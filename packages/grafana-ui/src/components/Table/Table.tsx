@@ -54,6 +54,7 @@ export const Table = memo((props: Props) => {
     footerValues,
     enablePagination,
     cellHeight = TableCellHeight.Sm,
+    timeRange,
   } = props;
 
   const listRef = useRef<VariableSizeList>(null);
@@ -120,6 +121,7 @@ export const Table = memo((props: Props) => {
       data: memoizedData,
       disableResizing: !resizable,
       stateReducer: stateReducer,
+      autoResetPage: false,
       initialState: getInitialState(initialSortBy, memoizedColumns),
       autoResetFilters: false,
       sortTypes: {
@@ -257,12 +259,14 @@ export const Table = memo((props: Props) => {
               onCellFilterAdded={onCellFilterAdded}
               columnIndex={index}
               columnCount={row.cells.length}
+              timeRange={timeRange}
+              frame={data}
             />
           ))}
         </div>
       );
     },
-    [onCellFilterAdded, page, enablePagination, prepareRow, rows, tableStyles, renderSubTable]
+    [onCellFilterAdded, page, enablePagination, prepareRow, rows, tableStyles, renderSubTable, timeRange, data]
   );
 
   const onNavigate = useCallback(
@@ -318,7 +322,14 @@ export const Table = memo((props: Props) => {
   };
 
   return (
-    <div {...getTableProps()} className={tableStyles.table} aria-label={ariaLabel} role="table" ref={tableDivRef}>
+    <div
+      {...getTableProps()}
+      className={tableStyles.table}
+      aria-label={ariaLabel}
+      role="table"
+      ref={tableDivRef}
+      style={{ width, height }}
+    >
       <CustomScrollbar hideVerticalTrack={true}>
         <div className={tableStyles.tableContentWrapper(totalColumnsWidth)}>
           {!noHeader && (

@@ -1,7 +1,12 @@
 ---
 aliases:
   - /docs/grafana/latest/setup-grafana/configure-security/configure-security-hardening/
-description: Security hardening enables you to apply additional security which might stop certain vulnerabilities from being exploited by a malicious attacker.
+description: Security hardening enables you to apply additional security which might
+  stop certain vulnerabilities from being exploited by a malicious attacker.
+labels:
+  products:
+    - enterprise
+    - oss
 title: Configure security hardening
 ---
 
@@ -9,13 +14,17 @@ title: Configure security hardening
 
 Security hardening enables you to apply additional security, which can help stop certain vulnerabilities from being exploited by a malicious attacker.
 
-> **Note:** These settings are available in the [grafana.ini configuration file]({{< relref "../../configure-grafana/#configuration-file-location" >}}). To apply changes to the configuration file, restart the Grafana server.
+{{% admonition type="note" %}}
+These settings are available in the [grafana.ini configuration file]({{< relref "../../configure-grafana#configuration-file-location" >}}). To apply changes to the configuration file, restart the Grafana server.
+{{% /admonition %}}
 
 ## Additional security for cookies
 
 If Grafana uses HTTPS, you can further secure the cookie that the system uses to authenticate access to the web UI. By applying additional security to the cookie, you might mitigate certain attacks that result from an attacker obtaining the cookie value.
 
-> **Note:** Grafana must use HTTPS for the following configurations to work properly.
+{{% admonition type="note" %}}
+Grafana must use HTTPS for the following configurations to work properly.
+{{% /admonition %}}
 
 ### Add a secure attribute to cookies
 
@@ -39,7 +48,9 @@ Example:
 cookie_samesite = strict
 ```
 
-> **Note:** By setting the SameSite attribute to "strict," only the user clicks within a Grafana instance work. The default option, "lax," does not produce this behavior.
+{{% admonition type="note" %}}
+By setting the SameSite attribute to "strict," only the user clicks within a Grafana instance work. The default option, "lax," does not produce this behavior.
+{{% /admonition %}}
 
 ### Add a prefix to cookie names
 
@@ -73,6 +84,24 @@ content_security_policy = true
 # $ROOT_PATH is server.root_url without the protocol.
 content_security_policy_template = """script-src 'self' 'unsafe-eval' 'unsafe-inline' 'strict-dynamic' $NONCE;object-src 'none';font-src 'self';style-src 'self' 'unsafe-inline' blob:;img-src * data:;base-uri 'self';connect-src 'self' grafana.com ws://$ROOT_PATH wss://$ROOT_PATH;manifest-src 'self';media-src 'none';form-action 'self';"""
 ```
+
+### Enable trusted types
+
+**Currently in development. [Trusted types](https://github.com/w3c/trusted-types/blob/main/explainer.md) is an experimental Javascript API with [limited browser support](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/trusted-types#browser_compatibility).**
+
+Trusted types reduce the risk of DOM XSS by enforcing developers to sanitize strings that are used in injection sinks, such as setting `innerHTML` on an element. Furthermore, when enabling trusted types, these injection sinks need to go through a policy that will sanitize, or leave the string intact and return it as "safe". This provides some protection from client side injection vulnerabilities in third party libraries, such as jQuery, Angular and even third party plugins.
+
+To enable trusted types in enforce mode, where injection sinks are automatically sanitized:
+
+- Enable `content_security_policy` in the configuration.
+- Add `require-trusted-types-for 'script'` to the `content_security_policy_template` in the configuration.
+
+To enable trusted types in report mode, where inputs that have not been sanitized with trusted types will be logged to the console:
+
+- Enable `content_security_policy_report_only` in the configuration.
+- Add `require-trusted-types-for 'script'` to the `content_security_policy_report_only_template` in the configuration.
+
+As this is a feature currently in development, things may break. If they do, or if you have any other feedback, feel free to [leave a comment](https://github.com/grafana/grafana/discussions/66823).
 
 ## Additional security hardening
 

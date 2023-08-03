@@ -11,6 +11,6 @@ func TestIntegrationSQLxUserStarsDataAccess(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 	testIntegrationUserStarsDataAccess(t, func(ss db.DB) store {
-		return &sqlxStore{sess: ss.GetSqlxSession()}
+		return &sqlxStore{sess: ss.GetSqlxSession(), db: ss}
 	})
 }

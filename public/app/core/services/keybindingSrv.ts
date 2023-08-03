@@ -29,7 +29,10 @@ import { toggleTheme } from './theme';
 import { withFocusedPanel } from './withFocusedPanelId';
 
 export class KeybindingSrv {
-  constructor(private locationService: LocationService, private chromeService: AppChromeService) {}
+  constructor(
+    private locationService: LocationService,
+    private chromeService: AppChromeService
+  ) {}
 
   clearAndInitGlobalBindings(route: RouteDescriptor) {
     Mousetrap.reset();
@@ -38,10 +41,10 @@ export class KeybindingSrv {
     if (!route.chromeless) {
       this.bind(['?', 'h'], this.showHelpModal);
       this.bind('g h', this.goToHome);
+      this.bind('g d', this.goToDashboards);
+      this.bind('g e', this.goToExplore);
       this.bind('g a', this.openAlerting);
       this.bind('g p', this.goToProfile);
-      this.bind('g e', this.goToExplore);
-      this.bind('t a', this.makeAbsoluteTime);
       this.bind('esc', this.exit);
       this.bindGlobalEsc();
     }
@@ -88,6 +91,10 @@ export class KeybindingSrv {
     this.locationService.push('/alerting');
   }
 
+  private goToDashboards() {
+    this.locationService.push('/dashboards');
+  }
+
   private goToHome() {
     this.locationService.push('/');
   }
@@ -98,10 +105,6 @@ export class KeybindingSrv {
 
   private goToExplore() {
     this.locationService.push('/explore');
-  }
-
-  private makeAbsoluteTime() {
-    appEvents.publish(new AbsoluteTimeEvent());
   }
 
   private showHelpModal() {
@@ -182,6 +185,10 @@ export class KeybindingSrv {
   }
 
   setupTimeRangeBindings(updateUrl = true) {
+    this.bind('t a', () => {
+      appEvents.publish(new AbsoluteTimeEvent({ updateUrl }));
+    });
+
     this.bind('t z', () => {
       appEvents.publish(new ZoomOutEvent({ scale: 2, updateUrl }));
     });
@@ -251,7 +258,7 @@ export class KeybindingSrv {
 
     // jump to explore if permissions allow
     if (contextSrv.hasAccessToExplore()) {
-      this.bindWithPanelId('x', async (panelId) => {
+      this.bindWithPanelId('p x', async (panelId) => {
         const panel = dashboard.getPanelById(panelId)!;
         const url = await getExploreUrl({
           panel,
@@ -303,6 +310,11 @@ export class KeybindingSrv {
     // toggle all panel legends
     this.bind('d l', () => {
       dashboard.toggleLegendsForAll();
+    });
+
+    // toggle all exemplars
+    this.bind('d x', () => {
+      dashboard.toggleExemplarsForAll();
     });
 
     // collapse all rows

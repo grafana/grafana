@@ -71,6 +71,7 @@ type UnifiedAlertingSettings struct {
 	HAPeerTimeout                  time.Duration
 	HAGossipInterval               time.Duration
 	HAPushPullInterval             time.Duration
+	HALabel                        string
 	HARedisAddr                    string
 	HARedisPeerName                string
 	HARedisPrefix                  string
@@ -92,6 +93,8 @@ type UnifiedAlertingSettings struct {
 	Screenshots                   UnifiedAlertingScreenshotSettings
 	ReservedLabels                UnifiedAlertingReservedLabelSettings
 	StateHistory                  UnifiedAlertingStateHistorySettings
+	// MaxStateSaveConcurrency controls the number of goroutines (per rule) that can save alert state in parallel.
+	MaxStateSaveConcurrency int
 }
 
 type UnifiedAlertingScreenshotSettings struct {
@@ -230,6 +233,7 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 	}
 	uaCfg.HAListenAddr = ua.Key("ha_listen_address").MustString(alertmanagerDefaultClusterAddr)
 	uaCfg.HAAdvertiseAddr = ua.Key("ha_advertise_address").MustString("")
+	uaCfg.HALabel = ua.Key("ha_label").MustString("")
 	uaCfg.HARedisAddr = ua.Key("ha_redis_address").MustString("")
 	uaCfg.HARedisPeerName = ua.Key("ha_redis_peer_name").MustString("")
 	uaCfg.HARedisPrefix = ua.Key("ha_redis_prefix").MustString("")
@@ -282,6 +286,27 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 	uaCfg.MaxAttempts = uaMaxAttempts
 
 	uaCfg.BaseInterval = SchedulerBaseInterval
+
+	// The base interval of the scheduler for evaluating alerts.
+	// 1. It is used by the internal scheduler's timer to tick at this interval.
+	// 2. to spread evaluations of rules that need to be evaluated at the current tick T. In other words, the evaluation of rules at the tick T will be evenly spread in the interval from T to T+scheduler_tick_interval.
+	//    For example, if there are 100 rules that need to be evaluated at tick T, and the base interval is 10s, rules will be evaluated every 100ms.
+	// 3. It increases delay between rule updates and state reset.
+	// NOTE:
+	// 1. All alert rule intervals should be times of this interval. Otherwise, the rules will not be evaluated. It is not recommended to set it lower than 10s or odd numbers. Recommended: 10s, 30s, 1m
+	// 2. The increasing of the interval will affect how slow alert rule updates will reset the state, and therefore reset notification. Higher the interval - slower propagation of the changes.
+	baseInterval, err := gtime.ParseDuration(valueAsString(ua, "scheduler_tick_interval", SchedulerBaseInterval.String()))
+	if cfg.IsFeatureToggleEnabled("configurableSchedulerTick") { // use literal to avoid cycle imports
+		if err != nil {
+			return fmt.Errorf("failed to parse setting 'scheduler_tick_interval' as duration: %w", err)
+		}
+		if baseInterval != SchedulerBaseInterval {
+			cfg.Logger.Warn("Scheduler tick interval is changed to non-default", "interval", baseInterval, "default", SchedulerBaseInterval)
+		}
+		uaCfg.BaseInterval = baseInterval
+	} else if baseInterval != SchedulerBaseInterval {
+		cfg.Logger.Warn("Scheduler tick interval is changed to non-default but the feature flag is not enabled. Using default.", "interval", baseInterval, "default", SchedulerBaseInterval)
+	}
 
 	uaMinInterval, err := gtime.ParseDuration(valueAsString(ua, "min_interval", uaCfg.BaseInterval.String()))
 	if err != nil || uaMinInterval == uaCfg.BaseInterval { // unified option is invalid duration or equals the default
@@ -349,6 +374,8 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 		ExternalLabels:        stateHistoryLabels.KeysHash(),
 	}
 	uaCfg.StateHistory = uaCfgStateHistory
+
+	uaCfg.MaxStateSaveConcurrency = ua.Key("max_state_save_concurrency").MustInt(1)
 
 	cfg.UnifiedAlerting = uaCfg
 	return nil

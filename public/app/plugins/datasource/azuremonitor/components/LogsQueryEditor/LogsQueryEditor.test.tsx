@@ -170,7 +170,7 @@ describe('LogsQueryEditor', () => {
     await userEvent.click(advancedSection);
 
     const advancedInput = await screen.findByTestId('input-advanced-resource-picker-1');
-    // const advancedInput = await screen.findByLabelText('Resource URI(s)');
+
     await userEvent.type(advancedInput, '/subscriptions/def-123');
 
     const applyButton = screen.getByRole('button', { name: 'Apply' });
@@ -180,6 +180,33 @@ describe('LogsQueryEditor', () => {
       expect.objectContaining({
         azureLogAnalytics: expect.objectContaining({
           resources: ['/subscriptions/def-123'],
+        }),
+      })
+    );
+  });
+
+  it('should update the intersectTime prop', async () => {
+    const mockDatasource = createMockDatasource({ resourcePickerData: createMockResourcePickerData() });
+    const query = createMockQuery();
+    const onChange = jest.fn();
+
+    render(
+      <LogsQueryEditor
+        query={query}
+        datasource={mockDatasource}
+        variableOptionGroup={variableOptionGroup}
+        onChange={onChange}
+        setError={() => {}}
+      />
+    );
+
+    const intersectionOption = await screen.findByLabelText('Intersection');
+    await userEvent.click(intersectionOption);
+
+    expect(onChange).toBeCalledWith(
+      expect.objectContaining({
+        azureLogAnalytics: expect.objectContaining({
+          intersectTime: true,
         }),
       })
     );

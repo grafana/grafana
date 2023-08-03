@@ -1,10 +1,16 @@
 ---
-aliases:
+canonical: https://grafana.com/docs/grafana/latest/alerting/manage-notifications/template-notifications/reference/
+description: Reference for templating notifications
 keywords:
   - grafana
   - alerting
   - notifications
   - templates
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: Reference
 weight: 400
 ---
@@ -41,7 +47,7 @@ weight: 400
 | Resolved alerts   | `[]Alert` | List of all resolved alerts in this notification                                                     | `There are {{ len .Alerts.Resolved }} resolved alerts` |
 | GroupLabels       | `KV`      | The labels that group these alerts in this                                                           | `{{ .GroupLabels }}`                                   |
 | CommonLabels      | `KV`      | The labels common to all alerts in this notification                                                 | `{{ .CommonLabels }}`                                  |
-| CommonAnnotations | `KV`      | The annotations common to all alerts i this notification                                             | `{{ .CommonAnnotations }}`                             |
+| CommonAnnotations | `KV`      | The annotations common to all alerts in this notification                                            | `{{ .CommonAnnotations }}`                             |
 | ExternalURL       | `string`  | A link to Grafana, or the Alertmanager that sent this notification if using an external Alertmanager | `{{ .ExternalURL }}`                                   |
 
 ### KV

@@ -4,6 +4,10 @@ aliases:
   - ../../../enterprise/access-control/rbac-fixed-basic-role-definitions/
 description: This topic includes a table that lists permission associated with Grafana
   fixed and basic roles.
+labels:
+  products:
+    - cloud
+    - enterprise
 menuTitle: RBAC role definitions
 title: Grafana RBAC role definitions
 weight: 70
@@ -11,7 +15,9 @@ weight: 70
 
 # RBAC role definitions
 
-> **Note:** Available in [Grafana Enterprise]({{< relref "../../../../introduction/grafana-enterprise/" >}}) and [Grafana Cloud Advanced](/docs/grafana-cloud).
+{{% admonition type="note" %}}
+Available in [Grafana Enterprise]({{< relref "../../../../introduction/grafana-enterprise/" >}}) and [Grafana Cloud](/docs/grafana-cloud).
+{{% /admonition %}}
 
 The following tables list permissions associated with basic and fixed roles.
 
@@ -42,7 +48,7 @@ The following tables list permissions associated with basic and fixed roles.
 | `fixed:annotations:writer`             | All permissions from `fixed:annotations:reader` <br>`annotations:write` <br>`annotations.create`<br> `annotations:delete` for scope `annotations:type:*`                                                                                                             | Read, create, update and delete all annotations and annotation tags.                                                                                                                                                                                                                  |
 | `fixed:apikeys:reader`                 | `apikeys:read` for scope `apikeys:*`                                                                                                                                                                                                                                 | Read all api keys.                                                                                                                                                                                                                                                                    |
 | `fixed:apikeys:writer`                 | All permissions from `fixed:apikeys:reader` and <br> `apikeys:create` <br> `apikeys:delete` for scope `apikeys:*`                                                                                                                                                    | Read, create, delete all api keys.                                                                                                                                                                                                                                                    |
-| `fixed:authentication.config:writer`   | `settings:read` <br> `settings:write` for scopes `settings:auth:*` and `settings:auth.saml:*`                                                                                                                                                                        | Read and update authentication and SAML settings.                                                                                                                                                                                                                                     |
+| `fixed:authentication.config:writer`   | `settings:read` for scope `settings:auth.saml:*` <br> `settings:write` for scope `settings:auth.saml:*`                                                                                                                                                              | Read and update authentication and SAML settings.                                                                                                                                                                                                                                     |
 | `fixed:dashboards:creator`             | `dashboards:create`<br>`folders:read`                                                                                                                                                                                                                                | Create dashboards.                                                                                                                                                                                                                                                                    |
 | `fixed:dashboards.insights:reader`     | `dashboards.insights:read`                                                                                                                                                                                                                                           | Read dashboard insights data and see presence indicators.                                                                                                                                                                                                                             |
 | `fixed:dashboards.permissions:reader`  | `dashboards.permissions:read`                                                                                                                                                                                                                                        | Read all dashboard permissions.                                                                                                                                                                                                                                                       |
@@ -95,7 +101,7 @@ The following tables list permissions associated with basic and fixed roles.
 
 ### Alerting roles
 
-If alerting is [enabled]({{< relref "../../../../alerting/migrating-alerts/opt-out/" >}}), you can use predefined roles to manage user access to alert rules, alert instances, and alert notification settings and create custom roles to limit user access to alert rules in a folder.
+If alerting is [enabled]({{< relref "../../../../alerting/set-up/migrating-alerts/opt-out/" >}}), you can use predefined roles to manage user access to alert rules, alert instances, and alert notification settings and create custom roles to limit user access to alert rules in a folder.
 
 Access to Grafana alert rules is an intersection of many permissions:
 
@@ -108,10 +114,14 @@ For more information about the permissions required to access alert rules, refer
 
 ### Grafana OnCall roles (beta)
 
-> **Note:** Available from Grafana 9.4 in early access.
+{{% admonition type="note" %}}
+Available from Grafana 9.4 in early access.
+{{% /admonition %}}
 
-> **Note:** This feature is behind the `accessControlOnCall` feature toggle.
-> You can enable feature toggles through configuration file or environment variables. See configuration [docs]({{< relref "../../../../setup-grafana/configure-grafana/#feature_toggles" >}}) for details.
+{{% admonition type="note" %}}
+This feature is behind the `accessControlOnCall` feature toggle.
+You can enable feature toggles through configuration file or environment variables. See configuration [docs]({{< relref "../../../../setup-grafana/configure-grafana/#feature_toggles" >}}) for details.
+{{% /admonition %}}
 
 If you are using [Grafana OnCall](https://grafana.com/docs/oncall/latest/get-started/), you can try out the integration between Grafana OnCall and RBAC.
 This will allow you to control access to different OnCall features using the following RBAC roles:

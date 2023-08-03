@@ -1,4 +1,4 @@
-import { DataSourcePluginMeta, DataSourceSettings, locationUtil } from '@grafana/data';
+import { DataSourcePluginMeta, DataSourceSettings, locationUtil, TestDataSourceResponse } from '@grafana/data';
 import {
   config,
   DataSourceWithBackend,
@@ -57,6 +57,34 @@ export interface TestDataSourceDependencies {
   getBackendSrv: typeof getBackendSrv;
 }
 
+type parseDataSourceSaveResponse = {
+  message?: string | undefined;
+  status?: string;
+  details?: HealthCheckResultDetails | { message?: string; verboseMessage?: string };
+};
+
+const parseHealthCheckError = (errorResponse: any): parseDataSourceSaveResponse => {
+  let message: string | undefined;
+  let details: HealthCheckResultDetails;
+
+  if (errorResponse.error && errorResponse.error instanceof HealthCheckError) {
+    message = errorResponse.error.message;
+    details = errorResponse.error.details;
+  } else if (isFetchError(errorResponse)) {
+    message = errorResponse.data.message ?? `HTTP error ${errorResponse.statusText}`;
+  } else if (errorResponse instanceof Error) {
+    message = errorResponse.message;
+  }
+
+  return { message, details };
+};
+
+const parseHealthCheckSuccess = (response: TestDataSourceResponse): parseDataSourceSaveResponse => {
+  const { details, message, status } = response;
+
+  return { status, message, details };
+};
+
 export const initDataSourceSettings = (
   uid: string,
   dependencies: InitDataSourceSettingDependencies = {
@@ -112,7 +140,9 @@ export const testDataSource = (
       try {
         const result = await dsApi.testDatasource();
 
-        dispatch(testDataSourceSucceeded(result));
+        const parsedResult = parseHealthCheckSuccess({ ...result, details: { ...result.details } });
+        dispatch(testDataSourceSucceeded(parsedResult));
+
         trackDataSourceTested({
           grafana_version: config.buildInfo.version,
           plugin_id: dsApi.type,
@@ -121,19 +151,9 @@ export const testDataSource = (
           path: editLink,
         });
       } catch (err) {
-        let message: string | undefined;
-        let details: HealthCheckResultDetails;
+        const formattedError = parseHealthCheckError(err);
 
-        if (err instanceof HealthCheckError) {
-          message = err.message;
-          details = err.details;
-        } else if (isFetchError(err)) {
-          message = err.data.message ?? `HTTP error ${err.statusText}`;
-        } else if (err instanceof Error) {
-          message = err.message;
-        }
-
-        dispatch(testDataSourceFailed({ message, details }));
+        dispatch(testDataSourceFailed({ ...formattedError }));
         trackDataSourceTested({
           grafana_version: config.buildInfo.version,
           plugin_id: dsApi.type,
@@ -216,6 +236,7 @@ export function addDataSource(
       isDefault: isFirstDataSource,
     };
 
+    // TODO: typo in name
     if (nameExits(dataSources, newInstance.name)) {
       newInstance.name = findNewName(dataSources, newInstance.name);
     }
@@ -248,9 +269,23 @@ export function loadDataSourcePlugins(): ThunkResult<void> {
 }
 
 export function updateDataSource(dataSource: DataSourceSettings) {
-  return async (dispatch: (dataSourceSettings: ThunkResult<Promise<DataSourceSettings>>) => DataSourceSettings) => {
-    await api.updateDataSource(dataSource);
+  return async (
+    dispatch: (
+      dataSourceSettings: ThunkResult<Promise<DataSourceSettings>> | { payload: unknown; type: string }
+    ) => DataSourceSettings
+  ) => {
+    try {
+      await api.updateDataSource(dataSource);
+    } catch (err) {
+      const formattedError = parseHealthCheckError(err);
+
+      dispatch(testDataSourceFailed(formattedError));
+
+      return Promise.reject(dataSource);
+    }
+
     await getDatasourceSrv().reload();
+
     return dispatch(loadDataSource(dataSource.uid));
   };
 }
@@ -259,13 +294,16 @@ export function deleteLoadedDataSource(): ThunkResult<void> {
   return async (dispatch, getStore) => {
     const { uid } = getStore().dataSources.dataSource;
 
-    await api.deleteDataSource(uid);
-    await getDatasourceSrv().reload();
+    try {
+      await api.deleteDataSource(uid);
+      await getDatasourceSrv().reload();
 
-    const datasourcesUrl = config.featureToggles.dataConnectionsConsole
-      ? CONNECTIONS_ROUTES.DataSources
-      : '/datasources';
+      const datasourcesUrl = CONNECTIONS_ROUTES.DataSources;
 
-    locationService.push(datasourcesUrl);
+      locationService.push(datasourcesUrl);
+    } catch (err) {
+      const formattedError = parseHealthCheckError(err);
+      dispatch(testDataSourceFailed(formattedError));
+    }
   };
 }

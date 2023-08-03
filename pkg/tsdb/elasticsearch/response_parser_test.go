@@ -50,7 +50,7 @@ func TestProcessLogsResponse(t *testing.T) {
 							  "_type": "_doc",
 							  "_index": "mock-index",
 							  "_source": {
-								"testtime": "2019-06-24T09:51:19.765Z",
+								"testtime": "06/24/2019",
 								"host": "djisaodjsoad",
 								"number": 1,
 								"line": "hello, i am a message",
@@ -58,17 +58,20 @@ func TestProcessLogsResponse(t *testing.T) {
 								"fields": { "lvl": "debug" }
 							  },
 							  "highlight": {
-								"message": [
-								  "@HIGHLIGHT@hello@/HIGHLIGHT@, i am a @HIGHLIGHT@message@/HIGHLIGHT@"
-								]
-							  }
+									"message": [
+								  	"@HIGHLIGHT@hello@/HIGHLIGHT@, i am a @HIGHLIGHT@message@/HIGHLIGHT@"
+									]
+							  },
+								"fields": {
+									"testtime": [ "2019-06-24T09:51:19.765Z" ]
+								}
 							},
 							{
 							  "_id": "kdospaidopa",
 							  "_type": "_doc",
 							  "_index": "mock-index",
 							  "_source": {
-								"testtime": "2019-06-24T09:52:19.765Z",
+								"testtime": "06/24/2019",
 								"host": "dsalkdakdop",
 								"number": 2,
 								"line": "hello, i am also message",
@@ -76,10 +79,13 @@ func TestProcessLogsResponse(t *testing.T) {
 								"fields": { "lvl": "info" }
 							  },
 							  "highlight": {
-								"message": [
-								  "@HIGHLIGHT@hello@/HIGHLIGHT@, i am a @HIGHLIGHT@message@/HIGHLIGHT@"
-								]
-							  }
+									"message": [
+								  	"@HIGHLIGHT@hello@/HIGHLIGHT@, i am a @HIGHLIGHT@message@/HIGHLIGHT@"
+									]
+							  },
+								"fields": {
+									"testtime": [ "2019-06-24T09:52:19.765Z" ]
+								}
 							}
 						  ]
 						}
@@ -99,7 +105,7 @@ func TestProcessLogsResponse(t *testing.T) {
 			logsFrame := frames[0]
 
 			meta := logsFrame.Meta
-			require.Equal(t, map[string]interface{}{"searchWords": []string{"hello", "message"}}, meta.Custom)
+			require.Equal(t, map[string]interface{}{"searchWords": []string{"hello", "message"}, "limit": 500}, meta.Custom)
 			require.Equal(t, data.VisTypeLogs, string(meta.PreferredVisualization))
 
 			logsFieldMap := make(map[string]*data.Field)
@@ -141,14 +147,14 @@ func TestProcessLogsResponse(t *testing.T) {
 						"level": "debug",
 						"line": "hello, i am a message",
 						"number": 1,
-						"testtime": "2019-06-24T09:51:19.765Z",
+						"testtime": "06/24/2019",
 						"line": "hello, i am a message"
 					}
 					`
 
 			expectedJson2 := `
 					{
-						"testtime": "2019-06-24T09:52:19.765Z",
+						"testtime": "06/24/2019",
 						"host": "dsalkdakdop",
 						"number": 2,
 						"line": "hello, i am also message",
@@ -179,6 +185,28 @@ func TestProcessLogsResponse(t *testing.T) {
 
 			requireStringAt(t, "debug", field, 0)
 			requireStringAt(t, "error", field, 1)
+		})
+
+		t.Run("gets correct time field from fields", func(t *testing.T) {
+			result, err := queryDataTest(query, response)
+			require.NoError(t, err)
+
+			require.Len(t, result.response.Responses, 1)
+			frames := result.response.Responses["A"].Frames
+			require.Len(t, frames, 1)
+
+			logsFrame := frames[0]
+
+			logsFieldMap := make(map[string]*data.Field)
+			for _, field := range logsFrame.Fields {
+				logsFieldMap[field.Name] = field
+			}
+			t0 := time.Date(2019, time.June, 24, 9, 51, 19, 765000000, time.UTC)
+			t1 := time.Date(2019, time.June, 24, 9, 52, 19, 765000000, time.UTC)
+			require.Contains(t, logsFieldMap, "testtime")
+			require.Equal(t, data.FieldTypeNullableTime, logsFieldMap["testtime"].Type())
+			require.Equal(t, &t0, logsFieldMap["testtime"].At(0))
+			require.Equal(t, &t1, logsFieldMap["testtime"].At(1))
 		})
 	})
 	t.Run("Empty response", func(t *testing.T) {
@@ -402,6 +430,7 @@ func TestProcessLogsResponse(t *testing.T) {
 
 		require.Equal(t, map[string]interface{}{
 			"searchWords": []string{"hello", "message"},
+			"limit":       500,
 		}, customMeta)
 	})
 }
@@ -2452,7 +2481,6 @@ func TestProcessBuckets(t *testing.T) {
 		  }
 		]
 	  }
-		  
 	`)
 
 			result, err := queryDataTest(query, response)
@@ -3276,7 +3304,7 @@ func TestFlatten(t *testing.T) {
 			},
 		}
 
-		flattened := flatten(obj)
+		flattened := flatten(obj, 10)
 		require.Len(t, flattened, 2)
 		require.Equal(t, "bar", flattened["foo"])
 		require.Equal(t, "qux", flattened["nested.bax.baz"])
@@ -3311,9 +3339,110 @@ func TestFlatten(t *testing.T) {
 			},
 		}
 
-		flattened := flatten(obj)
+		flattened := flatten(obj, 10)
 		require.Len(t, flattened, 1)
 		require.Equal(t, map[string]interface{}{"nested11": map[string]interface{}{"nested12": "abc"}}, flattened["nested0.nested1.nested2.nested3.nested4.nested5.nested6.nested7.nested8.nested9.nested10"])
+	})
+
+	t.Run("does not affect any non-nested JSON", func(t *testing.T) {
+		target := map[string]interface{}{
+			"fieldName": "",
+		}
+
+		assert.Equal(t, map[string]interface{}{
+			"fieldName": "",
+		}, flatten(target, 10))
+	})
+
+	t.Run("flattens up to maxDepth", func(t *testing.T) {
+		target := map[string]interface{}{
+			"fieldName2": map[string]interface{}{
+				"innerFieldName2": map[string]interface{}{
+					"innerFieldName3": "",
+				},
+			},
+		}
+
+		assert.Equal(t, map[string]interface{}{
+			"fieldName2.innerFieldName2": map[string]interface{}{"innerFieldName3": ""}}, flatten(target, 1))
+	})
+
+	t.Run("flattens up to maxDepth with multiple keys in target", func(t *testing.T) {
+		target := map[string]interface{}{
+			"fieldName": map[string]interface{}{
+				"innerFieldName": "",
+			},
+			"fieldName2": map[string]interface{}{
+				"innerFieldName2": map[string]interface{}{
+					"innerFieldName3": "",
+				},
+			},
+		}
+
+		assert.Equal(t, map[string]interface{}{"fieldName.innerFieldName": "", "fieldName2.innerFieldName2": map[string]interface{}{"innerFieldName3": ""}}, flatten(target, 1))
+	})
+
+	t.Run("flattens multiple objects of the same max depth", func(t *testing.T) {
+		target := map[string]interface{}{
+			"fieldName": map[string]interface{}{
+				"innerFieldName": "",
+			},
+			"fieldName2": map[string]interface{}{
+				"innerFieldName2": "",
+			},
+		}
+
+		assert.Equal(t, map[string]interface{}{
+			"fieldName.innerFieldName":   "",
+			"fieldName2.innerFieldName2": ""}, flatten(target, 1))
+	})
+
+	t.Run("only flattens multiple entries in the same key", func(t *testing.T) {
+		target := map[string]interface{}{
+			"fieldName": map[string]interface{}{
+				"innerFieldName":  "",
+				"innerFieldName1": "",
+			},
+			"fieldName2": map[string]interface{}{
+				"innerFieldName2": map[string]interface{}{
+					"innerFieldName3": "",
+				},
+			},
+		}
+
+		assert.Equal(t, map[string]interface{}{
+			"fieldName.innerFieldName":   "",
+			"fieldName.innerFieldName1":  "",
+			"fieldName2.innerFieldName2": map[string]interface{}{"innerFieldName3": ""}}, flatten(target, 1))
+	})
+
+	t.Run("combines nested field names", func(t *testing.T) {
+		target := map[string]interface{}{
+			"fieldName": map[string]interface{}{
+				"innerFieldName": "",
+			},
+			"fieldName2": map[string]interface{}{
+				"innerFieldName2": "",
+			},
+		}
+
+		assert.Equal(t, map[string]interface{}{"fieldName.innerFieldName": "", "fieldName2.innerFieldName2": ""}, flatten(target, 10))
+	})
+
+	t.Run("will preserve only one key with the same name", func(t *testing.T) {
+		// This test documents that in the unlikely case of a collision of a flattened name and an existing key, only
+		// one entry's value will be preserved at random
+		target := map[string]interface{}{
+			"fieldName": map[string]interface{}{
+				"innerFieldName": "one of these values will be lost",
+			},
+			"fieldName.innerFieldName": "this may be lost",
+		}
+
+		result := flatten(target, 10)
+		assert.Len(t, result, 1)
+		_, ok := result["fieldName.innerFieldName"]
+		assert.True(t, ok)
 	})
 }
 

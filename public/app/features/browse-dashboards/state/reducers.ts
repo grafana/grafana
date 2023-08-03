@@ -4,20 +4,61 @@ import { DashboardViewItem, DashboardViewItemKind } from 'app/features/search/ty
 
 import { BrowseDashboardsState } from '../types';
 
-import { fetchChildren } from './actions';
+import { fetchNextChildrenPage, refetchChildren } from './actions';
+import { findItem } from './utils';
 
-type FetchChildrenAction = ReturnType<typeof fetchChildren.fulfilled>;
+type FetchNextChildrenPageFulfilledAction = ReturnType<typeof fetchNextChildrenPage.fulfilled>;
+type RefetchChildrenFulfilledAction = ReturnType<typeof refetchChildren.fulfilled>;
 
-export function extraReducerFetchChildrenFulfilled(state: BrowseDashboardsState, action: FetchChildrenAction) {
-  const parentUID = action.meta.arg;
-  const children = action.payload;
+export function refetchChildrenFulfilled(state: BrowseDashboardsState, action: RefetchChildrenFulfilledAction) {
+  const { children, page, kind, lastPageOfKind } = action.payload;
+  const { parentUID } = action.meta.arg;
 
-  if (!parentUID) {
-    state.rootItems = children;
+  const newCollection = {
+    items: children,
+    lastFetchedKind: kind,
+    lastFetchedPage: page,
+    lastKindHasMoreItems: !lastPageOfKind,
+    isFullyLoaded: kind === 'dashboard' && lastPageOfKind,
+  };
+
+  if (parentUID) {
+    state.childrenByParentUID[parentUID] = newCollection;
+  } else {
+    state.rootItems = newCollection;
+  }
+}
+
+export function fetchNextChildrenPageFulfilled(
+  state: BrowseDashboardsState,
+  action: FetchNextChildrenPageFulfilledAction
+) {
+  const payload = action.payload;
+  if (!payload) {
+    // If not additional pages to load, the action returns undefined
     return;
   }
 
-  state.childrenByParentUID[parentUID] = children;
+  const { children, page, kind, lastPageOfKind } = payload;
+  const { parentUID, excludeKinds = [] } = action.meta.arg;
+
+  const collection = parentUID ? state.childrenByParentUID[parentUID] : state.rootItems;
+  const prevItems = collection?.items ?? [];
+
+  const newCollection = {
+    items: prevItems.concat(children),
+    lastFetchedKind: kind,
+    lastFetchedPage: page,
+    lastKindHasMoreItems: !lastPageOfKind,
+    isFullyLoaded: !excludeKinds.includes('dashboard') ? kind === 'dashboard' && lastPageOfKind : lastPageOfKind,
+  };
+
+  if (!parentUID) {
+    state.rootItems = newCollection;
+    return;
+  }
+
+  state.childrenByParentUID[parentUID] = newCollection;
 
   // If the parent of the items we've loaded are selected, we must select all these items also
   const parentIsSelected = state.selectedItems.folder[parentUID];
@@ -45,6 +86,8 @@ export function setItemSelectionState(
 ) {
   const { item, isSelected } = action.payload;
 
+  // Selecting a folder selects all children, and unselecting a folder deselects all children
+  // so propagate the new selection state to all descendants
   function markChildren(kind: DashboardViewItemKind, uid: string) {
     state.selectedItems[kind][uid] = isSelected;
 
@@ -52,38 +95,45 @@ export function setItemSelectionState(
       return;
     }
 
-    let children = state.childrenByParentUID[uid] ?? [];
-    for (const child of children) {
+    let collection = state.childrenByParentUID[uid];
+    for (const child of collection?.items ?? []) {
       markChildren(child.kind, child.uid);
     }
   }
 
   markChildren(item.kind, item.uid);
 
-  // If we're unselecting an item, unselect all ancestors (parent, grandparent, etc) also
-  // so we can later show a UI-only 'mixed' checkbox
-  if (!isSelected) {
-    let nextParentUID = item.parentUID;
+  // If all children of a folder are selected, then the folder is also selected.
+  // If *any* child of a folder is unselelected, then the folder is alo unselected.
+  // Reconcile all ancestors to make sure they're in the correct state.
+  let nextParentUID = item.parentUID;
 
-    // this is like a recursive climb up the parents of the tree while we have a
-    // parentUID (we've hit a root dashboard/folder)
-    while (nextParentUID) {
-      const parent = findItem(state.rootItems, state.childrenByParentUID, nextParentUID);
+  while (nextParentUID) {
+    const parent = findItem(state.rootItems?.items ?? [], state.childrenByParentUID, nextParentUID);
 
-      // This case should not happen, but a find can theortically return undefined, and it
-      // helps limit infinite loops
-      if (!parent) {
-        break;
-      }
-
-      state.selectedItems[parent.kind][parent.uid] = false;
-      nextParentUID = parent.parentUID;
+    // This case should not happen, but a find can theortically return undefined, and it
+    // helps limit infinite loops
+    if (!parent) {
+      break;
     }
+
+    if (!isSelected) {
+      // A folder cannot be selected if any of it's children are unselected
+      state.selectedItems[parent.kind][parent.uid] = false;
+    }
+
+    nextParentUID = parent.parentUID;
   }
+
+  // Check to see if we should mark the header checkbox selected if all root items are selected
+  state.selectedItems.$all = state.rootItems?.items?.every((v) => state.selectedItems[v.kind][v.uid]) ?? false;
 }
 
-export function setAllSelection(state: BrowseDashboardsState, action: PayloadAction<{ isSelected: boolean }>) {
-  const { isSelected } = action.payload;
+export function setAllSelection(
+  state: BrowseDashboardsState,
+  action: PayloadAction<{ isSelected: boolean; folderUID: string | undefined }>
+) {
+  const { isSelected, folderUID: folderUIDArg } = action.payload;
 
   state.selectedItems.$all = isSelected;
 
@@ -94,17 +144,27 @@ export function setAllSelection(state: BrowseDashboardsState, action: PayloadAct
   //    redux, so we just need to iterate over the selected items to flip them to false
 
   if (isSelected) {
-    for (const folderUID in state.childrenByParentUID) {
-      const children = state.childrenByParentUID[folderUID] ?? [];
+    // Recursively select the children of the folder in view
+    function selectChildrenOfFolder(folderUID: string | undefined) {
+      const collection = folderUID ? state.childrenByParentUID[folderUID] : state.rootItems;
 
-      for (const child of children) {
+      // Bail early if the collection isn't found (not loaded yet)
+      if (!collection) {
+        return;
+      }
+
+      for (const child of collection.items) {
         state.selectedItems[child.kind][child.uid] = isSelected;
+
+        if (child.kind !== 'folder') {
+          continue;
+        }
+
+        selectChildrenOfFolder(child.uid);
       }
     }
 
-    for (const child of state.rootItems) {
-      state.selectedItems[child.kind][child.uid] = isSelected;
-    }
+    selectChildrenOfFolder(folderUIDArg);
   } else {
     // if deselecting only need to loop over what we've already selected
     for (const kind in state.selectedItems) {
@@ -119,31 +179,4 @@ export function setAllSelection(state: BrowseDashboardsState, action: PayloadAct
       }
     }
   }
-}
-
-function findItem(
-  rootItems: DashboardViewItem[],
-  childrenByUID: Record<string, DashboardViewItem[] | undefined>,
-  uid: string
-): DashboardViewItem | undefined {
-  for (const item of rootItems) {
-    if (item.uid === uid) {
-      return item;
-    }
-  }
-
-  for (const parentUID in childrenByUID) {
-    const children = childrenByUID[parentUID];
-    if (!children) {
-      continue;
-    }
-
-    for (const child of children) {
-      if (child.uid === uid) {
-        return child;
-      }
-    }
-  }
-
-  return undefined;
 }

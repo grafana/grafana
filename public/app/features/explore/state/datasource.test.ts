@@ -1,6 +1,6 @@
 import { DataSourceApi } from '@grafana/data';
 import { DataQuery } from '@grafana/schema';
-import { ExploreId, ExploreItemState } from 'app/types';
+import { ExploreItemState } from 'app/types';
 
 import { updateDatasourceInstanceAction, datasourceReducer } from './datasource';
 import { createEmptyQueryResponse } from './utils';
@@ -27,7 +27,7 @@ describe('Datasource reducer', () => {
 
     const result = datasourceReducer(
       initialState,
-      updateDatasourceInstanceAction({ exploreId: ExploreId.left, datasourceInstance, history: [] })
+      updateDatasourceInstanceAction({ exploreId: 'left', datasourceInstance, history: [] })
     );
 
     const expectedState: Partial<ExploreItemState> = {
@@ -37,7 +37,6 @@ describe('Datasource reducer', () => {
       graphResult: null,
       logsResult: null,
       tableResult: null,
-      loading: false,
       queryResponse: {
         // When creating an empty query response we also create a timeRange object with the current time.
         // Copying the range from the reducer here prevents intermittent failures when creating them at different times.

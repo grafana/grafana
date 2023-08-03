@@ -1,36 +1,88 @@
+import { useCallback, useRef } from 'react';
 import { createSelector } from 'reselect';
 
 import { DashboardViewItem } from 'app/features/search/types';
-import { useSelector, StoreState } from 'app/types';
+import { useSelector, StoreState, useDispatch } from 'app/types';
 
-import { DashboardsTreeItem, DashboardTreeSelection } from '../types';
+import { PAGE_SIZE } from '../api/services';
+import {
+  BrowseDashboardsState,
+  DashboardsTreeItem,
+  DashboardTreeSelection,
+  DashboardViewItemWithUIItems,
+  UIDashboardViewItem,
+} from '../types';
+
+import { fetchNextChildrenPage } from './actions';
+import { getPaginationPlaceholders } from './utils';
+
+export const rootItemsSelector = (wholeState: StoreState) => wholeState.browseDashboards.rootItems;
+export const childrenByParentUIDSelector = (wholeState: StoreState) => wholeState.browseDashboards.childrenByParentUID;
+export const openFoldersSelector = (wholeState: StoreState) => wholeState.browseDashboards.openFolders;
+export const selectedItemsSelector = (wholeState: StoreState) => wholeState.browseDashboards.selectedItems;
 
 const flatTreeSelector = createSelector(
-  (wholeState: StoreState) => wholeState.browseDashboards.rootItems,
-  (wholeState: StoreState) => wholeState.browseDashboards.childrenByParentUID,
-  (wholeState: StoreState) => wholeState.browseDashboards.openFolders,
+  rootItemsSelector,
+  childrenByParentUIDSelector,
+  openFoldersSelector,
   (wholeState: StoreState, rootFolderUID: string | undefined) => rootFolderUID,
   (rootItems, childrenByParentUID, openFolders, folderUID) => {
     return createFlatTree(folderUID, rootItems, childrenByParentUID, openFolders);
   }
 );
 
-const hasSelectionSelector = createSelector(
-  (wholeState: StoreState) => wholeState.browseDashboards.selectedItems,
-  (selectedItems) => {
-    return Object.values(selectedItems).some((selectedItem) =>
-      Object.values(selectedItem).some((isSelected) => isSelected)
-    );
+const hasSelectionSelector = createSelector(selectedItemsSelector, (selectedItems) => {
+  return Object.values(selectedItems).some((selectedItem) =>
+    Object.values(selectedItem).some((isSelected) => isSelected)
+  );
+});
+
+// Returns a DashboardTreeSelection but unselects any selected folder's children.
+// This is useful when making backend requests to move or delete items.
+// In this case, we only need to move/delete the parent folder and it will cascade to the children.
+const selectedItemsForActionsSelector = createSelector(
+  selectedItemsSelector,
+  childrenByParentUIDSelector,
+  (selectedItems, childrenByParentUID) => {
+    // Take a copy of the selected items to work with
+    // We don't care about panels here, only dashboards and folders can be moved or deleted
+    const result: Omit<DashboardTreeSelection, 'panel' | '$all'> = {
+      dashboard: { ...selectedItems.dashboard },
+      folder: { ...selectedItems.folder },
+    };
+
+    // Loop over selected folders in the input
+    for (const folderUID of Object.keys(selectedItems.folder)) {
+      const isSelected = selectedItems.folder[folderUID];
+      if (isSelected) {
+        // Unselect any children in the output
+        const collection = childrenByParentUID[folderUID];
+        if (collection) {
+          for (const child of collection.items) {
+            if (child.kind === 'dashboard') {
+              result.dashboard[child.uid] = false;
+            }
+            if (child.kind === 'folder') {
+              result.folder[child.uid] = false;
+            }
+          }
+        }
+      }
+    }
+
+    return result;
   }
 );
 
-const selectedItemsForActionsSelector = createSelector(
-  (wholeState: StoreState) => wholeState.browseDashboards.selectedItems,
-  (wholeState: StoreState) => wholeState.browseDashboards.childrenByParentUID,
-  (selectedItems, childrenByParentUID) => {
-    return getSelectedItemsForActions(selectedItems, childrenByParentUID);
-  }
-);
+export function useBrowseLoadingStatus(folderUID: string | undefined): 'pending' | 'fulfilled' {
+  return useSelector((wholeState) => {
+    const children = folderUID
+      ? wholeState.browseDashboards.childrenByParentUID[folderUID]
+      : wholeState.browseDashboards.rootItems;
+
+    return children ? 'fulfilled' : 'pending';
+  });
+}
 
 export function useFlatTreeState(folderUID: string | undefined) {
   return useSelector((state) => flatTreeSelector(state, folderUID));
@@ -41,11 +93,40 @@ export function useHasSelection() {
 }
 
 export function useCheckboxSelectionState() {
-  return useSelector((wholeState: StoreState) => wholeState.browseDashboards.selectedItems);
+  return useSelector(selectedItemsSelector);
+}
+
+export function useChildrenByParentUIDState() {
+  return useSelector((wholeState: StoreState) => wholeState.browseDashboards.childrenByParentUID);
 }
 
 export function useActionSelectionState() {
   return useSelector((state) => selectedItemsForActionsSelector(state));
+}
+
+export function useLoadNextChildrenPage(
+  excludeKinds: Array<DashboardViewItemWithUIItems['kind'] | UIDashboardViewItem['uiKind']> = []
+) {
+  const dispatch = useDispatch();
+  const requestInFlightRef = useRef(false);
+
+  const handleLoadMore = useCallback(
+    (folderUID: string | undefined) => {
+      if (requestInFlightRef.current) {
+        return Promise.resolve();
+      }
+
+      requestInFlightRef.current = true;
+
+      const promise = dispatch(fetchNextChildrenPage({ parentUID: folderUID, excludeKinds, pageSize: PAGE_SIZE }));
+      promise.finally(() => (requestInFlightRef.current = false));
+
+      return promise;
+    },
+    [dispatch, excludeKinds]
+  );
+
+  return handleLoadMore;
 }
 
 /**
@@ -57,23 +138,38 @@ export function useActionSelectionState() {
  * @param openFolders Object of UID to whether that item is expanded or not
  * @param level level of item in the tree. Only to be specified when called recursively.
  */
-function createFlatTree(
+export function createFlatTree(
   folderUID: string | undefined,
-  rootItems: DashboardViewItem[],
-  childrenByUID: Record<string, DashboardViewItem[] | undefined>,
+  rootCollection: BrowseDashboardsState['rootItems'],
+  childrenByUID: BrowseDashboardsState['childrenByParentUID'],
   openFolders: Record<string, boolean>,
-  level = 0
+  level = 0,
+  excludeKinds: Array<DashboardViewItemWithUIItems['kind'] | UIDashboardViewItem['uiKind']> = [],
+  excludeUIDs: string[] = []
 ): DashboardsTreeItem[] {
   function mapItem(item: DashboardViewItem, parentUID: string | undefined, level: number): DashboardsTreeItem[] {
-    const mappedChildren = createFlatTree(item.uid, rootItems, childrenByUID, openFolders, level + 1);
+    if (excludeKinds.includes(item.kind) || excludeUIDs.includes(item.uid)) {
+      return [];
+    }
+
+    const mappedChildren = createFlatTree(
+      item.uid,
+      rootCollection,
+      childrenByUID,
+      openFolders,
+      level + 1,
+      excludeKinds,
+      excludeUIDs
+    );
 
     const isOpen = Boolean(openFolders[item.uid]);
-    const emptyFolder = childrenByUID[item.uid]?.length === 0;
-    if (isOpen && emptyFolder) {
+    const emptyFolder = childrenByUID[item.uid]?.items.length === 0;
+    if (isOpen && emptyFolder && !excludeKinds.includes('empty-folder')) {
       mappedChildren.push({
         isOpen: false,
         level: level + 1,
-        item: { kind: 'ui-empty-folder', uid: item.uid + '-empty-folder' },
+        item: { kind: 'ui', uiKind: 'empty-folder', uid: item.uid + 'empty-folder' },
+        parentUID,
       });
     }
 
@@ -89,49 +185,28 @@ function createFlatTree(
 
   const isOpen = (folderUID && openFolders[folderUID]) || level === 0;
 
+  const collection = folderUID ? childrenByUID[folderUID] : rootCollection;
+
   const items = folderUID
-    ? (isOpen && childrenByUID[folderUID]) || [] // keep seperate lines
-    : rootItems;
+    ? isOpen && collection?.items // keep seperate lines
+    : collection?.items;
 
-  return items.flatMap((item) => mapItem(item, folderUID, level));
-}
+  let children = (items || []).flatMap((item) => {
+    return mapItem(item, folderUID, level);
+  });
 
-/**
- * Returns a DashboardTreeSelection but unselects any selected folder's children.
- * This is useful when making backend requests to move or delete items.
- * In this case, we only need to move/delete the parent folder and it will cascade to the children.
- * @param selectedItemsState Overall selection state
- * @param childrenByParentUID Arrays of children keyed by their parent UID
- */
-function getSelectedItemsForActions(
-  selectedItemsState: DashboardTreeSelection,
-  childrenByParentUID: Record<string, DashboardViewItem[] | undefined>
-): Omit<DashboardTreeSelection, 'panel' | '$all'> {
-  // Take a copy of the selected items to work with
-  // We don't care about panels here, only dashboards and folders can be moved or deleted
-  const result = {
-    dashboard: { ...selectedItemsState.dashboard },
-    folder: { ...selectedItemsState.folder },
-  };
+  // this is very custom to the folder picker right now
+  // we exclude dashboards, but if you have more than 1 page of dashboards collection.isFullyLoaded is false
+  // so we need to check that we're ignoring dashboards and we've fetched all the folders
+  // TODO generalize this properly (e.g. split state by kind?)
+  const isConsideredLoaded = excludeKinds.includes('dashboard') && collection?.lastFetchedKind === 'dashboard';
 
-  // Loop over selected folders in the input
-  for (const folderUID of Object.keys(selectedItemsState.folder)) {
-    const isSelected = selectedItemsState.folder[folderUID];
-    if (isSelected) {
-      // Unselect any children in the output
-      const children = childrenByParentUID[folderUID];
-      if (children) {
-        for (const child of children) {
-          if (child.kind === 'dashboard') {
-            result.dashboard[child.uid] = false;
-          }
-          if (child.kind === 'folder') {
-            result.folder[child.uid] = false;
-          }
-        }
-      }
-    }
+  const showPlaceholders =
+    (level === 0 && !collection) || (isOpen && collection && !(collection.isFullyLoaded || isConsideredLoaded));
+
+  if (showPlaceholders) {
+    children = children.concat(getPaginationPlaceholders(PAGE_SIZE, folderUID, level));
   }
 
-  return result;
+  return children;
 }

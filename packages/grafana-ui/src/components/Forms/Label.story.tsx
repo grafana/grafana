@@ -1,10 +1,10 @@
-import { ComponentMeta, ComponentStory } from '@storybook/react';
+import { Meta, StoryFn } from '@storybook/react';
 import React from 'react';
 
 import { Label } from './Label';
 import mdx from './Label.mdx';
 
-const meta: ComponentMeta<typeof Label> = {
+const meta: Meta<typeof Label> = {
   title: 'Forms/Label',
   component: Label,
   argTypes: {
@@ -18,7 +18,7 @@ const meta: ComponentMeta<typeof Label> = {
   },
 };
 
-export const simple: ComponentStory<typeof Label> = (args) => {
+export const simple: StoryFn<typeof Label> = (args) => {
   return <Label {...args} />;
 };
 
@@ -31,7 +31,7 @@ simple.args = {
   description: 'Option description',
 };
 
-export const categorised: ComponentStory<typeof Label> = (args) => {
+export const categorised: StoryFn<typeof Label> = (args) => {
   return <Label {...args} />;
 };
 

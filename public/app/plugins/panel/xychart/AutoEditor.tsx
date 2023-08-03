@@ -11,7 +11,7 @@ import {
 import { Field, IconButton, Select, useStyles2 } from '@grafana/ui';
 
 import { getXYDimensions, isGraphable } from './dims';
-import { XYDimensionConfig, XYChartOptions } from './models.gen';
+import { XYDimensionConfig, Options } from './panelcfg.gen';
 
 interface XYInfo {
   numberFields: Array<SelectableValue<string>>;
@@ -19,11 +19,7 @@ interface XYInfo {
   yFields: Array<SelectableValue<boolean>>;
 }
 
-export const AutoEditor = ({
-  value,
-  onChange,
-  context,
-}: StandardEditorProps<XYDimensionConfig, any, XYChartOptions>) => {
+export const AutoEditor = ({ value, onChange, context }: StandardEditorProps<XYDimensionConfig, any, Options>) => {
   const frameNames = useMemo(() => {
     if (context?.data?.length) {
       return context.data.map((f, idx) => ({
@@ -132,6 +128,7 @@ export const AutoEditor = ({
                     exclude,
                   });
                 }}
+                tooltip={v.value ? 'Disable' : 'Enable'}
               />
               {v.label}
             </div>
@@ -154,7 +151,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
 
   row: css`
     padding: ${theme.spacing(0.5, 1)};
-    border-radius: ${theme.shape.borderRadius(1)};
+    border-radius: ${theme.shape.radius.default};
     background: ${theme.colors.background.secondary};
     min-height: ${theme.spacing(4)};
     display: flex;

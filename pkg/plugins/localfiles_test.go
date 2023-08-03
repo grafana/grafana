@@ -277,3 +277,26 @@ func TestStaticFS(t *testing.T) {
 		})
 	})
 }
+
+// TestFSTwoDotsInFileName ensures that LocalFS and StaticFS allow two dots in file names.
+// This makes sure that FSes do not believe that two dots in a file name (anywhere in the path)
+// represent a path traversal attempt.
+func TestFSTwoDotsInFileName(t *testing.T) {
+	tmp := t.TempDir()
+	const fn = "test..png"
+	require.NoError(t, createDummyTempFile(tmp, fn))
+
+	localFS := NewLocalFS(tmp)
+	staticFS, err := NewStaticFS(localFS)
+	require.NoError(t, err)
+
+	// Test both with localFS and staticFS
+
+	files, err := localFS.Files()
+	require.NoError(t, err)
+	require.Equal(t, []string{"test..png"}, files)
+
+	files, err = staticFS.Files()
+	require.NoError(t, err)
+	require.Equal(t, []string{"test..png"}, files)
+}

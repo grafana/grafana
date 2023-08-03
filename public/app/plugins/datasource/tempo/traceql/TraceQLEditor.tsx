@@ -28,6 +28,10 @@ export function TraceQLEditor(props: Props) {
   const setupAutocompleteFn = useAutocomplete(props.datasource);
   const theme = useTheme2();
   const styles = getStyles(theme, placeholder);
+  // work around the problem that `onEditorDidMount` is called once
+  // and wouldn't get new version of onRunQuery
+  const onRunQueryRef = useRef(onRunQuery);
+  onRunQueryRef.current = onRunQuery;
 
   return (
     <CodeEditor
@@ -56,7 +60,7 @@ export function TraceQLEditor(props: Props) {
       onEditorDidMount={(editor, monaco) => {
         if (!props.readOnly) {
           setupAutocompleteFn(editor, monaco, setupRegisterInteractionCommand(editor));
-          setupActions(editor, monaco, onRunQuery);
+          setupActions(editor, monaco, () => onRunQueryRef.current());
           setupPlaceholder(editor, monaco, styles);
         }
         setupAutoSize(editor);
@@ -149,16 +153,6 @@ function useAutocomplete(datasource: TempoDatasource) {
     const fetchTags = async () => {
       try {
         await datasource.languageProvider.start();
-        const tags = datasource.languageProvider.getTags();
-
-        if (tags) {
-          // This is needed because the /api/v2/search/tag/${tag}/values API expects "status" and the v1 API expects "status.code"
-          // so Tempo doesn't send anything and we inject it here for the autocomplete
-          if (!tags.find((t) => t === 'status')) {
-            tags.push('status');
-          }
-          providerRef.current.setTags(tags);
-        }
       } catch (error) {
         if (error instanceof Error) {
           dispatch(notifyApp(createErrorNotification('Error', error)));
@@ -213,7 +207,7 @@ interface EditorStyles {
 const getStyles = (theme: GrafanaTheme2, placeholder: string): EditorStyles => {
   return {
     queryField: css`
-      border-radius: ${theme.shape.borderRadius()};
+      border-radius: ${theme.shape.radius.default};
       border: 1px solid ${theme.components.input.borderColor};
       flex: 1;
     `,

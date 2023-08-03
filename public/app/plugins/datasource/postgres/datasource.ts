@@ -81,6 +81,7 @@ export class PostgresDatasource extends SqlDatasource {
     if (this.db !== undefined) {
       return this.db;
     }
+
     return {
       init: () => Promise.resolve(true),
       datasets: () => Promise.resolve([]),

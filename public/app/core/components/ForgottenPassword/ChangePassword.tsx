@@ -1,13 +1,14 @@
 import React, { SyntheticEvent } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { Tooltip, Form, Field, VerticalGroup, Button } from '@grafana/ui';
+import { Tooltip, Form, Field, VerticalGroup, Button, Alert } from '@grafana/ui';
 
 import { submitButton } from '../Login/LoginForm';
 import { PasswordField } from '../PasswordField/PasswordField';
 interface Props {
   onSubmit: (pw: string) => void;
   onSkip?: (event?: SyntheticEvent) => void;
+  showDefaultPasswordWarning?: boolean;
 }
 
 interface PasswordDTO {
@@ -15,7 +16,7 @@ interface PasswordDTO {
   confirmNew: string;
 }
 
-export const ChangePassword = ({ onSubmit, onSkip }: Props) => {
+export const ChangePassword = ({ onSubmit, onSkip, showDefaultPasswordWarning }: Props) => {
   const submit = (passwords: PasswordDTO) => {
     onSubmit(passwords.newPassword);
   };
@@ -23,6 +24,9 @@ export const ChangePassword = ({ onSubmit, onSkip }: Props) => {
     <Form onSubmit={submit}>
       {({ errors, register, getValues }) => (
         <>
+          {showDefaultPasswordWarning && (
+            <Alert severity="info" title="Continuing to use the default password exposes you to security risks." />
+          )}
           <Field label="New password" invalid={!!errors.newPassword} error={errors?.newPassword?.message}>
             <PasswordField
               id="new-password"

@@ -4,6 +4,8 @@ import React from 'react';
 import { TestProvider } from 'test/helpers/TestProvider';
 import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
 
+import { setBackendSrv } from '@grafana/runtime';
+import { backendSrv } from 'app/core/services/__mocks__/backend_srv';
 import * as api from 'app/features/manage-dashboards/state/actions';
 import { DashboardSearchHit } from 'app/features/search/types';
 
@@ -21,6 +23,14 @@ describe('browse-dashboards MoveModal', () => {
     { title: 'Folder 1', uid: 'wfTJJL5Wz' } as DashboardSearchHit,
   ];
   let props: Props;
+
+  beforeAll(() => {
+    setBackendSrv(backendSrv);
+    jest.spyOn(backendSrv, 'get').mockResolvedValue({
+      dashboard: 0,
+      folder: 0,
+    });
+  });
 
   beforeEach(() => {
     props = {
@@ -69,7 +79,9 @@ describe('browse-dashboards MoveModal', () => {
     };
     render(<MoveModal {...props} />);
 
-    expect(await screen.findByText('Moving this item may change its permissions.')).toBeInTheDocument();
+    expect(
+      await screen.findByRole('status', { name: 'Moving this item may change its permissions.' })
+    ).toBeInTheDocument();
   });
 
   it('only enables the `Move` button if a folder is selected', async () => {
@@ -101,7 +113,7 @@ describe('browse-dashboards MoveModal', () => {
   it('calls onDismiss when clicking the X', async () => {
     render(<MoveModal {...props} />);
 
-    await userEvent.click(await screen.findByRole('button', { name: 'Close dialog' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Close' }));
     expect(mockOnDismiss).toHaveBeenCalled();
   });
 });

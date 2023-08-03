@@ -7,6 +7,9 @@ import {
   Bool,
   By,
   ConvOp,
+  Decolorize,
+  DistinctFilter,
+  DistinctLabel,
   Filter,
   FilterOp,
   Grouping,
@@ -176,6 +179,11 @@ export function handleExpression(expr: string, node: SyntaxNode, context: Contex
       break;
     }
 
+    case Decolorize: {
+      visQuery.operations.push(getDecolorize());
+      break;
+    }
+
     case RangeAggregationExpr: {
       visQuery.operations.push(handleRangeAggregation(expr, node, context));
       break;
@@ -196,6 +204,11 @@ export function handleExpression(expr: string, node: SyntaxNode, context: Contex
         break;
       }
       context.errors.push(makeError(expr, node));
+      break;
+    }
+
+    case DistinctFilter: {
+      visQuery.operations.push(handleDistinctFilter(expr, node, context));
       break;
     }
 
@@ -368,6 +381,15 @@ function getLabelFormat(expr: string, node: SyntaxNode): QueryBuilderOperation {
   };
 }
 
+function getDecolorize(): QueryBuilderOperation {
+  const id = LokiOperationId.Decolorize;
+
+  return {
+    id,
+    params: [],
+  };
+}
+
 function handleUnwrapExpr(
   expr: string,
   node: SyntaxNode,
@@ -407,6 +429,7 @@ function handleUnwrapExpr(
 
   return {};
 }
+
 function handleRangeAggregation(expr: string, node: SyntaxNode, context: Context) {
   const nameNode = node.getChild(RangeOp);
   const funcName = getString(expr, nameNode);
@@ -574,9 +597,12 @@ function isIntervalVariableError(node: SyntaxNode) {
   return node?.parent?.type.id === Range;
 }
 
-function handleQuotes(string: string) {
+export function handleQuotes(string: string) {
   if (string[0] === `"` && string[string.length - 1] === `"`) {
-    return string.replace(/"/g, '').replace(/\\\\/g, '\\');
+    return string
+      .substring(1, string.length - 1)
+      .replace(/\\"/g, '"')
+      .replace(/\\\\/g, '\\');
   }
   return string.replace(/`/g, '');
 }
@@ -616,4 +642,21 @@ function isEmptyQuery(query: LokiVisualQuery) {
     return true;
   }
   return false;
+}
+
+function handleDistinctFilter(expr: string, node: SyntaxNode, context: Context): QueryBuilderOperation {
+  const labels: string[] = [];
+  let exploringNode = node.getChild(DistinctLabel);
+  while (exploringNode) {
+    const label = getString(expr, exploringNode.getChild(Identifier));
+    if (label) {
+      labels.push(label);
+    }
+    exploringNode = exploringNode?.getChild(DistinctLabel);
+  }
+  labels.reverse();
+  return {
+    id: LokiOperationId.Distinct,
+    params: labels,
+  };
 }

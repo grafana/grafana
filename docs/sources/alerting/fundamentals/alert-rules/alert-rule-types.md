@@ -1,16 +1,22 @@
 ---
+canonical: https://grafana.com/docs/grafana/latest/alerting/fundamentals/alert-rules/alert-rule-types/
 description: Learn about the different alert rule types
 keywords:
   - grafana
   - alerting
   - rule types
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: Alert rule types
 weight: 102
 ---
 
 # Alert rule types
 
-Grafana supports several different alert rule types. Learn more about each of the alert rule types, how they work, and decide which one is best for your use case.
+Grafana supports two different alert rule types. Learn more about each of the alert rule types, how they work, and decide which one is best for your use case.
 
 ## Grafana-managed alert rules
 
@@ -33,31 +39,21 @@ The following diagram shows how Grafana-managed alerting works.
 You can also configure alerts to be delivered using an external Alertmanager; or use both internal and external alertmanagers.
 For more information, see Add an external Alertmanager.
 
-## Grafana Mimir or Loki-managed alert rules
+## Data source-managed alert rules
 
-To create Grafana Mimir or Grafana Loki-managed alert rules, you must have a compatible Prometheus or Loki data source.
+To create data source-managed alert rules, you must have a compatible Prometheus or Loki data source.
 
 You can check if your data source supports rule creation via Grafana by testing the data source and observing if the Ruler API is supported.
 
-For more information on the Ruler API, refer to [Ruler API](docs/loki/latest/api/#ruler).
+For more information on the Ruler API, refer to [Ruler API](/docs/loki/latest/api/#ruler).
 
-The following diagram shows how Grafana Mimir or Grafana Loki-managed alerting works.
+The following diagram shows how data source-managed alerting works.
 
 {{< figure src="/media/docs/alerting/loki-mimir-rule.png" max-width="750px" caption="Grafana Mimir/Loki-managed alerting" >}}
 
 1. Alert rules are created and stored within the data source itself.
 1. Alert rules can only be created based on Prometheus data.
 1. Alert rule evaluation and delivery is distributed across multiple nodes for high availability and fault tolerance.
-
-## Recording rules
-
-Recording rules are only available for compatible Prometheus or Loki data sources.
-
-A recording rule allows you to pre-compute frequently needed or computationally expensive expressions and save their result as a new set of time series. This is useful if you want to run alerts on aggregated data or if you have dashboards that query computationally expensive expressions repeatedly.
-
-Grafana Enterprise offers an alternative to recorded rules in the form of recorded queries that can be executed against any data source.
-
-For more information on recording rules in Prometheus, refer to [recording rules](https://prometheus.io/docs/prometheus/latest/configuration/recording_rules/).
 
 ## Choose an alert rule type
 

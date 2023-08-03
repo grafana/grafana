@@ -9,7 +9,7 @@ Grafana uses the [i18next](https://www.i18next.com/) framework for managing tran
 - Use `<Trans i18nKey="search-results.panel-link">Go to {{ pageTitle }}</Trans>` in code to add a translatable phrase
 - Translations are stored in JSON files in `public/locales/{locale}/grafana.json`
 - If a particular phrase is not available in the a language then it will fall back to English
-- To update phrases in English, edit the default phrase in the component's source, then run `yarn i18n:extract`. Do not edit the `en-ES/grafana.json` or update the english phrase in Crowdin
+- To update phrases in English, edit the default phrase in both the component's source and the [English grafana.json message catalogue](../public/locales/en-US/grafana.json), then run `yarn i18n:extract`.
 - To update phrases in any translated language, edit the phrase in Crowdin. Do not edit the `{locale}/grafana.json`
 
 ## How to add a new translation phrase
@@ -80,7 +80,7 @@ Grafana uses the [i18next](https://www.i18next.com/) framework for managing tran
 - Extracts phrases into messages catalogues for translating in external systems
 - Manages the user's locale and putting the translated phrases in the UI
 
-English phrases remain in our Javascript bundle in the source components (as the `<Trans />` or `t()` default phrase). At runtime, we don't need to load any messages for en-US. If the user's language preference is set to another language, Grafana will load that translations's messages JSON before the initial render.
+Grafana will load the message catalogue JSON before the initial render.
 
 ### Phrase ID naming convention
 
@@ -162,17 +162,32 @@ import { Trans } from "app/core/internationalization"
 
 ### Plurals
 
-Plurals require special handling to make sure they can be translating according to the rules of each locale (which may be more complex that you think!). Use the `<Trans />` component, with the `count` prop.
+Plurals require special handling to make sure they can be translating according to the rules of each locale (which may be more complex that you think!). Use either the `<Trans />` component or the `t` function, with the `count` prop to provide a singular form.
 
 ```js
 import { Trans } from 'app/core/internationalization';
 
-<Trans i18nKey="newMessages" count={messages.length}>
-  You got {{ count: messages.length }} messages.
+<Trans i18nKey="inbox.heading" count={messages.length}>
+  You got {{ count: messages.length }} message
 </Trans>;
 ```
 
-Once extracted with `yarn i18n:extract` you will need to manually fill in the grafana.json message catalogues with the additional plural forms. See the [react-i18next docs](https://react.i18next.com/latest/trans-component#plural) for more details.
+```js
+import { t } from 'app/core/internationalization';
+
+const translatedString = t('inbox.heading', 'You got {{count}} message', { count: messages.length });
+```
+
+Once extracted with `yarn i18n:extract` you will need to manually edit the [English grafana.json message catalogue](../public/locales/en-US/grafana.json) to correct the plural forms. See the [react-i18next docs](https://react.i18next.com/latest/trans-component#plural) for more details.
+
+```json
+{
+  "inbox": {
+    "heading__one": "You got {{count}} message",
+    "heading__other": "You got {{count}} messages"
+  }
+}
+```
 
 ## Documentation
 

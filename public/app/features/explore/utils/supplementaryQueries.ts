@@ -15,9 +15,10 @@ import {
   LogsVolumeType,
   SupplementaryQueryType,
 } from '@grafana/data';
-import { makeDataFramesForLogs } from 'app/core/logsModel';
 import store from 'app/core/store';
 import { ExplorePanelData, SupplementaryQueries } from 'app/types';
+
+import { makeDataFramesForLogs } from '../../logs/logsModel';
 
 export const supplementaryQueryTypes: SupplementaryQueryType[] = [
   SupplementaryQueryType.LogsVolume,
@@ -38,21 +39,6 @@ export const loadSupplementaryQueries = (): SupplementaryQueries => {
   };
 
   for (const type of supplementaryQueryTypes) {
-    if (type === SupplementaryQueryType.LogsVolume) {
-      // TODO: Remove this in 10.0 (#61626)
-      // For LogsVolume we need to migrate old key to new key. So check for old key:
-      // If we have old key: 1) use it 2) migrate to new key 3) delete old key
-      // If not, continue with new key
-      const oldLogsVolumeEnabledKey = 'grafana.explore.logs.enableVolumeHistogram';
-      const shouldBeEnabled = store.get(oldLogsVolumeEnabledKey);
-      if (shouldBeEnabled) {
-        supplementaryQueries[type] = { enabled: shouldBeEnabled === 'true' ? true : false };
-        storeSupplementaryQueryEnabled(shouldBeEnabled === 'true', SupplementaryQueryType.LogsVolume);
-        localStorage.removeItem(oldLogsVolumeEnabledKey);
-        continue;
-      }
-    }
-
     // We want to skip LogsSample and default it to false for now to trigger it only on user action
     if (type === SupplementaryQueryType.LogsSample) {
       continue;
@@ -73,7 +59,7 @@ const createFallbackLogVolumeProvider = (
   datasourceName: string
 ): Observable<DataQueryResponse> => {
   return new Observable<DataQueryResponse>((observer) => {
-    explorePanelData.subscribe((exploreData) => {
+    return explorePanelData.subscribe((exploreData) => {
       if (
         exploreData.logsResult &&
         exploreData.logsResult.rows &&

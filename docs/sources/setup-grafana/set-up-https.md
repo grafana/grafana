@@ -1,11 +1,16 @@
 ---
+description: Learn how to set up Grafana HTTPS for secure web traffic.
 keywords:
   - grafana
   - https
   - ssl
   - certificates
-title: Set up Grafana HTTPS for secure web traffic
+labels:
+  products:
+    - enterprise
+    - oss
 menuTitle: Set up HTTPS
+title: Set up Grafana HTTPS for secure web traffic
 weight: 900
 ---
 
@@ -79,7 +84,7 @@ This section shows you how to use `openssl` tooling to generate all necessary fi
 1. Run the following command to self-sign the certificate with the private key, for a period of validity of 365 days:
 
    ```bash
-   sudo openssl x509 -req -days 365 -in grafana.csr -signkey /etc/grafana/grafana.key -out /etc/grafana/grafana.crt
+   sudo openssl x509 -req -days 365 -in /etc/grafana/grafana.csr -signkey /etc/grafana/grafana.key -out /etc/grafana/grafana.crt
    ```
 
 1. Run the following commands to set the appropriate permissions for the files:
@@ -87,7 +92,7 @@ This section shows you how to use `openssl` tooling to generate all necessary fi
    ```bash
    sudo chown grafana:grafana /etc/grafana/grafana.crt
    sudo chown grafana:grafana /etc/grafana/grafana.key
-   sudo chmod 400 grafana.key /etc/grafana/grafana.crt
+   sudo chmod 400 /etc/grafana/grafana.key /etc/grafana/grafana.crt
    ```
 
    **Note**: When using these files, browsers might provide warnings for the resulting website because a third-party source does not trust the certificate. Browsers will show trust warnings; however, the connection will remain encrypted.
@@ -102,7 +107,9 @@ This section shows you how to use `openssl` tooling to generate all necessary fi
 
 The examples in this section use LetsEncrypt because it is free.
 
-> **Note**: The instructions provided in this section are for a Debian-based Linux system. For other distributions and operating systems, please refer to the [certbot instructions](https://certbot.eff.org/instructions). Also, these instructions require you to have a domain name that you are in control of. Dynamic domain names like those from Amazon EC2 or DynDNS providers will not function.
+{{% admonition type="note" %}}
+The instructions provided in this section are for a Debian-based Linux system. For other distributions and operating systems, please refer to the [certbot instructions](https://certbot.eff.org/instructions). Also, these instructions require you to have a domain name that you are in control of. Dynamic domain names like those from Amazon EC2 or DynDNS providers will not function.
+{{% /admonition %}}
 
 #### Install `snapd` and `certbot`
 
@@ -237,7 +244,7 @@ To configure Grafana HTTPS and restart Grafana, complete the following steps.
 
    > **Note**: The standard port for SSL traffic is 443, which you can use instead of Grafana's default port 3000. This change might require additional operating system privileges or configuration to bind to lower-numbered privileged ports.
 
-1. [Restart the Grafana server]({{< relref "./start-restart-grafana/#linux" >}}) using `systemd`, `init.d`, or the binary as appropriate for your environment.
+1. [Restart the Grafana server]({{< relref "./start-restart-grafana#linux" >}}) using `systemd`, `init.d`, or the binary as appropriate for your environment.
 
 ## Troubleshooting
 

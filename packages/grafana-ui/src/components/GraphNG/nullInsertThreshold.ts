@@ -1,4 +1,6 @@
-import { DataFrame, FieldType, incrRoundDn } from '@grafana/data';
+import { DataFrame } from '@grafana/data';
+
+import { getRefField } from './utils';
 
 type InsertMode = (prev: number, next: number, threshold: number) => number;
 
@@ -29,10 +31,7 @@ export function applyNullInsertThreshold(opts: NullInsertOptions): DataFrame {
     insertMode = INSERT_MODES.threshold;
   }
 
-  const refField = frame.fields.find((field) => {
-    // note: getFieldDisplayName() would require full DF[]
-    return refFieldName != null ? field.name === refFieldName : field.type === FieldType.time;
-  });
+  const refField = getRefField(frame, refFieldName);
 
   if (refField == null) {
     return frame;
@@ -43,7 +42,7 @@ export function applyNullInsertThreshold(opts: NullInsertOptions): DataFrame {
     nullThresholdApplied: true,
   };
 
-  const thresholds = frame.fields.map((field) => field.config.custom?.insertNulls ?? refField.config.interval ?? null);
+  const thresholds = frame.fields.map((field) => field.config.custom?.insertNulls || refField.config.interval || null);
 
   const uniqueThresholds = new Set<number>(thresholds);
 
@@ -108,11 +107,11 @@ function nullInsertThreshold(
   const len = refValues.length;
   const refValuesNew: number[] = [];
 
-  // Continiuously subtract the threshold from the first data
-  // point filling in insert values accordingly
+  // Continuously subtract the threshold from the first data point, filling in insert values accordingly
   if (refFieldPseudoMin != null && refFieldPseudoMin < refValues[0]) {
+    let preFillCount = Math.ceil((refValues[0] - refFieldPseudoMin) / threshold);
     // this will be 0 or 1 threshold increment left of visible range
-    let prevSlot = incrRoundDn(refFieldPseudoMin, threshold);
+    let prevSlot = refValues[0] - preFillCount * threshold;
 
     while (prevSlot < refValues[0]) {
       // (prevSlot - threshold) is used to simulate the previous 'real' data point, as getInsertValue expects
@@ -126,8 +125,7 @@ function nullInsertThreshold(
 
   let prevValue: number = refValues[0];
 
-  // Fill nulls when a value is greater than
-  // the threshold value
+  // Fill nulls when a value is greater than the threshold value
   for (let i = 1; i < len; i++) {
     const curValue = refValues[i];
 

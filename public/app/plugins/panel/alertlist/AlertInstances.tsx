@@ -80,7 +80,10 @@ export const AlertInstances = ({
     handleInstancesLimit(true);
     setDisplayInstances(true);
   };
-  const totalInstancesNumber = limitInstances ? grafanaFilteredInstancesTotal : filteredAlerts.length;
+  const totalInstancesGrafana = limitInstances ? grafanaFilteredInstancesTotal : filteredAlerts.length;
+  const totalInstancesNotGrafana = filteredAlerts.length;
+  const totalInstancesNumber = isGrafanaAlert ? totalInstancesGrafana : totalInstancesNotGrafana;
+
   const limitStatus = limitInstances
     ? `Showing ${INSTANCES_DISPLAY_LIMIT} of ${grafanaTotalInstances} instances`
     : `Showing all ${grafanaTotalInstances} instances`;

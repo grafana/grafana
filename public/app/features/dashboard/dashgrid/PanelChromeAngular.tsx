@@ -229,6 +229,7 @@ export class PanelChromeAngularUnconnected extends PureComponent<Props, State> {
           hoverHeader={panelChromeProps.hasOverlayHeader()}
           displayMode={transparent ? 'transparent' : 'default'}
           onCancelQuery={panelChromeProps.onCancelQuery}
+          onOpenMenu={panelChromeProps.onOpenMenu}
         >
           {() => <div ref={(element) => (this.element = element)} className="panel-height-helper" />}
         </PanelChrome>

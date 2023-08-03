@@ -6,18 +6,24 @@ keywords:
   - migration
   - plugin
   - documentation
-title: Migrating plugins from Grafana 9.1.x to 9.2.x
-menutitle: v9.1.x to v9.2.x
+labels:
+  products:
+    - enterprise
+    - oss
+menuTitle: v9.1.x to v9.2.x
+title: Migrate plugins from Grafana version 9.1.x to 9.2.x
 weight: 2100
 ---
 
-# Migrating plugins from Grafana version 9.1.x to 9.2.x
+# Migrate plugins from Grafana version 9.1.x to 9.2.x
+
+Follow the instructions in this section to migrate plugins from Grafana version 9.1.x to 9.2.x.
 
 ## React and React-dom as peer dependencies
 
-In earlier versions of Grafana packages `react` and `react-dom` were installed during a `yarn install` regardless of a plugins dependencies. In 9.2.0 the `@grafana` packages declare these react packages as peerDependencies and will need adding to a plugins `package.json` file for test commands to continue to run successfully.
+In earlier versions of Grafana packages, `react` and `react-dom` were installed during a `yarn install` command regardless of a plugin's dependencies. In version 9.2.0, the `@grafana` packages declare these React packages as `peerDependencies` and must be added to a plugin's `package.json` file for test commands.
 
-Example:
+**Example:**
 
 ```json
 // before
@@ -36,11 +42,11 @@ Example:
 
 ```
 
-## NavModelItem requires a valid icon name
+## `NavModelItem` requires a valid icon name
 
-The typings of the `NavModelItem` have improved to only allow a valid `IconName` for the icon property. You can find the complete list of valid icons [here](https://github.com/grafana/grafana/blob/v9.2.0-beta1/packages/grafana-data/src/types/icon.ts). The icons specified in the list will work for older versions of Grafana 9.
+The typings of the `NavModelItem` have improved to only allow a valid `IconName` for the icon property. For a complete list of valid icons, refer to the [source code](https://github.com/grafana/grafana/blob/v9.2.0-beta1/packages/grafana-data/src/types/icon.ts). These icons will work for older versions of Grafana 9.
 
-Example:
+**Example:**
 
 ```ts
 // before
@@ -62,9 +68,9 @@ const model: NavModelItem = {
 
 ## Additional type availability
 
-FieldProps, ModalProps, and QueryFieldProps are now exposed from `@grafana/ui`. They can be imported in the same way as other types.
+`FieldProps`, `ModalProps`, and `QueryFieldProps` are now exposed from `@grafana/ui`. They can be imported in the same way as other types.
 
-Example:
+**Example:**
 
 ```ts
 import { FieldProps, ModalProps, QueryFieldProps } from '@grafana/ui';

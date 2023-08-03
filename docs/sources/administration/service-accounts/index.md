@@ -8,6 +8,10 @@ description: This page contains information about service accounts in Grafana
 keywords:
   - API keys
   - Service accounts
+labels:
+  products:
+    - enterprise
+    - oss
 menuTitle: Service accounts
 title: Service accounts
 weight: 800
@@ -17,7 +21,9 @@ weight: 800
 
 You can use a service account to run automated workloads in Grafana, such as dashboard provisioning, configuration, or report generation. Create service accounts and tokens to authenticate applications, such as Terraform, with the Grafana API.
 
-> **Note:** Service accounts will eventually replace [API keys]({{< relref "../api-keys/" >}}) as the primary way to authenticate applications that interact with Grafana.
+{{% admonition type="note" %}}
+Service accounts will eventually replace [API keys]({{< relref "../api-keys/" >}}) as the primary way to authenticate applications that interact with Grafana.
+{{% /admonition %}}
 
 A common use case for creating a service account is to perform operations on automated or triggered tasks. You can use service accounts to:
 
@@ -28,7 +34,9 @@ A common use case for creating a service account is to perform operations on aut
 
 In [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise/" >}}), you can also use service accounts in combination with [role-based access control]({{< relref "../roles-and-permissions/access-control/" >}}) to grant very specific permissions to applications that interact with Grafana.
 
-> **Note:** Service accounts can only act in the organization they are created for. If you have the same task that is needed for multiple organizations, we recommend creating service accounts in each organization.
+{{% admonition type="note" %}}
+Service accounts can only act in the organization they are created for. If you have the same task that is needed for multiple organizations, we recommend creating service accounts in each organization.
+{{% /admonition %}}
 
 {{< vimeo 742056367 >}}
 
@@ -174,8 +182,10 @@ To list your token's permissions, use the `/api/access-control/user/permissions`
 
 #### Example
 
-> **Note:** The following command output is shortened to show only the relevant content.
-> Authorize your request with the token whose permissions you want to check.
+{{% admonition type="note" %}}
+The following command output is shortened to show only the relevant content.
+Authorize your request with the token whose permissions you want to check.
+{{% /admonition %}}
 
 ```bash
 curl -H "Authorization: Bearer glsa_HOruNAb7SOiCdshU9algkrq7FDsNSLAa_54e2f8be" -X GET '<grafana_url>/api/access-control/user/permissions' | jq

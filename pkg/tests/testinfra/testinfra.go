@@ -60,7 +60,7 @@ func StartGrafanaEnv(t *testing.T, grafDir, cfgPath string) (string, *server.Tes
 
 	go func() {
 		// When the server runs, it will also build and initialize the service graph
-		if err := env.Server.Run(); err != nil {
+		if err := env.Server.Run(ctx); err != nil {
 			t.Log("Server exited uncleanly", "error", err)
 		}
 	}()
@@ -71,6 +71,8 @@ func StartGrafanaEnv(t *testing.T, grafDir, cfgPath string) (string, *server.Tes
 	})
 
 	// Wait for Grafana to be ready
+	err = env.Server.AwaitHealthy(ctx)
+	require.NoError(t, err)
 	addr := listener.Addr().String()
 	resp, err := http.Get(fmt.Sprintf("http://%s/api/health", addr))
 	require.NoError(t, err)
@@ -199,6 +201,15 @@ func CreateGrafDir(t *testing.T, opts ...GrafanaOpts) (string, string) {
 	_, err = serverSect.NewKey("static_root_path", publicDir)
 	require.NoError(t, err)
 
+	authSect, err := cfg.NewSection("auth")
+	require.NoError(t, err)
+	authBrokerState := "false"
+	if len(opts) > 0 && opts[0].AuthBrokerEnabled {
+		authBrokerState = "true"
+	}
+	_, err = authSect.NewKey("broker", authBrokerState)
+	require.NoError(t, err)
+
 	anonSect, err := cfg.NewSection("auth.anonymous")
 	require.NoError(t, err)
 	_, err = anonSect.NewKey("enabled", "true")
@@ -214,6 +225,11 @@ func CreateGrafDir(t *testing.T, opts ...GrafanaOpts) (string, string) {
 	rbacSect, err := cfg.NewSection("rbac")
 	require.NoError(t, err)
 	_, err = rbacSect.NewKey("permission_cache", "false")
+	require.NoError(t, err)
+
+	analyticsSect, err := cfg.NewSection("analytics")
+	require.NoError(t, err)
+	_, err = analyticsSect.NewKey("intercom_secret", "intercom_secret_at_config")
 	require.NoError(t, err)
 
 	getOrCreateSection := func(name string) (*ini.Section, error) {
@@ -379,6 +395,7 @@ type GrafanaOpts struct {
 	EnableLog                             bool
 	GRPCServerAddress                     string
 	QueryRetries                          int64
+	AuthBrokerEnabled                     bool
 }
 
 func CreateUser(t *testing.T, store *sqlstore.SQLStore, cmd user.CreateUserCommand) *user.User {

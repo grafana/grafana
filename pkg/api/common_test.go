@@ -21,12 +21,14 @@ import (
 	"github.com/grafana/grafana/pkg/infra/fs"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/models/usertoken"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/annotations/annotationstest"
 	"github.com/grafana/grafana/pkg/services/anonymous/anontest"
 	"github.com/grafana/grafana/pkg/services/auth/authtest"
 	"github.com/grafana/grafana/pkg/services/auth/jwt"
+	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/authn/authntest"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/contexthandler/authproxy"
@@ -177,7 +179,7 @@ type scenarioContext struct {
 	authInfoService         *logintest.AuthInfoServiceFake
 	dashboardVersionService dashver.Service
 	userService             user.Service
-	dashboardService        dashboards.DashboardService
+	ctxHdlr                 *contexthandler.ContextHandler
 }
 
 func (sc *scenarioContext) exec() {
@@ -209,17 +211,20 @@ func getContextHandler(t *testing.T, cfg *setting.Cfg) *contexthandler.ContextHa
 	ctxHdlr := contexthandler.ProvideService(cfg, userAuthTokenSvc, authJWTSvc,
 		remoteCacheSvc, renderSvc, sqlStore, tracer, authProxy, loginService, nil,
 		authenticator, usertest.NewUserServiceFake(), orgtest.NewOrgServiceFake(),
-		nil, featuremgmt.WithFeatures(), &authntest.FakeService{}, &anontest.FakeAnonymousSessionService{})
+		nil, featuremgmt.WithFeatures(), &authntest.FakeService{
+			ExpectedIdentity: &authn.Identity{OrgID: 1, ID: "user:1", SessionToken: &usertoken.UserToken{}}}, &anontest.FakeAnonymousSessionService{})
 
 	return ctxHdlr
 }
 
 func setupScenarioContext(t *testing.T, url string) *scenarioContext {
 	cfg := setting.NewCfg()
+	ctxHdlr := getContextHandler(t, cfg)
 	sc := &scenarioContext{
-		url: url,
-		t:   t,
-		cfg: cfg,
+		url:     url,
+		t:       t,
+		cfg:     cfg,
+		ctxHdlr: ctxHdlr,
 	}
 	viewsPath, err := filepath.Abs("../../public/views")
 	require.NoError(t, err)
@@ -229,7 +234,7 @@ func setupScenarioContext(t *testing.T, url string) *scenarioContext {
 
 	sc.m = web.New()
 	sc.m.UseMiddleware(web.Renderer(viewsPath, "[[", "]]"))
-	sc.m.Use(getContextHandler(t, cfg).Middleware)
+	sc.m.Use(ctxHdlr.Middleware)
 
 	return sc
 }
@@ -296,7 +301,6 @@ func SetupAPITestServer(t *testing.T, opts ...APITestServerOption) *webtest.Serv
 
 	if hs.Cfg == nil {
 		hs.Cfg = setting.NewCfg()
-		hs.Cfg.RBACEnabled = false
 	}
 
 	if hs.AccessControl == nil {

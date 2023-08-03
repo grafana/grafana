@@ -14,6 +14,11 @@ keywords:
   - guide
   - cloud
   - monitoring
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 menuTitle: Google Cloud Monitoring
 title: Google Cloud Monitoring data source
 weight: 350
@@ -24,12 +29,14 @@ weight: 350
 Grafana ships with built-in support for Google Cloud Monitoring.
 This topic describes queries, templates, variables, and other configuration specific to the Google Cloud Monitoring data source.
 
-> **Note:** Before Grafana v7.1, Google Cloud Monitoring was referred to as Google Stackdriver.
+{{% admonition type="note" %}}
+Before Grafana v7.1, Google Cloud Monitoring was referred to as Google Stackdriver.
+{{% /admonition %}}
 
-For instructions on how to add a data source to Grafana, refer to the [administration documentation]({{< relref "../../administration/data-source-management/" >}}).
+For instructions on how to add a data source to Grafana, refer to the [administration documentation][data-source-management].
 Only users with the organization administrator role can add data sources.
 
-Once you've added the Google Cloud Monitoring data source, you can [configure it]({{< relref "#configure-the-data-source" >}}) so that your Grafana instance's users can create queries in its [query editor]({{< relref "./query-editor/" >}}) and apply [annotations]({{< relref "#annotations" >}}) when they [build dashboards]({{< relref "../../dashboards/build-dashboards/" >}}) and use [Explore]({{< relref "../../explore/" >}}).
+Once you've added the Google Cloud Monitoring data source, you can [configure it](#configure-the-data-source) so that your Grafana instance's users can create queries in its [query editor]({{< relref "./query-editor" >}}) and apply [annotations](#annotations) when they [build dashboards][build-dashboards] and use [Explore][explore].
 
 ## Configure the data source
 
@@ -54,19 +61,19 @@ To configure basic settings for the data source, complete the following steps:
 Before you can request data from Google Cloud Monitoring, you must configure authentication.
 All requests to Google APIs are performed on the server-side by the Grafana backend.
 
-For authentication options and configuration details, refer to [Google authentication]({{< relref "./google-authentication/" >}}).
+For authentication options and configuration details, refer to [Google authentication]({{< relref "./google-authentication" >}}).
 
 When configuring Google authentication, note these additional Google Cloud Monitoring-specific steps:
 
 #### Configure a GCP Service Account
 
-When you [create a Google Cloud Platform (GCP) Service Account and key file]({{< relref "./google-authentication/#create-a-gcp-service-account-and-key-file" >}}), the Service Account must have the **Monitoring Viewer** role (**Role > Select a role > Monitoring > Monitoring Viewer**):
+When you [create a Google Cloud Platform (GCP) Service Account and key file]({{< relref "./google-authentication#create-a-gcp-service-account-and-key-file" >}}), the Service Account must have the **Monitoring Viewer** role (**Role > Select a role > Monitoring > Monitoring Viewer**):
 
 {{< figure src="/static/img/docs/v71/cloudmonitoring_service_account_choose_role.png" max-width="600px" class="docs-image--no-shadow" caption="Choose role" >}}
 
 #### Grant the GCE Default Service Account scope
 
-If Grafana is running on a Google Compute Engine (GCE) virtual machine, then when you [Configure a GCE Default Service Account]({{< relref "./google-authentication/#configure-a-gce-default-service-account" >}}), you must also grant that Service Account access to the "Cloud Monitoring API" scope.
+If Grafana is running on a Google Compute Engine (GCE) virtual machine, then when you [Configure a GCE Default Service Account]({{< relref "./google-authentication#configure-a-gce-default-service-account" >}}), you must also grant that Service Account access to the "Cloud Monitoring API" scope.
 
 ### Enable necessary Google Cloud Platform APIs
 
@@ -84,7 +91,7 @@ Before you can request data from Google Cloud Monitoring, you must first enable 
 ### Provision the data source
 
 You can define and configure the data source in YAML files as part of Grafana's provisioning system.
-For more information about provisioning, and for available configuration options, refer to [Provisioning Grafana]({{< relref "../../administration/provisioning/#data-sources" >}}).
+For more information about provisioning, and for available configuration options, refer to [Provisioning Grafana][provisioning-data-sources].
 
 #### Provisioning examples
 
@@ -150,14 +157,14 @@ These curated dashboards are based on similar dashboards in the GCP dashboard sa
 
 **To import curated dashboards:**
 
-1. Navigate to the data source's [configuration page]({{< relref "#configure-the-data-source" >}}).
+1. Navigate to the data source's [configuration page](#configure-the-data-source).
 1. Select the **Dashboards** tab.
 
    This displays the curated selection of importable dashboards.
 
 1. Select **Import** for the dashboard to import.
 
-The dashboards include a [template variable]({{< relref "./template-variables/" >}}) populated with the projects accessible by the configured [Service Account]({{< relref "./google-authentication/" >}}) each time you load the dashboard.
+The dashboards include a [template variable]({{< relref "./template-variables" >}}) populated with the projects accessible by the configured [Service Account]({{< relref "./google-authentication" >}}) each time you load the dashboard.
 After Grafana loads the dashboard, you can select a project from the dropdown list.
 
 **To customize an imported dashboard:**
@@ -169,7 +176,7 @@ If you don't, upgrading Grafana can overwrite the customized dashboard with the 
 
 The Google Cloud Monitoring query editor helps you build two types of queries: **Metric** and **Service Level Objective (SLO)**.
 
-For details, refer to the [query editor documentation]({{< relref "./query-editor/" >}}).
+For details, refer to the [query editor documentation]({{< relref "./query-editor" >}}).
 
 ## Use template variables
 
@@ -177,4 +184,18 @@ Instead of hard-coding details such as server, application, and sensor names in 
 Grafana lists these variables in dropdown select boxes at the top of the dashboard to help you change the data displayed in your dashboard.
 Grafana refers to such variables as template variables.
 
-For details, see the [template variables documentation]({{< relref "./template-variables/" >}}).
+For details, see the [template variables documentation]({{< relref "./template-variables" >}}).
+
+{{% docs/reference %}}
+[build-dashboards]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/build-dashboards"
+[build-dashboards]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/build-dashboards"
+
+[data-source-management]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/administration/data-source-management"
+[data-source-management]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/administration/data-source-management"
+
+[explore]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/explore"
+[explore]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/explore"
+
+[provisioning-data-sources]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/administration/provisioning#data-sources"
+[provisioning-data-sources]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/administration/provisioning#data-sources"
+{{% /docs/reference %}}

@@ -85,9 +85,6 @@ export abstract class FunctionalVector<T = any> implements Vector<T> {
   shift(): T | undefined {
     throw new Error('Method not implemented.');
   }
-  slice(start?: number | undefined, end?: number | undefined): T[] {
-    throw new Error('Method not implemented.');
-  }
   sort(compareFn?: ((a: T, b: T) => number) | undefined): this {
     throw new Error('Method not implemented.');
   }
@@ -121,6 +118,9 @@ export abstract class FunctionalVector<T = any> implements Vector<T> {
   // Delegated Array function -- these will not be efficient :grimmice:
   //--------------------------------------------------------------------------------
 
+  slice(start?: number | undefined, end?: number | undefined): T[] {
+    return this.toArray().slice(start, end);
+  }
   indexOf(searchElement: T, fromIndex?: number | undefined): number {
     return this.toArray().indexOf(searchElement, fromIndex);
   }

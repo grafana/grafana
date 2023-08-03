@@ -19,6 +19,9 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/db/dbtest"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
+	"github.com/grafana/grafana/pkg/login/social"
+	"github.com/grafana/grafana/pkg/login/socialtest"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/login"
@@ -41,10 +44,11 @@ import (
 func TestUserAPIEndpoint_userLoggedIn(t *testing.T) {
 	settings := setting.NewCfg()
 	sqlStore := db.InitTestDB(t)
+	sqlStore.Cfg = settings
 	hs := &HTTPServer{
 		Cfg:           settings,
 		SQLStore:      sqlStore,
-		AccessControl: acmock.New(),
+		AccessControl: acimpl.ProvideAccessControl(settings),
 	}
 
 	mockResult := user.SearchUserQueryResult{
@@ -56,6 +60,7 @@ func TestUserAPIEndpoint_userLoggedIn(t *testing.T) {
 	}
 	mock := dbtest.NewFakeDB()
 	userMock := usertest.NewUserServiceFake()
+
 	loggedInUserScenario(t, "When calling GET on", "api/users/1", "api/users/:id", func(sc *scenarioContext) {
 		fakeNow := time.Date(2019, 2, 11, 17, 30, 40, 0, time.UTC)
 		secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(sqlStore))
@@ -67,6 +72,7 @@ func TestUserAPIEndpoint_userLoggedIn(t *testing.T) {
 		)
 		hs.authInfoService = srv
 		orgSvc, err := orgimpl.ProvideService(sqlStore, sqlStore.Cfg, quotatest.New(false, nil))
+		require.NoError(t, err)
 		require.NoError(t, err)
 		userSvc, err := userimpl.ProvideService(sqlStore, orgSvc, sc.cfg, nil, nil, quotatest.New(false, nil), supportbundlestest.NewFakeBundleService())
 		require.NoError(t, err)
@@ -210,6 +216,125 @@ func TestUserAPIEndpoint_userLoggedIn(t *testing.T) {
 		assert.Equal(t, 2, respJSON.Get("page").MustInt())
 		assert.Equal(t, 10, respJSON.Get("perPage").MustInt())
 	}, mock)
+}
+
+func Test_GetUserByID(t *testing.T) {
+	testcases := []struct {
+		name                         string
+		authModule                   string
+		allowAssignGrafanaAdmin      bool
+		authEnabled                  bool
+		skipOrgRoleSync              bool
+		expectedIsGrafanaAdminSynced bool
+	}{
+		{
+			name:                         "Should return IsGrafanaAdminExternallySynced = false for an externally synced OAuth user if Grafana Admin role is not synced",
+			authModule:                   login.GenericOAuthModule,
+			authEnabled:                  true,
+			allowAssignGrafanaAdmin:      false,
+			skipOrgRoleSync:              false,
+			expectedIsGrafanaAdminSynced: false,
+		},
+		{
+			name:                         "Should return IsGrafanaAdminExternallySynced = false for an externally synced OAuth user if OAuth provider is not enabled",
+			authModule:                   login.GenericOAuthModule,
+			authEnabled:                  false,
+			allowAssignGrafanaAdmin:      true,
+			skipOrgRoleSync:              false,
+			expectedIsGrafanaAdminSynced: false,
+		},
+		{
+			name:                         "Should return IsGrafanaAdminExternallySynced = false for an externally synced OAuth user if org roles are not being synced",
+			authModule:                   login.GenericOAuthModule,
+			authEnabled:                  true,
+			allowAssignGrafanaAdmin:      true,
+			skipOrgRoleSync:              true,
+			expectedIsGrafanaAdminSynced: false,
+		},
+		{
+			name:                         "Should return IsGrafanaAdminExternallySynced = true for an externally synced OAuth user",
+			authModule:                   login.GenericOAuthModule,
+			authEnabled:                  true,
+			allowAssignGrafanaAdmin:      true,
+			skipOrgRoleSync:              false,
+			expectedIsGrafanaAdminSynced: true,
+		},
+		{
+			name:                         "Should return IsGrafanaAdminExternallySynced = false for an externally synced JWT user if Grafana Admin role is not synced",
+			authModule:                   login.JWTModule,
+			authEnabled:                  true,
+			allowAssignGrafanaAdmin:      false,
+			skipOrgRoleSync:              false,
+			expectedIsGrafanaAdminSynced: false,
+		},
+		{
+			name:                         "Should return IsGrafanaAdminExternallySynced = false for an externally synced JWT user if JWT provider is not enabled",
+			authModule:                   login.JWTModule,
+			authEnabled:                  false,
+			allowAssignGrafanaAdmin:      true,
+			skipOrgRoleSync:              false,
+			expectedIsGrafanaAdminSynced: false,
+		},
+		{
+			name:                         "Should return IsGrafanaAdminExternallySynced = false for an externally synced JWT user if org roles are not being synced",
+			authModule:                   login.JWTModule,
+			authEnabled:                  true,
+			allowAssignGrafanaAdmin:      true,
+			skipOrgRoleSync:              true,
+			expectedIsGrafanaAdminSynced: false,
+		},
+		{
+			name:                         "Should return IsGrafanaAdminExternallySynced = true for an externally synced JWT user",
+			authModule:                   login.JWTModule,
+			authEnabled:                  true,
+			allowAssignGrafanaAdmin:      true,
+			skipOrgRoleSync:              false,
+			expectedIsGrafanaAdminSynced: true,
+		},
+	}
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			userAuth := &login.UserAuth{AuthModule: tc.authModule}
+			authInfoService := &logintest.AuthInfoServiceFake{ExpectedUserAuth: userAuth}
+			socialService := &socialtest.FakeSocialService{}
+			userService := &usertest.FakeUserService{ExpectedUserProfileDTO: &user.UserProfileDTO{}}
+			cfg := setting.NewCfg()
+
+			switch tc.authModule {
+			case login.GenericOAuthModule:
+				socialService.ExpectedAuthInfoProvider = &social.OAuthInfo{AllowAssignGrafanaAdmin: tc.allowAssignGrafanaAdmin, Enabled: tc.authEnabled}
+				cfg.GenericOAuthAuthEnabled = tc.authEnabled
+				cfg.GenericOAuthSkipOrgRoleSync = tc.skipOrgRoleSync
+			case login.JWTModule:
+				cfg.JWTAuthEnabled = tc.authEnabled
+				cfg.JWTAuthSkipOrgRoleSync = tc.skipOrgRoleSync
+				cfg.JWTAuthAllowAssignGrafanaAdmin = tc.allowAssignGrafanaAdmin
+			}
+
+			hs := &HTTPServer{
+				Cfg:             cfg,
+				authInfoService: authInfoService,
+				SocialService:   socialService,
+				userService:     userService,
+			}
+
+			sc := setupScenarioContext(t, "/api/users/1")
+			sc.defaultHandler = routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
+				sc.context = c
+				return hs.GetUserByID(c)
+			})
+
+			sc.m.Get("/api/users/:id", sc.defaultHandler)
+			sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
+
+			var resp user.UserProfileDTO
+			require.Equal(t, http.StatusOK, sc.resp.Code)
+			err := json.Unmarshal(sc.resp.Body.Bytes(), &resp)
+			require.NoError(t, err)
+
+			assert.Equal(t, tc.expectedIsGrafanaAdminSynced, resp.IsGrafanaAdminExternallySynced)
+		})
+	}
 }
 
 func TestHTTPServer_UpdateUser(t *testing.T) {

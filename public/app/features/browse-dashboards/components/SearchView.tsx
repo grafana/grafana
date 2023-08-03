@@ -1,6 +1,8 @@
 import React, { useCallback } from 'react';
 
-import { Spinner } from '@grafana/ui';
+import { DataFrameView, toDataFrame } from '@grafana/data';
+import { Button, Card } from '@grafana/ui';
+import { Trans } from 'app/core/internationalization';
 import { useKeyNavigationListener } from 'app/features/search/hooks/useSearchKeyboardSelection';
 import { SearchResultsProps, SearchResultsTable } from 'app/features/search/page/components/SearchResultsTable';
 import { useSearchStateManager } from 'app/features/search/state/SearchStateManager';
@@ -12,9 +14,34 @@ import { setAllSelection, setItemSelectionState, useHasSelection } from '../stat
 interface SearchViewProps {
   height: number;
   width: number;
+  canSelect: boolean;
 }
 
-export function SearchView({ width, height }: SearchViewProps) {
+const NUM_PLACEHOLDER_ROWS = 50;
+const initialLoadingView = {
+  view: new DataFrameView(
+    toDataFrame({
+      fields: [
+        { name: 'uid', display: true, values: Array(NUM_PLACEHOLDER_ROWS).fill(null) },
+        { name: 'kind', display: true, values: Array(NUM_PLACEHOLDER_ROWS).fill('dashboard') },
+        { name: 'name', display: true, values: Array(NUM_PLACEHOLDER_ROWS).fill('') },
+        { name: 'location', display: true, values: Array(NUM_PLACEHOLDER_ROWS).fill('') },
+        { name: 'tags', display: true, values: Array(NUM_PLACEHOLDER_ROWS).fill([]) },
+      ],
+      meta: {
+        custom: {
+          locationInfo: [],
+        },
+      },
+    })
+  ),
+  loadMoreItems: () => Promise.resolve(),
+  // this is key and controls whether to show the skeleton in generateColumns
+  isItemLoaded: () => false,
+  totalRows: NUM_PLACEHOLDER_ROWS,
+};
+
+export function SearchView({ width, height, canSelect }: SearchViewProps) {
   const dispatch = useDispatch();
   const selectedItems = useSelector((wholeState) => wholeState.browseDashboards.selectedItems);
   const hasSelection = useHasSelection();
@@ -22,7 +49,7 @@ export function SearchView({ width, height }: SearchViewProps) {
   const { keyboardEvents } = useKeyNavigationListener();
   const [searchState, stateManager] = useSearchStateManager();
 
-  const value = searchState.result;
+  const value = searchState.result ?? initialLoadingView;
 
   const selectionChecker = useCallback(
     (kind: string | undefined, uid: string): boolean => {
@@ -45,7 +72,7 @@ export function SearchView({ width, height }: SearchViewProps) {
   );
 
   const clearSelection = useCallback(() => {
-    dispatch(setAllSelection({ isSelected: false }));
+    dispatch(setAllSelection({ isSelected: false, folderUID: undefined }));
   }, [dispatch]);
 
   const handleItemSelectionChange = useCallback(
@@ -59,22 +86,27 @@ export function SearchView({ width, height }: SearchViewProps) {
     [selectionChecker, dispatch]
   );
 
-  if (!value) {
+  if (value.totalRows === 0) {
     return (
       <div style={{ width }}>
-        <Spinner />
+        <Card>
+          <Card.Heading>
+            <Trans i18nKey="browse-dashboards.no-results.text">No results found for your query.</Trans>
+          </Card.Heading>
+          <Card.Actions>
+            <Button variant="secondary" onClick={stateManager.onClearSearchAndFilters}>
+              <Trans i18nKey="browse-dashboards.no-results.clear">Clear search and filters</Trans>
+            </Button>
+          </Card.Actions>
+        </Card>
       </div>
     );
   }
 
-  if (value.totalRows === 0) {
-    return <div style={{ width }}>No search results</div>;
-  }
-
   const props: SearchResultsProps = {
     response: value,
-    selection: selectionChecker,
-    selectionToggle: handleItemSelectionChange,
+    selection: canSelect ? selectionChecker : undefined,
+    selectionToggle: canSelect ? handleItemSelectionChange : undefined,
     clearSelection,
     width: width,
     height: height,

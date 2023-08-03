@@ -52,6 +52,7 @@ type Alertmanager interface {
 	// Receivers
 	GetReceivers(ctx context.Context) []apimodels.Receiver
 	TestReceivers(ctx context.Context, c apimodels.TestReceiversConfigBodyParams) (*notifier.TestReceiversResult, error)
+	TestTemplate(ctx context.Context, c apimodels.TestTemplatesConfigBodyParams) (*notifier.TestTemplatesResults, error)
 }
 
 type AlertingStore interface {
@@ -135,6 +136,7 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 			cfg:             &api.Cfg.UnifiedAlerting,
 			backtesting:     backtesting.NewEngine(api.AppUrl, api.EvaluatorFactory),
 			featureManager:  api.FeatureManager,
+			appUrl:          api.AppUrl,
 		}), m)
 	api.RegisterConfigurationApiEndpoints(NewConfiguration(
 		&ConfigSrv{

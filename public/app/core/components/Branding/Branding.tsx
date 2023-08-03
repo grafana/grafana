@@ -19,7 +19,7 @@ const LoginBackground: FC<BrandComponentProps> = ({ className, children }) => {
   const background = css`
     &:before {
       content: '';
-      position: absolute;
+      position: fixed;
       left: 0;
       right: 0;
       bottom: 0;

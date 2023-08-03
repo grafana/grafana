@@ -8,9 +8,7 @@
 //
 // Run 'make gen-cue' from repository root to regenerate.
 
-export const PanelCfgModelVersion = Object.freeze([0, 0]);
-
-export interface PanelOptions {
+export interface Options {
   folderId?: number;
   includeVars: boolean;
   keepTime: boolean;
@@ -23,7 +21,7 @@ export interface PanelOptions {
   tags: Array<string>;
 }
 
-export const defaultPanelOptions: Partial<PanelOptions> = {
+export const defaultOptions: Partial<Options> = {
   includeVars: false,
   keepTime: false,
   maxItems: 10,

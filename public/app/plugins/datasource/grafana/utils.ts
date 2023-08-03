@@ -1,10 +1,13 @@
+import { DropEvent, FileRejection } from 'react-dropzone';
+
 import { DataFrame, DataFrameJSON, dataFrameToJSON } from '@grafana/data';
 import appEvents from 'app/core/app_events';
 import { GRAFANA_DATASOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
 import { PanelModel } from 'app/features/dashboard/state';
+import * as DFImport from 'app/features/dataframe-import';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
-import { GrafanaQuery, GrafanaQueryType } from './types';
+import { defaultFileUploadQuery, GrafanaQuery, GrafanaQueryType } from './types';
 
 /**
  * Will show a confirm modal if the current panel does not have a snapshot query.
@@ -53,4 +56,19 @@ function updateSnapshotData(frames: DataFrame[], panel: PanelModel) {
   });
 
   panel.refresh();
+}
+
+export function getFileDropToQueryHandler(
+  onFileLoaded: (query: GrafanaQuery, fileRejections: FileRejection[]) => void
+) {
+  return (acceptedFiles: File[], fileRejections: FileRejection[], event: DropEvent) => {
+    DFImport.filesToDataframes(acceptedFiles).subscribe(async (next) => {
+      const snapshot: DataFrameJSON[] = [];
+      next.dataFrames.forEach((df: DataFrame) => {
+        const dataframeJson = dataFrameToJSON(df);
+        snapshot.push(dataframeJson);
+      });
+      onFileLoaded({ ...defaultFileUploadQuery, ...{ snapshot: snapshot, file: next.file } }, fileRejections);
+    });
+  };
 }

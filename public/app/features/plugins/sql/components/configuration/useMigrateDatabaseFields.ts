@@ -1,9 +1,8 @@
 import { useEffect } from 'react';
 
 import { DataSourcePluginOptionsEditorProps } from '@grafana/data';
-import { logDebug } from '@grafana/runtime';
+import { logDebug, config } from '@grafana/runtime';
 
-import { SQLConnectionDefaults } from '../../constants';
 import { SQLOptions } from '../../types';
 
 /**
@@ -34,9 +33,7 @@ export function useMigrateDatabaseFields<T extends SQLOptions, S = {}>({
       jsonData.maxIdleConns === undefined &&
       jsonData.maxIdleConnsAuto === undefined
     ) {
-      // It's expected that the default will be greater than 4
-      const maxOpenConns = SQLConnectionDefaults.MAX_CONNS;
-      const maxIdleConns = maxOpenConns;
+      const { maxOpenConns, maxIdleConns } = config.sqlConnectionLimits;
 
       logDebug(
         `Setting default max open connections to ${maxOpenConns} and setting max idle connection to ${maxIdleConns}`
@@ -52,6 +49,21 @@ export function useMigrateDatabaseFields<T extends SQLOptions, S = {}>({
       };
 
       // Make sure we issue an update if options changed
+      optionsUpdated = true;
+    }
+
+    // If the maximum connection lifetime hasn't been
+    // otherwise set fill in with the default from configuration
+    if (jsonData.connMaxLifetime === undefined) {
+      const { connMaxLifetime } = config.sqlConnectionLimits;
+
+      // Spread new options and add our value
+      newOptions.jsonData = {
+        ...newOptions.jsonData,
+        connMaxLifetime: connMaxLifetime,
+      };
+
+      // Note that we've updated the options
       optionsUpdated = true;
     }
 

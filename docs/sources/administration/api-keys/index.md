@@ -6,6 +6,10 @@ description: This section contains information about API keys in Grafana
 keywords:
   - API keys
   - Service accounts
+labels:
+  products:
+    - enterprise
+    - oss
 menuTitle: API keys
 title: API keys
 weight: 700
@@ -17,7 +21,9 @@ An API key is a randomly generated string that external systems use to interact 
 
 When you create an API key, you specify a **Role** that determines the permissions associated with the API key. Role permissions control that actions the API key can perform on Grafana resources.
 
-> **Note:** If you use Grafana v9.1 or newer, use service accounts instead of API keys. For more information, refer to [Grafana service accounts]({{< relref "../service-accounts/" >}}).
+{{% admonition type="note" %}}
+If you use Grafana v9.1 or newer, use service accounts instead of API keys. For more information, refer to [Grafana service accounts]({{< relref "../service-accounts/" >}}).
+{{% /admonition %}}
 
 {{< section >}}
 
@@ -61,7 +67,9 @@ For more information about the benefits of service accounts, refer to [Grafana s
 
 The service account endpoints generate a machine user for authentication instead of using API keys. When you migrate an API key to a service account, a service account will be created with a service account token.
 
-> **Note:** If you are using API keys for authentication, we recommend that you migrate your integration to the service account authentication method. The API key will continue to work. You can locate the API key in the [Grafana service account tokens]({{< relref "../service-accounts/#service-account-tokens" >}}) details.
+{{% admonition type="note" %}}
+If you're currently using API keys for authentication, we strongly recommend to use Grafana Service Accounts instead. Rest assured, when migrating to Service Accounts, your existing API keys will continue working as before. To find the migrated API keys, navigate to the Service Accounts section and select the Service Account Tokens tab. For more information, please refer to the [Grafana service account tokens]({{< relref "../service-accounts/#service-account-tokens" >}}) details.
+{{% /admonition %}}
 
 ## Ways of migrating API keys to service accounts
 
@@ -256,7 +264,9 @@ resource "grafana_service_account_token" "sat-foo" {
 
 This section shows you how to migrate your Terraform configuration for Grafana cloud stack API keys to Grafana cloud stack service accounts. For migration your cloud stack api keys, use the `grafana_cloud_stack_service_account` and `gafana_cloud_stack_service_account_token` resources see [Grafana Cloud Stack Service Accounts in Terraform](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/cloud_stack_service_account).
 
-> **Note:** This is only relevant for Grafana Cloud **Stack** API keys `grafana_cloud_stack_api_key`. Grafana Cloud API keys resource `grafana_cloud_api_key` are not deprecated and should be used for authentication for managing your Grafana cloud.
+{{% admonition type="note" %}}
+This is only relevant for Grafana Cloud **Stack** API keys `grafana_cloud_stack_api_key`. Grafana Cloud API keys resource `grafana_cloud_api_key` are not deprecated and should be used for authentication for managing your Grafana cloud.
+{{% /admonition %}}
 
 #### Steps
 

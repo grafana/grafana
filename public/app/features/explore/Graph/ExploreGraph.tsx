@@ -15,11 +15,18 @@ import {
   LoadingState,
   SplitOpen,
   TimeZone,
+  ThresholdsConfig,
   DashboardCursorSync,
   EventBus,
 } from '@grafana/data';
 import { PanelRenderer } from '@grafana/runtime';
-import { GraphDrawStyle, LegendDisplayMode, TooltipDisplayMode, SortOrder } from '@grafana/schema';
+import {
+  GraphDrawStyle,
+  LegendDisplayMode,
+  TooltipDisplayMode,
+  SortOrder,
+  GraphThresholdsStyleConfig,
+} from '@grafana/schema';
 import {
   Button,
   Icon,
@@ -29,13 +36,15 @@ import {
   useStyles2,
   useTheme2,
 } from '@grafana/ui';
+import { GraphFieldConfig } from 'app/plugins/panel/graph/types';
 import { defaultGraphConfig, getGraphFieldConfig } from 'app/plugins/panel/timeseries/config';
-import { PanelOptions as TimeSeriesOptions } from 'app/plugins/panel/timeseries/panelcfg.gen';
+import { Options as TimeSeriesOptions } from 'app/plugins/panel/timeseries/panelcfg.gen';
 import { ExploreGraphStyle } from 'app/types';
 
 import { seriesVisibilityConfigFactory } from '../../dashboard/dashgrid/SeriesVisibilityConfigFactory';
+import { useExploreDataLinkPostProcessor } from '../hooks/useExploreDataLinkPostProcessor';
 
-import { applyGraphStyle } from './exploreGraphStyleUtils';
+import { applyGraphStyle, applyThresholdsConfig } from './exploreGraphStyleUtils';
 import { useStructureRev } from './useStructureRev';
 
 const MAX_NUMBER_OF_TIME_SERIES = 20;
@@ -55,6 +64,8 @@ interface Props {
   graphStyle: ExploreGraphStyle;
   anchorToZero?: boolean;
   yAxisMaximum?: number;
+  thresholdsConfig?: ThresholdsConfig;
+  thresholdsStyle?: GraphThresholdsStyleConfig;
   eventBus: EventBus;
 }
 
@@ -73,27 +84,32 @@ export function ExploreGraph({
   tooltipDisplayMode = TooltipDisplayMode.Single,
   anchorToZero = false,
   yAxisMaximum,
+  thresholdsConfig,
+  thresholdsStyle,
   eventBus,
 }: Props) {
   const theme = useTheme2();
   const style = useStyles2(getStyles);
   const [showAllTimeSeries, setShowAllTimeSeries] = useState(false);
 
-  const timeRange = {
-    from: dateTime(absoluteRange.from),
-    to: dateTime(absoluteRange.to),
-    raw: {
+  const timeRange = useMemo(
+    () => ({
       from: dateTime(absoluteRange.from),
       to: dateTime(absoluteRange.to),
-    },
-  };
+      raw: {
+        from: dateTime(absoluteRange.from),
+        to: dateTime(absoluteRange.to),
+      },
+    }),
+    [absoluteRange.from, absoluteRange.to]
+  );
 
   const fieldConfigRegistry = useMemo(
     () => createFieldConfigRegistry(getGraphFieldConfig(defaultGraphConfig), 'Explore'),
     []
   );
 
-  const [fieldConfig, setFieldConfig] = useState<FieldConfigSource>({
+  const [fieldConfig, setFieldConfig] = useState<FieldConfigSource<GraphFieldConfig>>({
     defaults: {
       min: anchorToZero ? 0 : undefined,
       max: yAxisMaximum || undefined,
@@ -109,10 +125,12 @@ export function ExploreGraph({
     overrides: [],
   });
 
-  const styledFieldConfig = useMemo(
-    () => applyGraphStyle(fieldConfig, graphStyle, yAxisMaximum),
-    [fieldConfig, graphStyle, yAxisMaximum]
-  );
+  const styledFieldConfig = useMemo(() => {
+    const withGraphStyle = applyGraphStyle(fieldConfig, graphStyle, yAxisMaximum);
+    return applyThresholdsConfig(withGraphStyle, thresholdsStyle, thresholdsConfig);
+  }, [fieldConfig, graphStyle, yAxisMaximum, thresholdsConfig, thresholdsStyle]);
+
+  const dataLinkPostProcessor = useExploreDataLinkPostProcessor(splitOpenFn, timeRange);
 
   const dataWithConfig = useMemo(() => {
     return applyFieldOverrides({
@@ -122,8 +140,23 @@ export function ExploreGraph({
       replaceVariables: (value) => value, // We don't need proper replace here as it is only used in getLinks and we use getFieldLinks
       theme,
       fieldConfigRegistry,
+      dataLinkPostProcessor,
     });
-  }, [fieldConfigRegistry, data, timeZone, theme, styledFieldConfig, showAllTimeSeries]);
+  }, [fieldConfigRegistry, data, timeZone, theme, styledFieldConfig, showAllTimeSeries, dataLinkPostProcessor]);
+
+  const annotationsWithConfig = useMemo(() => {
+    return applyFieldOverrides({
+      fieldConfig: {
+        defaults: {},
+        overrides: [],
+      },
+      data: annotations,
+      timeZone,
+      replaceVariables: (value) => value,
+      theme,
+      dataLinkPostProcessor,
+    });
+  }, [annotations, timeZone, theme, dataLinkPostProcessor]);
 
   const structureRev = useStructureRev(dataWithConfig);
 
@@ -141,12 +174,13 @@ export function ExploreGraph({
   }, [dataWithConfig, onHiddenSeriesChanged]);
 
   const panelContext: PanelContext = {
+    eventsScope: 'explore',
     eventBus,
     sync: () => DashboardCursorSync.Crosshair,
-    onSplitOpen: splitOpenFn,
     onToggleSeriesVisibility(label: string, mode: SeriesVisibilityChangeMode) {
       setFieldConfig(seriesVisibilityConfigFactory(label, mode, fieldConfig, data));
     },
+    dataLinkPostProcessor,
   };
 
   const panelOptions: TimeSeriesOptions = useMemo(
@@ -179,7 +213,13 @@ export function ExploreGraph({
         </div>
       )}
       <PanelRenderer
-        data={{ series: dataWithConfig, timeRange, state: loadingState, annotations, structureRev }}
+        data={{
+          series: dataWithConfig,
+          timeRange,
+          state: loadingState,
+          annotations: annotationsWithConfig,
+          structureRev,
+        }}
         pluginId="timeseries"
         title=""
         width={width}

@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
 import React, { useState, useCallback } from 'react';
 
-import { DataSourceSettings, SelectableValue } from '@grafana/data';
+import { SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { useTheme2 } from '../../themes';
@@ -73,19 +73,41 @@ export const DataSourceHttpSettings = (props: HttpSettingsProps) => {
     azureAuthSettings,
     renderSigV4Editor,
     secureSocksDSProxyEnabled,
+    urlLabel,
+    urlDocs,
   } = props;
-  let urlTooltip;
+
   const [isAccessHelpVisible, setIsAccessHelpVisible] = useState(false);
+  const [azureAuthEnabled, setAzureAuthEnabled] = useState(false);
   const theme = useTheme2();
+  let urlTooltip;
 
   const onSettingsChange = useCallback(
-    (change: Partial<DataSourceSettings<any, any>>) => {
+    (change: Partial<typeof dataSourceConfig>) => {
+      // Azure Authentication doesn't work correctly when Forward OAuth Identity is enabled.
+      // The Authorization header that has been set by the ApplyAzureAuth middleware gets overwritten
+      // with the Authorization header set by the OAuthTokenMiddleware.
+      const isAzureAuthEnabled =
+        (azureAuthSettings?.azureAuthSupported && azureAuthSettings.getAzureAuthEnabled(dataSourceConfig)) || false;
+      setAzureAuthEnabled(isAzureAuthEnabled);
+      if (isAzureAuthEnabled) {
+        const tmpOauthPassThru =
+          dataSourceConfig.jsonData.oauthPassThru !== undefined ? dataSourceConfig.jsonData.oauthPassThru : false;
+        change = {
+          ...change,
+          jsonData: {
+            ...dataSourceConfig.jsonData,
+            oauthPassThru: isAzureAuthEnabled ? false : tmpOauthPassThru,
+          },
+        };
+      }
+
       onChange({
         ...dataSourceConfig,
         ...change,
       });
     },
-    [dataSourceConfig, onChange]
+    [azureAuthSettings, dataSourceConfig, onChange]
   );
 
   switch (dataSourceConfig.access) {
@@ -93,6 +115,7 @@ export const DataSourceHttpSettings = (props: HttpSettingsProps) => {
       urlTooltip = (
         <>
           Your access method is <em>Browser</em>, this means the URL needs to be accessible from the browser.
+          {urlDocs}
         </>
       );
       break;
@@ -101,11 +124,12 @@ export const DataSourceHttpSettings = (props: HttpSettingsProps) => {
         <>
           Your access method is <em>Server</em>, this means the URL needs to be accessible from the grafana
           backend/server.
+          {urlDocs}
         </>
       );
       break;
     default:
-      urlTooltip = 'Specify a complete HTTP URL (for example http://your_server:8080)';
+      urlTooltip = <>Specify a complete HTTP URL (for example http://your_server:8080) {urlDocs}</>;
   }
 
   const accessSelect = (
@@ -123,9 +147,9 @@ export const DataSourceHttpSettings = (props: HttpSettingsProps) => {
     dataSourceConfig.url
   );
 
-  const notValidStyle = css`
-    box-shadow: inset 0 0px 5px ${theme.v1.palette.red};
-  `;
+  const notValidStyle = css({
+    boxShadow: `inset 0 0px 5px ${theme.v1.palette.red}`,
+  });
 
   const inputStyle = cx({ [`width-20`]: true, [notValidStyle]: !isValidUrl });
 
@@ -140,16 +164,19 @@ export const DataSourceHttpSettings = (props: HttpSettingsProps) => {
     />
   );
 
-  const azureAuthEnabled: boolean =
-    (azureAuthSettings?.azureAuthSupported && azureAuthSettings.getAzureAuthEnabled(dataSourceConfig)) || false;
-
   return (
     <div className="gf-form-group">
       <>
         <h3 className="page-heading">HTTP</h3>
         <div className="gf-form-group">
           <div className="gf-form">
-            <FormField label="URL" labelWidth={13} tooltip={urlTooltip} inputEl={urlInput} />
+            <FormField
+              interactive={urlDocs ? true : false}
+              label={urlLabel ?? 'URL'}
+              labelWidth={13}
+              tooltip={urlTooltip}
+              inputEl={urlInput}
+            />
           </div>
 
           {showAccessOptions && (
@@ -284,7 +311,7 @@ export const DataSourceHttpSettings = (props: HttpSettingsProps) => {
             <HttpProxySettings
               dataSourceConfig={dataSourceConfig}
               onChange={(jsonData) => onSettingsChange({ jsonData })}
-              showForwardOAuthIdentityOption={showForwardOAuthIdentityOption}
+              showForwardOAuthIdentityOption={azureAuthEnabled ? false : showForwardOAuthIdentityOption}
             />
           )}
         </div>

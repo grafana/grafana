@@ -18,16 +18,14 @@ composableKinds: PanelCfg: {
 	maturity: "experimental"
 
 	lineage: {
-		seqs: [
-			{
-				schemas: [
-					{
-						PanelOptions: {
-							selectedSeries: int32 & >=0 | *0
-						} @cuetsy(kind="interface")
-					},
-				]
-			},
-		]
+		schemas: [{
+			version: [0, 0]
+			schema: {
+				Options: {
+					selectedSeries: int32 & >=0 | *0
+				} @cuetsy(kind="interface")
+			}
+		}]
+		lenses: []
 	}
 }

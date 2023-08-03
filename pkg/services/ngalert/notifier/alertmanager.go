@@ -12,6 +12,7 @@ import (
 	alertingNotify "github.com/grafana/alerting/notify"
 	"github.com/grafana/alerting/receivers"
 	alertingTemplates "github.com/grafana/alerting/templates"
+	"github.com/prometheus/alertmanager/config"
 
 	amv2 "github.com/prometheus/alertmanager/api/v2/models"
 
@@ -47,6 +48,7 @@ type Alertmanager struct {
 	Base   *alertingNotify.GrafanaAlertmanager
 	logger log.Logger
 
+	ConfigMetrics       *metrics.AlertmanagerConfigMetrics
 	Settings            *setting.Cfg
 	Store               AlertingStore
 	fileStore           *FileStore
@@ -117,14 +119,15 @@ func newAlertmanager(ctx context.Context, orgID int64, cfg *setting.Cfg, store A
 	}
 
 	amcfg := &alertingNotify.GrafanaAlertmanagerConfig{
-		WorkingDirectory:   workingDir,
+		WorkingDirectory:   filepath.Join(cfg.DataPath, workingDir, strconv.Itoa(int(orgID))),
+		ExternalURL:        cfg.AppURL,
 		AlertStoreCallback: nil,
 		PeerTimeout:        cfg.UnifiedAlerting.HAPeerTimeout,
 		Silences:           silencesOptions,
 		Nflog:              nflogOptions,
 	}
 
-	l := log.New("alertmanager", "org", orgID)
+	l := log.New("ngalert.notifier.alertmanager", orgID)
 	gam, err := alertingNotify.NewGrafanaAlertmanager("orgID", orgID, amcfg, peer, l, alertingNotify.NewGrafanaAlertmanagerMetrics(m.Registerer))
 	if err != nil {
 		return nil, err
@@ -132,6 +135,7 @@ func newAlertmanager(ctx context.Context, orgID int64, cfg *setting.Cfg, store A
 
 	am := &Alertmanager{
 		Base:                gam,
+		ConfigMetrics:       m.AlertmanagerConfigMetrics,
 		Settings:            cfg,
 		Store:               store,
 		NotificationService: ns,
@@ -236,6 +240,44 @@ func (am *Alertmanager) ApplyConfig(ctx context.Context, dbCfg *ngmodels.AlertCo
 	return outerErr
 }
 
+type AggregateMatchersUsage struct {
+	Matchers       int
+	MatchRE        int
+	Match          int
+	ObjectMatchers int
+}
+
+func (am *Alertmanager) updateConfigMetrics(cfg *apimodels.PostableUserConfig) {
+	var amu AggregateMatchersUsage
+	am.aggregateRouteMatchers(cfg.AlertmanagerConfig.Route, &amu)
+	am.aggregateInhibitMatchers(cfg.AlertmanagerConfig.InhibitRules, &amu)
+	am.ConfigMetrics.Matchers.Set(float64(amu.Matchers))
+	am.ConfigMetrics.MatchRE.Set(float64(amu.MatchRE))
+	am.ConfigMetrics.Match.Set(float64(amu.Match))
+	am.ConfigMetrics.ObjectMatchers.Set(float64(amu.ObjectMatchers))
+}
+
+func (am *Alertmanager) aggregateRouteMatchers(r *apimodels.Route, amu *AggregateMatchersUsage) {
+	amu.Matchers += len(r.Matchers)
+	amu.MatchRE += len(r.MatchRE)
+	amu.Match += len(r.Match)
+	amu.ObjectMatchers += len(r.ObjectMatchers)
+	for _, next := range r.Routes {
+		am.aggregateRouteMatchers(next, amu)
+	}
+}
+
+func (am *Alertmanager) aggregateInhibitMatchers(rules []config.InhibitRule, amu *AggregateMatchersUsage) {
+	for _, r := range rules {
+		amu.Matchers += len(r.SourceMatchers)
+		amu.Matchers += len(r.TargetMatchers)
+		amu.MatchRE += len(r.SourceMatchRE)
+		amu.MatchRE += len(r.TargetMatchRE)
+		amu.Match += len(r.SourceMatch)
+		amu.Match += len(r.TargetMatch)
+	}
+}
+
 // applyConfig applies a new configuration by re-initializing all components using the configuration provided.
 // It returns a boolean indicating whether the user config was changed and an error.
 // It is not safe to call concurrently.
@@ -261,29 +303,25 @@ func (am *Alertmanager) applyConfig(cfg *apimodels.PostableUserConfig, rawConfig
 	cfg.TemplateFiles["__default__.tmpl"] = alertingTemplates.DefaultTemplateString
 
 	// next, we need to make sure we persist the templates to disk.
-	paths, templatesChanged, err := PersistTemplates(cfg, am.WorkingDirPath())
+	paths, templatesChanged, err := PersistTemplates(am.logger, cfg, am.Base.WorkingDirectory())
 	if err != nil {
 		return false, err
 	}
+	cfg.AlertmanagerConfig.Templates = paths
 
 	// If neither the configuration nor templates have changed, we've got nothing to do.
 	if !amConfigChanged && !templatesChanged {
-		am.logger.Debug("neither config nor template have changed, skipping configuration sync.")
+		am.logger.Debug("Neither config nor template have changed, skipping configuration sync.")
 		return false, nil
 	}
 
-	// With the templates persisted, create the template list using the paths.
-	tmpl, err := am.Base.TemplateFromPaths(am.Settings.AppURL, paths...)
-	if err != nil {
-		return false, err
-	}
+	am.updateConfigMetrics(cfg)
 
 	err = am.Base.ApplyConfig(AlertingConfiguration{
-		RawAlertmanagerConfig:    rawConfig,
-		AlertmanagerConfig:       cfg.AlertmanagerConfig,
-		AlertmanagerTemplates:    tmpl,
-		IntegrationsFunc:         am.buildIntegrationsMap,
-		ReceiverIntegrationsFunc: am.buildReceiverIntegration,
+		rawAlertmanagerConfig:    rawConfig,
+		alertmanagerConfig:       cfg.AlertmanagerConfig,
+		receivers:                PostableApiAlertingConfigToApiReceivers(cfg.AlertmanagerConfig),
+		receiverIntegrationsFunc: am.buildReceiverIntegrations,
 	})
 	if err != nil {
 		return false, err
@@ -310,22 +348,8 @@ func (am *Alertmanager) applyAndMarkConfig(ctx context.Context, hash string, cfg
 	return nil
 }
 
-func (am *Alertmanager) WorkingDirPath() string {
-	return filepath.Join(am.Settings.DataPath, workingDir, strconv.Itoa(int(am.orgID)))
-}
-
-// buildIntegrationsMap builds a map of name to the list of Grafana integration notifiers off of a list of receiver config.
-func (am *Alertmanager) buildIntegrationsMap(receivers []*alertingNotify.APIReceiver, templates *alertingTemplates.Template) (map[string][]*alertingNotify.Integration, error) {
-	integrationsMap := make(map[string][]*alertingNotify.Integration, len(receivers))
-	for _, receiver := range receivers {
-		integrations, err := am.buildReceiverIntegrations(receiver, templates)
-		if err != nil {
-			return nil, err
-		}
-		integrationsMap[receiver.Name] = integrations
-	}
-
-	return integrationsMap, nil
+func (am *Alertmanager) AppURL() string {
+	return am.Settings.AppURL
 }
 
 // buildReceiverIntegrations builds a list of integration notifiers off of a receiver config.
@@ -335,7 +359,7 @@ func (am *Alertmanager) buildReceiverIntegrations(receiver *alertingNotify.APIRe
 		return nil, err
 	}
 	s := &sender{am.NotificationService}
-	img := newImageStore(am.Store)
+	img := newImageProvider(am.Store, log.New("ngalert.notifier.image-provider"))
 	integrations, err := alertingNotify.BuildReceiverIntegrations(
 		receiverCfg,
 		tmpl,
@@ -354,23 +378,6 @@ func (am *Alertmanager) buildReceiverIntegrations(receiver *alertingNotify.APIRe
 		return nil, err
 	}
 	return integrations, nil
-}
-
-func (am *Alertmanager) buildReceiverIntegration(r *alertingNotify.GrafanaIntegrationConfig, tmpl *alertingTemplates.Template) (*alertingNotify.Integration, error) {
-	apiReceiver := &alertingNotify.APIReceiver{
-		GrafanaIntegrations: alertingNotify.GrafanaIntegrations{
-			Integrations: []*alertingNotify.GrafanaIntegrationConfig{r},
-		},
-	}
-	integrations, err := am.buildReceiverIntegrations(apiReceiver, tmpl)
-	if err != nil {
-		return nil, err
-	}
-	if len(integrations) == 0 {
-		// This should not happen, but it is better to return some error rather than having a panic.
-		return nil, fmt.Errorf("failed to build integration")
-	}
-	return integrations[0], nil
 }
 
 // PutAlerts receives the alerts and then sends them through the corresponding route based on whenever the alert has a receiver embedded or not

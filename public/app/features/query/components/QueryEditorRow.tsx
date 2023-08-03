@@ -25,7 +25,10 @@ import { selectors } from '@grafana/e2e-selectors';
 import { AngularComponent, getAngularLoader, getDataSourceSrv } from '@grafana/runtime';
 import { Badge, ErrorBoundaryAlert, HorizontalGroup } from '@grafana/ui';
 import { OperationRowHelp } from 'app/core/components/QueryOperationRow/OperationRowHelp';
-import { QueryOperationAction } from 'app/core/components/QueryOperationRow/QueryOperationAction';
+import {
+  QueryOperationAction,
+  QueryOperationToggleAction,
+} from 'app/core/components/QueryOperationRow/QueryOperationAction';
 import {
   QueryOperationRow,
   QueryOperationRowRenderProps,
@@ -46,6 +49,7 @@ interface Props<TQuery extends DataQuery> {
   index: number;
   dataSource: DataSourceInstanceSettings;
   onChangeDataSource?: (dsSettings: DataSourceInstanceSettings) => void;
+  onDataSourceLoaded?: (instance: DataSourceApi) => void;
   renderHeaderExtras?: () => ReactNode;
   onAddQuery: (query: TQuery) => void;
   onRemoveQuery: (query: TQuery) => void;
@@ -60,6 +64,7 @@ interface Props<TQuery extends DataQuery> {
   onQueryCopied?: () => void;
   onQueryRemoved?: () => void;
   onQueryToggled?: (queryStatus?: boolean | undefined) => void;
+  collapsable?: boolean;
 }
 
 interface State<TQuery extends DataQuery> {
@@ -160,6 +165,10 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
     } catch (error) {
       // If the DS doesn't exist, it fails. Getting with no args returns the default DS.
       datasource = await this.dataSourceSrv.get();
+    }
+
+    if (typeof this.props.onDataSourceLoaded === 'function') {
+      this.props.onDataSourceLoaded(datasource);
     }
 
     this.setState({
@@ -425,15 +434,15 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
   renderActions = (props: QueryOperationRowRenderProps) => {
     const { query, hideDisableQuery = false } = this.props;
     const { hasTextEditMode, datasource, showingHelp } = this.state;
-    const isDisabled = query.hide;
+    const isDisabled = !!query.hide;
 
     const hasEditorHelp = datasource?.components?.QueryEditorHelp;
 
     return (
       <HorizontalGroup width="auto">
         {hasEditorHelp && (
-          <QueryOperationAction
-            title="Toggle data source help"
+          <QueryOperationToggleAction
+            title="Show data source help"
             icon="question-circle"
             onClick={this.onToggleHelp}
             active={showingHelp}
@@ -451,8 +460,8 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
         {this.renderExtraActions()}
         <QueryOperationAction title="Duplicate query" icon="copy" onClick={this.onCopyQuery} />
         {!hideDisableQuery ? (
-          <QueryOperationAction
-            title="Disable/enable query"
+          <QueryOperationToggleAction
+            title="Disable query"
             icon={isDisabled ? 'eye-slash' : 'eye'}
             active={isDisabled}
             onClick={this.onDisableQuery}
@@ -483,7 +492,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
   };
 
   render() {
-    const { query, index, visualization } = this.props;
+    const { query, index, visualization, collapsable } = this.props;
     const { datasource, showingHelp, data } = this.state;
     const isDisabled = query.hide;
 
@@ -504,6 +513,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
         <QueryOperationRow
           id={this.id}
           draggable={true}
+          collapsable={collapsable}
           index={index}
           headerElement={this.renderHeader}
           actions={this.renderActions}

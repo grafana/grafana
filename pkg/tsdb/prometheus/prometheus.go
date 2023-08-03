@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/client"
+	"github.com/grafana/grafana/pkg/tsdb/prometheus/instrumentation"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/querydata"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/resource"
 )
@@ -78,19 +79,25 @@ func newInstanceSettings(httpClientProvider httpclient.Provider, cfg *setting.Cf
 
 func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	if len(req.Queries) == 0 {
-		return &backend.QueryDataResponse{}, fmt.Errorf("query contains no queries")
+		err := fmt.Errorf("query contains no queries")
+		instrumentation.UpdateQueryDataMetrics(err, nil)
+		return &backend.QueryDataResponse{}, err
 	}
 
-	i, err := s.getInstance(req.PluginContext)
+	i, err := s.getInstance(ctx, req.PluginContext)
 	if err != nil {
+		instrumentation.UpdateQueryDataMetrics(err, nil)
 		return nil, err
 	}
 
-	return i.queryData.Execute(ctx, req)
+	qd, err := i.queryData.Execute(ctx, req)
+	instrumentation.UpdateQueryDataMetrics(err, qd)
+
+	return qd, err
 }
 
 func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
-	i, err := s.getInstance(req.PluginContext)
+	i, err := s.getInstance(ctx, req.PluginContext)
 	if err != nil {
 		return err
 	}
@@ -117,8 +124,8 @@ func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceReq
 	return sender.Send(resp)
 }
 
-func (s *Service) getInstance(pluginCtx backend.PluginContext) (*instance, error) {
-	i, err := s.im.Get(pluginCtx)
+func (s *Service) getInstance(ctx context.Context, pluginCtx backend.PluginContext) (*instance, error) {
+	i, err := s.im.Get(ctx, pluginCtx)
 	if err != nil {
 		return nil, err
 	}

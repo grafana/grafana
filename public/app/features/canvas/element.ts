@@ -2,9 +2,10 @@ import { ComponentType } from 'react';
 
 import { RegistryItem } from '@grafana/data';
 import { PanelOptionsSupplier } from '@grafana/data/src/panel/PanelPlugin';
+import { ColorDimensionConfig, ScaleDimensionConfig } from '@grafana/schema';
 import { config } from 'app/core/config';
 
-import { DimensionContext, ColorDimensionConfig, ScaleDimensionConfig } from '../dimensions';
+import { DimensionContext } from '../dimensions';
 
 import { BackgroundConfig, Constraint, LineConfig, Placement } from './types';
 

@@ -95,7 +95,7 @@ describe('situation', () => {
       type: 'AFTER_SELECTOR',
       afterPipe: true,
       hasSpace: false,
-      logQuery: '{place="luna"}| logfmt |',
+      logQuery: '{place="luna"} | logfmt |',
     });
   });
 
@@ -179,7 +179,7 @@ describe('situation', () => {
       'quantile_over_time(0.99, {cluster="ops-tools1",container="ingress-nginx"} | json | __error__ = "" | unwrap ^',
       {
         type: 'AFTER_UNWRAP',
-        logQuery: '{cluster="ops-tools1",container="ingress-nginx"}| json | __error__ = ""',
+        logQuery: '{cluster="ops-tools1",container="ingress-nginx"} | json | __error__ = ""',
       }
     );
 
@@ -262,6 +262,18 @@ describe('situation', () => {
         { name: 'four', value: 'val4', op: '=~' },
         { name: 'five', value: 'val5', op: '!~' },
       ],
+    });
+  });
+
+  it('identifies AFTER_DISTINCT autocomplete situations', () => {
+    assertSituation('{label="value"} | logfmt | distinct^', {
+      type: 'AFTER_DISTINCT',
+      logQuery: '{label="value"} | logfmt ',
+    });
+
+    assertSituation('{label="value"} | logfmt | distinct id,^', {
+      type: 'AFTER_DISTINCT',
+      logQuery: '{label="value"} | logfmt ',
     });
   });
 });

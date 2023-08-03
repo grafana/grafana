@@ -3,12 +3,12 @@ import { FrameState } from 'app/features/canvas/runtime/frame';
 
 import { CanvasPanel, InstanceState } from './CanvasPanel';
 import { getConnectionEditor } from './editor/connectionEditor';
-import { getElementEditor } from './editor/elementEditor';
-import { getLayerEditor } from './editor/layerEditor';
+import { getElementEditor } from './editor/element/elementEditor';
+import { getLayerEditor } from './editor/layer/layerEditor';
 import { canvasMigrationHandler } from './migrations';
-import { PanelOptions } from './models.gen';
+import { Options } from './panelcfg.gen';
 
-export const addStandardCanvasEditorOptions = (builder: PanelOptionsEditorBuilder<PanelOptions>) => {
+export const addStandardCanvasEditorOptions = (builder: PanelOptionsEditorBuilder<Options>) => {
   builder.addBooleanSwitch({
     path: 'inlineEditing',
     name: 'Inline editing',
@@ -18,13 +18,13 @@ export const addStandardCanvasEditorOptions = (builder: PanelOptionsEditorBuilde
 
   builder.addBooleanSwitch({
     path: 'showAdvancedTypes',
-    name: 'Show advanced element types',
-    description: '',
-    defaultValue: false,
+    name: 'Experimental element types',
+    description: 'Enable selection of experimental element types',
+    defaultValue: true,
   });
 };
 
-export const plugin = new PanelPlugin<PanelOptions>(CanvasPanel)
+export const plugin = new PanelPlugin<Options>(CanvasPanel)
   .setNoPadding() // extend to panel edges
   .useFieldConfig({
     standardOptions: {

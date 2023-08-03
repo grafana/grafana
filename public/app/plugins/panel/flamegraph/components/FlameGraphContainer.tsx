@@ -1,17 +1,18 @@
 import { css } from '@emotion/css';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useMeasure } from 'react-use';
 
 import { DataFrame, CoreApp, GrafanaTheme2 } from '@grafana/data';
+import { config, reportInteraction } from '@grafana/runtime';
 import { useStyles2, useTheme2 } from '@grafana/ui';
 
 import { MIN_WIDTH_TO_SHOW_BOTH_TOPTABLE_AND_FLAMEGRAPH } from '../constants';
 
 import FlameGraph from './FlameGraph/FlameGraph';
-import { FlameGraphDataContainer, LevelItem, nestedSetToLevels } from './FlameGraph/dataTransform';
+import { FlameGraphDataContainer } from './FlameGraph/dataTransform';
 import FlameGraphHeader from './FlameGraphHeader';
 import FlameGraphTopTableContainer from './TopTable/FlameGraphTopTableContainer';
-import { SelectedView } from './types';
+import { ClickedItemData, ColorScheme, ColorSchemeDiff, SelectedView, TextAlign } from './types';
 
 type Props = {
   data?: DataFrame;
@@ -19,26 +20,27 @@ type Props = {
 };
 
 const FlameGraphContainer = (props: Props) => {
-  const [topLevelIndex, setTopLevelIndex] = useState(0);
-  const [selectedBarIndex, setSelectedBarIndex] = useState(0);
+  const [focusedItemData, setFocusedItemData] = useState<ClickedItemData>();
+
   const [rangeMin, setRangeMin] = useState(0);
   const [rangeMax, setRangeMax] = useState(1);
   const [search, setSearch] = useState('');
   const [selectedView, setSelectedView] = useState(SelectedView.Both);
   const [sizeRef, { width: containerWidth }] = useMeasure<HTMLDivElement>();
+  const [textAlign, setTextAlign] = useState<TextAlign>('left');
+  // This is a label of the item because in sandwich view we group all items by label and present a merged graph
+  const [sandwichItem, setSandwichItem] = useState<string>();
+
   const theme = useTheme2();
 
-  const [dataContainer, levels] = useMemo((): [FlameGraphDataContainer, LevelItem[][]] | [undefined, undefined] => {
+  const dataContainer = useMemo((): FlameGraphDataContainer | undefined => {
     if (!props.data) {
-      return [undefined, undefined];
+      return;
     }
-    const container = new FlameGraphDataContainer(props.data, theme);
-
-    // Transform dataFrame with nested set format to array of levels. Each level contains all the bars for a particular
-    // level of the flame graph. We do this temporary as in the end we should be able to render directly by iterating
-    // over the dataFrame rows.
-    return [container, nestedSetToLevels(container)];
+    return new FlameGraphDataContainer(props.data, theme);
   }, [props.data, theme]);
+
+  const [colorScheme, setColorScheme] = useColorScheme(dataContainer);
 
   const styles = useStyles2(getStyles);
 
@@ -53,12 +55,36 @@ const FlameGraphContainer = (props: Props) => {
     }
   }, [selectedView, setSelectedView, containerWidth]);
 
-  useEffect(() => {
-    setTopLevelIndex(0);
-    setSelectedBarIndex(0);
+  const resetFocus = useCallback(() => {
+    setFocusedItemData(undefined);
     setRangeMin(0);
     setRangeMax(1);
-  }, [props.data]);
+  }, [setFocusedItemData, setRangeMax, setRangeMin]);
+
+  function resetSandwich() {
+    setSandwichItem(undefined);
+  }
+
+  useEffect(() => {
+    resetFocus();
+    resetSandwich();
+  }, [props.data, resetFocus]);
+
+  const onSymbolClick = useCallback(
+    (symbol: string) => {
+      if (search === symbol) {
+        setSearch('');
+      } else {
+        reportInteraction('grafana_flamegraph_table_item_selected', {
+          app: props.app,
+          grafana_version: config.buildInfo.version,
+        });
+        setSearch(symbol);
+        resetFocus();
+      }
+    },
+    [setSearch, resetFocus, props.app, search]
+  );
 
   return (
     <>
@@ -66,15 +92,21 @@ const FlameGraphContainer = (props: Props) => {
         <div ref={sizeRef} className={styles.container}>
           <FlameGraphHeader
             app={props.app}
-            setTopLevelIndex={setTopLevelIndex}
-            setSelectedBarIndex={setSelectedBarIndex}
-            setRangeMin={setRangeMin}
-            setRangeMax={setRangeMax}
             search={search}
             setSearch={setSearch}
             selectedView={selectedView}
             setSelectedView={setSelectedView}
             containerWidth={containerWidth}
+            onReset={() => {
+              resetFocus();
+              resetSandwich();
+            }}
+            textAlign={textAlign}
+            onTextAlignChange={setTextAlign}
+            showResetButton={Boolean(focusedItemData || sandwichItem)}
+            colorScheme={colorScheme}
+            onColorSchemeChange={setColorScheme}
+            isDiffMode={Boolean(dataContainer.isDiffFlamegraph())}
           />
 
           <div className={styles.body}>
@@ -82,32 +114,34 @@ const FlameGraphContainer = (props: Props) => {
               <FlameGraphTopTableContainer
                 data={dataContainer}
                 app={props.app}
-                totalLevels={levels.length}
-                selectedView={selectedView}
+                onSymbolClick={onSymbolClick}
+                height={selectedView === SelectedView.TopTable ? 600 : undefined}
                 search={search}
-                setSearch={setSearch}
-                setTopLevelIndex={setTopLevelIndex}
-                setSelectedBarIndex={setSelectedBarIndex}
-                setRangeMin={setRangeMin}
-                setRangeMax={setRangeMax}
+                sandwichItem={sandwichItem}
+                onSandwich={setSandwichItem}
+                onSearch={setSearch}
               />
             )}
 
             {selectedView !== SelectedView.TopTable && (
               <FlameGraph
                 data={dataContainer}
-                app={props.app}
-                levels={levels}
-                topLevelIndex={topLevelIndex}
-                selectedBarIndex={selectedBarIndex}
                 rangeMin={rangeMin}
                 rangeMax={rangeMax}
                 search={search}
-                setTopLevelIndex={setTopLevelIndex}
-                setSelectedBarIndex={setSelectedBarIndex}
                 setRangeMin={setRangeMin}
                 setRangeMax={setRangeMax}
-                selectedView={selectedView}
+                onItemFocused={(data) => setFocusedItemData(data)}
+                focusedItemData={focusedItemData}
+                textAlign={textAlign}
+                sandwichItem={sandwichItem}
+                onSandwich={(label: string) => {
+                  resetFocus();
+                  setSandwichItem(label);
+                }}
+                onFocusPillClick={resetFocus}
+                onSandwichPillClick={resetSandwich}
+                colorScheme={colorScheme}
               />
             )}
           </div>
@@ -117,6 +151,29 @@ const FlameGraphContainer = (props: Props) => {
   );
 };
 
+function useColorScheme(dataContainer: FlameGraphDataContainer | undefined) {
+  const [colorScheme, setColorScheme] = useState<ColorScheme | ColorSchemeDiff>(
+    dataContainer?.isDiffFlamegraph() ? ColorSchemeDiff.Default : ColorScheme.ValueBased
+  );
+  useEffect(() => {
+    if (
+      dataContainer?.isDiffFlamegraph() &&
+      (colorScheme === ColorScheme.ValueBased || colorScheme === ColorScheme.PackageBased)
+    ) {
+      setColorScheme(ColorSchemeDiff.Default);
+    }
+
+    if (
+      !dataContainer?.isDiffFlamegraph() &&
+      (colorScheme === ColorSchemeDiff.Default || colorScheme === ColorSchemeDiff.DiffColorBlind)
+    ) {
+      setColorScheme(ColorScheme.ValueBased);
+    }
+  }, [dataContainer, colorScheme]);
+
+  return [colorScheme, setColorScheme] as const;
+}
+
 function getStyles(theme: GrafanaTheme2) {
   return {
     container: css({
@@ -125,7 +182,7 @@ function getStyles(theme: GrafanaTheme2) {
       flex: '1 1 0',
       flexDirection: 'column',
       minHeight: 0,
-      gap: theme.spacing(2),
+      gap: theme.spacing(1),
     }),
     body: css({
       display: 'flex',

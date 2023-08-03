@@ -38,10 +38,14 @@ func main() {
 
 	// All the jennies that comprise the core kinds generator pipeline
 	coreKindsGen.Append(
-		codegen.LatestJenny(cuectx.GoCoreKindParentPath, codegen.GoTypesJenny{}),
+		&codegen.ResourceGoTypesJenny{},
+		&codegen.SubresourceGoTypesJenny{},
 		codegen.CoreKindJenny(cuectx.GoCoreKindParentPath, nil),
 		codegen.BaseCoreRegistryJenny(filepath.Join("pkg", "registry", "corekind"), cuectx.GoCoreKindParentPath),
-		codegen.LatestMajorsOrXJenny(cuectx.TSCoreKindParentPath, codegen.TSTypesJenny{}),
+		codegen.LatestMajorsOrXJenny(
+			cuectx.TSCoreKindParentPath,
+			true, // forcing group so that we ignore the top level resource (for now)
+			codegen.TSResourceJenny{}),
 		codegen.TSVeneerIndexJenny(filepath.Join("packages", "grafana-schema", "src")),
 		codegen.DocsJenny(filepath.Join("docs", "sources", "developers", "kinds", "core")),
 	)

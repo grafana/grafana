@@ -104,12 +104,8 @@ const PublicDashboardPage = (props: Props) => {
   }
 
   return (
-    <Page
-      pageNav={{ text: dashboard.title }}
-      layout={PageLayoutType.Custom}
-      toolbar={<Toolbar dashboard={dashboard} />}
-      data-testid={selectors.page}
-    >
+    <Page pageNav={{ text: dashboard.title }} layout={PageLayoutType.Custom} data-testid={selectors.page}>
+      <Toolbar dashboard={dashboard} />
       {dashboardState.initError && <DashboardFailed initError={dashboardState.initError} />}
       <div className={styles.gridContainer}>
         <DashboardGrid dashboard={dashboard} isEditable={false} viewPanel={null} editPanel={null} hidePanelMenus />

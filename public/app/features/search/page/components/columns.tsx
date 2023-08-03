@@ -1,5 +1,6 @@
 import { cx } from '@emotion/css';
 import React from 'react';
+import Skeleton from 'react-loading-skeleton';
 
 import {
   DisplayProcessor,
@@ -10,7 +11,7 @@ import {
   getFieldDisplayName,
 } from '@grafana/data';
 import { config, getDataSourceSrv } from '@grafana/runtime';
-import { Checkbox, Icon, IconButton, IconName, TagList } from '@grafana/ui';
+import { Checkbox, Icon, IconName, TagList, Text } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import { t } from 'app/core/internationalization';
 import { PluginIconName } from 'app/features/plugins/admin/types';
@@ -57,38 +58,30 @@ export const generateColumns = (
 
   let width = 50;
   if (selection && selectionToggle) {
-    width = 30;
+    width = 0;
     columns.push({
       id: `column-checkbox`,
       width,
       Header: () => {
-        if (selection('*', '*')) {
-          return (
-            <div className={styles.checkboxHeader}>
-              <IconButton name="check-square" onClick={clearSelection} />
-            </div>
-          );
-        }
+        const { view } = response;
+        const hasSelection = selection('*', '*');
+        const allSelected = view.every((item) => selection(item.kind, item.uid));
         return (
-          <div className={styles.checkboxHeader}>
-            <Checkbox
-              checked={false}
-              onChange={(e) => {
-                e.stopPropagation();
-                e.preventDefault();
-                const { view } = response;
-                const count = Math.min(view.length, 50);
-                for (let i = 0; i < count; i++) {
+          <Checkbox
+            indeterminate={!allSelected && hasSelection}
+            checked={allSelected}
+            disabled={!response}
+            onChange={(e) => {
+              if (hasSelection) {
+                clearSelection();
+              } else {
+                for (let i = 0; i < view.length; i++) {
                   const item = view.get(i);
-                  if (item.uid && item.kind) {
-                    if (!selection(item.kind, item.uid)) {
-                      selectionToggle(item.kind, item.uid);
-                    }
-                  }
+                  selectionToggle(item.kind, item.uid);
                 }
-              }}
-            />
-          </div>
+              }
+            }}
+          />
         );
       },
       Cell: (p) => {
@@ -97,16 +90,14 @@ export const generateColumns = (
         const selected = selection(kind, uid);
         const hasUID = uid != null; // Panels don't have UID! Likely should not be shown on pages with manage options
         return (
-          <div {...p.cellProps}>
-            <div className={styles.checkbox}>
-              <Checkbox
-                disabled={!hasUID}
-                value={selected && hasUID}
-                onChange={(e) => {
-                  selectionToggle(kind, uid);
-                }}
-              />
-            </div>
+          <div {...p.cellProps} className={styles.cell}>
+            <Checkbox
+              disabled={!hasUID}
+              value={selected && hasUID}
+              onChange={(e) => {
+                selectionToggle(kind, uid);
+              }}
+            />
           </div>
         );
       },
@@ -127,20 +118,26 @@ export const generateColumns = (
         classNames += ' ' + styles.missingTitleText;
       }
       return (
-        <a {...p.cellProps} href={p.userProps.href} onClick={p.userProps.onClick} className={classNames} title={name}>
-          {name}
-        </a>
+        <div className={styles.cell} {...p.cellProps}>
+          {!response.isItemLoaded(p.row.index) ? (
+            <Skeleton width={200} />
+          ) : (
+            <a href={p.userProps.href} onClick={p.userProps.onClick} className={classNames} title={name}>
+              {name}
+            </a>
+          )}
+        </div>
       );
     },
     id: `column-name`,
     field: access.name!,
-    Header: () => <div className={styles.headerNameStyle}>{t('search.results-table.name-header', 'Name')}</div>,
+    Header: () => <div>{t('search.results-table.name-header', 'Name')}</div>,
     width,
   });
   availableWidth -= width;
 
   width = TYPE_COLUMN_WIDTH;
-  columns.push(makeTypeColumn(access.kind, access.panel_type, width, styles));
+  columns.push(makeTypeColumn(response, access.kind, access.panel_type, width, styles));
   availableWidth -= width;
 
   // Show datasources if we have any
@@ -168,20 +165,29 @@ export const generateColumns = (
       Cell: (p) => {
         const parts = (access.location?.values[p.row.index] ?? '').split('/');
         return (
-          <div {...p.cellProps} className={cx(styles.locationCellStyle)}>
-            {parts.map((p) => {
-              let info = meta.locationInfo[p];
-              if (!info && p === 'general') {
-                info = { kind: 'folder', url: '/dashboards', name: 'General' };
-              }
-              return info ? (
-                <a key={p} href={info.url} className={styles.locationItem}>
-                  <Icon name={getIconForKind(info.kind)} /> {info.name}
-                </a>
-              ) : (
-                <span key={p}>{p}</span>
-              );
-            })}
+          <div {...p.cellProps} className={styles.cell}>
+            {!response.isItemLoaded(p.row.index) ? (
+              <Skeleton width={150} />
+            ) : (
+              <div className={styles.locationContainer}>
+                {parts.map((p) => {
+                  let info = meta.locationInfo[p];
+                  if (!info && p === 'general') {
+                    info = { kind: 'folder', url: '/dashboards', name: 'General' };
+                  }
+                  return info ? (
+                    <a key={p} href={info.url} className={styles.locationItem}>
+                      <Icon name={getIconForKind(info.kind)} />
+                      <Text variant="body" truncate>
+                        {info.name}
+                      </Text>
+                    </a>
+                  ) : (
+                    <span key={p}>{p}</span>
+                  );
+                })}
+              </div>
+            )}
           </div>
         );
       },
@@ -193,17 +199,17 @@ export const generateColumns = (
   }
 
   if (availableWidth > 0 && showTags) {
-    columns.push(makeTagsColumn(access.tags, availableWidth, styles.tagList, onTagSelected));
+    columns.push(makeTagsColumn(response, access.tags, availableWidth, styles, onTagSelected));
   }
 
   if (sortField && sortFieldWith) {
     const disp = sortField.display ?? getDisplayProcessor({ field: sortField, theme: config.theme2 });
 
     columns.push({
-      Header: () => <div className={styles.sortedHeader}>{getFieldDisplayName(sortField)}</div>,
+      Header: getFieldDisplayName(sortField),
       Cell: (p) => {
         return (
-          <div {...p.cellProps} className={styles.sortedItems}>
+          <div {...p.cellProps} className={styles.cell}>
             {getDisplayValue({
               sortField,
               getDisplay: disp,
@@ -239,7 +245,13 @@ export const generateColumns = (
       Header: () => <div className={styles.sortedHeader}>Score</div>,
       Cell: (p) => {
         return (
-          <div {...p.cellProps} className={styles.explainItem} onClick={() => showExplainPopup(p.row.index)}>
+          // TODO: fix keyboard a11y
+          // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
+          <div
+            {...p.cellProps}
+            className={cx(styles.cell, styles.explainItem)}
+            onClick={() => showExplainPopup(p.row.index)}
+          >
             {vals[p.row.index]}
           </div>
         );
@@ -287,6 +299,8 @@ function makeDataSourceColumn(
             const icon = settings?.meta?.info?.logos?.small;
             if (icon) {
               return (
+                // TODO: fix keyboard a11y
+                // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
                 <span
                   key={i}
                   onClick={(e) => {
@@ -314,6 +328,7 @@ function makeDataSourceColumn(
 }
 
 function makeTypeColumn(
+  response: QueryResponse,
   kindField: Field<string>,
   typeField: Field<string>,
   width: number,
@@ -366,9 +381,15 @@ function makeTypeColumn(
         }
       }
       return (
-        <div {...p.cellProps} className={styles.typeText}>
-          <Icon name={icon} size="sm" title={txt} className={styles.typeIcon} />
-          {txt}
+        <div {...p.cellProps} className={cx(styles.cell, styles.typeCell)}>
+          {!response.isItemLoaded(p.row.index) ? (
+            <Skeleton width={100} />
+          ) : (
+            <>
+              <Icon name={icon} size="sm" title={txt} className={styles.typeIcon} />
+              {txt}
+            </>
+          )}
         </div>
       );
     },
@@ -377,19 +398,24 @@ function makeTypeColumn(
 }
 
 function makeTagsColumn(
+  response: QueryResponse,
   field: Field<string[]>,
   width: number,
-  tagListClass: string,
+  styles: Record<string, string>,
   onTagSelected: (tag: string) => void
 ): TableColumn {
   return {
     Cell: (p) => {
       const tags = field.values[p.row.index];
-      return tags ? (
-        <div {...p.cellProps}>
-          <TagList className={tagListClass} tags={tags} onClick={onTagSelected} />
+      return (
+        <div {...p.cellProps} className={styles.cell}>
+          {!response.isItemLoaded(p.row.index) ? (
+            <TagList.Skeleton />
+          ) : (
+            <>{tags ? <TagList className={styles.tagList} tags={tags} onClick={onTagSelected} /> : null}</>
+          )}
         </div>
-      ) : null;
+      );
     },
     id: `column-tags`,
     field: field,

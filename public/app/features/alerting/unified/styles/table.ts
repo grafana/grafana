@@ -5,7 +5,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 export const getAlertTableStyles = (theme: GrafanaTheme2) => ({
   table: css`
     width: 100%;
-    border-radius: ${theme.shape.borderRadius()};
+    border-radius: ${theme.shape.radius.default};
     border: solid 1px ${theme.colors.border.weak};
     background-color: ${theme.colors.background.secondary};
 
@@ -26,6 +26,9 @@ export const getAlertTableStyles = (theme: GrafanaTheme2) => ({
   `,
   colExpand: css`
     width: 36px;
+  `,
+  nameCell: css`
+    gap: ${theme.spacing(1)};
   `,
   actionsCell: css`
     text-align: right;

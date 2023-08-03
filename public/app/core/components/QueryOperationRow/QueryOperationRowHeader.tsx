@@ -5,10 +5,11 @@ import { DraggableProvided } from 'react-beautiful-dnd';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Icon, IconButton, useStyles2 } from '@grafana/ui';
 
-interface QueryOperationRowHeaderProps {
+export interface QueryOperationRowHeaderProps {
   actionsElement?: React.ReactNode;
   disabled?: boolean;
   draggable: boolean;
+  collapsable?: boolean;
   dragHandleProps?: DraggableProvided['dragHandleProps'];
   headerElement?: React.ReactNode;
   isContentVisible: boolean;
@@ -22,6 +23,7 @@ export const QueryOperationRowHeader = ({
   actionsElement,
   disabled,
   draggable,
+  collapsable = true,
   dragHandleProps,
   headerElement,
   isContentVisible,
@@ -35,16 +37,16 @@ export const QueryOperationRowHeader = ({
   return (
     <div className={styles.header}>
       <div className={styles.column}>
-        <IconButton
-          name={isContentVisible ? 'angle-down' : 'angle-right'}
-          title="toggle collapse and expand"
-          aria-label="toggle collapse and expand query row"
-          className={styles.collapseIcon}
-          onClick={onRowToggle}
-          type="button"
-          aria-expanded={isContentVisible}
-          aria-controls={id}
-        />
+        {collapsable && (
+          <IconButton
+            name={isContentVisible ? 'angle-down' : 'angle-right'}
+            tooltip={isContentVisible ? 'Collapse query row' : 'Expand query row'}
+            className={styles.collapseIcon}
+            onClick={onRowToggle}
+            aria-expanded={isContentVisible}
+            aria-controls={id}
+          />
+        )}
         {title && (
           // disabling the a11y rules here as the IconButton above handles keyboard interactions
           // this is just to provide a better experience for mouse users
@@ -77,7 +79,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   header: css`
     label: Header;
     padding: ${theme.spacing(0.5, 0.5)};
-    border-radius: ${theme.shape.borderRadius(1)};
+    border-radius: ${theme.shape.radius.default};
     background: ${theme.colors.background.secondary};
     min-height: ${theme.spacing(4)};
     display: grid;

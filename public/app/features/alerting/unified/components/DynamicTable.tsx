@@ -124,13 +124,10 @@ export const DynamicTable = <T extends object>({
               {isExpandable && (
                 <div className={cx(styles.cell, styles.expandCell)}>
                   <IconButton
-                    aria-label={`${isItemExpanded ? 'Collapse' : 'Expand'} row`}
-                    size="lg"
+                    tooltip={`${isItemExpanded ? 'Collapse' : 'Expand'} row`}
                     data-testid="collapse-toggle"
-                    className={styles.expandButton}
                     name={isItemExpanded ? 'angle-down' : 'angle-right'}
                     onClick={() => toggleExpanded(item)}
-                    type="button"
                   />
                 </div>
               )}
@@ -194,7 +191,7 @@ const getStyles = <T extends unknown>(
   return (theme: GrafanaTheme2) => ({
     container: css`
       border: 1px solid ${theme.colors.border.weak};
-      border-radius: ${theme.shape.borderRadius()};
+      border-radius: ${theme.shape.radius.default};
       color: ${theme.colors.text.secondary};
     `,
     row: css`
@@ -277,10 +274,6 @@ const getStyles = <T extends unknown>(
         grid-row: auto;
         padding: ${theme.spacing(1)} 0 0 0;
       }
-    `,
-    expandButton: css`
-      margin-right: 0;
-      display: block;
     `,
   });
 };

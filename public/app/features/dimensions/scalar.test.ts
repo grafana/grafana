@@ -1,8 +1,7 @@
 import { DataFrame, FieldType } from '@grafana/data';
+import { ScalarDimensionMode } from '@grafana/schema';
 
 import { getScalarDimension } from './scalar';
-
-import { ScalarDimensionMode } from '.';
 
 describe('scalar dimensions', () => {
   it('handles string field', () => {

@@ -1,9 +1,12 @@
 import React from 'react';
 
-import { DataSourcePluginOptionsEditorProps, updateDatasourcePluginJsonDataOption } from '@grafana/data';
-import { DataSourcePicker } from '@grafana/runtime';
+import {
+  DataSourceInstanceSettings,
+  DataSourcePluginOptionsEditorProps,
+  updateDatasourcePluginJsonDataOption,
+} from '@grafana/data';
 import { Button, InlineField, InlineFieldRow, useStyles2 } from '@grafana/ui';
-import { DocsLinkButton } from 'app/core/components/DocsLinkButton';
+import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 
 import { TempoJsonData } from '../types';
 
@@ -16,13 +19,6 @@ export function ServiceGraphSettings({ options, onOptionsChange }: Props) {
 
   return (
     <div className={styles.container}>
-      <h3 className="page-heading">Service graph</h3>
-
-      <div className={styles.infoText}>
-        Select a Prometheus data source that contains the service graph data
-        <DocsLinkButton hrefSuffix="tempo/#service-graph" />
-      </div>
-
       <InlineFieldRow className={styles.row}>
         <InlineField
           tooltip="The Prometheus data source with the service graph data"
@@ -35,7 +31,7 @@ export function ServiceGraphSettings({ options, onOptionsChange }: Props) {
             current={options.jsonData.serviceMap?.datasourceUid}
             noDefault={true}
             width={40}
-            onChange={(ds) =>
+            onChange={(ds: DataSourceInstanceSettings) =>
               updateDatasourcePluginJsonDataOption({ onOptionsChange, options }, 'serviceMap', {
                 datasourceUid: ds.uid,
               })

@@ -51,11 +51,6 @@ def integration_tests(trigger, prefix, ver_mode = "pr"):
         # In pull requests, attempt to clone grafana enterprise.
         init_steps.append(enterprise_setup_step())
 
-        # Ensure that verif_gen_cue happens after we clone enterprise
-        # At the time of writing this, very_gen_cue is depended on by the wire step which is what everything else depends on.
-        verify_step["depends_on"].append("clone-enterprise")
-        verify_jsonnet_step["depends_on"].append("clone-enterprise")
-
     init_steps += [
         download_grabpl_step(),
         compile_build_cmd(),
@@ -67,14 +62,14 @@ def integration_tests(trigger, prefix, ver_mode = "pr"):
 
     test_steps = [
         postgres_integration_tests_step(),
-        mysql_integration_tests_step(),
+        mysql_integration_tests_step("mysql57", "5.7"),
+        mysql_integration_tests_step("mysql80", "8.0"),
         redis_integration_tests_step(),
         memcached_integration_tests_step(),
     ]
 
     return pipeline(
         name = "{}-integration-tests".format(prefix),
-        edition = "oss",
         trigger = trigger,
         environment = environment,
         services = services,

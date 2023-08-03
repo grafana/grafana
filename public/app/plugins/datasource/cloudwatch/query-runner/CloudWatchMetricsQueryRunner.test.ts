@@ -487,7 +487,7 @@ describe('CloudWatchMetricsQueryRunner', () => {
         });
       });
 
-      it('should generate the correct query in the case of one multilple template variables', async () => {
+      it('should generate the correct query in the case of one multiple template variables', async () => {
         const { runner, fetchMock, request } = setupMockedMetricsQueryRunner({ variables: [var1, var2, var3, var4] });
         const queries: CloudWatchMetricsQuery[] = [
           {
@@ -524,7 +524,7 @@ describe('CloudWatchMetricsQueryRunner', () => {
         });
       });
 
-      it('should generate the correct query in the case of multilple multi template variables', async () => {
+      it('should generate the correct query in the case of multiple multi template variables', async () => {
         const { runner, fetchMock, request } = setupMockedMetricsQueryRunner({ variables: [var1, var2, var3, var4] });
         const queries: CloudWatchMetricsQuery[] = [
           {
@@ -553,7 +553,7 @@ describe('CloudWatchMetricsQueryRunner', () => {
         });
       });
 
-      it('should generate the correct query for multilple template variables, lack scopedVars', async () => {
+      it('should generate the correct query for multiple template variables, lack scopedVars', async () => {
         const { runner, fetchMock, request } = setupMockedMetricsQueryRunner({ variables: [var1, var2, var3, var4] });
         const queries: CloudWatchMetricsQuery[] = [
           {

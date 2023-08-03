@@ -5,18 +5,18 @@ import "github.com/grafana/thema"
 composableKinds: PanelCfg: {
 	lineage: {
 		joinSchema: {
-			PanelOptions: {...}
-			PanelFieldConfig: string
+			Options: {...}
+			FieldConfig: string
 		}
 		name: "panel_conflicting_joinschema"
 		seqs: [
 			{
 				schemas: [
 					{
-						PanelOptions: {
+						Options: {
 							foo: string
 						} @cuetsy(kind="interface")
-						PanelFieldConfig: string
+						FieldConfig: string
 					},
 				]
 			},

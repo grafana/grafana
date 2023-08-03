@@ -23,7 +23,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
@@ -75,12 +75,13 @@ func TestProcessTicks(t *testing.T) {
 		Tracer:       testTracer,
 	}
 	managerCfg := state.ManagerCfg{
-		Metrics:       testMetrics.GetStateMetrics(),
-		ExternalURL:   nil,
-		InstanceStore: nil,
-		Images:        &state.NoopImageService{},
-		Clock:         mockedClock,
-		Historian:     &state.FakeHistorian{},
+		Metrics:                 testMetrics.GetStateMetrics(),
+		ExternalURL:             nil,
+		InstanceStore:           nil,
+		Images:                  &state.NoopImageService{},
+		Clock:                   mockedClock,
+		Historian:               &state.FakeHistorian{},
+		MaxStateSaveConcurrency: 1,
 	}
 	st := state.NewManager(managerCfg)
 
@@ -530,6 +531,8 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 
 	t.Run("when a message is sent to update channel", func(t *testing.T) {
 		rule := models.AlertRuleGen(withQueryForState(t, eval.Normal))()
+		folderTitle := "folderName"
+		ruleFp := ruleWithFolder{rule, folderTitle}.Fingerprint()
 
 		evalChan := make(chan *evaluation)
 		evalAppliedChan := make(chan time.Time)
@@ -540,7 +543,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 
 		sch, ruleStore, _, _ := createSchedule(evalAppliedChan, &sender)
 		ruleStore.PutRule(context.Background(), rule)
-		sch.schedulableAlertRules.set([]*models.AlertRule{rule}, map[string]string{rule.NamespaceUID: "folderName"})
+		sch.schedulableAlertRules.set([]*models.AlertRule{rule}, map[string]string{rule.NamespaceUID: folderTitle})
 
 		go func() {
 			ctx, cancel := context.WithCancel(context.Background())
@@ -552,6 +555,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 		evalChan <- &evaluation{
 			scheduledAt: sch.clock.Now(),
 			rule:        rule,
+			folderTitle: folderTitle,
 		}
 
 		waitForTimeChannel(t, evalAppliedChan)
@@ -584,9 +588,8 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 		require.Greaterf(t, expectedToBeSent, 0, "State manager was expected to return at least one state that can be expired")
 
 		t.Run("should do nothing if version in channel is the same", func(t *testing.T) {
-			updateChan <- ruleVersionAndPauseStatus{ruleVersion(rule.Version - 1), false}
-			updateChan <- ruleVersionAndPauseStatus{ruleVersion(rule.Version), false}
-			updateChan <- ruleVersionAndPauseStatus{ruleVersion(rule.Version), false} // second time just to make sure that previous messages were handled
+			updateChan <- ruleVersionAndPauseStatus{ruleFp, false}
+			updateChan <- ruleVersionAndPauseStatus{ruleFp, false} // second time just to make sure that previous messages were handled
 
 			actualStates := sch.stateManager.GetStatesForRuleUID(rule.OrgID, rule.UID)
 			require.Len(t, actualStates, len(states))
@@ -595,7 +598,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 		})
 
 		t.Run("should clear the state and expire firing alerts if version in channel is greater", func(t *testing.T) {
-			updateChan <- ruleVersionAndPauseStatus{ruleVersion(rule.Version + rand.Int63n(1000) + 1), false}
+			updateChan <- ruleVersionAndPauseStatus{ruleFp + 1, false}
 
 			require.Eventually(t, func() bool {
 				return len(sender.Calls) > 0
@@ -674,7 +677,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 			args, ok := sender.Calls[0].Arguments[1].(definitions.PostableAlerts)
 			require.Truef(t, ok, fmt.Sprintf("expected argument of function was supposed to be 'definitions.PostableAlerts' but got %T", sender.Calls[0].Arguments[1]))
 			assert.Len(t, args.PostableAlerts, 1)
-			assert.Equal(t, ErrorAlertName, args.PostableAlerts[0].Labels[prometheusModel.AlertNameLabel])
+			assert.Equal(t, state.ErrorAlertName, args.PostableAlerts[0].Labels[prometheusModel.AlertNameLabel])
 		})
 	})
 
@@ -781,7 +784,7 @@ func setupScheduler(t *testing.T, rs *fakeRulesStore, is *state.FakeInstanceStor
 
 	var evaluator = evalMock
 	if evalMock == nil {
-		evaluator = eval.NewEvaluatorFactory(setting.UnifiedAlertingSettings{}, nil, expr.ProvideService(&setting.Cfg{ExpressionsEnabled: true}, nil, nil, &featuremgmt.FeatureManager{}, nil, tracing.InitializeTracerForTest()), &plugins.FakePluginStore{})
+		evaluator = eval.NewEvaluatorFactory(setting.UnifiedAlertingSettings{}, nil, expr.ProvideService(&setting.Cfg{ExpressionsEnabled: true}, nil, nil, &featuremgmt.FeatureManager{}, nil, tracing.InitializeTracerForTest()), &fakes.FakePluginStore{})
 	}
 
 	if registry == nil {
@@ -816,12 +819,13 @@ func setupScheduler(t *testing.T, rs *fakeRulesStore, is *state.FakeInstanceStor
 		Tracer:           testTracer,
 	}
 	managerCfg := state.ManagerCfg{
-		Metrics:       m.GetStateMetrics(),
-		ExternalURL:   nil,
-		InstanceStore: is,
-		Images:        &state.NoopImageService{},
-		Clock:         mockedClock,
-		Historian:     &state.FakeHistorian{},
+		Metrics:                 m.GetStateMetrics(),
+		ExternalURL:             nil,
+		InstanceStore:           is,
+		Images:                  &state.NoopImageService{},
+		Clock:                   mockedClock,
+		Historian:               &state.FakeHistorian{},
+		MaxStateSaveConcurrency: 1,
 	}
 	st := state.NewManager(managerCfg)
 

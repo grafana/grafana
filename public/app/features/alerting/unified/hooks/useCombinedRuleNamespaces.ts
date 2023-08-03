@@ -24,6 +24,7 @@ import {
 import {
   getAllRulesSources,
   getRulesSourceByName,
+  GRAFANA_RULES_SOURCE_NAME,
   isCloudRulesSource,
   isGrafanaRulesSource,
 } from '../utils/datasource';
@@ -45,7 +46,10 @@ interface CacheValue {
 
 // this little monster combines prometheus rules and ruler rules to produce a unified data structure
 // can limit to a single rules source
-export function useCombinedRuleNamespaces(rulesSourceName?: string): CombinedRuleNamespace[] {
+export function useCombinedRuleNamespaces(
+  rulesSourceName?: string,
+  grafanaPromRuleNamespaces?: RuleNamespace[]
+): CombinedRuleNamespace[] {
   const promRulesResponses = useUnifiedAlertingSelector((state) => state.promRules);
   const rulerRulesResponses = useUnifiedAlertingSelector((state) => state.rulerRules);
 
@@ -67,8 +71,12 @@ export function useCombinedRuleNamespaces(rulesSourceName?: string): CombinedRul
     return rulesSources
       .map((rulesSource): CombinedRuleNamespace[] => {
         const rulesSourceName = isCloudRulesSource(rulesSource) ? rulesSource.name : rulesSource;
-        const promRules = promRulesResponses[rulesSourceName]?.result;
         const rulerRules = rulerRulesResponses[rulesSourceName]?.result;
+
+        let promRules = promRulesResponses[rulesSourceName]?.result;
+        if (rulesSourceName === GRAFANA_RULES_SOURCE_NAME && grafanaPromRuleNamespaces) {
+          promRules = grafanaPromRuleNamespaces;
+        }
 
         const cached = cache.current[rulesSourceName];
         if (cached && cached.promRules === promRules && cached.rulerRules === rulerRules) {
@@ -104,7 +112,7 @@ export function useCombinedRuleNamespaces(rulesSourceName?: string): CombinedRul
         return result;
       })
       .flat();
-  }, [promRulesResponses, rulerRulesResponses, rulesSources]);
+  }, [promRulesResponses, rulerRulesResponses, rulesSources, grafanaPromRuleNamespaces]);
 }
 
 // merge all groups in case of grafana managed, essentially treating namespaces (folders) as groups

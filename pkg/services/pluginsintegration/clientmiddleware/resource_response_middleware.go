@@ -34,6 +34,10 @@ func (m *ResourceResponseMiddleware) CallResource(ctx context.Context, req *back
 	processedStreams := 0
 	wrappedSender := callResourceResponseSenderFunc(func(res *backend.CallResourceResponse) error {
 		if processedStreams == 0 {
+			if res.Headers == nil {
+				res.Headers = map[string][]string{}
+			}
+
 			proxyutil.SetProxyResponseHeaders(res.Headers)
 		}
 

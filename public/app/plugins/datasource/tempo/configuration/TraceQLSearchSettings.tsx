@@ -4,7 +4,6 @@ import useAsync from 'react-use/lib/useAsync';
 import { DataSourcePluginOptionsEditorProps, updateDatasourcePluginJsonDataOption } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { InlineField, InlineFieldRow, InlineSwitch, useStyles2 } from '@grafana/ui';
-import { DocsLinkButton } from 'app/core/components/DocsLinkButton';
 
 import { TempoDatasource } from '../datasource';
 import { TempoJsonData } from '../types';
@@ -25,13 +24,6 @@ export function TraceQLSearchSettings({ options, onOptionsChange }: Props) {
 
   return (
     <div className={styles.container}>
-      <h3 className="page-heading">Tempo search</h3>
-
-      <div className={styles.infoText}>
-        Modify how traces are searched
-        <DocsLinkButton hrefSuffix="tempo/#tempo-search" />
-      </div>
-
       <InlineFieldRow className={styles.row}>
         <InlineField tooltip="Removes the search tab from the query editor" label="Hide search" labelWidth={26}>
           <InlineSwitch

@@ -40,7 +40,7 @@ import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { GrafanaQuery, GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
 
 import { defaultGraphConfig } from './config';
-import { PanelOptions } from './panelcfg.gen';
+import { Options } from './panelcfg.gen';
 
 let dashboardRefreshDebouncer: ReturnType<typeof setTimeout> | null = null;
 
@@ -87,7 +87,7 @@ export const graphPanelChangedHandler: PanelTypeChangedHandler = (
 
 export function graphToTimeseriesOptions(angular: any): {
   fieldConfig: FieldConfigSource;
-  options: PanelOptions;
+  options: Options;
   annotations: AnnotationQuery[];
 } {
   let annotations: AnnotationQuery[] = [];
@@ -263,7 +263,7 @@ export function graphToTimeseriesOptions(angular: any): {
           case 'stack':
             rule.properties.push({
               id: 'custom.stacking',
-              value: { mode: StackingMode.Normal, group: v },
+              value: getStackingFromOverrides(v),
             });
             break;
           case 'color':
@@ -346,7 +346,7 @@ export function graphToTimeseriesOptions(angular: any): {
   y1.custom = omitBy(graph, isNil);
   y1.nullValueMode = angular.nullPointMode as NullValueMode;
 
-  const options: PanelOptions = {
+  const options: Options = {
     legend: {
       displayMode: LegendDisplayMode.List,
       showLegend: true,
@@ -731,5 +731,13 @@ function getLegendHideFromOverride(reducer: ReducerID.allIsZero | ReducerID.allI
         },
       },
     ],
+  };
+}
+
+function getStackingFromOverrides(value: Boolean | string) {
+  const defaultGroupName = defaultGraphConfig.stacking?.group;
+  return {
+    mode: value ? StackingMode.Normal : StackingMode.None,
+    group: isString(value) ? value : defaultGroupName,
   };
 }

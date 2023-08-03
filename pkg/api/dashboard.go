@@ -158,11 +158,8 @@ func (hs *HTTPServer) GetDashboard(c *contextmodel.ReqContext) response.Response
 	}
 
 	annotationPermissions := &dtos.AnnotationPermission{}
-
-	if !hs.AccessControl.IsDisabled() {
-		hs.getAnnotationPermissionsByScope(c, &annotationPermissions.Dashboard, accesscontrol.ScopeAnnotationsTypeDashboard)
-		hs.getAnnotationPermissionsByScope(c, &annotationPermissions.Organization, accesscontrol.ScopeAnnotationsTypeOrganization)
-	}
+	hs.getAnnotationPermissionsByScope(c, &annotationPermissions.Dashboard, accesscontrol.ScopeAnnotationsTypeDashboard)
+	hs.getAnnotationPermissionsByScope(c, &annotationPermissions.Organization, accesscontrol.ScopeAnnotationsTypeOrganization)
 
 	meta := dtos.DashboardMeta{
 		IsStarred:              isStarred,
@@ -488,7 +485,7 @@ func (hs *HTTPServer) postDashboard(c *contextmodel.ReqContext, cmd dashboards.S
 
 	// Clear permission cache for the user who's created the dashboard, so that new permissions are fetched for their next call
 	// Required for cases when caller wants to immediately interact with the newly created object
-	if newDashboard && !hs.accesscontrolService.IsDisabled() {
+	if newDashboard {
 		hs.accesscontrolService.ClearUserPermissionCache(c.SignedInUser)
 	}
 
@@ -840,7 +837,10 @@ func (hs *HTTPServer) ValidateDashboard(c *contextmodel.ReqContext) response.Res
 	// work), or if schemaVersion is absent (which will happen once the Thema
 	// schema becomes canonical).
 	if err != nil || schemaVersion >= dashboard.HandoffSchemaVersion {
-		_, _, validationErr := dk.JSONValueMux(dashboardBytes)
+		// Schemas expect the dashboard to live in the spec field
+		k8sResource := `{"spec": ` + cmd.Dashboard + "}"
+
+		_, _, validationErr := dk.JSONValueMux([]byte(k8sResource))
 
 		if validationErr == nil {
 			isValid = true

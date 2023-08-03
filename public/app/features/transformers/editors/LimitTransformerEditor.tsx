@@ -1,6 +1,12 @@
 import React, { FormEvent, useCallback } from 'react';
 
-import { DataTransformerID, standardTransformers, TransformerRegistryItem, TransformerUIProps } from '@grafana/data';
+import {
+  DataTransformerID,
+  standardTransformers,
+  TransformerRegistryItem,
+  TransformerUIProps,
+  TransformerCategory,
+} from '@grafana/data';
 import { LimitTransformerOptions } from '@grafana/data/src/transformations/transformers/limit';
 import { InlineField, InlineFieldRow, Input } from '@grafana/ui';
 
@@ -38,4 +44,5 @@ export const limitTransformRegistryItem: TransformerRegistryItem<LimitTransforme
   transformation: standardTransformers.limitTransformer,
   name: 'Limit',
   description: `Limit the number of items displayed.`,
+  categories: new Set([TransformerCategory.Filter]),
 };

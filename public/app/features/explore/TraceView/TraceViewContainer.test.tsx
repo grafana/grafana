@@ -4,8 +4,6 @@ import React, { createRef } from 'react';
 import { Provider } from 'react-redux';
 
 import { getDefaultTimeRange, LoadingState } from '@grafana/data';
-import { config } from '@grafana/runtime';
-import { ExploreId } from 'app/types';
 
 import { configureStore } from '../../../store/configureStore';
 
@@ -31,7 +29,7 @@ function renderTraceViewContainer(frames = [frameOld]) {
   const { container, baseElement } = render(
     <Provider store={store}>
       <TraceViewContainer
-        exploreId={ExploreId.left}
+        exploreId="left"
         dataFrames={frames}
         splitOpenFn={() => {}}
         queryResponse={mockPanelData}
@@ -87,57 +85,58 @@ describe('TraceViewContainer', () => {
     expect(screen.queryAllByText('', { selector: 'div[data-testid="span-view"]' }).length).toBe(3);
   });
 
-  it('searches for spans', async () => {
-    renderTraceViewContainer();
-    await user.type(screen.getByPlaceholderText('Find...'), '1ed38015486087ca');
-    expect(
-      screen.queryAllByText('', { selector: 'div[data-testid="span-view"]' })[0].parentElement!.className
-    ).toContain('rowMatchingFilter');
-  });
-
   it('can select next/prev results', async () => {
     renderTraceViewContainer();
-    await user.type(screen.getByPlaceholderText('Find...'), 'logproto');
-    const nextResultButton = screen.getByRole('button', { name: 'Next results button' });
-    const prevResultButton = screen.getByRole('button', { name: 'Prev results button' });
-    const suffix = screen.getByLabelText('Search bar suffix');
+    const spanFiltersButton = screen.getByRole('button', { name: 'Span Filters 3 spans Prev Next' });
+    await user.click(spanFiltersButton);
 
+    const nextResultButton = screen.getByRole('button', { name: 'Next result button' });
+    const prevResultButton = screen.getByRole('button', { name: 'Prev result button' });
+    expect(nextResultButton.getAttribute('tabindex')).toBe('-1');
+    expect(prevResultButton.getAttribute('tabindex')).toBe('-1');
+
+    await user.click(screen.getByLabelText('Select tag key'));
+    const tagOption = screen.getByText('component');
+    await waitFor(() => expect(tagOption).toBeInTheDocument());
+    await user.click(tagOption);
+
+    await waitFor(() => {
+      expect(
+        screen.queryAllByText('', { selector: 'div[data-testid="span-view"]' })[0].parentElement!.className
+      ).toContain('rowMatchingFilter');
+      expect(
+        screen.queryAllByText('', { selector: 'div[data-testid="span-view"]' })[1].parentElement!.className
+      ).toContain('rowMatchingFilter');
+      expect(
+        screen.queryAllByText('', { selector: 'div[data-testid="span-view"]' })[2].parentElement!.className
+      ).toContain('rowMatchingFilter');
+    });
+
+    expect(nextResultButton.getAttribute('tabindex')).toBe('0');
+    expect(prevResultButton.getAttribute('tabindex')).toBe('0');
     await user.click(nextResultButton);
-    expect(suffix.textContent).toBe('1 of 2');
-    expect(
-      screen.queryAllByText('', { selector: 'div[data-testid="span-view"]' })[1].parentElement!.className
-    ).toContain('rowFocused');
+    await waitFor(() => {
+      expect(
+        screen.queryAllByText('', { selector: 'div[data-testid="span-view"]' })[0].parentElement!.className
+      ).toContain('rowFocused');
+    });
     await user.click(nextResultButton);
-    expect(suffix.textContent).toBe('2 of 2');
-    expect(
-      screen.queryAllByText('', { selector: 'div[data-testid="span-view"]' })[2].parentElement!.className
-    ).toContain('rowFocused');
-    await user.click(nextResultButton);
-    expect(suffix.textContent).toBe('1 of 2');
-    expect(
-      screen.queryAllByText('', { selector: 'div[data-testid="span-view"]' })[1].parentElement!.className
-    ).toContain('rowFocused');
+    await waitFor(() => {
+      expect(
+        screen.queryAllByText('', { selector: 'div[data-testid="span-view"]' })[1].parentElement!.className
+      ).toContain('rowFocused');
+    });
     await user.click(prevResultButton);
-    expect(suffix.textContent).toBe('2 of 2');
-    expect(
-      screen.queryAllByText('', { selector: 'div[data-testid="span-view"]' })[2].parentElement!.className
-    ).toContain('rowFocused');
-    await user.click(prevResultButton);
-    expect(suffix.textContent).toBe('1 of 2');
-    expect(
-      screen.queryAllByText('', { selector: 'div[data-testid="span-view"]' })[1].parentElement!.className
-    ).toContain('rowFocused');
-    await user.click(prevResultButton);
-    expect(suffix.textContent).toBe('2 of 2');
-    expect(
-      screen.queryAllByText('', { selector: 'div[data-testid="span-view"]' })[2].parentElement!.className
-    ).toContain('rowFocused');
+    await waitFor(() => {
+      expect(
+        screen.queryAllByText('', { selector: 'div[data-testid="span-view"]' })[0].parentElement!.className
+      ).toContain('rowFocused');
+    });
   });
 
   it('show matches only works as expected', async () => {
-    config.featureToggles.newTraceViewHeader = true;
     renderTraceViewContainer();
-    const spanFiltersButton = screen.getByRole('button', { name: 'Span Filters' });
+    const spanFiltersButton = screen.getByRole('button', { name: 'Span Filters 3 spans Prev Next' });
     await user.click(spanFiltersButton);
 
     await user.click(screen.getByLabelText('Select tag key'));

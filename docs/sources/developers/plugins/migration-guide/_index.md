@@ -1,13 +1,19 @@
 ---
 aliases:
   - ../../plugins/developing/migration-guide
+description: A guide for migrating and updating a Grafana plugin.
 keywords:
   - grafana
   - plugins
   - migration
   - plugin
   - documentation
-title: Migration guides
+labels:
+  products:
+    - enterprise
+    - oss
+title: Migrate a plugin
+weight: 500
 ---
 
 <script>
@@ -34,7 +40,7 @@ title: Migration guides
 })();
 </script>
 
-# Plugin migration guides
+# Migrate a plugin
 
 The following guides help you identify the steps required to update a plugin following changes between versions of Grafana.
 

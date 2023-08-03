@@ -24,7 +24,7 @@ import { DashboardSearchItem } from 'app/features/search/types';
 import { getVariablesUrlParams } from 'app/features/variables/getAllVariableValuesForUrl';
 import { useDispatch } from 'app/types';
 
-import { PanelOptions } from './panelcfg.gen';
+import { Options } from './panelcfg.gen';
 import { getStyles } from './styles';
 
 type Dashboard = DashboardSearchItem & { id?: number; isSearchResult?: boolean; isRecent?: boolean };
@@ -35,7 +35,7 @@ interface DashboardGroup {
   dashboards: Dashboard[];
 }
 
-async function fetchDashboards(options: PanelOptions, replaceVars: InterpolateFunction) {
+async function fetchDashboards(options: Options, replaceVars: InterpolateFunction) {
   let starredDashboards: Promise<DashboardSearchItem[]> = Promise.resolve([]);
   if (options.showStarred) {
     const params = { limit: options.maxItems, starred: 'true' };
@@ -99,7 +99,7 @@ async function fetchDashboards(options: PanelOptions, replaceVars: InterpolateFu
   return dashMap;
 }
 
-export function DashList(props: PanelProps<PanelOptions>) {
+export function DashList(props: PanelProps<Options>) {
   const [dashboards, setDashboards] = useState(new Map<string, Dashboard>());
   const dispatch = useDispatch();
   useEffect(() => {
@@ -266,7 +266,7 @@ export const getCheckboxStyles = stylesFactory((theme: GrafanaTheme2) => {
       appearance: 'none',
       '&:focus-visible + *': {
         ...getFocusStyles(theme),
-        borderRadius: theme.shape.borderRadius(1),
+        borderRadius: theme.shape.radius.default,
       },
     }),
     icon: css({

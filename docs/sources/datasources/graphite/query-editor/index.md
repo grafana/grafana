@@ -11,6 +11,11 @@ keywords:
   - logs
   - resources
   - queries
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 menuTitle: Query editor
 title: Graphite query editor
 weight: 300
@@ -22,7 +27,7 @@ Grafana includes a Graphite-specific query editor to help you build queries.
 The query editor helps you quickly navigate the metric space, add functions, and change function parameters.
 It can handle all types of Graphite queries, including complex nested queries through the use of query references.
 
-For general documentation on querying data sources in Grafana, see [Query and transform data]({{< relref "../../../panels-visualizations/query-transform-data" >}}).
+For general documentation on querying data sources in Grafana, see [Query and transform data][query-transform-data].
 
 ## View the raw query
 
@@ -66,8 +71,10 @@ Grafana consolidates all Graphite metrics so that Graphite doesn't return more d
 By default, Grafana consolidates data points using the `avg` function.
 To control how Graphite consolidates metrics, use the Graphite `consolidateBy()` function.
 
-> **Note:** Legend summary values (max, min, total) can't all be correct at the same time because they are calculated client-side by Grafana.
-> Depending on your consolidation function, only one or two can be correct at the same time.
+{{% admonition type="note" %}}
+Legend summary values (max, min, total) can't all be correct at the same time because they are calculated client-side by Grafana.
+Depending on your consolidation function, only one or two can be correct at the same time.
+{{% /admonition %}}
 
 ### Combine time series
 
@@ -82,8 +89,10 @@ To select data, use the `seriesByTag` function, which takes tag expressions (`=`
 
 The Grafana query builder does this for you automatically when you select a tag.
 
-> **Tip:** The regular expression search can be slow on high-cardinality tags, so try to use other tags to reduce the scope first.
-> To help reduce the results, start by filtering on a particular name or namespace.
+{{% admonition type="note" %}}
+The regular expression search can be slow on high-cardinality tags, so try to use other tags to reduce the scope first.
+To help reduce the results, start by filtering on a particular name or namespace.
+{{% /admonition %}}
 
 ## Nest queries
 
@@ -101,7 +110,7 @@ This is more efficient than adding a query for each time series, such as `cpu.pe
 
 ## Apply annotations
 
-[Annotations]({{< relref "../../../dashboards/build-dashboards/annotate-visualizations" >}}) overlay rich event information on top of graphs.
+[Annotations][annotate-visualizations] overlay rich event information on top of graphs.
 You can add annotation queries in the Dashboard menu's Annotations view.
 
 Graphite supports two ways to query annotations:
@@ -112,10 +121,21 @@ Graphite supports two ways to query annotations:
 ## Get Grafana metrics into Graphite
 
 Grafana exposes metrics for Graphite on the `/metrics` endpoint.
-For detailed instructions, refer to [Internal Grafana metrics]({{< relref "../../../setup-grafana/set-up-grafana-monitoring" >}}).
+For detailed instructions, refer to [Internal Grafana metrics][set-up-grafana-monitoring].
 
 ## Integration with Loki
 
 Graphite queries get converted to Loki queries when the data source selection changes in Explore. Loki label names and values are extracted from the Graphite queries according to mappings information provided in Graphite data source configuration. Queries using tags with `seriesByTags()` are also transformed without any additional setup.
 
 Refer to the Graphite data source settings for more details.
+
+{{% docs/reference %}}
+[annotate-visualizations]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/build-dashboards/annotate-visualizations"
+[annotate-visualizations]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/build-dashboards/annotate-visualizations"
+
+[query-transform-data]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/query-transform-data"
+[query-transform-data]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/query-transform-data"
+
+[set-up-grafana-monitoring]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/set-up-grafana-monitoring"
+[set-up-grafana-monitoring]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/set-up-grafana-monitoring"
+{{% /docs/reference %}}

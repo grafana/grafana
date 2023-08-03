@@ -13,11 +13,11 @@ import (
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/plugins"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/supportbundles"
 	"github.com/grafana/grafana/pkg/services/supportbundles/bundleregistry"
-	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -77,10 +77,8 @@ func ProvideService(
 		return s, nil
 	}
 
-	if !accessControl.IsDisabled() {
-		if err := s.declareFixedRoles(accesscontrolService); err != nil {
-			return nil, err
-		}
+	if err := s.declareFixedRoles(accesscontrolService); err != nil {
+		return nil, err
 	}
 
 	s.registerAPIEndpoints(httpServer, routeRegister)
@@ -111,7 +109,7 @@ func (s *Service) Run(ctx context.Context) error {
 	return ctx.Err()
 }
 
-func (s *Service) create(ctx context.Context, collectors []string, usr *user.SignedInUser) (*supportbundles.Bundle, error) {
+func (s *Service) create(ctx context.Context, collectors []string, usr identity.Requester) (*supportbundles.Bundle, error) {
 	bundle, err := s.store.Create(ctx, usr)
 	if err != nil {
 		return nil, err

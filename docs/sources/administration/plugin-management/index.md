@@ -5,6 +5,10 @@ aliases:
   - ../plugins/installation/
   - ../plugins/plugin-signature-verification/
   - ../plugins/plugin-signatures/
+labels:
+  products:
+    - enterprise
+    - oss
 title: Plugin management
 weight: 600
 ---
@@ -19,7 +23,7 @@ Grafana supports three types of plugins: [panels](/grafana/plugins?type=panel), 
 
 ## Panel plugins
 
-Add new visualizations to your dashboard with panel plugins, such as the [Worldmap Panel](/grafana/plugins/grafana-worldmap-panel), [Clock](/grafana/plugins/grafana-clock-panel), and [Pie Chart](/grafana/plugins/grafana-piechart-panel).
+Add new visualizations to your dashboard with panel plugins, such as the [Clock](/grafana/plugins/grafana-clock-panel), [Mosaic](/grafana/plugins/boazreicher-mosaicplot-panel) and [Variable](/grafana/plugins/volkovlabs-variable-panel) panels.
 
 Use panel plugins when you want to:
 
@@ -49,7 +53,9 @@ With [RBAC]({{< relref "../roles-and-permissions/access-control/#about-rbac" >}}
 
 By default, Viewers, Editors and Admins have access to all App Plugins that their organization role allows them to access, thanks to the `fixed:plugins.app:reader` role.
 
-> **Note:** Revoking this RBAC role from some users, will prevent them from accessing app plugins. But granting this RBAC role to users will only allow them to see app plugins their organization role allows them to see.
+{{% admonition type="note" %}}
+Revoking this RBAC role from some users, will prevent them from accessing app plugins. But granting this RBAC role to users will only allow them to see app plugins their organization role allows them to see.
+{{% /admonition %}}
 
 To prevent users from seeing an app plugin, refer to [this permissions scenarios]({{< relref "../roles-and-permissions/access-control/plan-rbac-rollout-strategy#prevent-viewers-from-accessing-an-app-plugin" >}}).
 
@@ -165,7 +171,7 @@ Grafana also writes an error message to the server log:
 WARN[05-26|12:00:00] Some plugin scanning errors were found   errors="plugin '<plugin id>' is unsigned, plugin '<plugin id>' has an invalid signature"
 ```
 
-If you are a plugin developer and want to know how to sign your plugin, refer to [Sign a plugin]({{< relref "../../developers/plugins/sign-a-plugin/" >}}).
+If you are a plugin developer and want to know how to sign your plugin, refer to [Sign a plugin]({{< relref "../../developers/plugins/publish-a-plugin/sign-a-plugin.md" >}}).
 
 | Signature status   | Description                                                                     |
 | ------------------ | ------------------------------------------------------------------------------- |
@@ -197,7 +203,9 @@ If you've allowed loading of an unsigned plugin, then Grafana writes a warning m
 WARN[06-01|16:45:59] Running an unsigned plugin   pluginID=<plugin id>
 ```
 
-> **Note:** If you're developing a plugin, then you can enable development mode to allow all unsigned plugins.
+{{% admonition type="note" %}}
+If you're developing a plugin, then you can enable development mode to allow all unsigned plugins.
+{{% /admonition %}}
 
 ## Learn more
 

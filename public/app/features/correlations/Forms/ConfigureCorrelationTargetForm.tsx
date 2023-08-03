@@ -2,8 +2,8 @@ import React from 'react';
 import { Controller, useFormContext, useWatch } from 'react-hook-form';
 
 import { DataSourceInstanceSettings } from '@grafana/data';
-import { DataSourcePicker } from '@grafana/runtime';
 import { Field, FieldSet } from '@grafana/ui';
+import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 
 import { QueryEditorField } from './QueryEditorField';
 import { useCorrelationsFormContext } from './correlationsFormContext';
@@ -16,8 +16,10 @@ export const ConfigureCorrelationTargetForm = () => {
 
   return (
     <>
-      <FieldSet label="Setup target query (2/3)">
-        <p>Clicking on a link runs a provided target query.</p>
+      <FieldSet label="Setup the target for the correlation (Step 2 of 3)">
+        <p>
+          Define what data source the correlation will link to, and what query will run when the correlation is clicked.
+        </p>
         <Controller
           control={control}
           name="targetUID"
