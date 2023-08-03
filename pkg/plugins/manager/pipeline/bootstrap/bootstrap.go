@@ -47,7 +47,7 @@ func New(cfg *config.Cfg, opts Opts) *Bootstrap {
 		opts.ConstructFunc = DefaultConstructFunc(signature.DefaultCalculator(cfg), assetpath.DefaultService(cfg))
 	}
 
-	if len(opts.DecorateFuncs) == 0 {
+	if opts.DecorateFuncs == nil {
 		opts.DecorateFuncs = DefaultDecorateFuncs
 	}
 
