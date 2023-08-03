@@ -868,7 +868,7 @@ func TestService_getProxySettings(t *testing.T) {
 
 		opts, err := dsService.httpClientOptions(context.Background(), &ds)
 		require.NoError(t, err)
-		require.False(t, opts.ProxyOptions.Enabled)
+		require.Nil(t, opts.ProxyOptions)
 	})
 
 	t.Run("Username should default to datasource UID", func(t *testing.T) {
