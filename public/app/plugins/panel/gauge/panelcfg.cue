@@ -29,8 +29,8 @@ composableKinds: PanelCfg: {
 					common.SingleStatBaseOptions
 					showThresholdLabels:  bool | *false
 					showThresholdMarkers: bool | *true
-					minVizWidth:          uint32 | *250
-					minVizHeight:         uint32 | *200
+					minVizWidth:          uint32 | *100
+					minVizHeight:         uint32 | *100
 				} @cuetsy(kind="interface")
 			}
 		}]

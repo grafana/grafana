@@ -18,8 +18,8 @@ export interface Options extends common.SingleStatBaseOptions {
 }
 
 export const defaultOptions: Partial<Options> = {
-  minVizHeight: 200,
-  minVizWidth: 250,
+  minVizHeight: 100,
+  minVizWidth: 100,
   showThresholdLabels: false,
   showThresholdMarkers: true,
 };
