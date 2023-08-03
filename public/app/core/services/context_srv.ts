@@ -91,9 +91,7 @@ export class ContextSrv {
     this.hasEditPermissionInFolders = this.user.hasEditPermissionInFolders;
     this.minRefreshInterval = config.minRefreshInterval;
 
-    if (this.canScheduleRotation()) {
-      this.scheduleTokenRotationJob();
-    }
+    this.scheduleTokenRotationJob();
   }
 
   async fetchUserPermissions() {
