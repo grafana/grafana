@@ -46,7 +46,7 @@ var executeSyncLogQuery = func(ctx context.Context, e *cloudWatchExecutor, req *
 			return nil, err
 		}
 
-		getQueryResultsOutput, err := e.syncQuery(ctx, logsClient, q, logsQuery, time.Duration(instance.Settings.LogsTimeout.Duration))
+		getQueryResultsOutput, err := e.syncQuery(ctx, logsClient, q, logsQuery, instance.Settings.LogsTimeout.Duration)
 		if err != nil {
 			return nil, err
 		}
@@ -113,7 +113,7 @@ func (e *cloudWatchExecutor) syncQuery(ctx context.Context, logsClient cloudwatc
 		if isTerminated(*res.Status) {
 			return res, err
 		}
-		if time.Duration(attemptCount) * time.Second >= logsTimeout {
+		if time.Duration(attemptCount)*time.Second >= logsTimeout {
 			return res, fmt.Errorf("time to fetch query results exceeded logs timeout")
 		}
 

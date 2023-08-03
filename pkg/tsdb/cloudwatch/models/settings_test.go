@@ -105,7 +105,7 @@ func Test_Settings_LoadCloudWatchSettings(t *testing.T) {
 
 		s, err := LoadCloudWatchSettings(settings)
 		require.NoError(t, err)
-		assert.Equal(t, time.Minute * 30, s.LogsTimeout.Duration)
+		assert.Equal(t, time.Minute*30, s.LogsTimeout.Duration)
 	})
 	t.Run("Should correctly parse logsTimeout duration string", func(t *testing.T) {
 		settings := backend.DataSourceInstanceSettings{
@@ -123,7 +123,7 @@ func Test_Settings_LoadCloudWatchSettings(t *testing.T) {
 
 		s, err := LoadCloudWatchSettings(settings)
 		require.NoError(t, err)
-		assert.Equal(t, time.Minute * 10, s.LogsTimeout.Duration)
+		assert.Equal(t, time.Minute*10, s.LogsTimeout.Duration)
 	})
 	t.Run("Should correctly parse logsTimeout string with float number", func(t *testing.T) {
 		settings := backend.DataSourceInstanceSettings{
