@@ -54,7 +54,7 @@ export function createRangeOperation(name: string, isRangeOperationWithGrouping?
       let opDocs = FUNCTIONS.find((x) => x.insertText === op.id)?.documentation ?? '';
 
       if (op.params[0] === '$__auto') {
-        return `${opDocs} \`$__auto\` is a variable that will be replaced with the [value of step](https://grafana.com/docs/grafana/next/datasources/loki/query-editor/#options) for range queries and with the value of selected time range (calculated to - from) for instant queries.`;
+        return `${opDocs} \`$__auto\` is a variable that will be replaced with the [value of step](https://grafana.com/docs/grafana/next/datasources/loki/query-editor/#options) for range queries and with the value of the selected time range (calculated to - from) for instant queries.`;
       } else {
         return `${opDocs} The [range vector](https://grafana.com/docs/loki/latest/logql/metric_queries/#range-vector-aggregation) is set to \`${op.params[0]}\`.`;
       }
