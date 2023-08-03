@@ -27,7 +27,8 @@ export const ConfigEditor = (props: Props) => {
 
   if (prometheusConfigOverhaulAuth) {
     // passed to the SigV4 component(aws-sdk-react) to display custom width
-    props.options.jsonData.inExperimentalAuthComponent = true;
+    // @ts-ignore (REMOVE THIS ONCE THE react-aws-sdk CHANGE HAS BEEN MADE TO UPDATE THE INTERFACE)
+    props.inExperimentalAuthComponent = true;
   }
   // use ref so this is evaluated only first time it renders and the select does not disappear suddenly.
   const showAccessOptions = useRef(props.options.access === 'direct');
