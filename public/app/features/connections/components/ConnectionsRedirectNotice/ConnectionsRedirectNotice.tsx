@@ -25,7 +25,7 @@ export function ConnectionsRedirectNotice() {
   const [showNotice, setShowNotice] = useState(true);
 
   return showNotice ? (
-    <Alert severity="warning" title="" onRemove={() => setShowNotice(false)}>
+    <Alert severity="info" title="" onRemove={() => setShowNotice(false)}>
       <div className={styles.alertContent}>
         <p className={styles.alertParagraph}>
           Data sources have a new home! You can discover new data sources or manage existing ones in the Connections
