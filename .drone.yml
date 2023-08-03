@@ -1059,15 +1059,7 @@ steps:
   image: grafana/build-container:1.7.5
   name: yarn-install
 - commands:
-  - |-
-    echo -e "unknwon
-    referer
-    errorstring
-    eror
-    iam
-    wan" > words_to_ignore.txt
-  - codespell -I words_to_ignore.txt docs/
-  - rm words_to_ignore.txt
+  - codespell -I .codespellignore docs/
   image: grafana/build-container:1.7.5
   name: codespell
 - commands:
@@ -1344,15 +1336,7 @@ steps:
   image: grafana/build-container:1.7.5
   name: yarn-install
 - commands:
-  - |-
-    echo -e "unknwon
-    referer
-    errorstring
-    eror
-    iam
-    wan" > words_to_ignore.txt
-  - codespell -I words_to_ignore.txt docs/
-  - rm words_to_ignore.txt
+  - codespell -I .codespellignore docs/
   image: grafana/build-container:1.7.5
   name: codespell
 - commands:
