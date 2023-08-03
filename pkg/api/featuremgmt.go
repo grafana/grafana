@@ -5,6 +5,8 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/response"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/web"
 )
 
 func (hs *HTTPServer) GetFeatureToggles(ctx *contextmodel.ReqContext) response.Response {
@@ -27,4 +29,12 @@ func (hs *HTTPServer) GetFeatureToggles(ctx *contextmodel.ReqContext) response.R
 	}
 
 	return response.JSON(http.StatusOK, features)
+}
+
+func (hs *HTTPServer) UpdateFeatureToggle(ctx *contextmodel.ReqContext) response.Response {
+	cmd := featuremgmt.UpdateFeatureTogglesCommand{}
+	if err := web.Bind(ctx.Req, &cmd); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
+	return response.Success("Feature toggles updated")
 }
