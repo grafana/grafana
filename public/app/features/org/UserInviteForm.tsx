@@ -1,8 +1,9 @@
 import React from 'react';
 
 import { locationUtil, SelectableValue } from '@grafana/data';
+import { GrafanaEdition } from '@grafana/data/src/types/config';
 import { Stack } from '@grafana/experimental';
-import { locationService } from '@grafana/runtime';
+import { config, locationService } from '@grafana/runtime';
 import {
   Button,
   LinkButton,
@@ -22,10 +23,18 @@ import { OrgRole, useDispatch } from 'app/types';
 
 import { addInvitee } from '../invites/state/actions';
 
-const roles: Array<SelectableValue<OrgRole>> = Object.values(OrgRole).map((r) => ({
-  label: r === OrgRole.None ? 'No basic role' : r,
-  value: r,
-}));
+const noBasicRoleFlag = config.licenseInfo.edition === GrafanaEdition.Enterprise;
+
+const tooltipMessage = noBasicRoleFlag
+  ? 'You can now select the "No basic role" option and add permissions to your custom needs.'
+  : undefined;
+
+const roles: Array<SelectableValue<OrgRole>> = Object.values(OrgRole)
+  .filter((r) => noBasicRoleFlag || r !== OrgRole.None)
+  .map((r) => ({
+    label: r === OrgRole.None ? 'No basic role' : r,
+    value: r,
+  }));
 
 export interface FormModel {
   role: OrgRole;
@@ -72,13 +81,11 @@ export const UserInviteForm = () => {
                   <Label>
                     <Stack gap={0.5}>
                       <span>Role</span>
-                      <Tooltip
-                        placement="right-end"
-                        interactive={true}
-                        content='You can now select the "No basic role" option and add permissions to your custom needs.'
-                      >
-                        <Icon name="info-circle" size="xs" />
-                      </Tooltip>
+                      {tooltipMessage && (
+                        <Tooltip placement="right-end" interactive={true} content={<>{tooltipMessage}</>}>
+                          <Icon name="info-circle" size="xs" />
+                        </Tooltip>
+                      )}
                     </Stack>
                   </Label>
                 }

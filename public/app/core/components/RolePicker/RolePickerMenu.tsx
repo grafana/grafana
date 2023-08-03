@@ -1,6 +1,8 @@
 import { css, cx } from '@emotion/css';
 import React, { useEffect, useRef, useState } from 'react';
 
+import { GrafanaEdition } from '@grafana/data/src/types/config';
+import { config } from '@grafana/runtime';
 import { Button, CustomScrollbar, HorizontalGroup, useStyles2, useTheme2 } from '@grafana/ui';
 import { getSelectStyles } from '@grafana/ui/src/components/Select/getSelectStyles';
 import { OrgRole, Role } from 'app/types';
@@ -33,6 +35,11 @@ const fixedRoleGroupNames: Record<string, string> = {
   ldap: 'LDAP',
   current: 'Current org',
 };
+
+const noBasicRoleFlag = config.licenseInfo.edition === GrafanaEdition.Enterprise;
+const tooltipMessage = noBasicRoleFlag
+  ? 'You can now select the "No basic role" option and add permissions to your custom needs.'
+  : undefined;
 
 interface RolePickerMenuProps {
   basicRole?: OrgRole;
@@ -207,7 +214,7 @@ export const RolePickerMenu = ({
                 onChange={onSelectedBuiltinRoleChange}
                 disabled={basicRoleDisabled}
                 disabledMesssage={disabledMessage}
-                tooltipMessage='You can now select the "No basic role" option and add permissions to your custom needs.'
+                tooltipMessage={tooltipMessage}
               />
             </div>
           )}
