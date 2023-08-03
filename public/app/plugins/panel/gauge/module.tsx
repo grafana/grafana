@@ -42,14 +42,14 @@ export const plugin = new PanelPlugin<Options>(GaugePanel)
         path: 'minVizWidth',
         name: 'Min width',
         description: 'Minimum column width',
-        defaultValue: 250,
+        defaultValue: defaultOptions.minVizWidth,
         showIf: (options: Options) => options.orientation === VizOrientation.Vertical,
       })
       .addNumberInput({
         path: 'minVizHeight',
         name: 'Min height',
         description: 'Minimum row height',
-        defaultValue: 200,
+        defaultValue: defaultOptions.minVizHeight,
         showIf: (options: Options) => options.orientation === VizOrientation.Horizontal,
       });
 
