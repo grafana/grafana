@@ -85,21 +85,21 @@ The following table lists permissions for each role.
 
 | Permission                     | Organization administrator | Editor | Viewer | No Basic Role |
 | :----------------------------- | :------------------------: | :----: | :----: | :-----------: |
-| View dashboards                |                            |   x    |   x    |               |
-| Add, edit, delete dashboards   |             x              |   x    |        |               |
-| Add, edit, delete folders      |             x              |   x    |        |               |
-| View playlists                 |             x              |   x    |   x    |               |
-| Add, edit, delete playlists    |             x              |   x    |        |               |
-| Create library panels          |             x              |   x    |        |               |
-| View annotations               |             x              |   x    |   x    |               |
-| Add, edit, delete annotations  |             x              |   x    |        |               |
-| Access Explore                 |             x              |   x    |        |               |
-| Add, edit, delete data sources |             x              |        |        |               |
-| Add and edit users             |             x              |        |        |               |
-| Add and edit teams             |             x              |        |        |               |
-| Change organizations settings  |             x              |        |        |               |
-| Change team settings           |             x              |        |        |               |
-| Configure application plugins  |             x              |        |        |               |
+| View dashboards                |                            |  yes   |  yes   |               |
+| Add, edit, delete dashboards   |            yes             |  yes   |        |               |
+| Add, edit, delete folders      |            yes             |  yes   |        |               |
+| View playlists                 |            yes             |  yes   |  yes   |               |
+| Add, edit, delete playlists    |            yes             |  yes   |        |               |
+| Create library panels          |            yes             |  yes   |        |               |
+| View annotations               |            yes             |  yes   |  yes   |               |
+| Add, edit, delete annotations  |            yes             |  yes   |        |               |
+| Access Explore                 |            yes             |  yes   |        |               |
+| Add, edit, delete data sources |            yes             |        |        |               |
+| Add and edit users             |            yes             |        |        |               |
+| Add and edit teams             |            yes             |        |        |               |
+| Change organizations settings  |            yes             |        |        |               |
+| Change team settings           |            yes             |        |        |               |
+| Configure application plugins  |            yes             |        |        |               |
 
 ## Dashboard permissions
 
