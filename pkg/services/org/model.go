@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/models/roletype"
-	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
@@ -174,7 +174,7 @@ type GetOrgUsersQuery struct {
 	// Flag used to allow oss edition to query users without access control
 	DontEnforceAccessControl bool
 
-	User *user.SignedInUser
+	User identity.Requester
 }
 
 type SearchOrgUsersQuery struct {
@@ -186,7 +186,7 @@ type SearchOrgUsersQuery struct {
 	// Flag used to allow oss edition to query users without access control
 	DontEnforceAccessControl bool
 
-	User *user.SignedInUser
+	User identity.Requester
 }
 
 type SearchOrgUsersQueryResult struct {
