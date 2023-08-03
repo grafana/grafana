@@ -406,4 +406,8 @@ const (
 	// FlagInfluxdbSqlSupport
 	// Enable InfluxDB SQL query language support with new querying UI
 	FlagInfluxdbSqlSupport = "influxdbSqlSupport"
+
+	// FlagUserWithoutRole
+	// Enable UI for users to be assigned an empty role
+	FlagNoBasicRole = "noBasicRole"
 )
