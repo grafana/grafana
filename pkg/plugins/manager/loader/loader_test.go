@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/bootstrap"
 	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/discovery"
 	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/initialization"
+	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/termination"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
 	"github.com/grafana/grafana/pkg/plugins/manager/sources"
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
@@ -435,11 +436,15 @@ func TestLoader_Load(t *testing.T) {
 		angularInspector, err := angularinspector.NewStaticInspector()
 		require.NoError(t, err)
 
+		terminationStage, err := termination.New(tt.cfg, termination.Opts{})
+		require.NoError(t, err)
+
 		l := New(tt.cfg, signature.NewUnsignedAuthorizer(tt.cfg), fakes.NewFakePluginRegistry(),
 			fakes.NewFakeProcessManager(), fakes.NewFakeRoleRegistry(),
 			assetpath.ProvideService(pluginscdn.ProvideService(tt.cfg)), angularInspector, &fakes.FakeOauthService{},
 			discovery.New(tt.cfg, discovery.Opts{}), bootstrap.New(tt.cfg, bootstrap.Opts{}),
-			initialization.New(tt.cfg, initialization.Opts{}))
+			initialization.New(tt.cfg, initialization.Opts{}),
+			terminationStage)
 
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := l.Load(context.Background(), sources.NewLocalSource(tt.class, tt.pluginPaths))
@@ -506,7 +511,7 @@ func TestLoader_Load(t *testing.T) {
 					steps = append(steps, "initialize")
 					return ps, nil
 				},
-			})
+			}, &fakes.FakeTerminator{})
 
 		got, err := l.Load(context.Background(), src)
 		require.NoError(t, err)

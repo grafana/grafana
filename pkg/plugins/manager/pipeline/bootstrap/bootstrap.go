@@ -65,6 +65,10 @@ func (b *Bootstrap) Bootstrap(ctx context.Context, src plugins.PluginSource, fou
 		return nil, err
 	}
 
+	if len(b.decorateSteps) == 0 {
+		return ps, nil
+	}
+
 	for _, p := range ps {
 		for _, decorator := range b.decorateSteps {
 			p, err = decorator(ctx, p)

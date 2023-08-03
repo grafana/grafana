@@ -496,3 +496,14 @@ func (f *FakeInitializer) Initialize(ctx context.Context, ps []*plugins.Plugin) 
 	}
 	return []*plugins.Plugin{}, nil
 }
+
+type FakeTerminator struct {
+	TerminateFunc func(ctx context.Context, uid string) error
+}
+
+func (f *FakeTerminator) Terminate(ctx context.Context, uid string) error {
+	if f.TerminateFunc != nil {
+		return f.TerminateFunc(ctx, uid)
+	}
+	return nil
+}
