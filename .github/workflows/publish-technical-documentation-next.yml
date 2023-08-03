@@ -25,7 +25,7 @@ jobs:
         id: generate-token
         uses: tibdex/github-app-token@v1
         with:
-          app: ${{ secrets.PUBLISH_TECHNICAL_DOCUMENTATION_ID }}
+          app_id: ${{ secrets.PUBLISH_TECHNICAL_DOCUMENTATION_ID }}
           private_key: ${{ secrets.PUBLISH_TECHNICAL_DOCUMENTATION_PEM }}
 
       - name: Checkout code
