@@ -516,7 +516,7 @@ func TestProcessEvalResults(t *testing.T) {
 					newResult(eval.WithState(eval.Alerting), eval.WithLabels(labels1)),
 				},
 				t3: {
-					newResult(eval.WithState(eval.NoData), eval.WithLabels(labels1)), // TODO fix it because NoData does not have labels
+					newResult(eval.WithState(eval.NoData), eval.WithLabels(noDataLabels)),
 				},
 				tn(4): {
 					newResult(eval.WithState(eval.Alerting), eval.WithLabels(labels1)),
@@ -525,17 +525,17 @@ func TestProcessEvalResults(t *testing.T) {
 					newResult(eval.WithState(eval.Alerting), eval.WithLabels(labels1)),
 				},
 			},
-			expectedAnnotations: 3, // Normal -> Pending, Pending -> NoData, NoData -> Pending
+			expectedAnnotations: 4, // [t2: Normal -> Pending, t3: Normal -> NoData, t4: Pending -> Alerting, t5: NoData -> Normal (MissingSeries)]
 			expectedStates: []*state.State{
 				{
 					Labels: labels["system + rule + labels1"],
-					State:  eval.Pending,
+					State:  eval.Alerting,
 					Results: []state.Evaluation{
 						newEvaluation(tn(4), eval.Alerting),
 						newEvaluation(tn(5), eval.Alerting),
 					},
 					StartsAt:           tn(4),
-					EndsAt:             tn(4).Add(state.ResendDelay * 3),
+					EndsAt:             tn(5).Add(state.ResendDelay * 3),
 					LastEvaluationTime: tn(5),
 				},
 			},
@@ -554,16 +554,26 @@ func TestProcessEvalResults(t *testing.T) {
 					newResult(eval.WithState(eval.Alerting), eval.WithLabels(labels1)),
 				},
 				tn(4): {
-					newResult(eval.WithState(eval.NoData), eval.WithLabels(labels1)),
+					newResult(eval.WithState(eval.NoData), eval.WithLabels(noDataLabels)),
 				},
 			},
 			expectedAnnotations: 3,
 			expectedStates: []*state.State{
 				{
 					Labels: labels["system + rule + labels1"],
+					State:  eval.Alerting,
+					Results: []state.Evaluation{
+						newEvaluation(t2, eval.Alerting),
+						newEvaluation(t3, eval.Alerting),
+					},
+					StartsAt:           tn(3),
+					EndsAt:             tn(3).Add(state.ResendDelay * 3),
+					LastEvaluationTime: tn(3),
+				},
+				{
+					Labels: labels["system + rule + no-data"],
 					State:  eval.NoData,
 					Results: []state.Evaluation{
-						newEvaluation(t3, eval.Alerting),
 						newEvaluation(tn(4), eval.NoData),
 					},
 					StartsAt:           tn(4),
@@ -633,17 +643,26 @@ func TestProcessEvalResults(t *testing.T) {
 					newResult(eval.WithState(eval.Normal), eval.WithLabels(labels1)),
 				},
 				t2: {
-					newResult(eval.WithState(eval.NoData), eval.WithLabels(labels1)),
+					newResult(eval.WithState(eval.NoData), eval.WithLabels(noDataLabels)),
 				},
 			},
 			expectedAnnotations: 1,
 			expectedStates: []*state.State{
 				{
-					Labels:      labels["system + rule + labels1"],
+					Labels: labels["system + rule + labels1"],
+					State:  eval.Normal,
+					Results: []state.Evaluation{
+						newEvaluation(t1, eval.Normal),
+					},
+					StartsAt:           t1,
+					EndsAt:             t1,
+					LastEvaluationTime: t1,
+				},
+				{
+					Labels:      labels["system + rule + no-data"],
 					State:       eval.Pending,
 					StateReason: eval.NoData.String(),
 					Results: []state.Evaluation{
-						newEvaluation(t1, eval.Normal),
 						newEvaluation(t2, eval.NoData),
 					},
 					StartsAt:           t2,
@@ -660,22 +679,22 @@ func TestProcessEvalResults(t *testing.T) {
 					newResult(eval.WithState(eval.Normal), eval.WithLabels(labels1)),
 				},
 				t2: {
-					newResult(eval.WithState(eval.NoData), eval.WithLabels(labels1)), // TODO fix it because nodata has no labels of regular result
+					newResult(eval.WithState(eval.NoData), eval.WithLabels(noDataLabels)),
 				},
 				t3: {
-					newResult(eval.WithState(eval.NoData), eval.WithLabels(labels1)),
+					newResult(eval.WithState(eval.NoData), eval.WithLabels(noDataLabels)),
 				},
 				tn(4): {
-					newResult(eval.WithState(eval.NoData), eval.WithLabels(labels1)),
+					newResult(eval.WithState(eval.NoData), eval.WithLabels(noDataLabels)),
 				},
 				tn(5): {
-					newResult(eval.WithState(eval.NoData), eval.WithLabels(labels1)),
+					newResult(eval.WithState(eval.NoData), eval.WithLabels(noDataLabels)),
 				},
 			},
 			expectedAnnotations: 2,
 			expectedStates: []*state.State{
 				{
-					Labels:      labels["system + rule + labels1"],
+					Labels:      labels["system + rule + no-data"],
 					State:       eval.Alerting,
 					StateReason: eval.NoData.String(),
 					Results: []state.Evaluation{
@@ -697,33 +716,7 @@ func TestProcessEvalResults(t *testing.T) {
 					newResult(eval.WithState(eval.Normal), eval.WithLabels(labels1)),
 				},
 				t2: {
-					newResult(eval.WithState(eval.NoData), eval.WithLabels(labels1)),
-				},
-			},
-			expectedAnnotations: 1,
-			expectedStates: []*state.State{
-				{
-					Labels: labels["system + rule + labels1"],
-					State:  eval.NoData,
-					Results: []state.Evaluation{
-						newEvaluation(t1, eval.Normal),
-						newEvaluation(t2, eval.NoData),
-					},
-					StartsAt:           t2,
-					EndsAt:             t2.Add(state.ResendDelay * 3),
-					LastEvaluationTime: t2,
-				},
-			},
-		},
-		{
-			desc:      "normal -> nodata no labels when result is NoData and NoDataState is nodata", // TODO should be broken in https://github.com/grafana/grafana/pull/68142
-			alertRule: baseRule,
-			evalResults: map[time.Time]eval.Results{
-				t1: {
-					newResult(eval.WithState(eval.Normal), eval.WithLabels(labels1)),
-				},
-				t2: {
-					newResult(eval.WithState(eval.NoData), eval.WithLabels(nil)),
+					newResult(eval.WithState(eval.NoData), eval.WithLabels(noDataLabels)),
 				},
 			},
 			expectedAnnotations: 1,
@@ -739,7 +732,7 @@ func TestProcessEvalResults(t *testing.T) {
 					LastEvaluationTime: t1,
 				},
 				{
-					Labels: labels["system + rule"],
+					Labels: labels["system + rule + no-data"],
 					State:  eval.NoData,
 					Results: []state.Evaluation{
 						newEvaluation(t2, eval.NoData),
@@ -751,7 +744,42 @@ func TestProcessEvalResults(t *testing.T) {
 			},
 		},
 		{
-			desc:      "normal (multi-dimensional) -> nodata no labels when result is NoData and NoDataState is nodata",
+			desc:      "normal -> nodata no labels when result is NoData and NoDataState is nodata",
+			alertRule: baseRule,
+			evalResults: map[time.Time]eval.Results{
+				t1: {
+					newResult(eval.WithState(eval.Normal), eval.WithLabels(labels1)),
+				},
+				t2: {
+					newResult(eval.WithState(eval.NoData), eval.WithLabels(noDataLabels)),
+				},
+			},
+			expectedAnnotations: 1,
+			expectedStates: []*state.State{
+				{
+					Labels: labels["system + rule + labels1"],
+					State:  eval.Normal,
+					Results: []state.Evaluation{
+						newEvaluation(t1, eval.Normal),
+					},
+					StartsAt:           t1,
+					EndsAt:             t1,
+					LastEvaluationTime: t1,
+				},
+				{
+					Labels: labels["system + rule + no-data"],
+					State:  eval.NoData,
+					Results: []state.Evaluation{
+						newEvaluation(t2, eval.NoData),
+					},
+					StartsAt:           t2,
+					EndsAt:             t2.Add(state.ResendDelay * 3),
+					LastEvaluationTime: t2,
+				},
+			},
+		},
+		{
+			desc:      "normal (multi-dimensional) -> nodata when result is NoData and NoDataState is nodata",
 			alertRule: baseRule,
 			evalResults: map[time.Time]eval.Results{
 				t1: {
@@ -759,7 +787,7 @@ func TestProcessEvalResults(t *testing.T) {
 					newResult(eval.WithState(eval.Normal), eval.WithLabels(labels2)),
 				},
 				t2: {
-					newResult(eval.WithState(eval.NoData), eval.WithLabels(data.Labels{})),
+					newResult(eval.WithState(eval.NoData), eval.WithLabels(noDataLabels)),
 				},
 			},
 			expectedAnnotations: 1,
@@ -785,7 +813,7 @@ func TestProcessEvalResults(t *testing.T) {
 					LastEvaluationTime: t1,
 				},
 				{
-					Labels: labels["system + rule"],
+					Labels: labels["system + rule + no-data"],
 					State:  eval.NoData,
 					Results: []state.Evaluation{
 						newEvaluation(t2, eval.NoData),
@@ -843,21 +871,30 @@ func TestProcessEvalResults(t *testing.T) {
 					newResult(eval.WithState(eval.Normal), eval.WithLabels(labels1)),
 				},
 				t2: {
-					newResult(eval.WithState(eval.NoData), eval.WithLabels(labels1)), // TODO fix it because NoData does not have same labels
+					newResult(eval.WithState(eval.NoData), eval.WithLabels(noDataLabels)),
 				},
 			},
 			expectedAnnotations: 1,
 			expectedStates: []*state.State{
 				{
-					Labels:      labels["system + rule + labels1"],
-					State:       eval.Normal,
-					StateReason: eval.NoData.String(),
+					Labels: labels["system + rule + labels1"],
+					State:  eval.Normal,
 					Results: []state.Evaluation{
 						newEvaluation(t1, eval.Normal),
-						newEvaluation(t2, eval.NoData),
 					},
 					StartsAt:           t1,
 					EndsAt:             t1,
+					LastEvaluationTime: t1,
+				},
+				{
+					Labels:      labels["system + rule + no-data"],
+					State:       eval.Normal,
+					StateReason: eval.NoData.String(),
+					Results: []state.Evaluation{
+						newEvaluation(t2, eval.NoData),
+					},
+					StartsAt:           t2,
+					EndsAt:             t2,
 					LastEvaluationTime: t2,
 				},
 			},
@@ -1108,17 +1145,32 @@ func TestProcessEvalResults(t *testing.T) {
 					newResult(eval.WithState(eval.Error), eval.WithLabels(labels1)), // TODO FIX it
 				},
 				tn(6): {
-					newResult(eval.WithState(eval.NoData), eval.WithLabels(labels1)), // TODO fix it because it's not possible
+					newResult(eval.WithState(eval.NoData), eval.WithLabels(noDataLabels)),
 				},
 			},
 			expectedAnnotations: 3,
 			expectedStates: []*state.State{
 				{
 					Labels: labels["system + rule + labels1"],
-					State:  eval.NoData,
+					State:  eval.Error,
+					Error:  errors.New("with_state_error"),
 					Results: []state.Evaluation{
+						newEvaluation(t1, eval.Normal),
 						newEvaluation(tn(4), eval.Alerting),
 						newEvaluation(tn(5), eval.Error),
+					},
+					StartsAt:           tn(5),
+					EndsAt:             tn(5).Add(state.ResendDelay * 3),
+					LastEvaluationTime: tn(5),
+					Annotations: map[string]string{
+						"Error":      "with_state_error",
+						"annotation": "test",
+					},
+				},
+				{
+					Labels: labels["system + rule + no-data"],
+					State:  eval.NoData,
+					Results: []state.Evaluation{
 						newEvaluation(tn(6), eval.NoData),
 					},
 					StartsAt:           tn(6),
