@@ -261,6 +261,7 @@ export class QueryGroup extends PureComponent<Props, State> {
             pluginType={PluginType.datasource}
             angularSupportEnabled={config?.angularSupportEnabled}
             showPluginDetailsLink={true}
+            interactionElementId="datasource-query"
           />
         )}
       </div>
