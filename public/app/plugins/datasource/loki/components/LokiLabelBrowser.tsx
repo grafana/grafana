@@ -201,7 +201,7 @@ export class UnthemedLokiLabelBrowser extends React.Component<BrowserProps, Brow
       closeType: 'showLogsRateButton',
     });
     const selector = buildSelector(this.state.labels);
-    const query = `rate(${selector}[$__interval])`;
+    const query = `rate(${selector}[$__auto])`;
     this.props.onChange(query);
   };
 

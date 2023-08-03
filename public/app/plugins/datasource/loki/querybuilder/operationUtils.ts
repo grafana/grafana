@@ -17,7 +17,7 @@ import { LokiOperationId, LokiOperationOrder, LokiVisualQuery, LokiVisualQueryOp
 
 export function createRangeOperation(name: string, isRangeOperationWithGrouping?: boolean): QueryBuilderOperationDef {
   const params = [getRangeVectorParamDef()];
-  const defaultParams = ['$__interval'];
+  const defaultParams = ['$__auto'];
   let paramChangedHandler = undefined;
 
   if (name === LokiOperationId.QuantileOverTime) {
@@ -53,8 +53,8 @@ export function createRangeOperation(name: string, isRangeOperationWithGrouping?
     explainHandler: (op, def) => {
       let opDocs = FUNCTIONS.find((x) => x.insertText === op.id)?.documentation ?? '';
 
-      if (op.params[0] === '$__interval') {
-        return `${opDocs} \`$__interval\` is a variable that will be replaced with the [calculated interval](https://grafana.com/docs/grafana/latest/dashboards/variables/add-template-variables/#__interval) based on the time range and width of the graph. In Dashboards, you can affect the interval variable using **Max data points** and **Min interval**. You can find these options under **Query options** right of the data source select dropdown.`;
+      if (op.params[0] === '$__auto') {
+        return `${opDocs} \`$__auto\` is a variable that will be replaced with the [value of step](https://grafana.com/docs/grafana/next/datasources/loki/query-editor/#options) for range queries and with the value of the selected time range (calculated to - from) for instant queries.`;
       } else {
         return `${opDocs} The [range vector](https://grafana.com/docs/loki/latest/logql/metric_queries/#range-vector-aggregation) is set to \`${op.params[0]}\`.`;
       }
@@ -137,14 +137,14 @@ function operationWithRangeVectorRenderer(
   innerExpr: string
 ) {
   const params = model.params ?? [];
-  const rangeVector = params[0] ?? '$__interval';
+  const rangeVector = params[0] ?? '$__auto';
   // QuantileOverTime is only range vector with more than one param
   if (params.length === 2 && model.id === LokiOperationId.QuantileOverTime) {
     const quantile = params[1];
     return `${model.id}(${quantile}, ${innerExpr} [${rangeVector}])`;
   }
 
-  return `${model.id}(${innerExpr} [${params[0] ?? '$__interval'}])`;
+  return `${model.id}(${innerExpr} [${params[0] ?? '$__auto'}])`;
 }
 
 export function labelFilterRenderer(model: QueryBuilderOperation, def: QueryBuilderOperationDef, innerExpr: string) {
@@ -237,7 +237,7 @@ export function addLokiOperation(
           modeller,
           (def) => def.category === LokiVisualQueryOperationCategory.Functions
         );
-        operations.splice(placeToInsert, 0, { id: LokiOperationId.Rate, params: ['$__interval'] });
+        operations.splice(placeToInsert, 0, { id: LokiOperationId.Rate, params: ['$__auto'] });
       }
       operations.push(newOperation);
       break;
@@ -292,6 +292,6 @@ function getRangeVectorParamDef(): QueryBuilderOperationParamDef {
   return {
     name: 'Range',
     type: 'string',
-    options: ['$__interval', '$__range', '1m', '5m', '10m', '1h', '24h'],
+    options: ['$__auto', '1m', '5m', '10m', '1h', '24h'],
   };
 }

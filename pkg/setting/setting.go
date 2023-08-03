@@ -256,6 +256,7 @@ type Cfg struct {
 	MetricsEndpointBasicAuthUsername string
 	MetricsEndpointBasicAuthPassword string
 	MetricsEndpointDisableTotalStats bool
+	MetricsTotalStatsIntervalSeconds int
 	MetricsGrafanaEnvironmentInfo    map[string]string
 
 	// Dashboards
@@ -318,6 +319,7 @@ type Cfg struct {
 	JWTAuthJWKSetURL               string
 	JWTAuthCacheTTL                time.Duration
 	JWTAuthKeyFile                 string
+	JWTAuthKeyID                   string
 	JWTAuthJWKSetFile              string
 	JWTAuthAutoSignUp              bool
 	JWTAuthRoleAttributePath       string
@@ -515,8 +517,9 @@ type Cfg struct {
 	SecureSocksDSProxy SecureSocksDSProxySettings
 
 	// SAML Auth
-	SAMLAuthEnabled     bool
-	SAMLSkipOrgRoleSync bool
+	SAMLAuthEnabled            bool
+	SAMLSkipOrgRoleSync        bool
+	SAMLRoleValuesGrafanaAdmin string
 
 	// Okta OAuth
 	OktaAuthEnabled     bool
@@ -964,7 +967,7 @@ var skipStaticRootValidation = false
 
 func NewCfg() *Cfg {
 	return &Cfg{
-		Target:      []string{"all"},
+		Target:      []string{},
 		Logger:      log.New("settings"),
 		Raw:         ini.Empty(),
 		Azure:       &azsettings.AzureSettings{},
@@ -1023,8 +1026,10 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 
 	cfg.ErrTemplateName = "error"
 
-	Target := valueAsString(iniFile.Section(""), "target", "all")
-	cfg.Target = strings.Split(Target, " ")
+	Target := valueAsString(iniFile.Section(""), "target", "")
+	if Target != "" {
+		cfg.Target = strings.Split(Target, " ")
+	}
 	Env = valueAsString(iniFile.Section(""), "app_mode", "development")
 	cfg.Env = Env
 	cfg.ForceMigration = iniFile.Section("").Key("force_migration").MustBool(false)
@@ -1084,6 +1089,7 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 	cfg.MetricsEndpointBasicAuthUsername = valueAsString(iniFile.Section("metrics"), "basic_auth_username", "")
 	cfg.MetricsEndpointBasicAuthPassword = valueAsString(iniFile.Section("metrics"), "basic_auth_password", "")
 	cfg.MetricsEndpointDisableTotalStats = iniFile.Section("metrics").Key("disable_total_stats").MustBool(false)
+	cfg.MetricsTotalStatsIntervalSeconds = iniFile.Section("metrics").Key("total_stats_collector_interval_seconds").MustInt(1800)
 
 	analytics := iniFile.Section("analytics")
 	cfg.CheckForGrafanaUpdates = analytics.Key("check_for_updates").MustBool(true)
@@ -1260,6 +1266,7 @@ func (cfg *Cfg) readSAMLConfig() {
 	samlSec := cfg.Raw.Section("auth.saml")
 	cfg.SAMLAuthEnabled = samlSec.Key("enabled").MustBool(false)
 	cfg.SAMLSkipOrgRoleSync = samlSec.Key("skip_org_role_sync").MustBool(false)
+	cfg.SAMLRoleValuesGrafanaAdmin = samlSec.Key("role_values_grafana_admin").MustString("")
 }
 
 func (cfg *Cfg) readLDAPConfig() {
@@ -1597,6 +1604,7 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 	cfg.JWTAuthJWKSetURL = valueAsString(authJWT, "jwk_set_url", "")
 	cfg.JWTAuthCacheTTL = authJWT.Key("cache_ttl").MustDuration(time.Minute * 60)
 	cfg.JWTAuthKeyFile = valueAsString(authJWT, "key_file", "")
+	cfg.JWTAuthKeyID = authJWT.Key("key_id").MustString("")
 	cfg.JWTAuthJWKSetFile = valueAsString(authJWT, "jwk_set_file", "")
 	cfg.JWTAuthAutoSignUp = authJWT.Key("auto_sign_up").MustBool(false)
 	cfg.JWTAuthRoleAttributePath = valueAsString(authJWT, "role_attribute_path", "")

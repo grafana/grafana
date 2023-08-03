@@ -11,6 +11,7 @@ import {
   DataSourceApi,
   DataSourceInstanceSettings,
   dateTime,
+  Field,
   FieldType,
   isValidGoDuration,
   LoadingState,
@@ -650,14 +651,16 @@ function errorAndDurationQuery(
   let durationsBySpanName: string[] = [];
 
   let labels = [];
-  if (request.app === CoreApp.Explore) {
-    if (rateResponse.data[0][0]?.fields[1]?.values) {
-      labels = rateResponse.data[0][0]?.fields[1]?.values;
+  if (rateResponse.data[0][0] && request.app === CoreApp.Explore) {
+    const spanNameField = rateResponse.data[0][0].fields.find((field: Field) => field.name === 'span_name');
+    if (spanNameField && spanNameField.values) {
+      labels = spanNameField.values;
     }
   } else if (rateResponse.data[0]) {
     rateResponse.data[0].map((df: DataFrame) => {
-      if (df.fields[1]?.labels && df.fields[1]?.labels['span_name']) {
-        labels.push(df.fields[1]?.labels['span_name']);
+      const spanNameLabels = df.fields.find((field: Field) => field.labels?.['span_name']);
+      if (spanNameLabels) {
+        labels.push(spanNameLabels.labels?.['span_name']);
       }
     });
   }
