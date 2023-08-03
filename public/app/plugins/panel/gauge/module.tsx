@@ -1,4 +1,5 @@
-import { PanelPlugin, VizOrientation } from '@grafana/data';
+import { PanelPlugin } from '@grafana/data';
+import { VizOrientation } from '@grafana/schema';
 import { commonOptionsBuilder } from '@grafana/ui';
 
 import { addOrientationOption, addStandardDataReduceOptions } from '../stat/common';
