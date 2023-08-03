@@ -227,7 +227,7 @@ export const Table = memo((props: Props) => {
         nestedFrames[rowIndex].forEach((nf: DataFrame, nfIndex: number) => {
           const noHeader = !!nf.meta?.custom?.noHeader;
           const height = tableStyles.rowHeight * (nf.length + (noHeader ? 0 : 1)); // account for the header with + 1
-          const emphasize = theme.colors.mode === GrafanaThemeType.Dark ? 0.05 : 0.015;
+          const emphasize = theme.colors.mode === GrafanaThemeType.Dark ? 0.03 : 0.015;
 
           const subTableStyle: CSSProperties = {
             height: height,
