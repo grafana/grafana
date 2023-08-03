@@ -2,7 +2,7 @@ import { css, cx } from '@emotion/css';
 import React, { useMemo } from 'react';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { MenuGroup, MenuItem, useTheme2, WithContextMenu } from '@grafana/ui';
+import { Button, MenuGroup, MenuItem, useTheme2, WithContextMenu } from '@grafana/ui';
 
 import { toSelectableValue } from '../utils/toSelectableValue';
 import { unwrap } from '../utils/unwrap';
@@ -125,17 +125,27 @@ export const PartListSection = ({
   return (
     <>
       {parts.map((part, index) => (
-        <Part
-          key={index}
-          name={part.name}
-          params={part.params}
-          onRemove={() => {
-            onRemovePart(index);
-          }}
-          onChange={(pars) => {
-            onChange(index, pars);
-          }}
-        />
+        <>
+          <Part
+            key={index}
+            name={part.name}
+            params={part.params}
+            onRemove={() => {
+              onRemovePart(index);
+            }}
+            onChange={(pars) => {
+              onChange(index, pars);
+            }}
+          />
+          <Button
+            style={{ marginRight: '4px' }}
+            aria-label="Delete part"
+            icon="trash-alt"
+            variant="secondary"
+            type="button"
+            onClick={() => onRemovePart(index)}
+          />
+        </>
       ))}
       <AddButton loadOptions={getNewPartOptions} onAdd={onAddNewPart} />
     </>

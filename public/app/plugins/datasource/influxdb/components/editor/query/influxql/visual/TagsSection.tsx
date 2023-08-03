@@ -1,6 +1,7 @@
 import React from 'react';
 
 import { SelectableValue } from '@grafana/data';
+import { Button } from '@grafana/ui';
 
 import { InfluxQueryTag } from '../../../../../types';
 import { adjustOperatorIfNeeded, getCondition, getOperator } from '../utils/tagUtils';
@@ -56,7 +57,7 @@ const Tag = ({ tag, isFirst, onRemove, onChange, getTagKeyOptions, getTagValueOp
         console.error(err);
         return [];
       })
-      .then((tags) => [{ label: '-- remove filter --', value: undefined }, ...tags.map(toSelectableValue)]);
+      .then((tags) => tags.map(toSelectableValue));
   };
 
   const getTagValueSegmentOptions = () => {
@@ -102,6 +103,14 @@ const Tag = ({ tag, isFirst, onRemove, onChange, getTagKeyOptions, getTagValueOp
           const value = v.value ?? '';
           onChange({ ...tag, value, operator: adjustOperatorIfNeeded(operator, value) });
         }}
+      />
+      <Button
+        style={{ marginRight: '4px' }}
+        aria-label="Delete tag"
+        icon="trash-alt"
+        variant="secondary"
+        type="button"
+        onClick={() => onRemove()}
       />
     </div>
   );
