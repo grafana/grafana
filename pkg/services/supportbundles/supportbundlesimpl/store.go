@@ -15,8 +15,8 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/supportbundles"
-	"github.com/grafana/grafana/pkg/services/user"
 )
 
 const (
@@ -41,7 +41,7 @@ type store struct {
 }
 
 type bundleStore interface {
-	Create(ctx context.Context, usr *user.SignedInUser) (*supportbundles.Bundle, error)
+	Create(ctx context.Context, usr identity.Requester) (*supportbundles.Bundle, error)
 	Get(ctx context.Context, uid string) (*supportbundles.Bundle, error)
 	StatsCount(ctx context.Context) (int64, error)
 	List() ([]supportbundles.Bundle, error)
@@ -49,7 +49,7 @@ type bundleStore interface {
 	Update(ctx context.Context, uid string, state supportbundles.State, tarBytes []byte) error
 }
 
-func (s *store) Create(ctx context.Context, usr *user.SignedInUser) (*supportbundles.Bundle, error) {
+func (s *store) Create(ctx context.Context, usr identity.Requester) (*supportbundles.Bundle, error) {
 	uid, err := uuid.NewRandom()
 	if err != nil {
 		return nil, err
@@ -58,7 +58,7 @@ func (s *store) Create(ctx context.Context, usr *user.SignedInUser) (*supportbun
 	bundle := supportbundles.Bundle{
 		UID:       uid.String(),
 		State:     supportbundles.StatePending,
-		Creator:   usr.Login,
+		Creator:   usr.GetLogin(),
 		CreatedAt: time.Now().Unix(),
 		ExpiresAt: time.Now().Add(defaultBundleExpiration).Unix(),
 	}
