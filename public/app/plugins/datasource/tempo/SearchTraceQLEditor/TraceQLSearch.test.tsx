@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
+import { act } from 'react-dom/test-utils';
 
 import { TraceqlSearchScope } from '../dataquery.gen';
 import { TempoDatasource } from '../datasource';
@@ -114,5 +115,26 @@ describe('TraceQLSearch', () => {
       expect(nameFilter?.tag).toBe('service.name');
       expect(nameFilter?.scope).toBe(TraceqlSearchScope.Resource);
     }
+  });
+
+  it('should not render static filter when no tag is configured', async () => {
+    const datasource: TempoDatasource = {
+      search: {
+        filters: [
+          {
+            id: 'service-name',
+            operator: '=',
+            scope: TraceqlSearchScope.Resource,
+          },
+        ],
+      },
+    } as TempoDatasource;
+    datasource.languageProvider = new TempoLanguageProvider(datasource);
+    await act(async () => {
+      const { container } = render(<TraceQLSearch datasource={datasource} query={query} onChange={onChange} />);
+      const serviceNameValue = container.querySelector(`input[aria-label="select service-name value"]`);
+      expect(serviceNameValue).toBeNull();
+      expect(serviceNameValue).not.toBeInTheDocument();
+    });
   });
 });
