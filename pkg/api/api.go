@@ -111,6 +111,12 @@ func (hs *HTTPServer) registerRoutes() {
 		r.Get("/admin/storage", reqSignedIn, hs.Index)
 		r.Get("/admin/storage/*", reqSignedIn, hs.Index)
 	}
+
+	// feature toggle admin page
+	if hs.Features.IsEnabled(featuremgmt.FlagFeatureToggleAdminPage) {
+		r.Get("/admin/featuretoggles", authorize(ac.EvalPermission(ac.ActionFeatureManagementRead)), hs.Index)
+	}
+
 	r.Get("/styleguide", reqSignedIn, hs.Index)
 
 	r.Get("/live", reqGrafanaAdmin, hs.Index)
