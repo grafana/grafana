@@ -269,6 +269,11 @@ export class ContextSrv {
       return false;
     }
 
+    // skip if the user has been authenticated by JWT auth
+    if (this.user.authenticatedBy === 'jwt') {
+      return false;
+    }
+
     return true;
   }
 
