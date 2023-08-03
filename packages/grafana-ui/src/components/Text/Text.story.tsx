@@ -84,6 +84,7 @@ export const Example: StoryFn = (args) => {
     </VerticalGroup>
   );
 };
+
 Example.parameters = {
   controls: {
     exclude: ['element', 'variant', 'weight', 'textAlignment', 'truncate', 'italic', 'color', 'children'],
