@@ -368,6 +368,9 @@ func (ss *sqlStore) ChangePassword(ctx context.Context, cmd *user.ChangeUserPass
 }
 
 func (ss *sqlStore) UpdateLastSeenAt(ctx context.Context, cmd *user.UpdateUserLastSeenAtCommand) error {
+	if cmd.UserID <= 0 {
+		return user.ErrUpdateInvalidID
+	}
 	return ss.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		user := user.User{
 			ID:         cmd.UserID,
@@ -421,6 +424,8 @@ func (ss *sqlStore) GetSignedInUser(ctx context.Context, query *user.GetSignedIn
 			} else {
 				sess.SQL(rawSQL+"WHERE u.email=?", query.Email)
 			}
+		default:
+			return user.ErrNoUniqueID
 		}
 		has, err := sess.Get(&signedInUser)
 		if err != nil {

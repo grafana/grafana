@@ -136,9 +136,13 @@ func (s *UserSync) SyncLastSeenHook(ctx context.Context, identity *authn.Identit
 
 	namespace, id := identity.NamespacedID()
 
+	// do not sync invalid users
+	if id <= 0 {
+		return nil // skip sync
+	}
+
 	if namespace != authn.NamespaceUser && namespace != authn.NamespaceServiceAccount {
-		// skip sync
-		return nil
+		return nil // skip sync
 	}
 
 	go func(userID int64) {
