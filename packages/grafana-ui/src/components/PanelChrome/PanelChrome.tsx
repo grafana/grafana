@@ -175,7 +175,7 @@ export function PanelChrome({
       <button
         type="button"
         className={styles.clearButtonStyles}
-        onClick={() => toggle()}
+        onClick={toggle}
         aria-expanded={isOpen}
         aria-controls={isOpen ? panelContentId : undefined}
       >
