@@ -102,7 +102,7 @@ auto_login = true
 
 ## Skip organization role sync
 
-We do not currently sync roles from Google and instead set the AutoAssigned role to the user at first login. To manage your user's organization role from within Grafana, set `skip_org_role_sync` to `true`.
+We do not currently sync roles from Google and instead set the AutoAssigned role to the user at first login. By default `skip_org_role_sync` is set to `true` to not lock down role updates.
 
 ```ini
 [auth.google]
