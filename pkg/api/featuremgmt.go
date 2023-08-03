@@ -1,6 +1,7 @@
 package api
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/grafana/grafana/pkg/api/response"
@@ -32,9 +33,19 @@ func (hs *HTTPServer) GetFeatureToggles(ctx *contextmodel.ReqContext) response.R
 }
 
 func (hs *HTTPServer) UpdateFeatureToggle(ctx *contextmodel.ReqContext) response.Response {
+	featureMgmtCfg := hs.Cfg.FeatureManagement
+	if !featureMgmtCfg.AllowEditing {
+		return response.Error(http.StatusForbidden, "feature toggles are read-only", fmt.Errorf("feature toggles are read-only"))
+	}
+
+	if featureMgmtCfg.UpdateControllerUrl == "" {
+		return response.Error(http.StatusForbidden, "feature toggles service is misconfigured", fmt.Errorf("update_controller_url is not set"))
+	}
+
 	cmd := featuremgmt.UpdateFeatureTogglesCommand{}
 	if err := web.Bind(ctx.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	return response.Success("Feature toggles updated")
+
+	return response.Success("feature toggles updated")
 }
