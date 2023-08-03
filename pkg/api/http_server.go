@@ -11,9 +11,8 @@ import (
 	"path"
 	"path/filepath"
 	"strings"
-	"time"
+	"sync"
 
-	"github.com/grafana/dskit/services"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
@@ -33,7 +32,6 @@ import (
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/middleware/csrf"
 	"github.com/grafana/grafana/pkg/middleware/loggermw"
-	"github.com/grafana/grafana/pkg/modules"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	"github.com/grafana/grafana/pkg/registry/corekind"
@@ -105,10 +103,6 @@ import (
 )
 
 type HTTPServer struct {
-	// services.NamedService is embedded so we can inherit AddListener, without
-	// implementing the service interface.
-	services.NamedService
-
 	log              log.Logger
 	web              *web.Mux
 	context          context.Context
@@ -116,7 +110,6 @@ type HTTPServer struct {
 	middlewares      []web.Handler
 	namedMiddlewares []routing.RegisterNamedMiddleware
 	bus              bus.Bus
-	errs             chan error
 
 	pluginContextProvider        *plugincontext.Provider
 	RouteRegister                routing.RouteRegister
@@ -358,7 +351,6 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		authnService:                 authnService,
 		pluginsCDNService:            pluginsCDNService,
 		starApi:                      starApi,
-		errs:                         make(chan error),
 	}
 	if hs.Listener != nil {
 		hs.log.Debug("Using provided listener")
@@ -371,8 +363,6 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	if err := hs.declareFixedRoles(); err != nil {
 		return nil, err
 	}
-
-	hs.NamedService = services.NewBasicService(hs.start, hs.running, hs.stop).WithName(modules.HTTPServer)
 	return hs, nil
 }
 
@@ -384,7 +374,7 @@ func (hs *HTTPServer) AddNamedMiddleware(middleware routing.RegisterNamedMiddlew
 	hs.namedMiddlewares = append(hs.namedMiddlewares, middleware)
 }
 
-func (hs *HTTPServer) start(ctx context.Context) error {
+func (hs *HTTPServer) Run(ctx context.Context) error {
 	hs.context = ctx
 
 	hs.applyRoutes()
@@ -416,57 +406,42 @@ func (hs *HTTPServer) start(ctx context.Context) error {
 	hs.log.Info("HTTP Server Listen", "address", listener.Addr().String(), "protocol",
 		hs.Cfg.Protocol, "subUrl", hs.Cfg.AppSubURL, "socket", hs.Cfg.SocketPath)
 
+	var wg sync.WaitGroup
+	wg.Add(1)
+
+	// handle http shutdown on server context done
+	go func() {
+		defer wg.Done()
+
+		<-ctx.Done()
+		if err := hs.httpSrv.Shutdown(context.Background()); err != nil {
+			hs.log.Error("Failed to shutdown server", "error", err)
+		}
+	}()
+
 	switch hs.Cfg.Protocol {
 	case setting.HTTPScheme, setting.SocketScheme:
-		go func() {
-			if err := hs.httpSrv.Serve(listener); err != nil {
-				if errors.Is(err, http.ErrServerClosed) {
-					hs.log.Debug("server was shutdown gracefully")
-					close(hs.errs)
-					return
-				}
-				hs.errs <- err
+		if err := hs.httpSrv.Serve(listener); err != nil {
+			if errors.Is(err, http.ErrServerClosed) {
+				hs.log.Debug("server was shutdown gracefully")
+				return nil
 			}
-		}()
+			return err
+		}
 	case setting.HTTP2Scheme, setting.HTTPSScheme:
-		go func() {
-			if err := hs.httpSrv.ServeTLS(listener, hs.Cfg.CertFile, hs.Cfg.KeyFile); err != nil {
-				if errors.Is(err, http.ErrServerClosed) {
-					hs.log.Debug("server was shutdown gracefully")
-					close(hs.errs)
-					return
-				}
-				hs.errs <- err
+		if err := hs.httpSrv.ServeTLS(listener, hs.Cfg.CertFile, hs.Cfg.KeyFile); err != nil {
+			if errors.Is(err, http.ErrServerClosed) {
+				hs.log.Debug("server was shutdown gracefully")
+				return nil
 			}
-		}()
+			return err
+		}
 	default:
 		panic(fmt.Sprintf("Unhandled protocol %q", hs.Cfg.Protocol))
 	}
 
-	return nil
-}
+	wg.Wait()
 
-func (hs *HTTPServer) running(ctx context.Context) error {
-	select {
-	case err, ok := <-hs.errs:
-		if !ok {
-			return nil
-		}
-		return err
-	case <-ctx.Done():
-	}
-
-	return nil
-}
-
-func (hs *HTTPServer) stop(_ error) error {
-	// Create a context with a timeout
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-	defer cancel()
-
-	if err := hs.httpSrv.Shutdown(ctx); err != nil {
-		return fmt.Errorf("failed to shutdown server: %w", err)
-	}
 	return nil
 }
 

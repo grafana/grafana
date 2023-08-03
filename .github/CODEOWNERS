@@ -68,7 +68,6 @@
 /pkg/api/ @grafana/backend-platform
 /pkg/bus/ @grafana/backend-platform
 /pkg/cmd/ @grafana/backend-platform
-/pkg/systemd/ @grafana/backend-platform
 /pkg/components/apikeygen/ @grafana/grafana-authnz-team
 /pkg/components/satokengen/ @grafana/grafana-authnz-team
 /pkg/components/dashdiffs/ @grafana/backend-platform
