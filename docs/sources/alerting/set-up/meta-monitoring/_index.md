@@ -1,11 +1,17 @@
 ---
 aliases:
   - meta-monitoring/
+  - alerting/meta-monitoring/
+canonical: https://grafana.com/docs/grafana/latest/alerting/set-up/meta-monitoring/
 description: Meta monitoring
 keywords:
   - grafana
   - alerting
   - meta-monitoring
+labels:
+  products:
+    - enterprise
+    - oss
 title: Meta monitoring
 weight: 500
 ---
@@ -20,7 +26,7 @@ Meta monitoring of Grafana Managed Alerts requires having a Prometheus server, o
 
 Here is an example of how this might look:
 
-```
+```yaml
 - job_name: grafana
   honor_timestamps: true
   scrape_interval: 15s
@@ -29,8 +35,8 @@ Here is an example of how this might look:
   scheme: http
   follow_redirects: true
   static_configs:
-  - targets:
-    - grafana:3000
+    - targets:
+        - grafana:3000
 ```
 
 The Grafana ruler, which is responsible for evaluating alert rules, and the Grafana Alertmanager, which is responsible for sending notifications of firing and resolved alerts, provide a number of metrics that let you observe them.
@@ -75,7 +81,7 @@ Meta monitoring in Alertmanager also requires having a Prometheus/Mimir server, 
 
 Here is an example of how this might look:
 
-```
+```yaml
 - job_name: alertmanager
   honor_timestamps: true
   scrape_interval: 15s
@@ -84,8 +90,8 @@ Here is an example of how this might look:
   scheme: http
   follow_redirects: true
   static_configs:
-  - targets:
-    - alertmanager:9093
+    - targets:
+        - alertmanager:9093
 ```
 
 #### alertmanager_alerts

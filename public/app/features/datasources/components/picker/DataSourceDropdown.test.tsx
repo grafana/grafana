@@ -4,11 +4,12 @@ import { UserEvent } from '@testing-library/user-event/dist/types/setup/setup';
 import React from 'react';
 
 import { DataSourceInstanceSettings, DataSourcePluginMeta, PluginMetaInfo, PluginType } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { ModalRoot, ModalsProvider } from '@grafana/ui';
 import config from 'app/core/config';
 import { defaultFileUploadQuery } from 'app/plugins/datasource/grafana/types';
 
-import { DataSourceDropdown } from './DataSourceDropdown';
+import { DataSourceDropdown, DataSourceDropdownProps } from './DataSourceDropdown';
 import * as utils from './utils';
 
 const pluginMetaInfo: PluginMetaInfo = {
@@ -44,14 +45,8 @@ const MockDSBuiltIn = createDS('mock.datasource.builtin', 3, true);
 
 const mockDSList = [mockDS1, mockDS2, MockDSBuiltIn];
 
-const setup = (onChange = () => {}, current = mockDS1.name) => {
-  const props = { onChange, current };
-  window.HTMLElement.prototype.scrollIntoView = jest.fn();
-  return render(<DataSourceDropdown {...props}></DataSourceDropdown>);
-};
-
-async function setupOpenDropdown(user: UserEvent, onChange?: () => void, current?: string) {
-  const dropdown = setup(onChange, current);
+async function setupOpenDropdown(user: UserEvent, props: DataSourceDropdownProps) {
+  const dropdown = render(<DataSourceDropdown {...props}></DataSourceDropdown>);
   const searchBox = dropdown.container.querySelector('input');
   expect(searchBox).toBeInTheDocument();
   await user.click(searchBox!);
@@ -87,6 +82,10 @@ jest.mock('../../hooks', () => {
   };
 });
 
+beforeAll(() => {
+  window.HTMLElement.prototype.scrollIntoView = jest.fn();
+});
+
 const getListMock = jest.fn();
 const getInstanceSettingsMock = jest.fn();
 beforeEach(() => {
@@ -96,13 +95,13 @@ beforeEach(() => {
 
 describe('DataSourceDropdown', () => {
   it('should render', () => {
-    expect(() => setup()).not.toThrow();
+    expect(() => render(<DataSourceDropdown onChange={jest.fn()}></DataSourceDropdown>)).not.toThrow();
   });
 
   describe('configuration', () => {
     const user = userEvent.setup();
 
-    it('should call the dataSourceSrv.getDatasourceList with the correct filters', async () => {
+    it('should fetch the DS applying the correct filters consistently across lists', async () => {
       const filters = {
         mixed: true,
         tracing: true,
@@ -121,35 +120,95 @@ describe('DataSourceDropdown', () => {
         current: mockDS1.name,
         ...filters,
       };
-      window.HTMLElement.prototype.scrollIntoView = jest.fn();
-      const dropdown = render(<DataSourceDropdown {...props}></DataSourceDropdown>);
 
-      const searchBox = dropdown.container.querySelector('input');
+      render(
+        <ModalsProvider>
+          <DataSourceDropdown {...props}></DataSourceDropdown>
+          <ModalRoot />
+        </ModalsProvider>
+      );
+
+      const searchBox = await screen.findByRole('textbox');
       expect(searchBox).toBeInTheDocument();
+
+      getListMock.mockClear();
       await user.click(searchBox!);
-      expect(getListMock.mock.lastCall[0]).toEqual(filters);
+      await user.click(await screen.findByText('Open advanced data source picker'));
+      expect(await screen.findByText('Select data source')); //Data source modal is open
+      // Every call to the service must contain same filters
+      getListMock.mock.calls.forEach((call) =>
+        expect(call[0]).toMatchObject({
+          ...filters,
+        })
+      );
+    });
+
+    it('should display the current selected DS in the selector', async () => {
+      getInstanceSettingsMock.mockReturnValue(mockDS2);
+      render(<DataSourceDropdown onChange={jest.fn()} current={mockDS2}></DataSourceDropdown>);
+      expect(screen.getByTestId(selectors.components.DataSourcePicker.inputV2)).toHaveAttribute(
+        'placeholder',
+        mockDS2.name
+      );
+      expect(screen.getByAltText(`${mockDS2.meta.name} logo`)).toBeVisible();
     });
 
     it('should display the current ds on top', async () => {
       //Mock ds is set as current, it appears on top
       getInstanceSettingsMock.mockReturnValue(mockDS1);
-      await setupOpenDropdown(user, jest.fn(), mockDS1.name);
+      await setupOpenDropdown(user, { onChange: jest.fn(), current: mockDS1.name });
       let cards = await screen.findAllByTestId('data-source-card');
       expect(await findByText(cards[0], mockDS1.name, { selector: 'span' })).toBeInTheDocument();
 
       //xMock ds is set as current, it appears on top
       getInstanceSettingsMock.mockReturnValue(mockDS2);
-      await setupOpenDropdown(user, jest.fn(), mockDS2.name);
+      await setupOpenDropdown(user, { onChange: jest.fn(), current: mockDS2.name });
       cards = await screen.findAllByTestId('data-source-card');
       expect(await findByText(cards[0], mockDS2.name, { selector: 'span' })).toBeInTheDocument();
+    });
+
+    it('should display the default DS as selected when `current` is not set', async () => {
+      getInstanceSettingsMock.mockReturnValue(mockDS2);
+      render(<DataSourceDropdown onChange={jest.fn()} current={undefined}></DataSourceDropdown>);
+      expect(screen.getByTestId(selectors.components.DataSourcePicker.inputV2)).toHaveAttribute(
+        'placeholder',
+        mockDS2.name
+      );
+      expect(screen.getByAltText(`${mockDS2.meta.name} logo`)).toBeVisible();
     });
 
     it('should get the sorting function using the correct parameters', async () => {
       //The actual sorting is tested in utils.test but let's make sure we're calling getDataSourceCompareFn with the correct parameters
       const spy = jest.spyOn(utils, 'getDataSourceCompareFn');
-      await setupOpenDropdown(user);
+      await setupOpenDropdown(user, { onChange: jest.fn(), current: mockDS1 });
 
       expect(spy.mock.lastCall).toEqual([mockDS1, [mockDS2.name], ['${foo}']]);
+    });
+
+    it('should disable the dropdown when `disabled` is true', () => {
+      render(<DataSourceDropdown onChange={jest.fn()} disabled></DataSourceDropdown>);
+      expect(screen.getByTestId(selectors.components.DataSourcePicker.inputV2)).toBeDisabled();
+    });
+
+    it('should assign the correct `id` to the input element to pair it with a label', () => {
+      render(<DataSourceDropdown onChange={jest.fn()} inputId={'custom.input.id'}></DataSourceDropdown>);
+      expect(screen.getByTestId(selectors.components.DataSourcePicker.inputV2)).toHaveAttribute(
+        'id',
+        'custom.input.id'
+      );
+    });
+
+    it('should not set the default DS when setting `noDefault` to true and `current` is not provided', () => {
+      render(<DataSourceDropdown onChange={jest.fn()} current={null} noDefault></DataSourceDropdown>);
+      getListMock.mockClear();
+      getInstanceSettingsMock.mockClear();
+      // Doesn't try to get the default DS
+      expect(getListMock).not.toBeCalled();
+      expect(getInstanceSettingsMock).not.toBeCalled();
+      expect(screen.getByTestId(selectors.components.DataSourcePicker.inputV2)).toHaveAttribute(
+        'placeholder',
+        'Select data source'
+      );
     });
   });
 
@@ -157,22 +216,30 @@ describe('DataSourceDropdown', () => {
     const user = userEvent.setup();
 
     it('should open when clicked', async () => {
-      await setupOpenDropdown(user);
+      await setupOpenDropdown(user, { onChange: jest.fn() });
       expect(await screen.findByText(mockDS1.name, { selector: 'span' })).toBeInTheDocument();
     });
 
     it('should call onChange when a data source is clicked', async () => {
       const onChange = jest.fn();
-      await setupOpenDropdown(user, onChange);
+      await setupOpenDropdown(user, { onChange });
 
       await user.click(await screen.findByText(mockDS2.name, { selector: 'span' }));
       expect(onChange.mock.lastCall[0]['name']).toEqual(mockDS2.name);
       expect(screen.queryByText(mockDS1.name, { selector: 'span' })).toBeNull();
     });
 
+    it('should not call onChange when the currently selected data source is clicked', async () => {
+      const onChange = jest.fn();
+      await setupOpenDropdown(user, { onChange });
+
+      await user.click(await screen.findByText(mockDS1.name, { selector: 'span' }));
+      expect(onChange).not.toBeCalled();
+    });
+
     it('should push recently used datasources when a data source is clicked', async () => {
       const onChange = jest.fn();
-      await setupOpenDropdown(user, onChange);
+      await setupOpenDropdown(user, { onChange });
 
       await user.click(await screen.findByText(mockDS2.name, { selector: 'span' }));
       expect(pushRecentlyUsedDataSourceMock.mock.lastCall[0]).toEqual(mockDS2);
@@ -180,7 +247,7 @@ describe('DataSourceDropdown', () => {
 
     it('should be navigatable by keyboard', async () => {
       const onChange = jest.fn();
-      await setupOpenDropdown(user, onChange);
+      await setupOpenDropdown(user, { onChange });
 
       await user.keyboard('[ArrowDown]');
       //Arrow down, second item is selected
@@ -202,7 +269,7 @@ describe('DataSourceDropdown', () => {
     });
 
     it('should be searchable', async () => {
-      await setupOpenDropdown(user);
+      await setupOpenDropdown(user, { onChange: jest.fn() });
 
       await user.keyboard(mockDS2.name); //Search for xMockDS
 
@@ -220,7 +287,7 @@ describe('DataSourceDropdown', () => {
     it('should call onChange with the default query when add csv is clicked', async () => {
       config.featureToggles.editPanelCSVDragAndDrop = true;
       const onChange = jest.fn();
-      await setupOpenDropdown(user, onChange);
+      await setupOpenDropdown(user, { onChange, uploadFile: true });
 
       await user.click(await screen.findByText('Add csv or spreadsheet'));
 
@@ -231,7 +298,6 @@ describe('DataSourceDropdown', () => {
 
     it('should open the modal when open advanced is clicked', async () => {
       const props = { onChange: jest.fn(), current: mockDS1.name };
-      window.HTMLElement.prototype.scrollIntoView = jest.fn();
       render(
         <ModalsProvider>
           <DataSourceDropdown {...props}></DataSourceDropdown>

@@ -32,6 +32,10 @@ jest.mock('./api/buildInfo');
 jest.mock('./api/ruler');
 jest.mock('../../../../app/features/manage-dashboards/state/actions');
 
+jest.mock('app/core/components/AppChrome/AppChromeUpdate', () => ({
+  AppChromeUpdate: ({ actions }: { actions: React.ReactNode }) => <div>{actions}</div>,
+}));
+
 // there's no angular scope in test and things go terribly wrong when trying to render the query editor row.
 // lets just skip it
 jest.mock('app/features/query/components/QueryEditorRow', () => ({
@@ -163,7 +167,6 @@ describe('RuleEditor grafana managed rules', () => {
               is_paused: false,
               no_data_state: 'NoData',
               title: 'my great new rule',
-              uid: '',
             },
           },
         ],

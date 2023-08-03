@@ -8,12 +8,8 @@ import (
 	"github.com/grafana/dskit/services"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
-)
-
-// List of available targets.
-const (
-	All string = "all"
 )
 
 type Engine interface {
@@ -42,7 +38,10 @@ type service struct {
 	ServiceMap     map[string]services.Service
 }
 
-func ProvideService(cfg *setting.Cfg) *service {
+func ProvideService(
+	cfg *setting.Cfg,
+	features *featuremgmt.FeatureManager,
+) *service {
 	logger := log.New("modules")
 
 	return &service{
@@ -59,9 +58,6 @@ func ProvideService(cfg *setting.Cfg) *service {
 // Init initializes all registered modules.
 func (m *service) Init(_ context.Context) error {
 	var err error
-
-	// module registration
-	m.RegisterModule(All, nil)
 
 	for mod, targets := range m.dependencyMap {
 		if err := m.ModuleManager.AddDependency(mod, targets...); err != nil {
@@ -102,6 +98,7 @@ func (m *service) Run(ctx context.Context) error {
 	listener := newServiceListener(m.log, m)
 	m.ServiceManager.AddListener(listener)
 
+	m.log.Debug("Starting module service manager")
 	// wait until a service fails or stop signal was received
 	err := m.ServiceManager.StartAsync(ctx)
 	if err != nil {

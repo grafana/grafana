@@ -1,9 +1,14 @@
-import { ProxyTarget } from '@locker/near-membrane-shared';
+import { isNearMembraneProxy, ProxyTarget } from '@locker/near-membrane-shared';
+
+import { DataSourceApi } from '@grafana/data';
+import { config } from '@grafana/runtime';
 
 import { forbiddenElements } from './constants';
+import { isReactClassComponent, logWarning } from './utils';
 
 // IMPORTANT: NEVER export this symbol from a public (e.g `@grafana/*`) package
 const SANDBOX_LIVE_VALUE = Symbol.for('@@SANDBOX_LIVE_VALUE');
+const monitorOnly = Boolean(config.featureToggles.frontendSandboxMonitorOnly);
 
 export function getSafeSandboxDomElement(element: Element, pluginId: string): Element {
   const nodeName = Reflect.get(element, 'nodeName');
@@ -25,7 +30,14 @@ export function getSafeSandboxDomElement(element: Element, pluginId: string): El
   }
 
   if (forbiddenElements.includes(nodeName)) {
-    throw new Error('<' + nodeName + '> is not allowed in sandboxed plugins');
+    logWarning('<' + nodeName + '> is not allowed in sandboxed plugins', {
+      pluginId,
+      param: nodeName,
+    });
+
+    if (!monitorOnly) {
+      throw new Error('<' + nodeName + '> is not allowed in sandboxed plugins');
+    }
   }
 
   // allow elements inside the sandbox or the sandbox body
@@ -37,10 +49,15 @@ export function getSafeSandboxDomElement(element: Element, pluginId: string): El
     return element;
   }
 
-  // any other element gets a mock
-  const mockElement = document.createElement(nodeName);
-  mockElement.dataset.grafanaPluginSandboxElement = 'true';
-  return mockElement;
+  if (!monitorOnly) {
+    // any other element gets a mock
+    const mockElement = document.createElement(nodeName);
+    mockElement.dataset.grafanaPluginSandboxElement = 'true';
+    // we are not logging this because a high number of warnings can be generated
+    return mockElement;
+  } else {
+    return element;
+  }
 }
 
 export function isDomElement(obj: unknown): obj is Element {
@@ -62,13 +79,34 @@ export function isDomElement(obj: unknown): obj is Element {
  * This is necessary for plugins working with style attributes to work in Chrome
  */
 export function markDomElementStyleAsALiveTarget(el: Element) {
+  const style = Reflect.get(el, 'style');
+  if (!Object.hasOwn(style, SANDBOX_LIVE_VALUE)) {
+    Reflect.defineProperty(style, SANDBOX_LIVE_VALUE, {});
+  }
+}
+
+/**
+ * Some specific near membrane proxies interfere with plugins
+ * an example of this is React class components state and their fast life cycles
+ * with cached objects.
+ *
+ * This function marks an object as a live target inside the sandbox
+ * but not all objects, only the ones that are allowed to be modified
+ */
+export function patchObjectAsLiveTarget(obj: unknown) {
   if (
-    // only HTMLElement's (extends Element) have a style attribute
-    el instanceof HTMLElement &&
+    obj &&
     // do not define it twice
-    !Object.hasOwn(el.style, SANDBOX_LIVE_VALUE)
+    !Object.hasOwn(obj, SANDBOX_LIVE_VALUE) &&
+    // only for proxies
+    isNearMembraneProxy(obj) &&
+    // do not patch functions
+    !(obj instanceof Function) &&
+    // conditions for allowed objects
+    // react class components
+    (isReactClassComponent(obj) || obj instanceof DataSourceApi)
   ) {
-    Reflect.defineProperty(el.style, SANDBOX_LIVE_VALUE, {});
+    Reflect.defineProperty(obj, SANDBOX_LIVE_VALUE, {});
   }
 }
 

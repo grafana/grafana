@@ -6,6 +6,11 @@ keywords:
   - documentation
   - '10.0'
   - release notes
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: Breaking changes in Grafana v10.0
 weight: -1
 ---
@@ -157,6 +162,38 @@ We've built a [CLI tool](https://grafana.com/blog/2022/12/12/guide-to-using-the-
 #### Learn more
 
 - [Blog post describing usage of the new CLI command](https://grafana.com/blog/2022/12/12/guide-to-using-the-new-grafana-cli-user-identity-conflict-tool-in-grafana-9.3/)
+
+### Grafana OAuth integrations do not work anymore with email lookups
+
+#### You are affected if:
+
+- You have configured Grafana to use multiple identity providers, and you have users with the same email address in multiple identity providers.
+- You have configured Grafana to use Generic OAuth with an identity provider that does not support a unique ID field.
+
+#### Background
+
+Grafana used to validate identity provider accounts based on the email claim. On many identity providers, the email field is not unique, and this could open a possible account vector to perform an account takeover and authentication bypass in certain scenarios.
+This change also ensures that Grafana is protected against the [CVE-2023-3128](https://grafana.com/security/security-advisories/CVE-2023-3128) vulnerability.
+
+#### Change in Grafana v10
+
+Grafana will not allow the affected users to sign in.
+
+#### Migration path
+
+In order to address any errors, we have provided an escape hatch that allows you to activate email lookup. You can use the following configuration in your Grafana instance to return the previous behavior.
+
+```
+[auth]
+oauth_allow_insecure_email_lookup = true
+```
+
+We strongly recommend not doing this in case you are using Azure AD as an identity provider with a multi-tenant app.
+
+#### Learn more
+
+- [CVE-2023-3128 Advisory](https://grafana.com/security/security-advisories/CVE-2023-3128)
+- [Enable email lookup]({{< relref "../setup-grafana/configure-security/configure-authentication/" >}})
 
 ### The "Alias" field in the CloudWatch data source is removed
 
@@ -324,7 +361,7 @@ npx @grafana/create-plugin@latest migrate
 
 #### Learn more
 
-- [Migration guide](https://grafana.github.io/plugin-tools/docs/migrating-from-toolkit/)
+- [Migration guide](https://grafana.github.io/plugin-tools/docs/getting-started/migrating-from-toolkit/)
 
 ## Deprecations
 

@@ -72,7 +72,6 @@ func TestRemoteLokiBackend(t *testing.T) {
 				"folderUID":          rule.NamespaceUID,
 				"group":              rule.Group,
 				"orgID":              fmt.Sprint(rule.OrgID),
-				"ruleUID":            rule.UID,
 			}
 			require.Equal(t, exp, res.Stream)
 		})
@@ -88,6 +87,20 @@ func TestRemoteLokiBackend(t *testing.T) {
 			res := statesToStream(rule, states, nil, l)
 
 			require.NotContains(t, res.Stream, "__private__")
+		})
+
+		t.Run("includes ruleUID in log line", func(t *testing.T) {
+			rule := createTestRule()
+			l := log.NewNopLogger()
+			states := singleFromNormal(&state.State{
+				State:  eval.Alerting,
+				Labels: data.Labels{"a": "b"},
+			})
+
+			res := statesToStream(rule, states, nil, l)
+
+			entry := requireSingleEntry(t, res)
+			require.Equal(t, rule.UID, entry.RuleUID)
 		})
 
 		t.Run("includes instance labels in log line", func(t *testing.T) {
@@ -210,12 +223,35 @@ func TestRemoteLokiBackend(t *testing.T) {
 				exp:   `{orgID="0",from="state-history"}`,
 			},
 			{
-				name: "adds stream label filter for ruleUID and orgID",
+				name: "adds stream label filter for orgID",
 				query: models.HistoryQuery{
-					RuleUID: "rule-uid",
-					OrgID:   123,
+					OrgID: 123,
 				},
-				exp: `{orgID="123",from="state-history",ruleUID="rule-uid"}`,
+				exp: `{orgID="123",from="state-history"}`,
+			},
+			{
+				name: "filters ruleUID in log line",
+				query: models.HistoryQuery{
+					OrgID:   123,
+					RuleUID: "rule-uid",
+				},
+				exp: `{orgID="123",from="state-history"} | json | ruleUID="rule-uid"`,
+			},
+			{
+				name: "filters dashboardUID in log line",
+				query: models.HistoryQuery{
+					OrgID:        123,
+					DashboardUID: "dash-uid",
+				},
+				exp: `{orgID="123",from="state-history"} | json | dashboardUID="dash-uid"`,
+			},
+			{
+				name: "filters panelID in log line",
+				query: models.HistoryQuery{
+					OrgID:   123,
+					PanelID: 456,
+				},
+				exp: `{orgID="123",from="state-history"} | json | panelID=456`,
 			},
 			{
 				name: "filters instance labels in log line",
@@ -227,6 +263,17 @@ func TestRemoteLokiBackend(t *testing.T) {
 					},
 				},
 				exp: `{orgID="123",from="state-history"} | json | labels_customlabel="customvalue" | labels_labeltwo="labelvaluetwo"`,
+			},
+			{
+				name: "filters both instance labels + ruleUID",
+				query: models.HistoryQuery{
+					OrgID:   123,
+					RuleUID: "rule-uid",
+					Labels: map[string]string{
+						"customlabel": "customvalue",
+					},
+				},
+				exp: `{orgID="123",from="state-history"} | json | ruleUID="rule-uid" | labels_customlabel="customvalue"`,
 			},
 		}
 

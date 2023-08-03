@@ -98,7 +98,7 @@ const QueryHeader = ({
             <Badge
               text="Monitoring account"
               color="blue"
-              tooltip="AWS monitoring accounts view data from source accounts so you can centralize monitoring and troubleshoot activites"
+              tooltip="AWS monitoring accounts view data from source accounts so you can centralize monitoring and troubleshoot activities"
             ></Badge>
           </>
         )}

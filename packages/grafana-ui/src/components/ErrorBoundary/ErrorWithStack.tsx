@@ -6,10 +6,10 @@ import { stylesFactory } from '../../themes';
 import { ErrorBoundaryApi } from './ErrorBoundary';
 
 const getStyles = stylesFactory(() => {
-  return css`
-    width: 500px;
-    margin: 64px auto;
-  `;
+  return css({
+    width: '500px',
+    margin: '64px auto',
+  });
 });
 
 export interface Props extends ErrorBoundaryApi {

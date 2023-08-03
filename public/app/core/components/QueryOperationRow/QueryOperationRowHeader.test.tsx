@@ -24,11 +24,11 @@ describe('QueryOperationRowHeader', () => {
   describe('collapsable property', () => {
     test('should show the button to collapse the query row by default', () => {
       setup();
-      expect(screen.getByLabelText('toggle collapse and expand query row')).toBeInTheDocument();
+      expect(screen.getByLabelText('Collapse query row')).toBeInTheDocument();
     });
     test('should hide the button to collapse the query row when collapsable is set as false', () => {
       setup({ collapsable: false });
-      expect(screen.queryByLabelText('toggle collapse and expand query row')).not.toBeInTheDocument();
+      expect(screen.queryByLabelText('Collapse query row')).not.toBeInTheDocument();
     });
   });
 });

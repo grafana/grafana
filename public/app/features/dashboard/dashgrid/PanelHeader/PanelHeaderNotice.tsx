@@ -14,7 +14,7 @@ export const PanelHeaderNotice = ({ notice, onClick }: Props) => {
   const styles = useStyles2(getStyles);
 
   const iconName =
-    notice.severity === 'error' || notice.severity === 'warning' ? 'exclamation-triangle' : 'info-circle';
+    notice.severity === 'error' || notice.severity === 'warning' ? 'exclamation-triangle' : 'file-landscape-alt';
 
   if (notice.inspect && onClick) {
     return (
@@ -50,14 +50,14 @@ const getStyles = (theme: GrafanaTheme2) => ({
   notice: css({
     background: 'inherit',
     border: 'none',
-    borderRadius: theme.shape.borderRadius(),
+    borderRadius: theme.shape.radius.default,
   }),
   iconTooltip: css({
     color: `${theme.colors.text.secondary}`,
     backgroundColor: 'inherit',
     cursor: 'auto',
     border: 'none',
-    borderRadius: `${theme.shape.borderRadius()}`,
+    borderRadius: `${theme.shape.radius.default}`,
     padding: `${theme.spacing(0, 1)}`,
     height: ` ${theme.spacing(theme.components.height.md)}`,
     display: 'flex',

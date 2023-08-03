@@ -1,19 +1,40 @@
 import React from 'react';
 
-import { locationUtil } from '@grafana/data';
+import { locationUtil, SelectableValue } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
 import { locationService } from '@grafana/runtime';
-import { Button, LinkButton, Input, Switch, RadioButtonGroup, Form, Field, InputControl, FieldSet } from '@grafana/ui';
+import {
+  Button,
+  LinkButton,
+  Input,
+  Switch,
+  RadioButtonGroup,
+  Form,
+  Field,
+  InputControl,
+  FieldSet,
+  Icon,
+  Tooltip,
+  Label,
+} from '@grafana/ui';
 import { getConfig } from 'app/core/config';
+import { contextSrv } from 'app/core/core';
 import { OrgRole, useDispatch } from 'app/types';
 
 import { addInvitee } from '../invites/state/actions';
 
-const roles = [
-  { label: 'Viewer', value: OrgRole.Viewer },
-  { label: 'Editor', value: OrgRole.Editor },
-  { label: 'Admin', value: OrgRole.Admin },
-];
+const noBasicRoleFlag = contextSrv.licensedAccessControlEnabled();
+
+const tooltipMessage = noBasicRoleFlag
+  ? 'You can now select the "No basic role" option and add permissions to your custom needs.'
+  : undefined;
+
+const roles: Array<SelectableValue<OrgRole>> = Object.values(OrgRole)
+  .filter((r) => noBasicRoleFlag || r !== OrgRole.None)
+  .map((r) => ({
+    label: r === OrgRole.None ? 'No basic role' : r,
+    value: r,
+  }));
 
 export interface FormModel {
   role: OrgRole;
@@ -54,7 +75,21 @@ export const UserInviteForm = () => {
               <Field invalid={!!errors.name} label="Name">
                 <Input {...register('name')} placeholder="(optional)" />
               </Field>
-              <Field invalid={!!errors.role} label="Role">
+              <Field
+                invalid={!!errors.role}
+                label={
+                  <Label>
+                    <Stack gap={0.5}>
+                      <span>Role</span>
+                      {tooltipMessage && (
+                        <Tooltip placement="right-end" interactive={true} content={<>{tooltipMessage}</>}>
+                          <Icon name="info-circle" size="xs" />
+                        </Tooltip>
+                      )}
+                    </Stack>
+                  </Label>
+                }
+              >
                 <InputControl
                   render={({ field: { ref, ...field } }) => <RadioButtonGroup {...field} options={roles} />}
                   control={control}

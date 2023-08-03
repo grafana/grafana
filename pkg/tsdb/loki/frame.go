@@ -12,7 +12,7 @@ import (
 
 // we adjust the dataframes to be the way frontend & alerting
 // wants them.
-func adjustFrame(frame *data.Frame, query *lokiQuery, setMetricFrameName bool) error {
+func adjustFrame(frame *data.Frame, query *lokiQuery, setMetricFrameName bool, logsDataplane bool) error {
 	fields := frame.Fields
 
 	if len(fields) < 2 {
@@ -27,7 +27,7 @@ func adjustFrame(frame *data.Frame, query *lokiQuery, setMetricFrameName bool) e
 	if secondField.Type() == data.FieldTypeFloat64 {
 		return adjustMetricFrame(frame, query, setMetricFrameName)
 	} else {
-		return adjustLogsFrame(frame, query)
+		return adjustLogsFrame(frame, query, logsDataplane)
 	}
 }
 
@@ -82,7 +82,15 @@ func adjustMetricFrame(frame *data.Frame, query *lokiQuery, setFrameName bool) e
 	return nil
 }
 
-func adjustLogsFrame(frame *data.Frame, query *lokiQuery) error {
+func adjustLogsFrame(frame *data.Frame, query *lokiQuery, dataplane bool) error {
+	if dataplane {
+		return adjustDataplaneLogsFrame(frame, query)
+	} else {
+		return adjustLegacyLogsFrame(frame, query)
+	}
+}
+
+func adjustLegacyLogsFrame(frame *data.Frame, query *lokiQuery) error {
 	// we check if the fields are of correct type and length
 	fields := frame.Fields
 	if len(fields) != 4 {
@@ -135,6 +143,54 @@ func adjustLogsFrame(frame *data.Frame, query *lokiQuery) error {
 		return err
 	}
 	frame.Fields = append(frame.Fields, idField)
+	return nil
+}
+
+func adjustDataplaneLogsFrame(frame *data.Frame, query *lokiQuery) error {
+	// we check if the fields are of correct type and length
+	fields := frame.Fields
+	if len(fields) != 4 {
+		return fmt.Errorf("invalid fields in logs frame")
+	}
+
+	labelsField := fields[0]
+	timeField := fields[1]
+	lineField := fields[2]
+	stringTimeField := fields[3]
+
+	if (timeField.Type() != data.FieldTypeTime) || (lineField.Type() != data.FieldTypeString) || (labelsField.Type() != data.FieldTypeJSON) || (stringTimeField.Type() != data.FieldTypeString) {
+		return fmt.Errorf("invalid fields in logs frame")
+	}
+
+	if (timeField.Len() != lineField.Len()) || (timeField.Len() != labelsField.Len()) || (timeField.Len() != stringTimeField.Len()) {
+		return fmt.Errorf("invalid fields in logs frame")
+	}
+
+	// this returns an error when the length of fields do not match
+	_, err := frame.RowLen()
+	if err != nil {
+		return err
+	}
+
+	timeField.Name = "timestamp"
+	labelsField.Name = "attributes"
+	lineField.Name = "body"
+
+	if frame.Meta == nil {
+		frame.Meta = &data.FrameMeta{}
+	}
+
+	frame.Meta.Stats = parseStats(frame.Meta.Custom)
+	frame.Meta.Custom = nil
+	frame.Meta.Type = data.FrameTypeLogLines
+
+	frame.Meta.ExecutedQueryString = "Expr: " + query.Expr
+
+	idField, err := makeIdField(stringTimeField, lineField, labelsField, query.RefID)
+	if err != nil {
+		return err
+	}
+	frame.Fields = data.Fields{labelsField, timeField, lineField, idField}
 	return nil
 }
 

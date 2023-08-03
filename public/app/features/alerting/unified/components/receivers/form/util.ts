@@ -8,7 +8,7 @@ export interface DeprecatedAuthHTTPConfig {
 }
 
 export interface HTTPAuthConfig {
-  authorization: {
+  authorization?: {
     type: string;
     credentials?: string;
     credentials_file?: string;
@@ -42,8 +42,8 @@ function normalizeHTTPConfig(config: HTTPAuthConfig | DeprecatedAuthHTTPConfig):
 
   return {
     ...omit(config, 'authorization'),
-    bearer_token: config.authorization.credentials,
-    bearer_token_file: config.authorization.credentials_file,
+    bearer_token: config.authorization?.credentials,
+    bearer_token_file: config.authorization?.credentials_file,
   };
 }
 

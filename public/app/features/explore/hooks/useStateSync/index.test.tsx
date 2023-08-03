@@ -6,8 +6,8 @@ import React, { ReactNode } from 'react';
 import { TestProvider } from 'test/helpers/TestProvider';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
-import { UrlQueryMap } from '@grafana/data';
-import { HistoryWrapper, setDataSourceSrv } from '@grafana/runtime';
+import { DataSourceApi, UrlQueryMap } from '@grafana/data';
+import { HistoryWrapper, setDataSourceSrv, DataSourceSrv } from '@grafana/runtime';
 import { setLastUsedDatasourceUID } from 'app/core/utils/explore';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 import { configureStore } from 'app/store/configureStore';
@@ -17,11 +17,46 @@ import { splitClose, splitOpen } from '../../state/main';
 
 import { useStateSync } from './';
 
+const fetch = jest.fn().mockResolvedValue({ correlations: [] });
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getBackendSrv: () => ({ fetch }),
+}));
+
+jest.mock('rxjs', () => ({
+  ...jest.requireActual('rxjs'),
+  lastValueFrom: () =>
+    new Promise((resolve, reject) => {
+      resolve({ data: { correlations: [] } });
+    }),
+}));
+
+function defaultDsGetter(datasources: Array<ReturnType<typeof makeDatasourceSetup>>): DataSourceSrv['get'] {
+  return (datasource) => {
+    let ds;
+    if (!datasource) {
+      ds = datasources[0]?.api;
+    } else {
+      ds = datasources.find((ds) =>
+        typeof datasource === 'string'
+          ? ds.api.name === datasource || ds.api.uid === datasource
+          : ds.api.uid === datasource?.uid
+      )?.api;
+    }
+
+    if (ds) {
+      return Promise.resolve(ds);
+    }
+
+    return Promise.reject();
+  };
+}
+
 interface SetupParams {
   queryParams?: UrlQueryMap;
-  exploreMixedDatasource?: boolean;
+  datasourceGetter?: (datasources: Array<ReturnType<typeof makeDatasourceSetup>>) => DataSourceSrv['get'];
 }
-function setup({ queryParams = {}, exploreMixedDatasource = false }: SetupParams) {
+function setup({ queryParams = {}, datasourceGetter = defaultDsGetter }: SetupParams) {
   const history = createMemoryHistory({
     initialEntries: [{ pathname: '/explore', search: stringify(queryParams) }],
   });
@@ -31,31 +66,11 @@ function setup({ queryParams = {}, exploreMixedDatasource = false }: SetupParams
   const datasources = [
     makeDatasourceSetup({ name: 'loki', uid: 'loki-uid' }),
     makeDatasourceSetup({ name: 'elastic', uid: 'elastic-uid' }),
+    makeDatasourceSetup({ name: MIXED_DATASOURCE_NAME, uid: MIXED_DATASOURCE_NAME, id: 999 }),
   ];
 
-  if (exploreMixedDatasource) {
-    datasources.push(makeDatasourceSetup({ name: MIXED_DATASOURCE_NAME, uid: MIXED_DATASOURCE_NAME, id: 999 }));
-  }
-
   setDataSourceSrv({
-    get(datasource) {
-      let ds;
-      if (!datasource) {
-        ds = datasources[0]?.api;
-      } else {
-        ds = datasources.find((ds) =>
-          typeof datasource === 'string'
-            ? ds.api.name === datasource || ds.api.uid === datasource
-            : ds.api.uid === datasource?.uid
-        )?.api;
-      }
-
-      if (ds) {
-        return Promise.resolve(ds);
-      }
-
-      return Promise.reject();
-    },
+    get: datasourceGetter(datasources),
     getInstanceSettings: jest.fn(),
     getList: jest.fn(),
     reload: jest.fn(),
@@ -85,12 +100,6 @@ function setup({ queryParams = {}, exploreMixedDatasource = false }: SetupParams
       grafanaContext={{
         ...context,
         location,
-        config: {
-          ...context.config,
-          featureToggles: {
-            exploreMixedDatasource,
-          },
-        },
       }}
       store={store}
     >
@@ -125,14 +134,40 @@ describe('useStateSync', () => {
     expect(search.panes).toBeDefined();
   });
 
-  it('inits an explore pane for each key in the panes search object', async () => {
+  it('correctly inits an explore pane for each key in the panes search object', async () => {
     const { location, waitForNextUpdate, store } = setup({
       queryParams: {
         panes: JSON.stringify({
-          one: { datasource: 'loki-uid', queries: [{ datasource: { name: 'loki', uid: 'loki-uid' } }] },
+          one: { datasource: 'loki-uid', queries: [{ datasource: { name: 'loki', uid: 'loki-uid' }, refId: '1+2' }] },
           two: { datasource: 'elastic-uid', queries: [{ datasource: { name: 'elastic', uid: 'elastic-uid' } }] },
         }),
         schemaVersion: 1,
+      },
+      datasourceGetter: (datasources: Array<ReturnType<typeof makeDatasourceSetup>>): DataSourceSrv['get'] => {
+        return (datasource) => {
+          let ds: DataSourceApi | undefined;
+          if (!datasource) {
+            ds = datasources[0]?.api;
+          } else {
+            ds = datasources.find((ds) =>
+              typeof datasource === 'string'
+                ? ds.api.name === datasource || ds.api.uid === datasource
+                : ds.api.uid === datasource?.uid
+            )?.api;
+          }
+
+          return new Promise((resolve, reject) => {
+            if (ds) {
+              if (typeof datasource === 'string' && datasource === 'loki-uid') {
+                setTimeout(() => Promise.resolve(ds));
+              } else {
+                resolve(ds);
+              }
+            }
+
+            reject();
+          });
+        };
       },
     });
 
@@ -142,9 +177,15 @@ describe('useStateSync', () => {
 
     expect(location.getHistory().length).toBe(initialHistoryLength);
 
-    const search = location.getSearchObject();
-    expect(search.panes).toBeDefined();
-    expect(Object.keys(store.getState().explore.panes)).toHaveLength(2);
+    const panes = location.getSearch().get('panes');
+    expect(panes).not.toBeNull();
+    if (panes) {
+      // check if the URL is properly encoded when finishing rendering the hook. (this would be '1 2' otherwise)
+      expect(JSON.parse(panes)['one'].queries[0].refId).toBe('1+2');
+
+      // we expect panes in the state to be in the same order as the ones in the URL
+      expect(Object.keys(store.getState().explore.panes)).toStrictEqual(Object.keys(JSON.parse(panes)));
+    }
   });
 
   it('inits with a default query from the root level datasource when there are no valid queries in the URL', async () => {
@@ -355,9 +396,42 @@ describe('useStateSync', () => {
     expect(store.getState().explore.panes['one']?.range.raw).toMatchObject({ from: 'now-6h', to: 'now' });
   });
 
+  it('Changes time range when the range in the URL is updated to absolute range', async () => {
+    const { waitForNextUpdate, rerender, store } = setup({
+      queryParams: {
+        panes: JSON.stringify({
+          one: { datasource: 'loki-uid', queries: [{ expr: 'a' }], range: { from: 'now-1h', to: 'now' } },
+        }),
+        schemaVersion: 1,
+      },
+    });
+
+    await waitForNextUpdate();
+
+    expect(store.getState().explore.panes['one']?.range.raw).toMatchObject({ from: 'now-1h', to: 'now' });
+
+    rerender({
+      children: null,
+      params: {
+        panes: JSON.stringify({
+          one: {
+            datasource: 'loki-uid',
+            queries: [{ expr: 'a' }],
+            range: { from: '1500000000000', to: '1500000001000' },
+          },
+        }),
+        schemaVersion: 1,
+      },
+    });
+
+    await waitForNextUpdate();
+
+    expect(store.getState().explore.panes['one']?.range.raw.from.valueOf().toString()).toEqual('1500000000000');
+    expect(store.getState().explore.panes['one']?.range.raw.to.valueOf().toString()).toEqual('1500000001000');
+  });
+
   it('uses the first query datasource if no root datasource is specified in the URL', async () => {
     const { waitForNextUpdate, store } = setup({
-      exploreMixedDatasource: true,
       queryParams: {
         panes: JSON.stringify({
           one: {
@@ -378,7 +452,6 @@ describe('useStateSync', () => {
 
   it('updates the URL opening and closing a pane datasource changes', async () => {
     const { waitForNextUpdate, store, location } = setup({
-      exploreMixedDatasource: true,
       queryParams: {
         panes: JSON.stringify({
           one: {
@@ -416,28 +489,25 @@ describe('useStateSync', () => {
     });
   });
 
-  describe('with exploreMixedDatasource enabled', () => {
-    it('filters out queries from the URL that do not have a datasource', async () => {
-      const { waitForNextUpdate, store } = setup({
-        exploreMixedDatasource: true,
-        queryParams: {
-          panes: JSON.stringify({
-            one: {
-              datasource: MIXED_DATASOURCE_NAME,
-              queries: [
-                { expr: 'a', refId: 'A' },
-                { expr: 'b', datasource: { uid: 'loki-uid', type: 'logs' }, refId: 'B' },
-              ],
-            },
-          }),
-          schemaVersion: 1,
-        },
-      });
-
-      await waitForNextUpdate();
-
-      expect(store.getState().explore.panes['one']?.queries.length).toBe(1);
-      expect(store.getState().explore.panes['one']?.queries[0]).toMatchObject({ expr: 'b', refId: 'B' });
+  it('filters out queries from the URL that do not have a datasource', async () => {
+    const { waitForNextUpdate, store } = setup({
+      queryParams: {
+        panes: JSON.stringify({
+          one: {
+            datasource: MIXED_DATASOURCE_NAME,
+            queries: [
+              { expr: 'a', refId: 'A' },
+              { expr: 'b', datasource: { uid: 'loki-uid', type: 'logs' }, refId: 'B' },
+            ],
+          },
+        }),
+        schemaVersion: 1,
+      },
     });
+
+    await waitForNextUpdate();
+
+    expect(store.getState().explore.panes['one']?.queries.length).toBe(1);
+    expect(store.getState().explore.panes['one']?.queries[0]).toMatchObject({ expr: 'b', refId: 'B' });
   });
 });

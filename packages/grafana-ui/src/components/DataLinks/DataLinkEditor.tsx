@@ -20,14 +20,14 @@ interface DataLinkEditorProps {
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  listItem: css`
-    margin-bottom: ${theme.spacing()};
-  `,
-  infoText: css`
-    padding-bottom: ${theme.spacing(2)};
-    margin-left: 66px;
-    color: ${theme.colors.text.secondary};
-  `,
+  listItem: css({
+    marginBottom: theme.spacing(),
+  }),
+  infoText: css({
+    paddingBottom: theme.spacing(2),
+    marginLeft: '66px',
+    color: theme.colors.text.secondary,
+  }),
 });
 
 export const DataLinkEditor = React.memo(({ index, value, onChange, suggestions, isLast }: DataLinkEditorProps) => {

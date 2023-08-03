@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models/roletype"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
@@ -114,7 +115,7 @@ func TestAddAppLinks(t *testing.T) {
 		accessControl:  accesscontrolmock.New().WithPermissions(permissions),
 		pluginSettings: &pluginSettings,
 		features:       featuremgmt.WithFeatures(),
-		pluginStore: plugins.FakePluginStore{
+		pluginStore: &fakes.FakePluginStore{
 			PluginList: []plugins.PluginDTO{testApp1, testApp2, testApp3},
 		},
 	}
@@ -293,7 +294,6 @@ func TestAddAppLinks(t *testing.T) {
 	})
 
 	t.Run("Should replace page from plugin", func(t *testing.T) {
-		service.features = featuremgmt.WithFeatures(featuremgmt.FlagDataConnectionsConsole)
 		service.navigationAppConfig = map[string]NavigationAppConfig{}
 		service.navigationAppPathConfig = map[string]NavigationAppConfig{
 			"/connections/add-new-connection": {SectionID: "connections"},
@@ -333,7 +333,6 @@ func TestAddAppLinks(t *testing.T) {
 	})
 
 	t.Run("Should not register pages under the app plugin section unless AddToNav=true", func(t *testing.T) {
-		service.features = featuremgmt.WithFeatures(featuremgmt.FlagDataConnectionsConsole)
 		service.navigationAppPathConfig = map[string]NavigationAppConfig{} // We don't configure it as a standalone plugin page
 
 		treeRoot := navtree.NavTreeRoot{}
@@ -436,7 +435,7 @@ func TestAddAppLinksAccessControl(t *testing.T) {
 		accessControl:  acimpl.ProvideAccessControl(cfg),
 		pluginSettings: &pluginSettings,
 		features:       featuremgmt.WithFeatures(),
-		pluginStore: plugins.FakePluginStore{
+		pluginStore: &fakes.FakePluginStore{
 			PluginList: []plugins.PluginDTO{testApp1},
 		},
 	}

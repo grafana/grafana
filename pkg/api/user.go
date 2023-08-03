@@ -68,6 +68,11 @@ func (hs *HTTPServer) getUserUserProfile(c *contextmodel.ReqContext, userID int6
 		userProfile.AuthLabels = append(userProfile.AuthLabels, authLabel)
 		userProfile.IsExternal = true
 		userProfile.IsExternallySynced = login.IsExternallySynced(hs.Cfg, authInfo.AuthModule)
+		oAuthAndAllowAssignGrafanaAdmin := false
+		if oauthInfo := hs.SocialService.GetOAuthInfoProvider(strings.TrimPrefix(authInfo.AuthModule, "oauth_")); oauthInfo != nil {
+			oAuthAndAllowAssignGrafanaAdmin = oauthInfo.AllowAssignGrafanaAdmin
+		}
+		userProfile.IsGrafanaAdminExternallySynced = login.IsGrafanaAdminExternallySynced(hs.Cfg, authInfo.AuthModule, oAuthAndAllowAssignGrafanaAdmin)
 	}
 
 	userProfile.AccessControl = hs.getAccessControlMetadata(c, c.OrgID, "global.users:id:", strconv.FormatInt(userID, 10))
@@ -625,13 +630,6 @@ type UpdateUserParams struct {
 	// in:path
 	// required:true
 	UserID int64 `json:"user_id"`
-}
-
-// swagger:response searchUsersResponse
-type SearchUsersResponse struct {
-	// The response message
-	// in: body
-	Body user.SearchUserQueryResult `json:"body"`
 }
 
 // swagger:response userResponse

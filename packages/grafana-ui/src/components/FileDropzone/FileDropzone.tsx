@@ -259,7 +259,7 @@ export function FileDropzoneDefaultChildren({ primaryText = 'Drop file here or c
   const styles = getStyles(theme);
 
   return (
-    <div className={cx(styles.defaultDropZone)}>
+    <div className={cx(styles.defaultDropZone)} data-testid="file-drop-zone-default-children">
       <Icon className={cx(styles.icon)} name="upload" size="xl" />
       <h6 className={cx(styles.primaryText)}>{primaryText}</h6>
       <small className={styles.small}>{secondaryText}</small>
@@ -298,43 +298,45 @@ function mapToCustomFile(file: File): DropzoneFile {
 
 function getStyles(theme: GrafanaTheme2, isDragActive?: boolean) {
   return {
-    container: css`
-      display: flex;
-      flex-direction: column;
-      width: 100%;
-      padding: ${theme.spacing(2)};
-      border-radius: 2px;
-      border: 1px dashed ${theme.colors.border.strong};
-      background-color: ${isDragActive ? theme.colors.background.secondary : theme.colors.background.primary};
-      cursor: pointer;
-      align-items: center;
-      justify-content: center;
-    `,
-    dropzone: css`
-      display: flex;
-      flex-direction: column;
-    `,
-    defaultDropZone: css`
-      text-align: center;
-    `,
-    icon: css`
-      margin-bottom: ${theme.spacing(1)};
-    `,
-    primaryText: css`
-      margin-bottom: ${theme.spacing(1)};
-    `,
-    acceptContainer: css`
-      text-align: center;
-      margin: 0;
-    `,
-    acceptSeparator: css`
-      margin: 0 ${theme.spacing(1)};
-    `,
-    small: css`
-      color: ${theme.colors.text.secondary};
-    `,
-    errorAlert: css`
-      padding-top: 10px;
-    `,
+    container: css({
+      display: 'flex',
+      flexDirection: 'column',
+      width: '100%',
+      padding: theme.spacing(2),
+      borderRadius: theme.shape.radius.default,
+      border: `1px dashed ${theme.colors.border.strong}`,
+      backgroundColor: isDragActive ? theme.colors.background.secondary : theme.colors.background.primary,
+      cursor: 'pointer',
+      alignItems: 'center',
+      justifyContent: 'center',
+    }),
+    dropzone: css({
+      height: '100%',
+      width: '100%',
+      display: 'flex',
+      flexDirection: 'column',
+    }),
+    defaultDropZone: css({
+      textAlign: 'center',
+    }),
+    icon: css({
+      marginBottom: theme.spacing(1),
+    }),
+    primaryText: css({
+      marginBottom: theme.spacing(1),
+    }),
+    acceptContainer: css({
+      textAlign: 'center',
+      margin: 0,
+    }),
+    acceptSeparator: css({
+      margin: `0 ${theme.spacing(1)}`,
+    }),
+    small: css({
+      color: theme.colors.text.secondary,
+    }),
+    errorAlert: css({
+      paddingTop: '10px',
+    }),
   };
 }

@@ -321,6 +321,16 @@ const (
           "interval": "",
           "legendFormat": "",
           "refId": "B"
+        },
+        {
+          "datasource": {
+            "name": "Expression",
+            "type": "__expr__",
+            "uid": "__expr__"
+          },
+          "expression": "$A + $B",
+          "refId": "C",
+          "type": "math"
         }
       ],
       "title": "Panel Title",
@@ -358,6 +368,16 @@ const (
           "legendFormat": "",
           "refId": "B",
 		  "hide": true
+        },
+        {
+          "datasource": {
+            "name": "Expression",
+            "type": "__expr__",
+            "uid": "__expr__"
+          },
+          "expression": "$A + $B",
+          "refId": "C",
+          "type": "math"
         }
       ],
       "title": "Panel Title",
@@ -367,7 +387,7 @@ const (
   "schemaVersion": 35
 }`
 
-	dashboardWithRows = `
+	dashboardWithRowsAndOneHiddenQuery = `
 {
   "panels": [
     {
@@ -393,6 +413,7 @@ const (
           "expr": "query2",
           "interval": "",
           "legendFormat": "",
+		  "hide": true,
           "refId": "B"
         }
       ],
@@ -684,8 +705,9 @@ func TestGetQueryDataResponse(t *testing.T) {
 	t.Run("Returns query data even when the query is hidden", func(t *testing.T) {
 		hiddenQuery := map[string]interface{}{
 			"datasource": map[string]interface{}{
-				"type": "mysql",
-				"uid":  "ds1",
+				"name": "Expression",
+				"type": "__expr__",
+				"uid":  "__expr__",
 			},
 			"hide":  true,
 			"refId": "A",
@@ -704,11 +726,9 @@ func TestGetQueryDataResponse(t *testing.T) {
 		dto := &SavePublicDashboardDTO{
 			DashboardUid: dashboard.UID,
 			UserId:       7,
+			OrgID:        dashboard.OrgID,
 			PublicDashboard: &PublicDashboardDTO{
-				IsEnabled:    &isEnabled,
-				DashboardUid: "NOTTHESAME",
-				OrgId:        dashboard.OrgID,
-				TimeSettings: timeSettings,
+				IsEnabled: &isEnabled,
 			},
 		}
 		pubdashDto, err := service.Create(context.Background(), SignedInUser, dto)
@@ -1215,11 +1235,9 @@ func TestBuildMetricRequest(t *testing.T) {
 	isEnabled := true
 	dto := &SavePublicDashboardDTO{
 		DashboardUid: publicDashboard.UID,
+		OrgID:        9999999,
 		PublicDashboard: &PublicDashboardDTO{
-			IsEnabled:    &isEnabled,
-			DashboardUid: "NOTTHESAME",
-			OrgId:        9999999,
-			TimeSettings: timeSettings,
+			IsEnabled: &isEnabled,
 		},
 	}
 
@@ -1229,11 +1247,9 @@ func TestBuildMetricRequest(t *testing.T) {
 	isEnabled = false
 	nonPublicDto := &SavePublicDashboardDTO{
 		DashboardUid: nonPublicDashboard.UID,
+		OrgID:        9999999,
 		PublicDashboard: &PublicDashboardDTO{
-			IsEnabled:    &isEnabled,
-			DashboardUid: "NOTTHESAME",
-			OrgId:        9999999,
-			TimeSettings: defaultPubdashTimeSettings,
+			IsEnabled: &isEnabled,
 		},
 	}
 
@@ -1345,18 +1361,12 @@ func TestBuildMetricRequest(t *testing.T) {
 			require.Equal(t, publicDashboardQueryDTO.MaxDataPoints, reqDTO.Queries[i].Get("maxDataPoints").MustInt64())
 		}
 
-		require.Len(t, reqDTO.Queries, 2)
-
-		require.Equal(
-			t,
-			simplejson.NewFromAny(hiddenQuery),
-			reqDTO.Queries[0],
-		)
+		require.Len(t, reqDTO.Queries, 1)
 
 		require.Equal(
 			t,
 			simplejson.NewFromAny(nonHiddenQuery),
-			reqDTO.Queries[1],
+			reqDTO.Queries[0],
 		)
 	})
 }
@@ -1490,24 +1500,24 @@ func TestGroupQueriesByPanelId(t *testing.T) {
 		}`, string(query))
 	})
 
-	t.Run("hidden query not filtered", func(t *testing.T) {
+	t.Run("hidden queries in a panel with an expression not filtered", func(t *testing.T) {
 		json, err := simplejson.NewJson([]byte(dashboardWithOneHiddenQuery))
 		require.NoError(t, err)
 		queries := groupQueriesByPanelId(json)[2]
 
-		require.Len(t, queries, 2)
+		require.Len(t, queries, 3)
 	})
 
-	t.Run("hidden queries not filtered, so queries returned", func(t *testing.T) {
+	t.Run("all hidden queries in a panel with an expression not filtered", func(t *testing.T) {
 		json, err := simplejson.NewJson([]byte(dashboardWithAllHiddenQueries))
 		require.NoError(t, err)
 		queries := groupQueriesByPanelId(json)[2]
 
-		require.Len(t, queries, 2)
+		require.Len(t, queries, 3)
 	})
 
 	t.Run("queries inside panels inside rows are returned", func(t *testing.T) {
-		json, err := simplejson.NewJson([]byte(dashboardWithRows))
+		json, err := simplejson.NewJson([]byte(dashboardWithRowsAndOneHiddenQuery))
 		require.NoError(t, err)
 
 		queries := groupQueriesByPanelId(json)
@@ -1516,6 +1526,20 @@ func TestGroupQueriesByPanelId(t *testing.T) {
 		}
 
 		assert.Len(t, queries, 2)
+	})
+
+	t.Run("hidden queries are not returned", func(t *testing.T) {
+		json, err := simplejson.NewJson([]byte(dashboardWithRowsAndOneHiddenQuery))
+		require.NoError(t, err)
+
+		queries := groupQueriesByPanelId(json)
+		var totalQueries int
+		for idx := range queries {
+			totalQueries += len(queries[idx])
+			assert.NotNil(t, queries[idx])
+		}
+
+		assert.Equal(t, 3, totalQueries)
 	})
 }
 

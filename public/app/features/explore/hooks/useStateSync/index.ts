@@ -1,7 +1,7 @@
 import { identity, isEmpty, isEqual, isObject, mapValues, omitBy } from 'lodash';
 import { useEffect, useRef } from 'react';
 
-import { CoreApp, ExploreUrlState, isDateTime, TimeRange, RawTimeRange, DataSourceApi } from '@grafana/data';
+import { CoreApp, ExploreUrlState, RawTimeRange, DataSourceApi } from '@grafana/data';
 import { DataQuery, DataSourceRef } from '@grafana/schema';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { clearQueryKeys, getLastUsedDatasourceUID } from 'app/core/utils/explore';
@@ -15,7 +15,7 @@ import { clearPanes, splitClose, splitOpen, syncTimesAction } from '../../state/
 import { runQueries, setQueriesAction } from '../../state/query';
 import { selectPanes } from '../../state/selectors';
 import { changeRangeAction, updateTime } from '../../state/time';
-import { DEFAULT_RANGE } from '../../state/utils';
+import { DEFAULT_RANGE, fromURLRange, toURLTimeRange } from '../../state/utils';
 import { withUniqueRefIds } from '../../utils/queries';
 import { isFulfilled } from '../utils';
 
@@ -25,12 +25,7 @@ import { parseURL } from './parseURL';
  * Bi-directionally syncs URL changes with Explore's state.
  */
 export function useStateSync(params: ExploreQueryParams) {
-  const {
-    location,
-    config: {
-      featureToggles: { exploreMixedDatasource },
-    },
-  } = useGrafana();
+  const { location } = useGrafana();
   const dispatch = useDispatch();
   const panesState = useSelector(selectPanes);
   const orgId = useSelector((state) => state.user.orgId);
@@ -123,7 +118,7 @@ export function useStateSync(params: ExploreQueryParams) {
             })
             .then(() => {
               if (update.range) {
-                dispatch(updateTime({ exploreId, rawRange: range }));
+                dispatch(updateTime({ exploreId, rawRange: fromURLRange(range) }));
               }
 
               if (update.queries) {
@@ -170,58 +165,56 @@ export function useStateSync(params: ExploreQueryParams) {
 
       Promise.all(
         Object.entries(urlState.panes).map(([exploreId, { datasource, queries, range, panelsState }]) => {
-          return getPaneDatasource(datasource, queries, orgId, !!exploreMixedDatasource).then(
-            async (paneDatasource) => {
-              return Promise.resolve(
-                // FIXME: In theory, given the Grafana datasource will always be present, this should always be defined.
-                paneDatasource
-                  ? queries.length
-                    ? // if we have queries in the URL, we use them
-                      withUniqueRefIds(queries)
-                        // but filter out the ones that are not compatible with the pane datasource
-                        .filter(getQueryFilter(paneDatasource))
-                        .map(
-                          isMixedDatasource(paneDatasource)
-                            ? identity<DataQuery>
-                            : (query) => ({ ...query, datasource: paneDatasource.getRef() })
-                        )
-                    : getDatasourceSrv()
-                        // otherwise we get a default query from the pane datasource or from the default datasource if the pane datasource is mixed
-                        .get(isMixedDatasource(paneDatasource) ? undefined : paneDatasource.getRef())
-                        .then((ds) => [getDefaultQuery(ds)])
-                  : []
-              )
-                .then(async (queries) => {
-                  // we remove queries that have an invalid datasources
-                  const validQueries = await removeQueriesWithInvalidDatasource(queries);
+          return getPaneDatasource(datasource, queries, orgId).then((paneDatasource) => {
+            return Promise.resolve(
+              // Given the Grafana datasource will always be present, this should always be defined.
+              paneDatasource
+                ? queries.length
+                  ? // if we have queries in the URL, we use them
+                    withUniqueRefIds(queries)
+                      // but filter out the ones that are not compatible with the pane datasource
+                      .filter(getQueryFilter(paneDatasource))
+                      .map(
+                        isMixedDatasource(paneDatasource)
+                          ? identity<DataQuery>
+                          : (query) => ({ ...query, datasource: paneDatasource.getRef() })
+                      )
+                  : getDatasourceSrv()
+                      // otherwise we get a default query from the pane datasource or from the default datasource if the pane datasource is mixed
+                      .get(isMixedDatasource(paneDatasource) ? undefined : paneDatasource.getRef())
+                      .then((ds) => [getDefaultQuery(ds)])
+                : []
+            ).then(async (queries) => {
+              // we remove queries that have an invalid datasources
+              let validQueries = await removeQueriesWithInvalidDatasource(queries);
 
-                  if (!validQueries.length && paneDatasource) {
-                    // and in case there's no query left we add a default one.
-                    return [
-                      getDefaultQuery(
-                        isMixedDatasource(paneDatasource) ? await getDatasourceSrv().get() : paneDatasource
-                      ),
-                    ];
-                  }
+              if (!validQueries.length && paneDatasource) {
+                // and in case there's no query left we add a default one.
+                validQueries = [
+                  getDefaultQuery(isMixedDatasource(paneDatasource) ? await getDatasourceSrv().get() : paneDatasource),
+                ];
+              }
 
-                  return validQueries;
-                })
-                .then((queries) => {
-                  return dispatch(
-                    initializeExplore({
-                      exploreId,
-                      datasource: paneDatasource,
-                      queries,
-                      range,
-                      panelsState,
-                    })
-                  ).unwrap();
-                });
-            }
-          );
+              return { exploreId, range, panelsState, queries: validQueries, datasource: paneDatasource };
+            });
+          });
         })
-      ).then((panes) => {
-        const newParams = panes.reduce(
+      ).then(async (panes) => {
+        const initializedPanes = await Promise.all(
+          panes.map(({ exploreId, range, panelsState, queries, datasource }) => {
+            return dispatch(
+              initializeExplore({
+                exploreId,
+                datasource,
+                queries,
+                range,
+                panelsState,
+              })
+            ).unwrap();
+          })
+        );
+
+        const newParams = initializedPanes.reduce(
           (acc, { exploreId, state }) => {
             return {
               ...acc,
@@ -235,25 +228,28 @@ export function useStateSync(params: ExploreQueryParams) {
             panes: {},
           }
         );
-
         initState.current = 'done';
-
-        location.replace({
-          search: Object.entries({
+        // we need to use partial here beacuse replace doesn't encode the query params.
+        location.partial(
+          {
+            // partial doesn't remove other parameters, so we delete (by setting them to undefined) all the current one before adding the new ones.
+            ...Object.keys(location.getSearchObject()).reduce<Record<string, unknown>>((acc, key) => {
+              acc[key] = undefined;
+              return acc;
+            }, {}),
             panes: JSON.stringify(newParams.panes),
             schemaVersion: urlState.schemaVersion,
             orgId,
-          })
-            .map(([key, value]) => `${key}=${value}`)
-            .join('&'),
-        });
+          },
+          true
+        );
       });
     }
 
     prevParams.current = params;
 
     isURLOutOfSync && initState.current === 'done' && sync();
-  }, [dispatch, panesState, exploreMixedDatasource, orgId, location, params]);
+  }, [dispatch, panesState, orgId, location, params]);
 }
 
 function getDefaultQuery(ds: DataSourceApi) {
@@ -302,7 +298,7 @@ async function removeQueriesWithInvalidDatasource(queries: DataQuery[]) {
 
 /**
  * Returns the datasource that an explore pane should be using.
- * If the URL specifies a datasource and that datasource exists, it will be used unless said datasource is mixed and `allowMixed` is false.
+ * If the URL specifies a datasource and that datasource exists, it will be used unless said datasource is mixed.
  * Otherwise the datasource will be extracetd from the the first query specifying a valid datasource.
  *
  * If there's no datasource in the queries, the last used datasource will be used.
@@ -311,28 +307,22 @@ async function removeQueriesWithInvalidDatasource(queries: DataQuery[]) {
  * @param rootDatasource the top-level datasource specified in the URL
  * @param queries the queries in the pane
  * @param orgId the orgId of the user
- * @param allowMixed whether mixed datasources are allowed
  *
  * @returns the datasource UID that the pane should use, undefined if no suitable datasource is found
  */
 async function getPaneDatasource(
   rootDatasource: DataSourceRef | string | null | undefined,
   queries: DataQuery[],
-  orgId: number,
-  allowMixed: boolean
+  orgId: number
 ) {
-  // If there's a root datasource, use it unless it's mixed and we don't allow mixed.
+  // If there's a root datasource, use it unless it's unavailable
   if (rootDatasource) {
     try {
-      const ds = await getDatasourceSrv().get(rootDatasource);
-
-      if (!isMixedDatasource(ds) || allowMixed) {
-        return ds;
-      }
+      return await getDatasourceSrv().get(rootDatasource);
     } catch (_) {}
   }
 
-  // TODO: if queries have multiple datasources and allowMixed is true, we should return mixed datasource
+  // TODO: if queries have multiple datasources we should return mixed datasource
   // Else we try to find a datasource in the queries, returning the first one that exists
   const queriesWithDS = queries.filter((q) => q.datasource);
   for (const query of queriesWithDS) {
@@ -368,7 +358,7 @@ const urlDiff = (
 } => {
   const datasource = !isEqual(currentUrlState?.datasource, oldUrlState?.datasource);
   const queries = !isEqual(currentUrlState?.queries, oldUrlState?.queries);
-  const range = !isEqual(currentUrlState?.range || DEFAULT_RANGE, oldUrlState?.range || DEFAULT_RANGE);
+  const range = !areRangesEqual(currentUrlState?.range || DEFAULT_RANGE, oldUrlState?.range || DEFAULT_RANGE);
   const panelsState = !isEqual(currentUrlState?.panelsState, oldUrlState?.panelsState);
 
   return {
@@ -379,13 +369,20 @@ const urlDiff = (
   };
 };
 
+const areRangesEqual = (a: RawTimeRange, b: RawTimeRange): boolean => {
+  const parsedA = toURLTimeRange(a);
+  const parsedB = toURLTimeRange(b);
+
+  return parsedA.from === parsedB.from && parsedA.to === parsedB.to;
+};
+
 export function getUrlStateFromPaneState(pane: ExploreItemState): ExploreUrlState {
   return {
     // datasourceInstance should not be undefined anymore here but in case there is some path for it to be undefined
     // lets just fallback instead of crashing.
     datasource: pane.datasourceInstance?.uid || '',
     queries: pane.queries.map(clearQueryKeys),
-    range: toRawTimeRange(pane.range),
+    range: toURLTimeRange(pane.range.raw),
     // don't include panelsState in the url unless a piece of state is actually set
     panelsState: pruneObject(pane.panelsState),
   };
@@ -403,20 +400,3 @@ function pruneObject(obj: object): object | undefined {
   }
   return pruned;
 }
-
-const toRawTimeRange = (range: TimeRange): RawTimeRange => {
-  let from = range.raw.from;
-  if (isDateTime(from)) {
-    from = from.valueOf().toString(10);
-  }
-
-  let to = range.raw.to;
-  if (isDateTime(to)) {
-    to = to.valueOf().toString(10);
-  }
-
-  return {
-    from,
-    to,
-  };
-};

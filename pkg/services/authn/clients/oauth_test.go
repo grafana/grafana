@@ -20,9 +20,10 @@ import (
 
 func TestOAuth_Authenticate(t *testing.T) {
 	type testCase struct {
-		desc     string
-		req      *authn.Request
-		oauthCfg *social.OAuthInfo
+		desc                  string
+		req                   *authn.Request
+		oauthCfg              *social.OAuthInfo
+		allowInsecureTakeover bool
 
 		addStateCookie   bool
 		stateCookieValue string
@@ -128,13 +129,52 @@ func TestOAuth_Authenticate(t *testing.T) {
 				Groups: []string{"grp1", "grp2"},
 			},
 			expectedIdentity: &authn.Identity{
-				Email:      "some@email.com",
-				AuthModule: "oauth_azuread",
-				AuthID:     "123",
-				Name:       "name",
-				Groups:     []string{"grp1", "grp2"},
-				OAuthToken: &oauth2.Token{},
-				OrgRoles:   map[int64]org.RoleType{1: org.RoleAdmin},
+				Email:           "some@email.com",
+				AuthenticatedBy: login.AzureADAuthModule,
+				AuthID:          "123",
+				Name:            "name",
+				Groups:          []string{"grp1", "grp2"},
+				OAuthToken:      &oauth2.Token{},
+				OrgRoles:        map[int64]org.RoleType{1: org.RoleAdmin},
+				ClientParams: authn.ClientParams{
+					SyncUser:        true,
+					SyncTeams:       true,
+					AllowSignUp:     true,
+					FetchSyncedUser: true,
+					SyncOrgRoles:    true,
+					LookUpParams:    login.UserLookupParams{},
+				},
+			},
+		},
+		{
+			desc: "should return identity for valid request - and lookup user by email",
+			req: &authn.Request{HTTPRequest: &http.Request{
+				Header: map[string][]string{},
+				URL:    mustParseURL("http://grafana.com/?state=some-state"),
+			},
+			},
+			oauthCfg:              &social.OAuthInfo{UsePKCE: true},
+			allowInsecureTakeover: true,
+			addStateCookie:        true,
+			stateCookieValue:      "some-state",
+			addPKCECookie:         true,
+			pkceCookieValue:       "some-pkce-value",
+			isEmailAllowed:        true,
+			userInfo: &social.BasicUserInfo{
+				Id:     "123",
+				Name:   "name",
+				Email:  "some@email.com",
+				Role:   "Admin",
+				Groups: []string{"grp1", "grp2"},
+			},
+			expectedIdentity: &authn.Identity{
+				Email:           "some@email.com",
+				AuthenticatedBy: login.AzureADAuthModule,
+				AuthID:          "123",
+				Name:            "name",
+				Groups:          []string{"grp1", "grp2"},
+				OAuthToken:      &oauth2.Token{},
+				OrgRoles:        map[int64]org.RoleType{1: org.RoleAdmin},
 				ClientParams: authn.ClientParams{
 					SyncUser:        true,
 					SyncTeams:       true,
@@ -150,6 +190,10 @@ func TestOAuth_Authenticate(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
 			cfg := setting.NewCfg()
+
+			if tt.allowInsecureTakeover {
+				cfg.OAuthAllowInsecureEmailLookup = true
+			}
 
 			if tt.addStateCookie {
 				v := tt.stateCookieValue
@@ -177,7 +221,7 @@ func TestOAuth_Authenticate(t *testing.T) {
 				assert.Equal(t, tt.expectedIdentity.Name, identity.Name)
 				assert.Equal(t, tt.expectedIdentity.Email, identity.Email)
 				assert.Equal(t, tt.expectedIdentity.AuthID, identity.AuthID)
-				assert.Equal(t, tt.expectedIdentity.AuthModule, identity.AuthModule)
+				assert.Equal(t, tt.expectedIdentity.AuthenticatedBy, identity.AuthenticatedBy)
 				assert.Equal(t, tt.expectedIdentity.Groups, identity.Groups)
 
 				assert.Equal(t, tt.expectedIdentity.ClientParams.SyncUser, identity.ClientParams.SyncUser)

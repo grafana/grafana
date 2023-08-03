@@ -10,7 +10,6 @@ import {
   VizDisplayMode,
   CandlestickFieldMap,
   FieldConfig,
-  PanelCfgModelVersion,
 } from './panelcfg.gen';
 
 export const defaultOptions: Partial<Options> = {
@@ -33,5 +32,4 @@ export {
   VizDisplayMode,
   CandlestickFieldMap,
   FieldConfig,
-  PanelCfgModelVersion,
 };

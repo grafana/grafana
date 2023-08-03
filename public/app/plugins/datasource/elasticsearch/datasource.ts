@@ -31,12 +31,16 @@ import {
   SupplementaryQueryOptions,
   toUtc,
   AnnotationEvent,
+  FieldType,
+  DataSourceWithToggleableQueryFiltersSupport,
+  QueryFilterOptions,
+  ToggleFilterAction,
 } from '@grafana/data';
 import { DataSourceWithBackend, getDataSourceSrv, config, BackendSrvRequest } from '@grafana/runtime';
-import { queryLogsVolume } from 'app/core/logsModel';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
 
+import { queryLogsSample, queryLogsVolume } from '../../../features/logs/logsModel';
 import { getLogLevelFromKey } from '../../../features/logs/utils';
 
 import { IndexPattern, intervalMap } from './IndexPattern';
@@ -52,6 +56,13 @@ import {
 } from './components/QueryEditor/MetricAggregationsEditor/aggregations';
 import { metricAggregationConfig } from './components/QueryEditor/MetricAggregationsEditor/utils';
 import { isMetricAggregationWithMeta } from './guards';
+import {
+  addFilterToQuery,
+  escapeFilter,
+  escapeFilterValue,
+  queryHasFilter,
+  removeFilterFromQuery,
+} from './modifyQuery';
 import { trackAnnotationQuery, trackQuery } from './tracking';
 import {
   Logs,
@@ -64,9 +75,11 @@ import {
   ElasticsearchAnnotationQuery,
   RangeMap,
 } from './types';
-import { getScriptValue, isSupportedVersion, unsupportedVersionMessage } from './utils';
+import { getScriptValue, isSupportedVersion, isTimeSeriesQuery, unsupportedVersionMessage } from './utils';
 
 export const REF_ID_STARTER_LOG_VOLUME = 'log-volume-';
+export const REF_ID_STARTER_LOG_SAMPLE = 'log-sample-';
+
 // Those are metadata fields as defined in https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-fields.html#_identity_metadata_fields.
 // custom fields can start with underscores, therefore is not safe to exclude anything that starts with one.
 const ELASTIC_META_FIELDS = [
@@ -86,7 +99,8 @@ export class ElasticDatasource
   implements
     DataSourceWithLogsContextSupport,
     DataSourceWithQueryImportSupport<ElasticsearchQuery>,
-    DataSourceWithSupplementaryQueriesSupport<ElasticsearchQuery>
+    DataSourceWithSupplementaryQueriesSupport<ElasticsearchQuery>,
+    DataSourceWithToggleableQueryFiltersSupport<ElasticsearchQuery>
 {
   basicAuth?: string;
   withCredentials?: boolean;
@@ -520,13 +534,15 @@ export class ElasticDatasource
     switch (type) {
       case SupplementaryQueryType.LogsVolume:
         return this.getLogsVolumeDataProvider(request);
+      case SupplementaryQueryType.LogsSample:
+        return this.getLogsSampleDataProvider(request);
       default:
         return undefined;
     }
   }
 
   getSupportedSupplementaryQueryTypes(): SupplementaryQueryType[] {
-    return [SupplementaryQueryType.LogsVolume];
+    return [SupplementaryQueryType.LogsVolume, SupplementaryQueryType.LogsSample];
   }
 
   getSupplementaryQuery(options: SupplementaryQueryOptions, query: ElasticsearchQuery): ElasticsearchQuery | undefined {
@@ -579,6 +595,27 @@ export class ElasticDatasource
           bucketAggs,
         };
 
+      case SupplementaryQueryType.LogsSample:
+        isQuerySuitable = isTimeSeriesQuery(query);
+
+        if (!isQuerySuitable) {
+          return undefined;
+        }
+
+        if (options.limit) {
+          return {
+            refId: `${REF_ID_STARTER_LOG_SAMPLE}${query.refId}`,
+            query: query.query,
+            metrics: [{ type: 'logs', id: '1', settings: { limit: options.limit.toString() } }],
+          };
+        }
+
+        return {
+          refId: `${REF_ID_STARTER_LOG_SAMPLE}${query.refId}`,
+          query: query.query,
+          metrics: [{ type: 'logs', id: '1' }],
+        };
+
       default:
         return undefined;
     }
@@ -600,9 +637,23 @@ export class ElasticDatasource
       {
         range: request.range,
         targets: request.targets,
-        extractLevel: (dataFrame) => getLogLevelFromKey(dataFrame.name || ''),
+        extractLevel,
       }
     );
+  }
+
+  getLogsSampleDataProvider(request: DataQueryRequest<ElasticsearchQuery>): Observable<DataQueryResponse> | undefined {
+    const logsSampleRequest = cloneDeep(request);
+    const targets = logsSampleRequest.targets;
+    const queries = targets.map((query) => {
+      return this.getSupplementaryQuery({ type: SupplementaryQueryType.LogsSample, limit: 100 }, query);
+    });
+    const elasticQueries = queries.filter((query): query is ElasticsearchQuery => !!query);
+
+    if (!elasticQueries.length) {
+      return undefined;
+    }
+    return queryLogsSample(this, { ...logsSampleRequest, targets: elasticQueries });
   }
 
   query(request: DataQueryRequest<ElasticsearchQuery>): Observable<DataQueryResponse> {
@@ -729,7 +780,7 @@ export class ElasticDatasource
     const url = this.getMultiSearchUrl();
 
     const termsObservable = config.featureToggles.enableElasticsearchBackendQuerying
-      ? // TODO: This is run trough resource call, but maybe should run trough query
+      ? // TODO: This is run through resource call, but maybe should run through query
         from(this.postResourceRequest(url, esQuery))
       : this.legacyQueryRunner.request('POST', url, esQuery);
 
@@ -851,6 +902,34 @@ export class ElasticDatasource
     return false;
   }
 
+  toggleQueryFilter(query: ElasticsearchQuery, filter: ToggleFilterAction): ElasticsearchQuery {
+    let expression = query.query ?? '';
+    switch (filter.type) {
+      case 'FILTER_FOR': {
+        // This gives the user the ability to toggle a filter on and off.
+        expression = queryHasFilter(expression, filter.options.key, filter.options.value)
+          ? removeFilterFromQuery(expression, filter.options.key, filter.options.value)
+          : addFilterToQuery(expression, filter.options.key, filter.options.value);
+        break;
+      }
+      case 'FILTER_OUT': {
+        // If the opposite filter is present, remove it before adding the new one.
+        if (queryHasFilter(expression, filter.options.key, filter.options.value)) {
+          expression = removeFilterFromQuery(expression, filter.options.key, filter.options.value);
+        }
+        expression = addFilterToQuery(expression, filter.options.key, filter.options.value, '-');
+        break;
+      }
+    }
+
+    return { ...query, query: expression };
+  }
+
+  queryHasFilter(query: ElasticsearchQuery, options: QueryFilterOptions): boolean {
+    let expression = query.query ?? '';
+    return queryHasFilter(expression, options.key, options.value);
+  }
+
   modifyQuery(query: ElasticsearchQuery, action: QueryFixAction): ElasticsearchQuery {
     if (!action.options) {
       return query;
@@ -859,20 +938,15 @@ export class ElasticDatasource
     let expression = query.query ?? '';
     switch (action.type) {
       case 'ADD_FILTER': {
-        if (expression.length > 0) {
-          expression += ' AND ';
-        }
-        expression += `${action.options.key}:"${action.options.value}"`;
+        expression = addFilterToQuery(expression, action.options.key, action.options.value);
         break;
       }
       case 'ADD_FILTER_OUT': {
-        if (expression.length > 0) {
-          expression += ' AND ';
-        }
-        expression += `-${action.options.key}:"${action.options.value}"`;
+        expression = addFilterToQuery(expression, action.options.key, action.options.value, '-');
         break;
       }
     }
+
     return { ...query, query: expression };
   }
 
@@ -882,10 +956,16 @@ export class ElasticDatasource
       return query;
     }
     const esFilters = adhocFilters.map((filter) => {
-      const { key, operator, value } = filter;
+      let { key, operator, value } = filter;
       if (!key || !value) {
         return;
       }
+      /**
+       * Keys and values in ad hoc filters may contain characters such as
+       * colons, which needs to be escaped.
+       */
+      key = escapeFilter(key);
+      value = escapeFilterValue(value);
       switch (operator) {
         case '=':
           return `${key}:"${value}"`;
@@ -1093,4 +1173,10 @@ function createContextTimeRange(rowTimeEpochMs: number, direction: string, inter
       };
     }
   }
+}
+
+function extractLevel(dataFrame: DataFrame): LogLevel {
+  const valueField = dataFrame.fields.find((f) => f.type === FieldType.number);
+  const name = valueField?.labels?.['level'] ?? '';
+  return getLogLevelFromKey(name);
 }

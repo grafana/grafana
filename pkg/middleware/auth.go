@@ -20,8 +20,8 @@ import (
 
 type AuthOptions struct {
 	ReqGrafanaAdmin bool
-	ReqSignedIn     bool
 	ReqNoAnonynmous bool
+	ReqSignedIn     bool
 }
 
 func accessForbidden(c *contextmodel.ReqContext) {

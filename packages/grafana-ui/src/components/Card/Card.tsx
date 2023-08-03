@@ -133,7 +133,7 @@ const getHeadingStyles = (theme: GrafanaTheme2) => ({
       bottom: 0,
       left: 0,
       right: 0,
-      borderRadius: theme.shape.borderRadius(1),
+      borderRadius: theme.shape.radius.default,
     },
 
     '&:focus-visible': {
@@ -187,9 +187,9 @@ const Figure = ({ children, align = 'start', className }: ChildProps & { align?:
       className={cx(
         styles.media,
         className,
-        css`
-          align-self: ${align};
-        `
+        css({
+          alignSelf: align,
+        })
       )}
     >
       {children}
@@ -329,13 +329,13 @@ SecondaryActions.displayName = 'SecondaryActions';
  */
 export const getCardStyles = (theme: GrafanaTheme2) => {
   return {
-    inner: css`
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      width: 100%;
-      flex-wrap: wrap;
-    `,
+    inner: css({
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      width: '100%',
+      flexWrap: 'wrap',
+    }),
     ...getHeadingStyles(theme),
     ...getMetaStyles(theme),
     ...getDescriptionStyles(theme),

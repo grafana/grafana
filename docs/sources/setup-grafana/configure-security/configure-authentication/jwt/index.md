@@ -2,8 +2,14 @@
 aliases:
   - ../../../auth/jwt/
 description: Grafana JWT Authentication
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
+menuTitle: JWT
 title: Configure JWT authentication
-weight: 500
+weight: 1600
 ---
 
 # Configure JWT authentication
@@ -140,6 +146,12 @@ PEM-encoded key file in PKIX, PKCS #1, PKCS #8 or SEC 1 format.
 
 ```ini
 key_file = /path/to/key.pem
+```
+
+If the JWT token's header specifies a `kid` (Key ID), then the Key ID must be set using the `key_id` configuration option.
+
+```ini
+key_id = my-key-id
 ```
 
 ## Validate claims

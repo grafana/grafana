@@ -11,29 +11,39 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager"
 	"github.com/grafana/grafana/pkg/plugins/manager/client"
 	"github.com/grafana/grafana/pkg/plugins/manager/filestore"
-	"github.com/grafana/grafana/pkg/plugins/manager/loader"
-	"github.com/grafana/grafana/pkg/plugins/manager/loader/angulardetector"
+	pluginLoader "github.com/grafana/grafana/pkg/plugins/manager/loader"
+	pAngularInspector "github.com/grafana/grafana/pkg/plugins/manager/loader/angular/angularinspector"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/assetpath"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/finder"
+	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/bootstrap"
+	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/discovery"
+	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/initialization"
 	"github.com/grafana/grafana/pkg/plugins/manager/process"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
 	"github.com/grafana/grafana/pkg/plugins/manager/sources"
 	"github.com/grafana/grafana/pkg/plugins/manager/store"
+	"github.com/grafana/grafana/pkg/plugins/oauth"
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	"github.com/grafana/grafana/pkg/plugins/repo"
 	"github.com/grafana/grafana/pkg/services/caching"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/angulardetectorsprovider"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/angularinspector"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/angularpatternsstore"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/clientmiddleware"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/config"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/keyretriever"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/keyretriever/dynamic"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/keystore"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/licensing"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/loader"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pipeline"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	pluginSettings "github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings/service"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/serviceregistration"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -52,9 +62,21 @@ var WireSet = wire.NewSet(
 	coreplugin.ProvideCoreRegistry,
 	pluginscdn.ProvideService,
 	assetpath.ProvideService,
-	angulardetector.ProvideService,
+
+	pipeline.ProvideDiscoveryStage,
+	wire.Bind(new(discovery.Discoverer), new(*discovery.Discovery)),
+	pipeline.ProvideBootstrapStage,
+	wire.Bind(new(bootstrap.Bootstrapper), new(*bootstrap.Bootstrap)),
+	pipeline.ProvideInitializationStage,
+	wire.Bind(new(initialization.Initializer), new(*initialization.Initialize)),
+
+	angularpatternsstore.ProvideService,
+	angulardetectorsprovider.ProvideDynamic,
+	angularinspector.ProvideService,
+	wire.Bind(new(pAngularInspector.Inspector), new(*angularinspector.Service)),
+
 	loader.ProvideService,
-	wire.Bind(new(loader.Service), new(*loader.Loader)),
+	wire.Bind(new(pluginLoader.Service), new(*loader.Loader)),
 	wire.Bind(new(plugins.ErrorResolver), new(*loader.Loader)),
 	manager.ProvideInstaller,
 	wire.Bind(new(plugins.Installer), new(*manager.PluginInstaller)),
@@ -78,6 +100,8 @@ var WireSet = wire.NewSet(
 	wire.Bind(new(plugins.KeyRetriever), new(*keyretriever.Service)),
 	keyretriever.ProvideService,
 	dynamic.ProvideService,
+	serviceregistration.ProvideService,
+	wire.Bind(new(oauth.ExternalServiceRegistry), new(*serviceregistration.Service)),
 )
 
 // WireExtensionSet provides a wire.ProviderSet of plugin providers that can be
@@ -126,7 +150,7 @@ func CreateMiddlewares(cfg *setting.Cfg, oAuthTokenService oauthtoken.OAuthToken
 
 	// Placing the new service implementation behind a feature flag until it is known to be stable
 	if features.IsEnabled(featuremgmt.FlagUseCachingService) {
-		middlewares = append(middlewares, clientmiddleware.NewCachingMiddleware(cachingService))
+		middlewares = append(middlewares, clientmiddleware.NewCachingMiddlewareWithFeatureManager(cachingService, features))
 	}
 
 	if cfg.SendUserHeader {

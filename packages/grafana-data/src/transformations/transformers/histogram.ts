@@ -77,7 +77,7 @@ export const histogramFieldInfo = {
 export const histogramTransformer: SynchronousDataTransformerInfo<HistogramTransformerOptions> = {
   id: DataTransformerID.histogram,
   name: 'Histogram',
-  description: 'Calculate a histogram from input data',
+  description: 'Calculate a histogram from input data.',
   defaultOptions: {
     fields: {},
   },

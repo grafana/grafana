@@ -46,10 +46,6 @@ export function useDatasources(filters: GetDataSourceListFilters) {
 export function useDatasource(dataSource: string | DataSourceRef | DataSourceInstanceSettings | null | undefined) {
   const dataSourceSrv = getDataSourceSrv();
 
-  if (!dataSource) {
-    return undefined;
-  }
-
   if (typeof dataSource === 'string') {
     return dataSourceSrv.getInstanceSettings(dataSource);
   }

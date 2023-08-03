@@ -46,16 +46,6 @@ func (db *PostgresDialect) BatchSize() int {
 	return 1000
 }
 
-func (db *PostgresDialect) Default(col *Column) string {
-	if col.Type == DB_Bool {
-		if col.Default == "0" {
-			return "FALSE"
-		}
-		return "TRUE"
-	}
-	return col.Default
-}
-
 func (db *PostgresDialect) SQLType(c *Column) string {
 	var res string
 	switch t := c.Type; t {

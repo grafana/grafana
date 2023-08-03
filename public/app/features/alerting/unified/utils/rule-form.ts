@@ -34,7 +34,7 @@ import { EvalFunction } from '../../state/alertDef';
 import { RuleFormType, RuleFormValues } from '../types/rule-form';
 
 import { getRulesAccess } from './access-control';
-import { Annotation } from './constants';
+import { Annotation, defaultAnnotations } from './constants';
 import { getDefaultOrFirstCompatibleDataSource, isGrafanaRulesSource } from './datasource';
 import { arrayToRecord, recordToArray } from './misc';
 import { isAlertingRulerRule, isGrafanaRulerRule, isRecordingRulerRule } from './rules';
@@ -51,11 +51,7 @@ export const getDefaultFormValues = (): RuleFormValues => {
     name: '',
     uid: '',
     labels: [{ key: '', value: '' }],
-    annotations: [
-      { key: Annotation.summary, value: '' },
-      { key: Annotation.description, value: '' },
-      { key: Annotation.runbookURL, value: '' },
-    ],
+    annotations: defaultAnnotations,
     dataSourceName: null,
     type: canCreateGrafanaRules ? RuleFormType.grafana : canCreateCloudRules ? RuleFormType.cloudAlerting : undefined, // viewers can't create prom alerts
     group: '',
@@ -98,8 +94,35 @@ export function formValuesToRulerRuleDTO(values: RuleFormValues): RulerRuleDTO {
   throw new Error(`unexpected rule type: ${type}`);
 }
 
-function listifyLabelsOrAnnotations(item: Labels | Annotations | undefined): Array<{ key: string; value: string }> {
-  return [...recordToArray(item || {}), { key: '', value: '' }];
+export function listifyLabelsOrAnnotations(
+  item: Labels | Annotations | undefined,
+  addEmpty: boolean
+): Array<{ key: string; value: string }> {
+  const list = [...recordToArray(item || {})];
+  if (addEmpty) {
+    list.push({ key: '', value: '' });
+  }
+  return list;
+}
+
+//make sure default annotations are always shown in order even if empty
+export function normalizeDefaultAnnotations(annotations: Array<{ key: string; value: string }>) {
+  const orderedAnnotations = [...annotations];
+  const defaultAnnotationKeys = defaultAnnotations.map((annotation) => annotation.key);
+
+  defaultAnnotationKeys.forEach((defaultAnnotationKey, index) => {
+    const fieldIndex = orderedAnnotations.findIndex((field) => field.key === defaultAnnotationKey);
+
+    if (fieldIndex === -1) {
+      //add the default annotation if abstent
+      const emptyValue = { key: defaultAnnotationKey, value: '' };
+      orderedAnnotations.splice(index, 0, emptyValue);
+    } else if (fieldIndex !== index) {
+      //move it to the correct position if present
+      orderedAnnotations.splice(index, 0, orderedAnnotations.splice(fieldIndex, 1)[0]);
+    }
+  });
+  return orderedAnnotations;
 }
 
 export function formValuesToRulerGrafanaRuleDTO(values: RuleFormValues): PostableRuleGrafanaRuleDTO {
@@ -108,7 +131,6 @@ export function formValuesToRulerGrafanaRuleDTO(values: RuleFormValues): Postabl
     return {
       grafana_alert: {
         title: name,
-        uid: values.uid,
         condition,
         no_data_state: noDataState,
         exec_err_state: execErrState,
@@ -134,7 +156,6 @@ export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleF
       return {
         ...defaultFormValues,
         name: ga.title,
-        uid: ga.uid,
         type: RuleFormType.grafana,
         group: group.name,
         evaluateEvery: group.interval || defaultFormValues.evaluateEvery,
@@ -143,8 +164,8 @@ export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleF
         execErrState: ga.exec_err_state,
         queries: ga.data,
         condition: ga.condition,
-        annotations: listifyLabelsOrAnnotations(rule.annotations),
-        labels: listifyLabelsOrAnnotations(rule.labels),
+        annotations: normalizeDefaultAnnotations(listifyLabelsOrAnnotations(rule.annotations, false)),
+        labels: listifyLabelsOrAnnotations(rule.labels, true),
         folder: { title: namespace, uid: ga.namespace_uid },
         isPaused: ga.is_paused,
       };
@@ -158,6 +179,7 @@ export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleF
       return {
         ...defaultFormValues,
         ...alertingRuleValues,
+        annotations: normalizeDefaultAnnotations(listifyLabelsOrAnnotations(rule.annotations, false)),
         type: RuleFormType.cloudAlerting,
         dataSourceName: ruleSourceName,
         namespace,
@@ -194,8 +216,8 @@ export function alertingRulerRuleToRuleForm(
     expression: rule.expr,
     forTime,
     forTimeUnit,
-    annotations: listifyLabelsOrAnnotations(rule.annotations),
-    labels: listifyLabelsOrAnnotations(rule.labels),
+    annotations: listifyLabelsOrAnnotations(rule.annotations, false),
+    labels: listifyLabelsOrAnnotations(rule.labels, true),
   };
 }
 
@@ -205,7 +227,7 @@ export function recordingRulerRuleToRuleForm(
   return {
     name: rule.record,
     expression: rule.expr,
-    labels: listifyLabelsOrAnnotations(rule.labels),
+    labels: listifyLabelsOrAnnotations(rule.labels, true),
   };
 }
 

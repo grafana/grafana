@@ -13,6 +13,7 @@ import (
 
 	"golang.org/x/sync/singleflight"
 
+	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/components/apikeygen"
 	"github.com/grafana/grafana/pkg/components/satokengen"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -51,50 +52,50 @@ func ProvideService(cfg *setting.Cfg, tokenService auth.UserTokenService, jwtSer
 	tracer tracing.Tracer, authProxy *authproxy.AuthProxy, loginService login.Service,
 	apiKeyService apikey.Service, authenticator loginpkg.Authenticator, userService user.Service,
 	orgService org.Service, oauthTokenService oauthtoken.OAuthTokenService, features *featuremgmt.FeatureManager,
-	authnService authn.Service, anonSessionService anonymous.Service,
+	authnService authn.Service, anonDeviceService anonymous.Service,
 ) *ContextHandler {
 	return &ContextHandler{
-		Cfg:                cfg,
-		AuthTokenService:   tokenService,
-		JWTAuthService:     jwtService,
-		RemoteCache:        remoteCache,
-		RenderService:      renderService,
-		SQLStore:           sqlStore,
-		tracer:             tracer,
-		authProxy:          authProxy,
-		authenticator:      authenticator,
-		loginService:       loginService,
-		apiKeyService:      apiKeyService,
-		userService:        userService,
-		orgService:         orgService,
-		oauthTokenService:  oauthTokenService,
-		features:           features,
-		authnService:       authnService,
-		anonSessionService: anonSessionService,
-		singleflight:       new(singleflight.Group),
+		Cfg:               cfg,
+		AuthTokenService:  tokenService,
+		JWTAuthService:    jwtService,
+		RemoteCache:       remoteCache,
+		RenderService:     renderService,
+		SQLStore:          sqlStore,
+		tracer:            tracer,
+		authProxy:         authProxy,
+		authenticator:     authenticator,
+		loginService:      loginService,
+		apiKeyService:     apiKeyService,
+		userService:       userService,
+		orgService:        orgService,
+		oauthTokenService: oauthTokenService,
+		features:          features,
+		AuthnService:      authnService,
+		anonDeviceService: anonDeviceService,
+		singleflight:      new(singleflight.Group),
 	}
 }
 
 // ContextHandler is a middleware.
 type ContextHandler struct {
-	Cfg                *setting.Cfg
-	AuthTokenService   auth.UserTokenService
-	JWTAuthService     auth.JWTVerifierService
-	RemoteCache        *remotecache.RemoteCache
-	RenderService      rendering.Service
-	SQLStore           db.DB
-	tracer             tracing.Tracer
-	authProxy          *authproxy.AuthProxy
-	authenticator      loginpkg.Authenticator
-	loginService       login.Service
-	apiKeyService      apikey.Service
-	userService        user.Service
-	orgService         org.Service
-	oauthTokenService  oauthtoken.OAuthTokenService
-	features           *featuremgmt.FeatureManager
-	authnService       authn.Service
-	singleflight       *singleflight.Group
-	anonSessionService anonymous.Service
+	Cfg               *setting.Cfg
+	AuthTokenService  auth.UserTokenService
+	JWTAuthService    auth.JWTVerifierService
+	RemoteCache       *remotecache.RemoteCache
+	RenderService     rendering.Service
+	SQLStore          db.DB
+	tracer            tracing.Tracer
+	authProxy         *authproxy.AuthProxy
+	authenticator     loginpkg.Authenticator
+	loginService      login.Service
+	apiKeyService     apikey.Service
+	userService       user.Service
+	orgService        org.Service
+	oauthTokenService oauthtoken.OAuthTokenService
+	features          *featuremgmt.FeatureManager
+	AuthnService      authn.Service
+	singleflight      *singleflight.Group
+	anonDeviceService anonymous.Service
 	// GetTime returns the current time.
 	// Stubbable by tests.
 	GetTime func() time.Time
@@ -108,6 +109,36 @@ func FromContext(c context.Context) *contextmodel.ReqContext {
 		return reqCtx
 	}
 	return nil
+}
+
+// CopyWithReqContext returns a copy of the parent context with a semi-shallow copy of the ReqContext as a value.
+// The ReqContexts's *web.Context is deep copied so that headers are thread-safe; additional properties are shallow copied and should be treated as read-only.
+func CopyWithReqContext(ctx context.Context) context.Context {
+	origReqCtx := FromContext(ctx)
+	if origReqCtx == nil {
+		return ctx
+	}
+
+	webCtx := &web.Context{
+		Req:  origReqCtx.Req.Clone(ctx),
+		Resp: web.NewResponseWriter(origReqCtx.Req.Method, response.CreateNormalResponse(http.Header{}, []byte{}, 0)),
+	}
+	reqCtx := &contextmodel.ReqContext{
+		Context:               webCtx,
+		SignedInUser:          origReqCtx.SignedInUser,
+		UserToken:             origReqCtx.UserToken,
+		IsSignedIn:            origReqCtx.IsSignedIn,
+		IsRenderCall:          origReqCtx.IsRenderCall,
+		AllowAnonymous:        origReqCtx.AllowAnonymous,
+		SkipDSCache:           origReqCtx.SkipDSCache,
+		SkipQueryCache:        origReqCtx.SkipQueryCache,
+		Logger:                origReqCtx.Logger,
+		Error:                 origReqCtx.Error,
+		RequestNonce:          origReqCtx.RequestNonce,
+		IsPublicDashboardView: origReqCtx.IsPublicDashboardView,
+		LookupTokenErr:        origReqCtx.LookupTokenErr,
+	}
+	return context.WithValue(ctx, reqContextKey{}, reqCtx)
 }
 
 // Middleware provides a middleware to initialize the request context.
@@ -140,7 +171,7 @@ func (h *ContextHandler) Middleware(next http.Handler) http.Handler {
 		}
 
 		if h.Cfg.AuthBrokerEnabled {
-			identity, err := h.authnService.Authenticate(ctx, &authn.Request{HTTPRequest: reqContext.Req, Resp: reqContext.Resp})
+			identity, err := h.AuthnService.Authenticate(ctx, &authn.Request{HTTPRequest: reqContext.Req, Resp: reqContext.Resp})
 			if err != nil {
 				if errors.Is(err, auth.ErrInvalidSessionToken) {
 					// Burn the cookie in case of invalid, expired or missing token
@@ -154,7 +185,7 @@ func (h *ContextHandler) Middleware(next http.Handler) http.Handler {
 				reqContext.UserToken = identity.SessionToken
 				reqContext.IsSignedIn = !identity.IsAnonymous
 				reqContext.AllowAnonymous = identity.IsAnonymous
-				reqContext.IsRenderCall = identity.AuthModule == login.RenderModule
+				reqContext.IsRenderCall = identity.AuthenticatedBy == login.RenderModule
 			}
 		} else {
 			const headerName = "X-Grafana-Org-Id"
@@ -211,7 +242,8 @@ func (h *ContextHandler) Middleware(next http.Handler) http.Handler {
 			// update last seen every 5min
 			if reqContext.ShouldUpdateLastSeenAt() {
 				reqContext.Logger.Debug("Updating last user_seen_at", "user_id", reqContext.UserID)
-				if err := h.userService.UpdateLastSeenAt(mContext.Req.Context(), &user.UpdateUserLastSeenAtCommand{UserID: reqContext.UserID}); err != nil {
+				err := h.userService.UpdateLastSeenAt(mContext.Req.Context(), &user.UpdateUserLastSeenAtCommand{UserID: reqContext.UserID, OrgID: reqContext.OrgID})
+				if err != nil && !errors.Is(err, user.ErrLastSeenUpToDate) {
 					reqContext.Logger.Error("Failed to update last_seen_at", "error", err)
 				}
 			}
@@ -250,7 +282,8 @@ func (h *ContextHandler) initContextWithAnonymousUser(reqContext *contextmodel.R
 				reqContext.Logger.Warn("tag anon session panic", "err", err)
 			}
 		}()
-		if err := h.anonSessionService.TagSession(context.Background(), httpReqCopy); err != nil {
+
+		if err := h.anonDeviceService.TagDevice(context.Background(), httpReqCopy, anonymous.AnonDevice); err != nil {
 			reqContext.Logger.Warn("Failed to tag anonymous session", "error", err)
 		}
 	}()

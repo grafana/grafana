@@ -1,10 +1,8 @@
 import React, { useState } from 'react';
-import { connect, ConnectedProps } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 
 import { reportInteraction } from '@grafana/runtime';
 import { Button, Drawer, Dropdown, Icon, Menu, MenuItem } from '@grafana/ui';
-import { createNewFolder } from 'app/features/folders/state/actions';
 import {
   getNewDashboardPhrase,
   getNewFolderPhrase,
@@ -13,35 +11,36 @@ import {
 } from 'app/features/search/tempI18nPhrases';
 import { FolderDTO } from 'app/types';
 
+import { useNewFolderMutation } from '../api/browseDashboardsAPI';
+
 import { NewFolderForm } from './NewFolderForm';
 
-const mapDispatchToProps = {
-  createNewFolder,
-};
-
-const connector = connect(null, mapDispatchToProps);
-
-interface OwnProps {
+interface Props {
   parentFolder?: FolderDTO;
   canCreateFolder: boolean;
   canCreateDashboard: boolean;
 }
 
-type Props = OwnProps & ConnectedProps<typeof connector>;
-
-function CreateNewButton({ parentFolder, canCreateDashboard, canCreateFolder, createNewFolder }: Props) {
+export default function CreateNewButton({ parentFolder, canCreateDashboard, canCreateFolder }: Props) {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
+  const [newFolder] = useNewFolderMutation();
   const [showNewFolderDrawer, setShowNewFolderDrawer] = useState(false);
 
-  const onCreateFolder = (folderName: string) => {
-    createNewFolder(folderName, parentFolder?.uid);
-    const depth = parentFolder?.parents ? parentFolder.parents.length + 1 : 0;
-    reportInteraction('grafana_manage_dashboards_folder_created', {
-      is_subfolder: Boolean(parentFolder?.uid),
-      folder_depth: depth,
-    });
-    setShowNewFolderDrawer(false);
+  const onCreateFolder = async (folderName: string) => {
+    try {
+      await newFolder({
+        title: folderName,
+        parentUid: parentFolder?.uid,
+      });
+      const depth = parentFolder?.parents ? parentFolder.parents.length + 1 : 0;
+      reportInteraction('grafana_manage_dashboards_folder_created', {
+        is_subfolder: Boolean(parentFolder?.uid),
+        folder_depth: depth,
+      });
+    } finally {
+      setShowNewFolderDrawer(false);
+    }
   };
 
   const newMenu = (
@@ -96,8 +95,6 @@ function CreateNewButton({ parentFolder, canCreateDashboard, canCreateFolder, cr
     </>
   );
 }
-
-export default connector(CreateNewButton);
 
 /**
  *

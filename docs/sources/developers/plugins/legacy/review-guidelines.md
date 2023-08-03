@@ -1,6 +1,11 @@
 ---
 aliases:
   - ../../../plugins/developing/plugin-review-guidelines/
+description: Deprecated guide for Angular plugin development.
+labels:
+  products:
+    - enterprise
+    - oss
 title: Legacy review guidelines
 ---
 
@@ -10,7 +15,7 @@ The Grafana team reviews all plugins that are published on Grafana.com. There ar
 
 ## Metadata
 
-The plugin metadata consists of a `plugin.json` file and the README.md file. The `plugin.json` file is used by Grafana to load the plugin, and the README.md file is shown in the plugins section of Grafana and the plugins section of https://grafana.com.
+The plugin metadata consists of a `plugin.json` file and the README.md file. The `plugin.json` file is used by Grafana to load the plugin, and the README.md file is shown in the [plugins catalog](/plugins).
 
 ### README.md
 
@@ -161,7 +166,7 @@ For more information about data sources, refer to the [basic guide for data sour
 
 If possible, any passwords or secrets should be saved in the `secureJsonData` blob. To encrypt sensitive data, the Grafana server's proxy feature must be used. The Grafana server has support for token authentication (OAuth) and HTTP Header authentication. If the calls have to be sent directly from the browser to a third-party API, this will not be possible and sensitive data will not be encrypted.
 
-Read more here about how [authentication for data sources]({{< relref "../add-authentication-for-data-source-plugins/" >}}) works.
+Read more here about how [authentication for data sources]({{< relref "../create-a-grafana-plugin/extend-a-plugin/add-authentication-for-data-source-plugins" >}}) works.
 
 If using the proxy feature, the Configuration page should use the `secureJsonData` blob like this:
 

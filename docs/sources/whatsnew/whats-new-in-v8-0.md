@@ -10,6 +10,11 @@ keywords:
   - documentation
   - '8.0'
   - release notes
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: What's new in Grafana v8.0
 weight: -33
 ---
@@ -30,7 +35,7 @@ As part of the new alert changes, we have introduced a new data source, Alertman
 
 > **Note:** Out of the box, Grafana still supports old Grafana alerts. They are legacy alerts at this time, and will be deprecated in a future release.
 
-To learn more about the differences between new alerts and the legacy alerts, refer to [What's New with Grafana 8 Alerts](/docs/grafana/latest/alerting/unified-alerting/difference-old-new/).
+To learn more about the differences between new alerts and the legacy alerts, refer to [What's New with Grafana 8 Alerts](/docs/grafana/v10.0/alerting/difference-old-new/).
 
 ### Library panels
 
@@ -303,7 +308,7 @@ This results in faster average load times for dashboards and fewer duplicate que
 
 You can enable caching per data source, and time-to-live (TTL) can be configured globally and per data source. Query caching can be set up with Redis, Memcached, or a simple in-memory cache.
 
-For more information, refer to the [Data source query caching docs]({{< relref "../administration/data-source-management#query-caching" >}}).
+For more information, refer to the [Data source query caching docs]({{< relref "../administration/data-source-management#query-and-resource-caching" >}}).
 
 ### Reporting updates
 

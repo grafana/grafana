@@ -238,268 +238,272 @@ func TestSearchJSONForRole(t *testing.T) {
 }
 
 func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
-	t.Run("Given a generic OAuth provider", func(t *testing.T) {
-		provider := SocialGenericOAuth{
-			SocialBase: &SocialBase{
-				log: newLogger("generic_oauth_test", "debug"),
-			},
-			emailAttributePath: "email",
-		}
+	provider := SocialGenericOAuth{
+		SocialBase: &SocialBase{
+			log: newLogger("generic_oauth_test", "debug"),
+		},
+		emailAttributePath: "email",
+	}
 
-		tests := []struct {
-			Name                    string
-			SkipOrgRoleSync         bool
-			AllowAssignGrafanaAdmin bool
-			ResponseBody            interface{}
-			OAuth2Extra             interface{}
-			RoleAttributePath       string
-			ExpectedEmail           string
-			ExpectedRole            org.RoleType
-			ExpectedGrafanaAdmin    *bool
-		}{
-			{
-				Name: "Given a valid id_token, a valid role path, no API response, use id_token",
-				OAuth2Extra: map[string]interface{}{
-					// { "role": "Admin", "email": "john.doe@example.com" }
-					"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiQWRtaW4iLCJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIn0.9PtHcCaXxZa2HDlASyKIaFGfOKlw2ILQo32xlvhvhRg",
-				},
-				RoleAttributePath: "role",
-				ExpectedEmail:     "john.doe@example.com",
-				ExpectedRole:      "Admin",
+	tests := []struct {
+		Name                    string
+		SkipOrgRoleSync         bool
+		AllowAssignGrafanaAdmin bool
+		ResponseBody            interface{}
+		OAuth2Extra             interface{}
+		RoleAttributePath       string
+		ExpectedEmail           string
+		ExpectedRole            org.RoleType
+		ExpectedError           error
+		ExpectedGrafanaAdmin    *bool
+	}{
+		{
+			Name: "Given a valid id_token, a valid role path, no API response, use id_token",
+			OAuth2Extra: map[string]interface{}{
+				// { "role": "Admin", "email": "john.doe@example.com" }
+				"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiQWRtaW4iLCJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIn0.9PtHcCaXxZa2HDlASyKIaFGfOKlw2ILQo32xlvhvhRg",
 			},
-			{
-				Name: "Given a valid id_token, no role path, no API response, use id_token",
-				OAuth2Extra: map[string]interface{}{
-					// { "email": "john.doe@example.com" }
-					"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIn0.k5GwPcZvGe2BE_jgwN0ntz0nz4KlYhEd0hRRLApkTJ4",
-				},
-				RoleAttributePath: "",
-				ExpectedEmail:     "john.doe@example.com",
-				ExpectedRole:      "",
+			RoleAttributePath: "role",
+			ExpectedEmail:     "john.doe@example.com",
+			ExpectedRole:      "Admin",
+		},
+		{
+			Name: "Given a valid id_token, no role path, no API response, use id_token",
+			OAuth2Extra: map[string]interface{}{
+				// { "email": "john.doe@example.com" }
+				"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIn0.k5GwPcZvGe2BE_jgwN0ntz0nz4KlYhEd0hRRLApkTJ4",
 			},
-			{
-				Name: "Given a valid id_token, an invalid role path, no API response, use id_token",
-				OAuth2Extra: map[string]interface{}{
-					// { "role": "Admin", "email": "john.doe@example.com" }
-					"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiQWRtaW4iLCJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIn0.9PtHcCaXxZa2HDlASyKIaFGfOKlw2ILQo32xlvhvhRg",
-				},
-				RoleAttributePath: "invalid_path",
-				ExpectedEmail:     "john.doe@example.com",
-				ExpectedRole:      "",
+			RoleAttributePath: "",
+			ExpectedEmail:     "john.doe@example.com",
+			ExpectedRole:      "Viewer",
+		},
+		{
+			Name: "Given a valid id_token, an invalid role path, no API response, use id_token",
+			OAuth2Extra: map[string]interface{}{
+				// { "role": "Admin", "email": "john.doe@example.com" }
+				"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiQWRtaW4iLCJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIn0.9PtHcCaXxZa2HDlASyKIaFGfOKlw2ILQo32xlvhvhRg",
 			},
-			{
-				Name: "Given no id_token, a valid role path, a valid API response, use API response",
-				ResponseBody: map[string]interface{}{
-					"role":  "Admin",
-					"email": "john.doe@example.com",
-				},
-				RoleAttributePath: "role",
-				ExpectedEmail:     "john.doe@example.com",
-				ExpectedRole:      "Admin",
+			RoleAttributePath: "invalid_path",
+			ExpectedEmail:     "john.doe@example.com",
+			ExpectedRole:      "Viewer",
+		},
+		{
+			Name: "Given no id_token, a valid role path, a valid API response, use API response",
+			ResponseBody: map[string]interface{}{
+				"role":  "Admin",
+				"email": "john.doe@example.com",
 			},
-			{
-				Name: "Given no id_token, no role path, a valid API response, use API response",
-				ResponseBody: map[string]interface{}{
-					"email": "john.doe@example.com",
-				},
-				RoleAttributePath: "",
-				ExpectedEmail:     "john.doe@example.com",
-				ExpectedRole:      "",
+			RoleAttributePath: "role",
+			ExpectedEmail:     "john.doe@example.com",
+			ExpectedRole:      "Admin",
+		},
+		{
+			Name: "Given no id_token, no role path, a valid API response, use API response",
+			ResponseBody: map[string]interface{}{
+				"email": "john.doe@example.com",
 			},
-			{
-				Name: "Given no id_token, a role path, a valid API response without a role, use API response",
-				ResponseBody: map[string]interface{}{
-					"email": "john.doe@example.com",
-				},
-				RoleAttributePath: "role",
-				ExpectedEmail:     "john.doe@example.com",
-				ExpectedRole:      "",
+			RoleAttributePath: "",
+			ExpectedEmail:     "john.doe@example.com",
+			ExpectedRole:      "Viewer",
+		},
+		{
+			Name: "Given no id_token, a role path, a valid API response without a role, use API response",
+			ResponseBody: map[string]interface{}{
+				"email": "john.doe@example.com",
 			},
-			{
-				Name:              "Given no id_token, a valid role path, no API response, no data",
-				RoleAttributePath: "role",
-				ExpectedEmail:     "",
-				ExpectedRole:      "",
+			RoleAttributePath: "role",
+			ExpectedEmail:     "john.doe@example.com",
+			ExpectedRole:      "Viewer",
+		},
+		{
+			Name:              "Given no id_token, a valid role path, no API response, no data",
+			RoleAttributePath: "role",
+			ExpectedEmail:     "",
+			ExpectedRole:      "Viewer",
+		},
+		{
+			Name: "Given a valid id_token, a valid role path, a valid API response, prefer id_token",
+			OAuth2Extra: map[string]interface{}{
+				// { "role": "Admin", "email": "john.doe@example.com" }
+				"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiQWRtaW4iLCJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIn0.9PtHcCaXxZa2HDlASyKIaFGfOKlw2ILQo32xlvhvhRg",
 			},
-			{
-				Name: "Given a valid id_token, a valid role path, a valid API response, prefer id_token",
-				OAuth2Extra: map[string]interface{}{
-					// { "role": "Admin", "email": "john.doe@example.com" }
-					"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiQWRtaW4iLCJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIn0.9PtHcCaXxZa2HDlASyKIaFGfOKlw2ILQo32xlvhvhRg",
-				},
-				ResponseBody: map[string]interface{}{
-					"role":  "FromResponse",
-					"email": "from_response@example.com",
-				},
-				RoleAttributePath: "role",
-				ExpectedEmail:     "john.doe@example.com",
-				ExpectedRole:      "Admin",
+			ResponseBody: map[string]interface{}{
+				"role":  "FromResponse",
+				"email": "from_response@example.com",
 			},
-			{
-				Name:                    "Given a valid id_token and AssignGrafanaAdmin is unchecked, don't grant Server Admin",
-				AllowAssignGrafanaAdmin: false,
-				OAuth2Extra: map[string]interface{}{
-					// { "role": "GrafanaAdmin", "email": "john.doe@example.com" }
-					"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiR3JhZmFuYUFkbWluIiwiZW1haWwiOiJqb2huLmRvZUBleGFtcGxlLmNvbSJ9.cQqMJpVjwdtJ8qEZLOo9RKNbAFfpkQcpnRG0nopmWEI",
-				},
-				ResponseBody: map[string]interface{}{
-					"role":  "FromResponse",
-					"email": "from_response@example.com",
-				},
-				RoleAttributePath:    "role",
-				ExpectedEmail:        "john.doe@example.com",
-				ExpectedRole:         "Admin",
-				ExpectedGrafanaAdmin: nil,
+			RoleAttributePath: "role",
+			ExpectedEmail:     "john.doe@example.com",
+			ExpectedRole:      "Admin",
+		},
+		{
+			Name:                    "Given a valid id_token and AssignGrafanaAdmin is unchecked, don't grant Server Admin",
+			AllowAssignGrafanaAdmin: false,
+			OAuth2Extra: map[string]interface{}{
+				// { "role": "GrafanaAdmin", "email": "john.doe@example.com" }
+				"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiR3JhZmFuYUFkbWluIiwiZW1haWwiOiJqb2huLmRvZUBleGFtcGxlLmNvbSJ9.cQqMJpVjwdtJ8qEZLOo9RKNbAFfpkQcpnRG0nopmWEI",
 			},
-			{
-				Name:                    "Given a valid id_token and AssignGrafanaAdmin is checked, grant Server Admin",
-				AllowAssignGrafanaAdmin: true,
-				OAuth2Extra: map[string]interface{}{
-					// { "role": "GrafanaAdmin", "email": "john.doe@example.com" }
-					"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiR3JhZmFuYUFkbWluIiwiZW1haWwiOiJqb2huLmRvZUBleGFtcGxlLmNvbSJ9.cQqMJpVjwdtJ8qEZLOo9RKNbAFfpkQcpnRG0nopmWEI",
-				},
-				ResponseBody: map[string]interface{}{
-					"role":  "FromResponse",
-					"email": "from_response@example.com",
-				},
-				RoleAttributePath:    "role",
-				ExpectedEmail:        "john.doe@example.com",
-				ExpectedRole:         "Admin",
-				ExpectedGrafanaAdmin: trueBoolPtr(),
+			ResponseBody: map[string]interface{}{
+				"role":  "FromResponse",
+				"email": "from_response@example.com",
 			},
-			{
-				Name: "Given a valid id_token, an invalid role path, a valid API response, prefer id_token",
-				OAuth2Extra: map[string]interface{}{
-					// { "role": "Admin", "email": "john.doe@example.com" }
-					"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiQWRtaW4iLCJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIn0.9PtHcCaXxZa2HDlASyKIaFGfOKlw2ILQo32xlvhvhRg",
-				},
-				ResponseBody: map[string]interface{}{
-					"role":  "FromResponse",
-					"email": "from_response@example.com",
-				},
-				RoleAttributePath: "invalid_path",
-				ExpectedEmail:     "john.doe@example.com",
-				ExpectedRole:      "",
+			RoleAttributePath:    "role",
+			ExpectedEmail:        "john.doe@example.com",
+			ExpectedRole:         "Admin",
+			ExpectedGrafanaAdmin: nil,
+		},
+		{
+			Name:                    "Given a valid id_token and AssignGrafanaAdmin is checked, grant Server Admin",
+			AllowAssignGrafanaAdmin: true,
+			OAuth2Extra: map[string]interface{}{
+				// { "role": "GrafanaAdmin", "email": "john.doe@example.com" }
+				"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiR3JhZmFuYUFkbWluIiwiZW1haWwiOiJqb2huLmRvZUBleGFtcGxlLmNvbSJ9.cQqMJpVjwdtJ8qEZLOo9RKNbAFfpkQcpnRG0nopmWEI",
 			},
-			{
-				Name: "Given a valid id_token with no email, a valid role path, a valid API response with no role, merge",
-				OAuth2Extra: map[string]interface{}{
-					// { "role": "Admin" }
-					"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiQWRtaW4ifQ.k5GwPcZvGe2BE_jgwN0ntz0nz4KlYhEd0hRRLApkTJ4",
-				},
-				ResponseBody: map[string]interface{}{
-					"email": "from_response@example.com",
-				},
-				RoleAttributePath: "role",
-				ExpectedEmail:     "from_response@example.com",
-				ExpectedRole:      "Admin",
+			ResponseBody: map[string]interface{}{
+				"role":  "FromResponse",
+				"email": "from_response@example.com",
 			},
-			{
-				Name: "Given a valid id_token with no role, a valid role path, a valid API response with no email, merge",
-				OAuth2Extra: map[string]interface{}{
-					// { "email": "john.doe@example.com" }
-					"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIn0.k5GwPcZvGe2BE_jgwN0ntz0nz4KlYhEd0hRRLApkTJ4",
-				},
-				ResponseBody: map[string]interface{}{
-					"role": "FromResponse",
-				},
-				RoleAttributePath: "role",
-				ExpectedEmail:     "john.doe@example.com",
-				ExpectedRole:      "Fromresponse",
+			RoleAttributePath:    "role",
+			ExpectedEmail:        "john.doe@example.com",
+			ExpectedRole:         "Admin",
+			ExpectedGrafanaAdmin: trueBoolPtr(),
+		},
+		{
+			Name: "Given a valid id_token, an invalid role path, a valid API response, prefer id_token",
+			OAuth2Extra: map[string]interface{}{
+				// { "role": "Admin", "email": "john.doe@example.com" }
+				"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiQWRtaW4iLCJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIn0.9PtHcCaXxZa2HDlASyKIaFGfOKlw2ILQo32xlvhvhRg",
 			},
-			{
-				Name: "Given a valid id_token, a valid advanced JMESPath role path, derive the role",
-				OAuth2Extra: map[string]interface{}{
-					// { "email": "john.doe@example.com",
-					//   "info": { "roles": [ "dev", "engineering" ] }}
-					"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIiwiaW5mbyI6eyJyb2xlcyI6WyJkZXYiLCJlbmdpbmVlcmluZyJdfX0.RmmQfv25eXb4p3wMrJsvXfGQ6EXhGtwRXo6SlCFHRNg",
-				},
-				RoleAttributePath: "contains(info.roles[*], 'dev') && 'Editor'",
-				ExpectedEmail:     "john.doe@example.com",
-				ExpectedRole:      "Editor",
+			ResponseBody: map[string]interface{}{
+				"role":  "FromResponse",
+				"email": "from_response@example.com",
 			},
-			{
-				Name: "Given a valid id_token without role info, a valid advanced JMESPath role path, a valid API response, derive the correct role using the userinfo API response (JMESPath warning on id_token)",
-				OAuth2Extra: map[string]interface{}{
-					// { "email": "john.doe@example.com" }
-					"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIn0.k5GwPcZvGe2BE_jgwN0ntz0nz4KlYhEd0hRRLApkTJ4",
-				},
-				ResponseBody: map[string]interface{}{
-					"info": map[string]interface{}{
-						"roles": []string{"engineering", "SRE"},
-					},
-				},
-				RoleAttributePath: "contains(info.roles[*], 'SRE') && 'Admin'",
-				ExpectedEmail:     "john.doe@example.com",
-				ExpectedRole:      "Admin",
+			RoleAttributePath: "invalid_path",
+			ExpectedEmail:     "john.doe@example.com",
+			ExpectedRole:      "Viewer",
+		},
+		{
+			Name: "Given a valid id_token with no email, a valid role path, a valid API response with no role, merge",
+			OAuth2Extra: map[string]interface{}{
+				// { "role": "Admin" }
+				"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiQWRtaW4ifQ.k5GwPcZvGe2BE_jgwN0ntz0nz4KlYhEd0hRRLApkTJ4",
 			},
-			{
-				Name: "Given a valid id_token, a valid advanced JMESPath role path, a valid API response, prefer ID token",
-				OAuth2Extra: map[string]interface{}{
-					// { "email": "john.doe@example.com",
-					//   "info": { "roles": [ "dev", "engineering" ] }}
-					"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIiwiaW5mbyI6eyJyb2xlcyI6WyJkZXYiLCJlbmdpbmVlcmluZyJdfX0.RmmQfv25eXb4p3wMrJsvXfGQ6EXhGtwRXo6SlCFHRNg",
-				},
-				ResponseBody: map[string]interface{}{
-					"info": map[string]interface{}{
-						"roles": []string{"engineering", "SRE"},
-					},
-				},
-				RoleAttributePath: "contains(info.roles[*], 'SRE') && 'Admin' || contains(info.roles[*], 'dev') && 'Editor' || 'Viewer'",
-				ExpectedEmail:     "john.doe@example.com",
-				ExpectedRole:      "Editor",
+			ResponseBody: map[string]interface{}{
+				"email": "from_response@example.com",
 			},
-			{
-				Name:            "Given skip org role sync set to true, with a valid id_token, a valid advanced JMESPath role path, a valid API response, no org role should be set",
-				SkipOrgRoleSync: true,
-				OAuth2Extra: map[string]interface{}{
-					// { "email": "john.doe@example.com",
-					//   "info": { "roles": [ "dev", "engineering" ] }}
-					"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIiwiaW5mbyI6eyJyb2xlcyI6WyJkZXYiLCJlbmdpbmVlcmluZyJdfX0.RmmQfv25eXb4p3wMrJsvXfGQ6EXhGtwRXo6SlCFHRNg",
-				},
-				ResponseBody: map[string]interface{}{
-					"info": map[string]interface{}{
-						"roles": []string{"engineering", "SRE"},
-					},
-				},
-				RoleAttributePath: "contains(info.roles[*], 'SRE') && 'Admin' || contains(info.roles[*], 'dev') && 'Editor' || 'Viewer'",
-				ExpectedEmail:     "john.doe@example.com",
-				ExpectedRole:      "",
+			RoleAttributePath: "role",
+			ExpectedEmail:     "from_response@example.com",
+			ExpectedRole:      "Admin",
+		},
+		{
+			Name: "Given a valid id_token with no role, a valid role path, a valid API response with no email, merge",
+			OAuth2Extra: map[string]interface{}{
+				// { "email": "john.doe@example.com" }
+				"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIn0.k5GwPcZvGe2BE_jgwN0ntz0nz4KlYhEd0hRRLApkTJ4",
 			},
-		}
+			ResponseBody: map[string]interface{}{
+				"role": "FromResponse",
+			},
+			RoleAttributePath: "role",
+			ExpectedEmail:     "john.doe@example.com",
+			ExpectedRole:      "Viewer",
+			ExpectedError:     nil,
+		},
+		{
+			Name: "Given a valid id_token, a valid advanced JMESPath role path, derive the role",
+			OAuth2Extra: map[string]interface{}{
+				// { "email": "john.doe@example.com",
+				//   "info": { "roles": [ "dev", "engineering" ] }}
+				"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIiwiaW5mbyI6eyJyb2xlcyI6WyJkZXYiLCJlbmdpbmVlcmluZyJdfX0.RmmQfv25eXb4p3wMrJsvXfGQ6EXhGtwRXo6SlCFHRNg",
+			},
+			RoleAttributePath: "contains(info.roles[*], 'dev') && 'Editor'",
+			ExpectedEmail:     "john.doe@example.com",
+			ExpectedRole:      "Editor",
+		},
+		{
+			Name: "Given a valid id_token without role info, a valid advanced JMESPath role path, a valid API response, derive the correct role using the userinfo API response (JMESPath warning on id_token)",
+			OAuth2Extra: map[string]interface{}{
+				// { "email": "john.doe@example.com" }
+				"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIn0.k5GwPcZvGe2BE_jgwN0ntz0nz4KlYhEd0hRRLApkTJ4",
+			},
+			ResponseBody: map[string]interface{}{
+				"info": map[string]interface{}{
+					"roles": []string{"engineering", "SRE"},
+				},
+			},
+			RoleAttributePath: "contains(info.roles[*], 'SRE') && 'Admin'",
+			ExpectedEmail:     "john.doe@example.com",
+			ExpectedRole:      "Admin",
+		},
+		{
+			Name: "Given a valid id_token, a valid advanced JMESPath role path, a valid API response, prefer ID token",
+			OAuth2Extra: map[string]interface{}{
+				// { "email": "john.doe@example.com",
+				//   "info": { "roles": [ "dev", "engineering" ] }}
+				"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIiwiaW5mbyI6eyJyb2xlcyI6WyJkZXYiLCJlbmdpbmVlcmluZyJdfX0.RmmQfv25eXb4p3wMrJsvXfGQ6EXhGtwRXo6SlCFHRNg",
+			},
+			ResponseBody: map[string]interface{}{
+				"info": map[string]interface{}{
+					"roles": []string{"engineering", "SRE"},
+				},
+			},
+			RoleAttributePath: "contains(info.roles[*], 'SRE') && 'Admin' || contains(info.roles[*], 'dev') && 'Editor' || 'Viewer'",
+			ExpectedEmail:     "john.doe@example.com",
+			ExpectedRole:      "Editor",
+		},
+		{
+			Name:            "Given skip org role sync set to true, with a valid id_token, a valid advanced JMESPath role path, a valid API response, no org role should be set",
+			SkipOrgRoleSync: true,
+			OAuth2Extra: map[string]interface{}{
+				// { "email": "john.doe@example.com",
+				//   "info": { "roles": [ "dev", "engineering" ] }}
+				"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIiwiaW5mbyI6eyJyb2xlcyI6WyJkZXYiLCJlbmdpbmVlcmluZyJdfX0.RmmQfv25eXb4p3wMrJsvXfGQ6EXhGtwRXo6SlCFHRNg",
+			},
+			ResponseBody: map[string]interface{}{
+				"info": map[string]interface{}{
+					"roles": []string{"engineering", "SRE"},
+				},
+			},
+			RoleAttributePath: "contains(info.roles[*], 'SRE') && 'Admin' || contains(info.roles[*], 'dev') && 'Editor' || 'Viewer'",
+			ExpectedEmail:     "john.doe@example.com",
+			ExpectedRole:      "",
+		},
+	}
 
-		for _, test := range tests {
-			provider.roleAttributePath = test.RoleAttributePath
-			provider.allowAssignGrafanaAdmin = test.AllowAssignGrafanaAdmin
-			provider.skipOrgRoleSync = test.SkipOrgRoleSync
+	for _, test := range tests {
+		provider.roleAttributePath = test.RoleAttributePath
+		provider.allowAssignGrafanaAdmin = test.AllowAssignGrafanaAdmin
+		provider.skipOrgRoleSync = test.SkipOrgRoleSync
 
-			t.Run(test.Name, func(t *testing.T) {
-				body, err := json.Marshal(test.ResponseBody)
+		t.Run(test.Name, func(t *testing.T) {
+			body, err := json.Marshal(test.ResponseBody)
+			require.NoError(t, err)
+			ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusOK)
+				w.Header().Set("Content-Type", "application/json")
+				_, err = w.Write(body)
 				require.NoError(t, err)
-				ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-					w.WriteHeader(http.StatusOK)
-					w.Header().Set("Content-Type", "application/json")
-					_, err = w.Write(body)
-					require.NoError(t, err)
-				}))
-				provider.apiUrl = ts.URL
-				staticToken := oauth2.Token{
-					AccessToken:  "",
-					TokenType:    "",
-					RefreshToken: "",
-					Expiry:       time.Now(),
-				}
+			}))
+			provider.apiUrl = ts.URL
+			staticToken := oauth2.Token{
+				AccessToken:  "",
+				TokenType:    "",
+				RefreshToken: "",
+				Expiry:       time.Now(),
+			}
 
-				token := staticToken.WithExtra(test.OAuth2Extra)
-				actualResult, err := provider.UserInfo(context.Background(), ts.Client(), token)
-				require.NoError(t, err)
-				require.Equal(t, test.ExpectedEmail, actualResult.Email)
-				require.Equal(t, test.ExpectedEmail, actualResult.Login)
-				require.Equal(t, test.ExpectedRole, actualResult.Role)
-				require.Equal(t, test.ExpectedGrafanaAdmin, actualResult.IsGrafanaAdmin)
-			})
-		}
-	})
+			token := staticToken.WithExtra(test.OAuth2Extra)
+			actualResult, err := provider.UserInfo(context.Background(), ts.Client(), token)
+			if test.ExpectedError != nil {
+				require.ErrorIs(t, err, test.ExpectedError)
+				return
+			}
+			require.NoError(t, err)
+			require.Equal(t, test.ExpectedEmail, actualResult.Email)
+			require.Equal(t, test.ExpectedEmail, actualResult.Login)
+			require.Equal(t, test.ExpectedRole, actualResult.Role)
+			require.Equal(t, test.ExpectedGrafanaAdmin, actualResult.IsGrafanaAdmin)
+		})
+	}
 }
 
 func TestUserInfoSearchesForLogin(t *testing.T) {

@@ -23,7 +23,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
@@ -75,12 +75,13 @@ func TestProcessTicks(t *testing.T) {
 		Tracer:       testTracer,
 	}
 	managerCfg := state.ManagerCfg{
-		Metrics:       testMetrics.GetStateMetrics(),
-		ExternalURL:   nil,
-		InstanceStore: nil,
-		Images:        &state.NoopImageService{},
-		Clock:         mockedClock,
-		Historian:     &state.FakeHistorian{},
+		Metrics:                 testMetrics.GetStateMetrics(),
+		ExternalURL:             nil,
+		InstanceStore:           nil,
+		Images:                  &state.NoopImageService{},
+		Clock:                   mockedClock,
+		Historian:               &state.FakeHistorian{},
+		MaxStateSaveConcurrency: 1,
 	}
 	st := state.NewManager(managerCfg)
 
@@ -783,7 +784,7 @@ func setupScheduler(t *testing.T, rs *fakeRulesStore, is *state.FakeInstanceStor
 
 	var evaluator = evalMock
 	if evalMock == nil {
-		evaluator = eval.NewEvaluatorFactory(setting.UnifiedAlertingSettings{}, nil, expr.ProvideService(&setting.Cfg{ExpressionsEnabled: true}, nil, nil, &featuremgmt.FeatureManager{}, nil, tracing.InitializeTracerForTest()), &plugins.FakePluginStore{})
+		evaluator = eval.NewEvaluatorFactory(setting.UnifiedAlertingSettings{}, nil, expr.ProvideService(&setting.Cfg{ExpressionsEnabled: true}, nil, nil, &featuremgmt.FeatureManager{}, nil, tracing.InitializeTracerForTest()), &fakes.FakePluginStore{})
 	}
 
 	if registry == nil {
@@ -818,12 +819,13 @@ func setupScheduler(t *testing.T, rs *fakeRulesStore, is *state.FakeInstanceStor
 		Tracer:           testTracer,
 	}
 	managerCfg := state.ManagerCfg{
-		Metrics:       m.GetStateMetrics(),
-		ExternalURL:   nil,
-		InstanceStore: is,
-		Images:        &state.NoopImageService{},
-		Clock:         mockedClock,
-		Historian:     &state.FakeHistorian{},
+		Metrics:                 m.GetStateMetrics(),
+		ExternalURL:             nil,
+		InstanceStore:           is,
+		Images:                  &state.NoopImageService{},
+		Clock:                   mockedClock,
+		Historian:               &state.FakeHistorian{},
+		MaxStateSaveConcurrency: 1,
 	}
 	st := state.NewManager(managerCfg)
 

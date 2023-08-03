@@ -1,8 +1,6 @@
 import React, { PureComponent } from 'react';
 
-import { AppEvents } from '@grafana/data';
 import { FetchError, getBackendSrv, isFetchError } from '@grafana/runtime';
-import appEvents from 'app/core/app_events';
 import config from 'app/core/config';
 import { t } from 'app/core/internationalization';
 
@@ -53,11 +51,8 @@ export class LoginCtrl extends PureComponent<Props, State> {
       isLoggingIn: false,
       isChangingPassword: false,
       showDefaultPasswordWarning: false,
+      loginErrorMessage: config.loginError,
     };
-
-    if (config.loginError) {
-      appEvents.emit(AppEvents.alertWarning, ['Login Failed', config.loginError]);
-    }
   }
 
   changePassword = (password: string) => {
@@ -169,8 +164,12 @@ function getErrorMessage(err: FetchError<undefined | { messageId?: string; messa
     case 'password-auth.empty':
     case 'password-auth.failed':
     case 'password-auth.invalid':
-    case 'login-attempt.blocked':
       return t('login.error.invalid-user-or-password', 'Invalid username or password');
+    case 'login-attempt.blocked':
+      return t(
+        'login.error.blocked',
+        'You have exceeded the number of login attempts for this user. Please try again later.'
+      );
     default:
       return err.data?.message;
   }

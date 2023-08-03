@@ -17,6 +17,7 @@ vendor/
 /docs/menu.yaml
 /requests
 tsconfig.tsbuildinfo
+__debug_bin*
 
 # Yarn
 .yarn/*
@@ -191,3 +192,6 @@ public/api-spec.json
 deployment_tools_config.json
 
 .betterer.cache
+
+# Temporary file for backporting PRs
+.pr-body.txt

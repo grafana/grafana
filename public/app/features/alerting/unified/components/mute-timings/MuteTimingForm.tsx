@@ -2,26 +2,18 @@ import { css } from '@emotion/css';
 import React, { useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
-import { GrafanaTheme2, NavModelItem } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { Alert, Button, Field, FieldSet, Input, LinkButton, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
-import {
-  AlertmanagerConfig,
-  AlertManagerCortexConfig,
-  MuteTimeInterval,
-} from 'app/plugins/datasource/alertmanager/types';
+import { AlertManagerCortexConfig, MuteTimeInterval } from 'app/plugins/datasource/alertmanager/types';
 import { useDispatch } from 'app/types';
 
-import { useAlertManagerSourceName } from '../../hooks/useAlertManagerSourceName';
-import { useAlertManagersByPermission } from '../../hooks/useAlertManagerSources';
-import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
+import { useAlertmanagerConfig } from '../../hooks/useAlertmanagerConfig';
+import { useAlertmanager } from '../../state/AlertmanagerContext';
 import { updateAlertManagerConfigAction } from '../../state/actions';
 import { MuteTimingFields } from '../../types/mute-timing-form';
 import { renameMuteTimings } from '../../utils/alertmanager';
 import { makeAMLink } from '../../utils/misc';
 import { createMuteTiming, defaultTimeInterval } from '../../utils/mute-timings';
-import { initialAsyncRequestState } from '../../utils/redux';
-import { AlertManagerPicker } from '../AlertManagerPicker';
-import { AlertingPageWrapper } from '../AlertingPageWrapper';
 import { ProvisionedResource, ProvisioningAlert } from '../Provisioning';
 
 import { MuteTimingTimeInterval } from './MuteTimingTimeInterval';
@@ -58,33 +50,29 @@ const useDefaultValues = (muteTiming?: MuteTimeInterval): MuteTimingFields => {
   };
 };
 
-const defaultPageNav: Partial<NavModelItem> = {
-  icon: 'sitemap',
-};
-
 const MuteTimingForm = ({ muteTiming, showError, loading, provenance }: Props) => {
   const dispatch = useDispatch();
-  const alertManagers = useAlertManagersByPermission('notification');
-  const [alertManagerSourceName, setAlertManagerSourceName] = useAlertManagerSourceName(alertManagers);
+  const { selectedAlertmanager } = useAlertmanager();
   const styles = useStyles2(getStyles);
 
   const [updating, setUpdating] = useState(false);
 
-  const defaultAmCortexConfig = { alertmanager_config: {}, template_files: {} };
-  const amConfigs = useUnifiedAlertingSelector((state) => state.amConfigs);
-  const { result = defaultAmCortexConfig } =
-    (alertManagerSourceName && amConfigs[alertManagerSourceName]) || initialAsyncRequestState;
+  const { currentData: result } = useAlertmanagerConfig(selectedAlertmanager);
+  const config = result?.alertmanager_config;
 
-  const config: AlertmanagerConfig = result?.alertmanager_config ?? {};
   const defaultValues = useDefaultValues(muteTiming);
   const formApi = useForm({ defaultValues });
 
   const onSubmit = (values: MuteTimingFields) => {
+    if (!result) {
+      return;
+    }
+
     const newMuteTiming = createMuteTiming(values);
 
     const muteTimings = muteTiming
       ? config?.mute_time_intervals?.filter(({ name }) => name !== muteTiming.name)
-      : config.mute_time_intervals;
+      : config?.mute_time_intervals;
 
     const newConfig: AlertManagerCortexConfig = {
       ...result,
@@ -92,8 +80,8 @@ const MuteTimingForm = ({ muteTiming, showError, loading, provenance }: Props) =
         ...config,
         route:
           muteTiming && newMuteTiming.name !== muteTiming.name
-            ? renameMuteTimings(newMuteTiming.name, muteTiming.name, config.route ?? {})
-            : config.route,
+            ? renameMuteTimings(newMuteTiming.name, muteTiming.name, config?.route ?? {})
+            : config?.route,
         mute_time_intervals: [...(muteTimings || []), newMuteTiming],
       },
     };
@@ -102,7 +90,7 @@ const MuteTimingForm = ({ muteTiming, showError, loading, provenance }: Props) =
       updateAlertManagerConfigAction({
         newConfig,
         oldConfig: result,
-        alertManagerSourceName: alertManagerSourceName!,
+        alertManagerSourceName: selectedAlertmanager!,
         successMessage: 'Mute timing saved',
         redirectPath: '/alerting/routes/',
         redirectSearch: 'tab=mute_timings',
@@ -117,20 +105,7 @@ const MuteTimingForm = ({ muteTiming, showError, loading, provenance }: Props) =
   };
 
   return (
-    <AlertingPageWrapper
-      pageId="am-routes"
-      pageNav={{
-        ...defaultPageNav,
-        id: muteTiming ? 'alert-policy-edit' : 'alert-policy-new',
-        text: muteTiming ? 'Edit mute timing' : 'Add mute timing',
-      }}
-    >
-      <AlertManagerPicker
-        current={alertManagerSourceName}
-        onChange={setAlertManagerSourceName}
-        disabled
-        dataSources={alertManagers}
-      />
+    <>
       {provenance && <ProvisioningAlert resource={ProvisionedResource.MuteTiming} />}
       {loading && <LoadingPlaceholder text="Loading mute timing" />}
       {showError && <Alert title="No matching mute timing found" />}
@@ -168,7 +143,7 @@ const MuteTimingForm = ({ muteTiming, showError, loading, provenance }: Props) =
                 type="button"
                 variant="secondary"
                 fill="outline"
-                href={makeAMLink('/alerting/routes/', alertManagerSourceName, { tab: 'mute_timings' })}
+                href={makeAMLink('/alerting/routes/', selectedAlertmanager, { tab: 'mute_timings' })}
                 disabled={updating}
               >
                 Cancel
@@ -177,7 +152,7 @@ const MuteTimingForm = ({ muteTiming, showError, loading, provenance }: Props) =
           </form>
         </FormProvider>
       )}
-    </AlertingPageWrapper>
+    </>
   );
 };
 

@@ -10,13 +10,18 @@ keywords:
   - guide
   - profiling
   - pyroscope
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: Grafana Pyroscope
 weight: 1150
 ---
 
 # Grafana Pyroscope data source
 
-Formerly Phlare data source, it supports both Phlare and Pyroscope, a horizontally scalable, highly-available, multi-tenant, OSS, continuous profiling aggregation systems. Add it as a data source, and you are ready to query your profiles in [Explore]({{< relref "../explore" >}}).
+Formerly Phlare data source, it supports both Phlare and Pyroscope, a horizontally scalable, highly-available, multi-tenant, OSS, continuous profiling aggregation systems. Add it as a data source, and you are ready to query your profiles in [Explore][explore].
 
 ## Configure the Grafana Pyroscope data source
 
@@ -62,13 +67,13 @@ Use the labels selector input to filter by labels. Phlare and Pyroscope uses sim
 
 Options section contains a switch for Query Type and Group by.
 
-Select a query type to return the profile data which can be shown in the [Flame Graph]({{< relref "../panels-visualizations/visualizations/flame-graph" >}}), metric data visualized in a graph, or both. You can only select both options in a dashboard, because panels allow only one visualization.
+Select a query type to return the profile data which can be shown in the [Flame Graph][flame-graph], metric data visualized in a graph, or both. You can only select both options in a dashboard, because panels allow only one visualization.
 
 Group by allows you to group metric data by a specified label. Without any Group by label, metric data is aggregated over all the labels into single time series. You can use multiple labels to group by. Group by has only an effect on the metric data and does not change the profile data results.
 
 ### Profiles query results
 
-Profiles can be visualized in a flame graph. See the [Flame Graph documentation]({{< relref "../panels-visualizations/visualizations/flame-graph" >}}) to learn about the visualization and its features.
+Profiles can be visualized in a flame graph. See the [Flame Graph documentation][flame-graph] to learn about the visualization and its features.
 
 ![Flame graph](/static/img/docs/phlare/flame-graph.png 'Flame graph')
 
@@ -84,7 +89,7 @@ This allows you to quickly see any spikes in the value of the scraped profiles a
 
 ## Provision the Grafana Pyroscope data source
 
-You can modify the Grafana configuration files to provision the Grafana Pyroscope data source. To learn more, and to view the available provisioning settings, see [provisioning documentation]({{< relref "../administration/provisioning/#datasources" >}}).
+You can modify the Grafana configuration files to provision the Grafana Pyroscope data source. To learn more, and to view the available provisioning settings, see [provisioning documentation][provisioning-data-sources].
 
 Here is an example config:
 
@@ -99,3 +104,14 @@ datasources:
       minStep: '15s'
       backendType: 'pyroscope'
 ```
+
+{{% docs/reference %}}
+[explore]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/explore"
+[explore]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/explore"
+
+[flame-graph]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/flame-graph"
+[flame-graph]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/flame-graph"
+
+[provisioning-data-sources]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/administration/provisioning#datasources"
+[provisioning-data-sources]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/administration/provisioning#datasources"
+{{% /docs/reference %}}

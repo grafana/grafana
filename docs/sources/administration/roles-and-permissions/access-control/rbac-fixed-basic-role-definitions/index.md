@@ -4,6 +4,10 @@ aliases:
   - ../../../enterprise/access-control/rbac-fixed-basic-role-definitions/
 description: This topic includes a table that lists permission associated with Grafana
   fixed and basic roles.
+labels:
+  products:
+    - cloud
+    - enterprise
 menuTitle: RBAC role definitions
 title: Grafana RBAC role definitions
 weight: 70
@@ -97,7 +101,7 @@ The following tables list permissions associated with basic and fixed roles.
 
 ### Alerting roles
 
-If alerting is [enabled]({{< relref "../../../../alerting/migrating-alerts/opt-out/" >}}), you can use predefined roles to manage user access to alert rules, alert instances, and alert notification settings and create custom roles to limit user access to alert rules in a folder.
+If alerting is [enabled]({{< relref "../../../../alerting/set-up/migrating-alerts/opt-out/" >}}), you can use predefined roles to manage user access to alert rules, alert instances, and alert notification settings and create custom roles to limit user access to alert rules in a folder.
 
 Access to Grafana alert rules is an intersection of many permissions:
 
