@@ -105,7 +105,6 @@ Experimental features might be changed or removed without prior notice.
 | `alertStateHistoryLokiPrimary`              | Enable a remote Loki instance as the primary source for state history reads.                                                                                                             |
 | `alertStateHistoryLokiOnly`                 | Disable Grafana alerts from emitting annotations when a remote Loki instance is available.                                                                                               |
 | `unifiedRequestLog`                         | Writes error logs to the request logger                                                                                                                                                  |
-| `pyroscopeFlameGraph`                       | Changes flame graph to pyroscope one                                                                                                                                                     |
 | `extraThemes`                               | Enables extra themes                                                                                                                                                                     |
 | `lokiPredefinedOperations`                  | Adds predefined query operations to Loki query editor                                                                                                                                    |
 | `pluginsFrontendSandbox`                    | Enables the plugins frontend sandbox                                                                                                                                                     |
@@ -117,7 +116,6 @@ Experimental features might be changed or removed without prior notice.
 | `recordedQueriesMulti`                      | Enables writing multiple items from a single query within Recorded Queries                                                                                                               |
 | `pluginsDynamicAngularDetectionPatterns`    | Enables fetching Angular detection patterns for plugins from GCOM and fallback to hardcoded ones                                                                                         |
 | `alertingLokiRangeToInstant`                | Rewrites eligible loki range queries to instant queries                                                                                                                                  |
-| `elasticToggleableFilters`                  | Enable support to toggle filters off from the query through the Logs Details component                                                                                                   |
 | `vizAndWidgetSplit`                         | Split panels between vizualizations and widgets                                                                                                                                          |
 | `prometheusIncrementalQueryInstrumentation` | Adds RudderStack events to incremental queries                                                                                                                                           |
 | `logsExploreTableVisualisation`             | A table visualisation for logs in Explore                                                                                                                                                |
@@ -128,7 +126,9 @@ Experimental features might be changed or removed without prior notice.
 | `grafanaAPIServer`                          | Enable Kubernetes API Server for Grafana resources                                                                                                                                       |
 | `featureToggleAdminPage`                    | Enable admin page for managing feature toggles from the Grafana front-end                                                                                                                |
 | `awsAsyncQueryCaching`                      | Enable caching for async queries for Redshift and Athena. Requires that the `useCachingService` feature toggle is enabled and the datasource has caching and async query support enabled |
+| `permissionsFilterRemoveSubquery`           | Alternative permission filter implementation that does not use subqueries for fetching the dashboard folder                                                                              |
 | `prometheusConfigOverhaulAuth`              | Update the Prometheus configuration page with the new auth component                                                                                                                     |
+| `influxdbSqlSupport`                        | Enable InfluxDB SQL query language support with new querying UI                                                                                                                          |
 
 ## Development feature toggles
 

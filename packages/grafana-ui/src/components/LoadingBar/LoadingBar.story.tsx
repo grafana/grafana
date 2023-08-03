@@ -31,7 +31,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       width: '400px',
       height: '200px',
       border: `1px solid ${borderColor}`,
-      borderRadius: '3px',
+      borderRadius: theme.shape.radius.default,
     }),
   };
 };

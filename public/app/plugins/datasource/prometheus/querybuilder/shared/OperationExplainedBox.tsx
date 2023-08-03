@@ -37,7 +37,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     box: css({
       background: theme.colors.background.secondary,
       padding: theme.spacing(1),
-      borderRadius: theme.shape.borderRadius(),
+      borderRadius: theme.shape.radius.default,
       position: 'relative',
     }),
     boxInner: css({

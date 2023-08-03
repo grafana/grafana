@@ -214,7 +214,7 @@ describe('browse-dashboards BrowseDashboardsPage', () => {
     it('selecting an item hides the filters and shows the actions instead', async () => {
       render(<BrowseDashboardsPage {...props} />);
 
-      const checkbox = await screen.findByTestId(selectors.pages.BrowseDashbards.table.checkbox(dashbdD.item.uid));
+      const checkbox = await screen.findByTestId(selectors.pages.BrowseDashboards.table.checkbox(dashbdD.item.uid));
       await userEvent.click(checkbox);
 
       // Check the filters are now hidden
@@ -229,7 +229,7 @@ describe('browse-dashboards BrowseDashboardsPage', () => {
     it('navigating into a child item resets the selected state', async () => {
       const { rerender } = render(<BrowseDashboardsPage {...props} />);
 
-      const checkbox = await screen.findByTestId(selectors.pages.BrowseDashbards.table.checkbox(folderA.item.uid));
+      const checkbox = await screen.findByTestId(selectors.pages.BrowseDashboards.table.checkbox(folderA.item.uid));
       await userEvent.click(checkbox);
 
       // Check the actions are now visible
@@ -340,7 +340,7 @@ describe('browse-dashboards BrowseDashboardsPage', () => {
       render(<BrowseDashboardsPage {...props} />);
 
       const checkbox = await screen.findByTestId(
-        selectors.pages.BrowseDashbards.table.checkbox(folderA_folderA.item.uid)
+        selectors.pages.BrowseDashboards.table.checkbox(folderA_folderA.item.uid)
       );
       await userEvent.click(checkbox);
 
