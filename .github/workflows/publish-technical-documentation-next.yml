@@ -23,11 +23,11 @@ jobs:
     steps:
       - name: Generate token
         id: generate-token
-        uses: jdbaldry/github-app-token@418ba1324a06668c553014b26d695890821e1cf3
+        uses: tibdex/github-app-token@v1
         with:
           app_id: ${{ secrets.PUBLISH_TECHNICAL_DOCUMENTATION_ID }}
           private_key: ${{ secrets.PUBLISH_TECHNICAL_DOCUMENTATION_PEM }}
-          organization: grafana
+          installation_id: 40284556
 
       - name: Checkout code
         uses: actions/checkout@v3
