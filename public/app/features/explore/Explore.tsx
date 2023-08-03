@@ -496,6 +496,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
       timeZone,
       showLogsSample,
       panelsState,
+      isCorrelationsEditorMode,
     } = this.props;
     const { openDrawer } = this.state;
     const styles = getStyles(theme);
@@ -516,11 +517,11 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
         queryResponse.customFrames,
       ].every((e) => e.length === 0);
 
-      let correlationsBox = undefined;
-      if (panelsState && panelsState.correlations !== undefined) {
-        const vars = Object.entries(panelsState.correlations.vars);
-        correlationsBox = <CorrelationHelper vars={vars} />
-      }
+    let correlationsBox = undefined;
+    if (isCorrelationsEditorMode && panelsState && panelsState.correlations !== undefined) {
+      const vars = Object.entries(panelsState.correlations.vars);
+      correlationsBox = <CorrelationHelper vars={vars} />;
+    }
 
     return (
       <CustomScrollbar
@@ -629,7 +630,7 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     showFlameGraph,
     showRawPrometheus,
     supplementaryQueries,
-    panelsState
+    panelsState,
   } = item;
 
   const loading = selectIsWaitingForData(exploreId)(state);
@@ -660,7 +661,8 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     loading,
     logsSample,
     showLogsSample,
-    panelsState
+    panelsState,
+    isCorrelationsEditorMode: explore.correlationsEditorMode,
   };
 }
 

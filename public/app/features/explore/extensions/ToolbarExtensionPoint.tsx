@@ -20,14 +20,15 @@ type Props = {
   exploreId: string;
   timeZone: TimeZone;
   splitted: boolean;
+  isCorrelationsEditorMode: boolean;
 };
 
 export function ToolbarExtensionPoint(props: Props): ReactElement | null {
-  const { exploreId, splitted } = props;
+  const { exploreId, splitted, isCorrelationsEditorMode } = props;
   const [selectedExtension, setSelectedExtension] = useState<PluginExtensionLink | undefined>();
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const context = useExtensionPointContext(props);
-  const extensions = useExtensionLinks(context);
+  let extensions = useExtensionLinks(context);
   const selectExploreItem = getExploreItemSelector(exploreId);
   const noQueriesInPane = useSelector(selectExploreItem)?.queries?.length;
 
@@ -46,6 +47,14 @@ export function ToolbarExtensionPoint(props: Props): ReactElement | null {
       <Suspense fallback={null}>
         <AddToDashboard exploreId={exploreId} />
       </Suspense>
+    );
+  }
+
+  //TODO: yikes
+  if (splitted || isCorrelationsEditorMode) {
+    extensions = extensions.filter(
+      (extension) =>
+        extension.pluginId !== 'grafana' || (extension.pluginId === 'grafana' && extension.title === 'Add Correlation')
     );
   }
 

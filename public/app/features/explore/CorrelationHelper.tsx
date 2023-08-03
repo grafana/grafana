@@ -1,13 +1,15 @@
 import React, { useState } from 'react';
+import { useForm } from 'react-hook-form';
 
 import { Button, Collapse, Alert, Field, Input } from '@grafana/ui';
+import { useDispatch } from 'app/types';
 
 import { saveCurrentCorrelation } from './state/query';
 
 export const CorrelationHelper = ({ vars }: { vars: Array<[string, string]> }) => {
+  const dispatch = useDispatch();
+  const { register, getValues } = useForm();
   const [isOpen, setIsOpen] = useState(false);
-  const [label, setLabel] = useState();
-  const [description, setDescription] = useState();
 
   return (
     <Alert title="Correlation Details" severity="info">
@@ -26,14 +28,26 @@ export const CorrelationHelper = ({ vars }: { vars: Array<[string, string]> }) =
         label="Label/Description"
       >
         <Field label="Label">
-          <Input value={label} onBlur={() => setLabel} />
+          <Input {...register('label')} />
         </Field>
         <Field label="Description">
-          <Input value={description} onBlur={() => setDescription} />
+          <Input {...register('description')} />
         </Field>
       </Collapse>
       Once you&#39;re happy with your setup, click{' '}
-      <Button onClick={() => saveCurrentCorrelation(label, description)}>Save</Button>
+      <Button
+        onClick={() => {
+          const values = getValues();
+          dispatch(
+            saveCurrentCorrelation(
+              values.label === '' ? undefined : values.label,
+              values.description === '' ? undefined : values.description
+            )
+          );
+        }}
+      >
+        Save
+      </Button>
     </Alert>
   );
 };

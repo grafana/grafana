@@ -20,6 +20,7 @@ import { ExploreTimeControls } from './ExploreTimeControls';
 import { LiveTailButton } from './LiveTailButton';
 import { ToolbarExtensionPoint } from './extensions/ToolbarExtensionPoint';
 import { changeDatasource } from './state/datasource';
+import { removeCorrelationData } from './state/explorePane';
 import {
   splitClose,
   splitOpen,
@@ -140,15 +141,16 @@ export function ExploreToolbar({ exploreId, topOfViewRef, onChangeTime }: Props)
         onClick={() => {
           dispatch(changeCorrelationsEditorMode({ correlationsEditorMode: false }));
           panes.forEach((pane) => {
+            dispatch(removeCorrelationData(pane[0]));
             dispatch(runQueries({ exploreId: pane[0] }));
           });
         }}
         aria-label="exit correlations editor mode"
-      > Exit Correlation Editor 
+      >
+        {' '}
+        Exit Correlation Editor
       </DashNavButton>
     );
-
-    // navBarActions.push(<div style={{ flex: 1 }} key="spacer1" />);
   }
 
   return (
@@ -203,6 +205,7 @@ export function ExploreToolbar({ exploreId, topOfViewRef, onChangeTime }: Props)
             key="toolbar-extension-point"
             exploreId={exploreId}
             timeZone={timeZone}
+            isCorrelationsEditorMode={isCorrelationsEditorMode}
           />,
           !isLive && (
             <ExploreTimeControls

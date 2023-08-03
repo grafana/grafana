@@ -97,6 +97,7 @@ const dummyProps: Props = {
   showLogsSample: false,
   logsSample: { enabled: false },
   setSupplementaryQueryEnabled: jest.fn(),
+  isCorrelationsEditorMode: false,
 };
 
 jest.mock('@grafana/runtime/src/services/dataSourceSrv', () => {

@@ -1,7 +1,8 @@
 import { css, cx } from '@emotion/css';
 import React, { useEffect } from 'react';
 
-import { ErrorBoundaryAlert } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
+import { ErrorBoundaryAlert, useStyles2 } from '@grafana/ui';
 import { SplitPaneWrapper } from 'app/core/components/SplitPaneWrapper/SplitPaneWrapper';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { useNavModel } from 'app/core/hooks/useNavModel';
@@ -19,20 +20,8 @@ import { isSplit, selectCorrelationEditorMode, selectPanesEntries } from './stat
 
 const MIN_PANE_WIDTH = 200;
 
-const styles = {
-  pageScrollbarWrapper: css`
-    width: 100%;
-    flex-grow: 1;
-    min-height: 0;
-    height: 100%;
-    position: relative;
-  `,
-  correlationsEditorIndicator: css`
-    border: 4px solid limegreen;
-  `,
-};
-
 export default function ExplorePage(props: GrafanaRouteComponentProps<{}, ExploreQueryParams>) {
+  const styles = useStyles2(getStyles);
   useTimeSrvFix();
   useStateSync(props.queryParams);
   // We want  to set the title according to the URL and not to the state because the URL itself may lag
@@ -46,7 +35,6 @@ export default function ExplorePage(props: GrafanaRouteComponentProps<{}, Explor
   const { updateSplitSize, widthCalc } = useSplitSizeUpdater(MIN_PANE_WIDTH);
 
   const panes = useSelector(selectPanesEntries);
-  console.log(panes.map(pane => pane[1]?.panelsState?.correlations !== undefined).includes(true));
   const hasSplit = useSelector(isSplit);
   const isCorrelationsEditorMode = useSelector(selectCorrelationEditorMode);
 
@@ -57,7 +45,7 @@ export default function ExplorePage(props: GrafanaRouteComponentProps<{}, Explor
   }, [chrome, navModel]);
 
   useEffect(() => {
-    navModel.node.text = `Explore${isCorrelationsEditorMode ? ' (Correlations Editor)' : ''}`
+    navModel.node.text = `Explore${isCorrelationsEditorMode ? ' (Correlations Editor)' : ''}`;
     chrome.update({ sectionNav: navModel });
   }, [chrome, isCorrelationsEditorMode, navModel]);
 
@@ -94,3 +82,21 @@ export default function ExplorePage(props: GrafanaRouteComponentProps<{}, Explor
     </div>
   );
 }
+
+const getStyles = (theme: GrafanaTheme2) => {
+  return {
+    pageScrollbarWrapper: css`
+      width: 100%;
+      flex-grow: 1;
+      min-height: 0;
+      height: 100%;
+      position: relative;
+    `,
+    correlationsEditorIndicator: css`
+      border-top: 8px solid ${theme.colors.primary.main};
+      border-left: 4px solid ${theme.colors.primary.main};
+      border-right: 4px solid ${theme.colors.primary.main};
+      border-bottom: 4px solid ${theme.colors.primary.main};
+    `,
+  };
+};

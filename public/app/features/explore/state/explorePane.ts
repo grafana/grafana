@@ -73,10 +73,25 @@ export function changePanelState(
         },
       })
     );
+  };
+}
 
-    if (panelsState.correlations !== undefined && !getState().explore.correlationsEditorMode) {
-      dispatch(changeCorrelationsEditorMode({ correlationsEditorMode: true }));
+export function removeCorrelationData(exploreId: string): ThunkResult<void> {
+  return async (dispatch, getState) => {
+    const exploreItem = getState().explore.panes[exploreId];
+    if (exploreItem === undefined) {
+      return;
     }
+    const { panelsState } = exploreItem;
+    dispatch(
+      changePanelsStateAction({
+        exploreId,
+        panelsState: {
+          ...panelsState,
+          correlations: undefined,
+        },
+      })
+    );
   };
 }
 
@@ -155,7 +170,12 @@ export const initializeExplore = createAsyncThunk(
     );
     if (panelsState !== undefined) {
       dispatch(changePanelsStateAction({ exploreId, panelsState }));
+
+      if (panelsState.correlations !== undefined && !getState().explore.correlationsEditorMode) {
+        dispatch(changeCorrelationsEditorMode({ correlationsEditorMode: true }));
+      }
     }
+
     dispatch(updateTime({ exploreId }));
 
     if (instance) {
@@ -164,6 +184,10 @@ export const initializeExplore = createAsyncThunk(
       dispatch(saveCorrelationsAction({ exploreId: exploreId, correlations: correlations.correlations || [] }));
 
       dispatch(runQueries({ exploreId }));
+    }
+
+    if (panelsState?.correlations !== undefined && !getState().explore.correlationsEditorMode) {
+      dispatch(changeCorrelationsEditorMode({ correlationsEditorMode: true }));
     }
 
     return fulfillWithValue({ exploreId, state: getState().explore.panes[exploreId]! });
@@ -204,6 +228,11 @@ export const paneReducer = (state: ExploreItemState = makeExplorePaneState(), ac
   if (changeSizeAction.match(action)) {
     const containerWidth = action.payload.width;
     return { ...state, containerWidth };
+  }
+
+  if (changePanelsStateAction.match(action)) {
+    const { panelsState } = action.payload;
+    return { ...state, panelsState };
   }
 
   if (changePanelsStateAction.match(action)) {
