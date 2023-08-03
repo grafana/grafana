@@ -102,7 +102,7 @@ auto_login = true
 
 ## Skip organization role sync
 
-We do not currently sync roles from Google and instead set the AutoAssigned role to the user at first login. By default `skip_org_role_sync` is set to `true` to not lock down role updates.
+We do not currently sync roles from Google and instead set the AutoAssigned role to the user at first login. By default `skip_org_role_sync` is set to `true` to not lock down role changes in the UI.
 
 ```ini
 [auth.google]
