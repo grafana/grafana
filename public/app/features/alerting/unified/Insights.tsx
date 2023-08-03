@@ -12,11 +12,17 @@ import {
 } from '@grafana/scenes';
 import { useStyles2 } from '@grafana/ui';
 
-const FIRING_QUERIES_LAST_WEEK = 'sum(count_over_time({from="state-history"} | json | current="Alerting"[1w]))';
-const TOTAL_QUERIES_LAST_WEEK = 'sum(count_over_time({from="state-history"} | json[1w]))';
+const TOP_5_FIRING_INSTANCES =
+  'topk(5, sum by(labels_alertname, ruleUID) (count_over_time({from="state-history"} | json | current = `Alerting` [1w])))';
+const TOP_5_FIRING_RULES =
+  'topk(5, sum by(ruleUID, labels_grafana_folder) (count_over_time({from="state-history"} | json | current = `Alerting` [1w])))';
 
-const WORST_OFFENDERS_ALERTS_THIS_WEEK =
-  'sum by (labels_grafana_folder, group) (count_over_time({from="state-history"} | json | current="Alerting"[1w]))';
+const TOTALS_FIRING = 'sum(count_over_time({from="state-history"} | json | current="Alerting"[1w]))';
+const TOTALS = 'sum(count_over_time({from="state-history"} | json[1w]))';
+
+const RATE_FIRING = 'sum(count_over_time({from="state-history"} | json | current="Alerting"[1w]))';
+
+const LAST_WEEK_TIME_RANGE = new SceneTimeRange({ from: 'now-1w', to: 'now' });
 
 //all cloud instances are guaranteed to have this datasource uid for the alert state history loki datasource
 const datasourceUid = 'grafanacloud-alert-state-history';
@@ -27,47 +33,57 @@ const datasource = {
 };
 
 function getScene() {
-  const queryRunner1 = new SceneQueryRunner({
+  const topFiringInstancesQuery = new SceneQueryRunner({
     datasource,
     queries: [
       {
         refId: 'A',
-        expr: TOTAL_QUERIES_LAST_WEEK,
+        expr: TOP_5_FIRING_INSTANCES,
+        instant: true,
       },
     ],
+
+    $timeRange: LAST_WEEK_TIME_RANGE,
   });
 
-  const queryRunner2 = new SceneQueryRunner({
+  const topFiringRulesQuery = new SceneQueryRunner({
     datasource,
     queries: [
       {
         refId: 'A',
-        expr: FIRING_QUERIES_LAST_WEEK,
+        expr: TOP_5_FIRING_RULES,
+        instant: true,
       },
     ],
-    $timeRange: new SceneTimeRange({ from: 'now-2w', to: 'now-1w' }),
+    $timeRange: LAST_WEEK_TIME_RANGE,
   });
 
-  const queryRunner3 = new SceneQueryRunner({
-    datasource,
-    queries: [
-      {
-        refId: 'A',
-        expr: FIRING_QUERIES_LAST_WEEK,
-      },
-    ],
-    $timeRange: new SceneTimeRange({ from: 'now-1w', to: 'now' }),
-  });
-
-  const queryRunner4 = new SceneQueryRunner({
+  const totalsQuery = new SceneQueryRunner({
     datasource,
     queries: [
       {
         refId: 'A',
         instant: true,
-        expr: WORST_OFFENDERS_ALERTS_THIS_WEEK,
+        expr: TOTALS_FIRING,
+      },
+      {
+        refId: 'B',
+        instant: true,
+        expr: TOTALS,
       },
     ],
+    $timeRange: LAST_WEEK_TIME_RANGE,
+  });
+
+  const rateFiringQuery = new SceneQueryRunner({
+    datasource,
+    queries: [
+      {
+        refId: 'A',
+        expr: RATE_FIRING,
+      },
+    ],
+    $timeRange: LAST_WEEK_TIME_RANGE,
   });
 
   //this accepts the same format as the one outputted when inspecting a panel transformation as JSON
@@ -85,7 +101,15 @@ function getScene() {
         },
       },
     ],
-  });*/
+  });
+
+  const thresholds: ThresholdsConfig = {
+    steps: [
+      { value: 0, color: 'RED' },
+      { value: 20, color: 'GREEN' },
+    ],
+    mode: ThresholdsMode.Percentage,
+  };*/
 
   return new EmbeddedScene({
     body: new SceneFlexLayout({
@@ -93,24 +117,32 @@ function getScene() {
       wrap: 'wrap',
       children: [
         new SceneFlexItem({
-          width: '100%',
-          height: 300,
-          body: PanelBuilders.stat().setTitle('Total queries this week').setData(queryRunner1).build(),
-        }),
-        new SceneFlexItem({
-          height: 300,
-          body: PanelBuilders.stat().setTitle('Total Firing 2 weeks from now').setData(queryRunner2).build(),
-        }),
-        new SceneFlexItem({
-          height: 300,
-          body: PanelBuilders.stat().setTitle('Total Firing last week').setData(queryRunner3).build(),
-        }),
-        new SceneFlexItem({
-          width: '100%',
+          width: '50%',
           height: 300,
           body: PanelBuilders.table()
-            .setTitle('Alerts that fired the most this week')
-            .setData(queryRunner4)
+            .setTitle('Alert rules - fired most over the past week')
+            .setData(topFiringRulesQuery)
+            .setOverrides((b) =>
+              b
+                .matchFieldsWithNameByRegex('.*')
+                .overrideFilterable(false)
+                .matchFieldsWithName('Time')
+                .overrideCustomFieldConfig('hidden', true)
+                .matchFieldsWithName('Value #A')
+                .overrideDisplayName('Fires this week')
+                .matchFieldsWithName('labels_alertname')
+                .overrideDisplayName('Alert name')
+                .matchFieldsWithName('ruleUID')
+                .overrideCustomFieldConfig('hidden', false)
+            )
+            .build(),
+        }),
+        new SceneFlexItem({
+          width: '49%',
+          height: 300,
+          body: PanelBuilders.table()
+            .setTitle('Alert instances - Fired most over the past week')
+            .setData(topFiringInstancesQuery)
             .setOverrides((b) =>
               b
                 .matchFieldsWithNameByRegex('.*')
@@ -121,9 +153,33 @@ function getScene() {
                 .overrideDisplayName('Fires this week')
                 .matchFieldsWithName('labels_grafana_folder')
                 .overrideDisplayName('Folder')
-                .matchFieldsWithName('group')
-                .overrideDisplayName('Group')
+                .matchFieldsWithName('ruleUID')
+                .overrideCustomFieldConfig('hidden', false)
             )
+            .build(),
+        }),
+        new SceneFlexItem({
+          width: '50%',
+          height: 300,
+          body: PanelBuilders.piechart()
+            .setTitle('Firing vs Totals / Last week')
+            .setData(totalsQuery)
+            .setOverrides((b) =>
+              b
+                .matchFieldsWithName('Value #A')
+                .overrideDisplayName('#Firing')
+                .matchFieldsWithName('Value #B')
+                .overrideDisplayName('#Total')
+            )
+            .build(),
+        }),
+        new SceneFlexItem({
+          width: '49%',
+          height: 300,
+          body: PanelBuilders.timeseries()
+            .setTitle('Rate of firing alerts / Last week')
+            .setData(rateFiringQuery)
+            .setOverrides((b) => b.matchFieldsWithName('{}').overrideDisplayName('#Firing'))
             .build(),
         }),
       ],
