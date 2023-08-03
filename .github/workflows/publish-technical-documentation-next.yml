@@ -23,7 +23,7 @@ jobs:
     steps:
       - name: Generate token
         id: generate-token
-        uses: jdbaldry/github-app-token@e39cd6afe97f7f59c8b67f2af76d6bd60233e8c7
+        uses: jdbaldry/github-app-token@418ba1324a06668c553014b26d695890821e1cf3
         with:
           app_id: ${{ secrets.PUBLISH_TECHNICAL_DOCUMENTATION_ID }}
           private_key: ${{ secrets.PUBLISH_TECHNICAL_DOCUMENTATION_PEM }}
