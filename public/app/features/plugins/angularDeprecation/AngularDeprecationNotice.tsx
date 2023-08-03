@@ -1,5 +1,6 @@
 import React from 'react';
 
+import { reportInteraction } from '@grafana/runtime';
 import { Alert } from '@grafana/ui';
 import { LocalStorageValueProvider } from 'app/core/components/LocalStorageValueProvider';
 
@@ -26,6 +27,7 @@ export function AngularDeprecationNotice({ dashboardUid }: Props) {
               severity="warning"
               title="This dashboard depends on Angular, which is deprecated and will stop working in future releases of Grafana."
               onRemove={() => {
+                reportInteraction('angular_deprecation_notice_dismissed');
                 onDismiss(true);
               }}
             >
