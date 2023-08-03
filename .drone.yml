@@ -339,7 +339,7 @@ steps:
   image: grafana/build-container:1.7.5
   name: wire-install
 - commands:
-  - go test -tags requires_buildifer -short -covermode=atomic -timeout=5m ./pkg/...
+  - make test-go-unit
   depends_on:
   - wire-install
   image: grafana/build-container:1.7.5
@@ -1574,7 +1574,7 @@ steps:
   image: grafana/build-container:1.7.5
   name: wire-install
 - commands:
-  - go test -tags requires_buildifer -short -covermode=atomic -timeout=5m ./pkg/...
+  - make test-go-unit
   depends_on:
   - wire-install
   image: grafana/build-container:1.7.5
@@ -2945,7 +2945,7 @@ steps:
   image: grafana/build-container:1.7.5
   name: wire-install
 - commands:
-  - go test -tags requires_buildifer -short -covermode=atomic -timeout=5m ./pkg/...
+  - make test-go-unit
   depends_on:
   - wire-install
   image: grafana/build-container:1.7.5
@@ -3234,7 +3234,7 @@ steps:
   image: grafana/grafana-ci-windows-test:0.1.0
   name: wire-install
 - commands:
-  - go test -tags requires_buildifer -short -covermode=atomic -timeout=5m ./pkg/...
+  - make test-go-unit
   depends_on:
   - wire-install
   image: grafana/grafana-ci-windows-test:0.1.0
@@ -3639,7 +3639,7 @@ steps:
   image: grafana/build-container:1.7.5
   name: wire-install
 - commands:
-  - go test -tags requires_buildifer -short -covermode=atomic -timeout=5m ./pkg/...
+  - make test-go-unit
   depends_on:
   - wire-install
   image: grafana/build-container:1.7.5
@@ -4556,6 +4556,6 @@ kind: secret
 name: delivery-bot-app-private-key
 ---
 kind: signature
-hmac: 4351462792d68218e3f95264ffa4d5f87d56290b2bbe1ed6d93401d6ca194c34
+hmac: e69330169d2c1b9e83e540f5463f376ccab3ba66c89c2e331ec1d098ff13f10b
 
 ...

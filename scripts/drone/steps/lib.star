@@ -567,7 +567,7 @@ def test_backend_step(image = images["build_image"]):
             "wire-install",
         ],
         "commands": [
-            "go test -tags requires_buildifer -short -covermode=atomic -timeout=5m ./pkg/...",
+            "make test-go-unit",
         ],
     }
 
