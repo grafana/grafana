@@ -18,16 +18,55 @@ interface BuiltInDataSourceListProps {
   className?: string;
   current: DataSourceRef | string | null | undefined;
   onChange: (ds: DataSourceInstanceSettings) => void;
-  dashboard?: boolean;
+
+  // DS filters
+  filter?: (ds: DataSourceInstanceSettings) => boolean;
+  tracing?: boolean;
   mixed?: boolean;
+  dashboard?: boolean;
+  metrics?: boolean;
+  type?: string | string[];
+  annotations?: boolean;
+  variables?: boolean;
+  alerting?: boolean;
+  pluginId?: string;
+  logs?: boolean;
 }
 
-export function BuiltInDataSourceList({ className, current, onChange, dashboard, mixed }: BuiltInDataSourceListProps) {
-  const grafanaDataSources = useDatasources({ mixed, dashboard, filter: (ds) => !!ds.meta.builtIn });
+export function BuiltInDataSourceList({
+  className,
+  current,
+  onChange,
+  tracing,
+  dashboard,
+  mixed,
+  metrics,
+  type,
+  annotations,
+  variables,
+  alerting,
+  pluginId,
+  logs,
+  filter,
+}: BuiltInDataSourceListProps) {
+  const grafanaDataSources = useDatasources({
+    tracing,
+    dashboard,
+    mixed,
+    metrics,
+    type,
+    annotations,
+    variables,
+    alerting,
+    pluginId,
+    logs,
+  });
+
+  const filteredResults = grafanaDataSources.filter((ds) => (filter ? filter?.(ds) : true) && !!ds.meta.builtIn);
 
   return (
     <div className={className} data-testid="built-in-data-sources-list">
-      {grafanaDataSources.map((ds) => {
+      {filteredResults.map((ds) => {
         return (
           <DataSourceCard
             key={ds.uid}

@@ -1,223 +1,168 @@
 ---
 aliases:
   - ../../../auth/github/
-description: Grafana OAuthentication Guide
+description: Configure GitHub OAuth2 authentication
 keywords:
   - grafana
   - configuration
   - documentation
   - oauth
-title: Configure GitHub OAuth2 authentication
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 menuTitle: GitHub OAuth2
+title: Configure GitHub OAuth2 authentication
 weight: 900
 ---
 
 # Configure GitHub OAuth2 authentication
 
-To enable the GitHub OAuth2 you must register your application with GitHub. GitHub will generate a client ID and secret key for you to use.
+{{< docs/shared "auth/intro.md" >}}
 
-## Configure GitHub OAuth application
+This topic describes how to configure GitHub OAuth2 authentication.
 
-You need to create a GitHub OAuth application (you will find this under the GitHub
-settings page). When you create the application you will need to specify
-a callback URL. Specify this as callback:
+## Before you begin
 
-```bash
-http://<my_grafana_server_name_or_ip>:<grafana_server_port>/login/github
-```
+To follow this guide:
 
-> Note: <my_grafana_server_name_or_ip>'s value should match your grafana server's `root_url`, the URL used to access grafana.
+- Ensure that you have access to the [Grafana configuration file]({{< relref "../../../configure-grafana#configuration-file-location" >}}).
+- Ensure you know how to create a GitHub OAuth app. Consult GitHub's documentation on [creating an OAuth app](https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/creating-an-oauth-app) for more information.
 
-This callback URL must match the full HTTP address that you use in your
-browser to access Grafana, but with the suffix path of `/login/github`.
-When the GitHub OAuth application is created you will get a Client ID and a
-Client Secret. Specify these in the Grafana configuration file. For
-example:
+## Steps
 
-## Enable GitHub in Grafana
+To configure GitHub authentication with Grafana, follow these steps:
 
-```bash
-[auth.github]
-enabled = true
-allow_sign_up = true
-auto_login = false
-client_id = YOUR_GITHUB_APP_CLIENT_ID
-client_secret = YOUR_GITHUB_APP_CLIENT_SECRET
-scopes = user:email,read:org
-auth_url = https://github.com/login/oauth/authorize
-token_url = https://github.com/login/oauth/access_token
-api_url = https://api.github.com/user
-team_ids =
-allowed_organizations =
-```
+1. Create an OAuth application in GitHub.
+1. Set the callback URL for your GitHub OAuth app to `http://<my_grafana_server_name_or_ip>:<grafana_server_port>/login/github`.
 
-You may have to set the `root_url` option of `[server]` for the callback URL to be
-correct. For example in case you are serving Grafana behind a proxy.
+   Ensure that the callback URL is the complete HTTP address that you use to access Grafana via your browser, but with the appended path of `/login/github`.
 
-Restart the Grafana back-end. You should now see a GitHub login button
-on the login page. You can now login or sign up with your GitHub
-accounts.
+   For the callback URL to be correct, it might be necessary to set the `root_url` option in the `[server]`section of the Grafana configuration file. For example, if you are serving Grafana behind a proxy.
 
-You may allow users to sign-up via GitHub authentication by setting the
-`allow_sign_up` option to `true`. When this option is set to `true`, any
-user successfully authenticating via GitHub authentication will be
-automatically signed up.
+1. Refer to the following table to update field values located in the `[auth.github]` section of the Grafana configuration file:
 
-You can also use [variable expansion]({{< relref "../../../configure-grafana#variable-expansion" >}}) to reference environment variables and local files in your GitHub auth configuration.
+   | Field                        | Description                                                                         |
+   | ---------------------------- | ----------------------------------------------------------------------------------- |
+   | `client_id`, `client_secret` | These values must match the client ID and client secret from your GitHub OAuth app. |
+   | `enabled`                    | Enables GitHub authentication. Set this value to `true`.                            |
 
-### GitHub refresh token
+   Review the list of other GitHub [configuration options]({{< relref "#configuration-options" >}}) and complete them, as necessary.
 
-> Available in Grafana v9.3 and later versions.
+1. [Configure role mapping]({{< relref "#configure-role-mapping" >}}).
+1. Optional: [Configure team synchronization]({{< relref "#configure-team-synchronization" >}}).
+1. Restart Grafana.
 
-> **Note:** This feature is behind the `accessTokenExpirationCheck` feature toggle.
+   You should now see a GitHub login button on the login page and be able to log in or sign up with your GitHub accounts.
 
-GitHub OAuth applications do not support refresh tokens because the provided access tokens do not expire.
+## Configuration options
 
-### team_ids
+The table below describes all GitHub OAuth configuration options. Like any other Grafana configuration, you can apply these options as environment variables.
 
-Require an active team membership for at least one of the given teams on
-GitHub. If the authenticated user isn't a member of at least one of the
-teams they will not be able to register or authenticate with your
-Grafana instance. For example:
+| Setting                      | Required | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 | Default                                       |
+| ---------------------------- | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------- |
+| `enabled`                    | No       | Whether GitHub OAuth authentication is allowed.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             | `false`                                       |
+| `name`                       | No       | Name used to refer to the GitHub authentication in the Grafana user interface.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              | `GitHub`                                      |
+| `icon`                       | No       | Icon used for GitHub authentication in the Grafana user interface.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          | `github`                                      |
+| `client_id`                  | Yes      | Client ID provided by your GitHub OAuth app.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |                                               |
+| `client_secret`              | Yes      | Client secret provided by your GitHub OAuth app.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |                                               |
+| `auth_url`                   | Yes      | Authorization endpoint of your GitHub OAuth provider.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       | `https://github.com/login/oauth/authorize`    |
+| `token_url`                  | Yes      | Endpoint used to obtain GitHub OAuth access token.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          | `https://github.com/login/oauth/access_token` |
+| `api_url`                    | Yes      | Endpoint used to obtain GitHub user information compatible with [OpenID UserInfo](https://connect2id.com/products/server/docs/api/userinfo).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                | `https://api.github.com/user`                 |
+| `scopes`                     | No       | List of comma- or space-separated GitHub OAuth scopes.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      | `user:email,read:org`                         |
+| `allow_sign_up`              | No       | Whether to allow new Grafana user creation through GitHub login. If set to `false`, then only existing Grafana users can log in with GitHub OAuth.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          | `true`                                        |
+| `auto_login`                 | No       | Set to `true` to enable users to bypass the login screen and automatically log in. This setting is ignored if you configure multiple auth providers to use auto-login.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      | `false`                                       |
+| `role_attribute_path`        | No       | [JMESPath](http://jmespath.org/examples.html) expression to use for Grafana role lookup. Grafana will first evaluate the expression using the user information obtained from the UserInfo endpoint. If no role is found, Grafana creates a JSON data with `groups` key that maps to GitHub teams obtained from GitHub's [`/api/user/teams`](https://docs.github.com/en/rest/teams/teams#list-teams-for-the-authenticated-user) endpoint, and evaluates the expression using this data. The result of the evaluation should be a valid Grafana role (`Viewer`, `Editor`, `Admin` or `GrafanaAdmin`). For more information on user role mapping, refer to [Configure role mapping]({{< relref "#configure-role-mapping" >}}). |                                               |
+| `role_attribute_strict`      | No       | Set to `true` to deny user login if the Grafana role cannot be extracted using `role_attribute_path`. For more information on user role mapping, refer to [Configure role mapping]({{< relref "#configure-role-mapping" >}}).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               | `false`                                       |
+| `allow_assign_grafana_admin` | No       | Set to `true` to enable automatic sync of the Grafana server administrator role. If this option is set to `true` and the result of evaluating `role_attribute_path` for a user is `GrafanaAdmin`, Grafana grants the user the server administrator privileges and organization administrator role. If this option is set to `false` and the result of evaluating `role_attribute_path` for a user is `GrafanaAdmin`, Grafana grants the user only organization administrator role. For more information on user role mapping, refer to [Configure role mapping]({{< relref "#configure-role-mapping" >}}).                                                                                                                  | `false`                                       |
+| `skip_org_role_sync`         | No       | Set to `true` to stop automatically syncing user roles.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     | `false`                                       |
+| `allowed_organizations`      | No       | List of comma- or space-separated organizations. User must be a member of at least one organization to log in.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |                                               |
+| `allowed_domains`            | No       | List of comma- or space-separated domains. User must belong to at least one domain to log in.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |                                               |
+| `team_ids`                   | No       | String list of team IDs. If set, user has to be a member of one of the given teams to log in.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |                                               |
+| `tls_skip_verify_insecure`   | No       | If set to `true`, the client accepts any certificate presented by the server and any host name in that certificate. _You should only use this for testing_, because this mode leaves SSL/TLS susceptible to man-in-the-middle attacks.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      | `false`                                       |
+| `tls_client_cert`            | No       | The path to the certificate.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |                                               |
+| `tls_client_key`             | No       | The path to the key.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |                                               |
+| `tls_client_ca`              | No       | The path to the trusted certificate authority list.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |                                               |
 
-```bash
-[auth.github]
-enabled = true
-allow_sign_up = true
-auto_login = false
-client_id = YOUR_GITHUB_APP_CLIENT_ID
-client_secret = YOUR_GITHUB_APP_CLIENT_SECRET
-scopes = user:email,read:org
-team_ids = 150,300
-auth_url = https://github.com/login/oauth/authorize
-token_url = https://github.com/login/oauth/access_token
-api_url = https://api.github.com/user
-```
+## Configure role mapping
 
-### allowed_organizations
+Unless `skip_org_role_sync` option is enabled, the user's role will be set to the role retrieved from GitHub upon user login.
 
-Require an active organization membership for at least one of the given
-organizations on GitHub. If the authenticated user isn't a member of at least
-one of the organizations they will not be able to register or authenticate with
-your Grafana instance. For example
+The user's role is retrieved using a [JMESPath](http://jmespath.org/examples.html) expression from the `role_attribute_path` configuration option.
+To map the server administrator role, use the `allow_assign_grafana_admin` configuration option.
+Refer to [configuration options]({{< relref "#configuration-options" >}}) for more information.
 
-```bash
-[auth.github]
-enabled = true
-allow_sign_up = true
-auto_login = false
-client_id = YOUR_GITHUB_APP_CLIENT_ID
-client_secret = YOUR_GITHUB_APP_CLIENT_SECRET
-scopes = user:email,read:org
-auth_url = https://github.com/login/oauth/authorize
-token_url = https://github.com/login/oauth/access_token
-api_url = https://api.github.com/user
-# space-delimited organization names
-allowed_organizations = github google
-```
+If no valid role is found, the user is assigned the role specified by [the `auto_assign_org_role` option]({{< relref "../../../configure-grafana#auto_assign_org_role" >}}).
+You can disable this default role assignment by setting `role_attribute_strict = true`.
+This setting denies user access if no role or an invalid role is returned.
 
-### Configure automatic login
+To ease configuration of a proper JMESPath expression, go to [JMESPath](http://jmespath.org/) to test and evaluate expressions with custom payloads.
 
-Set `auto_login` option to true to attempt login automatically, skipping the login screen.
-This setting is ignored if multiple auth providers are configured to use auto login.
+### Role mapping examples
 
-```
-auto_login = true
-```
+This section includes examples of JMESPath expressions used for role mapping.
 
-### Map roles
+#### Map roles using GitHub user information
 
-You can use GitHub OAuth to map roles. During mapping, Grafana checks for the presence of a role using the [JMESPath](http://jmespath.org/examples.html) specified via the `role_attribute_path` configuration option.
-
-For the path lookup, Grafana uses JSON obtained from querying GitHub's API [`/api/user`](https://docs.github.com/en/rest/users/users#get-the-authenticated-user=) endpoint and a `groups` key containing all of the user's teams (retrieved from `/api/user/teams`).
-
-The result of evaluating the `role_attribute_path` JMESPath expression must be a valid Grafana role, for example, `Viewer`, `Editor` or `Admin`. For more information about roles and permissions in Grafana, refer to [Roles and permissions]({{< relref "../../../../administration/roles-and-permissions" >}}).
-
-{{% admonition type="warning" %}}
-Currently if no organization role mapping is found for a user, Grafana doesn't
-update the user's organization role. This is going to change in Grafana 10. To avoid overriding manually set roles,
-enable the `skip_org_role_sync` option in the [auth.github] section.
-See [Configure Grafana]({{< relref "../../../configure-grafana#authgithub" >}}) for more information.
-{{% /admonition %}}
-
-On first login, if the`role_attribute_path` property does not return a role, then the user is assigned the role
-specified by [the `auto_assign_org_role` option]({{< relref "../../../configure-grafana#auto_assign_org_role" >}}).
-You can disable this default role assignment by setting `role_attribute_strict = true`.
-It denies user access if no role or an invalid role is returned.
-
-{{% admonition type="warning" %}}
-With Grafana 10, **on every login**, if the`role_attribute_path` property does not return a role,
-then the user is assigned the role specified by
-[the `auto_assign_org_role` option]({{< relref "../../../configure-grafana#auto_assign_org_role" >}}).
-{{% /admonition %}}
-
-An example Query could look like the following:
+In this example, the user with login `octocat` has been granted the `Admin` role.
+All other users are granted the `Viewer` role.
 
 ```bash
-role_attribute_path = [login==octocat] && 'Admin' || 'Viewer'
+role_attribute_path = [login=='octocat'][0] && 'Admin' || 'Viewer'
 ```
 
-This allows the user with login "octocat" to be mapped to the `Admin` role,
-but all other users to be mapped to the `Viewer` role.
+#### Map roles using GitHub teams
 
-#### Map roles using teams
-
-Teams can also be used to map roles. For instance,
-if you have a team called 'example-group' you can use the following snippet to
-ensure those members inherit the role 'Editor'.
+In this example, the user from GitHub team `my-github-team` has been granted the `Editor` role.
+All other users are granted the `Viewer` role.
 
 ```bash
 role_attribute_path = contains(groups[*], '@my-github-organization/my-github-team') && 'Editor' || 'Viewer'
 ```
 
-Note: If a match is found in other fields, teams will be ignored.
+### Map server administrator role
 
-#### Map server administrator privileges
+In this example, the user with login `octocat` has been granted the `Admin` organization role as well as the Grafana server admin role.
+All other users are granted the `Viewer` role.
 
-> Available in Grafana v9.2 and later versions.
-
-If the application role received by Grafana is `GrafanaAdmin`, Grafana grants the user server administrator privileges.  
-This is useful if you want to grant server administrator privileges to a subset of users.  
-Grafana also assigns the user the `Admin` role of the default organization.
-
-The setting `allow_assign_grafana_admin` under `[auth.github]` must be set to `true` for this to work.  
-If the setting is set to `false`, the user is assigned the role of `Admin` of the default organization, but not server administrator privileges.
-
-```ini
-allow_assign_grafana_admin = true
+```bash
+role_attribute_path = [login=='octocat'][0] && 'GrafanaAdmin' || 'Viewer'
 ```
 
-Example:
+## Configure team synchronization
 
-```ini
-role_attribute_path = [login==octocat] && 'GrafanaAdmin' || 'Viewer'
-```
+> **Note:** Available in [Grafana Enterprise]({{< relref "../../../../introduction/grafana-enterprise" >}}) and [Grafana Cloud](/docs/grafana-cloud/).
 
-### Team Sync (Enterprise only)
+By using Team Sync, you can map teams from your GitHub organization to teams within Grafana. This will automatically assign users to the appropriate teams.
+Teams for each user are synchronized when the user logs in.
 
-> Only available in Grafana Enterprise v6.3+
-
-With Team Sync you can map your GitHub org teams to teams in Grafana so that your users will automatically be added to
-the correct teams.
-
-Your GitHub teams can be referenced in two ways:
+GitHub teams can be referenced in two ways:
 
 - `https://github.com/orgs/<org>/teams/<slug>`
 - `@<org>/<slug>`
 
-Example: `@grafana/developers`
+For example, `https://github.com/orgs/grafana/teams/developers` or `@grafana/developers`.
 
-[Learn more about Team Sync]({{< relref "../../configure-team-sync" >}})
+To learn more about Team Sync, refer to [Configure team sync]({{< relref "../../configure-team-sync" >}}).
 
-## Skip organization role sync
+## Example of GitHub configuration in Grafana
 
-To prevent the sync of organization roles from GitHub, set `skip_org_role_sync` to `true`. This is useful if you want to manage the organization roles for your users from within Grafana.
-This also impacts the `allow_assign_grafana_admin` setting by not syncing the Grafana admin role from GitHub.
+This section includes an example of GitHub configuration in the Grafana configuration file.
 
-```ini
+```bash
 [auth.github]
-# ..
-# prevents the sync of org roles from Github
-skip_org_role_sync = true
-``
+enabled = true
+client_id = YOUR_GITHUB_APP_CLIENT_ID
+client_secret = YOUR_GITHUB_APP_CLIENT_SECRET
+scopes = user:email,read:org
+auth_url = https://github.com/login/oauth/authorize
+token_url = https://github.com/login/oauth/access_token
+api_url = https://api.github.com/user
+allow_sign_up = true
+auto_login = false
+team_ids = 150,300
+allowed_organizations = ["My Organization", "Octocats"]
+allowed_domains = mycompany.com mycompany.org
+role_attribute_path = [login=='octocat'][0] && 'GrafanaAdmin' || 'Viewer'
 ```

@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -20,7 +21,7 @@ import (
 const (
 	apiURI    = "/api/v4"
 	userURI   = "/api/v4/user"
-	groupsURI = "/api/v4/groups"
+	groupsURI = "/api/v4/groups?min_access_level=10&page=1&per_page=50"
 
 	gitlabAttrPath = `is_admin && 'GrafanaAdmin' || contains(groups[*], 'admins') && 'Admin' || contains(groups[*], 'editors') && 'Editor' || contains(groups[*], 'viewers') && 'Viewer'`
 
@@ -54,6 +55,7 @@ func TestSocialGitlab_UserInfo(t *testing.T) {
 		Cfg                  conf
 		UserRespBody         string
 		GroupsRespBody       string
+		GroupHeaders         map[string]string
 		RoleAttributePath    string
 		ExpectedLogin        string
 		ExpectedEmail        string
@@ -62,10 +64,16 @@ func TestSocialGitlab_UserInfo(t *testing.T) {
 		ExpectedError        error
 	}{
 		{
-			Name:                 "Server Admin Allowed",
-			Cfg:                  conf{AllowAssignGrafanaAdmin: true},
-			UserRespBody:         rootUserRespBody,
-			GroupsRespBody:       "[" + strings.Join([]string{adminGroup, editorGroup, viewerGroup}, ",") + "]",
+			Name:           "Server Admin Allowed",
+			Cfg:            conf{AllowAssignGrafanaAdmin: true},
+			UserRespBody:   rootUserRespBody,
+			GroupsRespBody: "[" + strings.Join([]string{adminGroup, editorGroup, viewerGroup}, ",") + "]",
+			GroupHeaders: map[string]string{
+				"X-Total-Pages": "1",
+				"X-Total":       "3",
+				"X-Page":        "1",
+				"X-Next-Page":   "",
+			},
 			RoleAttributePath:    gitlabAttrPath,
 			ExpectedLogin:        "root",
 			ExpectedEmail:        "root@example.org",
@@ -73,14 +81,21 @@ func TestSocialGitlab_UserInfo(t *testing.T) {
 			ExpectedGrafanaAdmin: trueBoolPtr(),
 		},
 		{ // Edge case, user in Viewer Group, Server Admin disabled but attribute path contains a condition for Server Admin => User has the Admin role
-			Name:              "Server Admin Disabled",
-			Cfg:               conf{AllowAssignGrafanaAdmin: false},
-			UserRespBody:      rootUserRespBody,
-			GroupsRespBody:    "[" + strings.Join([]string{viewerGroup}, ",") + "]",
-			RoleAttributePath: gitlabAttrPath,
-			ExpectedLogin:     "root",
-			ExpectedEmail:     "root@example.org",
-			ExpectedRole:      "Admin",
+			Name:           "Server Admin Disabled",
+			Cfg:            conf{AllowAssignGrafanaAdmin: false},
+			UserRespBody:   rootUserRespBody,
+			GroupsRespBody: "[" + strings.Join([]string{adminGroup, editorGroup, viewerGroup}, ",") + "]",
+			GroupHeaders: map[string]string{
+				"X-Total-Pages": "1",
+				"X-Total":       "3",
+				"X-Page":        "1",
+				// Next page omitted to test that the provider does not make a second request
+			},
+			RoleAttributePath:    gitlabAttrPath,
+			ExpectedLogin:        "root",
+			ExpectedEmail:        "root@example.org",
+			ExpectedRole:         "Admin",
+			ExpectedGrafanaAdmin: nil,
 		},
 		{
 			Name:                 "Editor",
@@ -92,6 +107,9 @@ func TestSocialGitlab_UserInfo(t *testing.T) {
 			ExpectedEmail:        "gitlab-editor@example.org",
 			ExpectedRole:         "Editor",
 			ExpectedGrafanaAdmin: falseBoolPtr(),
+			GroupHeaders:         map[string]string{
+				// All headers omitted to test that the provider does not make a second request
+			},
 		},
 		{
 			Name:                 "Should not sync role, return empty role and nil pointer for GrafanaAdmin for skip org role sync set to true",
@@ -104,41 +122,41 @@ func TestSocialGitlab_UserInfo(t *testing.T) {
 			ExpectedRole:         "",
 			ExpectedGrafanaAdmin: nilPointer,
 		},
-		{ // Case that's going to change with Grafana 10
-			Name:              "No fallback to default org role (will change in Grafana 10)",
-			Cfg:               conf{AutoAssignOrgRole: org.RoleViewer},
+		{ // Fallback to autoAssignOrgRole
+			Name:              "No fallback to default org role",
+			Cfg:               conf{AutoAssignOrgRole: org.RoleAdmin},
 			UserRespBody:      editorUserRespBody,
 			GroupsRespBody:    "[" + strings.Join([]string{}, ",") + "]",
 			RoleAttributePath: gitlabAttrPath,
 			ExpectedLogin:     "gitlab-editor",
 			ExpectedEmail:     "gitlab-editor@example.org",
-			ExpectedRole:      "",
+			ExpectedRole:      "Admin",
 		},
 		{
 			Name:              "Strict mode prevents fallback to default",
-			Cfg:               conf{RoleAttributeStrict: true, AutoAssignOrgRole: org.RoleViewer},
+			Cfg:               conf{RoleAttributeStrict: true, AutoAssignOrgRole: org.RoleAdmin},
 			UserRespBody:      editorUserRespBody,
 			GroupsRespBody:    "[" + strings.Join([]string{}, ",") + "]",
 			RoleAttributePath: gitlabAttrPath,
-			ExpectedError:     &InvalidBasicRoleError{idP: "Gitlab"},
+			ExpectedError:     errRoleAttributeStrictViolation,
 		},
-		{ // Edge case, no match, no strict mode and no fallback => User has an empty role
-			Name:              "Fallback with no default will create a user with an empty role",
+		{ // Edge case, no match, no strict mode and no fallback => User has the Viewer role (hard coded)
+			Name:              "Fallback with no default will create a user with a default role",
 			Cfg:               conf{},
 			UserRespBody:      editorUserRespBody,
-			GroupsRespBody:    "[" + strings.Join([]string{}, ",") + "]",
+			GroupsRespBody:    "[]",
 			RoleAttributePath: gitlabAttrPath,
 			ExpectedLogin:     "gitlab-editor",
 			ExpectedEmail:     "gitlab-editor@example.org",
-			ExpectedRole:      "",
+			ExpectedRole:      "Viewer",
 		},
-		{ // Edge case, no attribute path with strict mode => User has an empty role
+		{ // Edge case, no attribute path with strict mode => Error
 			Name:              "Strict mode with no attribute path",
 			Cfg:               conf{RoleAttributeStrict: true, AutoAssignOrgRole: org.RoleViewer},
 			UserRespBody:      editorUserRespBody,
 			GroupsRespBody:    "[" + strings.Join([]string{editorGroup}, ",") + "]",
 			RoleAttributePath: "",
-			ExpectedError:     &InvalidBasicRoleError{idP: "Gitlab"},
+			ExpectedError:     errRoleAttributePathNotSet,
 		},
 	}
 
@@ -155,19 +173,24 @@ func TestSocialGitlab_UserInfo(t *testing.T) {
 				w.Header().Set("Content-Type", "application/json")
 				switch r.RequestURI {
 				case userURI:
+					w.WriteHeader(http.StatusOK)
 					_, err := w.Write([]byte(test.UserRespBody))
 					require.NoError(t, err)
 				case groupsURI:
+					w.WriteHeader(http.StatusOK)
+					for k, v := range test.GroupHeaders {
+						w.Header().Set(k, v)
+					}
 					_, err := w.Write([]byte(test.GroupsRespBody))
 					require.NoError(t, err)
 				default:
-					w.WriteHeader(http.StatusNotFound)
+					require.Fail(t, "unexpected request URI: "+r.RequestURI)
 				}
 			}))
 			provider.apiUrl = ts.URL + apiURI
 			actualResult, err := provider.UserInfo(context.Background(), ts.Client(), &oauth2.Token{})
 			if test.ExpectedError != nil {
-				require.Equal(t, err, test.ExpectedError)
+				require.ErrorIs(t, err, test.ExpectedError)
 				return
 			}
 
@@ -246,7 +269,7 @@ func TestSocialGitlab_extractFromToken(t *testing.T) {
 				Name:           "John Doe",
 				Groups:         []string{"admins", "editors", "viewers"},
 				EmailVerified:  true,
-				Role:           "",
+				Role:           "Viewer",
 				IsGrafanaAdmin: nil,
 			},
 		},
@@ -313,7 +336,7 @@ func TestSocialGitlab_extractFromToken(t *testing.T) {
 				Name:           "John Doe",
 				Groups:         []string{"admins"},
 				EmailVerified:  true,
-				Role:           "",
+				Role:           "Viewer",
 				IsGrafanaAdmin: nil,
 			},
 		},
@@ -382,4 +405,61 @@ func (t *tokenSource) Token() (*oauth2.Token, error) {
 		AccessToken: t.accessToken,
 		TokenType:   "Bearer",
 	}, nil
+}
+
+func TestSocialGitlab_GetGroupsNextPage(t *testing.T) {
+	type Group struct {
+		FullPath string `json:"full_path"`
+	}
+
+	groups := []Group{
+		{FullPath: "admins"},
+		{FullPath: "editors"},
+		{FullPath: "viewers"},
+		{FullPath: "serveradmins"},
+	}
+
+	calls := 0
+	// Create a mock HTTP client and server
+	mockServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/groups" {
+			// Return a paginated response with 2 groups per page
+			page, err := strconv.Atoi(r.URL.Query().Get("page"))
+			require.NoError(t, err)
+			perPage := 2
+			startIndex := (page - 1) * perPage
+			endIndex := startIndex + perPage
+			if endIndex > len(groups) {
+				endIndex = len(groups)
+			}
+			groupsPage := groups[startIndex:endIndex]
+			jsonBytes, err := json.Marshal(groupsPage)
+			require.NoError(t, err)
+
+			w.Header().Set("X-Total", strconv.Itoa(len(groups)))
+			if endIndex < len(groups) {
+				w.Header().Set("X-Next-Page", strconv.Itoa(page+1))
+			}
+			calls += 1
+			_, err = w.Write(jsonBytes)
+			require.NoError(t, err)
+		} else {
+			w.WriteHeader(http.StatusNotFound)
+		}
+	}))
+	defer mockServer.Close()
+
+	// Create a SocialGitlab instance with the mock server URL
+	s := &SocialGitlab{
+		apiUrl: mockServer.URL,
+		SocialBase: &SocialBase{
+			log: newLogger("test", "debug"),
+		},
+	}
+
+	// Call getGroups and verify that it returns all groups
+	expectedGroups := []string{"admins", "editors", "viewers", "serveradmins"}
+	actualGroups := s.getGroups(context.Background(), mockServer.Client())
+	assert.Equal(t, expectedGroups, actualGroups)
+	assert.Equal(t, 2, calls)
 }

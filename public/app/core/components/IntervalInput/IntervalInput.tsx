@@ -1,53 +1,69 @@
 import React, { useState } from 'react';
 import { useDebounce } from 'react-use';
 
-import { InlineField, InlineFieldRow, Input } from '@grafana/ui';
+import { InlineField, Input } from '@grafana/ui';
 
-import { validateInterval } from './validation';
+import { validateInterval, validateIntervalRegex } from './validation';
 
 interface Props {
-  label: string;
-  tooltip: string;
   value: string;
   onChange: (val: string) => void;
   isInvalidError: string;
+  placeholder?: string;
+  width?: number;
+  ariaLabel?: string;
+  label?: string;
+  tooltip?: string;
   disabled?: boolean;
+  validationRegex?: RegExp;
 }
 
-export function IntervalInput(props: Props) {
+interface FieldProps {
+  labelWidth: number;
+  disabled: boolean;
+  invalid: boolean;
+  error: string;
+  label?: string;
+  tooltip?: string;
+}
+
+export const IntervalInput = (props: Props) => {
+  const validationRegex = props.validationRegex || validateIntervalRegex;
   const [intervalIsInvalid, setIntervalIsInvalid] = useState(() => {
-    return props.value ? validateInterval(props.value) : false;
+    return props.value ? validateInterval(props.value, validationRegex) : false;
   });
 
   useDebounce(
     () => {
-      setIntervalIsInvalid(validateInterval(props.value));
+      setIntervalIsInvalid(validateInterval(props.value, validationRegex));
     },
     500,
     [props.value]
   );
 
+  const fieldProps: FieldProps = {
+    labelWidth: 26,
+    disabled: props.disabled ?? false,
+    invalid: intervalIsInvalid,
+    error: props.isInvalidError,
+  };
+  if (props.label) {
+    fieldProps.label = props.label;
+    fieldProps.tooltip = props.tooltip || '';
+  }
+
   return (
-    <InlineFieldRow>
-      <InlineField
-        label={props.label}
-        labelWidth={26}
-        disabled={props.disabled ?? false}
-        grow
-        tooltip={props.tooltip}
-        invalid={intervalIsInvalid}
-        error={props.isInvalidError}
-      >
-        <Input
-          type="text"
-          placeholder="0"
-          width={40}
-          onChange={(e) => {
-            props.onChange(e.currentTarget.value);
-          }}
-          value={props.value}
-        />
-      </InlineField>
-    </InlineFieldRow>
+    <InlineField {...fieldProps}>
+      <Input
+        type="text"
+        placeholder={props.placeholder || '0'}
+        width={props.width || 40}
+        onChange={(e) => {
+          props.onChange(e.currentTarget.value);
+        }}
+        value={props.value}
+        aria-label={props.ariaLabel || 'interval input'}
+      />
+    </InlineField>
   );
-}
+};

@@ -29,8 +29,8 @@ export class TimeSrv {
   oldRefresh?: string;
   timeModel?: TimeModel;
   timeAtLoad: RawTimeRange;
+  refreshMS?: number;
   private autoRefreshBlocked?: boolean;
-  private refreshMS?: number;
 
   constructor(private contextSrv: ContextSrv) {
     // default time
@@ -46,8 +46,8 @@ export class TimeSrv {
       this.shiftTime(e.payload.direction, e.payload.updateUrl);
     });
 
-    appEvents.subscribe(AbsoluteTimeEvent, () => {
-      this.makeAbsoluteTime();
+    appEvents.subscribe(AbsoluteTimeEvent, (e) => {
+      this.makeAbsoluteTime(e.payload.updateUrl);
     });
 
     document.addEventListener('visibilitychange', () => {
@@ -364,14 +364,9 @@ export class TimeSrv {
     );
   }
 
-  makeAbsoluteTime() {
-    const params = locationService.getSearch();
-    if (params.get('left')) {
-      return; // explore handles this;
-    }
-
+  makeAbsoluteTime(updateUrl: boolean) {
     const { from, to } = this.timeRange();
-    this.setTime({ from, to }, true);
+    this.setTime({ from, to }, updateUrl);
   }
 
   // isRefreshOutsideThreshold function calculates the difference between last refresh and now

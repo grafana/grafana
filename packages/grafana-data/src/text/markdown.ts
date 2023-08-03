@@ -1,4 +1,5 @@
 import { marked } from 'marked';
+import { mangle } from 'marked-mangle';
 
 import { sanitizeTextPanelContent } from './sanitize';
 
@@ -10,6 +11,7 @@ export interface RenderMarkdownOptions {
 }
 
 const markdownOptions = {
+  headerIds: false,
   pedantic: false,
   gfm: true,
   smartLists: true,
@@ -20,6 +22,7 @@ const markdownOptions = {
 
 export function renderMarkdown(str?: string, options?: RenderMarkdownOptions): string {
   if (!hasInitialized) {
+    marked.use(mangle());
     marked.setOptions({ ...markdownOptions });
     hasInitialized = true;
   }
@@ -42,6 +45,7 @@ export function renderMarkdown(str?: string, options?: RenderMarkdownOptions): s
 
 export function renderTextPanelMarkdown(str?: string, options?: RenderMarkdownOptions): string {
   if (!hasInitialized) {
+    marked.use(mangle());
     marked.setOptions({ ...markdownOptions });
     hasInitialized = true;
   }

@@ -3,6 +3,7 @@ package searchstore_test
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -113,53 +114,16 @@ func TestBuilder_Pagination(t *testing.T) {
 	assert.Equal(t, "P", resPg2[0].Title, "page 2 should start with the 16th dashboard")
 }
 
-func TestBuilder_Permissions(t *testing.T) {
-	user := &user.SignedInUser{
-		UserID:  1,
-		OrgID:   1,
-		OrgRole: org.RoleViewer,
-	}
-
-	store := setupTestEnvironment(t)
-	createDashboards(t, store, 0, 1, user.OrgID)
-
-	level := dashboards.PERMISSION_EDIT
-
-	builder := &searchstore.Builder{
-		Filters: []interface{}{
-			searchstore.OrgFilter{OrgId: user.OrgID},
-			searchstore.TitleSorter{},
-			permissions.DashboardPermissionFilter{
-				Dialect:         store.GetDialect(),
-				OrgRole:         user.OrgRole,
-				OrgId:           user.OrgID,
-				UserId:          user.UserID,
-				PermissionLevel: level,
-			},
-		},
-		Dialect: store.GetDialect(),
-	}
-
-	res := []dashboards.DashboardSearchProjection{}
-	err := store.WithDbSession(context.Background(), func(sess *db.Session) error {
-		sql, params := builder.ToSQL(limit, page)
-		return sess.SQL(sql, params...).Find(&res)
-	})
-	require.NoError(t, err)
-
-	assert.Len(t, res, 0)
-}
-
 func TestBuilder_RBAC(t *testing.T) {
 	testsCases := []struct {
 		desc            string
 		userPermissions []accesscontrol.Permission
-		features        featuremgmt.FeatureToggles
+		features        []interface{}
 		expectedParams  []interface{}
 	}{
 		{
 			desc:     "no user permissions",
-			features: featuremgmt.WithFeatures(),
+			features: []interface{}{},
 			expectedParams: []interface{}{
 				int64(1),
 			},
@@ -169,7 +133,7 @@ func TestBuilder_RBAC(t *testing.T) {
 			userPermissions: []accesscontrol.Permission{
 				{Action: dashboards.ActionDashboardsRead, Scope: "dashboards:uid:1"},
 			},
-			features: featuremgmt.WithFeatures(),
+			features: []interface{}{},
 			expectedParams: []interface{}{
 				int64(1),
 				int64(1),
@@ -206,7 +170,7 @@ func TestBuilder_RBAC(t *testing.T) {
 			userPermissions: []accesscontrol.Permission{
 				{Action: dashboards.ActionDashboardsRead, Scope: "dashboards:uid:1"},
 			},
-			features: featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders),
+			features: []interface{}{featuremgmt.FlagNestedFolders},
 			expectedParams: []interface{}{
 				int64(1),
 				int64(1),
@@ -253,39 +217,47 @@ func TestBuilder_RBAC(t *testing.T) {
 	require.NoError(t, err)
 
 	for _, tc := range testsCases {
-		t.Run(tc.desc, func(t *testing.T) {
-			if len(tc.userPermissions) > 0 {
-				user.Permissions = map[int64]map[string][]string{1: accesscontrol.GroupScopesByAction(tc.userPermissions)}
+		for _, features := range []*featuremgmt.FeatureManager{featuremgmt.WithFeatures(tc.features...), featuremgmt.WithFeatures(append(tc.features, featuremgmt.FlagPermissionsFilterRemoveSubquery)...)} {
+			m := features.GetEnabled(context.Background())
+			keys := make([]string, 0, len(m))
+			for k := range m {
+				keys = append(keys, k)
 			}
 
-			level := dashboards.PERMISSION_EDIT
+			t.Run(tc.desc+" with features "+strings.Join(keys, ","), func(t *testing.T) {
+				if len(tc.userPermissions) > 0 {
+					user.Permissions = map[int64]map[string][]string{1: accesscontrol.GroupScopesByAction(tc.userPermissions)}
+				}
 
-			builder := &searchstore.Builder{
-				Filters: []interface{}{
-					searchstore.OrgFilter{OrgId: user.OrgID},
-					searchstore.TitleSorter{},
-					permissions.NewAccessControlDashboardPermissionFilter(
-						user,
-						level,
-						"",
-						tc.features,
-						recursiveQueriesAreSupported,
-					),
-				},
-				Dialect: store.GetDialect(),
-			}
+				level := dashboards.PERMISSION_EDIT
 
-			res := []dashboards.DashboardSearchProjection{}
-			err := store.WithDbSession(context.Background(), func(sess *db.Session) error {
-				sql, params := builder.ToSQL(limit, page)
-				// TODO: replace with a proper test
-				assert.Equal(t, tc.expectedParams, params)
-				return sess.SQL(sql, params...).Find(&res)
+				builder := &searchstore.Builder{
+					Filters: []interface{}{
+						searchstore.OrgFilter{OrgId: user.OrgID},
+						searchstore.TitleSorter{},
+						permissions.NewAccessControlDashboardPermissionFilter(
+							user,
+							level,
+							"",
+							features,
+							recursiveQueriesAreSupported,
+						),
+					},
+					Dialect: store.GetDialect(),
+				}
+
+				res := []dashboards.DashboardSearchProjection{}
+				err := store.WithDbSession(context.Background(), func(sess *db.Session) error {
+					sql, params := builder.ToSQL(limit, page)
+					// TODO: replace with a proper test
+					assert.Equal(t, tc.expectedParams, params)
+					return sess.SQL(sql, params...).Find(&res)
+				})
+				require.NoError(t, err)
+
+				assert.Len(t, res, 0)
 			})
-			require.NoError(t, err)
-
-			assert.Len(t, res, 0)
-		})
+		}
 	}
 }
 

@@ -6,7 +6,7 @@ import { LinkButton, useStyles2, VerticalGroup, VizTooltipOptions } from '@grafa
 import { findField } from 'app/features/dimensions';
 import { getTitleFromHref } from 'app/features/explore/utils/links';
 
-import { ScatterSeriesConfig, SeriesMapping } from './models.gen';
+import { ScatterSeriesConfig, SeriesMapping } from './panelcfg.gen';
 import { ScatterSeries } from './types';
 
 interface YValue {
@@ -72,8 +72,8 @@ export const TooltipView = ({
   let yValue: YValue | null = null;
   let extraFacets: ExtraFacets | null = null;
   if (seriesMapping === SeriesMapping.Manual && manualSeriesConfigs) {
-    const colorFacetFieldName = manualSeriesConfigs[hoveredPointIndex].pointColor?.field ?? '';
-    const sizeFacetFieldName = manualSeriesConfigs[hoveredPointIndex].pointSize?.field ?? '';
+    const colorFacetFieldName = manualSeriesConfigs[hoveredPointIndex]?.pointColor?.field ?? '';
+    const sizeFacetFieldName = manualSeriesConfigs[hoveredPointIndex]?.pointSize?.field ?? '';
 
     const colorFacet = colorFacetFieldName ? findField(frame, colorFacetFieldName) : undefined;
     const sizeFacet = sizeFacetFieldName ? findField(frame, sizeFacetFieldName) : undefined;

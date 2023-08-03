@@ -38,6 +38,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/oauthtoken/oauthtokentest"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/config"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pipeline"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	pluginSettings "github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings/service"
@@ -63,16 +64,21 @@ func TestCallResource(t *testing.T) {
 	cfg.Azure = &azsettings.AzureSettings{}
 
 	coreRegistry := coreplugin.ProvideCoreRegistry(nil, &cloudwatch.CloudWatchService{}, nil, nil, nil, nil,
-		nil, nil, nil, nil, testdatasource.ProvideService(cfg), nil, nil, nil, nil, nil, nil)
+		nil, nil, nil, nil, testdatasource.ProvideService(), nil, nil, nil, nil, nil, nil)
 	pCfg, err := config.ProvideConfig(setting.ProvideProvider(cfg), cfg, featuremgmt.WithFeatures())
 	require.NoError(t, err)
 	reg := registry.ProvideService()
 	angularInspector, err := angularinspector.NewStaticInspector()
 	require.NoError(t, err)
-	l := loader.ProvideService(pCfg, fakes.NewFakeLicensingService(), signature.NewUnsignedAuthorizer(pCfg),
-		reg, provider.ProvideService(coreRegistry), finder.NewLocalFinder(pCfg), fakes.NewFakeRoleRegistry(),
-		assetpath.ProvideService(pluginscdn.ProvideService(pCfg)), signature.ProvideService(pCfg, statickey.New()),
-		angularInspector, &fakes.FakeOauthService{})
+
+	discovery := pipeline.ProvideDiscoveryStage(pCfg, finder.NewLocalFinder(pCfg.DevMode), reg)
+	bootstrap := pipeline.ProvideBootstrapStage(pCfg, signature.ProvideService(pCfg, statickey.New()), assetpath.ProvideService(pluginscdn.ProvideService(pCfg)))
+	initialize := pipeline.ProvideInitializationStage(pCfg, reg, fakes.NewFakeLicensingService(), provider.ProvideService(coreRegistry))
+
+	l := loader.ProvideService(pCfg, signature.NewUnsignedAuthorizer(pCfg),
+		reg, fakes.NewFakeRoleRegistry(),
+		assetpath.ProvideService(pluginscdn.ProvideService(pCfg)),
+		angularInspector, &fakes.FakeOauthService{}, discovery, bootstrap, initialize)
 	srcs := sources.ProvideService(cfg, pCfg)
 	ps, err := store.ProvideService(reg, srcs, l)
 	require.NoError(t, err)

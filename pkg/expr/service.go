@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -47,6 +48,9 @@ func NodeTypeFromDatasourceUID(uid string) NodeType {
 	if IsDataSource(uid) {
 		return TypeCMDNode
 	}
+	if uid == MLDatasourceUID {
+		return TypeMLNode
+	}
 	return TypeDatasourceNode
 }
 
@@ -54,13 +58,18 @@ func NodeTypeFromDatasourceUID(uid string) NodeType {
 type Service struct {
 	cfg          *setting.Cfg
 	dataService  backend.QueryDataHandler
-	pCtxProvider *plugincontext.Provider
+	pCtxProvider pluginContextProvider
 	features     featuremgmt.FeatureToggles
 
 	pluginsClient backend.CallResourceHandler
 
 	tracer  tracing.Tracer
 	metrics *metrics
+}
+
+type pluginContextProvider interface {
+	Get(ctx context.Context, pluginID string, user *user.SignedInUser, orgID int64) (backend.PluginContext, error)
+	GetWithDataSource(ctx context.Context, pluginID string, user *user.SignedInUser, ds *datasources.DataSource) (backend.PluginContext, error)
 }
 
 func ProvideService(cfg *setting.Cfg, pluginClient plugins.Client, pCtxProvider *plugincontext.Provider,
@@ -114,6 +123,15 @@ func DataSourceModelFromNodeType(kind NodeType) (*datasources.DataSource, error)
 			UID:            DatasourceUID,
 			Name:           DatasourceUID,
 			Type:           DatasourceType,
+			JsonData:       simplejson.New(),
+			SecureJsonData: make(map[string][]byte),
+		}, nil
+	case TypeMLNode:
+		return &datasources.DataSource{
+			ID:             mlDatasourceID,
+			UID:            MLDatasourceUID,
+			Name:           DatasourceUID,
+			Type:           mlPluginID,
 			JsonData:       simplejson.New(),
 			SecureJsonData: make(map[string][]byte),
 		}, nil

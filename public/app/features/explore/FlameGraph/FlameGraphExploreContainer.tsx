@@ -3,7 +3,7 @@ import React from 'react';
 
 import { DataFrame, GrafanaTheme2, CoreApp } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
-import { FlameGraphTopWrapper } from 'app/plugins/panel/flamegraph/components/FlameGraphTopWrapper';
+import FlameGraphContainer from 'app/plugins/panel/flamegraph/components/FlameGraphContainer';
 
 interface Props {
   dataFrames: DataFrame[];
@@ -14,7 +14,7 @@ export const FlameGraphExploreContainer = (props: Props) => {
 
   return (
     <div className={styles.container}>
-      <FlameGraphTopWrapper data={props.dataFrames[0]} app={CoreApp.Explore} />
+      <FlameGraphContainer data={props.dataFrames[0]} app={CoreApp.Explore} />
     </div>
   );
 };
@@ -25,6 +25,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: flow-root;
     padding: 0 ${theme.spacing(1)} ${theme.spacing(1)} ${theme.spacing(1)};
     border: 1px solid ${theme.components.panel.borderColor};
-    border-radius: ${theme.shape.borderRadius(1)};
+    border-radius: ${theme.shape.radius.default};
   `,
 });

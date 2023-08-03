@@ -17,6 +17,11 @@ keywords:
   - dynamic
   - rows
   - add
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 menuTitle: Panel editor overview
 title: Panel editor overview
 weight: 1
@@ -53,7 +58,7 @@ This section describes the areas of the Grafana panel editor.
 
    - **Query tab:** Select your data source and enter queries here. For more information, refer to [Add a query]({{< relref "../query-transform-data/#add-a-query" >}}). When you create a new dashboard, you'll be prompted to select a data source before you get to the panel editor. You set or update the data source in existing dashboards using the dropdown in the **Query** tab.
    - **Transform tab:** Apply data transformations. For more information, refer to [Transform data]({{< relref "../query-transform-data/transform-data/" >}}).
-   - **Alert tab:** Write alert rules. For more information, refer to [Overview of Grafana 8 alerting]({{< relref "../../alerting/" >}}).
+   - **Alert tab:** Write alert rules. For more information, refer to [the overview of Grafana Alerting]({{< relref "../../alerting/" >}}).
 
 1. Panel display options: The display options section contains tabs where you configure almost every aspect of your data visualization.
 

@@ -1,11 +1,12 @@
 import { css, cx } from '@emotion/css';
 import React, { useEffect, useRef, useState } from 'react';
 
-import { SelectableValue } from '@grafana/data';
-import { Button, CustomScrollbar, HorizontalGroup, RadioButtonGroup, useStyles2, useTheme2 } from '@grafana/ui';
+import { Button, CustomScrollbar, HorizontalGroup, useStyles2, useTheme2 } from '@grafana/ui';
 import { getSelectStyles } from '@grafana/ui/src/components/Select/getSelectStyles';
+import { contextSrv } from 'app/core/core';
 import { OrgRole, Role } from 'app/types';
 
+import { BuiltinRoleSelector } from './BuiltinRoleSelector';
 import { RoleMenuGroupsSection } from './RoleMenuGroupsSection';
 import { MENU_MAX_HEIGHT } from './constants';
 import { getStyles } from './styles';
@@ -29,16 +30,15 @@ interface RolesCollectionEntry {
   roles: Role[];
 }
 
-const BasicRoles = Object.values(OrgRole);
-const BasicRoleOption: Array<SelectableValue<OrgRole>> = BasicRoles.map((r) => ({
-  label: r,
-  value: r,
-}));
-
 const fixedRoleGroupNames: Record<string, string> = {
   ldap: 'LDAP',
   current: 'Current org',
 };
+
+const noBasicRoleFlag = contextSrv.licensedAccessControlEnabled();
+const tooltipMessage = noBasicRoleFlag
+  ? 'You can now select the "No basic role" option and add permissions to your custom needs.'
+  : undefined;
 
 interface RolePickerMenuProps {
   basicRole?: OrgRole;
@@ -46,6 +46,7 @@ interface RolePickerMenuProps {
   appliedRoles: Role[];
   showGroups?: boolean;
   basicRoleDisabled?: boolean;
+  disabledMessage?: string;
   showBasicRole?: boolean;
   onSelect: (roles: Role[]) => void;
   onBasicRoleSelect?: (role: OrgRole) => void;
@@ -61,6 +62,7 @@ export const RolePickerMenu = ({
   appliedRoles,
   showGroups,
   basicRoleDisabled,
+  disabledMessage,
   showBasicRole,
   onSelect,
   onBasicRoleSelect,
@@ -206,14 +208,12 @@ export const RolePickerMenu = ({
         <CustomScrollbar autoHide={false} autoHeightMax={`${MENU_MAX_HEIGHT}px`} hideHorizontalTrack hideVerticalTrack>
           {showBasicRole && (
             <div className={customStyles.menuSection}>
-              <div className={customStyles.groupHeader}>Basic roles</div>
-              <RadioButtonGroup
-                className={customStyles.basicRoleSelector}
-                options={BasicRoleOption}
+              <BuiltinRoleSelector
                 value={selectedBuiltInRole}
                 onChange={onSelectedBuiltinRoleChange}
-                fullWidth={true}
                 disabled={basicRoleDisabled}
+                disabledMesssage={disabledMessage}
+                tooltipMessage={tooltipMessage}
               />
             </div>
           )}
