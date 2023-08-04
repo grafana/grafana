@@ -4,10 +4,12 @@ import (
 	"bytes"
 	"context"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -29,7 +31,9 @@ import (
 	"github.com/grafana/grafana/pkg/services/licensing"
 	loginservice "github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/navtree"
+	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
+	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -86,37 +90,56 @@ var oAuthInfos = map[string]*social.OAuthInfo{
 	},
 }
 
-func TestLoginView_ErrorCookie(t *testing.T) {
-	var cfg *setting.Cfg
-	server := SetupAPITestServer(t, func(hs *HTTPServer) {
-		cfg = setting.NewCfg()
-		hs.Cfg = cfg
-		hs.SocialService = &mockSocialService{}
-		hs.SettingsProvider = &setting.OSSImpl{Cfg: hs.Cfg}
-		hs.SecretsService = fakes.NewFakeSecretsService()
-	})
-
+func TestLoginErrorCookieAPIEndpoint(t *testing.T) {
 	fakeSetIndexViewData(t)
 
-	req := server.NewGetRequest("/login")
-	req.AddCookie(&http.Cookie{
-		Name:     loginErrorCookieName,
-		MaxAge:   60,
-		Value:    hex.EncodeToString([]byte("authentication error")),
-		HttpOnly: true,
-		Path:     "/",
-		Secure:   cfg.CookieSecure,
-		SameSite: cfg.CookieSameSiteMode,
+	fakeViewIndex(t)
+
+	sc := setupScenarioContext(t, "/login")
+	cfg := setting.NewCfg()
+	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
+	hs := &HTTPServer{
+		Cfg:              cfg,
+		SettingsProvider: &setting.OSSImpl{Cfg: cfg},
+		License:          &licensing.OSSLicensingService{},
+		SocialService:    &mockSocialService{},
+		SecretsService:   secretsService,
+		Features:         featuremgmt.WithFeatures(),
+	}
+
+	sc.defaultHandler = routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
+		hs.LoginView(c)
+		return response.Empty(http.StatusOK)
 	})
 
-	res, err := server.Send(req)
-	require.NoError(t, err)
+	cfg.LoginCookieName = "grafana_session"
+	setting.SecretKey = "login_testing"
 
-	require.Equal(t, http.StatusOK, res.StatusCode)
+	cfg.OAuthAutoLogin = true
 
-	body, err := io.ReadAll(res.Body)
+	oauthError := errors.New("User not a member of one of the required organizations")
+	encryptedError, err := hs.SecretsService.Encrypt(context.Background(), []byte(oauthError.Error()), secrets.WithoutScope())
 	require.NoError(t, err)
-	assert.Contains(t, string(body), "authentication error")
+	expCookiePath := "/"
+	if len(setting.AppSubUrl) > 0 {
+		expCookiePath = setting.AppSubUrl
+	}
+	cookie := http.Cookie{
+		Name:     loginErrorCookieName,
+		MaxAge:   60,
+		Value:    hex.EncodeToString(encryptedError),
+		HttpOnly: true,
+		Path:     expCookiePath,
+		Secure:   hs.Cfg.CookieSecure,
+		SameSite: hs.Cfg.CookieSameSiteMode,
+	}
+	sc.m.Get(sc.url, sc.defaultHandler)
+	sc.fakeReqNoAssertionsWithCookie("GET", sc.url, cookie).exec()
+	require.Equal(t, 200, sc.resp.Code)
+
+	responseString, err := getBody(sc.resp)
+	require.NoError(t, err)
+	assert.True(t, strings.Contains(responseString, oauthError.Error()))
 }
 
 func TestLoginViewRedirect(t *testing.T) {
