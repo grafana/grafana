@@ -1,7 +1,7 @@
 import React from 'react';
 
 import { SelectableValue } from '@grafana/data';
-import { Button } from '@grafana/ui';
+import { AccessoryButton } from '@grafana/experimental';
 
 import { InfluxQueryTag } from '../../../../../types';
 import { adjustOperatorIfNeeded, getCondition, getOperator } from '../utils/tagUtils';
@@ -104,13 +104,14 @@ const Tag = ({ tag, isFirst, onRemove, onChange, getTagKeyOptions, getTagValueOp
           onChange({ ...tag, value, operator: adjustOperatorIfNeeded(operator, value) });
         }}
       />
-      <Button
+      <AccessoryButton
         style={{ marginRight: '4px' }}
-        aria-label="Delete tag"
-        icon="trash-alt"
+        aria-label="remove"
+        icon="times"
         variant="secondary"
-        type="button"
-        onClick={() => onRemove()}
+        onClick={() => {
+          onRemove();
+        }}
       />
     </div>
   );

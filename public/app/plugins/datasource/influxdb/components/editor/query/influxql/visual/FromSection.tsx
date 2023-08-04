@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { Button } from '@grafana/ui';
+import { AccessoryButton } from '@grafana/experimental';
 
 import { toSelectableValue } from '../utils/toSelectableValue';
 
@@ -62,13 +62,14 @@ export const FromSection = ({
         }}
       />
       {measurement && (
-        <Button
+        <AccessoryButton
           style={{ marginRight: '4px' }}
-          aria-label="Clear measurement selection"
-          icon="trash-alt"
+          aria-label="remove"
+          icon="times"
           variant="secondary"
-          type="button"
-          onClick={() => onChange(policy, undefined)}
+          onClick={() => {
+            onChange(policy, undefined);
+          }}
         />
       )}
     </>
