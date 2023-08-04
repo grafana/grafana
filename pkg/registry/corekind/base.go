@@ -21,8 +21,8 @@ var (
 	defaultBase *Base
 )
 
-// NewBase provides a registry of all core raw and structured kinds, without any
-// composition of slot kinds.
+// NewBase provides a registry of all core kinds, without any composable kinds
+// injected.
 //
 // All calling code within grafana/grafana is expected to use Grafana's
 // singleton [thema.Runtime], returned from [cuectx.GrafanaThemaRuntime]. If nil
@@ -55,7 +55,7 @@ func (b *Base) ByName(name string) kindsys.Core {
 		return b.all[i].Name() >= name
 	})
 
-	if b.all[i].Name() == name {
+	if i < len(b.all) && b.all[i].Name() == name {
 		return b.all[i]
 	}
 	return nil
