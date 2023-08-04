@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -595,6 +596,7 @@ func doSearchQuery(
 		}
 
 		if len(tags) > 0 {
+			sort.Strings(tags)
 			js, _ := json.Marshal(tags)
 			jsb := json.RawMessage(js)
 			fTags.Append(&jsb)
