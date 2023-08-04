@@ -148,7 +148,7 @@ If you want to guarantee the existence of metrics before any observations has ha
    ```
 
 1. Run Grafana, and create a Prometheus datasource if you do not have one yet. Set the server URL to `http://localhost:9090`, enable basic auth, and type in the same auth you have for local Grafana
-1. Use Grafana Explore or dashboards to query any exported Grafana metrics. Can also view them at http://localhost:3000/metrics
+1. Use Grafana Explore or dashboards to query any exported Grafana metrics. You can also view them at http://localhost:3000/metrics
 
 ## Traces
 
