@@ -140,7 +140,7 @@ If you want to guarantee the existence of metrics before any observations has ha
 
 ### How to collect and visualize metrics locally
 
-1. Ensure you have docker installed and running on your machine
+1. Ensure you have Docker installed and running on your machine
 1. Start Prometheus
 
    ```bash
