@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/termination"
 	"github.com/grafana/grafana/pkg/plugins/manager/process"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
+	"github.com/grafana/grafana/pkg/plugins/oauth"
 )
 
 func ProvideDiscoveryStage(cfg *config.Cfg, pf finder.Finder, pr registry.Service) *discovery.Discovery {
@@ -36,11 +37,17 @@ func ProvideBootstrapStage(cfg *config.Cfg, sc plugins.SignatureCalculator, a *a
 	})
 }
 
-func ProvideInitializationStage(cfg *config.Cfg, pr registry.Service, l plugins.Licensing, bp plugins.BackendFactoryProvider) *initialization.Initialize {
+func ProvideInitializationStage(cfg *config.Cfg, pr registry.Service, l plugins.Licensing,
+	bp plugins.BackendFactoryProvider, pm process.Service, externalServiceRegistry oauth.ExternalServiceRegistry,
+	roleRegistry plugins.RoleRegistry) *initialization.Initialize {
 	return initialization.New(cfg, initialization.Opts{
 		InitializeFuncs: []initialization.InitializeFunc{
 			initialization.BackendClientInitStep(envvars.NewProvider(cfg, l), bp),
 			initialization.PluginRegistrationStep(pr),
+			initialization.BackendProcessStartStep(pm),
+			ExternalServiceRegistrationStep(cfg, externalServiceRegistry),
+			RegisterPluginRolesStep(roleRegistry),
+			ReportBuildMetrics,
 		},
 	})
 }

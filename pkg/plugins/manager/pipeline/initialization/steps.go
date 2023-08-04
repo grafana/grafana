@@ -7,6 +7,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/envvars"
 	"github.com/grafana/grafana/pkg/plugins/log"
+	"github.com/grafana/grafana/pkg/plugins/manager/process"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 )
 
@@ -15,7 +16,7 @@ import (
 // It uses the envvars.Provider to retrieve the environment variables required for the plugin and the plugins.BackendFactoryProvider
 // to get fetch backend factory, which is used to form a connection to the backend plugin process.
 //
-// Note: This step does not start the backend plugin process.
+// Note: This step does not start the backend plugin process. Please see BackendClientStarter for starting the backend plugin process.
 type BackendClientInit struct {
 	envVarProvider  envvars.Provider
 	backendProvider plugins.BackendFactoryProvider
@@ -54,6 +55,33 @@ func (b *BackendClientInit) Initialize(ctx context.Context, p *plugins.Plugin) (
 		} else {
 			p.RegisterClient(backendClient)
 		}
+	}
+	return p, nil
+}
+
+// BackendClientStarter implements an InitializeFunc for starting a backend plugin process.
+type BackendClientStarter struct {
+	processManager process.Service
+	log            log.Logger
+}
+
+// BackendProcessStartStep returns a new InitializeFunc for starting a backend plugin process.
+func BackendProcessStartStep(processManager process.Service) InitializeFunc {
+	return newBackendProcessStarter(processManager).Start
+}
+
+func newBackendProcessStarter(processManager process.Service) *BackendClientStarter {
+	return &BackendClientStarter{
+		processManager: processManager,
+		log:            log.New("plugins.backend.start"),
+	}
+}
+
+// Start will start the backend plugin process.
+func (b *BackendClientStarter) Start(ctx context.Context, p *plugins.Plugin) (*plugins.Plugin, error) {
+	if err := b.processManager.Start(ctx, p.ID); err != nil {
+		b.log.Error("Could not start plugin", "pluginId", p.ID, "err", err)
+		return nil, err
 	}
 	return p, nil
 }
