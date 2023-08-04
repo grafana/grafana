@@ -7,6 +7,7 @@ keywords:
   - grafana
   - elasticsearch
   - guide
+  - data source
 labels:
   products:
     - cloud
