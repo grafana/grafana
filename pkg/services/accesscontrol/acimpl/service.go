@@ -117,7 +117,7 @@ func (s *Service) getUserPermissions(ctx context.Context, user identity.Requeste
 	}
 
 	namespace, identifier := user.GetNamespacedID()
-	if namespace != authn.NamespaceUser && namespace != authn.NamespaceServiceAccount {
+	if namespace != authn.NamespaceUser && namespace != authn.NamespaceServiceAccount && namespace != identity.NamespaceRenderService {
 		// TOFIX: return error
 		return permissions, nil
 	}

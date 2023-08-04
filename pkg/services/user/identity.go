@@ -6,6 +6,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/models/roletype"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
+	"github.com/grafana/grafana/pkg/services/login"
 )
 
 type SignedInUser struct {
@@ -130,8 +131,13 @@ func (u *SignedInUser) GetNamespacedID() (string, string) {
 		return identity.NamespaceServiceAccount, fmt.Sprintf("%d", u.UserID)
 	case u.UserID != 0:
 		return identity.NamespaceUser, fmt.Sprintf("%d", u.UserID)
+	case u.IsAnonymous:
+		return identity.NamespaceAnonymous, ""
+	case u.AuthenticatedBy == login.RenderModule:
+		return identity.NamespaceRenderService, fmt.Sprintf("%d", u.UserID)
 	}
-	// backwards compatibility for render auth and anonymous access
+
+	// backwards compatibility
 	return identity.NamespaceUser, fmt.Sprintf("%d", u.UserID)
 }
 
