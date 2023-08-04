@@ -106,7 +106,6 @@ func (u *SignedInUser) GetOrgID() int64 {
 	return u.OrgID
 }
 
-// TODO: Add permission fetching if needed for the orgID
 func (u *SignedInUser) GetPermissions() map[string][]string {
 	if u.Permissions == nil {
 		return make(map[string][]string)
@@ -115,12 +114,10 @@ func (u *SignedInUser) GetPermissions() map[string][]string {
 	return u.Permissions[u.GetOrgID()]
 }
 
-// TODO: Add orgID to this method
 func (u *SignedInUser) GetTeams() []int64 {
 	return u.Teams
 }
 
-// TODO: Add orgID to this method
 func (u *SignedInUser) GetOrgRole() roletype.RoleType {
 	return u.OrgRole
 }
