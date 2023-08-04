@@ -2,11 +2,12 @@ import { cloneDeep, isFunction } from 'lodash';
 
 import { PluginMeta } from '@grafana/data';
 import { config } from '@grafana/runtime';
+import { Monaco } from '@grafana/ui';
 
 import { loadScriptIntoSandbox } from './code_loader';
 import { forbiddenElements } from './constants';
 import { SandboxEnvironment } from './types';
-import { logWarning } from './utils';
+import { logWarning, unboxRegexesFromMembraneProxy, waitForObjectKeyAvailable } from './utils';
 
 /**
  * Distortions are near-membrane mechanisms to altert JS instrics and DOM APIs.
@@ -79,6 +80,7 @@ export function getGeneralSandboxDistortionMap() {
     distortCreateElement(generalDistortionMap);
     distortWorkers(generalDistortionMap);
     distortDocument(generalDistortionMap);
+    distortMonacoEditor(generalDistortionMap);
   }
   return generalDistortionMap;
 }
@@ -455,4 +457,31 @@ function distortDocument(distortions: DistortionMap) {
       distortions.set(descriptor.value, failToSet);
     }
   }
+}
+
+async function distortMonacoEditor(distortions: DistortionMap) {
+  // We rely on `monaco` being instanciated inside `window.monaco`.
+  // this is the same object passed down to plugins using monaco editor for their editors
+  // this `window.monaco` is an instance of monaco but not the same as if we
+  // import `monaco-editor` directly in this file.
+  // Short of abusing the `window.monaco` object we would have to modify grafana-ui to export
+  // the monaco instance directly in the ReactMonacoEditor component
+  const monacoEditor = await waitForObjectKeyAvailable<Monaco>(window, 'monaco');
+  const originalSetMonarchTokensProvider = monacoEditor.languages.setMonarchTokensProvider;
+
+  // NOTE: this function is particular is called only once per intialized custom language inside a plugin which is a
+  // rare ocurrance but if not patched it'll break the syntax highlighting for the custom language.
+  function getSetMonarchTokensProvider() {
+    return function (...args: Parameters<typeof originalSetMonarchTokensProvider>) {
+      if (args.length !== 2) {
+        return originalSetMonarchTokensProvider.apply(monacoEditor, args);
+      }
+      return originalSetMonarchTokensProvider.call(
+        monacoEditor,
+        args[0],
+        unboxRegexesFromMembraneProxy(args[1]) as (typeof args)[1]
+      );
+    };
+  }
+  distortions.set(monacoEditor.languages.setMonarchTokensProvider, getSetMonarchTokensProvider);
 }
