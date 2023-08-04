@@ -4,12 +4,10 @@ import (
 	"bytes"
 	"context"
 	"encoding/hex"
-	"errors"
 	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
-	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -20,18 +18,18 @@ import (
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/login"
 	"github.com/grafana/grafana/pkg/login/social"
+	"github.com/grafana/grafana/pkg/models/usertoken"
 	"github.com/grafana/grafana/pkg/services/auth/authtest"
+	"github.com/grafana/grafana/pkg/services/authn"
+	"github.com/grafana/grafana/pkg/services/authn/authntest"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/hooks"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	loginservice "github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/navtree"
-	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
-	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -88,56 +86,37 @@ var oAuthInfos = map[string]*social.OAuthInfo{
 	},
 }
 
-func TestLoginErrorCookieAPIEndpoint(t *testing.T) {
-	fakeSetIndexViewData(t)
-
-	fakeViewIndex(t)
-
-	sc := setupScenarioContext(t, "/login")
-	cfg := setting.NewCfg()
-	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-	hs := &HTTPServer{
-		Cfg:              cfg,
-		SettingsProvider: &setting.OSSImpl{Cfg: cfg},
-		License:          &licensing.OSSLicensingService{},
-		SocialService:    &mockSocialService{},
-		SecretsService:   secretsService,
-		Features:         featuremgmt.WithFeatures(),
-	}
-
-	sc.defaultHandler = routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
-		hs.LoginView(c)
-		return response.Empty(http.StatusOK)
+func TestLoginView_ErrorCookie(t *testing.T) {
+	var cfg *setting.Cfg
+	server := SetupAPITestServer(t, func(hs *HTTPServer) {
+		cfg = setting.NewCfg()
+		hs.Cfg = cfg
+		hs.SocialService = &mockSocialService{}
+		hs.SettingsProvider = &setting.OSSImpl{Cfg: hs.Cfg}
+		hs.SecretsService = fakes.NewFakeSecretsService()
 	})
 
-	cfg.LoginCookieName = "grafana_session"
-	setting.SecretKey = "login_testing"
+	fakeSetIndexViewData(t)
 
-	cfg.OAuthAutoLogin = true
-
-	oauthError := errors.New("User not a member of one of the required organizations")
-	encryptedError, err := hs.SecretsService.Encrypt(context.Background(), []byte(oauthError.Error()), secrets.WithoutScope())
-	require.NoError(t, err)
-	expCookiePath := "/"
-	if len(setting.AppSubUrl) > 0 {
-		expCookiePath = setting.AppSubUrl
-	}
-	cookie := http.Cookie{
+	req := server.NewGetRequest("/login")
+	req.AddCookie(&http.Cookie{
 		Name:     loginErrorCookieName,
 		MaxAge:   60,
-		Value:    hex.EncodeToString(encryptedError),
+		Value:    hex.EncodeToString([]byte("authentication error")),
 		HttpOnly: true,
-		Path:     expCookiePath,
-		Secure:   hs.Cfg.CookieSecure,
-		SameSite: hs.Cfg.CookieSameSiteMode,
-	}
-	sc.m.Get(sc.url, sc.defaultHandler)
-	sc.fakeReqNoAssertionsWithCookie("GET", sc.url, cookie).exec()
-	require.Equal(t, 200, sc.resp.Code)
+		Path:     "/",
+		Secure:   cfg.CookieSecure,
+		SameSite: cfg.CookieSameSiteMode,
+	})
 
-	responseString, err := getBody(sc.resp)
+	res, err := server.Send(req)
 	require.NoError(t, err)
-	assert.True(t, strings.Contains(responseString, oauthError.Error()))
+
+	require.Equal(t, http.StatusOK, res.StatusCode)
+
+	body, err := io.ReadAll(res.Body)
+	require.NoError(t, err)
+	assert.Contains(t, string(body), "authentication error")
 }
 
 func TestLoginViewRedirect(t *testing.T) {
@@ -315,11 +294,15 @@ func TestLoginPostRedirect(t *testing.T) {
 
 	fakeViewIndex(t)
 	sc := setupScenarioContext(t, "/login")
+
 	hs := &HTTPServer{
-		log:              log.NewNopLogger(),
-		Cfg:              setting.NewCfg(),
-		HooksService:     &hooks.HooksService{},
-		License:          &licensing.OSSLicensingService{},
+		log:          log.NewNopLogger(),
+		Cfg:          setting.NewCfg(),
+		HooksService: &hooks.HooksService{},
+		License:      &licensing.OSSLicensingService{},
+		authnService: &authntest.FakeService{
+			ExpectedIdentity: &authn.Identity{ID: "user:42", SessionToken: &usertoken.UserToken{}},
+		},
 		AuthTokenService: authtest.NewFakeUserAuthTokenService(),
 		Features:         featuremgmt.WithFeatures(),
 	}
@@ -330,13 +313,6 @@ func TestLoginPostRedirect(t *testing.T) {
 		c.Req.Body = io.NopCloser(bytes.NewBufferString(`{"user":"admin","password":"admin"}`))
 		return hs.LoginPost(c)
 	})
-
-	user := &user.User{
-		ID:    42,
-		Email: "",
-	}
-
-	hs.authenticator = &fakeAuthenticator{user, "", nil}
 
 	redirectCases := []redirectCase{
 		{
@@ -427,6 +403,9 @@ func TestLoginPostRedirect(t *testing.T) {
 		hs.Cfg.AppSubURL = c.appSubURL
 
 		t.Run(c.desc, func(t *testing.T) {
+			if c.desc == "grafana invalid relative url starting with subpath" {
+				fmt.Println()
+			}
 			expCookiePath := "/"
 			if len(hs.Cfg.AppSubURL) > 0 {
 				expCookiePath = hs.Cfg.AppSubURL
@@ -585,112 +564,6 @@ func setupAuthProxyLoginTest(t *testing.T, enableLoginToken bool) *scenarioConte
 	sc.fakeReqNoAssertions("GET", sc.url).exec()
 
 	return sc
-}
-
-type loginHookTest struct {
-	info *loginservice.LoginInfo
-}
-
-func (r *loginHookTest) LoginHook(loginInfo *loginservice.LoginInfo, req *contextmodel.ReqContext) {
-	r.info = loginInfo
-}
-
-// TOREMOVE: remove with context handler auth
-func TestLoginPostRunLokingHook(t *testing.T) {
-	sc := setupScenarioContext(t, "/login")
-	hookService := &hooks.HooksService{}
-	hs := &HTTPServer{
-		log:              log.New("test"),
-		Cfg:              sc.cfg,
-		License:          &licensing.OSSLicensingService{},
-		AuthTokenService: authtest.NewFakeUserAuthTokenService(),
-		Features:         featuremgmt.WithFeatures(),
-		HooksService:     hookService,
-		authnService:     sc.ctxHdlr.AuthnService,
-	}
-
-	sc.cfg.AuthBrokerEnabled = false
-
-	sc.defaultHandler = routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
-		c.Req.Header.Set("Content-Type", "application/json")
-		c.Req.Body = io.NopCloser(bytes.NewBufferString(`{"user":"admin","password":"admin"}`))
-		x := hs.LoginPost(c)
-		return x
-	})
-
-	testHook := loginHookTest{}
-	hookService.AddLoginHook(testHook.LoginHook)
-
-	testUser := &user.User{
-		ID:    42,
-		Email: "",
-	}
-
-	testCases := []struct {
-		desc       string
-		authUser   *user.User
-		authModule string
-		authErr    error
-		info       loginservice.LoginInfo
-	}{
-		{
-			desc:    "invalid credentials",
-			authErr: login.ErrInvalidCredentials,
-			info: loginservice.LoginInfo{
-				AuthModule: "",
-				HTTPStatus: 401,
-				Error:      login.ErrInvalidCredentials,
-			},
-		},
-		{
-			desc:    "user disabled",
-			authErr: login.ErrUserDisabled,
-			info: loginservice.LoginInfo{
-				AuthModule: "",
-				HTTPStatus: 401,
-				Error:      login.ErrUserDisabled,
-			},
-		},
-		{
-			desc:       "valid Grafana user",
-			authUser:   testUser,
-			authModule: "grafana",
-			info: loginservice.LoginInfo{
-				AuthModule: "grafana",
-				User:       testUser,
-				HTTPStatus: 200,
-			},
-		},
-		{
-			desc:       "valid LDAP user",
-			authUser:   testUser,
-			authModule: loginservice.LDAPAuthModule,
-			info: loginservice.LoginInfo{
-				AuthModule: loginservice.LDAPAuthModule,
-				User:       testUser,
-				HTTPStatus: 200,
-			},
-		},
-	}
-
-	for _, c := range testCases {
-		t.Run(c.desc, func(t *testing.T) {
-			hs.authenticator = &fakeAuthenticator{c.authUser, c.authModule, c.authErr}
-			sc.m.Post(sc.url, sc.defaultHandler)
-			sc.fakeReqNoAssertions("POST", sc.url).exec()
-
-			info := testHook.info
-			assert.Equal(t, c.info.AuthModule, info.AuthModule)
-			assert.Equal(t, "admin", info.LoginUsername)
-			assert.Equal(t, c.info.HTTPStatus, info.HTTPStatus)
-			assert.Equal(t, c.info.Error, info.Error)
-
-			if c.info.User != nil {
-				require.NotEmpty(t, info.User)
-				assert.Equal(t, c.info.User.ID, info.User.ID)
-			}
-		})
-	}
 }
 
 type mockSocialService struct {
