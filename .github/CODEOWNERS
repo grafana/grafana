@@ -65,6 +65,8 @@
 /.golangci.toml @grafana/backend-platform
 /build.go @grafana/backend-platform
 /scripts/modowners/ @grafana/backend-platform
+/go.work @grafana/plugins-platform-backend
+/go.work.sum @grafana/plugins-platform-backend
 
 /pkg/api/ @grafana/backend-platform
 /pkg/bus/ @grafana/backend-platform
