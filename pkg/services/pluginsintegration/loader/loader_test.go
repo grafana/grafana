@@ -1327,7 +1327,7 @@ func newLoader(t *testing.T, cfg *config.Cfg, reg registry.Service, proc process
 		angularInspector, &fakes.FakeOauthService{},
 		pipeline.ProvideDiscoveryStage(cfg, finder.NewLocalFinder(false), reg),
 		pipeline.ProvideBootstrapStage(cfg, signature.DefaultCalculator(cfg), assets),
-		pipeline.ProvideInitializationStage(cfg, reg, lic, backendFactory),
+		pipeline.ProvideInitializationStage(cfg, reg, lic, backendFactory, proc, &fakes.FakeOauthService{}, fakes.NewFakeRoleRegistry()),
 		terminate)
 }
 
