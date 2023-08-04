@@ -289,6 +289,7 @@ type Cfg struct {
 	AWSAllowedAuthProviders []string
 	AWSAssumeRoleEnabled    bool
 	AWSListMetricsPageLimit int
+	AWSExternalId           string
 
 	// Azure Cloud settings
 	Azure *azsettings.AzureSettings
@@ -1299,6 +1300,11 @@ func (cfg *Cfg) handleAWSConfig() {
 	err = os.Setenv(awsds.AllowedAuthProvidersEnvVarKeyName, allowedAuthProviders)
 	if err != nil {
 		cfg.Logger.Error(fmt.Sprintf("could not set environment variable '%s'", awsds.AllowedAuthProvidersEnvVarKeyName), err)
+	}
+
+	cfg.AWSExternalId = awsPluginSec.Key("external_id").Value()
+	if err != nil {
+		cfg.Logger.Error(fmt.Sprintf("could not set environment variable '%s'", awsds.GrafanaAssumeRoleExternalIdKeyName), err)
 	}
 }
 

@@ -92,6 +92,9 @@ func (s *Service) awsEnvVars() []string {
 	if len(s.cfg.AWSAllowedAuthProviders) > 0 {
 		variables = append(variables, awsds.AllowedAuthProvidersEnvVarKeyName+"="+strings.Join(s.cfg.AWSAllowedAuthProviders, ","))
 	}
+	if s.cfg.AWSExternalId != "" {
+		variables = append(variables, awsds.GrafanaAssumeRoleExternalIdKeyName+"="+s.cfg.AWSExternalId)
+	}
 
 	return variables
 }
