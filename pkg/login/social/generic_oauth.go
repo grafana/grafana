@@ -27,6 +27,7 @@ type SocialGenericOAuth struct {
 	teamIdsAttributePath string
 	teamIds              []string
 	allowedGroups        []string
+	skipOrgRoleSync      bool
 }
 
 func (s *SocialGenericOAuth) IsGroupMember(groups []string) bool {

@@ -5,7 +5,6 @@ import (
 	"errors"
 	"time"
 
-	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/log"
@@ -14,11 +13,11 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/bootstrap"
 	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/discovery"
 	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/initialization"
+	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/termination"
 	"github.com/grafana/grafana/pkg/plugins/manager/process"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
 	"github.com/grafana/grafana/pkg/plugins/oauth"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
 var _ plugins.ErrorResolver = (*Loader)(nil)
@@ -27,6 +26,7 @@ type Loader struct {
 	discovery   discovery.Discoverer
 	bootstrap   bootstrap.Bootstrapper
 	initializer initialization.Initializer
+	termination termination.Terminator
 
 	processManager          process.Service
 	pluginRegistry          registry.Service
@@ -45,15 +45,17 @@ type Loader struct {
 func ProvideService(cfg *config.Cfg, authorizer plugins.PluginLoaderAuthorizer,
 	pluginRegistry registry.Service, roleRegistry plugins.RoleRegistry, assetPath *assetpath.Service,
 	angularInspector angularinspector.Inspector, externalServiceRegistry oauth.ExternalServiceRegistry,
-	discovery discovery.Discoverer, bootstrap bootstrap.Bootstrapper, initializer initialization.Initializer) *Loader {
+	discovery discovery.Discoverer, bootstrap bootstrap.Bootstrapper, initializer initialization.Initializer,
+	termination termination.Terminator) *Loader {
 	return New(cfg, authorizer, pluginRegistry, process.NewManager(pluginRegistry), roleRegistry, assetPath,
-		angularInspector, externalServiceRegistry, discovery, bootstrap, initializer)
+		angularInspector, externalServiceRegistry, discovery, bootstrap, initializer, termination)
 }
 
 func New(cfg *config.Cfg, authorizer plugins.PluginLoaderAuthorizer, pluginRegistry registry.Service,
 	processManager process.Service, roleRegistry plugins.RoleRegistry, assetPath *assetpath.Service,
 	angularInspector angularinspector.Inspector, externalServiceRegistry oauth.ExternalServiceRegistry,
-	discovery discovery.Discoverer, bootstrap bootstrap.Bootstrapper, initializer initialization.Initializer) *Loader {
+	discovery discovery.Discoverer, bootstrap bootstrap.Bootstrapper, initializer initialization.Initializer,
+	termination termination.Terminator) *Loader {
 	return &Loader{
 		pluginRegistry:          pluginRegistry,
 		signatureValidator:      signature.NewValidator(authorizer),
@@ -68,6 +70,7 @@ func New(cfg *config.Cfg, authorizer plugins.PluginLoaderAuthorizer, pluginRegis
 		discovery:               discovery,
 		bootstrap:               bootstrap,
 		initializer:             initializer,
+		termination:             termination,
 	}
 }
 
@@ -148,70 +151,11 @@ func (l *Loader) Load(ctx context.Context, src plugins.PluginSource) ([]*plugins
 	}
 	// </INITIALIZATION STAGE>
 
-	// <POST-INITIALIZATION STAGE>
-	for _, p := range initializedPlugins {
-		if err = l.processManager.Start(ctx, p.ID); err != nil {
-			l.log.Error("Could not start plugin", "pluginId", p.ID, "err", err)
-			continue
-		}
-
-		if p.ExternalServiceRegistration != nil && l.cfg.Features.IsEnabled(featuremgmt.FlagExternalServiceAuth) {
-			s, err := l.externalServiceRegistry.RegisterExternalService(ctx, p.ID, p.ExternalServiceRegistration)
-			if err != nil {
-				l.log.Error("Could not register an external service. Initialization skipped", "pluginID", p.ID, "err", err)
-				continue
-			}
-			p.ExternalService = s
-		}
-
-		if err = l.roleRegistry.DeclarePluginRoles(ctx, p.ID, p.Name, p.Roles); err != nil {
-			l.log.Warn("Declare plugin roles failed.", "pluginID", p.ID, "err", err)
-		}
-
-		if !p.IsCorePlugin() && !p.IsBundledPlugin() {
-			metrics.SetPluginBuildInformation(p.ID, string(p.Type), p.Info.Version, string(p.Signature))
-		}
-	}
-	// </POST-INITIALIZATION STAGE>
-
 	return initializedPlugins, nil
 }
 
 func (l *Loader) Unload(ctx context.Context, pluginID string) error {
-	plugin, exists := l.pluginRegistry.Plugin(ctx, pluginID)
-	if !exists {
-		return plugins.ErrPluginNotInstalled
-	}
-
-	if plugin.IsCorePlugin() || plugin.IsBundledPlugin() {
-		return plugins.ErrUninstallCorePlugin
-	}
-
-	if err := l.unload(ctx, plugin); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (l *Loader) unload(ctx context.Context, p *plugins.Plugin) error {
-	l.log.Debug("Stopping plugin process", "pluginId", p.ID)
-
-	if err := l.processManager.Stop(ctx, p.ID); err != nil {
-		return err
-	}
-
-	if err := l.pluginRegistry.Remove(ctx, p.ID); err != nil {
-		return err
-	}
-	l.log.Debug("Plugin unregistered", "pluginId", p.ID)
-
-	if remover, ok := p.FS.(plugins.FSRemover); ok {
-		if err := remover.Remove(); err != nil {
-			return err
-		}
-	}
-
-	return nil
+	return l.termination.Terminate(ctx, pluginID)
 }
 
 func (l *Loader) PluginErrors() []*plugins.Error {
