@@ -10,10 +10,13 @@ import (
 
 type noneSigner struct{}
 
-func sign(t *testing.T, key interface{}, claims interface{}) string {
+func sign(t *testing.T, key interface{}, claims interface{}, opts *jose.SignerOptions) string {
 	t.Helper()
 
-	sig, err := jose.NewSigner(jose.SigningKey{Algorithm: jose.PS512, Key: key}, (&jose.SignerOptions{}).WithType("JWT"))
+	if opts == nil {
+		opts = &jose.SignerOptions{}
+	}
+	sig, err := jose.NewSigner(jose.SigningKey{Algorithm: jose.PS512, Key: key}, (opts).WithType("JWT"))
 	require.NoError(t, err)
 	token, err := jwt.Signed(sig).Claims(claims).CompactSerialize()
 	require.NoError(t, err)

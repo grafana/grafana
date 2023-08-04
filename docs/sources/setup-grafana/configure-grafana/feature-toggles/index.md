@@ -105,7 +105,6 @@ Experimental features might be changed or removed without prior notice.
 | `alertStateHistoryLokiPrimary`              | Enable a remote Loki instance as the primary source for state history reads.                                                                                                             |
 | `alertStateHistoryLokiOnly`                 | Disable Grafana alerts from emitting annotations when a remote Loki instance is available.                                                                                               |
 | `unifiedRequestLog`                         | Writes error logs to the request logger                                                                                                                                                  |
-| `pyroscopeFlameGraph`                       | Changes flame graph to pyroscope one                                                                                                                                                     |
 | `extraThemes`                               | Enables extra themes                                                                                                                                                                     |
 | `lokiPredefinedOperations`                  | Adds predefined query operations to Loki query editor                                                                                                                                    |
 | `pluginsFrontendSandbox`                    | Enables the plugins frontend sandbox                                                                                                                                                     |
@@ -130,6 +129,8 @@ Experimental features might be changed or removed without prior notice.
 | `decoupleCorePlugins`                       | Skip loading core plugins on startup in order to load them as external                                                                                                                   |
 | `permissionsFilterRemoveSubquery`           | Alternative permission filter implementation that does not use subqueries for fetching the dashboard folder                                                                              |
 | `prometheusConfigOverhaulAuth`              | Update the Prometheus configuration page with the new auth component                                                                                                                     |
+| `influxdbSqlSupport`                        | Enable InfluxDB SQL query language support with new querying UI                                                                                                                          |
+| `noBasicRole`                               | Enables a new role that has no permissions by default                                                                                                                                    |
 
 ## Development feature toggles
 

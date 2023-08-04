@@ -124,11 +124,11 @@ func TestIntegrationPluginManager(t *testing.T) {
 
 	discovery := pipeline.ProvideDiscoveryStage(pCfg, finder.NewLocalFinder(pCfg.DevMode), reg)
 	bootstrap := pipeline.ProvideBootstrapStage(pCfg, signature.ProvideService(pCfg, statickey.New()), assetpath.ProvideService(pluginscdn.ProvideService(pCfg)))
-
-	l := loader.ProvideService(pCfg, lic, signature.NewUnsignedAuthorizer(pCfg),
-		reg, provider.ProvideService(coreRegistry), fakes.NewFakeRoleRegistry(),
+	initialize := pipeline.ProvideInitializationStage(pCfg, reg, lic, provider.ProvideService(coreRegistry))
+	l := loader.ProvideService(pCfg, signature.NewUnsignedAuthorizer(pCfg),
+		reg, fakes.NewFakeRoleRegistry(),
 		assetpath.ProvideService(pluginscdn.ProvideService(pCfg)),
-		angularInspector, &fakes.FakeOauthService{}, discovery, bootstrap)
+		angularInspector, &fakes.FakeOauthService{}, discovery, bootstrap, initialize)
 	srcs := sources.ProvideService(cfg, pCfg)
 	ps, err := store.ProvideService(reg, srcs, l)
 	require.NoError(t, err)
