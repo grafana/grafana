@@ -4,62 +4,17 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"path/filepath"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/models/usertoken"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/authn/authntest"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-
-	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/infra/remotecache"
-	"github.com/grafana/grafana/pkg/infra/usagestats"
-	"github.com/grafana/grafana/pkg/login/social"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/hooks"
-	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
-	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/web"
 )
-
-func setupSocialHTTPServerWithConfig(t *testing.T, cfg *setting.Cfg) *HTTPServer {
-	sqlStore := db.InitTestDB(t)
-	features := featuremgmt.WithFeatures()
-
-	return &HTTPServer{
-		Cfg:            cfg,
-		License:        &licensing.OSSLicensingService{Cfg: cfg},
-		SQLStore:       sqlStore,
-		SocialService:  social.ProvideService(cfg, features, &usagestats.UsageStatsMock{}, supportbundlestest.NewFakeBundleService(), remotecache.NewFakeCacheStorage()),
-		HooksService:   hooks.ProvideService(),
-		SecretsService: fakes.NewFakeSecretsService(),
-		Features:       features,
-	}
-}
-
-func setupOAuthTest(t *testing.T, cfg *setting.Cfg) *web.Mux {
-	t.Helper()
-
-	if cfg == nil {
-		cfg = setting.NewCfg()
-	}
-	cfg.ErrTemplateName = "error-template"
-	hs := setupSocialHTTPServerWithConfig(t, cfg)
-
-	m := web.New()
-	m.Use(getContextHandler(t, cfg).Middleware)
-	viewPath, err := filepath.Abs("../../public/views")
-	require.NoError(t, err)
-
-	m.UseMiddleware(web.Renderer(viewPath, "[[", "]]"))
-
-	m.Get("/login/:name", hs.OAuthLogin)
-	return m
-}
 
 func setClientWithoutRedirectFollow(t *testing.T) {
 	t.Helper()
@@ -158,6 +113,8 @@ func TestOAuthLogin_Redirect(t *testing.T) {
 				} else {
 					require.Len(t, res.Cookies(), 1)
 				}
+
+				require.NoError(t, res.Body.Close())
 			}
 		})
 	}
@@ -185,9 +142,11 @@ func TestOAuthLogin_AuthorizationCode(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
+			var cfg *setting.Cfg
 			server := SetupAPITestServer(t, func(hs *HTTPServer) {
-				hs.Cfg = setting.NewCfg()
-				hs.Cfg.LoginCookieName = "grafana_session"
+				cfg = setting.NewCfg()
+				hs.Cfg = cfg
+				hs.Cfg.LoginCookieName = "some_name"
 				hs.SecretsService = fakes.NewFakeSecretsService()
 				hs.authnService = &authntest.FakeService{
 					ExpectedErr:      tt.expectedErr,
@@ -224,9 +183,11 @@ func TestOAuthLogin_AuthorizationCode(t *testing.T) {
 				assert.Equal(t, "/", res.Header.Get("Location"))
 
 				// verify session expiry cookie is set
-				assert.Equal(t, "grafana_session", res.Cookies()[2].Name)
+				assert.Equal(t, cfg.LoginCookieName, res.Cookies()[2].Name)
 				assert.Equal(t, "grafana_session_expiry", res.Cookies()[3].Name)
 			}
+
+			require.NoError(t, res.Body.Close())
 		})
 	}
 }
@@ -248,4 +209,5 @@ func TestOAuthLogin_Error(t *testing.T) {
 	require.Len(t, res.Cookies(), 1)
 	errCookie := res.Cookies()[0]
 	assert.Equal(t, loginErrorCookieName, errCookie.Name)
+	require.NoError(t, res.Body.Close())
 }

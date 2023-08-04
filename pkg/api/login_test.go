@@ -29,7 +29,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/hooks"
 	"github.com/grafana/grafana/pkg/services/licensing"
-	loginservice "github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/navtree"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
@@ -616,16 +615,4 @@ func (m *mockSocialService) GetOAuthHttpClient(name string) (*http.Client, error
 
 func (m *mockSocialService) GetConnector(string) (social.SocialConnector, error) {
 	return m.socialConnector, m.err
-}
-
-type fakeAuthenticator struct {
-	ExpectedUser       *user.User
-	ExpectedAuthModule string
-	ExpectedError      error
-}
-
-func (fa *fakeAuthenticator) AuthenticateUser(c context.Context, query *loginservice.LoginUserQuery) error {
-	query.User = fa.ExpectedUser
-	query.AuthModule = fa.ExpectedAuthModule
-	return fa.ExpectedError
 }

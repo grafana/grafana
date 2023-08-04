@@ -399,7 +399,6 @@ func DeleteSessionCookie(w http.ResponseWriter, cfg *setting.Cfg) {
 		opts.NotHttpOnly = true
 		return opts
 	})
-
 }
 
 func cookieOptions(cfg *setting.Cfg) func() cookies.CookieOptions {
