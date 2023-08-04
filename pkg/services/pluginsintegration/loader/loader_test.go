@@ -22,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/bootstrap"
 	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/discovery"
 	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/initialization"
+	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/termination"
 	"github.com/grafana/grafana/pkg/plugins/manager/process"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
@@ -976,7 +977,7 @@ func TestLoader_AngularClass(t *testing.T) {
 				},
 			}
 			// if angularDetected = true, it means that the detection has run
-			l := newLoaderWithAngularInspector(&config.Cfg{AngularSupportEnabled: true}, angularinspector.AlwaysAngularFakeInspector)
+			l := newLoaderWithAngularInspector(t, &config.Cfg{AngularSupportEnabled: true}, angularinspector.AlwaysAngularFakeInspector)
 			p, err := l.Load(context.Background(), fakePluginSource)
 			require.NoError(t, err)
 			require.Len(t, p, 1, "should load 1 plugin")
@@ -1025,7 +1026,7 @@ func TestLoader_Load_Angular(t *testing.T) {
 				},
 			} {
 				t.Run(tc.name, func(t *testing.T) {
-					l := newLoaderWithAngularInspector(cfgTc.cfg, tc.angularInspector)
+					l := newLoaderWithAngularInspector(t, cfgTc.cfg, tc.angularInspector)
 					p, err := l.Load(context.Background(), fakePluginSource)
 					require.NoError(t, err)
 					if tc.shouldLoad {
@@ -1318,19 +1319,29 @@ func newLoader(t *testing.T, cfg *config.Cfg, reg registry.Service, proc process
 	lic := fakes.NewFakeLicensingService()
 	angularInspector, err := angularinspector.NewStaticInspector()
 	require.NoError(t, err)
+
+	terminate, err := pipeline.ProvideTerminationStage(cfg, reg, proc)
+	require.NoError(t, err)
+
 	return ProvideService(cfg, signature.NewUnsignedAuthorizer(cfg), proc, reg, fakes.NewFakeRoleRegistry(), assets,
 		angularInspector, &fakes.FakeOauthService{},
 		pipeline.ProvideDiscoveryStage(cfg, finder.NewLocalFinder(false), reg),
 		pipeline.ProvideBootstrapStage(cfg, signature.DefaultCalculator(cfg), assets),
-		pipeline.ProvideInitializationStage(cfg, reg, lic, backendFactory))
+		pipeline.ProvideInitializationStage(cfg, reg, lic, backendFactory),
+		terminate)
 }
 
-func newLoaderWithAngularInspector(cfg *config.Cfg, angularInspector angularinspector.Inspector) *Loader {
+func newLoaderWithAngularInspector(t *testing.T, cfg *config.Cfg, angularInspector angularinspector.Inspector) *Loader {
 	reg := fakes.NewFakePluginRegistry()
+
+	terminationStage, err := termination.New(cfg, termination.Opts{})
+	require.NoError(t, err)
+
 	return ProvideService(cfg, signature.NewUnsignedAuthorizer(cfg), process.ProvideService(reg), reg,
 		fakes.NewFakeRoleRegistry(), assetpath.ProvideService(pluginscdn.ProvideService(cfg)),
 		angularInspector, &fakes.FakeOauthService{},
-		discovery.New(cfg, discovery.Opts{}), bootstrap.New(cfg, bootstrap.Opts{}), initialization.New(cfg, initialization.Opts{}))
+		discovery.New(cfg, discovery.Opts{}), bootstrap.New(cfg, bootstrap.Opts{}),
+		initialization.New(cfg, initialization.Opts{}), terminationStage)
 }
 
 func verifyState(t *testing.T, ps []*plugins.Plugin, reg registry.Service,
