@@ -1,15 +1,23 @@
 import React from 'react';
 
 import { SelectableValue } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { Icon, RadioButtonList, Tooltip, useStyles2, useTheme2 } from '@grafana/ui';
+import { contextSrv } from 'app/core/core';
 import { OrgRole } from 'app/types';
 
 import { getStyles } from './styles';
 
-const BasicRoleOption: Array<SelectableValue<OrgRole>> = Object.values(OrgRole).map((r) => ({
-  label: r === OrgRole.None ? 'No basic role' : r,
-  value: r,
-}));
+const noBasicRoleFlag = contextSrv.licensedAccessControlEnabled();
+
+const noBasicRole = config.featureToggles.noBasicRole && noBasicRoleFlag;
+
+const BasicRoleOption: Array<SelectableValue<OrgRole>> = Object.values(OrgRole)
+  .filter((r) => noBasicRole || r !== OrgRole.None)
+  .map((r) => ({
+    label: r === OrgRole.None ? 'No basic role' : r,
+    value: r,
+  }));
 
 interface Props {
   value?: OrgRole;

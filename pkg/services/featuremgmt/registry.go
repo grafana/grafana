@@ -698,5 +698,13 @@ var (
 			Owner:           grafanaObservabilityMetricsSquad,
 			RequiresRestart: false,
 		},
+		{
+			Name:            "noBasicRole",
+			Description:     "Enables a new role that has no permissions by default",
+			Stage:           FeatureStageExperimental,
+			FrontendOnly:    true,
+			Owner:           grafanaAuthnzSquad,
+			RequiresRestart: true,
+		},
 	}
 )

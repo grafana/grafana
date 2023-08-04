@@ -410,4 +410,8 @@ const (
 	// FlagInfluxdbSqlSupport
 	// Enable InfluxDB SQL query language support with new querying UI
 	FlagInfluxdbSqlSupport = "influxdbSqlSupport"
+
+	// FlagNoBasicRole
+	// Enables a new role that has no permissions by default
+	FlagNoBasicRole = "noBasicRole"
 )

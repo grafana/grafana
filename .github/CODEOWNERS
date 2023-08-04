@@ -101,7 +101,7 @@
 /pkg/services/certgenerator @grafana/grafana-app-platform-squad
 /pkg/services/cleanup/ @grafana/backend-platform
 /pkg/services/contexthandler/ @grafana/backend-platform
-/pkg/services/correlations/ @grafana/backend-platform
+/pkg/services/correlations/ @grafana/explore-squad
 /pkg/services/dashboardimport/ @grafana/backend-platform
 /pkg/services/dashboards/ @grafana/backend-platform
 /pkg/services/dashboardsnapshots/ @grafana/backend-platform
@@ -136,7 +136,7 @@
 /pkg/services/team/ @grafana/grafana-authnz-team
 /pkg/services/temp_user/ @grafana/backend-platform
 /pkg/services/updatechecker/ @grafana/backend-platform
-/pkg/services/user/ @grafana/backend-platform
+/pkg/services/user/ @grafana/grafana-authnz-team
 /pkg/services/validations/ @grafana/backend-platform
 /pkg/setting/ @grafana/backend-platform
 /pkg/tests/ @grafana/backend-platform
