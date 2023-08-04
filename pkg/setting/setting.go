@@ -1482,7 +1482,9 @@ func readAuthGithubSettings(cfg *Cfg) {
 func readAuthGoogleSettings(cfg *Cfg) {
 	sec := cfg.SectionWithEnvOverrides("auth.google")
 	cfg.GoogleAuthEnabled = sec.Key("enabled").MustBool(false)
-	cfg.GoogleSkipOrgRoleSync = sec.Key("skip_org_role_sync").MustBool(false)
+	// FIXME: for now we skip org role sync for google auth
+	// as we do not sync organization roles from Google
+	cfg.GoogleSkipOrgRoleSync = true
 }
 
 func readAuthGitlabSettings(cfg *Cfg) {

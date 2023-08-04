@@ -11,7 +11,10 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/bootstrap"
 	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/discovery"
 	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/initialization"
+	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/termination"
+	"github.com/grafana/grafana/pkg/plugins/manager/process"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
+	"github.com/grafana/grafana/pkg/plugins/oauth"
 )
 
 func ProvideDiscoveryStage(cfg *config.Cfg, pf finder.Finder, pr registry.Service) *discovery.Discovery {
@@ -34,11 +37,28 @@ func ProvideBootstrapStage(cfg *config.Cfg, sc plugins.SignatureCalculator, a *a
 	})
 }
 
-func ProvideInitializationStage(cfg *config.Cfg, pr registry.Service, l plugins.Licensing, bp plugins.BackendFactoryProvider) *initialization.Initialize {
+func ProvideInitializationStage(cfg *config.Cfg, pr registry.Service, l plugins.Licensing,
+	bp plugins.BackendFactoryProvider, pm process.Service, externalServiceRegistry oauth.ExternalServiceRegistry,
+	roleRegistry plugins.RoleRegistry) *initialization.Initialize {
 	return initialization.New(cfg, initialization.Opts{
 		InitializeFuncs: []initialization.InitializeFunc{
-			initialization.NewBackendClientInitStep(envvars.NewProvider(cfg, l), bp),
-			initialization.NewPluginRegistrationStep(pr),
+			initialization.BackendClientInitStep(envvars.NewProvider(cfg, l), bp),
+			initialization.PluginRegistrationStep(pr),
+			initialization.BackendProcessStartStep(pm),
+			ExternalServiceRegistrationStep(cfg, externalServiceRegistry),
+			RegisterPluginRolesStep(roleRegistry),
+			ReportBuildMetrics,
+		},
+	})
+}
+
+func ProvideTerminationStage(cfg *config.Cfg, pr registry.Service, pm process.Service) (*termination.Terminate, error) {
+	return termination.New(cfg, termination.Opts{
+		ResolveFunc: termination.TerminablePluginResolverStep(pr),
+		TerminateFuncs: []termination.TerminateFunc{
+			termination.BackendProcessTerminatorStep(pm),
+			termination.DeregisterStep(pr),
+			termination.FSRemoval,
 		},
 	})
 }

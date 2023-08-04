@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/bootstrap"
 	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/discovery"
 	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/initialization"
+	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/termination"
 	"github.com/grafana/grafana/pkg/plugins/manager/process"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/oauth"
@@ -27,10 +28,11 @@ func ProvideService(cfg *config.Cfg, authorizer plugins.PluginLoaderAuthorizer, 
 	pluginRegistry registry.Service, roleRegistry plugins.RoleRegistry, assetPath *assetpath.Service,
 	angularInspector angularinspector.Inspector, externalServiceRegistry oauth.ExternalServiceRegistry,
 	discovery discovery.Discoverer, bootstrap bootstrap.Bootstrapper, initializer initialization.Initializer,
+	termination termination.Terminator,
 ) *Loader {
 	return &Loader{
 		loader: pluginsLoader.New(cfg, authorizer, pluginRegistry, processManager, roleRegistry, assetPath,
-			angularInspector, externalServiceRegistry, discovery, bootstrap, initializer),
+			angularInspector, externalServiceRegistry, discovery, bootstrap, initializer, termination),
 	}
 }
 
