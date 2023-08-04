@@ -4,6 +4,10 @@ import { connect, ConnectedProps } from 'react-redux';
 import { applyFieldOverrides, TimeZone, SplitOpen, DataFrame, LoadingState, FieldType } from '@grafana/data';
 import { Table, AdHocFilterItem, PanelChrome } from '@grafana/ui';
 import { config } from 'app/core/config';
+import {
+  hasDeprecatedParentRowIndex,
+  migrateFromParentRowIndexToNestedFrames,
+} from 'app/plugins/panel/table/migrations';
 import { StoreState } from 'app/types';
 import { ExploreItemState } from 'app/types/explore';
 
@@ -48,8 +52,9 @@ export class TableContainer extends PureComponent<Props> {
   render() {
     const { loading, onCellFilterAdded, tableResult, width, splitOpenFn, range, ariaLabel, timeZone } = this.props;
 
-    let dataFrames = tableResult;
-
+    let dataFrames = hasDeprecatedParentRowIndex(tableResult)
+      ? migrateFromParentRowIndexToNestedFrames(tableResult)
+      : tableResult;
     const dataLinkPostProcessor = exploreDataLinkPostProcessorFactory(splitOpenFn, range);
 
     if (dataFrames?.length) {

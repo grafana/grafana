@@ -6,6 +6,7 @@ import { PanelDataErrorView } from '@grafana/runtime';
 import { Select, Table, usePanelContext, useTheme2 } from '@grafana/ui';
 import { TableSortByFieldState } from '@grafana/ui/src/components/Table/types';
 
+import { hasDeprecatedParentRowIndex, migrateFromParentRowIndexToNestedFrames } from './migrations';
 import { Options } from './panelcfg.gen';
 
 interface Props extends PanelProps<Options> {}
@@ -15,7 +16,9 @@ export function TablePanel(props: Props) {
 
   const theme = useTheme2();
   const panelContext = usePanelContext();
-  const frames = data.series;
+  const frames = hasDeprecatedParentRowIndex(data.series)
+    ? migrateFromParentRowIndexToNestedFrames(data.series)
+    : data.series;
   const count = frames?.length;
   const hasFields = frames[0]?.fields.length;
   const currentIndex = getCurrentFrameIndex(frames, options);
