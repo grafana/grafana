@@ -430,7 +430,7 @@ func InitializeForCLI(cla setting.CommandLineArgs) (Runner, error) {
 // the full Grafana server.
 // NOTE: This is an OSS only set of dependencies; if this works it should be moved to wireexts_oss and add the enterprise set.
 var wireBaseCLISet = wire.NewSet(
-	NewBaseRunner,
+	NewModuleRunner,
 	setting.NewCfgFromArgs,
 	setting.ProvideProvider, wire.Bind(new(setting.Provider), new(*setting.OSSImpl)),
 	featuremgmt.ProvideManagerService,
@@ -443,9 +443,9 @@ var wireBaseCLISet = wire.NewSet(
 	modules.WireSet,
 )
 
-func InitializeForCLITarget(cla setting.CommandLineArgs) (BaseRunner, error) {
+func InitializeForCLITarget(cla setting.CommandLineArgs) (ModuleRunner, error) {
 	wire.Build(wireBaseCLISet)
-	return BaseRunner{}, nil
+	return ModuleRunner{}, nil
 }
 
 var wireModuleServerSet = wire.NewSet(
