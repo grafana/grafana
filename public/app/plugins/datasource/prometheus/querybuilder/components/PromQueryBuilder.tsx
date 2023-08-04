@@ -29,6 +29,9 @@ export interface Props {
   showExplain: boolean;
 }
 
+// starting the branch for hackathon-2023-08-promqail
+// AI/ML + Prometheus
+
 export const PromQueryBuilder = React.memo<Props>((props) => {
   const { datasource, query, onChange, onRunQuery, data, showExplain } = props;
   const [highlightedOp, setHighlightedOp] = useState<QueryBuilderOperation | undefined>();
