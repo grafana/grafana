@@ -193,7 +193,7 @@ export default class InfluxQueryModel {
       measurement = this.templateSrv.replace(measurement, this.scopedVars, 'regex');
     }
 
-    if (policy !== 'default') {
+    if (policy !== DEFAULT_POLICY) {
       policy = '"' + this.target.policy + '".';
     } else {
       policy = '';
