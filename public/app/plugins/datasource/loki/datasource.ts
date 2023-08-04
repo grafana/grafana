@@ -33,6 +33,10 @@ import {
   SupplementaryQueryOptions,
   TimeRange,
   LogRowContextOptions,
+  DataSourceWithToggleableQueryFiltersSupport,
+  ToggleFilterAction,
+  QueryFilterOptions,
+  renderLegendFormat,
 } from '@grafana/data';
 import { BackendSrvRequest, config, DataSourceWithBackend, FetchError } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
@@ -43,7 +47,6 @@ import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_sr
 import { serializeParams } from '../../../core/utils/fetch';
 import { queryLogsSample, queryLogsVolume } from '../../../features/logs/logsModel';
 import { getLogLevelFromKey } from '../../../features/logs/utils';
-import { renderLegendFormat } from '../prometheus/legend';
 import { replaceVariables, returnVariables } from '../prometheus/querybuilder/shared/parsingUtils';
 
 import LanguageProvider from './LanguageProvider';
@@ -131,7 +134,8 @@ export class LokiDatasource
     DataSourceWithLogsContextSupport,
     DataSourceWithSupplementaryQueriesSupport<LokiQuery>,
     DataSourceWithQueryImportSupport<LokiQuery>,
-    DataSourceWithQueryExportSupport<LokiQuery>
+    DataSourceWithQueryExportSupport<LokiQuery>,
+    DataSourceWithToggleableQueryFiltersSupport<LokiQuery>
 {
   private streams = new LiveStreams();
   languageProvider: LanguageProvider;
@@ -190,7 +194,7 @@ export class LokiDatasource
     switch (options.type) {
       case SupplementaryQueryType.LogsVolume:
         // it has to be a logs-producing range-query
-        isQuerySuitable = !!(query.expr && isLogsQuery(query.expr) && query.queryType === LokiQueryType.Range);
+        isQuerySuitable = !!(expr && isLogsQuery(expr) && normalizedQuery.queryType === LokiQueryType.Range);
         if (!isQuerySuitable) {
           return undefined;
         }
@@ -200,12 +204,12 @@ export class LokiDatasource
           refId: `${REF_ID_STARTER_LOG_VOLUME}${normalizedQuery.refId}`,
           queryType: LokiQueryType.Range,
           supportingQueryType: SupportingQueryType.LogsVolume,
-          expr: `sum by (level) (count_over_time(${expr}[$__interval]))`,
+          expr: `sum by (level) (count_over_time(${expr}[$__auto]))`,
         };
 
       case SupplementaryQueryType.LogsSample:
         // it has to be a metric query
-        isQuerySuitable = !!(query.expr && !isLogsQuery(query.expr));
+        isQuerySuitable = !!(expr && !isLogsQuery(expr));
         if (!isQuerySuitable) {
           return undefined;
         }
@@ -611,33 +615,61 @@ export class LokiDatasource
     return escapedValues.join('|');
   }
 
-  modifyQuery(query: LokiQuery, action: QueryFixAction): LokiQuery {
+  toggleQueryFilter(query: LokiQuery, filter: ToggleFilterAction): LokiQuery {
     let expression = query.expr ?? '';
-    switch (action.type) {
-      case 'ADD_FILTER': {
-        if (action.options?.key && action.options?.value) {
-          const value = escapeLabelValueInSelector(action.options.value);
+    switch (filter.type) {
+      case 'FILTER_FOR': {
+        if (filter.options?.key && filter.options?.value) {
+          const value = escapeLabelValueInSelector(filter.options.value);
 
           // This gives the user the ability to toggle a filter on and off.
-          expression = queryHasFilter(expression, action.options.key, '=', value)
-            ? removeLabelFromQuery(expression, action.options.key, '=', value)
-            : addLabelToQuery(expression, action.options.key, '=', value);
+          expression = queryHasFilter(expression, filter.options.key, '=', value)
+            ? removeLabelFromQuery(expression, filter.options.key, '=', value)
+            : addLabelToQuery(expression, filter.options.key, '=', value);
         }
         break;
       }
-      case 'ADD_FILTER_OUT': {
-        if (action.options?.key && action.options?.value) {
-          const value = escapeLabelValueInSelector(action.options.value);
+      case 'FILTER_OUT': {
+        if (filter.options?.key && filter.options?.value) {
+          const value = escapeLabelValueInSelector(filter.options.value);
 
           /**
            * If there is a filter with the same key and value, remove it.
            * This prevents the user from seeing no changes in the query when they apply
            * this filter.
            */
-          if (queryHasFilter(expression, action.options.key, '=', value)) {
-            expression = removeLabelFromQuery(expression, action.options.key, '=', value);
+          if (queryHasFilter(expression, filter.options.key, '=', value)) {
+            expression = removeLabelFromQuery(expression, filter.options.key, '=', value);
           }
 
+          expression = addLabelToQuery(expression, filter.options.key, '!=', value);
+        }
+        break;
+      }
+      default:
+        break;
+    }
+    return { ...query, expr: expression };
+  }
+
+  queryHasFilter(query: LokiQuery, filter: QueryFilterOptions): boolean {
+    let expression = query.expr ?? '';
+    return queryHasFilter(expression, filter.key, '=', filter.value);
+  }
+
+  modifyQuery(query: LokiQuery, action: QueryFixAction): LokiQuery {
+    let expression = query.expr ?? '';
+    switch (action.type) {
+      case 'ADD_FILTER': {
+        if (action.options?.key && action.options?.value) {
+          const value = escapeLabelValueInSelector(action.options.value);
+          expression = addLabelToQuery(expression, action.options.key, '=', value);
+        }
+        break;
+      }
+      case 'ADD_FILTER_OUT': {
+        if (action.options?.key && action.options?.value) {
+          const value = escapeLabelValueInSelector(action.options.value);
           expression = addLabelToQuery(expression, action.options.key, '!=', value);
         }
         break;
@@ -856,7 +888,7 @@ export class LokiDatasource
   applyTemplateVariables(target: LokiQuery, scopedVars: ScopedVars): LokiQuery {
     // We want to interpolate these variables on backend because we support using them in
     // alerting/ML queries and we want to have consistent interpolation for all queries
-    const { __interval, __interval_ms, __range, __range_s, __range_ms, ...rest } = scopedVars || {};
+    const { __auto, __interval, __interval_ms, __range, __range_s, __range_ms, ...rest } = scopedVars || {};
 
     const exprWithAdHoc = this.addAdHocFilters(target.expr);
 

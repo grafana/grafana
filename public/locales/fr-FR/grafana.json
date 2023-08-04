@@ -66,6 +66,14 @@
       "manage-permissions": "",
       "move": ""
     },
+    "folder-picker": {
+      "accessible-label": "",
+      "button-label": "",
+      "empty-message": "",
+      "error-title": "",
+      "search-placeholder": "",
+      "unknown-error": ""
+    },
     "manage-folder-nav": {
       "alert-rules": "",
       "dashboards": "",
@@ -251,6 +259,7 @@
     "error": {
       "blocked": "",
       "invalid-user-or-password": "",
+      "title": "",
       "unknown": ""
     }
   },

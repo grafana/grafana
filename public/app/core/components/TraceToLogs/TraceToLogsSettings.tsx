@@ -3,19 +3,24 @@ import React, { useCallback, useMemo } from 'react';
 
 import { DataSourceJsonData, DataSourceInstanceSettings, DataSourcePluginOptionsEditorProps } from '@grafana/data';
 import { ConfigSection } from '@grafana/experimental';
-import { DataSourcePicker } from '@grafana/runtime';
 import { InlineField, InlineFieldRow, Input, InlineSwitch } from '@grafana/ui';
 import { ConfigDescriptionLink } from 'app/core/components/ConfigDescriptionLink';
+import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 
 import { IntervalInput } from '../IntervalInput/IntervalInput';
 
 import { TagMappingInput } from './TagMappingInput';
 
+export interface TraceToLogsTag {
+  key: string;
+  value?: string;
+}
+
 // @deprecated use getTraceToLogsOptions to get the v2 version of this config from jsonData
 export interface TraceToLogsOptions {
   datasourceUid?: string;
   tags?: string[];
-  mappedTags?: Array<{ key: string; value?: string }>;
+  mappedTags?: TraceToLogsTag[];
   mapTagNamesEnabled?: boolean;
   spanStartTimeShift?: string;
   spanEndTimeShift?: string;
@@ -26,7 +31,7 @@ export interface TraceToLogsOptions {
 
 export interface TraceToLogsOptionsV2 {
   datasourceUid?: string;
-  tags?: Array<{ key: string; value?: string }>;
+  tags?: TraceToLogsTag[];
   spanStartTimeShift?: string;
   spanEndTimeShift?: string;
   filterByTraceID?: boolean;
@@ -125,28 +130,33 @@ export function TraceToLogsSettings({ options, onOptionsChange }: Props) {
         </InlineField>
       </InlineFieldRow>
 
-      <IntervalInput
-        label={getTimeShiftLabel('start')}
-        tooltip={getTimeShiftTooltip('start')}
-        value={traceToLogs.spanStartTimeShift || ''}
-        onChange={(val) => {
-          updateTracesToLogs({ spanStartTimeShift: val });
-        }}
-        isInvalidError={invalidTimeShiftError}
-      />
-      <IntervalInput
-        label={getTimeShiftLabel('end')}
-        tooltip={getTimeShiftTooltip('end')}
-        value={traceToLogs.spanEndTimeShift || ''}
-        onChange={(val) => {
-          updateTracesToLogs({ spanEndTimeShift: val });
-        }}
-        isInvalidError={invalidTimeShiftError}
-      />
+      <InlineFieldRow>
+        <IntervalInput
+          label={getTimeShiftLabel('start')}
+          tooltip={getTimeShiftTooltip('start', '0')}
+          value={traceToLogs.spanStartTimeShift || ''}
+          onChange={(val) => {
+            updateTracesToLogs({ spanStartTimeShift: val });
+          }}
+          isInvalidError={invalidTimeShiftError}
+        />
+      </InlineFieldRow>
+
+      <InlineFieldRow>
+        <IntervalInput
+          label={getTimeShiftLabel('end')}
+          tooltip={getTimeShiftTooltip('end', '0')}
+          value={traceToLogs.spanEndTimeShift || ''}
+          onChange={(val) => {
+            updateTracesToLogs({ spanEndTimeShift: val });
+          }}
+          isInvalidError={invalidTimeShiftError}
+        />
+      </InlineFieldRow>
 
       <InlineFieldRow>
         <InlineField
-          tooltip="Tags that will be used in the query. Default tags: 'cluster', 'hostname', 'namespace', 'pod'"
+          tooltip="Tags that will be used in the query. Default tags: 'cluster', 'hostname', 'namespace', 'pod', 'service.name', 'service.namespace', 'deployment.environment'"
           label="Tags"
           labelWidth={26}
         >
@@ -236,8 +246,8 @@ export const getTimeShiftLabel = (type: 'start' | 'end') => {
   return `Span ${type} time shift`;
 };
 
-export const getTimeShiftTooltip = (type: 'start' | 'end') => {
-  return `Shifts the ${type} time of the span. Default: 0 (Time units can be used here, for example: 5s, -1m, 3h)`;
+export const getTimeShiftTooltip = (type: 'start' | 'end', defaultVal: string) => {
+  return `Shifts the ${type} time of the span. Default: ${defaultVal} (Time units can be used here, for example: 5s, -1m, 3h)`;
 };
 
 export const invalidTimeShiftError = 'Invalid time shift. See tooltip for examples.';

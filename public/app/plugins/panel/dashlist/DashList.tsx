@@ -266,7 +266,7 @@ export const getCheckboxStyles = stylesFactory((theme: GrafanaTheme2) => {
       appearance: 'none',
       '&:focus-visible + *': {
         ...getFocusStyles(theme),
-        borderRadius: theme.shape.borderRadius(1),
+        borderRadius: theme.shape.radius.default,
       },
     }),
     icon: css({

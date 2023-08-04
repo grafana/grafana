@@ -2,6 +2,7 @@ package pluginsintegration
 
 import (
 	"github.com/google/wire"
+
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
@@ -10,10 +11,14 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager"
 	"github.com/grafana/grafana/pkg/plugins/manager/client"
 	"github.com/grafana/grafana/pkg/plugins/manager/filestore"
-	"github.com/grafana/grafana/pkg/plugins/manager/loader"
+	pluginLoader "github.com/grafana/grafana/pkg/plugins/manager/loader"
 	pAngularInspector "github.com/grafana/grafana/pkg/plugins/manager/loader/angular/angularinspector"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/assetpath"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/finder"
+	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/bootstrap"
+	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/discovery"
+	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/initialization"
+	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/termination"
 	"github.com/grafana/grafana/pkg/plugins/manager/process"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
@@ -34,6 +39,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/keyretriever/dynamic"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/keystore"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/licensing"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/loader"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pipeline"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	pluginSettings "github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings/service"
@@ -57,13 +64,22 @@ var WireSet = wire.NewSet(
 	pluginscdn.ProvideService,
 	assetpath.ProvideService,
 
+	pipeline.ProvideDiscoveryStage,
+	wire.Bind(new(discovery.Discoverer), new(*discovery.Discovery)),
+	pipeline.ProvideBootstrapStage,
+	wire.Bind(new(bootstrap.Bootstrapper), new(*bootstrap.Bootstrap)),
+	pipeline.ProvideInitializationStage,
+	wire.Bind(new(initialization.Initializer), new(*initialization.Initialize)),
+	pipeline.ProvideTerminationStage,
+	wire.Bind(new(termination.Terminator), new(*termination.Terminate)),
+
 	angularpatternsstore.ProvideService,
 	angulardetectorsprovider.ProvideDynamic,
 	angularinspector.ProvideService,
 	wire.Bind(new(pAngularInspector.Inspector), new(*angularinspector.Service)),
 
 	loader.ProvideService,
-	wire.Bind(new(loader.Service), new(*loader.Loader)),
+	wire.Bind(new(pluginLoader.Service), new(*loader.Loader)),
 	wire.Bind(new(plugins.ErrorResolver), new(*loader.Loader)),
 	manager.ProvideInstaller,
 	wire.Bind(new(plugins.Installer), new(*manager.PluginInstaller)),
@@ -137,7 +153,7 @@ func CreateMiddlewares(cfg *setting.Cfg, oAuthTokenService oauthtoken.OAuthToken
 
 	// Placing the new service implementation behind a feature flag until it is known to be stable
 	if features.IsEnabled(featuremgmt.FlagUseCachingService) {
-		middlewares = append(middlewares, clientmiddleware.NewCachingMiddleware(cachingService))
+		middlewares = append(middlewares, clientmiddleware.NewCachingMiddlewareWithFeatureManager(cachingService, features))
 	}
 
 	if cfg.SendUserHeader {

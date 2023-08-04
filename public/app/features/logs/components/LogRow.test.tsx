@@ -66,6 +66,7 @@ describe('LogRow', () => {
         logRowUid: 'log-row-id',
         datasourceType: 'unknown',
       });
+      expect(scrollIntoView).toHaveBeenCalledTimes(1);
     });
 
     it('highlights row with same permalink-id', () => {
@@ -104,10 +105,40 @@ describe('LogRow', () => {
       expect(scrollIntoView).toHaveBeenCalled();
     });
 
-    it('not calls `scrollIntoView` if permalink does not match', () => {
+    it('does not call `scrollIntoView` if permalink does not match', () => {
       const scrollIntoView = jest.fn();
       setup({ permalinkedRowId: 'wrong-log-row-id', scrollIntoView });
       expect(scrollIntoView).not.toHaveBeenCalled();
     });
+
+    it('calls `scrollIntoView` once', async () => {
+      const scrollIntoView = jest.fn();
+      setup({ permalinkedRowId: 'log-row-id', scrollIntoView });
+      await userEvent.hover(screen.getByText('test123'));
+      expect(scrollIntoView).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  it('should render the menu cell on mouse over', async () => {
+    setup({ showContextToggle: jest.fn().mockReturnValue(true) });
+
+    expect(screen.queryByLabelText('Show context')).not.toBeInTheDocument();
+
+    await userEvent.hover(screen.getByText('test123'));
+
+    expect(screen.getByLabelText('Show context')).toBeInTheDocument();
+  });
+
+  it('should render the menu cell on mouse over with displayed fields', async () => {
+    setup(
+      { showContextToggle: jest.fn().mockReturnValue(true), displayedFields: ['test'] },
+      { labels: { test: 'field value' } }
+    );
+
+    expect(screen.queryByLabelText('Show context')).not.toBeInTheDocument();
+
+    await userEvent.hover(screen.getByText('test=field value'));
+
+    expect(screen.getByLabelText('Show context')).toBeInTheDocument();
   });
 });

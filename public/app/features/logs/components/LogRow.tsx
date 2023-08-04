@@ -42,6 +42,7 @@ interface Props extends Themeable2 {
   styles: LogRowStyles;
   permalinkedRowId?: string;
   scrollIntoView?: (element: HTMLElement) => void;
+  isFilterLabelActive?: (key: string, value: string) => Promise<boolean>;
   onPinLine?: (row: LogRowModel) => void;
   onUnpinLine?: (row: LogRowModel) => void;
   pinned?: boolean;
@@ -50,6 +51,7 @@ interface Props extends Themeable2 {
 interface State {
   highlightBackround: boolean;
   showDetails: boolean;
+  mouseIsOver: boolean;
 }
 
 /**
@@ -63,6 +65,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
   state: State = {
     highlightBackround: false,
     showDetails: false,
+    mouseIsOver: false,
   };
   logLineRef: React.RefObject<HTMLTableRowElement>;
 
@@ -108,12 +111,14 @@ class UnThemedLogRow extends PureComponent<Props, State> {
   }
 
   onMouseEnter = () => {
+    this.setState({ mouseIsOver: true });
     if (this.props.onLogRowHover) {
       this.props.onLogRowHover(this.props.row);
     }
   };
 
   onMouseLeave = () => {
+    this.setState({ mouseIsOver: false });
     if (this.props.onLogRowHover) {
       this.props.onLogRowHover(undefined);
     }
@@ -138,11 +143,11 @@ class UnThemedLogRow extends PureComponent<Props, State> {
       return;
     }
 
-    // at this point this row is the permalinked row, so we need to scroll to it and highlight it if possible.
-    if (this.logLineRef.current && scrollIntoView) {
-      scrollIntoView(this.logLineRef.current);
-    }
     if (!this.state.highlightBackround) {
+      // at this point this row is the permalinked row, so we need to scroll to it and highlight it if possible.
+      if (this.logLineRef.current && scrollIntoView) {
+        scrollIntoView(this.logLineRef.current);
+      }
       reportInteraction('grafana_explore_logs_permalink_opened', {
         datasourceType: row.datasourceType ?? 'unknown',
         logRowUid: row.uid,
@@ -198,6 +203,12 @@ class UnThemedLogRow extends PureComponent<Props, State> {
           onClick={this.toggleDetails}
           onMouseEnter={this.onMouseEnter}
           onMouseLeave={this.onMouseLeave}
+          /**
+           * For better accessibility support, we listen to the onFocus event here (to display the LogRowMenuCell), and
+           * to onBlur event in the LogRowMenuCell (to hide it). This way, the LogRowMenuCell is displayed when the user navigates
+           * using the keyboard.
+           */
+          onFocus={this.onMouseEnter}
         >
           {showDuplicates && (
             <td className={styles.logsRowDuplicates}>
@@ -235,6 +246,8 @@ class UnThemedLogRow extends PureComponent<Props, State> {
               onPinLine={this.props.onPinLine}
               onUnpinLine={this.props.onUnpinLine}
               pinned={this.props.pinned}
+              mouseIsOver={this.state.mouseIsOver}
+              onBlur={this.onMouseLeave}
             />
           ) : (
             <LogRowMessage
@@ -249,6 +262,8 @@ class UnThemedLogRow extends PureComponent<Props, State> {
               onPinLine={this.props.onPinLine}
               onUnpinLine={this.props.onUnpinLine}
               pinned={this.props.pinned}
+              mouseIsOver={this.state.mouseIsOver}
+              onBlur={this.onMouseLeave}
             />
           )}
         </tr>
@@ -268,6 +283,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
             displayedFields={displayedFields}
             app={app}
             styles={styles}
+            isFilterLabelActive={this.props.isFilterLabelActive}
           />
         )}
       </>

@@ -1,6 +1,6 @@
 ---
 aliases:
-  - ../../features/panels/anotations/
+  - ../../features/panels/annotations/
   - ../../panels/visualizations/annotations/
   - ../../visualizations/annotations/
 description: Annotations visualization documentation
@@ -9,6 +9,11 @@ keywords:
   - Annotations
   - panel
   - documentation
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: Annotations
 weight: 105
 ---

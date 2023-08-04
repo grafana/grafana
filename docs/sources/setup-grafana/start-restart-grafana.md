@@ -3,8 +3,12 @@ aliases:
   - ../installation/restart-grafana/
   - ./restart-grafana/
 description: How to start the Grafana server
-title: Start the Grafana server
+labels:
+  products:
+    - enterprise
+    - oss
 menuTitle: Start Grafana
+title: Start the Grafana server
 weight: 300
 ---
 
@@ -176,6 +180,14 @@ To restart the Grafana server, complete the following steps:
 ## macOS
 
 Restart methods differ depending on whether you installed Grafana using Homebrew or as standalone macOS binaries.
+
+### Start Grafana using Homebrew
+
+To start Grafana using [Homebrew](http://brew.sh/), run the following start command:
+
+```bash
+brew services start grafana
+```
 
 ### Restart Grafana using Homebrew
 

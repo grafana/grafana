@@ -115,3 +115,9 @@ func (mw mockWriter) Before(web.BeforeFunc) {}
 func (mw mockWriter) Push(target string, opts *http.PushOptions) error {
 	return nil
 }
+func (mw mockWriter) CloseNotify() <-chan bool {
+	return make(<-chan bool)
+}
+func (mw mockWriter) Unwrap() http.ResponseWriter {
+	return mw
+}

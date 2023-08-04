@@ -8,7 +8,7 @@ describe('utils', () => {
           getBoundingClientRect: () => ({ right }),
         },
         getBoundingClientRect: () => ({ width }),
-      } as HTMLElement);
+      }) as HTMLElement;
 
     Object.defineProperty(window, 'innerWidth', { value: 1000 });
 

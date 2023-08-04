@@ -61,6 +61,14 @@
       "manage-permissions": "Mäŉäģę pęřmįşşįőŉş",
       "move": "Mővę"
     },
+    "folder-picker": {
+      "accessible-label": "Ŝęľęčŧ ƒőľđęř: {{ label }} čūřřęŉŧľy şęľęčŧęđ",
+      "button-label": "Ŝęľęčŧ ƒőľđęř",
+      "empty-message": "Ńő ƒőľđęřş ƒőūŉđ",
+      "error-title": "Ēřřőř ľőäđįŉģ ƒőľđęřş",
+      "search-placeholder": "Ŝęäřčĥ ƒőľđęřş",
+      "unknown-error": "Ůŉĸŉőŵŉ ęřřőř"
+    },
     "manage-folder-nav": {
       "alert-rules": "Åľęřŧ řūľęş",
       "dashboards": "Đäşĥþőäřđş",
@@ -246,6 +254,7 @@
     "error": {
       "blocked": "Ÿőū ĥävę ęχčęęđęđ ŧĥę ŉūmþęř őƒ ľőģįŉ äŧŧęmpŧş ƒőř ŧĥįş ūşęř. Pľęäşę ŧřy äģäįŉ ľäŧęř.",
       "invalid-user-or-password": "Ĩŉväľįđ ūşęřŉämę őř päşşŵőřđ",
+      "title": "Ŀőģįŉ ƒäįľęđ",
       "unknown": "Ůŉĸŉőŵŉ ęřřőř őččūřřęđ"
     }
   },

@@ -48,7 +48,7 @@ export function RadioButtonList<T>({
 
         return (
           <RadioButtonDot
-            key={itemId}
+            key={index}
             id={itemId}
             name={name}
             label={option.label}
@@ -64,8 +64,8 @@ export function RadioButtonList<T>({
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  container: css`
-    display: grid;
-    gap: ${theme.spacing(1)};
-  `,
+  container: css({
+    display: 'grid',
+    gap: theme.spacing(1),
+  }),
 });

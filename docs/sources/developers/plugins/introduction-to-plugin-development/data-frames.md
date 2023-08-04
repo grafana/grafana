@@ -1,5 +1,4 @@
 ---
-title: Data frames
 aliases:
   - ../../plugins/data-frames/
 description: Learn about data frames and how they work in plugins.
@@ -9,6 +8,11 @@ keywords:
   - plugin
   - data frames
   - dataframes
+labels:
+  products:
+    - enterprise
+    - oss
+title: Data frames
 ---
 
 # Data frames
