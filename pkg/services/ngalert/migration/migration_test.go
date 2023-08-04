@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strconv"
 	"testing"
 	"time"
 
@@ -25,6 +26,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 )
 
 // TestServiceStart tests the wrapper method that decides when to run the migration based on migration status and settings.
@@ -40,7 +42,7 @@ func TestServiceStart(t *testing.T) {
 			name: "when unified alerting enabled and migration not already run, then run migration",
 			config: &setting.Cfg{
 				UnifiedAlerting: setting.UnifiedAlertingSettings{
-					Enabled: boolPointer(true),
+					Enabled: pointer(true),
 				},
 			},
 			isMigrationRun: false,
@@ -50,7 +52,7 @@ func TestServiceStart(t *testing.T) {
 			name: "when unified alerting disabled, migration is already run and force migration is enabled, then revert migration",
 			config: &setting.Cfg{
 				UnifiedAlerting: setting.UnifiedAlertingSettings{
-					Enabled: boolPointer(false),
+					Enabled: pointer(false),
 				},
 				ForceMigration: true,
 			},
@@ -61,7 +63,7 @@ func TestServiceStart(t *testing.T) {
 			name: "when unified alerting disabled, migration is already run and force migration is disabled, then the migration should panic",
 			config: &setting.Cfg{
 				UnifiedAlerting: setting.UnifiedAlertingSettings{
-					Enabled: boolPointer(false),
+					Enabled: pointer(false),
 				},
 				ForceMigration: false,
 			},
@@ -73,7 +75,7 @@ func TestServiceStart(t *testing.T) {
 			name: "when unified alerting enabled and migration is already run, then do nothing",
 			config: &setting.Cfg{
 				UnifiedAlerting: setting.UnifiedAlertingSettings{
-					Enabled: boolPointer(true),
+					Enabled: pointer(true),
 				},
 			},
 			isMigrationRun: true,
@@ -83,7 +85,7 @@ func TestServiceStart(t *testing.T) {
 			name: "when unified alerting disabled and migration is not already run, then do nothing",
 			config: &setting.Cfg{
 				UnifiedAlerting: setting.UnifiedAlertingSettings{
-					Enabled: boolPointer(false),
+					Enabled: pointer(false),
 				},
 			},
 			isMigrationRun: false,
@@ -138,12 +140,12 @@ func TestAMConfigMigration(t *testing.T) {
 				createAlertNotification(t, int64(2), "notifier6", "opsgenie", opsgenieSettings, true), // default
 			},
 			alerts: []*models.Alert{
-				createAlert(t, int64(1), int64(1), int64(1), "alert1", []string{"notifier1"}),
-				createAlert(t, int64(1), int64(1), int64(2), "alert2", []string{"notifier2", "notifier3"}),
-				createAlert(t, int64(1), int64(2), int64(3), "alert3", []string{"notifier3"}),
-				createAlert(t, int64(2), int64(3), int64(1), "alert4", []string{"notifier4"}),
-				createAlert(t, int64(2), int64(3), int64(2), "alert5", []string{"notifier4", "notifier5", "notifier6"}),
-				createAlert(t, int64(2), int64(4), int64(3), "alert6", []string{}),
+				createAlert(t, 1, 1, 1, "alert1", []string{"notifier1"}),
+				createAlert(t, 1, 1, 2, "alert2", []string{"notifier2", "notifier3"}),
+				createAlert(t, 1, 2, 3, "alert3", []string{"notifier3"}),
+				createAlert(t, 2, 3, 1, "alert4", []string{"notifier4"}),
+				createAlert(t, 2, 3, 2, "alert5", []string{"notifier4", "notifier5", "notifier6"}),
+				createAlert(t, 2, 4, 3, "alert6", []string{}),
 			},
 			expected: map[int64]*PostableUserConfig{
 				int64(1): {
@@ -353,8 +355,8 @@ func TestAMConfigMigration(t *testing.T) {
 				createAlertNotification(t, int64(1), "notifier2", "slack", slackSettings, false),
 			},
 			alerts: []*models.Alert{
-				createAlert(t, int64(1), int64(1), int64(1), "alert1", []string{"notifier1"}),
-				createAlert(t, int64(1), int64(1), int64(1), "alert2", []string{"notifier1", "notifier2"}),
+				createAlert(t, 1, 1, 1, "alert1", []string{"notifier1"}),
+				createAlert(t, 1, 1, 1, "alert2", []string{"notifier1", "notifier2"}),
 			},
 			expected: map[int64]*PostableUserConfig{
 				int64(1): {
@@ -433,7 +435,7 @@ func TestAMConfigMigration(t *testing.T) {
 				createAlertNotification(t, int64(1), "notifier2", "sensu", "", false),
 			},
 			alerts: []*models.Alert{
-				createAlert(t, int64(1), int64(1), int64(1), "alert1", []string{"notifier1", "notifier2"}),
+				createAlert(t, 1, 1, 1, "alert1", []string{"notifier1", "notifier2"}),
 			},
 			expected: map[int64]*PostableUserConfig{
 				int64(1): {
@@ -512,12 +514,12 @@ func TestDashAlertMigration(t *testing.T) {
 			createAlertNotification(t, int64(2), "notifier6", "opsgenie", opsgenieSettings, true), // default
 		}
 		alerts := []*models.Alert{
-			createAlert(t, int64(1), int64(1), int64(1), "alert1", []string{"notifier1"}),
-			createAlert(t, int64(1), int64(1), int64(2), "alert2", []string{"notifier2", "notifier3"}),
-			createAlert(t, int64(1), int64(2), int64(3), "alert3", []string{"notifier3"}),
-			createAlert(t, int64(2), int64(3), int64(1), "alert4", []string{"notifier4"}),
-			createAlert(t, int64(2), int64(3), int64(2), "alert5", []string{"notifier4", "notifier5", "notifier6"}),
-			createAlert(t, int64(2), int64(4), int64(3), "alert6", []string{}),
+			createAlert(t, 1, 1, 1, "alert1", []string{"notifier1"}),
+			createAlert(t, 1, 1, 2, "alert2", []string{"notifier2", "notifier3"}),
+			createAlert(t, 1, 2, 3, "alert3", []string{"notifier3"}),
+			createAlert(t, 2, 3, 1, "alert4", []string{"notifier4"}),
+			createAlert(t, 2, 3, 2, "alert5", []string{"notifier4", "notifier5", "notifier6"}),
+			createAlert(t, 2, 4, 3, "alert6", []string{}),
 		}
 		expected := map[int64]map[string]*ngModels.AlertRule{
 			int64(1): {
@@ -551,7 +553,7 @@ func TestDashAlertMigration(t *testing.T) {
 			createAlertNotification(t, int64(1), "notif\"ier1", "email", emailSettings, false),
 		}
 		alerts := []*models.Alert{
-			createAlert(t, int64(1), int64(1), int64(1), "alert1", []string{"notif\"ier1"}),
+			createAlert(t, 1, 1, 1, "alert1", []string{"notif\"ier1"}),
 		}
 		expected := map[int64]map[string]*ngModels.AlertRule{
 			int64(1): {
@@ -575,15 +577,12 @@ func TestDashAlertMigration(t *testing.T) {
 	t.Run("when folder is missing put alert in General folder", func(t *testing.T) {
 		defer teardown(t, x, service)
 		o := createOrg(t, 1)
-		folder1 := createDashboard(t, 1, o.ID, "folder-1")
-		folder1.IsFolder = true
-		dash1 := createDashboard(t, 3, o.ID, "dash1")
-		dash1.FolderID = folder1.ID
-		dash2 := createDashboard(t, 4, o.ID, "dash2")
-		dash2.FolderID = 22 // missing folder
+		folder1 := createFolder(t, 1, o.ID, "folder-1")
+		dash1 := createDashboard(t, 3, o.ID, "dash1", folder1.ID)
+		dash2 := createDashboard(t, 4, o.ID, "dash2", 22) // missing folder
 
-		a1 := createAlert(t, o.ID, dash1.ID, int64(1), "alert-1", []string{})
-		a2 := createAlert(t, o.ID, dash2.ID, int64(1), "alert-2", []string{})
+		a1 := createAlert(t, int(o.ID), int(dash1.ID), 1, "alert-1", []string{})
+		a2 := createAlert(t, int(o.ID), int(dash2.ID), 1, "alert-2", []string{})
 
 		_, err := x.Insert(o, folder1, dash1, dash2, a1, a2)
 		require.NoError(t, err)
@@ -610,6 +609,399 @@ func TestDashAlertMigration(t *testing.T) {
 			require.Equal(t, expectedFolder.UID, rule.NamespaceUID)
 		}
 	})
+}
+
+// TestDashAlertQueryMigration tests the execution of the migration specifically for alert rule queries.
+func TestDashAlertQueryMigration(t *testing.T) {
+	sqlStore := db.InitTestDB(t)
+	x := sqlStore.GetEngine()
+	service := NewMigrationService(t, sqlStore, &setting.Cfg{})
+
+	createAlertQuery := func(refId string, ds string, from string, to string) ngModels.AlertQuery {
+		dur, _ := calculateInterval(legacydata.NewDataTimeRange(from, to), simplejson.New(), nil)
+		intervalMs := strconv.FormatInt(dur.Milliseconds(), 10)
+		rel, _ := getRelativeDuration(from, to)
+		return ngModels.AlertQuery{
+			RefID:             refId,
+			RelativeTimeRange: ngModels.RelativeTimeRange{From: ngModels.Duration(rel.From), To: ngModels.Duration(rel.To)},
+			DatasourceUID:     ds,
+			Model:             []byte(fmt.Sprintf(`{"datasource":{"type":"prometheus","uid":"gdev-prometheus"},"expr":"up{job=\"fake-data-gen\"}","instant":false,"intervalMs":%s,"maxDataPoints":1500,"refId":"%s"}`, intervalMs, refId)),
+		}
+	}
+
+	createClassicConditionQuery := func(refId string, conditions []classicConditionJSON) ngModels.AlertQuery {
+		exprModel := struct {
+			Type       string                 `json:"type"`
+			RefID      string                 `json:"refId"`
+			Conditions []classicConditionJSON `json:"conditions"`
+		}{
+			"classic_conditions",
+			refId,
+			conditions,
+		}
+		exprModelJSON, _ := json.Marshal(&exprModel)
+
+		return ngModels.AlertQuery{
+			RefID:         refId,
+			DatasourceUID: expressionDatasourceUID,
+			Model:         exprModelJSON,
+		}
+	}
+
+	cond := func(refId string, reducer string, evalType string, thresh float64) classicConditionJSON {
+		return classicConditionJSON{
+			Evaluator: conditionEvalJSON{Params: []float64{thresh}, Type: evalType},
+			Operator: struct {
+				Type string `json:"type"`
+			}{Type: "and"},
+			Query: struct {
+				Params []string `json:"params"`
+			}{Params: []string{refId}},
+			Reducer: struct {
+				Type string `json:"type"`
+			}{Type: reducer},
+		}
+	}
+
+	genAlert := func(mutators ...ngModels.AlertRuleMutator) *ngModels.AlertRule {
+		rule := &ngModels.AlertRule{
+			ID:              1,
+			OrgID:           1,
+			Title:           "alert1",
+			Condition:       "B",
+			Data:            []ngModels.AlertQuery{},
+			IntervalSeconds: 60,
+			Version:         1,
+			NamespaceUID:    "folder5-1",
+			DashboardUID:    pointer("dash1-1"),
+			PanelID:         pointer(int64(1)),
+			RuleGroup:       "alert1",
+			RuleGroupIndex:  1,
+			NoDataState:     ngModels.NoData,
+			ExecErrState:    ngModels.AlertingErrState,
+			For:             60 * time.Second,
+			Annotations: map[string]string{
+				"message": "message",
+			},
+			Labels:   map[string]string{},
+			IsPaused: false,
+		}
+
+		for _, mutator := range mutators {
+			mutator(rule)
+		}
+
+		rule.Annotations["__dashboardUid__"] = *rule.DashboardUID
+		rule.Annotations["__panelId__"] = strconv.FormatInt(*rule.PanelID, 10)
+		return rule
+	}
+
+	type testcase struct {
+		name   string
+		alerts []*models.Alert
+
+		expectedFolder *dashboards.Dashboard
+		expected       map[int64][]*ngModels.AlertRule
+		expErr         error
+	}
+
+	tc := []testcase{
+		{
+			name: "simple query and condition",
+			alerts: []*models.Alert{
+				createAlertWithCond(t, 1, 1, 1, "alert1", nil,
+					[]dashAlertCondition{createCondition("A", "max", "gt", 42, 1, "5m", "now")}),
+				createAlertWithCond(t, 2, 3, 1, "alert1", nil,
+					[]dashAlertCondition{createCondition("A", "max", "gt", 42, 3, "5m", "now")}),
+			},
+			expected: map[int64][]*ngModels.AlertRule{
+				int64(1): {
+					genAlert(func(rule *ngModels.AlertRule) {
+						rule.Data = append(rule.Data, createAlertQuery("A", "ds1-1", "5m", "now"))
+						rule.Data = append(rule.Data, createClassicConditionQuery("B", []classicConditionJSON{
+							cond("A", "max", "gt", 42),
+						}))
+					}),
+				},
+				int64(2): {
+					genAlert(func(rule *ngModels.AlertRule) {
+						rule.OrgID = 2
+						rule.DashboardUID = pointer("dash3-2")
+						rule.NamespaceUID = "folder6-2"
+						rule.Data = append(rule.Data, createAlertQuery("A", "ds3-2", "5m", "now"))
+						rule.Data = append(rule.Data, createClassicConditionQuery("B", []classicConditionJSON{
+							cond("A", "max", "gt", 42),
+						}))
+					}),
+				},
+			},
+		},
+		{
+			name: "multiple conditions",
+			alerts: []*models.Alert{
+				createAlertWithCond(t, 1, 1, 1, "alert1", nil,
+					[]dashAlertCondition{
+						createCondition("A", "avg", "gt", 42, 1, "5m", "now"),
+						createCondition("B", "max", "gt", 43, 2, "3m", "now"),
+						createCondition("C", "min", "lt", 20, 2, "3m", "now"),
+					}),
+			},
+			expected: map[int64][]*ngModels.AlertRule{
+				int64(1): {
+					genAlert(func(rule *ngModels.AlertRule) {
+						rule.Condition = "D"
+						rule.Data = append(rule.Data, createAlertQuery("A", "ds1-1", "5m", "now"))
+						rule.Data = append(rule.Data, createAlertQuery("B", "ds2-1", "3m", "now"))
+						rule.Data = append(rule.Data, createAlertQuery("C", "ds2-1", "3m", "now"))
+						rule.Data = append(rule.Data, createClassicConditionQuery("D", []classicConditionJSON{
+							cond("A", "avg", "gt", 42),
+							cond("B", "max", "gt", 43),
+							cond("C", "min", "lt", 20),
+						}))
+					}),
+				},
+			},
+		},
+		{
+			name: "multiple conditions on same query with same timerange should not create multiple queries",
+			alerts: []*models.Alert{
+				createAlertWithCond(t, 1, 1, 1, "alert1", nil,
+					[]dashAlertCondition{
+						createCondition("A", "max", "gt", 42, 1, "5m", "now"),
+						createCondition("A", "avg", "gt", 20, 1, "5m", "now"),
+					}),
+			},
+			expected: map[int64][]*ngModels.AlertRule{
+				int64(1): {
+					genAlert(func(rule *ngModels.AlertRule) {
+						rule.Condition = "B"
+						rule.Data = append(rule.Data, createAlertQuery("A", "ds1-1", "5m", "now"))
+						rule.Data = append(rule.Data, createClassicConditionQuery("B", []classicConditionJSON{
+							cond("A", "max", "gt", 42),
+							cond("A", "avg", "gt", 20),
+						}))
+					}),
+				},
+			},
+		},
+		{
+			name: "multiple conditions on same query with different timeranges should create multiple queries",
+			alerts: []*models.Alert{
+				createAlertWithCond(t, 1, 1, 1, "alert1", nil,
+					[]dashAlertCondition{
+						createCondition("A", "max", "gt", 42, 1, "5m", "now"),
+						createCondition("A", "avg", "gt", 20, 1, "3m", "now"),
+					}),
+			},
+			expected: map[int64][]*ngModels.AlertRule{
+				int64(1): {
+					genAlert(func(rule *ngModels.AlertRule) {
+						rule.Condition = "C"
+						rule.Data = append(rule.Data, createAlertQuery("A", "ds1-1", "3m", "now")) // Ordered by time range.
+						rule.Data = append(rule.Data, createAlertQuery("B", "ds1-1", "5m", "now"))
+						rule.Data = append(rule.Data, createClassicConditionQuery("C", []classicConditionJSON{
+							cond("B", "max", "gt", 42),
+							cond("A", "avg", "gt", 20),
+						}))
+					}),
+				},
+			},
+		},
+		{
+			name: "multiple conditions custom refIds",
+			alerts: []*models.Alert{
+				createAlertWithCond(t, 1, 1, 1, "alert1", nil,
+					[]dashAlertCondition{
+						createCondition("Q1", "avg", "gt", 42, 1, "5m", "now"),
+						createCondition("Q2", "max", "gt", 43, 2, "3m", "now"),
+						createCondition("Q3", "min", "lt", 20, 2, "3m", "now"),
+					}),
+			},
+			expected: map[int64][]*ngModels.AlertRule{
+				int64(1): {
+					genAlert(func(rule *ngModels.AlertRule) {
+						rule.Condition = "A"
+						rule.Data = append(rule.Data, createClassicConditionQuery("A", []classicConditionJSON{
+							cond("Q1", "avg", "gt", 42),
+							cond("Q2", "max", "gt", 43),
+							cond("Q3", "min", "lt", 20),
+						}))
+						rule.Data = append(rule.Data, createAlertQuery("Q1", "ds1-1", "5m", "now"))
+						rule.Data = append(rule.Data, createAlertQuery("Q2", "ds2-1", "3m", "now"))
+						rule.Data = append(rule.Data, createAlertQuery("Q3", "ds2-1", "3m", "now"))
+					}),
+				},
+			},
+		},
+		{
+			name: "multiple conditions out of order refIds, queries should be sorted by refId and conditions should be in original order",
+			alerts: []*models.Alert{
+				createAlertWithCond(t, 1, 1, 1, "alert1", nil,
+					[]dashAlertCondition{
+						createCondition("B", "avg", "gt", 42, 1, "5m", "now"),
+						createCondition("C", "max", "gt", 43, 2, "3m", "now"),
+						createCondition("A", "min", "lt", 20, 2, "3m", "now"),
+					}),
+			},
+			expected: map[int64][]*ngModels.AlertRule{
+				int64(1): {
+					genAlert(func(rule *ngModels.AlertRule) {
+						rule.Condition = "D"
+						rule.Data = append(rule.Data, createAlertQuery("A", "ds2-1", "3m", "now"))
+						rule.Data = append(rule.Data, createAlertQuery("B", "ds1-1", "5m", "now"))
+						rule.Data = append(rule.Data, createAlertQuery("C", "ds2-1", "3m", "now"))
+						rule.Data = append(rule.Data, createClassicConditionQuery("D", []classicConditionJSON{
+							cond("B", "avg", "gt", 42),
+							cond("C", "max", "gt", 43),
+							cond("A", "min", "lt", 20),
+						}))
+					}),
+				},
+			},
+		},
+		{
+			name: "multiple conditions out of order with duplicate refIds",
+			alerts: []*models.Alert{
+				createAlertWithCond(t, 1, 1, 1, "alert1", nil,
+					[]dashAlertCondition{
+						createCondition("C", "avg", "gt", 42, 1, "5m", "now"),
+						createCondition("C", "max", "gt", 43, 1, "3m", "now"),
+						createCondition("B", "min", "lt", 20, 2, "5m", "now"),
+						createCondition("B", "min", "lt", 21, 2, "3m", "now"),
+					}),
+			},
+			expected: map[int64][]*ngModels.AlertRule{
+				int64(1): {
+					genAlert(func(rule *ngModels.AlertRule) {
+						rule.Condition = "E"
+						rule.Data = append(rule.Data, createAlertQuery("A", "ds2-1", "3m", "now"))
+						rule.Data = append(rule.Data, createAlertQuery("B", "ds2-1", "5m", "now"))
+						rule.Data = append(rule.Data, createAlertQuery("C", "ds1-1", "3m", "now"))
+						rule.Data = append(rule.Data, createAlertQuery("D", "ds1-1", "5m", "now"))
+						rule.Data = append(rule.Data, createClassicConditionQuery("E", []classicConditionJSON{
+							cond("D", "avg", "gt", 42),
+							cond("C", "max", "gt", 43),
+							cond("B", "min", "lt", 20),
+							cond("A", "min", "lt", 21),
+						}))
+					}),
+				},
+			},
+		},
+		{
+			name: "alerts with unknown dashboard do not migrate",
+			alerts: []*models.Alert{
+				createAlertWithCond(t, 1, 22, 1, "alert1", nil,
+					[]dashAlertCondition{
+						createCondition("A", "avg", "gt", 42, 1, "5m", "now"),
+					}),
+			},
+			expected: map[int64][]*ngModels.AlertRule{
+				int64(1): {},
+			},
+		},
+		{
+			name: "alerts with unknown org do not migrate",
+			alerts: []*models.Alert{
+				createAlertWithCond(t, 22, 1, 1, "alert1", nil,
+					[]dashAlertCondition{
+						createCondition("A", "avg", "gt", 42, 1, "5m", "now"),
+					}),
+			},
+			expected: map[int64][]*ngModels.AlertRule{
+				int64(22): {},
+			},
+		},
+		{
+			name: "alerts in general folder migrate to existing general alerting",
+			alerts: []*models.Alert{
+				createAlertWithCond(t, 1, 8, 1, "alert1", nil,
+					[]dashAlertCondition{
+						createCondition("A", "avg", "gt", 42, 1, "5m", "now"),
+					}),
+			},
+			expected: map[int64][]*ngModels.AlertRule{
+				int64(1): {
+					genAlert(func(rule *ngModels.AlertRule) {
+						rule.NamespaceUID = "General Alerting"
+						rule.DashboardUID = pointer("dash-in-general-1")
+						rule.Data = append(rule.Data, createAlertQuery("A", "ds1-1", "5m", "now"))
+						rule.Data = append(rule.Data, createClassicConditionQuery("B", []classicConditionJSON{
+							cond("A", "avg", "gt", 42),
+						}))
+					}),
+				},
+			},
+		},
+		{
+			name: "alerts in general folder migrate to newly created general alerting if one doesn't exist",
+			alerts: []*models.Alert{
+				createAlertWithCond(t, 2, 9, 1, "alert1", nil, // Org 2 doesn't have general alerting folder.
+					[]dashAlertCondition{
+						createCondition("A", "avg", "gt", 42, 3, "5m", "now"),
+					}),
+			},
+			expectedFolder: &dashboards.Dashboard{
+				OrgID:    2,
+				Title:    "General Alerting",
+				FolderID: 0,
+				Slug:     "general-alerting",
+			},
+			expected: map[int64][]*ngModels.AlertRule{
+				int64(2): {
+					genAlert(func(rule *ngModels.AlertRule) {
+						rule.OrgID = 2
+						rule.DashboardUID = pointer("dash-in-general-2")
+						rule.Data = append(rule.Data, createAlertQuery("A", "ds3-2", "5m", "now"))
+						rule.Data = append(rule.Data, createClassicConditionQuery("B", []classicConditionJSON{
+							cond("A", "avg", "gt", 42),
+						}))
+					}),
+				},
+			},
+		},
+	}
+	for _, tt := range tc {
+		t.Run(tt.name, func(t *testing.T) {
+			defer teardown(t, x, service)
+			setupLegacyAlertsTables(t, x, nil, tt.alerts)
+
+			err := service.Run(context.Background())
+			require.NoError(t, err)
+
+			for orgId, expected := range tt.expected {
+				rules := getAlertRules(t, x, orgId)
+
+				for _, r := range rules {
+					// Remove generated fields.
+					require.NotEqual(t, r.Labels["rule_uid"], "")
+					delete(r.Labels, "rule_uid")
+					require.NotEqual(t, r.Annotations["__alertId__"], "")
+					delete(r.Annotations, "__alertId__")
+
+					// If folder is created, we check if separately
+					if tt.expectedFolder != nil {
+						folder := getDashboard(t, x, orgId, r.NamespaceUID)
+						require.Equal(t, tt.expectedFolder.Title, folder.Title)
+					}
+				}
+
+				cOpt := []cmp.Option{
+					cmpopts.SortSlices(func(a, b *ngModels.AlertRule) bool {
+						return a.ID < b.ID
+					}),
+					cmpopts.IgnoreUnexported(ngModels.AlertRule{}, ngModels.AlertQuery{}),
+					cmpopts.IgnoreFields(ngModels.AlertRule{}, "Updated", "UID", "ID"),
+				}
+				if tt.expectedFolder != nil {
+					cOpt = append(cOpt, cmpopts.IgnoreFields(ngModels.AlertRule{}, "NamespaceUID"))
+				}
+				if !cmp.Equal(expected, rules, cOpt...) {
+					t.Errorf("Unexpected Rule: %v", cmp.Diff(expected, rules, cOpt...))
+				}
+			}
+		})
+	}
 }
 
 const (
@@ -655,8 +1047,43 @@ func createAlertNotification(t *testing.T, orgId int64, uid string, channelType 
 	return createAlertNotificationWithReminder(t, orgId, uid, channelType, settings, defaultChannel, false, time.Duration(0))
 }
 
+var queryModel = `{"datasource":{"type":"prometheus","uid":"gdev-prometheus"},"expr":"up{job=\"fake-data-gen\"}","instant":false,"refId":"%s"}`
+
+func createCondition(refId string, reducer string, evalType string, thresh float64, datasourceId int64, from string, to string) dashAlertCondition {
+	return dashAlertCondition{
+		Evaluator: conditionEvalJSON{
+			Params: []float64{thresh},
+			Type:   evalType,
+		},
+		Operator: struct {
+			Type string `json:"type"`
+		}{
+			Type: "and",
+		},
+		Query: struct {
+			Params       []string `json:"params"`
+			DatasourceID int64    `json:"datasourceId"`
+			Model        json.RawMessage
+		}{
+			Params:       []string{refId, from, to},
+			DatasourceID: datasourceId,
+			Model:        []byte(fmt.Sprintf(queryModel, refId)),
+		},
+		Reducer: struct {
+			Type string `json:"type"`
+		}{
+			Type: reducer,
+		},
+	}
+}
+
 // createAlert creates a legacy alert rule for inserting into the test database.
-func createAlert(t *testing.T, orgId int64, dashboardId int64, panelsId int64, name string, notifierUids []string) *models.Alert {
+func createAlert(t *testing.T, orgId int, dashboardId int, panelsId int, name string, notifierUids []string) *models.Alert {
+	return createAlertWithCond(t, orgId, dashboardId, panelsId, name, notifierUids, []dashAlertCondition{})
+}
+
+// createAlert creates a legacy alert rule for inserting into the test database.
+func createAlertWithCond(t *testing.T, orgId int, dashboardId int, panelsId int, name string, notifierUids []string, cond []dashAlertCondition) *models.Alert {
 	t.Helper()
 
 	var settings = simplejson.New()
@@ -670,15 +1097,16 @@ func createAlert(t *testing.T, orgId int64, dashboardId int64, panelsId int64, n
 
 		settings.Set("notifications", notifiers)
 	}
+	settings.Set("conditions", cond)
 
 	return &models.Alert{
-		OrgID:        orgId,
-		DashboardID:  dashboardId,
-		PanelID:      panelsId,
+		OrgID:        int64(orgId),
+		DashboardID:  int64(dashboardId),
+		PanelID:      int64(panelsId),
 		Name:         name,
 		Message:      "message",
 		Frequency:    int64(60),
-		For:          time.Duration(time.Duration(60).Seconds()),
+		For:          60 * time.Second,
 		State:        models.AlertStateOK,
 		Settings:     settings,
 		NewStateDate: now,
@@ -687,20 +1115,28 @@ func createAlert(t *testing.T, orgId int64, dashboardId int64, panelsId int64, n
 	}
 }
 
+// createDashboard creates a folder for inserting into the test database.
+func createFolder(t *testing.T, id int64, orgId int64, uid string) *dashboards.Dashboard {
+	f := createDashboard(t, id, orgId, uid, 0)
+	f.IsFolder = true
+	return f
+}
+
 // createDashboard creates a dashboard for inserting into the test database.
-func createDashboard(t *testing.T, id int64, orgId int64, uid string) *dashboards.Dashboard {
+func createDashboard(t *testing.T, id int64, orgId int64, uid string, folderId int64) *dashboards.Dashboard {
 	t.Helper()
 	return &dashboards.Dashboard{
-		ID:      id,
-		OrgID:   orgId,
-		UID:     uid,
-		Created: now,
-		Updated: now,
-		Title:   uid, // Not tested, needed to satisfy contraint.
+		ID:       id,
+		OrgID:    orgId,
+		UID:      uid,
+		Created:  now,
+		Updated:  now,
+		Title:    uid, // Not tested, needed to satisfy constraint.
+		FolderID: folderId,
 	}
 }
 
-// createDatasource creates a ddatasource for inserting into the test database.
+// createDatasource creates a datasource for inserting into the test database.
 func createDatasource(t *testing.T, id int64, orgId int64, uid string) *datasources.DataSource {
 	t.Helper()
 	return &datasources.DataSource{
@@ -709,7 +1145,7 @@ func createDatasource(t *testing.T, id int64, orgId int64, uid string) *datasour
 		UID:     uid,
 		Created: now,
 		Updated: now,
-		Name:    uid, // Not tested, needed to satisfy contraint.
+		Name:    uid, // Not tested, needed to satisfy constraint.
 	}
 }
 
@@ -751,10 +1187,15 @@ func setupLegacyAlertsTables(t *testing.T, x *xorm.Engine, legacyChannels []*mod
 
 	// Setup dashboards.
 	dashboards := []dashboards.Dashboard{
-		*createDashboard(t, 1, 1, "dash1-1"),
-		*createDashboard(t, 2, 1, "dash2-1"),
-		*createDashboard(t, 3, 2, "dash3-2"),
-		*createDashboard(t, 4, 2, "dash4-2"),
+		*createDashboard(t, 1, 1, "dash1-1", 5),
+		*createDashboard(t, 2, 1, "dash2-1", 5),
+		*createDashboard(t, 3, 2, "dash3-2", 6),
+		*createDashboard(t, 4, 2, "dash4-2", 6),
+		*createFolder(t, 5, 1, "folder5-1"),
+		*createFolder(t, 6, 2, "folder6-2"),
+		*createFolder(t, 7, 1, "General Alerting"),
+		*createDashboard(t, 8, 1, "dash-in-general-1", 0),
+		*createDashboard(t, 9, 2, "dash-in-general-2", 0),
 	}
 	_, errDashboards := x.Insert(dashboards)
 	require.NoError(t, errDashboards)
@@ -805,6 +1246,16 @@ func getAlertRules(t *testing.T, x *xorm.Engine, orgId int64) []*ngModels.AlertR
 	return rules
 }
 
+// getDashboard retrieves a dashboard from the database for a given org, uid.
+func getDashboard(t *testing.T, x *xorm.Engine, orgId int64, uid string) *dashboards.Dashboard {
+	dashes := make([]*dashboards.Dashboard, 0)
+	err := x.Table("dashboard").Where("org_id = ? AND uid = ?", orgId, uid).Find(&dashes)
+	require.NoError(t, err)
+	require.Len(t, dashes, 1)
+
+	return dashes[0]
+}
+
 func NewMigrationService(t *testing.T, sqlStore db.DB, cfg *setting.Cfg) *MigrationService {
 	ms, err := ProvideService(
 		serverlock.ProvideService(sqlStore, tracing.InitializeTracerForTest()),
@@ -816,6 +1267,6 @@ func NewMigrationService(t *testing.T, sqlStore db.DB, cfg *setting.Cfg) *Migrat
 	return ms
 }
 
-func boolPointer(b bool) *bool {
+func pointer[T any](b T) *T {
 	return &b
 }
