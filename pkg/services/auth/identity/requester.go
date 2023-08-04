@@ -2,13 +2,21 @@ package identity
 
 import "github.com/grafana/grafana/pkg/models/roletype"
 
+const (
+	NamespaceUser           = "user"
+	NamespaceAPIKey         = "api-key"
+	NamespaceServiceAccount = "service-account"
+	NamespaceAnonymous      = "anonymous"
+	NamespaceRenderService  = "render"
+)
+
 type Requester interface {
 	GetIsGrafanaAdmin() bool
 	GetLogin() string
 	GetOrgID() int64
-	GetPermissions(orgID int64) map[string][]string
-	GetTeams(orgID int64) []int64
-	GetOrgRole(orgID int64) roletype.RoleType
+	GetPermissions() map[string][]string
+	GetTeams() []int64
+	GetOrgRole() roletype.RoleType
 	GetNamespacedID() (string, string)
 	IsNil() bool
 }

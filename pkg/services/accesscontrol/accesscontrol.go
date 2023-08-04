@@ -377,7 +377,7 @@ func IsDisabled(cfg *setting.Cfg) bool {
 
 // GetOrgRoles returns legacy org roles for a user
 func GetOrgRoles(user identity.Requester) []string {
-	roles := []string{string(user.GetOrgRole(user.GetOrgID()))}
+	roles := []string{string(user.GetOrgRole())}
 
 	if user.GetIsGrafanaAdmin() {
 		roles = append(roles, RoleGrafanaAdmin)

@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/models/roletype"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 )
 
 type SignedInUser struct {
@@ -106,35 +107,35 @@ func (u *SignedInUser) GetOrgID() int64 {
 }
 
 // TODO: Add permission fetching if needed for the orgID
-func (u *SignedInUser) GetPermissions(orgID int64) map[string][]string {
+func (u *SignedInUser) GetPermissions() map[string][]string {
 	if u.Permissions == nil {
 		return make(map[string][]string)
 	}
 
-	return u.Permissions[orgID]
+	return u.Permissions[u.GetOrgID()]
 }
 
 // TODO: Add orgID to this method
-func (u *SignedInUser) GetTeams(orgID int64) []int64 {
+func (u *SignedInUser) GetTeams() []int64 {
 	return u.Teams
 }
 
 // TODO: Add orgID to this method
-func (u *SignedInUser) GetOrgRole(orgID int64) roletype.RoleType {
+func (u *SignedInUser) GetOrgRole() roletype.RoleType {
 	return u.OrgRole
 }
 
 func (u *SignedInUser) GetNamespacedID() (string, string) {
 	switch {
 	case u.ApiKeyID != 0:
-		return "apikey", fmt.Sprintf("%d", u.ApiKeyID)
+		return identity.NamespaceAPIKey, fmt.Sprintf("%d", u.ApiKeyID)
 	case u.IsServiceAccount:
-		return "service", fmt.Sprintf("%d", u.UserID)
+		return identity.NamespaceServiceAccount, fmt.Sprintf("%d", u.UserID)
 	case u.UserID != 0:
-		return "user", fmt.Sprintf("%d", u.UserID)
-	default:
-		return "anonymous", ""
+		return identity.NamespaceUser, fmt.Sprintf("%d", u.UserID)
 	}
+	// backwards compatibility for render auth and anonymous access
+	return identity.NamespaceUser, fmt.Sprintf("%d", u.UserID)
 }
 
 // FIXME: remove this method once all services are using an interface

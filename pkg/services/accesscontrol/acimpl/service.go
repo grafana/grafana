@@ -131,7 +131,7 @@ func (s *Service) getUserPermissions(ctx context.Context, user identity.Requeste
 		OrgID:        user.GetOrgID(),
 		UserID:       userID,
 		Roles:        accesscontrol.GetOrgRoles(user),
-		TeamIDs:      user.GetTeams(user.GetOrgID()),
+		TeamIDs:      user.GetTeams(),
 		RolePrefixes: []string{accesscontrol.ManagedRolePrefix, accesscontrol.ExternalServiceRolePrefix},
 	})
 	if err != nil {
