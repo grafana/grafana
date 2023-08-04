@@ -1263,7 +1263,7 @@ func TestProcessEvalResults(t *testing.T) {
 				}
 				delete(expectedStates, actual.CacheID)
 				if !assert.ObjectsAreEqual(expected, actual) {
-					assert.Failf(t, "expected and acutal states are not equal", "Diff: %s", cmp.Diff(expected, actual, cmpopts.EquateErrors()))
+					assert.Failf(t, "expected and actual states are not equal", "Diff: %s", cmp.Diff(expected, actual, cmpopts.EquateErrors()))
 				}
 			}
 
