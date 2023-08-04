@@ -1,6 +1,7 @@
 import { css, cx } from '@emotion/css';
 import React, { useEffect, useRef, useState } from 'react';
 
+import { config } from '@grafana/runtime';
 import { Button, CustomScrollbar, HorizontalGroup, useStyles2, useTheme2 } from '@grafana/ui';
 import { getSelectStyles } from '@grafana/ui/src/components/Select/getSelectStyles';
 import { contextSrv } from 'app/core/core';
@@ -35,7 +36,7 @@ const fixedRoleGroupNames: Record<string, string> = {
   current: 'Current org',
 };
 
-const noBasicRoleFlag = contextSrv.licensedAccessControlEnabled();
+const noBasicRoleFlag = contextSrv.licensedAccessControlEnabled() && config.featureToggles.noBasicRole;
 const tooltipMessage = noBasicRoleFlag
   ? 'You can now select the "No basic role" option and add permissions to your custom needs.'
   : undefined;
