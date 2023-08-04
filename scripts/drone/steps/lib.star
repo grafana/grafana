@@ -261,7 +261,6 @@ def validate_modfile_step():
     return {
         "name": "validate-modfile",
         "image": images["go_image"],
-        "failure": "ignore",
         "commands": [
             "go run scripts/modowners/modowners.go check go.mod",
         ],
@@ -747,10 +746,7 @@ def codespell_step():
         "name": "codespell",
         "image": images["build_image"],
         "commands": [
-            # Important: all words have to be in lowercase, and separated by "\n".
-            'echo -e "unknwon\nreferer\nerrorstring\neror\niam\nwan" > words_to_ignore.txt',
-            "codespell -I words_to_ignore.txt docs/",
-            "rm words_to_ignore.txt",
+            "codespell -I .codespellignore docs/",
         ],
     }
 
@@ -1222,7 +1218,7 @@ def publish_grafanacom_step(ver_mode):
         ],
         "environment": {
             "GRAFANA_COM_API_KEY": from_secret("grafana_api_key"),
-            "GCP_KEY": from_secret(gcp_grafanauploads),
+            "GCP_KEY": from_secret(gcp_grafanauploads_base64),
         },
         "commands": [
             cmd,
@@ -1362,7 +1358,7 @@ def get_windows_steps(ver_mode, bucket = "%PRERELEASE_BUCKET%"):
                     "windows-init",
                 ],
                 "environment": {
-                    "GCP_KEY": from_secret("gcp_key"),
+                    "GCP_KEY": from_secret(gcp_grafanauploads_base64),
                     "PRERELEASE_BUCKET": from_secret(prerelease_bucket),
                     "GITHUB_TOKEN": from_secret("github_token"),
                 },

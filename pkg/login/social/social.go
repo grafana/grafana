@@ -239,6 +239,7 @@ func ProvideService(cfg *setting.Cfg,
 				teamIds:              sec.Key("team_ids").Strings(","),
 				allowedOrganizations: util.SplitString(sec.Key("allowed_organizations").String()),
 				allowedGroups:        util.SplitString(sec.Key("allowed_groups").String()),
+				skipOrgRoleSync:      cfg.GenericOAuthSkipOrgRoleSync,
 			}
 		}
 

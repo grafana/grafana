@@ -61,7 +61,7 @@ func SetupTestEnv(tb testing.TB, baseInterval time.Duration) (*ngalert.AlertNG, 
 	bus := bus.ProvideBus(tracer)
 	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
 	dashboardService, dashboardStore := testutil.SetupDashboardService(tb, sqlStore, folderStore, cfg)
-	folderService := testutil.SetupFolderService(tb, cfg, dashboardStore, folderStore, bus)
+	folderService := testutil.SetupFolderService(tb, cfg, sqlStore, dashboardStore, folderStore, bus)
 	ruleStore, err := store.ProvideDBStore(cfg, featuremgmt.WithFeatures(), sqlStore, folderService,
 		ac, &dashboards.FakeDashboardService{})
 	require.NoError(tb, err)

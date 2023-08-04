@@ -7,6 +7,7 @@ import { notifyApp } from '../../../../core/reducers/appNotification';
 import { dispatch } from '../../../../store/store';
 import TempoLanguageProvider from '../language_provider';
 
+import { getSituation, Situation } from './situation';
 import { intrinsics, scopes } from './traceql';
 
 interface Props {
@@ -52,8 +53,8 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
     }
 
     const { range, offset } = getRangeAndOffset(this.monaco, model, position);
-    const situation = this.getSituation(model.getValue(), offset);
-    const completionItems = this.getCompletions(situation);
+    const situation = getSituation(model.getValue(), offset);
+    const completionItems = situation != null ? this.getCompletions(situation) : Promise.resolve([]);
 
     return completionItems.then((items) => {
       // monaco by-default alphabetically orders the items.
@@ -124,8 +125,8 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
         return this.getScopesCompletions().concat(this.getIntrinsicsCompletions()).concat(this.getTagsCompletions());
       case 'SPANSET_IN_NAME_SCOPE':
         return this.getTagsCompletions(undefined, situation.scope);
-      case 'SPANSET_AFTER_NAME':
-        return CompletionProvider.operators.map((key) => ({
+      case 'SPANSET_EXPRESSION_OPERATORS':
+        return [...CompletionProvider.logicalOps, ...CompletionProvider.operators].map((key) => ({
           label: key,
           insertText: key,
           type: 'OPERATOR',
@@ -198,115 +199,6 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
       type: 'SCOPE',
     }));
   }
-
-  private getSituationInSpanSet(textUntilCaret: string): Situation {
-    const nameRegex = /(?<name>[\w./-]+)?/;
-    const opRegex = /(?<op>[!=+\-<>]+)/;
-    // only allow spaces in the value if it's enclosed by quotes
-    const valueRegex = /(?<value>(?<open_quote>")([^"\n&|]+)?(?<close_quote>")?|([^"\n\s&|]+))?/;
-
-    // prettier-ignore
-    const fullRegex = new RegExp(
-      '([\\s{])' +      // Space(s) or initial opening bracket {
-      '(' +                   // Open full set group
-      nameRegex.source +
-      '(?<space1>\\s*)' +     // Optional space(s) between name and operator
-      '(' +                   // Open operator + value group
-      opRegex.source +
-      '(?<space2>\\s*)' +     // Optional space(s) between operator and value
-      valueRegex.source +
-      ')?' +                  // Close operator + value group
-      ')' +                   // Close full set group
-      '(?<space3>\\s*)$'      // Optional space(s) at the end of the set
-    );
-
-    const matched = textUntilCaret.match(fullRegex);
-
-    if (matched) {
-      const nameFull = matched.groups?.name;
-      const op = matched.groups?.op;
-
-      if (!nameFull) {
-        return {
-          type: 'SPANSET_EMPTY',
-        };
-      }
-
-      if (nameFull === '.') {
-        return {
-          type: 'SPANSET_ONLY_DOT',
-        };
-      }
-
-      const nameMatched = nameFull.match(/^(?<pre_dot>\.)?(?<word>\w[\w./-]*\w)(?<post_dot>\.)?$/);
-
-      // We already have a (potentially partial) tag name so let's check if there's an operator declared
-      // { .tag_name|
-      if (!op) {
-        // There's no operator so we check if the name is one of the known scopes
-        // { resource.|
-        if (scopes.filter((w) => w === nameMatched?.groups?.word) && nameMatched?.groups?.post_dot) {
-          return {
-            type: 'SPANSET_IN_NAME_SCOPE',
-            scope: nameMatched?.groups?.word || '',
-          };
-        }
-        // It's not one of the scopes, so we now check if we're after the name (there's a space after the word) or if we still have to autocomplete the rest of the name
-        // In case there's a space we start autocompleting the operators { .http.method |
-        // Otherwise we keep showing the tags/intrinsics/scopes list { .http.met|
-        return {
-          type: matched.groups?.space1 ? 'SPANSET_AFTER_NAME' : 'SPANSET_IN_NAME',
-        };
-      }
-
-      // In case there's a space after the full [name + operator + value] group we can start autocompleting logical operators or close the spanset
-      // To avoid triggering this situation when we are writing a space inside a string we check the state of the open and close quotes
-      // { .http.method = "GET" |
-      if (matched.groups?.space3 && matched.groups.open_quote === matched.groups.close_quote) {
-        return {
-          type: 'SPANSET_AFTER_VALUE',
-        };
-      }
-
-      // We already have an operator and know that the set isn't complete so let's autocomplete the possible values for the tag name
-      // { .http.method = |
-      return {
-        type: 'SPANSET_IN_VALUE',
-        tagName: nameFull,
-        betweenQuotes: !!matched.groups?.open_quote,
-      };
-    }
-
-    return {
-      type: 'EMPTY',
-    };
-  }
-
-  /**
-   * Figure out where is the cursor and what kind of suggestions are appropriate.
-   * @param text
-   * @param offset
-   */
-  private getSituation(text: string, offset: number): Situation {
-    if (text === '' || offset === 0) {
-      return {
-        type: 'EMPTY',
-      };
-    }
-
-    const textUntilCaret = text.substring(0, offset);
-
-    // Check if we're inside a span set
-    let isInSpanSet = textUntilCaret.lastIndexOf('{') > textUntilCaret.lastIndexOf('}');
-    if (isInSpanSet) {
-      return this.getSituationInSpanSet(textUntilCaret);
-    }
-
-    // Will happen only if user writes something that isn't really a tag selector
-    return {
-      type: 'UNKNOWN',
-    };
-  }
 }
 
 /**
@@ -342,38 +234,6 @@ export type Tag = {
   name: string;
   value: string;
 };
-
-export type Situation =
-  | {
-      type: 'UNKNOWN';
-    }
-  | {
-      type: 'EMPTY';
-    }
-  | {
-      type: 'SPANSET_EMPTY';
-    }
-  | {
-      type: 'SPANSET_ONLY_DOT';
-    }
-  | {
-      type: 'SPANSET_AFTER_NAME';
-    }
-  | {
-      type: 'SPANSET_IN_NAME';
-    }
-  | {
-      type: 'SPANSET_IN_NAME_SCOPE';
-      scope: string;
-    }
-  | {
-      type: 'SPANSET_IN_VALUE';
-      tagName: string;
-      betweenQuotes: boolean;
-    }
-  | {
-      type: 'SPANSET_AFTER_VALUE';
-    };
 
 function getRangeAndOffset(monaco: Monaco, model: monacoTypes.editor.ITextModel, position: monacoTypes.Position) {
   const word = model.getWordAtPosition(position);

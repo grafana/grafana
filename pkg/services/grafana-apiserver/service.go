@@ -24,10 +24,10 @@ import (
 	"k8s.io/klog/v2"
 
 	"github.com/grafana/grafana-apiserver/pkg/certgenerator"
+
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/middleware"
-	"github.com/grafana/grafana/pkg/modules"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
@@ -69,7 +69,7 @@ func ProvideService(cfg *setting.Cfg, rr routing.RouteRegister) (*service, error
 		stopCh:   make(chan struct{}),
 	}
 
-	s.BasicService = services.NewBasicService(s.start, s.running, nil).WithName(modules.GrafanaAPIServer)
+	s.BasicService = services.NewBasicService(s.start, s.running, nil).WithName("grafana-apiserver")
 
 	s.rr.Group("/k8s", func(k8sRoute routing.RouteRegister) {
 		handler := func(c *contextmodel.ReqContext) {
