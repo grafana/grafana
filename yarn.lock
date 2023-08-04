@@ -3868,6 +3868,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@grafana/lezer-traceql@npm:0.0.4":
+  version: 0.0.4
+  resolution: "@grafana/lezer-traceql@npm:0.0.4"
+  peerDependencies:
+    "@lezer/lr": ^1.3.0
+  checksum: 69acea33476d3cdabfb99f3eb62bb34289bc205da69920e0eccc82f40407f9d584fa03f9662706ab667ee97d3ea84b964b22a11925e6699deef5afe1ca9e1906
+  languageName: node
+  linkType: hard
+
 "@grafana/monaco-logql@npm:^0.0.7":
   version: 0.0.7
   resolution: "@grafana/monaco-logql@npm:0.0.7"
@@ -6587,18 +6596,6 @@ __metadata:
   version: 1.1.0
   resolution: "@protobufjs/utf8@npm:1.1.0"
   checksum: f9bf3163d13aaa3b6f5e6fbf37a116e094ea021c0e1f2a7ccd0e12a29e2ce08dafba4e8b36e13f8ed7397e1591610ce880ed1289af4d66cf4ace8a36a9557278
-  languageName: node
-  linkType: hard
-
-"@pyroscope/flamegraph@npm:^0.35.5":
-  version: 0.35.6
-  resolution: "@pyroscope/flamegraph@npm:0.35.6"
-  peerDependencies:
-    graphviz-react: ^1.2.5
-    react: ">=16.14.0"
-    react-dom: ">=16.14.0"
-    true-myth: ^5.1.2
-  checksum: 7744b6af4ba9f94c33cdc088167db11074783818c1f325c495cd6762af1f16559a48040f251af9920fd0e9bb85bc55d70a1cffdfc38b3b0d0b7af943b057cb88
   languageName: node
   linkType: hard
 
@@ -19282,6 +19279,7 @@ __metadata:
     "@grafana/faro-web-sdk": 1.1.2
     "@grafana/google-sdk": 0.1.1
     "@grafana/lezer-logql": 0.1.8
+    "@grafana/lezer-traceql": 0.0.4
     "@grafana/monaco-logql": ^0.0.7
     "@grafana/runtime": "workspace:*"
     "@grafana/scenes": 0.22.0
@@ -19303,7 +19301,6 @@ __metadata:
     "@pmmmwh/react-refresh-webpack-plugin": 0.5.10
     "@popperjs/core": 2.11.8
     "@prometheus-io/lezer-promql": ^0.37.0-rc.1
-    "@pyroscope/flamegraph": ^0.35.5
     "@react-aria/button": 3.8.0
     "@react-aria/dialog": 3.5.3
     "@react-aria/focus": 3.13.0

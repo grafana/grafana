@@ -3,6 +3,7 @@ import { AdHocVariableFilter, DataQuery, DataSourceJsonData } from '@grafana/dat
 export enum InfluxVersion {
   InfluxQL = 'InfluxQL',
   Flux = 'Flux',
+  SQL = 'SQL',
 }
 
 export interface InfluxOptions extends DataSourceJsonData {
@@ -17,6 +18,9 @@ export interface InfluxOptions extends DataSourceJsonData {
   organization?: string;
   defaultBucket?: string;
   maxSeries?: number;
+
+  // With SQL
+  metadata?: Array<Record<string, string>>;
 }
 
 /**
