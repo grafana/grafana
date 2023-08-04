@@ -338,6 +338,13 @@ func TestProcessEvalResults(t *testing.T) {
 		return r
 	}
 
+	genericError := errors.New("test-error")
+	datasourceError := expr.MakeQueryError("A", "datasource_uid_1", errors.New("this is an error"))
+	expectedDatasourceErrorLabels := data.Labels{
+		"datasource_uid": "datasource_uid_1",
+		"ref_id":         "A",
+	}
+
 	labels1 := data.Labels{
 		"instance_label": "test-1",
 	}
@@ -351,11 +358,13 @@ func TestProcessEvalResults(t *testing.T) {
 		"datasource_uid": "1",
 		"ref_id":         "A",
 	}
+
 	labels := map[string]data.Labels{
-		"system + rule":           mergeLabels(baseRule.Labels, systemLabels),
-		"system + rule + labels1": mergeLabels(mergeLabels(labels1, baseRule.Labels), systemLabels),
-		"system + rule + labels2": mergeLabels(mergeLabels(labels2, baseRule.Labels), systemLabels),
-		"system + rule + no-data": mergeLabels(mergeLabels(noDataLabels, baseRule.Labels), systemLabels),
+		"system + rule":                    mergeLabels(baseRule.Labels, systemLabels),
+		"system + rule + labels1":          mergeLabels(mergeLabels(labels1, baseRule.Labels), systemLabels),
+		"system + rule + labels2":          mergeLabels(mergeLabels(labels2, baseRule.Labels), systemLabels),
+		"system + rule + no-data":          mergeLabels(mergeLabels(noDataLabels, baseRule.Labels), systemLabels),
+		"system + rule + datasource-error": mergeLabels(mergeLabels(expectedDatasourceErrorLabels, baseRule.Labels), systemLabels),
 	}
 
 	// keep it separate to make code folding work correctly.
@@ -900,6 +909,34 @@ func TestProcessEvalResults(t *testing.T) {
 			},
 		},
 		{
+			desc:      "classic-condition, normal -> pending when For is set but not exceeded, result is Error and ExecErrState is Alerting",
+			alertRule: baseRuleWith(models.WithForNTimes(6), models.WithErrorExecAs(models.AlertingErrState)),
+			evalResults: map[time.Time]eval.Results{
+				t1: {
+					newResult(eval.WithState(eval.Normal)),
+				},
+				t2: {
+					newResult(eval.WithError(genericError)),
+				},
+			},
+			expectedAnnotations: 1,
+			expectedStates: []*state.State{
+				{
+					Labels:      labels["system + rule"],
+					State:       eval.Pending,
+					StateReason: eval.Error.String(),
+					Error:       genericError,
+					Results: []state.Evaluation{
+						newEvaluation(t1, eval.Normal),
+						newEvaluation(t2, eval.Error),
+					},
+					StartsAt:           t2,
+					EndsAt:             t2.Add(state.ResendDelay * 3),
+					LastEvaluationTime: t2,
+				},
+			},
+		},
+		{
 			desc:      "normal -> pending when For is set but not exceeded, result is Error and ExecErrState is Alerting",
 			alertRule: baseRuleWith(models.WithForNTimes(6), models.WithErrorExecAs(models.AlertingErrState)),
 			evalResults: map[time.Time]eval.Results{
@@ -907,18 +944,27 @@ func TestProcessEvalResults(t *testing.T) {
 					newResult(eval.WithState(eval.Normal), eval.WithLabels(labels1)),
 				},
 				t2: {
-					newResult(eval.WithState(eval.Error), eval.WithLabels(labels1)),
+					newResult(eval.WithError(genericError)),
 				},
 			},
 			expectedAnnotations: 1,
 			expectedStates: []*state.State{
 				{
-					Labels:      labels["system + rule + labels1"],
-					State:       eval.Pending,
-					StateReason: eval.Error.String(),
-					Error:       errors.New("with_state_error"),
+					Labels: labels["system + rule + labels1"],
+					State:  eval.Normal,
 					Results: []state.Evaluation{
 						newEvaluation(t1, eval.Normal),
+					},
+					StartsAt:           t1,
+					EndsAt:             t1,
+					LastEvaluationTime: t1,
+				},
+				{
+					Labels:      labels["system + rule"],
+					State:       eval.Pending,
+					StateReason: eval.Error.String(),
+					Error:       genericError,
+					Results: []state.Evaluation{
 						newEvaluation(t2, eval.Error),
 					},
 					StartsAt:           t2,
@@ -935,25 +981,25 @@ func TestProcessEvalResults(t *testing.T) {
 					newResult(eval.WithState(eval.Normal), eval.WithLabels(labels1)),
 				},
 				t2: {
-					newResult(eval.WithState(eval.Error), eval.WithLabels(labels1)),
+					newResult(eval.WithError(genericError)),
 				},
 				t3: {
-					newResult(eval.WithState(eval.Error), eval.WithLabels(labels1)),
+					newResult(eval.WithError(genericError)),
 				},
 				tn(4): {
-					newResult(eval.WithState(eval.Error), eval.WithLabels(labels1)),
+					newResult(eval.WithError(genericError)),
 				},
 				tn(5): {
-					newResult(eval.WithState(eval.Error), eval.WithLabels(labels1)),
+					newResult(eval.WithError(genericError)),
 				},
 			},
 			expectedAnnotations: 2,
 			expectedStates: []*state.State{
 				{
-					Labels:      labels["system + rule + labels1"],
+					Labels:      labels["system + rule"],
 					State:       eval.Alerting,
 					StateReason: eval.Error.String(),
-					Error:       errors.New("with_state_error"),
+					Error:       genericError,
 					Results: []state.Evaluation{
 						newEvaluation(t3, eval.Error),
 						newEvaluation(tn(4), eval.Error),
@@ -966,33 +1012,30 @@ func TestProcessEvalResults(t *testing.T) {
 			},
 		},
 		{
-			desc:      "normal -> error when result is Error and ExecErrState is Error",
+			desc:      "classic-condition, normal -> sse.dataQueryError when result is Error and ExecErrState is Error",
 			alertRule: baseRuleWith(models.WithForNTimes(6), models.WithErrorExecAs(models.ErrorErrState)),
 			evalResults: map[time.Time]eval.Results{
 				t1: {
-					newResult(eval.WithState(eval.Normal), eval.WithLabels(labels1)),
+					newResult(eval.WithState(eval.Normal)),
 				},
 				t2: {
-					newResult(eval.WithError(expr.MakeQueryError("A", "datasource_uid_1", errors.New("this is an error"))), eval.WithLabels(labels1)), // TODO fix it because error labels are different
+					newResult(eval.WithError(datasourceError)),
 				},
 			},
 			expectedAnnotations: 1,
 			expectedStates: []*state.State{
 				{
 					CacheID: func() string {
-						lbls := models.InstanceLabels(labels["system + rule + labels1"])
+						lbls := models.InstanceLabels(labels["system + rule"])
 						r, err := lbls.StringKey()
 						if err != nil {
 							panic(err)
 						}
 						return r
 					}(),
-					Labels: mergeLabels(labels["system + rule + labels1"], data.Labels{
-						"datasource_uid": "datasource_uid_1",
-						"ref_id":         "A",
-					}),
-					State: eval.Error,
-					Error: expr.MakeQueryError("A", "datasource_uid_1", errors.New("this is an error")),
+					Labels: labels["system + rule + datasource-error"],
+					State:  eval.Error,
+					Error:  datasourceError,
 					Results: []state.Evaluation{
 						newEvaluation(t1, eval.Normal),
 						newEvaluation(t2, eval.Error),
@@ -1001,7 +1044,56 @@ func TestProcessEvalResults(t *testing.T) {
 					EndsAt:             t2.Add(state.ResendDelay * 3),
 					LastEvaluationTime: t2,
 					EvaluationDuration: evaluationDuration,
-					Annotations:        map[string]string{"annotation": "test", "Error": "[sse.dataQueryError] failed to execute query [A]: this is an error"},
+					Annotations: mergeLabels(baseRule.Annotations, data.Labels{
+						"Error": datasourceError.Error(),
+					}),
+				},
+			},
+		},
+		{
+			desc:      "normal -> sse.dataQueryError when result is Error and ExecErrState is Error",
+			alertRule: baseRuleWith(models.WithForNTimes(6), models.WithErrorExecAs(models.ErrorErrState)),
+			evalResults: map[time.Time]eval.Results{
+				t1: {
+					newResult(eval.WithState(eval.Normal), eval.WithLabels(labels1)),
+				},
+				t2: {
+					newResult(eval.WithError(datasourceError)),
+				},
+			},
+			expectedAnnotations: 1,
+			expectedStates: []*state.State{
+				{
+					Labels: labels["system + rule + labels1"],
+					State:  eval.Normal,
+					Results: []state.Evaluation{
+						newEvaluation(t1, eval.Normal),
+					},
+					StartsAt:           t1,
+					EndsAt:             t1,
+					LastEvaluationTime: t1,
+				},
+				{
+					CacheID: func() string {
+						lbls := models.InstanceLabels(labels["system + rule"])
+						r, err := lbls.StringKey()
+						if err != nil {
+							panic(err)
+						}
+						return r
+					}(),
+					Labels: labels["system + rule + datasource-error"],
+					State:  eval.Error,
+					Error:  datasourceError,
+					Results: []state.Evaluation{
+						newEvaluation(t2, eval.Error),
+					},
+					StartsAt:           t2,
+					EndsAt:             t2.Add(state.ResendDelay * 3),
+					LastEvaluationTime: t2,
+					Annotations: mergeLabels(baseRule.Annotations, data.Labels{
+						"Error": datasourceError.Error(),
+					}),
 				},
 			},
 		},
@@ -1013,44 +1105,26 @@ func TestProcessEvalResults(t *testing.T) {
 					newResult(eval.WithState(eval.Normal), eval.WithLabels(labels1)),
 				},
 				t2: {
-					newResult(eval.WithError(expr.MakeQueryError("A", "datasource_uid_1", errors.New("this is an error"))), eval.WithLabels(labels1)), // TODO fix it because error labels are different
+					newResult(eval.WithError(datasourceError)),
 				},
 			},
 			expectedAnnotations: 1,
 			expectedStates: []*state.State{
 				{
-					Labels:      labels["system + rule + labels1"],
-					State:       eval.Normal,
-					StateReason: eval.Error.String(),
+					Labels: labels["system + rule + labels1"],
+					State:  eval.Normal,
 					Results: []state.Evaluation{
 						newEvaluation(t1, eval.Normal),
-						newEvaluation(t2, eval.Error),
 					},
 					StartsAt:           t1,
 					EndsAt:             t1,
-					LastEvaluationTime: t2,
+					LastEvaluationTime: t1,
 				},
-			},
-		},
-		{
-			desc:      "alerting -> normal when result is Error and ExecErrState is OK",
-			alertRule: baseRuleWith(models.WithForNTimes(6), models.WithErrorExecAs(models.OkErrState)),
-			evalResults: map[time.Time]eval.Results{
-				t1: {
-					newResult(eval.WithState(eval.Alerting), eval.WithLabels(labels1)),
-				},
-				t2: {
-					newResult(eval.WithError(expr.MakeQueryError("A", "datasource_uid_1", errors.New("this is an error"))), eval.WithLabels(labels1)), // TODO fix it because error labels are different
-				},
-			},
-			expectedAnnotations: 2,
-			expectedStates: []*state.State{
 				{
-					Labels:      labels["system + rule + labels1"],
+					Labels:      labels["system + rule"],
 					State:       eval.Normal,
-					StateReason: eval.Error.String(),
+					StateReason: "Error",
 					Results: []state.Evaluation{
-						newEvaluation(t1, eval.Alerting),
 						newEvaluation(t2, eval.Error),
 					},
 					StartsAt:           t2,
@@ -1060,7 +1134,44 @@ func TestProcessEvalResults(t *testing.T) {
 			},
 		},
 		{
-			desc:      "normal -> alerting -> error when result is Error and ExecErrorState is Error",
+			desc:      "alerting and normal error when result is Error and ExecErrState=OK",
+			alertRule: baseRuleWith(models.WithForNTimes(6), models.WithErrorExecAs(models.OkErrState)),
+			evalResults: map[time.Time]eval.Results{
+				t1: {
+					newResult(eval.WithState(eval.Alerting), eval.WithLabels(labels1)),
+				},
+				t2: {
+					newResult(eval.WithError(datasourceError)),
+				},
+			},
+			expectedAnnotations: 2, // Normal -> Pending, Normal -> Normal (Error)
+			expectedStates: []*state.State{
+				{
+					Labels:      labels["system + rule + labels1"],
+					State:       eval.Pending,
+					StateReason: "",
+					Results: []state.Evaluation{
+						newEvaluation(t1, eval.Alerting),
+					},
+					StartsAt:           t1,
+					EndsAt:             t1.Add(state.ResendDelay * 3),
+					LastEvaluationTime: t1,
+				},
+				{
+					Labels:      labels["system + rule"],
+					State:       eval.Normal,
+					StateReason: "Error",
+					Results: []state.Evaluation{
+						newEvaluation(t2, eval.Error),
+					},
+					StartsAt:           t2,
+					EndsAt:             t2,
+					LastEvaluationTime: t2,
+				},
+			},
+		},
+		{
+			desc:      "error and expired alerting when result is Error and ExecErrorState=Error",
 			alertRule: baseRuleWith(models.WithForNTimes(2)),
 			evalResults: map[time.Time]eval.Results{
 				t1: {
@@ -1073,21 +1184,21 @@ func TestProcessEvalResults(t *testing.T) {
 					newResult(eval.WithState(eval.Alerting), eval.WithLabels(labels1)),
 				},
 				tn(4): {
-					newResult(eval.WithState(eval.Error), eval.WithLabels(labels1)), // TODO this is not how error result is created
+					newResult(eval.WithError(genericError)),
 				},
 				tn(5): {
-					newResult(eval.WithState(eval.Error), eval.WithLabels(labels1)), // TODO this is not how error result is created
+					newResult(eval.WithError(genericError)),
 				},
 				tn(6): {
-					newResult(eval.WithState(eval.Error), eval.WithLabels(labels1)), // TODO this is not how error result is created
+					newResult(eval.WithError(genericError)),
 				},
 			},
-			expectedAnnotations: 3,
+			expectedAnnotations: 4, // Normal -> Pending, Pending -> Alerting, Normal -> Error, Alerting -> Normal (MissingSeries)
 			expectedStates: []*state.State{
 				{
-					Labels: labels["system + rule + labels1"],
+					Labels: labels["system + rule"],
 					State:  eval.Error,
-					Error:  fmt.Errorf("with_state_error"),
+					Error:  genericError,
 					Results: []state.Evaluation{
 						newEvaluation(tn(5), eval.Error),
 						newEvaluation(tn(6), eval.Error),
@@ -1109,20 +1220,20 @@ func TestProcessEvalResults(t *testing.T) {
 					newResult(eval.WithState(eval.Alerting), eval.WithLabels(labels1)),
 				},
 				tn(5): {
-					newResult(eval.WithState(eval.Error), eval.WithLabels(labels1)), // TODO fix it
+					newResult(eval.WithError(genericError)),
 				},
 				tn(8): {
 					newResult(eval.WithState(eval.Alerting), eval.WithLabels(labels1)),
 				},
 			},
-			expectedAnnotations: 3,
+			expectedAnnotations: 4, // [1: Normal -> Pending, 2: Normal -> Error, 1: Pending -> Alerting, 2: Error -> Normal (MissingSeries)]
 			expectedStates: []*state.State{
 				{
 					Labels: labels["system + rule + labels1"],
-					State:  eval.Pending,
+					State:  eval.Alerting,
 					Results: []state.Evaluation{
+						newEvaluation(t1, eval.Normal),
 						newEvaluation(tn(4), eval.Alerting),
-						newEvaluation(tn(5), eval.Error),
 						newEvaluation(tn(8), eval.Alerting),
 					},
 					StartsAt:           tn(8),
@@ -1132,7 +1243,7 @@ func TestProcessEvalResults(t *testing.T) {
 			},
 		},
 		{
-			desc:      "normal -> alerting -> error -> no data - it should clear the error",
+			desc:      "normal -> alerting -> error -> no data, expires the normal eval",
 			alertRule: baseRuleWith(models.WithForNTimes(3)),
 			evalResults: map[time.Time]eval.Results{
 				t1: {
@@ -1142,30 +1253,27 @@ func TestProcessEvalResults(t *testing.T) {
 					newResult(eval.WithState(eval.Alerting), eval.WithLabels(labels1)),
 				},
 				tn(5): {
-					newResult(eval.WithState(eval.Error), eval.WithLabels(labels1)), // TODO FIX it
+					newResult(eval.WithError(genericError)),
 				},
 				tn(6): {
 					newResult(eval.WithState(eval.NoData), eval.WithLabels(noDataLabels)),
 				},
 			},
-			expectedAnnotations: 3,
+			expectedAnnotations: 4, // 1: Normal -> Pending, 2: Normal -> Error, 3: Normal -> NoData, 1: Pending -> Normal (MissingSeries)]
 			expectedStates: []*state.State{
 				{
-					Labels: labels["system + rule + labels1"],
+					Labels: labels["system + rule"],
 					State:  eval.Error,
-					Error:  errors.New("with_state_error"),
+					Error:  genericError,
 					Results: []state.Evaluation{
-						newEvaluation(t1, eval.Normal),
-						newEvaluation(tn(4), eval.Alerting),
 						newEvaluation(tn(5), eval.Error),
 					},
 					StartsAt:           tn(5),
 					EndsAt:             tn(5).Add(state.ResendDelay * 3),
 					LastEvaluationTime: tn(5),
-					Annotations: map[string]string{
-						"Error":      "with_state_error",
-						"annotation": "test",
-					},
+					Annotations: mergeLabels(baseRule.Annotations, data.Labels{
+						"Error": genericError.Error(),
+					}),
 				},
 				{
 					Labels: labels["system + rule + no-data"],
@@ -1224,7 +1332,7 @@ func TestProcessEvalResults(t *testing.T) {
 					newResult(eval.WithState(eval.Alerting), eval.WithLabels(data.Labels{})),
 				},
 				t2: {
-					newResult(eval.WithError(expr.MakeQueryError("A", "test-datasource-uid", errors.New("this is an error"))), eval.WithLabels(data.Labels{})),
+					newResult(eval.WithError(datasourceError)),
 				},
 				t3: {
 					newResult(eval.WithState(eval.Alerting), eval.WithLabels(data.Labels{})),
