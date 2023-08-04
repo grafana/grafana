@@ -386,7 +386,17 @@
       "maturity": "experimental",
       "name": "Dashboard",
       "pluralMachineName": "dashboards",
-      "pluralName": "Dashboards"
+      "pluralName": "Dashboards",
+      "slots": {
+        "panel": {
+          "name": "panel",
+          "schemaInterface": "PanelCfg"
+        },
+        "query": {
+          "name": "query",
+          "schemaInterface": "DataQuery"
+        }
+      }
     },
     "dashboarddataquery": {
       "category": "composable",
