@@ -147,7 +147,7 @@ If you want to guarantee the existence of metrics before any observations has ha
    make devenv sources=prometheus
    ```
 
-1. run grafana, and create a prometheus datasource if you do not have one yet. Set the server url to http://localhost:9090, enable basic auth, and type in the same auth you have for local grafana
+1. Run Grafana, and create a Prometheus datasource if you do not have one yet. Set the server URL to `http://localhost:9090`, enable basic auth, and type in the same auth you have for local Grafana
 1. Use Grafana Explore or dashboards to query any exported Grafana metrics. Can also view them at http://localhost:3000/metrics
 
 ## Traces
