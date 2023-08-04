@@ -11,7 +11,7 @@ import { VisualInfluxQLEditor } from './VisualInfluxQLEditor';
 jest.mock('../../../../../influxql_metadata_query', () => {
   return {
     __esModule: true,
-    getAllPolicies: jest.fn().mockReturnValueOnce(Promise.resolve([DEFAULT_POLICY, 'autogen'])),
+    getAllPolicies: jest.fn().mockReturnValueOnce(Promise.resolve(['default', 'autogen'])),
     getFieldKeysForMeasurement: jest
       .fn()
       .mockReturnValueOnce(Promise.resolve(['free', 'total']))
