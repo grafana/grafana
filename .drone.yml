@@ -4186,10 +4186,6 @@ kind: secret
 name: delivery-bot-app-private-key
 ---
 kind: signature
-<<<<<<< HEAD
-hmac: 31ebf70f6ac3ac5a65ba189843d00fdeeaec81c64cb2621ce247495e79045cce
-=======
-hmac: 5e841f57d336278b10d0ba19adba1b1a3f52a8f4037ba4a17bf4f9b52098367e
->>>>>>> b1fd399c10 (Docs/k8s install update (#72567))
+hmac: 0210365c5324870574a3ff06684df7afbae110271c8226f75e5683c5675ffab5
 
 ...

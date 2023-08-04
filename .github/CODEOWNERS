@@ -13,12 +13,8 @@
 
 # Documentation
 /.changelog-archive @grafana/docs-grafana
-<<<<<<< HEAD
-/CHANGELOG.md @grafana/docs-grafana
-=======
 /.codespellignore @grafana/docs-tooling
 /CHANGELOG.md @grafana/grafana-delivery
->>>>>>> b1fd399c10 (Docs/k8s install update (#72567))
 /CODE_OF_CONDUCT.md @grafana/docs-grafana
 /CONTRIBUTING.md @grafana/docs-grafana
 /GOVERNANCE.md @RichiH
