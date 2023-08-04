@@ -1,22 +1,30 @@
 import React from 'react';
 
 import { SelectableValue } from '@grafana/data';
-import { Icon, RadioButtonList, Tooltip, useStyles2, useTheme2 } from '@grafana/ui';
+import { config } from '@grafana/runtime';
+import { Icon, RadioButtonList, Tooltip, useStyles2, useTheme2, PopoverContent } from '@grafana/ui';
+import { contextSrv } from 'app/core/core';
 import { OrgRole } from 'app/types';
 
 import { getStyles } from './styles';
 
-const BasicRoleOption: Array<SelectableValue<OrgRole>> = Object.values(OrgRole).map((r) => ({
-  label: r === OrgRole.None ? 'No basic role' : r,
-  value: r,
-}));
+const noBasicRoleFlag = contextSrv.licensedAccessControlEnabled();
+
+const noBasicRole = config.featureToggles.noBasicRole && noBasicRoleFlag;
+
+const BasicRoleOption: Array<SelectableValue<OrgRole>> = Object.values(OrgRole)
+  .filter((r) => noBasicRole || r !== OrgRole.None)
+  .map((r) => ({
+    label: r === OrgRole.None ? 'No basic role' : r,
+    value: r,
+  }));
 
 interface Props {
   value?: OrgRole;
   onChange: (value: OrgRole) => void;
   disabled?: boolean;
   disabledMesssage?: string;
-  tooltipMessage?: string;
+  tooltipMessage?: PopoverContent;
 }
 
 export const BuiltinRoleSelector = ({ value, onChange, disabled, disabledMesssage, tooltipMessage }: Props) => {
