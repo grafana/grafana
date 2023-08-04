@@ -1,10 +1,9 @@
-import { screen, render, waitFor } from '@testing-library/react';
+import { screen, render } from '@testing-library/react';
 import React from 'react';
 import { Provider } from 'react-redux';
 
 import { PluginExtensionTypes, PluginState } from '@grafana/data';
 import { setAngularLoader, setPluginExtensionGetter } from '@grafana/runtime';
-import appEvents from 'app/core/app_events';
 import { configureStore } from 'app/store/configureStore';
 
 import { getMockDataSource, getMockDataSourceMeta, getMockDataSourceSettingsState } from '../__mocks__';
@@ -24,11 +23,6 @@ jest.mock('@grafana/runtime', () => {
     })),
   };
 });
-
-jest.mock('app/core/app_events', () => ({
-  ...jest.requireActual('app/core/app_events'),
-  publish: jest.fn(),
-}));
 
 const setup = (props?: Partial<ViewProps>) => {
   const store = configureStore();
@@ -268,60 +262,6 @@ describe('<EditDataSource>', () => {
       expect(screen.queryByText(message)).toBeVisible();
       expect(screen.queryByText(detailsMessage)).not.toBeInTheDocument();
       expect(screen.queryByText(detailsVerboseMessage)).toBeInTheDocument();
-    });
-
-    it('should publish to the event bus when save and test succeeds', async () => {
-      const onUpdate = jest.fn();
-
-      setup({
-        onUpdate,
-        dataSource: getMockDataSource({
-          jsonData: {
-            trackingData: {
-              something: 'youMightWantToTrack',
-            },
-          },
-        }),
-      });
-
-      screen.getByText('Save & test').click();
-      await waitFor(() => expect(onUpdate).toHaveBeenCalled());
-      expect(appEvents.publish).toBeCalledWith({
-        type: 'datasource-updated-successfully',
-        payload: {
-          datasourceType: 'cloudwatch',
-          trackingData: {
-            something: 'youMightWantToTrack',
-          },
-        },
-      });
-    });
-
-    it('should publish to the event bus when save and test fails', async () => {
-      const onUpdate = jest.fn().mockRejectedValue('some error');
-
-      setup({
-        onUpdate,
-        dataSource: getMockDataSource({
-          jsonData: {
-            trackingData: {
-              something: 'youMightWantToTrack',
-            },
-          },
-        }),
-      });
-
-      screen.getByText('Save & test').click();
-      await waitFor(() => expect(onUpdate).toHaveBeenCalled());
-      expect(appEvents.publish).toBeCalledWith({
-        type: 'datasource-update-failed',
-        payload: {
-          datasourceType: 'cloudwatch',
-          trackingData: {
-            something: 'youMightWantToTrack',
-          },
-        },
-      });
     });
   });
 

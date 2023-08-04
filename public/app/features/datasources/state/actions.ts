@@ -1,6 +1,15 @@
-import { DataSourcePluginMeta, DataSourceSettings, locationUtil, TestDataSourceResponse } from '@grafana/data';
 import {
+  DataSourcePluginMeta,
+  DataSourceSettings,
+  locationUtil,
+  TestDataSourceResponse,
+  DataSourceTestSucceeded,
+  DataSourceTestFailed,
+} from '@grafana/data';
+import {
+  BackendSrv,
   config,
+  DataSourceSrv,
   DataSourceWithBackend,
   getDataSourceSrv,
   HealthCheckError,
@@ -9,7 +18,7 @@ import {
   locationService,
 } from '@grafana/runtime';
 import { updateNavIndex } from 'app/core/actions';
-import { contextSrv } from 'app/core/core';
+import { appEvents, contextSrv } from 'app/core/core';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import { ROUTES as CONNECTIONS_ROUTES } from 'app/features/connections/constants';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
@@ -53,7 +62,7 @@ export interface InitDataSourceSettingDependencies {
 }
 
 export interface TestDataSourceDependencies {
-  getDatasourceSrv: typeof getDataSourceSrv;
+  getDatasourceSrv: () => Pick<DataSourceSrv, 'get'>;
   getBackendSrv: typeof getBackendSrv;
 }
 
@@ -150,6 +159,7 @@ export const testDataSource = (
           success: true,
           path: editLink,
         });
+        appEvents.publish(new DataSourceTestSucceeded());
       } catch (err) {
         const formattedError = parseHealthCheckError(err);
 
@@ -161,6 +171,7 @@ export const testDataSource = (
           success: false,
           path: editLink,
         });
+        appEvents.publish(new DataSourceTestFailed());
       }
     });
   };

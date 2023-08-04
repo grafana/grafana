@@ -54,13 +54,13 @@ export type DashboardLoadedEventPayload<T> = {
 export class DashboardLoadedEvent<T> extends BusEventWithPayload<DashboardLoadedEventPayload<T>> {
   static type = 'dashboard-loaded';
 }
-
-export type DataSourceUpdatedEventPayload = {
-  trackingData?: Record<string, string>;
-};
-export class DataSourceUpdatedSuccessfully extends BusEventWithPayload<DataSourceUpdatedEventPayload> {
+export class DataSourceUpdatedSuccessfully extends BusEventBase {
   static type = 'datasource-updated-successfully';
 }
-export class DataSourceUpdateFailed extends BusEventWithPayload<DataSourceUpdatedEventPayload> {
-  static type = 'datasource-update-failed';
+export class DataSourceTestSucceeded extends BusEventBase {
+  static type = 'datasource-test-succeeded';
+}
+
+export class DataSourceTestFailed extends BusEventBase {
+  static type = 'datasource-test-failed';
 }
