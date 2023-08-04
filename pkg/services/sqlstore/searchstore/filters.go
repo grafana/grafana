@@ -99,12 +99,43 @@ type FolderUIDFilter struct {
 }
 
 func (f FolderUIDFilter) Where() (string, []interface{}) {
-	if len(f.UIDs) == 1 && f.UIDs[0] == folder.GeneralFolderUID {
-		return "dashboard.folder_id = 0", nil
+	if len(f.UIDs) < 1 {
+		return "", nil
 	}
-	innerSelect, params := sqlUIDin("uid", f.UIDs)
-	params = append([]interface{}{f.OrgID}, params...)
-	return fmt.Sprintf("dashboard.folder_id IN (SELECT id FROM dashboard WHERE org_id = ? AND %s)", innerSelect), params
+
+	params := []interface{}{}
+	includeGeneral := false
+	for _, uid := range f.UIDs {
+		if uid == folder.GeneralFolderUID {
+			includeGeneral = true
+			continue
+		}
+		params = append(params, uid)
+	}
+
+	q := ""
+	switch {
+	case len(params) < 1:
+		// do nothing
+	case len(params) == 1:
+		q = "dashboard.folder_id IN (SELECT id FROM dashboard WHERE org_id = ? AND uid = ?)"
+		params = append([]interface{}{f.OrgID}, params...)
+	default:
+		sqlArray := "(?" + strings.Repeat(",?", len(params)-1) + ")"
+		q = "dashboard.folder_id IN (SELECT id FROM dashboard WHERE org_id = ? AND uid IN " + sqlArray + ")"
+		params = append([]interface{}{f.OrgID}, params...)
+	}
+
+	if includeGeneral {
+		if q == "" {
+			q = "dashboard.folder_id = ? "
+		} else {
+			q = "(" + q + " OR dashboard.folder_id = ?)"
+		}
+		params = append(params, 0)
+	}
+
+	return q, params
 }
 
 type DashboardIDFilter struct {
