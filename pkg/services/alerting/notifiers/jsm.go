@@ -14,9 +14,9 @@ import (
 )
 
 const (
-	sendTags    = "tags"
-	sendDetails = "details"
-	sendBoth    = "both"
+	sendTagsJsm    = "tags"
+	sendDetailsJsm = "details"
+	sendBothJsm    = "both"
 )
 
 func init() {
@@ -60,15 +60,15 @@ func init() {
 				Element: alerting.ElementTypeSelect,
 				SelectOptions: []alerting.SelectOption{
 					{
-						Value: sendTags,
+						Value: sendTagsJsm,
 						Label: "Tags",
 					},
 					{
-						Value: sendDetails,
+						Value: sendDetailsJsm,
 						Label: "Extra Properties",
 					},
 					{
-						Value: sendBoth,
+						Value: sendBothJsm,
 						Label: "Tags & Extra Properties",
 					},
 				},
@@ -96,8 +96,8 @@ func NewJsmNotifier(model *models.AlertNotification, fn alerting.GetDecryptedVal
 		apiURL = jsmAlertURL
 	}
 
-	sendTagsAs := model.Settings.Get("sendTagsAs").MustString(sendTags)
-	if sendTagsAs != sendTags && sendTagsAs != sendDetails && sendTagsAs != sendBoth {
+	sendTagsAs := model.Settings.Get("sendTagsAs").MustString(sendTagsJsm)
+	if sendTagsAs != sendTagsJsm && sendTagsAs != sendDetailsJsm && sendTagsAs != sendBothJsm {
 		return nil, alerting.ValidationError{
 			Reason: fmt.Sprintf("Invalid value for sendTagsAs: %q", sendTagsAs),
 		}
@@ -169,11 +169,11 @@ func (on *JsmNotifier) createAlert(evalContext *alerting.EvalContext) error {
 	}
 	tags := make([]string, 0)
 	for _, tag := range evalContext.Rule.AlertRuleTags {
-		if on.sendDetails() {
+		if on.sendDetailsJsm() {
 			details.Set(tag.Key, tag.Value)
 		}
 
-		if on.sendTags() {
+		if on.sendTagsJsm() {
 			if len(tag.Value) > 0 {
 				tags = append(tags, fmt.Sprintf("%s:%s", tag.Key, tag.Value))
 			} else {
@@ -236,10 +236,10 @@ func (on *JsmNotifier) closeAlert(evalContext *alerting.EvalContext) error {
 	return nil
 }
 
-func (on *JsmNotifier) sendDetails() bool {
-	return on.SendTagsAs == sendDetails || on.SendTagsAs == sendBoth
+func (on *JsmNotifier) sendDetailsJsm() bool {
+	return on.SendTagsAs == sendDetailsJsm || on.SendTagsAs == sendBothJsm
 }
 
-func (on *JsmNotifier) sendTags() bool {
-	return on.SendTagsAs == sendTags || on.SendTagsAs == sendBoth
+func (on *JsmNotifier) sendTagsJsm() bool {
+	return on.SendTagsAs == sendTagsJsm || on.SendTagsAs == sendBothJsm
 }
