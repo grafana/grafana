@@ -164,7 +164,7 @@ export const RolePicker = ({
       }}
       ref={ref}
     >
-      <ClickOutsideWrapper onClick={onClickOutside}>
+      <ClickOutsideWrapper onClick={onClickOutside} useCapture={true}>
         <RolePickerInput
           basicRole={selectedBuiltInRole}
           appliedRoles={selectedRoles}

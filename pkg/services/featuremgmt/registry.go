@@ -433,12 +433,6 @@ var (
 			Owner:       grafanaAsCodeSquad,
 		},
 		{
-			Name:        "pyroscopeFlameGraph",
-			Description: "Changes flame graph to pyroscope one",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaObservabilityTracesAndProfilingSquad,
-		},
-		{
 			Name:            "externalServiceAuth",
 			Description:     "Starts an OAuth2 authentication provider for external services",
 			Stage:           FeatureStageExperimental,
@@ -688,6 +682,22 @@ var (
 			Owner:           grafanaAlertingSquad,
 			RequiresRestart: true,
 			HideFromDocs:    true,
+		},
+		{
+			Name:            "influxdbSqlSupport",
+			Description:     "Enable InfluxDB SQL query language support with new querying UI",
+			Stage:           FeatureStageExperimental,
+			FrontendOnly:    false,
+			Owner:           grafanaObservabilityMetricsSquad,
+			RequiresRestart: false,
+		},
+		{
+			Name:            "noBasicRole",
+			Description:     "Enables a new role that has no permissions by default",
+			Stage:           FeatureStageExperimental,
+			FrontendOnly:    true,
+			Owner:           grafanaAuthnzSquad,
+			RequiresRestart: true,
 		},
 	}
 )

@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana/pkg/expr/mathexp/parse"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -293,7 +294,8 @@ func Test_union(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			unions := union(tt.aResults, tt.bResults)
+			fakeNode := &parse.BinaryNode{Args: [2]parse.Node{&parse.VarNode{}, &parse.VarNode{}}}
+			unions := (&State{}).union(tt.aResults, tt.bResults, fakeNode)
 			tt.unionsAre(t, tt.unions, unions)
 		})
 	}
