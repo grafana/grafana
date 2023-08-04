@@ -358,13 +358,16 @@ func TestProcessEvalResults(t *testing.T) {
 		"system + rule + no-data": mergeLabels(mergeLabels(noDataLabels, baseRule.Labels), systemLabels),
 	}
 
-	testCases := []struct {
+	// keep it separate to make code folding work correctly.
+	type testCase struct {
 		desc                string
 		alertRule           *models.AlertRule
 		evalResults         map[time.Time]eval.Results
 		expectedStates      []*state.State
 		expectedAnnotations int
-	}{
+	}
+
+	testCases := []testCase{
 		{
 			desc:      "a cache entry is correctly created",
 			alertRule: baseRule,
