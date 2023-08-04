@@ -156,7 +156,7 @@ const RESOLVERS: Resolver[] = [
   },
 ];
 
-function resolveSpanset(node: SyntaxNode, text: string, pos: number): SituationType {
+function resolveSpanset(node: SyntaxNode): SituationType {
   const lastFieldExpression = walk(node, [['lastChild', [FieldExpression]]]);
   if (lastFieldExpression) {
     return {
@@ -169,7 +169,7 @@ function resolveSpanset(node: SyntaxNode, text: string, pos: number): SituationT
   };
 }
 
-function resolveAttribute(node: SyntaxNode, text: string, pos: number): SituationType {
+function resolveAttribute(node: SyntaxNode, text: string): SituationType {
   const attributeFieldParent = walk(node, [['parent', [AttributeField]]]);
   const attributeFieldParentText = attributeFieldParent ? getNodeText(attributeFieldParent, text) : '';
 
@@ -193,7 +193,7 @@ function resolveAttribute(node: SyntaxNode, text: string, pos: number): Situatio
   };
 }
 
-function resolveExpression(node: SyntaxNode, text: string, pos: number): SituationType {
+function resolveExpression(node: SyntaxNode, text: string): SituationType {
   if (node.prevSibling?.type.id === FieldOp) {
     let attributeField = node.prevSibling.prevSibling;
     if (attributeField) {
@@ -209,7 +209,7 @@ function resolveExpression(node: SyntaxNode, text: string, pos: number): Situati
   };
 }
 
-function resolveErrorInFilterRoot(node: SyntaxNode, text: string, pos: number): SituationType {
+function resolveErrorInFilterRoot(): SituationType {
   return {
     type: 'SPANSET_IN_NAME',
   };
