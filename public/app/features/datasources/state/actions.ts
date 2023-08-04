@@ -7,11 +7,9 @@ import {
   DataSourceTestFailed,
 } from '@grafana/data';
 import {
-  BackendSrv,
   config,
   DataSourceSrv,
   DataSourceWithBackend,
-  getDataSourceSrv,
   HealthCheckError,
   HealthCheckResultDetails,
   isFetchError,
