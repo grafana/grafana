@@ -132,16 +132,16 @@ lineage: schemas: [{
 		#AnnotationTarget: {
 			// Only required/valid for the grafana datasource...
 			// but code+tests is already depending on it so hard to change
-			limit: int64
+			limit?: int64
 			// Only required/valid for the grafana datasource...
 			// but code+tests is already depending on it so hard to change
-			matchAny: bool
+			matchAny: bool | *false
 			// Only required/valid for the grafana datasource...
 			// but code+tests is already depending on it so hard to change
-			tags: [...string]
+			tags?: [...string]
 			// Only required/valid for the grafana datasource...
 			// but code+tests is already depending on it so hard to change
-			type: string
+			type?: string
 			... // datasource will stick their raw DataQuery here
 		} @cuetsy(kind="interface") @grafanamaturity(NeedsExpertReview)
 
@@ -280,9 +280,9 @@ lineage: schemas: [{
 			// Icon name to be displayed with the link
 			icon: string
 			// Tooltip to display when the user hovers their mouse over it
-			tooltip: string
+			tooltip?: string
 			// Link URL. Only required/valid if the type is link
-			url: string
+			url?: string
 			// List of tags to limit the linked dashboards. If empty, all dashboards will be displayed. Only valid if the type is dashboards
 			tags: [...string]
 			// If true, all dashboards links will be displayed in a dropdown. If false, all dashboards links will be displayed side by side. Only valid if the type is dashboards
@@ -361,7 +361,7 @@ lineage: schemas: [{
 		#Threshold: {
 			// Value represents a specified metric for the threshold, which triggers a visual change in the dashboard when this value is met or exceeded.
 			// Nulls currently appear here when serializing -Infinity to JSON.
-			value: number | null @grafanamaturity(NeedsExpertReview)
+			value?: number | null @grafanamaturity(NeedsExpertReview)
 			// Color represents the color of the visual change that will occur in the dashboard when the threshold value is met or exceeded.
 			color: string @grafanamaturity(NeedsExpertReview)
 		} @cuetsy(kind="interface") @grafanamaturity(NeedsExpertReview)

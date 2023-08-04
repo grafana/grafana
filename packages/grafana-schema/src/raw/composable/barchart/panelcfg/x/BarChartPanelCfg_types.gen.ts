@@ -54,7 +54,7 @@ export interface Options extends common.OptionsWithLegend, common.OptionsWithToo
   /**
    * Sets the max length that a label can have before it is truncated.
    */
-  xTickLabelMaxLength: number;
+  xTickLabelMaxLength: number; // TODO field is absent in some devenv dashboards
   /**
    * Controls the rotation of the x axis labels.
    */

@@ -137,10 +137,10 @@ these match the properties of the "grafana" datasouce that is default in most da
 
 | Property   | Type     | Required | Default | Description                                                                                                       |
 |------------|----------|----------|---------|-------------------------------------------------------------------------------------------------------------------|
-| `limit`    | integer  | **Yes**  |         | Only required/valid for the grafana datasource...<br/>but code+tests is already depending on it so hard to change |
-| `matchAny` | boolean  | **Yes**  |         | Only required/valid for the grafana datasource...<br/>but code+tests is already depending on it so hard to change |
-| `tags`     | string[] | **Yes**  |         | Only required/valid for the grafana datasource...<br/>but code+tests is already depending on it so hard to change |
-| `type`     | string   | **Yes**  |         | Only required/valid for the grafana datasource...<br/>but code+tests is already depending on it so hard to change |
+| `matchAny` | boolean  | **Yes**  | `false` | Only required/valid for the grafana datasource...<br/>but code+tests is already depending on it so hard to change |
+| `limit`    | integer  | No       |         | Only required/valid for the grafana datasource...<br/>but code+tests is already depending on it so hard to change |
+| `tags`     | string[] | No       |         | Only required/valid for the grafana datasource...<br/>but code+tests is already depending on it so hard to change |
+| `type`     | string   | No       |         | Only required/valid for the grafana datasource...<br/>but code+tests is already depending on it so hard to change |
 
 ### DataSourceRef
 
@@ -164,9 +164,9 @@ Links with references to other dashboards or external resources
 | `tags`        | string[] | **Yes**  |         | List of tags to limit the linked dashboards. If empty, all dashboards will be displayed. Only valid if the type is dashboards                                                  |
 | `targetBlank` | boolean  | **Yes**  | `false` | If true, the link will be opened in a new tab                                                                                                                                  |
 | `title`       | string   | **Yes**  |         | Title to display with the link                                                                                                                                                 |
-| `tooltip`     | string   | **Yes**  |         | Tooltip to display when the user hovers their mouse over it                                                                                                                    |
 | `type`        | string   | **Yes**  |         | Dashboard Link type. Accepted values are dashboards (to refer to another dashboard) and link (to refer to an external resource)<br/>Possible values are: `link`, `dashboards`. |
-| `url`         | string   | **Yes**  |         | Link URL. Only required/valid if the type is link                                                                                                                              |
+| `tooltip`     | string   | No       |         | Tooltip to display when the user hovers their mouse over it                                                                                                                    |
+| `url`         | string   | No       |         | Link URL. Only required/valid if the type is link                                                                                                                              |
 
 ### Snapshot
 
@@ -282,7 +282,7 @@ They are used to conditionally style and color visualizations based on query res
 | Property | Type           | Required | Default | Description                                                                                                                                                                                                    |
 |----------|----------------|----------|---------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `color`  | string         | **Yes**  |         | Color represents the color of the visual change that will occur in the dashboard when the threshold value is met or exceeded.                                                                                  |
-| `value`  | number or null | **Yes**  |         | Value represents a specified metric for the threshold, which triggers a visual change in the dashboard when this value is met or exceeded.<br/>Nulls currently appear here when serializing -Infinity to JSON. |
+| `value`  | number or null | No       |         | Value represents a specified metric for the threshold, which triggers a visual change in the dashboard when this value is met or exceeded.<br/>Nulls currently appear here when serializing -Infinity to JSON. |
 
 ### ValueMapping
 

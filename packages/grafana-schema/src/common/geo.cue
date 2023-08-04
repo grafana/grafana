@@ -13,7 +13,7 @@ MapLayerOptions: {
 		// Common properties:
 		// https://openlayers.org/en/latest/apidoc/module-ol_layer_Base-BaseLayer.html
 		// Layer opacity (0-1)
-		opacity?: int64
+		opacity?: float32 & >=0 & <=1
 		// Check tooltip (defaults to true)
 		tooltip?: bool
 } @cuetsy(kind="interface") @grafana(TSVeneer="type")

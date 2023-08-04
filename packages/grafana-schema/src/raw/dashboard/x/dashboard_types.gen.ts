@@ -17,7 +17,7 @@ export interface AnnotationTarget {
    * Only required/valid for the grafana datasource...
    * but code+tests is already depending on it so hard to change
    */
-  limit: number;
+  limit?: number;
   /**
    * Only required/valid for the grafana datasource...
    * but code+tests is already depending on it so hard to change
@@ -27,15 +27,16 @@ export interface AnnotationTarget {
    * Only required/valid for the grafana datasource...
    * but code+tests is already depending on it so hard to change
    */
-  tags: Array<string>;
+  tags?: Array<string>;
   /**
    * Only required/valid for the grafana datasource...
    * but code+tests is already depending on it so hard to change
    */
-  type: string;
+  type?: string;
 }
 
 export const defaultAnnotationTarget: Partial<AnnotationTarget> = {
+  matchAny: false,
   tags: [],
 };
 
@@ -305,7 +306,7 @@ export interface DashboardLink {
   /**
    * Tooltip to display when the user hovers their mouse over it
    */
-  tooltip: string;
+  tooltip?: string;
   /**
    * Link type. Accepted values are dashboards (to refer to another dashboard) and link (to refer to an external resource)
    */
@@ -313,7 +314,7 @@ export interface DashboardLink {
   /**
    * Link URL. Only required/valid if the type is link
    */
-  url: string;
+  url?: string;
 }
 
 export const defaultDashboardLink: Partial<DashboardLink> = {
@@ -449,7 +450,7 @@ export interface Threshold {
    * Value represents a specified metric for the threshold, which triggers a visual change in the dashboard when this value is met or exceeded.
    * Nulls currently appear here when serializing -Infinity to JSON.
    */
-  value: (number | null);
+  value?: (number | null);
 }
 
 /**

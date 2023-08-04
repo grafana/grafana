@@ -605,7 +605,7 @@ export interface VizLegendOptions {
   displayMode: LegendDisplayMode;
   isVisible?: boolean;
   placement: LegendPlacement;
-  showLegend: boolean;
+  showLegend: boolean; // TODO existing devenv dashboards seem to omit this field
   sortBy?: string;
   sortDesc?: boolean;
   width?: number;
@@ -695,7 +695,7 @@ export interface TableSortByFieldState {
 export interface TableFooterOptions {
   countRows?: boolean;
   enablePagination?: boolean;
-  fields?: Array<string>;
+  fields?: Array<string>; // TODO many devenv dashboards put an empty string here
   reducer: Array<string>; // actually 1 value
   show: boolean;
 }

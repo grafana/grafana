@@ -18,14 +18,19 @@ title: GeomapPanelCfg kind
 
 
 
-| Property          | Type                       | Required | Default | Description                                   |
-|-------------------|----------------------------|----------|---------|-----------------------------------------------|
-| `ControlsOptions` | [object](#controlsoptions) | **Yes**  |         |                                               |
-| `MapCenterID`     | string                     | **Yes**  |         | Possible values are: `zero`, `coords`, `fit`. |
-| `MapViewConfig`   | [object](#mapviewconfig)   | **Yes**  |         |                                               |
-| `Options`         | [object](#options)         | **Yes**  |         |                                               |
-| `TooltipMode`     | string                     | **Yes**  |         | Possible values are: `none`, `details`.       |
-| `TooltipOptions`  | [object](#tooltipoptions)  | **Yes**  |         |                                               |
+| Property  | Type               | Required | Default | Description |
+|-----------|--------------------|----------|---------|-------------|
+| `Options` | [object](#options) | **Yes**  |         |             |
+
+### Options
+
+| Property   | Type                                  | Required | Default | Description |
+|------------|---------------------------------------|----------|---------|-------------|
+| `basemap`  | [MapLayerOptions](#maplayeroptions)   | **Yes**  |         |             |
+| `controls` | [ControlsOptions](#controlsoptions)   | **Yes**  |         |             |
+| `layers`   | [MapLayerOptions](#maplayeroptions)[] | **Yes**  |         |             |
+| `tooltip`  | [TooltipOptions](#tooltipoptions)     | **Yes**  |         |             |
+| `view`     | [MapViewConfig](#mapviewconfig)       | **Yes**  |         |             |
 
 ### ControlsOptions
 
@@ -38,43 +43,17 @@ title: GeomapPanelCfg kind
 | `showScale`       | boolean | No       |         | Scale options            |
 | `showZoom`        | boolean | No       |         | Zoom (upper left)        |
 
-### MapViewConfig
-
-| Property    | Type    | Required | Default | Description |
-|-------------|---------|----------|---------|-------------|
-| `id`        | string  | **Yes**  | `zero`  |             |
-| `allLayers` | boolean | No       | `true`  |             |
-| `lastOnly`  | boolean | No       |         |             |
-| `lat`       | int64   | No       | `0`     |             |
-| `layer`     | string  | No       |         |             |
-| `lon`       | int64   | No       | `0`     |             |
-| `maxZoom`   | integer | No       |         |             |
-| `minZoom`   | integer | No       |         |             |
-| `padding`   | integer | No       |         |             |
-| `shared`    | boolean | No       |         |             |
-| `zoom`      | int64   | No       | `1`     |             |
-
-### Options
-
-| Property   | Type                                  | Required | Default | Description |
-|------------|---------------------------------------|----------|---------|-------------|
-| `basemap`  | [MapLayerOptions](#maplayeroptions)   | **Yes**  |         |             |
-| `controls` | [ControlsOptions](#controlsoptions)   | **Yes**  |         |             |
-| `layers`   | [MapLayerOptions](#maplayeroptions)[] | **Yes**  |         |             |
-| `tooltip`  | [TooltipOptions](#tooltipoptions)     | **Yes**  |         |             |
-| `view`     | [MapViewConfig](#mapviewconfig)       | **Yes**  |         |             |
-
 ### MapLayerOptions
 
-| Property     | Type                                        | Required | Default | Description                                                                                                                |
-|--------------|---------------------------------------------|----------|---------|----------------------------------------------------------------------------------------------------------------------------|
-| `name`       | string                                      | **Yes**  |         | configured unique display name                                                                                             |
-| `type`       | string                                      | **Yes**  |         |                                                                                                                            |
-| `config`     |                                             | No       |         | Custom options depending on the type                                                                                       |
-| `filterData` |                                             | No       |         | Defines a frame MatcherConfig that may filter data for the given layer                                                     |
-| `location`   | [FrameGeometrySource](#framegeometrysource) | No       |         |                                                                                                                            |
-| `opacity`    | integer                                     | No       |         | Common properties:<br/>https://openlayers.org/en/latest/apidoc/module-ol_layer_Base-BaseLayer.html<br/>Layer opacity (0-1) |
-| `tooltip`    | boolean                                     | No       |         | Check tooltip (defaults to true)                                                                                           |
+| Property     | Type                                        | Required | Default | Description                                                                                                                                             |
+|--------------|---------------------------------------------|----------|---------|---------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `name`       | string                                      | **Yes**  |         | configured unique display name                                                                                                                          |
+| `type`       | string                                      | **Yes**  |         |                                                                                                                                                         |
+| `config`     |                                             | No       |         | Custom options depending on the type                                                                                                                    |
+| `filterData` |                                             | No       |         | Defines a frame MatcherConfig that may filter data for the given layer                                                                                  |
+| `location`   | [FrameGeometrySource](#framegeometrysource) | No       |         |                                                                                                                                                         |
+| `opacity`    | number                                      | No       |         | Common properties:<br/>https://openlayers.org/en/latest/apidoc/module-ol_layer_Base-BaseLayer.html<br/>Layer opacity (0-1)<br/>Constraint: `>=0 & <=1`. |
+| `tooltip`    | boolean                                     | No       |         | Check tooltip (defaults to true)                                                                                                                        |
 
 ### FrameGeometrySource
 
@@ -87,6 +66,22 @@ title: GeomapPanelCfg kind
 | `longitude` | string | No       |         |                                                             |
 | `lookup`    | string | No       |         |                                                             |
 | `wkt`       | string | No       |         |                                                             |
+
+### MapViewConfig
+
+| Property    | Type    | Required | Default | Description                                                                                                         |
+|-------------|---------|----------|---------|---------------------------------------------------------------------------------------------------------------------|
+| `id`        | string  | **Yes**  | `zero`  |                                                                                                                     |
+| `allLayers` | boolean | No       | `true`  |                                                                                                                     |
+| `lastOnly`  | boolean | No       |         |                                                                                                                     |
+| `lat`       | number  | No       | `0`     | Constraint: `>=-1.797693134862315708145274237317043567981E+308 & <=1.797693134862315708145274237317043567981E+308`. |
+| `layer`     | string  | No       |         |                                                                                                                     |
+| `lon`       | number  | No       | `0`     | Constraint: `>=-1.797693134862315708145274237317043567981E+308 & <=1.797693134862315708145274237317043567981E+308`. |
+| `maxZoom`   | number  | No       |         |                                                                                                                     |
+| `minZoom`   | number  | No       |         |                                                                                                                     |
+| `padding`   | number  | No       |         |                                                                                                                     |
+| `shared`    | boolean | No       |         |                                                                                                                     |
+| `zoom`      | number  | No       | `1`     | Constraint: `>=-340282346638528859811704183484516925440 & <=340282346638528859811704183484516925440`.               |
 
 ### TooltipOptions
 
