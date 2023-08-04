@@ -55,7 +55,45 @@ type DataPipeline []Node
 // map of the refId of the of each command
 func (dp *DataPipeline) execute(c context.Context, now time.Time, s *Service) (mathexp.Vars, error) {
 	vars := make(mathexp.Vars)
+
+	// Execute datasource nodes first, and grouped by datasource.
+	dsNodes := []*DSNode{}
 	for _, node := range *dp {
+		if node.NodeType() != TypeDatasourceNode {
+			continue
+		}
+		dsNodes = append(dsNodes, node.(*DSNode))
+	}
+
+	executeDSNodesGrouped(c, now, vars, s, dsNodes)
+
+	// TODO: Mark Dependent nodes of vars[X] that have result.Error != nil, and then don't execute dependent nodes,
+	// but instead set them to an error and return
+
+	for _, node := range *dp {
+		if node.NodeType() == TypeDatasourceNode {
+			continue // already executed via executeDSNodesGrouped
+		}
+
+		var hasDepError bool
+		if cmd, ok := node.(*CMDNode); ok {
+			for _, neededVar := range cmd.Command.NeedsVars() {
+				if res, ok := vars[neededVar]; ok {
+					if res.Error != nil {
+						errResult := mathexp.Results{
+							Error: fmt.Errorf("not executing expression %v because expression %v errored", node.RefID(), neededVar), // TODO errutil
+						}
+						vars[node.RefID()] = errResult
+						hasDepError = true
+						break
+					}
+				}
+			}
+		}
+		if hasDepError {
+			continue
+		}
+
 		c, span := s.tracer.Start(c, "SSE.ExecuteNode")
 		span.SetAttributes("node.refId", node.RefID(), attribute.Key("node.refId").String(node.RefID()))
 		if node.NodeType() == TypeCMDNode {
@@ -67,7 +105,7 @@ func (dp *DataPipeline) execute(c context.Context, now time.Time, s *Service) (m
 
 		res, err := node.Execute(c, now, vars, s)
 		if err != nil {
-			return nil, err
+			res.Error = err
 		}
 
 		vars[node.RefID()] = res
@@ -84,12 +122,12 @@ func (s *Service) buildPipeline(req *Request) (DataPipeline, error) {
 
 	graph, err := s.buildDependencyGraph(req)
 	if err != nil {
-		return nil, err
+		return DataPipeline{}, err
 	}
 
 	nodes, err := buildExecutionOrder(graph)
 	if err != nil {
-		return nil, err
+		return DataPipeline{}, err
 	}
 
 	return nodes, nil
@@ -112,8 +150,10 @@ func (s *Service) buildDependencyGraph(req *Request) (*simple.DirectedGraph, err
 }
 
 // buildExecutionOrder returns a sequence of nodes ordered by dependency.
+// Note: During execution, Datasource query nodes for the same datasource will
+// be grouped into one request and executed first as phase after this call.
 func buildExecutionOrder(graph *simple.DirectedGraph) ([]Node, error) {
-	sortedNodes, err := topo.Sort(graph)
+	sortedNodes, err := topo.SortStabilized(graph, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -144,8 +184,7 @@ func buildNodeRegistry(g *simple.DirectedGraph) map[string]Node {
 // buildGraph creates a new graph populated with nodes for every query.
 func (s *Service) buildGraph(req *Request) (*simple.DirectedGraph, error) {
 	dp := simple.NewDirectedGraph()
-
-	for _, query := range req.Queries {
+	for i, query := range req.Queries {
 		if query.DataSource == nil || query.DataSource.UID == "" {
 			return nil, fmt.Errorf("missing datasource uid in query with refId %v", query.RefID)
 		}
@@ -169,6 +208,7 @@ func (s *Service) buildGraph(req *Request) (*simple.DirectedGraph, error) {
 			TimeRange:  query.TimeRange,
 			QueryType:  query.QueryType,
 			DataSource: query.DataSource,
+			idx:        int64(i),
 		}
 
 		var node Node

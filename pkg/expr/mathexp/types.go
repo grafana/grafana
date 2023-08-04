@@ -10,6 +10,7 @@ import (
 // Results is a container for Value interfaces.
 type Results struct {
 	Values Values
+	Error  error
 }
 
 // Values is a slice of Value interfaces

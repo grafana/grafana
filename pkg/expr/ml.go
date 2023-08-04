@@ -141,7 +141,7 @@ func (s *Service) buildMLNode(dp *simple.DirectedGraph, rn *rawNode, req *Reques
 
 	return &MLNode{
 		baseNode: baseNode{
-			id:    dp.NewNode().ID(),
+			id:    rn.idx,
 			refID: rn.RefID,
 		},
 		TimeRange: rn.TimeRange,
