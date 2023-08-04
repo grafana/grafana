@@ -212,7 +212,7 @@ type AnnotationQuery struct {
 type AnnotationTarget struct {
 	// Only required/valid for the grafana datasource...
 	// but code+tests is already depending on it so hard to change
-	Limit int64 `json:"limit"`
+	Limit *int64 `json:"limit,omitempty"`
 
 	// Only required/valid for the grafana datasource...
 	// but code+tests is already depending on it so hard to change
@@ -220,11 +220,11 @@ type AnnotationTarget struct {
 
 	// Only required/valid for the grafana datasource...
 	// but code+tests is already depending on it so hard to change
-	Tags []string `json:"tags"`
+	Tags []string `json:"tags,omitempty"`
 
 	// Only required/valid for the grafana datasource...
 	// but code+tests is already depending on it so hard to change
-	Type string `json:"type"`
+	Type *string `json:"type,omitempty"`
 }
 
 // 0 for no shared crosshair or tooltip (default).
@@ -256,13 +256,13 @@ type Link struct {
 	Title string `json:"title"`
 
 	// Tooltip to display when the user hovers their mouse over it
-	Tooltip string `json:"tooltip"`
+	Tooltip *string `json:"tooltip,omitempty"`
 
 	// Dashboard Link type. Accepted values are dashboards (to refer to another dashboard) and link (to refer to an external resource)
 	Type LinkType `json:"type"`
 
 	// Link URL. Only required/valid if the type is link
-	Url string `json:"url"`
+	Url *string `json:"url,omitempty"`
 }
 
 // Dashboard Link type. Accepted values are dashboards (to refer to another dashboard) and link (to refer to an external resource)

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"sort"
+	"strings"
 
 	"cuelang.org/go/cue"
 	cjson "cuelang.org/go/encoding/json"
@@ -51,31 +52,52 @@ func (k *Kind) Compose(slot kindsys.Slot, kinds ...kindsys.Composable) (kindsys.
 	com[slot.Name] = all
 
 	return &Kind{
-		Core:   k.Core,
-		lin:    k.lin,
-		jcodec: k.jcodec,
-		valmux: k.valmux,
+		Core:     k.Core,
+		lin:      k.lin,
+		jcodec:   k.jcodec,
+		valmux:   k.valmux,
+		composed: com,
 	}, nil
 }
 
 func (k *Kind) Validate(b []byte, codec kindsys.Decoder) error {
+	dashv := struct {
+		SchemaVersion int `json:"schemaVersion,omitempty"`
+	}{}
+	// any error here will be caught later
+	_ = json.Unmarshal(b, &dashv)
+	// Only try to validate dashboards that are at least the HandoffSchemaVersion
+	if dashv.SchemaVersion != 0 && dashv.SchemaVersion < HandoffSchemaVersion {
+		return nil
+	}
+
 	// TODO remove this whole method once slots are described declaratively and this is all handled generically
 	if err := k.Core.Validate(b, codec); err != nil {
 		return err
 	}
 
-	type pseudoDash struct {
-		Panels []struct {
-			Type        string          `json:"type"`
-			Options     json.RawMessage `json:"options"`
-			FieldConfig struct {
-				Defaults struct {
-					Custom json.RawMessage `json:"custom"`
-				} `json:"defaults"`
-			} `json:"fieldConfig"`
-			Targets []json.RawMessage `json:"targets"`
-		} `json:"panels"`
+	// Base validation succeeded. Now, perform additional validation with composed kinds
+	type pdt struct {
+		Spec struct {
+			Panels []struct {
+				Type        string          `json:"type"`
+				Options     json.RawMessage `json:"options"`
+				FieldConfig struct {
+					Defaults struct {
+						Custom json.RawMessage `json:"custom"`
+					} `json:"defaults"`
+				} `json:"fieldConfig"`
+				Targets []json.RawMessage `json:"targets"`
+			} `json:"panels"`
+		} `json:"spec"`
 	}
+
+	pd := pdt{}
+	err := json.Unmarshal(b, &pd)
+	if err != nil {
+		return fmt.Errorf("error unmarshaling panel into intermediate struct: %w", err)
+	}
+	cctx := k.lin.Runtime().Context()
 
 	type pcfg struct {
 		Options     json.RawMessage `json:"Options"`
@@ -88,19 +110,11 @@ func (k *Kind) Validate(b []byte, codec kindsys.Decoder) error {
 		}
 	}
 
-	// Base validation succeeded. Now, perform additional validation with composed kinds
-	pd := pseudoDash{}
-	err := json.Unmarshal(b, &pd)
-	if err != nil {
-		return fmt.Errorf("error unmarshaling panel into intermediate struct: %w", err)
-	}
-	cctx := k.lin.Runtime().Context()
-
-	for _, panel := range pd.Panels {
+	for _, panel := range pd.Spec.Panels {
 		for _, ckind := range k.composed["panel"] {
 			// Only attempt panel type validation if panel is of that kind. If none match,
 			// that's ok, we let it fall through
-			if ckind.Name() == panel.Type {
+			if strings.TrimSuffix(ckind.MachineName(), "panelcfg") == panel.Type {
 				// TODO this is fine until we allow multi-schema
 				sch := ckind.Lineage().First()
 
