@@ -69,20 +69,17 @@ func TestCallResource(t *testing.T) {
 	pCfg, err := config.ProvideConfig(setting.ProvideProvider(cfg), cfg, featuremgmt.WithFeatures())
 	require.NoError(t, err)
 	reg := registry.ProvideService()
-	angularInspector, err := angularinspector.NewStaticInspector()
-	require.NoError(t, err)
+	angularInspector := angularinspector.NewStaticInspector()
 	proc := process.NewManager(reg)
 
 	discovery := pipeline.ProvideDiscoveryStage(pCfg, finder.NewLocalFinder(pCfg.DevMode), reg)
 	bootstrap := pipeline.ProvideBootstrapStage(pCfg, signature.ProvideService(pCfg, statickey.New()), assetpath.ProvideService(pluginscdn.ProvideService(pCfg)))
+	validate := pipeline.ProvideValidationStage(pCfg, signature.NewValidator(signature.NewUnsignedAuthorizer(pCfg)), angularInspector)
 	initialize := pipeline.ProvideInitializationStage(pCfg, reg, fakes.NewFakeLicensingService(), provider.ProvideService(coreRegistry), proc, &fakes.FakeOauthService{}, fakes.NewFakeRoleRegistry())
 	terminate, err := pipeline.ProvideTerminationStage(pCfg, reg, proc)
 	require.NoError(t, err)
 
-	l := loader.ProvideService(pCfg, signature.NewUnsignedAuthorizer(pCfg),
-		reg, fakes.NewFakeRoleRegistry(),
-		assetpath.ProvideService(pluginscdn.ProvideService(pCfg)),
-		angularInspector, &fakes.FakeOauthService{}, discovery, bootstrap, initialize, terminate)
+	l := loader.ProvideService(discovery, bootstrap, validate, initialize, terminate)
 	srcs := sources.ProvideService(cfg, pCfg)
 	ps, err := store.ProvideService(reg, srcs, l)
 	require.NoError(t, err)

@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/discovery"
 	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/initialization"
 	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/termination"
+	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/validation"
 	"github.com/grafana/grafana/pkg/plugins/manager/process"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
@@ -35,6 +36,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/angularpatternsstore"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/clientmiddleware"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/config"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/errors"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/keyretriever"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/keyretriever/dynamic"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/keystore"
@@ -72,15 +74,20 @@ var WireSet = wire.NewSet(
 	wire.Bind(new(initialization.Initializer), new(*initialization.Initialize)),
 	pipeline.ProvideTerminationStage,
 	wire.Bind(new(termination.Terminator), new(*termination.Terminate)),
+	pipeline.ProvideValidationStage,
+	wire.Bind(new(validation.Validator), new(*validation.Validate)),
 
 	angularpatternsstore.ProvideService,
 	angulardetectorsprovider.ProvideDynamic,
 	angularinspector.ProvideService,
 	wire.Bind(new(pAngularInspector.Inspector), new(*angularinspector.Service)),
 
+	signature.ProvideValidatorService,
+	wire.Bind(new(signature.Validator), new(*signature.Validation)),
 	loader.ProvideService,
 	wire.Bind(new(pluginLoader.Service), new(*loader.Loader)),
-	wire.Bind(new(plugins.ErrorResolver), new(*loader.Loader)),
+	errors.ProvideService,
+	wire.Bind(new(plugins.ErrorResolver), new(*errors.Resolver)),
 	manager.ProvideInstaller,
 	wire.Bind(new(plugins.Installer), new(*manager.PluginInstaller)),
 	registry.ProvideService,

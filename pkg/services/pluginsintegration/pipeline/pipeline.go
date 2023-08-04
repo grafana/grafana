@@ -6,14 +6,17 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/envvars"
+	"github.com/grafana/grafana/pkg/plugins/manager/loader/angular/angularinspector"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/assetpath"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/finder"
 	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/bootstrap"
 	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/discovery"
 	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/initialization"
 	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/termination"
+	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/validation"
 	"github.com/grafana/grafana/pkg/plugins/manager/process"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
+	"github.com/grafana/grafana/pkg/plugins/manager/signature"
 	"github.com/grafana/grafana/pkg/plugins/oauth"
 )
 
@@ -34,6 +37,16 @@ func ProvideBootstrapStage(cfg *config.Cfg, sc plugins.SignatureCalculator, a *a
 	return bootstrap.New(cfg, bootstrap.Opts{
 		ConstructFunc: bootstrap.DefaultConstructFunc(sc, a),
 		DecorateFuncs: bootstrap.DefaultDecorateFuncs,
+	})
+}
+
+func ProvideValidationStage(cfg *config.Cfg, sv signature.Validator, ai angularinspector.Inspector) *validation.Validate {
+	return validation.New(cfg, validation.Opts{
+		ValidateFuncs: []validation.ValidateFunc{
+			validation.SignatureValidationStep(sv),
+			validation.ModuleJSValidationStep(),
+			validation.AngularDetectionStep(cfg, ai),
+		},
 	})
 }
 
