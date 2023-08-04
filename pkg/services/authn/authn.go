@@ -394,6 +394,12 @@ func WriteSessionCookie(w http.ResponseWriter, cfg *setting.Cfg, token *usertoke
 
 func DeleteSessionCookie(w http.ResponseWriter, cfg *setting.Cfg) {
 	cookies.DeleteCookie(w, cfg.LoginCookieName, cookieOptions(cfg))
+	cookies.DeleteCookie(w, sessionExpiryCookie, func() cookies.CookieOptions {
+		opts := cookieOptions(cfg)()
+		opts.NotHttpOnly = true
+		return opts
+	})
+
 }
 
 func cookieOptions(cfg *setting.Cfg) func() cookies.CookieOptions {
