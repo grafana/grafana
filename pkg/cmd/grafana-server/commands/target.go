@@ -3,34 +3,23 @@ package commands
 import (
 	"context"
 	"fmt"
-	_ "net/http/pprof"
 	"os"
-	"os/signal"
 	"runtime/debug"
 	"strings"
-	"syscall"
-	"time"
 
 	"github.com/urfave/cli/v2"
 
 	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/infra/process"
 	"github.com/grafana/grafana/pkg/server"
-	_ "github.com/grafana/grafana/pkg/services/alerting/conditions"
-	_ "github.com/grafana/grafana/pkg/services/alerting/notifiers"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-type ServerOptions struct {
-	Version     string
-	Commit      string
-	BuildBranch string
-	BuildStamp  string
-	Context     *cli.Context
-}
-
-func ServerCommand(version, commit, buildBranch, buildstamp string) *cli.Command {
+// TargetCommand is the command for running a pared-down grafana server suitable
+// for starting background tasks and dskit modules. It can be used to start all
+// of Grafana, but by default the HTTPServer (and it's dependencies) do not
+// start.
+func TargetCommand(version, commit, buildBranch, buildstamp string) *cli.Command {
 	return &cli.Command{
 		Name:  "server",
 		Usage: "run the grafana server",
@@ -44,11 +33,11 @@ func ServerCommand(version, commit, buildBranch, buildstamp string) *cli.Command
 				Context:     context,
 			})
 		},
-		Subcommands: []*cli.Command{TargetCommand(version, commit, buildBranch, buildstamp)},
 	}
 }
 
-func RunServer(opts ServerOptions) error {
+// RunBaseServer starts up a grafana server without the HTTPServer.
+func RunBaseServer(opts ServerOptions) error {
 	if Version || VerboseVersion {
 		fmt.Printf("Version %s (commit: %s, branch: %s)\n", opts.Version, opts.Commit, opts.BuildBranch)
 		if VerboseVersion {
@@ -95,7 +84,7 @@ func RunServer(opts ServerOptions) error {
 
 	configOptions := strings.Split(ConfigOverrides, " ")
 
-	s, err := server.Initialize(
+	s, err := server.InitializeBaseServer(
 		setting.CommandLineArgs{
 			Config:   ConfigFile,
 			HomePath: HomePath,
@@ -119,54 +108,4 @@ func RunServer(opts ServerOptions) error {
 	go listenToSystemSignals(ctx, s)
 
 	return s.Run()
-}
-
-func validPackaging(packaging string) string {
-	validTypes := []string{"dev", "deb", "rpm", "docker", "brew", "hosted", "unknown"}
-	for _, vt := range validTypes {
-		if packaging == vt {
-			return packaging
-		}
-	}
-	return "unknown"
-}
-
-// baseServer is a minimal interface satisfied by Server and BasicServer for
-// any methods which are used by both.
-type baseServer interface {
-	Shutdown(context.Context, string) error
-}
-
-func listenToSystemSignals(ctx context.Context, s baseServer) {
-	signalChan := make(chan os.Signal, 1)
-	sighupChan := make(chan os.Signal, 1)
-
-	signal.Notify(sighupChan, syscall.SIGHUP)
-	signal.Notify(signalChan, os.Interrupt, syscall.SIGTERM)
-
-	for {
-		select {
-		case <-sighupChan:
-			if err := log.Reload(); err != nil {
-				fmt.Fprintf(os.Stderr, "Failed to reload loggers: %s\n", err)
-			}
-		case sig := <-signalChan:
-			ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
-			defer cancel()
-			if err := s.Shutdown(ctx, fmt.Sprintf("System signal: %s", sig)); err != nil {
-				fmt.Fprintf(os.Stderr, "Timed out waiting for server to shut down\n")
-			}
-			return
-		}
-	}
-}
-
-func checkPrivileges() {
-	elevated, err := process.IsRunningWithElevatedPrivileges()
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error checking server process execution privilege. error: %s\n", err.Error())
-	}
-	if elevated {
-		fmt.Println("Grafana server is running with elevated privileges. This is not recommended")
-	}
 }
