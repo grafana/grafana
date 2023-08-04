@@ -2,7 +2,7 @@ import React from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { Icon, RadioButtonList, Tooltip, useStyles2, useTheme2 } from '@grafana/ui';
+import { Icon, RadioButtonList, Tooltip, useStyles2, useTheme2, PopoverContent } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
 import { OrgRole } from 'app/types';
 
@@ -24,7 +24,7 @@ interface Props {
   onChange: (value: OrgRole) => void;
   disabled?: boolean;
   disabledMesssage?: string;
-  tooltipMessage?: string;
+  tooltipMessage?: PopoverContent;
 }
 
 export const BuiltinRoleSelector = ({ value, onChange, disabled, disabledMesssage, tooltipMessage }: Props) => {

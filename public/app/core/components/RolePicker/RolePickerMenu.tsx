@@ -2,7 +2,7 @@ import { css, cx } from '@emotion/css';
 import React, { useEffect, useRef, useState } from 'react';
 
 import { config } from '@grafana/runtime';
-import { Button, CustomScrollbar, HorizontalGroup, useStyles2, useTheme2 } from '@grafana/ui';
+import { Button, CustomScrollbar, HorizontalGroup, TextLink, useStyles2, useTheme2 } from '@grafana/ui';
 import { getSelectStyles } from '@grafana/ui/src/components/Select/getSelectStyles';
 import { contextSrv } from 'app/core/core';
 import { OrgRole, Role } from 'app/types';
@@ -37,9 +37,22 @@ const fixedRoleGroupNames: Record<string, string> = {
 };
 
 const noBasicRoleFlag = contextSrv.licensedAccessControlEnabled() && config.featureToggles.noBasicRole;
-const tooltipMessage = noBasicRoleFlag
-  ? 'You can now select the "No basic role" option and add permissions to your custom needs.'
-  : undefined;
+const tooltipMessage = noBasicRoleFlag ? (
+  <>
+    You can now select the &quot;No basic role&quot; option and add permissions to your custom needs. You can find more
+    information in&nbsp;
+    <TextLink
+      href="https://grafana.com/docs/grafana/latest/administration/roles-and-permissions/#organization-roles"
+      variant="bodySmall"
+      external
+    >
+      our documentation
+    </TextLink>
+    .
+  </>
+) : (
+  ''
+);
 
 interface RolePickerMenuProps {
   basicRole?: OrgRole;
