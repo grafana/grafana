@@ -122,11 +122,12 @@ func TestIntegrationPluginManager(t *testing.T) {
 	lic := plicensing.ProvideLicensing(cfg, &licensing.OSSLicensingService{Cfg: cfg})
 	angularInspector, err := angularinspector.NewStaticInspector()
 	require.NoError(t, err)
+	proc := process.NewManager(reg)
 
 	discovery := pipeline.ProvideDiscoveryStage(pCfg, finder.NewLocalFinder(pCfg.DevMode), reg)
 	bootstrap := pipeline.ProvideBootstrapStage(pCfg, signature.ProvideService(pCfg, statickey.New()), assetpath.ProvideService(pluginscdn.ProvideService(pCfg)))
-	initialize := pipeline.ProvideInitializationStage(pCfg, reg, lic, provider.ProvideService(coreRegistry))
-	terminate, err := pipeline.ProvideTerminationStage(pCfg, reg, process.NewManager(reg))
+	initialize := pipeline.ProvideInitializationStage(pCfg, reg, lic, provider.ProvideService(coreRegistry), proc, &fakes.FakeOauthService{}, fakes.NewFakeRoleRegistry())
+	terminate, err := pipeline.ProvideTerminationStage(pCfg, reg, proc)
 	require.NoError(t, err)
 
 	l := loader.ProvideService(pCfg, signature.NewUnsignedAuthorizer(pCfg),
