@@ -31,6 +31,8 @@ import (
 	"github.com/grafana/grafana/pkg/middleware/loggermw"
 	"github.com/grafana/grafana/pkg/modules"
 	pluginDashboards "github.com/grafana/grafana/pkg/plugins/manager/dashboards"
+	"github.com/grafana/grafana/pkg/registry"
+	"github.com/grafana/grafana/pkg/registry/backgroundsvcs"
 	"github.com/grafana/grafana/pkg/registry/corekind"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
@@ -72,6 +74,7 @@ import (
 	ldapservice "github.com/grafana/grafana/pkg/services/ldap/service"
 	"github.com/grafana/grafana/pkg/services/libraryelements"
 	"github.com/grafana/grafana/pkg/services/librarypanels"
+	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/live"
 	"github.com/grafana/grafana/pkg/services/live/pushhttp"
 	"github.com/grafana/grafana/pkg/services/login"
@@ -420,4 +423,39 @@ func InitializeForTest(cla setting.CommandLineArgs, opts Options, apiOpts api.Se
 func InitializeForCLI(cla setting.CommandLineArgs) (Runner, error) {
 	wire.Build(wireExtsCLISet)
 	return Runner{}, nil
+}
+
+// The BaseCLISet is a simplified set of dependencies for the CLI, suitable for
+// running background services and targeted dskit modules without starting up
+// the full Grafana server.
+// NOTE: This is an OSS only set of dependencies; if this works it should be moved to wireexts_oss and add the enterprise set.
+var wireBaseCLISet = wire.NewSet(
+	NewBaseRunner,
+	setting.NewCfgFromArgs,
+	setting.ProvideProvider, wire.Bind(new(setting.Provider), new(*setting.OSSImpl)),
+	featuremgmt.ProvideManagerService,
+	featuremgmt.ProvideToggles,
+	licensing.ProvideService,
+	wire.Bind(new(licensing.Licensing), new(*licensing.OSSLicensingService)),
+	hooks.ProvideService,
+	backgroundsvcs.ProvideBackgroundServiceRegistry,
+	wire.Bind(new(registry.BackgroundServiceRegistry), new(*backgroundsvcs.BackgroundServiceRegistry)),
+	modules.WireSet,
+)
+
+func InitializeForCLITarget(cla setting.CommandLineArgs) (BaseRunner, error) {
+	wire.Build(wireBaseCLISet)
+	return BaseRunner{}, nil
+}
+
+var wireBaseServerSet = wire.NewSet(
+	NewBase,
+	wireBaseCLISet,
+)
+
+// InitializeBaseServer is a simplified set of dependencies for the CLI,
+// suitable for running background services and targeting dskit modules.
+func InitializeBaseServer(cla setting.CommandLineArgs, opts Options, apiOpts api.ServerOptions) (*BaseServer, error) {
+	wire.Build(wireBaseServerSet)
+	return &BaseServer{}, nil
 }
