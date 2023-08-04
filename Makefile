@@ -126,7 +126,7 @@ test-go: test-go-unit test-go-integration
 .PHONY: test-go-unit
 test-go-unit: ## Run unit tests for backend with flags.
 	@echo "test backend unit tests"
-	$(GO) test -tags requires_buildifer -short -covermode=atomic -timeout=30m ./pkg/... $(GO_DECOUPLED_CORE_PLUGIN_TESTS)
+	$(GO) test -short -covermode=atomic -timeout=30m ./pkg/... $(GO_DECOUPLED_CORE_PLUGIN_TESTS)
 
 .PHONY: test-go-integration
 test-go-integration: ## Run integration tests for backend with flags.
