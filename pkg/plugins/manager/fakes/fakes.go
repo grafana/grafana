@@ -487,14 +487,14 @@ func (f *FakeBootstrapper) Bootstrap(ctx context.Context, src plugins.PluginSour
 }
 
 type FakeValidator struct {
-	ValidateFunc func(ctx context.Context, p *plugins.Plugin) error
+	ValidateFunc func(ctx context.Context, ps []*plugins.Plugin) ([]*plugins.Plugin, error)
 }
 
-func (f *FakeValidator) Validate(ctx context.Context, p *plugins.Plugin) error {
+func (f *FakeValidator) Validate(ctx context.Context, ps []*plugins.Plugin) ([]*plugins.Plugin, error) {
 	if f.ValidateFunc != nil {
-		return f.ValidateFunc(ctx, p)
+		return f.ValidateFunc(ctx, ps)
 	}
-	return nil
+	return []*plugins.Plugin{}, nil
 }
 
 type FakeInitializer struct {

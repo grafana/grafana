@@ -10,7 +10,7 @@ import (
 
 // Validator is responsible for the Validation stage of the plugin loader pipeline.
 type Validator interface {
-	Validate(ctx context.Context, p *plugins.Plugin) error
+	Validate(ctx context.Context, ps []*plugins.Plugin) ([]*plugins.Plugin, error)
 }
 
 // ValidateFunc is the function used for the Validate step of the Validation stage.
@@ -40,12 +40,27 @@ func New(cfg *config.Cfg, opts Opts) *Validate {
 }
 
 // Validate will execute the Validate steps of the Validation stage.
-func (t *Validate) Validate(ctx context.Context, p *plugins.Plugin) error {
-	for _, step := range t.validateSteps {
-		if err := step(ctx, p); err != nil {
-			return err
+func (t *Validate) Validate(ctx context.Context, ps []*plugins.Plugin) ([]*plugins.Plugin, error) {
+	if len(t.validateSteps) == 0 {
+		return ps, nil
+	}
+
+	var err error
+	verifiedPlugins := make([]*plugins.Plugin, 0, len(ps))
+	for _, p := range ps {
+		stepFailed := false
+		for _, validate := range t.validateSteps {
+			err = validate(ctx, p)
+			if err != nil {
+				stepFailed = true
+				t.log.Error("Plugin verification failed", "pluginID", p.ID, "err", err)
+				break
+			}
+		}
+		if !stepFailed {
+			verifiedPlugins = append(verifiedPlugins, p)
 		}
 	}
 
-	return nil
+	return verifiedPlugins, nil
 }

@@ -50,14 +50,9 @@ func (l *Loader) Load(ctx context.Context, src plugins.PluginSource) ([]*plugins
 		return nil, err
 	}
 
-	verifiedPlugins := make([]*plugins.Plugin, 0, len(bootstrappedPlugins))
-	for _, p := range bootstrappedPlugins {
-		err = l.validation.Validate(ctx, p)
-		if err != nil {
-			l.log.Warn("Skipping loading plugin due to problem with validation", "pluginID", p.ID, "err", err)
-			continue
-		}
-		verifiedPlugins = append(verifiedPlugins, p)
+	verifiedPlugins, err := l.validation.Validate(ctx, bootstrappedPlugins)
+	if err != nil {
+		return nil, err
 	}
 
 	initializedPlugins, err := l.initializer.Initialize(ctx, verifiedPlugins)

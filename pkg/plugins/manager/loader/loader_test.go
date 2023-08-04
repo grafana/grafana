@@ -485,11 +485,11 @@ func TestLoader_Load(t *testing.T) {
 					steps = append(steps, "bootstrap")
 					return []*plugins.Plugin{plugin}, nil
 				},
-			}, &fakes.FakeValidator{ValidateFunc: func(ctx context.Context, p *plugins.Plugin) error {
-				require.Equal(t, plugin, p)
+			}, &fakes.FakeValidator{ValidateFunc: func(ctx context.Context, ps []*plugins.Plugin) ([]*plugins.Plugin, error) {
+				require.Equal(t, []*plugins.Plugin{plugin}, ps)
 
 				steps = append(steps, "validate")
-				return nil
+				return ps, nil
 			}},
 			&fakes.FakeInitializer{
 				IntializeFunc: func(ctx context.Context, ps []*plugins.Plugin) ([]*plugins.Plugin, error) {
