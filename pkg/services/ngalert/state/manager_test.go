@@ -950,7 +950,7 @@ func TestProcessEvalResults(t *testing.T) {
 						}
 						return r
 					}(),
-					Labels: mergeLabels(labels["system + rule"], data.Labels{
+					Labels: mergeLabels(labels["system + rule + labels1"], data.Labels{
 						"datasource_uid": "datasource_uid_1",
 						"ref_id":         "A",
 					}),
