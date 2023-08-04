@@ -1247,6 +1247,7 @@ func TestProcessEvalResults(t *testing.T) {
 			states := st.GetStatesForRuleUID(tc.alertRule.OrgID, tc.alertRule.UID)
 			assert.Len(t, states, len(tc.expectedStates))
 
+			expectedStates := make(map[string]*state.State, len(tc.expectedStates))
 			for _, s := range tc.expectedStates {
 				// patch all optional fields of the expected state
 				setCacheID(s)
@@ -1265,9 +1266,27 @@ func TestProcessEvalResults(t *testing.T) {
 				if s.Values == nil {
 					s.Values = make(map[string]float64)
 				}
+				expectedStates[s.CacheID] = s
+			}
 
-				cachedState := st.Get(s.OrgID, s.AlertRuleUID, s.CacheID)
-				assert.Equal(t, s, cachedState)
+			for _, actual := range states {
+				expected, ok := expectedStates[actual.CacheID]
+				if !ok {
+					assert.Failf(t, "state is not expected", "State: %#v", actual)
+					continue
+				}
+				delete(expectedStates, actual.CacheID)
+				if !assert.ObjectsAreEqual(expected, actual) {
+					assert.Failf(t, "expected and acutal states are not equal", "Diff: %s", cmp.Diff(expected, actual, cmpopts.EquateErrors()))
+				}
+			}
+
+			if len(expectedStates) > 0 {
+				vals := make([]state.State, 0, len(expectedStates))
+				for _, s := range expectedStates {
+					vals = append(vals, *s)
+				}
+				assert.Failf(t, "some expected states do not exist", "States: %#v", vals)
 			}
 
 			require.Eventuallyf(t, func() bool {
