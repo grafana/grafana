@@ -975,15 +975,7 @@ steps:
   image: grafana/build-container:1.7.5
   name: yarn-install
 - commands:
-  - |-
-    echo -e "unknwon
-    referer
-    errorstring
-    eror
-    iam
-    wan" > words_to_ignore.txt
-  - codespell -I words_to_ignore.txt docs/
-  - rm words_to_ignore.txt
+  - codespell -I .codespellignore docs/
   image: grafana/build-container:1.7.5
   name: codespell
 - commands:
@@ -1086,15 +1078,7 @@ steps:
   image: grafana/build-container:1.7.5
   name: yarn-install
 - commands:
-  - |-
-    echo -e "unknwon
-    referer
-    errorstring
-    eror
-    iam
-    wan" > words_to_ignore.txt
-  - codespell -I words_to_ignore.txt docs/
-  - rm words_to_ignore.txt
+  - codespell -I .codespellignore docs/
   image: grafana/build-container:1.7.5
   name: codespell
 - commands:
@@ -4079,6 +4063,6 @@ kind: secret
 name: github_token
 ---
 kind: signature
-hmac: 3c78f9469e1e7210a083720809140e3c4c447ccd4dc2306246fc08645b9f4324
+hmac: ae94e73d30ff5ca5f231dd677f2db92ab671e11ded0fe084558d8410adbf7080
 
 ...
