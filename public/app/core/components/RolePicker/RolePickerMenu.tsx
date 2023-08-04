@@ -50,7 +50,9 @@ const tooltipMessage = noBasicRoleFlag ? (
     </TextLink>
     .
   </>
-) : undefined;
+) : (
+  ''
+);
 
 interface RolePickerMenuProps {
   basicRole?: OrgRole;

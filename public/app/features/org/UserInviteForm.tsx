@@ -38,7 +38,9 @@ const tooltipMessage = noBasicRoleFlag ? (
     </TextLink>
     .
   </>
-) : undefined;
+) : (
+  ''
+);
 
 const roles: Array<SelectableValue<OrgRole>> = Object.values(OrgRole)
   .filter((r) => noBasicRoleFlag || r !== OrgRole.None)
