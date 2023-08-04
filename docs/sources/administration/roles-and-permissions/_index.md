@@ -85,7 +85,7 @@ The following table lists permissions for each role.
 
 | Permission                     | Organization administrator | Editor | Viewer | No Basic Role |
 | :----------------------------- | :------------------------: | :----: | :----: | :-----------: |
-| View dashboards                |                            |  yes   |  yes   |               |
+| View dashboards                |            yes             |  yes   |  yes   |               |
 | Add, edit, delete dashboards   |            yes             |  yes   |        |               |
 | Add, edit, delete folders      |            yes             |  yes   |        |               |
 | View playlists                 |            yes             |  yes   |  yes   |               |
