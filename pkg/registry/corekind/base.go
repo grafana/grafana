@@ -1,6 +1,7 @@
 package corekind
 
 import (
+	"sort"
 	"sync"
 
 	"github.com/google/wire"
