@@ -1,40 +1,40 @@
 package common
 
 // TODO docs
-AxisPlacement:      "auto" | "top" | "right" | "bottom" | "left" | "hidden" @cuetsy(kind="enum")
+AxisPlacement: "auto" | "top" | "right" | "bottom" | "left" | "hidden" @cuetsy(kind="enum")
 
 // TODO docs
-AxisColorMode:      "text" | "series"                                       @cuetsy(kind="enum")
+AxisColorMode: "text" | "series" @cuetsy(kind="enum")
 
 // TODO docs
-VisibilityMode:     "auto" | "never" | "always"                             @cuetsy(kind="enum")
+VisibilityMode: "auto" | "never" | "always" @cuetsy(kind="enum")
 
 // TODO docs
-GraphDrawStyle:     "line" | "bars" | "points"                              @cuetsy(kind="enum")
+GraphDrawStyle: "line" | "bars" | "points" @cuetsy(kind="enum")
 
 // TODO docs
-GraphTransform:     "constant" | "negative-Y"                               @cuetsy(kind="enum",memberNames="Constant|NegativeY")
+GraphTransform: "constant" | "negative-Y" @cuetsy(kind="enum",memberNames="Constant|NegativeY")
 
 // TODO docs
-LineInterpolation:  "linear" | "smooth" | "stepBefore" | "stepAfter"        @cuetsy(kind="enum")
+LineInterpolation: "linear" | "smooth" | "stepBefore" | "stepAfter" @cuetsy(kind="enum")
 
 // TODO docs
-ScaleDistribution:  "linear" | "log" | "ordinal" | "symlog"                 @cuetsy(kind="enum")
+ScaleDistribution: "linear" | "log" | "ordinal" | "symlog" @cuetsy(kind="enum")
 
 // TODO docs
-GraphGradientMode:  "none" | "opacity" | "hue" | "scheme"                   @cuetsy(kind="enum")
+GraphGradientMode: "none" | "opacity" | "hue" | "scheme" @cuetsy(kind="enum")
 
 // TODO docs
-StackingMode:       "none" | "normal" | "percent"                           @cuetsy(kind="enum")
+StackingMode: "none" | "normal" | "percent" @cuetsy(kind="enum")
 
 // TODO docs
-BarAlignment:       -1 | 0 | 1                                              @cuetsy(kind="enum",memberNames="Before|Center|After")
+BarAlignment: -1 | 0 | 1 @cuetsy(kind="enum",memberNames="Before|Center|After")
 
 // TODO docs
-ScaleOrientation:   0 | 1                                                   @cuetsy(kind="enum",memberNames="Horizontal|Vertical")
+ScaleOrientation: 0 | 1 @cuetsy(kind="enum",memberNames="Horizontal|Vertical")
 
 // TODO docs
-ScaleDirection:     1 | 1 | -1 | -1                                         @cuetsy(kind="enum",memberNames="Up|Right|Down|Left")
+ScaleDirection: 1 | 1 | -1 | -1 @cuetsy(kind="enum",memberNames="Up|Right|Down|Left")
 
 // TODO docs
 LineStyle: {
@@ -227,15 +227,15 @@ GraphFieldConfig: {
 
 // TODO docs
 VizLegendOptions: {
-	displayMode:  LegendDisplayMode
-	placement:    LegendPlacement
-	showLegend: 	bool
-	asTable?:     bool
-	isVisible?:   bool
-	sortBy?:      string
-	sortDesc?:    bool
-	width?:       number
-	calcs:        [...string]
+	displayMode: LegendDisplayMode
+	placement:   LegendPlacement
+	showLegend:  bool // TODO existing devenv dashboards seem to omit this field
+	asTable?:    bool
+	isVisible?:  bool
+	sortBy?:     string
+	sortDesc?:   bool
+	width?:      number
+	calcs: [...string]
 } @cuetsy(kind="interface")
 
 // Enum expressing the possible display modes

@@ -63,7 +63,7 @@ require (
 	github.com/google/wire v0.5.0 // @grafana/backend-platform
 	github.com/gorilla/websocket v1.5.0 // @grafana/grafana-app-platform-squad
 	github.com/grafana/alerting v0.0.0-20230606080147-55b8d71c7890 // @grafana/alerting-squad-backend
-	github.com/grafana/cuetsy v0.1.10 // @grafana/grafana-as-code
+	github.com/grafana/cuetsy v0.1.11 // @grafana/grafana-as-code
 	github.com/grafana/grafana-aws-sdk v0.16.1 // @grafana/aws-datasources
 	github.com/grafana/grafana-azure-sdk-go v1.7.0 // @grafana/backend-platform
 	github.com/grafana/grafana-plugin-sdk-go v0.171.0 // @grafana/plugins-platform-backend
@@ -266,7 +266,7 @@ require (
 	github.com/grafana/go-mssqldb v0.9.1 // @grafana/grafana-bi-squad
 	github.com/grafana/kindsys v0.0.0-20230803163628-16bde441fe34 //  @grafana/grafana-as-code
 	github.com/grafana/tempo v1.5.1-0.20230524121406-1dc1bfe7085b // @grafana/observability-traces-and-profiling
-	github.com/grafana/thema v0.0.0-20230712153715-375c1b45f3ed // @grafana/grafana-as-code
+	github.com/grafana/thema v0.0.0-20230801151112-711d7fd5162f // @grafana/grafana-as-code
 	github.com/ory/fosite v0.44.1-0.20230317114349-45a6785cc54f // @grafana/grafana-authnz-team
 	github.com/redis/go-redis/v9 v9.0.2 // @grafana/alerting-squad-backend
 	github.com/weaveworks/common v0.0.0-20230511094633-334485600903 // @grafana/alerting-squad-backend

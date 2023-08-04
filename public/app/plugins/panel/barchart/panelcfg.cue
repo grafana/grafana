@@ -42,7 +42,7 @@ composableKinds: PanelCfg: {
 					// Controls the rotation of the x axis labels.
 					xTickLabelRotation: int32 & >=-90 & <=90 | *0
 					// Sets the max length that a label can have before it is truncated.
-					xTickLabelMaxLength: int32 & >=0
+					xTickLabelMaxLength: int32 & >=0 // TODO field is absent in some devenv dashboards
 					// Controls the spacing between x axis labels.
 					// negative values indicate backwards skipping behavior
 					xTickLabelSpacing?: int32 | *0
