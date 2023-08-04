@@ -292,8 +292,6 @@ func TestProcessEvalResults(t *testing.T) {
 	t2 := tn(2)
 	t3 := tn(3)
 
-	ruleLabelKey := "label"
-	ruleLabelValue := "test"
 	baseRule := &models.AlertRule{
 		OrgID: 1,
 		Title: "test_title",
@@ -307,7 +305,7 @@ func TestProcessEvalResults(t *testing.T) {
 		}},
 		NamespaceUID:    "test_namespace_uid",
 		Annotations:     map[string]string{"annotation": "test"},
-		Labels:          map[string]string{ruleLabelKey: ruleLabelValue},
+		Labels:          map[string]string{"label": "test"},
 		IntervalSeconds: int64(evaluationInterval.Seconds()),
 		NoDataState:     models.NoData,
 		ExecErrState:    models.ErrorErrState,
@@ -340,19 +338,25 @@ func TestProcessEvalResults(t *testing.T) {
 		return r
 	}
 
-	label1Key := "instance_label"
-	label1Value := "test-1"
 	labels1 := data.Labels{
-		label1Key: label1Value,
+		"instance_label": "test-1",
 	}
-	label2Key := label1Key
-	label2Value := "test-2"
 	labels2 := data.Labels{
-		label2Key: label2Value,
+		"instance_label": "test-2",
 	}
-
-	systemLabelKey := "system"
-	systemLabelValue := "owned"
+	systemLabels := data.Labels{
+		"system": "owned",
+	}
+	noDataLabels := data.Labels{
+		"datasource_uid": "1",
+		"ref_id":         "A",
+	}
+	labels := map[string]data.Labels{
+		"system + rule":           mergeLabels(baseRule.Labels, systemLabels),
+		"system + rule + labels1": mergeLabels(mergeLabels(labels1, baseRule.Labels), systemLabels),
+		"system + rule + labels2": mergeLabels(mergeLabels(labels2, baseRule.Labels), systemLabels),
+		"system + rule + no-data": mergeLabels(mergeLabels(noDataLabels, baseRule.Labels), systemLabels),
+	}
 
 	testCases := []struct {
 		desc                string
@@ -371,7 +375,7 @@ func TestProcessEvalResults(t *testing.T) {
 			},
 			expectedStates: []*state.State{
 				{
-					Labels: data.Labels{systemLabelKey: systemLabelValue, ruleLabelKey: ruleLabelValue, label1Key: label1Value},
+					Labels: labels["system + rule + labels1"],
 					State:  eval.Normal,
 					Results: []state.Evaluation{
 						newEvaluation(t1, eval.Normal),
@@ -394,7 +398,7 @@ func TestProcessEvalResults(t *testing.T) {
 			expectedAnnotations: 1,
 			expectedStates: []*state.State{
 				{
-					Labels: data.Labels{systemLabelKey: systemLabelValue, ruleLabelKey: ruleLabelValue, label1Key: label1Value},
+					Labels: labels["system + rule + labels1"],
 					State:  eval.Normal,
 					Results: []state.Evaluation{
 						newEvaluation(t1, eval.Normal),
@@ -404,7 +408,7 @@ func TestProcessEvalResults(t *testing.T) {
 					LastEvaluationTime: t1,
 				},
 				{
-					Labels: data.Labels{systemLabelKey: systemLabelValue, ruleLabelKey: ruleLabelValue, label2Key: label2Value},
+					Labels: labels["system + rule + labels2"],
 					State:  eval.Alerting,
 					Results: []state.Evaluation{
 						newEvaluation(t1, eval.Alerting),
@@ -428,7 +432,7 @@ func TestProcessEvalResults(t *testing.T) {
 			},
 			expectedStates: []*state.State{
 				{
-					Labels: data.Labels{systemLabelKey: systemLabelValue, ruleLabelKey: ruleLabelValue, label1Key: label1Value},
+					Labels: labels["system + rule + labels1"],
 					State:  eval.Normal,
 					Results: []state.Evaluation{
 						newEvaluation(t1, eval.Normal),
@@ -454,7 +458,7 @@ func TestProcessEvalResults(t *testing.T) {
 			expectedAnnotations: 1,
 			expectedStates: []*state.State{
 				{
-					Labels: data.Labels{systemLabelKey: systemLabelValue, ruleLabelKey: ruleLabelValue, label1Key: label1Value},
+					Labels: labels["system + rule + labels1"],
 					State:  eval.Alerting,
 					Results: []state.Evaluation{
 						newEvaluation(t1, eval.Normal),
@@ -486,7 +490,7 @@ func TestProcessEvalResults(t *testing.T) {
 			expectedAnnotations: 2,
 			expectedStates: []*state.State{
 				{
-					Labels: data.Labels{systemLabelKey: systemLabelValue, ruleLabelKey: ruleLabelValue, label1Key: label1Value},
+					Labels: labels["system + rule + labels1"],
 					State:  eval.Alerting,
 					Results: []state.Evaluation{
 						newEvaluation(t3, eval.Alerting),
@@ -521,7 +525,7 @@ func TestProcessEvalResults(t *testing.T) {
 			expectedAnnotations: 3, // Normal -> Pending, Pending -> NoData, NoData -> Pending
 			expectedStates: []*state.State{
 				{
-					Labels: data.Labels{systemLabelKey: systemLabelValue, ruleLabelKey: ruleLabelValue, label1Key: label1Value},
+					Labels: labels["system + rule + labels1"],
 					State:  eval.Pending,
 					Results: []state.Evaluation{
 						newEvaluation(tn(4), eval.Alerting),
@@ -553,7 +557,7 @@ func TestProcessEvalResults(t *testing.T) {
 			expectedAnnotations: 3,
 			expectedStates: []*state.State{
 				{
-					Labels: data.Labels{systemLabelKey: systemLabelValue, ruleLabelKey: ruleLabelValue, label1Key: label1Value},
+					Labels: labels["system + rule + labels1"],
 					State:  eval.NoData,
 					Results: []state.Evaluation{
 						newEvaluation(t3, eval.Alerting),
@@ -579,7 +583,7 @@ func TestProcessEvalResults(t *testing.T) {
 			expectedAnnotations: 1,
 			expectedStates: []*state.State{
 				{
-					Labels: data.Labels{systemLabelKey: systemLabelValue, ruleLabelKey: ruleLabelValue, label1Key: label1Value},
+					Labels: labels["system + rule + labels1"],
 
 					State: eval.Pending,
 					Results: []state.Evaluation{
@@ -606,7 +610,7 @@ func TestProcessEvalResults(t *testing.T) {
 			expectedAnnotations: 1,
 			expectedStates: []*state.State{
 				{
-					Labels: data.Labels{systemLabelKey: systemLabelValue, ruleLabelKey: ruleLabelValue, label1Key: label1Value},
+					Labels: labels["system + rule + labels1"],
 					State:  eval.Pending,
 					Results: []state.Evaluation{
 						newEvaluation(t1, eval.Alerting),
@@ -632,7 +636,7 @@ func TestProcessEvalResults(t *testing.T) {
 			expectedAnnotations: 1,
 			expectedStates: []*state.State{
 				{
-					Labels:      data.Labels{systemLabelKey: systemLabelValue, ruleLabelKey: ruleLabelValue, label1Key: label1Value},
+					Labels:      labels["system + rule + labels1"],
 					State:       eval.Pending,
 					StateReason: eval.NoData.String(),
 					Results: []state.Evaluation{
@@ -668,7 +672,7 @@ func TestProcessEvalResults(t *testing.T) {
 			expectedAnnotations: 2,
 			expectedStates: []*state.State{
 				{
-					Labels:      data.Labels{systemLabelKey: systemLabelValue, ruleLabelKey: ruleLabelValue, label1Key: label1Value},
+					Labels:      labels["system + rule + labels1"],
 					State:       eval.Alerting,
 					StateReason: eval.NoData.String(),
 					Results: []state.Evaluation{
@@ -696,7 +700,7 @@ func TestProcessEvalResults(t *testing.T) {
 			expectedAnnotations: 1,
 			expectedStates: []*state.State{
 				{
-					Labels: data.Labels{systemLabelKey: systemLabelValue, ruleLabelKey: ruleLabelValue, label1Key: label1Value},
+					Labels: labels["system + rule + labels1"],
 					State:  eval.NoData,
 					Results: []state.Evaluation{
 						newEvaluation(t1, eval.Normal),
@@ -722,7 +726,7 @@ func TestProcessEvalResults(t *testing.T) {
 			expectedAnnotations: 1,
 			expectedStates: []*state.State{
 				{
-					Labels: data.Labels{systemLabelKey: systemLabelValue, ruleLabelKey: ruleLabelValue, label1Key: label1Value},
+					Labels: labels["system + rule + labels1"],
 					State:  eval.Normal,
 					Results: []state.Evaluation{
 						newEvaluation(t1, eval.Normal),
@@ -732,7 +736,7 @@ func TestProcessEvalResults(t *testing.T) {
 					LastEvaluationTime: t1,
 				},
 				{
-					Labels: data.Labels{systemLabelKey: systemLabelValue, ruleLabelKey: ruleLabelValue},
+					Labels: labels["system + rule"],
 					State:  eval.NoData,
 					Results: []state.Evaluation{
 						newEvaluation(t2, eval.NoData),
@@ -758,7 +762,7 @@ func TestProcessEvalResults(t *testing.T) {
 			expectedAnnotations: 1,
 			expectedStates: []*state.State{
 				{
-					Labels: data.Labels{systemLabelKey: systemLabelValue, ruleLabelKey: ruleLabelValue, label1Key: label1Value},
+					Labels: labels["system + rule + labels1"],
 					State:  eval.Normal,
 					Results: []state.Evaluation{
 						newEvaluation(t1, eval.Normal),
@@ -768,7 +772,7 @@ func TestProcessEvalResults(t *testing.T) {
 					LastEvaluationTime: t1,
 				},
 				{
-					Labels: data.Labels{systemLabelKey: systemLabelValue, ruleLabelKey: ruleLabelValue, label2Key: label2Value},
+					Labels: labels["system + rule + labels2"],
 					State:  eval.Normal,
 					Results: []state.Evaluation{
 						newEvaluation(t1, eval.Normal),
@@ -778,10 +782,8 @@ func TestProcessEvalResults(t *testing.T) {
 					LastEvaluationTime: t1,
 				},
 				{
-					Labels: data.Labels{
-						systemLabelKey: systemLabelValue, "label": "test",
-					},
-					State: eval.NoData,
+					Labels: labels["system + rule"],
+					State:  eval.NoData,
 					Results: []state.Evaluation{
 						newEvaluation(t2, eval.NoData),
 					},
@@ -799,10 +801,7 @@ func TestProcessEvalResults(t *testing.T) {
 					newResult(eval.WithState(eval.Normal), eval.WithLabels(labels1)),
 				},
 				t2: {
-					newResult(eval.WithState(eval.NoData), eval.WithLabels(data.Labels{
-						"datasource_uid": "1",
-						"ref_id":         "A",
-					})),
+					newResult(eval.WithState(eval.NoData), eval.WithLabels(noDataLabels)),
 				},
 				t3: {
 					newResult(eval.WithState(eval.Normal), eval.WithLabels(labels1)),
@@ -811,7 +810,7 @@ func TestProcessEvalResults(t *testing.T) {
 			expectedAnnotations: 1,
 			expectedStates: []*state.State{
 				{
-					Labels: data.Labels{systemLabelKey: systemLabelValue, ruleLabelKey: ruleLabelValue, label1Key: label1Value},
+					Labels: labels["system + rule + labels1"],
 					State:  eval.Normal,
 					Results: []state.Evaluation{
 						newEvaluation(t1, eval.Normal),
@@ -822,13 +821,8 @@ func TestProcessEvalResults(t *testing.T) {
 					LastEvaluationTime: t3,
 				},
 				{
-					Labels: data.Labels{
-						systemLabelKey:   systemLabelValue,
-						ruleLabelKey:     ruleLabelValue,
-						"datasource_uid": "1",
-						"ref_id":         "A",
-					},
-					State: eval.NoData,
+					Labels: labels["system + rule + no-data"],
+					State:  eval.NoData,
 					Results: []state.Evaluation{
 						newEvaluation(t2, eval.NoData),
 					},
@@ -852,7 +846,7 @@ func TestProcessEvalResults(t *testing.T) {
 			expectedAnnotations: 1,
 			expectedStates: []*state.State{
 				{
-					Labels:      data.Labels{systemLabelKey: systemLabelValue, ruleLabelKey: ruleLabelValue, label1Key: label1Value},
+					Labels:      labels["system + rule + labels1"],
 					State:       eval.Normal,
 					StateReason: eval.NoData.String(),
 					Results: []state.Evaluation{
@@ -879,7 +873,7 @@ func TestProcessEvalResults(t *testing.T) {
 			expectedAnnotations: 1,
 			expectedStates: []*state.State{
 				{
-					Labels:      data.Labels{systemLabelKey: systemLabelValue, ruleLabelKey: ruleLabelValue, label1Key: label1Value},
+					Labels:      labels["system + rule + labels1"],
 					State:       eval.Pending,
 					StateReason: eval.Error.String(),
 					Error:       errors.New("with_state_error"),
@@ -916,7 +910,7 @@ func TestProcessEvalResults(t *testing.T) {
 			expectedAnnotations: 2,
 			expectedStates: []*state.State{
 				{
-					Labels:      data.Labels{systemLabelKey: systemLabelValue, ruleLabelKey: ruleLabelValue, label1Key: label1Value},
+					Labels:      labels["system + rule + labels1"],
 					State:       eval.Alerting,
 					StateReason: eval.Error.String(),
 					Error:       errors.New("with_state_error"),
@@ -946,24 +940,17 @@ func TestProcessEvalResults(t *testing.T) {
 			expectedStates: []*state.State{
 				{
 					CacheID: func() string {
-						lbls := models.InstanceLabels{
-							systemLabelKey: systemLabelValue,
-							ruleLabelKey:   ruleLabelValue,
-							label1Key:      label1Value,
-						}
+						lbls := models.InstanceLabels(labels["system + rule + labels1"])
 						r, err := lbls.StringKey()
 						if err != nil {
 							panic(err)
 						}
 						return r
 					}(),
-					Labels: data.Labels{
-						systemLabelKey:   systemLabelValue,
-						ruleLabelKey:     ruleLabelValue,
-						label1Key:        label1Value,
+					Labels: mergeLabels(labels["system + rule"], data.Labels{
 						"datasource_uid": "datasource_uid_1",
 						"ref_id":         "A",
-					},
+					}),
 					State: eval.Error,
 					Error: expr.MakeQueryError("A", "datasource_uid_1", errors.New("this is an error")),
 					Results: []state.Evaluation{
@@ -992,7 +979,7 @@ func TestProcessEvalResults(t *testing.T) {
 			expectedAnnotations: 1,
 			expectedStates: []*state.State{
 				{
-					Labels:      data.Labels{systemLabelKey: systemLabelValue, ruleLabelKey: ruleLabelValue, label1Key: label1Value},
+					Labels:      labels["system + rule + labels1"],
 					State:       eval.Normal,
 					StateReason: eval.Error.String(),
 					Results: []state.Evaluation{
@@ -1019,7 +1006,7 @@ func TestProcessEvalResults(t *testing.T) {
 			expectedAnnotations: 2,
 			expectedStates: []*state.State{
 				{
-					Labels:      data.Labels{systemLabelKey: systemLabelValue, ruleLabelKey: ruleLabelValue, label1Key: label1Value},
+					Labels:      labels["system + rule + labels1"],
 					State:       eval.Normal,
 					StateReason: eval.Error.String(),
 					Results: []state.Evaluation{
@@ -1058,7 +1045,7 @@ func TestProcessEvalResults(t *testing.T) {
 			expectedAnnotations: 3,
 			expectedStates: []*state.State{
 				{
-					Labels: data.Labels{systemLabelKey: systemLabelValue, ruleLabelKey: ruleLabelValue, label1Key: label1Value},
+					Labels: labels["system + rule + labels1"],
 					State:  eval.Error,
 					Error:  fmt.Errorf("with_state_error"),
 					Results: []state.Evaluation{
@@ -1091,7 +1078,7 @@ func TestProcessEvalResults(t *testing.T) {
 			expectedAnnotations: 3,
 			expectedStates: []*state.State{
 				{
-					Labels: data.Labels{systemLabelKey: systemLabelValue, ruleLabelKey: ruleLabelValue, label1Key: label1Value},
+					Labels: labels["system + rule + labels1"],
 					State:  eval.Pending,
 					Results: []state.Evaluation{
 						newEvaluation(tn(4), eval.Alerting),
@@ -1124,7 +1111,7 @@ func TestProcessEvalResults(t *testing.T) {
 			expectedAnnotations: 3,
 			expectedStates: []*state.State{
 				{
-					Labels: data.Labels{systemLabelKey: systemLabelValue, ruleLabelKey: ruleLabelValue, label1Key: label1Value},
+					Labels: labels["system + rule + labels1"],
 					State:  eval.NoData,
 					Results: []state.Evaluation{
 						newEvaluation(tn(4), eval.Alerting),
@@ -1154,13 +1141,13 @@ func TestProcessEvalResults(t *testing.T) {
 			},
 			expectedStates: []*state.State{
 				{
-					Labels: data.Labels{
-						systemLabelKey: systemLabelValue, "cluster": "us-central-1",
+					Labels: mergeLabels(systemLabels, data.Labels{
+						"cluster":   "us-central-1",
 						"namespace": "prod",
 						"pod":       "grafana",
 						"label":     "test",
 						"job":       "prod/grafana",
-					},
+					}),
 					State: eval.Normal,
 					Results: []state.Evaluation{
 						newEvaluation(t1, eval.Normal),
@@ -1190,7 +1177,7 @@ func TestProcessEvalResults(t *testing.T) {
 			},
 			expectedStates: []*state.State{
 				{
-					Labels: data.Labels{systemLabelKey: systemLabelValue, ruleLabelKey: ruleLabelValue},
+					Labels: labels["system + rule"],
 					State:  eval.Alerting,
 					Results: []state.Evaluation{
 						newEvaluation(t1, eval.Alerting),
@@ -1237,9 +1224,7 @@ func TestProcessEvalResults(t *testing.T) {
 					res[i].EvaluatedAt = evalTime
 				}
 				clk.Set(evalTime)
-				_ = st.ProcessEvalResults(context.Background(), evalTime, tc.alertRule, res, data.Labels{
-					systemLabelKey: systemLabelValue,
-				})
+				_ = st.ProcessEvalResults(context.Background(), evalTime, tc.alertRule, res, systemLabels)
 			}
 
 			states := st.GetStatesForRuleUID(tc.alertRule.OrgID, tc.alertRule.UID)
@@ -1914,6 +1899,17 @@ func stateSliceToMap(states []*state.State) map[string]*state.State {
 	for _, s := range states {
 		setCacheID(s)
 		result[s.CacheID] = s
+	}
+	return result
+}
+
+func mergeLabels(a, b data.Labels) data.Labels {
+	result := make(data.Labels, len(a)+len(b))
+	for k, v := range a {
+		result[k] = v
+	}
+	for k, v := range b {
+		result[k] = v
 	}
 	return result
 }
