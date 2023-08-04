@@ -22,8 +22,8 @@ type BackendClientInit struct {
 	log             log.Logger
 }
 
-// NewBackendClientInitStep returns a new InitializeFunc for registering a backend plugin process.
-func NewBackendClientInitStep(envVarProvider envvars.Provider,
+// BackendClientInitStep returns a new InitializeFunc for registering a backend plugin process.
+func BackendClientInitStep(envVarProvider envvars.Provider,
 	backendProvider plugins.BackendFactoryProvider) InitializeFunc {
 	return newBackendProcessRegistration(envVarProvider, backendProvider).Initialize
 }
@@ -64,8 +64,8 @@ type PluginRegistration struct {
 	log            log.Logger
 }
 
-// NewPluginRegistrationStep returns a new InitializeFunc for registering a plugin with the plugin registry.
-func NewPluginRegistrationStep(pluginRegistry registry.Service) InitializeFunc {
+// PluginRegistrationStep returns a new InitializeFunc for registering a plugin with the plugin registry.
+func PluginRegistrationStep(pluginRegistry registry.Service) InitializeFunc {
 	return newPluginRegistration(pluginRegistry).Initialize
 }
 

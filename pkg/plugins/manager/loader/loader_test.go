@@ -2,6 +2,7 @@ package loader
 
 import (
 	"context"
+	"errors"
 	"path/filepath"
 	"sort"
 	"testing"
@@ -18,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/bootstrap"
 	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/discovery"
 	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/initialization"
+	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/termination"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
 	"github.com/grafana/grafana/pkg/plugins/manager/sources"
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
@@ -435,11 +437,15 @@ func TestLoader_Load(t *testing.T) {
 		angularInspector, err := angularinspector.NewStaticInspector()
 		require.NoError(t, err)
 
+		terminationStage, err := termination.New(tt.cfg, termination.Opts{})
+		require.NoError(t, err)
+
 		l := New(tt.cfg, signature.NewUnsignedAuthorizer(tt.cfg), fakes.NewFakePluginRegistry(),
 			fakes.NewFakeProcessManager(), fakes.NewFakeRoleRegistry(),
 			assetpath.ProvideService(pluginscdn.ProvideService(tt.cfg)), angularInspector, &fakes.FakeOauthService{},
 			discovery.New(tt.cfg, discovery.Opts{}), bootstrap.New(tt.cfg, bootstrap.Opts{}),
-			initialization.New(tt.cfg, initialization.Opts{}))
+			initialization.New(tt.cfg, initialization.Opts{}),
+			terminationStage)
 
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := l.Load(context.Background(), sources.NewLocalSource(tt.class, tt.pluginPaths))
@@ -506,13 +512,48 @@ func TestLoader_Load(t *testing.T) {
 					steps = append(steps, "initialize")
 					return ps, nil
 				},
-			})
+			}, &fakes.FakeTerminator{})
 
 		got, err := l.Load(context.Background(), src)
 		require.NoError(t, err)
 		require.Equal(t, []*plugins.Plugin{p}, got)
 		require.Equal(t, []string{"discover", "bootstrap", "initialize"}, steps)
 		require.Zero(t, len(l.PluginErrors()))
+	})
+}
+
+func TestLoader_Unload(t *testing.T) {
+	t.Run("Termination stage error is returned from Unload", func(t *testing.T) {
+		pluginID := "grafana-test-panel"
+		cfg := &config.Cfg{}
+		angularInspector, err := angularinspector.NewStaticInspector()
+		require.NoError(t, err)
+
+		tcs := []struct {
+			expectedErr error
+		}{
+			{
+				expectedErr: errors.New("plugin not found"),
+			},
+			{
+				expectedErr: nil,
+			},
+		}
+
+		for _, tc := range tcs {
+			l := New(cfg, signature.NewUnsignedAuthorizer(cfg), fakes.NewFakePluginRegistry(), fakes.NewFakeProcessManager(),
+				fakes.NewFakeRoleRegistry(), assetpath.ProvideService(pluginscdn.ProvideService(cfg)), angularInspector,
+				&fakes.FakeOauthService{}, &fakes.FakeDiscoverer{}, &fakes.FakeBootstrapper{}, &fakes.FakeInitializer{},
+				&fakes.FakeTerminator{
+					TerminateFunc: func(ctx context.Context, pID string) error {
+						require.Equal(t, pluginID, pID)
+						return tc.expectedErr
+					},
+				})
+
+			err = l.Unload(context.Background(), pluginID)
+			require.ErrorIs(t, err, tc.expectedErr)
+		}
 	})
 }
 

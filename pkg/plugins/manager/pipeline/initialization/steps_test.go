@@ -28,7 +28,7 @@ func TestInitializer_Initialize(t *testing.T) {
 			Class: plugins.ClassCore,
 		}
 
-		stepFunc := NewBackendClientInitStep(&fakeEnvVarsProvider{}, &fakeBackendProvider{plugin: p})
+		stepFunc := BackendClientInitStep(&fakeEnvVarsProvider{}, &fakeBackendProvider{plugin: p})
 
 		var err error
 		p, err = stepFunc(context.Background(), p)
@@ -52,7 +52,7 @@ func TestInitializer_Initialize(t *testing.T) {
 			Class: plugins.ClassExternal,
 		}
 
-		stepFunc := NewBackendClientInitStep(&fakeEnvVarsProvider{}, &fakeBackendProvider{plugin: p})
+		stepFunc := BackendClientInitStep(&fakeEnvVarsProvider{}, &fakeBackendProvider{plugin: p})
 
 		var err error
 		p, err = stepFunc(context.Background(), p)
@@ -76,7 +76,7 @@ func TestInitializer_Initialize(t *testing.T) {
 			Class: plugins.ClassExternal,
 		}
 
-		stepFunc := NewBackendClientInitStep(&fakeEnvVarsProvider{}, &fakeBackendProvider{plugin: p})
+		stepFunc := BackendClientInitStep(&fakeEnvVarsProvider{}, &fakeBackendProvider{plugin: p})
 
 		var err error
 		p, err = stepFunc(context.Background(), p)
@@ -94,7 +94,7 @@ func TestInitializer_Initialize(t *testing.T) {
 			},
 		}
 
-		i := NewBackendClientInitStep(&fakeEnvVarsProvider{}, &fakeBackendProvider{
+		i := BackendClientInitStep(&fakeEnvVarsProvider{}, &fakeBackendProvider{
 			plugin: p,
 		})
 
