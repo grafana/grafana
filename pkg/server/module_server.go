@@ -18,12 +18,12 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-// NewBase returns an instances of a BaseServer, responsible for managing dskit modules (services).
+// NewModule returns an instances of a BaseServer, responsible for managing dskit modules (services).
 // TODO: rename to something dskittier.
-func NewBase(opts Options, cfg *setting.Cfg,
+func NewModule(opts Options, cfg *setting.Cfg,
 	moduleService modules.Engine,
-) (*BaseServer, error) {
-	s, err := newBaseServer(opts, cfg, moduleService)
+) (*ModuleServer, error) {
+	s, err := newModuleServer(opts, cfg, moduleService)
 	if err != nil {
 		return nil, err
 	}
@@ -35,13 +35,13 @@ func NewBase(opts Options, cfg *setting.Cfg,
 	return s, nil
 }
 
-func newBaseServer(opts Options, cfg *setting.Cfg,
+func newModuleServer(opts Options, cfg *setting.Cfg,
 	moduleService modules.Engine,
-) (*BaseServer, error) {
+) (*ModuleServer, error) {
 	rootCtx, shutdownFn := context.WithCancel(context.Background())
 	childRoutines, childCtx := errgroup.WithContext(rootCtx)
 
-	s := &BaseServer{
+	s := &ModuleServer{
 		context:          childCtx,
 		childRoutines:    childRoutines,
 		shutdownFn:       shutdownFn,
@@ -58,9 +58,9 @@ func newBaseServer(opts Options, cfg *setting.Cfg,
 	return s, nil
 }
 
-// BaseServer is responsible for managing the lifecycle of services. The
-// BaseServer does not include the HTTP server.
-type BaseServer struct {
+// ModuleServer is responsible for managing the lifecycle of services. The
+// ModuleServer does not include the HTTP server.
+type ModuleServer struct {
 	context          context.Context
 	shutdownFn       context.CancelFunc
 	childRoutines    *errgroup.Group
@@ -80,7 +80,7 @@ type BaseServer struct {
 }
 
 // init initializes the server and its services.
-func (s *BaseServer) init() error {
+func (s *ModuleServer) init() error {
 	s.mtx.Lock()
 	defer s.mtx.Unlock()
 
@@ -99,7 +99,7 @@ func (s *BaseServer) init() error {
 
 // Run initializes and starts services. This will block until all services have
 // exited. To initiate shutdown, call the Shutdown method in another goroutine.
-func (s *BaseServer) Run() error {
+func (s *ModuleServer) Run() error {
 	defer close(s.shutdownFinished)
 
 	if err := s.init(); err != nil {
@@ -123,7 +123,7 @@ func (s *BaseServer) Run() error {
 // Shutdown initiates Grafana graceful shutdown. This shuts down all
 // running background services. Since Run blocks Shutdown supposed to
 // be run from a separate goroutine.
-func (s *BaseServer) Shutdown(ctx context.Context, reason string) error {
+func (s *ModuleServer) Shutdown(ctx context.Context, reason string) error {
 	var err error
 	s.shutdownOnce.Do(func() {
 		s.log.Info("Shutdown started", "reason", reason)
@@ -146,7 +146,7 @@ func (s *BaseServer) Shutdown(ctx context.Context, reason string) error {
 }
 
 // writePIDFile retrieves the current process ID and writes it to file.
-func (s *BaseServer) writePIDFile() error {
+func (s *ModuleServer) writePIDFile() error {
 	if s.pidFile == "" {
 		return nil
 	}
@@ -170,7 +170,7 @@ func (s *BaseServer) writePIDFile() error {
 }
 
 // notifySystemd sends state notifications to systemd.
-func (s *BaseServer) notifySystemd(state string) {
+func (s *ModuleServer) notifySystemd(state string) {
 	notifySocket := os.Getenv("NOTIFY_SOCKET")
 	if notifySocket == "" {
 		s.log.Debug(
