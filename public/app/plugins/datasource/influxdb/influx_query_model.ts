@@ -4,7 +4,7 @@ import { escapeRegex, ScopedVars } from '@grafana/data';
 import { TemplateSrv } from '@grafana/runtime';
 
 import queryPart from './query_part';
-import { InfluxQuery, InfluxQueryTag } from './types';
+import { DEFAULT_POLICY, InfluxQuery, InfluxQueryTag } from './types';
 
 export default class InfluxQueryModel {
   target: InfluxQuery;
@@ -20,7 +20,7 @@ export default class InfluxQueryModel {
     this.templateSrv = templateSrv;
     this.scopedVars = scopedVars;
 
-    target.policy = target.policy || 'default';
+    target.policy = target.policy || DEFAULT_POLICY;
     target.resultFormat = target.resultFormat || 'time_series';
     target.orderByTime = target.orderByTime || 'ASC';
     target.tags = target.tags || [];
@@ -193,7 +193,7 @@ export default class InfluxQueryModel {
       measurement = this.templateSrv.replace(measurement, this.scopedVars, 'regex');
     }
 
-    if (policy !== 'default') {
+    if (policy !== DEFAULT_POLICY) {
       policy = '"' + this.target.policy + '".';
     } else {
       policy = '';
