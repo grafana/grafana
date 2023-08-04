@@ -5,7 +5,6 @@ import (
 	"errors"
 	"time"
 
-	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/log"
@@ -19,7 +18,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
 	"github.com/grafana/grafana/pkg/plugins/oauth"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
 var _ plugins.ErrorResolver = (*Loader)(nil)
@@ -152,32 +150,6 @@ func (l *Loader) Load(ctx context.Context, src plugins.PluginSource) ([]*plugins
 		return nil, err
 	}
 	// </INITIALIZATION STAGE>
-
-	// <POST-INITIALIZATION STAGE>
-	for _, p := range initializedPlugins {
-		if err = l.processManager.Start(ctx, p.ID); err != nil {
-			l.log.Error("Could not start plugin", "pluginId", p.ID, "err", err)
-			continue
-		}
-
-		if p.ExternalServiceRegistration != nil && l.cfg.Features.IsEnabled(featuremgmt.FlagExternalServiceAuth) {
-			s, err := l.externalServiceRegistry.RegisterExternalService(ctx, p.ID, p.ExternalServiceRegistration)
-			if err != nil {
-				l.log.Error("Could not register an external service. Initialization skipped", "pluginID", p.ID, "err", err)
-				continue
-			}
-			p.ExternalService = s
-		}
-
-		if err = l.roleRegistry.DeclarePluginRoles(ctx, p.ID, p.Name, p.Roles); err != nil {
-			l.log.Warn("Declare plugin roles failed.", "pluginID", p.ID, "err", err)
-		}
-
-		if !p.IsCorePlugin() && !p.IsBundledPlugin() {
-			metrics.SetPluginBuildInformation(p.ID, string(p.Type), p.Info.Version, string(p.Signature))
-		}
-	}
-	// </POST-INITIALIZATION STAGE>
 
 	return initializedPlugins, nil
 }
