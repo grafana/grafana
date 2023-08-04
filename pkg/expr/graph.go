@@ -55,7 +55,19 @@ type DataPipeline []Node
 // map of the refId of the of each command
 func (dp *DataPipeline) execute(c context.Context, now time.Time, s *Service) (mathexp.Vars, error) {
 	vars := make(mathexp.Vars)
+	dsNodes := []*DSNode{}
 	for _, node := range *dp {
+		if node.NodeType() != TypeDatasourceNode {
+			continue
+		}
+		dsNodes = append(dsNodes, node.(*DSNode))
+	}
+	ExecuteDSNodesGrouped(c, now, vars, s, dsNodes)
+	
+	for _, node := range *dp {
+		if node.NodeType() == TypeDatasourceNode {
+			continue
+		}
 		c, span := s.tracer.Start(c, "SSE.ExecuteNode")
 		span.SetAttributes("node.refId", node.RefID(), attribute.Key("node.refId").String(node.RefID()))
 		if node.NodeType() == TypeCMDNode {
