@@ -448,14 +448,14 @@ func InitializeForCLITarget(cla setting.CommandLineArgs) (BaseRunner, error) {
 	return BaseRunner{}, nil
 }
 
-var wireBaseServerSet = wire.NewSet(
-	NewBase,
+var wireModuleServerSet = wire.NewSet(
+	NewModule,
 	wireBaseCLISet,
 )
 
-// InitializeBaseServer is a simplified set of dependencies for the CLI,
+// InitializeModuleServer is a simplified set of dependencies for the CLI,
 // suitable for running background services and targeting dskit modules.
-func InitializeBaseServer(cla setting.CommandLineArgs, opts Options, apiOpts api.ServerOptions) (*BaseServer, error) {
-	wire.Build(wireBaseServerSet)
-	return &BaseServer{}, nil
+func InitializeModuleServer(cla setting.CommandLineArgs, opts Options, apiOpts api.ServerOptions) (*ModuleServer, error) {
+	wire.Build(wireModuleServerSet)
+	return &ModuleServer{}, nil
 }

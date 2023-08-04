@@ -84,7 +84,7 @@ func RunBaseServer(opts ServerOptions) error {
 
 	configOptions := strings.Split(ConfigOverrides, " ")
 
-	s, err := server.InitializeBaseServer(
+	s, err := server.InitializeModuleServer(
 		setting.CommandLineArgs{
 			Config:   ConfigFile,
 			HomePath: HomePath,
