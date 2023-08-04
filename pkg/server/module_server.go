@@ -18,8 +18,8 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-// NewModule returns an instances of a BaseServer, responsible for managing dskit modules (services).
-// TODO: rename to something dskittier.
+// NewModule returns an instances of a ModuleServer, responsible for managing
+// dskit modules (services).
 func NewModule(opts Options, cfg *setting.Cfg,
 	moduleService modules.Engine,
 ) (*ModuleServer, error) {
@@ -58,7 +58,7 @@ func newModuleServer(opts Options, cfg *setting.Cfg,
 	return s, nil
 }
 
-// ModuleServer is responsible for managing the lifecycle of services. The
+// ModuleServer is responsible for managing the lifecycle of dskit services. The
 // ModuleServer does not include the HTTP server.
 type ModuleServer struct {
 	context          context.Context
