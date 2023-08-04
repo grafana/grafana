@@ -34,7 +34,7 @@ export const FromSection = ({
   const handlePolicyLoadOptions = async () => {
     const allPolicies = await getPolicyOptions();
     // if `default` does not exist in the list of policies, we add it
-    const allPoliciesWithDefault = allPolicies.some((p) => p === 'default')
+    const allPoliciesWithDefault = allPolicies.some((p) => p === DEFAULT_POLICY)
       ? allPolicies
       : [DEFAULT_POLICY, ...allPolicies];
 
