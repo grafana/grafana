@@ -25,7 +25,7 @@ func TargetCommand(version, commit, buildBranch, buildstamp string) *cli.Command
 		Usage: "run the grafana server",
 		Flags: commonFlags,
 		Action: func(context *cli.Context) error {
-			return RunServer(ServerOptions{
+			return RunBaseServer(ServerOptions{
 				Version:     version,
 				Commit:      commit,
 				BuildBranch: buildBranch,
