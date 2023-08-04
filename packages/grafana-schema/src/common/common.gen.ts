@@ -695,7 +695,7 @@ export interface TableSortByFieldState {
 export interface TableFooterOptions {
   countRows?: boolean;
   enablePagination?: boolean;
-  fields?: Array<string>; // TODO many devenv dashboards put an empty string here
+  fields?: Array<string>;
   reducer: Array<string>; // actually 1 value
   show: boolean;
 }
