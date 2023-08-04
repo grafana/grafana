@@ -2680,9 +2680,21 @@
             "format": "int64",
             "type": "integer"
           },
+          "contactPoints": {
+            "items": {
+              "$ref": "#/components/schemas/ContactPointExport"
+            },
+            "type": "array"
+          },
           "groups": {
             "items": {
               "$ref": "#/components/schemas/AlertRuleGroupExport"
+            },
+            "type": "array"
+          },
+          "policies": {
+            "items": {
+              "$ref": "#/components/schemas/NotificationPolicyExport"
             },
             "type": "array"
           }
@@ -3117,11 +3129,48 @@
         },
         "type": "object"
       },
+      "ContactPointExport": {
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "orgId": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "receivers": {
+            "items": {
+              "$ref": "#/components/schemas/ReceiverExport"
+            },
+            "type": "array"
+          }
+        },
+        "title": "ContactPointExport is the provisioned file export of alerting.ContactPointV1.",
+        "type": "object"
+      },
       "ContactPoints": {
         "items": {
           "$ref": "#/components/schemas/EmbeddedContactPoint"
         },
         "type": "array"
+      },
+      "CookiePreferences": {
+        "properties": {
+          "analytics": {
+            "additionalProperties": false,
+            "type": "object"
+          },
+          "functional": {
+            "additionalProperties": false,
+            "type": "object"
+          },
+          "performance": {
+            "additionalProperties": false,
+            "type": "object"
+          }
+        },
+        "title": "CookiePreferences defines model for CookiePreferences.",
+        "type": "object"
       },
       "CookieType": {
         "type": "string"
@@ -3627,6 +3676,9 @@
           "folderId": {
             "format": "int64",
             "type": "integer"
+          },
+          "folderUid": {
+            "type": "string"
           },
           "inherited": {
             "type": "boolean"
@@ -4857,6 +4909,10 @@
           },
           "pathSeparator": {
             "description": "PathSeparator defines the separator pattern to decode a hierarchy. The default separator is '/'.",
+            "type": "string"
+          },
+          "preferredVisualisationPluginId": {
+            "description": "PreferredVisualizationPluginId sets the panel plugin id to use to render the data when using Explore. If\nthe plugin cannot be found will fall back to PreferredVisualization.",
             "type": "string"
           },
           "preferredVisualisationType": {
@@ -6313,6 +6369,19 @@
         "format": "int64",
         "title": "NoticeSeverity is a type for the Severity property of a Notice.",
         "type": "integer"
+      },
+      "NotificationPolicyExport": {
+        "properties": {
+          "Policy": {
+            "$ref": "#/components/schemas/RouteExport"
+          },
+          "orgId": {
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "title": "NotificationPolicyExport is the provisioned file export of alerting.NotificiationPolicyV1.",
+        "type": "object"
       },
       "NotificationTemplate": {
         "properties": {
@@ -7845,6 +7914,24 @@
         "title": "Receiver configuration provides configuration on how to contact a receiver.",
         "type": "object"
       },
+      "ReceiverExport": {
+        "properties": {
+          "disableResolveMessage": {
+            "type": "boolean"
+          },
+          "settings": {
+            "$ref": "#/components/schemas/RawMessage"
+          },
+          "type": {
+            "type": "string"
+          },
+          "uid": {
+            "type": "string"
+          }
+        },
+        "title": "ReceiverExport is the provisioned file export of alerting.ReceiverV1.",
+        "type": "object"
+      },
       "RecordingRuleJSON": {
         "description": "RecordingRuleJSON is the external representation of a recording rule",
         "properties": {
@@ -8101,6 +8188,61 @@
           "routes": {
             "items": {
               "$ref": "#/components/schemas/Route"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "RouteExport": {
+        "description": "RouteExport is the provisioned file export of definitions.Route. This is needed to hide fields that aren't useable in\nprovisioning file format. An alternative would be to define a custom MarshalJSON and MarshalYAML that excludes them.",
+        "properties": {
+          "continue": {
+            "type": "boolean"
+          },
+          "group_by": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "group_interval": {
+            "type": "string"
+          },
+          "group_wait": {
+            "type": "string"
+          },
+          "match": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Deprecated. Remove before v1.0 release.",
+            "type": "object"
+          },
+          "match_re": {
+            "$ref": "#/components/schemas/MatchRegexps"
+          },
+          "matchers": {
+            "$ref": "#/components/schemas/Matchers"
+          },
+          "mute_time_intervals": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "object_matchers": {
+            "$ref": "#/components/schemas/ObjectMatchers"
+          },
+          "receiver": {
+            "type": "string"
+          },
+          "repeat_interval": {
+            "type": "string"
+          },
+          "routes": {
+            "items": {
+              "$ref": "#/components/schemas/RouteExport"
             },
             "type": "array"
           }
@@ -8908,6 +9050,9 @@
       },
       "Spec": {
         "properties": {
+          "cookiePreferences": {
+            "$ref": "#/components/schemas/CookiePreferences"
+          },
           "homeDashboardUID": {
             "description": "UID for the home dashboard",
             "type": "string"
@@ -10664,6 +10809,7 @@
         "type": "object"
       },
       "gettableAlert": {
+        "description": "GettableAlert gettable alert",
         "properties": {
           "annotations": {
             "$ref": "#/components/schemas/labelSet"
@@ -10924,7 +11070,6 @@
         "type": "array"
       },
       "postableSilence": {
-        "description": "PostableSilence postable silence",
         "properties": {
           "comment": {
             "description": "comment",
@@ -10962,6 +11107,7 @@
         "type": "object"
       },
       "receiver": {
+        "description": "Receiver receiver",
         "properties": {
           "active": {
             "description": "active",
@@ -13955,15 +14101,6 @@
         "operationId": "RouteGetAlertRuleExport",
         "parameters": [
           {
-            "description": "Alert rule UID",
-            "in": "path",
-            "name": "UID",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
             "description": "Whether to initiate a download of the file or not.",
             "in": "query",
             "name": "download",
@@ -13978,6 +14115,15 @@
             "name": "format",
             "schema": {
               "default": "yaml",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Alert rule UID",
+            "in": "path",
+            "name": "UID",
+            "required": true,
+            "schema": {
               "type": "string"
             }
           }
@@ -14078,6 +14224,74 @@
           }
         },
         "summary": "Create a contact point.",
+        "tags": [
+          "provisioning"
+        ]
+      }
+    },
+    "/api/v1/provisioning/contact-points/export": {
+      "get": {
+        "operationId": "RouteGetContactpointsExport",
+        "parameters": [
+          {
+            "description": "Whether to initiate a download of the file or not.",
+            "in": "query",
+            "name": "download",
+            "schema": {
+              "default": false,
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence.",
+            "in": "query",
+            "name": "format",
+            "schema": {
+              "default": "yaml",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Whether any contained secure settings should be decrypted or left redacted. Redacted settings will contain RedactedValue instead. Currently, only org admin can view decrypted secure settings.",
+            "in": "query",
+            "name": "decrypt",
+            "schema": {
+              "default": false,
+              "type": "boolean"
+            }
+          },
+          {
+            "description": "Filter by name",
+            "in": "query",
+            "name": "name",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertingFileExport"
+                }
+              }
+            },
+            "description": "AlertingFileExport"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PermissionDenied"
+                }
+              }
+            },
+            "description": "PermissionDenied"
+          }
+        },
+        "summary": "Export all contact points in provisioning file format.",
         "tags": [
           "provisioning"
         ]
@@ -14262,22 +14476,6 @@
         "operationId": "RouteGetAlertRuleGroupExport",
         "parameters": [
           {
-            "in": "path",
-            "name": "FolderUID",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "in": "path",
-            "name": "Group",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
             "description": "Whether to initiate a download of the file or not.",
             "in": "query",
             "name": "download",
@@ -14292,6 +14490,22 @@
             "name": "format",
             "schema": {
               "default": "yaml",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "FolderUID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "Group",
+            "required": true,
+            "schema": {
               "type": "string"
             }
           }
@@ -14570,6 +14784,37 @@
           }
         },
         "summary": "Sets the notification policy tree.",
+        "tags": [
+          "provisioning"
+        ]
+      }
+    },
+    "/api/v1/provisioning/policies/export": {
+      "get": {
+        "operationId": "RouteGetPolicyTreeExport",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertingFileExport"
+                }
+              }
+            },
+            "description": "AlertingFileExport"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotFound"
+                }
+              }
+            },
+            "description": "NotFound"
+          }
+        },
+        "summary": "Export the notification policy tree in provisioning file format.",
         "tags": [
           "provisioning"
         ]
@@ -20566,7 +20811,7 @@
             }
           },
           {
-            "description": "List of dashboard id’s to search for",
+            "description": "List of dashboard id’s to search for\nThis is deprecated: users should use the `dashboardUIDs` query parameter instead",
             "in": "query",
             "name": "dashboardIds",
             "schema": {
@@ -20589,13 +20834,24 @@
             }
           },
           {
-            "description": "List of folder id’s to search in for dashboards",
+            "description": "List of folder id’s to search in for dashboards\nIf it's `0` then it will query for the top level folders\nThis is deprecated: users should use the `folderUIDs` query parameter instead",
             "in": "query",
             "name": "folderIds",
             "schema": {
               "items": {
                 "format": "int64",
                 "type": "integer"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "List of folder UID’s to search in for dashboards\nIf it's an empty string then it will query for the top level folders",
+            "in": "query",
+            "name": "folderUIDs",
+            "schema": {
+              "items": {
+                "type": "string"
               },
               "type": "array"
             }

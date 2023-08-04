@@ -517,8 +517,9 @@ type Cfg struct {
 	SecureSocksDSProxy SecureSocksDSProxySettings
 
 	// SAML Auth
-	SAMLAuthEnabled     bool
-	SAMLSkipOrgRoleSync bool
+	SAMLAuthEnabled            bool
+	SAMLSkipOrgRoleSync        bool
+	SAMLRoleValuesGrafanaAdmin string
 
 	// Okta OAuth
 	OktaAuthEnabled     bool
@@ -966,7 +967,7 @@ var skipStaticRootValidation = false
 
 func NewCfg() *Cfg {
 	return &Cfg{
-		Target:      []string{"all"},
+		Target:      []string{},
 		Logger:      log.New("settings"),
 		Raw:         ini.Empty(),
 		Azure:       &azsettings.AzureSettings{},
@@ -1025,8 +1026,10 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 
 	cfg.ErrTemplateName = "error"
 
-	Target := valueAsString(iniFile.Section(""), "target", "all")
-	cfg.Target = strings.Split(Target, " ")
+	Target := valueAsString(iniFile.Section(""), "target", "")
+	if Target != "" {
+		cfg.Target = strings.Split(Target, " ")
+	}
 	Env = valueAsString(iniFile.Section(""), "app_mode", "development")
 	cfg.Env = Env
 	cfg.ForceMigration = iniFile.Section("").Key("force_migration").MustBool(false)
@@ -1263,6 +1266,7 @@ func (cfg *Cfg) readSAMLConfig() {
 	samlSec := cfg.Raw.Section("auth.saml")
 	cfg.SAMLAuthEnabled = samlSec.Key("enabled").MustBool(false)
 	cfg.SAMLSkipOrgRoleSync = samlSec.Key("skip_org_role_sync").MustBool(false)
+	cfg.SAMLRoleValuesGrafanaAdmin = samlSec.Key("role_values_grafana_admin").MustString("")
 }
 
 func (cfg *Cfg) readLDAPConfig() {
@@ -1478,7 +1482,9 @@ func readAuthGithubSettings(cfg *Cfg) {
 func readAuthGoogleSettings(cfg *Cfg) {
 	sec := cfg.SectionWithEnvOverrides("auth.google")
 	cfg.GoogleAuthEnabled = sec.Key("enabled").MustBool(false)
-	cfg.GoogleSkipOrgRoleSync = sec.Key("skip_org_role_sync").MustBool(false)
+	// FIXME: for now we skip org role sync for google auth
+	// as we do not sync organization roles from Google
+	cfg.GoogleSkipOrgRoleSync = true
 }
 
 func readAuthGitlabSettings(cfg *Cfg) {
