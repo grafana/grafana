@@ -2,12 +2,13 @@ package middleware
 
 import (
 	"fmt"
+	"net/http"
+	"strconv"
+
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
-	"net/http"
-	"strconv"
 )
 
 // OrgRedirect changes org and redirects users if the
