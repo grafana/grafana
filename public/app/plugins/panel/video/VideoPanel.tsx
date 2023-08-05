@@ -6,7 +6,7 @@ import videojs from 'video.js';
 import { EventBus, DataHoverEvent, PanelProps } from '@grafana/data';
 
 import VideoJSWrapper from './VideoJSWrapper';
-import { Options } from './panelcfg.gen'
+import { Options } from './panelcfg.gen';
 import { VideoPlayPayload } from './types';
 
 interface Props extends PanelProps<Options> {}
