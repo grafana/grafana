@@ -15,7 +15,7 @@
 package grafanaplugin
 
 composableKinds: PanelCfg: {
-	maturity: "experimental"
+	maturity: "merged"
 
 	lineage: {
 		schemas: [{

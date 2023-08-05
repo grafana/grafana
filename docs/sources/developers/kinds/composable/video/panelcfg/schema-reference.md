@@ -13,7 +13,7 @@ title: VideoPanelCfg kind
 
 ## VideoPanelCfg
 
-#### Maturity: [experimental](../../../maturity/#experimental)
+#### Maturity: [merged](../../../maturity/#merged)
 #### Version: 0.0
 
 

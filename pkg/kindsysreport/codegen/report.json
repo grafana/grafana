@@ -2048,7 +2048,7 @@
         "ts": "https://github.com/grafana/grafana/tree/main/public/app/plugins/panel/video/panelcfg.gen.ts"
       },
       "machineName": "videopanelcfg",
-      "maturity": "experimental",
+      "maturity": "merged",
       "name": "VideoPanelCfg",
       "pluralMachineName": "videopanelcfgs",
       "pluralName": "VideoPanelCfgs",
@@ -2283,10 +2283,9 @@
           "tempodataquery",
           "testdatadataquery",
           "textpanelcfg",
-          "videopanelcfg",
           "xychartpanelcfg"
         ],
-        "count": 32
+        "count": 31
       },
       "mature": {
         "name": "mature",
@@ -2309,9 +2308,10 @@
           "rolebinding",
           "team",
           "timeseriespanelcfg",
-          "trendpanelcfg"
+          "trendpanelcfg",
+          "videopanelcfg"
         ],
-        "count": 14
+        "count": 15
       },
       "planned": {
         "name": "planned",
