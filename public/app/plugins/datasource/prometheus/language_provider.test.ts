@@ -284,11 +284,16 @@ describe('Language completion provider', () => {
       const requestSpy = jest.spyOn(languageProvider, 'request');
       getSeriesValues('job', '{instance="$instance", job="grafana"}');
       expect(requestSpy).toHaveBeenCalled();
-      expect(requestSpy).toHaveBeenCalledWith('/api/v1/series', [], {
-        end: toPrometheusTimeString,
-        'match[]': '{instance="interpolated-instance", job="grafana"}',
-        start: fromPrometheusTimeString,
-      });
+      expect(requestSpy).toHaveBeenCalledWith(
+        '/api/v1/series',
+        [],
+        {
+          end: toPrometheusTimeString,
+          'match[]': '{instance="interpolated-instance", job="grafana"}',
+          start: fromPrometheusTimeString,
+        },
+        undefined
+      );
     });
   });
 
