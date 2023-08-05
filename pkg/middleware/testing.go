@@ -73,6 +73,11 @@ func (sc *scenarioContext) withJWTAuthHeader(jwtAuthHeader string) *scenarioCont
 	return sc
 }
 
+func (sc *scenarioContext) withAppSubURL(subURL string) *scenarioContext {
+	sc.cfg.AppSubURL = subURL
+	return sc
+}
+
 func (sc *scenarioContext) fakeReq(method, url string) *scenarioContext {
 	sc.t.Helper()
 

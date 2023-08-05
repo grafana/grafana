@@ -2,14 +2,12 @@ package middleware
 
 import (
 	"fmt"
-	"net/http"
-	"strconv"
-	"strings"
-
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
+	"net/http"
+	"strconv"
 )
 
 // OrgRedirect changes org and redirects users if the
@@ -51,7 +49,7 @@ func OrgRedirect(cfg *setting.Cfg, userSvc user.Service) web.Handler {
 			qs = fmt.Sprintf("%s&kiosk", urlParams.Encode())
 		}
 
-		newURL := fmt.Sprintf("%s%s?%s", cfg.AppURL, strings.TrimPrefix(c.Req.URL.Path, "/"), qs)
+		newURL := fmt.Sprintf("%s%s/?%s", cfg.AppSubURL, c.Req.URL.Path, qs)
 
 		c.Redirect(newURL, 302)
 	}

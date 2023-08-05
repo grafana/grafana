@@ -31,7 +31,7 @@ func TestOrgRedirectMiddleware(t *testing.T) {
 			expLocation: "/?orgId=3&kiosk",
 		},
 		{
-			desc:        "when setting a correct org for the user with '&kiosk=",
+			desc:        "when setting a correct org for the user with '&kiosk='",
 			input:       "/?kiosk=&orgId=3",
 			expStatus:   302,
 			expLocation: "/?orgId=3&kiosk",
@@ -44,23 +44,28 @@ func TestOrgRedirectMiddleware(t *testing.T) {
 		},
 	}
 
+	appSubURL := []string{"", "/grafana"}
+
 	for _, tc := range testCases {
-		middlewareScenario(t, tc.desc, func(t *testing.T, sc *scenarioContext) {
-			sc.withTokenSessionCookie("token")
-			sc.userService.ExpectedSignedInUser = &user.SignedInUser{OrgID: 1, UserID: 12}
-			sc.userAuthTokenService.LookupTokenProvider = func(ctx context.Context, unhashedToken string) (*auth.UserToken, error) {
-				return &auth.UserToken{
-					UserId:        0,
-					UnhashedToken: "",
-				}, nil
-			}
+		for _, u := range appSubURL {
+			middlewareScenario(t, fmt.Sprintf("%s with appSubURL=%s", tc.desc, u), func(t *testing.T, sc *scenarioContext) {
+				sc.withAppSubURL(u)
+				sc.withTokenSessionCookie("token")
+				sc.userService.ExpectedSignedInUser = &user.SignedInUser{OrgID: 1, UserID: 12}
+				sc.userAuthTokenService.LookupTokenProvider = func(ctx context.Context, unhashedToken string) (*auth.UserToken, error) {
+					return &auth.UserToken{
+						UserId:        0,
+						UnhashedToken: "",
+					}, nil
+				}
 
-			sc.m.Get("/", sc.defaultHandler)
-			sc.fakeReq("GET", tc.input).exec()
+				sc.m.Get(u, sc.defaultHandler)
+				sc.fakeReq("GET", tc.input).exec()
 
-			require.Equal(t, tc.expStatus, sc.resp.Code)
-			require.Equal(t, tc.expLocation, sc.resp.Header().Get("Location"))
-		})
+				require.Equal(t, tc.expStatus, sc.resp.Code)
+				require.Equal(t, u+tc.expLocation, sc.resp.Header().Get("Location"))
+			})
+		}
 	}
 
 	middlewareScenario(t, "when setting an invalid org for user", func(t *testing.T, sc *scenarioContext) {
