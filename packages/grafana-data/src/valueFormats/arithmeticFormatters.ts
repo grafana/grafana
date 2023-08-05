@@ -2,21 +2,21 @@ import { DecimalCount } from '../types/displayValue';
 
 import { toFixed, FormattedValue } from './valueFormats';
 
-export function toPercent(size: number, decimals: DecimalCount): FormattedValue {
+export function toPercent(size: number | null, decimals: DecimalCount): FormattedValue {
   if (size === null) {
     return { text: '' };
   }
   return { text: toFixed(size, decimals), suffix: '%' };
 }
 
-export function toPercentUnit(size: number, decimals: DecimalCount): FormattedValue {
+export function toPercentUnit(size: number | null, decimals: DecimalCount): FormattedValue {
   if (size === null) {
     return { text: '' };
   }
   return { text: toFixed(100 * size, decimals), suffix: '%' };
 }
 
-export function toHex0x(value: number, decimals: DecimalCount): FormattedValue {
+export function toHex0x(value: number | null, decimals: DecimalCount): FormattedValue {
   if (value == null) {
     return { text: '' };
   }
@@ -29,7 +29,7 @@ export function toHex0x(value: number, decimals: DecimalCount): FormattedValue {
   return asHex;
 }
 
-export function toHex(value: number, decimals: DecimalCount): FormattedValue {
+export function toHex(value: number | null, decimals: DecimalCount): FormattedValue {
   if (value == null) {
     return { text: '' };
   }
@@ -38,9 +38,9 @@ export function toHex(value: number, decimals: DecimalCount): FormattedValue {
   };
 }
 
-export function sci(value: number, decimals: DecimalCount): FormattedValue {
+export function sci(value: number | null, decimals: DecimalCount): FormattedValue {
   if (value == null) {
     return { text: '' };
   }
-  return { text: value.toExponential(decimals as number) };
+  return { text: value.toExponential(decimals ?? undefined) };
 }

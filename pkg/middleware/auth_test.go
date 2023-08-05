@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/models"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -87,7 +87,7 @@ func TestMiddlewareAuth(t *testing.T) {
 
 	middlewareScenario(t, "Snapshot public mode disabled and unauthenticated request should return 401", func(
 		t *testing.T, sc *scenarioContext) {
-		sc.m.Get("/api/snapshot", func(c *models.ReqContext) {
+		sc.m.Get("/api/snapshot", func(c *contextmodel.ReqContext) {
 			c.IsSignedIn = false
 		}, SnapshotPublicModeOrSignedIn(sc.cfg), sc.defaultHandler)
 		sc.fakeReq("GET", "/api/snapshot").exec()
@@ -96,7 +96,7 @@ func TestMiddlewareAuth(t *testing.T) {
 
 	middlewareScenario(t, "Snapshot public mode disabled and authenticated request should return 200", func(
 		t *testing.T, sc *scenarioContext) {
-		sc.m.Get("/api/snapshot", func(c *models.ReqContext) {
+		sc.m.Get("/api/snapshot", func(c *contextmodel.ReqContext) {
 			c.IsSignedIn = true
 		}, SnapshotPublicModeOrSignedIn(sc.cfg), sc.defaultHandler)
 		sc.fakeReq("GET", "/api/snapshot").exec()

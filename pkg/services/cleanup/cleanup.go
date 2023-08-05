@@ -16,7 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/serverlock"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
 	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
@@ -227,7 +226,7 @@ func (srv *CleanUpService) expireOldUserInvites(ctx context.Context) {
 	logger := srv.log.FromContext(ctx)
 	maxInviteLifetime := srv.Cfg.UserInviteMaxLifetime
 
-	cmd := models.ExpireTempUsersCommand{
+	cmd := tempuser.ExpireTempUsersCommand{
 		OlderThan: time.Now().Add(-maxInviteLifetime),
 	}
 
@@ -240,7 +239,7 @@ func (srv *CleanUpService) expireOldUserInvites(ctx context.Context) {
 
 func (srv *CleanUpService) deleteStaleShortURLs(ctx context.Context) {
 	logger := srv.log.FromContext(ctx)
-	cmd := models.DeleteShortUrlCommand{
+	cmd := shorturls.DeleteShortUrlCommand{
 		OlderThan: time.Now().Add(-time.Hour * 24 * 7),
 	}
 	if err := srv.ShortURLService.DeleteStaleShortURLs(ctx, &cmd); err != nil {

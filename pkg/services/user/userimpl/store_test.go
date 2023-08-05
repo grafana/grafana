@@ -10,15 +10,104 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotaimpl"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
+
+func TestIntegrationUserGet(t *testing.T) {
+	testCases := []struct {
+		name            string
+		wantErr         error
+		searchLogin     string
+		searchEmail     string
+		caseInsensitive bool
+	}{
+		{
+			name:            "user not found non exact - not case insensitive",
+			wantErr:         user.ErrUserNotFound,
+			searchLogin:     "Test",
+			searchEmail:     "Test@email.com",
+			caseInsensitive: false,
+		},
+		{
+			name:            "user found exact - not case insensitive",
+			wantErr:         nil,
+			searchLogin:     "test",
+			searchEmail:     "test@email.com",
+			caseInsensitive: false,
+		},
+		{
+			name:            "user found non exact - case insensitive",
+			wantErr:         nil,
+			searchLogin:     "Test",
+			searchEmail:     "Test@email.com",
+			caseInsensitive: true,
+		},
+		{
+			name:            "user found exact - case insensitive",
+			wantErr:         nil,
+			searchLogin:     "Test",
+			searchEmail:     "Test@email.com",
+			caseInsensitive: true,
+		},
+		{
+			name:            "user not found - case insensitive",
+			wantErr:         user.ErrUserNotFound,
+			searchLogin:     "Test_login",
+			searchEmail:     "Test*@email.com",
+			caseInsensitive: true,
+		},
+	}
+
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
+	ss := db.InitTestDB(t)
+	cfg := ss.Cfg
+	userStore := ProvideStore(ss, cfg)
+
+	_, errUser := userStore.Insert(context.Background(),
+		&user.User{
+			Email:   "test@email.com",
+			Name:    "test",
+			Login:   "test",
+			Created: time.Now(),
+			Updated: time.Now(),
+		},
+	)
+	require.NoError(t, errUser)
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			if !tc.caseInsensitive && db.IsTestDbMySQL() {
+				t.Skip("mysql is always case insensitive")
+			}
+			cfg.CaseInsensitiveLogin = tc.caseInsensitive
+			usr, err := userStore.Get(context.Background(),
+				&user.User{
+					Email: tc.searchEmail,
+					Login: tc.searchLogin,
+				},
+			)
+
+			if tc.wantErr != nil {
+				require.Error(t, err)
+				require.Nil(t, usr)
+			} else {
+				require.NoError(t, err)
+				require.NotNil(t, usr)
+			}
+		})
+	}
+}
 
 func TestIntegrationUserDataAccess(t *testing.T) {
 	if testing.Short() {
@@ -30,7 +119,7 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 	orgService, err := orgimpl.ProvideService(ss, ss.Cfg, quotaService)
 	require.NoError(t, err)
 	userStore := ProvideStore(ss, setting.NewCfg())
-	usrSvc, err := ProvideService(ss, orgService, ss.Cfg, nil, nil, quotaService)
+	usrSvc, err := ProvideService(ss, orgService, ss.Cfg, nil, nil, quotaService, supportbundlestest.NewFakeBundleService())
 	require.NoError(t, err)
 	usr := &user.SignedInUser{
 		OrgID:       1,
@@ -260,8 +349,15 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 	})
 
 	t.Run("update last seen at", func(t *testing.T) {
-		err := userStore.UpdateLastSeenAt(context.Background(), &user.UpdateUserLastSeenAtCommand{})
+		err := userStore.UpdateLastSeenAt(context.Background(), &user.UpdateUserLastSeenAtCommand{
+			UserID: 10, // Requires UserID
+		})
 		require.NoError(t, err)
+
+		err = userStore.UpdateLastSeenAt(context.Background(), &user.UpdateUserLastSeenAtCommand{
+			UserID: -1,
+		})
+		require.Error(t, err)
 	})
 
 	t.Run("get signed in user", func(t *testing.T) {
@@ -281,9 +377,9 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 		})
 		require.Nil(t, err)
 
-		err = updateDashboardACL(t, ss, 1, &models.DashboardACL{
+		err = updateDashboardACL(t, ss, 1, &dashboards.DashboardACL{
 			DashboardID: 1, OrgID: users[0].OrgID, UserID: users[1].ID,
-			Permission: models.PERMISSION_EDIT,
+			Permission: dashboards.PERMISSION_EDIT,
 		})
 		require.Nil(t, err)
 
@@ -293,6 +389,15 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 		result, err := userStore.GetSignedInUser(context.Background(), query)
 		require.NoError(t, err)
 		require.Equal(t, result.Email, "user1@test.com")
+
+		// Throw errors for invalid user IDs
+		for _, userID := range []int64{-1, 0} {
+			_, err = userStore.GetSignedInUser(context.Background(),
+				&user.GetSignedInUserQuery{
+					OrgID:  users[1].OrgID,
+					UserID: userID}) // zero
+			require.Error(t, err)
+		}
 	})
 
 	t.Run("update user", func(t *testing.T) {
@@ -420,9 +525,9 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 		})
 		require.Nil(t, err)
 
-		err = updateDashboardACL(t, ss, 1, &models.DashboardACL{
+		err = updateDashboardACL(t, ss, 1, &dashboards.DashboardACL{
 			DashboardID: 1, OrgID: users[0].OrgID, UserID: users[1].ID,
-			Permission: models.PERMISSION_EDIT,
+			Permission: dashboards.PERMISSION_EDIT,
 		})
 		require.Nil(t, err)
 
@@ -430,11 +535,11 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 		err = userStore.Delete(context.Background(), users[1].ID)
 		require.Nil(t, err)
 
-		permQuery := &models.GetDashboardACLInfoListQuery{DashboardID: 1, OrgID: users[0].OrgID}
-		err = userStore.getDashboardACLInfoList(permQuery)
+		permQuery := &dashboards.GetDashboardACLInfoListQuery{DashboardID: 1, OrgID: users[0].OrgID}
+		permQueryResult, err := userStore.getDashboardACLInfoList(permQuery)
 		require.Nil(t, err)
 
-		require.Len(t, permQuery.Result, 0)
+		require.Len(t, permQueryResult, 0)
 
 		// A user is an org member and has been assigned permissions
 		// Re-init DB
@@ -454,9 +559,9 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 		})
 		require.Nil(t, err)
 
-		err = updateDashboardACL(t, ss, 1, &models.DashboardACL{
+		err = updateDashboardACL(t, ss, 1, &dashboards.DashboardACL{
 			DashboardID: 1, OrgID: users[0].OrgID, UserID: users[1].ID,
-			Permission: models.PERMISSION_EDIT,
+			Permission: dashboards.PERMISSION_EDIT,
 		})
 		require.Nil(t, err)
 
@@ -486,18 +591,18 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 		err = userStore.Delete(context.Background(), users[1].ID)
 		require.Nil(t, err)
 
-		permQuery = &models.GetDashboardACLInfoListQuery{DashboardID: 1, OrgID: users[0].OrgID}
-		err = userStore.getDashboardACLInfoList(permQuery)
+		permQuery = &dashboards.GetDashboardACLInfoListQuery{DashboardID: 1, OrgID: users[0].OrgID}
+		permQueryResult, err = userStore.getDashboardACLInfoList(permQuery)
 		require.Nil(t, err)
 
-		require.Len(t, permQuery.Result, 0)
+		require.Len(t, permQueryResult, 0)
 	})
 
 	t.Run("Testing DB - return list of users that the SignedInUser has permission to read", func(t *testing.T) {
 		ss := db.InitTestDB(t)
 		orgService, err := orgimpl.ProvideService(ss, ss.Cfg, quotaService)
 		require.NoError(t, err)
-		usrSvc, err := ProvideService(ss, orgService, ss.Cfg, nil, nil, quotaService)
+		usrSvc, err := ProvideService(ss, orgService, ss.Cfg, nil, nil, quotaService, supportbundlestest.NewFakeBundleService())
 		require.NoError(t, err)
 
 		createFiveTestUsers(t, usrSvc, func(i int) *user.CreateUserCommand {
@@ -808,7 +913,7 @@ func createFiveTestUsers(t *testing.T, svc user.Service, fn func(i int) *user.Cr
 	users := make([]user.User, 5)
 	for i := 0; i < 5; i++ {
 		cmd := fn(i)
-		user, err := svc.CreateUserForTests(context.Background(), cmd)
+		user, err := svc.Create(context.Background(), cmd)
 		require.Nil(t, err)
 		users[i] = *user
 	}
@@ -817,7 +922,7 @@ func createFiveTestUsers(t *testing.T, svc user.Service, fn func(i int) *user.Cr
 }
 
 // TODO: Use FakeDashboardStore when org has its own service
-func updateDashboardACL(t *testing.T, sqlStore db.DB, dashboardID int64, items ...*models.DashboardACL) error {
+func updateDashboardACL(t *testing.T, sqlStore db.DB, dashboardID int64, items ...*dashboards.DashboardACL) error {
 	t.Helper()
 
 	err := sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
@@ -830,11 +935,11 @@ func updateDashboardACL(t *testing.T, sqlStore db.DB, dashboardID int64, items .
 			item.Created = time.Now()
 			item.Updated = time.Now()
 			if item.UserID == 0 && item.TeamID == 0 && (item.Role == nil || !item.Role.IsValid()) {
-				return models.ErrDashboardACLInfoMissing
+				return dashboards.ErrDashboardACLInfoMissing
 			}
 
 			if item.DashboardID == 0 {
-				return models.ErrDashboardPermissionDashboardEmpty
+				return dashboards.ErrDashboardPermissionDashboardEmpty
 			}
 
 			sess.Nullable("user_id", "team_id")
@@ -844,7 +949,7 @@ func updateDashboardACL(t *testing.T, sqlStore db.DB, dashboardID int64, items .
 		}
 
 		// Update dashboard HasACL flag
-		dashboard := models.Dashboard{HasACL: true}
+		dashboard := dashboards.Dashboard{HasACL: true}
 		_, err = sess.Cols("has_acl").Where("id=?", dashboardID).Update(&dashboard)
 		return err
 	})
@@ -854,9 +959,9 @@ func updateDashboardACL(t *testing.T, sqlStore db.DB, dashboardID int64, items .
 // This function was copied from pkg/services/dashboards/database to circumvent
 // import cycles. When this org-related code is refactored into a service the
 // tests can the real GetDashboardACLInfoList functions
-func (ss *sqlStore) getDashboardACLInfoList(query *models.GetDashboardACLInfoListQuery) error {
+func (ss *sqlStore) getDashboardACLInfoList(query *dashboards.GetDashboardACLInfoListQuery) ([]*dashboards.DashboardACLInfoDTO, error) {
+	queryResult := make([]*dashboards.DashboardACLInfoDTO, 0)
 	outerErr := ss.db.WithDbSession(context.Background(), func(dbSession *db.Session) error {
-		query.Result = make([]*models.DashboardACLInfoDTO, 0)
 		falseStr := ss.dialect.BooleanStr(false)
 
 		if query.DashboardID == 0 {
@@ -880,7 +985,7 @@ func (ss *sqlStore) getDashboardACLInfoList(query *models.GetDashboardACLInfoLis
 				falseStr + ` AS inherited
 		FROM dashboard_acl as da
 		WHERE da.dashboard_id = -1`
-			return dbSession.SQL(sql).Find(&query.Result)
+			return dbSession.SQL(sql).Find(&queryResult)
 		}
 
 		rawSQL := `
@@ -922,18 +1027,18 @@ func (ss *sqlStore) getDashboardACLInfoList(query *models.GetDashboardACLInfoLis
 			ORDER BY da.id ASC
 			`
 
-		return dbSession.SQL(rawSQL, query.OrgID, query.DashboardID).Find(&query.Result)
+		return dbSession.SQL(rawSQL, query.OrgID, query.DashboardID).Find(&queryResult)
 	})
 
 	if outerErr != nil {
-		return outerErr
+		return nil, outerErr
 	}
 
-	for _, p := range query.Result {
+	for _, p := range queryResult {
 		p.PermissionName = p.Permission.String()
 	}
 
-	return nil
+	return queryResult, nil
 }
 
 func createOrgAndUserSvc(t *testing.T, store db.DB, cfg *setting.Cfg) (org.Service, user.Service) {
@@ -942,7 +1047,7 @@ func createOrgAndUserSvc(t *testing.T, store db.DB, cfg *setting.Cfg) (org.Servi
 	quotaService := quotaimpl.ProvideService(store, cfg)
 	orgService, err := orgimpl.ProvideService(store, cfg, quotaService)
 	require.NoError(t, err)
-	usrSvc, err := ProvideService(store, orgService, cfg, nil, nil, quotaService)
+	usrSvc, err := ProvideService(store, orgService, cfg, nil, nil, quotaService, supportbundlestest.NewFakeBundleService())
 	require.NoError(t, err)
 
 	return orgService, usrSvc

@@ -1,9 +1,10 @@
 import { css } from '@emotion/css';
-import React, { FC } from 'react';
+import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { ScalarDimensionConfig } from '@grafana/schema';
 import { useStyles2 } from '@grafana/ui';
-import { DimensionContext, ScalarDimensionConfig } from 'app/features/dimensions';
+import { DimensionContext } from 'app/features/dimensions';
 import { ScalarDimensionEditor } from 'app/features/dimensions/editors';
 
 import { CanvasElementItem, CanvasElementProps, defaultBgColor } from '../element';
@@ -16,10 +17,8 @@ interface DroneFrontConfig {
   rollAngle?: ScalarDimensionConfig;
 }
 
-const DroneFrontDisplay: FC<CanvasElementProps<DroneFrontConfig, DroneFrontData>> = (props) => {
+const DroneFrontDisplay = ({ data }: CanvasElementProps<DroneFrontConfig, DroneFrontData>) => {
   const styles = useStyles2(getStyles);
-
-  const { data } = props;
 
   const droneFrontTransformStyle = `rotate(${data?.rollAngle ? data.rollAngle : 0}deg)`;
 
@@ -70,7 +69,7 @@ const DroneFrontDisplay: FC<CanvasElementProps<DroneFrontConfig, DroneFrontData>
   );
 };
 
-export const droneFrontItem: CanvasElementItem<any, any> = {
+export const droneFrontItem: CanvasElementItem = {
   id: 'droneFront',
   name: 'Drone Front',
   description: 'Drone front',

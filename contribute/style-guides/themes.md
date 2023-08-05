@@ -29,11 +29,12 @@ function Foo(props: FooProps) {
   const styles = useStyles2(getStyles);
   // Use styles with className
 }
-```
 
-const getStyles = (theme: GrafanaTheme2) => css({
-padding: theme.spacing(1,2)
-});
+const getStyles = (theme: GrafanaTheme2) =>
+  css({
+    padding: theme.spacing(1, 2),
+  });
+```
 
 #### Get the theme object
 

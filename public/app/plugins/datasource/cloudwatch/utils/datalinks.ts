@@ -20,7 +20,7 @@ export async function addDataLinksToLogsResponse(
   getRegion: (region: string) => string,
   tracingDatasourceUid?: string
 ): Promise<void> {
-  const replace = (target: string, fieldName?: string) => replaceFn(target, request.scopedVars, true, fieldName);
+  const replace = (target: string, fieldName?: string) => replaceFn(target, request.scopedVars, false, fieldName);
   const getVariableValue = (target: string) => getVariableValueFn(target, request.scopedVars);
 
   for (const dataFrame of response.data as DataFrame[]) {
@@ -71,8 +71,8 @@ function createAwsConsoleLink(
   getVariableValue: (value: string) => string[]
 ) {
   const arns = (target.logGroups ?? [])
-    .filter((group) => group?.value)
-    .map((group) => (group.value ?? '').replace(/:\*$/, '')); // remove `:*` from end of arn
+    .filter((group) => group?.arn)
+    .map((group) => (group.arn ?? '').replace(/:\*$/, '')); // remove `:*` from end of arn
   const logGroupNames = target.logGroupNames ?? [];
   const sources = arns?.length ? arns : logGroupNames;
   const interpolatedExpression = target.expression ? replace(target.expression) : '';

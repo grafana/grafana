@@ -22,10 +22,10 @@ export const makeSQLQuery = (sql?: SQLExpression): CloudWatchMetricsQuery => ({
 
 describe('Cloudwatch SQLBuilderEditor', () => {
   beforeEach(() => {
-    datasource.api.getNamespaces = jest.fn().mockResolvedValue([]);
-    datasource.api.getMetrics = jest.fn().mockResolvedValue([]);
-    datasource.api.getDimensionKeys = jest.fn().mockResolvedValue([]);
-    datasource.api.getDimensionValues = jest.fn().mockResolvedValue([]);
+    datasource.resources.getNamespaces = jest.fn().mockResolvedValue([]);
+    datasource.resources.getMetrics = jest.fn().mockResolvedValue([]);
+    datasource.resources.getDimensionKeys = jest.fn().mockResolvedValue([]);
+    datasource.resources.getDimensionValues = jest.fn().mockResolvedValue([]);
   });
 
   const baseProps = {
@@ -46,7 +46,7 @@ describe('Cloudwatch SQLBuilderEditor', () => {
     });
 
     render(<SQLBuilderEditor {...baseProps} query={query} />);
-    await waitFor(() => expect(datasource.api.getNamespaces).toHaveBeenCalled());
+    await waitFor(() => expect(datasource.resources.getNamespaces).toHaveBeenCalled());
 
     expect(screen.getByText('AWS/EC2')).toBeInTheDocument();
     expect(screen.getByLabelText('With schema')).not.toBeChecked();
@@ -67,7 +67,7 @@ describe('Cloudwatch SQLBuilderEditor', () => {
     });
 
     render(<SQLBuilderEditor {...baseProps} query={query} />);
-    await waitFor(() => expect(datasource.api.getNamespaces).toHaveBeenCalled());
+    await waitFor(() => expect(datasource.resources.getNamespaces).toHaveBeenCalled());
 
     expect(screen.getByText('AWS/EC2')).toBeInTheDocument();
     expect(screen.getByLabelText('With schema')).toBeChecked();
@@ -94,7 +94,7 @@ describe('Cloudwatch SQLBuilderEditor', () => {
 
     render(<SQLBuilderEditor {...baseProps} query={query} />);
     await waitFor(() =>
-      expect(datasource.api.getDimensionKeys).toHaveBeenCalledWith({
+      expect(datasource.resources.getDimensionKeys).toHaveBeenCalledWith({
         namespace: 'AWS/EC2',
         region: query.region,
         dimensionFilters: { InstanceId: null },
@@ -121,7 +121,7 @@ describe('Cloudwatch SQLBuilderEditor', () => {
     });
 
     render(<SQLBuilderEditor {...baseProps} query={query} />);
-    await waitFor(() => expect(datasource.api.getNamespaces).toHaveBeenCalled());
+    await waitFor(() => expect(datasource.resources.getNamespaces).toHaveBeenCalled());
 
     expect(screen.getByText('AVERAGE')).toBeInTheDocument();
     expect(screen.getByText('CPUUtilization')).toBeInTheDocument();
@@ -137,7 +137,7 @@ describe('Cloudwatch SQLBuilderEditor', () => {
       });
 
       render(<SQLBuilderEditor {...baseProps} query={query} />);
-      await waitFor(() => expect(datasource.api.getNamespaces).toHaveBeenCalled());
+      await waitFor(() => expect(datasource.resources.getNamespaces).toHaveBeenCalled());
 
       expect(screen.getByText('AVG')).toBeInTheDocument();
       const directionElement = screen.getByLabelText('Direction');
@@ -149,7 +149,7 @@ describe('Cloudwatch SQLBuilderEditor', () => {
       const query = makeSQLQuery({});
 
       render(<SQLBuilderEditor {...baseProps} query={query} />);
-      await waitFor(() => expect(datasource.api.getNamespaces).toHaveBeenCalled());
+      await waitFor(() => expect(datasource.resources.getNamespaces).toHaveBeenCalled());
 
       expect(screen.queryByText('AVG')).toBeNull();
       const directionElement = screen.getByLabelText('Direction');

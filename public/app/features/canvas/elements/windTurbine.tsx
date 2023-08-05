@@ -1,9 +1,10 @@
 import { css } from '@emotion/css';
-import React, { FC } from 'react';
+import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { ScalarDimensionConfig } from '@grafana/schema';
 import { useStyles2 } from '@grafana/ui';
-import { DimensionContext, ScalarDimensionConfig } from 'app/features/dimensions';
+import { DimensionContext } from 'app/features/dimensions';
 import { ScalarDimensionEditor } from 'app/features/dimensions/editors';
 
 import { CanvasElementItem, CanvasElementProps, defaultBgColor } from '../element';
@@ -16,10 +17,8 @@ interface WindTurbineConfig {
   rpm?: ScalarDimensionConfig;
 }
 
-const WindTurbineDisplay: FC<CanvasElementProps<WindTurbineConfig, WindTurbineData>> = (props) => {
+const WindTurbineDisplay = ({ data }: CanvasElementProps<WindTurbineConfig, WindTurbineData>) => {
   const styles = useStyles2(getStyles);
-
-  const { data } = props;
 
   const windTurbineAnimation = `spin ${data?.rpm ? 60 / Math.abs(data.rpm) : 0}s linear infinite`;
 
@@ -65,7 +64,7 @@ const WindTurbineDisplay: FC<CanvasElementProps<WindTurbineConfig, WindTurbineDa
   );
 };
 
-export const windTurbineItem: CanvasElementItem<any, any> = {
+export const windTurbineItem: CanvasElementItem = {
   id: 'windTurbine',
   name: 'Wind Turbine',
   description: 'Spinny spinny',

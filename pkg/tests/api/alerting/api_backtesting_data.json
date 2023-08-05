@@ -220,14 +220,14 @@
       },
       {
         "refId": "B",
-        "datasourceUid": "-100",
+        "datasourceUid": "__expr__",
         "queryType": "",
         "model": {
           "refId": "B",
           "hide": false,
           "type": "reduce",
           "datasource": {
-            "uid": "-100",
+            "uid": "__expr__",
             "type": "__expr__"
           },
           "conditions": [
@@ -261,14 +261,14 @@
       },
       {
         "refId": "C",
-        "datasourceUid": "-100",
+        "datasourceUid": "__expr__",
         "queryType": "",
         "model": {
           "refId": "C",
           "hide": false,
           "type": "threshold",
           "datasource": {
-            "uid": "-100",
+            "uid": "__expr__",
             "type": "__expr__"
           },
           "conditions": [

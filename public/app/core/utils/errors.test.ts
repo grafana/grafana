@@ -1,3 +1,4 @@
+import { FetchError } from '@grafana/runtime';
 import { getMessageFromError } from 'app/core/utils/errors';
 
 describe('errors functions', () => {
@@ -15,7 +16,7 @@ describe('errors functions', () => {
 
   describe('when getMessageFromError gets an error object with message field', () => {
     beforeEach(() => {
-      message = getMessageFromError({ message: 'error string' } as Error);
+      message = getMessageFromError(new Error('error string'));
     });
 
     it('should return the message text', () => {
@@ -25,7 +26,7 @@ describe('errors functions', () => {
 
   describe('when getMessageFromError gets an error object with data.message field', () => {
     beforeEach(() => {
-      message = getMessageFromError({ data: { message: 'error string' } } as any);
+      message = getMessageFromError({ data: { message: 'error string' }, status: 500 } as FetchError);
     });
 
     it('should return the message text', () => {
@@ -35,7 +36,7 @@ describe('errors functions', () => {
 
   describe('when getMessageFromError gets an error object with statusText field', () => {
     beforeEach(() => {
-      message = getMessageFromError({ statusText: 'error string' } as any);
+      message = getMessageFromError({ data: 'foo', statusText: 'error string', status: 500 } as FetchError);
     });
 
     it('should return the statusText text', () => {
@@ -45,7 +46,7 @@ describe('errors functions', () => {
 
   describe('when getMessageFromError gets an error object', () => {
     beforeEach(() => {
-      message = getMessageFromError({ customError: 'error string' } as any);
+      message = getMessageFromError({ customError: 'error string' });
     });
 
     it('should return the stringified error', () => {

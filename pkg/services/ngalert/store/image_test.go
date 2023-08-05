@@ -30,7 +30,7 @@ func TestIntegrationSaveAndGetImage(t *testing.T) {
 	// create an image with a path on disk
 	image1 := models.Image{Path: "example.png"}
 	require.NoError(t, dbstore.SaveImage(ctx, &image1))
-	require.NotEqual(t, "", image1.Token)
+	require.NotEqual(t, image1.Token, "")
 
 	// image should not have expired
 	assert.False(t, image1.HasExpired())
@@ -49,7 +49,12 @@ func TestIntegrationSaveAndGetImage(t *testing.T) {
 	// create an image with a URL
 	image2 := models.Image{URL: "https://example.com/example.png"}
 	require.NoError(t, dbstore.SaveImage(ctx, &image2))
-	require.NotEqual(t, "", image2.Token)
+	require.NotEqual(t, image2.Token, "")
+
+	// create another image with the same URL
+	image3 := models.Image{URL: "https://example.com/example.png"}
+	require.NoError(t, dbstore.SaveImage(ctx, &image3))
+	require.NotEqual(t, image3.Token, "")
 
 	// image should not have expired
 	assert.False(t, image2.HasExpired())
@@ -60,12 +65,24 @@ func TestIntegrationSaveAndGetImage(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, image2, *result2)
 
+	// querying by URL should yield the same result even though we have two images with the same URL
+	result2, err = dbstore.GetImageByURL(ctx, image2.URL)
+	require.NoError(t, err)
+	assert.Equal(t, image2, *result2)
+
 	// expired image should not be returned
 	image1.ExpiresAt = time.Now().Add(-time.Second)
 	require.NoError(t, dbstore.SaveImage(ctx, &image1))
 	result1, err = dbstore.GetImage(ctx, image1.Token)
 	assert.EqualError(t, err, "image not found")
 	assert.Nil(t, result1)
+
+	// Querying by URL should yield the same result.
+	image2.ExpiresAt = time.Now().Add(-time.Second)
+	require.NoError(t, dbstore.SaveImage(ctx, &image1))
+	result2, err = dbstore.GetImage(ctx, image2.URL)
+	assert.EqualError(t, err, "image not found")
+	assert.Nil(t, result2)
 }
 
 func TestIntegrationGetImages(t *testing.T) {

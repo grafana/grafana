@@ -3,13 +3,10 @@ package featuremgmt
 import (
 	"context"
 	"fmt"
-	"net/http"
 	"reflect"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-
-	"github.com/grafana/grafana/pkg/api/response"
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/licensing"
 )
 
 var (
@@ -18,7 +15,7 @@ var (
 
 type FeatureManager struct {
 	isDevMod  bool
-	licensing models.Licensing
+	licensing licensing.Licensing
 	flags     map[string]*FeatureFlag
 	enabled   map[string]bool // only the "on" values
 	config    string          // path to config file
@@ -51,8 +48,8 @@ func (fm *FeatureManager) registerFlags(flags ...FeatureFlag) {
 		}
 
 		// The most recently defined state
-		if add.State != FeatureStateUnknown {
-			flag.State = add.State
+		if add.Stage != FeatureStageUnknown {
+			flag.Stage = add.Stage
 		}
 
 		// Only gets more restrictive
@@ -131,7 +128,7 @@ func (fm *FeatureManager) IsEnabled(flag string) bool {
 	return fm.enabled[flag]
 }
 
-// GetEnabled returns a map contaning only the features that are enabled
+// GetEnabled returns a map containing only the features that are enabled
 func (fm *FeatureManager) GetEnabled(ctx context.Context) map[string]bool {
 	enabled := make(map[string]bool, len(fm.enabled))
 	for key, val := range fm.enabled {
@@ -151,25 +148,12 @@ func (fm *FeatureManager) GetFlags() []FeatureFlag {
 	return v
 }
 
-func (fm *FeatureManager) HandleGetSettings(c *models.ReqContext) {
-	res := make(map[string]interface{}, 3)
-	res["enabled"] = fm.GetEnabled(c.Req.Context())
-
-	vv := make([]*FeatureFlag, 0, len(fm.flags))
-	for _, v := range fm.flags {
-		vv = append(vv, v)
-	}
-
-	res["info"] = vv
-
-	response.JSON(http.StatusOK, res).WriteTo(c)
-}
-
 // WithFeatures is used to define feature toggles for testing.
 // The arguments are a list of strings that are optionally followed by a boolean value for example:
 // WithFeatures([]interface{}{"my_feature", "other_feature"}) or WithFeatures([]interface{}{"my_feature", true})
 func WithFeatures(spec ...interface{}) *FeatureManager {
 	count := len(spec)
+	features := make(map[string]*FeatureFlag, count)
 	enabled := make(map[string]bool, count)
 
 	idx := 0
@@ -182,10 +166,11 @@ func WithFeatures(spec ...interface{}) *FeatureManager {
 			idx++
 		}
 
+		features[key] = &FeatureFlag{Name: key, Enabled: val}
 		if val {
 			enabled[key] = true
 		}
 	}
 
-	return &FeatureManager{enabled: enabled}
+	return &FeatureManager{enabled: enabled, flags: features}
 }

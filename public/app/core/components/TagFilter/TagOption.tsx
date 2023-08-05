@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { FC } from 'react';
+import React from 'react';
 import { OptionProps } from 'react-select';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -7,12 +7,7 @@ import { useStyles2 } from '@grafana/ui';
 
 import { TagBadge } from './TagBadge';
 
-// https://github.com/JedWatson/react-select/issues/3038
-interface ExtendedOptionProps extends OptionProps<any, any> {
-  data: any;
-}
-
-export const TagOption: FC<ExtendedOptionProps> = ({ data, className, label, isFocused, innerProps }) => {
+export const TagOption = ({ data, className, label, isFocused, innerProps }: OptionProps<any>) => {
   const styles = useStyles2(getStyles);
 
   return (

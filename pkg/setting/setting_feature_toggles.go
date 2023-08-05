@@ -3,8 +3,9 @@ package setting
 import (
 	"strconv"
 
-	"github.com/grafana/grafana/pkg/util"
 	"gopkg.in/ini.v1"
+
+	"github.com/grafana/grafana/pkg/util"
 )
 
 // @deprecated -- should use `featuremgmt.FeatureToggles`

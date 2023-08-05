@@ -26,7 +26,7 @@ describe('histogram frames frames', () => {
     expect(
       out.fields.map((f) => ({
         name: f.name,
-        values: f.values.toArray(),
+        values: f.values,
         config: f.config,
       }))
     ).toMatchInlineSnapshot(`
@@ -35,7 +35,7 @@ describe('histogram frames frames', () => {
           "config": {
             "unit": "mph",
           },
-          "name": "BucketMin",
+          "name": "xMin",
           "values": [
             1,
             2,
@@ -52,7 +52,7 @@ describe('histogram frames frames', () => {
           "config": {
             "unit": "mph",
           },
-          "name": "BucketMax",
+          "name": "xMax",
           "values": [
             2,
             3,
@@ -140,12 +140,12 @@ describe('histogram frames frames', () => {
     expect(
       out2.fields.map((f) => ({
         name: f.name,
-        values: f.values.toArray(),
+        values: f.values,
       }))
     ).toMatchInlineSnapshot(`
       [
         {
-          "name": "BucketMin",
+          "name": "xMin",
           "values": [
             1,
             2,
@@ -159,7 +159,7 @@ describe('histogram frames frames', () => {
           ],
         },
         {
-          "name": "BucketMax",
+          "name": "xMax",
           "values": [
             2,
             3,
@@ -173,7 +173,7 @@ describe('histogram frames frames', () => {
           ],
         },
         {
-          "name": "Count",
+          "name": "count",
           "values": [
             1,
             1,

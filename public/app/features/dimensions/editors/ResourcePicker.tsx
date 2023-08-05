@@ -1,6 +1,5 @@
 import { css } from '@emotion/css';
 import React, { createRef } from 'react';
-import SVG from 'react-inlinesvg';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import {
@@ -15,6 +14,7 @@ import {
   useTheme2,
 } from '@grafana/ui';
 import { closePopover } from '@grafana/ui/src/utils/closePopover';
+import { SanitizedSVG } from 'app/core/components/SVG/SanitizedSVG';
 
 import { getPublicOrAbsoluteUrl } from '../resource';
 import { MediaType, ResourceFolderName, ResourcePickerSize } from '../types';
@@ -40,7 +40,7 @@ export const ResourcePicker = (props: Props) => {
   const styles = useStyles2(getStyles);
   const theme = useTheme2();
 
-  const pickerTriggerRef = createRef<any>();
+  const pickerTriggerRef = createRef<HTMLDivElement>();
   const popoverElement = (
     <ResourcePickerPopover onChange={onChange} value={value} mediaType={mediaType} folderName={folderName} />
   );
@@ -56,7 +56,7 @@ export const ResourcePicker = (props: Props) => {
 
   const renderSmallResourcePicker = () => {
     if (value && sanitizedSrc) {
-      return <SVG src={sanitizedSrc} className={styles.icon} style={{ ...colorStyle }} />;
+      return <SanitizedSVG src={sanitizedSrc} className={styles.icon} style={{ ...colorStyle }} />;
     } else {
       return (
         <LinkButton variant="primary" fill="text" size="sm">
@@ -70,10 +70,10 @@ export const ResourcePicker = (props: Props) => {
     <InlineFieldRow>
       <InlineField label={null} grow>
         <Input
-          value={name}
+          value={getDisplayName(src, name)}
           placeholder={placeholder}
           readOnly={true}
-          prefix={sanitizedSrc && <SVG src={sanitizedSrc} className={styles.icon} style={{ ...colorStyle }} />}
+          prefix={sanitizedSrc && <SanitizedSVG src={sanitizedSrc} className={styles.icon} style={{ ...colorStyle }} />}
           suffix={<Button icon="times" variant="secondary" fill="text" size="sm" onClick={onClear} />}
         />
       </InlineField>
@@ -96,6 +96,8 @@ export const ResourcePicker = (props: Props) => {
               />
             )}
 
+            {/* TODO: fix keyboard a11y */}
+            {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
             <div ref={pickerTriggerRef} onClick={showPopper} className={styles.pointer}>
               {size === ResourcePickerSize.SMALL && renderSmallResourcePicker()}
               {size === ResourcePickerSize.NORMAL && renderNormalResourcePicker()}
@@ -106,6 +108,17 @@ export const ResourcePicker = (props: Props) => {
     </PopoverController>
   );
 };
+
+// strip the SVG off icons in the icons folder
+function getDisplayName(src?: string, name?: string): string | undefined {
+  if (src?.startsWith('public/img/icons')) {
+    const idx = name?.lastIndexOf('.svg') ?? 0;
+    if (idx > 0) {
+      return name!.substring(0, idx);
+    }
+  }
+  return name;
+}
 
 const getStyles = (theme: GrafanaTheme2) => ({
   pointer: css`

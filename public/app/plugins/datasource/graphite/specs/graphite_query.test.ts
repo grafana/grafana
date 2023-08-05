@@ -110,4 +110,49 @@ describe('Graphite query model', () => {
       expect(ctx.queryModel.target.target).toBe('foo.bar');
     });
   });
+
+  describe('when query has multiple seriesByTags functions as parameters it updates the model target correctly', () => {
+    /* 
+      all functions that take parameters as functions can have a bug where writing a query
+      in code with two seriesByTags funcs as params and then 
+      switching from code to builder parsers the second function in a way that 
+      changes the order of the params and wraps the first param in the second param.
+      
+      asPercent(seriesByTag('namespace=asd'), (seriesByTag('namespace=fgh')) 
+      becomes
+      asPercent(seriesByTag(seriesByTag('namespace=asd'), 'namespace=fgh'))
+
+      This is due to the core functionality of parsing changed targets by reducing them, 
+      where each function is wrapped in another function
+      https://github.com/grafana/grafana/blob/main/public/app/plugins/datasource/graphite/graphite_query.ts#LL187C8-L187C8
+
+      Parsing the second seriesByTag function as param as a string fixes this issue 
+
+      This is one of the edge cases that could be a reason for either refactoring or rebuilding the Graphite query builder
+    */
+    beforeEach(() => {
+      ctx.target = { refId: 'A', target: `asPercent(seriesByTag('namespace=asd'), seriesByTag('namespace=fgh'))` };
+      ctx.targets = [ctx.target];
+      ctx.queryModel = new GraphiteQuery(ctx.datasource, ctx.target, ctx.templateSrv);
+    });
+
+    it('should parse the second function param as a string and not a second function', () => {
+      const targets = [
+        {
+          refId: 'A',
+          datasource: {
+            type: 'graphite',
+            uid: 'zzz',
+          },
+          target: "asPercent(seriesByTag('namespace=jkl'), seriesByTag('namespace=fgh'))",
+          textEditor: false,
+          key: '123',
+        },
+      ];
+      expect(ctx.queryModel.segments.length).toBe(0);
+      expect(ctx.queryModel.functions.length).toBe(2);
+      ctx.queryModel.updateModelTarget(targets);
+      expect(ctx.queryModel.target.target).not.toContain('seriesByTag(seriesByTag(');
+    });
+  });
 });

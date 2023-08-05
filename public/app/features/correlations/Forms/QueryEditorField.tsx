@@ -2,6 +2,7 @@ import React from 'react';
 import { Controller } from 'react-hook-form';
 import { useAsync } from 'react-use';
 
+import { CoreApp } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { Field, LoadingPlaceholder, Alert } from '@grafana/ui';
 
@@ -23,10 +24,28 @@ export const QueryEditorField = ({ dsUid, invalid, error, name }: Props) => {
     }
     return getDataSourceSrv().get(dsUid);
   }, [dsUid]);
+
   const QueryEditor = datasource?.components?.QueryEditor;
 
   return (
-    <Field label="Query" invalid={invalid} error={error}>
+    <Field
+      label="Query"
+      description={
+        <span>
+          Define the query that is run when the link is clicked. You can use{' '}
+          <a
+            href="https://grafana.com/docs/grafana/latest/panels-visualizations/configure-data-links/"
+            target="_blank"
+            rel="noreferrer"
+          >
+            variables
+          </a>{' '}
+          to access specific field values.
+        </span>
+      }
+      invalid={invalid}
+      error={error}
+    >
       <Controller
         name={name}
         rules={{
@@ -52,8 +71,19 @@ export const QueryEditorField = ({ dsUid, invalid, error, name }: Props) => {
           if (!QueryEditor) {
             return <Alert title="Data source does not export a query editor."></Alert>;
           }
-
-          return <QueryEditor onRunQuery={() => {}} onChange={onChange} datasource={datasource} query={value} />;
+          return (
+            <>
+              <QueryEditor
+                onRunQuery={() => {}}
+                app={CoreApp.Correlations}
+                onChange={(value) => {
+                  onChange(value);
+                }}
+                datasource={datasource}
+                query={value}
+              />
+            </>
+          );
         }}
       />
     </Field>

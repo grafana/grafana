@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/playlist"
+	"github.com/grafana/grafana/pkg/services/star"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -171,7 +171,7 @@ func (s *sqlStore) List(ctx context.Context, query *playlist.GetPlaylistsQuery) 
 func (s *sqlStore) GetItems(ctx context.Context, query *playlist.GetPlaylistItemsByUidQuery) ([]playlist.PlaylistItem, error) {
 	var playlistItems = make([]playlist.PlaylistItem, 0)
 	if query.PlaylistUID == "" || query.OrgId == 0 {
-		return playlistItems, models.ErrCommandValidationFailed
+		return playlistItems, star.ErrCommandValidationFailed
 	}
 	err := s.db.WithDbSession(ctx, func(sess *db.Session) error {
 		// getQuery the playlist Id

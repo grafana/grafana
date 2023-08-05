@@ -1,7 +1,7 @@
 import { of, throwError } from 'rxjs';
 import { delay } from 'rxjs/operators';
 
-import { getDefaultTimeRange, LoadingState, VariableSupportType } from '@grafana/data';
+import { DataSourceApi, getDefaultTimeRange, LoadingState, VariableSupportType } from '@grafana/data';
 
 import { queryBuilder } from '../shared/testing/builders';
 import { getPreloadedState } from '../state/helpers';
@@ -15,15 +15,10 @@ import { UpdateOptionsResults, VariableQueryRunner } from './VariableQueryRunner
 import { QueryRunner, QueryRunners } from './queryRunners';
 import { updateVariableOptions } from './reducer';
 
-type DoneCallback = {
-  (...args: any[]): any;
-  fail(error?: string | { message: string }): any;
-};
-
 function expectOnResults(args: {
   runner: VariableQueryRunner;
   identifier: KeyedVariableIdentifier;
-  done: DoneCallback;
+  done: jest.DoneCallback;
   expect: (results: UpdateOptionsResults[]) => void;
 }) {
   const { runner, identifier, done, expect: expectCallback } = args;
@@ -51,7 +46,7 @@ function getTestContext(variable?: QueryVariableModel) {
   });
   const key = '0123456789';
   variable = variable ?? queryBuilder().withId('query').withRootStateKey(key).withName('query').build();
-  const datasource: any = { metricFindQuery: jest.fn().mockResolvedValue([]) };
+  const datasource = { metricFindQuery: jest.fn().mockResolvedValue([]) } as unknown as DataSourceApi;
   const identifier = toKeyedVariableIdentifier(variable);
   const searchFilter = undefined;
   const getTemplatedRegex = jest.fn().mockReturnValue('getTemplatedRegex result');

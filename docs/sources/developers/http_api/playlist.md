@@ -1,6 +1,7 @@
 ---
 aliases:
   - ../../http_api/playlist/
+canonical: /docs/grafana/latest/developers/http_api/playlist/
 description: Playlist Admin HTTP API
 keywords:
   - grafana
@@ -8,6 +9,10 @@ keywords:
   - documentation
   - api
   - playlist
+labels:
+  products:
+    - enterprise
+    - oss
 title: 'Playlist HTTP API '
 ---
 
@@ -69,7 +74,6 @@ Content-Type: application/json
   "uid" : "1",
   "name": "my playlist",
   "interval": "5m",
-  "orgId": "my org",
   "items": [
     {
       "id": 1,
@@ -245,7 +249,6 @@ Content-Type: application/json
   "uid" : "1",
   "name": "my playlist",
   "interval": "5m",
-  "orgId": "my org",
   "items": [
     {
       "id": 1,

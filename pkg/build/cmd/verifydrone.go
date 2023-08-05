@@ -10,9 +10,7 @@ import (
 
 	"github.com/drone/drone-cli/drone/lint"
 	"github.com/drone/drone-cli/drone/starlark"
-
 	"github.com/google/go-cmp/cmp"
-
 	cliv1 "github.com/urfave/cli"
 	"github.com/urfave/cli/v2"
 	"gopkg.in/yaml.v3"

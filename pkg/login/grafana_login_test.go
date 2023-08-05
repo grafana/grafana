@@ -9,7 +9,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/db/dbtest"
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/usertest"
 )
@@ -59,7 +59,7 @@ func TestLoginUsingGrafanaDB(t *testing.T) {
 type grafanaLoginScenarioContext struct {
 	store                  db.DB
 	userService            *usertest.FakeUserService
-	loginUserQuery         *models.LoginUserQuery
+	loginUserQuery         *login.LoginUserQuery
 	validatePasswordCalled bool
 }
 
@@ -73,7 +73,7 @@ func grafanaLoginScenario(t *testing.T, desc string, fn grafanaLoginScenarioFunc
 
 		sc := &grafanaLoginScenarioContext{
 			store: dbtest.NewFakeDB(),
-			loginUserQuery: &models.LoginUserQuery{
+			loginUserQuery: &login.LoginUserQuery{
 				Username:  "user",
 				Password:  "pwd",
 				IpAddress: "192.168.1.1:56433",

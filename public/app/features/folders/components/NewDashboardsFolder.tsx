@@ -3,7 +3,7 @@ import { connect, ConnectedProps } from 'react-redux';
 
 import { NavModelItem } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { Button, Input, Form, Field } from '@grafana/ui';
+import { Button, Input, Form, Field, HorizontalGroup, LinkButton } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 
@@ -29,7 +29,6 @@ const initialFormModel: FormModel = { folderName: '' };
 const pageNav: NavModelItem = {
   text: 'Create a new folder',
   subTitle: 'Folders provide a way to group dashboards and alert rules.',
-  breadcrumbs: [{ title: 'Dashboards', url: 'dashboards' }],
 };
 
 function NewDashboardsFolder({ createNewFolder }: Props) {
@@ -54,7 +53,6 @@ function NewDashboardsFolder({ createNewFolder }: Props) {
   return (
     <Page navId="dashboards/browse" pageNav={pageNav}>
       <Page.Contents>
-        {!config.featureToggles.topnav && <h3>New dashboard folder</h3>}
         <Form defaultValues={initialFormModel} onSubmit={onSubmit}>
           {({ register, errors }) => (
             <>
@@ -71,7 +69,12 @@ function NewDashboardsFolder({ createNewFolder }: Props) {
                   })}
                 />
               </Field>
-              <Button type="submit">Create</Button>
+              <HorizontalGroup>
+                <Button type="submit">Create</Button>
+                <LinkButton variant="secondary" href={`${config.appSubUrl}/dashboards`}>
+                  Cancel
+                </LinkButton>
+              </HorizontalGroup>
             </>
           )}
         </Form>

@@ -1,5 +1,5 @@
 import { DataQuery } from '@grafana/data';
-import { Dashboard } from '@grafana/schema';
+import { Dashboard, DataSourceRef } from '@grafana/schema';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 
 import { DashboardAcl } from './acl';
@@ -8,6 +8,15 @@ export interface DashboardDTO {
   redirectUri?: string;
   dashboard: DashboardDataDTO;
   meta: DashboardMeta;
+}
+
+export interface SaveDashboardResponseDTO {
+  id: number;
+  slug: string;
+  status: string;
+  uid: string;
+  url: string;
+  version: number;
 }
 
 export interface DashboardMeta {
@@ -23,7 +32,6 @@ export interface DashboardMeta {
   folderId?: number;
   folderUid?: string;
   canMakeEditable?: boolean;
-  submenuEnabled?: boolean;
   provisioned?: boolean;
   provisionedExternalId?: string;
   isStarred?: boolean;
@@ -44,7 +52,6 @@ export interface DashboardMeta {
   publicDashboardAccessToken?: string;
   publicDashboardUid?: string;
   publicDashboardEnabled?: boolean;
-  hasPublicDashboard?: boolean;
   dashboardNotFound?: boolean;
 }
 
@@ -73,6 +80,7 @@ export enum DashboardRoutes {
   Path = 'path-dashboard',
   Scripted = 'scripted-dashboard',
   Public = 'public-dashboard',
+  Embedded = 'embedded-dashboard',
 }
 
 export enum DashboardInitPhase {
@@ -85,7 +93,7 @@ export enum DashboardInitPhase {
 
 export interface DashboardInitError {
   message: string;
-  error: any;
+  error: unknown;
 }
 
 export enum KioskMode {
@@ -103,6 +111,7 @@ export interface QueriesToUpdateOnDashboardLoad {
 export interface DashboardState {
   getModel: GetMutableDashboardModelFn;
   initPhase: DashboardInitPhase;
+  initialDatasource?: DataSourceRef['uid'];
   initError: DashboardInitError | null;
   permissions: DashboardAcl[];
 }

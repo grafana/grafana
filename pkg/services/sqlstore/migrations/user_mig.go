@@ -3,9 +3,10 @@ package migrations
 import (
 	"fmt"
 
+	"xorm.io/xorm"
+
 	. "github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/util"
-	"xorm.io/xorm"
 )
 
 func addUserMigrations(mg *Migrator) {

@@ -3,13 +3,13 @@ package middleware
 import (
 	"strings"
 
-	"github.com/grafana/grafana/pkg/models"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 )
 
 func ValidateHostHeader(cfg *setting.Cfg) web.Handler {
-	return func(c *models.ReqContext) {
+	return func(c *contextmodel.ReqContext) {
 		// ignore local render calls
 		if c.IsRenderCall {
 			return

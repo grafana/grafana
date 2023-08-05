@@ -5,7 +5,6 @@
     "graph": "",
     "panel-tests": ""
   },
-  "URL": "/d/graph_tests.json/panel-tests-graph",
   "fields": {
     "schemaVersion": 16
   },
@@ -14,19 +13,18 @@
       "uid": "graph_tests.json#1",
       "kind": "panel",
       "name": "No Data Points Warning",
-      "URL": "/d/graph_tests.json/panel-tests-graph?viewPanel=1",
       "fields": {
         "type": "graph"
       },
       "references": [
         {
-          "kind": "ds",
-          "UID": "gdev-testdata"
+          "family": "ds",
+          "ID": "gdev-testdata"
         },
         {
-          "kind": "plugin",
+          "family": "plugin",
           "type": "panel",
-          "UID": "graph"
+          "ID": "graph"
         }
       ]
     },
@@ -34,19 +32,18 @@
       "uid": "graph_tests.json#2",
       "kind": "panel",
       "name": "Datapoints Outside Range Warning",
-      "URL": "/d/graph_tests.json/panel-tests-graph?viewPanel=2",
       "fields": {
         "type": "graph"
       },
       "references": [
         {
-          "kind": "ds",
-          "UID": "gdev-testdata"
+          "family": "ds",
+          "ID": "gdev-testdata"
         },
         {
-          "kind": "plugin",
+          "family": "plugin",
           "type": "panel",
-          "UID": "graph"
+          "ID": "graph"
         }
       ]
     },
@@ -54,19 +51,18 @@
       "uid": "graph_tests.json#3",
       "kind": "panel",
       "name": "Random walk series",
-      "URL": "/d/graph_tests.json/panel-tests-graph?viewPanel=3",
       "fields": {
         "type": "graph"
       },
       "references": [
         {
-          "kind": "ds",
-          "UID": "gdev-testdata"
+          "family": "ds",
+          "ID": "gdev-testdata"
         },
         {
-          "kind": "plugin",
+          "family": "plugin",
           "type": "panel",
-          "UID": "graph"
+          "ID": "graph"
         }
       ]
     },
@@ -74,37 +70,35 @@
       "uid": "graph_tests.json#4",
       "kind": "panel",
       "name": "Millisecond res x-axis and tooltip",
-      "URL": "/d/graph_tests.json/panel-tests-graph?viewPanel=4",
       "fields": {
         "type": "graph"
       },
       "references": [
         {
-          "kind": "ds",
-          "UID": "gdev-testdata"
+          "family": "ds",
+          "ID": "gdev-testdata"
         },
         {
-          "kind": "plugin",
+          "family": "plugin",
           "type": "panel",
-          "UID": "graph"
+          "ID": "graph"
         }
       ]
     },
     {
       "uid": "graph_tests.json#6",
       "kind": "panel",
-      "URL": "/d/graph_tests.json/panel-tests-graph?viewPanel=6",
       "fields": {
         "type": "text"
       },
       "references": [
         {
-          "kind": "ds"
+          "family": "ds"
         },
         {
-          "kind": "plugin",
+          "family": "plugin",
           "type": "panel",
-          "UID": "text"
+          "ID": "text"
         }
       ]
     },
@@ -112,37 +106,35 @@
       "uid": "graph_tests.json#5",
       "kind": "panel",
       "name": "2 yaxis and axis labels",
-      "URL": "/d/graph_tests.json/panel-tests-graph?viewPanel=5",
       "fields": {
         "type": "graph"
       },
       "references": [
         {
-          "kind": "ds",
-          "UID": "gdev-testdata"
+          "family": "ds",
+          "ID": "gdev-testdata"
         },
         {
-          "kind": "plugin",
+          "family": "plugin",
           "type": "panel",
-          "UID": "graph"
+          "ID": "graph"
         }
       ]
     },
     {
       "uid": "graph_tests.json#7",
       "kind": "panel",
-      "URL": "/d/graph_tests.json/panel-tests-graph?viewPanel=7",
       "fields": {
         "type": "text"
       },
       "references": [
         {
-          "kind": "ds"
+          "family": "ds"
         },
         {
-          "kind": "plugin",
+          "family": "plugin",
           "type": "panel",
-          "UID": "text"
+          "ID": "text"
         }
       ]
     },
@@ -150,19 +142,18 @@
       "uid": "graph_tests.json#8",
       "kind": "panel",
       "name": "null value connected",
-      "URL": "/d/graph_tests.json/panel-tests-graph?viewPanel=8",
       "fields": {
         "type": "graph"
       },
       "references": [
         {
-          "kind": "ds",
-          "UID": "gdev-testdata"
+          "family": "ds",
+          "ID": "gdev-testdata"
         },
         {
-          "kind": "plugin",
+          "family": "plugin",
           "type": "panel",
-          "UID": "graph"
+          "ID": "graph"
         }
       ]
     },
@@ -170,37 +161,35 @@
       "uid": "graph_tests.json#10",
       "kind": "panel",
       "name": "null value null as zero",
-      "URL": "/d/graph_tests.json/panel-tests-graph?viewPanel=10",
       "fields": {
         "type": "graph"
       },
       "references": [
         {
-          "kind": "ds",
-          "UID": "gdev-testdata"
+          "family": "ds",
+          "ID": "gdev-testdata"
         },
         {
-          "kind": "plugin",
+          "family": "plugin",
           "type": "panel",
-          "UID": "graph"
+          "ID": "graph"
         }
       ]
     },
     {
       "uid": "graph_tests.json#13",
       "kind": "panel",
-      "URL": "/d/graph_tests.json/panel-tests-graph?viewPanel=13",
       "fields": {
         "type": "text"
       },
       "references": [
         {
-          "kind": "ds"
+          "family": "ds"
         },
         {
-          "kind": "plugin",
+          "family": "plugin",
           "type": "panel",
-          "UID": "text"
+          "ID": "text"
         }
       ]
     },
@@ -208,37 +197,35 @@
       "uid": "graph_tests.json#9",
       "kind": "panel",
       "name": "Stacking value ontop of nulls",
-      "URL": "/d/graph_tests.json/panel-tests-graph?viewPanel=9",
       "fields": {
         "type": "graph"
       },
       "references": [
         {
-          "kind": "ds",
-          "UID": "gdev-testdata"
+          "family": "ds",
+          "ID": "gdev-testdata"
         },
         {
-          "kind": "plugin",
+          "family": "plugin",
           "type": "panel",
-          "UID": "graph"
+          "ID": "graph"
         }
       ]
     },
     {
       "uid": "graph_tests.json#14",
       "kind": "panel",
-      "URL": "/d/graph_tests.json/panel-tests-graph?viewPanel=14",
       "fields": {
         "type": "text"
       },
       "references": [
         {
-          "kind": "ds"
+          "family": "ds"
         },
         {
-          "kind": "plugin",
+          "family": "plugin",
           "type": "panel",
-          "UID": "text"
+          "ID": "text"
         }
       ]
     },
@@ -246,37 +233,35 @@
       "uid": "graph_tests.json#12",
       "kind": "panel",
       "name": "Stacking all series null segment",
-      "URL": "/d/graph_tests.json/panel-tests-graph?viewPanel=12",
       "fields": {
         "type": "graph"
       },
       "references": [
         {
-          "kind": "ds",
-          "UID": "gdev-testdata"
+          "family": "ds",
+          "ID": "gdev-testdata"
         },
         {
-          "kind": "plugin",
+          "family": "plugin",
           "type": "panel",
-          "UID": "graph"
+          "ID": "graph"
         }
       ]
     },
     {
       "uid": "graph_tests.json#15",
       "kind": "panel",
-      "URL": "/d/graph_tests.json/panel-tests-graph?viewPanel=15",
       "fields": {
         "type": "text"
       },
       "references": [
         {
-          "kind": "ds"
+          "family": "ds"
         },
         {
-          "kind": "plugin",
+          "family": "plugin",
           "type": "panel",
-          "UID": "text"
+          "ID": "text"
         }
       ]
     },
@@ -284,37 +269,35 @@
       "uid": "graph_tests.json#21",
       "kind": "panel",
       "name": "Null between points",
-      "URL": "/d/graph_tests.json/panel-tests-graph?viewPanel=21",
       "fields": {
         "type": "graph"
       },
       "references": [
         {
-          "kind": "ds",
-          "UID": "gdev-testdata"
+          "family": "ds",
+          "ID": "gdev-testdata"
         },
         {
-          "kind": "plugin",
+          "family": "plugin",
           "type": "panel",
-          "UID": "graph"
+          "ID": "graph"
         }
       ]
     },
     {
       "uid": "graph_tests.json#22",
       "kind": "panel",
-      "URL": "/d/graph_tests.json/panel-tests-graph?viewPanel=22",
       "fields": {
         "type": "text"
       },
       "references": [
         {
-          "kind": "ds"
+          "family": "ds"
         },
         {
-          "kind": "plugin",
+          "family": "plugin",
           "type": "panel",
-          "UID": "text"
+          "ID": "text"
         }
       ]
     },
@@ -322,19 +305,18 @@
       "uid": "graph_tests.json#20",
       "kind": "panel",
       "name": "Legend Table Single Series Should Take Minimum Height",
-      "URL": "/d/graph_tests.json/panel-tests-graph?viewPanel=20",
       "fields": {
         "type": "graph"
       },
       "references": [
         {
-          "kind": "ds",
-          "UID": "gdev-testdata"
+          "family": "ds",
+          "ID": "gdev-testdata"
         },
         {
-          "kind": "plugin",
+          "family": "plugin",
           "type": "panel",
-          "UID": "graph"
+          "ID": "graph"
         }
       ]
     },
@@ -342,19 +324,18 @@
       "uid": "graph_tests.json#16",
       "kind": "panel",
       "name": "Legend Table No Scroll Visible",
-      "URL": "/d/graph_tests.json/panel-tests-graph?viewPanel=16",
       "fields": {
         "type": "graph"
       },
       "references": [
         {
-          "kind": "ds",
-          "UID": "gdev-testdata"
+          "family": "ds",
+          "ID": "gdev-testdata"
         },
         {
-          "kind": "plugin",
+          "family": "plugin",
           "type": "panel",
-          "UID": "graph"
+          "ID": "graph"
         }
       ]
     },
@@ -362,19 +343,18 @@
       "uid": "graph_tests.json#17",
       "kind": "panel",
       "name": "Legend Table Should Scroll",
-      "URL": "/d/graph_tests.json/panel-tests-graph?viewPanel=17",
       "fields": {
         "type": "graph"
       },
       "references": [
         {
-          "kind": "ds",
-          "UID": "gdev-testdata"
+          "family": "ds",
+          "ID": "gdev-testdata"
         },
         {
-          "kind": "plugin",
+          "family": "plugin",
           "type": "panel",
-          "UID": "graph"
+          "ID": "graph"
         }
       ]
     },
@@ -382,19 +362,18 @@
       "uid": "graph_tests.json#18",
       "kind": "panel",
       "name": "Legend Table No Scroll Visible",
-      "URL": "/d/graph_tests.json/panel-tests-graph?viewPanel=18",
       "fields": {
         "type": "graph"
       },
       "references": [
         {
-          "kind": "ds",
-          "UID": "gdev-testdata"
+          "family": "ds",
+          "ID": "gdev-testdata"
         },
         {
-          "kind": "plugin",
+          "family": "plugin",
           "type": "panel",
-          "UID": "graph"
+          "ID": "graph"
         }
       ]
     },
@@ -402,40 +381,39 @@
       "uid": "graph_tests.json#19",
       "kind": "panel",
       "name": "Legend Table No Scroll Visible",
-      "URL": "/d/graph_tests.json/panel-tests-graph?viewPanel=19",
       "fields": {
         "type": "graph"
       },
       "references": [
         {
-          "kind": "ds",
-          "UID": "gdev-testdata"
+          "family": "ds",
+          "ID": "gdev-testdata"
         },
         {
-          "kind": "plugin",
+          "family": "plugin",
           "type": "panel",
-          "UID": "graph"
+          "ID": "graph"
         }
       ]
     }
   ],
   "references": [
     {
-      "kind": "ds"
+      "family": "ds"
     },
     {
-      "kind": "ds",
-      "UID": "gdev-testdata"
+      "family": "ds",
+      "ID": "gdev-testdata"
     },
     {
-      "kind": "plugin",
+      "family": "plugin",
       "type": "panel",
-      "UID": "graph"
+      "ID": "graph"
     },
     {
-      "kind": "plugin",
+      "family": "plugin",
       "type": "panel",
-      "UID": "text"
+      "ID": "text"
     }
   ]
 }

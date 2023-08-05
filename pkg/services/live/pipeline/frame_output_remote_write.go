@@ -10,8 +10,9 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana/pkg/services/live/remotewrite"
 	"github.com/prometheus/prometheus/prompb"
+
+	"github.com/grafana/grafana/pkg/services/live/remotewrite"
 )
 
 const flushInterval = 15 * time.Second
@@ -118,7 +119,7 @@ func (out *RemoteWriteFrameOutput) sample(timeSeries []prompb.TimeSeries) []prom
 		sample.Samples = append(sample.Samples, filteredSamples...)
 		samples[name] = sample
 	}
-	var toReturn []prompb.TimeSeries
+	toReturn := make([]prompb.TimeSeries, 0, len(samples))
 	for _, ts := range samples {
 		toReturn = append(toReturn, ts)
 	}

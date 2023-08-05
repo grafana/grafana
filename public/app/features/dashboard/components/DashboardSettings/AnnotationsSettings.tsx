@@ -2,7 +2,7 @@ import React from 'react';
 
 import { AnnotationQuery, getDataSourceRef, NavModelItem } from '@grafana/data';
 import { getDataSourceSrv, locationService } from '@grafana/runtime';
-import { Page } from 'app/core/components/PageNew/Page';
+import { Page } from 'app/core/components/Page/Page';
 
 import { DashboardModel } from '../../state';
 import { AnnotationSettingsEdit, AnnotationSettingsList, newAnnotationName } from '../AnnotationSettings';

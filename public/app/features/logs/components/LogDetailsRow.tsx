@@ -1,85 +1,116 @@
 import { css, cx } from '@emotion/css';
-import React, { PureComponent } from 'react';
+import { isEqual } from 'lodash';
+import memoizeOne from 'memoize-one';
+import React, { PureComponent, useState } from 'react';
 
-import { Field, LinkModel, LogLabelStatsModel, GrafanaTheme2, LogRowModel, CoreApp } from '@grafana/data';
-import { reportInteraction } from '@grafana/runtime';
-import { withTheme2, Themeable2, ClipboardButton, DataLinkButton, IconButton } from '@grafana/ui';
+import { CoreApp, Field, GrafanaTheme2, IconName, LinkModel, LogLabelStatsModel, LogRowModel } from '@grafana/data';
+import { config, reportInteraction } from '@grafana/runtime';
+import { ClipboardButton, DataLinkButton, IconButton, Themeable2, withTheme2 } from '@grafana/ui';
 
 import { LogLabelStats } from './LogLabelStats';
 import { getLogRowStyles } from './getLogRowStyles';
 
-//Components
-
 export interface Props extends Themeable2 {
-  parsedValue: string;
-  parsedKey: string;
+  parsedValues: string[];
+  parsedKeys: string[];
+  disableActions: boolean;
   wrapLogMessage?: boolean;
   isLabel?: boolean;
   onClickFilterLabel?: (key: string, value: string) => void;
   onClickFilterOutLabel?: (key: string, value: string) => void;
   links?: Array<LinkModel<Field>>;
   getStats: () => LogLabelStatsModel[] | null;
-  showDetectedFields?: string[];
-  onClickShowDetectedField?: (key: string) => void;
-  onClickHideDetectedField?: (key: string) => void;
+  displayedFields?: string[];
+  onClickShowField?: (key: string) => void;
+  onClickHideField?: (key: string) => void;
   row: LogRowModel;
   app?: CoreApp;
+  isFilterLabelActive?: (key: string, value: string) => Promise<boolean>;
 }
 
 interface State {
   showFieldsStats: boolean;
   fieldCount: number;
   fieldStats: LogLabelStatsModel[] | null;
-  mouseOver: boolean;
 }
 
-const getStyles = (theme: GrafanaTheme2) => {
+const getStyles = memoizeOne((theme: GrafanaTheme2) => {
   return {
-    noHoverBackground: css`
-      label: noHoverBackground;
-      :hover {
-        background-color: transparent;
-      }
-    `,
-    hoverCursor: css`
-      label: hoverCursor;
-      cursor: pointer;
-    `,
     wordBreakAll: css`
       label: wordBreakAll;
       word-break: break-all;
     `,
-    showingField: css`
-      color: ${theme.colors.primary.text};
+    copyButton: css`
+      & > button {
+        color: ${theme.colors.text.secondary};
+        padding: 0;
+        justify-content: center;
+        border-radius: ${theme.shape.radius.circle};
+        height: ${theme.spacing(theme.components.height.sm)};
+        width: ${theme.spacing(theme.components.height.sm)};
+        svg {
+          margin: 0;
+        }
+
+        span > div {
+          top: -5px;
+          & button {
+            color: ${theme.colors.success.main};
+          }
+        }
+      }
     `,
-    hoverValueCopy: css`
-      margin: ${theme.spacing(0, 0, 0, 1.2)};
-      position: absolute;
-      top: 0px;
-      justify-content: center;
-      border-radius: ${theme.shape.borderRadius(10)};
-      width: ${theme.spacing(3.25)};
-      height: ${theme.spacing(3.25)};
+    adjoiningLinkButton: css`
+      margin-left: ${theme.spacing(1)};
     `,
     wrapLine: css`
       label: wrapLine;
       white-space: pre-wrap;
     `,
+    logDetailsStats: css`
+      padding: 0 ${theme.spacing(1)};
+    `,
+    logDetailsValue: css`
+      display: flex;
+      align-items: center;
+      line-height: 22px;
+
+      .show-on-hover {
+        display: inline;
+        visibility: hidden;
+      }
+      &:hover {
+        .show-on-hover {
+          visibility: visible;
+        }
+      }
+    `,
+    buttonRow: css`
+      display: flex;
+      flex-direction: row;
+      gap: ${theme.spacing(0.5)};
+      margin-left: ${theme.spacing(0.5)};
+    `,
   };
-};
+});
 
 class UnThemedLogDetailsRow extends PureComponent<Props, State> {
   state: State = {
     showFieldsStats: false,
     fieldCount: 0,
     fieldStats: null,
-    mouseOver: false,
   };
 
+  componentDidUpdate() {
+    if (this.state.showFieldsStats) {
+      this.updateStats();
+    }
+  }
+
   showField = () => {
-    const { onClickShowDetectedField, parsedKey, row } = this.props;
+    const { onClickShowField: onClickShowDetectedField, parsedKeys, row } = this.props;
     if (onClickShowDetectedField) {
-      onClickShowDetectedField(parsedKey);
+      onClickShowDetectedField(parsedKeys[0]);
     }
 
     reportInteraction('grafana_explore_logs_log_details_replace_line_clicked', {
@@ -90,9 +121,9 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
   };
 
   hideField = () => {
-    const { onClickHideDetectedField, parsedKey, row } = this.props;
+    const { onClickHideField: onClickHideDetectedField, parsedKeys, row } = this.props;
     if (onClickHideDetectedField) {
-      onClickHideDetectedField(parsedKey);
+      onClickHideDetectedField(parsedKeys[0]);
     }
 
     reportInteraction('grafana_explore_logs_log_details_replace_line_clicked', {
@@ -102,10 +133,18 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
     });
   };
 
+  isFilterLabelActive = async () => {
+    const { isFilterLabelActive, parsedKeys, parsedValues } = this.props;
+    if (isFilterLabelActive) {
+      return await isFilterLabelActive(parsedKeys[0], parsedValues[0]);
+    }
+    return false;
+  };
+
   filterLabel = () => {
-    const { onClickFilterLabel, parsedKey, parsedValue, row } = this.props;
+    const { onClickFilterLabel, parsedKeys, parsedValues, row } = this.props;
     if (onClickFilterLabel) {
-      onClickFilterLabel(parsedKey, parsedValue);
+      onClickFilterLabel(parsedKeys[0], parsedValues[0]);
     }
 
     reportInteraction('grafana_explore_logs_log_details_filter_clicked', {
@@ -116,9 +155,9 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
   };
 
   filterOutLabel = () => {
-    const { onClickFilterOutLabel, parsedKey, parsedValue, row } = this.props;
+    const { onClickFilterOutLabel, parsedKeys, parsedValues, row } = this.props;
     if (onClickFilterOutLabel) {
-      onClickFilterOutLabel(parsedKey, parsedValue);
+      onClickFilterOutLabel(parsedKeys[0], parsedValues[0]);
     }
 
     reportInteraction('grafana_explore_logs_log_details_filter_clicked', {
@@ -128,13 +167,20 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
     });
   };
 
+  updateStats = () => {
+    const { getStats } = this.props;
+    const fieldStats = getStats();
+    const fieldCount = fieldStats ? fieldStats.reduce((sum, stat) => sum + stat.count, 0) : 0;
+    if (!isEqual(this.state.fieldStats, fieldStats) || fieldCount !== this.state.fieldCount) {
+      this.setState({ fieldStats, fieldCount });
+    }
+  };
+
   showStats = () => {
-    const { getStats, isLabel, row, app } = this.props;
+    const { isLabel, row, app } = this.props;
     const { showFieldsStats } = this.state;
     if (!showFieldsStats) {
-      const fieldStats = getStats();
-      const fieldCount = fieldStats ? fieldStats.reduce((sum, stat) => sum + stat.count, 0) : 0;
-      this.setState({ fieldStats, fieldCount });
+      this.updateStats();
     }
     this.toggleFieldsStats();
 
@@ -155,102 +201,174 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
     });
   }
 
-  hoverValueCopy() {
-    const mouseOver = !this.state.mouseOver;
-    this.setState({ mouseOver });
+  generateClipboardButton(val: string) {
+    const { theme } = this.props;
+    const styles = getStyles(theme);
+
+    return (
+      <div className={cx('show-on-hover', styles.copyButton)}>
+        <ClipboardButton
+          getText={() => val}
+          title="Copy value to clipboard"
+          fill="text"
+          variant="secondary"
+          icon="copy"
+          size="md"
+        />
+      </div>
+    );
+  }
+
+  generateMultiVal(value: string[], showCopy?: boolean) {
+    return (
+      <table>
+        <tbody>
+          {value?.map((val, i) => {
+            return (
+              <tr key={`${val}-${i}`}>
+                <td>
+                  {val}
+                  {showCopy && val !== '' && this.generateClipboardButton(val)}
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    );
   }
 
   render() {
     const {
       theme,
-      parsedKey,
-      parsedValue,
+      parsedKeys,
+      parsedValues,
       isLabel,
       links,
-      showDetectedFields,
+      displayedFields,
       wrapLogMessage,
-      onClickShowDetectedField,
-      onClickHideDetectedField,
       onClickFilterLabel,
       onClickFilterOutLabel,
+      disableActions,
     } = this.props;
-    const { showFieldsStats, fieldStats, fieldCount, mouseOver } = this.state;
+    const { showFieldsStats, fieldStats, fieldCount } = this.state;
     const styles = getStyles(theme);
     const style = getLogRowStyles(theme);
+    const singleKey = parsedKeys == null ? false : parsedKeys.length === 1;
+    const singleVal = parsedValues == null ? false : parsedValues.length === 1;
+    const hasFilteringFunctionality = !disableActions && onClickFilterLabel && onClickFilterOutLabel;
 
-    const hasDetectedFieldsFunctionality = onClickShowDetectedField && onClickHideDetectedField;
-    const hasFilteringFunctionality = onClickFilterLabel && onClickFilterOutLabel;
+    const isMultiParsedValueWithNoContent =
+      !singleVal && parsedValues != null && !parsedValues.every((val) => val === '');
 
     const toggleFieldButton =
-      !isLabel && showDetectedFields && showDetectedFields.includes(parsedKey) ? (
-        <IconButton name="eye" className={styles.showingField} title="Hide this field" onClick={this.hideField} />
+      displayedFields && parsedKeys != null && displayedFields.includes(parsedKeys[0]) ? (
+        <IconButton variant="primary" tooltip="Hide this field" name="eye" onClick={this.hideField} />
       ) : (
-        <IconButton name="eye" title="Show this field instead of the message" onClick={this.showField} />
+        <IconButton tooltip="Show this field instead of the message" name="eye" onClick={this.showField} />
       );
 
     return (
-      <tr className={cx(style.logDetailsValue, { [styles.noHoverBackground]: showFieldsStats })}>
-        {/* Action buttons - show stats/filter results */}
-        <td className={style.logsDetailsIcon}>
-          <IconButton name="signal" title={'Ad-hoc statistics'} onClick={this.showStats} />
-        </td>
-
-        {hasFilteringFunctionality && isLabel && (
-          <>
-            <td className={style.logsDetailsIcon}>
-              <IconButton name="search-plus" title="Filter for value" onClick={this.filterLabel} />
-            </td>
-            <td className={style.logsDetailsIcon}>
-              <IconButton name="search-minus" title="Filter out value" onClick={this.filterOutLabel} />
-            </td>
-          </>
-        )}
-
-        {hasDetectedFieldsFunctionality && !isLabel && (
-          <td className={style.logsDetailsIcon} colSpan={2}>
-            {toggleFieldButton}
+      <>
+        <tr className={cx(style.logDetailsValue)}>
+          <td className={style.logsDetailsIcon}>
+            <div className={styles.buttonRow}>
+              {hasFilteringFunctionality && (
+                <>
+                  {config.featureToggles.toggleLabelsInLogsUI && (
+                    // If we are using the new label toggling, we want to use the async icon button
+                    <AsyncIconButton
+                      name="search-plus"
+                      onClick={this.filterLabel}
+                      isActive={this.isFilterLabelActive}
+                    />
+                  )}
+                  {!config.featureToggles.toggleLabelsInLogsUI && (
+                    <IconButton name="search-plus" onClick={this.filterLabel} tooltip="Filter for value" />
+                  )}
+                  <IconButton name="search-minus" tooltip="Filter out value" onClick={this.filterOutLabel} />
+                </>
+              )}
+              {!disableActions && displayedFields && toggleFieldButton}
+              {!disableActions && (
+                <IconButton
+                  variant={showFieldsStats ? 'primary' : 'secondary'}
+                  name="signal"
+                  tooltip="Ad-hoc statistics"
+                  className="stats-button"
+                  disabled={!singleKey}
+                  onClick={this.showStats}
+                />
+              )}
+            </div>
           </td>
-        )}
 
-        {/* Key - value columns */}
-        <td className={style.logDetailsLabel}>{parsedKey}</td>
-        <td
-          className={cx(styles.wordBreakAll, wrapLogMessage && styles.wrapLine)}
-          onMouseEnter={this.hoverValueCopy.bind(this)}
-          onMouseLeave={this.hoverValueCopy.bind(this)}
-        >
-          {parsedValue}
-          {mouseOver && (
-            <ClipboardButton
-              getText={() => parsedValue}
-              title="Copy value to clipboard"
-              fill="text"
-              variant="secondary"
-              icon="copy"
-              size="sm"
-              className={styles.hoverValueCopy}
-            />
-          )}
-          {links?.map((link) => (
-            <span key={link.title}>
-              &nbsp;
-              <DataLinkButton link={link} />
-            </span>
-          ))}
-          {showFieldsStats && (
-            <LogLabelStats
-              stats={fieldStats!}
-              label={parsedKey}
-              value={parsedValue}
-              rowCount={fieldCount}
-              isLabel={isLabel}
-            />
-          )}
-        </td>
-      </tr>
+          {/* Key - value columns */}
+          <td className={style.logDetailsLabel}>{singleKey ? parsedKeys[0] : this.generateMultiVal(parsedKeys)}</td>
+          <td className={cx(styles.wordBreakAll, wrapLogMessage && styles.wrapLine)}>
+            <div className={styles.logDetailsValue}>
+              {singleVal ? parsedValues[0] : this.generateMultiVal(parsedValues, true)}
+              {singleVal && this.generateClipboardButton(parsedValues[0])}
+              <div className={cx((singleVal || isMultiParsedValueWithNoContent) && styles.adjoiningLinkButton)}>
+                {links?.map((link, i) => (
+                  <span key={`${link.title}-${i}`}>
+                    <DataLinkButton link={link} />
+                  </span>
+                ))}
+              </div>
+            </div>
+          </td>
+        </tr>
+        {showFieldsStats && singleKey && singleVal && (
+          <tr>
+            <td>
+              <IconButton
+                variant={showFieldsStats ? 'primary' : 'secondary'}
+                name="signal"
+                tooltip="Hide ad-hoc statistics"
+                onClick={this.showStats}
+              />
+            </td>
+            <td colSpan={2}>
+              <div className={styles.logDetailsStats}>
+                <LogLabelStats
+                  stats={fieldStats!}
+                  label={parsedKeys[0]}
+                  value={parsedValues[0]}
+                  rowCount={fieldCount}
+                  isLabel={isLabel}
+                />
+              </div>
+            </td>
+          </tr>
+        )}
+      </>
     );
   }
 }
+
+interface AsyncIconButtonProps extends Pick<React.ButtonHTMLAttributes<HTMLButtonElement>, 'onClick'> {
+  name: IconName;
+  isActive(): Promise<boolean>;
+}
+
+const AsyncIconButton = ({ isActive, ...rest }: AsyncIconButtonProps) => {
+  const [active, setActive] = useState(false);
+
+  /**
+   * We purposely want to run this on every render to allow the active state to be updated
+   * when log details remains open between updates.
+   */
+  isActive().then(setActive);
+
+  return (
+    <IconButton
+      {...rest}
+      variant={active ? 'primary' : undefined}
+      tooltip={active ? 'Remove filter' : 'Filter for value'}
+    />
+  );
+};
 
 export const LogDetailsRow = withTheme2(UnThemedLogDetailsRow);
 LogDetailsRow.displayName = 'LogDetailsRow';

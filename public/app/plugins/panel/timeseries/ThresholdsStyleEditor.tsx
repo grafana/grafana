@@ -4,9 +4,9 @@ import { FieldOverrideEditorProps, SelectableValue } from '@grafana/data';
 import { GraphTresholdsStyleMode } from '@grafana/schema';
 import { Select } from '@grafana/ui';
 
-export const ThresholdsStyleEditor: React.FC<
-  FieldOverrideEditorProps<SelectableValue<{ mode: GraphTresholdsStyleMode }>, any>
-> = ({ item, value, onChange, id }) => {
+type Props = FieldOverrideEditorProps<SelectableValue<{ mode: GraphTresholdsStyleMode }>, unknown>;
+
+export const ThresholdsStyleEditor = ({ item, value, onChange, id }: Props) => {
   const onChangeCb = useCallback(
     (v: SelectableValue<GraphTresholdsStyleMode>) => {
       onChange({

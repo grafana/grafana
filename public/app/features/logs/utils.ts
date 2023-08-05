@@ -1,21 +1,21 @@
-import { countBy, chain, escapeRegExp } from 'lodash';
+import { countBy, chain } from 'lodash';
 
 import {
-  ArrayVector,
-  DataFrame,
-  FieldType,
   LogLevel,
   LogRowModel,
   LogLabelStatsModel,
   LogsModel,
   LogsSortOrder,
+  DataFrame,
+  FieldConfig,
+  FieldCache,
+  FieldType,
+  MutableDataFrame,
+  QueryResultMeta,
+  LogsVolumeType,
 } from '@grafana/data';
 
-// This matches:
-// first a label from start of the string or first white space, then any word chars until "="
-// second either an empty quotes, or anything that starts with quote and ends with unescaped quote,
-// or any non whitespace chars that do not start with quote
-const LOGFMT_REGEXP = /(?:^|\s)([\w\(\)\[\]\{\}]+)=(""|(?:".*?[^\\]"|[^"\s]\S*))/;
+import { getDataframeFields } from './components/logParser';
 
 /**
  * Returns the log level of a log line.
@@ -53,112 +53,6 @@ export function getLogLevelFromKey(key: string | number): LogLevel {
   return LogLevel.unknown;
 }
 
-export function addLogLevelToSeries(series: DataFrame, lineIndex: number): DataFrame {
-  const levels = new ArrayVector<LogLevel>();
-  const lines = series.fields[lineIndex];
-  for (let i = 0; i < lines.values.length; i++) {
-    const line = lines.values.get(lineIndex);
-    levels.buffer.push(getLogLevel(line));
-  }
-
-  return {
-    ...series, // Keeps Tags, RefID etc
-    fields: [
-      ...series.fields,
-      {
-        name: 'LogLevel',
-        type: FieldType.string,
-        values: levels,
-        config: {},
-      },
-    ],
-  };
-}
-
-interface LogsParser {
-  /**
-   * Value-agnostic matcher for a field label.
-   * Used to filter rows, and first capture group contains the value.
-   */
-  buildMatcher: (label: string) => RegExp;
-
-  /**
-   * Returns all parsable substrings from a line, used for highlighting
-   */
-  getFields: (line: string) => string[];
-
-  /**
-   * Gets the label name from a parsable substring of a line
-   */
-  getLabelFromField: (field: string) => string;
-
-  /**
-   * Gets the label value from a parsable substring of a line
-   */
-  getValueFromField: (field: string) => string;
-  /**
-   * Function to verify if this is a valid parser for the given line.
-   * The parser accepts the line if it returns true.
-   */
-  test: (line: string) => boolean;
-}
-
-export const LogsParsers: { [name: string]: LogsParser } = {
-  JSON: {
-    buildMatcher: (label) => new RegExp(`(?:{|,)\\s*"${label}"\\s*:\\s*"?([\\d\\.]+|[^"]*)"?`),
-    getFields: (line) => {
-      try {
-        const parsed = JSON.parse(line);
-        return Object.keys(parsed).map((key) => {
-          return `"${key}":${JSON.stringify(parsed[key])}`;
-        });
-      } catch {}
-      return [];
-    },
-    getLabelFromField: (field) => (field.match(/^"([^"]+)"\s*:/) || [])[1],
-    getValueFromField: (field) => (field.match(/:\s*(.*)$/) || [])[1],
-    test: (line) => {
-      let parsed;
-      try {
-        parsed = JSON.parse(line);
-      } catch (error) {}
-      // The JSON parser should only be used for log lines that are valid serialized JSON objects.
-      // If it would be used for a string, detected fields would include each letter as a separate field.
-      return typeof parsed === 'object';
-    },
-  },
-
-  logfmt: {
-    buildMatcher: (label) => new RegExp(`(?:^|\\s)${escapeRegExp(label)}=("[^"]*"|\\S+)`),
-    getFields: (line) => {
-      const fields: string[] = [];
-      line.replace(new RegExp(LOGFMT_REGEXP, 'g'), (substring) => {
-        fields.push(substring.trim());
-        return '';
-      });
-      return fields;
-    },
-    getLabelFromField: (field) => (field.match(LOGFMT_REGEXP) || [])[1],
-    getValueFromField: (field) => (field.match(LOGFMT_REGEXP) || [])[2],
-    test: (line) => LOGFMT_REGEXP.test(line),
-  },
-};
-
-export function calculateFieldStats(rows: LogRowModel[], extractor: RegExp): LogLabelStatsModel[] {
-  // Consider only rows that satisfy the matcher
-  const rowsWithField = rows.filter((row) => extractor.test(row.entry));
-  const rowCount = rowsWithField.length;
-
-  // Get field value counts for eligible rows
-  const countsByValue = countBy(rowsWithField, (r) => {
-    const row: LogRowModel = r;
-    const match = row.entry.match(extractor);
-
-    return match ? match[1] : null;
-  });
-  return getSortedCounts(countsByValue, rowCount);
-}
-
 export function calculateLogsLabelStats(rows: LogRowModel[], label: string): LogLabelStatsModel[] {
   // Consider only rows that have the given label
   const rowsWithLabel = rows.filter((row) => row.labels[label] !== undefined);
@@ -182,21 +76,6 @@ const getSortedCounts = (countsByValue: { [value: string]: number }, rowCount: n
     .reverse()
     .value();
 };
-
-export function getParser(line: string): LogsParser | undefined {
-  let parser;
-  try {
-    if (LogsParsers.JSON.test(line)) {
-      parser = LogsParsers.JSON;
-    }
-  } catch (error) {}
-
-  if (!parser && LogsParsers.logfmt.test(line)) {
-    parser = LogsParsers.logfmt;
-  }
-
-  return parser;
-}
 
 export const sortInAscendingOrder = (a: LogRowModel, b: LogRowModel) => {
   // compare milliseconds
@@ -265,3 +144,131 @@ export const checkLogsError = (logRow: LogRowModel): { hasError: boolean; errorM
 
 export const escapeUnescapedString = (string: string) =>
   string.replace(/\\r\\n|\\n|\\t|\\r/g, (match: string) => (match.slice(1) === 't' ? '\t' : '\n'));
+
+export function logRowsToReadableJson(logs: LogRowModel[]) {
+  return logs.map((log) => {
+    const fields = getDataframeFields(log).reduce<Record<string, string>>((acc, field) => {
+      const key = field.keys[0];
+      acc[key] = field.values[0];
+      return acc;
+    }, {});
+
+    return {
+      line: log.entry,
+      timestamp: log.timeEpochNs,
+      fields: {
+        ...fields,
+        ...log.labels,
+      },
+    };
+  });
+}
+
+export const getLogsVolumeMaximumRange = (dataFrames: DataFrame[]) => {
+  let widestRange = { from: Infinity, to: -Infinity };
+
+  dataFrames.forEach((dataFrame: DataFrame) => {
+    const meta = dataFrame.meta?.custom || {};
+    if (meta.absoluteRange?.from && meta.absoluteRange?.to) {
+      widestRange = {
+        from: Math.min(widestRange.from, meta.absoluteRange.from),
+        to: Math.max(widestRange.to, meta.absoluteRange.to),
+      };
+    }
+  });
+
+  return widestRange;
+};
+
+/**
+ * Merge data frames by level and calculate maximum total value for all levels together
+ */
+export const mergeLogsVolumeDataFrames = (dataFrames: DataFrame[]): { dataFrames: DataFrame[]; maximum: number } => {
+  if (dataFrames.length === 0) {
+    throw new Error('Cannot aggregate data frames: there must be at least one data frame to aggregate');
+  }
+
+  // aggregate by level (to produce data frames)
+  const aggregated: Record<string, Record<number, number>> = {};
+
+  // aggregate totals to align Y axis when multiple log volumes are shown
+  const totals: Record<number, number> = {};
+  let maximumValue = -Infinity;
+
+  const configs: Record<
+    string,
+    { meta?: QueryResultMeta; valueFieldConfig: FieldConfig; timeFieldConfig: FieldConfig }
+  > = {};
+  let results: DataFrame[] = [];
+
+  // collect and aggregate into aggregated object
+  dataFrames.forEach((dataFrame) => {
+    const fieldCache = new FieldCache(dataFrame);
+    const timeField = fieldCache.getFirstFieldOfType(FieldType.time);
+    const valueField = fieldCache.getFirstFieldOfType(FieldType.number);
+
+    if (!timeField) {
+      throw new Error('Missing time field');
+    }
+    if (!valueField) {
+      throw new Error('Missing value field');
+    }
+
+    const level = valueField.config.displayNameFromDS || dataFrame.name || 'logs';
+    const length = valueField.values.length;
+    configs[level] = {
+      meta: dataFrame.meta,
+      valueFieldConfig: valueField.config,
+      timeFieldConfig: timeField.config,
+    };
+
+    for (let pointIndex = 0; pointIndex < length; pointIndex++) {
+      const time: number = timeField.values[pointIndex];
+      const value: number = valueField.values[pointIndex];
+      aggregated[level] ??= {};
+      aggregated[level][time] = (aggregated[level][time] || 0) + value;
+
+      totals[time] = (totals[time] || 0) + value;
+      maximumValue = Math.max(totals[time], maximumValue);
+    }
+  });
+
+  // convert aggregated into data frames
+  Object.keys(aggregated).forEach((level) => {
+    const levelDataFrame = new MutableDataFrame();
+    const { meta, timeFieldConfig, valueFieldConfig } = configs[level];
+    // Log Volume visualization uses the name when toggling the legend
+    levelDataFrame.name = level;
+    levelDataFrame.meta = meta;
+    levelDataFrame.addField({ name: 'Time', type: FieldType.time, config: timeFieldConfig });
+    levelDataFrame.addField({ name: 'Value', type: FieldType.number, config: valueFieldConfig });
+
+    for (const time in aggregated[level]) {
+      const value = aggregated[level][time];
+      levelDataFrame.add({
+        Time: Number(time),
+        Value: value,
+      });
+    }
+
+    results.push(levelDataFrame);
+  });
+
+  return { dataFrames: results, maximum: maximumValue };
+};
+
+export const getLogsVolumeDataSourceInfo = (dataFrames: DataFrame[]): { name: string } | null => {
+  const customMeta = dataFrames[0]?.meta?.custom;
+
+  if (customMeta && customMeta.datasourceName) {
+    return {
+      name: customMeta.datasourceName,
+    };
+  }
+
+  return null;
+};
+
+export const isLogsVolumeLimited = (dataFrames: DataFrame[]) => {
+  return dataFrames[0]?.meta?.custom?.logsVolumeType === LogsVolumeType.Limited;
+};

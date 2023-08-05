@@ -1,6 +1,7 @@
 import { DataFrame, Field } from '@grafana/data';
+import { ScalarDimensionConfig, ScalarDimensionMode } from '@grafana/schema';
 
-import { DimensionSupplier, ScalarDimensionConfig, ScalarDimensionMode } from './types';
+import { DimensionSupplier } from './types';
 import { findField, getLastNotNullFieldValue } from './utils';
 
 //---------------------------------------------------------
@@ -45,7 +46,7 @@ export function getScalarDimensionForField(
   }
 
   const get = (i: number) => {
-    const v = field.values.get(i);
+    const v = field.values[i];
     if (v === null || typeof v !== 'number') {
       return 0;
     }

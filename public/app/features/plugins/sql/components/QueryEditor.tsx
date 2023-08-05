@@ -13,13 +13,23 @@ import { QueryHeader, QueryHeaderProps } from './QueryHeader';
 import { RawEditor } from './query-editor-raw/RawEditor';
 import { VisualEditor } from './visual-query-builder/VisualEditor';
 
-interface Props extends QueryEditorProps<SqlDatasource, SQLQuery, SQLOptions> {
-  queryHeaderProps?: Pick<QueryHeaderProps, 'isDatasetSelectorHidden'>;
+interface SqlQueryEditorProps extends QueryEditorProps<SqlDatasource, SQLQuery, SQLOptions> {
+  queryHeaderProps?: Pick<QueryHeaderProps, 'isPostgresInstance'>;
 }
 
-export function SqlQueryEditor({ datasource, query, onChange, onRunQuery, range, queryHeaderProps }: Props) {
+export function SqlQueryEditor({
+  datasource,
+  query,
+  onChange,
+  onRunQuery,
+  range,
+  queryHeaderProps,
+}: SqlQueryEditorProps) {
   const [isQueryRunnable, setIsQueryRunnable] = useState(true);
   const db = datasource.getDB();
+
+  const { preconfiguredDatabase } = datasource;
+  const isPostgresInstance = !!queryHeaderProps?.isPostgresInstance;
   const { loading, error } = useAsync(async () => {
     return () => {
       if (datasource.getDB(datasource.id).init !== undefined) {
@@ -80,13 +90,14 @@ export function SqlQueryEditor({ datasource, query, onChange, onRunQuery, range,
     <>
       <QueryHeader
         db={db}
+        preconfiguredDataset={preconfiguredDatabase}
         onChange={onQueryHeaderChange}
         onRunQuery={onRunQuery}
         onQueryRowChange={setQueryRowFilter}
         queryRowFilter={queryRowFilter}
         query={queryWithDefaults}
         isQueryRunnable={isQueryRunnable}
-        {...queryHeaderProps}
+        isPostgresInstance={isPostgresInstance}
       />
 
       <Space v={0.5} />

@@ -10,12 +10,12 @@ import {
   RichHistorySearchFilters,
   RichHistorySettings,
 } from 'app/core/utils/richHistory';
-import { RichHistoryQuery, ExploreId } from 'app/types/explore';
+import { RichHistoryQuery } from 'app/types/explore';
 
 import { getSortOrderOptions } from './RichHistory';
 import RichHistoryCard from './RichHistoryCard';
 
-export interface Props {
+export interface RichHistoryStarredTabProps {
   queries: RichHistoryQuery[];
   totalQueries: number;
   loading: boolean;
@@ -25,11 +25,10 @@ export interface Props {
   loadMoreRichHistory: () => void;
   richHistorySearchFilters?: RichHistorySearchFilters;
   richHistorySettings: RichHistorySettings;
-  exploreId: ExploreId;
+  exploreId: string;
 }
 
 const getStyles = (theme: GrafanaTheme2) => {
-  const bgColor = theme.isLight ? theme.v1.palette.gray5 : theme.v1.palette.dark4;
   return {
     container: css`
       display: flex;
@@ -45,11 +44,6 @@ const getStyles = (theme: GrafanaTheme2) => {
     multiselect: css`
       width: 100%;
       margin-bottom: ${theme.spacing(1)};
-      .gf-form-select-box__multi-value {
-        background-color: ${bgColor};
-        padding: ${theme.spacing(0.25, 0.5, 0.25, 1)};
-        border-radius: ${theme.shape.borderRadius(1)};
-      }
     `,
     filterInput: css`
       margin-bottom: ${theme.spacing(1)};
@@ -72,7 +66,7 @@ const getStyles = (theme: GrafanaTheme2) => {
   };
 };
 
-export function RichHistoryStarredTab(props: Props) {
+export function RichHistoryStarredTab(props: RichHistoryStarredTabProps) {
   const {
     updateFilters,
     clearRichHistoryResults,
@@ -136,6 +130,7 @@ export function RichHistoryStarredTab(props: Props) {
           )}
           <div className={styles.filterInput}>
             <FilterInput
+              escapeRegex={false}
               placeholder="Search queries"
               value={richHistorySearchFilters.search}
               onChange={(search: string) => updateFilters({ search })}
@@ -153,16 +148,7 @@ export function RichHistoryStarredTab(props: Props) {
         {loading && <span>Loading results...</span>}
         {!loading &&
           queries.map((q) => {
-            const idx = listOfDatasources.findIndex((d) => d.uid === q.datasourceUid);
-            return (
-              <RichHistoryCard
-                query={q}
-                key={q.id}
-                exploreId={exploreId}
-                dsImg={idx === -1 ? 'public/img/icn-datasource.svg' : listOfDatasources[idx].imgUrl}
-                isRemoved={idx === -1}
-              />
-            );
+            return <RichHistoryCard query={q} key={q.id} exploreId={exploreId} />;
           })}
         {queries.length && queries.length !== totalQueries ? (
           <div>

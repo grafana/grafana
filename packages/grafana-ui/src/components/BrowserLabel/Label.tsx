@@ -101,57 +101,57 @@ export const Label = forwardRef<HTMLButtonElement, Props>(
 Label.displayName = 'Label';
 
 const getLabelStyles = (theme: GrafanaTheme2) => ({
-  base: css`
-    display: inline-block;
-    cursor: pointer;
-    font-size: ${theme.typography.size.sm};
-    line-height: ${theme.typography.bodySmall.lineHeight};
-    background-color: ${theme.colors.background.secondary};
-    color: ${theme.colors.text.primary};
-    white-space: nowrap;
-    text-shadow: none;
-    padding: ${theme.spacing(0.5)};
-    border-radius: ${theme.shape.borderRadius()};
-    border: none;
-    margin-right: ${theme.spacing(1)};
-    margin-bottom: ${theme.spacing(0.5)};
-  `,
-  loading: css`
-    font-weight: ${theme.typography.fontWeightMedium};
-    background-color: ${theme.colors.primary.shade};
-    color: ${theme.colors.text.primary};
-    animation: pulse 3s ease-out 0s infinite normal forwards;
-    @keyframes pulse {
-      0% {
-        color: ${theme.colors.text.primary};
-      }
-      50% {
-        color: ${theme.colors.text.secondary};
-      }
-      100% {
-        color: ${theme.colors.text.disabled};
-      }
-    }
-  `,
-  active: css`
-    font-weight: ${theme.typography.fontWeightMedium};
-    background-color: ${theme.colors.primary.main};
-    color: ${theme.colors.primary.contrastText};
-  `,
-  matchHighLight: css`
-    background: inherit;
-    color: ${theme.components.textHighlight.text};
-    background-color: ${theme.components.textHighlight.background};
-  `,
-  hidden: css`
-    opacity: 0.6;
-    cursor: default;
-    border: 1px solid transparent;
-  `,
-  hover: css`
-    &:hover {
-      opacity: 0.85;
-      cursor: pointer;
-    }
-  `,
+  base: css({
+    display: 'inline-block',
+    cursor: 'pointer',
+    fontSize: theme.typography.size.sm,
+    lineHeight: theme.typography.bodySmall.lineHeight,
+    backgroundColor: theme.colors.background.secondary,
+    color: theme.colors.text.primary,
+    whiteSpace: 'nowrap',
+    textShadow: 'none',
+    padding: theme.spacing(0.5),
+    borderRadius: theme.shape.radius.default,
+    border: 'none',
+    marginRight: theme.spacing(1),
+    marginBottom: theme.spacing(0.5),
+  }),
+  loading: css({
+    fontWeight: theme.typography.fontWeightMedium,
+    backgroundColor: theme.colors.primary.shade,
+    color: theme.colors.text.primary,
+    animation: 'pulse 3s ease-out 0s infinite normal forwards',
+    '@keyframes pulse': {
+      '0%': {
+        color: theme.colors.text.primary,
+      },
+      '50%': {
+        color: theme.colors.text.secondary,
+      },
+      '100%': {
+        color: theme.colors.text.disabled,
+      },
+    },
+  }),
+  active: css({
+    fontWeight: theme.typography.fontWeightMedium,
+    backgroundColor: theme.colors.primary.main,
+    color: theme.colors.primary.contrastText,
+  }),
+  matchHighLight: css({
+    background: 'inherit',
+    color: theme.components.textHighlight.text,
+    backgroundColor: theme.components.textHighlight.background,
+  }),
+  hidden: css({
+    opacity: 0.6,
+    cursor: 'default',
+    border: '1px solid transparent',
+  }),
+  hover: css({
+    ['&:hover']: {
+      opacity: 0.85,
+      cursor: 'pointer',
+    },
+  }),
 });

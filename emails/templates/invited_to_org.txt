@@ -1,4 +1,4 @@
-[[Subject .Subject "[[.InvitedBy]] has added you to the [[.OrgName]] organization"]]
+[[HiddenSubject .Subject "[[.InvitedBy]] has added you to the [[.OrgName]] organization"]]
 
 You have been added to [[.OrgName]]
 

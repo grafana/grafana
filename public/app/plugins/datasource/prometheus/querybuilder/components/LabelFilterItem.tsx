@@ -20,6 +20,7 @@ export interface Props {
   invalidLabel?: boolean;
   invalidValue?: boolean;
   getLabelValuesAutofillSuggestions: (query: string, labelName?: string) => Promise<SelectableValue[]>;
+  debounceDuration: number;
 }
 
 export function LabelFilterItem({
@@ -32,6 +33,7 @@ export function LabelFilterItem({
   invalidLabel,
   invalidValue,
   getLabelValuesAutofillSuggestions,
+  debounceDuration,
 }: Props) {
   const [state, setState] = useState<{
     labelNames?: SelectableValue[];
@@ -39,6 +41,11 @@ export function LabelFilterItem({
     isLoadingLabelNames?: boolean;
     isLoadingLabelValues?: boolean;
   }>({});
+  // there's a bug in react-select where the menu doesn't recalculate its position when the options are loaded asynchronously
+  // see https://github.com/grafana/grafana/issues/63558
+  // instead, we explicitly control the menu visibility and prevent showing it until the options have fully loaded
+  const [labelNamesMenuOpen, setLabelNamesMenuOpen] = useState(false);
+  const [labelValuesMenuOpen, setLabelValuesMenuOpen] = useState(false);
 
   const isMultiSelect = (operator = item.op) => {
     return operators.find((op) => op.label === operator)?.isMultiValue;
@@ -54,7 +61,10 @@ export function LabelFilterItem({
     return [];
   };
 
-  const labelValueSearch = debounce((query: string) => getLabelValuesAutofillSuggestions(query, item.label), 350);
+  const labelValueSearch = debounce(
+    (query: string) => getLabelValuesAutofillSuggestions(query, item.label),
+    debounceDuration
+  );
 
   return (
     <div data-testid="prometheus-dimensions-filter-item">
@@ -70,8 +80,13 @@ export function LabelFilterItem({
           onOpenMenu={async () => {
             setState({ isLoadingLabelNames: true });
             const labelNames = await onGetLabelNames(item);
+            setLabelNamesMenuOpen(true);
             setState({ labelNames, isLoadingLabelNames: undefined });
           }}
+          onCloseMenu={() => {
+            setLabelNamesMenuOpen(false);
+          }}
+          isOpen={labelNamesMenuOpen}
           isLoading={state.isLoadingLabelNames ?? false}
           options={state.labelNames}
           onChange={(change) => {
@@ -124,12 +139,17 @@ export function LabelFilterItem({
             if (labelValues.length > PROMETHEUS_QUERY_BUILDER_MAX_RESULTS) {
               labelValues.splice(0, labelValues.length - PROMETHEUS_QUERY_BUILDER_MAX_RESULTS);
             }
+            setLabelValuesMenuOpen(true);
             setState({
               ...state,
               labelValues,
               isLoadingLabelValues: undefined,
             });
           }}
+          onCloseMenu={() => {
+            setLabelValuesMenuOpen(false);
+          }}
+          isOpen={labelValuesMenuOpen}
           defaultOptions={state.labelValues}
           isMulti={isMultiSelect()}
           isLoading={state.isLoadingLabelValues}

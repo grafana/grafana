@@ -3,12 +3,12 @@ package parca
 import (
 	"context"
 
+	"buf.build/gen/go/parca-dev/parca/bufbuild/connect-go/parca/query/v1alpha1/queryv1alpha1connect"
+	v1alpha1 "buf.build/gen/go/parca-dev/parca/protocolbuffers/go/parca/query/v1alpha1"
 	"github.com/bufbuild/connect-go"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
-	"github.com/grafana/grafana/pkg/tsdb/parca/gen/parca/parca/query/v1alpha1/queryv1alpha1connect"
-	v1alpha1 "github.com/parca-dev/parca/gen/proto/go/parca/query/v1alpha1"
 )
 
 // Make sure ParcaDatasource implements required interfaces. This is important to do

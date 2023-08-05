@@ -30,7 +30,7 @@ groups:
         relativeTimeRange:
           from: 0
           to: 0
-        datasourceUID: "-100"
+        datasourceUid: "__expr__"
         model:
           conditions:
           - evaluator:
@@ -48,7 +48,7 @@ groups:
             type: query
           datasource:
             type: __expr__
-            uid: "-100"
+            uid: "__expr__"
           hide: false
           intervalMs: 1000
           maxDataPoints: 43200
@@ -84,7 +84,7 @@ groups:
         relativeTimeRange:
           from: 0
           to: 0
-        datasourceUID: "-100"
+        datasourceUid: "__expr__"
         model:
           conditions:
           - evaluator:
@@ -102,7 +102,7 @@ groups:
             type: query
           datasource:
             type: __expr__
-            uid: "-100"
+            uid: "__expr__"
           hide: false
           intervalMs: 1000
           maxDataPoints: 43200

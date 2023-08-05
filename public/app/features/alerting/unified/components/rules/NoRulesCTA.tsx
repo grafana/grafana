@@ -13,9 +13,9 @@ export const NoRulesSplash = () => {
   if (canCreateGrafanaRules || canCreateCloudRules) {
     return (
       <EmptyListCTA
-        title="You haven`t created any alert rules yet"
+        title="You haven't created any alert rules yet"
         buttonIcon="bell"
-        buttonLink={'alerting/new'}
+        buttonLink={'alerting/new/alerting'}
         buttonTitle="New alert rule"
         proTip="you can also create alert rules from existing panels and queries."
         proTipLink="https://grafana.com/docs/"

@@ -1,12 +1,10 @@
 package alerting
 
 import (
-	"os"
 	"testing"
 
-	"gopkg.in/yaml.v3"
-
 	"github.com/stretchr/testify/require"
+	"gopkg.in/yaml.v3"
 )
 
 func TestNotificationPolicy(t *testing.T) {
@@ -14,11 +12,8 @@ func TestNotificationPolicy(t *testing.T) {
 		envKey   = "NOTIFIER_EMAIL_REMINDER_FREQUENCY"
 		envValue = "4h"
 	)
-	err := os.Setenv(envKey, envValue)
-	require.NoError(t, err)
-	defer func() {
-		_ = os.Unsetenv(envKey)
-	}()
+	t.Setenv(envKey, envValue)
+
 	data := `orgId: 123
 receiver: test
 continue: true
@@ -26,7 +21,7 @@ repeat_interval: ${NOTIFIER_EMAIL_REMINDER_FREQUENCY}
 `
 	var model NotificiationPolicyV1
 
-	err = yaml.Unmarshal([]byte(data), &model)
+	err := yaml.Unmarshal([]byte(data), &model)
 	require.NoError(t, err)
 	np, err := model.mapToModel()
 	require.NoError(t, err)

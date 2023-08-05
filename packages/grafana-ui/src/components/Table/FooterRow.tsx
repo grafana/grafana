@@ -1,6 +1,7 @@
 import React from 'react';
 import { ColumnInstance, HeaderGroup } from 'react-table';
 
+import { fieldReducers, ReducerID } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { EmptyCell, FooterCell } from './FooterCell';
@@ -15,7 +16,7 @@ export interface FooterRowProps {
   tableStyles: TableStyles;
 }
 
-export const FooterRow = (props: FooterRowProps) => {
+export function FooterRow(props: FooterRowProps) {
   const { totalColumnsWidth, footerGroups, isPaginationVisible, tableStyles } = props;
   const e2eSelectorsTable = selectors.components.Panels.Visualization.Table;
 
@@ -37,7 +38,7 @@ export const FooterRow = (props: FooterRowProps) => {
       })}
     </div>
   );
-};
+}
 
 function renderFooterCell(column: ColumnInstance, tableStyles: TableStyles) {
   const footerProps = column.getHeaderProps();
@@ -63,12 +64,13 @@ export function getFooterValue(index: number, footerValues?: FooterItem[], isCou
   }
 
   if (isCountRowsSet) {
-    const count = footerValues[index];
-    if (typeof count !== 'string') {
+    if (footerValues[index] === undefined) {
       return EmptyCell;
     }
 
-    return FooterCell({ value: [{ Count: count }] });
+    const key = fieldReducers.get(ReducerID.count).name;
+
+    return FooterCell({ value: [{ [key]: String(footerValues[index]) }] });
   }
 
   return FooterCell({ value: footerValues[index] });

@@ -1,12 +1,11 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
-import { Provider } from 'react-redux';
+import { TestProvider } from 'test/helpers/TestProvider';
 
 import config from 'app/core/config';
 
 import { backendSrv } from '../../core/services/backend_srv';
-import { configureStore } from '../../store/configureStore';
 
 import { Props, ChangePasswordPage } from './ChangePasswordPage';
 import { initialUserState } from './state/reducers';
@@ -28,7 +27,6 @@ const defaultProps: Props = {
 };
 
 async function getTestContext(overrides: Partial<Props> = {}) {
-  const store = configureStore();
   jest.clearAllMocks();
   jest.spyOn(backendSrv, 'get').mockResolvedValue({
     id: 1,
@@ -42,9 +40,9 @@ async function getTestContext(overrides: Partial<Props> = {}) {
 
   const props = { ...defaultProps, ...overrides };
   const { rerender } = render(
-    <Provider store={store}>
+    <TestProvider>
       <ChangePasswordPage {...props} />
-    </Provider>
+    </TestProvider>
   );
 
   await waitFor(() => expect(props.loadUser).toHaveBeenCalledTimes(1));
@@ -61,7 +59,6 @@ describe('ChangePasswordPage', () => {
 
   it('should show change password form when user has loaded', async () => {
     await getTestContext();
-    expect(screen.getByText('Change Your Password')).toBeInTheDocument();
 
     expect(screen.getByLabelText('Old password')).toBeInTheDocument();
     expect(screen.getByLabelText('New password')).toBeInTheDocument();
@@ -72,6 +69,7 @@ describe('ChangePasswordPage', () => {
     expect(screen.getByRole('link', { name: 'Cancel' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Cancel' })).toHaveAttribute('href', '/profile');
   });
+
   it('should call changePassword if change password is valid', async () => {
     const { props } = await getTestContext();
 

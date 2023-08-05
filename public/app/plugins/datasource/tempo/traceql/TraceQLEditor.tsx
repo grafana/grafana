@@ -3,6 +3,7 @@ import type { languages } from 'monaco-editor';
 import React, { useEffect, useRef } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { reportInteraction } from '@grafana/runtime';
 import { CodeEditor, Monaco, monacoTypes, useTheme2 } from '@grafana/ui';
 
 import { createErrorNotification } from '../../../../core/copy/appNotification';
@@ -10,7 +11,7 @@ import { notifyApp } from '../../../../core/reducers/appNotification';
 import { dispatch } from '../../../../store/store';
 import { TempoDatasource } from '../datasource';
 
-import { CompletionProvider } from './autocomplete';
+import { CompletionProvider, CompletionType } from './autocomplete';
 import { languageDefinition } from './traceql';
 
 interface Props {
@@ -19,6 +20,7 @@ interface Props {
   onChange: (val: string) => void;
   onRunQuery: () => void;
   datasource: TempoDatasource;
+  readOnly?: boolean;
 }
 
 export function TraceQLEditor(props: Props) {
@@ -26,6 +28,10 @@ export function TraceQLEditor(props: Props) {
   const setupAutocompleteFn = useAutocomplete(props.datasource);
   const theme = useTheme2();
   const styles = getStyles(theme, placeholder);
+  // work around the problem that `onEditorDidMount` is called once
+  // and wouldn't get new version of onRunQuery
+  const onRunQueryRef = useRef(onRunQuery);
+  onRunQueryRef.current = onRunQuery;
 
   return (
     <CodeEditor
@@ -34,6 +40,7 @@ export function TraceQLEditor(props: Props) {
       onBlur={onChange}
       onChange={onChange}
       containerStyles={styles.queryField}
+      readOnly={props.readOnly}
       monacoOptions={{
         folding: false,
         fontSize: 14,
@@ -51,9 +58,11 @@ export function TraceQLEditor(props: Props) {
       }}
       onBeforeEditorMount={ensureTraceQL}
       onEditorDidMount={(editor, monaco) => {
-        setupAutocompleteFn(editor, monaco);
-        setupActions(editor, monaco, onRunQuery);
-        setupPlaceholder(editor, monaco, styles);
+        if (!props.readOnly) {
+          setupAutocompleteFn(editor, monaco, setupRegisterInteractionCommand(editor));
+          setupActions(editor, monaco, () => onRunQueryRef.current());
+          setupPlaceholder(editor, monaco, styles);
+        }
         setupAutoSize(editor);
       }}
     />
@@ -101,6 +110,17 @@ function setupActions(editor: monacoTypes.editor.IStandaloneCodeEditor, monaco: 
   });
 }
 
+function setupRegisterInteractionCommand(editor: monacoTypes.editor.IStandaloneCodeEditor): string | null {
+  return editor.addCommand(0, function (_, label, type: CompletionType) {
+    const properties: Record<string, unknown> = { datasourceType: 'tempo', type };
+    // Filter out the label for TAG_VALUE completions to avoid potentially exposing sensitive data
+    if (type !== 'TAG_VALUE') {
+      properties.label = label;
+    }
+    reportInteraction('grafana_traces_traceql_completion', properties);
+  });
+}
+
 function setupAutoSize(editor: monacoTypes.editor.IStandaloneCodeEditor) {
   const container = editor.getDomNode();
   const updateHeight = () => {
@@ -133,11 +153,6 @@ function useAutocomplete(datasource: TempoDatasource) {
     const fetchTags = async () => {
       try {
         await datasource.languageProvider.start();
-        const tags = datasource.languageProvider.getTags();
-
-        if (tags) {
-          providerRef.current.setTags(tags);
-        }
       } catch (error) {
         if (error instanceof Error) {
           dispatch(notifyApp(createErrorNotification('Error', error)));
@@ -156,9 +171,14 @@ function useAutocomplete(datasource: TempoDatasource) {
   }, []);
 
   // This should be run in monaco onEditorDidMount
-  return (editor: monacoTypes.editor.IStandaloneCodeEditor, monaco: Monaco) => {
+  return (
+    editor: monacoTypes.editor.IStandaloneCodeEditor,
+    monaco: Monaco,
+    registerInteractionCommandId: string | null
+  ) => {
     providerRef.current.editor = editor;
     providerRef.current.monaco = monaco;
+    providerRef.current.setRegisterInteractionCommandId(registerInteractionCommandId);
 
     const { dispose } = monaco.languages.registerCompletionItemProvider(langId, providerRef.current);
     autocompleteDisposeFun.current = dispose;
@@ -187,7 +207,7 @@ interface EditorStyles {
 const getStyles = (theme: GrafanaTheme2, placeholder: string): EditorStyles => {
   return {
     queryField: css`
-      border-radius: ${theme.shape.borderRadius()};
+      border-radius: ${theme.shape.radius.default};
       border: 1px solid ${theme.components.input.borderColor};
       flex: 1;
     `,

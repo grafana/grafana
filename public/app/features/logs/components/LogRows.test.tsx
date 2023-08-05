@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import { range } from 'lodash';
 import React from 'react';
 
@@ -20,6 +20,11 @@ describe('LogRows', () => {
         prettifyLogMessage={true}
         timeZone={'utc'}
         enableLogDetails={true}
+        displayedFields={[]}
+        onClickFilterLabel={() => {}}
+        onClickFilterOutLabel={() => {}}
+        onClickHideField={() => {}}
+        onClickShowField={() => {}}
       />
     );
 
@@ -50,7 +55,9 @@ describe('LogRows', () => {
     expect(screen.queryAllByRole('row')).toHaveLength(2);
     expect(screen.queryAllByRole('row').at(0)).toHaveTextContent('log message 1');
 
-    jest.runAllTimers();
+    act(() => {
+      jest.runAllTimers();
+    });
     rerender(
       <LogRows
         logRows={rows}
@@ -62,6 +69,11 @@ describe('LogRows', () => {
         timeZone={'utc'}
         previewLimit={1}
         enableLogDetails={true}
+        displayedFields={[]}
+        onClickFilterLabel={() => {}}
+        onClickFilterOutLabel={() => {}}
+        onClickHideField={() => {}}
+        onClickShowField={() => {}}
       />
     );
 
@@ -87,6 +99,11 @@ describe('LogRows', () => {
         prettifyLogMessage={true}
         timeZone={'utc'}
         enableLogDetails={true}
+        displayedFields={[]}
+        onClickFilterLabel={() => {}}
+        onClickFilterOutLabel={() => {}}
+        onClickHideField={() => {}}
+        onClickShowField={() => {}}
       />
     );
     expect(screen.queryAllByRole('row')).toHaveLength(2);
@@ -107,6 +124,11 @@ describe('LogRows', () => {
         prettifyLogMessage={true}
         timeZone={'utc'}
         enableLogDetails={true}
+        displayedFields={[]}
+        onClickFilterLabel={() => {}}
+        onClickFilterOutLabel={() => {}}
+        onClickHideField={() => {}}
+        onClickShowField={() => {}}
       />
     );
 
@@ -131,6 +153,11 @@ describe('LogRows', () => {
         timeZone={'utc'}
         logsSortOrder={LogsSortOrder.Ascending}
         enableLogDetails={true}
+        displayedFields={[]}
+        onClickFilterLabel={() => {}}
+        onClickFilterOutLabel={() => {}}
+        onClickHideField={() => {}}
+        onClickShowField={() => {}}
       />
     );
 
@@ -155,6 +182,11 @@ describe('LogRows', () => {
         timeZone={'utc'}
         logsSortOrder={LogsSortOrder.Descending}
         enableLogDetails={true}
+        displayedFields={[]}
+        onClickFilterLabel={() => {}}
+        onClickFilterOutLabel={() => {}}
+        onClickHideField={() => {}}
+        onClickShowField={() => {}}
       />
     );
 

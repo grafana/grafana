@@ -6,34 +6,20 @@ import (
 	"os"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/ini.v1"
 	"gopkg.in/yaml.v3"
+
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 func TestValues(t *testing.T) {
 	t.Run("Values", func(t *testing.T) {
-		err := os.Setenv("INT", "1")
-		require.NoError(t, err)
-		err = os.Setenv("STRING", "test")
-		require.NoError(t, err)
-		err = os.Setenv("EMPTYSTRING", "")
-		require.NoError(t, err)
-		err = os.Setenv("BOOL", "true")
-		require.NoError(t, err)
-
-		defer func() {
-			err := os.Unsetenv("INT")
-			require.NoError(t, err)
-			err = os.Unsetenv("STRING")
-			require.NoError(t, err)
-			err = os.Unsetenv("EMPTYSTRING")
-			require.NoError(t, err)
-			err = os.Unsetenv("BOOL")
-			require.NoError(t, err)
-		}()
+		t.Setenv("INT", "1")
+		t.Setenv("STRING", "test")
+		t.Setenv("EMPTYSTRING", "")
+		t.Setenv("BOOL", "true")
 
 		t.Run("IntValue", func(t *testing.T) {
 			type Data struct {
@@ -167,6 +153,7 @@ func TestValues(t *testing.T) {
                      Some text with $STRING
                    anchor: &label $INT
                    anchored: *label
+                   boolval: $BOOL
                `
 				unmarshalingTest(t, doc, d)
 
@@ -190,12 +177,13 @@ func TestValues(t *testing.T) {
 					},
 					"four": stringMap{
 						"nested": stringMap{
-							"onemore": "1",
+							"onemore": int64(1),
 						},
 					},
 					"multiline": "Some text with test\n",
-					"anchor":    "1",
-					"anchored":  "1",
+					"anchor":    int64(1),
+					"anchored":  int64(1),
+					"boolval":   true,
 				})
 
 				require.Equal(t, d.Val.Raw, stringMap{
@@ -223,6 +211,7 @@ func TestValues(t *testing.T) {
 					"multiline": "Some text with $STRING\n",
 					"anchor":    "$INT",
 					"anchored":  "$INT",
+					"boolval":   "$BOOL",
 				})
 			})
 		})
@@ -250,12 +239,12 @@ func TestValues(t *testing.T) {
 				require.Equal(t, []stringMap{
 					{
 						"interpolatedString": "test",
-						"interpolatedInt":    "1",
+						"interpolatedInt":    int64(1),
 						"string":             "just a string",
 					},
 					{
 						"interpolatedString": "test",
-						"interpolatedInt":    "1",
+						"interpolatedInt":    int64(1),
 						"string":             "just a string",
 					},
 				}, d.Val.Value())

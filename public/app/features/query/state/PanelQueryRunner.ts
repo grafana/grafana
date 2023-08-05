@@ -1,8 +1,9 @@
 import { cloneDeep } from 'lodash';
-import { MonoTypeOperatorFunction, Observable, of, ReplaySubject, Unsubscribable } from 'rxjs';
+import { Observable, of, ReplaySubject, Unsubscribable } from 'rxjs';
 import { map, mergeMap } from 'rxjs/operators';
 
 import {
+  ApplyFieldOverrideOptions,
   applyFieldOverrides,
   compareArrayValues,
   compareDataFrameStructures,
@@ -14,12 +15,15 @@ import {
   DataSourceApi,
   DataSourceJsonData,
   DataSourceRef,
+  DataTransformContext,
   DataTransformerConfig,
   getDefaultTimeRange,
   LoadingState,
   PanelData,
+  preProcessPanelData,
   rangeUtil,
   ScopedVars,
+  StreamingDataFrame,
   TimeRange,
   TimeZone,
   toDataFrame,
@@ -27,7 +31,7 @@ import {
 } from '@grafana/data';
 import { getTemplateSrv, toDataQueryError } from '@grafana/runtime';
 import { ExpressionDatasourceRef } from '@grafana/runtime/src/utils/DataSourceWithBackend';
-import { StreamingDataFrame } from 'app/features/live/data/StreamingDataFrame';
+import { updatePanelDataWithASHFromLoki } from 'app/features/alerting/unified/components/rules/state-history/common';
 import { isStreamingDataFrame } from 'app/features/live/data/utils';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 
@@ -37,17 +41,15 @@ import { PanelModel } from '../../dashboard/state';
 
 import { getDashboardQueryRunner } from './DashboardQueryRunner/DashboardQueryRunner';
 import { mergePanelAndDashData } from './mergePanelAndDashData';
-import { preProcessPanelData, runRequest } from './runRequest';
+import { runRequest } from './runRequest';
 
 export interface QueryRunnerOptions<
   TQuery extends DataQuery = DataQuery,
-  TOptions extends DataSourceJsonData = DataSourceJsonData
+  TOptions extends DataSourceJsonData = DataSourceJsonData,
 > {
   datasource: DataSourceRef | DataSourceApi<TQuery, TOptions> | null;
   queries: TQuery[];
   panelId?: number;
-  /** @deprecate */
-  dashboardId?: number;
   dashboardUID?: string;
   publicDashboardAccessToken?: string;
   timezone: TimeZone;
@@ -57,6 +59,7 @@ export interface QueryRunnerOptions<
   minInterval: string | undefined | null;
   scopedVars?: ScopedVars;
   cacheTimeout?: string | null;
+  queryCachingTTL?: number | null;
   transformations?: DataTransformerConfig[];
   app?: CoreApp;
 }
@@ -90,7 +93,10 @@ export class PanelQueryRunner {
   getData(options: GetDataOptions): Observable<PanelData> {
     const { withFieldConfig, withTransforms } = options;
     let structureRev = 1;
-    let lastData: DataFrame[] = [];
+    let lastFieldConfig: ApplyFieldOverrideOptions | undefined = undefined;
+    let lastProcessedFrames: DataFrame[] = [];
+    let lastRawFrames: DataFrame[] = [];
+    let lastTransformations: DataTransformerConfig[] | undefined;
     let isFirstPacket = true;
     let lastConfigRev = -1;
 
@@ -104,100 +110,119 @@ export class PanelQueryRunner {
     }
 
     return this.subject.pipe(
-      this.getTransformationsStream(withTransforms),
-      map((data: PanelData) => {
-        let processedData = data;
-        let streamingPacketWithSameSchema = false;
-
-        if (withFieldConfig && data.series?.length) {
-          if (lastConfigRev === this.dataConfigSource.configRev) {
-            const streamingDataFrame = data.series.find((data) => isStreamingDataFrame(data)) as
-              | StreamingDataFrame
-              | undefined;
-
-            if (
-              streamingDataFrame &&
-              !streamingDataFrame.packetInfo.schemaChanged &&
-              // TODO: remove the condition below after fixing
-              // https://github.com/grafana/grafana/pull/41492#issuecomment-970281430
-              lastData[0].fields.length === streamingDataFrame.fields.length
-            ) {
-              processedData = {
-                ...processedData,
-                series: lastData.map((frame, frameIndex) => ({
-                  ...frame,
-                  length: data.series[frameIndex].length,
-                  fields: frame.fields.map((field, fieldIndex) => ({
-                    ...field,
-                    values: data.series[frameIndex].fields[fieldIndex].values,
-                    state: {
-                      ...field.state,
-                      calcs: undefined,
-                      range: undefined,
-                    },
-                  })),
-                })),
-              };
-
-              streamingPacketWithSameSchema = true;
-            }
-          }
-
-          // Apply field defaults and overrides
-          let fieldConfig = this.dataConfigSource.getFieldOverrideOptions();
-
-          if (fieldConfig != null && (isFirstPacket || !streamingPacketWithSameSchema)) {
-            lastConfigRev = this.dataConfigSource.configRev!;
-            processedData = {
-              ...processedData,
-              series: applyFieldOverrides({
-                timeZone: data.request?.timezone ?? 'browser',
-                data: processedData.series,
-                ...fieldConfig!,
-              }),
-            };
-            isFirstPacket = false;
-          }
-        }
+      mergeMap((data: PanelData) => {
+        let fieldConfig = this.dataConfigSource.getFieldOverrideOptions();
+        let transformations = this.dataConfigSource.getTransformations();
 
         if (
-          !streamingPacketWithSameSchema &&
-          !compareArrayValues(lastData, processedData.series, compareDataFrameStructures)
+          data.series === lastRawFrames &&
+          lastFieldConfig?.fieldConfig === fieldConfig?.fieldConfig &&
+          lastTransformations === transformations
         ) {
-          structureRev++;
+          return of({ ...data, structureRev, series: lastProcessedFrames });
         }
-        lastData = processedData.series;
 
-        return { ...processedData, structureRev };
+        lastFieldConfig = fieldConfig;
+        lastTransformations = transformations;
+        lastRawFrames = data.series;
+        let dataWithTransforms = of(data);
+
+        if (withTransforms) {
+          dataWithTransforms = this.applyTransformations(data);
+        }
+
+        return dataWithTransforms.pipe(
+          map((data: PanelData) => {
+            let processedData = data;
+            let streamingPacketWithSameSchema = false;
+
+            if (withFieldConfig && data.series?.length) {
+              if (lastConfigRev === this.dataConfigSource.configRev) {
+                const streamingDataFrame = data.series.find((data) => isStreamingDataFrame(data)) as
+                  | StreamingDataFrame
+                  | undefined;
+
+                if (
+                  streamingDataFrame &&
+                  !streamingDataFrame.packetInfo.schemaChanged &&
+                  // TODO: remove the condition below after fixing
+                  // https://github.com/grafana/grafana/pull/41492#issuecomment-970281430
+                  lastProcessedFrames[0].fields.length === streamingDataFrame.fields.length
+                ) {
+                  processedData = {
+                    ...processedData,
+                    series: lastProcessedFrames.map((frame, frameIndex) => ({
+                      ...frame,
+                      length: data.series[frameIndex].length,
+                      fields: frame.fields.map((field, fieldIndex) => ({
+                        ...field,
+                        values: data.series[frameIndex].fields[fieldIndex].values,
+                        state: {
+                          ...field.state,
+                          calcs: undefined,
+                          range: undefined,
+                        },
+                      })),
+                    })),
+                  };
+
+                  streamingPacketWithSameSchema = true;
+                }
+              }
+
+              if (fieldConfig != null && (isFirstPacket || !streamingPacketWithSameSchema)) {
+                lastConfigRev = this.dataConfigSource.configRev!;
+                processedData = {
+                  ...processedData,
+                  series: applyFieldOverrides({
+                    timeZone: data.request?.timezone ?? 'browser',
+                    data: processedData.series,
+                    ...fieldConfig!,
+                  }),
+                };
+                if (processedData.annotations) {
+                  processedData.annotations = applyFieldOverrides({
+                    data: processedData.annotations,
+                    ...fieldConfig!,
+                    fieldConfig: {
+                      defaults: {},
+                      overrides: [],
+                    },
+                  });
+                }
+                isFirstPacket = false;
+              }
+            }
+
+            if (
+              !streamingPacketWithSameSchema &&
+              !compareArrayValues(lastProcessedFrames, processedData.series, compareDataFrameStructures)
+            ) {
+              structureRev++;
+            }
+
+            lastProcessedFrames = processedData.series;
+
+            return { ...processedData, structureRev };
+          })
+        );
       })
     );
   }
 
-  private getTransformationsStream = (withTransforms: boolean): MonoTypeOperatorFunction<PanelData> => {
-    return (inputStream) =>
-      inputStream.pipe(
-        mergeMap((data) => {
-          if (!withTransforms) {
-            return of(data);
-          }
+  private applyTransformations(data: PanelData): Observable<PanelData> {
+    const transformations = this.dataConfigSource.getTransformations();
 
-          const transformations = this.dataConfigSource.getTransformations();
+    if (!transformations || transformations.length === 0) {
+      return of(data);
+    }
 
-          if (!transformations || transformations.length === 0) {
-            return of(data);
-          }
+    const ctx: DataTransformContext = {
+      interpolate: (v: string) => getTemplateSrv().replace(v, data?.request?.scopedVars),
+    };
 
-          const replace = (option: string): string => {
-            return getTemplateSrv().replace(option, data?.request?.scopedVars);
-          };
-          transformations.forEach((transform: any) => {
-            transform.replace = replace;
-          });
-
-          return transformDataFrame(transformations, data.series).pipe(map((series) => ({ ...data, series })));
-        })
-      );
-  };
+    return transformDataFrame(transformations, data.series, ctx).pipe(map((series) => ({ ...data, series })));
+  }
 
   async run(options: QueryRunnerOptions) {
     const {
@@ -205,12 +230,12 @@ export class PanelQueryRunner {
       timezone,
       datasource,
       panelId,
-      dashboardId,
       dashboardUID,
       publicDashboardAccessToken,
       timeRange,
       timeInfo,
       cacheTimeout,
+      queryCachingTTL,
       maxDataPoints,
       scopedVars,
       minInterval,
@@ -218,7 +243,7 @@ export class PanelQueryRunner {
     } = options;
 
     if (isSharedDashboardQuery(datasource)) {
-      this.pipeToSubject(runSharedRequest(options, queries[0]), panelId);
+      this.pipeToSubject(runSharedRequest(options, queries[0]), panelId, true);
       return;
     }
 
@@ -227,7 +252,6 @@ export class PanelQueryRunner {
       requestId: getNextRequestId(),
       timezone,
       panelId,
-      dashboardId,
       dashboardUID,
       publicDashboardAccessToken,
       range: timeRange,
@@ -238,6 +262,7 @@ export class PanelQueryRunner {
       maxDataPoints: maxDataPoints,
       scopedVars: scopedVars || {},
       cacheTimeout,
+      queryCachingTTL,
       startTime: Date.now(),
       rangeRaw: timeRange.raw,
     };
@@ -286,7 +311,7 @@ export class PanelQueryRunner {
     }
   }
 
-  private pipeToSubject(observable: Observable<PanelData>, panelId?: number) {
+  private pipeToSubject(observable: Observable<PanelData>, panelId?: number, skipPreProcess = false) {
     if (this.subscription) {
       this.subscription.unsubscribe();
     }
@@ -300,8 +325,11 @@ export class PanelQueryRunner {
     }
 
     this.subscription = panelData.subscribe({
-      next: (data) => {
-        this.lastResult = preProcessPanelData(data, this.lastResult);
+      next: async (data) => {
+        this.lastResult = skipPreProcess
+          ? data
+          : await updatePanelDataWithASHFromLoki(preProcessPanelData(data, this.lastResult));
+
         // Store preprocessed query results for applying overrides later on in the pipeline
         this.subject.next(this.lastResult);
       },
@@ -315,8 +343,11 @@ export class PanelQueryRunner {
 
     this.subscription.unsubscribe();
 
-    // If we have an old result with loading state, send it with done state
-    if (this.lastResult && this.lastResult.state === LoadingState.Loading) {
+    // If we have an old result with loading or streaming state, send it with done state
+    if (
+      this.lastResult &&
+      (this.lastResult.state === LoadingState.Loading || this.lastResult.state === LoadingState.Streaming)
+    ) {
       this.subject.next({
         ...this.lastResult,
         state: LoadingState.Done,

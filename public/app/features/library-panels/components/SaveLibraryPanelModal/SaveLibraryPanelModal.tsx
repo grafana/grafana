@@ -64,8 +64,8 @@ export const SaveLibraryPanelModal = ({
         <p className={styles.textInfo}>
           {'This update will affect '}
           <strong>
-            {panel.libraryPanel.meta.connectedDashboards}{' '}
-            {panel.libraryPanel.meta.connectedDashboards === 1 ? 'dashboard' : 'dashboards'}.
+            {panel.libraryPanel.meta?.connectedDashboards}{' '}
+            {panel.libraryPanel.meta?.connectedDashboards === 1 ? 'dashboard' : 'dashboards'}.
           </strong>
           The following dashboards using the panel will be affected:
         </p>

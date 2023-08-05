@@ -48,10 +48,10 @@ export interface BarsOptions {
   showValue: VisibilityMode;
   stacking: StackingMode;
   rawValue: (seriesIdx: number, valueIdx: number) => number | null;
-  getColor?: (seriesIdx: number, valueIdx: number, value: any) => string | null;
+  getColor?: (seriesIdx: number, valueIdx: number, value: unknown) => string | null;
   fillOpacity?: number;
-  formatValue: (seriesIdx: number, value: any) => string;
-  formatShortValue: (seriesIdx: number, value: any) => string;
+  formatValue: (seriesIdx: number, value: unknown) => string;
+  formatShortValue: (seriesIdx: number, value: unknown) => string;
   timeZone?: TimeZone;
   text?: VizTextDisplayOptions;
   onHover?: (seriesIdx: number, valueIdx: number) => void;
@@ -60,6 +60,7 @@ export interface BarsOptions {
   xSpacing?: number;
   xTimeAuto?: boolean;
   negY?: boolean[];
+  fullHighlight?: boolean;
 }
 
 /**
@@ -285,7 +286,14 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
     : {};
 
   let barsBuilder = uPlot.paths.bars!({
-    radius: barRadius,
+    radius: pctStacked
+      ? 0
+      : !isStacked
+      ? barRadius
+      : (u: uPlot, seriesIdx: number) => {
+          let isTopmostSeries = seriesIdx === u.data.length - 1;
+          return isTopmostSeries ? [barRadius, 0] : [0, 0];
+        },
     disp: {
       x0: {
         unit: 2,
@@ -315,6 +323,17 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
       }
 
       let barRect = { x: lft, y: top, w: wid, h: hgt, sidx: seriesIdx, didx: dataIdx };
+
+      if (opts.fullHighlight) {
+        if (opts.xOri === ScaleOrientation.Horizontal) {
+          barRect.y = 0;
+          barRect.h = u.bbox.height;
+        } else {
+          barRect.x = 0;
+          barRect.w = u.bbox.width;
+        }
+      }
+
       qt.add(barRect);
 
       if (showValue !== VisibilityMode.Never) {
@@ -429,6 +448,9 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
     u.root.querySelectorAll('.u-cursor-pt').forEach((el) => {
       if (el instanceof HTMLElement) {
         el.style.borderRadius = '0';
+        if (opts.fullHighlight) {
+          el.style.zIndex = '-1';
+        }
       }
     });
   };
@@ -472,11 +494,14 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
         let widthReduce = 0;
 
         // get height of bar rect at same index of the series below the hovered one
-        if (isStacked && isHovered && hRect!.sidx > 1) {
-          if (isXHorizontal) {
-            heightReduce = findRect(qt, hRect!.sidx - 1, hRect!.didx)!.h;
-          } else {
-            widthReduce = findRect(qt, hRect!.sidx - 1, hRect!.didx)!.w;
+        if (isStacked && isHovered) {
+          const rect = hRect && hRect.sidx > 1 && findRect(qt, hRect.sidx - 1, hRect.didx);
+          if (rect) {
+            if (isXHorizontal) {
+              heightReduce = rect.h;
+            } else {
+              widthReduce = rect.w;
+            }
           }
         }
 

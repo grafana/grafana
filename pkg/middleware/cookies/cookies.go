@@ -2,14 +2,12 @@ package cookies
 
 import (
 	"net/http"
-	"net/url"
-	"time"
 
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 type CookieOptions struct {
+	NotHttpOnly      bool
 	Path             string
 	Secure           bool
 	SameSiteDisabled bool
@@ -45,7 +43,7 @@ func WriteCookie(w http.ResponseWriter, name string, value string, maxAge int, g
 		Name:     name,
 		MaxAge:   maxAge,
 		Value:    value,
-		HttpOnly: true,
+		HttpOnly: !options.NotHttpOnly,
 		Path:     options.Path,
 		Secure:   options.Secure,
 	}
@@ -53,19 +51,4 @@ func WriteCookie(w http.ResponseWriter, name string, value string, maxAge int, g
 		cookie.SameSite = options.SameSiteMode
 	}
 	http.SetCookie(w, &cookie)
-}
-
-func WriteSessionCookie(ctx *models.ReqContext, cfg *setting.Cfg, value string, maxLifetime time.Duration) {
-	if cfg.Env == setting.Dev {
-		ctx.Logger.Info("New token", "unhashed token", value)
-	}
-
-	var maxAge int
-	if maxLifetime <= 0 {
-		maxAge = -1
-	} else {
-		maxAge = int(maxLifetime.Seconds())
-	}
-
-	WriteCookie(ctx.Resp, cfg.LoginCookieName, url.QueryEscape(value), maxAge, nil)
 }

@@ -11,7 +11,7 @@ type Service interface {
 	GetUserOrgList(context.Context, *GetUserOrgListQuery) ([]*UserOrgDTO, error)
 	UpdateOrg(context.Context, *UpdateOrgCommand) error
 	Search(context.Context, *SearchOrgsQuery) ([]*OrgDTO, error)
-	GetByID(context.Context, *GetOrgByIdQuery) (*Org, error)
+	GetByID(context.Context, *GetOrgByIDQuery) (*Org, error)
 	GetByName(context.Context, *GetOrgByNameQuery) (*Org, error)
 	CreateWithMember(context.Context, *CreateOrgCommand) (*Org, error)
 	UpdateAddress(context.Context, *UpdateOrgAddressCommand) error

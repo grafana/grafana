@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 import React from 'react';
 import { Subject } from 'rxjs';
 
-import { ArrayVector, DataFrame, DataFrameView, FieldType } from '@grafana/data';
+import { DataFrame, DataFrameView, FieldType } from '@grafana/data';
 
 import { DashboardQueryResult, getGrafanaSearcher, QueryResponse } from '../../service';
 import { DashboardSearchItemType } from '../../types';
@@ -19,14 +19,14 @@ describe('SearchResultsCards', () => {
   describe('when there is data', () => {
     const searchData: DataFrame = {
       fields: [
-        { name: 'kind', type: FieldType.string, config: {}, values: new ArrayVector([DashboardSearchItemType.DashDB]) },
-        { name: 'uid', type: FieldType.string, config: {}, values: new ArrayVector(['my-dashboard-1']) },
-        { name: 'name', type: FieldType.string, config: {}, values: new ArrayVector(['My dashboard 1']) },
-        { name: 'panel_type', type: FieldType.string, config: {}, values: new ArrayVector(['']) },
-        { name: 'url', type: FieldType.string, config: {}, values: new ArrayVector(['/my-dashboard-1']) },
-        { name: 'tags', type: FieldType.other, config: {}, values: new ArrayVector([['foo', 'bar']]) },
-        { name: 'ds_uid', type: FieldType.other, config: {}, values: new ArrayVector(['']) },
-        { name: 'location', type: FieldType.string, config: {}, values: new ArrayVector(['folder0/my-dashboard-1']) },
+        { name: 'kind', type: FieldType.string, config: {}, values: [DashboardSearchItemType.DashDB] },
+        { name: 'uid', type: FieldType.string, config: {}, values: ['my-dashboard-1'] },
+        { name: 'name', type: FieldType.string, config: {}, values: ['My dashboard 1'] },
+        { name: 'panel_type', type: FieldType.string, config: {}, values: [''] },
+        { name: 'url', type: FieldType.string, config: {}, values: ['/my-dashboard-1'] },
+        { name: 'tags', type: FieldType.other, config: {}, values: [['foo', 'bar']] },
+        { name: 'ds_uid', type: FieldType.other, config: {}, values: [''] },
+        { name: 'location', type: FieldType.string, config: {}, values: ['folder0/my-dashboard-1'] },
       ],
       meta: {
         custom: {
@@ -90,12 +90,12 @@ describe('SearchResultsCards', () => {
   describe('when there is no data', () => {
     const emptySearchData: DataFrame = {
       fields: [
-        { name: 'kind', type: FieldType.string, config: {}, values: new ArrayVector([]) },
-        { name: 'name', type: FieldType.string, config: {}, values: new ArrayVector([]) },
-        { name: 'uid', type: FieldType.string, config: {}, values: new ArrayVector([]) },
-        { name: 'url', type: FieldType.string, config: {}, values: new ArrayVector([]) },
-        { name: 'tags', type: FieldType.other, config: {}, values: new ArrayVector([]) },
-        { name: 'location', type: FieldType.string, config: {}, values: new ArrayVector([]) },
+        { name: 'kind', type: FieldType.string, config: {}, values: [] },
+        { name: 'name', type: FieldType.string, config: {}, values: [] },
+        { name: 'uid', type: FieldType.string, config: {}, values: [] },
+        { name: 'url', type: FieldType.string, config: {}, values: [] },
+        { name: 'tags', type: FieldType.other, config: {}, values: [] },
+        { name: 'location', type: FieldType.string, config: {}, values: [] },
       ],
       length: 0,
     };

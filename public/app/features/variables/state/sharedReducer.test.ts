@@ -1,6 +1,6 @@
 import { cloneDeep } from 'lodash';
 
-import { LoadingState, VariableType } from '@grafana/data';
+import { BaseVariableModel, LoadingState, VariableType } from '@grafana/data';
 
 import { reducerTester } from '../../../../test/core/redux/reducerTester';
 import { variableAdapters } from '../adapters';
@@ -36,11 +36,11 @@ variableAdapters.setInit(() => [createQueryVariableAdapter(), createConstantVari
 describe('sharedReducer', () => {
   describe('when addVariable is dispatched', () => {
     it('then state should be correct', () => {
-      const model: any = {
+      const model = {
         name: 'name from model',
         type: 'query',
         current: undefined,
-      };
+      } as unknown as BaseVariableModel;
 
       const expected: QueryVariableModel = {
         ...initialQueryVariableModelState,
@@ -65,13 +65,13 @@ describe('sharedReducer', () => {
 
   describe('when addVariable is dispatched for a constant model', () => {
     it('then state should be correct', () => {
-      const model: any = {
+      const model = {
         name: 'constant',
         type: 'constant',
         query: 'a constant',
         current: { selected: true, text: 'A', value: 'A' },
         options: [{ selected: true, text: 'A', value: 'A' }],
-      };
+      } as unknown as BaseVariableModel;
 
       const expected: ConstantVariableModel = {
         ...initialConstantVariableModelState,
@@ -147,6 +147,82 @@ describe('sharedReducer', () => {
             id: '11',
             name: 'copy_of_Name-1',
             index: 3,
+          },
+        });
+    });
+
+    it('then state should be correct', () => {
+      const initialState: VariablesState = getVariableState(3, -1, false, true);
+      initialState['1'].name = 'copy_of_Name-1_2';
+      const payload = toVariablePayload({ id: '1', type: 'query' }, { newId: '11' });
+      reducerTester<VariablesState>()
+        .givenReducer(sharedReducer, initialState)
+        .whenActionIsDispatched(duplicateVariable(payload))
+        .thenStateShouldEqual({
+          ...initialState,
+          '11': {
+            ...initialQueryVariableModelState,
+            ...initialState['1'],
+            id: '11',
+            name: 'copy_of_copy_of_Name-1_2',
+            index: 3,
+          },
+        });
+    });
+
+    it('then state should be correct', () => {
+      const initialState: VariablesState = getVariableState(3, -1, false, true);
+      initialState['0'].name = 'Name-0';
+      initialState['1'].name = 'copy_of_Name-0_2';
+      const payload = toVariablePayload({ id: '0', type: 'query' }, { newId: '01' });
+      reducerTester<VariablesState>()
+        .givenReducer(sharedReducer, initialState)
+        .whenActionIsDispatched(duplicateVariable(payload))
+        .thenStateShouldEqual({
+          ...initialState,
+          '01': {
+            ...initialQueryVariableModelState,
+            ...initialState['0'],
+            id: '01',
+            name: 'copy_of_Name-0_3',
+            index: 3,
+          },
+        });
+    });
+
+    it('then state should be correct', () => {
+      const initialState: VariablesState = getVariableState(3, -1, false, true);
+      initialState['1'].name = 'copy_of_Name-1_2';
+      const duplicateOne = toVariablePayload({ id: '1', type: 'query' }, { newId: '11' });
+      const duplicateTwo = toVariablePayload({ id: '1', type: 'query' }, { newId: '12' });
+      const duplicateThree = toVariablePayload({ id: '1', type: 'query' }, { newId: '13' });
+      reducerTester<VariablesState>()
+        .givenReducer(sharedReducer, initialState)
+        .whenActionIsDispatched(duplicateVariable(duplicateOne))
+        .whenActionIsDispatched(duplicateVariable(duplicateTwo))
+        .whenActionIsDispatched(duplicateVariable(duplicateThree))
+        .thenStateShouldEqual({
+          ...initialState,
+          '11': {
+            ...initialQueryVariableModelState,
+            ...initialState['1'],
+            id: '11',
+            name: 'copy_of_copy_of_Name-1_2',
+            index: 3,
+          },
+          '12': {
+            ...initialQueryVariableModelState,
+            ...initialState['1'],
+            id: '12',
+            name: 'copy_of_copy_of_Name-1_2_1',
+            index: 4,
+          },
+          '13': {
+            ...initialQueryVariableModelState,
+            ...initialState['1'],
+            id: '13',
+            name: 'copy_of_copy_of_Name-1_2_2',
+            index: 5,
           },
         });
     });

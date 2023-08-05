@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -31,6 +32,21 @@ func (pr parsedRequest) getFlattenedQueries() []parsedQuery {
 }
 
 func (pr parsedRequest) validateRequest(ctx context.Context) error {
+	refIds := make(map[string]bool)
+	for _, pq := range pr.parsedQueries {
+		for _, q := range pq {
+			if refIds[q.query.RefID] {
+				return ErrDuplicateRefId
+			}
+			refIds[q.query.RefID] = true
+		}
+	}
+
+	// Skip header validation. See https://github.com/grafana/grafana/pull/58871
+	if true {
+		return nil
+	}
+
 	reqCtx := contexthandler.FromContext(ctx)
 
 	if reqCtx == nil || reqCtx.Req == nil {

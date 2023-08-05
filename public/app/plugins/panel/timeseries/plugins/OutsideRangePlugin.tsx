@@ -9,7 +9,7 @@ interface ThresholdControlsPluginProps {
   onChangeTimeRange: (timeRange: AbsoluteTimeRange) => void;
 }
 
-export const OutsideRangePlugin: React.FC<ThresholdControlsPluginProps> = ({ config, onChangeTimeRange }) => {
+export const OutsideRangePlugin = ({ config, onChangeTimeRange }: ThresholdControlsPluginProps) => {
   const plotInstance = useRef<uPlot>();
   const [timevalues, setTimeValues] = useState<number[] | TypedArray>([]);
   const [timeRange, setTimeRange] = useState<Scale | undefined>();
@@ -71,7 +71,11 @@ export const OutsideRangePlugin: React.FC<ThresholdControlsPluginProps> = ({ con
     >
       <div>
         <div>Data outside time range</div>
-        <Button onClick={(v) => onChangeTimeRange({ from: first, to: last })} variant="secondary">
+        <Button
+          onClick={(v) => onChangeTimeRange({ from: first, to: last })}
+          variant="secondary"
+          data-testid="time-series-zoom-to-data"
+        >
           Zoom to data
         </Button>
       </div>

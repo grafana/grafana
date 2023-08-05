@@ -2,6 +2,8 @@ package pluginproxy
 
 import (
 	"bytes"
+	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -75,6 +77,10 @@ func setBodyContent(req *http.Request, route *plugins.Route, data templateData) 
 		interpolatedBody, err := interpolateString(string(route.Body), data)
 		if err != nil {
 			return err
+		}
+
+		if !json.Valid([]byte(interpolatedBody)) {
+			return errors.New("body is not valid JSON")
 		}
 
 		req.Body = io.NopCloser(strings.NewReader(interpolatedBody))

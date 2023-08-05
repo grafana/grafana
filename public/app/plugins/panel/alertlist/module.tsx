@@ -1,15 +1,18 @@
 import React from 'react';
 
-import { PanelPlugin } from '@grafana/data';
-import { config, DataSourcePicker } from '@grafana/runtime';
+import { DataSourceInstanceSettings, PanelPlugin } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { TagsInput } from '@grafana/ui';
-import { FolderPicker } from 'app/core/components/Select/FolderPicker';
+import { OldFolderPicker } from 'app/core/components/Select/OldFolderPicker';
 import {
   ALL_FOLDER,
   GENERAL_FOLDER,
   ReadonlyFolderPicker,
 } from 'app/core/components/Select/ReadonlyFolderPicker/ReadonlyFolderPicker';
+import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 import { PermissionLevelString } from 'app/types';
+
+import { GRAFANA_DATASOURCE_NAME } from '../../../features/alerting/unified/utils/datasource';
 
 import { AlertList } from './AlertList';
 import { alertListPanelMigrationHandler } from './AlertListMigrationHandler';
@@ -195,6 +198,7 @@ const unifiedAlertList = new PanelPlugin<UnifiedAlertListOptions>(UnifiedAlertLi
             id={props.id ?? 'groupBy'}
             defaultValue={props.value.map((value: string) => ({ label: value, value }))}
             onChange={props.onChange}
+            dataSource={props.context.options.datasource}
           />
         );
       },
@@ -244,28 +248,6 @@ const unifiedAlertList = new PanelPlugin<UnifiedAlertListOptions>(UnifiedAlertLi
       category: ['Filter'],
     })
     .addCustomEditor({
-      path: 'folder',
-      name: 'Folder',
-      description: 'Filter for alerts in the selected folder (only for Grafana alerts)',
-      id: 'folder',
-      defaultValue: null,
-      editor: function RenderFolderPicker(props) {
-        return (
-          <FolderPicker
-            enableReset={true}
-            showRoot={false}
-            allowEmpty={true}
-            initialTitle={props.value?.title}
-            initialFolderUid={props.value?.uid}
-            permissionLevel={PermissionLevelString.View}
-            onClear={() => props.onChange('')}
-            {...props}
-          />
-        );
-      },
-      category: ['Filter'],
-    })
-    .addCustomEditor({
       path: 'datasource',
       name: 'Datasource',
       description: 'Filter alerts from selected datasource',
@@ -278,8 +260,31 @@ const unifiedAlertList = new PanelPlugin<UnifiedAlertListOptions>(UnifiedAlertLi
             type={['prometheus', 'loki', 'grafana']}
             noDefault
             current={props.value}
-            onChange={(ds) => props.onChange(ds.name)}
+            onChange={(ds: DataSourceInstanceSettings) => props.onChange(ds.name)}
             onClear={() => props.onChange(null)}
+          />
+        );
+      },
+      category: ['Filter'],
+    })
+    .addCustomEditor({
+      showIf: (options) => options.datasource === GRAFANA_DATASOURCE_NAME || !Boolean(options.datasource),
+      path: 'folder',
+      name: 'Folder',
+      description: 'Filter for alerts in the selected folder (only for Grafana alerts)',
+      id: 'folder',
+      defaultValue: null,
+      editor: function RenderFolderPicker(props) {
+        return (
+          <OldFolderPicker
+            enableReset={true}
+            showRoot={false}
+            allowEmpty={true}
+            initialTitle={props.value?.title}
+            initialFolderUid={props.value?.uid}
+            permissionLevel={PermissionLevelString.View}
+            onClear={() => props.onChange('')}
+            {...props}
           />
         );
       },

@@ -35,7 +35,6 @@ type Statement struct {
 	tableName       string
 	RawSQL          string
 	RawParams       []interface{}
-	UseCascade      bool
 	UseAutoJoin     bool
 	StoreEngine     string
 	Charset         string
@@ -66,7 +65,6 @@ func (statement *Statement) Init() {
 	statement.Start = 0
 	statement.LimitN = nil
 	statement.OrderStr = ""
-	statement.UseCascade = true
 	statement.JoinStr = ""
 	statement.joinArgs = make([]interface{}, 0)
 	statement.GroupByStr = ""
@@ -100,6 +98,11 @@ func (statement *Statement) Init() {
 	statement.bufferSize = 0
 	statement.lastError = nil
 }
+
+var (
+	ptrPkType = reflect.TypeOf(&core.PK{})
+	pkType    = reflect.TypeOf(core.PK{})
+)
 
 // NoAutoCondition if you do not want convert bean's field as query condition, then use this function
 func (statement *Statement) NoAutoCondition(no ...bool) *Statement {

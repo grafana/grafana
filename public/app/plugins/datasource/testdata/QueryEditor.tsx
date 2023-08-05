@@ -1,9 +1,9 @@
-import React, { ChangeEvent, FormEvent, useMemo } from 'react';
+import React, { FormEvent, useMemo } from 'react';
 import { useAsync } from 'react-use';
 
 import { QueryEditorProps, SelectableValue } from '@grafana/data';
 import { selectors as editorSelectors } from '@grafana/e2e-selectors';
-import { InlineField, InlineFieldRow, InlineSwitch, Input, Select, TextArea } from '@grafana/ui';
+import { InlineField, InlineFieldRow, InlineSwitch, Input, Select, Icon, TextArea } from '@grafana/ui';
 
 import { RandomWalkEditor, StreamingClientEditor } from './components';
 import { CSVContentEditor } from './components/CSVContentEditor';
@@ -17,11 +17,10 @@ import { RawFrameEditor } from './components/RawFrameEditor';
 import { SimulationQueryEditor } from './components/SimulationQueryEditor';
 import { USAQueryEditor, usaQueryModes } from './components/USAQueryEditor';
 import { defaultCSVWaveQuery, defaultPulseQuery, defaultQuery } from './constants';
+import { CSVWave, NodesQuery, TestData, TestDataQueryType, USAQuery } from './dataquery.gen';
 import { TestDataDataSource } from './datasource';
 import { defaultStreamQuery } from './runStreams';
-import { CSVWave, NodesQuery, TestDataQuery, USAQuery } from './types';
 
-const showLabelsFor = ['random_walk', 'predictable_pulse'];
 const endpoints = [
   { value: 'datasources', label: 'Data Sources' },
   { value: 'search', label: 'Search' },
@@ -32,39 +31,39 @@ const selectors = editorSelectors.components.DataSource.TestData.QueryTab;
 
 export interface EditorProps {
   onChange: (value: any) => void;
-  query: TestDataQuery;
+  query: TestData;
   ds: TestDataDataSource;
 }
 
-export type Props = QueryEditorProps<TestDataDataSource, TestDataQuery>;
+export type Props = QueryEditorProps<TestDataDataSource, TestData>;
 
 export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) => {
   query = { ...defaultQuery, ...query };
 
   const { loading, value: scenarioList } = useAsync(async () => {
     // migrate manual_entry (unusable since 7, removed in 8)
-    if (query.scenarioId === 'manual_entry' && (query as any).points) {
+    if (query.scenarioId === TestDataQueryType.ManualEntry && query.points) {
       let csvContent = 'Time,Value\n';
-      for (const point of (query as any).points) {
+      for (const point of query.points) {
         csvContent += `${point[1]},${point[0]}\n`;
       }
       onChange({
         refId: query.refId,
         datasource: query.datasource,
-        scenarioId: 'csv_content',
+        scenarioId: TestDataQueryType.CSVContent,
         csvContent,
       });
     }
 
     const vals = await datasource.getScenarios();
-    const hideAlias = ['simulation'];
+    const hideAlias = [TestDataQueryType.Simulation, TestDataQueryType.Annotations];
     return vals.map((v) => ({
       ...v,
-      hideAliasField: hideAlias.includes(v.id),
+      hideAliasField: hideAlias.includes(v.id as TestDataQueryType),
     }));
   }, []);
 
-  const onUpdate = (query: TestDataQuery) => {
+  const onUpdate = (query: TestData) => {
     onChange(query);
     onRunQuery();
   };
@@ -84,8 +83,8 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
     }
 
     // Clear model from existing props that belong to other scenarios
-    const update: TestDataQuery = {
-      scenarioId: item.value!,
+    const update: TestData = {
+      scenarioId: item.value! as TestDataQueryType,
       refId: query.refId,
       alias: query.alias,
       datasource: query.datasource,
@@ -96,25 +95,28 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
     }
 
     switch (scenario.id) {
-      case 'grafana_api':
+      case TestDataQueryType.GrafanaAPI:
         update.stringInput = 'datasources';
         break;
-      case 'streaming_client':
+      case TestDataQueryType.StreamingClient:
         update.stream = defaultStreamQuery;
         break;
-      case 'live':
+      case TestDataQueryType.Live:
         update.channel = 'random-2s-stream'; // default stream
         break;
-      case 'simulation':
+      case TestDataQueryType.Simulation:
         update.sim = { key: { type: 'flight', tick: 10 } }; // default stream
         break;
-      case 'predictable_pulse':
+      case TestDataQueryType.PredictablePulse:
         update.pulseWave = defaultPulseQuery;
         break;
-      case 'predictable_csv_wave':
+      case TestDataQueryType.PredictableCSVWave:
         update.csvWave = defaultCSVWaveQuery;
         break;
-      case 'usa':
+      case TestDataQueryType.Annotations:
+        update.lines = 10;
+        break;
+      case TestDataQueryType.USA:
         update.usa = {
           mode: usaQueryModes[0].value,
         };
@@ -138,8 +140,8 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
     onUpdate({ ...query, [name]: newValue });
   };
 
-  const onFieldChange = (field: string) => (e: ChangeEvent<HTMLInputElement>) => {
-    const { name, value, type } = e.currentTarget;
+  const onFieldChange = (field: string) => (e: { target: { name: string; value: string; type: string } }) => {
+    const { name, value, type } = e.target;
     let newValue: any = value;
 
     if (type === 'number') {
@@ -170,7 +172,15 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
         .sort((a, b) => a.label.localeCompare(b.label)),
     [scenarioList]
   );
-  const showLabels = useMemo(() => showLabelsFor.includes(query.scenarioId ?? ''), [query]);
+
+  // Common options that can be added to various scenarios
+  const show = useMemo(() => {
+    const scenarioId = query.scenarioId ?? '';
+    return {
+      labels: ['random_walk', 'predictable_pulse'].includes(scenarioId),
+      dropPercent: ['csv_content', 'csv_file'].includes(scenarioId),
+    };
+  }, [query?.scenarioId]);
 
   if (loading) {
     return null;
@@ -214,7 +224,23 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
             />
           </InlineField>
         )}
-        {showLabels && (
+        {show.dropPercent && (
+          <InlineField label="Drop" tooltip={'Drop a random set of points'}>
+            <Input
+              type="number"
+              min={0}
+              max={100}
+              step={5}
+              width={8}
+              onChange={onInputChange}
+              name="dropPercent"
+              placeholder="0"
+              value={query.dropPercent}
+              suffix={<Icon name="percentage" />}
+            />
+          </InlineField>
+        )}
+        {show.labels && (
           <InlineField
             label="Labels"
             labelWidth={14}
@@ -228,6 +254,9 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
                 <br />
                 key=value, key2=value
                 <br />
+                Value can contain templates:
+                <br />
+                $seriesIndex - replaced with index of the series
               </>
             }
           >
@@ -243,16 +272,24 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
         )}
       </InlineFieldRow>
 
-      {scenarioId === 'random_walk' && <RandomWalkEditor onChange={onInputChange} query={query} ds={datasource} />}
-      {scenarioId === 'streaming_client' && (
+      {scenarioId === TestDataQueryType.RandomWalk && (
+        <RandomWalkEditor onChange={onInputChange} query={query} ds={datasource} />
+      )}
+      {scenarioId === TestDataQueryType.StreamingClient && (
         <StreamingClientEditor onChange={onStreamClientChange} query={query} ds={datasource} />
       )}
-      {scenarioId === 'live' && <GrafanaLiveEditor onChange={onUpdate} query={query} ds={datasource} />}
-      {scenarioId === 'simulation' && <SimulationQueryEditor onChange={onUpdate} query={query} ds={datasource} />}
-      {scenarioId === 'raw_frame' && <RawFrameEditor onChange={onUpdate} query={query} ds={datasource} />}
-      {scenarioId === 'csv_file' && <CSVFileEditor onChange={onUpdate} query={query} ds={datasource} />}
-      {scenarioId === 'csv_content' && <CSVContentEditor onChange={onUpdate} query={query} ds={datasource} />}
-      {scenarioId === 'logs' && (
+      {scenarioId === TestDataQueryType.Live && <GrafanaLiveEditor onChange={onUpdate} query={query} ds={datasource} />}
+      {scenarioId === TestDataQueryType.Simulation && (
+        <SimulationQueryEditor onChange={onUpdate} query={query} ds={datasource} />
+      )}
+      {scenarioId === TestDataQueryType.RawFrame && (
+        <RawFrameEditor onChange={onUpdate} query={query} ds={datasource} />
+      )}
+      {scenarioId === TestDataQueryType.CSVFile && <CSVFileEditor onChange={onUpdate} query={query} ds={datasource} />}
+      {scenarioId === TestDataQueryType.CSVContent && (
+        <CSVContentEditor onChange={onUpdate} query={query} ds={datasource} />
+      )}
+      {scenarioId === TestDataQueryType.Logs && (
         <InlineFieldRow>
           <InlineField label="Lines" labelWidth={14}>
             <Input
@@ -269,9 +306,22 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
           </InlineField>
         </InlineFieldRow>
       )}
-
-      {scenarioId === 'usa' && <USAQueryEditor onChange={onUSAStatsChange} query={query.usa ?? {}} />}
-      {scenarioId === 'grafana_api' && (
+      {scenarioId === TestDataQueryType.Annotations && (
+        <InlineFieldRow>
+          <InlineField label="Count" labelWidth={14}>
+            <Input
+              type="number"
+              name="lines"
+              value={query.lines}
+              width={32}
+              onChange={onInputChange}
+              placeholder="10"
+            />
+          </InlineField>
+        </InlineFieldRow>
+      )}
+      {scenarioId === TestDataQueryType.USA && <USAQueryEditor onChange={onUSAStatsChange} query={query.usa ?? {}} />}
+      {scenarioId === TestDataQueryType.GrafanaAPI && (
         <InlineField labelWidth={14} label="Endpoint">
           <Select
             options={endpoints}
@@ -282,7 +332,7 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
         </InlineField>
       )}
 
-      {scenarioId === 'arrow' && (
+      {scenarioId === TestDataQueryType.Arrow && (
         <InlineField grow>
           <TextArea
             name="stringInput"
@@ -294,15 +344,30 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
         </InlineField>
       )}
 
-      {scenarioId === 'predictable_pulse' && (
+      {scenarioId === TestDataQueryType.FlameGraph && (
+        <InlineField label={'Diff profile'} grow>
+          <InlineSwitch
+            value={Boolean(query.flamegraphDiff)}
+            onChange={(e) => {
+              onUpdate({ ...query, flamegraphDiff: e.currentTarget.checked });
+            }}
+          />
+        </InlineField>
+      )}
+
+      {scenarioId === TestDataQueryType.PredictablePulse && (
         <PredictablePulseEditor onChange={onPulseWaveChange} query={query} ds={datasource} />
       )}
-      {scenarioId === 'predictable_csv_wave' && <CSVWavesEditor onChange={onCSVWaveChange} waves={query.csvWave} />}
-      {scenarioId === 'node_graph' && (
+      {scenarioId === TestDataQueryType.PredictableCSVWave && (
+        <CSVWavesEditor onChange={onCSVWaveChange} waves={query.csvWave} />
+      )}
+      {scenarioId === TestDataQueryType.NodeGraph && (
         <NodeGraphEditor onChange={(val: NodesQuery) => onChange({ ...query, nodes: val })} query={query} />
       )}
-      {scenarioId === 'server_error_500' && <ErrorEditor onChange={onUpdate} query={query} ds={datasource} />}
-      {scenarioId === 'trace' && (
+      {scenarioId === TestDataQueryType.ServerError500 && (
+        <ErrorEditor onChange={onUpdate} query={query} ds={datasource} />
+      )}
+      {scenarioId === TestDataQueryType.Trace && (
         <InlineField labelWidth={14} label="Span count">
           <Input
             type="number"

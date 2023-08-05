@@ -8,6 +8,11 @@ aliases:
   - ../panels/specify-thresholds/delete-a-threshold/
   - ../panels/thresholds/
 description: This section includes information about using thresholds in your visualizations.
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 menuTitle: Configure thresholds
 title: Configure thresholds
 weight: 300
@@ -15,7 +20,7 @@ weight: 300
 
 # Configure thresholds
 
-This section includes information about using thresholds in your visualizations. You'll learn about thresholds and their defaults, how to add or delete a threshold, and adding a threshold to a legacy panel.
+This section includes information about using thresholds in your visualizations. You'll learn about thresholds, their defaults, how to add or delete a threshold, and adding a threshold to a legacy panel.
 
 ## About thresholds
 
@@ -25,7 +30,7 @@ Thresholds provide one method for you to conditionally style and color your visu
 
 You can use thresholds to:
 
-- Color grid lines or grid ares areas in the [Time-series visualization]({{< relref "../visualizations/time-series/" >}})
+- Color grid lines or grid areas in the [Time-series visualization]({{< relref "../visualizations/time-series/" >}})
 - Color lines in the [Time-series visualization]({{< relref "../visualizations/time-series#from-thresholds" >}})
 - Color the background or value text in the [Stat visualization]({{< relref "../visualizations/stat/" >}})
 - Color the gauge and threshold markers in the [Gauge visualization]({{< relref "../visualizations/gauge/" >}})
@@ -52,7 +57,7 @@ The **Base** value represents minus infinity. It is generally the “good” col
 
 You can add as many thresholds to a panel as you want. Grafana automatically sorts thresholds values from highest to lowest.
 
-Delete a threshold when it is no longer relevant to your business operations. When you delete a threshold, the system removes the threshold from all visualizations that include the threshold.
+Delete a threshold when it is no longer needed. When you delete a threshold, the system removes the threshold from all visualizations that include the threshold.
 
 1. To add a threshold:
 
@@ -83,7 +88,7 @@ In the Graph panel visualization, thresholds enable you to add lines or sections
      - **critical -** Fill and line color are red.
      - **warning -** Fill and line color are yellow.
      - **ok -** Fill and line color are green.
-   - **Fill -** Controls whether the threshold fill is displayed.
-   - **Line -** Controls whether the threshold line is displayed.
-   - **Y-Axis -** Choose **left** or **right**.
+   - **Fill -** Toggle the display of the threshold fill.
+   - **Line -** Toggle the display of the threshold line.
+   - **Y-Axis -** Choose to display the y-axis on either the **left** or **right** of the panel.
 1. Click **Save** to save the changes in the dashboard.

@@ -4,6 +4,7 @@ import {
   parseDuration,
   isValidDuration,
   isValidGoDuration,
+  durationToMilliseconds,
 } from './durationutil';
 
 describe('Duration util', () => {
@@ -12,6 +13,12 @@ describe('Duration util', () => {
       const startDate = new Date();
       const endDate = addDurationToDate(startDate, { months: 1, weeks: 1, days: 1, hours: 1, minutes: 1, seconds: 1 });
       expect(intervalToAbbreviatedDurationString({ start: startDate, end: endDate })).toEqual('1M 8d 1h 1m 1s');
+    });
+
+    it('should return an empty string if start date is after end date', () => {
+      const endDate = new Date();
+      const startDate = addDurationToDate(endDate, { minutes: 1 });
+      expect(intervalToAbbreviatedDurationString({ start: startDate, end: endDate })).toEqual('');
     });
   });
 
@@ -58,6 +65,17 @@ describe('Duration util', () => {
     it('invalid float number duration string returns false', () => {
       const durationString = '3.h -4.0m 0.s 2.ms -0.us 5.ns';
       expect(isValidGoDuration(durationString)).toEqual(false);
+    });
+  });
+
+  describe('durationToMilliseconds', () => {
+    it('converts a duration to milliseconds', () => {
+      const duration = { hours: 1, minutes: 30, seconds: 45 };
+
+      const now = new Date('2023-07-12');
+      const result = addDurationToDate(now, duration).getTime() - now.getTime();
+
+      expect(result).toEqual(durationToMilliseconds(duration));
     });
   });
 });

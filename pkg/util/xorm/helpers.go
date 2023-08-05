@@ -5,115 +5,11 @@
 package xorm
 
 import (
-	"errors"
 	"fmt"
 	"reflect"
 	"sort"
-	"strconv"
 	"strings"
-
-	"xorm.io/core"
 )
-
-// str2PK convert string value to primary key value according to tp
-func str2PKValue(s string, tp reflect.Type) (reflect.Value, error) {
-	var err error
-	var result interface{}
-	var defReturn = reflect.Zero(tp)
-
-	switch tp.Kind() {
-	case reflect.Int:
-		result, err = strconv.Atoi(s)
-		if err != nil {
-			return defReturn, fmt.Errorf("convert %s as int: %s", s, err.Error())
-		}
-	case reflect.Int8:
-		x, err := strconv.Atoi(s)
-		if err != nil {
-			return defReturn, fmt.Errorf("convert %s as int8: %s", s, err.Error())
-		}
-		result = int8(x)
-	case reflect.Int16:
-		x, err := strconv.Atoi(s)
-		if err != nil {
-			return defReturn, fmt.Errorf("convert %s as int16: %s", s, err.Error())
-		}
-		result = int16(x)
-	case reflect.Int32:
-		x, err := strconv.Atoi(s)
-		if err != nil {
-			return defReturn, fmt.Errorf("convert %s as int32: %s", s, err.Error())
-		}
-		result = int32(x)
-	case reflect.Int64:
-		result, err = strconv.ParseInt(s, 10, 64)
-		if err != nil {
-			return defReturn, fmt.Errorf("convert %s as int64: %s", s, err.Error())
-		}
-	case reflect.Uint:
-		x, err := strconv.ParseUint(s, 10, 64)
-		if err != nil {
-			return defReturn, fmt.Errorf("convert %s as uint: %s", s, err.Error())
-		}
-		result = uint(x)
-	case reflect.Uint8:
-		x, err := strconv.ParseUint(s, 10, 64)
-		if err != nil {
-			return defReturn, fmt.Errorf("convert %s as uint8: %s", s, err.Error())
-		}
-		result = uint8(x)
-	case reflect.Uint16:
-		x, err := strconv.ParseUint(s, 10, 64)
-		if err != nil {
-			return defReturn, fmt.Errorf("convert %s as uint16: %s", s, err.Error())
-		}
-		result = uint16(x)
-	case reflect.Uint32:
-		x, err := strconv.ParseUint(s, 10, 64)
-		if err != nil {
-			return defReturn, fmt.Errorf("convert %s as uint32: %s", s, err.Error())
-		}
-		result = uint32(x)
-	case reflect.Uint64:
-		result, err = strconv.ParseUint(s, 10, 64)
-		if err != nil {
-			return defReturn, fmt.Errorf("convert %s as uint64: %s", s, err.Error())
-		}
-	case reflect.String:
-		result = s
-	default:
-		return defReturn, errors.New("unsupported convert type")
-	}
-	return reflect.ValueOf(result).Convert(tp), nil
-}
-
-func str2PK(s string, tp reflect.Type) (interface{}, error) {
-	v, err := str2PKValue(s, tp)
-	if err != nil {
-		return nil, err
-	}
-	return v.Interface(), nil
-}
-
-func splitTag(tag string) (tags []string) {
-	tag = strings.TrimSpace(tag)
-	var hasQuote = false
-	var lastIdx = 0
-	for i, t := range tag {
-		if t == '\'' {
-			hasQuote = !hasQuote
-		} else if t == ' ' {
-			if lastIdx < i && !hasQuote {
-				tags = append(tags, strings.TrimSpace(tag[lastIdx:i]))
-				lastIdx = i + 1
-			}
-		}
-	}
-	if lastIdx < len(tag) {
-		tags = append(tags, strings.TrimSpace(tag[lastIdx:]))
-	}
-	return
-}
 
 type zeroable interface {
 	IsZero() bool
@@ -190,6 +86,26 @@ func isStructZero(v reflect.Value) bool {
 	return true
 }
 
+func splitTag(tag string) (tags []string) {
+	tag = strings.TrimSpace(tag)
+	var hasQuote = false
+	var lastIdx = 0
+	for i, t := range tag {
+		if t == '\'' {
+			hasQuote = !hasQuote
+		} else if t == ' ' {
+			if lastIdx < i && !hasQuote {
+				tags = append(tags, strings.TrimSpace(tag[lastIdx:i]))
+				lastIdx = i + 1
+			}
+		}
+	}
+	if lastIdx < len(tag) {
+		tags = append(tags, strings.TrimSpace(tag[lastIdx:]))
+	}
+	return
+}
+
 func isArrayValueZero(v reflect.Value) bool {
 	if !v.IsValid() || v.Len() == 0 {
 		return true
@@ -249,58 +165,8 @@ func int64ToInt(id int64, tp reflect.Type) interface{} {
 	return int64ToIntValue(id, tp).Interface()
 }
 
-func isPKZero(pk core.PK) bool {
-	for _, k := range pk {
-		if isZero(k) {
-			return true
-		}
-	}
-	return false
-}
-
-func indexNoCase(s, sep string) int {
-	return strings.Index(strings.ToLower(s), strings.ToLower(sep))
-}
-
-func splitNoCase(s, sep string) []string {
-	idx := indexNoCase(s, sep)
-	if idx < 0 {
-		return []string{s}
-	}
-	return strings.Split(s, s[idx:idx+len(sep)])
-}
-
-func splitNNoCase(s, sep string, n int) []string {
-	idx := indexNoCase(s, sep)
-	if idx < 0 {
-		return []string{s}
-	}
-	return strings.SplitN(s, s[idx:idx+len(sep)], n)
-}
-
-func makeArray(elem string, count int) []string {
-	res := make([]string, count)
-	for i := 0; i < count; i++ {
-		res[i] = elem
-	}
-	return res
-}
-
 func rValue(bean interface{}) reflect.Value {
 	return reflect.Indirect(reflect.ValueOf(bean))
-}
-
-func rType(bean interface{}) reflect.Type {
-	sliceValue := reflect.Indirect(reflect.ValueOf(bean))
-	// return reflect.TypeOf(sliceValue.Interface())
-	return sliceValue.Type()
-}
-
-func structName(v reflect.Type) string {
-	for v.Kind() == reflect.Ptr {
-		v = v.Elem()
-	}
-	return v.Name()
 }
 
 func sliceEq(left, right []string) bool {

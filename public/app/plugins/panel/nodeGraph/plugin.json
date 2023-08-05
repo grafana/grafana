@@ -2,7 +2,6 @@
   "type": "panel",
   "name": "Node Graph",
   "id": "nodeGraph",
-  "state": "beta",
 
   "info": {
     "author": {

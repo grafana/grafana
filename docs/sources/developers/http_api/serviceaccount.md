@@ -1,6 +1,7 @@
 ---
 aliases:
   - ../../http_api/serviceaccount/
+canonical: /docs/grafana/latest/developers/http_api/serviceaccount/
 description: Grafana service account HTTP API
 keywords:
   - grafana
@@ -8,12 +9,16 @@ keywords:
   - documentation
   - api
   - serviceaccount
+labels:
+  products:
+    - enterprise
+    - oss
 title: Service account HTTP API
 ---
 
 # Service account API
 
-> If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions]({{< relref "../../administration/roles-and-permissions/access-control/custom-role-actions-scopes/" >}}) for more information.
+> If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions]({{< relref "/docs/grafana/latest/administration/roles-and-permissions/access-control/custom-role-actions-scopes" >}}) for more information.
 
 ## Search service accounts with Paging
 
@@ -105,7 +110,7 @@ Authorization: Basic YWRtaW46YWRtaW4=
 {
   "name": "grafana",
   "role": "Viewer",
-  "isDisabled" : false
+  "isDisabled": false
 }
 ```
 
@@ -216,7 +221,167 @@ Content-Type: application/json
 }
 ```
 
+## Delete service account
+
+`DELETE /api/serviceaccounts/:id`
+
+**Required permissions**
+
+See note in the [introduction]({{< ref "#service-account-api" >}}) for an explanation.
+
+| Action                 | Scope                 |
+| ---------------------- | --------------------- |
+| serviceaccounts:delete | serviceaccounts:id:\* |
+
+**Example Request**:
+
+```http
+DELETE /api/serviceaccounts/2 HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+Authorization: Basic YWRtaW46YWRtaW4=
+```
+
+**Example Response**:
+
+```http
+HTTP/1.1 200
+Content-Type: application/json
+
+{
+	"message": "Service account deleted"
+}
+```
+
 ---
+
+## Migrate API keys to service accounts
+
+`POST /api/serviceaccounts/migrate`
+
+**Required permissions**
+
+See note in the [introduction]({{< ref "#service-account-api" >}}) for an explanation.
+
+| Action                | Scope              |
+| --------------------- | ------------------ |
+| serviceaccounts:write | serviceaccounts:\* |
+
+**Example Request**:
+
+```http
+POST /api/serviceaccounts/migrate HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+Authorization: Basic YWRtaW46YWRtaW4=
+```
+
+**Example Response**:
+
+```http
+HTTP/1.1 200
+Content-Type: application/json
+
+{
+	"message": "API keys migrated to service accounts"
+}
+```
+
+## Migrate API key to service account
+
+`POST /api/serviceaccounts/migrate/:keyId`
+
+**Required permissions**
+
+See note in the [introduction]({{< ref "#service-account-api" >}}) for an explanation.
+
+| Action                | Scope              |
+| --------------------- | ------------------ |
+| serviceaccounts:write | serviceaccounts:\* |
+
+**Example Request**:
+
+```http
+POST /api/serviceaccounts/migrate/4 HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+Authorization: Basic YWRtaW46YWRtaW4=
+```
+
+**Example Response**:
+
+```http
+HTTP/1.1 200
+Content-Type: application/json
+
+{
+	"message": "Service accounts migrated"
+}
+```
+
+## Get API key to service account migration status
+
+`GET /api/serviceaccounts/migrationstatus`
+
+**Required permissions**
+
+See note in the [introduction]({{< ref "#service-account-api" >}}) for an explanation.
+
+| Action               | Scope              |
+| -------------------- | ------------------ |
+| serviceaccounts:read | serviceaccounts:\* |
+
+**Example Request**:
+
+```http
+POST /api/serviceaccounts/migrationstatus HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+Authorization: Basic YWRtaW46YWRtaW4=
+```
+
+**Example Response**:
+
+```http
+HTTP/1.1 200
+Content-Type: application/json
+
+{
+	"migrated": true
+}
+```
+
+## Hide the API keys tab
+
+`GET /api/serviceaccounts/hideApiKeys`
+
+**Required permissions**
+
+See note in the [introduction]({{< ref "#service-account-api" >}}) for an explanation.
+
+| Action                | Scope              |
+| --------------------- | ------------------ |
+| serviceaccounts:write | serviceaccounts:\* |
+
+**Example Request**:
+
+```http
+POST /api/serviceaccounts/hideApiKeys HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+Authorization: Basic YWRtaW46YWRtaW4=
+```
+
+**Example Response**:
+
+```http
+HTTP/1.1 200
+Content-Type: application/json
+
+{
+	"message": "API keys hidden"
+}
+```
 
 ## Get service account tokens
 
@@ -279,8 +444,7 @@ Content-Type: application/json
 Authorization: Basic YWRtaW46YWRtaW4=
 
 {
-	"name": "grafana",
-	"role": "Viewer"
+	"name": "grafana"
 }
 ```
 

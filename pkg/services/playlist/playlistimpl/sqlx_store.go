@@ -5,9 +5,9 @@ import (
 	"database/sql"
 	"errors"
 
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/playlist"
 	"github.com/grafana/grafana/pkg/services/sqlstore/session"
+	"github.com/grafana/grafana/pkg/services/star"
 )
 
 type sqlxStore struct {
@@ -171,7 +171,7 @@ func (s *sqlxStore) List(ctx context.Context, query *playlist.GetPlaylistsQuery)
 func (s *sqlxStore) GetItems(ctx context.Context, query *playlist.GetPlaylistItemsByUidQuery) ([]playlist.PlaylistItem, error) {
 	var playlistItems = make([]playlist.PlaylistItem, 0)
 	if query.PlaylistUID == "" || query.OrgId == 0 {
-		return playlistItems, models.ErrCommandValidationFailed
+		return playlistItems, star.ErrCommandValidationFailed
 	}
 
 	var p = playlist.Playlist{}

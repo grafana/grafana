@@ -7,19 +7,21 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
 )
 
-func NewStore(sql db.DB) *store {
-	return &store{sql}
+func NewStore(sql db.DB, features featuremgmt.FeatureToggles) *store {
+	return &store{sql, features}
 }
 
 type store struct {
-	sql db.DB
+	sql      db.DB
+	features featuremgmt.FeatureToggles
 }
 
 type flatResourcePermission struct {
@@ -39,11 +41,40 @@ type flatResourcePermission struct {
 }
 
 func (p *flatResourcePermission) IsManaged(scope string) bool {
-	return strings.HasPrefix(p.RoleName, accesscontrol.ManagedRolePrefix) && !p.IsInherited(scope)
+	return strings.HasPrefix(p.RoleName, accesscontrol.ManagedRolePrefix) && p.Scope == scope
 }
 
+// IsInherited returns true for scopes from managed permissions that don't directly match the required scope
+// (ie, managed permissions on a parent resource)
 func (p *flatResourcePermission) IsInherited(scope string) bool {
-	return !strings.HasPrefix(p.Scope, strings.Split(strings.ReplaceAll(scope, "*", ""), ":")[0])
+	return strings.HasPrefix(p.RoleName, accesscontrol.ManagedRolePrefix) && p.Scope != scope
+}
+
+type DeleteResourcePermissionsCmd struct {
+	Resource          string
+	ResourceAttribute string
+	ResourceID        string
+}
+
+func (s *store) DeleteResourcePermissions(ctx context.Context, orgID int64, cmd *DeleteResourcePermissionsCmd) error {
+	scope := accesscontrol.Scope(cmd.Resource, cmd.ResourceAttribute, cmd.ResourceID)
+
+	err := s.sql.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
+		var permissionIDs []int64
+		err := sess.SQL(
+			"SELECT permission.id FROM permission INNER JOIN role ON permission.role_id = role.id WHERE permission.scope = ? AND role.org_id = ?",
+			scope, orgID).Find(&permissionIDs)
+		if err != nil {
+			return err
+		}
+
+		if err := deletePermissions(sess, permissionIDs); err != nil {
+			return err
+		}
+		return err
+	})
+
+	return err
 }
 
 func (s *store) SetUserResourcePermission(
@@ -89,7 +120,7 @@ func (s *store) SetTeamResourcePermission(
 	hook TeamResourceHookFunc,
 ) (*accesscontrol.ResourcePermission, error) {
 	if teamID == 0 {
-		return nil, models.ErrTeamNotFound
+		return nil, team.ErrTeamNotFound
 	}
 
 	var err error
@@ -412,10 +443,12 @@ func groupPermissionsByAssignment(permissions []flatResourcePermission) (map[int
 }
 
 func flatPermissionsToResourcePermissions(scope string, permissions []flatResourcePermission) []accesscontrol.ResourcePermission {
-	var managed, provisioned []flatResourcePermission
+	var managed, inherited, provisioned []flatResourcePermission
 	for _, p := range permissions {
 		if p.IsManaged(scope) {
 			managed = append(managed, p)
+		} else if p.IsInherited(scope) {
+			inherited = append(inherited, p)
 		} else {
 			provisioned = append(provisioned, p)
 		}
@@ -423,6 +456,9 @@ func flatPermissionsToResourcePermissions(scope string, permissions []flatResour
 
 	var result []accesscontrol.ResourcePermission
 	if g := flatPermissionsToResourcePermission(scope, managed); g != nil {
+		result = append(result, *g)
+	}
+	if g := flatPermissionsToResourcePermission(scope, inherited); g != nil {
 		result = append(result, *g)
 	}
 	if g := flatPermissionsToResourcePermission(scope, provisioned); g != nil {
@@ -614,6 +650,9 @@ func (s *store) createPermissions(sess *db.Session, roleID int64, resource, reso
 		p.RoleID = roleID
 		p.Created = time.Now()
 		p.Updated = time.Now()
+		if s.features.IsEnabled(featuremgmt.FlagSplitScopes) {
+			p.Kind, p.Attribute, p.Identifier = p.SplitScope()
+		}
 		permissions = append(permissions, p)
 	}
 

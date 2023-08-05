@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import React from 'react';
-import { Provider } from 'react-redux';
 import { Store } from 'redux';
+import { TestProvider } from 'test/helpers/TestProvider';
 
 import { setAngularLoader } from '@grafana/runtime';
 import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps';
@@ -23,7 +23,7 @@ jest.mock('app/core/services/context_srv', () => ({
 
 const setup = (uid: string, store: Store) =>
   render(
-    <Provider store={store}>
+    <TestProvider store={store}>
       <DataSourceDashboardsPage
         {...getRouteComponentProps({
           // @ts-ignore
@@ -34,7 +34,7 @@ const setup = (uid: string, store: Store) =>
           },
         })}
       />
-    </Provider>
+    </TestProvider>
   );
 
 describe('<DataSourceDashboardsPage>', () => {
@@ -74,9 +74,9 @@ describe('<DataSourceDashboardsPage>', () => {
     });
   });
 
-  it('should render the dashboards page without an issue', () => {
+  it('should render the dashboards page without an issue', async () => {
     setup(uid, store);
 
-    expect(screen.queryByText(dataSourceName)).toBeVisible();
+    expect(await screen.findByText(dataSourceName)).toBeVisible();
   });
 });

@@ -24,13 +24,11 @@ e2e.scenario({
 
     // waiting for network requests first
     e2e().wait(['@tagsTemplatingSearch', '@tagsDemoSearch']);
-    // and then waiting for links to render
-    e2e().wait(1000);
 
     const verifyLinks = (variableValue: string) => {
       e2e.components.DashboardLinks.link()
         .should('be.visible')
-        .and((links) => {
+        .should((links) => {
           expect(links).to.have.length.greaterThan(13);
 
           for (let index = 0; index < links.length; index++) {
@@ -48,7 +46,7 @@ e2e.scenario({
 
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('p2').should('be.visible').click();
 
-    e2e.components.PageToolbar.container().click();
+    e2e.components.NavToolbar.container().click();
     e2e.components.DashboardLinks.dropDown()
       .scrollIntoView()
       .should('be.visible')

@@ -3,15 +3,22 @@ import { WithAccessControlMetadata } from '@grafana/data';
 import { DashboardAcl } from './acl';
 
 export interface FolderDTO extends WithAccessControlMetadata {
-  id: number;
-  uid: string;
-  title: string;
-  url: string;
-  version: number;
-  canSave: boolean;
-  canEdit: boolean;
   canAdmin: boolean;
   canDelete: boolean;
+  canEdit: boolean;
+  canSave: boolean;
+  created: string;
+  createdBy: string;
+  hasAcl: boolean;
+  id: number;
+  parentUid?: string;
+  parents?: FolderDTO[];
+  title: string;
+  uid: string;
+  updated: string;
+  updatedBy: string;
+  url: string;
+  version?: number;
 }
 
 export interface FolderState {
@@ -25,6 +32,20 @@ export interface FolderState {
   version: number;
   permissions: DashboardAcl[];
   canViewFolderPermissions: boolean;
+}
+
+export interface DescendantCountDTO {
+  folder: number;
+  dashboard: number;
+  libraryPanel: number;
+  alertrule?: number;
+}
+
+export interface DescendantCount {
+  folder: number;
+  dashboard: number;
+  libraryPanel: number;
+  alertRule: number;
 }
 
 export interface FolderInfo {

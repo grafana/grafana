@@ -5,7 +5,7 @@ import { Provider } from 'react-redux';
 import configureMockStore from 'redux-mock-store';
 import { Observable } from 'rxjs';
 
-import { ArrayVector, DataFrame, DataFrameView, FieldType } from '@grafana/data';
+import { DataFrame, DataFrameView, FieldType } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
 import { DashboardQueryResult, getGrafanaSearcher, QueryResponse } from '../../service';
@@ -50,11 +50,11 @@ describe('SearchView', () => {
         name: 'kind',
         type: FieldType.string,
         config: {},
-        values: new ArrayVector([DashboardSearchItemType.DashFolder]),
+        values: [DashboardSearchItemType.DashFolder],
       },
-      { name: 'name', type: FieldType.string, config: {}, values: new ArrayVector(['My folder 1']) },
-      { name: 'uid', type: FieldType.string, config: {}, values: new ArrayVector(['my-folder-1']) },
-      { name: 'url', type: FieldType.string, config: {}, values: new ArrayVector(['/my-folder-1']) },
+      { name: 'name', type: FieldType.string, config: {}, values: ['My folder 1'] },
+      { name: 'uid', type: FieldType.string, config: {}, values: ['my-folder-1'] },
+      { name: 'url', type: FieldType.string, config: {}, values: ['/my-folder-1'] },
     ],
     length: 1,
   };
@@ -103,6 +103,51 @@ describe('SearchView', () => {
 
     await waitFor(() => expect(screen.queryByText('No results found for your query.')).toBeInTheDocument());
     expect(screen.getByRole('button', { name: 'Clear search and filters' })).toBeInTheDocument();
+  });
+
+  it('shows an empty state if no starred dashboard returned', async () => {
+    jest.spyOn(getGrafanaSearcher(), 'search').mockResolvedValue({
+      ...mockSearchResult,
+      totalRows: 0,
+      view: new DataFrameView<DashboardQueryResult>({ fields: [], length: 0 }),
+    });
+
+    setup(undefined, { starred: true });
+
+    await waitFor(() => expect(screen.queryByText('No results found for your query.')).toBeInTheDocument());
+    expect(screen.getByRole('button', { name: 'Clear search and filters' })).toBeInTheDocument();
+  });
+
+  it('shows empty folder cta for empty folder', async () => {
+    jest.spyOn(getGrafanaSearcher(), 'search').mockResolvedValue({
+      ...mockSearchResult,
+      totalRows: 0,
+      view: new DataFrameView<DashboardQueryResult>({ fields: [], length: 0 }),
+    });
+
+    setup(
+      {
+        folderDTO: {
+          id: 1,
+          uid: 'abc',
+          title: 'morning coffee',
+          url: '/morningcoffee',
+          version: 1,
+          canSave: true,
+          canEdit: true,
+          canAdmin: true,
+          canDelete: true,
+          created: '',
+          createdBy: '',
+          hasAcl: false,
+          updated: '',
+          updatedBy: '',
+        },
+      },
+      undefined
+    );
+
+    await waitFor(() => expect(screen.queryByText("This folder doesn't have any dashboards yet")).toBeInTheDocument());
   });
 
   describe('include panels', () => {

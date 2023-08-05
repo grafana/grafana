@@ -1,8 +1,112 @@
 {
-  "_comment": "Do not manually edit this file. Translations must be made in Crowdin which will sync them back into this file",
+  "_comment": "",
+  "access-control": {
+    "add-permission": {
+      "role-label": "",
+      "team-label": "",
+      "title": "",
+      "user-label": ""
+    },
+    "add-permissions": {
+      "save": ""
+    },
+    "permission-list": {
+      "permission": ""
+    },
+    "permissions": {
+      "add-label": "",
+      "no-permissions": "",
+      "permissions-change-warning": "",
+      "role": "",
+      "team": "",
+      "title": "",
+      "user": ""
+    }
+  },
+  "browse-dashboards": {
+    "action": {
+      "cancel-button": "",
+      "delete-button": "",
+      "delete-modal-text": "",
+      "delete-modal-title": "",
+      "deleting": "",
+      "manage-permissions-button": "",
+      "move-button": "",
+      "move-modal-alert": "",
+      "move-modal-field-label": "",
+      "move-modal-text": "",
+      "move-modal-title": "",
+      "moving": "",
+      "new-folder-name-required-phrase": ""
+    },
+    "counts": {
+      "alertRule__one": "",
+      "alertRule__other": "",
+      "dashboard__one": "",
+      "dashboard__other": "",
+      "folder__one": "",
+      "folder__other": "",
+      "libraryPanel__one": "",
+      "libraryPanel__other": "",
+      "total__one": "",
+      "total__other": ""
+    },
+    "dashboards-tree": {
+      "name-column": "",
+      "tags-column": ""
+    },
+    "folder-actions-button": {
+      "delete": "",
+      "folder-actions": "",
+      "manage-permissions": "",
+      "move": ""
+    },
+    "folder-picker": {
+      "accessible-label": "",
+      "button-label": "",
+      "empty-message": "",
+      "error-title": "",
+      "search-placeholder": "",
+      "unknown-error": ""
+    },
+    "manage-folder-nav": {
+      "alert-rules": "",
+      "dashboards": "",
+      "panels": "",
+      "permissions": "",
+      "settings": ""
+    },
+    "new-folder-form": {
+      "cancel-label": "",
+      "create-label": "",
+      "name-label": ""
+    },
+    "no-results": {
+      "clear": "",
+      "text": ""
+    }
+  },
   "clipboard-button": {
     "inline-toast": {
-      "success": ""
+      "success": "Kopiert"
+    }
+  },
+  "command-palette": {
+    "action": {
+      "change-theme": "Thema ändern...",
+      "dark-theme": "Dunkel",
+      "light-theme": "Hell"
+    },
+    "search-box": {
+      "placeholder": "Suche oder springe zu ..."
+    },
+    "section": {
+      "actions": "Aktionen",
+      "dashboard-search-results": "Dashboards",
+      "folder-search-results": "Ordner",
+      "pages": "Seiten",
+      "preferences": "Einstellungen",
+      "recent-dashboards": "Kürzliche Dashboards"
     }
   },
   "common": {
@@ -11,9 +115,37 @@
     },
     "save": "Speichern"
   },
+  "connections": {
+    "connect-data": {
+      "category-header-label": ""
+    },
+    "search": {
+      "placeholder": ""
+    }
+  },
   "dashboard": {
+    "add-menu": {
+      "import": "Aus Bibliothek importieren",
+      "paste-panel": "Panel einfügen",
+      "row": "Zeile",
+      "visualization": "Visualisierung",
+      "widget": ""
+    },
+    "empty": {
+      "add-import-body": "Visualisierungen importieren, die mit anderen Dashboards geteilt werden.",
+      "add-import-button": "Bibliotheks-Panel importieren",
+      "add-import-header": "Panel importieren",
+      "add-row-body": "Gruppieren Sie Ihre Visualisierungen in erweiterbare Abschnitte.",
+      "add-row-button": "Zeile hinzufügen",
+      "add-row-header": "Eine Zeile hinzufügen",
+      "add-visualization-body": "Wählen Sie eine Datenquelle aus und visualisieren und fragen Sie dann Ihre Daten mit Diagrammen, Statistiken und Tabellen ab oder erstellen Sie Listen, Markierungen und andere Widgets.",
+      "add-visualization-button": "Visualisierung hinzufügen",
+      "add-visualization-header": "Starten Sie Ihr neues Dashboard, indem Sie eine Visualisierung hinzufügen",
+      "add-widget-body": "",
+      "add-widget-button": "",
+      "add-widget-header": ""
+    },
     "inspect": {
-      "actions-tab": "Aktionen",
       "data-tab": "Daten",
       "error-tab": "Fehler",
       "json-tab": "JSON",
@@ -58,6 +190,7 @@
     },
     "inspect-stats": {
       "data-title": "Statistiken zu Datenquellen",
+      "data-traceids": "IDs nachverfolgen",
       "processing-time": "Datenverarbeitungszeit",
       "queries": "Anzahl der Abfragen",
       "request-time": "Gesamte Anfragezeit",
@@ -65,8 +198,8 @@
       "table-title": "Statistiken"
     },
     "toolbar": {
+      "add": "Hinzufügen",
       "add-panel": "Panel hinzufügen",
-      "comments-show": "Dashboard-Kommentare anzeigen",
       "mark-favorite": "Als Favorit markieren",
       "open-original": "Original-Dashboard öffnen",
       "playlist-next": "Zum nächsten Dashboard",
@@ -76,12 +209,27 @@
       "save": "Dashboard speichern",
       "settings": "Dashboard-Einstellungen",
       "share": "Dashboard oder Panel teilen",
-      "tv-button": "Zyklus-Ansichtsmodus",
       "unmark-favorite": "Markierung als Favorit entfernen"
+    }
+  },
+  "data-sources": {
+    "datasource-add-button": {
+      "label": ""
     }
   },
   "folder-picker": {
     "loading": "Ordner werden geladen …"
+  },
+  "grafana-ui": {
+    "segment-async": {
+      "error": "Fehler beim Laden der Optionen",
+      "loading": "Optionen werden geladen ...",
+      "no-options": "Keine Optionen gefunden"
+    },
+    "select": {
+      "no-options-label": "",
+      "placeholder": ""
+    }
   },
   "library-panel": {
     "add-modal": {
@@ -91,6 +239,9 @@
       "folder": "In Ordner speichern",
       "folder-description": "Berechtigungen des Bibliotheks-Panels werden von den Ordnerberechtigungen übernommen",
       "name": "Name des Bibliotheks-Panels"
+    },
+    "add-widget": {
+      "title": "Panel aus Panel-Bibliothek hinzufügen"
     }
   },
   "library-panels": {
@@ -99,19 +250,21 @@
       "success": "Bibliotheks-Panel wurde gespeichert"
     }
   },
+  "login": {
+    "error": {
+      "blocked": "",
+      "invalid-user-or-password": "",
+      "title": "",
+      "unknown": ""
+    }
+  },
   "nav": {
+    "add-new-connections": {
+      "title": ""
+    },
     "admin": {
       "subtitle": "Serverweite Einstellungen und Zugriff auf Ressourcen wie Organisationen, Benutzer und Lizenzen verwalten",
       "title": "Server-Administrator"
-    },
-    "admin-access": {
-      "title": ""
-    },
-    "admin-general": {
-      "title": ""
-    },
-    "admin-plugins": {
-      "title": ""
     },
     "alerting": {
       "subtitle": "Informiere dich über Probleme in deinen Systemen kurz nach deren Auftreten",
@@ -131,6 +284,9 @@
       "subtitle": "Zeige gruppierte Warnungen vom Alertmanager an",
       "title": "Gruppen"
     },
+    "alerting-home": {
+      "title": "Home"
+    },
     "alerting-legacy": {
       "title": "Warnungen (Legacy)"
     },
@@ -139,7 +295,7 @@
       "title": "Warnregeln"
     },
     "alerting-receivers": {
-      "subtitle": "Entscheide, wie deine Kontakte benachrichtigt werden, wenn eine Warnung ausgelöst wird",
+      "subtitle": "Wählen Sie, wie Ihre Kontaktpunkte benachrichtigen werden, wenn eine Warninstanz auslöst",
       "title": "Kontaktpunkte"
     },
     "alerting-silences": {
@@ -148,19 +304,31 @@
     },
     "alerts-and-incidents": {
       "subtitle": "Warn- und Vorfallmanagement-Apps",
-      "title": "Warnungen & Vorfälle"
+      "title": "Warnungen und IRM"
     },
     "api-keys": {
       "subtitle": "Verwalte und erstelle API-Schlüssel, die für die Interaktion mit HTTP-APIs von Grafana verwendet werden",
       "title": "API-Schlüssel"
     },
+    "application": {
+      "title": ""
+    },
     "apps": {
       "subtitle": "App-Plug-ins, die das Grafana-Erlebnis erweitern",
       "title": "Apps"
     },
+    "authentication": {
+      "title": ""
+    },
     "config": {
-      "title": "Verwaltung",
-      "titleBeforeTopnav": "Konfiguration"
+      "title": "Verwaltung"
+    },
+    "connect-data": {
+      "title": ""
+    },
+    "connections": {
+      "subtitle": "",
+      "title": ""
     },
     "correlations": {
       "subtitle": "Füge Korrelationen hinzu und konfiguriere sie",
@@ -170,7 +338,7 @@
       "title": "Erstellen"
     },
     "create-alert": {
-      "title": "Neue Warnregel"
+      "title": "Alarmregel erstellen"
     },
     "create-dashboard": {
       "title": "Dashboard"
@@ -179,27 +347,39 @@
       "title": "Ordner"
     },
     "create-import": {
-      "title": "Importieren"
+      "title": "Dashboard importieren"
     },
     "dashboards": {
       "subtitle": "Erstelle und verwalte Dashboards, um deine Daten zu visualisieren",
       "title": "Dashboards"
     },
+    "data-sources": {
+      "subtitle": "",
+      "title": ""
+    },
     "datasources": {
       "subtitle": "Füge Datenquellen hinzu und konfiguriere sie",
       "title": "Datenquellen"
     },
+    "detect": {
+      "title": ""
+    },
     "explore": {
       "title": "Entdecken"
+    },
+    "frontend": {
+      "title": ""
     },
     "global-orgs": {
       "subtitle": "Isolierte Instanzen von Grafana auf dem gleichen Server",
       "title": "Organisationen"
     },
     "global-users": {
-      "subtitle": "Erstelle und verwalte Benutzer auf dem gesamten Grafana-Server",
-      "title": "",
-      "titleBeforeTopnav": "Benutzer"
+      "subtitle": "Benutzer in Grafana verwalten",
+      "title": "Benutzer"
+    },
+    "grafana-quaderno": {
+      "title": ""
     },
     "help": {
       "title": "Hilfe"
@@ -211,28 +391,31 @@
     "home": {
       "title": "Home"
     },
+    "incidents": {
+      "title": ""
+    },
+    "infrastructure": {
+      "title": ""
+    },
+    "kubernetes": {
+      "title": ""
+    },
     "library-panels": {
       "subtitle": "Wiederverwendbare Panels, die zu mehreren Dashboards hinzugefügt werden können",
       "title": "Bibliotheks-Panels"
     },
-    "live": {
-      "title": "Event-Streaming"
+    "machine-learning": {
+      "title": ""
     },
-    "live-cloud": {
-      "title": "Cloud"
-    },
-    "live-pipeline": {
-      "title": "In Vorbereitung"
-    },
-    "live-status": {
-      "title": "Status"
-    },
-    "manage-dashboards": {
-      "title": "Durchsuchen"
+    "manage-folder": {
+      "subtitle": "Ordner-Dashboards und Berechtigungen verwalten"
     },
     "monitoring": {
       "subtitle": "Überwachungs- und Infrastruktur-Apps",
-      "title": "Überwachung"
+      "title": "Beobachtbarkeit"
+    },
+    "new": {
+      "title": "Neu"
     },
     "new-dashboard": {
       "title": "Neues Dashboard"
@@ -240,10 +423,18 @@
     "new-folder": {
       "title": "Neuer Ordner"
     },
+    "observability": {
+      "title": ""
+    },
+    "oncall": {
+      "title": ""
+    },
     "org-settings": {
       "subtitle": "Verwalte Einstellungen in der gesamten Organisation",
-      "title": "",
-      "titleBeforeTopnav": "Einstellungen"
+      "title": "Standardeinstellungen"
+    },
+    "performance-testing": {
+      "title": ""
     },
     "playlists": {
       "subtitle": "Gruppen von Dashboards, die in einer bestimmten Reihenfolge angezeigt werden",
@@ -260,17 +451,28 @@
       "title": "Passwort ändern"
     },
     "profile/settings": {
-      "title": "Einstellungen"
+      "title": "Profil"
     },
-    "profile/switch-org": "Organisation wechseln",
+    "profiles": {
+      "title": ""
+    },
+    "public": {
+      "title": "Öffentliche Dashboards"
+    },
+    "recorded-queries": {
+      "title": ""
+    },
+    "reporting": {
+      "title": ""
+    },
     "scenes": {
       "title": "Szenen"
     },
     "search": {
-      "placeholder": "Grafana durchsuchen"
+      "placeholderCommandPalette": "Suche oder springe zu ..."
     },
     "search-dashboards": {
-      "title": ""
+      "title": "Dashboards durchsuchen"
     },
     "server-settings": {
       "subtitle": "Zeige die in deiner Grafana-Konfiguration festgelegten Einstellungen an",
@@ -280,9 +482,11 @@
       "subtitle": "Verwende Servicekonten, um automatisierte Arbeitsabläufe in Grafana auszuführen",
       "title": "Servicekonten"
     },
-    "sign-in": "Anmelden",
     "sign-out": {
       "title": "Abmelden"
+    },
+    "slo": {
+      "title": ""
     },
     "snapshots": {
       "subtitle": "Interaktive, öffentlich verfügbare Point-in-Time-Darstellungen von Dashboards",
@@ -294,9 +498,19 @@
     "starred-empty": {
       "title": "Deine hervorgehobenen Dashboards werden hier angezeigt"
     },
+    "statistics-and-licensing": {
+      "title": ""
+    },
     "storage": {
       "subtitle": "Dateispeicher verwalten",
       "title": "Speicher"
+    },
+    "support-bundles": {
+      "subtitle": "Support-Bundles herunterladen",
+      "title": "Support-Bundles"
+    },
+    "synthetics": {
+      "title": ""
     },
     "teams": {
       "subtitle": "Gruppen von Benutzern mit gemeinsamen Dashboards und Benachrichtigungen",
@@ -313,42 +527,104 @@
   "navigation": {
     "kiosk": {
       "tv-alert": "Drücke ESC, um den Kiosk-Modus zu verlassen"
+    },
+    "toolbar": {
+      "enable-kiosk": "Kiosk-Modus aktivieren",
+      "toggle-menu": "Menü umschalten",
+      "toggle-search-bar": "Obere Suchleiste umschalten"
     }
   },
   "news": {
     "title": "Das Neueste aus dem Blog"
   },
   "notifications": {
-    "starred-dashboard": "",
-    "unstarred-dashboard": ""
+    "starred-dashboard": "Dashboard markiert",
+    "unstarred-dashboard": "Dashboard nicht markiert"
   },
   "panel": {
     "header-menu": {
-      "hide-legend": "",
+      "copy": "Kopieren",
+      "create-library-panel": "Bibliotheksleiste erstellen",
+      "duplicate": "Duplikat",
+      "edit": "Bearbeiten",
+      "explore": "Entdecken",
+      "get-help": "Hilfe",
+      "hide-legend": "Legende ausblenden",
       "inspect": "Überprüfen",
       "inspect-data": "Daten",
       "inspect-json": "Panel-JSON",
       "more": "Mehr …",
+      "query": "Abfrage",
+      "remove": "Entfernen",
       "share": "Teilen",
-      "show-legend": "",
+      "show-legend": "Legende anzeigen",
+      "unlink-library-panel": "Verknüpfung mit der Bibliotheksleiste aufheben",
       "view": "Anzeigen"
     }
   },
   "refresh-picker": {
     "aria-label": {
-      "choose-interval": "Automatische Aktualisierung deaktiviert. Zeitintervall für Aktualisierungen auswählen",
-      "duration-selected": ""
+      "choose-interval": "Automatische Aktualisierung ausgeschaltet. Aktualisierungszeitintervall auswählen",
+      "duration-selected": "Aktualisierungszeitintervall mit aktuellem Intervall {{durationAriaLabel}} ausgewählt"
     },
-    "live-option": {
+    "auto-option": {
       "aria-label": "",
       "label": ""
     },
+    "live-option": {
+      "aria-label": "Live-Streaming einschalten",
+      "label": "Live"
+    },
     "off-option": {
-      "aria-label": "Automatische Aktualisierung deaktivieren",
+      "aria-label": "Automatische Aktualisierung ausschalten",
       "label": "Aus"
     },
     "select-button": {
-      "auto-refresh": ""
+      "auto-refresh": "Automatisches Aktualisierungsintervall festlegen"
+    }
+  },
+  "search": {
+    "actions": {
+      "include-panels": "Panels einschließen",
+      "remove-datasource-filter": "Datenquelle: {{datasource}}",
+      "sort-placeholder": "Sortieren",
+      "starred": "Hervorgehoben",
+      "view-as-folders": "Nach Ordnern anzeigen",
+      "view-as-list": "Als Liste anzeigen"
+    },
+    "dashboard-actions": {
+      "import": "Importieren",
+      "new": "Neu",
+      "new-dashboard": "Neues Dashboard",
+      "new-folder": "Neuer Ordner"
+    },
+    "folder-view": {
+      "go-to-folder": "Zum Ordner",
+      "select-folder": "Ordner auswählen"
+    },
+    "result-kind": {
+      "dashboard": "Dashboard",
+      "folder": "Ordner",
+      "panel": "Panel"
+    },
+    "results-table": {
+      "datasource-header": "Datenquelle",
+      "location-header": "Standort",
+      "name-header": "Name",
+      "tags-header": "Tags",
+      "type-dashboard": "Dashboard",
+      "type-folder": "Ordner",
+      "type-header": "Typ"
+    },
+    "search-input": {
+      "include-panels-placeholder": "Nach Dashboards und Panels suchen",
+      "placeholder": "Nach Dashboards suchen"
+    }
+  },
+  "search-view": {
+    "no-results": {
+      "clear": "",
+      "text": ""
     }
   },
   "share-modal": {
@@ -407,7 +683,7 @@
       "name": "Name des Schnappschusses",
       "timeout": "Timeout (Sekunden)",
       "timeout-description": "Wenn die Erfassung deiner Dashboard-Metriken lange dauert, musst du ggf. den Timeout-Wert anpassen.",
-      "url-label": ""
+      "url-label": "Schnappschuss-URL"
     },
     "tab-title": {
       "embed": "Einbetten",
@@ -423,7 +699,16 @@
       "light": "Hell"
     },
     "view-json": {
-      "copy-button": ""
+      "copy-button": "In Zwischenablage kopieren"
+    }
+  },
+  "shared": {
+    "preferences": {
+      "theme": {
+        "dark-label": "",
+        "light-label": "",
+        "system-label": ""
+      }
     }
   },
   "shared-dashboard": {
@@ -441,11 +726,14 @@
       "week-start-label": "Wochenbeginn"
     },
     "theme": {
-      "dark-label": "Dunkel",
-      "default-label": "Standard",
-      "light-label": "Hell"
+      "default-label": "Standard"
     },
     "title": "Einstellungen"
+  },
+  "tag-filter": {
+    "loading": "Wird geladen ...",
+    "no-tags": "Keine Tags gefunden",
+    "placeholder": "Nach Tag filtern"
   },
   "time-picker": {
     "absolute": {
@@ -453,46 +741,46 @@
       "title": "Absoluter Zeitbereich"
     },
     "calendar": {
-      "apply-button": "",
+      "apply-button": "Zeitbereich anwenden",
       "cancel-button": "Abbrechen",
-      "select-time": ""
+      "select-time": "Einen Zeitbereich auswählen"
     },
     "content": {
-      "empty-recent-list": "",
-      "filter-placeholder": ""
+      "empty-recent-list": "<0><0>Es sieht so aus, als hätten Sie diesen Zeit-Auswähler noch nie benutzt. Sobald Sie einige Zeitintervalle eingeben, werden hier die zuletzt verwendeten Intervalle angezeigt.</0></0><1><0>Lesen Sie die Dokumentation</0><1>, um mehr darüber zu erfahren, wie Sie benutzerdefinierte Zeitbereiche eingeben können.</1></1>",
+      "filter-placeholder": "Schnellbereiche suchen"
     },
     "footer": {
-      "change-settings-button": "",
-      "fiscal-year-option": "",
-      "fiscal-year-start": "",
-      "time-zone-option": "",
-      "time-zone-selection": ""
+      "change-settings-button": "Zeiteinstellungen ändern",
+      "fiscal-year-option": "Geschäftsjahr",
+      "fiscal-year-start": "Startmonat Geschäftsjahr",
+      "time-zone-option": "Zeitzone",
+      "time-zone-selection": "Zeitzonenauswahl"
     },
     "range-content": {
-      "apply-button": "",
-      "default-error": "",
-      "fiscal-year": "",
-      "from-input": "",
-      "range-error": "",
-      "to-input": ""
+      "apply-button": "Zeitbereich anwenden",
+      "default-error": "Ein vergangenes Datum oder \"heutiges\" eingeben",
+      "fiscal-year": "Geschäftsjahr",
+      "from-input": "Von",
+      "range-error": "„Von“ darf nicht nach „Bis“ sein",
+      "to-input": "Bis"
     },
     "range-picker": {
-      "backwards-time-aria-label": "",
-      "current-time-selected": "",
-      "forwards-time-aria-label": "",
-      "to": "",
-      "zoom-out-button": "",
-      "zoom-out-tooltip": ""
+      "backwards-time-aria-label": "Zeitbereich nach hinten verschieben",
+      "current-time-selected": "Ausgewählter Zeitbereich: {{currentTimeRange}}",
+      "forwards-time-aria-label": "Zeitbereich nach vorne verschieben",
+      "to": "bis",
+      "zoom-out-button": "Zeitbereich verkleinern",
+      "zoom-out-tooltip": "Zeitbereich verkleinern <1></1> STRG +Z"
     },
     "time-range": {
-      "aria-role": "",
-      "default-title": "",
-      "example-title": "",
-      "specify": ""
+      "aria-role": "Zeitbereichauswahl",
+      "default-title": "Zeitbereiche",
+      "example-title": "Zeitbereiche-Beispiel",
+      "specify": "Zeitbereich festlegen <1></1>"
     },
     "zone": {
-      "select-aria-label": "",
-      "select-search-input": ""
+      "select-aria-label": "Zeitzonen-Auswähler",
+      "select-search-input": "Suchbegriff eingeben (Land, Stadt, Abkürzung)"
     }
   },
   "user-orgs": {
@@ -509,8 +797,7 @@
       "name-error": "Name ist erforderlich",
       "name-label": "Name",
       "username-label": "Benutzername"
-    },
-    "title": "Profil bearbeiten"
+    }
   },
   "user-session": {
     "browser-column": "Browser & Betriebssystem",
@@ -523,12 +810,20 @@
     "loading": "Sitzungen werden geladen …"
   },
   "variable": {
+    "adhoc": {
+      "placeholder": "Wert auswählen"
+    },
+    "dropdown": {
+      "placeholder": "Variablenwert eingeben"
+    },
     "picker": {
-      "input": "",
-      "link-all": "",
-      "option-all": "",
-      "option-selected-values": "",
-      "option-tooltip": ""
+      "link-all": "Alle",
+      "option-all": "Alle",
+      "option-selected-values": "Ausgewählt",
+      "option-tooltip": "Auswahl löschen"
+    },
+    "textbox": {
+      "placeholder": "Variablenwert eingeben"
     }
   }
 }

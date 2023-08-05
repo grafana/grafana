@@ -1,12 +1,12 @@
 import type * as monacoType from 'monaco-editor/esm/vs/editor/editor.api';
-import React, { FunctionComponent, useCallback, useEffect } from 'react';
+import React, { useCallback, useEffect } from 'react';
 
 import { CodeEditor, Monaco } from '@grafana/ui';
 
-import language from '../cloudwatch-sql/definition';
 import { CloudWatchDatasource } from '../datasource';
-import { TRIGGER_SUGGEST } from '../monarch/commands';
-import { registerLanguage } from '../monarch/register';
+import language from '../language/cloudwatch-sql/definition';
+import { TRIGGER_SUGGEST } from '../language/monarch/commands';
+import { registerLanguage } from '../language/monarch/register';
 
 export interface Props {
   region: string;
@@ -15,7 +15,7 @@ export interface Props {
   datasource: CloudWatchDatasource;
 }
 
-export const SQLCodeEditor: FunctionComponent<Props> = ({ region, sql, onChange, datasource }) => {
+export const SQLCodeEditor = ({ region, sql, onChange, datasource }: Props) => {
   useEffect(() => {
     datasource.sqlCompletionItemProvider.setRegion(region);
   }, [region, datasource]);

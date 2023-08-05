@@ -1,18 +1,17 @@
 import { render, screen } from '@testing-library/react';
 import React from 'react';
-import { Provider } from 'react-redux';
-import { MemoryRouter } from 'react-router-dom';
 import { useLocation } from 'react-use';
+import { TestProvider } from 'test/helpers/TestProvider';
 
 import { DataSourceJsonData, PluginMeta } from '@grafana/data';
-import { configureStore } from 'app/store/configureStore';
+import { locationService } from '@grafana/runtime';
 
 import { CombinedRule, Rule } from '../../../types/unified-alerting';
 import { PromRuleType } from '../../../types/unified-alerting-dto';
 
 import { RedirectToRuleViewer } from './RedirectToRuleViewer';
-import { useCombinedRulesMatching } from './hooks/useCombinedRule';
 import * as combinedRuleHooks from './hooks/useCombinedRule';
+import { useCombinedRulesMatching } from './hooks/useCombinedRule';
 import { getRulesSourceByName } from './utils/datasource';
 
 jest.mock('./hooks/useCombinedRule');
@@ -24,16 +23,15 @@ jest.mock('react-router-dom', () => ({
 
 jest.mock('react-use');
 
-const store = configureStore();
 const renderRedirectToRuleViewer = (pathname: string) => {
   jest.mocked(useLocation).mockReturnValue({ pathname, trigger: '' });
 
+  locationService.push(pathname);
+
   return render(
-    <Provider store={store}>
-      <MemoryRouter initialEntries={[pathname]}>
-        <RedirectToRuleViewer />
-      </MemoryRouter>
-    </Provider>
+    <TestProvider>
+      <RedirectToRuleViewer />
+    </TestProvider>
   );
 };
 
@@ -121,6 +119,7 @@ const mockedRules: CombinedRule[] = [
     group: {
       name: 'test',
       rules: [],
+      totals: {},
     },
     promRule: {
       health: 'ok',
@@ -142,6 +141,8 @@ const mockedRules: CombinedRule[] = [
         readOnly: false,
       },
     },
+    instanceTotals: {},
+    filteredInstanceTotals: {},
   },
   {
     name: 'Cloud test alert',
@@ -151,6 +152,7 @@ const mockedRules: CombinedRule[] = [
     group: {
       name: 'test',
       rules: [],
+      totals: {},
     },
     promRule: {
       health: 'ok',
@@ -172,5 +174,7 @@ const mockedRules: CombinedRule[] = [
         readOnly: false,
       },
     },
+    instanceTotals: {},
+    filteredInstanceTotals: {},
   },
 ];

@@ -7,9 +7,10 @@ import (
 )
 
 type FakeService struct {
-	ExpectedFolders []*folder.Folder
-	ExpectedFolder  *folder.Folder
-	ExpectedError   error
+	ExpectedFolders          []*folder.Folder
+	ExpectedFolder           *folder.Folder
+	ExpectedError            error
+	ExpectedDescendantCounts map[string]int64
 }
 
 func NewFakeService() *FakeService {
@@ -21,6 +22,11 @@ var _ folder.Service = (*FakeService)(nil)
 func (s *FakeService) GetChildren(ctx context.Context, cmd *folder.GetChildrenQuery) ([]*folder.Folder, error) {
 	return s.ExpectedFolders, s.ExpectedError
 }
+
+func (s *FakeService) GetParents(ctx context.Context, q folder.GetParentsQuery) ([]*folder.Folder, error) {
+	return s.ExpectedFolders, s.ExpectedError
+}
+
 func (s *FakeService) Create(ctx context.Context, cmd *folder.CreateFolderCommand) (*folder.Folder, error) {
 	return s.ExpectedFolder, s.ExpectedError
 }
@@ -39,4 +45,12 @@ func (s *FakeService) MakeUserAdmin(ctx context.Context, orgID int64, userID, fo
 
 func (s *FakeService) Move(ctx context.Context, cmd *folder.MoveFolderCommand) (*folder.Folder, error) {
 	return s.ExpectedFolder, s.ExpectedError
+}
+
+func (s *FakeService) RegisterService(service folder.RegistryService) error {
+	return s.ExpectedError
+}
+
+func (s *FakeService) GetDescendantCounts(ctx context.Context, cmd *folder.GetDescendantCountsQuery) (folder.DescendantCounts, error) {
+	return s.ExpectedDescendantCounts, s.ExpectedError
 }

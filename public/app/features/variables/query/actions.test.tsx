@@ -558,6 +558,45 @@ describe('query actions', () => {
     });
   });
 
+  describe('when changeQueryVariableQuery is dispatched with empty string definition', () => {
+    it('then correct actions are dispatched', async () => {
+      const optionsMetrics = [createMetric('A'), createMetric('B')];
+      const variable = createVariable({ datasource: { uid: 'datasource' }, includeAll: true });
+
+      const query = '$datasource';
+      const definition = '';
+
+      mockDatasourceMetrics({ ...variable, query }, optionsMetrics);
+
+      const tester = await reduxTester<RootReducerType>()
+        .givenRootReducer(getRootReducer())
+        .whenActionIsDispatched(
+          toKeyedAction('key', addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
+        )
+        .whenActionIsDispatched(toKeyedAction('key', variablesInitTransaction({ uid: 'key' })))
+        .whenAsyncActionIsDispatched(
+          changeQueryVariableQuery(toKeyedVariableIdentifier(variable), query, definition),
+          true
+        );
+
+      const option = createOption(ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE);
+      const update = { results: optionsMetrics, templatedRegex: '' };
+
+      tester.thenDispatchedActionsShouldEqual(
+        toKeyedAction('key', removeVariableEditorError({ errorProp: 'query' })),
+        toKeyedAction('key', changeVariableProp(toVariablePayload(variable, { propName: 'query', propValue: query }))),
+        toKeyedAction(
+          'key',
+          changeVariableProp(toVariablePayload(variable, { propName: 'definition', propValue: definition }))
+        ),
+        toKeyedAction('key', variableStateFetching(toVariablePayload(variable))),
+        toKeyedAction('key', updateVariableOptions(toVariablePayload(variable, update))),
+        toKeyedAction('key', setCurrentVariableValue(toVariablePayload(variable, { option }))),
+        toKeyedAction('key', variableStateCompleted(toVariablePayload(variable)))
+      );
+    });
+  });
+
   describe('hasSelfReferencingQuery', () => {
     it('when called with a string', () => {
       const query = '$query';
@@ -712,6 +751,95 @@ describe('query actions', () => {
         arr_1_arr_0_bool: true,
       });
     });
+  });
+
+  it('returns correct result when called with an object with null values inside', () => {
+    const query = {
+      level2: {
+        level3: {
+          query: '${query3}',
+          refId: 'C',
+          num: 2,
+          bool: true,
+          null: null,
+          arr: [
+            { query: '${query4}', refId: 'D', num: 4, bool: true },
+            {
+              query: '${query5}',
+              refId: 'E',
+              num: 5,
+              bool: true,
+              arr: [{ query: '${query6}', refId: 'F', num: 6, bool: true }],
+            },
+          ],
+        },
+        query: '${query2}',
+        refId: 'B',
+        num: 1,
+        bool: false,
+      },
+      query: '${query1}',
+      refId: 'A',
+      num: 0,
+      bool: true,
+      arr: [
+        { query: '${query7}', refId: 'G', num: 7, bool: true },
+        {
+          query: '${query8}',
+          refId: 'H',
+          num: 8,
+          bool: true,
+          arr: [{ query: '${query9}', refId: 'I', num: 9, bool: true, null: null }],
+        },
+      ],
+    };
+
+    expect(flattenQuery(query)).toEqual({
+      query: '${query1}',
+      refId: 'A',
+      num: 0,
+      bool: true,
+      level2_query: '${query2}',
+      level2_refId: 'B',
+      level2_num: 1,
+      level2_bool: false,
+      level2_level3_query: '${query3}',
+      level2_level3_refId: 'C',
+      level2_level3_num: 2,
+      level2_level3_bool: true,
+      level2_level3_null: null,
+      level2_level3_arr_0_query: '${query4}',
+      level2_level3_arr_0_refId: 'D',
+      level2_level3_arr_0_num: 4,
+      level2_level3_arr_0_bool: true,
+      level2_level3_arr_1_query: '${query5}',
+      level2_level3_arr_1_refId: 'E',
+      level2_level3_arr_1_num: 5,
+      level2_level3_arr_1_bool: true,
+      level2_level3_arr_1_arr_0_query: '${query6}',
+      level2_level3_arr_1_arr_0_refId: 'F',
+      level2_level3_arr_1_arr_0_num: 6,
+      level2_level3_arr_1_arr_0_bool: true,
+      arr_0_query: '${query7}',
+      arr_0_refId: 'G',
+      arr_0_num: 7,
+      arr_0_bool: true,
+      arr_1_query: '${query8}',
+      arr_1_refId: 'H',
+      arr_1_num: 8,
+      arr_1_bool: true,
+      arr_1_arr_0_query: '${query9}',
+      arr_1_arr_0_refId: 'I',
+      arr_1_arr_0_num: 9,
+      arr_1_arr_0_bool: true,
+      arr_1_arr_0_null: null,
+    });
+  });
+
+  it('returns correct result when called with null', () => {
+    const query = null;
+
+    expect(flattenQuery(query)).toEqual({ query: null });
   });
 });
 

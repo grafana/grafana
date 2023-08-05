@@ -46,7 +46,7 @@ type sqlEntityServer struct {
 
 func getReadSelect(r *entity.ReadEntityRequest) string {
 	fields := []string{
-		"tenant_id", "kind", "uid", // The PK
+		"tenant_id", "kind", "uid", "folder", // GRN + folder
 		"version", "size", "etag", "errors", // errors are always returned
 		"created_at", "created_by",
 		"updated_at", "updated_by",
@@ -56,7 +56,7 @@ func getReadSelect(r *entity.ReadEntityRequest) string {
 		fields = append(fields, `body`)
 	}
 	if r.WithSummary {
-		fields = append(fields, "name", "slug", "folder", "description", "labels", "fields")
+		fields = append(fields, "name", "slug", "description", "labels", "fields")
 	}
 	return "SELECT " + strings.Join(fields, ",") + " FROM entity WHERE "
 }
@@ -69,7 +69,7 @@ func (s *sqlEntityServer) rowToReadEntityResponse(ctx context.Context, rows *sql
 
 	summaryjson := &summarySupport{}
 	args := []interface{}{
-		&raw.GRN.TenantId, &raw.GRN.Kind, &raw.GRN.UID,
+		&raw.GRN.TenantId, &raw.GRN.Kind, &raw.GRN.UID, &raw.Folder,
 		&raw.Version, &raw.Size, &raw.ETag, &summaryjson.errors,
 		&raw.CreatedAt, &raw.CreatedBy,
 		&raw.UpdatedAt, &raw.UpdatedBy,
@@ -79,7 +79,7 @@ func (s *sqlEntityServer) rowToReadEntityResponse(ctx context.Context, rows *sql
 		args = append(args, &raw.Body)
 	}
 	if r.WithSummary {
-		args = append(args, &summaryjson.name, &summaryjson.slug, &summaryjson.folder, &summaryjson.description, &summaryjson.labels, &summaryjson.fields)
+		args = append(args, &summaryjson.name, &summaryjson.slug, &summaryjson.description, &summaryjson.labels, &summaryjson.fields)
 	}
 
 	err := rows.Scan(args...)
@@ -324,7 +324,7 @@ func (s *sqlEntityServer) AdminWrite(ctx context.Context, r *entity.AdminWriteEn
 					return err
 				}
 			}
-			_, err = doDelete(ctx, tx, oid)
+			_, err = doDelete(ctx, tx, grn)
 			if err != nil {
 				return err
 			}
@@ -370,10 +370,13 @@ func (s *sqlEntityServer) AdminWrite(ctx context.Context, r *entity.AdminWriteEn
 
 		if isUpdate {
 			// Clear the labels+refs
-			if _, err := tx.Exec(ctx, "DELETE FROM entity_labels WHERE grn=?", oid); err != nil {
+			if _, err := tx.Exec(ctx, "DELETE FROM entity_labels WHERE grn=? OR parent_grn=?", oid, oid); err != nil {
 				return err
 			}
-			if _, err := tx.Exec(ctx, "DELETE FROM entity_ref WHERE grn=?", oid); err != nil {
+			if _, err := tx.Exec(ctx, "DELETE FROM entity_ref WHERE grn=? OR parent_grn=?", oid, oid); err != nil {
+				return err
+			}
+			if _, err := tx.Exec(ctx, "DELETE FROM entity_nested WHERE parent_grn=?", oid); err != nil {
 				return err
 			}
 		}
@@ -396,37 +399,6 @@ func (s *sqlEntityServer) AdminWrite(ctx context.Context, r *entity.AdminWriteEn
 			return err
 		}
 
-		// 2. Add the labels rows
-		for k, v := range summary.model.Labels {
-			_, err = tx.Exec(ctx,
-				`INSERT INTO entity_labels `+
-					"(grn, label, value) "+
-					`VALUES (?, ?, ?)`,
-				oid, k, v,
-			)
-			if err != nil {
-				return err
-			}
-		}
-
-		// 3. Add the references rows
-		for _, ref := range summary.model.References {
-			resolved, err := s.resolver.Resolve(ctx, ref)
-			if err != nil {
-				return err
-			}
-			_, err = tx.Exec(ctx, `INSERT INTO entity_ref (`+
-				"grn, kind, type, uid, "+
-				"resolved_ok, resolved_to, resolved_warning, resolved_time) "+
-				`VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-				oid, ref.Kind, ref.Type, ref.UID,
-				resolved.OK, resolved.Key, resolved.Warning, resolved.Timestamp,
-			)
-			if err != nil {
-				return err
-			}
-		}
-
 		// 5. Add/update the main `entity` table
 		rsp.Entity = versionInfo
 		if isUpdate {
@@ -445,36 +417,43 @@ func (s *sqlEntityServer) AdminWrite(ctx context.Context, r *entity.AdminWriteEn
 				origin.Source, origin.Key, timestamp,
 				oid,
 			)
-			return err
-		}
+		} else {
+			if createdAt < 1000 {
+				createdAt = updatedAt
+			}
+			if createdBy == "" {
+				createdBy = updatedBy
+			}
 
-		if createdAt < 1000 {
-			createdAt = updatedAt
+			_, err = tx.Exec(ctx, "INSERT INTO entity ("+
+				"grn, tenant_id, kind, uid, folder, "+
+				"size, body, etag, version, "+
+				"updated_at, updated_by, created_at, created_by, "+
+				"name, description, slug, "+
+				"labels, fields, errors, "+
+				"origin, origin_key, origin_ts) "+
+				"VALUES (?, ?, ?, ?, ?, "+
+				" ?, ?, ?, ?, "+
+				" ?, ?, ?, ?, "+
+				" ?, ?, ?, "+
+				" ?, ?, ?, "+
+				" ?, ?, ?)",
+				oid, grn.TenantId, grn.Kind, grn.UID, r.Folder,
+				versionInfo.Size, body, etag, versionInfo.Version,
+				updatedAt, createdBy, createdAt, createdBy,
+				summary.model.Name, summary.model.Description, summary.model.Slug,
+				summary.labels, summary.fields, summary.errors,
+				origin.Source, origin.Key, origin.Time,
+			)
 		}
-		if createdBy == "" {
-			createdBy = updatedBy
+		if err == nil && entity.StandardKindFolder == r.GRN.Kind {
+			err = updateFolderTree(ctx, tx, grn.TenantId)
 		}
-
-		_, err = tx.Exec(ctx, "INSERT INTO entity ("+
-			"grn, tenant_id, kind, uid, folder, "+
-			"size, body, etag, version, "+
-			"updated_at, updated_by, created_at, created_by, "+
-			"name, description, slug, "+
-			"labels, fields, errors, "+
-			"origin, origin_key, origin_ts) "+
-			"VALUES (?, ?, ?, ?, ?, "+
-			" ?, ?, ?, ?, "+
-			" ?, ?, ?, ?, "+
-			" ?, ?, ?, "+
-			" ?, ?, ?, "+
-			" ?, ?, ?)",
-			oid, grn.TenantId, grn.Kind, grn.UID, r.Folder,
-			versionInfo.Size, body, etag, versionInfo.Version,
-			updatedAt, createdBy, createdAt, createdBy,
-			summary.model.Name, summary.model.Description, summary.model.Slug,
-			summary.labels, summary.fields, summary.errors,
-			origin.Source, origin.Key, origin.Time,
-		)
+		if err == nil {
+			summary.folder = r.Folder
+			summary.parent_grn = grn
+			return s.writeSearchInfo(ctx, tx, oid, summary)
+		}
 		return err
 	})
 	rsp.SummaryJson = summary.marshaled
@@ -495,15 +474,19 @@ func (s *sqlEntityServer) fillCreationInfo(ctx context.Context, tx *session.Sess
 	}
 
 	rows, err := tx.Query(ctx, "SELECT created_at,created_by FROM entity WHERE grn=?", grn)
-	if err == nil {
-		if rows.Next() {
-			err = rows.Scan(&createdAt, &createdBy)
-		}
-		if err == nil {
-			err = rows.Close()
-		}
+	if err != nil {
+		return err
 	}
-	return err
+
+	if rows.Next() {
+		err = rows.Scan(&createdAt, &createdBy)
+	}
+
+	errClose := rows.Close()
+	if err != nil {
+		return err
+	}
+	return errClose
 }
 
 func (s *sqlEntityServer) selectForUpdate(ctx context.Context, tx *session.SessionTx, grn string) (*entity.EntityVersionInfo, error) {
@@ -519,10 +502,99 @@ func (s *sqlEntityServer) selectForUpdate(ctx context.Context, tx *session.Sessi
 	if rows.Next() {
 		err = rows.Scan(&current.ETag, &current.Version, &current.UpdatedAt, &current.Size)
 	}
-	if err == nil {
-		err = rows.Close()
+
+	errClose := rows.Close()
+	if err != nil {
+		return nil, err
 	}
-	return current, err
+
+	return current, errClose
+}
+
+func (s *sqlEntityServer) writeSearchInfo(
+	ctx context.Context,
+	tx *session.SessionTx,
+	grn string,
+	summary *summarySupport,
+) error {
+	parent_grn := summary.getParentGRN()
+
+	// Add the labels rows
+	for k, v := range summary.model.Labels {
+		_, err := tx.Exec(ctx,
+			`INSERT INTO entity_labels `+
+				"(grn, label, value, parent_grn) "+
+				`VALUES (?, ?, ?, ?)`,
+			grn, k, v, parent_grn,
+		)
+		if err != nil {
+			return err
+		}
+	}
+
+	// Resolve references
+	for _, ref := range summary.model.References {
+		resolved, err := s.resolver.Resolve(ctx, ref)
+		if err != nil {
+			return err
+		}
+		_, err = tx.Exec(ctx, `INSERT INTO entity_ref (`+
+			"grn, parent_grn, family, type, id, "+
+			"resolved_ok, resolved_to, resolved_warning, resolved_time) "+
+			`VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+			grn, parent_grn, ref.Family, ref.Type, ref.Identifier,
+			resolved.OK, resolved.Key, resolved.Warning, resolved.Timestamp,
+		)
+		if err != nil {
+			return err
+		}
+	}
+
+	// Traverse entities and insert refs
+	if summary.model.Nested != nil {
+		for _, childModel := range summary.model.Nested {
+			grn = (&entity.GRN{
+				TenantId: summary.parent_grn.TenantId,
+				Kind:     childModel.Kind,
+				UID:      childModel.UID, // append???
+			}).ToGRNString()
+
+			child, err := newSummarySupport(childModel)
+			if err != nil {
+				return err
+			}
+			child.isNested = true
+			child.folder = summary.folder
+			child.parent_grn = summary.parent_grn
+			parent_grn := child.getParentGRN()
+
+			_, err = tx.Exec(ctx, "INSERT INTO entity_nested ("+
+				"parent_grn, grn, "+
+				"tenant_id, kind, uid, folder, "+
+				"name, description, "+
+				"labels, fields, errors) "+
+				"VALUES (?, ?,"+
+				" ?, ?, ?, ?,"+
+				" ?, ?,"+
+				" ?, ?, ?)",
+				*parent_grn, grn,
+				summary.parent_grn.TenantId, childModel.Kind, childModel.UID, summary.folder,
+				child.name, child.description,
+				child.labels, child.fields, child.errors,
+			)
+
+			if err != nil {
+				return err
+			}
+
+			err = s.writeSearchInfo(ctx, tx, grn, child)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
 }
 
 func (s *sqlEntityServer) prepare(ctx context.Context, r *entity.AdminWriteEntityRequest) (*summarySupport, []byte, error) {
@@ -537,11 +609,6 @@ func (s *sqlEntityServer) prepare(ctx context.Context, r *entity.AdminWriteEntit
 		return nil, nil, err
 	}
 
-	summaryjson, err := newSummarySupport(summary)
-	if err != nil {
-		return nil, nil, err
-	}
-
 	// Update a summary based on the name (unless the root suggested one)
 	if summary.Slug == "" {
 		t := summary.Name
@@ -549,6 +616,11 @@ func (s *sqlEntityServer) prepare(ctx context.Context, r *entity.AdminWriteEntit
 			t = r.GRN.UID
 		}
 		summary.Slug = slugify.Slugify(t)
+	}
+
+	summaryjson, err := newSummarySupport(summary)
+	if err != nil {
+		return nil, nil, err
 	}
 
 	return summaryjson, body, nil
@@ -562,14 +634,15 @@ func (s *sqlEntityServer) Delete(ctx context.Context, r *entity.DeleteEntityRequ
 
 	rsp := &entity.DeleteEntityResponse{}
 	err = s.sess.WithTransaction(ctx, func(tx *session.SessionTx) error {
-		rsp.OK, err = doDelete(ctx, tx, grn.ToGRNString())
+		rsp.OK, err = doDelete(ctx, tx, grn)
 		return err
 	})
 	return rsp, err
 }
 
-func doDelete(ctx context.Context, tx *session.SessionTx, grn string) (bool, error) {
-	results, err := tx.Exec(ctx, "DELETE FROM entity WHERE grn=?", grn)
+func doDelete(ctx context.Context, tx *session.SessionTx, grn *entity.GRN) (bool, error) {
+	str := grn.ToGRNString()
+	results, err := tx.Exec(ctx, "DELETE FROM entity WHERE grn=?", str)
 	if err != nil {
 		return false, err
 	}
@@ -579,9 +652,26 @@ func doDelete(ctx context.Context, tx *session.SessionTx, grn string) (bool, err
 	}
 
 	// TODO: keep history? would need current version bump, and the "write" would have to get from history
-	_, _ = tx.Exec(ctx, "DELETE FROM entity_history WHERE grn=?", grn)
-	_, _ = tx.Exec(ctx, "DELETE FROM entity_labels WHERE grn=?", grn)
-	_, _ = tx.Exec(ctx, "DELETE FROM entity_ref WHERE grn=?", grn)
+	_, err = tx.Exec(ctx, "DELETE FROM entity_history WHERE grn=?", str)
+	if err != nil {
+		return false, err
+	}
+	_, err = tx.Exec(ctx, "DELETE FROM entity_labels WHERE grn=? OR parent_grn=?", str, str)
+	if err != nil {
+		return false, err
+	}
+	_, err = tx.Exec(ctx, "DELETE FROM entity_ref WHERE grn=? OR parent_grn=?", str, str)
+	if err != nil {
+		return false, err
+	}
+	_, err = tx.Exec(ctx, "DELETE FROM entity_nested WHERE parent_grn=?", str)
+	if err != nil {
+		return false, err
+	}
+
+	if grn.Kind == entity.StandardKindFolder {
+		err = updateFolderTree(ctx, tx, grn.TenantId)
+	}
 	return rows > 0, err
 }
 
@@ -659,7 +749,7 @@ func (s *sqlEntityServer) Search(ctx context.Context, r *entity.EntitySearchRequ
 		fields:   fields,
 		from:     "entity", // the table
 		args:     []interface{}{},
-		limit:    int(r.Limit),
+		limit:    r.Limit,
 		oneExtra: true, // request one more than the limit (and show next token if it exists)
 	}
 	entityQuery.addWhere("tenant_id", user.OrgID)
@@ -689,11 +779,6 @@ func (s *sqlEntityServer) Search(ctx context.Context, r *entity.EntitySearchRequ
 	}
 
 	query, args := entityQuery.toQuery()
-
-	fmt.Printf("\n\n-------------\n")
-	fmt.Printf("%s\n", query)
-	fmt.Printf("%v\n", args)
-	fmt.Printf("\n-------------\n\n")
 
 	rows, err := s.sess.Query(ctx, query, args...)
 	if err != nil {
@@ -730,7 +815,7 @@ func (s *sqlEntityServer) Search(ctx context.Context, r *entity.EntitySearchRequ
 		}
 
 		// found one more than requested
-		if len(rsp.Results) >= entityQuery.limit {
+		if int64(len(rsp.Results)) >= entityQuery.limit {
 			// TODO? should this encode start+offset?
 			rsp.NextPageToken = oid
 			break
@@ -760,4 +845,8 @@ func (s *sqlEntityServer) Search(ctx context.Context, r *entity.EntitySearchRequ
 	}
 
 	return rsp, err
+}
+
+func (s *sqlEntityServer) Watch(*entity.EntityWatchRequest, entity.EntityStore_WatchServer) error {
+	return fmt.Errorf("unimplemented")
 }

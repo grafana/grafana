@@ -42,9 +42,9 @@ export const DataLinksContextMenu = ({ children, links, style }: DataLinksContex
   };
 
   // Use this class name (exposed via render prop) to add context menu indicator to the click target of the visualization
-  const targetClassName = css`
-    cursor: context-menu;
-  `;
+  const targetClassName = css({
+    cursor: 'context-menu',
+  });
 
   if (linksCounter > 1) {
     return (
@@ -62,7 +62,7 @@ export const DataLinksContextMenu = ({ children, links, style }: DataLinksContex
         onClick={linkModel.onClick}
         target={linkModel.target}
         title={linkModel.title}
-        style={{ ...style, overflow: 'hidden', display: 'flex', flexGrow: 1 }}
+        style={{ ...style, overflow: 'hidden', display: 'flex' }}
         aria-label={selectors.components.DataLinksContextMenu.singleLink}
       >
         {children({})}

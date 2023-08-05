@@ -23,7 +23,7 @@ export const DeletePublicDashboardButton = ({
   dashboard?: DashboardModel;
   publicDashboard: PublicDashboardDeletion;
   loader?: JSX.Element;
-  children: React.ReactNode;
+  children?: React.ReactNode;
   onDismiss?: () => void;
 } & ButtonProps) => {
   const [deletePublicDashboard, { isLoading }] = useDeletePublicDashboardMutation();
@@ -41,8 +41,8 @@ export const DeletePublicDashboardButton = ({
     <ModalsController>
       {({ showModal, hideModal }) => (
         <Button
-          aria-label="Delete public dashboard"
-          title="Delete public dashboard"
+          aria-label="Revoke public URL"
+          title="Revoke public URL"
           onClick={() =>
             showModal(DeletePublicDashboardModal, {
               dashboardTitle: publicDashboard.title,

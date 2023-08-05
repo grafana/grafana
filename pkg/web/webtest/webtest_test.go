@@ -7,17 +7,18 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
-	"github.com/grafana/grafana/pkg/models"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/stretchr/testify/require"
 )
 
 func TestServer(t *testing.T) {
 	routeRegister := routing.NewRouteRegister()
 	var actualRequest *http.Request
-	routeRegister.Post("/api", routing.Wrap(func(c *models.ReqContext) response.Response {
+	routeRegister.Post("/api", routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
 		actualRequest = c.Req
 		return response.JSON(http.StatusOK, c.SignedInUser)
 	}))
@@ -68,7 +69,7 @@ func verifyRequest(t *testing.T, s *Server, req *http.Request, expectedBody stri
 
 	require.NotEmpty(t, requestIdentifierFromRequest(req))
 
-	req = RequestWithWebContext(req, &models.ReqContext{
+	req = RequestWithWebContext(req, &contextmodel.ReqContext{
 		IsSignedIn: true,
 	})
 	require.NotNil(t, req)
@@ -79,7 +80,7 @@ func verifyRequest(t *testing.T, s *Server, req *http.Request, expectedBody stri
 
 func TestServerClient(t *testing.T) {
 	routeRegister := routing.NewRouteRegister()
-	routeRegister.Get("/test", routing.Wrap(func(c *models.ReqContext) response.Response {
+	routeRegister.Get("/test", routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
 		return response.JSON(http.StatusOK, c.SignedInUser)
 	}))
 
@@ -87,7 +88,7 @@ func TestServerClient(t *testing.T) {
 
 	t.Run("Making a request with user 1 should return user 1 as signed in user", func(t *testing.T) {
 		req := s.NewRequest(http.MethodGet, "/test", nil)
-		req = RequestWithWebContext(req, &models.ReqContext{
+		req = RequestWithWebContext(req, &contextmodel.ReqContext{
 			SignedInUser: &user.SignedInUser{
 				UserID: 1,
 			},
@@ -109,7 +110,7 @@ func TestServerClient(t *testing.T) {
 
 	t.Run("Making a request with user 2 should return user 2 as signed in user", func(t *testing.T) {
 		req := s.NewRequest(http.MethodGet, "/test", nil)
-		req = RequestWithWebContext(req, &models.ReqContext{
+		req = RequestWithWebContext(req, &contextmodel.ReqContext{
 			SignedInUser: &user.SignedInUser{
 				UserID: 2,
 			},

@@ -10,13 +10,15 @@ import (
 
 	"github.com/gchaincl/sqlhooks"
 	"github.com/go-sql-driver/mysql"
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/lib/pq"
 	"github.com/mattn/go-sqlite3"
 	"github.com/prometheus/client_golang/prometheus"
+	"go.opentelemetry.io/otel/trace"
 	"xorm.io/core"
+
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 )
 
 var (
@@ -95,7 +97,7 @@ func (h *databaseQueryWrapper) instrument(ctx context.Context, status string, qu
 
 	ctx = log.IncDBCallCounter(ctx)
 
-	_, span := h.tracer.Start(ctx, "database query")
+	_, span := h.tracer.Start(ctx, "database query", trace.WithTimestamp(begin))
 	defer span.End()
 
 	span.AddEvents([]string{"query", "status"}, []tracing.EventValue{{Str: query}, {Str: status}})

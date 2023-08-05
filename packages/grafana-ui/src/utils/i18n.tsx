@@ -14,7 +14,8 @@ import { Trans as I18NextTrans, initReactI18next } from 'react-i18next'; // esli
 // Creates a default, english i18next instance when running outside of grafana.
 // we don't support changing the locale of grafana ui when outside of Grafana
 function initI18n() {
-  if (!i18next.options.lng) {
+  // resources is undefined by default and set either by grafana app.ts or here
+  if (typeof i18next.options.resources !== 'object') {
     i18next.use(initReactI18next).init({
       resources: {},
       returnEmptyString: false,
@@ -28,7 +29,11 @@ export const Trans: typeof I18NextTrans = (props) => {
   return <I18NextTrans {...props} />;
 };
 
+// Reassign t() so i18next-parser doesn't warn on dynamic key, and we can have 'failOnWarnings' enabled
+const tFunc = i18next.t;
+
 export const t = (id: string, defaultMessage: string, values?: Record<string, unknown>) => {
   initI18n();
-  return i18next.t(id, defaultMessage, values);
+
+  return tFunc(id, defaultMessage, values);
 };

@@ -21,10 +21,30 @@ export const getPublicDashboardRoutes = (): RouteDescriptor[] => {
         path: '/public-dashboards/:accessToken',
         pageClass: 'page-dashboard',
         routeName: DashboardRoutes.Public,
+        chromeless: true,
         component: SafeDynamicImport(
           () =>
             import(
               /* webpackChunkName: "PublicDashboardPage" */ '../../features/dashboard/containers/PublicDashboardPage'
+            )
+        ),
+      },
+    ];
+  }
+  return [];
+};
+
+export const getEmbeddedDashboardRoutes = (): RouteDescriptor[] => {
+  if (config.featureToggles.dashboardEmbed) {
+    return [
+      {
+        path: '/d-embed',
+        pageClass: 'dashboard-embed',
+        routeName: DashboardRoutes.Embedded,
+        component: SafeDynamicImport(
+          () =>
+            import(
+              /* webpackChunkName: "EmbeddedDashboardPage" */ '../../features/dashboard/containers/EmbeddedDashboardPage'
             )
         ),
       },

@@ -9,7 +9,7 @@ import { MockDataSourceSrv } from 'app/features/alerting/unified/mocks';
 import { QueryEditorField } from './QueryEditorField';
 
 const Wrapper = ({ children }: { children: ReactNode }) => {
-  const methods = useForm();
+  const methods = useForm({ defaultValues: { query: {} } });
   return <FormProvider {...methods}>{children}</FormProvider>;
 };
 
@@ -21,7 +21,7 @@ const defaultGetHandler = async (name: string) => {
   return dsApi;
 };
 
-const renderWithContext = async (
+const renderWithContext = (
   children: ReactNode,
   getHandler: (name: string) => Promise<MockDataSourceApi> = defaultGetHandler
 ) => {
@@ -34,6 +34,10 @@ const renderWithContext = async (
 };
 
 describe('QueryEditorField', () => {
+  afterAll(() => {
+    jest.restoreAllMocks();
+  });
+
   it('should render the query editor', async () => {
     renderWithContext(<QueryEditorField name="query" dsUid="test" />);
 
@@ -51,7 +55,7 @@ describe('QueryEditorField', () => {
   it('shows an info alert when no datasource is selected', async () => {
     renderWithContext(<QueryEditorField name="query" />);
 
-    expect(await screen.findByRole('alert', { name: 'No data source selected' })).toBeInTheDocument();
+    expect(await screen.findByRole('status', { name: 'No data source selected' })).toBeInTheDocument();
   });
 
   it('shows an info alert when datasaource does not export a query editor', async () => {

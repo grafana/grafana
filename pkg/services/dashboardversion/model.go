@@ -46,10 +46,13 @@ func (v *DashboardVersion) ToDTO(dashUid string) *DashboardVersionDTO {
 	}
 }
 
+// GetDashboardVersionQuery is used to Get a dashboard version. Only one of
+// DashboardID and DashboardUID are required.
 type GetDashboardVersionQuery struct {
-	DashboardID int64
-	OrgID       int64
-	Version     int
+	DashboardID  int64
+	DashboardUID string
+	OrgID        int64
+	Version      int
 }
 
 type DeleteExpiredVersionsCommand struct {
@@ -63,7 +66,6 @@ type ListDashboardVersionsQuery struct {
 	Limit        int
 	Start        int
 }
-
 type DashboardVersionDTO struct {
 	ID            int64            `json:"id"`
 	DashboardID   int64            `json:"dashboardId"`

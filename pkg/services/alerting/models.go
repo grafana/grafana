@@ -4,7 +4,7 @@ import (
 	"sync"
 
 	"github.com/grafana/grafana/pkg/components/null"
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
@@ -47,6 +47,6 @@ type EvalMatch struct {
 
 type DashAlertInfo struct {
 	User  *user.SignedInUser
-	Dash  *models.Dashboard
+	Dash  *dashboards.Dashboard
 	OrgID int64
 }

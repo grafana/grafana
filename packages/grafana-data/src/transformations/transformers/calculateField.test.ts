@@ -1,6 +1,6 @@
 import { DataFrameView } from '../../dataframe';
 import { toDataFrame } from '../../dataframe/processDataFrame';
-import { ScopedVars } from '../../types';
+import { DataTransformContext, ScopedVars } from '../../types';
 import { FieldType } from '../../types/dataFrame';
 import { BinaryOperationID } from '../../utils';
 import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
@@ -222,6 +222,22 @@ describe('calculateField transformer w/ timeseries', () => {
     });
   });
 
+  it('can add index field', async () => {
+    const cfg = {
+      id: DataTransformerID.calculateField,
+      options: {
+        mode: CalculateFieldMode.Index,
+        replaceFields: true,
+      },
+    };
+
+    await expect(transformDataFrame([cfg], [seriesBC])).toEmitValuesWith((received) => {
+      const data = received[0][0];
+      expect(data.fields.length).toEqual(1);
+      expect(data.fields[0].values).toEqual([0, 1]);
+    });
+  });
+
   it('uses template variable substituion', async () => {
     const cfg = {
       id: DataTransformerID.calculateField,
@@ -235,7 +251,9 @@ describe('calculateField transformer w/ timeseries', () => {
         },
         replaceFields: true,
       },
-      replace: (target: string | undefined, scopedVars?: ScopedVars, format?: string | Function): string => {
+    };
+    const context: DataTransformContext = {
+      interpolate: (target: string | undefined, scopedVars?: ScopedVars, format?: string | Function): string => {
         if (!target) {
           return '';
         }
@@ -255,14 +273,14 @@ describe('calculateField transformer w/ timeseries', () => {
         };
         for (const key of Object.keys(variables)) {
           if (target === `$${key}`) {
-            return variables[key].value + '';
+            return variables[key]!.value + '';
           }
         }
         return target;
       },
     };
 
-    await expect(transformDataFrame([cfg], [seriesA])).toEmitValuesWith((received) => {
+    await expect(transformDataFrame([cfg], [seriesA], context)).toEmitValuesWith((received) => {
       const data = received[0];
       const filtered = data[0];
       const rows = new DataFrameView(filtered).toArray();

@@ -86,7 +86,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     padding: 5px 8px;
     font-size: 10px;
     text-shadow: 0 1px 0 rgba(0, 0, 0, 0.2);
-    border-radius: ${theme.shape.borderRadius()};
+    border-radius: ${theme.shape.radius.default};
     align-items: center;
     position: absolute;
     top: 0;
@@ -368,10 +368,13 @@ const EdgeLabels = memo(function EdgeLabels(props: EdgeLabelsProps) {
   return (
     <>
       {props.edges.map((e, index) => {
+        // We show the edge label in case user hovers over the edge directly or if they hover over node edge is
+        // connected to.
         const shouldShow =
           (e.source as NodeDatum).id === props.nodeHoveringId ||
           (e.target as NodeDatum).id === props.nodeHoveringId ||
           props.edgeHoveringId === e.id;
+
         const hasStats = e.mainStat || e.secondaryStat;
         return shouldShow && hasStats && <EdgeLabel key={e.id} edge={e} />;
       })}

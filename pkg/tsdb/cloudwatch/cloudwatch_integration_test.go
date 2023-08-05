@@ -9,6 +9,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
+	"github.com/aws/aws-sdk-go/service/cloudwatchlogs"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
@@ -18,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models/resources"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
 
@@ -27,7 +29,12 @@ func Test_CloudWatch_CallResource_Integration_Test(t *testing.T) {
 	origNewOAMAPI := NewOAMAPI
 	origNewLogsAPI := NewLogsAPI
 	NewOAMAPI = func(sess *session.Session) models.OAMAPIProvider { return nil }
-	NewLogsAPI = func(sess *session.Session) models.CloudWatchLogsAPIProvider { return nil }
+
+	var logApi mocks.LogsAPI
+	NewLogsAPI = func(sess *session.Session) models.CloudWatchLogsAPIProvider {
+		return &logApi
+	}
+
 	t.Cleanup(func() {
 		NewOAMAPI = origNewOAMAPI
 		NewMetricsAPI = origNewMetricsAPI
@@ -197,5 +204,39 @@ func Test_CloudWatch_CallResource_Integration_Test(t *testing.T) {
 		err = json.Unmarshal(sent.Body, &res)
 		require.Nil(t, err)
 		assert.Equal(t, []resources.ResourceResponse[resources.Metric]{{Value: resources.Metric{Name: "Test_MetricName1", Namespace: "AWS/EC2"}}, {Value: resources.Metric{Name: "Test_MetricName2", Namespace: "AWS/EC2"}}, {Value: resources.Metric{Name: "Test_MetricName3", Namespace: "AWS/ECS"}}, {Value: resources.Metric{Name: "Test_MetricName10", Namespace: "AWS/ECS"}}, {Value: resources.Metric{Name: "Test_MetricName4", Namespace: "AWS/ECS"}}, {Value: resources.Metric{Name: "Test_MetricName5", Namespace: "AWS/Redshift"}}}, res)
+	})
+
+	t.Run("Should handle log group fields request", func(t *testing.T) {
+		logApi = mocks.LogsAPI{}
+		logApi.On("GetLogGroupFields", mock.Anything).Return(&cloudwatchlogs.GetLogGroupFieldsOutput{
+			LogGroupFields: []*cloudwatchlogs.LogGroupField{
+				{
+					Name:    aws.String("field1"),
+					Percent: aws.Int64(50),
+				},
+				{
+					Name:    aws.String("field2"),
+					Percent: aws.Int64(50),
+				},
+			},
+		}, nil)
+		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
+
+		req := &backend.CallResourceRequest{
+			Method: "GET",
+			Path:   `/log-group-fields?region=us-east-2&logGroupName=test`,
+			PluginContext: backend.PluginContext{
+				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{ID: 0},
+				PluginID:                   "cloudwatch",
+			},
+		}
+		err := executor.CallResource(context.Background(), req, sender)
+
+		require.NoError(t, err)
+		sent := sender.Response
+		require.NotNil(t, sent)
+		require.Equal(t, http.StatusOK, sent.Status)
+		require.Nil(t, err)
+		assert.JSONEq(t, `[{"value":{"name":"field1","percent":50}},{"value":{"name":"field2","percent":50}}]`, string(sent.Body))
 	})
 }

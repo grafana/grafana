@@ -13,8 +13,12 @@ export class TablePanelEditorCtrl {
   canSetColumns = false;
   columnsHelpMessage = '';
 
-  /** @ngInject */
-  constructor($scope: any, private uiSegmentSrv: any) {
+  static $inject = ['$scope', 'uiSegmentSrv'];
+
+  constructor(
+    $scope: any,
+    private uiSegmentSrv: any
+  ) {
     $scope.editor = this;
     this.panelCtrl = $scope.ctrl;
     this.panel = this.panelCtrl.panel;

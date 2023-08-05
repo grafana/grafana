@@ -1,4 +1,6 @@
 import { NavModel, NavModelItem, NavIndex } from '@grafana/data';
+import { config } from '@grafana/runtime';
+import { FOLDER_ID } from 'app/features/folders/state/navModel';
 
 import { HOME_NAV_ID } from '../reducers/navModel';
 
@@ -37,7 +39,12 @@ export const getNavModel = (navIndex: NavIndex, id: string, fallback?: NavModel,
 };
 
 export function getRootSectionForNode(node: NavModelItem): NavModelItem {
-  return node.parentItem && node.parentItem.id !== HOME_NAV_ID ? getRootSectionForNode(node.parentItem) : node;
+  // Don't recurse fully up the folder tree when nested folders is enabled
+  if (config.featureToggles.nestedFolders && node.id === FOLDER_ID) {
+    return node;
+  } else {
+    return node.parentItem && node.parentItem.id !== HOME_NAV_ID ? getRootSectionForNode(node.parentItem) : node;
+  }
 }
 
 function enrichNodeWithActiveState(node: NavModelItem, activeId: string): NavModelItem {

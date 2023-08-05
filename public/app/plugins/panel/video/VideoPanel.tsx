@@ -6,10 +6,10 @@ import videojs from 'video.js';
 import { EventBus, DataHoverEvent, PanelProps } from '@grafana/data';
 
 import VideoJSWrapper from './VideoJSWrapper';
-import { PanelOptions } from './models.gen';
+import { Options } from './panelcfg.gen'
 import { VideoPlayPayload } from './types';
 
-interface Props extends PanelProps<PanelOptions> {}
+interface Props extends PanelProps<Options> {}
 
 interface State {
   over?: boolean;

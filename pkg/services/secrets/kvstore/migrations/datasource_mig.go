@@ -55,12 +55,12 @@ func (s *DataSourceSecretMigrationService) Migrate(ctx context.Context) error {
 	if needCompatibility || needMigration {
 		logger.Debug("performing secret migration", "needs migration", needMigration, "needs compatibility", needCompatibility)
 		query := &datasources.GetAllDataSourcesQuery{}
-		err := s.dataSourcesService.GetAllDataSources(ctx, query)
+		dsList, err := s.dataSourcesService.GetAllDataSources(ctx, query)
 		if err != nil {
 			return err
 		}
 
-		for _, ds := range query.Result {
+		for _, ds := range dsList {
 			secureJsonData, err := s.dataSourcesService.DecryptedValues(ctx, ds)
 			if err != nil {
 				return err
@@ -68,10 +68,10 @@ func (s *DataSourceSecretMigrationService) Migrate(ctx context.Context) error {
 
 			// Secrets are set by the update data source function if the SecureJsonData is set in the command
 			// Secrets are deleted by the update data source function if the disableSecretsCompatibility flag is enabled
-			err = s.dataSourcesService.UpdateDataSource(ctx, &datasources.UpdateDataSourceCommand{
-				Id:             ds.Id,
-				OrgId:          ds.OrgId,
-				Uid:            ds.Uid,
+			_, err = s.dataSourcesService.UpdateDataSource(ctx, &datasources.UpdateDataSourceCommand{
+				ID:             ds.ID,
+				OrgID:          ds.OrgID,
+				UID:            ds.UID,
 				Name:           ds.Name,
 				JsonData:       ds.JsonData,
 				SecureJsonData: secureJsonData,
@@ -82,6 +82,7 @@ func (s *DataSourceSecretMigrationService) Migrate(ctx context.Context) error {
 				WithCredentials: ds.WithCredentials,
 				ReadOnly:        ds.ReadOnly,
 				User:            ds.User,
+				Database:        ds.Database,
 			})
 			if err != nil {
 				return err

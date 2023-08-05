@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/alerting/models"
 	"github.com/grafana/grafana/pkg/services/annotations/annotationstest"
 	"github.com/grafana/grafana/pkg/services/validations"
 )
@@ -93,7 +93,7 @@ func TestGetStateFromEvalContext(t *testing.T) {
 			name:     "alerting -> alerting. should not update regardless of FOR",
 			expected: models.AlertStateAlerting,
 			applyFn: func(ec *EvalContext) {
-				ec.PrevAlertState = models.AlertStateAlerting
+				ec.PrevAlertState = models.AlertStatePending
 				ec.Firing = true
 				ec.Rule.LastStateChange = time.Now().Add(-time.Minute * 5)
 				ec.Rule.For = time.Minute * 2

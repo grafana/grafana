@@ -22,16 +22,19 @@ export const organizeFieldsTransformer: DataTransformerInfo<OrganizeFieldsTransf
   },
 
   /**
-   * Return a modified copy of the series.  If the transform is not or should not
+   * Return a modified copy of the series. If the transform is not or should not
    * be applied, just return the input series
    */
-  operator: (options) => (source) =>
+  operator: (options, ctx) => (source) =>
     source.pipe(
-      filterFieldsByNameTransformer.operator({
-        exclude: { names: mapToExcludeArray(options.excludeByName) },
-      }),
-      orderFieldsTransformer.operator(options),
-      renameFieldsTransformer.operator(options)
+      filterFieldsByNameTransformer.operator(
+        {
+          exclude: { names: mapToExcludeArray(options.excludeByName) },
+        },
+        ctx
+      ),
+      orderFieldsTransformer.operator(options, ctx),
+      renameFieldsTransformer.operator(options, ctx)
     ),
 };
 

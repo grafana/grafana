@@ -1,15 +1,14 @@
 package dtos
 
 import (
-	"github.com/grafana/grafana/pkg/services/navtree"
-	"github.com/grafana/grafana/pkg/setting"
-
 	"html/template"
+
+	"github.com/grafana/grafana/pkg/services/navtree"
 )
 
 type IndexViewData struct {
 	User                                *CurrentUser
-	Settings                            map[string]interface{}
+	Settings                            *FrontendSettingsDTO
 	AppUrl                              string
 	AppSubUrl                           string
 	GoogleAnalyticsId                   string
@@ -19,7 +18,7 @@ type IndexViewData struct {
 	NavTree                             *navtree.NavTreeRoot
 	BuildVersion                        string
 	BuildCommit                         string
-	Theme                               string
+	ThemeType                           string
 	NewGrafanaVersionExists             bool
 	NewGrafanaVersion                   string
 	AppName                             string
@@ -27,9 +26,12 @@ type IndexViewData struct {
 	FavIcon                             template.URL
 	AppleTouchIcon                      template.URL
 	AppTitle                            string
-	Sentry                              *setting.Sentry
 	ContentDeliveryURL                  string
 	LoadingLogo                         template.URL
+	CSPContent                          string
+	CSPEnabled                          bool
+	IsDevelopmentEnv                    bool
 	// Nonce is a cryptographic identifier for use with Content Security Policy.
-	Nonce string
+	Nonce           string
+	NewsFeedEnabled bool
 }

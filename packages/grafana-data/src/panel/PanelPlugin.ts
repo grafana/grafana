@@ -3,15 +3,15 @@ import { ComponentClass, ComponentType } from 'react';
 
 import { FieldConfigOptionsRegistry, StandardEditorContext } from '../field';
 import {
+  FieldConfigProperty,
   FieldConfigSource,
   GrafanaPlugin,
   PanelEditorProps,
   PanelMigrationHandler,
+  PanelPluginDataSupport,
   PanelPluginMeta,
   PanelProps,
   PanelTypeChangedHandler,
-  FieldConfigProperty,
-  PanelPluginDataSupport,
   VisualizationSuggestionsSupplier,
 } from '../types';
 import { deprecationWarning } from '../utils';
@@ -23,6 +23,7 @@ import { createFieldConfigRegistry } from './registryFactories';
 export type StandardOptionConfig = {
   defaultValue?: any;
   settings?: any;
+  hideFromDefaults?: boolean;
 };
 
 /** @beta */
@@ -93,7 +94,7 @@ export type PanelOptionsSupplier<TOptions> = (
 
 export class PanelPlugin<
   TOptions = any,
-  TFieldConfigOptions extends object = any
+  TFieldConfigOptions extends object = any,
 > extends GrafanaPlugin<PanelPluginMeta> {
   private _defaults?: TOptions;
   private _fieldConfigDefaults: FieldConfigSource<TFieldConfigOptions> = {
@@ -120,7 +121,7 @@ export class PanelPlugin<
   };
 
   /**
-   * Legacy angular ctrl.  If this exists it will be used instead of the panel
+   * Legacy angular ctrl. If this exists it will be used instead of the panel
    */
   angularPanelCtrl?: any;
 

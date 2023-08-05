@@ -13,10 +13,6 @@ exports[`PanelAlertTabContent Will render alerts belonging to panel and a button
     },
   ],
   "condition": "C",
-  "folder": {
-    "id": 1,
-    "title": "super folder",
-  },
   "name": "mypanel",
   "queries": [
     {
@@ -39,7 +35,7 @@ exports[`PanelAlertTabContent Will render alerts belonging to panel and a button
       },
     },
     {
-      "datasourceUid": "-100",
+      "datasourceUid": "__expr__",
       "model": {
         "conditions": [
           {
@@ -64,10 +60,9 @@ exports[`PanelAlertTabContent Will render alerts belonging to panel and a button
         ],
         "datasource": {
           "type": "__expr__",
-          "uid": "-100",
+          "uid": "__expr__",
         },
         "expression": "A",
-        "hide": false,
         "reducer": "last",
         "refId": "B",
         "type": "reduce",
@@ -76,7 +71,7 @@ exports[`PanelAlertTabContent Will render alerts belonging to panel and a button
       "refId": "B",
     },
     {
-      "datasourceUid": "-100",
+      "datasourceUid": "__expr__",
       "model": {
         "conditions": [
           {
@@ -103,10 +98,9 @@ exports[`PanelAlertTabContent Will render alerts belonging to panel and a button
         ],
         "datasource": {
           "type": "__expr__",
-          "uid": "-100",
+          "uid": "__expr__",
         },
         "expression": "B",
-        "hide": false,
         "refId": "C",
         "type": "threshold",
       },

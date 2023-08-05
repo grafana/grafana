@@ -1,24 +1,30 @@
 ---
-aliases:
+canonical: https://grafana.com/docs/grafana/latest/alerting/manage-notifications/template-notifications/using-go-templating-language/
+description: Use Go's templating language in notifications
 keywords:
   - grafana
   - alerting
   - notifications
   - templates
   - write templates
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: Using Go's templating language
-weight: 200
+weight: 100
 ---
 
 # Using Go's templating language
 
-You write message templates in Go's templating language, [text/template](https://pkg.go.dev/text/template).
+You write notification templates in Go's templating language, [text/template](https://pkg.go.dev/text/template).
 
-Before you start creating your own message templates, we recommend that you read through this topic, which provides you with an overview of Go's templating language and writing templates in text/template.
+Before you start creating your own notification templates, we recommend that you read through this topic, which provides you with an overview of Go's templating language and writing templates in text/template.
 
 ## Dot
 
-In text/template there is a special cursor called dot, and is written as `.`. You can think of this cursor as a variable whose value changes depending where in the template it is used. For example, at the start of a message template `.` refers to something called [`ExtendedData`]({{< relref "./reference#extendeddata" >}}) which contains a number of fields including `Alerts`, `Status`, `GroupLabels`, `CommonLabels`, `CommonAnnotations` and `ExternalURL`. However, dot might refer to something else when used in a range over a list, when used inside a `with`, or when writing feature templates to be used in other templates. You can see examples of this in [Create message templates]({{< relref "./create-message-templates" >}}), and all data and functions in the [Reference]({{< relref "./reference" >}}).
+In text/template there is a special cursor called dot, and is written as `.`. You can think of this cursor as a variable whose value changes depending where in the template it is used. For example, at the start of a notification template `.` refers to something called [`ExtendedData`][extendeddata] which contains a number of fields including `Alerts`, `Status`, `GroupLabels`, `CommonLabels`, `CommonAnnotations` and `ExternalURL`. However, dot might refer to something else when used in a range over a list, when used inside a `with`, or when writing feature templates to be used in other templates. You can see examples of this in [Create notification templates][create-notification-templates], and all data and functions in the [Reference][reference].
 
 ## Opening and closing tags
 
@@ -68,6 +74,16 @@ The name of the label is {{ .Name }}, and the value is {{ .Value }}
 {{ range .Annotations.SortedPairs }}
 The name of the annotation is {{ .Name }}, and the value is {{ .Value }}
 {{ end }}
+{{ end }}
+```
+
+## The index function
+
+To print a specific annotation or label use the `index` function.
+
+```
+{{ range .Alerts }}
+The name of the alert is {{ index .Labels "alertname" }}
 {{ end }}
 ```
 
@@ -143,7 +159,7 @@ This is alert {{ $index }} out of {{ $num_alerts }}
 
 ## Define templates
 
-You can define templates using `define` and the name of the template in double quotes. You should not define templates with the same name as other templates, including default templates such as `__subject`, `__text_values_list`, `__text_alert_list`, `default.title` and `default.message`. Where a template has been created with the same name as a default template, or a template in another message template, Grafana might use either template. Grafana does not prevent, or show an error message, when there are two or more templates with the same name.
+You can define templates using `define` and the name of the template in double quotes. You should not define templates with the same name as other templates, including default templates such as `__subject`, `__text_values_list`, `__text_alert_list`, `default.title` and `default.message`. Where a template has been created with the same name as a default template, or a template in another notification template, Grafana might use either template. Grafana does not prevent, or show an error message, when there are two or more templates with the same name.
 
 ```
 {{ define "print_labels" }}
@@ -262,3 +278,14 @@ The indentation and line breaks in the template are now absent from the text:
 alertname = "Test"
 grafana_folder = "Test alerts"
 ```
+
+{{% docs/reference %}}
+[create-notification-templates]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/alerting/manage-notifications/template-notifications/create-notification-templates"
+[create-notification-templates]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/manage-notifications/template-notifications/create-notification-templates"
+
+[extendeddata]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/alerting/manage-notifications/template-notifications/reference#extendeddata"
+[extendeddata]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/manage-notifications/template-notifications/reference#extendeddata"
+
+[reference]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/alerting/manage-notifications/template-notifications/reference"
+[reference]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/manage-notifications/template-notifications/reference"
+{{% /docs/reference %}}

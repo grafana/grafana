@@ -2,7 +2,6 @@ package conditions
 
 import (
 	"math"
-
 	"sort"
 
 	"github.com/grafana/grafana/pkg/components/null"

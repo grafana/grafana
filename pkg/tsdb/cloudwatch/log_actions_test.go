@@ -15,13 +15,16 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/mocks"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
+	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/utils"
+	"github.com/stretchr/testify/mock"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func TestQuery_GetLogEvents(t *testing.T) {
+func TestQuery_handleGetLogEvents_passes_nil_start_and_end_times_to_GetLogEvents(t *testing.T) {
 	origNewCWLogsClient := NewCWLogsClient
 	t.Cleanup(func() {
 		NewCWLogsClient = origNewCWLogsClient
@@ -107,81 +110,56 @@ func TestQuery_GetLogEvents(t *testing.T) {
 	}
 }
 
-func TestQuery_GetLogGroupFields(t *testing.T) {
+func TestQuery_GetLogEvents_returns_response_from_GetLogEvents_to_data_frame_field(t *testing.T) {
 	origNewCWLogsClient := NewCWLogsClient
 	t.Cleanup(func() {
 		NewCWLogsClient = origNewCWLogsClient
 	})
-
-	var cli fakeCWLogsClient
-
+	var cli *mocks.MockLogEvents
 	NewCWLogsClient = func(sess *session.Session) cloudwatchlogsiface.CloudWatchLogsAPI {
-		return &cli
+		return cli
 	}
-
-	cli = fakeCWLogsClient{
-		logGroupFields: cloudwatchlogs.GetLogGroupFieldsOutput{
-			LogGroupFields: []*cloudwatchlogs.LogGroupField{
-				{
-					Name:    aws.String("field_a"),
-					Percent: aws.Int64(100),
-				},
-				{
-					Name:    aws.String("field_b"),
-					Percent: aws.Int64(30),
-				},
-				{
-					Name:    aws.String("field_c"),
-					Percent: aws.Int64(55),
-				},
-			},
-		},
-	}
-
-	const refID = "A"
-
 	im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 		return DataSource{Settings: models.CloudWatchSettings{}}, nil
 	})
-
 	executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
+
+	cli = &mocks.MockLogEvents{}
+	cli.On("GetLogEventsWithContext", mock.Anything, mock.Anything, mock.Anything).Return(&cloudwatchlogs.GetLogEventsOutput{
+		Events: []*cloudwatchlogs.OutputLogEvent{{
+			Message:   utils.Pointer("some message"),
+			Timestamp: utils.Pointer(int64(15)),
+		}}}, nil)
+
 	resp, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
 		PluginContext: backend.PluginContext{
 			DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
 		},
 		Queries: []backend.DataQuery{
 			{
-				RefID: refID,
+				RefID:     "A",
+				TimeRange: backend.TimeRange{From: time.Unix(0, 0), To: time.Unix(1, 0)},
 				JSON: json.RawMessage(`{
-					"type":    "logAction",
-					"subtype": "GetLogGroupFields",
-					"logGroupName": "group_a",
-					"limit": 50
-				}`),
+							"type":         "logAction",
+							"subtype":       "GetLogEvents",
+							"logGroupName":  "foo",
+							"logStreamName": "bar",
+							"endTime":       1,
+							"startFromHead": false
+						}`),
 			},
 		},
 	})
-	require.NoError(t, err)
-	require.NotNil(t, resp)
 
-	expFrame := &data.Frame{
-		Name: refID,
-		Fields: []*data.Field{
-			data.NewField("name", nil, []*string{
-				aws.String("field_a"), aws.String("field_b"), aws.String("field_c"),
-			}),
-			data.NewField("percent", nil, []*int64{
-				aws.Int64(100), aws.Int64(30), aws.Int64(55),
-			}),
-		},
-	}
-	expFrame.RefID = refID
-	assert.Equal(t, &backend.QueryDataResponse{Responses: backend.Responses{
-		refID: backend.DataResponse{
-			Frames: data.Frames{expFrame},
-		},
-	},
-	}, resp)
+	require.NoError(t, err)
+
+	respA, ok := resp.Responses["A"]
+	assert.True(t, ok)
+
+	expectedTsField := data.NewField("ts", nil, []time.Time{time.UnixMilli(15).UTC()})
+	expectedMessageField := data.NewField("line", nil, []*string{utils.Pointer("some message")})
+	expectedTsField.SetConfig(&data.FieldConfig{DisplayName: "Time"})
+	assert.Equal(t, []*data.Field{expectedTsField, expectedMessageField}, respA.Frames[0].Fields)
 }
 
 func TestQuery_StartQuery(t *testing.T) {
@@ -410,7 +388,7 @@ func Test_executeStartQuery(t *testing.T) {
 						"subtype": "StartQuery",
 						"limit":   12,
 						"queryString":"fields @message",
-						"logGroups":[{"value": "fakeARN"}]
+						"logGroups":[{"arn": "fakeARN"}]
 					}`),
 				},
 			},
@@ -446,7 +424,7 @@ func Test_executeStartQuery(t *testing.T) {
 						"subtype": "StartQuery",
 						"limit":   12,
 						"queryString":"fields @message",
-						"logGroups":[{"value": "*fake**ARN*"}]
+						"logGroups":[{"arn": "*fake**ARN*"}]
 					}`),
 				},
 			},

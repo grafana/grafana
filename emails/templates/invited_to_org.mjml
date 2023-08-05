@@ -2,7 +2,7 @@
   <mj-head>
     <!-- ⬇ Don't forget to specifify an email subject! Use the HTML comment below ⬇ -->
     <mj-title>
-      {{ Subject .Subject "{{ .InvitedBy }} has added you to the {{ .OrgName }} organization" }}
+      {{ Subject .Subject .TemplateData "{{ .InvitedBy }} has added you to the {{ .OrgName }} organization" }}
     </mj-title>
     <mj-include path="./partials/layout/head.mjml" />
   </mj-head>

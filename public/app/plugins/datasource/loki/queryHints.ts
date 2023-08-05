@@ -1,6 +1,12 @@
 import { DataFrame, QueryHint } from '@grafana/data';
 
-import { isQueryPipelineErrorFiltering, isQueryWithLabelFormat, isQueryWithParser } from './queryUtils';
+import {
+  isQueryWithLabelFilter,
+  isQueryPipelineErrorFiltering,
+  isQueryWithLabelFormat,
+  isQueryWithParser,
+  isQueryWithLineFilter,
+} from './queryUtils';
 import {
   dataFrameHasLevelLabel,
   extractHasErrorLabelFromDataFrame,
@@ -17,20 +23,35 @@ export function getQueryHints(query: string, series: DataFrame[]): QueryHint[] {
   const { queryWithParser, parserCount } = isQueryWithParser(query);
 
   if (!queryWithParser) {
-    const { hasLogfmt, hasJSON } = extractLogParserFromDataFrame(series[0]);
+    const { hasLogfmt, hasJSON, hasPack } = extractLogParserFromDataFrame(series[0]);
     if (hasJSON) {
-      hints.push({
-        type: 'ADD_JSON_PARSER',
-        label: 'Selected log stream selector has JSON formatted logs.',
-        fix: {
-          title: 'add json parser',
-          label: 'Consider using JSON parser.',
-          action: {
-            type: 'ADD_JSON_PARSER',
-            query,
+      if (hasPack) {
+        hints.push({
+          type: 'ADD_UNPACK_PARSER',
+          label: 'Selected log stream selector has packed logs.',
+          fix: {
+            title: 'add unpack parser',
+            label: 'Consider using unpack parser.',
+            action: {
+              type: 'ADD_UNPACK_PARSER',
+              query,
+            },
           },
-        },
-      });
+        });
+      } else {
+        hints.push({
+          type: 'ADD_JSON_PARSER',
+          label: 'Selected log stream selector has JSON formatted logs.',
+          fix: {
+            title: 'add json parser',
+            label: 'Consider using JSON parser.',
+            action: {
+              type: 'ADD_JSON_PARSER',
+              query,
+            },
+          },
+        });
+      }
     }
 
     if (hasLogfmt) {
@@ -69,6 +90,23 @@ export function getQueryHints(query: string, series: DataFrame[]): QueryHint[] {
         });
       }
     }
+
+    const hasLabelFilter = isQueryWithLabelFilter(query);
+
+    if (!hasLabelFilter) {
+      hints.push({
+        type: 'ADD_LABEL_FILTER',
+        label: 'Consider filtering logs by their label and value.',
+        fix: {
+          title: 'add label filter',
+          label: '',
+          action: {
+            type: 'ADD_LABEL_FILTER',
+            query,
+          },
+        },
+      });
+    }
   }
 
   const queryWithLabelFormat = isQueryWithLabelFormat(query);
@@ -95,6 +133,23 @@ export function getQueryHints(query: string, series: DataFrame[]): QueryHint[] {
         },
       });
     }
+  }
+
+  const hasLineFilter = isQueryWithLineFilter(query);
+
+  if (!hasLineFilter) {
+    hints.push({
+      type: 'ADD_LINE_FILTER',
+      label: 'Consider filtering logs for specific string.',
+      fix: {
+        title: 'add line filter',
+        label: '',
+        action: {
+          type: 'ADD_LINE_FILTER',
+          query,
+        },
+      },
+    });
   }
 
   return hints;

@@ -1,9 +1,10 @@
 import { css } from '@emotion/css';
-import React, { FC } from 'react';
+import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { ScalarDimensionConfig } from '@grafana/schema';
 import { useStyles2 } from '@grafana/ui';
-import { DimensionContext, ScalarDimensionConfig } from 'app/features/dimensions';
+import { DimensionContext } from 'app/features/dimensions';
 import { ScalarDimensionEditor } from 'app/features/dimensions/editors';
 
 import { CanvasElementItem, CanvasElementProps, defaultBgColor } from '../element';
@@ -16,10 +17,8 @@ interface DroneSideConfig {
   pitchAngle?: ScalarDimensionConfig;
 }
 
-const DroneSideDisplay: FC<CanvasElementProps<DroneSideConfig, DroneSideData>> = (props) => {
+const DroneSideDisplay = ({ data }: CanvasElementProps<DroneSideConfig, DroneSideData>) => {
   const styles = useStyles2(getStyles);
-
-  const { data } = props;
 
   const droneSidePitchTransformStyle = `rotate(${data?.pitchAngle ? data.pitchAngle : 0}deg)`;
 
@@ -69,7 +68,7 @@ const DroneSideDisplay: FC<CanvasElementProps<DroneSideConfig, DroneSideData>> =
   );
 };
 
-export const droneSideItem: CanvasElementItem<any, any> = {
+export const droneSideItem: CanvasElementItem = {
   id: 'droneSide',
   name: 'Drone Side',
   description: 'Drone Side',

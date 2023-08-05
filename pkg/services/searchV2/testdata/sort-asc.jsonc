@@ -2,6 +2,10 @@
 //  
 //  Frame[0] {
 //      "type": "search-results",
+//      "typeVersion": [
+//          0,
+//          0
+//      ],
 //      "custom": {
 //          "count": 2,
 //          "sortBy": "test"
@@ -14,8 +18,8 @@
 //  | Labels:        | Labels:        | Labels:        | Labels:          | Labels:        | Labels:                  | Labels:                 | Labels:        | Labels:         |
 //  | Type: []string | Type: []string | Type: []string | Type: []string   | Type: []string | Type: []*json.RawMessage | Type: []json.RawMessage | Type: []string | Type: []float64 |
 //  +----------------+----------------+----------------+------------------+----------------+--------------------------+-------------------------+----------------+-----------------+
-//  | dashboard      | 1              | a-test         |                  | /pfix/d/1/     | null                     | []                      |                | 0               |
-//  | dashboard      | 2              | z-test         |                  | /pfix/d/2/     | null                     | []                      |                | 1               |
+//  | dashboard      | 1              | a-test         |                  | /pfix/d/1/     | null                     | []                      | general        | 0               |
+//  | dashboard      | 2              | z-test         |                  | /pfix/d/2/     | null                     | []                      | general        | 1               |
 //  +----------------+----------------+----------------+------------------+----------------+--------------------------+-------------------------+----------------+-----------------+
 //  
 //  
@@ -28,6 +32,10 @@
         "name": "Query results",
         "meta": {
           "type": "search-results",
+          "typeVersion": [
+            0,
+            0
+          ],
           "custom": {
             "count": 2,
             "sortBy": "test"
@@ -139,8 +147,8 @@
             []
           ],
           [
-            "",
-            ""
+            "general",
+            "general"
           ],
           [
             0,

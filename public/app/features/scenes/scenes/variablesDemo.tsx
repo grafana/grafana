@@ -1,20 +1,26 @@
-import { VizPanel } from '../components';
-import { Scene, EmbeddedScene } from '../components/Scene';
-import { SceneCanvasText } from '../components/SceneCanvasText';
-import { SceneSubMenu } from '../components/SceneSubMenu';
-import { SceneTimePicker } from '../components/SceneTimePicker';
-import { SceneFlexLayout } from '../components/layout/SceneFlexLayout';
-import { SceneTimeRange } from '../core/SceneTimeRange';
-import { VariableValueSelectors } from '../variables/components/VariableValueSelectors';
-import { SceneVariableSet } from '../variables/sets/SceneVariableSet';
-import { CustomVariable } from '../variables/variants/CustomVariable';
-import { DataSourceVariable } from '../variables/variants/DataSourceVariable';
-import { TestVariable } from '../variables/variants/TestVariable';
+import {
+  SceneCanvasText,
+  SceneTimePicker,
+  SceneFlexLayout,
+  SceneTimeRange,
+  VariableValueSelectors,
+  SceneVariableSet,
+  CustomVariable,
+  DataSourceVariable,
+  TestVariable,
+  NestedScene,
+  SceneRefreshPicker,
+  TextBoxVariable,
+  SceneFlexItem,
+  PanelBuilders,
+} from '@grafana/scenes';
+
+import { DashboardScene } from '../dashboard/DashboardScene';
 
 import { getQueryRunnerWithRandomWalkQuery } from './queries';
 
-export function getVariablesDemo(standalone: boolean): Scene {
-  const state = {
+export function getVariablesDemo(): DashboardScene {
+  return new DashboardScene({
     title: 'Variables',
     $variables: new SceneVariableSet({
       variables: [
@@ -50,44 +56,86 @@ export function getVariablesDemo(standalone: boolean): Scene {
         }),
         new DataSourceVariable({
           name: 'ds',
-          query: 'testdata',
+          pluginId: 'testdata',
+        }),
+        new TextBoxVariable({
+          name: 'textbox',
+          value: 'default value',
         }),
       ],
     }),
     body: new SceneFlexLayout({
       direction: 'row',
       children: [
-        new SceneFlexLayout({
-          children: [
-            new VizPanel({
-              pluginId: 'timeseries',
-              title: 'handler: $handler',
-              $data: getQueryRunnerWithRandomWalkQuery({
-                alias: 'handler: $handler',
+        new SceneFlexItem({
+          body: new SceneFlexLayout({
+            direction: 'column',
+            children: [
+              new SceneFlexItem({
+                body: new SceneFlexLayout({
+                  children: [
+                    new SceneFlexItem({
+                      body: PanelBuilders.timeseries()
+                        .setTitle('handler: $handler')
+                        .setData(
+                          getQueryRunnerWithRandomWalkQuery({
+                            alias: 'handler: $handler',
+                          })
+                        )
+                        .build(),
+                    }),
+                    new SceneFlexItem({
+                      body: new SceneCanvasText({
+                        text: 'Text: ${textbox}',
+                        fontSize: 20,
+                        align: 'center',
+                      }),
+                    }),
+                    new SceneFlexItem({
+                      width: '40%',
+                      body: new SceneCanvasText({
+                        text: 'server: ${server} pod:${pod}',
+                        fontSize: 20,
+                        align: 'center',
+                      }),
+                    }),
+                  ],
+                }),
               }),
-            }),
-            new SceneCanvasText({
-              placement: { width: '40%' },
-              text: 'server: ${server} pod:${pod}',
-              fontSize: 20,
-              align: 'center',
-            }),
-          ],
+              new SceneFlexItem({
+                body: new NestedScene({
+                  title: 'Collapsable inner scene',
+                  canCollapse: true,
+                  body: new SceneFlexLayout({
+                    direction: 'row',
+                    children: [
+                      new SceneFlexItem({
+                        body: PanelBuilders.timeseries()
+                          .setTitle('handler: $handler')
+                          .setData(
+                            getQueryRunnerWithRandomWalkQuery({
+                              alias: 'handler: $handler',
+                            })
+                          )
+                          .build(),
+                      }),
+                    ],
+                  }),
+                }),
+              }),
+            ],
+          }),
         }),
       ],
     }),
     $timeRange: new SceneTimeRange(),
-    actions: [new SceneTimePicker({})],
-    subMenu: new SceneSubMenu({
-      children: [new VariableValueSelectors({})],
-    }),
-  };
-
-  return standalone ? new Scene(state) : new EmbeddedScene(state);
+    actions: [new SceneTimePicker({}), new SceneRefreshPicker({})],
+    controls: [new VariableValueSelectors({})],
+  });
 }
 
-export function getVariablesDemoWithAll(): Scene {
-  const scene = new Scene({
+export function getVariablesDemoWithAll(): DashboardScene {
+  return new DashboardScene({
     title: 'Variables with All values',
     $variables: new SceneVariableSet({
       variables: [
@@ -128,31 +176,28 @@ export function getVariablesDemoWithAll(): Scene {
     body: new SceneFlexLayout({
       direction: 'row',
       children: [
-        new SceneFlexLayout({
-          children: [
-            new VizPanel({
-              pluginId: 'timeseries',
-              title: 'handler: $handler',
-              $data: getQueryRunnerWithRandomWalkQuery({
+        new SceneFlexItem({
+          body: PanelBuilders.timeseries()
+            .setTitle('handler: $handler')
+            .setData(
+              getQueryRunnerWithRandomWalkQuery({
                 alias: 'handler: $handler',
-              }),
-            }),
-            new SceneCanvasText({
-              placement: { width: '40%' },
-              text: 'server: ${server} pod:${pod}',
-              fontSize: 20,
-              align: 'center',
-            }),
-          ],
+              })
+            )
+            .build(),
+        }),
+        new SceneFlexItem({
+          width: '40%',
+          body: new SceneCanvasText({
+            text: 'server: ${server} pod:${pod}',
+            fontSize: 20,
+            align: 'center',
+          }),
         }),
       ],
     }),
     $timeRange: new SceneTimeRange(),
-    actions: [new SceneTimePicker({})],
-    subMenu: new SceneSubMenu({
-      children: [new VariableValueSelectors({})],
-    }),
+    actions: [new SceneTimePicker({}), new SceneRefreshPicker({})],
+    controls: [new VariableValueSelectors({})],
   });
-
-  return scene;
 }

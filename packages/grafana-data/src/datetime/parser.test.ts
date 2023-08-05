@@ -1,7 +1,12 @@
-import { systemDateFormats } from './formats';
+import { systemDateFormats, SystemDateFormatsState } from './formats';
 import { dateTimeParse } from './parser';
 
 describe('dateTimeParse', () => {
+  it('should parse using the systems configured timezone', () => {
+    const date = dateTimeParse('2020-03-02 15:00:22');
+    expect(date.format()).toEqual('2020-03-02T15:00:22-05:00');
+  });
+
   it('should be able to parse using default format', () => {
     const date = dateTimeParse('2020-03-02 15:00:22', { timeZone: 'utc' });
     expect(date.format()).toEqual('2020-03-02T15:00:22Z');
@@ -10,7 +15,7 @@ describe('dateTimeParse', () => {
   it('should be able to parse using default format', () => {
     systemDateFormats.update({
       fullDate: 'MMMM D, YYYY, h:mm:ss a',
-      interval: {} as any,
+      interval: {} as SystemDateFormatsState['interval'],
       useBrowserLocale: false,
     });
 

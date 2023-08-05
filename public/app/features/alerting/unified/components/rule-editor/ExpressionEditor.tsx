@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { noop } from 'lodash';
-import React, { FC, useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { useAsync } from 'react-use';
 
 import { CoreApp, DataQuery, DataSourcePluginContextProvider, GrafanaTheme2, LoadingState } from '@grafana/data';
@@ -16,9 +16,15 @@ export interface ExpressionEditorProps {
   value?: string;
   onChange: (value: string) => void;
   dataSourceName: string; // will be a prometheus or loki datasource
+  showPreviewAlertsButton: boolean;
 }
 
-export const ExpressionEditor: FC<ExpressionEditorProps> = ({ value, onChange, dataSourceName }) => {
+export const ExpressionEditor = ({
+  value,
+  onChange,
+  dataSourceName,
+  showPreviewAlertsButton = true,
+}: ExpressionEditorProps) => {
   const styles = useStyles2(getStyles);
 
   const { mapToValue, mapToQuery } = useQueryMappers(dataSourceName);
@@ -77,17 +83,23 @@ export const ExpressionEditor: FC<ExpressionEditorProps> = ({ value, onChange, d
           datasource={dataSource}
         />
       </DataSourcePluginContextProvider>
-      <div className={styles.preview}>
-        <Button type="button" onClick={onRunQueriesClick} disabled={alertPreview?.data.state === LoadingState.Loading}>
-          Preview alerts
-        </Button>
-        {previewLoaded && !previewHasAlerts && (
-          <Alert title="Alerts preview" severity="info" className={styles.previewAlert}>
-            There are no firing alerts for your query.
-          </Alert>
-        )}
-        {previewHasAlerts && <CloudAlertPreview preview={previewDataFrame} />}
-      </div>
+      {showPreviewAlertsButton && (
+        <div className={styles.preview}>
+          <Button
+            type="button"
+            onClick={onRunQueriesClick}
+            disabled={alertPreview?.data.state === LoadingState.Loading}
+          >
+            Preview alerts
+          </Button>
+          {previewLoaded && !previewHasAlerts && (
+            <Alert title="Alerts preview" severity="info" className={styles.previewAlert}>
+              There are no firing alerts for your query.
+            </Alert>
+          )}
+          {previewHasAlerts && <CloudAlertPreview preview={previewDataFrame} />}
+        </div>
+      )}
     </>
   );
 };
@@ -107,7 +119,7 @@ type QueryMappers<T extends DataQuery = DataQuery> = {
   mapToQuery: (existing: T, value: string | undefined) => T;
 };
 
-function useQueryMappers(dataSourceName: string): QueryMappers {
+export function useQueryMappers(dataSourceName: string): QueryMappers {
   return useMemo(() => {
     const settings = getDataSourceSrv().getInstanceSettings(dataSourceName);
 

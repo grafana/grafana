@@ -21,6 +21,10 @@ export type Props = {
   onChange: (value: MetricStat) => void;
 };
 
+const percentileSyntaxRE = /^(p|tm|tc|ts|wm)\d{2}(?:\.\d{1,2})?$/;
+const boundariesInnerParenthesesSyntax = `\\d*(\\.\\d+)?%?:\\d*(\\.\\d+)?%?`;
+const boundariesSyntaxRE = new RegExp(`^(PR|TM|TC|TS|WM)\\((${boundariesInnerParenthesesSyntax})\\)$`);
+
 export function MetricStatEditor({
   refId,
   metricStat,
@@ -31,10 +35,10 @@ export function MetricStatEditor({
   const namespaces = useNamespaces(datasource);
   const metrics = useMetrics(datasource, metricStat);
   const dimensionKeys = useDimensionKeys(datasource, { ...metricStat, dimensionFilters: metricStat.dimensions });
-  const accountState = useAccountOptions(datasource.api, metricStat.region);
+  const accountState = useAccountOptions(datasource.resources, metricStat.region);
 
   useEffect(() => {
-    datasource.api.isMonitoringAccount(metricStat.region).then((isMonitoringAccount) => {
+    datasource.resources.isMonitoringAccount(metricStat.region).then((isMonitoringAccount) => {
       if (isMonitoringAccount && !accountState.loading && accountState.value?.length && !metricStat.accountId) {
         onChange({ ...metricStat, accountId: 'all' });
       }
@@ -43,7 +47,7 @@ export function MetricStatEditor({
         onChange({ ...metricStat, accountId: undefined });
       }
     });
-  }, [accountState, metricStat, onChange, datasource.api]);
+  }, [accountState, metricStat, onChange, datasource.resources]);
 
   const onNamespaceChange = async (metricStat: MetricStat) => {
     const validatedQuery = await validateMetricName(metricStat);
@@ -55,7 +59,7 @@ export function MetricStatEditor({
     if (!metricName) {
       return metricStat;
     }
-    await datasource.api.getMetrics({ namespace, region }).then((result: Array<SelectableValue<string>>) => {
+    await datasource.resources.getMetrics({ namespace, region }).then((result: Array<SelectableValue<string>>) => {
       if (!result.find((metric) => metric.value === metricName)) {
         metricName = '';
       }
@@ -116,8 +120,8 @@ export function MetricStatEditor({
                 if (
                   !statistic ||
                   (!standardStatistics.includes(statistic) &&
-                    !/^p\d{2}(?:\.\d{1,2})?$/.test(statistic) &&
-                    !statistic.startsWith('$'))
+                    !(percentileSyntaxRE.test(statistic) || boundariesSyntaxRE.test(statistic)) &&
+                    !datasource.templateSrv.containsTemplate(statistic))
                 ) {
                   return;
                 }

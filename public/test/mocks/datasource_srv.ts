@@ -3,6 +3,7 @@ import { Observable } from 'rxjs';
 import {
   DataQueryRequest,
   DataQueryResponse,
+  TestDataSourceResponse,
   DataSourceApi,
   DataSourceInstanceSettings,
   DataSourcePluginMeta,
@@ -11,7 +12,10 @@ import {
 } from '@grafana/data';
 
 export class DatasourceSrvMock {
-  constructor(private defaultDS: DataSourceApi, private datasources: { [name: string]: DataSourceApi }) {
+  constructor(
+    private defaultDS: DataSourceApi,
+    private datasources: { [name: string]: DataSourceApi }
+  ) {
     //
   }
 
@@ -31,7 +35,12 @@ export class DatasourceSrvMock {
 export class MockDataSourceApi extends DataSourceApi {
   result: DataQueryResponse = { data: [] };
 
-  constructor(name?: string, result?: DataQueryResponse, meta?: any, private error: string | null = null) {
+  constructor(
+    name?: string,
+    result?: DataQueryResponse,
+    meta?: DataSourcePluginMeta,
+    public error: string | null = null
+  ) {
     super({ name: name ? name : 'MockDataSourceApi' } as DataSourceInstanceSettings);
     if (result) {
       this.result = result;
@@ -52,15 +61,26 @@ export class MockDataSourceApi extends DataSourceApi {
     });
   }
 
-  testDatasource() {
-    return Promise.resolve();
+  testDatasource(): Promise<TestDataSourceResponse> {
+    return Promise.resolve({ message: '', status: '' });
+  }
+
+  setupMixed(value: boolean) {
+    this.meta = this.meta || {};
+    this.meta.mixed = value;
+    return this;
   }
 }
 
 export class MockObservableDataSourceApi extends DataSourceApi {
   results: DataQueryResponse[] = [{ data: [] }];
 
-  constructor(name?: string, results?: DataQueryResponse[], meta?: any, private error: string | null = null) {
+  constructor(
+    name?: string,
+    results?: DataQueryResponse[],
+    meta?: DataSourcePluginMeta,
+    private error: string | null = null
+  ) {
     super({ name: name ? name : 'MockDataSourceApi' } as DataSourceInstanceSettings);
 
     if (results) {
@@ -83,7 +103,7 @@ export class MockObservableDataSourceApi extends DataSourceApi {
     });
   }
 
-  testDatasource() {
-    return Promise.resolve();
+  testDatasource(): Promise<TestDataSourceResponse> {
+    return Promise.resolve({ message: '', status: '' });
   }
 }

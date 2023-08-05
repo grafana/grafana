@@ -2,12 +2,13 @@ import { dateTime } from '../datetime/moment_wrapper';
 import { DataFrameDTO, FieldType, TableData, TimeSeries } from '../types/index';
 
 import { ArrayDataFrame } from './ArrayDataFrame';
-import { MutableDataFrame } from './MutableDataFrame';
 import {
+  createDataFrame,
   guessFieldTypeFromValue,
   guessFieldTypes,
   isDataFrame,
   isTableData,
+  reverseDataFrame,
   sortDataFrame,
   toDataFrame,
   toLegacyResponseData,
@@ -83,10 +84,9 @@ describe('toDataFrame', () => {
       { a: 1, b: 2 },
       { a: 3, b: 4 },
     ];
-    const array = new ArrayDataFrame(orig);
+    const array = new ArrayDataFrame(orig); // will return a simple DataFrame
     const frame = toDataFrame(array);
     expect(frame).toEqual(array);
-    expect(frame instanceof ArrayDataFrame).toEqual(true);
     expect(frame.length).toEqual(orig.length);
     expect(frame.fields.map((f) => f.name)).toEqual(['a', 'b']);
   });
@@ -131,7 +131,7 @@ describe('toDataFrame', () => {
   });
 
   it('Guess Column Types from series', () => {
-    const series = new MutableDataFrame({
+    const series = createDataFrame({
       fields: [
         { name: 'A (number)', values: [123, null] },
         { name: 'B (strings)', values: [null, 'Hello'] },
@@ -198,7 +198,7 @@ describe('toDataFrame', () => {
       },
     };
     const dataFrame = toDataFrame(msg);
-    expect(dataFrame.fields.map((f) => ({ [f.name]: f.values.toArray() }))).toMatchInlineSnapshot(`
+    expect(dataFrame.fields.map((f) => ({ [f.name]: f.values }))).toMatchInlineSnapshot(`
       [
         {
           "First": [
@@ -361,19 +361,45 @@ describe('sorted DataFrame', () => {
       { name: 'fist', type: FieldType.time, values: [1, 2, 3] },
       { name: 'second', type: FieldType.string, values: ['a', 'b', 'c'] },
       { name: 'third', type: FieldType.number, values: [2000, 3000, 1000] },
+      { name: 'fourth', type: FieldType.time, values: [1, 2, 3], nanos: [10, 20, 30] },
     ],
   });
   it('Should sort numbers', () => {
     const sorted = sortDataFrame(frame, 0, true);
     expect(sorted.length).toEqual(3);
-    expect(sorted.fields[0].values.toArray()).toEqual([3, 2, 1]);
-    expect(sorted.fields[1].values.toArray()).toEqual(['c', 'b', 'a']);
+    expect(sorted.fields[0].values).toEqual([3, 2, 1]);
+    expect(sorted.fields[0].nanos).toBeUndefined();
+    expect(sorted.fields[1].values).toEqual(['c', 'b', 'a']);
+    expect(sorted.fields[1].nanos).toBeUndefined();
+    expect(sorted.fields[3].values).toEqual([3, 2, 1]);
+    expect(sorted.fields[3].nanos).toEqual([30, 20, 10]);
   });
 
   it('Should sort strings', () => {
     const sorted = sortDataFrame(frame, 1, true);
     expect(sorted.length).toEqual(3);
-    expect(sorted.fields[0].values.toArray()).toEqual([3, 2, 1]);
-    expect(sorted.fields[1].values.toArray()).toEqual(['c', 'b', 'a']);
+    expect(sorted.fields[0].values).toEqual([3, 2, 1]);
+    expect(sorted.fields[0].nanos).toBeUndefined();
+    expect(sorted.fields[1].values).toEqual(['c', 'b', 'a']);
+    expect(sorted.fields[1].nanos).toBeUndefined();
+    expect(sorted.fields[3].values).toEqual([3, 2, 1]);
+    expect(sorted.fields[3].nanos).toEqual([30, 20, 10]);
+  });
+});
+
+describe('reverse DataFrame', () => {
+  const frame = toDataFrame({
+    fields: [
+      { name: 'fist', type: FieldType.time, values: [1, 2, 3], nanos: [10, 20, 30] },
+      { name: 'third', type: FieldType.string, values: ['a', 'b', 'c'] },
+    ],
+  });
+  it('should reverse dataframe', () => {
+    const rev = reverseDataFrame(frame);
+    expect(rev.length).toEqual(3);
+    expect(rev.fields[0].values).toEqual([3, 2, 1]);
+    expect(rev.fields[0].nanos).toEqual([30, 20, 10]);
+    expect(rev.fields[1].values).toEqual(['c', 'b', 'a']);
+    expect(rev.fields[1].nanos).toBeUndefined();
   });
 });

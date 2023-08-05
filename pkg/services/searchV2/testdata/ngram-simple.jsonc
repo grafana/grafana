@@ -2,6 +2,10 @@
 //  
 //  Frame[0] {
 //      "type": "search-results",
+//      "typeVersion": [
+//          0,
+//          0
+//      ],
 //      "custom": {
 //          "count": 2
 //      }
@@ -13,8 +17,8 @@
 //  | Labels:        | Labels:        | Labels:          | Labels:          | Labels:        | Labels:                  | Labels:                 | Labels:        |
 //  | Type: []string | Type: []string | Type: []string   | Type: []string   | Type: []string | Type: []*json.RawMessage | Type: []json.RawMessage | Type: []string |
 //  +----------------+----------------+------------------+------------------+----------------+--------------------------+-------------------------+----------------+
-//  | dashboard      | 1              | heat-torkel      |                  | /pfix/d/1/     | null                     | []                      |                |
-//  | dashboard      | 2              | topology heatmap |                  | /pfix/d/2/     | null                     | []                      |                |
+//  | dashboard      | 1              | heat-torkel      |                  | /pfix/d/1/     | null                     | []                      | general        |
+//  | dashboard      | 2              | topology heatmap |                  | /pfix/d/2/     | null                     | []                      | general        |
 //  +----------------+----------------+------------------+------------------+----------------+--------------------------+-------------------------+----------------+
 //  
 //  
@@ -27,6 +31,10 @@
         "name": "Query results",
         "meta": {
           "type": "search-results",
+          "typeVersion": [
+            0,
+            0
+          ],
           "custom": {
             "count": 2
           }
@@ -130,8 +138,8 @@
             []
           ],
           [
-            "",
-            ""
+            "general",
+            "general"
           ]
         ]
       }

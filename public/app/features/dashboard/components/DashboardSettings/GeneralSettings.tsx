@@ -2,15 +2,13 @@ import React, { useState } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { TimeZone } from '@grafana/data';
-import { config } from '@grafana/runtime';
 import { CollapsableSection, Field, Input, RadioButtonGroup, TagsInput } from '@grafana/ui';
-import { Page } from 'app/core/components/PageNew/Page';
+import { Page } from 'app/core/components/Page/Page';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import { updateTimeZoneDashboard, updateWeekStartDashboard } from 'app/features/dashboard/state/actions';
 
 import { DeleteDashboardButton } from '../DeleteDashboard/DeleteDashboardButton';
 
-import { PreviewSettings } from './PreviewSettings';
 import { TimePickerSettings } from './TimePickerSettings';
 import { SettingsPageProps } from './types';
 
@@ -30,10 +28,11 @@ export function GeneralSettingsUnconnected({
 }: Props): JSX.Element {
   const [renderCounter, setRenderCounter] = useState(0);
 
-  const onFolderChange = (folder: { uid: string; title: string }) => {
-    dashboard.meta.folderUid = folder.uid;
-    dashboard.meta.folderTitle = folder.title;
+  const onFolderChange = (newUID: string, newTitle: string) => {
+    dashboard.meta.folderUid = newUID;
+    dashboard.meta.folderTitle = newTitle;
     dashboard.meta.hasUnsavedFolderChange = true;
+    setRenderCounter(renderCounter + 1);
   };
 
   const onBlur = (event: React.FocusEvent<HTMLInputElement>) => {
@@ -105,15 +104,17 @@ export function GeneralSettingsUnconnected({
           <Field label="Tags">
             <TagsInput id="tags-input" tags={dashboard.tags} onChange={onTagsChange} width={40} />
           </Field>
+
           <Field label="Folder">
             <FolderPicker
-              inputId="dashboard-folder-input"
-              initialTitle={dashboard.meta.folderTitle}
-              initialFolderUid={dashboard.meta.folderUid}
+              value={dashboard.meta.folderUid}
               onChange={onFolderChange}
-              enableCreateNew={true}
+              // TODO deprecated props that can be removed once NestedFolderPicker is enabled by default
+              initialTitle={dashboard.meta.folderTitle}
+              inputId="dashboard-folder-input"
+              enableCreateNew
               dashboardId={dashboard.id}
-              skipInitialLoad={true}
+              skipInitialLoad
             />
           </Field>
 
@@ -124,10 +125,6 @@ export function GeneralSettingsUnconnected({
             <RadioButtonGroup value={dashboard.editable} options={editableOptions} onChange={onEditableChange} />
           </Field>
         </div>
-
-        {config.featureToggles.dashboardPreviews && config.featureToggles.dashboardPreviewsAdmin && (
-          <PreviewSettings uid={dashboard.uid} />
-        )}
 
         <TimePickerSettings
           onTimeZoneChange={onTimeZoneChange}

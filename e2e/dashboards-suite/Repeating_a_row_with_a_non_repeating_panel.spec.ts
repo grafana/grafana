@@ -1,5 +1,6 @@
 import { e2e } from '@grafana/e2e';
 const PAGE_UNDER_TEST = 'k3PEoCpnk/repeating-a-row-with-a-non-repeating-panel-and-horizontal-repeating-panel';
+const DASHBOARD_NAME = 'Repeating a row with a non-repeating panel and horizontal repeating panel';
 
 describe('Repeating a row with repeated panels and a non-repeating panel', () => {
   beforeEach(() => {
@@ -8,6 +9,7 @@ describe('Repeating a row with repeated panels and a non-repeating panel', () =>
 
   it('should be able to collapse and expand a repeated row without losing panels', () => {
     e2e.flows.openDashboard({ uid: PAGE_UNDER_TEST });
+    e2e().contains(DASHBOARD_NAME).should('be.visible');
 
     const panelsToCheck = [
       'Row 2 non-repeating panel',

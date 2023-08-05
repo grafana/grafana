@@ -45,7 +45,9 @@ func TestGetDefaults(t *testing.T) {
 			Theme:           "light",
 			Timezone:        "UTC",
 			HomeDashboardID: 0,
-			JSONData:        &pref.PreferenceJSONData{},
+			JSONData: &pref.PreferenceJSONData{
+				Language: "en-US",
+			},
 		}
 		if diff := cmp.Diff(expected, preference); diff != "" {
 			t.Fatalf("Result mismatch (-want +got):\n%s", diff)
@@ -56,32 +58,6 @@ func TestGetDefaults(t *testing.T) {
 		query := &pref.GetPreferenceWithDefaultsQuery{OrgID: 1}
 		preference, err := prefService.GetWithDefaults(context.Background(), query)
 		require.NoError(t, err)
-		expected := &pref.Preference{
-			WeekStart:       &weekStart,
-			Theme:           "light",
-			Timezone:        "UTC",
-			HomeDashboardID: 0,
-			JSONData:        &pref.PreferenceJSONData{},
-		}
-		if diff := cmp.Diff(expected, preference); diff != "" {
-			t.Fatalf("Result mismatch (-want +got):\n%s", diff)
-		}
-	})
-}
-
-func TestGetDefaultsWithI18nFeatureFlag(t *testing.T) {
-	prefService := &Service{
-		store:    newFake(),
-		cfg:      setting.NewCfg(),
-		features: featuremgmt.WithFeatures(featuremgmt.FlagInternationalization),
-	}
-	weekStart := ""
-	prefService.cfg.DefaultLanguage = "en-US"
-	prefService.cfg.DefaultTheme = "light"
-	prefService.cfg.DateFormats.DefaultTimezone = "UTC"
-
-	t.Run("GetDefaults", func(t *testing.T) {
-		preference := prefService.GetDefaults()
 		expected := &pref.Preference{
 			WeekStart:       &weekStart,
 			Theme:           "light",
@@ -174,51 +150,15 @@ func TestGetDefaults_JSONData(t *testing.T) {
 	queryPreference := pref.QueryHistoryPreference{
 		HomeTab: "hometab",
 	}
-	userNavbarPreferences := pref.NavbarPreference{
-		SavedItems: []pref.NavLink{{
-			ID:   "explore",
-			Text: "Explore",
-			Url:  "/explore",
-		}},
-	}
-	orgNavbarPreferences := pref.NavbarPreference{
-		SavedItems: []pref.NavLink{{
-			ID:   "alerting",
-			Text: "Alerting",
-			Url:  "/alerting",
-		}},
-	}
-	team1NavbarPreferences := pref.NavbarPreference{
-		SavedItems: []pref.NavLink{{
-			ID:   "dashboards",
-			Text: "Dashboards",
-			Url:  "/dashboards",
-		}},
-	}
-	team2NavbarPreferences := pref.NavbarPreference{
-		SavedItems: []pref.NavLink{{
-			ID:   "home",
-			Text: "Home",
-			Url:  "/home",
-		}},
-	}
 	userPreferencesJsonData := pref.PreferenceJSONData{
-		Navbar:       userNavbarPreferences,
 		QueryHistory: queryPreference,
 	}
-	orgPreferencesJsonData := pref.PreferenceJSONData{
-		Navbar: orgNavbarPreferences,
-	}
+	orgPreferencesJsonData := pref.PreferenceJSONData{}
 	orgPreferencesWithLanguageJsonData := pref.PreferenceJSONData{
-		Navbar:   orgNavbarPreferences,
 		Language: "en-GB",
 	}
-	team2PreferencesJsonData := pref.PreferenceJSONData{
-		Navbar: team2NavbarPreferences,
-	}
-	team1PreferencesJsonData := pref.PreferenceJSONData{
-		Navbar: team1NavbarPreferences,
-	}
+	team2PreferencesJsonData := pref.PreferenceJSONData{}
+	team1PreferencesJsonData := pref.PreferenceJSONData{}
 
 	t.Run("users have precedence over org", func(t *testing.T) {
 		prefService := &Service{
@@ -274,7 +214,6 @@ func TestGetDefaults_JSONData(t *testing.T) {
 			WeekStart: &weekStart,
 			JSONData: &pref.PreferenceJSONData{
 				Language:     "en-GB",
-				Navbar:       userNavbarPreferences,
 				QueryHistory: queryPreference,
 			},
 		}, preference)

@@ -178,7 +178,7 @@ function cleanDashboardFromIgnoredChanges(dashData: Dashboard) {
 
   // ignore time and refresh
   dash.time = 0;
-  dash.refresh = 0;
+  dash.refresh = '';
   dash.schemaVersion = 0;
   dash.timezone = 0;
 

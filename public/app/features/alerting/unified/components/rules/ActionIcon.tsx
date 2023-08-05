@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React from 'react';
 
 import { IconName, Tooltip, LinkButton, Button } from '@grafana/ui';
 import { PopoverContent, TooltipPlacement } from '@grafana/ui/src/components/Tooltip';
@@ -14,7 +14,7 @@ interface Props {
   'data-testid'?: string;
 }
 
-export const ActionIcon: FC<Props> = ({
+export const ActionIcon = ({
   tooltip,
   icon,
   to,
@@ -23,7 +23,7 @@ export const ActionIcon: FC<Props> = ({
   className,
   tooltipPlacement = 'top',
   ...rest
-}) => {
+}: Props) => {
   const ariaLabel = typeof tooltip === 'string' ? tooltip : undefined;
 
   return (

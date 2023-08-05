@@ -13,10 +13,10 @@ import {
   LiveChannelLeaveEvent,
   LiveChannelScope,
   LoadingState,
+  StreamingDataFrame,
 } from '@grafana/data';
 import { StreamingFrameAction } from '@grafana/runtime';
 
-import { StreamingDataFrame } from '../data/StreamingDataFrame';
 import { isStreamingResponseData, StreamingResponseData, StreamingResponseDataType } from '../data/utils';
 
 import { DataStreamHandlerDeps, LiveDataStream } from './LiveDataStream';
@@ -300,17 +300,13 @@ describe('LiveDataStream', () => {
           config: {},
           name: 'time',
           type: 'time',
-          values: {
-            buffer: [100, 101],
-          },
+          values: [100, 101],
         },
         {
           config: {},
           name: 'b',
           type: 'number',
-          values: {
-            buffer: [1, 2],
-          },
+          values: [1, 2],
         },
       ]);
       expect(deserializedFrame.length).toEqual(dataFrameJsons.schema1().data.values[0].length);
@@ -529,17 +525,13 @@ describe('LiveDataStream', () => {
           config: {},
           name: 'time',
           type: 'time',
-          values: {
-            buffer: [100, 101],
-          },
+          values: [100, 101],
         },
         {
           config: {},
           name: 'b',
           type: 'number',
-          values: {
-            buffer: [1, 2],
-          },
+          values: [1, 2],
         },
       ]);
       expect(deserializedFrame.length).toEqual(dataFrameJsons.schema1().data.values[0].length);

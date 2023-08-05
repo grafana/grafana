@@ -3,11 +3,10 @@ import React, { SyntheticEvent } from 'react';
 import { Provider } from 'react-redux';
 
 import { SelectableValue } from '@grafana/data';
-import { EventsWithValidation } from '@grafana/ui';
 
 import { configureStore } from '../../../../store/configureStore';
 
-import { getValueFromEventItem, promSettingsValidationEvents, PromSettings } from './PromSettings';
+import { getValueFromEventItem, PromSettings } from './PromSettings';
 import { createDefaultConfigOptions } from './mocks';
 
 describe('PromSettings', () => {
@@ -38,58 +37,6 @@ describe('PromSettings', () => {
     });
   });
 
-  describe('promSettingsValidationEvents', () => {
-    const validationEvents = promSettingsValidationEvents;
-
-    it('should have one event handlers', () => {
-      expect(Object.keys(validationEvents).length).toEqual(1);
-    });
-
-    it('should have an onBlur handler', () => {
-      expect(validationEvents.hasOwnProperty(EventsWithValidation.onBlur)).toBe(true);
-    });
-
-    it('should have one rule', () => {
-      expect(validationEvents[EventsWithValidation.onBlur].length).toEqual(1);
-    });
-
-    describe('when calling the rule with an empty string', () => {
-      it('then it should return true', () => {
-        expect(validationEvents[EventsWithValidation.onBlur][0].rule('')).toBe(true);
-      });
-    });
-
-    it.each`
-      value    | expected
-      ${'1ms'} | ${true}
-      ${'1M'}  | ${true}
-      ${'1w'}  | ${true}
-      ${'1d'}  | ${true}
-      ${'1h'}  | ${true}
-      ${'1m'}  | ${true}
-      ${'1s'}  | ${true}
-      ${'1y'}  | ${true}
-    `(
-      "when calling the rule with correct formatted value: '$value' then result should be '$expected'",
-      ({ value, expected }) => {
-        expect(validationEvents[EventsWithValidation.onBlur][0].rule(value)).toBe(expected);
-      }
-    );
-
-    it.each`
-      value     | expected
-      ${'1 ms'} | ${false}
-      ${'1x'}   | ${false}
-      ${' '}    | ${false}
-      ${'w'}    | ${false}
-      ${'1.0s'} | ${false}
-    `(
-      "when calling the rule with incorrect formatted value: '$value' then result should be '$expected'",
-      ({ value, expected }) => {
-        expect(validationEvents[EventsWithValidation.onBlur][0].rule(value)).toBe(expected);
-      }
-    );
-  });
   describe('PromSettings component', () => {
     const defaultProps = createDefaultConfigOptions();
 

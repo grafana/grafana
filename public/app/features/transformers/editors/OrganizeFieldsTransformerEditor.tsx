@@ -8,6 +8,7 @@ import {
   standardTransformers,
   TransformerRegistryItem,
   TransformerUIProps,
+  TransformerCategory,
 } from '@grafana/data';
 import { createOrderFieldsComparer } from '@grafana/data/src/transformations/transformers/order';
 import { OrganizeFieldsTransformerOptions } from '@grafana/data/src/transformations/transformers/organize';
@@ -17,8 +18,7 @@ import { useAllFieldNamesFromDataFrames } from '../utils';
 
 interface OrganizeFieldsTransformerEditorProps extends TransformerUIProps<OrganizeFieldsTransformerOptions> {}
 
-const OrganizeFieldsTransformerEditor: React.FC<OrganizeFieldsTransformerEditorProps> = (props) => {
-  const { options, input, onChange } = props;
+const OrganizeFieldsTransformerEditor = ({ options, input, onChange }: OrganizeFieldsTransformerEditorProps) => {
   const { indexByName, excludeByName, renameByName } = options;
 
   const fieldNames = useAllFieldNamesFromDataFrames(input);
@@ -75,7 +75,8 @@ const OrganizeFieldsTransformerEditor: React.FC<OrganizeFieldsTransformerEditorP
   if (input.length > 1) {
     return (
       <FieldValidationMessage>
-        Organize fields only works with a single frame. Consider applying a join transformation first.
+        Organize fields only works with a single frame. Consider applying a join transformation or filtering the input
+        first.
       </FieldValidationMessage>
     );
   }
@@ -145,6 +146,7 @@ const DraggableFieldName = ({
                 size="md"
                 name={visible ? 'eye' : 'eye-slash'}
                 onClick={() => onToggleVisibility(fieldName, visible)}
+                tooltip={visible ? 'Disable' : 'Enable'}
               />
               <span className={styles.name} title={fieldName}>
                 {fieldName}
@@ -190,10 +192,10 @@ const reorderToIndex = (fieldNames: string[], startIndex: number, endIndex: numb
   const [removed] = result.splice(startIndex, 1);
   result.splice(endIndex, 0, removed);
 
-  return result.reduce((nameByIndex, fieldName, index) => {
+  return result.reduce<Record<string, number>>((nameByIndex, fieldName, index) => {
     nameByIndex[fieldName] = index;
     return nameByIndex;
-  }, {} as Record<string, number>);
+  }, {});
 };
 
 const orderFieldNamesByIndex = (fieldNames: string[], indexByName: Record<string, number> = {}): string[] => {
@@ -211,4 +213,5 @@ export const organizeFieldsTransformRegistryItem: TransformerRegistryItem<Organi
   name: 'Organize fields',
   description:
     "Allows the user to re-order, hide, or rename fields / columns. Useful when data source doesn't allow overrides for visualizing data.",
+  categories: new Set([TransformerCategory.ReorderAndRename]),
 };

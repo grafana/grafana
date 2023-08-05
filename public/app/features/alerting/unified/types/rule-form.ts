@@ -1,14 +1,11 @@
 import { AlertQuery, GrafanaAlertStateDecision } from 'app/types/unified-alerting-dto';
 
+import { Folder } from '../components/rule-editor/RuleFolderPicker';
+
 export enum RuleFormType {
   grafana = 'grafana',
   cloudAlerting = 'cloud-alerting',
   cloudRecording = 'cloud-recording',
-}
-
-export interface RuleForm {
-  title: string;
-  id: number;
 }
 
 export interface RuleFormValues {
@@ -26,9 +23,10 @@ export interface RuleFormValues {
   condition: string | null; // refId of the query that gets alerted on
   noDataState: GrafanaAlertStateDecision;
   execErrState: GrafanaAlertStateDecision;
-  folder: RuleForm | null;
+  folder: Folder | null;
   evaluateEvery: string;
   evaluateFor: string;
+  isPaused?: boolean;
 
   // cortex / loki rules
   namespace: string;

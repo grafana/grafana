@@ -3,6 +3,7 @@ import { each, map } from 'lodash';
 import { DataLinkBuiltInVars, MappingType } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
 import { setDataSourceSrv } from '@grafana/runtime';
+import { FieldConfigSource } from '@grafana/schema';
 import { config } from 'app/core/config';
 import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN } from 'app/core/constants';
 import { mockDataSource, MockDataSourceSrv } from 'app/features/alerting/unified/mocks';
@@ -87,8 +88,8 @@ describe('DashboardModel', () => {
           },
           {
             type: 'singlestat',
-            legend: true,
             // @ts-expect-error
+            legend: true,
             thresholds: '10,20,30',
             colors: ['#FF0000', 'green', 'orange'],
             aliasYAxis: { test: 2 },
@@ -197,7 +198,7 @@ describe('DashboardModel', () => {
     });
 
     it('dashboard schema version should be set to latest', () => {
-      expect(model.schemaVersion).toBe(37);
+      expect(model.schemaVersion).toBe(38);
     });
 
     it('graph thresholds should be migrated', () => {
@@ -664,16 +665,16 @@ describe('DashboardModel', () => {
       model = new DashboardModel({
         templating: {
           list: [
+            // @ts-expect-error
             {
-              // @ts-expect-error
               multi: false,
               current: {
                 value: ['value'],
                 text: ['text'],
               },
             },
+            // @ts-expect-error
             {
-              // @ts-expect-error
               multi: true,
               current: {
                 value: ['value'],
@@ -723,8 +724,8 @@ describe('DashboardModel', () => {
             },
             {
               type: 'query',
-              // @ts-expect-error
               current: {
+                // @ts-expect-error
                 tags: [
                   {
                     selected: true,
@@ -887,52 +888,52 @@ describe('DashboardModel', () => {
       model = new DashboardModel({
         templating: {
           list: [
+            // @ts-expect-error
             {
               type: 'query',
               hide: VariableHide.dontHide,
               datasource: null,
-              // @ts-expect-error
               allFormat: '',
             },
+            // @ts-expect-error
             {
               type: 'query',
               hide: VariableHide.hideLabel,
               datasource: null,
-              // @ts-expect-error
               allFormat: '',
             },
+            // @ts-expect-error
             {
               type: 'query',
               hide: VariableHide.hideVariable,
               datasource: null,
-              // @ts-expect-error
               allFormat: '',
             },
+            // @ts-expect-error
             {
               type: 'constant',
               hide: VariableHide.dontHide,
               query: 'default value',
-              // @ts-expect-error
               current: { selected: true, text: 'A', value: 'B' },
               options: [{ selected: true, text: 'A', value: 'B' }],
               datasource: null,
               allFormat: '',
             },
+            // @ts-expect-error
             {
               type: 'constant',
               hide: VariableHide.hideLabel,
               query: 'default value',
-              // @ts-expect-error
               current: { selected: true, text: 'A', value: 'B' },
               options: [{ selected: true, text: 'A', value: 'B' }],
               datasource: null,
               allFormat: '',
             },
+            // @ts-expect-error
             {
               type: 'constant',
               hide: VariableHide.hideVariable,
               query: 'default value',
-              // @ts-expect-error
               current: { selected: true, text: 'A', value: 'B' },
               options: [{ selected: true, text: 'A', value: 'B' }],
               datasource: null,
@@ -994,96 +995,96 @@ describe('DashboardModel', () => {
       model = new DashboardModel({
         templating: {
           list: [
+            // @ts-expect-error
             {
               type: 'query',
               name: 'variable_with_never_refresh_with_options',
-              // @ts-expect-error
               options: [{ text: 'A', value: 'A' }],
               refresh: 0,
             },
+            // @ts-expect-error
             {
               type: 'query',
               name: 'variable_with_never_refresh_without_options',
-              // @ts-expect-error
               options: [],
               refresh: 0,
             },
+            // @ts-expect-error
             {
               type: 'query',
               name: 'variable_with_dashboard_refresh_with_options',
-              // @ts-expect-error
               options: [{ text: 'A', value: 'A' }],
               refresh: 1,
             },
+            // @ts-expect-error
             {
               type: 'query',
               name: 'variable_with_dashboard_refresh_without_options',
-              // @ts-expect-error
               options: [],
               refresh: 1,
             },
+            // @ts-expect-error
             {
               type: 'query',
               name: 'variable_with_timerange_refresh_with_options',
-              // @ts-expect-error
               options: [{ text: 'A', value: 'A' }],
               refresh: 2,
             },
+            // @ts-expect-error
             {
               type: 'query',
               name: 'variable_with_timerange_refresh_without_options',
-              // @ts-expect-error
               options: [],
               refresh: 2,
             },
+            // @ts-expect-error
             {
               type: 'query',
               name: 'variable_with_no_refresh_with_options',
-              // @ts-expect-error
               options: [{ text: 'A', value: 'A' }],
             },
+            // @ts-expect-error
             {
               type: 'query',
               name: 'variable_with_no_refresh_without_options',
-              // @ts-expect-error
               options: [],
             },
+            // @ts-expect-error
             {
               type: 'query',
               name: 'variable_with_unknown_refresh_with_options',
-              // @ts-expect-error
               options: [{ text: 'A', value: 'A' }],
               refresh: 2001,
             },
+            // @ts-expect-error
             {
               type: 'query',
               name: 'variable_with_unknown_refresh_without_options',
-              // @ts-expect-error
               options: [],
               refresh: 2001,
             },
+            // @ts-expect-error
             {
               type: 'custom',
               name: 'custom',
-              // @ts-expect-error
               options: [{ text: 'custom', value: 'custom' }],
             },
+            // @ts-expect-error
             {
               type: 'textbox',
               name: 'textbox',
-              // @ts-expect-error
               options: [{ text: 'Hello', value: 'World' }],
             },
+            // @ts-expect-error
             {
               type: 'datasource',
               name: 'datasource',
-              // @ts-expect-error
               options: [{ text: 'ds', value: 'ds' }], // fake example doesn't exist
             },
+            // @ts-expect-error
             {
               type: 'interval',
               name: 'interval',
-              // @ts-expect-error
               options: [{ text: '1m', value: '1m' }],
             },
           ],
@@ -1161,7 +1162,6 @@ describe('DashboardModel', () => {
                   steps: [
                     {
                       color: 'green',
-                      // @ts-expect-error
                       value: null,
                     },
                     {
@@ -1333,8 +1333,8 @@ describe('DashboardModel', () => {
         panels: [
           {
             type: 'singlestat',
-            legend: true,
             // @ts-expect-error
+            legend: true,
             thresholds: '10,20,30',
             colors: ['#FF0000', 'green', 'orange'],
             aliasYAxis: { test: 2 },
@@ -1395,8 +1395,8 @@ describe('DashboardModel', () => {
         panels: [
           {
             type: 'singlestat',
-            legend: true,
             // @ts-expect-error
+            legend: true,
             thresholds: '10,20,30',
             colors: ['#FF0000', 'green', 'orange'],
             aliasYAxis: { test: 2 },
@@ -2003,10 +2003,10 @@ describe('DashboardModel', () => {
       model = new DashboardModel({
         templating: {
           list: [
+            // @ts-expect-error
             {
               type: 'query',
               name: 'var',
-              // @ts-expect-error
               options: [{ text: 'A', value: 'A' }],
               refresh: 0,
               datasource: null,
@@ -2015,8 +2015,8 @@ describe('DashboardModel', () => {
         },
         annotations: {
           list: [
+            // @ts-expect-error
             {
-              // @ts-expect-error
               datasource: null,
             },
             {
@@ -2175,6 +2175,229 @@ describe('when generating the legend for a panel', () => {
     expect(model.panels[0].options.legend.placement).toEqual('bottom');
     expect(model.panels[1].options.legend.placement).toEqual('right');
     expect(model.panels[2].options.legend.placement).toEqual('bottom');
+  });
+});
+
+describe('when migrating table cell display mode to cell options', () => {
+  let model: DashboardModel;
+
+  beforeEach(() => {
+    model = new DashboardModel({
+      panels: [
+        // @ts-expect-error
+        {
+          id: 1,
+          type: 'table',
+          fieldConfig: {
+            defaults: {
+              custom: {
+                align: 'auto',
+                displayMode: 'color-background',
+                inspect: false,
+              },
+            },
+          } as unknown as FieldConfigSource, // missing overrides
+        },
+        // @ts-expect-error
+        {
+          id: 2,
+          type: 'table',
+          fieldConfig: {
+            defaults: {
+              custom: {
+                align: 'auto',
+                displayMode: 'color-background-solid',
+                inspect: false,
+              },
+            },
+            overrides: [],
+          },
+        },
+        // @ts-expect-error
+        {
+          id: 3,
+          type: 'table',
+          fieldConfig: {
+            defaults: {
+              custom: {
+                align: 'auto',
+                displayMode: 'lcd-gauge',
+                inspect: false,
+              },
+            },
+            overrides: [],
+          },
+        },
+        // @ts-expect-error
+        {
+          id: 4,
+          type: 'table',
+          fieldConfig: {
+            defaults: {
+              custom: {
+                align: 'auto',
+                displayMode: 'gradient-gauge',
+                inspect: false,
+              },
+            },
+            overrides: [],
+          },
+        },
+        // @ts-expect-error
+        {
+          id: 5,
+          type: 'table',
+          fieldConfig: {
+            defaults: {
+              custom: {
+                align: 'auto',
+                displayMode: 'basic',
+                inspect: false,
+              },
+            },
+            overrides: [],
+          },
+        },
+        // @ts-expect-error
+        {
+          id: 6,
+          type: 'table',
+          fieldConfig: {
+            defaults: {
+              custom: {
+                align: 'auto',
+                displayMode: 'auto',
+                inspect: false,
+              },
+            },
+            overrides: [
+              {
+                matcher: {
+                  id: 'byName',
+                  options: 'value',
+                },
+                properties: [
+                  {
+                    id: 'custom.displayMode',
+                    value: 'color-background',
+                  },
+                ],
+              },
+              {
+                matcher: {
+                  id: 'byName',
+                  options: 'value2',
+                },
+                properties: [
+                  {
+                    id: 'custom.displayMode',
+                    value: 'lcd-gauge',
+                  },
+                ],
+              },
+              {
+                matcher: {
+                  id: 'byName',
+                  options: 'value3',
+                },
+                properties: [
+                  {
+                    id: 'custom.displayMode',
+                    value: 'gradient-gauge',
+                  },
+                ],
+              },
+              {
+                matcher: {
+                  id: 'byName',
+                  options: 'value4',
+                },
+                properties: [
+                  {
+                    id: 'custom.align',
+                    value: 'left',
+                  },
+                  {
+                    id: 'custom.displayMode',
+                    value: 'gradient-gauge',
+                  },
+                ],
+              },
+            ],
+          },
+        },
+        // @ts-expect-error
+        {
+          id: 7,
+          type: 'table',
+          fieldConfig: {
+            defaults: {
+              custom: {
+                align: 'auto',
+                displayMode: 'auto',
+                inspect: false,
+              },
+            },
+            overrides: [],
+          },
+        },
+      ],
+      schemaVersion: 37,
+    });
+  });
+
+  it('should migrate gradient color background option to the new option format', () => {
+    const cellOptions = model.panels[0].fieldConfig.defaults.custom.cellOptions;
+    expect(cellOptions).toEqual({ type: 'color-background', mode: 'gradient' });
+  });
+
+  it('should migrate solid color background option to the new option format', () => {
+    const cellOptions = model.panels[1].fieldConfig.defaults.custom.cellOptions;
+    expect(cellOptions).toEqual({ type: 'color-background', mode: 'basic' });
+  });
+
+  it('should migrate LCD gauge option to the new option format', () => {
+    const cellOptions = model.panels[2].fieldConfig.defaults.custom.cellOptions;
+    expect(cellOptions).toEqual({ type: 'gauge', mode: 'lcd' });
+  });
+
+  it('should migrate gradient gauge option to the new option format', () => {
+    const cellOptions = model.panels[3].fieldConfig.defaults.custom.cellOptions;
+    expect(cellOptions).toEqual({ type: 'gauge', mode: 'gradient' });
+  });
+
+  it('should migrate basic gauge option to the new option format', () => {
+    const cellOptions = model.panels[4].fieldConfig.defaults.custom.cellOptions;
+    expect(cellOptions).toEqual({ type: 'gauge', mode: 'basic' });
+  });
+
+  it('should migrate from display mode to cell options in field overrides', () => {
+    const fieldConfig = model.panels[5].fieldConfig;
+
+    expect(fieldConfig.overrides[0].properties[0]).toEqual({
+      id: 'custom.cellOptions',
+      value: { type: 'color-background', mode: 'gradient' },
+    });
+
+    expect(fieldConfig.overrides[1].properties[0]).toEqual({
+      id: 'custom.cellOptions',
+      value: { type: 'gauge', mode: 'lcd' },
+    });
+
+    expect(fieldConfig.overrides[2].properties[0]).toEqual({
+      id: 'custom.cellOptions',
+      value: { type: 'gauge', mode: 'gradient' },
+    });
+  });
+
+  it('should migrate from display mode to cell options in field overrides with other overrides present', () => {
+    const override = model.panels[5].fieldConfig.overrides[3];
+    expect(override.properties[1]).toEqual({ id: 'custom.cellOptions', value: { type: 'gauge', mode: 'gradient' } });
+  });
+
+  it('should migrate cell display modes without options', () => {
+    const fieldConfig = model.panels[6].fieldConfig;
+    expect(fieldConfig.defaults.custom.cellOptions).toEqual({ type: 'auto' });
   });
 });
 

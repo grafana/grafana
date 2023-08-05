@@ -3,7 +3,8 @@ import { map, each, isUndefined } from 'lodash';
 import { textUtil } from '@grafana/data';
 import coreModule from 'app/angular/core_module';
 
-/** @ngInject */
+coreModule.controller('SeriesOverridesCtrl', ['$scope', '$element', 'popoverSrv', SeriesOverridesCtrl]);
+
 export function SeriesOverridesCtrl($scope: any, $element: JQuery, popoverSrv: any) {
   $scope.overrideMenu = [];
   $scope.currentOverrides = [];
@@ -131,5 +132,3 @@ export function SeriesOverridesCtrl($scope: any, $element: JQuery, popoverSrv: a
   $scope.addOverrideOption('Hide in tooltip', 'hideTooltip', [true, false]);
   $scope.updateCurrentOverrides();
 }
-
-coreModule.controller('SeriesOverridesCtrl', SeriesOverridesCtrl);

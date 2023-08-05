@@ -6,9 +6,10 @@ import { InlineField } from '@grafana/ui';
 
 import { Dimensions } from '..';
 import { CloudWatchDatasource } from '../../datasource';
-import { useDimensionKeys, useMetrics, useNamespaces, useRegions } from '../../hooks';
+import { useAccountOptions, useDimensionKeys, useMetrics, useNamespaces, useRegions } from '../../hooks';
 import { migrateVariableQuery } from '../../migrations/variableQueryMigrations';
 import { CloudWatchJsonData, CloudWatchQuery, VariableQuery, VariableQueryType } from '../../types';
+import { ALL_ACCOUNTS_OPTION } from '../Account';
 
 import { MultiFilter } from './MultiFilter';
 import { VariableQueryField } from './VariableQueryField';
@@ -41,11 +42,13 @@ export const VariableQueryEditor = ({ query, datasource, onChange }: Props) => {
   const metrics = useMetrics(datasource, { region, namespace });
   const dimensionKeys = useDimensionKeys(datasource, { region, namespace, metricName });
   const keysForDimensionFilter = useDimensionKeys(datasource, { region, namespace, metricName, dimensionFilters });
+  const accountState = useAccountOptions(datasource.resources, query.region);
 
   const onRegionChange = async (region: string) => {
     const validatedQuery = await sanitizeQuery({
       ...parsedQuery,
       region,
+      accountId: undefined,
     });
     onQueryChange(validatedQuery);
   };
@@ -69,19 +72,21 @@ export const VariableQueryEditor = ({ query, datasource, onChange }: Props) => {
   const sanitizeQuery = async (query: VariableQuery) => {
     let { metricName, dimensionKey, dimensionFilters, namespace, region } = query;
     if (metricName) {
-      await datasource.api.getMetrics({ namespace, region }).then((result: Array<SelectableValue<string>>) => {
+      await datasource.resources.getMetrics({ namespace, region }).then((result: Array<SelectableValue<string>>) => {
         if (!result.find((metric) => metric.value === metricName)) {
           metricName = '';
         }
       });
     }
     if (dimensionKey) {
-      await datasource.api.getDimensionKeys({ namespace, region }).then((result: Array<SelectableValue<string>>) => {
-        if (!result.find((key) => key.value === dimensionKey)) {
-          dimensionKey = '';
-          dimensionFilters = {};
-        }
-      });
+      await datasource.resources
+        .getDimensionKeys({ namespace, region })
+        .then((result: Array<SelectableValue<string>>) => {
+          if (!result.find((key) => key.value === dimensionKey)) {
+            dimensionKey = '';
+            dimensionFilters = {};
+          }
+        });
     }
     return { ...query, metricName, dimensionKey, dimensionFilters };
   };
@@ -96,6 +101,12 @@ export const VariableQueryEditor = ({ query, datasource, onChange }: Props) => {
     VariableQueryType.LogGroups,
     VariableQueryType.Accounts,
   ].includes(parsedQuery.queryType);
+  const hasAccountIDField = [
+    VariableQueryType.Metrics,
+    VariableQueryType.DimensionKeys,
+    VariableQueryType.DimensionValues,
+    VariableQueryType.LogGroups,
+  ].includes(parsedQuery.queryType);
   const hasNamespaceField = [
     VariableQueryType.Metrics,
     VariableQueryType.DimensionKeys,
@@ -106,7 +117,9 @@ export const VariableQueryEditor = ({ query, datasource, onChange }: Props) => {
       <VariableQueryField
         value={parsedQuery.queryType}
         options={queryTypes}
-        onChange={(value: VariableQueryType) => onQueryChange({ ...parsedQuery, queryType: value })}
+        onChange={(value: VariableQueryType) =>
+          onQueryChange({ ...parsedQuery, queryType: value, accountId: undefined })
+        }
         label="Query type"
         inputId={`variable-query-type-${query.refId}`}
       />
@@ -120,6 +133,18 @@ export const VariableQueryEditor = ({ query, datasource, onChange }: Props) => {
           inputId={`variable-query-region-${query.refId}`}
         />
       )}
+      {hasAccountIDField &&
+        accountState.value &&
+        accountState.value?.length > 0 &&
+        config.featureToggles.cloudWatchCrossAccountQuerying && (
+          <VariableQueryField
+            label="Account"
+            value={query.accountId ?? null}
+            onChange={(accountId?: string) => onQueryChange({ ...parsedQuery, accountId })}
+            options={[ALL_ACCOUNTS_OPTION, ...accountState?.value]}
+            allowCustomValue={false}
+          />
+        )}
       {hasNamespaceField && (
         <VariableQueryField
           value={namespace}
@@ -148,7 +173,7 @@ export const VariableQueryEditor = ({ query, datasource, onChange }: Props) => {
             inputId={`variable-query-dimension-key-${query.refId}`}
             allowCustomValue
           />
-          <InlineField label="Dimensions" labelWidth={20} tooltip="Dimensions to filter the returned values on">
+          <InlineField label="Dimensions" labelWidth={20} shrink tooltip="Dimensions to filter the returned values on">
             <Dimensions
               metricStat={{ ...parsedQuery, dimensions: parsedQuery.dimensionFilters }}
               onChange={(dimensions) => {
@@ -192,6 +217,7 @@ export const VariableQueryEditor = ({ query, datasource, onChange }: Props) => {
           <InlineField
             label="Filters"
             labelWidth={20}
+            shrink
             tooltip={
               <>
                 <a
@@ -222,7 +248,7 @@ export const VariableQueryEditor = ({ query, datasource, onChange }: Props) => {
             onBlur={(value: string) => onQueryChange({ ...parsedQuery, resourceType: value })}
             label="Resource type"
           />
-          <InlineField label="Tags" labelWidth={20} tooltip="Tags to filter the returned values on.">
+          <InlineField label="Tags" shrink labelWidth={20} tooltip="Tags to filter the returned values on.">
             <MultiFilter
               filters={parsedQuery.tags}
               onChange={(filters) => {

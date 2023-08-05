@@ -3,10 +3,10 @@ package grpcserver
 import (
 	"context"
 
-	"github.com/grafana/grafana/pkg/setting"
-
 	"google.golang.org/grpc/health"
 	"google.golang.org/grpc/health/grpc_health_v1"
+
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 // HealthService implements GRPC Health Checking Protocol:

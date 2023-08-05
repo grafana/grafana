@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React from 'react';
 import { useLocation } from 'react-router-dom';
 import { useAsync } from 'react-use';
 
@@ -17,7 +17,7 @@ interface Props {
   className?: string;
 }
 
-export const NewRuleFromPanelButton: FC<Props> = ({ dashboard, panel, className }) => {
+export const NewRuleFromPanelButton = ({ dashboard, panel, className }: Props) => {
   const templating = useSelector((state) => {
     return state.templating;
   });

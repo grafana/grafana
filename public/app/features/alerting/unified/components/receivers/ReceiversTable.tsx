@@ -1,24 +1,26 @@
-import { css } from '@emotion/css';
 import pluralize from 'pluralize';
-import React, { FC, useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 
-import { GrafanaTheme2, dateTime, dateTimeFormat } from '@grafana/data';
+import { dateTime, dateTimeFormat } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
-import { Button, ConfirmModal, Modal, useStyles2, Badge, Icon } from '@grafana/ui';
+import { Badge, Button, ConfirmModal, Icon, Modal, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
-import { useDispatch, AccessControlAction, ContactPointsState, NotifiersState, ReceiversState } from 'app/types';
+import { AccessControlAction, ContactPointsState, NotifiersState, ReceiversState, useDispatch } from 'app/types';
 
+import { isOrgAdmin } from '../../../../plugins/admin/permissions';
 import { useGetContactPointsState } from '../../api/receiversApi';
 import { Authorize } from '../../components/Authorize';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
 import { deleteReceiverAction } from '../../state/actions';
 import { getAlertTableStyles } from '../../styles/table';
+import { SupportedPlugin } from '../../types/pluginBridges';
 import { getNotificationsPermissions } from '../../utils/access-control';
 import { isReceiverUsed } from '../../utils/alertmanager';
-import { isVanillaPrometheusAlertManagerDataSource } from '../../utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME, isVanillaPrometheusAlertManagerDataSource } from '../../utils/datasource';
 import { makeAMLink } from '../../utils/misc';
 import { extractNotifierTypeCounts } from '../../utils/receivers';
+import { createUrl } from '../../utils/url';
 import { DynamicTable, DynamicTableColumnProps, DynamicTableItemProps } from '../DynamicTable';
 import { ProvisioningBadge } from '../Provisioning';
 import { ActionIcon } from '../rules/ActionIcon';
@@ -26,7 +28,8 @@ import { ActionIcon } from '../rules/ActionIcon';
 import { ReceiversSection } from './ReceiversSection';
 import { GrafanaAppBadge } from './grafanaAppReceivers/GrafanaAppBadge';
 import { useGetReceiversWithGrafanaAppTypes } from './grafanaAppReceivers/grafanaApp';
-import { GrafanaAppReceiverEnum, ReceiverWithTypes } from './grafanaAppReceivers/types';
+import { ReceiverWithTypes } from './grafanaAppReceivers/types';
+import { AlertmanagerConfigHealth, useAlertmanagerConfigHealth } from './useAlertmanagerConfigHealth';
 
 interface UpdateActionProps extends ActionProps {
   onClickDeleteReceiver: (receiverName: string) => void;
@@ -57,12 +60,16 @@ function UpdateActions({ permissions, alertManagerName, receiverName, onClickDel
     </>
   );
 }
+
 interface ActionProps {
   permissions: {
     read: AccessControlAction;
     create: AccessControlAction;
     update: AccessControlAction;
     delete: AccessControlAction;
+    provisioning: {
+      read: AccessControlAction;
+    };
   };
   alertManagerName: string;
   receiverName: string;
@@ -80,16 +87,40 @@ function ViewAction({ permissions, alertManagerName, receiverName }: ActionProps
     </Authorize>
   );
 }
+
+function ExportAction({ permissions, receiverName }: ActionProps) {
+  return (
+    <Authorize actions={[permissions.provisioning.read]} fallback={isOrgAdmin()}>
+      <ActionIcon
+        data-testid="export"
+        to={createUrl(`/api/v1/provisioning/contact-points/export/`, {
+          download: 'true',
+          format: 'yaml',
+          decrypt: isOrgAdmin().toString(),
+          name: receiverName,
+        })}
+        tooltip={isOrgAdmin() ? 'Export contact point' : 'Export redacted contact point'}
+        icon="download-alt"
+        target="_blank"
+      />
+    </Authorize>
+  );
+}
+
 interface ReceiverErrorProps {
   errorCount: number;
   errorDetail?: string;
   showErrorCount: boolean;
+  tooltip?: string;
 }
 
-function ReceiverError({ errorCount, errorDetail, showErrorCount }: ReceiverErrorProps) {
+function ReceiverError({ errorCount, errorDetail, showErrorCount, tooltip }: ReceiverErrorProps) {
   const text = showErrorCount ? `${errorCount} ${pluralize('error', errorCount)}` : 'Error';
-  return <Badge color="orange" icon="exclamation-triangle" text={text} tooltip={errorDetail ?? 'Error'} />;
+  const tooltipToRender = tooltip ?? errorDetail ?? 'Error';
+
+  return <Badge color="red" icon="exclamation-circle" text={text} tooltip={tooltipToRender} />;
 }
+
 interface NotifierHealthProps {
   errorsByNotifier: number;
   errorDetail?: string;
@@ -97,13 +128,18 @@ interface NotifierHealthProps {
 }
 
 function NotifierHealth({ errorsByNotifier, errorDetail, lastNotify }: NotifierHealthProps) {
-  const noErrorsColor = isLastNotifyNullDate(lastNotify) ? 'orange' : 'green';
-  const noErrorsText = isLastNotifyNullDate(lastNotify) ? 'No attempts' : 'OK';
-  return errorsByNotifier > 0 ? (
-    <ReceiverError errorCount={errorsByNotifier} errorDetail={errorDetail} showErrorCount={false} />
-  ) : (
-    <Badge color={noErrorsColor} text={noErrorsText} tooltip="" />
-  );
+  const hasErrors = errorsByNotifier > 0;
+  const noAttempts = isLastNotifyNullDate(lastNotify);
+
+  if (hasErrors) {
+    return <ReceiverError errorCount={errorsByNotifier} errorDetail={errorDetail} showErrorCount={false} />;
+  }
+
+  if (noAttempts) {
+    return <>No attempts</>;
+  }
+
+  return <Badge color="green" text="OK" />;
 }
 
 interface ReceiverHealthProps {
@@ -112,13 +148,23 @@ interface ReceiverHealthProps {
 }
 
 function ReceiverHealth({ errorsByReceiver, someWithNoAttempt }: ReceiverHealthProps) {
-  const noErrorsColor = someWithNoAttempt ? 'orange' : 'green';
-  const noErrorsText = someWithNoAttempt ? 'No attempts' : 'OK';
-  return errorsByReceiver > 0 ? (
-    <ReceiverError errorCount={errorsByReceiver} showErrorCount={true} />
-  ) : (
-    <Badge color={noErrorsColor} text={noErrorsText} tooltip="" />
-  );
+  const hasErrors = errorsByReceiver > 0;
+
+  if (hasErrors) {
+    return (
+      <ReceiverError
+        errorCount={errorsByReceiver}
+        showErrorCount={true}
+        tooltip="Expand the contact point to see error details."
+      />
+    );
+  }
+
+  if (someWithNoAttempt) {
+    return <>No attempts</>;
+  }
+
+  return <Badge color="green" text="OK" />;
 }
 
 const useContactPointsState = (alertManagerName: string) => {
@@ -127,11 +173,12 @@ const useContactPointsState = (alertManagerName: string) => {
   const errorStateAvailable = Object.keys(receivers).length > 0;
   return { contactPointsState, errorStateAvailable };
 };
+
 interface ReceiverItem {
   name: string;
   types: string[];
   provisioned?: boolean;
-  grafanaAppReceiverType?: GrafanaAppReceiverEnum;
+  grafanaAppReceiverType?: SupportedPlugin;
 }
 
 interface NotifierStatus {
@@ -151,6 +198,7 @@ type NotifierItemTableProps = DynamicTableItemProps<NotifierStatus>;
 interface NotifiersTableProps {
   notifiersState: NotifiersState;
 }
+
 const isLastNotifyNullDate = (lastNotify: string) => lastNotify === '0001-01-01T00:00:00.000Z';
 
 function LastNotify({ lastNotifyDate }: { lastNotifyDate: string }) {
@@ -215,6 +263,7 @@ function NotifiersTable({ notifiersState }: NotifiersTableProps) {
       },
     ];
   }
+
   const notifierRows: NotifierItemTableProps[] = Object.entries(notifiersState).flatMap((typeState) =>
     typeState[1].map((notifierStatus, index) => {
       return {
@@ -238,18 +287,21 @@ interface Props {
   alertManagerName: string;
 }
 
-export const ReceiversTable: FC<Props> = ({ config, alertManagerName }) => {
+export const ReceiversTable = ({ config, alertManagerName }: Props) => {
   const dispatch = useDispatch();
-  const styles = useStyles2(getStyles);
   const isVanillaAM = isVanillaPrometheusAlertManagerDataSource(alertManagerName);
   const permissions = getNotificationsPermissions(alertManagerName);
   const grafanaNotifiers = useUnifiedAlertingSelector((state) => state.grafanaNotifiers);
 
+  const configHealth = useAlertmanagerConfigHealth(config.alertmanager_config);
   const { contactPointsState, errorStateAvailable } = useContactPointsState(alertManagerName);
 
   // receiver name slated for deletion. If this is set, a confirmation modal is shown. If user approves, this receiver is deleted
   const [receiverToDelete, setReceiverToDelete] = useState<string>();
   const [showCannotDeleteReceiverModal, setShowCannotDeleteReceiverModal] = useState(false);
+
+  const isGrafanaAM = alertManagerName === GRAFANA_RULES_SOURCE_NAME;
+  const showExport = isGrafanaAM && contextSrv.hasAccess(permissions.provisioning.read, isOrgAdmin());
 
   const onClickDeleteReceiver = (receiverName: string): void => {
     if (isReceiverUsed(receiverName, config)) {
@@ -265,6 +317,7 @@ export const ReceiversTable: FC<Props> = ({ config, alertManagerName }) => {
     }
     setReceiverToDelete(undefined);
   };
+
   const receivers = useGetReceiversWithGrafanaAppTypes(config.alertmanager_config.receivers ?? []);
   const rows: RowItemTableProps[] = useMemo(() => {
     return (
@@ -291,6 +344,7 @@ export const ReceiversTable: FC<Props> = ({ config, alertManagerName }) => {
     alertManagerName,
     errorStateAvailable,
     contactPointsState,
+    configHealth,
     onClickDeleteReceiver,
     permissions,
     isVanillaAM
@@ -298,12 +352,20 @@ export const ReceiversTable: FC<Props> = ({ config, alertManagerName }) => {
 
   return (
     <ReceiversSection
-      className={styles.section}
       title="Contact points"
-      description="Define where the notifications will be sent to, for example email or Slack."
+      description="Define where notifications are sent, for example, email or Slack."
       showButton={!isVanillaAM && contextSrv.hasPermission(permissions.create)}
-      addButtonLabel={'New contact point'}
+      addButtonLabel={'Add contact point'}
       addButtonTo={makeAMLink('/alerting/notifications/receivers/new', alertManagerName)}
+      exportLink={
+        showExport
+          ? createUrl('/api/v1/provisioning/contact-points/export', {
+              download: 'true',
+              format: 'yaml',
+              decrypt: isOrgAdmin().toString(),
+            })
+          : undefined
+      }
     >
       <DynamicTable
         items={rows}
@@ -352,8 +414,12 @@ const errorsByReceiver = (contactPointsState: ContactPointsState, receiverName: 
 
 const someNotifiersWithNoAttempt = (contactPointsState: ContactPointsState, receiverName: string) => {
   const notifiers = Object.values(contactPointsState?.receivers[receiverName]?.notifiers ?? {});
-  const hasSomeWitNoAttempt =
-    notifiers.length === 0 || notifiers.flat().some((status) => isLastNotifyNullDate(status.lastNotifyAttempt));
+
+  if (notifiers.length === 0) {
+    return false;
+  }
+
+  const hasSomeWitNoAttempt = notifiers.flat().some((status) => isLastNotifyNullDate(status.lastNotifyAttempt));
   return hasSomeWitNoAttempt;
 };
 
@@ -361,27 +427,38 @@ function useGetColumns(
   alertManagerName: string,
   errorStateAvailable: boolean,
   contactPointsState: ContactPointsState | undefined,
+  configHealth: AlertmanagerConfigHealth,
   onClickDeleteReceiver: (receiverName: string) => void,
   permissions: {
     read: AccessControlAction;
     create: AccessControlAction;
     update: AccessControlAction;
     delete: AccessControlAction;
+    provisioning: {
+      read: AccessControlAction;
+    };
   },
   isVanillaAM: boolean
 ): RowTableColumnProps[] {
   const tableStyles = useStyles2(getAlertTableStyles);
+
+  const enableHealthColumn =
+    errorStateAvailable || Object.values(configHealth.contactPoints).some((cp) => cp.matchingRoutes === 0);
+
+  const isGrafanaAlertManager = alertManagerName === GRAFANA_RULES_SOURCE_NAME;
+
   const baseColumns: RowTableColumnProps[] = [
     {
       id: 'name',
       label: 'Contact point name',
       renderCell: ({ data: { name, provisioned } }) => (
-        <Stack alignItems="center">
+        <>
           <div>{name}</div>
           {provisioned && <ProvisioningBadge />}
-        </Stack>
+        </>
       ),
-      size: 1,
+      size: 3,
+      className: tableStyles.nameCell,
     },
     {
       id: 'type',
@@ -389,15 +466,20 @@ function useGetColumns(
       renderCell: ({ data: { types, grafanaAppReceiverType } }) => (
         <>{grafanaAppReceiverType ? <GrafanaAppBadge grafanaAppType={grafanaAppReceiverType} /> : types.join(', ')}</>
       ),
-      size: 1,
+      size: 2,
     },
   ];
   const healthColumn: RowTableColumnProps = {
     id: 'health',
     label: 'Health',
     renderCell: ({ data: { name } }) => {
+      if (configHealth.contactPoints[name]?.matchingRoutes === 0) {
+        return <UnusedContactPointBadge />;
+      }
+
       return (
-        contactPointsState && (
+        contactPointsState &&
+        Object.entries(contactPointsState.receivers).length > 0 && (
           <ReceiverHealth
             errorsByReceiver={errorsByReceiver(contactPointsState, name)}
             someWithNoAttempt={someNotifiersWithNoAttempt(contactPointsState, name)}
@@ -405,17 +487,20 @@ function useGetColumns(
         )
       );
     },
-    size: 1,
+    size: '160px',
   };
 
   return [
     ...baseColumns,
-    ...(errorStateAvailable ? [healthColumn] : []),
+    ...(enableHealthColumn ? [healthColumn] : []),
     {
       id: 'actions',
       label: 'Actions',
       renderCell: ({ data: { provisioned, name } }) => (
-        <Authorize actions={[permissions.update, permissions.delete]}>
+        <Authorize
+          actions={[permissions.update, permissions.delete, permissions.provisioning.read]}
+          fallback={isOrgAdmin()}
+        >
           <div className={tableStyles.actionsCell}>
             {!isVanillaAM && !provisioned && (
               <UpdateActions
@@ -428,6 +513,9 @@ function useGetColumns(
             {(isVanillaAM || provisioned) && (
               <ViewAction permissions={permissions} alertManagerName={alertManagerName} receiverName={name} />
             )}
+            {isGrafanaAlertManager && (
+              <ExportAction permissions={permissions} alertManagerName={alertManagerName} receiverName={name} />
+            )}
           </div>
         </Authorize>
       ),
@@ -436,22 +524,13 @@ function useGetColumns(
   ];
 }
 
-const getStyles = (theme: GrafanaTheme2) => ({
-  section: css`
-    margin-top: ${theme.spacing(4)};
-  `,
-  warning: css`
-    color: ${theme.colors.warning.text};
-  `,
-  countMessage: css``,
-  onCallBadgeWrapper: css`
-    text-align: left;
-    height: 22px;
-    display: inline-flex;
-    padding: 1px 4px;
-    border-radius: 3px;
-    border: 1px solid rgba(245, 95, 62, 1);
-    color: rgba(245, 95, 62, 1);
-    font-weight: ${theme.typography.fontWeightRegular};
-  `,
-});
+function UnusedContactPointBadge() {
+  return (
+    <Badge
+      text="Unused"
+      color="orange"
+      icon="exclamation-triangle"
+      tooltip="This contact point is not used in any notification policy and it will not receive any alerts"
+    />
+  );
+}

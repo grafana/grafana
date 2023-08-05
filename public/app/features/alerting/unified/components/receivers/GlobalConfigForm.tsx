@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React from 'react';
 import { useForm, FormProvider } from 'react-hook-form';
 
 import { Alert, Button, HorizontalGroup, LinkButton } from '@grafana/ui';
@@ -27,7 +27,7 @@ const defaultValues: FormValues = {
   smtp_require_tls: true,
 } as const;
 
-export const GlobalConfigForm: FC<Props> = ({ config, alertManagerSourceName }) => {
+export const GlobalConfigForm = ({ config, alertManagerSourceName }: Props) => {
   const dispatch = useDispatch();
 
   useCleanup((state) => (state.unifiedAlerting.saveAMConfig = initialAsyncRequestState));

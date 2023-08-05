@@ -205,7 +205,10 @@ describe('filterByName transformer', () => {
             pattern: '/^$var1/',
           },
         },
-        replace: (target: string | undefined, scopedVars?: ScopedVars, format?: string | Function): string => {
+      };
+
+      const ctx = {
+        interpolate: (target: string | undefined, scopedVars?: ScopedVars, format?: string | Function): string => {
           if (!target) {
             return '';
           }
@@ -216,13 +219,13 @@ describe('filterByName transformer', () => {
             },
           };
           for (const key of Object.keys(variables)) {
-            return target.replace(`$${key}`, variables[key].value);
+            return target.replace(`$${key}`, variables[key]!.value);
           }
           return target;
         },
       };
 
-      await expect(transformDataFrame([cfg], [seriesWithNamesToMatch])).toEmitValuesWith((received) => {
+      await expect(transformDataFrame([cfg], [seriesWithNamesToMatch], ctx)).toEmitValuesWith((received) => {
         const data = received[0];
         const filtered = data[0];
         expect(filtered.fields.length).toBe(2);

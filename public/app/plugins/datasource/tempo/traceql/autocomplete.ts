@@ -1,7 +1,14 @@
 import { SelectableValue } from '@grafana/data';
+import { isFetchError } from '@grafana/runtime';
 import type { Monaco, monacoTypes } from '@grafana/ui';
 
+import { createErrorNotification } from '../../../../core/copy/appNotification';
+import { notifyApp } from '../../../../core/reducers/appNotification';
+import { dispatch } from '../../../../store/store';
 import TempoLanguageProvider from '../language_provider';
+
+import { getSituation, Situation } from './situation';
+import { intrinsics, scopes } from './traceql';
 
 interface Props {
   languageProvider: TempoLanguageProvider;
@@ -13,15 +20,14 @@ interface Props {
  */
 export class CompletionProvider implements monacoTypes.languages.CompletionItemProvider {
   languageProvider: TempoLanguageProvider;
+  registerInteractionCommandId: string | null;
 
   constructor(props: Props) {
     this.languageProvider = props.languageProvider;
+    this.registerInteractionCommandId = null;
   }
 
   triggerCharacters = ['{', '.', '[', '(', '=', '~', ' ', '"'];
-
-  static readonly intrinsics: string[] = ['duration', 'name', 'status'];
-  static readonly scopes: string[] = ['resource', 'span'];
   static readonly operators: string[] = ['=', '-', '+', '<', '>', '>=', '<=', '=~'];
   static readonly logicalOps: string[] = ['&&', '||'];
 
@@ -29,7 +35,6 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
   monaco: Monaco | undefined;
   editor: monacoTypes.editor.IStandaloneCodeEditor | undefined;
 
-  private tags: { [tag: string]: Set<string> } = {};
   private cachedValues: { [key: string]: Array<SelectableValue<string>> } = {};
 
   provideCompletionItems(
@@ -48,8 +53,8 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
     }
 
     const { range, offset } = getRangeAndOffset(this.monaco, model, position);
-    const situation = this.getSituation(model.getValue(), offset);
-    const completionItems = this.getCompletions(situation);
+    const situation = getSituation(model.getValue(), offset);
+    const completionItems = situation != null ? this.getCompletions(situation) : Promise.resolve([]);
 
     return completionItems.then((items) => {
       // monaco by-default alphabetically orders the items.
@@ -57,14 +62,19 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
       // so that monaco keeps the order we use
       const maxIndexDigits = items.length.toString().length;
       const suggestions: monacoTypes.languages.CompletionItem[] = items.map((item, index) => {
-        const suggestion = {
+        const suggestion: monacoTypes.languages.CompletionItem = {
           kind: getMonacoCompletionItemKind(item.type, this.monaco!),
           label: item.label,
           insertText: item.insertText,
           sortText: index.toString().padStart(maxIndexDigits, '0'), // to force the order we have
           range,
+          command: {
+            id: this.registerInteractionCommandId || 'noOp',
+            title: 'Report Interaction',
+            arguments: [item.label, item.type],
+          },
         };
-        fixSuggestion(suggestion, item.type, model, offset, this.monaco!);
+        fixSuggestion(suggestion, item.type, model, offset);
         return suggestion;
       });
       return { suggestions };
@@ -72,28 +82,19 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
   }
 
   /**
-   * We expect the tags list data directly from the request and assign it an empty set here.
+   * Set the ID for the registerInteraction command, to be used to keep track of how many completions are used by the users
    */
-  setTags(tags: string[]) {
-    tags.forEach((t) => (this.tags[t] = new Set<string>()));
-  }
-
-  private overrideTagName(tagName: string): string {
-    switch (tagName) {
-      case 'status':
-        return 'status.code';
-      default:
-        return tagName;
-    }
+  setRegisterInteractionCommandId(id: string | null) {
+    this.registerInteractionCommandId = id;
   }
 
   private async getTagValues(tagName: string): Promise<Array<SelectableValue<string>>> {
-    let tagValues: Array<SelectableValue<string>> = [];
+    let tagValues: Array<SelectableValue<string>>;
 
     if (this.cachedValues.hasOwnProperty(tagName)) {
       tagValues = this.cachedValues[tagName];
     } else {
-      tagValues = await this.languageProvider.getOptions(tagName);
+      tagValues = await this.languageProvider.getOptionsV2(tagName);
       this.cachedValues[tagName] = tagValues;
     }
     return tagValues;
@@ -105,9 +106,6 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
    * @private
    */
   private async getCompletions(situation: Situation): Promise<Completion[]> {
-    if (!Object.keys(this.tags).length) {
-      return [];
-    }
     switch (situation.type) {
       // Not really sure what would make sense to suggest in this case so just leave it
       case 'UNKNOWN': {
@@ -126,27 +124,35 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
       case 'SPANSET_IN_NAME':
         return this.getScopesCompletions().concat(this.getIntrinsicsCompletions()).concat(this.getTagsCompletions());
       case 'SPANSET_IN_NAME_SCOPE':
-        return this.getTagsCompletions();
-      case 'SPANSET_AFTER_NAME':
-        return CompletionProvider.operators.map((key) => ({
+        return this.getTagsCompletions(undefined, situation.scope);
+      case 'SPANSET_EXPRESSION_OPERATORS':
+        return [...CompletionProvider.logicalOps, ...CompletionProvider.operators].map((key) => ({
           label: key,
           insertText: key,
           type: 'OPERATOR',
         }));
       case 'SPANSET_IN_VALUE':
-        const tagName = this.overrideTagName(situation.tagName);
-        const tagsNoQuotesAroundValue: string[] = ['status'];
-        const tagValues = await this.getTagValues(tagName);
+        let tagValues;
+        try {
+          tagValues = await this.getTagValues(situation.tagName);
+        } catch (error) {
+          if (isFetchError(error)) {
+            dispatch(notifyApp(createErrorNotification(error.data.error, new Error(error.data.message))));
+          } else if (error instanceof Error) {
+            dispatch(notifyApp(createErrorNotification('Error', error)));
+          }
+        }
+
         const items: Completion[] = [];
 
         const getInsertionText = (val: SelectableValue<string>): string => {
           if (situation.betweenQuotes) {
             return val.label!;
           }
-          return tagsNoQuotesAroundValue.includes(situation.tagName) ? val.label! : `"${val.label}"`;
+          return val.type === 'string' ? `"${val.label}"` : val.label!;
         };
 
-        tagValues.forEach((val) => {
+        tagValues?.forEach((val) => {
           if (val?.label) {
             items.push({
               label: val.label,
@@ -167,8 +173,9 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
     }
   }
 
-  private getTagsCompletions(prepend?: string): Completion[] {
-    return Object.keys(this.tags)
+  private getTagsCompletions(prepend?: string, scope?: string): Completion[] {
+    const tags = this.languageProvider.getTraceqlAutocompleteTags(scope);
+    return tags
       .sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'accent' }))
       .map((key) => ({
         label: key,
@@ -178,7 +185,7 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
   }
 
   private getIntrinsicsCompletions(prepend?: string): Completion[] {
-    return CompletionProvider.intrinsics.map((key) => ({
+    return intrinsics.map((key) => ({
       label: key,
       insertText: (prepend || '') + key,
       type: 'KEYWORD',
@@ -186,126 +193,11 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
   }
 
   private getScopesCompletions(prepend?: string): Completion[] {
-    return CompletionProvider.scopes.map((key) => ({
+    return scopes.map((key) => ({
       label: key,
       insertText: (prepend || '') + key,
       type: 'SCOPE',
     }));
-  }
-
-  private getSituationInSpanSet(textUntilCaret: string): Situation {
-    const nameRegex = /(?<name>[\w./-]+)?/;
-    const opRegex = /(?<op>[!=+\-<>]+)/;
-    // only allow spaces in the value if it's enclosed by quotes
-    const valueRegex = /(?<value>(?<open_quote>")([^"\n&|]+)?(?<close_quote>")?|([^"\n\s&|]+))?/;
-
-    // prettier-ignore
-    const fullRegex = new RegExp(
-      '([\\s{])' +      // Space(s) or initial opening bracket {
-      '(' +                   // Open full set group
-      nameRegex.source +
-      '(?<space1>\\s*)' +     // Optional space(s) between name and operator
-      '(' +                   // Open operator + value group
-      opRegex.source +
-      '(?<space2>\\s*)' +     // Optional space(s) between operator and value
-      valueRegex.source +
-      ')?' +                  // Close operator + value group
-      ')' +                   // Close full set group
-      '(?<space3>\\s*)$'      // Optional space(s) at the end of the set
-    );
-
-    const matched = textUntilCaret.match(fullRegex);
-
-    if (matched) {
-      const nameFull = matched.groups?.name;
-      const op = matched.groups?.op;
-
-      if (!nameFull) {
-        return {
-          type: 'SPANSET_EMPTY',
-        };
-      }
-
-      if (nameFull === '.') {
-        return {
-          type: 'SPANSET_ONLY_DOT',
-        };
-      }
-
-      const nameMatched = nameFull.match(/^(?<pre_dot>\.)?(?<word>\w[\w./-]*\w)(?<post_dot>\.)?$/);
-
-      // We already have a (potentially partial) tag name so let's check if there's an operator declared
-      // { .tag_name|
-      if (!op) {
-        // There's no operator so we check if the name is one of the known scopes
-        // { resource.|
-        if (CompletionProvider.scopes.filter((w) => w === nameMatched?.groups?.word) && nameMatched?.groups?.post_dot) {
-          return {
-            type: 'SPANSET_IN_NAME_SCOPE',
-          };
-        }
-        // It's not one of the scopes, so we now check if we're after the name (there's a space after the word) or if we still have to autocomplete the rest of the name
-        // In case there's a space we start autocompleting the operators { .http.method |
-        // Otherwise we keep showing the tags/intrinsics/scopes list { .http.met|
-        return {
-          type: matched.groups?.space1 ? 'SPANSET_AFTER_NAME' : 'SPANSET_IN_NAME',
-        };
-      }
-
-      // In case there's a space after the full [name + operator + value] group we can start autocompleting logical operators or close the spanset
-      // To avoid triggering this situation when we are writing a space inside a string we check the state of the open and close quotes
-      // { .http.method = "GET" |
-      if (matched.groups?.space3 && matched.groups.open_quote === matched.groups.close_quote) {
-        return {
-          type: 'SPANSET_AFTER_VALUE',
-        };
-      }
-
-      // remove the scopes from the word to get accurate autocompletes
-      // Ex: 'span.host.name' won't resolve to any autocomplete values, but removing 'span.' results in 'host.name' which can have autocomplete values
-      const noScopeWord = CompletionProvider.scopes.reduce(
-        (result, word) => result.replace(`${word}.`, ''),
-        nameMatched?.groups?.word || ''
-      );
-
-      // We already have an operator and know that the set isn't complete so let's autocomplete the possible values for the tag name
-      // { .http.method = |
-      return {
-        type: 'SPANSET_IN_VALUE',
-        tagName: noScopeWord,
-        betweenQuotes: !!matched.groups?.open_quote,
-      };
-    }
-
-    return {
-      type: 'EMPTY',
-    };
-  }
-
-  /**
-   * Figure out where is the cursor and what kind of suggestions are appropriate.
-   * @param text
-   * @param offset
-   */
-  private getSituation(text: string, offset: number): Situation {
-    if (text === '' || offset === 0) {
-      return {
-        type: 'EMPTY',
-      };
-    }
-
-    const textUntilCaret = text.substring(0, offset);
-
-    // Check if we're inside a span set
-    let isInSpanSet = textUntilCaret.lastIndexOf('{') > textUntilCaret.lastIndexOf('}');
-    if (isInSpanSet) {
-      return this.getSituationInSpanSet(textUntilCaret);
-    }
-
-    // Will happen only if user writes something that isn't really a tag selector
-    return {
-      type: 'UNKNOWN',
-    };
   }
 }
 
@@ -343,37 +235,6 @@ export type Tag = {
   value: string;
 };
 
-export type Situation =
-  | {
-      type: 'UNKNOWN';
-    }
-  | {
-      type: 'EMPTY';
-    }
-  | {
-      type: 'SPANSET_EMPTY';
-    }
-  | {
-      type: 'SPANSET_ONLY_DOT';
-    }
-  | {
-      type: 'SPANSET_AFTER_NAME';
-    }
-  | {
-      type: 'SPANSET_IN_NAME';
-    }
-  | {
-      type: 'SPANSET_IN_NAME_SCOPE';
-    }
-  | {
-      type: 'SPANSET_IN_VALUE';
-      tagName: string;
-      betweenQuotes: boolean;
-    }
-  | {
-      type: 'SPANSET_AFTER_VALUE';
-    };
-
 function getRangeAndOffset(monaco: Monaco, model: monacoTypes.editor.ITextModel, position: monacoTypes.Position) {
   const word = model.getWordAtPosition(position);
   const range =
@@ -404,11 +265,10 @@ function getRangeAndOffset(monaco: Monaco, model: monacoTypes.editor.ITextModel,
  * here.
  */
 function fixSuggestion(
-  suggestion: monacoTypes.languages.CompletionItem & { range: monacoTypes.IRange },
+  suggestion: monacoTypes.languages.CompletionItem,
   itemType: CompletionType,
   model: monacoTypes.editor.ITextModel,
-  offset: number,
-  monaco: Monaco
+  offset: number
 ) {
   if (itemType === 'TAG_NAME') {
     const match = model
@@ -427,10 +287,10 @@ function fixSuggestion(
         }
 
         // Adjust the range, so that we will replace the whole tag.
-        suggestion.range = monaco.Range.lift({
+        suggestion.range = {
           ...suggestion.range,
           startColumn: offset - tag.length + 1,
-        });
+        };
       }
     }
   }

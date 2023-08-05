@@ -2,14 +2,13 @@ package es
 
 import (
 	"encoding/json"
-
-	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
+	"time"
 )
 
 // SearchRequest represents a search request
 type SearchRequest struct {
 	Index       string
-	Interval    intervalv2.Interval
+	Interval    time.Duration
 	Size        int
 	Sort        map[string]interface{}
 	Query       *Query
@@ -235,6 +234,11 @@ type TermsAggregation struct {
 	Order       map[string]interface{} `json:"order"`
 	MinDocCount *int                   `json:"min_doc_count,omitempty"`
 	Missing     *string                `json:"missing,omitempty"`
+}
+
+// NestedAggregation represents a nested aggregation
+type NestedAggregation struct {
+	Path string `json:"path"`
 }
 
 // ExtendedBounds represents extended bounds

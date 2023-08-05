@@ -4,9 +4,9 @@ import { useAsyncFn, useDeepCompareEffect } from 'react-use';
 import { SelectableValue, toOption } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
-import { CloudWatchAPI } from './api';
 import { CloudWatchDatasource } from './datasource';
-import { GetDimensionKeysRequest, GetMetricsRequest } from './types';
+import { ResourcesAPI } from './resources/ResourcesAPI';
+import { GetMetricsRequest, GetDimensionKeysRequest } from './resources/types';
 import { appendTemplateVariables } from './utils/utils';
 
 export const useRegions = (datasource: CloudWatchDatasource): [Array<SelectableValue<string>>, boolean] => {
@@ -21,7 +21,7 @@ export const useRegions = (datasource: CloudWatchDatasource): [Array<SelectableV
       options: datasource.getVariables().map(toOption),
     };
 
-    datasource.api
+    datasource.resources
       .getRegions()
       .then((regions: Array<SelectableValue<string>>) => setRegions([...regions, variableOptionGroup]))
       .finally(() => setRegionsIsLoading(false));
@@ -33,7 +33,7 @@ export const useRegions = (datasource: CloudWatchDatasource): [Array<SelectableV
 export const useNamespaces = (datasource: CloudWatchDatasource) => {
   const [namespaces, setNamespaces] = useState<Array<SelectableValue<string>>>([]);
   useEffect(() => {
-    datasource.api.getNamespaces().then((namespaces) => {
+    datasource.resources.getNamespaces().then((namespaces) => {
       setNamespaces(appendTemplateVariables(datasource, namespaces));
     });
   }, [datasource]);
@@ -56,7 +56,7 @@ export const useMetrics = (datasource: CloudWatchDatasource, { region, namespace
     accountId = datasource.templateSrv.replace(accountId, {});
   }
   useEffect(() => {
-    datasource.api.getMetrics({ namespace, region, accountId }).then((result: Array<SelectableValue<string>>) => {
+    datasource.resources.getMetrics({ namespace, region, accountId }).then((result: Array<SelectableValue<string>>) => {
       setMetrics(appendTemplateVariables(datasource, result));
     });
   }, [datasource, region, namespace, accountId]);
@@ -87,12 +87,12 @@ export const useDimensionKeys = (
   }
 
   if (dimensionFilters) {
-    dimensionFilters = datasource.api.convertDimensionFormat(dimensionFilters, {});
+    dimensionFilters = datasource.resources.convertDimensionFormat(dimensionFilters, {});
   }
 
   // doing deep comparison to avoid making new api calls to list metrics unless dimension filter object props changes
   useDeepCompareEffect(() => {
-    datasource.api
+    datasource.resources
       .getDimensionKeys({ namespace, region, metricName, accountId, dimensionFilters })
       .then((result: Array<SelectableValue<string>>) => {
         setDimensionKeys(appendTemplateVariables(datasource, result));
@@ -102,37 +102,37 @@ export const useDimensionKeys = (
   return dimensionKeys;
 };
 
-export const useIsMonitoringAccount = (api: CloudWatchAPI, region: string) => {
+export const useIsMonitoringAccount = (resources: ResourcesAPI, region: string) => {
   const [isMonitoringAccount, setIsMonitoringAccount] = useState(false);
   // we call this before the use effect to ensure dependency array below
   // receives the interpolated value so that the effect is triggered when a variable is changed
   if (region) {
-    region = api.templateSrv.replace(region, {});
+    region = resources.templateSrv.replace(region, {});
   }
   useEffect(() => {
     if (config.featureToggles.cloudWatchCrossAccountQuerying) {
-      api.isMonitoringAccount(region).then((result) => setIsMonitoringAccount(result));
+      resources.isMonitoringAccount(region).then((result) => setIsMonitoringAccount(result));
     }
-  }, [region, api]);
+  }, [region, resources]);
 
   return isMonitoringAccount;
 };
 
 export const useAccountOptions = (
-  api: Pick<CloudWatchAPI, 'getAccounts' | 'templateSrv' | 'getVariables'>,
+  resources: Pick<ResourcesAPI, 'getAccounts' | 'templateSrv' | 'getVariables'> | undefined,
   region: string
 ) => {
   // we call this before the use effect to ensure dependency array below
   // receives the interpolated value so that the effect is triggered when a variable is changed
   if (region) {
-    region = api.templateSrv.replace(region, {});
+    region = resources?.templateSrv.replace(region, {}) ?? '';
   }
 
   const fetchAccountOptions = async () => {
     if (!config.featureToggles.cloudWatchCrossAccountQuerying) {
       return Promise.resolve([]);
     }
-    const accounts = await api.getAccounts({ region });
+    const accounts = (await resources?.getAccounts({ region })) ?? [];
     if (accounts.length === 0) {
       return [];
     }
@@ -143,7 +143,7 @@ export const useAccountOptions = (
       description: a.id,
     }));
 
-    const variableOptions = api.getVariables().map(toOption);
+    const variableOptions = resources?.getVariables().map(toOption) || [];
 
     const variableOptionGroup: SelectableValue<string> = {
       label: 'Template Variables',
@@ -153,11 +153,11 @@ export const useAccountOptions = (
     return [...options, variableOptionGroup];
   };
 
-  const [state, doFetch] = useAsyncFn(fetchAccountOptions, [api, region]);
+  const [state, doFetch] = useAsyncFn(fetchAccountOptions, [resources, region]);
 
   useEffect(() => {
     doFetch();
-  }, [api, region, doFetch]);
+  }, [resources, region, doFetch]);
 
   return state;
 };

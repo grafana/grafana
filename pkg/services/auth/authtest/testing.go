@@ -5,16 +5,18 @@ import (
 	"net"
 	"time"
 
-	"github.com/grafana/grafana/pkg/models"
+	"golang.org/x/oauth2"
+
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/user"
-	"golang.org/x/oauth2"
 )
 
 type FakeUserAuthTokenService struct {
 	CreateTokenProvider          func(ctx context.Context, user *user.User, clientIP net.IP, userAgent string) (*auth.UserToken, error)
-	TryRotateTokenProvider       func(ctx context.Context, token *auth.UserToken, clientIP net.IP, userAgent string) (bool, error)
+	RotateTokenProvider          func(ctx context.Context, cmd auth.RotateCommand) (*auth.UserToken, error)
+	TryRotateTokenProvider       func(ctx context.Context, token *auth.UserToken, clientIP net.IP, userAgent string) (bool, *auth.UserToken, error)
 	LookupTokenProvider          func(ctx context.Context, unhashedToken string) (*auth.UserToken, error)
 	RevokeTokenProvider          func(ctx context.Context, token *auth.UserToken, soft bool) error
 	RevokeAllUserTokensProvider  func(ctx context.Context, userId int64) error
@@ -33,8 +35,8 @@ func NewFakeUserAuthTokenService() *FakeUserAuthTokenService {
 				UnhashedToken: "",
 			}, nil
 		},
-		TryRotateTokenProvider: func(ctx context.Context, token *auth.UserToken, clientIP net.IP, userAgent string) (bool, error) {
-			return false, nil
+		TryRotateTokenProvider: func(ctx context.Context, token *auth.UserToken, clientIP net.IP, userAgent string) (bool, *auth.UserToken, error) {
+			return false, nil, nil
 		},
 		LookupTokenProvider: func(ctx context.Context, unhashedToken string) (*auth.UserToken, error) {
 			return &auth.UserToken{
@@ -73,12 +75,16 @@ func (s *FakeUserAuthTokenService) CreateToken(ctx context.Context, user *user.U
 	return s.CreateTokenProvider(context.Background(), user, clientIP, userAgent)
 }
 
+func (s *FakeUserAuthTokenService) RotateToken(ctx context.Context, cmd auth.RotateCommand) (*auth.UserToken, error) {
+	return s.RotateTokenProvider(ctx, cmd)
+}
+
 func (s *FakeUserAuthTokenService) LookupToken(ctx context.Context, unhashedToken string) (*auth.UserToken, error) {
 	return s.LookupTokenProvider(context.Background(), unhashedToken)
 }
 
 func (s *FakeUserAuthTokenService) TryRotateToken(ctx context.Context, token *auth.UserToken, clientIP net.IP,
-	userAgent string) (bool, error) {
+	userAgent string) (bool, *auth.UserToken, error) {
 	return s.TryRotateTokenProvider(context.Background(), token, clientIP, userAgent)
 }
 
@@ -112,7 +118,7 @@ func (s *FakeUserAuthTokenService) BatchRevokeAllUserTokens(ctx context.Context,
 
 type FakeOAuthTokenService struct {
 	passThruEnabled  bool
-	ExpectedAuthUser *models.UserAuth
+	ExpectedAuthUser *login.UserAuth
 	ExpectedErrors   map[string]error
 }
 
@@ -129,7 +135,7 @@ func (ts *FakeOAuthTokenService) IsOAuthPassThruEnabled(*datasources.DataSource)
 	return ts.passThruEnabled
 }
 
-func (ts *FakeOAuthTokenService) HasOAuthEntry(context.Context, *user.SignedInUser) (*models.UserAuth, bool, error) {
+func (ts *FakeOAuthTokenService) HasOAuthEntry(context.Context, *user.SignedInUser) (*login.UserAuth, bool, error) {
 	if ts.ExpectedAuthUser != nil {
 		return ts.ExpectedAuthUser, true, nil
 	}
@@ -139,14 +145,14 @@ func (ts *FakeOAuthTokenService) HasOAuthEntry(context.Context, *user.SignedInUs
 	return nil, false, nil
 }
 
-func (ts *FakeOAuthTokenService) InvalidateOAuthTokens(ctx context.Context, usr *models.UserAuth) error {
+func (ts *FakeOAuthTokenService) InvalidateOAuthTokens(ctx context.Context, usr *login.UserAuth) error {
 	ts.ExpectedAuthUser.OAuthAccessToken = ""
 	ts.ExpectedAuthUser.OAuthRefreshToken = ""
 	ts.ExpectedAuthUser.OAuthExpiry = time.Time{}
 	return nil
 }
 
-func (ts *FakeOAuthTokenService) TryTokenRefresh(ctx context.Context, usr *models.UserAuth) error {
+func (ts *FakeOAuthTokenService) TryTokenRefresh(ctx context.Context, usr *login.UserAuth) error {
 	if err, ok := ts.ExpectedErrors["TryTokenRefresh"]; ok {
 		return err
 	}

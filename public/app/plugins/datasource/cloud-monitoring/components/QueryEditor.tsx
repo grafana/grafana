@@ -4,7 +4,8 @@ import { QueryEditorProps, toOption } from '@grafana/data';
 import { EditorRows } from '@grafana/experimental';
 
 import CloudMonitoringDatasource from '../datasource';
-import { CloudMonitoringQuery, QueryType, SLOQuery, CloudMonitoringOptions } from '../types';
+import { CloudMonitoringQuery, QueryType, SLOQuery } from '../types/query';
+import { CloudMonitoringOptions } from '../types/types';
 
 import { QueryHeader } from './QueryHeader';
 import { defaultQuery as defaultSLOQuery } from './SLOQueryEditor';
@@ -20,10 +21,13 @@ export const QueryEditor = (props: Props) => {
   const query = useMemo(() => {
     if (!migrated) {
       setMigrated(true);
-      return datasource.migrateQuery(oldQ);
+      const migratedQuery = datasource.migrateQuery(oldQ);
+      // Update the query once the migrations have been completed.
+      onChange({ ...migratedQuery });
+      return migratedQuery;
     }
     return oldQ;
-  }, [oldQ, datasource, migrated]);
+  }, [oldQ, datasource, onChange, migrated]);
 
   const sloQuery = { ...defaultSLOQuery(datasource), ...query.sloQuery };
   const onSLOQueryChange = (q: SLOQuery) => {
@@ -41,7 +45,7 @@ export const QueryEditor = (props: Props) => {
 
   // Use a known query type
   useEffect(() => {
-    if (!Object.values(QueryType).includes(query.queryType)) {
+    if (!query.queryType || !Object.values(QueryType).includes(query.queryType)) {
       onChange({ ...query, queryType: QueryType.TIME_SERIES_LIST });
     }
   });

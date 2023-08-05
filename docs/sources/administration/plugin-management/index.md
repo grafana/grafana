@@ -5,6 +5,10 @@ aliases:
   - ../plugins/installation/
   - ../plugins/plugin-signature-verification/
   - ../plugins/plugin-signatures/
+labels:
+  products:
+    - enterprise
+    - oss
 title: Plugin management
 weight: 600
 ---
@@ -19,7 +23,7 @@ Grafana supports three types of plugins: [panels](/grafana/plugins?type=panel), 
 
 ## Panel plugins
 
-Add new visualizations to your dashboard with panel plugins, such as the [Worldmap Panel](/grafana/plugins/grafana-worldmap-panel), [Clock](/grafana/plugins/grafana-clock-panel), and [Pie Chart](/grafana/plugins/grafana-piechart-panel).
+Add new visualizations to your dashboard with panel plugins, such as the [Clock](/grafana/plugins/grafana-clock-panel), [Mosaic](/grafana/plugins/boazreicher-mosaicplot-panel) and [Variable](/grafana/plugins/volkovlabs-variable-panel) panels.
 
 Use panel plugins when you want to:
 
@@ -29,7 +33,7 @@ Use panel plugins when you want to:
 
 ## Data source plugins
 
-Data source plugins add support for new databases, such as [Google BigQuery](/grafana/plugins/doitintl-bigquery-datasource).
+Data source plugins add support for new databases, such as [Google BigQuery](/grafana/plugins/grafana-bigquery-datasource).
 
 Data source plugins communicate with external sources of data and return the data in a format that Grafana understands. By adding a data source plugin, you can immediately use the data in any of your existing dashboards.
 
@@ -49,7 +53,9 @@ With [RBAC]({{< relref "../roles-and-permissions/access-control/#about-rbac" >}}
 
 By default, Viewers, Editors and Admins have access to all App Plugins that their organization role allows them to access, thanks to the `fixed:plugins.app:reader` role.
 
-> **Note:** Revoking this RBAC role from some users, will prevent them from accessing app plugins. But granting this RBAC role to users will only allow them to see app plugins their organization role allows them to see.
+{{% admonition type="note" %}}
+Revoking this RBAC role from some users, will prevent them from accessing app plugins. But granting this RBAC role to users will only allow them to see app plugins their organization role allows them to see.
+{{% /admonition %}}
 
 To prevent users from seeing an app plugin, refer to [this permissions scenarios]({{< relref "../roles-and-permissions/access-control/plan-rbac-rollout-strategy#prevent-viewers-from-accessing-an-app-plugin" >}}).
 
@@ -72,18 +78,20 @@ The Plugin catalog allows you to browse and manage plugins from within Grafana. 
   </video>
 </div>
 
+_Video shows the Plugin catalog in a previous version of Grafana._
+
 In order to be able to install / uninstall / update plugins using plugin catalog, you must enable it via the `plugin_admin_enabled` flag in the [configuration]({{< relref "../../setup-grafana/configure-grafana/#plugin_admin_enabled" >}}) file.
 Before following the steps below, make sure you are logged in as a Grafana administrator.
 
 <a id="#plugin-catalog-entry"></a>
 
-- Administrators can find the Plugin catalog at **Configuration > Plugins**.
+Administrators can find the Plugin catalog at **Administration > Plugins**.
 
 ### Browse plugins
 
 To browse for available plugins:
 
-1. In Grafana, [navigate to the Plugin catalog](#plugin-catalog-entry) to view installed plugins.
+1. In Grafana, click **Administration > Plugins** in the side navigation menu to view installed plugins.
 1. Click the **All** filter to browse all available plugins.
 1. Click the **Data sources**, **Panels**, or **Applications** buttons to filter by plugin type.
 
@@ -91,7 +99,7 @@ To browse for available plugins:
 
 To install a plugin:
 
-1. In Grafana, [navigate to the Plugin catalog](#plugin-catalog-entry) to view installed plugins.
+1. In Grafana, click **Administration > Plugins** in the side navigation menu to view installed plugins.
 1. Browse and find a plugin.
 1. Click on the plugin logo.
 1. Click **Install**.
@@ -102,7 +110,7 @@ When the update is complete, you see a confirmation message that the installatio
 
 To update a plugin:
 
-1. In Grafana, [navigate to the Plugin catalog](#plugin-catalog-entry) to view installed plugins.
+1. In Grafana, click **Administration > Plugins** in the side navigation menu to view installed plugins.
 1. Click on the plugin logo.
 1. Click **Update**.
 
@@ -112,7 +120,7 @@ When the update is complete, you see a confirmation message that the update was 
 
 To uninstall a plugin:
 
-1. In Grafana, [navigate to the Plugin catalog](#plugin-catalog-entry) to view installed plugins.
+1. In Grafana, click **Administration > Plugins** in the side navigation menu to view installed plugins.
 1. Click on the plugin logo.
 1. Click **Uninstall**.
 
@@ -163,7 +171,7 @@ Grafana also writes an error message to the server log:
 WARN[05-26|12:00:00] Some plugin scanning errors were found   errors="plugin '<plugin id>' is unsigned, plugin '<plugin id>' has an invalid signature"
 ```
 
-If you are a plugin developer and want to know how to sign your plugin, refer to [Sign a plugin]({{< relref "../../developers/plugins/sign-a-plugin/" >}}).
+If you are a plugin developer and want to know how to sign your plugin, refer to [Sign a plugin]({{< relref "../../developers/plugins/publish-a-plugin/sign-a-plugin.md" >}}).
 
 | Signature status   | Description                                                                     |
 | ------------------ | ------------------------------------------------------------------------------- |
@@ -195,7 +203,9 @@ If you've allowed loading of an unsigned plugin, then Grafana writes a warning m
 WARN[06-01|16:45:59] Running an unsigned plugin   pluginID=<plugin id>
 ```
 
-> **Note:** If you're developing a plugin, then you can enable development mode to allow all unsigned plugins.
+{{% admonition type="note" %}}
+If you're developing a plugin, then you can enable development mode to allow all unsigned plugins.
+{{% /admonition %}}
 
 ## Learn more
 

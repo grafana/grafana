@@ -10,7 +10,7 @@ type IntervalMap = Record<
   }
 >;
 
-const intervalMap: IntervalMap = {
+export const intervalMap: IntervalMap = {
   Hourly: { startOf: 'hour', amount: 'hours' },
   Daily: { startOf: 'day', amount: 'days' },
   Weekly: { startOf: 'isoWeek', amount: 'weeks' },
@@ -21,7 +21,10 @@ const intervalMap: IntervalMap = {
 export class IndexPattern {
   private dateLocale = 'en';
 
-  constructor(private pattern: string, private interval?: keyof typeof intervalMap) {}
+  constructor(
+    private pattern: string,
+    private interval?: keyof typeof intervalMap
+  ) {}
 
   getIndexForToday() {
     if (this.interval) {
@@ -36,6 +39,7 @@ export class IndexPattern {
     // for the provided index pattern.
     // This is useful when requesting log context where the only time data we have is the log
     // timestamp.
+    // TODO: Remove when enableBackendMigration toggle is removed
     const indexOffset = 7;
     if (!this.interval) {
       return this.pattern;

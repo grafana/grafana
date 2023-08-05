@@ -4,6 +4,7 @@ import { AlertQuery } from 'app/types/unified-alerting-dto';
 
 import {
   checkForPathSeparator,
+  findRenamedDataQueryReferences,
   getThresholdsForQueries,
   queriesWithUpdatedReferences,
   updateMathExpressionRefs,
@@ -25,7 +26,7 @@ describe('rule-editor', () => {
 
   const classicCondition = {
     refId: 'B',
-    datasourceUid: '-100',
+    datasourceUid: '__expr__',
     queryType: '',
     model: {
       refId: 'B',
@@ -55,7 +56,7 @@ describe('rule-editor', () => {
 
   const mathExpression = {
     refId: 'B',
-    datasourceUid: '-100',
+    datasourceUid: '__expr__',
     queryType: '',
     model: {
       refId: 'B',
@@ -68,7 +69,7 @@ describe('rule-editor', () => {
 
   const reduceExpression = {
     refId: 'B',
-    datasourceUid: '-100',
+    datasourceUid: '__expr__',
     queryType: '',
     model: {
       refId: 'B',
@@ -82,7 +83,7 @@ describe('rule-editor', () => {
 
   const resampleExpression = {
     refId: 'A',
-    datasourceUid: '-100',
+    datasourceUid: '__expr__',
     model: {
       refId: 'A',
       type: 'resample',
@@ -101,14 +102,14 @@ describe('rule-editor', () => {
 
   const thresholdExpression = {
     refId: 'C',
-    datasourceUid: '-100',
+    datasourceUid: '__expr__',
     model: {
       refId: 'C',
       type: 'threshold',
       expression: 'B',
       datasource: {
         type: '__expr__',
-        uid: '-100',
+        uid: '__expr__',
       },
       conditions: [
         {
@@ -253,7 +254,7 @@ describe('getThresholdsForQueries', () => {
 
     const classicCondition = {
       refId: 'B',
-      datasourceUid: '-100',
+      datasourceUid: '__expr__',
       queryType: '',
       model: {
         refId: 'B',
@@ -283,6 +284,56 @@ describe('getThresholdsForQueries', () => {
 
     const thresholdsClassic = getThresholdsForQueries([dataQuery, classicCondition]);
     expect(thresholdsClassic).toMatchSnapshot();
+  });
+
+  it('should not throw if no refId exists', () => {
+    const dataQuery: AlertQuery = {
+      refId: 'A',
+      datasourceUid: 'abc123',
+      queryType: '',
+      relativeTimeRange: {
+        from: 600,
+        to: 0,
+      },
+      model: {
+        refId: 'A',
+      },
+    };
+
+    const classicCondition = {
+      refId: 'B',
+      datasourceUid: '__expr__',
+      queryType: '',
+      model: {
+        refId: 'B',
+        type: 'classic_conditions',
+        datasource: ExpressionDatasourceRef,
+        conditions: [
+          {
+            type: 'query',
+            evaluator: {
+              params: [0],
+              type: 'gt',
+            },
+            operator: {
+              type: 'and',
+            },
+            query: {
+              params: [''],
+            },
+            reducer: {
+              params: [],
+              type: 'last',
+            },
+          },
+        ],
+      },
+    };
+
+    expect(() => {
+      const thresholds = getThresholdsForQueries([dataQuery, classicCondition]);
+      expect(thresholds).toStrictEqual({});
+    }).not.toThrowError();
   });
 
   it('should work for within_range', () => {
@@ -319,7 +370,7 @@ function createThresholdExample(thresholdType: string): AlertQuery[] {
 
   const reduceExpression = {
     refId: 'B',
-    datasourceUid: '-100',
+    datasourceUid: '__expr__',
     queryType: '',
     model: {
       refId: 'B',
@@ -333,7 +384,7 @@ function createThresholdExample(thresholdType: string): AlertQuery[] {
 
   const thresholdExpression = {
     refId: 'C',
-    datasourceUid: '-100',
+    datasourceUid: '__expr__',
     queryType: '',
     model: {
       refId: 'C',
@@ -346,16 +397,6 @@ function createThresholdExample(thresholdType: string): AlertQuery[] {
             params: [0, 10],
             type: thresholdType ?? 'gt',
           },
-          operator: {
-            type: 'and',
-          },
-          query: {
-            params: ['B'],
-          },
-          reducer: {
-            params: [],
-            type: 'last',
-          },
         },
       ],
       expression: 'B',
@@ -364,3 +405,33 @@ function createThresholdExample(thresholdType: string): AlertQuery[] {
 
   return [dataQuery, reduceExpression, thresholdExpression];
 }
+
+describe('findRenamedReferences', () => {
+  it('should find the renamed ids', () => {
+    const previous = [{ refId: 'A' }, { refId: 'B' }, { refId: 'C' }] as AlertQuery[];
+    const updated = [{ refId: 'FOO' }, { refId: 'B' }, { refId: 'C' }] as AlertQuery[];
+
+    expect(findRenamedDataQueryReferences(previous, updated)).toEqual(['A', 'FOO']);
+  });
+
+  it('should ignore expression queries', () => {
+    // @ts-expect-error
+    const previous = [
+      { refId: 'A' },
+      { refId: 'REDUCE', model: { datasource: '-100' } },
+      { refId: 'MATH', model: { datasource: '-100' } },
+      { refId: 'B' },
+      { refId: 'C' },
+    ] as AlertQuery[];
+
+    // @ts-expect-error
+    const updated = [
+      { refId: 'FOO' },
+      { refId: 'REDUCE', model: { datasource: '-100' } },
+      { refId: 'B' },
+      { refId: 'C' },
+    ] as AlertQuery[];
+
+    expect(findRenamedDataQueryReferences(previous, updated)).toEqual(['A', 'FOO']);
+  });
+});

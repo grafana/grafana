@@ -7,7 +7,7 @@ import { configureStore } from 'app/store/configureStore';
 import { Invitee, OrgUser } from 'app/types';
 
 import { Props, UsersListPageUnconnected } from './UsersListPage';
-import { setUsersSearchPage, setUsersSearchQuery } from './state/reducers';
+import { pageChanged } from './state/reducers';
 
 jest.mock('../../core/app_events', () => ({
   emit: jest.fn(),
@@ -27,15 +27,16 @@ const setup = (propOverrides?: object) => {
     users: [] as OrgUser[],
     invitees: [] as Invitee[],
     searchQuery: '',
-    searchPage: 1,
+    page: 1,
+    totalPages: 1,
+    perPage: 30,
     externalUserMngInfo: '',
     fetchInvitees: jest.fn(),
     loadUsers: jest.fn(),
     updateUser: jest.fn(),
     removeUser: jest.fn(),
-    setUsersSearchQuery: mockToolkitActionCreator(setUsersSearchQuery),
-    setUsersSearchPage: mockToolkitActionCreator(setUsersSearchPage),
-    hasFetched: false,
+    changePage: mockToolkitActionCreator(pageChanged),
+    isLoading: false,
   };
 
   Object.assign(props, propOverrides);

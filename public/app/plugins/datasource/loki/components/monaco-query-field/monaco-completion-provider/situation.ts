@@ -20,6 +20,8 @@ import {
   LiteralExpr,
   MetricExpr,
   UnwrapExpr,
+  DistinctFilter,
+  DistinctLabel,
 } from '@grafana/lezer-logql';
 
 import { getLogQueryFromMetricsQuery } from '../../../queryUtils';
@@ -63,14 +65,14 @@ function parseStringLiteral(text: string): string {
   if (text.startsWith('"') && text.endsWith('"')) {
     // NOTE: this is not 100% perfect, we only unescape the double-quote,
     // there might be other characters too
-    return inside.replace(/\\"/, '"');
+    return inside.replace(/\\"/gm, '"');
   }
 
   // Single quotes
   if (text.startsWith("'") && text.endsWith("'")) {
     // NOTE: this is not 100% perfect, we only unescape the single-quote,
     // there might be other characters too
-    return inside.replace(/\\'/, "'");
+    return inside.replace(/\\'/gm, "'");
   }
 
   // Backticks
@@ -119,10 +121,15 @@ export type Situation =
   | {
       type: 'AFTER_SELECTOR';
       afterPipe: boolean;
+      hasSpace: boolean;
       logQuery: string;
     }
   | {
       type: 'AFTER_UNWRAP';
+      logQuery: string;
+    }
+  | {
+      type: 'AFTER_DISTINCT';
       logQuery: string;
     };
 
@@ -140,6 +147,10 @@ const ERROR_NODE_ID = 0;
 const RESOLVERS: Resolver[] = [
   {
     path: [Selector],
+    fun: resolveSelector,
+  },
+  {
+    path: [ERROR_NODE_ID, Matchers, Selector],
     fun: resolveSelector,
   },
   {
@@ -185,6 +196,14 @@ const RESOLVERS: Resolver[] = [
   {
     path: [UnwrapExpr],
     fun: resolveAfterUnwrap,
+  },
+  {
+    path: [ERROR_NODE_ID, DistinctFilter],
+    fun: resolveAfterDistinct,
+  },
+  {
+    path: [ERROR_NODE_ID, DistinctLabel],
+    fun: resolveAfterDistinct,
   },
 ];
 
@@ -243,14 +262,11 @@ function getLabels(selectorNode: SyntaxNode, text: string): Label[] {
 
   while (listNode !== null) {
     const matcherNode = walk(listNode, [['lastChild', Matcher]]);
-    if (matcherNode === null) {
-      // unexpected, we stop
-      return [];
-    }
-
-    const label = getLabel(matcherNode, text);
-    if (label !== null) {
-      labels.push(label);
+    if (matcherNode !== null) {
+      const label = getLabel(matcherNode, text);
+      if (label !== null) {
+        labels.push(label);
+      }
     }
 
     // there might be more labels
@@ -450,6 +466,7 @@ function resolveLogOrLogRange(node: SyntaxNode, text: string, pos: number, after
   return {
     type: 'AFTER_SELECTOR',
     afterPipe,
+    hasSpace: text.endsWith(' '),
     logQuery: getLogQueryFromMetricsQuery(text).trim(),
   };
 }
@@ -467,18 +484,51 @@ function resolveSelector(node: SyntaxNode, text: string, pos: number): Situation
     // to be able to suggest adding the next label.
     // the area between the end-of-the-child-node and the cursor-pos
     // must contain a `,` in this case.
-    const textToCheck = text.slice(child.to, pos);
-
-    if (!textToCheck.includes(',')) {
+    const textToCheck = text.slice(child.from, pos);
+    if (!textToCheck.trim().endsWith(',')) {
       return null;
     }
   }
 
-  const otherLabels = getLabels(node, text);
+  const selectorNode =
+    node.type.id === ERROR_NODE_ID
+      ? walk(node, [
+          ['parent', Matchers],
+          ['parent', Selector],
+        ])
+      : node;
+  if (!selectorNode) {
+    return null;
+  }
+
+  const otherLabels = getLabels(selectorNode, text);
 
   return {
     type: 'IN_LABEL_SELECTOR_NO_LABEL_NAME',
     otherLabels,
+  };
+}
+
+function resolveAfterDistinct(node: SyntaxNode, text: string, pos: number): Situation | null {
+  let logQuery = getLogQueryFromMetricsQuery(text).trim();
+
+  let distinctFilterParent: SyntaxNode | null = null;
+  let parent = node.parent;
+  while (parent !== null) {
+    if (parent.type.id === PipelineStage) {
+      distinctFilterParent = parent;
+      break;
+    }
+    parent = parent.parent;
+  }
+
+  if (distinctFilterParent?.type.id === PipelineStage) {
+    logQuery = logQuery.slice(0, distinctFilterParent.from);
+  }
+
+  return {
+    type: 'AFTER_DISTINCT',
+    logQuery,
   };
 }
 

@@ -75,7 +75,7 @@ function ensurePromQL(monaco: Monaco) {
 const getStyles = (theme: GrafanaTheme2, placeholder: string) => {
   return {
     container: css`
-      border-radius: ${theme.shape.borderRadius()};
+      border-radius: ${theme.shape.radius.default};
       border: 1px solid ${theme.components.input.borderColor};
     `,
     placeholder: css`
@@ -141,8 +141,6 @@ const MonacoQueryField = (props: Props) => {
           });
 
           // we construct a DataProvider object
-          const getSeries = (selector: string) => lpRef.current.getSeries(selector);
-
           const getHistory = () =>
             Promise.resolve(historyRef.current.map((h) => h.query.expr).filter((expr) => expr !== undefined));
 
@@ -164,7 +162,18 @@ const MonacoQueryField = (props: Props) => {
 
           const getLabelValues = (labelName: string) => lpRef.current.getLabelValues(labelName);
 
-          const dataProvider = { getSeries, getHistory, getAllMetricNames, getAllLabelNames, getLabelValues };
+          const getSeriesValues = lpRef.current.getSeriesValues;
+
+          const getSeriesLabels = lpRef.current.getSeriesLabels;
+
+          const dataProvider = {
+            getHistory,
+            getAllMetricNames,
+            getAllLabelNames,
+            getLabelValues,
+            getSeriesValues,
+            getSeriesLabels,
+          };
           const completionProvider = getCompletionProvider(monaco, dataProvider);
 
           // completion-providers in monaco are not registered directly to editor-instances,
@@ -222,7 +231,7 @@ const MonacoQueryField = (props: Props) => {
           const updateCurrentEditorValue = debounce(() => {
             const editorValue = editor.getValue();
             onChangeRef.current(editorValue);
-          }, 300);
+          }, lpRef.current.datasource.getDebounceTimeInMilliseconds());
 
           editor.getModel()?.onDidChangeContent(() => {
             updateCurrentEditorValue();

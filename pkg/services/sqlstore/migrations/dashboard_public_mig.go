@@ -84,4 +84,16 @@ func addPublicDashboardMigration(mg *Migrator) {
 
 	mg.AddMigration("delete orphaned public dashboards", NewRawSQLMigration(
 		"DELETE FROM dashboard_public WHERE dashboard_uid NOT IN (SELECT uid FROM dashboard)"))
+
+	mg.AddMigration("add share column", NewAddColumnMigration(dashboardPublicCfgV2, &Column{
+		Name:     "share",
+		Type:     DB_NVarchar,
+		Length:   64,
+		Nullable: false,
+		Default:  "'public'",
+	}))
+
+	mg.AddMigration("backfill empty share column fields with default of public", NewRawSQLMigration(
+		"UPDATE dashboard_public SET share='public' WHERE share=''",
+	))
 }

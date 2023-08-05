@@ -1,5 +1,10 @@
+import { dateTime } from '@grafana/data';
 import { faro, LogLevel as GrafanaLogLevel } from '@grafana/faro-web-sdk';
+import { getBackendSrv } from '@grafana/runtime';
 import { config, reportInteraction } from '@grafana/runtime/src';
+import { contextSrv } from 'app/core/core';
+
+export const USER_CREATION_MIN_DAYS = 7;
 
 export const LogMessages = {
   filterByLabel: 'filtering alert instances by label',
@@ -10,9 +15,11 @@ export const LogMessages = {
   clickingAlertStateFilters: 'clicking alert state filters',
   cancelSavingAlertRule: 'user canceled alert rule creation',
   successSavingAlertRule: 'alert rule saved successfully',
+  unknownMessageFromError: 'unknown messageFromError',
+  errorGettingLokiHistory: 'error getting Loki history',
 };
 
-// logInfo from '@grafana/runtime' should be used, but it doesn't handle Grafana JS Agent and Sentry correctly
+// logInfo from '@grafana/runtime' should be used, but it doesn't handle Grafana JS Agent correctly
 export function logInfo(message: string, context: Record<string, string | number> = {}) {
   if (config.grafanaJavascriptAgent.enabled) {
     faro.api.pushLog([message], {
@@ -40,20 +47,61 @@ export function withPerformanceLogging<TFunc extends (...args: any[]) => Promise
   };
 }
 
-export const trackNewAlerRuleFormSaved = (props: AlertRuleTrackingProps) => {
+export async function isNewUser() {
+  try {
+    const { createdAt } = await getBackendSrv().get(`/api/user`);
+
+    const limitDateForNewUser = dateTime().subtract(USER_CREATION_MIN_DAYS, 'days');
+    const userCreationDate = dateTime(createdAt);
+
+    const isNew = limitDateForNewUser.isBefore(userCreationDate);
+
+    return isNew;
+  } catch {
+    return true; //if no date is returned, we assume the user is new to prevent tracking actions
+  }
+}
+
+export const trackRuleListNavigation = async (
+  props: AlertRuleTrackingProps = {
+    grafana_version: config.buildInfo.version,
+    org_id: contextSrv.user.orgId,
+    user_id: contextSrv.user.id,
+  }
+) => {
+  const isNew = await isNewUser();
+  if (isNew) {
+    return;
+  }
+  reportInteraction('grafana_alerting_navigation', props);
+};
+
+export const trackNewAlerRuleFormSaved = async (props: AlertRuleTrackingProps) => {
+  const isNew = await isNewUser();
+  if (isNew) {
+    return;
+  }
   reportInteraction('grafana_alerting_rule_creation', props);
 };
 
-export const trackNewAlerRuleFormCancelled = (props: AlertRuleTrackingProps) => {
+export const trackNewAlerRuleFormCancelled = async (props: AlertRuleTrackingProps) => {
+  const isNew = await isNewUser();
+  if (isNew) {
+    return;
+  }
   reportInteraction('grafana_alerting_rule_aborted', props);
 };
 
-export const trackNewAlerRuleFormError = (props: AlertRuleTrackingProps & { error: string }) => {
+export const trackNewAlerRuleFormError = async (props: AlertRuleTrackingProps & { error: string }) => {
+  const isNew = await isNewUser();
+  if (isNew) {
+    return;
+  }
   reportInteraction('grafana_alerting_rule_form_error', props);
 };
 
 export type AlertRuleTrackingProps = {
+  user_id: number;
   grafana_version?: string;
   org_id?: number;
-  user_id?: number;
 };

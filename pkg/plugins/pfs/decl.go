@@ -2,17 +2,19 @@ package pfs
 
 import (
 	"cuelang.org/go/cue/ast"
-	"github.com/grafana/grafana/pkg/kindsys"
-	"github.com/grafana/grafana/pkg/plugins/plugindef"
+	"github.com/grafana/kindsys"
 	"github.com/grafana/thema"
+
+	"github.com/grafana/grafana/pkg/plugins/plugindef"
 )
 
 type PluginDecl struct {
-	Slot       *kindsys.Slot
-	Lineage    thema.Lineage
-	Imports    []*ast.ImportSpec
-	PluginPath string
-	PluginMeta plugindef.PluginDef
+	SchemaInterface *kindsys.SchemaInterface
+	Lineage         thema.Lineage
+	Imports         []*ast.ImportSpec
+	PluginPath      string
+	PluginMeta      plugindef.PluginDef
+	KindDecl        kindsys.Def[kindsys.ComposableProperties]
 }
 
 func EmptyPluginDecl(path string, meta plugindef.PluginDef) *PluginDecl {
@@ -24,5 +26,5 @@ func EmptyPluginDecl(path string, meta plugindef.PluginDef) *PluginDecl {
 }
 
 func (decl *PluginDecl) HasSchema() bool {
-	return decl.Lineage != nil && decl.Slot != nil
+	return decl.Lineage != nil && decl.SchemaInterface != nil
 }

@@ -4,6 +4,23 @@ exports[`FlameGraph should render correctly 1`] = `
 [
   {
     "props": {
+      "height": 1100,
+      "width": 1600,
+      "x": 0,
+      "y": 0,
+    },
+    "transform": [
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+    ],
+    "type": "clearRect",
+  },
+  {
+    "props": {
       "path": [
         {
           "props": {},

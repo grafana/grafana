@@ -5,10 +5,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"net/http"
 	"strconv"
 	"time"
-
-	"net/http"
 )
 
 type payload struct {

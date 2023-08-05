@@ -7,9 +7,10 @@ import { PanelModel } from 'app/features/dashboard/state';
 
 import { reducerTester } from '../../../../test/core/redux/reducerTester';
 import { MockDataSourceApi } from '../../../../test/mocks/datasource_srv';
-import { ExploreId, ExploreItemState, ExploreState } from '../../../types';
+import { configureStore } from '../../../store/configureStore';
+import { ExploreItemState, ExploreState, StoreState, ThunkDispatch } from '../../../types';
 
-import { exploreReducer, navigateToExplore, splitCloseAction } from './main';
+import { exploreReducer, navigateToExplore, splitClose, splitOpen } from './main';
 
 const getNavigateToExploreContext = async (openInNewWindow?: (url: string) => void) => {
   const url = '/explore';
@@ -116,8 +117,37 @@ describe('navigateToExplore', () => {
 
 describe('Explore reducer', () => {
   describe('split view', () => {
+    describe('split open', () => {
+      it('it should create only ony new pane', async () => {
+        let dispatch: ThunkDispatch, getState: () => StoreState;
+
+        const store: { dispatch: ThunkDispatch; getState: () => StoreState } = configureStore({
+          explore: {
+            panes: {
+              one: { queries: [], range: {} },
+            },
+          },
+        } as unknown as Partial<StoreState>);
+
+        dispatch = store.dispatch;
+        getState = store.getState;
+
+        await dispatch(splitOpen());
+        let splitPanes = Object.keys(getState().explore.panes);
+        expect(splitPanes).toHaveLength(2);
+        let secondSplitPaneId = splitPanes[1];
+
+        await dispatch(splitOpen());
+        splitPanes = Object.keys(getState().explore.panes);
+        // only 2 panes exist...
+        expect(splitPanes).toHaveLength(2);
+        // ...and the second pane is replaced
+        expect(splitPanes[0]).toBe('one');
+        expect(splitPanes[1]).not.toBe(secondSplitPaneId);
+      });
+    });
     describe('split close', () => {
-      it('should keep right pane as left when left is closed', () => {
+      it('should reset right pane when it is closed', () => {
         const leftItemMock = {
           containerWidth: 100,
         } as unknown as ExploreItemState;
@@ -127,53 +157,56 @@ describe('Explore reducer', () => {
         } as unknown as ExploreItemState;
 
         const initialState = {
-          left: leftItemMock,
-          right: rightItemMock,
+          panes: {
+            left: leftItemMock,
+            right: rightItemMock,
+          },
         } as unknown as ExploreState;
 
         // closing left item
         reducerTester<ExploreState>()
           .givenReducer(exploreReducer, initialState)
-          .whenActionIsDispatched(splitCloseAction({ itemId: ExploreId.left }))
+          .whenActionIsDispatched(splitClose('right'))
           .thenStateShouldEqual({
             evenSplitPanes: true,
             largerExploreId: undefined,
-            left: rightItemMock,
+            panes: {
+              left: leftItemMock,
+            },
             maxedExploreId: undefined,
-            right: undefined,
+            syncedTimes: false,
           } as unknown as ExploreState);
       });
-      it('should reset right pane when it is closed ', () => {
-        const leftItemMock = {
+
+      it('should unsync time ranges', () => {
+        const itemMock = {
           containerWidth: 100,
         } as unknown as ExploreItemState;
 
-        const rightItemMock = {
-          containerWidth: 200,
-        } as unknown as ExploreItemState;
-
         const initialState = {
-          left: leftItemMock,
-          right: rightItemMock,
+          panes: {
+            right: itemMock,
+            left: itemMock,
+          },
+          syncedTimes: true,
         } as unknown as ExploreState;
 
-        // closing left item
         reducerTester<ExploreState>()
           .givenReducer(exploreReducer, initialState)
-          .whenActionIsDispatched(splitCloseAction({ itemId: ExploreId.right }))
+          .whenActionIsDispatched(splitClose('right'))
           .thenStateShouldEqual({
             evenSplitPanes: true,
-            largerExploreId: undefined,
-            left: leftItemMock,
-            maxedExploreId: undefined,
-            right: undefined,
+            panes: {
+              left: itemMock,
+            },
+            syncedTimes: false,
           } as unknown as ExploreState);
       });
     });
   });
 });
 
-export const setup = (urlStateOverrides?: any) => {
+export const setup = (urlStateOverrides?: Partial<ExploreUrlState>) => {
   const urlStateDefaults: ExploreUrlState = {
     datasource: 'some-datasource',
     queries: [],

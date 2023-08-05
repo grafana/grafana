@@ -3,14 +3,13 @@ package dashboards
 import (
 	"context"
 	"errors"
-	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgtest"
 )
 
@@ -28,11 +27,11 @@ func TestDashboardsAsConfig(t *testing.T) {
 		orgFake := orgtest.NewOrgServiceFake()
 
 		t.Run("Should fail if orgs don't exist in the database", func(t *testing.T) {
-			orgFake.ExpectedError = models.ErrOrgNotFound
+			orgFake.ExpectedError = org.ErrOrgNotFound
 			cfgProvider := configReader{path: appliedDefaults, log: logger, orgService: orgFake}
 			_, err := cfgProvider.readConfig(context.Background())
 			require.Error(t, err)
-			assert.True(t, errors.Is(err, models.ErrOrgNotFound))
+			assert.True(t, errors.Is(err, org.ErrOrgNotFound))
 			orgFake.ExpectedError = nil
 		})
 
@@ -47,10 +46,9 @@ func TestDashboardsAsConfig(t *testing.T) {
 		})
 
 		t.Run("Can read config file version 1 format", func(t *testing.T) {
-			_ = os.Setenv("TEST_VAR", "general")
+			t.Setenv("TEST_VAR", "general")
 			cfgProvider := configReader{path: simpleDashboardConfig, log: logger, orgService: orgFake}
 			cfg, err := cfgProvider.readConfig(context.Background())
-			_ = os.Unsetenv("TEST_VAR")
 			require.NoError(t, err)
 
 			validateDashboardAsConfig(t, cfg)

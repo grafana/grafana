@@ -53,8 +53,10 @@ export const Basic: Story = ({ body, title, ...args }) => {
     <Modal title={title} {...args}>
       {body}
       <Modal.ButtonRow>
+        <Button variant="secondary" fill="outline">
+          Cancel
+        </Button>
         <Button>Button1</Button>
-        <Button variant="secondary">Cancel</Button>
       </Modal.ButtonRow>
     </Modal>
   );
@@ -105,9 +107,9 @@ WithTabs.args = {
 
 export const UsingContentClassName: Story = ({ title, body, ...args }) => {
   const override = {
-    modalContent: css`
-      background-color: darkorange;
-    `,
+    modalContent: css({
+      backgroundColor: 'darkorange',
+    }),
   };
   return (
     <Modal title={title} {...args} contentClassName={cx(override.modalContent)}>

@@ -4,18 +4,19 @@ import (
 	"context"
 	"sync"
 
+	"golang.org/x/sync/errgroup"
+
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/setting"
-	"golang.org/x/sync/errgroup"
 )
 
 type serviceDisabled struct {
 }
 
-func (s *serviceDisabled) QuotaReached(c *models.ReqContext, targetSrv quota.TargetSrv) (bool, error) {
+func (s *serviceDisabled) QuotaReached(c *contextmodel.ReqContext, targetSrv quota.TargetSrv) (bool, error) {
 	return false, nil
 }
 
@@ -75,7 +76,7 @@ func (s *service) IsDisabled() bool {
 }
 
 // QuotaReached checks that quota is reached for a target. Runs CheckQuotaReached and take context and scope parameters from the request context
-func (s *service) QuotaReached(c *models.ReqContext, targetSrv quota.TargetSrv) (bool, error) {
+func (s *service) QuotaReached(c *contextmodel.ReqContext, targetSrv quota.TargetSrv) (bool, error) {
 	// No request context means this is a background service, like LDAP Background Sync
 	if c == nil {
 		return false, nil

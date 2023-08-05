@@ -5,6 +5,7 @@ import {
   DataQuery,
   DataQueryRequest,
   DataQueryResponse,
+  TestDataSourceResponse,
   DataSourceApi,
   DataSourceJsonData,
   DataSourcePluginMeta,
@@ -80,7 +81,15 @@ export class PublicDashboardDataSource extends DataSourceApi<DataQuery, DataSour
    * Ideally final -- any other implementation may not work as expected
    */
   query(request: DataQueryRequest<DataQuery>): Observable<DataQueryResponse> {
-    const { intervalMs, maxDataPoints, requestId, publicDashboardAccessToken, panelId } = request;
+    const {
+      intervalMs,
+      maxDataPoints,
+      requestId,
+      publicDashboardAccessToken,
+      panelId,
+      queryCachingTTL,
+      range: { from: fromRange, to: toRange },
+    } = request;
     let queries: DataQuery[];
 
     // Return early if no queries exist
@@ -100,7 +109,16 @@ export class PublicDashboardDataSource extends DataSourceApi<DataQuery, DataSour
 
     // Its a datasource query
     else {
-      const body = { intervalMs, maxDataPoints };
+      const body = {
+        intervalMs,
+        maxDataPoints,
+        queryCachingTTL,
+        timeRange: {
+          from: fromRange.valueOf().toString(),
+          to: toRange.valueOf().toString(),
+          timezone: this.getBrowserTimezone(),
+        },
+      };
 
       return getBackendSrv()
         .fetch<BackendDataSourceResponse>({
@@ -138,7 +156,12 @@ export class PublicDashboardDataSource extends DataSourceApi<DataQuery, DataSour
     return { data: [toDataFrame(annotations)] };
   }
 
-  testDatasource(): Promise<null> {
-    return Promise.resolve(null);
+  testDatasource(): Promise<TestDataSourceResponse> {
+    return Promise.resolve({ message: '', status: '' });
+  }
+
+  // Try to get the browser timezone otherwise return blank
+  getBrowserTimezone(): string {
+    return window.Intl?.DateTimeFormat().resolvedOptions()?.timeZone || '';
   }
 }

@@ -1,4 +1,4 @@
-import React, { FC, CSSProperties, HTMLProps } from 'react';
+import React, { CSSProperties, HTMLProps } from 'react';
 
 import { FormattedValue } from '@grafana/data';
 
@@ -18,7 +18,7 @@ function fontSizeReductionFactor(fontSize: number) {
   return 0.6;
 }
 
-export const FormattedValueDisplay: FC<Props> = ({ value, className, style, ...htmlProps }) => {
+export const FormattedValueDisplay = ({ value, className, style, ...htmlProps }: Props) => {
   const hasPrefix = (value.prefix ?? '').length > 0;
   const hasSuffix = (value.suffix ?? '').length > 0;
   let suffixStyle;

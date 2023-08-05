@@ -2,16 +2,15 @@ import { PanelPlugin } from '@grafana/data';
 
 import { TextPanel } from './TextPanel';
 import { TextPanelEditor } from './TextPanelEditor';
-import { CodeLanguage, defaultCodeOptions, defaultPanelOptions, PanelOptions, TextMode } from './models.gen';
+import { CodeLanguage, defaultCodeOptions, defaultOptions, Options, TextMode } from './panelcfg.gen';
 import { textPanelMigrationHandler } from './textPanelMigrationHandler';
 
-export const plugin = new PanelPlugin<PanelOptions>(TextPanel)
+export const plugin = new PanelPlugin<Options>(TextPanel)
   .setPanelOptions((builder) => {
     builder
       .addRadio({
         path: 'mode',
         name: 'Mode',
-        description: 'text mode of the panel',
         settings: {
           options: [
             { value: TextMode.Markdown, label: 'Markdown' },
@@ -19,7 +18,7 @@ export const plugin = new PanelPlugin<PanelOptions>(TextPanel)
             { value: TextMode.Code, label: 'Code' },
           ],
         },
-        defaultValue: defaultPanelOptions.mode,
+        defaultValue: defaultOptions.mode,
       })
       .addSelect({
         path: 'code.language',
@@ -49,9 +48,8 @@ export const plugin = new PanelPlugin<PanelOptions>(TextPanel)
         id: 'content',
         path: 'content',
         name: 'Content',
-        description: 'Content of the panel',
         editor: TextPanelEditor,
-        defaultValue: defaultPanelOptions.content,
+        defaultValue: defaultOptions.content,
       });
   })
   .setMigrationHandler(textPanelMigrationHandler);

@@ -13,6 +13,14 @@ export enum DataFrameType {
 
   TimeSeriesMulti = 'timeseries-multi',
 
+  /** Numeric types: https://grafana.github.io/dataplane/contract/numeric */
+  NumericWide = 'numeric-wide',
+  NumericMulti = 'numeric-multi',
+  NumericLong = 'numeric-long',
+
+  /** Logs types: https://grafana.github.io/dataplane/logs */
+  LogLines = 'log-lines',
+
   /** Directory listing */
   DirectoryListing = 'directory-listing',
 
@@ -30,4 +38,10 @@ export enum DataFrameType {
    * If the y value is actually ordinal, use `meta.custom` to specify the bucket lookup values
    */
   HeatmapCells = 'heatmap-cells',
+
+  /**
+   * Explicit fields for:
+   *  xMin, xMax, count
+   */
+  Histogram = 'histogram',
 }

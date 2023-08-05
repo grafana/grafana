@@ -5,10 +5,10 @@ import { SelectableValue, toOption } from '@grafana/data';
 import { AccessoryButton, EditorList, InputGroup } from '@grafana/experimental';
 import { Select } from '@grafana/ui';
 
-import { COMPARISON_OPERATORS, EQUALS } from '../../cloudwatch-sql/language';
 import { CloudWatchDatasource } from '../../datasource';
 import { QueryEditorExpressionType, QueryEditorOperatorExpression, QueryEditorPropertyType } from '../../expressions';
 import { useDimensionKeys } from '../../hooks';
+import { COMPARISON_OPERATORS, EQUALS } from '../../language/cloudwatch-sql/language';
 import { CloudWatchMetricsQuery } from '../../types';
 import { appendTemplateVariables } from '../../utils/utils';
 
@@ -31,7 +31,7 @@ interface SQLFilterProps {
 
 const OPERATORS = COMPARISON_OPERATORS.map(toOption);
 
-const SQLFilter: React.FC<SQLFilterProps> = ({ query, onQueryChange, datasource }) => {
+const SQLFilter = ({ query, onQueryChange, datasource }: SQLFilterProps) => {
   const filtersFromQuery = useMemo(() => getFlattenedFilters(query.sql ?? {}), [query.sql]);
   const [filters, setFilters] = useState<QueryEditorOperatorExpression[]>(filtersFromQuery);
 
@@ -95,7 +95,7 @@ interface FilterItemProps {
   onDelete: () => void;
 }
 
-const FilterItem: React.FC<FilterItemProps> = (props) => {
+const FilterItem = (props: FilterItemProps) => {
   const { datasource, query, filter, onChange, onDelete } = props;
   const sql = query.sql ?? {};
 
@@ -109,7 +109,7 @@ const FilterItem: React.FC<FilterItemProps> = (props) => {
       return [];
     }
 
-    return datasource.api
+    return datasource.resources
       .getDimensionValues({ region: query.region, namespace, metricName, dimensionKey: filter.property.name })
       .then((result: Array<SelectableValue<string>>) => {
         return appendTemplateVariables(datasource, result);

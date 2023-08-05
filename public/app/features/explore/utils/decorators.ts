@@ -9,17 +9,18 @@ import {
   getDisplayProcessor,
   PanelData,
   standardTransformers,
-  DataQuery,
+  preProcessPanelData,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
+import { DataQuery } from '@grafana/schema';
 
-import { dataFrameToLogsModel } from '../../../core/logsModel';
 import { refreshIntervalToSortOrder } from '../../../core/utils/explore';
 import { ExplorePanelData } from '../../../types';
 import { CorrelationData } from '../../correlations/useCorrelations';
 import { attachCorrelationsToDataFrames } from '../../correlations/utils';
+import { dataFrameToLogsModel } from '../../logs/logsModel';
 import { sortLogsResult } from '../../logs/utils';
-import { preProcessPanelData } from '../../query/state/runRequest';
+import { hasPanelPlugin } from '../../plugins/importPanelPlugin';
 
 /**
  * When processing response first we try to determine what kind of dataframes we got as one query can return multiple
@@ -29,12 +30,18 @@ import { preProcessPanelData } from '../../query/state/runRequest';
 export const decorateWithFrameTypeMetadata = (data: PanelData): ExplorePanelData => {
   const graphFrames: DataFrame[] = [];
   const tableFrames: DataFrame[] = [];
+  const rawPrometheusFrames: DataFrame[] = [];
   const logsFrames: DataFrame[] = [];
   const traceFrames: DataFrame[] = [];
   const nodeGraphFrames: DataFrame[] = [];
   const flameGraphFrames: DataFrame[] = [];
+  const customFrames: DataFrame[] = [];
 
   for (const frame of data.series) {
+    if (canFindPanel(frame)) {
+      customFrames.push(frame);
+      continue;
+    }
     switch (frame.meta?.preferredVisualisationType) {
       case 'logs':
         logsFrames.push(frame);
@@ -48,11 +55,14 @@ export const decorateWithFrameTypeMetadata = (data: PanelData): ExplorePanelData
       case 'table':
         tableFrames.push(frame);
         break;
+      case 'rawPrometheus':
+        rawPrometheusFrames.push(frame);
+        break;
       case 'nodeGraph':
         nodeGraphFrames.push(frame);
         break;
       case 'flamegraph':
-        config.featureToggles.flameGraph ? flameGraphFrames.push(frame) : tableFrames.push(frame);
+        flameGraphFrames.push(frame);
         break;
       default:
         if (isTimeSeries(frame)) {
@@ -72,10 +82,13 @@ export const decorateWithFrameTypeMetadata = (data: PanelData): ExplorePanelData
     logsFrames,
     traceFrames,
     nodeGraphFrames,
+    customFrames,
     flameGraphFrames,
+    rawPrometheusFrames,
     graphResult: null,
     tableResult: null,
     logsResult: null,
+    rawPrometheusResult: null,
   };
 };
 
@@ -105,7 +118,7 @@ export const decorateWithGraphResult = (data: ExplorePanelData): ExplorePanelDat
 
 /**
  * This processing returns Observable because it uses Transformer internally which result type is also Observable.
- * In this case the transformer should return single result but it is possible that in the future it could return
+ * In this case the transformer should return single result, but it is possible that in the future it could return
  * multiple results and so this should be used with mergeMap or similar to unbox the internal observable.
  */
 export const decorateWithTableResult = (data: ExplorePanelData): Observable<ExplorePanelData> => {
@@ -127,13 +140,16 @@ export const decorateWithTableResult = (data: ExplorePanelData): Observable<Expl
   });
 
   const hasOnlyTimeseries = data.tableFrames.every((df) => isTimeSeries(df));
+  const transformContext = {
+    interpolate: (v: string) => v,
+  };
 
   // If we have only timeseries we do join on default time column which makes more sense. If we are showing
   // non timeseries or some mix of data we are not trying to join on anything and just try to merge them in
   // single table, which may not make sense in most cases, but it's up to the user to query something sensible.
   const transformer = hasOnlyTimeseries
-    ? of(data.tableFrames).pipe(standardTransformers.joinByFieldTransformer.operator({}))
-    : of(data.tableFrames).pipe(standardTransformers.mergeTransformer.operator({}));
+    ? of(data.tableFrames).pipe(standardTransformers.joinByFieldTransformer.operator({}, transformContext))
+    : of(data.tableFrames).pipe(standardTransformers.mergeTransformer.operator({}, transformContext));
 
   return transformer.pipe(
     map((frames) => {
@@ -155,13 +171,65 @@ export const decorateWithTableResult = (data: ExplorePanelData): Observable<Expl
   );
 };
 
+export const decorateWithRawPrometheusResult = (data: ExplorePanelData): Observable<ExplorePanelData> => {
+  // Prometheus has a custom frame visualization alongside the table view, but they both handle the data the same
+  const tableFrames = data.rawPrometheusFrames;
+
+  if (!tableFrames || tableFrames.length === 0) {
+    return of({ ...data, tableResult: null });
+  }
+
+  tableFrames.sort((frameA: DataFrame, frameB: DataFrame) => {
+    const frameARefId = frameA.refId!;
+    const frameBRefId = frameB.refId!;
+
+    if (frameARefId > frameBRefId) {
+      return 1;
+    }
+    if (frameARefId < frameBRefId) {
+      return -1;
+    }
+    return 0;
+  });
+
+  const hasOnlyTimeseries = tableFrames.every((df) => isTimeSeries(df));
+  const transformContext = {
+    interpolate: (v: string) => v,
+  };
+
+  // If we have only timeseries we do join on default time column which makes more sense. If we are showing
+  // non timeseries or some mix of data we are not trying to join on anything and just try to merge them in
+  // single table, which may not make sense in most cases, but it's up to the user to query something sensible.
+  const transformer = hasOnlyTimeseries
+    ? of(tableFrames).pipe(standardTransformers.joinByFieldTransformer.operator({}, transformContext))
+    : of(tableFrames).pipe(standardTransformers.mergeTransformer.operator({}, transformContext));
+
+  return transformer.pipe(
+    map((frames) => {
+      const frame = frames[0];
+
+      // set display processor
+      for (const field of frame.fields) {
+        field.display =
+          field.display ??
+          getDisplayProcessor({
+            field,
+            theme: config.theme2,
+            timeZone: data.request?.timezone ?? 'browser',
+          });
+      }
+
+      return { ...data, rawPrometheusResult: frame };
+    })
+  );
+};
+
 export const decorateWithLogsResult =
   (
     options: {
       absoluteRange?: AbsoluteTimeRange;
       refreshInterval?: string;
       queries?: DataQuery[];
-      fullRangeLogsVolumeAvailable?: boolean;
     } = {}
   ) =>
   (data: ExplorePanelData): ExplorePanelData => {
@@ -174,7 +242,7 @@ export const decorateWithLogsResult =
     const sortOrder = refreshIntervalToSortOrder(options.refreshInterval);
     const sortedNewResults = sortLogsResult(newResults, sortOrder);
     const rows = sortedNewResults.rows;
-    const series = options.fullRangeLogsVolumeAvailable ? undefined : sortedNewResults.series;
+    const series = sortedNewResults.series;
     const logsResult = { ...sortedNewResults, rows, series };
 
     return { ...data, logsResult };
@@ -187,15 +255,15 @@ export function decorateData(
   absoluteRange: AbsoluteTimeRange,
   refreshInterval: string | undefined,
   queries: DataQuery[] | undefined,
-  correlations: CorrelationData[] | undefined,
-  fullRangeLogsVolumeAvailable: boolean
+  correlations: CorrelationData[] | undefined
 ): Observable<ExplorePanelData> {
   return of(data).pipe(
     map((data: PanelData) => preProcessPanelData(data, queryResponse)),
     map(decorateWithCorrelations({ queries, correlations })),
     map(decorateWithFrameTypeMetadata),
     map(decorateWithGraphResult),
-    map(decorateWithLogsResult({ absoluteRange, refreshInterval, queries, fullRangeLogsVolumeAvailable })),
+    map(decorateWithLogsResult({ absoluteRange, refreshInterval, queries })),
+    mergeMap(decorateWithRawPrometheusResult),
     mergeMap(decorateWithTableResult)
   );
 }
@@ -208,4 +276,16 @@ function isTimeSeries(frame: DataFrame): boolean {
   return Boolean(
     Object.keys(grouped).length === 2 && grouped[FieldType.time]?.length === 1 && grouped[FieldType.number]
   );
+}
+
+/**
+ * Can we find a panel that matches the type defined on the frame
+ *
+ * @param frame
+ */
+function canFindPanel(frame: DataFrame): boolean {
+  if (!!frame.meta?.preferredVisualisationPluginId) {
+    return hasPanelPlugin(frame.meta?.preferredVisualisationPluginId);
+  }
+  return false;
 }

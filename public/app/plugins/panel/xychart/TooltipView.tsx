@@ -1,19 +1,12 @@
 import { css } from '@emotion/css';
 import React from 'react';
 
-import {
-  DataFrame,
-  Field,
-  formattedValueToString,
-  getFieldDisplayName,
-  GrafanaTheme2,
-  LinkModel,
-  TimeRange,
-} from '@grafana/data';
-import { LinkButton, usePanelContext, useStyles2, VerticalGroup, VizTooltipOptions } from '@grafana/ui';
-import { getFieldLinksForExplore } from 'app/features/explore/utils/links';
+import { DataFrame, Field, formattedValueToString, getFieldDisplayName, GrafanaTheme2, LinkModel } from '@grafana/data';
+import { LinkButton, useStyles2, VerticalGroup, VizTooltipOptions } from '@grafana/ui';
+import { findField } from 'app/features/dimensions';
+import { getTitleFromHref } from 'app/features/explore/utils/links';
 
-import { ScatterSeriesConfig, SeriesMapping } from './models.gen';
+import { ScatterSeriesConfig, SeriesMapping } from './panelcfg.gen';
 import { ScatterSeries } from './types';
 
 interface YValue {
@@ -38,7 +31,6 @@ export interface Props {
   seriesMapping: SeriesMapping;
   hoveredPointIndex: number; // the hovered point
   options: VizTooltipOptions;
-  range: TimeRange;
 }
 
 export const TooltipView = ({
@@ -49,10 +41,8 @@ export const TooltipView = ({
   rowIndex,
   hoveredPointIndex,
   options,
-  range,
 }: Props) => {
   const style = useStyles2(getStyles);
-  const { onSplitOpen } = usePanelContext();
 
   if (!allSeries || rowIndex == null) {
     return null;
@@ -62,33 +52,45 @@ export const TooltipView = ({
   const frame = series.frame(data);
   const xField = series.x(frame);
   const yField = series.y(frame);
-  const links: Array<LinkModel<Field>> = getFieldLinksForExplore({
-    field: yField,
-    splitOpenFn: onSplitOpen,
-    rowIndex,
-    range,
-  });
+
+  let links: LinkModel[] | undefined = undefined;
+
+  if (yField.getLinks) {
+    const v = yField.values[rowIndex];
+    const disp = yField.display ? yField.display(v) : { text: `${v}`, numeric: +v };
+    links = yField.getLinks({ calculatedValue: disp, valueRowIndex: rowIndex }).map((linkModel) => {
+      if (!linkModel.title) {
+        linkModel.title = getTitleFromHref(linkModel.href);
+      }
+
+      return linkModel;
+    });
+  }
+
+  let extraFields: Field[] = frame.fields.filter((f) => f !== xField && f !== yField);
 
   let yValue: YValue | null = null;
   let extraFacets: ExtraFacets | null = null;
   if (seriesMapping === SeriesMapping.Manual && manualSeriesConfigs) {
-    const colorFacetFieldName = manualSeriesConfigs[hoveredPointIndex].pointColor?.field ?? '';
-    const sizeFacetFieldName = manualSeriesConfigs[hoveredPointIndex].pointSize?.field ?? '';
+    const colorFacetFieldName = manualSeriesConfigs[hoveredPointIndex]?.pointColor?.field ?? '';
+    const sizeFacetFieldName = manualSeriesConfigs[hoveredPointIndex]?.pointSize?.field ?? '';
 
-    const colorFacet = colorFacetFieldName ? frame.fields.find((f) => f.name === colorFacetFieldName) : undefined;
-    const sizeFacet = sizeFacetFieldName ? frame.fields.find((f) => f.name === sizeFacetFieldName) : undefined;
+    const colorFacet = colorFacetFieldName ? findField(frame, colorFacetFieldName) : undefined;
+    const sizeFacet = sizeFacetFieldName ? findField(frame, sizeFacetFieldName) : undefined;
 
     extraFacets = {
       colorFacetFieldName,
       sizeFacetFieldName,
-      colorFacetValue: colorFacet?.values.get(rowIndex),
-      sizeFacetValue: sizeFacet?.values.get(rowIndex),
+      colorFacetValue: colorFacet?.values[rowIndex],
+      sizeFacetValue: sizeFacet?.values[rowIndex],
     };
+
+    extraFields = extraFields.filter((f) => f !== colorFacet && f !== sizeFacet);
   }
 
   yValue = {
     name: getFieldDisplayName(yField, frame),
-    val: yField.values.get(rowIndex),
+    val: yField.values[rowIndex],
     field: yField,
     color: series.pointColor(frame) as string,
   };
@@ -101,8 +103,8 @@ export const TooltipView = ({
         </tr>
         <tbody>
           <tr>
-            <th>{xField.name}</th>
-            <td>{fmt(frame.fields[0], xField.values.get(rowIndex))}</td>
+            <th>{getFieldDisplayName(xField, frame)}</th>
+            <td>{fmt(xField, xField.values[rowIndex])}</td>
           </tr>
           <tr>
             <th>{yValue.name}:</th>
@@ -120,7 +122,13 @@ export const TooltipView = ({
               <td>{extraFacets.sizeFacetValue}</td>
             </tr>
           )}
-          {links.length > 0 && (
+          {extraFields.map((field, i) => (
+            <tr key={i}>
+              <th>{getFieldDisplayName(field, frame)}:</th>
+              <td>{fmt(field, field.values[rowIndex])}</td>
+            </tr>
+          ))}
+          {links && links.length > 0 && (
             <tr>
               <td colSpan={2}>
                 <VerticalGroup>

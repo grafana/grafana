@@ -15,7 +15,7 @@ var _ datasources.CacheService = &FakeCacheService{}
 
 func (c *FakeCacheService) GetDatasource(ctx context.Context, datasourceID int64, user *user.SignedInUser, skipCache bool) (*datasources.DataSource, error) {
 	for _, datasource := range c.DataSources {
-		if datasource.Id == datasourceID {
+		if datasource.ID == datasourceID {
 			return datasource, nil
 		}
 	}
@@ -24,7 +24,7 @@ func (c *FakeCacheService) GetDatasource(ctx context.Context, datasourceID int64
 
 func (c *FakeCacheService) GetDatasourceByUID(ctx context.Context, datasourceUID string, user *user.SignedInUser, skipCache bool) (*datasources.DataSource, error) {
 	for _, datasource := range c.DataSources {
-		if datasource.Uid == datasourceUID {
+		if datasource.UID == datasourceUID {
 			return datasource, nil
 		}
 	}

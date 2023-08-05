@@ -11,6 +11,7 @@ import { RulerRuleDTO } from '../../../types/unified-alerting-dto';
 
 import { AlertRuleForm } from './components/rule-editor/AlertRuleForm';
 import { fetchEditableRuleAction } from './state/actions';
+import { generateCopiedName } from './utils/duplicate';
 import { rulerRuleToFormValues } from './utils/rule-form';
 import { getRuleName, isAlertingRulerRule, isGrafanaRulerRule, isRecordingRulerRule } from './utils/rules';
 import { createUrl } from './utils/url';
@@ -29,14 +30,8 @@ export function CloneRuleEditor({ sourceRuleId }: { sourceRuleId: RuleIdentifier
   }
 
   if (rule) {
-    const ruleClone = cloneDeep(rule);
-    changeRuleName(ruleClone.rule, generateCopiedRuleTitle(ruleClone));
+    const ruleClone = cloneRuleDefinition(rule);
     const formPrefill = rulerRuleToFormValues(ruleClone);
-
-    // Provisioned alert rules have provisioned alert group which cannot be used in UI
-    if (isGrafanaRulerRule(rule.rule) && Boolean(rule.rule.grafana_alert.provenance)) {
-      formPrefill.group = '';
-    }
 
     return <AlertRuleForm prefill={formPrefill} />;
   }
@@ -51,26 +46,11 @@ export function CloneRuleEditor({ sourceRuleId }: { sourceRuleId: RuleIdentifier
 
   return (
     <Alert
-      title="Cannot duplicate. The rule does not exist"
+      title="Cannot copy the rule. The rule does not exist"
       buttonContent="Go back to alert list"
       onRemove={() => locationService.replace(createUrl('/alerting/list'))}
     />
   );
-}
-
-export function generateCopiedRuleTitle(originRuleWithLocation: RuleWithLocation): string {
-  const originName = getRuleName(originRuleWithLocation.rule);
-  const existingRulesNames = originRuleWithLocation.group.rules.map(getRuleName);
-
-  const nonDuplicateName = originName.replace(/\(copy( [0-9]+)?\)$/, '').trim();
-
-  let newName = `${nonDuplicateName} (copy)`;
-
-  for (let i = 2; existingRulesNames.includes(newName); i++) {
-    newName = `${nonDuplicateName} (copy ${i})`;
-  }
-
-  return newName;
 }
 
 function changeRuleName(rule: RulerRuleDTO, newName: string) {
@@ -84,4 +64,23 @@ function changeRuleName(rule: RulerRuleDTO, newName: string) {
   if (isRecordingRulerRule(rule)) {
     rule.record = newName;
   }
+}
+
+export function cloneRuleDefinition(rule: RuleWithLocation<RulerRuleDTO>) {
+  const ruleClone = cloneDeep(rule);
+  changeRuleName(
+    ruleClone.rule,
+    generateCopiedName(getRuleName(ruleClone.rule), ruleClone.group.rules.map(getRuleName))
+  );
+
+  if (isGrafanaRulerRule(ruleClone.rule)) {
+    ruleClone.rule.grafana_alert.uid = '';
+
+    // Provisioned alert rules have provisioned alert group which cannot be used in UI
+    if (Boolean(ruleClone.rule.grafana_alert.provenance)) {
+      ruleClone.group = { name: '', rules: ruleClone.group.rules };
+    }
+  }
+
+  return ruleClone;
 }

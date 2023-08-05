@@ -1,12 +1,19 @@
 ---
+canonical: https://grafana.com/docs/grafana/latest/alerting/manage-notifications/view-notification-errors/
+description: View notification errors to find out why they weren't sent or received
 keywords:
   - grafana
   - alerting
   - notification
   - errors
   - contact points
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: View notification errors
-weight: 150
+weight: 900
 ---
 
 # View notification errors

@@ -5,7 +5,7 @@ import (
 	"strconv"
 
 	"github.com/grafana/grafana/pkg/api/response"
-	"github.com/grafana/grafana/pkg/models"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -22,7 +22,7 @@ import (
 // 403: forbiddenError
 // 404: notFoundError
 // 500: internalServerError
-func (hs *HTTPServer) GetCurrentOrgQuotas(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) GetCurrentOrgQuotas(c *contextmodel.ReqContext) response.Response {
 	return hs.getOrgQuotasHelper(c, c.OrgID)
 }
 
@@ -38,7 +38,7 @@ func (hs *HTTPServer) GetCurrentOrgQuotas(c *models.ReqContext) response.Respons
 // 403: forbiddenError
 // 404: notFoundError
 // 500: internalServerError
-func (hs *HTTPServer) GetOrgQuotas(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) GetOrgQuotas(c *contextmodel.ReqContext) response.Response {
 	orgId, err := strconv.ParseInt(web.Params(c.Req)[":orgId"], 10, 64)
 	if err != nil {
 		return response.Err(quota.ErrBadRequest.Errorf("orgId is invalid: %w", err))
@@ -46,7 +46,7 @@ func (hs *HTTPServer) GetOrgQuotas(c *models.ReqContext) response.Response {
 	return hs.getOrgQuotasHelper(c, orgId)
 }
 
-func (hs *HTTPServer) getOrgQuotasHelper(c *models.ReqContext, orgID int64) response.Response {
+func (hs *HTTPServer) getOrgQuotasHelper(c *contextmodel.ReqContext, orgID int64) response.Response {
 	q, err := hs.QuotaService.GetQuotasByScope(c.Req.Context(), quota.OrgScope, orgID)
 	if err != nil {
 		return response.ErrOrFallback(http.StatusInternalServerError, "failed to get quota", err)
@@ -69,7 +69,7 @@ func (hs *HTTPServer) getOrgQuotasHelper(c *models.ReqContext, orgID int64) resp
 // 403: forbiddenError
 // 404: notFoundError
 // 500: internalServerError
-func (hs *HTTPServer) UpdateOrgQuota(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) UpdateOrgQuota(c *contextmodel.ReqContext) response.Response {
 	cmd := quota.UpdateQuotaCmd{}
 	var err error
 	if err := web.Bind(c.Req, &cmd); err != nil {
@@ -113,7 +113,7 @@ func (hs *HTTPServer) UpdateOrgQuota(c *models.ReqContext) response.Response {
 // 403: forbiddenError
 // 404: notFoundError
 // 500: internalServerError
-func (hs *HTTPServer) GetUserQuotas(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) GetUserQuotas(c *contextmodel.ReqContext) response.Response {
 	id, err := strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
 	if err != nil {
 		return response.Err(quota.ErrBadRequest.Errorf("id is invalid: %w", err))
@@ -142,7 +142,7 @@ func (hs *HTTPServer) GetUserQuotas(c *models.ReqContext) response.Response {
 // 403: forbiddenError
 // 404: notFoundError
 // 500: internalServerError
-func (hs *HTTPServer) UpdateUserQuota(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) UpdateUserQuota(c *contextmodel.ReqContext) response.Response {
 	cmd := quota.UpdateQuotaCmd{}
 	var err error
 	if err := web.Bind(c.Req, &cmd); err != nil {

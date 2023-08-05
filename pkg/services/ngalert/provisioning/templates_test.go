@@ -5,12 +5,13 @@ import (
 	"fmt"
 	"testing"
 
+	mock "github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/setting"
-	mock "github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/require"
 )
 
 func TestTemplateService(t *testing.T) {
@@ -45,7 +46,7 @@ func TestTemplateService(t *testing.T) {
 			sut := createTemplateServiceSut()
 			sut.config.(*MockAMConfigStore).EXPECT().
 				GetLatestAlertmanagerConfiguration(mock.Anything, mock.Anything).
-				Return(fmt.Errorf("failed"))
+				Return(nil, fmt.Errorf("failed"))
 
 			_, err := sut.GetTemplates(context.Background(), 1)
 
@@ -68,7 +69,7 @@ func TestTemplateService(t *testing.T) {
 			sut := createTemplateServiceSut()
 			sut.config.(*MockAMConfigStore).EXPECT().
 				GetLatestAlertmanagerConfiguration(mock.Anything, mock.Anything).
-				Return(nil)
+				Return(nil, nil)
 
 			_, err := sut.GetTemplates(context.Background(), 1)
 
@@ -79,7 +80,7 @@ func TestTemplateService(t *testing.T) {
 	t.Run("setting templates", func(t *testing.T) {
 		t.Run("rejects templates that fail validation", func(t *testing.T) {
 			sut := createTemplateServiceSut()
-			tmpl := definitions.MessageTemplate{
+			tmpl := definitions.NotificationTemplate{
 				Name:     "",
 				Template: "",
 			}
@@ -92,10 +93,10 @@ func TestTemplateService(t *testing.T) {
 		t.Run("propagates errors", func(t *testing.T) {
 			t.Run("when unable to read config", func(t *testing.T) {
 				sut := createTemplateServiceSut()
-				tmpl := createMessageTemplate()
+				tmpl := createNotificationTemplate()
 				sut.config.(*MockAMConfigStore).EXPECT().
 					GetLatestAlertmanagerConfiguration(mock.Anything, mock.Anything).
-					Return(fmt.Errorf("failed"))
+					Return(nil, fmt.Errorf("failed"))
 
 				_, err := sut.SetTemplate(context.Background(), 1, tmpl)
 
@@ -104,7 +105,7 @@ func TestTemplateService(t *testing.T) {
 
 			t.Run("when config is invalid", func(t *testing.T) {
 				sut := createTemplateServiceSut()
-				tmpl := createMessageTemplate()
+				tmpl := createNotificationTemplate()
 				sut.config.(*MockAMConfigStore).EXPECT().
 					GetsConfig(models.AlertConfiguration{
 						AlertmanagerConfiguration: brokenConfig,
@@ -117,10 +118,10 @@ func TestTemplateService(t *testing.T) {
 
 			t.Run("when no AM config in current org", func(t *testing.T) {
 				sut := createTemplateServiceSut()
-				tmpl := createMessageTemplate()
+				tmpl := createNotificationTemplate()
 				sut.config.(*MockAMConfigStore).EXPECT().
 					GetLatestAlertmanagerConfiguration(mock.Anything, mock.Anything).
-					Return(nil)
+					Return(nil, nil)
 
 				_, err := sut.SetTemplate(context.Background(), 1, tmpl)
 
@@ -129,7 +130,7 @@ func TestTemplateService(t *testing.T) {
 
 			t.Run("when provenance fails to save", func(t *testing.T) {
 				sut := createTemplateServiceSut()
-				tmpl := createMessageTemplate()
+				tmpl := createNotificationTemplate()
 				sut.config.(*MockAMConfigStore).EXPECT().
 					GetsConfig(models.AlertConfiguration{
 						AlertmanagerConfiguration: configWithTemplates,
@@ -146,7 +147,7 @@ func TestTemplateService(t *testing.T) {
 
 			t.Run("when AM config fails to save", func(t *testing.T) {
 				sut := createTemplateServiceSut()
-				tmpl := createMessageTemplate()
+				tmpl := createNotificationTemplate()
 				sut.config.(*MockAMConfigStore).EXPECT().
 					GetsConfig(models.AlertConfiguration{
 						AlertmanagerConfiguration: configWithTemplates,
@@ -164,7 +165,7 @@ func TestTemplateService(t *testing.T) {
 
 		t.Run("adds new template to config file on success", func(t *testing.T) {
 			sut := createTemplateServiceSut()
-			tmpl := createMessageTemplate()
+			tmpl := createNotificationTemplate()
 			sut.config.(*MockAMConfigStore).EXPECT().
 				GetsConfig(models.AlertConfiguration{
 					AlertmanagerConfiguration: configWithTemplates,
@@ -179,7 +180,7 @@ func TestTemplateService(t *testing.T) {
 
 		t.Run("succeeds when stitching config file with no templates", func(t *testing.T) {
 			sut := createTemplateServiceSut()
-			tmpl := createMessageTemplate()
+			tmpl := createNotificationTemplate()
 			sut.config.(*MockAMConfigStore).EXPECT().
 				GetsConfig(models.AlertConfiguration{
 					AlertmanagerConfiguration: defaultConfig,
@@ -194,7 +195,7 @@ func TestTemplateService(t *testing.T) {
 
 		t.Run("normalizes template content with no define", func(t *testing.T) {
 			sut := createTemplateServiceSut()
-			tmpl := definitions.MessageTemplate{
+			tmpl := definitions.NotificationTemplate{
 				Name:     "name",
 				Template: "content",
 			}
@@ -213,7 +214,7 @@ func TestTemplateService(t *testing.T) {
 
 		t.Run("avoids normalizing template content with define", func(t *testing.T) {
 			sut := createTemplateServiceSut()
-			tmpl := definitions.MessageTemplate{
+			tmpl := definitions.NotificationTemplate{
 				Name:     "name",
 				Template: "{{define \"name\"}}content{{end}}",
 			}
@@ -231,7 +232,7 @@ func TestTemplateService(t *testing.T) {
 
 		t.Run("rejects syntactically invalid template", func(t *testing.T) {
 			sut := createTemplateServiceSut()
-			tmpl := definitions.MessageTemplate{
+			tmpl := definitions.NotificationTemplate{
 				Name:     "name",
 				Template: "{{ .MyField }",
 			}
@@ -249,7 +250,7 @@ func TestTemplateService(t *testing.T) {
 
 		t.Run("does not reject template with unknown field", func(t *testing.T) {
 			sut := createTemplateServiceSut()
-			tmpl := definitions.MessageTemplate{
+			tmpl := definitions.NotificationTemplate{
 				Name:     "name",
 				Template: "{{ .NotAField }}",
 			}
@@ -272,7 +273,7 @@ func TestTemplateService(t *testing.T) {
 				sut := createTemplateServiceSut()
 				sut.config.(*MockAMConfigStore).EXPECT().
 					GetLatestAlertmanagerConfiguration(mock.Anything, mock.Anything).
-					Return(fmt.Errorf("failed"))
+					Return(nil, fmt.Errorf("failed"))
 
 				err := sut.DeleteTemplate(context.Background(), 1, "template")
 
@@ -295,7 +296,7 @@ func TestTemplateService(t *testing.T) {
 				sut := createTemplateServiceSut()
 				sut.config.(*MockAMConfigStore).EXPECT().
 					GetLatestAlertmanagerConfiguration(mock.Anything, mock.Anything).
-					Return(nil)
+					Return(nil, nil)
 
 				err := sut.DeleteTemplate(context.Background(), 1, "template")
 
@@ -388,8 +389,8 @@ func createTemplateServiceSut() *TemplateService {
 	}
 }
 
-func createMessageTemplate() definitions.MessageTemplate {
-	return definitions.MessageTemplate{
+func createNotificationTemplate() definitions.NotificationTemplate {
+	return definitions.NotificationTemplate{
 		Name:     "test",
 		Template: "asdf",
 	}

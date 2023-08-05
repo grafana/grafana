@@ -45,7 +45,6 @@
     ],
     "query": "",
     "refId": "a",
-    "timeField": "testtime",
     "intervalMs": 200,
     "maxDataPoints": 779
   }

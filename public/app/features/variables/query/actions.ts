@@ -137,7 +137,7 @@ export const changeQueryVariableQuery =
       )
     );
 
-    if (definition) {
+    if (definition !== undefined) {
       dispatch(
         toKeyedAction(
           rootStateKey,
@@ -179,27 +179,30 @@ export function hasSelfReferencingQuery(name: string, query: any): boolean {
  * Function that takes any object and flattens all props into one level deep object
  * */
 export function flattenQuery(query: any): any {
-  if (typeof query !== 'object') {
+  if (typeof query !== 'object' || query === null) {
     return { query };
   }
 
   const keys = Object.keys(query);
-  const flattened = keys.reduce((all, key) => {
-    const value = query[key];
-    if (typeof value !== 'object') {
-      all[key] = value;
-      return all;
-    }
-
-    const result = flattenQuery(value);
-    for (let childProp in result) {
-      if (result.hasOwnProperty(childProp)) {
-        all[`${key}_${childProp}`] = result[childProp];
+  const flattened = keys.reduce(
+    (all, key) => {
+      const value = query[key];
+      if (typeof value !== 'object' || value === null) {
+        all[key] = value;
+        return all;
       }
-    }
 
-    return all;
-  }, {} as Record<string, any>);
+      const result = flattenQuery(value);
+      for (let childProp in result) {
+        if (result.hasOwnProperty(childProp)) {
+          all[`${key}_${childProp}`] = result[childProp];
+        }
+      }
+
+      return all;
+    },
+    {} as Record<string, any>
+  );
 
   return flattened;
 }

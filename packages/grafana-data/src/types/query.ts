@@ -1,3 +1,15 @@
+import { DataQuery as SchemaDataQuery, DataSourceRef as SchemaDataSourceRef } from '@grafana/schema';
+
+/**
+ * @deprecated use the type from @grafana/schema
+ */
+export interface DataQuery extends SchemaDataQuery {}
+
+/**
+ * @deprecated use the type from @grafana/schema
+ */
+export interface DataSourceRef extends SchemaDataSourceRef {}
+
 /**
  * Attached to query results (not persisted)
  *
@@ -8,56 +20,10 @@ export enum DataTopic {
 }
 
 /**
- * @public
- */
-export interface DataSourceRef {
-  /** The plugin type-id */
-  type?: string;
-
-  /** Specific datasource instance */
-  uid?: string;
-}
-
-/**
- * These are the common properties available to all queries in all datasources
- * Specific implementations will *extend* this interface adding the required properties
- * for the given context
- *
- * @public
- */
-export interface DataQuery {
-  /**
-   * A - Z
-   */
-  refId: string;
-
-  /**
-   * true if query is disabled (ie should not be returned to the dashboard)
-   */
-  hide?: boolean;
-
-  /**
-   * Unique, guid like, string used in explore mode
-   */
-  key?: string;
-
-  /**
-   * Specify the query flavor
-   */
-  queryType?: string;
-
-  /**
-   * For mixed data sources the selected datasource is on the query level.
-   * For non mixed scenarios this is undefined.
-   */
-  datasource?: DataSourceRef | null;
-}
-
-/**
  * Abstract representation of any label-based query
  * @internal
  */
-export interface AbstractQuery extends DataQuery {
+export interface AbstractQuery extends SchemaDataQuery {
   labelMatchers: AbstractLabelMatcher[];
 }
 
@@ -83,21 +49,21 @@ export type AbstractLabelMatcher = {
 /**
  * @internal
  */
-export interface DataSourceWithQueryImportSupport<TQuery extends DataQuery> {
+export interface DataSourceWithQueryImportSupport<TQuery extends SchemaDataQuery> {
   importFromAbstractQueries(labelBasedQuery: AbstractQuery[]): Promise<TQuery[]>;
 }
 
 /**
  * @internal
  */
-export interface DataSourceWithQueryExportSupport<TQuery extends DataQuery> {
+export interface DataSourceWithQueryExportSupport<TQuery extends SchemaDataQuery> {
   exportToAbstractQueries(query: TQuery[]): Promise<AbstractQuery[]>;
 }
 
 /**
  * @internal
  */
-export const hasQueryImportSupport = <TQuery extends DataQuery>(
+export const hasQueryImportSupport = <TQuery extends SchemaDataQuery>(
   datasource: unknown
 ): datasource is DataSourceWithQueryImportSupport<TQuery> => {
   return (datasource as DataSourceWithQueryImportSupport<TQuery>).importFromAbstractQueries !== undefined;
@@ -106,7 +72,7 @@ export const hasQueryImportSupport = <TQuery extends DataQuery>(
 /**
  * @internal
  */
-export const hasQueryExportSupport = <TQuery extends DataQuery>(
+export const hasQueryExportSupport = <TQuery extends SchemaDataQuery>(
   datasource: unknown
 ): datasource is DataSourceWithQueryExportSupport<TQuery> => {
   return (datasource as DataSourceWithQueryExportSupport<TQuery>).exportToAbstractQueries !== undefined;

@@ -6,7 +6,11 @@ import (
 	"net/http"
 	"sort"
 	"sync"
+
+	"github.com/grafana/grafana/pkg/expr"
 )
+
+var grafanaDatasources = []string{expr.DatasourceType, "datasource"}
 
 type listPluginResponse struct {
 	Items []struct {
@@ -41,6 +45,8 @@ func GetCompatibleDatasources(baseUrl string) ([]string, error) {
 		}
 	}
 
+	supported = append(supported, grafanaDatasources...)
+
 	sort.Strings(supported)
 	return supported, nil
 }
@@ -56,7 +62,7 @@ func getDatasourcePluginSlugs(baseUrl string) ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
-	var slugs []string
+	slugs := make([]string, 0, len(res.Items))
 	for _, meta := range res.Items {
 		slugs = append(slugs, meta.Slug)
 	}

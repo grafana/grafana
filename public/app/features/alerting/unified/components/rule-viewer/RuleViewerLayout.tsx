@@ -14,7 +14,6 @@ type Props = {
 const defaultPageNav: Partial<NavModelItem> = {
   icon: 'bell',
   id: 'alert-rule-view',
-  breadcrumbs: [{ title: 'Alert rules', url: 'alerting/list' }],
 };
 
 export function RuleViewerLayout(props: Props): JSX.Element | null {
@@ -53,7 +52,7 @@ const getContentStyles = (padding: number) => (theme: GrafanaTheme2) => {
     wrapper: css`
       background: ${theme.colors.background.primary};
       border: 1px solid ${theme.colors.border.weak};
-      border-radius: ${theme.shape.borderRadius()};
+      border-radius: ${theme.shape.radius.default};
       padding: ${theme.spacing(padding)};
     `,
   };
