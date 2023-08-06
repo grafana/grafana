@@ -4,7 +4,7 @@ import React from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config, locationService, reportInteraction } from '@grafana/runtime';
-import { Button, useStyles2, Text } from '@grafana/ui';
+import { Button, useStyles2, Text, Input, HorizontalGroup } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
 import { DashboardModel } from 'app/features/dashboard/state';
 import { onAddLibraryPanel, onCreateNewPanel, onCreateNewRow } from 'app/features/dashboard/utils/dashboard';
@@ -25,6 +25,40 @@ const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
   return (
     <div className={styles.centeredContent}>
       <div className={cx(styles.centeredContent, styles.wrapper)}>
+        {/* DashGPT */}
+        {/*<div className={cx(styles.containerBox, styles.centeredContent, styles.visualizationContainer)}>*/}
+        {/*  <div className={styles.headerBig}>*/}
+        {/*    <Text element="h1" textAlignment="center" weight="medium">*/}
+        {/*      DashGPT can create a dashboard for you*/}
+        {/*    </Text>*/}
+        {/*  </div>*/}
+        {/*  <div className={styles.bodyBig}>*/}
+        {/*    <Text element="p" textAlignment="center" color="secondary">*/}
+        {/*      Tell us what your dashboard is about - for example, &quot;I want a graph where I can see the network latency of my Kubernetes cluster.&quot;*/}
+        {/*    </Text>*/}
+        {/*  </div>*/}
+
+        {/*  <HorizontalGroup width='auto'>*/}
+        {/*    <Input*/}
+        {/*      width={60}*/}
+        {/*      defaultValue=""*/}
+        {/*      placeholder="Tell us something"*/}
+        {/*      onBlur={(e) => console.log(e.currentTarget.value)}*/}
+        {/*    />*/}
+        {/*    <Button*/}
+        {/*      size="md"*/}
+        {/*      icon="plus"*/}
+        {/*      data-testid={selectors.pages.AddDashboard.itemButton('Create new panel button')}*/}
+        {/*      onClick={() => {*/}
+        {/*        console.log('on click')*/}
+        {/*      }}*/}
+        {/*      disabled={!canCreate}*/}
+        {/*    >*/}
+        {/*      Generate dashboard*/}
+        {/*    </Button>*/}
+        {/*  </HorizontalGroup>*/}
+        {/*</div>*/}
+
         <div className={cx(styles.containerBox, styles.centeredContent, styles.visualizationContainer)}>
           <div className={styles.headerBig}>
             <Text element="h1" textAlignment="center" weight="medium">
@@ -56,6 +90,7 @@ const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
             <Trans i18nKey="dashboard.empty.add-visualization-button">Add visualization</Trans>
           </Button>
         </div>
+
         <div className={cx(styles.centeredContent, styles.others)}>
           {config.featureToggles.vizAndWidgetSplit && (
             <div className={cx(styles.containerBox, styles.centeredContent, styles.widgetContainer)}>
@@ -161,6 +196,7 @@ function getStyles(theme: GrafanaTheme2) {
       flexDirection: 'column',
       boxSizing: 'border-box',
       border: '1px dashed rgba(110, 159, 255, 0.5)',
+      margin: 0,
     }),
     centeredContent: css({
       label: 'centered',
