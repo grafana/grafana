@@ -2,6 +2,7 @@ import { omit } from 'lodash';
 
 import { FieldConfigSource, PanelPlugin } from '@grafana/data';
 import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, GRID_COLUMN_COUNT } from 'app/core/constants';
+import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 
 import { PanelModel } from '../../state/PanelModel';
 
@@ -99,4 +100,26 @@ export function setOptionImmutably<T extends object>(options: T, path: string | 
   }
 
   return { ...options, [key]: setOptionImmutably(current, splat, value) };
+}
+
+export const getGeneratePayload = (panel: PanelModel): GeneratePayload => {
+  const dashboard = getDashboardSrv().getCurrent();
+
+  return {
+    dashboardTitle: dashboard?.title,
+    dashboardDescription: dashboard?.description,
+    panelTitles: dashboard?.panels.map((panel) => panel.title).filter((title) => title && title !== '') ?? [],
+    panelDescriptions:
+      dashboard?.panels.map((panel) => panel.description).filter((description) => description && description !== '') ??
+      [],
+    panelJson: panel.getSaveModel(),
+  };
+};
+
+export interface GeneratePayload {
+  dashboardTitle: string | undefined;
+  dashboardDescription: string;
+  panelTitles: string[];
+  panelDescriptions: string[];
+  panelJson: any;
 }

@@ -1,5 +1,6 @@
 import React from 'react';
 
+import { llms } from '@grafana/experimental';
 import { DataLinksInlineEditor, Input, RadioButtonGroup, Select, Switch, TextArea } from '@grafana/ui';
 import { getPanelLinksVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
 
@@ -7,7 +8,9 @@ import { RepeatRowSelect } from '../RepeatRowSelect/RepeatRowSelect';
 
 import { OptionsPaneCategoryDescriptor } from './OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from './OptionsPaneItemDescriptor';
+import { AiAssist } from './dashGPT/AiAssist';
 import { OptionPaneRenderProps } from './types';
+import { GeneratePayload, getGeneratePayload } from './utils';
 
 export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPaneCategoryDescriptor {
   const { panel, onPanelConfigChange } = props;
@@ -16,6 +19,81 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
     id: 'Panel options',
     isOpenDefault: true,
   });
+
+  let llmReply = '';
+
+  const setLlmReply = (reply: string, subject: string) => {
+    llmReply = reply.replace(/^"(.*)"$/, '$1');
+    // @TODO move this to a better place
+    if (subject === 'title') {
+      onTitleChange(llmReply);
+    } else {
+      onDescriptionChange(llmReply);
+    }
+  };
+
+  const fetchData = async (payload: GeneratePayload, subject: string) => {
+    // Check if the LLM plugin is enabled and configured.
+    // If not, we won't be able to make requests, so return early.
+    const enabled = await llms.openai.enabled();
+    if (!enabled) {
+      return { enabled };
+    }
+
+    llms.openai
+      .streamChatCompletions({
+        model: 'gpt-3.5-turbo',
+        messages: [
+          {
+            role: 'system',
+            content: `You are an expert in creating Grafana Panels.
+              Generate one ${subject} for this panel with a minimum of 50 characters and a maximum of 100 characters.`,
+          },
+          {
+            role: 'user',
+            content: 'HELLO!',
+            // content: JSON.stringify(payload),
+          },
+        ],
+      })
+      .pipe(
+        // Accumulate the stream content into a stream of strings, where each
+        // element contains the accumulated message so far.
+        llms.openai.accumulateContent()
+      )
+      .subscribe((response) => setLlmReply(response, subject));
+
+    return { enabled };
+  };
+
+  const llmGenerate = (subject: string) => {
+    const payload = getGeneratePayload(panel);
+
+    fetchData(payload, subject).catch((e) => console.log('error', e.message));
+  };
+
+  // @TODO Refactor
+  const onTitleChange = (value: string) => {
+    const input = document.getElementById('PanelFrameTitle') as HTMLInputElement;
+    input.value = value;
+
+    onPanelConfigChange('title', value);
+  };
+
+  const onDescriptionChange = (value: string) => {
+    const input = document.getElementById('description-text-area') as HTMLTextAreaElement;
+    input.value = value;
+
+    onPanelConfigChange('description', value);
+  };
+
+  const getText = () => {
+    if (llmReply !== '') {
+      return 'Regenerate';
+    }
+
+    return 'Generate';
+  };
 
   return descriptor
     .addItem(
@@ -28,10 +106,11 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
             <Input
               id="PanelFrameTitle"
               defaultValue={panel.title}
-              onBlur={(e) => onPanelConfigChange('title', e.currentTarget.value)}
+              onBlur={(e) => onTitleChange(e.currentTarget.value)}
             />
           );
         },
+        addon: <AiAssist text={`${getText()} title`} onClick={() => llmGenerate('title')} />,
       })
     )
     .addItem(
@@ -44,10 +123,11 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
             <TextArea
               id="description-text-area"
               defaultValue={panel.description}
-              onBlur={(e) => onPanelConfigChange('description', e.currentTarget.value)}
+              onBlur={(e) => onDescriptionChange(e.currentTarget.value)}
             />
           );
         },
+        addon: <AiAssist text={`${getText()} description`} onClick={() => llmGenerate('description')} />,
       })
     )
     .addItem(
