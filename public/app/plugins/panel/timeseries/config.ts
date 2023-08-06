@@ -43,10 +43,13 @@ export const defaultGraphConfig: GraphFieldConfig = {
 
 const categoryStyles = ['Graph styles'];
 
+export type NullEditorSettings = { isTime: boolean };
+
 export function addPointAndLineStyles<T extends GraphFieldConfig>(
   cfg: T,
   builder: FieldConfigEditorBuilder<T>,
   hideFromDefaults: boolean,
+  isTime: boolean,
   excludeForBarChartPanel?: boolean // bar chart adds this explicitly at the root
 ) {
   builder
@@ -148,7 +151,7 @@ export function addPointAndLineStyles<T extends GraphFieldConfig>(
       shouldApply: (field) => field.type === FieldType.number,
       hideFromDefaults,
     })
-    .addCustomEditor<void, boolean>({
+    .addCustomEditor<NullEditorSettings, boolean>({
       id: 'spanNulls',
       path: 'spanNulls',
       name: 'Connect null values',
@@ -160,8 +163,9 @@ export function addPointAndLineStyles<T extends GraphFieldConfig>(
       shouldApply: (field) => field.type !== FieldType.time,
       process: identityOverrideProcessor,
       hideFromDefaults,
+      settings: { isTime },
     })
-    .addCustomEditor<void, boolean>({
+    .addCustomEditor<NullEditorSettings, boolean>({
       id: 'insertNulls',
       path: 'insertNulls',
       name: 'Disconnect values',
@@ -173,6 +177,7 @@ export function addPointAndLineStyles<T extends GraphFieldConfig>(
       shouldApply: (field) => field.type !== FieldType.time,
       process: identityOverrideProcessor,
       hideFromDefaults,
+      settings: { isTime },
     })
     .addRadio({
       path: 'showPoints',
@@ -201,7 +206,7 @@ export function addPointAndLineStyles<T extends GraphFieldConfig>(
     });
 }
 
-export function getGraphFieldConfig(cfg: GraphFieldConfig): SetFieldConfigOptionsArgs<GraphFieldConfig> {
+export function getGraphFieldConfig(cfg: GraphFieldConfig, isTime = true): SetFieldConfigOptionsArgs<GraphFieldConfig> {
   return {
     standardOptions: {
       [FieldConfigProperty.Color]: {
@@ -216,7 +221,7 @@ export function getGraphFieldConfig(cfg: GraphFieldConfig): SetFieldConfigOption
       },
     },
     useCustomConfig: (builder) => {
-      addPointAndLineStyles(cfg, builder, false);
+      addPointAndLineStyles(cfg, builder, isTime, false);
 
       commonOptionsBuilder.addStackingConfig(builder, cfg.stacking, categoryStyles);
 

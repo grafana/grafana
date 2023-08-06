@@ -37,6 +37,7 @@ const (
 const (
 	MetaKeyUsername   = "username"
 	MetaKeyAuthModule = "authModule"
+	MetaKeyIsLogin    = "isLogin"
 )
 
 // ClientParams are hints to the auth service about how to handle the identity management
@@ -179,8 +180,6 @@ const (
 type Identity struct {
 	// OrgID is the active organization for the entity.
 	OrgID int64
-	// OrgCount is the number of organizations the entity is a member of.
-	OrgCount int
 	// OrgName is the name of the active organization.
 	OrgName string
 	// OrgRoles is the list of organizations the entity is a member of and their roles.
@@ -200,9 +199,9 @@ type Identity struct {
 	Email string
 	// IsGrafanaAdmin is true if the entity is a Grafana admin.
 	IsGrafanaAdmin *bool
-	// AuthModule is the name of the external system. For example, "auth_ldap" or "auth_saml".
-	// Empty if the identity is provided by Grafana.
-	AuthModule string
+	// AuthenticatedBy is the name of the authentication client that was used to authenticate the current Identity.
+	// For example, "password", "apikey", "auth_ldap" or "auth_azuread".
+	AuthenticatedBy string
 	// AuthId is the unique identifier for the entity in the external system.
 	// Empty if the identity is provided by Grafana.
 	AuthID string
@@ -262,21 +261,21 @@ func (i *Identity) SignedInUser() *user.SignedInUser {
 	}
 
 	u := &user.SignedInUser{
-		UserID:         0,
-		OrgID:          i.OrgID,
-		OrgName:        i.OrgName,
-		OrgRole:        i.Role(),
-		Login:          i.Login,
-		Name:           i.Name,
-		Email:          i.Email,
-		OrgCount:       i.OrgCount,
-		IsGrafanaAdmin: isGrafanaAdmin,
-		IsAnonymous:    i.IsAnonymous,
-		IsDisabled:     i.IsDisabled,
-		HelpFlags1:     i.HelpFlags1,
-		LastSeenAt:     i.LastSeenAt,
-		Teams:          i.Teams,
-		Permissions:    i.Permissions,
+		UserID:          0,
+		OrgID:           i.OrgID,
+		OrgName:         i.OrgName,
+		OrgRole:         i.Role(),
+		Login:           i.Login,
+		Name:            i.Name,
+		Email:           i.Email,
+		AuthenticatedBy: i.AuthenticatedBy,
+		IsGrafanaAdmin:  isGrafanaAdmin,
+		IsAnonymous:     i.IsAnonymous,
+		IsDisabled:      i.IsDisabled,
+		HelpFlags1:      i.HelpFlags1,
+		LastSeenAt:      i.LastSeenAt,
+		Teams:           i.Teams,
+		Permissions:     i.Permissions,
 	}
 
 	namespace, id := i.NamespacedID()
@@ -294,7 +293,7 @@ func (i *Identity) ExternalUserInfo() login.ExternalUserInfo {
 	_, id := i.NamespacedID()
 	return login.ExternalUserInfo{
 		OAuthToken:     i.OAuthToken,
-		AuthModule:     i.AuthModule,
+		AuthModule:     i.AuthenticatedBy,
 		AuthId:         i.AuthID,
 		UserId:         id,
 		Email:          i.Email,
@@ -308,23 +307,23 @@ func (i *Identity) ExternalUserInfo() login.ExternalUserInfo {
 }
 
 // IdentityFromSignedInUser creates an identity from a SignedInUser.
-func IdentityFromSignedInUser(id string, usr *user.SignedInUser, params ClientParams) *Identity {
+func IdentityFromSignedInUser(id string, usr *user.SignedInUser, params ClientParams, authenticatedBy string) *Identity {
 	return &Identity{
-		ID:             id,
-		OrgID:          usr.OrgID,
-		OrgName:        usr.OrgName,
-		OrgRoles:       map[int64]org.RoleType{usr.OrgID: usr.OrgRole},
-		Login:          usr.Login,
-		Name:           usr.Name,
-		Email:          usr.Email,
-		OrgCount:       usr.OrgCount,
-		IsGrafanaAdmin: &usr.IsGrafanaAdmin,
-		IsDisabled:     usr.IsDisabled,
-		HelpFlags1:     usr.HelpFlags1,
-		LastSeenAt:     usr.LastSeenAt,
-		Teams:          usr.Teams,
-		ClientParams:   params,
-		Permissions:    usr.Permissions,
+		ID:              id,
+		OrgID:           usr.OrgID,
+		OrgName:         usr.OrgName,
+		OrgRoles:        map[int64]org.RoleType{usr.OrgID: usr.OrgRole},
+		Login:           usr.Login,
+		Name:            usr.Name,
+		Email:           usr.Email,
+		AuthenticatedBy: authenticatedBy,
+		IsGrafanaAdmin:  &usr.IsGrafanaAdmin,
+		IsDisabled:      usr.IsDisabled,
+		HelpFlags1:      usr.HelpFlags1,
+		LastSeenAt:      usr.LastSeenAt,
+		Teams:           usr.Teams,
+		ClientParams:    params,
+		Permissions:     usr.Permissions,
 	}
 }
 

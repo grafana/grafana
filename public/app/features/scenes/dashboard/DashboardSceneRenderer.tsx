@@ -1,73 +1,29 @@
 import { css } from '@emotion/css';
 import React from 'react';
+import { useLocation } from 'react-router-dom';
 
 import { GrafanaTheme2, PageLayoutType } from '@grafana/data';
-import { locationService } from '@grafana/runtime';
 import { SceneComponentProps } from '@grafana/scenes';
-import { Button, CustomScrollbar, useStyles2 } from '@grafana/ui';
-import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
-import { NavToolbarSeparator } from 'app/core/components/AppChrome/NavToolbar/NavToolbarSeparator';
+import { CustomScrollbar, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
-import { DashNavButton } from 'app/features/dashboard/components/DashNav/DashNavButton';
 
 import { DashboardScene } from './DashboardScene';
+import { NavToolbarActions } from './NavToolbarActions';
+import { ScenePanelInspector } from './ScenePanelInspector';
 
 export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardScene>) {
-  const { title, body, actions = [], controls, isEditing, isDirty, uid } = model.useState();
+  const { body, controls, inspectPanelKey, viewPanelKey } = model.useState();
   const styles = useStyles2(getStyles);
-  const toolbarActions = (actions ?? []).map((action) => <action.Component key={action.state.key} model={action} />);
-
-  if (uid) {
-    toolbarActions.push(
-      <DashNavButton
-        key="button-scenes"
-        tooltip={'View as dashboard'}
-        icon="apps"
-        onClick={() => locationService.push(`/d/${uid}`)}
-      />
-    );
-  }
-
-  toolbarActions.push(<NavToolbarSeparator leftActionsSeparator />);
-
-  if (!isEditing) {
-    // TODO check permissions
-    toolbarActions.push(
-      <Button
-        onClick={model.onEnterEditMode}
-        tooltip="Enter edit mode"
-        key="edit"
-        variant="primary"
-        icon="pen"
-        fill="text"
-      >
-        Edit
-      </Button>
-    );
-  } else {
-    // TODO check permissions
-    toolbarActions.push(
-      <Button onClick={model.onEnterEditMode} tooltip="Save as copy" fill="text" key="save-as">
-        Save as
-      </Button>
-    );
-    toolbarActions.push(
-      <Button onClick={model.onDiscard} tooltip="Save changes" fill="text" key="discard" variant="destructive">
-        Discard
-      </Button>
-    );
-    toolbarActions.push(
-      <Button onClick={model.onEnterEditMode} tooltip="Save changes" key="save" disabled={!isDirty}>
-        Save
-      </Button>
-    );
-  }
+  const inspectPanel = model.findPanel(inspectPanelKey);
+  const viewPanel = model.findPanel(viewPanelKey);
+  const location = useLocation();
+  const pageNav = model.getPageNav(location);
 
   return (
-    <Page navId="scenes" pageNav={{ text: title }} layout={PageLayoutType.Custom}>
+    <Page navId="scenes" pageNav={pageNav} layout={PageLayoutType.Custom}>
       <CustomScrollbar autoHeightMin={'100%'}>
         <div className={styles.canvasContent}>
-          <AppChromeUpdate actions={toolbarActions} />
+          <NavToolbarActions dashboard={model} />
           {controls && (
             <div className={styles.controls}>
               {controls.map((control) => (
@@ -75,11 +31,18 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
               ))}
             </div>
           )}
-          <div className={styles.body}>
-            <body.Component model={body} />
-          </div>
+          {viewPanel ? (
+            <div className={styles.viewPanel}>
+              <viewPanel.Component model={viewPanel} />
+            </div>
+          ) : (
+            <div className={styles.body}>
+              <body.Component model={body} />
+            </div>
+          )}
         </div>
       </CustomScrollbar>
+      {inspectPanel && <ScenePanelInspector panel={inspectPanel} dashboard={model} />}
     </Page>
   );
 }
@@ -95,9 +58,16 @@ function getStyles(theme: GrafanaTheme2) {
       flexGrow: 1,
     }),
     body: css({
+      label: 'body',
       flexGrow: 1,
       display: 'flex',
       gap: '8px',
+    }),
+    viewPanel: css({
+      display: 'flex',
+      position: 'relative',
+      flexGrow: 1,
+      marginBottom: theme.spacing(2),
     }),
     controls: css({
       display: 'flex',

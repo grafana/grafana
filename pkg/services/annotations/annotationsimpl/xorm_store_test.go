@@ -39,7 +39,9 @@ func TestIntegrationAnnotations(t *testing.T) {
 	}
 	sql := db.InitTestDB(t)
 	var maximumTagsLength int64 = 60
-	repo := xormRepositoryImpl{db: sql, cfg: setting.NewCfg(), log: log.New("annotation.test"), tagService: tagimpl.ProvideService(sql, sql.Cfg), maximumTagsLength: maximumTagsLength}
+	repo := xormRepositoryImpl{db: sql, cfg: setting.NewCfg(), log: log.New("annotation.test"), tagService: tagimpl.ProvideService(sql, sql.Cfg), maximumTagsLength: maximumTagsLength,
+		features: featuremgmt.WithFeatures(),
+	}
 
 	testUser := &user.SignedInUser{
 		OrgID: 1,
@@ -364,6 +366,35 @@ func TestIntegrationAnnotations(t *testing.T) {
 
 			assert.Equal(t, annotationId, items[0].ID)
 			assert.Equal(t, []string{"newtag1", "newtag2"}, items[0].Tags)
+			assert.Equal(t, "something new", items[0].Text)
+			assert.Greater(t, items[0].Updated, items[0].Created)
+		})
+
+		t.Run("Can update annotation with additional tags", func(t *testing.T) {
+			query := &annotations.ItemQuery{
+				OrgID:        1,
+				DashboardID:  1,
+				From:         0,
+				To:           15,
+				SignedInUser: testUser,
+			}
+			items, err := repo.Get(context.Background(), query)
+			require.NoError(t, err)
+
+			annotationId := items[0].ID
+			err = repo.Update(context.Background(), &annotations.Item{
+				ID:    annotationId,
+				OrgID: 1,
+				Text:  "something new",
+				Tags:  []string{"newtag1", "newtag3"},
+			})
+			require.NoError(t, err)
+
+			items, err = repo.Get(context.Background(), query)
+			require.NoError(t, err)
+
+			assert.Equal(t, annotationId, items[0].ID)
+			assert.Equal(t, []string{"newtag1", "newtag3"}, items[0].Tags)
 			assert.Equal(t, "something new", items[0].Text)
 			assert.Greater(t, items[0].Updated, items[0].Created)
 		})

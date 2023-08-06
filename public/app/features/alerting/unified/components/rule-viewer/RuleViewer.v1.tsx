@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import produce from 'immer';
+import { produce } from 'immer';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useObservable, useToggle } from 'react-use';
 
@@ -171,7 +171,7 @@ export function RuleViewer({ match }: RuleViewerProps) {
             )}
             {!!rule.labels && !!Object.keys(rule.labels).length && (
               <DetailsField label="Labels" horizontal={true}>
-                <AlertLabels labels={rule.labels} className={styles.labels} />
+                <AlertLabels labels={rule.labels} />
               </DetailsField>
             )}
             <RuleDetailsExpression rulesSource={rulesSource} rule={rule} annotations={annotations} />
@@ -268,7 +268,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     collapse: css`
       margin-top: ${theme.spacing(2)};
       border-color: ${theme.colors.border.weak};
-      border-radius: ${theme.shape.borderRadius()};
+      border-radius: ${theme.shape.radius.default};
     `,
     queriesTitle: css`
       padding: ${theme.spacing(2, 0.5)};
@@ -297,6 +297,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     `,
     leftSide: css`
       flex: 1;
+      overflow: hidden;
     `,
     rightSide: css`
       padding-right: ${theme.spacing(3)};

@@ -26,90 +26,88 @@ const getStyles = (theme: GrafanaTheme2) => {
   const rowHoverBg = theme.colors.emphasize(theme.colors.background.primary, 0.03);
 
   return {
-    container: css`
-      display: flex;
-      gap: ${theme.spacing(2)};
-      flex-direction: column;
-      width: 100%;
-    `,
-    table: css`
-      border-radius: ${theme.shape.borderRadius()};
-      width: 100%;
+    container: css({
+      display: 'flex',
+      gap: theme.spacing(2),
+      flexDirection: 'column',
+      width: '100%',
+    }),
+    table: css({
+      borderRadius: theme.shape.radius.default,
+      width: '100%',
 
-      td {
-        padding: ${theme.spacing(1)};
-      }
+      td: {
+        padding: theme.spacing(1),
+      },
 
-      td,
-      th {
-        min-width: ${theme.spacing(3)};
-      }
-    `,
-    disableGrow: css`
-      width: 0;
-    `,
-    header: css`
-      border-bottom: 1px solid ${theme.colors.border.weak};
-      &,
-      & > button {
-        position: relative;
-        white-space: nowrap;
-        padding: ${theme.spacing(1)};
-      }
-      & > button {
-        &:after {
-          content: '\\00a0';
-        }
-        width: 100%;
-        height: 100%;
-        background: none;
-        border: none;
-        padding-right: ${theme.spacing(2.5)};
-        text-align: left;
-        font-weight: ${theme.typography.fontWeightMedium};
-      }
-    `,
-    row: css`
-      label: row;
-      border-bottom: 1px solid ${theme.colors.border.weak};
+      'td, th': {
+        minWidth: theme.spacing(3),
+      },
+    }),
+    disableGrow: css({
+      width: 0,
+    }),
+    header: css({
+      borderBottom: `1px solid ${theme.colors.border.weak}`,
+      '&, & > button': {
+        position: 'relative',
+        whiteSpace: 'nowrap',
+        padding: theme.spacing(1),
+      },
+      '& > button': {
+        '&:after': {
+          content: '"\\00a0"',
+        },
+        width: '100%',
+        height: '100%',
+        background: 'none',
+        border: 'none',
+        paddingRight: theme.spacing(2.5),
+        textAlign: 'left',
+        fontWeight: theme.typography.fontWeightMedium,
+      },
+    }),
+    row: css({
+      label: 'row',
+      borderBottom: `1px solid ${theme.colors.border.weak}`,
 
-      &:hover {
-        background-color: ${rowHoverBg};
-      }
+      '&:hover': {
+        backgroundColor: rowHoverBg,
+      },
 
-      &:last-child {
-        border-bottom: 0;
-      }
-    `,
-    expandedRow: css`
-      label: expanded-row-content;
-      border-bottom: none;
-    `,
-    expandedContentRow: css`
-      label: expanded-row-content;
+      '&:last-child': {
+        borderBottom: 0,
+      },
+    }),
+    expandedRow: css({
+      label: 'expanded-row-content',
+      borderBottom: 'none',
+    }),
+    expandedContentRow: css({
+      label: 'expanded-row-content',
 
-      td {
-        border-bottom: 1px solid ${theme.colors.border.weak};
-        position: relative;
-        padding: ${theme.spacing(2, 2, 2, 5)};
+      td: {
+        borderBottom: `1px solid ${theme.colors.border.weak}`,
+        position: 'relative',
+        padding: theme.spacing(2, 2, 2, 5),
 
-        &:before {
-          content: '';
-          position: absolute;
-          width: 1px;
-          top: 0;
-          left: 16px;
-          bottom: ${theme.spacing(2)};
-          background: ${theme.colors.border.medium};
-        }
-      }
-    `,
-    sortableHeader: css`
+        '&:before': {
+          content: '""',
+          position: 'absolute',
+          width: '1px',
+          top: 0,
+          left: '16px',
+          bottom: theme.spacing(2),
+          background: theme.colors.border.medium,
+        },
+      },
+    }),
+    sortableHeader: css({
       /* increases selector's specificity so that it always takes precedence over default styles  */
-      && {
-        padding: 0;
-      }
-    `,
+      '&&': {
+        padding: 0,
+      },
+    }),
   };
 };
 
@@ -287,13 +285,13 @@ const useUniqueId = () => {
 };
 
 const getColumnHeaderStyles = (theme: GrafanaTheme2) => ({
-  sortIcon: css`
-    position: absolute;
-    top: ${theme.spacing(1)};
-  `,
-  headerTooltipIcon: css`
-    margin-left: ${theme.spacing(0.5)};
-  `,
+  sortIcon: css({
+    position: 'absolute',
+    top: theme.spacing(1),
+  }),
+  headerTooltipIcon: css({
+    marginLeft: theme.spacing(0.5),
+  }),
 });
 
 function ColumnHeader<T extends object>({

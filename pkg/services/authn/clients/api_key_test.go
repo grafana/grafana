@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/apikey/apikeytest"
 	"github.com/grafana/grafana/pkg/services/authn"
+	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/usertest"
@@ -55,6 +56,7 @@ func TestAPIKey_Authenticate(t *testing.T) {
 				ClientParams: authn.ClientParams{
 					SyncPermissions: true,
 				},
+				AuthenticatedBy: login.APIKeyAuthModule,
 			},
 		},
 		{
@@ -74,20 +76,19 @@ func TestAPIKey_Authenticate(t *testing.T) {
 				UserID:           1,
 				OrgID:            1,
 				IsServiceAccount: true,
-				OrgCount:         1,
 				OrgRole:          org.RoleViewer,
 				Name:             "test",
 			},
 			expectedIdentity: &authn.Identity{
 				ID:             "service-account:1",
 				OrgID:          1,
-				OrgCount:       1,
 				Name:           "test",
 				OrgRoles:       map[int64]org.RoleType{1: org.RoleViewer},
 				IsGrafanaAdmin: boolPtr(false),
 				ClientParams: authn.ClientParams{
 					SyncPermissions: true,
 				},
+				AuthenticatedBy: login.APIKeyAuthModule,
 			},
 		},
 		{

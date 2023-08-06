@@ -6,6 +6,11 @@ keywords:
   - documentation
   - '10.0'
   - release notes
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: Breaking changes in Grafana v10.0
 weight: -1
 ---
@@ -356,7 +361,7 @@ npx @grafana/create-plugin@latest migrate
 
 #### Learn more
 
-- [Migration guide](https://grafana.github.io/plugin-tools/docs/migrating-from-toolkit/)
+- [Migration guide](https://grafana.github.io/plugin-tools/docs/getting-started/migrating-from-toolkit/)
 
 ## Deprecations
 

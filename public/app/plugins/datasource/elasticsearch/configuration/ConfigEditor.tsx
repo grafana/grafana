@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from 'react';
 
 import { SIGV4ConnectionConfig } from '@grafana/aws-sdk';
 import { DataSourcePluginOptionsEditorProps } from '@grafana/data';
-import { ConfigSection } from '@grafana/experimental';
+import { ConfigSection, DataSourceDescription } from '@grafana/experimental';
 import { Alert, DataSourceHttpSettings } from '@grafana/ui';
 import { Divider } from 'app/core/components/Divider';
 import { config } from 'app/core/config';
@@ -38,6 +38,11 @@ export const ConfigEditor = (props: Props) => {
           Browser access mode in the Elasticsearch datasource is no longer available. Switch to server access mode.
         </Alert>
       )}
+      <DataSourceDescription
+        dataSourceName="Elasticsearch"
+        docsLink="https://grafana.com/docs/grafana/latest/datasources/elasticsearch"
+        hasRequiredFields={false}
+      />
 
       <Divider />
 

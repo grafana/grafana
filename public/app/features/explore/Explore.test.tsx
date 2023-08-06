@@ -86,6 +86,7 @@ const dummyProps: Props = {
   showLogs: true,
   showTable: true,
   showTrace: true,
+  showCustom: true,
   showNodeGraph: true,
   showFlameGraph: true,
   splitOpen: jest.fn(),

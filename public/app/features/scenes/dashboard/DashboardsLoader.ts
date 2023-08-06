@@ -5,6 +5,7 @@ import {
   QueryVariableModel,
   VariableModel,
 } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import {
   VizPanel,
   SceneTimePicker,
@@ -23,17 +24,17 @@ import {
   SceneDataTransformer,
   SceneGridItem,
   SceneDataProvider,
-  getUrlSyncManager,
   SceneObject,
   SceneControlsSpacer,
+  VizPanelMenu,
 } from '@grafana/scenes';
 import { StateManagerBase } from 'app/core/services/StateManagerBase';
 import { dashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/types';
-import { DashboardDTO } from 'app/types';
 
 import { DashboardScene } from './DashboardScene';
+import { panelMenuBehavior } from './PanelMenuBehavior';
 import { ShareQueryDataProvider } from './ShareQueryDataProvider';
 import { getVizPanelKeyForPanelId } from './utils';
 
@@ -46,42 +47,38 @@ export interface DashboardLoaderState {
 export class DashboardLoader extends StateManagerBase<DashboardLoaderState> {
   private cache: Record<string, DashboardScene> = {};
 
-  async load(uid: string) {
-    const fromCache = this.cache[uid];
-    if (fromCache) {
-      this.setState({ dashboard: fromCache });
-      return;
-    }
-
-    this.setState({ isLoading: true });
-
+  async loadAndInit(uid: string) {
     try {
-      const rsp = await dashboardLoaderSrv.loadDashboard('db', '', uid);
+      const scene = await this.loadScene(uid);
+      scene.initUrlSync();
 
-      if (rsp.dashboard) {
-        this.initDashboard(rsp);
-      } else {
-        throw new Error('Dashboard not found');
-      }
+      this.cache[uid] = scene;
+      this.setState({ dashboard: scene, isLoading: false });
     } catch (err) {
       this.setState({ isLoading: false, loadError: String(err) });
     }
   }
 
-  private initDashboard(rsp: DashboardDTO) {
-    // Just to have migrations run
-    const oldModel = new DashboardModel(rsp.dashboard, rsp.meta, {
-      autoMigrateOldPanels: true,
-    });
+  private async loadScene(uid: string): Promise<DashboardScene> {
+    const fromCache = this.cache[uid];
+    if (fromCache) {
+      return fromCache;
+    }
 
-    const dashboard = createDashboardSceneFromDashboardModel(oldModel);
+    this.setState({ isLoading: true });
 
-    // We initialize URL sync here as it better to do that before mounting and doing any rendering.
-    // But would be nice to have a conditional around this so you can pre-load dashboards without url sync.
-    getUrlSyncManager().initSync(dashboard);
+    const rsp = await dashboardLoaderSrv.loadDashboard('db', '', uid);
 
-    this.cache[rsp.dashboard.uid] = dashboard;
-    this.setState({ dashboard, isLoading: false });
+    if (rsp.dashboard) {
+      // Just to have migrations run
+      const oldModel = new DashboardModel(rsp.dashboard, rsp.meta, {
+        autoMigrateOldPanels: true,
+      });
+
+      return createDashboardSceneFromDashboardModel(oldModel);
+    }
+
+    throw new Error('Dashboard not found');
   }
 
   clearState() {
@@ -272,8 +269,6 @@ export function createVizPanelFromPanelModel(panel: PanelModel) {
     y: panel.gridPos.y,
     width: panel.gridPos.w,
     height: panel.gridPos.h,
-    isDraggable: true,
-    isResizable: true,
     body: new VizPanel({
       key: getVizPanelKeyForPanelId(panel.id),
       title: panel.title,
@@ -285,12 +280,21 @@ export function createVizPanelFromPanelModel(panel: PanelModel) {
       // To be replaced with it's own option persited option instead derived
       hoverHeader: !panel.title && !panel.timeFrom && !panel.timeShift,
       $data: createPanelDataProvider(panel),
+      menu: new VizPanelMenu({
+        $behaviors: [panelMenuBehavior],
+      }),
     }),
   });
 }
 
 export function createPanelDataProvider(panel: PanelModel): SceneDataProvider | undefined {
+  // Skip setting query runner for panels without queries
   if (!panel.targets?.length) {
+    return undefined;
+  }
+
+  // Skip setting query runner for panel plugins with skipDataQuery
+  if (config.panels[panel.type]?.skipDataQuery) {
     return undefined;
   }
 

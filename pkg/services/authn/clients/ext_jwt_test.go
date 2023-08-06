@@ -150,19 +150,18 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 				}
 			},
 			want: &authn.Identity{
-				OrgID:          1,
-				OrgCount:       0,
-				OrgName:        "",
-				OrgRoles:       map[int64]roletype.RoleType{1: roletype.RoleAdmin},
-				ID:             "user:2",
-				Login:          "johndoe",
-				Name:           "John Doe",
-				Email:          "johndoe@grafana.com",
-				IsGrafanaAdmin: boolPtr(false),
-				AuthModule:     "",
-				AuthID:         "",
-				IsDisabled:     false,
-				HelpFlags1:     0,
+				OrgID:           1,
+				OrgName:         "",
+				OrgRoles:        map[int64]roletype.RoleType{1: roletype.RoleAdmin},
+				ID:              "user:2",
+				Login:           "johndoe",
+				Name:            "John Doe",
+				Email:           "johndoe@grafana.com",
+				IsGrafanaAdmin:  boolPtr(false),
+				AuthenticatedBy: login.ExtendedJWTModule,
+				AuthID:          "",
+				IsDisabled:      false,
+				HelpFlags1:      0,
 				Permissions: map[int64]map[string][]string{
 					1: {
 						"dashboards:create": {

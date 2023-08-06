@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
-import React, { useCallback, useEffect, useMemo, useReducer } from 'react';
+import { cloneDeep } from 'lodash';
+import React, { useCallback, useEffect, useMemo, useReducer, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { getDefaultRelativeTimeRange, GrafanaTheme2 } from '@grafana/data';
@@ -7,30 +8,35 @@ import { selectors } from '@grafana/e2e-selectors';
 import { Stack } from '@grafana/experimental';
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import { Alert, Button, Dropdown, Field, Icon, InputControl, Menu, MenuItem, Tooltip, useStyles2 } from '@grafana/ui';
-import { H5 } from '@grafana/ui/src/unstable';
+import { Text } from '@grafana/ui/src/components/Text/Text';
 import { isExpressionQuery } from 'app/features/expressions/guards';
-import { ExpressionQueryType, expressionTypes } from 'app/features/expressions/types';
+import { ExpressionDatasourceUID, ExpressionQueryType, expressionTypes } from 'app/features/expressions/types';
+import { useDispatch } from 'app/types';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
 
 import { useRulesSourcesWithRuler } from '../../../hooks/useRuleSourcesWithRuler';
+import { fetchAllPromBuildInfoAction } from '../../../state/actions';
 import { RuleFormType, RuleFormValues } from '../../../types/rule-form';
 import { getDefaultOrFirstCompatibleDataSource } from '../../../utils/datasource';
-import { isPromOrLokiQuery } from '../../../utils/rule-form';
+import { isPromOrLokiQuery, PromOrLokiQuery } from '../../../utils/rule-form';
 import { ExpressionEditor } from '../ExpressionEditor';
 import { ExpressionsEditor } from '../ExpressionsEditor';
 import { NeedHelpInfo } from '../NeedHelpInfo';
 import { QueryEditor } from '../QueryEditor';
 import { RecordingRuleEditor } from '../RecordingRuleEditor';
 import { RuleEditorSection } from '../RuleEditorSection';
-import { errorFromSeries, refIdExists } from '../util';
+import { errorFromSeries, findRenamedDataQueryReferences, refIdExists } from '../util';
 
-import { AlertType } from './AlertType';
+import { CloudDataSourceSelector } from './CloudDataSourceSelector';
+import { SmartAlertTypeDetector } from './SmartAlertTypeDetector';
 import {
+  addExpressions,
   addNewDataQuery,
   addNewExpression,
   duplicateQuery,
   queriesAndExpressionsReducer,
   removeExpression,
+  removeExpressions,
   rewireExpressions,
   setDataQueries,
   setRecordingRulesQueries,
@@ -67,6 +73,11 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
   const isGrafanaManagedType = type === RuleFormType.grafana;
   const isRecordingRuleType = type === RuleFormType.cloudRecording;
   const isCloudAlertRuleType = type === RuleFormType.cloudAlerting;
+
+  const dispatchReduxAction = useDispatch();
+  useEffect(() => {
+    dispatchReduxAction(fetchAllPromBuildInfoAction());
+  }, [dispatchReduxAction]);
 
   const rulesSourcesWithRuler = useRulesSourcesWithRuler();
 
@@ -135,6 +146,8 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
     [condition, queries, handleSetCondition]
   );
 
+  const updateExpressionAndDatasource = useSetExpressionAndDataSource();
+
   const onChangeQueries = useCallback(
     (updatedQueries: AlertQuery[]) => {
       // Most data sources triggers onChange and onRunQueries consecutively
@@ -144,19 +157,18 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
       // This way we can access up to date queries in runQueriesPreview without waiting for re-render
       setValue('queries', updatedQueries, { shouldValidate: false });
 
+      updateExpressionAndDatasource(updatedQueries);
+
       dispatch(setDataQueries(updatedQueries));
       dispatch(updateExpressionTimeRange());
-      // check if we need to rewire expressions
-      updatedQueries.forEach((query, index) => {
-        const oldRefId = queries[index].refId;
-        const newRefId = query.refId;
 
-        if (oldRefId !== newRefId) {
-          dispatch(rewireExpressions({ oldRefId, newRefId }));
-        }
-      });
+      // check if we need to rewire expressions (and which ones)
+      const [oldRefId, newRefId] = findRenamedDataQueryReferences(queries, updatedQueries);
+      if (oldRefId && newRefId) {
+        dispatch(rewireExpressions({ oldRefId, newRefId }));
+      }
     },
-    [queries, setValue]
+    [queries, setValue, updateExpressionAndDatasource]
   );
 
   const onChangeRecordingRulesQueries = useCallback(
@@ -236,9 +248,100 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
 
   const styles = useStyles2(getStyles);
 
+  // Cloud alerts load data from form values
+  // whereas Grafana managed alerts load data from reducer
+  //when data source is changed in the cloud selector we need to update the queries in the reducer
+
+  const onChangeCloudDatasource = useCallback(
+    (datasourceUid: string) => {
+      const newQueries = cloneDeep(queries);
+      newQueries[0].datasourceUid = datasourceUid;
+      setValue('queries', newQueries, { shouldValidate: false });
+
+      updateExpressionAndDatasource(newQueries);
+
+      dispatch(setDataQueries(newQueries));
+    },
+    [queries, setValue, updateExpressionAndDatasource, dispatch]
+  );
+
+  // ExpressionEditor for cloud query needs to update queries in the reducer and in the form
+  // otherwise the value is not updated for Grafana managed alerts
+
+  const onChangeExpression = (value: string) => {
+    const newQueries = cloneDeep(queries);
+
+    if (newQueries[0].model) {
+      if (isPromOrLokiQuery(newQueries[0].model)) {
+        newQueries[0].model.expr = value;
+      } else {
+        // first time we come from grafana-managed type
+        // we need to convert the model to PromOrLokiQuery
+        const promLoki: PromOrLokiQuery = {
+          ...cloneDeep(newQueries[0].model),
+          expr: value,
+        };
+        newQueries[0].model = promLoki;
+      }
+    }
+
+    setValue('queries', newQueries, { shouldValidate: false });
+
+    updateExpressionAndDatasource(newQueries);
+
+    dispatch(setDataQueries(newQueries));
+    runQueriesPreview();
+  };
+
+  const removeExpressionsInQueries = useCallback(() => dispatch(removeExpressions()), [dispatch]);
+
+  const addExpressionsInQueries = useCallback(
+    (expressions: AlertQuery[]) => dispatch(addExpressions(expressions)),
+    [dispatch]
+  );
+
+  // we need to keep track of the previous expressions and condition reference to be able to restore them when switching back to grafana managed
+  const [prevExpressions, setPrevExpressions] = useState<AlertQuery[]>([]);
+  const [prevCondition, setPrevCondition] = useState<string | null>(null);
+
+  const restoreExpressionsInQueries = useCallback(() => {
+    addExpressionsInQueries(prevExpressions);
+  }, [prevExpressions, addExpressionsInQueries]);
+
+  const onClickSwitch = useCallback(() => {
+    const typeInForm = getValues('type');
+    if (typeInForm === RuleFormType.cloudAlerting) {
+      setValue('type', RuleFormType.grafana);
+      prevExpressions.length > 0 && restoreExpressionsInQueries();
+      prevCondition && setValue('condition', prevCondition);
+    } else {
+      setValue('type', RuleFormType.cloudAlerting);
+      const expressions = queries.filter((query) => query.datasourceUid === ExpressionDatasourceUID);
+      setPrevExpressions(expressions);
+      removeExpressionsInQueries();
+      setPrevCondition(condition);
+    }
+  }, [
+    getValues,
+    setValue,
+    queries,
+    removeExpressionsInQueries,
+    restoreExpressionsInQueries,
+    setPrevExpressions,
+    prevExpressions,
+    prevCondition,
+    condition,
+  ]);
+
   return (
-    <RuleEditorSection stepNo={2} title="Define query and alert condition">
-      <AlertType editingExistingRule={editingExistingRule} />
+    <RuleEditorSection
+      stepNo={2}
+      title={type !== RuleFormType.cloudRecording ? 'Define query and alert condition' : 'Define query'}
+    >
+      {/* This is the cloud data source selector */}
+      {(type === RuleFormType.cloudRecording || type === RuleFormType.cloudAlerting) && (
+        <CloudDataSourceSelector onChangeCloudDatasource={onChangeCloudDatasource} disabled={editingExistingRule} />
+      )}
 
       {/* This is the PromQL Editor for recording rules */}
       {isRecordingRuleType && dataSourceName && (
@@ -255,24 +358,33 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
 
       {/* This is the PromQL Editor for Cloud rules */}
       {isCloudAlertRuleType && dataSourceName && (
-        <Field error={errors.expression?.message} invalid={!!errors.expression?.message}>
-          <InputControl
-            name="expression"
-            render={({ field: { ref, ...field } }) => {
-              return (
-                <ExpressionEditor
-                  {...field}
-                  dataSourceName={dataSourceName}
-                  showPreviewAlertsButton={!isRecordingRuleType}
-                />
-              );
-            }}
-            control={control}
-            rules={{
-              required: { value: true, message: 'A valid expression is required' },
-            }}
+        <Stack direction="column">
+          <Field error={errors.expression?.message} invalid={!!errors.expression?.message}>
+            <InputControl
+              name="expression"
+              render={({ field: { ref, ...field } }) => {
+                return (
+                  <ExpressionEditor
+                    {...field}
+                    dataSourceName={dataSourceName}
+                    showPreviewAlertsButton={!isRecordingRuleType}
+                    onChange={onChangeExpression}
+                  />
+                );
+              }}
+              control={control}
+              rules={{
+                required: { value: true, message: 'A valid expression is required' },
+              }}
+            />
+          </Field>
+          <SmartAlertTypeDetector
+            editingExistingRule={editingExistingRule}
+            queries={queries}
+            rulesSourcesWithRuler={rulesSourcesWithRuler}
+            onClickSwitch={onClickSwitch}
           />
-        </Field>
+        </Stack>
       )}
 
       {/* This is the editor for Grafana managed rules */}
@@ -319,9 +431,15 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
               Add query
             </Button>
           </Tooltip>
+          <SmartAlertTypeDetector
+            editingExistingRule={editingExistingRule}
+            rulesSourcesWithRuler={rulesSourcesWithRuler}
+            queries={queries}
+            onClickSwitch={onClickSwitch}
+          />
           {/* Expression Queries */}
-          <H5>Expressions</H5>
-          <div className={styles.mutedText}>Manipulate data returned from queries with math and other operations</div>
+          <Text element="h5">Expressions</Text>
+          <div className={styles.mutedText}>Manipulate data returned from queries with math and other operations.</div>
           <ExpressionsEditor
             queries={queries}
             panelData={queryPreviewData}
@@ -418,3 +536,27 @@ const getStyles = (theme: GrafanaTheme2) => ({
     color: ${theme.colors.text.link};
   `,
 });
+
+const useSetExpressionAndDataSource = () => {
+  const { setValue } = useFormContext<RuleFormValues>();
+
+  return (updatedQueries: AlertQuery[]) => {
+    // update data source name and expression if it's been changed in the queries from the reducer when prom or loki query
+    const query = updatedQueries[0];
+    if (!query) {
+      return;
+    }
+
+    const dataSourceSettings = getDataSourceSrv().getInstanceSettings(query.datasourceUid);
+    if (!dataSourceSettings) {
+      throw new Error('The Data source has not been defined.');
+    }
+    setValue('dataSourceName', dataSourceSettings.name);
+
+    if (isPromOrLokiQuery(query.model)) {
+      const expression = query.model.expr;
+
+      setValue('expression', expression);
+    }
+  };
+};

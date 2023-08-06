@@ -42,6 +42,7 @@ export const PanelTypeCard = ({
     <div
       className={cssClass}
       aria-label={selectors.components.PluginVisualization.item(plugin.name)}
+      data-testid={selectors.components.PluginVisualization.item(plugin.name)}
       onClick={isDisabled ? undefined : onClick}
       title={isCurrent ? 'Click again to close this section' : plugin.name}
     >
@@ -83,7 +84,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       flex-shrink: 0;
       cursor: pointer;
       background: ${theme.colors.background.secondary};
-      border-radius: ${theme.shape.borderRadius()};
+      border-radius: ${theme.shape.radius.default};
       box-shadow: ${theme.shadows.z1};
       border: 1px solid ${theme.colors.background.secondary};
       align-items: center;

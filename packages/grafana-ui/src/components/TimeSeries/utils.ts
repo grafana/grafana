@@ -90,6 +90,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
   renderers,
   tweakScale = (opts) => opts,
   tweakAxis = (opts) => opts,
+  eventsScope = '__global_',
 }) => {
   const builder = new UPlotConfigBuilder(timeZones[0]);
 
@@ -216,7 +217,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
 
     const customConfig: GraphFieldConfig = config.custom!;
 
-    if (field === xField || field.type !== FieldType.number) {
+    if (field === xField || (field.type !== FieldType.number && field.type !== FieldType.enum)) {
       continue;
     }
 
@@ -233,7 +234,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
         theme,
       });
     }
-    const scaleKey = buildScaleKey(config);
+    const scaleKey = buildScaleKey(config, field.type);
     const colorMode = getFieldColorModeForField(field);
     const scaleColor = getFieldSeriesColor(field, theme);
     const seriesColor = scaleColor.color;
@@ -260,6 +261,16 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
                   dataMax = dataMax > 0 ? 1 : 0;
                   return [dataMin, dataMax];
                 }
+              : field.type === FieldType.enum
+              ? (u: uPlot, dataMin: number, dataMax: number) => {
+                  // this is the exhaustive enum (stable)
+                  let len = field.config.type!.enum!.text!.length;
+
+                  return [-1, len];
+
+                  // these are only values that are present
+                  // return [dataMin - 1, dataMax + 1]
+                }
               : undefined,
           decimals: field.config.decimals,
         },
@@ -275,8 +286,16 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
       const axisColorOpts = getAxisColorOpts(customConfig.axisColorMode, colorMode, theme, field, seriesColor);
       let incrs: uPlot.Axis.Incrs | undefined;
 
+      // TODO: these will be dynamic with frame updates, so need to accept getYTickLabels()
+      let values: uPlot.Axis.Values | undefined;
+      let splits: uPlot.Axis.Splits | undefined;
+
       if (IEC_UNITS.has(config.unit!)) {
         incrs = BIN_INCRS;
+      } else if (field.type === FieldType.enum) {
+        let text = field.config.type!.enum!.text!;
+        splits = text.map((v: string, i: number) => i);
+        values = text;
       }
 
       builder.addAxis(
@@ -291,6 +310,8 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
             grid: { show: customConfig.axisGridShow },
             decimals: field.config.decimals,
             distr: customConfig.scaleDistribution?.type,
+            splits,
+            values,
             incrs,
             ...axisColorOpts,
           },
@@ -572,9 +593,10 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
       },
       data: frame,
     };
+
     const hoverEvent = new DataHoverEvent(payload);
     cursor.sync = {
-      key: '__global_',
+      key: eventsScope,
       filters: {
         pub: (type: string, src: uPlot, x: number, y: number, w: number, h: number, dataIdx: number) => {
           if (sync && sync() === DashboardCursorSync.Off) {
