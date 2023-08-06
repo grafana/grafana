@@ -66,7 +66,7 @@ It is useful as a fallback or if the user has more than 150 group memberships.
 - Implicit Flow Enabled: `OFF`
 - Direct Access Grants Enabled: `ON`
 - Root URL: `<grafana_root_url>`
-- Valid Redirect URIs: `<grafana_root_url>/*`
+- Valid Redirect URIs: `<grafana_root_url>/login/generic_oauth`
 - Web Origins: `<grafana_root_url>`
 - Admin URL: `<grafana_root_url>`
 - Base URL: `<grafana_root_url>`
