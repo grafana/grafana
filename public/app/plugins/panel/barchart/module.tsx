@@ -104,7 +104,7 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(BarChartPanel)
         shouldApply: () => true,
       });
 
-      addPointAndLineStyles(cfg, builder, true, true);
+      addPointAndLineStyles(cfg, builder, true, false, true);
       commonOptionsBuilder.addAxisConfig(builder, cfg, false);
       commonOptionsBuilder.addHideFrom(builder);
     },
