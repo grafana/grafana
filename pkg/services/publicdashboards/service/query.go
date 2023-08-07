@@ -54,9 +54,13 @@ func (pd *PublicDashboardServiceImpl) FindAnnotations(ctx context.Context, reqDT
 		}
 
 		if anno.Target != nil {
-			annoQuery.Limit = anno.Target.Limit
+			if anno.Target.Limit != nil {
+				annoQuery.Limit = *anno.Target.Limit
+			} else {
+				annoQuery.Limit = 0
+			}
 			annoQuery.MatchAny = anno.Target.MatchAny
-			if anno.Target.Type == "tags" {
+			if anno.Target.Type != nil && *anno.Target.Type == "tags" {
 				annoQuery.DashboardID = 0
 				annoQuery.Tags = anno.Target.Tags
 			}
@@ -88,7 +92,7 @@ func (pd *PublicDashboardServiceImpl) FindAnnotations(ctx context.Context, reqDT
 
 			// We want events from tag queries to overwrite existing events
 			_, has := uniqueEvents[event.Id]
-			if !has || (has && anno.Target != nil && anno.Target.Type == "tags") {
+			if !has || (has && anno.Target != nil && anno.Target.Type != nil && *anno.Target.Type == "tags") {
 				uniqueEvents[event.Id] = event
 			}
 		}

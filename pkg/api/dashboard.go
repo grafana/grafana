@@ -11,6 +11,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/grafana/kindsys/encoding"
+
 	"github.com/grafana/grafana/pkg/api/apierrors"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
@@ -838,9 +840,13 @@ func (hs *HTTPServer) ValidateDashboard(c *contextmodel.ReqContext) response.Res
 	// schema becomes canonical).
 	if err != nil || schemaVersion >= dashboard.HandoffSchemaVersion {
 		// Schemas expect the dashboard to live in the spec field
-		k8sResource := `{"spec": ` + cmd.Dashboard + "}"
+		k8sResource := `{
+"kind": "Dashboard",
+"apiVersion": "core.kinds.grafana.com/v0-0-alpha",
+"metadata": { "name": "placeholder" },
+"spec": ` + cmd.Dashboard + "}"
 
-		_, _, validationErr := dk.JSONValueMux([]byte(k8sResource))
+		validationErr := dk.Validate([]byte(k8sResource), &encoding.KubernetesJSONDecoder{})
 
 		if validationErr == nil {
 			isValid = true
