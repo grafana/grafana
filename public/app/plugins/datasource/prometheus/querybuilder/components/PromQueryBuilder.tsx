@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { DataSourceApi, PanelData } from '@grafana/data';
 import { EditorRow } from '@grafana/experimental';
 import { config } from '@grafana/runtime';
-import { Button } from '@grafana/ui';
+import { Button, Drawer } from '@grafana/ui';
 
 import { PrometheusDatasource } from '../../datasource';
 import promqlGrammar from '../../promql';
@@ -38,6 +38,7 @@ const prometheusPromQAIL = config.featureToggles.prometheusPromQAIL;
 export const PromQueryBuilder = React.memo<Props>((props) => {
   const { datasource, query, onChange, onRunQuery, data, showExplain } = props;
   const [highlightedOp, setHighlightedOp] = useState<QueryBuilderOperation | undefined>();
+  const [showDrawer, setShowDrawer] = useState<boolean>(false);
 
   const lang = { grammar: promqlGrammar, name: 'promql' };
 
@@ -45,6 +46,21 @@ export const PromQueryBuilder = React.memo<Props>((props) => {
 
   return (
     <>
+      {showDrawer && (
+        <Drawer onClose={() => setShowDrawer(false)}>
+          <div style={{ padding: '10px' }}>
+            <ul>
+              <li>this</li>
+              <li>is</li>
+              <li>a</li>
+              <li>list</li>
+              <li>of</li>
+              <li>menu</li>
+              <li>items</li>
+            </ul>
+          </div>
+        </Drawer>
+      )}
       <EditorRow>
         <MetricsLabelsSection query={query} onChange={onChange} datasource={datasource} />
       </EditorRow>
@@ -82,7 +98,7 @@ export const PromQueryBuilder = React.memo<Props>((props) => {
           <Button
             variant={'secondary'}
             onClick={() => {
-              console.log('open drawer');
+              setShowDrawer(true);
             }}
             title={'Get query suggestions.'}
           >
