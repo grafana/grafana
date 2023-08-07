@@ -2,6 +2,7 @@ import { thunkTester } from 'test/core/thunk/thunkTester';
 
 import { AppPluginMeta, DataSourceSettings, PluginMetaInfo, PluginType } from '@grafana/data';
 import { FetchError } from '@grafana/runtime';
+import { appEvents } from 'app/core/core';
 import { ThunkResult, ThunkDispatch } from 'app/types';
 
 import { getMockDataSource } from '../__mocks__';
@@ -30,7 +31,12 @@ import {
 
 jest.mock('../api');
 jest.mock('app/core/services/backend_srv');
-jest.mock('app/core/core');
+jest.mock('app/core/core', () => ({
+  ...jest.requireActual('app/core/core'),
+  appEvents: {
+    publish: jest.fn(),
+  },
+}));
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getDataSourceSrv: jest.fn().mockReturnValue({ reload: jest.fn() }),
@@ -330,6 +336,39 @@ describe('testDataSource', () => {
       };
       const dispatchedActions = await failDataSourceTest(error);
       expect(dispatchedActions).toEqual([testDataSourceStarting(), testDataSourceFailed(result)]);
+    });
+
+    it('publishes an app event when the test succeeds', async () => {
+      const dependencies: TestDataSourceDependencies = {
+        getDatasourceSrv: () => ({
+          get: jest.fn().mockReturnValue({
+            testDatasource: jest.fn().mockReturnValue({
+              status: 'success',
+              message: '',
+            }),
+            type: 'cloudwatch',
+            uid: 'CW1234',
+          }),
+        }),
+        getBackendSrv: getBackendSrvMock,
+      };
+      await thunkTester({})
+        .givenThunk(testDataSource)
+        .whenThunkIsDispatched('CloudWatch', DATASOURCES_ROUTES.Edit, dependencies);
+      expect(appEvents.publish).toHaveBeenCalledWith({ type: 'datasource-test-succeeded' });
+    });
+
+    it('publishes an app event when the test fails', async () => {
+      const error: FetchError = {
+        config: {
+          url: '',
+        },
+        data: {},
+        statusText: 'Bad Request',
+        status: 400,
+      };
+      await failDataSourceTest(error);
+      expect(appEvents.publish).toHaveBeenCalledWith({ type: 'datasource-test-failed' });
     });
   });
 });
