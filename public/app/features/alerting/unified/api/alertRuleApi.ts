@@ -152,8 +152,8 @@ export const alertRuleApi = alertingApi.injectEndpoints({
           params: queryParams,
         };
       },
-      transformResponse: (response: PromRulesResponse): RuleNamespace[] => {
-        return groupRulesByFileName(response.data.groups, GRAFANA_RULES_SOURCE_NAME);
+      transformResponse: (response: PromRulesResponse, _, args): RuleNamespace[] => {
+        return groupRulesByFileName(response.data.groups, args.ruleSourceName);
       },
     }),
 

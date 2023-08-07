@@ -3,7 +3,7 @@ import { setupServer, SetupServer } from 'msw/node';
 import 'whatwg-fetch';
 
 import { setBackendSrv } from '@grafana/runtime';
-import { RuleNamespace } from 'app/types/unified-alerting';
+import { PromRulesResponse, RulerRuleGroupDTO, RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 
 import { backendSrv } from '../../../core/services/backend_srv';
 import {
@@ -14,8 +14,6 @@ import {
   MatcherOperator,
   Route,
 } from '../../../plugins/datasource/alertmanager/types';
-
-import { alertRuleApi } from './api/alertRuleApi';
 
 class AlertmanagerConfigBuilder {
   private alertmanagerConfig: AlertmanagerConfig = { receivers: [] };
@@ -129,10 +127,22 @@ export function mockApi(server: SetupServer) {
 
 export function mockAlertRuleApi(server: SetupServer) {
   return {
-    prometheusRuleNamespaces: (dsName: string, response: RuleNamespace[]) => {
+    prometheusRuleNamespaces: (dsName: string, response: PromRulesResponse) => {
       server.use(
         rest.get(`api/prometheus/${dsName}/api/v1/rules`, (req, res, ctx) =>
-          res(ctx.status(200), ctx.json<RuleNamespace[]>(response))
+          res(ctx.status(200), ctx.json<PromRulesResponse>(response))
+        )
+      );
+    },
+    rulerRules: (dsName: string, response: RulerRulesConfigDTO) => {
+      server.use(
+        rest.get(`/api/ruler/${dsName}/api/v1/rules`, (req, res, ctx) => res(ctx.status(200), ctx.json(response)))
+      );
+    },
+    rulerRuleGroup: (dsName: string, namespace: string, group: string, response: RulerRuleGroupDTO) => {
+      server.use(
+        rest.get(`/api/ruler/${dsName}/api/v1/rules/${namespace}/${group}`, (req, res, ctx) =>
+          res(ctx.status(200), ctx.json(response))
         )
       );
     },

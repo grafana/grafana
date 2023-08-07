@@ -3,33 +3,45 @@ import React from 'react';
 import { TestProvider } from 'test/helpers/TestProvider';
 import { byRole, byText } from 'testing-library-selector';
 
-import { locationService, setBackendSrv } from '@grafana/runtime';
+import { config, locationService, setBackendSrv, setDataSourceSrv } from '@grafana/runtime';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types';
 import { CombinedRule } from 'app/types/unified-alerting';
+import { PromAlertingRuleState, PromApplication } from 'app/types/unified-alerting-dto';
 
-// import { useCombinedRule } from '../../hooks/useCombinedRule';
+import { discoverFeatures } from '../../api/buildInfo';
 import { useIsRuleEditable } from '../../hooks/useIsRuleEditable';
-import { setupMswServer } from '../../mockApi';
-import { getCloudRule, getGrafanaRule, grantUserPermissions } from '../../mocks';
+import { mockAlertRuleApi, setupMswServer } from '../../mockApi';
+import {
+  getCloudRule,
+  getGrafanaRule,
+  grantUserPermissions,
+  mockDataSource,
+  MockDataSourceSrv,
+  mockPromAlertingRule,
+  mockRulerAlertingRule,
+  promRuleFromRulerRule,
+} from '../../mocks';
+import * as ruleId from '../../utils/rule-id';
 
 import { RuleViewer } from './RuleViewer.v1';
 
-const mockGrafanaRule = getGrafanaRule({ name: 'Test alert' });
+const mockGrafanaRule = getGrafanaRule({ name: 'Test alert' }, { uid: 'test1', title: 'Test alert' });
 const mockCloudRule = getCloudRule({ name: 'cloud test alert' });
-const mockRoute: GrafanaRouteComponentProps<{ id?: string; sourceName?: string }> = {
+
+const mockRoute = (id?: string): GrafanaRouteComponentProps<{ id?: string; sourceName?: string }> => ({
   route: {
     path: '/',
     component: RuleViewer,
   },
   queryParams: { returnTo: '/alerting/list' },
-  match: { params: { id: 'test1', sourceName: 'grafana' }, isExact: false, url: 'asdf', path: '' },
+  match: { params: { id: id ?? 'test1', sourceName: 'grafana' }, isExact: false, url: 'asdf', path: '' },
   history: locationService.getHistory(),
   location: { pathname: '', hash: '', search: '', state: '' },
   staticContext: {},
-};
+});
 
 // jest.mock('../../hooks/useCombinedRule');
 jest.mock('@grafana/runtime', () => ({
@@ -46,6 +58,7 @@ jest.mock('@grafana/runtime', () => ({
 }));
 
 jest.mock('../../hooks/useIsRuleEditable');
+jest.mock('../../api/buildInfo');
 
 const mocks = {
   useIsRuleEditable: jest.mocked(useIsRuleEditable),
@@ -61,10 +74,10 @@ const ui = {
   loadingIndicator: byText(/Loading rule/i),
 };
 
-const renderRuleViewer = async () => {
+const renderRuleViewer = async (ruleId?: string) => {
   render(
     <TestProvider>
-      <RuleViewer {...mockRoute} />
+      <RuleViewer {...mockRoute(ruleId)} />
     </TestProvider>
   );
 
@@ -73,33 +86,73 @@ const renderRuleViewer = async () => {
 
 const server = setupMswServer();
 
+const dsName = 'prometheus';
+const rulerRule = mockRulerAlertingRule({ alert: 'cloud test alert' });
+const rulerRuleIdentifier = ruleId.fromRulerRule('prometheus', 'ns-default', 'group-default', rulerRule);
+
 beforeAll(() => {
   setBackendSrv(backendSrv);
-});
 
-afterEach(() => {
-  server.resetHandlers();
+  const dsSettings = mockDataSource({
+    name: dsName,
+    uid: dsName,
+  });
+  config.datasources = {
+    [dsName]: dsSettings,
+  };
+
+  setDataSourceSrv(new MockDataSourceSrv({ [dsName]: dsSettings }));
+
+  mockAlertRuleApi(server).rulerRules('grafana', {
+    [mockGrafanaRule.namespace.name]: [
+      { name: mockGrafanaRule.group.name, interval: '1m', rules: [mockGrafanaRule.rulerRule!] },
+    ],
+  });
+
+  const { name, query, labels, annotations } = mockGrafanaRule;
+  mockAlertRuleApi(server).prometheusRuleNamespaces('grafana', {
+    data: {
+      groups: [
+        {
+          file: mockGrafanaRule.namespace.name,
+          interval: 60,
+          name: mockGrafanaRule.group.name,
+          rules: [mockPromAlertingRule({ name, query, labels, annotations })],
+        },
+      ],
+    },
+    status: 'success',
+  });
+
+  mockAlertRuleApi(server).rulerRuleGroup(dsName, 'ns-default', 'group-default', {
+    name: 'group-default',
+    interval: '1m',
+    rules: [rulerRule],
+  });
+
+  mockAlertRuleApi(server).prometheusRuleNamespaces(dsName, {
+    data: {
+      groups: [
+        {
+          file: 'ns-default',
+          interval: 60,
+          name: 'group-default',
+          rules: [promRuleFromRulerRule(rulerRule, { state: PromAlertingRuleState.Inactive })],
+        },
+      ],
+    },
+    status: 'success',
+  });
 });
 
 describe('RuleViewer', () => {
   let mockCombinedRule = jest.fn();
-
-  // beforeEach(() => {
-  //   mockCombinedRule = jest.mocked(useCombinedRule);
-  // });
 
   afterEach(() => {
     mockCombinedRule.mockReset();
   });
 
   it('should render page with grafana alert', async () => {
-    mockCombinedRule.mockReturnValue({
-      result: mockGrafanaRule as CombinedRule,
-      loading: false,
-      dispatched: true,
-      requestId: 'A',
-      error: undefined,
-    });
     mocks.useIsRuleEditable.mockReturnValue({ loading: false, isEditable: false });
     await renderRuleViewer();
 
@@ -107,15 +160,14 @@ describe('RuleViewer', () => {
   });
 
   it('should render page with cloud alert', async () => {
-    mockCombinedRule.mockReturnValue({
-      result: mockCloudRule as CombinedRule,
-      loading: false,
-      dispatched: true,
-      requestId: 'A',
-      error: undefined,
-    });
+    jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
+
+    jest
+      .mocked(discoverFeatures)
+      .mockResolvedValue({ application: PromApplication.Mimir, features: { rulerApiEnabled: true } });
+
     mocks.useIsRuleEditable.mockReturnValue({ loading: false, isEditable: false });
-    await renderRuleViewer();
+    await renderRuleViewer(ruleId.stringifyIdentifier(rulerRuleIdentifier));
 
     expect(screen.getByText(/cloud test alert/i)).toBeInTheDocument();
   });
