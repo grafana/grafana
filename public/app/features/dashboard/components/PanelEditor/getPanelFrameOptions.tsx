@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 
 import { llms } from '@grafana/experimental';
 import { DataLinksInlineEditor, Input, RadioButtonGroup, Select, Switch, TextArea } from '@grafana/ui';
@@ -12,6 +12,14 @@ import { AiAssist } from './dashGPT/AiAssist';
 import { OptionPaneRenderProps } from './types';
 import { GeneratePayload, getGeneratePayload } from './utils';
 
+let llmReplyTitle = '';
+let llmReplyDescription = '';
+
+let generatingTitle = false;
+let generatingDescription = false;
+
+let enabled = false;
+
 export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPaneCategoryDescriptor {
   const { panel, onPanelConfigChange } = props;
   const descriptor = new OptionsPaneCategoryDescriptor({
@@ -20,16 +28,28 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
     isOpenDefault: true,
   });
 
-  let llmReply = '';
-
   const setLlmReply = (reply: string, subject: string) => {
-    llmReply = reply.replace(/^"(.*)"$/, '$1');
-    // @TODO move this to a better place
     if (subject === 'title') {
-      onTitleChange(llmReply);
+      generatingTitle = reply !== llmReplyTitle;
+
+      llmReplyTitle = reply.replace(/^"(.*)"$/, '$1');
+      if (enabled && llmReplyTitle !== '') {
+        onPanelConfigChange('title', llmReplyTitle);
+      }
     } else {
-      onDescriptionChange(llmReply);
+      generatingDescription = reply !== llmReplyDescription;
+
+      llmReplyDescription = reply.replace(/^"(.*)"$/, '$1');
+      if (enabled && llmReplyDescription !== '') {
+        onPanelConfigChange('description', llmReplyDescription);
+      }
     }
+
+    setTimeout(() => {
+      generatingTitle = false;
+      generatingDescription = false;
+      onPanelConfigChange('title', llmReplyTitle);
+    }, 1000);
   };
 
   const fetchData = async (payload: GeneratePayload, subject: string) => {
@@ -43,18 +63,17 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
     const getContent = () => {
       if (subject === 'title') {
         return (
-          'You are an expert in creating Grafana Panels. ' +
-          'Generate one title for this panel with a maximum of 100 characters. ' +
-          'Provide just the title text.' +
-          'Look at user content "panelTitles"'
+          'You are an expert in creating Grafana Panels.' +
+          'Your goal is to write short, descriptive, and concise panel titles for a given panel described by a JSON object' +
+          'The title should be shorter than 50 characters. '
         );
       }
 
       return (
-        'You are an expert in creating Grafana Panels. ' +
-        'Generate one description for this panel with a minimum of 50 characters and a maximum of 150 characters. ' +
-        'Describe what this panel might be monitoring and why it is useful. Provide just the description text.' +
-        "Describe the panel's thresholds"
+        'You are an expert in creating Grafana Panels.' +
+        'Your goal is to write short, descriptive, and concise panel descriptions for a given panel described by a JSON object.' +
+        'The description should be shorter than 150 characters' +
+        'Describe what this panel might be monitoring and why it is useful.'
       );
     };
 
@@ -86,30 +105,11 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
   const llmGenerate = (subject: string) => {
     const payload = getGeneratePayload(panel);
 
-    fetchData(payload, subject).catch((e) => console.log('error', e.message));
-  };
-
-  // @TODO Refactor
-  const onTitleChange = (value: string) => {
-    const input = document.getElementById('PanelFrameTitle') as HTMLInputElement;
-    input.value = value;
-
-    onPanelConfigChange('title', value);
-  };
-
-  const onDescriptionChange = (value: string) => {
-    const input = document.getElementById('description-text-area') as HTMLTextAreaElement;
-    input.value = value;
-
-    onPanelConfigChange('description', value);
-  };
-
-  const getText = () => {
-    if (llmReply !== '') {
-      return 'Regenerate';
-    }
-
-    return 'Generate';
+    fetchData(payload, subject)
+      .then((response) => {
+        enabled = response.enabled;
+      })
+      .catch((e) => console.log('error', e.message));
   };
 
   return descriptor
@@ -123,11 +123,16 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
             <Input
               id="PanelFrameTitle"
               defaultValue={panel.title}
-              onBlur={(e) => onTitleChange(e.currentTarget.value)}
+              onBlur={(e) => onPanelConfigChange('title', e.currentTarget.value)}
             />
           );
         },
-        addon: <AiAssist text={`${getText()} title`} onClick={() => llmGenerate('title')} />,
+        addon: (
+          <AiAssist
+            text={generatingTitle ? 'Generating title' : 'Generate title'}
+            onClick={() => llmGenerate('title')}
+          />
+        ),
       })
     )
     .addItem(
@@ -140,11 +145,16 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
             <TextArea
               id="description-text-area"
               defaultValue={panel.description}
-              onBlur={(e) => onDescriptionChange(e.currentTarget.value)}
+              onBlur={(e) => onPanelConfigChange('description', e.currentTarget.value)}
             />
           );
         },
-        addon: <AiAssist text={`${getText()} description`} onClick={() => llmGenerate('description')} />,
+        addon: (
+          <AiAssist
+            text={generatingDescription ? 'Generating description' : 'Generate description'}
+            onClick={() => llmGenerate('description')}
+          />
+        ),
       })
     )
     .addItem(
