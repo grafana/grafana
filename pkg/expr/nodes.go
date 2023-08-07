@@ -40,6 +40,7 @@ type rawNode struct {
 	QueryType  string
 	TimeRange  TimeRange
 	DataSource *datasources.DataSource
+	idx        int64
 }
 
 func (rn *rawNode) GetCommandType() (c CommandType, err error) {
@@ -97,7 +98,7 @@ func buildCMDNode(dp *simple.DirectedGraph, rn *rawNode) (*CMDNode, error) {
 
 	node := &CMDNode{
 		baseNode: baseNode{
-			id:    dp.NewNode().ID(),
+			id:    rn.idx,
 			refID: rn.RefID,
 		},
 		CMDType: commandType,
@@ -159,7 +160,7 @@ func (s *Service) buildDSNode(dp *simple.DirectedGraph, rn *rawNode, req *Reques
 
 	dsNode := &DSNode{
 		baseNode: baseNode{
-			id:    dp.NewNode().ID(),
+			id:    rn.idx,
 			refID: rn.RefID,
 		},
 		orgID:      req.OrgId,

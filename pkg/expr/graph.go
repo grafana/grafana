@@ -127,7 +127,7 @@ func (s *Service) buildDependencyGraph(req *Request) (*simple.DirectedGraph, err
 // Note: During execution, Datasource query nodes for the same datasource will
 // be grouped into one request and executed first as phase after this call.
 func buildExecutionOrder(graph *simple.DirectedGraph) ([]Node, error) {
-	sortedNodes, err := topo.Sort(graph)
+	sortedNodes, err := topo.SortStabilized(graph, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -159,7 +159,7 @@ func buildNodeRegistry(g *simple.DirectedGraph) map[string]Node {
 func (s *Service) buildGraph(req *Request) (*simple.DirectedGraph, error) {
 	dp := simple.NewDirectedGraph()
 
-	for _, query := range req.Queries {
+	for i, query := range req.Queries {
 		if query.DataSource == nil || query.DataSource.UID == "" {
 			return nil, fmt.Errorf("missing datasource uid in query with refId %v", query.RefID)
 		}
@@ -183,6 +183,7 @@ func (s *Service) buildGraph(req *Request) (*simple.DirectedGraph, error) {
 			TimeRange:  query.TimeRange,
 			QueryType:  query.QueryType,
 			DataSource: query.DataSource,
+			idx:        int64(i),
 		}
 
 		var node Node
