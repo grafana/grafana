@@ -410,4 +410,8 @@ const (
 	// FlagNoBasicRole
 	// Enables a new role that has no permissions by default
 	FlagNoBasicRole = "noBasicRole"
+
+	// FlagPrometheusPromQAIL
+	// Prometheus and AI/ML to assist users in creating a query
+	FlagPrometheusPromQAIL = "prometheusPromQAIL"
 )

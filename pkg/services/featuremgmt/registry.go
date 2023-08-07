@@ -699,5 +699,12 @@ var (
 			Owner:           grafanaAuthnzSquad,
 			RequiresRestart: true,
 		},
+		{
+			Name:         "prometheusPromQAIL",
+			Description:  "Prometheus and AI/ML to assist users in creating a query",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: false,
+			Owner:        grafanaObservabilityMetricsSquad,
+		},
 	}
 )
