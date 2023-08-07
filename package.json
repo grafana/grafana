@@ -254,6 +254,7 @@
     "webpack-dev-server": "4.15.1",
     "webpack-manifest-plugin": "5.0.0",
     "webpack-merge": "5.9.0",
+    "workbox-webpack-plugin": "7.0.0",
     "yargs": "^17.5.1"
   },
   "dependencies": {

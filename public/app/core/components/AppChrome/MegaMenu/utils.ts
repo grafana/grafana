@@ -7,7 +7,7 @@ import appEvents from '../../../app_events';
 import { getFooterLinks } from '../../Footer/Footer';
 import { HelpModal } from '../../help/HelpModal';
 
-export const enrichHelpItem = (helpItem: NavModelItem) => {
+export const enrichHelpItem = (helpItem: NavModelItem, installPromptEvent?: BeforeInstallPromptEvent) => {
   let menuItems = helpItem.children || [];
 
   if (helpItem.id === 'help') {
@@ -25,6 +25,15 @@ export const enrichHelpItem = (helpItem: NavModelItem) => {
         onClick: onOpenShortcuts,
       },
     ];
+
+    if (installPromptEvent) {
+      helpItem.children.push({
+        id: 'install-app',
+        text: 'Install',
+        icon: 'mobile-android',
+        onClick: () => installPromptEvent.prompt(),
+      });
+    }
   }
   return helpItem;
 };

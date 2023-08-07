@@ -6,6 +6,7 @@ import { useLocation } from 'react-router-dom';
 import { GrafanaTheme2, locationUtil, textUtil } from '@grafana/data';
 import { Dropdown, ToolbarButton, useStyles2 } from '@grafana/ui';
 import { config } from 'app/core/config';
+import { useGrafana } from 'app/core/context/GrafanaContext';
 import { contextSrv } from 'app/core/core';
 import { useSelector } from 'app/types';
 
@@ -22,12 +23,14 @@ import { TopSearchBarCommandPaletteTrigger } from './TopSearchBarCommandPaletteT
 import { TopSearchBarSection } from './TopSearchBarSection';
 
 export const TopSearchBar = React.memo(function TopSearchBar() {
+  const { chrome } = useGrafana();
+  const { installPromptEvent } = chrome.useState();
   const styles = useStyles2(getStyles);
   const navIndex = useSelector((state) => state.navIndex);
   const location = useLocation();
 
   const helpNode = cloneDeep(navIndex['help']);
-  const enrichedHelpNode = helpNode ? enrichHelpItem(helpNode) : undefined;
+  const enrichedHelpNode = helpNode ? enrichHelpItem(helpNode, installPromptEvent) : undefined;
   const profileNode = navIndex['profile'];
 
   let homeUrl = config.appSubUrl || '/';

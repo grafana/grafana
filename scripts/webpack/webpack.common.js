@@ -1,6 +1,7 @@
 const CopyWebpackPlugin = require('copy-webpack-plugin');
 const path = require('path');
 const webpack = require('webpack');
+const { GenerateSW } = require('workbox-webpack-plugin');
 
 const CorsWorkerPlugin = require('./plugins/CorsWorkerPlugin');
 
@@ -75,6 +76,11 @@ module.exports = {
           to: '../lib/monaco/min/vs/language/kusto/',
         },
       ],
+    }),
+    new GenerateSW({
+      modifyURLPrefix: {
+        'public/build/': './',
+      },
     }),
   ],
   module: {

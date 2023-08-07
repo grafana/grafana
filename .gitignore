@@ -143,7 +143,7 @@ pkg/services/quota/quotaimpl/storage/storage.json
 /npm-artifacts
 
 # Ignore frontend build manifest
-manifest.json
+/manifest.json
 
 # Ignore go local build dependencies
 /scripts/go/bin/**

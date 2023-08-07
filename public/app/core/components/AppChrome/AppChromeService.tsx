@@ -20,6 +20,7 @@ export interface AppChromeState {
   megaMenuOpen?: boolean;
   kioskMode: KioskMode | null;
   layout: PageLayoutType;
+  installPromptEvent?: BeforeInstallPromptEvent;
 }
 
 export class AppChromeService {

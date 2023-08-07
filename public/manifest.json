@@ -1,0 +1,74 @@
+{
+  "short_name": "Grafana",
+  "name": "Grafana",
+  "icons": [
+    {
+      "src": "/public/img/grafana_nonmaskable_icon_x512.svg",
+      "type": "image/svg+xml",
+      "sizes": "512x512"
+    },
+    {
+      "src": "/public/img/grafana_maskable_icon_x512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "maskable"
+    }
+  ],
+  "id": "/",
+  "start_url": "/",
+  "background_color": "#FF671D",
+  "display": "standalone",
+  "scope": "/",
+  "theme_color": "#FF671D",
+  "description": "Query, visualize, alert on, and understand your data no matter where it's stored. With Grafana you can create, explore, and share all of your data through beautiful, flexible dashboards.",
+  "screenshots": [
+    {
+      "src": "/public/img/screenshots/timeseries-stacking.png",
+      "type": "image/png",
+      "sizes": "1920x970",
+      "form_factor": "wide"
+    },
+    {
+      "src": "/public/img/screenshots/timeseries.png",
+      "type": "image/png",
+      "sizes": "1920x970",
+      "form_factor": "wide"
+    },
+    {
+      "src": "/public/img/screenshots/home.png",
+      "type": "image/png",
+      "sizes": "1920x970",
+      "form_factor": "wide"
+    },
+    {
+      "src": "/public/img/screenshots/plugins.png",
+      "type": "image/png",
+      "sizes": "1920x970",
+      "form_factor": "wide"
+    },
+    {
+      "src": "/public/img/screenshots/timeseries-stacking-mobile.jpg",
+      "type": "image/jpg",
+      "sizes": "1080x2130",
+      "form_factor": "narrow"
+    },
+    {
+      "src": "/public/img/screenshots/timeseries-mobile.jpg",
+      "type": "image/jpg",
+      "sizes": "1080x2130",
+      "form_factor": "narrow"
+    },
+    {
+      "src": "/public/img/screenshots/blog-mobile.jpg",
+      "type": "image/jpg",
+      "sizes": "1080x2130",
+      "form_factor": "narrow"
+    },
+    {
+      "src": "/public/img/screenshots/plugins-mobile.jpg",
+      "type": "image/jpg",
+      "sizes": "1080x2130",
+      "form_factor": "narrow"
+    }
+  ]
+}

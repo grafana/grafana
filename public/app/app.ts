@@ -94,6 +94,12 @@ import { createSystemVariableAdapter } from './features/variables/system/adapter
 import { createTextBoxVariableAdapter } from './features/variables/textbox/adapter';
 import { configureStore } from './store/configureStore';
 
+declare global {
+  interface WindowEventMap {
+    beforeinstallprompt: BeforeInstallPromptEvent;
+  }
+}
+
 // add move to lodash for backward compatabilty with plugins
 // @ts-ignore
 _.move = arrayMove;
@@ -219,6 +225,17 @@ export class GrafanaApp {
         keybindings: keybindingsService,
         config,
       };
+
+      window.addEventListener('load', () => {
+        if ('serviceWorker' in navigator) {
+          navigator.serviceWorker.register('./public/build/service-worker.js', { scope: '/' });
+        }
+      });
+
+      window.addEventListener('beforeinstallprompt', (e) => {
+        // Save the event in the chromeService so we can trigger it later if needed
+        chromeService.update({ installPromptEvent: e });
+      });
 
       const root = createRoot(document.getElementById('reactRoot')!);
       root.render(

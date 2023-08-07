@@ -719,6 +719,7 @@ func (hs *HTTPServer) mapStatic(m *web.Mux, rootDir string, dir string, prefix s
 	if hs.Cfg.Env == setting.Dev {
 		headers = func(c *web.Context) {
 			c.Resp.Header().Set("Cache-Control", "max-age=0, must-revalidate, no-cache")
+			c.Resp.Header().Set("Service-Worker-Allowed", "/")
 		}
 	}
 
