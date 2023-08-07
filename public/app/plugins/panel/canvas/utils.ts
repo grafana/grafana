@@ -111,6 +111,7 @@ export async function onImportFile(target: EventTarget & HTMLInputElement) {
   // eslint-disable-next-line no-console
   console.debug('file', target.files && target.files[0]); // TODO: remove debugging
 
+  // TODO: only handle .dxf files
   if (target.files && target.files[0]) {
     let fileText = await target.files[0].text();
 
