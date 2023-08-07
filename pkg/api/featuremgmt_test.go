@@ -78,7 +78,7 @@ func TestGetFeatureToggles(t *testing.T) {
 			assert.Equal(t, tt.expectedCode, res.StatusCode)
 
 			if tt.expectedCode == http.StatusOK {
-				var result []featuremgmt.FeatureFlag
+				var result []featuremgmt.FeatureToggleDTO
 				err := json.NewDecoder(res.Body).Decode(&result)
 				require.NoError(t, err)
 

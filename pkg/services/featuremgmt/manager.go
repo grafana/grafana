@@ -151,11 +151,9 @@ func (fm *FeatureManager) GetFlags() []FeatureFlag {
 // Check to see if a feature toggle exists by name
 func (fm *FeatureManager) LookupFlag(name string) (FeatureFlag, bool) {
 	f, ok := fm.flags[name]
-
 	if !ok {
 		return FeatureFlag{}, false
 	}
-
 	return *f, true
 }
 
