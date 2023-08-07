@@ -6,8 +6,7 @@ import { Link } from 'react-router-dom';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
-import { Badge, Button, Dropdown, getTagColorsFromName, Icon, Menu, Tooltip, useStyles2 } from '@grafana/ui';
-import { Text } from '@grafana/ui/src/unstable';
+import { Badge, Button, Dropdown, getTagColorsFromName, Icon, Menu, Tooltip, useStyles2, Text } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
 import ConditionalWrap from 'app/features/alerting/components/ConditionalWrap';
 import { RouteWithID, Receiver, ObjectMatcher, AlertmanagerGroup } from 'app/plugins/datasource/alertmanager/types';
@@ -607,7 +606,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
         font-size: ${theme.typography.bodySmall.fontSize};
 
         border: solid 1px ${borderColor};
-        border-radius: ${theme.shape.borderRadius(1)};
+        border-radius: ${theme.shape.radius.default};
       `,
     };
   },
@@ -640,7 +639,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     position: relative;
     background: ${theme.colors.background.secondary};
 
-    border-radius: ${theme.shape.borderRadius(1)};
+    border-radius: ${theme.shape.radius.default};
     border: solid 1px ${theme.colors.border.weak};
 
     ${hasFocus &&
@@ -674,7 +673,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     text-align: center;
 
     border: solid 1px ${theme.colors.border.weak};
-    border-radius: ${theme.shape.borderRadius(1)};
+    border-radius: ${theme.shape.radius.default};
 
     padding: 0;
   `,

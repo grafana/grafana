@@ -109,6 +109,7 @@ export const OptionsPaneOptions = (props: OptionPaneRenderProps) => {
             pluginId={plugin.meta.id}
             pluginType={plugin.meta.type}
             angularSupportEnabled={config?.angularSupportEnabled}
+            interactionElementId="panel-options"
           />
         )}
         <div className={styles.formRow}>

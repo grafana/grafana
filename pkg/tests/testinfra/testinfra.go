@@ -60,7 +60,7 @@ func StartGrafanaEnv(t *testing.T, grafDir, cfgPath string) (string, *server.Tes
 
 	go func() {
 		// When the server runs, it will also build and initialize the service graph
-		if err := env.Server.Run(ctx); err != nil {
+		if err := env.Server.Run(); err != nil {
 			t.Log("Server exited uncleanly", "error", err)
 		}
 	}()
@@ -71,8 +71,6 @@ func StartGrafanaEnv(t *testing.T, grafDir, cfgPath string) (string, *server.Tes
 	})
 
 	// Wait for Grafana to be ready
-	err = env.Server.AwaitHealthy(ctx)
-	require.NoError(t, err)
 	addr := listener.Addr().String()
 	resp, err := http.Get(fmt.Sprintf("http://%s/api/health", addr))
 	require.NoError(t, err)
