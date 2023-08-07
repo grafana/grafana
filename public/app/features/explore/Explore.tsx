@@ -388,9 +388,6 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
       graphResultClone && graphResultClone.length > 0 ? graphResultClone.pop() : []
     ) as DataFrame;
 
-    console.log('original', graphResult);
-    console.log('graphResultClone', graphResultClone);
-    console.log('getMegaGrubbled', getMegaGrubbled);
     getMegaGrubbled.length = getMegaGrubbled.fields[0].values.length;
 
     return (
