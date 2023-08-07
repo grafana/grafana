@@ -15,8 +15,6 @@ import {
   FieldType,
   isValidGoDuration,
   LoadingState,
-  MutableDataFrame,
-  PartialDataFrame,
   rangeUtil,
   ScopedVars,
 } from '@grafana/data';
@@ -39,6 +37,7 @@ import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { LokiOptions } from '../loki/types';
 import { PrometheusDatasource } from '../prometheus/datasource';
 import { PromQuery } from '../prometheus/types';
+
 import { generateQueryFromFilters } from './SearchTraceQLEditor/utils';
 import { TraceqlFilter, TraceqlSearchScope } from './dataquery.gen';
 import {
@@ -146,13 +145,14 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
               type: FieldType.time,
               values: r.values.map((value) => value[0] * 1000),
               config: { displayName: 'Time' },
+              labels: r.metric,
             },
             {
               name: 'Value',
               type: FieldType.number,
               values: r.values.map((value) => parseFloat(value[1])),
-              config: { displayName: 'Value' },
-              labels: r.metric
+              config: { displayName: r.metric.__name__ },
+              labels: r.metric,
             },
           ],
           name: r.metric.__name__,
