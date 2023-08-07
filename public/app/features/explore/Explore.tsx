@@ -422,7 +422,9 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
       graphResultClone && graphResultClone.length > 0 ? graphResultClone.pop() : []
     ) as DataFrame;
 
-    getMegaGrubbled.length = getMegaGrubbled.fields[0].values.length;
+    if (getMegaGrubbled && getMegaGrubbled.fields?.length) {
+      getMegaGrubbled.length = getMegaGrubbled.fields[0].values.length;
+    }
 
     return (
       <div className={styles.grubbleWrapper}>
