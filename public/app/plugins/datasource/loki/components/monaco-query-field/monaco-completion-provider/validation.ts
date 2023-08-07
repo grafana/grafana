@@ -115,6 +115,7 @@ function isErrorBoundary(boundary: ParserErrorBoundary | null): boundary is Pars
 
 export const placeHolderScopedVars = {
   __interval: { text: '1s', value: '1s' },
+  __auto: { text: '1s', value: '1s' },
   __interval_ms: { text: '1000', value: 1000 },
   __range_ms: { text: '1000', value: 1000 },
   __range_s: { text: '1', value: 1 },

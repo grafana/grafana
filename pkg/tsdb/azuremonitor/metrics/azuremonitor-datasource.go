@@ -245,10 +245,10 @@ func getParams(azJSONModel *dataquery.AzureMetricQuery, query backend.DataQuery)
 	return params, nil
 }
 
-func (e *AzureMonitorDatasource) retrieveSubscriptionDetails(cli *http.Client, ctx context.Context, logger log.Logger, tracer tracing.Tracer, subscriptionId string, baseUrl string, dsId int64, orgId int64) string {
+func (e *AzureMonitorDatasource) retrieveSubscriptionDetails(cli *http.Client, ctx context.Context, logger log.Logger, tracer tracing.Tracer, subscriptionId string, baseUrl string, dsId int64, orgId int64) (string, error) {
 	req, err := e.createRequest(ctx, logger, fmt.Sprintf("%s/subscriptions/%s", baseUrl, subscriptionId))
 	if err != nil {
-		logger.Error("failed to retrieve subscription details for subscription %s: %s", subscriptionId, err)
+		return "", fmt.Errorf("failed to retrieve subscription details for subscription %s: %s", subscriptionId, err)
 	}
 	values := req.URL.Query()
 	values.Add("api-version", "2022-12-01")
@@ -264,30 +264,30 @@ func (e *AzureMonitorDatasource) retrieveSubscriptionDetails(cli *http.Client, c
 	logger.Debug("AzureMonitor", "Subscription Details Req")
 	res, err := cli.Do(req)
 	if err != nil {
-		logger.Warn("failed to request subscription details: %s", err)
+		return "", fmt.Errorf("failed to request subscription details: %s", err)
 	}
 	defer func() {
 		if err := res.Body.Close(); err != nil {
-			logger.Warn("Failed to close response body", "err", err)
+			logger.Warn("failed to close response body", "err", err)
 		}
 	}()
 
 	body, err := io.ReadAll(res.Body)
 	if err != nil {
-		logger.Warn("failed to read response body: %s", err)
+		return "", fmt.Errorf("failed to read response body: %s", err)
 	}
 
 	if res.StatusCode/100 != 2 {
-		logger.Warn("request failed, status: %s, error: %s", res.Status, string(body))
+		return "", fmt.Errorf("request failed, status: %s, error: %s", res.Status, string(body))
 	}
 
 	var data types.SubscriptionsResponse
 	err = json.Unmarshal(body, &data)
 	if err != nil {
-		logger.Warn("Failed to unmarshal subscription detail response", "error", err, "status", res.Status, "body", string(body))
+		return "", fmt.Errorf("failed to unmarshal subscription detail response. error: %s, status: %s, body: %s", err, res.Status, string(body))
 	}
 
-	return data.DisplayName
+	return data.DisplayName, nil
 }
 
 func (e *AzureMonitorDatasource) executeQuery(ctx context.Context, logger log.Logger, query *types.AzureMonitorQuery, dsInfo types.DatasourceInfo, cli *http.Client,
@@ -326,7 +326,7 @@ func (e *AzureMonitorDatasource) executeQuery(ctx context.Context, logger log.Lo
 	}
 	defer func() {
 		if err := res.Body.Close(); err != nil {
-			logger.Warn("Failed to close response body", "err", err)
+			logger.Warn("failed to close response body", "err", err)
 		}
 	}()
 
@@ -342,7 +342,10 @@ func (e *AzureMonitorDatasource) executeQuery(ctx context.Context, logger log.Lo
 		return dataResponse
 	}
 
-	subscription := e.retrieveSubscriptionDetails(cli, ctx, logger, tracer, query.Subscription, dsInfo.Routes["Azure Monitor"].URL, dsInfo.DatasourceID, dsInfo.OrgID)
+	subscription, err := e.retrieveSubscriptionDetails(cli, ctx, logger, tracer, query.Subscription, dsInfo.Routes["Azure Monitor"].URL, dsInfo.DatasourceID, dsInfo.OrgID)
+	if err != nil {
+		logger.Warn(err.Error())
+	}
 
 	dataResponse.Frames, err = e.parseResponse(data, query, azurePortalUrl, subscription)
 	if err != nil {
@@ -356,8 +359,8 @@ func (e *AzureMonitorDatasource) executeQuery(ctx context.Context, logger log.Lo
 func (e *AzureMonitorDatasource) createRequest(ctx context.Context, logger log.Logger, url string) (*http.Request, error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
-		logger.Debug("Failed to create request", "error", err)
-		return nil, fmt.Errorf("%v: %w", "Failed to create request", err)
+		logger.Debug("failed to create request", "error", err)
+		return nil, fmt.Errorf("%v: %w", "failed to create request", err)
 	}
 	req.Header.Set("Content-Type", "application/json")
 
@@ -378,7 +381,7 @@ func (e *AzureMonitorDatasource) unmarshalResponse(logger log.Logger, res *http.
 	var data types.AzureMonitorResponse
 	err = json.Unmarshal(body, &data)
 	if err != nil {
-		logger.Debug("Failed to unmarshal AzureMonitor response", "error", err, "status", res.Status, "body", string(body))
+		logger.Debug("failed to unmarshal AzureMonitor response", "error", err, "status", res.Status, "body", string(body))
 		return types.AzureMonitorResponse{}, err
 	}
 

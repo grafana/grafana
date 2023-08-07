@@ -125,6 +125,8 @@ func IsGrafanaAdminExternallySynced(cfg *setting.Cfg, authModule string, oAuthAn
 	switch authModule {
 	case JWTModule:
 		return cfg.JWTAuthAllowAssignGrafanaAdmin
+	case SAMLAuthModule:
+		return cfg.SAMLRoleValuesGrafanaAdmin != ""
 	case LDAPAuthModule:
 		return true
 	default:
