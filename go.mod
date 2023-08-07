@@ -66,7 +66,7 @@ require (
 	github.com/grafana/cuetsy v0.1.10 // @grafana/grafana-as-code
 	github.com/grafana/grafana-aws-sdk v0.18.0 // @grafana/aws-datasources
 	github.com/grafana/grafana-azure-sdk-go v1.7.0 // @grafana/backend-platform
-	github.com/grafana/grafana-plugin-sdk-go v0.171.0 // @grafana/plugins-platform-backend
+	github.com/grafana/grafana-plugin-sdk-go v0.172.0 // @grafana/plugins-platform-backend
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0 // @grafana/backend-platform
 	github.com/hashicorp/go-hclog v1.5.0 // @grafana/plugins-platform-backend
 	github.com/hashicorp/go-plugin v1.4.9 // @grafana/plugins-platform-backend
@@ -79,7 +79,7 @@ require (
 	github.com/lib/pq v1.10.6 // @grafana/backend-platform
 	github.com/linkedin/goavro/v2 v2.10.0 // @grafana/backend-platform
 	github.com/m3db/prometheus_remote_client_golang v0.4.4 // @grafana/backend-platform
-	github.com/magefile/mage v1.14.0 // @grafana/grafana-delivery
+	github.com/magefile/mage v1.15.0 // @grafana/grafana-delivery
 	github.com/mattn/go-isatty v0.0.18 // @grafana/backend-platform
 	github.com/mattn/go-sqlite3 v1.14.16 // @grafana/backend-platform
 	github.com/matttproud/golang_protobuf_extensions v1.0.4 // @grafana/alerting-squad-backend
@@ -457,7 +457,7 @@ require (
 	github.com/coreos/go-semver v0.3.0 // indirect
 	github.com/dgryski/go-metro v0.0.0-20211217172704-adc40b04c140 // indirect
 	github.com/docker/docker v23.0.4+incompatible // @grafana/grafana-delivery
-	github.com/elazarl/goproxy v0.0.0-20220115173737-adb46da277ac // indirect
+	github.com/elazarl/goproxy v0.0.0-20230731152917-f99041a5c027 // indirect
 	github.com/emirpasic/gods v1.12.0 // indirect
 	github.com/ghodss/yaml v1.0.1-0.20190212211648-25d852aebe32 // indirect
 	github.com/go-git/gcfg v1.5.0 // indirect
