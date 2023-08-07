@@ -28,17 +28,26 @@ To make your plugin publicly available outside of your organization, sign your p
 
 If you intend to only use the plugin within your organization, sign it under a _private_ [signature level](#plugin-signature-levels).
 
-## Generate an API key
+## Generate a token
 
-To verify ownership of your plugin, generate an API key that you'll use every time you need to sign a new version of your plugin.
+To verify ownership of your plugin, generate an access token that you'll use every time you need to sign a new version of your plugin.
 
 1. [Create a Grafana Cloud account](/signup).
 
-1. Make sure that the first part of the plugin ID matches the slug of your Grafana Cloud account.
+1. Login into your account and navigate to **My Account > Security > Access Policies**. Click **Create access policy**.
 
-   You can find the plugin ID in the `plugin.json` file inside your plugin directory. For example, if your account slug is `acmecorp`, you need to prefix the plugin ID with `acmecorp-`.
+   Realm: has to be your-org-name (all-stacks)
+   Scope: plugins:write
 
-1. [Create a Grafana Cloud API key](/docs/grafana-cloud/reference/create-api-key/) with the **PluginPublisher** role.
+   {{< figure src="/static/img/docs/plugins/create-access-policy.png" class="docs-image--no-shadow" max-width="650px" >}}
+
+1. Click **Create token** to create a new token.
+
+   The expiration date field is optional, though you should change tokens periodically for increased security.
+
+   {{< figure src="/static/img/docs/plugins/create-access-policy-token.png" class="docs-image--no-shadow" max-width="650px" >}}
+
+1. Click **Create** and save a copy of the token somewhere secure for future reference.
 
 ## Sign a public plugin
 
@@ -49,7 +58,7 @@ Public plugins need to be reviewed by the Grafana team before you can sign them.
 1. In your plugin directory, sign the plugin with the API key you just created. Grafana Sign Plugin creates a [MANIFEST.txt](#plugin-manifest) file in the `dist` directory of your plugin:
 
    ```bash
-   export GRAFANA_API_KEY=<YOUR_API_KEY>
+   export GRAFANA_ACCESS_POLICY_TOKEN=<YOUR_ACCESS_POLICY_TOKEN>
    npx @grafana/sign-plugin@latest
    ```
 
@@ -58,7 +67,7 @@ Public plugins need to be reviewed by the Grafana team before you can sign them.
 1. In your plugin directory, sign the plugin with the API key you just created. Grafana Sign Plugin creates a [MANIFEST.txt](#plugin-manifest) file in the `dist` directory of your plugin.
 
    ```bash
-   export GRAFANA_API_KEY=<YOUR_API_KEY>
+   export GRAFANA_ACCESS_POLICY_TOKEN=<YOUR_ACCESS_POLICY_TOKEN>
    npx @grafana/sign-plugin@latest --rootUrls https://example.com/grafana
    ```
 
