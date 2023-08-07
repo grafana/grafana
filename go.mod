@@ -1,8 +1,8 @@
-module github.com/grafana/grafana
+	module github.com/grafana/grafana
 
-go 1.20
+	go 1.20
 
-// Override xorm's outdated go-mssqldb dependency, since we can't upgrade to current xorm (due to breaking changes).
+	// Override xorm's outdated go-mssqldb dependency, since we can't upgrade to current xorm (due to breaking changes).
 // We need a more current go-mssqldb so we get rid of a version of apache/thrift with vulnerabilities.
 // Also, use our fork with fixes for unimplemented methods (required for Go 1.16).
 replace github.com/denisenkom/go-mssqldb => github.com/grafana/go-mssqldb v0.9.2
@@ -261,7 +261,7 @@ require (
 	github.com/go-jose/go-jose/v3 v3.0.0 // @grafana/backend-platform
 	github.com/grafana/dataplane/examples v0.0.1 // @grafana/observability-metrics
 	github.com/grafana/dataplane/sdata v0.0.6 // @grafana/observability-metrics
-	github.com/grafana/go-mssqldb v0.9.1 // @grafana/grafana-bi-squad
+	github.com/microsoft/go-mssqldb v1.5.0 // @grafana/grafana-bi-squad
 	github.com/grafana/kindsys v0.0.0-20230508162304-452481b63482 //  @grafana/grafana-as-code
 	github.com/grafana/tempo v1.5.1-0.20230524121406-1dc1bfe7085b
 	github.com/grafana/thema v0.0.0-20230712153715-375c1b45f3ed // @grafana/grafana-as-code
@@ -327,7 +327,6 @@ require (
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-ieproxy v0.0.3 // indirect
 	github.com/mattn/goveralls v0.0.6 // indirect
-	github.com/microsoft/go-mssqldb v1.3.0 // indirect
 	github.com/mitchellh/copystructure v1.2.0 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/mitchellh/reflectwalk v1.0.2 // indirect
