@@ -134,7 +134,6 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     }) as Observable<{ data: { data: MegaSelectResponse } }>;
 
     const transformFromTempoMegaSelect = (response: MegaSelectResponse): DataQueryResponse => {
-      console.log('response', response);
       let transformedFrames: DataFrame[] = [];
 
       response.result.forEach((r) => {
@@ -143,25 +142,23 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
             {
               name: 'Time',
               type: FieldType.time,
-              values: r.values.map((value) => value[0] * 1000),
+              values: r.values.map((value) => value[0] * 1000), // seconds to ms
               config: { displayName: 'Time' },
               labels: r.metric,
             },
             {
               name: 'Value',
               type: FieldType.number,
-              values: r.values.map((value) => parseFloat(value[1])),
+              values: r.values.map((value) => parseFloat(value[1])), // string to float
               config: { displayName: r.metric.__name__ },
               labels: r.metric,
             },
           ],
           name: r.metric.__name__,
-          length: 1,
+          length: r.values.length,
         };
         transformedFrames.push(dataFrame);
       });
-
-      console.log('transformed', transformedFrames);
 
       return { data: transformedFrames };
     };
