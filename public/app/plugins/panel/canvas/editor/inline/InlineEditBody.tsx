@@ -6,7 +6,7 @@ import { useObservable } from 'react-use';
 import { DataFrame, GrafanaTheme2, PanelOptionsEditorBuilder, StandardEditorContext } from '@grafana/data';
 import { PanelOptionsSupplier } from '@grafana/data/src/panel/PanelPlugin';
 import { NestedValueAccess } from '@grafana/data/src/utils/OptionsUIBuilders';
-import { useStyles2 } from '@grafana/ui/src';
+import { FileUpload, useStyles2 } from '@grafana/ui/src';
 import { AddLayerButton } from 'app/core/components/Layers/AddLayerButton';
 import { FrameState } from 'app/features/canvas/runtime/frame';
 import { OptionsPaneCategory } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategory';
@@ -17,7 +17,7 @@ import { setOptionImmutably } from 'app/features/dashboard/components/PanelEdito
 import { activePanelSubject, InstanceState } from '../../CanvasPanel';
 import { addStandardCanvasEditorOptions } from '../../module';
 import { InlineEditTabs } from '../../types';
-import { getElementTypes, onAddItem } from '../../utils';
+import { getElementTypes, onAddItem, onImportFile } from '../../utils';
 import { getElementEditor } from '../element/elementEditor';
 import { getLayerEditor } from '../layer/layerEditor';
 
@@ -89,6 +89,11 @@ export function InlineEditBody() {
       <div style={topLevelItemsContainerStyle}>{pane.items.map((item) => item.render())}</div>
       <div style={topLevelItemsContainerStyle}>
         <AddLayerButton onChange={(sel) => onAddItem(sel, rootLayer)} options={typeOptions} label={'Add item'} />
+      </div>
+      <div style={topLevelItemsContainerStyle}>
+        <FileUpload size="sm" accept=".dxf" onFileUpload={({ currentTarget }) => onImportFile(currentTarget)}>
+          <span>Upload CAD file</span>
+        </FileUpload>
       </div>
       <div style={topLevelItemsContainerStyle}>
         <TabsEditor onTabChange={onTabChange} />

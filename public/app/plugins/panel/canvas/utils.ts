@@ -106,6 +106,11 @@ export function onAddItem(sel: SelectableValue<string>, rootLayer: FrameState | 
   }
 }
 
+export async function onImportFile(target: EventTarget & HTMLInputElement) {
+  // eslint-disable-next-line no-console
+  console.debug('file', target.files && target.files[0]); // TODO: remove debugging
+}
+
 export function getDataLinks(ctx: DimensionContext, cfg: TextConfig, textData: string | undefined): LinkModel[] {
   const panelData = ctx.getPanelData();
   const frames = panelData?.series;
