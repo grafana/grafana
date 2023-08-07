@@ -12,7 +12,6 @@ import (
 
 func (hs *HTTPServer) GetFeatureToggles(ctx *contextmodel.ReqContext) response.Response {
 	featureMgmtCfg := hs.Cfg.FeatureManagement
-
 	features := hs.Features.GetFlags()
 	enabledFeatures := hs.Features.GetEnabled(ctx.Req.Context())
 
@@ -25,7 +24,7 @@ func (hs *HTTPServer) GetFeatureToggles(ctx *contextmodel.ReqContext) response.R
 			features = append(features[:i], features[i+1:]...) // remove feature
 			continue
 		}
-		if _, ok := featureMgmtCfg.ReadOnlyToggles[ft.Name]; ok || ft.Stage == featuremgmt.FeatureStagePublicPreview {
+		if _, ok := featureMgmtCfg.ReadOnlyToggles[ft.Name]; ok || ft.Stage == featuremgmt.FeatureStagePublicPreview || ft.Name == featuremgmt.FlagFeatureToggleAdminPage {
 			features[i].ReadOnly = true
 		}
 		features[i].Enabled = enabledFeatures[ft.Name]
@@ -52,7 +51,7 @@ func (hs *HTTPServer) UpdateFeatureToggle(ctx *contextmodel.ReqContext) response
 
 	for _, t := range cmd.FeatureToggles {
 		// make sure flag exists, and only allow editing if flag is GA or deprecated
-		if f, ok := hs.Features.LookupFlag(t.Name); !ok || (f.Stage != featuremgmt.FeatureStageGeneralAvailability && f.Stage != featuremgmt.FeatureStageDeprecated) {
+		if f, ok := hs.Features.LookupFlag(t.Name); !ok || (f.Stage != featuremgmt.FeatureStageGeneralAvailability && f.Stage != featuremgmt.FeatureStageDeprecated) || f.Name == featuremgmt.FlagFeatureToggleAdminPage {
 			hs.log.Warn("UpdateFeatureToggle: invalid toggle passed in", "toggle_name", t.Name)
 			return response.Error(http.StatusBadRequest, "invalid toggle passed in", fmt.Errorf("invalid toggle passed in"))
 		} else {
