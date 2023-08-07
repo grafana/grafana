@@ -296,7 +296,7 @@ When you're browsing logs in Explore, you can now click the eye icon within a ro
 
 _Generally available in all editions of Grafana_
 
-Browsing log lines is faster than ever, after a series of performance optimizations to log-related components.
+After a series of performance optimizations to log-related components, browsing log lines is faster than ever.
 
 ### Logs: See more log lines in logs context
 
