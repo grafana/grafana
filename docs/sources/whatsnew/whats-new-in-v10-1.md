@@ -128,7 +128,7 @@ To learn more, refer to both our [Heatmap documentation]({{< relref "../panels-v
 
 {{< figure src="/media/docs/grafana/screenshot-grafana-10-1-heatmap-datalinks.png" max-width="750px" caption="Heatmap datalink support" >}}
 
-## Activate draft reports
+### Activate draft reports
 
 <!-- Robert Horvath -->
 
