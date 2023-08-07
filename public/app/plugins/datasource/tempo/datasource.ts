@@ -13,10 +13,10 @@ import {
   dateTime,
   Field,
   FieldType,
-  isValidGoDuration,
-  LoadingState,
+  isValidGoDuration, Labels,
+  LoadingState, QueryResultMeta,
   rangeUtil,
-  ScopedVars,
+  ScopedVars, TimeSeries, TimeSeriesValue,
 } from '@grafana/data';
 import {
   config,
@@ -74,6 +74,71 @@ interface megaSelectResposne {
     }>
 
   };
+}
+
+export interface LokiMatrixResult {
+  metric: Record<string, string>;
+  values: Array<[number, string]>;
+}
+
+export interface TransformerOptions {
+  legendFormat?: string;
+  query: string;
+  refId: string;
+  scopedVars: ScopedVars;
+  meta?: QueryResultMeta;
+}
+
+
+function tempoMatrixToTimeSeries(matrixResult: LokiMatrixResult, options: TransformerOptions): TimeSeries {
+  const name = createMetricLabel(matrixResult.metric, options);
+  return {
+    target: name,
+    title: name,
+    datapoints: lokiPointsToTimeseriesPoints(matrixResult.values),
+    tags: matrixResult.metric,
+    meta: options.meta,
+    refId: options.refId,
+  };
+}
+
+export function createMetricLabel(labelData: { [key: string]: string }, options?: TransformerOptions) {
+  let label =
+    options === undefined || isEmpty(options.legendFormat)
+      ? getOriginalMetricName(labelData)
+      : renderLegendFormat(getTemplateSrv().replace(options.legendFormat ?? '', options.scopedVars), labelData);
+
+  if (!label && options) {
+    label = options.query;
+  }
+  return label;
+}
+
+
+function getOriginalMetricName(labelData: { [key: string]: string }) {
+  const labelPart = Object.entries(labelData)
+    .map((label) => `${label[0]}="${label[1]}"`)
+    .join(',');
+  return `{${labelPart}}`;
+}
+
+export function renderLegendFormat(aliasPattern: string, aliasData: Labels): string {
+  const aliasRegex = /\{\{\s*(.+?)\s*\}\}/g;
+  return aliasPattern.replace(aliasRegex, (_, g1) => (aliasData[g1] ? aliasData[g1] : g1));
+}
+
+export function lokiPointsToTimeseriesPoints(data: Array<[number, string]>): TimeSeriesValue[][] {
+  const datapoints: TimeSeriesValue[][] = [];
+
+  for (const [time, value] of data) {
+    let datapointValue: TimeSeriesValue = parsePrometheusFormatSampleValue(value);
+
+    const timestamp = time * 1000;
+
+    datapoints.push([datapointValue, timestamp]);
+  }
+
+  return datapoints;
 }
 
 export const DEFAULT_LIMIT = 20;
