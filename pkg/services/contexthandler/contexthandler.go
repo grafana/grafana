@@ -173,7 +173,7 @@ func (h *ContextHandler) Middleware(next http.Handler) http.Handler {
 		if h.Cfg.AuthBrokerEnabled {
 			identity, err := h.AuthnService.Authenticate(ctx, &authn.Request{HTTPRequest: reqContext.Req, Resp: reqContext.Resp})
 			if err != nil {
-				if errors.Is(err, auth.ErrInvalidSessionToken) {
+				if errors.Is(err, auth.ErrInvalidSessionToken) || errors.Is(err, authn.ErrExpiredAccessToken) {
 					// Burn the cookie in case of invalid, expired or missing token
 					reqContext.Resp.Before(h.deleteInvalidCookieEndOfRequestFunc(reqContext))
 				}
