@@ -40,19 +40,36 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
       return { enabled };
     }
 
+    const getContent = () => {
+      if (subject === 'title') {
+        return (
+          'You are an expert in creating Grafana Panels. ' +
+          'Generate one title for this panel with a maximum of 100 characters. ' +
+          'Provide just the title text.' +
+          'Look at user content "panelTitles"'
+        );
+      }
+
+      return (
+        'You are an expert in creating Grafana Panels. ' +
+        'Generate one description for this panel with a minimum of 50 characters and a maximum of 150 characters. ' +
+        'Describe what this panel might be monitoring and why it is useful. Provide just the description text.' +
+        "Describe the panel's thresholds"
+      );
+    };
+
     llms.openai
       .streamChatCompletions({
         model: 'gpt-3.5-turbo',
         messages: [
           {
             role: 'system',
-            content: `You are an expert in creating Grafana Panels.
-              Generate one ${subject} for this panel with a minimum of 50 characters and a maximum of 100 characters.`,
+            content: getContent(),
           },
           {
             role: 'user',
-            content: 'HELLO!',
-            // content: JSON.stringify(payload),
+            // content: 'HELLO!',
+            content: JSON.stringify(payload),
           },
         ],
       })
