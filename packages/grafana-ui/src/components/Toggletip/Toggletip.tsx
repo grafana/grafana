@@ -31,6 +31,7 @@ export interface ToggletipProps {
   children: JSX.Element;
   /** Determine whether the toggletip should fit its content or not */
   fitContent?: boolean;
+  shouldClose?: boolean;
 }
 
 export const Toggletip = React.memo(
@@ -44,6 +45,7 @@ export const Toggletip = React.memo(
     onClose,
     footer,
     fitContent = false,
+    shouldClose = false,
   }: ToggletipProps) => {
     const styles = useStyles2(getStyles);
     const style = styles[theme];
@@ -69,6 +71,12 @@ export const Toggletip = React.memo(
       }
       return;
     }, [controlledVisible, closeToggletip]);
+
+    useEffect(() => {
+      if (shouldClose) {
+        closeToggletip();
+      }
+    });
 
     const { getArrowProps, getTooltipProps, setTooltipRef, setTriggerRef, visible, update } = usePopperTooltip({
       visible: controlledVisible,

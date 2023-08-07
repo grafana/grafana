@@ -20,6 +20,9 @@ let generatingDescription = false;
 
 let enabled = false;
 
+let titleHistory: string[] = [];
+let descriptionHistory: string[] = [];
+
 export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPaneCategoryDescriptor {
   const { panel, onPanelConfigChange } = props;
   const descriptor = new OptionsPaneCategoryDescriptor({
@@ -49,11 +52,17 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
     setTimeout(() => {
       generatingTitle = false;
       onPanelConfigChange('title', llmReplyTitle);
+      if (titleHistory.indexOf(llmReplyTitle) === -1) {
+        titleHistory.push(llmReplyTitle);
+      }
     }, 1000);
 
     setTimeout(() => {
       generatingDescription = false;
       onPanelConfigChange('description', llmReplyDescription);
+      if (descriptionHistory.indexOf(llmReplyDescription) === -1) {
+        descriptionHistory.push(llmReplyDescription);
+      }
     }, 3000);
   };
 
@@ -124,6 +133,8 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
         value: panel.title,
         popularRank: 1,
         render: function renderTitle() {
+          console.log('titleHist', titleHistory);
+
           return (
             <Input
               id="PanelFrameTitle"
@@ -136,6 +147,8 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
           <AiAssist
             text={generatingTitle ? 'Generating title' : 'Generate title'}
             onClick={() => llmGenerate('title')}
+            history={titleHistory}
+            applySuggestion={(suggestion: string) => onPanelConfigChange('title', suggestion)}
           />
         ),
       })
@@ -146,6 +159,7 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
         // description: panel.description,
         value: panel.description,
         render: function renderDescription() {
+          console.log('descriptionHistory', descriptionHistory);
           return (
             <TextArea
               id="description-text-area"
@@ -158,6 +172,8 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
           <AiAssist
             text={generatingDescription ? 'Generating description' : 'Generate description'}
             onClick={() => llmGenerate('description')}
+            history={descriptionHistory}
+            applySuggestion={(suggestion: string) => onPanelConfigChange('description', suggestion)}
           />
         ),
       })
