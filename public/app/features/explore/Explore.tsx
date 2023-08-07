@@ -382,6 +382,40 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
 
     const graphResultClone: DataFrame[] = JSON.parse(JSON.stringify(graphResult));
 
+    const filterExemplars = (exemplars: DataFrame[], targetFrame: DataFrame): DataFrame[] => {
+      return exemplars.map((exemplar) => {
+        let newExemplar: DataFrame;
+        newExemplar = cloneDeep(exemplar);
+        newExemplar.fields.forEach((field) => (field.values = []));
+
+        const frameLabels = targetFrame.fields[1].labels;
+
+        if (frameLabels) {
+          // Iterate through the labels from the dataFrame for this panel
+          Object.keys(frameLabels).forEach((labelName) => {
+            const labelValue = frameLabels[labelName];
+
+            // Find the field that has this name
+            const targetField = exemplar.fields.find((field) => field.name === labelName);
+
+            if (targetField) {
+              // Iterate through all of the values for this field, each one that matches the value for the selected frame is an exemplar that is relevant, copy all values of the dataframe with this index, into the new dataframe
+              for (let i = 0; i < targetField.values.length; i++) {
+                if (targetField.values.get(i) === labelValue) {
+                  exemplar.fields.forEach((field, fieldIndex) => {
+                    newExemplar.fields[fieldIndex].values.add(field.values.get(i));
+                  });
+                }
+              }
+            }
+          });
+        }
+
+        newExemplar.length = newExemplar.fields[0].values.length;
+        return newExemplar;
+      });
+    };
+
     //@todo just grabbing first timeseries as megaGrubble for now
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
     const getMegaGrubbled = (
@@ -392,14 +426,14 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
 
     return (
       <div className={styles.grubbleWrapper}>
-        <GraphContainer
+        <GrubbleContainer
           data={[getMegaGrubbled]}
           height={showFlameGraph ? 180 : 400}
           width={width}
           absoluteRange={absoluteRange}
           timeZone={timeZone}
           onChangeTime={this.onUpdateTimeRange}
-          annotations={queryResponse.annotations}
+          annotations={filterExemplars(queryResponse.annotations ?? [], getMegaGrubbled)}
           splitOpenFn={this.onSplitOpen('graph')}
           loadingState={queryResponse.state}
           eventBus={this.graphEventBus}
@@ -416,37 +450,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
                   absoluteRange={absoluteRange}
                   timeZone={timeZone}
                   onChangeTime={this.onUpdateTimeRange}
-                  annotations={queryResponse?.annotations?.map((exemplar) => {
-                    let newExemplar: DataFrame;
-                    newExemplar = cloneDeep(exemplar);
-                    newExemplar.fields.forEach((field) => (field.values = []));
-
-                    const frameLabels = frame.fields[1].labels;
-
-                    if (frameLabels) {
-                      // Iterate through the labels from the dataFrame for this panel
-                      Object.keys(frameLabels).forEach((labelName) => {
-                        const labelValue = frameLabels[labelName];
-
-                        // Find the field that has this name
-                        const targetField = exemplar.fields.find((field) => field.name === labelName);
-
-                        if (targetField) {
-                          // Iterate through all of the values for this field, each one that matches the value for the selected frame is an exemplar that is relevant, copy all values of the dataframe with this index, into the new dataframe
-                          for (let i = 0; i < targetField.values.length; i++) {
-                            if (targetField.values.get(i) === labelValue) {
-                              exemplar.fields.forEach((field, fieldIndex) => {
-                                newExemplar.fields[fieldIndex].values.add(field.values.get(i));
-                              });
-                            }
-                          }
-                        }
-                      });
-                    }
-
-                    newExemplar.length = newExemplar.fields[0].values.length;
-                    return newExemplar;
-                  })}
+                  annotations={filterExemplars(queryResponse.annotations ?? [], frame)}
                   splitOpenFn={this.onSplitOpen('graph')}
                   loadingState={queryResponse.state}
                   eventBus={this.graphEventBus}
