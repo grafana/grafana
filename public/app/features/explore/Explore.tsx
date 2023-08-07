@@ -8,26 +8,27 @@ import { Unsubscribable } from 'rxjs';
 
 import {
   AbsoluteTimeRange,
+  DataFrame,
+  EventBus,
   GrafanaTheme2,
+  hasToggleableQueryFiltersSupport,
   LoadingState,
+  MutableDataFrame,
   QueryFixAction,
   RawTimeRange,
-  EventBus,
   SplitOpenOptions,
   SupplementaryQueryType,
-  hasToggleableQueryFiltersSupport,
-  DataFrame,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config, getDataSourceSrv, reportInteraction } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import {
+  AdHocFilterItem,
   CustomScrollbar,
   ErrorBoundaryAlert,
+  PanelContainer,
   Themeable2,
   withTheme2,
-  PanelContainer,
-  AdHocFilterItem,
 } from '@grafana/ui';
 import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR } from '@grafana/ui/src/components/Table/types';
 import appEvents from 'app/core/app_events';
@@ -376,16 +377,21 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
   }
 
   renderGrubbleUpPanels(width: number) {
-    const { graphResult, absoluteRange, timeZone, queryResponse, showFlameGraph, theme, eventBus } = this.props;
+    const { graphResult, absoluteRange, timeZone, queryResponse, showFlameGraph, theme } = this.props;
     const styles = getStyles(theme);
 
-    const graphResultClone = cloneDeep(graphResult);
+    const graphResultClone = JSON.parse(JSON.stringify(graphResult));
 
     //@todo just grabbing first timeseries as megaGrubble for now
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
     const getMegaGrubbled = (
       graphResultClone && graphResultClone.length > 0 ? graphResultClone.pop() : []
     ) as DataFrame;
+
+    console.log('original', graphResult);
+    console.log('graphResultClone', graphResultClone);
+    console.log('getMegaGrubbled', getMegaGrubbled);
+    getMegaGrubbled.length = getMegaGrubbled.fields[0].values.length;
 
     return (
       <div className={styles.grubbleWrapper}>
