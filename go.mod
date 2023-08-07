@@ -33,8 +33,8 @@ replace github.com/prometheus/prometheus => github.com/prometheus/prometheus v0.
 require (
 	cloud.google.com/go/storage v1.30.1 // @grafana/backend-platform
 	cuelang.org/go v0.6.0-0.dev // @grafana/grafana-as-code
-	github.com/Azure/azure-sdk-for-go v65.0.0+incompatible // @grafana-partner-datasources
-	github.com/Azure/go-autorest/autorest v0.11.28 // @grafana-partner-datasources
+	github.com/Azure/azure-sdk-for-go v65.0.0+incompatible // @grafana/partner-datasources
+	github.com/Azure/go-autorest/autorest v0.11.28 // @grafana/backend-platform
 	github.com/BurntSushi/toml v1.2.1 // @grafana/grafana-authnz-team
 	github.com/Masterminds/semver v1.5.0 // @grafana/backend-platform
 	github.com/VividCortex/mysqlerr v0.0.0-20170204212430-6c6b55f8796f // @grafana/backend-platform
@@ -65,7 +65,7 @@ require (
 	github.com/grafana/alerting v0.0.0-20230606080147-55b8d71c7890 // @grafana/alerting-squad-backend
 	github.com/grafana/cuetsy v0.1.10 // @grafana/grafana-as-code
 	github.com/grafana/grafana-aws-sdk v0.18.0 // @grafana/aws-datasources
-	github.com/grafana/grafana-azure-sdk-go v1.7.0 // @grafana-partner-datasources
+	github.com/grafana/grafana-azure-sdk-go v1.7.0 // @grafana/partner-datasources
 	github.com/grafana/grafana-plugin-sdk-go v0.171.0 // @grafana/plugins-platform-backend
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0 // @grafana/backend-platform
 	github.com/hashicorp/go-hclog v1.5.0 // @grafana/plugins-platform-backend
@@ -227,10 +227,10 @@ require (
 
 require (
 	cloud.google.com/go/kms v1.10.1 // @grafana/backend-platform
-	github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.2.0 // @grafana-partner-datasources
-	github.com/Azure/azure-sdk-for-go/sdk/keyvault/azkeys v0.9.0 // @grafana-partner-datasources
-	github.com/Azure/azure-storage-blob-go v0.15.0 // @grafana-partner-datasources
-	github.com/Azure/go-autorest/autorest/adal v0.9.22 // @grafana-partner-datasources
+	github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.2.0 // @grafana/partner-datasources
+	github.com/Azure/azure-sdk-for-go/sdk/keyvault/azkeys v0.9.0 // @grafana/backend-platform
+	github.com/Azure/azure-storage-blob-go v0.15.0 // @grafana/backend-platform
+	github.com/Azure/go-autorest/autorest/adal v0.9.22 // @grafana/backend-platform
 	github.com/armon/go-radix v1.0.0 // @grafana/grafana-app-platform-squad
 	github.com/blugelabs/bluge v0.1.9 // @grafana/backend-platform
 	github.com/blugelabs/bluge_segment_api v0.2.0 // @grafana/backend-platform
