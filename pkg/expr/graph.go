@@ -62,8 +62,8 @@ func (dp *DataPipeline) execute(c context.Context, now time.Time, s *Service) (m
 		}
 		dsNodes = append(dsNodes, node.(*DSNode))
 	}
-	ExecuteDSNodesGrouped(c, now, vars, s, dsNodes)
-	
+	executeDSNodesGrouped(c, now, vars, s, dsNodes)
+
 	for _, node := range *dp {
 		if node.NodeType() == TypeDatasourceNode {
 			continue
@@ -124,6 +124,8 @@ func (s *Service) buildDependencyGraph(req *Request) (*simple.DirectedGraph, err
 }
 
 // buildExecutionOrder returns a sequence of nodes ordered by dependency.
+// Note: During execution, Datasource query nodes for the same datasource will
+// be grouped into one request and executed first as phase after this call.
 func buildExecutionOrder(graph *simple.DirectedGraph) ([]Node, error) {
 	sortedNodes, err := topo.Sort(graph)
 	if err != nil {

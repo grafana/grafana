@@ -191,7 +191,7 @@ func (s *Service) buildDSNode(dp *simple.DirectedGraph, rn *rawNode, req *Reques
 	return dsNode, nil
 }
 
-func ExecuteDSNodesGrouped(ctx context.Context, now time.Time, vars mathexp.Vars, s *Service, nodes []*DSNode) (e error) {
+func executeDSNodesGrouped(ctx context.Context, now time.Time, vars mathexp.Vars, s *Service, nodes []*DSNode) (e error) {
 	logger := logger.FromContext(ctx).New() // "datasourceType", dn.datasource.Type, "queryRefId", dn.refID, "datasourceUid", dn.datasource.UID, "datasourceVersion", dn.datasource.Version)
 	ctx, span := s.tracer.Start(ctx, "SSE.ExecuteDatasourceQuery")
 	defer span.End()
@@ -249,7 +249,6 @@ func ExecuteDSNodesGrouped(ctx context.Context, now time.Time, vars mathexp.Vars
 		}
 
 		for _, dn := range nodeGroup {
-
 			dataFrames, err := getResponseFrame(resp, dn.refID)
 			if err != nil {
 				return MakeQueryError(dn.refID, dn.datasource.UID, err)
