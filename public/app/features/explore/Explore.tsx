@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { get, groupBy } from 'lodash';
+import { cloneDeep, get, groupBy } from 'lodash';
 import memoizeOne from 'memoize-one';
 import React, { createRef } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
@@ -16,6 +16,7 @@ import {
   SplitOpenOptions,
   SupplementaryQueryType,
   hasToggleableQueryFiltersSupport,
+  DataFrame,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config, getDataSourceSrv, reportInteraction } from '@grafana/runtime';
@@ -43,6 +44,7 @@ import ExploreQueryInspector from './ExploreQueryInspector';
 import { ExploreToolbar } from './ExploreToolbar';
 import { FlameGraphExploreContainer } from './FlameGraph/FlameGraphExploreContainer';
 import { GraphContainer } from './Graph/GraphContainer';
+import { GrubbleContainer } from './Graph/GrubbleContainer';
 import LogsContainer from './Logs/LogsContainer';
 import { LogsSamplePanel } from './Logs/LogsSamplePanel';
 import { NoData } from './NoData';
@@ -95,6 +97,12 @@ const getStyles = (theme: GrafanaTheme2) => {
       padding: ${theme.spacing(2)};
       padding-top: 0;
     `,
+    grubbleWrapper: css``,
+    grubbleSubWrapper: css`
+      display: flex;
+      flex-wrap: wrap;
+    `,
+    grubbleItem: css``,
   };
 };
 
@@ -367,6 +375,58 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
     );
   }
 
+  renderGrubbleUpPanels(width: number) {
+    const { graphResult, absoluteRange, timeZone, queryResponse, showFlameGraph, theme, eventBus } = this.props;
+    const styles = getStyles(theme);
+
+    const graphResultClone = cloneDeep(graphResult);
+
+    //@todo just grabbing first timeseries as megaGrubble for now
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    const getMegaGrubbled = (
+      graphResultClone && graphResultClone.length > 0 ? graphResultClone.pop() : []
+    ) as DataFrame;
+
+    const grubSubEventBus = eventBus.newScopedBus('graph', { onlyLocal: true });
+
+    return (
+      <div className={styles.grubbleWrapper}>
+        <GrubbleContainer
+          data={[getMegaGrubbled]}
+          height={showFlameGraph ? 180 : 400}
+          width={width}
+          absoluteRange={absoluteRange}
+          timeZone={timeZone}
+          onChangeTime={this.onUpdateTimeRange}
+          annotations={queryResponse.annotations}
+          splitOpenFn={this.onSplitOpen('graph')}
+          loadingState={queryResponse.state}
+          eventBus={this.graphEventBus}
+        />
+        <div className={styles.grubbleSubWrapper}>
+          {graphResultClone &&
+            graphResultClone.map((frame) => (
+              <div key={frame.name} className={styles.grubbleItem}>
+                <GrubbleContainer
+                  actionsOverride={<></>}
+                  data={[frame]}
+                  height={showFlameGraph ? 180 : 400}
+                  width={width / 4}
+                  absoluteRange={absoluteRange}
+                  timeZone={timeZone}
+                  onChangeTime={this.onUpdateTimeRange}
+                  annotations={queryResponse.annotations}
+                  splitOpenFn={this.onSplitOpen('graph')}
+                  loadingState={queryResponse.state}
+                  eventBus={grubSubEventBus}
+                />
+              </div>
+            ))}
+        </div>
+      </div>
+    );
+  }
+
   renderTablePanel(width: number) {
     const { exploreId, timeZone } = this.props;
     return (
@@ -494,6 +554,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
       showFlameGraph,
       timeZone,
       showLogsSample,
+      showGrubbleUp,
     } = this.props;
     const { openDrawer } = this.state;
     const styles = getStyles(theme);
@@ -550,7 +611,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
                     <ErrorBoundaryAlert>
                       {showPanels && (
                         <>
-                          {showMetrics && graphResult && (
+                          {!showGrubbleUp && showMetrics && graphResult && (
                             <ErrorBoundaryAlert>{this.renderGraphPanel(width)}</ErrorBoundaryAlert>
                           )}
                           {showRawPrometheus && (
@@ -562,6 +623,9 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
                           {showFlameGraph && <ErrorBoundaryAlert>{this.renderFlameGraphPanel()}</ErrorBoundaryAlert>}
                           {showTrace && <ErrorBoundaryAlert>{this.renderTraceViewPanel()}</ErrorBoundaryAlert>}
                           {showLogsSample && <ErrorBoundaryAlert>{this.renderLogsSamplePanel()}</ErrorBoundaryAlert>}
+                          {showGrubbleUp && graphResult && (
+                            <ErrorBoundaryAlert>{this.renderGrubbleUpPanels(width)}</ErrorBoundaryAlert>
+                          )}
                           {showCustom && <ErrorBoundaryAlert>{this.renderCustom(width)}</ErrorBoundaryAlert>}
                           {showNoData && <ErrorBoundaryAlert>{this.renderNoData()}</ErrorBoundaryAlert>}
                         </>
@@ -626,6 +690,7 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
   const logsSample = supplementaryQueries[SupplementaryQueryType.LogsSample];
   // We want to show logs sample only if there are no log results and if there is already graph or table result
   const showLogsSample = !!(logsSample.dataProvider !== undefined && !logsResult && (graphResult || tableResult));
+  const showGrubbleUp = true;
 
   return {
     datasourceInstance,
@@ -650,6 +715,7 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     loading,
     logsSample,
     showLogsSample,
+    showGrubbleUp,
   };
 }
 
