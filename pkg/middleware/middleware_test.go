@@ -1,6 +1,8 @@
 package middleware
 
 import (
+	"errors"
+	"fmt"
 	"net/http"
 	"path/filepath"
 	"testing"
@@ -12,28 +14,17 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
-	"github.com/grafana/grafana/pkg/infra/db/dbtest"
 	"github.com/grafana/grafana/pkg/infra/fs"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/anonymous/anontest"
-	"github.com/grafana/grafana/pkg/services/apikey/apikeytest"
 	"github.com/grafana/grafana/pkg/services/auth/authtest"
-	"github.com/grafana/grafana/pkg/services/auth/jwt"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/authn/authntest"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
-	"github.com/grafana/grafana/pkg/services/contexthandler/authproxy"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/ldap/service"
-	"github.com/grafana/grafana/pkg/services/login/loginservice"
-	"github.com/grafana/grafana/pkg/services/login/logintest"
 	"github.com/grafana/grafana/pkg/services/navtree"
-	"github.com/grafana/grafana/pkg/services/org/orgtest"
-	"github.com/grafana/grafana/pkg/services/rendering"
-	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/usertest"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
@@ -239,21 +230,13 @@ func middlewareScenario(t *testing.T, desc string, fn scenarioFunc, cbs ...func(
 		sc.m.UseMiddleware(ContentSecurityPolicy(cfg, logger))
 		sc.m.UseMiddleware(web.Renderer(viewsPath, "[[", "]]"))
 
-		sc.mockSQLStore = dbtest.NewFakeDB()
-		sc.loginService = &loginservice.LoginServiceMock{}
+		// defalut to not authenticated request
+		sc.authnService = &authntest.FakeService{ExpectedErr: errors.New("no auth")}
 		sc.userService = usertest.NewUserServiceFake()
-		sc.orgService = orgtest.NewOrgServiceFake()
-		sc.apiKeyService = &apikeytest.Service{}
-		sc.oauthTokenService = &authtest.FakeOAuthTokenService{}
-		ctxHdlr := getContextHandler(t, cfg, sc.mockSQLStore, sc.loginService, sc.apiKeyService, sc.userService, sc.orgService, sc.oauthTokenService)
-		sc.sqlStore = ctxHdlr.SQLStore
-		sc.contextHandler = ctxHdlr
+
+		ctxHdlr := getContextHandler(t, cfg, sc.authnService)
 		sc.m.Use(ctxHdlr.Middleware)
 		sc.m.Use(OrgRedirect(sc.cfg, sc.userService))
-
-		sc.userAuthTokenService = ctxHdlr.AuthTokenService.(*authtest.FakeUserAuthTokenService)
-		sc.jwtAuthService = ctxHdlr.JWTAuthService.(*jwt.FakeJWTService)
-		sc.remoteCacheService = ctxHdlr.RemoteCache
 
 		sc.defaultHandler = func(c *contextmodel.ReqContext) {
 			require.NotNil(t, c)
@@ -278,40 +261,14 @@ func middlewareScenario(t *testing.T, desc string, fn scenarioFunc, cbs ...func(
 	})
 }
 
-func getContextHandler(t *testing.T, cfg *setting.Cfg, mockSQLStore *dbtest.FakeDB,
-	loginService *loginservice.LoginServiceMock, apiKeyService *apikeytest.Service,
-	userService *usertest.FakeUserService, orgService *orgtest.FakeOrgService,
-	oauthTokenService *authtest.FakeOAuthTokenService,
-) *contexthandler.ContextHandler {
+func getContextHandler(t *testing.T, cfg *setting.Cfg, authnService authn.Service) *contexthandler.ContextHandler {
 	t.Helper()
 
-	if cfg == nil {
-		cfg = setting.NewCfg()
-	}
-	cfg.RemoteCacheOptions = &setting.RemoteCacheOptions{
-		Name: "database",
-	}
-
-	remoteCacheSvc := remotecache.NewFakeStore(t)
-	userAuthTokenSvc := authtest.NewFakeUserAuthTokenService()
-	renderSvc := &fakeRenderService{}
-	authJWTSvc := jwt.NewFakeJWTService()
-	tracer := tracing.InitializeTracerForTest()
-	authProxy := authproxy.ProvideAuthProxy(cfg, remoteCacheSvc, loginService,
-		userService, mockSQLStore, &service.LDAPFakeService{ExpectedError: service.ErrUnableToCreateLDAPClient})
-	authenticator := &logintest.AuthenticatorFake{ExpectedUser: &user.User{}}
-	return contexthandler.ProvideService(cfg, userAuthTokenSvc, authJWTSvc,
-		remoteCacheSvc, renderSvc, mockSQLStore, tracer, authProxy,
-		loginService, apiKeyService, authenticator, userService, orgService,
-		oauthTokenService,
-		featuremgmt.WithFeatures(featuremgmt.FlagAccessTokenExpirationCheck),
-		&authntest.FakeService{ExpectedIdentity: &authn.Identity{}}, &anontest.FakeAnonymousSessionService{})
-}
-
-type fakeRenderService struct {
-	rendering.Service
-}
-
-func (s *fakeRenderService) Init() error {
-	return nil
+	tracer := tracing.NewFakeTracer()
+	return contexthandler.ProvideService(cfg, authtest.NewFakeUserAuthTokenService(), nil,
+		nil, nil, nil, tracer, nil,
+		nil, nil, nil, nil, nil,
+		nil, featuremgmt.WithFeatures(featuremgmt.FlagAccessTokenExpirationCheck),
+		authnService, &anontest.FakeAnonymousSessionService{},
+	)
 }

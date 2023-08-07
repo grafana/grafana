@@ -55,12 +55,11 @@ func ProvideService(cfg *setting.Cfg, tokenService auth.UserTokenService, jwtSer
 	authnService authn.Service, anonDeviceService anonymous.Service,
 ) *ContextHandler {
 	return &ContextHandler{
-		Cfg:               cfg,
-		AuthTokenService:  tokenService,
-		JWTAuthService:    jwtService,
-		RemoteCache:       remoteCache,
-		RenderService:     renderService,
-		SQLStore:          sqlStore,
+		Cfg:              cfg,
+		AuthTokenService: tokenService,
+		JWTAuthService:   jwtService,
+		RemoteCache:      remoteCache,
+		RenderService:    renderService, SQLStore: sqlStore,
 		tracer:            tracer,
 		authProxy:         authProxy,
 		authenticator:     authenticator,
