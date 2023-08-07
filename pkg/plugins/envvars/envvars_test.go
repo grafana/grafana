@@ -337,3 +337,17 @@ func TestInitializer_oauthEnvVars(t *testing.T) {
 		assert.Equal(t, "GF_PLUGIN_APP_PRIVATE_KEY=privatePem", envVars[4])
 	})
 }
+
+func TestInitalizer_awsEnvVars(t *testing.T) {
+	t.Run("backend datasource with aws settings", func(t *testing.T) {
+		p := &plugins.Plugin{}
+		envVarsProvider := NewProvider(&config.Cfg{
+			AWSAssumeRoleEnabled:    true,
+			AWSAllowedAuthProviders: []string{"grafana_assume_role", "keys"},
+			AWSExternalId:           "mock_external_id",
+		}, nil)
+		envVars, err := envVarsProvider.Get(context.Background(), p)
+		require.NoError(t, err)
+		assert.ElementsMatch(t, []string{"GF_VERSION=", "AWS_AUTH_AssumeRoleEnabled=true", "AWS_AUTH_AllowedAuthProviders=grafana_assume_role,keys", "AWS_AUTH_EXTERNAL_ID=mock_external_id"}, envVars)
+	})
+}

@@ -1,5 +1,6 @@
 import { buildMetadataQuery } from './influxql_query_builder';
 import { templateSrvStub as templateService } from './specs/mocks';
+import { DEFAULT_POLICY } from './types';
 
 describe('influxql-query-builder', () => {
   describe('RETENTION_POLICIES', () => {
@@ -167,7 +168,7 @@ describe('influxql-query-builder', () => {
         templateService,
         withKey: 'app',
         measurement: 'cpu',
-        retentionPolicy: 'default',
+        retentionPolicy: DEFAULT_POLICY,
         tags: [],
       });
       expect(query).toBe('SHOW TAG VALUES FROM "cpu" WITH KEY = "app"');
