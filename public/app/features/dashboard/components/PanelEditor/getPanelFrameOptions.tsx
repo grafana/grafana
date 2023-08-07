@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 
 import { llms } from '@grafana/experimental';
 import { DataLinksInlineEditor, Input, RadioButtonGroup, Select, Switch, TextArea } from '@grafana/ui';
@@ -47,9 +47,13 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
 
     setTimeout(() => {
       generatingTitle = false;
-      generatingDescription = false;
       onPanelConfigChange('title', llmReplyTitle);
     }, 1000);
+
+    setTimeout(() => {
+      generatingDescription = false;
+      onPanelConfigChange('description', llmReplyDescription);
+    }, 3000);
   };
 
   const fetchData = async (payload: GeneratePayload, subject: string) => {
@@ -79,7 +83,7 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
 
     llms.openai
       .streamChatCompletions({
-        model: 'gpt-3.5-turbo',
+        model: 'gpt-4',
         messages: [
           {
             role: 'system',
@@ -138,7 +142,7 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
     .addItem(
       new OptionsPaneItemDescriptor({
         title: 'Description',
-        description: panel.description,
+        // description: panel.description,
         value: panel.description,
         render: function renderDescription() {
           return (
