@@ -141,9 +141,10 @@ func TestAuth_Middleware(t *testing.T) {
 			recorder := httptest.NewRecorder()
 			server.ServeHTTP(recorder, req)
 
+			res := recorder.Result()
 			assert.Equal(t, tt.expecedReached, reached)
-			assert.Equal(t, tt.expectedCode, recorder.Result().StatusCode)
-			require.NoError(t, recorder.Result().Body.Close())
+			assert.Equal(t, tt.expectedCode, res.StatusCode)
+			require.NoError(t, res.Body.Close())
 		})
 	}
 }
