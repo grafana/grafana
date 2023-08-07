@@ -38,6 +38,7 @@ import { LokiOptions } from '../loki/types';
 import { PrometheusDatasource } from '../prometheus/datasource';
 import { PromQuery } from '../prometheus/types';
 
+import { getMockDataFrame } from './GrubbleUp/mock-data';
 import { generateQueryFromFilters } from './SearchTraceQLEditor/utils';
 import { TraceqlFilter, TraceqlSearchScope } from './dataquery.gen';
 import {
@@ -288,6 +289,9 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
       } catch (error) {
         return of({ error: { message: error instanceof Error ? error.message : 'Unknown error occurred' }, data: [] });
       }
+    }
+    if (targets.grubbleUp?.length) {
+      return of({ data: [getMockDataFrame()] });
     }
 
     if (targets.upload?.length) {
