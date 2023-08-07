@@ -128,6 +128,16 @@ To learn more, refer to both our [Heatmap documentation]({{< relref "../panels-v
 
 {{< figure src="/media/docs/grafana/screenshot-grafana-10-1-heatmap-datalinks.png" max-width="750px" caption="Heatmap datalink support" >}}
 
+## Activate draft reports
+
+<!-- Robert Horvath -->
+
+_Generally available in Grafana Enterprise, Cloud Free, Cloud Pro, and Cloud Advanced_
+
+You can now use the resume and pause report functionality to activate draft reports that have all the required fields filled in.
+
+To learn more, refer to our [Create and manage reports documentation]({{< relref "../dashboards/create-reports" >}}).
+
 ## Data sources
 
 ### Step editor in Loki
@@ -491,12 +501,3 @@ To get started creating subfolders, enable the `nestedFolders` feature toggle. W
 
 {{< figure src="/media/docs/grafana/screenshot-grafana-10.1-subfolders-folder-picker.png" max-width="750px" caption="Selecting a folder in Grafana" >}}
 
-## Activate draft reports
-
-<!-- Robert Horvath -->
-
-_Generally available in Grafana Enterprise, Cloud Free, Cloud Pro, and Cloud Advanced_
-
-You can now use the resume and pause report functionality to activate draft reports that have all the required fields filled in.
-
-To learn more, refer to our [Create and manage reports documentation]({{< relref "../dashboards/create-reports" >}}).
