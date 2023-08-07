@@ -86,7 +86,7 @@ func (s *Service) tracingEnvVars(plugin *plugins.Plugin) []string {
 }
 
 func (s *Service) featureToggleEnableVar() []string {
-	var variables []string // an array is used to keep consistency and keep the logic simpler for no features case
+	var variables []string // an array is used for consistency and keep the logic simpler for no features case
 
 	if s.cfg.Features != nil {
 		enabledFeatures := s.cfg.Features.GetEnabled(context.Background())
