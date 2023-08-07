@@ -1,81 +1,110 @@
 // import { css } from '@emotion/css';
-import { stripIndent, stripIndents } from 'common-tags';
-import Prism from 'prismjs';
-import React, { useState } from 'react';
+// import { stripIndent, stripIndents } from 'common-tags';
+// import Prism from 'prismjs';
+import { css } from '@emotion/css';
+import React, { useEffect, useState } from 'react';
 
-import { Button, Collapse } from '@grafana/ui';
-import { flattenTokens } from '@grafana/ui/src/slate-plugins/slate-prism';
+import { GrafanaTheme2 } from '@grafana/data';
+import { getBackendSrv } from '@grafana/runtime';
+import { Button, Card, Collapse, useStyles2 } from '@grafana/ui';
 
 import tokenizer from '../../cloudwatch/language/cloudwatch-logs/syntax';
-import { AzureMonitorQuery, AzureQueryType } from '../types';
+import { RawQuery } from '../../prometheus/querybuilder/shared/RawQuery';
+import { AzureMonitorQuery } from '../types';
 
-interface QueryExample {
-  examples: Array<{
-    title?: string;
-    description?: string;
-    expr: string;
-  }>;
-}
+type CategoriesCheatsheet = {
+  id: string;
+  displayName: string;
+  related: {
+    tables: string[];
+    queries: string[];
+  };
+};
 
-const LOGS: QueryExample[] = [
-  {
-    examples: [
-      {
-        title: 'View CPU performance of a virtual machine over 5ms time grains',
-        expr: stripIndents`Perf
-        # $__timeFilter is a special Grafana macro that filters the results to the time span of the dashboard
-        | where $__timeFilter(TimeGenerated)
-        | where CounterName == "% Processor Time"
-        | summarize avg(CounterValue) by bin(TimeGenerated, 5m), Computer
-        | order by TimeGenerated asc
-        `,
-      },
-      {
-        title: 'Determine the amount of overprovisioned memory',
-        expr: stripIndent`filter @type = "REPORT"
-        | stats max(@memorySize / 1000 / 1000) as provisionedMemoryMB,
-          min(@maxMemoryUsed / 1000 / 1000) as smallestMemoryRequestMB,
-          avg(@maxMemoryUsed / 1000 / 1000) as avgMemoryUsedMB,
-          max(@maxMemoryUsed / 1000 / 1000) as maxMemoryUsedMB,
-          provisionedMemoryMB - maxMemoryUsedMB as overProvisionedMB
-        `,
-      },
-      // {
-      //   title: 'Find the most expensive requests',
-      //   expr: stripIndents`filter @type = "REPORT"
-      //   | fields @requestId, @billedDuration
-      //   | sort by @billedDuration desc`,
-      // },
-    ],
-  },
-];
+type FunctionsCheatsheet = {
+  id: string;
+  body: string;
+  description: string;
+  parameters: string;
+  name: string;
+  related: {
+    resourceTypes: string[];
+    solutions: string[];
+  };
+};
 
-function renderHighlightedMarkup(code: string, keyPrefix: string) {
-  const grammar = tokenizer;
-  const tokens = flattenTokens(Prism.tokenize(code, grammar));
-  const spans = tokens
-    .filter((token) => typeof token !== 'string')
-    .map((token, i) => {
-      return (
-        <span
-          className={`prism-token token ${token.types.join(' ')} ${token.aliases.join(' ')}`}
-          key={`${keyPrefix}-token-${i}`}
-        >
-          {token.content}
-        </span>
-      );
-    });
+type QueriesCheatsheet = {
+  body: string;
+  description: string;
+  displayName: string;
+  id: string;
+  properties: {
+    ExampleQuery: boolean;
+    QueryAttributes: {
+      isMultiResource: boolean;
+    };
+  };
+  related: {
+    categories: string[];
+    resourceTypes: string[];
+    tables: string[];
+  };
+  tags: {
+    Topic: string[];
+  };
+};
 
-  return <div className="slate-query-field">{spans}</div>;
-}
+type ResourceTypesCheatsheet = {
+  description: string;
+  displayName: string;
+  id: string;
+  related: {
+    tables: string[];
+    queries: string[];
+  };
+  type: string;
+};
 
-// const exampleCategory = css`
-//   margin-top: 5px;
-// `;
+type SolutionsCheatsheet = {
+  id: string;
+  name: string;
+  displayName: string;
+  description: string;
+  related: {
+    tables: string[];
+    queries: string[];
+  };
+};
 
-// const link = css`
-//   text-decoration: underline;
-// `;
+type TablesCheatsheetColumns = {
+  name: string;
+  type: string;
+  description?: string;
+};
+
+type TablesCheatsheet = {
+  id: string;
+  name: string;
+  tableAPIState: string;
+  tableType: string;
+  timespanColumn: string;
+  related: {
+    categories: string[];
+    resourceTypes: string[];
+    solutions: string[];
+    queries: string[];
+  };
+  columns: TablesCheatsheetColumns[];
+};
+
+type Cheatsheet = {
+  categories: CategoriesCheatsheet[];
+  functions: FunctionsCheatsheet[];
+  queries: QueriesCheatsheet[];
+  resourceTypes: ResourceTypesCheatsheet[];
+  solutions: SolutionsCheatsheet[];
+  tables: TablesCheatsheet[];
+};
 
 type Props = {
   onClickExample: (query: AzureMonitorQuery) => void;
@@ -83,47 +112,75 @@ type Props = {
 };
 
 const AzureCheatSheet = (props: Props) => {
-  //   const [isCommandsOpen, setIsCommandsOpen] = useState(false);
+  const [cheatsheetQueries, setCheatsheetQueries] = useState<Cheatsheet | null>(null);
   const [isLogsOpen, setIsLogsOpen] = useState(false);
+  const styles = useStyles2(getStyles);
+  const lang = { grammar: tokenizer, name: 'kql' };
+
+  const getCheatsheetQueries = async () => {
+    await getBackendSrv()
+      .get(`https://api.loganalytics.io/v1/metadata`)
+      .then((result) => {
+        console.log('result', result);
+        setCheatsheetQueries(result);
+      });
+  };
+
+  useEffect(() => {
+    if (!cheatsheetQueries) {
+      getCheatsheetQueries();
+    }
+  });
 
   return (
     <div>
       <h3>Azure Monitor cheat sheet</h3>
       <Collapse label="Logs" collapsible={true} isOpen={isLogsOpen} onToggle={(isOpen) => setIsLogsOpen(isOpen)}>
-        {LOGS.map((cat, i) => (
-          <div key={`cat-${i}`}>
-            {cat.examples.map((item, j) => (
-              <div className="cheat-sheet-item" key={`item-${j}`}>
-                <h5>{item.title}</h5>
-                <pre>{renderHighlightedMarkup(item.expr, `item-${j}`)}</pre>
-                {props.query.queryType === AzureQueryType.LogAnalytics && (
-                  <Button
-                    size="sm"
-                    aria-label="use this query button"
-                    type="button"
-                    className="cheat-sheet-item__example"
-                    key={item.expr}
-                    onClick={(e) => {
-                      e.preventDefault();
-                      console.log(item.expr);
-                      console.log('button query', props.query);
-                      // props.datasource.components.QueryEditor.defaultProps.onChange(item.expr)
-                      props.onClickExample({
-                        refId: props.query.refId ?? 'A',
-                        queryType: AzureQueryType.LogAnalytics,
-                      });
-                    }}
-                  >
+        {cheatsheetQueries &&
+          cheatsheetQueries.queries.map((query) => {
+            return (
+              <Card className={styles.card} key={query.id}>
+                <Card.Heading>{query.displayName}</Card.Heading>
+                <div className={styles.rawQueryContainer}>
+                  <RawQuery
+                    aria-label={`${query.displayName} raw query`}
+                    query={query.body}
+                    lang={lang}
+                    className={styles.rawQuery}
+                  />
+                </div>
+                <Card.Actions>
+                  <Button size="sm" aria-label="use this query button" onClick={() => {}}>
                     Use this query
                   </Button>
-                )}
-              </div>
-            ))}
-          </div>
-        ))}
+                </Card.Actions>
+              </Card>
+            );
+          })}
       </Collapse>
     </div>
   );
 };
 
 export default AzureCheatSheet;
+
+const getStyles = (theme: GrafanaTheme2) => {
+  return {
+    card: css`
+      width: 49.5%;
+      display: flex;
+      flex-direction: column;
+    `,
+    rawQueryContainer: css`
+      flex-grow: 1;
+    `,
+    rawQuery: css`
+      background-color: ${theme.colors.background.primary};
+      padding: ${theme.spacing(1)};
+      margin-top: ${theme.spacing(1)};
+    `,
+    spacing: css`
+      margin-bottom: ${theme.spacing(1)};
+    `,
+  };
+};
