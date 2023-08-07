@@ -21,6 +21,9 @@ describe('standardFieldConfigEditorRegistry', () => {
     noValue: 'no value',
     unit: 'km/s',
     links: [],
+    color: { mode: 'fixed' },
+    mappings: [],
+    filterable: true,
   };
 
   it('make sure all fields have a valid name', () => {
