@@ -28,6 +28,7 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
     isOpenDefault: true,
   });
 
+  // @TODO revisit this
   const setLlmReply = (reply: string, subject: string) => {
     if (subject === 'title') {
       generatingTitle = reply !== llmReplyTitle;
