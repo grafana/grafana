@@ -28,6 +28,22 @@ Integrating with an IAM provider provides the following benefits:
 
 In order to plan an integration with Grafana, assess your organization's current needs, requirements, and any existing IAM solutions being used. This includes thinking about how roles and permissions will be mapped to users in Grafana and how users can be grouped to access shared resources.
 
+### Authentication Feature table
+
+| Protocol          | Auth Provider       | Multi Org Mapping(6) | Enforce Sync(1) | Role Mapping(7) | Grafana Admin Mapping(8) | Team Sync(9) | Allowed groups(5) | Active Sync(11) | Option to skip Org/Role mapping | Auto Login (14) | Single Logout (16) |
+| :---------------- | :------------------ | :------------------- | :-------------- | :-------------- | :----------------------- | :----------- | :---------------- | :-------------- | :------------------------------ | :-------------- | :----------------- |
+| OAuth             | AzureAD (OSS)       | ❌                   | ✅              | ✅              | ✅(10)                   | ✅           | ✅                | 🚫              | ✅                              | ✅(15)          | ⚠️(17)             |
+| OAuth             | Google (OSS)        | ❌                   | ❌              | ❌              | ❌                       | ✅           | ❌                | 🚫              | ❌                              | ✅(15)          | ⚠️(17)             |
+| OAuth             | Generic Oauth (OSS) | ❌                   | ✅              | ✅              | ✅(10)                   | ✅           | ⚠️(4)             | 🚫              | ✅                              | ✅(15)          | ⚠️(17)             |
+| OAuth             | Gitlab (OSS)        | ❌                   | ✅              | ✅              | ✅(10)                   | ✅           | ✅                | 🚫              | ✅                              | ✅(15)          | ⚠️(17)             |
+| OAuth             | GitHub (OSS)        | ❌                   | ✅              | ✅              | ✅(10)                   | ✅           | ✅                | 🚫              | ✅                              | ✅(15)          | ⚠️(17)             |
+| OAuth             | Okta (OSS)          | ❌                   | ✅              | ✅              | ✅(10)                   | ✅           | ✅                | 🚫              | ✅                              | ✅(15)          | ⚠️(17)             |
+| OAuth             | Grafana.com (Cloud) | ❌                   | ❌              | ✅              | ❌                       | 🚫(12)       | 🚫(12)            | 🚫              | ✅                              | ✅(15)          | ⚠️(17)             |
+| SAML (Enterprise) | SAML                | ✅                   | ✅              | ✅              | ✅                       | ✅           | ✅                | 🚫              | ✅                              | ✅              | ✅                 |
+| LDAP (OSS)        | LDAP                | ✅                   | ✅              | ✅              | ✅                       | ✅           | ✅                | ✅              | ❌                              | 🚫              | 🚫                 |
+| JWT Proxy (OSS)   | JWT                 | ❌                   | ✅              | ✅(2)           | ✅                       | ❌           | ❌                | 🚫              | ❌                              | 🚫              | 🚫                 |
+| Auth Proxy (OSS)  | Auth Headers        | ❌                   | ✅              | ✅              | ❌                       | ✅           | ❌                | 🚫              | ❌                              | 🚫              | 🚫                 |
+
 ## Internal vs external users
 
 As a first step, determine how you want to manage users who will access Grafana.
