@@ -1,3 +1,4 @@
+import { DxfParser } from 'dxf-parser';
 import { isNumber, isString } from 'lodash';
 
 import { AppEvents, Field, LinkModel, PluginState, SelectableValue } from '@grafana/data';
@@ -109,6 +110,20 @@ export function onAddItem(sel: SelectableValue<string>, rootLayer: FrameState | 
 export async function onImportFile(target: EventTarget & HTMLInputElement) {
   // eslint-disable-next-line no-console
   console.debug('file', target.files && target.files[0]); // TODO: remove debugging
+
+  if (target.files && target.files[0]) {
+    let fileText = await target.files[0].text();
+
+    const parser = new DxfParser();
+    try {
+      const dxf = parser.parseSync(fileText);
+      // eslint-disable-next-line no-console
+      console.debug('dxf', dxf); // TODO: handle parsed dxf
+    } catch (error) {
+      // TODO: more specific error handling
+      console.error('error', error);
+    }
+  }
 }
 
 export function getDataLinks(ctx: DimensionContext, cfg: TextConfig, textData: string | undefined): LinkModel[] {
