@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 
 import { DataSourceApi, PanelData } from '@grafana/data';
 import { EditorRow } from '@grafana/experimental';
+import { config } from '@grafana/runtime';
+import { Button } from '@grafana/ui';
 
 import { PrometheusDatasource } from '../../datasource';
 import promqlGrammar from '../../promql';
@@ -29,8 +31,9 @@ export interface Props {
   showExplain: boolean;
 }
 
-// starting the branch for hackathon-2023-08-promqail
+// initial commit for hackathon-2023-08-promqail
 // AI/ML + Prometheus
+const prometheusPromQAIL = config.featureToggles.prometheusPromQAIL;
 
 export const PromQueryBuilder = React.memo<Props>((props) => {
   const { datasource, query, onChange, onRunQuery, data, showExplain } = props;
@@ -75,6 +78,17 @@ export const PromQueryBuilder = React.memo<Props>((props) => {
           onRunQuery={onRunQuery}
           highlightedOp={highlightedOp}
         />
+        {prometheusPromQAIL && (
+          <Button
+            variant={'secondary'}
+            onClick={() => {
+              console.log('open drawer');
+            }}
+            title={'Get query suggestions.'}
+          >
+            [ai] Get query suggestions
+          </Button>
+        )}
         <QueryBuilderHints<PromVisualQuery>
           datasource={datasource}
           query={query}
