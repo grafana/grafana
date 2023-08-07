@@ -2,9 +2,8 @@ package api
 
 import (
 	"encoding/json"
-	"testing"
-
 	"net/http"
+	"testing"
 
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -18,80 +17,192 @@ import (
 )
 
 func TestGetFeatureToggles(t *testing.T) {
-	type testCase struct {
-		desc            string
-		permissions     []accesscontrol.Permission
-		features        []interface{}
-		expectedCode    int
-		hiddenTogles    map[string]struct{}
-		readOnlyToggles map[string]struct{}
-	}
+	readPermissions := []accesscontrol.Permission{{Action: accesscontrol.ActionFeatureManagementRead}}
 
-	tests := []testCase{
-		{
-			desc:         "should not be able to get feature toggles without permissions",
-			permissions:  []accesscontrol.Permission{},
-			features:     []interface{}{},
-			expectedCode: http.StatusForbidden,
-		},
-		{
-			desc:         "should be able to get feature toggles with correct permissions",
-			permissions:  []accesscontrol.Permission{{Action: accesscontrol.ActionFeatureManagementRead}},
-			features:     []interface{}{"toggle1", true, "toggle2", false},
-			expectedCode: http.StatusOK,
-		},
-		{
-			desc:         "hidden toggles are not present in the response",
-			permissions:  []accesscontrol.Permission{{Action: accesscontrol.ActionFeatureManagementRead}},
-			features:     []interface{}{"toggle1", true, "toggle2", false},
-			expectedCode: http.StatusOK,
-			hiddenTogles: map[string]struct{}{"toggle1": {}},
-		},
-		{
-			desc:            "read only toggles have the readOnly field set",
-			permissions:     []accesscontrol.Permission{{Action: accesscontrol.ActionFeatureManagementRead}},
-			features:        []interface{}{"toggle1", true, "toggle2", false},
-			expectedCode:    http.StatusOK,
-			hiddenTogles:    map[string]struct{}{"toggle1": {}},
-			readOnlyToggles: map[string]struct{}{"toggle2": {}},
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.desc, func(t *testing.T) {
-			cfg := setting.NewCfg()
-			cfg.FeatureManagement.HiddenToggles = tt.hiddenTogles
-			cfg.FeatureManagement.ReadOnlyToggles = tt.readOnlyToggles
-			server := SetupAPITestServer(t, func(hs *HTTPServer) {
-				hs.Cfg = cfg
-				hs.Features = featuremgmt.WithFeatures(append([]interface{}{"featureToggleAdminPage", true}, tt.features...)...)
-				hs.orgService = orgtest.NewOrgServiceFake()
-				hs.userService = &usertest.FakeUserService{
-					ExpectedUser: &user.User{ID: 1},
-				}
-			})
-
-			req := webtest.RequestWithSignedInUser(server.NewGetRequest("/api/featuremgmt"), userWithPermissions(1, tt.permissions))
-			res, err := server.SendJSON(req)
-			require.NoError(t, err)
-			defer func() { require.NoError(t, res.Body.Close()) }()
-			assert.Equal(t, tt.expectedCode, res.StatusCode)
-
-			if tt.expectedCode == http.StatusOK {
-				var result []featuremgmt.FeatureToggleDTO
-				err := json.NewDecoder(res.Body).Decode(&result)
-				require.NoError(t, err)
-
-				for _, ft := range result {
-					if _, ok := tt.hiddenTogles[ft.Name]; ok {
-						t.Fail()
-					}
-					if _, ok := tt.readOnlyToggles[ft.Name]; ok {
-						assert.True(t, ft.ReadOnly, tt.desc)
-					}
-				}
-				assert.Equal(t, 3-len(tt.hiddenTogles), len(result), tt.desc)
+	find := func(result []featuremgmt.FeatureToggleDTO, name string) (featuremgmt.FeatureToggleDTO, bool) {
+		for _, t := range result {
+			if t.Name == name {
+				return t, true
 			}
-		})
+		}
+		return featuremgmt.FeatureToggleDTO{}, false
 	}
+
+	t.Run("should not be able to get feature toggles without permissions", func(t *testing.T) {
+		result := runTestScenario(t, []*featuremgmt.FeatureFlag{}, nil, nil, []accesscontrol.Permission{}, http.StatusForbidden)
+		assert.Len(t, result, 0)
+	})
+
+	t.Run("should be able to get feature toggles with correct permissions", func(t *testing.T) {
+		features := []*featuremgmt.FeatureFlag{
+			{
+				Name:    "toggle1",
+				Enabled: true,
+				Stage:   featuremgmt.FeatureStageGeneralAvailability,
+			}, {
+				Name:    "toggle2",
+				Enabled: false,
+				Stage:   featuremgmt.FeatureStageGeneralAvailability,
+			},
+		}
+
+		result := runTestScenario(t, features, nil, nil, readPermissions, http.StatusOK)
+		assert.Len(t, result, 2)
+		t1, _ := find(result, "toggle1")
+		assert.True(t, t1.Enabled)
+		t2, _ := find(result, "toggle2")
+		assert.False(t, t2.Enabled)
+	})
+
+	t.Run("toggles hidden by config are not present in the response", func(t *testing.T) {
+		features := []*featuremgmt.FeatureFlag{
+			{
+				Name:    "toggle1",
+				Enabled: true,
+				Stage:   featuremgmt.FeatureStageGeneralAvailability,
+			}, {
+				Name:    "toggle2",
+				Enabled: false,
+				Stage:   featuremgmt.FeatureStageGeneralAvailability,
+			},
+		}
+
+		result := runTestScenario(t, features, map[string]struct{}{"toggle1": {}}, nil, readPermissions, http.StatusOK)
+		assert.Len(t, result, 1)
+		assert.Equal(t, "toggle2", result[0].Name)
+	})
+
+	t.Run("toggles that are read-only by config have the readOnly field set", func(t *testing.T) {
+		features := []*featuremgmt.FeatureFlag{
+			{
+				Name:    "toggle1",
+				Enabled: true,
+				Stage:   featuremgmt.FeatureStageGeneralAvailability,
+			}, {
+				Name:    "toggle2",
+				Enabled: false,
+				Stage:   featuremgmt.FeatureStageGeneralAvailability,
+			},
+		}
+
+		result := runTestScenario(t, features, map[string]struct{}{"toggle1": {}}, map[string]struct{}{"toggle2": {}}, readPermissions, http.StatusOK)
+		assert.Len(t, result, 1)
+		assert.Equal(t, "toggle2", result[0].Name)
+		assert.True(t, result[0].ReadOnly)
+	})
+
+	t.Run("feature toggle defailts", func(t *testing.T) {
+		features := []*featuremgmt.FeatureFlag{
+			{
+				Name:  "toggle1",
+				Stage: featuremgmt.FeatureStageUnknown,
+			}, {
+				Name:  "toggle2",
+				Stage: featuremgmt.FeatureStageExperimental,
+			}, {
+				Name:  "toggle3",
+				Stage: featuremgmt.FeatureStagePrivatePreview,
+			}, {
+				Name:  "toggle4",
+				Stage: featuremgmt.FeatureStagePublicPreview,
+			}, {
+				Name:  "toggle5",
+				Stage: featuremgmt.FeatureStageGeneralAvailability,
+			}, {
+				Name:  "toggle6",
+				Stage: featuremgmt.FeatureStageDeprecated,
+			},
+		}
+
+		t.Run("unknown, experimental, and private preview toggles are hidden by default", func(t *testing.T) {
+			result := runTestScenario(t, features, nil, nil, readPermissions, http.StatusOK)
+			assert.Len(t, result, 3)
+
+			_, ok := find(result, "toggle1")
+			assert.False(t, ok)
+			_, ok = find(result, "toggle2")
+			assert.False(t, ok)
+			_, ok = find(result, "toggle3")
+			assert.False(t, ok)
+		})
+
+		t.Run("only public preview and GA are writeable by default", func(t *testing.T) {
+			result := runTestScenario(t, features, nil, nil, readPermissions, http.StatusOK)
+			assert.Len(t, result, 3)
+
+			t4, ok := find(result, "toggle4")
+			assert.True(t, ok)
+			assert.True(t, t4.ReadOnly)
+			t5, ok := find(result, "toggle5")
+			assert.True(t, ok)
+			assert.False(t, t5.ReadOnly)
+			t6, ok := find(result, "toggle6")
+			assert.True(t, ok)
+			assert.False(t, t6.ReadOnly)
+		})
+	})
+}
+
+func runTestScenario(
+	t *testing.T,
+	features []*featuremgmt.FeatureFlag,
+	hiddenToggles map[string]struct{},
+	readOnlyToggles map[string]struct{},
+	permissions []accesscontrol.Permission,
+	expectedCode int,
+) []featuremgmt.FeatureToggleDTO {
+	// Set up server and send request
+	cfg := setting.NewCfg()
+	cfg.FeatureManagement.HiddenToggles = hiddenToggles
+	cfg.FeatureManagement.ReadOnlyToggles = readOnlyToggles
+
+	server := SetupAPITestServer(t, func(hs *HTTPServer) {
+		hs.Cfg = cfg
+		hs.Features = featuremgmt.WithFeatureFlags(append([]*featuremgmt.FeatureFlag{{
+			Name:    featuremgmt.FlagFeatureToggleAdminPage,
+			Enabled: true,
+			Stage:   featuremgmt.FeatureStageGeneralAvailability,
+		}}, features...))
+		hs.orgService = orgtest.NewOrgServiceFake()
+		hs.userService = &usertest.FakeUserService{
+			ExpectedUser: &user.User{ID: 1},
+		}
+	})
+	req := webtest.RequestWithSignedInUser(server.NewGetRequest("/api/featuremgmt"), userWithPermissions(1, permissions))
+	res, err := server.SendJSON(req)
+	defer func() { require.NoError(t, res.Body.Close()) }()
+
+	// Do some general checks for every request
+	require.NoError(t, err)
+	require.Equal(t, expectedCode, res.StatusCode)
+	if res.StatusCode >= 400 {
+		return nil
+	}
+
+	var result []featuremgmt.FeatureToggleDTO
+	err = json.NewDecoder(res.Body).Decode(&result)
+	require.NoError(t, err)
+
+	for i := 0; i < len(result); {
+		ft := result[i]
+		// Always make sure admin page toggle is read-only, then remove it to make assertions easier
+		if ft.Name == featuremgmt.FlagFeatureToggleAdminPage {
+			assert.True(t, ft.ReadOnly)
+			result = append(result[:i], result[i+1:]...)
+			continue
+		}
+
+		// Make sure toggles explicitly marked "hidden" by config are hidden
+		if _, ok := hiddenToggles[ft.Name]; ok {
+			t.Fail()
+		}
+
+		// Make sure toggles explicitly marked "read only" by config are read only
+		if _, ok := readOnlyToggles[ft.Name]; ok {
+			assert.True(t, ft.ReadOnly)
+		}
+		i++
+	}
+
+	return result
 }

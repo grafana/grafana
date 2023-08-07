@@ -157,6 +157,8 @@ func (fm *FeatureManager) LookupFlag(name string) (FeatureFlag, bool) {
 	return *f, true
 }
 
+// ############# Test Functions #############
+
 // WithFeatures is used to define feature toggles for testing.
 // The arguments are a list of strings that are optionally followed by a boolean value for example:
 // WithFeatures([]interface{}{"my_feature", "other_feature"}) or WithFeatures([]interface{}{"my_feature", true})
@@ -179,6 +181,25 @@ func WithFeatures(spec ...interface{}) *FeatureManager {
 		if val {
 			enabled[key] = true
 		}
+	}
+
+	return &FeatureManager{enabled: enabled, flags: features}
+}
+
+// WithFeatureFlags is used to define feature toggles for testing.
+// It should be used when your test feature toggles require metadata beyond `Name` and `Enabled`.
+// You should provide a feature toggle Name at a minimum.
+func WithFeatureFlags(flags []*FeatureFlag) *FeatureManager {
+	count := len(flags)
+	features := make(map[string]*FeatureFlag, count)
+	enabled := make(map[string]bool, count)
+
+	for _, f := range flags {
+		if f.Name == "" {
+			continue
+		}
+		features[f.Name] = f
+		enabled[f.Name] = f.Enabled
 	}
 
 	return &FeatureManager{enabled: enabled, flags: features}
