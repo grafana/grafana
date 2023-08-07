@@ -62,7 +62,9 @@ func (dp *DataPipeline) execute(c context.Context, now time.Time, s *Service) (m
 		}
 		dsNodes = append(dsNodes, node.(*DSNode))
 	}
-	executeDSNodesGrouped(c, now, vars, s, dsNodes)
+	if err := executeDSNodesGrouped(c, now, vars, s, dsNodes); err != nil {
+		return nil, err
+	}
 
 	for _, node := range *dp {
 		if node.NodeType() == TypeDatasourceNode {
