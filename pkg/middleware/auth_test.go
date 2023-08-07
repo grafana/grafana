@@ -143,6 +143,7 @@ func TestAuth_Middleware(t *testing.T) {
 
 			assert.Equal(t, tt.expecedReached, reached)
 			assert.Equal(t, tt.expectedCode, recorder.Result().StatusCode)
+			require.NoError(t, recorder.Result().Body.Close())
 		})
 	}
 }

@@ -2,7 +2,6 @@ package middleware
 
 import (
 	"errors"
-	"fmt"
 	"net/http"
 	"path/filepath"
 	"testing"
@@ -29,15 +28,6 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 )
-
-func fakeGetTime() func() time.Time {
-	var timeSeed int64
-	return func() time.Time {
-		fakeNow := time.Unix(timeSeed, 0)
-		timeSeed++
-		return fakeNow
-	}
-}
 
 func TestMiddleWareSecurityHeaders(t *testing.T) {
 	middlewareScenario(t, "middleware should get correct x-xss-protection header", func(t *testing.T, sc *scenarioContext) {

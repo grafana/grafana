@@ -200,7 +200,7 @@ func TestOAuthLogin_Error(t *testing.T) {
 
 	setClientWithoutRedirectFollow(t)
 
-	res, err := server.Send(server.NewGetRequest(fmt.Sprintf("/login/azuread?error=someerror")))
+	res, err := server.Send(server.NewGetRequest("/login/azuread?error=someerror"))
 	require.NoError(t, err)
 
 	assert.Equal(t, http.StatusFound, res.StatusCode)
