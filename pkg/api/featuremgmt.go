@@ -16,13 +16,16 @@ func (hs *HTTPServer) GetFeatureToggles(ctx *contextmodel.ReqContext) response.R
 	features := hs.Features.GetFlags()
 	enabledFeatures := hs.Features.GetEnabled(ctx.Req.Context())
 
+	// public preview -> read-only
+	// experimental & unknown & private preview -> hidden
 	for i := 0; i < len(features); {
 		ft := features[i]
-		if _, ok := featureMgmtCfg.HiddenToggles[ft.Name]; ok {
+		if _, ok := featureMgmtCfg.HiddenToggles[ft.Name]; ok ||
+			ft.Stage == featuremgmt.FeatureStageExperimental || ft.Stage == featuremgmt.FeatureStageUnknown || ft.Stage == featuremgmt.FeatureStagePrivatePreview {
 			features = append(features[:i], features[i+1:]...) // remove feature
 			continue
 		}
-		if _, ok := featureMgmtCfg.ReadOnlyToggles[ft.Name]; ok {
+		if _, ok := featureMgmtCfg.ReadOnlyToggles[ft.Name]; ok || ft.Stage == featuremgmt.FeatureStagePublicPreview {
 			features[i].ReadOnly = true
 		}
 		features[i].Enabled = enabledFeatures[ft.Name]
@@ -48,8 +51,10 @@ func (hs *HTTPServer) UpdateFeatureToggle(ctx *contextmodel.ReqContext) response
 	}
 
 	for _, t := range cmd.FeatureToggles {
-		if !hs.Features.LookupFlag(t.Name) {
+		// make sure flag exists, and only allow editing if flag is GA or deprecated
+		if f, ok := hs.Features.LookupFlag(t.Name); !ok || (f.Stage != featuremgmt.FeatureStageGeneralAvailability && f.Stage != featuremgmt.FeatureStageDeprecated) {
 			hs.log.Warn("UpdateFeatureToggle: invalid toggle passed in", "toggle_name", t.Name)
+			return response.Error(http.StatusBadRequest, "invalid toggle passed in", fmt.Errorf("invalid toggle passed in"))
 		} else {
 			// build payload for controller
 		}
