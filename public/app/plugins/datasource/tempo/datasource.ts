@@ -1,4 +1,4 @@
-import { identity, pick, pickBy, groupBy, startCase } from 'lodash';
+import { groupBy, identity, pick, pickBy, startCase } from 'lodash';
 import { EMPTY, from, lastValueFrom, merge, Observable, of, throwError } from 'rxjs';
 import { catchError, concatMap, map, mergeMap, toArray } from 'rxjs/operators';
 
@@ -13,19 +13,21 @@ import {
   dateTime,
   Field,
   FieldType,
-  isValidGoDuration, Labels,
-  LoadingState, QueryResultMeta,
+  isValidGoDuration,
+  LoadingState,
+  MutableDataFrame,
+  PartialDataFrame,
   rangeUtil,
-  ScopedVars, TimeSeries, TimeSeriesValue,
+  ScopedVars,
 } from '@grafana/data';
 import {
-  config,
   BackendSrvRequest,
+  config,
   DataSourceWithBackend,
   getBackendSrv,
+  getTemplateSrv,
   reportInteraction,
   TemplateSrv,
-  getTemplateSrv,
 } from '@grafana/runtime';
 import { BarGaugeDisplayMode, TableCellDisplayMode, VariableFormatID } from '@grafana/schema';
 import { NodeGraphOptions } from 'app/core/components/NodeGraphSettings';
@@ -37,108 +39,37 @@ import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { LokiOptions } from '../loki/types';
 import { PrometheusDatasource } from '../prometheus/datasource';
 import { PromQuery } from '../prometheus/types';
-
-import { getMockDataFrame } from './GrubbleUp/mock-data';
 import { generateQueryFromFilters } from './SearchTraceQLEditor/utils';
 import { TraceqlFilter, TraceqlSearchScope } from './dataquery.gen';
 import {
+  defaultTableFilter,
+  durationMetric,
+  errorRateMetric,
   failedMetric,
   histogramMetric,
   mapPromMetricsToServiceMap,
+  rateMetric,
   serviceMapMetrics,
   totalsMetric,
-  rateMetric,
-  durationMetric,
-  errorRateMetric,
-  defaultTableFilter,
 } from './graphTransform';
 import TempoLanguageProvider from './language_provider';
 import {
-  transformTrace,
-  transformTraceList,
-  transformFromOTLP as transformFromOTEL,
   createTableFrameFromSearch,
   createTableFrameFromTraceQlQuery,
+  transformFromOTLP as transformFromOTEL,
+  transformTrace,
+  transformTraceList,
 } from './resultTransformer';
 import { doTempoChannelStream } from './streaming';
-import { SearchQueryParams, TempoQuery, TempoJsonData } from './types';
+import { SearchQueryParams, TempoJsonData, TempoQuery } from './types';
 import { getErrorMessage } from './utils';
 
-interface megaSelectResposne {
-  status: string;
-  data: {
-    resultType: 'matrix';
-    result: Array<{
-      metric: Record<string, string>;
-      values: Array<[number, string]>
-    }>
-
-  };
-}
-
-export interface LokiMatrixResult {
-  metric: Record<string, string>;
-  values: Array<[number, string]>;
-}
-
-export interface TransformerOptions {
-  legendFormat?: string;
-  query: string;
-  refId: string;
-  scopedVars: ScopedVars;
-  meta?: QueryResultMeta;
-}
-
-
-function tempoMatrixToTimeSeries(matrixResult: LokiMatrixResult, options: TransformerOptions): TimeSeries {
-  const name = createMetricLabel(matrixResult.metric, options);
-  return {
-    target: name,
-    title: name,
-    datapoints: lokiPointsToTimeseriesPoints(matrixResult.values),
-    tags: matrixResult.metric,
-    meta: options.meta,
-    refId: options.refId,
-  };
-}
-
-export function createMetricLabel(labelData: { [key: string]: string }, options?: TransformerOptions) {
-  let label =
-    options === undefined || isEmpty(options.legendFormat)
-      ? getOriginalMetricName(labelData)
-      : renderLegendFormat(getTemplateSrv().replace(options.legendFormat ?? '', options.scopedVars), labelData);
-
-  if (!label && options) {
-    label = options.query;
-  }
-  return label;
-}
-
-
-function getOriginalMetricName(labelData: { [key: string]: string }) {
-  const labelPart = Object.entries(labelData)
-    .map((label) => `${label[0]}="${label[1]}"`)
-    .join(',');
-  return `{${labelPart}}`;
-}
-
-export function renderLegendFormat(aliasPattern: string, aliasData: Labels): string {
-  const aliasRegex = /\{\{\s*(.+?)\s*\}\}/g;
-  return aliasPattern.replace(aliasRegex, (_, g1) => (aliasData[g1] ? aliasData[g1] : g1));
-}
-
-export function lokiPointsToTimeseriesPoints(data: Array<[number, string]>): TimeSeriesValue[][] {
-  const datapoints: TimeSeriesValue[][] = [];
-
-  for (const [time, value] of data) {
-    let datapointValue: TimeSeriesValue = parsePrometheusFormatSampleValue(value);
-
-    const timestamp = time * 1000;
-
-    datapoints.push([datapointValue, timestamp]);
-  }
-
-  return datapoints;
+interface MegaSelectResponse {
+  resultType: 'matrix';
+  result: Array<{
+    metric: Record<string, string>;
+    values: Array<[number, string]>;
+  }>;
 }
 
 export const DEFAULT_LIMIT = 20;
@@ -201,13 +132,41 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
       limit: options.targets[0].limit ?? DEFAULT_LIMIT,
       start: options.range.from.unix(),
       end: options.range.to.unix(),
-    }) as Observable<DataQueryResponse>;
+    }) as Observable<{ data: { data: MegaSelectResponse } }>;
 
-    const transformFromTempoMegaSelect = (response: DataQueryResponse) => {
-      return response;
+    const transformFromTempoMegaSelect = (response: MegaSelectResponse): DataQueryResponse => {
+      console.log('response', response);
+      let transformedFrames: DataFrame[] = [];
+
+      response.result.forEach((r) => {
+        const dataFrame: DataFrame = {
+          fields: [
+            {
+              name: 'Time',
+              type: FieldType.time,
+              values: r.values.map((value) => value[0] * 1000),
+              config: { displayName: 'Time' },
+            },
+            {
+              name: 'Value',
+              type: FieldType.number,
+              values: r.values.map((value) => parseFloat(value[1])),
+              config: { displayName: 'Value' },
+              labels: r.metric
+            },
+          ],
+          name: r.metric.__name__,
+          length: 1,
+        };
+        transformedFrames.push(dataFrame);
+      });
+
+      console.log('transformed', transformedFrames);
+
+      return { data: transformedFrames };
     };
 
-    return request.pipe(map((response) => (response.error ? response : transformFromTempoMegaSelect(response))));
+    return request.pipe(map((response) => transformFromTempoMegaSelect(response.data.data)));
   }
 
   query(options: DataQueryRequest<TempoQuery>): Observable<DataQueryResponse> {
