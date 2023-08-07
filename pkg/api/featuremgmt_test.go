@@ -1,6 +1,7 @@
 package api
 
 import (
+	"bytes"
 	"encoding/json"
 	"net/http"
 	"testing"
@@ -29,7 +30,7 @@ func TestGetFeatureToggles(t *testing.T) {
 	}
 
 	t.Run("should not be able to get feature toggles without permissions", func(t *testing.T) {
-		result := runTestScenario(t, []*featuremgmt.FeatureFlag{}, nil, nil, []accesscontrol.Permission{}, http.StatusForbidden)
+		result := runGetScenario(t, []*featuremgmt.FeatureFlag{}, nil, nil, []accesscontrol.Permission{}, http.StatusForbidden)
 		assert.Len(t, result, 0)
 	})
 
@@ -46,7 +47,7 @@ func TestGetFeatureToggles(t *testing.T) {
 			},
 		}
 
-		result := runTestScenario(t, features, nil, nil, readPermissions, http.StatusOK)
+		result := runGetScenario(t, features, nil, nil, readPermissions, http.StatusOK)
 		assert.Len(t, result, 2)
 		t1, _ := find(result, "toggle1")
 		assert.True(t, t1.Enabled)
@@ -67,7 +68,7 @@ func TestGetFeatureToggles(t *testing.T) {
 			},
 		}
 
-		result := runTestScenario(t, features, map[string]struct{}{"toggle1": {}}, nil, readPermissions, http.StatusOK)
+		result := runGetScenario(t, features, map[string]struct{}{"toggle1": {}}, nil, readPermissions, http.StatusOK)
 		assert.Len(t, result, 1)
 		assert.Equal(t, "toggle2", result[0].Name)
 	})
@@ -85,7 +86,7 @@ func TestGetFeatureToggles(t *testing.T) {
 			},
 		}
 
-		result := runTestScenario(t, features, map[string]struct{}{"toggle1": {}}, map[string]struct{}{"toggle2": {}}, readPermissions, http.StatusOK)
+		result := runGetScenario(t, features, map[string]struct{}{"toggle1": {}}, map[string]struct{}{"toggle2": {}}, readPermissions, http.StatusOK)
 		assert.Len(t, result, 1)
 		assert.Equal(t, "toggle2", result[0].Name)
 		assert.True(t, result[0].ReadOnly)
@@ -115,7 +116,7 @@ func TestGetFeatureToggles(t *testing.T) {
 		}
 
 		t.Run("unknown, experimental, and private preview toggles are hidden by default", func(t *testing.T) {
-			result := runTestScenario(t, features, nil, nil, readPermissions, http.StatusOK)
+			result := runGetScenario(t, features, nil, nil, readPermissions, http.StatusOK)
 			assert.Len(t, result, 3)
 
 			_, ok := find(result, "toggle1")
@@ -127,7 +128,7 @@ func TestGetFeatureToggles(t *testing.T) {
 		})
 
 		t.Run("only public preview and GA are writeable by default", func(t *testing.T) {
-			result := runTestScenario(t, features, nil, nil, readPermissions, http.StatusOK)
+			result := runGetScenario(t, features, nil, nil, readPermissions, http.StatusOK)
 			assert.Len(t, result, 3)
 
 			t4, ok := find(result, "toggle4")
@@ -143,7 +144,11 @@ func TestGetFeatureToggles(t *testing.T) {
 	})
 }
 
-func runTestScenario(
+func TestSetFeatureToggles(t *testing.T) {
+
+}
+
+func runGetScenario(
 	t *testing.T,
 	features []*featuremgmt.FeatureFlag,
 	hiddenToggles map[string]struct{},
@@ -205,4 +210,41 @@ func runTestScenario(
 	}
 
 	return result
+}
+
+func runSetScenario(
+	t *testing.T,
+	serverFeatures []*featuremgmt.FeatureFlag,
+	updateFeatures []featuremgmt.FeatureToggleDTO,
+	settings setting.FeatureMgmtSettings,
+	permissions []accesscontrol.Permission,
+	expectedCode int,
+) (*http.Response, error) {
+	// Set up server and send request
+	cfg := setting.NewCfg()
+	cfg.FeatureManagement = settings
+
+	server := SetupAPITestServer(t, func(hs *HTTPServer) {
+		hs.Cfg = cfg
+		hs.Features = featuremgmt.WithFeatureFlags(append([]*featuremgmt.FeatureFlag{{
+			Name:    featuremgmt.FlagFeatureToggleAdminPage,
+			Enabled: true,
+			Stage:   featuremgmt.FeatureStageGeneralAvailability,
+		}}, serverFeatures...))
+		hs.orgService = orgtest.NewOrgServiceFake()
+		hs.userService = &usertest.FakeUserService{
+			ExpectedUser: &user.User{ID: 1},
+		}
+	})
+	cmd := featuremgmt.UpdateFeatureTogglesCommand{
+		FeatureToggles: updateFeatures,
+	}
+	b, err := json.Marshal(cmd)
+	require.NoError(t, err)
+	req := webtest.RequestWithSignedInUser(server.NewPostRequest("/api/featuremgmt", bytes.NewReader(b)), userWithPermissions(1, permissions))
+	res, err := server.SendJSON(req)
+
+	require.Equal(t, expectedCode, res.StatusCode)
+
+	return res, err
 }
