@@ -29,10 +29,12 @@ export function createViewLink(ruleSource: RulesSource, rule: CombinedRule, retu
 }
 
 export function createExploreLink(datasource: DataSourceRef, query: string) {
+  const { uid, type } = datasource;
+
   return createUrl(`/explore`, {
     left: JSON.stringify({
       datasource: datasource.uid,
-      queries: [{ refId: 'A', datasource, expr: query }],
+      queries: [{ refId: 'A', datasource: { uid, type }, expr: query }],
       range: { from: 'now-1h', to: 'now' },
     }),
   });
