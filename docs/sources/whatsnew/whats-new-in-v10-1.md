@@ -286,7 +286,7 @@ promoted this feature from experimental to public preview. In the future, backen
 
 _Generally available in all editions of Grafana_
 
-When you're browsing logs in Explore, you can now click eye icon within a row to replace the log line's contents with the value of just one or more of the log fields or labels. This is helpful for scanning through your logs.
+When you're browsing logs in Explore, you can now click the eye icon within a row to replace the log line's contents with the value of one or more of the log fields or labels. This is helpful for scanning through your logs.
 
 {{< figure src="/media/docs/grafana/log-field-picker-10-1.gif" max-width="750px" caption="Log rows menu" >}}
 
@@ -500,4 +500,3 @@ When saving or moving a dashboard, you can now see the full folder tree when sel
 To get started creating subfolders, enable the `nestedFolders` feature toggle. We recommend that you enable this feature only on test or development instances, rather than in production environments.
 
 {{< figure src="/media/docs/grafana/screenshot-grafana-10.1-subfolders-folder-picker.png" max-width="750px" caption="Selecting a folder in Grafana" >}}
-
