@@ -54,7 +54,7 @@ export const AiAssist = ({ text, onClick, history, applySuggestion }: Props) => 
       </Button>
       {history && history.length > 0 && history[0] !== '' && (
         <Toggletip content={renderHistory} closeButton={true} placement="bottom-start" shouldClose={shouldClose}>
-          <IconButton name="history" aria-label="history" onClick={openHistory} />
+          <IconButton name="history" aria-label="history" />
         </Toggletip>
       )}
     </>
