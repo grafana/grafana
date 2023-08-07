@@ -31,8 +31,6 @@ export const AiAssist = ({ text, onClick, history, applySuggestion }: Props) => 
     console.log('retrySuggestion');
   };
 
-  const openHistory = () => {};
-
   const renderHistory = () => {
     return (
       <div className={styles.history}>

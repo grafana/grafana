@@ -66,6 +66,7 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
     }, 3000);
   };
 
+  // TODO: move this to a separate file
   const fetchData = async (payload: GeneratePayload, subject: string) => {
     // Check if the LLM plugin is enabled and configured.
     // If not, we won't be able to make requests, so return early.
@@ -101,7 +102,6 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
           },
           {
             role: 'user',
-            // content: 'HELLO!',
             content: JSON.stringify(payload),
           },
         ],
@@ -133,8 +133,6 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
         value: panel.title,
         popularRank: 1,
         render: function renderTitle() {
-          console.log('titleHist', titleHistory);
-
           return (
             <Input
               id="PanelFrameTitle"
@@ -156,10 +154,8 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
     .addItem(
       new OptionsPaneItemDescriptor({
         title: 'Description',
-        // description: panel.description,
         value: panel.description,
         render: function renderDescription() {
-          console.log('descriptionHistory', descriptionHistory);
           return (
             <TextArea
               id="description-text-area"
