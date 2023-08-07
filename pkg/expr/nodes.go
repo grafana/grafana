@@ -192,10 +192,18 @@ func (s *Service) buildDSNode(dp *simple.DirectedGraph, rn *rawNode, req *Reques
 	return dsNode, nil
 }
 
+// executeDSNodesGrouped groups datasource node queries by the datasource instance, and then sends them
+// in a single request with one or more queries to the datasource.
 func executeDSNodesGrouped(ctx context.Context, now time.Time, vars mathexp.Vars, s *Service, nodes []*DSNode) (e error) {
-	byDS := make(map[string][]*DSNode)
+	type dsKey struct {
+		uid   string // in theory I think this all I need for the key, but rather be safe
+		id    int64
+		orgID int64
+	}
+	byDS := make(map[dsKey][]*DSNode)
 	for _, node := range nodes {
-		byDS[node.datasource.UID] = append(byDS[node.datasource.UID], node)
+		k := dsKey{id: node.datasource.ID, uid: node.datasource.UID, orgID: node.orgID}
+		byDS[k] = append(byDS[k], node)
 	}
 
 	for _, nodeGroup := range byDS {
