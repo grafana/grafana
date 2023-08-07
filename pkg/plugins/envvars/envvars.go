@@ -56,6 +56,7 @@ func (s *Service) Get(_ context.Context, p *plugins.Plugin) []string {
 		)
 	}
 
+	hostEnv = append(hostEnv, s.featureToggleEnableVar()...)
 	hostEnv = append(hostEnv, s.awsEnvVars()...)
 	hostEnv = append(hostEnv, s.secureSocksProxyEnvVars()...)
 	hostEnv = append(hostEnv, azsettings.WriteToEnvStr(s.cfg.Azure)...)
@@ -82,6 +83,26 @@ func (s *Service) tracingEnvVars(plugin *plugins.Plugin) []string {
 		vars = append(vars, fmt.Sprintf("GF_PLUGIN_VERSION=%s", plugin.Info.Version))
 	}
 	return vars
+}
+
+func (s *Service) featureToggleEnableVar() []string {
+	var variables []string // an array is used to keep consistency and keep the logic simpler for no features case
+
+	if s.cfg.Features != nil {
+		enabledFeatures := s.cfg.Features.GetEnabled(context.Background())
+
+		if len(enabledFeatures) > 0 {
+			features := make([]string, len(enabledFeatures))
+			i := 0
+			for feat := range enabledFeatures {
+				features[i] = feat
+				i++
+			}
+			variables = append(variables, fmt.Sprintf("GF_FEATURE_TOGGLES_ENABLE=%s", strings.Join(features[:], ",")))
+		}
+	}
+
+	return variables
 }
 
 func (s *Service) awsEnvVars() []string {

@@ -345,3 +345,14 @@ func TestInitalizer_awsEnvVars(t *testing.T) {
 		assert.ElementsMatch(t, []string{"GF_VERSION=", "AWS_AUTH_AssumeRoleEnabled=true", "AWS_AUTH_AllowedAuthProviders=grafana_assume_role,keys", "AWS_AUTH_EXTERNAL_ID=mock_external_id"}, envVars)
 	})
 }
+
+func TestInitalizer_featureToggleEnvVar(t *testing.T) {
+	t.Run("backend datasource with feature toggle", func(t *testing.T) {
+		p := &plugins.Plugin{}
+		envVarsProvider := NewProvider(&config.Cfg{
+			Features: featuremgmt.WithFeatures("feat-1", true),
+		}, nil)
+		envVars := envVarsProvider.Get(context.Background(), p)
+		assert.ElementsMatch(t, []string{"GF_VERSION=", "GF_FEATURE_TOGGLES_ENABLE=feat-1"}, envVars)
+	})
+}
