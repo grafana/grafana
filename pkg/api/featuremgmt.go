@@ -55,7 +55,7 @@ func (hs *HTTPServer) UpdateFeatureToggle(ctx *contextmodel.ReqContext) response
 			hs.log.Warn("UpdateFeatureToggle: invalid toggle passed in", "toggle_name", t.Name)
 			return response.Error(http.StatusBadRequest, "invalid toggle passed in", fmt.Errorf("invalid toggle passed in"))
 		} else {
-			hs.log.Info("UpdateFeatureToggle: updating toggle", "toggle_name", t.Name, "enabled", t.Enabled, ctx.SignedInUser.Login)
+			hs.log.Info("UpdateFeatureToggle: updating toggle", "toggle_name", t.Name, "enabled", t.Enabled, "username", ctx.SignedInUser.Login)
 		}
 	}
 
