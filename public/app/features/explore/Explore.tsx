@@ -387,11 +387,9 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
       graphResultClone && graphResultClone.length > 0 ? graphResultClone.pop() : []
     ) as DataFrame;
 
-    const grubSubEventBus = eventBus.newScopedBus('graph', { onlyLocal: true });
-
     return (
       <div className={styles.grubbleWrapper}>
-        <GrubbleContainer
+        <GraphContainer
           data={[getMegaGrubbled]}
           height={showFlameGraph ? 180 : 400}
           width={width}
@@ -418,7 +416,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
                   annotations={queryResponse.annotations}
                   splitOpenFn={this.onSplitOpen('graph')}
                   loadingState={queryResponse.state}
-                  eventBus={grubSubEventBus}
+                  eventBus={this.graphEventBus}
                 />
               </div>
             ))}

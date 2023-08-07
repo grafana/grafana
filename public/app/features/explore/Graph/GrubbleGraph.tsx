@@ -176,7 +176,7 @@ export function GrubbleGraph({
   const panelContext: PanelContext = {
     eventsScope: 'explore',
     eventBus,
-    sync: () => DashboardCursorSync.Crosshair,
+    sync: () => DashboardCursorSync.Off,
     onToggleSeriesVisibility(label: string, mode: SeriesVisibilityChangeMode) {
       setFieldConfig(seriesVisibilityConfigFactory(label, mode, fieldConfig, data));
     },
