@@ -1,6 +1,7 @@
 import { sortBy } from 'lodash';
 
 import { UrlQueryMap, Labels, DataSourceInstanceSettings, DataSourceJsonData } from '@grafana/data';
+import { DataSourceRef } from '@grafana/schema';
 import { alertInstanceKey } from 'app/features/alerting/unified/utils/rules';
 import { SortOrder } from 'app/plugins/panel/alertlist/types';
 import { Alert, CombinedRule, FilterState, RulesSource, SilenceFilterState } from 'app/types/unified-alerting';
@@ -27,11 +28,11 @@ export function createViewLink(ruleSource: RulesSource, rule: CombinedRule, retu
   return createUrl(`/alerting/${paramSource}/${paramId}/view`, { returnTo });
 }
 
-export function createExploreLink(dataSourceName: string, query: string) {
+export function createExploreLink(datasource: DataSourceRef, query: string) {
   return createUrl(`/explore`, {
     left: JSON.stringify({
-      datasource: dataSourceName,
-      queries: [{ refId: 'A', expr: query }],
+      datasource: datasource.uid,
+      queries: [{ refId: 'A', datasource, expr: query }],
       range: { from: 'now-1h', to: 'now' },
     }),
   });
