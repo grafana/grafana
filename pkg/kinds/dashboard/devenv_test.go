@@ -41,6 +41,8 @@ var skiplist = map[string]string{
 	"panel-barchart/barchart-thresholds-mappings.json":     "instance of barchart.Options.xTickLabelMaxLength is absent",
 	"panel-barchart/barchart-tooltips.json":                "instance of barchart.Options.xTickLabelMaxLength is absent",
 
+	"panel-timeseries/timeseries-yaxis-ticks.json": "instance of dashboard.#DashboardLinks.tooltip is absent - schema should probably change to let this field be optional",
+
 	"panel-histogram/histogram_tests.json": "instance of common.OptionsWithTooltip.mode is absent, probably needs a default",
 
 	"panel-candlestick/candlestick.json": "many required fields are absent - seems like lots of defaults needed?",

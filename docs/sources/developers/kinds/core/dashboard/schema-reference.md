@@ -164,8 +164,8 @@ Links with references to other dashboards or external resources
 | `tags`        | string[] | **Yes**  |         | List of tags to limit the linked dashboards. If empty, all dashboards will be displayed. Only valid if the type is dashboards                                                  |
 | `targetBlank` | boolean  | **Yes**  | `false` | If true, the link will be opened in a new tab                                                                                                                                  |
 | `title`       | string   | **Yes**  |         | Title to display with the link                                                                                                                                                 |
+| `tooltip`     | string   | **Yes**  |         | Tooltip to display when the user hovers their mouse over it                                                                                                                    |
 | `type`        | string   | **Yes**  |         | Dashboard Link type. Accepted values are dashboards (to refer to another dashboard) and link (to refer to an external resource)<br/>Possible values are: `link`, `dashboards`. |
-| `tooltip`     | string   | No       |         | Tooltip to display when the user hovers their mouse over it                                                                                                                    |
 | `url`         | string   | No       |         | Link URL. Only required/valid if the type is link                                                                                                                              |
 
 ### Snapshot

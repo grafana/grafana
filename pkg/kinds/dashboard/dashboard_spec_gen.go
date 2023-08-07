@@ -256,7 +256,7 @@ type Link struct {
 	Title string `json:"title"`
 
 	// Tooltip to display when the user hovers their mouse over it
-	Tooltip *string `json:"tooltip,omitempty"`
+	Tooltip string `json:"tooltip"`
 
 	// Dashboard Link type. Accepted values are dashboards (to refer to another dashboard) and link (to refer to an external resource)
 	Type LinkType `json:"type"`

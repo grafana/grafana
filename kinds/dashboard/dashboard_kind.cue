@@ -280,7 +280,7 @@ lineage: schemas: [{
 			// Icon name to be displayed with the link
 			icon: string
 			// Tooltip to display when the user hovers their mouse over it
-			tooltip?: string
+			tooltip: string
 			// Link URL. Only required/valid if the type is link
 			url?: string
 			// List of tags to limit the linked dashboards. If empty, all dashboards will be displayed. Only valid if the type is dashboards

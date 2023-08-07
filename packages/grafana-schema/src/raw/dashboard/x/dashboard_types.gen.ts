@@ -306,7 +306,7 @@ export interface DashboardLink {
   /**
    * Tooltip to display when the user hovers their mouse over it
    */
-  tooltip?: string;
+  tooltip: string;
   /**
    * Link type. Accepted values are dashboards (to refer to another dashboard) and link (to refer to an external resource)
    */
