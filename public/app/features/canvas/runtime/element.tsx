@@ -425,6 +425,12 @@ export class ElementState implements LayerElement {
     event.target.style.transform = event.transform;
   };
 
+  applyRotate = (event: OnRotate) => {
+    //event.target.style.transform = event.transform;
+    event.target.style.transform = event.transform;
+    console.log(event);
+  };
+
   // kinda like:
   // https://github.com/grafana/grafana-edge-app/blob/main/src/panels/draw/WrapItem.tsx#L44
   applyResize = (event: OnResize) => {

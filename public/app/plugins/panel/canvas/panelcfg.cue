@@ -40,8 +40,9 @@ composableKinds: PanelCfg: {
 					right?:  float64
 					bottom?: float64
 
-					width?:  float64
-					height?: float64
+					width?:    float64
+					height?:   float64
+					rotation?: float64
 				} @cuetsy(kind="interface")
 
 				BackgroundImageSize: "original" | "contain" | "cover" | "fill" | "tile" @cuetsy(kind="enum", memberNames="Original|Contain|Cover|Fill|Tile")
