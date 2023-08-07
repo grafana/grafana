@@ -64,6 +64,18 @@ import { doTempoChannelStream } from './streaming';
 import { SearchQueryParams, TempoQuery, TempoJsonData } from './types';
 import { getErrorMessage } from './utils';
 
+interface megaSelectResposne {
+  status: string;
+  data: {
+    resultType: 'matrix';
+    result: Array<{
+      metric: Record<string, string>;
+      values: Array<[number, string]>
+    }>
+
+  };
+}
+
 export const DEFAULT_LIMIT = 20;
 
 export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJsonData> {
@@ -115,6 +127,22 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
         ],
       };
     }
+  }
+
+  queryMegaSelect(options: DataQueryRequest<TempoQuery>): Observable<DataQueryResponse> {
+    const request = this._request('/api/metrics/megaselect', {
+      q: options.targets[0].grubbleUpSpan,
+      metric: options.targets[0].view,
+      limit: options.targets[0].limit ?? DEFAULT_LIMIT,
+      start: options.range.from.unix(),
+      end: options.range.to.unix(),
+    }) as Observable<DataQueryResponse>;
+
+    const transformFromTempoMegaSelect = (response: DataQueryResponse) => {
+      return response;
+    };
+
+    return request.pipe(map((response) => (response.error ? response : transformFromTempoMegaSelect(response))));
   }
 
   query(options: DataQueryRequest<TempoQuery>): Observable<DataQueryResponse> {
@@ -291,7 +319,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
       }
     }
     if (targets.grubbleUp?.length) {
-      return of({ data: [getMockDataFrame()] });
+      return this.queryMegaSelect(options);
     }
 
     if (targets.upload?.length) {
