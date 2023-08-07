@@ -34,20 +34,20 @@ To verify ownership of your plugin, generate access token that you'll use every 
 
 1. [Create a Grafana Cloud account](/signup).
 
-1. Login into your account and navigate to "My Account" -> Security-> Access Policies. And click "Create access pilicy"
+1. Login into your account and navigate to **My Account > Security > Access Policies**. Click **Create access policy**.
 
-   Realm: has to be your-org-name (all-stacks)\
+   Realm: has to be your-org-name (all-stacks)
    Scope: plugins:write
 
    {{< figure src="/static/img/docs/plugins/create-access-policy.png" class="docs-image--no-shadow" max-width="650px" >}}
 
-1. Once policy created, create a new tocker by clicking "Create token" button.\
-   Token name could be anything\
-   "Expration date" is oprional although we stringly advise to change tokens from time to time for security reason.\
+1. Click **Create token** to create a new token.
+
+   The expiration date field is optional, though you should change tokens periodically for increased security.
 
    {{< figure src="/static/img/docs/plugins/create-access-policy-token.png" class="docs-image--no-shadow" max-width="650px" >}}
 
-   Click "Create" and Copy the token
+1. Click **Create** and save a copy of the token somewhere secure for future reference.
 
 ## Sign a public plugin
 
