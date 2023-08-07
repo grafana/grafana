@@ -193,10 +193,6 @@ func (s *Service) buildDSNode(dp *simple.DirectedGraph, rn *rawNode, req *Reques
 }
 
 func executeDSNodesGrouped(ctx context.Context, now time.Time, vars mathexp.Vars, s *Service, nodes []*DSNode) (e error) {
-	logger := logger.FromContext(ctx).New() // "datasourceType", dn.datasource.Type, "queryRefId", dn.refID, "datasourceUid", dn.datasource.UID, "datasourceVersion", dn.datasource.Version)
-	ctx, span := s.tracer.Start(ctx, "SSE.ExecuteDatasourceQuery")
-	defer span.End()
-
 	byDS := make(map[string][]*DSNode)
 	for _, node := range nodes {
 		byDS[node.datasource.UID] = append(byDS[node.datasource.UID], node)
@@ -208,6 +204,16 @@ func executeDSNodesGrouped(ctx context.Context, now time.Time, vars mathexp.Vars
 		if err != nil {
 			return err
 		}
+
+		logger := logger.FromContext(ctx).New("datasourceType", firstNode.datasource.Type,
+			"queryRefId", firstNode.refID,
+			"datasourceUid", firstNode.datasource.UID,
+			"datasourceVersion", firstNode.datasource.Version,
+		)
+
+		ctx, span := s.tracer.Start(ctx, "SSE.ExecuteDatasourceQuery")
+		defer span.End()
+
 		span.SetAttributes("datasource.type", firstNode.datasource.Type, attribute.Key("datasource.type").String(firstNode.datasource.Type))
 		span.SetAttributes("datasource.uid", firstNode.datasource.UID, attribute.Key("datasource.uid").String(firstNode.datasource.UID))
 
@@ -270,65 +276,8 @@ func executeDSNodesGrouped(ctx context.Context, now time.Time, vars mathexp.Vars
 // other nodes they must have already been executed and their results must
 // already by in vars.
 func (dn *DSNode) Execute(ctx context.Context, now time.Time, _ mathexp.Vars, s *Service) (r mathexp.Results, e error) {
-	logger := logger.FromContext(ctx).New("datasourceType", dn.datasource.Type, "queryRefId", dn.refID, "datasourceUid", dn.datasource.UID, "datasourceVersion", dn.datasource.Version)
-	ctx, span := s.tracer.Start(ctx, "SSE.ExecuteDatasourceQuery")
-	defer span.End()
-
-	pCtx, err := s.pCtxProvider.GetWithDataSource(ctx, dn.datasource.Type, dn.request.User, dn.datasource)
-	if err != nil {
-		return mathexp.Results{}, err
-	}
-	span.SetAttributes("datasource.type", dn.datasource.Type, attribute.Key("datasource.type").String(dn.datasource.Type))
-	span.SetAttributes("datasource.uid", dn.datasource.UID, attribute.Key("datasource.uid").String(dn.datasource.UID))
-
-	req := &backend.QueryDataRequest{
-		PluginContext: pCtx,
-		Queries: []backend.DataQuery{
-			{
-				RefID:         dn.refID,
-				MaxDataPoints: dn.maxDP,
-				Interval:      time.Duration(int64(time.Millisecond) * dn.intervalMS),
-				JSON:          dn.query,
-				TimeRange:     dn.timeRange.AbsoluteTime(now),
-				QueryType:     dn.queryType,
-			},
-		},
-		Headers: dn.request.Headers,
-	}
-
-	responseType := "unknown"
-	respStatus := "success"
-	defer func() {
-		if e != nil {
-			responseType = "error"
-			respStatus = "failure"
-			span.AddEvents([]string{"error", "message"},
-				[]tracing.EventValue{
-					{Str: fmt.Sprintf("%v", err)},
-					{Str: "failed to query data source"},
-				})
-		}
-		logger.Debug("Data source queried", "responseType", responseType)
-		useDataplane := strings.HasPrefix(responseType, "dataplane-")
-		s.metrics.dsRequests.WithLabelValues(respStatus, fmt.Sprintf("%t", useDataplane), dn.datasource.Type).Inc()
-	}()
-
-	resp, err := s.dataService.QueryData(ctx, req)
-	if err != nil {
-		return mathexp.Results{}, MakeQueryError(dn.refID, dn.datasource.UID, err)
-	}
-
-	dataFrames, err := getResponseFrame(resp, dn.refID)
-	if err != nil {
-		return mathexp.Results{}, MakeQueryError(dn.refID, dn.datasource.UID, err)
-	}
-
-	var result mathexp.Results
-	responseType, result, err = convertDataFramesToResults(ctx, dataFrames, dn.datasource.Type, s, logger)
-	if err != nil {
-		err = MakeConversionError(dn.refID, err)
-	}
-	return result, err
+	panic("Execute called on DSNode and should not be")
+	// Datasource queries are sent as a group to the datasource, see executeDSNodesGrouped.
 }
 
 func getResponseFrame(resp *backend.QueryDataResponse, refID string) (data.Frames, error) {
