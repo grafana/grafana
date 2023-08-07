@@ -7,7 +7,10 @@ import {
   DataSourcePluginOptionsEditorProps,
   onUpdateDatasourceJsonDataOption,
   updateDatasourcePluginJsonDataOption,
+  DataSourceTestSucceeded,
+  DataSourceTestFailed,
 } from '@grafana/data';
+import { getAppEvents, usePluginInteractionReporter } from '@grafana/runtime';
 import { Input, InlineField, FieldProps, SecureSocksProxySettings } from '@grafana/ui';
 import { notifyApp } from 'app/core/actions';
 import { config } from 'app/core/config';
@@ -37,6 +40,23 @@ export const ConfigEditor = (props: Props) => {
     invalid: false,
   });
   useEffect(() => setLogGroupFieldState({ invalid: false }), [props.options]);
+  const report = usePluginInteractionReporter();
+  useEffect(() => {
+    const successSubscription = getAppEvents().subscribe<DataSourceTestSucceeded>(DataSourceTestSucceeded, () => {
+      report('grafana_plugin_cloudwatch_save_succeeded', {
+        auth_type: options.jsonData.authType,
+      });
+    });
+    const failSubscription = getAppEvents().subscribe<DataSourceTestFailed>(DataSourceTestFailed, () => {
+      report('grafana_plugin_cloudwatch_save_failed', {
+        auth_type: options.jsonData.authType,
+      });
+    });
+    return () => {
+      successSubscription.unsubscribe();
+      failSubscription.unsubscribe();
+    };
+  }, [options.jsonData.authType, report]);
 
   return (
     <>
