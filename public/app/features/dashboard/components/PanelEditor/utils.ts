@@ -120,6 +120,6 @@ export interface GeneratePayload {
   dashboardTitle: string | undefined;
   dashboardDescription: string;
   panelTitles: string[];
-  panelDescriptions: string[];
+  panelDescriptions: Array<string | undefined>;
   panelJson: any;
 }

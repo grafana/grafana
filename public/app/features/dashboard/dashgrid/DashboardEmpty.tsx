@@ -4,7 +4,7 @@ import React from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config, locationService, reportInteraction } from '@grafana/runtime';
-import { Button, useStyles2, Text, Input, HorizontalGroup } from '@grafana/ui';
+import { Button, useStyles2, Text } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
 import { DashboardModel } from 'app/features/dashboard/state';
 import { onAddLibraryPanel, onCreateNewPanel, onCreateNewRow } from 'app/features/dashboard/utils/dashboard';
