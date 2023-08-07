@@ -31,7 +31,7 @@ export function createExploreLink(dataSourceName: string, query: string) {
   return createUrl(`/explore`, {
     left: JSON.stringify({
       datasource: dataSourceName,
-      queries: [{ refId: 'A', datasource: dataSourceName, expr: query }],
+      queries: [{ refId: 'A', expr: query }],
       range: { from: 'now-1h', to: 'now' },
     }),
   });
