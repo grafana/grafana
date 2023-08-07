@@ -12,6 +12,17 @@ const (
 	grafanaCloudStateHistory  = "grafanacloud-loki-alert-state-history"
 )
 
+// DSType can be used to check the datasource type if it's set in the model.
+type dsType struct {
+	DS struct {
+		Type string `json:"type"`
+	} `json:"datasource"`
+}
+
+func (t dsType) isLoki() bool {
+	return t.DS.Type == "loki"
+}
+
 func canBeInstant(r *models.AlertRule) bool {
 	if len(r.Data) < 2 {
 		return false
@@ -20,20 +31,27 @@ func canBeInstant(r *models.AlertRule) bool {
 	if r.Data[0].QueryType != "range" {
 		return false
 	}
-	// First query part should go to cloud logs or insights.
+
+	var t dsType
+	// We can ignore the error here, the query just won't be optimized.
+	_ = json.Unmarshal(r.Data[0].Model, &t)
+
 	if r.Data[0].DatasourceUID != grafanaCloudLogs &&
 		r.Data[0].DatasourceUID != grafanaCloudUsageInsights &&
-		r.Data[0].DatasourceUID != grafanaCloudStateHistory {
+		r.Data[0].DatasourceUID != grafanaCloudStateHistory &&
+		!t.isLoki() {
+		return false
+	}
+
+	exprRaw := make(map[string]interface{})
+	if err := json.Unmarshal(r.Data[1].Model, &exprRaw); err != nil {
 		return false
 	}
 	// Second query part should be and expression, '-100' is the legacy way to define it.
 	if r.Data[1].DatasourceUID != "__expr__" && r.Data[1].DatasourceUID != "-100" {
 		return false
 	}
-	exprRaw := make(map[string]interface{})
-	if err := json.Unmarshal(r.Data[1].Model, &exprRaw); err != nil {
-		return false
-	}
+
 	// Second query part should be "last()"
 	if val, ok := exprRaw["reducer"].(string); !ok || val != "last" {
 		return false
