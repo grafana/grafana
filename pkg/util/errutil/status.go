@@ -20,6 +20,7 @@ const (
 	// corresponding document to return to the request.
 	// HTTP status code 404.
 	StatusNotFound CoreStatus = "Not found"
+
 	// StatusTooManyRequests means that the client is rate limited
 	// by the server and should back-off before trying again.
 	// HTTP status code 429.

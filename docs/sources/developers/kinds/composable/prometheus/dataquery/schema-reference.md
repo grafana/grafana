@@ -14,7 +14,7 @@ title: PrometheusDataQuery kind
 ## PrometheusDataQuery
 
 #### Maturity: [experimental](../../../maturity/#experimental)
-#### Version: 0.0
+#### Version: 0.1
 
 
 
@@ -22,6 +22,7 @@ title: PrometheusDataQuery kind
 |------------------|---------|----------|---------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `expr`           | string  | **Yes**  |         | The actual expression/query that will be evaluated by Prometheus                                                                                                                                                                                        |
 | `refId`          | string  | **Yes**  |         | A unique identifier for the query within the list of targets.<br/>In server side expressions, the refId is used as a variable name to identify results.<br/>By default, the UI will assign A->Z; however setting meaningful names may be useful.        |
+| `cellLimit`      | integer | No       |         | Dataframe cells to be created before returning an error.                                                                                                                                                                                                |
 | `datasource`     |         | No       |         | For mixed data sources the selected datasource is on the query level.<br/>For non mixed scenarios this is undefined.<br/>TODO find a better way to do this ^ that's friendly to schema<br/>TODO this shouldn't be unknown but DataSourceRef &#124; null |
 | `editorMode`     | string  | No       |         | Possible values are: `code`, `builder`.                                                                                                                                                                                                                 |
 | `exemplar`       | boolean | No       |         | Execute an additional query to identify interesting raw samples relevant for the given expr                                                                                                                                                             |

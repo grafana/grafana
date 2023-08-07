@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental"
+	"github.com/grafana/grafana/pkg/util/errutil"
 	jsoniter "github.com/json-iterator/go"
 )
 
@@ -22,6 +23,7 @@ type Options struct {
 	MatrixWideSeries bool
 	VectorWideSeries bool
 	Dataplane        bool
+	CellLimit        int64
 }
 
 // ReadPrometheusStyleResult will read results from a prometheus or loki server and return data frames
@@ -481,9 +483,28 @@ func addValuePairToFrame(frame *data.Frame, timeMap map[int64]int, rowIdx int, i
 	return timeMap, rowIdx
 }
 
+var CellLimitError = errutil.NewBase(
+	errutil.StatusBadRequest,
+	"datasource.prometheus.responseTooLarge",
+).MustTemplate(
+	"response exceeded limit of {{.Public.limit}} cells",
+	errutil.WithPublic(
+		"response exceeded limit of {{.Public.limit}} cells - try a query that returns less data",
+	),
+)
+
+func MakeCellLimitError(limit int64) error {
+	data := errutil.TemplateData{
+		Public: map[string]interface{}{
+			"limit": limit,
+		},
+	}
+	return CellLimitError.Build(data)
+}
+
 func readMatrixOrVectorMulti(iter *jsoniter.Iterator, resultType string, opt Options) backend.DataResponse {
 	rsp := backend.DataResponse{}
-
+	cellCount := 0
 	for iter.ReadArray() {
 		timeField := data.NewFieldFromFieldType(data.FieldTypeTime, 0)
 		timeField.Name = data.TimeSeriesTimeFieldName
@@ -510,6 +531,11 @@ func readMatrixOrVectorMulti(iter *jsoniter.Iterator, resultType string, opt Opt
 				for iter.ReadArray() {
 					t, v, err := readTimeValuePair(iter)
 					if err == nil {
+						cellCount += 2
+						if opt.CellLimit > 0 && cellCount > int(opt.CellLimit) {
+							rsp.Error = MakeCellLimitError(opt.CellLimit)
+							return rsp
+						}
 						timeField.Append(t)
 						valueField.Append(v)
 					}

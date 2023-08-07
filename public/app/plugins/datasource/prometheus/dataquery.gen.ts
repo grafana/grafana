@@ -19,6 +19,10 @@ export type PromQueryFormat = ('time_series' | 'table' | 'heatmap');
 
 export interface Prometheus extends common.DataQuery {
   /**
+   * Dataframe cells to be created before returning an error.
+   */
+  cellLimit?: number;
+  /**
    * Specifies which editor is being used to prepare the query. It can be "code" or "builder"
    */
   editorMode?: QueryEditorMode;

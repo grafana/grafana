@@ -72,6 +72,7 @@ type Query struct {
 	RangeQuery    bool
 	ExemplarQuery bool
 	UtcOffsetSec  int64
+	CellLimit     int64
 }
 
 func Parse(query backend.DataQuery, timeInterval string, intervalCalculator intervalv2.Calculator, fromAlert bool) (*Query, error) {
@@ -114,6 +115,11 @@ func Parse(query backend.DataQuery, timeInterval string, intervalCalculator inte
 		exemplarQuery = false
 	}
 
+	var cellLimit int64
+	if model.CellLimit != nil && *model.CellLimit > 0 {
+		cellLimit = *model.CellLimit
+	}
+
 	return &Query{
 		Expr:          expr,
 		Step:          interval,
@@ -125,6 +131,7 @@ func Parse(query backend.DataQuery, timeInterval string, intervalCalculator inte
 		RangeQuery:    rangeQuery,
 		ExemplarQuery: exemplarQuery,
 		UtcOffsetSec:  model.UtcOffsetSec,
+		CellLimit:     cellLimit,
 	}, nil
 }
 

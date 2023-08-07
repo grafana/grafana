@@ -33,6 +33,7 @@ func (s *QueryData) parseResponse(ctx context.Context, q *models.Query, res *htt
 		MatrixWideSeries: s.enableWideSeries,
 		VectorWideSeries: s.enableWideSeries,
 		Dataplane:        s.enableDataplane,
+		CellLimit:        q.CellLimit,
 	})
 
 	// Add frame to attach metadata
