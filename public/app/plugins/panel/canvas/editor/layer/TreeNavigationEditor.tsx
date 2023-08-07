@@ -151,9 +151,16 @@ export const TreeNavigationEditor = ({ item }: StandardEditorProps<any, TreeView
         <div className={styles.addLayerButton}>
           <AddLayerButton onChange={(sel) => onAddItem(sel, layer)} options={typeOptions} label={'Add item'} />
         </div>
-        <FileUpload size="sm" accept=".dxf" onFileUpload={({ currentTarget }) => onImportFile(currentTarget)}>
-          <span>Upload CAD file</span>
-        </FileUpload>
+        <div className={styles.uploadFileButtonDiv}>
+          <FileUpload
+            className={styles.uploadFileButton}
+            size="sm"
+            accept=".dxf"
+            onFileUpload={({ currentTarget }) => onImportFile(currentTarget)}
+          >
+            <span>Upload CAD file</span>
+          </FileUpload>
+        </div>
         {selection.length > 0 && (
           <Button size="sm" variant="secondary" onClick={onClearSelection}>
             Clear selection
@@ -172,6 +179,12 @@ export const TreeNavigationEditor = ({ item }: StandardEditorProps<any, TreeView
 const getStyles = (theme: GrafanaTheme2) => ({
   addLayerButton: css`
     margin-left: 18px;
+    min-width: calc(min(100px, 0.05vw));
+  `,
+  uploadFileButton: css`
+    float: right;
+  `,
+  uploadFileButtonDiv: css`
     min-width: 150px;
   `,
 });
