@@ -72,7 +72,7 @@ To see the widget editor in Grafana OSS or Enterprise, enable the `vizAndWidgetS
 
 <!-- Catherine Gui -->
 
-The transformations tab has an improved user experience and visual redesign. Now, you can explore transformations with categories and illustrations.
+The transformations tab has an improved user experience and visual redesign. Now, transformations are categorized, and each transformation type has an illustration to help you choose the right one.
 
 {{< figure src="/media/docs/grafana/screenshot-grafana-10-1-transformations.png" max-width="750px" caption="Transformations redesign" >}}
 
@@ -148,7 +148,7 @@ By default, the `step` parameter is set to the value of the `$__interval` variab
 
 _Generally available in all editions of Grafana_
 
-A new linking of Loki log lines in Explore allows you to quickly navigate to specific log entries for precise analysis. By clicking the **Copy shortlink** button for a log line, you can generate and copy a [short URL]({{< relref "../developers/http_api/short_url/" >}}) that provides direct access to the exact log entry within an absolute time range. When you open the link, Grafana automatically scrolls to the corresponding log line and highlights it with a blue background, making it easy to identify and focus on the relevant information.
+A new linking of Loki log lines in Explore allows you to quickly navigate to specific log entries for precise analysis. By clicking the **Copy shortlink** button for a log line, you can generate and copy a [short URL]({{< relref "../developers/http_api/short_url/" >}}) that provides direct access to the exact log entry within an absolute time range. When you open the link, Grafana automatically scrolls to the corresponding log line and highlights it, making it easy to identify and focus on the relevant information.
 
 {{< figure src="/media/docs/grafana/data-sources/loki-shortlink.png" max-width="750px" caption="New Loki step editor" >}}
 
@@ -207,7 +207,7 @@ Learn more about span filtering in our [Tempo data source documentation]({{< rel
 
 _Generally available in all editions of Grafana_
 
-The Loki and Elasticsearch data source configuration pages have been redesigned to make getting started and setting up data sources as simple and easy to understand as possible. You can now find new subsections with links to configuration pages, as well as tooltips to assist you with configuring and customizing data sources.
+The Loki and Elasticsearch data source configuration pages have been redesigned to make getting started and setting up data sources as simple and easy to understand as possible. You can now find new subsections with links to documentation pages, as well as tooltips to assist you with configuring and customizing data sources.
 
 ### Loki query splitting
 
@@ -229,11 +229,13 @@ The Elasticsearch query editor now allows convenient switching between logs, met
 
 <!-- Catherine Gui -->
 
+_Generally available in all editions of Grafana_
+
 The Metrics explorer is a new feature that enhances metrics browsing in the Prometheus query builder. The Metrics explorer makes it easier for you to find the right metric, and get comfortable with PromQL. You can now explore metrics with additional metadata, perform fuzzy search on the metric name or description, and filter on the Prometheus type.
 
 {{< figure src="/media/docs/grafana/screenshot-grafana-10-1-metrics-explorer.png" max-width="750px" caption="Searching in Metrics explorer" >}}
 
-## Redshift and Athena: Async query data support
+### Redshift and Athena: Async query data support
 
 <!-- Isabella Siu, Kevin Yu, Andrés Martínez -->
 
@@ -241,7 +243,7 @@ _Generally available in all editions of Grafana_
 
 Async query data support in Redshift and Athena makes queries over multiple requests (starting, checking status, and fetching the results) instead of in a single request query. This is useful for queries that can potentially run for a long time and time out. This feature was previously available behind a feature toggle and is now be generally available and enabled by default.
 
-## Redshift and Athena: Async query caching
+### Redshift and Athena: Async query caching
 
 <!-- Isabella Siu -->
 
@@ -260,6 +262,8 @@ The CloudWatch logs query editor is moving from being a Slate-based editor to a 
 ### InfluxDB Backend Mode
 
 <!-- Ismail Simsek -->
+
+_Available in public preview in all editions of Grafana_
 
 Previously, InfluxDB backend mode was available, however, there were compatibility issues that needed to be addressed. In this release, we've addressed these issues and
 promoted this feature from experimental to public preview. In the future, backend mode will be the default, and we'll deprecate frontend mode. To try backend mode, enable the `influxdbBackendMigration` feature toggle. If you’re using Grafana Cloud and would like to enable this feature, please contact customer support.
@@ -322,13 +326,13 @@ We’ve made the following changes to alert rules.
 
 _This feature is for Grafana-managed alert rules only._
 
-Preview how your alert instances will be routed if they fire while you're creating your alert rule. View routing for each Alertmanager you have configured to receive Grafana-managed alerts and if required, you can easily make adjustments to your custom labels to change the way your alert instances are routed.
+Preview how your alert instances will be routed if they fire while you're creating your alert rule. You can view routing for each Alertmanager you have configured to receive Grafana-managed alerts, and if required, easily make adjustments to your custom labels to change the way your alert instances are routed.
 
 {{< figure src="/media/docs/alerting/alert-routing-preview.png" max-width="750px" caption="Alert instance routing preview" >}}
 
 #### Alert rule types
 
-Enables you to switch to a data source-managed alert rule if your data source is configured to support alert rule creation (Ruler API enabled). By default, the alert rule type is Grafana-managed.
+You can switch to a data source-managed alert rule if your data source is configured to support alert rule creation (Ruler API enabled). By default, the alert rule type is Grafana-managed.
 
 {{< figure src="/media/docs/alerting/alert-rule-types.png" max-width="750px" caption="Alert rule types" >}}
 
@@ -350,7 +354,7 @@ We’ve made the following changes to contact points.
 
 #### Additional contact points for external Alertmanager
 
-Adds support for the following contact points when using an external Alertmanager:
+We've added support for the following contact points when using an external Alertmanager:
 
 - WeChat
 - Amazon SNS
@@ -359,7 +363,7 @@ Adds support for the following contact points when using an external Alertmanage
 
 #### Contact point provisioning file export
 
-Facilitates file provisioning and maintenance for contact points. This feature implements the provisioning API export endpoints for exporting contact points as well as adding export buttons to the contact point list in the UI.
+This update facilitates file provisioning and maintenance for contact points. The feature implements the provisioning API export endpoints for exporting contact points as well as adding export buttons to the contact point list in the UI.
 
 ### Notification policies
 
@@ -367,7 +371,7 @@ We’ve made the following changes to notification policies.
 
 #### Notification policy provisioning file export
 
-Facilitates file provisioning and maintenance for notification policies. This feature implements the provisioning API export endpoints for exporting notification policies as well as adding an export button to the root notification policy in the UI.
+This update facilitates file provisioning and maintenance for notification policies. The feature implements the provisioning API export endpoints for exporting notification policies as well as adding an export button to the root notification policy in the UI.
 
 ### Alert management
 
@@ -375,7 +379,7 @@ We’ve made the following changes to alert management.
 
 #### Support for timezones in mute timings
 
-Adds support for different time zones and locations as well as a visual selector for week days, improvement to loading and error handling, and better validation for time ranges.
+We've added support for different time zones and locations as well as a visual selector for week days, made improvements to loading and error handling, and provided better validation for time ranges.
 
 {{< figure src="/media/docs/alerting/timezone-support.png" max-width="750px" caption="Time zone support" >}}
 
