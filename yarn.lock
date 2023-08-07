@@ -16399,6 +16399,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"dxf-parser@npm:^1.1.2":
+  version: 1.1.2
+  resolution: "dxf-parser@npm:1.1.2"
+  dependencies:
+    loglevel: ^1.7.1
+  checksum: 628ec229e30e1a8eeec86cd446ce27e81da94bc46dbfbe658db77c6c63f5017db6e453bbe23bb4b7f665fcb25528c63c1c9c75910ee7563eb9c0755169177899
+  languageName: node
+  linkType: hard
+
 "earcut@npm:^2.2.3":
   version: 2.2.4
   resolution: "earcut@npm:2.2.4"
@@ -19423,6 +19432,7 @@ __metadata:
     dangerously-set-html-content: 1.0.9
     date-fns: 2.30.0
     debounce-promise: 3.1.2
+    dxf-parser: ^1.1.2
     emotion: 11.0.0
     esbuild: 0.18.12
     esbuild-loader: 3.0.1
@@ -23195,6 +23205,13 @@ __metadata:
   bin:
     logfmt: ./bin/logfmt
   checksum: 639d327c1ec5c9b4078278c13f2dd4ea6be0c1057a8735e2b066b7c506532d6b7c267bc4b1c9a6ed7e5d2017abaa69dbe8b4bf9eec4c0b69069a2a53d50f24cb
+  languageName: node
+  linkType: hard
+
+"loglevel@npm:^1.7.1":
+  version: 1.8.1
+  resolution: "loglevel@npm:1.8.1"
+  checksum: a1a62db40291aaeaef2f612334c49e531bff71cc1d01a2acab689ab80d59e092f852ab164a5aedc1a752fdc46b7b162cb097d8a9eb2cf0b299511106c29af61d
   languageName: node
   linkType: hard
 

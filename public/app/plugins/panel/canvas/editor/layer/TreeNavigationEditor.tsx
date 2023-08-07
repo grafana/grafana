@@ -161,7 +161,6 @@ export const TreeNavigationEditor = ({ item }: StandardEditorProps<any, TreeView
             <span>Upload CAD file</span>
           </FileUpload>
         </div>
-
         {selection.length > 0 && (
           <Button size="sm" variant="secondary" onClick={onClearSelection}>
             Clear selection
