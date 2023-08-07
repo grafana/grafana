@@ -497,14 +497,7 @@ export default class OpenTsDatasource extends DataSourceApi<OpenTsdbQuery, OpenT
       return null;
     }
 
-    const query: any = {
-      metric: this.templateSrv.replace(target.metric, options.scopedVars, 'pipe'),
-      aggregator: 'avg',
-    };
-
-    if (target.aggregator) {
-      query.aggregator = this.templateSrv.replace(target.aggregator);
-    }
+    const query = this.interpolateVariablesInQuery(target, options.scopedVars);
 
     if (target.shouldComputeRate) {
       query.rate = true;
@@ -540,22 +533,6 @@ export default class OpenTsDatasource extends DataSourceApi<OpenTsdbQuery, OpenT
       }
     }
 
-    if (target.filters && target.filters.length > 0) {
-      query.filters = cloneDeep(target.filters);
-
-      if (query.filters) {
-        this.interpolateVariablesInFilters(query, options);
-      }
-    } else {
-      query.tags = cloneDeep(target.tags);
-
-      if (query.tags) {
-        for (const tagKey in query.tags) {
-          query.tags[tagKey] = this.templateSrv.replace(query.tags[tagKey], options.scopedVars, 'pipe');
-        }
-      }
-    }
-
     if (target.explicitTags) {
       query.explicitTags = true;
     }
@@ -563,11 +540,11 @@ export default class OpenTsDatasource extends DataSourceApi<OpenTsdbQuery, OpenT
     return query;
   }
 
-  interpolateVariablesInFilters(query: OpenTsdbQuery, options: DataQueryRequest<OpenTsdbQuery>) {
+  interpolateVariablesInFilters(query: OpenTsdbQuery, scopedVars: ScopedVars) {
     query.filters = query.filters?.map((filter: OpenTsdbFilter): OpenTsdbFilter => {
-      filter.tagk = this.templateSrv.replace(filter.tagk, options.scopedVars, 'pipe');
+      filter.tagk = this.templateSrv.replace(filter.tagk, scopedVars, 'pipe');
 
-      filter.filter = this.templateSrv.replace(filter.filter, options.scopedVars, 'pipe');
+      filter.filter = this.templateSrv.replace(filter.filter, scopedVars, 'pipe');
 
       return filter;
     });
@@ -602,10 +579,30 @@ export default class OpenTsDatasource extends DataSourceApi<OpenTsdbQuery, OpenT
       return queries;
     }
 
-    return queries.map((query) => ({
-      ...query,
-      metric: this.templateSrv.replace(query.metric, scopedVars),
-    }));
+    return queries.map((query) => this.interpolateVariablesInQuery(query, scopedVars));
+  }
+
+  interpolateVariablesInQuery(target: OpenTsdbQuery, scopedVars: ScopedVars): any {
+    const query = cloneDeep(target);
+
+    query.metric = this.templateSrv.replace(target.metric, scopedVars, 'pipe');
+
+    query.aggregator = 'avg';
+    if (target.aggregator) {
+      query.aggregator = this.templateSrv.replace(target.aggregator);
+    }
+
+    if (query.filters && query.filters.length > 0) {
+      this.interpolateVariablesInFilters(query, scopedVars);
+    } else {
+      if (query.tags) {
+        for (const tagKey in query.tags) {
+          query.tags[tagKey] = this.templateSrv.replace(query.tags[tagKey], scopedVars, 'pipe');
+        }
+      }
+    }
+
+    return query;
   }
 
   convertToTSDBTime(date: any, roundUp: any, timezone: any) {
