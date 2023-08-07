@@ -30,7 +30,7 @@ If you intend to only use the plugin within your organization, sign it under a _
 
 ## Generate a token
 
-To verify ownership of your plugin, generate access token that you'll use every time you need to sign a new version of your plugin.
+To verify ownership of your plugin, generate an access token that you'll use every time you need to sign a new version of your plugin.
 
 1. [Create a Grafana Cloud account](/signup).
 
