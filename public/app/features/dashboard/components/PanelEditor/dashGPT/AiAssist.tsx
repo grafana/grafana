@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data/src';
-import { LinkButton, useStyles2 } from '@grafana/ui';
+import { Button, useStyles2 } from '@grafana/ui';
 
 interface Props {
   text: string;
@@ -13,9 +13,9 @@ export const AiAssist = ({ text, onClick }: Props) => {
   const styles = useStyles2(getStyles);
 
   return (
-    <LinkButton icon="grafana" onClick={onClick} fill="text" size="sm" className={styles.button}>
+    <Button icon="grafana" onClick={onClick} fill="text" size="sm" className={styles.button}>
       {text}
-    </LinkButton>
+    </Button>
   );
 };
 
