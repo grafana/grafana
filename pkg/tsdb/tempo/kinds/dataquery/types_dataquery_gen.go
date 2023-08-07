@@ -20,6 +20,7 @@ const (
 // Defines values for TempoQueryType.
 const (
 	TempoQueryTypeClear         TempoQueryType = "clear"
+	TempoQueryTypeGrubbleUp     TempoQueryType = "grubbleUp"
 	TempoQueryTypeNativeSearch  TempoQueryType = "nativeSearch"
 	TempoQueryTypeSearch        TempoQueryType = "search"
 	TempoQueryTypeServiceMap    TempoQueryType = "serviceMap"
@@ -78,8 +79,10 @@ type TempoQuery struct {
 	// For non mixed scenarios this is undefined.
 	// TODO find a better way to do this ^ that's friendly to schema
 	// TODO this shouldn't be unknown but DataSourceRef | null
-	Datasource *any            `json:"datasource,omitempty"`
-	Filters    []TraceqlFilter `json:"filters"`
+	Datasource       *any            `json:"datasource,omitempty"`
+	Filters          []TraceqlFilter `json:"filters"`
+	GrubbleUpFilters []string        `json:"grubbleUpFilters,omitempty"`
+	GrubbleUpSpan    *string         `json:"grubbleUpSpan,omitempty"`
 
 	// Hide true if query is disabled (ie should not be returned to the dashboard)
 	// Note this does not always imply that the query should not be executed since
@@ -121,6 +124,9 @@ type TempoQuery struct {
 
 	// @deprecated Query traces by span name
 	SpanName *string `json:"spanName,omitempty"`
+
+	// Grubble Up
+	View *string `json:"view,omitempty"`
 }
 
 // TempoQueryType search = Loki search, nativeSearch = Tempo search for backwards compatibility

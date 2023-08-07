@@ -17,6 +17,7 @@ import {
 
 import { LokiQuery } from '../loki/types';
 
+import { GrubbleEditor } from './GrubbleUp/GrubbleEditor';
 import { LokiSearch } from './LokiSearch';
 import NativeSearch from './NativeSearch/NativeSearch';
 import TraceQLSearch from './SearchTraceQLEditor/TraceQLSearch';
@@ -87,6 +88,7 @@ class TempoQueryFieldComponent extends React.PureComponent<Props, State> {
       { value: 'traceqlSearch', label: 'Search' },
       { value: 'traceql', label: 'TraceQL' },
       { value: 'serviceMap', label: 'Service Graph' },
+      { value: 'grubbleUp', label: 'Grubble Up' },
     ];
 
     if (logsDatasourceUid) {
@@ -199,6 +201,14 @@ class TempoQueryFieldComponent extends React.PureComponent<Props, State> {
         )}
         {query.queryType === 'traceql' && (
           <QueryEditor
+            datasource={this.props.datasource}
+            query={query}
+            onRunQuery={this.props.onRunQuery}
+            onChange={onChange}
+          />
+        )}
+        {query.queryType === 'grubbleUp' && (
+          <GrubbleEditor
             datasource={this.props.datasource}
             query={query}
             onRunQuery={this.props.onRunQuery}
