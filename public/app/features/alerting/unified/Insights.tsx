@@ -1,23 +1,28 @@
 import { css } from '@emotion/css';
 import React from 'react';
+import { Observable, map } from 'rxjs';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { CustomTransformOperator, DataFrame, GrafanaTheme2 } from '@grafana/data';
 import {
   EmbeddedScene,
   PanelBuilders,
+  SceneDataTransformer,
   SceneFlexItem,
   SceneFlexLayout,
   SceneQueryRunner,
   SceneTimeRange,
 } from '@grafana/scenes';
-import { useStyles2 } from '@grafana/ui';
+import { Icon, Link, useStyles2 } from '@grafana/ui';
+
+import { createUrl } from './utils/url';
 
 const TOP_5_FIRING_INSTANCES =
   'topk(5, sum by(labels_alertname, ruleUID) (count_over_time({from="state-history"} | json | current = `Alerting` [1w])))';
 const TOP_5_FIRING_RULES =
-  'topk(5, sum by(ruleUID, labels_grafana_folder) (count_over_time({from="state-history"} | json | current = `Alerting` [1w])))';
+  'topk(5, sum by(group, labels_grafana_folder) (count_over_time({from="state-history"} | json | current = `Alerting` [1w])))';
 
 const TOTALS_FIRING = 'sum(count_over_time({from="state-history"} | json | current="Alerting"[1w]))';
+
 const TOTALS = 'sum(count_over_time({from="state-history"} | json[1w]))';
 
 const RATE_FIRING = 'sum(count_over_time({from="state-history"} | json | current="Alerting"[1w]))';
@@ -86,30 +91,67 @@ function getScene() {
     $timeRange: LAST_WEEK_TIME_RANGE,
   });
 
-  //this accepts the same format as the one outputted when inspecting a panel transformation as JSON
-  /*const transformedQueryData = new SceneDataTransformer({
-    $data: queryRunner1,
+  const ruleLinkTransformation: CustomTransformOperator = () => (source: Observable<DataFrame[]>) => {
+    return source.pipe(
+      map((data: DataFrame[]) => {
+        return data.map((frame: DataFrame) => {
+          return {
+            ...frame,
+            fields: frame.fields.map((field) => {
+              if (field.name === 'ruleUID') {
+                return {
+                  ...field,
+                  values: field.values.map((v) => (
+                    <Link key={v} target="_blank" href={createUrl(`/alerting/grafana/${v}/view`)}>
+                      <Icon name="external-link-alt" />
+                    </Link>
+                  )),
+                };
+              }
+              return field;
+            }),
+          };
+        });
+      })
+    );
+  };
+
+  const topFiringInstancestransformedData = new SceneDataTransformer({
+    $data: topFiringInstancesQuery,
     transformations: [
+      ruleLinkTransformation,
       {
-        id: 'calculateField',
+        id: 'sortBy',
         options: {
-          title: '%',
-          mode: 'reduceRow',
-          reduce: {
-            reducer: 'allValues',
+          fields: {},
+          sort: [
+            {
+              field: 'Value #A',
+              desc: true,
+            },
+          ],
+        },
+      },
+      {
+        id: 'organize',
+        options: {
+          excludeByName: {
+            Time: true,
+          },
+          indexByName: {
+            labels_alertname: 0,
+            'Value #A': 1,
+            ruleUID: 2,
+          },
+          renameByName: {
+            labels_alertname: 'Alert Name',
+            'Value #A': 'Fires this week',
+            ruleUID: 'Link',
           },
         },
       },
     ],
   });
-
-  const thresholds: ThresholdsConfig = {
-    steps: [
-      { value: 0, color: 'RED' },
-      { value: 20, color: 'GREEN' },
-    ],
-    mode: ThresholdsMode.Percentage,
-  };*/
 
   return new EmbeddedScene({
     body: new SceneFlexLayout({
@@ -142,20 +184,8 @@ function getScene() {
           height: 300,
           body: PanelBuilders.table()
             .setTitle('Alert instances - Fired most over the past week')
-            .setData(topFiringInstancesQuery)
-            .setOverrides((b) =>
-              b
-                .matchFieldsWithNameByRegex('.*')
-                .overrideFilterable(false)
-                .matchFieldsWithName('Time')
-                .overrideCustomFieldConfig('hidden', true)
-                .matchFieldsWithName('Value #A')
-                .overrideDisplayName('Fires this week')
-                .matchFieldsWithName('labels_grafana_folder')
-                .overrideDisplayName('Folder')
-                .matchFieldsWithName('ruleUID')
-                .overrideCustomFieldConfig('hidden', false)
-            )
+            .setData(topFiringInstancestransformedData)
+
             .build(),
         }),
         new SceneFlexItem({
