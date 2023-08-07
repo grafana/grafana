@@ -161,7 +161,7 @@ const METRIC_PREFIXES = [
   { symbol: 'k', magnitude: 3 },
 ];
 
-function scaleMetric(val: number, magnitude: number, unit: string) {
+export function scaleMetric(val: number, magnitude: number, unit: string) {
   const baseVal = val * 10 ** magnitude;
   const scale = Math.floor(Math.log10(baseVal));
   const prefix = findLast(METRIC_PREFIXES, (p) => p.magnitude <= scale) ?? METRIC_PREFIXES[0];

@@ -193,7 +193,7 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
       });
 
       // Wrap the display with a cache to avoid double calls
-      if (field.config.unit !== 'dateTimeFromNow') {
+      if (field.config.unit?.type !== 'dateTimeFromNow') {
         field.display = cachingDisplayProcessor(field.display, 2500);
       }
 

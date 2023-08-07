@@ -302,10 +302,10 @@ export const getCategories = (scalable = true): ValueFormatCategory[] => {
     {
       name: 'Length',
       formats: [
-        { name: 'millimeter', id: 'lengthmm', fn: scalable ? metricPrefix('m', -2) : toFixedUnit('mm') },
-        { name: 'centimeter', id: 'lengthcm', fn: scalable ? metricPrefix('m', -1) : toFixedUnit('cm') },
-        { name: 'meter', id: 'lengthm', fn: scalable ? metricPrefix('m') : toFixedUnit('m') },
-        { name: 'kilometer', id: 'lengthkm', fn: scalable ? metricPrefix('m', 1) : toFixedUnit('km') },
+        { name: 'millimeter', id: 'lengthmm', fn: scalable ? scaledMetricUnits('m', -2) : toFixedUnit('mm') },
+        { name: 'centimeter', id: 'lengthcm', fn: scalable ? scaledMetricUnits('m', -1) : toFixedUnit('cm') },
+        { name: 'meter', id: 'lengthm', fn: scalable ? scaledMetricUnits('m') : toFixedUnit('m') },
+        { name: 'kilometer', id: 'lengthkm', fn: scalable ? scaledMetricUnits('m', 1) : toFixedUnit('km') },
         { name: 'inch (in)', id: 'lengthin', fn: toFixedUnit('in') },
         { name: 'feet (ft)', id: 'lengthft', fn: toFixedUnit('ft') },
         { name: 'mile (mi)', id: 'lengthmi', fn: toFixedUnit('mi') },

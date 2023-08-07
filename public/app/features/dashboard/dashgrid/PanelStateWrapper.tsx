@@ -223,7 +223,9 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
         .getQueryRunner()
         .getData({ withTransforms: true, withFieldConfig: true })
         .subscribe({
-          next: (data) => this.onDataUpdate(data),
+          next: (data) => {
+            this.onDataUpdate(data);
+          },
         })
     );
 
