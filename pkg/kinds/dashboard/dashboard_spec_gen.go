@@ -262,7 +262,7 @@ type Link struct {
 	Type LinkType `json:"type"`
 
 	// Link URL. Only required/valid if the type is link
-	Url *string `json:"url,omitempty"`
+	Url string `json:"url"`
 }
 
 // Dashboard Link type. Accepted values are dashboards (to refer to another dashboard) and link (to refer to an external resource)
