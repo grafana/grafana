@@ -137,7 +137,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
       let transformedFrames: DataFrame[] = [];
 
       // We want to limit the number of viz more than the number of dataframes
-      response.result.forEach((r) => {
+      response?.result?.forEach((r) => {
         const dataFrame: DataFrame = {
           fields: [
             {
@@ -163,7 +163,6 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
 
       const framesByName = groupBy(transformedFrames, (frame) => frame.name);
 
-      console.log('groupedTransformed', framesByName);
       let groupedFrames = [];
       for (let name in framesByName) {
         if (framesByName[name].length === 1) {
@@ -178,7 +177,6 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
         }
       }
 
-      console.log('groupedFrames', groupedFrames);
       groupedFrames.sort((a, b) => (a.fields.length > b.fields.length ? -1 : 1));
 
       return { data: groupedFrames };
