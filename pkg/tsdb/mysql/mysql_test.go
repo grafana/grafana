@@ -22,7 +22,7 @@ import (
 // To run this test, set runMySqlTests=true
 // Or from the commandline: GRAFANA_TEST_DB=mysql go test -v ./pkg/tsdb/mysql
 // The tests require a MySQL db named grafana_ds_tests and a user/password grafana/password
-// Use the docker/blocks/mysql_tests/docker-compose.yaml to spin up a
+// Use 'make devenv start sources=mysql_tests' to spin up a
 // preconfigured MySQL server suitable for running these tests.
 // There is also a datasource and dashboard provisioned by devenv scripts that you can
 // use to verify that the generated data are visualized as expected, see
