@@ -42,8 +42,8 @@ const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
           </div>
           <div className={cx(styles.centeredContent, styles.bodyBig, styles.assistAIBody)}>
             <Text element="p" textAlignment="center" color="secondary">
-              Tell us what your dashboard is about - for example, &quot;I want a graph where I can see the network
-              latency of my Kubernetes cluster.&quot;
+              Tell us what your dashboard is about - for example, &quot;I want a dashboard where I can see an overview
+              of my Kubernetes cluster.&quot;
             </Text>
             <TextArea
               placeholder="Tell us something"
@@ -61,8 +61,10 @@ const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
                   let generatedDashboard = null;
                   let newDashboardModel = null;
                   try {
-                    generatedDashboard = JSON.parse(res)?.dashboard;
+                    console.log(res);
+                    generatedDashboard = JSON.parse(res)?.dashboard || JSON.parse(res);
                     newDashboardModel = new DashboardModel(generatedDashboard);
+                    console.log('Loaded model', newDashboardModel);
                     setAssitsLoading(false);
                   } catch (e) {}
                   if (generatedDashboard?.panels) {

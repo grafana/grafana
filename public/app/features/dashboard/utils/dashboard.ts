@@ -25,7 +25,7 @@ export function onCreateNewPanel(dashboard: DashboardModel, datasource?: string)
 export function onGenerateDashboardWithAI(dashboard: DashboardModel, description: string): Observable<string> {
   return llms.openai
     .streamChatCompletions({
-      model: 'gpt-3.5-turbo',
+      model: 'gpt-4',
       messages: [
         {
           role: 'system',
@@ -34,6 +34,10 @@ export function onGenerateDashboardWithAI(dashboard: DashboardModel, description
         {
           role: 'system',
           content: 'Your goal is to generate a valid Grafana dashboard JSON with the provided requirements',
+        },
+        {
+          role: 'system',
+          content: 'Do not organize the panels by rows, only a list of panels',
         },
         {
           role: 'system',
