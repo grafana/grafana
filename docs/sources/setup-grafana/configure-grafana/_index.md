@@ -2257,6 +2257,34 @@ For more information about Grafana Enterprise, refer to [Grafana Enterprise]({{<
 
 Keys of alpha features to enable, separated by space.
 
+<hr>
+
+## [feature_management]
+
+The options in this section configure the experimental Feature Toggle Admin Page feature, which is enabled using the `featureToggleAdminPage` feature toggle. **Use at your own risk.**
+
+Please see [Configure feature toggles]({{< relref "/feature-toggles" >}}) for more information.
+
+### allow_editing
+
+Allow users to toggle feature toggle state in the feature management page. Default is `false`.
+
+### update_controller_url
+
+Set the URL of the controller that manages feature toggle updates. If not set, feature toggles in the feature management page will be read-only.
+
+**Note:** The API for feature toggle updates has not been defined yet; please check back later.
+
+### hidden_toggles
+
+Hide additional specific feature toggles from the feature management page. By default, feature toggles in stages `unknown`, `experimental`, and `private preview` are hidden from the UI. Use this option to hide toggles in stages `public preview`, `general availability`, and `deprecated`.
+
+### read_only_toggles
+
+Disable updates for additional specific feature toggles in the feature management page. By default, feature feature toggles can only be updated if they are in stages `general availability` and `deprecated`. Use this option to disable updates for toggles in those stages.
+
+<hr>
+
 ## [date_formats]
 
 {{% admonition type="note" %}}
