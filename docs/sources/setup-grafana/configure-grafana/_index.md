@@ -2267,7 +2267,7 @@ Please see [Configure feature toggles]({{< relref "/feature-toggles" >}}) for mo
 
 ### allow_editing
 
-Allow users to toggle feature toggle state in the feature management page. Default is `false`.
+Lets you switch the feature toggle state in the feature management page. The default is `false`.
 
 ### update_controller_url
 
