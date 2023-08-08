@@ -24,7 +24,7 @@ func TestGetFeatureToggles(t *testing.T) {
 	readPermissions := []accesscontrol.Permission{{Action: accesscontrol.ActionFeatureManagementRead}}
 
 	t.Run("should not be able to get feature toggles without permissions", func(t *testing.T) {
-		result := runGetScenario(t, []*featuremgmt.FeatureFlag{}, nil, nil, []accesscontrol.Permission{}, http.StatusForbidden)
+		result := runGetScenario(t, []*featuremgmt.FeatureFlag{}, setting.FeatureMgmtSettings{}, []accesscontrol.Permission{}, http.StatusForbidden)
 		assert.Len(t, result, 0)
 	})
 
@@ -41,7 +41,7 @@ func TestGetFeatureToggles(t *testing.T) {
 			},
 		}
 
-		result := runGetScenario(t, features, nil, nil, readPermissions, http.StatusOK)
+		result := runGetScenario(t, features, setting.FeatureMgmtSettings{}, readPermissions, http.StatusOK)
 		assert.Len(t, result, 2)
 		t1, _ := findResult(t, result, "toggle1")
 		assert.True(t, t1.Enabled)
@@ -61,8 +61,11 @@ func TestGetFeatureToggles(t *testing.T) {
 				Stage:   featuremgmt.FeatureStageGeneralAvailability,
 			},
 		}
+		settings := setting.FeatureMgmtSettings{
+			HiddenToggles: map[string]struct{}{"toggle1": {}},
+		}
 
-		result := runGetScenario(t, features, map[string]struct{}{"toggle1": {}}, nil, readPermissions, http.StatusOK)
+		result := runGetScenario(t, features, settings, readPermissions, http.StatusOK)
 		assert.Len(t, result, 1)
 		assert.Equal(t, "toggle2", result[0].Name)
 	})
@@ -79,8 +82,14 @@ func TestGetFeatureToggles(t *testing.T) {
 				Stage:   featuremgmt.FeatureStageGeneralAvailability,
 			},
 		}
+		settings := setting.FeatureMgmtSettings{
+			HiddenToggles:       map[string]struct{}{"toggle1": {}},
+			ReadOnlyToggles:     map[string]struct{}{"toggle2": {}},
+			AllowEditing:        true,
+			UpdateControllerUrl: "bogus",
+		}
 
-		result := runGetScenario(t, features, map[string]struct{}{"toggle1": {}}, map[string]struct{}{"toggle2": {}}, readPermissions, http.StatusOK)
+		result := runGetScenario(t, features, settings, readPermissions, http.StatusOK)
 		assert.Len(t, result, 1)
 		assert.Equal(t, "toggle2", result[0].Name)
 		assert.True(t, result[0].ReadOnly)
@@ -110,7 +119,7 @@ func TestGetFeatureToggles(t *testing.T) {
 		}
 
 		t.Run("unknown, experimental, and private preview toggles are hidden by default", func(t *testing.T) {
-			result := runGetScenario(t, features, nil, nil, readPermissions, http.StatusOK)
+			result := runGetScenario(t, features, setting.FeatureMgmtSettings{}, readPermissions, http.StatusOK)
 			assert.Len(t, result, 3)
 
 			_, ok := findResult(t, result, "toggle1")
@@ -122,7 +131,11 @@ func TestGetFeatureToggles(t *testing.T) {
 		})
 
 		t.Run("only public preview and GA are writeable by default", func(t *testing.T) {
-			result := runGetScenario(t, features, nil, nil, readPermissions, http.StatusOK)
+			settings := setting.FeatureMgmtSettings{
+				AllowEditing:        true,
+				UpdateControllerUrl: "bogus",
+			}
+			result := runGetScenario(t, features, settings, readPermissions, http.StatusOK)
 			assert.Len(t, result, 3)
 
 			t4, ok := findResult(t, result, "toggle4")
@@ -134,6 +147,25 @@ func TestGetFeatureToggles(t *testing.T) {
 			t6, ok := findResult(t, result, "toggle6")
 			assert.True(t, ok)
 			assert.False(t, t6.ReadOnly)
+		})
+
+		t.Run("all toggles are read-only when server is misconfigured", func(t *testing.T) {
+			settings := setting.FeatureMgmtSettings{
+				AllowEditing:        false,
+				UpdateControllerUrl: "",
+			}
+			result := runGetScenario(t, features, settings, readPermissions, http.StatusOK)
+			assert.Len(t, result, 3)
+
+			t4, ok := findResult(t, result, "toggle4")
+			assert.True(t, ok)
+			assert.True(t, t4.ReadOnly)
+			t5, ok := findResult(t, result, "toggle5")
+			assert.True(t, ok)
+			assert.True(t, t5.ReadOnly)
+			t6, ok := findResult(t, result, "toggle6")
+			assert.True(t, ok)
+			assert.True(t, t6.ReadOnly)
 		})
 	})
 }
@@ -332,15 +364,13 @@ func readBody(t *testing.T, rc io.ReadCloser) map[string]interface{} {
 func runGetScenario(
 	t *testing.T,
 	features []*featuremgmt.FeatureFlag,
-	hiddenToggles map[string]struct{},
-	readOnlyToggles map[string]struct{},
+	settings setting.FeatureMgmtSettings,
 	permissions []accesscontrol.Permission,
 	expectedCode int,
 ) []featuremgmt.FeatureToggleDTO {
 	// Set up server and send request
 	cfg := setting.NewCfg()
-	cfg.FeatureManagement.HiddenToggles = hiddenToggles
-	cfg.FeatureManagement.ReadOnlyToggles = readOnlyToggles
+	cfg.FeatureManagement = settings
 
 	server := SetupAPITestServer(t, func(hs *HTTPServer) {
 		hs.Cfg = cfg
@@ -380,12 +410,12 @@ func runGetScenario(
 		}
 
 		// Make sure toggles explicitly marked "hidden" by config are hidden
-		if _, ok := hiddenToggles[ft.Name]; ok {
+		if _, ok := cfg.FeatureManagement.HiddenToggles[ft.Name]; ok {
 			t.Fail()
 		}
 
 		// Make sure toggles explicitly marked "read only" by config are read only
-		if _, ok := readOnlyToggles[ft.Name]; ok {
+		if _, ok := cfg.FeatureManagement.ReadOnlyToggles[ft.Name]; ok {
 			assert.True(t, ft.ReadOnly)
 		}
 		i++

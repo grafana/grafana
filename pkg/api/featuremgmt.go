@@ -7,6 +7,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -26,8 +27,9 @@ func (hs *HTTPServer) GetFeatureToggles(ctx *contextmodel.ReqContext) response.R
 			Name:        ft.Name,
 			Description: ft.Description,
 			Enabled:     enabledFeatures[ft.Name],
-			ReadOnly:    !isFeatureWriteable(ft, cfg.ReadOnlyToggles),
+			ReadOnly:    !isFeatureWriteable(ft, cfg.ReadOnlyToggles) || !isFeatureEditingAllowed(*hs.Cfg),
 		}
+
 		dtos = append(dtos, dto)
 	}
 
@@ -85,4 +87,9 @@ func isFeatureWriteable(flag featuremgmt.FeatureFlag, readOnlyCfg map[string]str
 		return false
 	}
 	return flag.Stage == featuremgmt.FeatureStageGeneralAvailability || flag.Stage == featuremgmt.FeatureStageDeprecated
+}
+
+// isFeatureEditingAllowed checks if the backend is properly configured to allow feature toggle changes from the UI
+func isFeatureEditingAllowed(cfg setting.Cfg) bool {
+	return cfg.FeatureManagement.AllowEditing && cfg.FeatureManagement.UpdateControllerUrl != ""
 }
