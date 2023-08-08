@@ -72,7 +72,14 @@
             "usa-states.geojson"
           ],
           [
-	@@ -83,4 +78,4 @@
+            "application/geo+json",
+            "application/geo+json"
+          ],
+          [
+            255943,
+            89263
+          ]
+        ]
       }
     }
   ]
