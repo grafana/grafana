@@ -7,6 +7,7 @@ import {
   PanelDataSummary,
   VisualizationSuggestionsBuilder,
   VisualizationSuggestion,
+  DataTransformerID,
 } from '@grafana/data';
 import { PanelDataErrorViewProps, locationService } from '@grafana/runtime';
 import { usePanelContext, useStyles2 } from '@grafana/ui';
@@ -27,7 +28,25 @@ export function PanelDataErrorView(props: PanelDataErrorViewProps) {
   const { dataSummary } = builder;
   const message = getMessageFor(props, dataSummary);
   const dispatch = useDispatch();
+
   const panel = getDashboardSrv().getCurrent()?.getPanelById(props.panelId);
+
+  let suggestions = props.suggestions;
+  if (props.needsTimeField && !dataSummary.hasTimeField && panel && panel.plugin?.hasPluginId) {
+    const transformations = panel.transformations ? [...panel.transformations] : [];
+    transformations.push({
+      id: DataTransformerID.convertFieldType,
+      options: {
+        format: '???',
+      },
+    });
+
+    suggestions?.push({
+      name: 'Convert field to ',
+      pluginId: panel.plugin?.meta.id,
+      transformations,
+    });
+  }
 
   const openVizPicker = () => {
     store.setObject(LS_VISUALIZATION_SELECT_TAB_KEY, VisualizationSelectPaneTab.Suggestions);
@@ -69,9 +88,9 @@ export function PanelDataErrorView(props: PanelDataErrorViewProps) {
       <div className={styles.message}>{message}</div>
       {context.app === CoreApp.PanelEditor && dataSummary.hasData && panel && (
         <div className={styles.actions}>
-          {props.suggestions && (
+          {suggestions && (
             <>
-              {props.suggestions.map((v) => (
+              {suggestions.map((v) => (
                 <CardButton key={v.name} icon="process" onClick={() => loadSuggestion(v)}>
                   {v.name}
                 </CardButton>
