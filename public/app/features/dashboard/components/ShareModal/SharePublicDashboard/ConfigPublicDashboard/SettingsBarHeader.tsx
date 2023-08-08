@@ -49,7 +49,7 @@ function getStyles(theme: GrafanaTheme2) {
     wrapper: css({
       label: 'header',
       padding: theme.spacing(0.5, 0.5),
-      borderRadius: theme.shape.borderRadius(1),
+      borderRadius: theme.shape.radius.default,
       background: theme.colors.background.secondary,
       minHeight: theme.spacing(4),
 

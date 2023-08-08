@@ -143,11 +143,11 @@ class UnThemedLogRow extends PureComponent<Props, State> {
       return;
     }
 
-    // at this point this row is the permalinked row, so we need to scroll to it and highlight it if possible.
-    if (this.logLineRef.current && scrollIntoView) {
-      scrollIntoView(this.logLineRef.current);
-    }
     if (!this.state.highlightBackround) {
+      // at this point this row is the permalinked row, so we need to scroll to it and highlight it if possible.
+      if (this.logLineRef.current && scrollIntoView) {
+        scrollIntoView(this.logLineRef.current);
+      }
       reportInteraction('grafana_explore_logs_permalink_opened', {
         datasourceType: row.datasourceType ?? 'unknown',
         logRowUid: row.uid,
@@ -203,6 +203,12 @@ class UnThemedLogRow extends PureComponent<Props, State> {
           onClick={this.toggleDetails}
           onMouseEnter={this.onMouseEnter}
           onMouseLeave={this.onMouseLeave}
+          /**
+           * For better accessibility support, we listen to the onFocus event here (to display the LogRowMenuCell), and
+           * to onBlur event in the LogRowMenuCell (to hide it). This way, the LogRowMenuCell is displayed when the user navigates
+           * using the keyboard.
+           */
+          onFocus={this.onMouseEnter}
         >
           {showDuplicates && (
             <td className={styles.logsRowDuplicates}>
@@ -241,6 +247,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
               onUnpinLine={this.props.onUnpinLine}
               pinned={this.props.pinned}
               mouseIsOver={this.state.mouseIsOver}
+              onBlur={this.onMouseLeave}
             />
           ) : (
             <LogRowMessage
@@ -256,6 +263,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
               onUnpinLine={this.props.onUnpinLine}
               pinned={this.props.pinned}
               mouseIsOver={this.state.mouseIsOver}
+              onBlur={this.onMouseLeave}
             />
           )}
         </tr>

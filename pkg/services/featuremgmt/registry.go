@@ -166,9 +166,11 @@ var (
 			Owner:       grafanaPluginsPlatformSquad,
 		},
 		{
+			// Some plugins rely on topnav feature flag being enabled, so we cannot remove this until we
+			// can afford the breaking change, or we've detemined no one else is relying on it
 			Name:        "topnav",
-			Description: "Enables new top navigation and page layouts",
-			Stage:       FeatureStageGeneralAvailability,
+			Description: "Enables topnav support in external plugins. The new Grafana navigation cannot be disabled.",
+			Stage:       FeatureStageDeprecated,
 			Expression:  "true", // enabled by default
 			Owner:       grafanaFrontendPlatformSquad,
 		},
@@ -348,7 +350,7 @@ var (
 		{
 			Name:         "influxdbBackendMigration",
 			Description:  "Query InfluxDB InfluxQL without the proxy",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStagePublicPreview,
 			FrontendOnly: true,
 			Owner:        grafanaObservabilityMetricsSquad,
 		},
@@ -429,12 +431,6 @@ var (
 			Description: "Uses JWT-based auth for rendering instead of relying on remote cache",
 			Stage:       FeatureStagePublicPreview,
 			Owner:       grafanaAsCodeSquad,
-		},
-		{
-			Name:        "pyroscopeFlameGraph",
-			Description: "Changes flame graph to pyroscope one",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaObservabilityTracesAndProfilingSquad,
 		},
 		{
 			Name:            "externalServiceAuth",
@@ -575,13 +571,6 @@ var (
 			Owner:        grafanaAlertingSquad,
 		},
 		{
-			Name:         "elasticToggleableFilters",
-			Description:  "Enable support to toggle filters off from the query through the Logs Details component",
-			Stage:        FeatureStageExperimental,
-			FrontendOnly: true,
-			Owner:        grafanaObservabilityLogsSquad,
-		},
-		{
 			Name:         "vizAndWidgetSplit",
 			Description:  "Split panels between vizualizations and widgets",
 			Stage:        FeatureStageExperimental,
@@ -611,8 +600,9 @@ var (
 		{
 			Name:         "transformationsRedesign",
 			Description:  "Enables the transformations redesign",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStageGeneralAvailability,
 			FrontendOnly: true,
+			Expression:   "true", // enabled by default
 			Owner:        grafanaObservabilityMetricsSquad,
 		},
 		{
@@ -630,8 +620,8 @@ var (
 			Owner:        grafanaAlertingSquad,
 		},
 		{
-			Name:         "disableTraceQLStreaming",
-			Description:  "Disables the option to stream the response of TraceQL queries of the Tempo data source",
+			Name:         "traceQLStreaming",
+			Description:  "Enables response streaming of TraceQL queries of the Tempo data source",
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: true,
 			Owner:        grafanaObservabilityTracesAndProfilingSquad,
@@ -671,6 +661,43 @@ var (
 			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaPartnerPluginsSquad,
 			Expression:  "true", // on by default
+		},
+		{
+			Name:        "permissionsFilterRemoveSubquery",
+			Description: "Alternative permission filter implementation that does not use subqueries for fetching the dashboard folder",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaBackendPlatformSquad,
+		},
+		{
+			Name:        "prometheusConfigOverhaulAuth",
+			Description: "Update the Prometheus configuration page with the new auth component",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaObservabilityMetricsSquad,
+		},
+		{
+			Name:            "configurableSchedulerTick",
+			Description:     "Enable changing the scheduler base interval via configuration option unified_alerting.scheduler_tick_interval",
+			Stage:           FeatureStageExperimental,
+			FrontendOnly:    false,
+			Owner:           grafanaAlertingSquad,
+			RequiresRestart: true,
+			HideFromDocs:    true,
+		},
+		{
+			Name:            "influxdbSqlSupport",
+			Description:     "Enable InfluxDB SQL query language support with new querying UI",
+			Stage:           FeatureStageExperimental,
+			FrontendOnly:    false,
+			Owner:           grafanaObservabilityMetricsSquad,
+			RequiresRestart: false,
+		},
+		{
+			Name:            "noBasicRole",
+			Description:     "Enables a new role that has no permissions by default",
+			Stage:           FeatureStageExperimental,
+			FrontendOnly:    true,
+			Owner:           grafanaAuthnzSquad,
+			RequiresRestart: true,
 		},
 	}
 )

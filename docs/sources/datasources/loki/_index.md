@@ -14,87 +14,42 @@ labels:
     - enterprise
     - oss
 menuTitle: Loki
-title: Loki data source
+title: Configure the Loki data source
 weight: 800
 ---
 
 # Loki data source
 
-Grafana ships with built-in support for [Loki](/docs/loki/latest/), an open-source log aggregation system by Grafana Labs.
-This topic explains configuring and querying specific to the Loki data source.
+Grafana Loki is a set of components that can be combined into a fully featured logging stack.
+Unlike other logging systems, Loki is built around the idea of only indexing metadata about your logs: labels (just like Prometheus labels). Log data itself is then compressed and stored in chunks in object stores such as S3 or GCS, or even locally on a filesystem.
 
-For instructions on how to add a data source to Grafana, refer to the [administration documentation]({{< relref "../../administration/data-source-management/" >}}).
+The following guides will help you get started with Loki:
+
+- [Getting started with Loki](/docs/loki/latest/getting-started/)
+- [Install Loki](/docs/loki/latest/installation/)
+- [Loki best practices](/docs/loki/latest/best-practices/#best-practices)
+- [Configure the Loki data source](/docs/grafana/latest/datasources/loki/configure-loki-data-source/)
+- [LogQL](/docs/loki/latest/logql/)
+- [Loki query editor]({{< relref "./query-editor" >}})
+
+## Adding a data source
+
+For instructions on how to add a data source to Grafana, refer to the [administration documentation][data-source-management]
 Only users with the organization administrator role can add data sources.
-Administrators can also [configure the data source via YAML]({{< relref "#provision-the-data-source" >}}) with Grafana's provisioning system.
+Administrators can also [configure the data source via YAML](#provision-the-data-source) with Grafana's provisioning system.
 
-Once you've added the Loki data source, you can [configure it]({{< relref "#configure-the-data-source" >}}) so that your Grafana instance's users can create queries in its [query editor]({{< relref "./query-editor/" >}}) when they [build dashboards]({{< relref "../../dashboards/build-dashboards/" >}}), use [Explore]({{< relref "../../explore/" >}}), and [annotate visualizations]({{< relref "./query-editor/#apply-annotations" >}}).
-
-## Configure the data source
-
-To configure basic settings for the data source, complete the following steps:
-
-1. Click **Connections** in the left-side menu.
-1. Under Your connections, click **Data sources**.
-1. Enter `Loki` in the search bar.
-1. Select **Loki**.
-
-   The **Settings** tab of the data source is displayed.
-
-1. Set the data source's basic configuration options:
-
-   | Name                | Description                                                                                                                                                         |
-   | ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-   | **Name**            | Sets the name you use to refer to the data source in panels and queries.                                                                                            |
-   | **Default**         | Sets the data source that's pre-selected for new panels.                                                                                                            |
-   | **URL**             | Sets the HTTP protocol, IP, and port of your Loki instance, such as `http://localhost:3100`.                                                                        |
-   | **Allowed cookies** | Defines which cookies are forwarded to the data source. Grafana Proxy deletes all other cookies.                                                                    |
-   | **Maximum lines**   | Sets the upper limit for the number of log lines returned by Loki. Defaults to 1,000. Lower this limit if your browser is sluggish when displaying logs in Explore. |
+Once you've added the Loki data source, you can [configure it](#configure-the-data-source) so that your Grafana instance's users can create queries in its [query editor]({{< relref "./query-editor" >}}) when they [build dashboards][build-dashboards], use [Explore][explore], and [annotate visualizations]({{< relref "./query-editor#apply-annotations" >}}).
 
 {{% admonition type="note" %}}
 To troubleshoot configuration and other issues, check the log file located at `/var/log/grafana/grafana.log` on Unix systems, or in `<grafana_install_dir>/data/log` on other platforms and manual installations.
 {{% /admonition %}}
 
-### Configure derived fields
-
-The **Derived Fields** configuration helps you:
-
-- Add fields parsed from the log message
-- Add a link that uses the value of the field
-
-For example, you can link to your tracing backend directly from your logs, or link to a user profile page if the log line contains a corresponding userId.
-These links appear in the [log details]({{< relref "../../explore/logs-integration/#labels-and-detected-fields" >}}).
-
-{{% admonition type="note" %}}
-If you use Grafana Cloud, you can request modifications to this feature by [opening a support ticket in the Cloud Portal](/profile/org#support).
-{{% /admonition %}}
-
-Each derived field consists of:
-
-| Field name        | Description                                                                                                                                                                                  |
-| ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Name**          | Sets the field name. Displayed as a label in the log details.                                                                                                                                |
-| **Regex**         | Defines a regular expression to evaluate on the log message and capture part of it as the value of the new field. Can contain only one capture group.                                        |
-| **URL/query**     | Sets the full link URL if the link is external, or a query for the target data source if the link is internal. You can interpolate the value from the field with the `${__value.raw}` macro. |
-| **URL Label**     | _(Optional)_ Sets a custom display label for the link. This setting overrides the link label, which defaults to the full external URL or name of the linked internal data source.            |
-| **Internal link** | Defines whether the link is internal or external. For internal links, you can select the target data source from a selector. This supports only tracing data sources.                        |
-
-#### Troubleshoot interpolation
-
-You can use a debug section to see what your fields extract and how the URL is interpolated.
-Select **Show example log message** to display a text area where you can enter a log message.
-
-{{< figure src="/static/img/docs/v75/loki_derived_fields_settings.png" class="docs-image--no-shadow" max-width="800px" caption="Screenshot of the derived fields debugging" >}}
-
-The new field with the link shown in log details:
-
-{{< figure src="/static/img/docs/explore/data-link-9-4.png" max-width="800px" caption="Data link in Explore" >}}
-
-### Provision the data source
+## Provision the Loki data source
 
 You can define and configure the data source in YAML files as part of Grafana's provisioning system.
-For more information about provisioning, and for available configuration options, refer to [Provisioning Grafana]({{< relref "../../administration/provisioning/#data-sources" >}}).
+For more information about provisioning, and for available configuration options, refer to [Provisioning Grafana][provisioning-data-sources].
 
-#### Provisioning examples
+### Provisioning examples
 
 ```yaml
 apiVersion: 1
@@ -161,7 +116,7 @@ datasources:
 
 The Loki data source's query editor helps you create log and metric queries that use Loki's query language, [LogQL](/docs/loki/latest/logql/).
 
-For details, refer to the [query editor documentation]({{< relref "./query-editor/" >}}).
+For details, refer to the [query editor documentation]({{< relref "./query-editor" >}}).
 
 ## Use template variables
 
@@ -169,4 +124,21 @@ Instead of hard-coding details such as server, application, and sensor names in 
 Grafana lists these variables in dropdown select boxes at the top of the dashboard to help you change the data displayed in your dashboard.
 Grafana refers to such variables as template variables.
 
-For details, see the [template variables documentation]({{< relref "./template-variables/" >}}).
+For details, see the [template variables documentation]({{< relref "./template-variables" >}}).
+
+{{% docs/reference %}}
+[build-dashboards]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/build-dashboards"
+[build-dashboards]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/build-dashboards"
+
+[data-source-management]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/administration/data-source-management"
+[data-source-management]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/administration/data-source-management"
+
+[explore]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/explore"
+[explore]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/explore"
+
+[logs-integration-labels-and-detected-fields]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/explore/logs-integration#labels-and-detected-fields"
+[logs-integration-labels-and-detected-fields]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/explore/logs-integration#labels-and-detected-fields"
+
+[provisioning-data-sources]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/administration/provisioning#data-sources"
+[provisioning-data-sources]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/administration/provisioning#data-sources"
+{{% /docs/reference %}}

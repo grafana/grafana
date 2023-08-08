@@ -21,7 +21,13 @@ import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelect
 import { deleteRuleAction, saveRuleFormAction } from '../../state/actions';
 import { RuleFormType, RuleFormValues } from '../../types/rule-form';
 import { initialAsyncRequestState } from '../../utils/redux';
-import { getDefaultFormValues, getDefaultQueries, MINUTE, rulerRuleToFormValues } from '../../utils/rule-form';
+import {
+  getDefaultFormValues,
+  getDefaultQueries,
+  MINUTE,
+  normalizeDefaultAnnotations,
+  rulerRuleToFormValues,
+} from '../../utils/rule-form';
 import * as ruleId from '../../utils/rule-id';
 
 import { CloudEvaluationBehavior } from './CloudEvaluationBehavior';
@@ -50,7 +56,7 @@ const AlertRuleNameInput = () => {
 
   const ruleFormType = watch('type');
   return (
-    <RuleEditorSection stepNo={1} title="Set alert rule name">
+    <RuleEditorSection stepNo={1} title="Set alert rule name.">
       <Field
         className={styles.formInput}
         label="Rule name"
@@ -323,6 +329,7 @@ function formValuesFromQueryParams(ruleDefinition: string, type: RuleFormType): 
   return ignoreHiddenQueries({
     ...getDefaultFormValues(),
     ...ruleFromQueryParams,
+    annotations: normalizeDefaultAnnotations(ruleFromQueryParams.annotations ?? []),
     queries: ruleFromQueryParams.queries ?? getDefaultQueries(),
     type: type || RuleFormType.grafana,
     evaluateEvery: MINUTE,
@@ -358,7 +365,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     contentOuter: css`
       background: ${theme.colors.background.primary};
       border: 1px solid ${theme.colors.border.weak};
-      border-radius: ${theme.shape.borderRadius()};
+      border-radius: ${theme.shape.radius.default};
       overflow: hidden;
       flex: 1;
       margin-top: ${theme.spacing(1)};

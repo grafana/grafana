@@ -27,6 +27,7 @@ type SocialGenericOAuth struct {
 	teamIdsAttributePath string
 	teamIds              []string
 	allowedGroups        []string
+	skipOrgRoleSync      bool
 }
 
 func (s *SocialGenericOAuth) IsGroupMember(groups []string) bool {
@@ -171,7 +172,7 @@ func (s *SocialGenericOAuth) UserInfo(ctx context.Context, client *http.Client, 
 	}
 
 	if s.allowAssignGrafanaAdmin && s.skipOrgRoleSync {
-		s.log.Warn("allowAssignGrafanaAdmin and skipOrgRoleSync are both set, Grafana Admin role will not be synced, consider setting one or the other")
+		s.log.Debug("allowAssignGrafanaAdmin and skipOrgRoleSync are both set, Grafana Admin role will not be synced, consider setting one or the other")
 	}
 
 	if userInfo.Email == "" {
