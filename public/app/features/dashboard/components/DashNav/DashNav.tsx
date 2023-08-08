@@ -32,6 +32,8 @@ import { updateTimeZoneForSession } from 'app/features/profile/state/reducers';
 import { KioskMode } from 'app/types';
 import { DashboardMetaChangedEvent, ShowModalReactEvent } from 'app/types/events';
 
+import { GeneratePanelButton } from '../DashGPT/GeneratePanelButton';
+
 import { DashNavButton } from './DashNavButton';
 import { DashNavTimeControls } from './DashNavTimeControls';
 import { ShareButton } from './ShareButton';
@@ -262,6 +264,7 @@ export const DashNav = React.memo<Props>((props) => {
 
     if (canEdit && !isFullscreen) {
       if (config.featureToggles.emptyDashboardPage) {
+        buttons.push(<GeneratePanelButton />);
         buttons.push(<AddPanelButton dashboard={dashboard} key="panel-add-dropdown" />);
       } else {
         buttons.push(
