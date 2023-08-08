@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/serverlock"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -29,13 +30,14 @@ const actionName = "alerting migration"
 var ForceMigrationError = fmt.Errorf("Grafana has already been migrated to Unified Alerting. Any alert rules created while using Unified Alerting will be deleted by rolling back. Set force_migration=true in your grafana.ini and restart Grafana to roll back and delete Unified Alerting configuration data.")
 
 type MigrationService struct {
-	lock          *serverlock.ServerLockService
-	store         db.DB
-	cfg           *setting.Cfg
-	log           log.Logger
-	kv            *kvstore.NamespacedKVStore
-	ruleStore     RuleStore
-	alertingStore AlertingStore
+	lock              *serverlock.ServerLockService
+	store             db.DB
+	cfg               *setting.Cfg
+	log               log.Logger
+	kv                *kvstore.NamespacedKVStore
+	ruleStore         RuleStore
+	alertingStore     AlertingStore
+	encryptionService secrets.Service
 }
 
 func ProvideService(
@@ -44,15 +46,17 @@ func ProvideService(
 	sqlStore db.DB,
 	kv kvstore.KVStore,
 	ruleStore *store.DBstore,
+	encryptionService secrets.Service,
 ) (*MigrationService, error) {
 	return &MigrationService{
-		lock:          lock,
-		log:           log.New("ngalert.migration"),
-		cfg:           cfg,
-		store:         sqlStore,
-		kv:            kvstore.WithNamespace(kv, 0, KVNamespace),
-		ruleStore:     ruleStore,
-		alertingStore: ruleStore,
+		lock:              lock,
+		log:               log.New("ngalert.migration"),
+		cfg:               cfg,
+		store:             sqlStore,
+		kv:                kvstore.WithNamespace(kv, 0, KVNamespace),
+		ruleStore:         ruleStore,
+		alertingStore:     ruleStore,
+		encryptionService: encryptionService,
 	}, nil
 }
 
@@ -96,7 +100,14 @@ func (ms *MigrationService) Run(ctx context.Context) error {
 			}
 
 			ms.log.Info("Starting legacy migration")
-			mg := newMigration(ms.log, ms.cfg, ms.store, ms.ruleStore, ms.alertingStore, ms.store.GetDialect())
+			mg := newMigration(ms.log,
+				ms.cfg,
+				ms.store,
+				ms.ruleStore,
+				ms.alertingStore,
+				ms.store.GetDialect(),
+				ms.encryptionService,
+			)
 
 			err = mg.Exec(ctx)
 			if err != nil {

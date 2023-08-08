@@ -28,6 +28,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/services/org"
+	fake_secrets "github.com/grafana/grafana/pkg/services/secrets/fakes"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 )
@@ -1273,7 +1274,7 @@ func NewMigrationService(t *testing.T, sqlStore db.DB, cfg *setting.Cfg) *Migrat
 		SQLStore: sqlStore,
 		Cfg:      cfg.UnifiedAlerting,
 	}
-	ms, err := ProvideService(serverlock.ProvideService(sqlStore, tracing.InitializeTracerForTest()), cfg, sqlStore, fakes.NewFakeKVStore(t), &alertingStore)
+	ms, err := ProvideService(serverlock.ProvideService(sqlStore, tracing.InitializeTracerForTest()), cfg, sqlStore, fakes.NewFakeKVStore(t), &alertingStore, fake_secrets.NewFakeSecretsService())
 	require.NoError(t, err)
 	return ms
 }

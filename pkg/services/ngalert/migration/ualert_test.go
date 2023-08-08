@@ -1,7 +1,6 @@
 package migration
 
 import (
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"strings"
@@ -63,7 +62,7 @@ func Test_validateAlertmanagerConfig(t *testing.T) {
 			mg := newTestMigration(t)
 
 			config := configFromReceivers(t, tt.receivers)
-			require.NoError(t, encryptSecureSettings(config)) // make sure we encrypt the settings
+			require.NoError(t, encryptSecureSettings(config, mg)) // make sure we encrypt the settings
 			err := mg.validateAlertmanagerConfig(config)
 			if tt.err != nil {
 				require.Error(t, err)
@@ -87,12 +86,12 @@ func configFromReceivers(t *testing.T, receivers []*apimodels.PostableGrafanaRec
 	}
 }
 
-func encryptSecureSettings(c *apimodels.PostableUserConfig) error {
+func encryptSecureSettings(c *apimodels.PostableUserConfig, m *migration) error {
 	for _, r := range c.AlertmanagerConfig.Receivers {
 		for _, gr := range r.GrafanaManagedReceivers {
-			encryptedData := GetEncryptedJsonData(gr.SecureSettings)
-			for k, v := range encryptedData {
-				gr.SecureSettings[k] = base64.StdEncoding.EncodeToString(v)
+			err := m.encryptSecureSettings(gr.SecureSettings)
+			if err != nil {
+				return err
 			}
 		}
 	}
