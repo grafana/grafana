@@ -224,11 +224,12 @@ func (m *Mock) DeleteUserPermissions(ctx context.Context, orgID, userID int64) e
 }
 
 // SearchUsersPermissions returns all users' permissions filtered by an action prefix
-func (m *Mock) SearchUsersPermissions(ctx context.Context, user *user.SignedInUser, orgID int64, options accesscontrol.SearchOptions) (map[int64][]accesscontrol.Permission, error) {
-	m.Calls.SearchUsersPermissions = append(m.Calls.SearchUsersPermissions, []interface{}{ctx, user, orgID, options})
+func (m *Mock) SearchUsersPermissions(ctx context.Context, usr identity.Requester, options accesscontrol.SearchOptions) (map[int64][]accesscontrol.Permission, error) {
+	user := usr.(*user.SignedInUser)
+	m.Calls.SearchUsersPermissions = append(m.Calls.SearchUsersPermissions, []interface{}{ctx, user, options})
 	// Use override if provided
 	if m.SearchUsersPermissionsFunc != nil {
-		return m.SearchUsersPermissionsFunc(ctx, user, orgID, options)
+		return m.SearchUsersPermissionsFunc(ctx, user, usr.GetOrgID(), options)
 	}
 	return nil, nil
 }

@@ -28,7 +28,7 @@ func (f FakeService) GetUserPermissions(ctx context.Context, user *user.SignedIn
 	return f.ExpectedPermissions, f.ExpectedErr
 }
 
-func (f FakeService) SearchUsersPermissions(ctx context.Context, user *user.SignedInUser, orgID int64, options accesscontrol.SearchOptions) (map[int64][]accesscontrol.Permission, error) {
+func (f FakeService) SearchUsersPermissions(ctx context.Context, user identity.Requester, options accesscontrol.SearchOptions) (map[int64][]accesscontrol.Permission, error) {
 	return f.ExpectedUsersPermissions, f.ExpectedErr
 }
 

@@ -263,7 +263,7 @@ func (s *Service) DeclarePluginRoles(_ context.Context, ID, name string, regs []
 }
 
 // SearchUsersPermissions returns all users' permissions filtered by action prefixes
-func (s *Service) SearchUsersPermissions(ctx context.Context, user *user.SignedInUser, orgID int64,
+func (s *Service) SearchUsersPermissions(ctx context.Context, user identity.Requester,
 	options accesscontrol.SearchOptions) (map[int64][]accesscontrol.Permission, error) {
 	// Filter ram permissions
 	basicPermissions := map[string][]accesscontrol.Permission{}
@@ -275,21 +275,21 @@ func (s *Service) SearchUsersPermissions(ctx context.Context, user *user.SignedI
 		}
 	}
 
-	usersRoles, err := s.store.GetUsersBasicRoles(ctx, nil, orgID)
+	usersRoles, err := s.store.GetUsersBasicRoles(ctx, nil, user.GetOrgID())
 	if err != nil {
 		return nil, err
 	}
 
 	// Get managed permissions (DB)
-	usersPermissions, err := s.store.SearchUsersPermissions(ctx, orgID, options)
+	usersPermissions, err := s.store.SearchUsersPermissions(ctx, user.GetOrgID(), options)
 	if err != nil {
 		return nil, err
 	}
 
 	// helper to filter out permissions the signed in users cannot see
 	canView := func() func(userID int64) bool {
-		siuPermissions, ok := user.Permissions[orgID]
-		if !ok {
+		siuPermissions := user.GetPermissions()
+		if len(siuPermissions) == 0 {
 			return func(_ int64) bool { return false }
 		}
 		scopes, ok := siuPermissions[accesscontrol.ActionUsersPermissionsRead]
