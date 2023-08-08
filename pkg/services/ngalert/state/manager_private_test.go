@@ -160,7 +160,41 @@ func TestManager_saveAlertStates(t *testing.T) {
 	})
 }
 
-func TestProcessEvalResultsExtended(t *testing.T) {
+// TestProcessEvalResults_StateTransitions tests state.Manager's how method ProcessEvalResults processes results and creates or changes states.
+// In other words, it tests the state transition.
+//
+// The tests use a micro-framework that has few features:
+// 1. It uses a base rule definition and allows each test case mutate its copy
+// 2. Expected State definition omits several fields which are patched before assertion
+// if they are not specified explicitly (see function "patchState" for patched fields).
+// 3. This allows specifications to be more condense and mention only important fields
+// 4. Expected State definition uses some shortcut functions to make the specification more clear.
+// Expected labels are populated from labels map where keys - description of what labels included in its values.
+// This allows to us to specify the list of labels expected to be in the state in one line, e.g. "system + rule + labels1"
+// Evaluations are populated using function `newEvaluation` that pre-set all important fields.
+// 5. Each test case can contain multiple consecutive evaluations at different time and assertions at every interval.
+// The framework offers variables t1, t2, t3 and function tN(n) that provide timestamps of different evaluations.
+// 6. NoData and Error tests require assertions for all possible execution options for the same input.
+//
+// Naming convention for tests cases.
+// The tests are formatted to the input characteristics, such as rule definition,
+// result format (multi- or single- dimensional) and at which times the assertions are defined.
+//
+// <time>[(<labelSet>:)<eval.State>] (and <rule_modifications>) at <asserted_time>
+//
+//    where
+//      <time> can be t1, t2 or t3, i.e. timestamp of evaluation
+//      <labelSet> indicates a label set of the normal result. It be 1,2,3 which corresponds to labels1, labels2 or labels3 or {} - for result without labels
+//        in the case of NoData or Error it is omitted
+//      <rule_modifications> rule modifications.
+//      <asserted_time> at which time intervals the test executes assertions. Can be t1,t2 or t3
+//
+// For example:
+//
+//     t1[1:normal] t2[1:alerting] and 'for'=2 at t2
+//     t1[{}:alerting] t2[{}:normal] t3[NoData] at t2,t3
+//
+func TestProcessEvalResults_StateTransitions(t *testing.T) {
 	evaluationDuration := 10 * time.Millisecond
 	evaluationInterval := 10 * time.Second
 
@@ -190,20 +224,20 @@ func TestProcessEvalResultsExtended(t *testing.T) {
 		ExecErrState:    ngmodels.ErrorErrState,
 	}
 
-	newEvaluation := func(evalTime time.Time, evalState eval.State) Evaluation {
-		return Evaluation{
-			EvaluationTime:  evalTime,
-			EvaluationState: evalState,
-			Values:          make(map[string]*float64),
-		}
-	}
-
 	baseRuleWith := func(mutators ...ngmodels.AlertRuleMutator) *ngmodels.AlertRule {
 		r := ngmodels.CopyRule(baseRule)
 		for _, mutator := range mutators {
 			mutator(r)
 		}
 		return r
+	}
+
+	newEvaluation := func(evalTime time.Time, evalState eval.State) Evaluation {
+		return Evaluation{
+			EvaluationTime:  evalTime,
+			EvaluationState: evalState,
+			Values:          make(map[string]*float64),
+		}
 	}
 
 	newResult := func(mutators ...eval.ResultMutator) eval.Result {
@@ -340,7 +374,7 @@ func TestProcessEvalResultsExtended(t *testing.T) {
 
 	testCases := []testCase{
 		{
-			desc:      "[]->[normal,normal]",
+			desc:      "t1[1:normal,2:normal] at t1",
 			alertRule: baseRule,
 			results: map[time.Time]eval.Results{
 				t1: {
@@ -380,7 +414,7 @@ func TestProcessEvalResultsExtended(t *testing.T) {
 			},
 		},
 		{
-			desc:      "[]->[alerting,normal]",
+			desc:      "t1[1:alerting,2:normal] at t1",
 			alertRule: baseRule,
 			results: map[time.Time]eval.Results{
 				t1: {
@@ -420,7 +454,7 @@ func TestProcessEvalResultsExtended(t *testing.T) {
 			},
 		},
 		{
-			desc:      "[]->[alerting,normal] and 'for'>0",
+			desc:      "t1[1:alerting,2:normal] and 'for'>0 at t1",
 			alertRule: baseRuleWith(ngmodels.WithForNTimes(3)),
 			results: map[time.Time]eval.Results{
 				t1: {
@@ -460,7 +494,7 @@ func TestProcessEvalResultsExtended(t *testing.T) {
 			},
 		},
 		{
-			desc:      "[normal,normal]->[alerting,normal]",
+			desc:      "t1[1:normal,2:normal] t2[1:alerting,2:normal] at t2",
 			alertRule: baseRule,
 			results: map[time.Time]eval.Results{
 				t1: {
@@ -506,7 +540,7 @@ func TestProcessEvalResultsExtended(t *testing.T) {
 			},
 		},
 		{
-			desc:      "[alerting]->[alerting]->[alerting] and 'for'=2",
+			desc:      "t1[1:alerting] t2[1:alerting] t3[1:alerting] and 'for'=2 at t1,t2,t3",
 			alertRule: baseRuleWith(ngmodels.WithForNTimes(2)),
 			results: map[time.Time]eval.Results{
 				t1: {
@@ -570,7 +604,7 @@ func TestProcessEvalResultsExtended(t *testing.T) {
 			},
 		},
 		{
-			desc:      "[alerting]->[normal] and 'for'=2",
+			desc:      "t1[1:alerting], t2[1:normal] and 'for'=2 at t2",
 			alertRule: baseRuleWith(ngmodels.WithForNTimes(2)),
 			results: map[time.Time]eval.Results{
 				t1: {
@@ -600,7 +634,7 @@ func TestProcessEvalResultsExtended(t *testing.T) {
 			},
 		},
 		{
-			desc:      "[alerting]->[normal]",
+			desc:      "t1:[1:alerting] t2[1:normal] at t2",
 			alertRule: baseRule,
 			results: map[time.Time]eval.Results{
 				t1: {
@@ -630,7 +664,7 @@ func TestProcessEvalResultsExtended(t *testing.T) {
 			},
 		},
 		{
-			desc:      "[normal,alerting,normal]->[-,-,normal]->[-,-,normal]",
+			desc:      "t1[1:normal,2:alerting,3:normal] t2[3:normal] t3[3:normal] at t2,t3",
 			alertRule: baseRule,
 			results: map[time.Time]eval.Results{
 				t1: {
@@ -711,7 +745,7 @@ func TestProcessEvalResultsExtended(t *testing.T) {
 			},
 		},
 		{
-			desc:      "->normal",
+			desc:      "t1[{}:normal] at t1",
 			alertRule: baseRule,
 			results: map[time.Time]eval.Results{
 				t1: {
@@ -737,7 +771,7 @@ func TestProcessEvalResultsExtended(t *testing.T) {
 			},
 		},
 		{
-			desc:      "->alerting",
+			desc:      "t1[{}:alerting] at t1",
 			alertRule: baseRule,
 			results: map[time.Time]eval.Results{
 				t1: {
@@ -763,7 +797,7 @@ func TestProcessEvalResultsExtended(t *testing.T) {
 			},
 		},
 		{
-			desc:      "->alerting and 'for'>0",
+			desc:      "t1[{}:alerting] and 'for'>0  at t1",
 			alertRule: baseRuleWith(ngmodels.WithForNTimes(3)),
 			results: map[time.Time]eval.Results{
 				t1: {
@@ -789,7 +823,7 @@ func TestProcessEvalResultsExtended(t *testing.T) {
 			},
 		},
 		{
-			desc:      "normal->alerting",
+			desc:      "t1[{}:normal] t2[{}:alerting] at t2",
 			alertRule: baseRule,
 			results: map[time.Time]eval.Results{
 				t1: {
@@ -862,7 +896,7 @@ func TestProcessEvalResultsExtended(t *testing.T) {
 
 		testCases := []noDataTestCase{
 			{
-				desc: "->NoData",
+				desc: "t1[NoData] at t1",
 				results: map[time.Time]eval.Results{
 					t1: {
 						newResult(eval.WithState(eval.NoData), eval.WithLabels(noDataLabels)),
@@ -925,7 +959,7 @@ func TestProcessEvalResultsExtended(t *testing.T) {
 				},
 			},
 			{
-				desc: "[normal]->NoData",
+				desc: "t1[1:normal] t2[NoData] at t2",
 				results: map[time.Time]eval.Results{
 					t1: {
 						newResult(eval.WithState(eval.Normal), eval.WithLabels(labels1)),
@@ -991,7 +1025,7 @@ func TestProcessEvalResultsExtended(t *testing.T) {
 				},
 			},
 			{
-				desc: "[normal,alerting]->NoData->NoData",
+				desc: "t1[1:normal,2:alerting] t2[NoData] t3[NoData] at t3",
 				results: map[time.Time]eval.Results{
 					t1: {
 						newResult(eval.WithState(eval.Normal), eval.WithLabels(labels1)),
@@ -1153,7 +1187,7 @@ func TestProcessEvalResultsExtended(t *testing.T) {
 				},
 			},
 			{
-				desc:         "[normal,alerting]->NoData->NoData, and 'for'=1",
+				desc:         "t1[1:normal,2:alerting] t2[NoData] t3[NoData] and 'for'=1 at t2*,t3",
 				ruleMutators: []ngmodels.AlertRuleMutator{ngmodels.WithForNTimes(1)},
 				results: map[time.Time]eval.Results{
 					t1: {
@@ -1326,7 +1360,7 @@ func TestProcessEvalResultsExtended(t *testing.T) {
 				},
 			},
 			{
-				desc:         "[alerting]->NoData->[alerting], and 'for'=2",
+				desc:         "t1[1:alerting] t2[NoData] t3[1:alerting] and 'for'=2 at t3",
 				ruleMutators: []ngmodels.AlertRuleMutator{ngmodels.WithForNTimes(2)},
 				results: map[time.Time]eval.Results{
 					t1: {
@@ -1397,7 +1431,7 @@ func TestProcessEvalResultsExtended(t *testing.T) {
 				},
 			},
 			{
-				desc: "NoData->[normal]->[normal]",
+				desc: "t1[NoData] t2[1:normal] t3[1:normal] at t3",
 				results: map[time.Time]eval.Results{
 					t1: {
 						newResult(eval.WithState(eval.NoData), eval.WithLabels(noDataLabels)),
@@ -1512,7 +1546,7 @@ func TestProcessEvalResultsExtended(t *testing.T) {
 				},
 			},
 			{
-				desc: "normal->NoData",
+				desc: "t1[{}:normal] t2[NoData] at t2",
 				results: map[time.Time]eval.Results{
 					t1: {
 						newResult(eval.WithState(eval.Normal)),
@@ -1578,7 +1612,7 @@ func TestProcessEvalResultsExtended(t *testing.T) {
 				},
 			},
 			{
-				desc: "alerting->NoData->NoData",
+				desc: "t1[{}:alerting] t2[NoData] t3[NoData] at t3",
 				results: map[time.Time]eval.Results{
 					t1: {
 						newResult(eval.WithState(eval.Alerting)),
@@ -1697,7 +1731,7 @@ func TestProcessEvalResultsExtended(t *testing.T) {
 				},
 			},
 			{
-				desc:         "alerting->NoData->alerting, and 'for'=2",
+				desc:         "t1[{}:alerting] t2[NoData] t3[{}:alerting] and 'for'=2 at t3",
 				ruleMutators: []ngmodels.AlertRuleMutator{ngmodels.WithForNTimes(2)},
 				results: map[time.Time]eval.Results{
 					t1: {
@@ -1821,7 +1855,7 @@ func TestProcessEvalResultsExtended(t *testing.T) {
 
 		testCases := []errorTestCase{
 			{
-				desc: "->QueryError",
+				desc: "t1[QueryError] at t1",
 				results: map[time.Time]eval.Results{
 					t1: {
 						newResult(eval.WithError(datasourceError)),
@@ -1890,7 +1924,7 @@ func TestProcessEvalResultsExtended(t *testing.T) {
 				},
 			},
 			{
-				desc: "->GenericError",
+				desc: "t1[GenericError] at t1",
 				results: map[time.Time]eval.Results{
 					t1: {
 						newResult(eval.WithError(genericError)),
@@ -1958,7 +1992,7 @@ func TestProcessEvalResultsExtended(t *testing.T) {
 				},
 			},
 			{
-				desc:         "[alerting]->QueryError, and 'for'=1",
+				desc:         "t1[1:alerting] t2[QueryError] and 'for'=1 at t2",
 				ruleMutators: []ngmodels.AlertRuleMutator{ngmodels.WithForNTimes(1)},
 				results: map[time.Time]eval.Results{
 					t1: {
@@ -2031,7 +2065,7 @@ func TestProcessEvalResultsExtended(t *testing.T) {
 				},
 			},
 			{
-				desc: "[normal]->QueryError",
+				desc: "t1[1:normal] t2[QueryError] at t2",
 				results: map[time.Time]eval.Results{
 					t1: {
 						newResult(eval.WithState(eval.Normal), eval.WithLabels(labels1)),
@@ -2103,7 +2137,7 @@ func TestProcessEvalResultsExtended(t *testing.T) {
 				},
 			},
 			{
-				desc: "normal->QueryError",
+				desc: "t1[{}:normal] t2[QueryError] at t2",
 				results: map[time.Time]eval.Results{
 					t1: {
 						newResult(eval.WithState(eval.Normal)),
@@ -2178,7 +2212,7 @@ func TestProcessEvalResultsExtended(t *testing.T) {
 				},
 			},
 			{
-				desc:         "alerting->QueryError, and 'for'=1",
+				desc:         "t1[{}:alerting] t2[QueryError] and 'for'=1 at t1*,t2",
 				ruleMutators: []ngmodels.AlertRuleMutator{ngmodels.WithForNTimes(1)},
 				results: map[time.Time]eval.Results{
 					t1: {
@@ -2266,7 +2300,7 @@ func TestProcessEvalResultsExtended(t *testing.T) {
 				},
 			},
 			{
-				desc:         "alerting->QueryError->alerting, and 'for'=2",
+				desc:         "t1[{}:alerting] t2[QueryError] t3[{}:alerting] and 'for'=2 at t2,t3",
 				ruleMutators: []ngmodels.AlertRuleMutator{ngmodels.WithForNTimes(2)},
 				results: map[time.Time]eval.Results{
 					t1: {
