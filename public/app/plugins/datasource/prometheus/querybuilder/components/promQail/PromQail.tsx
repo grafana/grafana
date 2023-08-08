@@ -7,6 +7,7 @@ import store from 'app/core/store';
 
 import { PromVisualQuery } from '../../types';
 
+import AI_Logo_color from './resources/AI_Logo_color.svg';
 import { initialState, stateSlice } from './state/state';
 
 // actions to update the state
@@ -42,7 +43,9 @@ export const PromQail = (props: PromQailProps) => {
       {/* Starting message */}
 
       <div>
-        <div className={styles.iconSection}>[ai] Assistant</div>
+        <div className={styles.iconSection}>
+          <img src={AI_Logo_color} alt="AI logo color" /> Assistant
+        </div>
         {state.showStartingMessage ? (
           <>
             <div className={styles.textPadding}>
@@ -145,7 +148,8 @@ export const getStyles = (theme: GrafanaTheme2) => {
       }
     `,
     iconSection: css`
-      padding: 10px 0;
+      padding: 0 0 10px 0;
+      color: #ccccdca6;
     `,
     nextButtonsWrapper: css`
       display: flex;
