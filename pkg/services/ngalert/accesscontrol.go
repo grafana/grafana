@@ -230,3 +230,5 @@ func DeclareFixedRoles(service accesscontrol.Service) error {
 		alertingReaderRole, alertingWriterRole, alertingProvisionerRole, alertingProvisioningReaderWithSecretsRole,
 	)
 }
+
+
