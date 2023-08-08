@@ -44,10 +44,6 @@ export function MegaSelectEditor(props: Props) {
     }
   }, [onViewChange, query]);
 
-  const getTags = () => {
-    return datasource.languageProvider.getTraceqlAutocompleteTags();
-  };
-
   return (
     <>
       <InlineFieldRow>
@@ -60,8 +56,8 @@ export function MegaSelectEditor(props: Props) {
             width={20}
           />
         </InlineField>
-        <InlineField label="Span" labelWidth={20}>
-          <SpanSelect {...props} tags={getTags()} />
+        <InlineField label="HTTP Endpoint" labelWidth={20}>
+          <SpanSelect {...props} />
         </InlineField>
       </InlineFieldRow>
     </>
