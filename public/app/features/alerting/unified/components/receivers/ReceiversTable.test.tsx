@@ -157,24 +157,25 @@ describe('ReceiversTable', () => {
 
         const buttons = within(screen.getByTestId('dynamic-table')).getAllByTestId('export');
         expect(buttons).toHaveLength(2);
-
-        const buttonsHrefs = buttons.map((b: any) => b.href);
-
-        expect(buttonsHrefs).toContainEqual(
-          createUrl(`http://localhost/api/v1/provisioning/contact-points/export/`, {
-            download: 'true',
-            format: 'yaml',
-            decrypt: 'false',
-            name: 'with receivers',
-          })
-        );
-        expect(buttonsHrefs).toContainEqual(
-          createUrl(`http://localhost/api/v1/provisioning/contact-points/export/`, {
-            download: 'true',
-            format: 'yaml',
-            decrypt: 'false',
-            name: 'no receivers',
-          })
+        expect(buttons).toEqual(
+            expect.arrayContaining([
+              expect.objectContaining({
+                href : createUrl(`http://localhost/api/v1/provisioning/contact-points/export/`, {
+                  download: 'true',
+                  format: 'yaml',
+                  decrypt: 'false',
+                  name: 'with receivers',
+                })
+              }),
+              expect.objectContaining({
+                href : createUrl(`http://localhost/api/v1/provisioning/contact-points/export/`, {
+                  download: 'true',
+                  format: 'yaml',
+                  decrypt: 'false',
+                  name:  'no receivers',
+                })
+              }),
+            ])
         );
       });
       it('should be visible when user has permissions to read provisioning with secrets', async () => {
@@ -185,23 +186,25 @@ describe('ReceiversTable', () => {
 
         const buttons = within(screen.getByTestId('dynamic-table')).getAllByTestId('export');
         expect(buttons).toHaveLength(2);
-        const buttonsHrefs = buttons.map((b: any) => b.href);
-
-        expect(buttonsHrefs).toContainEqual(
-          createUrl(`http://localhost/api/v1/provisioning/contact-points/export/`, {
-            download: 'true',
-            format: 'yaml',
-            decrypt: 'true',
-            name: 'with receivers',
-          })
-        );
-        expect(buttonsHrefs).toContainEqual(
-          createUrl(`http://localhost/api/v1/provisioning/contact-points/export/`, {
-            download: 'true',
-            format: 'yaml',
-            decrypt: 'true',
-            name: 'no receivers',
-          })
+        expect(buttons).toEqual(
+            expect.arrayContaining([
+              expect.objectContaining({
+                href : createUrl(`http://localhost/api/v1/provisioning/contact-points/export/`, {
+                  download: 'true',
+                  format: 'yaml',
+                  decrypt: 'true',
+                  name: 'with receivers',
+                })
+              }),
+              expect.objectContaining({
+                href : createUrl(`http://localhost/api/v1/provisioning/contact-points/export/`, {
+                  download: 'true',
+                  format: 'yaml',
+                  decrypt: 'true',
+                  name:  'no receivers',
+                })
+              }),
+            ])
         );
       });
       it('should not be visible when user has no provisioning permissions', async () => {
