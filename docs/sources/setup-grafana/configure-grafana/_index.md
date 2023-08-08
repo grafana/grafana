@@ -2279,7 +2279,7 @@ The API for feature toggle updates has not been defined yet.
 
 ### hidden_toggles
 
-Hide additional specific feature toggles from the feature management page. By default, feature toggles in stages `unknown`, `experimental`, and `private preview` are hidden from the UI. Use this option to hide toggles in stages `public preview`, `general availability`, and `deprecated`.
+Hide additional specific feature toggles from the feature management page. By default, feature toggles in the `unknown`, `experimental`, and `private preview` stages are hidden from the UI. Use this option to hide toggles in the `public preview`, `general availability`, and `deprecated` stages.
 
 ### read_only_toggles
 
