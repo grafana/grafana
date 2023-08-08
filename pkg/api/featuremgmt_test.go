@@ -334,7 +334,7 @@ func TestSetFeatureToggles(t *testing.T) {
 		}
 		// TODO: check for success status after the handler is fully implemented
 		res := runSetScenario(t, features, updates, s, writePermissions, http.StatusNotImplemented)
-
+		defer func() { require.NoError(t, res.Body.Close()) }()
 		p := readBody(t, res.Body)
 		assert.Equal(t, "UpdateFeatureToggle is unimplemented", p["message"])
 	})
