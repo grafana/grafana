@@ -72,6 +72,8 @@ To see the widget editor in Grafana OSS or Enterprise, enable the `vizAndWidgetS
 
 <!-- Catherine Gui -->
 
+_Available in public preview in all editions of Grafana_
+
 The transformations tab has an improved user experience and visual redesign. Now, transformations are categorized, and each transformation type has an illustration to help you choose the right one.
 
 {{< figure src="/media/docs/grafana/screenshot-grafana-10-1-transformations.png" max-width="750px" caption="Transformations redesign" >}}
