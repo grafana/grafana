@@ -126,6 +126,7 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
         render: function renderDescription() {
           return (
             <TextArea
+              style={{ height: '100px' }}
               id="description-text-area"
               defaultValue={panel.description}
               onBlur={(e) => onPanelConfigChange('description', e.currentTarget.value)}

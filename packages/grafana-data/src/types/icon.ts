@@ -33,6 +33,7 @@ export const availableIconsIndex = {
   'arrows-v': true,
   'expand-arrows': true,
   at: true,
+  ai: true,
   backward: true,
   bars: true,
   bell: true,

@@ -90,7 +90,7 @@ export const AiGenerate = ({ text, onClick, history, applySuggestion }: Props) =
 
   return (
     <div className={styles.wrapper}>
-      <Button icon="grafana" onClick={onClick} fill="text" size="sm">
+      <Button icon="ai" onClick={onClick} fill="text" size="sm">
         {text}
       </Button>
       {history && history.length > 0 && history[0] !== '' && (
