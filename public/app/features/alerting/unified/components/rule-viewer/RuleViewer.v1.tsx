@@ -13,7 +13,7 @@ import { DEFAULT_PER_PAGE_PAGINATION } from '../../../../../core/constants';
 import { AlertQuery, GrafanaRuleDefinition } from '../../../../../types/unified-alerting-dto';
 import { GrafanaRuleQueryViewer, QueryPreview } from '../../GrafanaRuleQueryViewer';
 import { useAlertQueriesStatus } from '../../hooks/useAlertQueriesStatus';
-import { useCombinedRuleLight } from '../../hooks/useCombinedRule';
+import { useCombinedRule } from '../../hooks/useCombinedRule';
 import { AlertingQueryRunner } from '../../state/AlertingQueryRunner';
 import { useCleanAnnotations } from '../../utils/annotations';
 import { getRulesSourceByName } from '../../utils/datasource';
@@ -52,7 +52,7 @@ export function RuleViewer({ match }: RuleViewerProps) {
     return ruleId.parse(id, true);
   }, [id]);
 
-  const { loading, error, result: rule } = useCombinedRuleLight({ ruleIdentifier: identifier });
+  const { loading, error, result: rule } = useCombinedRule({ ruleIdentifier: identifier });
 
   const runner = useMemo(() => new AlertingQueryRunner(), []);
   const data = useObservable(runner.get());

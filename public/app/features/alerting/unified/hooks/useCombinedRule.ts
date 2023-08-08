@@ -25,39 +25,6 @@ import {
 } from './useCombinedRuleNamespaces';
 import { useUnifiedAlertingSelector } from './useUnifiedAlertingSelector';
 
-export function useCombinedRule(
-  identifier: RuleIdentifier | undefined,
-  ruleSourceName: string | undefined
-): AsyncRequestState<CombinedRule> {
-  const requestState = useCombinedRulesLoader(ruleSourceName, identifier);
-  const combinedRules = useCombinedRuleNamespaces(ruleSourceName);
-
-  const rule = useMemo(() => {
-    if (!identifier || !ruleSourceName || combinedRules.length === 0) {
-      return;
-    }
-
-    for (const namespace of combinedRules) {
-      for (const group of namespace.groups) {
-        for (const rule of group.rules) {
-          const id = ruleId.fromCombinedRule(ruleSourceName, rule);
-
-          if (ruleId.equal(id, identifier)) {
-            return rule;
-          }
-        }
-      }
-    }
-
-    return;
-  }, [identifier, ruleSourceName, combinedRules]);
-
-  return {
-    ...requestState,
-    result: rule,
-  };
-}
-
 export function useCombinedRulesMatching(
   ruleName: string | undefined,
   ruleSourceName: string | undefined
@@ -194,7 +161,7 @@ function getRequestState(
   return state;
 }
 
-export function useCombinedRuleLight({ ruleIdentifier }: { ruleIdentifier: RuleIdentifier }): {
+export function useCombinedRule({ ruleIdentifier }: { ruleIdentifier: RuleIdentifier }): {
   loading: boolean;
   result?: CombinedRule;
   error?: unknown;
