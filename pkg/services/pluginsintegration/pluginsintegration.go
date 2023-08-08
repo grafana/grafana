@@ -36,7 +36,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/angularpatternsstore"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/clientmiddleware"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/config"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/errors"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/keyretriever"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/keyretriever/dynamic"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/keystore"
@@ -44,6 +43,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/loader"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pipeline"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginerrs"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	pluginSettings "github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings/service"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/serviceregistration"
@@ -86,8 +86,10 @@ var WireSet = wire.NewSet(
 	wire.Bind(new(signature.Validator), new(*signature.Validation)),
 	loader.ProvideService,
 	wire.Bind(new(pluginLoader.Service), new(*loader.Loader)),
-	errors.ProvideService,
-	wire.Bind(new(plugins.ErrorResolver), new(*errors.Resolver)),
+	pluginerrs.ProvideSignatureErrorTracker,
+	wire.Bind(new(pluginerrs.SignatureErrorTracker), new(*pluginerrs.SignatureErrorRegistry)),
+	pluginerrs.ProvideStore,
+	wire.Bind(new(plugins.ErrorResolver), new(*pluginerrs.Store)),
 	manager.ProvideInstaller,
 	wire.Bind(new(plugins.Installer), new(*manager.PluginInstaller)),
 	registry.ProvideService,

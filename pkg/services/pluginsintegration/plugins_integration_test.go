@@ -1,4 +1,4 @@
-package manager
+package pluginsintegration
 
 import (
 	"context"
@@ -37,6 +37,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/config"
 	plicensing "github.com/grafana/grafana/pkg/services/pluginsintegration/licensing"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pipeline"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginerrs"
 	"github.com/grafana/grafana/pkg/services/searchV2"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor"
@@ -75,7 +76,7 @@ func TestIntegrationPluginManager(t *testing.T) {
 		app_mode = production
 
 		[plugin.test-app]
-		path=testdata/test-app
+		path=../../plugins/manager/testdata/test-app
 
 		[plugin.test-panel]
 		not=included
@@ -122,10 +123,11 @@ func TestIntegrationPluginManager(t *testing.T) {
 	lic := plicensing.ProvideLicensing(cfg, &licensing.OSSLicensingService{Cfg: cfg})
 	angularInspector := angularinspector.NewStaticInspector()
 	proc := process.NewManager(reg)
+	sigErrTracker := pluginerrs.ProvideSignatureErrorTracker()
 
 	discovery := pipeline.ProvideDiscoveryStage(pCfg, finder.NewLocalFinder(pCfg.DevMode), reg)
 	bootstrap := pipeline.ProvideBootstrapStage(pCfg, signature.ProvideService(pCfg, statickey.New()), assetpath.ProvideService(pluginscdn.ProvideService(pCfg)))
-	validate := pipeline.ProvideValidationStage(pCfg, signature.NewValidator(signature.NewUnsignedAuthorizer(pCfg)), angularInspector)
+	validate := pipeline.ProvideValidationStage(pCfg, signature.NewValidator(signature.NewUnsignedAuthorizer(pCfg)), angularInspector, sigErrTracker)
 	initialize := pipeline.ProvideInitializationStage(pCfg, reg, lic, provider.ProvideService(coreRegistry), proc, &fakes.FakeOauthService{}, fakes.NewFakeRoleRegistry())
 	terminate, err := pipeline.ProvideTerminationStage(pCfg, reg, proc)
 	require.NoError(t, err)

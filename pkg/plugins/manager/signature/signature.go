@@ -6,7 +6,7 @@ import (
 )
 
 type Validator interface {
-	ValidateSignature(plugin *plugins.Plugin) *plugins.SignatureError
+	ValidateSignature(plugin *plugins.Plugin) error
 }
 
 type Validation struct {
@@ -25,7 +25,7 @@ func NewValidator(authorizer plugins.PluginLoaderAuthorizer) *Validation {
 	}
 }
 
-func (s *Validation) ValidateSignature(plugin *plugins.Plugin) *plugins.SignatureError {
+func (s *Validation) ValidateSignature(plugin *plugins.Plugin) error {
 	if plugin.Signature.IsValid() {
 		s.log.Debug("Plugin has valid signature", "id", plugin.ID)
 		return nil

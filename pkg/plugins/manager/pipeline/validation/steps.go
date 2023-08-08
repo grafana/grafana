@@ -38,14 +38,7 @@ func newPluginSignatureValidator(signatureValidator signature.Validator) *Plugin
 }
 
 func (v *PluginSignatureValidator) Validate(_ context.Context, p *plugins.Plugin) error {
-	err := v.signatureValidator.ValidateSignature(p)
-	if err != nil {
-		v.log.Warn("Skipping loading plugin due to problem with signature",
-			"pluginID", p.ID, "status", err.SignatureStatus)
-		p.SignatureError = err
-		return err
-	}
-	return nil
+	return v.signatureValidator.ValidateSignature(p)
 }
 
 type ModuleJSValidator struct {

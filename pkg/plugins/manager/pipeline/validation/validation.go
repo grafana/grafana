@@ -2,6 +2,7 @@ package validation
 
 import (
 	"context"
+	"errors"
 
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/config"
@@ -51,7 +52,7 @@ func (t *Validate) Validate(ctx context.Context, ps []*plugins.Plugin) ([]*plugi
 		stepFailed := false
 		for _, validate := range t.validateSteps {
 			err = validate(ctx, p)
-			if err != nil {
+			if err != nil && !errors.Is(err, nil) {
 				stepFailed = true
 				t.log.Error("Plugin verification failed", "pluginID", p.ID, "err", err)
 				break
