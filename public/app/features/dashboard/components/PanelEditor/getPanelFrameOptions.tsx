@@ -1,6 +1,5 @@
 import React from 'react';
 
-import { llms } from '@grafana/experimental';
 import { DataLinksInlineEditor, Input, RadioButtonGroup, Select, Switch, TextArea } from '@grafana/ui';
 import { getPanelLinksVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
 
@@ -9,8 +8,9 @@ import { RepeatRowSelect } from '../RepeatRowSelect/RepeatRowSelect';
 import { OptionsPaneCategoryDescriptor } from './OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from './OptionsPaneItemDescriptor';
 import { AiAssist } from './dashGPT/AiAssist';
+import { fetchData } from './dashGPT/utils';
 import { OptionPaneRenderProps } from './types';
-import { GeneratePayload, getGeneratePayload } from './utils';
+import { getGeneratePayload } from './utils';
 
 let llmReplyTitle = '';
 let llmReplyDescription = '';
@@ -45,24 +45,26 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
 
   // @TODO revisit this
   const setLlmReply = (reply: string, subject: string) => {
+    reply = reply.replace(/^"(.*)"$/, '$1');
+
     if (subject === 'title') {
       generatingTitle = reply !== llmReplyTitle;
 
-      llmReplyTitle = reply.replace(/^"(.*)"$/, '$1');
+      llmReplyTitle = reply;
       if (enabled && llmReplyTitle !== '') {
         setPanelTitle(llmReplyTitle);
       }
     } else {
       generatingDescription = reply !== llmReplyDescription;
 
-      llmReplyDescription = reply.replace(/^"(.*)"$/, '$1');
+      llmReplyDescription = reply;
       if (enabled && llmReplyDescription !== '') {
         setPanelDescription(llmReplyDescription);
       }
     }
 
     setTimeout(() => {
-      generatingTitle = false;
+      // generatingTitle = false;
       setPanelTitle(llmReplyTitle);
       if (titleHistory.indexOf(llmReplyTitle) === -1) {
         titleHistory.push(llmReplyTitle);
@@ -70,7 +72,7 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
     }, 1000);
 
     setTimeout(() => {
-      generatingDescription = false;
+      // generatingDescription = false;
       setPanelDescription(llmReplyDescription);
       if (descriptionHistory.indexOf(llmReplyDescription) === -1) {
         descriptionHistory.push(llmReplyDescription);
@@ -78,60 +80,10 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
     }, 3000);
   };
 
-  // TODO: move this to a separate file
-  const fetchData = async (payload: GeneratePayload, subject: string) => {
-    // Check if the LLM plugin is enabled and configured.
-    // If not, we won't be able to make requests, so return early.
-    const enabled = await llms.openai.enabled();
-    if (!enabled) {
-      return { enabled };
-    }
-
-    const getContent = () => {
-      if (subject === 'title') {
-        return (
-          'You are an expert in creating Grafana Panels.' +
-          'Your goal is to write short, descriptive, and concise panel titles for a given panel described by a JSON object' +
-          'The title should be shorter than 50 characters. '
-        );
-      }
-
-      return (
-        'You are an expert in creating Grafana Panels.' +
-        'Your goal is to write short, descriptive, and concise panel descriptions for a given panel described by a JSON object.' +
-        'The description should be shorter than 150 characters' +
-        'Describe what this panel might be monitoring and why it is useful.'
-      );
-    };
-
-    llms.openai
-      .streamChatCompletions({
-        model: 'gpt-4',
-        messages: [
-          {
-            role: 'system',
-            content: getContent(),
-          },
-          {
-            role: 'user',
-            content: JSON.stringify(payload),
-          },
-        ],
-      })
-      .pipe(
-        // Accumulate the stream content into a stream of strings, where each
-        // element contains the accumulated message so far.
-        llms.openai.accumulateContent()
-      )
-      .subscribe((response) => setLlmReply(response, subject));
-
-    return { enabled };
-  };
-
   const llmGenerate = (subject: string) => {
     const payload = getGeneratePayload(panel);
 
-    fetchData(payload, subject)
+    fetchData(payload, subject, setLlmReply)
       .then((response) => {
         enabled = response.enabled;
       })
