@@ -29,5 +29,6 @@ export function useDataSourceSettingsNav(pageId?: string) {
   return {
     navId: 'connections-datasources',
     pageNav,
+    dataSourceHeader: nav.dataSourceHeader,
   };
 }
