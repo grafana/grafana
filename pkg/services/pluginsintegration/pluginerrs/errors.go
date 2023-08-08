@@ -2,7 +2,6 @@ package pluginerrs
 
 import (
 	"context"
-	"errors"
 
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/log"
@@ -55,11 +54,8 @@ func newSignatureErrorRegistry() *SignatureErrorRegistry {
 	}
 }
 
-func (r *SignatureErrorRegistry) Record(_ context.Context, err *plugins.SignatureError) {
-	var signatureError *plugins.SignatureError
-	if errors.As(err, &signatureError) {
-		r.errs[signatureError.PluginID] = signatureError
-	}
+func (r *SignatureErrorRegistry) Record(_ context.Context, signatureErr *plugins.SignatureError) {
+	r.errs[signatureErr.PluginID] = signatureErr
 }
 
 func (r *SignatureErrorRegistry) Clear(_ context.Context, pluginID string) {
