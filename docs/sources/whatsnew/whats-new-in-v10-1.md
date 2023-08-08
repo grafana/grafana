@@ -92,6 +92,8 @@ When working with date and time data, it can be useful to have different time fo
 
 <!-- Brendan O'Handley -->
 
+_Generally available in all editions of Grafana_
+
 The Join by field transformation has a new option. This option, outer join (tabular), is a true outer join for tabular data (SQL-like data). Data can now be joined on a field value that is not distinct. This is different from the previous outer join which is optimized for time-series data where the join values are never repeated.
 
 ### Disconnect values in Time series, Trend, and State timeline visualizations
