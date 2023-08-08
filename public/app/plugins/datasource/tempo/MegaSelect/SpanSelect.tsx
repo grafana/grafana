@@ -35,5 +35,5 @@ export function SpanSelect(props: Props) {
     fetchOptions();
   }, [datasource]);
 
-  return <Select aria-label="Span" onChange={onSpanChange} value={query.megaSpan} options={options} width={20} />;
+  return <Select aria-label="Span" onChange={onSpanChange} value={query.megaSpan} options={options} width={40} />;
 }

@@ -451,7 +451,6 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
             panelsToRender.map((frame) => (
               <div key={JSON.stringify(frame.fields[1].labels)} className={styles.megaSelectItem}>
                 <MegaSelectContainer
-                  megaSelectView={megaSelectView}
                   actionsOverride={<></>}
                   data={[frame]}
                   height={300}

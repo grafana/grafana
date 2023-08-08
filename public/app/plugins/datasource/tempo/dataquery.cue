@@ -49,7 +49,7 @@ composableKinds: DataQuery: {
 					// Mega Select
 					view?:     string
 					megaSpan?: string
-					megaFilters?: [...string]
+					megaFilters?: [...#AdHocVariableFilter]
 				} @cuetsy(kind="interface") @grafana(TSVeneer="type")
 
 				// search = Loki search, nativeSearch = Tempo search for backwards compatibility
@@ -73,6 +73,13 @@ composableKinds: DataQuery: {
 					valueType?: string
 					// The scope of the filter, can either be unscoped/all scopes, resource or span
 					scope?: #TraceqlSearchScope
+				} @cuetsy(kind="interface")
+
+				#AdHocVariableFilter: {
+					key:       string
+					operator:  string
+					value:     string
+					condition: string
 				} @cuetsy(kind="interface")
 			}
 		}]

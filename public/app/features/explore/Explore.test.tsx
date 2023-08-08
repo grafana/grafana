@@ -97,6 +97,8 @@ const dummyProps: Props = {
   logsSample: { enabled: false },
   setSupplementaryQueryEnabled: jest.fn(),
   showMegaSelect: false,
+  megaSelectView: null,
+  megaSelectEndpoint: '',
 };
 
 jest.mock('@grafana/runtime/src/services/dataSourceSrv', () => {
