@@ -7,6 +7,7 @@ import store from 'app/core/store';
 
 import { PromVisualQuery } from '../../types';
 
+// @ts-ignore until we can get these added for icons
 import AI_Logo_color from './resources/AI_Logo_color.svg';
 import { initialState, stateSlice } from './state/state';
 
@@ -82,7 +83,7 @@ export const PromQail = (props: PromQailProps) => {
             </div>
             <div className={styles.nextButtonsWrapper}>
               <div className={styles.nextButtons}>
-                <Button fill="outline" variant="secondary" onClick={closeDrawer}>
+                <Button className={styles.leftButton} fill="outline" variant="secondary" onClick={closeDrawer}>
                   Cancel
                 </Button>
                 <Button fill="solid" variant="primary" onClick={() => dispatch(showStartingMessage(false))}>
@@ -93,18 +94,49 @@ export const PromQail = (props: PromQailProps) => {
           </>
         ) : (
           <>
+            {/* MAKE THIS TABLE RESPONSIVE */}
+            {/* FIT SUPER LONG METRICS AND LABELS IN HERE */}
             <div className={styles.textPadding}>Here are the metrics you have selected:</div>
             <div className={styles.metricContainer}>
-              <div>Metric: {state.query.metric}</div>
-              <div>Labels: {state.query.labels.toString()}</div>
+              <table className={styles.metricTable}>
+                <tr>
+                  <td className={styles.metricTableName}>metric</td>
+                  <td className={styles.metricTableValue}>{state.query.metric}</td>
+                  <td>
+                    <Button
+                      fill="outline"
+                      variant="secondary"
+                      onClick={closeDrawer}
+                      className={styles.metricTableButton}
+                    >
+                      Choose new metric
+                    </Button>
+                  </td>
+                </tr>
+                {state.query.labels.map((label, idx) => {
+                  const text = idx === 0 ? 'labels' : '';
+                  return (
+                    <tr key={`${label.label}-${idx}`}>
+                      <td>{text}</td>
+                      <td className={styles.metricTableValue}>{`${label.label}${label.op}${label.value}`}</td>
+                      <td> </td>
+                    </tr>
+                  );
+                })}
+              </table>
             </div>
 
             {!state.askForQueryHelp ? (
               <>
-                <div>Do you know what you want to query?</div>
+                <div className={styles.queryQuestion}>Do you know what you want to query?</div>
                 <div className={styles.nextButtonsWrapper}>
                   <div className={styles.nextButtons}>
-                    <Button fill="solid" variant="secondary" onClick={() => dispatch(askForQueryHelp(true))}>
+                    <Button
+                      className={styles.leftButton}
+                      fill="solid"
+                      variant="secondary"
+                      onClick={() => dispatch(askForQueryHelp(true))}
+                    >
                       No
                     </Button>
                     <Button fill="solid" variant="primary" onClick={closeDrawer}>
@@ -156,10 +188,9 @@ export const getStyles = (theme: GrafanaTheme2) => {
     `,
     nextButtons: css`
       margin-left: auto;
-
-      button {
-        margin-right: 10px;
-      }
+    `,
+    leftButton: css`
+      margin-right: 10px;
     `,
     dataList: css`
       padding: 0px 28px 28px 28px;
@@ -177,6 +208,23 @@ export const getStyles = (theme: GrafanaTheme2) => {
       margin-top: 10px;
       margin-bottom: 20px;
       border-radius: 8px 8px 8px 0;
+    `,
+    metricTable: css``,
+    metricTableName: css`
+      width: 15%;
+    `,
+    metricTableValue: css`
+      font-family: ${theme.typography.fontFamilyMonospace};
+      font-size: ${theme.typography.bodySmall.fontSize};
+      overflow: scroll;
+      max-width: 150px;
+    `,
+    metricTableButton: css`
+      margin-left: 10px;
+    `,
+    queryQuestion: css`
+      text-align: end;
+      padding: 8px 0;
     `,
   };
 };
