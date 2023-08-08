@@ -15,6 +15,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	legacymodels "github.com/grafana/grafana/pkg/services/alerting/models"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngModels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels_config"
@@ -100,13 +101,13 @@ func TestFilterReceiversForAlert(t *testing.T) {
 func TestCreateRoute(t *testing.T) {
 	tc := []struct {
 		name     string
-		channel  *notificationChannel
+		channel  *legacymodels.AlertNotification
 		recv     *apimodels.PostableApiReceiver
 		expected *apimodels.Route
 	}{
 		{
 			name:    "when a receiver is passed in, the route should regex match based on quoted name with continue=true",
-			channel: &notificationChannel{},
+			channel: &legacymodels.AlertNotification{},
 			recv:    createPostableApiReceiver("recv1", nil),
 			expected: &apimodels.Route{
 				Receiver:       "recv1",
@@ -119,7 +120,7 @@ func TestCreateRoute(t *testing.T) {
 		},
 		{
 			name:    "notification channel should be escaped for regex in the matcher",
-			channel: &notificationChannel{},
+			channel: &legacymodels.AlertNotification{},
 			recv:    createPostableApiReceiver(`. ^ $ * + - ? ( ) [ ] { } \ |`, nil),
 			expected: &apimodels.Route{
 				Receiver:       `. ^ $ * + - ? ( ) [ ] { } \ |`,
@@ -132,7 +133,7 @@ func TestCreateRoute(t *testing.T) {
 		},
 		{
 			name:    "when a channel has sendReminder=true, the route should use the frequency in repeat interval",
-			channel: &notificationChannel{SendReminder: true, Frequency: model.Duration(time.Duration(42) * time.Hour)},
+			channel: &legacymodels.AlertNotification{SendReminder: true, Frequency: time.Duration(42) * time.Hour},
 			recv:    createPostableApiReceiver("recv1", nil),
 			expected: &apimodels.Route{
 				Receiver:       "recv1",
@@ -145,7 +146,7 @@ func TestCreateRoute(t *testing.T) {
 		},
 		{
 			name:    "when a channel has sendReminder=false, the route should ignore the frequency in repeat interval and use DisabledRepeatInterval",
-			channel: &notificationChannel{SendReminder: false, Frequency: model.Duration(time.Duration(42) * time.Hour)},
+			channel: &legacymodels.AlertNotification{SendReminder: false, Frequency: time.Duration(42) * time.Hour},
 			recv:    createPostableApiReceiver("recv1", nil),
 			expected: &apimodels.Route{
 				Receiver:       "recv1",
@@ -184,28 +185,28 @@ func TestCreateRoute(t *testing.T) {
 	}
 }
 
-func createNotChannel(t *testing.T, uid string, id int64, name string) *notificationChannel {
+func createNotChannel(t *testing.T, uid string, id int64, name string) *legacymodels.AlertNotification {
 	t.Helper()
-	return &notificationChannel{Uid: uid, ID: id, Name: name, Settings: simplejson.New()}
+	return &legacymodels.AlertNotification{UID: uid, ID: id, Name: name, Settings: simplejson.New()}
 }
 
-func createNotChannelWithReminder(t *testing.T, uid string, id int64, name string, frequency model.Duration) *notificationChannel {
+func createNotChannelWithReminder(t *testing.T, uid string, id int64, name string, frequency time.Duration) *legacymodels.AlertNotification {
 	t.Helper()
-	return &notificationChannel{Uid: uid, ID: id, Name: name, SendReminder: true, Frequency: frequency, Settings: simplejson.New()}
+	return &legacymodels.AlertNotification{UID: uid, ID: id, Name: name, SendReminder: true, Frequency: frequency, Settings: simplejson.New()}
 }
 
 func TestCreateReceivers(t *testing.T) {
 	tc := []struct {
 		name            string
-		allChannels     []*notificationChannel
-		defaultChannels []*notificationChannel
+		allChannels     []*legacymodels.AlertNotification
+		defaultChannels []*legacymodels.AlertNotification
 		expRecvMap      map[uidOrID]*apimodels.PostableApiReceiver
 		expRecv         []channelReceiver
 		expErr          error
 	}{
 		{
 			name:        "when given notification channels migrate them to receivers",
-			allChannels: []*notificationChannel{createNotChannel(t, "uid1", int64(1), "name1"), createNotChannel(t, "uid2", int64(2), "name2")},
+			allChannels: []*legacymodels.AlertNotification{createNotChannel(t, "uid1", int64(1), "name1"), createNotChannel(t, "uid2", int64(2), "name2")},
 			expRecvMap: map[uidOrID]*apimodels.PostableApiReceiver{
 				"uid1":   createPostableApiReceiver("name1", []string{"name1"}),
 				"uid2":   createPostableApiReceiver("name2", []string{"name2"}),
@@ -225,7 +226,7 @@ func TestCreateReceivers(t *testing.T) {
 		},
 		{
 			name:        "when given notification channel contains double quote sanitize with underscore",
-			allChannels: []*notificationChannel{createNotChannel(t, "uid1", int64(1), "name\"1")},
+			allChannels: []*legacymodels.AlertNotification{createNotChannel(t, "uid1", int64(1), "name\"1")},
 			expRecvMap: map[uidOrID]*apimodels.PostableApiReceiver{
 				"uid1":   createPostableApiReceiver("name_1", []string{"name_1"}),
 				int64(1): createPostableApiReceiver("name_1", []string{"name_1"}),
@@ -239,7 +240,7 @@ func TestCreateReceivers(t *testing.T) {
 		},
 		{
 			name:        "when given notification channels collide after sanitization add short hash to end",
-			allChannels: []*notificationChannel{createNotChannel(t, "uid1", int64(1), "name\"1"), createNotChannel(t, "uid2", int64(2), "name_1")},
+			allChannels: []*legacymodels.AlertNotification{createNotChannel(t, "uid1", int64(1), "name\"1"), createNotChannel(t, "uid2", int64(2), "name_1")},
 			expRecvMap: map[uidOrID]*apimodels.PostableApiReceiver{
 				"uid1":   createPostableApiReceiver("name_1", []string{"name_1"}),
 				"uid2":   createPostableApiReceiver("name_1_dba13d", []string{"name_1_dba13d"}),
@@ -299,9 +300,9 @@ func TestMigrateNotificationChannelSecureSettings(t *testing.T) {
 		require.NoError(t, err)
 		return string(raw)
 	}
-	gen := func(nType string, fn func(channel *notificationChannel)) *notificationChannel {
-		not := &notificationChannel{
-			Uid:  "uid",
+	gen := func(nType string, fn func(channel *legacymodels.AlertNotification)) *legacymodels.AlertNotification {
+		not := &legacymodels.AlertNotification{
+			UID:  "uid",
 			ID:   1,
 			Name: "channel name",
 			Type: nType,
@@ -340,13 +341,13 @@ func TestMigrateNotificationChannelSecureSettings(t *testing.T) {
 
 	tc := []struct {
 		name    string
-		channel *notificationChannel
+		channel *legacymodels.AlertNotification
 		expRecv *apimodels.PostableGrafanaReceiver
 		expErr  error
 	}{
 		{
 			name: "when secure settings exist, migrate them to receiver secure settings",
-			channel: gen("slack", func(channel *notificationChannel) {
+			channel: gen("slack", func(channel *legacymodels.AlertNotification) {
 				channel.SecureSettings = map[string][]byte{
 					"token": []byte(encryptFn("secure token")),
 					"url":   []byte(encryptFn("secure url")),
@@ -364,7 +365,7 @@ func TestMigrateNotificationChannelSecureSettings(t *testing.T) {
 		},
 		{
 			name: "when some secure settings are available unencrypted in settings, migrate them to secureSettings and encrypt",
-			channel: gen("slack", func(channel *notificationChannel) {
+			channel: gen("slack", func(channel *legacymodels.AlertNotification) {
 				channel.SecureSettings = map[string][]byte{
 					"url": []byte(encryptFn("secure url")),
 				}
@@ -405,7 +406,7 @@ func TestMigrateNotificationChannelSecureSettings(t *testing.T) {
 				require.NoError(t, err)
 				t.Run(fmt.Sprintf(nType), func(t *testing.T) {
 					m := newTestMigration(t)
-					channel := gen(nType, func(channel *notificationChannel) {
+					channel := gen(nType, func(channel *legacymodels.AlertNotification) {
 						for _, key := range secureSettings {
 							channel.SecureSettings[key] = []byte(encryptFn("secure " + key))
 						}
@@ -437,7 +438,7 @@ func TestMigrateNotificationChannelSecureSettings(t *testing.T) {
 				t.Run(fmt.Sprintf(nType), func(t *testing.T) {
 					m := newTestMigration(t)
 
-					channel := gen(nType, func(channel *notificationChannel) {
+					channel := gen(nType, func(channel *legacymodels.AlertNotification) {
 						for _, key := range secureSettings {
 							// Key difference to above. We store the secure settings in the settings field and expect
 							// them to be migrated to secureSettings.
@@ -467,14 +468,14 @@ func TestCreateDefaultRouteAndReceiver(t *testing.T) {
 	tc := []struct {
 		name            string
 		amConfig        *apimodels.PostableUserConfig
-		defaultChannels []*notificationChannel
+		defaultChannels []*legacymodels.AlertNotification
 		expRecv         *apimodels.PostableApiReceiver
 		expRoute        *apimodels.Route
 		expErr          error
 	}{
 		{
 			name:            "when given multiple default notification channels migrate them to a single receiver",
-			defaultChannels: []*notificationChannel{createNotChannel(t, "uid1", int64(1), "name1"), createNotChannel(t, "uid2", int64(2), "name2")},
+			defaultChannels: []*legacymodels.AlertNotification{createNotChannel(t, "uid1", int64(1), "name1"), createNotChannel(t, "uid2", int64(2), "name2")},
 			expRecv:         createPostableApiReceiver("autogen-contact-point-default", []string{"name1", "name2"}),
 			expRoute: &apimodels.Route{
 				Receiver:       "autogen-contact-point-default",
@@ -485,9 +486,9 @@ func TestCreateDefaultRouteAndReceiver(t *testing.T) {
 		},
 		{
 			name: "when given multiple default notification channels migrate them to a single receiver with RepeatInterval set to be the minimum of all channel frequencies",
-			defaultChannels: []*notificationChannel{
-				createNotChannelWithReminder(t, "uid1", int64(1), "name1", model.Duration(42)),
-				createNotChannelWithReminder(t, "uid2", int64(2), "name2", model.Duration(100000)),
+			defaultChannels: []*legacymodels.AlertNotification{
+				createNotChannelWithReminder(t, "uid1", int64(1), "name1", time.Duration(42)),
+				createNotChannelWithReminder(t, "uid2", int64(2), "name2", time.Duration(100000)),
 			},
 			expRecv: createPostableApiReceiver("autogen-contact-point-default", []string{"name1", "name2"}),
 			expRoute: &apimodels.Route{
@@ -499,7 +500,7 @@ func TestCreateDefaultRouteAndReceiver(t *testing.T) {
 		},
 		{
 			name:            "when given no default notification channels create a single empty receiver for default",
-			defaultChannels: []*notificationChannel{},
+			defaultChannels: []*legacymodels.AlertNotification{},
 			expRecv:         createPostableApiReceiver("autogen-contact-point-default", nil),
 			expRoute: &apimodels.Route{
 				Receiver:       "autogen-contact-point-default",
@@ -510,7 +511,7 @@ func TestCreateDefaultRouteAndReceiver(t *testing.T) {
 		},
 		{
 			name:            "when given a single default notification channels don't create a new default receiver",
-			defaultChannels: []*notificationChannel{createNotChannel(t, "uid1", int64(1), "name1")},
+			defaultChannels: []*legacymodels.AlertNotification{createNotChannel(t, "uid1", int64(1), "name1")},
 			expRecv:         nil,
 			expRoute: &apimodels.Route{
 				Receiver:       "name1",
@@ -521,7 +522,7 @@ func TestCreateDefaultRouteAndReceiver(t *testing.T) {
 		},
 		{
 			name:            "when given a single default notification channel with SendReminder=true, use the channels Frequency as the RepeatInterval",
-			defaultChannels: []*notificationChannel{createNotChannelWithReminder(t, "uid1", int64(1), "name1", model.Duration(42))},
+			defaultChannels: []*legacymodels.AlertNotification{createNotChannelWithReminder(t, "uid1", int64(1), "name1", time.Duration(42))},
 			expRecv:         nil,
 			expRoute: &apimodels.Route{
 				Receiver:       "name1",
