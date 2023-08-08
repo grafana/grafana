@@ -16,13 +16,23 @@ type Props = {
   data?: DataFrame;
   stickyHeader?: boolean;
 
+  getTheme: () => GrafanaTheme2;
+
   // for interaction reporting
   onTableSymbolClick?: (symbol: string) => void;
   onViewSelected?: (view: string) => void;
   onTextAlignSelected?: (align: string) => void;
+  onTableSort?: (sort: string) => void;
 };
 
-const FlameGraphContainer = ({ data, onTableSymbolClick, onViewSelected, onTextAlignSelected }: Props) => {
+const FlameGraphContainer = ({
+  data,
+  onTableSymbolClick,
+  onViewSelected,
+  onTextAlignSelected,
+  onTableSort,
+  getTheme,
+}: Props) => {
   const [focusedItemData, setFocusedItemData] = useState<ClickedItemData>();
 
   const [rangeMin, setRangeMin] = useState(0);
@@ -122,6 +132,8 @@ const FlameGraphContainer = ({ data, onTableSymbolClick, onViewSelected, onTextA
                 sandwichItem={sandwichItem}
                 onSandwich={setSandwichItem}
                 onSearch={setSearch}
+                onTableSort={onTableSort}
+                getTheme={getTheme}
               />
             )}
 

@@ -2,8 +2,7 @@ import { css } from '@emotion/css';
 import React, { useState } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
-import { applyFieldOverrides, CoreApp, DataFrame, DataLinkClickEvent, Field, FieldType } from '@grafana/data';
-import { config, reportInteraction } from '@grafana/runtime';
+import { applyFieldOverrides, DataFrame, DataLinkClickEvent, Field, FieldType, GrafanaTheme2 } from '@grafana/data';
 import {
   IconButton,
   Table,
@@ -14,23 +13,24 @@ import {
   useStyles2,
 } from '@grafana/ui';
 
-import { TOP_TABLE_COLUMN_WIDTH } from '../constants';
 import { FlameGraphDataContainer } from '../FlameGraph/dataTransform';
+import { TOP_TABLE_COLUMN_WIDTH } from '../constants';
 import { TableData } from '../types';
 
 type Props = {
   data: FlameGraphDataContainer;
-  app: CoreApp;
   onSymbolClick: (symbol: string) => void;
   height?: number;
   search?: string;
   sandwichItem?: string;
   onSearch: (str: string) => void;
   onSandwich: (str?: string) => void;
+  onTableSort?: (sort: string) => void;
+  getTheme: () => GrafanaTheme2;
 };
 
 const FlameGraphTopTableContainer = React.memo(
-  ({ data, app, onSymbolClick, height, search, onSearch, sandwichItem, onSandwich }: Props) => {
+  ({ data, onSymbolClick, height, search, onSearch, sandwichItem, onSandwich, onTableSort, getTheme }: Props) => {
     const styles = useStyles2(getStyles);
 
     const [sort, setSort] = useState<TableSortByFieldState[]>([{ displayName: 'Self', desc: true }]);
@@ -43,17 +43,22 @@ const FlameGraphTopTableContainer = React.memo(
               return null;
             }
 
-            const frame = buildTableDataFrame(data, width, onSymbolClick, onSearch, onSandwich, search, sandwichItem);
+            const frame = buildTableDataFrame(
+              data,
+              width,
+              onSymbolClick,
+              onSearch,
+              onSandwich,
+              getTheme,
+              search,
+              sandwichItem
+            );
             return (
               <Table
                 initialSortBy={sort}
                 onSortByChange={(s) => {
                   if (s && s.length) {
-                    reportInteraction('grafana_flamegraph_table_sort_selected', {
-                      app,
-                      grafana_version: config.buildInfo.version,
-                      sort: s[0].displayName + '_' + (s[0].desc ? 'desc' : 'asc'),
-                    });
+                    onTableSort?.(s[0].displayName + '_' + (s[0].desc ? 'desc' : 'asc'));
                   }
                   setSort(s);
                 }}
@@ -77,6 +82,7 @@ function buildTableDataFrame(
   onSymbolClick: (str: string) => void,
   onSearch: (str: string) => void,
   onSandwich: (str?: string) => void,
+  getTheme: () => GrafanaTheme2,
   search?: string,
   sandwichItem?: string
 ): DataFrame {
@@ -133,7 +139,7 @@ function buildTableDataFrame(
       overrides: [],
     },
     replaceVariables: (value: string) => value,
-    theme: config.theme2,
+    theme: getTheme(),
   });
 
   return dataFrames[0];

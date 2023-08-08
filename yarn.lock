@@ -3858,6 +3858,8 @@ __metadata:
     "@testing-library/react": 14.0.0
     "@testing-library/user-event": 14.4.3
     "@types/lodash": 4.14.195
+    "@types/react": 18.2.15
+    "@types/react-virtualized-auto-sizer": 1.0.1
     "@types/tinycolor2": 1.4.3
     lodash: 4.17.21
     react: 18.2.0

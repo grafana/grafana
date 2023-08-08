@@ -11,7 +11,7 @@ import {
   HIDE_THRESHOLD,
   LABEL_THRESHOLD,
   PIXELS_PER_LEVEL,
-} from '../../constants';
+} from '../constants';
 import { ClickedItemData, ColorScheme, TextAlign } from '../types';
 
 import { getBarColorByPackage, getBarColorByValue } from './colors';
