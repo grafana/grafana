@@ -147,7 +147,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
               labels: r.metric,
             },
             {
-              name: 'Value',
+              name: r.metric.__name__,
               type: FieldType.number,
               values: r.values.map((value) => parseFloat(value[1])), // string to float
               config: { displayName: r.metric.__value__ },
@@ -160,7 +160,26 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
         transformedFrames.push(dataFrame);
       });
 
-      return { data: transformedFrames };
+      const framesByName = groupBy(transformedFrames, (frame) => frame.name);
+
+      console.log('groupedTransformed', framesByName);
+      let groupedFrames = [];
+      for (let name in framesByName) {
+        if (framesByName[name].length === 1) {
+          groupedFrames.push(framesByName[name][0]);
+        } else {
+          for (let i = 1; i < framesByName[name].length; i++) {
+            const mainFrame = framesByName[name][0];
+            const frame = framesByName[name][i];
+            mainFrame.fields.push(frame.fields[1]);
+          }
+          groupedFrames.push(framesByName[name][0]);
+        }
+      }
+
+      console.log('groupedFrames', groupedFrames);
+
+      return { data: groupedFrames };
     };
 
     return request.pipe(map((response) => transformFromTempoMegaSelect(response.data.data)));
