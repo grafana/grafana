@@ -49,8 +49,8 @@ We've added four new features to the Flame graph visualization:
 
 - **Sandwich view**: You can now show a sandwich view of any symbol in the flame graph. Sandwich view shows all the callers on the top and all the callees of the symbol on the bottom. This is useful when you want to see the context of a symbol.
 - **Switching color scheme**: You can now switch color scheme between a color gradient based on the relative value of a symbol or by the package name of a symbol.
-- **Switching symbol name alignment**: Symbols with long names may be hard to differentiate if they have the same prefix. This new option allows you to align the text to the left or right so that you can see the part of the symbol name that's important.
-- **Improved navigation**: You can also highlight a symbol or enable sandwich view for a symbol from the table. Also, a new status bar on top of the flame graph displays which views are enabled.
+- **Switching symbol name alignment**: Symbols with long names may be hard to differentiate if they have the same prefix. This new option allows you to align the text to the left or right so you can see the part of the symbol name that's important.
+- **Improved navigation**: You can highlight a symbol or enable sandwich view for a symbol from the table. Also, a new status bar on top of the flame graph displays which views are enabled.
 
 {{< video-embed src="/media/docs/grafana/panels-visualizations/screen-recording-grafana-10.1-flamegraph-whatsnew.mp4" >}}
 
@@ -94,7 +94,7 @@ When working with date and time data, it can be useful to have different time fo
 
 _Generally available in all editions of Grafana_
 
-The Join by field transformation has a new option. This option, outer join (tabular), is a true outer join for tabular data (SQL-like data). Data can now be joined on a field value that is not distinct. This is different from the previous outer join which is optimized for time-series data where the join values are never repeated.
+The Join by field transformation has a new option: outer join (tabular). This option is a true outer join for tabular (SQL-like) data. Data can now be joined on a field value that is not distinct. This is different from the previous outer join, which is optimized for time-series data where the join values are never repeated.
 
 ### Disconnect values in Time series, Trend, and State timeline visualizations
 
@@ -150,9 +150,9 @@ To learn more, refer to our [Create and manage reports documentation]({{< relref
 
 _Generally available in all editions of Grafana_
 
-We've improved the Loki query editor by adding a new **Step** editor field. This editor allows you to specify a value for the `step` parameter in Loki queries. You can use this parameter when making metric queries to Loki or when you want a matrix response from your queries.
+We've improved the Loki query editor by adding a new **Step** editor field. This field allows you to specify a value for the `step` parameter in Loki queries. You can use this parameter when making metric queries to Loki or when you want a matrix response from your queries.
 
-By default, the `step` parameter is set to the value of the `$__interval` variable. This variable is calculated based on the time range and the width of the graph (in pixels). If you want to learn more about the Loki `step` parameter, you can visit [the Loki step parameter documentation](/docs/loki/latest/api/#step-versus-interval).
+By default, the `step` parameter is set to the value of the `$__interval` variable. This variable is calculated based on the time range and the width of the graph (in pixels). To learn more about the Loki `step` parameter, refer to our [Loki step parameter documentation](/docs/loki/latest/api/#step-versus-interval).
 
 {{< figure src="/media/docs/grafana/data-sources/loki-step-editor.png" max-width="750px" caption="New Loki step editor" >}}
 
@@ -162,9 +162,9 @@ By default, the `step` parameter is set to the value of the `$__interval` variab
 
 _Generally available in all editions of Grafana_
 
-A new linking of Loki log lines in Explore allows you to quickly navigate to specific log entries for precise analysis. By clicking the **Copy shortlink** button for a log line, you can generate and copy a [short URL]({{< relref "../developers/http_api/short_url/" >}}) that provides direct access to the exact log entry within an absolute time range. When you open the link, Grafana automatically scrolls to the corresponding log line and highlights it, making it easy to identify and focus on the relevant information.
+New functionality for linking of Loki log lines in Explore allows you to quickly navigate to specific log entries for precise analysis. By clicking the **Copy shortlink** button for a log line, you can generate and copy a [short URL]({{< relref "../developers/http_api/short_url/" >}}) that provides direct access to the exact log entry within an absolute time range. When you open the link, Grafana automatically scrolls to the corresponding log line and highlights it, making it easy to identify and focus on the relevant information.
 
-{{< figure src="/media/docs/grafana/data-sources/loki-shortlink.png" max-width="750px" caption="New Loki step editor" >}}
+{{< figure src="/media/docs/grafana/data-sources/loki-shortlink.png" max-width="750px" caption="New Loki log line linking" >}}
 
 ### TraceQL response streaming in Tempo
 
@@ -245,7 +245,7 @@ The Elasticsearch query editor now allows convenient switching between logs, met
 
 _Generally available in all editions of Grafana_
 
-The Metrics explorer is a new feature that enhances metrics browsing in the Prometheus query builder. The Metrics explorer makes it easier for you to find the right metric, and get comfortable with PromQL. You can now explore metrics with additional metadata, perform fuzzy search on the metric name or description, and filter on the Prometheus type.
+The Metrics explorer is a new feature that enhances metrics browsing in the Prometheus query builder. The Metrics explorer makes it easier for you to find the right metric and get comfortable with PromQL. You can now explore metrics with additional metadata, perform fuzzy search on the metric name or description, and filter on the Prometheus type.
 
 {{< figure src="/media/docs/grafana/screenshot-grafana-10-1-metrics-explorer.png" max-width="750px" caption="Searching in Metrics explorer" >}}
 
@@ -271,9 +271,9 @@ This feature adds support for query caching of async queries in the Athena and R
 
 _Experimental in all editions of Grafana_
 
-The CloudWatch logs query editor is moving from being a Slate-based editor to a Monaco-based editor. This new Monaco-based editor will provide improved syntax highlighting, and auto-completion. To use the Monaco-based query editor, enable the `cloudWatchLogsMonacoEditor` feature toggle. If you’re using Grafana Cloud and would like to enable this feature, please contact customer support.
+The CloudWatch logs query editor is moving from being a Slate-based editor to a Monaco-based editor. This new Monaco-based editor provides improved syntax highlighting, and auto-completion. To use the Monaco-based query editor, enable the `cloudWatchLogsMonacoEditor` feature toggle. If you’re using Grafana Cloud and would like to enable this feature, please contact customer support.
 
-### InfluxDB Backend Mode
+### InfluxDB backend mode
 
 <!-- Ismail Simsek -->
 
@@ -302,7 +302,7 @@ _Generally available in all editions of Grafana_
 
 After a series of performance optimizations to log-related components, browsing log lines is faster than ever.
 
-### Logs: See more log lines in logs context
+### Logs: See more log lines in log context
 
 <!-- Gabor Farkas, Sven Grossmann -->
 
@@ -316,7 +316,7 @@ Log context allows you to view additional lines surrounding a specific log entry
 
 _Generally available in all editions of Grafana_
 
-For Elasticsearch metric queries in Explore, you can now see the sample of log lines that contributed to the displayed results. To see these logs, click the collapsed Logs sample panel under your graph or table panel. If you want to interact with the log lines or modify the log query, click the **Open logs in split view** button and the log query will be executed in the split view.
+For Elasticsearch metric queries in Explore, you can now see the sample of log lines that contributed to the displayed results. To see these logs, click the collapsed logs sample panel under your graph or table panel. If you want to interact with the log lines or modify the log query, click the **Open logs in split view** button and the log query will be executed in the split view.
 
 ### Panel plugins in Explore
 
@@ -340,7 +340,7 @@ We’ve made the following changes to alert rules.
 
 _This feature is for Grafana-managed alert rules only._
 
-Preview how your alert instances will be routed if they fire while you're creating your alert rule. You can view routing for each Alertmanager you have configured to receive Grafana-managed alerts, and if required, easily make adjustments to your custom labels to change the way your alert instances are routed.
+Preview how your alert instances will be routed if they fire while you're creating your alert rule. You can view routing for each Alertmanager you've configured to receive Grafana-managed alerts, and if required, easily make adjustments to your custom labels to change the way your alert instances are routed.
 
 {{< figure src="/media/docs/alerting/alert-routing-preview.png" max-width="750px" caption="Alert instance routing preview" >}}
 
@@ -352,11 +352,11 @@ You can switch to a data source-managed alert rule if your data source is config
 
 #### UI improvements
 
-- **Alert evaluation behavior**: New UI components for creating a folder and adding an evaluation group along with improved text and validation.
+- **Alert evaluation behavior**: New UI components for creating a folder and adding an evaluation group. along with improved text and validation.
 - **Alert Rule list page**: The process of creating recording rules (**More** drop-down) is now separate from Grafana-managed and data source-managed alert rules (**+New alert rule**)
   .
-- **Annotations display**: Adding a summary, description, and runbook URL as annotations are now optional. The dashboard and panel names are now also linked directly, making it easier to access.
-- **View YAML button**: Displays alert rule configuration in YAML format on the Grafana-managed alert rules form, as well as the Grafana-managed provisioned and non-provisioned Alert Rule detail view.
+- **Annotations display**: Adding a summary, description, and runbook URL as annotations are now optional. The dashboard and panel names are now also linked directly, making them easier to access.
+- **View YAML button**: Displays alert rule configuration in YAML format on the Grafana-managed alert rules form, as well as in the Grafana-managed provisioned and non-provisioned Alert Rule detail view.
 - **Queries and expressions**: Several improvements have been made to the display of queries and expressions, including making **Add expression** a drop-down and moving **Conditions** to the header.
 - **Min interval option**: Improves control over query costs and performance by allowing you to adjust the minimum resolution of the data used in your alerting queries.
 - **In-app guidance for alert rule creation**: Learn about how to create your alert rules interactively with in-app guidance for additional context and links out to our Alerting documentation.
@@ -391,11 +391,11 @@ This update facilitates file provisioning and maintenance for notification polic
 
 We’ve made the following changes to alert management.
 
-#### Support for timezones in mute timings
+#### Support for time zones in mute timings
 
 We've added support for different time zones and locations as well as a visual selector for week days, made improvements to loading and error handling, and provided better validation for time ranges.
 
-{{< figure src="/media/docs/alerting/timezone-support.png" max-width="750px" caption="Time zone support" >}}
+{{< figure src="/media/docs/alerting/timezone-support.png" max-width="600px" caption="Time zone support" >}}
 
 #### Label colors for alert instances
 
@@ -409,13 +409,13 @@ Labels are colored according to the label key, which makes it easier to track an
 
 _Generally available in all editions of Grafana_
 
-This change impacts `GitHub`,`Gitlab, `Okta`, and `Generic` OAuth.
+This change impacts `GitHub`, `GitLab`, `Okta`, and `Generic` OAuth.
 
-Previously, if no organization role mapping was found for a user when they connect using OAuth, Grafana didn’t update the user’s organization role.
+Previously, if no organization role mapping was found for a user when they connected using OAuth, Grafana didn’t update the user’s organization role.
 
 Now, on every login, if the `role_attribute_path` property doesn't return a role, then the user is assigned the role specified by the `auto_assign_org_role` option or the default role for the organization, which is Viewer by default.
 
-To avoid overriding manually set roles, enable the `skip_org_role_sync` option in the Grafana configuration for your OAuth provider before the user logs in for the first time.
+To avoid overriding manually set roles, enable the `skip_org_role_sync` option in the Grafana configuration for your OAuth provider before affected users log in for the first time.
 
 ### Prevent manual role updates for externally synced roles
 
@@ -444,7 +444,7 @@ _Generally available in all editions of Grafana_
 
 Grafana now supports GitLab OIDC through the `GitLab` OAuth provider in addition to the existing `GitLab` OAuth2 provider. This allows you to use GitLab OIDC to authenticate users in Grafana.
 
-This change also allows Grafana to reduce the access scope to only the required scopes for authentication and authorization instead
+This change also allows Grafana to reduce the access scope to only the required scopes for authentication and authorization, instead
 of full read API access.
 
 To learn how to migrate your GitLab OAuth2 setup to OIDC, refer to our [GitLab authentication documentation]({{< relref "../setup-grafana/configure-security/configure-authentication/gitlab/" >}}).
@@ -489,7 +489,7 @@ Learn more in our [Angular support deprecation documentation]({{< relref "../dev
 
 _Generally available in all editions of Grafana_
 
-Grafana now logs an error when provisioning data sources with invalid UIDs. A valid UID is a combination of a-z, A-Z, 0-9 (alphanumeric), `-` (dash), and `_` (underscore), with a maximum length of 40 characters.
+Grafana now logs an error when provisioning data sources with invalid UIDs. A valid UID is a combination of a-z, A-Z, 0-9 (alphanumericals), `-` (dashes), and `_` (underscores), with a maximum length of 40 characters.
 
 Provisioning data sources with invalid UIDs will be removed in future versions of Grafana, and will return an error instead.
 
