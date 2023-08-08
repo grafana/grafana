@@ -125,6 +125,15 @@ func (s *ServiceImpl) GetNavTree(c *contextmodel.ReqContext, prefs *pref.Prefere
 		})
 	}
 
+	treeRoot.AddSection(&navtree.NavLink{
+		Text:       "Grafana X",
+		Id:         "x",
+		SubTitle:   "eXtend the big tent",
+		Icon:       "x",
+		SortWeight: navtree.WeightExplore + 1,
+		Url:        s.cfg.AppSubURL + "/x",
+	})
+
 	if setting.ProfileEnabled && c.IsSignedIn {
 		treeRoot.AddSection(s.getProfileNode(c))
 	}

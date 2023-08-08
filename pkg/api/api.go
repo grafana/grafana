@@ -173,6 +173,9 @@ func (hs *HTTPServer) registerRoutes() {
 
 	r.Get("/explore", authorize(ac.EvalPermission(ac.ActionDatasourcesExplore)), hs.Index)
 
+	r.Get("/x", reqSignedIn, hs.Index)
+	r.Get("/x/:searchQuery", reqSignedIn, hs.Index)
+
 	r.Get("/playlists/", reqSignedIn, hs.Index)
 	r.Get("/playlists/*", reqSignedIn, hs.Index)
 	r.Get("/alerting/", reqSignedIn, hs.Index)
@@ -232,6 +235,7 @@ func (hs *HTTPServer) registerRoutes() {
 			userRoute.Get("/teams", routing.Wrap(hs.GetSignedInUserTeamList))
 
 			userRoute.Get("/stars", routing.Wrap(hs.starApi.GetStars))
+
 			// Deprecated: use /stars/dashboard/uid/:uid API instead.
 			// nolint:staticcheck
 			userRoute.Post("/stars/dashboard/:id", routing.Wrap(hs.starApi.StarDashboard))
@@ -293,6 +297,8 @@ func (hs *HTTPServer) registerRoutes() {
 			orgRoute.Get("/", authorize(ac.EvalPermission(ac.ActionOrgsRead)), routing.Wrap(hs.GetCurrentOrg))
 			orgRoute.Get("/quotas", authorize(ac.EvalPermission(ac.ActionOrgsQuotasRead)), routing.Wrap(hs.GetCurrentOrgQuotas))
 		})
+
+		apiRoute.Get("/x", routing.Wrap(hs.GetXServer))
 
 		if hs.Features.IsEnabled(featuremgmt.FlagStorage) {
 			// Will eventually be replaced with the 'object' route

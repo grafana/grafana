@@ -178,6 +178,14 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     {
+      path: '/x',
+      component: SafeDynamicImport(() => import('app/features/x/x')),
+    },
+    {
+      path: '/x/:searchQuery',
+      component: SafeDynamicImport(() => import(/* webpackChunkName: "XSearch"*/ 'app/features/x/x')),
+    },
+    {
       path: '/explore',
       pageClass: 'page-explore',
       roles: () =>

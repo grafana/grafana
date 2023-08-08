@@ -1,0 +1,17 @@
+{
+  "type": "panel",
+  "name": "Message",
+  "id": "message",
+  "skipDataQuery": true,
+  "hideFromList": true,
+  "info": {
+    "author": {
+      "name": "Grafana Labs",
+      "url": "https://grafana.com"
+    },
+    "logos": {
+      "small": "img/undefined.svg",
+      "large": "img/undefined.svg"
+    }
+  }
+}

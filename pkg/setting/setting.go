@@ -456,6 +456,10 @@ type Cfg struct {
 	DefaultLanguage string
 	HomePage        string
 
+	// X
+	XServer string
+	XToken  string
+
 	Quota QuotaSettings
 
 	AutoAssignOrg              bool
@@ -1067,6 +1071,10 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 	MinRefreshInterval = valueAsString(dashboards, "min_refresh_interval", "5s")
 
 	cfg.DefaultHomeDashboardPath = dashboards.Key("default_home_dashboard_path").MustString("")
+
+	x := iniFile.Section("x")
+	cfg.XServer = x.Key("server").MustString("")
+	cfg.XToken = x.Key("token").MustString("")
 
 	if err := readUserSettings(iniFile, cfg); err != nil {
 		return err

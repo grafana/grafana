@@ -19,8 +19,32 @@ export default function useActions(searchQuery: string) {
   // Load standard static actions
   useEffect(() => {
     const staticActionsResp = getStaticActions(navBarTree);
+    if (searchQuery.toLowerCase().includes('hackathon?')) {
+      staticActionsResp.push({
+        id: `x`,
+        name: `Grafana X`,
+        subtitle: ` - pushing Grafana to it's eXtreme`,
+        keywords: searchQuery,
+        section: `Introducing....`,
+        url: `x`,
+        parent: undefined,
+        priority: 1,
+      });
+    } else if (searchQuery.toLowerCase().startsWith('w') || searchQuery.toLowerCase().startsWith('hmm')) {
+    } else if (searchQuery) {
+      staticActionsResp.push({
+        id: `search-x-${searchQuery}`,
+        name: `${searchQuery} - Ask Grafana X`,
+        keywords: searchQuery,
+        section: 'Search',
+        url: `x/${searchQuery}`,
+        parent: undefined,
+        priority: 5,
+      });
+    }
+
     setNavTreeActions(staticActionsResp);
-  }, [navBarTree]);
+  }, [navBarTree, searchQuery]);
 
   // Load recent dashboards - we don't want them to reload when the nav tree changes
   useEffect(() => {
