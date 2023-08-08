@@ -64,7 +64,7 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
     }
 
     setTimeout(() => {
-      // generatingTitle = false;
+      generatingTitle = false;
       setPanelTitle(llmReplyTitle);
       if (titleHistory.indexOf(llmReplyTitle) === -1) {
         titleHistory.push(llmReplyTitle);
@@ -72,7 +72,7 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
     }, 1000);
 
     setTimeout(() => {
-      // generatingDescription = false;
+      generatingDescription = false;
       setPanelDescription(llmReplyDescription);
       if (descriptionHistory.indexOf(llmReplyDescription) === -1) {
         descriptionHistory.push(llmReplyDescription);
