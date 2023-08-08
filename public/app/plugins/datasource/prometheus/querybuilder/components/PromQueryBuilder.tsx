@@ -21,6 +21,7 @@ import { PromVisualQuery } from '../types';
 import { MetricsLabelsSection } from './MetricsLabelsSection';
 import { NestedQueryList } from './NestedQueryList';
 import { EXPLAIN_LABEL_FILTER_CONTENT } from './PromQueryBuilderExplained';
+import { PromQail } from './promQail/PromQail';
 
 export interface Props {
   query: PromVisualQuery;
@@ -46,19 +47,9 @@ export const PromQueryBuilder = React.memo<Props>((props) => {
 
   return (
     <>
-      {showDrawer && (
-        <Drawer onClose={() => setShowDrawer(false)}>
-          <div style={{ padding: '10px' }}>
-            <ul>
-              <li>this</li>
-              <li>is</li>
-              <li>a</li>
-              <li>list</li>
-              <li>of</li>
-              <li>menu</li>
-              <li>items</li>
-            </ul>
-          </div>
+      {prometheusPromQAIL && showDrawer && (
+        <Drawer closeOnMaskClick={false} onClose={() => setShowDrawer(false)}>
+          <PromQail query={query} closeDrawer={() => setShowDrawer(false)} />
         </Drawer>
       )}
       <EditorRow>
