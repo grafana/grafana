@@ -79,7 +79,7 @@ type DashboardFilter struct {
 }
 
 func (f *DashboardFilter) LeftJoin() string {
-	return f.join.string
+	return " dashboard AS folder ON dashboard.org_id = folder.org_id AND dashboard.folder_id = folder.id " + f.join.string
 }
 
 func (f *DashboardFilter) Where() (string, []interface{}) {
@@ -106,7 +106,7 @@ func (f *DashboardFilter) buildClauses(folderAction, dashboardAction string) {
 
 	if !useSelfContained {
 		// build join clause
-		query.WriteString("permission p ON (dashboard.uid = p.identifier OR folder.uid = p.identifier)")
+		query.WriteString("LEFT OUTER JOIN permission p ON (dashboard.uid = p.identifier OR folder.uid = p.identifier)")
 		f.join = clause{string: query.String()}
 
 		// recycle and reuse

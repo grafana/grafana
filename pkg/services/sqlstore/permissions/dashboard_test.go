@@ -766,9 +766,13 @@ func setupTest(t *testing.T, numFolders, numDashboards int, permissions []access
 		}
 
 		for i := range permissions {
+			kind, attribute, identifier := permissions[i].SplitScope()
 			permissions[i].RoleID = role.ID
 			permissions[i].Created = time.Now()
 			permissions[i].Updated = time.Now()
+			permissions[i].Kind = kind
+			permissions[i].Attribute = attribute
+			permissions[i].Identifier = identifier
 		}
 		if len(permissions) > 0 {
 			_, err = sess.InsertMulti(&permissions)

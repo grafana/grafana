@@ -2,7 +2,6 @@ package permissions_test
 
 import (
 	"context"
-	"fmt"
 	"strings"
 	"testing"
 
@@ -174,7 +173,6 @@ func queryWithFilter(store db.DB, filter *permissions.DashboardFilter) (int, err
 		where, whereParams := filter.Where()
 		query.WriteString(where)
 		params = append(params, whereParams...)
-		fmt.Println(query.String())
 		_, err := sess.SQL(query.String(), params...).Get(&result)
 		return err
 	})
