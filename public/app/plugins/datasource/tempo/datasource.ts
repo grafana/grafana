@@ -136,7 +136,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     const transformFromTempoMegaSelect = (response: MegaSelectResponse): DataQueryResponse => {
       let transformedFrames: DataFrame[] = [];
 
-      response.result.forEach((r) => {
+      response.result.slice(0, Math.min(response.result.length, 21)).forEach((r) => {
         const dataFrame: DataFrame = {
           fields: [
             {
