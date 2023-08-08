@@ -34,7 +34,7 @@ func (a *AccessControl) Evaluate(ctx context.Context, user identity.Requester, e
 	metrics.MAccessEvaluationCount.Inc()
 
 	if user == nil || user.IsNil() {
-		a.log.Warn("no user set for access control evaluation")
+		a.log.Warn("no entity set for access control evaluation")
 		return false, nil
 	}
 
