@@ -217,6 +217,7 @@ describe('CloneRuleEditor', function () {
             ruleSourceName: 'my-prom-ds',
             namespace: 'namespace-one',
             groupName: 'group1',
+            ruleName: 'First Ruler Rule',
             rulerRuleHash: hashRulerRule(originRule),
           }}
         />,
