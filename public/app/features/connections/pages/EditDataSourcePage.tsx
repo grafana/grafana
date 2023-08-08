@@ -18,7 +18,7 @@ export function EditDataSourcePage() {
   const { navId, pageNav } = useDataSourceSettingsNav();
 
   if (dataSourcePageHeader) {
-    return <DataSourceTabPage uid={uid} pageId={pageId} navId="connections-datasources" />;
+    return <DataSourceTabPage uid={uid} pageId={pageId} />;
   }
 
   return (
