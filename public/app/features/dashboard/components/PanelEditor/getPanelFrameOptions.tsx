@@ -7,7 +7,7 @@ import { RepeatRowSelect } from '../RepeatRowSelect/RepeatRowSelect';
 
 import { OptionsPaneCategoryDescriptor } from './OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from './OptionsPaneItemDescriptor';
-import { AiAssist } from './dashGPT/AiAssist';
+import { AiGenerate } from './dashGPT/AiGenerate';
 import { fetchData } from './dashGPT/utils';
 import { OptionPaneRenderProps } from './types';
 import { getGeneratePayload } from './utils';
@@ -45,7 +45,7 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
 
   // @TODO revisit this
   const setLlmReply = (reply: string, subject: string) => {
-    reply = reply.replace(/^"(.*)"$/, '$1');
+    reply = reply.replace(/"/g, '');
 
     if (subject === 'title') {
       generatingTitle = reply !== llmReplyTitle;
@@ -66,7 +66,7 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
     setTimeout(() => {
       generatingTitle = false;
       setPanelTitle(llmReplyTitle);
-      if (titleHistory.indexOf(llmReplyTitle) === -1) {
+      if (titleHistory.indexOf(llmReplyTitle) === -1 && llmReplyTitle !== '') {
         titleHistory.push(llmReplyTitle);
       }
     }, 1000);
@@ -74,7 +74,7 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
     setTimeout(() => {
       generatingDescription = false;
       setPanelDescription(llmReplyDescription);
-      if (descriptionHistory.indexOf(llmReplyDescription) === -1) {
+      if (descriptionHistory.indexOf(llmReplyDescription) === -1 && llmReplyDescription !== '') {
         descriptionHistory.push(llmReplyDescription);
       }
     }, 3000);
@@ -106,7 +106,7 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
           );
         },
         addon: (
-          <AiAssist
+          <AiGenerate
             text={generatingTitle ? 'Generating title' : 'Generate title'}
             onClick={() => llmGenerate('title')}
             history={titleHistory}
@@ -129,7 +129,7 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
           );
         },
         addon: (
-          <AiAssist
+          <AiGenerate
             text={generatingDescription ? 'Generating description' : 'Generate description'}
             onClick={() => llmGenerate('description')}
             history={descriptionHistory}
