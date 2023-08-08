@@ -2261,7 +2261,7 @@ Keys of alpha features to enable, separated by space.
 
 ## [feature_management]
 
-The options in this section configure the experimental Feature Toggle Admin Page feature, which is enabled using the `featureToggleAdminPage` feature toggle. **Use at your own risk.**
+The options in this section configure the experimental Feature Toggle Admin Page feature, which is enabled using the `featureToggleAdminPage` feature toggle. Grafana Labs offers support on a best-effort basis, and breaking changes might occur prior to the feature being made generally available.
 
 Please see [Configure feature toggles]({{< relref "/feature-toggles" >}}) for more information.
 
