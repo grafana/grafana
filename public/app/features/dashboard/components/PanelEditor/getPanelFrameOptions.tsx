@@ -43,7 +43,6 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
     onPanelConfigChange('description', description);
   };
 
-  // @TODO revisit this
   const setLlmReply = (reply: string, subject: string) => {
     if (reply.indexOf(SPECIAL_DONE_TOKEN) >= 0) {
       reply = reply.replace(SPECIAL_DONE_TOKEN, '');
@@ -52,11 +51,15 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
       if (subject === 'title') {
         generatingTitle = false;
         setPanelTitle(reply);
-        titleHistory.push(reply);
+        if (titleHistory.indexOf(reply) === -1 && reply !== '') {
+          titleHistory.push(reply);
+        }
       } else {
         generatingDescription = false;
         setPanelDescription(reply);
-        descriptionHistory.push(reply);
+        if (descriptionHistory.indexOf(reply) === -1 && reply !== '') {
+          descriptionHistory.push(reply);
+        }
       }
 
       return;

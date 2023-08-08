@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data/src';
-import { Button, IconButton, Toggletip, useStyles2 } from '@grafana/ui';
+import { Button, IconButton, TextArea, Toggletip, useStyles2 } from '@grafana/ui';
 
 interface Props {
   text: string;
@@ -31,6 +31,42 @@ export const AiGenerate = ({ text, onClick, history, applySuggestion }: Props) =
     console.log('retrySuggestion');
   };
 
+  const [assitsDescription, setAssitsDescription] = React.useState('');
+
+  const renderQuickSuggestions = () => {
+    return (
+      <div className={styles.quickSuggestionsWrapper}>
+        <Button>Even shorter</Button>
+        <Button>Improve it</Button>
+        <Button>More descriptive</Button>
+        <Button>More concise</Button>
+      </div>
+    );
+  };
+
+  let onSubmit = async () => {
+    console.log('on submit');
+    // const response = await onGeneratePanelWithAI(dashboard!, promptValue);
+    // const parsedResponse = JSON.parse(response);
+    // const panel = parsedResponse.panels[0];
+    // dashboard?.addPanel(panel);
+  };
+
+  const renderUserInput = () => {
+    return (
+      <div className={styles.userInputWrapper}>
+        <TextArea
+          className={styles.textArea}
+          placeholder="Tell us something"
+          width={200}
+          onChange={(e) => setAssitsDescription(e.currentTarget.value)}
+          value={assitsDescription}
+        />
+        <IconButton name="message" aria-label="message" onClick={onSubmit} />
+      </div>
+    );
+  };
+
   const renderHistory = () => {
     return (
       <div className={styles.history}>
@@ -45,6 +81,9 @@ export const AiGenerate = ({ text, onClick, history, applySuggestion }: Props) =
             </div>
           );
         })}
+
+        {history && history.length > 0 && renderQuickSuggestions()}
+        {history && history.length > 0 && renderUserInput()}
       </div>
     );
   };
@@ -79,5 +118,19 @@ const getStyles = (theme: GrafanaTheme2) => ({
   item: css`
     margin-right: 10px;
     font-size: ${theme.typography.size.md};
+  `,
+  quickSuggestionsWrapper: css`
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+  `,
+  userInputWrapper: css`
+    margin-top: 20px;
+    display: flex;
+  `,
+  textArea: css`
+    margin-right: 10px;
   `,
 });
