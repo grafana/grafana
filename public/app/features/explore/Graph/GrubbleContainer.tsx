@@ -14,7 +14,6 @@ import { ExploreGraphStyle } from 'app/types';
 
 import { storeGraphStyle } from '../state/utils';
 
-import { ExploreGraph } from './ExploreGraph';
 import { ExploreGraphLabel } from './ExploreGraphLabel';
 import { GrubbleGraph } from './GrubbleGraph';
 import { loadGraphStyle } from './utils';
