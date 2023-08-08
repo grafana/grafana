@@ -42,7 +42,7 @@ func canBeInstant(r *models.AlertRule) bool {
 	}
 
 	// Second query part should be and expression.
-	if expr.IsDataSource(r.Data[1].DatasourceUID) {
+	if !expr.IsDataSource(r.Data[1].DatasourceUID) {
 		return false
 	}
 
