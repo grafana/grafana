@@ -126,22 +126,40 @@ func BenchmarkFolderListAndSearch(b *testing.B) {
 			features:    featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders, featuremgmt.FlagPermissionsFilterRemoveSubquery),
 		},
 		{
-			desc:        "get root folders with nested folders feature disabled",
+			desc:        "get root folders with removed subquery enabled",
 			url:         "/api/folders?limit=5000",
 			expectedLen: withLimit(LEVEL0_FOLDER_NUM),
 			features:    featuremgmt.WithFeatures(featuremgmt.FlagPermissionsFilterRemoveSubquery),
 		},
 		{
-			desc:        "list all dashboards with nested folders feature disabled",
+			desc:        "list all dashboards with removed subquery enabled",
 			url:         "/api/search?type=dash-db&limit=5000",
 			expectedLen: withLimit(LEVEL0_FOLDER_NUM * LEVEL0_DASHBOARD_NUM),
 			features:    featuremgmt.WithFeatures(featuremgmt.FlagPermissionsFilterRemoveSubquery),
 		},
 		{
-			desc:        "search specific dashboard with nested folders feature disabled",
+			desc:        "search specific dashboard with removed subquery enabled",
 			url:         "/api/search?type=dash-db&query=dashboard_0_0",
 			expectedLen: 1,
 			features:    featuremgmt.WithFeatures(featuremgmt.FlagPermissionsFilterRemoveSubquery),
+		},
+		{
+			desc:        "get root folders with split scope enabled",
+			url:         "/api/folders?limit=5000",
+			expectedLen: withLimit(LEVEL0_FOLDER_NUM),
+			features:    featuremgmt.WithFeatures(featuremgmt.FlagSplitScopes),
+		},
+		{
+			desc:        "list all dashboards with split scope enabled",
+			url:         "/api/search?type=dash-db&limit=5000",
+			expectedLen: withLimit(LEVEL0_FOLDER_NUM * LEVEL0_DASHBOARD_NUM),
+			features:    featuremgmt.WithFeatures(featuremgmt.FlagSplitScopes),
+		},
+		{
+			desc:        "search specific dashboard with split scope enabled",
+			url:         "/api/search?type=dash-db&query=dashboard_0_0",
+			expectedLen: 1,
+			features:    featuremgmt.WithFeatures(featuremgmt.FlagSplitScopes),
 		},
 	}
 	for _, bm := range benchmarks {
@@ -279,18 +297,24 @@ func setupDB(b testing.TB) benchScenario {
 
 		roleID := int64(i%TEAM_NUM + 1)
 		permissions = append(permissions, accesscontrol.Permission{
-			RoleID:  roleID,
-			Action:  dashboards.ActionFoldersRead,
-			Scope:   dashboards.ScopeFoldersProvider.GetResourceScopeUID(f0.UID),
-			Updated: now,
-			Created: now,
+			RoleID:     roleID,
+			Action:     dashboards.ActionFoldersRead,
+			Scope:      dashboards.ScopeFoldersProvider.GetResourceScopeUID(f0.UID),
+			Updated:    now,
+			Created:    now,
+			Kind:       "folders",
+			Attribute:  "uid",
+			Identifier: f0.UID,
 		},
 			accesscontrol.Permission{
-				RoleID:  roleID,
-				Action:  dashboards.ActionDashboardsRead,
-				Scope:   dashboards.ScopeFoldersProvider.GetResourceScopeUID(f0.UID),
-				Updated: now,
-				Created: now,
+				RoleID:     roleID,
+				Action:     dashboards.ActionDashboardsRead,
+				Scope:      dashboards.ScopeFoldersProvider.GetResourceScopeUID(f0.UID),
+				Updated:    now,
+				Created:    now,
+				Kind:       "folders",
+				Attribute:  "uid",
+				Identifier: f0.UID,
 			},
 		)
 
