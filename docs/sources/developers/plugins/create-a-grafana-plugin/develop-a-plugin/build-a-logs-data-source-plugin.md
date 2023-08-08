@@ -50,17 +50,17 @@ Tell Grafana that your data source plugin can return log data, by adding `"logs"
 
 The log data frame should include following fields:
 
-| Field name     | Field type                                      | Info                                                                                                                                                                                                                                        |
-| -------------- | ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **timestamp**  | `time`                                          | Field with the timestamp, non nullable.                                                                                                                                                                                                     |
-| **body**       | `string`                                        | Field with the content of the log line content, non nullable.                                                                                                                                                                               |
-| **severity**   | `string`                                        | Represents the severity/level of the log line. If no severity field is found, consumers/client will decide the log level. More info about log level can be found [here](https://grafana.com/docs/grafana/latest/explore/logs-integration/). |
-| **id**         | `string`                                        | Unique identifier of the log line.                                                                                                                                                                                                          |
-| **attributes** | `json raw message` (Go) or `other` (Typescript) | This field represents additional attributes of the log line. Other systems may refer to this with different names, such as "Labels" in Loki. Its value should be represented with Record<string,any> type in javascript.                    |
+| Field name     | Field type                                      | Description                                                                                                                                                                                                                                   |
+| -------------- | ----------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **timestamp**  | `time`                                          | Timestamp, non-nullable.                                                                                                                                                                                                                      |
+| **body**       | `string`                                        | Content of the log line, non-nullable.                                                                                                                                                                                                        |
+| **severity**   | `string`                                        | Severity/level of the log line. If no severity field is found, consumers/client will decide the log level. More information about log levels, refer to [Logs integration](https://grafana.com/docs/grafana/latest/explore/logs-integration/). |
+| **id**         | `string`                                        | Unique identifier of the log line.                                                                                                                                                                                                            |
+| **attributes** | `json raw message` (Go) or `other` (TypeScript) | Additional attributes of the log line. Other systems may refer to this with different names, such as "Labels" in Loki. Represent its value as Record<string,any> type in JavaScript.                                                          |
 
 Logs data frame's `type` needs to be set to `type: DataFrameType.LogLines` in data frame's meta.
 
-Example of constructing a logs data frame in `Go`:
+**Example of constructing a logs data frame in Go:**
 
 ```go
 frame := data.NewFrame(
@@ -77,7 +77,7 @@ frame.SetMeta(&data.FrameMeta{
 })
 ```
 
-Example of constructing a logs data frame in `Typescript`:
+**Example of constructing a logs data frame in TypeScript:**
 
 ```ts
 const result = new MutableDataFrame({
@@ -100,19 +100,19 @@ const result = new MutableDataFrame({
 
 ## Enhance your logs data source plugin with optional features
 
+You can use the following optional features to enhance your logs data source plugin.
+
 ### Implement features that enhance log querying experience in Explore
 
-[Explore]({{< relref "../../../../explore" >}}) provides an excellent place for investigating incidents and troubleshooting using logs. If the data source produces log results, we highly recommend implementing the following APIs to empower your users to fully utilize the logs UI and its features within Explore.
+[Explore]({{< relref "../../../../explore" >}}) provides a useful interface for investigating incidents and troubleshooting logs. If the data source produces log results, we highly recommend implementing the following APIs to allow your users to get the most out of the logs UI and its features within Explore.
 
-This guide will walk you through the process of adding support for Explore features in a data source plugin through a seamless integration, maximizing the potential for logs analysis. By implementing these APIs, you can enhance the user experience and provide valuable insights through Explore's powerful log investigation capabilities.
+The following steps show the process for adding support for Explore features in a data source plugin through a seamless integration. Implement these APIs to enhance the user experience and take advantage of Explore's powerful log investigation capabilities.
 
 #### Show log results in Explore's Logs view
 
-> Must be implemented in the data frame as a meta attribute
+To ensure that your log results are displayed in an interactive Logs view, you must add a `meta` attribute to `preferredVisualisationType` in your log result data frame.
 
-To ensure that your log results are displayed in an interactive Logs view, add a `meta` attribute to `preferredVisualisationType` in your log result data frame.
-
-Example of constructing a data frame with specific meta information in `Go`:
+**Example in Go:**
 
 ```go
 frame.Meta = &data.FrameMeta{
@@ -120,7 +120,7 @@ frame.Meta = &data.FrameMeta{
 }
 ```
 
-Example of constructing a data frame with specific meta information in `Typescript`:
+**Example in TypeScript:**
 
 ```ts
 const result = new MutableDataFrame({
@@ -133,11 +133,12 @@ const result = new MutableDataFrame({
 
 #### Highlight searched words
 
-> Must be implemented in the data frame as a meta attribute
+{{% admonition type="note" %}} This feature must be implemented in the data frame as a meta attribute. {{%
+/admonition %}}
 
-The logs visualisation can [highlight specific words or strings]({{< relref "../../../../explore/logs-integration/#highlight-searched-words" >}}) in log entries. This feature is typically utilized for highlighting search terms, making it easier for users to locate and focus on relevant information in the logs. For the highlighting to work, search words need to be included in the data frame's meta information
+The logs visualization can [highlight specific words or strings]({{< relref "../../../../explore/logs-integration/#highlight-searched-words" >}}) in log entries. This feature is typically used for highlighting search terms, making it easier for users to locate and focus on relevant information in the logs. For the highlighting to work, you must include search words in the data frame's `meta` information.
 
-Example of constructing a data frame that includes searchWords in `Go`:
+**Example in Go:**
 
 ```go
 frame.Meta = &data.FrameMeta{
@@ -147,7 +148,7 @@ frame.Meta = &data.FrameMeta{
 }
 ```
 
-Example of constructing a data frame that includes searchWords in `Typescript`:
+**Example in TypeScript:**
 
 ```ts
 const result = new MutableDataFrame({
@@ -162,15 +163,16 @@ const result = new MutableDataFrame({
 
 #### Log result meta information
 
-> Must be implemented in the data frame as a meta attribute, or in the data frame as a field
+{{% admonition type="note" %}} This feature must be implemented in the data frame as a meta attribute, or in the data frame as a field. {{%
+/admonition %}}
 
 [Log result meta information]({{< relref "../../../../explore/logs-integration/#log-result-meta-information" >}}) can be used to communicate information about logs results to the user. The following information can be shared with the user:
 
-- **Count of received logs vs limit** - It displays the count of received logs compared to the specified limit. Data frames should have a "limit" a meta attribute with the number of requested log lines.
-- **Error**: Displays possible errors in your log results. Data frames should to have an "error" meta attribute.
+- **Count of received logs vs limit** - Displays the count of received logs compared to the specified limit. Data frames should set a limit with a meta attribute for the number of requested log lines.
+- **Error**: Displays possible errors in your log results. Data frames should to have an `error` in the `meta` attribute.
 - **Common labels**: Displays attributes present in the `attributes` data frame field that are the same for all displayed log lines. This feature is supported for data sources that produce log data frames with an attributes field. Refer to [Logs data frame format](#logs-data-frame-format) for more information.
 
-Example of constructing a data frame with specific meta information in `Go`:
+**Example in Go:**
 
 ```go
 frame.Meta = &data.FrameMeta{
@@ -181,7 +183,7 @@ frame.Meta = &data.FrameMeta{
 }
 ```
 
-Example of constructing a data frame with specific meta information in `Typescript`:
+**Example in TypeScript:**
 
 ```ts
 const result = new MutableDataFrame({
