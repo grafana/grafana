@@ -73,7 +73,7 @@ require (
 	github.com/hashicorp/go-hclog v1.5.0 // @grafana/plugins-platform-backend
 	github.com/hashicorp/go-plugin v1.4.9 // @grafana/plugins-platform-backend
 	github.com/hashicorp/go-version v1.6.0 // @grafana/backend-platform
-	github.com/influxdata/influxdb-client-go/v2 v2.6.0 // @grafana/observability-metrics
+	github.com/influxdata/influxdb-client-go/v2 v2.12.3 // @grafana/observability-metrics
 	github.com/influxdata/line-protocol v0.0.0-20210311194329-9aa0e372d097 // @grafana/grafana-app-platform-squad
 	github.com/jmespath/go-jmespath v0.4.0 // @grafana/backend-platform
 	github.com/json-iterator/go v1.1.12 // @grafana/backend-platform
