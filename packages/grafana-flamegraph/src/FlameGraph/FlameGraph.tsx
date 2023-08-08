@@ -20,7 +20,8 @@ import { css } from '@emotion/css';
 import React, { MouseEvent as ReactMouseEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useMeasure } from 'react-use';
 
-import { Icon, useStyles2 } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
+import { Icon } from '@grafana/ui';
 
 import { PIXELS_PER_LEVEL } from '../constants';
 import { ClickedItemData, ColorScheme, TextAlign } from '../types';
@@ -47,6 +48,7 @@ type Props = {
   onFocusPillClick: () => void;
   onSandwichPillClick: () => void;
   colorScheme: ColorScheme;
+  getTheme: () => GrafanaTheme2;
 };
 
 const FlameGraph = ({
@@ -64,8 +66,9 @@ const FlameGraph = ({
   onFocusPillClick,
   onSandwichPillClick,
   colorScheme,
+  getTheme,
 }: Props) => {
-  const styles = useStyles2(getStyles);
+  const styles = getStyles();
 
   const [levels, totalTicks, callersCount] = useMemo(() => {
     let levels = data.getLevels();
@@ -98,6 +101,7 @@ const FlameGraph = ({
     textAlign,
     totalTicks,
     colorScheme,
+    getTheme,
     focusedItemData
   );
 
@@ -174,6 +178,7 @@ const FlameGraph = ({
   return (
     <div className={styles.graph}>
       <FlameGraphMetadata
+        getTheme={getTheme}
         data={data}
         focusedItem={focusedItemData}
         sandwichedLabel={sandwichItem}
@@ -207,7 +212,13 @@ const FlameGraph = ({
           />
         </div>
       </div>
-      <FlameGraphTooltip position={mousePosition} item={tooltipItem} data={data} totalTicks={totalTicks} />
+      <FlameGraphTooltip
+        getTheme={getTheme}
+        position={mousePosition}
+        item={tooltipItem}
+        data={data}
+        totalTicks={totalTicks}
+      />
       {clickedItemData && (
         <FlameGraphContextMenu
           itemData={clickedItemData}

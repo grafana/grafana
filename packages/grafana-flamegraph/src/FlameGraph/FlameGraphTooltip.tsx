@@ -2,19 +2,20 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Portal, useStyles2, VizTooltipContainer } from '@grafana/ui';
+import { Portal, VizTooltipContainer } from '@grafana/ui';
 
 import { FlameGraphDataContainer, LevelItem } from './dataTransform';
 
 type Props = {
   data: FlameGraphDataContainer;
   totalTicks: number;
+  getTheme: () => GrafanaTheme2;
   position?: { x: number; y: number };
   item?: LevelItem;
 };
 
-const FlameGraphTooltip = ({ data, item, totalTicks, position }: Props) => {
-  const styles = useStyles2(getStyles);
+const FlameGraphTooltip = ({ data, item, totalTicks, position, getTheme }: Props) => {
+  const styles = getStyles(getTheme());
 
   if (!(item && position)) {
     return null;

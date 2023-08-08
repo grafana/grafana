@@ -2,7 +2,7 @@ import uFuzzy from '@leeoniya/ufuzzy';
 import { RefObject, useEffect, useMemo, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { colors, useTheme2 } from '@grafana/ui';
+import { colors } from '@grafana/ui';
 
 import {
   BAR_BORDER_WIDTH,
@@ -30,6 +30,7 @@ export function useFlameRender(
   textAlign: TextAlign,
   totalTicks: number,
   colorScheme: ColorScheme,
+  getTheme: () => GrafanaTheme2,
   focusedItemData?: ClickedItemData
 ) {
   const foundLabels = useMemo(() => {
@@ -50,7 +51,7 @@ export function useFlameRender(
   }, [search, data]);
 
   const ctx = useSetupCanvas(canvasRef, wrapperWidth, levels.length);
-  const theme = useTheme2();
+  const theme = getTheme();
 
   useEffect(() => {
     if (!ctx) {

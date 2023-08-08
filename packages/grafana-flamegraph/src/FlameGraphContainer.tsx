@@ -3,7 +3,6 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useMeasure } from 'react-use';
 
 import { DataFrame, GrafanaTheme2 } from '@grafana/data';
-import { useStyles2, useTheme2 } from '@grafana/ui';
 
 import FlameGraph from './FlameGraph/FlameGraph';
 import { FlameGraphDataContainer } from './FlameGraph/dataTransform';
@@ -45,7 +44,7 @@ const FlameGraphContainer = ({
   const [sandwichItem, setSandwichItem] = useState<string>();
   const [colorScheme, setColorScheme] = useState<ColorScheme>(ColorScheme.ValueBased);
 
-  const theme = useTheme2();
+  const theme = getTheme();
 
   const dataContainer = useMemo((): FlameGraphDataContainer | undefined => {
     if (!data) {
@@ -54,7 +53,7 @@ const FlameGraphContainer = ({
     return new FlameGraphDataContainer(data, theme);
   }, [data, theme]);
 
-  const styles = useStyles2(getStyles);
+  const styles = getStyles(theme);
 
   // If user resizes window with both as the selected view
   useEffect(() => {
@@ -139,6 +138,7 @@ const FlameGraphContainer = ({
 
             {selectedView !== SelectedView.TopTable && (
               <FlameGraph
+                getTheme={getTheme}
                 data={dataContainer}
                 rangeMin={rangeMin}
                 rangeMax={rangeMax}
@@ -168,6 +168,7 @@ const FlameGraphContainer = ({
 function getStyles(theme: GrafanaTheme2) {
   return {
     container: css({
+      label: 'container',
       height: '100%',
       display: 'flex',
       flex: '1 1 0',
@@ -176,6 +177,7 @@ function getStyles(theme: GrafanaTheme2) {
       gap: theme.spacing(1),
     }),
     body: css({
+      label: 'body',
       display: 'flex',
       flexGrow: 1,
       minHeight: 0,
