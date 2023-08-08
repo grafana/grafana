@@ -6,6 +6,7 @@ import { droneFrontItem } from './elements/droneFront';
 import { droneSideItem } from './elements/droneSide';
 import { droneTopItem } from './elements/droneTop';
 import { iconItem } from './elements/icon';
+import { lineItem } from './elements/line';
 import { metricValueItem } from './elements/metricValue';
 import { rectangleItem } from './elements/rectangle';
 import { serverItem } from './elements/server/server';
@@ -20,6 +21,7 @@ export const DEFAULT_CANVAS_ELEMENT_CONFIG: CanvasElementOptions = {
 };
 
 export const defaultElementItems = [
+  lineItem,
   metricValueItem, // default for now
   textItem,
   rectangleItem,
