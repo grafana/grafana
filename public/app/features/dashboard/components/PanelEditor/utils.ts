@@ -109,9 +109,7 @@ export const getGeneratePayload = (panel: PanelModel): GeneratePayload => {
     dashboardTitle: dashboard?.title,
     dashboardDescription: dashboard?.description,
     panelTitles: dashboard?.panels.map((panel) => panel.title).filter((title) => title && title !== '') ?? [],
-    panelDescriptions:
-      dashboard?.panels.map((panel) => panel.description).filter((description) => description && description !== '') ??
-      [],
+    panelDescriptions: dashboard?.panels.map((panel) => panel.description || '').filter(Boolean) ?? [],
     panelJson: panel.getSaveModel(),
   };
 };

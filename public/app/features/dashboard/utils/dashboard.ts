@@ -1,6 +1,8 @@
 import { chain, cloneDeep, defaults, find } from 'lodash';
+import { Observable, of } from 'rxjs';
 
 import { PanelPluginMeta } from '@grafana/data';
+import { llms } from '@grafana/experimental';
 import config from 'app/core/config';
 import { LS_PANEL_COPY_KEY } from 'app/core/constants';
 import store from 'app/core/store';
@@ -18,6 +20,36 @@ export function onCreateNewPanel(dashboard: DashboardModel, datasource?: string)
 
   dashboard.addPanel(newPanel);
   return newPanel.id;
+}
+
+export function onGenerateDashboardWithAI(dashboard: DashboardModel, description: string): Observable<string> {
+  return llms.openai
+    .streamChatCompletions({
+      model: 'gpt-3.5-turbo',
+      messages: [
+        {
+          role: 'system',
+          content: 'You are an API that only repond with JSON',
+        },
+        {
+          role: 'system',
+          content: 'Your goal is to generate a valid Grafana dashboard JSON with the provided requirements',
+        },
+        {
+          role: 'system',
+          content: 'DO NOT explain the dashboard, only answer with a valid JSON',
+        },
+        {
+          role: 'user',
+          content: description,
+        },
+      ],
+    })
+    .pipe(
+      // Accumulate the stream content into a stream of strings, where each
+      // element contains the accumulated message so far.
+      llms.openai.accumulateContent()
+    );
 }
 
 export function onCreateNewWidgetPanel(dashboard: DashboardModel, widgetType: string): number | undefined {

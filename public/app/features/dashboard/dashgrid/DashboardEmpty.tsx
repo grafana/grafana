@@ -4,10 +4,16 @@ import React from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config, locationService, reportInteraction } from '@grafana/runtime';
-import { Button, useStyles2, Text } from '@grafana/ui';
+import { Panel } from '@grafana/schema';
+import { Button, useStyles2, Text, TextArea, LoadingPlaceholder } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
 import { DashboardModel } from 'app/features/dashboard/state';
-import { onAddLibraryPanel, onCreateNewPanel, onCreateNewRow } from 'app/features/dashboard/utils/dashboard';
+import {
+  onAddLibraryPanel,
+  onCreateNewPanel,
+  onCreateNewRow,
+  onGenerateDashboardWithAI,
+} from 'app/features/dashboard/utils/dashboard';
 import { useDispatch, useSelector } from 'app/types';
 
 import { setInitialDatasource } from '../state/reducers';
@@ -21,47 +27,61 @@ const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
   const styles = useStyles2(getStyles);
   const dispatch = useDispatch();
   const initialDatasource = useSelector((state) => state.dashboard.initialDatasource);
+  const [assitsDescription, setAssitsDescription] = React.useState('');
+  const [assitsLoading, setAssitsLoading] = React.useState(false);
 
   return (
     <div className={styles.centeredContent}>
       <div className={cx(styles.centeredContent, styles.wrapper)}>
         {/* DashGPT */}
-        {/*<div className={cx(styles.containerBox, styles.centeredContent, styles.visualizationContainer)}>*/}
-        {/*  <div className={styles.headerBig}>*/}
-        {/*    <Text element="h1" textAlignment="center" weight="medium">*/}
-        {/*      DashGPT can create a dashboard for you*/}
-        {/*    </Text>*/}
-        {/*  </div>*/}
-        {/*  <div className={styles.bodyBig}>*/}
-        {/*    <Text element="p" textAlignment="center" color="secondary">*/}
-        {/*      Tell us what your dashboard is about - for example, &quot;I want a graph where I can see the network latency of my Kubernetes cluster.&quot;*/}
-        {/*    </Text>*/}
-        {/*  </div>*/}
-
-        {/*  <HorizontalGroup width='auto'>*/}
-        {/*    <Input*/}
-        {/*      width={60}*/}
-        {/*      defaultValue=""*/}
-        {/*      placeholder="Tell us something"*/}
-        {/*      onBlur={(e) => console.log(e.currentTarget.value)}*/}
-        {/*    />*/}
-        {/*    <Button*/}
-        {/*      size="md"*/}
-        {/*      icon="plus"*/}
-        {/*      data-testid={selectors.pages.AddDashboard.itemButton('Create new panel button')}*/}
-        {/*      onClick={() => {*/}
-        {/*        console.log('on click')*/}
-        {/*      }}*/}
-        {/*      disabled={!canCreate}*/}
-        {/*    >*/}
-        {/*      Generate dashboard*/}
-        {/*    </Button>*/}
-        {/*  </HorizontalGroup>*/}
-        {/*</div>*/}
+        <div className={cx(styles.containerBox, styles.centeredContent, styles.assistAIContainer)}>
+          <div className={styles.headerBig}>
+            <Text element="h1" textAlignment="center" weight="medium">
+              DashGPT can create a dashboard for you
+            </Text>
+          </div>
+          <div className={cx(styles.centeredContent, styles.bodyBig, styles.assistAIBody)}>
+            <Text element="p" textAlignment="center" color="secondary">
+              Tell us what your dashboard is about - for example, &quot;I want a graph where I can see the network
+              latency of my Kubernetes cluster.&quot;
+            </Text>
+            <TextArea
+              placeholder="Tell us something"
+              width={200}
+              onChange={(e) => setAssitsDescription(e.currentTarget.value)}
+              value={assitsDescription}
+            />
+            <Button
+              size="md"
+              icon="grafana"
+              data-testid={selectors.pages.AddDashboard.itemButton('Create new panel button')}
+              onClick={() => {
+                setAssitsLoading(true);
+                onGenerateDashboardWithAI(dashboard, assitsDescription).subscribe((res) => {
+                  let generatedDashboard = null;
+                  let newDashboardModel = null;
+                  try {
+                    generatedDashboard = JSON.parse(res)?.dashboard;
+                    newDashboardModel = new DashboardModel(generatedDashboard);
+                    setAssitsLoading(false);
+                  } catch (e) {}
+                  if (generatedDashboard?.panels) {
+                    generatedDashboard?.panels.forEach((panel: Panel) => {
+                      dashboard.addPanel(panel);
+                    });
+                  }
+                });
+              }}
+              disabled={!canCreate}
+            >
+              {assitsLoading ? <LoadingPlaceholder text="Generating response..." /> : 'Generate dashboard'}
+            </Button>
+          </div>
+        </div>
 
         <div className={cx(styles.containerBox, styles.centeredContent, styles.visualizationContainer)}>
           <div className={styles.headerBig}>
-            <Text element="h1" textAlignment="center" weight="medium">
+            <Text element="h2" textAlignment="center" weight="medium">
               <Trans i18nKey="dashboard.empty.add-visualization-header">
                 Start your new dashboard by adding a visualization
               </Trans>
@@ -76,8 +96,9 @@ const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
             </Text>
           </div>
           <Button
-            size="lg"
+            size="md"
             icon="plus"
+            fill="outline"
             data-testid={selectors.pages.AddDashboard.itemButton('Create new panel button')}
             onClick={() => {
               const id = onCreateNewPanel(dashboard, initialDatasource);
@@ -218,6 +239,22 @@ function getStyles(theme: GrafanaTheme2) {
       [theme.breakpoints.down('md')]: {
         flexDirection: 'column',
       },
+    }),
+    assistAIContainer: css({
+      label: 'assist-ai-container',
+      padding: theme.spacing.gridSize * 3,
+      flex: 1,
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+    }),
+    assistAIBody: css({
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: theme.spacing.gridSize * 2,
     }),
     widgetContainer: css({
       label: 'widget-container',
