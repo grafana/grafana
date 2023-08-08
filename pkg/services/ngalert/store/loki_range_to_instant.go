@@ -3,6 +3,8 @@ package store
 import (
 	"encoding/json"
 
+	"github.com/grafana/grafana/pkg/expr"
+	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
@@ -20,7 +22,7 @@ type dsType struct {
 }
 
 func (t dsType) isLoki() bool {
-	return t.DS.Type == "loki"
+	return t.DS.Type == datasources.DS_LOKI
 }
 
 func canBeInstant(r *models.AlertRule) bool {
@@ -47,8 +49,9 @@ func canBeInstant(r *models.AlertRule) bool {
 	if err := json.Unmarshal(r.Data[1].Model, &exprRaw); err != nil {
 		return false
 	}
-	// Second query part should be and expression, '-100' is the legacy way to define it.
-	if r.Data[1].DatasourceUID != "__expr__" && r.Data[1].DatasourceUID != "-100" {
+
+	// Second query part should be and expression.
+	if expr.IsDataSource(r.Data[1].DatasourceUID) {
 		return false
 	}
 
