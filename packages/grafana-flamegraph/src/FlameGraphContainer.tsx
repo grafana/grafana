@@ -31,6 +31,7 @@ const FlameGraphContainer = ({
   onTextAlignSelected,
   onTableSort,
   getTheme,
+  stickyHeader,
 }: Props) => {
   const [focusedItemData, setFocusedItemData] = useState<ClickedItemData>();
 
@@ -119,6 +120,7 @@ const FlameGraphContainer = ({
             showResetButton={Boolean(focusedItemData || sandwichItem)}
             colorScheme={colorScheme}
             onColorSchemeChange={setColorScheme}
+            stickyHeader={Boolean(stickyHeader)}
           />
 
           <div className={styles.body}>

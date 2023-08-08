@@ -22,7 +22,7 @@ type Props = {
   showResetButton: boolean;
   colorScheme: ColorScheme;
   onColorSchemeChange: (colorScheme: ColorScheme) => void;
-  stickyHeader?: boolean;
+  stickyHeader: boolean;
 };
 
 const FlameGraphHeader = ({
