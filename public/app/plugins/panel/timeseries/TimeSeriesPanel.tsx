@@ -13,6 +13,7 @@ import { ContextMenuPlugin } from './plugins/ContextMenuPlugin';
 import { ExemplarsPlugin, getVisibleLabels } from './plugins/ExemplarsPlugin';
 import { OutsideRangePlugin } from './plugins/OutsideRangePlugin';
 import { ThresholdControlsPlugin } from './plugins/ThresholdControlsPlugin';
+import { TimeMarkerPlugin } from './plugins/TimeMarkerPlugin';
 import { getPrepareTimeseriesSuggestion } from './suggestions';
 import { getTimezones, prepareGraphableFields, regenerateLinksSupplier } from './utils';
 
@@ -162,6 +163,7 @@ export const TimeSeriesPanel = ({
             )}
 
             <OutsideRangePlugin config={config} onChangeTimeRange={onChangeTimeRange} />
+            <TimeMarkerPlugin config={config} timeZone={timeZone} />
           </>
         );
       }}

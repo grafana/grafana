@@ -36,6 +36,20 @@ export class CopyPanelEvent extends BusEventWithPayload<PanelModel> {
   static type = 'copy-panel';
 }
 
+/**
+ * Called to manipulate a time marker
+ *
+ * @public
+ */
+export class TimeMarkerChangedEvent extends BusEventWithPayload<TimeMarkerChange> {
+  static type = 'time-marker-changed';
+}
+
+type TimeMarkerChange = {
+  id: string;
+  time: number | null;
+};
+
 // Internal singleton instance
 let singletonInstance: EventBus;
 
