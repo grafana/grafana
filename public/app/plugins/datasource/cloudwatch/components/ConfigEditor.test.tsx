@@ -5,6 +5,7 @@ import { Provider } from 'react-redux';
 
 import { AwsAuthType } from '@grafana/aws-sdk';
 import { PluginContextProvider, PluginMeta, PluginMetaInfo, PluginType } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { configureStore } from 'app/store/configureStore';
 
 import { CloudWatchSettings, setupMockedDataSource } from '../__mocks__/CloudWatchDataSource';
@@ -14,6 +15,7 @@ import { ConfigEditor, Props } from './ConfigEditor';
 
 const datasource = new CloudWatchDatasource(CloudWatchSettings);
 const loadDataSourceMock = jest.fn();
+
 jest.mock('app/features/plugins/datasource_srv', () => ({
   getDatasourceSrv: () => ({
     loadDatasource: loadDataSourceMock,
@@ -35,6 +37,11 @@ jest.mock('@grafana/runtime', () => ({
     put: putMock,
     get: getMock,
   }),
+  config: {
+    awsAssumeRoleEnabled: true,
+    featureToggles: {},
+    awsAllowedAuthProviders: [],
+  },
   getAppEvents: () => mockAppEvents,
 }));
 
@@ -107,9 +114,6 @@ const setup = (optionOverrides?: Partial<Props['options']>) => {
 
 describe('Render', () => {
   beforeEach(() => {
-    (window as any).grafanaBootData = {
-      settings: {},
-    };
     jest.resetAllMocks();
     putMock.mockImplementation(async () => ({ datasource: setupMockedDataSource().datasource }));
     getMock.mockImplementation(async () => ({ datasource: setupMockedDataSource().datasource }));
@@ -154,13 +158,16 @@ describe('Render', () => {
     });
   });
 
-  it('should show arn role field', async () => {
-    setup({
-      jsonData: {
-        authType: AwsAuthType.ARN,
-      },
-    });
+  it('should show arn role field if awsAssumeRoleEnabled feature flag is enabled', async () => {
+    config.awsAssumeRoleEnabled = true;
+    setup({});
     await waitFor(async () => expect(screen.getByLabelText('Assume Role ARN')).toBeInTheDocument());
+  });
+
+  it('should not show arn role field if awsAssumeRoleEnabled feature flag is disabled', async () => {
+    setup({});
+    config.awsAssumeRoleEnabled = false;
+    await waitFor(async () => expect(screen.queryByLabelText('Assume Role ARN')).not.toBeInTheDocument());
   });
 
   it('should display log group selector field', async () => {
