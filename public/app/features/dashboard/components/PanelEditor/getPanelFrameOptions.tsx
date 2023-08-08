@@ -31,6 +31,18 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
     isOpenDefault: true,
   });
 
+  const setPanelTitle = (title: string) => {
+    const input = document.getElementById('PanelFrameTitle') as HTMLInputElement;
+    input.value = title;
+    onPanelConfigChange('title', title);
+  };
+
+  const setPanelDescription = (description: string) => {
+    const input = document.getElementById('description-text-area') as HTMLInputElement;
+    input.value = description;
+    onPanelConfigChange('description', description);
+  };
+
   // @TODO revisit this
   const setLlmReply = (reply: string, subject: string) => {
     if (subject === 'title') {
@@ -38,20 +50,20 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
 
       llmReplyTitle = reply.replace(/^"(.*)"$/, '$1');
       if (enabled && llmReplyTitle !== '') {
-        onPanelConfigChange('title', llmReplyTitle);
+        setPanelTitle(llmReplyTitle);
       }
     } else {
       generatingDescription = reply !== llmReplyDescription;
 
       llmReplyDescription = reply.replace(/^"(.*)"$/, '$1');
       if (enabled && llmReplyDescription !== '') {
-        onPanelConfigChange('description', llmReplyDescription);
+        setPanelDescription(llmReplyDescription);
       }
     }
 
     setTimeout(() => {
       generatingTitle = false;
-      onPanelConfigChange('title', llmReplyTitle);
+      setPanelTitle(llmReplyTitle);
       if (titleHistory.indexOf(llmReplyTitle) === -1) {
         titleHistory.push(llmReplyTitle);
       }
@@ -59,7 +71,7 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
 
     setTimeout(() => {
       generatingDescription = false;
-      onPanelConfigChange('description', llmReplyDescription);
+      setPanelDescription(llmReplyDescription);
       if (descriptionHistory.indexOf(llmReplyDescription) === -1) {
         descriptionHistory.push(llmReplyDescription);
       }
@@ -146,7 +158,7 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
             text={generatingTitle ? 'Generating title' : 'Generate title'}
             onClick={() => llmGenerate('title')}
             history={titleHistory}
-            applySuggestion={(suggestion: string) => onPanelConfigChange('title', suggestion)}
+            applySuggestion={(suggestion: string) => setPanelTitle(suggestion)}
           />
         ),
       })
@@ -169,7 +181,7 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
             text={generatingDescription ? 'Generating description' : 'Generate description'}
             onClick={() => llmGenerate('description')}
             history={descriptionHistory}
-            applySuggestion={(suggestion: string) => onPanelConfigChange('description', suggestion)}
+            applySuggestion={(suggestion: string) => setPanelDescription(suggestion)}
           />
         ),
       })
