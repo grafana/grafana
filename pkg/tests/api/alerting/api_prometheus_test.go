@@ -743,17 +743,8 @@ func TestIntegrationPrometheusRulesPermissions(t *testing.T) {
 			err := resp.Body.Close()
 			require.NoError(t, err)
 		})
-		b, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
-		require.Equal(t, 200, resp.StatusCode)
-
-		require.JSONEq(t, `
-{
-	"status": "success",
-	"data": {
-		"groups": []
-	}
-}`, string(b))
+		require.Equal(t, 403, resp.StatusCode)
 	}
 }
 
