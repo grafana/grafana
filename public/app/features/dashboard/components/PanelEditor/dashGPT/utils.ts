@@ -2,6 +2,8 @@ import { llms } from '@grafana/experimental';
 
 import { GeneratePayload } from '../utils';
 
+export const SPECIAL_DONE_TOKEN = '~';
+
 export const fetchData = async (
   payload: GeneratePayload,
   subject: string,
@@ -19,7 +21,8 @@ export const fetchData = async (
       return (
         'You are an expert in creating Grafana Panels.' +
         'Your goal is to write short, descriptive, and concise panel titles for a given panel described by a JSON object' +
-        'The title should be shorter than 50 characters. '
+        'The title should be shorter than 50 characters. ' +
+        `When you are done with the title, write "${SPECIAL_DONE_TOKEN}".`
       );
     }
 
@@ -27,7 +30,8 @@ export const fetchData = async (
       'You are an expert in creating Grafana Panels.' +
       'Your goal is to write short, descriptive, and concise panel descriptions for a given panel described by a JSON object.' +
       'The description should be shorter than 150 characters' +
-      'Describe what this panel might be monitoring and why it is useful.'
+      'Describe what this panel might be monitoring and why it is useful.' +
+      `When you are done with the description, write "${SPECIAL_DONE_TOKEN}".`
     );
   };
 
