@@ -143,6 +143,14 @@ export function MegaSelectGraph({
       dataLinkPostProcessor,
     });
   }, [fieldConfigRegistry, data, timeZone, theme, styledFieldConfig, showAllTimeSeries, dataLinkPostProcessor]);
+  dataWithConfig.forEach((frame) => {
+    frame.fields.forEach((field) => {
+      field.config = {
+        ...field.config,
+        custom: { ...field.config.custom, lineWidth: 1 },
+      };
+    });
+  });
 
   const annotationsWithConfig = useMemo(() => {
     return applyFieldOverrides({
@@ -188,11 +196,13 @@ export function MegaSelectGraph({
       tooltip: { mode: tooltipDisplayMode, sort: SortOrder.None },
       legend: {
         displayMode: LegendDisplayMode.List,
-        showLegend: true,
+        // Remember the time is a field
+        showLegend: data[0].fields.length <= 5,
         placement: 'bottom',
         calcs: [],
       },
     }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [tooltipDisplayMode]
   );
 
@@ -213,6 +223,7 @@ export function MegaSelectGraph({
         </div>
       )}
       <PanelRenderer
+        fieldConfig={styledFieldConfig}
         data={{
           series: dataWithConfig,
           timeRange,

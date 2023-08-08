@@ -435,7 +435,6 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
             endpoint: megaSelectEndpoint,
             mega: true,
           }}
-          megaSelectView={megaSelectView}
           data={[getMegaSelect]}
           height={400}
           width={width}
