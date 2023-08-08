@@ -11,7 +11,6 @@ const (
 )
 
 type Requester interface {
-	GetCacheKey() (string, error)
 	GetIsGrafanaAdmin() bool
 	GetLogin() string
 	GetOrgID() int64
@@ -20,4 +19,8 @@ type Requester interface {
 	GetOrgRole() roletype.RoleType
 	GetNamespacedID() (string, string)
 	IsNil() bool
+
+	// Legacy
+	GetCacheKey() (string, error)
+	HasUniqueId() bool
 }

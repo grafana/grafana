@@ -24,7 +24,7 @@ func (f FakeService) GetUsageStats(ctx context.Context) map[string]interface{} {
 	return map[string]interface{}{}
 }
 
-func (f FakeService) GetUserPermissions(ctx context.Context, user *user.SignedInUser, options accesscontrol.Options) ([]accesscontrol.Permission, error) {
+func (f FakeService) GetUserPermissions(ctx context.Context, user identity.Requester, options accesscontrol.Options) ([]accesscontrol.Permission, error) {
 	return f.ExpectedPermissions, f.ExpectedErr
 }
 

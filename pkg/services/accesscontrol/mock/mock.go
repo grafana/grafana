@@ -140,7 +140,8 @@ func (m *Mock) Evaluate(ctx context.Context, us identity.Requester, evaluator ac
 
 // GetUserPermissions returns user permissions.
 // This mock return m.permissions unless an override is provided.
-func (m *Mock) GetUserPermissions(ctx context.Context, user *user.SignedInUser, opts accesscontrol.Options) ([]accesscontrol.Permission, error) {
+func (m *Mock) GetUserPermissions(ctx context.Context, usr identity.Requester, opts accesscontrol.Options) ([]accesscontrol.Permission, error) {
+	user := usr.(*user.SignedInUser)
 	m.Calls.GetUserPermissions = append(m.Calls.GetUserPermissions, []interface{}{ctx, user, opts})
 	// Use override if provided
 	if m.GetUserPermissionsFunc != nil {

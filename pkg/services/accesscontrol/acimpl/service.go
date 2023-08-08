@@ -97,7 +97,7 @@ func (s *Service) GetUsageStats(_ context.Context) map[string]interface{} {
 }
 
 // GetUserPermissions returns user permissions based on built-in roles
-func (s *Service) GetUserPermissions(ctx context.Context, user *user.SignedInUser, options accesscontrol.Options) ([]accesscontrol.Permission, error) {
+func (s *Service) GetUserPermissions(ctx context.Context, user identity.Requester, options accesscontrol.Options) ([]accesscontrol.Permission, error) {
 	timer := prometheus.NewTimer(metrics.MAccessPermissionsSummary)
 	defer timer.ObserveDuration()
 
@@ -120,13 +120,17 @@ func (s *Service) getUserPermissions(ctx context.Context, user identity.Requeste
 	if namespace != authn.NamespaceUser &&
 		namespace != authn.NamespaceServiceAccount &&
 		namespace != identity.NamespaceRenderService {
-		// TOFIX: return error
 		return permissions, nil
 	}
 
 	userID, err := strconv.ParseInt(identifier, 10, 64)
 	if err != nil {
 		return nil, err
+	}
+
+	if userID == 0 {
+		s.log.Warn("user ID is 0, skipping DB lookup")
+		return permissions, nil
 	}
 
 	dbPermissions, err := s.store.GetUserPermissions(ctx, accesscontrol.GetUserPermissionsQuery{
@@ -143,7 +147,7 @@ func (s *Service) getUserPermissions(ctx context.Context, user identity.Requeste
 	return append(permissions, dbPermissions...), nil
 }
 
-func (s *Service) getCachedUserPermissions(ctx context.Context, user *user.SignedInUser, options accesscontrol.Options) ([]accesscontrol.Permission, error) {
+func (s *Service) getCachedUserPermissions(ctx context.Context, user identity.Requester, options accesscontrol.Options) ([]accesscontrol.Permission, error) {
 	key, err := permissionCacheKey(user)
 	if err != nil {
 		return nil, err
