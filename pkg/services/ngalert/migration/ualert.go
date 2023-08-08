@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -52,22 +53,32 @@ type migration struct {
 	seenUIDs uidSet
 	silences map[int64][]*pb.MeshSilence
 
-	store         db.DB
-	ruleStore     RuleStore
-	alertingStore AlertingStore
+	store             db.DB
+	ruleStore         RuleStore
+	alertingStore     AlertingStore
+	encryptionService secrets.Service
 }
 
-func newMigration(log log.Logger, cfg *setting.Cfg, store db.DB, ruleStore RuleStore, alertingStore AlertingStore, dialect migrator.Dialect) *migration {
+func newMigration(
+	log log.Logger,
+	cfg *setting.Cfg,
+	store db.DB,
+	ruleStore RuleStore,
+	alertingStore AlertingStore,
+	dialect migrator.Dialect,
+	encryptionService secrets.Service,
+) *migration {
 	return &migration{
 		// We deduplicate for case-insensitive matching in MySQL-compatible backend flavours because they use case-insensitive collation.
-		seenUIDs:      uidSet{set: make(map[string]struct{}), caseInsensitive: dialect.SupportEngine()},
-		silences:      make(map[int64][]*pb.MeshSilence),
-		log:           log,
-		dialect:       dialect,
-		cfg:           cfg,
-		store:         store,
-		ruleStore:     ruleStore,
-		alertingStore: alertingStore,
+		seenUIDs:          uidSet{set: make(map[string]struct{}), caseInsensitive: dialect.SupportEngine()},
+		silences:          make(map[int64][]*pb.MeshSilence),
+		log:               log,
+		dialect:           dialect,
+		cfg:               cfg,
+		store:             store,
+		ruleStore:         ruleStore,
+		alertingStore:     alertingStore,
+		encryptionService: encryptionService,
 	}
 }
 
@@ -322,22 +333,9 @@ func (m *migration) validateAlertmanagerConfig(config *apimodels.PostableUserCon
 				}
 			)
 
-			// decryptFunc represents the legacy way of decrypting data. Before the migration, we don't need any new way,
-			// given that the previous alerting will never support it.
-			decryptFunc := func(_ context.Context, sjd map[string][]byte, key string, fallback string) string {
-				if value, ok := sjd[key]; ok {
-					decryptedData, err := util.Decrypt(value, setting.SecretKey)
-					if err != nil {
-						m.log.Warn("unable to decrypt key '%s' for %s receiver with uid %s, returning fallback.", key, gr.Type, gr.UID)
-						return fallback
-					}
-					return string(decryptedData)
-				}
-				return fallback
-			}
 			_, err = alertingNotify.BuildReceiverConfiguration(context.Background(), &alertingNotify.APIReceiver{
 				GrafanaIntegrations: alertingNotify.GrafanaIntegrations{Integrations: []*alertingNotify.GrafanaIntegrationConfig{cfg}},
-			}, decryptFunc)
+			}, m.encryptionService.GetDecryptedValue)
 			if err != nil {
 				return err
 			}

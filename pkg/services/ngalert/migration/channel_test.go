@@ -1,6 +1,7 @@
 package migration
 
 import (
+	"context"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -288,15 +289,15 @@ func TestCreateReceivers(t *testing.T) {
 }
 
 func TestMigrateNotificationChannelSecureSettings(t *testing.T) {
-	encryptFn := func(data string) string {
+	legacyEncryptFn := func(data string) string {
 		raw, err := util.Encrypt([]byte(data), setting.SecretKey)
 		require.NoError(t, err)
 		return string(raw)
 	}
-	decryptFn := func(data string) string {
+	decryptFn := func(data string, m *migration) string {
 		decoded, err := base64.StdEncoding.DecodeString(data)
 		require.NoError(t, err)
-		raw, err := util.Decrypt(decoded, setting.SecretKey)
+		raw, err := m.encryptionService.Decrypt(context.Background(), decoded)
 		require.NoError(t, err)
 		return string(raw)
 	}
@@ -349,8 +350,8 @@ func TestMigrateNotificationChannelSecureSettings(t *testing.T) {
 			name: "when secure settings exist, migrate them to receiver secure settings",
 			channel: gen("slack", func(channel *legacymodels.AlertNotification) {
 				channel.SecureSettings = map[string][]byte{
-					"token": []byte(encryptFn("secure token")),
-					"url":   []byte(encryptFn("secure url")),
+					"token": []byte(legacyEncryptFn("secure token")),
+					"url":   []byte(legacyEncryptFn("secure url")),
 				}
 			}),
 			expRecv: genExpSlack(nil),
@@ -367,7 +368,7 @@ func TestMigrateNotificationChannelSecureSettings(t *testing.T) {
 			name: "when some secure settings are available unencrypted in settings, migrate them to secureSettings and encrypt",
 			channel: gen("slack", func(channel *legacymodels.AlertNotification) {
 				channel.SecureSettings = map[string][]byte{
-					"url": []byte(encryptFn("secure url")),
+					"url": []byte(legacyEncryptFn("secure url")),
 				}
 				channel.Settings.Set("token", "secure token")
 			}),
@@ -390,7 +391,7 @@ func TestMigrateNotificationChannelSecureSettings(t *testing.T) {
 				require.NotEqual(t, tt.expRecv, recv) // Make sure they were actually encrypted at first.
 			}
 			for k, v := range recv.SecureSettings {
-				recv.SecureSettings[k] = decryptFn(v)
+				recv.SecureSettings[k] = decryptFn(v, m)
 			}
 			require.Equal(t, tt.expRecv, recv)
 		})
@@ -408,7 +409,7 @@ func TestMigrateNotificationChannelSecureSettings(t *testing.T) {
 					m := newTestMigration(t)
 					channel := gen(nType, func(channel *legacymodels.AlertNotification) {
 						for _, key := range secureSettings {
-							channel.SecureSettings[key] = []byte(encryptFn("secure " + key))
+							channel.SecureSettings[key] = []byte(legacyEncryptFn("secure " + key))
 						}
 					})
 					recv, err := m.createNotifier(channel)
@@ -422,7 +423,7 @@ func TestMigrateNotificationChannelSecureSettings(t *testing.T) {
 					}
 					require.Len(t, recv.SecureSettings, len(secureSettings))
 					for _, key := range secureSettings {
-						require.Equal(t, "secure "+key, decryptFn(recv.SecureSettings[key]))
+						require.Equal(t, "secure "+key, decryptFn(recv.SecureSettings[key], m))
 					}
 				})
 			}
@@ -456,7 +457,7 @@ func TestMigrateNotificationChannelSecureSettings(t *testing.T) {
 					}
 					require.Len(t, recv.SecureSettings, len(secureSettings))
 					for _, key := range secureSettings {
-						require.Equal(t, "secure "+key, decryptFn(recv.SecureSettings[key]))
+						require.Equal(t, "secure "+key, decryptFn(recv.SecureSettings[key], m))
 					}
 				})
 			}

@@ -29,18 +29,3 @@ func (s SecureJsonData) Decrypt() map[string]string {
 	}
 	return decrypted
 }
-
-// GetEncryptedJsonData returns map where all keys are encrypted.
-func GetEncryptedJsonData(sjd map[string]string) SecureJsonData {
-	encrypted := make(SecureJsonData)
-	for key, data := range sjd {
-		encryptedData, err := util.Encrypt([]byte(data), setting.SecretKey)
-		if err != nil {
-			seclogger.Error(err.Error())
-			os.Exit(1)
-		}
-
-		encrypted[key] = encryptedData
-	}
-	return encrypted
-}

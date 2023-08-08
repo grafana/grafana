@@ -19,6 +19,7 @@ import (
 	legacymodels "github.com/grafana/grafana/pkg/services/alerting/models"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/secrets"
 )
 
 const (
@@ -193,7 +194,7 @@ func (m *migration) createNotifier(c *legacymodels.AlertNotification) (*apimodel
 		return nil, err
 	}
 
-	settings, secureSettings, err := migrateSettingsToSecureSettings(c.Type, c.Settings, c.SecureSettings)
+	settings, secureSettings, err := m.migrateSettingsToSecureSettings(c.Type, c.Settings, c.SecureSettings)
 	if err != nil {
 		return nil, err
 	}
@@ -424,7 +425,7 @@ var secureKeysToMigrate = map[string][]string{
 // Some settings were migrated from settings to secure settings in between.
 // See https://grafana.com/docs/grafana/latest/installation/upgrading/#ensure-encryption-of-existing-alert-notification-channel-secrets.
 // migrateSettingsToSecureSettings takes care of that.
-func migrateSettingsToSecureSettings(chanType string, settings *simplejson.Json, secureSettings SecureJsonData) (*simplejson.Json, map[string]string, error) {
+func (m *migration) migrateSettingsToSecureSettings(chanType string, settings *simplejson.Json, secureSettings SecureJsonData) (*simplejson.Json, map[string]string, error) {
 	keys := secureKeysToMigrate[chanType]
 	newSecureSettings := secureSettings.Decrypt()
 	cloneSettings := simplejson.New()
@@ -447,10 +448,21 @@ func migrateSettingsToSecureSettings(chanType string, settings *simplejson.Json,
 		}
 	}
 
-	encryptedData := GetEncryptedJsonData(newSecureSettings)
-	for k, v := range encryptedData {
-		newSecureSettings[k] = base64.StdEncoding.EncodeToString(v)
+	err = m.encryptSecureSettings(newSecureSettings)
+	if err != nil {
+		return nil, nil, err
 	}
 
 	return cloneSettings, newSecureSettings, nil
+}
+
+func (m *migration) encryptSecureSettings(secureSettings map[string]string) error {
+	for key, value := range secureSettings {
+		encryptedData, err := m.encryptionService.Encrypt(context.Background(), []byte(value), secrets.WithoutScope())
+		if err != nil {
+			return fmt.Errorf("failed to encrypt secure settings: %w", err)
+		}
+		secureSettings[key] = base64.StdEncoding.EncodeToString(encryptedData)
+	}
+	return nil
 }
