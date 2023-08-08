@@ -375,7 +375,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
     );
   }
 
-  renderMegaSelectPanels(width: number, megaSelectView: string) {
+  renderMegaSelectPanels(width: number, megaSelectView: string, megaSelectEndpoint: string) {
     const { graphResult, absoluteRange, timeZone, queryResponse, theme } = this.props;
     const styles = getStyles(theme);
 
@@ -419,17 +419,22 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
     //@todo just grabbing first timeseries as megaSelect for now
     const megaSummaryIndex = graphResultClone.findIndex((df) => df.name === 'mega-summary');
     const getMegaSelect = graphResultClone.splice(megaSummaryIndex, 1)[0];
+
+    // Filter the number of panels to render
     const panelsToRender = graphResultClone.slice(0, 20);
 
     if (getMegaSelect && getMegaSelect.fields?.length) {
       getMegaSelect.length = getMegaSelect.fields[0].values.length;
     }
 
-    console.log('frames to viz', { mega: getMegaSelect, other: graphResultClone });
-
     return (
       <div className={styles.megaSelectWrapper}>
         <MegaSelectContainer
+          options={{
+            view: megaSelectView,
+            endpoint: megaSelectEndpoint,
+            mega: true,
+          }}
           megaSelectView={megaSelectView}
           data={[getMegaSelect]}
           height={400}
@@ -459,6 +464,11 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
                   splitOpenFn={this.onSplitOpen('graph')}
                   loadingState={queryResponse.state}
                   eventBus={this.graphEventBus}
+                  options={{
+                    view: megaSelectView,
+                    endpoint: megaSelectEndpoint,
+                    mega: false,
+                  }}
                 />
               </div>
             ))}
@@ -596,6 +606,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
       showLogsSample,
       showMegaSelect,
       megaSelectView,
+      megaSelectEndpoint,
     } = this.props;
     const { openDrawer } = this.state;
     const styles = getStyles(theme);
@@ -668,7 +679,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
                           {showLogsSample && <ErrorBoundaryAlert>{this.renderLogsSamplePanel()}</ErrorBoundaryAlert>}
                           {showMegaSelect && graphResult && (
                             <ErrorBoundaryAlert>
-                              {this.renderMegaSelectPanels(width, megaSelectView)}
+                              {this.renderMegaSelectPanels(width, megaSelectView, megaSelectEndpoint)}
                             </ErrorBoundaryAlert>
                           )}
                           {showCustom && <ErrorBoundaryAlert>{this.renderCustom(width)}</ErrorBoundaryAlert>}
@@ -736,8 +747,12 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
   // We want to show logs sample only if there are no log results and if there is already graph or table result
   const showLogsSample = !!(logsSample.dataProvider !== undefined && !logsResult && (graphResult || tableResult));
   const showMegaSelect = item.queries.some((query) => query.queryType === 'megaSelect');
+
+  const query = item.queries.find((query) => query.queryType === 'megaSelect');
   //@ts-ignore
-  const megaSelectView = item.queries.find((query) => query.queryType === 'megaSelect')?.view ?? '';
+  const megaSelectView = query?.view ?? '';
+  //@ts-ignore
+  const megaSelectEndpoint = query?.megaSpan.replace('http://', '') ?? '';
 
   return {
     datasourceInstance,
@@ -764,6 +779,7 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     showLogsSample,
     showMegaSelect,
     megaSelectView,
+    megaSelectEndpoint,
   };
 }
 

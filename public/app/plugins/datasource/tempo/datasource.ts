@@ -137,7 +137,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
       let transformedFrames: DataFrame[] = [];
 
       // We want to limit the number of viz more than the number of dataframes
-      response.result.slice(0, Math.min(response.result.length, 1000)).forEach((r) => {
+      response.result.forEach((r) => {
         const dataFrame: DataFrame = {
           fields: [
             {
