@@ -8,12 +8,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
-const (
-	grafanaCloudLogs          = "grafanacloud-logs"
-	grafanaCloudUsageInsights = "grafanacloud-usage-insights"
-	grafanaCloudStateHistory  = "grafanacloud-loki-alert-state-history"
-)
-
 // DSType can be used to check the datasource type if it's set in the model.
 type dsType struct {
 	DS struct {
@@ -38,10 +32,7 @@ func canBeInstant(r *models.AlertRule) bool {
 	// We can ignore the error here, the query just won't be optimized.
 	_ = json.Unmarshal(r.Data[0].Model, &t)
 
-	if r.Data[0].DatasourceUID != grafanaCloudLogs &&
-		r.Data[0].DatasourceUID != grafanaCloudUsageInsights &&
-		r.Data[0].DatasourceUID != grafanaCloudStateHistory &&
-		!t.isLoki() {
+	if !t.isLoki() {
 		return false
 	}
 

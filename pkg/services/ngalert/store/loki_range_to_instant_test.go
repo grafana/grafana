@@ -121,7 +121,7 @@ func createMigrateableLokiRule(t *testing.T, muts ...func(*models.AlertRule)) *m
 			{
 				RefID:         "A",
 				QueryType:     "range",
-				DatasourceUID: grafanaCloudLogs,
+				DatasourceUID: "grafanacloud-logs",
 				Model: []byte(`{
 					"datasource": {
 						"type": "loki",
