@@ -127,14 +127,15 @@ It extends [BaseDimensionConfig](#basedimensionconfig).
 
 ### Placement
 
-| Property | Type   | Required | Default | Description |
-|----------|--------|----------|---------|-------------|
-| `bottom` | number | No       |         |             |
-| `height` | number | No       |         |             |
-| `left`   | number | No       |         |             |
-| `right`  | number | No       |         |             |
-| `top`    | number | No       |         |             |
-| `width`  | number | No       |         |             |
+| Property   | Type   | Required | Default | Description |
+|------------|--------|----------|---------|-------------|
+| `bottom`   | number | No       |         |             |
+| `height`   | number | No       |         |             |
+| `left`     | number | No       |         |             |
+| `right`    | number | No       |         |             |
+| `rotation` | number | No       |         |             |
+| `top`      | number | No       |         |             |
+| `width`    | number | No       |         |             |
 
 ### Options
 

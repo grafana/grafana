@@ -99,6 +99,7 @@ export class Scene {
         return;
       }
       this.moveable.draggable = !open;
+      this.moveable.rotatable = true;
     });
 
     this.panel = panel;
@@ -379,6 +380,7 @@ export class Scene {
     this.moveable = new Moveable(this.div!, {
       draggable: allowChanges && !this.editModeEnabled.getValue(),
       resizable: allowChanges,
+      rotatable: allowChanges,
       ables: [dimensionViewable, constraintViewable(this), settingsViewable(this)],
       props: {
         dimensionViewable: allowChanges,
@@ -509,6 +511,28 @@ export class Scene {
 
           targetedElement.setPlacementFromConstraint();
         }
+      })
+      .on('rotateStart', (event) => {
+        this.ignoreDataUpdate = true;
+        this.setNonTargetPointerEvents(event.target, true);
+      })
+      .on('rotate', (event) => {
+        const targetedElement = this.findElementByTarget(event.target);
+        if (targetedElement) {
+          targetedElement.applyRotate(event);
+        }
+
+        console.log(event);
+      })
+      .on('rotateEnd', (event) => {
+        const targetedElement = this.findElementByTarget(event.target);
+        if (targetedElement) {
+          targetedElement.setPlacementFromConstraint();
+        }
+
+        this.moved.next(Date.now());
+        this.ignoreDataUpdate = false;
+        this.setNonTargetPointerEvents(event.target, false);
       });
 
     let targets: Array<HTMLElement | SVGElement> = [];

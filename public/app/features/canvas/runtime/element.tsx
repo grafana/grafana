@@ -1,5 +1,5 @@
 import React, { CSSProperties } from 'react';
-import { OnDrag, OnResize } from 'react-moveable/declaration/types';
+import { OnDrag, OnResize, OnRotate } from 'react-moveable/declaration/types';
 
 import { LayerElement } from 'app/core/components/Layers/types';
 import {
@@ -182,8 +182,10 @@ export class ElementState implements LayerElement {
         style.width = '';
         break;
     }
-
-    style.transform = `translate(${translate[0]}, ${translate[1]})`;
+    // Apply rotation (positive clockwise)
+    style.transform = `translate(${translate[0]}, ${translate[1]}) rotate(${placement.rotation ?? 0}deg)`;
+    // TODO determine rotation origin
+    //style.transformOrigin = `bottom left`;
     this.options.placement = placement;
     this.sizeStyle = style;
     if (this.div) {
@@ -285,7 +287,10 @@ export class ElementState implements LayerElement {
         placement.right = (relativeRight / (parentContainer?.width ?? width)) * 100;
         break;
     }
-
+    // Apply rotation
+    if (this.options.placement?.rotation) {
+      placement.rotation = this.options.placement?.rotation;
+    }
     this.options.placement = placement;
 
     this.applyLayoutStylesToDiv();
@@ -423,6 +428,12 @@ export class ElementState implements LayerElement {
     }
 
     event.target.style.transform = event.transform;
+  };
+
+  applyRotate = (event: OnRotate) => {
+    event.target.style.transform = event.transform;
+    const placement = this.options.placement!;
+    placement.rotation = event.rotation;
   };
 
   // kinda like:
