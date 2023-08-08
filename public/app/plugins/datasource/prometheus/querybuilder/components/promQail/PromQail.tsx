@@ -2,17 +2,27 @@ import { css } from '@emotion/css';
 import React, { useReducer } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Button, Checkbox, Drawer, useTheme2 } from '@grafana/ui';
+import { Button, Checkbox, Drawer, Input, Spinner, useTheme2 } from '@grafana/ui';
 import store from 'app/core/store';
 
 import { PromVisualQuery } from '../../types';
 
 // @ts-ignore until we can get these added for icons
 import AI_Logo_color from './resources/AI_Logo_color.svg';
+import { callOpenAI } from './state/helpers';
 import { initialState, stateSlice } from './state/state';
 
 // actions to update the state
-const { showStartingMessage, showExplainer, indicateCheckbox, askForQueryHelp } = stateSlice.actions;
+const {
+  showStartingMessage,
+  showExplainer,
+  indicateCheckbox,
+  askForQueryHelp,
+  knowWhatYouWantToQuery,
+  promptKnowWhatToSeeWithMetric,
+  aiIsLoading,
+  giveMeHistoricalQueries,
+} = stateSlice.actions;
 
 export type PromQailProps = {
   query: PromVisualQuery;
@@ -99,33 +109,36 @@ export const PromQail = (props: PromQailProps) => {
             <div className={styles.textPadding}>Here are the metrics you have selected:</div>
             <div className={styles.metricContainer}>
               <table className={styles.metricTable}>
-                <tr>
-                  <td className={styles.metricTableName}>metric</td>
-                  <td className={styles.metricTableValue}>{state.query.metric}</td>
-                  <td>
-                    <Button
-                      fill="outline"
-                      variant="secondary"
-                      onClick={closeDrawer}
-                      className={styles.metricTableButton}
-                    >
-                      Choose new metric
-                    </Button>
-                  </td>
-                </tr>
-                {state.query.labels.map((label, idx) => {
-                  const text = idx === 0 ? 'labels' : '';
-                  return (
-                    <tr key={`${label.label}-${idx}`}>
-                      <td>{text}</td>
-                      <td className={styles.metricTableValue}>{`${label.label}${label.op}${label.value}`}</td>
-                      <td> </td>
-                    </tr>
-                  );
-                })}
+                <tbody>
+                  <tr>
+                    <td className={styles.metricTableName}>metric</td>
+                    <td className={styles.metricTableValue}>{state.query.metric}</td>
+                    <td>
+                      <Button
+                        fill="outline"
+                        variant="secondary"
+                        onClick={closeDrawer}
+                        className={styles.metricTableButton}
+                      >
+                        Choose new metric
+                      </Button>
+                    </td>
+                  </tr>
+                  {state.query.labels.map((label, idx) => {
+                    const text = idx === 0 ? 'labels' : '';
+                    return (
+                      <tr key={`${label.label}-${idx}`}>
+                        <td>{text}</td>
+                        <td className={styles.metricTableValue}>{`${label.label}${label.op}${label.value}`}</td>
+                        <td> </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
               </table>
             </div>
 
+            {/* Ask if you know what you want to query? */}
             {!state.askForQueryHelp ? (
               <>
                 <div className={styles.queryQuestion}>Do you know what you want to query?</div>
@@ -135,18 +148,101 @@ export const PromQail = (props: PromQailProps) => {
                       className={styles.leftButton}
                       fill="solid"
                       variant="secondary"
-                      onClick={() => dispatch(askForQueryHelp(true))}
+                      onClick={() => {
+                        dispatch(askForQueryHelp(true));
+                        dispatch(knowWhatYouWantToQuery(false));
+                      }}
                     >
                       No
                     </Button>
-                    <Button fill="solid" variant="primary" onClick={closeDrawer}>
+                    <Button
+                      fill="solid"
+                      variant="primary"
+                      onClick={() => {
+                        dispatch(askForQueryHelp(true));
+                        dispatch(knowWhatYouWantToQuery(true));
+                      }}
+                    >
                       Yes
                     </Button>
                   </div>
                 </div>
               </>
+            ) : state.knowWhatYouWantToQuery ? (
+              <>
+                <div className={styles.textPadding}>What kind of data do you want to see with your metric?</div>
+                <div className={styles.secondaryText}>
+                  <div>You do not need to enter in a metric or a label again in the prompt.</div>
+                  <div>Example: I want to monitor request latency, not errors.</div>
+                </div>
+                <div className={styles.textPadding}>
+                  <Input
+                    value={state.promptKnowWhatToSeeWithMetric}
+                    spellCheck={false}
+                    placeholder="Enter prompt"
+                    onChange={(e) => {
+                      const val = e.currentTarget.value;
+                      dispatch(promptKnowWhatToSeeWithMetric(val));
+                    }}
+                  />
+                </div>
+                {!state.aiIsLoading && !state.giveMeAIQueries ? (
+                  <>
+                    <div className={styles.nextButtonsWrapper}>
+                      <div className={styles.nextButtons}>
+                        <Button
+                          className={styles.leftButton}
+                          fill="outline"
+                          variant="secondary"
+                          onClick={() => {
+                            dispatch(askForQueryHelp(false));
+                            dispatch(knowWhatYouWantToQuery(false));
+                          }}
+                        >
+                          Cancel
+                        </Button>
+                        <Button
+                          className={styles.leftButton}
+                          fill="outline"
+                          variant="secondary"
+                          onClick={() => {
+                            // JUST SUGGEST QUERIES AND SHOW THE LIST
+                            dispatch(knowWhatYouWantToQuery(false));
+                            dispatch(giveMeHistoricalQueries(false));
+                            // will need to show some loading while fetching historical queries
+                          }}
+                        >
+                          Suggest queries instead
+                        </Button>
+                        <Button
+                          fill="solid"
+                          variant="primary"
+                          onClick={() => {
+                            dispatch(aiIsLoading(true));
+                            callOpenAI(dispatch, state.promptKnowWhatToSeeWithMetric);
+                          }}
+                        >
+                          Submit
+                        </Button>
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    {state.aiIsLoading ? (
+                      <>
+                        <div className={styles.loadingMessageContainer}>
+                          Waiting for OpenAI <Spinner className={styles.spinnerPlacement} />
+                        </div>
+                      </>
+                    ) : (
+                      <>LIST OF SUGGESTED QUERIES FROM AI</>
+                    )}
+                  </>
+                )}
+              </>
             ) : (
-              <div>LIST OF QUERIES</div>
+              <>LIST OF SUGGESTED QUERIES FROM HISTORICAL DATA</>
             )}
           </>
         )}
@@ -181,7 +277,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
     `,
     iconSection: css`
       padding: 0 0 10px 0;
-      color: #ccccdca6;
+      color: ${theme.colors.text.secondary};
     `,
     nextButtonsWrapper: css`
       display: flex;
@@ -196,7 +292,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
       padding: 0px 28px 28px 28px;
     `,
     textPadding: css`
-      padding-bottom: 20px;
+      padding-bottom: 15px;
     `,
     containerPadding: css`
       padding: 28px;
@@ -225,6 +321,23 @@ export const getStyles = (theme: GrafanaTheme2) => {
     queryQuestion: css`
       text-align: end;
       padding: 8px 0;
+    `,
+    secondaryText: css`
+      color: ${theme.colors.text.secondary};
+      margin-bottom: 20px;
+    `,
+    loadingMessageContainer: css`
+      border: 1px solid #ccccdc38;
+      padding: 28px;
+      background-color: #22252b;
+      margin-top: 10px;
+      margin-bottom: 20px;
+      border-radius: 8px;
+      color: ${theme.colors.text.secondary};
+      font-style: italic;
+    `,
+    spinnerPlacement: css`
+      float: right;
     `,
   };
 };
