@@ -53,9 +53,9 @@ export const PromQail = (props: PromQailProps) => {
             </div>
             <div className={styles.dataList}>
               <ul>
-                <li>x</li>
-                <li>x</li>
-                <li>x</li>
+                <li>Metrics</li>
+                <li>Labels</li>
+                <li>Metrics metadata</li>
               </ul>
             </div>
             <div className={styles.textPadding}>Check with OpenAI to understand how your data is being used.</div>
