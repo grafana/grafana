@@ -24,4 +24,4 @@ Additional resources:
 
 - [Get started with creating a plugin](https://grafana.github.io/plugin-tools/docs/get-started/)
 - [Types of Grafana plugins](/docs/grafana/latest/administration/plugin-management/)
-- [Set up your development environment](https://grafana.github.io/plugin-tools/docs/development/docker)
+- [Set up your development environment](https://grafana.github.io/plugin-tools/docs/get-started/set-up-development-environment)
