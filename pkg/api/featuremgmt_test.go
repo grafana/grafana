@@ -23,15 +23,6 @@ import (
 func TestGetFeatureToggles(t *testing.T) {
 	readPermissions := []accesscontrol.Permission{{Action: accesscontrol.ActionFeatureManagementRead}}
 
-	find := func(result []featuremgmt.FeatureToggleDTO, name string) (featuremgmt.FeatureToggleDTO, bool) {
-		for _, t := range result {
-			if t.Name == name {
-				return t, true
-			}
-		}
-		return featuremgmt.FeatureToggleDTO{}, false
-	}
-
 	t.Run("should not be able to get feature toggles without permissions", func(t *testing.T) {
 		result := runGetScenario(t, []*featuremgmt.FeatureFlag{}, nil, nil, []accesscontrol.Permission{}, http.StatusForbidden)
 		assert.Len(t, result, 0)
@@ -52,9 +43,9 @@ func TestGetFeatureToggles(t *testing.T) {
 
 		result := runGetScenario(t, features, nil, nil, readPermissions, http.StatusOK)
 		assert.Len(t, result, 2)
-		t1, _ := find(result, "toggle1")
+		t1, _ := findResult(t, result, "toggle1")
 		assert.True(t, t1.Enabled)
-		t2, _ := find(result, "toggle2")
+		t2, _ := findResult(t, result, "toggle2")
 		assert.False(t, t2.Enabled)
 	})
 
@@ -122,11 +113,11 @@ func TestGetFeatureToggles(t *testing.T) {
 			result := runGetScenario(t, features, nil, nil, readPermissions, http.StatusOK)
 			assert.Len(t, result, 3)
 
-			_, ok := find(result, "toggle1")
+			_, ok := findResult(t, result, "toggle1")
 			assert.False(t, ok)
-			_, ok = find(result, "toggle2")
+			_, ok = findResult(t, result, "toggle2")
 			assert.False(t, ok)
-			_, ok = find(result, "toggle3")
+			_, ok = findResult(t, result, "toggle3")
 			assert.False(t, ok)
 		})
 
@@ -134,13 +125,13 @@ func TestGetFeatureToggles(t *testing.T) {
 			result := runGetScenario(t, features, nil, nil, readPermissions, http.StatusOK)
 			assert.Len(t, result, 3)
 
-			t4, ok := find(result, "toggle4")
+			t4, ok := findResult(t, result, "toggle4")
 			assert.True(t, ok)
 			assert.True(t, t4.ReadOnly)
-			t5, ok := find(result, "toggle5")
+			t5, ok := findResult(t, result, "toggle5")
 			assert.True(t, ok)
 			assert.False(t, t5.ReadOnly)
-			t6, ok := find(result, "toggle6")
+			t6, ok := findResult(t, result, "toggle6")
 			assert.True(t, ok)
 			assert.False(t, t6.ReadOnly)
 		})
@@ -150,24 +141,14 @@ func TestGetFeatureToggles(t *testing.T) {
 func TestSetFeatureToggles(t *testing.T) {
 	writePermissions := []accesscontrol.Permission{{Action: accesscontrol.ActionFeatureManagementWrite}}
 
-	readBody := func(t *testing.T, rc io.ReadCloser) map[string]interface{} {
-		b, err := io.ReadAll(rc)
-		require.NoError(t, err)
-		payload := map[string]interface{}{}
-		require.NoError(t, json.Unmarshal(b, &payload))
-		return payload
-	}
-
 	t.Run("fails without adequate permissions", func(t *testing.T) {
 		res := runSetScenario(t, nil, nil, setting.FeatureMgmtSettings{}, []accesscontrol.Permission{}, http.StatusForbidden)
 		defer func() { require.NoError(t, res.Body.Close()) }()
-		assert.NotNil(t, res)
 	})
 
 	t.Run("fails when toggle editing is not enabled", func(t *testing.T) {
 		res := runSetScenario(t, nil, nil, setting.FeatureMgmtSettings{}, writePermissions, http.StatusForbidden)
 		defer func() { require.NoError(t, res.Body.Close()) }()
-		require.NotNil(t, res)
 		p := readBody(t, res.Body)
 		assert.Equal(t, "feature toggles are read-only", p["message"])
 	})
@@ -178,7 +159,6 @@ func TestSetFeatureToggles(t *testing.T) {
 		}
 		res := runSetScenario(t, nil, nil, s, writePermissions, http.StatusInternalServerError)
 		defer func() { require.NoError(t, res.Body.Close()) }()
-		require.NotNil(t, res)
 		p := readBody(t, res.Body)
 		assert.Equal(t, "feature toggles service is misconfigured", p["message"])
 	})
@@ -209,7 +189,6 @@ func TestSetFeatureToggles(t *testing.T) {
 		}
 		res := runSetScenario(t, features, updates, s, writePermissions, http.StatusBadRequest)
 		defer func() { require.NoError(t, res.Body.Close()) }()
-		require.NotNil(t, res)
 		p := readBody(t, res.Body)
 		assert.Equal(t, "invalid toggle passed in", p["message"])
 	})
@@ -248,7 +227,6 @@ func TestSetFeatureToggles(t *testing.T) {
 			}
 			res := runSetScenario(t, features, updates, s, writePermissions, http.StatusBadRequest)
 			defer func() { require.NoError(t, res.Body.Close()) }()
-			require.NotNil(t, res)
 			p := readBody(t, res.Body)
 			assert.Equal(t, fmt.Sprintf("invalid toggle passed in: %s", featuremgmt.FlagFeatureToggleAdminPage), p["error"])
 		})
@@ -262,7 +240,6 @@ func TestSetFeatureToggles(t *testing.T) {
 			}
 			res := runSetScenario(t, features, updates, s, writePermissions, http.StatusBadRequest)
 			defer func() { require.NoError(t, res.Body.Close()) }()
-			require.NotNil(t, res)
 			p := readBody(t, res.Body)
 			assert.Equal(t, "invalid toggle passed in: toggle2", p["error"])
 		})
@@ -276,7 +253,6 @@ func TestSetFeatureToggles(t *testing.T) {
 			}
 			res := runSetScenario(t, features, updates, s, writePermissions, http.StatusBadRequest)
 			defer func() { require.NoError(t, res.Body.Close()) }()
-			require.NotNil(t, res)
 			p := readBody(t, res.Body)
 			assert.Equal(t, "invalid toggle passed in: toggle3", p["error"])
 		})
@@ -326,11 +302,31 @@ func TestSetFeatureToggles(t *testing.T) {
 		}
 		// TODO: check for success status after the handler is fully implemented
 		res := runSetScenario(t, features, updates, s, writePermissions, http.StatusNotImplemented)
-		defer func() { require.NoError(t, res.Body.Close()) }()
-		require.NotNil(t, res)
+
 		p := readBody(t, res.Body)
 		assert.Equal(t, "UpdateFeatureToggle is unimplemented", p["message"])
 	})
+}
+
+func findResult(t *testing.T, result []featuremgmt.FeatureToggleDTO, name string) (featuremgmt.FeatureToggleDTO, bool) {
+	t.Helper()
+
+	for _, t := range result {
+		if t.Name == name {
+			return t, true
+		}
+	}
+	return featuremgmt.FeatureToggleDTO{}, false
+}
+
+func readBody(t *testing.T, rc io.ReadCloser) map[string]interface{} {
+	t.Helper()
+
+	b, err := io.ReadAll(rc)
+	require.NoError(t, err)
+	payload := map[string]interface{}{}
+	require.NoError(t, json.Unmarshal(b, &payload))
+	return payload
 }
 
 func runGetScenario(
@@ -433,6 +429,7 @@ func runSetScenario(
 	res, err := server.SendJSON(req)
 
 	require.NoError(t, err)
+	require.NotNil(t, res)
 	require.Equal(t, expectedCode, res.StatusCode)
 
 	return res
