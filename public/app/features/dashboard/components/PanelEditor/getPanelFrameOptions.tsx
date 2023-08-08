@@ -8,7 +8,7 @@ import { RepeatRowSelect } from '../RepeatRowSelect/RepeatRowSelect';
 import { OptionsPaneCategoryDescriptor } from './OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from './OptionsPaneItemDescriptor';
 import { AiGenerate } from './dashGPT/AiGenerate';
-import { fetchData } from './dashGPT/utils';
+import { fetchData, SPECIAL_DONE_TOKEN } from './dashGPT/utils';
 import { OptionPaneRenderProps } from './types';
 import { getGeneratePayloadForTitle } from './utils';
 
@@ -45,39 +45,40 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
 
   // @TODO revisit this
   const setLlmReply = (reply: string, subject: string) => {
+    if (reply.indexOf(SPECIAL_DONE_TOKEN) >= 0) {
+      reply = reply.replace(SPECIAL_DONE_TOKEN, '');
+      reply = reply.replace(/"/g, '');
+
+      if (subject === 'title') {
+        generatingTitle = false;
+        setPanelTitle(reply);
+        titleHistory.push(reply);
+      } else {
+        generatingDescription = false;
+        setPanelDescription(reply);
+        descriptionHistory.push(reply);
+      }
+
+      return;
+    }
+
     reply = reply.replace(/"/g, '');
 
     if (subject === 'title') {
-      generatingTitle = reply !== llmReplyTitle;
+      generatingTitle = true;
 
       llmReplyTitle = reply;
       if (enabled && llmReplyTitle !== '') {
         setPanelTitle(llmReplyTitle);
       }
     } else {
-      generatingDescription = reply !== llmReplyDescription;
+      generatingDescription = true;
 
       llmReplyDescription = reply;
       if (enabled && llmReplyDescription !== '') {
         setPanelDescription(llmReplyDescription);
       }
     }
-
-    setTimeout(() => {
-      generatingTitle = false;
-      setPanelTitle(llmReplyTitle);
-      if (titleHistory.indexOf(llmReplyTitle) === -1 && llmReplyTitle !== '') {
-        titleHistory.push(llmReplyTitle);
-      }
-    }, 1000);
-
-    setTimeout(() => {
-      generatingDescription = false;
-      setPanelDescription(llmReplyDescription);
-      if (descriptionHistory.indexOf(llmReplyDescription) === -1 && llmReplyDescription !== '') {
-        descriptionHistory.push(llmReplyDescription);
-      }
-    }, 3000);
   };
 
   const llmGenerate = (subject: string) => {
