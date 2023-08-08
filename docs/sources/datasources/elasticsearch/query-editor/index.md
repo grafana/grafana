@@ -15,6 +15,7 @@ labels:
     - cloud
     - enterprise
     - oss
+    - data source
 menuTitle: Query editor
 title: Elasticsearch query editor
 weight: 300
@@ -24,7 +25,7 @@ weight: 300
 
 {{< figure src="/static/img/docs/elasticsearch/elastic-query-editor-10.1.png" max-width="800px" class="docs-image--no-shadow" caption="Elasticsearch query editor" >}}
 
-Grafana provides a query editor for Elasticsearch's Query DSL language. See [Query DSL](https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl.html) if you are new to working with Elasticsearch.
+Grafana provides a query editor for Elasticsearch. Elasticsearch queries are in Lucene format. See [Query DSL](https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl.html) if you are new to working with Elasticsearch.
 
 For general documentation on querying data sources in Grafana, see [Query and transform data]({{< relref "../../../panels-visualizations/query-transform-data" >}}).
 
@@ -36,42 +37,47 @@ You have options with regard to the type of query you can run.
 
 ### Metrics query type
 
-Metrics queries aggregate data. Metrics aggregations include
+Metrics queries aggregate data. Metrics aggregations include:
 
-- count
-- average
+- count - see [Value count aggregation](https://www.elastic.co/guide/en/elasticsearch/reference/8.9/search-aggregations-metrics-valuecount-aggregation.html)
+- average - see [Avg aggregation](https://www.elastic.co/guide/en/elasticsearch/reference/8.9/search-aggregations-metrics-rate-aggregation.html)
 - sum - see [Sum aggregation](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-metrics-sum-aggregation.html)
-- max
-- min
+- max - see [Max aggregation](https://www.elastic.co/guide/en/elasticsearch/reference/8.9/search-aggregations-metrics-max-aggregation.html)
+- min - see [Min aggregation](https://www.elastic.co/guide/en/elasticsearch/reference/8.9/search-aggregations-metrics-min-aggregation.html)
 - extended stats - see [Extended stats aggregation](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-metrics-extendedstats-aggregation.html)
-- percentiles
-- unique count
-- top metrics
-- rate
+- percentiles - see [Percentiles aggregation](https://www.elastic.co/guide/en/elasticsearch/reference/8.9/search-aggregations-metrics-percentile-aggregation.html)
+- unique count - see [Cardinlaity aggregation](https://www.elastic.co/guide/en/elasticsearch/reference/8.9/search-aggregations-metrics-cardinality-aggregation.html)
+- top metrics - see [Top metrics aggregation](https://www.elastic.co/guide/en/elasticsearch/reference/8.9/search-aggregations-metrics-top-metrics.html)
+- rate - see [Rate aggregation](https://www.elastic.co/guide/en/elasticsearch/reference/8.9/search-aggregations-metrics-rate-aggregation.html)
 
 You can select multiple metrics and group by multiple terms or filters when using the Elasticsearch query editor.
 
 Use the plus and minus icons to the right to add and remove metrics or group by clauses.
 To expand the row to view and edit any available metric or group-by options, click the option text.
 
-Group by options
+- **Alias** - Aliasing only applies to time series queries, where the last group is date histogram. This is ignored for any other type of query.
 
-- terms
-- filter
-- geo hash grid
-- date histogram
-- histogram
+- **Group by options** -
+
+You can utilize multiple group by options when constructing your Elasticsearch query.
+
+- terms -
+- filter -
+- geo hash grid -
+- date histogram - for time series queries
+- histogram - depicts frequency distributions
 - nested (experimental) -
 
-### Control pipeline metrics visibility
+Elasticsearch groups aggregation type into the following:
 
-Some metric aggregations, such as _Moving Average_ and _Derivative_, are called **Pipeline** aggregations.
-Elasticsearch pipeline metrics must be based on another metric.
+- **Pipeline** - Elasticsearch pipeline metrics must be based on another metric. There are parent and sibling and sibling pipeline aggregations. See [Pipeline aggregations](https://www.elastic.co/guide/en/elasticsearch/reference/8.9/search-aggregations-pipeline.html) for additional information.
+
+- **Metrics** -
 
 Use the eye icon next to the metric to prevent metrics from appearing in the graph.
 This is useful for metrics you only have in the query for use in a pipeline metric.
 
-{{< figure src="/static/img/docs/elasticsearch/pipeline-aggregation-editor-7-4.png" max-width="500px" class="docs-image--no-shadow" caption="Pipeline aggregation editor" >}}
+{{< figure src="/static/img/docs/elasticsearch/pipeline-aggregation-editor-7-4.png" max-width="500px" class="docs-image--no-shadow" caption="Pipeline aggregation editor" >}} -->
 
 ### Logs query type
 
@@ -83,7 +89,7 @@ raw data -
 
 ### Raw data query type
 
-What is a raw data query?
+Run a a raw data query to retrieve a table of all fields that are associated with each log line.
 
 What is the size of 500? Is that the default? Is it documents? You can change the size.
 
