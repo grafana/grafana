@@ -256,6 +256,7 @@ type Cfg struct {
 	MetricsEndpointBasicAuthUsername string
 	MetricsEndpointBasicAuthPassword string
 	MetricsEndpointDisableTotalStats bool
+	MetricsTotalStatsIntervalSeconds int
 	MetricsGrafanaEnvironmentInfo    map[string]string
 
 	// Dashboards
@@ -275,7 +276,6 @@ type Cfg struct {
 	AdminPassword                string
 	DisableLogin                 bool
 	AdminEmail                   string
-	DisableSyncLock              bool
 	DisableLoginForm             bool
 	// Not documented & not supported
 	// stand in until a more complete solution is implemented
@@ -289,6 +289,7 @@ type Cfg struct {
 	AWSAllowedAuthProviders []string
 	AWSAssumeRoleEnabled    bool
 	AWSListMetricsPageLimit int
+	AWSExternalId           string
 
 	// Azure Cloud settings
 	Azure *azsettings.AzureSettings
@@ -319,6 +320,7 @@ type Cfg struct {
 	JWTAuthJWKSetURL               string
 	JWTAuthCacheTTL                time.Duration
 	JWTAuthKeyFile                 string
+	JWTAuthKeyID                   string
 	JWTAuthJWKSetFile              string
 	JWTAuthAutoSignUp              bool
 	JWTAuthRoleAttributePath       string
@@ -516,8 +518,9 @@ type Cfg struct {
 	SecureSocksDSProxy SecureSocksDSProxySettings
 
 	// SAML Auth
-	SAMLAuthEnabled     bool
-	SAMLSkipOrgRoleSync bool
+	SAMLAuthEnabled            bool
+	SAMLSkipOrgRoleSync        bool
+	SAMLRoleValuesGrafanaAdmin string
 
 	// Okta OAuth
 	OktaAuthEnabled     bool
@@ -965,7 +968,7 @@ var skipStaticRootValidation = false
 
 func NewCfg() *Cfg {
 	return &Cfg{
-		Target:      []string{"all"},
+		Target:      []string{},
 		Logger:      log.New("settings"),
 		Raw:         ini.Empty(),
 		Azure:       &azsettings.AzureSettings{},
@@ -1024,8 +1027,10 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 
 	cfg.ErrTemplateName = "error"
 
-	Target := valueAsString(iniFile.Section(""), "target", "all")
-	cfg.Target = strings.Split(Target, " ")
+	Target := valueAsString(iniFile.Section(""), "target", "")
+	if Target != "" {
+		cfg.Target = strings.Split(Target, " ")
+	}
 	Env = valueAsString(iniFile.Section(""), "app_mode", "development")
 	cfg.Env = Env
 	cfg.ForceMigration = iniFile.Section("").Key("force_migration").MustBool(false)
@@ -1085,6 +1090,7 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 	cfg.MetricsEndpointBasicAuthUsername = valueAsString(iniFile.Section("metrics"), "basic_auth_username", "")
 	cfg.MetricsEndpointBasicAuthPassword = valueAsString(iniFile.Section("metrics"), "basic_auth_password", "")
 	cfg.MetricsEndpointDisableTotalStats = iniFile.Section("metrics").Key("disable_total_stats").MustBool(false)
+	cfg.MetricsTotalStatsIntervalSeconds = iniFile.Section("metrics").Key("total_stats_collector_interval_seconds").MustInt(1800)
 
 	analytics := iniFile.Section("analytics")
 	cfg.CheckForGrafanaUpdates = analytics.Key("check_for_updates").MustBool(true)
@@ -1261,6 +1267,7 @@ func (cfg *Cfg) readSAMLConfig() {
 	samlSec := cfg.Raw.Section("auth.saml")
 	cfg.SAMLAuthEnabled = samlSec.Key("enabled").MustBool(false)
 	cfg.SAMLSkipOrgRoleSync = samlSec.Key("skip_org_role_sync").MustBool(false)
+	cfg.SAMLRoleValuesGrafanaAdmin = samlSec.Key("role_values_grafana_admin").MustString("")
 }
 
 func (cfg *Cfg) readLDAPConfig() {
@@ -1293,6 +1300,11 @@ func (cfg *Cfg) handleAWSConfig() {
 	err = os.Setenv(awsds.AllowedAuthProvidersEnvVarKeyName, allowedAuthProviders)
 	if err != nil {
 		cfg.Logger.Error(fmt.Sprintf("could not set environment variable '%s'", awsds.AllowedAuthProvidersEnvVarKeyName), err)
+	}
+
+	cfg.AWSExternalId = awsPluginSec.Key("external_id").Value()
+	if err != nil {
+		cfg.Logger.Error(fmt.Sprintf("could not set environment variable '%s'", awsds.GrafanaAssumeRoleExternalIdKeyName), err)
 	}
 }
 
@@ -1476,7 +1488,9 @@ func readAuthGithubSettings(cfg *Cfg) {
 func readAuthGoogleSettings(cfg *Cfg) {
 	sec := cfg.SectionWithEnvOverrides("auth.google")
 	cfg.GoogleAuthEnabled = sec.Key("enabled").MustBool(false)
-	cfg.GoogleSkipOrgRoleSync = sec.Key("skip_org_role_sync").MustBool(false)
+	// FIXME: for now we skip org role sync for google auth
+	// as we do not sync organization roles from Google
+	cfg.GoogleSkipOrgRoleSync = true
 }
 
 func readAuthGitlabSettings(cfg *Cfg) {
@@ -1523,9 +1537,6 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 	if cfg.TokenRotationIntervalMinutes < 2 {
 		cfg.TokenRotationIntervalMinutes = 2
 	}
-
-	// Debug setting unlocking frontend auth sync lock. Users will still be reset on their next login.
-	cfg.DisableSyncLock = auth.Key("disable_sync_lock").MustBool(false)
 
 	// Do not use
 	cfg.AuthConfigUIAdminAccess = auth.Key("config_ui_admin_access").MustBool(false)
@@ -1601,6 +1612,7 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 	cfg.JWTAuthJWKSetURL = valueAsString(authJWT, "jwk_set_url", "")
 	cfg.JWTAuthCacheTTL = authJWT.Key("cache_ttl").MustDuration(time.Minute * 60)
 	cfg.JWTAuthKeyFile = valueAsString(authJWT, "key_file", "")
+	cfg.JWTAuthKeyID = authJWT.Key("key_id").MustString("")
 	cfg.JWTAuthJWKSetFile = valueAsString(authJWT, "jwk_set_file", "")
 	cfg.JWTAuthAutoSignUp = authJWT.Key("auto_sign_up").MustBool(false)
 	cfg.JWTAuthRoleAttributePath = valueAsString(authJWT, "role_attribute_path", "")

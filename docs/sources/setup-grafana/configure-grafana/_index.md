@@ -1711,6 +1711,10 @@ Flush/write interval when sending metrics to external TSDB. Defaults to `10`.
 
 If set to `true`, then total stats generation (`stat_totals_*` metrics) is disabled. Default is `false`.
 
+### total_stats_collector_interval_seconds
+
+Sets the total stats collector interval. The default is 1800 seconds (30 minutes).
+
 ### basic_auth_username and basic_auth_password
 
 If both are set, then basic authentication is required to access the metrics endpoint.

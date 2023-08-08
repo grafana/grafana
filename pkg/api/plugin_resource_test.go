@@ -25,6 +25,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/loader"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/assetpath"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/finder"
+	"github.com/grafana/grafana/pkg/plugins/manager/process"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature/statickey"
@@ -70,14 +71,18 @@ func TestCallResource(t *testing.T) {
 	reg := registry.ProvideService()
 	angularInspector, err := angularinspector.NewStaticInspector()
 	require.NoError(t, err)
+	proc := process.NewManager(reg)
 
 	discovery := pipeline.ProvideDiscoveryStage(pCfg, finder.NewLocalFinder(pCfg.DevMode), reg)
 	bootstrap := pipeline.ProvideBootstrapStage(pCfg, signature.ProvideService(pCfg, statickey.New()), assetpath.ProvideService(pluginscdn.ProvideService(pCfg)))
+	initialize := pipeline.ProvideInitializationStage(pCfg, reg, fakes.NewFakeLicensingService(), provider.ProvideService(coreRegistry), proc, &fakes.FakeOauthService{}, fakes.NewFakeRoleRegistry())
+	terminate, err := pipeline.ProvideTerminationStage(pCfg, reg, proc)
+	require.NoError(t, err)
 
-	l := loader.ProvideService(pCfg, fakes.NewFakeLicensingService(), signature.NewUnsignedAuthorizer(pCfg),
-		reg, provider.ProvideService(coreRegistry), fakes.NewFakeRoleRegistry(),
+	l := loader.ProvideService(pCfg, signature.NewUnsignedAuthorizer(pCfg),
+		reg, fakes.NewFakeRoleRegistry(),
 		assetpath.ProvideService(pluginscdn.ProvideService(pCfg)),
-		angularInspector, &fakes.FakeOauthService{}, discovery, bootstrap)
+		angularInspector, &fakes.FakeOauthService{}, discovery, bootstrap, initialize, terminate)
 	srcs := sources.ProvideService(cfg, pCfg)
 	ps, err := store.ProvideService(reg, srcs, l)
 	require.NoError(t, err)

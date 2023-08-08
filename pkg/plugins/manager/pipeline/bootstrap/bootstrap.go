@@ -47,7 +47,7 @@ func New(cfg *config.Cfg, opts Opts) *Bootstrap {
 		opts.ConstructFunc = DefaultConstructFunc(signature.DefaultCalculator(cfg), assetpath.DefaultService(cfg))
 	}
 
-	if len(opts.DecorateFuncs) == 0 {
+	if opts.DecorateFuncs == nil {
 		opts.DecorateFuncs = DefaultDecorateFuncs
 	}
 
@@ -63,6 +63,10 @@ func (b *Bootstrap) Bootstrap(ctx context.Context, src plugins.PluginSource, fou
 	ps, err := b.constructStep(ctx, src, found)
 	if err != nil {
 		return nil, err
+	}
+
+	if len(b.decorateSteps) == 0 {
+		return ps, nil
 	}
 
 	for _, p := range ps {
