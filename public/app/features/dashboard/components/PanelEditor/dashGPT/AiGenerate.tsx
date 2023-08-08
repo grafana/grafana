@@ -1,9 +1,84 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import React, { useState } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data/src';
-import { Button, IconButton, TextArea, Toggletip, useStyles2 } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
+import { Button, Divider, IconButton, TextArea, Toggletip, useStyles2 } from '@grafana/ui';
 
+const QuickFeedbackSuggestions = () => {
+  const styles = useStyles2(getStyles);
+  return (
+    <div className={styles.quickSuggestionsWrapper}>
+      <Button>Even shorter</Button>
+      <Button>Improve it</Button>
+      <Button>More descriptive</Button>
+      <Button>More concise</Button>
+    </div>
+  );
+};
+
+const UserInput = () => {
+  const onSubmit = async () => {
+    console.log('on submit');
+    // const response = await onGeneratePanelWithAI(dashboard!, promptValue);
+    // const parsedResponse = JSON.parse(response);
+    // const panel = parsedResponse.panels[0];
+    // dashboard?.addPanel(panel);
+  };
+
+  const styles = useStyles2(getStyles);
+  const [assitsDescription, setAssitsDescription] = useState('');
+  return (
+    <div className={styles.userInputWrapper}>
+      <TextArea
+        className={styles.textArea}
+        placeholder="Tell us something"
+        width={200}
+        onChange={(e) => setAssitsDescription(e.currentTarget.value)}
+        value={assitsDescription}
+      />
+      <IconButton name="message" aria-label="message" onClick={onSubmit} />
+    </div>
+  );
+};
+
+interface HistoryItemProps {
+  item: string;
+  suggestionApply: (suggestion: string) => void;
+}
+
+const HistoryItem = ({ item, suggestionApply }: HistoryItemProps) => {
+  const styles = useStyles2(getStyles);
+  const [isFeedbackSectionOpen, setIsFeedbackSectionOpen] = useState(false);
+
+  const toggleFeedbackSection = () => {
+    setIsFeedbackSectionOpen(!isFeedbackSectionOpen);
+  };
+
+  return (
+    <>
+      <div className={styles.historyItems}>
+        <div className={styles.item}>{item}</div>
+        <div className={styles.buttons}>
+          <IconButton
+            name="clipboard-alt"
+            aria-label="clipboard-alt"
+            onClick={() => suggestionApply(item)}
+            tooltip="Apply"
+          />
+          <IconButton
+            name="sync"
+            aria-label="sync"
+            onClick={() => toggleFeedbackSection()}
+            tooltip="Provide feedback"
+          />
+        </div>
+      </div>
+      {isFeedbackSectionOpen && <QuickFeedbackSuggestions />}
+      {isFeedbackSectionOpen && <UserInput />}
+      <Divider />
+    </>
+  );
+};
 interface Props {
   text: string;
   onClick: () => void;
@@ -14,7 +89,7 @@ interface Props {
 export const AiGenerate = ({ text, onClick, history, applySuggestion }: Props) => {
   const styles = useStyles2(getStyles);
 
-  const [shouldClose, setShouldClose] = React.useState(false);
+  const [shouldClose, setShouldClose] = useState(false);
 
   const suggestionApply = (suggestion: string) => {
     if (applySuggestion) {
@@ -27,63 +102,10 @@ export const AiGenerate = ({ text, onClick, history, applySuggestion }: Props) =
     });
   };
 
-  const retrySuggestion = () => {
-    console.log('retrySuggestion');
-  };
-
-  const [assitsDescription, setAssitsDescription] = React.useState('');
-
-  const renderQuickSuggestions = () => {
-    return (
-      <div className={styles.quickSuggestionsWrapper}>
-        <Button>Even shorter</Button>
-        <Button>Improve it</Button>
-        <Button>More descriptive</Button>
-        <Button>More concise</Button>
-      </div>
-    );
-  };
-
-  let onSubmit = async () => {
-    console.log('on submit');
-    // const response = await onGeneratePanelWithAI(dashboard!, promptValue);
-    // const parsedResponse = JSON.parse(response);
-    // const panel = parsedResponse.panels[0];
-    // dashboard?.addPanel(panel);
-  };
-
-  const renderUserInput = () => {
-    return (
-      <div className={styles.userInputWrapper}>
-        <TextArea
-          className={styles.textArea}
-          placeholder="Tell us something"
-          width={200}
-          onChange={(e) => setAssitsDescription(e.currentTarget.value)}
-          value={assitsDescription}
-        />
-        <IconButton name="message" aria-label="message" onClick={onSubmit} />
-      </div>
-    );
-  };
-
   const renderHistory = () => {
     return (
       <div className={styles.history}>
-        {history?.map((item, index) => {
-          return (
-            <div key={index} className={styles.historyItems}>
-              <div className={styles.item}>{item}</div>
-              <div className={styles.buttons}>
-                <IconButton name="clipboard-alt" aria-label="clipboard-alt" onClick={() => suggestionApply(item)} />
-                <IconButton name="sync" aria-label="sync" onClick={retrySuggestion} />
-              </div>
-            </div>
-          );
-        })}
-
-        {history && history.length > 0 && renderQuickSuggestions()}
-        {history && history.length > 0 && renderUserInput()}
+        {history?.map((item, index) => <HistoryItem key={index} item={item} suggestionApply={suggestionApply} />)}
       </div>
     );
   };
@@ -106,14 +128,17 @@ const getStyles = (theme: GrafanaTheme2) => ({
   wrapper: css`
     display: flex;
   `,
-  history: css``,
+  history: css`
+    overflow: scroll;
+    max-height: 50vh;
+  `,
   historyItems: css`
     display: flex;
-    align-items: flex-start;
     padding: 5px 0;
   `,
   buttons: css`
-    align-items: flex-end;
+    margin-left: auto;
+    align-items: center;
   `,
   item: css`
     margin-right: 10px;
