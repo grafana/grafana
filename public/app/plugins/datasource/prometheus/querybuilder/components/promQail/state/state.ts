@@ -12,6 +12,12 @@ export const stateSlice = createSlice({
     showStartingMessage: (state, action: PayloadAction<boolean>) => {
       state.showStartingMessage = action.payload;
     },
+    indicateCheckbox: (state, action: PayloadAction<boolean>) => {
+      state.indicateCheckbox = action.payload;
+    },
+    askForQueryHelp: (state, action: PayloadAction<boolean>) => {
+      state.askForQueryHelp = action.payload;
+    },
   },
 });
 
@@ -19,7 +25,7 @@ export const stateSlice = createSlice({
  * Initial state for PromQAIL
  * @param query the prometheus query with metric and possible labels
  */
-export function initialState(query?: PromVisualQuery): PromQailState {
+export function initialState(query?: PromVisualQuery, showStartingMessage?: boolean): PromQailState {
   return {
     query: query ?? {
       metric: '',
@@ -27,7 +33,9 @@ export function initialState(query?: PromVisualQuery): PromQailState {
       operations: [],
     },
     showExplainer: false,
-    showStartingMessage: true,
+    showStartingMessage: showStartingMessage ?? true,
+    indicateCheckbox: false,
+    askForQueryHelp: false,
   };
 }
 
@@ -38,4 +46,6 @@ export interface PromQailState {
   query: PromVisualQuery;
   showExplainer: boolean;
   showStartingMessage: boolean;
+  indicateCheckbox: boolean;
+  askForQueryHelp: boolean;
 }
