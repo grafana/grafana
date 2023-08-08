@@ -1,6 +1,9 @@
 package migration
 
 import (
+	"encoding/base64"
+	"encoding/json"
+	"fmt"
 	"testing"
 	"time"
 
@@ -14,6 +17,9 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngModels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels_config"
+	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 func TestFilterReceiversForAlert(t *testing.T) {
@@ -278,6 +284,183 @@ func TestCreateReceivers(t *testing.T) {
 			require.ElementsMatch(t, tt.expRecv, recvs)
 		})
 	}
+}
+
+func TestMigrateNotificationChannelSecureSettings(t *testing.T) {
+	encryptFn := func(data string) string {
+		raw, err := util.Encrypt([]byte(data), setting.SecretKey)
+		require.NoError(t, err)
+		return string(raw)
+	}
+	decryptFn := func(data string) string {
+		decoded, err := base64.StdEncoding.DecodeString(data)
+		require.NoError(t, err)
+		raw, err := util.Decrypt(decoded, setting.SecretKey)
+		require.NoError(t, err)
+		return string(raw)
+	}
+	gen := func(nType string, fn func(channel *notificationChannel)) *notificationChannel {
+		not := &notificationChannel{
+			Uid:  "uid",
+			ID:   1,
+			Name: "channel name",
+			Type: nType,
+			Settings: simplejson.NewFromAny(map[string]any{
+				"something": "some value",
+			}),
+			SecureSettings: map[string][]byte{},
+		}
+		if fn != nil {
+			fn(not)
+		}
+		return not
+	}
+	genExpSlack := func(fn func(channel *apimodels.PostableGrafanaReceiver)) *apimodels.PostableGrafanaReceiver {
+		rawSettings, err := json.Marshal(map[string]string{
+			"something": "some value",
+		})
+		require.NoError(t, err)
+
+		recv := &apimodels.PostableGrafanaReceiver{
+			UID:      "uid",
+			Name:     "channel name",
+			Type:     "slack",
+			Settings: rawSettings,
+			SecureSettings: map[string]string{
+				"token": "secure token",
+				"url":   "secure url",
+			},
+		}
+
+		if fn != nil {
+			fn(recv)
+		}
+		return recv
+	}
+
+	tc := []struct {
+		name    string
+		channel *notificationChannel
+		expRecv *apimodels.PostableGrafanaReceiver
+		expErr  error
+	}{
+		{
+			name: "when secure settings exist, migrate them to receiver secure settings",
+			channel: gen("slack", func(channel *notificationChannel) {
+				channel.SecureSettings = map[string][]byte{
+					"token": []byte(encryptFn("secure token")),
+					"url":   []byte(encryptFn("secure url")),
+				}
+			}),
+			expRecv: genExpSlack(nil),
+		},
+		{
+			name:    "when no secure settings are encrypted, do nothing",
+			channel: gen("slack", nil),
+			expRecv: genExpSlack(func(recv *apimodels.PostableGrafanaReceiver) {
+				delete(recv.SecureSettings, "token")
+				delete(recv.SecureSettings, "url")
+			}),
+		},
+		{
+			name: "when some secure settings are available unencrypted in settings, migrate them to secureSettings and encrypt",
+			channel: gen("slack", func(channel *notificationChannel) {
+				channel.SecureSettings = map[string][]byte{
+					"url": []byte(encryptFn("secure url")),
+				}
+				channel.Settings.Set("token", "secure token")
+			}),
+			expRecv: genExpSlack(nil),
+		},
+	}
+
+	for _, tt := range tc {
+		t.Run(tt.name, func(t *testing.T) {
+			m := newTestMigration(t)
+			recv, err := m.createNotifier(tt.channel)
+			if tt.expErr != nil {
+				require.Error(t, err)
+				require.EqualError(t, err, tt.expErr.Error())
+				return
+			}
+			require.NoError(t, err)
+
+			if len(tt.expRecv.SecureSettings) > 0 {
+				require.NotEqual(t, tt.expRecv, recv) // Make sure they were actually encrypted at first.
+			}
+			for k, v := range recv.SecureSettings {
+				recv.SecureSettings[k] = decryptFn(v)
+			}
+			require.Equal(t, tt.expRecv, recv)
+		})
+	}
+
+	// Generate tests for each notification channel type.
+	t.Run("secure settings migrations for each notifier type", func(t *testing.T) {
+		notifiers := channels_config.GetAvailableNotifiers()
+		t.Run("migrate notification channel secure settings to receiver secure settings", func(t *testing.T) {
+			for _, notifier := range notifiers {
+				nType := notifier.Type
+				secureSettings, err := channels_config.GetSecretKeysForContactPointType(nType)
+				require.NoError(t, err)
+				t.Run(fmt.Sprintf(nType), func(t *testing.T) {
+					m := newTestMigration(t)
+					channel := gen(nType, func(channel *notificationChannel) {
+						for _, key := range secureSettings {
+							channel.SecureSettings[key] = []byte(encryptFn("secure " + key))
+						}
+					})
+					recv, err := m.createNotifier(channel)
+					require.NoError(t, err)
+
+					require.Equal(t, nType, recv.Type)
+					if len(secureSettings) > 0 {
+						for _, key := range secureSettings {
+							require.NotEqual(t, "secure "+key, recv.SecureSettings[key]) // Make sure they were actually encrypted at first.
+						}
+					}
+					require.Len(t, recv.SecureSettings, len(secureSettings))
+					for _, key := range secureSettings {
+						require.Equal(t, "secure "+key, decryptFn(recv.SecureSettings[key]))
+					}
+				})
+			}
+		})
+
+		t.Run("for certain legacy channel types, migrate secure fields stored in settings to secure settings", func(t *testing.T) {
+			for _, notifier := range notifiers {
+				nType := notifier.Type
+				secureSettings, ok := secureKeysToMigrate[nType]
+				if !ok {
+					continue
+				}
+				t.Run(fmt.Sprintf(nType), func(t *testing.T) {
+					m := newTestMigration(t)
+
+					channel := gen(nType, func(channel *notificationChannel) {
+						for _, key := range secureSettings {
+							// Key difference to above. We store the secure settings in the settings field and expect
+							// them to be migrated to secureSettings.
+							channel.Settings.Set(key, "secure "+key)
+						}
+					})
+					recv, err := m.createNotifier(channel)
+					require.NoError(t, err)
+
+					require.Equal(t, nType, recv.Type)
+					if len(secureSettings) > 0 {
+						for _, key := range secureSettings {
+							require.NotEqual(t, "secure "+key, recv.SecureSettings[key]) // Make sure they were actually encrypted at first.
+						}
+					}
+					require.Len(t, recv.SecureSettings, len(secureSettings))
+					for _, key := range secureSettings {
+						require.Equal(t, "secure "+key, decryptFn(recv.SecureSettings[key]))
+					}
+				})
+			}
+		})
+	})
 }
 
 func TestCreateDefaultRouteAndReceiver(t *testing.T) {

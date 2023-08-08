@@ -419,32 +419,23 @@ func (m *migration) determineChannelUid(c *notificationChannel) (string, error) 
 	return legacyUid, nil
 }
 
+var secureKeysToMigrate = map[string][]string{
+	"slack":                   {"url", "token"},
+	"pagerduty":               {"integrationKey"},
+	"webhook":                 {"password"},
+	"prometheus-alertmanager": {"basicAuthPassword"},
+	"opsgenie":                {"apiKey"},
+	"telegram":                {"bottoken"},
+	"line":                    {"token"},
+	"pushover":                {"apiToken", "userKey"},
+	"threema":                 {"api_secret"},
+}
+
 // Some settings were migrated from settings to secure settings in between.
 // See https://grafana.com/docs/grafana/latest/installation/upgrading/#ensure-encryption-of-existing-alert-notification-channel-secrets.
 // migrateSettingsToSecureSettings takes care of that.
 func migrateSettingsToSecureSettings(chanType string, settings *simplejson.Json, secureSettings SecureJsonData) (*simplejson.Json, map[string]string, error) {
-	keys := []string{}
-	switch chanType {
-	case "slack":
-		keys = []string{"url", "token"}
-	case "pagerduty":
-		keys = []string{"integrationKey"}
-	case "webhook":
-		keys = []string{"password"}
-	case "prometheus-alertmanager":
-		keys = []string{"basicAuthPassword"}
-	case "opsgenie":
-		keys = []string{"apiKey"}
-	case "telegram":
-		keys = []string{"bottoken"}
-	case "line":
-		keys = []string{"token"}
-	case "pushover":
-		keys = []string{"apiToken", "userKey"}
-	case "threema":
-		keys = []string{"api_secret"}
-	}
-
+	keys := secureKeysToMigrate[chanType]
 	newSecureSettings := secureSettings.Decrypt()
 	cloneSettings := simplejson.New()
 	settingsMap, err := settings.Map()
