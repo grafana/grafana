@@ -53,10 +53,10 @@ type folderHelper struct {
 
 // getOrCreateGeneralFolder returns the general folder under the specific organisation
 // If the general folder does not exist it creates it.
-func (m *folderHelper) getOrCreateGeneralFolder(ctx context.Context, orgID int64) (*dashboard, error) {
+func (m *folderHelper) getOrCreateGeneralFolder(ctx context.Context, orgID int64) (*dashboards.Dashboard, error) {
 	// there is a unique constraint on org_id, folder_id, title
 	// there are no nested folders so the parent folder id is always 0
-	dashboard := dashboard{OrgId: orgID, FolderId: 0, Title: GENERAL_FOLDER}
+	dashboard := dashboards.Dashboard{OrgID: orgID, FolderID: 0, Title: GENERAL_FOLDER}
 	err := m.store.WithDbSession(ctx, func(sess *db.Session) error {
 		has, err := sess.Get(&dashboard)
 		if err != nil {
@@ -77,25 +77,25 @@ func (m *folderHelper) getOrCreateGeneralFolder(ctx context.Context, orgID int64
 	return &dashboard, nil
 }
 
-func (m *folderHelper) createGeneralFolder(ctx context.Context, orgID int64) (*dashboard, error) {
+func (m *folderHelper) createGeneralFolder(ctx context.Context, orgID int64) (*dashboards.Dashboard, error) {
 	return m.createFolder(ctx, orgID, GENERAL_FOLDER)
 }
 
 // returns the folder of the given dashboard (if exists)
-func (m *folderHelper) getFolder(ctx context.Context, dash dashboard) (dashboard, error) {
+func (m *folderHelper) getFolder(ctx context.Context, dash dashboards.Dashboard, da dashAlert) (dashboards.Dashboard, error) {
 	// get folder if exists
-	folder := dashboard{}
-	if dash.FolderId > 0 {
+	folder := dashboards.Dashboard{}
+	if dash.FolderID > 0 {
 		err := m.store.WithDbSession(ctx, func(sess *db.Session) error {
-			exists, err := sess.Where("id=?", dash.FolderId).Get(&folder)
+			exists, err := sess.Where("id=?", dash.FolderID).Get(&folder)
 			if err != nil {
-				return fmt.Errorf("failed to get folder %d: %w", dash.FolderId, err)
+				return fmt.Errorf("failed to get folder %d: %w", dash.FolderID, err)
 			}
 			if !exists {
-				return fmt.Errorf("folder with id %v not found", dash.FolderId)
+				return fmt.Errorf("folder with id %v not found", dash.FolderID)
 			}
 			if !folder.IsFolder {
-				return fmt.Errorf("id %v is a dashboard not a folder", dash.FolderId)
+				return fmt.Errorf("id %v is a dashboard not a folder", dash.FolderID)
 			}
 			return nil
 		})
@@ -108,22 +108,22 @@ func (m *folderHelper) getFolder(ctx context.Context, dash dashboard) (dashboard
 
 // based on sqlstore.saveDashboard()
 // it should be called from inside a transaction
-func (m *folderHelper) createFolder(ctx context.Context, orgID int64, title string) (*dashboard, error) {
-	var dash *dashboard
+func (m *folderHelper) createFolder(ctx context.Context, orgID int64, title string) (*dashboards.Dashboard, error) {
+	var dash *dashboards.Dashboard
 	err := m.store.WithDbSession(ctx, func(sess *db.Session) error {
-		cmd := saveFolderCommand{
-			OrgId:    orgID,
-			FolderId: 0,
+		cmd := dashboards.SaveDashboardCommand{
+			OrgID:    orgID,
+			FolderID: 0,
 			IsFolder: true,
 			Dashboard: simplejson.NewFromAny(map[string]any{
 				"title": title,
 			}),
 		}
-		dash = cmd.getDashboardModel()
-		dash.setUid(util.GenerateShortUID())
+		dash = cmd.GetDashboardModel()
+		dash.SetUID(util.GenerateShortUID())
 
 		parentVersion := dash.Version
-		dash.setVersion(1)
+		dash.SetVersion(1)
 		dash.Created = time.Now()
 		dash.CreatedBy = FOLDER_CREATED_BY
 		dash.Updated = time.Now()
@@ -135,7 +135,7 @@ func (m *folderHelper) createFolder(ctx context.Context, orgID int64, title stri
 		}
 
 		dashVersion := &dashver.DashboardVersion{
-			DashboardID:   dash.Id,
+			DashboardID:   dash.ID,
 			ParentVersion: parentVersion,
 			RestoredFrom:  cmd.RestoredFrom,
 			Version:       dash.Version,
