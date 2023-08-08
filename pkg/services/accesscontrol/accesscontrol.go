@@ -30,7 +30,7 @@ type Service interface {
 	// SearchUsersPermissions returns all users' permissions filtered by an action prefix
 	SearchUsersPermissions(ctx context.Context, user identity.Requester, options SearchOptions) (map[int64][]Permission, error)
 	// ClearUserPermissionCache removes the permission cache entry for the given user
-	ClearUserPermissionCache(user *user.SignedInUser)
+	ClearUserPermissionCache(user identity.Requester)
 	// SearchUserPermissions returns single user's permissions filtered by an action prefix or an action
 	SearchUserPermissions(ctx context.Context, orgID int64, filterOptions SearchOptions) ([]Permission, error)
 	// DeleteUserPermissions removes all permissions user has in org and all permission to that user

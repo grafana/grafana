@@ -169,7 +169,7 @@ func (s *Service) getCachedUserPermissions(ctx context.Context, user *user.Signe
 	return permissions, nil
 }
 
-func (s *Service) ClearUserPermissionCache(user *user.SignedInUser) {
+func (s *Service) ClearUserPermissionCache(user identity.Requester) {
 	key, err := permissionCacheKey(user)
 	if err != nil {
 		return
@@ -224,7 +224,7 @@ func (s *Service) IsDisabled() bool {
 	return accesscontrol.IsDisabled(s.cfg)
 }
 
-func permissionCacheKey(user *user.SignedInUser) (string, error) {
+func permissionCacheKey(user identity.Requester) (string, error) {
 	key, err := user.GetCacheKey()
 	if err != nil {
 		return "", err

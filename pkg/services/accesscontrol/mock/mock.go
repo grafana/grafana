@@ -150,7 +150,8 @@ func (m *Mock) GetUserPermissions(ctx context.Context, user *user.SignedInUser, 
 	return m.permissions, nil
 }
 
-func (m *Mock) ClearUserPermissionCache(user *user.SignedInUser) {
+func (m *Mock) ClearUserPermissionCache(usr identity.Requester) {
+	user := usr.(*user.SignedInUser)
 	m.Calls.ClearUserPermissionCache = append(m.Calls.ClearUserPermissionCache, []interface{}{user})
 	// Use override if provided
 	if m.ClearUserPermissionCacheFunc != nil {

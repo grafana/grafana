@@ -11,6 +11,7 @@ const (
 )
 
 type Requester interface {
+	GetCacheKey() (string, error)
 	GetIsGrafanaAdmin() bool
 	GetLogin() string
 	GetOrgID() int64
