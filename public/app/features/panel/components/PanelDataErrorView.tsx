@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
 import React from 'react';
+import { useAsync } from 'react-use';
 
 import {
   CoreApp,
@@ -9,6 +10,7 @@ import {
   VisualizationSuggestion,
   DataTransformerID,
 } from '@grafana/data';
+import { llms } from '@grafana/experimental';
 import { PanelDataErrorViewProps, locationService } from '@grafana/runtime';
 import { usePanelContext, useStyles2 } from '@grafana/ui';
 import { CardButton } from 'app/core/components/CardButton';
@@ -25,22 +27,69 @@ export function PanelDataErrorView(props: PanelDataErrorViewProps) {
   const styles = useStyles2(getStyles);
   const context = usePanelContext();
   const builder = new VisualizationSuggestionsBuilder(props.data);
+  // When is the best time to check the data for transformation suggestions?
+  // Do we build our own data summary here relevant to our needs?
   const { dataSummary } = builder;
   const message = getMessageFor(props, dataSummary);
   const dispatch = useDispatch();
 
   const panel = getDashboardSrv().getCurrent()?.getPanelById(props.panelId);
 
+  const { loading, error, value } = useAsync(async () => {
+    const enabled = await llms.openai.enabled();
+    if (!enabled) {
+      return false;
+    }
+
+    // We don't really need to steam the completions, since there will really only be a single string answer,
+    // but this is how the LLM functionality is currently implemented.
+    const stream = llms.openai
+      .streamChatCompletions({
+        model: 'gpt-3.5-turbo',
+        messages: [{ role: 'system', content: 'default promt that we build to check for time types/fields' }],
+      })
+      .pipe(
+        // Accumulate the stream chunks into a single string.
+        llms.openai.accumulateContent()
+      );
+    // Subscribe to the stream and update the state for each returned value.
+    return {
+      enabled,
+      // Do we need to subscribe to the stream here? None of this is being streamed to the UI.
+      // Instead here do have a side-effect of updating the transformation suggestions?
+      // TODO: DO SOMETHING WITH THE STREAM
+      // stream: stream.subscribe(setReply),
+    };
+    // This message should never change outside of mount.
+  }, [message]);
+
+  if (error) {
+    console.error(error.message);
+    // TODO: DO SOMETHING MORE WITH THIS ERROR
+    return null;
+  }
+
+  // If we add the LLM logic here, we'll need to consider how to handle the async nature of the API.
+  // Do we want to run the LLM logic by default? Or give the user the option to run it?
+
+  // The LLM functionality in experimental is streaming by nature, even if we are only wanting to returm a stream of one item.
+
+  // Where are these suggestions coming from? Are
   let suggestions = props.suggestions;
+  // What if the dataSummary is not reliable for recognizing fields correctly?
   if (props.needsTimeField && !dataSummary.hasTimeField && panel && panel.plugin?.hasPluginId) {
     const transformations = panel.transformations ? [...panel.transformations] : [];
+    // Only push the transformation is the user wants to add it?
     transformations.push({
       id: DataTransformerID.convertFieldType,
       options: {
+        // Is this where we let the LLM choose the format? Or do we bake in a default?
+        // Or let the user choose the format? What should the UI/UX for the user choosing it look like?
         format: '???',
       },
     });
 
+    // Are `suggestions` panel suggestions or transformation suggestions?
     suggestions?.push({
       name: 'Convert field to ',
       pluginId: panel.plugin?.meta.id,

@@ -277,9 +277,12 @@ export class VisualizationSuggestionsBuilder {
     return new VisualizationSuggestionsListAppender<TOptions, TFieldConfig>(this.list, defaults);
   }
 
+  // Should we build our field checks here?
   private computeDataSummary() {
     const frames = this.data?.series || [];
 
+    // Looks like we rely heavily on `FieldType` here...
+    // Also only returning number/boolean values for insight...
     let numberFieldCount = 0;
     let timeFieldCount = 0;
     let stringFieldCount = 0;
@@ -298,6 +301,8 @@ export class VisualizationSuggestionsBuilder {
       for (const field of frame.fields) {
         fieldCount++;
 
+        // Will `FieldType` exist on something like a CSV/JSON upload? What about Google Sheets?
+        // If not, then this is useless...
         switch (field.type) {
           case FieldType.number:
             numberFieldCount += 1;
