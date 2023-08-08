@@ -264,7 +264,7 @@ export const DashNav = React.memo<Props>((props) => {
 
     if (canEdit && !isFullscreen) {
       if (config.featureToggles.emptyDashboardPage) {
-        buttons.push(<GeneratePanelButton />);
+        buttons.push(<GeneratePanelButton key="panel-generate" />);
         buttons.push(<AddPanelButton dashboard={dashboard} key="panel-add-dropdown" />);
       } else {
         buttons.push(

@@ -57,7 +57,7 @@ const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
               data-testid={selectors.pages.AddDashboard.itemButton('Create new panel button')}
               onClick={() => {
                 setAssitsLoading(true);
-                onGenerateDashboardWithAI(dashboard, assitsDescription).subscribe((res) => {
+                onGenerateDashboardWithAI(assitsDescription).subscribe((res) => {
                   let generatedDashboard = null;
                   let newDashboardModel = null;
                   try {

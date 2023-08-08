@@ -4,6 +4,9 @@ import React, { useState } from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Drawer, IconButton, ModalsController, TextArea, ToolbarButton, useStyles2 } from '@grafana/ui';
 
+import { getDashboardSrv } from '../../services/DashboardSrv';
+import { onGeneratePanelWithAI } from '../../utils/dashboard';
+
 export const GeneratePanelButton = () => {
   return (
     <ModalsController key="button-save">
@@ -29,6 +32,7 @@ const GeneratePanelDrawer = ({ onDismiss }: GeneratePanelDrawerProps) => {
   const styles = useStyles2(getStyles);
 
   const [promptValue, setPromptValue] = useState<string>('');
+  const dashboard = getDashboardSrv().getCurrent();
 
   const getContent = () => {
     return (
@@ -57,8 +61,15 @@ const GeneratePanelDrawer = ({ onDismiss }: GeneratePanelDrawerProps) => {
   };
 
   const onInputChange = (value: string) => {
-    console.log('onInputChange', value);
     setPromptValue(value);
+  };
+
+  let onSubmit = async () => {
+    const response = await onGeneratePanelWithAI(dashboard!, promptValue);
+    const parsedResponse = JSON.parse(response);
+    const panel = parsedResponse.panels[0];
+
+    dashboard?.addPanel(panel);
   };
 
   return (
@@ -71,7 +82,7 @@ const GeneratePanelDrawer = ({ onDismiss }: GeneratePanelDrawerProps) => {
           value={promptValue}
           className={styles.textArea}
         />
-        <IconButton name="message" aria-label="message" />
+        <IconButton name="message" aria-label="message" onClick={onSubmit} />
       </div>
     </Drawer>
   );

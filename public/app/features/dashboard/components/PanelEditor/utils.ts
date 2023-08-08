@@ -4,6 +4,7 @@ import { FieldConfigSource, PanelPlugin } from '@grafana/data';
 import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, GRID_COLUMN_COUNT } from 'app/core/constants';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 
+import { DashboardModel } from '../../state';
 import { PanelModel } from '../../state/PanelModel';
 
 import { DisplayMode } from './types';
@@ -102,7 +103,7 @@ export function setOptionImmutably<T extends object>(options: T, path: string | 
   return { ...options, [key]: setOptionImmutably(current, splat, value) };
 }
 
-export const getGeneratePayload = (panel: PanelModel): GeneratePayload => {
+export const getGeneratePayloadForTitle = (panel: PanelModel): GeneratePayload => {
   const dashboard = getDashboardSrv().getCurrent();
 
   return {
@@ -111,6 +112,19 @@ export const getGeneratePayload = (panel: PanelModel): GeneratePayload => {
     panelTitles: dashboard?.panels.map((panel) => panel.title).filter((title) => title && title !== '') ?? [],
     panelDescriptions: dashboard?.panels.map((panel) => panel.description || '').filter(Boolean) ?? [],
     panelJson: panel.getSaveModel(),
+  };
+};
+
+// @TODO try sending all panels
+export const getGeneratePayloadForPanels = (dashboard: DashboardModel) => {
+  return {
+    dashboardTitle: dashboard?.title,
+    dashboardDescription: dashboard?.description,
+    panels:
+      dashboard?.panels
+        .filter((panel) => panel.type !== 'row')
+        .map((panel) => panel.getSaveModel())
+        .slice(0, 1) ?? [],
   };
 };
 

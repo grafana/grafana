@@ -1,5 +1,5 @@
 import { chain, cloneDeep, defaults, find } from 'lodash';
-import { Observable, of } from 'rxjs';
+import { Observable } from 'rxjs';
 
 import { PanelPluginMeta } from '@grafana/data';
 import { llms } from '@grafana/experimental';
@@ -8,6 +8,8 @@ import { LS_PANEL_COPY_KEY } from 'app/core/constants';
 import store from 'app/core/store';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { calculateNewPanelGridPos } from 'app/features/dashboard/utils/panel';
+
+import { getGeneratePayloadForPanels } from '../components/PanelEditor/utils';
 
 export function onCreateNewPanel(dashboard: DashboardModel, datasource?: string): number | undefined {
   const newPanel: Partial<PanelModel> = {
@@ -22,14 +24,51 @@ export function onCreateNewPanel(dashboard: DashboardModel, datasource?: string)
   return newPanel.id;
 }
 
-export function onGenerateDashboardWithAI(dashboard: DashboardModel, description: string): Observable<string> {
+// If generating with AI consider using the dashboard model to improve suggestions quality
+export function onGeneratePanelWithAI(dashboard: DashboardModel, description: string): any {
+  const payload = getGeneratePayloadForPanels(dashboard);
+
+  return llms.openai
+    .chatCompletions({
+      model: 'gpt-4',
+      messages: [
+        {
+          role: 'system',
+          content: 'You are an API that only respond with JSON',
+        },
+        {
+          role: 'system',
+          content: 'Your goal is to generate a valid Grafana panel JSON with the provided requirements',
+        },
+        {
+          role: 'system',
+          content: 'DO NOT explain the panel, only answer with a valid JSON',
+        },
+        {
+          role: 'system',
+          content: 'Use the following panels as context to generate the new panels',
+        },
+        {
+          role: 'system',
+          content: JSON.stringify(payload),
+        },
+        {
+          role: 'user',
+          content: description,
+        },
+      ],
+    })
+    .then((response) => response.choices[0].message.content);
+}
+
+export function onGenerateDashboardWithAI(description: string): Observable<string> {
   return llms.openai
     .streamChatCompletions({
       model: 'gpt-4',
       messages: [
         {
           role: 'system',
-          content: 'You are an API that only repond with JSON',
+          content: 'You are an API that only respond with JSON',
         },
         {
           role: 'system',

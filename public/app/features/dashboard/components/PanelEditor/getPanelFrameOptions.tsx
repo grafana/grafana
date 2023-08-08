@@ -10,7 +10,7 @@ import { OptionsPaneItemDescriptor } from './OptionsPaneItemDescriptor';
 import { AiGenerate } from './dashGPT/AiGenerate';
 import { fetchData } from './dashGPT/utils';
 import { OptionPaneRenderProps } from './types';
-import { getGeneratePayload } from './utils';
+import { getGeneratePayloadForTitle } from './utils';
 
 let llmReplyTitle = '';
 let llmReplyDescription = '';
@@ -81,7 +81,7 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
   };
 
   const llmGenerate = (subject: string) => {
-    const payload = getGeneratePayload(panel);
+    const payload = getGeneratePayloadForTitle(panel);
 
     fetchData(payload, subject, setLlmReply)
       .then((response) => {
