@@ -12,18 +12,18 @@ import { AccessControlAction, ContactPointsState, NotifierDTO, NotifierType } fr
 
 import * as onCallApi from '../../api/onCallApi';
 import * as receiversApi from '../../api/receiversApi';
+import { enableRBAC, grantUserPermissions } from '../../mocks';
 import { fetchGrafanaNotifiersAction } from '../../state/actions';
+import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
+import { createUrl } from '../../utils/url';
 
 import { ReceiversTable } from './ReceiversTable';
 import * as grafanaApp from './grafanaAppReceivers/grafanaApp';
-import { enableRBAC, grantUserPermissions } from '../../mocks';
-import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
-import { createUrl } from '../../utils/url';
 
 const renderReceieversTable = async (
   receivers: Receiver[],
   notifiers: NotifierDTO[],
-  alertmanagerName: string = 'alertmanager-1'
+  alertmanagerName = 'alertmanager-1'
 ) => {
   const config: AlertManagerCortexConfig = {
     template_files: {},
