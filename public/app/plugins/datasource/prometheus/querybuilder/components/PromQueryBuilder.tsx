@@ -1,3 +1,4 @@
+import { css } from '@emotion/css';
 import React, { useState } from 'react';
 
 import { DataSourceApi, PanelData } from '@grafana/data';
@@ -48,7 +49,12 @@ export const PromQueryBuilder = React.memo<Props>((props) => {
   return (
     <>
       {prometheusPromQAIL && showDrawer && (
-        <Drawer closeOnMaskClick={false} onClose={() => setShowDrawer(false)}>
+        <Drawer
+          // make the width resonsponsive when the inner drawer is opened
+          width={'50%'}
+          closeOnMaskClick={false}
+          onClose={() => setShowDrawer(false)}
+        >
           <PromQail query={query} closeDrawer={() => setShowDrawer(false)} />
         </Drawer>
       )}
@@ -86,15 +92,21 @@ export const PromQueryBuilder = React.memo<Props>((props) => {
           highlightedOp={highlightedOp}
         />
         {prometheusPromQAIL && (
-          <Button
-            variant={'secondary'}
-            onClick={() => {
-              setShowDrawer(true);
-            }}
-            title={'Get query suggestions.'}
+          <div
+            className={css`
+              padding: 0 0 0 6px;
+            `}
           >
-            [ai] Get query suggestions
-          </Button>
+            <Button
+              variant={'secondary'}
+              onClick={() => {
+                setShowDrawer(true);
+              }}
+              title={'Get query suggestions.'}
+            >
+              [ai] Get query suggestions
+            </Button>
+          </div>
         )}
         <QueryBuilderHints<PromVisualQuery>
           datasource={datasource}
