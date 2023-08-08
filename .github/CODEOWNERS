@@ -278,6 +278,11 @@
 /pkg/tests/api/alerting/ @grafana/alerting-backend-product
 /public/app/features/alerting/ @grafana/alerting-frontend
 
+# x
+/public/app/features/x/ @yesoreyeram
+/public/app/plugins/panel/message @yesoreyeram 
+/pkg/api/x.go @yesoreyeram
+
 # Library Services
 /pkg/services/libraryelements/ @grafana/grafana-frontend-platform
 /pkg/services/librarypanels/ @grafana/grafana-frontend-platform
