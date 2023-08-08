@@ -2283,7 +2283,7 @@ Hide additional specific feature toggles from the feature management page. By de
 
 ### read_only_toggles
 
-Disable updates for additional specific feature toggles in the feature management page. By default, feature feature toggles can only be updated if they are in stages `general availability` and `deprecated`. Use this option to disable updates for toggles in those stages.
+Use to disable updates for additional specific feature toggles in the feature management page. By default, feature toggles can only be updated if they are in the `general availability` and `deprecated`stages. Use this option to disable updates for toggles in those stages.
 
 <hr>
 
