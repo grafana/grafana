@@ -247,7 +247,9 @@ describe('RuleDetails RBAC', () => {
       await renderRuleViewer();
 
       // Assert
-      expect(ui.actionButtons.silence.query()).not.toBeInTheDocument();
+      await waitFor(() => {
+        expect(ui.actionButtons.silence.query()).not.toBeInTheDocument();
+      });
     });
 
     it('Should render Silence button for users with the instance create permissions', async () => {
@@ -267,7 +269,9 @@ describe('RuleDetails RBAC', () => {
       await renderRuleViewer();
 
       // Assert
-      expect(ui.actionButtons.silence.query()).toBeInTheDocument();
+      await waitFor(() => {
+        expect(ui.actionButtons.silence.query()).toBeInTheDocument();
+      });
     });
 
     it('Should render clone button for users having create rule permission', async () => {
