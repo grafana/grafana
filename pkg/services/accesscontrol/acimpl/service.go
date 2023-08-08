@@ -117,20 +117,17 @@ func (s *Service) getUserPermissions(ctx context.Context, user identity.Requeste
 	}
 
 	namespace, identifier := user.GetNamespacedID()
-	if namespace != authn.NamespaceUser &&
-		namespace != authn.NamespaceServiceAccount &&
-		namespace != identity.NamespaceRenderService {
-		return permissions, nil
-	}
 
 	userID, err := strconv.ParseInt(identifier, 10, 64)
 	if err != nil {
 		return nil, err
 	}
 
-	if userID == 0 {
-		s.log.Warn("user ID is 0, skipping DB lookup")
-		return permissions, nil
+	if namespace != authn.NamespaceUser &&
+		namespace != authn.NamespaceServiceAccount &&
+		namespace != identity.NamespaceRenderService {
+		// if namespace is not user or SA, the ID is not a user ID
+		userID = 0
 	}
 
 	dbPermissions, err := s.store.GetUserPermissions(ctx, accesscontrol.GetUserPermissionsQuery{
