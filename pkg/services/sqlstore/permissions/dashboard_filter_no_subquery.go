@@ -29,11 +29,9 @@ func (f *accessControlDashboardPermissionFilterNoFolderSubquery) buildClauses() 
 		f.where = clause{string: "(1 = 0)"}
 		return
 	}
-	dashWildcards := accesscontrol.WildcardsFromPrefix(dashboards.ScopeDashboardsPrefix)
-	folderWildcards := accesscontrol.WildcardsFromPrefix(dashboards.ScopeFoldersPrefix)
 
 	filter, params := accesscontrol.UserRolesFilter(f.user.OrgID, f.user.UserID, f.user.Teams, accesscontrol.GetOrgRoles(f.user))
-	rolesFilter := " AND role_id IN(SELECT id FROM role " + filter + ") "
+	rolesFilter := " AND role_id IN(SELECT id FROM role INNER JOIN (" + filter + ") as all_role ON role.id = all_role.role_id) "
 	var args []any
 	builder := strings.Builder{}
 	builder.WriteRune('(')

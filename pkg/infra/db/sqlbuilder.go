@@ -64,6 +64,33 @@ func (sb *SQLBuilder) AddParams(params ...any) {
 }
 
 func (sb *SQLBuilder) WriteDashboardPermissionFilter(user *user.SignedInUser, permission dashboards.PermissionType, queryType string) {
+	// Search log with improved performance
+	// Currently not supported for nested folders
+	if sb.features.IsEnabled(featuremgmt.FlagSplitScopes) && !sb.features.IsEnabled(featuremgmt.FlagNestedFolders) {
+		sb.sql.WriteString(" AND ")
+
+		filter := permissions.NewDashboardFilter(user, permission, queryType, sb.features, sb.recursiveQueriesAreSupported)
+		where, filterParams := filter.Where()
+
+		sb.sql.WriteString(`
+			dashboard.id IN(
+				SELECT dashboard.id FROM dashboard
+				LEFT OUTER JOIN dashboard AS folder ON dashboard.folder_id = folder.id
+		`)
+
+		join := filter.LeftJoin()
+		if join != "" {
+			sb.sql.WriteString("LEFT OUTER JOIN " + join)
+		}
+
+		sb.sql.WriteString(" WHERE ")
+		sb.sql.WriteString(where)
+		sb.sql.WriteByte(')')
+
+		sb.params = append(sb.params, filterParams...)
+		return
+	}
+
 	var (
 		sql          string
 		params       []any

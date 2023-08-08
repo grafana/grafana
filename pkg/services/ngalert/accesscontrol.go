@@ -10,23 +10,51 @@ import (
 const AlertRolesGroup = "Alerting"
 
 var (
-	rulesReaderRole = accesscontrol.RoleRegistration{
+	externalRulesReaderRole = accesscontrol.RoleRegistration{
 		Role: accesscontrol.RoleDTO{
 			Name:        accesscontrol.FixedRolePrefix + "alerting.rules:reader",
-			DisplayName: "Rules Reader",
-			Description: "Read alert rules in all Grafana folders and external providers",
+			DisplayName: "External Rules Reader",
+			Description: "Read alert rules from external providers",
 			Group:       AlertRolesGroup,
 			Permissions: []accesscontrol.Permission{
-				{
-					Action: accesscontrol.ActionAlertingRuleRead,
-					Scope:  dashboards.ScopeFoldersAll,
-				},
 				{
 					Action: accesscontrol.ActionAlertingRuleExternalRead,
 					Scope:  datasources.ScopeAll,
 				},
 			},
 		},
+		Grants: []string{string(org.RoleViewer)},
+	}
+
+	rulesReaderRole = accesscontrol.RoleRegistration{
+		Role: accesscontrol.RoleDTO{
+			Name:        accesscontrol.FixedRolePrefix + "alerting.rules:reader",
+			DisplayName: "Rules Reader",
+			Description: "Read alert rules in all Grafana folders and external providers",
+			Group:       AlertRolesGroup,
+			Permissions: accesscontrol.ConcatPermissions(externalRulesReaderRole.Role.Permissions, []accesscontrol.Permission{
+				{
+					Action: accesscontrol.ActionAlertingRuleRead,
+					Scope:  dashboards.ScopeFoldersAll,
+				},
+			}),
+		},
+	}
+
+	externalRulesWriterRole = accesscontrol.RoleRegistration{
+		Role: accesscontrol.RoleDTO{
+			Name:        accesscontrol.FixedRolePrefix + "alerting.rules:writer",
+			DisplayName: "External Rules Writer",
+			Description: "Read, Add, update, and delete rules in external providers",
+			Group:       AlertRolesGroup,
+			Permissions: accesscontrol.ConcatPermissions(externalRulesReaderRole.Role.Permissions, []accesscontrol.Permission{
+				{
+					Action: accesscontrol.ActionAlertingRuleExternalWrite,
+					Scope:  datasources.ScopeAll,
+				},
+			}),
+		},
+		Grants: []string{string(org.RoleEditor)},
 	}
 
 	rulesWriterRole = accesscontrol.RoleRegistration{
@@ -72,6 +100,7 @@ var (
 				},
 			},
 		},
+		Grants: []string{string(org.RoleViewer)},
 	}
 
 	instancesWriterRole = accesscontrol.RoleRegistration{
@@ -93,6 +122,7 @@ var (
 				},
 			}),
 		},
+		Grants: []string{string(org.RoleEditor)},
 	}
 
 	notificationsReaderRole = accesscontrol.RoleRegistration{
@@ -111,6 +141,7 @@ var (
 				},
 			},
 		},
+		Grants: []string{string(org.RoleViewer)},
 	}
 
 	notificationsWriterRole = accesscontrol.RoleRegistration{
@@ -129,6 +160,7 @@ var (
 				},
 			}),
 		},
+		Grants: []string{string(org.RoleEditor)},
 	}
 
 	alertingReaderRole = accesscontrol.RoleRegistration{
@@ -139,7 +171,7 @@ var (
 			Group:       AlertRolesGroup,
 			Permissions: accesscontrol.ConcatPermissions(rulesReaderRole.Role.Permissions, instancesReaderRole.Role.Permissions, notificationsReaderRole.Role.Permissions),
 		},
-		Grants: []string{string(org.RoleViewer)},
+		Grants: []string{string(org.RoleAdmin)},
 	}
 
 	alertingWriterRole = accesscontrol.RoleRegistration{
@@ -150,7 +182,7 @@ var (
 			Group:       AlertRolesGroup,
 			Permissions: accesscontrol.ConcatPermissions(rulesWriterRole.Role.Permissions, instancesWriterRole.Role.Permissions, notificationsWriterRole.Role.Permissions),
 		},
-		Grants: []string{string(org.RoleEditor), string(org.RoleAdmin)},
+		Grants: []string{string(org.RoleAdmin)},
 	}
 
 	alertingProvisionerRole = accesscontrol.RoleRegistration{
@@ -192,8 +224,8 @@ var (
 
 func DeclareFixedRoles(service accesscontrol.Service) error {
 	return service.DeclareFixedRoles(
-		rulesReaderRole, rulesWriterRole,
-		instancesReaderRole, instancesWriterRole,
+		externalRulesReaderRole, rulesReaderRole, externalRulesWriterRole,
+		rulesWriterRole, instancesReaderRole, instancesWriterRole,
 		notificationsReaderRole, notificationsWriterRole,
 		alertingReaderRole, alertingWriterRole, alertingProvisionerRole, alertingProvisioningReaderWithSecretsRole,
 	)

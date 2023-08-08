@@ -19,7 +19,6 @@ var sqlIDAcceptList = map[string]struct{}{
 	"`user`.`id`":      {}, // For MySQL and SQLite
 	"dashboard.uid":    {},
 }
-
 var (
 	denyQuery     = SQLFilter{" 1 = 0", nil}
 	allowAllQuery = SQLFilter{" 1 = 1", nil}
@@ -175,5 +174,5 @@ func UserRolesFilter(orgID, userID int64, teamIDs []int64, roles []string) (stri
 		params = append(params, orgID, GlobalOrgID)
 	}
 
-	return "INNER JOIN (" + builder.String() + ") as all_role ON role.id = all_role.role_id", params
+	return builder.String(), params
 }
