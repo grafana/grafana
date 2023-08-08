@@ -2273,7 +2273,9 @@ Lets you switch the feature toggle state in the feature management page. The def
 
 Set the URL of the controller that manages the feature toggle updates. If not set, feature toggles in the feature management page will be read-only.
 
-**Note:** The API for feature toggle updates has not been defined yet; please check back later.
+{{% admonition type="note" %}}
+The API for feature toggle updates has not been defined yet.
+{{% /admonition %}}
 
 ### hidden_toggles
 
