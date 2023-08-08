@@ -351,23 +351,24 @@ export class ExampleDatasource
 }
 ```
 
-## APIs being currently developed that are not supported for external plugin developers
+## APIs under development
 
-These APIs can be used in data sources within the [`grafana/grafana`](https://github.com/grafana/grafana) repository.
+These APIs can be used in data sources within the [`grafana/grafana`](https://github.com/grafana/grafana) repository. They are not supported for external plugin developers.
 
 ### Show full-range logs volume
 
-> Currently not supported for external plugins outside of Grafana repo.
-> To be implemented in data source trough implementing DataSourceWithXXXSupport interface.
+{{% admonition type="note" %}} This feature is not currently not supported for external plugins outside of Grafana repo. It is implemented in data source by implementing `DataSourceWithXXXSupport` interface. {{%
+/admonition %}}
 
-With [full range logs volume]({{< relref "../../../../explore/logs-integration/#logs-volume" >}}) Explore displays a graph showing the log distribution for all the entered log queries. To add full-range logs volume support to data source plugin, use `DataSourceWithSupplementaryQueriesSupport` API.
+With [full range logs volume]({{< relref "../../../../explore/logs-integration/#logs-volume" >}}), Explore displays a graph showing the log distribution for all the entered log queries. To add full-range logs volume support to the data source plugin, use the `DataSourceWithSupplementaryQueriesSupport` API.
 
-Implement DataSourceWithSupplementaryQueriesSupport API in data source:
+**How to implement `DataSourceWithSupplementaryQueriesSupport` API in data source:**
 
-> Note: The API needs to be implemented in data source in typescript code.
+{{% admonition type="note" %}} This API must be implemented in data source in typescript code. {{%
+/admonition %}}
 
 ```ts
-import { queryLogsVolume } from '../features/logs/logsModel'; // This is currently not possible to use outside of Grafana repo
+import { queryLogsVolume } from '../features/logs/logsModel'; // This is currently not available for use outside of the Grafana repo
 import {
   DataSourceWithSupplementaryQueriesSupport,
   LogLevel,
@@ -418,7 +419,7 @@ export class ExampleDatasource
     }
   }
 
-  // This is a mocked implementation. Be sure to adjust this based your data source logic.
+  // Be sure to adjust this example based your data source logic.
   private getLogsVolumeDataProvider(
     request: DataQueryRequest<ExampleQuery>
   ): Observable<DataQueryResponse> | undefined {
@@ -448,12 +449,12 @@ export class ExampleDatasource
 
 ### Logs sample
 
-> Currently not supported for external plugins outside of Grafana repo.
-> To be implemented in data source trough implementing DataSourceWithXXXSupport interface.
+{{% admonition type="note" %}} This feature is currently not supported for external plugins outside of the Grafana repo. Implement this API in a data source by implementing the `DataSourceWithXXXSupport` interface. {{%
+/admonition %}}
 
-The [Logs sample]({{< relref "../../../../explore/logs-integration/#logs-sample" >}}) feature is a valuable addition when your data source supports both logs and metrics. It enables users to view samples of log lines that contributed to the visualized metrics, providing deeper insights into the data.
+The [logs sample]({{< relref "../../../../explore/logs-integration/#logs-sample" >}}) feature is a valuable addition when your data source supports both logs and metrics. It enables users to view samples of log lines that contributed to the visualized metrics, providing deeper insights into the data.
 
-To implement Logs sample support in your data source plugin, you can use the `DataSourceWithSupplementaryQueriesSupport` API.
+To implement the logs sample support in your data source plugin, you can use the `DataSourceWithSupplementaryQueriesSupport` API.
 
 ```ts
 import { queryLogsSample } from '../features/logs/logsModel'; // This is currently not possible to use outside of Grafana repo
@@ -481,7 +482,7 @@ export class ExampleDatasource
 
     switch (options.type) {
       case SupplementaryQueryType.LogsSample:
-        // This is a mocked implementation. Be sure to adjust this based on your data source logic.
+        // Be sure to adjust this example based on your data source logic.
         return { ...query, refId: `logs-sample-${query.refId}`, queryType: 'logs' };
       default:
         return undefined;
@@ -523,11 +524,11 @@ export class ExampleDatasource
 }
 ```
 
-Example of [PR implementing Logs sample in Elasticsearch data source](https://github.com/grafana/grafana/pull/70258/)
+For an example of how to implement the logs sample in the Elasticsearch data source, refer to [PR 70258](https://github.com/grafana/grafana/pull/70258/).
 
 ### Log context query editor
 
-> Currently not supported for external plugins outside of Grafana repo.
-> @alpha API that is currently in process of development
+{{% admonition type="note" %}} This feature is currently not supported for external plugins outside of the Grafana repo. The`@alpha` API is currently under development. {{%
+/admonition %}}
 
-It allows plugin developers to display a custom UI in the context view by implementing `getLogRowContextUi?(row: LogRowModel, runContextQuery?: () => void, origQuery?: TQuery): React.ReactNode;` method.
+It allows plugin developers to display a custom UI in the context view by implementing the `getLogRowContextUi?(row: LogRowModel, runContextQuery?: () => void, origQuery?: TQuery): React.ReactNode;` method.
