@@ -13,7 +13,6 @@ import {
   GrafanaTheme2,
   hasToggleableQueryFiltersSupport,
   LoadingState,
-  MutableDataFrame,
   QueryFixAction,
   RawTimeRange,
   SplitOpenOptions,
@@ -418,9 +417,9 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
 
     //@todo just grabbing first timeseries as megaGrubble for now
 
-    const megaSummaryIndex = graphResultClone.findIndex(df => df.name === 'mega-summary');
+    const megaSummaryIndex = graphResultClone.findIndex((df) => df.name === 'mega-summary');
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-    const getMegaGrubbled = graphResultClone.splice(megaSummaryIndex, 1)[0]
+    const getMegaGrubbled = graphResultClone.splice(megaSummaryIndex, 1)[0];
 
     if (getMegaGrubbled && getMegaGrubbled.fields?.length) {
       getMegaGrubbled.length = getMegaGrubbled.fields[0].values.length;
