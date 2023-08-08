@@ -16,7 +16,9 @@ interface ResultBag {
 
 export function useIsRuleEditable(rulesSourceName: string, rule?: RulerRuleDTO): ResultBag {
   const dataSources = useUnifiedAlertingSelector((state) => state.dataSources);
-  const { currentData: dsFeatures } = featureDiscoveryApi.endpoints.discoverDsFeatures.useQuery({ rulesSourceName });
+  const { currentData: dsFeatures, isLoading } = featureDiscoveryApi.endpoints.discoverDsFeatures.useQuery({
+    rulesSourceName,
+  });
 
   const folderUID = rule && isGrafanaRulerRule(rule) ? rule.grafana_alert.namespace_uid : undefined;
 
@@ -53,7 +55,7 @@ export function useIsRuleEditable(rulesSourceName: string, rule?: RulerRuleDTO):
     return {
       isEditable: canEditGrafanaRules,
       isRemovable: canRemoveGrafanaRules,
-      loading,
+      loading: loading || isLoading,
     };
   }
 
@@ -66,6 +68,6 @@ export function useIsRuleEditable(rulesSourceName: string, rule?: RulerRuleDTO):
   return {
     isEditable: canEditCloudRules && isRulerAvailable,
     isRemovable: canRemoveCloudRules && isRulerAvailable,
-    loading: dataSources[rulesSourceName]?.loading,
+    loading: isLoading || dataSources[rulesSourceName]?.loading,
   };
 }
