@@ -13,6 +13,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/secrets"
@@ -107,27 +108,27 @@ func (m *migration) Exec(ctx context.Context) error {
 	}
 
 	// cache for folders created for dashboards that have custom permissions
-	folderCache := make(map[string]*dashboard)
+	folderCache := make(map[string]*dashboards.Dashboard)
 	// cache for the general folders
-	generalFolderCache := make(map[int64]*dashboard)
+	generalFolderCache := make(map[int64]*dashboards.Dashboard)
 
 	folderHelper := folderHelper{
 		store:   m.store,
 		dialect: m.dialect,
 	}
 
-	gf := func(dash dashboard, da dashAlert) (*dashboard, error) {
-		f, ok := generalFolderCache[dash.OrgId]
+	gf := func(dash dashboards.Dashboard, da dashAlert) (*dashboards.Dashboard, error) {
+		f, ok := generalFolderCache[dash.OrgID]
 		if !ok {
 			// get or create general folder
-			f, err = folderHelper.getOrCreateGeneralFolder(ctx, dash.OrgId)
+			f, err = folderHelper.getOrCreateGeneralFolder(ctx, dash.OrgID)
 			if err != nil {
 				return nil, MigrationError{
-					Err:     fmt.Errorf("failed to get or create general folder under organisation %d: %w", dash.OrgId, err),
+					Err:     fmt.Errorf("failed to get or create general folder under organisation %d: %w", dash.OrgID, err),
 					AlertId: da.Id,
 				}
 			}
-			generalFolderCache[dash.OrgId] = f
+			generalFolderCache[dash.OrgID] = f
 		}
 		// No need to assign default permissions to general folder
 		// because they are included to the query result if it's a folder with no permissions
@@ -149,7 +150,7 @@ func (m *migration) Exec(ctx context.Context) error {
 		da.DashboardUID = dashIDMap[[2]int64{da.OrgId, da.DashboardId}]
 
 		// get dashboard
-		dash := dashboard{}
+		dash := dashboards.Dashboard{}
 		err = m.store.WithDbSession(ctx, func(sess *db.Session) error {
 			exists, err := sess.Where("org_id=? AND uid=?", da.OrgId, da.DashboardUID).Get(&dash)
 			if err != nil {
@@ -170,7 +171,7 @@ func (m *migration) Exec(ctx context.Context) error {
 			return err
 		}
 
-		var folder *dashboard
+		var folder *dashboards.Dashboard
 		switch {
 		case dash.HasACL:
 			folderName := getAlertFolderNameFromDashboard(&dash)
@@ -178,36 +179,36 @@ func (m *migration) Exec(ctx context.Context) error {
 			if !ok {
 				l.Info("create a new folder for alerts that belongs to dashboard because it has custom permissions", "folder", folderName)
 				// create folder and assign the permissions of the dashboard (included default and inherited)
-				f, err = folderHelper.createFolder(ctx, dash.OrgId, folderName)
+				f, err = folderHelper.createFolder(ctx, dash.OrgID, folderName)
 				if err != nil {
 					return MigrationError{
 						Err:     fmt.Errorf("failed to create folder: %w", err),
 						AlertId: da.Id,
 					}
 				}
-				permissions, err := folderHelper.getACL(ctx, dash.OrgId, dash.Id)
+				permissions, err := folderHelper.getACL(ctx, dash.OrgID, dash.ID)
 				if err != nil {
 					return MigrationError{
-						Err:     fmt.Errorf("failed to get dashboard %d under organisation %d permissions: %w", dash.Id, dash.OrgId, err),
+						Err:     fmt.Errorf("failed to get dashboard %d under organisation %d permissions: %w", dash.ID, dash.OrgID, err),
 						AlertId: da.Id,
 					}
 				}
-				err = folderHelper.setACL(ctx, f.OrgId, f.Id, permissions)
+				err = folderHelper.setACL(ctx, f.OrgID, f.ID, permissions)
 				if err != nil {
 					return MigrationError{
-						Err:     fmt.Errorf("failed to set folder %d under organisation %d permissions: %w", f.Id, f.OrgId, err),
+						Err:     fmt.Errorf("failed to set folder %d under organisation %d permissions: %w", f.ID, f.OrgID, err),
 						AlertId: da.Id,
 					}
 				}
 				folderCache[folderName] = f
 			}
 			folder = f
-		case dash.FolderId > 0:
+		case dash.FolderID > 0:
 			// get folder if exists
 			f, err := folderHelper.getFolder(ctx, dash)
 			if err != nil {
 				// If folder does not exist then the dashboard is an orphan and we migrate the alert to the general folder.
-				l.Warn("Failed to find folder for dashboard. Migrate rule to the default folder", "rule_name", da.Name, "dashboard_uid", da.DashboardUID, "missing_folder_id", dash.FolderId)
+				l.Warn("Failed to find folder for dashboard. Migrate rule to the default folder", "rule_name", da.Name, "dashboard_uid", da.DashboardUID, "missing_folder_id", dash.FolderID)
 				folder, err = gf(dash, da)
 				if err != nil {
 					return err
@@ -222,13 +223,13 @@ func (m *migration) Exec(ctx context.Context) error {
 			}
 		}
 
-		if folder.Uid == "" {
+		if folder.UID == "" {
 			return MigrationError{
 				Err:     fmt.Errorf("empty folder identifier"),
 				AlertId: da.Id,
 			}
 		}
-		rule, err := m.makeAlertRule(l, *newCond, da, folder.Uid)
+		rule, err := m.makeAlertRule(l, *newCond, da, folder.UID)
 		if err != nil {
 			return fmt.Errorf("failed to migrate alert rule '%s' [ID:%d, DashboardUID:%s, orgID:%d]: %w", da.Name, da.Id, da.DashboardUID, da.OrgId, err)
 		}
@@ -347,13 +348,13 @@ func (m *migration) validateAlertmanagerConfig(config *apimodels.PostableUserCon
 
 // getAlertFolderNameFromDashboard generates a folder name for alerts that belong to a dashboard. Formats the string according to DASHBOARD_FOLDER format.
 // If the resulting string exceeds the migrations.MaxTitleLength, the dashboard title is stripped to be at the maximum length
-func getAlertFolderNameFromDashboard(dash *dashboard) string {
-	maxLen := MaxFolderName - len(fmt.Sprintf(DASHBOARD_FOLDER, "", dash.Uid))
+func getAlertFolderNameFromDashboard(dash *dashboards.Dashboard) string {
+	maxLen := MaxFolderName - len(fmt.Sprintf(DASHBOARD_FOLDER, "", dash.UID))
 	title := dash.Title
 	if len(title) > maxLen {
 		title = title[:maxLen]
 	}
-	return fmt.Sprintf(DASHBOARD_FOLDER, title, dash.Uid) // include UID to the name to avoid collision
+	return fmt.Sprintf(DASHBOARD_FOLDER, title, dash.UID) // include UID to the name to avoid collision
 }
 
 // uidSet is a wrapper around map[string]struct{} and util.GenerateShortUID() which aims help generate uids in quick
