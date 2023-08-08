@@ -379,6 +379,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
     const { graphResult, absoluteRange, timeZone, queryResponse, theme } = this.props;
     const styles = getStyles(theme);
 
+    //@todo not this
     const graphResultClone: DataFrame[] = JSON.parse(JSON.stringify(graphResult));
 
     const filterExemplars = (exemplars: DataFrame[], targetFrame: DataFrame): DataFrame[] => {
@@ -418,6 +419,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
     //@todo just grabbing first timeseries as megaSelect for now
     const megaSummaryIndex = graphResultClone.findIndex((df) => df.name === 'mega-summary');
     const getMegaSelect = graphResultClone.splice(megaSummaryIndex, 1)[0];
+    const panelsToRender = graphResultClone.slice(0, 20);
 
     if (getMegaSelect && getMegaSelect.fields?.length) {
       getMegaSelect.length = getMegaSelect.fields[0].values.length;
@@ -441,8 +443,8 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
           eventBus={this.graphEventBus}
         />
         <div className={styles.megaSelectSubWrapper}>
-          {graphResultClone &&
-            graphResultClone.map((frame) => (
+          {panelsToRender &&
+            panelsToRender.map((frame) => (
               <div key={JSON.stringify(frame.fields[1].labels)} className={styles.megaSelectItem}>
                 <MegaSelectContainer
                   megaSelectView={megaSelectView}

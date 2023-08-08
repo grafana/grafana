@@ -136,7 +136,8 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     const transformFromTempoMegaSelect = (response: MegaSelectResponse): DataQueryResponse => {
       let transformedFrames: DataFrame[] = [];
 
-      response.result.slice(0, Math.min(response.result.length, 21)).forEach((r) => {
+      // We want to limit the number of viz more than the number of dataframes
+      response.result.slice(0, Math.min(response.result.length, 1000)).forEach((r) => {
         const dataFrame: DataFrame = {
           fields: [
             {
@@ -178,6 +179,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
       }
 
       console.log('groupedFrames', groupedFrames);
+      groupedFrames.sort((a, b) => (a.fields.length > b.fields.length ? -1 : 1));
 
       return { data: groupedFrames };
     };
