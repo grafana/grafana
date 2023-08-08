@@ -43,7 +43,12 @@
             "name": "name",
             "type": "string",
             "typeInfo": {
-	@@ -52,28 +52,28 @@
+              "frame": "string"
+            }
+          },
+          {
+            "name": "mediaType",
+            "type": "string",
             "typeInfo": {
               "frame": "string"
             }
@@ -67,14 +72,7 @@
             "usa-states.geojson"
           ],
           [
-            "application/geo+json",
-            "application/geo+json"
-          ],
-          [
-            255943,
-            89263
-          ]
-        ]
+	@@ -83,4 +78,4 @@
       }
     }
   ]
