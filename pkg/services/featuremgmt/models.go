@@ -124,6 +124,6 @@ type UpdateFeatureTogglesCommand struct {
 type FeatureToggleDTO struct {
 	Name        string `json:"name" binding:"Required"`
 	Description string `json:"description"`
-	Enabled     bool   `json:"enabled" binding:"Required"`
+	Enabled     bool   `json:"enabled"`
 	ReadOnly    bool   `json:"readOnly,omitempty"`
 }

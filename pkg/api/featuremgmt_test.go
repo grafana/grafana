@@ -3,9 +3,12 @@ package api
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
+	"io"
 	"net/http"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org/orgtest"
@@ -145,7 +148,189 @@ func TestGetFeatureToggles(t *testing.T) {
 }
 
 func TestSetFeatureToggles(t *testing.T) {
+	writePermissions := []accesscontrol.Permission{{Action: accesscontrol.ActionFeatureManagementWrite}}
 
+	readBody := func(t *testing.T, rc io.ReadCloser) map[string]interface{} {
+		b, err := io.ReadAll(rc)
+		require.NoError(t, err)
+		payload := map[string]interface{}{}
+		require.NoError(t, json.Unmarshal(b, &payload))
+		return payload
+	}
+
+	t.Run("fails without adequate permissions", func(t *testing.T) {
+		res := runSetScenario(t, nil, nil, setting.FeatureMgmtSettings{}, []accesscontrol.Permission{}, http.StatusForbidden)
+		defer func() { require.NoError(t, res.Body.Close()) }()
+		assert.NotNil(t, res)
+	})
+
+	t.Run("fails when toggle editing is not enabled", func(t *testing.T) {
+		res := runSetScenario(t, nil, nil, setting.FeatureMgmtSettings{}, writePermissions, http.StatusForbidden)
+		defer func() { require.NoError(t, res.Body.Close()) }()
+		require.NotNil(t, res)
+		p := readBody(t, res.Body)
+		assert.Equal(t, "feature toggles are read-only", p["message"])
+	})
+
+	t.Run("fails when update toggle url is not set", func(t *testing.T) {
+		s := setting.FeatureMgmtSettings{
+			AllowEditing: true,
+		}
+		res := runSetScenario(t, nil, nil, s, writePermissions, http.StatusInternalServerError)
+		defer func() { require.NoError(t, res.Body.Close()) }()
+		require.NotNil(t, res)
+		p := readBody(t, res.Body)
+		assert.Equal(t, "feature toggles service is misconfigured", p["message"])
+	})
+
+	t.Run("fails with non-existent toggle", func(t *testing.T) {
+		features := []*featuremgmt.FeatureFlag{
+			{
+				Name:    "toggle1",
+				Enabled: true,
+				Stage:   featuremgmt.FeatureStageGeneralAvailability,
+			}, {
+				Name:    "toggle2",
+				Enabled: false,
+				Stage:   featuremgmt.FeatureStageGeneralAvailability,
+			},
+		}
+
+		updates := []featuremgmt.FeatureToggleDTO{
+			{
+				Name:    "toggle3",
+				Enabled: true,
+			},
+		}
+
+		s := setting.FeatureMgmtSettings{
+			AllowEditing:        true,
+			UpdateControllerUrl: "random",
+		}
+		res := runSetScenario(t, features, updates, s, writePermissions, http.StatusBadRequest)
+		defer func() { require.NoError(t, res.Body.Close()) }()
+		require.NotNil(t, res)
+		p := readBody(t, res.Body)
+		assert.Equal(t, "invalid toggle passed in", p["message"])
+	})
+
+	t.Run("fails with read-only toggles", func(t *testing.T) {
+		features := []*featuremgmt.FeatureFlag{
+			{
+				Name:    featuremgmt.FlagFeatureToggleAdminPage,
+				Enabled: true,
+				Stage:   featuremgmt.FeatureStageGeneralAvailability,
+			}, {
+				Name:    "toggle2",
+				Enabled: false,
+				Stage:   featuremgmt.FeatureStagePublicPreview,
+			}, {
+				Name:    "toggle3",
+				Enabled: false,
+				Stage:   featuremgmt.FeatureStageGeneralAvailability,
+			},
+		}
+
+		s := setting.FeatureMgmtSettings{
+			AllowEditing:        true,
+			UpdateControllerUrl: "random",
+			ReadOnlyToggles: map[string]struct{}{
+				"toggle3": {},
+			},
+		}
+
+		t.Run("because it is the feature toggle admin page toggle", func(t *testing.T) {
+			updates := []featuremgmt.FeatureToggleDTO{
+				{
+					Name:    featuremgmt.FlagFeatureToggleAdminPage,
+					Enabled: true,
+				},
+			}
+			res := runSetScenario(t, features, updates, s, writePermissions, http.StatusBadRequest)
+			defer func() { require.NoError(t, res.Body.Close()) }()
+			require.NotNil(t, res)
+			p := readBody(t, res.Body)
+			assert.Equal(t, fmt.Sprintf("invalid toggle passed in: %s", featuremgmt.FlagFeatureToggleAdminPage), p["error"])
+		})
+
+		t.Run("because it is not GA or Deprecated", func(t *testing.T) {
+			updates := []featuremgmt.FeatureToggleDTO{
+				{
+					Name:    "toggle2",
+					Enabled: true,
+				},
+			}
+			res := runSetScenario(t, features, updates, s, writePermissions, http.StatusBadRequest)
+			defer func() { require.NoError(t, res.Body.Close()) }()
+			require.NotNil(t, res)
+			p := readBody(t, res.Body)
+			assert.Equal(t, "invalid toggle passed in: toggle2", p["error"])
+		})
+
+		t.Run("because it is configured to be read-only", func(t *testing.T) {
+			updates := []featuremgmt.FeatureToggleDTO{
+				{
+					Name:    "toggle3",
+					Enabled: true,
+				},
+			}
+			res := runSetScenario(t, features, updates, s, writePermissions, http.StatusBadRequest)
+			defer func() { require.NoError(t, res.Body.Close()) }()
+			require.NotNil(t, res)
+			p := readBody(t, res.Body)
+			assert.Equal(t, "invalid toggle passed in: toggle3", p["error"])
+		})
+	})
+
+	t.Run("succeeds with all conditions met", func(t *testing.T) {
+		features := []*featuremgmt.FeatureFlag{
+			{
+				Name:    featuremgmt.FlagFeatureToggleAdminPage,
+				Enabled: true,
+				Stage:   featuremgmt.FeatureStageGeneralAvailability,
+			}, {
+				Name:    "toggle2",
+				Enabled: false,
+				Stage:   featuremgmt.FeatureStagePublicPreview,
+			}, {
+				Name:    "toggle3",
+				Enabled: false,
+				Stage:   featuremgmt.FeatureStageGeneralAvailability,
+			}, {
+				Name:    "toggle4",
+				Enabled: false,
+				Stage:   featuremgmt.FeatureStageGeneralAvailability,
+			}, {
+				Name:    "toggle5",
+				Enabled: false,
+				Stage:   featuremgmt.FeatureStageDeprecated,
+			},
+		}
+
+		s := setting.FeatureMgmtSettings{
+			AllowEditing:        true,
+			UpdateControllerUrl: "random",
+			ReadOnlyToggles: map[string]struct{}{
+				"toggle3": {},
+			},
+		}
+
+		updates := []featuremgmt.FeatureToggleDTO{
+			{
+				Name:    "toggle4",
+				Enabled: true,
+			}, {
+				Name:    "toggle5",
+				Enabled: false,
+			},
+		}
+		// TODO: check for success status after the handler is fully implemented
+		res := runSetScenario(t, features, updates, s, writePermissions, http.StatusNotImplemented)
+		defer func() { require.NoError(t, res.Body.Close()) }()
+		require.NotNil(t, res)
+		p := readBody(t, res.Body)
+		assert.Equal(t, "UpdateFeatureToggle is unimplemented", p["message"])
+	})
 }
 
 func runGetScenario(
@@ -172,6 +357,7 @@ func runGetScenario(
 		hs.userService = &usertest.FakeUserService{
 			ExpectedUser: &user.User{ID: 1},
 		}
+		hs.log = log.New("test")
 	})
 	req := webtest.RequestWithSignedInUser(server.NewGetRequest("/api/featuremgmt"), userWithPermissions(1, permissions))
 	res, err := server.SendJSON(req)
@@ -219,7 +405,7 @@ func runSetScenario(
 	settings setting.FeatureMgmtSettings,
 	permissions []accesscontrol.Permission,
 	expectedCode int,
-) (*http.Response, error) {
+) *http.Response {
 	// Set up server and send request
 	cfg := setting.NewCfg()
 	cfg.FeatureManagement = settings
@@ -235,7 +421,9 @@ func runSetScenario(
 		hs.userService = &usertest.FakeUserService{
 			ExpectedUser: &user.User{ID: 1},
 		}
+		hs.log = log.New("test")
 	})
+
 	cmd := featuremgmt.UpdateFeatureTogglesCommand{
 		FeatureToggles: updateFeatures,
 	}
@@ -244,7 +432,8 @@ func runSetScenario(
 	req := webtest.RequestWithSignedInUser(server.NewPostRequest("/api/featuremgmt", bytes.NewReader(b)), userWithPermissions(1, permissions))
 	res, err := server.SendJSON(req)
 
+	require.NoError(t, err)
 	require.Equal(t, expectedCode, res.StatusCode)
 
-	return res, err
+	return res
 }

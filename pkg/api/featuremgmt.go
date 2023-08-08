@@ -41,7 +41,7 @@ func (hs *HTTPServer) UpdateFeatureToggle(ctx *contextmodel.ReqContext) response
 	}
 
 	if featureMgmtCfg.UpdateControllerUrl == "" {
-		return response.Error(http.StatusForbidden, "feature toggles service is misconfigured", fmt.Errorf("[feature_management]update_controller_url is not set"))
+		return response.Error(http.StatusInternalServerError, "feature toggles service is misconfigured", fmt.Errorf("[feature_management]update_controller_url is not set"))
 	}
 
 	cmd := featuremgmt.UpdateFeatureTogglesCommand{}
@@ -53,9 +53,10 @@ func (hs *HTTPServer) UpdateFeatureToggle(ctx *contextmodel.ReqContext) response
 		// make sure flag exists, and only continue if flag is writeable
 		if f, ok := hs.Features.LookupFlag(t.Name); ok && isFeatureWriteable(f, hs.Cfg.FeatureManagement.ReadOnlyToggles) {
 			hs.log.Info("UpdateFeatureToggle: updating toggle", "toggle_name", t.Name, "enabled", t.Enabled, "username", ctx.SignedInUser.Login)
+			// TODO build payload
 		} else {
-			hs.log.Warn("UpdateFeatureToggle: invalid toggle passed in, skipping", "toggle_name", t.Name)
-			continue
+			hs.log.Warn("UpdateFeatureToggle: invalid toggle passed in", "toggle_name", t.Name)
+			return response.Error(http.StatusBadRequest, "invalid toggle passed in", fmt.Errorf("invalid toggle passed in: %s", t.Name))
 		}
 	}
 
