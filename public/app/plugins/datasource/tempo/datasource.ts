@@ -126,7 +126,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
 
   queryMegaSelect(options: DataQueryRequest<TempoQuery>): Observable<DataQueryResponse> {
     const request = this._request('/api/metrics/megaselect', {
-      q: options.targets[0].grubbleUpSpan,
+      q: '{}',
       metric: options.targets[0].view,
       limit: options.targets[0].limit ?? DEFAULT_LIMIT,
       start: options.range.from.unix(),
