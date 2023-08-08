@@ -59,7 +59,6 @@ export const MegaSelectContainer = ({
 
   return (
     <PanelChrome
-      title="Graph"
       width={width}
       height={height}
       loadingState={loadingState}

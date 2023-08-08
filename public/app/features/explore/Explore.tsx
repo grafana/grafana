@@ -429,7 +429,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
       <div className={styles.megaSelectWrapper}>
         <MegaSelectContainer
           data={[getMegaSelect]}
-          height={showFlameGraph ? 180 : 400}
+          height={400}
           width={width}
           absoluteRange={absoluteRange}
           timeZone={timeZone}
@@ -446,7 +446,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
                 <MegaSelectContainer
                   actionsOverride={<></>}
                   data={[frame]}
-                  height={showFlameGraph ? 180 : 400}
+                  height={300}
                   width={width / 4}
                   absoluteRange={absoluteRange}
                   timeZone={timeZone}
