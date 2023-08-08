@@ -84,7 +84,7 @@ export function useCombinedRuleNamespaces(
         }
         const namespaces: Record<string, CombinedRuleNamespace> = {};
 
-        // first get all the ruler rules in
+        // first get all the ruler rules from the data source
         Object.entries(rulerRules || {}).forEach(([namespaceName, groups]) => {
           const namespace: CombinedRuleNamespace = {
             rulesSource,
@@ -115,7 +115,6 @@ export function useCombinedRuleNamespaces(
   }, [promRulesResponses, rulerRulesResponses, rulesSources, grafanaPromRuleNamespaces]);
 }
 
-// TODO This should be used in the useCombinedRules hook
 export function combineRulesNamespaces(
   rulesSource: RulesSource,
   promNamespaces: RuleNamespace[],
@@ -123,7 +122,7 @@ export function combineRulesNamespaces(
 ): CombinedRuleNamespace[] {
   const namespaces: Record<string, CombinedRuleNamespace> = {};
 
-  // first get all the ruler rules in
+  // first get all the ruler rules from the data source
   Object.entries(rulerRules || {}).forEach(([namespaceName, groups]) => {
     const namespace: CombinedRuleNamespace = {
       rulesSource,

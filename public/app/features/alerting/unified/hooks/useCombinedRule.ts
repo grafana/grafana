@@ -175,22 +175,30 @@ export function useCombinedRule({ ruleIdentifier }: { ruleIdentifier: RuleIdenti
     currentData: promRuleNs,
     isLoading: isLoadingPromRules,
     error: promRuleNsError,
-  } = alertRuleApi.endpoints.prometheusRuleNamespaces.useQuery({
-    // TODO Refactor parameters
-    ruleSourceName: ruleIdentifier.ruleSourceName,
-    namespace:
-      isPrometheusRuleIdentifier(ruleIdentifier) || isCloudRuleIdentifier(ruleIdentifier)
-        ? ruleIdentifier.namespace
-        : undefined,
-    groupName:
-      isPrometheusRuleIdentifier(ruleIdentifier) || isCloudRuleIdentifier(ruleIdentifier)
-        ? ruleIdentifier.groupName
-        : undefined,
-    ruleName:
-      isPrometheusRuleIdentifier(ruleIdentifier) || isCloudRuleIdentifier(ruleIdentifier)
-        ? ruleIdentifier.ruleName
-        : undefined,
-  });
+  } = alertRuleApi.endpoints.prometheusRuleNamespaces.useQuery(
+    {
+      // TODO Refactor parameters
+      ruleSourceName: ruleIdentifier.ruleSourceName,
+      namespace:
+        isPrometheusRuleIdentifier(ruleIdentifier) || isCloudRuleIdentifier(ruleIdentifier)
+          ? ruleIdentifier.namespace
+          : undefined,
+      groupName:
+        isPrometheusRuleIdentifier(ruleIdentifier) || isCloudRuleIdentifier(ruleIdentifier)
+          ? ruleIdentifier.groupName
+          : undefined,
+      ruleName:
+        isPrometheusRuleIdentifier(ruleIdentifier) || isCloudRuleIdentifier(ruleIdentifier)
+          ? ruleIdentifier.ruleName
+          : undefined,
+    }
+    // TODO – experiment with enabling these now that we request a single alert rule more efficiently.
+    // Requires a recent version of Prometheus with support for query params on /api/v1/rules
+    // {
+    //   refetchOnFocus: true,
+    //   refetchOnReconnect: true,
+    // }
+  );
 
   const [
     fetchRulerRuleGroup,
@@ -212,7 +220,7 @@ export function useCombinedRule({ ruleIdentifier }: { ruleIdentifier: RuleIdenti
         group: ruleIdentifier.groupName,
       });
     } else if (isGrafanaRuleIdentifier(ruleIdentifier)) {
-      // TODO Fetch a single group for Grafana managed rules
+      // TODO Fetch a single group for Grafana managed rules, we're currently still fetching all rules for Grafana managed
       fetchRulerRules({ rulerConfig: dsFeatures.rulerConfig });
     }
   }, [dsFeatures, fetchRulerRuleGroup, fetchRulerRules, ruleIdentifier]);
