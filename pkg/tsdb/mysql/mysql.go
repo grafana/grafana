@@ -53,11 +53,12 @@ func ProvideService(cfg *setting.Cfg, httpClientProvider httpclient.Provider) *S
 func newInstanceSettings(cfg *setting.Cfg, httpClientProvider httpclient.Provider) datasource.InstanceFactoryFunc {
 	return func(ctx context.Context, settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 		jsonData := sqleng.JsonData{
-			MaxOpenConns:            cfg.SqlDatasourceMaxOpenConnsDefault,
-			MaxIdleConns:            cfg.SqlDatasourceMaxIdleConnsDefault,
-			ConnMaxLifetime:         cfg.SqlDatasourceMaxConnLifetimeDefault,
-			SecureDSProxy:           false,
-			AllowCleartextPasswords: false,
+			MaxOpenConns:               cfg.SqlDatasourceMaxOpenConnsDefault,
+			MaxIdleConns:               cfg.SqlDatasourceMaxIdleConnsDefault,
+			ConnMaxLifetime:            cfg.SqlDatasourceMaxConnLifetimeDefault,
+			SecureDSProxy:              false,
+			AllowCleartextPasswords:    false,
+			EnableMySQLMultiStatements: false,
 		}
 
 		err := json.Unmarshal(settings.JSONData, &jsonData)
@@ -107,6 +108,10 @@ func newInstanceSettings(cfg *setting.Cfg, httpClientProvider httpclient.Provide
 
 		if dsInfo.JsonData.AllowCleartextPasswords {
 			cnnstr += "&allowCleartextPasswords=true"
+		}
+
+		if dsInfo.JsonData.EnableMySQLMultiStatements {
+			cnnstr += "&multiStatements=true"
 		}
 
 		opts, err := settings.HTTPClientOptions(ctx)

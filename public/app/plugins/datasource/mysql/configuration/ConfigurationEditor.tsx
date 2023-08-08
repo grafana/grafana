@@ -146,6 +146,15 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<My
             value={jsonData.allowCleartextPasswords || false}
           />
         </Field>
+        <Field
+          label="Enable multi statements"
+          description="Enables the usage of multiple statement execution for MySQL queries."
+        >
+          <Switch
+            onChange={onSwitchChanged('enableMySQLMultiStatements')}
+            value={jsonData.enableMySQLMultiStatements || false}
+          />
+        </Field>
       </ConfigSection>
 
       {jsonData.tlsAuth || jsonData.tlsAuthWithCACert ? (

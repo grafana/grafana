@@ -56,26 +56,27 @@ var NewXormEngine = func(driverName string, connectionString string) (*xorm.Engi
 }
 
 type JsonData struct {
-	MaxOpenConns            int    `json:"maxOpenConns"`
-	MaxIdleConns            int    `json:"maxIdleConns"`
-	ConnMaxLifetime         int    `json:"connMaxLifetime"`
-	ConnectionTimeout       int    `json:"connectionTimeout"`
-	Timescaledb             bool   `json:"timescaledb"`
-	Mode                    string `json:"sslmode"`
-	ConfigurationMethod     string `json:"tlsConfigurationMethod"`
-	TlsSkipVerify           bool   `json:"tlsSkipVerify"`
-	RootCertFile            string `json:"sslRootCertFile"`
-	CertFile                string `json:"sslCertFile"`
-	CertKeyFile             string `json:"sslKeyFile"`
-	Timezone                string `json:"timezone"`
-	Encrypt                 string `json:"encrypt"`
-	Servername              string `json:"servername"`
-	TimeInterval            string `json:"timeInterval"`
-	Database                string `json:"database"`
-	SecureDSProxy           bool   `json:"enableSecureSocksProxy"`
-	SecureDSProxyUsername   string `json:"secureSocksProxyUsername"`
-	AllowCleartextPasswords bool   `json:"allowCleartextPasswords"`
-	AuthenticationType      string `json:"authenticationType"`
+	MaxOpenConns               int    `json:"maxOpenConns"`
+	MaxIdleConns               int    `json:"maxIdleConns"`
+	ConnMaxLifetime            int    `json:"connMaxLifetime"`
+	ConnectionTimeout          int    `json:"connectionTimeout"`
+	Timescaledb                bool   `json:"timescaledb"`
+	Mode                       string `json:"sslmode"`
+	ConfigurationMethod        string `json:"tlsConfigurationMethod"`
+	TlsSkipVerify              bool   `json:"tlsSkipVerify"`
+	RootCertFile               string `json:"sslRootCertFile"`
+	CertFile                   string `json:"sslCertFile"`
+	CertKeyFile                string `json:"sslKeyFile"`
+	Timezone                   string `json:"timezone"`
+	Encrypt                    string `json:"encrypt"`
+	Servername                 string `json:"servername"`
+	TimeInterval               string `json:"timeInterval"`
+	Database                   string `json:"database"`
+	SecureDSProxy              bool   `json:"enableSecureSocksProxy"`
+	SecureDSProxyUsername      string `json:"secureSocksProxyUsername"`
+	AllowCleartextPasswords    bool   `json:"allowCleartextPasswords"`
+	AuthenticationType         string `json:"authenticationType"`
+	EnableMySQLMultiStatements bool   `json:"enableMySQLMultiStatements"`
 }
 
 type DataSourceInfo struct {
