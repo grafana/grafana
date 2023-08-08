@@ -1,0 +1,39 @@
+import { Meta, ArgTypes } from '@storybook/blocks';
+import { Flex } from './Flex';
+
+<Meta title="MDX|Flex" component={Flex} />
+
+# Flex
+
+The Flex Component aims at providing a more efficient way to lay out, align and distribute space among items in a container and
+the decision to create it is to ensure consistency in design across Grafana.
+
+### Usage
+
+#### When to use
+
+Use when in need to align components and small parts of the application. Use as parent container to wrap elements that
+you wish to align in a certain way.
+
+#### When not to use
+
+When you need to lay out bigger parts of the application or when you want to create page lay out.
+
+### Variants
+
+### Dos
+
+    * to display the direction of the elements
+    * to set the elements to wrap
+    * to align items (center, vertically or horizontally)
+
+### Don'ts
+
+    * for complex grid lay outs with various rows and columns
+    * bidirectional lay outs
+    * complex nesting
+    * equal height columns
+
+### Props
+
+<ArgTypes of={Flex} />
