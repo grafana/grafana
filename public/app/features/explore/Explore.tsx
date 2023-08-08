@@ -751,7 +751,7 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
   //@ts-ignore
   const megaSelectView = query?.view ?? '';
   //@ts-ignore
-  const megaSelectEndpoint = query?.megaSpan.replace('http://', '') ?? '';
+  const megaSelectEndpoint = query?.megaSpan?.replace('http://', '') ?? '';
 
   return {
     datasourceInstance,
