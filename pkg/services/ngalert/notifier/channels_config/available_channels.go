@@ -1,6 +1,7 @@
 package channels_config
 
 import (
+	"fmt"
 	"os"
 
 	alertingOpsgenie "github.com/grafana/alerting/receivers/opsgenie"
@@ -1339,4 +1340,21 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 			},
 		},
 	}
+}
+
+// GetSecretKeysForContactPointType returns settings keys of contact point of the given type that are expected to be secrets. Returns error is contact point type is not known.
+func GetSecretKeysForContactPointType(contactPointType string) ([]string, error) {
+	notifiers := GetAvailableNotifiers()
+	for _, n := range notifiers {
+		if n.Type == contactPointType {
+			var secureFields []string
+			for _, field := range n.Options {
+				if field.Secure {
+					secureFields = append(secureFields, field.PropertyName)
+				}
+			}
+			return secureFields, nil
+		}
+	}
+	return nil, fmt.Errorf("no secrets configured for type '%s'", contactPointType)
 }
