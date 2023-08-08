@@ -111,6 +111,10 @@ func (u *SignedInUser) GetPermissions() map[string][]string {
 		return make(map[string][]string)
 	}
 
+	if u.Permissions[u.GetOrgID()] == nil {
+		return make(map[string][]string)
+	}
+
 	return u.Permissions[u.GetOrgID()]
 }
 

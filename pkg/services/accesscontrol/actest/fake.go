@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
@@ -69,7 +70,7 @@ type FakeAccessControl struct {
 	ExpectedEvaluate bool
 }
 
-func (f FakeAccessControl) Evaluate(ctx context.Context, user *user.SignedInUser, evaluator accesscontrol.Evaluator) (bool, error) {
+func (f FakeAccessControl) Evaluate(ctx context.Context, user identity.Requester, evaluator accesscontrol.Evaluator) (bool, error) {
 	return f.ExpectedEvaluate, f.ExpectedErr
 }
 

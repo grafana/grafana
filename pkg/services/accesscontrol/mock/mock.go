@@ -7,6 +7,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
@@ -101,7 +102,8 @@ func (m *Mock) WithBuiltInRoles(builtInRoles []string) *Mock {
 
 // Evaluate evaluates access to the given resource.
 // This mock uses GetUserPermissions to then call the evaluator Evaluate function.
-func (m *Mock) Evaluate(ctx context.Context, usr *user.SignedInUser, evaluator accesscontrol.Evaluator) (bool, error) {
+func (m *Mock) Evaluate(ctx context.Context, us identity.Requester, evaluator accesscontrol.Evaluator) (bool, error) {
+	usr := us.(*user.SignedInUser)
 	m.Calls.Evaluate = append(m.Calls.Evaluate, []interface{}{ctx, usr, evaluator})
 	// Use override if provided
 	if m.EvaluateFunc != nil {
