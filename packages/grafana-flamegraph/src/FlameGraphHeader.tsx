@@ -3,17 +3,14 @@ import React, { useEffect, useState } from 'react';
 import useDebounce from 'react-use/lib/useDebounce';
 import usePrevious from 'react-use/lib/usePrevious';
 
-import { CoreApp, GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { reportInteraction, config } from '@grafana/runtime';
+import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Button, Dropdown, Input, Menu, RadioButtonGroup, useStyles2 } from '@grafana/ui';
 
-import { MIN_WIDTH_TO_SHOW_BOTH_TOPTABLE_AND_FLAMEGRAPH } from './constants';
-
 import { byPackageGradient, byValueGradient } from './FlameGraph/colors';
+import { MIN_WIDTH_TO_SHOW_BOTH_TOPTABLE_AND_FLAMEGRAPH } from './constants';
 import { ColorScheme, SelectedView, TextAlign } from './types';
 
 type Props = {
-  app: CoreApp;
   search: string;
   setSearch: (search: string) => void;
   selectedView: SelectedView;
@@ -25,10 +22,10 @@ type Props = {
   showResetButton: boolean;
   colorScheme: ColorScheme;
   onColorSchemeChange: (colorScheme: ColorScheme) => void;
+  stickyHeader?: boolean;
 };
 
 const FlameGraphHeader = ({
-  app,
   search,
   setSearch,
   selectedView,
@@ -40,16 +37,9 @@ const FlameGraphHeader = ({
   showResetButton,
   colorScheme,
   onColorSchemeChange,
+  stickyHeader,
 }: Props) => {
-  const styles = useStyles2((theme) => getStyles(theme, app));
-  function interaction(name: string, context: Record<string, string | number>) {
-    reportInteraction(`grafana_flamegraph_${name}`, {
-      app,
-      grafana_version: config.buildInfo.version,
-      ...context,
-    });
-  }
-
+  const styles = useStyles2((theme) => getStyles(theme, stickyHeader));
   const [localSearch, setLocalSearch] = useSearchInput(search, setSearch);
 
   const suffix =
@@ -97,26 +87,20 @@ const FlameGraphHeader = ({
             aria-label={'Reset focus and sandwich state'}
           />
         )}
-        <ColorSchemeButton app={app} value={colorScheme} onChange={onColorSchemeChange} />
+        <ColorSchemeButton value={colorScheme} onChange={onColorSchemeChange} />
         <RadioButtonGroup<TextAlign>
           size="sm"
           disabled={selectedView === SelectedView.TopTable}
           options={alignOptions}
           value={textAlign}
-          onChange={(val) => {
-            interaction('text_align_selected', { align: val });
-            onTextAlignChange(val);
-          }}
+          onChange={onTextAlignChange}
           className={styles.buttonSpacing}
         />
         <RadioButtonGroup<SelectedView>
           size="sm"
           options={getViewOptions(containerWidth)}
           value={selectedView}
-          onChange={(view) => {
-            interaction('view_selected', { view });
-            setSelectedView(view);
-          }}
+          onChange={setSelectedView}
         />
       </div>
     </div>
@@ -124,12 +108,12 @@ const FlameGraphHeader = ({
 };
 
 type ColorSchemeButtonProps = {
-  app: CoreApp;
   value: ColorScheme;
   onChange: (colorScheme: ColorScheme) => void;
 };
 function ColorSchemeButton(props: ColorSchemeButtonProps) {
-  const styles = useStyles2((theme) => getStyles(theme, props.app));
+  // TODO: probably create separate getStyles
+  const styles = useStyles2((theme) => getStyles(theme, false));
   const menu = (
     <Menu>
       <Menu.Item label="By value" onClick={() => props.onChange(ColorScheme.ValueBased)} />
@@ -208,7 +192,7 @@ function useSearchInput(
   return [localSearchState, setLocalSearchState];
 }
 
-const getStyles = (theme: GrafanaTheme2, app: CoreApp) => ({
+const getStyles = (theme: GrafanaTheme2, sticky?: boolean) => ({
   header: css`
     label: header;
     display: flex;
@@ -217,7 +201,7 @@ const getStyles = (theme: GrafanaTheme2, app: CoreApp) => ({
     background: ${theme.colors.background.primary};
     top: 0;
     z-index: ${theme.zIndex.navbarFixed};
-    ${app === CoreApp.Explore
+    ${sticky
       ? css`
           position: sticky;
           padding-bottom: ${theme.spacing(1)};

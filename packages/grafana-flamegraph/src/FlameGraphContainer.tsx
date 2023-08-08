@@ -2,24 +2,27 @@ import { css } from '@emotion/css';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useMeasure } from 'react-use';
 
-import { DataFrame, CoreApp, GrafanaTheme2 } from '@grafana/data';
-import { config, reportInteraction } from '@grafana/runtime';
+import { DataFrame, GrafanaTheme2 } from '@grafana/data';
 import { useStyles2, useTheme2 } from '@grafana/ui';
-
-import { MIN_WIDTH_TO_SHOW_BOTH_TOPTABLE_AND_FLAMEGRAPH } from './constants';
 
 import FlameGraph from './FlameGraph/FlameGraph';
 import { FlameGraphDataContainer } from './FlameGraph/dataTransform';
 import FlameGraphHeader from './FlameGraphHeader';
 import FlameGraphTopTableContainer from './TopTable/FlameGraphTopTableContainer';
+import { MIN_WIDTH_TO_SHOW_BOTH_TOPTABLE_AND_FLAMEGRAPH } from './constants';
 import { ClickedItemData, ColorScheme, SelectedView, TextAlign } from './types';
 
 type Props = {
   data?: DataFrame;
-  app: CoreApp;
+  stickyHeader?: boolean;
+
+  // for interaction reporting
+  onTableSymbolClick?: (symbol: string) => void;
+  onViewSelected?: (view: string) => void;
+  onTextAlignSelected?: (align: string) => void;
 };
 
-const FlameGraphContainer = (props: Props) => {
+const FlameGraphContainer = ({ data, onTableSymbolClick, onViewSelected, onTextAlignSelected }: Props) => {
   const [focusedItemData, setFocusedItemData] = useState<ClickedItemData>();
 
   const [rangeMin, setRangeMin] = useState(0);
@@ -35,11 +38,11 @@ const FlameGraphContainer = (props: Props) => {
   const theme = useTheme2();
 
   const dataContainer = useMemo((): FlameGraphDataContainer | undefined => {
-    if (!props.data) {
+    if (!data) {
       return;
     }
-    return new FlameGraphDataContainer(props.data, theme);
-  }, [props.data, theme]);
+    return new FlameGraphDataContainer(data, theme);
+  }, [data, theme]);
 
   const styles = useStyles2(getStyles);
 
@@ -67,22 +70,19 @@ const FlameGraphContainer = (props: Props) => {
   useEffect(() => {
     resetFocus();
     resetSandwich();
-  }, [props.data, resetFocus]);
+  }, [data, resetFocus]);
 
   const onSymbolClick = useCallback(
     (symbol: string) => {
       if (search === symbol) {
         setSearch('');
       } else {
-        reportInteraction('grafana_flamegraph_table_item_selected', {
-          app: props.app,
-          grafana_version: config.buildInfo.version,
-        });
+        onTableSymbolClick?.(symbol);
         setSearch(symbol);
         resetFocus();
       }
     },
-    [setSearch, resetFocus, props.app, search]
+    [setSearch, resetFocus, onTableSymbolClick, search]
   );
 
   return (
@@ -90,18 +90,23 @@ const FlameGraphContainer = (props: Props) => {
       {dataContainer && (
         <div ref={sizeRef} className={styles.container}>
           <FlameGraphHeader
-            app={props.app}
             search={search}
             setSearch={setSearch}
             selectedView={selectedView}
-            setSelectedView={setSelectedView}
+            setSelectedView={(view) => {
+              setSelectedView(view);
+              onViewSelected?.(view);
+            }}
             containerWidth={containerWidth}
             onReset={() => {
               resetFocus();
               resetSandwich();
             }}
             textAlign={textAlign}
-            onTextAlignChange={setTextAlign}
+            onTextAlignChange={(align) => {
+              setTextAlign(align);
+              onTextAlignSelected?.(align);
+            }}
             showResetButton={Boolean(focusedItemData || sandwichItem)}
             colorScheme={colorScheme}
             onColorSchemeChange={setColorScheme}
@@ -111,7 +116,6 @@ const FlameGraphContainer = (props: Props) => {
             {selectedView !== SelectedView.FlameGraph && (
               <FlameGraphTopTableContainer
                 data={dataContainer}
-                app={props.app}
                 onSymbolClick={onSymbolClick}
                 height={selectedView === SelectedView.TopTable ? 600 : undefined}
                 search={search}

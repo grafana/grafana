@@ -3845,6 +3845,31 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@grafana/flamegraph@workspace:*, @grafana/flamegraph@workspace:packages/grafana-flamegraph":
+  version: 0.0.0-use.local
+  resolution: "@grafana/flamegraph@workspace:packages/grafana-flamegraph"
+  dependencies:
+    "@emotion/css": 11.11.2
+    "@grafana/data": 10.2.0-pre
+    "@grafana/tsconfig": ^1.2.0-rc1
+    "@grafana/ui": 10.2.0-pre
+    "@leeoniya/ufuzzy": 1.0.8
+    "@testing-library/jest-dom": 5.16.5
+    "@testing-library/react": 14.0.0
+    "@testing-library/user-event": 14.4.3
+    "@types/lodash": 4.14.195
+    "@types/tinycolor2": 1.4.3
+    lodash: 4.17.21
+    react: 18.2.0
+    react-use: 17.4.0
+    react-virtualized-auto-sizer: 1.0.7
+    tinycolor2: 1.6.0
+  peerDependencies:
+    react: ^17.0.0 || ^18.0.0
+    react-dom: ^17.0.0 || ^18.0.0
+  languageName: unknown
+  linkType: soft
+
 "@grafana/google-sdk@npm:0.1.1":
   version: 0.1.1
   resolution: "@grafana/google-sdk@npm:0.1.1"
@@ -19280,6 +19305,7 @@ __metadata:
     "@grafana/experimental": 1.6.1
     "@grafana/faro-core": 1.1.2
     "@grafana/faro-web-sdk": 1.1.2
+    "@grafana/flamegraph": "workspace:*"
     "@grafana/google-sdk": 0.1.1
     "@grafana/lezer-logql": 0.1.8
     "@grafana/monaco-logql": ^0.0.7
