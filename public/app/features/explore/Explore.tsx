@@ -653,7 +653,9 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
                           {showRawPrometheus && (
                             <ErrorBoundaryAlert>{this.renderRawPrometheus(width)}</ErrorBoundaryAlert>
                           )}
-                          {showTable && <ErrorBoundaryAlert>{this.renderTablePanel(width)}</ErrorBoundaryAlert>}
+                          {showTable && !showMegaSelect && (
+                            <ErrorBoundaryAlert>{this.renderTablePanel(width)}</ErrorBoundaryAlert>
+                          )}
                           {showLogs && <ErrorBoundaryAlert>{this.renderLogsPanel(width)}</ErrorBoundaryAlert>}
                           {showNodeGraph && <ErrorBoundaryAlert>{this.renderNodeGraphPanel()}</ErrorBoundaryAlert>}
                           {showFlameGraph && <ErrorBoundaryAlert>{this.renderFlameGraphPanel()}</ErrorBoundaryAlert>}
@@ -726,7 +728,7 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
   const logsSample = supplementaryQueries[SupplementaryQueryType.LogsSample];
   // We want to show logs sample only if there are no log results and if there is already graph or table result
   const showLogsSample = !!(logsSample.dataProvider !== undefined && !logsResult && (graphResult || tableResult));
-  const showMegaSelect = true;
+  const showMegaSelect = item.queries.some((query) => query.queryType === 'megaSelect');
 
   return {
     datasourceInstance,
