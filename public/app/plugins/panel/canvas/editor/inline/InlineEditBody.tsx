@@ -91,7 +91,11 @@ export function InlineEditBody() {
         <AddLayerButton onChange={(sel) => onAddItem(sel, rootLayer)} options={typeOptions} label={'Add item'} />
       </div>
       <div style={topLevelItemsContainerStyle}>
-        <FileUpload size="sm" accept=".dxf" onFileUpload={({ currentTarget }) => onImportFile(currentTarget)}>
+        <FileUpload
+          size="sm"
+          accept=".dxf"
+          onFileUpload={({ currentTarget }) => onImportFile(currentTarget, rootLayer)}
+        >
           <span>Upload CAD file</span>
         </FileUpload>
       </div>

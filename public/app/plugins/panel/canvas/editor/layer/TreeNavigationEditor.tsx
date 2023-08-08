@@ -156,7 +156,7 @@ export const TreeNavigationEditor = ({ item }: StandardEditorProps<any, TreeView
             className={styles.uploadFileButton}
             size="sm"
             accept=".dxf"
-            onFileUpload={({ currentTarget }) => onImportFile(currentTarget)}
+            onFileUpload={({ currentTarget }) => onImportFile(currentTarget, layer)}
           >
             <span>Upload CAD file</span>
           </FileUpload>

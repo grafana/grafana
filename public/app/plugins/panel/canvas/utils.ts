@@ -1,4 +1,3 @@
-import { DxfParser } from 'dxf-parser';
 import { isNumber, isString } from 'lodash';
 
 import { AppEvents, Field, LinkModel, PluginState, SelectableValue } from '@grafana/data';
@@ -18,6 +17,7 @@ import { FrameState } from 'app/features/canvas/runtime/frame';
 import { Scene, SelectionParams } from 'app/features/canvas/runtime/scene';
 import { DimensionContext } from 'app/features/dimensions';
 
+import { handleDxfFile } from './editor/cad/utils';
 import { AnchorPoint, ConnectionState } from './types';
 
 export function doSelect(scene: Scene, element: ElementState | FrameState) {
@@ -107,27 +107,17 @@ export function onAddItem(sel: SelectableValue<string>, rootLayer: FrameState | 
   }
 }
 
-export async function onImportFile(target: EventTarget & HTMLInputElement) {
+export async function onImportFile(target: EventTarget & HTMLInputElement, layer: FrameState | undefined) {
+  if (!layer) {
+    return;
+  }
+
   // eslint-disable-next-line no-console
   console.debug('file', target.files && target.files[0]); // TODO: remove debugging
 
   if (target.files && target.files[0]) {
     // TODO: check file type and map to handler
-    handleDxfFile(target.files[0]);
-  }
-}
-
-export async function handleDxfFile(file: File) {
-  let fileText = await file.text();
-
-  const parser = new DxfParser();
-  try {
-    const dxf = parser.parseSync(fileText);
-    // eslint-disable-next-line no-console
-    console.debug('dxf', dxf); // TODO: handle parsed dxf
-  } catch (error) {
-    // TODO: more specific error handling
-    console.error('error', error);
+    await handleDxfFile(target.files[0], layer);
   }
 }
 
