@@ -150,7 +150,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
               name: 'Value',
               type: FieldType.number,
               values: r.values.map((value) => parseFloat(value[1])), // string to float
-              config: { displayName: r.metric.__name__ },
+              config: { displayName: r.metric.__value__ },
               labels: r.metric,
             },
           ],

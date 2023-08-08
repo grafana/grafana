@@ -32,6 +32,7 @@ interface Props extends Pick<PanelChromeProps, 'statusMessage'> {
   thresholdsConfig?: ThresholdsConfig;
   thresholdsStyle?: GraphThresholdsStyleConfig;
   actionsOverride?: JSX.Element;
+  megaSelectView?: string;
 }
 
 export const MegaSelectContainer = ({
@@ -49,6 +50,7 @@ export const MegaSelectContainer = ({
   loadingState,
   statusMessage,
   actionsOverride,
+  megaSelectView,
 }: Props) => {
   const [graphStyle, setGraphStyle] = useState(loadGraphStyle);
 
@@ -57,8 +59,16 @@ export const MegaSelectContainer = ({
     setGraphStyle(graphStyle);
   }, []);
 
+  const getTitle = () => {
+    if (megaSelectView) {
+      return `${megaSelectView} by ${data[0]?.fields[1]?.labels?.__name__}`;
+    }
+    return undefined;
+  };
+
   return (
     <PanelChrome
+      title={getTitle()}
       width={width}
       height={height}
       loadingState={loadingState}
