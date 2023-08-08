@@ -7,6 +7,7 @@ import { config, locationService, setBackendSrv, setDataSourceSrv } from '@grafa
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
+import { AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types';
 import { CombinedRule } from 'app/types/unified-alerting';
 import { PromAlertingRuleState, PromApplication } from 'app/types/unified-alerting-dto';
@@ -24,6 +25,9 @@ import {
   mockRulerAlertingRule,
   promRuleFromRulerRule,
 } from '../../mocks';
+import { mockAlertmanagerChoiceResponse } from '../../mocks/alertmanagerApi';
+import { mockPluginSettings } from '../../mocks/plugins';
+import { SupportedPlugin } from '../../types/pluginBridges';
 import * as ruleId from '../../utils/rule-id';
 
 import { RuleViewer } from './RuleViewer.v1';
@@ -92,6 +96,14 @@ const rulerRuleIdentifier = ruleId.fromRulerRule('prometheus', 'ns-default', 'gr
 
 beforeAll(() => {
   setBackendSrv(backendSrv);
+
+  // some action buttons need to check what Alertmanager setup we have for Grafana managed rules
+  mockAlertmanagerChoiceResponse(server, {
+    alertmanagersChoice: AlertmanagerChoice.Internal,
+    numExternalAlertmanagers: 1,
+  });
+  // we need to mock this one for the "declare incident" button
+  mockPluginSettings(server, SupportedPlugin.Incident);
 
   const dsSettings = mockDataSource({
     name: dsName,
@@ -202,7 +214,7 @@ describe('RuleDetails RBAC', () => {
       expect(ui.actionButtons.edit.get()).toBeInTheDocument();
     });
 
-    it('Should  render Delete button for users with the delete permission', async () => {
+    it('Should render Delete button for users with the delete permission', async () => {
       // Arrange
       mockCombinedRule.mockReturnValue({
         result: mockGrafanaRule as CombinedRule,
