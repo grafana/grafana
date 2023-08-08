@@ -1229,6 +1229,60 @@ func TestIntegrationMySQL(t *testing.T) {
 				require.Equal(t, data.NoticeSeverityWarning, frames[0].Meta.Notices[0].Severity)
 			})
 		})
+
+		t.Run("When doing a query with multiple statements to get deploy events should return expected result", func(t *testing.T) {
+			query := &backend.QueryDataRequest{
+				Queries: []backend.DataQuery{
+					{
+						JSON: []byte(`{
+							"rawSql": "SET @foo='bar'; SELECT time_sec, description as text, tags FROM event WHERE tags='deploy'",
+							"format": "table"
+						}`),
+						RefID: "Deploys",
+						TimeRange: backend.TimeRange{
+							From: fromStart.Add(-20 * time.Minute),
+							To:   fromStart.Add(40 * time.Minute),
+						},
+					},
+				},
+			}
+
+			resp, err := exe.QueryData(context.Background(), query)
+			require.NoError(t, err)
+			queryResult := resp.Responses["Deploys"]
+
+			frames := queryResult.Frames
+			require.Len(t, frames, 1)
+			require.Len(t, frames[0].Fields, 3)
+			require.Equal(t, 3, frames[0].Fields[0].Len())
+		})
+
+		t.Run("When doing a query with multiple statements that return more than one result set only the first one is used", func(t *testing.T) {
+			query := &backend.QueryDataRequest{
+				Queries: []backend.DataQuery{
+					{
+						JSON: []byte(`{
+							"rawSql": "SELECT time_sec, description as text, tags FROM event WHERE tags='ticket'; SELECT 1",
+							"format": "table"
+						}`),
+						RefID: "Multi",
+						TimeRange: backend.TimeRange{
+							From: fromStart.Add(-20 * time.Minute),
+							To:   fromStart.Add(40 * time.Minute),
+						},
+					},
+				},
+			}
+
+			resp, err := exe.QueryData(context.Background(), query)
+			require.NoError(t, err)
+			queryResult := resp.Responses["Multi"]
+
+			frames := queryResult.Frames
+			require.Len(t, frames, 1)
+			require.Len(t, frames[0].Fields, 3)
+			require.Equal(t, 3, frames[0].Fields[0].Len())
+		})
 	})
 
 	t.Run("Given an empty table", func(t *testing.T) {
