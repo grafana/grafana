@@ -339,7 +339,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
         return of({ error: { message: error instanceof Error ? error.message : 'Unknown error occurred' }, data: [] });
       }
     }
-    if (targets.grubbleUp?.length) {
+    if (targets.megaSelect?.length) {
       return this.queryMegaSelect(options);
     }
 

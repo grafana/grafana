@@ -44,7 +44,7 @@ import ExploreQueryInspector from './ExploreQueryInspector';
 import { ExploreToolbar } from './ExploreToolbar';
 import { FlameGraphExploreContainer } from './FlameGraph/FlameGraphExploreContainer';
 import { GraphContainer } from './Graph/GraphContainer';
-import { GrubbleContainer } from './Graph/GrubbleContainer';
+import { MegaSelectContainer } from './Graph/MegaSelectContainer';
 import LogsContainer from './Logs/LogsContainer';
 import { LogsSamplePanel } from './Logs/LogsSamplePanel';
 import { NoData } from './NoData';
@@ -97,12 +97,12 @@ const getStyles = (theme: GrafanaTheme2) => {
       padding: ${theme.spacing(2)};
       padding-top: 0;
     `,
-    grubbleWrapper: css``,
-    grubbleSubWrapper: css`
+    megaSelectWrapper: css``,
+    megaSelectSubWrapper: css`
       display: flex;
       flex-wrap: wrap;
     `,
-    grubbleItem: css``,
+    megaSelectItem: css``,
   };
 };
 
@@ -375,7 +375,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
     );
   }
 
-  renderGrubbleUpPanels(width: number) {
+  renderMegaSelectPanels(width: number) {
     const { graphResult, absoluteRange, timeZone, queryResponse, showFlameGraph, theme } = this.props;
     const styles = getStyles(theme);
 
@@ -415,35 +415,35 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
       });
     };
 
-    //@todo just grabbing first timeseries as megaGrubble for now
+    //@todo just grabbing first timeseries as megaSelect for now
 
     const megaSummaryIndex = graphResultClone.findIndex((df) => df.name === 'mega-summary');
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-    const getMegaGrubbled = graphResultClone.splice(megaSummaryIndex, 1)[0];
+    const getMegaSelect = graphResultClone.splice(megaSummaryIndex, 1)[0];
 
-    if (getMegaGrubbled && getMegaGrubbled.fields?.length) {
-      getMegaGrubbled.length = getMegaGrubbled.fields[0].values.length;
+    if (getMegaSelect && getMegaSelect.fields?.length) {
+      getMegaSelect.length = getMegaSelect.fields[0].values.length;
     }
 
     return (
-      <div className={styles.grubbleWrapper}>
-        <GrubbleContainer
-          data={[getMegaGrubbled]}
+      <div className={styles.megaSelectWrapper}>
+        <MegaSelectContainer
+          data={[getMegaSelect]}
           height={showFlameGraph ? 180 : 400}
           width={width}
           absoluteRange={absoluteRange}
           timeZone={timeZone}
           onChangeTime={this.onUpdateTimeRange}
-          annotations={filterExemplars(queryResponse.annotations ?? [], getMegaGrubbled)}
+          annotations={filterExemplars(queryResponse.annotations ?? [], getMegaSelect)}
           splitOpenFn={this.onSplitOpen('graph')}
           loadingState={queryResponse.state}
           eventBus={this.graphEventBus}
         />
-        <div className={styles.grubbleSubWrapper}>
+        <div className={styles.megaSelectSubWrapper}>
           {graphResultClone &&
             graphResultClone.map((frame) => (
-              <div key={JSON.stringify(frame.fields[1].labels)} className={styles.grubbleItem}>
-                <GrubbleContainer
+              <div key={JSON.stringify(frame.fields[1].labels)} className={styles.megaSelectItem}>
+                <MegaSelectContainer
                   actionsOverride={<></>}
                   data={[frame]}
                   height={showFlameGraph ? 180 : 400}
@@ -590,7 +590,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
       showFlameGraph,
       timeZone,
       showLogsSample,
-      showGrubbleUp,
+      showMegaSelect,
     } = this.props;
     const { openDrawer } = this.state;
     const styles = getStyles(theme);
@@ -647,7 +647,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
                     <ErrorBoundaryAlert>
                       {showPanels && (
                         <>
-                          {!showGrubbleUp && showMetrics && graphResult && (
+                          {!showMegaSelect && showMetrics && graphResult && (
                             <ErrorBoundaryAlert>{this.renderGraphPanel(width)}</ErrorBoundaryAlert>
                           )}
                           {showRawPrometheus && (
@@ -659,8 +659,8 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
                           {showFlameGraph && <ErrorBoundaryAlert>{this.renderFlameGraphPanel()}</ErrorBoundaryAlert>}
                           {showTrace && <ErrorBoundaryAlert>{this.renderTraceViewPanel()}</ErrorBoundaryAlert>}
                           {showLogsSample && <ErrorBoundaryAlert>{this.renderLogsSamplePanel()}</ErrorBoundaryAlert>}
-                          {showGrubbleUp && graphResult && (
-                            <ErrorBoundaryAlert>{this.renderGrubbleUpPanels(width)}</ErrorBoundaryAlert>
+                          {showMegaSelect && graphResult && (
+                            <ErrorBoundaryAlert>{this.renderMegaSelectPanels(width)}</ErrorBoundaryAlert>
                           )}
                           {showCustom && <ErrorBoundaryAlert>{this.renderCustom(width)}</ErrorBoundaryAlert>}
                           {showNoData && <ErrorBoundaryAlert>{this.renderNoData()}</ErrorBoundaryAlert>}
@@ -726,7 +726,7 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
   const logsSample = supplementaryQueries[SupplementaryQueryType.LogsSample];
   // We want to show logs sample only if there are no log results and if there is already graph or table result
   const showLogsSample = !!(logsSample.dataProvider !== undefined && !logsResult && (graphResult || tableResult));
-  const showGrubbleUp = true;
+  const showMegaSelect = true;
 
   return {
     datasourceInstance,
@@ -751,7 +751,7 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     loading,
     logsSample,
     showLogsSample,
-    showGrubbleUp,
+    showMegaSelect,
   };
 }
 

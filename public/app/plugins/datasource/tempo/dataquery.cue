@@ -46,14 +46,14 @@ composableKinds: DataQuery: {
 					limit?: int64
 					filters: [...#TraceqlFilter]
 
-					// Grubble Up
-					view?:          string
-					grubbleUpSpan?: string
-					grubbleUpFilters?: [...string]
+					// Mega Select
+					view?:     string
+					megaSpan?: string
+					megaFilters?: [...string]
 				} @cuetsy(kind="interface") @grafana(TSVeneer="type")
 
 				// search = Loki search, nativeSearch = Tempo search for backwards compatibility
-				#TempoQueryType: "traceql" | "traceqlSearch" | "search" | "serviceMap" | "upload" | "nativeSearch" | "traceId" | "clear" | "grubbleUp" @cuetsy(kind="type")
+				#TempoQueryType: "traceql" | "traceqlSearch" | "search" | "serviceMap" | "upload" | "nativeSearch" | "traceId" | "clear" | "megaSelect" @cuetsy(kind="type")
 
 				// The state of the TraceQL streaming search query
 				#SearchStreamingState: "pending" | "streaming" | "done" | "error" @cuetsy(kind="enum")

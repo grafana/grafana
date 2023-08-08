@@ -15,7 +15,7 @@ import { ExploreGraphStyle } from 'app/types';
 import { storeGraphStyle } from '../state/utils';
 
 import { ExploreGraphLabel } from './ExploreGraphLabel';
-import { GrubbleGraph } from './GrubbleGraph';
+import { MegaSelectGraph } from './MegaSelectGraph';
 import { loadGraphStyle } from './utils';
 
 interface Props extends Pick<PanelChromeProps, 'statusMessage'> {
@@ -34,7 +34,7 @@ interface Props extends Pick<PanelChromeProps, 'statusMessage'> {
   actionsOverride?: JSX.Element;
 }
 
-export const GrubbleContainer = ({
+export const MegaSelectContainer = ({
   data,
   eventBus,
   height,
@@ -67,7 +67,7 @@ export const GrubbleContainer = ({
       actions={actionsOverride ?? <ExploreGraphLabel graphStyle={graphStyle} onChangeGraphStyle={onGraphStyleChange} />}
     >
       {(innerWidth, innerHeight) => (
-        <GrubbleGraph
+        <MegaSelectGraph
           graphStyle={graphStyle}
           data={data}
           height={innerHeight}

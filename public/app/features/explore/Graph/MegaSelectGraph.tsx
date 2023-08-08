@@ -69,7 +69,7 @@ interface Props {
   eventBus: EventBus;
 }
 
-export function GrubbleGraph({
+export function MegaSelectGraph({
   data,
   height,
   width,

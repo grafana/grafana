@@ -12,8 +12,6 @@ import * as common from '@grafana/schema';
 
 export interface TempoQuery extends common.DataQuery {
   filters: Array<TraceqlFilter>;
-  grubbleUpFilters?: Array<string>;
-  grubbleUpSpan?: string;
   /**
    * Defines the maximum number of traces that are returned from Tempo
    */
@@ -22,6 +20,8 @@ export interface TempoQuery extends common.DataQuery {
    * @deprecated Define the maximum duration to select traces. Use duration format, for example: 1.2s, 100ms
    */
   maxDuration?: string;
+  megaFilters?: Array<string>;
+  megaSpan?: string;
   /**
    * @deprecated Define the minimum duration to select traces. Use duration format, for example: 1.2s, 100ms
    */
@@ -51,20 +51,20 @@ export interface TempoQuery extends common.DataQuery {
    */
   spanName?: string;
   /**
-   * Grubble Up
+   * Mega Select
    */
   view?: string;
 }
 
 export const defaultTempoQuery: Partial<TempoQuery> = {
   filters: [],
-  grubbleUpFilters: [],
+  megaFilters: [],
 };
 
 /**
  * search = Loki search, nativeSearch = Tempo search for backwards compatibility
  */
-export type TempoQueryType = ('traceql' | 'traceqlSearch' | 'search' | 'serviceMap' | 'upload' | 'nativeSearch' | 'traceId' | 'clear' | 'grubbleUp');
+export type TempoQueryType = ('traceql' | 'traceqlSearch' | 'search' | 'serviceMap' | 'upload' | 'nativeSearch' | 'traceId' | 'clear' | 'megaSelect');
 
 /**
  * The state of the TraceQL streaming search query

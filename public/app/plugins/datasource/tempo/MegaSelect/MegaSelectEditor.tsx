@@ -14,7 +14,7 @@ import { SpanSelect } from './SpanSelect';
 
 type Props = QueryEditorProps<TempoDatasource, TempoQuery, MyDataSourceOptions>;
 
-export function GrubbleEditor(props: Props) {
+export function MegaSelectEditor(props: Props) {
   const query = defaults(props.query, defaultQuery);
   const { datasource } = props;
 

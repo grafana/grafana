@@ -20,7 +20,7 @@ const (
 // Defines values for TempoQueryType.
 const (
 	TempoQueryTypeClear         TempoQueryType = "clear"
-	TempoQueryTypeGrubbleUp     TempoQueryType = "grubbleUp"
+	TempoQueryTypeMegaSelect    TempoQueryType = "megaSelect"
 	TempoQueryTypeNativeSearch  TempoQueryType = "nativeSearch"
 	TempoQueryTypeSearch        TempoQueryType = "search"
 	TempoQueryTypeServiceMap    TempoQueryType = "serviceMap"
@@ -79,10 +79,8 @@ type TempoQuery struct {
 	// For non mixed scenarios this is undefined.
 	// TODO find a better way to do this ^ that's friendly to schema
 	// TODO this shouldn't be unknown but DataSourceRef | null
-	Datasource       *any            `json:"datasource,omitempty"`
-	Filters          []TraceqlFilter `json:"filters"`
-	GrubbleUpFilters []string        `json:"grubbleUpFilters,omitempty"`
-	GrubbleUpSpan    *string         `json:"grubbleUpSpan,omitempty"`
+	Datasource *any            `json:"datasource,omitempty"`
+	Filters    []TraceqlFilter `json:"filters"`
 
 	// Hide true if query is disabled (ie should not be returned to the dashboard)
 	// Note this does not always imply that the query should not be executed since
@@ -93,7 +91,9 @@ type TempoQuery struct {
 	Limit *int64 `json:"limit,omitempty"`
 
 	// @deprecated Define the maximum duration to select traces. Use duration format, for example: 1.2s, 100ms
-	MaxDuration *string `json:"maxDuration,omitempty"`
+	MaxDuration *string  `json:"maxDuration,omitempty"`
+	MegaFilters []string `json:"megaFilters,omitempty"`
+	MegaSpan    *string  `json:"megaSpan,omitempty"`
 
 	// @deprecated Define the minimum duration to select traces. Use duration format, for example: 1.2s, 100ms
 	MinDuration *string `json:"minDuration,omitempty"`
@@ -125,7 +125,7 @@ type TempoQuery struct {
 	// @deprecated Query traces by span name
 	SpanName *string `json:"spanName,omitempty"`
 
-	// Grubble Up
+	// Mega Select
 	View *string `json:"view,omitempty"`
 }
 

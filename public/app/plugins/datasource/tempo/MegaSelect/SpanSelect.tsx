@@ -14,14 +14,14 @@ export function SpanSelect(props: Props & { tags: string[] }) {
   const { tags } = props;
 
   const onSpanChange = (selValue: SelectableValue<string>) => {
-    props.onChange({ ...query, grubbleUpSpan: selValue.value });
+    props.onChange({ ...query, megaSpan: selValue.value });
   };
 
   return (
     <Select
       aria-label="Span"
       onChange={onSpanChange}
-      value={query.grubbleUpSpan}
+      value={query.megaSpan}
       options={tags.map((value: string) => ({ label: value, value }))}
       width={20}
     />
