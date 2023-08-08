@@ -117,15 +117,12 @@ func (f *DashboardFilter) buildClauses(folderAction, dashboardAction string) {
 
 	if folderAction != "" {
 		if f.needToCheckFolderAction {
-			query.WriteString(fmt.Sprintf(`
-				(
-					p.action = '%s' AND
-					p.kind = 'folders' AND
-					p.attribute = 'uid' AND
-					p.role_id IN(%s) AND
-					dashboard.is_folder
-				)
-				`, folderAction, roleFilter))
+			query.WriteString(
+				fmt.Sprintf(
+					"(p.action = '%s' AND p.kind = 'folders' AND p.attribute = 'uid' AND p.role_id IN(%s) AND dashboard.is_folder)",
+					folderAction,
+					roleFilter,
+				))
 			params = append(params, roleFilterParams...)
 		} else {
 			query.WriteString("dashboard.is_folder")
@@ -143,21 +140,21 @@ func (f *DashboardFilter) buildClauses(folderAction, dashboardAction string) {
 				LEFT OUTER JOIN permission p2 ON p2.identifier = folder.uid
 			`)
 
-			query.WriteString(fmt.Sprintf(`
-				((
-					p.action = '%s' AND
-					p.kind = 'dashboards' AND
-					p.attribute = 'uid' AND
-					p.role_id IN(%s) AND
-					NOT dashboard.is_folder
-				) OR (
-					p2.action = '%s' AND
-					p2.kind = 'folders' AND
-					p2.attribute = 'uid' AND
-					p2.role_id IN(%s) AND
-					NOT dashboard.is_folder
+			query.WriteString(
+				fmt.Sprintf(
+					"(p.action = '%s' AND p.kind = 'dashboards' AND p.attribute = 'uid' AND p.role_id IN(%s) AND NOT dashboard.is_folder)",
+					dashboardAction,
+					roleFilter,
 				))
-				`, dashboardAction, roleFilter, dashboardAction, roleFilter))
+
+			query.WriteString(" OR ")
+
+			query.WriteString(
+				fmt.Sprintf(
+					"(p2.action = '%s' AND p2.kind = 'folders' AND p2.attribute = 'uid' AND p2.role_id IN(%s) AND NOT dashboard.is_folder)",
+					dashboardAction,
+					roleFilter,
+				))
 
 			params = append(params, roleFilterParams...)
 			params = append(params, roleFilterParams...)
