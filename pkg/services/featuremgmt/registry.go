@@ -915,7 +915,7 @@ var (
 			Name:         "prometheusPromQAIL",
 			Description:  "Prometheus and AI/ML to assist users in creating a query",
 			Stage:        FeatureStageExperimental,
-			FrontendOnly: false,
+			FrontendOnly: true,
 			Owner:        grafanaObservabilityMetricsSquad,
 		},
 	}
