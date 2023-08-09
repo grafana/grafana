@@ -98,12 +98,13 @@ const GeneratePanelDrawer = ({ onDismiss }: GeneratePanelDrawerProps) => {
 const getStyles = (theme: GrafanaTheme2) => ({
   wrapper: css`
     display: flex;
+    align-items: center;
   `,
   contentWrapper: css`
     padding-right: 30px;
   `,
   textArea: css`
-    margin-right: 24px;
+    margin-right: ${theme.spacing(4)};
   `,
   list: css`
     padding: 0 0 10px 20px;

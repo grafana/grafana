@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
 import React from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, PanelModel } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config, locationService, reportInteraction } from '@grafana/runtime';
 import { Panel } from '@grafana/schema';
@@ -13,6 +13,7 @@ import {
   onCreateNewPanel,
   onCreateNewRow,
   onGenerateDashboardWithAI,
+  onGenerateDashboardWithSemanticSearch,
 } from 'app/features/dashboard/utils/dashboard';
 import { useDispatch, useSelector } from 'app/types';
 
@@ -32,17 +33,28 @@ const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
 
   const onGenerateDashboard = async () => {
     setAssitsLoading(true);
-    const response = await onGenerateDashboardWithAI(assitsDescription);
-    let generatedDashboard = null;
-    let newDashboardModel = null;
     try {
-      generatedDashboard = JSON.parse(response)?.dashboard || JSON.parse(response);
-      newDashboardModel = new DashboardModel(generatedDashboard);
-      console.log('Loaded model', newDashboardModel);
-      setAssitsLoading(false);
-    } catch (e) {}
-    if (generatedDashboard?.panels) {
-      generatedDashboard?.panels.forEach((panel: Panel) => {
+      const generatedDashboard = await onGenerateDashboardWithAI(assitsDescription);
+      if (generatedDashboard?.panels) {
+        generatedDashboard?.panels.forEach((panel: Panel) => {
+          dashboard.addPanel(panel);
+        });
+      }
+    } catch (err) {
+      // @TODO: Show error in the UI
+      console.log(err);
+    }
+    setAssitsLoading(false);
+  };
+
+  const onSearchDashboard = async () => {
+    setAssitsLoading(true);
+    const dashboard = await onGenerateDashboardWithSemanticSearch(assitsDescription);
+    console.log('Loaded dashboard', dashboard);
+    const newDashboardModel = new DashboardModel(dashboard);
+    setAssitsLoading(false);
+    if (newDashboardModel?.panels) {
+      newDashboardModel?.panels.forEach((panel: PanelModel) => {
         dashboard.addPanel(panel);
       });
     }
@@ -79,7 +91,20 @@ const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
               {assitsLoading ? (
                 <LoadingPlaceholder text="Generating response" className={styles.loadingPlaceholder} />
               ) : (
-                'Generate dashboard'
+                'Generate dashboard with DashGPT'
+              )}
+            </Button>
+            <Button
+              size="md"
+              icon="ai"
+              data-testid={selectors.pages.AddDashboard.itemButton('Create new panel button')}
+              onClick={onSearchDashboard}
+              disabled={assitsLoading}
+            >
+              {assitsLoading ? (
+                <LoadingPlaceholder text="Generating response" className={styles.loadingPlaceholder} />
+              ) : (
+                'Generate dashboard with templates'
               )}
             </Button>
           </div>

@@ -2,6 +2,7 @@ import { chain, cloneDeep, defaults, find } from 'lodash';
 
 import { PanelPluginMeta } from '@grafana/data';
 import { llms } from '@grafana/experimental';
+import { Dashboard } from '@grafana/schema';
 import config from 'app/core/config';
 import { LS_PANEL_COPY_KEY } from 'app/core/constants';
 import store from 'app/core/store';
@@ -62,6 +63,21 @@ export function onGeneratePanelWithAI(dashboard: DashboardModel, description: st
     .then((response) => response.choices[0].message.content);
 }
 
+// Generate panels using semantic search on Grafana panels database
+export function onGenerateDashboardWithSemanticSearch(query: string): any {
+  return fetch('http://localhost:9044/get_dashboards/', {
+    method: 'POST', // *GET, POST, PUT, DELETE, etc.
+    //mode: "no-cors", // no-cors, *cors, same-origin
+    // cache: "no-cache", // *default, no-cache, reload, force-cache, only-if-cached
+    // credentials: "same-origin", // include, *same-origin, omit
+    headers: {
+      'Content-Type': 'application/json',
+      // 'Content-Type': 'application/x-www-form-urlencoded',
+    },
+    body: JSON.stringify({ query }), // body data type must match "Content-Type" header
+  }).then((res) => res.json());
+}
+
 export function onGenerateDashboardWithAI(description: string): any {
   return llms.openai
     .chatCompletions({
@@ -89,7 +105,15 @@ export function onGenerateDashboardWithAI(description: string): any {
         },
       ],
     })
-    .then((response) => response.choices[0].message.content);
+    .then((response) => response.choices[0].message.content)
+    .then((content) => {
+      const parsedJSON = JSON.parse(content);
+      // Sometimes the AI returns a dashboard object, sometimes an object with the dashboard as property
+      const generatedDashboard = parsedJSON?.dashboard || parsedJSON;
+
+      return new DashboardModel(generatedDashboard);
+    })
+    .then(normalizeDashboard);
 }
 
 export function onCreateNewWidgetPanel(dashboard: DashboardModel, widgetType: string): number | undefined {
@@ -175,4 +199,37 @@ export function getCopiedPanelPlugin(): (PanelPluginMeta & PanelPluginInfo) | un
   }
 
   return undefined;
+}
+
+/**
+ * Standardize dashboard since the AI can generate old versions of the dashboard that are not  100% compatible with the latest version:
+ * - Fix panels size
+ */
+export function normalizeDashboard(dashboard: DashboardModel): Dashboard {
+  // Migrate Dashboard to the latest version
+  const newDashboard = dashboard.getSaveModelClone() as Dashboard;
+
+  // Fix panels size
+  const newPanels = (newDashboard.panels || []).map((panel) => {
+    console.log(panel);
+
+    const newPanel = {
+      ...panel,
+      gridPos: {
+        //@ts-ignore
+        ...panel.gridPos,
+        //@ts-ignore
+        w: (panel?.gridPos?.w ?? 12) * 2,
+        //@ts-ignore
+        h: panel?.gridPos?.h ?? 8,
+      },
+    };
+    console.log('normalized', newPanel);
+    return newPanel;
+  });
+
+  return {
+    ...newDashboard,
+    panels: newPanels,
+  };
 }
