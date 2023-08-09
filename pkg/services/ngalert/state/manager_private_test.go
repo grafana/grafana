@@ -580,7 +580,7 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 								newEvaluation(t2, eval.Alerting),
 							},
 							StartsAt:           t1,
-							EndsAt:             t1.Add(ResendDelay * 3), // TODO should we fix it to be t2.Add(ResendDelay * 3)?
+							EndsAt:             t1.Add(ResendDelay * 3), // TODO probably it should be t1 (semantic of Normal)?
 							LastEvaluationTime: t2,
 						},
 					},
@@ -2488,7 +2488,7 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 										newEvaluation(t2, eval.Error),
 									},
 									StartsAt:           t1,
-									EndsAt:             t1.Add(ResendDelay * 3), // TODO probably it should be t2.Add(...)?
+									EndsAt:             t1.Add(ResendDelay * 3), // TODO probably it should be t1 (semantic of Normal)?
 									LastEvaluationTime: t2,
 								},
 							},
