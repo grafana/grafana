@@ -50,17 +50,17 @@ Tell Grafana that your data source plugin can return log data, by adding `"logs"
 
 The log data frame should include following fields:
 
-| Field name     | Field type                                      | Info                                                                                                                                                                                                                                        |
-| -------------- | ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **timestamp**  | `time`                                          | Field with the timestamp, non nullable.                                                                                                                                                                                                     |
-| **body**       | `string`                                        | Field with the content of the log line content, non nullable.                                                                                                                                                                               |
-| **severity**   | `string`                                        | Represents the severity/level of the log line. If no severity field is found, consumers/client will decide the log level. More info about log level can be found [here](https://grafana.com/docs/grafana/latest/explore/logs-integration/). |
-| **id**         | `string`                                        | Unique identifier of the log line.                                                                                                                                                                                                          |
-| **attributes** | `json raw message` (Go) or `other` (Typescript) | This field represents additional attributes of the log line. Other systems may refer to this with different names, such as "Labels" in Loki. Its value should be represented with Record<string,any> type in javascript.                    |
+| Field name     | Field type                                      | Description                                                                                                                                                                                                                                   |
+| -------------- | ----------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **timestamp**  | `time`                                          | Timestamp, non-nullable.                                                                                                                                                                                                                      |
+| **body**       | `string`                                        | Content of the log line, non-nullable.                                                                                                                                                                                                        |
+| **severity**   | `string`                                        | Severity/level of the log line. If no severity field is found, consumers/client will decide the log level. More information about log levels, refer to [Logs integration](https://grafana.com/docs/grafana/latest/explore/logs-integration/). |
+| **id**         | `string`                                        | Unique identifier of the log line.                                                                                                                                                                                                            |
+| **attributes** | `json raw message` (Go) or `other` (TypeScript) | Additional attributes of the log line. Other systems may refer to this with different names, such as "Labels" in Loki. Represent its value as Record<string,any> type in JavaScript.                                                          |
 
 Logs data frame's `type` needs to be set to `type: DataFrameType.LogLines` in data frame's meta.
 
-Example of constructing a logs data frame in `Go`:
+**Example of constructing a logs data frame in Go:**
 
 ```go
 frame := data.NewFrame(
@@ -77,7 +77,7 @@ frame.SetMeta(&data.FrameMeta{
 })
 ```
 
-Example of constructing a logs data frame in `Typescript`:
+**Example of constructing a logs data frame in TypeScript:**
 
 ```ts
 const result = new MutableDataFrame({
@@ -100,19 +100,19 @@ const result = new MutableDataFrame({
 
 ## Enhance your logs data source plugin with optional features
 
+You can use the following optional features to enhance your logs data source plugin.
+
 ### Implement features that enhance log querying experience in Explore
 
-[Explore]({{< relref "../../../../explore" >}}) provides an excellent place for investigating incidents and troubleshooting using logs. If the data source produces log results, we highly recommend implementing the following APIs to empower your users to fully utilize the logs UI and its features within Explore.
+[Explore]({{< relref "../../../../explore" >}}) provides a useful interface for investigating incidents and troubleshooting logs. If the data source produces log results, we highly recommend implementing the following APIs to allow your users to get the most out of the logs UI and its features within Explore.
 
-This guide will walk you through the process of adding support for Explore features in a data source plugin through a seamless integration, maximizing the potential for logs analysis. By implementing these APIs, you can enhance the user experience and provide valuable insights through Explore's powerful log investigation capabilities.
+The following steps show the process for adding support for Explore features in a data source plugin through a seamless integration. Implement these APIs to enhance the user experience and take advantage of Explore's powerful log investigation capabilities.
 
 #### Show log results in Explore's Logs view
 
-> Must be implemented in the data frame as a meta attribute
+To ensure that your log results are displayed in an interactive Logs view, you must add a `meta` attribute to `preferredVisualisationType` in your log result data frame.
 
-To ensure that your log results are displayed in an interactive Logs view, add a `meta` attribute to `preferredVisualisationType` in your log result data frame.
-
-Example of constructing a data frame with specific meta information in `Go`:
+**Example in Go:**
 
 ```go
 frame.Meta = &data.FrameMeta{
@@ -120,7 +120,7 @@ frame.Meta = &data.FrameMeta{
 }
 ```
 
-Example of constructing a data frame with specific meta information in `Typescript`:
+**Example in TypeScript:**
 
 ```ts
 const result = new MutableDataFrame({
@@ -133,11 +133,12 @@ const result = new MutableDataFrame({
 
 #### Highlight searched words
 
-> Must be implemented in the data frame as a meta attribute
+{{% admonition type="note" %}} This feature must be implemented in the data frame as a meta attribute. {{%
+/admonition %}}
 
-The logs visualisation can [highlight specific words or strings]({{< relref "../../../../explore/logs-integration/#highlight-searched-words" >}}) in log entries. This feature is typically utilized for highlighting search terms, making it easier for users to locate and focus on relevant information in the logs. For the highlighting to work, search words need to be included in the data frame's meta information
+The logs visualization can [highlight specific words or strings]({{< relref "../../../../explore/logs-integration/#highlight-searched-words" >}}) in log entries. This feature is typically used for highlighting search terms, making it easier for users to locate and focus on relevant information in the logs. For the highlighting to work, you must include search words in the data frame's `meta` information.
 
-Example of constructing a data frame that includes searchWords in `Go`:
+**Example in Go:**
 
 ```go
 frame.Meta = &data.FrameMeta{
@@ -147,7 +148,7 @@ frame.Meta = &data.FrameMeta{
 }
 ```
 
-Example of constructing a data frame that includes searchWords in `Typescript`:
+**Example in TypeScript:**
 
 ```ts
 const result = new MutableDataFrame({
@@ -160,17 +161,18 @@ const result = new MutableDataFrame({
 });
 ```
 
-#### Log result meta information
+#### Log result `meta` information
 
-> Must be implemented in the data frame as a meta attribute, or in the data frame as a field
+{{% admonition type="note" %}} This feature must be implemented in the data frame as a meta attribute, or in the data frame as a field. {{%
+/admonition %}}
 
 [Log result meta information]({{< relref "../../../../explore/logs-integration/#log-result-meta-information" >}}) can be used to communicate information about logs results to the user. The following information can be shared with the user:
 
-- **Count of received logs vs limit** - It displays the count of received logs compared to the specified limit. Data frames should have a "limit" a meta attribute with the number of requested log lines.
-- **Error**: Displays possible errors in your log results. Data frames should to have an "error" meta attribute.
+- **Count of received logs vs limit** - Displays the count of received logs compared to the specified limit. Data frames should set a limit with a meta attribute for the number of requested log lines.
+- **Error**: Displays possible errors in your log results. Data frames should to have an `error` in the `meta` attribute.
 - **Common labels**: Displays attributes present in the `attributes` data frame field that are the same for all displayed log lines. This feature is supported for data sources that produce log data frames with an attributes field. Refer to [Logs data frame format](#logs-data-frame-format) for more information.
 
-Example of constructing a data frame with specific meta information in `Go`:
+**Example in Go:**
 
 ```go
 frame.Meta = &data.FrameMeta{
@@ -181,7 +183,7 @@ frame.Meta = &data.FrameMeta{
 }
 ```
 
-Example of constructing a data frame with specific meta information in `Typescript`:
+**Example in TypeScript:**
 
 ```ts
 const result = new MutableDataFrame({
@@ -195,32 +197,35 @@ const result = new MutableDataFrame({
 });
 ```
 
-#### Color coded log levels
+#### Color-coded log levels
 
-> Must be implemented in the data frame as a field
+{{% admonition type="note" %}} This feature must be implemented in the data frame as a field. {{%
+/admonition %}}
 
-Color coded [log levels]({{< relref "../../../../explore/logs-integration/#log-level" >}}) are displayed at the beginning of each log line. It improves the log visualization by allowing users to quickly assess the severity of log entries, facilitating log analysis and troubleshooting. The log level is determined from the `severity` field of the data frame. In the case where the `severity` field is not present, Grafana tries to evaluate the level based on the content of the log line. If inferring the log level from the content is not possible, the log level is then set to `unknown`.
+Color-coded [log levels]({{< relref "../../../../explore/logs-integration/#log-level" >}}) are displayed at the beginning of each log line. They allow users to quickly assess the severity of log entries and facilitate log analysis and troubleshooting. The log level is determined from the `severity` field of the data frame. If the `severity` field isn't present, Grafana tries to evaluate the level based on the content of the log line. If inferring the log level from the content isn't possible, the log level is then set to `unknown`.
 
 Refer to [Logs data frame format](#logs-data-frame-format) for more information.
 
 #### Copy link to log line
 
-> Must be implemented in the data frame as a field
+{{% admonition type="note" %}} This feature must be implemented in the data frame as a field. {{%
+/admonition %}}
 
-[Copy link to log line]({{< relref "../../../../explore/logs-integration/#copy-link-to-log-line" >}}) is a feature that allows you to generate a link to a specific log line for easy sharing and referencing. This feature is supported in data sources that produce log data frames with `id` fields.
+[Copy link to log line]({{< relref "../../../../explore/logs-integration/#copy-link-to-log-line" >}}) is a feature that allows you to generate a link to a specific log line for easy sharing and referencing. Grafana supports this feature in data sources that produce log data frames with `id` fields.
 
-In the case where the underlying database does not return an `id` field, you can implement one within the data source. For example, in the Loki data source, a combination of nanosecond timestamp, labels, and the content of the log line is used to create a unique id. On the other hand, Elasticsearch returns an `_id` field that is unique for the specified index. In such cases, to ensure uniqueness, both the `index name` and `_id` are used to create a unique id.
+If the underlying database doesn't return an `id` field, you can implement one within the data source. For example, in the Loki data source, a combination of nanosecond timestamp, labels, and the content of the log line is used to create a unique `id`. On the other hand, Elasticsearch returns an `_id` field that is unique for the specified index. In such cases, to ensure uniqueness, both the `index name` and `_id` are used to create a unique `id`.
 
 Refer to [Logs data frame format](#logs-data-frame-format) for more information.
 
-#### Filtering of fields using Log details
+#### Filter fields using Log details
 
-> To be implemented trough data source method
+{{% admonition type="note" %}} Implement this feature through the data source method. {{%
+/admonition %}}
 
-Every log line has an expandable part called "Log details" that can be opened by clicking on the line. Within Log details, [Fields]({{< relref "../../../../explore/logs-integration/#fields" >}}) associated with that log entry are displayed. If the data source implements `modifyQuery?(query: TQuery, action: QueryFixAction): TQuery;` API, then filtering functionality is available for each field. For logs, two filtering options are currently available:
+Every log line has an expandable part called "Log details" that you can open by clicking on the line. Within Log details, Grafana displays [Fields]({{< relref "../../../../explore/logs-integration/#fields" >}}) associated with that log entry. If the data source implements `modifyQuery?(query: TQuery, action: QueryFixAction): TQuery;` API, then filtering functionality is available for each field. For logs, two filtering options are currently available:
 
-- `ADD_FILTER` - to filter for log lines that include selected fields
-- `ADD_FILTER_OUT` - to filter for log lines that do not include selected fields
+- `ADD_FILTER` - Use to filter for log lines that include selected fields.
+- `ADD_FILTER_OUT` - Use to filter for log lines that don't include selected fields.
 
 ```ts
 export class ExampleDatasource extends DataSourceApi<ExampleQuery, ExampleOptions> {
@@ -229,14 +234,14 @@ export class ExampleDatasource extends DataSourceApi<ExampleQuery, ExampleOption
     switch (action.type) {
       case 'ADD_FILTER':
         if (action.options?.key && action.options?.value) {
-          // This is a mocked implementation. Be sure to adjust this based on your data source logic.
+          // Be sure to adjust this example code based on your data source logic.
           queryText = addLabelToQuery(queryText, action.options.key, '=', action.options.value);
         }
         break;
       case 'ADD_FILTER_OUT':
         {
           if (action.options?.key && action.options?.value) {
-            // This is a mocked implementation. Be sure to adjust this based on your data source logic.
+            // Be sure to adjust this example code based on your data source logic.
             queryText = addLabelToQuery(queryText, action.options.key, '!=', action.options.value);
           }
         }
@@ -249,11 +254,12 @@ export class ExampleDatasource extends DataSourceApi<ExampleQuery, ExampleOption
 
 #### Live tailing
 
-> To be implemented trough data source method and enabled in plugin.json
+{{% admonition type="note" %}} Implement this feature data source method and enabled in `plugin.json` {{%
+/admonition %}}
 
-[Live tailing]({{< relref "../../../../explore/logs-integration/#live-tailing" >}}) is a feature that enables real-time log result streaming using Explore. To enable live tailing for your data source, you need to follow these steps:
+[Live tailing]({{< relref "../../../../explore/logs-integration/#live-tailing" >}}) is a feature that enables real-time log result streaming using Explore. To enable live tailing for your data source, follow these steps:
 
-1. **Enable streaming in plugin.json**: In your data source plugin's plugin.json file, set the `streaming` attribute to `true`. This allows Explore to recognize and enable live tailing controls for your data source.
+1. **Enable streaming in `plugin.json`**: In your data source plugin's `plugin.json` file, set the `streaming` attribute to `true`. This allows Explore to recognize and enable live tailing controls for your data source.
 
 ```json
 {
@@ -281,9 +287,10 @@ export class ExampleDatasource extends DataSourceApi<ExampleQuery, ExampleOption
 
 #### Log context
 
-> To be implemented in data source trough implementing DataSourceWithXXXSupport interface
+{{% admonition type="note" %}} Implement this feature through the `DataSourceWithXXXSupport` interface{{%
+/admonition %}}
 
-[Log context]({{< relref "../../../../explore/logs-integration/#log-context" >}}) is a feature in Explore that enables the display of additional lines of context surrounding a log entry that matches a specific search query. This feature allows users to gain deeper insights into the log data by viewing the log entry within its relevant context. By showing the surrounding log lines, users can have a better understanding of the sequence of events and the context in which the log entry occurred, facilitating a more comprehensive log analysis and troubleshooting.
+[Log context]({{< relref "../../../../explore/logs-integration/#log-context" >}}) is a feature in Explore that enables the display of additional lines of context surrounding a log entry that matches a specific search query. This feature allows users to gain deeper insights into the log data by viewing the log entry within its relevant context. Because Grafana will show the surrounding log lines, users can gain a better understanding of the sequence of events and the context in which the log entry occurred, improving log analysis and troubleshooting.
 
 ```ts
 import {
@@ -306,10 +313,10 @@ export class ExampleDatasource
     options?: LogRowContextOptions,
     query?: ExampleQuery
   ): Promise<DataQueryResponse> {
-    // createRequestFromQuery is a mocked implementation. Be sure to adjust this based on your data source logic.
+    // Be sure to adjust this example implementation of createRequestFromQuery based on your data source logic.
     const request = createRequestFromQuery(row, query, options);
     return lastValueFrom(
-      // this.query is a mocked implementation. Be sure to adjust this based on your data source logic.
+      // Be sure to adjust this example of this.query based on your data source logic.
       this.query(request).pipe(
         catchError((err) => {
           const error: DataQueryError = {
@@ -319,7 +326,7 @@ export class ExampleDatasource
           };
           throw error;
         }),
-        // processResultsToDataQueryResponse is a mocked implementation. Be sure to adjust this based on your data source logic.
+        // Be sure to adjust this example of processResultsToDataQueryResponse based on your data source logic.
         switchMap((res) => of(processResultsToDataQueryResponse(res)))
       )
     );
@@ -334,7 +341,7 @@ export class ExampleDatasource
     // Data source internal implementation that creates context query based on row, options and original query
   }
 
-  // This method can be used to show "context" button based on runtime conditions (for example row model data or plugin settings,...)
+  // This method can be used to show "context" button based on runtime conditions (for example, row model data or plugin settings)
   showContextToggle(row?: LogRowModel): boolean {
     // If you want to always show toggle, you can just return true
     if (row && row.searchWords && row.searchWords.length > 0) {
@@ -344,23 +351,24 @@ export class ExampleDatasource
 }
 ```
 
-## APIs being currently developed that are not supported for external plugin developers
+## APIs under development
 
-These APIs can be used in data sources within grafana/grafana repository.
+These APIs can be used in data sources within the [`grafana/grafana`](https://github.com/grafana/grafana) repository. They are not supported for external plugin developers.
 
 ### Show full-range logs volume
 
-> Currently not supported for external plugins outside of Grafana repo.
-> To be implemented in data source trough implementing DataSourceWithXXXSupport interface.
+{{% admonition type="note" %}} This feature is not currently not supported for external plugins outside of Grafana repo. It is implemented in data source by implementing `DataSourceWithXXXSupport` interface. {{%
+/admonition %}}
 
-With [full range logs volume]({{< relref "../../../../explore/logs-integration/#logs-volume" >}}) Explore displays a graph showing the log distribution for all the entered log queries. To add full-range logs volume support to data source plugin, use `DataSourceWithSupplementaryQueriesSupport` API.
+With [full range logs volume]({{< relref "../../../../explore/logs-integration/#logs-volume" >}}), Explore displays a graph showing the log distribution for all the entered log queries. To add full-range logs volume support to the data source plugin, use the `DataSourceWithSupplementaryQueriesSupport` API.
 
-Implement DataSourceWithSupplementaryQueriesSupport API in data source:
+**How to implement `DataSourceWithSupplementaryQueriesSupport` API in data source:**
 
-> Note: The API needs to be implemented in data source in typescript code.
+{{% admonition type="note" %}} This API must be implemented in data source in typescript code. {{%
+/admonition %}}
 
 ```ts
-import { queryLogsVolume } from '../features/logs/logsModel'; // This is currently not possible to use outside of Grafana repo
+import { queryLogsVolume } from '../features/logs/logsModel'; // This is currently not available for use outside of the Grafana repo
 import {
   DataSourceWithSupplementaryQueriesSupport,
   LogLevel,
@@ -411,7 +419,7 @@ export class ExampleDatasource
     }
   }
 
-  // This is a mocked implementation. Be sure to adjust this based your data source logic.
+  // Be sure to adjust this example based your data source logic.
   private getLogsVolumeDataProvider(
     request: DataQueryRequest<ExampleQuery>
   ): Observable<DataQueryResponse> | undefined {
@@ -441,12 +449,12 @@ export class ExampleDatasource
 
 ### Logs sample
 
-> Currently not supported for external plugins outside of Grafana repo.
-> To be implemented in data source trough implementing DataSourceWithXXXSupport interface.
+{{% admonition type="note" %}} This feature is currently not supported for external plugins outside of the Grafana repo. Implement this API in a data source by implementing the `DataSourceWithXXXSupport` interface. {{%
+/admonition %}}
 
-The [Logs sample]({{< relref "../../../../explore/logs-integration/#logs-sample" >}}) feature is a valuable addition when your data source supports both logs and metrics. It enables users to view samples of log lines that contributed to the visualized metrics, providing deeper insights into the data.
+The [logs sample]({{< relref "../../../../explore/logs-integration/#logs-sample" >}}) feature is a valuable addition when your data source supports both logs and metrics. It enables users to view samples of log lines that contributed to the visualized metrics, providing deeper insights into the data.
 
-To implement Logs sample support in your data source plugin, you can use the `DataSourceWithSupplementaryQueriesSupport` API.
+To implement the logs sample support in your data source plugin, you can use the `DataSourceWithSupplementaryQueriesSupport` API.
 
 ```ts
 import { queryLogsSample } from '../features/logs/logsModel'; // This is currently not possible to use outside of Grafana repo
@@ -474,7 +482,7 @@ export class ExampleDatasource
 
     switch (options.type) {
       case SupplementaryQueryType.LogsSample:
-        // This is a mocked implementation. Be sure to adjust this based on your data source logic.
+        // Be sure to adjust this example based on your data source logic.
         return { ...query, refId: `logs-sample-${query.refId}`, queryType: 'logs' };
       default:
         return undefined;
@@ -516,11 +524,11 @@ export class ExampleDatasource
 }
 ```
 
-Example of [PR implementing Logs sample in Elasticsearch data source](https://github.com/grafana/grafana/pull/70258/)
+For an example of how to implement the logs sample in the Elasticsearch data source, refer to [PR 70258](https://github.com/grafana/grafana/pull/70258/).
 
 ### Log context query editor
 
-> Currently not supported for external plugins outside of Grafana repo.
-> @alpha API that is currently in process of development
+{{% admonition type="note" %}} This feature is currently not supported for external plugins outside of the Grafana repo. The`@alpha` API is currently under development. {{%
+/admonition %}}
 
-It allows plugin developers to display a custom UI in the context view by implementing `getLogRowContextUi?(row: LogRowModel, runContextQuery?: () => void, origQuery?: TQuery): React.ReactNode;` method.
+It allows plugin developers to display a custom UI in the context view by implementing the `getLogRowContextUi?(row: LogRowModel, runContextQuery?: () => void, origQuery?: TQuery): React.ReactNode;` method.
