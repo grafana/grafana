@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/middleware/cookies"
 	"github.com/grafana/grafana/pkg/models/usertoken"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -172,9 +173,9 @@ type Redirect struct {
 }
 
 const (
-	NamespaceUser           = "user"
-	NamespaceAPIKey         = "api-key"
-	NamespaceServiceAccount = "service-account"
+	NamespaceUser           = identity.NamespaceUser
+	NamespaceAPIKey         = identity.NamespaceAPIKey
+	NamespaceServiceAccount = identity.NamespaceServiceAccount
 )
 
 type Identity struct {
