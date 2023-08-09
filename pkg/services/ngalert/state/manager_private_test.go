@@ -2549,6 +2549,77 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 					},
 				},
 			},
+			{
+				desc: "t1[QueryError] t2[{}:normal] at t2",
+				results: map[time.Time]eval.Results{
+					t1: {
+						newResult(eval.WithError(datasourceError)),
+					},
+					t2: {
+						newResult(eval.WithState(eval.Normal)),
+					},
+				},
+				expectedTransitions: map[ngmodels.ExecutionErrorState]map[time.Time][]StateTransition{
+					ngmodels.ErrorErrState: {
+						t2: {
+							{
+								PreviousState: eval.Error,
+								State: &State{
+									CacheID: cacheID(labels["system + rule"]),
+									Labels:  labels["system + rule"],
+									State:   eval.Normal,
+									Results: []Evaluation{
+										newEvaluation(t1, eval.Error),
+										newEvaluation(t2, eval.Normal),
+									},
+									StartsAt:           t2,
+									EndsAt:             t2,
+									LastEvaluationTime: t2,
+								},
+							},
+						},
+					},
+					ngmodels.AlertingErrState: {
+						t2: {
+							{
+								PreviousState:       eval.Alerting,
+								PreviousStateReason: eval.Error.String(),
+								State: &State{
+									Labels: labels["system + rule"],
+									State:  eval.Normal,
+									Results: []Evaluation{
+										newEvaluation(t1, eval.Error),
+										newEvaluation(t2, eval.Normal),
+									},
+									StartsAt:           t2,
+									EndsAt:             t2,
+									LastEvaluationTime: t2,
+									Resolved:           true,
+								},
+							},
+						},
+					},
+					ngmodels.OkErrState: {
+						t2: {
+							{
+								PreviousState:       eval.Normal,
+								PreviousStateReason: eval.Error.String(),
+								State: &State{
+									Labels: labels["system + rule"],
+									State:  eval.Normal,
+									Results: []Evaluation{
+										newEvaluation(t1, eval.Error),
+										newEvaluation(t2, eval.Normal),
+									},
+									StartsAt:           t1,
+									EndsAt:             t1,
+									LastEvaluationTime: t2,
+								},
+							},
+						},
+					},
+				},
+			},
 		}
 
 		for _, tc := range testCases {
