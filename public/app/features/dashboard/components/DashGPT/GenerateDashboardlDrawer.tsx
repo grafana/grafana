@@ -3,10 +3,12 @@ import React, { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Panel } from '@grafana/schema/dist/esm/veneer/dashboard.types';
-import { Drawer, IconButton, Spinner, TextArea, useStyles2 } from '@grafana/ui';
+import { Card, Drawer, useStyles2 } from '@grafana/ui';
 
 import { getDashboardSrv } from '../../services/DashboardSrv';
 import { onGenerateDashboardWithAI } from '../../utils/dashboard';
+
+import { UserPrompt } from './UserPrompt';
 
 interface GenerateDashboardDrawerProps {
   onDismiss: () => void;
@@ -64,78 +66,56 @@ export const GenerateDashboardDrawer = ({ onDismiss }: GenerateDashboardDrawerPr
   return (
     <Drawer title={'Dashboard Generator'} onClose={onDismiss} scrollableContent>
       {getContent()}
-      <Suggestions />
+      <DatasourceSuggestions />
       <UserPrompt onSubmitUserInput={onSubmitUserInput} isLoading={isLoading} />
     </Drawer>
   );
 };
 
-interface UserPromptProps {
-  onSubmitUserInput: (userInput: string) => void;
-  isLoading: boolean;
-}
-
-const UserPrompt = ({ onSubmitUserInput, isLoading }: UserPromptProps) => {
+const DatasourceSuggestions = () => {
   const styles = useStyles2(getStyles);
 
-  const [promptValue, setPromptValue] = useState<string>('');
+  const datasourceSuggestions = [
+    {
+      name: 'Graphite Templated Nested',
+      id: 'graphite',
+    },
+    {
+      name: 'Influx 2.2: Live NOAA Buoy Data',
+      id: 'influxdb',
+    },
+    {
+      name: 'Loki NGINX Service Mesh',
+      id: 'loki',
+    },
+  ];
 
-  const onInputChange = (value: string) => {
-    setPromptValue(value);
+  const onUseDatasourceSuggestion = () => {
+    console.log('onUseDatasourceSuggestion');
   };
 
   return (
-    <div className={styles.userPromptWrapper}>
-      <TextArea
-        placeholder="Tell us something"
-        rows={2}
-        onChange={(e) => onInputChange(e.currentTarget.value)}
-        value={promptValue}
-        className={styles.textArea}
-      />
-      {isLoading && <Spinner />}
-      {!isLoading && <IconButton name="message" aria-label="message" onClick={() => onSubmitUserInput(promptValue)} />}
-    </div>
-  );
-};
-
-const Suggestions = () => {
-  const styles = useStyles2(getStyles);
-
-  return (
     <div className={styles.suggestionsWrapper}>
-      <div className={styles.suggestion}>
-        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Duis varius mi ex, in fermentum nisi lacinia eu.
-      </div>
-      <div className={styles.suggestion}>Aliquam sodales finibus ipsum, et lacinia mi pharetra molestie.</div>
-      <div className={styles.suggestion}>In pulvinar nisl non sem ullamcorper, id blandit velit cursus.</div>
+      {datasourceSuggestions.map((item, index) => (
+        <Card onClick={onUseDatasourceSuggestion} key={index}>
+          <Card.Description>{item.name}</Card.Description>
+        </Card>
+      ))}
     </div>
   );
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  userPromptWrapper: css`
-    display: flex;
-  `,
   contentWrapper: css`
     padding-right: 30px;
-  `,
-  textArea: css`
-    margin-right: 24px;
   `,
   list: css`
     padding: 0 0 10px 20px;
   `,
   suggestionsWrapper: css`
     display: flex;
-    flex-wrap: wrap;
-    padding-left: 0;
     gap: 10px;
+    margin-right: 55px;
     margin-bottom: 100px; // @TODO style this
-  `,
-  suggestion: css`
-    padding: 20px;
-    border: 1px solid ${theme.colors.border.weak};
-    flex: 0 0 30%;
   `,
 });
