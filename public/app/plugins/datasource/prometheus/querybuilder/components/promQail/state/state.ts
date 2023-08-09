@@ -1,6 +1,7 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 import { PromVisualQuery } from '../../../types';
+import { Interaction } from '../types';
 
 export const stateSlice = createSlice({
   name: 'metrics-modal-state',
@@ -33,6 +34,35 @@ export const stateSlice = createSlice({
     giveMeHistoricalQueries: (state, action: PayloadAction<boolean>) => {
       state.aiIsLoading = action.payload;
     },
+    /*
+     * start working on a collection of interactions
+     * {
+     *  askForhelp y n
+     *  prompt question
+     *  queries querySuggestions
+     * }
+     *
+     */
+    addInteraction: (state, action: PayloadAction<boolean>) => {
+      // need help?
+      const interaction = createInteraction(action.payload);
+      const interactions = state.interactions;
+      state.interactions = interactions.concat([interaction]);
+    },
+    updateInteraction: (state, action: PayloadAction<{ idx: number; interaction: Interaction }>) => {
+      // update the interaction by index
+      // will most likely be the last interaction but we might update previous by giving them cues of helpful or not
+      const index = action.payload.idx;
+      const updInteraction = action.payload.interaction;
+
+      state.interactions = state.interactions.map((interaction: Interaction, idx: number) => {
+        if (idx === index) {
+          return updInteraction;
+        }
+
+        return interaction;
+      });
+    },
   },
 });
 
@@ -56,6 +86,7 @@ export function initialState(query?: PromVisualQuery, showStartingMessage?: bool
     aiIsLoading: false,
     giveMeAIQueries: false,
     giveMeHistoricalQueries: false,
+    interactions: [],
   };
 }
 
@@ -73,4 +104,13 @@ export interface PromQailState {
   aiIsLoading: boolean;
   giveMeAIQueries: boolean;
   giveMeHistoricalQueries: boolean;
+  interactions: Interaction[];
+}
+
+function createInteraction(needHelp: boolean): Interaction {
+  return {
+    needHelp: needHelp,
+    prompt: '',
+    suggestions: [],
+  };
 }
