@@ -199,15 +199,6 @@ func CreateGrafDir(t *testing.T, opts ...GrafanaOpts) (string, string) {
 	_, err = serverSect.NewKey("static_root_path", publicDir)
 	require.NoError(t, err)
 
-	authSect, err := cfg.NewSection("auth")
-	require.NoError(t, err)
-	authBrokerState := "false"
-	if len(opts) > 0 && opts[0].AuthBrokerEnabled {
-		authBrokerState = "true"
-	}
-	_, err = authSect.NewKey("broker", authBrokerState)
-	require.NoError(t, err)
-
 	anonSect, err := cfg.NewSection("auth.anonymous")
 	require.NoError(t, err)
 	_, err = anonSect.NewKey("enabled", "true")

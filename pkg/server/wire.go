@@ -45,7 +45,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/certgenerator"
 	"github.com/grafana/grafana/pkg/services/cleanup"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
-	"github.com/grafana/grafana/pkg/services/contexthandler/authproxy"
 	"github.com/grafana/grafana/pkg/services/correlations"
 	"github.com/grafana/grafana/pkg/services/dashboardimport"
 	dashboardimportservice "github.com/grafana/grafana/pkg/services/dashboardimport/service"
@@ -302,7 +301,6 @@ var wireBasicSet = wire.NewSet(
 	sanitizer.ProvideService,
 	secretsStore.ProvideService,
 	avatar.ProvideAvatarCacheServer,
-	authproxy.ProvideAuthProxy,
 	statscollector.ProvideService,
 	corekind.KindSet,
 	cuectx.GrafanaCUEContext,
