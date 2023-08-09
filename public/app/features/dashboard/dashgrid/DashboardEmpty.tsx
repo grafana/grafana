@@ -49,12 +49,17 @@ const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
 
   const onSearchDashboard = async () => {
     setAssitsLoading(true);
-    const dashboard = await onGenerateDashboardWithSemanticSearch(assitsDescription);
-    console.log('Loaded dashboard', dashboard);
-    const newDashboardModel = new DashboardModel(dashboard);
+    const bestDashboardMatch = await onGenerateDashboardWithSemanticSearch(assitsDescription);
+
     setAssitsLoading(false);
-    if (newDashboardModel?.panels) {
-      newDashboardModel?.panels.forEach((panel: PanelModel) => {
+    const bestDashboardMatchModel = new DashboardModel(bestDashboardMatch);
+
+    // @TODO: Update title
+    // @TODO: Update variables
+    // @TODO: Update update annotations
+    // @TODO: Should we create the dashboard first, like import does and then load it through URL?
+    if (bestDashboardMatchModel?.panels) {
+      bestDashboardMatchModel?.panels.forEach((panel: PanelModel) => {
         dashboard.addPanel(panel);
       });
     }

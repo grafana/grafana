@@ -75,7 +75,15 @@ export function onGenerateDashboardWithSemanticSearch(query: string): any {
       // 'Content-Type': 'application/x-www-form-urlencoded',
     },
     body: JSON.stringify({ query }), // body data type must match "Content-Type" header
-  }).then((res) => res.json());
+  })
+    .then((res) => res.json())
+    .then((response) => {
+      // It returns 5 dashboards sorted by relevance, for now we pick only the first one
+      const bestMatch = response.dashboards[0][0];
+      const dashboard = JSON.parse(bestMatch);
+
+      return dashboard;
+    });
 }
 
 export function onGenerateDashboardWithAI(description: string): any {
