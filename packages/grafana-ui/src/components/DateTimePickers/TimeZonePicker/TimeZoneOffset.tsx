@@ -52,7 +52,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       color: theme.colors.text.primary,
       background: theme.colors.background.secondary,
       padding: '2px 5px',
-      borderRadius: '2px',
+      borderRadius: theme.shape.radius.default,
       marginLeft: '4px',
     }),
   };

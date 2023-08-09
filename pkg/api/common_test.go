@@ -21,12 +21,14 @@ import (
 	"github.com/grafana/grafana/pkg/infra/fs"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/models/usertoken"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/annotations/annotationstest"
 	"github.com/grafana/grafana/pkg/services/anonymous/anontest"
 	"github.com/grafana/grafana/pkg/services/auth/authtest"
 	"github.com/grafana/grafana/pkg/services/auth/jwt"
+	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/authn/authntest"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/contexthandler/authproxy"
@@ -70,6 +72,7 @@ func loggedInUserScenarioWithRole(t *testing.T, desc string, method string, url 
 			sc.context.OrgID = testOrgID
 			sc.context.Login = testUserLogin
 			sc.context.OrgRole = role
+			sc.context.IsAnonymous = false
 			if sc.handlerFunc != nil {
 				return sc.handlerFunc(sc.context)
 			}
@@ -177,6 +180,7 @@ type scenarioContext struct {
 	authInfoService         *logintest.AuthInfoServiceFake
 	dashboardVersionService dashver.Service
 	userService             user.Service
+	ctxHdlr                 *contexthandler.ContextHandler
 }
 
 func (sc *scenarioContext) exec() {
@@ -208,17 +212,20 @@ func getContextHandler(t *testing.T, cfg *setting.Cfg) *contexthandler.ContextHa
 	ctxHdlr := contexthandler.ProvideService(cfg, userAuthTokenSvc, authJWTSvc,
 		remoteCacheSvc, renderSvc, sqlStore, tracer, authProxy, loginService, nil,
 		authenticator, usertest.NewUserServiceFake(), orgtest.NewOrgServiceFake(),
-		nil, featuremgmt.WithFeatures(), &authntest.FakeService{}, &anontest.FakeAnonymousSessionService{})
+		nil, featuremgmt.WithFeatures(), &authntest.FakeService{
+			ExpectedIdentity: &authn.Identity{IsAnonymous: true, SessionToken: &usertoken.UserToken{}}}, &anontest.FakeAnonymousSessionService{})
 
 	return ctxHdlr
 }
 
 func setupScenarioContext(t *testing.T, url string) *scenarioContext {
 	cfg := setting.NewCfg()
+	ctxHdlr := getContextHandler(t, cfg)
 	sc := &scenarioContext{
-		url: url,
-		t:   t,
-		cfg: cfg,
+		url:     url,
+		t:       t,
+		cfg:     cfg,
+		ctxHdlr: ctxHdlr,
 	}
 	viewsPath, err := filepath.Abs("../../public/views")
 	require.NoError(t, err)
@@ -228,7 +235,7 @@ func setupScenarioContext(t *testing.T, url string) *scenarioContext {
 
 	sc.m = web.New()
 	sc.m.UseMiddleware(web.Renderer(viewsPath, "[[", "]]"))
-	sc.m.Use(getContextHandler(t, cfg).Middleware)
+	sc.m.Use(ctxHdlr.Middleware)
 
 	return sc
 }
@@ -241,8 +248,9 @@ func (s *fakeRenderService) Init() error {
 	return nil
 }
 
+// FIXME: This user should not be anonymous
 func userWithPermissions(orgID int64, permissions []accesscontrol.Permission) *user.SignedInUser {
-	return &user.SignedInUser{OrgID: orgID, OrgRole: org.RoleViewer, Permissions: map[int64]map[string][]string{orgID: accesscontrol.GroupScopesByAction(permissions)}}
+	return &user.SignedInUser{IsAnonymous: true, OrgID: orgID, OrgRole: org.RoleViewer, Permissions: map[int64]map[string][]string{orgID: accesscontrol.GroupScopesByAction(permissions)}}
 }
 
 func setupSimpleHTTPServer(features *featuremgmt.FeatureManager) *HTTPServer {
@@ -304,6 +312,11 @@ func SetupAPITestServer(t *testing.T, opts ...APITestServerOption) *webtest.Serv
 	hs.registerRoutes()
 
 	s := webtest.NewServer(t, hs.RouteRegister)
+
+	viewsPath, err := filepath.Abs("../../public/views")
+	require.NoError(t, err)
+	s.Mux.UseMiddleware(web.Renderer(viewsPath, "[[", "]]"))
+
 	return s
 }
 

@@ -25,7 +25,7 @@ weight: 300
 {{< figure src="/static/img/docs/elasticsearch/query-editor-7-4.png" max-width="500px" class="docs-image--no-shadow" caption="Elasticsearch Query Editor" >}}
 
 This topic explains querying specific to the Elasticsearch data source.
-For general documentation on querying data sources in Grafana, see [Query and transform data]({{< relref "../../../panels-visualizations/query-transform-data" >}}).
+For general documentation on querying data sources in Grafana, see [Query and transform data][query-transform-data].
 
 ## Select and edit metrics
 
@@ -36,7 +36,7 @@ To expand the row to view and edit any available metric or group-by options, cli
 
 ## Use template variables
 
-You can also augment queries by using [template variables]({{< relref "./template-variables/" >}}).
+You can also augment queries by using [template variables]({{< relref "./template-variables" >}}).
 
 ## Name a time series
 
@@ -52,7 +52,6 @@ You can control the name for time series via the `Alias` input field.
 
 Some metric aggregations, such as _Moving Average_ and _Derivative_, are called **Pipeline** aggregations.
 Elasticsearch pipeline metrics must be based on another metric.
-
 Use the eye icon next to the metric to prevent metrics from appearing in the graph.
 This is useful for metrics you only have in the query for use in a pipeline metric.
 
@@ -72,3 +71,8 @@ If the query is [multi-field](https://www.elastic.co/guide/en/elasticsearch/refe
 
 Queries of `terms` have a 500-result limit by default.
 To set a custom limit, set the `size` property in your query.
+
+{{% docs/reference %}}
+[query-transform-data]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/query-transform-data"
+[query-transform-data]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/query-transform-data"
+{{% /docs/reference %}}

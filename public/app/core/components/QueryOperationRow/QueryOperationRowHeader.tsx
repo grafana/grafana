@@ -79,7 +79,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   header: css`
     label: Header;
     padding: ${theme.spacing(0.5, 0.5)};
-    border-radius: ${theme.shape.borderRadius(1)};
+    border-radius: ${theme.shape.radius.default};
     background: ${theme.colors.background.secondary};
     min-height: ${theme.spacing(4)};
     display: grid;
