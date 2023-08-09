@@ -160,40 +160,40 @@ func TestManager_saveAlertStates(t *testing.T) {
 	})
 }
 
-// TestProcessEvalResults_StateTransitions tests state.Manager's how method ProcessEvalResults processes results and creates or changes states.
+// TestProcessEvalResults_StateTransitions tests how state.Manager's ProcessEvalResults processes results and creates or changes states.
 // In other words, it tests the state transition.
 //
-// The tests use a micro-framework that has few features:
-// 1. It uses a base rule definition and allows each test case mutate its copy
-// 2. Expected State definition omits several fields which are patched before assertion
-// if they are not specified explicitly (see function "patchState" for patched fields).
-// 3. This allows specifications to be more condense and mention only important fields
-// 4. Expected State definition uses some shortcut functions to make the specification more clear.
-// Expected labels are populated from labels map where keys - description of what labels included in its values.
-// This allows to us to specify the list of labels expected to be in the state in one line, e.g. "system + rule + labels1"
-// Evaluations are populated using function `newEvaluation` that pre-set all important fields.
-// 5. Each test case can contain multiple consecutive evaluations at different time and assertions at every interval.
-// The framework offers variables t1, t2, t3 and function tN(n) that provide timestamps of different evaluations.
-// 6. NoData and Error tests require assertions for all possible execution options for the same input.
+// The tests use a micro-framework that has the following features:
+//  1. It uses a base rule definition and allows each test case mutate its copy.
+//  2. Expected State definition omits several fields which are patched before assertion
+//     if they are not specified explicitly (see function "patchState" for patched fields).
+//     This allows specifications to be more condense and mention only important fields.
+//  3. Expected State definition uses some shortcut functions to make the specification more clear.
+//     Expected labels are populated from a labels map where keys = description of what labels included in its values.
+//     This allows us to specify the list of labels expected to be in the state in one line, e.g. "system + rule + labels1"
+//     Evaluations are populated using function `newEvaluation` that pre-set all important fields.
+//  4. Each test case can contain multiple consecutive evaluations at different times with assertions at every interval.
+//     The framework offers variables t1, t2, t3 and function tN(n) that provide timestamps of different evaluations.
+//  5. NoData and Error tests require assertions for all possible execution options for the same input.
 //
-// Naming convention for tests cases.
+// # Naming convention for tests cases.
+//
 // The tests are formatted to the input characteristics, such as rule definition,
 // result format (multi- or single- dimensional) and at which times the assertions are defined.
 //
 // <time>[(<labelSet>:)<eval.State>] (and <rule_modifications>) at <asserted_time>
 //
-//    where
-//      <time> can be t1, t2 or t3, i.e. timestamp of evaluation
-//      <labelSet> indicates a label set of the normal result. It be 1,2,3 which corresponds to labels1, labels2 or labels3 or {} - for result without labels
-//        in the case of NoData or Error it is omitted
-//      <rule_modifications> rule modifications.
-//      <asserted_time> at which time intervals the test executes assertions. Can be t1,t2 or t3
+//	Where:
+//	  - <time> can be t1, t2 or t3, i.e. timestamp of evaluation.
+//	  - <labelSet> indicates the label set of the normal result. It can be 1,2,3 which corresponds to labels1, labels2 and labels3, or {} for results without labels.
+//	    In the case of NoData or Error labelSet is omitted
+//	  - <rule_modifications> rule modifications.
+//	  - <asserted_time> at which time intervals the test executes assertions. Can be t1,t2 or t3.
 //
 // For example:
 //
-//     t1[1:normal] t2[1:alerting] and 'for'=2 at t2
-//     t1[{}:alerting] t2[{}:normal] t3[NoData] at t2,t3
-//
+//	t1[1:normal] t2[1:alerting] and 'for'=2 at t2
+//	t1[{}:alerting] t2[{}:normal] t3[NoData] at t2,t3
 func TestProcessEvalResults_StateTransitions(t *testing.T) {
 	evaluationDuration := 10 * time.Millisecond
 	evaluationInterval := 10 * time.Second
