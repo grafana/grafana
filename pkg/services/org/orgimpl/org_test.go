@@ -66,6 +66,16 @@ func TestOrgService(t *testing.T) {
 		err := orgService.DeleteUserFromAll(context.Background(), 1)
 		require.NoError(t, err)
 	})
+
+	t.Run("update user with role None", func(t *testing.T) {
+		orgStore.ExpectedStats = &org.Stats{
+			UserAccountsWithNoRole: 1,
+		}
+		stats, err := orgService.getUsageMetrics(context.Background())
+		require.NoError(t, err)
+		assert.Len(t, stats, 1, stats)
+		assert.Equal(t, int64(1), stats["stats.user.role_none.count"].(int64))
+	})
 }
 
 type FakeOrgStore struct {
@@ -77,6 +87,7 @@ type FakeOrgStore struct {
 	ExpectedOrgs                      []*org.OrgDTO
 	ExpectedOrgUsers                  []*org.OrgUserDTO
 	ExpectedSearchOrgUsersQueryResult *org.SearchOrgUsersQueryResult
+	ExpectedStats                     *org.Stats
 }
 
 func newOrgStoreFake() *FakeOrgStore {
@@ -153,4 +164,8 @@ func (f *FakeOrgStore) RemoveOrgUser(ctx context.Context, cmd *org.RemoveOrgUser
 
 func (f *FakeOrgStore) Count(ctx context.Context, _ *quota.ScopeParameters) (*quota.Map, error) {
 	return nil, nil
+}
+
+func (f *FakeOrgStore) GetUsageMetrics(ctx context.Context) (*org.Stats, error) {
+	return f.ExpectedStats, nil
 }

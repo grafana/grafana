@@ -204,6 +204,10 @@ type OrgDetailsDTO struct {
 	Address Address `json:"address"`
 }
 
+type Stats struct {
+	UserAccountsWithNoRole int64 `xorm:"user_accounts_with_no_role"`
+}
+
 // Len returns the length of an array of organisations.
 func (o ByOrgName) Len() int {
 	return len(o)
