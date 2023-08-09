@@ -2137,6 +2137,127 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 				},
 			},
 			{
+				desc: "t1[QueryError] t2[1:normal] t3[1:normal] at t3",
+				results: map[time.Time]eval.Results{
+					t1: {
+						newResult(eval.WithError(datasourceError)),
+					},
+					t2: {
+						newResult(eval.WithState(eval.Normal), eval.WithLabels(labels1)),
+					},
+					t3: {
+						newResult(eval.WithState(eval.Normal), eval.WithLabels(labels1)),
+					},
+				},
+				expectedTransitions: map[ngmodels.ExecutionErrorState]map[time.Time][]StateTransition{
+					ngmodels.ErrorErrState: {
+						t3: {
+							{
+								PreviousState: eval.Normal,
+								State: &State{
+									Labels: labels["system + rule + labels1"],
+									State:  eval.Normal,
+									Results: []Evaluation{
+										newEvaluation(t2, eval.Normal),
+										newEvaluation(t3, eval.Normal),
+									},
+									StartsAt:           t2,
+									EndsAt:             t2,
+									LastEvaluationTime: t3,
+								},
+							},
+							{
+								PreviousState: eval.Error,
+								State: &State{
+									CacheID:     cacheID(labels["system + rule"]),
+									Labels:      labels["system + rule + datasource-error"],
+									Error:       datasourceError,
+									State:       eval.Normal,
+									StateReason: ngmodels.StateReasonMissingSeries,
+									Results: []Evaluation{
+										newEvaluation(t1, eval.Error),
+									},
+									StartsAt:           t1,
+									EndsAt:             t3,
+									LastEvaluationTime: t3,
+									Annotations: mergeLabels(baseRule.Annotations, data.Labels{
+										"Error": datasourceError.Error(),
+									}),
+								},
+							},
+						},
+					},
+					ngmodels.AlertingErrState: {
+						t3: {
+							{
+								PreviousState: eval.Normal,
+								State: &State{
+									Labels: labels["system + rule + labels1"],
+									State:  eval.Normal,
+									Results: []Evaluation{
+										newEvaluation(t2, eval.Normal),
+										newEvaluation(t3, eval.Normal),
+									},
+									StartsAt:           t2,
+									EndsAt:             t2,
+									LastEvaluationTime: t3,
+								},
+							},
+							{
+								PreviousState:       eval.Alerting,
+								PreviousStateReason: eval.Error.String(),
+								State: &State{
+									Labels:      labels["system + rule"],
+									Error:       datasourceError,
+									State:       eval.Normal,
+									StateReason: ngmodels.StateReasonMissingSeries,
+									Results: []Evaluation{
+										newEvaluation(t1, eval.Error),
+									},
+									StartsAt:           t1,
+									EndsAt:             t3,
+									LastEvaluationTime: t3,
+									Resolved:           true,
+								},
+							},
+						},
+					},
+					ngmodels.OkErrState: {
+						t3: {
+							{
+								PreviousState: eval.Normal,
+								State: &State{
+									Labels: labels["system + rule + labels1"],
+									State:  eval.Normal,
+									Results: []Evaluation{
+										newEvaluation(t2, eval.Normal),
+										newEvaluation(t3, eval.Normal),
+									},
+									StartsAt:           t2,
+									EndsAt:             t2,
+									LastEvaluationTime: t3,
+								},
+							},
+							{
+								PreviousState:       eval.Normal,
+								PreviousStateReason: eval.Error.String(),
+								State: &State{
+									Labels:      labels["system + rule"],
+									State:       eval.Normal,
+									StateReason: ngmodels.StateReasonMissingSeries,
+									Results: []Evaluation{
+										newEvaluation(t1, eval.Error),
+									},
+									StartsAt:           t1,
+									EndsAt:             t3,
+									LastEvaluationTime: t3,
+								},
+							},
+						},
+					},
+				},
+			},
+			{
 				desc: "t1[{}:normal] t2[QueryError] at t2",
 				results: map[time.Time]eval.Results{
 					t1: {
