@@ -1,6 +1,8 @@
 import { produce } from 'immer';
 import { useCallback, useMemo } from 'react';
 
+import { isFetchError } from '@grafana/runtime';
+
 import { Receiver } from '../../../../../../../plugins/datasource/alertmanager/types';
 import { NotifierDTO } from '../../../../../../../types';
 import { onCallApi } from '../../../../api/onCallApi';
@@ -93,10 +95,16 @@ export function useOnCallIntegration() {
   const onCallFormValidators = useMemo(() => {
     return {
       integration_name: async (value: string) => {
-        const isValid = await validateIntegrationNameQuery(value).unwrap();
-        // TODO
-        // The name needs to be unique among all OnCall integrations
-        return isValid ? true : 'Integration of this name already exists in OnCall';
+        try {
+          await validateIntegrationNameQuery(value).unwrap();
+          return true;
+        } catch (error) {
+          if (isFetchError(error) && error.status === 409) {
+            return 'Integration of this name already exists in OnCall';
+          }
+
+          throw error;
+        }
       },
       url: (value: string) => {
         if (!isAlertingV2IntegrationEnabled) {
