@@ -88,7 +88,7 @@ const UserInput = ({ item, isRegenerating, setIsRegenerating, llmReGenerate, ind
       setUserInput('');
     }
   };
-
+  console.log('type', type);
   return (
     <div className={styles.userInputWrapper}>
       <TextArea
@@ -96,7 +96,7 @@ const UserInput = ({ item, isRegenerating, setIsRegenerating, llmReGenerate, ind
         placeholder="Tell us something"
         onChange={(e) => setUserInput(e.currentTarget.value)}
         value={userInput}
-        style={{ width: type === 'text' ? '400px' : '600px' }}
+        style={{ width: type === 'title' ? '400px' : '600px' }}
       />
       <IconButton name="message" aria-label="message" onClick={() => onSubmit(userInput)} disabled={isRegenerating} />
     </div>

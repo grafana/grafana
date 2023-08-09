@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import React, { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Drawer, IconButton, ModalsController, TextArea, ToolbarButton, useStyles2 } from '@grafana/ui';
+import { Drawer, IconButton, ModalsController, Spinner, TextArea, ToolbarButton, useStyles2 } from '@grafana/ui';
 
 import { getDashboardSrv } from '../../services/DashboardSrv';
 import { onGeneratePanelWithAI } from '../../utils/dashboard';
@@ -12,7 +12,7 @@ export const GeneratePanelButton = () => {
     <ModalsController key="button-save">
       {({ showModal, hideModal }) => (
         <ToolbarButton
-          icon="grafana"
+          icon="ai"
           iconOnly={false}
           onClick={() => {
             showModal(GeneratePanelDrawer, { onDismiss: hideModal });
@@ -32,18 +32,19 @@ const GeneratePanelDrawer = ({ onDismiss }: GeneratePanelDrawerProps) => {
   const styles = useStyles2(getStyles);
 
   const [promptValue, setPromptValue] = useState<string>('');
+  const [isLoading, setIsLoading] = useState<boolean>(false);
   const dashboard = getDashboardSrv().getCurrent();
 
   const getContent = () => {
     return (
-      <div>
+      <div className={styles.contentWrapper}>
         <p>This assistant can recommend a panel based on the current configuration of this dashboard.</p>
 
         <p>
           The assistant will connect to OpenAI using your API key. The following information will be sent to OpenAI:
         </p>
 
-        <ul>
+        <ul className={styles.list}>
           <li>The name and description of this dashboard</li>
           <li>The types of data sources this dashboard is using</li>
           <li>The configuration of any existing panels and sections</li>
@@ -64,10 +65,15 @@ const GeneratePanelDrawer = ({ onDismiss }: GeneratePanelDrawerProps) => {
     setPromptValue(value);
   };
 
-  let onSubmit = async () => {
+  let onSubmitUserInput = async () => {
+    setIsLoading(true);
     const response = await onGeneratePanelWithAI(dashboard!, promptValue);
     const parsedResponse = JSON.parse(response);
     const panel = parsedResponse.panels[0];
+
+    if (parsedResponse) {
+      setIsLoading(false);
+    }
 
     dashboard?.addPanel(panel);
   };
@@ -82,7 +88,8 @@ const GeneratePanelDrawer = ({ onDismiss }: GeneratePanelDrawerProps) => {
           value={promptValue}
           className={styles.textArea}
         />
-        <IconButton name="message" aria-label="message" onClick={onSubmit} />
+        {isLoading && <Spinner />}
+        {!isLoading && <IconButton name="message" aria-label="message" onClick={onSubmitUserInput} />}
       </div>
     </Drawer>
   );
@@ -92,7 +99,13 @@ const getStyles = (theme: GrafanaTheme2) => ({
   wrapper: css`
     display: flex;
   `,
+  contentWrapper: css`
+    padding-right: 30px;
+  `,
   textArea: css`
-    margin-right: 10px;
+    margin-right: 24px;
+  `,
+  list: css`
+    padding: 0 0 10px 20px;
   `,
 });
