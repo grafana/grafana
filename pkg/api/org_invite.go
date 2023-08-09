@@ -132,7 +132,7 @@ func (hs *HTTPServer) AddOrgInvite(c *contextmodel.ReqContext) response.Response
 			Template: "new_user_invite",
 			Data: map[string]interface{}{
 				"Name":      util.StringsFallback2(cmd.Name, cmd.Email),
-				"OrgName":   c.SignedInUser.GetOrgID(),
+				"OrgName":   c.SignedInUser.GetOrgName(),
 				"Email":     c.SignedInUser.GetEmail(),
 				"LinkUrl":   setting.ToAbsUrl("invite/" + cmd.Code),
 				"InvitedBy": c.SignedInUser.GetDisplayName(),
