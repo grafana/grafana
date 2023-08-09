@@ -235,7 +235,7 @@ You've installed and are using the Redshift data source plugin.
 
 #### Description
 
-Grafana v10.0.0 ships with the new React 18 upgrade. In turn, changes in the batching of state updates in React 18 cause a bug in the query editor in Redshift plugin versions <=1.8.3.
+Grafana v10.0.0 ships with the new React 18 upgrade. In turn, changes in the batching of state updates in React 18 cause a bug in the query editor in Redshift plugin versions <=1.8.2.
 
 #### Migration path
 
