@@ -55,17 +55,34 @@ const QuickFeedbackSuggestions = ({
   );
 };
 
-const UserInput = () => {
-  const onSubmit = async () => {
-    console.log('on submit');
-    // const response = await onGeneratePanelWithAI(dashboard!, promptValue);
-    // const parsedResponse = JSON.parse(response);
-    // const panel = parsedResponse.panels[0];
-    // dashboard?.addPanel(panel);
-  };
+interface UserInputProps {
+  item: string;
+  isRegenerating: boolean;
+  setIsRegenerating: (isRegenerating: boolean) => void;
+  llmReGenerate: (
+    subject: string,
+    originalResponse: string,
+    feedback: string,
+    historyItemIndex: number
+  ) => Promise<boolean>;
+  index: number;
+  type: string;
+}
 
+const UserInput = ({ item, isRegenerating, setIsRegenerating, llmReGenerate, index, type }: UserInputProps) => {
   const styles = useStyles2(getStyles);
   const [assitsDescription, setAssitsDescription] = useState('');
+
+  const onSubmit = async (feedback: string) => {
+    setIsRegenerating(true);
+    const done = await llmReGenerate(type, item, feedback, index);
+
+    if (done) {
+      setIsRegenerating(false);
+      setAssitsDescription('');
+    }
+  };
+
   return (
     <div className={styles.userInputWrapper}>
       <TextArea
@@ -75,7 +92,12 @@ const UserInput = () => {
         onChange={(e) => setAssitsDescription(e.currentTarget.value)}
         value={assitsDescription}
       />
-      <IconButton name="message" aria-label="message" onClick={onSubmit} />
+      <IconButton
+        name="message"
+        aria-label="message"
+        onClick={() => onSubmit(assitsDescription)}
+        disabled={isRegenerating}
+      />
     </div>
   );
 };
@@ -131,7 +153,16 @@ const HistoryItem = ({ item, suggestionApply, llmReGenerate, index, type }: Hist
           type={type}
         />
       )}
-      {isFeedbackSectionOpen && <UserInput />}
+      {isFeedbackSectionOpen && (
+        <UserInput
+          item={item}
+          isRegenerating={isRegenerating}
+          setIsRegenerating={setIsRegenerating}
+          llmReGenerate={llmReGenerate}
+          index={index}
+          type={type}
+        />
+      )}
       <Divider />
     </>
   );
