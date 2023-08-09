@@ -20,7 +20,7 @@ const BOTTOM_LEFT_CONSTRAINT = {
 
 const TEMP_MULTIPLIER = 20;
 
-export async function handleDxfFile(file: File, layer: FrameState) {
+export async function handleDxfFile(file: File, canvasLayer: FrameState) {
   let fileText = await file.text();
 
   const parser = new DxfParser();
@@ -30,13 +30,19 @@ export async function handleDxfFile(file: File, layer: FrameState) {
   }
 
   console.debug('dxf', dxf); // eslint-disable-line no-console
-  console.debug('scene', layer.scene); // eslint-disable-line no-console
+  console.debug('scene', canvasLayer.scene); // eslint-disable-line no-console
+
+  canvasLayer.elements = [];
 
   dxf.entities.forEach((entity: IEntity) => {
-    addEntity(entity, dxf.tables.layer, layer);
+    addEntity(entity, getEntityLayer(entity, dxf.tables.layer), canvasLayer);
   });
 
-  updateScene(layer.scene, dxf.tables.viewPort.viewPorts[0], layer);
+  updateScene(canvasLayer.scene, dxf.tables.viewPort.viewPorts[0], canvasLayer);
+}
+
+function getEntityLayer(entity: IEntity, cadLayers: ILayersTable): ILayer {
+  return cadLayers.layers[entity.layer];
 }
 
 function updateScene(scene: Scene, viewport: IViewPort, layer: FrameState) {
@@ -45,14 +51,12 @@ function updateScene(scene: Scene, viewport: IViewPort, layer: FrameState) {
     fixed: fromColorRepr(viewport.ambientColor),
   });
 
-  layer.scene.save();
-  layer.reinitializeMoveable();
+  scene.updateCurrentLayer(layer);
 }
 
-function addEntity(entity: IEntity, cadLayers: ILayersTable, layer: FrameState) {
+function addEntity(entity: IEntity, entityLayer: ILayer, canvasLayer: FrameState) {
   if (isTextEntity(entity)) {
-    let text = entity;
-    addTextElement(text, cadLayers, layer);
+    addTextElement(entity, entityLayer, canvasLayer);
   } else {
     console.warn('unhandled entity type', entity.type);
   }
@@ -62,7 +66,7 @@ function isTextEntity(entity: IEntity): entity is ITextEntity {
   return entity.type === 'TEXT';
 }
 
-function addTextElement(text: ITextEntity, cadLayers: ILayersTable, layer: FrameState) {
+function addTextElement(entity: ITextEntity, entityLayer: ILayer, canvasLayer: FrameState) {
   const newTextItem: CanvasElementItem<TextConfig, TextData> = canvasElementRegistry.get('text');
 
   let newElementOptions: CanvasElementOptions = {
@@ -71,22 +75,22 @@ function addTextElement(text: ITextEntity, cadLayers: ILayersTable, layer: Frame
     name: '',
     constraint: BOTTOM_LEFT_CONSTRAINT,
     placement: {
-      bottom: text.startPoint.y * TEMP_MULTIPLIER,
-      left: text.startPoint.x * TEMP_MULTIPLIER,
-      rotation: -text.rotation,
-      height: text.textHeight * TEMP_MULTIPLIER * 2.5,
-      width: text.textHeight * text.text.length * TEMP_MULTIPLIER,
+      bottom: entity.startPoint.y * TEMP_MULTIPLIER,
+      left: entity.startPoint.x * TEMP_MULTIPLIER,
+      rotation: -entity.rotation,
+      height: entity.textHeight * TEMP_MULTIPLIER * 2.5,
+      width: entity.textHeight * entity.text.length * TEMP_MULTIPLIER,
     },
     config: {
-      text: { fixed: text.text },
-      size: text.textHeight * TEMP_MULTIPLIER,
+      text: { fixed: entity.text },
+      size: entity.textHeight * TEMP_MULTIPLIER,
       color: {
-        fixed: fromColorRepr(text.color, cadLayers.layers[text.layer]),
+        fixed: fromColorRepr(entity.color, entityLayer),
       },
     },
   };
 
-  addElement(newTextItem, newElementOptions, layer);
+  addElement(newTextItem, newElementOptions, canvasLayer);
 }
 
 function fromColorRepr(color: number | undefined, cadLayer?: ILayer): string {
