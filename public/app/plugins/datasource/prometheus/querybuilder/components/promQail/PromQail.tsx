@@ -241,6 +241,7 @@ export const PromQail = (props: PromQailProps) => {
                       <QuerySuggestionContainer
                         suggestionType={SuggestionType.AI}
                         querySuggestions={querySuggestions}
+                        closeDrawer={closeDrawer}
                       />
                     )}
                   </>
@@ -248,7 +249,11 @@ export const PromQail = (props: PromQailProps) => {
               </>
             ) : (
               // LIST OF SUGGESTED QUERIES FROM HISTORICAL DATA
-              <QuerySuggestionContainer suggestionType={SuggestionType.AI} querySuggestions={querySuggestions} />
+              <QuerySuggestionContainer
+                suggestionType={SuggestionType.AI}
+                querySuggestions={querySuggestions}
+                closeDrawer={closeDrawer}
+              />
             )}
           </>
         )}
@@ -364,6 +369,10 @@ export const getStyles = (theme: GrafanaTheme2) => {
     `,
     doc: css`
       text-decoration: underline;
+    `,
+    afterButtons: css`
+      display: flex;
+      justify-content: flex-end;
     `,
   };
 };
