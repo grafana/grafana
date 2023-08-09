@@ -10,6 +10,6 @@ export enum SuggestionType {
 
 export type Interaction = {
   prompt: string;
-  needHelp: boolean;
+  suggestionType: SuggestionType;
   suggestions: QuerySuggestion[];
 };

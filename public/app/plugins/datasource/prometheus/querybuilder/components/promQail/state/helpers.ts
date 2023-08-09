@@ -1,11 +1,11 @@
 import { AnyAction } from 'redux';
 
-import { QuerySuggestion } from '../types';
+import { Interaction, QuerySuggestion, SuggestionType } from '../types';
 
-import { stateSlice } from './state';
+import { createInteraction, stateSlice } from './state';
 
 // actions to update the state
-const { aiIsLoading, giveMeAIQueries } = stateSlice.actions;
+const { aiIsLoading, updateInteraction } = stateSlice.actions;
 
 export const querySuggestions: QuerySuggestion[] = [
   {
@@ -30,13 +30,33 @@ export const querySuggestions: QuerySuggestion[] = [
   },
 ];
 
-export async function callOpenAI(dispatch: React.Dispatch<AnyAction>, prompt?: string): Promise<QuerySuggestion[]> {
+/**
+ * Calls the API and adds suggestions to the interaction
+ *
+ * @param dispatch
+ * @param idx
+ * @param interaction
+ * @returns
+ */
+export async function callOpenAI(
+  dispatch: React.Dispatch<AnyAction>,
+  idx: number,
+  interaction?: Interaction
+): Promise<QuerySuggestion[]> {
   const prom = new Promise<QuerySuggestion[]>((resolve) => {
     return setTimeout(() => {
       console.log(prompt ?? 'no prompt given');
       resolve(querySuggestions);
       dispatch(aiIsLoading(false));
-      dispatch(giveMeAIQueries(true));
+
+      const interactionToUpdate = interaction ? interaction : createInteraction(SuggestionType.Historical);
+
+      const payload = {
+        idx,
+        interaction: { ...interactionToUpdate, suggestions: querySuggestions },
+      };
+      dispatch(updateInteraction(payload));
+      // dispatch(giveMeAIQueries(true));
     }, 1000);
   });
 
