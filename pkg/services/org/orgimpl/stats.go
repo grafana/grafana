@@ -30,10 +30,10 @@ func init() {
 	)
 }
 
-func (sa *Service) getUsageMetrics(ctx context.Context) (map[string]interface{}, error) {
+func (s *Service) getUsageMetrics(ctx context.Context) (map[string]interface{}, error) {
 	stats := map[string]interface{}{}
 
-	storeStats, err := sa.store.GetUsageMetrics(ctx)
+	storeStats, err := s.store.GetUsageMetrics(ctx)
 	if err != nil {
 		return nil, err
 	}
