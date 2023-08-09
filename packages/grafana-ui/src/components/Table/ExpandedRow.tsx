@@ -3,6 +3,8 @@ import React, { CSSProperties } from 'react';
 import { DataFrame, Field } from '@grafana/data';
 import { TableCellHeight } from '@grafana/schema';
 
+import { useTheme2 } from '../../themes';
+
 import { Table } from './Table';
 import { TableStyles } from './styles';
 import { EXPANDER_WIDTH } from './utils';
@@ -18,8 +20,9 @@ export interface Props {
 export function ExpandedRow({ tableStyles, nestedData, rowIndex, width, cellHeight }: Props) {
   const frames = nestedData.values as DataFrame[][];
   const subTables: React.ReactNode[] = [];
+  const theme = useTheme2();
 
-  let top = tableStyles.rowHeight; // initial height for row that expands above sub tables
+  let top = tableStyles.rowHeight + theme.spacing.gridSize; // initial height for row that expands above sub tables + 1 grid unit spacing
 
   frames[rowIndex].forEach((nf: DataFrame, nfIndex: number) => {
     const noHeader = !!nf.meta?.custom?.noHeader;
@@ -32,7 +35,7 @@ export function ExpandedRow({ tableStyles, nestedData, rowIndex, width, cellHeig
       top,
     };
 
-    top += height;
+    top += height + theme.spacing.gridSize;
 
     subTables.push(
       <div style={subTableStyle} key={`subTable_${rowIndex}_${nfIndex}`}>
@@ -56,7 +59,7 @@ export function getExpandedRowHeight(nestedData: Field, rowIndex: number, tableS
   const height = frames[rowIndex].reduce((acc: number, frame: DataFrame) => {
     if (frame.length) {
       const noHeader = !!frame.meta?.custom?.noHeader;
-      return acc + tableStyles.rowHeight * (frame.length + (noHeader ? 0 : 1)); // account for the header with + 1
+      return acc + tableStyles.rowHeight * (frame.length + (noHeader ? 0 : 1)) + 8; // account for the header with + 1
     }
     return acc;
   }, tableStyles.rowHeight); // initial height for row that expands above sub tables
