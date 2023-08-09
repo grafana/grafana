@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/models/roletype"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 )
 
 type SignedInUser struct {
@@ -105,12 +106,42 @@ func (u *SignedInUser) GetOrgID() int64 {
 	return u.OrgID
 }
 
-func (u *SignedInUser) GetPermissions(orgID int64) map[string][]string {
+func (u *SignedInUser) GetPermissions() map[string][]string {
 	if u.Permissions == nil {
 		return make(map[string][]string)
 	}
 
-	return u.Permissions[orgID]
+	if u.Permissions[u.GetOrgID()] == nil {
+		return make(map[string][]string)
+	}
+
+	return u.Permissions[u.GetOrgID()]
+}
+
+func (u *SignedInUser) GetTeams() []int64 {
+	return u.Teams
+}
+
+func (u *SignedInUser) GetOrgRole() roletype.RoleType {
+	return u.OrgRole
+}
+
+func (u *SignedInUser) GetNamespacedID() (string, string) {
+	switch {
+	case u.ApiKeyID != 0:
+		return identity.NamespaceAPIKey, fmt.Sprintf("%d", u.ApiKeyID)
+	case u.IsServiceAccount:
+		return identity.NamespaceServiceAccount, fmt.Sprintf("%d", u.UserID)
+	case u.UserID != 0:
+		return identity.NamespaceUser, fmt.Sprintf("%d", u.UserID)
+	case u.IsAnonymous:
+		return identity.NamespaceAnonymous, ""
+	case u.AuthenticatedBy == "render": //import cycle render
+		return identity.NamespaceRenderService, fmt.Sprintf("%d", u.UserID)
+	}
+
+	// backwards compatibility
+	return identity.NamespaceUser, fmt.Sprintf("%d", u.UserID)
 }
 
 // FIXME: remove this method once all services are using an interface

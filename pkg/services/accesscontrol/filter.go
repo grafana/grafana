@@ -45,7 +45,7 @@ func Filter(user identity.Requester, sqlID, prefix string, actions ...string) (S
 	wildcards := 0
 	result := make(map[interface{}]int)
 	for _, a := range actions {
-		ids, hasWildcard := ParseScopes(prefix, user.GetPermissions(user.GetOrgID())[a])
+		ids, hasWildcard := ParseScopes(prefix, user.GetPermissions()[a])
 		if hasWildcard {
 			wildcards += 1
 			continue
