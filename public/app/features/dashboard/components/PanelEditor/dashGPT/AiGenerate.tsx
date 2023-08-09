@@ -180,9 +180,10 @@ interface Props {
     historyItemIndex: number
   ) => Promise<boolean>;
   type: string;
+  loading?: boolean;
 }
 
-export const AiGenerate = ({ text, onClick, history, applySuggestion, llmReGenerate, type }: Props) => {
+export const AiGenerate = ({ text, onClick, history, applySuggestion, llmReGenerate, type, loading }: Props) => {
   const styles = useStyles2(getStyles);
 
   const [shouldClose, setShouldClose] = useState(false);
@@ -217,7 +218,8 @@ export const AiGenerate = ({ text, onClick, history, applySuggestion, llmReGener
 
   return (
     <div className={styles.wrapper}>
-      <Button icon="ai" onClick={onClick} fill="text" size="sm">
+      {loading && <Spinner size={14} />}
+      <Button icon={!loading ? 'ai' : undefined} onClick={onClick} fill="text" size="sm" disabled={loading}>
         {text}
       </Button>
       {history && history.length > 0 && history[0] !== '' && (

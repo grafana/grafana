@@ -147,6 +147,7 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
             applySuggestion={(suggestion: string) => setPanelTitle(suggestion)}
             llmReGenerate={llmReGenerate}
             type="title"
+            loading={generatingTitle}
           />
         ),
       })
@@ -173,6 +174,7 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
             applySuggestion={(suggestion: string) => setPanelDescription(suggestion)}
             llmReGenerate={llmReGenerate}
             type="description"
+            loading={generatingDescription}
           />
         ),
       })
