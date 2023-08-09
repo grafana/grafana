@@ -265,52 +265,52 @@ func setupTestDB(b testing.TB) benchScenario {
 		dashID := generateID(IDs)
 		dash := createDashboard(orgID, dashID, str, 0)
 		dashs = append(dashs, dash)
-		permissions = append(permissions, createPermission(signedInUserRole.ID, dashboards.ActionDashboardsRead, dashboards.ScopeDashboardsProvider.GetResourceScopeUID(dash.UID)))
+		permissions = append(permissions, createPermission(signedInUserRole.ID, dashboards.ActionDashboardsRead, "dashboards", dash.UID))
 	}
 
 	for i := 0; i < LVL0_FOLDER_NUM; i++ {
 		f0, d := createFolder(orgID, generateID(IDs), fmt.Sprintf("folder%d", i), nil)
 		folders = append(folders, f0)
 		dashs = append(dashs, d)
-		permissions = append(permissions, createPermission(signedInUserRole.ID, dashboards.ActionFoldersRead, dashboards.ScopeFoldersProvider.GetResourceScopeUID(f0.UID)))
-		permissions = append(permissions, createPermission(signedInUserRole.ID, dashboards.ActionDashboardsRead, dashboards.ScopeFoldersProvider.GetResourceScopeUID(f0.UID)))
+		permissions = append(permissions, createPermission(signedInUserRole.ID, dashboards.ActionFoldersRead, "folders", f0.UID))
+		permissions = append(permissions, createPermission(signedInUserRole.ID, dashboards.ActionDashboardsRead, "folders", f0.UID))
 
 		for j := 0; j < LVL0_DASHBOARD_NUM; j++ {
 			str := fmt.Sprintf("dashboard_%d_%d", i, j)
 			dashID := generateID(IDs)
 			dash := createDashboard(orgID, dashID, str, f0.ID)
 			dashs = append(dashs, dash)
-			permissions = append(permissions, createPermission(signedInUserRole.ID, dashboards.ActionDashboardsRead, dashboards.ScopeDashboardsProvider.GetResourceScopeUID(dash.UID)))
+			permissions = append(permissions, createPermission(signedInUserRole.ID, dashboards.ActionDashboardsRead, "dashboards", dash.UID))
 		}
 
 		for j := 0; j < LVL1_FOLDER_NUM; j++ {
 			f1, d1 := createFolder(orgID, generateID(IDs), fmt.Sprintf("folder%d_%d", i, j), &f0.UID)
 			folders = append(folders, f1)
 			dashs = append(dashs, d1)
-			permissions = append(permissions, createPermission(signedInUserRole.ID, dashboards.ActionFoldersRead, dashboards.ScopeFoldersProvider.GetResourceScopeUID(f1.UID)))
-			permissions = append(permissions, createPermission(signedInUserRole.ID, dashboards.ActionDashboardsRead, dashboards.ScopeFoldersProvider.GetResourceScopeUID(f1.UID)))
+			permissions = append(permissions, createPermission(signedInUserRole.ID, dashboards.ActionFoldersRead, "folders", f1.UID))
+			permissions = append(permissions, createPermission(signedInUserRole.ID, dashboards.ActionDashboardsRead, "folders", f1.UID))
 
 			for k := 0; k < LVL1_DASHBOARD_NUM; k++ {
 				str := fmt.Sprintf("dashboard_%d_%d_%d", i, j, k)
 				dashID := generateID(IDs)
 				dash := createDashboard(orgID, dashID, str, f1.ID)
 				dashs = append(dashs, dash)
-				permissions = append(permissions, createPermission(signedInUserRole.ID, dashboards.ActionDashboardsRead, dashboards.ScopeDashboardsProvider.GetResourceScopeUID(dash.UID)))
+				permissions = append(permissions, createPermission(signedInUserRole.ID, dashboards.ActionDashboardsRead, "dashboards", dash.UID))
 			}
 
 			for k := 0; k < LVL2_FOLDER_NUM; k++ {
 				f2, d2 := createFolder(orgID, generateID(IDs), fmt.Sprintf("folder%d_%d_%d", i, j, k), &f1.UID)
 				folders = append(folders, f2)
 				dashs = append(dashs, d2)
-				permissions = append(permissions, createPermission(signedInUserRole.ID, dashboards.ActionFoldersRead, dashboards.ScopeFoldersProvider.GetResourceScopeUID(f2.UID)))
-				permissions = append(permissions, createPermission(signedInUserRole.ID, dashboards.ActionDashboardsRead, dashboards.ScopeFoldersProvider.GetResourceScopeUID(f2.UID)))
+				permissions = append(permissions, createPermission(signedInUserRole.ID, dashboards.ActionFoldersRead, "folders", f2.UID))
+				permissions = append(permissions, createPermission(signedInUserRole.ID, dashboards.ActionDashboardsRead, "folders", f2.UID))
 
 				for l := 0; l < LVL2_DASHBOARD_NUM; l++ {
 					str := fmt.Sprintf("dashboard_%d_%d_%d_%d", i, j, k, l)
 					dashID := generateID(IDs)
 					dash := createDashboard(orgID, dashID, str, f2.ID)
 					dashs = append(dashs, dash)
-					permissions = append(permissions, createPermission(signedInUserRole.ID, dashboards.ActionDashboardsRead, dashboards.ScopeDashboardsProvider.GetResourceScopeUID(dash.UID)))
+					permissions = append(permissions, createPermission(signedInUserRole.ID, dashboards.ActionDashboardsRead, "dashboards", dash.UID))
 				}
 			}
 		}
@@ -383,13 +383,20 @@ func createDashboard(orgID int64, id int64, uid string, parentID int64) *dashboa
 	return d
 }
 
-func createPermission(roleID int64, action string, scope string) accesscontrol.Permission {
+func createPermission(roleID int64, action string, kind string, uid string) accesscontrol.Permission {
+	scope := dashboards.ScopeDashboardsProvider.GetResourceScopeUID(uid)
+	if kind == "folders" {
+		scope = dashboards.ScopeFoldersProvider.GetResourceScopeUID(uid)
+	}
 	now := time.Now()
 	return accesscontrol.Permission{
-		RoleID:  roleID,
-		Action:  action,
-		Scope:   scope,
-		Updated: now,
-		Created: now,
+		RoleID:     roleID,
+		Action:     action,
+		Scope:      scope,
+		Updated:    now,
+		Created:    now,
+		Kind:       kind,
+		Attribute:  "uid",
+		Identifier: uid,
 	}
 }
