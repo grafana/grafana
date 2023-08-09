@@ -98,6 +98,17 @@ export function RedirectToRuleViewer(): JSX.Element | null {
     return <Redirect to={to} />;
   }
 
+  if (rules.length === 0) {
+    return (
+      <RuleViewerLayout title={pageTitle}>
+        <div data-testid="no-rules">
+          No rules in <span className={styles.param}>{sourceName}</span> matched the name{' '}
+          <span className={styles.param}>{name}</span>
+        </div>
+      </RuleViewerLayout>
+    );
+  }
+
   return (
     <RuleViewerLayout title={pageTitle}>
       <div>
