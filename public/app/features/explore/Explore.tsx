@@ -130,6 +130,15 @@ interface ExploreState {
   openDrawer?: ExploreDrawer;
 }
 
+export interface MegaSelectOptions {
+  view?: string;
+  endpoint?: string;
+  mega?: boolean;
+  minValue: number;
+  maxValue: number;
+  startOfRow: boolean;
+}
+
 export type Props = ExploreProps & ConnectedProps<typeof connector>;
 
 /**
@@ -474,6 +483,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
               endpoint: megaSelectEndpoint,
               mega: true,
               ...getMinMax([getMegaSelect]),
+              startOfRow: true,
             }}
             data={[getMegaSelect]}
             height={300}
@@ -489,7 +499,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
         </div>
         <div className={styles.megaSelectSubWrapper}>
           {panelsToRender &&
-            panelsToRender.map((frame) => (
+            panelsToRender.map((frame, frameIndex) => (
               <div key={JSON.stringify(frame.fields[1].labels)} className={styles.megaSelectItem}>
                 <MegaSelectContainer
                   actionsOverride={<></>}
@@ -508,6 +518,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
                     endpoint: megaSelectEndpoint,
                     mega: false,
                     ...minMax,
+                    startOfRow: frameIndex % 4 === 0,
                   }}
                 />
               </div>

@@ -6,27 +6,26 @@ import {
   AbsoluteTimeRange,
   applyFieldOverrides,
   createFieldConfigRegistry,
+  DashboardCursorSync,
   DataFrame,
   dateTime,
+  EventBus,
   FieldColorModeId,
   FieldConfigSource,
   getFrameDisplayName,
   GrafanaTheme2,
   LoadingState,
   SplitOpen,
-  TimeZone,
   ThresholdsConfig,
-  DashboardCursorSync,
-  EventBus,
-  FieldConfig,
+  TimeZone,
 } from '@grafana/data';
 import { PanelRenderer } from '@grafana/runtime';
 import {
   GraphDrawStyle,
-  LegendDisplayMode,
-  TooltipDisplayMode,
-  SortOrder,
   GraphThresholdsStyleConfig,
+  LegendDisplayMode,
+  SortOrder,
+  TooltipDisplayMode,
 } from '@grafana/schema';
 import {
   Button,
@@ -43,6 +42,7 @@ import { Options as TimeSeriesOptions } from 'app/plugins/panel/timeseries/panel
 import { ExploreGraphStyle } from 'app/types';
 
 import { seriesVisibilityConfigFactory } from '../../dashboard/dashgrid/SeriesVisibilityConfigFactory';
+import { MegaSelectOptions } from '../Explore';
 import { useExploreDataLinkPostProcessor } from '../hooks/useExploreDataLinkPostProcessor';
 
 import { applyGraphStyle, applyThresholdsConfig } from './exploreGraphStyleUtils';
@@ -68,13 +68,7 @@ interface Props {
   thresholdsConfig?: ThresholdsConfig;
   thresholdsStyle?: GraphThresholdsStyleConfig;
   eventBus: EventBus;
-  options: {
-    view?: string;
-    endpoint?: string;
-    mega?: boolean;
-    minValue: number;
-    maxValue: number;
-  };
+  options: MegaSelectOptions;
 }
 
 export function MegaSelectGraph({
@@ -136,10 +130,35 @@ export function MegaSelectGraph({
 
   const styledFieldConfig = useMemo(() => {
     const withGraphStyle = applyGraphStyle(fieldConfig, graphStyle, yAxisMaximum);
-    return applyThresholdsConfig(withGraphStyle, thresholdsStyle, thresholdsConfig);
-  }, [fieldConfig, graphStyle, yAxisMaximum, thresholdsConfig, thresholdsStyle]);
+
+    const getOverrides = () => {
+      if (!options.startOfRow) {
+        const match = {
+          matcher: {
+            id: 'byName',
+            options: 'Value',
+          },
+          properties: [
+            {
+              id: 'custom.axisPlacement',
+              value: 'hidden',
+            },
+          ],
+        };
+        return [match];
+      }
+
+      return [];
+    };
+
+    return {
+      ...applyThresholdsConfig(withGraphStyle, thresholdsStyle, thresholdsConfig),
+      overrides: getOverrides(),
+    };
+  }, [fieldConfig, graphStyle, yAxisMaximum, thresholdsConfig, thresholdsStyle, options.startOfRow]);
 
   const dataLinkPostProcessor = useExploreDataLinkPostProcessor(splitOpenFn, timeRange);
+  // filterFieldConfigOverrides
 
   const dataWithConfig = useMemo(() => {
     return applyFieldOverrides({

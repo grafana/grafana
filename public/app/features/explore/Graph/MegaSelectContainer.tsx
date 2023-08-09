@@ -12,6 +12,7 @@ import {
 import { GraphThresholdsStyleConfig, PanelChrome, PanelChromeProps } from '@grafana/ui';
 import { ExploreGraphStyle } from 'app/types';
 
+import { MegaSelectOptions } from '../Explore';
 import { storeGraphStyle } from '../state/utils';
 
 import { ExploreGraphLabel } from './ExploreGraphLabel';
@@ -32,13 +33,7 @@ interface Props extends Pick<PanelChromeProps, 'statusMessage'> {
   thresholdsConfig?: ThresholdsConfig;
   thresholdsStyle?: GraphThresholdsStyleConfig;
   actionsOverride?: JSX.Element;
-  options: {
-    view?: string;
-    endpoint?: string;
-    mega?: boolean;
-    minValue: number;
-    maxValue: number;
-  };
+  options: MegaSelectOptions;
 }
 
 export const MegaSelectContainer = ({
