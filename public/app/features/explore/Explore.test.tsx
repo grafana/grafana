@@ -99,6 +99,7 @@ const dummyProps: Props = {
   showMegaSelect: false,
   megaSelectView: null,
   megaSelectEndpoint: '',
+  exemplarsHack: undefined,
 };
 
 jest.mock('@grafana/runtime/src/services/dataSourceSrv', () => {
