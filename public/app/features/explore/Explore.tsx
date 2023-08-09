@@ -384,14 +384,16 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
   }
 
   renderMegaSelectPanels(width: number, megaSelectView: string, megaSelectEndpoint: string) {
-    const { graphResult, absoluteRange, timeZone, queryResponse, theme } = this.props;
+    const { graphResult, absoluteRange, timeZone, queryResponse, theme, exemplarsHack } = this.props;
     const styles = getStyles(theme);
 
     //@todo not this
     const graphResultClone: DataFrame[] = JSON.parse(JSON.stringify(graphResult));
 
     const filterExemplars = (exemplars: DataFrame[], targetFrame: DataFrame): DataFrame[] => {
-      return exemplars.map((exemplar) => {
+      console.log('exemplars', exemplars);
+      console.log('targetFrame', targetFrame);
+      const result = exemplars.map((exemplar) => {
         let newExemplar: DataFrame;
         newExemplar = cloneDeep(exemplar);
         newExemplar.fields.forEach((field) => (field.values = []));
@@ -422,6 +424,8 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
         newExemplar.length = newExemplar.fields[0].values.length;
         return newExemplar;
       });
+      console.log('filtered Exemplars', result);
+      return result;
     };
 
     //@todo just grabbing first timeseries as megaSelect for now
@@ -434,6 +438,9 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
     if (getMegaSelect && getMegaSelect.fields?.length) {
       getMegaSelect.length = getMegaSelect.fields[0].values.length;
     }
+
+    console.log('queryresponse.annotations', queryResponse.annotations);
+    console.log('dataframes', graphResult);
 
     return (
       <div className={styles.megaSelectWrapper}>
@@ -468,7 +475,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
                   absoluteRange={absoluteRange}
                   timeZone={timeZone}
                   onChangeTime={this.onUpdateTimeRange}
-                  annotations={filterExemplars(queryResponse.annotations ?? [], frame)}
+                  annotations={filterExemplars(exemplarsHack ? [exemplarsHack] : [], frame)}
                   splitOpenFn={this.onSplitOpen('graph')}
                   loadingState={queryResponse.state}
                   eventBus={this.graphEventBus}
@@ -755,8 +762,9 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
   // We want to show logs sample only if there are no log results and if there is already graph or table result
   const showLogsSample = !!(logsSample.dataProvider !== undefined && !logsResult && (graphResult || tableResult));
   const showMegaSelect = item.queries.some((query) => query.queryType === 'megaSelect');
+  const exemplarsHack = item.queryResponse.series?.find((series) => series.name === 'exemplar');
 
-  const query = item.queries.find((query) => query.queryType === 'megaSelect');
+  const query = item.queries.find((query) => query?.queryType === 'megaSelect');
   //@ts-ignore
   const megaSelectView = query?.view ?? '';
   //@ts-ignore
@@ -788,6 +796,7 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     showMegaSelect,
     megaSelectView,
     megaSelectEndpoint,
+    exemplarsHack,
   };
 }
 

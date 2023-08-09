@@ -153,7 +153,7 @@ export function MegaSelectGraph({
     frame.fields.forEach((field) => {
       field.config = {
         ...field.config,
-        custom: { ...field.config.custom, lineWidth: 1 },
+        custom: { ...field.config.custom, showPoints: 'never' },
       };
     });
   });

@@ -1,3 +1,4 @@
+import { Dictionary } from '@reduxjs/toolkit';
 import { groupBy, identity, pick, pickBy, startCase } from 'lodash';
 import { EMPTY, from, lastValueFrom, merge, Observable, of, throwError } from 'rxjs';
 import { catchError, concatMap, map, mergeMap, toArray } from 'rxjs/operators';
@@ -65,11 +66,16 @@ import { intrinsics } from './traceql/traceql';
 import { SearchQueryParams, TempoJsonData, TempoQuery } from './types';
 import { getErrorMessage } from './utils';
 
+type RawTimeStamp = number;
+type ExemplarValue = string;
+type TraceId = string;
+
 interface MegaSelectResponse {
   resultType: 'matrix';
   result: Array<{
     metric: Record<string, string>;
     values: Array<[number, string]>;
+    exemplars: Array<[RawTimeStamp, ExemplarValue, TraceId]>;
   }>;
 }
 
@@ -168,8 +174,75 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
       end: options.range.to.unix(),
     }) as Observable<{ data: { data: MegaSelectResponse } }>;
 
+    function groupFrames(framesByName: Dictionary<DataFrame[]>, groupedFrames: DataFrame[]) {
+      for (let name in framesByName) {
+        if (framesByName[name] && framesByName[name]?.length === 1) {
+          //@ts-ignore
+          groupedFrames.push(framesByName[name][0]);
+        } else {
+          if (name in framesByName && framesByName[name]) {
+            //@ts-ignore
+            for (let i = 1; i < framesByName[name].length; i++) {
+              //@ts-ignore
+              const mainFrame = framesByName[name][0];
+              //@ts-ignore
+              const frame = framesByName[name][i];
+              mainFrame.fields.push(frame.fields[1]);
+            }
+          }
+
+          //@ts-ignore
+          groupedFrames.push(framesByName[name][0]);
+        }
+      }
+    }
+
     const transformFromTempoMegaSelect = (response: MegaSelectResponse): DataQueryResponse => {
       let transformedFrames: DataFrame[] = [];
+
+      const exemplarFrame: DataFrame = {
+        fields: [
+          {
+            name: 'Time',
+            type: FieldType.time,
+            values: [], // seconds to ms
+            config: { displayName: 'Time' },
+          },
+          {
+            name: 'Value',
+            type: FieldType.number,
+            values: [], // string to float
+            config: {},
+            labels: {},
+          },
+          {
+            name: 'traceId',
+            type: FieldType.string,
+            values: [],
+            config: {},
+            labels: {},
+          },
+          {
+            name: '__name__',
+            type: FieldType.string,
+            values: [],
+            config: {},
+          },
+          {
+            name: '__value__',
+            type: FieldType.string,
+            values: [],
+            config: {},
+          },
+        ],
+        length: 0,
+        name: 'exemplar',
+        meta: {
+          custom: {
+            resultType: 'exemplar',
+          },
+        },
+      };
 
       // We want to limit the number of viz more than the number of dataframes
       response?.result?.forEach((r) => {
@@ -180,7 +253,6 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
               type: FieldType.time,
               values: r.values.map((value) => value[0] * 1000), // seconds to ms
               config: { displayName: 'Time' },
-              labels: r.metric,
             },
             {
               name: r.metric.__name__,
@@ -194,28 +266,58 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
           length: r.values.length,
         };
         transformedFrames.push(dataFrame);
+
+        if (!r.metric.__value__) {
+          console.log('empty metric value', r);
+        }
+
+        const exemplarFields: Field[] = [
+          {
+            name: 'Time',
+            type: FieldType.time,
+            values: r.exemplars.map((value) => value[0] * 1000), // seconds to ms
+            config: { displayName: 'Time' },
+          },
+          {
+            name: 'Value',
+            type: FieldType.number,
+            values: r.exemplars.map((value) => parseFloat(value[1])), // string to float
+            config: { displayName: r.metric.__value__ },
+          },
+          {
+            name: 'traceId',
+            type: FieldType.string,
+            values: r.exemplars.map((value) => value[2]), // string to float
+            config: { displayName: r.metric.__value__ },
+          },
+          {
+            name: '__name__',
+            type: FieldType.string,
+            values: r.exemplars.map(() => r.metric.__name__),
+            config: { displayName: r.metric.__name__ },
+          },
+          {
+            name: '__value__',
+            type: FieldType.string,
+            values: r.exemplars.map(() => r.metric.__value__),
+            config: { displayName: r.metric.__value__ },
+          },
+        ];
+        exemplarFrame.fields.forEach((field, i) => {
+          exemplarFrame.fields[i].values = exemplarFrame.fields[i].values.concat(exemplarFields[i].values);
+        });
+        exemplarFrame.length = exemplarFrame.fields[0].values.length;
       });
 
       const framesByName = groupBy(transformedFrames, (frame) => frame.name);
 
-      let groupedFrames = [];
-      for (let name in framesByName) {
-        if (framesByName[name].length === 1) {
-          groupedFrames.push(framesByName[name][0]);
-        } else {
-          for (let i = 1; i < framesByName[name].length; i++) {
-            const mainFrame = framesByName[name][0];
-            const frame = framesByName[name][i];
-            mainFrame.fields.push(frame.fields[1]);
-          }
-          groupedFrames.push(framesByName[name][0]);
-        }
-      }
+      let groupedFrames: DataFrame[] = [];
+      groupFrames(framesByName, groupedFrames);
 
-      // Sorting to be done on backend
-      // groupedFrames.sort((a, b) => (a.fields.length > b.fields.length ? -1 : 1));
+      console.log('groupedFrames', groupedFrames);
+      console.log('exemplarFrames', exemplarFrame);
 
-      return { data: groupedFrames };
+      return { data: [...groupedFrames, exemplarFrame] };
     };
 
     return request.pipe(map((response) => transformFromTempoMegaSelect(response.data.data)));
