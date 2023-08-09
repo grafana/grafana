@@ -32,7 +32,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme2, data) => ({
     width: 100%;
     display: table;
     height: ${data?.size}px;
-    background-color: ${data?.backgroundColor};
+    background-color: ${data?.color};
     top: 50%;
     transform: translateY(-50%);
   `,
