@@ -18,31 +18,16 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin/provider"
 	pluginClient "github.com/grafana/grafana/pkg/plugins/manager/client"
 	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
-	"github.com/grafana/grafana/pkg/plugins/manager/loader"
-	"github.com/grafana/grafana/pkg/plugins/manager/loader/angular/angularinspector"
-	"github.com/grafana/grafana/pkg/plugins/manager/loader/assetpath"
-	"github.com/grafana/grafana/pkg/plugins/manager/loader/finder"
-	"github.com/grafana/grafana/pkg/plugins/manager/process"
-	"github.com/grafana/grafana/pkg/plugins/manager/registry"
-	"github.com/grafana/grafana/pkg/plugins/manager/signature"
-	"github.com/grafana/grafana/pkg/plugins/manager/signature/statickey"
-	"github.com/grafana/grafana/pkg/plugins/manager/sources"
-	"github.com/grafana/grafana/pkg/plugins/manager/store"
-	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/caching"
 	datasources "github.com/grafana/grafana/pkg/services/datasources/fakes"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/oauthtoken/oauthtokentest"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/config"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/pipeline"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginerrs"
 	pluginSettings "github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings/service"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	fakeSecrets "github.com/grafana/grafana/pkg/services/secrets/fakes"
@@ -67,34 +52,18 @@ func TestCallResource(t *testing.T) {
 
 	coreRegistry := coreplugin.ProvideCoreRegistry(nil, &cloudwatch.CloudWatchService{}, nil, nil, nil, nil,
 		nil, nil, nil, nil, testdatasource.ProvideService(), nil, nil, nil, nil, nil, nil)
-	pCfg, err := config.ProvideConfig(setting.ProvideProvider(cfg), cfg, featuremgmt.WithFeatures())
-	require.NoError(t, err)
-	reg := registry.ProvideService()
-	angularInspector := angularinspector.NewStaticInspector()
-	proc := process.NewManager(reg)
-	sigErrTracker := pluginerrs.ProvideSignatureErrorTracker()
 
-	discovery := pipeline.ProvideDiscoveryStage(pCfg, finder.NewLocalFinder(pCfg.DevMode), reg)
-	bootstrap := pipeline.ProvideBootstrapStage(pCfg, signature.ProvideService(pCfg, statickey.New()), assetpath.ProvideService(pluginscdn.ProvideService(pCfg)))
-	validate := pipeline.ProvideValidationStage(pCfg, signature.NewValidator(signature.NewUnsignedAuthorizer(pCfg)), angularInspector, sigErrTracker)
-	initialize := pipeline.ProvideInitializationStage(pCfg, reg, fakes.NewFakeLicensingService(), provider.ProvideService(coreRegistry), proc, &fakes.FakeOauthService{}, fakes.NewFakeRoleRegistry())
-	terminate, err := pipeline.ProvideTerminationStage(pCfg, reg, proc)
-	require.NoError(t, err)
+	textCtx := pluginsintegration.CreateIntegrationTestCtx(t, cfg, coreRegistry)
 
-	l := loader.ProvideService(discovery, bootstrap, validate, initialize, terminate)
-	srcs := sources.ProvideService(cfg, pCfg)
-	ps, err := store.ProvideService(reg, srcs, l)
-	require.NoError(t, err)
-
-	pcp := plugincontext.ProvideService(localcache.ProvideService(), ps, &datasources.FakeDataSourceService{},
+	pcp := plugincontext.ProvideService(localcache.ProvideService(), textCtx.PluginStore, &datasources.FakeDataSourceService{},
 		pluginSettings.ProvideService(db.InitTestDB(t), fakeSecrets.NewFakeSecretsService()))
 
 	srv := SetupAPITestServer(t, func(hs *HTTPServer) {
 		hs.Cfg = cfg
 		hs.pluginContextProvider = pcp
 		hs.QuotaService = quotatest.New(false, nil)
-		hs.pluginStore = ps
-		hs.pluginClient = pluginClient.ProvideService(reg, pCfg)
+		hs.pluginStore = textCtx.PluginStore
+		hs.pluginClient = textCtx.PluginClient
 		hs.log = log.New("test")
 	})
 
@@ -132,7 +101,7 @@ func TestCallResource(t *testing.T) {
 		hs.Cfg = cfg
 		hs.pluginContextProvider = pcp
 		hs.QuotaService = quotatest.New(false, nil)
-		hs.pluginStore = ps
+		hs.pluginStore = textCtx.PluginStore
 		hs.pluginClient = pc
 		hs.log = log.New("test")
 	})
