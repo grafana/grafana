@@ -858,7 +858,7 @@ func createOrgAndUserSvc(t *testing.T, store db.DB, cfg *setting.Cfg) (org.Servi
 	return orgService, usrSvc
 }
 
-func TestIasdntegration_SQLStore_RemoveOrgUser(t *testing.T) {
+func TestMetricsUsage(t *testing.T) {
 	ss := db.InitTestDB(t)
 	_, usrSvc := createOrgAndUserSvc(t, ss, ss.Cfg)
 	orgUserStore := sqlStore{
@@ -866,7 +866,7 @@ func TestIasdntegration_SQLStore_RemoveOrgUser(t *testing.T) {
 		dialect: ss.GetDialect(),
 		cfg:     setting.NewCfg(),
 	}
-	t.Run("tt.desc", func(t *testing.T) {
+	t.Run("should count users with a role None", func(t *testing.T) {
 		orgId := int64(1)
 		// create first user
 		createFirstUserCmd := &user.CreateUserCommand{
