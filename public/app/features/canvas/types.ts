@@ -48,6 +48,11 @@ export interface TextConfig {
   valign: VAlign;
 }
 
+export interface LineData {
+  color?: string;
+  width?: number;
+}
+
 export {
   Placement,
   Constraint,
