@@ -5,18 +5,10 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { stylesFactory } from '@grafana/ui';
 import { config } from 'app/core/config';
 import { DimensionContext } from 'app/features/dimensions/context';
+import { ColorDimensionEditor } from 'app/features/dimensions/editors/ColorDimensionEditor';
 
-import { CanvasElementItem, CanvasElementProps } from '../element';
-
-interface LineData {
-  color?: string;
-  size?: number;
-}
-
-interface LineConfig {
-  color?: string;
-  size?: number;
-}
+import { CanvasElementItem, CanvasElementProps, defaultBgColor } from '../element';
+import { LineConfig, LineData } from '../types';
 
 class LineDisplay extends PureComponent<CanvasElementProps<LineConfig, LineData>> {
   render() {
@@ -31,7 +23,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme2, data) => ({
     position: absolute;
     width: 100%;
     display: table;
-    height: ${data?.size}px;
+    height: ${data?.width}px;
     background-color: ${data?.color};
     top: 50%;
     transform: translateY(-50%);
@@ -53,8 +45,10 @@ export const lineItem: CanvasElementItem<LineConfig, LineData> = {
   getNewOptions: (options) => ({
     ...options,
     config: {
-      color: 'red',
-      size: 3,
+      color: {
+        fixed: defaultBgColor,
+      },
+      width: 3,
     },
     background: {
       color: {
@@ -66,10 +60,35 @@ export const lineItem: CanvasElementItem<LineConfig, LineData> = {
   // Called when data changes
   prepareData: (ctx: DimensionContext, cfg: LineConfig) => {
     const data: LineData = {
-      color: cfg.color,
-      size: cfg.size,
+      width: cfg.width,
     };
 
+    if (cfg.color) {
+      data.color = ctx.getColor(cfg.color).value();
+    }
+
     return data;
+  },
+
+  registerOptionsUI: (builder) => {
+    const category = ['Line'];
+    builder
+      .addCustomEditor({
+        category,
+        id: 'config.color',
+        path: 'config.color',
+        name: 'Line color',
+        editor: ColorDimensionEditor,
+        settings: {},
+        defaultValue: {},
+      })
+      .addNumberInput({
+        category,
+        path: 'config.width',
+        name: 'Line width',
+        settings: {
+          placeholder: 'Auto',
+        },
+      });
   },
 };
