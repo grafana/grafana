@@ -1,5 +1,4 @@
 import { chain, cloneDeep, defaults, find } from 'lodash';
-import { Observable } from 'rxjs';
 
 import { PanelPluginMeta } from '@grafana/data';
 import { llms } from '@grafana/experimental';
@@ -61,9 +60,9 @@ export function onGeneratePanelWithAI(dashboard: DashboardModel, description: st
     .then((response) => response.choices[0].message.content);
 }
 
-export function onGenerateDashboardWithAI(description: string): Observable<string> {
+export function onGenerateDashboardWithAI(description: string): any {
   return llms.openai
-    .streamChatCompletions({
+    .chatCompletions({
       model: 'gpt-4',
       messages: [
         {
@@ -88,11 +87,7 @@ export function onGenerateDashboardWithAI(description: string): Observable<strin
         },
       ],
     })
-    .pipe(
-      // Accumulate the stream content into a stream of strings, where each
-      // element contains the accumulated message so far.
-      llms.openai.accumulateContent()
-    );
+    .then((response) => response.choices[0].message.content);
 }
 
 export function onCreateNewWidgetPanel(dashboard: DashboardModel, widgetType: string): number | undefined {

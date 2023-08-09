@@ -30,6 +30,24 @@ const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
   const [assitsDescription, setAssitsDescription] = React.useState('');
   const [assitsLoading, setAssitsLoading] = React.useState(false);
 
+  const onGenerateDashboard = async () => {
+    setAssitsLoading(true);
+    const response = await onGenerateDashboardWithAI(assitsDescription);
+    let generatedDashboard = null;
+    let newDashboardModel = null;
+    try {
+      generatedDashboard = JSON.parse(response)?.dashboard || JSON.parse(response);
+      newDashboardModel = new DashboardModel(generatedDashboard);
+      console.log('Loaded model', newDashboardModel);
+      setAssitsLoading(false);
+    } catch (e) {}
+    if (generatedDashboard?.panels) {
+      generatedDashboard?.panels.forEach((panel: Panel) => {
+        dashboard.addPanel(panel);
+      });
+    }
+  };
+
   return (
     <div className={styles.centeredContent}>
       <div className={cx(styles.centeredContent, styles.wrapper)}>
@@ -55,25 +73,7 @@ const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
               size="md"
               icon="ai"
               data-testid={selectors.pages.AddDashboard.itemButton('Create new panel button')}
-              onClick={() => {
-                setAssitsLoading(true);
-                onGenerateDashboardWithAI(assitsDescription).subscribe((res) => {
-                  let generatedDashboard = null;
-                  let newDashboardModel = null;
-                  try {
-                    console.log(res);
-                    generatedDashboard = JSON.parse(res)?.dashboard || JSON.parse(res);
-                    newDashboardModel = new DashboardModel(generatedDashboard);
-                    console.log('Loaded model', newDashboardModel);
-                    setAssitsLoading(false);
-                  } catch (e) {}
-                  if (generatedDashboard?.panels) {
-                    generatedDashboard?.panels.forEach((panel: Panel) => {
-                      dashboard.addPanel(panel);
-                    });
-                  }
-                });
-              }}
+              onClick={onGenerateDashboard}
               disabled={assitsLoading}
             >
               {assitsLoading ? (
