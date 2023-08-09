@@ -85,7 +85,7 @@ func BenchmarkSearch(b *testing.B) {
 		{
 			desc:        "search several dashboards with nested folders feature disabled and no feature flags",
 			url:         "/api/search?type=dash-db&query=dashboard_0_0_0",
-			expectedLen: withLimit(LVL2_FOLDER_NUM*LVL2_DASHBOARD_NUM + 1),
+			expectedLen: withLimit(LVL2_DASHBOARD_NUM + 1),
 			features:    featuremgmt.WithFeatures(),
 		},
 		{
@@ -109,7 +109,7 @@ func BenchmarkSearch(b *testing.B) {
 		{
 			desc:        "search several dashboards with nested folders feature disabled with removed subquery enabled",
 			url:         "/api/search?type=dash-db&query=dashboard_0_0_0",
-			expectedLen: withLimit(LVL2_FOLDER_NUM*LVL2_DASHBOARD_NUM + 1),
+			expectedLen: withLimit(LVL2_DASHBOARD_NUM + 1),
 			features:    featuremgmt.WithFeatures(featuremgmt.FlagPermissionsFilterRemoveSubquery),
 		},
 		{
@@ -133,7 +133,7 @@ func BenchmarkSearch(b *testing.B) {
 		{
 			desc:        "search several dashboards with nested folders feature disabled with split scopes enabled",
 			url:         "/api/search?type=dash-db&query=dashboard_0_0_0",
-			expectedLen: withLimit(LVL2_FOLDER_NUM*LVL2_DASHBOARD_NUM + 1),
+			expectedLen: withLimit(LVL2_DASHBOARD_NUM + 1),
 			features:    featuremgmt.WithFeatures(featuremgmt.FlagSplitScopes),
 		},
 		{
