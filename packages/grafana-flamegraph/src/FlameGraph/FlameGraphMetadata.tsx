@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import React, { ReactNode } from 'react';
 
-import { getValueFormat, GrafanaTheme2 } from '@grafana/data/src';
+import { getValueFormat, GrafanaTheme2 } from '@grafana/data';
 import { Icon, IconButton } from '@grafana/ui';
 
 import { ClickedItemData } from '../types';
