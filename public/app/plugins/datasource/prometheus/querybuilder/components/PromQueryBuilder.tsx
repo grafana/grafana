@@ -50,12 +50,7 @@ export const PromQueryBuilder = React.memo<Props>((props) => {
   return (
     <>
       {prometheusPromQAIL && showDrawer && (
-        <Drawer
-          // make the width resonsponsive when the inner drawer is opened
-          width={'50%'}
-          closeOnMaskClick={false}
-          onClose={() => setShowDrawer(false)}
-        >
+        <Drawer scrollableContent={true} closeOnMaskClick={false} onClose={() => setShowDrawer(false)}>
           <PromQail query={query} closeDrawer={() => setShowDrawer(false)} />
         </Drawer>
       )}

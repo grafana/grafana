@@ -12,6 +12,22 @@ export const querySuggestions: QuerySuggestion[] = [
     query: 'up{instance="localhost:3000"}',
     explanation: 'This query is measuring a certain amount of things. It will help you know that your service is up.',
   },
+  {
+    query: 'up{instance="localhost:3000"}',
+    explanation: 'This query is measuring a certain amount of things. It will help you know that your service is up.',
+  },
+  {
+    query: 'up{instance="localhost:3000"}',
+    explanation: 'This query is measuring a certain amount of things. It will help you know that your service is up.',
+  },
+  {
+    query: 'up{instance="localhost:3000"}',
+    explanation: 'This query is measuring a certain amount of things. It will help you know that your service is up.',
+  },
+  {
+    query: 'up{instance="localhost:3000"}',
+    explanation: 'This query is measuring a certain amount of things. It will help you know that your service is up.',
+  },
 ];
 
 export async function callOpenAI(dispatch: React.Dispatch<AnyAction>, prompt?: string): Promise<QuerySuggestion[]> {
@@ -21,7 +37,7 @@ export async function callOpenAI(dispatch: React.Dispatch<AnyAction>, prompt?: s
       resolve(querySuggestions);
       dispatch(aiIsLoading(false));
       dispatch(giveMeAIQueries(true));
-    }, 3000);
+    }, 1000);
   });
 
   const data: QuerySuggestion[] = await prom;

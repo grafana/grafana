@@ -1,4 +1,4 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import React, { useReducer } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -7,10 +7,12 @@ import store from 'app/core/store';
 
 import { PromVisualQuery } from '../../types';
 
+import { QuerySuggestionContainer } from './QuerySuggestionContainer';
 // @ts-ignore until we can get these added for icons
 import AI_Logo_color from './resources/AI_Logo_color.svg';
-import { callOpenAI } from './state/helpers';
+import { callOpenAI, querySuggestions } from './state/helpers';
 import { initialState, stateSlice } from './state/state';
+import { SuggestionType } from './types';
 
 // actions to update the state
 const {
@@ -33,7 +35,6 @@ const SKIP_STARTING_MESSAGE = 'SKIP_STARTING_MESSAGE';
 
 export const PromQail = (props: PromQailProps) => {
   const { query, closeDrawer } = props;
-
   const skipStartingMessage = store.getBool(SKIP_STARTING_MESSAGE, false);
 
   const [state, dispatch] = useReducer(stateSlice.reducer, initialState(query, !skipStartingMessage));
@@ -91,8 +92,8 @@ export const PromQail = (props: PromQailProps) => {
                 label="Don't show this message again"
               />
             </div>
-            <div className={styles.nextButtonsWrapper}>
-              <div className={styles.nextButtons}>
+            <div className={styles.rightButtonsWrapper}>
+              <div className={styles.rightButtons}>
                 <Button className={styles.leftButton} fill="outline" variant="secondary" onClick={closeDrawer}>
                   Cancel
                 </Button>
@@ -106,8 +107,8 @@ export const PromQail = (props: PromQailProps) => {
           <>
             {/* MAKE THIS TABLE RESPONSIVE */}
             {/* FIT SUPER LONG METRICS AND LABELS IN HERE */}
-            <div className={styles.textPadding}>Here are the metrics you have selected:</div>
-            <div className={styles.metricContainer}>
+            <div className={styles.textPadding}>Here is the metric you have selected:</div>
+            <div className={styles.infoContainer}>
               <table className={styles.metricTable}>
                 <tbody>
                   <tr>
@@ -142,8 +143,8 @@ export const PromQail = (props: PromQailProps) => {
             {!state.askForQueryHelp ? (
               <>
                 <div className={styles.queryQuestion}>Do you know what you want to query?</div>
-                <div className={styles.nextButtonsWrapper}>
-                  <div className={styles.nextButtons}>
+                <div className={styles.rightButtonsWrapper}>
+                  <div className={styles.rightButtons}>
                     <Button
                       className={styles.leftButton}
                       fill="solid"
@@ -171,7 +172,7 @@ export const PromQail = (props: PromQailProps) => {
             ) : state.knowWhatYouWantToQuery ? (
               <>
                 <div className={styles.textPadding}>What kind of data do you want to see with your metric?</div>
-                <div className={styles.secondaryText}>
+                <div className={cx(styles.secondaryText, styles.bottomMargin)}>
                   <div>You do not need to enter in a metric or a label again in the prompt.</div>
                   <div>Example: I want to monitor request latency, not errors.</div>
                 </div>
@@ -188,8 +189,8 @@ export const PromQail = (props: PromQailProps) => {
                 </div>
                 {!state.aiIsLoading && !state.giveMeAIQueries ? (
                   <>
-                    <div className={styles.nextButtonsWrapper}>
-                      <div className={styles.nextButtons}>
+                    <div className={styles.rightButtonsWrapper}>
+                      <div className={styles.rightButtons}>
                         <Button
                           className={styles.leftButton}
                           fill="outline"
@@ -232,17 +233,22 @@ export const PromQail = (props: PromQailProps) => {
                     {state.aiIsLoading ? (
                       <>
                         <div className={styles.loadingMessageContainer}>
-                          Waiting for OpenAI <Spinner className={styles.spinnerPlacement} />
+                          Waiting for OpenAI <Spinner className={styles.floatRight} />
                         </div>
                       </>
                     ) : (
-                      <>LIST OF SUGGESTED QUERIES FROM AI</>
+                      // LIST OF SUGGESTED QUERIES FROM AI
+                      <QuerySuggestionContainer
+                        suggestionType={SuggestionType.AI}
+                        querySuggestions={querySuggestions}
+                      />
                     )}
                   </>
                 )}
               </>
             ) : (
-              <>LIST OF SUGGESTED QUERIES FROM HISTORICAL DATA</>
+              // LIST OF SUGGESTED QUERIES FROM HISTORICAL DATA
+              <QuerySuggestionContainer suggestionType={SuggestionType.AI} querySuggestions={querySuggestions} />
             )}
           </>
         )}
@@ -272,17 +278,16 @@ export const getStyles = (theme: GrafanaTheme2) => {
 
       button {
         margin-left: auto;
-        margin-right: 10px;
       }
     `,
     iconSection: css`
       padding: 0 0 10px 0;
       color: ${theme.colors.text.secondary};
     `,
-    nextButtonsWrapper: css`
+    rightButtonsWrapper: css`
       display: flex;
     `,
-    nextButtons: css`
+    rightButtons: css`
       margin-left: auto;
     `,
     leftButton: css`
@@ -297,7 +302,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
     containerPadding: css`
       padding: 28px;
     `,
-    metricContainer: css`
+    infoContainer: css`
       border: 1px solid #ccccdc38;
       padding: 28px;
       background-color: #22252b;
@@ -305,15 +310,18 @@ export const getStyles = (theme: GrafanaTheme2) => {
       margin-bottom: 20px;
       border-radius: 8px 8px 8px 0;
     `,
-    metricTable: css``,
+    metricTable: css`
+      width: 100%;
+    `,
     metricTableName: css`
       width: 15%;
     `,
     metricTableValue: css`
       font-family: ${theme.typography.fontFamilyMonospace};
       font-size: ${theme.typography.bodySmall.fontSize};
-      overflow: scroll;
+      overflow: wrap;
       max-width: 150px;
+      width: 60%;
     `,
     metricTableButton: css`
       margin-left: 10px;
@@ -324,7 +332,6 @@ export const getStyles = (theme: GrafanaTheme2) => {
     `,
     secondaryText: css`
       color: ${theme.colors.text.secondary};
-      margin-bottom: 20px;
     `,
     loadingMessageContainer: css`
       border: 1px solid #ccccdc38;
@@ -336,8 +343,27 @@ export const getStyles = (theme: GrafanaTheme2) => {
       color: ${theme.colors.text.secondary};
       font-style: italic;
     `,
-    spinnerPlacement: css`
+    floatRight: css`
       float: right;
+    `,
+    codeText: css`
+      font-family: ${theme.typography.fontFamilyMonospace};
+      font-size: ${theme.typography.bodySmall.fontSize};
+    `,
+    bodySmall: css`
+      font-size: ${theme.typography.bodySmall.fontSize};
+    `,
+    explainPadding: css`
+      padding-left: 26px;
+    `,
+    bottomMargin: css`
+      margin-bottom: 20px;
+    `,
+    topPadding: css`
+      padding-top: 22px;
+    `,
+    doc: css`
+      text-decoration: underline;
     `,
   };
 };
