@@ -1,14 +1,4 @@
-import React, {
-  CSSProperties,
-  memo,
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  UIEventHandler,
-  ReactElement,
-} from 'react';
+import React, { CSSProperties, memo, useCallback, useEffect, useMemo, useRef, useState, UIEventHandler } from 'react';
 import {
   Cell,
   useAbsoluteLayout,
@@ -21,13 +11,14 @@ import {
 } from 'react-table';
 import { VariableSizeList } from 'react-window';
 
-import { DataFrame, Field, FieldType, GrafanaThemeType, ReducerID } from '@grafana/data';
+import { Field, FieldType, ReducerID } from '@grafana/data';
 import { TableCellHeight } from '@grafana/schema';
 
 import { useTheme2 } from '../../themes';
 import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
 import { Pagination } from '../Pagination/Pagination';
 
+import { getExpandedRowHeight, ExpandedRow } from './ExpandedRow';
 import { FooterRow } from './FooterRow';
 import { HeaderRow } from './HeaderRow';
 import { TableCell } from './TableCell';
@@ -35,14 +26,7 @@ import { useFixScrollbarContainer, useResetVariableListSizeCache } from './hooks
 import { getInitialState, useTableStateReducer } from './reducer';
 import { useTableStyles } from './styles';
 import { FooterItem, GrafanaTableState, Props } from './types';
-import {
-  getColumns,
-  sortCaseInsensitive,
-  sortNumber,
-  getFooterItems,
-  createFooterCalculationValues,
-  EXPANDER_WIDTH,
-} from './utils';
+import { getColumns, sortCaseInsensitive, sortNumber, getFooterItems, createFooterCalculationValues } from './utils';
 
 const COLUMN_MIN_WIDTH = 150;
 const FOOTER_ROW_HEIGHT = 36;
@@ -115,12 +99,13 @@ export const Table = memo((props: Props) => {
       footerOptions.reducer[0] === ReducerID.count
   );
 
-  const nestedFrames = useMemo(() => data.fields.find((f) => f.type === FieldType.nestedFrames)?.values || [], [data]);
+  const nestedDataField = data.fields.find((f) => f.type === FieldType.nestedFrames);
+  const hasNestedData = nestedDataField !== undefined;
 
   // React-table column definitions
   const memoizedColumns = useMemo(
-    () => getColumns(data, width, columnMinWidth, !!nestedFrames?.length, footerItems, isCountRowsSet),
-    [data, width, columnMinWidth, footerItems, nestedFrames, isCountRowsSet]
+    () => getColumns(data, width, columnMinWidth, hasNestedData, footerItems, isCountRowsSet),
+    [data, width, columnMinWidth, footerItems, hasNestedData, isCountRowsSet]
   );
 
   // Internal react table state reducer
@@ -218,46 +203,6 @@ export const Table = memo((props: Props) => {
   useResetVariableListSizeCache(extendedState, listRef, data);
   useFixScrollbarContainer(variableSizeListScrollbarRef, tableDivRef);
 
-  const renderSubTables = useCallback(
-    (rowIndex: number) => {
-      const subTables: ReactElement[] = [];
-
-      if (nestedFrames[rowIndex] && state.expanded[rowIndex]) {
-        let top = tableStyles.rowHeight; // initial height for row that expands above sub tables
-        nestedFrames[rowIndex].forEach((nf: DataFrame, nfIndex: number) => {
-          const noHeader = !!nf.meta?.custom?.noHeader;
-          const height = tableStyles.rowHeight * (nf.length + (noHeader ? 0 : 1)); // account for the header with + 1
-          const emphasize = theme.colors.mode === GrafanaThemeType.Dark ? 0.03 : 0.015;
-
-          const subTableStyle: CSSProperties = {
-            height: height,
-            background: theme.colors.emphasize(theme.colors.background.primary, emphasize),
-            paddingLeft: EXPANDER_WIDTH,
-            position: 'absolute',
-            top,
-          };
-
-          top += height;
-
-          subTables.push(
-            <div style={subTableStyle} key={`subTable_${rowIndex}_${nfIndex}`}>
-              <Table
-                data={nf}
-                width={width - EXPANDER_WIDTH}
-                height={tableStyles.rowHeight * (nf.length + 1)}
-                noHeader={noHeader}
-                cellHeight={cellHeight}
-              />
-            </div>
-          );
-        });
-      }
-
-      return subTables;
-    },
-    [cellHeight, state.expanded, nestedFrames, tableStyles.rowHeight, theme.colors, width]
-  );
-
   const rowIndexForPagination = useCallback(
     (index: number) => {
       return state.pageIndex * state.pageSize + index;
@@ -276,8 +221,17 @@ export const Table = memo((props: Props) => {
 
       return (
         <div {...row.getRowProps({ style })} className={tableStyles.row}>
-          {/*add the subtable to the DOM first to prevent a 1px border CSS issue on the last cell of the row*/}
-          {nestedFrames.length > 0 && renderSubTables(rowIndexForPagination(rowIndex))}
+          {/* TODO add expanded class row element above that disables hover row background when expanded */}
+          {/*add the nested data to the DOM first to prevent a 1px border CSS issue on the last cell of the row*/}
+          {nestedDataField && state.expanded[row.index] && (
+            <ExpandedRow
+              nestedData={nestedDataField}
+              tableStyles={tableStyles}
+              rowIndex={row.index}
+              width={width}
+              cellHeight={cellHeight}
+            />
+          )}
           {row.cells.map((cell: Cell, index: number) => (
             <TableCell
               key={index}
@@ -298,13 +252,14 @@ export const Table = memo((props: Props) => {
       enablePagination,
       prepareRow,
       tableStyles,
-      nestedFrames.length,
-      renderSubTables,
-      rowIndexForPagination,
+      nestedDataField,
       page,
       onCellFilterAdded,
       timeRange,
       data,
+      width,
+      cellHeight,
+      state.expanded,
     ]
   );
 
@@ -343,15 +298,8 @@ export const Table = memo((props: Props) => {
 
   const getItemSize = (index: number): number => {
     const indexForPagination = rowIndexForPagination(index);
-    if (state.expanded[indexForPagination]) {
-      const height = nestedFrames[indexForPagination]?.reduce((acc: number, frame: DataFrame) => {
-        if (frame.length) {
-          const noHeader = !!frame.meta?.custom?.noHeader;
-          return acc + tableStyles.rowHeight * (frame.length + (noHeader ? 0 : 1)); // account for the header with + 1
-        }
-        return acc;
-      }, tableStyles.rowHeight); // initial height for row that expands above sub tables
-      return height ?? tableStyles.rowHeight;
+    if (state.expanded[indexForPagination] && nestedDataField) {
+      return getExpandedRowHeight(nestedDataField, indexForPagination, tableStyles);
     }
 
     return tableStyles.rowHeight;
