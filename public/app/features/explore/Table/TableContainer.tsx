@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
-import { ValueLinkConfig, applyFieldOverrides, TimeZone, SplitOpen, DataFrame, LoadingState } from '@grafana/data';
+import { applyFieldOverrides, TimeZone, SplitOpen, DataFrame, LoadingState } from '@grafana/data';
 import { Table, AdHocFilterItem, PanelChrome } from '@grafana/ui';
 import { config } from 'app/core/config';
 import { StoreState } from 'app/types';
@@ -9,7 +9,7 @@ import { ExploreItemState } from 'app/types/explore';
 
 import { MetaInfoText } from '../MetaInfoText';
 import { selectIsWaitingForData } from '../state/query';
-import { getFieldLinksForExplore } from '../utils/links';
+import { exploreDataLinkPostProcessorFactory } from '../utils/links';
 
 interface TableContainerProps {
   ariaLabel?: string;
@@ -52,6 +52,8 @@ export class TableContainer extends PureComponent<Props> {
 
     let dataFrames = tableResult;
 
+    const dataLinkPostProcessor = exploreDataLinkPostProcessorFactory(splitOpenFn, range);
+
     if (dataFrames?.length) {
       dataFrames = applyFieldOverrides({
         data: dataFrames,
@@ -62,23 +64,8 @@ export class TableContainer extends PureComponent<Props> {
           defaults: {},
           overrides: [],
         },
+        dataLinkPostProcessor,
       });
-      // Bit of code smell here. We need to add links here to the frame modifying the frame on every render.
-      // Should work fine in essence but still not the ideal way to pass props. In logs container we do this
-      // differently and sidestep this getLinks API on a dataframe
-      for (const frame of dataFrames) {
-        for (const field of frame.fields) {
-          field.getLinks = (config: ValueLinkConfig) => {
-            return getFieldLinksForExplore({
-              field,
-              rowIndex: config.valueRowIndex!,
-              splitOpenFn,
-              range,
-              dataFrame: frame!,
-            });
-          };
-        }
-      }
     }
 
     // move dataframes to be grouped by table, with optional sub-tables for a row

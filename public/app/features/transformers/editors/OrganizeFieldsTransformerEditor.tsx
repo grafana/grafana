@@ -192,13 +192,10 @@ const reorderToIndex = (fieldNames: string[], startIndex: number, endIndex: numb
   const [removed] = result.splice(startIndex, 1);
   result.splice(endIndex, 0, removed);
 
-  return result.reduce(
-    (nameByIndex, fieldName, index) => {
-      nameByIndex[fieldName] = index;
-      return nameByIndex;
-    },
-    {} as Record<string, number>
-  );
+  return result.reduce<Record<string, number>>((nameByIndex, fieldName, index) => {
+    nameByIndex[fieldName] = index;
+    return nameByIndex;
+  }, {});
 };
 
 const orderFieldNamesByIndex = (fieldNames: string[], indexByName: Record<string, number> = {}): string[] => {

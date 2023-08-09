@@ -25,14 +25,14 @@ weight: 300
 You can create queries with the Microsoft SQL Server data source's query editor when editing a panel that uses a MS SQL data source.
 
 This topic explains querying specific to the MS SQL data source.
-For general documentation on querying data sources in Grafana, see [Query and transform data]({{< relref "../../../panels-visualizations/query-transform-data" >}}).
+For general documentation on querying data sources in Grafana, see [Query and transform data][query-transform-data].
 
 ## Choose a query editing mode
 
 You can switch the query editor between two modes:
 
-- [Code mode]({{< relref "#code-mode" >}}), which provides a feature-rich editor for writing queries
-- [Builder mode]({{< relref "#builder-mode" >}}), which provides a visual query designer
+- [Code mode](#code-mode), which provides a feature-rich editor for writing queries
+- [Builder mode](#builder-mode), which provides a visual query designer
 
 To switch between the editor modes, select the corresponding **Builder** and **Code** tabs above the editor.
 
@@ -40,9 +40,9 @@ To run a query, select **Run query** located at the top right corner of the edit
 
 The query editor also provides:
 
-- [Macros]){{< relref "#use-macros" >}}
-- [Annotations]){{< relref "#apply-annotations" >}}
-- [Stored procedures]){{< relref "#use-stored-procedures" >}}
+- [Macros](#use-macros)
+- [Annotations](#apply-annotations)
+- [Stored procedures](#use-stored-procedures)
 
 ## Configure common options
 
@@ -57,7 +57,7 @@ To choose a response format, select either the **Table** or **Time series** form
 To use the time series format, you must name one of the MS SQL columns `time`.
 You can use time series queries, but not table queries, in alerting conditions.
 
-For details about using these formats, refer to [Use table queries]({{< relref "#use-table-queries" >}}) and [Use time series queries]({{< relref "#use-time-series-queries" >}}).
+For details about using these formats, refer to [Use table queries](#use-table-queries) and [Use time series queries](#use-time-series-queries).
 
 ## Code mode
 
@@ -166,7 +166,7 @@ To display the raw interpolated SQL string that the data source executed, click 
 
 ## Use table queries
 
-If the **Format** query option is set to **Table** for a [Table panel]{{< relref "../../../panels-visualizations/visualizations/table/" >}}, you can enter any type of SQL query.
+If the **Format** query option is set to **Table** for a [Table panel][table], you can enter any type of SQL query.
 The Table panel then displays the query results with whatever columns and rows are returned.
 
 **Example database table:**
@@ -227,7 +227,7 @@ The resulting table panel:
 If you set the **Format** setting in the query editor to **Time series**, then the query must have a column named `time` that returns either a SQL datetime or any numeric datatype representing Unix epoch in seconds.
 Result sets of time series queries must also be sorted by time for panels to properly visualize the result.
 
-A time series query result is returned in a [wide data frame format]({{< relref "../../../developers/plugins/introduction-to-plugin-development/data-frames#wide-format" >}}).
+A time series query result is returned in a [wide data frame format][data-frames-wide-format].
 Any column except time or of type string transforms into value fields in the data frame query result.
 Any string column transforms into field labels in the data frame query result.
 
@@ -237,7 +237,7 @@ For backward compatibility, there's an exception to the above rule for queries t
 Instead of transforming the `metric` column into field labels, it becomes the field name, and then the series name is formatted as the value of the `metric` column.
 See the example with the `metric` column below.
 
-To optionally customize the default series name formatting, refer to [Standard options definitions]({{< relref "../../../panels-visualizations/configure-standard-options#display-name" >}}).
+To optionally customize the default series name formatting, refer to [Standard options definitions][configure-standard-options-display-name].
 
 **Example with `metric` column:**
 
@@ -283,7 +283,7 @@ GROUP BY
 ORDER BY 1
 ```
 
-Given the data frame result in the following example and using the graph panel, you will get two series named _value 10.0.1.1_ and _value 10.0.1.2_. To render the series with a name of _10.0.1.1_ and _10.0.1.2_ , use a [Standard options definitions]({{< relref "../../../panels-visualizations/configure-standard-options#display-name" >}}) display name value of `${__field.labels.hostname}`.
+Given the data frame result in the following example and using the graph panel, you will get two series named _value 10.0.1.1_ and _value 10.0.1.2_. To render the series with a name of _10.0.1.1_ and _10.0.1.2_ , use a [Standard options definitions][configure-standard-options-display-name] display name value of `${__field.labels.hostname}`.
 
 Data frame result:
 
@@ -326,7 +326,7 @@ Data frame result:
 
 ## Apply annotations
 
-[Annotations]({{< relref "../../../dashboards/build-dashboards/annotate-visualizations" >}}) overlay rich event information on top of graphs.
+[Annotations][annotate-visualizations] overlay rich event information on top of graphs.
 You can add annotation queries in the Dashboard menu's Annotations view.
 
 **Columns:**
@@ -348,7 +348,7 @@ CREATE TABLE [events] (
 )
 ```
 
-We also use the database table defined in [Time series queries]({{< relref "#time-series-queries" >}}).
+We also use the database table defined in [Time series queries](#time-series-queries).
 
 **Example query using time column with epoch values:**
 
@@ -544,3 +544,20 @@ DECLARE
 
 EXEC dbo.sp_test_datetime @from, @to
 ```
+
+{{% docs/reference %}}
+[annotate-visualizations]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/build-dashboards/annotate-visualizations"
+[annotate-visualizations]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/build-dashboards/annotate-visualizations"
+
+[configure-standard-options-display-name]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/configure-standard-options#display-name"
+[configure-standard-options-display-name]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/configure-standard-options#display-name"
+
+[data-frames-wide-format]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/developers/plugins/introduction-to-plugin-development/data-frames#wide-format"
+[data-frames-wide-format]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/developers/plugins/introduction-to-plugin-development/data-frames#wide-format"
+
+[query-transform-data]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/query-transform-data"
+[query-transform-data]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/query-transform-data"
+
+[table]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/table"
+[table]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/table"
+{{% /docs/reference %}}

@@ -11,8 +11,9 @@ import {
   ThresholdsMode,
   FieldConfig,
   formattedValueToString,
+  Field,
 } from '@grafana/data';
-import { Table } from '@grafana/ui';
+import { Button, Table } from '@grafana/ui';
 
 import { useTheme2 } from '../../themes';
 import { DashboardStoryCanvas } from '../../utils/storybook/DashboardStoryCanvas';
@@ -20,7 +21,7 @@ import { prepDataForStorybook } from '../../utils/storybook/data';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 
 import mdx from './Table.mdx';
-import { FooterItem } from './types';
+import { FooterItem, TableCellDisplayMode, TableCustomCellOptions } from './types';
 
 const meta: Meta<typeof Table> = {
   title: 'Visualizations/Table',
@@ -269,6 +270,51 @@ export const SubTables: StoryFn<typeof Table> = (args) => {
   return (
     <DashboardStoryCanvas>
       <Table {...args} data={data} subData={subData} />
+    </DashboardStoryCanvas>
+  );
+};
+
+export const CustomColumn: StoryFn<typeof Table> = (args) => {
+  const theme = useTheme2();
+  const data = buildData(theme, {});
+
+  const options: TableCustomCellOptions = {
+    type: TableCellDisplayMode.Custom,
+    cellComponent: (props) => {
+      return (
+        <Button
+          onClick={() =>
+            alert(`Canceling order from ${props.frame.fields.find((f) => f.name === 'Time')?.values[props.rowIndex]}`)
+          }
+        >
+          Cancel
+        </Button>
+      );
+    },
+  };
+
+  const customCellField: Field = {
+    name: 'Actions',
+    type: FieldType.other,
+    values: [],
+    config: {
+      decimals: 0,
+      custom: {
+        cellOptions: options,
+      },
+    },
+    display: () => ({ text: '', numeric: 0 }),
+  };
+
+  for (let i = 0; i < data.length; i++) {
+    customCellField.values.push(null);
+  }
+
+  data.fields = [customCellField, ...data.fields];
+
+  return (
+    <DashboardStoryCanvas>
+      <Table {...args} data={data} />
     </DashboardStoryCanvas>
   );
 };

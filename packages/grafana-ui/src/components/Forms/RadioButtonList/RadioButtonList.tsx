@@ -48,7 +48,7 @@ export function RadioButtonList<T extends string | number | readonly string[]>({
 
         return (
           <RadioButtonDot<T>
-            key={itemId}
+            key={index}
             id={itemId}
             name={name}
             label={option.label}
