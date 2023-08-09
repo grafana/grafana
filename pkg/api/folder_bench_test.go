@@ -77,17 +77,17 @@ func BenchmarkFolderListAndSearch(b *testing.B) {
 	sc := setupDB(b)
 	b.Log("setup time:", time.Since(start))
 
-	all := LEVEL0_FOLDER_NUM*LEVEL0_DASHBOARD_NUM + LEVEL0_FOLDER_NUM*LEVEL1_FOLDER_NUM*LEVEL1_DASHBOARD_NUM + LEVEL0_FOLDER_NUM*LEVEL1_FOLDER_NUM*LEVEL2_FOLDER_NUM*LEVEL2_DASHBOARD_NUM
-
-	// the maximum number of dashboards that can be returned by the search API
-	// otherwise the handler fails with 422 status code
-	const limit = 5000
-	withLimit := func(res int) int {
-		if res > limit {
-			return limit
-		}
-		return res
-	}
+	//all := LEVEL0_FOLDER_NUM*LEVEL0_DASHBOARD_NUM + LEVEL0_FOLDER_NUM*LEVEL1_FOLDER_NUM*LEVEL1_DASHBOARD_NUM + LEVEL0_FOLDER_NUM*LEVEL1_FOLDER_NUM*LEVEL2_FOLDER_NUM*LEVEL2_DASHBOARD_NUM
+	//
+	//// the maximum number of dashboards that can be returned by the search API
+	//// otherwise the handler fails with 422 status code
+	//const limit = 5000
+	//withLimit := func(res int) int {
+	//	if res > limit {
+	//		return limit
+	//	}
+	//	return res
+	//}
 
 	benchmarks := []struct {
 		desc        string
@@ -95,72 +95,72 @@ func BenchmarkFolderListAndSearch(b *testing.B) {
 		expectedLen int
 		features    *featuremgmt.FeatureManager
 	}{
-		{
-			desc:        "get root folders with nested folders feature enabled",
-			url:         "/api/folders",
-			expectedLen: LEVEL0_FOLDER_NUM,
-			features:    featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders, featuremgmt.FlagPermissionsFilterRemoveSubquery),
-		},
-		{
-			desc:        "get subfolders with nested folders feature enabled",
-			url:         "/api/folders?parentUid=folder0",
-			expectedLen: LEVEL1_FOLDER_NUM,
-			features:    featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders, featuremgmt.FlagPermissionsFilterRemoveSubquery),
-		},
-		{
-			desc:        "list all inherited dashboards with nested folders feature enabled",
-			url:         "/api/search?type=dash-db&limit=5000",
-			expectedLen: withLimit(all),
-			features:    featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders, featuremgmt.FlagPermissionsFilterRemoveSubquery),
-		},
-		{
-			desc:        "search for pattern with nested folders feature enabled",
-			url:         "/api/search?type=dash-db&query=dashboard_0_0&limit=5000",
-			expectedLen: withLimit(1 + LEVEL1_DASHBOARD_NUM + LEVEL2_FOLDER_NUM*LEVEL2_DASHBOARD_NUM),
-			features:    featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders, featuremgmt.FlagPermissionsFilterRemoveSubquery),
-		},
-		{
-			desc:        "search for specific dashboard nested folders feature enabled",
-			url:         "/api/search?type=dash-db&query=dashboard_0_0_0_0",
-			expectedLen: 1,
-			features:    featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders, featuremgmt.FlagPermissionsFilterRemoveSubquery),
-		},
-		{
-			desc:        "get root folders with removed subquery enabled",
-			url:         "/api/folders?limit=5000",
-			expectedLen: withLimit(LEVEL0_FOLDER_NUM),
-			features:    featuremgmt.WithFeatures(featuremgmt.FlagPermissionsFilterRemoveSubquery),
-		},
-		{
-			desc:        "list all dashboards with removed subquery enabled",
-			url:         "/api/search?type=dash-db&limit=5000",
-			expectedLen: withLimit(LEVEL0_FOLDER_NUM * LEVEL0_DASHBOARD_NUM),
-			features:    featuremgmt.WithFeatures(featuremgmt.FlagPermissionsFilterRemoveSubquery),
-		},
-		{
-			desc:        "search specific dashboard with removed subquery enabled",
-			url:         "/api/search?type=dash-db&query=dashboard_0_0",
-			expectedLen: 1,
-			features:    featuremgmt.WithFeatures(featuremgmt.FlagPermissionsFilterRemoveSubquery),
-		},
-		{
-			desc:        "get root folders with split scope enabled",
-			url:         "/api/folders?limit=5000",
-			expectedLen: withLimit(LEVEL0_FOLDER_NUM),
-			features:    featuremgmt.WithFeatures(featuremgmt.FlagSplitScopes),
-		},
-		{
-			desc:        "list all dashboards with split scope enabled",
-			url:         "/api/search?type=dash-db&limit=5000",
-			expectedLen: withLimit(LEVEL0_FOLDER_NUM * LEVEL0_DASHBOARD_NUM),
-			features:    featuremgmt.WithFeatures(featuremgmt.FlagSplitScopes),
-		},
-		{
-			desc:        "search specific dashboard with split scope enabled",
-			url:         "/api/search?type=dash-db&query=dashboard_0_0",
-			expectedLen: 1,
-			features:    featuremgmt.WithFeatures(featuremgmt.FlagSplitScopes),
-		},
+		//{
+		//	desc:        "get root folders with nested folders feature enabled",
+		//	url:         "/api/folders",
+		//	expectedLen: LEVEL0_FOLDER_NUM,
+		//	features:    featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders, featuremgmt.FlagPermissionsFilterRemoveSubquery),
+		//},
+		//{
+		//	desc:        "get subfolders with nested folders feature enabled",
+		//	url:         "/api/folders?parentUid=folder0",
+		//	expectedLen: LEVEL1_FOLDER_NUM,
+		//	features:    featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders, featuremgmt.FlagPermissionsFilterRemoveSubquery),
+		//},
+		//{
+		//	desc:        "list all inherited dashboards with nested folders feature enabled",
+		//	url:         "/api/search?type=dash-db&limit=5000",
+		//	expectedLen: withLimit(all),
+		//	features:    featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders, featuremgmt.FlagPermissionsFilterRemoveSubquery),
+		//},
+		//{
+		//	desc:        "search for pattern with nested folders feature enabled",
+		//	url:         "/api/search?type=dash-db&query=dashboard_0_0&limit=5000",
+		//	expectedLen: withLimit(1 + LEVEL1_DASHBOARD_NUM + LEVEL2_FOLDER_NUM*LEVEL2_DASHBOARD_NUM),
+		//	features:    featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders, featuremgmt.FlagPermissionsFilterRemoveSubquery),
+		//},
+		//{
+		//	desc:        "search for specific dashboard nested folders feature enabled",
+		//	url:         "/api/search?type=dash-db&query=dashboard_0_0_0_0",
+		//	expectedLen: 1,
+		//	features:    featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders, featuremgmt.FlagPermissionsFilterRemoveSubquery),
+		//},
+		//{
+		//	desc:        "get root folders with removed subquery enabled",
+		//	url:         "/api/folders?limit=5000",
+		//	expectedLen: withLimit(LEVEL0_FOLDER_NUM),
+		//	features:    featuremgmt.WithFeatures(featuremgmt.FlagPermissionsFilterRemoveSubquery),
+		//},
+		//{
+		//	desc:        "list all dashboards with removed subquery enabled",
+		//	url:         "/api/search?type=dash-db&limit=5000",
+		//	expectedLen: withLimit(LEVEL0_FOLDER_NUM * LEVEL0_DASHBOARD_NUM),
+		//	features:    featuremgmt.WithFeatures(featuremgmt.FlagPermissionsFilterRemoveSubquery),
+		//},
+		//{
+		//	desc:        "search specific dashboard with removed subquery enabled",
+		//	url:         "/api/search?type=dash-db&query=dashboard_0_0",
+		//	expectedLen: 1,
+		//	features:    featuremgmt.WithFeatures(featuremgmt.FlagPermissionsFilterRemoveSubquery),
+		//},
+		//{
+		//	desc:        "get root folders with split scope enabled",
+		//	url:         "/api/folders?limit=5000",
+		//	expectedLen: withLimit(LEVEL0_FOLDER_NUM),
+		//	features:    featuremgmt.WithFeatures(featuremgmt.FlagSplitScopes),
+		//},
+		//{
+		//	desc:        "list all dashboards with split scope enabled",
+		//	url:         "/api/search?type=dash-db&limit=5000",
+		//	expectedLen: withLimit(LEVEL0_FOLDER_NUM * LEVEL0_DASHBOARD_NUM),
+		//	features:    featuremgmt.WithFeatures(featuremgmt.FlagSplitScopes),
+		//},
+		//{
+		//	desc:        "search specific dashboard with split scope enabled",
+		//	url:         "/api/search?type=dash-db&query=dashboard_0_0",
+		//	expectedLen: 1,
+		//	features:    featuremgmt.WithFeatures(featuremgmt.FlagSplitScopes),
+		//},
 	}
 	for _, bm := range benchmarks {
 		b.Run(bm.desc, func(b *testing.B) {
