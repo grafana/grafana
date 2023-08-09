@@ -337,9 +337,7 @@ type RedirectValidator func(url string) error
 // HandleLoginResponse is a utility function to perform common operations after a successful login and returns response.NormalResponse
 func HandleLoginResponse(r *http.Request, w http.ResponseWriter, cfg *setting.Cfg, identity *Identity, validator RedirectValidator) *response.NormalResponse {
 	result := map[string]interface{}{"message": "Logged in"}
-	if redirectURL := handleLogin(r, w, cfg, identity, validator); redirectURL != cfg.AppSubURL+"/" {
-		result["redirectUrl"] = redirectURL
-	}
+	result["redirectUrl"] = handleLogin(r, w, cfg, identity, validator)
 	return response.JSON(http.StatusOK, result)
 }
 
@@ -356,9 +354,11 @@ func HandleLoginRedirectResponse(r *http.Request, w http.ResponseWriter, cfg *se
 
 func handleLogin(r *http.Request, w http.ResponseWriter, cfg *setting.Cfg, identity *Identity, validator RedirectValidator) string {
 	redirectURL := cfg.AppSubURL + "/"
-	if redirectTo := getRedirectURL(r); len(redirectTo) > 0 && validator(redirectTo) == nil {
-		cookies.DeleteCookie(w, "redirect_to", nil)
-		redirectURL = redirectTo
+	if redirectTo := getRedirectURL(r); len(redirectTo) > 0 {
+		if validator(redirectTo) == nil {
+			redirectURL = redirectTo
+		}
+		cookies.DeleteCookie(w, "redirect_to", cookieOptions(cfg))
 	}
 
 	WriteSessionCookie(w, cfg, identity.SessionToken)
@@ -386,17 +386,32 @@ func WriteSessionCookie(w http.ResponseWriter, cfg *setting.Cfg, token *usertoke
 	cookies.WriteCookie(w, cfg.LoginCookieName, url.QueryEscape(token.UnhashedToken), maxAge, nil)
 	expiry := token.NextRotation(time.Duration(cfg.TokenRotationIntervalMinutes) * time.Minute)
 	cookies.WriteCookie(w, sessionExpiryCookie, url.QueryEscape(strconv.FormatInt(expiry.Unix(), 10)), maxAge, func() cookies.CookieOptions {
-		opts := cookies.NewCookieOptions()
+		opts := cookieOptions(cfg)()
 		opts.NotHttpOnly = true
 		return opts
 	})
 }
 
 func DeleteSessionCookie(w http.ResponseWriter, cfg *setting.Cfg) {
-	cookies.DeleteCookie(w, cfg.LoginCookieName, nil)
+	cookies.DeleteCookie(w, cfg.LoginCookieName, cookieOptions(cfg))
 	cookies.DeleteCookie(w, sessionExpiryCookie, func() cookies.CookieOptions {
-		opts := cookies.NewCookieOptions()
+		opts := cookieOptions(cfg)()
 		opts.NotHttpOnly = true
 		return opts
 	})
+}
+
+func cookieOptions(cfg *setting.Cfg) func() cookies.CookieOptions {
+	return func() cookies.CookieOptions {
+		path := "/"
+		if len(cfg.AppSubURL) > 0 {
+			path = cfg.AppSubURL
+		}
+		return cookies.CookieOptions{
+			Path:             path,
+			Secure:           cfg.CookieSecure,
+			SameSiteDisabled: cfg.CookieSameSiteDisabled,
+			SameSiteMode:     cfg.CookieSameSiteMode,
+		}
+	}
 }
