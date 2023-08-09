@@ -19,33 +19,25 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/db/dbtest"
 	"github.com/grafana/grafana/pkg/infra/fs"
-	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/models/usertoken"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/annotations/annotationstest"
-	"github.com/grafana/grafana/pkg/services/anonymous/anontest"
 	"github.com/grafana/grafana/pkg/services/auth/authtest"
-	"github.com/grafana/grafana/pkg/services/auth/jwt"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/authn/authntest"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
-	"github.com/grafana/grafana/pkg/services/contexthandler/authproxy"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/guardian"
-	"github.com/grafana/grafana/pkg/services/ldap/service"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/login"
-	"github.com/grafana/grafana/pkg/services/login/loginservice"
 	"github.com/grafana/grafana/pkg/services/login/logintest"
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/services/org/orgtest"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
-	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/services/search"
 	"github.com/grafana/grafana/pkg/services/search/model"
 	"github.com/grafana/grafana/pkg/services/searchusers"
@@ -197,25 +189,12 @@ func getContextHandler(t *testing.T, cfg *setting.Cfg) *contexthandler.ContextHa
 		cfg = setting.NewCfg()
 	}
 
-	sqlStore := db.InitTestDB(t)
-	remoteCacheSvc := &remotecache.RemoteCache{}
-	cfg.RemoteCacheOptions = &setting.RemoteCacheOptions{
-		Name: "database",
-	}
-	userAuthTokenSvc := authtest.NewFakeUserAuthTokenService()
-	renderSvc := &fakeRenderService{}
-	authJWTSvc := jwt.NewFakeJWTService()
-	tracer := tracing.InitializeTracerForTest()
-	authProxy := authproxy.ProvideAuthProxy(cfg, remoteCacheSvc, loginservice.LoginServiceMock{}, &usertest.FakeUserService{}, sqlStore, service.NewLDAPFakeService())
-	loginService := &logintest.LoginServiceFake{}
-	authenticator := &logintest.AuthenticatorFake{}
-	ctxHdlr := contexthandler.ProvideService(cfg, userAuthTokenSvc, authJWTSvc,
-		remoteCacheSvc, renderSvc, sqlStore, tracer, authProxy, loginService, nil,
-		authenticator, usertest.NewUserServiceFake(), orgtest.NewOrgServiceFake(),
-		nil, featuremgmt.WithFeatures(), &authntest.FakeService{
-			ExpectedIdentity: &authn.Identity{IsAnonymous: true, SessionToken: &usertoken.UserToken{}}}, &anontest.FakeAnonymousSessionService{})
-
-	return ctxHdlr
+	return contexthandler.ProvideService(
+		cfg,
+		tracing.NewFakeTracer(),
+		featuremgmt.WithFeatures(),
+		&authntest.FakeService{ExpectedIdentity: &authn.Identity{IsAnonymous: true, SessionToken: &usertoken.UserToken{}}},
+	)
 }
 
 func setupScenarioContext(t *testing.T, url string) *scenarioContext {
@@ -238,14 +217,6 @@ func setupScenarioContext(t *testing.T, url string) *scenarioContext {
 	sc.m.Use(ctxHdlr.Middleware)
 
 	return sc
-}
-
-type fakeRenderService struct {
-	rendering.Service
-}
-
-func (s *fakeRenderService) Init() error {
-	return nil
 }
 
 // FIXME: This user should not be anonymous

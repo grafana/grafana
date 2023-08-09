@@ -15,8 +15,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/fs"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/services/anonymous/anontest"
-	"github.com/grafana/grafana/pkg/services/auth/authtest"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/authn/authntest"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
@@ -254,10 +252,5 @@ func getContextHandler(t *testing.T, cfg *setting.Cfg, authnService authn.Servic
 	t.Helper()
 
 	tracer := tracing.NewFakeTracer()
-	return contexthandler.ProvideService(cfg, authtest.NewFakeUserAuthTokenService(), nil,
-		nil, nil, nil, tracer, nil,
-		nil, nil, nil, nil, nil,
-		nil, featuremgmt.WithFeatures(featuremgmt.FlagAccessTokenExpirationCheck),
-		authnService, &anontest.FakeAnonymousSessionService{},
-	)
+	return contexthandler.ProvideService(cfg, tracer, featuremgmt.WithFeatures(), authnService)
 }
