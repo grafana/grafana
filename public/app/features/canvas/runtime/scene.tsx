@@ -57,6 +57,7 @@ export class Scene {
 
   width = 0;
   height = 0;
+  color = '';
   style: CSSProperties = {};
   data?: PanelData;
   selecto?: Selecto;
@@ -169,7 +170,23 @@ export class Scene {
   updateSize(width: number, height: number) {
     this.width = width;
     this.height = height;
-    this.style = { width, height };
+    this.style = {
+      ...this.style,
+      width,
+      height,
+    };
+
+    if (this.selecto?.getSelectedTargets().length) {
+      this.clearCurrentSelection();
+    }
+  }
+
+  updateColor(color: ColorDimensionConfig) {
+    this.color = this.context.getColor(color).value();
+    this.style = {
+      ...this.style,
+      backgroundColor: this.color,
+    };
 
     if (this.selecto?.getSelectedTargets().length) {
       this.clearCurrentSelection();
