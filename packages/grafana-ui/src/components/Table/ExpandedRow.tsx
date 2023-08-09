@@ -1,9 +1,10 @@
+import { css } from '@emotion/css';
 import React, { CSSProperties } from 'react';
 
-import { DataFrame, Field } from '@grafana/data';
+import { DataFrame, Field, GrafanaTheme2 } from '@grafana/data';
 import { TableCellHeight } from '@grafana/schema';
 
-import { useTheme2 } from '../../themes';
+import { useStyles2, useTheme2 } from '../../themes';
 
 import { Table } from './Table';
 import { TableStyles } from './styles';
@@ -21,6 +22,7 @@ export function ExpandedRow({ tableStyles, nestedData, rowIndex, width, cellHeig
   const frames = nestedData.values as DataFrame[][];
   const subTables: React.ReactNode[] = [];
   const theme = useTheme2();
+  const styles = useStyles2(getStyles);
 
   let top = tableStyles.rowHeight + theme.spacing.gridSize; // initial height for row that expands above sub tables + 1 grid unit spacing
 
@@ -28,7 +30,7 @@ export function ExpandedRow({ tableStyles, nestedData, rowIndex, width, cellHeig
     const noHeader = !!nf.meta?.custom?.noHeader;
     const height = tableStyles.rowHeight * (nf.length + (noHeader ? 0 : 1)); // account for the header with + 1
 
-    const subTableStyle: CSSProperties = {
+    const subTable: CSSProperties = {
       height: height,
       paddingLeft: EXPANDER_WIDTH,
       position: 'absolute',
@@ -38,7 +40,7 @@ export function ExpandedRow({ tableStyles, nestedData, rowIndex, width, cellHeig
     top += height + theme.spacing.gridSize;
 
     subTables.push(
-      <div style={subTableStyle} key={`subTable_${rowIndex}_${nfIndex}`}>
+      <div style={subTable} key={`subTable_${rowIndex}_${nfIndex}`}>
         <Table
           data={nf}
           width={width - EXPANDER_WIDTH}
@@ -50,8 +52,24 @@ export function ExpandedRow({ tableStyles, nestedData, rowIndex, width, cellHeig
     );
   });
 
-  return <>{subTables}</>;
+  return <div className={styles.subTables}>{subTables}</div>;
 }
+
+const getStyles = (theme: GrafanaTheme2) => {
+  return {
+    subTables: css({
+      '&:before': {
+        content: '""',
+        position: 'absolute',
+        width: '1px',
+        top: theme.spacing(5),
+        left: theme.spacing(1),
+        bottom: theme.spacing(2),
+        background: theme.colors.border.medium,
+      },
+    }),
+  };
+};
 
 export function getExpandedRowHeight(nestedData: Field, rowIndex: number, tableStyles: TableStyles) {
   const frames = nestedData.values as DataFrame[][];
