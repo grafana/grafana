@@ -9,6 +9,7 @@ import {
   standardTransformers,
   TransformerRegistryItem,
   TransformerUIProps,
+  TransformerCategory,
 } from '@grafana/data';
 import {
   ConvertFieldTypeOptions,
@@ -20,9 +21,9 @@ import { allFieldTypeIconOptions } from '@grafana/ui/src/components/MatchersUI/F
 import { hasAlphaPanels } from 'app/core/config';
 import { findField } from 'app/features/dimensions';
 
-const fieldNamePickerSettings: StandardEditorsRegistryItem<string, FieldNamePickerConfigSettings> = {
+const fieldNamePickerSettings = {
   settings: { width: 24, isClearable: false },
-} as any;
+} as StandardEditorsRegistryItem<string, FieldNamePickerConfigSettings>;
 
 export const ConvertFieldTypeTransformerEditor = ({
   input,
@@ -173,4 +174,5 @@ export const convertFieldTypeTransformRegistryItem: TransformerRegistryItem<Conv
   transformation: standardTransformers.convertFieldTypeTransformer,
   name: standardTransformers.convertFieldTypeTransformer.name,
   description: standardTransformers.convertFieldTypeTransformer.description,
+  categories: new Set([TransformerCategory.Reformat]),
 };

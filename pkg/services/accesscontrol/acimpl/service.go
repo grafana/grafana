@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/api"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/database"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/migrator"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/pluginutils"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -31,13 +32,21 @@ const (
 	cacheTTL = 10 * time.Second
 )
 
-func ProvideService(cfg *setting.Cfg, store db.DB, routeRegister routing.RouteRegister, cache *localcache.CacheService,
+func ProvideService(cfg *setting.Cfg, db db.DB, routeRegister routing.RouteRegister, cache *localcache.CacheService,
 	accessControl accesscontrol.AccessControl, features *featuremgmt.FeatureManager) (*Service, error) {
-	service := ProvideOSSService(cfg, database.ProvideService(store), cache, features)
+	service := ProvideOSSService(cfg, database.ProvideService(db), cache, features)
 
-	if !accesscontrol.IsDisabled(cfg) {
-		api.NewAccessControlAPI(routeRegister, accessControl, service, features).RegisterAPIEndpoints()
-		if err := accesscontrol.DeclareFixedRoles(service, cfg); err != nil {
+	api.NewAccessControlAPI(routeRegister, accessControl, service, features).RegisterAPIEndpoints()
+	if err := accesscontrol.DeclareFixedRoles(service, cfg); err != nil {
+		return nil, err
+	}
+
+	if cfg.IsFeatureToggleEnabled(featuremgmt.FlagSplitScopes) {
+		// Migrating scopes that haven't been split yet to have kind, attribute and identifier in the DB
+		// This will be removed once we've:
+		// 1) removed the feature toggle and
+		// 2) have released enough versions not to support a version without split scopes
+		if err := migrator.MigrateScopeSplit(db, service.log); err != nil {
 			return nil, err
 		}
 	}
@@ -80,13 +89,8 @@ type Service struct {
 }
 
 func (s *Service) GetUsageStats(_ context.Context) map[string]interface{} {
-	enabled := 0
-	if !accesscontrol.IsDisabled(s.cfg) {
-		enabled = 1
-	}
-
 	return map[string]interface{}{
-		"stats.oss.accesscontrol.enabled.count": enabled,
+		"stats.oss.accesscontrol.enabled.count": 1,
 	}
 }
 
@@ -165,11 +169,6 @@ func (s *Service) DeleteUserPermissions(ctx context.Context, orgID int64, userID
 // DeclareFixedRoles allow the caller to declare, to the service, fixed roles and their assignments
 // to organization roles ("Viewer", "Editor", "Admin") or "Grafana Admin"
 func (s *Service) DeclareFixedRoles(registrations ...accesscontrol.RoleRegistration) error {
-	// If accesscontrol is disabled no need to register roles
-	if accesscontrol.IsDisabled(s.cfg) {
-		return nil
-	}
-
 	for _, r := range registrations {
 		err := accesscontrol.ValidateFixedRole(r.Role)
 		if err != nil {

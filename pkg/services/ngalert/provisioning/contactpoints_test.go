@@ -2,6 +2,7 @@ package provisioning
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"testing"
 
@@ -11,51 +12,57 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/secrets/database"
 	"github.com/grafana/grafana/pkg/services/secrets/manager"
+	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 func TestContactPointService(t *testing.T) {
 	sqlStore := db.InitTestDB(t)
 	secretsService := manager.SetupTestService(t, database.ProvideSecretsStore(sqlStore))
 	t.Run("service gets contact points from AM config", func(t *testing.T) {
-		sut := createContactPointServiceSut(secretsService)
+		sut := createContactPointServiceSut(t, secretsService)
 
-		cps, err := sut.GetContactPoints(context.Background(), cpsQuery(1))
+		cps, err := sut.GetContactPoints(context.Background(), cpsQuery(1), nil)
 		require.NoError(t, err)
 
 		require.Len(t, cps, 1)
-		require.Equal(t, "email receiver", cps[0].Name)
+		require.Equal(t, "slack receiver", cps[0].Name)
 	})
 
 	t.Run("service filters contact points by name", func(t *testing.T) {
-		sut := createContactPointServiceSut(secretsService)
+		sut := createContactPointServiceSut(t, secretsService)
 		newCp := createTestContactPoint()
 		_, err := sut.CreateContactPoint(context.Background(), 1, newCp, models.ProvenanceAPI)
 		require.NoError(t, err)
 
 		q := ContactPointQuery{
 			OrgID: 1,
-			Name:  "email receiver",
+			Name:  "slack receiver",
 		}
-		cps, err := sut.GetContactPoints(context.Background(), q)
+		cps, err := sut.GetContactPoints(context.Background(), q, nil)
 		require.NoError(t, err)
 
 		require.Len(t, cps, 1)
-		require.Equal(t, "email receiver", cps[0].Name)
+		require.Equal(t, "slack receiver", cps[0].Name)
 	})
 
 	t.Run("service stitches contact point into org's AM config", func(t *testing.T) {
-		sut := createContactPointServiceSut(secretsService)
+		sut := createContactPointServiceSut(t, secretsService)
 		newCp := createTestContactPoint()
 
 		_, err := sut.CreateContactPoint(context.Background(), 1, newCp, models.ProvenanceAPI)
 		require.NoError(t, err)
 
-		cps, err := sut.GetContactPoints(context.Background(), cpsQuery(1))
+		cps, err := sut.GetContactPoints(context.Background(), cpsQuery(1), nil)
 		require.NoError(t, err)
 		require.Len(t, cps, 2)
 		require.Equal(t, "test-contact-point", cps[1].Name)
@@ -64,14 +71,14 @@ func TestContactPointService(t *testing.T) {
 
 	t.Run("it's possible to use a custom uid", func(t *testing.T) {
 		customUID := "1337"
-		sut := createContactPointServiceSut(secretsService)
+		sut := createContactPointServiceSut(t, secretsService)
 		newCp := createTestContactPoint()
 		newCp.UID = customUID
 
 		_, err := sut.CreateContactPoint(context.Background(), 1, newCp, models.ProvenanceAPI)
 		require.NoError(t, err)
 
-		cps, err := sut.GetContactPoints(context.Background(), cpsQuery(1))
+		cps, err := sut.GetContactPoints(context.Background(), cpsQuery(1), nil)
 		require.NoError(t, err)
 		require.Len(t, cps, 2)
 		require.Equal(t, customUID, cps[1].UID)
@@ -79,7 +86,7 @@ func TestContactPointService(t *testing.T) {
 
 	t.Run("it's not possible to use the same uid twice", func(t *testing.T) {
 		customUID := "1337"
-		sut := createContactPointServiceSut(secretsService)
+		sut := createContactPointServiceSut(t, secretsService)
 		newCp := createTestContactPoint()
 		newCp.UID = customUID
 
@@ -91,7 +98,7 @@ func TestContactPointService(t *testing.T) {
 	})
 
 	t.Run("create rejects contact points that fail validation", func(t *testing.T) {
-		sut := createContactPointServiceSut(secretsService)
+		sut := createContactPointServiceSut(t, secretsService)
 		newCp := createTestContactPoint()
 		newCp.Type = ""
 
@@ -101,7 +108,7 @@ func TestContactPointService(t *testing.T) {
 	})
 
 	t.Run("update rejects contact points with no settings", func(t *testing.T) {
-		sut := createContactPointServiceSut(secretsService)
+		sut := createContactPointServiceSut(t, secretsService)
 		newCp := createTestContactPoint()
 		newCp, err := sut.CreateContactPoint(context.Background(), 1, newCp, models.ProvenanceAPI)
 		require.NoError(t, err)
@@ -113,7 +120,7 @@ func TestContactPointService(t *testing.T) {
 	})
 
 	t.Run("update rejects contact points with no type", func(t *testing.T) {
-		sut := createContactPointServiceSut(secretsService)
+		sut := createContactPointServiceSut(t, secretsService)
 		newCp := createTestContactPoint()
 		newCp, err := sut.CreateContactPoint(context.Background(), 1, newCp, models.ProvenanceAPI)
 		require.NoError(t, err)
@@ -125,7 +132,7 @@ func TestContactPointService(t *testing.T) {
 	})
 
 	t.Run("update rejects contact points which fail validation after merging", func(t *testing.T) {
-		sut := createContactPointServiceSut(secretsService)
+		sut := createContactPointServiceSut(t, secretsService)
 		newCp := createTestContactPoint()
 		newCp, err := sut.CreateContactPoint(context.Background(), 1, newCp, models.ProvenanceAPI)
 		require.NoError(t, err)
@@ -137,9 +144,9 @@ func TestContactPointService(t *testing.T) {
 	})
 
 	t.Run("default provenance of contact points is none", func(t *testing.T) {
-		sut := createContactPointServiceSut(secretsService)
+		sut := createContactPointServiceSut(t, secretsService)
 
-		cps, err := sut.GetContactPoints(context.Background(), cpsQuery(1))
+		cps, err := sut.GetContactPoints(context.Background(), cpsQuery(1), nil)
 		require.NoError(t, err)
 
 		require.Equal(t, models.ProvenanceNone, models.Provenance(cps[0].Provenance))
@@ -191,13 +198,13 @@ func TestContactPointService(t *testing.T) {
 		}
 		for _, test := range tests {
 			t.Run(test.name, func(t *testing.T) {
-				sut := createContactPointServiceSut(secretsService)
+				sut := createContactPointServiceSut(t, secretsService)
 				newCp := createTestContactPoint()
 
 				newCp, err := sut.CreateContactPoint(context.Background(), 1, newCp, test.from)
 				require.NoError(t, err)
 
-				cps, err := sut.GetContactPoints(context.Background(), cpsQuery(1))
+				cps, err := sut.GetContactPoints(context.Background(), cpsQuery(1), nil)
 				require.NoError(t, err)
 				require.Equal(t, newCp.UID, cps[1].UID)
 				require.Equal(t, test.from, models.Provenance(cps[1].Provenance))
@@ -206,7 +213,7 @@ func TestContactPointService(t *testing.T) {
 				if test.errNil {
 					require.NoError(t, err)
 
-					cps, err = sut.GetContactPoints(context.Background(), cpsQuery(1))
+					cps, err = sut.GetContactPoints(context.Background(), cpsQuery(1), nil)
 					require.NoError(t, err)
 					require.Equal(t, newCp.UID, cps[1].UID)
 					require.Equal(t, test.to, models.Provenance(cps[1].Provenance))
@@ -218,7 +225,7 @@ func TestContactPointService(t *testing.T) {
 	})
 
 	t.Run("service respects concurrency token when updating", func(t *testing.T) {
-		sut := createContactPointServiceSut(secretsService)
+		sut := createContactPointServiceSut(t, secretsService)
 		newCp := createTestContactPoint()
 		q := models.GetLatestAlertmanagerConfigurationQuery{
 			OrgID: 1,
@@ -233,6 +240,58 @@ func TestContactPointService(t *testing.T) {
 		fake := sut.amStore.(*fakeAMConfigStore)
 		intercepted := fake.lastSaveCommand
 		require.Equal(t, expectedConcurrencyToken, intercepted.FetchedConfigurationHash)
+	})
+}
+
+func TestContactPointServiceDecryptRedact(t *testing.T) {
+	sqlStore := db.InitTestDB(t)
+	secretsService := manager.SetupTestService(t, database.ProvideSecretsStore(sqlStore))
+	ac := acimpl.ProvideAccessControl(setting.NewCfg())
+	t.Run("GetContactPoints gets redacted contact points by default", func(t *testing.T) {
+		sut := createContactPointServiceSut(t, secretsService)
+
+		cps, err := sut.GetContactPoints(context.Background(), cpsQuery(1), nil)
+		require.NoError(t, err)
+
+		require.Len(t, cps, 1)
+		require.Equal(t, "slack receiver", cps[0].Name)
+		require.Equal(t, definitions.RedactedValue, cps[0].Settings.Get("url").MustString())
+	})
+	t.Run("GetContactPoints errors when Decrypt = true and user does not have permissions", func(t *testing.T) {
+		sut := createContactPointServiceSut(t, secretsService)
+		sut.ac = ac
+
+		q := cpsQuery(1)
+		q.Decrypt = true
+		_, err := sut.GetContactPoints(context.Background(), q, &user.SignedInUser{})
+		require.ErrorIs(t, err, ErrPermissionDenied)
+	})
+	t.Run("GetContactPoints errors when Decrypt = true and user is nil", func(t *testing.T) {
+		sut := createContactPointServiceSut(t, secretsService)
+		sut.ac = ac
+
+		q := cpsQuery(1)
+		q.Decrypt = true
+		_, err := sut.GetContactPoints(context.Background(), q, nil)
+		require.ErrorIs(t, err, ErrPermissionDenied)
+	})
+
+	t.Run("GetContactPoints gets decrypted contact points when Decrypt = true and user has permissions", func(t *testing.T) {
+		sut := createContactPointServiceSut(t, secretsService)
+		sut.ac = ac
+
+		q := cpsQuery(1)
+		q.Decrypt = true
+		cps, err := sut.GetContactPoints(context.Background(), q, &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{
+			1: {
+				accesscontrol.ActionAlertingProvisioningReadSecrets: nil,
+			},
+		}})
+		require.NoError(t, err)
+
+		require.Len(t, cps, 1)
+		require.Equal(t, "slack receiver", cps[0].Name)
+		require.Equal(t, "secure url", cps[0].Settings.Get("url").MustString())
 	})
 }
 
@@ -267,13 +326,26 @@ func TestContactPointInUse(t *testing.T) {
 	require.False(t, result)
 }
 
-func createContactPointServiceSut(secretService secrets.Service) *ContactPointService {
+func createContactPointServiceSut(t *testing.T, secretService secrets.Service) *ContactPointService {
+	// Encrypt secure settings.
+	c := &definitions.PostableUserConfig{}
+	err := json.Unmarshal([]byte(defaultAlertmanagerConfigJSON), c)
+	require.NoError(t, err)
+	err = notifier.EncryptReceiverConfigs(c.AlertmanagerConfig.Receivers, func(ctx context.Context, payload []byte) ([]byte, error) {
+		return secretService.Encrypt(ctx, payload, secrets.WithoutScope())
+	})
+	require.NoError(t, err)
+
+	raw, err := json.Marshal(c)
+	require.NoError(t, err)
+
 	return &ContactPointService{
-		amStore:           newFakeAMConfigStore(),
+		amStore:           newFakeAMConfigStore(string(raw)),
 		provenanceStore:   NewFakeProvisioningStore(),
 		xact:              newNopTransactionManager(),
 		encryptionService: secretService,
 		log:               log.NewNopLogger(),
+		ac:                actest.FakeAccessControl{},
 	}
 }
 

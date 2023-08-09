@@ -1,4 +1,8 @@
 ---
+labels:
+  products:
+    - enterprise
+    - oss
 title: Serving Grafana on a port < 1024
 ---
 
@@ -8,7 +12,7 @@ If you are using `systemd` and want to start Grafana on a port that is lower tha
 
    ```bash
    # Alternatively, create a file in /etc/systemd/system/grafana-server.service.d/override.conf
-   systemctl edit grafana-server.service
+   sudo systemctl edit grafana-server.service
    ```
 
 1. Add the following additional settings to grant the `CAP_NET_BIND_SERVICE` capability.

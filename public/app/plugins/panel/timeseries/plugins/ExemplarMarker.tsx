@@ -9,7 +9,6 @@ import {
   Field,
   FieldType,
   GrafanaTheme2,
-  LinkModel,
   systemDateFormats,
   TimeZone,
 } from '@grafana/data';
@@ -23,7 +22,6 @@ interface ExemplarMarkerProps {
   dataFrame: DataFrame;
   dataFrameFieldIndex: DataFrameFieldIndex;
   config: UPlotConfigBuilder;
-  getFieldLinks: (field: Field, rowIndex: number) => Array<LinkModel<Field>>;
   exemplarColor?: string;
   clickedExemplarFieldIndex: DataFrameFieldIndex | undefined;
   setClickedExemplarFieldIndex: React.Dispatch<DataFrameFieldIndex | undefined>;
@@ -34,7 +32,6 @@ export const ExemplarMarker = ({
   dataFrame,
   dataFrameFieldIndex,
   config,
-  getFieldLinks,
   exemplarColor,
   clickedExemplarFieldIndex,
   setClickedExemplarFieldIndex,
@@ -160,10 +157,10 @@ export const ExemplarMarker = ({
             <div>
               <table className={styles.exemplarsTable}>
                 <tbody>
-                  {orderedDataFrameFields.map((field, i) => {
+                  {orderedDataFrameFields.map((field: Field, i) => {
                     const value = field.values[dataFrameFieldIndex.fieldIndex];
                     const links = field.config.links?.length
-                      ? getFieldLinks(field, dataFrameFieldIndex.fieldIndex)
+                      ? field.getLinks?.({ valueRowIndex: dataFrameFieldIndex.fieldIndex })
                       : undefined;
                     return (
                       <tr key={i}>
@@ -187,7 +184,6 @@ export const ExemplarMarker = ({
   }, [
     attributes.popper,
     dataFrame.fields,
-    getFieldLinks,
     dataFrameFieldIndex,
     onMouseEnter,
     onMouseLeave,
@@ -204,6 +200,8 @@ export const ExemplarMarker = ({
 
   return (
     <>
+      {/* TODO: fix keyboard a11y */}
+      {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
       <div
         ref={setMarkerElement}
         onClick={() => {

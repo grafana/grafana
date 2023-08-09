@@ -16,7 +16,7 @@ export interface PromQuery extends GenPromQuery, DataQuery {
   showingTable?: boolean;
   hinting?: boolean;
   interval?: string;
-  // store the metrics modal additional settings
+  // store the metrics explorer additional settings
   useBackend?: boolean;
   disableTextWrap?: boolean;
   fullMetaSearch?: boolean;
@@ -44,6 +44,8 @@ export interface PromOptions extends DataSourceJsonData {
   defaultEditor?: QueryEditorMode;
   incrementalQuerying?: boolean;
   incrementalQueryOverlapWindow?: string;
+  disableRecordingRules?: boolean;
+  sigV4Auth?: boolean;
 }
 
 export type ExemplarTraceIdDestination = {

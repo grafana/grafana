@@ -25,10 +25,10 @@ var (
 	backtestingEvaluatorFactory = newBacktestingEvaluator
 )
 
-type callbackFunc = func(now time.Time, results eval.Results) error
+type callbackFunc = func(evaluationIndex int, now time.Time, results eval.Results) error
 
 type backtestingEvaluator interface {
-	Eval(ctx context.Context, from, to time.Time, interval time.Duration, callback callbackFunc) error
+	Eval(ctx context.Context, from time.Time, interval time.Duration, evaluations int, callback callbackFunc) error
 }
 
 type stateManager interface {
@@ -84,8 +84,11 @@ func (e *Engine) Test(ctx context.Context, user *user.SignedInUser, rule *models
 	tsField := data.NewField("Time", nil, make([]time.Time, length))
 	valueFields := make(map[string]*data.Field)
 
-	err = evaluator.Eval(ruleCtx, from, to, time.Duration(rule.IntervalSeconds)*time.Second, func(currentTime time.Time, results eval.Results) error {
-		idx := int(currentTime.Sub(from).Seconds()) / int(rule.IntervalSeconds)
+	err = evaluator.Eval(ruleCtx, from, time.Duration(rule.IntervalSeconds)*time.Second, length, func(idx int, currentTime time.Time, results eval.Results) error {
+		if idx >= length {
+			logger.Info("Unexpected evaluation. Skipping", "from", from, "to", to, "interval", rule.IntervalSeconds, "evaluationTime", currentTime, "evaluationIndex", idx, "expectedEvaluations", length)
+			return nil
+		}
 		states := stateManager.ProcessEvalResults(ruleCtx, currentTime, rule, results, nil)
 		tsField.Set(idx, currentTime)
 		for _, s := range states {
@@ -110,7 +113,7 @@ func (e *Engine) Test(ctx context.Context, user *user.SignedInUser, rule *models
 	for _, f := range valueFields {
 		fields = append(fields, f)
 	}
-	result := data.NewFrame("Backtesting results", fields...)
+	result := data.NewFrame("Testing results", fields...)
 
 	if err != nil {
 		return nil, err

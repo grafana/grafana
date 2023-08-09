@@ -6,11 +6,12 @@ import { Stack } from '@grafana/experimental';
 import { Icon, Toggletip, useStyles2 } from '@grafana/ui';
 
 interface NeedHelpInfoProps {
-  contentText: string;
-  externalLink: string;
-  linkText: string;
+  contentText: string | JSX.Element;
+  externalLink?: string;
+  linkText?: string;
+  title: string;
 }
-export function NeedHelpInfo({ contentText, externalLink, linkText }: NeedHelpInfoProps) {
+export function NeedHelpInfo({ contentText, externalLink, linkText, title }: NeedHelpInfoProps) {
   const styles = useStyles2(getStyles);
   return (
     <Toggletip
@@ -18,15 +19,17 @@ export function NeedHelpInfo({ contentText, externalLink, linkText }: NeedHelpIn
       title={
         <Stack gap={1} direction="row">
           <Icon name="question-circle" />
-          Define query and alert condition
+          {title}
         </Stack>
       }
       footer={
-        <a href={externalLink} target="_blank" rel="noreferrer">
-          <div className={styles.infoLink}>
-            {linkText} <Icon name="external-link-alt" />
-          </div>
-        </a>
+        externalLink ? (
+          <a href={externalLink} target="_blank" rel="noreferrer">
+            <div className={styles.infoLink}>
+              {linkText} <Icon name="external-link-alt" />
+            </div>
+          </a>
+        ) : undefined
       }
       closeButton={true}
       placement="bottom-start"
@@ -53,6 +56,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     margin-left: ${theme.spacing(1)};
     font-size: ${theme.typography.size.sm};
     cursor: pointer;
+    color: ${theme.colors.text.primary};
   `,
   helpInfoText: css`
     margin-left: ${theme.spacing(0.5)};

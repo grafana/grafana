@@ -94,10 +94,11 @@ describe('LokiQueryBuilderOptions', () => {
   });
 
   it('shows correct options for metric query', async () => {
-    setup({ expr: 'rate({foo="bar"}[5m]', step: '1m' });
+    setup({ expr: 'rate({foo="bar"}[5m]', step: '1m', resolution: 2 });
     expect(screen.queryByText('Line limit: 20')).not.toBeInTheDocument();
     expect(screen.getByText('Type: Range')).toBeInTheDocument();
     expect(screen.getByText('Step: 1m')).toBeInTheDocument();
+    expect(screen.getByText('Resolution: 1/2')).toBeInTheDocument();
   });
 
   it('does not shows resolution field if resolution is not set', async () => {

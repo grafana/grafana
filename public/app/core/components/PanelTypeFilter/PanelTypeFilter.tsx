@@ -2,16 +2,26 @@ import { css } from '@emotion/css';
 import React, { useCallback, useMemo, useState } from 'react';
 
 import { GrafanaTheme2, PanelPluginMeta, SelectableValue } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { Icon, Button, MultiSelect, useStyles2 } from '@grafana/ui';
-import { getAllPanelPluginMeta } from 'app/features/panel/state/util';
+import { getAllPanelPluginMeta, getVizPluginMeta, getWidgetPluginMeta } from 'app/features/panel/state/util';
 
 export interface Props {
   onChange: (plugins: PanelPluginMeta[]) => void;
   maxMenuHeight?: number;
+  isWidget?: boolean;
 }
 
-export const PanelTypeFilter = ({ onChange: propsOnChange, maxMenuHeight }: Props): JSX.Element => {
-  const plugins = useMemo<PanelPluginMeta[]>(() => getAllPanelPluginMeta(), []);
+export const PanelTypeFilter = ({ onChange: propsOnChange, maxMenuHeight, isWidget = false }: Props): JSX.Element => {
+  const getPluginMetaData = (): PanelPluginMeta[] => {
+    if (config.featureToggles.vizAndWidgetSplit) {
+      return isWidget ? getWidgetPluginMeta() : getVizPluginMeta();
+    } else {
+      return getAllPanelPluginMeta();
+    }
+  };
+
+  const plugins = useMemo<PanelPluginMeta[]>(getPluginMetaData, [isWidget]);
   const options = useMemo(
     () =>
       plugins

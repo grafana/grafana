@@ -10,11 +10,10 @@ import { ExploreItemState, ExploreState } from 'app/types/explore';
 import { RichHistoryResults } from '../../../core/history/RichHistoryStorage';
 import { RichHistorySearchFilters, RichHistorySettings } from '../../../core/utils/richHistoryTypes';
 import { createAsyncThunk, ThunkResult } from '../../../types';
-import { CorrelationData } from '../../correlations/useCorrelations';
 import { TimeSrv } from '../../dashboard/services/TimeSrv';
 import { withUniqueRefIds } from '../utils/queries';
 
-import { initializeExplore, paneReducer } from './explorePane';
+import { initializeExplore, InitializeExploreOptions, paneReducer } from './explorePane';
 import { DEFAULT_RANGE, makeExplorePaneState } from './utils';
 
 //
@@ -37,8 +36,6 @@ export const richHistorySearchFiltersUpdatedAction = createAction<{
   exploreId: string;
   filters?: RichHistorySearchFilters;
 }>('explore/richHistorySearchFiltersUpdatedAction');
-
-export const saveCorrelationsAction = createAction<CorrelationData[]>('explore/saveCorrelationsAction');
 
 export const splitSizeUpdateAction = createAction<{
   largerExploreId?: string;
@@ -63,10 +60,7 @@ export const setPaneState = createAction<SetPaneStateActionPayload>('explore/set
 export const clearPanes = createAction('explore/clearPanes');
 
 /**
- * Opens a new split pane. It either copies existing state of an already present pane
- * or uses values from options arg.
- *
- * TODO: this can be improved by better inferring fallback values.
+ * Ensure Explore doesn't exceed supported number of panes and initializes the new pane.
  */
 export const splitOpen = createAsyncThunk(
   'explore/splitOpen',
@@ -76,8 +70,15 @@ export const splitOpen = createAsyncThunk(
 
     const queries = options?.queries ?? (options?.query ? [options?.query] : originState?.queries || []);
 
+    Object.keys(getState().explore.panes).forEach((paneId, index) => {
+      // Only 2 panes are supported. Remove panes before create a new one.
+      if (index >= 1) {
+        dispatch(splitClose(paneId));
+      }
+    });
+
     await dispatch(
-      initializeExplore({
+      createNewSplitOpenPane({
         exploreId: requestId,
         datasource: options?.datasourceUid || originState?.datasourceInstance?.getRef(),
         queries: withUniqueRefIds(queries),
@@ -88,6 +89,19 @@ export const splitOpen = createAsyncThunk(
   },
   {
     idGenerator: generateExploreId,
+  }
+);
+
+/**
+ * Opens a new split pane. It either copies existing state of an already present pane
+ * or uses values from options arg.
+ *
+ * TODO: this can be improved by better inferring fallback values.
+ */
+const createNewSplitOpenPane = createAsyncThunk(
+  'explore/createNewSplitOpen',
+  async (options: InitializeExploreOptions, { dispatch }) => {
+    await dispatch(initializeExplore(options));
   }
 );
 
@@ -127,7 +141,6 @@ const initialExploreItemState = makeExplorePaneState();
 export const initialExploreState: ExploreState = {
   syncedTimes: false,
   panes: {},
-  correlations: undefined,
   richHistoryStorageFull: false,
   richHistoryLimitExceededWarningShown: false,
   largerExploreId: undefined,
@@ -182,13 +195,6 @@ export const exploreReducer = (state = initialExploreState, action: AnyAction): 
     };
   }
 
-  if (saveCorrelationsAction.match(action)) {
-    return {
-      ...state,
-      correlations: action.payload,
-    };
-  }
-
   if (syncTimesAction.match(action)) {
     return { ...state, syncedTimes: action.payload.syncedTimes };
   }
@@ -215,12 +221,12 @@ export const exploreReducer = (state = initialExploreState, action: AnyAction): 
     };
   }
 
-  if (splitOpen.pending.match(action)) {
+  if (createNewSplitOpenPane.pending.match(action)) {
     return {
       ...state,
       panes: {
         ...state.panes,
-        [action.meta.requestId]: initialExploreItemState,
+        [action.meta.arg.exploreId]: initialExploreItemState,
       },
     };
   }

@@ -9,6 +9,10 @@ keywords:
   - documentation
   - api
   - serviceaccount
+labels:
+  products:
+    - enterprise
+    - oss
 title: Service account HTTP API
 ---
 
@@ -106,7 +110,7 @@ Authorization: Basic YWRtaW46YWRtaW4=
 {
   "name": "grafana",
   "role": "Viewer",
-  "isDisabled" : false
+  "isDisabled": false
 }
 ```
 
@@ -440,8 +444,7 @@ Content-Type: application/json
 Authorization: Basic YWRtaW46YWRtaW4=
 
 {
-	"name": "grafana",
-	"role": "Viewer"
+	"name": "grafana"
 }
 ```
 

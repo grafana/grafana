@@ -72,9 +72,7 @@ export function RootView({ root, onPathChange }: Props) {
                 {s.config.description}
                 {s.config.git?.remote && <a href={s.config.git?.remote}>{s.config.git?.remote}</a>}
               </Card.Meta>
-              {s.notice?.map((notice) => (
-                <Alert key={notice.text} severity={notice.severity} title={notice.text} />
-              ))}
+              {s.notice?.map((notice) => <Alert key={notice.text} severity={notice.severity} title={notice.text} />)}
 
               <Card.Tags className={styles.clickable}>
                 <HorizontalGroup>

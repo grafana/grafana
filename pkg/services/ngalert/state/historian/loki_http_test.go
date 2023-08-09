@@ -145,12 +145,72 @@ func TestLokiHTTPClient(t *testing.T) {
 			now := time.Now().UTC().UnixNano()
 			q := `{from="state-history"}`
 
-			_, err := client.rangeQuery(context.Background(), q, now-100, now)
+			_, err := client.rangeQuery(context.Background(), q, now-100, now, 1100)
+
+			require.NoError(t, err)
+			params := req.lastRequest.URL.Query()
+			require.True(t, params.Has("limit"), "query params did not contain 'limit': %#v", params)
+			require.Equal(t, fmt.Sprint(1100), params.Get("limit"))
+		})
+
+		t.Run("uses default page size if limit not provided", func(t *testing.T) {
+			req := NewFakeRequester().WithResponse(&http.Response{
+				Status:        "200 OK",
+				StatusCode:    200,
+				Body:          io.NopCloser(bytes.NewBufferString(`{}`)),
+				ContentLength: int64(0),
+				Header:        make(http.Header, 0),
+			})
+			client := createTestLokiClient(req)
+			now := time.Now().UTC().UnixNano()
+			q := `{from="state-history"}`
+
+			_, err := client.rangeQuery(context.Background(), q, now-100, now, 0)
 
 			require.NoError(t, err)
 			params := req.lastRequest.URL.Query()
 			require.True(t, params.Has("limit"), "query params did not contain 'limit': %#v", params)
 			require.Equal(t, fmt.Sprint(defaultPageSize), params.Get("limit"))
+		})
+
+		t.Run("uses default page size if limit invalid", func(t *testing.T) {
+			req := NewFakeRequester().WithResponse(&http.Response{
+				Status:        "200 OK",
+				StatusCode:    200,
+				Body:          io.NopCloser(bytes.NewBufferString(`{}`)),
+				ContentLength: int64(0),
+				Header:        make(http.Header, 0),
+			})
+			client := createTestLokiClient(req)
+			now := time.Now().UTC().UnixNano()
+			q := `{from="state-history"}`
+
+			_, err := client.rangeQuery(context.Background(), q, now-100, now, -100)
+
+			require.NoError(t, err)
+			params := req.lastRequest.URL.Query()
+			require.True(t, params.Has("limit"), "query params did not contain 'limit': %#v", params)
+			require.Equal(t, fmt.Sprint(defaultPageSize), params.Get("limit"))
+		})
+
+		t.Run("uses maximum page size if limit too big", func(t *testing.T) {
+			req := NewFakeRequester().WithResponse(&http.Response{
+				Status:        "200 OK",
+				StatusCode:    200,
+				Body:          io.NopCloser(bytes.NewBufferString(`{}`)),
+				ContentLength: int64(0),
+				Header:        make(http.Header, 0),
+			})
+			client := createTestLokiClient(req)
+			now := time.Now().UTC().UnixNano()
+			q := `{from="state-history"}`
+
+			_, err := client.rangeQuery(context.Background(), q, now-100, now, maximumPageSize+1000)
+
+			require.NoError(t, err)
+			params := req.lastRequest.URL.Query()
+			require.True(t, params.Has("limit"), "query params did not contain 'limit': %#v", params)
+			require.Equal(t, fmt.Sprint(maximumPageSize), params.Get("limit"))
 		})
 	})
 }
@@ -208,7 +268,7 @@ func TestLokiHTTPClient_Manual(t *testing.T) {
 		end := time.Now().UnixNano()
 
 		// Authorized request should not fail against Grafana Cloud.
-		res, err := client.rangeQuery(context.Background(), logQL, start, end)
+		res, err := client.rangeQuery(context.Background(), logQL, start, end, defaultPageSize)
 		require.NoError(t, err)
 		require.NotNil(t, res)
 	})

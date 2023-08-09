@@ -57,7 +57,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     width: ${theme.spacing(4)};
     height: ${theme.spacing(4)};
     line-height: ${theme.spacing(4)};
-    border-radius: 100%;
+    border-radius: ${theme.shape.radius.circle};
     text-align: center;
     color: ${theme.colors.text.maxContrast};
     background-color: ${theme.colors.background.canvas};

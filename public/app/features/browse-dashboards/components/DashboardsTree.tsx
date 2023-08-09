@@ -35,11 +35,11 @@ interface DashboardsTreeProps {
   onItemSelectionChange: (item: DashboardViewItem, newState: boolean) => void;
 
   isItemLoaded: (itemIndex: number) => boolean;
-  requestLoadMore: (startIndex: number, endIndex: number) => void;
+  requestLoadMore: (folderUid: string | undefined) => void;
 }
 
-const HEADER_HEIGHT = 35;
-const ROW_HEIGHT = 35;
+const HEADER_HEIGHT = 36;
+const ROW_HEIGHT = 36;
 
 export function DashboardsTree({
   items,
@@ -119,9 +119,10 @@ export function DashboardsTree({
 
   const handleLoadMore = useCallback(
     (startIndex: number, endIndex: number) => {
-      requestLoadMore(startIndex, endIndex);
+      const { parentUID } = items[startIndex];
+      requestLoadMore(parentUID);
     },
-    [requestLoadMore]
+    [requestLoadMore, items]
   );
 
   return (
@@ -146,7 +147,7 @@ export function DashboardsTree({
         );
       })}
 
-      <div {...getTableBodyProps()}>
+      <div {...getTableBodyProps()} data-testid={selectors.pages.BrowseDashboards.table.body}>
         <InfiniteLoader
           ref={infiniteLoaderRef}
           itemCount={items.length}
@@ -195,7 +196,7 @@ function VirtualListRow({ index, style, data }: VirtualListRowProps) {
     <div
       {...row.getRowProps({ style })}
       className={cx(styles.row, styles.bodyRow)}
-      data-testid={selectors.pages.BrowseDashbards.table.row(row.original.item.uid)}
+      data-testid={selectors.pages.BrowseDashboards.table.row(row.original.item.uid)}
     >
       {row.cells.map((cell) => {
         const { key, ...cellProps } = cell.getCellProps();

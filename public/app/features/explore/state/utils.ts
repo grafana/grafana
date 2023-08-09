@@ -1,3 +1,5 @@
+import { uniq } from 'lodash';
+
 import {
   AbsoluteTimeRange,
   DataSourceApi,
@@ -15,7 +17,8 @@ import {
   isDateTime,
   toUtc,
 } from '@grafana/data';
-import { DataSourceRef, TimeZone } from '@grafana/schema';
+import { DataQuery, DataSourceRef, TimeZone } from '@grafana/schema';
+import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 import { ExplorePanelData } from 'app/types';
 import { ExploreItemState } from 'app/types/explore';
 
@@ -67,6 +70,7 @@ export const makeExplorePaneState = (): ExploreItemState => ({
   richHistory: [],
   supplementaryQueries: loadSupplementaryQueries(),
   panelsState: {},
+  correlations: undefined,
 });
 
 export const createEmptyQueryResponse = (): ExplorePanelData => ({
@@ -78,6 +82,7 @@ export const createEmptyQueryResponse = (): ExplorePanelData => ({
   traceFrames: [],
   nodeGraphFrames: [],
   flameGraphFrames: [],
+  customFrames: [],
   tableFrames: [],
   rawPrometheusFrames: [],
   rawPrometheusResult: null,
@@ -152,6 +157,41 @@ export function getRange(range: RawTimeRange, timeZone: TimeZone): TimeRange {
   };
 }
 
+/**
+ * @param range RawTimeRange - Note: Range in the URL is not RawTimeRange compliant (see #72578 for more details)
+ */
+export function fromURLRange(range: RawTimeRange): RawTimeRange {
+  let rawTimeRange: RawTimeRange = DEFAULT_RANGE;
+  let parsedRange = {
+    from: parseRawTime(range.from),
+    to: parseRawTime(range.to),
+  };
+  if (parsedRange.from !== null && parsedRange.to !== null) {
+    rawTimeRange = { from: parsedRange.from, to: parsedRange.to };
+  }
+  return rawTimeRange;
+}
+
+/**
+ * @param range RawTimeRange - Note: Range in the URL is not RawTimeRange compliant (see #72578 for more details)
+ */
+export const toURLTimeRange = (range: RawTimeRange): RawTimeRange => {
+  let from = range.from;
+  if (isDateTime(from)) {
+    from = from.valueOf().toString();
+  }
+
+  let to = range.to;
+  if (isDateTime(to)) {
+    to = to.valueOf().toString();
+  }
+
+  return {
+    from,
+    to,
+  };
+};
+
 function parseRawTime(value: string | DateTime): TimeFragment | null {
   if (value === null) {
     return null;
@@ -204,4 +244,12 @@ export const filterLogRowsByIndex = (
   }
 
   return logRows;
+};
+
+export const getDatasourceUIDs = (datasourceUID: string, queries: DataQuery[]): string[] => {
+  if (datasourceUID === MIXED_DATASOURCE_NAME) {
+    return uniq(queries.map((query) => query.datasource?.uid).filter((uid): uid is string => !!uid));
+  } else {
+    return [datasourceUID];
+  }
 };

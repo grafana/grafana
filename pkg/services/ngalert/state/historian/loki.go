@@ -43,7 +43,7 @@ const defaultQueryRange = 6 * time.Hour
 type remoteLokiClient interface {
 	ping(context.Context) error
 	push(context.Context, []stream) error
-	rangeQuery(ctx context.Context, logQL string, start, end int64) (queryRes, error)
+	rangeQuery(ctx context.Context, logQL string, start, end, limit int64) (queryRes, error)
 }
 
 // RemoteLokibackend is a state.Historian that records state history to an external Loki instance.
@@ -126,7 +126,7 @@ func (h *RemoteLokiBackend) Query(ctx context.Context, query models.HistoryQuery
 	}
 
 	// Timestamps are expected in RFC3339Nano.
-	res, err := h.client.rangeQuery(ctx, logQL, query.From.UnixNano(), query.To.UnixNano())
+	res, err := h.client.rangeQuery(ctx, logQL, query.From.UnixNano(), query.To.UnixNano(), int64(query.Limit))
 	if err != nil {
 		return nil, err
 	}
@@ -377,6 +377,12 @@ func buildLogQuery(query models.HistoryQuery) (string, error) {
 	if query.RuleUID != "" {
 		logQL = fmt.Sprintf("%s | ruleUID=%q", logQL, query.RuleUID)
 	}
+	if query.DashboardUID != "" {
+		logQL = fmt.Sprintf("%s | dashboardUID=%q", logQL, query.DashboardUID)
+	}
+	if query.PanelID != 0 {
+		logQL = fmt.Sprintf("%s | panelID=%d", logQL, query.PanelID)
+	}
 
 	labelFilters := ""
 	labelKeys := make([]string, 0, len(query.Labels))
@@ -394,5 +400,8 @@ func buildLogQuery(query models.HistoryQuery) (string, error) {
 }
 
 func queryHasLogFilters(query models.HistoryQuery) bool {
-	return query.RuleUID != "" || len(query.Labels) > 0
+	return query.RuleUID != "" ||
+		query.DashboardUID != "" ||
+		query.PanelID != 0 ||
+		len(query.Labels) > 0
 }

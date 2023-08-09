@@ -42,9 +42,7 @@ export const VizLayout: VizLayoutComponentType = ({ width, height, legend, child
   if (!legend) {
     return (
       <>
-        {/* tabIndex={0} is needed for keyboard accessibility in the plot area */}
-        {/* eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex */}
-        <div tabIndex={0} style={containerStyle} className={styles.viz}>
+        <div style={containerStyle} className={styles.viz}>
           {children(width, height)}
         </div>
       </>
@@ -97,11 +95,7 @@ export const VizLayout: VizLayoutComponentType = ({ width, height, legend, child
 
   return (
     <div style={containerStyle}>
-      {/* tabIndex={0} is needed for keyboard accessibility in the plot area */}
-      {/* eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex */}
-      <div tabIndex={0} className={styles.viz}>
-        {size && children(size.width, size.height)}
-      </div>
+      <div className={styles.viz}>{size && children(size.width, size.height)}</div>
       <div style={legendStyle} ref={legendRef}>
         <CustomScrollbar hideHorizontalTrack>{legend}</CustomScrollbar>
       </div>
@@ -113,7 +107,7 @@ export const getVizStyles = (theme: GrafanaTheme2) => {
   return {
     viz: css({
       flexGrow: 2,
-      borderRadius: theme.shape.borderRadius(1),
+      borderRadius: theme.shape.radius.default,
       '&:focus-visible': getFocusStyles(theme),
     }),
   };

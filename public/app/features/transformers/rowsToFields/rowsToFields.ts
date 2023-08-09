@@ -19,7 +19,7 @@ export interface RowToFieldsTransformOptions {
 export const rowsToFieldsTransformer: DataTransformerInfo<RowToFieldsTransformOptions> = {
   id: DataTransformerID.rowsToFields,
   name: 'Rows to fields',
-  description: 'Convert each row into a field with dynamic config',
+  description: 'Convert each row into a field with dynamic config.',
   defaultOptions: {},
 
   /**
