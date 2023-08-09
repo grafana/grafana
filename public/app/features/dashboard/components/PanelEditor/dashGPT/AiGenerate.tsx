@@ -40,16 +40,21 @@ const QuickFeedbackSuggestions = ({
 
   return (
     <div className={styles.quickSuggestionsWrapper}>
-      <Button onClick={() => onSuggestionClick('Even shorter')} disabled={isRegenerating}>
+      <Button onClick={() => onSuggestionClick('Even shorter')} disabled={isRegenerating} size="sm" variant="secondary">
         Even shorter
       </Button>
-      <Button onClick={() => onSuggestionClick('Improve it')} disabled={isRegenerating}>
+      <Button onClick={() => onSuggestionClick('Improve it')} disabled={isRegenerating} size="sm" variant="secondary">
         Improve it
       </Button>
-      <Button onClick={() => onSuggestionClick('More descriptive')} disabled={isRegenerating}>
+      <Button
+        onClick={() => onSuggestionClick('More descriptive')}
+        disabled={isRegenerating}
+        size="sm"
+        variant="secondary"
+      >
         More descriptive
       </Button>
-      <Button onClick={() => onSuggestionClick('More concise')} disabled={isRegenerating}>
+      <Button onClick={() => onSuggestionClick('More concise')} disabled={isRegenerating} size="sm" variant="secondary">
         More concise
       </Button>
     </div>
@@ -72,7 +77,7 @@ interface UserInputProps {
 
 const UserInput = ({ item, isRegenerating, setIsRegenerating, llmReGenerate, index, type }: UserInputProps) => {
   const styles = useStyles2(getStyles);
-  const [assitsDescription, setAssitsDescription] = useState('');
+  const [userInput, setUserInput] = useState('');
 
   const onSubmit = async (feedback: string) => {
     setIsRegenerating(true);
@@ -80,7 +85,7 @@ const UserInput = ({ item, isRegenerating, setIsRegenerating, llmReGenerate, ind
 
     if (done) {
       setIsRegenerating(false);
-      setAssitsDescription('');
+      setUserInput('');
     }
   };
 
@@ -89,16 +94,10 @@ const UserInput = ({ item, isRegenerating, setIsRegenerating, llmReGenerate, ind
       <TextArea
         className={styles.textArea}
         placeholder="Tell us something"
-        width={200}
-        onChange={(e) => setAssitsDescription(e.currentTarget.value)}
-        value={assitsDescription}
+        onChange={(e) => setUserInput(e.currentTarget.value)}
+        value={userInput}
       />
-      <IconButton
-        name="message"
-        aria-label="message"
-        onClick={() => onSubmit(assitsDescription)}
-        disabled={isRegenerating}
-      />
+      <IconButton name="message" aria-label="message" onClick={() => onSubmit(userInput)} disabled={isRegenerating} />
     </div>
   );
 };
@@ -256,13 +255,15 @@ const getStyles = (theme: GrafanaTheme2) => ({
     flex-direction: row;
     align-items: center;
     flex-wrap: wrap;
-    gap: 10px;
+    gap: 8px;
+    padding-top: 10px;
   `,
   userInputWrapper: css`
     margin-top: 20px;
     display: flex;
   `,
   textArea: css`
-    margin-right: 10px;
+    margin-right: 24px;
+    width: 400px;
   `,
 });
