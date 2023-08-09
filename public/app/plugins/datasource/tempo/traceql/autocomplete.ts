@@ -17,6 +17,8 @@ interface Props {
 /**
  * Class that implements CompletionItemProvider interface and allows us to provide suggestion for the Monaco
  * autocomplete system.
+ *
+ * Please refer to https://grafana.com/docs/tempo/latest/traceql for the syntax of TraceQL.
  */
 export class CompletionProvider implements monacoTypes.languages.CompletionItemProvider {
   languageProvider: TempoLanguageProvider;
@@ -28,8 +30,13 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
   }
 
   triggerCharacters = ['{', '.', '[', '(', '=', '~', ' ', '"'];
+
+  // Operators
   static readonly operators: string[] = ['=', '-', '+', '<', '>', '>=', '<=', '=~'];
   static readonly logicalOps: string[] = ['&&', '||'];
+  static readonly comparisonOps: string[] = ['=', '!=', '>', '>=', '<', '<=', '=~', '!~'];
+  static readonly structuralOps: string[] = ['>> ', '>', '~'];
+  static readonly spansetOps: string[] = ['|', ...CompletionProvider.logicalOps, ...CompletionProvider.structuralOps];
 
   // We set these directly and ae required for the provider to function.
   monaco: Monaco | undefined;
@@ -127,6 +134,12 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
         return this.getTagsCompletions(undefined, situation.scope);
       case 'SPANSET_EXPRESSION_OPERATORS':
         return [...CompletionProvider.logicalOps, ...CompletionProvider.operators].map((key) => ({
+          label: key,
+          insertText: key,
+          type: 'OPERATOR',
+        }));
+      case 'SPANSET_COMBINING_OPERATORS':
+        return CompletionProvider.spansetOps.map((key) => ({
           label: key,
           insertText: key,
           type: 'OPERATOR',
