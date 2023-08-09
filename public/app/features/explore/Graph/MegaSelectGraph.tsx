@@ -67,6 +67,11 @@ interface Props {
   thresholdsConfig?: ThresholdsConfig;
   thresholdsStyle?: GraphThresholdsStyleConfig;
   eventBus: EventBus;
+  options: {
+    view?: string;
+    endpoint?: string;
+    mega?: boolean;
+  };
 }
 
 export function MegaSelectGraph({
@@ -87,6 +92,7 @@ export function MegaSelectGraph({
   thresholdsConfig,
   thresholdsStyle,
   eventBus,
+  options,
 }: Props) {
   const theme = useTheme2();
   const style = useStyles2(getStyles);
@@ -196,8 +202,9 @@ export function MegaSelectGraph({
       tooltip: { mode: tooltipDisplayMode, sort: SortOrder.None },
       legend: {
         displayMode: LegendDisplayMode.List,
-        // Remember the time is a field
-        showLegend: data[0].fields.length <= 5,
+        // Remember the time is a field, so we need to add 1 to the number of fields
+        // Also, we don't want to show the legend in the mega overview panel
+        showLegend: !options.mega ? data[0].fields.length <= 4 + 1 : false,
         placement: 'bottom',
         calcs: [],
       },

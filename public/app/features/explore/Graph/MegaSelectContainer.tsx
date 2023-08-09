@@ -84,6 +84,7 @@ export const MegaSelectContainer = ({
     >
       {(innerWidth, innerHeight) => (
         <MegaSelectGraph
+          options={options}
           graphStyle={graphStyle}
           data={data}
           height={innerHeight}

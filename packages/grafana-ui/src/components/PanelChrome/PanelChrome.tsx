@@ -401,7 +401,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       textOverflow: 'ellipsis',
       overflow: 'hidden',
       whiteSpace: 'nowrap',
-      fontSize: theme.typography.h6.fontSize,
+      fontSize: '12px',
       fontWeight: theme.typography.h6.fontWeight,
     }),
     items: css({

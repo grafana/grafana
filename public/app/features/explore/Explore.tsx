@@ -97,7 +97,15 @@ const getStyles = (theme: GrafanaTheme2) => {
       padding: ${theme.spacing(2)};
       padding-top: 0;
     `,
-    megaSelectWrapper: css``,
+    megaSelectStickyWrapper: css`
+      position: sticky;
+      top: 2px;
+      left: 0;
+      z-index: 1;
+    `,
+    megaSelectWrapper: css`
+      position: relative;
+    `,
     megaSelectSubWrapper: css`
       display: flex;
       flex-wrap: wrap;
@@ -429,23 +437,25 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
 
     return (
       <div className={styles.megaSelectWrapper}>
-        <MegaSelectContainer
-          options={{
-            view: megaSelectView,
-            endpoint: megaSelectEndpoint,
-            mega: true,
-          }}
-          data={[getMegaSelect]}
-          height={400}
-          width={width}
-          absoluteRange={absoluteRange}
-          timeZone={timeZone}
-          onChangeTime={this.onUpdateTimeRange}
-          annotations={filterExemplars(queryResponse.annotations ?? [], getMegaSelect)}
-          splitOpenFn={this.onSplitOpen('graph')}
-          loadingState={queryResponse.state}
-          eventBus={this.graphEventBus}
-        />
+        <div className={styles.megaSelectStickyWrapper}>
+          <MegaSelectContainer
+            options={{
+              view: megaSelectView,
+              endpoint: megaSelectEndpoint,
+              mega: true,
+            }}
+            data={[getMegaSelect]}
+            height={300}
+            width={width}
+            absoluteRange={absoluteRange}
+            timeZone={timeZone}
+            onChangeTime={this.onUpdateTimeRange}
+            annotations={filterExemplars(queryResponse.annotations ?? [], getMegaSelect)}
+            splitOpenFn={this.onSplitOpen('graph')}
+            loadingState={queryResponse.state}
+            eventBus={this.graphEventBus}
+          />
+        </div>
         <div className={styles.megaSelectSubWrapper}>
           {panelsToRender &&
             panelsToRender.map((frame) => (
@@ -453,7 +463,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
                 <MegaSelectContainer
                   actionsOverride={<></>}
                   data={[frame]}
-                  height={300}
+                  height={250}
                   width={width / 4}
                   absoluteRange={absoluteRange}
                   timeZone={timeZone}
