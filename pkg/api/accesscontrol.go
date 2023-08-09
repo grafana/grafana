@@ -434,6 +434,19 @@ func (hs *HTTPServer) declareFixedRoles() error {
 		Grants: []string{"Admin"},
 	}
 
+	featuremgmtWriterRole := ac.RoleRegistration{
+		Role: ac.RoleDTO{
+			Name:        "fixed:featuremgmt:writer",
+			DisplayName: "Feature Management writer",
+			Description: "Write feature toggles",
+			Group:       "Feature Management",
+			Permissions: []ac.Permission{
+				{Action: ac.ActionFeatureManagementWrite},
+			},
+		},
+		Grants: []string{"Admin"},
+	}
+
 	return hs.accesscontrolService.DeclareFixedRoles(
 		provisioningWriterRole, datasourcesReaderRole, builtInDatasourceReader, datasourcesWriterRole,
 		datasourcesIdReaderRole, orgReaderRole, orgWriterRole,
@@ -441,7 +454,7 @@ func (hs *HTTPServer) declareFixedRoles() error {
 		annotationsReaderRole, dashboardAnnotationsWriterRole, annotationsWriterRole,
 		dashboardsCreatorRole, dashboardsReaderRole, dashboardsWriterRole,
 		foldersCreatorRole, foldersReaderRole, foldersWriterRole, apikeyReaderRole, apikeyWriterRole,
-		publicDashboardsWriterRole, featuremgmtReaderRole,
+		publicDashboardsWriterRole, featuremgmtReaderRole, featuremgmtWriterRole,
 	)
 }
 

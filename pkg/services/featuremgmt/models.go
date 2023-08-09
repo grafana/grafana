@@ -114,6 +114,16 @@ type FeatureFlag struct {
 	FrontendOnly    bool `json:"frontend,omitempty"`        // change is only seen in the frontend
 	HideFromDocs    bool `json:"hideFromDocs,omitempty"`    // don't add the values to docs
 
-	Enabled  bool `json:"enabled,omitempty"`
-	ReadOnly bool `json:"readOnly,omitempty"`
+	Enabled bool `json:"enabled,omitempty"`
+}
+
+type UpdateFeatureTogglesCommand struct {
+	FeatureToggles []FeatureToggleDTO `json:"featureToggles"`
+}
+
+type FeatureToggleDTO struct {
+	Name        string `json:"name" binding:"Required"`
+	Description string `json:"description"`
+	Enabled     bool   `json:"enabled"`
+	ReadOnly    bool   `json:"readOnly,omitempty"`
 }
