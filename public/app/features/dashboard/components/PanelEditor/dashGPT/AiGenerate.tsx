@@ -96,6 +96,7 @@ const UserInput = ({ item, isRegenerating, setIsRegenerating, llmReGenerate, ind
         placeholder="Tell us something"
         onChange={(e) => setUserInput(e.currentTarget.value)}
         value={userInput}
+        style={{ width: type === 'text' ? '400px' : '600px' }}
       />
       <IconButton name="message" aria-label="message" onClick={() => onSubmit(userInput)} disabled={isRegenerating} />
     </div>
@@ -240,6 +241,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
   `,
   historyItems: css`
     display: flex;
+    flex-wrap: wrap;
+    align-content: space-between;
     padding: 5px 0;
   `,
   buttons: css`
@@ -249,6 +252,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   item: css`
     margin-right: 10px;
     font-size: ${theme.typography.size.md};
+    max-width: 600px;
   `,
   quickSuggestionsWrapper: css`
     display: flex;
@@ -264,6 +268,5 @@ const getStyles = (theme: GrafanaTheme2) => ({
   `,
   textArea: css`
     margin-right: 24px;
-    width: 400px;
   `,
 });
