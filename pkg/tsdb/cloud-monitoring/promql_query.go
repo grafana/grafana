@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/url"
 	"path"
+	"strconv"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -59,12 +60,13 @@ func (promQLQ *cloudMonitoringPromQL) run(ctx context.Context, req *backend.Quer
 	span := traceReq(ctx, tracer, req, dsInfo, r, "")
 	defer span.End()
 
+	promQLQ.logger.Error("dafsd", "promQLQ.timeRange.To", promQLQ.timeRange.To, "promQLQ.timeRange.From", promQLQ.timeRange.From)
 	promQLQ.parameters.Step = 10 //do not keep
 	requestBody := map[string]interface{}{
-		"query": "logging_googleapis_com:billing_bytes_ingested",
-		"end":   "2023-08-09T14:29:30.000Z",
-		"start": "2023-08-09T13:19:20.000Z",
-		"step":  "10s",
+		"query": promQLQ.parameters.Query,
+		"end":   formatTime(promQLQ.timeRange.To),
+		"start": formatTime(promQLQ.timeRange.From),
+		"step":  fmt.Sprintf("%vs", promQLQ.parameters.Step),
 	}
 
 	d, err := doRequestProm(ctx, promQLQ.logger, r, dsInfo, nil, requestBody)
@@ -248,4 +250,8 @@ func unmarshalPromResponse(logger log.Logger, res *http.Response) (promResponse,
 	}
 
 	return data, nil
+}
+
+func formatTime(t time.Time) string {
+	return strconv.FormatFloat(float64(t.Unix())+float64(t.Nanosecond())/1e9, 'f', -1, 64)
 }

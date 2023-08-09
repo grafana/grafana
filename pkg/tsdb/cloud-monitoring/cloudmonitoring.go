@@ -444,6 +444,7 @@ func (s *Service) buildQueryExecutors(logger log.Logger, req *backend.QueryDataR
 				logger:     logger,
 				aliasBy:    q.AliasBy,
 				parameters: q.PromQLQuery,
+				timeRange:  req.Queries[0].TimeRange,
 			}
 			//stuff.setParams(startTime, endTime, durationSeconds, query.Interval.Milliseconds())
 			queryInterface = stuff

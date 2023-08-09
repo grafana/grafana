@@ -1,8 +1,9 @@
 import React from 'react';
+import { css, cx } from '@emotion/css';
 
 import { SelectableValue } from '@grafana/data';
 import { EditorRow } from '@grafana/experimental';
-import { TextArea } from '@grafana/ui';
+import { TextArea, InlineFormLabel } from '@grafana/ui';
 
 import CloudMonitoringDatasource from '../datasource';
 import { PromQLQuery } from '../types/query';
@@ -21,6 +22,7 @@ export interface Props {
 export const defaultQuery: (dataSource: CloudMonitoringDatasource) => PromQLQuery = (dataSource) => ({
   projectName: dataSource.getDefaultProject(),
   query: "",
+  step: 10,
 });
 
 export function PromQLQueryEditor({
@@ -31,6 +33,23 @@ export function PromQLQueryEditor({
   variableOptionGroup,
   onRunQuery,
 }: React.PropsWithChildren<Props>) {
+
+  function onChangeQueryStep(interval: number) {
+    onChange({ ...query, step: interval });
+  }
+
+  function onStepChange(e: React.SyntheticEvent<HTMLInputElement>) {
+    if (e.currentTarget.value !== query.step.toString()) {
+      onChangeQueryStep(+e.currentTarget.value);
+    }
+  }
+
+  function onReturnKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+    if (e.key === 'Enter' && e.shiftKey) {
+      onRunQuery();
+    }
+  }
+
   return (
     <>
       <EditorRow>
@@ -50,6 +69,32 @@ export function PromQLQueryEditor({
           onBlur={onRunQuery}
           onChange={(e) => onChange({query: e.currentTarget.value} as PromQLQuery)}
         />
+      <div
+        className={cx(
+          'gf-form',
+          css`
+            flex-wrap: nowrap;
+          `
+        )}
+        aria-label="Step field"
+      >
+        <InlineFormLabel
+          width={6}
+          tooltip={
+            'Time units and built-in variables can be used here, for example: $__interval, $__rate_interval, 5s, 1m, 3h, 1d, 1y (Default if no unit is specified: s)'
+          }
+        >
+          Min step
+        </InlineFormLabel>
+        <input
+          type={'number'}
+          className="gf-form-input width-4"
+          placeholder={'auto'}
+          onChange={onStepChange}
+          onKeyDown={onReturnKeyDown}
+          value={query.step ?? ''}
+        />
+      </div>
       </EditorRow>
     </>
   );

@@ -36,7 +36,7 @@ export const QueryEditor = (props: Props) => {
     onRunQuery();
   };
 
-  const promQLQuery = { ...{projectName: datasource.getDefaultProject(), query: ""}, ...query.promQLQuery};
+  const promQLQuery = { ...{projectName: datasource.getDefaultProject(), query: "", step: 10}, ...query.promQLQuery};
   const onPromQLQueryChange = (q: PromQLQuery) => {
     onChange({ ...query, promQLQuery: q});
     onRunQuery();
