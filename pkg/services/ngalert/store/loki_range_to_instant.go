@@ -72,7 +72,7 @@ func canBeInstant(r *models.AlertRule) ([]int, bool) {
 	return optimizableIndices, canBeOptimized
 }
 
-// migrateToInstant will move for the provided indices from a range-query to an instant query. This should only
+// migrateToInstant will move the provided indices from a range-query to an instant query. This should only
 // be used for loki.
 func migrateToInstant(r *models.AlertRule, optimizableIndices []int) error {
 	for _, lokiQueryIndex := range optimizableIndices {
