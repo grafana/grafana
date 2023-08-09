@@ -2565,9 +2565,8 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 							{
 								PreviousState: eval.Error,
 								State: &State{
-									CacheID: cacheID(labels["system + rule"]),
-									Labels:  labels["system + rule"],
-									State:   eval.Normal,
+									Labels: labels["system + rule"],
+									State:  eval.Normal,
 									Results: []Evaluation{
 										newEvaluation(t1, eval.Error),
 										newEvaluation(t2, eval.Normal),
