@@ -83,6 +83,7 @@ func doRequestPage(ctx context.Context, logger log.Logger, r *http.Request, dsIn
 		r.Method = http.MethodPost
 	}
 	res, err := dsInfo.services[cloudMonitor].client.Do(r)
+	logger.Error("doRequest", "res", res, "err", err, "r", r, "body", body)
 	if err != nil {
 		return cloudMonitoringResponse{}, err
 	}
@@ -94,6 +95,7 @@ func doRequestPage(ctx context.Context, logger log.Logger, r *http.Request, dsIn
 	}()
 
 	dnext, err := unmarshalResponse(logger, res)
+	//logger.Error("unmarshal", "dnext", dnext, "err", err)
 	if err != nil {
 		return cloudMonitoringResponse{}, err
 	}
@@ -103,6 +105,7 @@ func doRequestPage(ctx context.Context, logger log.Logger, r *http.Request, dsIn
 
 func doRequestWithPagination(ctx context.Context, logger log.Logger, r *http.Request, dsInfo datasourceInfo, params url.Values, body map[string]interface{}) (cloudMonitoringResponse, error) {
 	d, err := doRequestPage(ctx, logger, r, dsInfo, params, body)
+	//logger.Error("doRequestWithPagination", "stuff", d, "err", err)
 	if err != nil {
 		return cloudMonitoringResponse{}, err
 	}

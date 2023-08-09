@@ -60,6 +60,7 @@ const (
 	timeSeriesListQueryType   = dataquery.QueryTypeTimeSeriesList
 	timeSeriesQueryQueryType  = dataquery.QueryTypeTimeSeriesQuery
 	sloQueryType              = dataquery.QueryTypeSlo
+	promQLQueryType           = dataquery.QueryTypePromQL
 	crossSeriesReducerDefault = "REDUCE_NONE"
 	perSeriesAlignerDefault   = "ALIGN_MEAN"
 )
@@ -332,6 +333,7 @@ func migrateRequest(req *backend.QueryDataRequest) error {
 // executes the queries against the CloudMonitoring API and parses the response into data frames
 func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	logger := slog.FromContext(ctx)
+	logger.Error("HELLOOOO", "req", req.Headers)
 	if len(req.Queries) == 0 {
 		return nil, fmt.Errorf("query contains no queries")
 	}
@@ -354,6 +356,8 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 	switch req.Queries[0].QueryType {
 	case string(dataquery.QueryTypeAnnotation):
 		return s.executeAnnotationQuery(ctx, req, *dsInfo, queries)
+	case string(dataquery.QueryTypePromQL):
+		return s.executePromQuery(ctx, req, *dsInfo, queries)
 	default:
 		return s.executeTimeSeriesQuery(ctx, req, *dsInfo, queries)
 	}
@@ -367,6 +371,8 @@ func (s *Service) executeTimeSeriesQuery(ctx context.Context, req *backend.Query
 		if err != nil {
 			return resp, err
 		}
+		//logger := slog.FromContext(ctx)
+		//logger.Error("BELLOOOO", "queryRes", queryRes, "dr", dr, "executedQueryString", executedQueryString, "err", err)
 		err = queryExecutor.parseResponse(queryRes, dr, executedQueryString)
 		if err != nil {
 			queryRes.Error = err
@@ -432,6 +438,15 @@ func (s *Service) buildQueryExecutors(logger log.Logger, req *backend.QueryDataR
 			}
 			cmslo.setParams(startTime, endTime, durationSeconds, query.Interval.Milliseconds())
 			queryInterface = cmslo
+		case string(dataquery.QueryTypePromQL):
+			stuff := &cloudMonitoringPromQL{
+				refID:      query.RefID,
+				logger:     logger,
+				aliasBy:    q.AliasBy,
+				parameters: q.PromQLQuery,
+			}
+			//stuff.setParams(startTime, endTime, durationSeconds, query.Interval.Milliseconds())
+			queryInterface = stuff
 		default:
 			return nil, fmt.Errorf("unrecognized query type %q", query.QueryType)
 		}
@@ -587,6 +602,7 @@ func (s *Service) getDefaultProject(ctx context.Context, dsInfo datasourceInfo) 
 
 func unmarshalResponse(logger log.Logger, res *http.Response) (cloudMonitoringResponse, error) {
 	body, err := io.ReadAll(res.Body)
+	logger.Error("body", "body", string(body), "r", err)
 	if err != nil {
 		return cloudMonitoringResponse{}, err
 	}

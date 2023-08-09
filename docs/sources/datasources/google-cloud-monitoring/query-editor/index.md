@@ -274,6 +274,10 @@ The **Alias By** field helps you control the format of legend keys for SLO queri
 
 SLO queries use the same alignment period functionality as [metric queries](#define-the-alignment-period).
 
+### Create a PromQL query
+
+Write stuff here
+
 ## Apply annotations
 
 {{< figure src="/static/img/docs/google-cloud-monitoring/annotations-8-0.png" max-width= "400px" class="docs-image--right" >}}

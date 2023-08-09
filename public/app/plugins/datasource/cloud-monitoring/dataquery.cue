@@ -23,7 +23,7 @@ composableKinds: DataQuery: {
 
 	lineage: {
 		schemas: [{
-			version: [0, 0]
+			version: [0, 0] //do i update this?
 			schema: {
 				#CloudMonitoringQuery: common.DataQuery & {
 					// Aliases can be set to modify the legend labels. e.g. {{metric.label.xxx}}. See docs for more detail.
@@ -36,12 +36,14 @@ composableKinds: DataQuery: {
 					timeSeriesQuery?: #TimeSeriesQuery
 					// SLO sub-query properties.
 					sloQuery?: #SLOQuery
+					// PromQL sub-query properties.
+					promQLQuery?: #PromQLQuery
 					// Time interval in milliseconds.
 					intervalMs?: number
 				} @cuetsy(kind="interface")
 
 				// Defines the supported queryTypes.
-				#QueryType: "timeSeriesList" | "timeSeriesQuery" | "slo" | "annotation" @cuetsy(kind="enum", memberNames="TIME_SERIES_LIST|TIME_SERIES_QUERY|SLO|ANNOTATION")
+				#QueryType: "timeSeriesList" | "timeSeriesQuery" | "slo" | "annotation" | "promQL" @cuetsy(kind="enum", memberNames="TIME_SERIES_LIST|TIME_SERIES_QUERY|SLO|ANNOTATION|PROMQL")
 
 				// Time Series List sub-query properties.
 				#TimeSeriesList: {
@@ -114,6 +116,16 @@ composableKinds: DataQuery: {
 					goal?: number
 					// Specific lookback period for the SLO.
 					lookbackPeriod?: string
+				} @cuetsy(kind="interface")
+
+				// PromQL sub-query properties.
+				#PromQLQuery: {
+					// GCP project to execute the query against.
+					projectName: string
+					// PromQL query to be executed.
+					query: string
+					// PromQL min step
+					step: number
 				} @cuetsy(kind="interface")
 
 				// @deprecated This type is for migration purposes only. Replaced by TimeSeriesList Metric sub-query properties.

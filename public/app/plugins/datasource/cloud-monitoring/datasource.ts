@@ -323,6 +323,10 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
       return !!query.timeSeriesList && !!query.timeSeriesList.projectName && !!getMetricType(query.timeSeriesList);
     }
 
+    if (query.queryType === QueryType.PROMQL) {
+      return !!query.promQLQuery && !!query.promQLQuery.projectName && !!query.promQLQuery.query;
+    }
+
     return false;
   }
 

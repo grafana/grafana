@@ -12,13 +12,13 @@ import (
 )
 
 func (sloQ *cloudMonitoringSLO) run(ctx context.Context, req *backend.QueryDataRequest,
-	s *Service, dsInfo datasourceInfo, tracer tracing.Tracer) (*backend.DataResponse, cloudMonitoringResponse, string, error) {
+	s *Service, dsInfo datasourceInfo, tracer tracing.Tracer) (*backend.DataResponse, any, string, error) {
 	return runTimeSeriesRequest(ctx, sloQ.logger, req, s, dsInfo, tracer, sloQ.parameters.ProjectName, sloQ.params, nil)
 }
 
 func (sloQ *cloudMonitoringSLO) parseResponse(queryRes *backend.DataResponse,
-	response cloudMonitoringResponse, executedQueryString string) error {
-	return parseTimeSeriesResponse(queryRes, response, executedQueryString, sloQ, sloQ.params, []string{})
+	response any, executedQueryString string) error {
+	return parseTimeSeriesResponse(queryRes, response.(cloudMonitoringResponse), executedQueryString, sloQ, sloQ.params, []string{})
 }
 
 func (sloQ *cloudMonitoringSLO) buildDeepLink() string {

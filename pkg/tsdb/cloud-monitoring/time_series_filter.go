@@ -16,7 +16,7 @@ import (
 )
 
 func (timeSeriesFilter *cloudMonitoringTimeSeriesList) run(ctx context.Context, req *backend.QueryDataRequest,
-	s *Service, dsInfo datasourceInfo, tracer tracing.Tracer) (*backend.DataResponse, cloudMonitoringResponse, string, error) {
+	s *Service, dsInfo datasourceInfo, tracer tracing.Tracer) (*backend.DataResponse, any, string, error) {
 	return runTimeSeriesRequest(ctx, timeSeriesFilter.logger, req, s, dsInfo, tracer, timeSeriesFilter.parameters.ProjectName, timeSeriesFilter.params, nil)
 }
 
@@ -56,8 +56,8 @@ func parseTimeSeriesResponse(queryRes *backend.DataResponse,
 }
 
 func (timeSeriesFilter *cloudMonitoringTimeSeriesList) parseResponse(queryRes *backend.DataResponse,
-	response cloudMonitoringResponse, executedQueryString string) error {
-	return parseTimeSeriesResponse(queryRes, response, executedQueryString, timeSeriesFilter, timeSeriesFilter.params, timeSeriesFilter.parameters.GroupBys)
+	response any, executedQueryString string) error {
+	return parseTimeSeriesResponse(queryRes, response.(cloudMonitoringResponse), executedQueryString, timeSeriesFilter, timeSeriesFilter.params, timeSeriesFilter.parameters.GroupBys)
 }
 
 func (timeSeriesFilter *cloudMonitoringTimeSeriesList) buildDeepLink() string {
