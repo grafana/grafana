@@ -41,7 +41,7 @@ func canBeInstant(r *models.AlertRule) ([]int, bool) {
 		if !t.isLoki() {
 			continue
 		}
-		var reduceIndex int
+		var validReducers bool
 		// Loop over all query nodes to find the reduce node.
 		for ii := range r.Data {
 			// Second query part should be and expression.
@@ -52,19 +52,19 @@ func canBeInstant(r *models.AlertRule) ([]int, bool) {
 			if err := json.Unmarshal(r.Data[ii].Model, &exprRaw); err != nil {
 				continue
 			}
-			// Second query part should be "last()"
-			if val, ok := exprRaw["reducer"].(string); !ok || val != "last" {
-				continue
-			}
 			// Second query part should use first query part as expression.
 			if ref, ok := exprRaw["expression"].(string); !ok || ref != r.Data[i].RefID {
 				continue
 			}
-			reduceIndex = ii
-			break
+			// Second query part should be "last()"
+			if val, ok := exprRaw["reducer"].(string); !ok || val != "last" {
+				validReducers = false
+				break
+			}
+			validReducers = true
 		}
 		// If we found a reduce node that uses last, we can add the loki query to the optimizations.
-		if reduceIndex != 0 {
+		if validReducers {
 			canBeOptimized = true
 			optimizableIndices = append(optimizableIndices, i)
 		}

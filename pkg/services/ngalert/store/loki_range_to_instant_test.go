@@ -2,6 +2,7 @@ package store
 
 import (
 	"encoding/json"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -54,16 +55,18 @@ func TestCanBeInstant(t *testing.T) {
 			name:     "invalid rule that has not last() as aggregation",
 			expected: false,
 			rule: createMigrateableLokiRule(t, func(r *models.AlertRule) {
-				raw := make(map[string]interface{})
-				err := json.Unmarshal(r.Data[1].Model, &raw)
-				require.NoError(t, err)
-				raw["reducer"] = "avg"
-				r.Data[1].Model, err = json.Marshal(raw)
-				require.NoError(t, err)
+				r.Data[1] = reducer(t, "B", "A", "avg")
 			}),
 		},
 		{
-			name:     "invalid rule that has no aggregation as second item",
+			name:     "invalid rule that has not all reducers last()",
+			expected: false,
+			rule: createMigrateableLokiRule(t, func(r *models.AlertRule) {
+				r.Data = append(r.Data, reducer(t, "invalid-reducer", "A", "min"))
+			}),
+		},
+		{
+			name:     "invalid rule that has no aggregation",
 			expected: false,
 			rule: createMigrateableLokiRule(t, func(r *models.AlertRule) {
 				r.Data[1].DatasourceUID = "something-else"
@@ -127,66 +130,44 @@ func TestMigrateLokiQueryToInstant(t *testing.T) {
 	require.False(t, canBeOptimized)
 }
 
+func TestMigrateMultiLokiQueryToInstant(t *testing.T) {
+	original := createMultiQueryMigratableLokiRule(t)
+	mirgrated := createMultiQueryMigratableLokiRule(t, func(r *models.AlertRule) {
+		r.Data[0] = lokiQuery(t, "TotalRequests", "instant", "grafanacloud-logs")
+		r.Data[1] = lokiQuery(t, "TotalErrors", "instant", "grafanacloud-logs")
+	})
+
+	optimizableIndices, canBeOptimized := canBeInstant(original)
+	require.True(t, canBeOptimized)
+	require.NoError(t, migrateToInstant(original, optimizableIndices))
+
+	require.Equal(t, mirgrated.Data[0].QueryType, original.Data[0].QueryType)
+	require.Equal(t, mirgrated.Data[1].QueryType, original.Data[1].QueryType)
+
+	originalModel := make(map[string]interface{})
+	require.NoError(t, json.Unmarshal(original.Data[0].Model, &originalModel))
+	migratedModel := make(map[string]interface{})
+	require.NoError(t, json.Unmarshal(mirgrated.Data[0].Model, &migratedModel))
+
+	require.Equal(t, migratedModel, originalModel)
+
+	originalModel = make(map[string]interface{})
+	require.NoError(t, json.Unmarshal(original.Data[1].Model, &originalModel))
+	migratedModel = make(map[string]interface{})
+	require.NoError(t, json.Unmarshal(mirgrated.Data[1].Model, &migratedModel))
+
+	require.Equal(t, migratedModel, originalModel)
+
+	_, canBeOptimized = canBeInstant(original)
+	require.False(t, canBeOptimized)
+}
+
 func createMigrateableLokiRule(t *testing.T, muts ...func(*models.AlertRule)) *models.AlertRule {
 	t.Helper()
 	r := &models.AlertRule{
 		Data: []models.AlertQuery{
-			{
-				RefID:         "A",
-				QueryType:     "range",
-				DatasourceUID: "grafanacloud-logs",
-				Model: []byte(`{
-					"datasource": {
-						"type": "loki",
-						"uid": "grafanacloud-logs"
-					},
-					"editorMode": "code",
-					"expr": "1",
-					"hide": false,
-					"intervalMs": 1000,
-					"maxDataPoints": 43200,
-					"queryType": "range",
-					"refId": "A"
-				}`),
-			},
-			{
-				RefID:         "B",
-				DatasourceUID: "__expr__",
-				Model: []byte(`{
-					"conditions": [
-						{
-							"evaluator": {
-								"params": [],
-								"type": "gt"
-							},
-							"operator": {
-								"type": "and"
-							},
-							"query": {
-								"params": [
-									"B"
-								]
-							},
-							"reducer": {
-								"params": [],
-								"type": "last"
-							},
-							"type": "query"
-						}
-					],
-					"datasource": {
-						"type": "__expr__",
-						"uid": "__expr__"
-					},
-					"expression": "A",
-					"hide": false,
-					"intervalMs": 1000,
-					"maxDataPoints": 43200,
-					"reducer": "last",
-					"refId": "B",
-					"type": "reduce"
-				}`),
-			},
+			lokiQuery(t, "A", "range", "grafanacloud-logs"),
+			reducer(t, "B", "A", "last"),
 		},
 	}
 	for _, m := range muts {
@@ -199,120 +180,76 @@ func createMultiQueryMigratableLokiRule(t *testing.T, muts ...func(*models.Alert
 	t.Helper()
 	r := &models.AlertRule{
 		Data: []models.AlertQuery{
-			{
-				RefID:         "TotalRequests",
-				QueryType:     "range",
-				DatasourceUID: "grafanacloud-logs",
-				Model: []byte(`{
-					"datasource": {
-						"type": "loki",
-						"uid": "grafanacloud-logs"
-					},
-					"editorMode": "code",
-					"expr": "1",
-					"intervalMs": 1000,
-					"maxDataPoints": 43200,
-					"queryType": "range",
-					"refId": "TotalRequests"
-				}`),
-			},
-			{
-				RefID:         "TotalErrors",
-				QueryType:     "range",
-				DatasourceUID: "grafanacloud-logs",
-				Model: []byte(`{
-					"datasource": {
-						"type": "loki",
-						"uid": "grafanacloud-logs"
-					},
-					"editorMode": "code",
-					"expr": "1",
-					"intervalMs": 1000,
-					"maxDataPoints": 43200,
-					"queryType": "range",
-					"refId": "TotalErrors"
-				}`),
-			},
-			{
-				RefID:         "TotalRequests_Last",
-				DatasourceUID: "__expr__",
-				Model: []byte(`{
-					"conditions": [
-						{
-							"evaluator": {
-								"params": [],
-								"type": "gt"
-							},
-							"operator": {
-								"type": "and"
-							},
-							"query": {
-								"params": [
-									"B"
-								]
-							},
-							"reducer": {
-								"params": [],
-								"type": "last"
-							},
-							"type": "query"
-						}
-					],
-					"datasource": {
-						"type": "__expr__",
-						"uid": "__expr__"
-					},
-					"expression": "TotalRequests",
-					"hide": false,
-					"intervalMs": 1000,
-					"maxDataPoints": 43200,
-					"reducer": "last",
-					"refId": "TotalRequests_Last",
-					"type": "reduce"
-				}`),
-			},
-			{
-				RefID:         "TotalErrors_Last",
-				DatasourceUID: "__expr__",
-				Model: []byte(`{
-					"conditions": [
-						{
-							"evaluator": {
-								"params": [],
-								"type": "gt"
-							},
-							"operator": {
-								"type": "and"
-							},
-							"query": {
-								"params": [
-									"B"
-								]
-							},
-							"reducer": {
-								"params": [],
-								"type": "last"
-							},
-							"type": "query"
-						}
-					],
-					"datasource": {
-						"type": "__expr__",
-						"uid": "__expr__"
-					},
-					"expression": "TotalErrors",
-					"hide": false,
-					"intervalMs": 1000,
-					"maxDataPoints": 43200,
-					"reducer": "last",
-					"refId": "TotalErrors_Last",
-					"type": "reduce"
-				}`),
-			},
+			lokiQuery(t, "TotalRequests", "range", "grafanacloud-logs"),
+			lokiQuery(t, "TotalErrors", "range", "grafanacloud-logs"),
+			reducer(t, "TotalRequests_Last", "TotalRequests", "last"),
+			reducer(t, "TotalErrors_Last", "TotalErrors", "last"),
 		},
 	}
 	for _, m := range muts {
 		m(r)
 	}
 	return r
+}
+func lokiQuery(t *testing.T, refID, queryType, datasourceUID string) models.AlertQuery {
+	t.Helper()
+	return models.AlertQuery{
+		RefID:         refID,
+		QueryType:     queryType,
+		DatasourceUID: datasourceUID,
+		Model: []byte(fmt.Sprintf(`{
+					"datasource": {
+						"type": "loki",
+						"uid": "%s"
+					},
+					"editorMode": "code",
+					"expr": "1",
+					"intervalMs": 1000,
+					"maxDataPoints": 43200,
+					"queryType": "%s",
+					"refId": "%s"
+				}`, datasourceUID, queryType, refID)),
+	}
+}
+
+func reducer(t *testing.T, refID, exp, op string) models.AlertQuery {
+	t.Helper()
+	return models.AlertQuery{
+		RefID:         refID,
+		DatasourceUID: "__expr__",
+		Model: []byte(fmt.Sprintf(`{
+					"conditions": [
+						{
+							"evaluator": {
+								"params": [],
+								"type": "gt"
+							},
+							"operator": {
+								"type": "and"
+							},
+							"query": {
+								"params": [
+									"B"
+								]
+							},
+							"reducer": {
+								"params": [],
+								"type": "%s"
+							},
+							"type": "query"
+						}
+					],
+					"datasource": {
+						"type": "__expr__",
+						"uid": "__expr__"
+					},
+					"expression": "%s",
+					"hide": false,
+					"intervalMs": 1000,
+					"maxDataPoints": 43200,
+					"reducer": "%s",
+					"refId": "%s",
+					"type": "reduce"
+				}`, op, exp, op, refID)),
+	}
 }
