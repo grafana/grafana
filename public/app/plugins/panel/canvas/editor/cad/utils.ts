@@ -32,6 +32,8 @@ export async function handleDxfFile(file: File, canvasLayer: FrameState) {
   console.debug('dxf', dxf); // eslint-disable-line no-console
   console.debug('scene', canvasLayer.scene); // eslint-disable-line no-console
 
+  canvasLayer.elements = [];
+
   dxf.entities.forEach((entity: IEntity) => {
     addEntity(entity, getEntityLayer(entity, dxf.tables.layer), canvasLayer);
   });
@@ -49,8 +51,7 @@ function updateScene(scene: Scene, viewport: IViewPort, layer: FrameState) {
     fixed: fromColorRepr(viewport.ambientColor),
   });
 
-  layer.scene.save();
-  layer.reinitializeMoveable();
+  scene.updateCurrentLayer(layer);
 }
 
 function addEntity(entity: IEntity, entityLayer: ILayer, canvasLayer: FrameState) {
