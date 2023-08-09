@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -116,7 +117,8 @@ type recordingAccessControlFake struct {
 	Callback func(user *user.SignedInUser, evaluator accesscontrol.Evaluator) (bool, error)
 }
 
-func (a *recordingAccessControlFake) Evaluate(ctx context.Context, u *user.SignedInUser, evaluator accesscontrol.Evaluator) (bool, error) {
+func (a *recordingAccessControlFake) Evaluate(ctx context.Context, ur identity.Requester, evaluator accesscontrol.Evaluator) (bool, error) {
+	u := ur.(*user.SignedInUser)
 	a.EvaluateRecordings = append(a.EvaluateRecordings, struct {
 		User      *user.SignedInUser
 		Evaluator accesscontrol.Evaluator
