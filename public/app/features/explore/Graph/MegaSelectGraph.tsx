@@ -5,6 +5,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import {
   AbsoluteTimeRange,
   applyFieldOverrides,
+  ConfigOverrideRule,
   createFieldConfigRegistry,
   DashboardCursorSync,
   DataFrame,
@@ -128,41 +129,42 @@ export function MegaSelectGraph({
     overrides: [],
   });
 
+  const getOverrides = (startOfRow: boolean): ConfigOverrideRule | undefined => {
+    if (startOfRow) {
+      const match = {
+        matcher: {
+          id: 'byName',
+          options: 'Value',
+        },
+        properties: [
+          {
+            id: 'custom.axisWidth',
+            value: 0,
+          },
+        ],
+      };
+      return match;
+    }
+
+    return undefined;
+  };
+
   const styledFieldConfig = useMemo(() => {
     const withGraphStyle = applyGraphStyle(fieldConfig, graphStyle, yAxisMaximum);
 
-    const getOverrides = () => {
-      if (!options.startOfRow) {
-        const match = {
-          matcher: {
-            id: 'byName',
-            options: 'Value',
-          },
-          properties: [
-            {
-              id: 'custom.axisWidth',
-              value: 0,
-            },
-          ],
-        };
-        return [match];
-      }
-
-      return [];
-    };
-
-    return {
-      ...applyThresholdsConfig(withGraphStyle, thresholdsStyle, thresholdsConfig),
-      overrides: getOverrides(),
-    };
-  }, [fieldConfig, graphStyle, yAxisMaximum, thresholdsConfig, thresholdsStyle, options.startOfRow]);
+    return applyThresholdsConfig(withGraphStyle, thresholdsStyle, thresholdsConfig);
+  }, [fieldConfig, graphStyle, yAxisMaximum, thresholdsConfig, thresholdsStyle]);
 
   const dataLinkPostProcessor = useExploreDataLinkPostProcessor(splitOpenFn, timeRange);
   // filterFieldConfigOverrides
 
   const dataWithConfig = useMemo(() => {
+    const overrides = getOverrides(options.startOfRow);
     return applyFieldOverrides({
-      fieldConfig: styledFieldConfig,
+      fieldConfig: {
+        defaults: styledFieldConfig.defaults,
+        overrides: overrides ? [overrides] : styledFieldConfig.overrides,
+      },
       data: showAllTimeSeries ? data : data.slice(0, MAX_NUMBER_OF_TIME_SERIES),
       timeZone,
       replaceVariables: (value) => value, // We don't need proper replace here as it is only used in getLinks and we use getFieldLinks
@@ -170,7 +172,16 @@ export function MegaSelectGraph({
       fieldConfigRegistry,
       dataLinkPostProcessor,
     });
-  }, [fieldConfigRegistry, data, timeZone, theme, styledFieldConfig, showAllTimeSeries, dataLinkPostProcessor]);
+  }, [
+    fieldConfigRegistry,
+    data,
+    timeZone,
+    theme,
+    styledFieldConfig,
+    showAllTimeSeries,
+    dataLinkPostProcessor,
+    options.startOfRow,
+  ]);
 
   // Hacky mutaty setting override options
   dataWithConfig.forEach((frame, frameIndex) => {
