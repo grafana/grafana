@@ -33,6 +33,8 @@ enum OnCallIntegrationStatus {
 }
 
 function useOnCallPluginStatus() {
+  // TODO We should be able to manually disable the OnCall integration or set it to V1 in case of errors
+
   const {
     installed: isOnCallEnabled,
     loading: isPluginBridgeLoading,
