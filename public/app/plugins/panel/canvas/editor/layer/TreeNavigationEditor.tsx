@@ -5,14 +5,14 @@ import React, { Key, useEffect, useMemo, useState } from 'react';
 
 import { GrafanaTheme2, StandardEditorProps } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { Button, HorizontalGroup, Icon, useStyles2, useTheme2 } from '@grafana/ui';
+import { Button, FileUpload, HorizontalGroup, Icon, useStyles2, useTheme2 } from '@grafana/ui';
 import { AddLayerButton } from 'app/core/components/Layers/AddLayerButton';
 import { ElementState } from 'app/features/canvas/runtime/element';
 
 import { getGlobalStyles } from '../../globalStyles';
 import { Options } from '../../panelcfg.gen';
 import { DragNode, DropNode } from '../../types';
-import { doSelect, getElementTypes, onAddItem } from '../../utils';
+import { doSelect, getElementTypes, onAddItem, onImportFile } from '../../utils';
 import { TreeViewEditorProps } from '../element/elementEditor';
 
 import { TreeNodeTitle } from './TreeNodeTitle';
@@ -151,6 +151,16 @@ export const TreeNavigationEditor = ({ item }: StandardEditorProps<any, TreeView
         <div className={styles.addLayerButton}>
           <AddLayerButton onChange={(sel) => onAddItem(sel, layer)} options={typeOptions} label={'Add item'} />
         </div>
+        <div className={styles.uploadFileButtonDiv}>
+          <FileUpload
+            className={styles.uploadFileButton}
+            size="sm"
+            accept=".dxf"
+            onFileUpload={({ currentTarget }) => onImportFile(currentTarget)}
+          >
+            <span>Upload CAD file</span>
+          </FileUpload>
+        </div>
         {selection.length > 0 && (
           <Button size="sm" variant="secondary" onClick={onClearSelection}>
             Clear selection
@@ -169,6 +179,12 @@ export const TreeNavigationEditor = ({ item }: StandardEditorProps<any, TreeView
 const getStyles = (theme: GrafanaTheme2) => ({
   addLayerButton: css`
     margin-left: 18px;
+    min-width: calc(min(100px, 0.05vw));
+  `,
+  uploadFileButton: css`
+    float: right;
+  `,
+  uploadFileButtonDiv: css`
     min-width: 150px;
   `,
 });
