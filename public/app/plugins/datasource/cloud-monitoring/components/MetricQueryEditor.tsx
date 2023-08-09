@@ -63,7 +63,6 @@ function Editor({
   );
 
   useEffect(() => {
-    console.log('query', query);
     if (query.queryType === QueryType.TIME_SERIES_LIST && !query.timeSeriesList) {
       onQueryChange({
         refId: query.refId,
