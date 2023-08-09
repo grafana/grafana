@@ -130,7 +130,8 @@ export function MegaSelectGraph({
   });
 
   const getOverrides = (startOfRow: boolean): ConfigOverrideRule | undefined => {
-    if (startOfRow) {
+    // Hide the axis for all but the first row
+    if (!startOfRow) {
       const match = {
         matcher: {
           id: 'byName',
