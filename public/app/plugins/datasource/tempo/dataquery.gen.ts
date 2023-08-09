@@ -20,7 +20,7 @@ export interface TempoQuery extends common.DataQuery {
    * @deprecated Define the maximum duration to select traces. Use duration format, for example: 1.2s, 100ms
    */
   maxDuration?: string;
-  megaFilters?: Array<string>;
+  megaFilters?: Array<AdHocVariableFilter>;
   megaSpan?: string;
   /**
    * @deprecated Define the minimum duration to select traces. Use duration format, for example: 1.2s, 100ms
@@ -110,6 +110,13 @@ export interface TraceqlFilter {
    * The type of the value, used for example to check whether we need to wrap the value in quotes when generating the query
    */
   valueType?: string;
+}
+
+export interface AdHocVariableFilter {
+  condition: string;
+  key: string;
+  operator: string;
+  value: string;
 }
 
 export interface Tempo {}

@@ -37,6 +37,14 @@ const (
 	TraceqlSearchScopeUnscoped TraceqlSearchScope = "unscoped"
 )
 
+// AdHocVariableFilter defines model for AdHocVariableFilter.
+type AdHocVariableFilter struct {
+	Condition string `json:"condition"`
+	Key       string `json:"key"`
+	Operator  string `json:"operator"`
+	Value     string `json:"value"`
+}
+
 // These are the common properties available to all queries in all datasources.
 // Specific implementations will *extend* this interface, adding the required
 // properties for the given context.
@@ -91,9 +99,9 @@ type TempoQuery struct {
 	Limit *int64 `json:"limit,omitempty"`
 
 	// @deprecated Define the maximum duration to select traces. Use duration format, for example: 1.2s, 100ms
-	MaxDuration *string  `json:"maxDuration,omitempty"`
-	MegaFilters []string `json:"megaFilters,omitempty"`
-	MegaSpan    *string  `json:"megaSpan,omitempty"`
+	MaxDuration *string               `json:"maxDuration,omitempty"`
+	MegaFilters []AdHocVariableFilter `json:"megaFilters,omitempty"`
+	MegaSpan    *string               `json:"megaSpan,omitempty"`
 
 	// @deprecated Define the minimum duration to select traces. Use duration format, for example: 1.2s, 100ms
 	MinDuration *string `json:"minDuration,omitempty"`

@@ -17,6 +17,7 @@ import {
   LoadingState,
   rangeUtil,
   ScopedVars,
+  SelectableValue,
 } from '@grafana/data';
 import {
   BackendSrvRequest,
@@ -60,6 +61,7 @@ import {
   transformTraceList,
 } from './resultTransformer';
 import { doTempoChannelStream } from './streaming';
+import { intrinsics } from './traceql/traceql';
 import { SearchQueryParams, TempoJsonData, TempoQuery } from './types';
 import { getErrorMessage } from './utils';
 
@@ -124,9 +126,42 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     }
   }
 
+  async getTagKeys() {
+    return this.languageProvider.getAutocompleteTags().map((t) => ({ text: t }));
+  }
+
+  async getTagValues(options: { key?: string } = {}) {
+    const pre = intrinsics.find((i) => i === options.key) ? '' : 'span.';
+    const result = await this.languageProvider.getOptionsV2(`${pre}${options.key}` || '');
+    return result?.map((value: SelectableValue) => ({ text: value.value })) ?? [];
+  }
+
   queryMegaSelect(options: DataQueryRequest<TempoQuery>): Observable<DataQueryResponse> {
+    const filters: TraceqlFilter[] = [];
+    if (options.targets[0].megaSpan) {
+      filters.push({
+        id: 'mega-span',
+        tag: 'http.url',
+        operator: '=',
+        scope: TraceqlSearchScope.Span,
+        value: options.targets[0].megaSpan,
+        valueType: FieldType.string,
+      });
+    }
+
+    filters.push(
+      ...(options.targets[0].megaFilters?.map((f, i) => ({
+        id: f.key + i,
+        tag: f.key,
+        operator: f.operator,
+        scope: TraceqlSearchScope.Span,
+        value: f.value,
+        valueType: f.key.includes('.') ? FieldType.string : FieldType.number,
+      })) || [])
+    );
+
     const request = this._request('/api/metrics/megaselect', {
-      q: options.targets[0].megaSpan ? `{span.http.url = "${options.targets[0].megaSpan}"}` : '{}',
+      q: generateQueryFromFilters(filters),
       metric: options.targets[0].view,
       limit: options.targets[0].limit ?? DEFAULT_LIMIT,
       start: options.range.from.unix(),
