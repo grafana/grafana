@@ -140,8 +140,8 @@ export function MegaSelectGraph({
           },
           properties: [
             {
-              id: 'custom.axisPlacement',
-              value: 'hidden',
+              id: 'custom.axisWidth',
+              value: 0,
             },
           ],
         };
@@ -183,6 +183,7 @@ export function MegaSelectGraph({
         custom: {
           ...field.config.custom,
           showPoints: options.mega ? 'auto' : 'never',
+          axisGridShow: options.mega ? 'auto' : true,
         },
       };
     });
