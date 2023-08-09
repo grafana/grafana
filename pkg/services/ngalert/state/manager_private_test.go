@@ -896,14 +896,16 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 					}
 				}
 				t.Run(fmt.Sprintf("execute as %s", stateExec), func(t *testing.T) {
-					t.Run("applyNoDataErrorToAllStates=true", func(t *testing.T) {
-						expectedTransitions, ok := tc.expectedTransitionsApplyNoDataErrorToAllStates[stateExec]
-						if !ok {
-							expectedTransitions, ok = tc.expectedTransitions[stateExec]
-						}
-						if !ok {
-							require.Fail(t, "no expected state transitions")
-						}
+					expectedTransitions, ok := tc.expectedTransitionsApplyNoDataErrorToAllStates[stateExec]
+					overridden := "[*]"
+					if !ok {
+						expectedTransitions, ok = tc.expectedTransitions[stateExec]
+						overridden = ""
+					}
+					if !ok {
+						require.Fail(t, "no expected state transitions")
+					}
+					t.Run("applyNoDataErrorToAllStates=true"+overridden, func(t *testing.T) {
 						executeTest(t, r, tc.results, expectedTransitions, true)
 					})
 					t.Run("applyNoDataErrorToAllStates=false", func(t *testing.T) {
@@ -2441,14 +2443,16 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 					}
 				}
 				t.Run(fmt.Sprintf("execute as %s", stateExec), func(t *testing.T) {
-					t.Run("applyNoDataErrorToAllStates=true", func(t *testing.T) {
-						expectedTransitions, ok := tc.expectedTransitionsApplyNoDataErrorToAllStates[stateExec]
-						if !ok {
-							expectedTransitions, ok = tc.expectedTransitions[stateExec]
-						}
-						if !ok {
-							require.Fail(t, "no expected state transitions")
-						}
+					expectedTransitions, ok := tc.expectedTransitionsApplyNoDataErrorToAllStates[stateExec]
+					overridden := "[*]"
+					if !ok {
+						expectedTransitions, ok = tc.expectedTransitions[stateExec]
+						overridden = ""
+					}
+					if !ok {
+						require.Fail(t, "no expected state transitions")
+					}
+					t.Run("applyNoDataErrorToAllStates=true"+overridden, func(t *testing.T) {
 						executeTest(t, r, tc.results, expectedTransitions, true)
 					})
 					t.Run("applyNoDataErrorToAllStates=false", func(t *testing.T) {
