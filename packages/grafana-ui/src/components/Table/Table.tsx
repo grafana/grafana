@@ -1,3 +1,4 @@
+import { css, cx } from '@emotion/css';
 import React, { CSSProperties, memo, useCallback, useEffect, useMemo, useRef, useState, UIEventHandler } from 'react';
 import {
   Cell,
@@ -219,9 +220,10 @@ export const Table = memo((props: Props) => {
 
       prepareRow(row);
 
+      const expandedRowStyle = state.expanded[row.index] ? css({ '&:hover': { background: 'inherit' } }) : {};
+
       return (
-        <div {...row.getRowProps({ style })} className={tableStyles.row}>
-          {/* TODO add expanded class row element above that disables hover row background when expanded */}
+        <div {...row.getRowProps({ style })} className={cx(tableStyles.row, expandedRowStyle)}>
           {/*add the nested data to the DOM first to prevent a 1px border CSS issue on the last cell of the row*/}
           {nestedDataField && state.expanded[row.index] && (
             <ExpandedRow
