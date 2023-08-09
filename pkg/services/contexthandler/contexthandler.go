@@ -55,12 +55,11 @@ func ProvideService(cfg *setting.Cfg, tokenService auth.UserTokenService, jwtSer
 	authnService authn.Service, anonDeviceService anonymous.Service,
 ) *ContextHandler {
 	return &ContextHandler{
-		Cfg:               cfg,
-		AuthTokenService:  tokenService,
-		JWTAuthService:    jwtService,
-		RemoteCache:       remoteCache,
-		RenderService:     renderService,
-		SQLStore:          sqlStore,
+		Cfg:              cfg,
+		AuthTokenService: tokenService,
+		JWTAuthService:   jwtService,
+		RemoteCache:      remoteCache,
+		RenderService:    renderService, SQLStore: sqlStore,
 		tracer:            tracer,
 		authProxy:         authProxy,
 		authenticator:     authenticator,
@@ -173,7 +172,7 @@ func (h *ContextHandler) Middleware(next http.Handler) http.Handler {
 		if h.Cfg.AuthBrokerEnabled {
 			identity, err := h.AuthnService.Authenticate(ctx, &authn.Request{HTTPRequest: reqContext.Req, Resp: reqContext.Resp})
 			if err != nil {
-				if errors.Is(err, auth.ErrInvalidSessionToken) {
+				if errors.Is(err, auth.ErrInvalidSessionToken) || errors.Is(err, authn.ErrExpiredAccessToken) {
 					// Burn the cookie in case of invalid, expired or missing token
 					reqContext.Resp.Before(h.deleteInvalidCookieEndOfRequestFunc(reqContext))
 				}
