@@ -1,6 +1,8 @@
+/* eslint-disable jsx-a11y/no-static-element-interactions */
 import { css } from '@emotion/css';
 import Moveable from 'moveable';
 import React, { CSSProperties } from 'react';
+import { TransformWrapper, TransformComponent } from 'react-zoom-pan-pinch';
 import { BehaviorSubject, ReplaySubject, Subject, Subscription } from 'rxjs';
 import { first } from 'rxjs/operators';
 import Selecto from 'selecto';
@@ -69,6 +71,10 @@ export class Scene {
   skipNextSelectionBroadcast = false;
   ignoreDataUpdate = false;
   panel: CanvasPanel;
+  contextMenuVisible = false;
+  contextMenuVisibleFun = (v: boolean) => {
+    this.contextMenuVisible = v;
+  };
 
   isPanelEditing = locationService.getSearchObject().editPanel !== undefined;
 
@@ -521,8 +527,6 @@ export class Scene {
         if (targetedElement) {
           targetedElement.applyRotate(event);
         }
-
-        console.log(event);
       })
       .on('rotateEnd', (event) => {
         const targetedElement = this.findElementByTarget(event.target);
@@ -671,20 +675,35 @@ export class Scene {
     const canShowElementTooltip = !this.isEditingEnabled && isTooltipValid;
 
     return (
-      <div key={this.revId} className={this.styles.wrap} style={this.style} ref={this.setRef}>
-        {this.connections.render()}
-        {this.root.render()}
-        {canShowContextMenu && (
-          <Portal>
-            <CanvasContextMenu scene={this} panel={this.panel} />
-          </Portal>
-        )}
-        {canShowElementTooltip && (
-          <Portal>
-            <CanvasTooltip scene={this} />
-          </Portal>
-        )}
-      </div>
+      <TransformWrapper panning={{ disabled: this.contextMenuVisible }} doubleClick={{ mode: 'reset' }}>
+        <TransformComponent>
+          <div
+            key={this.revId}
+            className={this.styles.wrap}
+            style={this.style}
+            ref={this.setRef}
+            onMouseDown={(e) => {
+              if (!this.contextMenuVisible && (e.button === 0 || (e.button === 2 && !e.ctrlKey))) {
+                e.preventDefault();
+                e.stopPropagation();
+              }
+            }}
+          >
+            {this.connections.render()}
+            {this.root.render()}
+            {canShowContextMenu && (
+              <Portal>
+                <CanvasContextMenu scene={this} panel={this.panel} visibleFun={this.contextMenuVisibleFun} />
+              </Portal>
+            )}
+            {canShowElementTooltip && (
+              <Portal>
+                <CanvasTooltip scene={this} />
+              </Portal>
+            )}
+          </div>
+        </TransformComponent>
+      </TransformWrapper>
     );
   }
 }
