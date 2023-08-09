@@ -359,7 +359,7 @@ export function transform(
   return dataFrame;
 }
 
-function getDataLinks(options: ExemplarTraceIdDestination): DataLink[] {
+export function getDataLinks(options: ExemplarTraceIdDestination): DataLink[] {
   const dataLinks: DataLink[] = [];
 
   if (options.datasourceUid) {

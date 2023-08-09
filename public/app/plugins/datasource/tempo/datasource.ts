@@ -38,7 +38,8 @@ import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 
 import { LokiOptions } from '../loki/types';
 import { PrometheusDatasource } from '../prometheus/datasource';
-import { PromQuery } from '../prometheus/types';
+import { getDataLinks } from '../prometheus/result_transformer';
+import { ExemplarTraceIdDestination, PromQuery } from '../prometheus/types';
 
 import { generateQueryFromFilters } from './SearchTraceQLEditor/utils';
 import { TraceqlFilter, TraceqlSearchScope } from './dataquery.gen';
@@ -216,7 +217,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
             labels: {},
           },
           {
-            name: 'traceId',
+            name: 'traceID',
             type: FieldType.string,
             values: [],
             config: {},
@@ -285,7 +286,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
             config: { displayName: r.metric.__value__ },
           },
           {
-            name: 'traceId',
+            name: 'traceID',
             type: FieldType.string,
             values: r.exemplars.map((value) => value[2]), // string to float
             config: { displayName: r.metric.__value__ },
@@ -314,8 +315,29 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
       let groupedFrames: DataFrame[] = [];
       groupFrames(framesByName, groupedFrames);
 
+      const destinations: ExemplarTraceIdDestination[] = [
+        {
+          name: 'traceID',
+          datasourceUid: this.uid,
+        },
+      ];
+      const processedExemplarFrames = [exemplarFrame].map((dataFrame) => {
+        if (destinations?.length) {
+          for (const exemplarTraceIdDestination of destinations) {
+            const traceIDField = dataFrame.fields.find((field) => field.name === exemplarTraceIdDestination.name);
+            if (traceIDField) {
+              const links = getDataLinks(exemplarTraceIdDestination);
+              traceIDField.config.links = traceIDField.config.links?.length
+                ? [...traceIDField.config.links, ...links]
+                : links;
+            }
+          }
+        }
+      });
+
       console.log('groupedFrames', groupedFrames);
       console.log('exemplarFrames', exemplarFrame);
+      console.log('processedExemplarFrames', processedExemplarFrames);
 
       return { data: [...groupedFrames, exemplarFrame] };
     };
