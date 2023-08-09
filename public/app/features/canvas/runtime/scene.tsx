@@ -1,8 +1,8 @@
 /* eslint-disable jsx-a11y/no-static-element-interactions */
 import { css } from '@emotion/css';
 import Moveable from 'moveable';
-import React, { CSSProperties } from 'react';
-import { TransformWrapper, TransformComponent } from 'react-zoom-pan-pinch';
+import React, { createRef, CSSProperties, RefObject } from 'react';
+import { TransformWrapper, TransformComponent, ReactZoomPanPinchContentRef } from 'react-zoom-pan-pinch';
 import { BehaviorSubject, ReplaySubject, Subject, Subscription } from 'rxjs';
 import { first } from 'rxjs/operators';
 import Selecto from 'selecto';
@@ -71,9 +71,17 @@ export class Scene {
   skipNextSelectionBroadcast = false;
   ignoreDataUpdate = false;
   panel: CanvasPanel;
-  contextMenuVisible = false;
-  contextMenuVisibleFun = (v: boolean) => {
-    this.contextMenuVisible = v;
+  contextMenuVisible?: boolean;
+  contextMenuVisibleFun = (visible: boolean) => {
+    this.contextMenuVisible = visible;
+    const transformInstance = this.transformComponentRef?.current?.instance;
+    if (transformInstance) {
+      if (visible) {
+        transformInstance.setup.disabled = true;
+      } else {
+        transformInstance.setup.disabled = false;
+      }
+    }
   };
 
   isPanelEditing = locationService.getSearchObject().editPanel !== undefined;
@@ -90,6 +98,7 @@ export class Scene {
   subscription: Subscription;
 
   targetsToSelect = new Set<HTMLDivElement>();
+  transformComponentRef: RefObject<ReactZoomPanPinchContentRef> | undefined;
 
   constructor(
     cfg: CanvasFrameOptions,
@@ -110,6 +119,7 @@ export class Scene {
 
     this.panel = panel;
     this.connections = new Connections(this);
+    this.transformComponentRef = createRef();
   }
 
   getNextElementName = (isFrame = false) => {
@@ -675,7 +685,7 @@ export class Scene {
     const canShowElementTooltip = !this.isEditingEnabled && isTooltipValid;
 
     return (
-      <TransformWrapper panning={{ disabled: this.contextMenuVisible }} doubleClick={{ mode: 'reset' }}>
+      <TransformWrapper doubleClick={{ mode: 'reset' }} ref={this.transformComponentRef}>
         <TransformComponent>
           <div
             key={this.revId}
@@ -683,6 +693,13 @@ export class Scene {
             style={this.style}
             ref={this.setRef}
             onMouseDown={(e) => {
+              const transformInstance = this.transformComponentRef?.current?.instance;
+              // If pan and zoom is disabled and middle mouse or ctrl + right mouse, don't pan
+              if (transformInstance?.setup.disabled && (e.button === 1 || (e.button === 2 && e.ctrlKey))) {
+                e.preventDefault();
+                e.stopPropagation();
+              }
+              // If context menu is hidden, ignore left mouse or non-ctrl right mouse for pan
               if (!this.contextMenuVisible && (e.button === 0 || (e.button === 2 && !e.ctrlKey))) {
                 e.preventDefault();
                 e.stopPropagation();
