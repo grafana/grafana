@@ -1,7 +1,7 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 import { PromVisualQuery } from '../../../types';
-import { Interaction } from '../types';
+import { Interaction, SuggestionType } from '../types';
 
 export const stateSlice = createSlice({
   name: 'metrics-modal-state',
@@ -43,8 +43,8 @@ export const stateSlice = createSlice({
      * }
      *
      */
-    addInteraction: (state, action: PayloadAction<boolean>) => {
-      // need help?
+    addInteraction: (state, action: PayloadAction<SuggestionType>) => {
+      // AI or Historical?
       const interaction = createInteraction(action.payload);
       const interactions = state.interactions;
       state.interactions = interactions.concat([interaction]);
@@ -107,9 +107,9 @@ export interface PromQailState {
   interactions: Interaction[];
 }
 
-function createInteraction(needHelp: boolean): Interaction {
+export function createInteraction(suggestionType: SuggestionType): Interaction {
   return {
-    needHelp: needHelp,
+    suggestionType: suggestionType,
     prompt: '',
     suggestions: [],
   };

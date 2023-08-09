@@ -12,7 +12,7 @@ import { QuerySuggestionContainer } from './QuerySuggestionContainer';
 import AI_Logo_color from './resources/AI_Logo_color.svg';
 import { callOpenAI, querySuggestions } from './state/helpers';
 import { initialState, stateSlice } from './state/state';
-import { SuggestionType } from './types';
+import { Interaction, SuggestionType } from './types';
 
 // actions to update the state
 const {
@@ -24,6 +24,8 @@ const {
   promptKnowWhatToSeeWithMetric,
   aiIsLoading,
   giveMeHistoricalQueries,
+  addInteraction,
+  updateInteraction,
 } = stateSlice.actions;
 
 export type PromQailProps = {
@@ -140,7 +142,7 @@ export const PromQail = (props: PromQailProps) => {
             </div>
 
             {/* Ask if you know what you want to query? */}
-            {!state.askForQueryHelp ? (
+            {!state.askForQueryHelp && state.interactions.length === 0 && (
               <>
                 <div className={styles.queryQuestion}>Do you know what you want to query?</div>
                 <div className={styles.rightButtonsWrapper}>
@@ -150,8 +152,9 @@ export const PromQail = (props: PromQailProps) => {
                       fill="solid"
                       variant="secondary"
                       onClick={() => {
-                        dispatch(askForQueryHelp(true));
-                        dispatch(knowWhatYouWantToQuery(false));
+                        dispatch(aiIsLoading(true));
+                        dispatch(addInteraction(SuggestionType.Historical));
+                        callOpenAI(dispatch, 0);
                       }}
                     >
                       No
@@ -160,8 +163,7 @@ export const PromQail = (props: PromQailProps) => {
                       fill="solid"
                       variant="primary"
                       onClick={() => {
-                        dispatch(askForQueryHelp(true));
-                        dispatch(knowWhatYouWantToQuery(true));
+                        dispatch(addInteraction(SuggestionType.AI));
                       }}
                     >
                       Yes
@@ -169,92 +171,120 @@ export const PromQail = (props: PromQailProps) => {
                   </div>
                 </div>
               </>
-            ) : state.knowWhatYouWantToQuery ? (
-              <>
-                <div className={styles.textPadding}>What kind of data do you want to see with your metric?</div>
-                <div className={cx(styles.secondaryText, styles.bottomMargin)}>
-                  <div>You do not need to enter in a metric or a label again in the prompt.</div>
-                  <div>Example: I want to monitor request latency, not errors.</div>
-                </div>
-                <div className={styles.textPadding}>
-                  <Input
-                    value={state.promptKnowWhatToSeeWithMetric}
-                    spellCheck={false}
-                    placeholder="Enter prompt"
-                    onChange={(e) => {
-                      const val = e.currentTarget.value;
-                      dispatch(promptKnowWhatToSeeWithMetric(val));
-                    }}
-                  />
-                </div>
-                {!state.aiIsLoading && !state.giveMeAIQueries ? (
-                  <>
-                    <div className={styles.rightButtonsWrapper}>
-                      <div className={styles.rightButtons}>
-                        <Button
-                          className={styles.leftButton}
-                          fill="outline"
-                          variant="secondary"
-                          onClick={() => {
-                            dispatch(askForQueryHelp(false));
-                            dispatch(knowWhatYouWantToQuery(false));
-                          }}
-                        >
-                          Cancel
-                        </Button>
-                        <Button
-                          className={styles.leftButton}
-                          fill="outline"
-                          variant="secondary"
-                          onClick={() => {
-                            // JUST SUGGEST QUERIES AND SHOW THE LIST
-                            dispatch(knowWhatYouWantToQuery(false));
-                            dispatch(giveMeHistoricalQueries(false));
-                            // will need to show some loading while fetching historical queries
-                          }}
-                        >
-                          Suggest queries instead
-                        </Button>
-                        <Button
-                          fill="solid"
-                          variant="primary"
-                          onClick={() => {
-                            dispatch(aiIsLoading(true));
-                            callOpenAI(dispatch, state.promptKnowWhatToSeeWithMetric);
-                          }}
-                        >
-                          Submit
-                        </Button>
-                      </div>
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    {state.aiIsLoading ? (
-                      <>
-                        <div className={styles.loadingMessageContainer}>
-                          Waiting for OpenAI <Spinner className={styles.floatRight} />
-                        </div>
-                      </>
-                    ) : (
-                      // LIST OF SUGGESTED QUERIES FROM AI
-                      <QuerySuggestionContainer
-                        suggestionType={SuggestionType.AI}
-                        querySuggestions={querySuggestions}
-                        closeDrawer={closeDrawer}
-                      />
-                    )}
-                  </>
-                )}
-              </>
-            ) : (
-              // LIST OF SUGGESTED QUERIES FROM HISTORICAL DATA
-              <QuerySuggestionContainer
-                suggestionType={SuggestionType.AI}
-                querySuggestions={querySuggestions}
-                closeDrawer={closeDrawer}
-              />
             )}
+
+            {state.interactions.map((interaction: Interaction, idx: number) => {
+              return (
+                <>
+                  {interaction.suggestionType === SuggestionType.AI ? (
+                    <>
+                      <div className={styles.textPadding}>What kind of data do you want to see with your metric?</div>
+                      <div className={cx(styles.secondaryText, styles.bottomMargin)}>
+                        <div>You do not need to enter in a metric or a label again in the prompt.</div>
+                        <div>Example: I want to monitor request latency, not errors.</div>
+                      </div>
+                      <div className={styles.textPadding}>
+                        <Input
+                          value={state.promptKnowWhatToSeeWithMetric}
+                          spellCheck={false}
+                          placeholder="Enter prompt"
+                          onChange={(e) => {
+                            const prompt = e.currentTarget.value;
+
+                            const payload = {
+                              idx: idx,
+                              interaction: { ...interaction, prompt },
+                            };
+
+                            dispatch(updateInteraction(payload));
+                          }}
+                        />
+                      </div>
+                      {interaction.suggestions.length === 0 ? (
+                        state.aiIsLoading ? (
+                          <>
+                            <div className={styles.loadingMessageContainer}>
+                              Waiting for OpenAI <Spinner className={styles.floatRight} />
+                            </div>
+                          </>
+                        ) : (
+                          <>
+                            <div className={styles.rightButtonsWrapper}>
+                              <div className={styles.rightButtons}>
+                                <Button
+                                  className={styles.leftButton}
+                                  fill="outline"
+                                  variant="secondary"
+                                  onClick={closeDrawer}
+                                >
+                                  Cancel
+                                </Button>
+                                <Button
+                                  className={styles.leftButton}
+                                  fill="outline"
+                                  variant="secondary"
+                                  onClick={() => {
+                                    dispatch(aiIsLoading(true));
+
+                                    // JUST SUGGEST QUERIES AND SHOW THE LIST
+                                    const newInteraction: Interaction = {
+                                      ...interaction,
+                                      suggestionType: SuggestionType.Historical,
+                                    };
+
+                                    const payload = {
+                                      idx: idx,
+                                      interaction: newInteraction,
+                                    };
+
+                                    dispatch(updateInteraction(payload));
+                                    callOpenAI(dispatch, idx, newInteraction);
+                                  }}
+                                >
+                                  Suggest queries instead
+                                </Button>
+                                <Button
+                                  fill="solid"
+                                  variant="primary"
+                                  onClick={() => {
+                                    dispatch(aiIsLoading(true));
+                                    // add the suggestions in the API call
+                                    callOpenAI(dispatch, idx, interaction);
+                                  }}
+                                >
+                                  Submit
+                                </Button>
+                              </div>
+                            </div>
+                          </>
+                        )
+                      ) : (
+                        // LIST OF SUGGESTED QUERIES FROM AI
+                        <QuerySuggestionContainer
+                          suggestionType={SuggestionType.AI}
+                          querySuggestions={interaction.suggestions}
+                          closeDrawer={closeDrawer}
+                        />
+                      )}
+                    </>
+                  ) : // HISTORICAL SUGGESTIONS
+                  state.aiIsLoading ? (
+                    <>
+                      <div className={styles.loadingMessageContainer}>
+                        Waiting for OpenAI <Spinner className={styles.floatRight} />
+                      </div>
+                    </>
+                  ) : (
+                    // LIST OF SUGGESTED QUERIES FROM HISTORICAL DATA
+                    <QuerySuggestionContainer
+                      suggestionType={SuggestionType.Historical}
+                      querySuggestions={interaction.suggestions}
+                      closeDrawer={closeDrawer}
+                    />
+                  )}
+                </>
+              );
+            })}
           </>
         )}
       </div>
