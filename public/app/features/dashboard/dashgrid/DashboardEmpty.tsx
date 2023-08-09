@@ -53,7 +53,7 @@ const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
             />
             <Button
               size="md"
-              icon="grafana"
+              icon="ai"
               data-testid={selectors.pages.AddDashboard.itemButton('Create new panel button')}
               onClick={() => {
                 setAssitsLoading(true);
@@ -74,9 +74,13 @@ const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
                   }
                 });
               }}
-              disabled={!canCreate}
+              disabled={assitsLoading}
             >
-              {assitsLoading ? <LoadingPlaceholder text="Generating response..." /> : 'Generate dashboard'}
+              {assitsLoading ? (
+                <LoadingPlaceholder text="Generating response" className={styles.loadingPlaceholder} />
+              ) : (
+                'Generate dashboard'
+              )}
             </Button>
           </div>
         </div>
@@ -285,6 +289,9 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     bodySmall: css({
       marginBottom: theme.spacing.gridSize * 3,
+    }),
+    loadingPlaceholder: css({
+      marginBottom: 0,
     }),
   };
 }
