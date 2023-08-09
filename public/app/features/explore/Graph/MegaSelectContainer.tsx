@@ -36,6 +36,8 @@ interface Props extends Pick<PanelChromeProps, 'statusMessage'> {
     view?: string;
     endpoint?: string;
     mega?: boolean;
+    minValue: number;
+    maxValue: number;
   };
 }
 

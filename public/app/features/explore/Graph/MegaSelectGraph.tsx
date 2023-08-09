@@ -18,6 +18,7 @@ import {
   ThresholdsConfig,
   DashboardCursorSync,
   EventBus,
+  FieldConfig,
 } from '@grafana/data';
 import { PanelRenderer } from '@grafana/runtime';
 import {
@@ -71,6 +72,8 @@ interface Props {
     view?: string;
     endpoint?: string;
     mega?: boolean;
+    minValue: number;
+    maxValue: number;
   };
 }
 
@@ -149,11 +152,19 @@ export function MegaSelectGraph({
       dataLinkPostProcessor,
     });
   }, [fieldConfigRegistry, data, timeZone, theme, styledFieldConfig, showAllTimeSeries, dataLinkPostProcessor]);
-  dataWithConfig.forEach((frame) => {
-    frame.fields.forEach((field) => {
+
+  // Hacky mutaty setting override options
+  dataWithConfig.forEach((frame, frameIndex) => {
+    frame.fields.forEach((field, fieldIndex) => {
       field.config = {
         ...field.config,
-        custom: { ...field.config.custom, showPoints: options.mega ? 'auto' : 'never' },
+        unit: 's',
+        min: options.minValue,
+        max: options.maxValue,
+        custom: {
+          ...field.config.custom,
+          showPoints: options.mega ? 'auto' : 'never',
+        },
       };
     });
   });

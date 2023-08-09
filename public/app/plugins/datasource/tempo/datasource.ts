@@ -335,10 +335,6 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
         }
       });
 
-      console.log('groupedFrames', groupedFrames);
-      console.log('exemplarFrames', exemplarFrame);
-      console.log('processedExemplarFrames', processedExemplarFrames);
-
       return { data: [...groupedFrames, exemplarFrame] };
     };
 

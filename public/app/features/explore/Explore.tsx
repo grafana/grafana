@@ -10,6 +10,7 @@ import {
   AbsoluteTimeRange,
   DataFrame,
   EventBus,
+  FieldType,
   GrafanaTheme2,
   hasToggleableQueryFiltersSupport,
   LoadingState,
@@ -391,8 +392,6 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
     const graphResultClone: DataFrame[] = JSON.parse(JSON.stringify(graphResult));
 
     const filterExemplars = (exemplars: DataFrame[], targetFrame: DataFrame): DataFrame[] => {
-      console.log('exemplars', exemplars);
-      console.log('targetFrame', targetFrame);
       const result = exemplars.map((exemplar) => {
         let newExemplar: DataFrame;
         newExemplar = cloneDeep(exemplar);
@@ -424,8 +423,33 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
         newExemplar.length = newExemplar.fields[0].values.length;
         return newExemplar;
       });
-      console.log('filtered Exemplars', result);
       return result;
+    };
+
+    const getMinMax = (dataFrames: DataFrame[]): { minValue: number; maxValue: number } => {
+      let min = Infinity;
+      let max = 0;
+
+      dataFrames?.forEach((frame) => {
+        frame.fields
+          .filter((f) => f.type === FieldType.number)
+          .forEach((field) => {
+            for (let i = 0; i < field.values.length; i++) {
+              const value = field.values.get(i);
+              if (min > value) {
+                min = value;
+              }
+              if (max < value) {
+                max = value;
+              }
+            }
+          });
+      });
+
+      return {
+        minValue: min,
+        maxValue: max,
+      };
     };
 
     //@todo just grabbing first timeseries as megaSelect for now
@@ -439,8 +463,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
       getMegaSelect.length = getMegaSelect.fields[0].values.length;
     }
 
-    console.log('queryresponse.annotations', queryResponse.annotations);
-    console.log('dataframes', graphResult);
+    const minMax = getMinMax(panelsToRender);
 
     return (
       <div className={styles.megaSelectWrapper}>
@@ -450,6 +473,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
               view: megaSelectView,
               endpoint: megaSelectEndpoint,
               mega: true,
+              ...getMinMax([getMegaSelect]),
             }}
             data={[getMegaSelect]}
             height={300}
@@ -483,6 +507,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
                     view: megaSelectView,
                     endpoint: megaSelectEndpoint,
                     mega: false,
+                    ...minMax,
                   }}
                 />
               </div>
