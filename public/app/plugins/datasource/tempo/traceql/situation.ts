@@ -1,6 +1,6 @@
 import { SyntaxNode, Tree } from '@lezer/common';
 
-import { AttributeField, FieldExpression, FieldOp, parser, SpansetFilter } from '@grafana/lezer-traceql';
+import { AttributeField, FieldExpression, FieldOp, parser, SpansetFilter, TraceQL } from '@grafana/lezer-traceql';
 
 type Direction = 'parent' | 'firstChild' | 'lastChild' | 'nextSibling' | 'prevSibling';
 type NodeType = number;
@@ -37,6 +37,9 @@ export type SituationType =
     }
   | {
       type: 'SPANSET_AFTER_VALUE';
+    }
+  | {
+      type: 'SPANSET_COMBINING_OPERATORS';
     };
 
 type Path = Array<[Direction, NodeType[]]>;
@@ -153,6 +156,14 @@ const RESOLVERS: Resolver[] = [
   {
     path: [SpansetFilter],
     fun: resolveSpanset,
+  },
+  {
+    path: [TraceQL],
+    fun: () => {
+      return {
+        type: 'SPANSET_COMBINING_OPERATORS',
+      };
+    },
   },
 ];
 

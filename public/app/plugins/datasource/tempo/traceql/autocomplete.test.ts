@@ -237,6 +237,17 @@ describe('CompletionProvider', () => {
       )
     );
   });
+
+  it('suggests spanset combining operators after spanset selector', async () => {
+    const { provider, model } = setup('{.foo=300} ', 11, v1Tags);
+    const result = await provider.provideCompletionItems(
+      model as unknown as monacoTypes.editor.ITextModel,
+      {} as monacoTypes.Position
+    );
+    expect((result! as monacoTypes.languages.CompletionList).suggestions).toEqual(
+      CompletionProvider.spansetOps.map((s) => expect.objectContaining({ label: s, insertText: s }))
+    );
+  });
 });
 
 function setup(value: string, offset: number, tagsV1?: string[], tagsV2?: Scope[]) {
