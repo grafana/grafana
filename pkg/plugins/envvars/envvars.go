@@ -98,7 +98,7 @@ func (s *Service) featureToggleEnableVar(ctx context.Context) []string {
 				features[i] = feat
 				i++
 			}
-			variables = append(variables, fmt.Sprintf("GF_INSTANCE_FEATURE_TOGGLES_ENABLE=%s", strings.Join(features[:], ",")))
+			variables = append(variables, fmt.Sprintf("GF_INSTANCE_FEATURE_TOGGLES_ENABLE=%s", strings.Join(features, ",")))
 		}
 	}
 
