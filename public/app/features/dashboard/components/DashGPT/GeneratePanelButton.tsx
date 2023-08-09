@@ -28,12 +28,13 @@ export const GeneratePanelButton = () => {
 interface GeneratePanelDrawerProps {
   onDismiss: () => void;
 }
-const GeneratePanelDrawer = ({ onDismiss }: GeneratePanelDrawerProps) => {
+
+export const GeneratePanelDrawer = ({ onDismiss }: GeneratePanelDrawerProps) => {
   const styles = useStyles2(getStyles);
 
-  const [promptValue, setPromptValue] = useState<string>('');
-  const [isLoading, setIsLoading] = useState<boolean>(false);
   const dashboard = getDashboardSrv().getCurrent();
+
+  const [isLoading, setIsLoading] = useState<boolean>(false);
 
   const getContent = () => {
     return (
@@ -56,16 +57,11 @@ const GeneratePanelDrawer = ({ onDismiss }: GeneratePanelDrawerProps) => {
           AI-generated panels may not always work correctly or may require further refinement. Always take a moment to
           review the new panel.
         </p>
-        <p>Please introduce a description that explains what do you wanna see in your panel</p>
       </div>
     );
   };
 
-  const onInputChange = (value: string) => {
-    setPromptValue(value);
-  };
-
-  let onSubmitUserInput = async () => {
+  let onSubmitUserInput = async (promptValue: string) => {
     setIsLoading(true);
     const response = await onGeneratePanelWithAI(dashboard!, promptValue);
     const parsedResponse = JSON.parse(response);
@@ -81,6 +77,28 @@ const GeneratePanelDrawer = ({ onDismiss }: GeneratePanelDrawerProps) => {
   return (
     <Drawer title={'Panel Generator'} onClose={onDismiss} scrollableContent>
       {getContent()}
+      <UserPrompt onSubmitUserInput={onSubmitUserInput} isLoading={isLoading} />
+    </Drawer>
+  );
+};
+
+interface UserPromptProps {
+  onSubmitUserInput: (userInput: string) => void;
+  isLoading: boolean;
+}
+
+export const UserPrompt = ({ onSubmitUserInput, isLoading }: UserPromptProps) => {
+  const styles = useStyles2(getStyles);
+
+  const [promptValue, setPromptValue] = useState<string>('');
+
+  const onInputChange = (value: string) => {
+    setPromptValue(value);
+  };
+
+  return (
+    <div>
+      <p>Please introduce a description that explains what do you wanna see in your panel</p>
       <div className={styles.wrapper}>
         <TextArea
           placeholder="Tell us something"
@@ -89,9 +107,11 @@ const GeneratePanelDrawer = ({ onDismiss }: GeneratePanelDrawerProps) => {
           className={styles.textArea}
         />
         {isLoading && <Spinner />}
-        {!isLoading && <IconButton name="message" aria-label="message" onClick={onSubmitUserInput} />}
+        {!isLoading && (
+          <IconButton name="message" aria-label="message" onClick={() => onSubmitUserInput(promptValue)} />
+        )}
       </div>
-    </Drawer>
+    </div>
   );
 };
 

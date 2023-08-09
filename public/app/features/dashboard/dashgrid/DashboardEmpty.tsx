@@ -4,19 +4,18 @@ import React from 'react';
 import { GrafanaTheme2, PanelModel } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config, locationService, reportInteraction } from '@grafana/runtime';
-import { Panel } from '@grafana/schema';
-import { Button, useStyles2, Text, TextArea, LoadingPlaceholder } from '@grafana/ui';
+import { Button, useStyles2, Text, TextArea, LoadingPlaceholder, ModalsController } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
 import { DashboardModel } from 'app/features/dashboard/state';
 import {
   onAddLibraryPanel,
   onCreateNewPanel,
   onCreateNewRow,
-  onGenerateDashboardWithAI,
   onGenerateDashboardWithSemanticSearch,
 } from 'app/features/dashboard/utils/dashboard';
 import { useDispatch, useSelector } from 'app/types';
 
+import { GenerateDashboardDrawer } from '../components/DashGPT/GenerateDashboardlDrawer';
 import { setInitialDatasource } from '../state/reducers';
 
 export interface Props {
@@ -30,22 +29,6 @@ const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
   const initialDatasource = useSelector((state) => state.dashboard.initialDatasource);
   const [assitsDescription, setAssitsDescription] = React.useState('');
   const [assitsLoading, setAssitsLoading] = React.useState(false);
-
-  const onGenerateDashboard = async () => {
-    setAssitsLoading(true);
-    try {
-      const generatedDashboard = await onGenerateDashboardWithAI(assitsDescription);
-      if (generatedDashboard?.panels) {
-        generatedDashboard?.panels.forEach((panel: Panel) => {
-          dashboard.addPanel(panel);
-        });
-      }
-    } catch (err) {
-      // @TODO: Show error in the UI
-      console.log(err);
-    }
-    setAssitsLoading(false);
-  };
 
   const onSearchDashboard = async () => {
     setAssitsLoading(true);
@@ -63,6 +46,23 @@ const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
         dashboard.addPanel(panel);
       });
     }
+  };
+
+  const generateDashboardButton = () => {
+    return (
+      <ModalsController key="button-save">
+        {({ showModal, hideModal }) => (
+          <Button
+            size="md"
+            icon="ai"
+            data-testid={selectors.pages.AddDashboard.itemButton('Create new panel button')}
+            onClick={() => showModal(GenerateDashboardDrawer, { onDismiss: hideModal })}
+          >
+            Generate dashboard
+          </Button>
+        )}
+      </ModalsController>
+    );
   };
 
   return (
@@ -86,19 +86,7 @@ const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
               onChange={(e) => setAssitsDescription(e.currentTarget.value)}
               value={assitsDescription}
             />
-            <Button
-              size="md"
-              icon="ai"
-              data-testid={selectors.pages.AddDashboard.itemButton('Create new panel button')}
-              onClick={onGenerateDashboard}
-              disabled={assitsLoading}
-            >
-              {assitsLoading ? (
-                <LoadingPlaceholder text="Generating response" className={styles.loadingPlaceholder} />
-              ) : (
-                'Generate dashboard with DashGPT'
-              )}
-            </Button>
+            {generateDashboardButton()}
             <Button
               size="md"
               icon="ai"
