@@ -223,14 +223,6 @@ _Generally available in all editions of Grafana_
 
 The Loki and Elasticsearch data source configuration pages have been redesigned to make getting started and setting up data sources as simple and easy to understand as possible. You can now find new subsections with links to documentation pages, as well as tooltips to assist you with configuring and customizing data sources.
 
-### Loki query splitting
-
-<!-- Matías Wenceslao Chomicki -->
-
-_Generally available in all editions of Grafana_
-
-In response to different query performance scenarios, we've implemented query splitting. Now, queries that request more than a day of data are split into sub-requests, each with a duration of one day. For example, requesting seven days of logs will produce seven requests of one day.
-
 ### Easier to use query editor for Elasticsearch
 
 <!-- Gabor Farkas -->
