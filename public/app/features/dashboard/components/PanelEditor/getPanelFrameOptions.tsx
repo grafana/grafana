@@ -12,6 +12,7 @@ import { fetchData, regenerateResponseWithFeedback, SPECIAL_DONE_TOKEN } from '.
 import { OptionPaneRenderProps } from './types';
 import { getGeneratePayloadForTitle } from './utils';
 
+// TODO: Consider saving these to local storage on a panel by panel basis? May not be necessary for demo purposes
 let llmReplyTitle = '';
 let llmReplyDescription = '';
 
