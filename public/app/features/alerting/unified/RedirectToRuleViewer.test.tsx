@@ -59,6 +59,17 @@ describe('Redirect to Rule viewer', () => {
     expect(screen.getAllByText('Cloud test alert')).toHaveLength(2);
   });
 
+  it('should show no rules if empty response', () => {
+    jest.mocked(combinedRuleHooks.useCloudCombinedRulesMatching).mockReturnValue({
+      rules: [],
+      loading: false,
+      error: undefined,
+    });
+    mockRuleSourceByName();
+    renderRedirectToRuleViewer('/alerting/test prom/prom alert/find');
+    expect(screen.getByTestId('no-rules')).toBeInTheDocument();
+  });
+
   it('should redirect to view rule page if only one match', () => {
     jest.mocked(combinedRuleHooks.useCloudCombinedRulesMatching).mockReturnValue({
       rules: [mockedRules[0]],
