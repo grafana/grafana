@@ -57,6 +57,11 @@ export const onCallApi = alertingApi.injectEndpoints({
       }),
       invalidatesTags: ['OnCallIntegrations'],
     }),
+    features: build.query<string[], void>({
+      query: () => ({
+        url: '/api/plugin-proxy/grafana-oncall-app/api/internal/v1/features/',
+      }),
+    }),
   }),
 });
 

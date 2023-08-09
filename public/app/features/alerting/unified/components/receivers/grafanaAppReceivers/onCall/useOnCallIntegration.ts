@@ -21,6 +21,8 @@ export enum OnCallIntegrationSetting {
   IntegrationName = 'integration_name',
 }
 
+const ONCALL_INTEGRATION_V2_FEATURE = 'grafana_alerting_v2';
+
 enum OnCallIntegrationStatus {
   Disabled = 'disabled',
   // The old integration done exclusively on the OnCall side
@@ -41,14 +43,22 @@ function useOnCallPluginStatus() {
     error: pluginError,
   } = usePluginBridge(SupportedPlugin.OnCall);
 
+  const {
+    data: onCallFeatures = [],
+    error: onCallFeaturesError,
+    isLoading: isOnCallFeaturesLoading,
+  } = onCallApi.endpoints.features.useQuery(undefined, { skip: !isOnCallEnabled });
+
   const integrationStatus = useMemo((): OnCallIntegrationStatus => {
     if (!isOnCallEnabled) {
       return OnCallIntegrationStatus.Disabled;
     }
     // TODO Support for V2 integration should be added when the OnCall team introduces the necessary changes
 
-    return OnCallIntegrationStatus.V2;
-  }, [isOnCallEnabled]);
+    return onCallFeatures.includes(ONCALL_INTEGRATION_V2_FEATURE)
+      ? OnCallIntegrationStatus.V2
+      : OnCallIntegrationStatus.V1;
+  }, [isOnCallEnabled, onCallFeatures]);
 
   const isAlertingV2IntegrationEnabled = useMemo(
     () => integrationStatus === OnCallIntegrationStatus.V2,
@@ -59,8 +69,8 @@ function useOnCallPluginStatus() {
     isOnCallEnabled,
     integrationStatus,
     isAlertingV2IntegrationEnabled,
-    isOnCallStatusLoading: isPluginBridgeLoading,
-    onCallError: pluginError,
+    isOnCallStatusLoading: isPluginBridgeLoading || isOnCallFeaturesLoading,
+    onCallError: pluginError ?? onCallFeaturesError,
   };
 }
 
