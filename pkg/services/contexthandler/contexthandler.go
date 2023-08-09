@@ -4,7 +4,6 @@ package contexthandler
 import (
 	"context"
 	"errors"
-	"fmt"
 	"net/http"
 
 	"github.com/grafana/grafana/pkg/api/response"
@@ -82,7 +81,6 @@ func CopyWithReqContext(ctx context.Context) context.Context {
 // Middleware provides a middleware to initialize the request context.
 func (h *ContextHandler) Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Println("GET HERE")
 		ctx := r.Context()
 		mContext := web.FromContext(ctx)
 		_, span := h.tracer.Start(ctx, "Auth - Middleware")
