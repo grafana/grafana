@@ -14,15 +14,12 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
-	"github.com/grafana/grafana/pkg/plugins/manager/loader/angular/angularinspector"
-	"github.com/grafana/grafana/pkg/plugins/manager/loader/assetpath"
 	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/bootstrap"
 	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/discovery"
 	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/initialization"
 	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/termination"
-	"github.com/grafana/grafana/pkg/plugins/manager/signature"
+	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/validation"
 	"github.com/grafana/grafana/pkg/plugins/manager/sources"
-	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	"github.com/grafana/grafana/pkg/services/org"
 )
 
@@ -61,12 +58,11 @@ func TestLoader_Load(t *testing.T) {
 		return
 	}
 	tests := []struct {
-		name         string
-		class        plugins.Class
-		cfg          *config.Cfg
-		pluginPaths  []string
-		want         []*plugins.Plugin
-		pluginErrors map[string]*plugins.Error
+		name        string
+		class       plugins.Class
+		cfg         *config.Cfg
+		pluginPaths []string
+		want        []*plugins.Plugin
 	}{
 		{
 			name:        "Load a Core plugin",
@@ -272,18 +268,13 @@ func TestLoader_Load(t *testing.T) {
 					Signature: "unsigned",
 				},
 			},
-		}, {
+		},
+		{
 			name:        "Load an unsigned plugin (production)",
 			class:       plugins.ClassExternal,
 			cfg:         &config.Cfg{},
 			pluginPaths: []string{"../testdata/unsigned-datasource"},
 			want:        []*plugins.Plugin{},
-			pluginErrors: map[string]*plugins.Error{
-				"test-datasource": {
-					PluginID:  "test-datasource",
-					ErrorCode: "signatureMissing",
-				},
-			},
 		},
 		{
 			name:  "Load an unsigned plugin using PluginsAllowUnsigned config (production)",
@@ -330,12 +321,6 @@ func TestLoader_Load(t *testing.T) {
 			cfg:         &config.Cfg{},
 			pluginPaths: []string{"../testdata/lacking-files"},
 			want:        []*plugins.Plugin{},
-			pluginErrors: map[string]*plugins.Error{
-				"test-datasource": {
-					PluginID:  "test-datasource",
-					ErrorCode: "signatureInvalid",
-				},
-			},
 		},
 		{
 			name:  "Load a plugin with v1 manifest using PluginsAllowUnsigned config (production) should return signatureInvali",
@@ -345,12 +330,6 @@ func TestLoader_Load(t *testing.T) {
 			},
 			pluginPaths: []string{"../testdata/lacking-files"},
 			want:        []*plugins.Plugin{},
-			pluginErrors: map[string]*plugins.Error{
-				"test-datasource": {
-					PluginID:  "test-datasource",
-					ErrorCode: "signatureInvalid",
-				},
-			},
 		},
 		{
 			name:  "Load a plugin with manifest which has a file not found in plugin folder",
@@ -360,12 +339,6 @@ func TestLoader_Load(t *testing.T) {
 			},
 			pluginPaths: []string{"../testdata/invalid-v2-missing-file"},
 			want:        []*plugins.Plugin{},
-			pluginErrors: map[string]*plugins.Error{
-				"test-datasource": {
-					PluginID:  "test-datasource",
-					ErrorCode: "signatureModified",
-				},
-			},
 		},
 		{
 			name:  "Load a plugin with file which is missing from the manifest",
@@ -375,12 +348,6 @@ func TestLoader_Load(t *testing.T) {
 			},
 			pluginPaths: []string{"../testdata/invalid-v2-extra-file"},
 			want:        []*plugins.Plugin{},
-			pluginErrors: map[string]*plugins.Error{
-				"test-datasource": {
-					PluginID:  "test-datasource",
-					ErrorCode: "signatureModified",
-				},
-			},
 		},
 		{
 			name:  "Load an app with includes",
@@ -434,30 +401,18 @@ func TestLoader_Load(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		angularInspector, err := angularinspector.NewStaticInspector()
-		require.NoError(t, err)
-
-		terminationStage, err := termination.New(tt.cfg, termination.Opts{})
-		require.NoError(t, err)
-
-		l := New(tt.cfg, signature.NewUnsignedAuthorizer(tt.cfg), fakes.NewFakePluginRegistry(),
-			fakes.NewFakeProcessManager(), fakes.NewFakeRoleRegistry(),
-			assetpath.ProvideService(pluginscdn.ProvideService(tt.cfg)), angularInspector, &fakes.FakeOauthService{},
-			discovery.New(tt.cfg, discovery.Opts{}), bootstrap.New(tt.cfg, bootstrap.Opts{}),
-			initialization.New(tt.cfg, initialization.Opts{}),
-			terminationStage)
-
 		t.Run(tt.name, func(t *testing.T) {
+			terminationStage, err := termination.New(tt.cfg, termination.Opts{})
+			require.NoError(t, err)
+
+			l := New(discovery.New(tt.cfg, discovery.Opts{}), bootstrap.New(tt.cfg, bootstrap.Opts{}),
+				validation.New(tt.cfg, validation.Opts{}), initialization.New(tt.cfg, initialization.Opts{}),
+				terminationStage)
+
 			got, err := l.Load(context.Background(), sources.NewLocalSource(tt.class, tt.pluginPaths))
 			require.NoError(t, err)
 			if !cmp.Equal(got, tt.want, compareOpts...) {
 				t.Fatalf("Result mismatch (-want +got):\n%s", cmp.Diff(got, tt.want, compareOpts...))
-			}
-
-			pluginErrs := l.PluginErrors()
-			require.Equal(t, len(tt.pluginErrors), len(pluginErrs))
-			for _, pluginErr := range pluginErrs {
-				require.Equal(t, tt.pluginErrors[pluginErr.PluginID], pluginErr)
 			}
 		})
 	}
@@ -474,41 +429,41 @@ func TestLoader_Load(t *testing.T) {
 				return plugins.Signature{}, false
 			},
 		}
-		pJSON := plugins.JSONData{ID: "test-datasource", Type: plugins.TypeDataSource, Info: plugins.Info{Version: "1.0.0"}}
-		p := &plugins.Plugin{
-			JSONData:      pJSON,
+		pluginJSON := plugins.JSONData{ID: "test-datasource", Type: plugins.TypeDataSource, Info: plugins.Info{Version: "1.0.0"}}
+		plugin := &plugins.Plugin{
+			JSONData:      pluginJSON,
 			Signature:     plugins.SignatureStatusValid,
 			SignatureType: plugins.SignatureTypeCommunity,
 			FS:            plugins.NewFakeFS(),
 		}
 
-		cfg := &config.Cfg{}
-		angularInspector, err := angularinspector.NewStaticInspector()
-		require.NoError(t, err)
-
 		var steps []string
-		l := New(cfg, signature.NewUnsignedAuthorizer(cfg), fakes.NewFakePluginRegistry(), fakes.NewFakeProcessManager(),
-			fakes.NewFakeRoleRegistry(), assetpath.ProvideService(pluginscdn.ProvideService(cfg)),
-			angularInspector, &fakes.FakeOauthService{},
+		l := New(
 			&fakes.FakeDiscoverer{
 				DiscoverFunc: func(ctx context.Context, s plugins.PluginSource) ([]*plugins.FoundBundle, error) {
 					require.Equal(t, src, s)
 					steps = append(steps, "discover")
-					return []*plugins.FoundBundle{{Primary: plugins.FoundPlugin{JSONData: pJSON}}}, nil
+					return []*plugins.FoundBundle{{Primary: plugins.FoundPlugin{JSONData: pluginJSON}}}, nil
 				},
 			}, &fakes.FakeBootstrapper{
 				BootstrapFunc: func(ctx context.Context, s plugins.PluginSource, b []*plugins.FoundBundle) ([]*plugins.Plugin, error) {
 					require.True(t, len(b) == 1)
-					require.Equal(t, b[0].Primary.JSONData, pJSON)
+					require.Equal(t, b[0].Primary.JSONData, pluginJSON)
 					require.Equal(t, src, s)
 
 					steps = append(steps, "bootstrap")
-					return []*plugins.Plugin{p}, nil
+					return []*plugins.Plugin{plugin}, nil
 				},
-			}, &fakes.FakeInitializer{
+			}, &fakes.FakeValidator{ValidateFunc: func(ctx context.Context, ps []*plugins.Plugin) ([]*plugins.Plugin, error) {
+				require.Equal(t, []*plugins.Plugin{plugin}, ps)
+
+				steps = append(steps, "validate")
+				return ps, nil
+			}},
+			&fakes.FakeInitializer{
 				IntializeFunc: func(ctx context.Context, ps []*plugins.Plugin) ([]*plugins.Plugin, error) {
 					require.True(t, len(ps) == 1)
-					require.Equal(t, ps[0].JSONData, pJSON)
+					require.Equal(t, ps[0].JSONData, pluginJSON)
 					steps = append(steps, "initialize")
 					return ps, nil
 				},
@@ -516,19 +471,14 @@ func TestLoader_Load(t *testing.T) {
 
 		got, err := l.Load(context.Background(), src)
 		require.NoError(t, err)
-		require.Equal(t, []*plugins.Plugin{p}, got)
-		require.Equal(t, []string{"discover", "bootstrap", "initialize"}, steps)
-		require.Zero(t, len(l.PluginErrors()))
+		require.Equal(t, []*plugins.Plugin{plugin}, got)
+		require.Equal(t, []string{"discover", "bootstrap", "validate", "initialize"}, steps)
 	})
 }
 
 func TestLoader_Unload(t *testing.T) {
 	t.Run("Termination stage error is returned from Unload", func(t *testing.T) {
 		pluginID := "grafana-test-panel"
-		cfg := &config.Cfg{}
-		angularInspector, err := angularinspector.NewStaticInspector()
-		require.NoError(t, err)
-
 		tcs := []struct {
 			expectedErr error
 		}{
@@ -541,9 +491,10 @@ func TestLoader_Unload(t *testing.T) {
 		}
 
 		for _, tc := range tcs {
-			l := New(cfg, signature.NewUnsignedAuthorizer(cfg), fakes.NewFakePluginRegistry(), fakes.NewFakeProcessManager(),
-				fakes.NewFakeRoleRegistry(), assetpath.ProvideService(pluginscdn.ProvideService(cfg)), angularInspector,
-				&fakes.FakeOauthService{}, &fakes.FakeDiscoverer{}, &fakes.FakeBootstrapper{}, &fakes.FakeInitializer{},
+			l := New(&fakes.FakeDiscoverer{},
+				&fakes.FakeBootstrapper{},
+				&fakes.FakeValidator{},
+				&fakes.FakeInitializer{},
 				&fakes.FakeTerminator{
 					TerminateFunc: func(ctx context.Context, pID string) error {
 						require.Equal(t, pluginID, pID)
@@ -551,7 +502,7 @@ func TestLoader_Unload(t *testing.T) {
 					},
 				})
 
-			err = l.Unload(context.Background(), pluginID)
+			err := l.Unload(context.Background(), pluginID)
 			require.ErrorIs(t, err, tc.expectedErr)
 		}
 	})

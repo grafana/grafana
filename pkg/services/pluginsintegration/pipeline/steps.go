@@ -2,14 +2,18 @@ package pipeline
 
 import (
 	"context"
+	"errors"
 
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/initialization"
+	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/validation"
+	"github.com/grafana/grafana/pkg/plugins/manager/signature"
 	"github.com/grafana/grafana/pkg/plugins/oauth"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginerrs"
 )
 
 // ExternalServiceRegistration implements an InitializeFunc for registering external services.
@@ -77,4 +81,43 @@ func ReportBuildMetrics(_ context.Context, p *plugins.Plugin) (*plugins.Plugin, 
 		metrics.SetPluginBuildInformation(p.ID, string(p.Type), p.Info.Version, string(p.Signature))
 	}
 	return p, nil
+}
+
+// SignatureValidation implements a ValidateFunc for validating plugin signatures.
+type SignatureValidation struct {
+	signatureValidator signature.Validator
+	errs               pluginerrs.SignatureErrorTracker
+	log                log.Logger
+}
+
+// SignatureValidationStep returns a new ValidateFunc for validating plugin signatures.
+func SignatureValidationStep(signatureValidator signature.Validator,
+	sigErr pluginerrs.SignatureErrorTracker) validation.ValidateFunc {
+	sv := &SignatureValidation{
+		errs:               sigErr,
+		signatureValidator: signatureValidator,
+		log:                log.New("plugins.signature.validation"),
+	}
+	return sv.Validate
+}
+
+// Validate validates the plugin signature. If a signature error is encountered, the error is recorded with the
+// pluginerrs.SignatureErrorTracker.
+func (v *SignatureValidation) Validate(ctx context.Context, p *plugins.Plugin) error {
+	err := v.signatureValidator.ValidateSignature(p)
+	if err != nil {
+		var sigErr *plugins.SignatureError
+		if errors.As(err, &sigErr) {
+			v.log.Warn("Skipping loading plugin due to problem with signature",
+				"pluginID", p.ID, "status", sigErr.SignatureStatus)
+			p.SignatureError = sigErr
+			v.errs.Record(ctx, sigErr)
+		}
+		return err
+	}
+
+	// clear plugin error if a pre-existing error has since been resolved
+	v.errs.Clear(ctx, p.ID)
+
+	return nil
 }

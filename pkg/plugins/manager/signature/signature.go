@@ -5,19 +5,27 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/log"
 )
 
-type Validator struct {
+type Validator interface {
+	ValidateSignature(plugin *plugins.Plugin) error
+}
+
+type Validation struct {
 	authorizer plugins.PluginLoaderAuthorizer
 	log        log.Logger
 }
 
-func NewValidator(authorizer plugins.PluginLoaderAuthorizer) Validator {
-	return Validator{
+func ProvideValidatorService(authorizer plugins.PluginLoaderAuthorizer) *Validation {
+	return NewValidator(authorizer)
+}
+
+func NewValidator(authorizer plugins.PluginLoaderAuthorizer) *Validation {
+	return &Validation{
 		authorizer: authorizer,
 		log:        log.New("plugin.signature.validator"),
 	}
 }
 
-func (s *Validator) Validate(plugin *plugins.Plugin) *plugins.SignatureError {
+func (s *Validation) ValidateSignature(plugin *plugins.Plugin) error {
 	if plugin.Signature.IsValid() {
 		s.log.Debug("Plugin has valid signature", "id", plugin.ID)
 		return nil
