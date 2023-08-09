@@ -56,6 +56,7 @@ func CreateIntegrationTestCtx(t *testing.T, cfg *setting.Cfg, coreRegistry *core
 	valid := pipeline.ProvideValidationStage(pCfg, signature.NewValidator(signature.NewUnsignedAuthorizer(pCfg)), angularInspector, errTracker)
 	init := pipeline.ProvideInitializationStage(pCfg, reg, fakes.NewFakeLicensingService(), provider.ProvideService(coreRegistry), proc, &fakes.FakeOauthService{}, fakes.NewFakeRoleRegistry())
 	term, err := pipeline.ProvideTerminationStage(pCfg, reg, proc)
+	require.NoError(t, err)
 
 	l := CreateTestLoader(t, pCfg, LoaderOpts{
 		Discoverer:   disc,
