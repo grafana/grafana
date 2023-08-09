@@ -41,17 +41,19 @@ export function onGeneratePanelWithAI(dashboard: DashboardModel, description: st
         },
         {
           role: 'system',
-          content: 'DO NOT explain the panel, only answer with a valid JSON',
+          content: 'DO NOT explain the panel, only answer with a valid panel JSON',
         },
         {
           role: 'system',
           content: 'Use the following panels as context to generate the new panels',
         },
-        {
+        // @ts-ignore
+        ...payload.panels.map((panel) => ({
           role: 'system',
-          content: JSON.stringify(payload),
-        },
+          content: JSON.stringify(panel),
+        })),
         {
+          // @ts-ignore
           role: 'user',
           content: description,
         },

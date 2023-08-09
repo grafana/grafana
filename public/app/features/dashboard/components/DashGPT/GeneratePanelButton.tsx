@@ -69,7 +69,7 @@ const GeneratePanelDrawer = ({ onDismiss }: GeneratePanelDrawerProps) => {
     setIsLoading(true);
     const response = await onGeneratePanelWithAI(dashboard!, promptValue);
     const parsedResponse = JSON.parse(response);
-    const panel = parsedResponse.panels[0];
+    const panel = parsedResponse?.panels?.[0] || parsedResponse;
 
     if (parsedResponse) {
       setIsLoading(false);

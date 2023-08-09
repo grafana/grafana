@@ -120,11 +120,7 @@ export const getGeneratePayloadForPanels = (dashboard: DashboardModel) => {
   return {
     dashboardTitle: dashboard?.title,
     dashboardDescription: dashboard?.description,
-    panels:
-      dashboard?.panels
-        .filter((panel) => panel.type !== 'row')
-        .map((panel) => panel.getSaveModel())
-        .slice(0, 1) ?? [],
+    panels: dashboard?.panels.filter((panel) => panel.type !== 'row').map((panel) => panel.getSaveModel()),
   };
 };
 
