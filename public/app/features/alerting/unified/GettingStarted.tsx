@@ -100,7 +100,6 @@ const getWelcomePageStyles = (theme: GrafanaTheme2) => ({
   `,
   videoBlock: css`
     grid-column: 3 / span 3;
-    grid-row: 3 / span 1;
 
     // Video required
     position: relative;
