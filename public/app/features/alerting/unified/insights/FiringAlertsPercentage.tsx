@@ -61,7 +61,7 @@ export function getFiringAlertsScene(timeRange: SceneTimeRange, datasource: Data
   });
 
   return new SceneFlexItem({
-    width: '49%',
+    width: 'calc(50% - 8px)',
     height: 300,
     body: PanelBuilders.stat()
       .setTitle(panelTitle)

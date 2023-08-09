@@ -18,7 +18,7 @@ export function getMostFiredRulesScene(timeRange: SceneTimeRange, datasource: Da
   });
 
   return new SceneFlexItem({
-    width: '50%',
+    width: 'calc(50% - 8px)',
     height: 300,
     body: PanelBuilders.table()
       .setTitle(panelTitle)

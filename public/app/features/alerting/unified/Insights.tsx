@@ -24,16 +24,15 @@ const LAST_WEEK_TIME_RANGE = new SceneTimeRange({ from: 'now-2w', to: 'now-1w' }
 function getScene() {
   return new EmbeddedScene({
     body: new SceneFlexLayout({
-      direction: 'row',
       wrap: 'wrap',
       children: [
         getMostFiredRulesScene(THIS_WEEK_TIME_RANGE, datasource, 'Alert rules - fired most over the past week'),
 
         getMostFiredInstancesScene(THIS_WEEK_TIME_RANGE, datasource, 'Alert instances - fired most over the past week'),
 
-        getFiringAlertsScene(THIS_WEEK_TIME_RANGE, datasource, '# Firing alerts this week'),
+        getFiringAlertsScene(THIS_WEEK_TIME_RANGE, datasource, 'Firing alerts this week'),
 
-        getFiringAlertsScene(LAST_WEEK_TIME_RANGE, datasource, '# Firing alerts last week'),
+        getFiringAlertsScene(LAST_WEEK_TIME_RANGE, datasource, 'Firing alerts last week'),
 
         getFiringAlertsRateScene(THIS_WEEK_TIME_RANGE, datasource, 'Alerts firing per minute'),
       ],
@@ -48,9 +47,7 @@ export default function GettingStarted() {
 
   return (
     <div className={styles.container}>
-      <div className={styles.panelsContainer}>
-        <scene.Component model={scene} />
-      </div>
+      <scene.Component model={scene} />
     </div>
   );
 }
@@ -58,8 +55,5 @@ export default function GettingStarted() {
 const getStyles = (theme: GrafanaTheme2) => ({
   container: css({
     padding: '10px 0 10px 0',
-  }),
-  panelsContainer: css({
-    display: 'flex',
   }),
 });
