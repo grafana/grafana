@@ -97,20 +97,7 @@ func TestCanBeInstant(t *testing.T) {
 func TestMigrateLokiQueryToInstant(t *testing.T) {
 	original := createMigrateableLokiRule(t)
 	mirgrated := createMigrateableLokiRule(t, func(r *models.AlertRule) {
-		r.Data[0].QueryType = "instant"
-		r.Data[0].Model = []byte(`{
-			"datasource": {
-				"type": "loki",
-				"uid": "grafanacloud-logs"
-			},
-			"editorMode": "code",
-			"expr": "1",
-			"hide": false,
-			"intervalMs": 1000,
-			"maxDataPoints": 43200,
-			"queryType": "instant",
-			"refId": "A"
-		}`)
+		r.Data[0] = lokiQuery(t, "A", "instant", "grafanacloud-logs")
 	})
 
 	optimizableIndices, canBeOptimized := canBeInstant(original)
