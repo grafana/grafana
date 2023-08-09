@@ -80,6 +80,9 @@ func NewManager(cfg ManagerCfg) *Manager {
 }
 
 func (st *Manager) Run(ctx context.Context) error {
+	if st.applyNoDataAndErrorToAllStates {
+		st.log.Info("Running in alternative execution of Error/NoData mode")
+	}
 	ticker := st.clock.Ticker(MetricsScrapeInterval)
 	for {
 		select {
