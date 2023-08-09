@@ -321,7 +321,9 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
           datasourceUid: this.uid,
         },
       ];
-      const processedExemplarFrames = [exemplarFrame].map((dataFrame) => {
+
+      // Add links to exemplar frame
+      [exemplarFrame].map((dataFrame) => {
         if (destinations?.length) {
           for (const exemplarTraceIdDestination of destinations) {
             const traceIDField = dataFrame.fields.find((field) => field.name === exemplarTraceIdDestination.name);
