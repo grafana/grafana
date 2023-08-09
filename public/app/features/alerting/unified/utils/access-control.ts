@@ -50,6 +50,7 @@ export const notificationsPermissions = {
 
 export const provisioningPermissions = {
   read: AccessControlAction.AlertingProvisioningRead,
+  readSecrets: AccessControlAction.AlertingProvisioningReadSecrets,
   write: AccessControlAction.AlertingProvisioningWrite,
 };
 
@@ -125,6 +126,8 @@ export function getRulesAccess() {
         rulesSourceName === GRAFANA_RULES_SOURCE_NAME ? contextSrv.hasEditPermissionInFolders : contextSrv.isEditor;
       return contextSrv.hasAccess(getRulesPermissions(rulesSourceName).update, permissionFallback);
     },
-    canReadProvisioning: contextSrv.hasAccess(provisioningPermissions.read, isOrgAdmin()),
+    canReadProvisioning:
+      contextSrv.hasAccess(provisioningPermissions.read, isOrgAdmin()) ||
+      contextSrv.hasAccess(provisioningPermissions.readSecrets, isOrgAdmin()),
   };
 }
