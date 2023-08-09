@@ -72,6 +72,7 @@ func loggedInUserScenarioWithRole(t *testing.T, desc string, method string, url 
 			sc.context.OrgID = testOrgID
 			sc.context.Login = testUserLogin
 			sc.context.OrgRole = role
+			sc.context.IsAnonymous = false
 			if sc.handlerFunc != nil {
 				return sc.handlerFunc(sc.context)
 			}
@@ -212,7 +213,7 @@ func getContextHandler(t *testing.T, cfg *setting.Cfg) *contexthandler.ContextHa
 		remoteCacheSvc, renderSvc, sqlStore, tracer, authProxy, loginService, nil,
 		authenticator, usertest.NewUserServiceFake(), orgtest.NewOrgServiceFake(),
 		nil, featuremgmt.WithFeatures(), &authntest.FakeService{
-			ExpectedIdentity: &authn.Identity{OrgID: 1, ID: "user:1", SessionToken: &usertoken.UserToken{}}}, &anontest.FakeAnonymousSessionService{})
+			ExpectedIdentity: &authn.Identity{IsAnonymous: true, SessionToken: &usertoken.UserToken{}}}, &anontest.FakeAnonymousSessionService{})
 
 	return ctxHdlr
 }
@@ -310,6 +311,11 @@ func SetupAPITestServer(t *testing.T, opts ...APITestServerOption) *webtest.Serv
 	hs.registerRoutes()
 
 	s := webtest.NewServer(t, hs.RouteRegister)
+
+	viewsPath, err := filepath.Abs("../../public/views")
+	require.NoError(t, err)
+	s.Mux.UseMiddleware(web.Renderer(viewsPath, "[[", "]]"))
+
 	return s
 }
 
