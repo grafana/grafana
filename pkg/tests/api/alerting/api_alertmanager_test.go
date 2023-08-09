@@ -451,7 +451,6 @@ func TestIntegrationAlertAndGroupsQuery(t *testing.T) {
 
 		var res map[string]interface{}
 		require.NoError(t, json.Unmarshal(b, &res))
-		fmt.Println(res)
 		assert.Equal(t, "Invalid username or password", res["message"])
 	}
 
