@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Button, Divider, IconButton, Spinner, TextArea, Toggletip, useStyles2 } from '@grafana/ui';
 
+// TODO: consider breaking out disparate components into separate files for better readability / maintainability?
 interface QuickFeedbackSuggestionsProps {
   item: string;
   isRegenerating: boolean;
