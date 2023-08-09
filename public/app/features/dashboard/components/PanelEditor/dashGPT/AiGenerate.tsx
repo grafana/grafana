@@ -2,16 +2,55 @@ import { css } from '@emotion/css';
 import React, { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Button, Divider, IconButton, TextArea, Toggletip, useStyles2 } from '@grafana/ui';
+import { Button, Divider, IconButton, Spinner, TextArea, Toggletip, useStyles2 } from '@grafana/ui';
 
-const QuickFeedbackSuggestions = () => {
+interface QuickFeedbackSuggestionsProps {
+  item: string;
+  isRegenerating: boolean;
+  setIsRegenerating: (isRegenerating: boolean) => void;
+  llmReGenerate: (
+    subject: string,
+    originalResponse: string,
+    feedback: string,
+    historyItemIndex: number
+  ) => Promise<boolean>;
+  index: number;
+  type: string;
+}
+
+const QuickFeedbackSuggestions = ({
+  item,
+  isRegenerating,
+  setIsRegenerating,
+  llmReGenerate,
+  index,
+  type,
+}: QuickFeedbackSuggestionsProps) => {
   const styles = useStyles2(getStyles);
+
+  const onSuggestionClick = async (suggestion: string) => {
+    setIsRegenerating(true);
+    const done = await llmReGenerate(type, item, suggestion, index);
+
+    if (done) {
+      setIsRegenerating(false);
+    }
+  };
+
   return (
     <div className={styles.quickSuggestionsWrapper}>
-      <Button>Even shorter</Button>
-      <Button>Improve it</Button>
-      <Button>More descriptive</Button>
-      <Button>More concise</Button>
+      <Button onClick={() => onSuggestionClick('Even shorter')} disabled={isRegenerating}>
+        Even shorter
+      </Button>
+      <Button onClick={() => onSuggestionClick('Improve it')} disabled={isRegenerating}>
+        Improve it
+      </Button>
+      <Button onClick={() => onSuggestionClick('More descriptive')} disabled={isRegenerating}>
+        More descriptive
+      </Button>
+      <Button onClick={() => onSuggestionClick('More concise')} disabled={isRegenerating}>
+        More concise
+      </Button>
     </div>
   );
 };
@@ -44,11 +83,20 @@ const UserInput = () => {
 interface HistoryItemProps {
   item: string;
   suggestionApply: (suggestion: string) => void;
+  llmReGenerate: (
+    subject: string,
+    originalResponse: string,
+    feedback: string,
+    historyItemIndex: number
+  ) => Promise<boolean>;
+  index: number;
+  type: string;
 }
 
-const HistoryItem = ({ item, suggestionApply }: HistoryItemProps) => {
+const HistoryItem = ({ item, suggestionApply, llmReGenerate, index, type }: HistoryItemProps) => {
   const styles = useStyles2(getStyles);
   const [isFeedbackSectionOpen, setIsFeedbackSectionOpen] = useState(false);
+  const [isRegenerating, setIsRegenerating] = useState(false);
 
   const toggleFeedbackSection = () => {
     setIsFeedbackSectionOpen(!isFeedbackSectionOpen);
@@ -57,7 +105,7 @@ const HistoryItem = ({ item, suggestionApply }: HistoryItemProps) => {
   return (
     <>
       <div className={styles.historyItems}>
-        <div className={styles.item}>{item}</div>
+        <div className={styles.item}>{isRegenerating ? <Spinner /> : item}</div>
         <div className={styles.buttons}>
           <IconButton
             name="clipboard-alt"
@@ -73,7 +121,16 @@ const HistoryItem = ({ item, suggestionApply }: HistoryItemProps) => {
           />
         </div>
       </div>
-      {isFeedbackSectionOpen && <QuickFeedbackSuggestions />}
+      {isFeedbackSectionOpen && (
+        <QuickFeedbackSuggestions
+          item={item}
+          isRegenerating={isRegenerating}
+          setIsRegenerating={setIsRegenerating}
+          llmReGenerate={llmReGenerate}
+          index={index}
+          type={type}
+        />
+      )}
       {isFeedbackSectionOpen && <UserInput />}
       <Divider />
     </>
@@ -84,9 +141,16 @@ interface Props {
   onClick: () => void;
   history?: string[];
   applySuggestion?: (suggestion: string) => void;
+  llmReGenerate: (
+    subject: string,
+    originalResponse: string,
+    feedback: string,
+    historyItemIndex: number
+  ) => Promise<boolean>;
+  type: string;
 }
 
-export const AiGenerate = ({ text, onClick, history, applySuggestion }: Props) => {
+export const AiGenerate = ({ text, onClick, history, applySuggestion, llmReGenerate, type }: Props) => {
   const styles = useStyles2(getStyles);
 
   const [shouldClose, setShouldClose] = useState(false);
@@ -105,7 +169,16 @@ export const AiGenerate = ({ text, onClick, history, applySuggestion }: Props) =
   const renderHistory = () => {
     return (
       <div className={styles.history}>
-        {history?.map((item, index) => <HistoryItem key={index} item={item} suggestionApply={suggestionApply} />)}
+        {history?.map((item, index) => (
+          <HistoryItem
+            key={index}
+            item={item}
+            suggestionApply={suggestionApply}
+            llmReGenerate={llmReGenerate}
+            index={index}
+            type={type}
+          />
+        ))}
       </div>
     );
   };

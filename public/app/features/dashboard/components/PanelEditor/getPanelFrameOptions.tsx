@@ -8,7 +8,7 @@ import { RepeatRowSelect } from '../RepeatRowSelect/RepeatRowSelect';
 import { OptionsPaneCategoryDescriptor } from './OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from './OptionsPaneItemDescriptor';
 import { AiGenerate } from './dashGPT/AiGenerate';
-import { fetchData, SPECIAL_DONE_TOKEN } from './dashGPT/utils';
+import { fetchData, regenerateResponseWithFeedback, SPECIAL_DONE_TOKEN } from './dashGPT/utils';
 import { OptionPaneRenderProps } from './types';
 import { getGeneratePayloadForTitle } from './utils';
 
@@ -94,6 +94,35 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
       .catch((e) => console.log('error', e.message));
   };
 
+  const llmReGenerate = async (
+    subject: string,
+    originalResponse: string,
+    feedback: string,
+    historyItemIndex: number
+  ): Promise<boolean> => {
+    const payload = getGeneratePayloadForTitle(panel);
+
+    let updatedResponse: string | { enabled: any } = await regenerateResponseWithFeedback(
+      payload,
+      subject,
+      originalResponse,
+      feedback
+    );
+
+    if (typeof updatedResponse === 'string') {
+      updatedResponse = updatedResponse.replace(SPECIAL_DONE_TOKEN, '');
+      updatedResponse = updatedResponse.replace(/"/g, '');
+
+      if (subject === 'title') {
+        titleHistory[historyItemIndex] = updatedResponse;
+      } else {
+        descriptionHistory[historyItemIndex] = updatedResponse;
+      }
+    }
+
+    return true;
+  };
+
   return descriptor
     .addItem(
       new OptionsPaneItemDescriptor({
@@ -115,6 +144,8 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
             onClick={() => llmGenerate('title')}
             history={titleHistory}
             applySuggestion={(suggestion: string) => setPanelTitle(suggestion)}
+            llmReGenerate={llmReGenerate}
+            type="title"
           />
         ),
       })
@@ -139,6 +170,8 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
             onClick={() => llmGenerate('description')}
             history={descriptionHistory}
             applySuggestion={(suggestion: string) => setPanelDescription(suggestion)}
+            llmReGenerate={llmReGenerate}
+            type="description"
           />
         ),
       })
