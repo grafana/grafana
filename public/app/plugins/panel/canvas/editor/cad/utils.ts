@@ -100,7 +100,7 @@ function fromColorRepr(color: number | undefined, cadLayer?: ILayer): string {
     hexColor = 'ffffff';
   }
 
-  return '#' + hexColor.padStart(6 - hexColor.length, '0');
+  return '#' + hexColor.padStart(6, '0');
 }
 
 function addElement(item: CanvasElementItem, options: CanvasElementOptions, layer: FrameState) {
