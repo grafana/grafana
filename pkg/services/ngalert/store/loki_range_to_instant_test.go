@@ -11,21 +11,30 @@ import (
 
 func TestCanBeInstant(t *testing.T) {
 	tcs := []struct {
-		name     string
-		expected bool
-		rule     *models.AlertRule
+		name            string
+		expected        bool
+		expectedIndices []int
+		rule            *models.AlertRule
 	}{
 		{
-			name:     "valid rule that can be migrated from range to instant",
-			expected: true,
-			rule:     createMigrateableLokiRule(t),
+			name:            "valid rule that can be migrated from range to instant",
+			expected:        true,
+			expectedIndices: []int{0},
+			rule:            createMigrateableLokiRule(t),
 		},
 		{
-			name:     "valid rule with external loki datasource",
-			expected: true,
+			name:            "valid rule with external loki datasource",
+			expected:        true,
+			expectedIndices: []int{0},
 			rule: createMigrateableLokiRule(t, func(r *models.AlertRule) {
 				r.Data[0].DatasourceUID = "something-external"
 			}),
+		},
+		{
+			name:            "valid multi query rule with loki datasources",
+			expected:        true,
+			expectedIndices: []int{0, 1},
+			rule:            createMultiQueryMigratableLokiRule(t),
 		},
 		{
 			name:     "invalid rule where the data array is too short to be migrateable",
@@ -75,7 +84,9 @@ func TestCanBeInstant(t *testing.T) {
 	}
 	for _, tc := range tcs {
 		t.Run(tc.name, func(t *testing.T) {
-			require.Equal(t, tc.expected, canBeInstant(tc.rule))
+			indicies, canBe := canBeInstant(tc.rule)
+			require.Equal(t, tc.expected, canBe)
+			require.Equal(t, tc.expectedIndices, indicies)
 		})
 	}
 }
@@ -99,8 +110,9 @@ func TestMigrateLokiQueryToInstant(t *testing.T) {
 		}`)
 	})
 
-	require.True(t, canBeInstant(original))
-	require.NoError(t, migrateToInstant(original))
+	optimizableIndices, canBeOptimized := canBeInstant(original)
+	require.True(t, canBeOptimized)
+	require.NoError(t, migrateToInstant(original, optimizableIndices))
 
 	require.Equal(t, mirgrated.Data[0].QueryType, original.Data[0].QueryType)
 
@@ -111,7 +123,8 @@ func TestMigrateLokiQueryToInstant(t *testing.T) {
 
 	require.Equal(t, migratedModel, originalModel)
 
-	require.False(t, canBeInstant(original))
+	_, canBeOptimized = canBeInstant(original)
+	require.False(t, canBeOptimized)
 }
 
 func createMigrateableLokiRule(t *testing.T, muts ...func(*models.AlertRule)) *models.AlertRule {
@@ -171,6 +184,128 @@ func createMigrateableLokiRule(t *testing.T, muts ...func(*models.AlertRule)) *m
 					"maxDataPoints": 43200,
 					"reducer": "last",
 					"refId": "B",
+					"type": "reduce"
+				}`),
+			},
+		},
+	}
+	for _, m := range muts {
+		m(r)
+	}
+	return r
+}
+
+func createMultiQueryMigratableLokiRule(t *testing.T, muts ...func(*models.AlertRule)) *models.AlertRule {
+	t.Helper()
+	r := &models.AlertRule{
+		Data: []models.AlertQuery{
+			{
+				RefID:         "TotalRequests",
+				QueryType:     "range",
+				DatasourceUID: "grafanacloud-logs",
+				Model: []byte(`{
+					"datasource": {
+						"type": "loki",
+						"uid": "grafanacloud-logs"
+					},
+					"editorMode": "code",
+					"expr": "1",
+					"intervalMs": 1000,
+					"maxDataPoints": 43200,
+					"queryType": "range",
+					"refId": "TotalRequests"
+				}`),
+			},
+			{
+				RefID:         "TotalErrors",
+				QueryType:     "range",
+				DatasourceUID: "grafanacloud-logs",
+				Model: []byte(`{
+					"datasource": {
+						"type": "loki",
+						"uid": "grafanacloud-logs"
+					},
+					"editorMode": "code",
+					"expr": "1",
+					"intervalMs": 1000,
+					"maxDataPoints": 43200,
+					"queryType": "range",
+					"refId": "TotalErrors"
+				}`),
+			},
+			{
+				RefID:         "TotalRequests_Last",
+				DatasourceUID: "__expr__",
+				Model: []byte(`{
+					"conditions": [
+						{
+							"evaluator": {
+								"params": [],
+								"type": "gt"
+							},
+							"operator": {
+								"type": "and"
+							},
+							"query": {
+								"params": [
+									"B"
+								]
+							},
+							"reducer": {
+								"params": [],
+								"type": "last"
+							},
+							"type": "query"
+						}
+					],
+					"datasource": {
+						"type": "__expr__",
+						"uid": "__expr__"
+					},
+					"expression": "TotalRequests",
+					"hide": false,
+					"intervalMs": 1000,
+					"maxDataPoints": 43200,
+					"reducer": "last",
+					"refId": "TotalRequests_Last",
+					"type": "reduce"
+				}`),
+			},
+			{
+				RefID:         "TotalErrors_Last",
+				DatasourceUID: "__expr__",
+				Model: []byte(`{
+					"conditions": [
+						{
+							"evaluator": {
+								"params": [],
+								"type": "gt"
+							},
+							"operator": {
+								"type": "and"
+							},
+							"query": {
+								"params": [
+									"B"
+								]
+							},
+							"reducer": {
+								"params": [],
+								"type": "last"
+							},
+							"type": "query"
+						}
+					],
+					"datasource": {
+						"type": "__expr__",
+						"uid": "__expr__"
+					},
+					"expression": "TotalErrors",
+					"hide": false,
+					"intervalMs": 1000,
+					"maxDataPoints": 43200,
+					"reducer": "last",
+					"refId": "TotalErrors_Last",
 					"type": "reduce"
 				}`),
 			},
