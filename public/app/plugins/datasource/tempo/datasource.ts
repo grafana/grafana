@@ -177,7 +177,8 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
         }
       }
 
-      groupedFrames.sort((a, b) => (a.fields.length > b.fields.length ? -1 : 1));
+      // Sorting to be done on backend
+      // groupedFrames.sort((a, b) => (a.fields.length > b.fields.length ? -1 : 1));
 
       return { data: groupedFrames };
     };
