@@ -70,7 +70,7 @@ function updateScene(scene: Scene, viewport: IViewPort, canvasLayer: FrameState)
   const options = canvasLayer.options;
   options.background = {
     color: {
-      fixed: fromColorRepr(viewport.ambientColor),
+      fixed: hexFromColorRepr(viewport.ambientColor),
     },
   };
 
@@ -125,7 +125,7 @@ function addTextElement(entity: ITextEntity, entityLayer: ILayer, canvasLayer: F
       text: { fixed: entity.text },
       size: (entity.textHeight * TEMP_MULTIPLIER) / 2,
       color: {
-        fixed: fromColorRepr(entity.color, entityLayer),
+        fixed: hexFromColorRepr(entity.color, entityLayer),
       },
     },
   };
@@ -176,7 +176,7 @@ function addLineElement(entity: ILineEntity, entityLayer: ILayer, canvasLayer: F
     config: {
       width: lineWeight,
       color: {
-        fixed: fromColorRepr(entity.color, entityLayer),
+        fixed: hexFromColorRepr(entity.color, entityLayer),
       },
     },
   };
@@ -207,7 +207,7 @@ function addLwPolylineElement(entity: ILwpolylineEntity, entityLayer: ILayer, ca
       config: {
         width: lineWeight,
         color: {
-          fixed: fromColorRepr(entity.color, entityLayer),
+          fixed: hexFromColorRepr(entity.color, entityLayer),
         },
       },
     };
@@ -216,7 +216,7 @@ function addLwPolylineElement(entity: ILwpolylineEntity, entityLayer: ILayer, ca
   }
 }
 
-function fromColorRepr(color: number | undefined, cadLayer?: ILayer): string {
+function hexFromColorRepr(color: number | undefined, cadLayer?: ILayer): string {
   let hexColor: string;
 
   if (color) {
