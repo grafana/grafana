@@ -19,6 +19,7 @@ export function SpanSelect(props: Props) {
 
   const onSpanChange = (selValue: SelectableValue<string>) => {
     props.onChange({ ...query, megaSpan: selValue.value });
+    props.onRunQuery();
   };
 
   useEffect(() => {

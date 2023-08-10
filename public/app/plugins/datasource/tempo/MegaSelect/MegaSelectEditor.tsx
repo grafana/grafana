@@ -29,8 +29,9 @@ export function MegaSelectEditor(props: Props) {
   const onViewChange = useCallback(
     (selValue: SelectableValue<string>) => {
       onChange({ ...query, view: selValue.value });
+      onRunQuery();
     },
-    [onChange, query]
+    [onRunQuery, onChange, query]
   );
 
   useEffect(() => {
@@ -50,7 +51,7 @@ export function MegaSelectEditor(props: Props) {
     if (!query.view) {
       onViewChange({ value: 'p99' });
     }
-  }, [onViewChange, query]);
+  }, [onRunQuery, onViewChange, query]);
 
   return (
     <>
@@ -77,16 +78,19 @@ export function MegaSelectEditor(props: Props) {
                 ...query,
                 megaFilters: [...(query.megaFilters || []), filter],
               });
+              onRunQuery();
             }}
             removeFilter={(index: number) => {
               const newFilters = [...(query.megaFilters || [])];
               newFilters.splice(index, 1);
               onChange({ ...query, megaFilters: newFilters });
+              onRunQuery();
             }}
             changeFilter={(index: number, filter: AdHocVariableFilter) => {
               const newFilters = [...(query.megaFilters || [])];
               newFilters.splice(index, 1, filter);
               onChange({ ...query, megaFilters: newFilters });
+              onRunQuery();
             }}
           />
         </InlineField>
