@@ -85,10 +85,6 @@ func (f *DashboardFilter) Where() (string, []interface{}) {
 	return f.where.string, f.where.params
 }
 
-func (f *DashboardFilter) GroupBy() (string, []interface{}) {
-	return `dashboard.id`, nil
-}
-
 func (f *DashboardFilter) buildClauses(folderAction, dashboardAction string) {
 	// if user has no
 	if f.hasNoPermissions() {
@@ -111,7 +107,6 @@ func (f *DashboardFilter) buildClauses(folderAction, dashboardAction string) {
 
 	join := strings.Builder{}
 	// build join clause
-	join.WriteString(`permission p ON dashboard.uid = p.identifier`)
 
 	query := strings.Builder{}
 	params := []interface{}{}
@@ -123,7 +118,7 @@ func (f *DashboardFilter) buildClauses(folderAction, dashboardAction string) {
 		if f.needToCheckFolderAction {
 			query.WriteString(
 				fmt.Sprintf(
-					"(p.action = '%s' AND p.kind = 'folders' AND p.attribute = 'uid' AND p.role_id IN(%s) AND dashboard.is_folder)",
+					"(dashboard.uid IN(SELECT p.identifier FROM permission p WHERE p.identifier = dashboard.uid AND p.action = '%s' AND p.kind = 'folders' AND p.attribute = 'uid' AND p.role_id IN (%s) AND dashboard.is_folder))",
 					folderAction,
 					roleFilter,
 				))
@@ -139,14 +134,11 @@ func (f *DashboardFilter) buildClauses(folderAction, dashboardAction string) {
 		}
 
 		if f.needToCheckDashboardAction {
-			join.WriteString(`
-				LEFT OUTER JOIN dashboard as folder ON dashboard.folder_id = folder.id AND dashboard.org_id = folder.org_id
-				LEFT OUTER JOIN permission p2 ON p2.identifier = folder.uid
-			`)
+			join.WriteString("dashboard as folder ON dashboard.folder_id = folder.id AND dashboard.org_id = folder.org_id")
 
 			query.WriteString(
 				fmt.Sprintf(
-					"(p.action = '%s' AND p.kind = 'dashboards' AND p.attribute = 'uid' AND p.role_id IN(%s) AND NOT dashboard.is_folder)",
+					"(dashboard.uid IN(SELECT p.identifier FROM permission p WHERE p.identifier = dashboard.uid AND p.action = '%s' AND p.kind = 'dashboards' AND p.attribute = 'uid' AND p.role_id IN (%s) AND NOT dashboard.is_folder))",
 					dashboardAction,
 					roleFilter,
 				))
@@ -155,7 +147,7 @@ func (f *DashboardFilter) buildClauses(folderAction, dashboardAction string) {
 
 			query.WriteString(
 				fmt.Sprintf(
-					"(p2.action = '%s' AND p2.kind = 'folders' AND p2.attribute = 'uid' AND p2.role_id IN(%s) AND NOT dashboard.is_folder)",
+					"(folder.uid IN(SELECT p.identifier FROM permission p WHERE p.identifier = folder.uid AND p.action = '%s' AND p.kind = 'folders' AND p.attribute = 'uid' AND p.role_id IN (%s) AND NOT dashboard.is_folder))",
 					dashboardAction,
 					roleFilter,
 				))
