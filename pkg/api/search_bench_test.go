@@ -30,7 +30,7 @@ import (
 )
 
 var (
-	Lvl0FolderNum    = 10
+	Lvl0FolderNum    = 20
 	Lvl1FolderNum    = 10
 	Lvl2FolderNum    = 3
 	RootDashboardNum = 5000
@@ -47,6 +47,10 @@ func BenchmarkSearch(b *testing.B) {
 
 	allDashboards := RootDashboardNum + Lvl0FolderNum*Lvl0DashboardNum + Lvl0FolderNum*Lvl1FolderNum*Lvl1DashboardNum + Lvl0FolderNum*Lvl1FolderNum*Lvl2FolderNum*Lvl2DashboardNum
 	allFolders := Lvl0FolderNum + Lvl0FolderNum*Lvl1FolderNum + Lvl0FolderNum*Lvl1FolderNum*Lvl2FolderNum
+
+	b.Logf("DB type: %s", sc.db.GetDBType())
+	b.Logf("Total number of folders: %d", allFolders)
+	b.Logf("Total number of dashboards: %d", allDashboards)
 
 	// the maximum number of dashboards that can be returned by the search API
 	// otherwise the handler fails with 422 status code
