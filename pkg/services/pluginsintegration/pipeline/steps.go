@@ -41,7 +41,7 @@ func (r *ExternalServiceRegistration) Register(ctx context.Context, p *plugins.P
 	if p.ExternalServiceRegistration != nil && r.cfg.Features.IsEnabled(featuremgmt.FlagExternalServiceAuth) {
 		s, err := r.externalServiceRegistry.RegisterExternalService(ctx, p.ID, p.ExternalServiceRegistration)
 		if err != nil {
-			r.log.Error("Could not register an external service. Initialization skipped", "pluginID", p.ID, "err", err)
+			r.log.Error("Could not register an external service. Initialization skipped", "pluginId", p.ID, "error", err)
 			return nil, err
 		}
 		p.ExternalService = s
@@ -70,7 +70,7 @@ func newRegisterPluginRoles(registry plugins.RoleRegistry) *RegisterPluginRoles 
 // Register registers the plugin roles with the role registry.
 func (r *RegisterPluginRoles) Register(ctx context.Context, p *plugins.Plugin) (*plugins.Plugin, error) {
 	if err := r.roleRegistry.DeclarePluginRoles(ctx, p.ID, p.Name, p.Roles); err != nil {
-		r.log.Warn("Declare plugin roles failed.", "pluginID", p.ID, "err", err)
+		r.log.Warn("Declare plugin roles failed.", "pluginId", p.ID, "error", err)
 	}
 	return p, nil
 }
@@ -109,7 +109,7 @@ func (v *SignatureValidation) Validate(ctx context.Context, p *plugins.Plugin) e
 		var sigErr *plugins.SignatureError
 		if errors.As(err, &sigErr) {
 			v.log.Warn("Skipping loading plugin due to problem with signature",
-				"pluginID", p.ID, "status", sigErr.SignatureStatus)
+				"pluginId", p.ID, "status", sigErr.SignatureStatus)
 			p.SignatureError = sigErr
 			v.errs.Record(ctx, sigErr)
 		}
