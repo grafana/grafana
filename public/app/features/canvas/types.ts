@@ -53,6 +53,18 @@ export interface LineData {
   width?: number;
 }
 
+export interface EllipseConfig {
+  backgroundColor?: ColorDimensionConfig;
+  borderColor?: ColorDimensionConfig;
+  width?: number;
+}
+
+export interface EllipseData {
+  backgroundColor?: string;
+  borderColor?: string;
+  width?: number;
+}
+
 export {
   Placement,
   Constraint,
