@@ -33,7 +33,7 @@ const BOTTOM_LEFT_CONSTRAINT = {
   vertical: VerticalConstraint.Bottom,
 };
 
-const TEMP_MULTIPLIER = 50;
+const TEMP_MULTIPLIER = 45;
 
 interface Line {
   theta: number;
@@ -165,7 +165,7 @@ function lineFromVertices(vertices: Array<{ x: number; y: number }>): Line {
 
 function addLineElement(entity: ILineEntity, entityLayer: ILayer, canvasLayer: FrameState) {
   const line = lineFromVertices(entity.vertices);
-  const lineWeight = entity.lineweight !== undefined && entity.lineweight !== 0 ? entity.lineweight : 0.25;
+  const lineWeight = entity.lineweight !== undefined && entity.lineweight !== 0 ? entity.lineweight : 1;
 
   const newLineItem: CanvasElementItem<LineConfig, LineData> = canvasElementRegistry.get('line');
   let newElementOptions: CanvasElementOptions = {
@@ -193,10 +193,8 @@ function addLineElement(entity: ILineEntity, entityLayer: ILayer, canvasLayer: F
 
 function addLwPolylineElement(entity: ILwpolylineEntity, entityLayer: ILayer, canvasLayer: FrameState) {
   for (let i = 0; i < entity.vertices.length - 1; i++) {
-    const vertices = entity.vertices.slice(i, i + 2);
-    console.debug('vertices', vertices); // eslint-disable-line no-console
-    const line = lineFromVertices(vertices);
-    const lineWeight = entity.lineweight !== undefined && entity.lineweight !== 0 ? entity.lineweight : 0.25;
+    const line = lineFromVertices(entity.vertices.slice(i, i + 2));
+    const lineWeight = entity.lineweight !== undefined && entity.lineweight !== 0 ? entity.lineweight : 1;
 
     const newLineItem: CanvasElementItem<LineConfig, LineData> = canvasElementRegistry.get('line');
     let newElementOptions: CanvasElementOptions = {
