@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 
 import { createMockDatasource } from '../__mocks__/cloudMonitoringDatasource';
@@ -63,5 +63,18 @@ describe('MetricQueryEditor', () => {
     render(<MetricQueryEditor {...defaultProps} />);
     const projectDropdown = await screen.findByLabelText('Project');
     expect(projectDropdown).toBeInTheDocument();
+  });
+
+  it('preserves the aliasBy property when switching between Builder and MQL queries', async () => {
+    const query = createMockQuery({ aliasBy: 'AliasTest' });
+    query.queryType = QueryType.TIME_SERIES_QUERY;
+
+    render(<MetricQueryEditor {...defaultProps} query={query} />);
+    await waitFor(() => expect(screen.getByLabelText('Alias by').closest('input')!.value).toEqual('AliasTest'));
+
+    query.queryType = QueryType.TIME_SERIES_LIST;
+
+    render(<MetricQueryEditor {...defaultProps} query={query} />);
+    await waitFor(() => expect(screen.getByLabelText('Alias by').closest('input')!.value).toEqual('AliasTest'));
   });
 });

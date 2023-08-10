@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect } from 'react';
 
 import { SelectableValue } from '@grafana/data';
-import { EditorRows } from '@grafana/experimental';
+import { EditorRows, Stack } from '@grafana/experimental';
 
 import CloudMonitoringDatasource from '../datasource';
 import {
@@ -13,6 +13,7 @@ import {
   TimeSeriesQuery,
 } from '../types';
 
+import { AliasBy } from './AliasBy';
 import { GraphPeriod } from './GraphPeriod';
 import { MQLQueryEditor } from './MQLQueryEditor';
 import { Project } from './Project';
@@ -75,6 +76,7 @@ function Editor({
         queryType: QueryType.TIME_SERIES_LIST,
         intervalMs: query.intervalMs,
         timeSeriesList: defaultTimeSeriesList(datasource),
+        aliasBy: query.aliasBy,
       });
     }
     if (query.queryType === QueryType.TIME_SERIES_QUERY && !query.timeSeriesQuery) {
@@ -84,6 +86,7 @@ function Editor({
         queryType: QueryType.TIME_SERIES_QUERY,
         intervalMs: query.intervalMs,
         timeSeriesQuery: defaultTimeSeriesQuery(datasource),
+        aliasBy: query.aliasBy,
       });
     }
   }, [onQueryChange, query, datasource]);
@@ -105,13 +108,22 @@ function Editor({
 
       {query.queryType === QueryType.TIME_SERIES_QUERY && query.timeSeriesQuery && (
         <>
-          <Project
-            refId={refId}
-            datasource={datasource}
-            onChange={(projectName) => onChangeTimeSeriesQuery({ ...query.timeSeriesQuery!, projectName: projectName })}
-            templateVariableOptions={variableOptionGroup.options}
-            projectName={query.timeSeriesQuery.projectName!}
-          />
+          <Stack gap={1} direction="row">
+            <Project
+              refId={refId}
+              datasource={datasource}
+              onChange={(projectName) =>
+                onChangeTimeSeriesQuery({ ...query.timeSeriesQuery!, projectName: projectName })
+              }
+              templateVariableOptions={variableOptionGroup.options}
+              projectName={query.timeSeriesQuery.projectName!}
+            />
+            <AliasBy
+              refId={refId}
+              value={query.aliasBy}
+              onChange={(aliasBy: string) => onQueryChange({ ...query, aliasBy })}
+            />
+          </Stack>
           <MQLQueryEditor
             onChange={(q: string) => onChangeTimeSeriesQuery({ ...query.timeSeriesQuery!, query: q })}
             onRunQuery={onRunQuery}
