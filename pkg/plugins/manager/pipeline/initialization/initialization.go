@@ -54,7 +54,7 @@ func (i *Initialize) Initialize(ctx context.Context, ps []*plugins.Plugin) ([]*p
 			ip, err = init(ctx, p)
 			if err != nil {
 				stepFailed = true
-				i.log.Error("Could not initialize plugin", "pluginId", p.ID, "err", err)
+				i.log.Error("Could not initialize plugin", "pluginId", p.ID, "error", err)
 				break
 			}
 		}
