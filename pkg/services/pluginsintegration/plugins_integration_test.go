@@ -247,7 +247,7 @@ func verifyBundledPlugins(t *testing.T, ctx context.Context, ps *store.Service) 
 	require.NotNil(t, dsPlugins["input"])
 
 	pluginRoutes := make(map[string]*plugins.StaticRoute)
-	for _, r := range ps.Routes() {
+	for _, r := range ps.Routes(ctx) {
 		pluginRoutes[r.PluginID] = r
 	}
 
@@ -259,7 +259,7 @@ func verifyBundledPlugins(t *testing.T, ctx context.Context, ps *store.Service) 
 
 func verifyPluginStaticRoutes(t *testing.T, ctx context.Context, rr plugins.StaticRouteResolver, reg registry.Service) {
 	routes := make(map[string]*plugins.StaticRoute)
-	for _, route := range rr.Routes() {
+	for _, route := range rr.Routes(ctx) {
 		routes[route.PluginID] = route
 	}
 

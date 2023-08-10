@@ -110,10 +110,10 @@ func (s *Service) availablePlugins(ctx context.Context) []*plugins.Plugin {
 	return res
 }
 
-func (s *Service) Routes() []*plugins.StaticRoute {
+func (s *Service) Routes(ctx context.Context) []*plugins.StaticRoute {
 	staticRoutes := make([]*plugins.StaticRoute, 0)
 
-	for _, p := range s.availablePlugins(context.TODO()) {
+	for _, p := range s.availablePlugins(ctx) {
 		if p.StaticRoute() != nil {
 			staticRoutes = append(staticRoutes, p.StaticRoute())
 		}
