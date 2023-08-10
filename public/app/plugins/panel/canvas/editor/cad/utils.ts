@@ -130,7 +130,7 @@ function addTextElement(entity: ITextEntity, entityLayer: ILayer, canvasLayer: F
     },
     config: {
       text: { fixed: entity.text },
-      size: (entity.textHeight * TEMP_MULTIPLIER) / 2,
+      size: entity.textHeight * TEMP_MULTIPLIER,
       color: {
         fixed: hexFromColorRepr(entity.color, entityLayer),
       },
