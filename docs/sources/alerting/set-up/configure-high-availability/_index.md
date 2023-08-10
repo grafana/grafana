@@ -40,8 +40,8 @@ Since gossiping of notifications and silences uses both TCP and UDP port `9094`,
 
 ## Enable alerting high availability in Grafana using Redis
 
-As an alternative to Memberlist you can use Redis for high availability. This might be useful if you want to have a central
-database for HA and cannot support the meshing of all Grafana Servers.
+As an alternative to Memberlist, you can use Redis for high availability. This is useful if you want to have a central
+database for HA and cannot support the meshing of all Grafana servers.
 
 1. Have a redis server that supports pub/sub. Make sure that if you use a proxy in front of your redis cluster, the proxy does support pub/sub.
 2. In your custom configuration file ($WORKING_DIR/conf/custom.ini), go to the [unified_alerting] section.
