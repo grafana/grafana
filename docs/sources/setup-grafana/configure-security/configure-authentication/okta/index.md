@@ -131,4 +131,4 @@ the correct teams.
 
 Okta groups can be referenced by group names, like `Admins` or `Editors`.
 
-To learn more about Team Sync, refer to [Confgure Team Sync]({{< relref "../../configure-team-sync" >}}).
+To learn more about Team Sync, refer to [Configure Team Sync]({{< relref "../../configure-team-sync" >}}).
