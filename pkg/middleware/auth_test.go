@@ -15,15 +15,16 @@ import (
 	"github.com/grafana/grafana/pkg/services/authn/authntest"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 )
 
 func setupAuthMiddlewareTest(t *testing.T, identity *authn.Identity, authErr error) *contexthandler.ContextHandler {
-	return contexthandler.ProvideService(setting.NewCfg(), nil, nil, nil, nil, nil, tracing.NewFakeTracer(), nil, nil, nil, nil, nil, nil, nil, nil, &authntest.FakeService{
+	return contexthandler.ProvideService(setting.NewCfg(), tracing.NewFakeTracer(), featuremgmt.WithFeatures(), &authntest.FakeService{
 		ExpectedErr:      authErr,
 		ExpectedIdentity: identity,
-	}, nil)
+	})
 }
 
 func TestAuth_Middleware(t *testing.T) {
