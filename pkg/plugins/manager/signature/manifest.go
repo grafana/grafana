@@ -116,7 +116,7 @@ func (s *Signature) Calculate(ctx context.Context, src plugins.PluginSource, plu
 		return plugins.Signature{}, fmt.Errorf("files: %w", err)
 	}
 	if len(fsFiles) == 0 {
-		s.log.Warn("No plugin file information in directory", "pluginID", plugin.JSONData.ID)
+		s.log.Warn("No plugin file information in directory", "pluginId", plugin.JSONData.ID)
 		return plugins.Signature{
 			Status: plugins.SignatureStatusInvalid,
 		}, nil
