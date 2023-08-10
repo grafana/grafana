@@ -112,7 +112,10 @@ export function onRegeneratePanelWithFeedback(
         },
       ],
     })
-    .then((response) => response.choices[0].message.content);
+    .then((response) => response.choices[0].message.content)
+    .catch((error) => {
+      throw new Error(error);
+    });
 }
 
 // Generate panels using semantic search on Grafana panels database
@@ -135,6 +138,9 @@ export function onGenerateDashboardWithSemanticSearch(query: string): any {
       const dashboard = JSON.parse(bestMatch);
 
       return dashboard;
+    })
+    .catch((error) => {
+      throw new Error(error);
     });
 }
 
@@ -185,6 +191,9 @@ export const checkDashboardResultQuality = (dashboard: DashboardModel, query: st
     .then((response: any) => response.choices[0].message.content)
     .then((content: string) => {
       return content === 'YES';
+    })
+    .catch((error) => {
+      throw new Error(error);
     });
 };
 
@@ -223,7 +232,10 @@ export function onGenerateDashboardWithAI(description: string): any {
 
       return new DashboardModel(generatedDashboard);
     })
-    .then(normalizeDashboard);
+    .then(normalizeDashboard)
+    .catch((error) => {
+      throw new Error(error);
+    });
 }
 
 export function onCreateNewWidgetPanel(dashboard: DashboardModel, widgetType: string): number | undefined {

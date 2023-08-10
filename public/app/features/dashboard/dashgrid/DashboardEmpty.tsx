@@ -69,6 +69,7 @@ const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
       }, 3000);
       console.log('error', error);
       setAssitsLoading(false);
+      setFeedbackToUser('');
     }
   };
 
