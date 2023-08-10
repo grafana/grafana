@@ -220,40 +220,27 @@ export class ElementState implements LayerElement {
     if (this.options.placement?.rotation && this.options.placement?.width && this.options.placement.height) {
       const rotationDegrees = this.options.placement.rotation;
       const rotationRad = (Math.PI / 180) * rotationDegrees;
+      let radOffset = rotationRad;
+
       switch (true) {
         case rotationDegrees >= 0 && rotationDegrees < 90:
-          const sinRad = Math.sin(rotationRad);
-          const cosRad = Math.cos(rotationRad);
-          deltaTop = (this.options.placement?.width / 2) * sinRad + (this.options.placement.height / 2) * (cosRad - 1);
-          deltaLeft = (this.options.placement?.height / 2) * sinRad + (this.options.placement.width / 2) * (cosRad - 1);
+          // no-op
           break;
         case rotationDegrees >= 90 && rotationDegrees < 180:
-          const sin180NegRad = Math.sin(Math.PI - rotationRad);
-          const cos180NegRad = Math.cos(Math.PI - rotationRad);
-          deltaTop =
-            (this.options.placement?.width / 2) * sin180NegRad +
-            (this.options.placement.height / 2) * (cos180NegRad - 1);
-          deltaLeft =
-            (this.options.placement?.height / 2) * sin180NegRad +
-            (this.options.placement.width / 2) * (cos180NegRad - 1);
+          radOffset = Math.PI - rotationRad;
           break;
         case rotationDegrees >= 180 && rotationDegrees < 270:
-          const sin180Rad = Math.sin(Math.PI + rotationRad);
-          const cos180Rad = Math.cos(Math.PI + rotationRad);
-          deltaTop =
-            (this.options.placement?.width / 2) * sin180Rad + (this.options.placement.height / 2) * (cos180Rad - 1);
-          deltaLeft =
-            (this.options.placement?.height / 2) * sin180Rad + (this.options.placement.width / 2) * (cos180Rad - 1);
+          radOffset = Math.PI + rotationRad;
           break;
         case rotationDegrees >= 270:
-          const sinNegRad = Math.sin(-rotationRad);
-          const cosNegRad = Math.cos(-rotationRad);
-          deltaTop =
-            (this.options.placement?.width / 2) * sinNegRad + (this.options.placement.height / 2) * (cosNegRad - 1);
-          deltaLeft =
-            (this.options.placement?.height / 2) * sinNegRad + (this.options.placement.width / 2) * (cosNegRad - 1);
+          radOffset = -rotationRad;
           break;
       }
+      
+      const calcDelta = (n: number, m: number) => (n / 2) * Math.sin(radOffset) + (m / 2) * (Math.cos(radOffset) - 1);
+
+      deltaTop = calcDelta(this.options.placement?.width, this.options.placement.height);
+      deltaLeft = calcDelta(this.options.placement?.height, this.options.placement.width);
     }
 
     const relativeTop =
