@@ -124,11 +124,14 @@ const getStyles = (theme: GrafanaTheme2) => ({
   drawerWrapper: css`
     display: flex;
     flex-direction: column;
+
+    height: 100%;
     padding: 20px;
   `,
   wrapper: css`
     display: flex;
     align-items: center;
+    margin-top: auto;
   `,
   contentWrapper: css`
     padding-right: 30px;
