@@ -11,22 +11,22 @@ export type Props = {
   querySuggestions: QuerySuggestion[];
   suggestionType: SuggestionType;
   closeDrawer: () => void;
+  nextInteraction: () => void;
 };
 
 export function QuerySuggestionContainer(props: Props) {
-  const { suggestionType, querySuggestions, closeDrawer } = props;
+  const { suggestionType, querySuggestions, closeDrawer, nextInteraction } = props;
 
   const theme = useTheme2();
   const styles = getStyles(theme);
 
-  let text, secondaryText, refineText;
+  const text = 'Here are 5 query suggestions:';
+  let secondaryText, refineText;
 
   if (suggestionType === SuggestionType.Historical) {
-    text = 'Here is the metric you have selected:';
     secondaryText = 'These queries based off of historical data (top used queries) for your metric.';
     refineText = 'I want to write a prompt';
   } else if (suggestionType === SuggestionType.AI) {
-    text = 'Here are 5 query suggestions:';
     secondaryText =
       'These queries were based off of natural language descriptions of the most commonly used PromQL queries.';
     refineText = 'Refine prompt';
@@ -43,7 +43,7 @@ export function QuerySuggestionContainer(props: Props) {
       </div>
       <div>
         <div className={cx(styles.afterButtons, styles.textPadding)}>
-          <Button fill="outline" variant="secondary" size="sm">
+          <Button onClick={nextInteraction} fill="outline" variant="secondary" size="sm">
             {refineText}
           </Button>
         </div>

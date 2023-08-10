@@ -5,7 +5,7 @@ import { Interaction, QuerySuggestion, SuggestionType } from '../types';
 import { createInteraction, stateSlice } from './state';
 
 // actions to update the state
-const { aiIsLoading, updateInteraction } = stateSlice.actions;
+const { updateInteraction } = stateSlice.actions;
 
 export const querySuggestions: QuerySuggestion[] = [
   {
@@ -47,13 +47,12 @@ export async function callOpenAI(
     return setTimeout(() => {
       console.log(prompt ?? 'no prompt given');
       resolve(querySuggestions);
-      dispatch(aiIsLoading(false));
 
       const interactionToUpdate = interaction ? interaction : createInteraction(SuggestionType.Historical);
 
       const payload = {
         idx,
-        interaction: { ...interactionToUpdate, suggestions: querySuggestions },
+        interaction: { ...interactionToUpdate, suggestions: querySuggestions, isLoading: false },
       };
       dispatch(updateInteraction(payload));
       // dispatch(giveMeAIQueries(true));
