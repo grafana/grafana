@@ -1,16 +1,22 @@
+import { css } from '@emotion/css';
 import { defaults } from 'lodash';
 import React, { useCallback, useEffect } from 'react';
 
 import { QueryEditorProps, SelectableValue } from '@grafana/data';
-import { InlineField, InlineFieldRow, Select } from '@grafana/ui';
+import { EditorRow } from '@grafana/experimental';
+import { Button, InlineField, InlineFieldRow, Select } from '@grafana/ui';
 
 import { createErrorNotification } from '../../../../core/copy/appNotification';
 import { notifyApp } from '../../../../core/reducers/appNotification';
 import { AdHocFilter } from '../../../../features/variables/adhoc/picker/AdHocFilter';
 import { AdHocVariableFilter } from '../../../../features/variables/types';
 import { dispatch } from '../../../../store/store';
+import { RawQuery } from '../../prometheus/querybuilder/shared/RawQuery';
+import { generateQueryFromFilters } from '../SearchTraceQLEditor/utils';
 import { TempoDatasource } from '../datasource';
+import { traceqlGrammar } from '../traceql/traceql';
 import { defaultQuery, MyDataSourceOptions, TempoQuery } from '../types';
+import { megaToFilters } from '../utils';
 
 import { SpanSelect } from './SpanSelect';
 
@@ -18,13 +24,14 @@ type Props = QueryEditorProps<TempoDatasource, TempoQuery, MyDataSourceOptions>;
 
 export function MegaSelectEditor(props: Props) {
   const query = defaults(props.query, defaultQuery);
-  const { datasource, onChange } = props;
+  const { datasource, onChange, onRunQuery } = props;
 
   const onViewChange = useCallback(
     (selValue: SelectableValue<string>) => {
       onChange({ ...query, view: selValue.value });
+      onRunQuery();
     },
-    [onChange, query]
+    [onRunQuery, onChange, query]
   );
 
   useEffect(() => {
@@ -44,7 +51,7 @@ export function MegaSelectEditor(props: Props) {
     if (!query.view) {
       onViewChange({ value: 'p99' });
     }
-  }, [onViewChange, query]);
+  }, [onRunQuery, onViewChange, query]);
 
   return (
     <>
@@ -54,7 +61,7 @@ export function MegaSelectEditor(props: Props) {
             aria-label="View"
             onChange={onViewChange}
             value={query.view}
-            options={['p99', 'p90', 'p50', 'errorRate'].map((value: string) => ({ label: value, value }))}
+            options={['p99', 'p90', 'p50'].map((value: string) => ({ label: value, value }))}
             width={12}
           />
         </InlineField>
@@ -71,20 +78,45 @@ export function MegaSelectEditor(props: Props) {
                 ...query,
                 megaFilters: [...(query.megaFilters || []), filter],
               });
+              onRunQuery();
             }}
             removeFilter={(index: number) => {
               const newFilters = [...(query.megaFilters || [])];
               newFilters.splice(index, 1);
               onChange({ ...query, megaFilters: newFilters });
+              onRunQuery();
             }}
             changeFilter={(index: number, filter: AdHocVariableFilter) => {
               const newFilters = [...(query.megaFilters || [])];
               newFilters.splice(index, 1, filter);
               onChange({ ...query, megaFilters: newFilters });
+              onRunQuery();
             }}
           />
         </InlineField>
       </InlineFieldRow>
+      <EditorRow>
+        <RawQuery
+          className={css`
+            flex-grow: 1;
+          `}
+          query={generateQueryFromFilters(megaToFilters(query.megaFilters, query.megaSpan))}
+          lang={{ grammar: traceqlGrammar, name: 'traceql' }}
+        />
+        <Button
+          onClick={() => {
+            onChange({
+              ...query,
+              query: generateQueryFromFilters(megaToFilters(query.megaFilters, query.megaSpan)),
+              queryType: 'traceql',
+            });
+            onRunQuery();
+          }}
+          size={'sm'}
+        >
+          Explore Traces
+        </Button>
+      </EditorRow>
     </>
   );
 }
