@@ -139,7 +139,8 @@ const getSearchStyles = (theme: GrafanaTheme2) => {
     positioner: css({
       zIndex: theme.zIndex.portal,
       marginTop: '0px',
-      paddingTop: '4px !important',
+      // add padding (if needed) here to account for iOS notch
+      paddingTop: 'calc(4px + env(safe-area-inset-top)) !important',
       '&::before': {
         content: '""',
         position: 'fixed',

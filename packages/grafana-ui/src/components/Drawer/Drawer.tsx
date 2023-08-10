@@ -169,11 +169,11 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     drawer: css({
       '.main-view &': {
-        top: '81px',
+        top: 'calc(81px + env(safe-area-inset-top))',
       },
 
       '.main-view--search-bar-hidden &': {
-        top: '41px',
+        top: 'calc(41px + env(safe-area-inset-top))',
       },
 
       '.rc-drawer-content-wrapper': {

@@ -79,6 +79,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     content: css({
       display: 'flex',
       flexDirection: 'column',
+      paddingBottom: 'env(safe-area-inset-bottom)',
       // add padding (if needed) here to account for iOS notch
       paddingTop: `calc(${TOP_BAR_LEVEL_HEIGHT * 2}px + env(safe-area-inset-top))`,
       flexGrow: 1,

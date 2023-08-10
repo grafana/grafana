@@ -21,7 +21,8 @@ export function getElementStyles(theme: GrafanaTheme2) {
     },
 
     body: {
-      height: '100%',
+      // add extra height (if needed) here to account for iOS notch
+      height: 'calc(100% + env(safe-area-inset-top))',
       width: '100%',
       position: 'absolute',
       color: theme.colors.text.primary,
