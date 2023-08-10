@@ -15,11 +15,15 @@ type LastUpdatedStore interface {
 type Store interface {
 	LastUpdatedStore
 	Get(ctx context.Context, key string) (string, bool, error)
-	Set(ctx context.Context, key string, value Marshaler) error
+	Set(ctx context.Context, key string, value any) error
 }
 
 type Deleter interface {
 	Delete(ctx context.Context, key string) error
+}
+
+type KeyLister interface {
+	ListKeys(ctx context.Context) ([]string, error)
 }
 
 type StoreKeyGetter interface {

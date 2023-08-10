@@ -85,18 +85,33 @@ func NewNamespacedStore(kv kvstore.KVStore, namespace string, opts ...Namespaced
 }
 
 // Get returns the value for the given key.
+// If no value is present, the second argument is false and the returned error is nil.
 func (s *NamespacedStore) Get(ctx context.Context, key string) (string, bool, error) {
 	return s.kv.Get(ctx, s.storeKeyGetter.GetStoreKey(key))
 }
 
 // Set sets the value for the given key and updates the last updated time.
-// The value is marshaled by calling value.Marshal() before being set.
-func (s *NamespacedStore) Set(ctx context.Context, key string, value Marshaler) error {
-	marshaledValue, err := value.Marshal()
-	if err != nil {
-		return fmt.Errorf("marshal: %w", err)
+// The value must be a Marshaler, a fmt.Stringer, a string or []byte.
+func (s *NamespacedStore) Set(ctx context.Context, key string, value any) error {
+	// TODO: move
+	var valueToStore string
+	if valueMarshaler, ok := value.(Marshaler); ok {
+		var err error
+		valueToStore, err = valueMarshaler.Marshal()
+		if err != nil {
+			return fmt.Errorf("marshal: %w", err)
+		}
+	} else if valueStringer, ok := value.(fmt.Stringer); ok {
+		valueToStore = valueStringer.String()
+	} else if valueString, ok := value.(string); ok {
+		valueToStore = valueString
+	} else if valueBytes, ok := value.([]byte); ok {
+		valueToStore = string(valueBytes)
+	} else {
+		return fmt.Errorf("unsupported value type: %T", value)
 	}
-	if err := s.kv.Set(ctx, key, marshaledValue); err != nil {
+
+	if err := s.kv.Set(ctx, key, valueToStore); err != nil {
 		return fmt.Errorf("kv set: %w", err)
 	}
 	if err := s.SetLastUpdated(ctx); err != nil {
@@ -133,4 +148,17 @@ func (s *NamespacedStore) SetLastUpdated(ctx context.Context) error {
 // Delete deletes the value for the given key.
 func (s *NamespacedStore) Delete(ctx context.Context, key string) error {
 	return s.kv.Del(ctx, s.storeKeyGetter.GetStoreKey(key))
+}
+
+// ListKeys returns all the keys in the store.
+func (s *NamespacedStore) ListKeys(ctx context.Context) ([]string, error) {
+	keys, err := s.kv.Keys(ctx, s.storeKeyGetter.GetStoreKey(""))
+	if err != nil {
+		return nil, err
+	}
+	res := make([]string, 0, len(keys))
+	for _, key := range keys {
+		res = append(res, key.Key)
+	}
+	return res, nil
 }

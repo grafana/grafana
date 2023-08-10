@@ -11,7 +11,7 @@ import (
 type SingleKeyStore interface {
 	LastUpdatedStore
 	Get(ctx context.Context) (string, bool, error)
-	Set(ctx context.Context, value Marshaler) error
+	Set(ctx context.Context, value any) error
 }
 
 // SingleKeyDeleter is like a Deleter, but Delete does not accept a key, as it's fixed.
@@ -41,7 +41,7 @@ func (s *SingleKeyNamespacedStore) Get(ctx context.Context) (string, bool, error
 }
 
 // Set stores the value.
-func (s *SingleKeyNamespacedStore) Set(ctx context.Context, value Marshaler) error {
+func (s *SingleKeyNamespacedStore) Set(ctx context.Context, value any) error {
 	return s.NamespacedStore.Set(ctx, "", value)
 }
 
