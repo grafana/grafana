@@ -4,7 +4,8 @@ import React from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config, locationService, reportInteraction } from '@grafana/runtime';
-import { Button, useStyles2, Text, TextArea, LoadingPlaceholder, ModalsController } from '@grafana/ui';
+import { Panel } from '@grafana/schema/dist/esm/veneer/dashboard.types';
+import { Button, useStyles2, Text, TextArea, LoadingPlaceholder } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
 import { DashboardModel } from 'app/features/dashboard/state';
 import {
@@ -18,7 +19,6 @@ import {
 } from 'app/features/dashboard/utils/dashboard';
 import { useDispatch, useSelector } from 'app/types';
 
-import { GenerateDashboardDrawer } from '../components/DashGPT/GenerateDashboardlDrawer';
 import { setInitialDatasource } from '../state/reducers';
 
 export interface Props {
@@ -32,6 +32,7 @@ const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
   const initialDatasource = useSelector((state) => state.dashboard.initialDatasource);
   const [assitsDescription, setAssitsDescription] = React.useState('');
   const [assitsLoading, setAssitsLoading] = React.useState(false);
+  const [isGenerationLoading, setIsGenerationLoading] = React.useState(false);
 
   const onSearchDashboard = async () => {
     setAssitsLoading(true);
@@ -52,22 +53,20 @@ const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
     locationService.push(dashboardUrl);
   };
 
-  const generateDashboardButton = () => {
-    return (
-      <ModalsController key="button-save">
-        {({ showModal, hideModal }) => (
-          <Button
-            size="md"
-            icon="ai"
-            data-testid={selectors.pages.AddDashboard.itemButton('Create new panel button')}
-            onClick={() => showModal(GenerateDashboardDrawer, { onDismiss: hideModal })}
-            tooltip="Have DashGPT generate a custom dashboard for you from scratch"
-          >
-            I&rsquo;m Feeling Lucky
-          </Button>
-        )}
-      </ModalsController>
-    );
+  const onGenerateDashboard = async () => {
+    setIsGenerationLoading(true);
+    try {
+      const generatedDashboard = await onGenerateDashboardWithAI(assitsDescription);
+      if (generatedDashboard?.panels) {
+        generatedDashboard?.panels.forEach((panel: Panel) => {
+          dashboard.addPanel(panel);
+        });
+      }
+    } catch (err) {
+      // @TODO: Show error in the UI
+      console.log(err);
+    }
+    setIsGenerationLoading(false);
   };
 
   return (
@@ -82,30 +81,46 @@ const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
           </div>
           <div className={cx(styles.centeredContent, styles.bodyBig, styles.assistAIBody)}>
             <Text element="p" textAlignment="center" color="secondary">
-              Tell us what your dashboard is about - for example, &quot;I want a dashboard where I can see an overview
-              of my Kubernetes cluster.&quot;
+              Write a description of the dashboard that you need and we generate it for you.
             </Text>
             <TextArea
-              placeholder="Tell us something"
+              placeholder="Save time by quickly generating dashboards using AI"
               width={200}
               onChange={(e) => setAssitsDescription(e.currentTarget.value)}
               value={assitsDescription}
             />
-            {generateDashboardButton()}
-            <Button
-              size="md"
-              icon="ai"
-              data-testid={selectors.pages.AddDashboard.itemButton('Create new panel button')}
-              onClick={onSearchDashboard}
-              disabled={assitsLoading}
-              tooltip="Have DashGPT find a dashboard from our curated templates or create a custom dashboard just for you if we don't have a great template for your use case."
-            >
-              {assitsLoading ? (
-                <LoadingPlaceholder text="Generating response" className={styles.loadingPlaceholder} />
-              ) : (
-                'DashGPT It!'
-              )}
-            </Button>
+            <div className={styles.llmButtons}>
+              <Button
+                size="md"
+                icon="ai"
+                variant="secondary"
+                fill="outline"
+                data-testid={selectors.pages.AddDashboard.itemButton('Create new panel button')}
+                onClick={onGenerateDashboard}
+                disabled={isGenerationLoading}
+                tooltip="Have DashGPT generate a custom dashboard for you from scratch"
+              >
+                {isGenerationLoading ? (
+                  <LoadingPlaceholder text="Generating response" className={styles.loadingPlaceholder} />
+                ) : (
+                  "I'm Feeling Lucky"
+                )}
+              </Button>
+              <Button
+                size="md"
+                icon="ai"
+                data-testid={selectors.pages.AddDashboard.itemButton('Create new panel button')}
+                onClick={onSearchDashboard}
+                disabled={assitsLoading}
+                tooltip="Have DashGPT find a dashboard from our curated templates or create a custom dashboard just for you if we don't have a great template for your use case."
+              >
+                {assitsLoading ? (
+                  <LoadingPlaceholder text="Generating response" className={styles.loadingPlaceholder} />
+                ) : (
+                  'DashGPT It!'
+                )}
+              </Button>
+            </div>
           </div>
         </div>
 
@@ -278,6 +293,7 @@ function getStyles(theme: GrafanaTheme2) {
       flexDirection: 'column',
       alignItems: 'center',
       justifyContent: 'center',
+      width: '100%',
     }),
     assistAIBody: css({
       display: 'flex',
@@ -316,6 +332,11 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     loadingPlaceholder: css({
       marginBottom: 0,
+    }),
+    llmButtons: css({
+      display: 'flex',
+      flexDirection: 'row',
+      gap: '10px',
     }),
   };
 }
