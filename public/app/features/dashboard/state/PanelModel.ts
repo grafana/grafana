@@ -136,8 +136,15 @@ export const autoMigrateAngular: Record<string, string> = {
   'grafana-worldmap-panel': 'geomap',
 };
 
+// Migrated every chart
 const autoMigratePanelType: Record<string, string> = {
-  'heatmap-new': 'heatmap', // this was a temporary development panel that is now standard
+  'heatmap-new': 'heatmap',
+  graph: 'timeseries',
+  'table-old': 'table',
+  singlestat: 'stat', // also automigrated if dashboard schemaVerion < 27
+  'grafana-singlestat-panel': 'stat',
+  'grafana-piechart-panel': 'piechart',
+  'grafana-worldmap-panel': 'geomap',
 };
 
 export class PanelModel implements DataConfigSource, IPanelModel {

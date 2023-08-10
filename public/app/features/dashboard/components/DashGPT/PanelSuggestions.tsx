@@ -84,6 +84,7 @@ function getSceneModel({
       children: panels.map((panel) => createVizPanelFromPanelModel(panel, onClickPanel)),
     }),
     $timeRange: new SceneTimeRange(),
+    // Create dashboards variable set from dashboard model in case suggestions uses the same variables
     $variables: new SceneVariableSet({
       variables: dashboard.templating.list.map((variable) => createSceneVariableFromVariableModel(variable)),
     }),
