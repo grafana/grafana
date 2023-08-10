@@ -64,7 +64,7 @@ func newBackendProcessTerminator(processManager process.Service) *BackendProcess
 
 // Terminate stops a backend plugin process.
 func (t *BackendProcessTerminator) Terminate(ctx context.Context, p *plugins.Plugin) error {
-	t.log.Debug("Stopping plugin process", "pluginId", p.ID)
+	t.log.Debug("Stopping plugin process", "pluginID", p.ID)
 
 	return t.processManager.Stop(ctx, p.ID)
 }
@@ -92,7 +92,7 @@ func (d *Deregister) Deregister(ctx context.Context, p *plugins.Plugin) error {
 	if err := d.pluginRegistry.Remove(ctx, p.ID); err != nil {
 		return err
 	}
-	d.log.Debug("Plugin unregistered", "pluginId", p.ID)
+	d.log.Debug("Plugin unregistered", "pluginID", p.ID)
 	return nil
 }
 

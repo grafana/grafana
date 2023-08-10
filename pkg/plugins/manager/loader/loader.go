@@ -44,12 +44,12 @@ func (l *Loader) Load(ctx context.Context, src plugins.PluginSource) ([]*plugins
 		return nil, err
 	}
 
-	verifiedPlugins, err := l.validation.Validate(ctx, bootstrappedPlugins)
+	validatedPlugins, err := l.validation.Validate(ctx, bootstrappedPlugins)
 	if err != nil {
 		return nil, err
 	}
 
-	initializedPlugins, err := l.initializer.Initialize(ctx, verifiedPlugins)
+	initializedPlugins, err := l.initializer.Initialize(ctx, validatedPlugins)
 	if err != nil {
 		return nil, err
 	}
