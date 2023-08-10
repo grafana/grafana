@@ -9,6 +9,7 @@ import {
   IViewPort,
 } from 'dxf-parser';
 
+import { ColorDimensionConfig } from '@grafana/schema';
 import {
   Align,
   CanvasElementItem,
@@ -33,7 +34,9 @@ const BOTTOM_LEFT_CONSTRAINT = {
   vertical: VerticalConstraint.Bottom,
 };
 
-const TEMP_MULTIPLIER = 45;
+const TEMP_MULTIPLIER = 25;
+
+const DEFAULT_LWEIGHT = 25;
 
 interface Line {
   theta: number;
@@ -164,8 +167,40 @@ function lineFromVertices(vertices: Array<{ x: number; y: number }>): Line {
 }
 
 function addLineElement(entity: ILineEntity, entityLayer: ILayer, canvasLayer: FrameState) {
-  const line = lineFromVertices(entity.vertices);
-  const lineWeight = entity.lineweight !== undefined && entity.lineweight !== 0 ? entity.lineweight : 1;
+  canvasLayer.addElement(
+    newLineElementState(
+      lineFromVertices(entity.vertices),
+      entity.lineweight,
+      { fixed: hexFromColorRepr(entity.color, entityLayer) },
+      canvasLayer
+    )
+  );
+}
+
+function addLwPolylineElement(entity: ILwpolylineEntity, entityLayer: ILayer, canvasLayer: FrameState) {
+  for (let i = 0; i < entity.vertices.length - 1; i++) {
+    canvasLayer.addElement(
+      newLineElementState(
+        lineFromVertices(entity.vertices.slice(i, i + 2)),
+        entity.lineweight,
+        { fixed: hexFromColorRepr(entity.color, entityLayer) },
+        canvasLayer
+      )
+    );
+  }
+}
+
+function newLineElementState(
+  line: Line,
+  lineWeight: number | undefined,
+  color: ColorDimensionConfig,
+  canvasLayer: FrameState
+): ElementState {
+  let weight = DEFAULT_LWEIGHT;
+  if (lineWeight !== undefined && lineWeight !== 0) {
+    weight = lineWeight;
+  }
+  weight = weight / 100; // weights are in 100ths of a mm
 
   const newLineItem: CanvasElementItem<LineConfig, LineData> = canvasElementRegistry.get('line');
   let newElementOptions: CanvasElementOptions = {
@@ -174,51 +209,19 @@ function addLineElement(entity: ILineEntity, entityLayer: ILayer, canvasLayer: F
     name: '',
     constraint: BOTTOM_LEFT_CONSTRAINT,
     placement: {
-      bottom: (line.midPoint.y - lineWeight / 2) * TEMP_MULTIPLIER,
+      bottom: (line.midPoint.y - weight / 2) * TEMP_MULTIPLIER,
       left: (line.midPoint.x - line.length / 2) * TEMP_MULTIPLIER,
-      height: lineWeight,
+      height: weight,
       width: line.length * TEMP_MULTIPLIER,
       rotation: -line.theta,
     },
     config: {
-      width: lineWeight,
-      color: {
-        fixed: hexFromColorRepr(entity.color, entityLayer),
-      },
+      width: weight,
+      color: color,
     },
   };
 
-  canvasLayer.addElement(new ElementState(newLineItem, newElementOptions, canvasLayer));
-}
-
-function addLwPolylineElement(entity: ILwpolylineEntity, entityLayer: ILayer, canvasLayer: FrameState) {
-  for (let i = 0; i < entity.vertices.length - 1; i++) {
-    const line = lineFromVertices(entity.vertices.slice(i, i + 2));
-    const lineWeight = entity.lineweight !== undefined && entity.lineweight !== 0 ? entity.lineweight : 1;
-
-    const newLineItem: CanvasElementItem<LineConfig, LineData> = canvasElementRegistry.get('line');
-    let newElementOptions: CanvasElementOptions = {
-      ...newLineItem.getNewOptions(),
-      type: newLineItem.id,
-      name: '',
-      constraint: BOTTOM_LEFT_CONSTRAINT,
-      placement: {
-        bottom: (line.midPoint.y - lineWeight / 2) * TEMP_MULTIPLIER,
-        left: (line.midPoint.x - line.length / 2) * TEMP_MULTIPLIER,
-        height: lineWeight,
-        width: line.length * TEMP_MULTIPLIER,
-        rotation: -line.theta,
-      },
-      config: {
-        width: lineWeight,
-        color: {
-          fixed: hexFromColorRepr(entity.color, entityLayer),
-        },
-      },
-    };
-
-    canvasLayer.addElement(new ElementState(newLineItem, newElementOptions, canvasLayer));
-  }
+  return new ElementState(newLineItem, newElementOptions, canvasLayer);
 }
 
 function hexFromColorRepr(color: number | undefined, cadLayer?: ILayer): string {
