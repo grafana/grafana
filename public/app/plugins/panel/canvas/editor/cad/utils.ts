@@ -31,12 +31,17 @@ const BOTTOM_LEFT_CONSTRAINT = {
   vertical: VerticalConstraint.Bottom,
 };
 
-const TEMP_MULTIPLIER = 20;
+const TEMP_MULTIPLIER = 50;
 
 interface Line {
   theta: number;
   length: number;
-  minVertexIndex: number;
+  midPoint: Point;
+}
+
+interface Point {
+  x: number;
+  y: number;
 }
 
 export async function handleDxfFile(file: File, canvasLayer: FrameState) {
@@ -144,15 +149,13 @@ function lineFromVertices(vertices: Array<{ x: number; y: number }>): Line {
   const theta = (Math.atan2(dy, dx) * 180) / Math.PI;
   const length = Math.hypot(dx, dy);
 
-  let minVertex = vertices[0].x > vertices[1].x ? 1 : 0;
-  if (theta < 0) {
-    minVertex = vertices[0].y < vertices[1].y ? 1 : 0;
-  }
-
   return {
     theta,
     length,
-    minVertexIndex: minVertex,
+    midPoint: {
+      x: (vertices[0].x + vertices[1].x) / 2,
+      y: (vertices[0].y + vertices[1].y) / 2,
+    },
   };
 }
 
@@ -167,8 +170,8 @@ function addLineElement(entity: ILineEntity, entityLayer: ILayer, canvasLayer: F
     name: '',
     constraint: BOTTOM_LEFT_CONSTRAINT,
     placement: {
-      bottom: entity.vertices[line.minVertexIndex].y * TEMP_MULTIPLIER,
-      left: entity.vertices[line.minVertexIndex].x * TEMP_MULTIPLIER,
+      bottom: (line.midPoint.y - lineWeight / 2) * TEMP_MULTIPLIER,
+      left: (line.midPoint.x - line.length / 2) * TEMP_MULTIPLIER,
       height: lineWeight,
       width: line.length * TEMP_MULTIPLIER,
       rotation: -line.theta,
@@ -198,8 +201,8 @@ function addLwPolylineElement(entity: ILwpolylineEntity, entityLayer: ILayer, ca
       name: '',
       constraint: BOTTOM_LEFT_CONSTRAINT,
       placement: {
-        bottom: entity.vertices[i + line.minVertexIndex].y * TEMP_MULTIPLIER,
-        left: entity.vertices[i + line.minVertexIndex].x * TEMP_MULTIPLIER,
+        bottom: (line.midPoint.y - lineWeight / 2) * TEMP_MULTIPLIER,
+        left: (line.midPoint.x - line.length / 2) * TEMP_MULTIPLIER,
         height: lineWeight,
         width: line.length * TEMP_MULTIPLIER,
         rotation: -line.theta,
