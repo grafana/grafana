@@ -5,7 +5,24 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { PanelChrome, useStyles2 } from '@grafana/ui';
 
 import { getDashboardSrv } from '../../services/DashboardSrv';
-import { PanelModel } from '../../state';
+import { DashboardModel, PanelModel } from '../../state';
+import { EmbeddedScene } from '@grafana/scenes';
+import { DashboardScene } from 'app/features/scenes/dashboard/DashboardScene';
+import { SceneGridLayout } from '@grafana/scenes';
+import { createSceneObjectsForPanels, createPanelDataProvider } from 'app/features/scenes/dashboard/DashboardsLoader';
+import { SceneTimeRange } from '@grafana/scenes';
+import { SceneVariableSet } from '@grafana/scenes';
+import { SceneRefreshPicker } from '@grafana/scenes';
+import { SceneTimePicker } from '@grafana/scenes';
+import { VariableValueSelectors } from '@grafana/scenes';
+import { SceneObject } from '@grafana/scenes';
+import { Panel } from '@grafana/schema';
+import { SceneFlexLayout } from '@grafana/scenes';
+import { SceneFlexItem } from '@grafana/scenes';
+import { VizPanel } from '@grafana/scenes';
+import { getVizPanelKeyForPanelId } from 'app/features/scenes/dashboard/utils';
+import { SceneObjectBase } from '@grafana/scenes';
+import { SceneObjectState } from '@grafana/scenes';
 
 interface PanelSuggestionsProps {
   suggestions: PanelModel[];
@@ -17,28 +34,16 @@ export const PanelSuggestions = ({ suggestions, onDismiss }: PanelSuggestionsPro
 
   const dashboard = getDashboardSrv().getCurrent();
 
-  const onUseSuggestion = (panel: any) => {
+  const onUseSuggestion = (panel: PanelModel) => {
     dashboard?.addPanel(panel);
     onDismiss();
   };
 
+  const previewScene = getSceneModel({panels: suggestions, dashboard, onClickPanel: onUseSuggestion})
+
   return (
     <div className={styles.wrapper}>
-      {suggestions.map((panel, index) => (
-        // TODO: fix keyboard a11y
-        // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
-        <div key={index} onClick={() => onUseSuggestion(panel)} className={styles.suggestion}>
-          <PanelChrome
-            title={panel.title ?? 'Untitled'}
-            description={panel.description}
-            width={800}
-            height={185}
-            key={index}
-          >
-            {(width: number, height: number) => <div style={{ height, width }}>Panel in a loading state</div>}
-          </PanelChrome>
-        </div>
-      ))}
+      <previewScene.Component model={previewScene} />
     </div>
   );
 };
@@ -58,3 +63,76 @@ const getStyles = (theme: GrafanaTheme2) => ({
     padding: ${theme.spacing(2)};
   `,
 });
+
+function getSceneModel({panels, onClickPanel}: {panels: PanelModel[], onClickPanel: (panel: PanelModel) => void}) {
+
+  const controls: SceneObject[] = [
+    new VariableValueSelectors({}),
+    new SceneTimePicker({}),
+    new SceneRefreshPicker({}),
+  ];
+
+
+  return new EmbeddedScene({
+    body: new SceneFlexLayout({
+      direction: 'column',
+
+      children: panels.map((panel) => createVizPanelFromPanelModel(panel, onClickPanel)),
+      // children: [],
+    }),
+    // $timeRange: new SceneTimeRange(),
+    // $variables: new SceneVariableSet({
+    //   variables: createSceneVariableFromVariableModel(dashboard!.getVariables()),
+    // }),
+    // controls: controls,
+  });
+}
+
+function normalizePanel(panel: PanelModel): PanelModel {
+
+  return new PanelModel({
+    ...panel,
+    gridPos: {
+    },
+  });
+}
+
+export function createVizPanelFromPanelModel(panel: PanelModel, onClick: (panel: PanelModel) => void) {
+  return  new SceneFlexItem({
+      minHeight: 200,
+      body: new SceneClickableElement({
+        onClick: () => onClick(panel),
+        children: new VizPanel({
+          key: getVizPanelKeyForPanelId(panel.id),
+          title: panel.title,
+          pluginId: panel.type,
+          options: panel.options ?? {},
+          fieldConfig: panel.fieldConfig,
+          pluginVersion: panel.pluginVersion,
+          displayMode: panel.transparent ? 'transparent' : undefined,
+          // To be replaced with it's own option persited option instead derived
+          hoverHeader: !panel.title && !panel.timeFrom && !panel.timeShift,
+          $data: createPanelDataProvider(panel),
+        }),
+      })
+    });
+}
+
+interface ClickableElementState extends SceneObjectState {
+  onClick: () => void;
+  children: SceneObject;
+}
+
+export class SceneClickableElement extends SceneObjectBase<ClickableElementState> {
+  static Component = ClickableElementRenderer;
+}
+
+function ClickableElementRenderer({ model }: { model: SceneClickableElement }) {
+  debugger
+  const {onClick, children} = model.useState();
+  return (
+    <div onClick={onClick}>
+      <children.Component model={children} />
+    </div>
+  );
+}
