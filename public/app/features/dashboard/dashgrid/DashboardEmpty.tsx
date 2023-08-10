@@ -8,9 +8,11 @@ import { Button, useStyles2, Text, TextArea, LoadingPlaceholder, ModalsControlle
 import { Trans } from 'app/core/internationalization';
 import { DashboardModel } from 'app/features/dashboard/state';
 import {
+  checkDashboardResultQuality,
   onAddLibraryPanel,
   onCreateNewPanel,
   onCreateNewRow,
+  onGenerateDashboardWithAI,
   onGenerateDashboardWithSemanticSearch,
 } from 'app/features/dashboard/utils/dashboard';
 import { useDispatch, useSelector } from 'app/types';
@@ -32,7 +34,16 @@ const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
 
   const onSearchDashboard = async () => {
     setAssitsLoading(true);
-    const bestDashboardMatch = await onGenerateDashboardWithSemanticSearch(assitsDescription);
+    let bestDashboardMatch = await onGenerateDashboardWithSemanticSearch(assitsDescription);
+
+    // ask AI for confirmation on dashboard quality, if not strong yes generate a custom one
+    // we can easily extend this to involve AI in selection of best dashboard from 5 original results as well as returning whether or not
+    // it is a strong match and to just generate a new dashboard in that case... all in one call probably
+    const isDashboardMatchStrong = await checkDashboardResultQuality(bestDashboardMatch, assitsDescription);
+
+    if (!isDashboardMatchStrong) {
+      bestDashboardMatch = await onGenerateDashboardWithAI(assitsDescription);
+    }
 
     setAssitsLoading(false);
     const bestDashboardMatchModel = new DashboardModel(bestDashboardMatch);
@@ -57,8 +68,9 @@ const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
             icon="ai"
             data-testid={selectors.pages.AddDashboard.itemButton('Create new panel button')}
             onClick={() => showModal(GenerateDashboardDrawer, { onDismiss: hideModal })}
+            tooltip="Have DashGPT generate a custom dashboard for you from scratch"
           >
-            Generate dashboard
+            I&rsquo;m Feeling Lucky
           </Button>
         )}
       </ModalsController>
@@ -93,11 +105,12 @@ const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
               data-testid={selectors.pages.AddDashboard.itemButton('Create new panel button')}
               onClick={onSearchDashboard}
               disabled={assitsLoading}
+              tooltip="Have DashGPT find a dashboard from our curated templates or create a custom dashboard just for you if we don't have a great template for your use case."
             >
               {assitsLoading ? (
                 <LoadingPlaceholder text="Generating response" className={styles.loadingPlaceholder} />
               ) : (
-                'Generate dashboard with templates'
+                'DashGPT It!'
               )}
             </Button>
           </div>

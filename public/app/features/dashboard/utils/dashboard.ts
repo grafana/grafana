@@ -86,6 +86,35 @@ export function onGenerateDashboardWithSemanticSearch(query: string): any {
     });
 }
 
+export const checkDashboardResultQuality = (dashboard: DashboardModel, query: string) => {
+  return llms.openai
+    .chatCompletions({
+      model: 'gpt-4',
+      messages: [
+        {
+          role: 'system',
+          content: 'You are an API that only respond with "YES" or "NO"',
+        },
+        {
+          role: 'system',
+          content: 'Your goal is to judge whether or a Grafana dashboard JSON is a good result for the query',
+        },
+        {
+          role: 'system',
+          content: 'If the dashboard is a good result, answer with "YES", otherwise answer with "NO"',
+        },
+        {
+          role: 'system',
+          content: `The query is: "${query}" and the dashboard is: ${JSON.stringify(dashboard)}`,
+        },
+      ],
+    })
+    .then((response: any) => response.choices[0].message.content)
+    .then((content: string) => {
+      return content === 'YES';
+    });
+};
+
 export function onGenerateDashboardWithAI(description: string): any {
   return llms.openai
     .chatCompletions({
