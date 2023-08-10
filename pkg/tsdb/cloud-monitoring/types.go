@@ -56,8 +56,8 @@ type (
 		params url.Values
 	}
 
-	// cloudMonitoringPromQL is used to build a promQL queries
-	cloudMonitoringPromQL struct {
+	// cloudMonitoringProm is used to build a promQL queries
+	cloudMonitoringProm struct {
 		refID      string
 		aliasBy    string
 		logger     log.Logger

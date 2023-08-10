@@ -436,7 +436,7 @@ func (s *Service) buildQueryExecutors(logger log.Logger, req *backend.QueryDataR
 			cmslo.setParams(startTime, endTime, durationSeconds, query.Interval.Milliseconds())
 			queryInterface = cmslo
 		case string(dataquery.QueryTypePromQL):
-			stuff := &cloudMonitoringPromQL{
+			stuff := &cloudMonitoringProm{
 				refID:      query.RefID,
 				logger:     logger,
 				aliasBy:    q.AliasBy,

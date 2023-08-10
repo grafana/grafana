@@ -18,7 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/util/converter"
 )
 
-func (promQLQ *cloudMonitoringPromQL) run(ctx context.Context, req *backend.QueryDataRequest,
+func (promQLQ *cloudMonitoringProm) run(ctx context.Context, req *backend.QueryDataRequest,
 	s *Service, dsInfo datasourceInfo, tracer tracing.Tracer) (*backend.DataResponse, any, string, error) {
 	dr := &backend.DataResponse{}
 	projectName, err := s.ensureProject(ctx, dsInfo, promQLQ.parameters.ProjectName)
@@ -68,7 +68,7 @@ func doRequestProm(r *http.Request, dsInfo datasourceInfo, body map[string]inter
 	return res, nil
 }
 
-func (promQLQ *cloudMonitoringPromQL) parseResponse(queryRes *backend.DataResponse,
+func (promQLQ *cloudMonitoringProm) parseResponse(queryRes *backend.DataResponse,
 	response any, executedQueryString string) error {
 	res := response.(*http.Response)
 	defer func() {
@@ -92,19 +92,19 @@ func (promQLQ *cloudMonitoringPromQL) parseResponse(queryRes *backend.DataRespon
 	return nil
 }
 
-func (promQLQ *cloudMonitoringPromQL) buildDeepLink() string {
+func (promQLQ *cloudMonitoringProm) buildDeepLink() string {
 	return ""
 }
 
-func (promQLQ *cloudMonitoringPromQL) getRefID() string {
+func (promQLQ *cloudMonitoringProm) getRefID() string {
 	return promQLQ.refID
 }
 
-func (promQLQ *cloudMonitoringPromQL) getAliasBy() string {
+func (promQLQ *cloudMonitoringProm) getAliasBy() string {
 	return promQLQ.aliasBy
 }
 
-func (promQLQ *cloudMonitoringPromQL) getParameter(i string) string {
+func (promQLQ *cloudMonitoringProm) getParameter(i string) string {
 	return ""
 }
 
