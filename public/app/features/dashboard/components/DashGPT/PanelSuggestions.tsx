@@ -76,17 +76,19 @@ function getSceneModel({
   onClickPanel: (panel: PanelModel) => void;
 }) {
   const controls: SceneObject[] = [new VariableValueSelectors({}), new SceneTimePicker({}), new SceneRefreshPicker({})];
+  const compatibleVariableTypes = (panel: PanelModel) => ['query', 'custom', 'constant', 'custom'].includes(panel.type);
+  const compatiblePanelTypes = (panel: PanelModel) => panel.type !== 'row';
 
   return new EmbeddedScene({
     body: new SceneFlexLayout({
       direction: 'column',
 
-      children: panels.map((panel) => createVizPanelFromPanelModel(panel, onClickPanel)),
+      children: panels.filter(compatiblePanelTypes).map((panel) => createVizPanelFromPanelModel(panel, onClickPanel)),
     }),
     $timeRange: new SceneTimeRange(),
     // Create dashboards variable set from dashboard model in case suggestions uses the same variables
     $variables: new SceneVariableSet({
-      variables: dashboard.templating.list.map((variable) => createSceneVariableFromVariableModel(variable)),
+      variables: dashboard.templating.list.filter(compatibleVariableTypes).map(createSceneVariableFromVariableModel),
     }),
     controls: controls,
   });
