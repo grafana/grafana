@@ -3,14 +3,13 @@ import path from 'path';
 import dts from 'rollup-plugin-dts';
 import esbuild from 'rollup-plugin-esbuild';
 import { externals } from 'rollup-plugin-node-externals';
-import svg from 'rollup-plugin-svg-import';
 
 const pkg = require('./package.json');
 
 export default [
   {
     input: 'src/index.ts',
-    plugins: [externals({ deps: true, packagePath: './package.json' }), resolve(), svg({ stringify: true }), esbuild()],
+    plugins: [externals({ deps: true, packagePath: './package.json' }), resolve(), esbuild()],
     output: [
       {
         format: 'cjs',
