@@ -94,7 +94,6 @@ export class ElementState implements LayerElement {
       cursor: editingEnabled ? 'grab' : 'auto',
       pointerEvents: disablePointerEvents ? 'none' : 'auto',
       position: 'absolute',
-      // Minimum element size is 10x10
       // minWidth: '10px',
       // minHeight: '10px',
     };
