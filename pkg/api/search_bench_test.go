@@ -29,22 +29,14 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-const (
-	LVL0_FOLDER_NUM    = 100
-	LVL1_FOLDER_NUM    = 10
-	LVL2_FOLDER_NUM    = 3
-	ROOT_DASHBOARD_NUM = 1000
-	LVL0_DASHBOARD_NUM = 25
-	LVL1_DASHBOARD_NUM = 25
-	LVL2_DASHBOARD_NUM = 25
-
-	//LVL0_FOLDER_NUM    = 1
-	//LVL1_FOLDER_NUM    = 0
-	//LVL2_FOLDER_NUM    = 5
-	//ROOT_DASHBOARD_NUM = 1
-	//LVL0_DASHBOARD_NUM = 1
-	//LVL1_DASHBOARD_NUM = 5
-	//LVL2_DASHBOARD_NUM = 5
+var (
+	Lvl0FolderNum    = 10
+	Lvl1FolderNum    = 10
+	Lvl2FolderNum    = 3
+	RootDashboardNum = 5000
+	Lvl0DashboardNum = 25
+	Lvl1DashboardNum = 10
+	Lvl2DashboardNum = 5
 )
 
 func BenchmarkSearch(b *testing.B) {
@@ -53,8 +45,8 @@ func BenchmarkSearch(b *testing.B) {
 	sc := setupTestDB(b)
 	b.Log("setup time:", time.Since(start))
 
-	allDashboards := ROOT_DASHBOARD_NUM + LVL0_FOLDER_NUM*LVL0_DASHBOARD_NUM + LVL0_FOLDER_NUM*LVL1_FOLDER_NUM*LVL1_DASHBOARD_NUM + LVL0_FOLDER_NUM*LVL1_FOLDER_NUM*LVL2_FOLDER_NUM*LVL2_DASHBOARD_NUM
-	allFolders := LVL0_FOLDER_NUM + LVL0_FOLDER_NUM*LVL1_FOLDER_NUM + LVL0_FOLDER_NUM*LVL1_FOLDER_NUM*LVL2_FOLDER_NUM
+	allDashboards := RootDashboardNum + Lvl0FolderNum*Lvl0DashboardNum + Lvl0FolderNum*Lvl1FolderNum*Lvl1DashboardNum + Lvl0FolderNum*Lvl1FolderNum*Lvl2FolderNum*Lvl2DashboardNum
+	allFolders := Lvl0FolderNum + Lvl0FolderNum*Lvl1FolderNum + Lvl0FolderNum*Lvl1FolderNum*Lvl2FolderNum
 
 	// the maximum number of dashboards that can be returned by the search API
 	// otherwise the handler fails with 422 status code
@@ -73,28 +65,28 @@ func BenchmarkSearch(b *testing.B) {
 		features    *featuremgmt.FeatureManager
 	}{
 		{
-			desc:        "get all folders with nested folders feature disabled and no feature flags",
+			desc:        "get all folders with nested folders feature disabled with split scopes enabled",
 			url:         "/api/folders?limit=5000",
 			expectedLen: withLimit(allFolders),
-			features:    featuremgmt.WithFeatures(),
+			features:    featuremgmt.WithFeatures(featuremgmt.FlagSplitScopes),
 		},
 		{
-			desc:        "list all dashboards with nested folders feature disabled and no feature flags",
+			desc:        "list all dashboards with nested folders feature disabled with split scopes enabled",
 			url:         "/api/search?type=dash-db&limit=5000",
 			expectedLen: withLimit(allDashboards),
-			features:    featuremgmt.WithFeatures(),
+			features:    featuremgmt.WithFeatures(featuremgmt.FlagSplitScopes),
 		},
 		{
-			desc:        "search specific dashboard with nested folders feature disabled and no feature flags",
+			desc:        "search specific dashboard with nested folders feature disabled with split scopes enabled",
 			url:         "/api/search?type=dash-db&query=dashboard_0_0_0_0",
 			expectedLen: 1,
-			features:    featuremgmt.WithFeatures(),
+			features:    featuremgmt.WithFeatures(featuremgmt.FlagSplitScopes),
 		},
 		{
-			desc:        "search several dashboards with nested folders feature disabled and no feature flags",
+			desc:        "search several dashboards with nested folders feature disabled with split scopes enabled",
 			url:         "/api/search?type=dash-db&query=dashboard_0_0_0",
-			expectedLen: withLimit(LVL2_DASHBOARD_NUM + 1),
-			features:    featuremgmt.WithFeatures(),
+			expectedLen: withLimit(Lvl2DashboardNum + 1),
+			features:    featuremgmt.WithFeatures(featuremgmt.FlagSplitScopes),
 		},
 		{
 			desc:        "get all folders with nested folders feature disabled with removed subquery enabled",
@@ -117,63 +109,33 @@ func BenchmarkSearch(b *testing.B) {
 		{
 			desc:        "search several dashboards with nested folders feature disabled with removed subquery enabled",
 			url:         "/api/search?type=dash-db&query=dashboard_0_0_0",
-			expectedLen: withLimit(LVL2_DASHBOARD_NUM + 1),
+			expectedLen: withLimit(Lvl2DashboardNum + 1),
 			features:    featuremgmt.WithFeatures(featuremgmt.FlagPermissionsFilterRemoveSubquery),
 		},
 		{
-			desc:        "get all folders with nested folders feature disabled with split scopes enabled",
+			desc:        "get all folders with nested folders feature disabled and no feature flags",
 			url:         "/api/folders?limit=5000",
 			expectedLen: withLimit(allFolders),
-			features:    featuremgmt.WithFeatures(featuremgmt.FlagSplitScopes),
+			features:    featuremgmt.WithFeatures(),
 		},
 		{
-			desc:        "list all dashboards with nested folders feature disabled with split scopes enabled",
+			desc:        "list all dashboards with nested folders feature disabled and no feature flags",
 			url:         "/api/search?type=dash-db&limit=5000",
 			expectedLen: withLimit(allDashboards),
-			features:    featuremgmt.WithFeatures(featuremgmt.FlagSplitScopes),
+			features:    featuremgmt.WithFeatures(),
 		},
 		{
-			desc:        "search specific dashboard with nested folders feature disabled with split scopes enabled",
+			desc:        "search specific dashboard with nested folders feature disabled and no feature flags",
 			url:         "/api/search?type=dash-db&query=dashboard_0_0_0_0",
 			expectedLen: 1,
-			features:    featuremgmt.WithFeatures(featuremgmt.FlagSplitScopes),
+			features:    featuremgmt.WithFeatures(),
 		},
 		{
-			desc:        "search several dashboards with nested folders feature disabled with split scopes enabled",
+			desc:        "search several dashboards with nested folders feature disabled and no feature flags",
 			url:         "/api/search?type=dash-db&query=dashboard_0_0_0",
-			expectedLen: withLimit(LVL2_DASHBOARD_NUM + 1),
-			features:    featuremgmt.WithFeatures(featuremgmt.FlagSplitScopes),
+			expectedLen: withLimit(Lvl2DashboardNum + 1),
+			features:    featuremgmt.WithFeatures(),
 		},
-		//{
-		//	desc:        "get root folders with nested folders feature enabled",
-		//	url:         "/api/folders",
-		//	expectedLen: LVL0_FOLDER_NUM,
-		//	features:    featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders, featuremgmt.FlagPermissionsFilterRemoveSubquery),
-		//},
-		//{
-		//	desc:        "get subfolders with nested folders feature enabled",
-		//	url:         "/api/folders?parentUid=folder0",
-		//	expectedLen: LVL1_FOLDER_NUM,
-		//	features:    featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders, featuremgmt.FlagPermissionsFilterRemoveSubquery),
-		//},
-		//{
-		//	desc:        "list all inherited dashboards with nested folders feature enabled",
-		//	url:         "/api/search?type=dash-db&limit=5000",
-		//	expectedLen: withLimit(allDashboards),
-		//	features:    featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders, featuremgmt.FlagPermissionsFilterRemoveSubquery),
-		//},
-		//{
-		//	desc:        "search for pattern with nested folders feature enabled",
-		//	url:         "/api/search?type=dash-db&query=dashboard_0_0&limit=5000",
-		//	expectedLen: withLimit(1 + LVL1_DASHBOARD_NUM + LVL2_FOLDER_NUM*LVL2_DASHBOARD_NUM),
-		//	features:    featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders, featuremgmt.FlagPermissionsFilterRemoveSubquery),
-		//},
-		//{
-		//	desc:        "search for specific dashboard nested folders feature enabled",
-		//	url:         "/api/search?type=dash-db&query=dashboard_0_0_0_0",
-		//	expectedLen: 1,
-		//	features:    featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders, featuremgmt.FlagPermissionsFilterRemoveSubquery),
-		//},
 	}
 	for _, bm := range benchmarks {
 		b.Run(bm.desc, func(b *testing.B) {
@@ -262,13 +224,13 @@ func setupTestDB(b testing.TB) benchScenario {
 	})
 	require.NoError(b, err)
 
-	allDashboards := ROOT_DASHBOARD_NUM + LVL0_FOLDER_NUM*LVL0_DASHBOARD_NUM + LVL0_FOLDER_NUM*LVL1_FOLDER_NUM*LVL1_DASHBOARD_NUM + LVL0_FOLDER_NUM*LVL1_FOLDER_NUM*LVL2_FOLDER_NUM*LVL2_DASHBOARD_NUM
-	allFolders := LVL0_FOLDER_NUM + LVL0_FOLDER_NUM*LVL1_FOLDER_NUM + LVL0_FOLDER_NUM*LVL1_FOLDER_NUM*LVL2_FOLDER_NUM
+	allDashboards := RootDashboardNum + Lvl0FolderNum*Lvl0DashboardNum + Lvl0FolderNum*Lvl1FolderNum*Lvl1DashboardNum + Lvl0FolderNum*Lvl1FolderNum*Lvl2FolderNum*Lvl2DashboardNum
+	allFolders := Lvl0FolderNum + Lvl0FolderNum*Lvl1FolderNum + Lvl0FolderNum*Lvl1FolderNum*Lvl2FolderNum
 	folders := make([]*f, 0, allFolders)
 	dashs := make([]*dashboards.Dashboard, 0, allDashboards)
 	permissions := make([]accesscontrol.Permission, 0, allFolders*2+allDashboards)
 
-	for i := 0; i < ROOT_DASHBOARD_NUM; i++ {
+	for i := 0; i < RootDashboardNum; i++ {
 		str := fmt.Sprintf("dashboard_%d", i)
 		dashID := generateID(IDs)
 		dash := createDashboard(orgID, dashID, str, 0)
@@ -276,14 +238,14 @@ func setupTestDB(b testing.TB) benchScenario {
 		permissions = append(permissions, createPermission(signedInUserRole.ID, dashboards.ActionDashboardsRead, "dashboards", dash.UID))
 	}
 
-	for i := 0; i < LVL0_FOLDER_NUM; i++ {
+	for i := 0; i < Lvl0FolderNum; i++ {
 		f0, d := createFolder(orgID, generateID(IDs), fmt.Sprintf("folder%d", i), nil)
 		folders = append(folders, f0)
 		dashs = append(dashs, d)
 		permissions = append(permissions, createPermission(signedInUserRole.ID, dashboards.ActionFoldersRead, "folders", f0.UID))
 		permissions = append(permissions, createPermission(signedInUserRole.ID, dashboards.ActionDashboardsRead, "folders", f0.UID))
 
-		for j := 0; j < LVL0_DASHBOARD_NUM; j++ {
+		for j := 0; j < Lvl0DashboardNum; j++ {
 			str := fmt.Sprintf("dashboard_%d_%d", i, j)
 			dashID := generateID(IDs)
 			dash := createDashboard(orgID, dashID, str, f0.ID)
@@ -291,14 +253,14 @@ func setupTestDB(b testing.TB) benchScenario {
 			permissions = append(permissions, createPermission(signedInUserRole.ID, dashboards.ActionDashboardsRead, "dashboards", dash.UID))
 		}
 
-		for j := 0; j < LVL1_FOLDER_NUM; j++ {
+		for j := 0; j < Lvl1FolderNum; j++ {
 			f1, d1 := createFolder(orgID, generateID(IDs), fmt.Sprintf("folder%d_%d", i, j), &f0.UID)
 			folders = append(folders, f1)
 			dashs = append(dashs, d1)
 			permissions = append(permissions, createPermission(signedInUserRole.ID, dashboards.ActionFoldersRead, "folders", f1.UID))
 			permissions = append(permissions, createPermission(signedInUserRole.ID, dashboards.ActionDashboardsRead, "folders", f1.UID))
 
-			for k := 0; k < LVL1_DASHBOARD_NUM; k++ {
+			for k := 0; k < Lvl1DashboardNum; k++ {
 				str := fmt.Sprintf("dashboard_%d_%d_%d", i, j, k)
 				dashID := generateID(IDs)
 				dash := createDashboard(orgID, dashID, str, f1.ID)
@@ -306,14 +268,14 @@ func setupTestDB(b testing.TB) benchScenario {
 				permissions = append(permissions, createPermission(signedInUserRole.ID, dashboards.ActionDashboardsRead, "dashboards", dash.UID))
 			}
 
-			for k := 0; k < LVL2_FOLDER_NUM; k++ {
+			for k := 0; k < Lvl2FolderNum; k++ {
 				f2, d2 := createFolder(orgID, generateID(IDs), fmt.Sprintf("folder%d_%d_%d", i, j, k), &f1.UID)
 				folders = append(folders, f2)
 				dashs = append(dashs, d2)
 				permissions = append(permissions, createPermission(signedInUserRole.ID, dashboards.ActionFoldersRead, "folders", f2.UID))
 				permissions = append(permissions, createPermission(signedInUserRole.ID, dashboards.ActionDashboardsRead, "folders", f2.UID))
 
-				for l := 0; l < LVL2_DASHBOARD_NUM; l++ {
+				for l := 0; l < Lvl2DashboardNum; l++ {
 					str := fmt.Sprintf("dashboard_%d_%d_%d_%d", i, j, k, l)
 					dashID := generateID(IDs)
 					dash := createDashboard(orgID, dashID, str, f2.ID)
