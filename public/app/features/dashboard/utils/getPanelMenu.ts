@@ -156,7 +156,7 @@ export function getPanelMenu(
       text: t('panel.header-menu.explore', `Explore`),
       iconClassName: 'compass',
       onClick: onNavigateToExplore,
-      shortcut: 'x',
+      shortcut: 'p x',
     });
   }
 

@@ -38,7 +38,7 @@ const datalinksSyntax: Grammar = {
 const plugins = [
   SlatePrism(
     {
-      onlyIn: (node: any) => node.type === 'code_block',
+      onlyIn: (node) => 'type' in node && node.type === 'code_block',
       getSyntax: () => 'links',
     },
     { ...(Prism.languages as LanguageMap), links: datalinksSyntax }
@@ -100,7 +100,7 @@ export const DataLinkInput = memo(
     // SelectionReference is used to position the variables suggestion relatively to current DOM selection
     const selectionRef = useMemo(() => new SelectionReference(), []);
 
-    const onKeyDown = React.useCallback((event: React.KeyboardEvent, next: () => any) => {
+    const onKeyDown = React.useCallback((event: React.KeyboardEvent, next: () => void) => {
       if (!stateRef.current.showingSuggestions) {
         if (event.key === '=' || event.key === '$' || (event.keyCode === 32 && event.ctrlKey)) {
           return setShowingSuggestions(true);

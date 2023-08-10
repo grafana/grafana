@@ -18,7 +18,13 @@ title: User HTTP API
 
 # User API
 
-> If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions]({{< relref "/docs/grafana/latest/administration/roles-and-permissions/access-control/custom-role-actions-scopes" >}}) for more information.
+The Users HTTP API does not currently work with an API Token. API Tokens are linked to an organization and an organization role. They cannot be given
+the permission of server users access, only users can be given that permission. To use these API calls you can use Basic Auth and the Grafana
+user must have the Grafana Admin role.
+
+API Tokens can be used with Organization HTTP API to get users of specific organization.
+
+> If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions]({{< relref "../../administration/roles-and-permissions/access-control/custom-role-actions-scopes/" >}}) for more information.
 
 ## Search Users
 
@@ -200,7 +206,7 @@ See note in the [introduction]({{< ref "#user-api" >}}) for an explanation.
 GET /api/users/lookup?loginOrEmail=user@mygraf.com HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Basic YWRtaW46YWRtaW4=
 ```
 
 **Example Request using the username as option**:

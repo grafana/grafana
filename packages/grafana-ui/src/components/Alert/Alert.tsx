@@ -120,11 +120,12 @@ const getStyles = (
   topSpacing?: number
 ) => {
   const color = theme.colors[severity];
-  const borderRadius = theme.shape.borderRadius();
+  const borderRadius = theme.shape.radius.default;
   const borderColor = tinycolor2(color.border).setAlpha(0.2).toString();
 
   return {
     alert: css({
+      label: 'alert',
       flexGrow: 1,
       position: 'relative',
       borderRadius,

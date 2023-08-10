@@ -48,6 +48,6 @@ type fakePluginStaticRouteResolver struct {
 	routes []*plugins.StaticRoute
 }
 
-func (psrr *fakePluginStaticRouteResolver) Routes() []*plugins.StaticRoute {
+func (psrr *fakePluginStaticRouteResolver) Routes(_ context.Context) []*plugins.StaticRoute {
 	return psrr.routes
 }

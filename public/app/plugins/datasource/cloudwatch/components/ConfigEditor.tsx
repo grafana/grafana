@@ -7,7 +7,10 @@ import {
   DataSourcePluginOptionsEditorProps,
   onUpdateDatasourceJsonDataOption,
   updateDatasourcePluginJsonDataOption,
+  DataSourceTestSucceeded,
+  DataSourceTestFailed,
 } from '@grafana/data';
+import { getAppEvents, usePluginInteractionReporter } from '@grafana/runtime';
 import { Input, InlineField, FieldProps, SecureSocksProxySettings } from '@grafana/ui';
 import { notifyApp } from 'app/core/actions';
 import { config } from 'app/core/config';
@@ -37,6 +40,23 @@ export const ConfigEditor = (props: Props) => {
     invalid: false,
   });
   useEffect(() => setLogGroupFieldState({ invalid: false }), [props.options]);
+  const report = usePluginInteractionReporter();
+  useEffect(() => {
+    const successSubscription = getAppEvents().subscribe<DataSourceTestSucceeded>(DataSourceTestSucceeded, () => {
+      report('grafana_plugin_cloudwatch_save_succeeded', {
+        auth_type: options.jsonData.authType,
+      });
+    });
+    const failSubscription = getAppEvents().subscribe<DataSourceTestFailed>(DataSourceTestFailed, () => {
+      report('grafana_plugin_cloudwatch_save_failed', {
+        auth_type: options.jsonData.authType,
+      });
+    });
+    return () => {
+      successSubscription.unsubscribe();
+      failSubscription.unsubscribe();
+    };
+  }, [options.jsonData.authType, report]);
 
   return (
     <>
@@ -74,9 +94,9 @@ export const ConfigEditor = (props: Props) => {
       <h3 className="page-heading">CloudWatch Logs</h3>
       <div className="gf-form-group">
         <InlineField
-          label="Retry Timeout"
+          label="Query Result Timeout"
           labelWidth={28}
-          tooltip='Cloudwatch Logs allows for a maximum of 30 concurrent queries. If Grafana hits a concurrent max query error from Cloudwatch Logs it will auto-retry requesting a query for up to 30min. This retry timeout strategy is configurable. Must be a valid duration string, such as "15m" "30s" "2000ms" etc.'
+          tooltip='Grafana will poll for Cloudwatch Logs query results every second until Done status is returned from AWS or timeout is exceeded, in which case Grafana will return an error. The default period is 30 minutes. Note: For Alerting, the timeout defined in the config file will take precedence. Must be a valid duration string, such as "15m" "30s" "2000ms" etc.'
           invalid={Boolean(logsTimeoutError)}
         >
           <Input
