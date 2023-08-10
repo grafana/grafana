@@ -14,9 +14,13 @@ import {
   VizPanel,
   SceneObjectState,
   SceneObjectBase,
+  SceneVariableSet,
 } from '@grafana/scenes';
 import { useStyles2 } from '@grafana/ui';
-import { createPanelDataProvider } from 'app/features/scenes/dashboard/DashboardsLoader';
+import {
+  createPanelDataProvider,
+  createSceneVariableFromVariableModel,
+} from 'app/features/scenes/dashboard/DashboardsLoader';
 import { getVizPanelKeyForPanelId } from 'app/features/scenes/dashboard/utils';
 
 import { getDashboardSrv } from '../../services/DashboardSrv';
@@ -30,14 +34,14 @@ interface PanelSuggestionsProps {
 export const PanelSuggestions = ({ suggestions, onDismiss }: PanelSuggestionsProps) => {
   const styles = useStyles2(getStyles);
 
-  const dashboard = getDashboardSrv().getCurrent();
+  const dashboard = getDashboardSrv().getCurrent() as DashboardModel;
 
   const onUseSuggestion = (panel: PanelModel) => {
     dashboard?.addPanel(panel);
     onDismiss();
   };
 
-  const previewScene = getSceneModel({ panels: suggestions, dashboard: DashboardModel, onClickPanel: onUseSuggestion });
+  const previewScene = getSceneModel({ panels: suggestions, dashboard, onClickPanel: onUseSuggestion });
 
   return (
     <div className={styles.wrapper}>
@@ -80,11 +84,10 @@ function getSceneModel({
       children: panels.map((panel) => createVizPanelFromPanelModel(panel, onClickPanel)),
     }),
     $timeRange: new SceneTimeRange(),
-    // $data: createPanelDataProvider(panels[0]),
-    // $variables: new SceneVariableSet({
-    //   variables: dashboard.templating.list.map((variable) => createSceneVariableFromVariableModel(variable)),
-    // }),
-    // controls: controls,
+    $variables: new SceneVariableSet({
+      variables: dashboard.templating.list.map((variable) => createSceneVariableFromVariableModel(variable)),
+    }),
+    controls: controls,
   });
 }
 

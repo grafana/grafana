@@ -2096,6 +2096,9 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "11"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "12"]
     ],
+    "public/app/features/dashboard/components/DashGPT/PanelSuggestions.tsx:5381": [
+      [0, 0, 0, "Do not use any type assertions.", "0"]
+    ],
     "public/app/features/dashboard/components/DashGPT/PanelSuggestionsDrawer.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Do not use any type assertions.", "1"]
@@ -2221,6 +2224,10 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "2"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "3"],
       [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "4"]
+    ],
+    "public/app/features/dashboard/dashgrid/DashboardEmpty.tsx:5381": [
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
     ],
     "public/app/features/dashboard/dashgrid/DashboardGrid.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]

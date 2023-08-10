@@ -32,28 +32,34 @@ const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
   const styles = useStyles2(getStyles);
   const dispatch = useDispatch();
   const initialDatasource = useSelector((state) => state.dashboard.initialDatasource);
-  const [assitsDescription, setAssitsDescription] = React.useState('');
+  const [assistDescription, setAssistDescription] = React.useState('');
   const [assitsLoading, setAssitsLoading] = React.useState(false);
   const [isGenerationLoading, setIsGenerationLoading] = React.useState(false);
-  const [error, setError] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
 
   const [feedbackToUser, setFeedbackToUser] = React.useState('');
 
   const onSearchDashboard = async () => {
     try {
       setAssitsLoading(true);
-      let bestDashboardMatch = await onGenerateDashboardWithSemanticSearch(assitsDescription);
+      let bestDashboardMatch = await onGenerateDashboardWithSemanticSearch(assistDescription);
 
       // ask AI for confirmation on dashboard quality, if not strong yes generate a custom one
       // we can easily extend this to involve AI in selection of best dashboard from 5 original results as well as returning whether or not
       // it is a strong match and to just generate a new dashboard in that case... all in one call probably
-      const isDashboardMatchStrong = await checkDashboardResultQuality(bestDashboardMatch, assitsDescription);
+      let isDashboardMatchStrong;
+      try {
+        isDashboardMatchStrong = await checkDashboardResultQuality(bestDashboardMatch, assistDescription);
+      } catch (e) {
+        console.warn('Error checking dashboard quality', e);
+        isDashboardMatchStrong = true;
+      }
 
       if (!isDashboardMatchStrong) {
         setFeedbackToUser(
           'We could not find a great match for your description, generating a custom dashboard for you... this can take a while 😬'
         );
-        bestDashboardMatch = await onGenerateDashboardWithAI(assitsDescription);
+        bestDashboardMatch = await onGenerateDashboardWithAI(assistDescription);
       }
       setAssitsLoading(false);
 
@@ -62,12 +68,12 @@ const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
       const dashboardUrl = await createNewDashboardFromJSON(bestDashboardMatch);
       // Open the imported dashboard
       locationService.push(dashboardUrl);
-    } catch (error) {
-      setError(true);
+    } catch (error: any) {
+      console.log('error', JSON.stringify(error));
+      setError(error?.message || 'Something went wrong, please try again.');
       setTimeout(function () {
-        setError(false);
-      }, 3000);
-      console.log('error', error);
+        setError(null);
+      }, 6000);
       setAssitsLoading(false);
       setFeedbackToUser('');
     }
@@ -76,22 +82,23 @@ const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
   const onGenerateDashboard = async () => {
     setIsGenerationLoading(true);
     try {
-      const generatedDashboard = await onGenerateDashboardWithAI(assitsDescription);
+      const generatedDashboard = await onGenerateDashboardWithAI(assistDescription);
       if (generatedDashboard?.panels) {
         generatedDashboard?.panels.forEach((panel: Panel) => {
           dashboard.addPanel(panel);
         });
       }
-    } catch (error) {
-      setError(true);
+    } catch (error: any) {
+      setError(error?.message || 'Something went wrong, please try again.');
       setTimeout(function () {
-        setError(false);
-      }, 3000);
-      console.log('error', error);
-      // @TODO: Show error in the UI
-      console.log(error);
+        setError(null);
+      }, 6000);
     }
     setIsGenerationLoading(false);
+  };
+
+  const onSelectSelectSuggestion = (suggestion: string) => {
+    setAssistDescription(suggestion);
   };
 
   return (
@@ -108,14 +115,14 @@ const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
             <Text element="p" textAlignment="center" color="secondary">
               Write a description of the dashboard that you need and we generate it for you.
             </Text>
-            <DatasourceSuggestions />
+            <DatasourceSuggestions onSelectSuggestion={onSelectSelectSuggestion} />
             <TextArea
               placeholder="Save time by quickly generating dashboards using AI"
               width={200}
-              onChange={(e) => setAssitsDescription(e.currentTarget.value)}
-              value={assitsDescription}
+              onChange={(e) => setAssistDescription(e.currentTarget.value)}
+              value={assistDescription}
             />
-            {error && <div className={styles.error}>Something went wrong, please try again.</div>}
+            {!!error && <div className={styles.error}>{error}</div>}
             {feedbackToUser && <div className={styles.feedbackToUser}>{feedbackToUser}</div>}
             <div className={styles.llmButtons}>
               <Button
