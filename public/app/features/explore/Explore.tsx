@@ -128,6 +128,7 @@ enum ExploreDrawer {
 
 interface ExploreState {
   openDrawer?: ExploreDrawer;
+  megaSelectCompareFrame?: DataFrame[];
 }
 
 export interface MegaSelectOptions {
@@ -174,9 +175,12 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
 
   constructor(props: Props) {
     super(props);
+
     this.state = {
       openDrawer: undefined,
+      megaSelectCompareFrame: undefined,
     };
+
     this.graphEventBus = props.eventBus.newScopedBus('graph', { onlyLocal: false });
     this.logsEventBus = props.eventBus.newScopedBus('logs', { onlyLocal: false });
   }
@@ -302,6 +306,11 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
     updateTimeRange({ exploreId, absoluteRange });
   };
 
+  setMegaSelectCompareFrame = (megaSelectCompareFrame: DataFrame[]) => {
+    console.log('megaSelectCompareFrame', megaSelectCompareFrame);
+    this.setState({ megaSelectCompareFrame });
+  };
+
   toggleShowRichHistory = () => {
     this.setState((state) => {
       return {
@@ -397,7 +406,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
     const { graphResult, absoluteRange, timeZone, queryResponse, theme, exemplarsHack } = this.props;
     const styles = getStyles(theme);
 
-    //@todo not this
+    //@todo not like this
     const graphResultClone: DataFrame[] = JSON.parse(JSON.stringify(graphResult));
 
     const filterExemplars = (exemplars: DataFrame[], targetFrame: DataFrame): DataFrame[] => {
@@ -474,34 +483,42 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
 
     const minMax = getMinMax(panelsToRender);
 
+    const mainMega = this.getMainMegaPanel();
+
+    console.log('mainMega', mainMega);
+
     return (
       <div className={styles.megaSelectWrapper}>
         <div className={styles.megaSelectStickyWrapper}>
-          <MegaSelectContainer
-            options={{
-              view: megaSelectView,
-              endpoint: megaSelectEndpoint,
-              mega: true,
-              ...getMinMax([getMegaSelect]),
-              startOfRow: true,
-            }}
-            data={[getMegaSelect]}
-            height={300}
-            width={width}
-            absoluteRange={absoluteRange}
-            timeZone={timeZone}
-            onChangeTime={this.onUpdateTimeRange}
-            annotations={filterExemplars(queryResponse.annotations ?? [], getMegaSelect)}
-            splitOpenFn={this.onSplitOpen('graph')}
-            loadingState={queryResponse.state}
-            eventBus={this.graphEventBus}
-          />
+          {mainMega && (
+            <MegaSelectContainer
+              options={{
+                view: megaSelectView,
+                endpoint: mainMega[0].name,
+                mega: true,
+                ...getMinMax(mainMega),
+                startOfRow: true,
+              }}
+              data={mainMega}
+              height={300}
+              width={width}
+              absoluteRange={absoluteRange}
+              timeZone={timeZone}
+              onChangeTime={this.onUpdateTimeRange}
+              annotations={filterExemplars(queryResponse.annotations ?? [], getMegaSelect)}
+              splitOpenFn={this.onSplitOpen('graph')}
+              loadingState={queryResponse.state}
+              eventBus={this.graphEventBus}
+            />
+          )}
         </div>
         <div className={styles.megaSelectSubWrapper}>
           {panelsToRender &&
             panelsToRender.map((frame, frameIndex) => (
               <div key={JSON.stringify(frame.fields[1].labels)} className={styles.megaSelectItem}>
                 <MegaSelectContainer
+                  megaSelectCompareFrame={this.state.megaSelectCompareFrame}
+                  setMegaSelectCompareFrame={this.setMegaSelectCompareFrame}
                   actionsOverride={<></>}
                   data={[frame]}
                   height={250}
@@ -617,6 +634,20 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
     const { queryResponse } = this.props;
     return <FlameGraphExploreContainer dataFrames={queryResponse.flameGraphFrames} />;
   }
+
+  getMainMegaPanel = () => {
+    console.log('getMainMegaPanel', this.state.megaSelectCompareFrame);
+    if (this.state.megaSelectCompareFrame && this.state.megaSelectCompareFrame.length) {
+      return this.state.megaSelectCompareFrame;
+    }
+
+    if (this.props.graphResult) {
+      const megaSummaryIndex = this.props.graphResult.findIndex((df) => df.name === 'mega-summary');
+      return [cloneDeep(this.props.graphResult[megaSummaryIndex])];
+    }
+
+    return [];
+  };
 
   renderTraceViewPanel() {
     const { queryResponse, exploreId } = this.props;

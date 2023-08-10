@@ -70,6 +70,7 @@ interface Props {
   thresholdsStyle?: GraphThresholdsStyleConfig;
   eventBus: EventBus;
   options: MegaSelectOptions;
+  setMegaSelectCompareFrame?: (megaSelectCompareFrame: DataFrame[]) => void;
 }
 
 export function MegaSelectGraph({
