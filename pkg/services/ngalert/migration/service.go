@@ -11,6 +11,8 @@ import (
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/serverlock"
+	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/secrets"
@@ -38,6 +40,8 @@ type MigrationService struct {
 	ruleStore         RuleStore
 	alertingStore     AlertingStore
 	encryptionService secrets.Service
+	dashboardService  dashboards.DashboardService
+	folderService     folder.Service
 }
 
 func ProvideService(
@@ -47,6 +51,8 @@ func ProvideService(
 	kv kvstore.KVStore,
 	ruleStore *store.DBstore,
 	encryptionService secrets.Service,
+	dashboardService dashboards.DashboardService,
+	folderService folder.Service,
 ) (*MigrationService, error) {
 	return &MigrationService{
 		lock:              lock,
@@ -57,6 +63,8 @@ func ProvideService(
 		ruleStore:         ruleStore,
 		alertingStore:     ruleStore,
 		encryptionService: encryptionService,
+		dashboardService:  dashboardService,
+		folderService:     folderService,
 	}, nil
 }
 
@@ -107,6 +115,8 @@ func (ms *MigrationService) Run(ctx context.Context) error {
 				ms.alertingStore,
 				ms.store.GetDialect(),
 				ms.encryptionService,
+				ms.dashboardService,
+				ms.folderService,
 			)
 
 			err = mg.Exec(ctx)

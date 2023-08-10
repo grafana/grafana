@@ -22,7 +22,6 @@ type dashAlert struct {
 
 	Settings       json.RawMessage
 	ParsedSettings *dashAlertSettings
-	DashboardUID   string // Set from separate call
 }
 
 var slurpDashSQL = `
@@ -112,28 +111,4 @@ type dashAlertCondition struct {
 type conditionEvalJSON struct {
 	Params []float64 `json:"params"`
 	Type   string    `json:"type"` // e.g. "gt"
-}
-
-// slurpDashUIDs returns a map of [orgID, dashboardId] -> dashUID.
-func (m *migration) slurpDashUIDs(ctx context.Context) (map[[2]int64]string, error) {
-	dashIDs := []struct {
-		OrgID int64  `xorm:"org_id"`
-		ID    int64  `xorm:"id"`
-		UID   string `xorm:"uid"`
-	}{}
-
-	err := m.store.WithDbSession(ctx, func(sess *db.Session) error {
-		return sess.SQL(`SELECT org_id, id, uid FROM dashboard`).Find(&dashIDs)
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	idToUID := make(map[[2]int64]string, len(dashIDs))
-
-	for _, ds := range dashIDs {
-		idToUID[[2]int64{ds.OrgID, ds.ID}] = ds.UID
-	}
-
-	return idToUID, nil
 }

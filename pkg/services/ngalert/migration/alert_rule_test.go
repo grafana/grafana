@@ -1,7 +1,6 @@
 package migration
 
 import (
-	"encoding/json"
 	"strings"
 	"testing"
 
@@ -92,30 +91,30 @@ func TestMigrateAlertRuleQueries(t *testing.T) {
 func TestAddMigrationInfo(t *testing.T) {
 	tt := []struct {
 		name                string
-		tagsJSON            string
+		alert               *dashAlert
+		dashboard           string
 		expectedLabels      map[string]string
 		expectedAnnotations map[string]string
 	}{
 		{
 			name:                "when alert rule tags are a JSON array, they're ignored.",
-			tagsJSON:            `{ "alertRuleTags": ["one", "two", "three", "four"] }`,
+			alert:               &dashAlert{Id: 43, ParsedSettings: &dashAlertSettings{AlertRuleTags: []string{"one", "two", "three", "four"}}, PanelId: 42},
+			dashboard:           "dashboard",
 			expectedLabels:      map[string]string{},
-			expectedAnnotations: map[string]string{"__alertId__": "0", "__dashboardUid__": "", "__panelId__": "0"},
+			expectedAnnotations: map[string]string{"__alertId__": "43", "__dashboardUid__": "dashboard", "__panelId__": "42"},
 		},
 		{
 			name:                "when alert rule tags are a JSON object",
-			tagsJSON:            `{ "alertRuleTags": { "key": "value", "key2": "value2" } }`,
+			alert:               &dashAlert{Id: 43, ParsedSettings: &dashAlertSettings{AlertRuleTags: map[string]any{"key": "value", "key2": "value2"}}, PanelId: 42},
+			dashboard:           "dashboard",
 			expectedLabels:      map[string]string{"key": "value", "key2": "value2"},
-			expectedAnnotations: map[string]string{"__alertId__": "0", "__dashboardUid__": "", "__panelId__": "0"},
+			expectedAnnotations: map[string]string{"__alertId__": "43", "__dashboardUid__": "dashboard", "__panelId__": "42"},
 		},
 	}
 
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
-			var settings dashAlertSettings
-			require.NoError(t, json.Unmarshal([]byte(tc.tagsJSON), &settings))
-
-			labels, annotations := addMigrationInfo(&dashAlert{ParsedSettings: &settings})
+			labels, annotations := addMigrationInfo(tc.alert, tc.dashboard)
 			require.Equal(t, tc.expectedLabels, labels)
 			require.Equal(t, tc.expectedAnnotations, annotations)
 		})
@@ -129,7 +128,7 @@ func TestMakeAlertRule(t *testing.T) {
 			da := createTestDashAlert()
 			cnd := createTestDashAlertCondition()
 
-			ar, err := m.makeAlertRule(&logtest.Fake{}, cnd, da, "folder")
+			ar, err := m.makeAlertRule(&logtest.Fake{}, cnd, da, "dashboard", "folder")
 
 			require.NoError(t, err)
 			require.Equal(t, da.Name, ar.Title)
@@ -142,7 +141,7 @@ func TestMakeAlertRule(t *testing.T) {
 			da.Name = strings.Repeat("a", store.AlertDefinitionMaxTitleLength+1)
 			cnd := createTestDashAlertCondition()
 
-			ar, err := m.makeAlertRule(&logtest.Fake{}, cnd, da, "folder")
+			ar, err := m.makeAlertRule(&logtest.Fake{}, cnd, da, "dashboard", "folder")
 
 			require.NoError(t, err)
 			require.Len(t, ar.Title, store.AlertDefinitionMaxTitleLength)
@@ -159,7 +158,7 @@ func TestMakeAlertRule(t *testing.T) {
 		da := createTestDashAlert()
 		cnd := createTestDashAlertCondition()
 
-		ar, err := m.makeAlertRule(&logtest.Fake{}, cnd, da, "folder")
+		ar, err := m.makeAlertRule(&logtest.Fake{}, cnd, da, "dashboard", "folder")
 		require.NoError(t, err)
 		require.False(t, ar.IsPaused)
 	})
@@ -170,7 +169,7 @@ func TestMakeAlertRule(t *testing.T) {
 		da.State = "paused"
 		cnd := createTestDashAlertCondition()
 
-		ar, err := m.makeAlertRule(&logtest.Fake{}, cnd, da, "folder")
+		ar, err := m.makeAlertRule(&logtest.Fake{}, cnd, da, "dashboard", "folder")
 		require.NoError(t, err)
 		require.True(t, ar.IsPaused)
 	})
@@ -181,7 +180,7 @@ func TestMakeAlertRule(t *testing.T) {
 		da.ParsedSettings.NoDataState = uuid.NewString()
 		cnd := createTestDashAlertCondition()
 
-		ar, err := m.makeAlertRule(&logtest.Fake{}, cnd, da, "folder")
+		ar, err := m.makeAlertRule(&logtest.Fake{}, cnd, da, "dashboard", "folder")
 		require.Nil(t, err)
 		require.Equal(t, models.NoData, ar.NoDataState)
 	})
@@ -192,7 +191,7 @@ func TestMakeAlertRule(t *testing.T) {
 		da.ParsedSettings.ExecutionErrorState = uuid.NewString()
 		cnd := createTestDashAlertCondition()
 
-		ar, err := m.makeAlertRule(&logtest.Fake{}, cnd, da, "folder")
+		ar, err := m.makeAlertRule(&logtest.Fake{}, cnd, da, "dashboard", "folder")
 		require.Nil(t, err)
 		require.Equal(t, models.ErrorErrState, ar.ExecErrState)
 	})
@@ -203,7 +202,7 @@ func TestMakeAlertRule(t *testing.T) {
 		da.Message = "Instance ${instance} is down"
 		cnd := createTestDashAlertCondition()
 
-		ar, err := m.makeAlertRule(&logtest.Fake{}, cnd, da, "folder")
+		ar, err := m.makeAlertRule(&logtest.Fake{}, cnd, da, "dashboard", "folder")
 		require.Nil(t, err)
 		expected :=
 			"{{- $mergedLabels := mergeLabelValues $values -}}\n" +
