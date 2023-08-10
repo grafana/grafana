@@ -697,8 +697,13 @@ func (hs *HTTPServer) apiHealthHandler(ctx *web.Context) {
 }
 
 func (hs *HTTPServer) mapStatic(m *web.Mux, rootDir string, dir string, prefix string, exclude ...string) {
+	serviceWorkerScope := "/"
+	if hs.Cfg.AppSubURL != "" {
+		serviceWorkerScope = hs.Cfg.AppSubURL
+	}
 	headers := func(c *web.Context) {
 		c.Resp.Header().Set("Cache-Control", "public, max-age=3600")
+		c.Resp.Header().Set("Service-Worker-Allowed", serviceWorkerScope)
 	}
 
 	if prefix == "public/build" {
@@ -710,7 +715,6 @@ func (hs *HTTPServer) mapStatic(m *web.Mux, rootDir string, dir string, prefix s
 	if hs.Cfg.Env == setting.Dev {
 		headers = func(c *web.Context) {
 			c.Resp.Header().Set("Cache-Control", "max-age=0, must-revalidate, no-cache")
-			c.Resp.Header().Set("Service-Worker-Allowed", "/")
 		}
 	}
 

@@ -228,7 +228,7 @@ export class GrafanaApp {
 
       window.addEventListener('load', () => {
         if ('serviceWorker' in navigator) {
-          navigator.serviceWorker.register('./public/build/service-worker.js', { scope: '/' });
+          navigator.serviceWorker.register('./public/build/service-worker.js', { scope: config.appSubUrl ?? '/' });
         }
       });
 
