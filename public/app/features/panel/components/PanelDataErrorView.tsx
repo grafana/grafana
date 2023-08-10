@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import moment from 'moment';
 import React from 'react';
 import { useAsync } from 'react-use';
 
@@ -9,6 +10,7 @@ import {
   VisualizationSuggestionsBuilder,
   VisualizationSuggestion,
   DataTransformerID,
+  FieldType,
 } from '@grafana/data';
 import { llms } from '@grafana/experimental';
 import { PanelDataErrorViewProps, locationService } from '@grafana/runtime';
@@ -34,7 +36,7 @@ export function PanelDataErrorView(props: PanelDataErrorViewProps) {
   const dispatch = useDispatch();
 
   const panel = getDashboardSrv().getCurrent()?.getPanelById(props.panelId);
-
+  /*
   const { loading, error, value } = useAsync(async () => {
     const enabled = await llms.openai.enabled();
     if (!enabled) {
@@ -43,8 +45,7 @@ export function PanelDataErrorView(props: PanelDataErrorViewProps) {
 
     // We don't really need to steam the completions, since there will really only be a single string answer,
     // but this is how the LLM functionality is currently implemented.
-    const stream = llms.openai
-      .streamChatCompletions({
+    const stream = llms.openai.streamChatCompletions({
         model: 'gpt-3.5-turbo',
         messages: [{ role: 'system', content: 'default promt that we build to check for time types/fields' }],
       })
@@ -73,25 +74,46 @@ export function PanelDataErrorView(props: PanelDataErrorViewProps) {
   // Do we want to run the LLM logic by default? Or give the user the option to run it?
 
   // The LLM functionality in experimental is streaming by nature, even if we are only wanting to returm a stream of one item.
-
+*/
   // Where are these suggestions coming from? Are
-  let suggestions = props.suggestions;
+  let suggestions = props.suggestions || [];
   // What if the dataSummary is not reliable for recognizing fields correctly?
   if (props.needsTimeField && !dataSummary.hasTimeField && panel && panel.plugin?.hasPluginId) {
     const transformations = panel.transformations ? [...panel.transformations] : [];
     // Only push the transformation is the user wants to add it?
+    const f = props.data.series[0].fields.find((f) => {
+      return (
+        (f.type === FieldType.string && f.values.slice(0, 5).every((v) => moment(v).isValid())) ||
+        (f.type === FieldType.number &&
+          f.values.slice(0, 5).every((v) => {
+            const epoch = moment.unix(v);
+            //Let's assume numbers that parse to +-5 years from now are unix epochs
+            let yearDiff = epoch.diff(moment(), 'years');
+            if (yearDiff < 5 && yearDiff > -5) {
+              return true;
+            }
+            const epochMillies = moment.unix(v / 1000);
+            yearDiff = epochMillies.diff(moment(), 'years');
+            if (yearDiff < 5 && yearDiff > -5) {
+              return true;
+            }
+            return false;
+          }))
+      );
+    });
     transformations.push({
       id: DataTransformerID.convertFieldType,
       options: {
         // Is this where we let the LLM choose the format? Or do we bake in a default?
         // Or let the user choose the format? What should the UI/UX for the user choosing it look like?
-        format: '???',
+        fields: {},
+        conversions: [{ targetField: f?.name, destinationType: FieldType.time, dateFormat: undefined }],
       },
     });
 
     // Are `suggestions` panel suggestions or transformation suggestions?
-    suggestions?.push({
-      name: 'Convert field to ',
+    suggestions.push({
+      name: `Convert the field \'${f?.name}\' to a time field.`,
       pluginId: panel.plugin?.meta.id,
       transformations,
     });
