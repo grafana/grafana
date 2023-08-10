@@ -23,7 +23,7 @@ import { MetricsLabelsSection } from './MetricsLabelsSection';
 import { NestedQueryList } from './NestedQueryList';
 import { EXPLAIN_LABEL_FILTER_CONTENT } from './PromQueryBuilderExplained';
 import { PromQail } from './promQail/PromQail';
-import AI_Logo_bw from './promQail/resources/AI_Logo_bw.svg';
+import AI_Logo_color from './promQail/resources/AI_Logo_color.svg';
 
 export interface Props {
   query: PromVisualQuery;
@@ -100,7 +100,7 @@ export const PromQueryBuilder = React.memo<Props>((props) => {
               }}
               title={'Get query suggestions.'}
             >
-              <img src={AI_Logo_bw} alt="AI logo black and white" />
+              <img src={AI_Logo_color} alt="AI logo black and white" />
               {'\u00A0'}Get query suggestions
             </Button>
           </div>
