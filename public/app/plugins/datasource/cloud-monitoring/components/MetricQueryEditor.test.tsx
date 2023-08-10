@@ -1,6 +1,5 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
-import { act } from 'react-test-renderer';
 
 import { createMockDatasource } from '../__mocks__/cloudMonitoringDatasource';
 import { createMockQuery } from '../__mocks__/cloudMonitoringQuery';
