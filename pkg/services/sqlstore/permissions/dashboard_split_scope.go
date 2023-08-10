@@ -207,7 +207,6 @@ func (f *DashboardFilter) buildSelfContainedClause(folderAction, dashboardAction
 		} else {
 			query.WriteString("NOT dashboard.is_folder")
 		}
-
 	}
 
 	if folderAction != "" {
