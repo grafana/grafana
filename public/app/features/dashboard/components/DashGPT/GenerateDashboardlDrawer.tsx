@@ -3,11 +3,12 @@ import React, { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Panel } from '@grafana/schema/dist/esm/veneer/dashboard.types';
-import { Card, Drawer, useStyles2 } from '@grafana/ui';
+import { Drawer, useStyles2 } from '@grafana/ui';
 
 import { getDashboardSrv } from '../../services/DashboardSrv';
 import { onGenerateDashboardWithAI } from '../../utils/dashboard';
 
+import { DatasourceSuggestions } from './DatasourceSuggestions';
 import { UserPrompt } from './UserPrompt';
 
 interface GenerateDashboardDrawerProps {
@@ -72,50 +73,11 @@ export const GenerateDashboardDrawer = ({ onDismiss }: GenerateDashboardDrawerPr
   );
 };
 
-const DatasourceSuggestions = () => {
-  const styles = useStyles2(getStyles);
-
-  const datasourceSuggestions = [
-    {
-      name: 'Graphite Templated Nested',
-      id: 'graphite',
-    },
-    {
-      name: 'Influx 2.2: Live NOAA Buoy Data',
-      id: 'influxdb',
-    },
-    {
-      name: 'Loki NGINX Service Mesh',
-      id: 'loki',
-    },
-  ];
-
-  const onUseDatasourceSuggestion = () => {
-    console.log('onUseDatasourceSuggestion');
-  };
-
-  return (
-    <div className={styles.suggestionsWrapper}>
-      {datasourceSuggestions.map((item, index) => (
-        <Card onClick={onUseDatasourceSuggestion} key={index}>
-          <Card.Description>{item.name}</Card.Description>
-        </Card>
-      ))}
-    </div>
-  );
-};
-
 const getStyles = (theme: GrafanaTheme2) => ({
   contentWrapper: css`
     padding-right: 30px;
   `,
   list: css`
     padding: 0 0 10px 20px;
-  `,
-  suggestionsWrapper: css`
-    display: flex;
-    gap: 10px;
-    margin-right: 55px;
-    margin-bottom: 100px; // @TODO style this
   `,
 });

@@ -19,6 +19,7 @@ import {
 } from 'app/features/dashboard/utils/dashboard';
 import { useDispatch, useSelector } from 'app/types';
 
+import { DatasourceSuggestions } from '../components/DashGPT/DatasourceSuggestions';
 import { setInitialDatasource } from '../state/reducers';
 
 export interface Props {
@@ -83,6 +84,7 @@ const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
             <Text element="p" textAlignment="center" color="secondary">
               Write a description of the dashboard that you need and we generate it for you.
             </Text>
+            <DatasourceSuggestions />
             <TextArea
               placeholder="Save time by quickly generating dashboards using AI"
               width={200}
