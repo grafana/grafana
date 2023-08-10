@@ -52,7 +52,7 @@ func (v *Validate) Validate(ctx context.Context, ps []*plugins.Plugin) ([]*plugi
 			err := validate(ctx, p)
 			if err != nil {
 				stepFailed = true
-				v.log.Error("Plugin validation failed", "pluginId", p.ID, "err", err)
+				v.log.Error("Plugin validation failed", "pluginId", p.ID, "error", err)
 				break
 			}
 		}
