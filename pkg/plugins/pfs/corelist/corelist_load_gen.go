@@ -83,5 +83,6 @@ func corePlugins(rt *thema.Runtime) []pfs.ParsedPlugin {
 		parsePluginOrPanic("public/app/plugins/panel/trend", "trend", rt),
 		parsePluginOrPanic("public/app/plugins/panel/welcome", "welcome", rt),
 		parsePluginOrPanic("public/app/plugins/panel/xychart", "xychart", rt),
+		parsePluginOrPanic("public/plugins/testdata/src", "testdata", rt),
 	}
 }

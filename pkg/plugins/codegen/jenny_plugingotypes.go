@@ -52,11 +52,12 @@ func (j *pgoJenny) Generate(decl *pfs.PluginDecl) (*codejen.File, error) {
 	}
 
 	pluginfolder := filepath.Base(decl.PluginPath)
-	// hardcoded exception for testdata datasource, ONLY because "testdata" is basically a
-	// language-reserved keyword for Go
-	if pluginfolder == "testdata" {
-		pluginfolder = "testdatasource"
-	}
 	filename := fmt.Sprintf("types_%s_gen.go", slotname)
+
+	// temporary hack
+	if decl.PluginMeta.Id == "testdata" {
+		return codejen.NewFile(filepath.Join("public", "plugins", decl.PluginMeta.Id, "pkg", "kinds", slotname, filename), byt, j), nil
+	}
+
 	return codejen.NewFile(filepath.Join(j.root, pluginfolder, "kinds", slotname, filename), byt, j), nil
 }

@@ -43,6 +43,10 @@ const (
 	composableTSPath  = "public/app/plugins/%s/%s/%s.gen.ts"
 	composableGoPath  = "pkg/tsdb/%s/kinds/%s/types_%s_gen.go"
 	composableCUEPath = "public/app/plugins/%s/%s/%s.cue"
+
+	decoupledComposableTSPath  = "public/plugins/%s/src/%s.gen.ts"
+	decoupledComposableGoPath  = "public/plugins/%s/pkg/kinds/%s/types_%s_gen.go"
+	decoupledComposableCUEPath = "public/plugins/%s/src/%s.cue"
 )
 
 func main() {
@@ -307,15 +311,31 @@ func buildComposableLinks(pp plugindef.PluginDef, cp kindsys.ComposablePropertie
 		pName = irr
 	}
 
+	goPath := composableGoPath
+	decoupled := false
+
+	if pp.Id == "testdata" {
+		decoupled = true
+	}
+
+	schemaLink := elsedie(url.JoinPath(repoBaseURL, fmt.Sprintf(composableCUEPath, string(pp.Type), pName, schemaInterface)))("cannot build schema link")
+	tsLink := elsedie(url.JoinPath(repoBaseURL, fmt.Sprintf(composableTSPath, string(pp.Type), pName, schemaInterface)))("cannot build ts link")
+
+	if decoupled {
+		goPath = decoupledComposableGoPath
+		schemaLink = elsedie(url.JoinPath(repoBaseURL, fmt.Sprintf(decoupledComposableCUEPath, pName, schemaInterface)))("cannot build schema link")
+		tsLink = elsedie(url.JoinPath(repoBaseURL, fmt.Sprintf(decoupledComposableTSPath, pName, schemaInterface)))("cannot build ts link")
+	}
+
 	var goLink string
 	if pp.Backend != nil && *pp.Backend {
-		goLink = elsedie(url.JoinPath(repoBaseURL, fmt.Sprintf(composableGoPath, pName, schemaInterface, schemaInterface)))("cannot build go link")
+		goLink = elsedie(url.JoinPath(repoBaseURL, fmt.Sprintf(goPath, pName, schemaInterface, schemaInterface)))("cannot build go link")
 	}
 
 	return KindLinks{
-		Schema: elsedie(url.JoinPath(repoBaseURL, fmt.Sprintf(composableCUEPath, string(pp.Type), pName, schemaInterface)))("cannot build schema link"),
+		Schema: schemaLink,
 		Go:     goLink,
-		Ts:     elsedie(url.JoinPath(repoBaseURL, fmt.Sprintf(composableTSPath, string(pp.Type), pName, schemaInterface)))("cannot build ts link"),
+		Ts:     tsLink,
 		Docs:   elsedie(url.JoinPath(docsBaseURL, category, cp.MachineName, "schema-reference"))("cannot build docs link"),
 	}
 }

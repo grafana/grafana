@@ -55,11 +55,17 @@ func (j *ptlJenny) Generate(decls ...*pfs.PluginDecl) (*codejen.File, error) {
 		}
 
 		pluginId := j.sanitizePluginId(meta.Id)
+		pluginPath := path.Join(append(strings.Split(prefix, "/")[3:], decl.PluginPath)...)
+
+		if meta.Id == "testdata" {
+			pluginPath = path.Join("public", "plugins", decl.PluginPath)
+		}
+
 		vars.Plugins = append(vars.Plugins, tpl{
 			PkgName:    pluginId,
 			NoAlias:    pluginId != filepath.Base(decl.PluginPath),
 			ImportPath: filepath.ToSlash(filepath.Join(prefix, decl.PluginPath)),
-			Path:       path.Join(append(strings.Split(prefix, "/")[3:], decl.PluginPath)...),
+			Path:       pluginPath,
 		})
 
 		j.plugins[meta.Id] = true

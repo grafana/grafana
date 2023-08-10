@@ -15,6 +15,7 @@ import (
 
 	"github.com/grafana/codejen"
 	"github.com/grafana/kindsys"
+	"github.com/yalue/merged_fs"
 
 	corecodegen "github.com/grafana/grafana/pkg/codegen"
 	"github.com/grafana/grafana/pkg/cuectx"
@@ -65,7 +66,7 @@ func main() {
 	pluginKindGen.AddPostprocessors(corecodegen.SlashHeaderMapper("public/app/plugins/gen.go"), splitSchiffer(schifnames))
 
 	declParser := pfs.NewDeclParser(rt, skipPlugins)
-	decls, err := declParser.Parse(os.DirFS(cwd))
+	decls, err := declParser.Parse(merged_fs.MergeMultiple(os.DirFS(cwd), os.DirFS(filepath.Join(cwd, "../../plugins"))))
 	if err != nil {
 		log.Fatalln(fmt.Errorf("parsing plugins in dir failed %s: %s", cwd, err))
 	}
