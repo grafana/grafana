@@ -40,12 +40,6 @@ const QuickFeedbackSuggestions = ({
 
   return (
     <div className={styles.quickSuggestionsWrapper}>
-      <Button onClick={() => onSuggestionClick('Even shorter')} disabled={isRegenerating} size="sm" variant="secondary">
-        Even shorter
-      </Button>
-      <Button onClick={() => onSuggestionClick('Improve it')} disabled={isRegenerating} size="sm" variant="secondary">
-        Improve it
-      </Button>
       <Button
         onClick={() => onSuggestionClick('More descriptive')}
         disabled={isRegenerating}
