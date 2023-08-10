@@ -79,15 +79,18 @@ const getStyles = (theme: GrafanaTheme2) => {
     content: css({
       display: 'flex',
       flexDirection: 'column',
-      paddingTop: TOP_BAR_LEVEL_HEIGHT * 2,
+      // add padding (if needed) here to account for iOS notch
+      paddingTop: `calc(${TOP_BAR_LEVEL_HEIGHT * 2}px + env(safe-area-inset-top))`,
       flexGrow: 1,
       height: '100%',
     }),
     contentNoSearchBar: css({
-      paddingTop: TOP_BAR_LEVEL_HEIGHT,
+      // add padding (if needed) here to account for iOS notch
+      paddingTop: `calc(${TOP_BAR_LEVEL_HEIGHT}px + env(safe-area-inset-top))`,
     }),
     contentChromeless: css({
-      paddingTop: 0,
+      // add padding (if needed) here to account for iOS notch
+      paddingTop: `env(safe-area-inset-top)`,
     }),
     topNav: css({
       display: 'flex',
@@ -99,7 +102,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       background: theme.colors.background.primary,
       flexDirection: 'column',
       borderBottom: `1px solid ${theme.colors.border.weak}`,
-      // add padding here for iOS notch
+      // add padding (if needed) here to account for iOS notch
       paddingTop: `env(safe-area-inset-top)`,
     }),
     panes: css({
