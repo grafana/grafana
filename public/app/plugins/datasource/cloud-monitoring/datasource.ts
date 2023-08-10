@@ -55,7 +55,7 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
   }
 
   applyTemplateVariables(target: CloudMonitoringQuery, scopedVars: ScopedVars): Record<string, any> {
-    const { timeSeriesList, timeSeriesQuery, sloQuery } = target;
+    const { timeSeriesList, timeSeriesQuery, sloQuery, promQLQuery } = target;
 
     return {
       ...target,
@@ -79,6 +79,7 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
         ),
       },
       sloQuery: sloQuery && this.interpolateProps(sloQuery, scopedVars),
+      promQLQuery: promQLQuery && this.interpolateProps(promQLQuery, scopedVars),
     };
   }
 
@@ -324,7 +325,7 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
     }
 
     if (query.queryType === QueryType.PROMQL) {
-      return !!query.promQLQuery && !!query.promQLQuery.projectName && !!query.promQLQuery.query;
+      return !!query.promQLQuery && !!query.promQLQuery.projectName && !!query.promQLQuery.query && !!query.promQLQuery.step;
     }
 
     return false;

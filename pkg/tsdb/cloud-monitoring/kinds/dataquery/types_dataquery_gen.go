@@ -233,7 +233,7 @@ type PromQLQuery struct {
 	Query string `json:"query"`
 
 	// PromQL min step
-	Step float32 `json:"step"`
+	Step string `json:"step"`
 }
 
 // Defines the supported queryTypes.

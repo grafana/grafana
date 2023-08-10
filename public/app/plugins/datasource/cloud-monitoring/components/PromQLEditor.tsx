@@ -22,7 +22,7 @@ export interface Props {
 export const defaultQuery: (dataSource: CloudMonitoringDatasource) => PromQLQuery = (dataSource) => ({
   projectName: dataSource.getDefaultProject(),
   query: "",
-  step: 10,
+  step: "10s",
 });
 
 export function PromQLQueryEditor({
@@ -34,19 +34,11 @@ export function PromQLQueryEditor({
   onRunQuery,
 }: React.PropsWithChildren<Props>) {
 
-  function onChangeQueryStep(interval: number) {
-    onChange({ ...query, step: interval });
-  }
-
-  function onStepChange(e: React.SyntheticEvent<HTMLInputElement>) {
-    if (e.currentTarget.value !== query.step.toString()) {
-      onChangeQueryStep(+e.currentTarget.value);
-    }
-  }
-
-  function onReturnKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+  function onReturnKeyDown(e: React.KeyboardEvent<any>) {
     if (e.key === 'Enter' && e.shiftKey) {
       onRunQuery();
+      e.preventDefault();
+      e.stopPropagation();
     }
   }
 
@@ -67,7 +59,8 @@ export function PromQLQueryEditor({
           rows={10}
           placeholder="Enter a Cloud Monitoring MQL query (Run with Shift+Enter)"
           onBlur={onRunQuery}
-          onChange={(e) => onChange({query: e.currentTarget.value} as PromQLQuery)}
+          onKeyDown={onReturnKeyDown}
+          onChange={(e) => onChange({...query, query: e.currentTarget.value})}
         />
       <div
         className={cx(
@@ -87,10 +80,10 @@ export function PromQLQueryEditor({
           Min step
         </InlineFormLabel>
         <input
-          type={'number'}
+          type={'string'}
           className="gf-form-input width-4"
           placeholder={'auto'}
-          onChange={onStepChange}
+          onChange={(e) => onChange({ ...query, step: e.currentTarget.value })}
           onKeyDown={onReturnKeyDown}
           value={query.step ?? ''}
         />

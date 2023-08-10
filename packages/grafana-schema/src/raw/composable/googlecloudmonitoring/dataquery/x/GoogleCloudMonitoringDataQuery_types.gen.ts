@@ -209,7 +209,7 @@ export interface PromQLQuery {
   /**
    * PromQL min step
    */
-  step: number;
+  step: string;
 }
 
 /**

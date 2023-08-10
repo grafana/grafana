@@ -333,7 +333,6 @@ func migrateRequest(req *backend.QueryDataRequest) error {
 // executes the queries against the CloudMonitoring API and parses the response into data frames
 func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	logger := slog.FromContext(ctx)
-	logger.Error("HELLOOOO", "req", req.Headers)
 	if len(req.Queries) == 0 {
 		return nil, fmt.Errorf("query contains no queries")
 	}
@@ -356,8 +355,6 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 	switch req.Queries[0].QueryType {
 	case string(dataquery.QueryTypeAnnotation):
 		return s.executeAnnotationQuery(ctx, req, *dsInfo, queries)
-	case string(dataquery.QueryTypePromQL):
-		return s.executePromQuery(ctx, req, *dsInfo, queries)
 	default:
 		return s.executeTimeSeriesQuery(ctx, req, *dsInfo, queries)
 	}

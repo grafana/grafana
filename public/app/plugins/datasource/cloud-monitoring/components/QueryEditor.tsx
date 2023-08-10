@@ -36,10 +36,9 @@ export const QueryEditor = (props: Props) => {
     onRunQuery();
   };
 
-  const promQLQuery = { ...{projectName: datasource.getDefaultProject(), query: "", step: 10}, ...query.promQLQuery};
+  const promQLQuery = { ...{projectName: datasource.getDefaultProject(), query: "", step: "10s"}, ...query.promQLQuery};
   const onPromQLQueryChange = (q: PromQLQuery) => {
     onChange({ ...query, promQLQuery: q});
-    onRunQuery();
   };
 
   const meta = props.data?.series.length ? props.data?.series[0].meta : {};

@@ -125,7 +125,7 @@ composableKinds: DataQuery: {
 					// PromQL query to be executed.
 					query: string
 					// PromQL min step
-					step: number
+					step: string
 				} @cuetsy(kind="interface")
 
 				// @deprecated This type is for migration purposes only. Replaced by TimeSeriesList Metric sub-query properties.
