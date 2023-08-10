@@ -2,27 +2,25 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { PanelChrome, useStyles2 } from '@grafana/ui';
+import {
+  SceneObject,
+  VariableValueSelectors,
+  SceneTimePicker,
+  SceneRefreshPicker,
+  EmbeddedScene,
+  SceneFlexLayout,
+  SceneTimeRange,
+  SceneFlexItem,
+  VizPanel,
+  SceneObjectState,
+  SceneObjectBase,
+} from '@grafana/scenes';
+import { useStyles2 } from '@grafana/ui';
+import { createPanelDataProvider } from 'app/features/scenes/dashboard/DashboardsLoader';
+import { getVizPanelKeyForPanelId } from 'app/features/scenes/dashboard/utils';
 
 import { getDashboardSrv } from '../../services/DashboardSrv';
 import { DashboardModel, PanelModel } from '../../state';
-import { EmbeddedScene } from '@grafana/scenes';
-import { DashboardScene } from 'app/features/scenes/dashboard/DashboardScene';
-import { SceneGridLayout } from '@grafana/scenes';
-import { createSceneObjectsForPanels, createPanelDataProvider } from 'app/features/scenes/dashboard/DashboardsLoader';
-import { SceneTimeRange } from '@grafana/scenes';
-import { SceneVariableSet } from '@grafana/scenes';
-import { SceneRefreshPicker } from '@grafana/scenes';
-import { SceneTimePicker } from '@grafana/scenes';
-import { VariableValueSelectors } from '@grafana/scenes';
-import { SceneObject } from '@grafana/scenes';
-import { Panel } from '@grafana/schema';
-import { SceneFlexLayout } from '@grafana/scenes';
-import { SceneFlexItem } from '@grafana/scenes';
-import { VizPanel } from '@grafana/scenes';
-import { getVizPanelKeyForPanelId } from 'app/features/scenes/dashboard/utils';
-import { SceneObjectBase } from '@grafana/scenes';
-import { SceneObjectState } from '@grafana/scenes';
 
 interface PanelSuggestionsProps {
   suggestions: PanelModel[];
@@ -39,7 +37,7 @@ export const PanelSuggestions = ({ suggestions, onDismiss }: PanelSuggestionsPro
     onDismiss();
   };
 
-  const previewScene = getSceneModel({panels: suggestions, dashboard, onClickPanel: onUseSuggestion})
+  const previewScene = getSceneModel({ panels: suggestions, dashboard: DashboardModel, onClickPanel: onUseSuggestion });
 
   return (
     <div className={styles.wrapper}>
@@ -64,58 +62,54 @@ const getStyles = (theme: GrafanaTheme2) => ({
   `,
 });
 
-function getSceneModel({panels, onClickPanel}: {panels: PanelModel[], onClickPanel: (panel: PanelModel) => void}) {
-
-  const controls: SceneObject[] = [
-    new VariableValueSelectors({}),
-    new SceneTimePicker({}),
-    new SceneRefreshPicker({}),
-  ];
-
+function getSceneModel({
+  panels,
+  dashboard,
+  onClickPanel,
+}: {
+  panels: PanelModel[];
+  dashboard: DashboardModel;
+  onClickPanel: (panel: PanelModel) => void;
+}) {
+  const controls: SceneObject[] = [new VariableValueSelectors({}), new SceneTimePicker({}), new SceneRefreshPicker({})];
 
   return new EmbeddedScene({
     body: new SceneFlexLayout({
       direction: 'column',
 
       children: panels.map((panel) => createVizPanelFromPanelModel(panel, onClickPanel)),
-      // children: [],
     }),
-    // $timeRange: new SceneTimeRange(),
+    $timeRange: new SceneTimeRange(),
+    // $data: createPanelDataProvider(panels[0]),
     // $variables: new SceneVariableSet({
-    //   variables: createSceneVariableFromVariableModel(dashboard!.getVariables()),
+    //   variables: dashboard.templating.list.map((variable) => createSceneVariableFromVariableModel(variable)),
     // }),
     // controls: controls,
   });
 }
 
-function normalizePanel(panel: PanelModel): PanelModel {
-
-  return new PanelModel({
-    ...panel,
-    gridPos: {
-    },
-  });
-}
-
+// TODO: Figure out why panels sometimes don't render (i.e. "node server")
+// TODO: Figure out how to auto migrate from old panel types to new panel types (angular)
+// TODO: Bonus - figure out way to filter out panels that are relying on missing DS variable?
 export function createVizPanelFromPanelModel(panel: PanelModel, onClick: (panel: PanelModel) => void) {
-  return  new SceneFlexItem({
-      minHeight: 200,
-      body: new SceneClickableElement({
-        onClick: () => onClick(panel),
-        children: new VizPanel({
-          key: getVizPanelKeyForPanelId(panel.id),
-          title: panel.title,
-          pluginId: panel.type,
-          options: panel.options ?? {},
-          fieldConfig: panel.fieldConfig,
-          pluginVersion: panel.pluginVersion,
-          displayMode: panel.transparent ? 'transparent' : undefined,
-          // To be replaced with it's own option persited option instead derived
-          hoverHeader: !panel.title && !panel.timeFrom && !panel.timeShift,
-          $data: createPanelDataProvider(panel),
-        }),
-      })
-    });
+  return new SceneFlexItem({
+    minHeight: 200,
+    body: new SceneClickableElement({
+      onClick: () => onClick(panel),
+      children: new VizPanel({
+        key: getVizPanelKeyForPanelId(panel.id),
+        title: panel.title,
+        pluginId: panel.type,
+        options: panel.options ?? {},
+        fieldConfig: panel.fieldConfig,
+        pluginVersion: panel.pluginVersion,
+        displayMode: panel.transparent ? 'transparent' : undefined,
+        // To be replaced with it's own option persisted option instead derived
+        hoverHeader: !panel.title && !panel.timeFrom && !panel.timeShift,
+        $data: createPanelDataProvider(panel),
+      }),
+    }),
+  });
 }
 
 interface ClickableElementState extends SceneObjectState {
@@ -128,10 +122,18 @@ export class SceneClickableElement extends SceneObjectBase<ClickableElementState
 }
 
 function ClickableElementRenderer({ model }: { model: SceneClickableElement }) {
-  debugger
-  const {onClick, children} = model.useState();
+  const { onClick, children } = model.useState();
   return (
-    <div onClick={onClick}>
+    <div
+      role="button"
+      tabIndex={0}
+      onClick={onClick}
+      onKeyDown={(event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          onClick();
+        }
+      }}
+    >
       <children.Component model={children} />
     </div>
   );

@@ -142,17 +142,3 @@ const getStyles = (theme: GrafanaTheme2) => ({
     border: 1px solid ${theme.colors.error.border};
   `,
 });
-
-function PanelsPreview({ panels }: { panels: Panel[] }) {
-  return (
-    <div>
-      {panels.map((panel: Panel) => {
-        return (
-          <div key={panel.title}>
-            <pre>{JSON.stringify(panel, null, 2)}</pre>
-          </div>
-        );
-      })}
-    </div>
-  );
-}
