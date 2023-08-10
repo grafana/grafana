@@ -42,7 +42,7 @@
 /docs/sources/alerting/                                                      @brendamuir
 /docs/sources/dashboards/                                                    @imatwawana
 /docs/sources/datasources/                                                   @lwandz13
-/docs/sources/explore/                                                       @explore-squad
+/docs/sources/explore/                                                       @grafana/explore-squad
 /docs/sources/fundamentals                                                   @chri2547
 /docs/sources/getting-started/                                               @chri2547
 /docs/sources/introduction/                                                  @chri2547
