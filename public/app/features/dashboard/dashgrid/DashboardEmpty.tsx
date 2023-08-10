@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React from 'react';
+import React, { useState } from 'react';
 import InlineSVG from 'react-inlinesvg/esm';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -35,31 +35,41 @@ const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
   const [assitsDescription, setAssitsDescription] = React.useState('');
   const [assitsLoading, setAssitsLoading] = React.useState(false);
   const [isGenerationLoading, setIsGenerationLoading] = React.useState(false);
+  const [error, setError] = useState<boolean>(false);
 
   const [feedbackToUser, setFeedbackToUser] = React.useState('');
 
   const onSearchDashboard = async () => {
-    setAssitsLoading(true);
-    let bestDashboardMatch = await onGenerateDashboardWithSemanticSearch(assitsDescription);
+    try {
+      setAssitsLoading(true);
+      let bestDashboardMatch = await onGenerateDashboardWithSemanticSearch(assitsDescription);
 
-    // ask AI for confirmation on dashboard quality, if not strong yes generate a custom one
-    // we can easily extend this to involve AI in selection of best dashboard from 5 original results as well as returning whether or not
-    // it is a strong match and to just generate a new dashboard in that case... all in one call probably
-    const isDashboardMatchStrong = await checkDashboardResultQuality(bestDashboardMatch, assitsDescription);
+      // ask AI for confirmation on dashboard quality, if not strong yes generate a custom one
+      // we can easily extend this to involve AI in selection of best dashboard from 5 original results as well as returning whether or not
+      // it is a strong match and to just generate a new dashboard in that case... all in one call probably
+      const isDashboardMatchStrong = await checkDashboardResultQuality(bestDashboardMatch, assitsDescription);
 
-    if (!isDashboardMatchStrong) {
-      setFeedbackToUser(
-        'We could not find a great match for your description, generating a custom dashboard for you... this can take a while 😬'
-      );
-      bestDashboardMatch = await onGenerateDashboardWithAI(assitsDescription);
+      if (!isDashboardMatchStrong) {
+        setFeedbackToUser(
+          'We could not find a great match for your description, generating a custom dashboard for you... this can take a while 😬'
+        );
+        bestDashboardMatch = await onGenerateDashboardWithAI(assitsDescription);
+      }
+      setAssitsLoading(false);
+
+      setFeedbackToUser('');
+
+      const dashboardUrl = await createNewDashboardFromJSON(bestDashboardMatch);
+      // Open the imported dashboard
+      locationService.push(dashboardUrl);
+    } catch (error) {
+      setError(true);
+      setTimeout(function () {
+        setError(false);
+      }, 3000);
+      console.log('error', error);
+      setAssitsLoading(false);
     }
-    setAssitsLoading(false);
-
-    setFeedbackToUser('');
-
-    const dashboardUrl = await createNewDashboardFromJSON(bestDashboardMatch);
-    // Open the imported dashboard
-    locationService.push(dashboardUrl);
   };
 
   const onGenerateDashboard = async () => {
@@ -71,9 +81,14 @@ const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
           dashboard.addPanel(panel);
         });
       }
-    } catch (err) {
+    } catch (error) {
+      setError(true);
+      setTimeout(function () {
+        setError(false);
+      }, 3000);
+      console.log('error', error);
       // @TODO: Show error in the UI
-      console.log(err);
+      console.log(error);
     }
     setIsGenerationLoading(false);
   };
@@ -99,6 +114,7 @@ const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
               onChange={(e) => setAssitsDescription(e.currentTarget.value)}
               value={assitsDescription}
             />
+            {error && <div className={styles.error}>Something went wrong, please try again.</div>}
             {feedbackToUser && <div className={styles.feedbackToUser}>{feedbackToUser}</div>}
             <div className={styles.llmButtons}>
               <Button
@@ -296,6 +312,10 @@ function getStyles(theme: GrafanaTheme2) {
         flexDirection: 'column',
       },
     }),
+    error: css`
+      padding: 10px;
+      border: 1px solid ${theme.colors.error.border};
+    `,
     assistAIContainer: css({
       label: 'assist-ai-container',
       padding: theme.spacing.gridSize * 3,
