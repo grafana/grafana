@@ -60,12 +60,12 @@ export function onGeneratePanelWithAI(dashboard: DashboardModel, description: st
         },
       ],
     })
-    .then((response) => response.choices[0].message.content);
+    .then((response: any) => response.choices[0].message.content);
 }
 
 // Generate panels using semantic search on Grafana panels database
 export function onGenerateDashboardWithSemanticSearch(query: string): any {
-  return fetch('http://localhost:9044/get_dashboards/', {
+  return fetch('http://18.116.13.121:9044/get_dashboards/', {
     method: 'POST', // *GET, POST, PUT, DELETE, etc.
     //mode: "no-cors", // no-cors, *cors, same-origin
     // cache: "no-cache", // *default, no-cache, reload, force-cache, only-if-cached
@@ -113,8 +113,8 @@ export function onGenerateDashboardWithAI(description: string): any {
         },
       ],
     })
-    .then((response) => response.choices[0].message.content)
-    .then((content) => {
+    .then((response: any) => response.choices[0].message.content)
+    .then((content: string) => {
       const parsedJSON = JSON.parse(content);
       // Sometimes the AI returns a dashboard object, sometimes an object with the dashboard as property
       const generatedDashboard = parsedJSON?.dashboard || parsedJSON;
