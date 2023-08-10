@@ -42,7 +42,7 @@ alertingBacktesting,experimental,@grafana/alerting-squad,false,false,false,false
 editPanelCSVDragAndDrop,experimental,@grafana/grafana-bi-squad,false,false,false,true
 alertingNoNormalState,preview,@grafana/alerting-squad,false,false,false,false
 logsContextDatasourceUi,GA,@grafana/observability-logs,false,false,false,true
-lokiQuerySplitting,GA,@grafana/observability-logs,false,false,false,true
+lokiQuerySplitting,experimental,@grafana/observability-logs,false,false,false,true
 lokiQuerySplittingConfig,experimental,@grafana/observability-logs,false,false,false,true
 individualCookiePreferences,experimental,@grafana/backend-platform,false,false,false,false
 gcomOnlyExternalOrgRoleSync,GA,@grafana/grafana-authnz-team,false,false,false,false

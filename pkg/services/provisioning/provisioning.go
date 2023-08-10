@@ -276,7 +276,7 @@ func (ps *ProvisioningServiceImpl) ProvisionAlerting(ctx context.Context) error 
 		int64(ps.Cfg.UnifiedAlerting.BaseInterval.Seconds()),
 		ps.log)
 	contactPointService := provisioning.NewContactPointService(&st, ps.secretService,
-		st, ps.SQLStore, ps.log)
+		st, ps.SQLStore, ps.log, ps.ac)
 	notificationPolicyService := provisioning.NewNotificationPolicyService(&st,
 		st, ps.SQLStore, ps.Cfg.UnifiedAlerting, ps.log)
 	mutetimingsService := provisioning.NewMuteTimingService(&st, st, &st, ps.log)
