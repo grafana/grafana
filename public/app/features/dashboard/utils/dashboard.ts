@@ -64,6 +64,57 @@ export function onGeneratePanelWithAI(dashboard: DashboardModel, description: st
     .then((response: any) => response.choices[0].message.content);
 }
 
+export function onRegeneratePanelWithFeedback(
+  dashboard: DashboardModel,
+  feedback: string,
+  originalResponse: any[],
+  userInput: string
+) {
+  const payload = getGeneratePayloadForPanels(dashboard);
+
+  return llms.openai
+    .chatCompletions({
+      model: 'gpt-4',
+      messages: [
+        {
+          role: 'system',
+          content: 'You are an API that only responds with JSON',
+        },
+        {
+          role: 'system',
+          content: 'Your goal is to generate a valid Grafana panel JSON with the provided requirements',
+        },
+        {
+          role: 'system',
+          content: 'DO NOT explain the panel, only answer with a valid panel JSON',
+        },
+        {
+          role: 'system',
+          content: 'Use the following panels as context to generate the new panels',
+        },
+
+        // @ts-ignore
+        ...payload.panels.map((panel) => ({
+          role: 'system',
+          content: JSON.stringify(panel),
+        })),
+        {
+          // @ts-ignore
+          role: 'system',
+          content: `Your previous response was: ${JSON.stringify(
+            originalResponse
+          )}. The user has provided the following feedback: ${feedback}. Re-generate your response according to the provided feedback.`,
+        },
+        {
+          // @ts-ignore
+          role: 'user',
+          content: userInput,
+        },
+      ],
+    })
+    .then((response) => response.choices[0].message.content);
+}
+
 // Generate panels using semantic search on Grafana panels database
 export function onGenerateDashboardWithSemanticSearch(query: string): any {
   return fetch('http://18.116.13.121:9044/get_dashboards/', {

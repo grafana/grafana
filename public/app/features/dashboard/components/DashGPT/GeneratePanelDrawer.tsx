@@ -2,12 +2,13 @@ import { css } from '@emotion/css';
 import React, { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Drawer, useStyles2 } from '@grafana/ui';
+import { Drawer, IconButton, ModalsController, Spinner, TextArea, useStyles2 } from '@grafana/ui';
 
 import { getDashboardSrv } from '../../services/DashboardSrv';
 import { onGeneratePanelWithAI } from '../../utils/dashboard';
 
-import { UserPrompt } from './UserPrompt';
+import { PanelSuggestionsDrawer } from './PanelSuggestionsDrawer';
+import { GeneratedPanel, getGeneratedQuickFeedback } from './utils';
 
 interface GeneratePanelDrawerProps {
   onDismiss: () => void;
@@ -19,6 +20,8 @@ export const GeneratePanelDrawer = ({ onDismiss }: GeneratePanelDrawerProps) => 
   const dashboard = getDashboardSrv().getCurrent();
 
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [promptValue, setPromptValue] = useState<string>('');
+  const [isError, setIsError] = useState<boolean>(false);
 
   const getContent = () => {
     return (
@@ -45,43 +48,100 @@ export const GeneratePanelDrawer = ({ onDismiss }: GeneratePanelDrawerProps) => 
     );
   };
 
-  let onSubmitUserInput = async (promptValue: string) => {
+  let onSubmitUserInput = async (promptValue: string): Promise<GeneratedPanel | null> => {
     setIsLoading(true);
-    const response = await onGeneratePanelWithAI(dashboard!, promptValue);
-    const parsedResponse = JSON.parse(response);
-    const panel = parsedResponse?.panels?.[0] || parsedResponse;
+    try {
+      const response = await onGeneratePanelWithAI(dashboard!, promptValue);
+      const parsedResponse = JSON.parse(response);
+      const panel = parsedResponse?.panels?.[0] || parsedResponse;
 
-    if (parsedResponse) {
+      const quickFeedbackChoices = await getGeneratedQuickFeedback(panel, promptValue);
+
       setIsLoading(false);
+
+      // @TODO: Refactor for multiple panels
+      return { panels: [panel], quickFeedback: quickFeedbackChoices };
+    } catch (e) {
+      setIsError(true);
+      setIsLoading(false);
+      setTimeout(function () {
+        setIsError(false);
+      }, 3000);
+      console.log('error', e);
     }
 
-    dashboard?.addPanel(panel);
+    return null;
   };
 
+  // @TODO: Refactor to use UserPrompt
   return (
     <Drawer title={'Panel Generator'} onClose={onDismiss} scrollableContent>
-      {getContent()}
-      <UserPrompt
-        onSubmitUserInput={onSubmitUserInput}
-        isLoading={isLoading}
-        text={'Please introduce a description that explains what do you wanna see in your panel'}
-      />
+      <div className={styles.drawerWrapper}>
+        {getContent()}
+        <div>
+          <p>Please introduce a description that explains what do you wanna see in your panel</p>
+          <div className={styles.wrapper}>
+            <TextArea
+              placeholder="Tell us something"
+              onChange={(e) => setPromptValue(e.currentTarget.value)}
+              value={promptValue}
+              className={styles.textArea}
+            />
+            {isLoading && <Spinner />}
+            {!isLoading && (
+              <ModalsController>
+                {({ showModal, hideModal }) => {
+                  return (
+                    <div>
+                      <IconButton
+                        name="message"
+                        aria-label="message"
+                        onClick={() => {
+                          onSubmitUserInput(promptValue).then((response) => {
+                            if (response) {
+                              showModal(PanelSuggestionsDrawer, {
+                                onDismiss: hideModal,
+                                suggestions: response.panels,
+                                generatedQuickFeedback: response.quickFeedback,
+                                userInput: promptValue,
+                              });
+                            }
+                          });
+                        }}
+                      />
+                    </div>
+                  );
+                }}
+              </ModalsController>
+            )}
+          </div>
+        </div>
+        {isError && <div className={styles.error}>Something went wrong, please try again.</div>}
+      </div>
     </Drawer>
   );
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
+  drawerWrapper: css`
+    padding: 20px;
+  `,
   wrapper: css`
     display: flex;
     align-items: center;
   `,
   contentWrapper: css`
     padding-right: 30px;
+    margin-bottom: 20px;
   `,
   textArea: css`
     margin-right: ${theme.spacing(4)};
   `,
   list: css`
     padding: 0 0 10px 20px;
+  `,
+  error: css`
+    padding: 10px;
+    border: 1px solid ${theme.colors.error.border};
   `,
 });

@@ -8,16 +8,13 @@ interface UserPromptProps {
   onSubmitUserInput: (userInput: string) => void;
   isLoading: boolean;
   text?: string;
+  value?: string;
 }
 
-export const UserPrompt = ({ onSubmitUserInput, isLoading, text }: UserPromptProps) => {
+export const UserPrompt = ({ onSubmitUserInput, isLoading, text, value }: UserPromptProps) => {
   const styles = useStyles2(getStyles);
 
-  const [promptValue, setPromptValue] = useState<string>('');
-
-  const onInputChange = (value: string) => {
-    setPromptValue(value);
-  };
+  const [promptValue, setPromptValue] = useState<string>(value ?? '');
 
   return (
     <div>
@@ -25,7 +22,7 @@ export const UserPrompt = ({ onSubmitUserInput, isLoading, text }: UserPromptPro
       <div className={styles.wrapper}>
         <TextArea
           placeholder="Tell us something"
-          onChange={(e) => onInputChange(e.currentTarget.value)}
+          onChange={(e) => setPromptValue(e.currentTarget.value)}
           value={promptValue}
           className={styles.textArea}
         />

@@ -3,12 +3,12 @@ import React from 'react';
 import { DataLinksInlineEditor, Input, RadioButtonGroup, Select, Switch, TextArea } from '@grafana/ui';
 import { getPanelLinksVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
 
+import { AiGenerate } from '../DashGPT/AiGenerate';
+import { onGenerateTextWithAi, regenerateResponseWithFeedback, SPECIAL_DONE_TOKEN } from '../DashGPT/utils';
 import { RepeatRowSelect } from '../RepeatRowSelect/RepeatRowSelect';
 
 import { OptionsPaneCategoryDescriptor } from './OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from './OptionsPaneItemDescriptor';
-import { AiGenerate } from './dashGPT/AiGenerate';
-import { fetchData, regenerateResponseWithFeedback, SPECIAL_DONE_TOKEN } from './dashGPT/utils';
 import { OptionPaneRenderProps } from './types';
 import { getGeneratePayloadForTitle } from './utils';
 
@@ -88,7 +88,7 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
   const llmGenerate = (subject: string) => {
     const payload = getGeneratePayloadForTitle(panel);
 
-    fetchData(payload, subject, setLlmReply)
+    onGenerateTextWithAi(payload, subject, setLlmReply)
       .then((response) => {
         enabled = response.enabled;
       })
