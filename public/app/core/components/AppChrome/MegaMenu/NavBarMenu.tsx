@@ -112,7 +112,8 @@ const getStyles = (theme: GrafanaTheme2, searchBarHidden?: boolean) => {
       left: 0,
       position: 'fixed',
       right: 0,
-      top: searchBarHidden ? 0 : TOP_BAR_LEVEL_HEIGHT,
+      // add padding (if needed) here to account for iOS notch
+      top: searchBarHidden ? `env(safe-area-inset-top)` : `calc(${TOP_BAR_LEVEL_HEIGHT}px + env(safe-area-inset-top))`,
       zIndex: theme.zIndex.modalBackdrop,
 
       [theme.breakpoints.up('md')]: {
@@ -129,7 +130,8 @@ const getStyles = (theme: GrafanaTheme2, searchBarHidden?: boolean) => {
       // Needs to below navbar should we change the navbarFixed? add add a new level?
       zIndex: theme.zIndex.modal,
       position: 'fixed',
-      top: searchBarHidden ? 0 : TOP_BAR_LEVEL_HEIGHT,
+      // add padding (if needed) here to account for iOS notch
+      top: searchBarHidden ? `env(safe-area-inset-top)` : `calc(${TOP_BAR_LEVEL_HEIGHT}px + env(safe-area-inset-top))`,
       backgroundColor: theme.colors.background.primary,
       boxSizing: 'content-box',
       flex: '1 1 0',
