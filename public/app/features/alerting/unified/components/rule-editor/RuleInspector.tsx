@@ -20,7 +20,7 @@ interface Props {
   onClose: () => void;
 }
 
-const tabs = [{ label: 'Yaml', value: 'yaml' }];
+const tabs = [{ label: 'Yaml', value: 'yaml' }, { label: "Terraform (HCL)", value: "hcl"}];
 
 export const RuleInspector = ({ onClose }: Props) => {
   const [activeTab, setActiveTab] = useState('yaml');

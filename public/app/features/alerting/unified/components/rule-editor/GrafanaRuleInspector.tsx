@@ -28,6 +28,7 @@ export const GrafanaRuleInspector = ({ onClose, alertUid }: Props) => {
       onClose={onClose}
     >
       {activeTab === 'yaml' && <GrafanaInspectorYamlTab alertUid={alertUid} />}
+      {activeTab === 'hcl' && <GrafanaInspectorHclTab alertUid={alertUid} />}
     </Drawer>
   );
 };
@@ -69,5 +70,39 @@ const GrafanaInspectorYamlTab = ({ alertUid }: YamlTabProps) => {
         </AutoSizer>
       </div>
     </>
+  );
+};
+
+const GrafanaInspectorHclTab = ({ alertUid }: YamlTabProps) => {
+  const styles = useStyles2(yamlTabStyle);
+
+  const { currentData: ruleHclConfig, isLoading } = useExportRuleQuery({ uid: alertUid, format: 'hcl' });
+
+   const hclRule = useMemo(() => ruleHclConfig ?? "", [ruleHclConfig]);
+
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
+
+  return (
+      <>
+        <div className={styles.content}>
+          <AutoSizer disableWidth>
+            {({ height }) => (
+                <CodeEditor
+                    width="100%"
+                    height={height}
+                    language="hcl"
+                    value={hclRule}
+                    monacoOptions={{
+                      minimap: {
+                        enabled: false,
+                      },
+                    }}
+                />
+            )}
+          </AutoSizer>
+        </div>
+      </>
   );
 };
