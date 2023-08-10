@@ -110,6 +110,7 @@ const QuickFeedback = ({ onSendFeedback, generatedQuickFeedback }: QuickFeedback
           disabled={isRegenerating}
           size="md"
           variant="secondary"
+          fill="outline"
           key={index}
         >
           {feedback}

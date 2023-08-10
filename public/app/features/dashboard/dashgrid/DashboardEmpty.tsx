@@ -95,7 +95,6 @@ const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
               <Button
                 size="md"
                 icon="ai"
-                variant="secondary"
                 fill="outline"
                 data-testid={selectors.pages.AddDashboard.itemButton('Create new panel button')}
                 onClick={onGenerateDashboard}
