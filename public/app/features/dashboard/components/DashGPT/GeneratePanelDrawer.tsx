@@ -2,9 +2,9 @@ import { css } from '@emotion/css';
 import React, { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Panel } from '@grafana/schema';
 import { Drawer, IconButton, ModalsController, Spinner, TextArea, useStyles2 } from '@grafana/ui';
 
+import { getDashboardSrv } from '../../services/DashboardSrv';
 import { onGeneratePanelWithSemanticSearch } from '../../utils/dashboard';
 
 import { PanelSuggestionsDrawer } from './PanelSuggestionsDrawer';
@@ -49,7 +49,11 @@ export const GeneratePanelDrawer = ({ onDismiss }: GeneratePanelDrawerProps) => 
   let onSubmitUserInput = async (promptValue: string): Promise<GeneratedPanel | null> => {
     setIsLoading(true);
     try {
-      const panels = await onGeneratePanelWithSemanticSearch(promptValue);
+      const dashboard = getDashboardSrv().getCurrent();
+
+      const enrichedPromptValue = promptValue + ' ' + dashboard?.title ?? '' + ' ' + dashboard?.description ?? '';
+
+      const panels = await onGeneratePanelWithSemanticSearch(enrichedPromptValue);
 
       // @TODO: Refactor for multiple panels
       const quickFeedbackChoices = await getGeneratedQuickFeedback(panels[0], promptValue);
