@@ -247,7 +247,7 @@ export function MegaSelectGraph({
         displayMode: LegendDisplayMode.List,
         // Remember the time is a field, so we need to add 1 to the number of fields
         // Also, we don't want to show the legend in the mega overview panel
-        showLegend: !options.mega ? data[0].fields.length <= 4 + 1 : false,
+        showLegend: !options.mega ? data[0].fields.length <= 8 + 1 : false,
         placement: 'bottom',
         calcs: [],
       },
