@@ -83,7 +83,10 @@ function getSceneModel({
     body: new SceneFlexLayout({
       direction: 'column',
 
-      children: panels.filter(compatiblePanelTypes).map((panel) => createVizPanelFromPanelModel(panel, onClickPanel)),
+      children: panels
+        .filter(compatiblePanelTypes)
+        .slice(0, 3)
+        .map((panel) => createVizPanelFromPanelModel(panel, onClickPanel)),
     }),
     $timeRange: new SceneTimeRange(),
     // Create dashboards variable set from dashboard model in case suggestions uses the same variables
