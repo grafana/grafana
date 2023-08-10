@@ -8,7 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 )
 
-const defaultLastUpdatedKey = "last_updated"
+const DefaultLastUpdatedKey = "last_updated"
 
 // NamespacedStore is a Store that stores data in a *kvstore.NamespacedKVStore.
 // It uses the provided StoreKeyGetter to get the key to use for a given key.
@@ -79,7 +79,7 @@ func NewNamespacedStore(kv kvstore.KVStore, namespace string, opts ...Namespaced
 		store.storeKeyGetter = DefaultStoreKeyGetterFunc
 	}
 	if store.lastUpdatedKey == "" {
-		store.lastUpdatedKey = defaultLastUpdatedKey
+		store.lastUpdatedKey = DefaultLastUpdatedKey
 	}
 	return store
 }

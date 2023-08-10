@@ -6,6 +6,7 @@ import (
 	"regexp"
 
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/angular/angulardetector"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/cachekvstore"
 )
 
 // gcomAngularPatternsPath is the relative path to the GCOM API handler that returns angular detection patterns.
@@ -52,3 +53,7 @@ func (p *GCOMPattern) angularDetector() (angulardetector.AngularDetector, error)
 
 // GCOMPatterns is a slice of GCOMPattern
 type GCOMPatterns []GCOMPattern
+
+func (p GCOMPatterns) Marshal() (string, error) {
+	return cachekvstore.NewJSONMarshaler(p).Marshal()
+}

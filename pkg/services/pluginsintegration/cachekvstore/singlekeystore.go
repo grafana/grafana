@@ -20,7 +20,7 @@ type SingleKeyDeleter interface {
 }
 
 // SingleKeyNamespacedStore is a NamespacedStore wrapper with fixed key.
-// It only allows to track store the value for one key.
+// It only allows store a single value (one key) along with its latest update time.
 type SingleKeyNamespacedStore struct {
 	*NamespacedStore
 }

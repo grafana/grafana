@@ -1,17 +1,12 @@
 package angularpatternsstore
 
 import (
-	"context"
-	"time"
-
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/cachekvstore"
 )
 
 type Service interface {
-	Get(ctx context.Context) (string, bool, error)
-	Set(ctx context.Context, patterns any) error
-	GetLastUpdated(ctx context.Context) (time.Time, error)
+	cachekvstore.SingleKeyStore
 }
 
 const (
@@ -33,8 +28,4 @@ func ProvideService(kv kvstore.KVStore) Service {
 			cachekvstore.WithLastUpdatedKey(keyLastUpdated),
 		),
 	}
-}
-
-func (s *KVStoreService) Set(ctx context.Context, patterns any) error {
-	return s.SingleKeyStore.Set(ctx, cachekvstore.NewJSONMarshaler(patterns))
 }
