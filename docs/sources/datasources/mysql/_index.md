@@ -120,7 +120,7 @@ datasources:
       password: ${GRAFANA_MYSQL_PASSWORD}
 ```
 
-##### Using TLS Verificaiton
+##### Using TLS Verification
 
 ```yaml
 apiVersion: 1
