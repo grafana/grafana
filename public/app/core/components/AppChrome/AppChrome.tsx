@@ -99,6 +99,8 @@ const getStyles = (theme: GrafanaTheme2) => {
       background: theme.colors.background.primary,
       flexDirection: 'column',
       borderBottom: `1px solid ${theme.colors.border.weak}`,
+      // add padding here for iOS notch
+      paddingTop: `env(safe-area-inset-top)`,
     }),
     panes: css({
       label: 'page-panes',
