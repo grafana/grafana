@@ -49,13 +49,16 @@ function getEntityLayer(entity: IEntity, cadLayers: ILayersTable): ILayer {
   return cadLayers.layers[entity.layer];
 }
 
-function updateScene(scene: Scene, viewport: IViewPort, layer: FrameState) {
-  // set scene background color to first viewport background color
-  scene.updateColor({
-    fixed: fromColorRepr(viewport.ambientColor),
-  });
+function updateScene(scene: Scene, viewport: IViewPort, canvasLayer: FrameState) {
+  const options = canvasLayer.options;
+  options.background = {
+    color: {
+      fixed: fromColorRepr(viewport.ambientColor),
+    },
+  };
 
-  scene.updateCurrentLayer(layer);
+  canvasLayer.onChange(options);
+  canvasLayer.updateData(scene.context);
 }
 
 function addEntity(entity: IEntity, entityLayer: ILayer, canvasLayer: FrameState) {
@@ -111,8 +114,11 @@ function fromColorRepr(color: number | undefined, cadLayer?: ILayer): string {
   return '#' + hexColor.padStart(6, '0');
 }
 
-function addElement(item: CanvasElementItem, options: CanvasElementOptions, layer: FrameState) {
-  const newElement = new ElementState(item, options, layer);
-  newElement.updateData(layer.scene.context);
-  layer.elements.push(newElement);
+function addElement(item: CanvasElementItem, options: CanvasElementOptions, canvasLayer: FrameState) {
+  const newElement = new ElementState(item, options, canvasLayer);
+  newElement.updateData(canvasLayer.scene.context);
+  canvasLayer.elements.push(newElement);
+
+  canvasLayer.scene.save();
+  canvasLayer.reinitializeMoveable();
 }
