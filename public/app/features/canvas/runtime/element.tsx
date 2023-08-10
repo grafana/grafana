@@ -214,21 +214,63 @@ export class ElementState implements LayerElement {
         : parseFloat(getComputedStyle(this.div?.parentElement!).borderWidth);
     }
 
+    let deltaTop = 0;
+    let deltaLeft = 0;
+    // For elements with rotation, a delta needs to be applied to account for bounding box rotation
+    if (this.options.placement?.rotation && this.options.placement?.width && this.options.placement.height) {
+      const rotationDegrees = this.options.placement.rotation;
+      const rotationRad = (Math.PI / 180) * rotationDegrees;
+      switch (true) {
+        case rotationDegrees >= 0 && rotationDegrees < 90:
+          const sinRad = Math.sin(rotationRad);
+          const cosRad = Math.cos(rotationRad);
+          deltaTop = (this.options.placement?.width / 2) * sinRad + (this.options.placement.height / 2) * (cosRad - 1);
+          deltaLeft = (this.options.placement?.height / 2) * sinRad + (this.options.placement.width / 2) * (cosRad - 1);
+          break;
+        case rotationDegrees >= 90 && rotationDegrees < 180:
+          const sin180NegRad = Math.sin(Math.PI - rotationRad);
+          const cos180NegRad = Math.cos(Math.PI - rotationRad);
+          deltaTop =
+            (this.options.placement?.width / 2) * sin180NegRad +
+            (this.options.placement.height / 2) * (cos180NegRad - 1);
+          deltaLeft =
+            (this.options.placement?.height / 2) * sin180NegRad +
+            (this.options.placement.width / 2) * (cos180NegRad - 1);
+          break;
+        case rotationDegrees >= 180 && rotationDegrees < 270:
+          const sin180Rad = Math.sin(Math.PI + rotationRad);
+          const cos180Rad = Math.cos(Math.PI + rotationRad);
+          deltaTop =
+            (this.options.placement?.width / 2) * sin180Rad + (this.options.placement.height / 2) * (cos180Rad - 1);
+          deltaLeft =
+            (this.options.placement?.height / 2) * sin180Rad + (this.options.placement.width / 2) * (cos180Rad - 1);
+          break;
+        case rotationDegrees >= 270:
+          const sinNegRad = Math.sin(-rotationRad);
+          const cosNegRad = Math.cos(-rotationRad);
+          deltaTop =
+            (this.options.placement?.width / 2) * sinNegRad + (this.options.placement.height / 2) * (cosNegRad - 1);
+          deltaLeft =
+            (this.options.placement?.height / 2) * sinNegRad + (this.options.placement.width / 2) * (cosNegRad - 1);
+          break;
+      }
+    }
+
     const relativeTop =
       elementContainer && parentContainer
-        ? Math.round(elementContainer.top - parentContainer.top - parentBorderWidth)
+        ? Math.round(elementContainer.top - parentContainer.top - parentBorderWidth + deltaTop)
         : 0;
     const relativeBottom =
       elementContainer && parentContainer
-        ? Math.round(parentContainer.bottom - parentBorderWidth - elementContainer.bottom)
+        ? Math.round(parentContainer.bottom - parentBorderWidth - elementContainer.bottom + deltaTop)
         : 0;
     const relativeLeft =
       elementContainer && parentContainer
-        ? Math.round(elementContainer.left - parentContainer.left - parentBorderWidth)
+        ? Math.round(elementContainer.left - parentContainer.left - parentBorderWidth + deltaLeft)
         : 0;
     const relativeRight =
       elementContainer && parentContainer
-        ? Math.round(parentContainer.right - parentBorderWidth - elementContainer.right)
+        ? Math.round(parentContainer.right - parentBorderWidth - elementContainer.right + deltaLeft)
         : 0;
 
     const placement = {} as Placement;
@@ -245,18 +287,18 @@ export class ElementState implements LayerElement {
         placement.bottom = relativeBottom;
         placement.height = height;
         break;
-      case VerticalConstraint.TopBottom:
+      case VerticalConstraint.TopBottom: //TODO FIX for rotation
         placement.top = relativeTop;
         placement.bottom = relativeBottom;
         break;
-      case VerticalConstraint.Center:
+      case VerticalConstraint.Center: //TODO FIX for rotation
         const elementCenter = elementContainer ? relativeTop + height / 2 : 0;
         const parentCenter = parentContainer ? parentContainer.height / 2 : 0;
         const distanceFromCenter = parentCenter - elementCenter;
         placement.top = distanceFromCenter;
         placement.height = height;
         break;
-      case VerticalConstraint.Scale:
+      case VerticalConstraint.Scale: //TODO FIX for rotation
         placement.top = (relativeTop / (parentContainer?.height ?? height)) * 100;
         placement.bottom = (relativeBottom / (parentContainer?.height ?? height)) * 100;
         break;
@@ -271,18 +313,18 @@ export class ElementState implements LayerElement {
         placement.right = relativeRight;
         placement.width = width;
         break;
-      case HorizontalConstraint.LeftRight:
+      case HorizontalConstraint.LeftRight: //TODO FIX for rotation
         placement.left = relativeLeft;
         placement.right = relativeRight;
         break;
-      case HorizontalConstraint.Center:
+      case HorizontalConstraint.Center: //TODO FIX for rotation
         const elementCenter = elementContainer ? relativeLeft + width / 2 : 0;
         const parentCenter = parentContainer ? parentContainer.width / 2 : 0;
         const distanceFromCenter = parentCenter - elementCenter;
         placement.left = distanceFromCenter;
         placement.width = width;
         break;
-      case HorizontalConstraint.Scale:
+      case HorizontalConstraint.Scale: //TODO FIX for rotation
         placement.left = (relativeLeft / (parentContainer?.width ?? width)) * 100;
         placement.right = (relativeRight / (parentContainer?.width ?? width)) * 100;
         break;
@@ -290,6 +332,8 @@ export class ElementState implements LayerElement {
     // Apply rotation
     if (this.options.placement?.rotation) {
       placement.rotation = this.options.placement?.rotation;
+      placement.width = this.options.placement?.width;
+      placement.height = this.options.placement?.height;
     }
     this.options.placement = placement;
 
@@ -433,7 +477,9 @@ export class ElementState implements LayerElement {
   applyRotate = (event: OnRotate) => {
     event.target.style.transform = event.transform;
     const placement = this.options.placement!;
-    placement.rotation = event.rotation;
+    const absoluteRotation = event.absoluteRotation;
+    // Ensure rotation is between 0 and 360
+    placement.rotation = absoluteRotation - Math.floor(absoluteRotation / 360) * 360;
   };
 
   // kinda like:
