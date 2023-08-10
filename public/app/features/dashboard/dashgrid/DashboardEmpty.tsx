@@ -105,9 +105,11 @@ const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
             </Text>
           </div>
           <div className={cx(styles.centeredContent, styles.bodyBig, styles.assistAIBody)}>
-            <Text element="p" textAlignment="center" color="secondary">
-              Write a description of the dashboard that you need and we generate it for you.
-            </Text>
+            <div className={styles.assistAISubtitle}>
+              <Text element="p" textAlignment="center" color="secondary">
+                Write a description of the dashboard that you need and we generate it for you.
+              </Text>
+            </div>
             <DatasourceSuggestions />
             <TextArea
               placeholder="Save time by quickly generating dashboards using AI"
@@ -383,6 +385,10 @@ function getStyles(theme: GrafanaTheme2) {
       display: 'flex',
       flexDirection: 'row',
       gap: '10px',
+    }),
+    assistAISubtitle: css({
+      paddingTop: '10px',
+      paddingBottom: '10px',
     }),
   };
 }
