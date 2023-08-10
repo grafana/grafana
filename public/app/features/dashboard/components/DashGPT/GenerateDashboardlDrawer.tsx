@@ -8,7 +8,7 @@ import { Drawer, useStyles2 } from '@grafana/ui';
 import { getDashboardSrv } from '../../services/DashboardSrv';
 import { onGenerateDashboardWithAI } from '../../utils/dashboard';
 
-import { DatasourceSuggestions } from './DatasourceSuggestions';
+import { QuickActions } from './QuickActions';
 import { UserPrompt } from './UserPrompt';
 
 interface GenerateDashboardDrawerProps {
@@ -67,7 +67,7 @@ export const GenerateDashboardDrawer = ({ onDismiss }: GenerateDashboardDrawerPr
   return (
     <Drawer title={'Dashboard Generator'} onClose={onDismiss} scrollableContent>
       {getContent()}
-      <DatasourceSuggestions />
+      <QuickActions onSelectSuggestion={() => {}} />
       <UserPrompt onSubmitUserInput={onSubmitUserInput} isLoading={isLoading} />
     </Drawer>
   );

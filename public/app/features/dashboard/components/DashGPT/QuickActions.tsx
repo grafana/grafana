@@ -4,7 +4,7 @@ import React from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Card, useStyles2 } from '@grafana/ui';
 
-interface DatasourceSuggestionsProps {
+interface QuickActionsProps {
   onSelectSuggestion: (value: string) => void;
 }
 
@@ -13,32 +13,32 @@ interface Suggestion {
   value: string;
 }
 
-export const DatasourceSuggestions = ({ onSelectSuggestion }: DatasourceSuggestionsProps) => {
+export const QuickActions = ({ onSelectSuggestion }: QuickActionsProps) => {
   const styles = useStyles2(getStyles);
 
-  const datasourceSuggestions = [
+  const suggestions = [
     {
-      name: 'K8s Cluster Overview',
-      value: 'Create a dashboard to overview my kubernetes cluster',
-    },
-    {
-      name: 'K8s Workload',
-      value: 'Create a dashboard to see the main metrics of a kubernetes workload',
+      name: 'K8s Cluster Metrics',
+      value: 'Create a dashboard to see the main metrics of a k8s cluster',
     },
     {
       name: 'Apache HTTP Server',
       value: 'Create a dashboard with the main metrics of an Apache HTTP server',
     },
+    {
+      name: 'Electricty consumption',
+      value: 'Create a dashboard with my house electricity consumption',
+    },
   ];
 
-  const onUseDatasourceSuggestion = (suggestion: Suggestion) => {
+  const onUseSuggestion = (suggestion: Suggestion) => {
     onSelectSuggestion(suggestion.value);
   };
 
   return (
     <div className={styles.suggestionsWrapper}>
-      {datasourceSuggestions.map((item) => (
-        <Card className={styles.suggestionCard} onClick={onUseDatasourceSuggestion.bind(this, item)} key={item.name}>
+      {suggestions.map((item) => (
+        <Card className={styles.suggestionCard} onClick={onUseSuggestion.bind(this, item)} key={item.name}>
           <Card.Heading className={styles.suggestionDescription}>{item.name}</Card.Heading>
           <Card.Description className={styles.suggestionDescription}>{item.value}</Card.Description>
         </Card>

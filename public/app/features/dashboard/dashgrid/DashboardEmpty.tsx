@@ -20,7 +20,7 @@ import {
 } from 'app/features/dashboard/utils/dashboard';
 import { useDispatch, useSelector } from 'app/types';
 
-import { DatasourceSuggestions } from '../components/DashGPT/DatasourceSuggestions';
+import { QuickActions } from '../components/DashGPT/QuickActions';
 import { setInitialDatasource } from '../state/reducers';
 
 export interface Props {
@@ -97,7 +97,7 @@ const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
     setIsGenerationLoading(false);
   };
 
-  const onSelectSelectSuggestion = (suggestion: string) => {
+  const onSelectQuickAction = (suggestion: string) => {
     setAssistDescription(suggestion);
   };
 
@@ -115,7 +115,7 @@ const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
             <Text element="p" textAlignment="center" color="secondary">
               Write a description of the dashboard that you need and we generate it for you.
             </Text>
-            <DatasourceSuggestions onSelectSuggestion={onSelectSelectSuggestion} />
+            <QuickActions onSelectSuggestion={onSelectQuickAction} />
             <TextArea
               placeholder="Save time by quickly generating dashboards using AI"
               width={200}
@@ -390,6 +390,10 @@ function getStyles(theme: GrafanaTheme2) {
       display: 'flex',
       flexDirection: 'row',
       gap: '10px',
+    }),
+    assistAISubtitle: css({
+      paddingTop: '10px',
+      paddingBottom: '10px',
     }),
   };
 }

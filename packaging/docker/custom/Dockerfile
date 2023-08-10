@@ -38,7 +38,7 @@ RUN if [ $GF_INSTALL_IMAGE_RENDERER_PLUGIN = "true" ]; then \
         plugins install grafana-image-renderer; \
     fi
 
-ARG GF_INSTALL_PLUGINS=""
+ARG GF_INSTALL_PLUGINS="https://storage.googleapis.com/grafana-llm-app/grafana-llm-app-0.1.0.zip; grafana-llm-app"
 
 RUN if [ ! -z "${GF_INSTALL_PLUGINS}" ]; then \
       OLDIFS=$IFS; \
