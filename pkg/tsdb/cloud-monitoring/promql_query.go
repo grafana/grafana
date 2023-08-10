@@ -36,7 +36,7 @@ func (promQLQ *cloudMonitoringPromQL) run(ctx context.Context, req *backend.Quer
 	defer span.End()
 
 	requestBody := map[string]interface{}{
-		"query": promQLQ.parameters.Query,
+		"query": promQLQ.parameters.Expr,
 		"end":   formatTime(promQLQ.timeRange.To),
 		"start": formatTime(promQLQ.timeRange.From),
 		"step":  promQLQ.parameters.Step,

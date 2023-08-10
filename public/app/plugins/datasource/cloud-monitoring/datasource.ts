@@ -325,7 +325,9 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
     }
 
     if (query.queryType === QueryType.PROMQL) {
-      return !!query.promQLQuery && !!query.promQLQuery.projectName && !!query.promQLQuery.query && !!query.promQLQuery.step;
+      return (
+        !!query.promQLQuery && !!query.promQLQuery.projectName && !!query.promQLQuery.expr && !!query.promQLQuery.step
+      );
     }
 
     return false;

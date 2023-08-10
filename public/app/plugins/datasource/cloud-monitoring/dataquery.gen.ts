@@ -196,13 +196,13 @@ export interface SLOQuery {
  */
 export interface PromQLQuery {
   /**
+   * PromQL expression/query to be executed.
+   */
+  expr: string;
+  /**
    * GCP project to execute the query against.
    */
   projectName: string;
-  /**
-   * PromQL query to be executed.
-   */
-  query: string;
   /**
    * PromQL min step
    */

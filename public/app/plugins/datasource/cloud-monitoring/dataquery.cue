@@ -122,8 +122,8 @@ composableKinds: DataQuery: {
 				#PromQLQuery: {
 					// GCP project to execute the query against.
 					projectName: string
-					// PromQL query to be executed.
-					query: string
+					// PromQL expression/query to be executed.
+					expr: string
 					// PromQL min step
 					step: string
 				} @cuetsy(kind="interface")

@@ -226,11 +226,11 @@ type PreprocessorType string
 
 // PromQL sub-query properties.
 type PromQLQuery struct {
+	// PromQL expression/query to be executed.
+	Expr string `json:"expr"`
+
 	// GCP project to execute the query against.
 	ProjectName string `json:"projectName"`
-
-	// PromQL query to be executed.
-	Query string `json:"query"`
 
 	// PromQL min step
 	Step string `json:"step"`

@@ -21,7 +21,7 @@ export interface Props {
 
 export const defaultQuery: (dataSource: CloudMonitoringDatasource) => PromQLQuery = (dataSource) => ({
   projectName: dataSource.getDefaultProject(),
-  query: '',
+  expr: '',
   step: '10s',
 });
 
@@ -54,12 +54,12 @@ export function PromQLQueryEditor({
         <TextArea
           name="Query"
           className="slate-query-field"
-          value={query.query}
+          value={query.expr}
           rows={10}
           placeholder="Enter a Cloud Monitoring MQL query (Run with Shift+Enter)"
           onBlur={onRunQuery}
           onKeyDown={onReturnKeyDown}
-          onChange={(e) => onChange({ ...query, query: e.currentTarget.value })}
+          onChange={(e) => onChange({ ...query, expr: e.currentTarget.value })}
         />
         <div
           className={cx(
