@@ -10,6 +10,7 @@ import (
 	"xorm.io/xorm"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	acmig "github.com/grafana/grafana/pkg/services/sqlstore/migrations/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
@@ -157,7 +158,7 @@ func TestManagedPermissionsMigration(t *testing.T) {
 			putTestPermissions(t, x, tc.putRolePerms)
 
 			// Run accesscontrol migration (permissions insertion should not have conflicted)
-			acmigrator := migrator.NewMigrator(x, &setting.Cfg{Logger: log.New("acmigration.test")})
+			acmigrator := migrator.NewMigrator(x, &setting.Cfg{Logger: log.New("acmigration.test")}, tracing.InitializeTracerForTest())
 			acmig.AddManagedPermissionsMigration(acmigrator, acmig.ManagedPermissionsMigrationID)
 
 			errRunningMig := acmigrator.Start(false, 0)
@@ -215,7 +216,7 @@ func TestManagedPermissionsMigrationRunTwice(t *testing.T) {
 				}
 
 				// Run accesscontrol migration (permissions insertion should not have conflicted)
-				acmigrator := migrator.NewMigrator(x, &setting.Cfg{Logger: log.New("acmigration.test")})
+				acmigrator := migrator.NewMigrator(x, &setting.Cfg{Logger: log.New("acmigration.test")}, tracing.InitializeTracerForTest())
 				acmig.AddManagedPermissionsMigration(acmigrator, acmig.ManagedPermissionsMigrationID+fmt.Sprint(i))
 
 				errRunningMig := acmigrator.Start(false, 0)

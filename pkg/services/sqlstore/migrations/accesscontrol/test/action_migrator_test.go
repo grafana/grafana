@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	acmig "github.com/grafana/grafana/pkg/services/sqlstore/migrations/accesscontrol"
@@ -210,7 +211,7 @@ func TestActionMigration(t *testing.T) {
 			}
 
 			// Run RBAC action name migration
-			acmigrator := migrator.NewMigrator(x, &setting.Cfg{Logger: log.New("acmigration.test")})
+			acmigrator := migrator.NewMigrator(x, &setting.Cfg{Logger: log.New("acmigration.test")}, tracing.InitializeTracerForTest())
 			acmig.AddActionNameMigrator(acmigrator)
 
 			errRunningMig := acmigrator.Start(false, 0)

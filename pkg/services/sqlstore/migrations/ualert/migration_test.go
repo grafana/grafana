@@ -15,6 +15,7 @@ import (
 	"xorm.io/xorm"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/alerting/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -114,7 +115,7 @@ func TestAddDashAlertMigration(t *testing.T) {
 				require.NoError(t, err)
 			}
 
-			mg := migrator.NewMigrator(x, tt.config)
+			mg := migrator.NewMigrator(x, tt.config, tracing.InitializeTracerForTest())
 
 			ualert.AddDashAlertMigration(mg)
 			require.Equal(t, tt.expected, mg.GetMigrationIDs(false))
@@ -630,7 +631,7 @@ func setupTestDB(t *testing.T) *xorm.Engine {
 	err = migrator.NewDialect(x.DriverName()).CleanDB(x)
 	require.NoError(t, err)
 
-	mg := migrator.NewMigrator(x, &setting.Cfg{Raw: ini.Empty()})
+	mg := migrator.NewMigrator(x, &setting.Cfg{Raw: ini.Empty()}, tracing.InitializeTracerForTest())
 	migrations := &migrations.OSSMigrations{}
 	migrations.AddMigration(mg)
 
@@ -765,7 +766,7 @@ func runDashAlertMigrationTestRun(t *testing.T, x *xorm.Engine) {
 	_, errDeleteMig := x.Exec("DELETE FROM migration_log WHERE migration_id = ?", ualert.MigTitle)
 	require.NoError(t, errDeleteMig)
 
-	alertMigrator := migrator.NewMigrator(x, &setting.Cfg{})
+	alertMigrator := migrator.NewMigrator(x, &setting.Cfg{}, tracing.InitializeTracerForTest())
 	alertMigrator.AddMigration(ualert.RmMigTitle, &ualert.RmMigration{})
 	ualert.AddDashAlertMigration(alertMigrator)
 

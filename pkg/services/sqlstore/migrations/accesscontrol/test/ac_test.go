@@ -12,6 +12,7 @@ import (
 	"xorm.io/xorm"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -211,7 +212,7 @@ func TestMigrations(t *testing.T) {
 			require.NoError(t, errDeleteMig)
 
 			// Run accesscontrol migration (permissions insertion should not have conflicted)
-			acmigrator := migrator.NewMigrator(x, tc.config)
+			acmigrator := migrator.NewMigrator(x, tc.config, tracing.InitializeTracerForTest())
 			acmig.AddTeamMembershipMigrations(acmigrator)
 
 			errRunningMig := acmigrator.Start(false, 0)
@@ -262,7 +263,7 @@ func setupTestDB(t *testing.T) *xorm.Engine {
 	mg := migrator.NewMigrator(x, &setting.Cfg{
 		Logger: log.New("acmigration.test"),
 		Raw:    ini.Empty(),
-	})
+	}, tracing.InitializeTracerForTest())
 	migrations := &migrations.OSSMigrations{}
 	migrations.AddMigration(mg)
 

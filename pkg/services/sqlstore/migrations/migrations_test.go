@@ -1,6 +1,7 @@
 package migrations
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"os"
@@ -15,6 +16,7 @@ import (
 	"gopkg.in/ini.v1"
 	"xorm.io/xorm"
 
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	. "github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
 	"github.com/grafana/grafana/pkg/setting"
@@ -34,7 +36,7 @@ func TestMigrations(t *testing.T) {
 	_, err = x.SQL(query).Get(&result)
 	require.Error(t, err)
 
-	mg := NewMigrator(x, &setting.Cfg{Raw: ini.Empty()})
+	mg := NewMigrator(x, &setting.Cfg{Raw: ini.Empty()}, tracing.InitializeTracerForTest())
 	migrations := &OSSMigrations{}
 	migrations.AddMigration(mg)
 	expectedMigrations := mg.GetMigrationIDs(true)
@@ -48,7 +50,7 @@ func TestMigrations(t *testing.T) {
 
 	checkStepsAndDatabaseMatch(t, mg, expectedMigrations)
 
-	mg = NewMigrator(x, &setting.Cfg{})
+	mg = NewMigrator(x, &setting.Cfg{}, tracing.InitializeTracerForTest())
 	migrations.AddMigration(mg)
 
 	err = mg.Start(false, 0)
@@ -171,7 +173,7 @@ func TestMigratorLocking(t *testing.T) {
 	err = NewDialect(x.DriverName()).CleanDB(x)
 	require.NoError(t, err)
 
-	mg := NewMigrator(x, &setting.Cfg{})
+	mg := NewMigrator(x, &setting.Cfg{}, tracing.InitializeTracerForTest())
 	migrations := &OSSMigrations{}
 	migrations.AddMigration(mg)
 
@@ -208,7 +210,7 @@ func TestDatabaseLocking(t *testing.T) {
 	err = NewDialect(x.DriverName()).CleanDB(x)
 	require.NoError(t, err)
 
-	mg1 := NewMigrator(x, &setting.Cfg{})
+	mg1 := NewMigrator(x, &setting.Cfg{}, tracing.InitializeTracerForTest())
 	migrations := &OSSMigrations{}
 	migrations.AddMigration(mg1)
 	reg := registry{
@@ -216,7 +218,7 @@ func TestDatabaseLocking(t *testing.T) {
 	}
 	reg.set(0, mg1)
 
-	mg2 := NewMigrator(x, &setting.Cfg{})
+	mg2 := NewMigrator(x, &setting.Cfg{}, tracing.InitializeTracerForTest())
 	migrations.AddMigration(mg2)
 	reg.set(1, mg2)
 
@@ -243,7 +245,7 @@ func TestDatabaseLocking(t *testing.T) {
 
 func checkStepsAndDatabaseMatch(t *testing.T, mg *Migrator, expected []string) {
 	t.Helper()
-	log, err := mg.GetMigrationLog()
+	log, err := mg.GetMigrationLog(context.Background())
 	require.NoError(t, err)
 	missing := make([]string, 0)
 	for _, id := range expected {

@@ -487,6 +487,6 @@ func setupEnv(t *testing.T, sqlStore *sqlstore.SQLStore, b bus.Bus, quotaService
 		annotationstest.NewFakeAnnotationsRepo(), &pluginFakes.FakePluginStore{}, tracer, ruleStore,
 	)
 	require.NoError(t, err)
-	_, err = storesrv.ProvideService(sqlStore, featuremgmt.WithFeatures(), sqlStore.Cfg, quotaService, storesrv.ProvideSystemUsersService())
+	_, err = storesrv.ProvideService(sqlStore, featuremgmt.WithFeatures(), sqlStore.Cfg, quotaService, storesrv.ProvideSystemUsersService(), tracing.InitializeTracerForTest())
 	require.NoError(t, err)
 }

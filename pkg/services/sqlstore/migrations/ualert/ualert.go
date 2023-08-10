@@ -55,7 +55,7 @@ func (e MigrationError) Error() string {
 func (e *MigrationError) Unwrap() error { return e.Err }
 
 func AddDashAlertMigration(mg *migrator.Migrator) {
-	logs, err := mg.GetMigrationLog()
+	logs, err := mg.GetMigrationLog(context.TODO())
 	if err != nil {
 		mg.Logger.Error("alert migration failure: could not get migration log", "error", err)
 		os.Exit(1)
@@ -105,7 +105,7 @@ func AddDashAlertMigration(mg *migrator.Migrator) {
 // RerunDashAlertMigration force the dashboard alert migration to run
 // to make sure that the Alertmanager configurations will be created for each organisation
 func RerunDashAlertMigration(mg *migrator.Migrator) {
-	logs, err := mg.GetMigrationLog()
+	logs, err := mg.GetMigrationLog(context.TODO())
 	if err != nil {
 		mg.Logger.Error("alert migration failure: could not get migration log", "error", err)
 		os.Exit(1)
@@ -126,7 +126,7 @@ func RerunDashAlertMigration(mg *migrator.Migrator) {
 }
 
 func AddDashboardUIDPanelIDMigration(mg *migrator.Migrator) {
-	logs, err := mg.GetMigrationLog()
+	logs, err := mg.GetMigrationLog(context.TODO())
 	if err != nil {
 		mg.Logger.Error("alert migration failure: could not get migration log", "error", err)
 		os.Exit(1)

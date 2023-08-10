@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/filestorage"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -98,13 +99,14 @@ func ProvideService(
 	cfg *setting.Cfg,
 	quotaService quota.Service,
 	systemUsersService SystemUsers,
+	tracer tracing.Tracer,
 ) (StorageService, error) {
 	settings, err := LoadStorageConfig(cfg, features)
 	if err != nil {
 		grafanaStorageLogger.Warn("error loading storage config", "error", err)
 	}
 
-	if err := migrations.MigrateEntityStore(sql, features); err != nil {
+	if err := migrations.MigrateEntityStore(sql, features, tracer); err != nil {
 		return nil, err
 	}
 

@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
@@ -12,7 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func MigrateEntityStore(xdb db.DB, features featuremgmt.FeatureToggles) error {
+func MigrateEntityStore(xdb db.DB, features featuremgmt.FeatureToggles, tracer tracing.Tracer) error {
 	// Skip if feature flag is not enabled
 	if !features.IsEnabled(featuremgmt.FlagEntityStore) {
 		return nil
@@ -33,7 +34,7 @@ func MigrateEntityStore(xdb db.DB, features featuremgmt.FeatureToggles) error {
 	}
 
 	marker := "Initialize entity tables (v0)" // changing this key wipe+rewrite everything
-	mg := migrator.NewScopedMigrator(sql.GetEngine(), sql.Cfg, "entity")
+	mg := migrator.NewScopedMigrator(sql.GetEngine(), sql.Cfg, tracer, "entity")
 	mg.AddCreateMigration()
 	mg.AddMigration(marker, &migrator.RawSQLMigration{})
 	initEntityTables(mg)
@@ -42,7 +43,7 @@ func MigrateEntityStore(xdb db.DB, features featuremgmt.FeatureToggles) error {
 	// The initial plan is to keep the source of truth in existing SQL tables, and mirrot it
 	// to a kubernetes model.  Once the kubernetes model needs to be preserved,
 	// this code should be removed
-	log, err := mg.GetMigrationLog()
+	log, err := mg.GetMigrationLog(context.TODO())
 	if err != nil {
 		return err
 	}

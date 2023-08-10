@@ -1,6 +1,7 @@
 package migrator
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -8,10 +9,13 @@ import (
 	"github.com/golang-migrate/migrate/v4/database"
 	_ "github.com/lib/pq"
 	_ "github.com/mattn/go-sqlite3"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
 	"go.uber.org/atomic"
 	"xorm.io/xorm"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -22,6 +26,7 @@ var (
 
 type Migrator struct {
 	DBEngine     *xorm.Engine
+	tracer       tracing.Tracer
 	Dialect      Dialect
 	migrations   []Migration
 	migrationIds map[string]struct{}
@@ -41,15 +46,16 @@ type MigrationLog struct {
 	Timestamp   time.Time
 }
 
-func NewMigrator(engine *xorm.Engine, cfg *setting.Cfg) *Migrator {
-	return NewScopedMigrator(engine, cfg, "")
+func NewMigrator(engine *xorm.Engine, cfg *setting.Cfg, tracer tracing.Tracer) *Migrator {
+	return NewScopedMigrator(engine, cfg, tracer, "")
 }
 
 // NewScopedMigrator should only be used for the transition to a new storage engine
-func NewScopedMigrator(engine *xorm.Engine, cfg *setting.Cfg, scope string) *Migrator {
+func NewScopedMigrator(engine *xorm.Engine, cfg *setting.Cfg, tracer tracing.Tracer, scope string) *Migrator {
 	mg := &Migrator{
 		Cfg:          cfg,
 		DBEngine:     engine,
+		tracer:       tracer,
 		migrations:   make([]Migration, 0),
 		migrationIds: make(map[string]struct{}),
 		Dialect:      NewDialect(engine.DriverName()),
@@ -105,11 +111,12 @@ func (mg *Migrator) GetMigrationIDs(excludeNotLogged bool) []string {
 	return result
 }
 
-func (mg *Migrator) GetMigrationLog() (map[string]MigrationLog, error) {
+func (mg *Migrator) GetMigrationLog(ctx context.Context) (map[string]MigrationLog, error) {
 	logMap := make(map[string]MigrationLog)
 	logItems := make([]MigrationLog, 0)
 
-	exists, err := mg.DBEngine.IsTableExist(mg.tableName)
+	sess := mg.DBEngine.Context(ctx)
+	exists, err := sess.IsTableExist(mg.tableName)
 	if err != nil {
 		return nil, fmt.Errorf("%v: %w", "failed to check table existence", err)
 	}
@@ -117,7 +124,7 @@ func (mg *Migrator) GetMigrationLog() (map[string]MigrationLog, error) {
 		return logMap, nil
 	}
 
-	if err = mg.DBEngine.Table(mg.tableName).Find(&logItems); err != nil {
+	if err = sess.Table(mg.tableName).Find(&logItems); err != nil {
 		return nil, err
 	}
 
@@ -139,8 +146,11 @@ func (mg *Migrator) RemoveMigrationLogs(migrationsIDs ...string) {
 }
 
 func (mg *Migrator) Start(isDatabaseLockingEnabled bool, lockAttemptTimeout int) (err error) {
+	ctx, span := mg.tracer.Start(context.Background(), "Migrator.Start")
+	defer span.End()
+
 	if !isDatabaseLockingEnabled {
-		return mg.run()
+		return mg.run(ctx)
 	}
 
 	dbName, err := mg.Dialect.GetDBName(mg.DBEngine.DataSourceName())
@@ -153,6 +163,7 @@ func (mg *Migrator) Start(isDatabaseLockingEnabled bool, lockAttemptTimeout int)
 	}
 
 	return mg.InTransaction(func(sess *xorm.Session) error {
+		sess.Context(ctx)
 		mg.Logger.Info("Locking database")
 		lockCfg := LockCfg{
 			Session: sess,
@@ -174,14 +185,17 @@ func (mg *Migrator) Start(isDatabaseLockingEnabled bool, lockAttemptTimeout int)
 		}()
 
 		// migration will run inside a nested transaction
-		return mg.run()
+		return mg.run(ctx)
 	})
 }
 
-func (mg *Migrator) run() (err error) {
-	mg.Logger.Info("Starting DB migrations")
+func (mg *Migrator) run(ctx context.Context) (err error) {
+	ctx, span := mg.tracer.Start(ctx, "Migrator.run")
+	defer span.End()
+	logger := mg.Logger.FromContext(ctx)
+	logger.Info("Starting DB migrations")
 
-	_, err = mg.GetMigrationLog()
+	_, err = mg.GetMigrationLog(ctx)
 	if err != nil {
 		return err
 	}
@@ -193,7 +207,7 @@ func (mg *Migrator) run() (err error) {
 		m := m
 		_, exists := mg.logMap[m.Id()]
 		if exists {
-			mg.Logger.Debug("Skipping migration: Already executed", "id", m.Id())
+			logger.Debug("Skipping migration: Already executed", "id", m.Id())
 			migrationsSkipped++
 			continue
 		}
@@ -207,9 +221,10 @@ func (mg *Migrator) run() (err error) {
 		}
 
 		err := mg.InTransaction(func(sess *xorm.Session) error {
-			err := mg.exec(m, sess)
+			sess.Context(ctx)
+			err := mg.exec(ctx, m, sess)
 			if err != nil {
-				mg.Logger.Error("Exec failed", "error", err, "sql", sql)
+				logger.Error("Exec failed", "id", m.Id(), "error", err, "sql", sql)
 				record.Error = err.Error()
 				if !m.SkipMigrationLog() {
 					if _, err := sess.Table(mg.tableName).Insert(&record); err != nil {
@@ -232,29 +247,38 @@ func (mg *Migrator) run() (err error) {
 		}
 	}
 
-	mg.Logger.Info("migrations completed", "performed", migrationsPerformed, "skipped", migrationsSkipped, "duration", time.Since(start))
+	logger.Info("DB migrations completed", "performed", migrationsPerformed, "skipped", migrationsSkipped, "duration", time.Since(start))
 
 	// Make sure migrations are synced
 	return mg.DBEngine.Sync2()
 }
 
-func (mg *Migrator) exec(m Migration, sess *xorm.Session) error {
-	mg.Logger.Info("Executing migration", "id", m.Id())
+func (mg *Migrator) exec(parentCtx context.Context, m Migration, sess *xorm.Session) error {
+	start := time.Now()
+
+	ctx, span := mg.tracer.Start(parentCtx, "Migrator.exec")
+	span.SetAttributes("migration_id", m.Id(), attribute.String("migration_id", m.Id()))
+	defer span.End()
+
+	sess.Context(ctx)
+
+	logger := mg.Logger.New("id", m.Id()).FromContext(ctx)
+	logger.Info("Executing migration")
 
 	condition := m.GetCondition()
 	if condition != nil {
 		sql, args := condition.SQL(mg.Dialect)
 
 		if sql != "" {
-			mg.Logger.Debug("Executing migration condition SQL", "id", m.Id(), "sql", sql, "args", args)
+			logger.Debug("Executing migration condition SQL", "sql", sql, "args", args)
 			results, err := sess.SQL(sql, args...).Query()
 			if err != nil {
-				mg.Logger.Error("Executing migration condition failed", "id", m.Id(), "error", err)
+				logger.Error("Executing migration condition failed", "error", err)
 				return err
 			}
 
 			if !condition.IsFulfilled(results) {
-				mg.Logger.Warn("Skipping migration: Already executed, but not recorded in migration log", "id", m.Id())
+				logger.Warn("Skipping migration: Already executed, but not recorded in migration log")
 				return nil
 			}
 		}
@@ -262,18 +286,22 @@ func (mg *Migrator) exec(m Migration, sess *xorm.Session) error {
 
 	var err error
 	if codeMigration, ok := m.(CodeMigration); ok {
-		mg.Logger.Debug("Executing code migration", "id", m.Id())
+		logger.Debug("Executing code migration")
 		err = codeMigration.Exec(sess, mg)
 	} else {
 		sql := m.SQL(mg.Dialect)
-		mg.Logger.Debug("Executing sql migration", "id", m.Id(), "sql", sql)
+		logger.Debug("Executing sql migration", "sql", sql)
 		_, err = sess.Exec(sql)
 	}
 
 	if err != nil {
-		mg.Logger.Error("Executing migration failed", "id", m.Id(), "error", err)
+		logger.Error("Migration failed", "error", err)
+		span.SetStatus(codes.Error, err.Error())
+		span.RecordError(err)
 		return err
 	}
+
+	logger.Info("Migration successfully executed", "duration", time.Since(start))
 
 	return nil
 }
