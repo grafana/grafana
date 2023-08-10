@@ -95,21 +95,23 @@ function getSceneModel({
 // TODO: Figure out how to auto migrate from old panel types to new panel types (angular)
 // TODO: Bonus - figure out way to filter out panels that are relying on missing DS variable?
 export function createVizPanelFromPanelModel(panel: PanelModel, onClick: (panel: PanelModel) => void) {
+  // Create Pamel Model from Panel to auto migrate old versions
+  const autoMigratedPanel = new PanelModel(panel);
   return new SceneFlexItem({
     minHeight: 200,
     body: new SceneClickableElement({
-      onClick: () => onClick(panel),
+      onClick: () => onClick(autoMigratedPanel),
       children: new VizPanel({
-        key: getVizPanelKeyForPanelId(panel.id),
-        title: panel.title,
-        pluginId: panel.type,
-        options: panel.options ?? {},
-        fieldConfig: panel.fieldConfig,
-        pluginVersion: panel.pluginVersion,
-        displayMode: panel.transparent ? 'transparent' : undefined,
+        key: getVizPanelKeyForPanelId(autoMigratedPanel.id),
+        title: autoMigratedPanel.title,
+        pluginId: autoMigratedPanel.type,
+        options: autoMigratedPanel.options ?? {},
+        fieldConfig: autoMigratedPanel.fieldConfig,
+        pluginVersion: autoMigratedPanel.pluginVersion,
+        displayMode: autoMigratedPanel.transparent ? 'transparent' : undefined,
         // To be replaced with it's own option persisted option instead derived
-        hoverHeader: !panel.title && !panel.timeFrom && !panel.timeShift,
-        $data: createPanelDataProvider(panel),
+        hoverHeader: !autoMigratedPanel.title && !autoMigratedPanel.timeFrom && !autoMigratedPanel.timeShift,
+        $data: createPanelDataProvider(autoMigratedPanel),
       }),
     }),
   });
