@@ -1,7 +1,8 @@
 import { chain, cloneDeep, defaults, find } from 'lodash';
 
-import { PanelPluginMeta } from '@grafana/data';
+import { PanelPluginMeta, DataSourceInstanceSettings, locationUtil } from '@grafana/data';
 import { llms } from '@grafana/experimental';
+import { getBackendSrv, locationService } from '@grafana/runtime';
 import { Dashboard } from '@grafana/schema';
 import config from 'app/core/config';
 import { LS_PANEL_COPY_KEY } from 'app/core/constants';
@@ -269,4 +270,20 @@ export function normalizeDashboard(dashboard: DashboardModel): Dashboard {
     ...newDashboard,
     panels: newPanels,
   };
+}
+
+/**
+ * Create a new dashboard from a valid dashboard JSON and return the URL where it was created.
+ * It doesn't matter the version of it, when the dashboard is loaded is automatically migrated to the latest version in runtime.
+ */
+export async function createNewDashboardFromJSON(dashboard: Dashboard): Promise<string> {
+  const result = await getBackendSrv().post('api/dashboards/import', {
+    // Remove UID to avoid conflicts
+    // Add tags to identify DashGPT dashboards
+    dashboard: { ...dashboard, uid: undefined, tags: ['DashGPT'], editable: true },
+    overwrite: true,
+  });
+
+  const dashboardUrl = locationUtil.stripBaseFromUrl(result.importedUrl);
+  return dashboardUrl;
 }

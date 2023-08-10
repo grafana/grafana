@@ -9,6 +9,7 @@ import { Trans } from 'app/core/internationalization';
 import { DashboardModel } from 'app/features/dashboard/state';
 import {
   checkDashboardResultQuality,
+  createNewDashboardFromJSON,
   onAddLibraryPanel,
   onCreateNewPanel,
   onCreateNewRow,
@@ -44,19 +45,11 @@ const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
     if (!isDashboardMatchStrong) {
       bestDashboardMatch = await onGenerateDashboardWithAI(assitsDescription);
     }
-
     setAssitsLoading(false);
-    const bestDashboardMatchModel = new DashboardModel(bestDashboardMatch);
 
-    // @TODO: Update title
-    // @TODO: Update variables
-    // @TODO: Update update annotations
-    // @TODO: Should we create the dashboard first, like import does and then load it through URL?
-    if (bestDashboardMatchModel?.panels) {
-      bestDashboardMatchModel?.panels.forEach((panel: PanelModel) => {
-        dashboard.addPanel(panel);
-      });
-    }
+    const dashboardUrl = await createNewDashboardFromJSON(bestDashboardMatch);
+    // Open the imported dashboard
+    locationService.push(dashboardUrl);
   };
 
   const generateDashboardButton = () => {
