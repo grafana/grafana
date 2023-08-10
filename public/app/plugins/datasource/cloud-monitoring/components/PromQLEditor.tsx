@@ -56,7 +56,7 @@ export function PromQLQueryEditor({
           className="slate-query-field"
           value={query.expr}
           rows={10}
-          placeholder="Enter a Cloud Monitoring MQL query (Run with Shift+Enter)"
+          placeholder="Enter a Cloud Monitoring Prometheus query (Run with Shift+Enter)"
           onBlur={onRunQuery}
           onKeyDown={onReturnKeyDown}
           onChange={(e) => onChange({ ...query, expr: e.currentTarget.value })}
