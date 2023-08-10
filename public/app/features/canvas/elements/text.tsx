@@ -134,8 +134,8 @@ export const textItem: CanvasElementItem<TextConfig, TextData> = {
   getNewOptions: (options) => ({
     ...options,
     config: {
-      align: Align.Center,
-      valign: VAlign.Middle,
+      align: options?.config.align || Align.Center,
+      valign: options?.config.valign || VAlign.Middle,
       color: {
         fixed: defaultThemeTextColor,
       },
