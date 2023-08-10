@@ -21,13 +21,7 @@ type Loader struct {
 	log         log.Logger
 }
 
-func ProvideService(discovery discovery.Discoverer, bootstrap bootstrap.Bootstrapper, validation validation.Validator,
-	initializer initialization.Initializer, termination termination.Terminator) *Loader {
-	return New(discovery, bootstrap, validation, initializer, termination)
-}
-
-func New(
-	discovery discovery.Discoverer, bootstrap bootstrap.Bootstrapper, validation validation.Validator,
+func New(discovery discovery.Discoverer, bootstrap bootstrap.Bootstrapper, validation validation.Validator,
 	initializer initialization.Initializer, termination termination.Terminator) *Loader {
 	return &Loader{
 		discovery:   discovery,

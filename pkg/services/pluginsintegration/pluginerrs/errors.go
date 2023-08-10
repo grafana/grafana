@@ -19,8 +19,8 @@ func ProvideStore(signatureErrs SignatureErrorTracker) *Store {
 	}
 }
 
-func (s *Store) PluginErrors() []*plugins.Error {
-	sigErrs := s.signatureErrs.SignatureErrors(context.Background())
+func (s *Store) PluginErrors(ctx context.Context) []*plugins.Error {
+	sigErrs := s.signatureErrs.SignatureErrors(ctx)
 	errs := make([]*plugins.Error, 0, len(sigErrs))
 	for _, err := range sigErrs {
 		errs = append(errs, &plugins.Error{
