@@ -10,6 +10,7 @@ import {
 } from 'dxf-parser';
 
 import {
+  Align,
   CanvasElementItem,
   CanvasElementOptions,
   canvasElementRegistry,
@@ -18,6 +19,7 @@ import {
   LineData,
   TextConfig,
   TextData,
+  VAlign,
   VerticalConstraint,
 } from 'app/features/canvas';
 import { ElementState } from 'app/features/canvas/runtime/element';
@@ -132,6 +134,8 @@ function addTextElement(entity: ITextEntity, entityLayer: ILayer, canvasLayer: F
       color: {
         fixed: hexFromColorRepr(entity.color, entityLayer),
       },
+      align: Align.Left,
+      valign: VAlign.Bottom,
     },
   };
 
