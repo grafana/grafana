@@ -1,8 +1,9 @@
 package api
 
 import (
+	"errors"
+
 	"github.com/grafana/grafana/pkg/infra/metrics"
-	"github.com/grafana/grafana/pkg/login"
 	"github.com/grafana/grafana/pkg/middleware/cookies"
 	"github.com/grafana/grafana/pkg/services/authn"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
@@ -21,7 +22,7 @@ func (hs *HTTPServer) OAuthLogin(reqCtx *contextmodel.ReqContext) {
 		errorDesc := reqCtx.Query("error_description")
 		hs.log.Error("failed to login ", "error", errorParam, "errorDesc", errorDesc)
 
-		hs.redirectWithError(reqCtx, login.ErrProviderDeniedRequest, "error", errorParam, "errorDesc", errorDesc)
+		hs.redirectWithError(reqCtx, errors.New("login provider denied login request"), "error", errorParam, "errorDesc", errorDesc)
 		return
 	}
 
