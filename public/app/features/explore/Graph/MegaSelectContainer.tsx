@@ -1,4 +1,3 @@
-import { css } from '@emotion/css';
 import React, { useCallback, useState } from 'react';
 
 import {
@@ -9,9 +8,8 @@ import {
   SplitOpen,
   LoadingState,
   ThresholdsConfig,
-  GrafanaTheme2,
 } from '@grafana/data';
-import { Button, GraphThresholdsStyleConfig, PanelChrome, PanelChromeProps, useStyles2 } from '@grafana/ui';
+import { GraphThresholdsStyleConfig, PanelChrome, PanelChromeProps } from '@grafana/ui';
 import { ExploreGraphStyle } from 'app/types';
 
 import { MegaSelectOptions } from '../Explore';
@@ -36,18 +34,7 @@ interface Props extends Pick<PanelChromeProps, 'statusMessage'> {
   thresholdsStyle?: GraphThresholdsStyleConfig;
   actionsOverride?: JSX.Element;
   options: MegaSelectOptions;
-  setMegaSelectCompareFrame?: (megaSelectCompareFrame: DataFrame[]) => void;
-  megaSelectCompareFrame?: DataFrame[];
 }
-
-const getStyles = (theme: GrafanaTheme2) => ({
-  compareButton: css`
-    position: absolute;
-    right: 0;
-    top: 0;
-    transform: scale(0.75);
-  `,
-});
 
 export const MegaSelectContainer = ({
   data,
@@ -65,36 +52,8 @@ export const MegaSelectContainer = ({
   statusMessage,
   actionsOverride,
   options,
-  setMegaSelectCompareFrame,
-  megaSelectCompareFrame,
 }: Props) => {
   const [graphStyle, setGraphStyle] = useState(loadGraphStyle);
-  const style = useStyles2(getStyles);
-
-  const CompareButton = (
-    <>
-      {setMegaSelectCompareFrame && (
-        <Button
-          variant="secondary"
-          fill="solid"
-          size="xs"
-          onClick={() => {
-            // debugger;
-            if (megaSelectCompareFrame?.length && data.find((df) => df.name === megaSelectCompareFrame[0]?.name)) {
-              setMegaSelectCompareFrame([]);
-            } else {
-              setMegaSelectCompareFrame(data);
-            }
-          }}
-          className={style.compareButton}
-        >
-          {megaSelectCompareFrame?.length && data.find((df) => df.name === megaSelectCompareFrame[0]?.name)
-            ? 'Unpin'
-            : 'Pin'}
-        </Button>
-      )}
-    </>
-  );
 
   const onGraphStyleChange = useCallback((graphStyle: ExploreGraphStyle) => {
     storeGraphStyle(graphStyle);
@@ -118,34 +77,25 @@ export const MegaSelectContainer = ({
       height={height}
       loadingState={loadingState}
       statusMessage={statusMessage}
-      actions={
-        actionsOverride ? (
-          CompareButton
-        ) : (
-          <ExploreGraphLabel graphStyle={graphStyle} onChangeGraphStyle={onGraphStyleChange} />
-        )
-      }
+      actions={actionsOverride ?? <ExploreGraphLabel graphStyle={graphStyle} onChangeGraphStyle={onGraphStyleChange} />}
     >
       {(innerWidth, innerHeight) => (
-        <>
-          <MegaSelectGraph
-            options={options}
-            graphStyle={graphStyle}
-            data={data}
-            height={innerHeight}
-            width={innerWidth}
-            absoluteRange={absoluteRange}
-            onChangeTime={onChangeTime}
-            timeZone={timeZone}
-            annotations={annotations}
-            splitOpenFn={splitOpenFn}
-            loadingState={loadingState}
-            thresholdsConfig={thresholdsConfig}
-            thresholdsStyle={thresholdsStyle}
-            eventBus={eventBus}
-            setMegaSelectCompareFrame={setMegaSelectCompareFrame}
-          />
-        </>
+        <MegaSelectGraph
+          options={options}
+          graphStyle={graphStyle}
+          data={data}
+          height={innerHeight}
+          width={innerWidth}
+          absoluteRange={absoluteRange}
+          onChangeTime={onChangeTime}
+          timeZone={timeZone}
+          annotations={annotations}
+          splitOpenFn={splitOpenFn}
+          loadingState={loadingState}
+          thresholdsConfig={thresholdsConfig}
+          thresholdsStyle={thresholdsStyle}
+          eventBus={eventBus}
+        />
       )}
     </PanelChrome>
   );
