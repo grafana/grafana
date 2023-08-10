@@ -10,7 +10,7 @@ import { PromVisualQuery } from '../../types';
 import { QuerySuggestionContainer } from './QuerySuggestionContainer';
 // @ts-ignore until we can get these added for icons
 import AI_Logo_color from './resources/AI_Logo_color.svg';
-import { callOpenAI, querySuggestions } from './state/helpers';
+import { callOpenAI } from './state/helpers';
 import { initialState, stateSlice } from './state/state';
 import { Interaction, SuggestionType } from './types';
 
