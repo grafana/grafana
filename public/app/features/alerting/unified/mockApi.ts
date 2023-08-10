@@ -3,6 +3,7 @@ import { setupServer, SetupServer } from 'msw/node';
 import 'whatwg-fetch';
 
 import { setBackendSrv } from '@grafana/runtime';
+import { PromRulesResponse, RulerRuleGroupDTO, RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 
 import { backendSrv } from '../../../core/services/backend_srv';
 import {
@@ -124,7 +125,31 @@ export function mockApi(server: SetupServer) {
   };
 }
 
-// Creates a MSW server and sets up beforeAll and afterAll handlers for it
+export function mockAlertRuleApi(server: SetupServer) {
+  return {
+    prometheusRuleNamespaces: (dsName: string, response: PromRulesResponse) => {
+      server.use(
+        rest.get(`api/prometheus/${dsName}/api/v1/rules`, (req, res, ctx) =>
+          res(ctx.status(200), ctx.json<PromRulesResponse>(response))
+        )
+      );
+    },
+    rulerRules: (dsName: string, response: RulerRulesConfigDTO) => {
+      server.use(
+        rest.get(`/api/ruler/${dsName}/api/v1/rules`, (req, res, ctx) => res(ctx.status(200), ctx.json(response)))
+      );
+    },
+    rulerRuleGroup: (dsName: string, namespace: string, group: string, response: RulerRuleGroupDTO) => {
+      server.use(
+        rest.get(`/api/ruler/${dsName}/api/v1/rules/${namespace}/${group}`, (req, res, ctx) =>
+          res(ctx.status(200), ctx.json(response))
+        )
+      );
+    },
+  };
+}
+
+// Creates a MSW server and sets up beforeAll, afterAll and beforeEach handlers for it
 export function setupMswServer() {
   const server = setupServer();
 
