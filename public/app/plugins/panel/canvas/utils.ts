@@ -108,16 +108,31 @@ export function onAddItem(sel: SelectableValue<string>, rootLayer: FrameState | 
 }
 
 export async function onImportFile(target: EventTarget & HTMLInputElement, layer: FrameState | undefined) {
+  const errMsgHeader = 'Unable to import file';
+
   if (!layer) {
+    appEvents.emit(AppEvents.alertError, [errMsgHeader, 'No layer found']);
     return;
   }
 
-  // eslint-disable-next-line no-console
-  console.debug('file', target.files && target.files[0]); // TODO: remove debugging
+  if (!target.files || target.files.length === 0) {
+    return;
+  }
 
-  if (target.files && target.files[0]) {
-    // TODO: check file type and map to handler
-    await handleDxfFile(target.files[0], layer);
+  try {
+    let file = target.files[0];
+    let ext = target.files[0].name.split('.').pop();
+
+    switch (ext?.toLowerCase()) {
+      case 'dxf':
+        await handleDxfFile(file, layer);
+        break;
+      default:
+        console.warn('unhandled file type'); // should never reach here
+    }
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : String(error);
+    appEvents.emit(AppEvents.alertError, [errMsgHeader, msg]);
   }
 }
 
