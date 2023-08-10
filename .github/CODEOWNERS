@@ -446,6 +446,7 @@ lerna.json @grafana/frontend-ops
 /public/lib/ @grafana/grafana-frontend-platform
 /public/lib/monaco-languages/kusto.ts @grafana/partner-datasources
 /public/maps/ @ryantxu
+/public/manifest.json @grafana/grafana-frontend-platform
 /public/robots.txt @grafana/frontend-ops
 /public/sass/ @grafana/grafana-frontend-platform
 /public/test/ @grafana/grafana-frontend-platform
