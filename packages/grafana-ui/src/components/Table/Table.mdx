@@ -7,11 +7,18 @@ Used for displaying tabular data
 
 ## Sub-tables
 
-Sub-tables are supported through the usage of the prop `subData` Dataframe array.
-The frames are linked to each row using the following custom properties under `dataframe.meta.custom`
+Sub-tables are supported by adding `FieldType.nestedFrames` to the field that contains the nested data in your dataframe.
 
-- **parentRowIndex**: number - The index of the parent row in the main dataframe (under the `data` prop of the Table component)
-- **noHeader**: boolean - Sets the noHeader of each sub-table
+This nested fields values can contain an array of one or more dataframes. Each of these dataframes will be rendered as one unique sub-table.
+
+For each dataframe and index in the nested field, the dataframe will be rendered as one or more sub-tables below the main dataframe row at that index.
+
+Each dataframe also supports using the following custom property under `dataframe.meta.custom`:
+
+- **noHeader**: boolean - Hides that sub-tables header.
+
+- @deprecated use `FieldType.nestedFrames` instead
+  - **parentRowIndex**: number - The index of the parent row in the main dataframe (under the `data` prop of the Table component).
 
 ## Cell rendering
 
