@@ -124,7 +124,7 @@ The sample application exposes metrics which are stored in [Prometheus](https://
 
 To be able to visualize the metrics from Prometheus, you first need to add it as a data source in Grafana.
 
-1. In the sidebar, hover over the **Configuration** (gear) icon, and then click **Data sources**.
+1. In the sidebar, hover over the **Administration** (gear) icon, and then click **Data sources**.
 1. Click **Add data source**.
 1. In the list of data sources, click **Prometheus**.
 1. In the URL box, enter **http\://prometheus:9090**.
