@@ -26,55 +26,107 @@ import { useDispatch } from 'app/types';
 import { changePanelPlugin } from '../state/actions';
 
 export function PanelDataErrorView(props: PanelDataErrorViewProps) {
+  const { panelId, data } = props;
   const styles = useStyles2(getStyles);
   const context = usePanelContext();
-  const builder = new VisualizationSuggestionsBuilder(props.data);
+  const builder = new VisualizationSuggestionsBuilder(data);
   // When is the best time to check the data for transformation suggestions?
   // Do we build our own data summary here relevant to our needs?
   const { dataSummary } = builder;
   const message = getMessageFor(props, dataSummary);
   const dispatch = useDispatch();
 
-  const panel = getDashboardSrv().getCurrent()?.getPanelById(props.panelId);
-  /*
-  const { loading, error, value } = useAsync(async () => {
-    const enabled = await llms.openai.enabled();
-    if (!enabled) {
-      return false;
+  const panel = getDashboardSrv().getCurrent()?.getPanelById(panelId);
+
+  const { value, error } = useAsync(async () => {
+    try {
+      const skynetEnabled = await llms.openai.enabled();
+      console.log(skynetEnabled, 'openai API enabled');
+
+      if (!skynetEnabled) {
+        return { skynetEnabled: false, skynetSuggestion: null };
+      }
+
+      const skynetSuggestion = await getSkynetSuggestion();
+
+      return { skynetEnabled, skynetSuggestion };
+    } catch (error) {
+      console.error('Error in useAsync:', error);
+      // Re-throw the error to be handled by the component
+      throw error;
+    }
+  }, []);
+
+  const getSkynetSuggestion = async () => {
+    try {
+      const skynetSuggestion = await askSkynet();
+      return skynetSuggestion;
+    } catch (error) {
+      console.error('Error:', error);
+      throw error;
+    }
+  };
+
+  const askSkynet = (
+    sampleValues: Array<string | number> = [1, 2, 3],
+    formats: string[] = ['datetime', 'number', 'timestamp', 'string']
+  ) => {
+    // No need to run the call if openai is not enabled
+    if (!value?.skynetEnabled) {
+      return null;
     }
 
-    // We don't really need to steam the completions, since there will really only be a single string answer,
-    // but this is how the LLM functionality is currently implemented.
-    const stream = llms.openai.streamChatCompletions({
+    const joinedValues = sampleValues.join('", "');
+    const joinedFormats = formats.join('", "');
+    const prompt =
+      `using this list of possible answers (${joinedFormats}), review the following string or number, ` +
+      `and return to me only the single item from the list mentioned above that most probably represents ` +
+      `all items in the following list: ${joinedValues}. reminder: please answer with one word.`;
+
+    const stream = llms.openai
+      .streamChatCompletions({
         model: 'gpt-3.5-turbo',
-        messages: [{ role: 'system', content: 'default promt that we build to check for time types/fields' }],
+        messages: [{ role: 'system', content: prompt }],
       })
-      .pipe(
-        // Accumulate the stream chunks into a single string.
-        llms.openai.accumulateContent()
-      );
-    // Subscribe to the stream and update the state for each returned value.
-    return {
-      enabled,
-      // Do we need to subscribe to the stream here? None of this is being streamed to the UI.
-      // Instead here do have a side-effect of updating the transformation suggestions?
-      // TODO: DO SOMETHING WITH THE STREAM
-      // stream: stream.subscribe(setReply),
-    };
-    // This message should never change outside of mount.
-  }, [message]);
+      .pipe(llms.openai.accumulateContent());
+
+    let final = '';
+
+    return new Promise((resolve, reject) => {
+      const subscription = stream.subscribe({
+        next: (skynetResponse) => {
+          console.log(skynetResponse, 'skynet response');
+          // Update the final value, only if the response is truthy
+          if (skynetResponse) {
+            final = skynetResponse;
+          }
+        },
+        complete: () => {
+          // Log the status
+          console.log('Stream completed');
+          console.log(final, 'final');
+          // Resolve the promise with the final value
+          resolve(final);
+        },
+        error: (error) => {
+          // Log the error
+          console.error('Error occurred:', error);
+          // Reject the promise with the error
+          reject(error);
+        },
+      });
+
+      // Clean up the subscription when the promise is resolved or rejected
+      subscription.unsubscribe();
+    });
+  };
 
   if (error) {
     console.error(error.message);
-    // TODO: DO SOMETHING MORE WITH THIS ERROR
+    // JEV: do something more useful here
     return null;
   }
 
-  // If we add the LLM logic here, we'll need to consider how to handle the async nature of the API.
-  // Do we want to run the LLM logic by default? Or give the user the option to run it?
-
-  // The LLM functionality in experimental is streaming by nature, even if we are only wanting to returm a stream of one item.
-*/
   // Where are these suggestions coming from? Are
   let suggestions = props.suggestions || [];
   // What if the dataSummary is not reliable for recognizing fields correctly?
@@ -86,6 +138,8 @@ export function PanelDataErrorView(props: PanelDataErrorViewProps) {
         (f.type === FieldType.string && f.values.slice(0, 5).every((v) => moment(v).isValid())) ||
         (f.type === FieldType.number &&
           f.values.slice(0, 5).every((v) => {
+            // JEV: add llm logic here
+            console.log(v, 'value being checked');
             const epoch = moment.unix(v);
             //Let's assume numbers that parse to +-5 years from now are unix epochs
             let yearDiff = epoch.diff(moment(), 'years');
