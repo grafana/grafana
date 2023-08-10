@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/auth"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -384,8 +385,15 @@ func (hs *HTTPServer) AdminLogoutUser(c *contextmodel.ReqContext) response.Respo
 		return response.Error(http.StatusBadRequest, "id is invalid", err)
 	}
 
-	if c.UserID == userID {
-		return response.Error(400, "You cannot logout yourself", nil)
+	namespace, identifier := c.SignedInUser.GetNamespacedID()
+	if namespace == identity.NamespaceUser {
+		activeUserID, err := identity.IntIdentifier(namespace, identifier)
+		if err != nil {
+			return response.Error(http.StatusInternalServerError, "Failed to parse active user id", err)
+		}
+		if activeUserID == userID {
+			return response.Error(http.StatusBadRequest, "You cannot logout yourself", nil)
+		}
 	}
 
 	return hs.logoutUserFromAllDevicesInternal(c.Req.Context(), userID)
