@@ -368,8 +368,6 @@ func (s *Service) executeTimeSeriesQuery(ctx context.Context, req *backend.Query
 		if err != nil {
 			return resp, err
 		}
-		//logger := slog.FromContext(ctx)
-		//logger.Error("BELLOOOO", "queryRes", queryRes, "dr", dr, "executedQueryString", executedQueryString, "err", err)
 		err = queryExecutor.parseResponse(queryRes, dr, executedQueryString)
 		if err != nil {
 			queryRes.Error = err
@@ -600,7 +598,6 @@ func (s *Service) getDefaultProject(ctx context.Context, dsInfo datasourceInfo) 
 
 func unmarshalResponse(logger log.Logger, res *http.Response) (cloudMonitoringResponse, error) {
 	body, err := io.ReadAll(res.Body)
-	logger.Error("body", "body", string(body), "r", err)
 	if err != nil {
 		return cloudMonitoringResponse{}, err
 	}
