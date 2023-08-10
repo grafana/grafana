@@ -1,8 +1,8 @@
 import { chain, cloneDeep, defaults, find } from 'lodash';
 
-import { PanelPluginMeta, DataSourceInstanceSettings, locationUtil } from '@grafana/data';
+import { PanelPluginMeta, locationUtil } from '@grafana/data';
 import { llms } from '@grafana/experimental';
-import { getBackendSrv, locationService } from '@grafana/runtime';
+import { getBackendSrv } from '@grafana/runtime';
 import { Dashboard } from '@grafana/schema';
 import config from 'app/core/config';
 import { LS_PANEL_COPY_KEY } from 'app/core/constants';

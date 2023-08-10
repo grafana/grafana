@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
 import React from 'react';
 
-import { GrafanaTheme2, PanelModel } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config, locationService, reportInteraction } from '@grafana/runtime';
 import { Button, useStyles2, Text, TextArea, LoadingPlaceholder, ModalsController } from '@grafana/ui';
