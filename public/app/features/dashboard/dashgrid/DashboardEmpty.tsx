@@ -36,6 +36,8 @@ const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
   const [assitsLoading, setAssitsLoading] = React.useState(false);
   const [isGenerationLoading, setIsGenerationLoading] = React.useState(false);
 
+  const [feedbackToUser, setFeedbackToUser] = React.useState('');
+
   const onSearchDashboard = async () => {
     setAssitsLoading(true);
     let bestDashboardMatch = await onGenerateDashboardWithSemanticSearch(assitsDescription);
@@ -46,9 +48,14 @@ const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
     const isDashboardMatchStrong = await checkDashboardResultQuality(bestDashboardMatch, assitsDescription);
 
     if (!isDashboardMatchStrong) {
+      setFeedbackToUser(
+        'We could not find a great match for your description, generating a custom dashboard for you... this can take a while 😬'
+      );
       bestDashboardMatch = await onGenerateDashboardWithAI(assitsDescription);
     }
     setAssitsLoading(false);
+
+    setFeedbackToUser('');
 
     const dashboardUrl = await createNewDashboardFromJSON(bestDashboardMatch);
     // Open the imported dashboard
@@ -92,6 +99,7 @@ const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
               onChange={(e) => setAssitsDescription(e.currentTarget.value)}
               value={assitsDescription}
             />
+            {feedbackToUser && <div className={styles.feedbackToUser}>{feedbackToUser}</div>}
             <div className={styles.llmButtons}>
               <Button
                 size="md"
@@ -99,7 +107,7 @@ const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
                 fill="outline"
                 data-testid={selectors.pages.AddDashboard.itemButton('Create new panel button')}
                 onClick={onGenerateDashboard}
-                disabled={isGenerationLoading}
+                disabled={isGenerationLoading || assitsLoading}
                 tooltip="Have DashGPT generate a custom dashboard for you from scratch"
               >
                 {isGenerationLoading ? (
@@ -113,7 +121,7 @@ const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
                 icon="ai"
                 data-testid={selectors.pages.AddDashboard.itemButton('Create new panel button')}
                 onClick={onSearchDashboard}
-                disabled={assitsLoading}
+                disabled={assitsLoading || isGenerationLoading}
                 tooltip="Have DashGPT find a dashboard from our curated templates or create a custom dashboard just for you if we don't have a great template for your use case."
               >
                 {assitsLoading ? (
@@ -312,6 +320,12 @@ function getStyles(theme: GrafanaTheme2) {
     IAMGROT: css({
       position: 'absolute',
       left: '-225px',
+    }),
+    feedbackToUser: css({
+      color: theme.colors.gradients.brandHorizontal,
+      fontSize: theme.typography.size.md,
+      textAlign: 'center',
+      padding: theme.spacing.gridSize * 2,
     }),
     widgetContainer: css({
       label: 'widget-container',
