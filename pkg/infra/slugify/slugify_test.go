@@ -17,6 +17,8 @@ func TestSlugify(t *testing.T) {
 	results["noi-nang-canh-canh-ben-long-bieng-khuay"] = "Nỗi nàng canh cánh bên lòng biếng khuây" // This line in a poem called Truyen Kieu
 	results["hello-playground"] = "Hello / playground"
 	results["hello-playground"] = "Hello % playground"
+	results["hello-and-playground"] = "Hello & //% playground"
+	results["hello-2a-23-playground"] = "Hello *# playground"
 
 	for slug, original := range results {
 		actual := Slugify(original)
