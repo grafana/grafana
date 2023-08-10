@@ -1,5 +1,5 @@
-import React from 'react';
 import { css, cx } from '@emotion/css';
+import React from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { EditorRow } from '@grafana/experimental';
@@ -21,8 +21,8 @@ export interface Props {
 
 export const defaultQuery: (dataSource: CloudMonitoringDatasource) => PromQLQuery = (dataSource) => ({
   projectName: dataSource.getDefaultProject(),
-  query: "",
-  step: "10s",
+  query: '',
+  step: '10s',
 });
 
 export function PromQLQueryEditor({
@@ -33,8 +33,7 @@ export function PromQLQueryEditor({
   variableOptionGroup,
   onRunQuery,
 }: React.PropsWithChildren<Props>) {
-
-  function onReturnKeyDown(e: React.KeyboardEvent<any>) {
+  function onReturnKeyDown(e: React.KeyboardEvent) {
     if (e.key === 'Enter' && e.shiftKey) {
       onRunQuery();
       e.preventDefault();
@@ -60,34 +59,34 @@ export function PromQLQueryEditor({
           placeholder="Enter a Cloud Monitoring MQL query (Run with Shift+Enter)"
           onBlur={onRunQuery}
           onKeyDown={onReturnKeyDown}
-          onChange={(e) => onChange({...query, query: e.currentTarget.value})}
+          onChange={(e) => onChange({ ...query, query: e.currentTarget.value })}
         />
-      <div
-        className={cx(
-          'gf-form',
-          css`
-            flex-wrap: nowrap;
-          `
-        )}
-        aria-label="Step field"
-      >
-        <InlineFormLabel
-          width={6}
-          tooltip={
-            'Time units and built-in variables can be used here, for example: $__interval, $__rate_interval, 5s, 1m, 3h, 1d, 1y (Default if no unit is specified: s)'
-          }
+        <div
+          className={cx(
+            'gf-form',
+            css`
+              flex-wrap: nowrap;
+            `
+          )}
+          aria-label="Step field"
         >
-          Min step
-        </InlineFormLabel>
-        <input
-          type={'string'}
-          className="gf-form-input width-4"
-          placeholder={'auto'}
-          onChange={(e) => onChange({ ...query, step: e.currentTarget.value })}
-          onKeyDown={onReturnKeyDown}
-          value={query.step ?? ''}
-        />
-      </div>
+          <InlineFormLabel
+            width={6}
+            tooltip={
+              'Time units and built-in variables can be used here, for example: $__interval, $__rate_interval, 5s, 1m, 3h, 1d, 1y (Default if no unit is specified: s)'
+            }
+          >
+            Min step
+          </InlineFormLabel>
+          <input
+            type={'string'}
+            className="gf-form-input width-4"
+            placeholder={'auto'}
+            onChange={(e) => onChange({ ...query, step: e.currentTarget.value })}
+            onKeyDown={onReturnKeyDown}
+            value={query.step ?? ''}
+          />
+        </div>
       </EditorRow>
     </>
   );
