@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { useStyles2 } from '@grafana/ui';
+import { PanelChrome, useStyles2 } from '@grafana/ui';
 
 import { getDashboardSrv } from '../../services/DashboardSrv';
 import { PanelModel } from '../../state';
@@ -28,7 +28,15 @@ export const PanelSuggestions = ({ suggestions, onDismiss }: PanelSuggestionsPro
         // TODO: fix keyboard a11y
         // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
         <div key={index} onClick={() => onUseSuggestion(panel)} className={styles.suggestion}>
-          <div className={styles.suggestionContent}>{panel.title ?? 'Untitled'}</div>
+          <PanelChrome
+            title={panel.title ?? 'Untitled'}
+            description={panel.description}
+            width={800}
+            height={185}
+            key={index}
+          >
+            {(width: number, height: number) => <div style={{ height, width }}>Panel in a loading state</div>}
+          </PanelChrome>
         </div>
       ))}
     </div>
@@ -44,10 +52,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     margin-bottom: ${theme.spacing(3)};
   `,
   suggestion: css`
-    height: 185px;
-    border-radius: 2px;
-    border: 1px solid ${theme.colors.border.weak};
-    background: ${theme.colors.background.secondary};
     cursor: pointer;
   `,
   suggestionContent: css`

@@ -2,10 +2,9 @@ import { css } from '@emotion/css';
 import React, { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Drawer, IconButton, ModalsController, Spinner, TextArea, useStyles2 } from '@grafana/ui';
 import { Panel } from '@grafana/schema';
+import { Drawer, IconButton, ModalsController, Spinner, TextArea, useStyles2 } from '@grafana/ui';
 
-import { getDashboardSrv } from '../../services/DashboardSrv';
 import { onGeneratePanelWithSemanticSearch } from '../../utils/dashboard';
 
 import { PanelSuggestionsDrawer } from './PanelSuggestionsDrawer';
@@ -20,8 +19,7 @@ export const GeneratePanelDrawer = ({ onDismiss }: GeneratePanelDrawerProps) => 
 
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [promptValue, setPromptValue] = useState<string>('');
-  const [isError, setIsError] = useState<boolean>(false);
-  const [panels, setPanels] = useState<Panel[]>([]);
+  const [error, setError] = useState<boolean>(false);
 
   const getContent = () => {
     return (
@@ -52,7 +50,7 @@ export const GeneratePanelDrawer = ({ onDismiss }: GeneratePanelDrawerProps) => 
     setIsLoading(true);
     try {
       const panels = await onGeneratePanelWithSemanticSearch(promptValue);
-      
+
       // @TODO: Refactor for multiple panels
       const quickFeedbackChoices = await getGeneratedQuickFeedback(panels[0], promptValue);
 
@@ -61,10 +59,10 @@ export const GeneratePanelDrawer = ({ onDismiss }: GeneratePanelDrawerProps) => 
       // @TODO: Refactor for multiple panels
       return { panels: panels, quickFeedback: quickFeedbackChoices };
     } catch (e) {
-      setIsError(true);
+      setError(true);
       setIsLoading(false);
       setTimeout(function () {
-        setIsError(false);
+        setError(false);
       }, 3000);
       console.log('error', e);
     }
@@ -115,7 +113,7 @@ export const GeneratePanelDrawer = ({ onDismiss }: GeneratePanelDrawerProps) => 
             )}
           </div>
         </div>
-        {isError && <div className={styles.error}>Something went wrong, please try again.</div>}
+        {error && <div className={styles.error}>Something went wrong, please try again.</div>}
       </div>
     </Drawer>
   );

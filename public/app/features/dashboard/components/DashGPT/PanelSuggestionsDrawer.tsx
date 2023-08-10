@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import React, { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Button, Drawer, useStyles2 } from '@grafana/ui';
+import { Button, Drawer, Icon, useStyles2 } from '@grafana/ui';
 
 import { getDashboardSrv } from '../../services/DashboardSrv';
 import { PanelModel } from '../../state';
@@ -30,7 +30,7 @@ export const PanelSuggestionsDrawer = ({
   const dashboard = getDashboardSrv().getCurrent();
 
   const [isRegenerating, setIsRegenerating] = useState<boolean>(false);
-  const [isError, setIsError] = useState<boolean>(false);
+  const [error, setError] = useState<boolean>(false);
 
   let onSubmitUserInput = async (promptValue: string) => {
     setIsRegenerating(true);
@@ -46,6 +46,7 @@ export const PanelSuggestionsDrawer = ({
   // @TODO refactor reused code
   // @TODO Force type to PanelModel
   // @TODO Refactor to support multiple panels
+  // @TODO Error handling
   const onSendFeedback = async (feedback: string) => {
     setIsRegenerating(true);
     try {
@@ -58,32 +59,29 @@ export const PanelSuggestionsDrawer = ({
 
       suggestions = [panel];
     } catch (e) {
-      setIsError(true);
+      setError(true);
       setIsRegenerating(false);
       setTimeout(function () {
-        setIsError(false);
+        setError(false);
       }, 3000);
       console.log('error', e);
     }
   };
 
+  // @TODO Move quick feedback and prompt at the bottom
+  // @TODO Add better loading feedback, maybe Grot?
+  // @TODO Maybe scroll for suggestions?
   return (
     <Drawer title={'Panel Generator'} onClose={onDismiss} scrollableContent>
       <div className={styles.drawerWrapper}>
-        <UserPrompt
-          onSubmitUserInput={onSubmitUserInput}
-          isLoading={isRegenerating}
-          text={'Please introduce a description that explains what do you wanna see in your panel'}
-          value={userInput}
-        />
+        <div className={styles.userInput}>
+          <Icon name="comment-alt-message" /> {userInput}
+        </div>
         {/*{isRegenerating && <div className={styles.spinner}><Spinner size={24}/></div>}*/}
-        {!isRegenerating && (
-          <div>
-            <PanelSuggestions suggestions={suggestions} onDismiss={onDismiss} />
-            <QuickFeedback onSendFeedback={onSendFeedback} generatedQuickFeedback={generatedQuickFeedback} />
-          </div>
-        )}
-        {isError && <div className={styles.error}>Something went wrong, please try again.</div>}
+        {error && <div className={styles.error}>Something went wrong, please try again.</div>}
+        {!isRegenerating && <PanelSuggestions suggestions={suggestions} onDismiss={onDismiss} />}
+        <QuickFeedback onSendFeedback={onSendFeedback} generatedQuickFeedback={generatedQuickFeedback} />
+        <UserPrompt onSubmitUserInput={onSubmitUserInput} isLoading={isRegenerating} />
       </div>
     </Drawer>
   );
@@ -123,6 +121,8 @@ const QuickFeedback = ({ onSendFeedback, generatedQuickFeedback }: QuickFeedback
 
 const getStyles = (theme: GrafanaTheme2) => ({
   drawerWrapper: css`
+    display: flex;
+    flex-direction: column;
     padding: 20px;
   `,
   wrapper: css`
@@ -144,7 +144,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
     align-items: flex-start;
     flex-wrap: wrap;
     gap: 8px;
-    padding-top: 10px;
+    padding-top: 16px;
+    padding-bottom: 16px;
   `,
   error: css`
     padding: 10px;
@@ -155,5 +156,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
     justify-content: center;
     align-content: center;
     padding-top: 30px;
+  `,
+  userInput: css`
+    top: 8px;
+    padding-bottom: 16px;
   `,
 });
