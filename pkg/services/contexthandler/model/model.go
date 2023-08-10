@@ -20,7 +20,6 @@ import (
 type ReqContext struct {
 	*web.Context
 	*user.SignedInUser
-	// SignedInUser identity.Requester
 	UserToken *usertoken.UserToken
 
 	IsSignedIn     bool
