@@ -584,8 +584,8 @@ func TestDashAlertMigration(t *testing.T) {
 		defer teardown(t, x, service)
 		o := createOrg(t, 1)
 		folder1 := createFolder(t, 1, o.ID, "folder-1")
-		dash1 := createDashboard(t, 3, o.ID, "dash1", folder1.ID)
-		dash2 := createDashboard(t, 4, o.ID, "dash2", 22) // missing folder
+		dash1 := createDashboard(t, 3, o.ID, "dash1", folder1.ID, nil)
+		dash2 := createDashboard(t, 4, o.ID, "dash2", 22, nil) // missing folder
 
 		a1 := createAlert(t, int(o.ID), int(dash1.ID), 1, "alert-1", []string{})
 		a2 := createAlert(t, int(o.ID), int(dash2.ID), 1, "alert-2", []string{})
@@ -970,6 +970,31 @@ func TestDashAlertQueryMigration(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "alerts in dashboard with custom ACL migrate to newly created folder",
+			alerts: []*models.Alert{
+				createAlertWithCond(t, 1, 10, 1, "alert1", nil,
+					[]dashAlertCondition{
+						createCondition("A", "avg", "gt", 42, 1, "5m", "now"),
+					}),
+			},
+			expectedFolder: &dashboards.Dashboard{
+				OrgID:    1,
+				Title:    "Dashboard With ACL 1 Alerts - dash-with-acl-1",
+				FolderID: 0,
+			},
+			expected: map[int64][]*ngModels.AlertRule{
+				int64(1): {
+					genAlert(func(rule *ngModels.AlertRule) {
+						rule.DashboardUID = pointer("dash-with-acl-1")
+						rule.Data = append(rule.Data, createAlertQuery("A", "ds1-1", "5m", "now"))
+						rule.Data = append(rule.Data, createClassicConditionQuery("B", []classicConditionJSON{
+							cond("A", "avg", "gt", 42),
+						}))
+					}),
+				},
+			},
+		},
 	}
 	for _, tt := range tc {
 		t.Run(tt.name, func(t *testing.T) {
@@ -993,6 +1018,8 @@ func TestDashAlertQueryMigration(t *testing.T) {
 					if tt.expectedFolder != nil {
 						folder := getDashboard(t, x, orgId, r.NamespaceUID)
 						require.Equal(t, tt.expectedFolder.Title, folder.Title)
+						require.Equal(t, tt.expectedFolder.OrgID, folder.OrgID)
+						require.Equal(t, tt.expectedFolder.FolderID, folder.FolderID)
 					}
 				}
 
@@ -1127,15 +1154,15 @@ func createAlertWithCond(t *testing.T, orgId int, dashboardId int, panelsId int,
 
 // createDashboard creates a folder for inserting into the test database.
 func createFolder(t *testing.T, id int64, orgId int64, uid string) *dashboards.Dashboard {
-	f := createDashboard(t, id, orgId, uid, 0)
+	f := createDashboard(t, id, orgId, uid, 0, nil)
 	f.IsFolder = true
 	return f
 }
 
 // createDashboard creates a dashboard for inserting into the test database.
-func createDashboard(t *testing.T, id int64, orgId int64, uid string, folderId int64) *dashboards.Dashboard {
+func createDashboard(t *testing.T, id int64, orgId int64, uid string, folderId int64, mut func(*dashboards.Dashboard)) *dashboards.Dashboard {
 	t.Helper()
-	return &dashboards.Dashboard{
+	d := &dashboards.Dashboard{
 		ID:       id,
 		OrgID:    orgId,
 		UID:      uid,
@@ -1144,6 +1171,10 @@ func createDashboard(t *testing.T, id int64, orgId int64, uid string, folderId i
 		Title:    uid, // Not tested, needed to satisfy constraint.
 		FolderID: folderId,
 	}
+	if mut != nil {
+		mut(d)
+	}
+	return d
 }
 
 // createDatasource creates a datasource for inserting into the test database.
@@ -1197,15 +1228,19 @@ func setupLegacyAlertsTables(t *testing.T, x *xorm.Engine, legacyChannels []*mod
 
 	// Setup dashboards.
 	dashboards := []dashboards.Dashboard{
-		*createDashboard(t, 1, 1, "dash1-1", 5),
-		*createDashboard(t, 2, 1, "dash2-1", 5),
-		*createDashboard(t, 3, 2, "dash3-2", 6),
-		*createDashboard(t, 4, 2, "dash4-2", 6),
+		*createDashboard(t, 1, 1, "dash1-1", 5, nil),
+		*createDashboard(t, 2, 1, "dash2-1", 5, nil),
+		*createDashboard(t, 3, 2, "dash3-2", 6, nil),
+		*createDashboard(t, 4, 2, "dash4-2", 6, nil),
 		*createFolder(t, 5, 1, "folder5-1"),
 		*createFolder(t, 6, 2, "folder6-2"),
 		*createFolder(t, 7, 1, "General Alerting"),
-		*createDashboard(t, 8, 1, "dash-in-general-1", 0),
-		*createDashboard(t, 9, 2, "dash-in-general-2", 0),
+		*createDashboard(t, 8, 1, "dash-in-general-1", 0, nil),
+		*createDashboard(t, 9, 2, "dash-in-general-2", 0, nil),
+		*createDashboard(t, 10, 1, "dash-with-acl-1", 5, func(d *dashboards.Dashboard) {
+			d.Title = "Dashboard With ACL 1"
+			d.HasACL = true
+		}),
 	}
 	_, errDashboards := x.Insert(dashboards)
 	require.NoError(t, errDashboards)
