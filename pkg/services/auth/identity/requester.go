@@ -61,7 +61,7 @@ type Requester interface {
 }
 
 // IntIdentifier converts a string identifier to an int64.
-// Applicable for users, service accounts and api keys.
+// Applicable for users, service accounts, api keys and renderer service.
 // Errors if the identifier is not initialized or if namespace is not recognized.
 func IntIdentifier(namespace, identifier string) (int64, error) {
 	switch namespace {
