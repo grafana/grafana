@@ -1,16 +1,22 @@
+import { css } from '@emotion/css';
 import { defaults } from 'lodash';
 import React, { useCallback, useEffect } from 'react';
 
 import { QueryEditorProps, SelectableValue } from '@grafana/data';
-import { InlineField, InlineFieldRow, Select } from '@grafana/ui';
+import { EditorRow } from '@grafana/experimental';
+import { Button, InlineField, InlineFieldRow, Select } from '@grafana/ui';
 
 import { createErrorNotification } from '../../../../core/copy/appNotification';
 import { notifyApp } from '../../../../core/reducers/appNotification';
 import { AdHocFilter } from '../../../../features/variables/adhoc/picker/AdHocFilter';
 import { AdHocVariableFilter } from '../../../../features/variables/types';
 import { dispatch } from '../../../../store/store';
+import { RawQuery } from '../../prometheus/querybuilder/shared/RawQuery';
+import { generateQueryFromFilters } from '../SearchTraceQLEditor/utils';
 import { TempoDatasource } from '../datasource';
+import { traceqlGrammar } from '../traceql/traceql';
 import { defaultQuery, MyDataSourceOptions, TempoQuery } from '../types';
+import { megaToFilters } from '../utils';
 
 import { SpanSelect } from './SpanSelect';
 
@@ -18,7 +24,7 @@ type Props = QueryEditorProps<TempoDatasource, TempoQuery, MyDataSourceOptions>;
 
 export function MegaSelectEditor(props: Props) {
   const query = defaults(props.query, defaultQuery);
-  const { datasource, onChange } = props;
+  const { datasource, onChange, onRunQuery } = props;
 
   const onViewChange = useCallback(
     (selValue: SelectableValue<string>) => {
@@ -85,6 +91,28 @@ export function MegaSelectEditor(props: Props) {
           />
         </InlineField>
       </InlineFieldRow>
+      <EditorRow>
+        <RawQuery
+          className={css`
+            flex-grow: 1;
+          `}
+          query={generateQueryFromFilters(megaToFilters(query.megaFilters, query.megaSpan))}
+          lang={{ grammar: traceqlGrammar, name: 'traceql' }}
+        />
+        <Button
+          onClick={() => {
+            onChange({
+              ...query,
+              query: generateQueryFromFilters(megaToFilters(query.megaFilters, query.megaSpan)),
+              queryType: 'traceql',
+            });
+            onRunQuery();
+          }}
+          size={'sm'}
+        >
+          Explore Traces
+        </Button>
+      </EditorRow>
     </>
   );
 }

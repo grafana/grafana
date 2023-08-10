@@ -65,7 +65,7 @@ import {
 import { doTempoChannelStream } from './streaming';
 import { intrinsics } from './traceql/traceql';
 import { SearchQueryParams, TempoJsonData, TempoQuery } from './types';
-import { getErrorMessage } from './utils';
+import { getErrorMessage, megaToFilters } from './utils';
 
 type RawTimeStamp = number;
 type ExemplarValue = string;
@@ -144,31 +144,9 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
   }
 
   queryMegaSelect(options: DataQueryRequest<TempoQuery>): Observable<DataQueryResponse> {
-    const filters: TraceqlFilter[] = [];
-    if (options.targets[0].megaSpan) {
-      filters.push({
-        id: 'mega-span',
-        tag: 'http.url',
-        operator: '=',
-        scope: TraceqlSearchScope.Span,
-        value: options.targets[0].megaSpan,
-        valueType: FieldType.string,
-      });
-    }
-
-    filters.push(
-      ...(options.targets[0].megaFilters?.map((f, i) => ({
-        id: f.key + i,
-        tag: f.key,
-        operator: f.operator,
-        scope: TraceqlSearchScope.Span,
-        value: f.value,
-        valueType: f.key.includes('.') ? FieldType.string : FieldType.number,
-      })) || [])
-    );
-
+    const query = generateQueryFromFilters(megaToFilters(options.targets[0].megaFilters, options.targets[0].megaSpan));
     const request = this._request('/api/metrics/megaselect', {
-      q: generateQueryFromFilters(filters),
+      q: query,
       metric: options.targets[0].view,
       limit: options.targets[0].limit ?? DEFAULT_LIMIT,
       start: options.range.from.unix(),
