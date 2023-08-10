@@ -1,4 +1,13 @@
-import { DxfParser, IEntity, ILayer, ILayersTable, ILineEntity, ITextEntity, IViewPort } from 'dxf-parser';
+import {
+  DxfParser,
+  IEntity,
+  ILayer,
+  ILayersTable,
+  ILineEntity,
+  ILwpolylineEntity,
+  ITextEntity,
+  IViewPort,
+} from 'dxf-parser';
 
 import {
   CanvasElementItem,
@@ -23,6 +32,12 @@ const BOTTOM_LEFT_CONSTRAINT = {
 };
 
 const TEMP_MULTIPLIER = 20;
+
+interface Line {
+  theta: number;
+  length: number;
+  minVertexIndex: number;
+}
 
 export async function handleDxfFile(file: File, canvasLayer: FrameState) {
   let fileText = await file.text();
@@ -69,6 +84,8 @@ function addEntity(entity: IEntity, entityLayer: ILayer, canvasLayer: FrameState
       addTextElement(entity, entityLayer, canvasLayer);
     } else if (isLineEntity(entity)) {
       addLineElement(entity, entityLayer, canvasLayer);
+    } else if (isILwpolylineEntity(entity)) {
+      addLwPolylineElement(entity, entityLayer, canvasLayer);
     } else {
       console.warn('unhandled entity type', entity.type);
     }
@@ -83,6 +100,10 @@ function isTextEntity(entity: IEntity): entity is ITextEntity {
 
 function isLineEntity(entity: IEntity): entity is ILineEntity {
   return entity.type === 'LINE';
+}
+
+function isILwpolylineEntity(entity: IEntity): entity is ILwpolylineEntity {
+  return entity.type === 'LWPOLYLINE';
 }
 
 function addTextElement(entity: ITextEntity, entityLayer: ILayer, canvasLayer: FrameState) {
@@ -112,37 +133,45 @@ function addTextElement(entity: ITextEntity, entityLayer: ILayer, canvasLayer: F
   canvasLayer.addElement(new ElementState(newTextItem, newElementOptions, canvasLayer));
 }
 
-function addLineElement(entity: ILineEntity, entityLayer: ILayer, canvasLayer: FrameState) {
-  if (entity.vertices.length !== 2) {
-    throw new Error('unexpected number of vertices');
+function lineFromVertices(vertices: Array<{ x: number; y: number }>): Line {
+  if (vertices.length !== 2) {
+    throw new Error(`unexpected number of vertices: expected 2, got ${vertices.length}`);
   }
 
-  const lineWeight = entity.lineweight !== undefined && entity.lineweight !== 0 ? entity.lineweight : 0.25;
+  const dy = vertices[1].y - vertices[0].y;
+  const dx = vertices[1].x - vertices[0].x;
 
-  const dy = entity.vertices[1].y - entity.vertices[0].y;
-  const dx = entity.vertices[1].x - entity.vertices[0].x;
-
-  const angle = (Math.atan2(dy, dx) * 180) / Math.PI;
+  const theta = (Math.atan2(dy, dx) * 180) / Math.PI;
   const length = Math.hypot(dx, dy);
 
-  let minVertexIndex = entity.vertices[0].x > entity.vertices[1].x ? 1 : 0;
-  if (angle < 0) {
-    minVertexIndex = entity.vertices[0].y < entity.vertices[1].y ? 1 : 0;
+  let minVertex = vertices[0].x > vertices[1].x ? 1 : 0;
+  if (theta < 0) {
+    minVertex = vertices[0].y < vertices[1].y ? 1 : 0;
   }
 
-  const newLineItem: CanvasElementItem<LineConfig, LineData> = canvasElementRegistry.get('line');
+  return {
+    theta,
+    length,
+    minVertexIndex: minVertex,
+  };
+}
 
+function addLineElement(entity: ILineEntity, entityLayer: ILayer, canvasLayer: FrameState) {
+  const line = lineFromVertices(entity.vertices);
+  const lineWeight = entity.lineweight !== undefined && entity.lineweight !== 0 ? entity.lineweight : 0.25;
+
+  const newLineItem: CanvasElementItem<LineConfig, LineData> = canvasElementRegistry.get('line');
   let newElementOptions: CanvasElementOptions = {
     ...newLineItem.getNewOptions(),
     type: newLineItem.id,
     name: '',
     constraint: BOTTOM_LEFT_CONSTRAINT,
     placement: {
-      bottom: entity.vertices[minVertexIndex].y * TEMP_MULTIPLIER,
-      left: entity.vertices[minVertexIndex].x * TEMP_MULTIPLIER,
+      bottom: entity.vertices[line.minVertexIndex].y * TEMP_MULTIPLIER,
+      left: entity.vertices[line.minVertexIndex].x * TEMP_MULTIPLIER,
       height: lineWeight,
-      width: length * TEMP_MULTIPLIER,
-      rotation: -angle,
+      width: line.length * TEMP_MULTIPLIER,
+      rotation: -line.theta,
     },
     config: {
       width: lineWeight,
@@ -153,6 +182,38 @@ function addLineElement(entity: ILineEntity, entityLayer: ILayer, canvasLayer: F
   };
 
   canvasLayer.addElement(new ElementState(newLineItem, newElementOptions, canvasLayer));
+}
+
+function addLwPolylineElement(entity: ILwpolylineEntity, entityLayer: ILayer, canvasLayer: FrameState) {
+  for (let i = 0; i < entity.vertices.length - 1; i++) {
+    const vertices = entity.vertices.slice(i, i + 2);
+    console.debug('vertices', vertices); // eslint-disable-line no-console
+    const line = lineFromVertices(vertices);
+    const lineWeight = entity.lineweight !== undefined && entity.lineweight !== 0 ? entity.lineweight : 0.25;
+
+    const newLineItem: CanvasElementItem<LineConfig, LineData> = canvasElementRegistry.get('line');
+    let newElementOptions: CanvasElementOptions = {
+      ...newLineItem.getNewOptions(),
+      type: newLineItem.id,
+      name: '',
+      constraint: BOTTOM_LEFT_CONSTRAINT,
+      placement: {
+        bottom: entity.vertices[i + line.minVertexIndex].y * TEMP_MULTIPLIER,
+        left: entity.vertices[i + line.minVertexIndex].x * TEMP_MULTIPLIER,
+        height: lineWeight,
+        width: line.length * TEMP_MULTIPLIER,
+        rotation: -line.theta,
+      },
+      config: {
+        width: lineWeight,
+        color: {
+          fixed: fromColorRepr(entity.color, entityLayer),
+        },
+      },
+    };
+
+    canvasLayer.addElement(new ElementState(newLineItem, newElementOptions, canvasLayer));
+  }
 }
 
 function fromColorRepr(color: number | undefined, cadLayer?: ILayer): string {
