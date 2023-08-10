@@ -36,10 +36,6 @@ jest.mock('@grafana/runtime', () => ({
     get: getMock,
   }),
   getAppEvents: () => mockAppEvents,
-  config: {
-    ...jest.requireActual('@grafana/runtime').config,
-    awsAssumeRoleEnabled: true,
-  },
 }));
 
 const props: Props = {

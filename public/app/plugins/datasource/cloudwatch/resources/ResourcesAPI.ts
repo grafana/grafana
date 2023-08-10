@@ -36,7 +36,7 @@ export class ResourcesAPI extends CloudWatchRequest {
   }
 
   async getExternalId(): Promise<string> {
-    return await this.memoizedGetRequest<{ externalId: string }>('externalId').then(({ externalId }) => externalId);
+    return await this.memoizedGetRequest<{ externalId: string }>('external-id').then(({ externalId }) => externalId);
   }
 
   getAccounts({ region }: ResourceRequest): Promise<Account[]> {
