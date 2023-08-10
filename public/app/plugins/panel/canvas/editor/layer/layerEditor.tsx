@@ -73,7 +73,7 @@ export function getLayerEditor(opts: InstanceState): NestedPanelOptions<LayerEdi
         path: 'root',
         name: 'Elements',
         editor: TreeNavigationEditor,
-        settings: { scene, layer: scene.currentLayer, selected },
+        settings: { scene, layer: currentLayer, selected },
       });
 
       const ctx = { ...context, options };
