@@ -13,6 +13,8 @@ import { ElementState } from 'app/features/canvas/runtime/element';
 import { FrameState } from 'app/features/canvas/runtime/frame';
 import { Scene } from 'app/features/canvas/runtime/scene';
 
+import { LayerActionID } from '../../types';
+
 const BOTTOM_LEFT_CONSTRAINT = {
   horizontal: HorizontalConstraint.Left,
   vertical: VerticalConstraint.Bottom,
@@ -32,7 +34,9 @@ export async function handleDxfFile(file: File, canvasLayer: FrameState) {
   console.debug('dxf', dxf); // eslint-disable-line no-console
   console.debug('scene', canvasLayer.scene); // eslint-disable-line no-console
 
-  canvasLayer.elements = [];
+  canvasLayer.elements.forEach((element) => {
+    canvasLayer.doAction(LayerActionID.Delete, element);
+  });
 
   dxf.entities.forEach((entity: IEntity) => {
     addEntity(entity, getEntityLayer(entity, dxf.tables.layer), canvasLayer);
