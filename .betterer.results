@@ -2438,9 +2438,13 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "3"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "4"],
+<<<<<<< HEAD
       [0, 0, 0, "Unexpected any. Specify a different type.", "5"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "6"],
       [0, 0, 0, "Do not use any type assertions.", "7"]
+=======
+      [0, 0, 0, "Do not use any type assertions.", "5"]
+>>>>>>> 24e42fcaae7 (Connect panels to semantic search)
     ],
     "public/app/features/dashboard/utils/getPanelMenu.test.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]

@@ -26,7 +26,7 @@ export function onCreateNewPanel(dashboard: DashboardModel, datasource?: string)
 }
 
 // If generating with AI consider using the dashboard model to improve suggestions quality
-export function onGeneratePanelWithAI(dashboard: DashboardModel, description: string): any {
+export function onGeneratePanelWithAI(dashboard: DashboardModel, description: string) {
   const payload = getGeneratePayloadForPanels(dashboard);
 
   return llms.openai
@@ -138,6 +138,27 @@ export function onGenerateDashboardWithSemanticSearch(query: string): any {
     });
 }
 
+// Generate panels using semantic search on Grafana panels database
+export function onGeneratePanelWithSemanticSearch(query: string): any {
+  return fetch('http://18.116.13.121:9044/get_panels/', {
+    method: 'POST', // *GET, POST, PUT, DELETE, etc.
+    //mode: "no-cors", // no-cors, *cors, same-origin
+    // cache: "no-cache", // *default, no-cache, reload, force-cache, only-if-cached
+    // credentials: "same-origin", // include, *same-origin, omit
+    headers: {
+      'Content-Type': 'application/json',
+      // 'Content-Type': 'application/x-www-form-urlencoded',
+    },
+    body: JSON.stringify({ query }), // body data type must match "Content-Type" header
+  })
+    .then((res) => res.json())
+    .then((response) => {
+      console.log(response);
+      // It returns 5 panels sorted by relevance
+      return response.panels[0].map((panel: string) => JSON.parse(panel));
+    });
+}
+
 export const checkDashboardResultQuality = (dashboard: DashboardModel, query: string) => {
   return llms.openai
     .chatCompletions({
@@ -194,7 +215,7 @@ export function onGenerateDashboardWithAI(description: string): any {
         },
       ],
     })
-    .then((response: any) => response.choices[0].message.content)
+    .then((response) => response.choices[0].message.content)
     .then((content: string) => {
       const parsedJSON = JSON.parse(content);
       // Sometimes the AI returns a dashboard object, sometimes an object with the dashboard as property
@@ -300,8 +321,6 @@ export function normalizeDashboard(dashboard: DashboardModel): Dashboard {
 
   // Fix panels size
   const newPanels = (newDashboard.panels || []).map((panel) => {
-    console.log(panel);
-
     const newPanel = {
       ...panel,
       gridPos: {
@@ -313,7 +332,6 @@ export function normalizeDashboard(dashboard: DashboardModel): Dashboard {
         h: panel?.gridPos?.h ?? 8,
       },
     };
-    console.log('normalized', newPanel);
     return newPanel;
   });
 

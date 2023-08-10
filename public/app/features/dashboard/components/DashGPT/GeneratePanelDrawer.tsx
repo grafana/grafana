@@ -3,9 +3,10 @@ import React, { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Drawer, IconButton, ModalsController, Spinner, TextArea, useStyles2 } from '@grafana/ui';
+import { Panel } from '@grafana/schema';
 
 import { getDashboardSrv } from '../../services/DashboardSrv';
-import { onGeneratePanelWithAI } from '../../utils/dashboard';
+import { onGeneratePanelWithSemanticSearch } from '../../utils/dashboard';
 
 import { PanelSuggestionsDrawer } from './PanelSuggestionsDrawer';
 import { GeneratedPanel, getGeneratedQuickFeedback } from './utils';
@@ -17,11 +18,10 @@ interface GeneratePanelDrawerProps {
 export const GeneratePanelDrawer = ({ onDismiss }: GeneratePanelDrawerProps) => {
   const styles = useStyles2(getStyles);
 
-  const dashboard = getDashboardSrv().getCurrent();
-
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [promptValue, setPromptValue] = useState<string>('');
   const [isError, setIsError] = useState<boolean>(false);
+  const [panels, setPanels] = useState<Panel[]>([]);
 
   const getContent = () => {
     return (
@@ -51,16 +51,15 @@ export const GeneratePanelDrawer = ({ onDismiss }: GeneratePanelDrawerProps) => 
   let onSubmitUserInput = async (promptValue: string): Promise<GeneratedPanel | null> => {
     setIsLoading(true);
     try {
-      const response = await onGeneratePanelWithAI(dashboard!, promptValue);
-      const parsedResponse = JSON.parse(response);
-      const panel = parsedResponse?.panels?.[0] || parsedResponse;
-
-      const quickFeedbackChoices = await getGeneratedQuickFeedback(panel, promptValue);
+      const panels = await onGeneratePanelWithSemanticSearch(promptValue);
+      
+      // @TODO: Refactor for multiple panels
+      const quickFeedbackChoices = await getGeneratedQuickFeedback(panels[0], promptValue);
 
       setIsLoading(false);
 
       // @TODO: Refactor for multiple panels
-      return { panels: [panel], quickFeedback: quickFeedbackChoices };
+      return { panels: panels, quickFeedback: quickFeedbackChoices };
     } catch (e) {
       setIsError(true);
       setIsLoading(false);
@@ -145,3 +144,17 @@ const getStyles = (theme: GrafanaTheme2) => ({
     border: 1px solid ${theme.colors.error.border};
   `,
 });
+
+function PanelsPreview({ panels }: { panels: Panel[] }) {
+  return (
+    <div>
+      {panels.map((panel: Panel) => {
+        return (
+          <div key={panel.title}>
+            <pre>{JSON.stringify(panel, null, 2)}</pre>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
