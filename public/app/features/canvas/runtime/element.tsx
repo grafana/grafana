@@ -236,7 +236,7 @@ export class ElementState implements LayerElement {
           radOffset = -rotationRad;
           break;
       }
-      
+
       const calcDelta = (n: number, m: number) => (n / 2) * Math.sin(radOffset) + (m / 2) * (Math.cos(radOffset) - 1);
 
       deltaTop = calcDelta(this.options.placement?.width, this.options.placement.height);
