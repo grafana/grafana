@@ -38,7 +38,7 @@ Since gossiping of notifications and silences uses both TCP and UDP port `9094`,
    By default, it is set to listen to all interfaces (`0.0.0.0`).
 4. Set `[ha_peer_timeout]` in the `[unified_alerting]` section of the custom.ini to specify the time to wait for an instance to send a notification via the Alertmanager. The default value is 15s, but it may increase if Grafana servers are located in different geographic regions or if the network latency between them is high.
 
-## Enable alerting high availability in Grafana with Redis
+## Enable alerting high availability in Grafana using Redis
 
 As an alternative to Memberlist you can use Redis for high availability. This might be useful if you want to have a central
 database for HA and cannot support the meshing of all Grafana Servers.
