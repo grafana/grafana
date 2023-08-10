@@ -21,7 +21,7 @@ class EllipseDisplay extends PureComponent<CanvasElementProps<EllipseConfig, Ell
 const getStyles = stylesFactory((theme: GrafanaTheme2, data) => ({
   container: css`
     border: ${data?.width}px solid ${data?.borderColor};
-    border-radius: 100%;
+    border-radius: 50%;
     position: absolute;
     width: 100%;
     display: table;
