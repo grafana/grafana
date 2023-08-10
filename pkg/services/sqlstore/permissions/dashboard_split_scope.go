@@ -85,6 +85,10 @@ func (f *DashboardFilter) Where() (string, []interface{}) {
 	return f.where.string, f.where.params
 }
 
+func (f *DashboardFilter) GroupBy() (string, []interface{}) {
+	return `dashboard.id`, nil
+}
+
 func (f *DashboardFilter) buildClauses(folderAction, dashboardAction string) {
 	// if user has no
 	if f.hasNoPermissions() {
