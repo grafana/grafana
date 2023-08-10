@@ -1,5 +1,6 @@
 import { css, cx } from '@emotion/css';
 import React from 'react';
+import InlineSVG from 'react-inlinesvg/esm';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -121,6 +122,7 @@ const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
                   'DashGPT It!'
                 )}
               </Button>
+              <InlineSVG className={styles.IAMGROT} src={'public/img/bg/GrotBotAI.svg'} />
             </div>
           </div>
         </div>
@@ -295,6 +297,9 @@ function getStyles(theme: GrafanaTheme2) {
       alignItems: 'center',
       justifyContent: 'center',
       width: '100%',
+      backgroundImage: 'url(public/img/bg/DashboardsLines.svg)',
+      backgroundRepeat: 'no-repeat',
+      backgroundPosition: 'bottom',
     }),
     assistAIBody: css({
       display: 'flex',
@@ -302,6 +307,11 @@ function getStyles(theme: GrafanaTheme2) {
       alignItems: 'center',
       justifyContent: 'center',
       gap: theme.spacing.gridSize * 2,
+      position: 'relative',
+    }),
+    IAMGROT: css({
+      position: 'absolute',
+      left: '-225px',
     }),
     widgetContainer: css({
       label: 'widget-container',
