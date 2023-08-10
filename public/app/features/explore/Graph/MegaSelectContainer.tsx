@@ -80,7 +80,7 @@ export const MegaSelectContainer = ({
           size="xs"
           onClick={() => {
             // debugger;
-            if (megaSelectCompareFrame?.length && data[0].name === megaSelectCompareFrame[0]?.name) {
+            if (megaSelectCompareFrame?.length && data.find((df) => df.name === megaSelectCompareFrame[0]?.name)) {
               setMegaSelectCompareFrame([]);
             } else {
               setMegaSelectCompareFrame(data);
@@ -88,7 +88,9 @@ export const MegaSelectContainer = ({
           }}
           className={style.compareButton}
         >
-          {megaSelectCompareFrame?.length && data[0].name === megaSelectCompareFrame[0]?.name ? 'Unpin' : 'Pin'}
+          {megaSelectCompareFrame?.length && data.find((df) => df.name === megaSelectCompareFrame[0]?.name)
+            ? 'Unpin'
+            : 'Pin'}
         </Button>
       )}
     </>

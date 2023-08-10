@@ -308,7 +308,17 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
 
   setMegaSelectCompareFrame = (megaSelectCompareFrame: DataFrame[]) => {
     console.log('megaSelectCompareFrame', megaSelectCompareFrame);
-    this.setState({ megaSelectCompareFrame });
+    console.log('thisState', this.state.megaSelectCompareFrame);
+    if (this.state.megaSelectCompareFrame && megaSelectCompareFrame.length > 0) {
+      const megaFrame = this.state.megaSelectCompareFrame.find((df) => df.name === 'mega-summary');
+      if (megaFrame) {
+        this.setState({ ...this.state, megaSelectCompareFrame: [megaFrame, megaSelectCompareFrame[0]] });
+      } else {
+        this.setState({ megaSelectCompareFrame });
+      }
+    } else {
+      this.setState({ megaSelectCompareFrame });
+    }
   };
 
   toggleShowRichHistory = () => {
@@ -635,10 +645,15 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
     return <FlameGraphExploreContainer dataFrames={queryResponse.flameGraphFrames} />;
   }
 
-  getMainMegaPanel = () => {
+  getMainMegaPanel = (): DataFrame[] => {
     console.log('getMainMegaPanel', this.state.megaSelectCompareFrame);
     if (this.state.megaSelectCompareFrame && this.state.megaSelectCompareFrame.length) {
-      return this.state.megaSelectCompareFrame;
+      if (this.props.graphResult) {
+        const megaSummaryIndex = this.props.graphResult.findIndex((df) => df.name === 'mega-summary');
+        return [this.state.megaSelectCompareFrame[0], cloneDeep(this.props.graphResult[megaSummaryIndex])];
+      } else {
+        return this.state.megaSelectCompareFrame;
+      }
     }
 
     if (this.props.graphResult) {
