@@ -101,9 +101,9 @@ func (s slugger) Slugify(value string) string {
 		}
 
 		p := make([]byte, 4)
-		size = utf8.EncodeRune(p, c)
+		utf8.EncodeRune(p, c)
 		for i := 0; i < size; i++ {
-			buffer.WriteString(fmt.Sprintf("%%%x", p[i]))
+			buffer.WriteString(fmt.Sprintf("%x", p[i]))
 		}
 	}
 
