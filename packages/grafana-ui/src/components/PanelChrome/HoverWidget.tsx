@@ -102,12 +102,6 @@ function getStyles(theme: GrafanaTheme2) {
         background: theme.colors.secondary.main,
       },
     }),
-    untitled: css({
-      color: theme.colors.text.disabled,
-      fontStyle: 'italic',
-      padding: theme.spacing(0, 1),
-      marginBottom: 0,
-    }),
     draggableIcon: css({
       transform: 'rotate(45deg)',
       color: theme.colors.text.secondary,
