@@ -27,7 +27,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	loginpkg "github.com/grafana/grafana/pkg/login"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/middleware/csrf"
@@ -125,7 +124,6 @@ type HTTPServer struct {
 	QuotaService                 quota.Service
 	RemoteCacheService           *remotecache.RemoteCache
 	ProvisioningService          provisioning.ProvisioningService
-	Login                        login.Service
 	License                      licensing.Licensing
 	AccessControl                accesscontrol.AccessControl
 	DataProxy                    *datasourceproxy.DataSourceProxyService
@@ -170,7 +168,6 @@ type HTTPServer struct {
 	queryDataService             query.Service
 	serviceAccountsService       serviceaccounts.Service
 	authInfoService              login.AuthInfoService
-	authenticator                loginpkg.Authenticator
 	teamPermissionsService       accesscontrol.TeamPermissionsService
 	NotificationService          *notifications.NotificationService
 	DashboardService             dashboards.DashboardService
@@ -219,9 +216,9 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	pluginDashboardService plugindashboards.Service, pluginStore plugins.Store, pluginClient plugins.Client,
 	pluginErrorResolver plugins.ErrorResolver, pluginInstaller plugins.Installer, settingsProvider setting.Provider,
 	dataSourceCache datasources.CacheService, userTokenService auth.UserTokenService,
-	cleanUpService *cleanup.CleanUpService, shortURLService shorturls.Service, queryHistoryService queryhistory.Service, correlationsService correlations.Service, remoteCache *remotecache.RemoteCache, provisioningService provisioning.ProvisioningService,
-	loginService login.Service, authenticator loginpkg.Authenticator, accessControl accesscontrol.AccessControl,
-	dataSourceProxy *datasourceproxy.DataSourceProxyService, searchService *search.SearchService,
+	cleanUpService *cleanup.CleanUpService, shortURLService shorturls.Service, queryHistoryService queryhistory.Service,
+	correlationsService correlations.Service, remoteCache *remotecache.RemoteCache, provisioningService provisioning.ProvisioningService,
+	accessControl accesscontrol.AccessControl, dataSourceProxy *datasourceproxy.DataSourceProxyService, searchService *search.SearchService,
 	live *live.GrafanaLive, livePushGateway *pushhttp.Gateway, plugCtxProvider *plugincontext.Provider,
 	contextHandler *contexthandler.ContextHandler, loggerMiddleware loggermw.Logger, features *featuremgmt.FeatureManager,
 	alertNG *ngalert.AlertNG, libraryPanelService librarypanels.Service, libraryElementService libraryelements.Service,
@@ -284,7 +281,6 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		StorageService:               storageService,
 		RemoteCacheService:           remoteCache,
 		ProvisioningService:          provisioningService,
-		Login:                        loginService,
 		AccessControl:                accessControl,
 		DataProxy:                    dataSourceProxy,
 		SearchV2HTTPService:          searchv2HTTPService,
@@ -315,7 +311,6 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		queryDataService:             queryDataService,
 		serviceAccountsService:       serviceaccountsService,
 		authInfoService:              authInfoService,
-		authenticator:                authenticator,
 		NotificationService:          notificationService,
 		DashboardService:             dashboardService,
 		dashboardProvisioningService: dashboardProvisioningService,
@@ -616,10 +611,6 @@ func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 
 	m.UseMiddleware(hs.ContextHandler.Middleware)
 	m.Use(middleware.OrgRedirect(hs.Cfg, hs.userService))
-
-	if !hs.Cfg.AuthBrokerEnabled {
-		m.Use(accesscontrol.LoadPermissionsMiddleware(hs.accesscontrolService))
-	}
 
 	// needs to be after context handler
 	if hs.Cfg.EnforceDomain {

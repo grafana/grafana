@@ -9,7 +9,6 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/network"
@@ -26,7 +25,6 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/errutil"
-	"github.com/grafana/grafana/pkg/web"
 )
 
 const (
@@ -195,99 +193,17 @@ func (hs *HTTPServer) LoginAPIPing(c *contextmodel.ReqContext) response.Response
 }
 
 func (hs *HTTPServer) LoginPost(c *contextmodel.ReqContext) response.Response {
-	if hs.Cfg.AuthBrokerEnabled {
-		identity, err := hs.authnService.Login(c.Req.Context(), authn.ClientForm, &authn.Request{HTTPRequest: c.Req, Resp: c.Resp})
-		if err != nil {
-			tokenErr := &auth.CreateTokenErr{}
-			if errors.As(err, &tokenErr) {
-				return response.Error(tokenErr.StatusCode, tokenErr.ExternalErr, tokenErr.InternalErr)
-			}
-			return response.Err(err)
-		}
-
-		metrics.MApiLoginPost.Inc()
-		return authn.HandleLoginResponse(c.Req, c.Resp, hs.Cfg, identity, hs.ValidateRedirectTo)
-	}
-
-	cmd := dtos.LoginCommand{}
-	if err := web.Bind(c.Req, &cmd); err != nil {
-		return response.Error(http.StatusBadRequest, "bad login data", err)
-	}
-	authModule := ""
-	var usr *user.User
-	var resp *response.NormalResponse
-
-	defer func() {
-		err := resp.Err()
-		if err == nil && resp.ErrMessage() != "" {
-			err = errors.New(resp.ErrMessage())
-		}
-		hs.HooksService.RunLoginHook(&loginservice.LoginInfo{
-			AuthModule:    authModule,
-			User:          usr,
-			LoginUsername: cmd.User,
-			HTTPStatus:    resp.Status(),
-			Error:         err,
-		}, c)
-	}()
-
-	if hs.Cfg.DisableLoginForm {
-		resp = response.Error(http.StatusUnauthorized, "Login is disabled", nil)
-		return resp
-	}
-
-	authQuery := &loginservice.LoginUserQuery{
-		ReqContext: c,
-		Username:   cmd.User,
-		Password:   cmd.Password,
-		IpAddress:  c.RemoteAddr(),
-		Cfg:        hs.Cfg,
-	}
-
-	err := hs.authenticator.AuthenticateUser(c.Req.Context(), authQuery)
-	authModule = authQuery.AuthModule
+	identity, err := hs.authnService.Login(c.Req.Context(), authn.ClientForm, &authn.Request{HTTPRequest: c.Req, Resp: c.Resp})
 	if err != nil {
-		resp = response.Error(401, "Invalid username or password", err)
-		if errors.Is(err, login.ErrInvalidCredentials) || errors.Is(err, login.ErrTooManyLoginAttempts) || errors.Is(err,
-			user.ErrUserNotFound) {
-			return resp
+		tokenErr := &auth.CreateTokenErr{}
+		if errors.As(err, &tokenErr) {
+			return response.Error(tokenErr.StatusCode, tokenErr.ExternalErr, tokenErr.InternalErr)
 		}
-
-		if errors.Is(err, login.ErrNoAuthProvider) {
-			resp = response.Error(http.StatusInternalServerError, "No authorization providers enabled", err)
-			return resp
-		}
-
-		// Do not expose disabled status,
-		// just show incorrect user credentials error (see #17947)
-		if errors.Is(err, login.ErrUserDisabled) {
-			hs.log.Warn("User is disabled", "user", cmd.User)
-			return resp
-		}
-
-		resp = response.Error(500, "Error while trying to authenticate user", err)
-		return resp
-	}
-
-	usr = authQuery.User
-
-	err = hs.loginUserWithUser(usr, c)
-	if err != nil {
-		var createTokenErr *auth.CreateTokenErr
-		if errors.As(err, &createTokenErr) {
-			resp = response.Error(createTokenErr.StatusCode, createTokenErr.ExternalErr, createTokenErr.InternalErr)
-		} else {
-			resp = response.Error(http.StatusInternalServerError, "Error while signing in user", err)
-		}
-		return resp
+		return response.Err(err)
 	}
 
 	metrics.MApiLoginPost.Inc()
-	resp = response.JSON(http.StatusOK, map[string]any{
-		"message":     "Logged in",
-		"redirectUrl": hs.GetRedirectURL(c),
-	})
-	return resp
+	return authn.HandleLoginResponse(c.Req, c.Resp, hs.Cfg, identity, hs.ValidateRedirectTo)
 }
 
 func (hs *HTTPServer) loginUserWithUser(user *user.User, c *contextmodel.ReqContext) error {

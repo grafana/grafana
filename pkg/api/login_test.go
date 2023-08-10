@@ -20,14 +20,15 @@ import (
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/login"
 	"github.com/grafana/grafana/pkg/login/social"
+	"github.com/grafana/grafana/pkg/models/usertoken"
 	"github.com/grafana/grafana/pkg/services/auth/authtest"
+	"github.com/grafana/grafana/pkg/services/authn"
+	"github.com/grafana/grafana/pkg/services/authn/authntest"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/hooks"
 	"github.com/grafana/grafana/pkg/services/licensing"
-	loginservice "github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/navtree"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
@@ -317,11 +318,15 @@ func TestLoginPostRedirect(t *testing.T) {
 
 	fakeViewIndex(t)
 	sc := setupScenarioContext(t, "/login")
+
 	hs := &HTTPServer{
-		log:              log.NewNopLogger(),
-		Cfg:              setting.NewCfg(),
-		HooksService:     &hooks.HooksService{},
-		License:          &licensing.OSSLicensingService{},
+		log:          log.NewNopLogger(),
+		Cfg:          setting.NewCfg(),
+		HooksService: &hooks.HooksService{},
+		License:      &licensing.OSSLicensingService{},
+		authnService: &authntest.FakeService{
+			ExpectedIdentity: &authn.Identity{ID: "user:42", SessionToken: &usertoken.UserToken{}},
+		},
 		AuthTokenService: authtest.NewFakeUserAuthTokenService(),
 		Features:         featuremgmt.WithFeatures(),
 	}
@@ -332,13 +337,6 @@ func TestLoginPostRedirect(t *testing.T) {
 		c.Req.Body = io.NopCloser(bytes.NewBufferString(`{"user":"admin","password":"admin"}`))
 		return hs.LoginPost(c)
 	})
-
-	user := &user.User{
-		ID:    42,
-		Email: "",
-	}
-
-	hs.authenticator = &fakeAuthenticator{user, "", nil}
 
 	redirectCases := []redirectCase{
 		{
@@ -429,6 +427,9 @@ func TestLoginPostRedirect(t *testing.T) {
 		hs.Cfg.AppSubURL = c.appSubURL
 
 		t.Run(c.desc, func(t *testing.T) {
+			if c.desc == "grafana invalid relative url starting with subpath" {
+				fmt.Println()
+			}
 			expCookiePath := "/"
 			if len(hs.Cfg.AppSubURL) > 0 {
 				expCookiePath = hs.Cfg.AppSubURL
@@ -640,112 +641,6 @@ func setupAuthProxyLoginTest(t *testing.T, enableLoginToken bool) *scenarioConte
 	return sc
 }
 
-type loginHookTest struct {
-	info *loginservice.LoginInfo
-}
-
-func (r *loginHookTest) LoginHook(loginInfo *loginservice.LoginInfo, req *contextmodel.ReqContext) {
-	r.info = loginInfo
-}
-
-// TOREMOVE: remove with context handler auth
-func TestLoginPostRunLokingHook(t *testing.T) {
-	sc := setupScenarioContext(t, "/login")
-	hookService := &hooks.HooksService{}
-	hs := &HTTPServer{
-		log:              log.New("test"),
-		Cfg:              sc.cfg,
-		License:          &licensing.OSSLicensingService{},
-		AuthTokenService: authtest.NewFakeUserAuthTokenService(),
-		Features:         featuremgmt.WithFeatures(),
-		HooksService:     hookService,
-		authnService:     sc.ctxHdlr.AuthnService,
-	}
-
-	sc.cfg.AuthBrokerEnabled = false
-
-	sc.defaultHandler = routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
-		c.Req.Header.Set("Content-Type", "application/json")
-		c.Req.Body = io.NopCloser(bytes.NewBufferString(`{"user":"admin","password":"admin"}`))
-		x := hs.LoginPost(c)
-		return x
-	})
-
-	testHook := loginHookTest{}
-	hookService.AddLoginHook(testHook.LoginHook)
-
-	testUser := &user.User{
-		ID:    42,
-		Email: "",
-	}
-
-	testCases := []struct {
-		desc       string
-		authUser   *user.User
-		authModule string
-		authErr    error
-		info       loginservice.LoginInfo
-	}{
-		{
-			desc:    "invalid credentials",
-			authErr: login.ErrInvalidCredentials,
-			info: loginservice.LoginInfo{
-				AuthModule: "",
-				HTTPStatus: 401,
-				Error:      login.ErrInvalidCredentials,
-			},
-		},
-		{
-			desc:    "user disabled",
-			authErr: login.ErrUserDisabled,
-			info: loginservice.LoginInfo{
-				AuthModule: "",
-				HTTPStatus: 401,
-				Error:      login.ErrUserDisabled,
-			},
-		},
-		{
-			desc:       "valid Grafana user",
-			authUser:   testUser,
-			authModule: "grafana",
-			info: loginservice.LoginInfo{
-				AuthModule: "grafana",
-				User:       testUser,
-				HTTPStatus: 200,
-			},
-		},
-		{
-			desc:       "valid LDAP user",
-			authUser:   testUser,
-			authModule: loginservice.LDAPAuthModule,
-			info: loginservice.LoginInfo{
-				AuthModule: loginservice.LDAPAuthModule,
-				User:       testUser,
-				HTTPStatus: 200,
-			},
-		},
-	}
-
-	for _, c := range testCases {
-		t.Run(c.desc, func(t *testing.T) {
-			hs.authenticator = &fakeAuthenticator{c.authUser, c.authModule, c.authErr}
-			sc.m.Post(sc.url, sc.defaultHandler)
-			sc.fakeReqNoAssertions("POST", sc.url).exec()
-
-			info := testHook.info
-			assert.Equal(t, c.info.AuthModule, info.AuthModule)
-			assert.Equal(t, "admin", info.LoginUsername)
-			assert.Equal(t, c.info.HTTPStatus, info.HTTPStatus)
-			assert.Equal(t, c.info.Error, info.Error)
-
-			if c.info.User != nil {
-				require.NotEmpty(t, info.User)
-				assert.Equal(t, c.info.User.ID, info.User.ID)
-			}
-		})
-	}
-}
-
 type mockSocialService struct {
 	oAuthInfo       *social.OAuthInfo
 	oAuthInfos      map[string]*social.OAuthInfo
@@ -773,16 +668,4 @@ func (m *mockSocialService) GetOAuthHttpClient(name string) (*http.Client, error
 
 func (m *mockSocialService) GetConnector(string) (social.SocialConnector, error) {
 	return m.socialConnector, m.err
-}
-
-type fakeAuthenticator struct {
-	ExpectedUser       *user.User
-	ExpectedAuthModule string
-	ExpectedError      error
-}
-
-func (fa *fakeAuthenticator) AuthenticateUser(c context.Context, query *loginservice.LoginUserQuery) error {
-	query.User = fa.ExpectedUser
-	query.AuthModule = fa.ExpectedAuthModule
-	return fa.ExpectedError
 }
