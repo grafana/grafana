@@ -15,18 +15,7 @@ import { initialState, stateSlice } from './state/state';
 import { Interaction, SuggestionType } from './types';
 
 // actions to update the state
-const {
-  showStartingMessage,
-  showExplainer,
-  indicateCheckbox,
-  askForQueryHelp,
-  knowWhatYouWantToQuery,
-  promptKnowWhatToSeeWithMetric,
-  aiIsLoading,
-  giveMeHistoricalQueries,
-  addInteraction,
-  updateInteraction,
-} = stateSlice.actions;
+const { showStartingMessage, showExplainer, indicateCheckbox, addInteraction, updateInteraction } = stateSlice.actions;
 
 export type PromQailProps = {
   query: PromVisualQuery;
@@ -152,8 +141,9 @@ export const PromQail = (props: PromQailProps) => {
                       fill="solid"
                       variant="secondary"
                       onClick={() => {
-                        dispatch(aiIsLoading(true));
-                        dispatch(addInteraction(SuggestionType.Historical));
+                        const isLoading = true;
+                        const suggestionType = SuggestionType.Historical;
+                        dispatch(addInteraction({ suggestionType, isLoading }));
                         callOpenAI(dispatch, 0);
                       }}
                     >
@@ -163,7 +153,9 @@ export const PromQail = (props: PromQailProps) => {
                       fill="solid"
                       variant="primary"
                       onClick={() => {
-                        dispatch(addInteraction(SuggestionType.AI));
+                        const isLoading = false;
+                        const suggestionType = SuggestionType.AI;
+                        dispatch(addInteraction({ suggestionType, isLoading }));
                       }}
                     >
                       Yes
@@ -185,7 +177,7 @@ export const PromQail = (props: PromQailProps) => {
                       </div>
                       <div className={styles.textPadding}>
                         <Input
-                          value={state.promptKnowWhatToSeeWithMetric}
+                          value={interaction.prompt}
                           spellCheck={false}
                           placeholder="Enter prompt"
                           onChange={(e) => {
@@ -201,7 +193,7 @@ export const PromQail = (props: PromQailProps) => {
                         />
                       </div>
                       {interaction.suggestions.length === 0 ? (
-                        state.aiIsLoading ? (
+                        interaction.isLoading ? (
                           <>
                             <div className={styles.loadingMessageContainer}>
                               Waiting for OpenAI <Spinner className={styles.floatRight} />
@@ -224,12 +216,11 @@ export const PromQail = (props: PromQailProps) => {
                                   fill="outline"
                                   variant="secondary"
                                   onClick={() => {
-                                    dispatch(aiIsLoading(true));
-
                                     // JUST SUGGEST QUERIES AND SHOW THE LIST
                                     const newInteraction: Interaction = {
                                       ...interaction,
                                       suggestionType: SuggestionType.Historical,
+                                      isLoading: true,
                                     };
 
                                     const payload = {
@@ -247,7 +238,17 @@ export const PromQail = (props: PromQailProps) => {
                                   fill="solid"
                                   variant="primary"
                                   onClick={() => {
-                                    dispatch(aiIsLoading(true));
+                                    const newInteraction: Interaction = {
+                                      ...interaction,
+                                      isLoading: true,
+                                    };
+
+                                    const payload = {
+                                      idx: idx,
+                                      interaction: newInteraction,
+                                    };
+
+                                    dispatch(updateInteraction(payload));
                                     // add the suggestions in the API call
                                     callOpenAI(dispatch, idx, interaction);
                                   }}
@@ -264,11 +265,16 @@ export const PromQail = (props: PromQailProps) => {
                           suggestionType={SuggestionType.AI}
                           querySuggestions={interaction.suggestions}
                           closeDrawer={closeDrawer}
+                          nextInteraction={() => {
+                            const isLoading = false;
+                            const suggestionType = SuggestionType.AI;
+                            dispatch(addInteraction({ suggestionType, isLoading }));
+                          }}
                         />
                       )}
                     </>
                   ) : // HISTORICAL SUGGESTIONS
-                  state.aiIsLoading ? (
+                  interaction.isLoading ? (
                     <>
                       <div className={styles.loadingMessageContainer}>
                         Waiting for OpenAI <Spinner className={styles.floatRight} />
@@ -280,6 +286,11 @@ export const PromQail = (props: PromQailProps) => {
                       suggestionType={SuggestionType.Historical}
                       querySuggestions={interaction.suggestions}
                       closeDrawer={closeDrawer}
+                      nextInteraction={() => {
+                        const isLoading = false;
+                        const suggestionType = SuggestionType.AI;
+                        dispatch(addInteraction({ suggestionType, isLoading }));
+                      }}
                     />
                   )}
                 </>

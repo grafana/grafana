@@ -19,21 +19,6 @@ export const stateSlice = createSlice({
     askForQueryHelp: (state, action: PayloadAction<boolean>) => {
       state.askForQueryHelp = action.payload;
     },
-    knowWhatYouWantToQuery: (state, action: PayloadAction<boolean>) => {
-      state.knowWhatYouWantToQuery = action.payload;
-    },
-    promptKnowWhatToSeeWithMetric: (state, action: PayloadAction<string>) => {
-      state.promptKnowWhatToSeeWithMetric = action.payload;
-    },
-    aiIsLoading: (state, action: PayloadAction<boolean>) => {
-      state.aiIsLoading = action.payload;
-    },
-    giveMeAIQueries: (state, action: PayloadAction<boolean>) => {
-      state.giveMeAIQueries = action.payload;
-    },
-    giveMeHistoricalQueries: (state, action: PayloadAction<boolean>) => {
-      state.aiIsLoading = action.payload;
-    },
     /*
      * start working on a collection of interactions
      * {
@@ -43,9 +28,9 @@ export const stateSlice = createSlice({
      * }
      *
      */
-    addInteraction: (state, action: PayloadAction<SuggestionType>) => {
+    addInteraction: (state, action: PayloadAction<{ suggestionType: SuggestionType; isLoading: boolean }>) => {
       // AI or Historical?
-      const interaction = createInteraction(action.payload);
+      const interaction = createInteraction(action.payload.suggestionType, action.payload.isLoading);
       const interactions = state.interactions;
       state.interactions = interactions.concat([interaction]);
     },
@@ -81,11 +66,6 @@ export function initialState(query?: PromVisualQuery, showStartingMessage?: bool
     showStartingMessage: showStartingMessage ?? true,
     indicateCheckbox: false,
     askForQueryHelp: false,
-    knowWhatYouWantToQuery: false,
-    promptKnowWhatToSeeWithMetric: '',
-    aiIsLoading: false,
-    giveMeAIQueries: false,
-    giveMeHistoricalQueries: false,
     interactions: [],
   };
 }
@@ -99,18 +79,14 @@ export interface PromQailState {
   showStartingMessage: boolean;
   indicateCheckbox: boolean;
   askForQueryHelp: boolean;
-  knowWhatYouWantToQuery: boolean;
-  promptKnowWhatToSeeWithMetric: string;
-  aiIsLoading: boolean;
-  giveMeAIQueries: boolean;
-  giveMeHistoricalQueries: boolean;
   interactions: Interaction[];
 }
 
-export function createInteraction(suggestionType: SuggestionType): Interaction {
+export function createInteraction(suggestionType: SuggestionType, isLoading?: boolean): Interaction {
   return {
     suggestionType: suggestionType,
     prompt: '',
     suggestions: [],
+    isLoading: isLoading ?? false,
   };
 }

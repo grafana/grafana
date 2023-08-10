@@ -12,4 +12,5 @@ export type Interaction = {
   prompt: string;
   suggestionType: SuggestionType;
   suggestions: QuerySuggestion[];
+  isLoading: boolean;
 };
