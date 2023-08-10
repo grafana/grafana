@@ -16,6 +16,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"xorm.io/xorm"
 
+	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/serverlock"
@@ -23,12 +24,15 @@ import (
 	"github.com/grafana/grafana/pkg/services/alerting/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngModels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
+	"github.com/grafana/grafana/pkg/services/ngalert/testutil"
 	"github.com/grafana/grafana/pkg/services/org"
 	fake_secrets "github.com/grafana/grafana/pkg/services/secrets/fakes"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 )
@@ -600,7 +604,7 @@ func TestDashAlertMigration(t *testing.T) {
 		require.Len(t, rules, 2)
 
 		var generalFolder dashboards.Dashboard
-		_, err = x.Table(&dashboards.Dashboard{}).Where("title = ? AND org_id = ?", GENERAL_FOLDER, o.ID).Get(&generalFolder)
+		_, err = x.Table(&dashboards.Dashboard{}).Where("title = ? AND org_id = ?", generalAlertingFolderTitle, o.ID).Get(&generalFolder)
 		require.NoError(t, err)
 
 		require.NotNil(t, generalFolder)
@@ -1301,7 +1305,7 @@ func getDashboard(t *testing.T, x *xorm.Engine, orgId int64, uid string) *dashbo
 	return dashes[0]
 }
 
-func NewMigrationService(t *testing.T, sqlStore db.DB, cfg *setting.Cfg) *MigrationService {
+func NewMigrationService(t *testing.T, sqlStore *sqlstore.SQLStore, cfg *setting.Cfg) *MigrationService {
 	if cfg.UnifiedAlerting.BaseInterval == 0 {
 		cfg.UnifiedAlerting.BaseInterval = time.Second * 10
 	}
@@ -1309,7 +1313,21 @@ func NewMigrationService(t *testing.T, sqlStore db.DB, cfg *setting.Cfg) *Migrat
 		SQLStore: sqlStore,
 		Cfg:      cfg.UnifiedAlerting,
 	}
-	ms, err := ProvideService(serverlock.ProvideService(sqlStore, tracing.InitializeTracerForTest()), cfg, sqlStore, fakes.NewFakeKVStore(t), &alertingStore, fake_secrets.NewFakeSecretsService())
+	tracer := tracing.InitializeTracerForTest()
+	bus := bus.ProvideBus(tracer)
+	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
+	dashboardService, dashboardStore := testutil.SetupDashboardService(t, sqlStore, folderStore, cfg)
+	folderService := testutil.SetupFolderService(t, cfg, sqlStore, dashboardStore, folderStore, bus)
+	ms, err := ProvideService(
+		serverlock.ProvideService(sqlStore, tracer),
+		cfg,
+		sqlStore,
+		fakes.NewFakeKVStore(t),
+		&alertingStore,
+		fake_secrets.NewFakeSecretsService(),
+		dashboardService,
+		folderService,
+	)
 	require.NoError(t, err)
 	return ms
 }

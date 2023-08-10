@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/folder"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/secrets"
@@ -22,7 +23,6 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-const GENERAL_FOLDER = "General Alerting"
 const DASHBOARD_FOLDER = "%s Alerts - %s"
 
 // MaxFolderName is the maximum length of the folder name generated using DASHBOARD_FOLDER format
@@ -58,6 +58,8 @@ type migration struct {
 	ruleStore         RuleStore
 	alertingStore     AlertingStore
 	encryptionService secrets.Service
+	dashboardService  dashboards.DashboardService
+	folderService     folder.Service
 }
 
 func newMigration(
@@ -68,6 +70,8 @@ func newMigration(
 	alertingStore AlertingStore,
 	dialect migrator.Dialect,
 	encryptionService secrets.Service,
+	dashboardService dashboards.DashboardService,
+	folderService folder.Service,
 ) *migration {
 	return &migration{
 		// We deduplicate for case-insensitive matching in MySQL-compatible backend flavours because they use case-insensitive collation.
@@ -80,6 +84,8 @@ func newMigration(
 		ruleStore:         ruleStore,
 		alertingStore:     alertingStore,
 		encryptionService: encryptionService,
+		dashboardService:  dashboardService,
+		folderService:     folderService,
 	}
 }
 
@@ -101,23 +107,18 @@ func (m *migration) Exec(ctx context.Context) error {
 		return err
 	}
 
-	// [orgID, dashboardId] -> dashUID
-	dashIDMap, err := m.slurpDashUIDs(ctx)
-	if err != nil {
-		return err
-	}
-
 	// cache for folders created for dashboards that have custom permissions
-	folderCache := make(map[string]*dashboards.Dashboard)
+	folderCache := make(map[string]*folder.Folder)
 	// cache for the general folders
-	generalFolderCache := make(map[int64]*dashboards.Dashboard)
+	generalFolderCache := make(map[int64]*folder.Folder)
 
 	folderHelper := folderHelper{
-		store:   m.store,
-		dialect: m.dialect,
+		store:         m.store,
+		dialect:       m.dialect,
+		folderService: m.folderService,
 	}
 
-	gf := func(dash dashboards.Dashboard, da dashAlert) (*dashboards.Dashboard, error) {
+	gf := func(dash *dashboards.Dashboard, da dashAlert) (*folder.Folder, error) {
 		f, ok := generalFolderCache[dash.OrgID]
 		if !ok {
 			// get or create general folder
@@ -140,41 +141,31 @@ func (m *migration) Exec(ctx context.Context) error {
 	rulesPerOrg := make(map[int64]map[*models.AlertRule][]uidOrID)
 
 	for _, da := range dashAlerts {
-		l := m.log.New("ruleID", da.Id, "ruleName", da.Name, "dashboardUID", da.DashboardUID, "orgID", da.OrgId)
+		l := m.log.New("ruleID", da.Id, "ruleName", da.Name, "dashboardID", da.DashboardId, "orgID", da.OrgId)
 		l.Debug("migrating alert rule to Unified Alerting")
 		newCond, err := transConditions(*da.ParsedSettings, da.OrgId, dsIDMap)
 		if err != nil {
 			return err
 		}
 
-		da.DashboardUID = dashIDMap[[2]int64{da.OrgId, da.DashboardId}]
-
-		// get dashboard
-		dash := dashboards.Dashboard{}
-		err = m.store.WithDbSession(ctx, func(sess *db.Session) error {
-			exists, err := sess.Where("org_id=? AND uid=?", da.OrgId, da.DashboardUID).Get(&dash)
-			if err != nil {
-				return MigrationError{
-					Err:     fmt.Errorf("failed to get dashboard %s under organisation %d: %w", da.DashboardUID, da.OrgId, err),
-					AlertId: da.Id,
-				}
-			}
-			if !exists {
-				return MigrationError{
-					Err:     fmt.Errorf("dashboard with UID %v under organisation %d not found: %w", da.DashboardUID, da.OrgId, err),
-					AlertId: da.Id,
-				}
-			}
-			return nil
-		})
+		dash, err := m.dashboardService.GetDashboard(ctx, &dashboards.GetDashboardQuery{ID: da.DashboardId, OrgID: da.OrgId})
 		if err != nil {
-			return err
+			if errors.Is(err, dashboards.ErrFolderNotFound) {
+				return MigrationError{
+					Err:     fmt.Errorf("dashboard with ID %v under organisation %d not found: %w", da.DashboardId, da.OrgId, err),
+					AlertId: da.Id,
+				}
+			}
+			return MigrationError{
+				Err:     fmt.Errorf("failed to get dashboard with ID %v under organisation %d: %w", da.DashboardId, da.OrgId, err),
+				AlertId: da.Id,
+			}
 		}
 
-		var folder *dashboards.Dashboard
+		var migratedFolder *folder.Folder
 		switch {
 		case dash.HasACL:
-			folderName := getAlertFolderNameFromDashboard(&dash)
+			folderName := getAlertFolderNameFromDashboard(dash)
 			f, ok := folderCache[folderName]
 			if !ok {
 				l.Info("create a new folder for alerts that belongs to dashboard because it has custom permissions", "folder", folderName)
@@ -202,36 +193,36 @@ func (m *migration) Exec(ctx context.Context) error {
 				}
 				folderCache[folderName] = f
 			}
-			folder = f
+			migratedFolder = f
 		case dash.FolderID > 0:
 			// get folder if exists
 			f, err := folderHelper.getFolder(ctx, dash)
 			if err != nil {
 				// If folder does not exist then the dashboard is an orphan and we migrate the alert to the general folder.
-				l.Warn("Failed to find folder for dashboard. Migrate rule to the default folder", "rule_name", da.Name, "dashboard_uid", da.DashboardUID, "missing_folder_id", dash.FolderID)
-				folder, err = gf(dash, da)
+				l.Warn("Failed to find folder for dashboard. Migrate rule to the default folder", "rule_name", da.Name, "dashboard_uid", dash.UID, "missing_folder_id", dash.FolderID, "error", err)
+				migratedFolder, err = gf(dash, da)
 				if err != nil {
 					return err
 				}
 			} else {
-				folder = &f
+				migratedFolder = f
 			}
 		default:
-			folder, err = gf(dash, da)
+			migratedFolder, err = gf(dash, da)
 			if err != nil {
 				return err
 			}
 		}
 
-		if folder.UID == "" {
+		if migratedFolder.UID == "" {
 			return MigrationError{
 				Err:     fmt.Errorf("empty folder identifier"),
 				AlertId: da.Id,
 			}
 		}
-		rule, err := m.makeAlertRule(l, *newCond, da, folder.UID)
+		rule, err := m.makeAlertRule(l, *newCond, da, dash.UID, migratedFolder.UID)
 		if err != nil {
-			return fmt.Errorf("failed to migrate alert rule '%s' [ID:%d, DashboardUID:%s, orgID:%d]: %w", da.Name, da.Id, da.DashboardUID, da.OrgId, err)
+			return fmt.Errorf("failed to migrate alert rule '%s' [ID:%d, DashboardUID:%s, orgID:%d]: %w", da.Name, da.Id, dash.UID, da.OrgId, err)
 		}
 
 		if _, ok := rulesPerOrg[rule.OrgID]; !ok {

@@ -20,7 +20,7 @@ const (
 	ContactLabel = "__contacts__"
 )
 
-func addMigrationInfo(da *dashAlert) (map[string]string, map[string]string) {
+func addMigrationInfo(da *dashAlert, dashboardUID string) (map[string]string, map[string]string) {
 	tagsMap := simplejson.NewFromAny(da.ParsedSettings.AlertRuleTags).MustMap()
 	lbls := make(map[string]string, len(tagsMap))
 
@@ -29,15 +29,15 @@ func addMigrationInfo(da *dashAlert) (map[string]string, map[string]string) {
 	}
 
 	annotations := make(map[string]string, 3)
-	annotations[ngmodels.DashboardUIDAnnotation] = da.DashboardUID
+	annotations[ngmodels.DashboardUIDAnnotation] = dashboardUID
 	annotations[ngmodels.PanelIDAnnotation] = fmt.Sprintf("%v", da.PanelId)
 	annotations["__alertId__"] = fmt.Sprintf("%v", da.Id)
 
 	return lbls, annotations
 }
 
-func (m *migration) makeAlertRule(l log.Logger, cond condition, da dashAlert, folderUID string) (*ngmodels.AlertRule, error) {
-	lbls, annotations := addMigrationInfo(&da)
+func (m *migration) makeAlertRule(l log.Logger, cond condition, da dashAlert, dashboardUID string, folderUID string) (*ngmodels.AlertRule, error) {
+	lbls, annotations := addMigrationInfo(&da, dashboardUID)
 
 	message := MigrateTmpl(l.New("field", "message"), da.Message)
 	annotations["message"] = message
@@ -68,7 +68,7 @@ func (m *migration) makeAlertRule(l log.Logger, cond condition, da dashAlert, fo
 		IntervalSeconds: ruleAdjustInterval(da.Frequency),
 		Version:         1,
 		NamespaceUID:    folderUID, // Folder already created, comes from env var.
-		DashboardUID:    &da.DashboardUID,
+		DashboardUID:    &dashboardUID,
 		PanelID:         &da.PanelId,
 		RuleGroup:       name,
 		For:             da.For,

@@ -2,16 +2,31 @@ package migration
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/infra/metrics"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
+	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
-	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/services/user"
+)
+
+var (
+	migratorPermissions = []accesscontrol.Permission{
+		{Action: dashboards.ActionFoldersRead, Scope: dashboards.ScopeFoldersAll},
+		{Action: dashboards.ActionDashboardsRead, Scope: dashboards.ScopeDashboardsAll},
+		{Action: dashboards.ActionFoldersPermissionsRead, Scope: dashboards.ScopeFoldersAll},
+		{Action: dashboards.ActionDashboardsPermissionsRead, Scope: dashboards.ScopeDashboardsAll},
+		{Action: dashboards.ActionFoldersCreate},
+		{Action: dashboards.ActionDashboardsCreate, Scope: dashboards.ScopeFoldersAll},
+		{Action: datasources.ActionRead, Scope: datasources.ScopeAll},
+	}
+	generalAlertingFolderTitle = "General Alerting"
 )
 
 type roleType string
@@ -48,114 +63,52 @@ func (p dashboardACL) TableName() string { return "dashboard_acl" }
 
 type folderHelper struct {
 	store   db.DB
-	dialect migrator.Dialect
+	dialect       migrator.Dialect
+	folderService folder.Service
+}
+
+func getBackgroundUser(orgID int64) *user.SignedInUser {
+	backgroundUser := accesscontrol.BackgroundUser("ngalert_migration", orgID, org.RoleAdmin, migratorPermissions)
+	backgroundUser.UserID = FOLDER_CREATED_BY
+	return backgroundUser
 }
 
 // getOrCreateGeneralFolder returns the general folder under the specific organisation
 // If the general folder does not exist it creates it.
-func (m *folderHelper) getOrCreateGeneralFolder(ctx context.Context, orgID int64) (*dashboards.Dashboard, error) {
-	// there is a unique constraint on org_id, folder_id, title
-	// there are no nested folders so the parent folder id is always 0
-	dashboard := dashboards.Dashboard{OrgID: orgID, FolderID: 0, Title: GENERAL_FOLDER}
-	err := m.store.WithDbSession(ctx, func(sess *db.Session) error {
-		has, err := sess.Get(&dashboard)
-		if err != nil {
-			return err
-		} else if !has {
-			// create folder
-			d, err := m.createGeneralFolder(ctx, orgID)
-			if err != nil {
-				return err
-			}
-			dashboard = *d
-		}
-		return nil
-	})
+func (m *folderHelper) getOrCreateGeneralFolder(ctx context.Context, orgID int64) (*folder.Folder, error) {
+	f, err := m.folderService.Get(ctx, &folder.GetFolderQuery{OrgID: orgID, Title: &generalAlertingFolderTitle, SignedInUser: getBackgroundUser(orgID)})
 	if err != nil {
-		return nil, err
+		if errors.Is(err, dashboards.ErrFolderNotFound) {
+			// create folder
+			return m.createFolder(ctx, orgID, generalAlertingFolderTitle)
+		}
+		return nil, fmt.Errorf("failed to get folder '%s': %w", generalAlertingFolderTitle, err)
 	}
-	return &dashboard, nil
-}
 
-func (m *folderHelper) createGeneralFolder(ctx context.Context, orgID int64) (*dashboards.Dashboard, error) {
-	return m.createFolder(ctx, orgID, GENERAL_FOLDER)
+	return f, nil
 }
 
 // returns the folder of the given dashboard (if exists)
-func (m *folderHelper) getFolder(ctx context.Context, dash dashboards.Dashboard, da dashAlert) (dashboards.Dashboard, error) {
-	// get folder if exists
-	folder := dashboards.Dashboard{}
-	if dash.FolderID > 0 {
-		err := m.store.WithDbSession(ctx, func(sess *db.Session) error {
-			exists, err := sess.Where("id=?", dash.FolderID).Get(&folder)
-			if err != nil {
-				return fmt.Errorf("failed to get folder %d: %w", dash.FolderID, err)
-			}
-			if !exists {
-				return fmt.Errorf("folder with id %v not found", dash.FolderID)
-			}
-			if !folder.IsFolder {
-				return fmt.Errorf("id %v is a dashboard not a folder", dash.FolderID)
-			}
-			return nil
-		})
-		if err != nil {
-			return folder, err
+func (m *folderHelper) getFolder(ctx context.Context, dash *dashboards.Dashboard) (*folder.Folder, error) {
+	f, err := m.folderService.Get(ctx, &folder.GetFolderQuery{ID: &dash.FolderID, OrgID: dash.OrgID, SignedInUser: getBackgroundUser(dash.OrgID)})
+	if err != nil {
+		if errors.Is(err, dashboards.ErrFolderNotFound) {
+			return nil, fmt.Errorf("folder with id %v not found", dash.FolderID)
 		}
+		return nil, fmt.Errorf("failed to get folder %d: %w", dash.FolderID, err)
 	}
-	return folder, nil
+
+	return f, nil
 }
 
 // based on sqlstore.saveDashboard()
 // it should be called from inside a transaction
-func (m *folderHelper) createFolder(ctx context.Context, orgID int64, title string) (*dashboards.Dashboard, error) {
-	var dash *dashboards.Dashboard
-	err := m.store.WithDbSession(ctx, func(sess *db.Session) error {
-		cmd := dashboards.SaveDashboardCommand{
-			OrgID:    orgID,
-			FolderID: 0,
-			IsFolder: true,
-			Dashboard: simplejson.NewFromAny(map[string]any{
-				"title": title,
-			}),
-		}
-		dash = cmd.GetDashboardModel()
-		dash.SetUID(util.GenerateShortUID())
-
-		parentVersion := dash.Version
-		dash.SetVersion(1)
-		dash.Created = time.Now()
-		dash.CreatedBy = FOLDER_CREATED_BY
-		dash.Updated = time.Now()
-		dash.UpdatedBy = FOLDER_CREATED_BY
-		metrics.MApiDashboardInsert.Inc()
-
-		if _, err := sess.Insert(dash); err != nil {
-			return err
-		}
-
-		dashVersion := &dashver.DashboardVersion{
-			DashboardID:   dash.ID,
-			ParentVersion: parentVersion,
-			RestoredFrom:  cmd.RestoredFrom,
-			Version:       dash.Version,
-			Created:       time.Now(),
-			CreatedBy:     dash.UpdatedBy,
-			Message:       cmd.Message,
-			Data:          dash.Data,
-		}
-
-		// insert version entry
-		if _, err := sess.Insert(dashVersion); err != nil {
-			return err
-		}
-		return nil
+func (m *folderHelper) createFolder(ctx context.Context, orgID int64, title string) (*folder.Folder, error) {
+	return m.folderService.Create(ctx, &folder.CreateFolderCommand{
+		OrgID:        orgID,
+		Title:        title,
+		SignedInUser: getBackgroundUser(orgID),
 	})
-	if err != nil {
-		return nil, err
-	}
-
-	return dash, nil
 }
 
 // based on SQLStore.UpdateDashboardACL()
