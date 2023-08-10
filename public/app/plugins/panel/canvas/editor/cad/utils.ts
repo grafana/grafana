@@ -1,10 +1,12 @@
-import { DxfParser, IEntity, ILayer, ILayersTable, ITextEntity, IViewPort } from 'dxf-parser';
+import { DxfParser, IEntity, ILayer, ILayersTable, ILineEntity, ITextEntity, IViewPort } from 'dxf-parser';
 
 import {
   CanvasElementItem,
   CanvasElementOptions,
   canvasElementRegistry,
   HorizontalConstraint,
+  LineConfig,
+  LineData,
   TextConfig,
   TextData,
   VerticalConstraint,
@@ -62,15 +64,25 @@ function updateScene(scene: Scene, viewport: IViewPort, canvasLayer: FrameState)
 }
 
 function addEntity(entity: IEntity, entityLayer: ILayer, canvasLayer: FrameState) {
-  if (isTextEntity(entity)) {
-    addTextElement(entity, entityLayer, canvasLayer);
-  } else {
-    console.warn('unhandled entity type', entity.type);
+  try {
+    if (isTextEntity(entity)) {
+      addTextElement(entity, entityLayer, canvasLayer);
+    } else if (isLineEntity(entity)) {
+      addLineElement(entity, entityLayer, canvasLayer);
+    } else {
+      console.warn('unhandled entity type', entity.type);
+    }
+  } catch (error) {
+    console.warn('failed to add entity', entity, error);
   }
 }
 
 function isTextEntity(entity: IEntity): entity is ITextEntity {
   return entity.type === 'TEXT';
+}
+
+function isLineEntity(entity: IEntity): entity is ILineEntity {
+  return entity.type === 'LINE';
 }
 
 function addTextElement(entity: ITextEntity, entityLayer: ILayer, canvasLayer: FrameState) {
@@ -85,19 +97,62 @@ function addTextElement(entity: ITextEntity, entityLayer: ILayer, canvasLayer: F
       bottom: entity.startPoint.y * TEMP_MULTIPLIER,
       left: entity.startPoint.x * TEMP_MULTIPLIER,
       rotation: -entity.rotation,
-      height: entity.textHeight * TEMP_MULTIPLIER * 2.5,
+      height: entity.textHeight * TEMP_MULTIPLIER,
       width: entity.textHeight * entity.text.length * TEMP_MULTIPLIER,
     },
     config: {
       text: { fixed: entity.text },
-      size: entity.textHeight * TEMP_MULTIPLIER,
+      size: (entity.textHeight * TEMP_MULTIPLIER) / 2,
       color: {
         fixed: fromColorRepr(entity.color, entityLayer),
       },
     },
   };
 
-  addElement(newTextItem, newElementOptions, canvasLayer);
+  canvasLayer.addElement(new ElementState(newTextItem, newElementOptions, canvasLayer));
+}
+
+function addLineElement(entity: ILineEntity, entityLayer: ILayer, canvasLayer: FrameState) {
+  if (entity.vertices.length !== 2) {
+    throw new Error('unexpected number of vertices');
+  }
+
+  const lineWeight = entity.lineweight !== undefined && entity.lineweight !== 0 ? entity.lineweight : 0.25;
+
+  const dy = entity.vertices[1].y - entity.vertices[0].y;
+  const dx = entity.vertices[1].x - entity.vertices[0].x;
+
+  const angle = (Math.atan2(dy, dx) * 180) / Math.PI;
+  const length = Math.hypot(dx, dy);
+
+  let minVertexIndex = entity.vertices[0].x > entity.vertices[1].x ? 1 : 0;
+  if (angle < 0) {
+    minVertexIndex = entity.vertices[0].y < entity.vertices[1].y ? 1 : 0;
+  }
+
+  const newLineItem: CanvasElementItem<LineConfig, LineData> = canvasElementRegistry.get('line');
+
+  let newElementOptions: CanvasElementOptions = {
+    ...newLineItem.getNewOptions(),
+    type: newLineItem.id,
+    name: '',
+    constraint: BOTTOM_LEFT_CONSTRAINT,
+    placement: {
+      bottom: entity.vertices[minVertexIndex].y * TEMP_MULTIPLIER,
+      left: entity.vertices[minVertexIndex].x * TEMP_MULTIPLIER,
+      height: lineWeight,
+      width: length * TEMP_MULTIPLIER,
+      rotation: -angle,
+    },
+    config: {
+      width: lineWeight,
+      color: {
+        fixed: fromColorRepr(entity.color, entityLayer),
+      },
+    },
+  };
+
+  canvasLayer.addElement(new ElementState(newLineItem, newElementOptions, canvasLayer));
 }
 
 function fromColorRepr(color: number | undefined, cadLayer?: ILayer): string {
@@ -112,13 +167,4 @@ function fromColorRepr(color: number | undefined, cadLayer?: ILayer): string {
   }
 
   return '#' + hexColor.padStart(6, '0');
-}
-
-function addElement(item: CanvasElementItem, options: CanvasElementOptions, canvasLayer: FrameState) {
-  const newElement = new ElementState(item, options, canvasLayer);
-  newElement.updateData(canvasLayer.scene.context);
-  canvasLayer.elements.push(newElement);
-
-  canvasLayer.scene.save();
-  canvasLayer.reinitializeMoveable();
 }

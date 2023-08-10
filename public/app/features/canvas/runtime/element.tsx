@@ -95,8 +95,8 @@ export class ElementState implements LayerElement {
       pointerEvents: disablePointerEvents ? 'none' : 'auto',
       position: 'absolute',
       // Minimum element size is 10x10
-      minWidth: '10px',
-      minHeight: '10px',
+      // minWidth: '10px',
+      // minHeight: '10px',
     };
 
     const translate = ['0px', '0px'];
@@ -185,7 +185,7 @@ export class ElementState implements LayerElement {
     // Apply rotation (positive clockwise)
     style.transform = `translate(${translate[0]}, ${translate[1]}) rotate(${placement.rotation ?? 0}deg)`;
     // TODO determine rotation origin
-    //style.transformOrigin = `bottom left`;
+    style.transformOrigin = 'bottom left';
     this.options.placement = placement;
     this.sizeStyle = style;
     if (this.div) {
