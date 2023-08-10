@@ -11,6 +11,7 @@ import {
   VisualizationSuggestion,
   DataTransformerID,
   FieldType,
+  Field,
 } from '@grafana/data';
 import { llms } from '@grafana/experimental';
 import { PanelDataErrorViewProps, locationService } from '@grafana/runtime';
@@ -38,16 +39,17 @@ export function PanelDataErrorView(props: PanelDataErrorViewProps) {
 
   const panel = getDashboardSrv().getCurrent()?.getPanelById(panelId);
 
-  const { value, error } = useAsync(async () => {
+  const { error, value } = useAsync(async () => {
+    const skynetEnabled = await llms.openai.enabled();
+    console.log(skynetEnabled, 'openai API enabled');
+
+    if (!skynetEnabled) {
+      return { skynetEnabled: false, skynetSuggestion: null };
+    }
+
     try {
-      const skynetEnabled = await llms.openai.enabled();
-      console.log(skynetEnabled, 'openai API enabled');
-
-      if (!skynetEnabled) {
-        return { skynetEnabled: false, skynetSuggestion: null };
-      }
-
-      const skynetSuggestion = await getSkynetSuggestion();
+      const skynetSuggestion = await getSkynetSuggestion(skynetEnabled);
+      console.log(skynetSuggestion, 'skynet suggestion');
 
       return { skynetEnabled, skynetSuggestion };
     } catch (error) {
@@ -57,9 +59,13 @@ export function PanelDataErrorView(props: PanelDataErrorViewProps) {
     }
   }, []);
 
-  const getSkynetSuggestion = async () => {
+  console.log(value, "use 'value.skynetEnabled' to check if skynet is enabled component-wide");
+
+  const getSkynetSuggestion = async (skynetEnabled: boolean | undefined) => {
     try {
-      const skynetSuggestion = await askSkynet();
+      console.log('getSkynetSuggestions try');
+      const skynetSuggestion = await askSkynet(skynetEnabled);
+      console.log(skynetSuggestion, 'skynet suggestion');
       return skynetSuggestion;
     } catch (error) {
       console.error('Error:', error);
@@ -68,14 +74,18 @@ export function PanelDataErrorView(props: PanelDataErrorViewProps) {
   };
 
   const askSkynet = (
+    skynetEnabled: boolean | undefined,
+    // Default values here for testing purposes
     sampleValues: Array<string | number> = [1, 2, 3],
     formats: string[] = ['datetime', 'number', 'timestamp', 'string']
   ) => {
+    console.log(skynetEnabled, 'skynet enabled???????????');
     // No need to run the call if openai is not enabled
-    if (!value?.skynetEnabled) {
+    if (!skynetEnabled) {
       return null;
     }
 
+    // Join the values for the prompt
     const joinedValues = sampleValues.join('", "');
     const joinedFormats = formats.join('", "');
     const prompt =
@@ -90,6 +100,7 @@ export function PanelDataErrorView(props: PanelDataErrorViewProps) {
       })
       .pipe(llms.openai.accumulateContent());
 
+    // Final value to be returned, and updated by the stream
     let final = '';
 
     return new Promise((resolve, reject) => {
@@ -111,7 +122,7 @@ export function PanelDataErrorView(props: PanelDataErrorViewProps) {
         error: (error) => {
           // Log the error
           console.error('Error occurred:', error);
-          // Reject the promise with the error
+          // Reject the promise with the error for later handling
           reject(error);
         },
       });
@@ -127,6 +138,26 @@ export function PanelDataErrorView(props: PanelDataErrorViewProps) {
     return null;
   }
 
+  const stringIsValidMomentDatetime = (field: Field): boolean =>
+    field.values.slice(0, 5).every((v) => moment(v).isValid());
+
+  const numberIsValidUnixEpoch = (field: Field): boolean =>
+    field.values.slice(0, 5).every((v) => {
+      console.log(v, 'value being checked');
+      const epoch = moment.unix(v);
+      //Let's assume numbers that parse to +-5 years from now are unix epochs
+      let yearDiff = epoch.diff(moment(), 'years');
+      if (yearDiff < 5 && yearDiff > -5) {
+        return true;
+      }
+      const epochMillies = moment.unix(v / 1000);
+      yearDiff = epochMillies.diff(moment(), 'years');
+      if (yearDiff < 5 && yearDiff > -5) {
+        return true;
+      }
+      return false;
+    });
+
   // Where are these suggestions coming from? Are
   let suggestions = props.suggestions || [];
   // What if the dataSummary is not reliable for recognizing fields correctly?
@@ -135,26 +166,11 @@ export function PanelDataErrorView(props: PanelDataErrorViewProps) {
     // Only push the transformation is the user wants to add it?
     const f = props.data.series[0].fields.find((f) => {
       return (
-        (f.type === FieldType.string && f.values.slice(0, 5).every((v) => moment(v).isValid())) ||
-        (f.type === FieldType.number &&
-          f.values.slice(0, 5).every((v) => {
-            // JEV: add llm logic here
-            console.log(v, 'value being checked');
-            const epoch = moment.unix(v);
-            //Let's assume numbers that parse to +-5 years from now are unix epochs
-            let yearDiff = epoch.diff(moment(), 'years');
-            if (yearDiff < 5 && yearDiff > -5) {
-              return true;
-            }
-            const epochMillies = moment.unix(v / 1000);
-            yearDiff = epochMillies.diff(moment(), 'years');
-            if (yearDiff < 5 && yearDiff > -5) {
-              return true;
-            }
-            return false;
-          }))
+        (f.type === FieldType.string && stringIsValidMomentDatetime(f)) ||
+        (f.type === FieldType.number && numberIsValidUnixEpoch(f))
       );
     });
+
     transformations.push({
       id: DataTransformerID.convertFieldType,
       options: {
