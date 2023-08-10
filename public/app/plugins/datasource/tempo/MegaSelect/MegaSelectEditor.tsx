@@ -60,7 +60,7 @@ export function MegaSelectEditor(props: Props) {
             aria-label="View"
             onChange={onViewChange}
             value={query.view}
-            options={['p99', 'p90', 'p50', 'errorRate'].map((value: string) => ({ label: value, value }))}
+            options={['p99', 'p90', 'p50'].map((value: string) => ({ label: value, value }))}
             width={12}
           />
         </InlineField>
