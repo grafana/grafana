@@ -6,7 +6,6 @@ import { Button, Checkbox, Input, Spinner, useTheme2 } from '@grafana/ui';
 import store from 'app/core/store';
 
 import { PrometheusDatasource } from '../../../datasource';
-import { getMetadataHelp } from '../../../language_provider';
 import { PromVisualQuery } from '../../types';
 
 import { QuerySuggestionContainer } from './QuerySuggestionContainer';
@@ -46,7 +45,6 @@ export const PromQail = (props: PromQailProps) => {
         <Button icon="times" fill="text" variant="secondary" onClick={closeDrawer} />
       </div>
       {/* Starting message */}
-
       <div>
         <div className={styles.iconSection}>
           <img src={AI_Logo_color} alt="AI logo color" /> Assistant
