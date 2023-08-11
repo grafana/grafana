@@ -136,6 +136,9 @@ func (s *NamespacedStore) ListKeys(ctx context.Context) ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
+	if len(keys) == 0 {
+		return nil, nil
+	}
 	res := make([]string, 0, len(keys)-1)
 	for _, key := range keys {
 		// Filter out last updated time
