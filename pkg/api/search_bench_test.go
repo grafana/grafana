@@ -2,12 +2,14 @@ package api
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -24,6 +26,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web/webtest"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -69,7 +72,7 @@ func BenchmarkSearch(b *testing.B) {
 		{
 			desc:        "get all folders with split scopes enabled",
 			url:         "/api/folders?limit=1000",
-			expectedLen: withLimit(allFolders),
+			expectedLen: withLimit(Lvl0FolderNum),
 			features:    featuremgmt.WithFeatures(featuremgmt.FlagSplitScopes),
 		},
 		{
@@ -86,45 +89,93 @@ func BenchmarkSearch(b *testing.B) {
 		},
 		{
 			desc:        "search several dashboards with split scopes enabled",
-			url:         "/api/search?type=dash-db&query=dashboard",
-			expectedLen: withLimit(Lvl2DashboardNum + 1),
+			url:         "/api/search?type=dash-db&query=dashboard_0_",
+			expectedLen: withLimit(Lvl0DashboardNum),
 			features:    featuremgmt.WithFeatures(featuremgmt.FlagSplitScopes),
-		},
-		{
-			desc:        "search dashboards and folder with split scopes enabled",
-			url:         "/api/search?query=dash",
-			expectedLen: withLimit(allDashboards + allFolders),
-			features:    featuremgmt.WithFeatures(featuremgmt.FlagSplitScopes),
-		},
-		{
-			desc:        "get all folders with removed sub-query enabled",
-			url:         "/api/folders?limit=1000",
-			expectedLen: withLimit(allFolders),
-			features:    featuremgmt.WithFeatures(featuremgmt.FlagPermissionsFilterRemoveSubquery),
-		},
-		{
-			desc:        "list all dashboards with removed sub-query enabled",
-			url:         "/api/search?type=dash-db&limit=1000",
-			expectedLen: withLimit(allDashboards),
-			features:    featuremgmt.WithFeatures(featuremgmt.FlagPermissionsFilterRemoveSubquery),
-		},
-		{
-			desc:        "search specific dashboard with removed sub-query enabled",
-			url:         "/api/search?type=dash-db&query=dashboard_0_0_0_0",
-			expectedLen: 1,
-			features:    featuremgmt.WithFeatures(featuremgmt.FlagPermissionsFilterRemoveSubquery),
-		},
-		{
-			desc:        "search several dashboards with removed sub-query enabled",
-			url:         "/api/search?type=dash-db&query=dashboard_0_0_0",
-			expectedLen: withLimit(Lvl2DashboardNum + 1),
-			features:    featuremgmt.WithFeatures(featuremgmt.FlagPermissionsFilterRemoveSubquery),
 		},
 		{
 			desc:        "search dashboards and folder with split scopes enabled",
 			url:         "/api/search",
 			expectedLen: withLimit(allDashboards + allFolders),
 			features:    featuremgmt.WithFeatures(featuremgmt.FlagSplitScopes),
+		},
+		{
+			desc:        "search dashboards in general folder with split scopes enabled",
+			url:         "/api/search?limit=1000&sort=name_sort&type=dash-db&folderUIDs=general",
+			expectedLen: withLimit(RootDashboardNum),
+			features:    featuremgmt.WithFeatures(featuremgmt.FlagSplitScopes),
+		},
+		{
+			desc:        "get all folders with remove sub-query toggle",
+			url:         "/api/folders?limit=1000",
+			expectedLen: withLimit(allFolders),
+			features:    featuremgmt.WithFeatures(featuremgmt.FlagPermissionsFilterRemoveSubquery),
+		},
+		{
+			desc:        "list all dashboards with remove sub-query toggle",
+			url:         "/api/search?type=dash-db&limit=1000",
+			expectedLen: withLimit(allDashboards),
+			features:    featuremgmt.WithFeatures(featuremgmt.FlagPermissionsFilterRemoveSubquery),
+		},
+		{
+			desc:        "search specific dashboard with remove sub-query toggle",
+			url:         "/api/search?type=dash-db&query=dashboard_0_0",
+			expectedLen: 1,
+			features:    featuremgmt.WithFeatures(featuremgmt.FlagPermissionsFilterRemoveSubquery),
+		},
+		{
+			desc:        "search several dashboards with remove sub-query toggle",
+			url:         "/api/search?type=dash-db&query=dashboard_0_",
+			expectedLen: withLimit(Lvl0DashboardNum),
+			features:    featuremgmt.WithFeatures(featuremgmt.FlagPermissionsFilterRemoveSubquery),
+		},
+		{
+			desc:        "search dashboards and folder with remove sub-query toggle",
+			url:         "/api/search",
+			expectedLen: withLimit(allDashboards + allFolders),
+			features:    featuremgmt.WithFeatures(featuremgmt.FlagPermissionsFilterRemoveSubquery),
+		},
+		{
+			desc:        "search dashboards in general folder remove sub-query toggle",
+			url:         "/api/search?limit=1000&sort=name_sort&type=dash-db&folderUIDs=general",
+			expectedLen: withLimit(allDashboards + allFolders),
+			features:    featuremgmt.WithFeatures(featuremgmt.FlagPermissionsFilterRemoveSubquery),
+		},
+		{
+			desc:        "get all folders without toggles",
+			url:         "/api/folders?limit=1000",
+			expectedLen: withLimit(allFolders),
+			features:    featuremgmt.WithFeatures(),
+		},
+		{
+			desc:        "list all dashboards without toggles",
+			url:         "/api/search?type=dash-db&limit=1000",
+			expectedLen: withLimit(allDashboards),
+			features:    featuremgmt.WithFeatures(),
+		},
+		{
+			desc:        "search specific dashboard without toggles",
+			url:         "/api/search?type=dash-db&query=dashboard_0_0",
+			expectedLen: 1,
+			features:    featuremgmt.WithFeatures(),
+		},
+		{
+			desc:        "search several dashboards without toggles",
+			url:         "/api/search?type=dash-db&query=dashboard_0_",
+			expectedLen: withLimit(Lvl0DashboardNum),
+			features:    featuremgmt.WithFeatures(),
+		},
+		{
+			desc:        "search dashboards and folder without toggles",
+			url:         "/api/search",
+			expectedLen: withLimit(allDashboards + allFolders),
+			features:    featuremgmt.WithFeatures(),
+		},
+		{
+			desc:        "search dashboards in general folder without toggles",
+			url:         "/api/search?limit=1000&sort=name_sort&type=dash-db&folderUIDs=general",
+			expectedLen: withLimit(allDashboards + allFolders),
+			features:    featuremgmt.WithFeatures(),
 		},
 	}
 	for _, bm := range benchmarks {
@@ -138,6 +189,10 @@ func BenchmarkSearch(b *testing.B) {
 				rec := httptest.NewRecorder()
 				m.ServeHTTP(rec, req)
 				require.Equal(b, 200, rec.Code)
+				var resp []dtos.FolderSearchHit
+				err := json.Unmarshal(rec.Body.Bytes(), &resp)
+				require.NoError(b, err)
+				assert.Len(b, resp, bm.expectedLen)
 			}
 		})
 	}
@@ -176,7 +231,7 @@ func setupTestDB(b testing.TB) benchScenario {
 	require.NoError(b, err)
 	require.NotZero(b, u.ID)
 
-	signedInUser := user.SignedInUser{UserID: u.ID, OrgID: orgID, OrgRole: org.RoleViewer}
+	signedInUser := user.SignedInUser{UserID: u.ID, OrgID: orgID, OrgRole: org.RoleViewer, Permissions: map[int64]map[string][]string{orgID: {}}}
 
 	now := time.Now()
 	managedViewerRole := accesscontrol.Role{
@@ -318,7 +373,6 @@ func setupTestDB(b testing.TB) benchScenario {
 		_, err = sess.BulkInsert("dashboard", dashs, opts)
 		require.NoError(b, err)
 
-		println(permissions)
 		_, err = sess.BulkInsert("permission", permissions, opts)
 		return err
 	})

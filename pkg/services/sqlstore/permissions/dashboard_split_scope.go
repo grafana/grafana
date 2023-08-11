@@ -238,16 +238,13 @@ func needToCheckAction(action string, permissions map[string][]string, wildcards
 		return false
 	}
 	var hasWildcard bool
-
+OUTER:
 	for _, scope := range permissions[action] {
 		for _, w := range wildcards {
 			if w.Contains(scope) {
 				hasWildcard = true
-				break
+				break OUTER
 			}
-		}
-		if hasWildcard {
-			break
 		}
 	}
 
