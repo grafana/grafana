@@ -31,11 +31,11 @@ import (
 )
 
 var (
-	Lvl0FolderNum    = 200
+	Lvl0FolderNum    = 50
 	Lvl1FolderNum    = 10
 	Lvl2FolderNum    = 10
-	RootDashboardNum = 30000
-	Lvl0DashboardNum = 100
+	RootDashboardNum = 5000
+	Lvl0DashboardNum = 30
 	Lvl1DashboardNum = 10
 	Lvl2DashboardNum = 10
 )
