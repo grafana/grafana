@@ -1,7 +1,7 @@
 import { cx } from '@emotion/css';
 import React, { useState } from 'react';
 
-import { Button, useTheme2 } from '@grafana/ui';
+import { Button, Spinner, useTheme2 } from '@grafana/ui';
 
 import { getStyles } from './PromQail';
 import { QuerySuggestion } from './types';
@@ -9,7 +9,7 @@ import { QuerySuggestion } from './types';
 export type Props = {
   querySuggestion: QuerySuggestion;
   order: number;
-  queryExplain: () => void;
+  queryExplain: (idx: number) => void;
   historical: boolean;
 };
 
@@ -37,7 +37,7 @@ export function QuerySuggestionItem(props: Props) {
           icon={showExp ? 'angle-up' : 'angle-down'}
           onClick={() => {
             updShowExp(!showExp);
-            queryExplain();
+            queryExplain(order - 1);
           }}
           className={cx(styles.bodySmall)}
           size="sm"
@@ -45,7 +45,13 @@ export function QuerySuggestionItem(props: Props) {
           Explainer
         </Button>
         {historical && !showExp && order !== 5 && <div className={styles.textPadding}></div>}
-        {showExp && (
+
+        {showExp && !querySuggestion.explanation && (
+          <div className={styles.center}>
+            <Spinner />
+          </div>
+        )}
+        {showExp && querySuggestion.explanation && (
           <>
             <div className={cx(styles.bodySmall, styles.explainPadding)}>
               <div className={styles.textPadding}>This query is trying to answer the question:</div>

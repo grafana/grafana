@@ -12,7 +12,7 @@ export type Props = {
   suggestionType: SuggestionType;
   closeDrawer: () => void;
   nextInteraction: () => void;
-  queryExplain: () => void;
+  queryExplain: (idx: number) => void;
 };
 
 export function QuerySuggestionContainer(props: Props) {
