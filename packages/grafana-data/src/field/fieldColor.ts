@@ -62,10 +62,10 @@ export const fieldColorModeRegistry = new Registry<FieldColorMode>(() => {
     }),
     new FieldColorSchemeMode({
       id: FieldColorModeId.PaletteClassicByName,
-      name: 'Classic palette (by series name)',
+      name: 'Classic palette (by metric name)',
       isContinuous: false,
       isByValue: false,
-      useSeriesName: true,
+      useMetricName: true,
       getColors: (theme: GrafanaTheme2) => {
         return theme.visualization.palette.filter(
           (color) =>
@@ -156,7 +156,7 @@ interface FieldColorSchemeModeOptions {
   getColors: (theme: GrafanaTheme2) => string[];
   isContinuous: boolean;
   isByValue: boolean;
-  useSeriesName?: boolean;
+  useMetricName?: boolean;
 }
 
 export class FieldColorSchemeMode implements FieldColorMode {
@@ -178,7 +178,7 @@ export class FieldColorSchemeMode implements FieldColorMode {
     this.getNamedColors = options.getColors;
     this.isContinuous = options.isContinuous;
     this.isByValue = options.isByValue;
-    this.useSeriesName = options.useSeriesName;
+    this.useSeriesName = options.useMetricName;
   }
 
   getColors(theme: GrafanaTheme2): string[] {
