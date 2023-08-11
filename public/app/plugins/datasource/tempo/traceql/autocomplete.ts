@@ -88,13 +88,13 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
     this.registerInteractionCommandId = id;
   }
 
-  private async getTagValues(tagName: string): Promise<Array<SelectableValue<string>>> {
+  private async getTagValues(tagName: string, query: string): Promise<Array<SelectableValue<string>>> {
     let tagValues: Array<SelectableValue<string>>;
 
     if (this.cachedValues.hasOwnProperty(tagName)) {
       tagValues = this.cachedValues[tagName];
     } else {
-      tagValues = await this.languageProvider.getOptionsV2(tagName);
+      tagValues = await this.languageProvider.getOptionsV2(tagName, query);
       this.cachedValues[tagName] = tagValues;
     }
     return tagValues;
@@ -134,7 +134,7 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
       case 'SPANSET_IN_VALUE':
         let tagValues;
         try {
-          tagValues = await this.getTagValues(situation.tagName);
+          tagValues = await this.getTagValues(situation.tagName, situation.query);
         } catch (error) {
           if (isFetchError(error)) {
             dispatch(notifyApp(createErrorNotification(error.data.error, new Error(error.data.message))));
