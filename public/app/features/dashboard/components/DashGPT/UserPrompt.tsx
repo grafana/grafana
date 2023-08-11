@@ -28,7 +28,12 @@ export const UserPrompt = ({ onSubmitUserInput, isLoading, text, value }: UserPr
         />
         {isLoading && <Spinner />}
         {!isLoading && (
-          <IconButton name="message" aria-label="message" onClick={() => onSubmitUserInput(promptValue)} />
+          <IconButton
+            name="message"
+            aria-label="message"
+            disabled={!promptValue}
+            onClick={() => onSubmitUserInput(promptValue)}
+          />
         )}
       </div>
     </div>

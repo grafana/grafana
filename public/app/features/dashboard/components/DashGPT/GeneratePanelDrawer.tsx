@@ -24,11 +24,9 @@ export const GeneratePanelDrawer = ({ onDismiss }: GeneratePanelDrawerProps) => 
   const getContent = () => {
     return (
       <div className={styles.contentWrapper}>
-        <p>This assistant can recommend a panel based on the current configuration of this dashboard.</p>
+        <p>DashGPT can recommend a panel based on the current configuration of this dashboard.</p>
 
-        <p>
-          The assistant will connect to OpenAI using your API key. The following information will be sent to OpenAI:
-        </p>
+        <p>DashGPT will connect to OpenAI using your API key. The following information will be sent to OpenAI:</p>
 
         <ul className={styles.list}>
           <li>The name and description of this dashboard</li>
@@ -42,6 +40,8 @@ export const GeneratePanelDrawer = ({ onDismiss }: GeneratePanelDrawerProps) => 
           AI-generated panels may not always work correctly or may require further refinement. Always take a moment to
           review the new panel.
         </p>
+
+        <p>Please introduce a description that explains what do you wanna see in your panel.</p>
       </div>
     );
   };
@@ -79,45 +79,43 @@ export const GeneratePanelDrawer = ({ onDismiss }: GeneratePanelDrawerProps) => 
     <Drawer title={'Panel Generator'} onClose={onDismiss} scrollableContent>
       <div className={styles.drawerWrapper}>
         {getContent()}
-        <div>
-          <p>Please introduce a description that explains what do you wanna see in your panel</p>
-          <div className={styles.wrapper}>
-            <TextArea
-              placeholder="Tell us something"
-              onChange={(e) => setPromptValue(e.currentTarget.value)}
-              value={promptValue}
-              className={styles.textArea}
-            />
-            {isLoading && <Spinner />}
-            {!isLoading && (
-              <ModalsController>
-                {({ showModal, hideModal }) => {
-                  return (
-                    <div>
-                      <IconButton
-                        name="message"
-                        aria-label="message"
-                        onClick={() => {
-                          onSubmitUserInput(promptValue).then((response) => {
-                            if (response) {
-                              showModal(PanelSuggestionsDrawer, {
-                                onDismiss: hideModal,
-                                suggestions: response.panels,
-                                generatedQuickFeedback: response.quickFeedback,
-                                userInput: promptValue,
-                              });
-                            }
-                          });
-                        }}
-                      />
-                    </div>
-                  );
-                }}
-              </ModalsController>
-            )}
-          </div>
-        </div>
         {error && <div className={styles.error}>Something went wrong, please try again.</div>}
+        <div className={styles.wrapper}>
+          <TextArea
+            placeholder="Tell us something"
+            onChange={(e) => setPromptValue(e.currentTarget.value)}
+            value={promptValue}
+            className={styles.textArea}
+          />
+          {isLoading && <Spinner />}
+          {!isLoading && (
+            <ModalsController>
+              {({ showModal, hideModal }) => {
+                return (
+                  <div>
+                    <IconButton
+                      name="message"
+                      aria-label="message"
+                      disabled={!promptValue}
+                      onClick={() => {
+                        onSubmitUserInput(promptValue).then((response) => {
+                          if (response) {
+                            showModal(PanelSuggestionsDrawer, {
+                              onDismiss: hideModal,
+                              suggestions: response.panels,
+                              generatedQuickFeedback: response.quickFeedback,
+                              userInput: promptValue,
+                            });
+                          }
+                        });
+                      }}
+                    />
+                  </div>
+                );
+              }}
+            </ModalsController>
+          )}
+        </div>
       </div>
     </Drawer>
   );
@@ -125,10 +123,15 @@ export const GeneratePanelDrawer = ({ onDismiss }: GeneratePanelDrawerProps) => 
 
 const getStyles = (theme: GrafanaTheme2) => ({
   drawerWrapper: css`
+    display: flex;
+    flex-direction: column;
+
+    height: 100%;
     padding: 20px;
   `,
   wrapper: css`
     display: flex;
+    margin-top: auto;
     align-items: center;
   `,
   contentWrapper: css`

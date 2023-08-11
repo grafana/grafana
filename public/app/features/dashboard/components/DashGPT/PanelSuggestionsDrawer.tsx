@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Button, Drawer, Icon, useStyles2 } from '@grafana/ui';
@@ -9,6 +9,7 @@ import { PanelModel } from '../../state';
 import { onGeneratePanelWithAI, onRegeneratePanelWithFeedback } from '../../utils/dashboard';
 
 import { PanelSuggestions } from './PanelSuggestions';
+import { SkeletonPlaceholder } from './SkeletonPlaceholder';
 import { UserPrompt } from './UserPrompt';
 import { getGeneratedQuickFeedback } from './utils';
 
@@ -18,6 +19,27 @@ interface PanelSuggestionsDrawerProps {
   userInput: string;
   generatedQuickFeedback: string[];
 }
+
+const panelPlaceholderStyle: React.CSSProperties = {
+  height: '200px',
+  border: '1px solid rgba(204, 204, 220, 0.12)',
+  borderRadius: '2px',
+};
+
+const timeRangePlaceholderStyle: React.CSSProperties = {
+  height: '32px',
+  width: '190px',
+  border: '1px solid rgba(204, 204, 220, 0.12)',
+  borderRadius: '2px',
+};
+
+// @TODO
+const timeRangePlaceholder2Style: React.CSSProperties = {
+  height: '32px',
+  width: '70px',
+  border: '1px solid rgba(204, 204, 220, 0.12)',
+  borderRadius: '2px',
+};
 
 export const PanelSuggestionsDrawer = ({
   onDismiss,
@@ -30,42 +52,59 @@ export const PanelSuggestionsDrawer = ({
   const dashboard = getDashboardSrv().getCurrent();
 
   const [isRegenerating, setIsRegenerating] = useState<boolean>(false);
-  const [error, setError] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
+  const [userInputValue, setUserInputValue] = useState<string>('');
 
-  let onSubmitUserInput = async (promptValue: string) => {
+  const [panelSuggestions, setPanelSuggestions] = useState<PanelModel[]>([]);
+
+  useEffect(() => {
+    setUserInputValue(userInput);
+    setPanelSuggestions(suggestions);
+  }, [userInput, suggestions]);
+
+  let onGeneratePanel = async (promptValue: string) => {
     setIsRegenerating(true);
-    const response = await onGeneratePanelWithAI(dashboard!, promptValue);
-    const parsedResponse = JSON.parse(response);
-    const panel = parsedResponse?.panels?.[0] || (parsedResponse as PanelModel);
+    setUserInputValue(promptValue);
 
-    generatedQuickFeedback = await getGeneratedQuickFeedback(panel, promptValue);
+    try {
+      const response = await onGeneratePanelWithAI(dashboard!, promptValue, suggestions);
+      const parsedResponse = JSON.parse(response);
+      const panel = parsedResponse?.panels?.[0] || (parsedResponse as PanelModel);
+
+      generatedQuickFeedback = await getGeneratedQuickFeedback(panel, promptValue);
+
+      setIsRegenerating(false);
+      setPanelSuggestions([panel]);
+    } catch (error: any) {
+      setError(error?.message || 'Something went wrong, please try again.');
+      setTimeout(function () {
+        setError(null);
+      }, 6000);
+    }
     setIsRegenerating(false);
-    suggestions = [panel];
   };
 
   // @TODO refactor reused code
-  // @TODO Force type to PanelModel
   // @TODO Refactor to support multiple panels
   // @TODO Error handling
   const onSendFeedback = async (feedback: string) => {
     setIsRegenerating(true);
     try {
-      const response = await onRegeneratePanelWithFeedback(dashboard!, feedback, suggestions, userInput);
+      const response = await onRegeneratePanelWithFeedback(dashboard!, feedback, suggestions, userInputValue);
       const parsedResponse = JSON.parse(response);
       const panel = parsedResponse?.panels?.[0] || (parsedResponse as PanelModel);
 
-      generatedQuickFeedback = await getGeneratedQuickFeedback(panel, userInput);
+      generatedQuickFeedback = await getGeneratedQuickFeedback(panel, userInputValue);
       setIsRegenerating(false);
 
-      suggestions = [panel];
-    } catch (e) {
-      setError(true);
-      setIsRegenerating(false);
+      setPanelSuggestions([panel]);
+    } catch (error: any) {
+      setError(error?.message || 'Something went wrong, please try again.');
       setTimeout(function () {
-        setError(false);
-      }, 3000);
-      console.log('error', e);
+        setError(null);
+      }, 6000);
     }
+    setIsRegenerating(false);
   };
 
   // @TODO Move quick feedback and prompt at the bottom
@@ -75,13 +114,27 @@ export const PanelSuggestionsDrawer = ({
     <Drawer title={'Panel Generator'} onClose={onDismiss} scrollableContent>
       <div className={styles.drawerWrapper}>
         <div className={styles.userInput}>
-          <Icon name="comment-alt-message" /> {userInput}
+          <Icon name="comment-alt-message" /> {userInputValue}
         </div>
-        {/*{isRegenerating && <div className={styles.spinner}><Spinner size={24}/></div>}*/}
-        {error && <div className={styles.error}>Something went wrong, please try again.</div>}
-        {!isRegenerating && <PanelSuggestions suggestions={suggestions} onDismiss={onDismiss} />}
-        <QuickFeedback onSendFeedback={onSendFeedback} generatedQuickFeedback={generatedQuickFeedback} />
-        <UserPrompt onSubmitUserInput={onSubmitUserInput} isLoading={isRegenerating} />
+        {isRegenerating && (
+          <>
+            <div className={styles.timeRangeSkeleton}>
+              <SkeletonPlaceholder style={timeRangePlaceholderStyle} />
+              <SkeletonPlaceholder style={timeRangePlaceholder2Style} />
+            </div>
+            <SkeletonPlaceholder style={panelPlaceholderStyle} />
+          </>
+        )}
+        {!isRegenerating && <PanelSuggestions suggestions={panelSuggestions} onDismiss={onDismiss} />}
+        <div className={styles.wrapper}>
+          {!!error && <div className={styles.error}>{error}</div>}
+          <QuickFeedback
+            onSendFeedback={onSendFeedback}
+            generatedQuickFeedback={generatedQuickFeedback}
+            isDisabled={isRegenerating}
+          />
+          <UserPrompt onSubmitUserInput={onGeneratePanel} isLoading={isRegenerating} />
+        </div>
       </div>
     </Drawer>
   );
@@ -90,9 +143,10 @@ export const PanelSuggestionsDrawer = ({
 interface QuickFeedbackProps {
   onSendFeedback: (feedback: string) => Promise<void>;
   generatedQuickFeedback: string[];
+  isDisabled: boolean;
 }
 
-const QuickFeedback = ({ onSendFeedback, generatedQuickFeedback }: QuickFeedbackProps) => {
+const QuickFeedback = ({ onSendFeedback, generatedQuickFeedback, isDisabled }: QuickFeedbackProps) => {
   const styles = useStyles2(getStyles);
 
   const [isRegenerating, setIsRegenerating] = useState<boolean>(false);
@@ -107,7 +161,7 @@ const QuickFeedback = ({ onSendFeedback, generatedQuickFeedback }: QuickFeedback
       {generatedQuickFeedback.map((feedback, index) => (
         <Button
           onClick={() => onFeedbackClick(feedback)}
-          disabled={isRegenerating}
+          disabled={isRegenerating || isDisabled}
           size="md"
           variant="secondary"
           fill="outline"
@@ -124,11 +178,13 @@ const getStyles = (theme: GrafanaTheme2) => ({
   drawerWrapper: css`
     display: flex;
     flex-direction: column;
+
+    height: 100%;
     padding: 20px;
   `,
   wrapper: css`
-    display: flex;
-    align-items: center;
+    margin-top: auto;
+    padding-bottom: 30px;
   `,
   contentWrapper: css`
     padding-right: 30px;
@@ -151,6 +207,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   error: css`
     padding: 10px;
     border: 1px solid ${theme.colors.error.border};
+    margin: 20px 0;
   `,
   spinner: css`
     display: flex;
@@ -161,5 +218,12 @@ const getStyles = (theme: GrafanaTheme2) => ({
   userInput: css`
     top: 8px;
     padding-bottom: 16px;
+  `,
+  timeRangeSkeleton: css`
+    display: flex;
+    flex-direction: row;
+    gap: 8px;
+    margin-top: 17px;
+    margin-bottom: 15px;
   `,
 });

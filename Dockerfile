@@ -170,7 +170,11 @@ EXPOSE 3000
 
 ARG RUN_SH=./packaging/docker/run.sh
 
+ARG GF_INSTALL_PLUGINS="https://storage.googleapis.com/grafana-llm-app/grafana-llm-app-0.1.0.zip;grafana-llm-app"
+
+
 COPY ${RUN_SH} /run.sh
 
 USER "$GF_UID"
+
 ENTRYPOINT [ "/run.sh" ]
