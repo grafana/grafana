@@ -103,39 +103,42 @@ export const PromQail = (props: PromQailProps) => {
             </div>
           </>
         ) : (
-          <>
+          <div className={styles.bodySmall}>
             {/* MAKE THIS TABLE RESPONSIVE */}
             {/* FIT SUPER LONG METRICS AND LABELS IN HERE */}
             <div className={styles.textPadding}>Here is the metric you have selected:</div>
-            <div className={styles.infoContainer}>
-              <table className={styles.metricTable}>
-                <tbody>
-                  <tr>
-                    <td className={styles.metricTableName}>metric</td>
-                    <td className={styles.metricTableValue}>{state.query.metric}</td>
-                    <td>
-                      <Button
-                        fill="outline"
-                        variant="secondary"
-                        onClick={closeDrawer}
-                        className={styles.metricTableButton}
-                      >
-                        Choose new metric
-                      </Button>
-                    </td>
-                  </tr>
-                  {state.query.labels.map((label, idx) => {
-                    const text = idx === 0 ? 'labels' : '';
-                    return (
-                      <tr key={`${label.label}-${idx}`}>
-                        <td>{text}</td>
-                        <td className={styles.metricTableValue}>{`${label.label}${label.op}${label.value}`}</td>
-                        <td> </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+            <div className={styles.infoContainerWrapper}>
+              <div className={styles.infoContainer}>
+                <table className={styles.metricTable}>
+                  <tbody>
+                    <tr>
+                      <td className={styles.metricTableName}>metric</td>
+                      <td className={styles.metricTableValue}>{state.query.metric}</td>
+                      <td>
+                        <Button
+                          fill="outline"
+                          variant="secondary"
+                          onClick={closeDrawer}
+                          className={styles.metricTableButton}
+                          size={'sm'}
+                        >
+                          Choose new metric
+                        </Button>
+                      </td>
+                    </tr>
+                    {state.query.labels.map((label, idx) => {
+                      const text = idx === 0 ? 'labels' : '';
+                      return (
+                        <tr key={`${label.label}-${idx}`}>
+                          <td>{text}</td>
+                          <td className={styles.metricTableValue}>{`${label.label}${label.op}${label.value}`}</td>
+                          <td> </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
             </div>
 
             {/* Ask if you know what you want to query? */}
@@ -184,7 +187,7 @@ export const PromQail = (props: PromQailProps) => {
                         <div>You do not need to enter in a metric or a label again in the prompt.</div>
                         <div>Example: I want to monitor request latency, not errors.</div>
                       </div>
-                      <div className={styles.textPadding}>
+                      <div className={styles.inputPadding}>
                         <Input
                           value={interaction.prompt}
                           spellCheck={false}
@@ -313,7 +316,7 @@ export const PromQail = (props: PromQailProps) => {
                 </div>
               );
             })}
-          </>
+          </div>
         )}
       </div>
       {/* Query Explainer, show second drawer
@@ -346,6 +349,10 @@ export const getStyles = (theme: GrafanaTheme2) => {
     iconSection: css`
       padding: 0 0 10px 0;
       color: ${theme.colors.text.secondary};
+
+      img {
+        padding-right: 4px;
+      }
     `,
     rightButtonsWrapper: css`
       display: flex;
@@ -369,8 +376,10 @@ export const getStyles = (theme: GrafanaTheme2) => {
       border: 1px solid #ccccdc38;
       padding: 16px;
       background-color: #22252b;
-      margin-bottom: 20px;
       border-radius: 8px 8px 8px 0;
+    `,
+    infoContainerWrapper: css`
+      padding-bottom: 24px;
     `,
     metricTable: css`
       width: 100%;
@@ -441,6 +450,9 @@ export const getStyles = (theme: GrafanaTheme2) => {
       display: flex;
       align-items: center;
       justify-content: center;
+    `,
+    inputPadding: css`
+      padding-bottom: 24px;
     `,
   };
 };
