@@ -1,4 +1,4 @@
-import { getSituation, Situation } from './situation';
+import { getSituation, SituationType } from './situation';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -7,7 +7,7 @@ jest.mock('@grafana/runtime', () => ({
 interface SituationTest {
   query: string;
   cursorPos: number;
-  expected: Situation;
+  expected: SituationType;
 }
 
 describe('situation', () => {
@@ -62,7 +62,7 @@ describe('situation', () => {
   tests.forEach((test) => {
     it(`${test.query} at ${test.cursorPos} is ${test.expected.type}`, async () => {
       const sit = getSituation(test.query, test.cursorPos);
-      expect(sit).toEqual(test.expected);
+      expect(sit).toEqual({ ...test.expected, query: test.query });
     });
   });
 });
