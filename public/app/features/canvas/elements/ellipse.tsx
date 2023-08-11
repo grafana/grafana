@@ -53,7 +53,7 @@ export const ellipseItem: CanvasElementItem<EllipseConfig, EllipseData> = {
       borderColor: {
         fixed: defaultBgColor,
       },
-      width: 3,
+      borderWidth: 3,
     },
     background: {
       color: {
