@@ -3,6 +3,9 @@ import React, { useState } from 'react';
 
 import { Button, Spinner, useTheme2 } from '@grafana/ui';
 
+import { buildVisualQueryFromString } from '../../parsing';
+import { PromVisualQuery } from '../../types';
+
 import { getStyles } from './PromQail';
 import { QuerySuggestion } from './types';
 
@@ -11,10 +14,12 @@ export type Props = {
   order: number;
   queryExplain: (idx: number) => void;
   historical: boolean;
+  onChange: (query: PromVisualQuery) => void;
+  closeDrawer: () => void;
 };
 
 export function QuerySuggestionItem(props: Props) {
-  const { querySuggestion, order, queryExplain, historical } = props;
+  const { querySuggestion, order, queryExplain, historical, onChange, closeDrawer } = props;
   const [showExp, updShowExp] = useState<boolean>(false);
 
   const theme = useTheme2();
@@ -26,7 +31,16 @@ export function QuerySuggestionItem(props: Props) {
     <>
       <div className={styles.header}>
         <div className={styles.codeText}>{`${order}  ${query}`}</div>
-        <Button variant="primary" size="sm">
+        <Button
+          variant="primary"
+          size="sm"
+          onClick={() => {
+            const pvq = buildVisualQueryFromString(querySuggestion.query);
+            // check for errors!
+            onChange(pvq.query);
+            closeDrawer();
+          }}
+        >
           Use
         </Button>
       </div>
