@@ -61,7 +61,10 @@ export function onGeneratePanelWithAI(dashboard: DashboardModel, description: st
         },
       ],
     })
-    .then((response: any) => response.choices[0].message.content);
+    .then((response: any) => response.choices[0].message.content)
+    .catch((error) => {
+      throw new Error(error);
+    });
 }
 
 export function onRegeneratePanelWithFeedback(
@@ -162,6 +165,9 @@ export function onGeneratePanelWithSemanticSearch(query: string): any {
       console.log(response);
       // It returns 5 panels sorted by relevance
       return response.panels[0].map((panel: string) => JSON.parse(panel));
+    })
+    .catch((error) => {
+      throw new Error(error);
     });
 }
 
