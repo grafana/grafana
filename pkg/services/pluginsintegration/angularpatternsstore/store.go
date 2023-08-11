@@ -21,6 +21,8 @@ type KVStoreService struct {
 	cachekvstore.SingleKeyStore
 }
 
+var _ Service = (*KVStoreService)(nil)
+
 func ProvideService(kv kvstore.KVStore) Service {
 	return &KVStoreService{
 		SingleKeyStore: cachekvstore.NewSingleKeyNamespacedStore(
