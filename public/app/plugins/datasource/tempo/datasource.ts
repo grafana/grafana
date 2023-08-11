@@ -1,6 +1,6 @@
 import { identity, pick, pickBy, groupBy, startCase } from 'lodash';
 import { EMPTY, from, lastValueFrom, merge, Observable, of, throwError } from 'rxjs';
-import { catchError, concatMap, map, mergeMap, toArray } from 'rxjs/operators';
+import { catchError, concatMap, map, mergeMap, startWith, toArray } from 'rxjs/operators';
 
 import {
   CoreApp,
@@ -52,6 +52,7 @@ import {
   defaultTableFilter,
 } from './graphTransform';
 import TempoLanguageProvider from './language_provider';
+import { createTableFrameFromMetricsQuery } from './metricsSummary';
 import {
   transformTrace,
   transformTraceList,
@@ -202,6 +203,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
         return of({ error: { message: error instanceof Error ? error.message : 'Unknown error occurred' }, data: [] });
       }
     }
+
     if (targets.traceql?.length) {
       try {
         const appliedQuery = this.applyVariables(targets.traceql[0], options.scopedVars);
@@ -227,6 +229,12 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
             streaming: config.featureToggles.traceQLStreaming,
           });
 
+          const groupBy = targets.traceql.find((t) => this.hasGroupBy(t));
+          if (groupBy) {
+            subQueries.push(
+              this.handleMetricsSummary(groupBy, this.applyVariables(groupBy, options.scopedVars)?.query || '', options)
+            );
+          }
           if (config.featureToggles.traceQLStreaming) {
             subQueries.push(this.handleStreamingSearch(options, targets.traceql));
           } else {
@@ -253,6 +261,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
         return of({ error: { message: error instanceof Error ? error.message : 'Unknown error occurred' }, data: [] });
       }
     }
+
     if (targets.traceqlSearch?.length) {
       try {
         const queryValue = generateQueryFromFilters(targets.traceqlSearch[0].filters);
@@ -264,6 +273,10 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
           streaming: config.featureToggles.traceQLStreaming,
         });
 
+        const groupBy = targets.traceqlSearch.find((t) => this.hasGroupBy(t));
+        if (groupBy) {
+          subQueries.push(this.handleMetricsSummary(groupBy, generateQueryFromFilters(groupBy.filters), options));
+        }
         if (config.featureToggles.traceQLStreaming) {
           subQueries.push(this.handleStreamingSearch(options, targets.traceqlSearch, queryValue));
         } else {
@@ -378,6 +391,56 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     };
   }
 
+  handleMetricsSummary = (target: TempoQuery, query: string, options: DataQueryRequest<TempoQuery>) => {
+    const groupBy = target.groupBy
+      ?.filter((f) => f.tag)
+      .map((f) => {
+        if (f.scope === TraceqlSearchScope.Unscoped) {
+          return `.${f.tag}`;
+        }
+        return f.scope !== TraceqlSearchScope.Intrinsic ? `${f.scope}.${f.tag}` : f.tag;
+      })
+      .join(', ');
+
+    return this._request('/api/metrics/summary', {
+      q: query,
+      groupBy,
+      start: options.range.from.unix(),
+      end: options.range.to.unix(),
+    }).pipe(
+      startWith({
+        data: [],
+        state: LoadingState.Loading,
+      }),
+      map((response) => {
+        if (response.state !== LoadingState.Loading && !response.data.summaries) {
+          return {
+            error: {
+              message: getErrorMessage(
+                `No summary data for '${groupBy}'. Note: the metrics summary API only considers spans of kind = server. Please check if the attributes exist by running a TraceQL query like { attr_key = attr_value && kind = server }`
+              ),
+            },
+            data: [],
+          };
+        }
+        return {
+          data: createTableFrameFromMetricsQuery(
+            response.data.summaries,
+            this.instanceSettings,
+            response.state === LoadingState.Loading
+          ),
+        };
+      }),
+      catchError((error) => {
+        return of({ error: { message: error.data.message }, data: [] });
+      })
+    );
+  };
+
+  hasGroupBy = (query: TempoQuery) => {
+    return query.groupBy?.find((gb) => gb.tag);
+  };
+
   /**
    * Handles the simplest of the queries where we have just a trace id and return trace data for it.
    * @param options
@@ -432,6 +495,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     query?: string
   ): Observable<DataQueryResponse> {
     const validTargets = targets
+      .filter((t) => !this.hasGroupBy(t))
       .filter((t) => t.query || query)
       .map((t): TempoQuery => ({ ...t, query: query || t.query.trim() }));
     if (!validTargets.length) {

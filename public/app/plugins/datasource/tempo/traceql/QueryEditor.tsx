@@ -37,7 +37,7 @@ export function QueryEditor(props: Props) {
         onRunQuery={props.onRunQuery}
       />
       <div className={styles.optionsContainer}>
-        <TempoQueryBuilderOptions query={query} onChange={props.onChange} />
+        <TempoQueryBuilderOptions query={query} onChange={props.onChange} datasource={props.datasource} />
       </div>
     </>
   );

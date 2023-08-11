@@ -76,6 +76,7 @@ export enum SearchStreamingState {
  * static fields are pre-set in the UI, dynamic fields are added by the user
  */
 export enum TraceqlSearchScope {
+  Intrinsic = 'intrinsic',
   Resource = 'resource',
   Span = 'span',
   Unscoped = 'unscoped',

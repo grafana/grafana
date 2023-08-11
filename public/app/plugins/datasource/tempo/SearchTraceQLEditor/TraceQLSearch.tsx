@@ -166,7 +166,7 @@ const TraceQLSearch = ({ datasource, query, onChange }: Props) => {
         <EditorRow>
           <RawQuery query={traceQlQuery} lang={{ grammar: traceqlGrammar, name: 'traceql' }} />
         </EditorRow>
-        <TempoQueryBuilderOptions onChange={onChange} query={query} />
+        <TempoQueryBuilderOptions onChange={onChange} query={query} datasource={datasource} />
       </div>
       {error ? (
         <Alert title="Unable to connect to Tempo search" severity="info" className={styles.alert}>
