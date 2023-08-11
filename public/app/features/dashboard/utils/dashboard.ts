@@ -26,7 +26,7 @@ export function onCreateNewPanel(dashboard: DashboardModel, datasource?: string)
 }
 
 // If generating with AI consider using the dashboard model to improve suggestions quality
-export function onGeneratePanelWithAI(dashboard: DashboardModel, description: string) {
+export function onGeneratePanelWithAI(dashboard: DashboardModel, description: string, currentSuggestions: any[]) {
   const payload = getGeneratePayloadForPanels(dashboard);
 
   return llms.openai
@@ -35,7 +35,7 @@ export function onGeneratePanelWithAI(dashboard: DashboardModel, description: st
       messages: [
         {
           role: 'system',
-          content: 'You are an API that only respond with JSON',
+          content: 'You are an API that only responds with JSON',
         },
         {
           role: 'system',
@@ -44,6 +44,12 @@ export function onGeneratePanelWithAI(dashboard: DashboardModel, description: st
         {
           role: 'system',
           content: 'DO NOT explain the panel, only answer with a valid panel JSON',
+        },
+        {
+          role: 'system',
+          content: `Apply the following user feedback: ${description} and re-generate a panel JSON that is more appropriate then the current results:  ${JSON.stringify(
+            currentSuggestions
+          )}`,
         },
         {
           role: 'system',
@@ -95,7 +101,6 @@ export function onRegeneratePanelWithFeedback(
           role: 'system',
           content: 'Use the following panels as context to generate the new panels',
         },
-
         // @ts-ignore
         ...payload.panels.map((panel) => ({
           role: 'system',
