@@ -75,7 +75,7 @@ export function QuerySuggestionItem(props: Props) {
           </>
         )}
         {/* {order === 5 && ( */}
-        <div className={cx(styles.textPadding, showExp && styles.topPadding)}>
+        <div className={cx(styles.feedbackPadding)}>
           <Button fill="outline" variant="secondary" size="sm" className={styles.floatRight}>
             Give feedback on suggestions
           </Button>

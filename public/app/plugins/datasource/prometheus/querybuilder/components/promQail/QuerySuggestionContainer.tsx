@@ -44,12 +44,12 @@ export function QuerySuggestionContainer(props: Props) {
       </div>
       <div>
         <div className={cx(styles.afterButtons, styles.textPadding)}>
-          <Button onClick={nextInteraction} fill="outline" variant="secondary" size="sm">
+          <Button onClick={nextInteraction} fill="outline" variant="secondary" size="md">
             {refineText}
           </Button>
         </div>
         <div className={cx(styles.textPadding, styles.floatRight)}>
-          <Button fill="outline" variant="secondary" size="sm" onClick={closeDrawer}>
+          <Button fill="outline" variant="secondary" size="md" onClick={closeDrawer}>
             Cancel
           </Button>
         </div>
