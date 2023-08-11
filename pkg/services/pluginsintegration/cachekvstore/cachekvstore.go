@@ -6,6 +6,7 @@ import (
 )
 
 // LastUpdatedStore keeps track of the last time the store was updated.
+// The last updated time is shared between all keys in the store.
 type LastUpdatedStore interface {
 	// GetLastUpdated returns the last time the store was updated.
 	GetLastUpdated(ctx context.Context) (time.Time, error)
@@ -14,12 +15,13 @@ type LastUpdatedStore interface {
 	SetLastUpdated(ctx context.Context) error
 }
 
-// Store is a key-value store with a last updated key that keeps track of the last time the store was updated.
-// It can be used to determine if the stored data is stale.
+// Store is a key-value store that also keeps track of the last update time of the whole store.
+// The last updated time can be used to determine if the stored data is stale.
 type Store interface {
 	LastUpdatedStore
 
 	// Get returns the stored value for the given key.
+	// If the value does not exist, it returns false and a nil error.
 	Get(ctx context.Context, key string) (string, bool, error)
 
 	// Set stores the value for the given key.
@@ -35,7 +37,6 @@ type Deleter interface {
 // KeyLister can list all keys in the store.
 type KeyLister interface {
 	// ListKeys returns all keys stored in the store.
-	// TODO: does it return the last updated key?
 	ListKeys(ctx context.Context) ([]string, error)
 }
 

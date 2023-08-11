@@ -8,18 +8,19 @@ import (
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 )
 
+// DefaultLastUpdatedKey is the default key used to store the last updated time.
 const DefaultLastUpdatedKey = "last_updated"
 
 // NamespacedStore is a Store that stores data in a *kvstore.NamespacedKVStore.
-// It uses the provided StoreKeyGetter to get the key to use for a given key.
-// It also stores a last updated time, which is unique for all the keys and is updated on
-// each call to `Set` and can be used to determine if the data is stale.
+// It uses the provided StoreKeyGetter to determine the underlying store's key to use for a given key.
+// It also stores a last updated time, which is unique for all the keys and is updated on each call to `Set`,
+// and can be used to determine if the data is stale.
 type NamespacedStore struct {
 	// kv is the underlying KV store.
 	kv *kvstore.NamespacedKVStore
 
-	// storeKeyGetter is a function that returns the key to use for a given key.
-	// This allows the key for the underlying storage to be modified.
+	// storeKeyGetter is a function that returns the underlying store's key to use for a given key.
+	// This allows to modify the key for the underlying storage.
 	// This is only used for actual data, not for the last updated time key.
 	storeKeyGetter StoreKeyGetter
 
@@ -28,20 +29,19 @@ type NamespacedStore struct {
 }
 
 // DefaultStoreKeyGetterFunc is the default StoreKeyGetterFunc, which returns the key as-is.
-// This allows to create stores that store multiple values.
 var DefaultStoreKeyGetterFunc = StoreKeyGetterFunc(func(k string) string {
 	return k
 })
 
 // PrefixStoreKeyGetter returns a StoreKeyGetterFunc that returns the key with a prefix.
+// It is used to prefix all keys in the underlying store with a fixed prefix.
 func PrefixStoreKeyGetter(prefix string) StoreKeyGetterFunc {
 	return func(k string) string {
 		return prefix + k
 	}
 }
 
-// NamespacedStoreOpt is an option for NewNamespacedStore.
-// It modifies the provided store.
+// NamespacedStoreOpt is an option for NewNamespacedStore that modifies the store passed to it.
 type NamespacedStoreOpt func(store *NamespacedStore)
 
 // WithLastUpdatedKey sets the key to use for the last updated time key.

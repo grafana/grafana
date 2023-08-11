@@ -29,8 +29,8 @@ func (m JSONMarshaler) Marshal() (string, error) {
 	return string(b), nil
 }
 
-// Marshal marshals the value to a string using the default marshaling.
-// The underlying value can be a type implementing Marshaler, fmt.Stringer or a string, []byte.
+// Marshal is the default marshaling function. It marshals the provided value to a string.
+// The provided value can be of a type implementing Marshaler, fmt.Stringer or a string, []byte.
 // It returns an error if the type is not supported.
 func Marshal(value any) (string, error) {
 	switch value := value.(type) {

@@ -6,16 +6,22 @@ import (
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 )
 
-// SingleKeyStore is a Store wrapper with fixed key.
+// SingleKeyStore is a Store that can only store a value in a fixed key.
 // It's like a Store, but Get and Set do not accept a key, as it's fixed.
 type SingleKeyStore interface {
 	LastUpdatedStore
+
+	// Get returns the stored value.
+	// If the value does not exist, it returns false and a nil error.
 	Get(ctx context.Context) (string, bool, error)
+
+	// Set stores the value.
 	Set(ctx context.Context, value any) error
 }
 
 // SingleKeyDeleter is like a Deleter, but Delete does not accept a key, as it's fixed.
 type SingleKeyDeleter interface {
+	// Delete deletes the stored value from the store.
 	Delete(ctx context.Context) error
 }
 
@@ -38,12 +44,12 @@ func NewSingleKeyNamespacedStore(kv kvstore.KVStore, namespace string, key strin
 	return &SingleKeyNamespacedStore{
 		NamespacedStore: NewNamespacedStore(
 			kv, namespace,
-			WithStoreKeyGetter(StaticStoreKeyGetter(key)),
+			append(opts, WithStoreKeyGetter(StaticStoreKeyGetter(key)))...,
 		),
 	}
 }
 
-// Get returns the stored value.
+// Get returns the stored value. If the value does not exist, it returns false and a nil error.
 func (s *SingleKeyNamespacedStore) Get(ctx context.Context) (string, bool, error) {
 	return s.NamespacedStore.Get(ctx, "")
 }
