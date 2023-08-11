@@ -111,7 +111,7 @@ func (s *NamespacedStore) Set(ctx context.Context, key string, value any) error 
 		return fmt.Errorf("unsupported value type: %T", value)
 	}
 
-	if err := s.kv.Set(ctx, key, valueToStore); err != nil {
+	if err := s.kv.Set(ctx, s.storeKeyGetter.GetStoreKey(key), valueToStore); err != nil {
 		return fmt.Errorf("kv set: %w", err)
 	}
 	if err := s.SetLastUpdated(ctx); err != nil {
