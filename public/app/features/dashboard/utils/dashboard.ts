@@ -128,7 +128,7 @@ export function onRegeneratePanelWithFeedback(
 
 // Generate panels using semantic search on Grafana panels database
 export function onGenerateDashboardWithSemanticSearch(query: string): any {
-  return fetch('http://18.116.13.121:9044/get_dashboards/', {
+  return fetch('https://dashgpt-vector.sandersaarond.com/get_dashboards/', {
     method: 'POST', // *GET, POST, PUT, DELETE, etc.
     //mode: "no-cors", // no-cors, *cors, same-origin
     // cache: "no-cache", // *default, no-cache, reload, force-cache, only-if-cached
@@ -154,7 +154,7 @@ export function onGenerateDashboardWithSemanticSearch(query: string): any {
 
 // Generate panels using semantic search on Grafana panels database
 export function onGeneratePanelWithSemanticSearch(query: string): any {
-  return fetch('http://18.116.13.121:9044/get_panels/', {
+  return fetch('https://dashgpt-vector.sandersaarond.com/get_panels/', {
     method: 'POST', // *GET, POST, PUT, DELETE, etc.
     //mode: "no-cors", // no-cors, *cors, same-origin
     // cache: "no-cache", // *default, no-cache, reload, force-cache, only-if-cached
