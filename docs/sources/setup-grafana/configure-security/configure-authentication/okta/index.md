@@ -28,7 +28,7 @@ To follow this guide:
 
 To integrate your Okta OAuth2 provider with Grafana using our Okta OAuth2 integration, follow these steps:
 
-1. [Create an SWA app](https://help.okta.com/en-us/Content/Topics/Apps/Apps_App_Integration_Wizard_SWA.htm) or [OCID app](https://help.okta.com/en-us/Content/Topics/Apps/Apps_App_Integration_Wizard_OIDC.htm) at the Okta applications section.
+1. [Create an SWA app](https://help.okta.com/en-us/Content/Topics/Apps/Apps_App_Integration_Wizard_SWA.htm) or [OIDC app](https://help.okta.com/en-us/Content/Topics/Apps/Apps_App_Integration_Wizard_OIDC.htm) in the Okta applications section.
 
 1. Set the callback URL for your OAuth2 app to `http://<my_grafana_server_name_or_ip>:<grafana_server_port>/login/okta`.
 
