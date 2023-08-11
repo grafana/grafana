@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strconv"
 	"sync"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -19,6 +20,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/resource/httpadapter"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -28,6 +30,8 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/clients"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/kinds/dataquery"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 )
 
 type DataQueryJson struct {
@@ -157,22 +161,33 @@ func (e *cloudWatchExecutor) QueryData(ctx context.Context, req *backend.QueryDa
 	_, fromAlert := req.Headers[ngalertmodels.FromAlertHeaderName]
 	fromExpression := req.GetHTTPHeader(query.HeaderFromExpression) != ""
 	isSyncLogQuery := (fromAlert || fromExpression) && model.QueryMode == logsQueryMode
-	if isSyncLogQuery {
-		return executeSyncLogQuery(ctx, e, req)
-	}
-
+	ctx, span := tracing.DefaultTracer().Start(
+		ctx,
+		"QueryData in Cloudwatch",
+		trace.WithAttributes(
+			attribute.String("model.Type", model.Type),
+			attribute.String("isSyncLogQuery", strconv.FormatBool(isSyncLogQuery)),
+			attribute.String("fromExpression", strconv.FormatBool(fromExpression)),
+		),
+	)
 	var result *backend.QueryDataResponse
-	switch model.Type {
-	case annotationQuery:
-		result, err = e.executeAnnotationQuery(ctx, req.PluginContext, model, q)
-	case logAction:
-		result, err = e.executeLogActions(ctx, logger, req)
-	case timeSeriesQuery:
-		fallthrough
-	default:
-		result, err = e.executeTimeSeriesQuery(ctx, logger, req)
+
+	if isSyncLogQuery {
+		result, err = executeSyncLogQuery(ctx, e, req)
+	} else {
+		switch model.Type {
+		case annotationQuery:
+			result, err = e.executeAnnotationQuery(ctx, req.PluginContext, model, q)
+		case logAction:
+			result, err = e.executeLogActions(ctx, logger, req)
+		case timeSeriesQuery:
+			fallthrough
+		default:
+			result, err = e.executeTimeSeriesQuery(ctx, logger, req)
+		}
 	}
 
+	defer span.End()
 	return result, err
 }
 
@@ -235,7 +250,13 @@ func (e *cloudWatchExecutor) newSession(ctx context.Context, pluginCtx backend.P
 	if region == defaultRegion {
 		region = instance.Settings.Region
 	}
-
+	ctx, span := tracing.DefaultTracer().Start(
+		ctx,
+		"GetSession in Cloudwatch",
+		trace.WithAttributes(
+			attribute.String("authType", instance.Settings.AuthType.String()),
+		),
+	)
 	sess, err := e.sessions.GetSession(awsds.SessionConfig{
 		// https://github.com/grafana/grafana/issues/46365
 		// HTTPClient: instance.HTTPClient,
@@ -261,6 +282,7 @@ func (e *cloudWatchExecutor) newSession(ctx context.Context, pluginCtx backend.P
 		// only update the transport to try to avoid the issue mentioned here https://github.com/grafana/grafana/issues/46365
 		sess.Config.HTTPClient.Transport = instance.HTTPClient.Transport
 	}
+	defer span.End()
 
 	return sess, nil
 }

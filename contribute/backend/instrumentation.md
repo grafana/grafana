@@ -251,6 +251,8 @@ Be **careful** to not expose any sensitive information in span names, attribute 
 make devenv sources=jaeger
 ```
 
+> **Note:** See the [Set up your development environment](../../devenv/README.md) guide if you run into issues running jaeger
+
 #### 2. Enable tracing in Grafana
 
 To enable tracing in Grafana, you must set the address in your config.ini file
