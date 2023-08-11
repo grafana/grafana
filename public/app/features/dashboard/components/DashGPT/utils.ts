@@ -21,6 +21,7 @@ const QUICK_FEEDBACK_GENERATION_STANDARD_PROMPT =
   'You are an expert in creating Grafana Panels.' +
   'Your goal is to generate 2 short improvement possibilities for a given panel described by a JSON object.' +
   'The quick feedback should be shorter than 20 characters.' +
+  'The feedback should refer to configurable properties from Grafana panel JSON' +
   'Return both responses separated by comma.' +
   `When you are done with the description, write "${SPECIAL_DONE_TOKEN}".`;
 

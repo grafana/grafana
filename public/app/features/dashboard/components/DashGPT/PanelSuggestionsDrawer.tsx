@@ -55,23 +55,26 @@ export const PanelSuggestionsDrawer = ({
   const [error, setError] = useState<string | null>(null);
   const [userInputValue, setUserInputValue] = useState<string>('');
 
+  const [panelSuggestions, setPanelSuggestions] = useState<PanelModel[]>([]);
+
   useEffect(() => {
     setUserInputValue(userInput);
-  }, [userInput]);
+    setPanelSuggestions(suggestions);
+  }, [userInput, suggestions]);
 
   let onGeneratePanel = async (promptValue: string) => {
     setIsRegenerating(true);
     setUserInputValue(promptValue);
 
     try {
-      const response = await onGeneratePanelWithAI(dashboard!, promptValue);
+      const response = await onGeneratePanelWithAI(dashboard!, promptValue, suggestions);
       const parsedResponse = JSON.parse(response);
       const panel = parsedResponse?.panels?.[0] || (parsedResponse as PanelModel);
 
       generatedQuickFeedback = await getGeneratedQuickFeedback(panel, promptValue);
-      setIsRegenerating(false);
 
-      suggestions = [panel];
+      setIsRegenerating(false);
+      setPanelSuggestions([panel]);
     } catch (error: any) {
       setError(error?.message || 'Something went wrong, please try again.');
       setTimeout(function () {
@@ -94,7 +97,7 @@ export const PanelSuggestionsDrawer = ({
       generatedQuickFeedback = await getGeneratedQuickFeedback(panel, userInputValue);
       setIsRegenerating(false);
 
-      suggestions = [panel];
+      setPanelSuggestions([panel]);
     } catch (error: any) {
       setError(error?.message || 'Something went wrong, please try again.');
       setTimeout(function () {
@@ -122,7 +125,7 @@ export const PanelSuggestionsDrawer = ({
             <SkeletonPlaceholder style={panelPlaceholderStyle} />
           </>
         )}
-        {!isRegenerating && <PanelSuggestions suggestions={suggestions} onDismiss={onDismiss} />}
+        {!isRegenerating && <PanelSuggestions suggestions={panelSuggestions} onDismiss={onDismiss} />}
         <div className={styles.wrapper}>
           {!!error && <div className={styles.error}>{error}</div>}
           <QuickFeedback
@@ -181,7 +184,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   `,
   wrapper: css`
     margin-top: auto;
-    padding-bottom: 5px;
+    padding-bottom: 30px;
   `,
   contentWrapper: css`
     padding-right: 30px;
