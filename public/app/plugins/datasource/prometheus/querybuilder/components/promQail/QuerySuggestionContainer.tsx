@@ -41,20 +41,22 @@ export function QuerySuggestionContainer(props: Props) {
     <>
       <div className={styles.textPadding}>{text}</div>
       <div className={cx(styles.secondaryText, styles.bottomMargin)}>{secondaryText}</div>
-      <div className={styles.infoContainer}>
-        {querySuggestions.map((qs: QuerySuggestion, idx: number) => {
-          return (
-            <QuerySuggestionItem
-              historical={suggestionType === SuggestionType.Historical}
-              querySuggestion={qs}
-              key={idx}
-              order={idx + 1}
-              queryExplain={queryExplain}
-              onChange={onChange}
-              closeDrawer={closeDrawer}
-            />
-          );
-        })}
+      <div className={styles.infoContainerWrapper}>
+        <div className={styles.infoContainer}>
+          {querySuggestions.map((qs: QuerySuggestion, idx: number) => {
+            return (
+              <QuerySuggestionItem
+                historical={suggestionType === SuggestionType.Historical}
+                querySuggestion={qs}
+                key={idx}
+                order={idx + 1}
+                queryExplain={queryExplain}
+                onChange={onChange}
+                closeDrawer={closeDrawer}
+              />
+            );
+          })}
+        </div>
       </div>
       <div className={styles.nextInteractionHeight}>
         <div className={cx(styles.afterButtons, styles.textPadding)}>
