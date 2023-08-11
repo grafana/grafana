@@ -486,6 +486,17 @@ func (f *FakeBootstrapper) Bootstrap(ctx context.Context, src plugins.PluginSour
 	return []*plugins.Plugin{}, nil
 }
 
+type FakeValidator struct {
+	ValidateFunc func(ctx context.Context, ps []*plugins.Plugin) ([]*plugins.Plugin, error)
+}
+
+func (f *FakeValidator) Validate(ctx context.Context, ps []*plugins.Plugin) ([]*plugins.Plugin, error) {
+	if f.ValidateFunc != nil {
+		return f.ValidateFunc(ctx, ps)
+	}
+	return []*plugins.Plugin{}, nil
+}
+
 type FakeInitializer struct {
 	IntializeFunc func(ctx context.Context, ps []*plugins.Plugin) ([]*plugins.Plugin, error)
 }
@@ -495,4 +506,15 @@ func (f *FakeInitializer) Initialize(ctx context.Context, ps []*plugins.Plugin) 
 		return f.IntializeFunc(ctx, ps)
 	}
 	return []*plugins.Plugin{}, nil
+}
+
+type FakeTerminator struct {
+	TerminateFunc func(ctx context.Context, pluginID string) error
+}
+
+func (f *FakeTerminator) Terminate(ctx context.Context, pluginID string) error {
+	if f.TerminateFunc != nil {
+		return f.TerminateFunc(ctx, pluginID)
+	}
+	return nil
 }

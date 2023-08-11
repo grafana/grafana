@@ -280,8 +280,6 @@ type Cfg struct {
 	// Not documented & not supported
 	// stand in until a more complete solution is implemented
 	AuthConfigUIAdminAccess bool
-	// TO REMOVE: Not documented & not supported. Remove with legacy handlers in 10.2
-	AuthBrokerEnabled bool
 	// TO REMOVE: Not documented & not supported. Remove in 10.3
 	TagAuthedDevices bool
 
@@ -289,6 +287,7 @@ type Cfg struct {
 	AWSAllowedAuthProviders []string
 	AWSAssumeRoleEnabled    bool
 	AWSListMetricsPageLimit int
+	AWSExternalId           string
 
 	// Azure Cloud settings
 	Azure *azsettings.AzureSettings
@@ -1300,6 +1299,11 @@ func (cfg *Cfg) handleAWSConfig() {
 	if err != nil {
 		cfg.Logger.Error(fmt.Sprintf("could not set environment variable '%s'", awsds.AllowedAuthProvidersEnvVarKeyName), err)
 	}
+
+	cfg.AWSExternalId = awsPluginSec.Key("external_id").Value()
+	if err != nil {
+		cfg.Logger.Error(fmt.Sprintf("could not set environment variable '%s'", awsds.GrafanaAssumeRoleExternalIdKeyName), err)
+	}
 }
 
 func (cfg *Cfg) readSessionConfig() {
@@ -1482,7 +1486,9 @@ func readAuthGithubSettings(cfg *Cfg) {
 func readAuthGoogleSettings(cfg *Cfg) {
 	sec := cfg.SectionWithEnvOverrides("auth.google")
 	cfg.GoogleAuthEnabled = sec.Key("enabled").MustBool(false)
-	cfg.GoogleSkipOrgRoleSync = sec.Key("skip_org_role_sync").MustBool(false)
+	// FIXME: for now we skip org role sync for google auth
+	// as we do not sync organization roles from Google
+	cfg.GoogleSkipOrgRoleSync = true
 }
 
 func readAuthGitlabSettings(cfg *Cfg) {
@@ -1532,7 +1538,6 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 
 	// Do not use
 	cfg.AuthConfigUIAdminAccess = auth.Key("config_ui_admin_access").MustBool(false)
-	cfg.AuthBrokerEnabled = auth.Key("broker").MustBool(true)
 	cfg.TagAuthedDevices = auth.Key("tag_authed_devices").MustBool(true)
 
 	cfg.DisableLoginForm = auth.Key("disable_login_form").MustBool(false)

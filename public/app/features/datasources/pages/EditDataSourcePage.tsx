@@ -19,7 +19,7 @@ export function EditDataSourcePage(props: Props) {
   const nav = useDataSourceSettingsNav(uid, pageId);
 
   if (dataSourcePageHeader) {
-    return <DataSourceTabPage uid={uid} pageId={pageId} navId="datasources" />;
+    return <DataSourceTabPage uid={uid} pageId={pageId} />;
   }
 
   return (

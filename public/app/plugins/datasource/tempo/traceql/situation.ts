@@ -1,16 +1,13 @@
-// we find the first error-node in the tree that is at the cursor-position.
-// NOTE: this might be too slow, might need to optimize it
-// (ideas: we do not need to go into every subtree, based on from/to)
-// also, only go to places that are in the sub-tree of the node found
-// by default by lezer. problem is, `next()` will go upward too,
-// and we do not want to go higher than our node
 import { SyntaxNode, Tree } from '@lezer/common';
 
 import { AttributeField, FieldExpression, FieldOp, parser, SpansetFilter } from '@grafana/lezer-traceql';
 
 type Direction = 'parent' | 'firstChild' | 'lastChild' | 'nextSibling' | 'prevSibling';
 type NodeType = number;
-export type Situation =
+
+export type Situation = { query: string } & SituationType;
+
+export type SituationType =
   | {
       type: 'UNKNOWN';
     }
@@ -46,7 +43,7 @@ type Path = Array<[Direction, NodeType[]]>;
 
 type Resolver = {
   path: NodeType[];
-  fun: (node: SyntaxNode, text: string, pos: number) => Situation | null;
+  fun: (node: SyntaxNode, text: string, pos: number) => SituationType | null;
 };
 
 function getErrorNode(tree: Tree, cursorPos: number): SyntaxNode | null {
@@ -101,6 +98,7 @@ export function getSituation(text: string, offset: number): Situation | null {
   // so we handle that case first
   if (text === '') {
     return {
+      query: text,
       type: 'EMPTY',
     };
   }
@@ -127,13 +125,14 @@ export function getSituation(text: string, offset: number): Situation | null {
     ids.push(cur.type.id);
   }
 
+  let situationType: SituationType | null = null;
   for (let resolver of RESOLVERS) {
     if (isPathMatch(resolver.path, ids)) {
-      return resolver.fun(currentNode, text, offset);
+      situationType = resolver.fun(currentNode, text, offset);
     }
   }
 
-  return null;
+  return { query: text, ...(situationType ?? { type: 'UNKNOWN' }) };
 }
 
 const ERROR_NODE_ID = 0;
@@ -157,7 +156,7 @@ const RESOLVERS: Resolver[] = [
   },
 ];
 
-function resolveSpanset(node: SyntaxNode, text: string, pos: number): Situation {
+function resolveSpanset(node: SyntaxNode): SituationType {
   const lastFieldExpression = walk(node, [['lastChild', [FieldExpression]]]);
   if (lastFieldExpression) {
     return {
@@ -170,7 +169,7 @@ function resolveSpanset(node: SyntaxNode, text: string, pos: number): Situation 
   };
 }
 
-function resolveAttribute(node: SyntaxNode, text: string, pos: number): Situation {
+function resolveAttribute(node: SyntaxNode, text: string): SituationType {
   const attributeFieldParent = walk(node, [['parent', [AttributeField]]]);
   const attributeFieldParentText = attributeFieldParent ? getNodeText(attributeFieldParent, text) : '';
 
@@ -194,7 +193,7 @@ function resolveAttribute(node: SyntaxNode, text: string, pos: number): Situatio
   };
 }
 
-function resolveExpression(node: SyntaxNode, text: string, pos: number): Situation {
+function resolveExpression(node: SyntaxNode, text: string): SituationType {
   if (node.prevSibling?.type.id === FieldOp) {
     let attributeField = node.prevSibling.prevSibling;
     if (attributeField) {
@@ -210,7 +209,7 @@ function resolveExpression(node: SyntaxNode, text: string, pos: number): Situati
   };
 }
 
-function resolveErrorInFilterRoot(node: SyntaxNode, text: string, pos: number): Situation {
+function resolveErrorInFilterRoot(): SituationType {
   return {
     type: 'SPANSET_IN_NAME',
   };

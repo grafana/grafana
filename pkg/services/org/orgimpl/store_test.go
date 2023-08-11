@@ -615,7 +615,7 @@ func TestIntegration_SQLStore_GetOrgUsers(t *testing.T) {
 
 			if !hasWildcardScope(tt.query.User, accesscontrol.ActionOrgUsersRead) {
 				for _, u := range result.OrgUsers {
-					assert.Contains(t, tt.query.User.GetPermissions(tt.query.User.GetOrgID())[accesscontrol.ActionOrgUsersRead], fmt.Sprintf("users:id:%d", u.UserID))
+					assert.Contains(t, tt.query.User.GetPermissions()[accesscontrol.ActionOrgUsersRead], fmt.Sprintf("users:id:%d", u.UserID))
 				}
 			}
 		})
@@ -647,7 +647,7 @@ func seedOrgUsers(t *testing.T, orgUserStore store, store *sqlstore.SQLStore, nu
 }
 
 func hasWildcardScope(user identity.Requester, action string) bool {
-	for _, scope := range user.GetPermissions(user.GetOrgID())[action] {
+	for _, scope := range user.GetPermissions()[action] {
 		if strings.HasSuffix(scope, ":*") {
 			return true
 		}
@@ -792,7 +792,7 @@ func TestIntegration_SQLStore_SearchOrgUsers(t *testing.T) {
 
 			if !hasWildcardScope(tt.query.User, accesscontrol.ActionOrgUsersRead) {
 				for _, u := range result.OrgUsers {
-					assert.Contains(t, tt.query.User.GetPermissions(tt.query.User.GetOrgID())[accesscontrol.ActionOrgUsersRead], fmt.Sprintf("users:id:%d", u.UserID))
+					assert.Contains(t, tt.query.User.GetPermissions()[accesscontrol.ActionOrgUsersRead], fmt.Sprintf("users:id:%d", u.UserID))
 				}
 			}
 		})

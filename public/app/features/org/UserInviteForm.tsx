@@ -2,7 +2,7 @@ import React from 'react';
 
 import { locationUtil, SelectableValue } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
-import { locationService } from '@grafana/runtime';
+import { config, locationService } from '@grafana/runtime';
 import {
   Button,
   LinkButton,
@@ -14,6 +14,7 @@ import {
   InputControl,
   FieldSet,
   Icon,
+  TextLink,
   Tooltip,
   Label,
 } from '@grafana/ui';
@@ -23,11 +24,23 @@ import { OrgRole, useDispatch } from 'app/types';
 
 import { addInvitee } from '../invites/state/actions';
 
-const noBasicRoleFlag = contextSrv.licensedAccessControlEnabled();
-
-const tooltipMessage = noBasicRoleFlag
-  ? 'You can now select the "No basic role" option and add permissions to your custom needs.'
-  : undefined;
+const noBasicRoleFlag = contextSrv.licensedAccessControlEnabled() && config.featureToggles.noBasicRole;
+const tooltipMessage = noBasicRoleFlag ? (
+  <>
+    You can now select the &quot;No basic role&quot; option and add permissions to your custom needs. You can find more
+    information in&nbsp;
+    <TextLink
+      href="https://grafana.com/docs/grafana/latest/administration/roles-and-permissions/#organization-roles"
+      variant="bodySmall"
+      external
+    >
+      our documentation
+    </TextLink>
+    .
+  </>
+) : (
+  ''
+);
 
 const roles: Array<SelectableValue<OrgRole>> = Object.values(OrgRole)
   .filter((r) => noBasicRoleFlag || r !== OrgRole.None)
@@ -82,7 +95,7 @@ export const UserInviteForm = () => {
                     <Stack gap={0.5}>
                       <span>Role</span>
                       {tooltipMessage && (
-                        <Tooltip placement="right-end" interactive={true} content={<>{tooltipMessage}</>}>
+                        <Tooltip placement="right-end" interactive={true} content={tooltipMessage}>
                           <Icon name="info-circle" size="xs" />
                         </Tooltip>
                       )}

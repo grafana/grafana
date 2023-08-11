@@ -89,7 +89,7 @@ func TestOAuthTokenSync_SyncOAuthTokenHook(t *testing.T) {
 			expectInvalidateOauthTokensCalled: true,
 			expectRevokeTokenCalled:           true,
 			expectedHasEntryToken:             &login.UserAuth{OAuthExpiry: time.Now().Add(-10 * time.Minute)},
-			expectedErr:                       errExpiredAccessToken,
+			expectedErr:                       authn.ErrExpiredAccessToken,
 		}, {
 			desc:                        "should skip sync when use_refresh_token is disabled",
 			identity:                    &authn.Identity{ID: "user:1", SessionToken: &auth.UserToken{}, AuthenticatedBy: login.GitLabAuthModule},

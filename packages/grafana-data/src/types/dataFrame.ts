@@ -19,6 +19,7 @@ export enum FieldType {
   enum = 'enum',
   other = 'other', // Object, Array, etc
   frame = 'frame', // DataFrame
+  nestedFrames = 'nestedFrames', // @alpha Nested DataFrames
 }
 
 /**
