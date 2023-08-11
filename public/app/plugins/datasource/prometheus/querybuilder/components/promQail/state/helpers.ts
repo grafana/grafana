@@ -191,11 +191,21 @@ export async function promQailSuggest(
     });
   } else {
     let url = 'http://localhost:5001/query-suggest';
-    const feedTheAI = {
+
+    type SuggestionBody = {
+      metric: string;
+      labels: string;
+      prompt?: string;
+    };
+
+    let feedTheAI: SuggestionBody = {
       metric: query.metric,
       labels: promQueryModeller.renderLabels(query.labels),
-      prompt: interaction.prompt,
     };
+
+    if (interaction.prompt) {
+      feedTheAI = { ...feedTheAI, prompt: interaction.prompt };
+    }
 
     const body = {
       method: 'POST',
