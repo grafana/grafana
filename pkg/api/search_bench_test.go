@@ -54,7 +54,7 @@ func BenchmarkSearch(b *testing.B) {
 
 	// the maximum number of dashboards that can be returned by the search API
 	// otherwise the handler fails with 422 status code
-	const limit = 5000
+	const limit = 1000
 	withLimit := func(res int) int {
 		if res > limit {
 			return limit
