@@ -19,6 +19,14 @@ type SingleKeyDeleter interface {
 	Delete(ctx context.Context) error
 }
 
+// StaticStoreKeyGetter returns a StoreKeyGetterFunc that always returns the same key.
+// This allows to create stores that only store a single value.
+func StaticStoreKeyGetter(staticKey string) StoreKeyGetterFunc {
+	return func(string) string {
+		return staticKey
+	}
+}
+
 // SingleKeyNamespacedStore is a NamespacedStore wrapper with fixed key.
 // It only allows store a single value (one key) along with its latest update time.
 type SingleKeyNamespacedStore struct {

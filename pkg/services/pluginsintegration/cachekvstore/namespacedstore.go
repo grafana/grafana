@@ -33,14 +33,6 @@ var DefaultStoreKeyGetterFunc = StoreKeyGetterFunc(func(k string) string {
 	return k
 })
 
-// StaticStoreKeyGetter returns a StoreKeyGetterFunc that always returns the same key.
-// This allows to create stores that only store a single value.
-func StaticStoreKeyGetter(staticKey string) StoreKeyGetterFunc {
-	return func(string) string {
-		return staticKey
-	}
-}
-
 // PrefixStoreKeyGetter returns a StoreKeyGetterFunc that returns the key with a prefix.
 func PrefixStoreKeyGetter(prefix string) StoreKeyGetterFunc {
 	return func(k string) string {
@@ -93,22 +85,9 @@ func (s *NamespacedStore) Get(ctx context.Context, key string) (string, bool, er
 // Set sets the value for the given key and updates the last updated time.
 // The value must be a Marshaler, a fmt.Stringer, a string or []byte.
 func (s *NamespacedStore) Set(ctx context.Context, key string, value any) error {
-	// TODO: move
-	var valueToStore string
-	if valueMarshaler, ok := value.(Marshaler); ok {
-		var err error
-		valueToStore, err = valueMarshaler.Marshal()
-		if err != nil {
-			return fmt.Errorf("marshal: %w", err)
-		}
-	} else if valueStringer, ok := value.(fmt.Stringer); ok {
-		valueToStore = valueStringer.String()
-	} else if valueString, ok := value.(string); ok {
-		valueToStore = valueString
-	} else if valueBytes, ok := value.([]byte); ok {
-		valueToStore = string(valueBytes)
-	} else {
-		return fmt.Errorf("unsupported value type: %T", value)
+	valueToStore, err := marshalValue(value)
+	if err != nil {
+		return fmt.Errorf("marshal: %w", err)
 	}
 
 	if err := s.kv.Set(ctx, s.storeKeyGetter.GetStoreKey(key), valueToStore); err != nil {
@@ -161,4 +140,22 @@ func (s *NamespacedStore) ListKeys(ctx context.Context) ([]string, error) {
 		res = append(res, key.Key)
 	}
 	return res, nil
+}
+
+// marshalValue marshals the value to a string.
+// It supports Marshaler, fmt.Stringer, string and []byte.
+// It returns an error if the type is not supported.
+func marshalValue(value any) (string, error) {
+	switch value := value.(type) {
+	case Marshaler:
+		return value.Marshal()
+	case fmt.Stringer:
+		return value.String(), nil
+	case string:
+		return value, nil
+	case []byte:
+		return string(value), nil
+	default:
+		return "", fmt.Errorf("unsupported value type: %T", value)
+	}
 }
