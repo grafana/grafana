@@ -135,7 +135,7 @@ type AddTeamMemberCommand struct {
 	OrgID      int64                     `json:"-"`
 	TeamID     int64                     `json:"-"`
 	External   bool                      `json:"-"`
-	Permission dashboards.PermissionType `json:"-"`
+	Permission dashboards.PermissionType `json:"permission"`
 }
 
 type UpdateTeamMemberCommand struct {
