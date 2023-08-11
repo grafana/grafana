@@ -102,7 +102,7 @@ export function getColumns(
 
   for (const [fieldIndex, field] of data.fields.entries()) {
     const fieldTableOptions = (field.config.custom || {}) as TableFieldOptions;
-    if (fieldTableOptions.hidden) {
+    if (fieldTableOptions.hidden || field.type === FieldType.nestedFrames) {
       continue;
     }
 
@@ -476,7 +476,7 @@ function addMissingColumnIndex(columns: Array<{ id: string; field?: Field } | un
   const missingIndex = columns.findIndex((field, index) => field?.id !== String(index));
 
   // Base case
-  if (missingIndex === -1) {
+  if (missingIndex === -1 || columns[missingIndex]?.id === 'expander') {
     return;
   }
 

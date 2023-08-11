@@ -58,17 +58,17 @@ func New(cfg *config.Cfg, opts Opts) *Discovery {
 
 // Discover will execute the Find and Filter steps of the Discovery stage.
 func (d *Discovery) Discover(ctx context.Context, src plugins.PluginSource) ([]*plugins.FoundBundle, error) {
-	found, err := d.findStep(ctx, src)
+	discoveredPlugins, err := d.findStep(ctx, src)
 	if err != nil {
 		return nil, err
 	}
 
-	for _, filterStep := range d.findFilterSteps {
-		found, err = filterStep(ctx, src.PluginClass(ctx), found)
+	for _, filter := range d.findFilterSteps {
+		discoveredPlugins, err = filter(ctx, src.PluginClass(ctx), discoveredPlugins)
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	return found, nil
+	return discoveredPlugins, nil
 }

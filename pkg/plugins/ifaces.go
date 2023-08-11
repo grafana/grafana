@@ -118,11 +118,11 @@ type SecretsPluginManager interface {
 }
 
 type StaticRouteResolver interface {
-	Routes() []*StaticRoute
+	Routes(ctx context.Context) []*StaticRoute
 }
 
 type ErrorResolver interface {
-	PluginErrors() []*Error
+	PluginErrors(ctx context.Context) []*Error
 }
 
 type PluginLoaderAuthorizer interface {
