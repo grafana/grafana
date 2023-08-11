@@ -1,11 +1,14 @@
 import {
   DxfParser,
+  ICircleEntity,
+  IEllipseEntity,
   IEntity,
   ILayer,
   ILayersTable,
   ILineEntity,
   ILwpolylineEntity,
   IPolylineEntity,
+  IPointEntity,
   ITextEntity,
   IViewPort,
 } from 'dxf-parser';
@@ -16,6 +19,8 @@ import {
   CanvasElementItem,
   CanvasElementOptions,
   canvasElementRegistry,
+  EllipseConfig,
+  EllipseData,
   HorizontalConstraint,
   LineConfig,
   LineData,
@@ -35,9 +40,16 @@ const BOTTOM_LEFT_CONSTRAINT = {
   vertical: VerticalConstraint.Bottom,
 };
 
-const TEMP_MULTIPLIER = 25;
+const TEMP_MULTIPLIER = 15;
 
 const DEFAULT_LWEIGHT = 25;
+
+interface Ellipse {
+  width: number;
+  height: number;
+  rotation?: number;
+  midPoint: Point;
+}
 
 interface Line {
   theta: number;
@@ -99,6 +111,12 @@ function addEntity(entity: IEntity, entityLayer: ILayer, canvasLayer: FrameState
       addLwPolylineElement(entity, entityLayer, canvasLayer);
     } else if (isPolyLineEntity(entity) && isSupportedPolyLineEntity(entity)) {
       add2dPolylineElement(entity, entityLayer, canvasLayer);
+    } else if (isCircleEntity(entity)) {
+      addCircleElement(entity, entityLayer, canvasLayer);
+    } else if (isEllipseEntity(entity)) {
+      addEllipseElement(entity, entityLayer, canvasLayer);
+    } else if (isPointEntity(entity)) {
+      addPointElement(entity, entityLayer, canvasLayer);
     } else {
       console.warn('unhandled entity type', entity.type);
     }
@@ -131,6 +149,18 @@ function isSupportedPolyLineEntity(entity: IPolylineEntity): boolean {
     !entity.is3dPolygonMesh &&
     !entity.isPolyfaceMesh
   );
+}
+
+function isCircleEntity(entity: IEntity): entity is ICircleEntity {
+  return entity.type === 'CIRCLE';
+}
+
+function isEllipseEntity(entity: IEntity): entity is IEllipseEntity {
+  return entity.type === 'ELLIPSE';
+}
+
+function isPointEntity(entity: IEntity): entity is IPointEntity {
+  return entity.type === 'POINT';
 }
 
 function addTextElement(entity: ITextEntity, entityLayer: ILayer, canvasLayer: FrameState) {
@@ -236,11 +266,7 @@ function newLineElementState(
   color: ColorDimensionConfig,
   canvasLayer: FrameState
 ): ElementState {
-  let weight = DEFAULT_LWEIGHT;
-  if (lineWeight !== undefined && lineWeight !== 0) {
-    weight = lineWeight;
-  }
-  weight = weight / 100; // weights are in 100ths of a mm
+  let weight = pixelsFromLineWeight(lineWeight);
 
   const newLineItem: CanvasElementItem<LineConfig, LineData> = canvasElementRegistry.get('line');
   let newElementOptions: CanvasElementOptions = {
@@ -264,6 +290,111 @@ function newLineElementState(
   return new ElementState(newLineItem, newElementOptions, canvasLayer);
 }
 
+function ellipseFromCadEllipse(entity: IEllipseEntity): Ellipse {
+  const dx = entity.majorAxisEndPoint.x;
+  const dy = entity.majorAxisEndPoint.y;
+
+  const theta = (Math.atan2(dy, dx) * 180) / Math.PI;
+  const width = Math.hypot(dx, dy) * 2;
+  const height = width * entity.axisRatio;
+
+  return {
+    width,
+    height,
+    rotation: theta,
+    midPoint: entity.center,
+  };
+}
+
+function ellipseFromCadCircle(entity: ICircleEntity): Ellipse {
+  return {
+    width: entity.radius * 2,
+    height: entity.radius * 2,
+    midPoint: entity.center,
+  };
+}
+
+function ellipseFromCadPoint(entity: IPointEntity): Ellipse {
+  return {
+    width: 1,
+    height: 1,
+    midPoint: entity.position,
+  };
+}
+
+function addEllipseElement(entity: IEllipseEntity, entityLayer: ILayer, canvasLayer: FrameState) {
+  canvasLayer.addElement(
+    newEllipseElement(
+      ellipseFromCadEllipse(entity),
+      { fixed: hexFromColorRepr(entity.color, entityLayer) },
+      entity.lineweight,
+      canvasLayer
+    )
+  );
+}
+
+function addCircleElement(entity: ICircleEntity, entityLayer: ILayer, canvasLayer: FrameState) {
+  canvasLayer.addElement(
+    newEllipseElement(
+      ellipseFromCadCircle(entity),
+      { fixed: hexFromColorRepr(entity.color, entityLayer) },
+      entity.lineweight,
+      canvasLayer
+    )
+  );
+}
+
+function addPointElement(entity: IPointEntity, entityLayer: ILayer, canvasLayer: FrameState) {
+  canvasLayer.addElement(
+    newEllipseElement(
+      ellipseFromCadPoint(entity),
+      { fixed: hexFromColorRepr(entity.color, entityLayer) },
+      entity.lineweight,
+      canvasLayer,
+      true
+    )
+  );
+}
+
+function newEllipseElement(
+  ellipse: Ellipse,
+  color: ColorDimensionConfig,
+  lineWeight: number | undefined,
+  canvasLayer: FrameState,
+  isPoint?: boolean
+) {
+  let height = ellipse.height;
+  let width = ellipse.width;
+  if (!isPoint) {
+    height = height * TEMP_MULTIPLIER;
+    width = width * TEMP_MULTIPLIER;
+  }
+
+  const newEllipseItem: CanvasElementItem<EllipseConfig, EllipseData> = canvasElementRegistry.get('ellipse');
+  let newElementOptions: CanvasElementOptions = {
+    ...newEllipseItem.getNewOptions(),
+    type: newEllipseItem.id,
+    name: '',
+    constraint: BOTTOM_LEFT_CONSTRAINT,
+    placement: {
+      bottom: (ellipse.midPoint.y - ellipse.height / 2) * TEMP_MULTIPLIER,
+      left: (ellipse.midPoint.x - ellipse.width / 2) * TEMP_MULTIPLIER,
+      height,
+      width,
+      rotation: ellipse.rotation ? -ellipse.rotation : 0,
+    },
+    config: {
+      backgroundColor: {
+        fixed: 'transparent',
+      },
+      borderColor: color,
+      borderWidth: pixelsFromLineWeight(lineWeight),
+    },
+  };
+
+  return new ElementState(newEllipseItem, newElementOptions, canvasLayer);
+}
+
 function hexFromColorRepr(color: number | undefined, cadLayer?: ILayer): string {
   let hexColor: string;
 
@@ -276,4 +407,12 @@ function hexFromColorRepr(color: number | undefined, cadLayer?: ILayer): string 
   }
 
   return '#' + hexColor.padStart(6, '0');
+}
+
+function pixelsFromLineWeight(lineWeight: number | undefined): number {
+  let weight = DEFAULT_LWEIGHT;
+  if (lineWeight !== undefined && lineWeight !== 0) {
+    weight = lineWeight;
+  }
+  return weight / 100 / 5; // weights are in 100ths of a mm
 }
