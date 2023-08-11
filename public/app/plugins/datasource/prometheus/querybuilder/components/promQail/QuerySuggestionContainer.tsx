@@ -3,6 +3,8 @@ import React from 'react';
 
 import { Button, useTheme2 } from '@grafana/ui';
 
+import { PromVisualQuery } from '../../types';
+
 import { getStyles } from './PromQail';
 import { QuerySuggestionItem } from './QuerySuggestionItem';
 import { QuerySuggestion, SuggestionType } from './types';
@@ -13,10 +15,11 @@ export type Props = {
   closeDrawer: () => void;
   nextInteraction: () => void;
   queryExplain: (idx: number) => void;
+  onChange: (query: PromVisualQuery) => void;
 };
 
 export function QuerySuggestionContainer(props: Props) {
-  const { suggestionType, querySuggestions, closeDrawer, nextInteraction, queryExplain } = props;
+  const { suggestionType, querySuggestions, closeDrawer, nextInteraction, queryExplain, onChange } = props;
 
   const theme = useTheme2();
   const styles = getStyles(theme);
@@ -47,6 +50,8 @@ export function QuerySuggestionContainer(props: Props) {
               key={idx}
               order={idx + 1}
               queryExplain={queryExplain}
+              onChange={onChange}
+              closeDrawer={closeDrawer}
             />
           );
         })}

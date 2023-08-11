@@ -2,7 +2,7 @@ import { css, cx } from '@emotion/css';
 import React, { useReducer } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Button, Checkbox, Drawer, Input, Spinner, useTheme2 } from '@grafana/ui';
+import { Button, Checkbox, Input, Spinner, useTheme2 } from '@grafana/ui';
 import store from 'app/core/store';
 
 import { PromVisualQuery } from '../../types';
@@ -15,17 +15,18 @@ import { initialState, stateSlice } from './state/state';
 import { Interaction, SuggestionType } from './types';
 
 // actions to update the state
-const { showStartingMessage, showExplainer, indicateCheckbox, addInteraction, updateInteraction } = stateSlice.actions;
+const { showStartingMessage, indicateCheckbox, addInteraction, updateInteraction } = stateSlice.actions;
 
 export type PromQailProps = {
   query: PromVisualQuery;
   closeDrawer: () => void;
+  onChange: (query: PromVisualQuery) => void;
 };
 
 const SKIP_STARTING_MESSAGE = 'SKIP_STARTING_MESSAGE';
 
 export const PromQail = (props: PromQailProps) => {
-  const { query, closeDrawer } = props;
+  const { query, closeDrawer, onChange } = props;
   const skipStartingMessage = store.getBool(SKIP_STARTING_MESSAGE, false);
 
   const [state, dispatch] = useReducer(stateSlice.reducer, initialState(query, !skipStartingMessage));
@@ -272,6 +273,7 @@ export const PromQail = (props: PromQailProps) => {
                           queryExplain={(suggIdx: number) =>
                             promQailExplain(dispatch, idx, query, interaction, suggIdx)
                           }
+                          onChange={onChange}
                         />
                       )}
                     </>
@@ -294,6 +296,7 @@ export const PromQail = (props: PromQailProps) => {
                         dispatch(addInteraction({ suggestionType, isLoading }));
                       }}
                       queryExplain={(suggIdx: number) => promQailExplain(dispatch, idx, query, interaction, suggIdx)}
+                      onChange={onChange}
                     />
                   )}
                 </div>
