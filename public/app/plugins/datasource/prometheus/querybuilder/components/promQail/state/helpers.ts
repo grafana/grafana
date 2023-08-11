@@ -1,6 +1,10 @@
 import { AnyAction } from 'redux';
 
+import { PrometheusDatasource } from 'app/plugins/datasource/prometheus/datasource';
+import { getMetadataHelp } from 'app/plugins/datasource/prometheus/language_provider';
+
 import { promQueryModeller } from '../../../PromQueryModeller';
+import { buildVisualQueryFromString } from '../../../parsing';
 import { PromVisualQuery } from '../../../types';
 import { Interaction, QuerySuggestion, SuggestionType } from '../types';
 
@@ -47,7 +51,7 @@ export async function promQailExplain(
   query: PromVisualQuery,
   interaction: Interaction,
   suggIdx: number,
-  metricMetadata: string | undefined
+  datasource: PrometheusDatasource
 ) {
   const check = await promQailHealthcheck();
 
@@ -81,8 +85,6 @@ export async function promQailExplain(
         };
 
         dispatch(updateInteraction(payload));
-
-        dispatch(updateInteraction(payload));
         resolve();
       }, 1); // so fast!
     });
@@ -91,10 +93,19 @@ export async function promQailExplain(
 
     const suggestedQuery = interaction.suggestions[suggIdx].query;
 
-    // future work, get the metadata for the metric in the suggested query
-    // parse the query, get the metric, find the metadata
-    if (interaction.suggestionType === SuggestionType.Historical) {
-      metricMetadata = '';
+    let metricMetadata: string | undefined;
+
+    if (datasource.languageProvider.metricsMetadata) {
+      if (interaction.suggestionType === SuggestionType.Historical) {
+        // parse the suggested query
+        // get the metric
+        // then check the metadata
+        const pvq = buildVisualQueryFromString(suggestedQuery);
+        metricMetadata = getMetadataHelp(pvq.query.metric, datasource.languageProvider.metricsMetadata!);
+      } else {
+        // for the AI we already have a metric selected
+        metricMetadata = getMetadataHelp(query.metric, datasource.languageProvider.metricsMetadata!);
+      }
     }
 
     const body = {

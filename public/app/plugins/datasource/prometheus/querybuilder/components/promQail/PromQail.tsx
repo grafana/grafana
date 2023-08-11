@@ -37,12 +37,6 @@ export const PromQail = (props: PromQailProps) => {
   const theme = useTheme2();
   const styles = getStyles(theme);
 
-  let metricMetadata: string | undefined = undefined;
-
-  if (datasource.languageProvider.metricsMetadata) {
-    metricMetadata = getMetadataHelp(query.metric, datasource.languageProvider.metricsMetadata!);
-  }
-
   return (
     <div className={styles.containerPadding}>
       {/* Query Advisor */}
@@ -283,7 +277,7 @@ export const PromQail = (props: PromQailProps) => {
                             dispatch(addInteraction({ suggestionType, isLoading }));
                           }}
                           queryExplain={(suggIdx: number) =>
-                            promQailExplain(dispatch, idx, query, interaction, suggIdx, metricMetadata)
+                            promQailExplain(dispatch, idx, query, interaction, suggIdx, datasource)
                           }
                           onChange={onChange}
                         />
@@ -308,7 +302,7 @@ export const PromQail = (props: PromQailProps) => {
                         dispatch(addInteraction({ suggestionType, isLoading }));
                       }}
                       queryExplain={(suggIdx: number) =>
-                        promQailExplain(dispatch, idx, query, interaction, suggIdx, metricMetadata)
+                        promQailExplain(dispatch, idx, query, interaction, suggIdx, datasource)
                       }
                       onChange={onChange}
                     />
