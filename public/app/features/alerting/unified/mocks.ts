@@ -61,12 +61,15 @@ export function mockDataSource<T extends DataSourceJsonData = DataSourceJsonData
 ): DataSourceInstanceSettings<T> {
   const id = partial.id ?? nextDataSourceId++;
 
+  const uid = partial.uid ?? `mock-ds-${nextDataSourceId}`;
+
   return {
     id,
-    uid: `mock-ds-${nextDataSourceId}`,
+    uid: uid,
     type: 'prometheus',
     name: `Prometheus-${id}`,
     access: 'proxy',
+    url: `/api/datasources/proxy/uid/${uid}`,
     jsonData: {} as T,
     meta: {
       info: {
@@ -338,6 +341,7 @@ class MockDataSourceApi extends DataSourceApi {
   }
 }
 
+// TODO This should be eventually moved to public/app/features/alerting/unified/testSetup/datasources.ts
 export class MockDataSourceSrv implements DataSourceSrv {
   datasources: Record<string, DataSourceApi> = {};
   // @ts-ignore
