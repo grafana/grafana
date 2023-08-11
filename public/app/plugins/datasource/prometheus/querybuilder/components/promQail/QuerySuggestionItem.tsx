@@ -9,10 +9,11 @@ import { QuerySuggestion } from './types';
 export type Props = {
   querySuggestion: QuerySuggestion;
   order: number;
+  queryExplain: () => void;
 };
 
 export function QuerySuggestionItem(props: Props) {
-  const { querySuggestion, order } = props;
+  const { querySuggestion, order, queryExplain } = props;
   const [showExp, updShowExp] = useState<boolean>(false);
 
   const theme = useTheme2();
@@ -33,7 +34,10 @@ export function QuerySuggestionItem(props: Props) {
           fill="text"
           variant="secondary"
           icon={showExp ? 'angle-up' : 'angle-down'}
-          onClick={() => updShowExp(!showExp)}
+          onClick={() => {
+            updShowExp(!showExp);
+            queryExplain();
+          }}
           className={styles.bodySmall}
           size="sm"
         >
@@ -67,16 +71,16 @@ export function QuerySuggestionItem(props: Props) {
                 </div>
               </div>
             </div>
-            {order !== 5 && <hr />}
+            {/* {order !== 5 && <hr />} */}
           </>
         )}
-        {order === 5 && (
-          <div className={cx(styles.textPadding, showExp && styles.topPadding)}>
-            <Button fill="outline" variant="secondary" size="sm" className={styles.floatRight}>
-              Give feedback on suggestions
-            </Button>
-          </div>
-        )}
+        {/* {order === 5 && ( */}
+        <div className={cx(styles.textPadding, showExp && styles.topPadding)}>
+          <Button fill="outline" variant="secondary" size="sm" className={styles.floatRight}>
+            Give feedback on suggestions
+          </Button>
+        </div>
+        {/* )} */}
       </div>
     </>
   );
