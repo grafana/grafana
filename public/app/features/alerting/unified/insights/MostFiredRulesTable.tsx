@@ -1,4 +1,4 @@
-import { PanelBuilders, SceneFlexItem, SceneQueryRunner, SceneTimeRange } from '@grafana/scenes';
+import { PanelBuilders, SceneDataTransformer, SceneFlexItem, SceneQueryRunner, SceneTimeRange } from '@grafana/scenes';
 import { DataSourceRef } from '@grafana/schema';
 
 const TOP_5_FIRING_RULES =
@@ -17,25 +17,45 @@ export function getMostFiredRulesScene(timeRange: SceneTimeRange, datasource: Da
     $timeRange: timeRange,
   });
 
+  const transformation = new SceneDataTransformer({
+    $data: query,
+    transformations: [
+      {
+        id: 'sortBy',
+        options: {
+          fields: {},
+          sort: [
+            {
+              field: 'Value #A',
+              desc: true,
+            },
+          ],
+        },
+      },
+      {
+        id: 'organize',
+        options: {
+          excludeByName: {
+            Time: true,
+          },
+          indexByName: {
+            group: 0,
+            labels_grafana_folder: 1,
+            'Value #A': 2,
+          },
+          renameByName: {
+            group: 'Group',
+            labels_grafana_folder: 'Folder',
+            'Value #A': 'Fires this week',
+          },
+        },
+      },
+    ],
+  });
+
   return new SceneFlexItem({
     width: 'calc(50% - 8px)',
     height: 300,
-    body: PanelBuilders.table()
-      .setTitle(panelTitle)
-      .setData(query)
-      .setOverrides((b) =>
-        b
-          .matchFieldsWithNameByRegex('.*')
-          .overrideFilterable(false)
-          .matchFieldsWithName('Time')
-          .overrideCustomFieldConfig('hidden', true)
-          .matchFieldsWithName('Value #A')
-          .overrideDisplayName('Fires this week')
-          .matchFieldsWithName('group')
-          .overrideDisplayName('Group')
-          .matchFieldsWithName('labels_grafana_folder')
-          .overrideDisplayName('Folder')
-      )
-      .build(),
+    body: PanelBuilders.table().setTitle(panelTitle).setData(transformation).build(),
   });
 }
