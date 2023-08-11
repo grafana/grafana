@@ -108,7 +108,7 @@ func BenchmarkSearch(b *testing.B) {
 		{
 			desc:        "get all folders with remove sub-query toggle",
 			url:         "/api/folders?limit=1000",
-			expectedLen: withLimit(allFolders),
+			expectedLen: withLimit(Lvl0FolderNum),
 			features:    featuremgmt.WithFeatures(featuremgmt.FlagPermissionsFilterRemoveSubquery),
 		},
 		{
@@ -144,7 +144,7 @@ func BenchmarkSearch(b *testing.B) {
 		{
 			desc:        "get all folders without toggles",
 			url:         "/api/folders?limit=1000",
-			expectedLen: withLimit(allFolders),
+			expectedLen: withLimit(Lvl0FolderNum),
 			features:    featuremgmt.WithFeatures(),
 		},
 		{
