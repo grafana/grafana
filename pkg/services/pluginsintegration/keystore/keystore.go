@@ -24,6 +24,8 @@ func ProvideService(kv kvstore.KVStore) *Service {
 		NamespacedStore: cachekvstore.NewNamespacedStore(
 			kv, namespace,
 			cachekvstore.WithLastUpdatedKey(lastUpdatedKey),
-			cachekvstore.WithStoreKeyGetter(cachekvstore.PrefixStoreKeyGetter(prefix))),
+			cachekvstore.WithStoreKeyGetter(cachekvstore.PrefixStoreKeyGetter(prefix)),
+			cachekvstore.WithSetLastUpdatedOnDelete(true),
+		),
 	}
 }

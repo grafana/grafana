@@ -176,9 +176,7 @@ func (kr *KeyRetriever) downloadKeys(ctx context.Context) error {
 			}
 		}
 	}
-
-	// Update the last updated timestamp
-	return kr.kv.SetLastUpdated(ctx)
+	return nil
 }
 
 func (kr *KeyRetriever) ensureKeys(ctx context.Context) error {
