@@ -298,14 +298,6 @@ Latest Version: 1.4.2 | Signature: Grafana | Last Updated: 2021
 If you're looking for an example of a data source plugin to start from, refer to [grafana-starter-datasource-backend](https://github.com/grafana/grafana-starter-datasource-backend).
 {{% /admonition %}}
 
-### [Strava](https://grafana.com/grafana/plugins/grafana-strava-datasource/)
-
-Latest Version: 1.5.1 | Signature: Grafana | Last Updated: 2022
-
-{{% admonition type="note" %}}
-Removal of any angular dependency is on the near term roadmap.
-{{% /admonition %}}
-
 ### [openHistorian](https://grafana.com/grafana/plugins/gridprotectionalliance-openhistorian-datasource/)
 
 Latest Version: 1.0.3 | Signature: Community | Last Updated: 2021
