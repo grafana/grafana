@@ -143,7 +143,7 @@ export const PromQail = (props: PromQailProps) => {
                         const suggestionType = SuggestionType.Historical;
                         dispatch(addInteraction({ suggestionType, isLoading }));
                         //CHECK THIS???
-                        promQailSuggest(dispatch, 0);
+                        promQailSuggest(dispatch, 0, query);
                       }}
                     >
                       No
@@ -228,7 +228,7 @@ export const PromQail = (props: PromQailProps) => {
                                     };
 
                                     dispatch(updateInteraction(payload));
-                                    promQailSuggest(dispatch, idx, '', newInteraction);
+                                    promQailSuggest(dispatch, idx, query, newInteraction);
                                   }}
                                 >
                                   Suggest queries instead
@@ -249,7 +249,7 @@ export const PromQail = (props: PromQailProps) => {
 
                                     dispatch(updateInteraction(payload));
                                     // add the suggestions in the API call
-                                    promQailSuggest(dispatch, idx, '/querysuggest', interaction);
+                                    promQailSuggest(dispatch, idx, query, interaction);
                                   }}
                                 >
                                   Submit
@@ -269,7 +269,9 @@ export const PromQail = (props: PromQailProps) => {
                             const suggestionType = SuggestionType.AI;
                             dispatch(addInteraction({ suggestionType, isLoading }));
                           }}
-                          queryExplain={() => promQailExplain(dispatch, idx, interaction)}
+                          queryExplain={(suggIdx: number) =>
+                            promQailExplain(dispatch, idx, query, interaction, suggIdx)
+                          }
                         />
                       )}
                     </>
@@ -291,7 +293,7 @@ export const PromQail = (props: PromQailProps) => {
                         const suggestionType = SuggestionType.AI;
                         dispatch(addInteraction({ suggestionType, isLoading }));
                       }}
-                      queryExplain={() => promQailExplain(dispatch, idx, interaction)}
+                      queryExplain={(suggIdx: number) => promQailExplain(dispatch, idx, query, interaction, suggIdx)}
                     />
                   )}
                 </div>
@@ -300,7 +302,7 @@ export const PromQail = (props: PromQailProps) => {
           </>
         )}
       </div>
-      {/* Query Explainer, show second drawer */}
+      {/* Query Explainer, show second drawer
       {state.showExplainer && (
         <Drawer width={'25%'} closeOnMaskClick={false} onClose={() => dispatch(showExplainer(false))}>
           <div className={styles.header}>
@@ -310,7 +312,7 @@ export const PromQail = (props: PromQailProps) => {
             </Button>
           </div>
         </Drawer>
-      )}
+      )} */}
     </div>
   );
 };
@@ -420,6 +422,11 @@ export const getStyles = (theme: GrafanaTheme2) => {
     `,
     nextInteractionHeight: css`
       height: 88px;
+    `,
+    center: css`
+      display: flex;
+      align-items: center;
+      justify-content: center;
     `,
   };
 };
