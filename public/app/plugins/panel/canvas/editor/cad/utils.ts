@@ -40,7 +40,7 @@ const BOTTOM_LEFT_CONSTRAINT = {
 
 const SCALE = 3;
 
-const DEFAULT_LWEIGHT = 25;
+const MIN_LWEIGHT = 25;
 
 interface Ellipse {
   width: number;
@@ -98,8 +98,9 @@ function addEntityLoop(dxf: IDxf, canvasLayer: FrameState) {
   }
 
   for (const [layerName, entities] of layerMap.entries()) {
-    for (const entity of entities) {
-      addEntity(entity, dxf.tables.layer.layers[entity.layer], canvasLayer, `${layerName}-${entity.type}`);
+    for (let i = 0; i < entities.length; i++) {
+      const entity = entities[i];
+      addEntity(entity, dxf.tables.layer.layers[entity.layer], canvasLayer, `${layerName}${i + 1}-${entity.type}`);
     }
   }
 }
@@ -249,8 +250,9 @@ function addLwPolylineElement(
   name: string | undefined
 ) {
   for (let i = 0; i < entity.vertices.length - 1; i++) {
-    if (name) {
-      name = `${name}-LINE${i + 1}`;
+    let lineName = name;
+    if (lineName) {
+      lineName = `${lineName}-L${i + 1}`;
     }
 
     pushElement(
@@ -259,7 +261,7 @@ function addLwPolylineElement(
         entity.lineweight,
         { fixed: hexFromColorRepr(entity.color, entityLayer.color) },
         canvasLayer,
-        name
+        lineName
       ),
       canvasLayer
     );
@@ -279,12 +281,13 @@ function add2dPolylineElement(
 
   for (let i = 0; i < bound; i++) {
     let vertices =
-      i === entity.vertices.length && entity.shape
-        ? [entity.vertices[entity.vertices.length - 1]]
+      i + 1 === entity.vertices.length && entity.shape
+        ? [entity.vertices[entity.vertices.length - 1], entity.vertices[0]]
         : entity.vertices.slice(i, i + 2);
 
-    if (name) {
-      name = `${name}-LINE${i + 1}`;
+    let lineName = name;
+    if (lineName) {
+      lineName = `${lineName}-L${i + 1}`;
     }
 
     pushElement(
@@ -293,7 +296,7 @@ function add2dPolylineElement(
         entity.lineweight,
         { fixed: hexFromColorRepr(entity.color, entityLayer.color) },
         canvasLayer,
-        name
+        lineName
       ),
       canvasLayer
     );
@@ -469,7 +472,7 @@ function hexFromColorRepr(color: number | undefined, layerColor?: number): strin
 }
 
 function pixelsFromLineWeight(lineWeight: number | undefined): number {
-  let weight = DEFAULT_LWEIGHT;
+  let weight = MIN_LWEIGHT;
   if (lineWeight !== undefined && lineWeight !== 0) {
     // clamp to min
     if (lineWeight > weight) {
