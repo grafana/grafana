@@ -16,6 +16,7 @@ import {
   SceneObjectBase,
   SceneVariableSet,
 } from '@grafana/scenes';
+import { VariableModel } from '@grafana/schema';
 import { useStyles2 } from '@grafana/ui';
 import {
   createPanelDataProvider,
@@ -76,7 +77,8 @@ function getSceneModel({
   onClickPanel: (panel: PanelModel) => void;
 }) {
   const controls: SceneObject[] = [new VariableValueSelectors({}), new SceneTimePicker({}), new SceneRefreshPicker({})];
-  const compatibleVariableTypes = (panel: PanelModel) => ['query', 'custom', 'constant', 'custom'].includes(panel.type);
+  const compatibleVariableTypes = (variable: VariableModel) =>
+    ['query', 'custom', 'constant', 'datasource'].includes(variable.type);
   const compatiblePanelTypes = (panel: PanelModel) => panel.type !== 'row';
 
   return new EmbeddedScene({

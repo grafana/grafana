@@ -305,6 +305,7 @@ export function createPanelDataProvider(panel: PanelModel): SceneDataProvider | 
   } else {
     dataProvider = new SceneQueryRunner({
       queries: panel.targets,
+      datasource: panel?.datasource ?? undefined,
       maxDataPoints: panel.maxDataPoints ?? undefined,
     });
   }
