@@ -2,8 +2,6 @@ package cachekvstore
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
 	"time"
 )
 
@@ -54,28 +52,4 @@ type StoreKeyGetterFunc func(k string) string
 // GetStoreKey calls the function.
 func (f StoreKeyGetterFunc) GetStoreKey(k string) string {
 	return f(k)
-}
-
-// Marshaler can marshal a value to a string before storing it into the key-value store.
-type Marshaler interface {
-	Marshal() (string, error)
-}
-
-// JSONMarshaler is a Marshaler that marshals the value to JSON.
-type JSONMarshaler struct {
-	value any
-}
-
-// NewJSONMarshaler returns a new JSONMarshaler for the provided value.
-func NewJSONMarshaler(v any) JSONMarshaler {
-	return JSONMarshaler{value: v}
-}
-
-// Marshal marshals the value to JSON using json.Marshal, and returns it as a string.
-func (m JSONMarshaler) Marshal() (string, error) {
-	b, err := json.Marshal(m.value)
-	if err != nil {
-		return "", fmt.Errorf("json marshal: %w", err)
-	}
-	return string(b), nil
 }

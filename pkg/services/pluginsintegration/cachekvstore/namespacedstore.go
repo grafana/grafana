@@ -83,9 +83,10 @@ func (s *NamespacedStore) Get(ctx context.Context, key string) (string, bool, er
 }
 
 // Set sets the value for the given key and updates the last updated time.
-// The value must be a Marshaler, a fmt.Stringer, a string or []byte.
+// It uses the Marshal method to marshal the value before storing it.
+// This means that the value to store can implement the Marshaler interface to control how it is stored.
 func (s *NamespacedStore) Set(ctx context.Context, key string, value any) error {
-	valueToStore, err := marshalValue(value)
+	valueToStore, err := Marshal(value)
 	if err != nil {
 		return fmt.Errorf("marshal: %w", err)
 	}
@@ -135,27 +136,13 @@ func (s *NamespacedStore) ListKeys(ctx context.Context) ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
-	res := make([]string, 0, len(keys))
+	res := make([]string, 0, len(keys)-1)
 	for _, key := range keys {
+		// Filter out last updated time
+		if key.Key == s.lastUpdatedKey {
+			continue
+		}
 		res = append(res, key.Key)
 	}
 	return res, nil
-}
-
-// marshalValue marshals the value to a string.
-// It supports Marshaler, fmt.Stringer, string and []byte.
-// It returns an error if the type is not supported.
-func marshalValue(value any) (string, error) {
-	switch value := value.(type) {
-	case Marshaler:
-		return value.Marshal()
-	case fmt.Stringer:
-		return value.String(), nil
-	case string:
-		return value, nil
-	case []byte:
-		return string(value), nil
-	default:
-		return "", fmt.Errorf("unsupported value type: %T", value)
-	}
 }
