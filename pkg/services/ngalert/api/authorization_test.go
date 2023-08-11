@@ -16,6 +16,7 @@ import (
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/util"
@@ -370,20 +371,20 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 				permissionCombinations = permissionCombinations[0 : len(permissionCombinations)-1] // exclude all permissions
 				for _, missing := range permissionCombinations {
 					executed := false
-					err := authorizeRuleChanges(groupChanges, func(evaluator ac.Evaluator) bool {
+					err := accesscontrol.AuthorizeRuleChanges(groupChanges, func(evaluator ac.Evaluator) bool {
 						response := evaluator.Evaluate(missing)
 						executed = true
 						return response
 					})
 					require.Errorf(t, err, "expected error because less permissions than expected were provided. Provided: %v; Expected: %v", missing, permissions)
-					require.ErrorIs(t, err, ErrAuthorization)
+					require.ErrorIs(t, err, accesscontrol.ErrAuthorization)
 					require.Truef(t, executed, "evaluation function is expected to be called but it was not.")
 				}
 			})
 
 			executed := false
 
-			err := authorizeRuleChanges(groupChanges, func(evaluator ac.Evaluator) bool {
+			err := accesscontrol.AuthorizeRuleChanges(groupChanges, func(evaluator ac.Evaluator) bool {
 				response := evaluator.Evaluate(permissions)
 				require.Truef(t, response, "provided permissions [%v] is not enough for requested permissions [%s]", permissions, evaluator.GoString())
 				executed = true
@@ -426,7 +427,7 @@ func TestCheckDatasourcePermissionsForRule(t *testing.T) {
 
 		executed := 0
 
-		eval := authorizeDatasourceAccessForRule(rule, func(evaluator ac.Evaluator) bool {
+		eval := accesscontrol.AuthorizeDatasourceAccessForRule(rule, func(evaluator ac.Evaluator) bool {
 			response := evaluator.Evaluate(permissions)
 			require.Truef(t, response, "provided permissions [%v] is not enough for requested permissions [%s]", permissions, evaluator.GoString())
 			executed++
@@ -440,7 +441,7 @@ func TestCheckDatasourcePermissionsForRule(t *testing.T) {
 	t.Run("should return on first negative evaluation", func(t *testing.T) {
 		executed := 0
 
-		eval := authorizeDatasourceAccessForRule(rule, func(evaluator ac.Evaluator) bool {
+		eval := accesscontrol.AuthorizeDatasourceAccessForRule(rule, func(evaluator ac.Evaluator) bool {
 			executed++
 			return false
 		})
@@ -463,7 +464,7 @@ func Test_authorizeAccessToRuleGroup(t *testing.T) {
 			datasources.ActionQuery: scopes,
 		}
 
-		result := authorizeAccessToRuleGroup(rules, func(evaluator ac.Evaluator) bool {
+		result := accesscontrol.AuthorizeAccessToRuleGroup(rules, func(evaluator ac.Evaluator) bool {
 			response := evaluator.Evaluate(permissions)
 			require.Truef(t, response, "provided permissions [%v] is not enough for requested permissions [%s]", permissions, evaluator.GoString())
 			return true
@@ -486,7 +487,7 @@ func Test_authorizeAccessToRuleGroup(t *testing.T) {
 		rule := models.AlertRuleGen()()
 		rules = append(rules, rule)
 
-		result := authorizeAccessToRuleGroup(rules, func(evaluator ac.Evaluator) bool {
+		result := accesscontrol.AuthorizeAccessToRuleGroup(rules, func(evaluator ac.Evaluator) bool {
 			response := evaluator.Evaluate(permissions)
 			return response
 		})

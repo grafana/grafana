@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	authz "github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -93,7 +94,7 @@ func (srv RulerSrv) RouteDeleteAlertRules(c *contextmodel.ReqContext, namespaceT
 				return err
 			}
 			if totalGroups > 0 && len(deletionCandidates) == 0 {
-				return fmt.Errorf("%w to delete any existing rules in the namespace", ErrAuthorization)
+				return fmt.Errorf("%w to delete any existing rules in the namespace", authz.ErrAuthorization)
 			}
 		}
 		rulesToDelete := make([]string, 0)
@@ -128,7 +129,7 @@ func (srv RulerSrv) RouteDeleteAlertRules(c *contextmodel.ReqContext, namespaceT
 	})
 
 	if err != nil {
-		if errors.Is(err, ErrAuthorization) {
+		if errors.Is(err, authz.ErrAuthorization) {
 			return ErrResp(http.StatusUnauthorized, err, "failed to delete rule group")
 		}
 		if errors.Is(err, errProvisionedResource) {
@@ -278,7 +279,7 @@ func (srv RulerSrv) updateAlertRulesInGroup(c *contextmodel.ReqContext, groupKey
 			return nil
 		}
 
-		err = authorizeRuleChanges(groupChanges, func(evaluator accesscontrol.Evaluator) bool {
+		err = authz.AuthorizeRuleChanges(groupChanges, func(evaluator accesscontrol.Evaluator) bool {
 			return hasAccess(evaluator)
 		})
 		if err != nil {
@@ -364,7 +365,7 @@ func (srv RulerSrv) updateAlertRulesInGroup(c *contextmodel.ReqContext, groupKey
 			return ErrResp(http.StatusBadRequest, err, "failed to update rule group")
 		} else if errors.Is(err, ngmodels.ErrQuotaReached) {
 			return ErrResp(http.StatusForbidden, err, "")
-		} else if errors.Is(err, ErrAuthorization) {
+		} else if errors.Is(err, authz.ErrAuthorization) {
 			return ErrResp(http.StatusUnauthorized, err, "")
 		} else if errors.Is(err, store.ErrOptimisticLock) {
 			return ErrResp(http.StatusConflict, err, "")
@@ -515,8 +516,8 @@ func (srv RulerSrv) getAuthorizedRuleByUid(ctx context.Context, c *contextmodel.
 	if err != nil {
 		return ngmodels.AlertRule{}, err
 	}
-	if !authorizeAccessToRuleGroup(rules, hasAccess) {
-		return ngmodels.AlertRule{}, fmt.Errorf("%w to access rules in this group", ErrAuthorization)
+	if !authz.AuthorizeAccessToRuleGroup(rules, hasAccess) {
+		return ngmodels.AlertRule{}, fmt.Errorf("%w to access rules in this group", authz.ErrAuthorization)
 	}
 	for _, rule := range rules {
 		if rule.UID == ruleUID {
@@ -541,8 +542,8 @@ func (srv RulerSrv) getAuthorizedRuleGroup(ctx context.Context, c *contextmodel.
 	if err != nil {
 		return nil, err
 	}
-	if !authorizeAccessToRuleGroup(rules, hasAccess) {
-		return nil, fmt.Errorf("%w to access rules in this group", ErrAuthorization)
+	if !authz.AuthorizeAccessToRuleGroup(rules, hasAccess) {
+		return nil, fmt.Errorf("%w to access rules in this group", authz.ErrAuthorization)
 	}
 	return rules, nil
 }
@@ -566,7 +567,7 @@ func (srv RulerSrv) searchAuthorizedAlertRules(ctx context.Context, c *contextmo
 	byGroupKey := ngmodels.GroupByAlertRuleGroupKey(rules)
 	totalGroups := len(byGroupKey)
 	for groupKey, rulesGroup := range byGroupKey {
-		if !authorizeAccessToRuleGroup(rulesGroup, hasAccess) {
+		if !authz.AuthorizeAccessToRuleGroup(rulesGroup, hasAccess) {
 			delete(byGroupKey, groupKey)
 		}
 	}
