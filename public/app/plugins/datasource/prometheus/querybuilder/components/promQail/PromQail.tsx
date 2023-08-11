@@ -10,7 +10,7 @@ import { PromVisualQuery } from '../../types';
 import { QuerySuggestionContainer } from './QuerySuggestionContainer';
 // @ts-ignore until we can get these added for icons
 import AI_Logo_color from './resources/AI_Logo_color.svg';
-import { callOpenAI } from './state/helpers';
+import { promQailExplain, promQailSuggest } from './state/helpers';
 import { initialState, stateSlice } from './state/state';
 import { Interaction, SuggestionType } from './types';
 
@@ -144,7 +144,8 @@ export const PromQail = (props: PromQailProps) => {
                         const isLoading = true;
                         const suggestionType = SuggestionType.Historical;
                         dispatch(addInteraction({ suggestionType, isLoading }));
-                        callOpenAI(dispatch, 0);
+                        //CHECK THIS???
+                        promQailSuggest(dispatch, 0);
                       }}
                     >
                       No
@@ -167,7 +168,7 @@ export const PromQail = (props: PromQailProps) => {
 
             {state.interactions.map((interaction: Interaction, idx: number) => {
               return (
-                <>
+                <div key={idx}>
                   {interaction.suggestionType === SuggestionType.AI ? (
                     <>
                       <div className={styles.textPadding}>What kind of data do you want to see with your metric?</div>
@@ -229,7 +230,7 @@ export const PromQail = (props: PromQailProps) => {
                                     };
 
                                     dispatch(updateInteraction(payload));
-                                    callOpenAI(dispatch, idx, newInteraction);
+                                    promQailSuggest(dispatch, idx, '', newInteraction);
                                   }}
                                 >
                                   Suggest queries instead
@@ -250,7 +251,7 @@ export const PromQail = (props: PromQailProps) => {
 
                                     dispatch(updateInteraction(payload));
                                     // add the suggestions in the API call
-                                    callOpenAI(dispatch, idx, interaction);
+                                    promQailSuggest(dispatch, idx, '/querysuggest', interaction);
                                   }}
                                 >
                                   Submit
@@ -270,6 +271,7 @@ export const PromQail = (props: PromQailProps) => {
                             const suggestionType = SuggestionType.AI;
                             dispatch(addInteraction({ suggestionType, isLoading }));
                           }}
+                          queryExplain={() => promQailExplain(dispatch, idx, interaction)}
                         />
                       )}
                     </>
@@ -291,9 +293,10 @@ export const PromQail = (props: PromQailProps) => {
                         const suggestionType = SuggestionType.AI;
                         dispatch(addInteraction({ suggestionType, isLoading }));
                       }}
+                      queryExplain={() => promQailExplain(dispatch, idx, interaction)}
                     />
                   )}
-                </>
+                </div>
               );
             })}
           </>

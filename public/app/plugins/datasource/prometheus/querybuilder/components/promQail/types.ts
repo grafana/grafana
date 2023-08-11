@@ -13,4 +13,5 @@ export type Interaction = {
   suggestionType: SuggestionType;
   suggestions: QuerySuggestion[];
   isLoading: boolean;
+  explanationIsLoading: boolean;
 };

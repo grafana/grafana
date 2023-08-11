@@ -88,5 +88,6 @@ export function createInteraction(suggestionType: SuggestionType, isLoading?: bo
     prompt: '',
     suggestions: [],
     isLoading: isLoading ?? false,
+    explanationIsLoading: false,
   };
 }

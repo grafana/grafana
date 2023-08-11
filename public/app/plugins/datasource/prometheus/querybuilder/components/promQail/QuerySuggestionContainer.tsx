@@ -12,23 +12,24 @@ export type Props = {
   suggestionType: SuggestionType;
   closeDrawer: () => void;
   nextInteraction: () => void;
+  queryExplain: () => void;
 };
 
 export function QuerySuggestionContainer(props: Props) {
-  const { suggestionType, querySuggestions, closeDrawer, nextInteraction } = props;
+  const { suggestionType, querySuggestions, closeDrawer, nextInteraction, queryExplain } = props;
 
   const theme = useTheme2();
   const styles = getStyles(theme);
 
-  const text = 'Here are 5 query suggestions:';
+  const text = 'Here is your query suggestion:';
   let secondaryText, refineText;
 
   if (suggestionType === SuggestionType.Historical) {
-    secondaryText = 'These queries based off of historical data (top used queries) for your metric.';
+    secondaryText = 'This query is based off of historical data (top used queries) for your metric.';
     refineText = 'I want to write a prompt';
   } else if (suggestionType === SuggestionType.AI) {
     secondaryText =
-      'These queries were based off of natural language descriptions of the most commonly used PromQL queries.';
+      'This query is based off of natural language descriptions of the most commonly used PromQL queries.';
     refineText = 'Refine prompt';
   }
 
@@ -38,7 +39,7 @@ export function QuerySuggestionContainer(props: Props) {
       <div className={cx(styles.secondaryText, styles.bottomMargin)}>{secondaryText}</div>
       <div className={styles.infoContainer}>
         {querySuggestions.map((qs: QuerySuggestion, idx: number) => {
-          return <QuerySuggestionItem querySuggestion={qs} key={idx} order={idx + 1} />;
+          return <QuerySuggestionItem querySuggestion={qs} key={idx} order={idx + 1} queryExplain={queryExplain} />;
         })}
       </div>
       <div>
