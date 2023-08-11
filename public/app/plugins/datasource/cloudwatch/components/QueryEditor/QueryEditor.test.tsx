@@ -34,7 +34,7 @@ const props: QueryEditorProps<CloudWatchDatasource, CloudWatchQuery, CloudWatchJ
 
 const FAKE_EDITOR_LABEL = 'FakeEditor';
 
-jest.mock('./SQLCodeEditor', () => ({
+jest.mock('./MetricsQueryEditor/SQLCodeEditor', () => ({
   SQLCodeEditor: ({ sql, onChange }: { sql: string; onChange: (val: string) => void }) => {
     return (
       <>
