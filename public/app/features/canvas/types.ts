@@ -56,13 +56,13 @@ export interface LineData {
 export interface EllipseConfig {
   backgroundColor?: ColorDimensionConfig;
   borderColor?: ColorDimensionConfig;
-  width?: number;
+  borderWidth?: number;
 }
 
 export interface EllipseData {
   backgroundColor?: string;
   borderColor?: string;
-  width?: number;
+  borderWidth?: number;
 }
 
 export {

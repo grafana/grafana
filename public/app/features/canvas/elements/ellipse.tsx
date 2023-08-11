@@ -20,7 +20,7 @@ class EllipseDisplay extends PureComponent<CanvasElementProps<EllipseConfig, Ell
 
 const getStyles = stylesFactory((theme: GrafanaTheme2, data) => ({
   container: css`
-    border: ${data?.width}px solid ${data?.borderColor};
+    border: ${data?.borderWidth}px solid ${data?.borderColor};
     border-radius: 50%;
     position: absolute;
     width: 100%;
@@ -65,7 +65,7 @@ export const ellipseItem: CanvasElementItem<EllipseConfig, EllipseData> = {
   // Called when data changes
   prepareData: (ctx: DimensionContext, cfg: EllipseConfig) => {
     const data: EllipseData = {
-      width: cfg.width,
+      borderWidth: cfg.borderWidth,
     };
 
     if (cfg.backgroundColor) {
