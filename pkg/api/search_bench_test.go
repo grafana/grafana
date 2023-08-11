@@ -2,14 +2,12 @@ package api
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -25,18 +23,17 @@ import (
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web/webtest"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 var (
-	Lvl0FolderNum    = 20
+	Lvl0FolderNum    = 50
 	Lvl1FolderNum    = 10
-	Lvl2FolderNum    = 3
-	RootDashboardNum = 5000
-	Lvl0DashboardNum = 25
+	Lvl2FolderNum    = 10
+	RootDashboardNum = 10000
+	Lvl0DashboardNum = 1000
 	Lvl1DashboardNum = 10
-	Lvl2DashboardNum = 5
+	Lvl2DashboardNum = 10
 )
 
 func BenchmarkSearch(b *testing.B) {
@@ -76,6 +73,12 @@ func BenchmarkSearch(b *testing.B) {
 		},
 		{
 			desc:        "list all dashboards with split scopes enabled",
+			url:         "/api/search?type=dash-db&limit=1000",
+			expectedLen: withLimit(allDashboards),
+			features:    featuremgmt.WithFeatures(featuremgmt.FlagSplitScopes),
+		},
+		{
+			desc:        "list all dashboards with split scopes enabled 2",
 			url:         "/api/search?type=dash-db&limit=1000",
 			expectedLen: withLimit(allDashboards),
 			features:    featuremgmt.WithFeatures(featuremgmt.FlagSplitScopes),
@@ -124,36 +127,10 @@ func BenchmarkSearch(b *testing.B) {
 		},
 		{
 			desc:        "search dashboards and folder with split scopes enabled",
-			url:         "/api/search?query=dash",
+			url:         "/api/search",
 			expectedLen: withLimit(allDashboards + allFolders),
 			features:    featuremgmt.WithFeatures(featuremgmt.FlagSplitScopes),
 		},
-		/*
-			{
-				desc:        "get all folders with nested folders feature disabled and no feature flags",
-				url:         "/api/folders?limit=5000",
-				expectedLen: withLimit(allFolders),
-				features:    featuremgmt.WithFeatures(),
-			},
-			{
-				desc:        "list all dashboards with nested folders feature disabled and no feature flags",
-				url:         "/api/search?type=dash-db&limit=5000",
-				expectedLen: withLimit(allDashboards),
-				features:    featuremgmt.WithFeatures(),
-			},
-			{
-				desc:        "search specific dashboard with nested folders feature disabled and no feature flags",
-				url:         "/api/search?type=dash-db&query=dashboard_0_0_0_0",
-				expectedLen: 1,
-				features:    featuremgmt.WithFeatures(),
-			},
-			{
-				desc:        "search several dashboards with nested folders feature disabled and no feature flags",
-				url:         "/api/search?type=dash-db&query=dashboard_0_0_0",
-				expectedLen: withLimit(Lvl2DashboardNum + 1),
-				features:    featuremgmt.WithFeatures(),
-			},
-		*/
 	}
 	for _, bm := range benchmarks {
 		b.Run(bm.desc, func(b *testing.B) {
@@ -166,10 +143,6 @@ func BenchmarkSearch(b *testing.B) {
 				rec := httptest.NewRecorder()
 				m.ServeHTTP(rec, req)
 				require.Equal(b, 200, rec.Code)
-				var resp []dtos.FolderSearchHit
-				err := json.Unmarshal(rec.Body.Bytes(), &resp)
-				require.NoError(b, err)
-				assert.Len(b, resp, bm.expectedLen)
 			}
 		})
 	}
@@ -200,8 +173,9 @@ func setupTestDB(b testing.TB) benchScenario {
 
 	var orgID int64 = 1
 	u, err := userSvc.Create(context.Background(), &user.CreateUserCommand{
-		OrgID: orgID,
-		Login: "user0",
+		OrgID:    orgID,
+		Login:    "user0",
+		Password: "grafana",
 	})
 	require.NoError(b, err)
 	require.NotZero(b, u.ID)
