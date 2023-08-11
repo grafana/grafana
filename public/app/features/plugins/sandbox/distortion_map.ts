@@ -474,7 +474,6 @@ async function distortMonacoEditor(distortions: DistortionMap) {
   if (!monacoEditor || Object.hasOwn(monacoEditor, SANDBOX_LIVE_API_PATCHED)) {
     return;
   }
-  console.log('Patching monaco editor');
   const originalSetMonarchTokensProvider = monacoEditor.languages.setMonarchTokensProvider;
 
   // NOTE: this function in particular is called only once per intialized custom language inside a plugin which is a
