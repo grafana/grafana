@@ -5,6 +5,8 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { Button, Checkbox, Input, Spinner, useTheme2 } from '@grafana/ui';
 import store from 'app/core/store';
 
+import { PrometheusDatasource } from '../../../datasource';
+import { getMetadataHelp } from '../../../language_provider';
 import { PromVisualQuery } from '../../types';
 
 import { QuerySuggestionContainer } from './QuerySuggestionContainer';
@@ -21,18 +23,25 @@ export type PromQailProps = {
   query: PromVisualQuery;
   closeDrawer: () => void;
   onChange: (query: PromVisualQuery) => void;
+  datasource: PrometheusDatasource;
 };
 
 const SKIP_STARTING_MESSAGE = 'SKIP_STARTING_MESSAGE';
 
 export const PromQail = (props: PromQailProps) => {
-  const { query, closeDrawer, onChange } = props;
+  const { query, closeDrawer, onChange, datasource } = props;
   const skipStartingMessage = store.getBool(SKIP_STARTING_MESSAGE, false);
 
   const [state, dispatch] = useReducer(stateSlice.reducer, initialState(query, !skipStartingMessage));
 
   const theme = useTheme2();
   const styles = getStyles(theme);
+
+  let metricMetadata: string | undefined = undefined;
+
+  if (datasource.languageProvider.metricsMetadata) {
+    metricMetadata = getMetadataHelp(query.metric, datasource.languageProvider.metricsMetadata!);
+  }
 
   return (
     <div className={styles.containerPadding}>
@@ -271,7 +280,7 @@ export const PromQail = (props: PromQailProps) => {
                             dispatch(addInteraction({ suggestionType, isLoading }));
                           }}
                           queryExplain={(suggIdx: number) =>
-                            promQailExplain(dispatch, idx, query, interaction, suggIdx)
+                            promQailExplain(dispatch, idx, query, interaction, suggIdx, metricMetadata)
                           }
                           onChange={onChange}
                         />
@@ -295,7 +304,9 @@ export const PromQail = (props: PromQailProps) => {
                         const suggestionType = SuggestionType.AI;
                         dispatch(addInteraction({ suggestionType, isLoading }));
                       }}
-                      queryExplain={(suggIdx: number) => promQailExplain(dispatch, idx, query, interaction, suggIdx)}
+                      queryExplain={(suggIdx: number) =>
+                        promQailExplain(dispatch, idx, query, interaction, suggIdx, metricMetadata)
+                      }
                       onChange={onChange}
                     />
                   )}

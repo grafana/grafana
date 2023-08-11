@@ -46,7 +46,8 @@ export async function promQailExplain(
   idx: number,
   query: PromVisualQuery,
   interaction: Interaction,
-  suggIdx: number
+  suggIdx: number,
+  metricMetadata: string | undefined
 ) {
   const check = await promQailHealthcheck();
 
@@ -89,12 +90,19 @@ export async function promQailExplain(
     const url = 'http://localhost:5001/query-explainer';
 
     const suggestedQuery = interaction.suggestions[suggIdx].query;
+
+    // future work, get the metadata for the metric in the suggested query
+    // parse the query, get the metric, find the metadata
+    if (interaction.suggestionType === SuggestionType.Historical) {
+      metricMetadata = '';
+    }
+
     const body = {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ query: suggestedQuery, metric: query.metric, description: '' }),
+      body: JSON.stringify({ query: suggestedQuery, metric: query.metric, description: metricMetadata ?? '' }),
     };
 
     const promQailPromise = fetch(url, body);
@@ -113,9 +121,6 @@ export async function promQailExplain(
     const interactionToUpdate = interaction;
     // switch to returning 1 query until we get more confidence returning more
     const explanation = promQailResp.response;
-
-    console.log(explanation);
-    // interactionToUpdate.suggestions[0].explanation = explanation;
 
     const updatedSuggestions = interactionToUpdate.suggestions.map((sg: QuerySuggestion, sidx: number) => {
       if (suggIdx === sidx) {
