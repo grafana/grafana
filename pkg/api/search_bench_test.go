@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/guardian"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -27,11 +28,11 @@ import (
 )
 
 var (
-	Lvl0FolderNum    = 50
+	Lvl0FolderNum    = 200
 	Lvl1FolderNum    = 10
 	Lvl2FolderNum    = 10
-	RootDashboardNum = 10000
-	Lvl0DashboardNum = 1000
+	RootDashboardNum = 30000
+	Lvl0DashboardNum = 100
 	Lvl1DashboardNum = 10
 	Lvl2DashboardNum = 10
 )
@@ -78,20 +79,14 @@ func BenchmarkSearch(b *testing.B) {
 			features:    featuremgmt.WithFeatures(featuremgmt.FlagSplitScopes),
 		},
 		{
-			desc:        "list all dashboards with split scopes enabled 2",
-			url:         "/api/search?type=dash-db&limit=1000",
-			expectedLen: withLimit(allDashboards),
-			features:    featuremgmt.WithFeatures(featuremgmt.FlagSplitScopes),
-		},
-		{
 			desc:        "search specific dashboard with split scopes enabled",
-			url:         "/api/search?type=dash-db&query=dashboard_0_0_0_0",
+			url:         "/api/search?type=dash-db&query=dashboard_0_0",
 			expectedLen: 1,
 			features:    featuremgmt.WithFeatures(featuremgmt.FlagSplitScopes),
 		},
 		{
 			desc:        "search several dashboards with split scopes enabled",
-			url:         "/api/search?type=dash-db&query=dashboard_0_0_0",
+			url:         "/api/search?type=dash-db&query=dashboard",
 			expectedLen: withLimit(Lvl2DashboardNum + 1),
 			features:    featuremgmt.WithFeatures(featuremgmt.FlagSplitScopes),
 		},
@@ -173,45 +168,77 @@ func setupTestDB(b testing.TB) benchScenario {
 
 	var orgID int64 = 1
 	u, err := userSvc.Create(context.Background(), &user.CreateUserCommand{
-		OrgID:    orgID,
-		Login:    "user0",
-		Password: "grafana",
+		OrgID:          orgID,
+		Login:          "user0",
+		Password:       "grafana",
+		DefaultOrgRole: "Viewer",
 	})
 	require.NoError(b, err)
 	require.NotZero(b, u.ID)
 
-	signedInUser := user.SignedInUser{UserID: u.ID, OrgID: orgID, Permissions: map[int64]map[string][]string{
-		orgID: {dashboards.ActionFoldersCreate: {}, dashboards.ActionFoldersWrite: {dashboards.ScopeFoldersAll}},
-	}}
+	signedInUser := user.SignedInUser{UserID: u.ID, OrgID: orgID, OrgRole: org.RoleViewer}
 
 	now := time.Now()
-	signedInUserRole := accesscontrol.Role{
+	managedViewerRole := accesscontrol.Role{
 		ID:          int64(1),
 		OrgID:       orgID,
 		Version:     1,
-		UID:         "role_1",
-		Name:        "signed_in_user_role",
-		DisplayName: "signed_in_user_role",
-		Group:       "",
-		Description: "signed in user role",
-		Hidden:      false,
+		UID:         "managed_viewer_role",
+		Name:        "managed:builtins:viewer:permissions",
+		DisplayName: "managed_viewer_role",
 		Updated:     now,
 		Created:     now,
 	}
 
-	signedInUserRoleAssignment := accesscontrol.UserRole{
-		ID:      int64(1),
+	managedViewerRoleAssignment := accesscontrol.UserRole{
 		OrgID:   orgID,
-		RoleID:  signedInUserRole.ID,
+		RoleID:  managedViewerRole.ID,
+		UserID:  u.ID,
+		Created: now,
+	}
+
+	managedEditorRole := accesscontrol.Role{
+		ID:          int64(2),
+		OrgID:       orgID,
+		Version:     1,
+		UID:         "managed_editor_role",
+		Name:        "managed:builtins:editor:permissions",
+		DisplayName: "managed_editor_role",
+		Updated:     now,
+		Created:     now,
+	}
+
+	managedEditorRoleAssignment := accesscontrol.UserRole{
+		OrgID:   orgID,
+		RoleID:  managedEditorRole.ID,
+		UserID:  u.ID,
+		Created: now,
+	}
+
+	managedAdminRole := accesscontrol.Role{
+		ID:          int64(3),
+		OrgID:       orgID,
+		Version:     1,
+		UID:         "managed_admin_role",
+		Name:        "managed:builtins:admin:permissions",
+		DisplayName: "managed_admin_role",
+		Updated:     now,
+		Created:     now,
+	}
+
+	managedAdminRoleAssignment := accesscontrol.UserRole{
+		OrgID:   orgID,
+		RoleID:  managedAdminRole.ID,
 		UserID:  u.ID,
 		Created: now,
 	}
 
 	err = db.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-		_, err = sess.Insert(signedInUserRole)
+		_, err = sess.InsertMulti(&[]accesscontrol.Role{managedViewerRole, managedEditorRole, managedAdminRole})
 		require.NoError(b, err)
 
-		_, err = sess.Insert(signedInUserRoleAssignment)
+		_, err = sess.InsertMulti(&[]accesscontrol.UserRole{managedViewerRoleAssignment, managedEditorRoleAssignment, managedAdminRoleAssignment})
+		require.NoError(b, err)
 		return err
 	})
 	require.NoError(b, err)
@@ -227,52 +254,56 @@ func setupTestDB(b testing.TB) benchScenario {
 		dashID := generateID(IDs)
 		dash := createDashboard(orgID, dashID, str, 0)
 		dashs = append(dashs, dash)
-		permissions = append(permissions, createPermission(signedInUserRole.ID, dashboards.ActionDashboardsRead, "dashboards", dash.UID))
+
+		// only add permissions to viewer role half of the time
+		if i%2 == 0 {
+			permissions = append(permissions, dashboardViewPermissions(managedViewerRole.ID, dash.UID)...)
+		}
+		permissions = append(permissions, dashboardEditPermissions(managedEditorRole.ID, dash.UID)...)
+		permissions = append(permissions, dashboardAdminPermissions(managedAdminRole.ID, dash.UID)...)
 	}
 
 	for i := 0; i < Lvl0FolderNum; i++ {
 		f0, d := createFolder(orgID, generateID(IDs), fmt.Sprintf("folder%d", i), nil)
 		folders = append(folders, f0)
 		dashs = append(dashs, d)
-		permissions = append(permissions, createPermission(signedInUserRole.ID, dashboards.ActionFoldersRead, "folders", f0.UID))
-		permissions = append(permissions, createPermission(signedInUserRole.ID, dashboards.ActionDashboardsRead, "folders", f0.UID))
+
+		// only add permissions to viewer role half of the time
+		if i%2 == 0 {
+			permissions = append(permissions, folderViewPermissions(managedViewerRole.ID, f0.UID)...)
+		}
+		permissions = append(permissions, folderEditPermissions(managedEditorRole.ID, f0.UID)...)
+		permissions = append(permissions, folderAdminPermissions(managedAdminRole.ID, f0.UID)...)
 
 		for j := 0; j < Lvl0DashboardNum; j++ {
 			str := fmt.Sprintf("dashboard_%d_%d", i, j)
 			dashID := generateID(IDs)
 			dash := createDashboard(orgID, dashID, str, f0.ID)
 			dashs = append(dashs, dash)
-			permissions = append(permissions, createPermission(signedInUserRole.ID, dashboards.ActionDashboardsRead, "dashboards", dash.UID))
 		}
 
 		for j := 0; j < Lvl1FolderNum; j++ {
 			f1, d1 := createFolder(orgID, generateID(IDs), fmt.Sprintf("folder%d_%d", i, j), &f0.UID)
 			folders = append(folders, f1)
 			dashs = append(dashs, d1)
-			permissions = append(permissions, createPermission(signedInUserRole.ID, dashboards.ActionFoldersRead, "folders", f1.UID))
-			permissions = append(permissions, createPermission(signedInUserRole.ID, dashboards.ActionDashboardsRead, "folders", f1.UID))
 
 			for k := 0; k < Lvl1DashboardNum; k++ {
 				str := fmt.Sprintf("dashboard_%d_%d_%d", i, j, k)
 				dashID := generateID(IDs)
 				dash := createDashboard(orgID, dashID, str, f1.ID)
 				dashs = append(dashs, dash)
-				permissions = append(permissions, createPermission(signedInUserRole.ID, dashboards.ActionDashboardsRead, "dashboards", dash.UID))
 			}
 
 			for k := 0; k < Lvl2FolderNum; k++ {
 				f2, d2 := createFolder(orgID, generateID(IDs), fmt.Sprintf("folder%d_%d_%d", i, j, k), &f1.UID)
 				folders = append(folders, f2)
 				dashs = append(dashs, d2)
-				permissions = append(permissions, createPermission(signedInUserRole.ID, dashboards.ActionFoldersRead, "folders", f2.UID))
-				permissions = append(permissions, createPermission(signedInUserRole.ID, dashboards.ActionDashboardsRead, "folders", f2.UID))
 
 				for l := 0; l < Lvl2DashboardNum; l++ {
 					str := fmt.Sprintf("dashboard_%d_%d_%d_%d", i, j, k, l)
 					dashID := generateID(IDs)
 					dash := createDashboard(orgID, dashID, str, f2.ID)
 					dashs = append(dashs, dash)
-					permissions = append(permissions, createPermission(signedInUserRole.ID, dashboards.ActionDashboardsRead, "dashboards", dash.UID))
 				}
 			}
 		}
@@ -287,6 +318,7 @@ func setupTestDB(b testing.TB) benchScenario {
 		_, err = sess.BulkInsert("dashboard", dashs, opts)
 		require.NoError(b, err)
 
+		println(permissions)
 		_, err = sess.BulkInsert("permission", permissions, opts)
 		return err
 	})
@@ -345,20 +377,98 @@ func createDashboard(orgID int64, id int64, uid string, parentID int64) *dashboa
 	return d
 }
 
-func createPermission(roleID int64, action string, kind string, uid string) accesscontrol.Permission {
-	scope := dashboards.ScopeDashboardsProvider.GetResourceScopeUID(uid)
-	if kind == "folders" {
-		scope = dashboards.ScopeFoldersProvider.GetResourceScopeUID(uid)
-	}
+func dashboardViewPermissions(roleID int64, uid string) []accesscontrol.Permission {
+	return createPermissions(
+		roleID,
+		dashboards.ScopeDashboardsProvider.GetResourceScopeUID(uid),
+		dashboards.ActionDashboardsRead,
+	)
+}
+
+func dashboardEditPermissions(roleID int64, uid string) []accesscontrol.Permission {
+	return createPermissions(
+		roleID,
+		dashboards.ScopeDashboardsProvider.GetResourceScopeUID(uid),
+		dashboards.ActionDashboardsRead,
+		dashboards.ActionDashboardsWrite,
+		dashboards.ActionDashboardsDelete,
+	)
+}
+
+func dashboardAdminPermissions(roleID int64, uid string) []accesscontrol.Permission {
+	return createPermissions(
+		roleID,
+		dashboards.ScopeDashboardsProvider.GetResourceScopeUID(uid),
+		dashboards.ActionDashboardsRead,
+		dashboards.ActionDashboardsWrite,
+		dashboards.ActionDashboardsDelete,
+		dashboards.ActionDashboardsPermissionsRead,
+		dashboards.ActionDashboardsPermissionsWrite,
+	)
+}
+
+func folderViewPermissions(roleID int64, uid string) []accesscontrol.Permission {
+	return createPermissions(
+		roleID,
+		dashboards.ScopeFoldersProvider.GetResourceScopeUID(uid),
+		dashboards.ActionFoldersRead,
+		dashboards.ActionDashboardsRead,
+		accesscontrol.ActionAlertingRuleRead,
+	)
+}
+
+func folderEditPermissions(roleID int64, uid string) []accesscontrol.Permission {
+	return createPermissions(
+		roleID,
+		dashboards.ScopeFoldersProvider.GetResourceScopeUID(uid),
+		dashboards.ActionFoldersRead,
+		dashboards.ActionFoldersWrite,
+		dashboards.ActionFoldersDelete,
+		dashboards.ActionDashboardsRead,
+		dashboards.ActionDashboardsCreate,
+		dashboards.ActionDashboardsWrite,
+		accesscontrol.ActionAlertingRuleRead,
+		accesscontrol.ActionAlertingRuleCreate,
+		accesscontrol.ActionAlertingRuleUpdate,
+	)
+}
+
+func folderAdminPermissions(roleID int64, uid string) []accesscontrol.Permission {
+	return createPermissions(
+		roleID,
+		dashboards.ScopeFoldersProvider.GetResourceScopeUID(uid),
+		dashboards.ActionFoldersRead,
+		dashboards.ActionFoldersWrite,
+		dashboards.ActionFoldersDelete,
+		dashboards.ActionDashboardsRead,
+		dashboards.ActionDashboardsCreate,
+		dashboards.ActionDashboardsWrite,
+		accesscontrol.ActionAlertingRuleRead,
+		accesscontrol.ActionAlertingRuleCreate,
+		accesscontrol.ActionAlertingRuleUpdate,
+		accesscontrol.ActionAlertingRuleDelete,
+		dashboards.ActionFoldersPermissionsRead,
+		dashboards.ActionFoldersPermissionsWrite,
+		dashboards.ActionDashboardsPermissionsRead,
+		dashboards.ActionDashboardsPermissionsWrite,
+	)
+}
+
+func createPermissions(roleID int64, scope string, actions ...string) []accesscontrol.Permission {
+	permissions := make([]accesscontrol.Permission, 0, len(actions))
+
 	now := time.Now()
-	return accesscontrol.Permission{
-		RoleID:     roleID,
-		Action:     action,
-		Scope:      scope,
-		Updated:    now,
-		Created:    now,
-		Kind:       kind,
-		Attribute:  "uid",
-		Identifier: uid,
+	for _, a := range actions {
+		p := accesscontrol.Permission{
+			RoleID:  roleID,
+			Action:  a,
+			Scope:   scope,
+			Updated: now,
+			Created: now,
+		}
+		p.Kind, p.Attribute, p.Identifier = p.SplitScope()
+		permissions = append(permissions, p)
 	}
+
+	return permissions
 }
