@@ -99,8 +99,9 @@ export const PromQueryBuilder = React.memo<Props>((props) => {
                 setShowDrawer(true);
               }}
               title={'Get query suggestions.'}
+              disabled={!query.metric}
             >
-              <img src={AI_Logo_color} alt="AI logo black and white" />
+              <img height={16} src={AI_Logo_color} alt="AI logo black and white" />
               {'\u00A0'}Get query suggestions
             </Button>
           </div>

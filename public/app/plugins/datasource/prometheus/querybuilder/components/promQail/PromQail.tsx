@@ -39,9 +39,7 @@ export const PromQail = (props: PromQailProps) => {
       {/* header */}
       <div className={styles.header}>
         <h3>Query advisor</h3>
-        <Button fill="text" variant="secondary" onClick={closeDrawer}>
-          x
-        </Button>
+        <Button icon="times" fill="text" variant="secondary" onClick={closeDrawer} />
       </div>
       {/* Starting message */}
 
@@ -346,16 +344,15 @@ export const getStyles = (theme: GrafanaTheme2) => {
       padding: 0px 28px 28px 28px;
     `,
     textPadding: css`
-      padding-bottom: 15px;
+      padding-bottom: 12px;
     `,
     containerPadding: css`
       padding: 28px;
     `,
     infoContainer: css`
       border: 1px solid #ccccdc38;
-      padding: 28px;
+      padding: 16px;
       background-color: #22252b;
-      margin-top: 10px;
       margin-bottom: 20px;
       border-radius: 8px 8px 8px 0;
     `,
@@ -384,9 +381,8 @@ export const getStyles = (theme: GrafanaTheme2) => {
     `,
     loadingMessageContainer: css`
       border: 1px solid #ccccdc38;
-      padding: 28px;
+      padding: 16px;
       background-color: #22252b;
-      margin-top: 10px;
       margin-bottom: 20px;
       border-radius: 8px;
       color: ${theme.colors.text.secondary};
@@ -417,6 +413,10 @@ export const getStyles = (theme: GrafanaTheme2) => {
     afterButtons: css`
       display: flex;
       justify-content: flex-end;
+    `,
+    feedbackPadding: css`
+      padding-top: 22px;
+      padding-bottom: 22px;
     `,
   };
 };
