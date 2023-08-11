@@ -1,13 +1,6 @@
 import { SpanKind, SpanStatusCode } from '@opentelemetry/api';
 
-import {
-  DataSourceInstanceSettings,
-  FieldDTO,
-  FieldType,
-  MutableDataFrame,
-  sortDataFrame,
-  ThresholdsMode,
-} from '@grafana/data';
+import { DataSourceInstanceSettings, FieldDTO, FieldType, MutableDataFrame, sortDataFrame } from '@grafana/data';
 
 type MetricsSummary = {
   spanCount: string;
@@ -93,10 +86,10 @@ export function createTableFrameFromMetricsQuery(
           type: FieldType.string,
           config: { displayNameFromDS: 'Error', unit: 'percent', custom: { width: 150 } },
         },
-        getPercentileRow('p50', 'green'),
-        getPercentileRow('p90', 'yellow'),
-        getPercentileRow('p95', 'orange'),
-        getPercentileRow('p99', 'red'),
+        getPercentileRow('p50'),
+        getPercentileRow('p90'),
+        getPercentileRow('p95'),
+        getPercentileRow('p99'),
       ],
       meta: {
         preferredVisualisationType: 'table',
@@ -197,7 +190,7 @@ const getMetricValue = (series: Series) => {
   }
 };
 
-const getPercentileRow = (name: string, color: string) => {
+const getPercentileRow = (name: string) => {
   return {
     name: name,
     type: FieldType.string,
@@ -206,16 +199,6 @@ const getPercentileRow = (name: string, color: string) => {
       unit: 'ns',
       custom: {
         width: 150,
-        displayMode: 'color-background',
-      },
-      thresholds: {
-        steps: [
-          {
-            color: color,
-            value: -Infinity,
-          },
-        ],
-        mode: ThresholdsMode.Absolute,
       },
     },
   };
