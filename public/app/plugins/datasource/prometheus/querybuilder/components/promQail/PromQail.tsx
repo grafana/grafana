@@ -418,5 +418,8 @@ export const getStyles = (theme: GrafanaTheme2) => {
       padding-top: 22px;
       padding-bottom: 22px;
     `,
+    nextInteractionHeight: css`
+      height: 88px;
+    `,
   };
 };

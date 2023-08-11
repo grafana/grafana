@@ -42,7 +42,7 @@ export function QuerySuggestionContainer(props: Props) {
           return <QuerySuggestionItem querySuggestion={qs} key={idx} order={idx + 1} queryExplain={queryExplain} />;
         })}
       </div>
-      <div>
+      <div className={styles.nextInteractionHeight}>
         <div className={cx(styles.afterButtons, styles.textPadding)}>
           <Button onClick={nextInteraction} fill="outline" variant="secondary" size="md">
             {refineText}
