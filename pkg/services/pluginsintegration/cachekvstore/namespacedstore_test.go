@@ -12,6 +12,12 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestDefaultStoreKeyGetter(t *testing.T) {
+	t.Run("returns the key", func(t *testing.T) {
+		require.Equal(t, "key", DefaultStoreKeyGetter.GetStoreKey("key"))
+	})
+}
+
 func TestPrefixStoreKeyGetter(t *testing.T) {
 	t.Run("adds the specified prefix", func(t *testing.T) {
 		require.Equal(t, "prefix-key", PrefixStoreKeyGetter("prefix-").GetStoreKey("key"))
@@ -105,7 +111,7 @@ func TestNamespacedStore(t *testing.T) {
 
 	t.Run("options", func(t *testing.T) {
 		t.Run("store key getter", func(t *testing.T) {
-			mockKeyGetter := newMockStoreKeyGetter(DefaultStoreKeyGetterFunc)
+			mockKeyGetter := newMockStoreKeyGetter(DefaultStoreKeyGetter)
 			store := NewNamespacedStore(
 				kvstore.NewFakeKVStore(), namespace,
 				WithStoreKeyGetter(mockKeyGetter),
@@ -116,7 +122,7 @@ func TestNamespacedStore(t *testing.T) {
 				// (testify can't compare functions, so compare their pointers)
 				require.Equal(
 					t,
-					reflect.ValueOf(DefaultStoreKeyGetterFunc).Pointer(),
+					reflect.ValueOf(DefaultStoreKeyGetter).Pointer(),
 					reflect.ValueOf(store.storeKeyGetter).Pointer(),
 				)
 			})

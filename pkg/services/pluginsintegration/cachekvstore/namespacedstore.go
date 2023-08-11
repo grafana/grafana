@@ -31,8 +31,8 @@ type NamespacedStore struct {
 	setLastUpdatedOnDelete bool
 }
 
-// DefaultStoreKeyGetterFunc is the default StoreKeyGetterFunc, which returns the key as-is.
-var DefaultStoreKeyGetterFunc = StoreKeyGetterFunc(func(k string) string {
+// DefaultStoreKeyGetter is the default StoreKeyGetterFunc, which returns the key as-is.
+var DefaultStoreKeyGetter = StoreKeyGetterFunc(func(k string) string {
 	return k
 })
 
@@ -72,7 +72,7 @@ func WithSetLastUpdatedOnDelete(updateLastUpdatedOnDelete bool) NamespacedStoreO
 func NewNamespacedStore(kv kvstore.KVStore, namespace string, opts ...NamespacedStoreOpt) *NamespacedStore {
 	store := &NamespacedStore{
 		kv:                     kvstore.WithNamespace(kv, 0, namespace),
-		storeKeyGetter:         DefaultStoreKeyGetterFunc,
+		storeKeyGetter:         DefaultStoreKeyGetter,
 		lastUpdatedKey:         DefaultLastUpdatedKey,
 		setLastUpdatedOnDelete: true,
 	}
