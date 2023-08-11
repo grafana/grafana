@@ -102,7 +102,9 @@ export function NavBarMenu({ activeItem, navItems, searchBarHidden, onClose }: P
 NavBarMenu.displayName = 'NavBarMenu';
 
 const getStyles = (theme: GrafanaTheme2, searchBarHidden?: boolean) => {
-  const topPosition = (searchBarHidden ? TOP_BAR_LEVEL_HEIGHT : TOP_BAR_LEVEL_HEIGHT * 2) + 1;
+  const topPosition = searchBarHidden
+    ? `calc(${TOP_BAR_LEVEL_HEIGHT + 1}px + env(safe-area-inset-top))`
+    : `calc(${TOP_BAR_LEVEL_HEIGHT * 2 + 1}px + env(safe-area-inset-top))`;
 
   return {
     backdrop: css({
