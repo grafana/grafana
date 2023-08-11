@@ -1,12 +1,17 @@
 import { produce } from 'immer';
+import { Observable } from 'rxjs';
 
 import {
+  DataQuery,
+  DataQueryRequest,
+  DataQueryResponse,
   DataSourceApi,
   DataSourceInstanceSettings,
   DataSourceJsonData,
   DataSourcePluginMeta,
   DataSourceRef,
   ScopedVars,
+  TestDataSourceResponse,
 } from '@grafana/data';
 import { config, DataSourceSrv, GetDataSourceListFilters } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -320,6 +325,19 @@ export const mockReceiversState = (partial: Partial<ReceiversState> = {}): Recei
   };
 };
 
+class MockDataSourceApi extends DataSourceApi {
+  constructor(instanceSettings: DataSourceInstanceSettings<DataSourceJsonData>) {
+    super(instanceSettings);
+  }
+
+  query(request: DataQueryRequest<DataQuery>): Promise<DataQueryResponse> | Observable<DataQueryResponse> {
+    throw new Error('Method not implemented.');
+  }
+  testDatasource(): Promise<TestDataSourceResponse> {
+    throw new Error('Method not implemented.');
+  }
+}
+
 export class MockDataSourceSrv implements DataSourceSrv {
   datasources: Record<string, DataSourceApi> = {};
   // @ts-ignore
@@ -350,6 +368,7 @@ export class MockDataSourceSrv implements DataSourceSrv {
       if (dsSettings.isDefault) {
         this.defaultName = dsSettings.name;
       }
+      this.datasources[dsSettings.uid] = new MockDataSourceApi(dsSettings);
     }
   }
 

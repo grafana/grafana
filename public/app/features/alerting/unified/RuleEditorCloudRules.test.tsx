@@ -5,7 +5,6 @@ import { renderRuleEditor, ui } from 'test/helpers/alertingRuleEditor';
 import { clickSelectOption } from 'test/helpers/selectOptionInTest';
 import { byRole } from 'testing-library-selector';
 
-import { setDataSourceSrv } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 import { PromApplication } from 'app/types/unified-alerting-dto';
 
@@ -14,9 +13,9 @@ import { searchFolders } from '../../manage-dashboards/state/actions';
 import { discoverFeatures } from './api/buildInfo';
 import { fetchRulerRules, fetchRulerRulesGroup, fetchRulerRulesNamespace, setRulerRuleGroup } from './api/ruler';
 import { ExpressionEditorProps } from './components/rule-editor/ExpressionEditor';
-import { disableRBAC, mockDataSource, MockDataSourceSrv } from './mocks';
+import { disableRBAC, mockDataSource } from './mocks';
 import { fetchRulerRulesIfNotFetchedYet } from './state/actions';
-import * as config from './utils/config';
+import { setupDatasources } from './testSetup/datasources';
 
 jest.mock('./components/rule-editor/ExpressionEditor', () => ({
   // eslint-disable-next-line react/display-name
@@ -45,29 +44,16 @@ jest.mock('./components/rule-editor/util', () => {
 });
 
 const dataSources = {
-  default: mockDataSource(
-    {
-      type: 'prometheus',
-      name: 'Prom',
-      isDefault: true,
-    },
-    { alerting: true }
-  ),
+  default: mockDataSource({ type: 'prometheus', name: 'Prom', isDefault: true }, { alerting: true }),
 };
 
-jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
-  getDataSourceSrv: jest.fn(() => ({
-    getInstanceSettings: () => dataSources.default,
-    get: () => dataSources.default,
-  })),
-}));
+setupDatasources(dataSources.default);
 
 jest.mock('app/core/components/AppChrome/AppChromeUpdate', () => ({
   AppChromeUpdate: ({ actions }: { actions: React.ReactNode }) => <div>{actions}</div>,
 }));
 
-jest.spyOn(config, 'getAllDataSources');
+// jest.spyOn(config, 'getAllDataSources');
 
 // these tests are rather slow because we have to wait for various API calls and mocks to be called
 // and wait for the UI to be in particular states, drone seems to time out quite often so
@@ -76,7 +62,6 @@ jest.spyOn(config, 'getAllDataSources');
 jest.setTimeout(60 * 1000);
 
 const mocks = {
-  getAllDataSources: jest.mocked(config.getAllDataSources),
   searchFolders: jest.mocked(searchFolders),
   api: {
     discoverFeatures: jest.mocked(discoverFeatures),
@@ -100,8 +85,6 @@ describe('RuleEditor cloud', () => {
   disableRBAC();
 
   it('can create a new cloud alert', async () => {
-    setDataSourceSrv(new MockDataSourceSrv(dataSources));
-    mocks.getAllDataSources.mockReturnValue(Object.values(dataSources));
     mocks.api.setRulerRuleGroup.mockResolvedValue();
     mocks.api.fetchRulerRulesNamespace.mockResolvedValue([]);
     mocks.api.fetchRulerRulesGroup.mockResolvedValue({
