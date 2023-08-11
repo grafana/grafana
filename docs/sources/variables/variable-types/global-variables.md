@@ -1,6 +1,7 @@
 ---
 aliases:
-  - ../global-variables.md/
+  - ../global-variables/
+canonical: https://grafana.com/docs/grafana/latest/dashboards/variables/add-template-variables/
 keywords:
   - grafana
   - templating
