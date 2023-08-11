@@ -7,6 +7,7 @@ import {
   ILayersTable,
   ILineEntity,
   ILwpolylineEntity,
+  IPolylineEntity,
   IPointEntity,
   ITextEntity,
   IViewPort,
@@ -108,6 +109,8 @@ function addEntity(entity: IEntity, entityLayer: ILayer, canvasLayer: FrameState
       addLineElement(entity, entityLayer, canvasLayer);
     } else if (isILwpolylineEntity(entity)) {
       addLwPolylineElement(entity, entityLayer, canvasLayer);
+    } else if (isPolyLineEntity(entity) && isSupportedPolyLineEntity(entity)) {
+      add2dPolylineElement(entity, entityLayer, canvasLayer);
     } else if (isCircleEntity(entity)) {
       addCircleElement(entity, entityLayer, canvasLayer);
     } else if (isEllipseEntity(entity)) {
@@ -132,6 +135,20 @@ function isLineEntity(entity: IEntity): entity is ILineEntity {
 
 function isILwpolylineEntity(entity: IEntity): entity is ILwpolylineEntity {
   return entity.type === 'LWPOLYLINE';
+}
+
+function isPolyLineEntity(entity: IEntity): entity is IPolylineEntity {
+  return entity.type === 'POLYLINE';
+}
+
+function isSupportedPolyLineEntity(entity: IPolylineEntity): boolean {
+  return (
+    !entity.includesCurveFitVertices &&
+    !entity.includesSplineFitVertices &&
+    !entity.is3dPolyline &&
+    !entity.is3dPolygonMesh &&
+    !entity.isPolyfaceMesh
+  );
 }
 
 function isCircleEntity(entity: IEntity): entity is ICircleEntity {
@@ -212,6 +229,29 @@ function addLwPolylineElement(entity: ILwpolylineEntity, entityLayer: ILayer, ca
     canvasLayer.addElement(
       newLineElementState(
         lineFromVertices(entity.vertices.slice(i, i + 2)),
+        entity.lineweight,
+        { fixed: hexFromColorRepr(entity.color, entityLayer) },
+        canvasLayer
+      )
+    );
+  }
+}
+
+function add2dPolylineElement(entity: IPolylineEntity, entityLayer: ILayer, canvasLayer: FrameState) {
+  let bound = entity.vertices.length - 1;
+  if (entity.shape) {
+    bound++;
+  }
+
+  for (let i = 0; i < bound; i++) {
+    let vertices = entity.vertices.slice(i, i + 2);
+    if (entity.shape && i + 1 === entity.vertices.length) {
+      vertices = [entity.vertices[entity.vertices.length - 1], entity.vertices[0]];
+    }
+
+    canvasLayer.addElement(
+      newLineElementState(
+        lineFromVertices(vertices),
         entity.lineweight,
         { fixed: hexFromColorRepr(entity.color, entityLayer) },
         canvasLayer

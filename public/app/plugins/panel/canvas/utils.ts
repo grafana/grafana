@@ -132,6 +132,7 @@ export async function onImportFile(target: EventTarget & HTMLInputElement, layer
     }
   } catch (error) {
     const msg = error instanceof Error ? error.message : String(error);
+    console.error(error);
     appEvents.emit(AppEvents.alertError, [errMsgHeader, msg]);
   }
 }
