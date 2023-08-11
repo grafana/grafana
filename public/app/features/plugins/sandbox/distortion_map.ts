@@ -7,7 +7,7 @@ import { Monaco } from '@grafana/ui';
 import { loadScriptIntoSandbox } from './code_loader';
 import { forbiddenElements } from './constants';
 import { SandboxEnvironment } from './types';
-import { logWarning, unboxRegexesFromMembraneProxy, waitForObjectKeyAvailable } from './utils';
+import { logWarning, unboxRegexesFromMembraneProxy } from './utils';
 
 /**
  * Distortions are near-membrane mechanisms to altert JS instrics and DOM APIs.
@@ -67,6 +67,8 @@ type DistortionMap = Map<
 const generalDistortionMap: DistortionMap = new Map();
 
 const monitorOnly = Boolean(config.featureToggles.frontendSandboxMonitorOnly);
+
+const SANDBOX_LIVE_API_PATCHED = Symbol.for('@SANDBOX_LIVE_API_PATCHED');
 
 export function getGeneralSandboxDistortionMap() {
   if (generalDistortionMap.size === 0) {
@@ -466,10 +468,16 @@ async function distortMonacoEditor(distortions: DistortionMap) {
   // import `monaco-editor` directly in this file.
   // Short of abusing the `window.monaco` object we would have to modify grafana-ui to export
   // the monaco instance directly in the ReactMonacoEditor component
-  const monacoEditor = await waitForObjectKeyAvailable<Monaco>(window, 'monaco');
+  const monacoEditor: Monaco = Reflect.get(window, 'monaco');
+
+  // do not double patch
+  if (!monacoEditor || Object.hasOwn(monacoEditor, SANDBOX_LIVE_API_PATCHED)) {
+    return;
+  }
+  console.log('Patching monaco editor');
   const originalSetMonarchTokensProvider = monacoEditor.languages.setMonarchTokensProvider;
 
-  // NOTE: this function is particular is called only once per intialized custom language inside a plugin which is a
+  // NOTE: this function in particular is called only once per intialized custom language inside a plugin which is a
   // rare ocurrance but if not patched it'll break the syntax highlighting for the custom language.
   function getSetMonarchTokensProvider() {
     return function (...args: Parameters<typeof originalSetMonarchTokensProvider>) {
@@ -484,4 +492,17 @@ async function distortMonacoEditor(distortions: DistortionMap) {
     };
   }
   distortions.set(monacoEditor.languages.setMonarchTokensProvider, getSetMonarchTokensProvider);
+  Reflect.set(monacoEditor, SANDBOX_LIVE_API_PATCHED, {});
+}
+
+/**
+ * We define "live" APIs as APIs that can only be distorted in runtime on-the-fly and not at initialization
+ * time like other distortions do.
+ *
+ * This could be because the objects we want to patch only become available after specific states are reached
+ * or because the libraries we want to patch are lazy-loaded and we don't have access to their definitions
+ *
+ */
+export async function distortLiveApis() {
+  distortMonacoEditor(generalDistortionMap);
 }

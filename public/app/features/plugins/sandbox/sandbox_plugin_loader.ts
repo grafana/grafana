@@ -6,7 +6,7 @@ import { PluginMeta } from '@grafana/data';
 import { getPluginSettings } from '../pluginSettings';
 
 import { getPluginCode } from './code_loader';
-import { getGeneralSandboxDistortionMap } from './distortion_map';
+import { getGeneralSandboxDistortionMap, distortLiveApis } from './distortion_map';
 import {
   getSafeSandboxDomElement,
   isDomElement,
@@ -60,6 +60,7 @@ async function doImportPluginModuleInSandbox(meta: PluginMeta): Promise<unknown>
       } else {
         patchObjectAsLiveTarget(originalValue);
       }
+      distortLiveApis();
       const distortion = generalDistortionMap.get(originalValue);
       if (distortion) {
         return distortion(originalValue, meta, sandboxEnvironment) as ProxyTarget;

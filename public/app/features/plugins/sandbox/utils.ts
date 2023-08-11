@@ -38,24 +38,6 @@ export function logError(error: Error, context?: LogContext) {
   logErrorRuntime(error, context);
 }
 
-export function waitForObjectKeyAvailable<T>(object: unknown, key: string): Promise<T> {
-  let timeout = 10000;
-  let waitTime = 2;
-  return new Promise((resolve, reject) => {
-    const interval = setInterval(() => {
-      if (timeout <= 0) {
-        clearInterval(interval);
-        reject();
-      }
-      if (object && Reflect.has(object, key)) {
-        clearInterval(interval);
-        resolve(Reflect.get(object, key));
-      }
-      timeout -= waitTime;
-    }, waitTime);
-  });
-}
-
 function isRegex(value: unknown): value is RegExp {
   return value?.constructor?.name === 'RegExp';
 }
