@@ -10,10 +10,11 @@ export type Props = {
   querySuggestion: QuerySuggestion;
   order: number;
   queryExplain: () => void;
+  historical: boolean;
 };
 
 export function QuerySuggestionItem(props: Props) {
-  const { querySuggestion, order, queryExplain } = props;
+  const { querySuggestion, order, queryExplain, historical } = props;
   const [showExp, updShowExp] = useState<boolean>(false);
 
   const theme = useTheme2();
@@ -38,11 +39,12 @@ export function QuerySuggestionItem(props: Props) {
             updShowExp(!showExp);
             queryExplain();
           }}
-          className={styles.bodySmall}
+          className={cx(styles.bodySmall)}
           size="sm"
         >
           Explainer
         </Button>
+        {historical && !showExp && order !== 5 && <div className={styles.textPadding}></div>}
         {showExp && (
           <>
             <div className={cx(styles.bodySmall, styles.explainPadding)}>
@@ -71,16 +73,24 @@ export function QuerySuggestionItem(props: Props) {
                 </div>
               </div>
             </div>
-            {/* {order !== 5 && <hr />} */}
+
+            {historical && order !== 5 && <hr />}
           </>
         )}
-        {/* {order === 5 && ( */}
-        <div className={cx(styles.feedbackPadding)}>
-          <Button fill="outline" variant="secondary" size="sm" className={styles.floatRight}>
-            Give feedback on suggestions
-          </Button>
-        </div>
-        {/* )} */}
+        {historical && order === 5 && (
+          <div className={cx(styles.feedbackPadding)}>
+            <Button fill="outline" variant="secondary" size="sm" className={styles.floatRight}>
+              Give feedback on suggestions
+            </Button>
+          </div>
+        )}
+        {!historical && (
+          <div className={cx(styles.feedbackPadding)}>
+            <Button fill="outline" variant="secondary" size="sm" className={styles.floatRight}>
+              Give feedback on suggestions
+            </Button>
+          </div>
+        )}
       </div>
     </>
   );

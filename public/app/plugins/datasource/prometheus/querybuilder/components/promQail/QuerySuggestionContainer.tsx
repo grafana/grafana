@@ -21,13 +21,14 @@ export function QuerySuggestionContainer(props: Props) {
   const theme = useTheme2();
   const styles = getStyles(theme);
 
-  const text = 'Here is your query suggestion:';
-  let secondaryText, refineText;
+  let text, secondaryText, refineText;
 
   if (suggestionType === SuggestionType.Historical) {
-    secondaryText = 'This query is based off of historical data (top used queries) for your metric.';
+    text = 'Here are 5 query suggestions:';
+    secondaryText = 'These queries are based off of historical data (top used queries) for your metric.';
     refineText = 'I want to write a prompt';
   } else if (suggestionType === SuggestionType.AI) {
+    text = text = 'Here is your query suggestion:';
     secondaryText =
       'This query is based off of natural language descriptions of the most commonly used PromQL queries.';
     refineText = 'Refine prompt';
@@ -39,7 +40,15 @@ export function QuerySuggestionContainer(props: Props) {
       <div className={cx(styles.secondaryText, styles.bottomMargin)}>{secondaryText}</div>
       <div className={styles.infoContainer}>
         {querySuggestions.map((qs: QuerySuggestion, idx: number) => {
-          return <QuerySuggestionItem querySuggestion={qs} key={idx} order={idx + 1} queryExplain={queryExplain} />;
+          return (
+            <QuerySuggestionItem
+              historical={suggestionType === SuggestionType.Historical}
+              querySuggestion={qs}
+              key={idx}
+              order={idx + 1}
+              queryExplain={queryExplain}
+            />
+          );
         })}
       </div>
       <div className={styles.nextInteractionHeight}>

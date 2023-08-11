@@ -10,24 +10,24 @@ const { updateInteraction } = stateSlice.actions;
 export const querySuggestions: QuerySuggestion[] = [
   {
     query: 'up{instance="localhost:3000"}',
-    explanation: '',
+    explanation: 'Explanation for you!',
   },
-  // {
-  //   query: 'up{instance="localhost:3000"}',
-  //   explanation: 'This query is measuring a certain amount of things. It will help you know that your service is up.',
-  // },
-  // {
-  //   query: 'up{instance="localhost:3000"}',
-  //   explanation: 'This query is measuring a certain amount of things. It will help you know that your service is up.',
-  // },
-  // {
-  //   query: 'up{instance="localhost:3000"}',
-  //   explanation: 'This query is measuring a certain amount of things. It will help you know that your service is up.',
-  // },
-  // {
-  //   query: 'up{instance="localhost:3000"}',
-  //   explanation: 'This query is measuring a certain amount of things. It will help you know that your service is up.',
-  // },
+  {
+    query: 'up{instance="localhost:3000"}',
+    explanation: 'This query is measuring a certain amount of things. It will help you know that your service is up.',
+  },
+  {
+    query: 'up{instance="localhost:3000"}',
+    explanation: 'This query is measuring a certain amount of things. It will help you know that your service is up.',
+  },
+  {
+    query: 'up{instance="localhost:3000"}',
+    explanation: 'This query is measuring a certain amount of things. It will help you know that your service is up.',
+  },
+  {
+    query: 'up{instance="localhost:3000"}',
+    explanation: 'This query is measuring a certain amount of things. It will help you know that your service is up.',
+  },
 ];
 
 /**
@@ -42,20 +42,30 @@ export async function promQailExplain(dispatch: React.Dispatch<AnyAction>, idx: 
   // HISTORICAL RESPONSE
   new Promise<void>((resolve) => {
     return setTimeout(() => {
-      const interactionToUpdate = interaction;
+      const interactionBase = interaction;
 
-      const payload = {
-        idx,
-        interaction: {
-          ...interactionToUpdate,
+      let inter;
+      if (interactionBase.suggestionType === SuggestionType.AI) {
+        inter = {
+          ...interactionBase,
           isLoading: false,
           suggestions: [
             {
-              query: interactionToUpdate.suggestions[0].query,
+              query: interactionBase.suggestions[0].query,
               explanation: 'this is the AI explanation.',
             },
           ],
-        },
+        };
+      } else {
+        inter = {
+          ...interactionBase,
+          isLoading: false,
+        };
+      }
+
+      const payload = {
+        idx,
+        interaction: inter,
         explanation: 'Here is an explanation.',
       };
       dispatch(updateInteraction(payload));
@@ -153,9 +163,12 @@ export async function promQailSuggest(
     return setTimeout(() => {
       const interactionToUpdate = interaction ? interaction : createInteraction(SuggestionType.Historical);
 
+      const suggestions =
+        interactionToUpdate.suggestionType === SuggestionType.Historical ? querySuggestions : [querySuggestions[0]];
+
       const payload = {
         idx,
-        interaction: { ...interactionToUpdate, suggestions: querySuggestions, isLoading: false },
+        interaction: { ...interactionToUpdate, suggestions: suggestions, isLoading: false },
       };
       dispatch(updateInteraction(payload));
       resolve();
