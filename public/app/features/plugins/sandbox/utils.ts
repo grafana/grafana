@@ -43,7 +43,7 @@ function isRegex(value: unknown): value is RegExp {
 }
 
 /**
- * Near membrane regex proxy objects behave just exactly the same as proxies
+ * Near membrane regex proxy objects behave just exactly the same as regular RegExp objects
  * with only one difference: they are not `instanceof RegExp`.
  * This function takes a structure and makes sure any regex that is a nearmembraneproxy
  * and returns the same regex but in the bluerealm
