@@ -263,11 +263,4 @@ export class FrameState extends ElementState {
       elements: this.elements.map((v) => v.getSaveModel()),
     };
   }
-
-  addElement(element: ElementState) {
-    this.elements.push(element);
-    this.scene.byName.set(element.options.name, element);
-    this.scene.save();
-    this.reinitializeMoveable();
-  }
 }

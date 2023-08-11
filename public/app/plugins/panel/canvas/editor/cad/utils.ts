@@ -4,13 +4,13 @@ import {
   IEllipseEntity,
   IEntity,
   ILayer,
-  ILayersTable,
   ILineEntity,
   ILwpolylineEntity,
   IPolylineEntity,
   IPointEntity,
   ITextEntity,
   IViewPort,
+  IDxf,
 } from 'dxf-parser';
 
 import { ColorDimensionConfig } from '@grafana/schema';
@@ -33,21 +33,19 @@ import { ElementState } from 'app/features/canvas/runtime/element';
 import { FrameState } from 'app/features/canvas/runtime/frame';
 import { Scene } from 'app/features/canvas/runtime/scene';
 
-import { LayerActionID } from '../../types';
-
 const BOTTOM_LEFT_CONSTRAINT = {
   horizontal: HorizontalConstraint.Left,
   vertical: VerticalConstraint.Bottom,
 };
 
-const TEMP_MULTIPLIER = 15;
+const SCALE = 3;
 
-const DEFAULT_LWEIGHT = 25;
+const MIN_LWEIGHT = 25;
 
 interface Ellipse {
   width: number;
   height: number;
-  rotation?: number;
+  rotation: number;
   midPoint: Point;
 }
 
@@ -71,25 +69,43 @@ export async function handleDxfFile(file: File, canvasLayer: FrameState) {
     throw new Error('Failed to parse DXF file');
   }
 
-  console.debug('dxf', dxf); // eslint-disable-line no-console
-  console.debug('scene', canvasLayer.scene); // eslint-disable-line no-console
+  for (const element of canvasLayer.elements) {
+    canvasLayer.elements = canvasLayer.elements.filter((e) => e !== element);
+    fastUpdateConnectionsForSource(element, canvasLayer.scene);
+    canvasLayer.scene.byName.delete(element.options.name);
+  }
 
-  canvasLayer.elements.forEach((element) => {
-    canvasLayer.doAction(LayerActionID.Delete, element);
-  });
+  addEntityLoop(dxf, canvasLayer);
 
-  dxf.entities.forEach((entity: IEntity) => {
-    addEntity(entity, getEntityLayer(entity, dxf.tables.layer), canvasLayer);
-  });
-
-  updateScene(canvasLayer.scene, dxf.tables.viewPort.viewPorts[0], canvasLayer);
+  updateScene(canvasLayer, dxf.tables.viewPort.viewPorts[0]);
 }
 
-function getEntityLayer(entity: IEntity, cadLayers: ILayersTable): ILayer {
-  return cadLayers.layers[entity.layer];
+function addEntityLoop(dxf: IDxf, canvasLayer: FrameState) {
+  const layerMap = new Map<string, IEntity[]>();
+  const mapEntity = (entity: IEntity, name: string) => {
+    if (!layerMap.has(name)) {
+      layerMap.set(name, []);
+    }
+    layerMap.get(name)?.push(entity);
+  };
+
+  for (const entity of dxf.entities) {
+    if (isNaN(+entity.layer)) {
+      mapEntity(entity, entity.layer);
+    } else {
+      addEntity(entity, dxf.tables.layer.layers[entity.layer], canvasLayer);
+    }
+  }
+
+  for (const [layerName, entities] of layerMap.entries()) {
+    for (let i = 0; i < entities.length; i++) {
+      const entity = entities[i];
+      addEntity(entity, dxf.tables.layer.layers[entity.layer], canvasLayer, `${layerName}${i + 1}-${entity.type}`);
+    }
+  }
 }
 
-function updateScene(scene: Scene, viewport: IViewPort, canvasLayer: FrameState) {
+function updateScene(canvasLayer: FrameState, viewport: IViewPort) {
   const options = canvasLayer.options;
   options.background = {
     color: {
@@ -97,26 +113,31 @@ function updateScene(scene: Scene, viewport: IViewPort, canvasLayer: FrameState)
     },
   };
 
+  const scene = canvasLayer.scene;
+
   canvasLayer.onChange(options);
   canvasLayer.updateData(scene.context);
+
+  scene.save();
+  canvasLayer.reinitializeMoveable();
 }
 
-function addEntity(entity: IEntity, entityLayer: ILayer, canvasLayer: FrameState) {
+function addEntity(entity: IEntity, entityLayer: ILayer, canvasLayer: FrameState, name?: string) {
   try {
-    if (isTextEntity(entity)) {
-      addTextElement(entity, entityLayer, canvasLayer);
-    } else if (isLineEntity(entity)) {
-      addLineElement(entity, entityLayer, canvasLayer);
+    if (isLineEntity(entity)) {
+      addLineElement(entity, entityLayer, canvasLayer, name);
     } else if (isILwpolylineEntity(entity)) {
-      addLwPolylineElement(entity, entityLayer, canvasLayer);
-    } else if (isPolyLineEntity(entity) && isSupportedPolyLineEntity(entity)) {
-      add2dPolylineElement(entity, entityLayer, canvasLayer);
+      addLwPolylineElement(entity, entityLayer, canvasLayer, name);
     } else if (isCircleEntity(entity)) {
-      addCircleElement(entity, entityLayer, canvasLayer);
+      addCircleElement(entity, entityLayer, canvasLayer, name);
     } else if (isEllipseEntity(entity)) {
-      addEllipseElement(entity, entityLayer, canvasLayer);
+      addEllipseElement(entity, entityLayer, canvasLayer, name);
     } else if (isPointEntity(entity)) {
-      addPointElement(entity, entityLayer, canvasLayer);
+      addPointElement(entity, entityLayer, canvasLayer, name);
+    } else if (isTextEntity(entity)) {
+      addTextElement(entity, entityLayer, canvasLayer, name);
+    } else if (isPolyLineEntity(entity) && isSupportedPolyLineEntity(entity)) {
+      add2dPolylineElement(entity, entityLayer, canvasLayer, name);
     } else {
       console.warn('unhandled entity type', entity.type);
     }
@@ -163,40 +184,36 @@ function isPointEntity(entity: IEntity): entity is IPointEntity {
   return entity.type === 'POINT';
 }
 
-function addTextElement(entity: ITextEntity, entityLayer: ILayer, canvasLayer: FrameState) {
+function addTextElement(entity: ITextEntity, entityLayer: ILayer, canvasLayer: FrameState, name: string | undefined) {
   const newTextItem: CanvasElementItem<TextConfig, TextData> = canvasElementRegistry.get('text');
 
   let newElementOptions: CanvasElementOptions = {
     ...newTextItem.getNewOptions(),
     type: newTextItem.id,
-    name: '',
+    name: name ? name : '',
     constraint: BOTTOM_LEFT_CONSTRAINT,
     placement: {
-      bottom: entity.startPoint.y * TEMP_MULTIPLIER,
-      left: entity.startPoint.x * TEMP_MULTIPLIER,
+      bottom: entity.startPoint.y * SCALE,
+      left: entity.startPoint.x * SCALE,
       rotation: -entity.rotation,
-      height: entity.textHeight * TEMP_MULTIPLIER,
-      width: entity.textHeight * entity.text.length * TEMP_MULTIPLIER,
+      height: entity.textHeight * SCALE,
+      width: entity.textHeight * entity.text.length * SCALE,
     },
     config: {
       text: { fixed: entity.text },
-      size: entity.textHeight * TEMP_MULTIPLIER,
+      size: entity.textHeight * SCALE,
       color: {
-        fixed: hexFromColorRepr(entity.color, entityLayer),
+        fixed: hexFromColorRepr(entity.color, entityLayer.color),
       },
       align: Align.Left,
       valign: VAlign.Bottom,
     },
   };
 
-  canvasLayer.addElement(new ElementState(newTextItem, newElementOptions, canvasLayer));
+  pushElement(new ElementState(newTextItem, newElementOptions, canvasLayer), canvasLayer);
 }
 
 function lineFromVertices(vertices: Array<{ x: number; y: number }>): Line {
-  if (vertices.length !== 2) {
-    throw new Error(`unexpected number of vertices: expected 2, got ${vertices.length}`);
-  }
-
   const dy = vertices[1].y - vertices[0].y;
   const dx = vertices[1].x - vertices[0].x;
 
@@ -213,49 +230,75 @@ function lineFromVertices(vertices: Array<{ x: number; y: number }>): Line {
   };
 }
 
-function addLineElement(entity: ILineEntity, entityLayer: ILayer, canvasLayer: FrameState) {
-  canvasLayer.addElement(
+function addLineElement(entity: ILineEntity, entityLayer: ILayer, canvasLayer: FrameState, name: string | undefined) {
+  pushElement(
     newLineElementState(
       lineFromVertices(entity.vertices),
       entity.lineweight,
-      { fixed: hexFromColorRepr(entity.color, entityLayer) },
-      canvasLayer
-    )
+      { fixed: hexFromColorRepr(entity.color, entityLayer.color) },
+      canvasLayer,
+      name
+    ),
+    canvasLayer
   );
 }
 
-function addLwPolylineElement(entity: ILwpolylineEntity, entityLayer: ILayer, canvasLayer: FrameState) {
+function addLwPolylineElement(
+  entity: ILwpolylineEntity,
+  entityLayer: ILayer,
+  canvasLayer: FrameState,
+  name: string | undefined
+) {
   for (let i = 0; i < entity.vertices.length - 1; i++) {
-    canvasLayer.addElement(
+    let lineName = name;
+    if (lineName) {
+      lineName = `${lineName}-L${i + 1}`;
+    }
+
+    pushElement(
       newLineElementState(
         lineFromVertices(entity.vertices.slice(i, i + 2)),
         entity.lineweight,
-        { fixed: hexFromColorRepr(entity.color, entityLayer) },
-        canvasLayer
-      )
+        { fixed: hexFromColorRepr(entity.color, entityLayer.color) },
+        canvasLayer,
+        lineName
+      ),
+      canvasLayer
     );
   }
 }
 
-function add2dPolylineElement(entity: IPolylineEntity, entityLayer: ILayer, canvasLayer: FrameState) {
+function add2dPolylineElement(
+  entity: IPolylineEntity,
+  entityLayer: ILayer,
+  canvasLayer: FrameState,
+  name: string | undefined
+) {
   let bound = entity.vertices.length - 1;
   if (entity.shape) {
     bound++;
   }
 
   for (let i = 0; i < bound; i++) {
-    let vertices = entity.vertices.slice(i, i + 2);
-    if (entity.shape && i + 1 === entity.vertices.length) {
-      vertices = [entity.vertices[entity.vertices.length - 1], entity.vertices[0]];
+    let vertices =
+      i + 1 === entity.vertices.length && entity.shape
+        ? [entity.vertices[entity.vertices.length - 1], entity.vertices[0]]
+        : entity.vertices.slice(i, i + 2);
+
+    let lineName = name;
+    if (lineName) {
+      lineName = `${lineName}-L${i + 1}`;
     }
 
-    canvasLayer.addElement(
+    pushElement(
       newLineElementState(
         lineFromVertices(vertices),
         entity.lineweight,
-        { fixed: hexFromColorRepr(entity.color, entityLayer) },
-        canvasLayer
-      )
+        { fixed: hexFromColorRepr(entity.color, entityLayer.color) },
+        canvasLayer,
+        lineName
+      ),
+      canvasLayer
     );
   }
 }
@@ -264,7 +307,8 @@ function newLineElementState(
   line: Line,
   lineWeight: number | undefined,
   color: ColorDimensionConfig,
-  canvasLayer: FrameState
+  canvasLayer: FrameState,
+  name: string | undefined
 ): ElementState {
   let weight = pixelsFromLineWeight(lineWeight);
 
@@ -272,13 +316,13 @@ function newLineElementState(
   let newElementOptions: CanvasElementOptions = {
     ...newLineItem.getNewOptions(),
     type: newLineItem.id,
-    name: '',
+    name: name ? name : '',
     constraint: BOTTOM_LEFT_CONSTRAINT,
     placement: {
-      bottom: (line.midPoint.y - weight / 2) * TEMP_MULTIPLIER,
-      left: (line.midPoint.x - line.length / 2) * TEMP_MULTIPLIER,
+      bottom: (line.midPoint.y - weight / 2) * SCALE,
+      left: (line.midPoint.x - line.length / 2) * SCALE,
       height: weight,
-      width: line.length * TEMP_MULTIPLIER,
+      width: line.length * SCALE,
       rotation: -line.theta,
     },
     config: {
@@ -310,6 +354,7 @@ function ellipseFromCadCircle(entity: ICircleEntity): Ellipse {
   return {
     width: entity.radius * 2,
     height: entity.radius * 2,
+    rotation: 0,
     midPoint: entity.center,
   };
 }
@@ -318,41 +363,58 @@ function ellipseFromCadPoint(entity: IPointEntity): Ellipse {
   return {
     width: 1,
     height: 1,
+    rotation: 0,
     midPoint: entity.position,
   };
 }
 
-function addEllipseElement(entity: IEllipseEntity, entityLayer: ILayer, canvasLayer: FrameState) {
-  canvasLayer.addElement(
+function addEllipseElement(
+  entity: IEllipseEntity,
+  entityLayer: ILayer,
+  canvasLayer: FrameState,
+  name: string | undefined
+) {
+  pushElement(
     newEllipseElement(
       ellipseFromCadEllipse(entity),
-      { fixed: hexFromColorRepr(entity.color, entityLayer) },
-      entity.lineweight,
-      canvasLayer
-    )
-  );
-}
-
-function addCircleElement(entity: ICircleEntity, entityLayer: ILayer, canvasLayer: FrameState) {
-  canvasLayer.addElement(
-    newEllipseElement(
-      ellipseFromCadCircle(entity),
-      { fixed: hexFromColorRepr(entity.color, entityLayer) },
-      entity.lineweight,
-      canvasLayer
-    )
-  );
-}
-
-function addPointElement(entity: IPointEntity, entityLayer: ILayer, canvasLayer: FrameState) {
-  canvasLayer.addElement(
-    newEllipseElement(
-      ellipseFromCadPoint(entity),
-      { fixed: hexFromColorRepr(entity.color, entityLayer) },
+      { fixed: hexFromColorRepr(entity.color, entityLayer.color) },
       entity.lineweight,
       canvasLayer,
+      name
+    ),
+    canvasLayer
+  );
+}
+
+function addCircleElement(
+  entity: ICircleEntity,
+  entityLayer: ILayer,
+  canvasLayer: FrameState,
+  name: string | undefined
+) {
+  pushElement(
+    newEllipseElement(
+      ellipseFromCadCircle(entity),
+      { fixed: hexFromColorRepr(entity.color, entityLayer.color) },
+      entity.lineweight,
+      canvasLayer,
+      name
+    ),
+    canvasLayer
+  );
+}
+
+function addPointElement(entity: IPointEntity, entityLayer: ILayer, canvasLayer: FrameState, name: string | undefined) {
+  pushElement(
+    newEllipseElement(
+      ellipseFromCadPoint(entity),
+      { fixed: hexFromColorRepr(entity.color, entityLayer.color) },
+      entity.lineweight,
+      canvasLayer,
+      name,
       true
-    )
+    ),
+    canvasLayer
   );
 }
 
@@ -361,27 +423,28 @@ function newEllipseElement(
   color: ColorDimensionConfig,
   lineWeight: number | undefined,
   canvasLayer: FrameState,
+  name: string | undefined,
   isPoint?: boolean
 ) {
   let height = ellipse.height;
   let width = ellipse.width;
   if (!isPoint) {
-    height = height * TEMP_MULTIPLIER;
-    width = width * TEMP_MULTIPLIER;
+    height = height * SCALE;
+    width = width * SCALE;
   }
 
   const newEllipseItem: CanvasElementItem<EllipseConfig, EllipseData> = canvasElementRegistry.get('ellipse');
   let newElementOptions: CanvasElementOptions = {
     ...newEllipseItem.getNewOptions(),
     type: newEllipseItem.id,
-    name: '',
+    name: name ? name : '',
     constraint: BOTTOM_LEFT_CONSTRAINT,
     placement: {
-      bottom: (ellipse.midPoint.y - ellipse.height / 2) * TEMP_MULTIPLIER,
-      left: (ellipse.midPoint.x - ellipse.width / 2) * TEMP_MULTIPLIER,
+      bottom: (ellipse.midPoint.y - ellipse.height / 2) * SCALE,
+      left: (ellipse.midPoint.x - ellipse.width / 2) * SCALE,
       height,
       width,
-      rotation: ellipse.rotation ? -ellipse.rotation : 0,
+      rotation: -ellipse.rotation,
     },
     config: {
       backgroundColor: {
@@ -395,13 +458,12 @@ function newEllipseElement(
   return new ElementState(newEllipseItem, newElementOptions, canvasLayer);
 }
 
-function hexFromColorRepr(color: number | undefined, cadLayer?: ILayer): string {
+function hexFromColorRepr(color: number | undefined, layerColor?: number): string {
   let hexColor: string;
+  let colorRepr = color ?? layerColor ?? undefined;
 
-  if (color) {
-    hexColor = color.toString(16);
-  } else if (cadLayer?.color) {
-    hexColor = cadLayer.color.toString(16);
+  if (colorRepr) {
+    hexColor = colorRepr.toString(16);
   } else {
     hexColor = 'ffffff';
   }
@@ -410,9 +472,26 @@ function hexFromColorRepr(color: number | undefined, cadLayer?: ILayer): string 
 }
 
 function pixelsFromLineWeight(lineWeight: number | undefined): number {
-  let weight = DEFAULT_LWEIGHT;
+  let weight = MIN_LWEIGHT;
   if (lineWeight !== undefined && lineWeight !== 0) {
-    weight = lineWeight;
+    // clamp to min
+    if (lineWeight > weight) {
+      weight = lineWeight;
+    }
   }
-  return weight / 100 / 5; // weights are in 100ths of a mm
+  return weight / 100; // weights are in 100ths of a mm
+}
+
+function pushElement(element: ElementState, canvasLayer: FrameState) {
+  canvasLayer.elements.push(element);
+  canvasLayer.scene.byName.set(element.options.name, element);
+}
+
+function fastUpdateConnectionsForSource(element: ElementState, scene: Scene) {
+  const targetConnections = scene.connections.state.filter((connection) => connection.target === element);
+  for (const connection of targetConnections) {
+    const sourceConnections = connection.source.options.connections?.splice(0) ?? [];
+    const connections = sourceConnections.filter((con) => con.targetName !== element.getName());
+    connection.source.onChange({ ...connection.source.options, connections });
+  }
 }
