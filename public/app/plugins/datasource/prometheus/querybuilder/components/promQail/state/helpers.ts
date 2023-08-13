@@ -170,7 +170,7 @@ export async function promQailSuggest(
   query: PromVisualQuery,
   interaction?: Interaction
 ) {
-  // HISTORICAL RESPONSE
+  // when you're not running promqail
   const check = await promQailHealthcheck();
   if (!check) {
     new Promise<void>((resolve) => {
