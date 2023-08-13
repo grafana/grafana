@@ -15,24 +15,23 @@ const { updateInteraction } = stateSlice.actions;
 
 export const querySuggestions: QuerySuggestion[] = [
   {
-    query: 'min(up{instance="localhost:3005"})',
+    query: 'min(mlapi_http_requests_total{instance="localhost:3005"})',
     explanation: '',
   },
   {
-    query: 'sum(access_evaluation_duration_sum{instance="localhost:3005"})',
+    query: 'sum(mlapi_http_requests_total{instance="localhost:3005"})',
     explanation: '',
   },
   {
-    query: 'avg(go_goroutines{job="go-app"})',
+    query: 'avg(mlapi_http_requests_total{job="go-app"})',
     explanation: '',
   },
   {
-    query:
-      'histogram_quantile(0.95, sum by(le) (rate(access_evaluation_duration_bucket{job="go-app"}[$__rate_interval])))',
+    query: 'mlapi_http_requests_total{job="go-app"}',
     explanation: '',
   },
   {
-    query: 'go_gc_duration_seconds{instance="localhost:3005"}',
+    query: 'mlapi_http_requests_total{instance="localhost:3005"}',
     explanation: '',
   },
 ];
@@ -173,7 +172,7 @@ export async function promQailSuggest(
 ) {
   // HISTORICAL RESPONSE
   const check = await promQailHealthcheck();
-  if (!check || !interaction || interaction.suggestionType === SuggestionType.Historical) {
+  if (!check) {
     new Promise<void>((resolve) => {
       return setTimeout(() => {
         const interactionToUpdate = interaction ? interaction : createInteraction(SuggestionType.Historical);
@@ -203,7 +202,7 @@ export async function promQailSuggest(
       labels: promQueryModeller.renderLabels(query.labels),
     };
 
-    if (interaction.prompt) {
+    if (interaction?.prompt) {
       feedTheAI = { ...feedTheAI, prompt: interaction.prompt };
     }
 
@@ -225,14 +224,14 @@ export async function promQailSuggest(
         return { error: error };
       });
 
-    const interactionToUpdate = interaction;
+    const interactionToUpdate = interaction ? interaction : createInteraction(SuggestionType.Historical);
 
-    const suggestions = [
-      {
-        query: promQailResp[0],
+    const suggestions: QuerySuggestion[] = promQailResp.map((resp: string) => {
+      return {
+        query: resp,
         explanation: '',
-      },
-    ];
+      };
+    });
 
     const payload = {
       idx,

@@ -382,9 +382,11 @@ export const getStyles = (theme: GrafanaTheme2) => {
     metricTableValue: css`
       font-family: ${theme.typography.fontFamilyMonospace};
       font-size: ${theme.typography.bodySmall.fontSize};
-      overflow: wrap;
+      overflow: scroll;
+      text-wrap: nowrap;
       max-width: 150px;
       width: 60%;
+      mask-image: linear-gradient(to right, rgba(0, 0, 0, 1) 90%, rgba(0, 0, 0, 0));
     `,
     metricTableButton: css`
       margin-left: 10px;
@@ -445,6 +447,24 @@ export const getStyles = (theme: GrafanaTheme2) => {
     `,
     inputPadding: css`
       padding-bottom: 24px;
+    `,
+    querySuggestion: css`
+      display: flex;
+      flex-wrap: nowrap;
+    `,
+    longCode: css`
+      width: 90%;
+      text-wrap: nowrap;
+      overflow: scroll;
+      mask-image: linear-gradient(to right, rgba(0, 0, 0, 1) 90%, rgba(0, 0, 0, 0));
+
+      div {
+        display: inline-block;
+      }
+    `,
+    useButton: css`
+      width: 10%;
+      margin-left: 12px;
     `,
   };
 };

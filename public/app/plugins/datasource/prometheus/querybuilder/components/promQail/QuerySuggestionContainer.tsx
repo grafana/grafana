@@ -27,7 +27,7 @@ export function QuerySuggestionContainer(props: Props) {
   let text, secondaryText, refineText;
 
   if (suggestionType === SuggestionType.Historical) {
-    text = 'Here are 5 query suggestions:';
+    text = `Here are ${querySuggestions.length} query suggestions:`;
     secondaryText = 'These queries are based off of historical data (top used queries) for your metric.';
     refineText = 'I want to write a prompt';
   } else if (suggestionType === SuggestionType.AI) {
@@ -53,6 +53,7 @@ export function QuerySuggestionContainer(props: Props) {
                 queryExplain={queryExplain}
                 onChange={onChange}
                 closeDrawer={closeDrawer}
+                last={idx === querySuggestions.length - 1}
               />
             );
           })}

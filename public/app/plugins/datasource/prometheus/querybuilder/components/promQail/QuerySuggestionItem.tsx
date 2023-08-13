@@ -16,10 +16,11 @@ export type Props = {
   historical: boolean;
   onChange: (query: PromVisualQuery) => void;
   closeDrawer: () => void;
+  last: boolean;
 };
 
 export function QuerySuggestionItem(props: Props) {
-  const { querySuggestion, order, queryExplain, historical, onChange, closeDrawer } = props;
+  const { querySuggestion, order, queryExplain, historical, onChange, closeDrawer, last } = props;
   const [showExp, updShowExp] = useState<boolean>(false);
 
   const theme = useTheme2();
@@ -29,20 +30,25 @@ export function QuerySuggestionItem(props: Props) {
 
   return (
     <>
-      <div className={styles.header}>
-        <div className={styles.codeText}>{`${order}  ${query}`}</div>
-        <Button
-          variant="primary"
-          size="sm"
-          onClick={() => {
-            const pvq = buildVisualQueryFromString(querySuggestion.query);
-            // check for errors!
-            onChange(pvq.query);
-            closeDrawer();
-          }}
-        >
-          Use
-        </Button>
+      <div className={styles.querySuggestion}>
+        <div title={query} className={cx(styles.codeText, styles.longCode)}>
+          {`${order}  ${query}`}
+          <div>...</div>
+        </div>
+        <div className={styles.useButton}>
+          <Button
+            variant="primary"
+            size="sm"
+            onClick={() => {
+              const pvq = buildVisualQueryFromString(querySuggestion.query);
+              // check for errors!
+              onChange(pvq.query);
+              closeDrawer();
+            }}
+          >
+            Use
+          </Button>
+        </div>
       </div>
       <div>
         <Button
@@ -94,10 +100,10 @@ export function QuerySuggestionItem(props: Props) {
               </div>
             </div>
 
-            {historical && order !== 5 && <hr />}
+            {historical && !last && <hr />}
           </>
         )}
-        {historical && order === 5 && (
+        {historical && last && (
           <div className={cx(styles.feedbackPadding)}>
             <Button fill="outline" variant="secondary" size="sm" className={styles.floatRight}>
               Give feedback on suggestions
