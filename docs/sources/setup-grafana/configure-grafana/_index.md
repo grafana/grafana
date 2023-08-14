@@ -514,6 +514,11 @@ Sets a custom value for the `User-Agent` header for outgoing data proxy requests
 
 ## [analytics]
 
+### enabled
+
+This option is also known as _usage analytics_. When `false`, this option disables the writers that read/write from and to the Grafana databases. The default
+value is `true`.
+
 ### reporting_enabled
 
 When enabled Grafana will send anonymous usage statistics to

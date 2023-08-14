@@ -454,8 +454,9 @@ var (
 		{
 			Name:        "enableElasticsearchBackendQuerying",
 			Description: "Enable the processing of queries and responses in the Elasticsearch data source through backend",
-			Stage:       FeatureStagePublicPreview,
+			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaObservabilityLogsSquad,
+			Expression:  "true", // enabled by default
 		},
 		{
 			Name:         "advancedDataSourcePicker",
