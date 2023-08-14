@@ -36,7 +36,7 @@ func addCorrelationsMigrations(mg *Migrator) {
 		Columns: []*Column{
 			{Name: "uid", Type: DB_NVarchar, Length: 40, Nullable: false, IsPrimaryKey: true},
 			// Allows null values to support existing records with no org_id
-			{Name: "org_id", Type: DB_BigInt, Nullable: true, IsPrimaryKey: true, Default: ""},
+			{Name: "org_id", Type: DB_BigInt, Nullable: true, IsPrimaryKey: true},
 			{Name: "source_uid", Type: DB_NVarchar, Length: 40, Nullable: false, IsPrimaryKey: true},
 			// Nullable because in the future we want to have correlations to external resources
 			{Name: "target_uid", Type: DB_NVarchar, Length: 40, Nullable: true},
