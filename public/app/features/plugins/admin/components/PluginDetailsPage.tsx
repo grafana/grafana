@@ -82,6 +82,7 @@ export function PluginDetailsPage({
               pluginId={plugin.id}
               pluginType={plugin.type}
               showPluginDetailsLink={false}
+              interactionElementId="plugin-details-page"
             />
           )}
           <PluginDetailsSignature plugin={plugin} className={styles.alert} />

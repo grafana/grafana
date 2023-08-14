@@ -4,8 +4,8 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
@@ -106,7 +106,7 @@ type SearchOrgServiceAccountsQuery struct {
 	Filter       ServiceAccountFilter
 	Page         int
 	Limit        int
-	SignedInUser *user.SignedInUser
+	SignedInUser identity.Requester
 }
 
 func (q *SearchOrgServiceAccountsQuery) SetDefaults() {

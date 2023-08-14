@@ -34,8 +34,8 @@ function makeLabelsGetter(
 
 export function parseLegacyLogsFrame(frame: DataFrame): LogsFrame | null {
   const cache = new FieldCache(frame);
-  const timeField = cache.getFields(FieldType.time)[0];
-  const bodyField = cache.getFields(FieldType.string)[0];
+  const timeField = cache.getFirstFieldOfType(FieldType.time);
+  const bodyField = cache.getFirstFieldOfType(FieldType.string);
 
   // these two are mandatory
   if (timeField === undefined || bodyField === undefined) {
