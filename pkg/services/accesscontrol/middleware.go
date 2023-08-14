@@ -242,22 +242,6 @@ func UseGlobalOrg(c *contextmodel.ReqContext) (int64, error) {
 	return GlobalOrgID, nil
 }
 
-func LoadPermissionsMiddleware(service Service) web.Handler {
-	return func(c *contextmodel.ReqContext) {
-		permissions, err := service.GetUserPermissions(c.Req.Context(), c.SignedInUser,
-			Options{ReloadCache: false})
-		if err != nil {
-			c.JsonApiErr(http.StatusForbidden, "", err)
-			return
-		}
-
-		if c.SignedInUser.Permissions == nil {
-			c.SignedInUser.Permissions = make(map[int64]map[string][]string)
-		}
-		c.SignedInUser.Permissions[c.OrgID] = GroupScopesByAction(permissions)
-	}
-}
-
 // scopeParams holds the parameters used to fill in scope templates
 type scopeParams struct {
 	OrgID     int64
