@@ -36,7 +36,7 @@ const (
 )
 
 // Sets the access mode
-// either proxy or direct (Server or Browser in the UI).
+// either proxy or direct (Server or Browser in the UI). 
 // Some data sources are incompatible with any setting but proxy (Server).
 type DsAccess string
 
@@ -95,9 +95,8 @@ func (e ErrDatasourceSecretsPluginUserFriendly) Error() string {
 // swagger:model
 // Also acts as api DTO
 type AddDataSourceCommand struct {
-	Name string `json:"name" binding:"Required"`
-	Type string `json:"type" binding:"Required"`
-	// required:true
+	Name            string            `json:"name" binding:"Required"`
+	Type            string            `json:"type" binding:"Required"`
 	Access          DsAccess          `json:"access" binding:"Required"`
 	URL             string            `json:"url"`
 	Database        string            `json:"database"`
