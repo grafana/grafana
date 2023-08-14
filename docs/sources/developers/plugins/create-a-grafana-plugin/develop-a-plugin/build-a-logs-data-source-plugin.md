@@ -197,6 +197,34 @@ const result = new MutableDataFrame({
 });
 ```
 
+### Logs to trace using data link with url
+
+If you are developing a log data source and your log data contains **trace IDs**, you can enhance your log data frames by adding a field with trace ID values and URL data links. These links should utilize the trace ID value to accurately link to the appropriate trace. This enhancement enables users to seamlessly move from log lines to the relevant traces.
+
+**Example in TypeScript:**
+
+```ts
+const result = new MutableDataFrame({
+  fields: [
+    ...,
+    { name: 'traceID',
+      type: FieldType.string,
+      values: ['a006649127e371903a2de979', 'e206649127z371903c3be12q' 'k777549127c371903a2lw34'],
+      config: {
+        links: [
+          {
+            // Be sure to adjust this example based on your data source logic.
+            title: 'Trace view',
+            url: `http://linkToTraceID/${__value.raw}` // ${__value.raw} is a variable that will be replaced with actual traceID value.
+          }
+        ]
+      }
+    }
+  ],
+  ...,
+});
+```
+
 #### Color-coded log levels
 
 {{% admonition type="note" %}} This feature must be implemented in the data frame as a field. {{%
@@ -525,6 +553,46 @@ export class ExampleDatasource
 ```
 
 For an example of how to implement the logs sample in the Elasticsearch data source, refer to [PR 70258](https://github.com/grafana/grafana/pull/70258/).
+
+### Logs to trace using internal data links
+
+{{% admonition type="note" %}} This feature is currently not supported for external plugins outside of the Grafana repo. The `@internal` API is currently under development. {{%
+/admonition %}}
+
+If you are developing a data source plugin that handles both logs and traces, and your log data contains **trace IDs**, you can enhance your log data frames by adding a field with **trace ID values** and **internal data links**. These links should utilize the trace ID value to accurately create a trace query that produces relevant trace. This enhancement enables users to seamlessly move from log lines to the traces.
+
+**Example in TypeScript:**
+
+```ts
+const result = new MutableDataFrame({
+  fields: [
+    ...,
+    { name: 'traceID',
+      type: FieldType.string,
+      values: ['a006649127e371903a2de979', 'e206649127z371903c3be12q' 'k777549127c371903a2lw34'],
+      config: {
+        links: [
+          {
+            title: 'Trace view',
+            url: '',
+            internal: {
+              // Be sure to adjust this example with datasourceUid,  datasourceName and query based on your data source logic.
+              datasourceUid: instanceSettings.uid,
+              datasourceName: instanceSettings.name,
+              query: {
+                { ...query, queryType: 'trace', traceId: '${__value.raw}'}; // ${__value.raw} is a variable that will be replaced with actual traceID value.
+              }
+            }
+
+          }
+        ]
+      }
+
+    }
+  ],
+  ...,
+});
+```
 
 ### Log context query editor
 
