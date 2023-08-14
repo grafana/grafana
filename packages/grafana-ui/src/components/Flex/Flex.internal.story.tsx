@@ -11,8 +11,8 @@ const Item = ({ color, text }: { color: string; text?: string | number }) => {
   return (
     <div
       style={{
-        width: '50px',
-        height: '50px',
+        width: '5em',
+        height: '5em',
         backgroundColor: color,
         display: 'flex',
         alignItems: 'center',
@@ -65,15 +65,13 @@ export const AlignItemsExamples: StoryFn<typeof Flex> = () => {
         ))}
       </Flex>
       <p>Align items stretch</p>
-      <Flex direction="row" wrap="wrap" alignItems="stretch" justifyContent="space-between" gap={2} height={80}>
-        {/* {Array.from({ length: 5 }).map((_, i) => (
-          <Item key={i} color="darkmagenta" text={i + 1} />
-        ))} */}
-        <div style={{ width: '100px', backgroundColor: 'pink' }} />
-        <div style={{ width: '100px', backgroundColor: 'darkmagenta' }} />
-        <div style={{ width: '100px', backgroundColor: 'pink' }} />
-        <div style={{ width: '100px', backgroundColor: 'darkmagenta' }} />
+      <Flex direction="row" wrap="wrap" alignItems="stretch" justifyContent="center" gap={2}>
+        <div style={{ width: '3em', minHeight: '5em', backgroundColor: 'pink' }} />
+        <div style={{ width: '3em', minHeight: '5em', backgroundColor: 'darkmagenta' }} />
+        <div style={{ width: '3em', minHeight: '5em', backgroundColor: 'pink' }} />
+        <div style={{ width: '3em', minHeight: '5em', backgroundColor: 'darkmagenta' }} />
       </Flex>
+
       <p>Align items baseline</p>
       <Flex direction="row" wrap="nowrap" alignItems="baseline" justifyContent="center" gap={2}>
         {Array.from({ length: 5 }).map((_, i) => (

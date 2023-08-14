@@ -38,15 +38,14 @@ interface FlexProps {
   justifyContent?: JustifyContent;
   direction?: Direction;
   wrap?: Wrap;
-  height?: number;
   children?: React.ReactNode;
 }
 
-export const Flex = ({ gap = 1, alignItems, justifyContent, direction, wrap, children, height }: FlexProps) => {
+export const Flex = ({ gap = 1, alignItems, justifyContent, direction, wrap, children }: FlexProps) => {
   const styles = useStyles2(
     useCallback(
-      (theme) => getStyles(theme, gap, alignItems, justifyContent, direction, wrap, height),
-      [gap, alignItems, justifyContent, direction, wrap, height]
+      (theme) => getStyles(theme, gap, alignItems, justifyContent, direction, wrap),
+      [gap, alignItems, justifyContent, direction, wrap]
     )
   );
 
@@ -61,8 +60,7 @@ const getStyles = (
   alignItems: FlexProps['alignItems'],
   justifyContent: FlexProps['justifyContent'],
   direction: FlexProps['direction'],
-  wrap: FlexProps['wrap'],
-  height: FlexProps['height']
+  wrap: FlexProps['wrap']
 ) => {
   return {
     flex: css({
@@ -72,8 +70,6 @@ const getStyles = (
       alignItems: alignItems,
       justifyContent: justifyContent,
       gap: theme.spacing(gap),
-      height: `${height}px`,
-      // width: '100%',
     }),
   };
 };
