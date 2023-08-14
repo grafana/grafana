@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
+	"golang.org/x/exp/maps"
 )
 
 type Service struct {
@@ -72,6 +73,9 @@ func (s *Service) GetUsageStats(ctx context.Context) map[string]interface{} {
 	}
 
 	stats["stats.case_insensitive_login.count"] = caseInsensitiveLoginVal
+
+	maps.Copy(stats, s.orgService.GetUsageStats(ctx))
+
 	return stats
 }
 

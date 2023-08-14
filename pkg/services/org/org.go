@@ -2,9 +2,12 @@ package org
 
 import (
 	"context"
+
+	"github.com/grafana/grafana/pkg/registry"
 )
 
 type Service interface {
+	registry.ProvidesUsageStats
 	GetIDForNewUser(context.Context, GetOrgIDForNewUserCommand) (int64, error)
 	InsertOrgUser(context.Context, *OrgUser) (int64, error)
 	DeleteUserFromAll(context.Context, int64) error

@@ -30,17 +30,17 @@ func init() {
 	)
 }
 
-func (s *Service) getUsageMetrics(ctx context.Context) (map[string]interface{}, error) {
+func (s *Service) getUsageMetrics(ctx context.Context) map[string]interface{} {
 	stats := map[string]interface{}{}
 
 	storeStats, err := s.store.GetUsageMetrics(ctx)
 	if err != nil {
-		return nil, err
+		return nil
 	}
 
 	stats["stats.user.role_none.count"] = storeStats.UserAccountsWithNoRole
 
 	MStatTotalUserAccountsNoRole.Set(float64(storeStats.UserAccountsWithNoRole))
 
-	return stats, nil
+	return stats
 }
