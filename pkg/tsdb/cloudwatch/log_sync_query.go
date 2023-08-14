@@ -83,7 +83,7 @@ func (e *cloudWatchExecutor) syncQuery(ctx context.Context, logsClient cloudwatc
 	queryContext backend.DataQuery, logsQuery models.LogsQuery, logsTimeout time.Duration) (*cloudwatchlogs.GetQueryResultsOutput, error) {
 	startQueryOutput, err := e.executeStartQuery(ctx, logsClient, logsQuery, queryContext.TimeRange)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("CloudWatch Error: %w", err)
 	}
 
 	requestParams := models.LogsQuery{
@@ -108,7 +108,7 @@ func (e *cloudWatchExecutor) syncQuery(ctx context.Context, logsClient cloudwatc
 	for range ticker.C {
 		res, err := e.executeGetQueryResults(ctx, logsClient, requestParams)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("CloudWatch Error: %w", err)
 		}
 		if isTerminated(*res.Status) {
 			return res, err
