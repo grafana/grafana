@@ -66,7 +66,7 @@ pyroscopeFlameGraph,experimental,@grafana/observability-traces-and-profiling,fal
 externalServiceAuth,experimental,@grafana/grafana-authnz-team,true,false,false,false
 refactorVariablesTimeRange,preview,@grafana/dashboards-squad,false,false,false,false
 useCachingService,GA,@grafana/grafana-operator-experience-squad,false,false,true,false
-enableElasticsearchBackendQuerying,preview,@grafana/observability-logs,false,false,false,false
+enableElasticsearchBackendQuerying,GA,@grafana/observability-logs,false,false,false,false
 advancedDataSourcePicker,GA,@grafana/dashboards-squad,false,false,false,true
 faroDatasourceSelector,preview,@grafana/app-o11y,false,false,false,true
 enableDatagridEditing,preview,@grafana/grafana-bi-squad,false,false,false,true
