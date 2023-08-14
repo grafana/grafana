@@ -1,6 +1,6 @@
-import { PanelModel } from '@grafana/data';
+import { createDataFrame, FieldType, PanelModel } from '@grafana/data';
 
-import { tablePanelChangedHandler } from './migrations';
+import { migrateFromParentRowIndexToNestedFrames, tablePanelChangedHandler } from './migrations';
 
 describe('Table Migrations', () => {
   it('migrates transform out to core transforms', () => {
@@ -267,5 +267,65 @@ describe('Table Migrations', () => {
         "transformations": [],
       }
     `);
+  });
+
+  it('migrates DataFrame[] from format using meta.custom.parentRowIndex to format using FieldType.nestedFrames', () => {
+    const mainFrame = (refId: string) => {
+      return createDataFrame({
+        refId,
+        fields: [
+          {
+            name: 'field',
+            type: FieldType.string,
+            config: {},
+            values: ['a', 'b', 'c'],
+          },
+        ],
+        meta: {
+          preferredVisualisationType: 'table',
+        },
+      });
+    };
+
+    const subFrame = (index: number) => {
+      return createDataFrame({
+        refId: 'B',
+        fields: [
+          {
+            name: `field_${index}`,
+            type: FieldType.string,
+            config: {},
+            values: [`${index}_subA`, 'subB', 'subC'],
+          },
+        ],
+        meta: {
+          preferredVisualisationType: 'table',
+          custom: {
+            parentRowIndex: index,
+          },
+        },
+      });
+    };
+
+    const oldFormat = [mainFrame('A'), mainFrame('B'), subFrame(0), subFrame(1)];
+    const newFormat = migrateFromParentRowIndexToNestedFrames(oldFormat);
+    expect(newFormat.length).toBe(2);
+    expect(newFormat[0].refId).toBe('A');
+    expect(newFormat[1].refId).toBe('B');
+    expect(newFormat[0].fields.length).toBe(1);
+    expect(newFormat[1].fields.length).toBe(2);
+    expect(newFormat[0].fields[0].name).toBe('field');
+    expect(newFormat[1].fields[0].name).toBe('field');
+    expect(newFormat[1].fields[1].name).toBe('nested');
+    expect(newFormat[1].fields[1].type).toBe(FieldType.nestedFrames);
+    expect(newFormat[1].fields[1].values.length).toBe(2);
+    expect(newFormat[1].fields[1].values[0][0].refId).toBe('B');
+    expect(newFormat[1].fields[1].values[1][0].refId).toBe('B');
+    expect(newFormat[1].fields[1].values[0][0].length).toBe(3);
+    expect(newFormat[1].fields[1].values[0][0].length).toBe(3);
+    expect(newFormat[1].fields[1].values[0][0].fields[0].name).toBe('field_0');
+    expect(newFormat[1].fields[1].values[1][0].fields[0].name).toBe('field_1');
+    expect(newFormat[1].fields[1].values[0][0].fields[0].values[0]).toBe('0_subA');
+    expect(newFormat[1].fields[1].values[1][0].fields[0].values[0]).toBe('1_subA');
   });
 });

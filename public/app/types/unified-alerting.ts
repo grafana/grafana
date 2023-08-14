@@ -18,7 +18,7 @@ export type Alert = {
   activeAt: string;
   annotations: { [key: string]: string };
   labels: { [key: string]: string };
-  state: PromAlertingRuleState | GrafanaAlertStateWithReason;
+  state: Exclude<PromAlertingRuleState | GrafanaAlertStateWithReason, PromAlertingRuleState.Inactive>;
   value: string;
 };
 
@@ -154,6 +154,7 @@ export interface CloudRuleIdentifier {
   ruleSourceName: string;
   namespace: string;
   groupName: string;
+  ruleName: string;
   rulerRuleHash: string;
 }
 export interface GrafanaRuleIdentifier {
@@ -166,6 +167,7 @@ export interface PrometheusRuleIdentifier {
   ruleSourceName: string;
   namespace: string;
   groupName: string;
+  ruleName: string;
   ruleHash: string;
 }
 
