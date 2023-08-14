@@ -17,14 +17,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/util/errutil"
-)
-
-var (
-	errExpiredAccessToken = errutil.NewBase(
-		errutil.StatusUnauthorized,
-		"oauth.expired-token",
-		errutil.WithPublicMessage("OAuth access token expired"))
 )
 
 func ProvideOAuthTokenSync(service oauthtoken.OAuthTokenService, sessionService auth.UserTokenService, socialService social.Service) *OAuthTokenSync {
@@ -122,7 +114,7 @@ func (s *OAuthTokenSync) SyncOauthTokenHook(ctx context.Context, identity *authn
 			s.log.FromContext(ctx).Error("Failed to revoke session token", "id", identity.ID, "tokenId", identity.SessionToken.Id, "error", err)
 		}
 
-		return errExpiredAccessToken.Errorf("oauth access token could not be refreshed: %w", err)
+		return authn.ErrExpiredAccessToken.Errorf("oauth access token could not be refreshed: %w", err)
 	}
 
 	return nil

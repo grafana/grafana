@@ -848,6 +848,84 @@ func TestService_GetHttpTransport(t *testing.T) {
 	})
 }
 
+func TestService_getProxySettings(t *testing.T) {
+	sqlStore := db.InitTestDB(t)
+	secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
+	secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
+	quotaService := quotatest.New(false, nil)
+	dsService, err := ProvideService(sqlStore, secretsService, secretsStore, &setting.Cfg{}, featuremgmt.WithFeatures(), acmock.New(), acmock.NewMockedPermissionsService(), quotaService)
+	require.NoError(t, err)
+
+	t.Run("Should default to disabled", func(t *testing.T) {
+		ds := datasources.DataSource{
+			ID:    1,
+			OrgID: 1,
+			UID:   "uid",
+			Name:  "graphite",
+			URL:   "http://test:8001",
+			Type:  "Graphite",
+		}
+
+		opts, err := dsService.httpClientOptions(context.Background(), &ds)
+		require.NoError(t, err)
+		require.Nil(t, opts.ProxyOptions)
+	})
+
+	t.Run("Username should default to datasource UID", func(t *testing.T) {
+		sjson := simplejson.New()
+		sjson.Set("enableSecureSocksProxy", true)
+		ds := datasources.DataSource{
+			ID:       1,
+			OrgID:    1,
+			UID:      "uid",
+			Name:     "graphite",
+			URL:      "http://test:8001",
+			Type:     "Graphite",
+			JsonData: sjson,
+		}
+
+		opts, err := dsService.httpClientOptions(context.Background(), &ds)
+		require.NoError(t, err)
+		require.True(t, opts.ProxyOptions.Enabled)
+		require.Equal(t, opts.ProxyOptions.Auth.Username, ds.UID)
+	})
+
+	t.Run("Can override options", func(t *testing.T) {
+		sjson := simplejson.New()
+		pass := "testpass"
+		user := "testuser"
+		sjson.Set("enableSecureSocksProxy", true)
+		sjson.Set("secureSocksProxyUsername", user)
+		sjson.Set("timeout", 10)
+		sjson.Set("keepAlive", 5)
+		ds := datasources.DataSource{
+			ID:       1,
+			OrgID:    1,
+			UID:      "uid",
+			Name:     "graphite",
+			URL:      "http://test:8001",
+			Type:     "Graphite",
+			JsonData: sjson,
+		}
+
+		secureJsonData, err := json.Marshal(map[string]string{
+			"secureSocksProxyPassword": pass,
+		})
+		require.NoError(t, err)
+
+		err = secretsStore.Set(context.Background(), ds.OrgID, ds.Name, secretskvs.DataSourceSecretType, string(secureJsonData))
+		require.NoError(t, err)
+
+		opts, err := dsService.httpClientOptions(context.Background(), &ds)
+		require.NoError(t, err)
+		require.True(t, opts.ProxyOptions.Enabled)
+		require.Equal(t, opts.ProxyOptions.Auth.Username, user)
+		require.Equal(t, opts.ProxyOptions.Auth.Password, pass)
+		require.Equal(t, opts.ProxyOptions.Timeouts.Timeout, 10*time.Second)
+		require.Equal(t, opts.ProxyOptions.Timeouts.KeepAlive, 5*time.Second)
+	})
+}
+
 func TestService_getTimeout(t *testing.T) {
 	cfg := &setting.Cfg{}
 	originalTimeout := sdkhttpclient.DefaultTimeoutOptions.Timeout
