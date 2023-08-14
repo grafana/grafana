@@ -592,7 +592,7 @@ const result = createDataFrame({
               datasourceUid: instanceSettings.uid,
               datasourceName: instanceSettings.name,
               query: {
-                { ...query, queryType: 'trace', traceId: '${__value.raw}'}; // ${__value.raw} is a variable that will be replaced with actual traceID value.
+                { ...query, queryType: 'trace', traceId: '${__value.raw}'}, // ${__value.raw} is a variable that will be replaced with actual traceID value.
               }
             }
 
