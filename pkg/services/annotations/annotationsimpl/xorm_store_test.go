@@ -39,7 +39,9 @@ func TestIntegrationAnnotations(t *testing.T) {
 	}
 	sql := db.InitTestDB(t)
 	var maximumTagsLength int64 = 60
-	repo := xormRepositoryImpl{db: sql, cfg: setting.NewCfg(), log: log.New("annotation.test"), tagService: tagimpl.ProvideService(sql, sql.Cfg), maximumTagsLength: maximumTagsLength}
+	repo := xormRepositoryImpl{db: sql, cfg: setting.NewCfg(), log: log.New("annotation.test"), tagService: tagimpl.ProvideService(sql, sql.Cfg), maximumTagsLength: maximumTagsLength,
+		features: featuremgmt.WithFeatures(),
+	}
 
 	testUser := &user.SignedInUser{
 		OrgID: 1,

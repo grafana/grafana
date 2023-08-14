@@ -84,7 +84,7 @@ export const HoverCard = ({
 
 const getStyles = (theme: GrafanaTheme2) => ({
   popover: (offset: number) => css`
-    border-radius: ${theme.shape.borderRadius()};
+    border-radius: ${theme.shape.radius.default};
     box-shadow: ${theme.shadows.z3};
     background: ${theme.colors.background.primary};
     border: 1px solid ${theme.colors.border.medium};

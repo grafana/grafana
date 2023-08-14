@@ -12,9 +12,9 @@ import (
 )
 
 var (
-	errEmptyPassword       = errutil.NewBase(errutil.StatusBadRequest, "password-auth.empty", errutil.WithPublicMessage("Invalid username or password"))
-	errPasswordAuthFailed  = errutil.NewBase(errutil.StatusBadRequest, "password-auth.failed", errutil.WithPublicMessage("Invalid username or password"))
-	errInvalidPassword     = errutil.NewBase(errutil.StatusBadRequest, "password-auth.invalid", errutil.WithPublicMessage("Invalid password or username"))
+	errEmptyPassword       = errutil.NewBase(errutil.StatusUnauthorized, "password-auth.empty", errutil.WithPublicMessage("Invalid username or password"))
+	errPasswordAuthFailed  = errutil.NewBase(errutil.StatusUnauthorized, "password-auth.failed", errutil.WithPublicMessage("Invalid username or password"))
+	errInvalidPassword     = errutil.NewBase(errutil.StatusUnauthorized, "password-auth.invalid", errutil.WithPublicMessage("Invalid password or username"))
 	errLoginAttemptBlocked = errutil.NewBase(errutil.StatusUnauthorized, "login-attempt.blocked", errutil.WithPublicMessage("Invalid username or password"))
 )
 
