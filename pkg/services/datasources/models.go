@@ -36,7 +36,7 @@ const (
 )
 
 // Sets the access mode
-// either proxy or direct (Server or Browser in the UI). 
+// either proxy or direct (Server or Browser in the UI).
 // Some data sources are incompatible with any setting but proxy (Server).
 type DsAccess string
 
