@@ -27,11 +27,11 @@ func ProvideDiscoveryStage(cfg *config.Cfg, pf finder.Finder, pr registry.Servic
 			return pf.Find(ctx, src)
 		},
 		FindFilterFuncs: []discovery.FindFilterFunc{
-			func(ctx context.Context, _ plugins.Class, b []*plugins.FoundBundle) ([]*plugins.FoundBundle, error) {
-				return discovery.NewDuplicatePluginFilterStep(pr).Filter(ctx, b)
-			},
 			func(ctx context.Context, cl plugins.Class, bundles []*plugins.FoundBundle) ([]*plugins.FoundBundle, error) {
 				return discovery.NewCorePluginFilterStep(cfg).Filter(ctx, cl, bundles)
+			},
+			func(ctx context.Context, _ plugins.Class, b []*plugins.FoundBundle) ([]*plugins.FoundBundle, error) {
+				return discovery.NewDuplicatePluginFilterStep(pr).Filter(ctx, b)
 			},
 		},
 	})
