@@ -46,8 +46,30 @@ export function useResetVariableListSizeCache(
 ) {
   useEffect(() => {
     if (extendedState.lastExpandedIndex !== undefined) {
-      listRef.current?.resetAfterIndex(Math.max(extendedState.lastExpandedIndex - 1, 0));
+      // Gets the expanded row with the lowest index. Needed to reset all expanded row heights from that index on
+      let resetIndex = extendedState.lastExpandedIndex;
+      const expandedIndexes = Object.keys(extendedState.expanded);
+      if (expandedIndexes.length > 0) {
+        const lowestExpandedIndex = parseInt(expandedIndexes[0], 10);
+        if (!isNaN(lowestExpandedIndex)) {
+          resetIndex = Math.min(resetIndex, lowestExpandedIndex);
+        }
+      }
+
+      const index =
+        extendedState.pageIndex === 0
+          ? resetIndex - 1
+          : resetIndex - extendedState.pageIndex - extendedState.pageIndex * extendedState.pageSize;
+      listRef.current?.resetAfterIndex(Math.max(index, 0));
       return;
     }
-  }, [extendedState.lastExpandedIndex, extendedState.toggleRowExpandedCounter, listRef, data]);
+  }, [
+    extendedState.lastExpandedIndex,
+    extendedState.toggleRowExpandedCounter,
+    extendedState.pageIndex,
+    extendedState.pageSize,
+    listRef,
+    data,
+    extendedState.expanded,
+  ]);
 }

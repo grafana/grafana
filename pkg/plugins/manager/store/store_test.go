@@ -132,7 +132,7 @@ func TestStore_Routes(t *testing.T) {
 			return &plugins.StaticRoute{PluginID: p.ID, Directory: p.FS.Base()}
 		}
 
-		rs := ps.Routes()
+		rs := ps.Routes(context.Background())
 		require.Equal(t, []*plugins.StaticRoute{sr(p1), sr(p2), sr(p4), sr(p5)}, rs)
 	})
 }

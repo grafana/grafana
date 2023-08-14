@@ -156,7 +156,6 @@ const AmRoutes = () => {
         oldConfig: result,
         alertManagerSourceName: selectedAlertmanager!,
         successMessage: 'Updated notification policies',
-        refetch: true,
       })
     )
       .unwrap()

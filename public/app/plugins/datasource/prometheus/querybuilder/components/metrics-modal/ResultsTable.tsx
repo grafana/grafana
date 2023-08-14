@@ -188,7 +188,7 @@ const getStyles = (theme: GrafanaTheme2, disableTextWrap: boolean) => {
   return {
     table: css`
       ${disableTextWrap ? '' : 'table-layout: fixed;'}
-      border-radius: ${theme.shape.borderRadius()};
+      border-radius: ${theme.shape.radius.default};
       width: 100%;
       white-space: ${disableTextWrap ? 'nowrap' : 'normal'};
       td {

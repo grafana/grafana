@@ -168,7 +168,7 @@ func queryData(ctx context.Context, req *backend.QueryDataRequest, dsInfo *datas
 	}
 
 	for _, query := range queries {
-		_, span := tracer.Start(ctx, "datasource.loki")
+		ctx, span := tracer.Start(ctx, "datasource.loki")
 		span.SetAttributes("expr", query.Expr, attribute.Key("expr").String(query.Expr))
 		span.SetAttributes("start_unixnano", query.Start, attribute.Key("start_unixnano").Int64(query.Start.UnixNano()))
 		span.SetAttributes("stop_unixnano", query.End, attribute.Key("stop_unixnano").Int64(query.End.UnixNano()))

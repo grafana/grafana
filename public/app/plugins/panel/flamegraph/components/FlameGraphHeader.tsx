@@ -9,8 +9,8 @@ import { Button, Dropdown, Input, Menu, RadioButtonGroup, useStyles2 } from '@gr
 
 import { MIN_WIDTH_TO_SHOW_BOTH_TOPTABLE_AND_FLAMEGRAPH } from '../constants';
 
-import { byPackageGradient, byValueGradient } from './FlameGraph/colors';
-import { ColorScheme, SelectedView, TextAlign } from './types';
+import { byPackageGradient, byValueGradient, diffColorBlindGradient, diffDefaultGradient } from './FlameGraph/colors';
+import { ColorScheme, ColorSchemeDiff, SelectedView, TextAlign } from './types';
 
 type Props = {
   app: CoreApp;
@@ -23,8 +23,9 @@ type Props = {
   textAlign: TextAlign;
   onTextAlignChange: (align: TextAlign) => void;
   showResetButton: boolean;
-  colorScheme: ColorScheme;
-  onColorSchemeChange: (colorScheme: ColorScheme) => void;
+  colorScheme: ColorScheme | ColorSchemeDiff;
+  onColorSchemeChange: (colorScheme: ColorScheme | ColorSchemeDiff) => void;
+  isDiffMode: boolean;
 };
 
 const FlameGraphHeader = ({
@@ -40,6 +41,7 @@ const FlameGraphHeader = ({
   showResetButton,
   colorScheme,
   onColorSchemeChange,
+  isDiffMode,
 }: Props) => {
   const styles = useStyles2((theme) => getStyles(theme, app));
   function interaction(name: string, context: Record<string, string | number>) {
@@ -97,7 +99,7 @@ const FlameGraphHeader = ({
             aria-label={'Reset focus and sandwich state'}
           />
         )}
-        <ColorSchemeButton app={app} value={colorScheme} onChange={onColorSchemeChange} />
+        <ColorSchemeButton app={app} value={colorScheme} onChange={onColorSchemeChange} isDiffMode={isDiffMode} />
         <RadioButtonGroup<TextAlign>
           size="sm"
           disabled={selectedView === SelectedView.TopTable}
@@ -125,17 +127,38 @@ const FlameGraphHeader = ({
 
 type ColorSchemeButtonProps = {
   app: CoreApp;
-  value: ColorScheme;
-  onChange: (colorScheme: ColorScheme) => void;
+  value: ColorScheme | ColorSchemeDiff;
+  onChange: (colorScheme: ColorScheme | ColorSchemeDiff) => void;
+  isDiffMode: boolean;
 };
 function ColorSchemeButton(props: ColorSchemeButtonProps) {
   const styles = useStyles2((theme) => getStyles(theme, props.app));
-  const menu = (
+
+  let menu = (
     <Menu>
       <Menu.Item label="By value" onClick={() => props.onChange(ColorScheme.ValueBased)} />
       <Menu.Item label="By package name" onClick={() => props.onChange(ColorScheme.PackageBased)} />
     </Menu>
   );
+
+  if (props.isDiffMode) {
+    menu = (
+      <Menu>
+        <Menu.Item label="Default (green to red)" onClick={() => props.onChange(ColorSchemeDiff.Default)} />
+        <Menu.Item label="Color blind (blue to red)" onClick={() => props.onChange(ColorSchemeDiff.DiffColorBlind)} />
+      </Menu>
+    );
+  }
+
+  // Show a bit different gradient as a way to indicate selected value
+  const colorDotStyle =
+    {
+      [ColorScheme.ValueBased]: styles.colorDotByValue,
+      [ColorScheme.PackageBased]: styles.colorDotByPackage,
+      [ColorSchemeDiff.DiffColorBlind]: styles.colorDotDiffColorBlind,
+      [ColorSchemeDiff.Default]: styles.colorDotDiffDefault,
+    }[props.value] || styles.colorDotByValue;
+
   return (
     <Dropdown overlay={menu}>
       <Button
@@ -147,13 +170,7 @@ function ColorSchemeButton(props: ColorSchemeButtonProps) {
         className={styles.buttonSpacing}
         aria-label={'Change color scheme'}
       >
-        <span
-          className={cx(
-            styles.colorDot,
-            // Show a bit different gradient as a way to indicate selected value
-            props.value === ColorScheme.ValueBased ? styles.colorDotByValue : styles.colorDotByPackage
-          )}
-        />
+        <span className={cx(styles.colorDot, colorDotStyle)} />
       </Button>
     </Dropdown>
   );
@@ -263,6 +280,15 @@ const getStyles = (theme: GrafanaTheme2, app: CoreApp) => ({
   colorDotByPackage: css`
     label: colorDotByPackage;
     background: ${byPackageGradient};
+  `,
+  colorDotDiffDefault: css`
+    label: colorDotDiffDefault;
+    background: ${diffDefaultGradient};
+  `,
+
+  colorDotDiffColorBlind: css`
+    label: colorDotDiffColorBlind;
+    background: ${diffColorBlindGradient};
   `,
 });
 
