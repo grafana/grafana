@@ -84,6 +84,10 @@ type Service interface {
 	RegisterClient(c Client)
 }
 
+type IdentitySyncronizer interface {
+	SyncIdentity(ctx context.Context, identity *Identity) error
+}
+
 type Client interface {
 	// Name returns the name of a client
 	Name() string
