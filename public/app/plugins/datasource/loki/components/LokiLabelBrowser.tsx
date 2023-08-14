@@ -133,10 +133,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
     padding: ${theme.spacing(2)};
     background-color: ${theme.colors.background.primary};
     position: sticky;
-    bottom: 0;
+    bottom: -24px; /* offset the padding on modal */
     left: 0;
-
-    z-index: 1;
   `,
   selector: css`
     font-family: ${theme.typography.fontFamilyMonospace};
