@@ -4,6 +4,7 @@ import React from 'react';
 import { Provider } from 'react-redux';
 
 import { AwsAuthType } from '@grafana/aws-sdk';
+import { PluginContextProvider, PluginMeta, PluginMetaInfo, PluginType } from '@grafana/data';
 import { configureStore } from 'app/store/configureStore';
 
 import { CloudWatchSettings, setupMockedDataSource } from '../__mocks__/CloudWatchDataSource';
@@ -25,12 +26,16 @@ jest.mock('./XrayLinkConfig', () => ({
 
 const putMock = jest.fn();
 const getMock = jest.fn();
+const mockAppEvents = {
+  subscribe: () => ({ unsubscribe: jest.fn() }),
+};
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getBackendSrv: () => ({
     put: putMock,
     get: getMock,
   }),
+  getAppEvents: () => mockAppEvents,
 }));
 
 const props: Props = {
@@ -82,11 +87,21 @@ const setup = (optionOverrides?: Partial<Props['options']>) => {
       ...optionOverrides,
     },
   };
+  const meta: PluginMeta = {
+    ...newProps.options,
+    id: 'cloudwatch',
+    type: PluginType.datasource,
+    info: {} as PluginMetaInfo,
+    module: '',
+    baseUrl: '',
+  };
 
-  render(
-    <Provider store={store}>
-      <ConfigEditor {...newProps} />
-    </Provider>
+  return render(
+    <PluginContextProvider meta={meta}>
+      <Provider store={store}>
+        <ConfigEditor {...newProps} />
+      </Provider>
+    </PluginContextProvider>
   );
 };
 
@@ -177,43 +192,19 @@ describe('Render', () => {
 
   it('should load the data source if it was saved before', async () => {
     const SAVED_VERSION = 2;
-    const newProps = {
-      ...props,
-      options: {
-        ...props.options,
-        version: SAVED_VERSION,
-      },
-    };
-
-    render(<ConfigEditor {...newProps} />);
+    setup({ version: SAVED_VERSION });
     await waitFor(async () => expect(loadDataSourceMock).toHaveBeenCalled());
   });
 
   it('should not load the data source if it wasnt saved before', async () => {
     const SAVED_VERSION = undefined;
-    const newProps = {
-      ...props,
-      options: {
-        ...props.options,
-        version: SAVED_VERSION,
-      },
-    };
-
-    render(<ConfigEditor {...newProps} />);
+    setup({ version: SAVED_VERSION });
     await waitFor(async () => expect(loadDataSourceMock).not.toHaveBeenCalled());
   });
 
   it('should show error message if Select log group button is clicked when data source is never saved', async () => {
     const SAVED_VERSION = undefined;
-    const newProps = {
-      ...props,
-      options: {
-        ...props.options,
-        version: SAVED_VERSION,
-      },
-    };
-
-    render(<ConfigEditor {...newProps} />);
+    setup({ version: SAVED_VERSION });
 
     await waitFor(() => expect(screen.getByText('Select log groups')).toBeInTheDocument());
     await userEvent.click(screen.getByText('Select log groups'));
@@ -231,7 +222,20 @@ describe('Render', () => {
         version: SAVED_VERSION,
       },
     };
-    const { rerender } = render(<ConfigEditor {...newProps} />);
+    const meta: PluginMeta = {
+      ...newProps.options,
+      id: 'cloudwatch',
+      type: PluginType.datasource,
+      info: {} as PluginMetaInfo,
+      module: '',
+      baseUrl: '',
+    };
+
+    const { rerender } = render(
+      <PluginContextProvider meta={meta}>
+        <ConfigEditor {...newProps} />
+      </PluginContextProvider>
+    );
     await waitFor(() => expect(screen.getByText('Select log groups')).toBeInTheDocument());
     const rerenderProps = {
       ...newProps,
@@ -243,7 +247,11 @@ describe('Render', () => {
         },
       },
     };
-    rerender(<ConfigEditor {...rerenderProps} />);
+    rerender(
+      <PluginContextProvider meta={meta}>
+        <ConfigEditor {...rerenderProps} />
+      </PluginContextProvider>
+    );
     await waitFor(() => expect(screen.getByText('AWS SDK Default')).toBeInTheDocument());
     await userEvent.click(screen.getByText('Select log groups'));
     await waitFor(() =>
@@ -264,7 +272,19 @@ describe('Render', () => {
         version: SAVED_VERSION,
       },
     };
-    const { rerender } = render(<ConfigEditor {...newProps} />);
+    const meta: PluginMeta = {
+      ...newProps.options,
+      id: 'cloudwatch',
+      type: PluginType.datasource,
+      info: {} as PluginMetaInfo,
+      module: '',
+      baseUrl: '',
+    };
+    const { rerender } = render(
+      <PluginContextProvider meta={meta}>
+        <ConfigEditor {...newProps} />
+      </PluginContextProvider>
+    );
     await waitFor(() => expect(screen.getByText('Select log groups')).toBeInTheDocument());
     const rerenderProps = {
       ...newProps,
@@ -273,7 +293,11 @@ describe('Render', () => {
         version: 1,
       },
     };
-    rerender(<ConfigEditor {...rerenderProps} />);
+    rerender(
+      <PluginContextProvider meta={meta}>
+        <ConfigEditor {...rerenderProps} />
+      </PluginContextProvider>
+    );
     await userEvent.click(screen.getByText('Select log groups'));
     await waitFor(() => expect(screen.getByText('Log group name prefix')).toBeInTheDocument());
   });

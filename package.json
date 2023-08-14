@@ -288,7 +288,6 @@
     "@opentelemetry/semantic-conventions": "1.15.0",
     "@popperjs/core": "2.11.8",
     "@prometheus-io/lezer-promql": "^0.37.0-rc.1",
-    "@pyroscope/flamegraph": "^0.35.5",
     "@react-aria/button": "3.8.0",
     "@react-aria/dialog": "3.5.3",
     "@react-aria/focus": "3.13.0",

@@ -117,8 +117,8 @@ export default class TempoLanguageProvider extends LanguageProvider {
     return options;
   }
 
-  async getOptionsV2(tag: string): Promise<Array<SelectableValue<string>>> {
-    const response = await this.request(`/api/v2/search/tag/${tag}/values`);
+  async getOptionsV2(tag: string, query: string): Promise<Array<SelectableValue<string>>> {
+    const response = await this.request(`/api/v2/search/tag/${tag}/values`, query ? { q: query } : {});
     let options: Array<SelectableValue<string>> = [];
     if (response && response.tagValues) {
       options = response.tagValues.map((v: { type: string; value: string }) => ({
