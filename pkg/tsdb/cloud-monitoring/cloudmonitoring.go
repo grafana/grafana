@@ -434,15 +434,14 @@ func (s *Service) buildQueryExecutors(logger log.Logger, req *backend.QueryDataR
 			cmslo.setParams(startTime, endTime, durationSeconds, query.Interval.Milliseconds())
 			queryInterface = cmslo
 		case string(dataquery.QueryTypePromQL):
-			stuff := &cloudMonitoringProm{
+			cmp := &cloudMonitoringProm{
 				refID:      query.RefID,
 				logger:     logger,
 				aliasBy:    q.AliasBy,
 				parameters: q.PromQLQuery,
 				timeRange:  req.Queries[0].TimeRange,
 			}
-			//stuff.setParams(startTime, endTime, durationSeconds, query.Interval.Milliseconds())
-			queryInterface = stuff
+			queryInterface = cmp
 		default:
 			return nil, fmt.Errorf("unrecognized query type %q", query.QueryType)
 		}
