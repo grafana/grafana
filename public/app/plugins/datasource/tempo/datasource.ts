@@ -336,7 +336,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
             streaming: config.featureToggles.traceQLStreaming,
           });
 
-          if (config.featureToggles.traceQLStreaming) {
+          if (config.featureToggles.traceQLStreaming && this.isFeatureAvailable(FeatureName.streaming)) {
             subQueries.push(this.handleStreamingSearch(options, traceqlSearchTargets, queryValue));
           } else {
             subQueries.push(
