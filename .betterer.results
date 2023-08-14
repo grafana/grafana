@@ -3513,10 +3513,7 @@ exports[`better eslint`] = {
     "public/app/plugins/datasource/cloud-monitoring/types/types.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
-    "public/app/plugins/datasource/cloudwatch/components/ConfigEditor.test.tsx:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
-    ],
-    "public/app/plugins/datasource/cloudwatch/components/LogsQueryField.tsx:5381": [
+    "public/app/plugins/datasource/cloudwatch/components/QueryEditor/LogsQueryEditor/LogsQueryFieldOld.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
     "public/app/plugins/datasource/cloudwatch/datasource.ts:5381": [
