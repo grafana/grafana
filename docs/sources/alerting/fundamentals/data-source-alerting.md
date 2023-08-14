@@ -43,6 +43,7 @@ These are the data sources that are compatible with and supported by Grafana Ale
 
 {{% docs/reference %}}
 [datasources]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/datasources"
+[datasources]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/datasources"
 
 [aws-cloudwatch]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/datasources/aws-cloudwatch"
 [aws-cloudwatch]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/datasources/aws-cloudwatch"
