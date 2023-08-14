@@ -15,7 +15,7 @@ weight: 10
 
 # Time series (improved)
 
-**_The Time series visualization_** is the default and primary way to visualize time series data as a graph. It can render series as lines, points, or bars. It is versatile enough to display almost any time-series data. [This public demo dashboard](https://play.grafana.org/d/000000016/1-time-series-graphs?orgId=1) contains many different examples of how it can be configured and styled.
+The Time series visualization is the default and primary way to visualize time series data as a graph. It can render series as lines, points, or bars. It is versatile enough to display almost any time-series data. [This public demo dashboard](https://play.grafana.org/d/000000016/1-time-series-graphs?orgId=1) contains many different examples of how it can be configured and styled.
 
 {{< figure src="/static/img/docs/time-series-panel/time_series_small_example.png" max-width="1200px" caption="Time series" >}}
 
@@ -31,9 +31,12 @@ Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor i
 
 ## Axis options
 
-**_Note: Headings for options to H3 level to ensure scannability._**
+{{% admonition type="note" %}}
+_Formatting notes_
 
-**_Note: x- and y-axis should always be lower case and hyphenated unless quoting in the UI. In the UI, we should use X- and Y-axis spelling with "axis" in lower-case._**
+Headings for options to H3 level to ensure scannability.
+x- and y-axis should always be lower case and hyphenated unless quoting in the UI. In the UI, we should use X- and Y-axis spelling with "axis" in lower-case.
+{{% /admonition %}}
 
 Options under the axis category change how the x- and y-axes are rendered. Some options do not take effect until you click outside of the field option box you are editing. You can also or press `Enter`.
 
@@ -45,7 +48,11 @@ Use the default time zone or select another time zone. You can also add multiple
 
 Select the placement of the y-axis.
 
-**_Note: Any options lower than an H3 are bolded and formatted in a bullet list since H3s and H4s are very hard to distinguish._**
+{{% admonition type="note" %}}
+_Formatting notes_
+
+Any options lower than an H3 are bolded and formatted in a bullet list since H3s and H4s are very hard to distinguish.
+{{% /admonition %}}
 
 - **Auto:** Automatically assigns the y-axis to the series. When there are two or more series with different units, Grafana assigns the left axis to the first unit and the right axis to the units that follow.
 - **Left:** Display all y-axes on the left side.
@@ -58,7 +65,11 @@ To selectively hide axes, [Add a field override]({{< relref "../../configure-ove
 
 Set a **_y-axis_** text label. If you have more than one y-axis, then you can assign different labels using an override.
 
-**_Note: Unless you're talking about a specific labeled axis, lower case, always hyphenated. Maybe the UI is an exception where we would use upper case with a hyphen, axis in lower case (e.g., X-axis)._**
+{{% admonition type="note" %}}
+_Formatting notes_
+
+Unless you're talking about a specific labeled axis, lower case, always hyphenated. Maybe the UI is an exception where we would use upper case with a hyphen, axis in lower case (e.g., X-axis).
+{{% /admonition %}}
 
 ### Width
 
@@ -70,16 +81,16 @@ By setting the width of the axis, data with different axes types can share the s
 
 Set whether grid lines are displayed or not.
 
-- **Auto**
-- **On**
-- **Off**
+- **Auto**: A description here
+- **On**: A description here
+- **Off**: A description here
 
 ### Color
 
 Set whether the axis color is the same as the color of the text or the series.
 
-- **Text**
-- **Series**
+- **Text**: A description here
+- **Series**: A description here
 
 ### Scale
 
@@ -132,7 +143,11 @@ The following table lists which of the styling options apply to each graph style
 | [Show points](#show-points)                 | X     | X    |        |
 | [Stack series](#stack-series)               | X     | X    | X      |
 
-**_Note: I've ordered these options as they display as you move across graph styles; but the table above is alphabetical to make it easier to find things. Maybe they should be consistent. Just addressing different approaches._**
+{{% admonition type="note" %}}
+_Formatting notes_
+
+I've ordered these options as they display as you move across graph styles; but the table above is alphabetical to make it easier to find things. Maybe they should be consistent. Just addressing different approaches.
+{{% /admonition %}}
 
 ### Line interpolation
 
@@ -232,7 +247,11 @@ The stacking group option is only available as an override. For more information
 
 ## Special overrides
 
-**_Note: These overrides aren't visible in the sections of the UI they're grouped under, so it's potentially confusing to have them that way._**
+{{% admonition type="note" %}}
+_Formatting notes_
+
+These overrides aren't visible in the sections of the UI they're grouped under, so it's potentially confusing to have them that way.
+{{% /admonition %}}
 
 ### Fill below to
 
@@ -260,7 +279,7 @@ The transform option is only available as an override.
 
 ## Other visualization options
 
-There are other common configuration options for visualizations:
+There are other common configuration options for the Time series visualization:
 
 <!--above can be a bit of shared content to ensure wording is consistent with guidance indicating that you should create an alphabetical list of other relevant options linked to that content-->
 
