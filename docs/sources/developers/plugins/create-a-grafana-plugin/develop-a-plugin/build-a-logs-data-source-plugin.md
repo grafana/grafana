@@ -199,7 +199,7 @@ const result = new MutableDataFrame({
 
 ### Logs to trace using data link with url
 
-If you are developing a log data source and your log data contains **trace IDs**, you can enhance your log data frames by adding a field with trace ID values and URL data links. These links should utilize the trace ID value to accurately link to the appropriate trace. This enhancement enables users to seamlessly move from log lines to the relevant traces.
+If your log data contains **trace IDs**, you can enhance your log data frames by adding a **field with trace ID values** and **URL data links**. These links should utilize the trace ID value to accurately link to the appropriate trace. This enhancement enables users to seamlessly move from log lines to the relevant traces.
 
 **Example in TypeScript:**
 
