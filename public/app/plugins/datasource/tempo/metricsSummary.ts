@@ -1,6 +1,13 @@
 import { SpanKind, SpanStatusCode } from '@opentelemetry/api';
 
-import { DataSourceInstanceSettings, FieldDTO, FieldType, MutableDataFrame, sortDataFrame } from '@grafana/data';
+import {
+  DataSourceInstanceSettings,
+  FieldDTO,
+  FieldType,
+  LoadingState,
+  MutableDataFrame,
+  sortDataFrame,
+} from '@grafana/data';
 
 type MetricsSummary = {
   spanCount: string;
@@ -39,10 +46,13 @@ type MetricsData = {
 export function createTableFrameFromMetricsQuery(
   data: MetricsSummary[],
   instanceSettings: DataSourceInstanceSettings,
-  isLoading: boolean
+  state: LoadingState
 ) {
   let frame;
-  if (isLoading) {
+
+  if (state === LoadingState.Error) {
+    frame = emptyResponse;
+  } else if (state === LoadingState.Loading) {
     frame = new MutableDataFrame({
       name: 'Metrics Summary',
       refId: 'metrics-summary',
@@ -203,3 +213,12 @@ const getPercentileRow = (name: string) => {
     },
   };
 };
+
+export const emptyResponse = new MutableDataFrame({
+  name: 'Metrics Summary',
+  refId: 'metrics-summary',
+  fields: [],
+  meta: {
+    preferredVisualisationType: 'table',
+  },
+});
