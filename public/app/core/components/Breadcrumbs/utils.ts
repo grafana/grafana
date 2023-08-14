@@ -17,10 +17,10 @@ export function buildBreadcrumbs(sectionNav: NavModelItem, pageNav?: NavModelIte
 
     if (!foundHome && !node.hideFromBreadcrumbs) {
       if (homeNav && urlToMatch === homeNav.url) {
-        crumbs.unshift({ text: homeNav.text, href: node.url ?? '' });
+        crumbs.unshift({ text: homeNav.text, href: node.url ?? '', onClick: node.onClick });
         foundHome = true;
       } else {
-        crumbs.unshift({ text: node.text, href: node.url ?? '' });
+        crumbs.unshift({ text: node.text, href: node.url ?? '', onClick: node.onClick });
       }
     }
 
