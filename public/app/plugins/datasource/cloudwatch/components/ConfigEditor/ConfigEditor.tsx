@@ -57,6 +57,15 @@ export const ConfigEditor = (props: Props) => {
       failSubscription.unsubscribe();
     };
   }, [options.jsonData.authType, report]);
+  const [externalId, setExternalId] = useState('');
+  useEffect(() => {
+    if (!externalId && datasource) {
+      datasource.resources
+        .getExternalId()
+        .then(setExternalId)
+        .catch(() => setExternalId('Unable to fetch externalId'));
+    }
+  }, [datasource, externalId]);
 
   return (
     <>
@@ -76,6 +85,7 @@ export const ConfigEditor = (props: Props) => {
               );
           })
         }
+        externalId={externalId}
       >
         <InlineField label="Namespaces of Custom Metrics" labelWidth={29} tooltip="Namespaces of Custom Metrics.">
           <Input
