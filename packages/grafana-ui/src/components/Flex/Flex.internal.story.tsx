@@ -65,10 +65,14 @@ export const AlignItemsExamples: StoryFn<typeof Flex> = () => {
         ))}
       </Flex>
       <p>Align items stretch</p>
-      <Flex direction="row" wrap="wrap" alignItems="stretch" justifyContent="center" gap={2}>
-        {Array.from({ length: 5 }).map((_, i) => (
+      <Flex direction="row" wrap="wrap" alignItems="stretch" justifyContent="space-between" gap={2} height={80}>
+        {/* {Array.from({ length: 5 }).map((_, i) => (
           <Item key={i} color="darkmagenta" text={i + 1} />
-        ))}
+        ))} */}
+        <div style={{ width: '100px', backgroundColor: 'pink' }} />
+        <div style={{ width: '100px', backgroundColor: 'darkmagenta' }} />
+        <div style={{ width: '100px', backgroundColor: 'pink' }} />
+        <div style={{ width: '100px', backgroundColor: 'darkmagenta' }} />
       </Flex>
       <p>Align items baseline</p>
       <Flex direction="row" wrap="nowrap" alignItems="baseline" justifyContent="center" gap={2}>
