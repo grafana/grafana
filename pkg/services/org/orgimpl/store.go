@@ -46,7 +46,6 @@ type store interface {
 	RemoveOrgUser(context.Context, *org.RemoveOrgUserCommand) error
 
 	Count(context.Context, *quota.ScopeParameters) (*quota.Map, error)
-	GetUsageMetrics(ctx context.Context) (*org.Stats, error)
 }
 
 type sqlStore struct {
@@ -807,27 +806,4 @@ func removeUserOrg(sess *db.Session, userID int64) error {
 
 	_, err := sess.ID(userID).MustCols("org_id").Update(&user)
 	return err
-}
-
-func (ss *sqlStore) GetUsageMetrics(ctx context.Context) (*org.Stats, error) {
-	dialect := ss.db.GetDialect()
-
-	sb := &db.SQLBuilder{}
-	sb.Write("SELECT ")
-	sb.Write(`(SELECT COUNT (*) from ` + dialect.Quote("org_user") + ` AS ou ` +
-		`LEFT JOIN ` + dialect.Quote("user") + ` AS u ON u.id = ou.user_id ` +
-		`WHERE ou.role =? ` +
-		`AND u.is_service_account = ` + dialect.BooleanStr(false) + ` ` +
-		`AND u.is_disabled = ` + dialect.BooleanStr(false) + `) AS user_accounts_with_no_role`)
-	sb.AddParams("None")
-
-	var sqlStats org.Stats
-	if err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
-		_, err := sess.SQL(sb.GetSQLString(), sb.GetParams()...).Get(&sqlStats)
-		return err
-	}); err != nil {
-		return nil, err
-	}
-
-	return &sqlStats, nil
 }
