@@ -576,7 +576,7 @@ const result = new MutableDataFrame({
             title: 'Trace view',
             url: '',
             internal: {
-              // Be sure to adjust this example with datasourceUid,  datasourceName and query based on your data source logic.
+              // Be sure to adjust this example with datasourceUid, datasourceName and query based on your data source logic.
               datasourceUid: instanceSettings.uid,
               datasourceName: instanceSettings.name,
               query: {
