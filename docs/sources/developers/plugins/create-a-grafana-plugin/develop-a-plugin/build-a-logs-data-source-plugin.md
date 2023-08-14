@@ -80,7 +80,9 @@ frame.SetMeta(&data.FrameMeta{
 **Example of constructing a logs data frame in TypeScript:**
 
 ```ts
-const result = new MutableDataFrame({
+import { createDataFrame, DataFrameType, FieldType } from '@grafana/data';
+
+const result = createDataFrame({
   fields: [
     { name: 'timestamp', type: FieldType.time, values: [1645030244810, 1645030247027, 1645030247027] },
     { name: 'body', type: FieldType.string, values: ['message one', 'message two', 'message three'] },
@@ -123,7 +125,9 @@ frame.Meta = &data.FrameMeta{
 **Example in TypeScript:**
 
 ```ts
-const result = new MutableDataFrame({
+import { createDataFrame } from '@grafana/data';
+
+const result = createDataFrame({
     fields: [...],
     meta: {
         preferredVisualisationType: 'logs',
@@ -151,7 +155,9 @@ frame.Meta = &data.FrameMeta{
 **Example in TypeScript:**
 
 ```ts
-const result = new MutableDataFrame({
+import { createDataFrame } from '@grafana/data';
+
+const result = createDataFrame({
     fields: [...],
     meta: {
       custom: {
@@ -186,7 +192,9 @@ frame.Meta = &data.FrameMeta{
 **Example in TypeScript:**
 
 ```ts
-const result = new MutableDataFrame({
+import { createDataFrame } from '@grafana/data';
+
+const result = createDataFrame({
     fields: [...],
     meta: {
       custom: {
@@ -204,7 +212,9 @@ If your log data contains **trace IDs**, you can enhance your log data frames by
 **Example in TypeScript:**
 
 ```ts
-const result = new MutableDataFrame({
+import { createDataFrame } from '@grafana/data';
+
+const result = createDataFrame({
   fields: [
     ...,
     { name: 'traceID',
@@ -564,7 +574,9 @@ If you are developing a data source plugin that handles both logs and traces, an
 **Example in TypeScript:**
 
 ```ts
-const result = new MutableDataFrame({
+import { createDataFrame } from '@grafana/data';
+
+const result = createDataFrame({
   fields: [
     ...,
     { name: 'traceID',
