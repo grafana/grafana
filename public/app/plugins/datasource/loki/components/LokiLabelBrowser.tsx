@@ -110,8 +110,10 @@ export function facetLabels(
 const getStyles = (theme: GrafanaTheme2) => ({
   wrapper: css`
     background-color: ${theme.colors.background.secondary};
-    padding: ${theme.spacing(2)};
     width: 100%;
+  `,
+  wrapperPadding: css`
+    padding: ${theme.spacing(2)};
   `,
   list: css`
     margin-top: ${theme.spacing(1)};
@@ -124,7 +126,17 @@ const getStyles = (theme: GrafanaTheme2) => ({
     & + & {
       margin: ${theme.spacing(2, 0)};
     }
+
     position: relative;
+  `,
+  footerSectionStyles: css`
+    padding: ${theme.spacing(2)};
+    background-color: ${theme.colors.background.primary};
+    position: sticky;
+    bottom: 0;
+    left: 0;
+
+    z-index: 1;
   `,
   selector: css`
     font-family: ${theme.typography.fontFamilyMonospace};
@@ -434,83 +446,85 @@ export class UnthemedLokiLabelBrowser extends React.Component<BrowserProps, Brow
     }
 
     return (
-      <div className={styles.wrapper}>
-        <div className={styles.section}>
-          <Label description="Which labels would you like to consider for your search?">
-            1. Select labels to search in
-          </Label>
-          <div className={styles.list}>
-            {labels.map((label) => (
-              <LokiLabel
-                key={label.name}
-                name={label.name}
-                loading={label.loading}
-                active={label.selected}
-                hidden={label.hidden}
-                facets={label.facets}
-                onClick={this.onClickLabel}
+      <>
+        <div className={styles.wrapper}>
+          <div className={cx(styles.section, styles.wrapperPadding)}>
+            <Label description="Which labels would you like to consider for your search?">
+              1. Select labels to search in
+            </Label>
+            <div className={styles.list}>
+              {labels.map((label) => (
+                <LokiLabel
+                  key={label.name}
+                  name={label.name}
+                  loading={label.loading}
+                  active={label.selected}
+                  hidden={label.hidden}
+                  facets={label.facets}
+                  onClick={this.onClickLabel}
+                />
+              ))}
+            </div>
+          </div>
+          <div className={cx(styles.section, styles.wrapperPadding)}>
+            <Label description="Choose the label values that you would like to use for the query. Use the search field to find values across selected labels.">
+              2. Find values for the selected labels
+            </Label>
+            <div>
+              <Input
+                onChange={this.onChangeSearch}
+                aria-label="Filter expression for values"
+                value={searchTerm}
+                placeholder={'Enter a label value'}
               />
-            ))}
-          </div>
-        </div>
-        <div className={styles.section}>
-          <Label description="Choose the label values that you would like to use for the query. Use the search field to find values across selected labels.">
-            2. Find values for the selected labels
-          </Label>
-          <div>
-            <Input
-              onChange={this.onChangeSearch}
-              aria-label="Filter expression for values"
-              value={searchTerm}
-              placeholder={'Enter a label value'}
-            />
-          </div>
-          <div className={styles.valueListArea}>
-            {selectedLabels.map((label) => (
-              <div role="list" key={label.name} className={styles.valueListWrapper}>
-                <div className={styles.valueTitle} aria-label={`Values for ${label.name}`}>
-                  <LokiLabel
-                    name={label.name}
-                    loading={label.loading}
-                    active={label.selected}
-                    hidden={label.hidden}
-                    //If no facets, we want to show number of all label values
-                    facets={label.facets || label.values?.length}
-                    onClick={this.onClickLabel}
-                  />
+            </div>
+            <div className={styles.valueListArea}>
+              {selectedLabels.map((label) => (
+                <div role="list" key={label.name} className={styles.valueListWrapper}>
+                  <div className={styles.valueTitle} aria-label={`Values for ${label.name}`}>
+                    <LokiLabel
+                      name={label.name}
+                      loading={label.loading}
+                      active={label.selected}
+                      hidden={label.hidden}
+                      //If no facets, we want to show number of all label values
+                      facets={label.facets || label.values?.length}
+                      onClick={this.onClickLabel}
+                    />
+                  </div>
+                  <FixedSizeList
+                    height={200}
+                    itemCount={label.values?.length || 0}
+                    itemSize={28}
+                    itemKey={(i) => (label.values as FacettableValue[])[i].name}
+                    width={200}
+                    className={styles.valueList}
+                  >
+                    {({ index, style }) => {
+                      const value = label.values?.[index];
+                      if (!value) {
+                        return null;
+                      }
+                      return (
+                        <div style={style}>
+                          <LokiLabel
+                            name={label.name}
+                            value={value?.name}
+                            active={value?.selected}
+                            highlightParts={value?.highlightParts}
+                            onClick={this.onClickValue}
+                            searchTerm={searchTerm}
+                          />
+                        </div>
+                      );
+                    }}
+                  </FixedSizeList>
                 </div>
-                <FixedSizeList
-                  height={200}
-                  itemCount={label.values?.length || 0}
-                  itemSize={28}
-                  itemKey={(i) => (label.values as FacettableValue[])[i].name}
-                  width={200}
-                  className={styles.valueList}
-                >
-                  {({ index, style }) => {
-                    const value = label.values?.[index];
-                    if (!value) {
-                      return null;
-                    }
-                    return (
-                      <div style={style}>
-                        <LokiLabel
-                          name={label.name}
-                          value={value?.name}
-                          active={value?.selected}
-                          highlightParts={value?.highlightParts}
-                          onClick={this.onClickValue}
-                          searchTerm={searchTerm}
-                        />
-                      </div>
-                    );
-                  }}
-                </FixedSizeList>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </div>
-        <div className={styles.section}>
+        <div className={styles.footerSectionStyles}>
           <Label>3. Resulting selector</Label>
           <div aria-label="selector" className={styles.selector}>
             {selector}
@@ -544,7 +558,7 @@ export class UnthemedLokiLabelBrowser extends React.Component<BrowserProps, Brow
             </Button>
           </HorizontalGroup>
         </div>
-      </div>
+      </>
     );
   }
 }
