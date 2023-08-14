@@ -113,12 +113,10 @@ func TestDatasourceProxy_proxyDatasourceRequest(t *testing.T) {
 
 			resp := responseRecorder.Result()
 			body := resp.Body
-			defer func() {
-				require.NoError(t, body.Close())
-			}()
 
 			b, err := io.ReadAll(body)
 			require.NoError(t, err)
+			require.NoError(t, body.Close())
 
 			jsonBody := make(map[string]string)
 			err = json.Unmarshal(b, &jsonBody)
