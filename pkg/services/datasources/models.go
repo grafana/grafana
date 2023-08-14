@@ -35,6 +35,9 @@ const (
 	CustomHeaderValue = "httpHeaderValue"
 )
 
+// Sets the access mode
+// either proxy or direct (Server or Browser in the UI).
+// Some data sources are incompatible with any setting but proxy (Server).
 type DsAccess string
 
 type DataSource struct {
@@ -89,10 +92,12 @@ func (e ErrDatasourceSecretsPluginUserFriendly) Error() string {
 // ----------------------
 // COMMANDS
 
+// swagger:model
 // Also acts as api DTO
 type AddDataSourceCommand struct {
-	Name            string            `json:"name" binding:"Required"`
-	Type            string            `json:"type" binding:"Required"`
+	Name string `json:"name" binding:"Required"`
+	Type string `json:"type" binding:"Required"`
+	// required:true
 	Access          DsAccess          `json:"access" binding:"Required"`
 	URL             string            `json:"url"`
 	Database        string            `json:"database"`
