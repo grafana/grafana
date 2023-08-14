@@ -212,7 +212,7 @@ If your log data contains **trace IDs**, you can enhance your log data frames by
 **Example in TypeScript:**
 
 ```ts
-import { createDataFrame } from '@grafana/data';
+import { createDataFrame, FieldType } from '@grafana/data';
 
 const result = createDataFrame({
   fields: [
