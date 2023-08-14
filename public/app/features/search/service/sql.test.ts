@@ -28,7 +28,7 @@ describe('SQLSearcher', () => {
       sort: query.sort,
       tag: undefined,
       type: DashboardSearchItemType.DashDB,
-      folderIds: [0],
+      folderUIDs: ['General'],
     });
   });
 
@@ -49,7 +49,7 @@ describe('SQLSearcher', () => {
       sort: query.sort,
       tag: undefined,
       type: DashboardSearchItemType.DashFolder,
-      folderIds: [0],
+      folderUIDs: ['any'],
     });
   });
 
@@ -71,7 +71,7 @@ describe('SQLSearcher', () => {
       query: query.query,
       tag: undefined,
       type: DashboardSearchItemType.DashFolder,
-      folderIds: [0],
+      folderUIDs: ['any'],
     });
   });
 

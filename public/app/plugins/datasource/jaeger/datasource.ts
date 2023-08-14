@@ -21,6 +21,7 @@ import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { SpanBarOptions } from 'app/features/explore/TraceView/components';
 
 import { ALL_OPERATIONS_KEY } from './components/SearchForm';
+import { TraceIdTimeParamsOptions } from './configuration/TraceIdTimeParams';
 import { createGraphFrames } from './graphTransform';
 import { createTableFrame, createTraceFrame } from './responseTransform';
 import { JaegerQuery } from './types';
@@ -28,11 +29,13 @@ import { convertTagsLogfmt } from './util';
 
 export interface JaegerJsonData extends DataSourceJsonData {
   nodeGraph?: NodeGraphOptions;
+  traceIdTimeParams?: TraceIdTimeParamsOptions;
 }
 
 export class JaegerDatasource extends DataSourceApi<JaegerQuery, JaegerJsonData> {
   uploadedJson: string | ArrayBuffer | null = null;
   nodeGraph?: NodeGraphOptions;
+  traceIdTimeParams?: TraceIdTimeParamsOptions;
   spanBar?: SpanBarOptions;
   constructor(
     private instanceSettings: DataSourceInstanceSettings<JaegerJsonData>,
@@ -41,6 +44,7 @@ export class JaegerDatasource extends DataSourceApi<JaegerQuery, JaegerJsonData>
   ) {
     super(instanceSettings);
     this.nodeGraph = instanceSettings.jsonData.nodeGraph;
+    this.traceIdTimeParams = instanceSettings.jsonData.traceIdTimeParams;
   }
 
   async metadataRequest(url: string, params?: Record<string, any>): Promise<any> {
@@ -65,10 +69,15 @@ export class JaegerDatasource extends DataSourceApi<JaegerQuery, JaegerJsonData>
       return of({ error: { message: 'You must select a service.' }, data: [] });
     }
 
+    let { start, end } = this.getTimeRange();
+
     if (target.queryType !== 'search' && target.query) {
-      return this._request(
-        `/api/traces/${encodeURIComponent(this.templateSrv.replace(target.query, options.scopedVars))}`
-      ).pipe(
+      let url = `/api/traces/${encodeURIComponent(this.templateSrv.replace(target.query, options.scopedVars))}`;
+      if (this.traceIdTimeParams) {
+        url += `?start=${start}&end=${end}`;
+      }
+
+      return this._request(url).pipe(
         map((response) => {
           const traceData = response?.data?.data?.[0];
           if (!traceData) {

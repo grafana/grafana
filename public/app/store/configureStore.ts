@@ -1,6 +1,7 @@
 import { configureStore as reduxConfigureStore, createListenerMiddleware } from '@reduxjs/toolkit';
 import { setupListeners } from '@reduxjs/toolkit/query';
 
+import { togglesApi } from 'app/features/admin/AdminFeatureTogglesAPI';
 import { browseDashboardsAPI } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
 import { publicDashboardApi } from 'app/features/dashboard/api/publicDashboardApi';
 import { StoreState } from 'app/types/store';
@@ -28,7 +29,8 @@ export function configureStore(initialState?: Partial<StoreState>) {
         listenerMiddleware.middleware,
         alertingApi.middleware,
         publicDashboardApi.middleware,
-        browseDashboardsAPI.middleware
+        browseDashboardsAPI.middleware,
+        togglesApi.middleware
       ),
     devTools: process.env.NODE_ENV !== 'production',
     preloadedState: {
