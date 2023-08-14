@@ -161,7 +161,7 @@ func (e *cloudWatchExecutor) QueryData(ctx context.Context, req *backend.QueryDa
 	_, fromAlert := req.Headers[ngalertmodels.FromAlertHeaderName]
 	fromExpression := req.GetHTTPHeader(query.HeaderFromExpression) != ""
 	isSyncLogQuery := (fromAlert || fromExpression) && model.QueryMode == logsQueryMode
-	ctx, span := tracing.DefaultTracer().Start(
+	_, span := tracing.DefaultTracer().Start(
 		ctx,
 		"QueryData in Cloudwatch",
 		trace.WithAttributes(
