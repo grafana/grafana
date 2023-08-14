@@ -162,7 +162,7 @@ export class DatasourceSrv implements DataSourceService {
       }
 
       // If there is only one constructor argument it is instanceSettings
-      const useAngular = dsPlugin.DataSourceClass.length !== 1;
+      const useAngular = dsPlugin.DataSourceClass.constructor.length !== 1;
       let instance: DataSourceApi<any, any>;
 
       if (useAngular) {
