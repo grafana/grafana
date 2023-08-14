@@ -1,6 +1,7 @@
 import { identity, pick, pickBy, groupBy, startCase } from 'lodash';
 import { EMPTY, from, lastValueFrom, merge, Observable, of, throwError } from 'rxjs';
 import { catchError, concatMap, map, mergeMap, toArray } from 'rxjs/operators';
+import semver from 'semver';
 
 import {
   CoreApp,
@@ -66,6 +67,20 @@ import { getErrorMessage } from './utils';
 
 export const DEFAULT_LIMIT = 20;
 
+enum FeatureName {
+  streaming = 'streaming',
+}
+
+/* Map, for each feature (e.g., streaming), the minimum Tempo version required to have that
+ ** feature available. If the running Tempo instance on the user's backend is older than the
+ ** target version, the feature is disabled in Grafana (frontend).
+ */
+const featuresToTempoVersion = {
+  [FeatureName.streaming]: 'v2.2', // TODO v2.2
+};
+
+const minimumTempoVersionWithStatusInfoEndpoint = 'v.2.2'; // TODO v2.2
+
 export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJsonData> {
   tracesToLogs?: TraceToLogsOptions;
   serviceMap?: {
@@ -130,8 +145,31 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
         })
       )
     );
+    // TODO use semantic version as type?
+    // TODO remove `v` from `v2.2`
     this.tempoVersion = response.data.version;
   };
+
+  /**
+   * Check, for the given feature, whether the running Tempo instance exposes that feature.
+   * This is done by checking that the version - fetched from the backend and stored in the object - of
+   * the Tempo instance running on the user's backend is greater than the version required to have
+   * that feature available.
+   *
+   * @param featureName - the name of the feature to consider
+   * @return true if the feature is available, false otherwise
+   */
+  private isFeatureAvailable(featureName: FeatureName) {
+    // Version of Tempo running on the backend.
+    // If we couldn't fetch the Tempo version by calling the dedicated endpoint in `init()`, since that
+    // endpoint has been exposed in v2.2, we assume that the running Tempo instance is before v2.2
+    // (e.g., v2.1).
+    // (Note that we are ignoring the brief moment were `this.tempoVersion` is undefined because we
+    // haven't fetched it from the backend yet.)
+    const actualVersion = this.tempoVersion ?? minimumTempoVersionWithStatusInfoEndpoint;
+
+    return semver.gte(actualVersion, featuresToTempoVersion[featureName]);
+  }
 
   query(options: DataQueryRequest<TempoQuery>): Observable<DataQueryResponse> {
     const subQueries: Array<Observable<DataQueryResponse>> = [];
@@ -245,7 +283,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
             streaming: config.featureToggles.traceQLStreaming,
           });
 
-          if (config.featureToggles.traceQLStreaming) {
+          if (config.featureToggles.traceQLStreaming && this.isFeatureAvailable(FeatureName.streaming)) {
             subQueries.push(this.handleStreamingSearch(options, targets.traceql, queryValue));
           } else {
             subQueries.push(
