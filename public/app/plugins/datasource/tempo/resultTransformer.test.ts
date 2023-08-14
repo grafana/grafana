@@ -110,15 +110,18 @@ describe('createTableFrameFromSearch()', () => {
     // TraceID must have unit = 'string' to prevent the ID from rendering as Infinity
     expect(frame.fields[0].config.unit).toBe('string');
 
-    expect(frame.fields[1].name).toBe('traceName');
-    expect(frame.fields[1].values[0]).toBe('c10d7ca4e3a00354 ');
+    expect(frame.fields[1].name).toBe('traceService');
+    expect(frame.fields[1].values[0]).toBe('requester');
 
-    expect(frame.fields[2].name).toBe('startTime');
-    expect(frame.fields[2].values[0]).toBe('2022-01-28 03:00:28');
-    expect(frame.fields[2].values[1]).toBe('2022-01-27 22:56:06');
+    expect(frame.fields[2].name).toBe('traceName');
+    expect(frame.fields[2].values[0]).toBe('app');
 
-    expect(frame.fields[3].name).toBe('traceDuration');
-    expect(frame.fields[3].values[0]).toBe(65);
+    expect(frame.fields[3].name).toBe('startTime');
+    expect(frame.fields[3].values[0]).toBe('2022-01-28 03:00:28');
+    expect(frame.fields[3].values[1]).toBe('2022-01-27 22:56:06');
+
+    expect(frame.fields[4].name).toBe('traceDuration');
+    expect(frame.fields[4].values[0]).toBe(65);
   });
 });
 
@@ -134,60 +137,64 @@ describe('createTableFrameFromTraceQlQuery()', () => {
     expect(frame.fields[1].name).toBe('startTime');
     expect(frame.fields[1].type).toBe('string');
     expect(frame.fields[1].values[1]).toBe('2022-01-27 22:56:06');
-    // Trace name field
-    expect(frame.fields[2].name).toBe('traceName');
+    // Trace service field
+    expect(frame.fields[2].name).toBe('traceService');
     expect(frame.fields[2].type).toBe('string');
-    expect(frame.fields[2].values[0]).toBe('lb HTTP Client');
+    expect(frame.fields[2].values[0]).toBe('lb');
+    // Trace name field
+    expect(frame.fields[3].name).toBe('traceName');
+    expect(frame.fields[3].type).toBe('string');
+    expect(frame.fields[3].values[0]).toBe('HTTP Client');
     // Duration field
-    expect(frame.fields[3].name).toBe('traceDuration');
-    expect(frame.fields[3].type).toBe('number');
-    expect(frame.fields[3].values[2]).toBe(44);
+    expect(frame.fields[4].name).toBe('traceDuration');
+    expect(frame.fields[4].type).toBe('number');
+    expect(frame.fields[4].values[2]).toBe(44);
     // Subframes field
-    expect(frame.fields[4].name).toBe('nested');
-    expect(frame.fields[4].type).toBe('nestedFrames');
+    expect(frame.fields[5].name).toBe('nested');
+    expect(frame.fields[5].type).toBe('nestedFrames');
     // Single spanset
-    expect(frame.fields[4].values[0][0].fields[0].name).toBe('traceIdHidden');
-    expect(frame.fields[4].values[0][0].fields[0].values[0]).toBe('b1586c3c8c34d');
-    expect(frame.fields[4].values[0][0].fields[1].name).toBe('spanID');
-    expect(frame.fields[4].values[0][0].fields[1].values[0]).toBe('162a4adae63b61f1');
-    expect(frame.fields[4].values[0][0].fields[2].name).toBe('spanStartTime');
-    expect(frame.fields[4].values[0][0].fields[2].values[0]).toBe('2022-10-19 09:03:34');
-    expect(frame.fields[4].values[0][0].fields[4].name).toBe('http.method');
-    expect(frame.fields[4].values[0][0].fields[4].values[0]).toBe('GET');
-    expect(frame.fields[4].values[0][0].fields[5].name).toBe('service.name');
-    expect(frame.fields[4].values[0][0].fields[5].values[0]).toBe('db');
-    expect(frame.fields[4].values[0][0].fields[6].name).toBe('duration');
-    expect(frame.fields[4].values[0][0].fields[6].values[0]).toBe(545000);
+    expect(frame.fields[5].values[0][0].fields[0].name).toBe('traceIdHidden');
+    expect(frame.fields[5].values[0][0].fields[0].values[0]).toBe('b1586c3c8c34d');
+    expect(frame.fields[5].values[0][0].fields[1].name).toBe('spanID');
+    expect(frame.fields[5].values[0][0].fields[1].values[0]).toBe('162a4adae63b61f1');
+    expect(frame.fields[5].values[0][0].fields[2].name).toBe('spanStartTime');
+    expect(frame.fields[5].values[0][0].fields[2].values[0]).toBe('2022-10-19 09:03:34');
+    expect(frame.fields[5].values[0][0].fields[4].name).toBe('http.method');
+    expect(frame.fields[5].values[0][0].fields[4].values[0]).toBe('GET');
+    expect(frame.fields[5].values[0][0].fields[5].name).toBe('service.name');
+    expect(frame.fields[5].values[0][0].fields[5].values[0]).toBe('db');
+    expect(frame.fields[5].values[0][0].fields[6].name).toBe('duration');
+    expect(frame.fields[5].values[0][0].fields[6].values[0]).toBe(545000);
     // Multiple spansets - set 0
-    expect(frame.fields[4].values[1][0].fields[0].name).toBe('traceIdHidden');
-    expect(frame.fields[4].values[1][0].fields[0].values[0]).toBe('9161e77388f3e');
-    expect(frame.fields[4].values[1][0].fields[1].name).toBe('spanID');
-    expect(frame.fields[4].values[1][0].fields[1].values[0]).toBe('3b9a5c222d3ddd8f');
-    expect(frame.fields[4].values[1][0].fields[2].name).toBe('spanStartTime');
-    expect(frame.fields[4].values[1][0].fields[2].values[0]).toBe('2022-10-19 08:57:55');
-    expect(frame.fields[4].values[1][0].fields[4].name).toBe('by(resource.service.name)');
-    expect(frame.fields[4].values[1][0].fields[4].values[0]).toBe('db');
-    expect(frame.fields[4].values[1][0].fields[5].name).toBe('http.method');
-    expect(frame.fields[4].values[1][0].fields[5].values[0]).toBe('GET');
-    expect(frame.fields[4].values[1][0].fields[6].name).toBe('service.name');
-    expect(frame.fields[4].values[1][0].fields[6].values[0]).toBe('db');
-    expect(frame.fields[4].values[1][0].fields[7].name).toBe('duration');
-    expect(frame.fields[4].values[1][0].fields[7].values[0]).toBe(877000);
+    expect(frame.fields[5].values[1][0].fields[0].name).toBe('traceIdHidden');
+    expect(frame.fields[5].values[1][0].fields[0].values[0]).toBe('9161e77388f3e');
+    expect(frame.fields[5].values[1][0].fields[1].name).toBe('spanID');
+    expect(frame.fields[5].values[1][0].fields[1].values[0]).toBe('3b9a5c222d3ddd8f');
+    expect(frame.fields[5].values[1][0].fields[2].name).toBe('spanStartTime');
+    expect(frame.fields[5].values[1][0].fields[2].values[0]).toBe('2022-10-19 08:57:55');
+    expect(frame.fields[5].values[1][0].fields[4].name).toBe('by(resource.service.name)');
+    expect(frame.fields[5].values[1][0].fields[4].values[0]).toBe('db');
+    expect(frame.fields[5].values[1][0].fields[5].name).toBe('http.method');
+    expect(frame.fields[5].values[1][0].fields[5].values[0]).toBe('GET');
+    expect(frame.fields[5].values[1][0].fields[6].name).toBe('service.name');
+    expect(frame.fields[5].values[1][0].fields[6].values[0]).toBe('db');
+    expect(frame.fields[5].values[1][0].fields[7].name).toBe('duration');
+    expect(frame.fields[5].values[1][0].fields[7].values[0]).toBe(877000);
     // Multiple spansets - set 1
-    expect(frame.fields[4].values[1][1].fields[0].name).toBe('traceIdHidden');
-    expect(frame.fields[4].values[1][1].fields[0].values[0]).toBe('9161e77388f3e');
-    expect(frame.fields[4].values[1][1].fields[1].name).toBe('spanID');
-    expect(frame.fields[4].values[1][1].fields[1].values[0]).toBe('894d90db6b5807f');
-    expect(frame.fields[4].values[1][1].fields[2].name).toBe('spanStartTime');
-    expect(frame.fields[4].values[1][1].fields[2].values[0]).toBe('2022-10-19 08:57:55');
-    expect(frame.fields[4].values[1][1].fields[4].name).toBe('by(resource.service.name)');
-    expect(frame.fields[4].values[1][1].fields[4].values[0]).toBe('app');
-    expect(frame.fields[4].values[1][1].fields[5].name).toBe('http.method');
-    expect(frame.fields[4].values[1][1].fields[5].values[0]).toBe('GET');
-    expect(frame.fields[4].values[1][1].fields[6].name).toBe('service.name');
-    expect(frame.fields[4].values[1][1].fields[6].values[0]).toBe('app');
-    expect(frame.fields[4].values[1][1].fields[7].name).toBe('duration');
-    expect(frame.fields[4].values[1][1].fields[7].values[0]).toBe(11073000);
+    expect(frame.fields[5].values[1][1].fields[0].name).toBe('traceIdHidden');
+    expect(frame.fields[5].values[1][1].fields[0].values[0]).toBe('9161e77388f3e');
+    expect(frame.fields[5].values[1][1].fields[1].name).toBe('spanID');
+    expect(frame.fields[5].values[1][1].fields[1].values[0]).toBe('894d90db6b5807f');
+    expect(frame.fields[5].values[1][1].fields[2].name).toBe('spanStartTime');
+    expect(frame.fields[5].values[1][1].fields[2].values[0]).toBe('2022-10-19 08:57:55');
+    expect(frame.fields[5].values[1][1].fields[4].name).toBe('by(resource.service.name)');
+    expect(frame.fields[5].values[1][1].fields[4].values[0]).toBe('app');
+    expect(frame.fields[5].values[1][1].fields[5].name).toBe('http.method');
+    expect(frame.fields[5].values[1][1].fields[5].values[0]).toBe('GET');
+    expect(frame.fields[5].values[1][1].fields[6].name).toBe('service.name');
+    expect(frame.fields[5].values[1][1].fields[6].values[0]).toBe('app');
+    expect(frame.fields[5].values[1][1].fields[7].name).toBe('duration');
+    expect(frame.fields[5].values[1][1].fields[7].values[0]).toBe(11073000);
   });
 });
 
