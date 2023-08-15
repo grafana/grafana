@@ -274,6 +274,27 @@ describe('Language completion provider', () => {
         undefined
       );
     });
+
+    it('should call old series endpoint and should use match[] parameter and interpolate the template variables', () => {
+      const languageProvider = new LanguageProvider({
+        ...defaultDatasource,
+        interpolateString: (string: string) => string.replace(/\$/, 'interpolated-'),
+      } as PrometheusDatasource);
+      const getSeriesValues = languageProvider.getSeriesValues;
+      const requestSpy = jest.spyOn(languageProvider, 'request');
+      getSeriesValues('job', '{instance="$instance", job="grafana"}');
+      expect(requestSpy).toHaveBeenCalled();
+      expect(requestSpy).toHaveBeenCalledWith(
+        '/api/v1/series',
+        [],
+        {
+          end: toPrometheusTimeString,
+          'match[]': '{instance="interpolated-instance", job="grafana"}',
+          start: fromPrometheusTimeString,
+        },
+        undefined
+      );
+    });
   });
 
   describe('fetchSeries', () => {

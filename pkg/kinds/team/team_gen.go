@@ -20,7 +20,7 @@ type K8sResource = kinds.GrafanaResource[Spec, Status]
 func NewK8sResource(name string, s *Spec) K8sResource {
 	return K8sResource{
 		Kind:       "Team",
-		APIVersion: "v0.0-alpha",
+		APIVersion: "v0-0-alpha",
 		Metadata: kinds.GrafanaResourceMetadata{
 			Name:        name,
 			Annotations: make(map[string]string),

@@ -5,12 +5,19 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"regexp"
+	"net/url"
+	"strconv"
 	"strings"
 
 	"golang.org/x/oauth2"
 
 	"github.com/grafana/grafana/pkg/models/roletype"
+	"github.com/grafana/grafana/pkg/setting"
+)
+
+const (
+	groupPerPage     = 50
+	accessLevelGuest = "10"
 )
 
 type SocialGitlab struct {
@@ -59,8 +66,11 @@ func (s *SocialGitlab) isGroupMember(groups []string) bool {
 
 func (s *SocialGitlab) getGroups(ctx context.Context, client *http.Client) []string {
 	groups := make([]string, 0)
+	nextPage := new(int)
 
-	for page, url := s.getGroupsPage(ctx, client, s.apiUrl+"/groups"); page != nil; page, url = s.getGroupsPage(ctx, client, url) {
+	for *nextPage = 1; nextPage != nil; {
+		var page []string
+		page, nextPage = s.getGroupsPage(ctx, client, *nextPage)
 		groups = append(groups, page...)
 	}
 
@@ -68,29 +78,50 @@ func (s *SocialGitlab) getGroups(ctx context.Context, client *http.Client) []str
 }
 
 // getGroupsPage returns groups and link to the next page if response is paginated
-func (s *SocialGitlab) getGroupsPage(ctx context.Context, client *http.Client, url string) ([]string, string) {
+func (s *SocialGitlab) getGroupsPage(ctx context.Context, client *http.Client, nextPage int) ([]string, *int) {
 	type Group struct {
 		FullPath string `json:"full_path"`
 	}
 
-	var (
-		groups []Group
-		next   string
-	)
-
-	if url == "" {
-		return nil, next
+	groupURL, err := url.JoinPath(s.apiUrl, "/groups")
+	if err != nil {
+		s.log.Error("Error joining GitLab API URL", "err", err)
+		return nil, nil
 	}
 
-	response, err := s.httpGet(ctx, client, url)
+	parsedUrl, err := url.Parse(groupURL)
+	if err != nil {
+		s.log.Error("Error parsing GitLab API URL", "err", err)
+		return nil, nil
+	}
+
+	q := parsedUrl.Query()
+	q.Set("per_page", fmt.Sprintf("%d", groupPerPage))
+	q.Set("min_access_level", accessLevelGuest)
+	q.Set("page", fmt.Sprintf("%d", nextPage))
+	parsedUrl.RawQuery = q.Encode()
+
+	response, err := s.httpGet(ctx, client, parsedUrl.String())
 	if err != nil {
 		s.log.Error("Error getting groups from GitLab API", "err", err)
-		return nil, next
+		return nil, nil
 	}
 
+	respSizeString := response.Headers.Get("X-Total")
+	respSize := groupPerPage
+	if respSizeString != "" {
+		foundSize, err := strconv.Atoi(respSizeString)
+		if err != nil {
+			s.log.Warn("Error parsing X-Total header from GitLab API", "err", err)
+		} else {
+			respSize = foundSize
+		}
+	}
+
+	groups := make([]Group, 0, respSize)
 	if err := json.Unmarshal(response.Body, &groups); err != nil {
 		s.log.Error("Error parsing JSON from GitLab API", "err", err)
-		return nil, next
+		return nil, nil
 	}
 
 	fullPaths := make([]string, len(groups))
@@ -98,11 +129,14 @@ func (s *SocialGitlab) getGroupsPage(ctx context.Context, client *http.Client, u
 		fullPaths[i] = group.FullPath
 	}
 
-	// GitLab uses Link header with "rel" set to prev/next/first/last page. We need "next".
-	if link, ok := response.Headers["Link"]; ok {
-		pattern := regexp.MustCompile(`<([^>]+)>; rel="next"`)
-		if matches := pattern.FindStringSubmatch(link[0]); matches != nil {
-			next = matches[1]
+	var next *int = nil
+	nextString := response.Headers.Get("X-Next-Page")
+	if nextString != "" {
+		foundNext, err := strconv.Atoi(nextString)
+		if err != nil {
+			s.log.Warn("Error parsing X-Next-Page header from GitLab API", "err", err)
+		} else {
+			next = &foundNext
 		}
 	}
 
@@ -185,6 +219,10 @@ func (s *SocialGitlab) extractFromAPI(ctx context.Context, client *http.Client, 
 		}
 
 		idData.Role = role
+	}
+
+	if setting.Env == setting.Dev {
+		s.log.Debug("Resolved ID", "data", fmt.Sprintf("%+v", idData))
 	}
 
 	return idData, nil

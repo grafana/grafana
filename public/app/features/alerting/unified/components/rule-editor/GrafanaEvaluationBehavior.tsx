@@ -168,7 +168,7 @@ function ForInput({ evaluateEvery }: { evaluateEvery: string }) {
         label={
           <Label
             htmlFor="evaluateFor"
-            description="Period in which an alert rule can be in breach of the condition until the alert rule fires"
+            description="Period in which an alert rule can be in breach of the condition until the alert rule fires."
           >
             Pending period
           </Label>

@@ -30,3 +30,5 @@ func (usm *UsageStatsMock) GetUsageReport(ctx context.Context) (Report, error) {
 }
 
 func (usm *UsageStatsMock) RegisterSendReportCallback(_ SendReportCallbackFunc) {}
+
+func (usm *UsageStatsMock) SetReadyToReport(_ context.Context) {}

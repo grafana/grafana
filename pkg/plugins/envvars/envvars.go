@@ -16,7 +16,7 @@ import (
 )
 
 type Provider interface {
-	Get(ctx context.Context, p *plugins.Plugin) ([]string, error)
+	Get(ctx context.Context, p *plugins.Plugin) []string
 }
 
 type Service struct {
@@ -31,7 +31,7 @@ func NewProvider(cfg *config.Cfg, license plugins.Licensing) *Service {
 	}
 }
 
-func (s *Service) Get(ctx context.Context, p *plugins.Plugin) ([]string, error) {
+func (s *Service) Get(_ context.Context, p *plugins.Plugin) []string {
 	hostEnv := []string{
 		fmt.Sprintf("GF_VERSION=%s", s.cfg.BuildVersion),
 	}
@@ -62,7 +62,7 @@ func (s *Service) Get(ctx context.Context, p *plugins.Plugin) ([]string, error) 
 	hostEnv = append(hostEnv, s.tracingEnvVars(p)...)
 
 	ev := getPluginSettings(p.ID, s.cfg).asEnvVar("GF_PLUGIN", hostEnv)
-	return ev, nil
+	return ev
 }
 
 func (s *Service) tracingEnvVars(plugin *plugins.Plugin) []string {
@@ -91,6 +91,9 @@ func (s *Service) awsEnvVars() []string {
 	}
 	if len(s.cfg.AWSAllowedAuthProviders) > 0 {
 		variables = append(variables, awsds.AllowedAuthProvidersEnvVarKeyName+"="+strings.Join(s.cfg.AWSAllowedAuthProviders, ","))
+	}
+	if s.cfg.AWSExternalId != "" {
+		variables = append(variables, awsds.GrafanaAssumeRoleExternalIdKeyName+"="+s.cfg.AWSExternalId)
 	}
 
 	return variables
