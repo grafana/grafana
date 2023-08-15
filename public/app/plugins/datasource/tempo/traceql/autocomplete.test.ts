@@ -260,7 +260,7 @@ describe('CompletionProvider', () => {
       {} as monacoTypes.Position
     );
     expect((result! as monacoTypes.languages.CompletionList).suggestions).toEqual(
-      ['count', 'avg', 'max', 'min', 'sum', 'select', 'by'].map((s) =>
+      [...CompletionProvider.spansetAggregatorOps, ...CompletionProvider.spansetGroupAndSelectOps].map((s) =>
         expect.objectContaining({ label: s, insertText: s })
       )
     );

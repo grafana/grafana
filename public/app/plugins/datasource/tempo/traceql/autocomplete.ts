@@ -38,6 +38,8 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
   static readonly comparisonOps: string[] = ['=', '!=', '>', '>=', '<', '<=', '=~', '!~'];
   static readonly structuralOps: string[] = ['>> ', '>', '~'];
   static readonly spansetOps: string[] = ['|', ...CompletionProvider.logicalOps, ...CompletionProvider.structuralOps];
+  static readonly spansetAggregatorOps: string[] = ['count', 'avg', 'max', 'min', 'sum'];
+  static readonly spansetGroupAndSelectOps: string[] = ['select', 'by'];
 
   // We set these directly and ae required for the provider to function.
   monaco: Monaco | undefined;
@@ -146,11 +148,13 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
           type: 'OPERATOR',
         }));
       case 'SPANSET_PIPELINE_AFTER_OPERATOR':
-        return ['count', 'avg', 'max', 'min', 'sum', 'select', 'by'].map((key) => ({
-          label: key,
-          insertText: key,
-          type: 'OPERATOR',
-        }));
+        return [...CompletionProvider.spansetAggregatorOps, ...CompletionProvider.spansetGroupAndSelectOps].map(
+          (key) => ({
+            label: key,
+            insertText: key,
+            type: 'OPERATOR',
+          })
+        );
       case 'SPANSET_COMPARISON_OPERATORS':
         return CompletionProvider.comparisonOps.map((key) => ({
           label: key,
