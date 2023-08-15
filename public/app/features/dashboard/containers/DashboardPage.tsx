@@ -4,7 +4,7 @@ import { connect, ConnectedProps } from 'react-redux';
 
 import { NavModel, NavModelItem, TimeRange, PageLayoutType, locationUtil } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { config, getBackendSrv, locationService } from '@grafana/runtime';
+import { config, locationService } from '@grafana/runtime';
 import { Themeable2, withTheme2 } from '@grafana/ui';
 import { notifyApp } from 'app/core/actions';
 import { Page } from 'app/core/components/Page/Page';
@@ -34,7 +34,7 @@ import { SubMenu } from '../components/SubMenu/SubMenu';
 import { DashboardGrid } from '../dashgrid/DashboardGrid';
 import { liveTimer } from '../dashgrid/liveTimer';
 import { getTimeSrv } from '../services/TimeSrv';
-import { cleanUpDashboardAndVariables } from '../state/actions';
+import { cleanUpDashboardAndVariables, loadDashboardJson } from '../state/actions';
 import { initDashboard } from '../state/initDashboard';
 import { calculateNewPanelGridPos } from '../utils/panel';
 
@@ -73,6 +73,7 @@ const mapDispatchToProps = {
   notifyApp,
   cancelVariables,
   templateVarsChangedInUrl,
+  loadDashboardJson,
 };
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
@@ -135,24 +136,16 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
       if (!callbackUrl) {
         throw new Error('No callback URL provided');
       }
-      getBackendSrv()
-        .get(`${callbackUrl}/load-dashboard`)
-        .then((dashboardJson) => {
-          this.setState({ dashboardJson });
-          // Remove dashboard UID from JSON to prevent errors from external dashboards
-          delete dashboardJson.uid;
-          const dashboardModel = new DashboardModel(dashboardJson);
+      this.props.loadDashboardJson(callbackUrl).then((dashboardJson) => {
+        const dashboardModel = new DashboardModel(dashboardJson);
 
-          this.props.initDashboard({
-            routeName: route.routeName,
-            fixUrl: false,
-            keybindingSrv: this.context.keybindings,
-            dashboardDto: { dashboard: dashboardModel, meta: { canEdit: true } },
-          });
-        })
-        .catch((err) => {
-          console.log('Error getting dashboard JSON: ', err);
+        this.props.initDashboard({
+          routeName: route.routeName,
+          fixUrl: false,
+          keybindingSrv: this.context.keybindings,
+          dashboardDto: { dashboard: dashboardModel, meta: { canEdit: true } },
         });
+      });
     } else {
       const { dashboard, match, queryParams } = this.props;
 

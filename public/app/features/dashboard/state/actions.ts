@@ -1,5 +1,6 @@
 import { TimeZone } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
+import { Dashboard } from '@grafana/schema';
 import { notifyApp } from 'app/core/actions';
 import { createSuccessNotification } from 'app/core/copy/appNotification';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
@@ -12,7 +13,7 @@ import { cancelVariables } from '../../variables/state/actions';
 import { getDashboardSrv } from '../services/DashboardSrv';
 import { getTimeSrv } from '../services/TimeSrv';
 
-import { cleanUpDashboard, loadDashboardPermissions } from './reducers';
+import { cleanUpDashboard, loadDashboardPermissions, dashboardJsonLoaded } from './reducers';
 
 export function getDashboardPermissions(id: number): ThunkResult<void> {
   return async (dispatch) => {
@@ -146,3 +147,18 @@ export const updateWeekStartDashboard =
     dispatch(updateWeekStartForSession(weekStart));
     getTimeSrv().refreshTimeModel();
   };
+
+export function loadDashboardJson(callbackUrl: string): ThunkResult<Promise<Dashboard>> {
+  return async (dispatch) => {
+    return getBackendSrv()
+      .get(`${callbackUrl}/load-dashboard`)
+      .then((dashboardJson) => {
+        delete dashboardJson.uid;
+        dispatch(dashboardJsonLoaded(dashboardJson));
+        return dashboardJson;
+      })
+      .catch((err) => {
+        console.log('Error getting dashboard JSON: ', err);
+      });
+  };
+}
