@@ -3,6 +3,7 @@ package guardian
 import (
 	"context"
 	"errors"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -29,6 +30,7 @@ func NewAccessControlDashboardGuardian(
 	folderPermissionsService accesscontrol.FolderPermissionsService,
 	dashboardPermissionsService accesscontrol.DashboardPermissionsService,
 	dashboardService dashboards.DashboardService,
+	folderService folder.Service,
 ) (DashboardGuardian, error) {
 	var dashboard *dashboards.Dashboard
 	if dashboardId != 0 {
@@ -60,6 +62,7 @@ func NewAccessControlDashboardGuardian(
 			},
 			folder:                   dashboards.FromDashboard(dashboard),
 			folderPermissionsService: folderPermissionsService,
+			folderService:            folderService,
 		}, nil
 	}
 
@@ -85,6 +88,7 @@ func NewAccessControlDashboardGuardianByUID(
 	folderPermissionsService accesscontrol.FolderPermissionsService,
 	dashboardPermissionsService accesscontrol.DashboardPermissionsService,
 	dashboardService dashboards.DashboardService,
+	folderService folder.Service,
 ) (DashboardGuardian, error) {
 	var dashboard *dashboards.Dashboard
 	if dashboardUID != "" {
@@ -116,6 +120,7 @@ func NewAccessControlDashboardGuardianByUID(
 			},
 			folder:                   dashboards.FromDashboard(dashboard),
 			folderPermissionsService: folderPermissionsService,
+			folderService:            folderService,
 		}, nil
 	}
 
@@ -143,6 +148,7 @@ func NewAccessControlDashboardGuardianByDashboard(
 	folderPermissionsService accesscontrol.FolderPermissionsService,
 	dashboardPermissionsService accesscontrol.DashboardPermissionsService,
 	dashboardService dashboards.DashboardService,
+	folderService folder.Service,
 ) (DashboardGuardian, error) {
 	if dashboard != nil && dashboard.IsFolder {
 		return &accessControlFolderGuardian{
@@ -157,6 +163,7 @@ func NewAccessControlDashboardGuardianByDashboard(
 			},
 			folder:                   dashboards.FromDashboard(dashboard),
 			folderPermissionsService: folderPermissionsService,
+			folderService:            folderService,
 		}, nil
 	}
 
@@ -182,6 +189,7 @@ func NewAccessControlFolderGuardian(
 	folderPermissionsService accesscontrol.FolderPermissionsService,
 	dashboardPermissionsService accesscontrol.DashboardPermissionsService,
 	dashboardService dashboards.DashboardService,
+	folderService folder.Service,
 ) (DashboardGuardian, error) {
 	return &accessControlFolderGuardian{
 		accessControlBaseGuardian: accessControlBaseGuardian{
@@ -195,6 +203,7 @@ func NewAccessControlFolderGuardian(
 		},
 		folder:                   f,
 		folderPermissionsService: folderPermissionsService,
+		folderService:            folderService,
 	}, nil
 }
 
@@ -218,6 +227,7 @@ type accessControlFolderGuardian struct {
 	accessControlBaseGuardian
 	folder                   *folder.Folder
 	folderPermissionsService accesscontrol.FolderPermissionsService
+	folderService            folder.Service
 }
 
 func (a *accessControlDashboardGuardian) CanSave() (bool, error) {
@@ -274,12 +284,56 @@ func (a *accessControlDashboardGuardian) CanView() (bool, error) {
 	)
 }
 
+func (a *accessControlDashboardGuardian) CanTraverse() (bool, error) {
+	if a.dashboard == nil {
+		return false, ErrGuardianDashboardNotFound.Errorf("failed to check permissions for dashboard")
+	}
+
+	return true, nil
+}
+
 func (a *accessControlFolderGuardian) CanView() (bool, error) {
 	if a.folder == nil {
 		return false, ErrGuardianFolderNotFound.Errorf("failed to check view permissions for folder")
 	}
 
 	return a.evaluate(accesscontrol.EvalPermission(dashboards.ActionFoldersRead, dashboards.ScopeFoldersProvider.GetResourceScopeUID(a.folder.UID)))
+}
+
+func (a *accessControlFolderGuardian) CanTraverse() (bool, error) {
+	if a.folder == nil {
+		return false, ErrGuardianFolderNotFound.Errorf("failed to check permissions for folder")
+	}
+
+	folderPermissions := a.user.Permissions[a.user.OrgID]["dashboards:read"]
+	folderUids := make([]string, 0)
+	for _, p := range folderPermissions {
+		if folderUid, found := strings.CutPrefix(p, "folders:uid:"); found {
+			folderUids = append(folderUids, folderUid)
+			if folderUid == a.folder.UID {
+				return true, nil
+			}
+		}
+	}
+
+	parentUids := make([]string, 0)
+	for _, uid := range folderUids {
+		parents, err := a.folderService.GetParents(a.ctx, folder.GetParentsQuery{
+			UID:   uid,
+			OrgID: a.user.OrgID,
+		})
+		if err != nil {
+			return false, err
+		}
+		for _, parent := range parents {
+			parentUids = append(parentUids, parent.UID)
+			if parent.UID == a.folder.UID {
+				return true, nil
+			}
+		}
+	}
+
+	return false, nil
 }
 
 func (a *accessControlDashboardGuardian) CanAdmin() (bool, error) {

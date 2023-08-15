@@ -29,6 +29,7 @@ type DashboardGuardian interface {
 	CanSave() (bool, error)
 	CanEdit() (bool, error)
 	CanView() (bool, error)
+	CanTraverse() (bool, error)
 	CanAdmin() (bool, error)
 	CanDelete() (bool, error)
 	CanCreate(folderID int64, isFolder bool) (bool, error)
@@ -191,6 +192,10 @@ func (g *dashboardGuardianImpl) CanEdit() (bool, error) {
 }
 
 func (g *dashboardGuardianImpl) CanView() (bool, error) {
+	return g.HasPermission(dashboards.PERMISSION_VIEW)
+}
+
+func (g *dashboardGuardianImpl) CanTraverse() (bool, error) {
 	return g.HasPermission(dashboards.PERMISSION_VIEW)
 }
 
@@ -452,6 +457,10 @@ func (g *FakeDashboardGuardian) CanEdit() (bool, error) {
 
 func (g *FakeDashboardGuardian) CanView() (bool, error) {
 	return g.CanViewValue, nil
+}
+
+func (g *FakeDashboardGuardian) CanTraverse() (bool, error) {
+	return true, nil
 }
 
 func (g *FakeDashboardGuardian) CanAdmin() (bool, error) {

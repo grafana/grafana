@@ -130,7 +130,17 @@ func (s *Service) Get(ctx context.Context, cmd *folder.GetFolderQuery) (*folder.
 		return nil, err
 	}
 
-	if canView, err := g.CanView(); err != nil || !canView {
+	canTraverse, err := g.CanTraverse()
+	if err != nil {
+		return nil, err
+	}
+
+	canView, err := g.CanView()
+	if err != nil {
+		return nil, err
+	}
+
+	if !canView && !canTraverse {
 		if err != nil {
 			return nil, toFolderError(err)
 		}
@@ -174,7 +184,12 @@ func (s *Service) GetChildren(ctx context.Context, cmd *folder.GetChildrenQuery)
 			return nil, err
 		}
 
-		if !canView {
+		canTraverse, err := g.CanTraverse()
+		if err != nil {
+			return nil, err
+		}
+
+		if !canView && !canTraverse {
 			return nil, dashboards.ErrFolderAccessDenied
 		}
 	}
@@ -221,7 +236,11 @@ func (s *Service) GetChildren(ctx context.Context, cmd *folder.GetChildrenQuery)
 		if err != nil {
 			return nil, err
 		}
-		if canView {
+		canTraverse, err := g.CanTraverse()
+		if err != nil {
+			return nil, err
+		}
+		if canView || canTraverse {
 			filtered = append(filtered, f)
 		}
 	}
