@@ -5,10 +5,10 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { EmbeddedScene, SceneFlexLayout, SceneTimeRange } from '@grafana/scenes';
 import { useStyles2 } from '@grafana/ui';
 
-import { getFiringAlertsScene } from './insights/FiringAlertsPercentage';
-import { getFiringAlertsRateScene } from './insights/FiringAlertsRate';
-import { getMostFiredInstancesScene } from './insights/MostFiredInstancesTable';
-import { getMostFiredRulesScene } from './insights/MostFiredRulesTable';
+import { getFiringAlertsScene } from './insights/grafana/FiringAlertsPercentage';
+import { getFiringAlertsRateScene } from './insights/grafana/FiringAlertsRate';
+import { getMostFiredInstancesScene } from './insights/grafana/MostFiredInstancesTable';
+import { getMostFiredRulesScene } from './insights/grafana/MostFiredRulesTable';
 
 //all cloud instances are guaranteed to have this datasource uid for the alert state history loki datasource
 const datasourceUid = 'grafanacloud-alert-state-history';
@@ -21,7 +21,7 @@ const datasource = {
 const THIS_WEEK_TIME_RANGE = new SceneTimeRange({ from: 'now-1w', to: 'now' });
 const LAST_WEEK_TIME_RANGE = new SceneTimeRange({ from: 'now-2w', to: 'now-1w' });
 
-function getScene() {
+function getGrafanaScenes() {
   return new EmbeddedScene({
     body: new SceneFlexLayout({
       wrap: 'wrap',
@@ -40,10 +40,9 @@ function getScene() {
   });
 }
 
-export default function GettingStarted() {
+export default function Insights() {
   const styles = useStyles2(getStyles);
-
-  const scene = getScene();
+  const scene = getGrafanaScenes();
 
   return (
     <div className={styles.container}>
