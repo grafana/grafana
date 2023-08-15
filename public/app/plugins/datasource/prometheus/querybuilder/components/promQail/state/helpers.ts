@@ -202,7 +202,7 @@ export async function promQailSuggest(
       labels: promQueryModeller.renderLabels(query.labels),
     };
 
-    if (interaction?.prompt) {
+    if (interaction?.suggestionType === SuggestionType.AI) {
       feedTheAI = { ...feedTheAI, prompt: interaction.prompt };
     }
 
