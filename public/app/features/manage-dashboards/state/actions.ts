@@ -1,5 +1,6 @@
 import { DataSourceInstanceSettings, locationUtil } from '@grafana/data';
 import { getBackendSrv, getDataSourceSrv, isFetchError, locationService } from '@grafana/runtime';
+import { Dashboard } from '@grafana/schema';
 import { notifyApp } from 'app/core/actions';
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { SaveDashboardCommand } from 'app/features/dashboard/components/SaveDashboard/types';
@@ -421,4 +422,13 @@ function executeInOrder(tasks: any[]): Promise<unknown> {
   return tasks.reduce((acc, task) => {
     return Promise.resolve(acc).then(task);
   }, []);
+}
+
+export function saveDashboardJson(json: Dashboard) {
+  const params = locationService.getSearch();
+  const callbackUrl = params.get('callbackUrl');
+  if (callbackUrl) {
+    return getBackendSrv().post(`${callbackUrl}/save-dashboard`, { dashboard: json });
+  }
+  return Promise.reject('No callback URL provided');
 }
