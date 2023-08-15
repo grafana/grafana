@@ -173,13 +173,14 @@ func (s *Service) GetChildren(ctx context.Context, cmd *folder.GetChildrenQuery)
 		return nil, folder.ErrBadRequest.Errorf("missing signed in user")
 	}
 
+	canView := false
 	if cmd.UID != "" {
 		g, err := guardian.NewByUID(ctx, cmd.UID, cmd.OrgID, cmd.SignedInUser)
 		if err != nil {
 			return nil, err
 		}
 
-		canView, err := g.CanView()
+		canView, err = g.CanView()
 		if err != nil {
 			return nil, err
 		}
@@ -221,7 +222,7 @@ func (s *Service) GetChildren(ctx context.Context, cmd *folder.GetChildrenQuery)
 		// always expose the dashboard store sequential ID
 		f.ID = dashFolder.ID
 
-		if cmd.UID != "" {
+		if cmd.UID != "" && canView {
 			// parent access has been checked already
 			// the subfolder must be accessible as well (due to inheritance)
 			filtered = append(filtered, f)
