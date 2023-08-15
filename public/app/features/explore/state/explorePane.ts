@@ -170,10 +170,6 @@ export const initializeExplore = createAsyncThunk(
     );
     if (panelsState !== undefined) {
       dispatch(changePanelsStateAction({ exploreId, panelsState }));
-
-      if (panelsState.correlations !== undefined && !getState().explore.correlationsEditorMode) {
-        dispatch(changeCorrelationsEditorMode({ correlationsEditorMode: true }));
-      }
     }
 
     dispatch(updateTime({ exploreId }));
@@ -228,11 +224,6 @@ export const paneReducer = (state: ExploreItemState = makeExplorePaneState(), ac
   if (changeSizeAction.match(action)) {
     const containerWidth = action.payload.width;
     return { ...state, containerWidth };
-  }
-
-  if (changePanelsStateAction.match(action)) {
-    const { panelsState } = action.payload;
-    return { ...state, panelsState };
   }
 
   if (changePanelsStateAction.match(action)) {

@@ -27,7 +27,7 @@ export function ToolbarExtensionPoint(props: Props): ReactElement | null {
   const [selectedExtension, setSelectedExtension] = useState<PluginExtensionLink | undefined>();
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const context = useExtensionPointContext(props);
-  let extensions = useExtensionLinks(context);
+  const extensions = useExtensionLinks(context);
   const selectExploreItem = getExploreItemSelector(exploreId);
   const noQueriesInPane = useSelector(selectExploreItem)?.queries?.length;
 
