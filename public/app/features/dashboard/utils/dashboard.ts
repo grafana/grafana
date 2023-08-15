@@ -1,7 +1,6 @@
 import { chain, cloneDeep, defaults, find } from 'lodash';
 
 import { PanelPluginMeta } from '@grafana/data';
-import { locationService } from '@grafana/runtime';
 import config from 'app/core/config';
 import { LS_PANEL_COPY_KEY } from 'app/core/constants';
 import store from 'app/core/store';
@@ -127,6 +126,7 @@ export function updateDashboardUidLastUsedDatasource(dashUid: string) {
   store.setObject(PANEL_EDIT_LAST_USED_DATASOURCE, { dashboardUid: dashUid, datasourceUid: datasourceUid });
 }
 
+// Function that returns last used datasource from local storage
 export function getLastUsedDatasourceFromStorage(dashboardUid: string): LastUsedDatasource {
   // Check if user has any local storage associated with this dashboard
   if (store.exists(PANEL_EDIT_LAST_USED_DATASOURCE)) {
@@ -138,13 +138,16 @@ export function getLastUsedDatasourceFromStorage(dashboardUid: string): LastUsed
   return undefined;
 }
 
+// Function that updates local storage with new dashboard uid and resets datasource to empty
 export function initLocalStorageLastUsedDatasource(dashboardUid: string | undefined) {
   store.setObject(PANEL_EDIT_LAST_USED_DATASOURCE, { dashboardUid: dashboardUid, datasourceUid: '' });
 }
 
+// Function that updates local storage with new dashboard uid and datasource uid
 export function setLastUsedDatasource(dashboardUid: string | undefined, datasourceUid: string) {
   store.setObject(PANEL_EDIT_LAST_USED_DATASOURCE, { dashboardUid: dashboardUid, datasourceUid: datasourceUid });
 }
+
 // Function that updates local storage with new datasource uid and keeps existing dashboard
 export function updateDatasourceUidLastUsedDatasource(dashUid: string, dsUid: string) {
   // Check if user has any datasource uid in local storage
@@ -156,12 +159,4 @@ export function updateDatasourceUidLastUsedDatasource(dashUid: string, dsUid: st
     const dashboardUid = lastUsedDatasource?.dashboardUid ?? '';
     store.setObject(PANEL_EDIT_LAST_USED_DATASOURCE, { dashboardUid: dashboardUid, datasourceUid: dsUid });
   }
-}
-
-export function getDashboardUidFromLocation() {
-  // get dashboard uid from the window location
-  const locationObject = locationService.getHistory().location;
-  const matchDashUid = locationObject.pathname.match(/\/d\/(.*)\/.*/);
-  const dashboardUid = matchDashUid ? matchDashUid[1] : '';
-  return dashboardUid;
 }
