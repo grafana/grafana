@@ -38,28 +38,45 @@ export function inputToValue(
   invalidDateDefault: Date = new Date(),
   timezone?: string
 ): [Date, Date] {
-  const fromAsDate = from.toDate();
-  const toAsDate = to.toDate();
-  const fromAsValidDate = dateTime(fromAsDate).isValid() ? fromAsDate : invalidDateDefault;
-  const toAsValidDate = dateTime(toAsDate).isValid() ? toAsDate : invalidDateDefault;
+  let fromAsDate = from.toDate();
+  let toAsDate = to.toDate();
+
+  fromAsDate = dateTime(fromAsDate).isValid() ? fromAsDate : invalidDateDefault;
+  toAsDate = dateTime(toAsDate).isValid() ? toAsDate : invalidDateDefault;
+
   if (timezone) {
-    const zone = getZone(timezone);
-    if (zone) {
-      const fromOffset = zone.offset(fromAsValidDate.getTime());
-      const toOffset = zone.offset(toAsValidDate.getTime());
-      // fromAsValidDate.setMinutes(fromAsValidDate.getMinutes() - fromOffset);
-      // toAsValidDate.setMinutes(toAsValidDate.getMinutes() - toOffset);
-      fromAsValidDate.setMinutes(fromAsValidDate.getMinutes() + 480);
-      toAsValidDate.setMinutes(toAsValidDate.getMinutes() + 480);
-      console.log({ fromOffset, toOffset });
-    }
+    [fromAsDate, toAsDate] = adjustDate(fromAsDate, toAsDate, timezone);
   }
 
-  if (fromAsValidDate > toAsValidDate) {
-    return [toAsValidDate, fromAsValidDate];
+  if (fromAsDate > toAsDate) {
+    return [toAsDate, fromAsDate];
   }
-  return [fromAsValidDate, toAsValidDate];
+  return [fromAsDate, toAsDate];
 }
+
+function adjustDate(from: Date, to: Date, timeZone: string): [Date, Date] {
+  const zone = getZone(timeZone);
+  if (!zone) {
+    return [from, to];
+  }
+
+  // get utc offset for timezone preference
+  const timezonePrefFromOffset = zone.utcOffset(from.getTime());
+  const timezonePrefToOffset = zone.utcOffset(to.getTime());
+
+  // get utc offset for local timezone
+  const localFromOffset = from.getTimezoneOffset();
+  const localToOffset = to.getTimezoneOffset();
+
+  // calculate difference between timezone preference and local timezone
+  // we keep these as separate variables in case one of them crosses a daylight savings boundary
+  const fromDiff = timezonePrefFromOffset - localFromOffset;
+  const toDiff = timezonePrefToOffset - localToOffset;
+
+  const newFromDate = new Date(from.getTime() - (fromDiff * 1000 * 60))
+  const newToDate = new Date(to.getTime() - (toDiff * 1000 * 60))
+  return [newFromDate, newToDate];
+};
 
 function useOnCalendarChange(onChange: (from: DateTime, to: DateTime) => void, timeZone?: TimeZone) {
   return useCallback<NonNullable<React.ComponentProps<typeof Calendar>['onChange']>>(
