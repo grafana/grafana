@@ -454,7 +454,18 @@ class UnthemedLogs extends PureComponent<Props, State> {
     return { from: firstTimeStamp, to: lastTimeStamp };
   });
 
-  scrollToTopLogs = () => this.topLogsRef.current?.scrollIntoView();
+  scrollToTopLogs = () => {
+    if (config.featureToggles.exploreScrollableLogsContainer) {
+      if (this.logsContainer.current) {
+        this.logsContainer.current.scroll({
+          behavior: 'auto',
+          top: 0,
+        });
+      }
+    } else {
+      this.topLogsRef.current?.scrollIntoView();
+    }
+  };
 
   render() {
     const {
