@@ -148,6 +148,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
     text-overflow: ellipsis;
     transition: opacity 100ms linear;
     opacity: 0;
+    font-size: ${theme.typography.pxToRem(12)};
+    height: calc(${theme.typography.pxToRem(12)} + 10px);
   `,
   statusShowing: css`
     opacity: 1;
