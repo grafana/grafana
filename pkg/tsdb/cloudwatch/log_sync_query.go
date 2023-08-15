@@ -83,7 +83,7 @@ func (e *cloudWatchExecutor) syncQuery(ctx context.Context, logsClient cloudwatc
 	queryContext backend.DataQuery, logsQuery models.LogsQuery, logsTimeout time.Duration) (*cloudwatchlogs.GetQueryResultsOutput, error) {
 	startQueryOutput, err := e.executeStartQuery(ctx, logsClient, logsQuery, queryContext.TimeRange)
 	if err != nil {
-		return nil, fmt.Errorf("CloudWatch Error: %w", err)
+		return nil, err
 	}
 
 	requestParams := models.LogsQuery{
