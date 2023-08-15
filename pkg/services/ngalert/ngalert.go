@@ -161,11 +161,11 @@ func (ng *AlertNG) init() error {
 		}
 		am, err := ng.DataSourceService.GetDataSource(initCtx, &query)
 		if err != nil {
-			return fmt.Errorf("Failed to find provisioned Alertmanager: %w", err)
+			return fmt.Errorf("failed to find provisioned Alertmanager: %w", err)
 		}
 		_, err = ng.DataSourceService.DecryptedBasicAuthPassword(initCtx, am)
 		if err != nil {
-			return fmt.Errorf("Error decrypting basic auth password: %w", err)
+			return fmt.Errorf("error decrypting basic auth password: %w", err)
 		}
 		// TODO: disable internal Alertmanager
 	}
