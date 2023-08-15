@@ -33,7 +33,6 @@ export function QuerySuggestionItem(props: Props) {
       <div className={styles.querySuggestion}>
         <div title={query} className={cx(styles.codeText, styles.longCode)}>
           {`${order}  ${query}`}
-          <div>...</div>
         </div>
         <div className={styles.useButton}>
           <Button
