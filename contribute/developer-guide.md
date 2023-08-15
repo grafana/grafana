@@ -49,9 +49,6 @@ More information can be found [here](https://yarnpkg.com/getting-started/editor-
 
 We use pre-commit hooks (via [lefthook](https://github.com/evilmartians/lefthook)) to lint, fix, and format code as you commit your changes. Previously the Grafana repository automatically installed these hook when you did `yarn install`, but they are now opt in for all contributors
 
-[!NOTE]  
-Contributors working on the frontend are highly encouraged to install the precommit hooks, even if your IDE formats on save, so the `.betterer.results` file is kept up to sync.
-
 Install the lefthook precommit hooks with:
 
 ```sh
@@ -63,6 +60,9 @@ To remove precommit hooks, run
 ```sh
 make lefthook-uninstall
 ```
+
+> [!NOTE]  
+> Contributors working on the frontend are highly encouraged to install the precommit hooks, even if your IDE formats on save, so the `.betterer.results` file is kept up to sync.
 
 ## Build Grafana
 
