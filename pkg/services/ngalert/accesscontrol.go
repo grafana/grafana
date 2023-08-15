@@ -65,7 +65,6 @@ var (
 			Permissions: []accesscontrol.Permission{
 				{
 					Action: accesscontrol.ActionAlertingInstanceRead,
-					Scope:  dashboards.ScopeFoldersAll,
 				},
 				{
 					Action: accesscontrol.ActionAlertingInstancesExternalRead,
