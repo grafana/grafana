@@ -47,7 +47,7 @@ Some features are enabled by default. You can disable these feature by setting t
 
 | Feature toggle name                  | Description                                                                                                                                                                                  |
 | ------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `trimDefaults`                       | Use cue schema to remove values that will be applied automatically                                                                                                                           |
+| `trimDefaults`                       | Use cue schema to remove values that'll be applied automatically                                                                                                                             |
 | `panelTitleSearch`                   | Search for dashboards using panel title                                                                                                                                                      |
 | `prometheusAzureOverrideAudience`    | Experimental. Allow override default AAD audience for Azure Prometheus endpoint                                                                                                              |
 | `publicDashboards`                   | Enables public access to dashboards                                                                                                                                                          |
