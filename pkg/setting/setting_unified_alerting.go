@@ -78,6 +78,7 @@ type UnifiedAlertingSettings struct {
 	HARedisUsername                string
 	HARedisPassword                string
 	HARedisDB                      int
+	DisableInternalAlertmanager    bool
 	MaxAttempts                    int64
 	MinInterval                    time.Duration
 	EvaluationTimeout              time.Duration
@@ -248,6 +249,8 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 			uaCfg.HAPeers = append(uaCfg.HAPeers, peer)
 		}
 	}
+
+	uaCfg.DisableInternalAlertmanager = ua.Key("disable_internal_alertmanager").MustBool(false)
 
 	// TODO load from ini file
 	uaCfg.DefaultConfiguration = alertmanagerDefaultConfiguration

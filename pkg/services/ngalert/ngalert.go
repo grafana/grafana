@@ -153,6 +153,23 @@ func (ng *AlertNG) init() error {
 
 	ng.store.Logger = ng.Log
 
+	if ng.Cfg.UnifiedAlerting.DisableInternalAlertmanager {
+		ng.Log.Info("Starting Grafana using an external Alertmanager")
+		query := datasources.GetDataSourceQuery{
+			UID:   "grafanacloud-ngalertmanager",
+			OrgID: 1,
+		}
+		am, err := ng.DataSourceService.GetDataSource(initCtx, &query)
+		if err != nil {
+			return fmt.Errorf("Failed to find provisioned Alertmanager: %w", err)
+		}
+		_, err = ng.DataSourceService.DecryptedBasicAuthPassword(initCtx, am)
+		if err != nil {
+			return fmt.Errorf("Error decrypting basic auth password: %w", err)
+		}
+		// TODO: disable internal Alertmanager
+	}
+
 	decryptFn := ng.SecretsService.GetDecryptedValue
 	multiOrgMetrics := ng.Metrics.GetMultiOrgAlertmanagerMetrics()
 	ng.MultiOrgAlertmanager, err = notifier.NewMultiOrgAlertmanager(ng.Cfg, ng.store, ng.store, ng.KVStore, ng.store, decryptFn, multiOrgMetrics, ng.NotificationService, log.New("ngalert.multiorg.alertmanager"), ng.SecretsService)
