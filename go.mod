@@ -78,7 +78,7 @@ require (
 	github.com/jmespath/go-jmespath v0.4.0 // @grafana/backend-platform
 	github.com/json-iterator/go v1.1.12 // @grafana/backend-platform
 	github.com/jung-kurt/gofpdf v1.16.2 // @grafana/backend-platform
-	github.com/lib/pq v1.10.6 // @grafana/backend-platform
+	github.com/lib/pq v1.10.9 // @grafana/backend-platform
 	github.com/linkedin/goavro/v2 v2.10.0 // @grafana/backend-platform
 	github.com/m3db/prometheus_remote_client_golang v0.4.4 // @grafana/backend-platform
 	github.com/magefile/mage v1.15.0 // @grafana/grafana-delivery
@@ -506,8 +506,5 @@ replace github.com/prometheus/alertmanager => github.com/grafana/prometheus-aler
 
 // grpc v1.46.0 removed "WithBalancerName()" API, still in use by weaveworks/commons.
 replace google.golang.org/grpc => google.golang.org/grpc v1.45.0
-
-// Use 1.10.6 of pq to avoid a change in 1.10.7 that has certificate validation issues. https://github.com/grafana/grafana/issues/65816
-replace github.com/lib/pq => github.com/lib/pq v1.10.6
 
 exclude github.com/mattn/go-sqlite3 v2.0.3+incompatible
