@@ -1,4 +1,4 @@
-import React, { SyntheticEvent, useCallback } from 'react';
+import React, { FocusEvent, SyntheticEvent, useCallback } from 'react';
 
 import { LogRowModel } from '@grafana/data';
 import { ClipboardButton, IconButton } from '@grafana/ui';
@@ -16,6 +16,7 @@ interface Props {
   pinned?: boolean;
   styles: LogRowStyles;
   mouseIsOver: boolean;
+  onBlur: () => void;
 }
 
 export const LogRowMenuCell = React.memo(
@@ -30,6 +31,7 @@ export const LogRowMenuCell = React.memo(
     showContextToggle,
     styles,
     mouseIsOver,
+    onBlur,
   }: Props) => {
     const shouldShowContextToggle = showContextToggle ? showContextToggle(row) : false;
     const onLogRowClick = useCallback((e: SyntheticEvent) => {
@@ -42,11 +44,23 @@ export const LogRowMenuCell = React.memo(
       },
       [onOpenContext, row]
     );
+    /**
+     * For better accessibility support, we listen to the onBlur event here (to hide this component), and
+     * to onFocus in LogRow (to show this component).
+     */
+    const handleBlur = useCallback(
+      (e: FocusEvent) => {
+        if (!e.currentTarget.contains(e.relatedTarget) && onBlur) {
+          onBlur();
+        }
+      },
+      [onBlur]
+    );
     const getLogText = useCallback(() => logText, [logText]);
     return (
-      // TODO: fix keyboard a11y
+      // We keep this click listener here to prevent the row from being selected when clicking on the menu.
       // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
-      <span className={`log-row-menu ${styles.rowMenu}`} onClick={onLogRowClick}>
+      <span className={`log-row-menu ${styles.rowMenu}`} onClick={onLogRowClick} onBlur={handleBlur}>
         {pinned && !mouseIsOver && (
           <IconButton
             className={styles.unPinButton}
@@ -56,6 +70,7 @@ export const LogRowMenuCell = React.memo(
             tooltip="Unpin line"
             tooltipPlacement="top"
             aria-label="Unpin line"
+            tabIndex={0}
           />
         )}
         {mouseIsOver && (
@@ -68,6 +83,7 @@ export const LogRowMenuCell = React.memo(
                 tooltip="Show context"
                 tooltipPlacement="top"
                 aria-label="Show context"
+                tabIndex={0}
               />
             )}
             <ClipboardButton
@@ -79,6 +95,7 @@ export const LogRowMenuCell = React.memo(
               getText={getLogText}
               tooltip="Copy to clipboard"
               tooltipPlacement="top"
+              tabIndex={0}
             />
             {pinned && onUnpinLine && (
               <IconButton
@@ -89,6 +106,7 @@ export const LogRowMenuCell = React.memo(
                 tooltip="Unpin line"
                 tooltipPlacement="top"
                 aria-label="Unpin line"
+                tabIndex={0}
               />
             )}
             {!pinned && onPinLine && (
@@ -100,9 +118,10 @@ export const LogRowMenuCell = React.memo(
                 tooltip="Pin line"
                 tooltipPlacement="top"
                 aria-label="Pin line"
+                tabIndex={0}
               />
             )}
-            {onPermalinkClick && row.uid && (
+            {onPermalinkClick && row.rowId !== undefined && row.uid && (
               <IconButton
                 tooltip="Copy shortlink"
                 aria-label="Copy shortlink"
@@ -110,6 +129,7 @@ export const LogRowMenuCell = React.memo(
                 size="md"
                 name="share-alt"
                 onClick={() => onPermalinkClick(row)}
+                tabIndex={0}
               />
             )}
           </>

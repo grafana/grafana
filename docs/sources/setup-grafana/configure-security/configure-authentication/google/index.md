@@ -2,8 +2,13 @@
 aliases:
   - ../../../auth/google/
 description: Grafana OAuthentication Guide
-title: Configure Google OAuth2 authentication
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 menuTitle: Google OAuth2
+title: Configure Google OAuth2 authentication
 weight: 1100
 ---
 
@@ -97,7 +102,7 @@ auto_login = true
 
 ## Skip organization role sync
 
-We do not currently sync roles from Google and instead set the AutoAssigned role to the user at first login. To manage your user's organization role from within Grafana, set `skip_org_role_sync` to `true`.
+We do not currently sync roles from Google and instead set the AutoAssigned role to the user at first login. The default setting for `skip_org_role_sync` is `true`, which means that role modifications can still be made through the user interface.
 
 ```ini
 [auth.google]

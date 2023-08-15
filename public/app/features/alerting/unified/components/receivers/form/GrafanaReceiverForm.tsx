@@ -3,8 +3,8 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { LoadingPlaceholder } from '@grafana/ui';
 import {
   AlertManagerCortexConfig,
+  GrafanaManagedContactPoint,
   GrafanaManagedReceiverConfig,
-  Receiver,
   TestReceiversAlert,
 } from 'app/plugins/datasource/alertmanager/types';
 import { useDispatch } from 'app/types';
@@ -32,7 +32,7 @@ import { TestContactPointModal } from './TestContactPointModal';
 interface Props {
   alertManagerSourceName: string;
   config: AlertManagerCortexConfig;
-  existing?: Receiver;
+  existing?: GrafanaManagedContactPoint;
 }
 
 const defaultChannelValues: GrafanaChannelValues = Object.freeze({
@@ -59,7 +59,7 @@ export const GrafanaReceiverForm = ({ existing, alertManagerSourceName, config }
   // transform receiver DTO to form values
   const [existingValue, id2original] = useMemo((): [
     ReceiverFormValues<GrafanaChannelValues> | undefined,
-    Record<string, GrafanaManagedReceiverConfig>
+    Record<string, GrafanaManagedReceiverConfig>,
   ] => {
     if (!existing || !grafanaNotifiers.result) {
       return [undefined, {}];

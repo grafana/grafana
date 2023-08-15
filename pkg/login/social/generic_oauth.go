@@ -27,6 +27,7 @@ type SocialGenericOAuth struct {
 	teamIdsAttributePath string
 	teamIds              []string
 	allowedGroups        []string
+	skipOrgRoleSync      bool
 }
 
 func (s *SocialGenericOAuth) IsGroupMember(groups []string) bool {
@@ -140,20 +141,15 @@ func (s *SocialGenericOAuth) UserInfo(ctx context.Context, client *http.Client, 
 			}
 		}
 
-		if userInfo.Role == "" {
-			if !s.skipOrgRoleSync {
-				role, grafanaAdmin := s.extractRoleAndAdmin(data.rawJSON, []string{}, true)
-				if role != "" {
-					s.log.Debug("Setting user info role from extracted role")
-
-					userInfo.Role = role
-					if s.allowAssignGrafanaAdmin {
-						userInfo.IsGrafanaAdmin = &grafanaAdmin
-					}
+		if userInfo.Role == "" && !s.skipOrgRoleSync {
+			role, grafanaAdmin, err := s.extractRoleAndAdminOptional(data.rawJSON, []string{})
+			if err != nil {
+				s.log.Warn("Failed to extract role", "err", err)
+			} else {
+				userInfo.Role = role
+				if s.allowAssignGrafanaAdmin {
+					userInfo.IsGrafanaAdmin = &grafanaAdmin
 				}
-			}
-			if s.allowAssignGrafanaAdmin && s.skipOrgRoleSync {
-				s.log.Warn("allowAssignGrafanaAdmin and skipOrgRoleSync are both set, Grafana Admin role will not be synced, consider setting one or the other")
 			}
 		}
 
@@ -168,8 +164,15 @@ func (s *SocialGenericOAuth) UserInfo(ctx context.Context, client *http.Client, 
 		}
 	}
 
-	if s.roleAttributeStrict && !userInfo.Role.IsValid() {
-		return nil, &InvalidBasicRoleError{assignedRole: string(userInfo.Role)}
+	if userInfo.Role == "" && !s.skipOrgRoleSync {
+		if s.roleAttributeStrict {
+			return nil, errRoleAttributeStrictViolation.Errorf("idP did not return a role attribute")
+		}
+		userInfo.Role = s.defaultRole()
+	}
+
+	if s.allowAssignGrafanaAdmin && s.skipOrgRoleSync {
+		s.log.Debug("allowAssignGrafanaAdmin and skipOrgRoleSync are both set, Grafana Admin role will not be synced, consider setting one or the other")
 	}
 
 	if userInfo.Email == "" {

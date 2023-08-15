@@ -92,26 +92,62 @@ const addAzureMonitorVariable = (
     .type(`${type.replace('Azure', '').trim()}{enter}`);
   switch (type) {
     case AzureQueryType.ResourceGroupsQuery:
-      e2eSelectors.variableEditor.subscription.input().find('input').type(`${options?.subscription}{enter}`);
+      e2eSelectors.variableEditor.subscription
+        .input()
+        .find('input')
+        .type(`${options?.subscription}{enter}`);
       break;
     case AzureQueryType.LocationsQuery:
-      e2eSelectors.variableEditor.subscription.input().find('input').type(`${options?.subscription}{enter}`);
+      e2eSelectors.variableEditor.subscription
+        .input()
+        .find('input')
+        .type(`${options?.subscription}{enter}`);
       break;
     case AzureQueryType.NamespacesQuery:
-      e2eSelectors.variableEditor.subscription.input().find('input').type(`${options?.subscription}{enter}`);
-      e2eSelectors.variableEditor.resourceGroup.input().find('input').type(`${options?.resourceGroup}{enter}`);
+      e2eSelectors.variableEditor.subscription
+        .input()
+        .find('input')
+        .type(`${options?.subscription}{enter}`);
+      e2eSelectors.variableEditor.resourceGroup
+        .input()
+        .find('input')
+        .type(`${options?.resourceGroup}{enter}`);
       break;
     case AzureQueryType.ResourceNamesQuery:
-      e2eSelectors.variableEditor.subscription.input().find('input').type(`${options?.subscription}{enter}`);
-      e2eSelectors.variableEditor.resourceGroup.input().find('input').type(`${options?.resourceGroup}{enter}`);
-      e2eSelectors.variableEditor.namespace.input().find('input').type(`${options?.namespace}{enter}`);
-      e2eSelectors.variableEditor.region.input().find('input').type(`${options?.region}{enter}`);
+      e2eSelectors.variableEditor.subscription
+        .input()
+        .find('input')
+        .type(`${options?.subscription}{enter}`);
+      e2eSelectors.variableEditor.resourceGroup
+        .input()
+        .find('input')
+        .type(`${options?.resourceGroup}{enter}`);
+      e2eSelectors.variableEditor.namespace
+        .input()
+        .find('input')
+        .type(`${options?.namespace}{enter}`);
+      e2eSelectors.variableEditor.region
+        .input()
+        .find('input')
+        .type(`${options?.region}{enter}`);
       break;
     case AzureQueryType.MetricNamesQuery:
-      e2eSelectors.variableEditor.subscription.input().find('input').type(`${options?.subscription}{enter}`);
-      e2eSelectors.variableEditor.resourceGroup.input().find('input').type(`${options?.resourceGroup}{enter}`);
-      e2eSelectors.variableEditor.namespace.input().find('input').type(`${options?.namespace}{enter}`);
-      e2eSelectors.variableEditor.resource.input().find('input').type(`${options?.resource}{enter}`);
+      e2eSelectors.variableEditor.subscription
+        .input()
+        .find('input')
+        .type(`${options?.subscription}{enter}`);
+      e2eSelectors.variableEditor.resourceGroup
+        .input()
+        .find('input')
+        .type(`${options?.resourceGroup}{enter}`);
+      e2eSelectors.variableEditor.namespace
+        .input()
+        .find('input')
+        .type(`${options?.namespace}{enter}`);
+      e2eSelectors.variableEditor.resource
+        .input()
+        .find('input')
+        .type(`${options?.resource}{enter}`);
       break;
   }
   e2e.pages.Dashboard.Settings.Variables.Edit.General.submitButton().click();
@@ -171,14 +207,11 @@ e2e.scenario({
         zone: 'Coordinated Universal Time',
       },
     });
-    e2e()
-      .intercept(/locations/)
-      .as('locations');
     e2e.flows.addPanel({
       dataSourceName,
       visitDashboardAtStart: false,
       queriesForm: () => {
-        e2eSelectors.queryEditor.resourcePicker.select.button().click().wait('@locations');
+        e2eSelectors.queryEditor.resourcePicker.select.button().click();
         e2eSelectors.queryEditor.resourcePicker.search
           .input()
           .wait(100)

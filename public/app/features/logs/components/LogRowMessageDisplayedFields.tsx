@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 
 import { LogRowModel, Field, LinkModel, DataFrame } from '@grafana/data';
 
@@ -19,11 +19,12 @@ export interface Props {
   onPinLine?: (row: LogRowModel) => void;
   onUnpinLine?: (row: LogRowModel) => void;
   pinned?: boolean;
+  mouseIsOver: boolean;
+  onBlur: () => void;
 }
 
 export const LogRowMessageDisplayedFields = React.memo((props: Props) => {
-  const [hover, setHover] = useState(false);
-  const { row, detectedFields, getFieldLinks, wrapLogMessage, styles, pinned, ...rest } = props;
+  const { row, detectedFields, getFieldLinks, wrapLogMessage, styles, mouseIsOver, pinned, ...rest } = props;
   const fields = getAllFields(row, getFieldLinks);
   const wrapClassName = wrapLogMessage ? '' : displayedFieldsStyles.noWrap;
   // only single key/value rows are filterable, so we only need the first field key for filtering
@@ -51,22 +52,23 @@ export const LogRowMessageDisplayedFields = React.memo((props: Props) => {
     [detectedFields, fields, row.labels]
   );
 
-  const showMenu = useCallback(() => {
-    setHover(true);
-  }, []);
-  const hideMenu = useCallback(() => {
-    setHover(false);
-  }, []);
-  const shouldShowMenu = useMemo(() => hover || pinned, [hover, pinned]);
+  const shouldShowMenu = useMemo(() => mouseIsOver || pinned, [mouseIsOver, pinned]);
 
   return (
     <>
-      <td className={styles.logsRowMessage} onMouseEnter={showMenu} onMouseLeave={hideMenu}>
+      <td className={styles.logsRowMessage}>
         <div className={wrapClassName}>{line}</div>
       </td>
-      <td className={`log-row-menu-cell ${styles.logRowMenuCell}`} onMouseEnter={showMenu} onMouseLeave={hideMenu}>
+      <td className={`log-row-menu-cell ${styles.logRowMenuCell}`}>
         {shouldShowMenu && (
-          <LogRowMenuCell logText={line} row={row} styles={styles} pinned={pinned} {...rest} mouseIsOver={false} />
+          <LogRowMenuCell
+            logText={line}
+            row={row}
+            styles={styles}
+            pinned={pinned}
+            mouseIsOver={mouseIsOver}
+            {...rest}
+          />
         )}
       </td>
     </>

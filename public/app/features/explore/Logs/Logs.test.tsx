@@ -97,9 +97,9 @@ describe('Logs', () => {
 
   const getComponent = (partialProps?: Partial<ComponentProps<typeof Logs>>, logs?: LogRowModel[]) => {
     const rows = [
-      makeLog({ uid: '1', timeEpochMs: 1 }),
-      makeLog({ uid: '2', timeEpochMs: 2 }),
-      makeLog({ uid: '3', timeEpochMs: 3 }),
+      makeLog({ uid: '1', rowId: 'id1', timeEpochMs: 1 }),
+      makeLog({ uid: '2', rowId: 'id2', timeEpochMs: 2 }),
+      makeLog({ uid: '3', rowId: 'id3', timeEpochMs: 3 }),
     ];
 
     const testDataFrame = {
@@ -159,6 +159,7 @@ describe('Logs', () => {
           return [];
         }}
         eventBus={new EventBusSrv()}
+        isFilterLabelActive={jest.fn()}
         logsFrames={[testDataFrame]}
         {...partialProps}
       />
@@ -222,6 +223,7 @@ describe('Logs', () => {
           return [];
         }}
         eventBus={new EventBusSrv()}
+        isFilterLabelActive={jest.fn()}
       />
     );
     const button = screen.getByRole('button', {
@@ -264,6 +266,7 @@ describe('Logs', () => {
           return [];
         }}
         eventBus={new EventBusSrv()}
+        isFilterLabelActive={jest.fn()}
       />
     );
 
@@ -310,6 +313,7 @@ describe('Logs', () => {
           return [];
         }}
         eventBus={new EventBusSrv()}
+        isFilterLabelActive={jest.fn()}
       />
     );
 

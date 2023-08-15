@@ -19,6 +19,7 @@ const setup = (propOverrides?: Partial<ComponentProps<typeof LogRowMessage>>, ro
     app: CoreApp.Explore,
     styles,
     mouseIsOver: true,
+    onBlur: jest.fn(),
     ...(propOverrides || {}),
   };
 
@@ -39,6 +40,11 @@ describe('LogRowMessage', () => {
   it('renders row entry', () => {
     setup();
     expect(screen.queryByText('test123')).toBeInTheDocument();
+  });
+
+  it('should hide the menu if the mouse is not over', async () => {
+    setup({ showContextToggle: () => true, mouseIsOver: false });
+    expect(screen.queryByLabelText('Show context')).not.toBeInTheDocument();
   });
 
   describe('with show context', () => {
@@ -66,10 +72,16 @@ describe('LogRowMessage', () => {
   });
 
   describe('with permalinking', () => {
-    it('should show permalinking button when `onPermalinkClick` is defined', async () => {
-      setup({ onPermalinkClick: jest.fn() });
+    it('should show permalinking button when `onPermalinkClick` is defined and rowId is defined', async () => {
+      setup({ onPermalinkClick: jest.fn() }, { rowId: 'id1' });
       await userEvent.hover(screen.getByText('test123'));
       expect(screen.queryByLabelText('Copy shortlink')).toBeInTheDocument();
+    });
+
+    it('should not show permalinking button when `onPermalinkClick` is defined and rowId is not defined', async () => {
+      setup({ onPermalinkClick: jest.fn() });
+      await userEvent.hover(screen.getByText('test123'));
+      expect(screen.queryByLabelText('Copy shortlink')).not.toBeInTheDocument();
     });
 
     it('should not show permalinking button when `onPermalinkClick` is not defined', () => {
@@ -79,7 +91,7 @@ describe('LogRowMessage', () => {
 
     it('should call `onPermalinkClick` with row on click', async () => {
       const permalinkClick = jest.fn();
-      const props = setup({ onPermalinkClick: permalinkClick });
+      const props = setup({ onPermalinkClick: permalinkClick }, { rowId: 'id1' });
       await userEvent.hover(screen.getByText('test123'));
       const button = screen.getByLabelText('Copy shortlink');
 

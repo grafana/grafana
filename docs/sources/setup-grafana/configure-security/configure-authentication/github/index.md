@@ -7,8 +7,13 @@ keywords:
   - configuration
   - documentation
   - oauth
-title: Configure GitHub OAuth2 authentication
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 menuTitle: GitHub OAuth2
+title: Configure GitHub OAuth2 authentication
 weight: 900
 ---
 
@@ -141,7 +146,7 @@ For example, `https://github.com/orgs/grafana/teams/developers` or `@grafana/dev
 
 To learn more about Team Sync, refer to [Configure team sync]({{< relref "../../configure-team-sync" >}}).
 
-## Examples of GitHub configuration in Grafana
+## Example of GitHub configuration in Grafana
 
 This section includes an example of GitHub configuration in the Grafana configuration file.
 

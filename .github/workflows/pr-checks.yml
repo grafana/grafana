@@ -13,8 +13,17 @@ on:
     types:
       - milestoned
       - demilestoned
+
 concurrency:
   group: pr-checks-${{ github.event.number }}
+
+permissions:
+  statuses: write
+  checks: write
+  actions: write
+  contents: read
+  pull-requests: read
+
 jobs:
   main:
     runs-on: ubuntu-latest

@@ -56,7 +56,7 @@ func (s *SocialAzureAD) cacheJWKS(ctx context.Context, jwks *keySetJWKS, cacheEx
 func (s *SocialAzureAD) retrieveGeneralJWKS(ctx context.Context, client *http.Client, authURL string) (*keySetJWKS, time.Duration, error) {
 	keysetURL := strings.Replace(authURL, "/oauth2/v2.0/authorize", "/discovery/v2.0/keys", 1)
 
-	resp, err := s.httpGet(context.Background(), client, keysetURL)
+	resp, err := s.httpGet(ctx, client, keysetURL)
 	if err != nil {
 		return nil, 0, err
 	}

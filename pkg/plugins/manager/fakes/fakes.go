@@ -432,3 +432,89 @@ type FakeOauthService struct {
 func (f *FakeOauthService) RegisterExternalService(ctx context.Context, name string, svc *plugindef.ExternalServiceRegistration) (*oauth.ExternalService, error) {
 	return f.Result, nil
 }
+
+type FakePluginStore struct {
+	PluginList []plugins.PluginDTO
+}
+
+func (pr *FakePluginStore) Plugin(_ context.Context, pluginID string) (plugins.PluginDTO, bool) {
+	for _, v := range pr.PluginList {
+		if v.ID == pluginID {
+			return v, true
+		}
+	}
+
+	return plugins.PluginDTO{}, false
+}
+
+func (pr *FakePluginStore) Plugins(_ context.Context, pluginTypes ...plugins.Type) []plugins.PluginDTO {
+	var result []plugins.PluginDTO
+	if len(pluginTypes) == 0 {
+		pluginTypes = plugins.PluginTypes
+	}
+
+	for _, v := range pr.PluginList {
+		for _, t := range pluginTypes {
+			if v.Type == t {
+				result = append(result, v)
+			}
+		}
+	}
+
+	return result
+}
+
+type FakeDiscoverer struct {
+	DiscoverFunc func(ctx context.Context, src plugins.PluginSource) ([]*plugins.FoundBundle, error)
+}
+
+func (f *FakeDiscoverer) Discover(ctx context.Context, src plugins.PluginSource) ([]*plugins.FoundBundle, error) {
+	if f.DiscoverFunc != nil {
+		return f.DiscoverFunc(ctx, src)
+	}
+	return []*plugins.FoundBundle{}, nil
+}
+
+type FakeBootstrapper struct {
+	BootstrapFunc func(ctx context.Context, src plugins.PluginSource, bundles []*plugins.FoundBundle) ([]*plugins.Plugin, error)
+}
+
+func (f *FakeBootstrapper) Bootstrap(ctx context.Context, src plugins.PluginSource, bundles []*plugins.FoundBundle) ([]*plugins.Plugin, error) {
+	if f.BootstrapFunc != nil {
+		return f.BootstrapFunc(ctx, src, bundles)
+	}
+	return []*plugins.Plugin{}, nil
+}
+
+type FakeValidator struct {
+	ValidateFunc func(ctx context.Context, ps []*plugins.Plugin) ([]*plugins.Plugin, error)
+}
+
+func (f *FakeValidator) Validate(ctx context.Context, ps []*plugins.Plugin) ([]*plugins.Plugin, error) {
+	if f.ValidateFunc != nil {
+		return f.ValidateFunc(ctx, ps)
+	}
+	return []*plugins.Plugin{}, nil
+}
+
+type FakeInitializer struct {
+	IntializeFunc func(ctx context.Context, ps []*plugins.Plugin) ([]*plugins.Plugin, error)
+}
+
+func (f *FakeInitializer) Initialize(ctx context.Context, ps []*plugins.Plugin) ([]*plugins.Plugin, error) {
+	if f.IntializeFunc != nil {
+		return f.IntializeFunc(ctx, ps)
+	}
+	return []*plugins.Plugin{}, nil
+}
+
+type FakeTerminator struct {
+	TerminateFunc func(ctx context.Context, pluginID string) error
+}
+
+func (f *FakeTerminator) Terminate(ctx context.Context, pluginID string) error {
+	if f.TerminateFunc != nil {
+		return f.TerminateFunc(ctx, pluginID)
+	}
+	return nil
+}

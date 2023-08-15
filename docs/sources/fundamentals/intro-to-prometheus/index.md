@@ -8,6 +8,11 @@ keywords:
   - Prometheus
   - metrics
   - time series
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: What is Prometheus?
 weight: 300
 ---
@@ -59,7 +64,7 @@ The following gauge visualization displays the total RAM usage on a computer.
 
 The third metric type is called a `histogram`, which counts observations and organizes them into configurable groups. The following example displays floating-point numbers grouped into ranges that display how frequently each occurred.
 
-{{< figure src="/media/docs/grafana/intro-prometheus/histogram-example.png" max-width="750px" caption="Historgram visualization" >}}
+{{< figure src="/media/docs/grafana/intro-prometheus/histogram-example.png" max-width="750px" caption="Histogram visualization" >}}
 
 These core concepts of time series, metrics, labels, and aggregation functions are foundational to Grafana and observability.
 

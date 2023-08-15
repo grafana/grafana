@@ -11,6 +11,7 @@ import {
   DataSourceApi,
   DataSourceInstanceSettings,
   dateTime,
+  Field,
   FieldType,
   isValidGoDuration,
   LoadingState,
@@ -223,10 +224,10 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
             app: options.app ?? '',
             grafana_version: config.buildInfo.version,
             query: queryValue ?? '',
-            streaming: appliedQuery.streaming,
+            streaming: config.featureToggles.traceQLStreaming,
           });
 
-          if (appliedQuery.streaming) {
+          if (config.featureToggles.traceQLStreaming) {
             subQueries.push(this.handleStreamingSearch(options, targets.traceql));
           } else {
             subQueries.push(
@@ -260,10 +261,10 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
           app: options.app ?? '',
           grafana_version: config.buildInfo.version,
           query: queryValue ?? '',
-          streaming: targets.traceqlSearch[0].streaming,
+          streaming: config.featureToggles.traceQLStreaming,
         });
 
-        if (targets.traceqlSearch[0].streaming) {
+        if (config.featureToggles.traceQLStreaming) {
           subQueries.push(this.handleStreamingSearch(options, targets.traceqlSearch, queryValue));
         } else {
           subQueries.push(
@@ -650,14 +651,16 @@ function errorAndDurationQuery(
   let durationsBySpanName: string[] = [];
 
   let labels = [];
-  if (request.app === CoreApp.Explore) {
-    if (rateResponse.data[0][0]?.fields[1]?.values) {
-      labels = rateResponse.data[0][0]?.fields[1]?.values;
+  if (rateResponse.data[0][0] && request.app === CoreApp.Explore) {
+    const spanNameField = rateResponse.data[0][0].fields.find((field: Field) => field.name === 'span_name');
+    if (spanNameField && spanNameField.values) {
+      labels = spanNameField.values;
     }
   } else if (rateResponse.data[0]) {
     rateResponse.data[0].map((df: DataFrame) => {
-      if (df.fields[1]?.labels && df.fields[1]?.labels['span_name']) {
-        labels.push(df.fields[1]?.labels['span_name']);
+      const spanNameLabels = df.fields.find((field: Field) => field.labels?.['span_name']);
+      if (spanNameLabels) {
+        labels.push(spanNameLabels.labels?.['span_name']);
       }
     });
   }
@@ -788,12 +791,14 @@ function makePromServiceMapRequest(options: DataQueryRequest<TempoQuery>): DataQ
   return {
     ...options,
     targets: serviceMapMetrics.map((metric) => {
+      const { serviceMapQuery, serviceMapIncludeNamespace: serviceMapIncludeNamespace } = options.targets[0];
+      const extraSumByFields = serviceMapIncludeNamespace ? ', client_service_namespace, server_service_namespace' : '';
       return {
         format: 'table',
         refId: metric,
         // options.targets[0] is not correct here, but not sure what should happen if you have multiple queries for
         // service map at the same time anyway
-        expr: `sum by (client, server) (rate(${metric}${options.targets[0].serviceMapQuery || ''}[$__range]))`,
+        expr: `sum by (client, server${extraSumByFields}) (rate(${metric}${serviceMapQuery || ''}[$__range]))`,
         instant: true,
       };
     }),

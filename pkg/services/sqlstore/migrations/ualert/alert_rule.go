@@ -152,10 +152,6 @@ func (m *migration) makeAlertRule(l log.Logger, cond condition, da dashAlert, fo
 	n, v := getLabelForSilenceMatching(ar.UID)
 	ar.Labels[n] = v
 
-	if err := m.addSilence(da, ar); err != nil {
-		m.mg.Logger.Error("alert migration error: failed to create silence", "rule_name", ar.Title, "err", err)
-	}
-
 	if err := m.addErrorSilence(da, ar); err != nil {
 		m.mg.Logger.Error("alert migration error: failed to create silence for Error", "rule_name", ar.Title, "err", err)
 	}

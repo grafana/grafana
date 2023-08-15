@@ -63,7 +63,6 @@ export const Expression: FC<ExpressionProps> = ({
   const seriesCount = series.length;
 
   const alertCondition = isAlertCondition ?? false;
-  //const showSummary = isAlertCondition && hasResults;
 
   const groupedByState = {
     [PromAlertingRuleState.Firing]: series.filter((serie) => getSeriesValue(serie) !== 0),
@@ -225,9 +224,15 @@ export const PreviewSummary: FC<{ firing: number; normal: number; isCondition: b
   seriesCount,
 }) => {
   const { mutedText } = useStyles2(getStyles);
+
+  if (seriesCount === 0) {
+    return <span className={mutedText}>No series</span>;
+  }
+
   if (isCondition) {
     return <span className={mutedText}>{`${seriesCount} series: ${firing} firing, ${normal} normal`}</span>;
   }
+
   return <span className={mutedText}>{`${seriesCount} series`}</span>;
 };
 
@@ -422,7 +427,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
       border: solid 1px ${theme.colors.border.medium};
       flex: 1;
       flex-basis: 400px;
-      border-radius: ${theme.shape.borderRadius()};
+      border-radius: ${theme.shape.radius.default};
     `,
     stack: css`
       display: flex;
@@ -527,7 +532,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   editable: css`
     padding: ${theme.spacing(0.5)} ${theme.spacing(1)};
     border: solid 1px ${theme.colors.border.weak};
-    border-radius: ${theme.shape.borderRadius()};
+    border-radius: ${theme.shape.radius.default};
 
     display: flex;
     flex-direction: row;

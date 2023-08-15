@@ -95,6 +95,7 @@ interface Props extends Themeable2 {
   eventBus: EventBus;
   panelState?: ExplorePanelsState;
   scrollElement?: HTMLDivElement;
+  isFilterLabelActive: (key: string, value: string) => Promise<boolean>;
   logsFrames?: DataFrame[];
   range: TimeRange;
 }
@@ -374,6 +375,14 @@ class UnthemedLogs extends PureComponent<Props, State> {
   };
 
   onPermalinkClick = async (row: LogRowModel) => {
+    // this is an extra check, to be sure that we are not
+    // creating permalinks for logs without an id-field.
+    // normally it should never happen, because we do not
+    // display the permalink button in such cases.
+    if (row.rowId === undefined) {
+      return;
+    }
+
     // get explore state, add log-row-id and make timerange absolute
     const urlState = getUrlStateFromPaneState(getState().explore.panes[this.props.exploreId]!);
     urlState.panelsState = { ...this.props.panelState, logs: { id: row.uid } };
@@ -445,7 +454,18 @@ class UnthemedLogs extends PureComponent<Props, State> {
     return { from: firstTimeStamp, to: lastTimeStamp };
   });
 
-  scrollToTopLogs = () => this.topLogsRef.current?.scrollIntoView();
+  scrollToTopLogs = () => {
+    if (config.featureToggles.exploreScrollableLogsContainer) {
+      if (this.logsContainer.current) {
+        this.logsContainer.current.scroll({
+          behavior: 'auto',
+          top: 0,
+        });
+      }
+    } else {
+      this.topLogsRef.current?.scrollIntoView();
+    }
+  };
 
   render() {
     const {
@@ -658,7 +678,6 @@ class UnthemedLogs extends PureComponent<Props, State> {
               <div className={styles.logRows} data-testid="logRowsTable">
                 {/* Width should be full width minus logsnavigation and padding */}
                 <LogsTable
-                  rows={logRows}
                   logsSortOrder={this.state.logsSortOrder}
                   range={this.props.range}
                   splitOpen={this.props.splitOpen}
@@ -695,6 +714,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
                   onPermalinkClick={this.onPermalinkClick}
                   permalinkedRowId={this.props.panelState?.logs?.id}
                   scrollIntoView={this.scrollIntoView}
+                  isFilterLabelActive={this.props.isFilterLabelActive}
                 />
               </div>
             )}
@@ -753,7 +773,7 @@ const getStyles = (theme: GrafanaTheme2, wrapLogMessage: boolean) => {
       flex-wrap: wrap;
       background-color: ${theme.colors.background.primary};
       padding: ${theme.spacing(1, 2)};
-      border-radius: ${theme.shape.borderRadius()};
+      border-radius: ${theme.shape.radius.default};
       margin: ${theme.spacing(0, 0, 1)};
       border: 1px solid ${theme.colors.border.medium};
     `,

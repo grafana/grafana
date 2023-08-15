@@ -64,7 +64,7 @@ func (m *Manager) Stop(ctx context.Context, pluginID string) error {
 	if !exists {
 		return backendplugin.ErrPluginNotRegistered
 	}
-	m.log.Debug("Stopping plugin process", "pluginID", p.ID)
+	m.log.Debug("Stopping plugin process", "pluginId", p.ID)
 	m.mu.Lock()
 	defer m.mu.Unlock()
 

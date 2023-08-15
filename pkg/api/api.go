@@ -111,6 +111,12 @@ func (hs *HTTPServer) registerRoutes() {
 		r.Get("/admin/storage", reqSignedIn, hs.Index)
 		r.Get("/admin/storage/*", reqSignedIn, hs.Index)
 	}
+
+	// feature toggle admin page
+	if hs.Features.IsEnabled(featuremgmt.FlagFeatureToggleAdminPage) {
+		r.Get("/admin/featuretoggles", authorize(ac.EvalPermission(ac.ActionFeatureManagementRead)), hs.Index)
+	}
+
 	r.Get("/styleguide", reqSignedIn, hs.Index)
 
 	r.Get("/live", reqGrafanaAdmin, hs.Index)
@@ -420,6 +426,13 @@ func (hs *HTTPServer) registerRoutes() {
 			pluginRoute.Post("/:pluginId/settings", authorize(ac.EvalPermission(pluginaccesscontrol.ActionWrite, pluginIDScope)), routing.Wrap(hs.UpdatePluginSetting))
 			pluginRoute.Get("/:pluginId/metrics", reqOrgAdmin, routing.Wrap(hs.CollectPluginMetrics))
 		})
+
+		if hs.Features.IsEnabled(featuremgmt.FlagFeatureToggleAdminPage) {
+			apiRoute.Group("/featuremgmt", func(featuremgmtRoute routing.RouteRegister) {
+				featuremgmtRoute.Get("/", authorize(ac.EvalPermission(ac.ActionFeatureManagementRead)), hs.GetFeatureToggles)
+				featuremgmtRoute.Post("/", authorize(ac.EvalPermission(ac.ActionFeatureManagementWrite)), hs.UpdateFeatureToggle)
+			})
+		}
 
 		apiRoute.Get("/frontend/settings/", hs.GetFrontendSettings)
 		apiRoute.Any("/datasources/proxy/:id/*", authorize(ac.EvalPermission(datasources.ActionQuery)), hs.ProxyDataSourceRequest)

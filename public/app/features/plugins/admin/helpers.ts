@@ -223,10 +223,10 @@ export const sortPlugins = (plugins: CatalogPlugin[], sortBy: Sorters) => {
 };
 
 function groupErrorsByPluginId(errors: PluginError[] = []): Record<string, PluginError | undefined> {
-  return errors.reduce((byId, error) => {
+  return errors.reduce<Record<string, PluginError | undefined>>((byId, error) => {
     byId[error.pluginId] = error;
     return byId;
-  }, {} as Record<string, PluginError | undefined>);
+  }, {});
 }
 
 function getPluginSignature(options: {

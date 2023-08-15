@@ -14,10 +14,6 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/services/publicdashboards"
-	"github.com/grafana/grafana/pkg/services/publicdashboards/api"
-	"github.com/grafana/grafana/pkg/services/user/usertest"
-
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -29,7 +25,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
-	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
 	"github.com/grafana/grafana/pkg/registry/corekind"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
@@ -53,10 +49,14 @@ import (
 	pref "github.com/grafana/grafana/pkg/services/preference"
 	"github.com/grafana/grafana/pkg/services/preference/preftest"
 	"github.com/grafana/grafana/pkg/services/provisioning"
+	"github.com/grafana/grafana/pkg/services/publicdashboards"
+	"github.com/grafana/grafana/pkg/services/publicdashboards/api"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
+	"github.com/grafana/grafana/pkg/services/star/startest"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/team/teamtest"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/services/user/usertest"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -73,7 +73,7 @@ func TestGetHomeDashboard(t *testing.T) {
 
 	hs := &HTTPServer{
 		Cfg:                     cfg,
-		pluginStore:             &plugins.FakePluginStore{},
+		pluginStore:             &fakes.FakePluginStore{},
 		SQLStore:                dbtest.NewFakeDB(),
 		preferenceService:       prefService,
 		dashboardVersionService: dashboardVersionService,
@@ -153,7 +153,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 
 		hs := &HTTPServer{
 			Cfg:                     setting.NewCfg(),
-			pluginStore:             &plugins.FakePluginStore{},
+			pluginStore:             &fakes.FakePluginStore{},
 			SQLStore:                mockSQLStore,
 			AccessControl:           accesscontrolmock.New(),
 			Features:                featuremgmt.WithFeatures(),
@@ -161,6 +161,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 			dashboardVersionService: fakeDashboardVersionService,
 			Kinds:                   corekind.NewBase(nil),
 			QuotaService:            quotatest.New(false, nil),
+			starService:             startest.NewStarServiceFake(),
 			userService: &usertest.FakeUserService{
 				ExpectedUser: &user.User{ID: 1, Login: "test-user"},
 			},
@@ -934,6 +935,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 				DashboardService:             dashboardService,
 				Features:                     featuremgmt.WithFeatures(),
 				Kinds:                        corekind.NewBase(nil),
+				starService:                  startest.NewStarServiceFake(),
 			}
 			hs.callGetDashboard(sc)
 
@@ -967,7 +969,7 @@ func TestDashboardVersionsAPIEndpoint(t *testing.T) {
 	getHS := func(userSvc *usertest.FakeUserService) *HTTPServer {
 		return &HTTPServer{
 			Cfg:                     cfg,
-			pluginStore:             &plugins.FakePluginStore{},
+			pluginStore:             &fakes.FakePluginStore{},
 			SQLStore:                mockSQLStore,
 			AccessControl:           accesscontrolmock.New(),
 			Features:                featuremgmt.WithFeatures(),
@@ -1122,6 +1124,7 @@ func getDashboardShouldReturn200WithConfig(t *testing.T, sc *scenarioContext, pr
 		DashboardService:             dashboardService,
 		Features:                     featuremgmt.WithFeatures(),
 		Kinds:                        corekind.NewBase(nil),
+		starService:                  startest.NewStarServiceFake(),
 	}
 
 	hs.callGetDashboard(sc)
@@ -1181,7 +1184,7 @@ func postDashboardScenario(t *testing.T, desc string, url string, routePattern s
 			ProvisioningService:   provisioning.NewProvisioningServiceMock(context.Background()),
 			Live:                  newTestLive(t, db.InitTestDB(t)),
 			QuotaService:          quotatest.New(false, nil),
-			pluginStore:           &plugins.FakePluginStore{},
+			pluginStore:           &fakes.FakePluginStore{},
 			LibraryPanelService:   &mockLibraryPanelService{},
 			LibraryElementService: &mockLibraryElementService{},
 			DashboardService:      dashboardService,
@@ -1360,7 +1363,7 @@ func (l *mockLibraryElementService) CreateElement(c context.Context, signedInUse
 }
 
 // GetElement gets an element from a UID.
-func (l *mockLibraryElementService) GetElement(c context.Context, signedInUser *user.SignedInUser, UID string) (model.LibraryElementDTO, error) {
+func (l *mockLibraryElementService) GetElement(c context.Context, signedInUser *user.SignedInUser, cmd model.GetLibraryElementCommand) (model.LibraryElementDTO, error) {
 	return model.LibraryElementDTO{}, nil
 }
 

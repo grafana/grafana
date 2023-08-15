@@ -5,7 +5,6 @@ import { useWindowSize } from 'react-use';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data/src';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
-import { reportInteraction } from '@grafana/runtime/src';
 import {
   Button,
   ButtonGroup,
@@ -25,6 +24,8 @@ import {
 } from 'app/features/dashboard/api/publicDashboardApi';
 import { useSelector } from 'app/types';
 
+import { trackDashboardSharingActionPerType } from '../../analytics';
+import { shareDashboardType } from '../../utils';
 import { PublicDashboard, PublicDashboardShareType, validEmailRegex } from '../SharePublicDashboardUtils';
 
 interface EmailSharingConfigurationForm {
@@ -55,12 +56,12 @@ const EmailList = ({
   const isLoading = isDeleteLoading || isReshareLoading;
 
   const onDeleteEmail = (recipientUid: string) => {
-    reportInteraction('grafana_dashboards_public_delete_sharing_email_clicked');
+    trackDashboardSharingActionPerType('delete_email', shareDashboardType.publicDashboard);
     deleteEmail({ recipientUid, dashboardUid: dashboardUid, uid: publicDashboardUid });
   };
 
   const onReshare = (recipientUid: string) => {
-    reportInteraction('grafana_dashboards_public_reshare_email_clicked');
+    trackDashboardSharingActionPerType('reshare_email', shareDashboardType.publicDashboard);
     reshareAccess({ recipientUid, uid: publicDashboardUid });
   };
 
@@ -133,7 +134,7 @@ export const EmailSharingConfiguration = () => {
     mode: 'onSubmit',
   });
 
-  const onShareTypeChange = (shareType: PublicDashboardShareType) => {
+  const onUpdateShareType = (shareType: PublicDashboardShareType) => {
     const req = {
       dashboard,
       payload: {
@@ -147,14 +148,14 @@ export const EmailSharingConfiguration = () => {
 
   const onSubmit = async (data: EmailSharingConfigurationForm) => {
     //TODO: add if it's domain or not when developed.
-    reportInteraction('grafana_dashboards_public_add_share_email_clicked');
+    trackDashboardSharingActionPerType('invite_email', shareDashboardType.publicDashboard);
     await addEmail({ recipient: data.email, uid: publicDashboard!.uid, dashboardUid: dashboard.uid }).unwrap();
     reset({ email: '', shareType: PublicDashboardShareType.EMAIL });
   };
 
   return (
     <form data-testid={selectors.Container} className={styles.container} onSubmit={handleSubmit(onSubmit)}>
-      <Field label="Can view dashboard">
+      <Field label="Can view dashboard" className={styles.field}>
         <InputControl
           name="shareType"
           control={control}
@@ -166,11 +167,12 @@ export const EmailSharingConfiguration = () => {
                 size={width < 480 ? 'sm' : 'md'}
                 options={options}
                 onChange={(shareType: PublicDashboardShareType) => {
-                  reportInteraction('grafana_dashboards_public_share_type_clicked', {
-                    type: shareType,
-                  });
+                  trackDashboardSharingActionPerType(
+                    `share_type_${shareType === PublicDashboardShareType.EMAIL ? 'email' : 'public'}`,
+                    shareDashboardType.publicDashboard
+                  );
                   setValue('shareType', shareType);
-                  onShareTypeChange(shareType);
+                  onUpdateShareType(shareType);
                 }}
               />
             );
@@ -184,6 +186,7 @@ export const EmailSharingConfiguration = () => {
             description="Invite people by email"
             error={errors.email?.message}
             invalid={!!errors.email?.message || undefined}
+            className={styles.field}
           >
             <div className={styles.emailContainer}>
               <Input
@@ -221,20 +224,30 @@ export const EmailSharingConfiguration = () => {
 
 const getStyles = (theme: GrafanaTheme2) => ({
   container: css`
-    margin-bottom: ${theme.spacing(2)};
+    label: emailConfigContainer;
+    display: flex;
+    flex-direction: column;
+    flex-wrap: wrap;
+    gap: ${theme.spacing(3)};
+  `,
+  field: css`
+    label: field-noMargin;
+    margin-bottom: 0;
   `,
   emailContainer: css`
+    label: emailContainer;
     display: flex;
     gap: ${theme.spacing(1)};
   `,
   emailInput: css`
+    label: emailInput;
     flex-grow: 1;
   `,
   table: css`
+    label: table;
     display: flex;
     max-height: 220px;
     overflow-y: scroll;
-    margin-bottom: ${theme.spacing(1)};
 
     & tbody {
       display: flex;
