@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import React, { useCallback } from 'react';
 import Calendar from 'react-calendar';
 
-import { GrafanaTheme2, dateTime, dateTimeParse, DateTime, TimeZone } from '@grafana/data';
+import { GrafanaTheme2, dateTime, dateTimeParse, DateTime, TimeZone, getZone } from '@grafana/data';
 
 import { useStyles2 } from '../../../themes';
 import { Icon } from '../../Icon/Icon';
@@ -10,7 +10,7 @@ import { Icon } from '../../Icon/Icon';
 import { TimePickerCalendarProps } from './TimePickerCalendar';
 
 export function Body({ onChange, from, to, timeZone }: TimePickerCalendarProps) {
-  const value = inputToValue(from, to);
+  const value = inputToValue(from, to, new Date(), timeZone);
   const onCalendarChange = useOnCalendarChange(onChange, timeZone);
   const styles = useStyles2(getBodyStyles);
 
@@ -32,14 +32,28 @@ export function Body({ onChange, from, to, timeZone }: TimePickerCalendarProps) 
 
 Body.displayName = 'Body';
 
-export function inputToValue(from: DateTime, to: DateTime, invalidDateDefault: Date = new Date()): [Date, Date] {
+export function inputToValue(
+  from: DateTime,
+  to: DateTime,
+  invalidDateDefault: Date = new Date(),
+  timezone?: string
+): [Date, Date] {
   const fromAsDate = from.toDate();
   const toAsDate = to.toDate();
   const fromAsValidDate = dateTime(fromAsDate).isValid() ? fromAsDate : invalidDateDefault;
   const toAsValidDate = dateTime(toAsDate).isValid() ? toAsDate : invalidDateDefault;
-
-  fromAsValidDate.setMinutes(fromAsValidDate.getMinutes() + 540);
-  toAsValidDate.setMinutes(toAsValidDate.getMinutes() + 540);
+  if (timezone) {
+    const zone = getZone(timezone);
+    if (zone) {
+      const fromOffset = zone.offset(fromAsValidDate.getTime());
+      const toOffset = zone.offset(toAsValidDate.getTime());
+      // fromAsValidDate.setMinutes(fromAsValidDate.getMinutes() - fromOffset);
+      // toAsValidDate.setMinutes(toAsValidDate.getMinutes() - toOffset);
+      fromAsValidDate.setMinutes(fromAsValidDate.getMinutes() + 480);
+      toAsValidDate.setMinutes(toAsValidDate.getMinutes() + 480);
+      console.log({ fromOffset, toOffset });
+    }
+  }
 
   if (fromAsValidDate > toAsValidDate) {
     return [toAsValidDate, fromAsValidDate];
