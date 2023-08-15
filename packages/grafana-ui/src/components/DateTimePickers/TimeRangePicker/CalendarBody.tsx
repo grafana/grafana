@@ -38,6 +38,9 @@ export function inputToValue(from: DateTime, to: DateTime, invalidDateDefault: D
   const fromAsValidDate = dateTime(fromAsDate).isValid() ? fromAsDate : invalidDateDefault;
   const toAsValidDate = dateTime(toAsDate).isValid() ? toAsDate : invalidDateDefault;
 
+  fromAsValidDate.setMinutes(fromAsValidDate.getMinutes() + 540);
+  toAsValidDate.setMinutes(toAsValidDate.getMinutes() + 540);
+
   if (fromAsValidDate > toAsValidDate) {
     return [toAsValidDate, fromAsValidDate];
   }
