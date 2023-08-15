@@ -149,13 +149,13 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
         return ['count', 'avg', 'max', 'min', 'sum', 'select', 'by'].map((key) => ({
           label: key,
           insertText: key,
-          type: 'OPERATOR', // TODO aggregator? and what about `select`?
+          type: 'OPERATOR',
         }));
-      case 'SPANSET_ARITMETHIC_OPERATORS': // TODO not actually `ARITMETHIC` operators, but comparisons
+      case 'SPANSET_COMPARISON_OPERATORS':
         return CompletionProvider.comparisonOps.map((key) => ({
           label: key,
           insertText: key,
-          type: 'OPERATOR', // TODO aggregator? and what about `select`?
+          type: 'OPERATOR',
         }));
       case 'SPANSET_IN_VALUE':
         let tagValues;
