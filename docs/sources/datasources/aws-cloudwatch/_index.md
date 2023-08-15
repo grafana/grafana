@@ -26,11 +26,11 @@ weight: 200
 Grafana ships with built-in support for Amazon CloudWatch.
 This topic describes queries, templates, variables, and other configuration specific to the CloudWatch data source.
 
-For instructions on how to add a data source to Grafana, refer to the [administration documentation]({{< relref "../../administration/data-source-management/" >}}).
+For instructions on how to add a data source to Grafana, refer to the [administration documentation][data-source-management].
 Only users with the organization administrator role can add data sources.
-Administrators can also [provision the data source]({{< relref "#provision-the-data-source" >}}) with Grafana's provisioning system, and should [control pricing]({{< relref "#control-pricing" >}}) and [manage service quotas]({{< relref "#manage-service-quotas" >}}) accordingly.
+Administrators can also [provision the data source](#provision-the-data-source) with Grafana's provisioning system, and should [control pricing](#control-pricing) and [manage service quotas](#manage-service-quotas) accordingly.
 
-Once you've added the data source, you can [configure it]({{< relref "#configure-the-data-source" >}}) so that your Grafana instance's users can create queries in its [query editor]({{< relref "./query-editor/" >}}) when they [build dashboards]({{< relref "../../dashboards/build-dashboards/" >}}) and use [Explore]({{< relref "../../explore/" >}}).
+Once you've added the data source, you can [configure it](#configure-the-data-source) so that your Grafana instance's users can create queries in its [query editor]({{< relref "./query-editor" >}}) when they [build dashboards][build-dashboards] and use [Explore][explore].
 
 {{% admonition type="note" %}}
 To troubleshoot issues while setting up the CloudWatch data source, check the `/var/log/grafana/grafana.log` file.
@@ -50,12 +50,12 @@ To troubleshoot issues while setting up the CloudWatch data source, check the `/
 A Grafana plugin's requests to AWS are made on behalf of an AWS Identity and Access Management (IAM) role or IAM user.
 The IAM user or IAM role must have the associated policies to perform certain API actions.
 
-For authentication options and configuration details, refer to [AWS authentication]({{< relref "./aws-authentication/" >}}).
+For authentication options and configuration details, refer to [AWS authentication]({{< relref "./aws-authentication" >}}).
 
 #### IAM policy examples
 
 To read CloudWatch metrics and EC2 tags, instances, regions, and alarms, you must grant Grafana permissions via IAM.
-You can attach these permissions to the IAM role or IAM user you configured in [AWS authentication]({{< relref "./aws-authentication/" >}}).
+You can attach these permissions to the IAM role or IAM user you configured in [AWS authentication]({{< relref "./aws-authentication" >}}).
 
 ##### Metrics-only permissions
 
@@ -217,7 +217,7 @@ The data source select contains only existing data source instances of type X-Ra
 To use this feature, you must already have an X-Ray data source configured.
 For details, see the [X-Ray data source docs](/grafana/plugins/grafana-x-ray-datasource/).
 
-To view the X-Ray link, select the log row in either the Explore view or dashboard [Logs panel]({{< relref "../../panels-visualizations/visualizations/logs" >}}) to view the log details section.
+To view the X-Ray link, select the log row in either the Explore view or dashboard [Logs panel][logs] to view the log details section.
 
 To log the `@xrayTraceId`, see the [AWS X-Ray documentation](https://docs.amazonaws.cn/en_us/xray/latest/devguide/xray-services.html).
 
@@ -227,7 +227,7 @@ To provide the field to Grafana, your log queries must also contain the `@xrayTr
 
 ### Configure the data source with grafana.ini
 
-The Grafana [configuration file]({{< relref "../../setup-grafana/configure-grafana#aws" >}}) includes an `AWS` section where you can configure data source options:
+The Grafana [configuration file][configure-grafana-aws] includes an `AWS` section where you can configure data source options:
 
 | Configuration option      | Description                                                                                                                                                                                                                                                                                                                                                                                                                                     |
 | ------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -238,7 +238,7 @@ The Grafana [configuration file]({{< relref "../../setup-grafana/configure-grafa
 ### Provision the data source
 
 You can define and configure the data source in YAML files as part of Grafana's provisioning system.
-For more information about provisioning, and for available configuration options, refer to [Provisioning Grafana]({{< relref "../../administration/provisioning/#data-sources" >}}).
+For more information about provisioning, and for available configuration options, refer to [Provisioning Grafana][provisioning-data-sources].
 
 #### Provisioning examples
 
@@ -302,7 +302,7 @@ datasources:
 
 The CloudWatch data source can query data from both CloudWatch metrics and CloudWatch Logs APIs, each with its own specialized query editor.
 
-For details, see the [query editor documentation]({{< relref "./query-editor/" >}}).
+For details, see the [query editor documentation]({{< relref "./query-editor" >}}).
 
 ## Use template variables
 
@@ -310,7 +310,7 @@ Instead of hard-coding details such as server, application, and sensor names in 
 Grafana lists these variables in dropdown select boxes at the top of the dashboard to help you change the data displayed in your dashboard.
 Grafana refers to such variables as template variables.
 
-For details, see the [template variables documentation]({{< relref "./template-variables/" >}}).
+For details, see the [template variables documentation]({{< relref "./template-variables" >}}).
 
 ## Import pre-configured dashboards
 
@@ -324,7 +324,7 @@ The CloudWatch data source ships with curated and pre-configured dashboards for 
 
 **To import curated dashboards:**
 
-1. Navigate to the data source's [configuration page]({{< relref "#configure-the-data-source" >}}).
+1. Navigate to the data source's [configuration page](#configure-the-data-source).
 1. Select the **Dashboards** tab.
 
    This displays the curated selection of importable dashboards.
@@ -355,7 +355,7 @@ filter @message like /Exception/
 If you receive an error like `input data must be a wide series but got ...` when trying to alert on a query, make sure that your query returns valid numeric data that can be output to a Time series panel.
 {{% /admonition %}}
 
-For more information on Grafana alerts, refer to [Alerting]({{< relref "../../alerting" >}}).
+For more information on Grafana alerts, refer to [Alerting][alerting].
 
 ## Control pricing
 
@@ -391,3 +391,26 @@ To use this feature, configure in the [AWS console under Cloudwatch Settings](ht
 ## CloudWatch Logs data protection
 
 CloudWatch Logs can safeguard data by using log group data protection policies. If you have data protection enabled for a log group, then any sensitive data that matches the data identifiers you've selected will be masked. In order to view masked data you will need to have the `logs:Unmask` IAM permission enabled. See the AWS documentation on how to [help protect sensitive log data with masking](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/mask-sensitive-log-data.html) to learn more about this.
+
+{{% docs/reference %}}
+[alerting]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/alerting"
+[alerting]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting"
+
+[build-dashboards]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/build-dashboards"
+[build-dashboards]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/build-dashboards"
+
+[configure-grafana-aws]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-grafana#aws"
+[configure-grafana-aws]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-grafana#aws"
+
+[data-source-management]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/administration/data-source-management"
+[data-source-management]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/administration/data-source-management"
+
+[explore]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/explore"
+[explore]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/explore"
+
+[logs]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/logs"
+[logs]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/logs"
+
+[provisioning-data-sources]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/administration/provisioning#data-sources"
+[provisioning-data-sources]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/administration/provisioning#data-sources"
+{{% /docs/reference %}}

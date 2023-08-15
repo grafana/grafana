@@ -5,11 +5,9 @@ import (
 	"reflect"
 	"time"
 
-	"github.com/grafana/dskit/services"
-
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/serverlock"
-	"github.com/grafana/grafana/pkg/modules"
+	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -23,21 +21,15 @@ type SecretMigrationService interface {
 }
 
 type SecretMigrationProvider interface {
+	registry.BackgroundService
 	TriggerPluginMigration(ctx context.Context, toPlugin bool) error
 }
 
 type SecretMigrationProviderImpl struct {
-	migServices              []SecretMigrationService
+	services                 []SecretMigrationService
 	ServerLockService        *serverlock.ServerLockService
 	migrateToPluginService   *MigrateToPluginService
 	migrateFromPluginService *MigrateFromPluginService
-
-	// SecretMigrationProviderImpl is a dskit module Note on dskit module usage:
-	// The SecretMigrationProviderImpl iterates over several service's
-	// Migration() method sequentially. dskit has the concept of a service
-	// Manager which launches services. We could use the Manager here, but it
-	// seems heavyweight given that these services only log errors.
-	*services.BasicService
 }
 
 func ProvideSecretMigrationProvider(
@@ -47,30 +39,27 @@ func ProvideSecretMigrationProvider(
 	migrateToPluginService *MigrateToPluginService,
 	migrateFromPluginService *MigrateFromPluginService,
 ) *SecretMigrationProviderImpl {
-	migServices := make([]SecretMigrationService, 0)
-	migServices = append(migServices, dataSourceSecretMigrationService)
+	services := make([]SecretMigrationService, 0)
+	services = append(services, dataSourceSecretMigrationService)
 	// Plugin migration should always be last; should either migrate to or from, not both
 	// This is because the migrateTo checks for use_plugin = true, in which case we should always
 	// migrate by default to ensure users don't lose access to secrets. If migration has
 	// already occurred, the migrateTo function will be called but it won't do anything
 	if cfg.SectionWithEnvOverrides("secrets").Key("migrate_from_plugin").MustBool(false) {
-		migServices = append(migServices, migrateFromPluginService)
+		services = append(services, migrateFromPluginService)
 	} else {
-		migServices = append(migServices, migrateToPluginService)
+		services = append(services, migrateToPluginService)
 	}
 
-	s := &SecretMigrationProviderImpl{
+	return &SecretMigrationProviderImpl{
 		ServerLockService:        serverLockService,
-		migServices:              migServices,
+		services:                 services,
 		migrateToPluginService:   migrateToPluginService,
 		migrateFromPluginService: migrateFromPluginService,
 	}
-
-	s.BasicService = services.NewIdleService(s.start, nil).WithName(modules.SecretMigrator)
-	return s
 }
 
-func (s *SecretMigrationProviderImpl) start(ctx context.Context) error {
+func (s *SecretMigrationProviderImpl) Run(ctx context.Context) error {
 	return s.Migrate(ctx)
 }
 
@@ -79,7 +68,7 @@ func (s *SecretMigrationProviderImpl) start(ctx context.Context) error {
 func (s *SecretMigrationProviderImpl) Migrate(ctx context.Context) error {
 	// Start migration services.
 	err := s.ServerLockService.LockExecuteAndRelease(ctx, actionName, time.Minute*10, func(context.Context) {
-		for _, service := range s.migServices {
+		for _, service := range s.services {
 			serviceName := reflect.TypeOf(service).String()
 			logger.Debug("Starting secret migration service", "service", serviceName)
 			err := service.Migrate(ctx)

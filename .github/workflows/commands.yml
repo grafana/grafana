@@ -16,7 +16,7 @@ jobs:
         id: check
         shell: bash
         run: |
-          if [ -n "${{ (secrets.GRAFANA_MISC_STATS_API_KEY != '' && secrets.GH_BOT_ACCESS_TOKEN != '') || '' }}" ]; then
+          if [ -n "${{ (secrets.GRAFANA_MISC_STATS_API_KEY != '' && secrets.ISSUE_COMMANDS_TOKEN != '') || '' }}" ]; then
             echo "has-secrets=1" >> "$GITHUB_OUTPUT"
           fi
 

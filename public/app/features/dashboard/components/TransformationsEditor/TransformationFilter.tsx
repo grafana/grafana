@@ -41,7 +41,7 @@ export const TransformationFilter = ({ index, data, config, onChange }: Transfor
 };
 
 const getStyles = (theme: GrafanaTheme2) => {
-  const borderRadius = theme.shape.borderRadius();
+  const borderRadius = theme.shape.radius.default;
 
   return {
     wrapper: css`

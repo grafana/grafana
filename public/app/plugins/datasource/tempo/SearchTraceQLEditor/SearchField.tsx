@@ -35,6 +35,7 @@ interface Props {
   hideTag?: boolean;
   hideValue?: boolean;
   allowDelete?: boolean;
+  query: string;
 }
 const SearchField = ({
   filter,
@@ -48,6 +49,7 @@ const SearchField = ({
   hideTag,
   hideValue,
   allowDelete,
+  query,
 }: Props) => {
   const styles = useStyles2(getStyles);
   const languageProvider = useMemo(() => new TempoLanguageProvider(datasource), [datasource]);
@@ -60,7 +62,7 @@ const SearchField = ({
 
   const updateOptions = async () => {
     try {
-      return await languageProvider.getOptionsV2(scopedTag);
+      return filter.tag ? await languageProvider.getOptionsV2(scopedTag, query) : [];
     } catch (error) {
       // Display message if Tempo is connected but search 404's
       if (isFetchError(error) && error?.status === 404) {
@@ -72,7 +74,12 @@ const SearchField = ({
     return [];
   };
 
-  const { loading: isLoadingValues, value: options } = useAsync(updateOptions, [scopedTag, languageProvider, setError]);
+  const { loading: isLoadingValues, value: options } = useAsync(updateOptions, [
+    scopedTag,
+    languageProvider,
+    setError,
+    query,
+  ]);
 
   useEffect(() => {
     if (Array.isArray(filter.value) && filter.value.length > 1 && filter.operator !== '=~') {

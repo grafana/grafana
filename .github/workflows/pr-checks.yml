@@ -13,15 +13,19 @@ on:
     types:
       - milestoned
       - demilestoned
+
 concurrency:
   group: pr-checks-${{ github.event.number }}
+
 permissions:
-  contents: write
+  statuses: write
+  checks: write
+  actions: write
+  contents: read
+  pull-requests: read
+
 jobs:
   main:
-    permissions:
-      actions: write
-      contents: read
     runs-on: ubuntu-latest
     if: github.event.pull_request.draft == false
     steps:
