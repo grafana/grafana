@@ -1,6 +1,6 @@
 import { cloneDeep } from 'lodash';
 import { Observable, of, ReplaySubject, Unsubscribable } from 'rxjs';
-import { map, mergeMap } from 'rxjs/operators';
+import { map, mergeMap, catchError } from 'rxjs/operators';
 
 import {
   ApplyFieldOverrideOptions,
@@ -221,7 +221,22 @@ export class PanelQueryRunner {
       interpolate: (v: string) => getTemplateSrv().replace(v, data?.request?.scopedVars),
     };
 
-    return transformDataFrame(transformations, data.series, ctx).pipe(map((series) => ({ ...data, series })));
+    return transformDataFrame(transformations, data.series, ctx).pipe(
+      // catchError(err => of({
+      //   ...data,
+      //   errors: [
+      //     { message: 'error running transformations' },
+      //     toDataQueryError(err),
+
+      //     //...data?.errors
+      //   ],
+      // }),
+      map((series) => ({ ...data, series })),
+      catchError((err, got) => {
+        console.log('Got error!', err, got);
+        return of({ ...data });
+      })
+    );
   }
 
   async run(options: QueryRunnerOptions) {

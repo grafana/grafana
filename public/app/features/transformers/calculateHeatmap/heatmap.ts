@@ -41,6 +41,10 @@ export const heatmapTransformer: SynchronousDataTransformerInfo<HeatmapTransform
 
   transformer: (options: HeatmapTransformerOptions) => {
     return (data: DataFrame[]) => {
+      if (1 === 1) {
+        throw 'thrown from heatmap xform';
+      }
+
       const v = calculateHeatmapFromData(data, options);
       if (options.keepOriginalData) {
         return [v, ...data];
