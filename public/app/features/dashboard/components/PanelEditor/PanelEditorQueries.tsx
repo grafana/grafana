@@ -9,7 +9,11 @@ import { QueryGroupDataSource, QueryGroupOptions } from 'app/types';
 
 import { getDashboardSrv } from '../../services/DashboardSrv';
 import { PanelModel } from '../../state';
-import { getLastUsedDatasourceFromStorage, updateDatasourceUidLastUsedDatasource } from '../../utils/dashboard';
+import {
+  getLastUsedDatasourceFromStorage,
+  initLastUsedDatasourceKeyForDashboard,
+  setLastUsedDatasourceKeyForDashboard,
+} from '../../utils/dashboard';
 
 interface Props {
   /** Current panel */
@@ -23,16 +27,18 @@ export class PanelEditorQueries extends PureComponent<Props> {
     super(props);
   }
 
+  // store last used datasource in local storage
   updateLastUsedDatasource = (datasource: QueryGroupDataSource) => {
     if (!datasource.uid) {
       return;
     }
+
     const dashboardUid = getDashboardSrv().getCurrent()?.uid ?? '';
     // if datasource is MIXED reset datasource uid in storage, because Mixed datasource can contain multiple ds
     if (datasource.uid === MIXED_DATASOURCE_NAME) {
-      return updateDatasourceUidLastUsedDatasource(dashboardUid!, '');
+      return initLastUsedDatasourceKeyForDashboard(dashboardUid!);
     }
-    updateDatasourceUidLastUsedDatasource(dashboardUid, datasource.uid);
+    setLastUsedDatasourceKeyForDashboard(dashboardUid, datasource.uid);
   };
 
   buildQueryOptions(panel: PanelModel): QueryGroupOptions {
