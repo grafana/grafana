@@ -843,6 +843,7 @@ export class DashboardModel implements TimeModel {
     if (!rowPanel.panels || rowPanel.panels.length === 0) {
       return 0;
     } else if (rowPanel.collapsed) {
+      // A collapsed row will always have height 1
       return 1;
     }
 
