@@ -40,8 +40,7 @@ export const InspectDataOptions = ({
   const styles = useStyles2(getPanelInspectorStyles2);
 
   const panelTransformations = panel?.getTransformations();
-  const showPanelTransformationsOption =
-    Boolean(panelTransformations?.length) && (transformId as any) !== 'join by time';
+  const showPanelTransformationsOption = Boolean(panelTransformations?.length);
   const showFieldConfigsOption = panel && !panel.plugin?.fieldConfigRegistry.isEmpty();
 
   let dataSelect = dataFrames;
@@ -49,11 +48,11 @@ export const InspectDataOptions = ({
     dataSelect = data!;
   }
 
-  const choices = dataSelect.map((frame, index) => {
+  const choices = dataSelect.map<SelectableValue<number>>((frame, index) => {
     return {
       value: index,
       label: `${getFrameDisplayName(frame)} (${index})`,
-    } as SelectableValue<number>;
+    };
   });
 
   const selectableOptions = [...transformationOptions, ...choices];
