@@ -33,7 +33,7 @@ import { Flex } from '@grafana/ui'
 <header>
     <h1>Using Flex component to align-items stretch and justify-content to be space-between</h1>
 </header>
-<Flex direction="row" wrap="wrap" alignItems="stretch" justifyContent="space-between" gap={2} height={80}>
+<Flex flexFlow="row wrap" alignItems="stretch" justifyContent="space-between" gap={2}>
     <div style={{ width: '100px', backgroundColor: 'pink' }} />
     <div style={{ width: '100px', backgroundColor: 'darkmagenta' }} />
     <div style={{ width: '100px', backgroundColor: 'pink' }} />
@@ -49,7 +49,7 @@ import { Flex } from '@grafana/ui'
 <header>
     <h1>Using Flex component to align-items with wrap-reverse property</h1>
 </header>
-<Flex direction="row" wrap="wrap-reverse" alignItems="center" justifyContent="center" gap={4}>
+<Flex flexFlow="row wrap-reverse" alignItems="center" justifyContent="center" gap={4}>
     <div style={{ width: '100px', height: '100px', backgroundColor: 'pink' }} />
     <div style={{ width: '100px', height: '100px', backgroundColor: 'darkmagenta' }} />
     <div style={{ width: '100px', height: '100px', backgroundColor: 'pink' }} />
@@ -65,7 +65,7 @@ import { Flex } from '@grafana/ui'
 <header>
     <h1>Using Flex component to align-items with justify-content property</h1>
 </header>
-<Flex direction="row" wrap="wrap" alignItems="center" justifyContent="flex-start" gap={2}>
+<Flex flexFlow="row wrap" alignItems="center" justifyContent="flex-start" gap={2}>
     <div style={{ width: '100px', height: '100px', backgroundColor: 'pink' }} />
     <div style={{ width: '100px', height: '100px', backgroundColor: 'darkmagenta' }} />
     <div style={{ width: '100px', height: '100px', backgroundColor: 'pink' }} />
@@ -81,7 +81,7 @@ import { Flex } from '@grafana/ui'
 <header>
     <h1>Using Flex component to align-items with gap of 16px</h1>
 </header>
-<Flex direction="row" wrap="wrap" alignItems="center" justifyContent="center" gap={2}>
+<Flex flexFlow="row wrap" alignItems="center" justifyContent="center" gap={2}>
     <div style={{ width: '100px', height: '100px', backgroundColor: 'pink' }} />
     <div style={{ width: '100px', height: '100px', backgroundColor: 'darkmagenta' }} />
     <div style={{ width: '100px', height: '100px', backgroundColor: 'pink' }} />
@@ -97,7 +97,7 @@ import { Flex } from '@grafana/ui'
 <header>
     <h1>Using Flex component to align-items with direction column</h1>
 </header>
-<Flex direction="column" wrap="wrap" alignItems="center" justifyContent="center" gap={2}>
+<Flex flexFlow="column wrap" alignItems="center" justifyContent="center" gap={2}>
     <div style={{ width: '100px', height: '100px', backgroundColor: 'pink' }} />
     <div style={{ width: '100px', height: '100px', backgroundColor: 'darkmagenta' }} />
     <div style={{ width: '100px', height: '100px', backgroundColor: 'pink' }} />
