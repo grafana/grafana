@@ -15,7 +15,7 @@ export const initialState: DashboardState = {
   permissions: [],
   initError: null,
   initialDatasource: undefined,
-  raw: undefined,
+  getJson: () => undefined,
 };
 
 const dashboardSlice = createSlice({
@@ -57,7 +57,10 @@ const dashboardSlice = createSlice({
       state.initialDatasource = action.payload;
     },
     dashboardJsonLoaded: (state, action: PayloadAction<Dashboard | undefined>) => {
-      state.raw = action.payload;
+      if (action.payload) {
+        state.getModel = () => new DashboardModel(action.payload!);
+        state.getJson = () => action.payload;
+      }
     },
   },
 });

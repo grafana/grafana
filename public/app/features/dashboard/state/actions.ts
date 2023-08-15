@@ -153,9 +153,9 @@ export function loadDashboardJson(callbackUrl: string): ThunkResult<Promise<Dash
     return getBackendSrv()
       .get(`${callbackUrl}/load-dashboard`)
       .then((dashboardJson) => {
-        delete dashboardJson.uid;
-        dispatch(dashboardJsonLoaded(dashboardJson));
-        return dashboardJson;
+        const { uid, ...dashboard } = dashboardJson;
+        dispatch(dashboardJsonLoaded(dashboard));
+        return dashboard;
       })
       .catch((err) => {
         console.log('Error getting dashboard JSON: ', err);
