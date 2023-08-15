@@ -239,13 +239,58 @@ describe('CompletionProvider', () => {
   });
 
   it('suggests spanset combining operators after spanset selector', async () => {
-    const { provider, model } = setup('{.foo=300} ', 11, v1Tags);
+    const { provider, model } = setup('{.foo=300} ', 11);
     const result = await provider.provideCompletionItems(
       model as unknown as monacoTypes.editor.ITextModel,
       {} as monacoTypes.Position
     );
     expect((result! as monacoTypes.languages.CompletionList).suggestions).toEqual(
       CompletionProvider.spansetOps.map((s) => expect.objectContaining({ label: s, insertText: s }))
+    );
+  });
+
+  it.each([
+    ['{.foo=300} | ', 13],
+    ['{.foo=300} && {.foo=300} | ', 27],
+    ['{.foo=300} && {.foo=300} && {.foo=300} | ', 41],
+  ])('suggests after-pipe operators (aggregators, selectorts, ...)', async (x: string, offset: number) => {
+    const { provider, model } = setup(x, offset);
+    const result = await provider.provideCompletionItems(
+      model as unknown as monacoTypes.editor.ITextModel,
+      {} as monacoTypes.Position
+    );
+    expect((result! as monacoTypes.languages.CompletionList).suggestions).toEqual(
+      ['count', 'avg', 'max', 'min', 'sum', 'select', 'by'].map((s) =>
+        expect.objectContaining({ label: s, insertText: s })
+      )
+    );
+  });
+
+  it.each([
+    ['{.foo=300} | avg(value) ', 24],
+    ['{.foo=300} && {.foo=300} | avg(value) ', 38],
+  ])('suggests comparison operators after aggregator (avg, max, ...)', async (x: string, offset: number) => {
+    const { provider, model } = setup(x, offset);
+    const result = await provider.provideCompletionItems(
+      model as unknown as monacoTypes.editor.ITextModel,
+      {} as monacoTypes.Position
+    );
+    expect((result! as monacoTypes.languages.CompletionList).suggestions).toEqual(
+      CompletionProvider.comparisonOps.map((s) => expect.objectContaining({ label: s, insertText: s }))
+    );
+  });
+
+  it.each([
+    ['{.foo=300} | avg(value) = ', 26],
+    ['{.foo=300} && {.foo=300} | avg(value) = ', 40],
+  ])('no suggestion after aggregator and comparison operator', async (x: string, offset: number) => {
+    const { provider, model } = setup(x, offset);
+    const result = await provider.provideCompletionItems(
+      model as unknown as monacoTypes.editor.ITextModel,
+      {} as monacoTypes.Position
+    );
+    expect((result! as monacoTypes.languages.CompletionList).suggestions).toEqual(
+      [].map((s) => expect.objectContaining({ label: s, insertText: s }))
     );
   });
 });
