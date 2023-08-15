@@ -14,6 +14,7 @@ import {
 } from '@grafana/data';
 import { Button, InlineField, Alert, useStyles2 } from '@grafana/ui';
 
+import { getTimeSrv } from '../../dashboard/services/TimeSrv';
 import { mergeLogsVolumeDataFrames, isLogsVolumeLimited, getLogsVolumeMaximumRange } from '../../logs/utils';
 import { SupplementaryResultError } from '../SupplementaryResultError';
 
@@ -58,7 +59,13 @@ export const LogsVolumePanelList = ({
       maximumValue = Math.max(maximumValue, mergedData.maximum);
       return mergedData.dataFrames;
     });
-    const maximumRange = getLogsVolumeMaximumRange(flatten(Object.values(logVolumes)));
+    const timeRange = getTimeSrv().timeRange();
+    console.log(logsVolumeData);
+    const maximumRange = getLogsVolumeMaximumRange(flatten(Object.values(logVolumes)), {
+      to: timeRange.to.valueOf(),
+      from: timeRange.from.valueOf(),
+    });
+    console.log('maximumRange', maximumRange);
     return {
       maximumValue,
       maximumRange,
@@ -81,6 +88,8 @@ export const LogsVolumePanelList = ({
     from: Math.max(absoluteRange.from, allLogsVolumeMaximumRange.from),
     to: Math.min(absoluteRange.to, allLogsVolumeMaximumRange.to),
   };
+
+  console.log('visible range', visibleRange);
 
   if (logsVolumeData?.state === LoadingState.Loading) {
     return <span>Loading...</span>;

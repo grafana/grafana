@@ -269,6 +269,9 @@ export class LokiDatasource
       targets: queries,
     };
 
+    console.log('request from', request.range.from);
+    console.log('request to', request.range.to);
+
     const streamQueries = fixedRequest.targets.filter((q) => q.queryType === LokiQueryType.Stream);
     if (
       config.featureToggles.lokiExperimentalStreaming &&

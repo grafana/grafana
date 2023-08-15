@@ -47,6 +47,7 @@ import store from 'app/core/store';
 import { createAndCopyShortLink } from 'app/core/utils/shortLinks';
 import { getState, dispatch } from 'app/store/store';
 
+import { getTimeSrv } from '../../dashboard/services/TimeSrv';
 import { LogRows } from '../../logs/components/LogRows';
 import { LogRowContextModal } from '../../logs/components/log-context/LogRowContextModal';
 import { dedupLogRows, filterLogLevels } from '../../logs/logsModel';

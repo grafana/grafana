@@ -13,6 +13,8 @@ import {
   MutableDataFrame,
   QueryResultMeta,
   LogsVolumeType,
+  dateTime,
+  AbsoluteTimeRange,
 } from '@grafana/data';
 
 import { getDataframeFields } from './components/logParser';
@@ -164,15 +166,15 @@ export function logRowsToReadableJson(logs: LogRowModel[]) {
   });
 }
 
-export const getLogsVolumeMaximumRange = (dataFrames: DataFrame[]) => {
+export const getLogsVolumeMaximumRange = (dataFrames: DataFrame[], absoluteRange?: AbsoluteTimeRange) => {
   let widestRange = { from: Infinity, to: -Infinity };
 
   dataFrames.forEach((dataFrame: DataFrame) => {
     const meta = dataFrame.meta?.custom || {};
     if (meta.absoluteRange?.from && meta.absoluteRange?.to) {
       widestRange = {
-        from: Math.min(widestRange.from, meta.absoluteRange.from),
-        to: Math.max(widestRange.to, meta.absoluteRange.to),
+        from: Math.min(widestRange.from, meta.absoluteRange.from, absoluteRange.from),
+        to: Math.max(widestRange.to, meta.absoluteRange.to, absoluteRange.to),
       };
     }
   });
