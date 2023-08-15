@@ -45,8 +45,10 @@ Some features are enabled by default. You can disable these feature by setting t
 
 ## Preview feature toggles
 
-| Feature toggle name                  | Description                                                                                                                                                                                  |
-| ------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+<!-- prettier-ignore-start -->
+
+| Feature toggle name                  | Description                                                         |
+| ------------------------------------ | ------------------------------------------------------------------- |
 | `trimDefaults`                       | Use cue schema to remove values that'll be applied automatically                                                                                                                             |
 | `panelTitleSearch`                   | Search for dashboards using panel title                                                                                                                                                      |
 | `prometheusAzureOverrideAudience`    | Experimental. Allow override default AAD audience for Azure Prometheus endpoint                                                                                                              |
@@ -68,6 +70,7 @@ Some features are enabled by default. You can disable these feature by setting t
 | `enableDatagridEditing`              | Enables the edit functionality in the datagrid panel                                                                                                                                         |
 | `dataSourcePageHeader`               | Apply new pageHeader UI in data source edit page                                                                                                                                             |
 | `sqlDatasourceDatabaseSelection`     | Enables previous SQL data source dataset dropdown behavior                                                                                                                                   |
+<!-- prettier-ignore-end -->
 
 ## Experimental feature toggles
 
