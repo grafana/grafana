@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
@@ -23,11 +24,11 @@ func (f FakeService) GetUsageStats(ctx context.Context) map[string]interface{} {
 	return map[string]interface{}{}
 }
 
-func (f FakeService) GetUserPermissions(ctx context.Context, user *user.SignedInUser, options accesscontrol.Options) ([]accesscontrol.Permission, error) {
+func (f FakeService) GetUserPermissions(ctx context.Context, user identity.Requester, options accesscontrol.Options) ([]accesscontrol.Permission, error) {
 	return f.ExpectedPermissions, f.ExpectedErr
 }
 
-func (f FakeService) SearchUsersPermissions(ctx context.Context, user *user.SignedInUser, orgID int64, options accesscontrol.SearchOptions) (map[int64][]accesscontrol.Permission, error) {
+func (f FakeService) SearchUsersPermissions(ctx context.Context, user identity.Requester, options accesscontrol.SearchOptions) (map[int64][]accesscontrol.Permission, error) {
 	return f.ExpectedUsersPermissions, f.ExpectedErr
 }
 
@@ -35,7 +36,7 @@ func (f FakeService) SearchUserPermissions(ctx context.Context, orgID int64, sea
 	return f.ExpectedFilteredUserPermissions, f.ExpectedErr
 }
 
-func (f FakeService) ClearUserPermissionCache(user *user.SignedInUser) {}
+func (f FakeService) ClearUserPermissionCache(user identity.Requester) {}
 
 func (f FakeService) DeleteUserPermissions(ctx context.Context, orgID, userID int64) error {
 	return f.ExpectedErr
@@ -69,7 +70,7 @@ type FakeAccessControl struct {
 	ExpectedEvaluate bool
 }
 
-func (f FakeAccessControl) Evaluate(ctx context.Context, user *user.SignedInUser, evaluator accesscontrol.Evaluator) (bool, error) {
+func (f FakeAccessControl) Evaluate(ctx context.Context, user identity.Requester, evaluator accesscontrol.Evaluator) (bool, error) {
 	return f.ExpectedEvaluate, f.ExpectedErr
 }
 

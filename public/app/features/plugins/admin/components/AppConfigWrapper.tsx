@@ -119,11 +119,11 @@ export class AppConfigCtrlWrapper extends PureComponent<Props, State> {
       });
   };
 
-  setPreUpdateHook = (callback: () => any) => {
+  setPreUpdateHook = (callback: () => Promise<void>) => {
     this.preUpdateHook = callback;
   };
 
-  setPostUpdateHook = (callback: () => any) => {
+  setPostUpdateHook = (callback: () => Promise<void>) => {
     this.postUpdateHook = callback;
   };
 

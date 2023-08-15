@@ -6,7 +6,7 @@ import { PluginMeta } from '@grafana/data';
 import { getPluginSettings } from '../pluginSettings';
 
 import { getPluginCode } from './code_loader';
-import { getGeneralSandboxDistortionMap } from './distortion_map';
+import { getGeneralSandboxDistortionMap, distortLiveApis } from './distortion_map';
 import {
   getSafeSandboxDomElement,
   isDomElement,
@@ -60,6 +60,7 @@ async function doImportPluginModuleInSandbox(meta: PluginMeta): Promise<unknown>
       } else {
         patchObjectAsLiveTarget(originalValue);
       }
+      distortLiveApis();
       const distortion = generalDistortionMap.get(originalValue);
       if (distortion) {
         return distortion(originalValue, meta, sandboxEnvironment) as ProxyTarget;
@@ -74,6 +75,11 @@ async function doImportPluginModuleInSandbox(meta: PluginMeta): Promise<unknown>
       liveTargetCallback: isLiveTarget,
       // endowments are custom variables we make available to plugins in their window object
       endowments: Object.getOwnPropertyDescriptors({
+        // window.location is unforgeable, we make the location available via endowments
+        // when the plugin code is loaded, the sandbox replaces the window.location with
+        // window.locationSandbox. In the future `window.location` could be a proxy if we
+        // want to intercept calls to it.
+        locationSandbox: window.location,
         // Plugins builds use the AMD module system. Their code consists
         // of a single function call to `define()` that internally contains all the plugin code.
         // This is that `define` function the plugin will call.
