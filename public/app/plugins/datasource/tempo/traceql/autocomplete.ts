@@ -18,7 +18,8 @@ interface Props {
  * Class that implements CompletionItemProvider interface and allows us to provide suggestion for the Monaco
  * autocomplete system.
  *
- * Please refer to https://grafana.com/docs/tempo/latest/traceql for the syntax of TraceQL.
+ * Here we want to provide suggestions for TraceQL. Please refer to
+ * https://grafana.com/docs/tempo/latest/traceql for the syntax of the language.
  */
 export class CompletionProvider implements monacoTypes.languages.CompletionItemProvider {
   languageProvider: TempoLanguageProvider;
@@ -143,6 +144,18 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
           label: key,
           insertText: key,
           type: 'OPERATOR',
+        }));
+      case 'SPANSET_PIPELINE_AFTER_OPERATOR':
+        return ['count', 'avg', 'max', 'min', 'sum', 'select', 'by'].map((key) => ({
+          label: key,
+          insertText: key,
+          type: 'OPERATOR', // TODO aggregator? and what about `select`?
+        }));
+      case 'SPANSET_ARITMETHIC_OPERATORS': // TODO not actually `ARITMETHIC` operators, but comparisons
+        return CompletionProvider.comparisonOps.map((key) => ({
+          label: key,
+          insertText: key,
+          type: 'OPERATOR', // TODO aggregator? and what about `select`?
         }));
       case 'SPANSET_IN_VALUE':
         let tagValues;

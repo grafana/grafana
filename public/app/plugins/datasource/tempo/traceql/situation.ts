@@ -1,6 +1,17 @@
 import { SyntaxNode, Tree } from '@lezer/common';
 
-import { AttributeField, FieldExpression, FieldOp, parser, SpansetFilter, TraceQL } from '@grafana/lezer-traceql';
+import {
+  AttributeField,
+  ComparisonOp,
+  FieldExpression,
+  FieldOp,
+  parser,
+  ScalarFilter,
+  SpansetFilter,
+  SpansetPipeline,
+  SpansetPipelineExpression,
+  TraceQL,
+} from '@grafana/lezer-traceql';
 
 type Direction = 'parent' | 'firstChild' | 'lastChild' | 'nextSibling' | 'prevSibling';
 type NodeType = number;
@@ -40,6 +51,12 @@ export type SituationType =
     }
   | {
       type: 'SPANSET_COMBINING_OPERATORS';
+    }
+  | {
+      type: 'SPANSET_PIPELINE_AFTER_OPERATOR';
+    }
+  | {
+      type: 'SPANSET_ARITMETHIC_OPERATORS';
     };
 
 type Path = Array<[Direction, NodeType[]]>;
@@ -159,9 +176,25 @@ const RESOLVERS: Resolver[] = [
   },
   {
     path: [TraceQL],
+    fun: resolveSpansetPipelineExpression,
+  },
+  {
+    path: [ERROR_NODE_ID, SpansetPipeline],
+    fun: resolveSpansetPipeline,
+  },
+  {
+    path: [ERROR_NODE_ID, SpansetPipeline, SpansetPipelineExpression],
+    fun: resolveSpansetPipeline,
+  },
+  {
+    path: [ERROR_NODE_ID, ScalarFilter, SpansetPipeline],
+    fun: resolveArithmeticOperator,
+  },
+  {
+    path: [ERROR_NODE_ID, TraceQL],
     fun: () => {
       return {
-        type: 'SPANSET_COMBINING_OPERATORS',
+        type: 'UNKNOWN',
       };
     },
   },
@@ -223,5 +256,29 @@ function resolveExpression(node: SyntaxNode, text: string): SituationType {
 function resolveErrorInFilterRoot(): SituationType {
   return {
     type: 'SPANSET_IN_NAME',
+  };
+}
+
+function resolveArithmeticOperator(node: SyntaxNode, _0: string, _1: number): Situation {
+  if (node.prevSibling?.type.id === ComparisonOp) {
+    return {
+      type: 'UNKNOWN',
+    };
+  }
+
+  return {
+    type: 'SPANSET_ARITMETHIC_OPERATORS',
+  };
+}
+
+function resolveSpansetPipelineExpression(_0: SyntaxNode, _1: string, _2: number): Situation {
+  return {
+    type: 'SPANSET_COMBINING_OPERATORS',
+  };
+}
+
+function resolveSpansetPipeline(_0: SyntaxNode, _1: string, _2: number): Situation {
+  return {
+    type: 'SPANSET_PIPELINE_AFTER_OPERATOR',
   };
 }
