@@ -28,7 +28,7 @@ export const SaveDashboardDrawer = ({ dashboard, onDismiss, onSaveSuccess, isCop
       return undefined;
     }
 
-    // TODO double check
+    // If dashboardJson is set, it means that we're in the dashboard embed view
     if (dashboardJson) {
       return dashboardJson;
     }

@@ -58,6 +58,7 @@ export type DashboardPageRouteSearchParams = {
   to?: string;
   refresh?: string;
   kiosk?: string | true;
+  callbackUrl?: string;
 };
 
 export const mapStateToProps = (state: StoreState) => ({
@@ -130,7 +131,6 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
   initDashboard() {
     if (this.props.route.routeName === DashboardRoutes.Embedded) {
       const { queryParams, route } = this.props;
-      //@ts-expect-error
       const callbackUrl = queryParams.callbackUrl;
 
       if (!callbackUrl) {
