@@ -4,7 +4,7 @@ import { connect, ConnectedProps } from 'react-redux';
 
 import { NavModel, NavModelItem, TimeRange, PageLayoutType, locationUtil } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { config, locationService } from '@grafana/runtime';
+import { config, getBackendSrv, locationService } from '@grafana/runtime';
 import { Themeable2, withTheme2 } from '@grafana/ui';
 import { notifyApp } from 'app/core/actions';
 import { Page } from 'app/core/components/Page/Page';
@@ -14,7 +14,7 @@ import { createErrorNotification } from 'app/core/copy/appNotification';
 import { getKioskMode } from 'app/core/navigation/kiosk';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { getNavModel } from 'app/core/selectors/navModel';
-import { PanelModel } from 'app/features/dashboard/state';
+import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { getPageNavFromSlug, getRootContentNavModel } from 'app/features/storage/StorageFolderPage';
 import { DashboardRoutes, KioskMode, StoreState } from 'app/types';
@@ -126,23 +126,51 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
   }
 
   initDashboard() {
-    const { dashboard, match, queryParams } = this.props;
+    if (this.props.route.routeName === DashboardRoutes.Embedded) {
+      const { queryParams, route } = this.props;
+      //@ts-expect-error
+      const callbackUrl = queryParams.callbackUrl;
 
-    if (dashboard) {
-      this.closeDashboard();
+      if (!callbackUrl) {
+        throw new Error('No callback URL provided');
+      }
+      getBackendSrv()
+        .get(`${callbackUrl}/load-dashboard`)
+        .then((dashboardJson) => {
+          //setDashboardJson(dashboardJson);
+          // Remove dashboard UID from JSON to prevent errors from external dashboards
+          delete dashboardJson.uid;
+          const dashboardModel = new DashboardModel(dashboardJson);
+
+          this.props.initDashboard({
+            routeName: route.routeName,
+            fixUrl: false,
+            keybindingSrv: this.context.keybindings,
+            dashboardDto: { dashboard: dashboardModel, meta: { canEdit: true } },
+          });
+        })
+        .catch((err) => {
+          console.log('Error getting dashboard JSON: ', err);
+        });
+    } else {
+      const { dashboard, match, queryParams } = this.props;
+
+      if (dashboard) {
+        this.closeDashboard();
+      }
+
+      this.props.initDashboard({
+        urlSlug: match.params.slug,
+        urlUid: match.params.uid,
+        urlType: match.params.type,
+        urlFolderUid: queryParams.folderUid,
+        panelType: queryParams.panelType,
+        routeName: this.props.route.routeName,
+        fixUrl: true,
+        accessToken: match.params.accessToken,
+        keybindingSrv: this.context.keybindings,
+      });
     }
-
-    this.props.initDashboard({
-      urlSlug: match.params.slug,
-      urlUid: match.params.uid,
-      urlType: match.params.type,
-      urlFolderUid: queryParams.folderUid,
-      panelType: queryParams.panelType,
-      routeName: this.props.route.routeName,
-      fixUrl: true,
-      accessToken: match.params.accessToken,
-      keybindingSrv: this.context.keybindings,
-    });
 
     // small delay to start live updates
     setTimeout(this.updateLiveTimer, 250);
@@ -331,6 +359,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
   }
 
   render() {
+    console.log('props', this.props);
     const { dashboard, initError, queryParams } = this.props;
     const { editPanel, viewPanel, updateScrollTop, pageNav, sectionNav } = this.state;
     const kioskMode = getKioskMode(this.props.queryParams);

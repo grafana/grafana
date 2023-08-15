@@ -43,9 +43,7 @@ export const getEmbeddedDashboardRoutes = (): RouteDescriptor[] => {
         routeName: DashboardRoutes.Embedded,
         component: SafeDynamicImport(
           () =>
-            import(
-              /* webpackChunkName: "EmbeddedDashboardPage" */ '../../features/dashboard/containers/EmbeddedDashboardPage'
-            )
+            import(/* webpackChunkName: "EmbeddedDashboardPage" */ '../../features/dashboard/containers/DashboardPage')
         ),
       },
     ];
