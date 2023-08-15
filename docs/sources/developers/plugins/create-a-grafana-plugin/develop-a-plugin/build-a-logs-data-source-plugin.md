@@ -207,7 +207,7 @@ const result = createDataFrame({
 
 ### Logs to trace using data link with url
 
-If your log data contains **trace IDs**, you can enhance your log data frames by adding a field with *trace ID values* and *URL data links*. These links should use the trace ID value to accurately link to the appropriate trace. This enhancement enables users to seamlessly move from log lines to the relevant traces.
+If your log data contains **trace IDs**, you can enhance your log data frames by adding a field with _trace ID values_ and _URL data links_. These links should use the trace ID value to accurately link to the appropriate trace. This enhancement enables users to seamlessly move from log lines to the relevant traces.
 
 **Example in TypeScript:**
 
