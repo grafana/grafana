@@ -249,7 +249,7 @@ export function formChannelValuesToGrafanaChannelConfig(
     ...channel.secureSettings,
   };
 
-  // remove the the secure ones from the regular settings
+  // remove the secure ones from the regular settings
   channel.settings = omit(channel.settings, secureFieldNames);
 
   if (existing) {
