@@ -66,6 +66,10 @@ clean-api-spec:
 lefthook-install: $(LEFTHOOK)
 	$(LEFTHOOK) install -f
 
+.PHONY: lefthook-uninstall
+lefthook-uninstall: $(LEFTHOOK)
+	$(LEFTHOOK) uninstall
+
 ##@ OpenAPI 3
 OAPI_SPEC_TARGET = public/openapi3.json
 
