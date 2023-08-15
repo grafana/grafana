@@ -228,7 +228,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
           });
 
           if (config.featureToggles.traceQLStreaming) {
-            subQueries.push(this.handleStreamingSearch(options, targets.traceql));
+            subQueries.push(this.handleStreamingSearch(options, targets.traceql, queryValue));
           } else {
             subQueries.push(
               this._request('/api/search', {
