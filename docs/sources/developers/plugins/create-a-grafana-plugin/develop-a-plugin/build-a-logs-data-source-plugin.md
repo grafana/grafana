@@ -569,7 +569,7 @@ For an example of how to implement the logs sample in the Elasticsearch data sou
 {{% admonition type="note" %}} This feature is currently not supported for external plugins outside of the Grafana repo. The `@internal` API is currently under development. {{%
 /admonition %}}
 
-If you are developing a data source plugin that handles both logs and traces, and your log data contains **trace IDs**, you can enhance your log data frames by adding a field with **trace ID values** and **internal data links**. These links should utilize the trace ID value to accurately create a trace query that produces relevant trace. This enhancement enables users to seamlessly move from log lines to the traces.
+If you are developing a data source plugin that handles both logs and traces, and your log data contains trace IDs, you can enhance your log data frames by adding a field with trace ID values and internal data links. These links should use the trace ID value to accurately create a trace query that produces relevant trace. This enhancement enables users to seamlessly move from log lines to the traces.
 
 **Example in TypeScript:**
 
