@@ -18,12 +18,11 @@ title: Configure the Elasticsearch data source
 weight: 200
 ---
 
-# Configure Elasticsearch data source
+# Configure the Elasticsearch data source
 
 Grafana ships with built-in support for Elasticsearch.
 You can make many types of queries to visualize logs or metrics stored in Elasticsearch, and annotate graphs with log events stored in Elasticsearch.
 
-This topic explains configuring and querying specific to the Elasticsearch data source.
 For general documentation on querying data sources in Grafana, see [Query and transform data]({{< relref "../../panels-visualizations/query-transform-data" >}}).
 
 For instructions on how to add a data source to Grafana, refer to the [administration documentation]({{< relref "../../administration/data-source-management/" >}}).
@@ -90,7 +89,7 @@ Use TLS (Transport Layer Security) for an additional layer of security when work
 
 ## Elasticsearch details
 
-The following settings are specific to Elasticsearch.
+The following settings are specific to the Elasticsearch data source.
 
 - **Index name** - Use the index settings to specify a default for the `time field` and your Elasticsearch index's name. You can use a time pattern, such as `YYYY.MM.DD`, or a wildcard for the index name.
 
@@ -105,33 +104,29 @@ The following settings are specific to Elasticsearch.
 
 - **Time field name** - Name of the time field. The default value is @timestamp. You can enter a different name.
 
-- **Max concurrent shard requests** - Sets the number of shards being queried at the same time. Default is 5. For more information on shards see [Elasticsearch's documentation](https://www.elastic.co/guide/en/elasticsearch/reference/8.9/scalability.html#scalability).
+- **Max concurrent shard requests** - Sets the number of shards being queried at the same time. The default is `5``. For more information on shards see [Elasticsearch's documentation](https://www.elastic.co/guide/en/elasticsearch/reference/8.9/scalability.html#scalability).
 
-- **Min time interval** - Defines a lower limit for the auto group-by time interval.
+- **Min time interval** - Defines a lower limit for the auto group-by time interval. This value **must** be formatted as a number followed by a valid time identifier:
 
-This value _must_ be formatted as a number followed by a valid time identifier:
-
-| Identifier | Description |
-| ---------- | ----------- |
-| `y`        | year        |
-| `M`        | month       |
-| `w`        | week        |
-| `d`        | day         |
-| `h`        | hour        |
-| `m`        | minute      |
-| `s`        | second      |
-| `ms`       | millisecond |
+  | Identifier | Description |
+  | ---------- | ----------- |
+  | `y`        | year        |
+  | `M`        | month       |
+  | `w`        | week        |
+  | `d`        | day         |
+  | `h`        | hour        |
+  | `m`        | minute      |
+  | `s`        | second      |
+  | `ms`       | millisecond |
 
 We recommend setting this value to match your Elasticsearch write frequency.
 For example, set this to `1m` if Elasticsearch writes data every minute.
 
-You can also override this setting in a dashboard panel under its data source options.
+You can also override this setting in a dashboard panel under its data source options. The default is `10s`.
 
 - **X-Pack enabled** - Toggle to enable `X-Pack`-specific features and options, which provide the [query editor]({{< relref "./query-editor/" >}}) with additional aggregations, such as `Rate` and `Top Metrics`.
 
-#### Include frozen indices
-
-When the "X-Pack enabled" setting is active and the configured Elasticsearch version is higher than `6.6.0`, you can configure Grafana to not ignore [frozen indices](https://www.elastic.co/guide/en/elasticsearch/reference/7.13/frozen-indices.html) when performing search requests.
+- **Include frozen indices** - Toggle on when `X-Pack enabled` setting is active and the configured Elasticsearch version is higher than `6.6.0`. You can configure Grafana to include [frozen indices](https://www.elastic.co/guide/en/elasticsearch/reference/7.13/frozen-indices.html) when performing search requests.
 
 {{% admonition type="note" %}}
 Frozen indices are [deprecated in Elasticsearch](https://www.elastic.co/guide/en/elasticsearch/reference/7.17/frozen-indices.html) since v7.14.
