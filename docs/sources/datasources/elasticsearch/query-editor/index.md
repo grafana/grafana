@@ -33,11 +33,25 @@ For options and functions common to all query editors, see [Query editors]({{< r
 
 ## Select a query type
 
-You have options with regard to the type of query you can run.
+You have three options with regard to the type of query you can run. Each type is explained in detail below.
+
+### Aggregation types
+
+Elasticsearch groups aggregation type into the following:
+
+- **Metrics** -
+
+- **Pipeline** - Elasticsearch pipeline metrics must be based on another metric. There are parent and sibling and sibling pipeline aggregations. See [Pipeline aggregations](https://www.elastic.co/guide/en/elasticsearch/reference/8.9/search-aggregations-pipeline.html) for additional information.
+
+- **Bucket** - Use bucket aggregations under `Group by` in the query builder. Bucket aggregations don't calculate metrics, they create buckets of documents. See [Bucket aggregations](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-bucket.html) for additional information.
 
 ### Metrics query type
 
-Metrics queries aggregate data. Metrics aggregations include:
+Metrics queries aggregate data.
+
+- **Alias** - Aliasing only applies to **time series queries**, where the last group is `date histogram`. This is ignored for any other type of query.
+
+- **Metric** - Metrics aggregations include:
 
 - count - see [Value count aggregation](https://www.elastic.co/guide/en/elasticsearch/reference/8.9/search-aggregations-metrics-valuecount-aggregation.html)
 - average - see [Avg aggregation](https://www.elastic.co/guide/en/elasticsearch/reference/8.9/search-aggregations-metrics-rate-aggregation.html)
@@ -52,40 +66,55 @@ Metrics queries aggregate data. Metrics aggregations include:
 
 You can select multiple metrics and group by multiple terms or filters when using the Elasticsearch query editor.
 
-Use the plus and minus icons to the right to add and remove metrics or group by clauses.
-To expand the row to view and edit any available metric or group-by options, click the option text.
+Use the plus icon to the right to add multiple metrics to your query.
 
-- **Alias** - Aliasing only applies to time series queries, where the last group is date histogram. This is ignored for any other type of query.
+**Group by options** -
 
-- **Group by options** -
+You can utilize multiple group by options when constructing your Elasticsearch query. Date histogram is the default option.
 
-You can utilize multiple group by options when constructing your Elasticsearch query.
+- terms - see [Terms aggregation](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-bucket-terms-aggregation.html).
+- filter - see [Filter aggregation](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-bucket-filter-aggregation.html).
+- geo hash grid - see [Geohash grid aggregation](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-bucket-geohashgrid-aggregation.html).
+- date histogram - for time series queries. See [Date histogram aggregation](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-bucket-datehistogram-aggregation.html).
+- histogram - Depicts frequency distributions. See [Histogram aggregation](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-bucket-histogram-aggregation.html).
+- nested (experimental) - See [Nested aggregation](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-bucket-nested-aggregation.html).
 
-- terms -
-- filter -
-- geo hash grid -
-- date histogram - for time series queries
-- histogram - depicts frequency distributions
-- nested (experimental) -
+- **@timestamp** -
 
-Elasticsearch groups aggregation type into the following:
+- **Interval** - Group by a type of interval. `Auto` is the default option. There are option to choose from the dropdown menu to select seconds, minutes, hours or day.
 
-- **Pipeline** - Elasticsearch pipeline metrics must be based on another metric. There are parent and sibling and sibling pipeline aggregations. See [Pipeline aggregations](https://www.elastic.co/guide/en/elasticsearch/reference/8.9/search-aggregations-pipeline.html) for additional information.
+  - **Min doc count** - The default is `0`.
+  - **Thin edges** - Select to trim edges on the time series data points. The default is `0`.
+  - **Offset** - Changes rhw start value of each bucket by the specified positive(+) or negative (-) offset duration. Examples include 1h for 1 hour, 5s for 5 seconds or 1d for 1 day.
+  - **Timezone** - Select a timezone. The default is `Coordinated universal time`.
 
-- **Metrics** -
+Click the + sign to add multiple group by options. You will `then by`
 
-Use the eye icon next to the metric to prevent metrics from appearing in the graph.
-This is useful for metrics you only have in the query for use in a pipeline metric.
-
-{{< figure src="/static/img/docs/elasticsearch/pipeline-aggregation-editor-7-4.png" max-width="500px" class="docs-image--no-shadow" caption="Pipeline aggregation editor" >}} -->
+Add a screenshot here.
 
 ### Logs query type
 
 Log queries can be limited to a specific number of documents. The default is `500`.
 
-raw data -
+Logs volume section -
 
-{{< figure src="/static/img/docs/elasticsearch/logs-query-type-10.1.png" max-width="850px" class="docs-image--no-shadow" caption="Logs query type" >}}
+Logs section or is it called panel?
+
+{{< figure src="/static/img/docs/elasticsearch/logs-query-type-10.1.png" max-width="850px" class="docs-image--no-shadow" caption="Logs panel" >}}
+
+Time - toggle on to do what?
+
+Unique labels - toggle on to do what?
+
+Wrap lines - toggle on to wrap lines?
+
+pretty JSON - toggle on to do what?
+
+Deduplication - select from none, exact, numbers and signature. The default is `None`.
+
+Display results - newest first or oldest first are your 2 options. `Newest first` is the default.
+
+You can download results in either text format or JSON.
 
 ### Raw data query type
 
@@ -110,21 +139,6 @@ You can control the name for time series via the `Alias` input field.
 | `{{term fieldname}}` | Value of a term group-by               |
 | `{{metric}}`         | Metric name, such as Average, Min, Max |
 | `{{field}}`          | Metric field name                      |
-
-## Create a query
-
-Write the query using a custom JSON string, with the field mapped as a [keyword](https://www.elastic.co/guide/en/elasticsearch/reference/current/keyword.html#keyword) in the Elasticsearch index mapping.
-
-If the query is [multi-field](https://www.elastic.co/guide/en/elasticsearch/reference/current/multi-fields.html) with both a `text` and `keyword` type, use `"field":"fieldname.keyword"` (sometimes `fieldname.raw`) to specify the keyword field in your query.
-
-| Query                                                               | Description                                                                                                                                                                   |
-| ------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `{"find": "fields", "type": "keyword"}`                             | Returns a list of field names with the index type `keyword`.                                                                                                                  |
-| `{"find": "terms", "field": "hostname.keyword", "size": 1000}`      | Returns a list of values for a keyword using term aggregation. Query will use current dashboard time range as time range query.                                               |
-| `{"find": "terms", "field": "hostname", "query": '<Lucene query>'}` | Returns a list of values for a keyword field using term aggregation and a specified Lucene query filter. Query will use current dashboard time range as time range for query. |
-
-Queries of `terms` have a 500-result limit by default.
-To set a custom limit, set the `size` property in your query.
 
 ## Common options
 
