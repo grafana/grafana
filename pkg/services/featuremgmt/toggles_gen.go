@@ -410,4 +410,8 @@ const (
 	// FlagNoBasicRole
 	// Enables a new role that has no permissions by default
 	FlagNoBasicRole = "noBasicRole"
+
+	// FlagAlertingNoDataErrorExecution
+	// Changes how Alerting state manager handles execution of NoData/Error
+	FlagAlertingNoDataErrorExecution = "alertingNoDataErrorExecution"
 )
