@@ -40,8 +40,9 @@ type Manager struct {
 	historian     Historian
 	externalURL   *url.URL
 
-	doNotSaveNormalState    bool
-	maxStateSaveConcurrency int
+	doNotSaveNormalState           bool
+	maxStateSaveConcurrency        int
+	applyNoDataAndErrorToAllStates bool
 }
 
 type ManagerCfg struct {
@@ -55,25 +56,33 @@ type ManagerCfg struct {
 	DoNotSaveNormalState bool
 	// MaxStateSaveConcurrency controls the number of goroutines (per rule) that can save alert state in parallel.
 	MaxStateSaveConcurrency int
+
+	// ApplyNoDataAndErrorToAllStates makes state manager to apply exceptional results (NoData and Error)
+	// to all states when corresponding execution in the rule definition is set to either `Alerting` or `OK`
+	ApplyNoDataAndErrorToAllStates bool
 }
 
 func NewManager(cfg ManagerCfg) *Manager {
 	return &Manager{
-		cache:                   newCache(),
-		ResendDelay:             ResendDelay, // TODO: make this configurable
-		log:                     log.New("ngalert.state.manager"),
-		metrics:                 cfg.Metrics,
-		instanceStore:           cfg.InstanceStore,
-		images:                  cfg.Images,
-		historian:               cfg.Historian,
-		clock:                   cfg.Clock,
-		externalURL:             cfg.ExternalURL,
-		doNotSaveNormalState:    cfg.DoNotSaveNormalState,
-		maxStateSaveConcurrency: cfg.MaxStateSaveConcurrency,
+		cache:                          newCache(),
+		ResendDelay:                    ResendDelay, // TODO: make this configurable
+		log:                            log.New("ngalert.state.manager"),
+		metrics:                        cfg.Metrics,
+		instanceStore:                  cfg.InstanceStore,
+		images:                         cfg.Images,
+		historian:                      cfg.Historian,
+		clock:                          cfg.Clock,
+		externalURL:                    cfg.ExternalURL,
+		doNotSaveNormalState:           cfg.DoNotSaveNormalState,
+		maxStateSaveConcurrency:        cfg.MaxStateSaveConcurrency,
+		applyNoDataAndErrorToAllStates: cfg.ApplyNoDataAndErrorToAllStates,
 	}
 }
 
 func (st *Manager) Run(ctx context.Context) error {
+	if st.applyNoDataAndErrorToAllStates {
+		st.log.Info("Running in alternative execution of Error/NoData mode")
+	}
 	ticker := st.clock.Ticker(MetricsScrapeInterval)
 	for {
 		select {
@@ -244,12 +253,8 @@ func (st *Manager) ResetStateByRuleUID(ctx context.Context, rule *ngModels.Alert
 func (st *Manager) ProcessEvalResults(ctx context.Context, evaluatedAt time.Time, alertRule *ngModels.AlertRule, results eval.Results, extraLabels data.Labels) []StateTransition {
 	logger := st.log.FromContext(ctx)
 	logger.Debug("State manager processing evaluation results", "resultCount", len(results))
-	states := make([]StateTransition, 0, len(results))
+	states := st.setNextStateForRule(ctx, alertRule, results, extraLabels, logger)
 
-	for _, result := range results {
-		s := st.setNextState(ctx, alertRule, result, extraLabels, logger)
-		states = append(states, s)
-	}
 	staleStates := st.deleteStaleStatesFromCache(ctx, logger, evaluatedAt, alertRule)
 	st.deleteAlertStates(ctx, logger, staleStates)
 
@@ -262,10 +267,42 @@ func (st *Manager) ProcessEvalResults(ctx context.Context, evaluatedAt time.Time
 	return allChanges
 }
 
-// Set the current state based on evaluation results
-func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRule, result eval.Result, extraLabels data.Labels, logger log.Logger) StateTransition {
-	currentState := st.cache.getOrCreate(ctx, logger, alertRule, result, extraLabels, st.externalURL)
+func (st *Manager) setNextStateForRule(ctx context.Context, alertRule *ngModels.AlertRule, results eval.Results, extraLabels data.Labels, logger log.Logger) []StateTransition {
+	if st.applyNoDataAndErrorToAllStates && results.IsNoData() && (alertRule.NoDataState == ngModels.Alerting || alertRule.NoDataState == ngModels.OK) { // If it is no data, check the mapping and switch all results to the new state
+		// TODO aggregate UID of datasources that returned NoData into one and provide as auxiliary info, probably annotation
+		transitions := st.setNextStateForAll(ctx, alertRule, results[0], logger)
+		if len(transitions) > 0 {
+			return transitions // if there are no current states for the rule. Create ones for each result
+		}
+	}
+	if st.applyNoDataAndErrorToAllStates && results.IsError() && (alertRule.ExecErrState == ngModels.AlertingErrState || alertRule.ExecErrState == ngModels.OkErrState) {
+		// TODO squash all errors into one, and provide as annotation
+		transitions := st.setNextStateForAll(ctx, alertRule, results[0], logger)
+		if len(transitions) > 0 {
+			return transitions // if there are no current states for the rule. Create ones for each result
+		}
+	}
+	transitions := make([]StateTransition, 0, len(results))
+	for _, result := range results {
+		currentState := st.cache.getOrCreate(ctx, logger, alertRule, result, extraLabels, st.externalURL)
+		s := st.setNextState(ctx, alertRule, currentState, result, logger)
+		transitions = append(transitions, s)
+	}
+	return transitions
+}
 
+func (st *Manager) setNextStateForAll(ctx context.Context, alertRule *ngModels.AlertRule, result eval.Result, logger log.Logger) []StateTransition {
+	currentStates := st.cache.getStatesForRuleUID(alertRule.OrgID, alertRule.UID, false)
+	transitions := make([]StateTransition, 0, len(currentStates))
+	for _, currentState := range currentStates {
+		t := st.setNextState(ctx, alertRule, currentState, result, logger)
+		transitions = append(transitions, t)
+	}
+	return transitions
+}
+
+// Set the current state based on evaluation results
+func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRule, currentState *State, result eval.Result, logger log.Logger) StateTransition {
 	currentState.LastEvaluationTime = result.EvaluatedAt
 	currentState.EvaluationDuration = result.EvaluationDuration
 	currentState.Results = append(currentState.Results, Evaluation{
@@ -288,7 +325,7 @@ func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRu
 	// Usually, it happens in the case of classic conditions when the evalResult does not have labels.
 	//
 	// This is temporary change to make sure that the labels are not persistent in the state after it was in Error state
-	// TODO yuri. Remove it in https://github.com/grafana/grafana/pull/68142
+	// TODO yuri. Remove it when correct Error result with labels is provided
 	if currentState.State == eval.Error && result.State != eval.Error {
 		// This is possible because state was updated after the CacheID was calculated.
 		_, curOk := currentState.Labels["ref_id"]

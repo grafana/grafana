@@ -699,5 +699,13 @@ var (
 			Owner:           grafanaAuthnzSquad,
 			RequiresRestart: true,
 		},
+		{
+			Name:            "alertingNoDataErrorExecution",
+			Description:     "Changes how Alerting state manager handles execution of NoData/Error",
+			Stage:           FeatureStagePrivatePreview,
+			FrontendOnly:    false,
+			Owner:           grafanaAlertingSquad,
+			RequiresRestart: true,
+		},
 	}
 )
