@@ -260,7 +260,7 @@ export const DashNav = React.memo<Props>((props) => {
       return [renderTimeControls()];
     }
 
-    if (canEdit && !isFullscreen) {
+    if (canEdit && !isFullscreen && kioskMode !== KioskMode.Embed) {
       if (config.featureToggles.emptyDashboardPage) {
         buttons.push(<AddPanelButton dashboard={dashboard} key="panel-add-dropdown" />);
       } else {
@@ -306,7 +306,7 @@ export const DashNav = React.memo<Props>((props) => {
       );
     }
 
-    if (showSettings) {
+    if (showSettings && kioskMode !== KioskMode.Embed) {
       buttons.push(
         <ToolbarButton
           tooltip={t('dashboard.toolbar.settings', 'Dashboard settings')}
@@ -328,7 +328,7 @@ export const DashNav = React.memo<Props>((props) => {
     <AppChromeUpdate
       actions={
         <>
-          {renderLeftActions()}
+          {props.kioskMode !== KioskMode.Embed && renderLeftActions()}
           <NavToolbarSeparator leftActionsSeparator />
           <ToolbarButtonRow alignment="right">{renderRightActions()}</ToolbarButtonRow>
         </>

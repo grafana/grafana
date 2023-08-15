@@ -92,6 +92,7 @@ export interface State {
   scrollElement?: HTMLDivElement;
   pageNav?: NavModelItem;
   sectionNav?: NavModel;
+  dashboardJson?: string;
 }
 
 export class UnthemedDashboardPage extends PureComponent<Props, State> {
@@ -137,7 +138,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
       getBackendSrv()
         .get(`${callbackUrl}/load-dashboard`)
         .then((dashboardJson) => {
-          //setDashboardJson(dashboardJson);
+          this.setState({ dashboardJson });
           // Remove dashboard UID from JSON to prevent errors from external dashboards
           delete dashboardJson.uid;
           const dashboardModel = new DashboardModel(dashboardJson);
