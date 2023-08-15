@@ -14,11 +14,21 @@ import {
   NewDataSourcePage,
 } from './pages';
 
+function RedirectToAddNewConnection() {
+  const { search } = useLocation();
+  return (
+    <Redirect
+      to={{
+        pathname: ROUTES.AddNewConnection,
+        search,
+      }}
+    />
+  );
+}
+
 export default function Connections() {
   const navIndex = useSelector((state: StoreState) => state.navIndex);
   const isAddNewConnectionPageOverridden = Boolean(navIndex['standalone-plugin-page-/connections/add-new-connection']);
-
-  const { search } = useLocation();
 
   return (
     <DataSourcesRoutesContext.Provider
@@ -44,13 +54,7 @@ export default function Connections() {
         )}
 
         {/* Redirect from earlier routes to updated routes */}
-        <Redirect
-          from={ROUTES.ConnectDataOutdated}
-          to={{
-            pathname: ROUTES.AddNewConnection,
-            search,
-          }}
-        />
+        <Route exact path={ROUTES.ConnectDataOutdated} component={RedirectToAddNewConnection} />
         <Redirect from={`${ROUTES.Base}/your-connections/:page`} to={`${ROUTES.Base}/:page`} />
         <Redirect from={ROUTES.YourConnectionsOutdated} to={ROUTES.DataSources} />
 
