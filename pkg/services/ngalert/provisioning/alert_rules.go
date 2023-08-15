@@ -112,6 +112,10 @@ func (service *AlertRuleService) GetAlertRuleWithFolderTitle(ctx context.Context
 func (service *AlertRuleService) CreateAlertRule(ctx context.Context, rule models.AlertRule, provenance models.Provenance, userID int64) (models.AlertRule, error) {
 	if rule.UID == "" {
 		rule.UID = util.GenerateShortUID()
+	} else {
+		if !util.IsValidShortUID(rule.UID) {
+			return models.AlertRule{}, errors.New("invalid UID. ")
+		}
 	}
 	interval, err := service.ruleStore.GetRuleGroupInterval(ctx, rule.OrgID, rule.NamespaceUID, rule.RuleGroup)
 	// if the alert group does not exists we just use the default interval
