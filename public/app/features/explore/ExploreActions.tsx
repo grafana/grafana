@@ -1,6 +1,7 @@
 import { useRegisterActions, useKBar, Action, Priority } from 'kbar';
 import { useEffect, useState } from 'react';
 
+import { config } from '@grafana/runtime';
 import { useDispatch, useSelector } from 'app/types';
 
 import { splitOpen, splitClose, changeCorrelationsEditorMode } from './state/main';
@@ -65,14 +66,16 @@ export const ExploreActions = () => {
         });
       }
     } else {
-      actionsArr.push({
-        id: 'correlations-editor',
-        name: 'Correlations editor',
-        perform: () => {
-          dispatch(changeCorrelationsEditorMode({ correlationsEditorMode: true }));
-          dispatch(runQueries({ exploreId: keys[0] }));
-        },
-      });
+      if (config.featureToggles.correlations) {
+        actionsArr.push({
+          id: 'correlations-editor',
+          name: 'Correlations editor',
+          perform: () => {
+            dispatch(changeCorrelationsEditorMode({ correlationsEditorMode: true }));
+            dispatch(runQueries({ exploreId: keys[0] }));
+          },
+        });
+      }
 
       actionsArr.push({
         id: 'explore/run-query',
