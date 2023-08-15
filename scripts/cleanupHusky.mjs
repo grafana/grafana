@@ -3,6 +3,16 @@ import * as childProcess from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
 
+/**
+ * This script is ran via yarn postinstall to clean up the previously installed husky git hooks.
+ * Originally husky would install git hooks into .git/hooks.
+ * Then husky would modify your git config to store hooks in .husky instead.
+ * It's possible that contributors have parts of husky littered in both of these places.
+ *
+ * We plan this script to run automatically for approx 6 months after removing
+ * husky / https://github.com/grafana/grafana/pull/66608 is merged - until March 2024.
+ */
+
 let changedHooksPath = false;
 
 const oldHuskyHooks = [
@@ -56,17 +66,4 @@ if (changedHooksPath) {
       }
     }
   }
-}
-
-//
-// Leave a helpful message in the old .husky directory.
-// We don't delete this directory for them in case they've added their own git hooks.
-try {
-  const message = [
-    `This directory is no longer used for git hooks and is safe to delete if you want to.`,
-    `If you've added custom git hooks in here, be sure to move them to the .git/hooks directory.`,
-  ].join('\n\n');
-  fs.writeFileSync('./.husky/safe-to-delete', message);
-} catch {
-  // This will throw an exception if the .husky folder doesn't exist, so just ignore any error
 }
