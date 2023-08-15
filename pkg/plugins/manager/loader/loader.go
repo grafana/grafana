@@ -21,13 +21,7 @@ type Loader struct {
 	log         log.Logger
 }
 
-func ProvideService(discovery discovery.Discoverer, bootstrap bootstrap.Bootstrapper, validation validation.Validator,
-	initializer initialization.Initializer, termination termination.Terminator) *Loader {
-	return New(discovery, bootstrap, validation, initializer, termination)
-}
-
-func New(
-	discovery discovery.Discoverer, bootstrap bootstrap.Bootstrapper, validation validation.Validator,
+func New(discovery discovery.Discoverer, bootstrap bootstrap.Bootstrapper, validation validation.Validator,
 	initializer initialization.Initializer, termination termination.Terminator) *Loader {
 	return &Loader{
 		discovery:   discovery,
@@ -50,12 +44,12 @@ func (l *Loader) Load(ctx context.Context, src plugins.PluginSource) ([]*plugins
 		return nil, err
 	}
 
-	verifiedPlugins, err := l.validation.Validate(ctx, bootstrappedPlugins)
+	validatedPlugins, err := l.validation.Validate(ctx, bootstrappedPlugins)
 	if err != nil {
 		return nil, err
 	}
 
-	initializedPlugins, err := l.initializer.Initialize(ctx, verifiedPlugins)
+	initializedPlugins, err := l.initializer.Initialize(ctx, validatedPlugins)
 	if err != nil {
 		return nil, err
 	}

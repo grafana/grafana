@@ -280,8 +280,6 @@ type Cfg struct {
 	// Not documented & not supported
 	// stand in until a more complete solution is implemented
 	AuthConfigUIAdminAccess bool
-	// TO REMOVE: Not documented & not supported. Remove with legacy handlers in 10.2
-	AuthBrokerEnabled bool
 	// TO REMOVE: Not documented & not supported. Remove in 10.3
 	TagAuthedDevices bool
 
@@ -968,12 +966,11 @@ var skipStaticRootValidation = false
 
 func NewCfg() *Cfg {
 	return &Cfg{
-		Target:            []string{},
-		Logger:            log.New("settings"),
-		Raw:               ini.Empty(),
-		Azure:             &azsettings.AzureSettings{},
-		RBACEnabled:       true,
-		AuthBrokerEnabled: true,
+		Target:      []string{},
+		Logger:      log.New("settings"),
+		Raw:         ini.Empty(),
+		Azure:       &azsettings.AzureSettings{},
+		RBACEnabled: true,
 	}
 }
 
@@ -1304,6 +1301,7 @@ func (cfg *Cfg) handleAWSConfig() {
 	}
 
 	cfg.AWSExternalId = awsPluginSec.Key("external_id").Value()
+	err = os.Setenv(awsds.GrafanaAssumeRoleExternalIdKeyName, cfg.AWSExternalId)
 	if err != nil {
 		cfg.Logger.Error(fmt.Sprintf("could not set environment variable '%s'", awsds.GrafanaAssumeRoleExternalIdKeyName), err)
 	}
@@ -1541,7 +1539,6 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 
 	// Do not use
 	cfg.AuthConfigUIAdminAccess = auth.Key("config_ui_admin_access").MustBool(false)
-	cfg.AuthBrokerEnabled = auth.Key("broker").MustBool(true)
 	cfg.TagAuthedDevices = auth.Key("tag_authed_devices").MustBool(true)
 
 	cfg.DisableLoginForm = auth.Key("disable_login_form").MustBool(false)

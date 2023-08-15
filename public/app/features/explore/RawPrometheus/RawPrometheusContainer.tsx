@@ -57,24 +57,19 @@ export class RawPrometheusContainer extends PureComponent<Props, PrometheusConta
     }
   }
 
-  getMainFrame(frames: DataFrame[] | null) {
-    return frames?.find((df) => df.meta?.custom?.parentRowIndex === undefined) || frames?.[0];
-  }
-
   onChangeResultsStyle = (resultsStyle: TableResultsStyle) => {
     this.setState({ resultsStyle });
   };
 
   getTableHeight() {
     const { tableResult } = this.props;
-    const mainFrame = this.getMainFrame(tableResult);
 
-    if (!mainFrame || mainFrame.length === 0) {
+    if (!tableResult || tableResult.length === 0) {
       return 200;
     }
 
     // tries to estimate table height
-    return Math.max(Math.min(600, mainFrame.length * 35) + 35);
+    return Math.max(Math.min(600, tableResult[0].length * 35) + 35);
   }
 
   renderLabel = () => {
@@ -134,8 +129,10 @@ export class RawPrometheusContainer extends PureComponent<Props, PrometheusConta
       });
     }
 
-    const mainFrame = this.getMainFrame(dataFrames);
-    const subFrames = dataFrames?.filter((df) => df.meta?.custom?.parentRowIndex !== undefined);
+    const frames = dataFrames?.filter(
+      (frame: DataFrame | undefined): frame is DataFrame => !!frame && frame.length !== 0
+    );
+
     const label = this.state?.resultsStyle !== undefined ? this.renderLabel() : 'Table';
 
     // Render table as default if resultsStyle is not set.
@@ -143,22 +140,21 @@ export class RawPrometheusContainer extends PureComponent<Props, PrometheusConta
 
     return (
       <Collapse label={label} loading={loading} isOpen>
-        {mainFrame?.length && (
+        {frames?.length && (
           <>
             {renderTable && (
               <Table
                 ariaLabel={ariaLabel}
-                data={mainFrame}
-                subData={subFrames}
+                data={frames[0]}
                 width={tableWidth}
                 height={height}
                 onCellFilterAdded={onCellFilterAdded}
               />
             )}
-            {this.state?.resultsStyle === TABLE_RESULTS_STYLE.raw && <RawListContainer tableResult={mainFrame} />}
+            {this.state?.resultsStyle === TABLE_RESULTS_STYLE.raw && <RawListContainer tableResult={frames[0]} />}
           </>
         )}
-        {!mainFrame?.length && <MetaInfoText metaItems={[{ value: '0 series returned' }]} />}
+        {!frames?.length && <MetaInfoText metaItems={[{ value: '0 series returned' }]} />}
       </Collapse>
     );
   }
