@@ -24,7 +24,7 @@ var (
 )
 
 // RequestMetrics is a middleware handler that instruments the request.
-func RequestMetrics(features featuremgmt.FeatureToggles, cfg *setting.Cfg) web.Middleware {
+func RequestMetrics(features featuremgmt.FeatureToggles, cfg *setting.Cfg, promRegister prometheus.Registerer) web.Middleware {
 	log := log.New("middleware.request-metrics")
 
 	httpRequestsInFlight := prometheus.NewGauge(
@@ -50,10 +50,7 @@ func RequestMetrics(features featuremgmt.FeatureToggles, cfg *setting.Cfg) web.M
 		histogramLabels,
 	)
 
-	// Swallow the errors due to in-memory integration tests throwing errors
-	// due to registrting metrics twice in the global prom registry.
-	_ = prometheus.Register(httpRequestsInFlight)
-	_ = prometheus.Register(httpRequestDurationHistogram)
+	promRegister.MustRegister(httpRequestsInFlight, httpRequestDurationHistogram)
 
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

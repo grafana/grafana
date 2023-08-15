@@ -214,6 +214,7 @@ type HTTPServer struct {
 	statsService         stats.Service
 	authnService         authn.Service
 	starApi              *starApi.API
+	promRegister         prometheus.Registerer
 }
 
 type ServerOptions struct {
@@ -255,7 +256,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	accesscontrolService accesscontrol.Service, navTreeService navtree.Service,
 	annotationRepo annotations.Repository, tagService tag.Service, searchv2HTTPService searchV2.SearchHTTPService, oauthTokenService oauthtoken.OAuthTokenService,
 	statsService stats.Service, authnService authn.Service, pluginsCDNService *pluginscdn.Service,
-	starApi *starApi.API,
+	starApi *starApi.API, promRegister prometheus.Registerer,
 
 ) (*HTTPServer, error) {
 	web.Env = cfg.Env
@@ -360,6 +361,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		pluginsCDNService:            pluginsCDNService,
 		starApi:                      starApi,
 		errs:                         make(chan error),
+		promRegister:                 promRegister,
 	}
 	if hs.Listener != nil {
 		hs.log.Debug("Using provided listener")
@@ -601,7 +603,7 @@ func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 
 	m.Use(requestmeta.SetupRequestMetadata())
 	m.Use(middleware.RequestTracing(hs.tracer))
-	m.Use(middleware.RequestMetrics(hs.Features, hs.Cfg))
+	m.Use(middleware.RequestMetrics(hs.Features, hs.Cfg, hs.promRegister))
 
 	m.UseMiddleware(hs.LoggerMiddleware.Middleware())
 
