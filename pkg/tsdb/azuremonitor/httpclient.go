@@ -31,6 +31,8 @@ func newHTTPClient(route types.AzRoute, model types.DatasourceInfo, settings *ba
 
 		authOpts := azhttpclient.NewAuthOptions(cfg.Azure)
 		authOpts.Scopes(route.Scopes)
+		authOpts.AddRateLimitSession(true)
+
 		azhttpclient.AddAzureAuthentication(&clientOpts, authOpts, model.Credentials)
 	}
 

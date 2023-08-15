@@ -1,6 +1,7 @@
 package azuremonitor
 
 import (
+	"context"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -60,7 +61,7 @@ func Test_proxyRequest(t *testing.T) {
 					t.Fatal(err)
 				}
 			}))
-			req, err := http.NewRequest(http.MethodGet, srv.URL, nil)
+			req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, srv.URL, nil)
 			if err != nil {
 				t.Error(err)
 			}
@@ -113,7 +114,7 @@ func Test_handleResourceReq(t *testing.T) {
 		},
 	}
 	rw := httptest.NewRecorder()
-	req, err := http.NewRequest(http.MethodGet, "http://foo/azuremonitor/subscriptions/44693801", nil)
+	req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, "http://foo/azuremonitor/subscriptions/44693801", nil)
 	if err != nil {
 		t.Fatalf("Unexpected error %v", err)
 	}
