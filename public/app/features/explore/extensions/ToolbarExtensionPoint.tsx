@@ -20,7 +20,6 @@ type Props = {
   exploreId: string;
   timeZone: TimeZone;
   splitted: boolean;
-  isCorrelationsEditorMode: boolean;
 };
 
 export function ToolbarExtensionPoint(props: Props): ReactElement | null {

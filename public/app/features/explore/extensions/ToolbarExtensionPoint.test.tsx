@@ -78,17 +78,13 @@ describe('ToolbarExtensionPoint', () => {
     });
 
     it('should render "Add" extension point menu button', () => {
-      renderWithExploreStore(
-        <ToolbarExtensionPoint exploreId="left" timeZone="browser" splitted={false} isCorrelationsEditorMode={false} />
-      );
+      renderWithExploreStore(<ToolbarExtensionPoint exploreId="left" timeZone="browser" splitted={false} />);
 
       expect(screen.getByRole('button', { name: 'Add' })).toBeVisible();
     });
 
     it('should render menu with extensions when "Add" is clicked in split mode', async () => {
-      renderWithExploreStore(
-        <ToolbarExtensionPoint exploreId={'left'} timeZone="browser" splitted={true} isCorrelationsEditorMode={false} />
-      );
+      renderWithExploreStore(<ToolbarExtensionPoint exploreId={'left'} timeZone="browser" splitted={true} />);
 
       await userEvent.click(screen.getByRole('button', { name: 'Add' }));
 
@@ -98,9 +94,7 @@ describe('ToolbarExtensionPoint', () => {
     });
 
     it('should render menu with extensions when "Add" is clicked', async () => {
-      renderWithExploreStore(
-        <ToolbarExtensionPoint exploreId="left" timeZone="browser" splitted={false} isCorrelationsEditorMode={false} />
-      );
+      renderWithExploreStore(<ToolbarExtensionPoint exploreId="left" timeZone="browser" splitted={false} />);
 
       await userEvent.click(screen.getByRole('button', { name: 'Add' }));
 
@@ -110,9 +104,7 @@ describe('ToolbarExtensionPoint', () => {
     });
 
     it('should call onClick from extension when menu item is clicked', async () => {
-      renderWithExploreStore(
-        <ToolbarExtensionPoint exploreId="left" timeZone="browser" splitted={false} isCorrelationsEditorMode={false} />
-      );
+      renderWithExploreStore(<ToolbarExtensionPoint exploreId="left" timeZone="browser" splitted={false} />);
 
       await userEvent.click(screen.getByRole('button', { name: 'Add' }));
       await userEvent.click(screen.getByRole('menuitem', { name: 'Add to dashboard' }));
@@ -124,9 +116,7 @@ describe('ToolbarExtensionPoint', () => {
     });
 
     it('should render confirm navigation modal when extension with path is clicked', async () => {
-      renderWithExploreStore(
-        <ToolbarExtensionPoint exploreId="left" timeZone="browser" splitted={false} isCorrelationsEditorMode={false} />
-      );
+      renderWithExploreStore(<ToolbarExtensionPoint exploreId="left" timeZone="browser" splitted={false} />);
 
       await userEvent.click(screen.getByRole('button', { name: 'Add' }));
       await userEvent.click(screen.getByRole('menuitem', { name: 'ML: Forecast' }));
@@ -140,13 +130,10 @@ describe('ToolbarExtensionPoint', () => {
       const targets = [{ refId: 'A' }];
       const data = createEmptyQueryResponse();
 
-      renderWithExploreStore(
-        <ToolbarExtensionPoint exploreId="left" timeZone="browser" splitted={false} isCorrelationsEditorMode={false} />,
-        {
-          targets,
-          data,
-        }
-      );
+      renderWithExploreStore(<ToolbarExtensionPoint exploreId="left" timeZone="browser" splitted={false} />, {
+        targets,
+        data,
+      });
 
       const [options] = getPluginLinkExtensionsMock.mock.calls[0];
       const { context } = options;
@@ -164,9 +151,7 @@ describe('ToolbarExtensionPoint', () => {
     });
 
     it('should correct extension point id when fetching extensions', async () => {
-      renderWithExploreStore(
-        <ToolbarExtensionPoint exploreId="left" timeZone="browser" splitted={false} isCorrelationsEditorMode={false} />
-      );
+      renderWithExploreStore(<ToolbarExtensionPoint exploreId="left" timeZone="browser" splitted={false} />);
 
       const [options] = getPluginLinkExtensionsMock.mock.calls[0];
       const { extensionPointId } = options;
@@ -200,17 +185,13 @@ describe('ToolbarExtensionPoint', () => {
     });
 
     it('should render "Add" extension point menu button', () => {
-      renderWithExploreStore(
-        <ToolbarExtensionPoint exploreId="left" timeZone="browser" splitted={false} isCorrelationsEditorMode={false} />
-      );
+      renderWithExploreStore(<ToolbarExtensionPoint exploreId="left" timeZone="browser" splitted={false} />);
 
       expect(screen.getByRole('button', { name: 'Add' })).toBeVisible();
     });
 
     it('should render "Add" extension point menu button in split mode', async () => {
-      renderWithExploreStore(
-        <ToolbarExtensionPoint exploreId={'left'} timeZone="browser" splitted={true} isCorrelationsEditorMode={false} />
-      );
+      renderWithExploreStore(<ToolbarExtensionPoint exploreId={'left'} timeZone="browser" splitted={true} />);
 
       await userEvent.click(screen.getByRole('button', { name: 'Add' }));
 
@@ -221,9 +202,7 @@ describe('ToolbarExtensionPoint', () => {
     });
 
     it('should render menu with extensions when "Add" is clicked', async () => {
-      renderWithExploreStore(
-        <ToolbarExtensionPoint exploreId="left" timeZone="browser" splitted={false} isCorrelationsEditorMode={false} />
-      );
+      renderWithExploreStore(<ToolbarExtensionPoint exploreId="left" timeZone="browser" splitted={false} />);
 
       await userEvent.click(screen.getByRole('button', { name: 'Add' }));
 
@@ -241,9 +220,7 @@ describe('ToolbarExtensionPoint', () => {
     });
 
     it('should render "add to dashboard" action button if one pane is visible', async () => {
-      renderWithExploreStore(
-        <ToolbarExtensionPoint exploreId="left" timeZone="browser" splitted={false} isCorrelationsEditorMode={false} />
-      );
+      renderWithExploreStore(<ToolbarExtensionPoint exploreId="left" timeZone="browser" splitted={false} />);
 
       await waitFor(() => {
         const button = screen.getByRole('button', { name: /add to dashboard/i });
@@ -261,9 +238,7 @@ describe('ToolbarExtensionPoint', () => {
     });
 
     it('should not render "add to dashboard" action button', async () => {
-      renderWithExploreStore(
-        <ToolbarExtensionPoint exploreId="left" timeZone="browser" splitted={false} isCorrelationsEditorMode={false} />
-      );
+      renderWithExploreStore(<ToolbarExtensionPoint exploreId="left" timeZone="browser" splitted={false} />);
 
       expect(screen.queryByRole('button', { name: /add to dashboard/i })).not.toBeInTheDocument();
     });

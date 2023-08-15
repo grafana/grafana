@@ -205,7 +205,6 @@ export function ExploreToolbar({ exploreId, topOfViewRef, onChangeTime }: Props)
             key="toolbar-extension-point"
             exploreId={exploreId}
             timeZone={timeZone}
-            isCorrelationsEditorMode={isCorrelationsEditorMode}
           />,
           !isLive && (
             <ExploreTimeControls
