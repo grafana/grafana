@@ -259,7 +259,7 @@ function resolveErrorInFilterRoot(): SituationType {
   };
 }
 
-function resolveArithmeticOperator(node: SyntaxNode, _0: string, _1: number): Situation {
+function resolveArithmeticOperator(node: SyntaxNode, _0: string, _1: number): SituationType {
   if (node.prevSibling?.type.id === ComparisonOp) {
     return {
       type: 'UNKNOWN',
@@ -271,13 +271,13 @@ function resolveArithmeticOperator(node: SyntaxNode, _0: string, _1: number): Si
   };
 }
 
-function resolveSpansetPipelineExpression(_0: SyntaxNode, _1: string, _2: number): Situation {
+function resolveSpansetPipelineExpression(_0: SyntaxNode, _1: string, _2: number): SituationType {
   return {
     type: 'SPANSET_COMBINING_OPERATORS',
   };
 }
 
-function resolveSpansetPipeline(_0: SyntaxNode, _1: string, _2: number): Situation {
+function resolveSpansetPipeline(_0: SyntaxNode, _1: string, _2: number): SituationType {
   return {
     type: 'SPANSET_PIPELINE_AFTER_OPERATOR',
   };
