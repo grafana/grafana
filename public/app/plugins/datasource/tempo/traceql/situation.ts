@@ -56,7 +56,7 @@ export type SituationType =
       type: 'SPANSET_PIPELINE_AFTER_OPERATOR';
     }
   | {
-      type: 'SPANSET_ARITMETHIC_OPERATORS';
+      type: 'SPANSET_COMPARISON_OPERATORS';
     };
 
 type Path = Array<[Direction, NodeType[]]>;
@@ -267,7 +267,7 @@ function resolveArithmeticOperator(node: SyntaxNode, _0: string, _1: number): Si
   }
 
   return {
-    type: 'SPANSET_ARITMETHIC_OPERATORS',
+    type: 'SPANSET_COMPARISON_OPERATORS',
   };
 }
 
