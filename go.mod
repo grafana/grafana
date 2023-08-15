@@ -288,8 +288,6 @@ require (
 	k8s.io/klog/v2 v2.90.1 // @grafana/grafana-app-platform-squad
 )
 
-require github.com/blang/semver/v4 v4.0.0
-
 require (
 	cloud.google.com/go v0.110.0 // indirect
 	cloud.google.com/go/compute/metadata v0.2.3 // indirect
