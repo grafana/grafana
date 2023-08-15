@@ -7,7 +7,7 @@ import { Dropdown, ToolbarButton } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction, ExplorePanelData, useSelector } from 'app/types';
 
-import { getExploreItemSelector } from '../state/selectors';
+import { getExploreItemSelector, selectCorrelationEditorMode, selectPanes } from '../state/selectors';
 
 import { ConfirmNavigationModal } from './ConfirmNavigationModal';
 import { ToolbarExtensionPointMenu } from './ToolbarExtensionPointMenu';
@@ -24,7 +24,7 @@ type Props = {
 };
 
 export function ToolbarExtensionPoint(props: Props): ReactElement | null {
-  const { exploreId, splitted, isCorrelationsEditorMode } = props;
+  const { exploreId, splitted } = props;
   const [selectedExtension, setSelectedExtension] = useState<PluginExtensionLink | undefined>();
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const context = useExtensionPointContext(props);
@@ -47,14 +47,6 @@ export function ToolbarExtensionPoint(props: Props): ReactElement | null {
       <Suspense fallback={null}>
         <AddToDashboard exploreId={exploreId} />
       </Suspense>
-    );
-  }
-
-  //TODO: yikes
-  if (splitted || isCorrelationsEditorMode) {
-    extensions = extensions.filter(
-      (extension) =>
-        extension.pluginId !== 'grafana' || (extension.pluginId === 'grafana' && extension.title === 'Add Correlation')
     );
   }
 
@@ -90,10 +82,13 @@ export type PluginExtensionExploreContext = {
   data: ExplorePanelData;
   timeRange: RawTimeRange;
   timeZone: TimeZone;
+  shouldShowAddCorrelation: boolean;
 };
 
 function useExtensionPointContext(props: Props): PluginExtensionExploreContext {
   const { exploreId, timeZone } = props;
+  const isCorrelationsEditorMode = useSelector(selectCorrelationEditorMode);
+  const panes = useSelector(selectPanes);
   const { queries, queryResponse, range } = useSelector(getExploreItemSelector(exploreId))!;
 
   return useMemo(() => {
@@ -103,8 +98,9 @@ function useExtensionPointContext(props: Props): PluginExtensionExploreContext {
       data: queryResponse,
       timeRange: range.raw,
       timeZone: timeZone,
+      shouldShowAddCorrelation: !isCorrelationsEditorMode && Object.keys(panes)[0] === exploreId,
     };
-  }, [exploreId, queries, queryResponse, range, timeZone]);
+  }, [exploreId, isCorrelationsEditorMode, panes, queries, queryResponse, range, timeZone]);
 }
 
 function useExtensionLinks(context: PluginExtensionExploreContext): PluginExtensionLink[] {

@@ -55,6 +55,9 @@ export function getExploreExtensionConfigs(): PluginExtensionLinkConfig[] {
             dispatch(runQueries({ exploreId: context?.exploreId }));
           }
         },
+        shouldShow: (context) => {
+          return context?.shouldShowAddCorrelation !== undefined ? context?.shouldShowAddCorrelation : false;
+        },
       }),
     ];
   } catch (error) {

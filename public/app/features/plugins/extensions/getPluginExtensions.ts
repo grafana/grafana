@@ -62,8 +62,13 @@ export const getPluginExtensions: GetExtensions = ({ context, extensionPointId, 
         // Run the configure() function with the current context, and apply the ovverides
         const overrides = getLinkExtensionOverrides(registryItem.pluginId, extensionConfig, frozenContext);
 
+        let shouldShow = true;
+        if (extensionConfig.shouldShow && context) {
+          shouldShow = extensionConfig.shouldShow(context);
+        }
+
         // configure() returned an `undefined` -> hide the extension
-        if (extensionConfig.configure && overrides === undefined) {
+        if (!shouldShow || (extensionConfig.configure && overrides === undefined)) {
           continue;
         }
 
