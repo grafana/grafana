@@ -28,43 +28,24 @@ type JustifyContent =
   | 'left'
   | 'right';
 
-// type Direction = 'row' | 'row-reverse' | 'column' | 'column-reverse';
+type Direction = 'row' | 'row-reverse' | 'column' | 'column-reverse';
 
-// type Wrap = 'nowrap' | 'wrap' | 'wrap-reverse';
-
-type FlexFlow =
-  | 'row wrap'
-  | 'row nowrap'
-  | 'column wrap'
-  | 'column nowrap'
-  | 'row-reverse wrap'
-  | 'row-reverse nowrap'
-  | 'column-reverse wrap'
-  | 'column-reverse nowrap'
-  | 'row wrap-reverse'
-  | 'row nowrap-reverse'
-  | 'column wrap-reverse'
-  | 'column nowrap-reverse'
-  | 'row-reverse wrap-reverse'
-  | 'row-reverse nowrap-reverse'
-  | 'column-reverse wrap-reverse'
-  | 'column-reverse nowrap-reverse';
+type Wrap = 'nowrap' | 'wrap' | 'wrap-reverse';
 
 interface FlexProps {
   gap?: ThemeSpacingTokens;
   alignItems?: AlignItems;
   justifyContent?: JustifyContent;
-  // direction?: Direction;
-  // wrap?: Wrap;
-  flexFlow?: FlexFlow;
+  direction?: Direction;
+  wrap?: Wrap;
   children?: React.ReactNode;
 }
 
-export const Flex = ({ gap = 1, alignItems, justifyContent, /*direction, wrap*/ flexFlow, children }: FlexProps) => {
+export const Flex = ({ gap = 1, alignItems, justifyContent, direction, wrap, children }: FlexProps) => {
   const styles = useStyles2(
     useCallback(
-      (theme) => getStyles(theme, gap, alignItems, justifyContent, /*direction, wrap*/ flexFlow),
-      [gap, alignItems, justifyContent, /*direction, wrap*/ flexFlow]
+      (theme) => getStyles(theme, gap, alignItems, justifyContent, direction, wrap),
+      [gap, alignItems, justifyContent, direction, wrap]
     )
   );
 
@@ -78,14 +59,14 @@ const getStyles = (
   gap: ThemeSpacingTokens,
   alignItems: FlexProps['alignItems'],
   justifyContent: FlexProps['justifyContent'],
-  // direction: FlexProps['direction'],
-  // wrap: FlexProps['wrap']
-  flexFlow: FlexProps['flexFlow']
+  direction: FlexProps['direction'],
+  wrap: FlexProps['wrap']
 ) => {
   return {
     flex: css({
       display: 'flex',
-      flexFlow: flexFlow,
+      flexDirection: direction,
+      flexWrap: wrap,
       alignItems: alignItems,
       justifyContent: justifyContent,
       gap: theme.spacing(gap),
