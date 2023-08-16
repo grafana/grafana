@@ -9,8 +9,8 @@ import {
   SelectableValue,
 } from '@grafana/data';
 
-import { ALL_ACCOUNTS_OPTION } from './components/Account';
 import { VariableQueryEditor } from './components/VariableQueryEditor/VariableQueryEditor';
+import { ALL_ACCOUNTS_OPTION } from './components/shared/Account';
 import { CloudWatchDatasource } from './datasource';
 import { DEFAULT_VARIABLE_QUERY } from './defaultQueries';
 import { migrateVariableQuery } from './migrations/variableQueryMigrations';

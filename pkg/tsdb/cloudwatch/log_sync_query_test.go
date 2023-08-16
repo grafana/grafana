@@ -336,4 +336,36 @@ func Test_executeSyncLogQuery_handles_RefId_from_input_queries(t *testing.T) {
 		assert.Error(t, err)
 		cli.AssertNumberOfCalls(t, "GetQueryResultsWithContext", 1)
 	})
+
+	t.Run("when getQueryResults returns aws error is returned, it keeps the context", func(t *testing.T) {
+		cli = &mockLogsSyncClient{}
+		cli.On("StartQueryWithContext", mock.Anything, mock.Anything, mock.Anything).Return(&cloudwatchlogs.StartQueryOutput{
+			QueryId: aws.String("abcd-efgh-ijkl-mnop"),
+		}, nil)
+		cli.On("GetQueryResultsWithContext", mock.Anything, mock.Anything, mock.Anything).Return(
+			&cloudwatchlogs.GetQueryResultsOutput{Status: aws.String("Complete")},
+			&fakeAWSError{code: "foo", message: "bar"},
+		)
+		im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+			return DataSource{Settings: models.CloudWatchSettings{}}, nil
+		})
+		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
+
+		res, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
+			Headers:       map[string]string{ngalertmodels.FromAlertHeaderName: "some value"},
+			PluginContext: backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}},
+			Queries: []backend.DataQuery{
+				{
+					TimeRange: backend.TimeRange{From: time.Unix(0, 0), To: time.Unix(1, 0)},
+					JSON: json.RawMessage(`{
+						"queryMode":    "Logs"
+					}`),
+				},
+			},
+		})
+
+		require.Nil(t, res)
+		require.Error(t, err)
+		require.Equal(t, "CloudWatch Error: foo: bar", err.Error())
+	})
 }

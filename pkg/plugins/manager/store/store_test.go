@@ -2,12 +2,14 @@ package store
 
 import (
 	"context"
+	"sync"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
+	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
 )
 
@@ -174,6 +176,37 @@ func TestStore_SecretsManager(t *testing.T) {
 
 		r := ps.SecretsManager(context.Background())
 		require.Equal(t, p3, r)
+	})
+}
+
+func TestProcessManager_shutdown(t *testing.T) {
+	p := &plugins.Plugin{JSONData: plugins.JSONData{ID: "test-datasource", Type: plugins.TypeDataSource}} // Backend: true
+	backend := &fakes.FakeBackendPlugin{}
+	p.RegisterClient(backend)
+	p.SetLogger(log.NewTestLogger())
+
+	ps := New(&fakes.FakePluginRegistry{
+		Store: map[string]*plugins.Plugin{
+			p.ID: p,
+		},
+	})
+
+	pCtx := context.Background()
+	cCtx, cancel := context.WithCancel(pCtx)
+	var wgRun sync.WaitGroup
+	wgRun.Add(1)
+	var runErr error
+	go func() {
+		runErr = ps.Run(cCtx)
+		wgRun.Done()
+	}()
+
+	t.Run("When context is cancelled the plugin is stopped", func(t *testing.T) {
+		cancel()
+		wgRun.Wait()
+		require.ErrorIs(t, runErr, context.Canceled)
+		require.True(t, p.Exited())
+		require.Equal(t, 1, backend.StopCount)
 	})
 }
 
