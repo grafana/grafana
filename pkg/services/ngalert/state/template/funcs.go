@@ -15,12 +15,13 @@ type query struct {
 
 var (
 	defaultFuncs = template.FuncMap{
-		"filterLabels":    filterLabelsFunc,
-		"filterLabelsRe":  filterLabelsReFunc,
-		"graphLink":       graphLinkFunc,
-		"removeLabels":    removeLabelsFunc,
-		"removeLabelslRe": removeLabelsReFunc,
-		"tableLink":       tableLinkFunc,
+		"filterLabels":      filterLabelsFunc,
+		"filterLabelsRe":    filterLabelsReFunc,
+		"graphLink":         graphLinkFunc,
+		"removeLabels":      removeLabelsFunc,
+		"removeLabelslRe":   removeLabelsReFunc,
+		"tableLink":         tableLinkFunc,
+		"deduplicateLabels": deduplicateLabelsFunc,
 	}
 )
 
@@ -88,4 +89,16 @@ func tableLinkFunc(data string) string {
 	datasource := url.QueryEscape(q.Datasource)
 	expr := url.QueryEscape(q.Expr)
 	return fmt.Sprintf(`/explore?left={"datasource":%[1]q,"queries":[{"datasource":%[1]q,"expr":%q,"instant":true,"range":false,"refId":"A"}],"range":{"from":"now-1h","to":"now"}}`, datasource, expr)
+}
+
+func deduplicateLabelsFunc(values map[string]Value) Labels {
+	res := make(Labels)
+	for _, value := range values {
+		for k, v := range value.Labels {
+			if _, ok := res[k]; !ok {
+				res[k] = v
+			}
+		}
+	}
+	return res
 }
