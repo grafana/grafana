@@ -81,7 +81,7 @@ If you're using your own logs, modify the logql query to match your own log mess
 
 1. Expand **Options** and select **Range** as the type.
 
-1. Click on **preview** to see a preview of the query result and alert evaluation. If you see **No Data** verify that you changed the query type to **Range**.
+1. Click **preview** to see a preview of the query result and alert evaluation. If you see **No Data**, verify that you changed the query type to **Range**.
 
 1. Expression B shows a table of labels and values returned. The message label captured the message string from the log line
  and the value shows the number of times that string occured during the evaluation interval.
@@ -91,7 +91,7 @@ If you're using your own logs, modify the logql query to match your own log mess
     |  message=level=info method=GET url=/ status=500 | 27 |
     |  message=level=info method=POST url=/ status=500 | 1 |
 
-1. Configure your alert evaluation behavior
+1. Configure your alert evaluation behavior.
     * Choose a folder or use **+add new** to add a new folder for this alert.
     * Select an existing evaluation group from the drop-down or create a new one if this is your first alert.
     * Set the **for** value to **0s** so the alert will fire instantly.
@@ -109,7 +109,7 @@ If you're using your own logs, modify the logql query to match your own log mess
 [Loki managed alerts](https://grafana.com/docs/loki/latest/rules/#alerting-and-recording-rules) are stored and evaluated by Loki. They use LogQL for their expressions. 
 
 1. Choose  Mimir or Loki managed alert to create an alert using Loki
-1. Select your Loki datasource from the drop-down
+1. Select your Loki data source from the drop-down
 1. The optional script will output a sample log line similar to this:
     ```
     2023-04-22T02:49:32.562825+00:00 level=info method=GET url=/ status=200 duration=171ms
@@ -127,7 +127,10 @@ If you're using your own logs, modify the logql query to match your own log mess
 1. Add an annotation that refers to labels and values from the query result in your alert notification.
   
     * Choose **+Add new** in the drop down and type the annotation name **AlertValues** into the blank box
-    * In the blank `text` box paste ```{{ $labels.message }}  has returned an error status {{$values.B}} times.```
+    * In the blank `text` box, paste the following:
+       ```
+       {{ $labels.message }}  has returned an error status {{$values.B}} times
+       ```
 
 1. Click **Save rule and exit** at the top of the alert screen.
 
@@ -159,7 +162,7 @@ If you're using your own logs, modify the logql query to match your own log mess
         ```
         * There are two sections to the notification template: 
             1. The `myalert` template creates a single alert notification based on a specific alert.
-            2. The `mymessage` template will find all of the grouped alerts that are firing and send them in a single notification.
+            1. The `mymessage` template will find all of the grouped alerts that are firing and send them in a single notification.
         * Save the template
 
 1. Add the template to your contact point
