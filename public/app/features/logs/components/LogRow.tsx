@@ -49,7 +49,8 @@ interface Props extends Themeable2 {
 }
 
 interface State {
-  highlightBackround: boolean;
+  permalinked: boolean;
+  showingContext: boolean;
   showDetails: boolean;
   mouseIsOver: boolean;
 }
@@ -63,7 +64,8 @@ interface State {
  */
 class UnThemedLogRow extends PureComponent<Props, State> {
   state: State = {
-    highlightBackround: false,
+    permalinked: false,
+    showingContext: false,
     showDetails: false,
     mouseIsOver: false,
   };
@@ -76,11 +78,11 @@ class UnThemedLogRow extends PureComponent<Props, State> {
 
   // we are debouncing the state change by 3 seconds to highlight the logline after the context closed.
   debouncedContextClose = debounce(() => {
-    this.setState({ highlightBackround: false });
+    this.setState({ showingContext: false });
   }, 3000);
 
   onOpenContext = (row: LogRowModel) => {
-    this.setState({ highlightBackround: true });
+    this.setState({ showingContext: true });
     this.props.onOpenContext(row, this.debouncedContextClose);
   };
 
@@ -137,13 +139,13 @@ class UnThemedLogRow extends PureComponent<Props, State> {
 
     if (permalinkedRowId !== row.uid) {
       // only set the new state if the row is not permalinked anymore or if the component was mounted.
-      if (prevState.highlightBackround || mounted) {
-        this.setState({ highlightBackround: false });
+      if (prevState.permalinked || mounted) {
+        this.setState({ permalinked: false });
       }
       return;
     }
 
-    if (!this.state.highlightBackround) {
+    if (!this.state.permalinked) {
       // at this point this row is the permalinked row, so we need to scroll to it and highlight it if possible.
       if (this.logLineRef.current && scrollIntoView) {
         scrollIntoView(this.logLineRef.current);
@@ -152,7 +154,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
         datasourceType: row.datasourceType ?? 'unknown',
         logRowUid: row.uid,
       });
-      this.setState({ highlightBackround: true });
+      this.setState({ permalinked: true });
     }
   };
 
@@ -178,16 +180,16 @@ class UnThemedLogRow extends PureComponent<Props, State> {
       app,
       styles,
     } = this.props;
-    const { showDetails, highlightBackround } = this.state;
+    const { showDetails, showingContext, permalinked } = this.state;
     const levelStyles = getLogLevelStyles(theme, row.logLevel);
     const { errorMessage, hasError } = checkLogsError(row);
     const logRowBackground = cx(styles.logsRow, {
       [styles.errorLogRow]: hasError,
-      [styles.highlightBackground]: highlightBackround,
+      [styles.highlightBackground]: showingContext || permalinked,
     });
     const logRowDetailsBackground = cx(styles.logsRow, {
       [styles.errorLogRow]: hasError,
-      [styles.highlightBackground]: highlightBackround && !this.state.showDetails,
+      [styles.highlightBackground]: permalinked && !this.state.showDetails,
     });
 
     const processedRow =
