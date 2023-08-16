@@ -6,7 +6,6 @@ import { InlineField, TagsInput } from '@grafana/ui';
 export const ExemplarLabelEditor = ({ value, onChange, context }: StandardEditorProps<string[]>) => {
   const labels = context.options?.exemplars?.labels;
   const setExemplarLabels = (ls?: string[]) => {
-    console.log(ls);
     onChange(ls);
   };
   return (
