@@ -6,10 +6,7 @@
 # Either setting up lefthook, or running the clean command will unset the hooksPath git config so this
 # hook is no longer ran when committing.
 
-# Hooks have never ran if only backend code was committed, so no need to print instructions
-git diff --cached --name-only | grep -v --quiet "^pkg/" || exit 0
-
-echo "\n\e[1mImportant: Pre-commit hooks are now opt-in.\e[0m"
+echo "\n⚠️⚠️⚠️ \e[1mImportant: Pre-commit hooks are now opt-in.\e[0m ⚠️⚠️⚠️"
 echo "To install the new pre-commit hooks:"
 echo "  $ \e[96mmake lefthook-install\e[0m"
 echo "Or, silence this message by cleaning up the old hooks"
