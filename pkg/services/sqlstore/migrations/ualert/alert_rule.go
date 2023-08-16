@@ -115,8 +115,10 @@ func (m *migration) makeAlertRule(l log.Logger, cond condition, da dashAlert, fo
 			"message", da.Message, "err", err)
 		annotations["message"] = da.Message
 	} else {
-		tokens = variablesToPromLabels(tokens)
-		annotations["message"] = tokensToTmpl(tokens)
+		tmpl := "{{- $deduplicatedLabels := deduplicateLabels $values -}}\n"
+		tokens = variablesToMapLookups(tokens, "deduplicatedLabels")
+		tmpl += tokensToTmpl(tokens)
+		annotations["message"] = tmpl
 	}
 
 	data, err := migrateAlertRuleQueries(l, cond.Data)
@@ -414,14 +416,21 @@ func tokensToTmpl(tokens []Token) string {
 	return buf.String()
 }
 
-// variablesToPromLabels adds $labels. before each variable
-func variablesToPromLabels(tokens []Token) []Token {
+// variablesToMapLookups converts any variables in a slice of tokens to Go template map lookups
+func variablesToMapLookups(tokens []Token, mapName string) []Token {
 	result := make([]Token, 0, len(tokens))
 	for _, token := range tokens {
 		if token.IsVariable() {
-			token.Variable = "$labels." + token.Variable
+			token.Variable = mapLookupString(token.Variable, mapName)
 		}
 		result = append(result, token)
 	}
 	return result
+}
+
+func mapLookupString(v string, mapName string) string {
+	if bytes.ContainsAny([]byte(v), " ") {
+		return fmt.Sprintf(`index $%s "%s"`, mapName, v)
+	}
+	return fmt.Sprintf(`$%s.%s`, mapName, v)
 }

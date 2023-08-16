@@ -196,6 +196,20 @@ func TestMakeAlertRule(t *testing.T) {
 		require.Nil(t, err)
 		require.Equal(t, string(models.ErrorErrState), ar.ExecErrState)
 	})
+
+	t.Run("migrate message template", func(t *testing.T) {
+		m := newTestMigration(t)
+		da := createTestDashAlert()
+		da.Message = "Instance ${instance} is down"
+		cnd := createTestDashAlertCondition()
+
+		ar, err := m.makeAlertRule(&logtest.Fake{}, cnd, da, "folder")
+		require.Nil(t, err)
+		expected :=
+			"{{- $deduplicatedLabels := deduplicateLabels $values -}}\n" +
+				"Instance {{$deduplicatedLabels.instance}} is down"
+		require.Equal(t, expected, ar.Annotations["message"])
+	})
 }
 
 func TestTokensToTmpl(t *testing.T) {
@@ -208,23 +222,30 @@ func TestTokensToTmplNewlines(t *testing.T) {
 	assert.Equal(t, "{{instance}} is down\n{{job}} is down", tokensToTmpl(tokens))
 }
 
-func TestVariablesToPromLabels(t *testing.T) {
+func TestVariablesToMapLookups(t *testing.T) {
 	tokens := []Token{{Variable: "instance"}, {Literal: " is down"}}
 	expected := []Token{{Variable: "$labels.instance"}, {Literal: " is down"}}
-	assert.Equal(t, expected, variablesToPromLabels(tokens))
+	assert.Equal(t, expected, variablesToMapLookups(tokens, "labels"))
 }
 
-func TestVariablesToPromLabelsSpace(t *testing.T) {
+func TestVariablesToMapLookupsSpace(t *testing.T) {
 	tokens := []Token{{Variable: "instance with spaces"}, {Literal: " is down"}}
 	expected := []Token{{Variable: "index $labels \"instance with spaces\""}, {Literal: " is down"}}
-	assert.Equal(t, expected, variablesToPromLabels(tokens))
+	assert.Equal(t, expected, variablesToMapLookups(tokens, "labels"))
 }
 
 func TestTranslateTmpl(t *testing.T) {
 	tokens, err := tokenizeTmpl("${instance} is down")
 	require.NoError(t, err)
-	tmpl := tokensToTmpl(variablesToPromLabels(tokens))
+	tmpl := tokensToTmpl(variablesToMapLookups(tokens, "labels"))
 	assert.Equal(t, "{{$labels.instance}} is down", tmpl)
+}
+
+func TestTranslateTmplNewlines(t *testing.T) {
+	tokens, err := tokenizeTmpl("${instance} is down\n${job} is down")
+	require.NoError(t, err)
+	tmpl := tokensToTmpl(variablesToMapLookups(tokens, "labels"))
+	assert.Equal(t, "{{$labels.instance}} is down\n{{$labels.job}} is down", tmpl)
 }
 
 func createTestDashAlert() dashAlert {
