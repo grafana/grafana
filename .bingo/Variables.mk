@@ -33,8 +33,7 @@ DRONE := $(GOBIN)/drone-v1.5.0
 $(DRONE): $(BINGO_DIR)/drone.mod
 	@# Install binary/ries using Go 1.14+ build command. This is using bwplotka/bingo-controlled, separate go module with pinned dependencies.
 	@echo "(re)installing $(GOBIN)/drone-v1.5.0"
-	@# Manual modification: CGo is disabled to make the Drone CLI build successfully on Darwin/arm64 machines.
-	@cd $(BINGO_DIR) && CGO_ENABLED=0 GOWORK=off $(GO) build -mod=mod -modfile=drone.mod -o=$(GOBIN)/drone-v1.5.0 "github.com/drone/drone-cli/drone"
+	@cd $(BINGO_DIR) && GOWORK=off CGO_ENABLED=0 $(GO) build -mod=mod -modfile=drone.mod -o=$(GOBIN)/drone-v1.5.0 "github.com/drone/drone-cli/drone"
 
 GOLANGCI_LINT := $(GOBIN)/golangci-lint-v1.53.3
 $(GOLANGCI_LINT): $(BINGO_DIR)/golangci-lint.mod
