@@ -19,7 +19,7 @@ import {
 } from '../../../plugins/datasource/alertmanager/types';
 import { NotifierDTO } from '../../../types';
 
-import { CreateIntegrationDTO, NewOnCallIntegrationDTO } from './api/onCallApi';
+import { CreateIntegrationDTO, NewOnCallIntegrationDTO, OnCallIntegrationDTO } from './api/onCallApi';
 
 type Configurator<T> = (builder: T) => T;
 
@@ -209,16 +209,28 @@ export function mockApi(server: SetupServer) {
     },
 
     oncall: {
-      getOnCallIntegrations: (builders: Array<(builder: OnCallIntegrationBuilder) => void>) => {
-        const integrations = builders.map((builder) => {
-          const integrationBuilder = new OnCallIntegrationBuilder();
-          builder(integrationBuilder);
-          return integrationBuilder.build();
-        });
-
+      getOnCallIntegrations: (response: OnCallIntegrationDTO[]) => {
         server.use(
           rest.get(`api/plugin-proxy/grafana-oncall-app/api/internal/v1/alert_receive_channels`, (_, res, ctx) =>
-            res(ctx.status(200), ctx.json<NewOnCallIntegrationDTO[]>(integrations))
+            res(ctx.status(200), ctx.json<OnCallIntegrationDTO[]>(response))
+          )
+        );
+      },
+      features: (response: string[]) => {
+        server.use(
+          rest.get(`api/plugin-proxy/grafana-oncall-app/api/internal/v1/features`, (_, res, ctx) =>
+            res(ctx.status(200), ctx.json<string[]>(response))
+          )
+        );
+      },
+      validateIntegrationName: (invalidNames: string[]) => {
+        server.use(
+          rest.get(
+            `api/plugin-proxy/grafana-oncall-app/api/internal/v1/alert_receive_channels/validate_name`,
+            (req, res, ctx) => {
+              const isValid = !invalidNames.includes(req.url.searchParams.get('verbal_name') ?? '');
+              return res(ctx.status(isValid ? 200 : 409), ctx.json<boolean>(isValid));
+            }
           )
         );
       },

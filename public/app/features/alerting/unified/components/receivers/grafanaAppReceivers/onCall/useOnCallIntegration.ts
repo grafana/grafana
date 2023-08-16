@@ -23,7 +23,7 @@ export enum OnCallIntegrationSetting {
   IntegrationName = 'integration_name',
 }
 
-const ONCALL_INTEGRATION_V2_FEATURE = 'grafana_alerting_v2';
+export const ONCALL_INTEGRATION_V2_FEATURE = 'grafana_alerting_v2';
 
 enum OnCallIntegrationStatus {
   Disabled = 'disabled',
@@ -83,7 +83,7 @@ export function useOnCallIntegration() {
   const { useCreateIntegrationMutation, useGrafanaOnCallIntegrationsQuery, useLazyValidateIntegrationNameQuery } =
     onCallApi;
 
-  const [validateIntegrationNameQuery] = useLazyValidateIntegrationNameQuery();
+  const [validateIntegrationNameQuery, { isFetching: isValidating }] = useLazyValidateIntegrationNameQuery();
   const [createIntegrationMutation] = useCreateIntegrationMutation();
 
   const {
@@ -241,6 +241,7 @@ export function useOnCallIntegration() {
     createOnCallIntegrations,
     onCallFormValidators,
     isLoadingOnCallIntegration: isLoadingOnCallIntegrations || isOnCallStatusLoading,
+    isValidating,
     hasOnCallError: Boolean(onCallError) || isIntegrationsQueryError,
   };
 }

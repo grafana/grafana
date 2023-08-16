@@ -12,7 +12,7 @@ import { AlertmanagerConfigBuilder, mockApi, setupMswServer } from '../../../moc
 import { grafanaAlertNotifiersMock } from '../../../mockGrafanaNotifiers';
 import { onCallPluginMetaMock } from '../../../mocks';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../../utils/datasource';
-import { GRAFANA_ONCALL_INTEGRATION_TYPE } from '../grafanaAppReceivers/onCall/onCall';
+import { ONCALL_INTEGRATION_V2_FEATURE } from '../grafanaAppReceivers/onCall/useOnCallIntegration';
 
 import { GrafanaReceiverForm } from './GrafanaReceiverForm';
 
@@ -61,20 +61,13 @@ describe('GrafanaReceiverForm', () => {
       expect(ui.integrationType.get().closest('form')).toHaveFormValues({ 'items.0.type': 'prometheus-alertmanager' });
     });
 
-    it('OnCall contact point should be support new and existing integration options if OnCall integration V2 is enabled', async () => {
+    it('OnCall contact point should support new and existing integration options if OnCall integration V2 is enabled', async () => {
       mockApi(server).grafanaNotifiers(grafanaAlertNotifiersMock);
       mockApi(server).plugins.getPluginSettings({ ...onCallPluginMetaMock, enabled: true });
+      mockApi(server).oncall.features([ONCALL_INTEGRATION_V2_FEATURE]);
       mockApi(server).oncall.getOnCallIntegrations([
-        (i) =>
-          i
-            .withIntegration(GRAFANA_ONCALL_INTEGRATION_TYPE)
-            .withVerbalName('nasa-oncall')
-            .withIntegrationUrl('https://nasa.oncall.example.com'),
-        (i) =>
-          i
-            .withIntegration(GRAFANA_ONCALL_INTEGRATION_TYPE)
-            .withVerbalName('apac-oncall')
-            .withIntegrationUrl('https://apac.oncall.example.com'),
+        { display_name: 'nasa-oncall', value: 'nasa-oncall', integration_url: 'https://nasa.oncall.example.com' },
+        { display_name: 'apac-oncall', value: 'apac-oncall', integration_url: 'https://apac.oncall.example.com' },
       ]);
 
       const amConfig = getAmCortexConfig((_) => {});
@@ -123,6 +116,7 @@ describe('GrafanaReceiverForm', () => {
     it('Should render URL text input field for OnCall concact point if OnCall plugin uses legacy integration', async () => {
       mockApi(server).grafanaNotifiers(grafanaAlertNotifiersMock);
       mockApi(server).plugins.getPluginSettings({ ...onCallPluginMetaMock, enabled: true });
+      mockApi(server).oncall.features([]);
       mockApi(server).oncall.getOnCallIntegrations([]);
 
       const amConfig = getAmCortexConfig((config) =>

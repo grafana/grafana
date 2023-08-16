@@ -6,8 +6,13 @@ import { onCallPluginMetaMock } from 'app/features/alerting/unified/mocks';
 import { option } from 'app/features/alerting/unified/utils/notifier-types';
 import { clearPluginSettingsCache } from 'app/features/plugins/pluginSettings';
 
-import { GRAFANA_ONCALL_INTEGRATION_TYPE, ReceiverTypes } from './onCall';
-import { OnCallIntegrationSetting, OnCallIntegrationType, useOnCallIntegration } from './useOnCallIntegration';
+import { ReceiverTypes } from './onCall';
+import {
+  OnCallIntegrationSetting,
+  OnCallIntegrationType,
+  ONCALL_INTEGRATION_V2_FEATURE,
+  useOnCallIntegration,
+} from './useOnCallIntegration';
 
 const server = setupMswServer();
 
@@ -20,13 +25,8 @@ describe('useOnCallIntegration', () => {
   describe('When OnCall Alerting V2 integration enabled', () => {
     it('extendOnCalReceivers should add new settings to the oncall receiver', async () => {
       mockApi(server).plugins.getPluginSettings({ ...onCallPluginMetaMock, enabled: true });
-      mockApi(server).oncall.getOnCallIntegrations([
-        (ib) =>
-          ib
-            .withVerbalName('grafana-integration')
-            .withIntegration(GRAFANA_ONCALL_INTEGRATION_TYPE)
-            .withIntegrationUrl('https://oncall-endpoint.example.com'),
-      ]);
+      mockApi(server).oncall.features([ONCALL_INTEGRATION_V2_FEATURE]);
+      mockApi(server).oncall.getOnCallIntegrations([]);
 
       const { result } = renderHook(() => useOnCallIntegration(), { wrapper: TestProvider });
 
@@ -59,39 +59,32 @@ describe('useOnCallIntegration', () => {
 
     it('createOnCallIntegrations should provide integration name and url validators', async () => {
       mockApi(server).plugins.getPluginSettings({ ...onCallPluginMetaMock, enabled: true });
+      mockApi(server).oncall.features([ONCALL_INTEGRATION_V2_FEATURE]);
       mockApi(server).oncall.getOnCallIntegrations([
-        (ib) =>
-          ib
-            .withVerbalName('grafana-integration')
-            .withIntegration(GRAFANA_ONCALL_INTEGRATION_TYPE)
-            .withIntegrationUrl('https://oncall.com/grafana-integration'),
-        (ib) =>
-          ib
-            .withVerbalName('alertmanager-integration')
-            .withIntegration('Alertmanager')
-            .withIntegrationUrl('https://oncall.com/alertmanager-integration'),
+        {
+          display_name: 'grafana-integration',
+          value: 'ABC123',
+          integration_url: 'https://oncall.com/grafana-integration',
+        },
       ]);
+      mockApi(server).oncall.validateIntegrationName(['grafana-integration', 'alertmanager-integration']);
       mockApi(server).oncall.createIntegraion();
 
       const { result } = renderHook(() => useOnCallIntegration(), { wrapper: TestProvider });
 
-      // await waitFor(() => expect(result.current.isLoadingOnCallIntegration).toBe(true));
       await waitFor(() => expect(result.current.isLoadingOnCallIntegration).toBe(false));
 
       const { onCallFormValidators } = result.current;
 
-      expect(onCallFormValidators.integration_name('grafana-integration')).toBe(
-        'Integration of this name already exists in OnCall'
-      );
-      expect(onCallFormValidators.integration_name('alertmanager-integration')).toBe(
-        'Integration of this name already exists in OnCall'
-      );
+      const gfValidationResult = await waitFor(() => onCallFormValidators.integration_name('grafana-integration'));
+      expect(gfValidationResult).toBe('Integration of this name already exists in OnCall');
+
+      const amValidationResult = await waitFor(() => onCallFormValidators.integration_name('alertmanager-integration'));
+      expect(amValidationResult).toBe('Integration of this name already exists in OnCall');
 
       // ULR validator should check if the provided URL already exists
       expect(onCallFormValidators.url('https://oncall.com/grafana-integration')).toBe(true);
 
-      // URL validator should check only among integrations of "grafana_alerting" type
-      // So the following URL is invalid because it already exists but has different integration type
       expect(onCallFormValidators.url('https://oncall.com/alertmanager-integration')).toBe(
         'Selection of existing OnCall integration is required'
       );
@@ -99,17 +92,13 @@ describe('useOnCallIntegration', () => {
 
     it('extendOnCallNotifierFeatures should add integration type and name options and swap url to a select option', async () => {
       mockApi(server).plugins.getPluginSettings({ ...onCallPluginMetaMock, enabled: true });
+      mockApi(server).oncall.features([ONCALL_INTEGRATION_V2_FEATURE]);
       mockApi(server).oncall.getOnCallIntegrations([
-        (ib) =>
-          ib
-            .withVerbalName('grafana-integration')
-            .withIntegration(GRAFANA_ONCALL_INTEGRATION_TYPE)
-            .withIntegrationUrl('https://oncall.com/grafana-integration'),
-        (ib) =>
-          ib
-            .withVerbalName('alertmanager-integration')
-            .withIntegration('Alertmanager')
-            .withIntegrationUrl('https://oncall.com/alertmanager-integration'),
+        {
+          display_name: 'grafana-integration',
+          value: 'ABC123',
+          integration_url: 'https://oncall.com/grafana-integration',
+        },
       ]);
 
       const { result } = renderHook(() => useOnCallIntegration(), { wrapper: TestProvider });
@@ -144,8 +133,8 @@ describe('useOnCallIntegration', () => {
 
   describe('When OnCall Alerting V2 integration disabled', () => {
     it('extendOnCalReceivers should not add new settings to the oncall receiver', async () => {
-      // TODO Mock the OnCall API response responsible for integration version
       mockApi(server).plugins.getPluginSettings({ ...onCallPluginMetaMock, enabled: true });
+      mockApi(server).oncall.features([]);
       mockApi(server).oncall.getOnCallIntegrations([]);
 
       const { result } = renderHook(() => useOnCallIntegration(), { wrapper: TestProvider });
@@ -175,8 +164,8 @@ describe('useOnCallIntegration', () => {
     });
 
     it('extendConCallNotifierFeatures should not extend notifier', async () => {
-      // TODO Mock the OnCall API response responsible for integration version
       mockApi(server).plugins.getPluginSettings({ ...onCallPluginMetaMock, enabled: true });
+      mockApi(server).oncall.features([]);
       mockApi(server).oncall.getOnCallIntegrations([]);
 
       const { result } = renderHook(() => useOnCallIntegration(), { wrapper: TestProvider });
