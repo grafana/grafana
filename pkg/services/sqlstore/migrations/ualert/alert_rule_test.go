@@ -199,13 +199,24 @@ func TestMakeAlertRule(t *testing.T) {
 }
 
 func TestTokensToTmpl(t *testing.T) {
-	tokens := []Token{{Variable: "instance"}, {Space: ' '}, {Literal: "is down"}}
+	tokens := []Token{{Variable: "instance"}, {Literal: " is down"}}
 	assert.Equal(t, "{{instance}} is down", tokensToTmpl(tokens))
 }
 
+func TestTokensToTmplNewlines(t *testing.T) {
+	tokens := []Token{{Variable: "instance"}, {Literal: " is down\n"}, {Variable: "job"}, {Literal: " is down"}}
+	assert.Equal(t, "{{instance}} is down\n{{job}} is down", tokensToTmpl(tokens))
+}
+
 func TestVariablesToPromLabels(t *testing.T) {
-	tokens := []Token{{Variable: "instance"}, {Space: ' '}, {Literal: "is down"}}
-	expected := []Token{{Variable: "$labels.instance"}, {Space: ' '}, {Literal: "is down"}}
+	tokens := []Token{{Variable: "instance"}, {Literal: " is down"}}
+	expected := []Token{{Variable: "$labels.instance"}, {Literal: " is down"}}
+	assert.Equal(t, expected, variablesToPromLabels(tokens))
+}
+
+func TestVariablesToPromLabelsSpace(t *testing.T) {
+	tokens := []Token{{Variable: "instance with spaces"}, {Literal: " is down"}}
+	expected := []Token{{Variable: "index $labels \"instance with spaces\""}, {Literal: " is down"}}
 	assert.Equal(t, expected, variablesToPromLabels(tokens))
 }
 

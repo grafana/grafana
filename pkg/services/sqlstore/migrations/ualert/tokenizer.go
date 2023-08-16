@@ -1,6 +1,5 @@
 // This file contains code that parses templates from old alerting into a sequence
-// of tokens. Each token can be either a whitespace character, such as a space, tab,
-// or newline; a string literal; or a variable.
+// of tokens. Each token can be either a string literal or a variable.
 
 package ualert
 
@@ -17,13 +16,8 @@ var (
 // Token contains either a whitespace character, such as a space, tab, or newline;
 // a string literal; or a variable.
 type Token struct {
-	Space    rune
 	Literal  string
 	Variable string
-}
-
-func (t Token) IsSpace() bool {
-	return t.Space > 0
 }
 
 func (t Token) IsLiteral() bool {
@@ -35,9 +29,7 @@ func (t Token) IsVariable() bool {
 }
 
 func (t Token) String() string {
-	if t.IsSpace() {
-		return string(t.Space)
-	} else if t.IsLiteral() {
+	if t.IsLiteral() {
 		return t.Literal
 	} else if t.IsVariable() {
 		return t.Variable
@@ -53,19 +45,10 @@ func tokenizeLiteral(in []rune) (Token, int, error) {
 		runes []rune
 	)
 
-	// consume leading spaces
-	for pos < len(in) {
-		if r = in[pos]; unicode.IsSpace(r) {
-			pos = pos + 1
-		} else {
-			break
-		}
-	}
-
-	// consume runes until the first dollar or the end of in
+	// consume runes until the first '$' or the end of in
 	for pos < len(in) {
 		if r = in[pos]; r == '$' {
-			// don't consume the dollar as this is the start of a variable
+			// don't consume the '$' as this is the start of a variable
 			break
 		}
 		runes = append(runes, r)
@@ -73,24 +56,7 @@ func tokenizeLiteral(in []rune) (Token, int, error) {
 		pos = pos + 1
 	}
 
-	// remove trailing spaces and rewind pos
-	for i := len(runes) - 1; i > 0; i-- {
-		if unicode.IsSpace(runes[i]) {
-			runes = runes[0:i]
-			pos = pos - 1
-		} else {
-			break
-		}
-	}
-
 	return Token{Literal: string(runes)}, pos, nil
-}
-
-func tokenizeSpace(in []rune) (Token, int, error) {
-	if len(in) > 0 && unicode.IsSpace(in[0]) {
-		return Token{Space: in[0]}, 1, nil
-	}
-	return Token{}, 0, ErrEOF
 }
 
 func tokenizeVariable(in []rune) (Token, int, error) {
@@ -100,50 +66,44 @@ func tokenizeVariable(in []rune) (Token, int, error) {
 		runes []rune
 	)
 
-	// consume leading spaces
-	for pos < len(in) {
-		if r = in[pos]; unicode.IsSpace(r) {
-			pos = pos + 1
-		} else {
-			break
-		}
-	}
-
 	// variables must start with a $
 	r = in[pos]
 	if r != '$' {
-		return Token{}, pos, fmt.Errorf("expected $, got %c", r)
+		return Token{}, pos, fmt.Errorf("expected '$', got '%c'", r)
 	}
 
 	// the next rune must be an open brace
 	pos = pos + 1
 	r = in[pos]
 	if r != '{' {
-		return Token{}, pos, fmt.Errorf("expected opening {, got %c", r)
+		return Token{}, pos, fmt.Errorf("expected '{', got '%c'", r)
 	}
 
-	// consume all letters, numbers and undercores until the closing brace
+	// consume all runes except for '$', '{', and any non-space whitespace until the closing brace
 	pos = pos + 1
 	for pos < len(in) {
-		if r = in[pos]; unicode.IsLetter(r) || unicode.IsNumber(r) || r == '_' {
-			runes = append(runes, r)
-			pos = pos + 1
+		r = in[pos]
+		if r == '$' || r == '{' {
+			return Token{}, pos, fmt.Errorf("unexpected '%c'", r)
+		} else if unicode.IsSpace(r) && r != ' ' {
+			return Token{}, pos, errors.New("unexpected whitespace")
 		} else if r == '}' {
 			pos = pos + 1
 			break
 		} else {
-			return Token{}, pos, fmt.Errorf("expected letter, number or underscore, got %c", r)
+			runes = append(runes, r)
+			pos = pos + 1
 		}
 	}
 
 	// if the last rune is not a closing brace then this is not a valid variable
 	if r != '}' {
-		return Token{}, pos, fmt.Errorf("expected closing }, got %c", r)
+		return Token{}, pos, fmt.Errorf("expected '}', got '%c'", r)
 	}
 
 	// if there is more than one closing brace then this is not a valid variable either
 	if pos < len(in) && in[pos] == '}' {
-		return Token{}, pos, errors.New("unexpected }")
+		return Token{}, pos, errors.New("unexpected '}'")
 	}
 
 	return Token{Variable: string(runes)}, pos, nil
@@ -165,8 +125,6 @@ func tokenizeTmpl(tmpl string) ([]Token, error) {
 		r = in[pos]
 		if r == '$' {
 			token, offset, err = tokenizeVariable(in[pos:])
-		} else if unicode.IsSpace(r) {
-			token, offset, err = tokenizeSpace(in[pos:])
 		} else {
 			token, offset, err = tokenizeLiteral(in[pos:])
 		}
@@ -175,15 +133,6 @@ func tokenizeTmpl(tmpl string) ([]Token, error) {
 		}
 		tokens = append(tokens, token)
 		pos = pos + offset
-	}
-
-	// remove the last tokens if spaces
-	for i := len(tokens) - 1; i > 0; i-- {
-		if tokens[i].Space > 0 {
-			tokens = tokens[0:i]
-		} else {
-			break
-		}
 	}
 
 	return tokens, nil
