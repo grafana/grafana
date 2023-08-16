@@ -1,9 +1,12 @@
 #!/bin/sh
 
-if [[ -f ".git/hooks/pre-commit" ]]; then
+# Catch devs who have installed lefthook, went back into the past and reinstalled husky,
+# then came back into lefthook-land
+if [ -f ".git/hooks/pre-commit" ]; then
   if grep -q lefthook ".git/hooks/pre-commit"; then
     env SILENT=1 ./scripts/cleanup-husky.sh
     ./.git/hooks/pre-commit "$@"
+    exit $?
   fi
 fi
 
