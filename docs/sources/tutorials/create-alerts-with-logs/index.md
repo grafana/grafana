@@ -30,8 +30,8 @@ In this tutorial, you'll:
 
 ## Before you begin
 
-* You’re on Grafana 8 or later with [Grafana Alerting](https://grafana.com/docs/grafana/latest/alerting/set-up/migrating-alerts/) enabled.
-* You’ve [configured a Loki datasource](https://grafana.com/docs/grafana/latest/datasources/loki/#configure-the-data-source) in Grafana.
+* Ensure you’re on Grafana 8 or later with [Grafana Alerting](https://grafana.com/docs/grafana/latest/alerting/set-up/migrating-alerts/) enabled.
+* Ensure you’ve [configured a Loki datasource](https://grafana.com/docs/grafana/latest/datasources/loki/#configure-the-data-source) in Grafana.
 * If you already have logs to work with, you can skip the optional sections and go straight to [create an alert](#create-an-alert).
 * If you want to use a log-generating sample script to create the logs demonstrated in this tutorial, refer to the optional steps:
     * [Use promtail and log-generating script](#optional-use-promtail-and-a-python-script-to-create-sample-logs-and-send-them-to-loki)
