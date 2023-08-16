@@ -11,7 +11,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/web"
@@ -88,7 +87,7 @@ func TestDatasourceProxy_proxyDatasourceRequest(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			pluginID := datasources.DS_PROMETHEUS
 
-			pluginStore := &fakes.FakePluginStore{PluginList: []plugins.PluginDTO{
+			pluginStore := &plugins.FakePluginStore{PluginList: []plugins.PluginDTO{
 				{JSONData: plugins.JSONData{ID: pluginID}},
 			}}
 
