@@ -57,6 +57,6 @@ func (l *Loader) Load(ctx context.Context, src plugins.PluginSource) ([]*plugins
 	return initializedPlugins, nil
 }
 
-func (l *Loader) Unload(ctx context.Context, pluginID string) error {
-	return l.termination.Terminate(ctx, pluginID)
+func (l *Loader) Unload(ctx context.Context, p *plugins.Plugin) (*plugins.Plugin, error) {
+	return l.termination.Terminate(ctx, p)
 }
