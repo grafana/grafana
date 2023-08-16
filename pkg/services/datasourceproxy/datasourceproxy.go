@@ -52,9 +52,7 @@ type DataSourceProxyService struct {
 	secretsService         secrets.Service
 }
 
-// TODO: remove prints.
 func (p *DataSourceProxyService) ProxyDataSourceRequest(c *contextmodel.ReqContext) {
-	fmt.Println("DataSourceProxyService.ProxyDataSourceRequest")
 	id, err := strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
 	if err != nil {
 		c.JsonApiErr(http.StatusBadRequest, "id is invalid", err)
@@ -64,7 +62,6 @@ func (p *DataSourceProxyService) ProxyDataSourceRequest(c *contextmodel.ReqConte
 }
 
 func (p *DataSourceProxyService) ProxyDatasourceRequestWithUID(c *contextmodel.ReqContext, dsUID string) {
-	fmt.Println("DataSourceProxyService.ProxyDatasourceRequestWithUID")
 	c.TimeRequest(metrics.MDataSourceProxyReqTimer)
 
 	if dsUID == "" { // if datasource UID is not provided, fetch it from the uid path parameter
@@ -85,7 +82,6 @@ func (p *DataSourceProxyService) ProxyDatasourceRequestWithUID(c *contextmodel.R
 }
 
 func (p *DataSourceProxyService) ProxyDatasourceRequestWithID(c *contextmodel.ReqContext, dsID int64) {
-	fmt.Println("DataSourceProxyService.ProxyDatasourceRequestWithID")
 	c.TimeRequest(metrics.MDataSourceProxyReqTimer)
 
 	ds, err := p.DataSourceCache.GetDatasource(c.Req.Context(), dsID, c.SignedInUser, c.SkipDSCache)
@@ -109,7 +105,6 @@ func toAPIError(c *contextmodel.ReqContext, err error) {
 }
 
 func (p *DataSourceProxyService) proxyDatasourceRequest(c *contextmodel.ReqContext, ds *datasources.DataSource) {
-	fmt.Println("DataSourceProxyService.proxyDatasourceRequest")
 	err := p.PluginRequestValidator.Validate(ds.URL, c.Req)
 	if err != nil {
 		c.JsonApiErr(http.StatusForbidden, "Access denied", err)
@@ -124,7 +119,6 @@ func (p *DataSourceProxyService) proxyDatasourceRequest(c *contextmodel.ReqConte
 	}
 
 	proxyPath := getProxyPath(c)
-	// Note(santiago): new data source proxy to make requests to the external AM?
 	proxy, err := pluginproxy.NewDataSourceProxy(ds, plugin.Routes, c, proxyPath, p.Cfg, p.HTTPClientProvider,
 		p.OAuthTokenService, p.DataSourcesService, p.tracer)
 	if err != nil {
