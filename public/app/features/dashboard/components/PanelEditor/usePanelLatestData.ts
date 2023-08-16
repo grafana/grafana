@@ -61,15 +61,12 @@ export const usePanelLatestData = (
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [panel, options.withTransforms]);
 
-  const hasError = Boolean(
-    latestData && (latestData.error || latestData?.errors?.length || latestData.state === LoadingState.Error)
-  );
-  console.log({ hasError, latestData });
-
   return {
     data: latestData,
     isLoading: latestData ? latestData.state === LoadingState.Loading : true,
     hasSeries: latestData ? !!latestData.series : false,
-    hasError,
+    hasError: Boolean(
+      latestData && (latestData.error || latestData?.errors?.length || latestData.state === LoadingState.Error)
+    ),
   };
 };
