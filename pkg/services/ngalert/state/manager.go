@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/benbjohnson/clock"
+	"github.com/grafana/dskit/concurrency"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -39,7 +40,8 @@ type Manager struct {
 	historian     Historian
 	externalURL   *url.URL
 
-	doNotSaveNormalState bool
+	doNotSaveNormalState    bool
+	maxStateSaveConcurrency int
 }
 
 type ManagerCfg struct {
@@ -51,20 +53,23 @@ type ManagerCfg struct {
 	Historian     Historian
 	// DoNotSaveNormalState controls whether eval.Normal state is persisted to the database and returned by get methods
 	DoNotSaveNormalState bool
+	// MaxStateSaveConcurrency controls the number of goroutines (per rule) that can save alert state in parallel.
+	MaxStateSaveConcurrency int
 }
 
 func NewManager(cfg ManagerCfg) *Manager {
 	return &Manager{
-		cache:                newCache(),
-		ResendDelay:          ResendDelay, // TODO: make this configurable
-		log:                  log.New("ngalert.state.manager"),
-		metrics:              cfg.Metrics,
-		instanceStore:        cfg.InstanceStore,
-		images:               cfg.Images,
-		historian:            cfg.Historian,
-		clock:                cfg.Clock,
-		externalURL:          cfg.ExternalURL,
-		doNotSaveNormalState: cfg.DoNotSaveNormalState,
+		cache:                   newCache(),
+		ResendDelay:             ResendDelay, // TODO: make this configurable
+		log:                     log.New("ngalert.state.manager"),
+		metrics:                 cfg.Metrics,
+		instanceStore:           cfg.InstanceStore,
+		images:                  cfg.Images,
+		historian:               cfg.Historian,
+		clock:                   cfg.Clock,
+		externalURL:             cfg.ExternalURL,
+		doNotSaveNormalState:    cfg.DoNotSaveNormalState,
+		maxStateSaveConcurrency: cfg.MaxStateSaveConcurrency,
 	}
 }
 
@@ -350,17 +355,17 @@ func (st *Manager) saveAlertStates(ctx context.Context, logger log.Logger, state
 		return
 	}
 
-	logger.Debug("Saving alert states", "count", len(states))
-	for _, s := range states {
+	saveState := func(ctx context.Context, idx int) error {
+		s := states[idx]
 		// Do not save normal state to database and remove transition to Normal state but keep mapped states
 		if st.doNotSaveNormalState && IsNormalStateWithNoReason(s.State) && !s.Changed() {
-			continue
+			return nil
 		}
 
 		key, err := s.GetAlertInstanceKey()
 		if err != nil {
 			logger.Error("Failed to create a key for alert state to save it to database. The state will be ignored ", "cacheID", s.CacheID, "error", err, "labels", s.Labels.String())
-			continue
+			return nil
 		}
 		instance := ngModels.AlertInstance{
 			AlertInstanceKey:  key,
@@ -375,9 +380,14 @@ func (st *Manager) saveAlertStates(ctx context.Context, logger log.Logger, state
 		err = st.instanceStore.SaveAlertInstance(ctx, instance)
 		if err != nil {
 			logger.Error("Failed to save alert state", "labels", s.Labels.String(), "state", s.State, "error", err)
+			return nil
 		}
+		return nil
 	}
-	logger.Debug("Saving alert states done", "count", len(states))
+
+	logger.Debug("Saving alert states", "count", len(states), "max_state_save_concurrency", st.maxStateSaveConcurrency)
+	_ = concurrency.ForEachJob(ctx, len(states), st.maxStateSaveConcurrency, saveState)
+	logger.Debug("Saving alert states done", "count", len(states), "max_state_save_concurrency", st.maxStateSaveConcurrency)
 }
 
 func (st *Manager) deleteAlertStates(ctx context.Context, logger log.Logger, states []StateTransition) {

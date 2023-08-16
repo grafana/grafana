@@ -46,12 +46,13 @@ func NewEngine(appUrl *url.URL, evalFactory eval.EvaluatorFactory) *Engine {
 		evalFactory: evalFactory,
 		createStateManager: func() stateManager {
 			cfg := state.ManagerCfg{
-				Metrics:       nil,
-				ExternalURL:   appUrl,
-				InstanceStore: nil,
-				Images:        &NoopImageService{},
-				Clock:         clock.New(),
-				Historian:     nil,
+				Metrics:                 nil,
+				ExternalURL:             appUrl,
+				InstanceStore:           nil,
+				Images:                  &NoopImageService{},
+				Clock:                   clock.New(),
+				Historian:               nil,
+				MaxStateSaveConcurrency: 1,
 			}
 			return state.NewManager(cfg)
 		},
