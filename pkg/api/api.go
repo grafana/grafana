@@ -71,9 +71,9 @@ func (hs *HTTPServer) registerRoutes() {
 
 	// not logged in views
 	r.Get("/logout", hs.Logout)
-	r.Post("/login", quota(string(auth.QuotaTargetSrv)), routing.Wrap(hs.LoginPost))
+	r.Post("/login", requestmeta.SetOwner(requestmeta.TeamAuth), quota(string(auth.QuotaTargetSrv)), routing.Wrap(hs.LoginPost))
 	r.Get("/login/:name", quota(string(auth.QuotaTargetSrv)), hs.OAuthLogin)
-	r.Get("/login", requestmeta.SetOwner(requestmeta.TeamAuth), hs.LoginView)
+	r.Get("/login", hs.LoginView)
 	r.Get("/invite/:code", hs.Index)
 
 	// authed views
