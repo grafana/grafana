@@ -1,6 +1,7 @@
 package state_test
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -15,11 +16,13 @@ import (
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/exp/slices"
 
 	"github.com/grafana/grafana/pkg/expr"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/annotations/annotationstest"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -198,6 +201,7 @@ func TestWarmStateCache(t *testing.T) {
 		Clock:                   clock.NewMock(),
 		Historian:               &state.FakeHistorian{},
 		MaxStateSaveConcurrency: 1,
+		Tracer:                  tracing.InitializeTracerForTest(),
 	}
 	st := state.NewManager(cfg)
 	st.Warm(ctx, dbstore)
@@ -234,6 +238,7 @@ func TestDashboardAnnotations(t *testing.T) {
 		Clock:                   clock.New(),
 		Historian:               hist,
 		MaxStateSaveConcurrency: 1,
+		Tracer:                  tracing.InitializeTracerForTest(),
 	}
 	st := state.NewManager(cfg)
 
@@ -1198,18 +1203,21 @@ func TestProcessEvalResults(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.desc, func(t *testing.T) {
 			fakeAnnoRepo := annotationstest.NewFakeAnnotationsRepo()
-			m := metrics.NewHistorianMetrics(prometheus.NewRegistry())
-			store := historian.NewAnnotationStore(fakeAnnoRepo, &dashboards.FakeDashboardService{}, m)
-			hist := historian.NewAnnotationBackend(store, nil, m)
+			reg := prometheus.NewPedanticRegistry()
+			stateMetrics := metrics.NewStateMetrics(reg)
+			metrics := metrics.NewHistorianMetrics(prometheus.NewRegistry())
+			store := historian.NewAnnotationStore(fakeAnnoRepo, &dashboards.FakeDashboardService{}, metrics)
+			hist := historian.NewAnnotationBackend(store, nil, metrics)
 			clk := clock.NewMock()
 			cfg := state.ManagerCfg{
-				Metrics:                 testMetrics.GetStateMetrics(),
+				Metrics:                 stateMetrics,
 				ExternalURL:             nil,
 				InstanceStore:           &state.FakeInstanceStore{},
 				Images:                  &state.NotAvailableImageService{},
 				Clock:                   clk,
 				Historian:               hist,
 				MaxStateSaveConcurrency: 1,
+				Tracer:                  tracing.InitializeTracerForTest(),
 			}
 			st := state.NewManager(cfg)
 
@@ -1220,7 +1228,7 @@ func TestProcessEvalResults(t *testing.T) {
 			slices.SortFunc(evals, func(a, b time.Time) bool {
 				return a.Before(b)
 			})
-
+			results := 0
 			for _, evalTime := range evals {
 				res := tc.evalResults[evalTime]
 				for i := 0; i < len(res); i++ {
@@ -1228,6 +1236,7 @@ func TestProcessEvalResults(t *testing.T) {
 				}
 				clk.Set(evalTime)
 				_ = st.ProcessEvalResults(context.Background(), evalTime, tc.alertRule, res, systemLabels)
+				results += len(res)
 			}
 
 			states := st.GetStatesForRuleUID(tc.alertRule.OrgID, tc.alertRule.UID)
@@ -1278,6 +1287,22 @@ func TestProcessEvalResults(t *testing.T) {
 			require.Eventuallyf(t, func() bool {
 				return tc.expectedAnnotations == fakeAnnoRepo.Len()
 			}, time.Second, 100*time.Millisecond, "%d annotations are present, expected %d. We have %+v", fakeAnnoRepo.Len(), tc.expectedAnnotations, printAllAnnotations(fakeAnnoRepo.Items()))
+
+			expectedMetric := fmt.Sprintf(
+				`# HELP grafana_alerting_state_calculation_duration_seconds The duration of calculation of a single state.
+        	            # TYPE grafana_alerting_state_calculation_duration_seconds histogram
+        	            grafana_alerting_state_calculation_duration_seconds_bucket{le="0.01"} %[1]d
+        	            grafana_alerting_state_calculation_duration_seconds_bucket{le="0.1"} %[1]d
+        	            grafana_alerting_state_calculation_duration_seconds_bucket{le="1"} %[1]d
+        	            grafana_alerting_state_calculation_duration_seconds_bucket{le="2"} %[1]d
+        	            grafana_alerting_state_calculation_duration_seconds_bucket{le="5"} %[1]d
+        	            grafana_alerting_state_calculation_duration_seconds_bucket{le="10"} %[1]d
+        	            grafana_alerting_state_calculation_duration_seconds_bucket{le="+Inf"} %[1]d
+        	            grafana_alerting_state_calculation_duration_seconds_sum 0
+        	            grafana_alerting_state_calculation_duration_seconds_count %[1]d
+						`, results)
+			err := testutil.GatherAndCompare(reg, bytes.NewBufferString(expectedMetric), "grafana_alerting_state_calculation_duration_seconds", "grafana_alerting_state_calculation_total")
+			require.NoError(t, err)
 		})
 	}
 
@@ -1292,6 +1317,7 @@ func TestProcessEvalResults(t *testing.T) {
 			Clock:                   clk,
 			Historian:               &state.FakeHistorian{},
 			MaxStateSaveConcurrency: 1,
+			Tracer:                  tracing.InitializeTracerForTest(),
 		}
 		st := state.NewManager(cfg)
 		rule := models.AlertRuleGen()()
@@ -1442,6 +1468,7 @@ func TestStaleResultsHandler(t *testing.T) {
 			Clock:                   clock.New(),
 			Historian:               &state.FakeHistorian{},
 			MaxStateSaveConcurrency: 1,
+			Tracer:                  tracing.InitializeTracerForTest(),
 		}
 		st := state.NewManager(cfg)
 		st.Warm(ctx, dbstore)
@@ -1523,6 +1550,7 @@ func TestStaleResults(t *testing.T) {
 		Clock:                   clk,
 		Historian:               &state.FakeHistorian{},
 		MaxStateSaveConcurrency: 1,
+		Tracer:                  tracing.InitializeTracerForTest(),
 	}
 	st := state.NewManager(cfg)
 
@@ -1695,6 +1723,7 @@ func TestDeleteStateByRuleUID(t *testing.T) {
 				Clock:                   clk,
 				Historian:               &state.FakeHistorian{},
 				MaxStateSaveConcurrency: 1,
+				Tracer:                  tracing.InitializeTracerForTest(),
 			}
 			st := state.NewManager(cfg)
 			st.Warm(ctx, dbstore)
@@ -1835,6 +1864,7 @@ func TestResetStateByRuleUID(t *testing.T) {
 				Clock:                   clk,
 				Historian:               fakeHistorian,
 				MaxStateSaveConcurrency: 1,
+				Tracer:                  tracing.InitializeTracerForTest(),
 			}
 			st := state.NewManager(cfg)
 			st.Warm(ctx, dbstore)
