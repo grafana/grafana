@@ -31,8 +31,6 @@ import (
 	"github.com/grafana/grafana/pkg/middleware/loggermw"
 	"github.com/grafana/grafana/pkg/modules"
 	pluginDashboards "github.com/grafana/grafana/pkg/plugins/manager/dashboards"
-	"github.com/grafana/grafana/pkg/registry"
-	"github.com/grafana/grafana/pkg/registry/backgroundsvcs"
 	"github.com/grafana/grafana/pkg/registry/corekind"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
@@ -438,8 +436,8 @@ var wireBaseCLISet = wire.NewSet(
 	licensing.ProvideService,
 	wire.Bind(new(licensing.Licensing), new(*licensing.OSSLicensingService)),
 	hooks.ProvideService,
-	backgroundsvcs.ProvideBackgroundServiceRegistry,
-	wire.Bind(new(registry.BackgroundServiceRegistry), new(*backgroundsvcs.BackgroundServiceRegistry)),
+	// backgroundsvcs.ProvideBackgroundServiceRegistry,
+	// wire.Bind(new(registry.BackgroundServiceRegistry), new(*backgroundsvcs.BackgroundServiceRegistry)),
 	modules.WireSet,
 )
 

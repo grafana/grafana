@@ -21,8 +21,8 @@ import (
 // start.
 func TargetCommand(version, commit, buildBranch, buildstamp string) *cli.Command {
 	return &cli.Command{
-		Name:  "server",
-		Usage: "run the grafana server",
+		Name:  "target",
+		Usage: "target specific grafana dskit services",
 		Flags: commonFlags,
 		Action: func(context *cli.Context) error {
 			return RunBaseServer(ServerOptions{
@@ -81,9 +81,7 @@ func RunBaseServer(opts ServerOptions) error {
 
 	setBuildInfo(opts)
 	checkPrivileges()
-
 	configOptions := strings.Split(ConfigOverrides, " ")
-
 	s, err := server.InitializeModuleServer(
 		setting.CommandLineArgs{
 			Config:   ConfigFile,
@@ -104,8 +102,6 @@ func RunBaseServer(opts ServerOptions) error {
 	}
 
 	ctx := context.Background()
-
 	go listenToSystemSignals(ctx, s)
-
 	return s.Run()
 }
