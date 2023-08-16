@@ -1,4 +1,4 @@
-import { render } from '@testing-library/react';
+import { render, waitFor } from '@testing-library/react';
 import React from 'react';
 import { Provider } from 'react-redux';
 import { Router } from 'react-router-dom';
@@ -33,7 +33,7 @@ describe('RuleListGroupView', () => {
   describe('RBAC', () => {
     jest.spyOn(contextSrv, 'accessControlEnabled').mockReturnValue(true);
 
-    it('Should display Grafana rules when the user has the alert rule read permission', () => {
+    it('Should display Grafana rules when the user has the alert rule read permission', async () => {
       const grafanaNamespace = getGrafanaNamespace();
       const namespaces: CombinedRuleNamespace[] = [grafanaNamespace];
 
@@ -43,10 +43,12 @@ describe('RuleListGroupView', () => {
 
       renderRuleList(namespaces);
 
-      expect(ui.grafanaRulesHeading.get()).toBeInTheDocument();
+      await waitFor(() => {
+        expect(ui.grafanaRulesHeading.get()).toBeInTheDocument();
+      });
     });
 
-    it('Should display Cloud rules when the user has the external rules read permission', () => {
+    it('Should display Cloud rules when the user has the external rules read permission', async () => {
       const cloudNamespace = getCloudNamespace();
       const namespaces: CombinedRuleNamespace[] = [cloudNamespace];
 
@@ -56,10 +58,12 @@ describe('RuleListGroupView', () => {
 
       renderRuleList(namespaces);
 
-      expect(ui.cloudRulesHeading.get()).toBeInTheDocument();
+      await waitFor(() => {
+        expect(ui.cloudRulesHeading.get()).toBeInTheDocument();
+      });
     });
 
-    it('Should not display Grafana rules when the user does not have alert rule read permission', () => {
+    it('Should not display Grafana rules when the user does not have alert rule read permission', async () => {
       const grafanaNamespace = getGrafanaNamespace();
       const namespaces: CombinedRuleNamespace[] = [grafanaNamespace];
 
@@ -67,10 +71,12 @@ describe('RuleListGroupView', () => {
 
       renderRuleList(namespaces);
 
-      expect(ui.grafanaRulesHeading.query()).not.toBeInTheDocument();
+      await waitFor(() => {
+        expect(ui.grafanaRulesHeading.query()).not.toBeInTheDocument();
+      });
     });
 
-    it('Should not display Cloud rules when the user does not have the external rules read permission', () => {
+    it('Should not display Cloud rules when the user does not have the external rules read permission', async () => {
       const cloudNamespace = getCloudNamespace();
 
       const namespaces: CombinedRuleNamespace[] = [cloudNamespace];
@@ -80,7 +86,9 @@ describe('RuleListGroupView', () => {
 
       renderRuleList(namespaces);
 
-      expect(ui.cloudRulesHeading.query()).not.toBeInTheDocument();
+      await waitFor(() => {
+        expect(ui.cloudRulesHeading.query()).not.toBeInTheDocument();
+      });
     });
   });
 

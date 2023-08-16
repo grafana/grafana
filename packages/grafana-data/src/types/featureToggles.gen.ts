@@ -81,7 +81,6 @@ export interface FeatureToggles {
   alertStateHistoryLokiOnly?: boolean;
   unifiedRequestLog?: boolean;
   renderAuthJWT?: boolean;
-  pyroscopeFlameGraph?: boolean;
   externalServiceAuth?: boolean;
   refactorVariablesTimeRange?: boolean;
   useCachingService?: boolean;
@@ -115,6 +114,10 @@ export interface FeatureToggles {
   awsAsyncQueryCaching?: boolean;
   splitScopes?: boolean;
   azureMonitorDataplane?: boolean;
+  permissionsFilterRemoveSubquery?: boolean;
   prometheusConfigOverhaulAuth?: boolean;
   configurableSchedulerTick?: boolean;
+  influxdbSqlSupport?: boolean;
+  noBasicRole?: boolean;
+  alertingNoDataErrorExecution?: boolean;
 }

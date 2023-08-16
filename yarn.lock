@@ -3604,13 +3604,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/aws-sdk@npm:0.0.47":
-  version: 0.0.47
-  resolution: "@grafana/aws-sdk@npm:0.0.47"
+"@grafana/aws-sdk@npm:0.1.1":
+  version: 0.1.1
+  resolution: "@grafana/aws-sdk@npm:0.1.1"
   dependencies:
     "@grafana/async-query-data": 0.1.4
     "@grafana/experimental": 1.1.0
-  checksum: 1e9f57bddf08f0c0b432bb8bdd5ad63382c2d40e9d8282469e3add0ea970a80bcd31e852f050412e0d41620d71e53839510261f92333d026bf79a88d7346c626
+  checksum: 12d1b27b0959a4d16ddf643b360ce067f6debd4141eb28652ff36fece98a99087f865aa2b9f6fda78df2b9e38870a6a7cfa48e0fd1a1ec03de63bc340b344f05
   languageName: node
   linkType: hard
 
@@ -3865,6 +3865,15 @@ __metadata:
   peerDependencies:
     "@lezer/lr": ^1.0.0
   checksum: f0f301b6d4fbd2d79563b5b4e34303257be0ea995b2b9fa1f012648654b4afaa9cea91642bc59eddb70e9fa24ec8804489c161f7065b41eef49db68d3a2ca561
+  languageName: node
+  linkType: hard
+
+"@grafana/lezer-traceql@npm:0.0.4":
+  version: 0.0.4
+  resolution: "@grafana/lezer-traceql@npm:0.0.4"
+  peerDependencies:
+    "@lezer/lr": ^1.3.0
+  checksum: 69acea33476d3cdabfb99f3eb62bb34289bc205da69920e0eccc82f40407f9d584fa03f9662706ab667ee97d3ea84b964b22a11925e6699deef5afe1ca9e1906
   languageName: node
   linkType: hard
 
@@ -6587,18 +6596,6 @@ __metadata:
   version: 1.1.0
   resolution: "@protobufjs/utf8@npm:1.1.0"
   checksum: f9bf3163d13aaa3b6f5e6fbf37a116e094ea021c0e1f2a7ccd0e12a29e2ce08dafba4e8b36e13f8ed7397e1591610ce880ed1289af4d66cf4ace8a36a9557278
-  languageName: node
-  linkType: hard
-
-"@pyroscope/flamegraph@npm:^0.35.5":
-  version: 0.35.6
-  resolution: "@pyroscope/flamegraph@npm:0.35.6"
-  peerDependencies:
-    graphviz-react: ^1.2.5
-    react: ">=16.14.0"
-    react-dom: ">=16.14.0"
-    true-myth: ^5.1.2
-  checksum: 7744b6af4ba9f94c33cdc088167db11074783818c1f325c495cd6762af1f16559a48040f251af9920fd0e9bb85bc55d70a1cffdfc38b3b0d0b7af943b057cb88
   languageName: node
   linkType: hard
 
@@ -19271,7 +19268,7 @@ __metadata:
     "@emotion/eslint-plugin": 11.11.0
     "@emotion/react": 11.11.1
     "@glideapps/glide-data-grid": ^5.2.1
-    "@grafana/aws-sdk": 0.0.47
+    "@grafana/aws-sdk": 0.1.1
     "@grafana/data": "workspace:*"
     "@grafana/e2e": "workspace:*"
     "@grafana/e2e-selectors": "workspace:*"
@@ -19282,6 +19279,7 @@ __metadata:
     "@grafana/faro-web-sdk": 1.1.2
     "@grafana/google-sdk": 0.1.1
     "@grafana/lezer-logql": 0.1.8
+    "@grafana/lezer-traceql": 0.0.4
     "@grafana/monaco-logql": ^0.0.7
     "@grafana/runtime": "workspace:*"
     "@grafana/scenes": 0.22.0
@@ -19303,7 +19301,6 @@ __metadata:
     "@pmmmwh/react-refresh-webpack-plugin": 0.5.10
     "@popperjs/core": 2.11.8
     "@prometheus-io/lezer-promql": ^0.37.0-rc.1
-    "@pyroscope/flamegraph": ^0.35.5
     "@react-aria/button": 3.8.0
     "@react-aria/dialog": 3.5.3
     "@react-aria/focus": 3.13.0
@@ -29351,7 +29348,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"semver@npm:7.5.4, semver@npm:^7.3.8, semver@npm:^7.5.1, semver@npm:^7.5.3":
+"semver@npm:7.5.4, semver@npm:7.x, semver@npm:^7.0.0, semver@npm:^7.1.1, semver@npm:^7.3.2, semver@npm:^7.3.4, semver@npm:^7.3.5, semver@npm:^7.3.7, semver@npm:^7.3.8, semver@npm:^7.5.1, semver@npm:^7.5.3":
   version: 7.5.4
   resolution: "semver@npm:7.5.4"
   dependencies:
@@ -29362,34 +29359,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"semver@npm:7.x, semver@npm:^7.3.2, semver@npm:^7.3.4, semver@npm:^7.3.5":
-  version: 7.3.5
-  resolution: "semver@npm:7.3.5"
-  dependencies:
-    lru-cache: ^6.0.0
-  bin:
-    semver: bin/semver.js
-  checksum: 5eafe6102bea2a7439897c1856362e31cc348ccf96efd455c8b5bc2c61e6f7e7b8250dc26b8828c1d76a56f818a7ee907a36ae9fb37a599d3d24609207001d60
-  languageName: node
-  linkType: hard
-
 "semver@npm:^6.0.0, semver@npm:^6.1.1, semver@npm:^6.1.2, semver@npm:^6.3.0, semver@npm:^6.3.1":
   version: 6.3.1
   resolution: "semver@npm:6.3.1"
   bin:
     semver: bin/semver.js
   checksum: ae47d06de28836adb9d3e25f22a92943477371292d9b665fb023fae278d345d508ca1958232af086d85e0155aee22e313e100971898bbb8d5d89b8b1d4054ca2
-  languageName: node
-  linkType: hard
-
-"semver@npm:^7.0.0, semver@npm:^7.1.1, semver@npm:^7.3.7":
-  version: 7.3.7
-  resolution: "semver@npm:7.3.7"
-  dependencies:
-    lru-cache: ^6.0.0
-  bin:
-    semver: bin/semver.js
-  checksum: 2fa3e877568cd6ce769c75c211beaed1f9fce80b28338cadd9d0b6c40f2e2862bafd62c19a6cff42f3d54292b7c623277bcab8816a2b5521cf15210d43e75232
   languageName: node
   linkType: hard
 

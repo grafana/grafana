@@ -118,17 +118,9 @@ An example of how to generate a self-signed certificate and private key that's v
 $ openssl req -x509 -newkey rsa:4096 -keyout key.pem -out cert.pem -days 365 -nodes​
 ```
 
-Base64-encode the cert.pem and key.pem files:
-(-w0 switch is not needed on Mac, only for Linux)
+The generated `key.pem` and `cert.pem` files are then used for certificate and private_key.
 
-```sh
-$ base64 -w0 key.pem > key.pem.base64
-$ base64 -w0 cert.pem > cert.pem.base64
-```
-
-The base64-encoded values (`key.pem.base64, cert.pem.base64` files) are then used for certificate and private_key.
-
-The keys you provide should look like:
+The key you provide should look like:
 
 ```
 -----BEGIN PRIVATE KEY-----

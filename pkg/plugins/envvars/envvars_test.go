@@ -40,8 +40,7 @@ func TestInitializer_envVars(t *testing.T) {
 			},
 		}, licensing)
 
-		envVars, err := envVarsProvider.Get(context.Background(), p)
-		require.NoError(t, err)
+		envVars := envVarsProvider.Get(context.Background(), p)
 		assert.Len(t, envVars, 6)
 		assert.Equal(t, "GF_PLUGIN_CUSTOM_ENV_VAR=customVal", envVars[0])
 		assert.Equal(t, "GF_VERSION=", envVars[1])
@@ -301,8 +300,7 @@ func TestInitializer_tracingEnvironmentVariables(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			envVarsProvider := NewProvider(tc.cfg, nil)
-			envVars, err := envVarsProvider.Get(context.Background(), tc.plugin)
-			require.NoError(t, err)
+			envVars := envVarsProvider.Get(context.Background(), tc.plugin)
 			tc.exp(t, envVars)
 		})
 	}
@@ -326,14 +324,24 @@ func TestInitializer_oauthEnvVars(t *testing.T) {
 			GrafanaAppURL: "https://myorg.com/",
 			Features:      featuremgmt.WithFeatures(featuremgmt.FlagExternalServiceAuth),
 		}, nil)
-		envVars, err := envVarsProvider.Get(context.Background(), p)
-
-		require.NoError(t, err)
-		assert.Len(t, envVars, 5)
+		envVars := envVarsProvider.Get(context.Background(), p)
 		assert.Equal(t, "GF_VERSION=", envVars[0])
 		assert.Equal(t, "GF_APP_URL=https://myorg.com/", envVars[1])
 		assert.Equal(t, "GF_PLUGIN_APP_CLIENT_ID=clientID", envVars[2])
 		assert.Equal(t, "GF_PLUGIN_APP_CLIENT_SECRET=clientSecret", envVars[3])
 		assert.Equal(t, "GF_PLUGIN_APP_PRIVATE_KEY=privatePem", envVars[4])
+	})
+}
+
+func TestInitalizer_awsEnvVars(t *testing.T) {
+	t.Run("backend datasource with aws settings", func(t *testing.T) {
+		p := &plugins.Plugin{}
+		envVarsProvider := NewProvider(&config.Cfg{
+			AWSAssumeRoleEnabled:    true,
+			AWSAllowedAuthProviders: []string{"grafana_assume_role", "keys"},
+			AWSExternalId:           "mock_external_id",
+		}, nil)
+		envVars := envVarsProvider.Get(context.Background(), p)
+		assert.ElementsMatch(t, []string{"GF_VERSION=", "AWS_AUTH_AssumeRoleEnabled=true", "AWS_AUTH_AllowedAuthProviders=grafana_assume_role,keys", "AWS_AUTH_EXTERNAL_ID=mock_external_id"}, envVars)
 	})
 }

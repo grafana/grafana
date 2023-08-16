@@ -208,14 +208,6 @@ export class QueryInspector extends PureComponent<Props, State> {
     return 1;
   };
 
-  setMockedResponse = (evt: any) => {
-    const mockedResponse = evt.target.value;
-    this.setState((prevState) => ({
-      ...prevState,
-      mockedResponse,
-    }));
-  };
-
   renderExecutedQueries(executedQueries: ExecutedQueryInfo[]) {
     if (!executedQueries.length) {
       return null;

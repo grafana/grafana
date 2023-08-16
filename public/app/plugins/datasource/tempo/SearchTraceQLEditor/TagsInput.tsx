@@ -34,6 +34,7 @@ interface Props {
   staticTags: Array<string | undefined>;
   isTagsLoading: boolean;
   hideValues?: boolean;
+  query: string;
 }
 const TagsInput = ({
   updateFilter,
@@ -44,6 +45,7 @@ const TagsInput = ({
   staticTags,
   isTagsLoading,
   hideValues,
+  query,
 }: Props) => {
   const styles = useStyles2(getStyles);
   const generateId = () => uuidv4().slice(0, 8);
@@ -77,6 +79,7 @@ const TagsInput = ({
             deleteFilter={deleteFilter}
             allowDelete={true}
             hideValue={hideValues}
+            query={query}
           />
           {i === filters.length - 1 && (
             <AccessoryButton variant={'secondary'} icon={'plus'} onClick={handleOnAdd} title={'Add tag'} />
