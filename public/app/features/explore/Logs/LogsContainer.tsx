@@ -75,15 +75,19 @@ class LogsContainer extends PureComponent<LogsContainerProps, LogsContainerState
   }
 
   private checkFiltersAvailability() {
-    const { queries, datasourceInstance } = this.props;
+    const { logsQueries, datasourceInstance } = this.props;
 
-    if (datasourceInstance?.modifyQuery || hasToggleableQueryFiltersSupport(queries)) {
+    if (!logsQueries) {
+      return;
+    }
+
+    if (datasourceInstance?.modifyQuery || hasToggleableQueryFiltersSupport(datasourceInstance)) {
       this.setState({ logDetailsFilterAvailable: true });
       return;
     }
 
     const promises = [];
-    for (const query of queries) {
+    for (const query of logsQueries) {
       if (query.datasource) {
         promises.push(getDataSourceSrv().get(query.datasource));
       }
@@ -281,7 +285,6 @@ function mapStateToProps(state: StoreState, { exploreId }: { exploreId: string }
     range,
     absoluteRange,
     supplementaryQueries,
-    queries,
   } = item;
   const loading = selectIsWaitingForData(exploreId)(state);
   const panelState = item.panelsState;
@@ -306,7 +309,6 @@ function mapStateToProps(state: StoreState, { exploreId }: { exploreId: string }
     logsVolume,
     panelState,
     logsFrames: item.queryResponse.logsFrames,
-    queries,
   };
 }
 
