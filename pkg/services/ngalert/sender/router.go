@@ -22,6 +22,9 @@ import (
 	"github.com/grafana/grafana/pkg/services/secrets"
 )
 
+// alertmanagerForOrg is a function that given an org ID returns an Alertmanager.
+type alertmanagerForOrg func(orgID int64) (*notifier.Alertmanager, error)
+
 // AlertsRouter handles alerts generated during alert rule evaluation.
 // Based on rule's orgID and the configuration for that organization,
 // it determines whether an alert needs to be sent to an external Alertmanager and\or internal notifier.Alertmanager
@@ -39,7 +42,7 @@ type AlertsRouter struct {
 	externalAlertmanagers        map[int64]*ExternalAlertmanager
 	externalAlertmanagersCfgHash map[int64]string
 
-	multiOrgNotifier *notifier.MultiOrgAlertmanager
+	alertmanagerForOrg alertmanagerForOrg
 
 	appURL                  *url.URL
 	disabledOrgs            map[int64]struct{}
@@ -49,7 +52,7 @@ type AlertsRouter struct {
 	secretService     secrets.Service
 }
 
-func NewAlertsRouter(multiOrgNotifier *notifier.MultiOrgAlertmanager, store store.AdminConfigurationStore,
+func NewAlertsRouter(amForOrgFunc alertmanagerForOrg, store store.AdminConfigurationStore,
 	clk clock.Clock, appURL *url.URL, disabledOrgs map[int64]struct{}, configPollInterval time.Duration,
 	datasourceService datasources.DataSourceService, secretService secrets.Service) *AlertsRouter {
 	d := &AlertsRouter{
@@ -62,7 +65,7 @@ func NewAlertsRouter(multiOrgNotifier *notifier.MultiOrgAlertmanager, store stor
 		externalAlertmanagersCfgHash: map[int64]string{},
 		sendAlertsTo:                 map[int64]models.AlertmanagersChoice{},
 
-		multiOrgNotifier: multiOrgNotifier,
+		alertmanagerForOrg: amForOrgFunc,
 
 		appURL:                  appURL,
 		disabledOrgs:            disabledOrgs,
@@ -301,7 +304,7 @@ func (d *AlertsRouter) Send(key models.AlertRuleKey, alerts definitions.Postable
 		logger.Debug("All alerts for the given org should be routed to external notifiers only. skipping the internal notifier.")
 	} else {
 		logger.Info("Sending alerts to local notifier", "count", len(alerts.PostableAlerts))
-		n, err := d.multiOrgNotifier.AlertmanagerFor(key.OrgID)
+		n, err := d.alertmanagerForOrg(key.OrgID)
 		if err == nil {
 			localNotifierExist = true
 			if err := n.PutAlerts(alerts); err != nil {

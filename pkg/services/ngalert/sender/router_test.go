@@ -61,7 +61,7 @@ func TestIntegrationSendingToExternalAlertmanager(t *testing.T) {
 			"implementation":             "prometheus",
 		}),
 	}
-	alertsRouter := NewAlertsRouter(moa, fakeAdminConfigStore, mockedClock, appUrl, map[int64]struct{}{}, 10*time.Minute,
+	alertsRouter := NewAlertsRouter(moa.AlertmanagerFor, fakeAdminConfigStore, mockedClock, appUrl, map[int64]struct{}{}, 10*time.Minute,
 		&fake_ds.FakeDataSourceService{DataSources: []*datasources.DataSource{&ds1}}, fake_secrets.NewFakeSecretsService())
 
 	mockedGetAdminConfigurations.Return([]*models.AdminConfiguration{
@@ -132,7 +132,7 @@ func TestIntegrationSendingToExternalAlertmanager_WithMultipleOrgs(t *testing.T)
 		}),
 	}
 	fakeDs := &fake_ds.FakeDataSourceService{DataSources: []*datasources.DataSource{&ds1}}
-	alertsRouter := NewAlertsRouter(moa, fakeAdminConfigStore, mockedClock, appUrl, map[int64]struct{}{}, 10*time.Minute,
+	alertsRouter := NewAlertsRouter(moa.AlertmanagerFor, fakeAdminConfigStore, mockedClock, appUrl, map[int64]struct{}{}, 10*time.Minute,
 		fakeDs, fake_secrets.NewFakeSecretsService())
 
 	mockedGetAdminConfigurations.Return([]*models.AdminConfiguration{
@@ -291,7 +291,7 @@ func TestChangingAlertmanagersChoice(t *testing.T) {
 			"implementation":             "prometheus",
 		}),
 	}
-	alertsRouter := NewAlertsRouter(moa, fakeAdminConfigStore, mockedClock, appUrl, map[int64]struct{}{},
+	alertsRouter := NewAlertsRouter(moa.AlertmanagerFor, fakeAdminConfigStore, mockedClock, appUrl, map[int64]struct{}{},
 		10*time.Minute, &fake_ds.FakeDataSourceService{DataSources: []*datasources.DataSource{&ds}}, fake_secrets.NewFakeSecretsService())
 
 	mockedGetAdminConfigurations.Return([]*models.AdminConfiguration{

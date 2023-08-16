@@ -229,7 +229,7 @@ func TestAlertmanagerConfig(t *testing.T) {
 		r := sut.RoutePostAlertingConfig(&rc, request)
 		require.Equal(t, 202, r.Status())
 
-		am, err := sut.mam.AlertmanagerFor(1)
+		am, err := sut.moa.AlertmanagerFor(1)
 		require.NoError(t, err)
 		hash := am.Base.ConfigHash()
 
@@ -241,7 +241,7 @@ func TestAlertmanagerConfig(t *testing.T) {
 		r = sut.RoutePostAlertingConfig(&rc, *postable)
 		require.Equal(t, 202, r.Status())
 
-		am, err = sut.mam.AlertmanagerFor(1)
+		am, err = sut.moa.AlertmanagerFor(1)
 		require.NoError(t, err)
 		newHash := am.Base.ConfigHash()
 		require.Equal(t, hash, newHash)
@@ -281,7 +281,8 @@ func TestAlertmanagerConfig(t *testing.T) {
 		t.Run("route from GET config has expected provenance", func(t *testing.T) {
 			sut := createSut(t)
 			rc := createRequestCtxInOrg(1)
-			setRouteProvenance(t, 1, sut.mam.ProvStore)
+			moa := (sut.moa).(*notifier.MultiOrgAlertmanager)
+			setRouteProvenance(t, 1, moa.ProvStore)
 
 			response := sut.RouteGetAlertingConfig(rc)
 
@@ -301,7 +302,8 @@ func TestAlertmanagerConfig(t *testing.T) {
 			cpUID := body.AlertmanagerConfig.Receivers[0].GrafanaManagedReceivers[0].UID
 			require.NotEmpty(t, cpUID)
 
-			setContactPointProvenance(t, 1, cpUID, sut.mam.ProvStore)
+			moa := (sut.moa).(*notifier.MultiOrgAlertmanager)
+			setContactPointProvenance(t, 1, cpUID, moa.ProvStore)
 
 			response = sut.RouteGetAlertingConfig(rc)
 			body = asGettableUserConfig(t, response)
@@ -311,7 +313,8 @@ func TestAlertmanagerConfig(t *testing.T) {
 		t.Run("templates from GET config have expected provenance", func(t *testing.T) {
 			sut := createSut(t)
 			rc := createRequestCtxInOrg(1)
-			setTemplateProvenance(t, 1, "a", sut.mam.ProvStore)
+			moa := (sut.moa).(*notifier.MultiOrgAlertmanager)
+			setTemplateProvenance(t, 1, "a", moa.ProvStore)
 
 			response := sut.RouteGetAlertingConfig(rc)
 
@@ -614,7 +617,7 @@ func TestRouteCreateSilence(t *testing.T) {
 			silence := tesCase.silence()
 
 			if silence.ID != "" {
-				alertmanagerFor, err := sut.mam.AlertmanagerFor(1)
+				alertmanagerFor, err := sut.moa.AlertmanagerFor(1)
 				require.NoError(t, err)
 				silence.ID = ""
 				newID, err := alertmanagerFor.CreateSilence(&silence)
@@ -631,11 +634,11 @@ func TestRouteCreateSilence(t *testing.T) {
 func createSut(t *testing.T) AlertmanagerSrv {
 	t.Helper()
 
-	mam := createMultiOrgAlertmanager(t)
+	moa := createMultiOrgAlertmanager(t)
 	log := log.NewNopLogger()
 	return AlertmanagerSrv{
-		mam:    mam,
-		crypto: mam.Crypto,
+		moa:    moa,
+		crypto: moa.Crypto,
 		ac:     acimpl.ProvideAccessControl(setting.NewCfg()),
 		log:    log,
 	}
@@ -677,11 +680,11 @@ func createMultiOrgAlertmanager(t *testing.T) *notifier.MultiOrgAlertmanager {
 		}, // do not poll in tests.
 	}
 
-	mam, err := notifier.NewMultiOrgAlertmanager(cfg, configStore, &orgStore, kvStore, provStore, decryptFn, m.GetMultiOrgAlertmanagerMetrics(), nil, log.New("testlogger"), secretsService)
+	moa, err := notifier.NewMultiOrgAlertmanager(cfg, configStore, &orgStore, kvStore, provStore, decryptFn, m.GetMultiOrgAlertmanagerMetrics(), nil, log.New("testlogger"), secretsService)
 	require.NoError(t, err)
-	err = mam.LoadAndSyncAlertmanagersForOrgs(context.Background())
+	err = moa.LoadAndSyncAlertmanagersForOrgs(context.Background())
 	require.NoError(t, err)
-	return mam
+	return moa
 }
 
 var validConfig = `{

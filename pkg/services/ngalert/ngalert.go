@@ -26,6 +26,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/ngalert/api"
+	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/image"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
@@ -107,6 +108,16 @@ func ProvideService(
 	return ng, nil
 }
 
+type multiOrgAlertmanager interface {
+	AlertmanagerFor(orgID int64) (*notifier.Alertmanager, error)
+	LoadAndSyncAlertmanagersForOrgs(ctx context.Context) error
+	Run(ctx context.Context) error
+	ActivateHistoricalConfiguration(ctx context.Context, orgId int64, id int64) error
+	GetAlertmanagerConfiguration(ctx context.Context, org int64) (apimodels.GettableUserConfig, error)
+	GetAppliedAlertmanagerConfigurations(ctx context.Context, org int64, limit int) ([]*apimodels.GettableHistoricUserConfig, error)
+	ApplyAlertmanagerConfiguration(ctx context.Context, org int64, config apimodels.PostableUserConfig) error
+}
+
 // AlertNG is the service for evaluating the condition of an alert definition.
 type AlertNG struct {
 	Cfg                 *setting.Cfg
@@ -132,7 +143,7 @@ type AlertNG struct {
 	api                 *api.API
 
 	// Alerting notification services
-	MultiOrgAlertmanager *notifier.MultiOrgAlertmanager
+	MultiOrgAlertmanager multiOrgAlertmanager
 	AlertsRouter         *sender.AlertsRouter
 	accesscontrol        accesscontrol.AccessControl
 	accesscontrolService accesscontrol.Service
@@ -179,7 +190,7 @@ func (ng *AlertNG) init() error {
 
 	clk := clock.New()
 
-	alertsRouter := sender.NewAlertsRouter(ng.MultiOrgAlertmanager, ng.store, clk, appUrl, ng.Cfg.UnifiedAlerting.DisabledOrgs,
+	alertsRouter := sender.NewAlertsRouter(ng.MultiOrgAlertmanager.AlertmanagerFor, ng.store, clk, appUrl, ng.Cfg.UnifiedAlerting.DisabledOrgs,
 		ng.Cfg.UnifiedAlerting.AdminConfigPollInterval, ng.DataSourceService, ng.SecretsService)
 
 	// Make sure we sync at least once as Grafana starts to get the router up and running before we start sending any alerts.
