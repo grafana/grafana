@@ -49,13 +49,13 @@ const saveDashboard = async (
 export const useDashboardSave = (dashboard: DashboardModel, isCopy = false) => {
   const dispatch = useDispatch();
   const notifyApp = useAppNotification();
-  const dashboardJson = useSelector((store) => store.dashboard.getJson?.());
+  const dashboardJson = useSelector((store) => !!store.dashboard.getJson?.());
   const [saveDashboardRtkQuery] = useSaveDashboardMutation();
   const [state, onDashboardSave] = useAsyncFn(
     async (clone: DashboardModel, options: SaveDashboardOptions, dashboard: DashboardModel) => {
       try {
         if (dashboardJson) {
-          return saveDashboardJson(dashboardJson)
+          return saveDashboardJson(clone)
             .then(() => {
               notifyApp.success('Dashboard saved');
               return { status: 'success' };

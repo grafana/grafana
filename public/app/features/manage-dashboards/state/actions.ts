@@ -1,6 +1,5 @@
 import { DataSourceInstanceSettings, locationUtil } from '@grafana/data';
 import { getBackendSrv, getDataSourceSrv, isFetchError, locationService } from '@grafana/runtime';
-import { Dashboard } from '@grafana/schema';
 import { notifyApp } from 'app/core/actions';
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { SaveDashboardCommand } from 'app/features/dashboard/components/SaveDashboard/types';
@@ -13,6 +12,7 @@ import {
   LibraryElementExport,
   LibraryPanel,
 } from '../../dashboard/components/DashExportModal/DashboardExporter';
+import { DashboardModel } from '../../dashboard/state';
 import { getLibraryPanel } from '../../library-panels/state/api';
 import { LibraryElementDTO, LibraryElementKind } from '../../library-panels/types';
 import { DashboardSearchHit } from '../../search/types';
@@ -424,7 +424,7 @@ function executeInOrder(tasks: any[]): Promise<unknown> {
   }, []);
 }
 
-export function saveDashboardJson(json: Dashboard) {
+export function saveDashboardJson(json: DashboardModel) {
   const params = locationService.getSearch();
   const callbackUrl = params.get('callbackUrl');
   if (callbackUrl) {
