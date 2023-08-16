@@ -215,7 +215,6 @@ Let's generate an error, and analyze it with Explore.
 
 Logs are helpful for understanding what went wrong. Later in this tutorial, you'll see how you can correlate logs with metrics from Prometheus to better understand the context of the error.
 
-
 ## Build a dashboard
 
 A _dashboard_ gives you an at-a-glance view of your data and lets you track metrics through different visualizations.
@@ -277,7 +276,7 @@ Manually annotating your dashboard is fine for those single events. For regularl
 
 1. Click **Apply**. Grafana displays the Annotations list, with your new annotation.
 1. Click the **Go back** arrow to return to your dashboard.
-1. At the top of your dashboard, there is now a toggle with the name **Errors** to display the results of the newly created annotation query. 
+1. At the top of your dashboard, there is now a toggle with the name **Errors** to display the results of the newly created annotation query.
 
 The log lines returned by your query are now displayed as annotations in the graph.
 
