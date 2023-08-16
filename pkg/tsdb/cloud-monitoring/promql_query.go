@@ -43,12 +43,23 @@ func (promQLQ *cloudMonitoringProm) run(ctx context.Context, req *backend.QueryD
 	}
 
 	res, err := doRequestProm(r, dsInfo, requestBody)
+	defer func() {
+		if err := res.Body.Close(); err != nil {
+			promQLQ.logger.Error("Failed to close response body", "err", err)
+		}
+	}()
 	if err != nil {
 		dr.Error = err
 		return dr, promResponse{}, "", nil
 	}
+	iter := jsoniter.Parse(jsoniter.ConfigDefault, res.Body, 1024)
+	promFormat := converter.ReadPrometheusStyleResult(iter, converter.Options{
+		MatrixWideSeries: false,
+		VectorWideSeries: false,
+		Dataplane:        false,
+	})
 
-	return dr, res, r.URL.RawQuery, nil
+	return dr, promFormat, r.URL.RawQuery, nil
 }
 
 func doRequestProm(r *http.Request, dsInfo datasourceInfo, body map[string]interface{}) (*http.Response, error) {
@@ -70,19 +81,7 @@ func doRequestProm(r *http.Request, dsInfo datasourceInfo, body map[string]inter
 
 func (promQLQ *cloudMonitoringProm) parseResponse(queryRes *backend.DataResponse,
 	response any, executedQueryString string) error {
-	res := response.(*http.Response)
-	defer func() {
-		if err := res.Body.Close(); err != nil {
-			promQLQ.logger.Error("Failed to close response body", "err", err)
-		}
-	}()
-	iter := jsoniter.Parse(jsoniter.ConfigDefault, res.Body, 1024)
-	r := converter.ReadPrometheusStyleResult(iter, converter.Options{
-		MatrixWideSeries: false,
-		VectorWideSeries: false,
-		Dataplane:        false,
-	})
-
+	r := response.(backend.DataResponse)
 	// Add frame to attach metadata
 	if len(r.Frames) == 0 {
 		r.Frames = append(r.Frames, data.NewFrame(""))

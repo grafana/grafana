@@ -108,17 +108,6 @@ type (
 			ResultType string `json:"resultType"`
 		} `json:"data"`
 	}
-
-	promDataMatrix struct {
-	}
-	promDataVector struct {
-	}
-
-	promDataScalar struct {
-	}
-
-	promDataString struct {
-	}
 )
 
 type pointIterator interface {
