@@ -45,7 +45,7 @@ func New(opts Options, cfg *setting.Cfg, httpServer *api.HTTPServer, roleRegistr
 		return nil, err
 	}
 
-	if err := s.init(); err != nil {
+	if err := s.Init(); err != nil {
 		return nil, err
 	}
 
@@ -101,8 +101,8 @@ type Server struct {
 	provisioningService provisioning.ProvisioningService
 }
 
-// init initializes the server and its services.
-func (s *Server) init() error {
+// Init initializes the server and its services.
+func (s *Server) Init() error {
 	s.mtx.Lock()
 	defer s.mtx.Unlock()
 
@@ -131,7 +131,7 @@ func (s *Server) init() error {
 func (s *Server) Run() error {
 	defer close(s.shutdownFinished)
 
-	if err := s.init(); err != nil {
+	if err := s.Init(); err != nil {
 		return err
 	}
 

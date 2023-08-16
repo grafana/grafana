@@ -86,6 +86,16 @@ func (s *service) start(ctx context.Context) error {
 		K8sDataPath: s.dataPath,
 	}
 
+	err := certUtil.InitializeCACertPKI()
+	if err != nil {
+		return err
+	}
+
+	err = certUtil.EnsureApiServerPKI(certgenerator.DefaultAPIServerIp)
+	if err != nil {
+		return err
+	}
+
 	o.RecommendedOptions.SecureServing.BindAddress = net.ParseIP(certgenerator.DefaultAPIServerIp)
 	o.RecommendedOptions.SecureServing.ServerCert.CertKey = options.CertKey{
 		CertFile: certUtil.APIServerCertFile(),

@@ -5,19 +5,24 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"path"
 	"path/filepath"
 	"strconv"
 	"sync"
 
+	"github.com/grafana/dskit/services"
+
+	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/modules"
+	grafanaapiserver "github.com/grafana/grafana/pkg/services/grafana-apiserver"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 // NewModule returns an instances of a ModuleServer, responsible for managing
 // dskit modules (services).
-func NewModule(opts Options, cfg *setting.Cfg) (*ModuleServer, error) {
-	s, err := newModuleServer(opts, cfg)
+func NewModule(cla setting.CommandLineArgs, opts Options, apiOpts api.ServerOptions, cfg *setting.Cfg) (*ModuleServer, error) {
+	s, err := newModuleServer(cla, opts, apiOpts, cfg)
 	if err != nil {
 		return nil, err
 	}
@@ -29,10 +34,13 @@ func NewModule(opts Options, cfg *setting.Cfg) (*ModuleServer, error) {
 	return s, nil
 }
 
-func newModuleServer(opts Options, cfg *setting.Cfg) (*ModuleServer, error) {
+func newModuleServer(cla setting.CommandLineArgs, opts Options, apiOpts api.ServerOptions, cfg *setting.Cfg) (*ModuleServer, error) {
 	rootCtx, shutdownFn := context.WithCancel(context.Background())
 
 	s := &ModuleServer{
+		cla:              cla,
+		opts:             opts,
+		apiOpts:          apiOpts,
 		context:          rootCtx,
 		shutdownFn:       shutdownFn,
 		shutdownFinished: make(chan struct{}),
@@ -50,6 +58,10 @@ func newModuleServer(opts Options, cfg *setting.Cfg) (*ModuleServer, error) {
 // ModuleServer is responsible for managing the lifecycle of dskit services. The
 // ModuleServer does not include the HTTP server.
 type ModuleServer struct {
+	cla     setting.CommandLineArgs
+	opts    Options
+	apiOpts api.ServerOptions
+
 	context          context.Context
 	shutdownFn       context.CancelFunc
 	log              log.Logger
@@ -95,6 +107,17 @@ func (s *ModuleServer) Run() error {
 	s.log.Debug("Waiting on services...")
 
 	m := modules.New(s.cfg.Target)
+
+	m.RegisterModule(modules.Core, func() (services.Service, error) {
+		return NewService(s.cla, s.opts, s.apiOpts)
+	})
+
+	m.RegisterModule(modules.GrafanaAPIServer, func() (services.Service, error) {
+		return grafanaapiserver.New(path.Join(s.cfg.DataPath, "k8s"))
+	})
+
+	m.RegisterModule(modules.All, nil)
+
 	return m.Run(s.context)
 }
 
