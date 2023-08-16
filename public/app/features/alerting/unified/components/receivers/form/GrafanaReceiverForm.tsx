@@ -68,7 +68,9 @@ export const GrafanaReceiverForm = ({ existing, alertManagerSourceName, config }
   }, [existing, grafanaNotifiers.result]);
 
   const onSubmit = (values: ReceiverFormValues<GrafanaChannelValues>) => {
-    const newReceiver = formValuesToGrafanaReceiver(values, id2original, defaultChannelValues);
+    const notifiers = grafanaNotifiers.result;
+
+    const newReceiver = formValuesToGrafanaReceiver(values, id2original, defaultChannelValues, notifiers ?? []);
     dispatch(
       updateAlertManagerConfigAction({
         newConfig: updateConfigWithReceiver(config, newReceiver, existing?.name),
