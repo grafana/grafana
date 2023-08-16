@@ -80,6 +80,12 @@ export function ExploreToolbar({ exploreId, topOfViewRef, onChangeTime }: Props)
 
   const onChangeDatasource = async (dsSettings: DataSourceInstanceSettings) => {
     dispatch(changeDatasource(exploreId, dsSettings.uid, { importQueries: true }));
+
+    if (isCorrelationsEditorMode && panes[0][0] === exploreId) {
+      panes.forEach((pane) => {
+        dispatch(removeCorrelationData(pane[0]));
+      });
+    }
   };
 
   const onRunQuery = (loading = false) => {
