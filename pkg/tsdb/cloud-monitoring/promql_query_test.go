@@ -23,7 +23,8 @@ func TestPromqlQuery(t *testing.T) {
 		require.NoError(t, err)
 		dataRes := &backend.DataResponse{}
 		query := &cloudMonitoringProm{}
-		err = query.parseResponse(dataRes, &res, "")
+		parsedProm := parseProm(&res)
+		err = query.parseResponse(dataRes, parsedProm, "")
 		require.NoError(t, err)
 		frame := dataRes.Frames[0]
 		experimental.CheckGoldenJSONFrame(t, "test-data", "parse-response-is-returned", frame, false)
