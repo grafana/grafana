@@ -230,7 +230,7 @@ export const getAllStandardFieldConfigs = () => {
     category,
   };
 
-  const unit: FieldConfigPropertyItem<any, string, UnitFieldConfigSettings> = {
+  const unit: FieldConfigPropertyItem<any, { type: string; scalable: boolean }, UnitFieldConfigSettings> = {
     id: 'unit',
     path: 'unit',
     name: 'Unit',
