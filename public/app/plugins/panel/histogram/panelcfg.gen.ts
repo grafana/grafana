@@ -10,9 +10,7 @@
 
 import * as common from '@grafana/schema';
 
-export const PanelCfgModelVersion = Object.freeze([0, 0]);
-
-export interface PanelOptions extends common.OptionsWithLegend, common.OptionsWithTooltip {
+export interface Options extends common.OptionsWithLegend, common.OptionsWithTooltip {
   /**
    * Offset buckets by this amount
    */
@@ -27,11 +25,11 @@ export interface PanelOptions extends common.OptionsWithLegend, common.OptionsWi
   combine?: boolean;
 }
 
-export const defaultPanelOptions: Partial<PanelOptions> = {
+export const defaultOptions: Partial<Options> = {
   bucketOffset: 0,
 };
 
-export interface PanelFieldConfig extends common.AxisConfig, common.HideableFieldConfig {
+export interface FieldConfig extends common.AxisConfig, common.HideableFieldConfig {
   /**
    * Controls the fill opacity of the bars.
    */
@@ -47,7 +45,7 @@ export interface PanelFieldConfig extends common.AxisConfig, common.HideableFiel
   lineWidth?: number;
 }
 
-export const defaultPanelFieldConfig: Partial<PanelFieldConfig> = {
+export const defaultFieldConfig: Partial<FieldConfig> = {
   fillOpacity: 80,
   gradientMode: common.GraphGradientMode.None,
   lineWidth: 1,

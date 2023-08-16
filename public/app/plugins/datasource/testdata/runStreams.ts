@@ -11,9 +11,8 @@ import {
   LoadingState,
   DataFrameSchema,
   DataFrameData,
+  StreamingDataFrame,
 } from '@grafana/data';
-import { liveTimer } from 'app/features/dashboard/dashgrid/liveTimer';
-import { StreamingDataFrame } from 'app/features/live/data/StreamingDataFrame';
 
 import { getRandomLine } from './LogIpsum';
 import { TestData, StreamingQuery } from './dataquery.gen';
@@ -67,7 +66,7 @@ export function runSignalStream(
     const frame = StreamingDataFrame.fromDataFrameJSON({ schema }, { maxLength: maxDataPoints });
 
     let value = Math.random() * 100;
-    let timeoutId: any = null;
+    let timeoutId: ReturnType<typeof setTimeout>;
     let lastSent = -1;
 
     const addNextRow = (time: number) => {
@@ -102,18 +101,13 @@ export function runSignalStream(
     }
 
     const pushNextEvent = () => {
-      addNextRow(Date.now());
-
-      const elapsed = liveTimer.lastUpdate - lastSent;
-      if (elapsed > 1000 || liveTimer.ok) {
-        subscriber.next({
-          data: [frame],
-          key: streamId,
-          state: LoadingState.Streaming,
-        });
-        lastSent = liveTimer.lastUpdate;
-      }
-
+      lastSent = Date.now();
+      addNextRow(lastSent);
+      subscriber.next({
+        data: [frame],
+        key: streamId,
+        state: LoadingState.Streaming,
+      });
       timeoutId = setTimeout(pushNextEvent, speed);
     };
 
@@ -148,11 +142,11 @@ export function runLogsStream(
 
     const { speed } = query;
 
-    let timeoutId: any = null;
+    let timeoutId: ReturnType<typeof setTimeout>;
 
     const pushNextEvent = () => {
-      data.fields[0].values.add(Date.now());
-      data.fields[1].values.add(getRandomLine());
+      data.fields[0].values.push(getRandomLine());
+      data.fields[1].values.push(Date.now());
 
       subscriber.next({
         data: [data],
@@ -205,7 +199,7 @@ export function runFetchStream(
             data.addField(field);
           }
         },
-        onRow: (row: any[]) => {
+        onRow: (row) => {
           data.add(row);
         },
       },

@@ -19,7 +19,7 @@ import appEvents from 'app/core/app_events';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 
 import { AnnotationListItem } from './AnnotationListItem';
-import { PanelOptions } from './panelcfg.gen';
+import { Options } from './panelcfg.gen';
 
 interface UserInfo {
   id?: number;
@@ -27,7 +27,7 @@ interface UserInfo {
   email?: string;
 }
 
-export interface Props extends PanelProps<PanelOptions> {}
+export interface Props extends PanelProps<Options> {}
 interface State {
   annotations: AnnotationEvent[];
   timeInfo: string;
@@ -74,6 +74,7 @@ export class AnnoListPanel extends PureComponent<Props, State> {
       options !== prevProps.options ||
       this.state.queryTags !== prevState.queryTags ||
       this.state.queryUser !== prevState.queryUser ||
+      prevProps.renderCounter !== this.props.renderCounter ||
       (options.onlyInTimeRange && timeRange !== prevProps.timeRange);
 
     if (needsQuery) {

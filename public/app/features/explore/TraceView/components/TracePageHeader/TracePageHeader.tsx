@@ -14,44 +14,158 @@
 
 import { css } from '@emotion/css';
 import cx from 'classnames';
-import { get as _get, maxBy as _maxBy, values as _values } from 'lodash';
-import * as React from 'react';
+import React, { memo, useEffect, useMemo } from 'react';
 
-import { dateTimeFormat, GrafanaTheme2, TimeZone } from '@grafana/data';
-import { Icon, useStyles2 } from '@grafana/ui';
+import { CoreApp, DataFrame, dateTimeFormat, GrafanaTheme2 } from '@grafana/data';
+import { TimeZone } from '@grafana/schema';
+import { Badge, BadgeColor, Tooltip, useStyles2 } from '@grafana/ui';
 
+import { SearchProps } from '../../useSearch';
 import ExternalLinks from '../common/ExternalLinks';
-import LabeledList from '../common/LabeledList';
 import TraceName from '../common/TraceName';
-import { autoColor, TUpdateViewRangeTimeFunction, ViewRange, ViewRangeTimeUpdate } from '../index';
 import { getTraceLinks } from '../model/link-patterns';
-import { getTraceName } from '../model/trace-viewer';
+import { getHeaderTags, getTraceName } from '../model/trace-viewer';
 import { Trace } from '../types';
-import { uTxMuted } from '../uberUtilityStyles';
 import { formatDuration } from '../utils/date';
 
-import SpanGraph from './SpanGraph';
+import TracePageActions from './Actions/TracePageActions';
+import { SpanFilters } from './SpanFilters/SpanFilters';
 
-const getStyles = (theme: GrafanaTheme2) => {
+export type TracePageHeaderProps = {
+  trace: Trace | null;
+  data: DataFrame;
+  app?: CoreApp;
+  timeZone: TimeZone;
+  search: SearchProps;
+  setSearch: React.Dispatch<React.SetStateAction<SearchProps>>;
+  showSpanFilters: boolean;
+  setShowSpanFilters: (isOpen: boolean) => void;
+  showSpanFilterMatchesOnly: boolean;
+  setShowSpanFilterMatchesOnly: (showMatchesOnly: boolean) => void;
+  setFocusedSpanIdForSearch: React.Dispatch<React.SetStateAction<string>>;
+  spanFilterMatches: Set<string> | undefined;
+  datasourceType: string;
+  setHeaderHeight: (height: number) => void;
+};
+
+export const TracePageHeader = memo((props: TracePageHeaderProps) => {
+  const {
+    trace,
+    data,
+    app,
+    timeZone,
+    search,
+    setSearch,
+    showSpanFilters,
+    setShowSpanFilters,
+    showSpanFilterMatchesOnly,
+    setShowSpanFilterMatchesOnly,
+    setFocusedSpanIdForSearch,
+    spanFilterMatches,
+    datasourceType,
+    setHeaderHeight,
+  } = props;
+  const styles = useStyles2(getNewStyles);
+
+  useEffect(() => {
+    setHeaderHeight(document.querySelector('.' + styles.header)?.scrollHeight ?? 0);
+  }, [setHeaderHeight, showSpanFilters, styles.header]);
+
+  const links = useMemo(() => {
+    if (!trace) {
+      return [];
+    }
+    return getTraceLinks(trace);
+  }, [trace]);
+
+  if (!trace) {
+    return null;
+  }
+
+  const timestamp = (trace: Trace, timeZone: TimeZone) => {
+    // Convert date from micro to milli seconds
+    const dateStr = dateTimeFormat(trace.startTime / 1000, { timeZone, defaultWithMS: true });
+    const match = dateStr.match(/^(.+)(:\d\d\.\d+)$/);
+    return match ? (
+      <span className={styles.TracePageHeaderOverviewItemValue}>
+        {match[1]}
+        <span className={styles.TracePageHeaderOverviewItemValueDetail}>{match[2]}</span>
+      </span>
+    ) : (
+      dateStr
+    );
+  };
+
+  const title = (
+    <h1 className={cx(styles.title)}>
+      <TraceName traceName={getTraceName(trace.spans)} />
+      <small className={styles.duration}>{formatDuration(trace.duration)}</small>
+    </h1>
+  );
+
+  const { method, status, url } = getHeaderTags(trace.spans);
+  let statusColor: BadgeColor = 'green';
+  if (status && status.length > 0) {
+    if (status[0].value.toString().charAt(0) === '4') {
+      statusColor = 'orange';
+    } else if (status[0].value.toString().charAt(0) === '5') {
+      statusColor = 'red';
+    }
+  }
+
+  return (
+    <header className={styles.header}>
+      <div className={styles.titleRow}>
+        {links && links.length > 0 && <ExternalLinks links={links} className={styles.TracePageHeaderBack} />}
+        {title}
+        <TracePageActions traceId={trace.traceID} data={data} app={app} />
+      </div>
+
+      <div className={styles.subtitle}>
+        <span className={styles.timestamp}>{timestamp(trace, timeZone)}</span>
+        <span className={styles.tagMeta}>
+          {method && method.length > 0 && (
+            <Tooltip content={'http.method'} interactive={true}>
+              <span className={styles.tag}>
+                <Badge text={method[0].value} color="blue" />
+              </span>
+            </Tooltip>
+          )}
+          {status && status.length > 0 && (
+            <Tooltip content={'http.status_code'} interactive={true}>
+              <span className={styles.tag}>
+                <Badge text={status[0].value} color={statusColor} />
+              </span>
+            </Tooltip>
+          )}
+          {url && url.length > 0 && (
+            <Tooltip content={'http.url or http.target or http.path'} interactive={true}>
+              <span className={styles.url}>{url[0].value}</span>
+            </Tooltip>
+          )}
+        </span>
+      </div>
+
+      <SpanFilters
+        trace={trace}
+        showSpanFilters={showSpanFilters}
+        setShowSpanFilters={setShowSpanFilters}
+        showSpanFilterMatchesOnly={showSpanFilterMatchesOnly}
+        setShowSpanFilterMatchesOnly={setShowSpanFilterMatchesOnly}
+        search={search}
+        setSearch={setSearch}
+        spanFilterMatches={spanFilterMatches}
+        setFocusedSpanIdForSearch={setFocusedSpanIdForSearch}
+        datasourceType={datasourceType}
+      />
+    </header>
+  );
+});
+
+TracePageHeader.displayName = 'TracePageHeader';
+
+const getNewStyles = (theme: GrafanaTheme2) => {
   return {
-    TracePageHeader: css`
-      label: TracePageHeader;
-      & > :first-child {
-        border-bottom: 1px solid ${autoColor(theme, '#e8e8e8')};
-      }
-      & > :nth-child(2) {
-        background-color: ${autoColor(theme, '#eee')};
-        border-bottom: 1px solid ${autoColor(theme, '#e4e4e4')};
-      }
-      & > :last-child {
-        border-bottom: 1px solid ${autoColor(theme, '#ccc')};
-      }
-    `,
-    TracePageHeaderTitleRow: css`
-      label: TracePageHeaderTitleRow;
-      align-items: center;
-      display: flex;
-    `,
     TracePageHeaderBack: css`
       label: TracePageHeaderBack;
       align-items: center;
@@ -69,51 +183,6 @@ const getStyles = (theme: GrafanaTheme2) => {
         border-color: #ccc;
       }
     `,
-    TracePageHeaderTitleLink: css`
-      label: TracePageHeaderTitleLink;
-      align-items: center;
-      display: flex;
-      flex: 1;
-
-      &:hover * {
-        text-decoration: underline;
-      }
-      &:hover > *,
-      &:hover small {
-        text-decoration: none;
-      }
-      /* Adapt styles when changing from a element into button */
-      background: transparent;
-      text-align: left;
-      border: none;
-    `,
-    TracePageHeaderDetailToggle: css`
-      label: TracePageHeaderDetailToggle;
-      font-size: 2.5rem;
-      transition: transform 0.07s ease-out;
-    `,
-    TracePageHeaderDetailToggleExpanded: css`
-      label: TracePageHeaderDetailToggleExpanded;
-      transform: rotate(90deg);
-    `,
-    TracePageHeaderTitle: css`
-      label: TracePageHeaderTitle;
-      color: inherit;
-      flex: 1;
-      font-size: 1.7em;
-      line-height: 1em;
-      margin: 0 0 0 0.5em;
-      padding-bottom: 0.5em;
-    `,
-    TracePageHeaderTitleCollapsible: css`
-      label: TracePageHeaderTitleCollapsible;
-      margin-left: 0;
-    `,
-    TracePageHeaderOverviewItems: css`
-      label: TracePageHeaderOverviewItems;
-      border-bottom: 1px solid #e4e4e4;
-      padding: 0.25rem 0.5rem !important;
-    `,
     TracePageHeaderOverviewItemValueDetail: cx(
       css`
         label: TracePageHeaderOverviewItemValueDetail;
@@ -127,147 +196,57 @@ const getStyles = (theme: GrafanaTheme2) => {
         color: unset;
       }
     `,
-    TracePageHeaderArchiveIcon: css`
-      label: TracePageHeaderArchiveIcon;
-      font-size: 1.78em;
-      margin-right: 0.15em;
+    header: css`
+      label: TracePageHeader;
+      background-color: ${theme.colors.background.primary};
+      padding: 0.5em 0 0 0;
+      position: sticky;
+      top: 0;
+      z-index: 5;
+    `,
+    titleRow: css`
+      align-items: flex-start;
+      display: flex;
+      padding: 0 8px;
+    `,
+    title: css`
+      color: inherit;
+      flex: 1;
+      font-size: 1.7em;
+      line-height: 1em;
+    `,
+    subtitle: css`
+      flex: 1;
+      line-height: 1em;
+      margin: -0.5em 0.5em 0.75em 0.5em;
+    `,
+    tag: css`
+      margin: 0 0.5em 0 0;
+    `,
+    duration: css`
+      color: #aaa;
+      margin: 0 0.75em;
+    `,
+    timestamp: css`
+      vertical-align: middle;
+    `,
+    tagMeta: css`
+      margin: 0 0.75em;
+      vertical-align: text-top;
+    `,
+    url: css`
+      margin: -2.5px 0.3em;
+      height: 15px;
+      overflow: hidden;
+      word-break: break-all;
+      line-height: 20px;
     `,
     TracePageHeaderTraceId: css`
       label: TracePageHeaderTraceId;
       white-space: nowrap;
+      text-overflow: ellipsis;
+      max-width: 30%;
+      display: inline-block;
     `,
   };
 };
-
-export type TracePageHeaderEmbedProps = {
-  canCollapse: boolean;
-  hideMap: boolean;
-  hideSummary: boolean;
-  onSlimViewClicked: () => void;
-  onTraceGraphViewClicked: () => void;
-  slimView: boolean;
-  trace: Trace | null;
-  updateNextViewRangeTime: (update: ViewRangeTimeUpdate) => void;
-  updateViewRangeTime: TUpdateViewRangeTimeFunction;
-  viewRange: ViewRange;
-  timeZone: TimeZone;
-};
-
-export const HEADER_ITEMS = [
-  {
-    key: 'timestamp',
-    label: 'Trace Start:',
-    renderer(trace: Trace, timeZone: TimeZone, styles: ReturnType<typeof getStyles>) {
-      // Convert date from micro to milli seconds
-      const dateStr = dateTimeFormat(trace.startTime / 1000, { timeZone, defaultWithMS: true });
-      const match = dateStr.match(/^(.+)(:\d\d\.\d+)$/);
-      return match ? (
-        <span className={styles.TracePageHeaderOverviewItemValue}>
-          {match[1]}
-          <span className={styles.TracePageHeaderOverviewItemValueDetail}>{match[2]}</span>
-        </span>
-      ) : (
-        dateStr
-      );
-    },
-  },
-  {
-    key: 'duration',
-    label: 'Duration:',
-    renderer: (trace: Trace) => formatDuration(trace.duration),
-  },
-  {
-    key: 'service-count',
-    label: 'Services:',
-    renderer: (trace: Trace) => new Set(_values(trace.processes).map((p) => p.serviceName)).size,
-  },
-  {
-    key: 'depth',
-    label: 'Depth:',
-    renderer: (trace: Trace) => _get(_maxBy(trace.spans, 'depth'), 'depth', 0) + 1,
-  },
-  {
-    key: 'span-count',
-    label: 'Total Spans:',
-    renderer: (trace: Trace) => trace.spans.length,
-  },
-];
-
-export default function TracePageHeader(props: TracePageHeaderEmbedProps) {
-  const {
-    canCollapse,
-    hideMap,
-    hideSummary,
-    onSlimViewClicked,
-    slimView,
-    trace,
-    updateNextViewRangeTime,
-    updateViewRangeTime,
-    viewRange,
-    timeZone,
-  } = props;
-
-  const styles = useStyles2(getStyles);
-  const links = React.useMemo(() => {
-    if (!trace) {
-      return [];
-    }
-    return getTraceLinks(trace);
-  }, [trace]);
-
-  if (!trace) {
-    return null;
-  }
-
-  const summaryItems =
-    !hideSummary &&
-    !slimView &&
-    HEADER_ITEMS.map((item) => {
-      const { renderer, ...rest } = item;
-      return { ...rest, value: renderer(trace, timeZone, styles) };
-    });
-
-  const title = (
-    <h1 className={cx(styles.TracePageHeaderTitle, canCollapse && styles.TracePageHeaderTitleCollapsible)}>
-      <TraceName traceName={getTraceName(trace.spans)} />{' '}
-      <small className={cx(styles.TracePageHeaderTraceId, uTxMuted)}>{trace.traceID}</small>
-    </h1>
-  );
-
-  return (
-    <header className={styles.TracePageHeader}>
-      <div className={styles.TracePageHeaderTitleRow}>
-        {links && links.length > 0 && <ExternalLinks links={links} className={styles.TracePageHeaderBack} />}
-        {canCollapse ? (
-          <button
-            type="button"
-            className={styles.TracePageHeaderTitleLink}
-            onClick={onSlimViewClicked}
-            role="switch"
-            aria-checked={!slimView}
-          >
-            <Icon
-              name={'angle-right'}
-              className={cx(
-                styles.TracePageHeaderDetailToggle,
-                !slimView && styles.TracePageHeaderDetailToggleExpanded
-              )}
-            />
-            {title}
-          </button>
-        ) : (
-          title
-        )}
-      </div>
-      {summaryItems && <LabeledList className={styles.TracePageHeaderOverviewItems} items={summaryItems} />}
-      {!hideMap && !slimView && (
-        <SpanGraph
-          trace={trace}
-          viewRange={viewRange}
-          updateNextViewRangeTime={updateNextViewRangeTime}
-          updateViewRangeTime={updateViewRangeTime}
-        />
-      )}
-    </header>
-  );
-}

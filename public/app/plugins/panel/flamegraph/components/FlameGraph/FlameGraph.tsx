@@ -17,232 +17,271 @@
 // TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
 // THIS SOFTWARE.
 import { css } from '@emotion/css';
-import uFuzzy from '@leeoniya/ufuzzy';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { MouseEvent as ReactMouseEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useMeasure } from 'react-use';
 
-import { CoreApp, createTheme, DataFrame, FieldType, getDisplayProcessor } from '@grafana/data';
+import { Icon, useStyles2 } from '@grafana/ui';
 
 import { PIXELS_PER_LEVEL } from '../../constants';
-import { TooltipData, SelectedView } from '../types';
+import { ClickedItemData, ColorScheme, ColorSchemeDiff, TextAlign } from '../types';
 
+import FlameGraphContextMenu from './FlameGraphContextMenu';
 import FlameGraphMetadata from './FlameGraphMetadata';
-import FlameGraphTooltip, { getTooltipData } from './FlameGraphTooltip';
-import { ItemWithStart } from './dataTransform';
-import { getBarX, getRectDimensionsForLevel, renderRect } from './rendering';
+import FlameGraphTooltip from './FlameGraphTooltip';
+import { FlameGraphDataContainer, LevelItem } from './dataTransform';
+import { getBarX, useFlameRender } from './rendering';
 
 type Props = {
-  data: DataFrame;
-  app: CoreApp;
-  flameGraphHeight?: number;
-  levels: ItemWithStart[][];
-  topLevelIndex: number;
-  selectedBarIndex: number;
+  data: FlameGraphDataContainer;
   rangeMin: number;
   rangeMax: number;
   search: string;
-  setTopLevelIndex: (level: number) => void;
-  setSelectedBarIndex: (bar: number) => void;
   setRangeMin: (range: number) => void;
   setRangeMax: (range: number) => void;
-  selectedView: SelectedView;
   style?: React.CSSProperties;
+  onItemFocused: (data: ClickedItemData) => void;
+  focusedItemData?: ClickedItemData;
+  textAlign: TextAlign;
+  sandwichItem?: string;
+  onSandwich: (label: string) => void;
+  onFocusPillClick: () => void;
+  onSandwichPillClick: () => void;
+  colorScheme: ColorScheme | ColorSchemeDiff;
 };
 
 const FlameGraph = ({
   data,
-  app,
-  flameGraphHeight,
-  levels,
-  topLevelIndex,
-  selectedBarIndex,
   rangeMin,
   rangeMax,
   search,
-  setTopLevelIndex,
-  setSelectedBarIndex,
   setRangeMin,
   setRangeMax,
-  selectedView,
+  onItemFocused,
+  focusedItemData,
+  textAlign,
+  onSandwich,
+  sandwichItem,
+  onFocusPillClick,
+  onSandwichPillClick,
+  colorScheme,
 }: Props) => {
-  const styles = getStyles(selectedView, app, flameGraphHeight);
-  const totalTicks = data.fields[1].values.get(0);
-  const valueField =
-    data.fields.find((f) => f.name === 'value') ?? data.fields.find((f) => f.type === FieldType.number);
-  if (!valueField) {
-    throw new Error('Malformed dataFrame: value field of type number is not in the query response');
-  }
+  const styles = useStyles2(getStyles);
+
+  const [levels, totalProfileTicks, totalProfileTicksRight, totalViewTicks, callersCount] = useMemo(() => {
+    let levels = data.getLevels();
+    let totalProfileTicks = levels.length ? levels[0][0].value : 0;
+    let totalProfileTicksRight = levels.length ? levels[0][0].valueRight : undefined;
+    let callersCount = 0;
+    let totalViewTicks = totalProfileTicks;
+
+    if (sandwichItem) {
+      const [callers, callees] = data.getSandwichLevels(sandwichItem);
+      levels = [...callers, [], ...callees];
+      // We need this separate as in case of diff profile we to compute diff colors based on the original ticks.
+      totalViewTicks = callees[0]?.[0]?.value ?? 0;
+      callersCount = callers.length;
+    }
+    return [levels, totalProfileTicks, totalProfileTicksRight, totalViewTicks, callersCount];
+  }, [data, sandwichItem]);
 
   const [sizeRef, { width: wrapperWidth }] = useMeasure<HTMLDivElement>();
   const graphRef = useRef<HTMLCanvasElement>(null);
-  const tooltipRef = useRef<HTMLDivElement>(null);
-  const [tooltipData, setTooltipData] = useState<TooltipData>();
-  const [showTooltip, setShowTooltip] = useState(false);
+  const [tooltipItem, setTooltipItem] = useState<LevelItem>();
 
-  // Convert pixel coordinates to bar coordinates in the levels array so that we can add mouse events like clicks to
-  // the canvas.
-  const convertPixelCoordinatesToBarCoordinates = useCallback(
-    (x: number, y: number, pixelsPerTick: number) => {
-      const levelIndex = Math.floor(y / (PIXELS_PER_LEVEL / window.devicePixelRatio));
-      const barIndex = getBarIndex(x, levels[levelIndex], pixelsPerTick, totalTicks, rangeMin);
-      return { levelIndex, barIndex };
-    },
-    [levels, totalTicks, rangeMin]
-  );
+  const [clickedItemData, setClickedItemData] = useState<ClickedItemData>();
 
-  const [ufuzzy] = useState(() => {
-    return new uFuzzy();
+  useFlameRender({
+    canvasRef: graphRef,
+    colorScheme,
+    data,
+    focusedItemData,
+    levels,
+    rangeMax,
+    rangeMin,
+    search,
+    textAlign,
+    totalViewTicks,
+    // We need this so that if we have a diff profile and are in sandwich view we still show the same diff colors.
+    totalColorTicks: data.isDiffFlamegraph() ? totalProfileTicks : totalViewTicks,
+    totalTicksRight: totalProfileTicksRight,
+    wrapperWidth,
   });
 
-  const uniqueLabels = useMemo(() => {
-    return [...new Set<string>(data.fields.find((f) => f.name === 'label')?.values.toArray())];
-  }, [data]);
+  const onGraphClick = useCallback(
+    (e: ReactMouseEvent<HTMLCanvasElement>) => {
+      setTooltipItem(undefined);
+      const pixelsPerTick = graphRef.current!.clientWidth / totalViewTicks / (rangeMax - rangeMin);
+      const { levelIndex, barIndex } = convertPixelCoordinatesToBarCoordinates(
+        { x: e.nativeEvent.offsetX, y: e.nativeEvent.offsetY },
+        levels,
+        pixelsPerTick,
+        totalViewTicks,
+        rangeMin
+      );
 
-  const foundLabels = useMemo(() => {
-    const foundLabels = new Set<string>();
-
-    if (search) {
-      for (let idx of ufuzzy.filter(uniqueLabels, search)) {
-        foundLabels.add(uniqueLabels[idx]);
+      // if clicking on a block in the canvas
+      if (barIndex !== -1 && !isNaN(levelIndex) && !isNaN(barIndex)) {
+        const item = levels[levelIndex][barIndex];
+        setClickedItemData({
+          posY: e.clientY,
+          posX: e.clientX,
+          item,
+          level: levelIndex,
+          label: data.getLabel(item.itemIndexes[0]),
+        });
+      } else {
+        // if clicking on the canvas but there is no block beneath the cursor
+        setClickedItemData(undefined);
       }
-    }
+    },
+    [data, rangeMin, rangeMax, totalViewTicks, levels]
+  );
 
-    return foundLabels;
-  }, [ufuzzy, search, uniqueLabels]);
+  const [mousePosition, setMousePosition] = useState<{ x: number; y: number }>();
+  const onGraphMouseMove = useCallback(
+    (e: ReactMouseEvent<HTMLCanvasElement>) => {
+      if (clickedItemData === undefined) {
+        setTooltipItem(undefined);
+        setMousePosition(undefined);
+        const pixelsPerTick = graphRef.current!.clientWidth / totalViewTicks / (rangeMax - rangeMin);
+        const { levelIndex, barIndex } = convertPixelCoordinatesToBarCoordinates(
+          { x: e.nativeEvent.offsetX, y: e.nativeEvent.offsetY },
+          levels,
+          pixelsPerTick,
+          totalViewTicks,
+          rangeMin
+        );
 
-  const render = useCallback(
-    (pixelsPerTick: number) => {
-      if (!levels.length) {
-        return;
-      }
-      const ctx = graphRef.current?.getContext('2d')!;
-      const graph = graphRef.current!;
-
-      const height = PIXELS_PER_LEVEL * levels.length;
-      graph.width = Math.round(wrapperWidth * window.devicePixelRatio);
-      graph.height = Math.round(height * window.devicePixelRatio);
-      graph.style.width = `${wrapperWidth}px`;
-      graph.style.height = `${height}px`;
-
-      ctx.textBaseline = 'middle';
-      ctx.font = 12 * window.devicePixelRatio + 'px monospace';
-      ctx.strokeStyle = 'white';
-
-      const processor = getDisplayProcessor({
-        field: valueField,
-        theme: createTheme() /* theme does not matter for us here */,
-      });
-
-      for (let levelIndex = 0; levelIndex < levels.length; levelIndex++) {
-        const level = levels[levelIndex];
-        // Get all the dimensions of the rectangles for the level. We do this by level instead of per rectangle, because
-        // sometimes we collapse multiple bars into single rect.
-        const dimensions = getRectDimensionsForLevel(level, levelIndex, totalTicks, rangeMin, pixelsPerTick, processor);
-        for (const rect of dimensions) {
-          // Render each rectangle based on the computed dimensions
-          renderRect(ctx, rect, totalTicks, rangeMin, rangeMax, search, levelIndex, topLevelIndex, foundLabels);
+        if (barIndex !== -1 && !isNaN(levelIndex) && !isNaN(barIndex)) {
+          setMousePosition({ x: e.clientX, y: e.clientY });
+          setTooltipItem(levels[levelIndex][barIndex]);
         }
       }
     },
-    [levels, wrapperWidth, valueField, totalTicks, rangeMin, rangeMax, search, topLevelIndex, foundLabels]
+    [rangeMin, rangeMax, totalViewTicks, clickedItemData, levels, setMousePosition]
   );
 
+  const onGraphMouseLeave = useCallback(() => {
+    setTooltipItem(undefined);
+  }, []);
+
+  // hide context menu if outside the flame graph canvas is clicked
   useEffect(() => {
-    if (graphRef.current) {
-      const pixelsPerTick = (wrapperWidth * window.devicePixelRatio) / totalTicks / (rangeMax - rangeMin);
-      render(pixelsPerTick);
-
-      // Clicking allows user to "zoom" into the flamegraph. Zooming means the x axis gets smaller so that the clicked
-      // bar takes 100% of the x axis.
-      graphRef.current.onclick = (e) => {
-        const pixelsPerTick = graphRef.current!.clientWidth / totalTicks / (rangeMax - rangeMin);
-        const { levelIndex, barIndex } = convertPixelCoordinatesToBarCoordinates(e.offsetX, e.offsetY, pixelsPerTick);
-
-        if (barIndex !== -1 && !isNaN(levelIndex) && !isNaN(barIndex)) {
-          setTopLevelIndex(levelIndex);
-          setSelectedBarIndex(barIndex);
-          setRangeMin(levels[levelIndex][barIndex].start / totalTicks);
-          setRangeMax((levels[levelIndex][barIndex].start + levels[levelIndex][barIndex].value) / totalTicks);
-        }
-      };
-
-      graphRef.current!.onmousemove = (e) => {
-        if (tooltipRef.current) {
-          setShowTooltip(false);
-          const pixelsPerTick = graphRef.current!.clientWidth / totalTicks / (rangeMax - rangeMin);
-          const { levelIndex, barIndex } = convertPixelCoordinatesToBarCoordinates(e.offsetX, e.offsetY, pixelsPerTick);
-
-          if (barIndex !== -1 && !isNaN(levelIndex) && !isNaN(barIndex)) {
-            tooltipRef.current.style.left = e.clientX + 10 + 'px';
-            tooltipRef.current.style.top = e.clientY + 'px';
-
-            const bar = levels[levelIndex][barIndex];
-            const tooltipData = getTooltipData(valueField, bar.label, bar.value, bar.self, totalTicks);
-            setTooltipData(tooltipData);
-            setShowTooltip(true);
-          }
-        }
-      };
-
-      graphRef.current!.onmouseleave = () => {
-        setShowTooltip(false);
-      };
-    }
-  }, [
-    render,
-    convertPixelCoordinatesToBarCoordinates,
-    levels,
-    rangeMin,
-    rangeMax,
-    topLevelIndex,
-    totalTicks,
-    wrapperWidth,
-    setTopLevelIndex,
-    setRangeMin,
-    setRangeMax,
-    selectedView,
-    valueField,
-    setSelectedBarIndex,
-  ]);
+    const handleOnClick = (e: MouseEvent) => {
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      if ((e.target as HTMLElement).parentElement?.id !== 'flameGraphCanvasContainer_clickOutsideCheck') {
+        setClickedItemData(undefined);
+      }
+    };
+    window.addEventListener('click', handleOnClick);
+    return () => window.removeEventListener('click', handleOnClick);
+  }, [setClickedItemData]);
 
   return (
-    <div className={styles.graph} ref={sizeRef}>
+    <div className={styles.graph}>
       <FlameGraphMetadata
-        levels={levels}
-        topLevelIndex={topLevelIndex}
-        selectedBarIndex={selectedBarIndex}
-        valueField={valueField}
-        totalTicks={totalTicks}
+        data={data}
+        focusedItem={focusedItemData}
+        sandwichedLabel={sandwichItem}
+        totalTicks={totalViewTicks}
+        onFocusPillClick={onFocusPillClick}
+        onSandwichPillClick={onSandwichPillClick}
       />
-      <canvas ref={graphRef} data-testid="flameGraph" />
-      <FlameGraphTooltip tooltipRef={tooltipRef} tooltipData={tooltipData!} showTooltip={showTooltip} />
+      <div className={styles.canvasContainer}>
+        {sandwichItem && (
+          <div>
+            <div
+              className={styles.sandwichMarker}
+              style={{ height: (callersCount * PIXELS_PER_LEVEL) / window.devicePixelRatio }}
+            >
+              Callers
+              <Icon className={styles.sandwichMarkerIcon} name={'arrow-down'} />
+            </div>
+            <div className={styles.sandwichMarker} style={{ marginTop: PIXELS_PER_LEVEL / window.devicePixelRatio }}>
+              <Icon className={styles.sandwichMarkerIcon} name={'arrow-up'} />
+              Callees
+            </div>
+          </div>
+        )}
+        <div className={styles.canvasWrapper} id="flameGraphCanvasContainer_clickOutsideCheck" ref={sizeRef}>
+          <canvas
+            ref={graphRef}
+            data-testid="flameGraph"
+            onClick={onGraphClick}
+            onMouseMove={onGraphMouseMove}
+            onMouseLeave={onGraphMouseLeave}
+          />
+        </div>
+      </div>
+      <FlameGraphTooltip position={mousePosition} item={tooltipItem} data={data} totalTicks={totalViewTicks} />
+      {clickedItemData && (
+        <FlameGraphContextMenu
+          itemData={clickedItemData}
+          onMenuItemClick={() => {
+            setClickedItemData(undefined);
+          }}
+          onItemFocus={() => {
+            setRangeMin(clickedItemData.item.start / totalViewTicks);
+            setRangeMax((clickedItemData.item.start + clickedItemData.item.value) / totalViewTicks);
+            onItemFocused(clickedItemData);
+          }}
+          onSandwich={() => {
+            onSandwich(data.getLabel(clickedItemData.item.itemIndexes[0]));
+          }}
+        />
+      )}
     </div>
   );
 };
 
-const getStyles = (selectedView: SelectedView, app: CoreApp, flameGraphHeight: number | undefined) => ({
+const getStyles = () => ({
   graph: css`
-    cursor: pointer;
-    float: left;
     overflow: scroll;
-    width: ${selectedView === SelectedView.FlameGraph ? '100%' : '50%'};
-    ${app !== CoreApp.Explore
-      ? `height: calc(${flameGraphHeight}px - 50px)`
-      : ''}; // 50px to adjust for header pushing content down
+    height: 100%;
+    flex-grow: 1;
+    flex-basis: 50%;
+  `,
+  canvasContainer: css`
+    label: canvasContainer;
+    display: flex;
+  `,
+  canvasWrapper: css`
+    label: canvasWrapper;
+    cursor: pointer;
+    flex: 1;
+    overflow: hidden;
+  `,
+  sandwichMarker: css`
+    writing-mode: vertical-lr;
+    transform: rotate(180deg);
+    overflow: hidden;
+    white-space: nowrap;
+  `,
+  sandwichMarkerIcon: css`
+    vertical-align: baseline;
   `,
 });
+
+// Convert pixel coordinates to bar coordinates in the levels array so that we can add mouse events like clicks to
+// the canvas.
+const convertPixelCoordinatesToBarCoordinates = (
+  // position relative to the start of the graph
+  pos: { x: number; y: number },
+  levels: LevelItem[][],
+  pixelsPerTick: number,
+  totalTicks: number,
+  rangeMin: number
+) => {
+  const levelIndex = Math.floor(pos.y / (PIXELS_PER_LEVEL / window.devicePixelRatio));
+  const barIndex = getBarIndex(pos.x, levels[levelIndex], pixelsPerTick, totalTicks, rangeMin);
+  return { levelIndex, barIndex };
+};
 
 /**
  * Binary search for a bar in a level, based on the X pixel coordinate. Useful for detecting which bar did user click
  * on.
  */
-const getBarIndex = (
-  x: number,
-  level: ItemWithStart[],
-  pixelsPerTick: number,
-  totalTicks: number,
-  rangeMin: number
-) => {
+const getBarIndex = (x: number, level: LevelItem[], pixelsPerTick: number, totalTicks: number, rangeMin: number) => {
   if (level) {
     let start = 0;
     let end = level.length - 1;

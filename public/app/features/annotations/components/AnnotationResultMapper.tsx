@@ -42,7 +42,8 @@ export class AnnotationFieldMapper extends PureComponent<Props, State> {
   }
 
   updateFields = () => {
-    const frame = this.props.response?.panelData?.series[0];
+    const panelData = this.props.response?.panelData;
+    const frame = panelData?.series?.[0] ?? panelData?.annotations?.[0];
     if (frame && frame.fields) {
       const fieldNames = frame.fields.map((f) => {
         const name = getFieldDisplayName(f, frame);
@@ -56,7 +57,7 @@ export class AnnotationFieldMapper extends PureComponent<Props, State> {
             description += '...';
             break;
           }
-          description += f.values.get(i);
+          description += f.values[i];
         }
 
         if (description.length > 50) {
@@ -129,7 +130,7 @@ export class AnnotationFieldMapper extends PureComponent<Props, State> {
     let value = first ? first[row.key] : '';
     if (value && row.key.startsWith('time')) {
       const fmt = getValueFormat('dateTimeAsIso');
-      value = formattedValueToString(fmt(value as number));
+      value = formattedValueToString(fmt(value));
     }
     if (value === null || value === undefined) {
       value = ''; // empty string

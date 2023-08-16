@@ -8,8 +8,9 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/ldap"
+	"github.com/grafana/grafana/pkg/services/ldap/multildap"
+	"github.com/grafana/grafana/pkg/services/ldap/service"
 	"github.com/grafana/grafana/pkg/services/login"
-	"github.com/grafana/grafana/pkg/services/multildap"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -38,19 +39,21 @@ func TestLDAP_AuthenticateProxy(t *testing.T) {
 				OrgRoles:   map[int64]org.RoleType{1: org.RoleViewer},
 			},
 			expectedIdentity: &authn.Identity{
-				OrgID:      1,
-				OrgRoles:   map[int64]org.RoleType{1: org.RoleViewer},
-				Login:      "test",
-				Name:       "test test",
-				Email:      "test@test.com",
-				AuthModule: login.LDAPAuthModule,
-				AuthID:     "123",
-				Groups:     []string{"1", "2"},
+				OrgID:           1,
+				OrgRoles:        map[int64]org.RoleType{1: org.RoleViewer},
+				Login:           "test",
+				Name:            "test test",
+				Email:           "test@test.com",
+				AuthenticatedBy: login.LDAPAuthModule,
+				AuthID:          "123",
+				Groups:          []string{"1", "2"},
 				ClientParams: authn.ClientParams{
 					SyncUser:            true,
-					SyncTeamMembers:     true,
+					SyncTeams:           true,
 					EnableDisabledUsers: true,
 					FetchSyncedUser:     true,
+					SyncOrgRoles:        true,
+					SyncPermissions:     true,
 					LookUpParams: login.UserLookupParams{
 						Email: strPtr("test@test.com"),
 						Login: strPtr("test"),
@@ -68,7 +71,7 @@ func TestLDAP_AuthenticateProxy(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			c := &LDAP{cfg: setting.NewCfg(), service: fakeLDAPService{ExpectedInfo: tt.expectedLDAPInfo, ExpectedErr: tt.expectedLDAPErr}}
+			c := &LDAP{cfg: setting.NewCfg(), service: &service.LDAPFakeService{ExpectedUser: tt.expectedLDAPInfo, ExpectedError: tt.expectedLDAPErr}}
 			identity, err := c.AuthenticateProxy(context.Background(), &authn.Request{OrgID: 1}, tt.username, nil)
 			assert.ErrorIs(t, err, tt.expectedErr)
 			assert.EqualValues(t, tt.expectedIdentity, identity)
@@ -102,19 +105,21 @@ func TestLDAP_AuthenticatePassword(t *testing.T) {
 				OrgRoles:   map[int64]org.RoleType{1: org.RoleViewer},
 			},
 			expectedIdentity: &authn.Identity{
-				OrgID:      1,
-				OrgRoles:   map[int64]org.RoleType{1: org.RoleViewer},
-				Login:      "test",
-				Name:       "test test",
-				Email:      "test@test.com",
-				AuthModule: login.LDAPAuthModule,
-				AuthID:     "123",
-				Groups:     []string{"1", "2"},
+				OrgID:           1,
+				OrgRoles:        map[int64]org.RoleType{1: org.RoleViewer},
+				Login:           "test",
+				Name:            "test test",
+				Email:           "test@test.com",
+				AuthenticatedBy: login.LDAPAuthModule,
+				AuthID:          "123",
+				Groups:          []string{"1", "2"},
 				ClientParams: authn.ClientParams{
 					SyncUser:            true,
-					SyncTeamMembers:     true,
+					SyncTeams:           true,
 					EnableDisabledUsers: true,
 					FetchSyncedUser:     true,
+					SyncOrgRoles:        true,
+					SyncPermissions:     true,
 					LookUpParams: login.UserLookupParams{
 						Email: strPtr("test@test.com"),
 						Login: strPtr("test"),
@@ -140,7 +145,7 @@ func TestLDAP_AuthenticatePassword(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			c := &LDAP{cfg: setting.NewCfg(), service: fakeLDAPService{ExpectedInfo: tt.expectedLDAPInfo, ExpectedErr: tt.expectedLDAPErr}}
+			c := &LDAP{cfg: setting.NewCfg(), service: &service.LDAPFakeService{ExpectedUser: tt.expectedLDAPInfo, ExpectedError: tt.expectedLDAPErr}}
 
 			identity, err := c.AuthenticatePassword(context.Background(), &authn.Request{OrgID: 1}, tt.username, tt.password)
 			assert.ErrorIs(t, err, tt.expectedErr)
@@ -151,19 +156,4 @@ func TestLDAP_AuthenticatePassword(t *testing.T) {
 
 func strPtr(s string) *string {
 	return &s
-}
-
-var _ ldapService = new(fakeLDAPService)
-
-type fakeLDAPService struct {
-	ExpectedErr  error
-	ExpectedInfo *login.ExternalUserInfo
-}
-
-func (f fakeLDAPService) Login(query *login.LoginUserQuery) (*login.ExternalUserInfo, error) {
-	return f.ExpectedInfo, f.ExpectedErr
-}
-
-func (f fakeLDAPService) User(username string) (*login.ExternalUserInfo, error) {
-	return f.ExpectedInfo, f.ExpectedErr
 }

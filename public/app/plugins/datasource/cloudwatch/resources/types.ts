@@ -39,6 +39,7 @@ export interface DescribeLogGroupsRequest extends ResourceRequest {
   logGroupPattern?: string;
   limit?: number;
   listAllLogGroups?: boolean;
+  accountId?: string;
 }
 
 export interface Account {

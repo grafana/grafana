@@ -58,6 +58,10 @@ function getDefaultDataFrame(): DataFrame {
       },
     ],
   });
+  return applyOverrides(dataFrame);
+}
+
+function applyOverrides(dataFrame: DataFrame) {
   const dataFrames = applyFieldOverrides({
     data: [dataFrame],
     fieldConfig: {
@@ -65,7 +69,7 @@ function getDefaultDataFrame(): DataFrame {
       overrides: [],
     },
     replaceVariables: (value, vars, format) => {
-      return vars && value === '${__value.text}' ? vars['__value'].value.text : value;
+      return vars && value === '${__value.text}' ? '${__value.text} interpolation' : value;
     },
     timeZone: 'utc',
     theme: createTheme(),
@@ -144,43 +148,11 @@ describe('Table', () => {
       const rows = within(getTable()).getAllByRole('row');
       expect(rows).toHaveLength(5);
       expect(getRowsData(rows)).toEqual([
-        { time: '2021-01-01 00:00:00', temperature: '10', link: '10' },
-        { time: '2021-01-01 03:00:00', temperature: 'NaN', link: 'NaN' },
-        { time: '2021-01-01 01:00:00', temperature: '11', link: '11' },
-        { time: '2021-01-01 02:00:00', temperature: '12', link: '12' },
+        { time: '2021-01-01 00:00:00', temperature: '10', link: '${__value.text} interpolation' },
+        { time: '2021-01-01 03:00:00', temperature: 'NaN', link: '${__value.text} interpolation' },
+        { time: '2021-01-01 01:00:00', temperature: '11', link: '${__value.text} interpolation' },
+        { time: '2021-01-01 02:00:00', temperature: '12', link: '${__value.text} interpolation' },
       ]);
-    });
-  });
-
-  describe('when `showRowNums` is toggled', () => {
-    const showRowNumsTestContext = {
-      data: toDataFrame({
-        name: 'A',
-        fields: [
-          {
-            name: 'number',
-            type: FieldType.number,
-            values: [1, 1, 1, 2, 2, 3, 4, 5],
-            config: {
-              custom: {
-                filterable: true,
-              },
-            },
-          },
-        ],
-      }),
-    };
-
-    it('should render the (fields.length) rows when `showRowNums` is untoggled', () => {
-      getTestContext({ ...showRowNumsTestContext, showRowNums: false });
-
-      expect(screen.getAllByRole('columnheader')).toHaveLength(1);
-    });
-
-    it('should render (fields.length + 1) rows row when `showRowNums` is toggled', () => {
-      getTestContext({ ...showRowNumsTestContext, showRowNums: true });
-
-      expect(screen.getAllByRole('columnheader')).toHaveLength(2);
     });
   });
 
@@ -203,10 +175,10 @@ describe('Table', () => {
       const rows = within(getTable()).getAllByRole('row');
       expect(rows).toHaveLength(5);
       expect(getRowsData(rows)).toEqual([
-        { time: '2021-01-01 02:00:00', temperature: '12', link: '12' },
-        { time: '2021-01-01 01:00:00', temperature: '11', link: '11' },
-        { time: '2021-01-01 00:00:00', temperature: '10', link: '10' },
-        { time: '2021-01-01 03:00:00', temperature: 'NaN', link: 'NaN' },
+        { time: '2021-01-01 02:00:00', temperature: '12', link: '${__value.text} interpolation' },
+        { time: '2021-01-01 01:00:00', temperature: '11', link: '${__value.text} interpolation' },
+        { time: '2021-01-01 00:00:00', temperature: '10', link: '${__value.text} interpolation' },
+        { time: '2021-01-01 03:00:00', temperature: 'NaN', link: '${__value.text} interpolation' },
       ]);
     });
   });
@@ -547,31 +519,41 @@ describe('Table', () => {
     });
   });
 
-  describe('when mounted with data and sub-data', () => {
-    it('then correct rows should be rendered and new table is rendered when expander is clicked', () => {
-      getTestContext({
-        subData: new Array(getDefaultDataFrame().length).fill(0).map((i) =>
+  describe('when mounted with nested data', () => {
+    it('then correct rows should be rendered and new table is rendered when expander is clicked', async () => {
+      const nestedFrame = (idx: number) =>
+        applyOverrides(
           toDataFrame({
-            name: 'A',
+            name: `nested_frame${idx}`,
             fields: [
               {
-                name: 'number' + i,
-                type: FieldType.number,
-                values: [i, i, i],
-                config: {
-                  custom: {
-                    filterable: true,
-                  },
-                },
+                name: `humidity_${idx}`,
+                type: FieldType.string,
+                values: [`3%_${idx}`, `17%_${idx}`],
+              },
+              {
+                name: `status_${idx}`,
+                type: FieldType.string,
+                values: [`ok_${idx}`, `humid_${idx}`],
               },
             ],
-            meta: {
-              custom: {
-                parentRowIndex: i,
-              },
-            },
           })
-        ),
+        );
+      const defaultFrame = getDefaultDataFrame();
+
+      getTestContext({
+        data: applyOverrides({
+          ...defaultFrame,
+          fields: [
+            ...defaultFrame.fields,
+            {
+              name: 'nested',
+              type: FieldType.nestedFrames,
+              values: [[nestedFrame(0), nestedFrame(1)]],
+              config: {},
+            },
+          ],
+        }),
       });
       expect(getTable()).toBeInTheDocument();
       expect(screen.getAllByRole('columnheader')).toHaveLength(4);
@@ -582,18 +564,34 @@ describe('Table', () => {
       const rows = within(getTable()).getAllByRole('row');
       expect(rows).toHaveLength(5);
       expect(getRowsData(rows)).toEqual([
-        { time: '2021-01-01 00:00:00', temperature: '10', link: '10' },
-        { time: '2021-01-01 03:00:00', temperature: 'NaN', link: 'NaN' },
-        { time: '2021-01-01 01:00:00', temperature: '11', link: '11' },
-        { time: '2021-01-01 02:00:00', temperature: '12', link: '12' },
+        { time: '2021-01-01 00:00:00', temperature: '10', link: '${__value.text} interpolation' },
+        { time: '2021-01-01 03:00:00', temperature: 'NaN', link: '${__value.text} interpolation' },
+        { time: '2021-01-01 01:00:00', temperature: '11', link: '${__value.text} interpolation' },
+        { time: '2021-01-01 02:00:00', temperature: '12', link: '${__value.text} interpolation' },
       ]);
 
-      within(rows[1]).getByLabelText('Expand row').click();
-      const rowsAfterClick = within(getTable()).getAllByRole('row');
-      expect(within(rowsAfterClick[1]).getByRole('table')).toBeInTheDocument();
-      expect(within(rowsAfterClick[1]).getByText(/number0/)).toBeInTheDocument();
+      await userEvent.click(within(rows[1]).getByLabelText('Expand row'));
+      expect(screen.getAllByRole('columnheader')).toHaveLength(8);
+      expect(getColumnHeader(/humidity_0/)).toBeInTheDocument();
+      expect(getColumnHeader(/humidity_1/)).toBeInTheDocument();
+      expect(getColumnHeader(/status_0/)).toBeInTheDocument();
+      expect(getColumnHeader(/status_1/)).toBeInTheDocument();
 
-      expect(within(rowsAfterClick[2]).queryByRole('table')).toBeNull();
+      const subTable0 = screen.getAllByRole('table')[1];
+      const subTableRows0 = within(subTable0).getAllByRole('row');
+      expect(subTableRows0).toHaveLength(3);
+      expect(within(subTableRows0[1]).getByText(/3%_0/)).toBeInTheDocument();
+      expect(within(subTableRows0[1]).getByText(/ok_0/)).toBeInTheDocument();
+      expect(within(subTableRows0[2]).getByText(/17%_0/)).toBeInTheDocument();
+      expect(within(subTableRows0[2]).getByText(/humid_0/)).toBeInTheDocument();
+
+      const subTable1 = screen.getAllByRole('table')[2];
+      const subTableRows1 = within(subTable1).getAllByRole('row');
+      expect(subTableRows1).toHaveLength(3);
+      expect(within(subTableRows1[1]).getByText(/3%_1/)).toBeInTheDocument();
+      expect(within(subTableRows1[1]).getByText(/ok_1/)).toBeInTheDocument();
+      expect(within(subTableRows1[2]).getByText(/17%_1/)).toBeInTheDocument();
+      expect(within(subTableRows1[2]).getByText(/humid_1/)).toBeInTheDocument();
     });
   });
 });

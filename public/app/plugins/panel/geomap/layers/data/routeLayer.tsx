@@ -1,3 +1,15 @@
+import { isNumber } from 'lodash';
+import Feature, { FeatureLike } from 'ol/Feature';
+import Map from 'ol/Map';
+import { LineString, Point, SimpleGeometry } from 'ol/geom';
+import { Group as LayerGroup } from 'ol/layer';
+import VectorLayer from 'ol/layer/Vector';
+import VectorSource from 'ol/source/Vector';
+import { Fill, Stroke, Style, Circle } from 'ol/style';
+import FlowLine from 'ol-ext/style/FlowLine';
+import { Subscription, throttleTime } from 'rxjs';
+import tinycolor from 'tinycolor2';
+
 import {
   MapLayerRegistryItem,
   PanelData,
@@ -9,32 +21,16 @@ import {
   DataFrame,
   TIME_SERIES_TIME_FIELD_NAME,
 } from '@grafana/data';
-
-import {
-  MapLayerOptions,
-  FrameGeometrySourceMode,
-} from '@grafana/schema';
-
-import Map from 'ol/Map';
-import { FeatureLike } from 'ol/Feature';
-import { Subscription, throttleTime } from 'rxjs';
-import { getGeometryField, getLocationMatchers } from 'app/features/geo/utils/location';
-import { defaultStyleConfig, StyleConfig } from '../../style/types';
-import { StyleEditor } from '../../editor/StyleEditor';
-import { getStyleConfigState } from '../../style/utils';
-import VectorLayer from 'ol/layer/Vector';
-import { isNumber } from 'lodash';
-import { routeStyle } from '../../style/markers';
-import { FrameVectorSource } from 'app/features/geo/utils/frameVectorSource';
-import { Group as LayerGroup } from 'ol/layer';
-import VectorSource from 'ol/source/Vector';
-import { Fill, Stroke, Style, Circle } from 'ol/style';
-import Feature from 'ol/Feature';
 import { alpha } from '@grafana/data/src/themes/colorManipulator';
-import { LineString, SimpleGeometry } from 'ol/geom';
-import FlowLine from 'ol-ext/style/FlowLine';
-import tinycolor from 'tinycolor2';
-import { getStyleDimension } from '../../utils/utils';
+import { MapLayerOptions, FrameGeometrySourceMode } from '@grafana/schema';
+import { FrameVectorSource } from 'app/features/geo/utils/frameVectorSource';
+import { getGeometryField, getLocationMatchers } from 'app/features/geo/utils/location';
+
+import { StyleEditor } from '../../editor/StyleEditor';
+import { routeStyle } from '../../style/markers';
+import { defaultStyleConfig, StyleConfig } from '../../style/types';
+import { getStyleConfigState } from '../../style/utils';
+import { getStyleDimension, isSegmentVisible } from '../../utils/utils';
 
 // Configuration options for Circle overlays
 export interface RouteConfig {
@@ -73,7 +69,7 @@ export const routeLayer: MapLayerRegistryItem<RouteConfig> = {
   description: 'Render data points as a route',
   isBaseMap: false,
   showLocation: true,
-  state: PluginState.alpha,
+  state: PluginState.beta,
 
   /**
    * Function that configures transformation and returns a transformer
@@ -90,7 +86,7 @@ export const routeLayer: MapLayerRegistryItem<RouteConfig> = {
     const location = await getLocationMatchers(options.location);
     const source = new FrameVectorSource(location);
     const vectorLayer = new VectorLayer({ source });
-    const hasArrows = config.arrow == 1 || config.arrow == -1;
+    const hasArrows = config.arrow === 1 || config.arrow === -1;
 
     if (!style.fields && !hasArrows) {
       // Set a global style
@@ -114,9 +110,13 @@ export const routeLayer: MapLayerRegistryItem<RouteConfig> = {
         if (geom instanceof SimpleGeometry) {
           const coordinates = geom.getCoordinates();
           if (coordinates) {
+            let startIndex = 0; // Index start for segment optimization
+            const pixelTolerance = 2; // For segment to be visible, it must be > 2 pixels (due to round ends)
             for (let i = 0; i < coordinates.length - 1; i++) {
+              const segmentStartCoords = coordinates[startIndex];
+              const segmentEndCoords = coordinates[i + 1];
               const color1 = tinycolor(
-                theme.visualization.getColorByName((dims.color && dims.color.get(i)) ?? style.base.color)
+                theme.visualization.getColorByName((dims.color && dims.color.get(startIndex)) ?? style.base.color)
               )
                 .setAlpha(opacity)
                 .toString();
@@ -126,15 +126,15 @@ export const routeLayer: MapLayerRegistryItem<RouteConfig> = {
                 .setAlpha(opacity)
                 .toString();
 
-              const arrowSize1 = (dims.size && dims.size.get(i)) ?? style.base.size;
+              const arrowSize1 = (dims.size && dims.size.get(startIndex)) ?? style.base.size;
               const arrowSize2 = (dims.size && dims.size.get(i + 1)) ?? style.base.size;
 
               const flowStyle = new FlowLine({
                 visible: true,
-                lineCap: config.arrow == 0 ? 'round' : 'square',
+                lineCap: config.arrow === 0 ? 'round' : 'square',
                 color: color1,
                 color2: color2,
-                width: (dims.size && dims.size.get(i)) ?? style.base.size,
+                width: (dims.size && dims.size.get(startIndex)) ?? style.base.size,
                 width2: (dims.size && dims.size.get(i + 1)) ?? style.base.size,
               });
               if (config.arrow) {
@@ -147,9 +147,33 @@ export const routeLayer: MapLayerRegistryItem<RouteConfig> = {
                   flowStyle.setArrowSize((arrowSize1 ?? 0) * 1.5);
                 }
               }
-              const LS = new LineString([coordinates[i], coordinates[i + 1]]);
-              flowStyle.setGeometry(LS);
-              styles.push(flowStyle);
+              // Only render segment if change in pixel coordinates is significant enough
+              if (isSegmentVisible(map, pixelTolerance, segmentStartCoords, segmentEndCoords)) {
+                const LS = new LineString([segmentStartCoords, segmentEndCoords]);
+                flowStyle.setGeometry(LS);
+                styles.push(flowStyle);
+                startIndex = i + 1; // Because a segment was created, move onto the next one
+              }
+            }
+            // If no segments created, render a single point
+            if (styles.length === 0) {
+              const P = new Point(coordinates[0]);
+              const radius = ((dims.size && dims.size.get(0)) ?? style.base.size ?? 10) / 2;
+              const color = tinycolor(
+                theme.visualization.getColorByName((dims.color && dims.color.get(0)) ?? style.base.color)
+              )
+                .setAlpha(opacity)
+                .toString();
+              const ZoomOutCircle = new Style({
+                image: new Circle({
+                  radius: radius,
+                  fill: new Fill({
+                    color: color,
+                  }),
+                }),
+              });
+              ZoomOutCircle.setGeometry(P);
+              styles.push(ZoomOutCircle);
             }
           }
           return styles;
@@ -204,12 +228,12 @@ export const routeLayer: MapLayerRegistryItem<RouteConfig> = {
             if (frame && time) {
               const timeField = frame.fields.find((f) => f.name === TIME_SERIES_TIME_FIELD_NAME);
               if (timeField) {
-                const timestamps: number[] = timeField.values.toArray();
+                const timestamps: number[] = timeField.values;
                 const pointIdx = findNearestTimeIndex(timestamps, time);
                 if (pointIdx !== null) {
                   const out = getGeometryField(frame, location);
                   if (out.field) {
-                    crosshairFeature.setGeometry(out.field.values.get(pointIdx));
+                    crosshairFeature.setGeometry(out.field.values[pointIdx]);
                     crosshairFeature.setStyle(crosshairStyle);
                   }
                 }
@@ -293,14 +317,14 @@ function findNearestTimeIndex(timestamps: number[], time: number): number | null
   if (time < timestamps[probableIdx]) {
     for (let i = probableIdx; i > 0; i--) {
       if (time > timestamps[i]) {
-        return i;
+        return i < lastIdx ? i + 1 : lastIdx;
       }
     }
     return 0;
   } else {
     for (let i = probableIdx; i < lastIdx; i++) {
       if (time < timestamps[i]) {
-        return i;
+        return i > 0 ? i - 1 : 0;
       }
     }
     return lastIdx;

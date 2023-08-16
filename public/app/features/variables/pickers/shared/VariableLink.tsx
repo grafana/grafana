@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { FC, MouseEvent, useCallback } from 'react';
+import React, { MouseEvent, useCallback } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -20,7 +20,7 @@ interface Props {
   id: string;
 }
 
-export const VariableLink: FC<Props> = ({ loading, disabled, onClick: propsOnClick, text, onCancel, id }) => {
+export const VariableLink = ({ loading, disabled, onClick: propsOnClick, text, onCancel, id }: Props) => {
   const styles = useStyles2(getStyles);
   const onClick = useCallback(
     (event: MouseEvent<HTMLButtonElement>) => {
@@ -66,7 +66,7 @@ interface VariableLinkTextProps {
   text: string;
 }
 
-const VariableLinkText: FC<VariableLinkTextProps> = ({ text }) => {
+const VariableLinkText = ({ text }: VariableLinkTextProps) => {
   const styles = useStyles2(getStyles);
   return (
     <span className={styles.textAndTags}>
@@ -75,7 +75,7 @@ const VariableLinkText: FC<VariableLinkTextProps> = ({ text }) => {
   );
 };
 
-const LoadingIndicator: FC<Pick<Props, 'onCancel'>> = ({ onCancel }) => {
+const LoadingIndicator = ({ onCancel }: Pick<Props, 'onCancel'>) => {
   const onClick = useCallback(
     (event: MouseEvent) => {
       event.preventDefault();
@@ -89,7 +89,7 @@ const LoadingIndicator: FC<Pick<Props, 'onCancel'>> = ({ onCancel }) => {
       <Icon
         className="spin-clockwise"
         name="sync"
-        size="xs"
+        size="sm"
         onClick={onClick}
         aria-label={selectors.components.LoadingIndicator.icon}
       />
@@ -104,7 +104,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     padding: 0 ${theme.spacing(1)};
     background-color: ${theme.components.input.background};
     border: 1px solid ${theme.components.input.borderColor};
-    border-radius: ${theme.shape.borderRadius(1)};
+    border-radius: ${theme.shape.radius.default};
     display: flex;
     align-items: center;
     color: ${theme.colors.text};

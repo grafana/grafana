@@ -1,4 +1,3 @@
-import { property } from 'lodash';
 import React from 'react';
 
 import {
@@ -18,17 +17,16 @@ import {
 import { getTemplateSrv } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import { Icon } from '@grafana/ui';
-import { TraceToLogsOptionsV2 } from 'app/core/components/TraceToLogs/TraceToLogsSettings';
+import { TraceToLogsOptionsV2, TraceToLogsTag } from 'app/core/components/TraceToLogs/TraceToLogsSettings';
 import { TraceToMetricQuery, TraceToMetricsOptions } from 'app/core/components/TraceToMetrics/TraceToMetricsSettings';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { PromQuery } from 'app/plugins/datasource/prometheus/types';
 
 import { LokiQuery } from '../../../plugins/datasource/loki/types';
-import { variableRegex } from '../../variables/utils';
-import { getFieldLinksForExplore } from '../utils/links';
+import { ExploreFieldLinkModel, getFieldLinksForExplore, getVariableUsageInfo } from '../utils/links';
 
-import { SpanLinkFunc, Trace, TraceSpan } from './components';
-import { SpanLinks } from './components/types/links';
+import { SpanLinkDef, SpanLinkFunc, Trace, TraceSpan } from './components';
+import { SpanLinkType } from './components/types/links';
 
 /**
  * This is a factory for the link creator. It returns the function mainly so it can return undefined in which case
@@ -56,66 +54,79 @@ export function createSpanLinkFactory({
 
   let scopedVars = scopedVarsFromTrace(trace);
   const hasLinks = dataFrame.fields.some((f) => Boolean(f.config.links?.length));
-  const legacyFormat = dataFrame.fields.length === 1;
 
-  if (legacyFormat || !hasLinks) {
-    // if the dataframe contains just a single blob of data (legacy format) or does not have any links configured,
-    // let's try to use the old legacy path.
-    // TODO: This was mainly a backward compatibility thing but at this point can probably be removed.
-    return legacyCreateSpanLinkFactory(
-      splitOpenFn,
-      // We need this to make the types happy but for this branch of code it does not matter which field we supply.
-      dataFrame.fields[0],
-      traceToLogsOptions,
-      traceToMetricsOptions,
-      createFocusSpanLink,
-      scopedVars
-    );
-  }
+  const createSpanLinks = legacyCreateSpanLinkFactory(
+    splitOpenFn,
+    // We need this to make the types happy but for this branch of code it does not matter which field we supply.
+    dataFrame.fields[0],
+    traceToLogsOptions,
+    traceToMetricsOptions,
+    createFocusSpanLink,
+    scopedVars
+  );
 
-  if (hasLinks) {
-    return function SpanLink(span: TraceSpan): SpanLinks | undefined {
+  return function SpanLink(span: TraceSpan): SpanLinkDef[] | undefined {
+    let spanLinks = createSpanLinks(span);
+
+    if (hasLinks) {
       scopedVars = {
         ...scopedVars,
         ...scopedVarsFromSpan(span),
       };
       // We should be here only if there are some links in the dataframe
-      const field = dataFrame.fields.find((f) => Boolean(f.config.links?.length))!;
+      const fields = dataFrame.fields.filter((f) => Boolean(f.config.links?.length))!;
       try {
-        const links = getFieldLinksForExplore({
-          field,
-          rowIndex: span.dataFrameRowIndex!,
-          splitOpenFn,
-          range: getTimeRangeFromSpan(span),
-          dataFrame,
-          vars: scopedVars,
+        let links: ExploreFieldLinkModel[] = [];
+        fields.forEach((field) => {
+          const fieldLinksForExplore = getFieldLinksForExplore({
+            field,
+            rowIndex: span.dataFrameRowIndex!,
+            splitOpenFn,
+            range: getTimeRangeFromSpan(span),
+            dataFrame,
+            vars: scopedVars,
+          });
+          links = links.concat(fieldLinksForExplore);
         });
 
-        return {
-          logLinks: [
-            {
-              href: links[0].href,
-              onClick: links[0].onClick,
-              content: <Icon name="gf-logs" title="Explore the logs for this in split view" />,
-              field: links[0].origin,
-            },
-          ],
-        };
+        const newSpanLinks: SpanLinkDef[] = links.map((link) => {
+          return {
+            title: link.title,
+            href: link.href,
+            onClick: link.onClick,
+            content: <Icon name="link" title={link.title || 'Link'} />,
+            field: link.origin,
+            type: SpanLinkType.Unknown,
+          };
+        });
+
+        spanLinks.push.apply(spanLinks, newSpanLinks);
       } catch (error) {
         // It's fairly easy to crash here for example if data source defines wrong interpolation in the data link
         console.error(error);
-        return undefined;
+        return spanLinks;
       }
-    };
-  }
+    }
 
-  return undefined;
+    return spanLinks;
+  };
 }
 
 /**
  * Default keys to use when there are no configured tags.
  */
-const defaultKeys = ['cluster', 'hostname', 'namespace', 'pod'].map((k) => ({ key: k }));
+const defaultKeys = [
+  'cluster',
+  'hostname',
+  'namespace',
+  'pod',
+  'service.name',
+  'service.namespace',
+  'deployment.environment',
+].map((k) => ({
+  key: k,
+  value: k.includes('.') ? k.replace('.', '_') : undefined,
+}));
 
 function legacyCreateSpanLinkFactory(
   splitOpenFn: SplitOpen,
@@ -136,12 +147,12 @@ function legacyCreateSpanLinkFactory(
     metricsDataSourceSettings = getDatasourceSrv().getInstanceSettings(traceToMetricsOptions.datasourceUid);
   }
 
-  return function SpanLink(span: TraceSpan): SpanLinks {
+  return function SpanLink(span: TraceSpan): SpanLinkDef[] {
     scopedVars = {
       ...scopedVars,
       ...scopedVarsFromSpan(span),
     };
-    const links: SpanLinks = { traceLinks: [] };
+    const links: SpanLinkDef[] = [];
     let query: DataQuery | undefined;
     let tags = '';
 
@@ -149,7 +160,8 @@ function legacyCreateSpanLinkFactory(
     //  deprecated blob format and we can map the link easily in data frame.
     if (logsDataSourceSettings && traceToLogsOptions) {
       const customQuery = traceToLogsOptions.customQuery ? traceToLogsOptions.query : undefined;
-      const tagsToUse = traceToLogsOptions.tags || defaultKeys;
+      const tagsToUse =
+        traceToLogsOptions.tags && traceToLogsOptions.tags.length > 0 ? traceToLogsOptions.tags : defaultKeys;
       switch (logsDataSourceSettings?.type) {
         case 'loki':
           tags = getFormattedTags(span, tagsToUse);
@@ -164,6 +176,13 @@ function legacyCreateSpanLinkFactory(
           tags = getFormattedTags(span, tagsToUse, { labelValueSign: ':', joinBy: ' AND ' });
           query = getQueryForElasticsearchOrOpensearch(span, traceToLogsOptions, tags, customQuery);
           break;
+        case 'grafana-falconlogscale-datasource':
+          tags = getFormattedTags(span, tagsToUse, { joinBy: ' OR ' });
+          query = getQueryForFalconLogScale(span, traceToLogsOptions, tags, customQuery);
+          break;
+        case 'googlecloud-logging-datasource':
+          tags = getFormattedTags(span, tagsToUse, { joinBy: ' AND ' });
+          query = getQueryForGoogleCloudLogging(span, traceToLogsOptions, tags, customQuery);
       }
 
       // query can be false in case the simple UI tag mapping is used but none of them are present in the span.
@@ -189,7 +208,7 @@ function legacyCreateSpanLinkFactory(
 
         // Check if all variables are defined and don't show if they aren't. This is usually handled by the
         // getQueryFor* functions but this is for case of custom query supplied by the user.
-        if (dataLinkHasAllVariablesDefined(dataLink.internal!.query, scopedVars)) {
+        if (getVariableUsageInfo(dataLink.internal!.query, scopedVars).allVariablesDefined) {
           const link = mapInternalLinkToExplore({
             link: dataLink,
             internalLink: dataLink.internal!,
@@ -211,21 +230,20 @@ function legacyCreateSpanLinkFactory(
             replaceVariables: getTemplateSrv().replace.bind(getTemplateSrv()),
           });
 
-          links.logLinks = [
-            {
-              href: link.href,
-              onClick: link.onClick,
-              content: <Icon name="gf-logs" title="Explore the logs for this in split view" />,
-              field,
-            },
-          ];
+          links.push({
+            href: link.href,
+            title: 'Related logs',
+            onClick: link.onClick,
+            content: <Icon name="gf-logs" title="Explore the logs for this in split view" />,
+            field,
+            type: SpanLinkType.Logs,
+          });
         }
       }
     }
 
     // Get metrics links
     if (metricsDataSourceSettings && traceToMetricsOptions?.queries) {
-      links.metricLinks = [];
       for (const query of traceToMetricsOptions.queries) {
         const expr = buildMetricsQuery(query, traceToMetricsOptions?.tags || [], span);
         const dataLink: DataLink<PromQuery> = {
@@ -248,22 +266,23 @@ function legacyCreateSpanLinkFactory(
           range: getTimeRangeFromSpan(span, {
             startMs: traceToMetricsOptions.spanStartTimeShift
               ? rangeUtil.intervalToMs(traceToMetricsOptions.spanStartTimeShift)
-              : 0,
+              : -120000,
             endMs: traceToMetricsOptions.spanEndTimeShift
               ? rangeUtil.intervalToMs(traceToMetricsOptions.spanEndTimeShift)
-              : 0,
+              : 120000,
           }),
           field: {} as Field,
           onClickFn: splitOpenFn,
           replaceVariables: getTemplateSrv().replace.bind(getTemplateSrv()),
         });
 
-        links.metricLinks.push({
+        links.push({
           title: query?.name,
           href: link.href,
           onClick: link.onClick,
           content: <Icon name="chart-line" title="Explore metrics for this span" />,
           field,
+          type: SpanLinkType.Metrics,
         });
       }
     }
@@ -278,12 +297,13 @@ function legacyCreateSpanLinkFactory(
 
         const link = createFocusSpanLink(reference.traceID, reference.spanID);
 
-        links.traceLinks!.push({
+        links!.push({
           href: link.href,
           title: reference.span ? reference.span.operationName : 'View linked span',
           content: <Icon name="link" title="View linked span" />,
           onClick: link.onClick,
           field: link.origin,
+          type: SpanLinkType.Traces,
         });
       }
     }
@@ -292,12 +312,13 @@ function legacyCreateSpanLinkFactory(
       for (const reference of span.subsidiarilyReferencedBy) {
         const link = createFocusSpanLink(reference.traceID, reference.spanID);
 
-        links.traceLinks!.push({
+        links!.push({
           href: link.href,
           title: reference.span ? reference.span.operationName : 'View linked span',
           content: <Icon name="link" title="View linked span" />,
           onClick: link.onClick,
           field: link.origin,
+          type: SpanLinkType.Traces,
         });
       }
     }
@@ -405,13 +426,73 @@ function getQueryForSplunk(span: TraceSpan, options: TraceToLogsOptionsV2, tags:
   };
 }
 
+function getQueryForGoogleCloudLogging(
+  span: TraceSpan,
+  options: TraceToLogsOptionsV2,
+  tags: string,
+  customQuery?: string
+) {
+  const { filterByTraceID, filterBySpanID } = options;
+
+  if (customQuery) {
+    return { query: customQuery, refId: '' };
+  }
+
+  let queryArr = [];
+  if (filterBySpanID && span.spanID) {
+    queryArr.push('"${__span.spanId}"');
+  }
+
+  if (filterByTraceID && span.traceID) {
+    queryArr.push('"${__span.traceId}"');
+  }
+
+  if (tags) {
+    queryArr.push('${__tags}');
+  }
+
+  return {
+    query: queryArr.join(' AND '),
+    refId: '',
+  };
+}
+
+function getQueryForFalconLogScale(span: TraceSpan, options: TraceToLogsOptionsV2, tags: string, customQuery?: string) {
+  const { filterByTraceID, filterBySpanID } = options;
+
+  if (customQuery) {
+    return {
+      lsql: customQuery,
+      refId: '',
+    };
+  }
+
+  if (!tags) {
+    return undefined;
+  }
+
+  let lsql = '${__tags}';
+  if (filterByTraceID && span.traceID) {
+    lsql += ' or "${__span.traceId}"';
+  }
+
+  if (filterBySpanID && span.spanID) {
+    lsql += ' or "${__span.spanId}"';
+  }
+
+  return {
+    lsql,
+    refId: '',
+  };
+}
+
 /**
  * Creates a string representing all the tags already formatted for use in the query. The tags are filtered so that
  * only intersection of tags that exist in a span and tags that you want are serialized into the string.
  */
 function getFormattedTags(
   span: TraceSpan,
-  tags: Array<{ key: string; value?: string }>,
+  tags: TraceToLogsTag[],
   { labelValueSign = '=', joinBy = ', ' }: { labelValueSign?: string; joinBy?: string } = {}
 ) {
   // In order, try to use mapped tags -> tags -> default tags
@@ -543,66 +624,4 @@ function scopedVarsFromSpan(span: TraceSpan): ScopedVars {
       },
     },
   };
-}
-
-type VarValue = string | number | boolean | undefined;
-
-/**
- * This function takes some code from  template service replace() function to figure out if all variables are
- * interpolated. This is so we don't show links that do not work. This cuts a lots of corners though and that is why
- * it's a local function. We sort of don't care about the dashboard template variables for example. Also we only link
- * to loki/splunk/elastic, so it should be less probable that user needs part of a query that looks like a variable but
- * is actually part of the query language.
- * @param query
- * @param scopedVars
- */
-function dataLinkHasAllVariablesDefined<T extends DataQuery>(query: T, scopedVars: ScopedVars): boolean {
-  const vars = getVariablesMapInTemplate(getStringsFromObject(query), scopedVars);
-  return Object.values(vars).every((val) => val !== undefined);
-}
-
-function getStringsFromObject<T extends Object>(obj: T): string {
-  let acc = '';
-  for (const k of Object.keys(obj)) {
-    // Honestly not sure how to type this to make TS happy.
-    // @ts-ignore
-    if (typeof obj[k] === 'string') {
-      // @ts-ignore
-      acc += ' ' + obj[k];
-      // @ts-ignore
-    } else if (typeof obj[k] === 'object' && obj[k] !== null) {
-      // @ts-ignore
-      acc += ' ' + getStringsFromObject(obj[k]);
-    }
-  }
-  return acc;
-}
-
-function getVariablesMapInTemplate(target: string, scopedVars: ScopedVars): Record<string, VarValue> {
-  const regex = new RegExp(variableRegex);
-  const values: Record<string, VarValue> = {};
-
-  target.replace(regex, (match, var1, var2, fmt2, var3, fieldPath) => {
-    const variableName = var1 || var2 || var3;
-    values[variableName] = getVariableValue(variableName, fieldPath, scopedVars);
-
-    // Don't care about the result anyway
-    return '';
-  });
-
-  return values;
-}
-
-function getVariableValue(variableName: string, fieldPath: string | undefined, scopedVars: ScopedVars): VarValue {
-  const scopedVar = scopedVars[variableName];
-  if (!scopedVar) {
-    return undefined;
-  }
-
-  if (fieldPath) {
-    // @ts-ignore ScopedVars are typed in way that I don't think this is possible to type correctly.
-    return property(fieldPath)(scopedVar.value);
-  }
-
-  return scopedVar.value;
 }

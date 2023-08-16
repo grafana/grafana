@@ -14,9 +14,10 @@ import {
   PanelModel as IPanelModel,
   TimeRange,
   TimeZone,
+  TypedVariableModel,
   UrlQueryValue,
 } from '@grafana/data';
-import { RefreshEvent, TimeRangeUpdatedEvent } from '@grafana/runtime';
+import { RefreshEvent, TimeRangeUpdatedEvent, config } from '@grafana/runtime';
 import { Dashboard } from '@grafana/schema';
 import { DEFAULT_ANNOTATION_COLOR } from '@grafana/ui';
 import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, GRID_COLUMN_COUNT, REPEAT_DIR_VERTICAL } from 'app/core/constants';
@@ -25,6 +26,7 @@ import { sortedDeepCloneWithoutNulls } from 'app/core/utils/object';
 import { variableAdapters } from 'app/features/variables/adapters';
 import { onTimeRangeUpdated } from 'app/features/variables/state/actions';
 import { GetVariables, getVariablesByKey } from 'app/features/variables/state/selectors';
+import { PromQuery } from 'app/plugins/datasource/prometheus/types';
 import { CoreEvents, DashboardMeta, KioskMode } from 'app/types';
 import { DashboardMetaChangedEvent, DashboardPanelsChangedEvent, RenderEvent } from 'app/types/events';
 
@@ -41,7 +43,7 @@ import { getTimeSrv } from '../services/TimeSrv';
 import { mergePanels, PanelMergeInfo } from '../utils/panelMerge';
 
 import { DashboardMigrator } from './DashboardMigrator';
-import { GridPos, PanelModel } from './PanelModel';
+import { PanelModel, autoMigrateAngular } from './PanelModel';
 import { TimeModel } from './TimeModel';
 import { deleteScopeVars, isOnTheSameGridRow } from './utils';
 
@@ -68,6 +70,7 @@ export interface DashboardLink {
 }
 
 export class DashboardModel implements TimeModel {
+  /** @deprecated use UID */
   id: any;
   // TODO: use propert type and fix all the places where uid is set to null
   uid: any;
@@ -90,7 +93,7 @@ export class DashboardModel implements TimeModel {
   snapshot: any;
   schemaVersion: number;
   version: number;
-  revision: number;
+  revision?: number; // Only used for dashboards managed by plugins
   links: DashboardLink[];
   gnetId: any;
   panels: PanelModel[];
@@ -100,6 +103,7 @@ export class DashboardModel implements TimeModel {
   private panelsAffectedByVariableChange: number[] | null;
   private appEventsSubscription: Subscription;
   private lastRefresh: number;
+  private timeRangeUpdatedDuringEdit = false;
 
   // ------------------
   // not persisted
@@ -108,6 +112,7 @@ export class DashboardModel implements TimeModel {
   // repeat process cycles
   declare meta: DashboardMeta;
   events: EventBusExtended;
+  private getVariablesFromState: GetVariables;
 
   static nonPersistedProperties: { [str: string]: boolean } = {
     events: true,
@@ -124,14 +129,26 @@ export class DashboardModel implements TimeModel {
     appEventsSubscription: true,
     panelsAffectedByVariableChange: true,
     lastRefresh: true,
+    timeRangeUpdatedDuringEdit: true,
   };
 
-  constructor(data: Dashboard, meta?: DashboardMeta, private getVariablesFromState: GetVariables = getVariablesByKey) {
+  constructor(
+    data: Dashboard,
+    meta?: DashboardMeta,
+    options?: {
+      // By default this uses variables from redux state
+      getVariablesFromState?: GetVariables;
+
+      // Force the loader to migrate panels
+      autoMigrateOldPanels?: boolean;
+    }
+  ) {
+    this.getVariablesFromState = options?.getVariablesFromState ?? getVariablesByKey;
     this.events = new EventBusSrv();
     this.id = data.id || null;
     // UID is not there for newly created dashboards
     this.uid = data.uid || null;
-    this.revision = data.revision || 1;
+    this.revision = data.revision ?? undefined;
     this.title = data.title ?? 'No Title';
     this.description = data.description;
     this.tags = data.tags ?? [];
@@ -153,7 +170,7 @@ export class DashboardModel implements TimeModel {
     this.links = data.links ?? [];
     this.gnetId = data.gnetId || null;
     this.panels = map(data.panels ?? [], (panelData: any) => new PanelModel(panelData));
-    this.ensurePanelsHaveIds();
+    this.ensurePanelsHaveUniqueIds();
     this.formatDate = this.formatDate.bind(this);
 
     this.resetOriginalVariables(true);
@@ -161,6 +178,17 @@ export class DashboardModel implements TimeModel {
 
     this.initMeta(meta);
     this.updateSchema(data);
+
+    // Auto-migrate old angular panels
+    if (options?.autoMigrateOldPanels || !config.angularSupportEnabled || config.featureToggles.autoMigrateOldPanels) {
+      this.panels.forEach((p) => {
+        const newType = autoMigrateAngular[p.type];
+        if (!p.autoMigrateFrom && newType) {
+          p.autoMigrateFrom = p.type;
+          p.type = newType;
+        }
+      });
+    }
 
     this.addBuiltInAnnotationQuery();
     this.sortPanelsByGridPos();
@@ -269,6 +297,7 @@ export class DashboardModel implements TimeModel {
   }
 
   private getPanelSaveModels() {
+    // Todo: Remove panel.type === 'add-panel' when we remove the emptyDashboardPage toggle
     return this.panels
       .filter(
         (panel) =>
@@ -354,6 +383,10 @@ export class DashboardModel implements TimeModel {
   timeRangeUpdated(timeRange: TimeRange) {
     this.events.publish(new TimeRangeUpdatedEvent(timeRange));
     dispatch(onTimeRangeUpdated(this.uid, timeRange));
+
+    if (this.panelInEdit) {
+      this.timeRangeUpdatedDuringEdit = true;
+    }
   }
 
   startRefresh(event: VariablesChangedEvent = { refreshAll: true, panelIds: [] }) {
@@ -392,9 +425,26 @@ export class DashboardModel implements TimeModel {
   }
 
   initEditPanel(sourcePanel: PanelModel): PanelModel {
-    getTimeSrv().pauseAutoRefresh();
+    getTimeSrv().stopAutoRefresh();
     this.panelInEdit = sourcePanel.getEditClone();
+    this.timeRangeUpdatedDuringEdit = false;
     return this.panelInEdit;
+  }
+
+  exitPanelEditor() {
+    this.panelInEdit!.destroy();
+    this.panelInEdit = undefined;
+
+    getTimeSrv().resumeAutoRefresh();
+
+    if (this.panelsAffectedByVariableChange || this.timeRangeUpdatedDuringEdit) {
+      this.startRefresh({
+        panelIds: this.panelsAffectedByVariableChange ?? [],
+        refreshAll: this.timeRangeUpdatedDuringEdit,
+      });
+      this.panelsAffectedByVariableChange = null;
+      this.timeRangeUpdatedDuringEdit = false;
+    }
   }
 
   initViewPanel(panel: PanelModel) {
@@ -408,13 +458,6 @@ export class DashboardModel implements TimeModel {
     this.refreshIfPanelsAffectedByVariableChange();
   }
 
-  exitPanelEditor() {
-    this.panelInEdit!.destroy();
-    this.panelInEdit = undefined;
-    getTimeSrv().resumeAutoRefresh();
-    this.refreshIfPanelsAffectedByVariableChange();
-  }
-
   private refreshIfPanelsAffectedByVariableChange() {
     if (!this.panelsAffectedByVariableChange) {
       return;
@@ -424,10 +467,14 @@ export class DashboardModel implements TimeModel {
     this.panelsAffectedByVariableChange = null;
   }
 
-  private ensurePanelsHaveIds() {
+  private ensurePanelsHaveUniqueIds() {
+    const ids = new Set<number>();
     let nextPanelId = this.getNextPanelId();
     for (const panel of this.panelIterator()) {
-      panel.id ??= nextPanelId++;
+      if (!panel.id || ids.has(panel.id)) {
+        panel.id = nextPanelId++;
+      }
+      ids.add(panel.id);
     }
   }
 
@@ -549,7 +596,7 @@ export class DashboardModel implements TimeModel {
   }
 
   processRepeats() {
-    if (this.isSnapshotTruthy() || !this.hasVariables()) {
+    if (this.isSnapshotTruthy() || !this.hasVariables() || this.panelInView) {
       return;
     }
 
@@ -621,12 +668,13 @@ export class DashboardModel implements TimeModel {
   }
 
   getRowRepeatClone(sourceRowPanel: PanelModel, valueIndex: number, sourcePanelIndex: number) {
-    // if first clone return source
+    // if first clone, return source
     if (valueIndex === 0) {
       if (!sourceRowPanel.collapsed) {
         const rowPanels = this.getRowPanels(sourcePanelIndex);
         sourceRowPanel.panels = rowPanels;
       }
+
       return sourceRowPanel;
     }
 
@@ -636,11 +684,13 @@ export class DashboardModel implements TimeModel {
     if (sourceRowPanel.collapsed) {
       rowPanels = cloneDeep(sourceRowPanel.panels) ?? [];
       clone.panels = rowPanels;
+
       // insert copied row after preceding row
       insertPos = sourcePanelIndex + valueIndex;
     } else {
       rowPanels = this.getRowPanels(sourcePanelIndex);
       clone.panels = rowPanels.map((panel) => panel.getSaveModel());
+
       // insert copied row after preceding row's panels
       insertPos = sourcePanelIndex + (rowPanels.length + 1) * valueIndex;
     }
@@ -711,58 +761,56 @@ export class DashboardModel implements TimeModel {
     }
   }
 
-  repeatRow(panel: PanelModel, panelIndex: number, variable: any) {
+  repeatRow(panel: PanelModel, panelIndex: number, variable: TypedVariableModel) {
     const selectedOptions = this.getSelectedVariableOptions(variable);
-    let yPos = panel.gridPos.y;
-
-    function setScopedVars(panel: PanelModel, variableOption: any) {
-      panel.scopedVars ??= {};
-      panel.scopedVars[variable.name] = variableOption;
-    }
 
     for (let optionIndex = 0; optionIndex < selectedOptions.length; optionIndex++) {
-      const option = selectedOptions[optionIndex];
-      const rowCopy = this.getRowRepeatClone(panel, optionIndex, panelIndex);
-      setScopedVars(rowCopy, option);
+      const curOption = selectedOptions[optionIndex];
+      const rowClone = this.getRowRepeatClone(panel, optionIndex, panelIndex);
 
-      const rowHeight = this.getRowHeight(rowCopy);
-      const rowPanels = rowCopy.panels || [];
+      setScopedVars(rowClone, variable, curOption);
+
+      const rowHeight = this.getRowHeight(rowClone);
+      const panelsInRow = rowClone.panels || [];
       let panelBelowIndex;
 
       if (panel.collapsed) {
-        // For collapsed row just copy its panels and set scoped vars and proper IDs
-        for (const rowPanel of rowPanels) {
-          setScopedVars(rowPanel, option);
+        // For a collapsed row, just copy its panels, set scoped vars and proper IDs
+        for (const panelInRow of panelsInRow) {
+          setScopedVars(panelInRow, variable, curOption);
           if (optionIndex > 0) {
-            this.updateRepeatedPanelIds(rowPanel, true);
+            this.updateRepeatedPanelIds(panelInRow, true);
           }
         }
-        rowCopy.gridPos.y += optionIndex;
-        yPos += optionIndex;
+
+        // push nth row clone's y-pos down by n
+        rowClone.gridPos.y += optionIndex;
         panelBelowIndex = panelIndex + optionIndex + 1;
       } else {
-        // insert after 'row' panel
-        const insertPos = panelIndex + (rowPanels.length + 1) * optionIndex + 1;
-        rowPanels.forEach((rowPanel: PanelModel, i: number) => {
-          setScopedVars(rowPanel, option);
+        // insert after row panel
+        const insertPos = panelIndex + (panelsInRow.length + 1) * optionIndex + 1;
+        panelsInRow.forEach((panelInRow, i) => {
+          setScopedVars(panelInRow, variable, curOption);
+
           if (optionIndex > 0) {
-            const cloneRowPanel = new PanelModel(rowPanel);
-            this.updateRepeatedPanelIds(cloneRowPanel, true);
-            // For exposed row additionally set proper Y grid position and add it to dashboard panels
-            cloneRowPanel.gridPos.y += rowHeight * optionIndex;
-            this.panels.splice(insertPos + i, 0, cloneRowPanel);
+            const panelInRowClone = new PanelModel(panelInRow);
+            this.updateRepeatedPanelIds(panelInRowClone, true);
+
+            // For exposed row, set correct grid y-position and add it to dashboard panels
+            panelInRowClone.gridPos.y += rowHeight * optionIndex;
+            this.panels.splice(insertPos + i, 0, panelInRowClone);
           }
         });
-        rowCopy.panels = [];
-        rowCopy.gridPos.y += rowHeight * optionIndex;
-        yPos += rowHeight;
-        panelBelowIndex = insertPos + rowPanels.length;
+
+        rowClone.panels = [];
+        rowClone.gridPos.y += rowHeight * optionIndex;
+        panelBelowIndex = insertPos + panelsInRow.length;
       }
 
       // Update gridPos for panels below if we inserted more than 1 repeated row panel
       if (selectedOptions.length > 1) {
         for (const panel of this.panels.slice(panelBelowIndex)) {
-          panel.gridPos.y += yPos;
+          panel.gridPos.y += rowHeight;
         }
       }
     }
@@ -794,12 +842,13 @@ export class DashboardModel implements TimeModel {
   getRowHeight(rowPanel: PanelModel): number {
     if (!rowPanel.panels || rowPanel.panels.length === 0) {
       return 0;
+    } else if (rowPanel.collapsed) {
+      // A collapsed row will always have height 1
+      return 1;
     }
 
-    const rowYPos = rowPanel.gridPos.y;
-    const positions = map(rowPanel.panels, 'gridPos');
-    const maxPos = maxBy(positions, (pos: GridPos) => pos.y + pos.h);
-    return maxPos!.y + maxPos!.h - rowYPos;
+    const maxYPos = maxBy(rowPanel.panels, ({ gridPos }) => gridPos.y + gridPos.h)!.gridPos;
+    return maxYPos.y + maxYPos.h - rowPanel.gridPos.y;
   }
 
   removePanel(panel: PanelModel) {
@@ -910,6 +959,10 @@ export class DashboardModel implements TimeModel {
     row.collapsed = false;
     const rowPanels = row.panels ?? [];
     const hasRepeat = rowPanels.some((p: PanelModel) => p.repeat);
+
+    // This is set only for the row being repeated.
+    const rowRepeatVariable = row.repeat;
+
     if (rowPanels.length > 0) {
       // Use first panel to figure out if it was moved or pushed
       // If the panel doesn't have gridPos.y, use the row gridPos.y instead.
@@ -924,6 +977,18 @@ export class DashboardModel implements TimeModel {
       let yMax = row.gridPos.y;
 
       for (const panel of rowPanels) {
+        // When expanding original row that's repeated, set scopedVars for repeated row panels.
+        if (rowRepeatVariable) {
+          const variable = this.getPanelRepeatVariable(row);
+          panel.scopedVars ??= {};
+          if (variable) {
+            const selectedOptions = this.getSelectedVariableOptions(variable);
+            panel.scopedVars = {
+              ...panel.scopedVars,
+              [variable.name]: selectedOptions[0],
+            };
+          }
+        }
         // set the y gridPos if it wasn't already set
         panel.gridPos.y ?? (panel.gridPos.y = row.gridPos.y); // (Safari 13.1 lacks ??= support)
         // make sure y is adjusted (in case row moved while collapsed)
@@ -1045,14 +1110,8 @@ export class DashboardModel implements TimeModel {
 
     const navbarHeight = 55;
     const margin = 20;
-    const submenuHeight = 50;
 
     let visibleHeight = viewHeight - navbarHeight - margin;
-
-    // Remove submenu height if visible
-    if (this.meta.submenuEnabled && !kioskMode) {
-      visibleHeight -= submenuHeight;
-    }
 
     // add back navbar height
     if (kioskMode && kioskMode !== KioskMode.TV) {
@@ -1098,6 +1157,21 @@ export class DashboardModel implements TimeModel {
       panel.legend.show = !panelLegendsOn;
       panel.render();
     }
+  }
+
+  toggleExemplarsForAll() {
+    for (const panel of this.panels) {
+      for (const target of panel.targets) {
+        if (!(target.datasource && target.datasource.type === 'prometheus')) {
+          continue;
+        }
+
+        const promTarget = target as PromQuery;
+        promTarget.exemplar = !promTarget.exemplar;
+      }
+    }
+
+    this.startRefresh();
   }
 
   getVariables() {
@@ -1227,4 +1301,9 @@ export class DashboardModel implements TimeModel {
 
 function isPanelWithLegend(panel: PanelModel): panel is PanelModel & Pick<Required<PanelModel>, 'legend'> {
   return Boolean(panel.legend);
+}
+
+function setScopedVars(panel: PanelModel, variable: TypedVariableModel, variableOption: any) {
+  panel.scopedVars ??= {};
+  panel.scopedVars[variable.name] = variableOption;
 }

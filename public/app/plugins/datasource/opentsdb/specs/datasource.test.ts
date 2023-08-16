@@ -2,13 +2,14 @@ import { of } from 'rxjs';
 
 import { DataQueryRequest, dateTime } from '@grafana/data';
 import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
+import { TemplateSrv } from 'app/features/templating/template_srv';
 
 import { createFetchResponse } from '../../../../../test/helpers/createFetchResponse';
 import OpenTsDatasource from '../datasource';
 import { OpenTsdbQuery } from '../types';
 
 jest.mock('@grafana/runtime', () => ({
-  ...(jest.requireActual('@grafana/runtime') as unknown as object),
+  ...jest.requireActual('@grafana/runtime'),
   getBackendSrv: () => backendSrv,
 }));
 
@@ -23,16 +24,16 @@ const metricFindQueryData = [
 ];
 
 describe('opentsdb', () => {
-  function getTestcontext({ data = metricFindQueryData }: { data?: any } = {}) {
+  function getTestcontext({ data = metricFindQueryData }: { data?: unknown } = {}) {
     jest.clearAllMocks();
     const fetchMock = jest.spyOn(backendSrv, 'fetch');
     fetchMock.mockImplementation(() => of(createFetchResponse(data)));
 
     const instanceSettings = { url: '', jsonData: { tsdbVersion: 1 } };
     const replace = jest.fn((value) => value);
-    const templateSrv: any = {
+    const templateSrv = {
       replace,
-    };
+    } as unknown as TemplateSrv;
 
     const ds = new OpenTsDatasource(instanceSettings, templateSrv);
 
@@ -127,7 +128,7 @@ describe('opentsdb', () => {
       expect(ds.interpolateVariablesInQueries([], {})).toHaveLength(0);
     });
 
-    it('should replace metric variable', () => {
+    it('should replace metric and filter variable', () => {
       const { ds, templateSrv } = getTestcontext();
       const logQuery: OpenTsdbQuery = {
         refId: 'someRefId',
@@ -135,8 +136,8 @@ describe('opentsdb', () => {
         filters: [
           {
             type: 'type',
-            tagk: 'someTagk',
-            filter: 'someTagv',
+            tagk: '$someTagk',
+            filter: '$someTagv',
             groupBy: true,
           },
         ],
@@ -144,8 +145,10 @@ describe('opentsdb', () => {
 
       ds.interpolateVariablesInQueries([logQuery], {});
 
-      expect(templateSrv.replace).toHaveBeenCalledWith('$someVar', {});
-      expect(templateSrv.replace).toHaveBeenCalledTimes(1);
+      expect(templateSrv.replace).toHaveBeenCalledWith('$someVar', {}, 'pipe');
+      expect(templateSrv.replace).toHaveBeenCalledWith('$someTagk', {}, 'pipe');
+      expect(templateSrv.replace).toHaveBeenCalledWith('$someTagv', {}, 'pipe');
+      expect(templateSrv.replace).toHaveBeenCalledTimes(3);
     });
 
     it('should replace filter tag key and value', () => {
@@ -186,7 +189,6 @@ describe('opentsdb', () => {
         requestId: 'Q103',
         timezone: 'browser',
         panelId: 2,
-        dashboardId: 189,
         dashboardUID: 'tyzmfPIVz',
         publicDashboardAccessToken: '',
         range: {
@@ -210,7 +212,7 @@ describe('opentsdb', () => {
         },
       };
 
-      ds.interpolateVariablesInFilters(logQuery, dataQR);
+      ds.interpolateVariablesInFilters(logQuery, dataQR.scopedVars);
 
       expect(templateSrv.replace).toHaveBeenCalledWith('$someTagk', scopedVars, 'pipe');
       expect(templateSrv.replace).toHaveBeenCalledWith('$someTagv', scopedVars, 'pipe');

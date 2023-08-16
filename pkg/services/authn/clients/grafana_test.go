@@ -40,19 +40,19 @@ func TestGrafana_AuthenticateProxy(t *testing.T) {
 				proxyFieldEmail:  "email@email.com",
 			},
 			expectedIdentity: &authn.Identity{
-				OrgID:      1,
-				OrgRoles:   map[int64]org.RoleType{1: org.RoleViewer},
-				Login:      "test",
-				Name:       "name",
-				Email:      "email@email.com",
-				AuthModule: "authproxy",
-				AuthID:     "test",
-				Groups:     []string{"grp1", "grp2"},
+				OrgRoles:        map[int64]org.RoleType{1: org.RoleViewer},
+				Login:           "test",
+				Name:            "name",
+				Email:           "email@email.com",
+				AuthenticatedBy: login.AuthProxyAuthModule,
+				AuthID:          "test",
+				Groups:          []string{"grp1", "grp2"},
 				ClientParams: authn.ClientParams{
 					SyncUser:        true,
-					SyncTeamMembers: true,
+					SyncTeams:       true,
 					AllowSignUp:     true,
 					FetchSyncedUser: true,
+					SyncOrgRoles:    true,
 					LookUpParams: login.UserLookupParams{
 						Email: strPtr("email@email.com"),
 						Login: strPtr("test"),
@@ -66,14 +66,15 @@ func TestGrafana_AuthenticateProxy(t *testing.T) {
 			req:        &authn.Request{HTTPRequest: &http.Request{Header: map[string][]string{}}},
 			additional: map[string]string{},
 			expectedIdentity: &authn.Identity{
-				Login:      "test@test.com",
-				Email:      "test@test.com",
-				AuthModule: "authproxy",
-				AuthID:     "test@test.com",
+				Login:           "test@test.com",
+				Email:           "test@test.com",
+				AuthenticatedBy: login.AuthProxyAuthModule,
+				AuthID:          "test@test.com",
 				ClientParams: authn.ClientParams{
-					SyncUser:        true,
-					SyncTeamMembers: true,
-					AllowSignUp:     true,
+					SyncUser:     true,
+					SyncTeams:    true,
+					AllowSignUp:  true,
+					SyncOrgRoles: true,
 					LookUpParams: login.UserLookupParams{
 						Email: strPtr("test@test.com"),
 						Login: strPtr("test@test.com"),
@@ -105,12 +106,12 @@ func TestGrafana_AuthenticateProxy(t *testing.T) {
 				assert.Equal(t, tt.expectedIdentity.Name, identity.Name)
 				assert.Equal(t, tt.expectedIdentity.Email, identity.Email)
 				assert.Equal(t, tt.expectedIdentity.AuthID, identity.AuthID)
-				assert.Equal(t, tt.expectedIdentity.AuthModule, identity.AuthModule)
+				assert.Equal(t, tt.expectedIdentity.AuthenticatedBy, identity.AuthenticatedBy)
 				assert.Equal(t, tt.expectedIdentity.Groups, identity.Groups)
 
 				assert.Equal(t, tt.expectedIdentity.ClientParams.SyncUser, identity.ClientParams.SyncUser)
 				assert.Equal(t, tt.expectedIdentity.ClientParams.AllowSignUp, identity.ClientParams.AllowSignUp)
-				assert.Equal(t, tt.expectedIdentity.ClientParams.SyncTeamMembers, identity.ClientParams.SyncTeamMembers)
+				assert.Equal(t, tt.expectedIdentity.ClientParams.SyncTeams, identity.ClientParams.SyncTeams)
 				assert.Equal(t, tt.expectedIdentity.ClientParams.EnableDisabledUsers, identity.ClientParams.EnableDisabledUsers)
 
 				assert.EqualValues(t, tt.expectedIdentity.ClientParams.LookUpParams.Email, identity.ClientParams.LookUpParams.Email)
@@ -141,7 +142,14 @@ func TestGrafana_AuthenticatePassword(t *testing.T) {
 			password:             "password",
 			findUser:             true,
 			expectedSignedInUser: &user.SignedInUser{UserID: 1, OrgID: 1, OrgRole: "Viewer"},
-			expectedIdentity:     &authn.Identity{ID: "user:1", OrgID: 1, OrgRoles: map[int64]org.RoleType{1: "Viewer"}, IsGrafanaAdmin: boolPtr(false)},
+			expectedIdentity: &authn.Identity{
+				ID:              "user:1",
+				OrgID:           1,
+				OrgRoles:        map[int64]org.RoleType{1: "Viewer"},
+				IsGrafanaAdmin:  boolPtr(false),
+				ClientParams:    authn.ClientParams{SyncPermissions: true},
+				AuthenticatedBy: login.PasswordAuthModule,
+			},
 		},
 		{
 			desc:        "should fail for incorrect password",

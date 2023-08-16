@@ -1,10 +1,12 @@
 import { Observable } from 'rxjs';
 
-import { Labels } from './data';
+import { DataQuery } from '@grafana/schema';
+
+import { KeyValue, Labels } from './data';
 import { DataFrame } from './dataFrame';
 import { DataQueryRequest, DataQueryResponse } from './datasource';
-import { DataQuery } from './query';
 import { AbsoluteTimeRange } from './time';
+export { LogsDedupStrategy, LogsSortOrder } from '@grafana/schema';
 
 /**
  * Mapping of log level abbreviation to canonical log level.
@@ -39,11 +41,6 @@ export enum LogsMetaKind {
   Error,
 }
 
-export enum LogsSortOrder {
-  Descending = 'Descending',
-  Ascending = 'Ascending',
-}
-
 export interface LogsMetaItem {
   label: string;
   value: string | number | Labels;
@@ -57,6 +54,9 @@ export interface LogRowModel {
   // Index of the row in the dataframe. As log rows can be stitched from multiple dataFrames, this does not have to be
   // the same as rows final index when rendered.
   rowIndex: number;
+
+  // The value of the the dataframe's id field, if it exists
+  rowId?: string;
 
   // Full DataFrame from which we parsed this log.
   // TODO: refactor this so we do not need to pass whole dataframes in addition to also parsed data.
@@ -91,6 +91,7 @@ export interface LogsModel {
   // visibleRange is time range for histogram created from log results
   visibleRange?: AbsoluteTimeRange;
   queries?: DataQuery[];
+  bucketSize?: number;
 }
 
 export interface LogSearchMatch {
@@ -106,47 +107,21 @@ export interface LogLabelStatsModel {
   value: string;
 }
 
-export enum LogsDedupStrategy {
-  none = 'none',
-  exact = 'exact',
-  numbers = 'numbers',
-  signature = 'signature',
-}
-
-/** @deprecated will be removed in the next major version */
-export interface LogsParser {
-  /**
-   * Value-agnostic matcher for a field label.
-   * Used to filter rows, and first capture group contains the value.
-   */
-  buildMatcher: (label: string) => RegExp;
-
-  /**
-   * Returns all parsable substrings from a line, used for highlighting
-   */
-  getFields: (line: string) => string[];
-
-  /**
-   * Gets the label name from a parsable substring of a line
-   */
-  getLabelFromField: (field: string) => string;
-
-  /**
-   * Gets the label value from a parsable substring of a line
-   */
-  getValueFromField: (field: string) => string;
-  /**
-   * Function to verify if this is a valid parser for the given line.
-   * The parser accepts the line if it returns true.
-   */
-  test: (line: string) => boolean;
-}
-
 export enum LogsDedupDescription {
   none = 'No de-duplication',
   exact = 'De-duplication of successive lines that are identical, ignoring ISO datetimes.',
   numbers = 'De-duplication of successive lines that are identical when ignoring numbers, e.g., IP addresses, latencies.',
   signature = 'De-duplication of successive lines that have identical punctuation and whitespace.',
+}
+
+export interface LogRowContextOptions {
+  direction?: LogRowContextQueryDirection;
+  limit?: number;
+}
+
+export enum LogRowContextQueryDirection {
+  Backward = 'BACKWARD',
+  Forward = 'FORWARD',
 }
 
 /**
@@ -157,11 +132,12 @@ export interface DataSourceWithLogsContextSupport<TQuery extends DataQuery = Dat
   /**
    * Retrieve context for a given log row
    */
-  getLogRowContext: <TContextQueryOptions extends {}>(
-    row: LogRowModel,
-    options?: TContextQueryOptions,
-    query?: TQuery
-  ) => Promise<DataQueryResponse>;
+  getLogRowContext: (row: LogRowModel, options?: LogRowContextOptions, query?: TQuery) => Promise<DataQueryResponse>;
+
+  /**
+   * Retrieve the context query object for a given log row. This is currently used to open LogContext queries in a split view.
+   */
+  getLogRowContextQuery?: (row: LogRowModel, options?: LogRowContextOptions, query?: TQuery) => Promise<TQuery | null>;
 
   /**
    * This method can be used to show "context" button based on runtime conditions (for example row model data or plugin settings, etc.)
@@ -173,7 +149,7 @@ export interface DataSourceWithLogsContextSupport<TQuery extends DataQuery = Dat
    * @alpha
    * @internal
    */
-  getLogRowContextUi?(row: LogRowModel, runContextQuery?: () => void): React.ReactNode;
+  getLogRowContextUi?(row: LogRowModel, runContextQuery?: () => void, origQuery?: TQuery): React.ReactNode;
 }
 
 export const hasLogsContextSupport = (datasource: unknown): datasource is DataSourceWithLogsContextSupport => {
@@ -194,6 +170,46 @@ export enum SupplementaryQueryType {
   LogsVolume = 'LogsVolume',
   LogsSample = 'LogsSample',
 }
+
+/**
+ * @internal
+ */
+export type SupplementaryQueryOptions = LogsVolumeOption | LogsSampleOptions;
+
+/**
+ * @internal
+ */
+export type LogsVolumeOption = {
+  type: SupplementaryQueryType.LogsVolume;
+};
+
+/**
+ * @internal
+ */
+export type LogsSampleOptions = {
+  type: SupplementaryQueryType.LogsSample;
+  limit?: number;
+};
+
+/**
+ * Types of logs volume responses. A data source may return full range histogram (based on selected range)
+ * or limited (based on returned results). This information is attached to DataFrame.meta.custom object.
+ * @internal
+ */
+export enum LogsVolumeType {
+  FullRange = 'FullRange',
+  Limited = 'Limited',
+}
+
+/**
+ * Custom meta information required by Logs Volume responses
+ */
+export type LogsVolumeCustomMetaData = {
+  absoluteRange: AbsoluteTimeRange;
+  logsVolumeType: LogsVolumeType;
+  datasourceName: string;
+  sourceQuery: DataQuery;
+};
 
 /**
  * Data sources that support supplementary queries in Explore.
@@ -218,7 +234,7 @@ export interface DataSourceWithSupplementaryQueriesSupport<TQuery extends DataQu
    * Returns a supplementary query to be used to fetch supplementary data based on the provided type and original query.
    * If provided query is not suitable for provided supplementary query type, undefined should be returned.
    */
-  getSupplementaryQuery(type: SupplementaryQueryType, query: TQuery): TQuery | undefined;
+  getSupplementaryQuery(options: SupplementaryQueryOptions, originalQuery: TQuery): TQuery | undefined;
 }
 
 export const hasSupplementaryQuerySupport = <TQuery extends DataQuery>(
@@ -246,4 +262,43 @@ export const hasLogsContextUiSupport = (datasource: unknown): datasource is Data
   const withLogsSupport = datasource as DataSourceWithLogsContextSupport;
 
   return withLogsSupport.getLogRowContextUi !== undefined;
+};
+
+export interface QueryFilterOptions extends KeyValue<string> {}
+export interface ToggleFilterAction {
+  type: 'FILTER_FOR' | 'FILTER_OUT';
+  options: QueryFilterOptions;
+}
+/**
+ * Data sources that support toggleable filters through `toggleQueryFilter`, and displaying the active
+ * state of filters through `queryHasFilter`, in the Log Details component in Explore.
+ * @internal
+ * @alpha
+ */
+export interface DataSourceWithToggleableQueryFiltersSupport<TQuery extends DataQuery> {
+  /**
+   * Toggle filters on and off from query.
+   * If the filter is already present, it should be removed.
+   * If the opposite filter is present, it should be replaced.
+   */
+  toggleQueryFilter(query: TQuery, filter: ToggleFilterAction): TQuery;
+
+  /**
+   * Given a query, determine if it has a filter that matches the options.
+   */
+  queryHasFilter(query: TQuery, filter: QueryFilterOptions): boolean;
+}
+
+/**
+ * @internal
+ */
+export const hasToggleableQueryFiltersSupport = <TQuery extends DataQuery>(
+  datasource: unknown
+): datasource is DataSourceWithToggleableQueryFiltersSupport<TQuery> => {
+  return (
+    datasource !== null &&
+    typeof datasource === 'object' &&
+    'toggleQueryFilter' in datasource &&
+    'queryHasFilter' in datasource
+  );
 };

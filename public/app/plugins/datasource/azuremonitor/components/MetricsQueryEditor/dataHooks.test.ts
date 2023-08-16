@@ -1,4 +1,4 @@
-import { renderHook } from '@testing-library/react-hooks';
+import { renderHook, waitFor } from '@testing-library/react';
 
 import createMockDatasource from '../../__mocks__/datasource';
 import Datasource from '../../datasource';
@@ -12,10 +12,6 @@ import {
   MetricMetadata,
   MetricsMetadataHook,
 } from './dataHooks';
-
-const WAIT_OPTIONS = {
-  timeout: 1000,
-};
 
 const opt = (text: string, value: string) => ({ text, value });
 
@@ -123,8 +119,8 @@ describe('AzureMonitor: metrics dataHooks', () => {
   ];
 
   let datasource: Datasource;
-  let onChange: jest.Mock<any, any>;
-  let setError: jest.Mock<any, any>;
+  let onChange: jest.Mock;
+  let setError: jest.Mock;
 
   beforeEach(() => {
     onChange = jest.fn();
@@ -180,10 +176,11 @@ describe('AzureMonitor: metrics dataHooks', () => {
         ...bareQuery,
         azureMonitor: scenario.emptyQueryPartial,
       };
-      const { result, waitForNextUpdate } = renderHook(() => scenario.hook(query, datasource, onChange, setError));
-      await waitForNextUpdate(WAIT_OPTIONS);
+      const { result } = renderHook(() => scenario.hook(query, datasource, onChange, setError));
 
-      expect(result.current).toEqual(scenario.expectedOptions);
+      await waitFor(() => {
+        expect(result.current).toEqual(scenario.expectedOptions);
+      });
     });
 
     it('adds custom properties as a valid option', async () => {
@@ -192,10 +189,11 @@ describe('AzureMonitor: metrics dataHooks', () => {
         azureMonitor: scenario.customProperties,
         ...scenario.topLevelCustomProperties,
       };
-      const { result, waitForNextUpdate } = renderHook(() => scenario.hook(query, datasource, onChange, setError));
-      await waitForNextUpdate(WAIT_OPTIONS);
+      const { result } = renderHook(() => scenario.hook(query, datasource, onChange, setError));
 
-      expect(result.current).toEqual(scenario.expectedCustomPropertyResults);
+      await waitFor(() => {
+        expect(result.current).toEqual(scenario.expectedCustomPropertyResults);
+      });
     });
   });
 
@@ -239,18 +237,19 @@ describe('AzureMonitor: metrics dataHooks', () => {
         ...bareQuery,
         azureMonitor: metricsMetadataConfig.emptyQueryPartial,
       };
-      const { result, waitForNextUpdate } = renderHook(() => metricsMetadataConfig.hook(query, datasource, onChange));
-      await waitForNextUpdate(WAIT_OPTIONS);
+      const { result } = renderHook(() => metricsMetadataConfig.hook(query, datasource, onChange));
 
-      expect(result.current).toEqual(metricsMetadataConfig.expectedOptions);
-      expect(onChange).toHaveBeenCalledWith({
-        ...query,
-        azureMonitor: {
-          ...query.azureMonitor,
-          aggregation: result.current.primaryAggType,
-          timeGrain: 'auto',
-          allowedTimeGrainsMs: [60_000, 300_000, 900_000, 1_800_000, 3_600_000, 21_600_000, 43_200_000, 86_400_000],
-        },
+      await waitFor(() => {
+        expect(result.current).toEqual(metricsMetadataConfig.expectedOptions);
+        expect(onChange).toHaveBeenCalledWith({
+          ...query,
+          azureMonitor: {
+            ...query.azureMonitor,
+            aggregation: result.current.primaryAggType,
+            timeGrain: 'auto',
+            allowedTimeGrainsMs: [60_000, 300_000, 900_000, 1_800_000, 3_600_000, 21_600_000, 43_200_000, 86_400_000],
+          },
+        });
       });
     });
   });
@@ -281,21 +280,20 @@ describe('AzureMonitor: metrics dataHooks', () => {
         ...bareQuery,
         azureMonitor: metricNamespacesConfig.emptyQueryPartial,
       };
-      const { result, waitForNextUpdate } = renderHook(() =>
-        metricNamespacesConfig.hook(query, datasource, onChange, jest.fn())
-      );
-      await waitForNextUpdate(WAIT_OPTIONS);
+      const { result } = renderHook(() => metricNamespacesConfig.hook(query, datasource, onChange, jest.fn()));
 
-      expect(result.current).toEqual(metricNamespacesConfig.expectedOptions);
-      expect(datasource.azureMonitorDatasource.getMetricNamespaces).toHaveBeenCalledWith(
-        expect.objectContaining({
-          resourceGroup: 'rg',
-          resourceName: 'rn',
-          metricNamespace: 'azure/vm',
-        }),
-        // Here, "global" should be false
-        false
-      );
+      await waitFor(() => {
+        expect(result.current).toEqual(metricNamespacesConfig.expectedOptions);
+        expect(datasource.azureMonitorDatasource.getMetricNamespaces).toHaveBeenCalledWith(
+          expect.objectContaining({
+            resourceGroup: 'rg',
+            resourceName: 'rn',
+            metricNamespace: 'azure/vm',
+          }),
+          // Here, "global" should be false
+          false
+        );
+      });
     });
   });
 });

@@ -5,14 +5,13 @@ import {
 } from '../__mocks__/argResourcePickerResponse';
 import createMockDatasource from '../__mocks__/datasource';
 import { createMockInstanceSetttings } from '../__mocks__/instanceSettings';
-import { mockGetValidLocations } from '../__mocks__/resourcePickerRows';
 import { ResourceRowType } from '../components/ResourcePicker/types';
 import { AzureGraphResponse } from '../types';
 
 import ResourcePickerData from './resourcePickerData';
 
 jest.mock('@grafana/runtime', () => ({
-  ...(jest.requireActual('@grafana/runtime') as unknown as object),
+  ...jest.requireActual('@grafana/runtime'),
   getTemplateSrv: () => ({
     replace: (val: string) => {
       return val;
@@ -32,11 +31,7 @@ const createResourcePickerData = (responses: AzureGraphResponse[]) => {
     postResource.mockResolvedValueOnce(res);
   });
   resourcePickerData.postResource = postResource;
-  const logLocationsMap = mockGetValidLocations();
-  const getLogsLocations = jest.spyOn(resourcePickerData, 'getLogsLocations').mockResolvedValue(logLocationsMap);
-  resourcePickerData.logLocationsMap = logLocationsMap;
-  resourcePickerData.logLocations = Array.from(logLocationsMap.values()).map((location) => `"${location.name}"`);
-  return { resourcePickerData, postResource, mockDatasource, getValidLocations: getLogsLocations };
+  return { resourcePickerData, postResource, mockDatasource };
 };
 
 describe('AzureMonitor resourcePickerData', () => {
@@ -252,7 +247,7 @@ describe('AzureMonitor resourcePickerData', () => {
         name: 'web-server',
         type: 'Resource',
         location: 'northeurope',
-        locationDisplayName: 'North Europe',
+        locationDisplayName: 'northeurope',
         resourceGroupName: 'dev',
         typeLabel: 'Microsoft.Compute/virtualMachines',
         uri: '/subscriptions/def-456/resourceGroups/dev/providers/Microsoft.Compute/virtualMachines/web-server',
@@ -329,7 +324,7 @@ describe('AzureMonitor resourcePickerData', () => {
         id: 'vmname',
         name: 'vmName',
         type: 'Resource',
-        location: 'North Europe',
+        location: 'northeurope',
         resourceGroupName: 'rgName',
         typeLabel: 'Virtual machines',
         uri: '/subscriptions/subId/resourceGroups/rgName/providers/Microsoft.Compute/virtualMachines/vmname',
@@ -359,7 +354,7 @@ describe('AzureMonitor resourcePickerData', () => {
         id: 'rgName',
         name: 'rgName',
         type: 'ResourceGroup',
-        location: 'North Europe',
+        location: 'northeurope',
         resourceGroupName: 'rgName',
         typeLabel: 'Resource groups',
         uri: '/subscriptions/subId/resourceGroups/rgName',
@@ -389,37 +384,6 @@ describe('AzureMonitor resourcePickerData', () => {
           throw err;
         }
       }
-    });
-  });
-
-  describe('getValidLocations', () => {
-    it('returns a locations map', async () => {
-      const { resourcePickerData, getValidLocations } = createResourcePickerData([createMockARGSubscriptionResponse()]);
-      getValidLocations.mockRestore();
-      const subscriptions = await resourcePickerData.getSubscriptions();
-      const locations = await resourcePickerData.getLogsLocations(subscriptions);
-
-      expect(locations.size).toBe(1);
-      expect(locations.has('northeurope')).toBe(true);
-      expect(locations.get('northeurope')?.name).toBe('northeurope');
-      expect(locations.get('northeurope')?.displayName).toBe('North Europe');
-      expect(locations.get('northeurope')?.supportsLogs).toBe(true);
-    });
-
-    it('returns the raw locations map if provider is undefined', async () => {
-      const { resourcePickerData, mockDatasource, getValidLocations } = createResourcePickerData([
-        createMockARGSubscriptionResponse(),
-      ]);
-      getValidLocations.mockRestore();
-      mockDatasource.azureMonitorDatasource.getProvider = jest.fn().mockResolvedValue(undefined);
-      const subscriptions = await resourcePickerData.getSubscriptions();
-      const locations = await resourcePickerData.getLogsLocations(subscriptions);
-
-      expect(locations.size).toBe(1);
-      expect(locations.has('northeurope')).toBe(true);
-      expect(locations.get('northeurope')?.name).toBe('northeurope');
-      expect(locations.get('northeurope')?.displayName).toBe('North Europe');
-      expect(locations.get('northeurope')?.supportsLogs).toBe(false);
     });
   });
 

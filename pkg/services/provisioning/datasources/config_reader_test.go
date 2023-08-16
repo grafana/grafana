@@ -2,7 +2,6 @@ package datasources
 
 import (
 	"context"
-	"os"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -192,10 +191,9 @@ func TestDatasourceAsConfig(t *testing.T) {
 	})
 
 	t.Run("can read all properties from version 1", func(t *testing.T) {
-		_ = os.Setenv("TEST_VAR", "name")
+		t.Setenv("TEST_VAR", "name")
 		cfgProvider := &configReader{log: log.New("test logger"), orgService: &orgtest.FakeOrgService{}}
 		cfg, err := cfgProvider.readConfig(context.Background(), allProperties)
-		_ = os.Unsetenv("TEST_VAR")
 		if err != nil {
 			t.Fatalf("readConfig return an error %v", err)
 		}
@@ -367,14 +365,13 @@ type spyStore struct {
 	items    []*datasources.DataSource
 }
 
-func (s *spyStore) GetDataSource(ctx context.Context, query *datasources.GetDataSourceQuery) error {
+func (s *spyStore) GetDataSource(ctx context.Context, query *datasources.GetDataSourceQuery) (*datasources.DataSource, error) {
 	for _, v := range s.items {
 		if query.Name == v.Name && query.OrgID == v.OrgID {
-			query.Result = v
-			return nil
+			return v, nil
 		}
 	}
-	return datasources.ErrDataSourceNotFound
+	return nil, datasources.ErrDataSourceNotFound
 }
 
 func (s *spyStore) DeleteDataSource(ctx context.Context, cmd *datasources.DeleteDataSourceCommand) error {
@@ -388,15 +385,12 @@ func (s *spyStore) DeleteDataSource(ctx context.Context, cmd *datasources.Delete
 	return nil
 }
 
-func (s *spyStore) AddDataSource(ctx context.Context, cmd *datasources.AddDataSourceCommand) error {
+func (s *spyStore) AddDataSource(ctx context.Context, cmd *datasources.AddDataSourceCommand) (*datasources.DataSource, error) {
 	s.inserted = append(s.inserted, cmd)
-	cmd.Result = &datasources.DataSource{
-		UID: cmd.UID,
-	}
-	return nil
+	return &datasources.DataSource{UID: cmd.UID}, nil
 }
 
-func (s *spyStore) UpdateDataSource(ctx context.Context, cmd *datasources.UpdateDataSourceCommand) error {
+func (s *spyStore) UpdateDataSource(ctx context.Context, cmd *datasources.UpdateDataSourceCommand) (*datasources.DataSource, error) {
 	s.updated = append(s.updated, cmd)
-	return nil
+	return nil, nil
 }

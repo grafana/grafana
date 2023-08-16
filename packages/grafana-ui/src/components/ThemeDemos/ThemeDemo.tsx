@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { FC, useState } from 'react';
+import React, { useState } from 'react';
 
 import { GrafanaTheme2, ThemeRichColor } from '@grafana/data';
 
@@ -23,30 +23,35 @@ interface DemoBoxProps {
   textColor?: string;
 }
 
-const DemoBox: FC<DemoBoxProps> = ({ bg, border, children }) => {
+const DemoBox = ({ bg, border, children }: React.PropsWithChildren<DemoBoxProps>) => {
   const style = cx(
-    css`
-      padding: 16px;
-      background: ${bg ?? 'inherit'};
-      width: 100%;
-    `,
+    css({
+      padding: '16px',
+      background: bg ?? 'inherit',
+      width: '100%',
+    }),
     border
-      ? css`
-          border: 1px solid ${border};
-        `
+      ? css({
+          border: `1px solid ${border}`,
+        })
       : null
   );
 
   return <div className={style}>{children}</div>;
 };
 
-const DemoText: FC<{ color?: string; bold?: boolean; size?: number }> = ({ color, bold, size, children }) => {
-  const style = css`
-    padding: 4px;
-    color: ${color ?? 'inherit'};
-    font-weight: ${bold ? 500 : 400};
-    font-size: ${size ?? 14}px;
-  `;
+const DemoText = ({
+  color,
+  bold,
+  size,
+  children,
+}: React.PropsWithChildren<{ color?: string; bold?: boolean; size?: number }>) => {
+  const style = css({
+    padding: '4px',
+    color: color ?? 'inherit',
+    fontWeight: bold ? 500 : 400,
+    fontSize: `${size ?? 14}px`,
+  });
 
   return <div className={style}>{children}</div>;
 };
@@ -80,10 +85,10 @@ export const ThemeDemo = () => {
 
   return (
     <div
-      className={css`
-        width: 100%;
-        color: ${t.colors.text.primary};
-      `}
+      className={css({
+        width: '100%',
+        color: t.colors.text.primary,
+      })}
     >
       <DemoBox bg={t.colors.background.canvas}>
         <CollapsableSection label="Layers" isOpen={true}>
@@ -116,6 +121,7 @@ export const ThemeDemo = () => {
                   <td>name</td>
                   <td>main</td>
                   <td>shade (used for hover)</td>
+                  <td>transparent</td>
                   <td>border & text</td>
                 </tr>
               </thead>
@@ -222,37 +228,48 @@ export function RichColorDemo({ theme, color }: RichColorDemoProps) {
       <td>{color.name}</td>
       <td>
         <div
-          className={css`
-            background: ${color.main};
-            border-radius: ${theme.shape.borderRadius()};
-            color: ${color.contrastText};
-            padding: 8px;
-            font-weight: 500;
-          `}
+          className={css({
+            background: color.main,
+            borderRadius: theme.shape.radius.default,
+            color: color.contrastText,
+            padding: '8px',
+            fontWeight: 500,
+          })}
         >
           {color.main}
         </div>
       </td>
       <td>
         <div
-          className={css`
-            background: ${color.shade};
-            color: ${color.contrastText};
-            border-radius: 4px;
-            padding: 8px;
-          `}
+          className={css({
+            background: color.shade,
+            color: color.contrastText,
+            borderRadius: theme.shape.radius.default,
+            padding: '8px',
+          })}
         >
           {color.shade}
         </div>
       </td>
       <td>
         <div
-          className={css`
-            border: 1px solid ${color.border};
-            color: ${color.text};
-            border-radius: 4px;
-            padding: 8px;
-          `}
+          className={css({
+            background: color.transparent,
+            borderRadius: theme.shape.radius.default,
+            padding: '8px',
+          })}
+        >
+          {color.shade}
+        </div>
+      </td>
+      <td>
+        <div
+          className={css({
+            border: `1px solid ${color.border}`,
+            color: color.text,
+            borderRadius: theme.shape.radius.default,
+            padding: '8px',
+          })}
         >
           {color.text}
         </div>
@@ -261,14 +278,14 @@ export function RichColorDemo({ theme, color }: RichColorDemoProps) {
   );
 }
 
-const colorsTableStyle = css`
-  text-align: center;
+const colorsTableStyle = css({
+  textAlign: 'center',
 
-  td {
-    padding: 8px;
-    text-align: center;
-  }
-`;
+  td: {
+    padding: '8px',
+    textAlign: 'center',
+  },
+});
 
 export function TextColors({ t }: { t: GrafanaTheme2 }) {
   return (

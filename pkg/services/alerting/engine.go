@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
+	"github.com/grafana/grafana/pkg/infra/usagestats/validator"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -44,6 +45,7 @@ type AlertEngine struct {
 	log                log.Logger
 	resultHandler      resultHandler
 	usageStatsService  usagestats.Service
+	validator          validator.Service
 	tracer             tracing.Tracer
 	AlertStore         AlertStore
 	dashAlertExtractor DashAlertExtractor
@@ -59,7 +61,7 @@ func (e *AlertEngine) IsDisabled() bool {
 
 // ProvideAlertEngine returns a new AlertEngine.
 func ProvideAlertEngine(renderer rendering.Service, requestValidator validations.PluginRequestValidator,
-	dataService legacydata.RequestHandler, usageStatsService usagestats.Service, encryptionService encryption.Internal,
+	dataService legacydata.RequestHandler, usageStatsService usagestats.Service, validator validator.Service, encryptionService encryption.Internal,
 	notificationService *notifications.NotificationService, tracer tracing.Tracer, store AlertStore, cfg *setting.Cfg,
 	dashAlertExtractor DashAlertExtractor, dashboardService dashboards.DashboardService, cacheService *localcache.CacheService, dsService datasources.DataSourceService, annotationsRepo annotations.Repository) *AlertEngine {
 	e := &AlertEngine{
@@ -68,6 +70,7 @@ func ProvideAlertEngine(renderer rendering.Service, requestValidator validations
 		RequestValidator:   requestValidator,
 		DataService:        dataService,
 		usageStatsService:  usageStatsService,
+		validator:          validator,
 		tracer:             tracer,
 		AlertStore:         store,
 		dashAlertExtractor: dashAlertExtractor,
@@ -278,7 +281,7 @@ func (e *AlertEngine) registerUsageMetrics() {
 		metrics := map[string]interface{}{}
 
 		for dsType, usageCount := range alertingUsageStats.DatasourceUsage {
-			if e.usageStatsService.ShouldBeReported(ctx, dsType) {
+			if e.validator.ShouldBeReported(ctx, dsType) {
 				metrics[fmt.Sprintf("stats.alerting.ds.%s.count", dsType)] = usageCount
 			} else {
 				alertingOtherCount += usageCount

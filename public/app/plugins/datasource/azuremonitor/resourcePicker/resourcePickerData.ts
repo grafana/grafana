@@ -1,9 +1,9 @@
 import { uniq } from 'lodash';
 
 import { DataSourceInstanceSettings } from '@grafana/data';
-import { DataSourceWithBackend } from '@grafana/runtime';
+import { DataSourceWithBackend, reportInteraction } from '@grafana/runtime';
 
-import { logsResourceTypes, resourceTypeDisplayNames } from '../azureMetadata';
+import { logsResourceTypes, resourceTypeDisplayNames, resourceTypes } from '../azureMetadata';
 import AzureMonitorDatasource from '../azure_monitor/azure_monitor_datasource';
 import { ResourceRow, ResourceRowGroup, ResourceRowType } from '../components/ResourcePicker/types';
 import {
@@ -18,7 +18,6 @@ import {
   AzureDataSourceJsonData,
   AzureGraphResponse,
   AzureMonitorResource,
-  AzureMonitorLocations,
   AzureMonitorQuery,
   AzureResourceGraphOptions,
   AzureResourceSummaryItem,
@@ -32,15 +31,13 @@ const RESOURCE_GRAPH_URL = '/providers/Microsoft.ResourceGraph/resources?api-ver
 
 const logsSupportedResourceTypesKusto = logsResourceTypes.map((v) => `"${v}"`).join(',');
 
-export type ResourcePickerQueryType = 'logs' | 'metrics';
+export type ResourcePickerQueryType = 'logs' | 'metrics' | 'traces';
 
 export default class ResourcePickerData extends DataSourceWithBackend<AzureMonitorQuery, AzureDataSourceJsonData> {
   private resourcePath: string;
   resultLimit = 200;
   azureMonitorDatasource;
   supportedMetricNamespaces = '';
-  logLocationsMap: Map<string, AzureMonitorLocations> = new Map();
-  logLocations: string[] = [];
 
   constructor(
     instanceSettings: DataSourceInstanceSettings<AzureDataSourceJsonData>,
@@ -56,11 +53,6 @@ export default class ResourcePickerData extends DataSourceWithBackend<AzureMonit
     currentSelection?: AzureMonitorResource[]
   ): Promise<ResourceRowGroup> {
     const subscriptions = await this.getSubscriptions();
-
-    if (this.logLocationsMap.size === 0) {
-      this.logLocationsMap = await this.getLogsLocations(subscriptions);
-      this.logLocations = Array.from(this.logLocationsMap.values()).map((location) => `"${location.name}"`);
-    }
 
     if (!currentSelection) {
       return subscriptions;
@@ -140,7 +132,7 @@ export default class ResourcePickerData extends DataSourceWithBackend<AzureMonit
         resourceGroupName: item.resourceGroup,
         type,
         typeLabel: resourceTypeDisplayNames[item.type] || item.type,
-        location: this.logLocationsMap.get(item.location)?.displayName || item.location,
+        location: item.location,
       };
     });
   };
@@ -243,13 +235,10 @@ export default class ResourcePickerData extends DataSourceWithBackend<AzureMonit
     resourceGroupId: string,
     type: ResourcePickerQueryType
   ): Promise<ResourceRowGroup> {
-    if (!this.logLocations) {
-      return [];
-    }
     const { data: response } = await this.makeResourceGraphRequest<RawAzureResourceItem[]>(`
       resources
       | where id hasprefix "${resourceGroupId}"
-      ${await this.filterByType(type)} and location in (${this.logLocations})
+      ${await this.filterByType(type)}
     `);
 
     return response.map((item) => {
@@ -264,7 +253,7 @@ export default class ResourcePickerData extends DataSourceWithBackend<AzureMonit
         resourceGroupName: item.resourceGroup,
         type: ResourceRowType.Resource,
         typeLabel: resourceTypeDisplayNames[item.type] || item.type,
-        locationDisplayName: this.logLocationsMap.get(item.location)?.displayName || item.location,
+        locationDisplayName: item.location,
         location: item.location,
       };
     });
@@ -369,6 +358,7 @@ export default class ResourcePickerData extends DataSourceWithBackend<AzureMonit
 
   private async fetchAllNamespaces() {
     const subscriptions = await this.getSubscriptions();
+    reportInteraction('grafana_ds_azuremonitor_subscriptions_loaded', { subscriptions: subscriptions.length });
     let supportedMetricNamespaces: string[] = [];
     for await (const subscription of subscriptions) {
       const namespaces = await this.azureMonitorDatasource.getMetricNamespaces(
@@ -388,37 +378,9 @@ export default class ResourcePickerData extends DataSourceWithBackend<AzureMonit
         'Unable to resolve a list of valid metric namespaces. Validate the datasource configuration is correct and required permissions have been granted for all subscriptions. Grafana requires at least the Reader role to be assigned.'
       );
     }
-    this.supportedMetricNamespaces = uniq(supportedMetricNamespaces).join(',');
-  }
-
-  async getLogsLocations(subscriptions: ResourceRowGroup): Promise<Map<string, AzureMonitorLocations>> {
-    const subscriptionIds = subscriptions.map((sub) => sub.id);
-    const locations = await this.azureMonitorDatasource.getLocations(subscriptionIds);
-    const insightsProvider = await this.azureMonitorDatasource.getProvider('Microsoft.Insights');
-    const logsProvider = insightsProvider?.resourceTypes.find((provider) => provider.resourceType === 'logs');
-
-    if (!logsProvider) {
-      return locations;
-    }
-
-    const logsLocations = logsProvider.locations.map((location) => ({
-      displayName: location,
-      name: '',
-      supportsLogs: true,
-    }));
-
-    const logLocationsMap = new Map<string, AzureMonitorLocations>();
-
-    for (const logLocation of logsLocations) {
-      const name =
-        Array.from(locations.values()).find((location) => logLocation.displayName === location.displayName)?.name || '';
-
-      if (name !== '') {
-        logLocationsMap.set(name, { ...logLocation, name });
-      }
-    }
-
-    return logLocationsMap;
+    this.supportedMetricNamespaces = uniq(
+      supportedMetricNamespaces.concat(resourceTypes.map((namespace) => `"${namespace}"`))
+    ).join(',');
   }
 
   parseRows(resources: Array<string | AzureMonitorResource>): ResourceRow[] {
@@ -445,7 +407,6 @@ export default class ResourcePickerData extends DataSourceWithBackend<AzureMonit
         uri: resourceToString(resource),
         typeLabel:
           resourceTypeDisplayNames[resource.metricNamespace?.toLowerCase() ?? ''] ?? resource.metricNamespace ?? '',
-        locationDisplayName: this.logLocationsMap.get(resource.region ?? '')?.displayName || resource.region,
         location: resource.region,
       });
     });

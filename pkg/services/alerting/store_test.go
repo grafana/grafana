@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/alerting/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -49,12 +50,12 @@ func TestIntegrationAlertingDataAccess(t *testing.T) {
 		ss := db.InitTestDB(t)
 		tagService := tagimpl.ProvideService(ss, ss.Cfg)
 		cfg := setting.NewCfg()
-		cfg.RBACEnabled = false
 		store = &sqlStore{
 			db:         ss,
 			log:        log.New(),
 			cfg:        cfg,
 			tagService: tagService,
+			features:   featuremgmt.WithFeatures(),
 		}
 
 		testDash = insertTestDashboard(t, store.db, "dashboard with alerts", 1, 0, false, "alert")
@@ -81,7 +82,17 @@ func TestIntegrationAlertingDataAccess(t *testing.T) {
 		setup(t)
 
 		// Get alert so we can use its ID in tests
-		alertQuery := models.GetAlertsQuery{DashboardIDs: []int64{testDash.ID}, PanelID: 1, OrgID: 1, User: &user.SignedInUser{OrgRole: org.RoleAdmin}}
+		signedInUser := &user.SignedInUser{
+			OrgRole: org.RoleAdmin,
+			OrgID:   1,
+			Permissions: map[int64]map[string][]string{
+				1: {
+					dashboards.ActionFoldersRead:    {dashboards.ScopeDashboardsAll, dashboards.ScopeFoldersAll},
+					dashboards.ActionDashboardsRead: {dashboards.ScopeDashboardsAll, dashboards.ScopeFoldersAll},
+				},
+			},
+		}
+		alertQuery := models.GetAlertsQuery{DashboardIDs: []int64{testDash.ID}, PanelID: 1, OrgID: 1, User: signedInUser}
 		result, err2 := store.HandleAlertsQuery(context.Background(), &alertQuery)
 		require.Nil(t, err2)
 
@@ -138,7 +149,16 @@ func TestIntegrationAlertingDataAccess(t *testing.T) {
 
 	t.Run("Can read properties", func(t *testing.T) {
 		setup(t)
-		alertQuery := models.GetAlertsQuery{DashboardIDs: []int64{testDash.ID}, PanelID: 1, OrgID: 1, User: &user.SignedInUser{OrgRole: org.RoleAdmin}}
+		signedInUser := &user.SignedInUser{
+			OrgRole: org.RoleAdmin,
+			OrgID:   1,
+			Permissions: map[int64]map[string][]string{
+				1: {
+					dashboards.ActionFoldersRead:    {dashboards.ScopeDashboardsAll, dashboards.ScopeFoldersAll},
+					dashboards.ActionDashboardsRead: {dashboards.ScopeDashboardsAll, dashboards.ScopeFoldersAll},
+				},
+			}}
+		alertQuery := models.GetAlertsQuery{DashboardIDs: []int64{testDash.ID}, PanelID: 1, OrgID: 1, User: signedInUser}
 		result, err2 := store.HandleAlertsQuery(context.Background(), &alertQuery)
 
 		alert := result[0]
@@ -159,7 +179,13 @@ func TestIntegrationAlertingDataAccess(t *testing.T) {
 
 	t.Run("Viewer can read alerts", func(t *testing.T) {
 		setup(t)
-		viewerUser := &user.SignedInUser{OrgRole: org.RoleViewer, OrgID: 1}
+		viewerUser := &user.SignedInUser{
+			OrgRole: org.RoleViewer,
+			OrgID:   1,
+			Permissions: map[int64]map[string][]string{
+				1: {dashboards.ActionFoldersRead: {dashboards.ScopeFoldersAll}, dashboards.ActionDashboardsRead: {dashboards.ScopeDashboardsAll}},
+			},
+		}
 		alertQuery := models.GetAlertsQuery{DashboardIDs: []int64{testDash.ID}, PanelID: 1, OrgID: 1, User: viewerUser}
 		res, err2 := store.HandleAlertsQuery(context.Background(), &alertQuery)
 
@@ -179,7 +205,16 @@ func TestIntegrationAlertingDataAccess(t *testing.T) {
 		})
 
 		t.Run("Alerts should be updated", func(t *testing.T) {
-			query := models.GetAlertsQuery{DashboardIDs: []int64{testDash.ID}, OrgID: 1, User: &user.SignedInUser{OrgRole: org.RoleAdmin}}
+			signedInUser := &user.SignedInUser{
+				OrgRole: org.RoleAdmin,
+				OrgID:   1,
+				Permissions: map[int64]map[string][]string{
+					1: {
+						dashboards.ActionFoldersRead:    {dashboards.ScopeDashboardsAll, dashboards.ScopeFoldersAll},
+						dashboards.ActionDashboardsRead: {dashboards.ScopeDashboardsAll, dashboards.ScopeFoldersAll},
+					},
+				}}
+			query := models.GetAlertsQuery{DashboardIDs: []int64{testDash.ID}, OrgID: 1, User: signedInUser}
 			res, err2 := store.HandleAlertsQuery(context.Background(), &query)
 
 			require.Nil(t, err2)
@@ -199,6 +234,16 @@ func TestIntegrationAlertingDataAccess(t *testing.T) {
 
 	t.Run("Multiple alerts per dashboard", func(t *testing.T) {
 		setup(t)
+		signedInUser := &user.SignedInUser{
+			OrgRole: org.RoleAdmin,
+			OrgID:   1,
+			Permissions: map[int64]map[string][]string{
+				1: {
+					dashboards.ActionFoldersRead:    {dashboards.ScopeDashboardsAll, dashboards.ScopeFoldersAll},
+					dashboards.ActionDashboardsRead: {dashboards.ScopeDashboardsAll, dashboards.ScopeFoldersAll},
+				},
+			},
+		}
 		multipleItems := []*models.Alert{
 			{
 				DashboardID: testDash.ID,
@@ -228,7 +273,7 @@ func TestIntegrationAlertingDataAccess(t *testing.T) {
 		t.Run("Should save 3 dashboards", func(t *testing.T) {
 			require.Nil(t, err)
 
-			queryForDashboard := models.GetAlertsQuery{DashboardIDs: []int64{testDash.ID}, OrgID: 1, User: &user.SignedInUser{OrgRole: org.RoleAdmin}}
+			queryForDashboard := models.GetAlertsQuery{DashboardIDs: []int64{testDash.ID}, OrgID: 1, User: signedInUser}
 			res, err2 := store.HandleAlertsQuery(context.Background(), &queryForDashboard)
 
 			require.Nil(t, err2)
@@ -241,7 +286,7 @@ func TestIntegrationAlertingDataAccess(t *testing.T) {
 			err = store.SaveAlerts(context.Background(), testDash.ID, missingOneAlert)
 
 			t.Run("should delete the missing alert", func(t *testing.T) {
-				query := models.GetAlertsQuery{DashboardIDs: []int64{testDash.ID}, OrgID: 1, User: &user.SignedInUser{OrgRole: org.RoleAdmin}}
+				query := models.GetAlertsQuery{DashboardIDs: []int64{testDash.ID}, OrgID: 1, User: signedInUser}
 				res, err2 := store.HandleAlertsQuery(context.Background(), &query)
 				require.Nil(t, err2)
 				require.Equal(t, 2, len(res))
@@ -289,7 +334,8 @@ func TestIntegrationPausingAlerts(t *testing.T) {
 
 	t.Run("Given an alert", func(t *testing.T) {
 		ss := db.InitTestDB(t)
-		sqlStore := sqlStore{db: ss, log: log.New(), tagService: tagimpl.ProvideService(ss, ss.Cfg)}
+		cfg := setting.NewCfg()
+		sqlStore := sqlStore{db: ss, cfg: cfg, log: log.New(), tagService: tagimpl.ProvideService(ss, ss.Cfg), features: featuremgmt.WithFeatures()}
 
 		testDash := insertTestDashboard(t, sqlStore.db, "dashboard with alerts", 1, 0, false, "alert")
 		alert, err := insertTestAlert("Alerting title", "Alerting message", testDash.OrgID, testDash.ID, simplejson.New(), sqlStore)
@@ -297,9 +343,18 @@ func TestIntegrationPausingAlerts(t *testing.T) {
 
 		stateDateBeforePause := alert.NewStateDate
 		stateDateAfterPause := stateDateBeforePause
-
+		signedInUser := &user.SignedInUser{
+			OrgRole: org.RoleAdmin,
+			OrgID:   testDash.OrgID,
+			Permissions: map[int64]map[string][]string{
+				testDash.OrgID: {
+					dashboards.ActionFoldersRead:    {dashboards.ScopeDashboardsAll, dashboards.ScopeFoldersAll},
+					dashboards.ActionDashboardsRead: {dashboards.ScopeDashboardsAll, dashboards.ScopeFoldersAll},
+				},
+			},
+		}
 		// Get alert so we can use its ID in tests
-		alertQuery := models.GetAlertsQuery{DashboardIDs: []int64{testDash.ID}, PanelID: 1, OrgID: 1, User: &user.SignedInUser{OrgRole: org.RoleAdmin}}
+		alertQuery := models.GetAlertsQuery{DashboardIDs: []int64{testDash.ID}, PanelID: 1, OrgID: 1, User: signedInUser}
 		res, err2 := sqlStore.HandleAlertsQuery(context.Background(), &alertQuery)
 		require.Nil(t, err2)
 

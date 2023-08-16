@@ -1,5 +1,5 @@
 import { chain, difference } from 'lodash';
-import LRU from 'lru-cache';
+import { LRUCache } from 'lru-cache';
 import Prism, { Grammar } from 'prismjs';
 
 import { dateTime, AbsoluteTimeRange, LanguageProvider, HistoryItem, AbstractQuery } from '@grafana/data';
@@ -29,8 +29,7 @@ const NS_IN_MS = 1000000;
 // When changing RATE_RANGES, check if Prometheus/PromQL ranges should be changed too
 // @see public/app/plugins/datasource/prometheus/promql.ts
 const RATE_RANGES: CompletionItem[] = [
-  { label: '$__interval', sortValue: '$__interval' },
-  { label: '$__range', sortValue: '$__range' },
+  { label: '$__auto', sortValue: '$__auto' },
   { label: '1m', sortValue: '00:01:00' },
   { label: '5m', sortValue: '00:05:00' },
   { label: '10m', sortValue: '00:10:00' },
@@ -79,8 +78,8 @@ export default class LokiLanguageProvider extends LanguageProvider {
    *  not account for different size of a response. If that is needed a `length` function can be added in the options.
    *  10 as a max size is totally arbitrary right now.
    */
-  private seriesCache = new LRU<string, Record<string, string[]>>({ max: 10 });
-  private labelsCache = new LRU<string, string[]>({ max: 10 });
+  private seriesCache = new LRUCache<string, Record<string, string[]>>({ max: 10 });
+  private labelsCache = new LRUCache<string, string[]>({ max: 10 });
 
   constructor(datasource: LokiDatasource, initialValues?: any) {
     super();
@@ -380,15 +379,10 @@ export default class LokiLanguageProvider extends LanguageProvider {
         .sort()
         .filter((label) => label !== '__name__');
       this.labelKeys = labels;
+      return this.labelKeys;
     }
 
     return [];
-  }
-
-  async refreshLogLabels(forceRefresh?: boolean) {
-    if ((this.labelKeys && Date.now().valueOf() - this.labelFetchTs > LABEL_REFRESH_INTERVAL) || forceRefresh) {
-      await this.fetchLabels();
-    }
   }
 
   /**
@@ -404,8 +398,6 @@ export default class LokiLanguageProvider extends LanguageProvider {
     const cacheKey = this.generateCacheKey(url, start, end, interpolatedMatch);
     let value = this.seriesCache.get(cacheKey);
     if (!value) {
-      // Clear value when requesting new one. Empty object being truthy also makes sure we don't request twice.
-      this.seriesCache.set(cacheKey, {});
       const params = { 'match[]': interpolatedMatch, start, end };
       const data = await this.request(url, params);
       const { values } = processLabels(data);
@@ -467,21 +459,26 @@ export default class LokiLanguageProvider extends LanguageProvider {
     return labelValues ?? [];
   }
 
-  async getParserAndLabelKeys(
-    selector: string
-  ): Promise<{ extractedLabelKeys: string[]; hasJSON: boolean; hasLogfmt: boolean; unwrapLabelKeys: string[] }> {
+  async getParserAndLabelKeys(selector: string): Promise<{
+    extractedLabelKeys: string[];
+    hasJSON: boolean;
+    hasLogfmt: boolean;
+    hasPack: boolean;
+    unwrapLabelKeys: string[];
+  }> {
     const series = await this.datasource.getDataSamples({ expr: selector, refId: 'data-samples' });
 
     if (!series.length) {
-      return { extractedLabelKeys: [], unwrapLabelKeys: [], hasJSON: false, hasLogfmt: false };
+      return { extractedLabelKeys: [], unwrapLabelKeys: [], hasJSON: false, hasLogfmt: false, hasPack: false };
     }
 
-    const { hasLogfmt, hasJSON } = extractLogParserFromDataFrame(series[0]);
+    const { hasLogfmt, hasJSON, hasPack } = extractLogParserFromDataFrame(series[0]);
 
     return {
       extractedLabelKeys: extractLabelKeysFromDataFrame(series[0]),
       unwrapLabelKeys: extractUnwrapLabelKeysFromDataFrame(series[0]),
       hasJSON,
+      hasPack,
       hasLogfmt,
     };
   }

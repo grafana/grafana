@@ -62,6 +62,7 @@ export function LabelFilters({
           renderItem={(item: Partial<QueryBuilderLabelFilter>, onChangeItem, onDelete) => (
             <LabelFilterItem
               item={item}
+              items={items}
               defaultOp={defaultOp}
               onChange={onChangeItem}
               onDelete={onDelete}

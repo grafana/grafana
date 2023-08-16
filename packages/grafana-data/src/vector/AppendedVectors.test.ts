@@ -8,6 +8,9 @@ describe('Check Appending Vector', () => {
     appended.append(new ArrayVector([4, 5, 6]));
     appended.append(new ArrayVector([7, 8, 9]));
     expect(appended.length).toEqual(9);
+    expect(appended[0]).toEqual(1);
+    expect(appended[1]).toEqual(2);
+    expect(appended[100]).toEqual(undefined);
 
     appended.setLength(5);
     expect(appended.length).toEqual(5);

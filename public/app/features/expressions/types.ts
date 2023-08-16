@@ -2,6 +2,11 @@ import { DataQuery, ReducerID, SelectableValue } from '@grafana/data';
 
 import { EvalFunction } from '../alerting/state/alertDef';
 
+/**
+ * MATCHES a constant in DataSourceWithBackend
+ */
+export const ExpressionDatasourceUID = '__expr__';
+
 export enum ExpressionQueryType {
   math = 'math',
   reduce = 'reduce',
@@ -10,7 +15,22 @@ export enum ExpressionQueryType {
   threshold = 'threshold',
 }
 
-export const gelTypes: Array<SelectableValue<ExpressionQueryType>> = [
+export const getExpressionLabel = (type: ExpressionQueryType) => {
+  switch (type) {
+    case ExpressionQueryType.math:
+      return 'Math';
+    case ExpressionQueryType.reduce:
+      return 'Reduce';
+    case ExpressionQueryType.resample:
+      return 'Resample';
+    case ExpressionQueryType.classic:
+      return 'Classic condition';
+    case ExpressionQueryType.threshold:
+      return 'Threshold';
+  }
+};
+
+export const expressionTypes: Array<SelectableValue<ExpressionQueryType>> = [
   {
     value: ExpressionQueryType.math,
     label: 'Math',
@@ -31,7 +51,7 @@ export const gelTypes: Array<SelectableValue<ExpressionQueryType>> = [
     value: ExpressionQueryType.classic,
     label: 'Classic condition',
     description:
-      'Takes one or more time series returned from a query or an expression and checks if any of the series match the condition.',
+      'Takes one or more time series returned from a query or an expression and checks if any of the series match the condition. Disables multi-dimensional alerts for this rule.',
   },
   {
     value: ExpressionQueryType.threshold,

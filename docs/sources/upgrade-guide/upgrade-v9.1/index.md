@@ -1,14 +1,16 @@
 ---
-aliases:
-
 description: Guide for upgrading to Grafana v9.1
 keywords:
   - grafana
   - configuration
   - documentation
   - upgrade
-title: Upgrade to Grafana v9.1
+labels:
+  products:
+    - enterprise
+    - oss
 menutitle: Upgrade to v9.1
+title: Upgrade to Grafana v9.1
 weight: 2200
 ---
 

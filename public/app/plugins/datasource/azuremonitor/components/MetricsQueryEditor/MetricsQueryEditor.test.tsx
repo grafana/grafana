@@ -10,15 +10,15 @@ import createMockQuery from '../../__mocks__/query';
 import {
   createMockResourceGroupsBySubscription,
   createMockSubscriptions,
-  mockGetValidLocations,
   mockResourcesByResourceGroup,
 } from '../../__mocks__/resourcePickerRows';
+import { selectors } from '../../e2e/selectors';
 import ResourcePickerData from '../../resourcePicker/resourcePickerData';
 
 import MetricsQueryEditor from './MetricsQueryEditor';
 
 jest.mock('@grafana/runtime', () => ({
-  ...(jest.requireActual('@grafana/runtime') as unknown as object),
+  ...jest.requireActual('@grafana/runtime'),
   getTemplateSrv: () => ({
     replace: (val: string) => {
       return val;
@@ -45,7 +45,6 @@ export function createMockResourcePickerData() {
   mockResourcePicker.getResourcesForResourceGroup = jest.fn().mockResolvedValue(mockResourcesByResourceGroup());
   mockResourcePicker.getResourceURIFromWorkspace = jest.fn().mockReturnValue('');
   mockResourcePicker.getResourceURIDisplayProperties = jest.fn().mockResolvedValue({});
-  mockResourcePicker.getLogsLocations = jest.fn().mockResolvedValue(mockGetValidLocations());
   return mockResourcePicker;
 }
 
@@ -74,7 +73,9 @@ describe('MetricsQueryEditor', () => {
       />
     );
 
-    expect(await screen.findByTestId('azure-monitor-metrics-query-editor-with-experimental-ui')).toBeInTheDocument();
+    expect(
+      await screen.findByTestId(selectors.components.queryEditor.metricsQueryEditor.container.input)
+    ).toBeInTheDocument();
   });
 
   it('should show the current resource in the ResourcePicker', async () => {
@@ -106,14 +107,13 @@ describe('MetricsQueryEditor', () => {
 
     const resourcePickerButton = await screen.findByRole('button', { name: 'web-server' });
     expect(resourcePickerButton).toBeInTheDocument();
-    resourcePickerButton.click();
+    await userEvent.click(resourcePickerButton);
 
-    await waitFor(() => {
+    await waitFor(async () => {
       expect(screen.queryByText('Loading...')).not.toBeInTheDocument();
+      const selection = await screen.findAllByLabelText('web-server');
+      expect(selection).toHaveLength(2);
     });
-
-    const selection = await screen.findAllByLabelText('web-server');
-    expect(selection).toHaveLength(2);
   });
 
   it('should change resource when a resource is selected in the ResourcePicker', async () => {
@@ -138,17 +138,17 @@ describe('MetricsQueryEditor', () => {
     const resourcePickerButton = await screen.findByRole('button', { name: 'Select a resource' });
     expect(resourcePickerButton).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Expand Primary Subscription' })).not.toBeInTheDocument();
-    resourcePickerButton.click();
+    await userEvent.click(resourcePickerButton);
 
     const subscriptionButton = await screen.findByRole('button', { name: 'Expand Primary Subscription' });
     expect(subscriptionButton).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Expand A Great Resource Group' })).not.toBeInTheDocument();
-    subscriptionButton.click();
+    await userEvent.click(subscriptionButton);
 
     const resourceGroupButton = await screen.findByRole('button', { name: 'Expand A Great Resource Group' });
     expect(resourceGroupButton).toBeInTheDocument();
     expect(screen.queryByLabelText('web-server')).not.toBeInTheDocument();
-    resourceGroupButton.click();
+    await userEvent.click(resourceGroupButton);
 
     const checkbox = await screen.findByLabelText('web-server');
     expect(checkbox).toBeInTheDocument();
@@ -194,13 +194,13 @@ describe('MetricsQueryEditor', () => {
     );
 
     const resourcePickerButton = await screen.findByRole('button', { name: 'Select a resource' });
-    resourcePickerButton.click();
+    await userEvent.click(resourcePickerButton);
 
     const subscriptionButton = await screen.findByRole('button', { name: 'Expand Primary Subscription' });
-    subscriptionButton.click();
+    await userEvent.click(subscriptionButton);
 
     const resourceGroupButton = await screen.findByRole('button', { name: 'Expand A Great Resource Group' });
-    resourceGroupButton.click();
+    await userEvent.click(resourceGroupButton);
 
     const checkbox = await screen.findByLabelText('web-server');
     await userEvent.click(checkbox);
@@ -253,13 +253,13 @@ describe('MetricsQueryEditor', () => {
     );
 
     const resourcePickerButton = await screen.findByRole('button', { name: 'Select a resource' });
-    resourcePickerButton.click();
+    await userEvent.click(resourcePickerButton);
 
     const subscriptionButton = await screen.findByRole('button', { name: 'Expand Primary Subscription' });
-    subscriptionButton.click();
+    await userEvent.click(subscriptionButton);
 
     const resourceGroupButton = await screen.findByRole('button', { name: 'Expand A Great Resource Group' });
-    resourceGroupButton.click();
+    await userEvent.click(resourceGroupButton);
 
     const checkbox = await screen.findByLabelText('web-server');
     await userEvent.click(checkbox);
@@ -288,13 +288,13 @@ describe('MetricsQueryEditor', () => {
     );
 
     const resourcePickerButton = await screen.findByRole('button', { name: 'Select a resource' });
-    resourcePickerButton.click();
+    await userEvent.click(resourcePickerButton);
 
     const subscriptionButton = await screen.findByRole('button', { name: 'Expand Primary Subscription' });
-    subscriptionButton.click();
+    await userEvent.click(subscriptionButton);
 
     const resourceGroupButton = await screen.findByRole('button', { name: 'Expand A Great Resource Group' });
-    resourceGroupButton.click();
+    await userEvent.click(resourceGroupButton);
 
     const checkbox = await screen.findByLabelText('web-server');
     await userEvent.click(checkbox);
@@ -397,20 +397,20 @@ describe('MetricsQueryEditor', () => {
     );
 
     const resourcePickerButton = await screen.findByRole('button', { name: 'Select a resource' });
-    resourcePickerButton.click();
+    await userEvent.click(resourcePickerButton);
 
     const subscriptionButton = await screen.findByRole('button', { name: 'Expand Primary Subscription' });
-    subscriptionButton.click();
+    await userEvent.click(subscriptionButton);
 
     const resourceGroupButton = await screen.findByRole('button', { name: 'Expand A Great Resource Group' });
-    resourceGroupButton.click();
+    await userEvent.click(resourceGroupButton);
 
     const checkbox = await screen.findByLabelText('web-server');
     await userEvent.click(checkbox);
     expect(checkbox).toBeChecked();
 
     const advancedSection = screen.getByText('Advanced');
-    advancedSection.click();
+    await userEvent.click(advancedSection);
 
     const advancedInput = await screen.findByLabelText('Subscription');
     await userEvent.type(advancedInput, 'def-123');
@@ -443,10 +443,10 @@ describe('MetricsQueryEditor', () => {
     );
 
     const resourcePickerButton = await screen.findByRole('button', { name: 'Select a resource' });
-    resourcePickerButton.click();
+    await userEvent.click(resourcePickerButton);
 
     const advancedSection = screen.getByText('Advanced');
-    advancedSection.click();
+    await userEvent.click(advancedSection);
 
     const advancedInput = await screen.findByLabelText('Subscription');
     await userEvent.type(advancedInput, 'def-123');
@@ -458,7 +458,7 @@ describe('MetricsQueryEditor', () => {
     await userEvent.type(rnInput, 'rn');
 
     const applyButton = screen.getByRole('button', { name: 'Apply' });
-    applyButton.click();
+    await userEvent.click(applyButton);
 
     expect(onChange).toBeCalledTimes(1);
     expect(onChange).toBeCalledWith(

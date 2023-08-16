@@ -70,14 +70,14 @@ func (hs *HTTPServer) AdminCreateUser(c *contextmodel.ReqContext) response.Respo
 	usr, err := hs.userService.Create(c.Req.Context(), &cmd)
 	if err != nil {
 		if errors.Is(err, org.ErrOrgNotFound) {
-			return response.Error(400, err.Error(), nil)
+			return response.Error(http.StatusBadRequest, err.Error(), nil)
 		}
 
 		if errors.Is(err, user.ErrUserAlreadyExists) {
-			return response.Error(412, fmt.Sprintf("User with email '%s' or username '%s' already exists", form.Email, form.Login), err)
+			return response.Error(http.StatusPreconditionFailed, fmt.Sprintf("User with email '%s' or username '%s' already exists", form.Email, form.Login), err)
 		}
 
-		return response.Error(500, "failed to create user", err)
+		return response.Error(http.StatusInternalServerError, "failed to create user", err)
 	}
 
 	metrics.MApiAdminUserCreate.Inc()
@@ -167,6 +167,17 @@ func (hs *HTTPServer) AdminUpdateUserPermissions(c *contextmodel.ReqContext) res
 		return response.Error(http.StatusBadRequest, "id is invalid", err)
 	}
 
+	getAuthQuery := login.GetAuthInfoQuery{UserId: userID}
+	if authInfo, err := hs.authInfoService.GetAuthInfo(c.Req.Context(), &getAuthQuery); err == nil && authInfo != nil {
+		oAuthAndAllowAssignGrafanaAdmin := false
+		if oauthInfo := hs.SocialService.GetOAuthInfoProvider(strings.TrimPrefix(authInfo.AuthModule, "oauth_")); oauthInfo != nil {
+			oAuthAndAllowAssignGrafanaAdmin = oauthInfo.AllowAssignGrafanaAdmin
+		}
+		if login.IsGrafanaAdminExternallySynced(hs.Cfg, authInfo.AuthModule, oAuthAndAllowAssignGrafanaAdmin) {
+			return response.Error(http.StatusForbidden, "Cannot change Grafana Admin role for externally synced user", nil)
+		}
+	}
+
 	err = hs.userService.UpdatePermissions(c.Req.Context(), userID, form.IsGrafanaAdmin)
 	if err != nil {
 		if errors.Is(err, user.ErrLastGrafanaAdmin) {
@@ -235,7 +246,7 @@ func (hs *HTTPServer) AdminDeleteUser(c *contextmodel.ReqContext) response.Respo
 		return nil
 	})
 	g.Go(func() error {
-		if err := hs.teamGuardian.DeleteByUser(ctx, cmd.UserID); err != nil {
+		if err := hs.teamService.RemoveUsersMemberships(ctx, cmd.UserID); err != nil {
 			return err
 		}
 		return nil
@@ -294,7 +305,7 @@ func (hs *HTTPServer) AdminDisableUser(c *contextmodel.ReqContext) response.Resp
 
 	// External users shouldn't be disabled from API
 	authInfoQuery := &login.GetAuthInfoQuery{UserId: userID}
-	if err := hs.authInfoService.GetAuthInfo(c.Req.Context(), authInfoQuery); !errors.Is(err, user.ErrUserNotFound) {
+	if _, err := hs.authInfoService.GetAuthInfo(c.Req.Context(), authInfoQuery); !errors.Is(err, user.ErrUserNotFound) {
 		return response.Error(500, "Could not disable external user", nil)
 	}
 
@@ -337,7 +348,7 @@ func (hs *HTTPServer) AdminEnableUser(c *contextmodel.ReqContext) response.Respo
 
 	// External users shouldn't be disabled from API
 	authInfoQuery := &login.GetAuthInfoQuery{UserId: userID}
-	if err := hs.authInfoService.GetAuthInfo(c.Req.Context(), authInfoQuery); !errors.Is(err, user.ErrUserNotFound) {
+	if _, err := hs.authInfoService.GetAuthInfo(c.Req.Context(), authInfoQuery); !errors.Is(err, user.ErrUserNotFound) {
 		return response.Error(500, "Could not enable external user", nil)
 	}
 

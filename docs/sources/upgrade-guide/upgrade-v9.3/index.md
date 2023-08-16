@@ -1,15 +1,16 @@
 ---
-aliases:
-  - ../installation/upgrading/
-  - ../setup-grafana/upgrade-grafana/
 description: Guide for upgrading to Grafana v9.3
 keywords:
   - grafana
   - configuration
   - documentation
   - upgrade
-title: Upgrade to Grafana v9.3
+labels:
+  products:
+    - enterprise
+    - oss
 menutitle: Upgrade to v9.3
+title: Upgrade to Grafana v9.3
 weight: 2000
 ---
 

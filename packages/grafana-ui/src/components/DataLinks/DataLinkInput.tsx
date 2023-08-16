@@ -38,7 +38,7 @@ const datalinksSyntax: Grammar = {
 const plugins = [
   SlatePrism(
     {
-      onlyIn: (node: any) => node.type === 'code_block',
+      onlyIn: (node) => 'type' in node && node.type === 'code_block',
       getSyntax: () => 'links',
     },
     { ...(Prism.languages as LanguageMap), links: datalinksSyntax }
@@ -47,33 +47,38 @@ const plugins = [
 
 const getStyles = (theme: GrafanaTheme2) => ({
   input: getInputStyles({ theme, invalid: false }).input,
-  editor: css`
-    .token.builtInVariable {
-      color: ${theme.colors.success.text};
-    }
-    .token.variable {
-      color: ${theme.colors.primary.text};
-    }
-  `,
-  suggestionsWrapper: css`
-    box-shadow: ${theme.shadows.z2};
-  `,
+  editor: css({
+    '.token.builtInVariable': {
+      color: theme.colors.success.text,
+    },
+    '.token.variable': {
+      color: theme.colors.primary.text,
+    },
+  }),
+  suggestionsWrapper: css({
+    boxShadow: theme.shadows.z2,
+  }),
   // Wrapper with child selector needed.
   // When classnames are applied to the same element as the wrapper, it causes the suggestions to stop working
-  wrapperOverrides: css`
-    width: 100%;
-    > .slate-query-field__wrapper {
-      padding: 0;
-      background-color: transparent;
-      border: none;
-    }
-  `,
+  wrapperOverrides: css({
+    width: '100%',
+    '> .slate-query-field__wrapper': {
+      padding: 0,
+      backgroundColor: 'transparent',
+      border: 'none',
+    },
+  }),
 });
 
 // This memoised also because rerendering the slate editor grabs focus which created problem in some cases this
 // was used and changes to different state were propagated here.
-export const DataLinkInput: React.FC<DataLinkInputProps> = memo(
-  ({ value, onChange, suggestions, placeholder = 'http://your-grafana.com/d/000000010/annotations' }) => {
+export const DataLinkInput = memo(
+  ({
+    value,
+    onChange,
+    suggestions,
+    placeholder = 'http://your-grafana.com/d/000000010/annotations',
+  }: DataLinkInputProps) => {
     const editorRef = useRef<Editor>(null);
     const styles = useStyles2(getStyles);
     const [showingSuggestions, setShowingSuggestions] = useState(false);
@@ -95,7 +100,7 @@ export const DataLinkInput: React.FC<DataLinkInputProps> = memo(
     // SelectionReference is used to position the variables suggestion relatively to current DOM selection
     const selectionRef = useMemo(() => new SelectionReference(), []);
 
-    const onKeyDown = React.useCallback((event: React.KeyboardEvent, next: () => any) => {
+    const onKeyDown = React.useCallback((event: React.KeyboardEvent, next: () => void) => {
       if (!stateRef.current.showingSuggestions) {
         if (event.key === '=' || event.key === '$' || (event.keyCode === 32 && event.ctrlKey)) {
           return setShowingSuggestions(true);
@@ -233,9 +238,9 @@ export const DataLinkInput: React.FC<DataLinkInputProps> = memo(
               className={cx(
                 styles.editor,
                 styles.input,
-                css`
-                  padding: 3px 8px;
-                `
+                css({
+                  padding: '3px 8px',
+                })
               )}
             />
           </div>

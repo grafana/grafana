@@ -1,14 +1,16 @@
 ---
-aliases:
-
 description: Guide for upgrading to Grafana v8.2
 keywords:
   - grafana
   - configuration
   - documentation
   - upgrade
-title: Upgrade to Grafana v8.2
+labels:
+  products:
+    - enterprise
+    - oss
 menutitle: Upgrade to v8.2
+title: Upgrade to Grafana v8.2
 weight: 2700
 ---
 

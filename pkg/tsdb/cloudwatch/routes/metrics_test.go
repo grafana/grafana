@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -19,7 +20,7 @@ func Test_Metrics_Route(t *testing.T) {
 	t.Run("calls GetMetricsByNamespace when a CustomNamespaceRequestType is passed", func(t *testing.T) {
 		mockListMetricsService := mocks.ListMetricsServiceMock{}
 		mockListMetricsService.On("GetMetricsByNamespace", mock.Anything).Return([]resources.ResourceResponse[resources.Metric]{}, nil)
-		newListMetricsService = func(pluginCtx backend.PluginContext, reqCtxFactory models.RequestContextFactoryFunc, region string) (models.ListMetricsProvider, error) {
+		newListMetricsService = func(_ context.Context, pluginCtx backend.PluginContext, reqCtxFactory models.RequestContextFactoryFunc, region string) (models.ListMetricsProvider, error) {
 			return &mockListMetricsService, nil
 		}
 		rr := httptest.NewRecorder()
@@ -69,7 +70,7 @@ func Test_Metrics_Route(t *testing.T) {
 	t.Run("returns 500 if GetMetricsByNamespace returns an error", func(t *testing.T) {
 		mockListMetricsService := mocks.ListMetricsServiceMock{}
 		mockListMetricsService.On("GetMetricsByNamespace", mock.Anything).Return([]resources.ResourceResponse[resources.Metric]{}, fmt.Errorf("some error"))
-		newListMetricsService = func(pluginCtx backend.PluginContext, reqCtxFactory models.RequestContextFactoryFunc, region string) (models.ListMetricsProvider, error) {
+		newListMetricsService = func(_ context.Context, pluginCtx backend.PluginContext, reqCtxFactory models.RequestContextFactoryFunc, region string) (models.ListMetricsProvider, error) {
 			return &mockListMetricsService, nil
 		}
 		rr := httptest.NewRecorder()

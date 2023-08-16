@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 
 import { LokiDatasource } from '../../datasource';
@@ -33,14 +33,15 @@ describe('LabelBrowserModal', () => {
   it('renders the label browser modal when open', async () => {
     render(<LabelBrowserModal {...props} />);
 
-    expect(await screen.findByText(/Loading/)).not.toBeInTheDocument();
-
+    await waitFor(() => {
+      expect(screen.queryByText(/Loading/)).not.toBeInTheDocument();
+    });
     expect(screen.getByRole('heading', { name: /label browser/i })).toBeInTheDocument();
   });
 
   it("doesn't render the label browser modal when closed", async () => {
     render(<LabelBrowserModal {...props} isOpen={false} />);
 
-    expect(screen.queryByRole('heading', { name: /label browser/i })).toBeNull();
+    expect(screen.queryByRole('heading', { name: /label browser/i })).not.toBeInTheDocument();
   });
 });

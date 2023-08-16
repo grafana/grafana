@@ -35,54 +35,53 @@ export const RadioButtonDot = ({ id, name, label, checked, disabled, description
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  input: css`
-    position: relative;
-    appearance: none;
-    outline: none;
-    background-color: ${theme.colors.background.canvas};
-    margin: 0;
-    width: ${theme.spacing(2)} !important; /* TODO How to overcome this? Checkbox does the same 🙁 */
-    height: ${theme.spacing(2)};
-    border: 1px solid ${theme.colors.border.medium};
-    border-radius: 50%;
-    margin: 3px 0; /* Space for box-shadow when focused */
+  input: css({
+    position: 'relative',
+    appearance: 'none',
+    outline: 'none',
+    backgroundColor: theme.colors.background.canvas,
+    width: `${theme.spacing(2)} !important` /* TODO How to overcome this? Checkbox does the same 🙁 */,
+    height: theme.spacing(2),
+    border: `1px solid ${theme.colors.border.medium}`,
+    borderRadius: theme.shape.radius.circle,
+    margin: '3px 0' /* Space for box-shadow when focused */,
 
-    :checked {
-      background-color: ${theme.v1.palette.white};
-      border: 5px solid ${theme.colors.primary.main};
-    }
+    ':checked': {
+      backgroundColor: theme.v1.palette.white,
+      border: `5px solid ${theme.colors.primary.main}`,
+    },
 
-    :disabled {
-      background-color: ${theme.colors.action.disabledBackground} !important;
-      border-color: ${theme.colors.border.weak};
-    }
+    ':disabled': {
+      backgroundColor: `${theme.colors.action.disabledBackground} !important`,
+      borderColor: theme.colors.border.weak,
+    },
 
-    :disabled:checked {
-      border: 1px solid ${theme.colors.border.weak};
-    }
+    ':disabled:checked': {
+      border: `1px solid ${theme.colors.border.weak}`,
+    },
 
-    :disabled:checked::after {
-      content: '';
-      width: 6px;
-      height: 6px;
-      background-color: ${theme.colors.text.disabled};
-      border-radius: 50%;
-      display: inline-block;
-      position: absolute;
-      top: 4px;
-      left: 4px;
-    }
+    ':disabled:checked::after': {
+      content: '""',
+      width: '6px',
+      height: '6px',
+      backgroundColor: theme.colors.text.disabled,
+      borderRadius: theme.shape.radius.circle,
+      display: 'inline-block',
+      position: 'absolute',
+      top: '4px',
+      left: '4px',
+    },
 
-    :focus {
-      outline: none !important;
-      box-shadow: 0 0 0 1px ${theme.colors.background.canvas}, 0 0 0 3px ${theme.colors.primary.main};
-    }
-  `,
-  label: css`
-    font-size: ${theme.typography.fontSize};
-    line-height: 22px; /* 16px for the radio button and 6px for the focus shadow */
-    display: grid;
-    grid-template-columns: ${theme.spacing(2)} auto;
-    gap: ${theme.spacing(1)};
-  `,
+    ':focus': {
+      outline: 'none !important',
+      boxShadow: `0 0 0 1px ${theme.colors.background.canvas}, 0 0 0 3px ${theme.colors.primary.main}`,
+    },
+  }),
+  label: css({
+    fontSize: theme.typography.fontSize,
+    lineHeight: '22px' /* 16px for the radio button and 6px for the focus shadow */,
+    display: 'grid',
+    gridTemplateColumns: `${theme.spacing(2)} auto`,
+    gap: theme.spacing(1),
+  }),
 });

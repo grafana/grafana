@@ -6,6 +6,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	"github.com/grafana/grafana/pkg/services/loginattempt"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -90,8 +91,8 @@ func (f fakeStore) GetUserLoginAttemptCount(ctx context.Context, query GetUserLo
 	return f.ExpectedCount, f.ExpectedErr
 }
 
-func (f fakeStore) CreateLoginAttempt(ctx context.Context, command CreateLoginAttemptCommand) error {
-	return f.ExpectedErr
+func (f fakeStore) CreateLoginAttempt(ctx context.Context, command CreateLoginAttemptCommand) (loginattempt.LoginAttempt, error) {
+	return loginattempt.LoginAttempt{}, f.ExpectedErr
 }
 
 func (f fakeStore) DeleteOldLoginAttempts(ctx context.Context, command DeleteOldLoginAttemptsCommand) (int64, error) {

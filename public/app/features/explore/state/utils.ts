@@ -1,24 +1,31 @@
-import { isEmpty, isObject, mapValues, omitBy } from 'lodash';
+import { uniq } from 'lodash';
 
 import {
   AbsoluteTimeRange,
   DataSourceApi,
   EventBusExtended,
-  ExploreUrlState,
   getDefaultTimeRange,
   HistoryItem,
   LoadingState,
+  LogRowModel,
   PanelData,
+  RawTimeRange,
+  TimeFragment,
+  TimeRange,
+  dateMath,
+  DateTime,
+  isDateTime,
+  toUtc,
 } from '@grafana/data';
-import { DataSourceRef } from '@grafana/schema';
+import { DataQuery, DataSourceRef, TimeZone } from '@grafana/schema';
+import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 import { ExplorePanelData } from 'app/types';
 import { ExploreItemState } from 'app/types/explore';
 
 import store from '../../../core/store';
-import { clearQueryKeys, lastUsedDatasourceKeyForOrgId } from '../../../core/utils/explore';
+import { setLastUsedDatasourceUID } from '../../../core/utils/explore';
 import { getDatasourceSrv } from '../../plugins/datasource_srv';
 import { loadSupplementaryQueries } from '../utils/supplementaryQueries';
-import { toRawTimeRange } from '../utils/time';
 
 export const DEFAULT_RANGE = {
   from: 'now-6h',
@@ -36,7 +43,6 @@ export const storeGraphStyle = (graphStyle: string): void => {
 export const makeExplorePaneState = (): ExploreItemState => ({
   containerWidth: 0,
   datasourceInstance: null,
-  datasourceMissing: false,
   history: [],
   queries: [],
   initialized: false,
@@ -50,7 +56,6 @@ export const makeExplorePaneState = (): ExploreItemState => ({
     to: null,
   } as any,
   scanning: false,
-  loading: false,
   queryKeys: [],
   isLive: false,
   isPaused: false,
@@ -58,12 +63,14 @@ export const makeExplorePaneState = (): ExploreItemState => ({
   tableResult: null,
   graphResult: null,
   logsResult: null,
+  clearedAtIndex: null,
   rawPrometheusResult: null,
   eventBridge: null as unknown as EventBusExtended,
   cache: [],
   richHistory: [],
   supplementaryQueries: loadSupplementaryQueries(),
   panelsState: {},
+  correlations: undefined,
 });
 
 export const createEmptyQueryResponse = (): ExplorePanelData => ({
@@ -75,6 +82,7 @@ export const createEmptyQueryResponse = (): ExplorePanelData => ({
   traceFrames: [],
   nodeGraphFrames: [],
   flameGraphFrames: [],
+  customFrames: [],
   tableFrames: [],
   rawPrometheusFrames: [],
   rawPrometheusResult: null,
@@ -110,31 +118,8 @@ export async function loadAndInitDatasource(
   const history = store.getObject<HistoryItem[]>(historyKey, []);
   // Save last-used datasource
 
-  store.set(lastUsedDatasourceKeyForOrgId(orgId), instance.uid);
+  setLastUsedDatasourceUID(orgId, instance.uid);
   return { history, instance };
-}
-
-// recursively walks an object, removing keys where the value is undefined
-// if the resulting object is empty, returns undefined
-function pruneObject(obj: object): object | undefined {
-  let pruned = mapValues(obj, (value) => (isObject(value) ? pruneObject(value) : value));
-  pruned = omitBy<typeof pruned>(pruned, isEmpty);
-  if (isEmpty(pruned)) {
-    return undefined;
-  }
-  return pruned;
-}
-
-export function getUrlStateFromPaneState(pane: ExploreItemState): ExploreUrlState {
-  return {
-    // datasourceInstance should not be undefined anymore here but in case there is some path for it to be undefined
-    // lets just fallback instead of crashing.
-    datasource: pane.datasourceInstance?.uid || '',
-    queries: pane.queries.map(clearQueryKeys),
-    range: toRawTimeRange(pane.range),
-    // don't include panelsState in the url unless a piece of state is actually set
-    panelsState: pruneObject(pane.panelsState),
-  };
 }
 
 export function createCacheKey(absRange: AbsoluteTimeRange) {
@@ -158,3 +143,113 @@ export function getResultsFromCache(
   const cacheValue = cacheIdx >= 0 ? cache[cacheIdx].value : undefined;
   return cacheValue;
 }
+
+export function getRange(range: RawTimeRange, timeZone: TimeZone): TimeRange {
+  const raw = {
+    from: parseRawTime(range.from)!,
+    to: parseRawTime(range.to)!,
+  };
+
+  return {
+    from: dateMath.parse(raw.from, false, timeZone)!,
+    to: dateMath.parse(raw.to, true, timeZone)!,
+    raw,
+  };
+}
+
+/**
+ * @param range RawTimeRange - Note: Range in the URL is not RawTimeRange compliant (see #72578 for more details)
+ */
+export function fromURLRange(range: RawTimeRange): RawTimeRange {
+  let rawTimeRange: RawTimeRange = DEFAULT_RANGE;
+  let parsedRange = {
+    from: parseRawTime(range.from),
+    to: parseRawTime(range.to),
+  };
+  if (parsedRange.from !== null && parsedRange.to !== null) {
+    rawTimeRange = { from: parsedRange.from, to: parsedRange.to };
+  }
+  return rawTimeRange;
+}
+
+/**
+ * @param range RawTimeRange - Note: Range in the URL is not RawTimeRange compliant (see #72578 for more details)
+ */
+export const toURLTimeRange = (range: RawTimeRange): RawTimeRange => {
+  let from = range.from;
+  if (isDateTime(from)) {
+    from = from.valueOf().toString();
+  }
+
+  let to = range.to;
+  if (isDateTime(to)) {
+    to = to.valueOf().toString();
+  }
+
+  return {
+    from,
+    to,
+  };
+};
+
+function parseRawTime(value: string | DateTime): TimeFragment | null {
+  if (value === null) {
+    return null;
+  }
+
+  if (isDateTime(value)) {
+    return value;
+  }
+
+  if (value.indexOf('now') !== -1) {
+    return value;
+  }
+  if (value.length === 8) {
+    return toUtc(value, 'YYYYMMDD');
+  }
+  if (value.length === 15) {
+    return toUtc(value, 'YYYYMMDDTHHmmss');
+  }
+  // Backward compatibility
+  if (value.length === 19) {
+    return toUtc(value, 'YYYY-MM-DD HH:mm:ss');
+  }
+
+  // This should handle cases where value is an epoch time as string
+  if (value.match(/^\d+$/)) {
+    const epoch = parseInt(value, 10);
+    return toUtc(epoch);
+  }
+
+  // This should handle ISO strings
+  const time = toUtc(value);
+  if (time.isValid()) {
+    return time;
+  }
+
+  return null;
+}
+
+export const filterLogRowsByIndex = (
+  clearedAtIndex: ExploreItemState['clearedAtIndex'],
+  logRows?: LogRowModel[]
+): LogRowModel[] => {
+  if (!logRows) {
+    return [];
+  }
+
+  if (clearedAtIndex) {
+    const filteredRows = logRows.slice(clearedAtIndex + 1);
+    return filteredRows;
+  }
+
+  return logRows;
+};
+
+export const getDatasourceUIDs = (datasourceUID: string, queries: DataQuery[]): string[] => {
+  if (datasourceUID === MIXED_DATASOURCE_NAME) {
+    return uniq(queries.map((query) => query.datasource?.uid).filter((uid): uid is string => !!uid));
+  } else {
+    return [datasourceUID];
+  }
+};

@@ -1,10 +1,17 @@
-import { captureException } from '@sentry/browser';
 import { render, screen } from '@testing-library/react';
 import React, { FC } from 'react';
 
+import { faro } from '@grafana/faro-web-sdk';
+
 import { ErrorBoundary } from './ErrorBoundary';
 
-jest.mock('@sentry/browser');
+jest.mock('@grafana/faro-web-sdk', () => ({
+  faro: {
+    api: {
+      pushError: jest.fn(),
+    },
+  },
+}));
 
 const ErrorThrower: FC<{ error: Error }> = ({ error }) => {
   throw error;
@@ -22,7 +29,7 @@ describe('ErrorBoundary', () => {
     consoleSpy.mockRestore();
   });
 
-  it('should catch error and report it to sentry, including react component stack in context', async () => {
+  it('should catch error and report it to Faro', async () => {
     const problem = new Error('things went terribly wrong');
     render(
       <ErrorBoundary>
@@ -37,16 +44,11 @@ describe('ErrorBoundary', () => {
     );
 
     await screen.findByText(problem.message);
-    expect(captureException).toHaveBeenCalledTimes(1);
-    const [error, context] = (captureException as jest.Mock).mock.calls[0];
-    expect(error).toBe(problem);
-    expect(context).toHaveProperty('contexts');
-    expect(context.contexts).toHaveProperty('react');
-    expect(context.contexts.react).toHaveProperty('componentStack');
-    expect(context.contexts.react.componentStack).toMatch(/^\s+at ErrorThrower (.*)\s+at ErrorBoundary (.*)\s*$/);
+    expect(faro.api.pushError).toHaveBeenCalledTimes(1);
+    expect((faro.api.pushError as jest.Mock).mock.calls[0][0]).toBe(problem);
   });
 
-  it('should recover when when recover props change', async () => {
+  it('should rerender when recover props change', async () => {
     const problem = new Error('things went terribly wrong');
     let renderCount = 0;
 
@@ -64,6 +66,8 @@ describe('ErrorBoundary', () => {
     );
 
     await screen.findByText(problem.message);
+    expect(renderCount).toBeGreaterThan(0);
+    const oldRenderCount = renderCount;
 
     rerender(
       <ErrorBoundary dependencies={[1, 3]}>
@@ -78,6 +82,6 @@ describe('ErrorBoundary', () => {
       </ErrorBoundary>
     );
 
-    expect(renderCount).toBe(2);
+    expect(renderCount).toBeGreaterThan(oldRenderCount);
   });
 });

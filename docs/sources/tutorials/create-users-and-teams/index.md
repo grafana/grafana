@@ -1,13 +1,20 @@
 ---
-title: Create users and teams
-summary: Learn how to set up teams and users.
+Feedback Link: https://github.com/grafana/tutorials/issues/new
+authors:
+  - grafana_labs
+categories:
+  - administration
 description: Learn how to set up teams and users.
 id: create-users-and-teams
-categories: ['administration']
-tags: ['beginner']
+labels:
+  products:
+    - enterprise
+    - oss
 status: Published
-authors: ['grafana_labs']
-Feedback Link: https://github.com/grafana/tutorials/issues/new
+summary: Learn how to set up teams and users.
+tags:
+  - beginner
+title: Create users and teams
 weight: 20
 ---
 
@@ -48,7 +55,9 @@ a global role, the default `admin` user has this role.
 - **Editor -** Create and edit dashboards.
 - **Viewer -** View dashboards.
 
-> **Note**: You can also configure Grafana to allow [anonymous access](/docs/grafana/latest/auth/overview/#anonymous-authentication), to make dashboards available even to those who don't have a Grafana user account. That's how Grafana Labs made https://play.grafana.org publicly available.
+{{% admonition type="note" %}}
+You can also configure Grafana to allow [anonymous access](/docs/grafana/latest/auth/overview/#anonymous-authentication), to make dashboards available even to those who don't have a Grafana user account. That's how Grafana Labs made https://play.grafana.org publicly available.
+{{% /admonition %}}
 
 ### Exercise
 

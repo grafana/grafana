@@ -26,6 +26,7 @@ import {
   someCloudAlertManagerConfig,
   someCloudAlertManagerStatus,
 } from '../../mocks';
+import { AlertmanagerProvider } from '../../state/AlertmanagerContext';
 import { getAllDataSources } from '../../utils/config';
 import { ALERTMANAGER_NAME_LOCAL_STORAGE_KEY, ALERTMANAGER_NAME_QUERY_KEY } from '../../utils/constants';
 import { DataSourceType } from '../../utils/datasource';
@@ -55,7 +56,9 @@ const renderAdminPage = (alertManagerSourceName?: string) => {
 
   return render(
     <TestProvider>
-      <AlertmanagerConfig />
+      <AlertmanagerProvider accessType="instance">
+        <AlertmanagerConfig />
+      </AlertmanagerProvider>
     </TestProvider>
   );
 };
@@ -75,10 +78,10 @@ const dataSources = {
 };
 
 const ui = {
-  confirmButton: byRole('button', { name: /Confirm Modal Danger Button/ }),
+  confirmButton: byRole('button', { name: /Yes, reset configuration/ }),
   resetButton: byRole('button', { name: /Reset configuration/ }),
   saveButton: byRole('button', { name: /Save/ }),
-  configInput: byLabelText<HTMLTextAreaElement>(/Configuration/),
+  configInput: byLabelText(/Code editor container/),
   readOnlyConfig: byTestId('readonly-config'),
 };
 
@@ -100,46 +103,36 @@ describe('Admin config', () => {
       alertmanager_config: {},
     });
     mocks.api.deleteAlertManagerConfig.mockResolvedValue();
-
-    await renderAdminPage(dataSources.alertManager.name);
-
+    renderAdminPage(dataSources.alertManager.name);
     await userEvent.click(await ui.resetButton.find());
     await userEvent.click(ui.confirmButton.get());
     await waitFor(() => expect(mocks.api.deleteAlertManagerConfig).toHaveBeenCalled());
     expect(ui.confirmButton.query()).not.toBeInTheDocument();
   });
 
-  it('Edit and save alertmanager config', async () => {
+  it('Editable alertmanager config', async () => {
     let savedConfig: AlertManagerCortexConfig | undefined = undefined;
 
     const defaultConfig = {
-      template_files: {
-        foo: 'bar',
+      template_files: {},
+      alertmanager_config: {
+        route: {
+          receiver: 'old one',
+        },
       },
-      alertmanager_config: {},
-    };
-
-    const newConfig = {
-      template_files: {
-        bar: 'baz',
-      },
-      alertmanager_config: {},
     };
 
     mocks.api.fetchConfig.mockImplementation(() => Promise.resolve(savedConfig ?? defaultConfig));
     mocks.api.updateAlertManagerConfig.mockResolvedValue();
-    await renderAdminPage(dataSources.alertManager.name);
-    const input = await ui.configInput.find();
-    expect(input.value).toEqual(JSON.stringify(defaultConfig, null, 2));
-    await userEvent.clear(input);
-    // What is this regex replace doing? in userEvent v13, '{' and '[' are special characters.
-    // To get the literal character, you have to escape them by typing '{{' or '[['.
-    // See https://github.com/testing-library/user-event/issues/584.
-    await userEvent.type(input, JSON.stringify(newConfig, null, 2).replace(/[{[]/g, '$&$&'));
+    renderAdminPage(dataSources.alertManager.name);
+
+    await ui.configInput.find();
     await userEvent.click(ui.saveButton.get());
+
     await waitFor(() => expect(mocks.api.updateAlertManagerConfig).toHaveBeenCalled());
-    await waitFor(() => expect(mocks.api.fetchConfig).toHaveBeenCalledTimes(3));
-    expect(input.value).toEqual(JSON.stringify(newConfig, null, 2));
+    expect(mocks.api.updateAlertManagerConfig.mock.lastCall).toMatchSnapshot();
+
+    await waitFor(() => expect(mocks.api.fetchConfig).toHaveBeenCalledTimes(2));
   });
 
   it('Read-only when using Prometheus Alertmanager', async () => {
@@ -147,10 +140,9 @@ describe('Admin config', () => {
       ...someCloudAlertManagerStatus,
       config: someCloudAlertManagerConfig.alertmanager_config,
     });
-    await renderAdminPage(dataSources.promAlertManager.name);
+    renderAdminPage(dataSources.promAlertManager.name);
 
     await ui.readOnlyConfig.find();
-    expect(ui.configInput.query()).not.toBeInTheDocument();
     expect(ui.resetButton.query()).not.toBeInTheDocument();
     expect(ui.saveButton.query()).not.toBeInTheDocument();
 

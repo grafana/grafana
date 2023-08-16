@@ -21,7 +21,7 @@ export const RawFrameEditor = ({ onChange, query }: EditorProps) => {
         return;
       }
 
-      let data: any = undefined;
+      let data = undefined;
 
       // Copy paste from panel json
       if (isArray(json.series) && json.state) {

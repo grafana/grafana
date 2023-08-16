@@ -1,9 +1,12 @@
+import { isEqual, uniqWith } from 'lodash';
+
 import { SelectableValue } from '@grafana/data';
 import {
   AlertManagerCortexConfig,
-  MatcherOperator,
-  Route,
   Matcher,
+  MatcherOperator,
+  ObjectMatcher,
+  Route,
   TimeInterval,
   TimeRange,
 } from 'app/plugins/datasource/alertmanager/types';
@@ -123,43 +126,13 @@ export const matcherFieldOptions: SelectableValue[] = [
   { label: MatcherOperator.notRegex, description: 'Does not match regex', value: MatcherOperator.notRegex },
 ];
 
-const matcherOperators = [
-  MatcherOperator.regex,
-  MatcherOperator.notRegex,
-  MatcherOperator.notEqual,
-  MatcherOperator.equal,
-];
-
-export function parseMatcher(matcher: string): Matcher {
-  const trimmed = matcher.trim();
-  if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
-    throw new Error(`PromQL matchers not supported yet, sorry! PromQL matcher found: ${trimmed}`);
-  }
-  const operatorsFound = matcherOperators
-    .map((op): [MatcherOperator, number] => [op, trimmed.indexOf(op)])
-    .filter(([_, idx]) => idx > -1)
-    .sort((a, b) => a[1] - b[1]);
-
-  if (!operatorsFound.length) {
-    throw new Error(`Invalid matcher: ${trimmed}`);
-  }
-  const [operator, idx] = operatorsFound[0];
-  const name = trimmed.slice(0, idx).trim();
-  const value = trimmed.slice(idx + operator.length).trim();
-  if (!name) {
-    throw new Error(`Invalid matcher: ${trimmed}`);
-  }
-
-  return {
-    name,
-    value,
-    isRegex: operator === MatcherOperator.regex || operator === MatcherOperator.notRegex,
-    isEqual: operator === MatcherOperator.equal || operator === MatcherOperator.regex,
-  };
+export function matcherToObjectMatcher(matcher: Matcher): ObjectMatcher {
+  const operator = matcherToOperator(matcher);
+  return [matcher.name, operator, matcher.value];
 }
 
 export function parseMatchers(matcherQueryString: string): Matcher[] {
-  const matcherRegExp = /\b([\w.-]+)(=~|!=|!~|=(?="?\w))"?([^"\n,]*)"?/g;
+  const matcherRegExp = /\b([\w.-]+)(=~|!=|!~|=(?="?\w))"?([^"\n,}]*)"?/g;
   const matchers: Matcher[] = [];
 
   matcherQueryString.replace(matcherRegExp, (_, key, operator, value) => {
@@ -167,7 +140,7 @@ export function parseMatchers(matcherQueryString: string): Matcher[] {
     const isRegex = operator === MatcherOperator.regex || operator === MatcherOperator.notRegex;
     matchers.push({
       name: key,
-      value,
+      value: isRegex ? getValidRegexString(value.trim()) : value.trim(),
       isEqual,
       isRegex,
     });
@@ -175,6 +148,16 @@ export function parseMatchers(matcherQueryString: string): Matcher[] {
   });
 
   return matchers;
+}
+
+function getValidRegexString(regex: string): string {
+  // Regexes provided by users might be invalid, so we need to catch the error
+  try {
+    new RegExp(regex);
+    return regex;
+  } catch (error) {
+    return '';
+  }
 }
 
 export function labelsMatchMatchers(labels: Labels, matchers: Matcher[]): boolean {
@@ -200,6 +183,12 @@ export function labelsMatchMatchers(labels: Labels, matchers: Matcher[]): boolea
   });
 }
 
+export function combineMatcherStrings(...matcherStrings: string[]): string {
+  const matchers = matcherStrings.map(parseMatchers).flat();
+  const uniqueMatchers = uniqWith(matchers, isEqual);
+  return matchersToString(uniqueMatchers);
+}
+
 export function getAllAlertmanagerDataSources() {
   return getAllDataSources().filter((ds) => ds.type === DataSourceType.Alertmanager);
 }
@@ -209,8 +198,8 @@ export function getAlertmanagerByUid(uid?: string) {
 }
 
 export function timeIntervalToString(timeInterval: TimeInterval): string {
-  const { times, weekdays, days_of_month, months, years } = timeInterval;
-  const timeString = getTimeString(times);
+  const { times, weekdays, days_of_month, months, years, location } = timeInterval;
+  const timeString = getTimeString(times, location);
   const weekdayString = getWeekdayString(weekdays);
   const daysString = getDaysOfMonthString(days_of_month);
   const monthsString = getMonthsString(months);
@@ -219,10 +208,12 @@ export function timeIntervalToString(timeInterval: TimeInterval): string {
   return [timeString, weekdayString, daysString, monthsString, yearsString].join(', ');
 }
 
-export function getTimeString(times?: TimeRange[]): string {
+export function getTimeString(times?: TimeRange[], location?: string): string {
   return (
     'Times: ' +
-    (times ? times?.map(({ start_time, end_time }) => `${start_time} - ${end_time} UTC`).join(' and ') : 'All')
+    (times
+      ? times?.map(({ start_time, end_time }) => `${start_time} - ${end_time} [${location ?? 'UTC'}]`).join(' and ')
+      : 'All')
   );
 }
 

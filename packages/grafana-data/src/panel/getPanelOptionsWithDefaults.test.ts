@@ -398,12 +398,12 @@ describe('restoreCustomOverrideRules', () => {
 });
 
 interface ScenarioOptions {
-  defaults?: FieldConfig<any>;
+  defaults?: FieldConfig;
   overrides?: ConfigOverrideRule[];
   disabledStandardOptions?: FieldConfigProperty[];
   standardOptions?: Partial<Record<FieldConfigProperty, StandardOptionConfig>>;
   plugin?: PanelPlugin;
-  options?: any;
+  options?: Record<string, unknown>;
   isAfterPluginChange?: boolean;
 }
 

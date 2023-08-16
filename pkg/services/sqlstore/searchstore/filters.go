@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 )
 
@@ -12,6 +13,12 @@ import (
 // an empty string are discarded.
 type FilterWhere interface {
 	Where() (string, []interface{})
+}
+
+// FilterWith returns any recursive CTE queries (if supported)
+// and their parameters
+type FilterWith interface {
+	With() (string, []interface{})
 }
 
 // FilterGroupBy should be used after performing an outer join on the
@@ -68,16 +75,6 @@ func (f OrgFilter) Where() (string, []interface{}) {
 	return "dashboard.org_id=?", []interface{}{f.OrgId}
 }
 
-type StarredFilter struct {
-	UserId int64
-}
-
-func (f StarredFilter) Where() (string, []interface{}) {
-	return `(SELECT count(*)
-			 FROM star
-			 WHERE star.dashboard_id = dashboard.id AND star.user_id = ?) > 0`, []interface{}{f.UserId}
-}
-
 type TitleFilter struct {
 	Dialect migrator.Dialect
 	Title   string
@@ -93,6 +90,52 @@ type FolderFilter struct {
 
 func (f FolderFilter) Where() (string, []interface{}) {
 	return sqlIDin("dashboard.folder_id", f.IDs)
+}
+
+type FolderUIDFilter struct {
+	Dialect migrator.Dialect
+	OrgID   int64
+	UIDs    []string
+}
+
+func (f FolderUIDFilter) Where() (string, []interface{}) {
+	if len(f.UIDs) < 1 {
+		return "", nil
+	}
+
+	params := []interface{}{}
+	includeGeneral := false
+	for _, uid := range f.UIDs {
+		if uid == folder.GeneralFolderUID {
+			includeGeneral = true
+			continue
+		}
+		params = append(params, uid)
+	}
+
+	q := ""
+	switch {
+	case len(params) < 1:
+		// do nothing
+	case len(params) == 1:
+		q = "dashboard.folder_id IN (SELECT id FROM dashboard WHERE org_id = ? AND uid = ?)"
+		params = append([]interface{}{f.OrgID}, params...)
+	default:
+		sqlArray := "(?" + strings.Repeat(",?", len(params)-1) + ")"
+		q = "dashboard.folder_id IN (SELECT id FROM dashboard WHERE org_id = ? AND uid IN " + sqlArray + ")"
+		params = append([]interface{}{f.OrgID}, params...)
+	}
+
+	if includeGeneral {
+		if q == "" {
+			q = "dashboard.folder_id = ? "
+		} else {
+			q = "(" + q + " OR dashboard.folder_id = ?)"
+		}
+		params = append(params, 0)
+	}
+
+	return q, params
 }
 
 type DashboardIDFilter struct {

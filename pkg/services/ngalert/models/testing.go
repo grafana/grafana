@@ -140,6 +140,21 @@ func WithOrgID(orgId int64) AlertRuleMutator {
 	}
 }
 
+func WithUniqueOrgID() AlertRuleMutator {
+	orgs := map[int64]struct{}{}
+	return func(rule *AlertRule) {
+		var orgID int64
+		for {
+			orgID = rand.Int63()
+			if _, ok := orgs[orgID]; !ok {
+				break
+			}
+		}
+		orgs[orgID] = struct{}{}
+		rule.OrgID = orgID
+	}
+}
+
 func WithNamespace(namespace *folder.Folder) AlertRuleMutator {
 	return func(rule *AlertRule) {
 		rule.NamespaceUID = namespace.UID
@@ -161,6 +176,54 @@ func WithTitle(title string) AlertRuleMutator {
 func WithFor(duration time.Duration) AlertRuleMutator {
 	return func(rule *AlertRule) {
 		rule.For = duration
+	}
+}
+
+func WithForNTimes(timesOfInterval int64) AlertRuleMutator {
+	return func(rule *AlertRule) {
+		rule.For = time.Duration(rule.IntervalSeconds*timesOfInterval) * time.Second
+	}
+}
+
+func WithNoDataExecAs(nodata NoDataState) AlertRuleMutator {
+	return func(rule *AlertRule) {
+		rule.NoDataState = nodata
+	}
+}
+
+func WithErrorExecAs(err ExecutionErrorState) AlertRuleMutator {
+	return func(rule *AlertRule) {
+		rule.ExecErrState = err
+	}
+}
+
+func WithAnnotations(a data.Labels) AlertRuleMutator {
+	return func(rule *AlertRule) {
+		rule.Annotations = a
+	}
+}
+
+func WithAnnotation(key, value string) AlertRuleMutator {
+	return func(rule *AlertRule) {
+		if rule.Annotations == nil {
+			rule.Annotations = data.Labels{}
+		}
+		rule.Annotations[key] = value
+	}
+}
+
+func WithLabels(a data.Labels) AlertRuleMutator {
+	return func(rule *AlertRule) {
+		rule.Labels = a
+	}
+}
+
+func WithLabel(key, value string) AlertRuleMutator {
+	return func(rule *AlertRule) {
+		if rule.Labels == nil {
+			rule.Labels = data.Labels{}
+		}
+		rule.Labels[key] = value
 	}
 }
 

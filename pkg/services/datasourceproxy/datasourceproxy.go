@@ -73,7 +73,7 @@ func (p *DataSourceProxyService) ProxyDatasourceRequestWithUID(c *contextmodel.R
 		return
 	}
 
-	ds, err := p.DataSourceCache.GetDatasourceByUID(c.Req.Context(), dsUID, c.SignedInUser, c.SkipCache)
+	ds, err := p.DataSourceCache.GetDatasourceByUID(c.Req.Context(), dsUID, c.SignedInUser, c.SkipDSCache)
 	if err != nil {
 		toAPIError(c, err)
 		return
@@ -84,7 +84,7 @@ func (p *DataSourceProxyService) ProxyDatasourceRequestWithUID(c *contextmodel.R
 func (p *DataSourceProxyService) ProxyDatasourceRequestWithID(c *contextmodel.ReqContext, dsID int64) {
 	c.TimeRequest(metrics.MDataSourceProxyReqTimer)
 
-	ds, err := p.DataSourceCache.GetDatasource(c.Req.Context(), dsID, c.SignedInUser, c.SkipCache)
+	ds, err := p.DataSourceCache.GetDatasource(c.Req.Context(), dsID, c.SignedInUser, c.SkipDSCache)
 	if err != nil {
 		toAPIError(c, err)
 		return
@@ -122,7 +122,8 @@ func (p *DataSourceProxyService) proxyDatasourceRequest(c *contextmodel.ReqConte
 	proxy, err := pluginproxy.NewDataSourceProxy(ds, plugin.Routes, c, proxyPath, p.Cfg, p.HTTPClientProvider,
 		p.OAuthTokenService, p.DataSourcesService, p.tracer)
 	if err != nil {
-		if errors.Is(err, datasource.URLValidationError{}) {
+		var urlValidationError datasource.URLValidationError
+		if errors.As(err, &urlValidationError) {
 			c.JsonApiErr(http.StatusBadRequest, fmt.Sprintf("Invalid data source URL: %q", ds.URL), err)
 		} else {
 			c.JsonApiErr(http.StatusInternalServerError, "Failed creating data source proxy", err)

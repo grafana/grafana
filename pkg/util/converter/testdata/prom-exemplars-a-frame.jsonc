@@ -1,6 +1,10 @@
 //  🌟 This was machine generated.  Do not edit. 🌟
 //  
 //  Frame[0] {
+//      "typeVersion": [
+//          0,
+//          0
+//      ],
 //      "custom": {
 //          "resultType": "exemplar"
 //      }
@@ -18,6 +22,10 @@
 //  
 //  
 //  Frame[1] {
+//      "typeVersion": [
+//          0,
+//          0
+//      ],
 //      "custom": {
 //          "resultType": "exemplar"
 //      }
@@ -41,6 +49,10 @@
     {
       "schema": {
         "meta": {
+          "typeVersion": [
+            0,
+            0
+          ],
           "custom": {
             "resultType": "exemplar"
           }
@@ -102,6 +114,10 @@
     {
       "schema": {
         "meta": {
+          "typeVersion": [
+            0,
+            0
+          ],
           "custom": {
             "resultType": "exemplar"
           }

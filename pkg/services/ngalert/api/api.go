@@ -7,6 +7,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/datasourceproxy"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -18,7 +19,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
-	"github.com/grafana/grafana/pkg/services/ngalert/schedule"
 	"github.com/grafana/grafana/pkg/services/ngalert/sender"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
@@ -53,10 +53,11 @@ type Alertmanager interface {
 	// Receivers
 	GetReceivers(ctx context.Context) []apimodels.Receiver
 	TestReceivers(ctx context.Context, c apimodels.TestReceiversConfigBodyParams) (*notifier.TestReceiversResult, error)
+	TestTemplate(ctx context.Context, c apimodels.TestTemplatesConfigBodyParams) (*notifier.TestTemplatesResults, error)
 }
 
 type AlertingStore interface {
-	GetLatestAlertmanagerConfiguration(ctx context.Context, query *models.GetLatestAlertmanagerConfigurationQuery) error
+	GetLatestAlertmanagerConfiguration(ctx context.Context, query *models.GetLatestAlertmanagerConfigurationQuery) (*models.AlertConfiguration, error)
 }
 
 // API handlers.
@@ -66,7 +67,6 @@ type API struct {
 	DatasourceService    datasources.DataSourceService
 	RouteRegister        routing.RouteRegister
 	QuotaService         quota.Service
-	Schedule             schedule.ScheduleService
 	TransactionManager   provisioning.TransactionManager
 	ProvenanceStore      provisioning.ProvisioningStore
 	RuleStore            RuleStore
@@ -85,8 +85,11 @@ type API struct {
 	EvaluatorFactory     eval.EvaluatorFactory
 	FeatureManager       featuremgmt.FeatureToggles
 	Historian            Historian
+	Tracer               tracing.Tracer
+	AppUrl               *url.URL
 
-	AppUrl *url.URL
+	// Hooks can be used to replace API handlers for specific paths.
+	Hooks *Hooks
 }
 
 // RegisterAPIEndpoints registers API handlers
@@ -116,7 +119,6 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 		&RulerSrv{
 			conditionValidator: api.EvaluatorFactory,
 			QuotaService:       api.QuotaService,
-			scheduleService:    api.Schedule,
 			store:              api.RuleStore,
 			provenanceStore:    api.ProvenanceStore,
 			xactManager:        api.TransactionManager,
@@ -133,8 +135,10 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 			accessControl:   api.AccessControl,
 			evaluator:       api.EvaluatorFactory,
 			cfg:             &api.Cfg.UnifiedAlerting,
-			backtesting:     backtesting.NewEngine(api.AppUrl, api.EvaluatorFactory),
+			backtesting:     backtesting.NewEngine(api.AppUrl, api.EvaluatorFactory, api.Tracer),
 			featureManager:  api.FeatureManager,
+			appUrl:          api.AppUrl,
+			tracer:          api.Tracer,
 		}), m)
 	api.RegisterConfigurationApiEndpoints(NewConfiguration(
 		&ConfigSrv{

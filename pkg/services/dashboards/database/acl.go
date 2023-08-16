@@ -5,8 +5,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	"github.com/grafana/grafana/pkg/services/folder"
-	"github.com/grafana/grafana/pkg/services/org"
 )
 
 // GetDashboardACLInfoList returns a list of permissions for a dashboard. They can be fetched from three
@@ -14,7 +12,7 @@ import (
 // 1) Permissions for the dashboard
 // 2) permissions for its parent folder
 // 3) if no specific permissions have been set for the dashboard or its parent folder then get the default permissions
-func (d *DashboardStore) GetDashboardACLInfoList(ctx context.Context, query *dashboards.GetDashboardACLInfoListQuery) ([]*dashboards.DashboardACLInfoDTO, error) {
+func (d *dashboardStore) GetDashboardACLInfoList(ctx context.Context, query *dashboards.GetDashboardACLInfoListQuery) ([]*dashboards.DashboardACLInfoDTO, error) {
 	queryResult := make([]*dashboards.DashboardACLInfoDTO, 0)
 	outerErr := d.store.WithDbSession(ctx, func(dbSession *db.Session) error {
 		falseStr := d.store.GetDialect().BooleanStr(false)
@@ -96,71 +94,7 @@ func (d *DashboardStore) GetDashboardACLInfoList(ctx context.Context, query *das
 	return queryResult, nil
 }
 
-// HasEditPermissionInFolders validates that an user have access to a certain folder
-func (d *DashboardStore) HasEditPermissionInFolders(ctx context.Context, query *folder.HasEditPermissionInFoldersQuery) (bool, error) {
-	var queryResult bool
-	if query.SignedInUser.HasRole(org.RoleEditor) {
-		queryResult = true
-		return queryResult, nil
-	}
-	err := d.store.WithDbSession(ctx, func(dbSession *db.Session) error {
-		builder := db.NewSqlBuilder(d.cfg, d.store.GetDialect())
-		builder.Write("SELECT COUNT(dashboard.id) AS count FROM dashboard WHERE dashboard.org_id = ? AND dashboard.is_folder = ?",
-			query.SignedInUser.OrgID, d.store.GetDialect().BooleanStr(true))
-		builder.WriteDashboardPermissionFilter(query.SignedInUser, dashboards.PERMISSION_EDIT)
-
-		type folderCount struct {
-			Count int64
-		}
-
-		resp := make([]*folderCount, 0)
-
-		if err := dbSession.SQL(builder.GetSQLString(), builder.GetParams()...).Find(&resp); err != nil {
-			return err
-		}
-
-		queryResult = len(resp) > 0 && resp[0].Count > 0
-
-		return nil
-	})
-	if err != nil {
-		return queryResult, err
-	}
-	return queryResult, nil
-}
-
-func (d *DashboardStore) HasAdminPermissionInDashboardsOrFolders(ctx context.Context, query *folder.HasAdminPermissionInDashboardsOrFoldersQuery) (bool, error) {
-	var queryResult bool
-	err := d.store.WithDbSession(ctx, func(dbSession *db.Session) error {
-		if query.SignedInUser.HasRole(org.RoleAdmin) {
-			queryResult = true
-			return nil
-		}
-
-		builder := db.NewSqlBuilder(d.cfg, d.store.GetDialect())
-		builder.Write("SELECT COUNT(dashboard.id) AS count FROM dashboard WHERE dashboard.org_id = ?", query.SignedInUser.OrgID)
-		builder.WriteDashboardPermissionFilter(query.SignedInUser, dashboards.PERMISSION_ADMIN)
-
-		type folderCount struct {
-			Count int64
-		}
-
-		resp := make([]*folderCount, 0)
-		if err := dbSession.SQL(builder.GetSQLString(), builder.GetParams()...).Find(&resp); err != nil {
-			return err
-		}
-
-		queryResult = len(resp) > 0 && resp[0].Count > 0
-
-		return nil
-	})
-	if err != nil {
-		return queryResult, err
-	}
-	return queryResult, nil
-}
-
-func (d *DashboardStore) DeleteACLByUser(ctx context.Context, userID int64) error {
+func (d *dashboardStore) DeleteACLByUser(ctx context.Context, userID int64) error {
 	return d.store.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		var rawSQL = "DELETE FROM dashboard_acl WHERE user_id = ?"
 		_, err := sess.Exec(rawSQL, userID)

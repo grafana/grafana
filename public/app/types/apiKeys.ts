@@ -15,10 +15,12 @@ export interface ApiKey extends WithAccessControlMetadata {
   lastUsedAt?: string;
 }
 
-export interface NewApiKey {
-  name: string;
-  role: OrgRole;
-  secondsToLive: string;
+export interface ApikeyMigrationResult {
+  total: number;
+  migrated: number;
+  failed: number;
+  failedApikeyIDs: number[];
+  failedDetails: string[];
 }
 
 export interface ApiKeysState {
@@ -27,5 +29,5 @@ export interface ApiKeysState {
   keysIncludingExpired: ApiKey[];
   searchQuery: string;
   hasFetched: boolean;
-  apiKeysMigrated: boolean;
+  migrationResult?: ApikeyMigrationResult;
 }

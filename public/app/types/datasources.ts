@@ -10,8 +10,8 @@ export interface DataSourcesState {
   dataSourcesCount: number;
   dataSource: DataSourceSettings;
   dataSourceMeta: DataSourcePluginMeta;
-  hasFetched: boolean;
   isLoadingDataSources: boolean;
+  isLoadingDataSourcePlugins: boolean;
   plugins: DataSourcePluginMeta[];
   categories: DataSourcePluginCategory[];
   isSortAscending: boolean;

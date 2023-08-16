@@ -15,9 +15,7 @@ const pluginID = "test-ds"
 
 func TestInMemory(t *testing.T) {
 	t.Run("Test mix of registry operations", func(t *testing.T) {
-		i := &InMemory{
-			store: map[string]*plugins.Plugin{},
-		}
+		i := NewInMemory()
 		ctx := context.Background()
 
 		p, exists := i.Plugin(ctx, pluginID)
@@ -271,4 +269,46 @@ func TestInMemory_Remove(t *testing.T) {
 			require.Equal(t, tt.err, err)
 		})
 	}
+}
+
+func TestAliasSupport(t *testing.T) {
+	t.Run("Test alias operations", func(t *testing.T) {
+		i := NewInMemory()
+		ctx := context.Background()
+
+		pluginIdNew := "plugin-new"
+		pluginIdOld := "plugin-old"
+
+		p, exists := i.Plugin(ctx, pluginIdNew)
+		require.False(t, exists)
+		require.Nil(t, p)
+
+		pluginNew := &plugins.Plugin{
+			JSONData: plugins.JSONData{
+				ID: pluginIdNew,
+			},
+			Alias: pluginIdOld, // TODO: move to JSONData
+		}
+		err := i.Add(ctx, pluginNew)
+		require.NoError(t, err)
+
+		// Can lookup by the new ID
+		found, exists := i.Plugin(ctx, pluginIdNew)
+		require.True(t, exists)
+		require.Equal(t, pluginNew, found)
+
+		// Can lookup by the old ID
+		found, exists = i.Plugin(ctx, pluginIdOld)
+		require.True(t, exists)
+		require.Equal(t, pluginNew, found)
+
+		// Register the old plugin and look it up
+		pluginOld := &plugins.Plugin{JSONData: plugins.JSONData{
+			ID: pluginIdOld,
+		}}
+		require.NoError(t, i.Add(ctx, pluginOld))
+		found, exists = i.Plugin(ctx, pluginIdOld)
+		require.True(t, exists)
+		require.Equal(t, pluginOld, found)
+	})
 }

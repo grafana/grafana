@@ -17,7 +17,7 @@ import {
 } from './reducers';
 
 describe('userReducer', () => {
-  let dateNow: any;
+  let dateNow: jest.SpyInstance;
 
   beforeAll(() => {
     dateNow = jest.spyOn(Date, 'now').mockImplementation(() => 1609470000000); // 2021-01-01 04:00:00

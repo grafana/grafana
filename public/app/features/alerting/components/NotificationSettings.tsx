@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React from 'react';
 
 import { Checkbox, CollapsableSection, Field, InfoBox, Input } from '@grafana/ui';
 
@@ -8,7 +8,7 @@ interface Props extends NotificationSettingsProps {
   imageRendererAvailable: boolean;
 }
 
-export const NotificationSettings: FC<Props> = ({ currentFormValues, imageRendererAvailable, register }) => {
+export const NotificationSettings = ({ currentFormValues, imageRendererAvailable, register }: Props) => {
   return (
     <CollapsableSection label="Notification settings" isOpen={false}>
       <Field>

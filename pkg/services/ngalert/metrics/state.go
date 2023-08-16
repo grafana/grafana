@@ -6,28 +6,26 @@ import (
 )
 
 type State struct {
-	GroupRules *prometheus.GaugeVec
-	AlertState *prometheus.GaugeVec
+	AlertState          *prometheus.GaugeVec
+	StateUpdateDuration prometheus.Histogram
 }
 
 func NewStateMetrics(r prometheus.Registerer) *State {
 	return &State{
-		// TODO: once rule groups support multiple rules, consider partitioning
-		// on rule group as well as tenant, similar to loki|cortex.
-		GroupRules: promauto.With(r).NewGaugeVec(
-			prometheus.GaugeOpts{
-				Namespace: Namespace,
-				Subsystem: Subsystem,
-				Name:      "rule_group_rules",
-				Help:      "The number of rules.",
-			},
-			[]string{"org"},
-		),
 		AlertState: promauto.With(r).NewGaugeVec(prometheus.GaugeOpts{
 			Namespace: Namespace,
 			Subsystem: Subsystem,
 			Name:      "alerts",
 			Help:      "How many alerts by state.",
 		}, []string{"state"}),
+		StateUpdateDuration: promauto.With(r).NewHistogram(
+			prometheus.HistogramOpts{
+				Namespace: Namespace,
+				Subsystem: Subsystem,
+				Name:      "state_calculation_duration_seconds",
+				Help:      "The duration of calculation of a single state.",
+				Buckets:   []float64{0.01, 0.1, 1, 2, 5, 10},
+			},
+		),
 	}
 }

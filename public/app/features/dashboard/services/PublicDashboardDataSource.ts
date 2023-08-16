@@ -5,6 +5,7 @@ import {
   DataQuery,
   DataQueryRequest,
   DataQueryResponse,
+  TestDataSourceResponse,
   DataSourceApi,
   DataSourceJsonData,
   DataSourcePluginMeta,
@@ -89,8 +90,6 @@ export class PublicDashboardDataSource extends DataSourceApi<DataQuery, DataSour
       queryCachingTTL,
       range: { from: fromRange, to: toRange },
     } = request;
-    let queries: DataQuery[];
-
     // Return early if no queries exist
     if (!request.targets.length) {
       return of({ data: [] });
@@ -112,7 +111,11 @@ export class PublicDashboardDataSource extends DataSourceApi<DataQuery, DataSour
         intervalMs,
         maxDataPoints,
         queryCachingTTL,
-        timeRange: { from: fromRange.valueOf().toString(), to: toRange.valueOf().toString() },
+        timeRange: {
+          from: fromRange.valueOf().toString(),
+          to: toRange.valueOf().toString(),
+          timezone: this.getBrowserTimezone(),
+        },
       };
 
       return getBackendSrv()
@@ -124,7 +127,7 @@ export class PublicDashboardDataSource extends DataSourceApi<DataQuery, DataSour
         })
         .pipe(
           switchMap((raw) => {
-            return of(toDataQueryResponse(raw, queries));
+            return of(toDataQueryResponse(raw, request.targets));
           }),
           catchError((err) => {
             return of(toDataQueryResponse(err));
@@ -151,7 +154,12 @@ export class PublicDashboardDataSource extends DataSourceApi<DataQuery, DataSour
     return { data: [toDataFrame(annotations)] };
   }
 
-  testDatasource(): Promise<null> {
-    return Promise.resolve(null);
+  testDatasource(): Promise<TestDataSourceResponse> {
+    return Promise.resolve({ message: '', status: '' });
+  }
+
+  // Try to get the browser timezone otherwise return blank
+  getBrowserTimezone(): string {
+    return window.Intl?.DateTimeFormat().resolvedOptions()?.timeZone || '';
   }
 }

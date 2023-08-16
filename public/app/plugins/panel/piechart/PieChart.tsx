@@ -84,7 +84,7 @@ export const PieChart = ({
 
   return (
     <div className={styles.container}>
-      <svg width={layout.size} height={layout.size} ref={containerRef}>
+      <svg width={layout.size} height={layout.size} ref={containerRef} style={{ overflow: 'visible' }}>
         <Group top={layout.position} left={layout.position}>
           {colors.map((color) => {
             return (

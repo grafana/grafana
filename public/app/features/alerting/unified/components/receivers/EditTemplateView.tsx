@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React from 'react';
 
 import { Alert } from '@grafana/ui';
 import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
@@ -11,7 +11,7 @@ interface Props {
   alertManagerSourceName: string;
 }
 
-export const EditTemplateView: FC<Props> = ({ config, templateName, alertManagerSourceName }) => {
+export const EditTemplateView = ({ config, templateName, alertManagerSourceName }: Props) => {
   const template = config.template_files?.[templateName];
   const provenance = config.template_file_provenances?.[templateName];
 

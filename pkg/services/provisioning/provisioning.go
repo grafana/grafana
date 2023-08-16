@@ -21,7 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/services/pluginsettings"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	prov_alerting "github.com/grafana/grafana/pkg/services/provisioning/alerting"
 	"github.com/grafana/grafana/pkg/services/provisioning/dashboards"
 	"github.com/grafana/grafana/pkg/services/provisioning/datasources"
@@ -276,7 +276,7 @@ func (ps *ProvisioningServiceImpl) ProvisionAlerting(ctx context.Context) error 
 		int64(ps.Cfg.UnifiedAlerting.BaseInterval.Seconds()),
 		ps.log)
 	contactPointService := provisioning.NewContactPointService(&st, ps.secretService,
-		st, ps.SQLStore, ps.log)
+		st, ps.SQLStore, ps.log, ps.ac)
 	notificationPolicyService := provisioning.NewNotificationPolicyService(&st,
 		st, ps.SQLStore, ps.Cfg.UnifiedAlerting, ps.log)
 	mutetimingsService := provisioning.NewMuteTimingService(&st, st, &st, ps.log)

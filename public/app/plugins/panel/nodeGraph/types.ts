@@ -1,8 +1,8 @@
 import { SimulationNodeDatum, SimulationLinkDatum } from 'd3-force';
 
-import { Field } from '@grafana/data';
+import { DataFrame, Field, IconName } from '@grafana/data';
 
-export { PanelOptions as NodeGraphOptions, ArcOption } from './panelcfg.gen';
+export { Options as NodeGraphOptions, ArcOption } from './panelcfg.gen';
 
 export type NodeDatum = SimulationNodeDatum & {
   id: string;
@@ -14,6 +14,7 @@ export type NodeDatum = SimulationNodeDatum & {
   secondaryStat?: Field;
   arcSections: Field[];
   color?: Field;
+  icon?: IconName;
 };
 
 export type NodeDatumFromEdge = NodeDatum & { mainStatNumeric?: number; secondaryStatNumeric?: number };
@@ -41,4 +42,9 @@ export type EdgeDatumLayout = EdgeDatum & {
 export type NodesMarker = {
   node: NodeDatum;
   count: number;
+};
+
+export type GraphFrame = {
+  nodes: DataFrame[];
+  edges: DataFrame[];
 };

@@ -88,25 +88,31 @@ export const useMetricNames: DataHook = (query, datasource, onChange, setError) 
   const { subscription } = query;
   const { metricNamespace, metricName, resources, customNamespace } = query.azureMonitor ?? {};
   const { resourceGroup, resourceName } = getResourceGroupAndName(resources);
+  const multipleResources = (resources && resources.length > 1) ?? false;
+  const region = query.azureMonitor?.region ?? '';
 
   return useAsyncState(
     async () => {
       if (!subscription || !metricNamespace || !resourceGroup || !resourceName) {
         return;
       }
-      const results = await datasource.azureMonitorDatasource.getMetricNames({
-        subscription,
-        resourceGroup,
-        resourceName,
-        metricNamespace,
-        customNamespace,
-      });
+      const results = await datasource.azureMonitorDatasource.getMetricNames(
+        {
+          subscription,
+          resourceGroup,
+          resourceName,
+          metricNamespace,
+          customNamespace,
+        },
+        multipleResources,
+        region
+      );
       const options = formatOptions(results, metricName);
 
       return options;
     },
     setError,
-    [subscription, resourceGroup, resourceName, metricNamespace, customNamespace]
+    [subscription, resourceGroup, resourceName, metricNamespace, customNamespace, multipleResources]
   );
 };
 
@@ -122,8 +128,10 @@ const defaultMetricMetadata: MetricMetadata = {
 export const useMetricMetadata = (query: AzureMonitorQuery, datasource: Datasource, onChange: OnChangeFn) => {
   const [metricMetadata, setMetricMetadata] = useState<MetricMetadata>(defaultMetricMetadata);
   const { subscription } = query;
-  const { resources, metricNamespace, metricName, aggregation, timeGrain, customNamespace } = query.azureMonitor ?? {};
+  const { resources, metricNamespace, metricName, aggregation, timeGrain, customNamespace, region } =
+    query.azureMonitor ?? {};
   const { resourceGroup, resourceName } = getResourceGroupAndName(resources);
+  const multipleResources = (resources && resources.length > 1) ?? false;
 
   // Fetch new metric metadata when the fields change
   useEffect(() => {
@@ -131,9 +139,12 @@ export const useMetricMetadata = (query: AzureMonitorQuery, datasource: Datasour
       setMetricMetadata(defaultMetricMetadata);
       return;
     }
-
     datasource.azureMonitorDatasource
-      .getMetricMetadata({ subscription, resourceGroup, resourceName, metricNamespace, metricName, customNamespace })
+      .getMetricMetadata(
+        { subscription, resourceGroup, resourceName, metricNamespace, metricName, customNamespace },
+        multipleResources,
+        region
+      )
       .then((metadata) => {
         // TODO: Move the aggregationTypes and timeGrain defaults into `getMetricMetadata`
         const aggregations = (metadata.supportedAggTypes || [metadata.primaryAggType]).map((v) => ({
@@ -150,7 +161,17 @@ export const useMetricMetadata = (query: AzureMonitorQuery, datasource: Datasour
           primaryAggType: metadata.primaryAggType,
         });
       });
-  }, [datasource, subscription, resourceGroup, resourceName, metricNamespace, metricName, customNamespace]);
+  }, [
+    region,
+    datasource,
+    subscription,
+    resourceGroup,
+    resourceName,
+    metricNamespace,
+    metricName,
+    customNamespace,
+    multipleResources,
+  ]);
 
   // Update the query state in response to the meta data changing
   useEffect(() => {

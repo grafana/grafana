@@ -1,9 +1,5 @@
 package definitions
 
-import (
-	"github.com/grafana/grafana/pkg/services/ngalert/models"
-)
-
 // swagger:route GET /api/v1/provisioning/templates provisioning stable RouteGetTemplates
 //
 // Get all notification templates.
@@ -47,9 +43,9 @@ type RouteGetTemplateParam struct {
 
 // swagger:model
 type NotificationTemplate struct {
-	Name       string            `json:"name"`
-	Template   string            `json:"template"`
-	Provenance models.Provenance `json:"provenance,omitempty"`
+	Name       string     `json:"name"`
+	Template   string     `json:"template"`
+	Provenance Provenance `json:"provenance,omitempty"`
 }
 
 // swagger:model

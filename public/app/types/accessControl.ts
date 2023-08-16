@@ -118,6 +118,7 @@ export enum AccessControlAction {
   AlertingNotificationsExternalRead = 'alert.notifications.external:read',
 
   // Alerting provisioning actions
+  AlertingProvisioningReadSecrets = 'alert.provisioning.secrets:read',
   AlertingProvisioningRead = 'alert.provisioning:read',
   AlertingProvisioningWrite = 'alert.provisioning:write',
 
@@ -127,6 +128,10 @@ export enum AccessControlAction {
 
   PluginsInstall = 'plugins:install',
   PluginsWrite = 'plugins:write',
+
+  // Settings
+  SettingsRead = 'settings:read',
+  SettingsWrite = 'settings:write',
 }
 
 export interface Role {

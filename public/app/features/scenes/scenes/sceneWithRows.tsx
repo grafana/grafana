@@ -1,7 +1,14 @@
-import { VizPanel, NestedScene, SceneTimePicker, SceneFlexLayout, SceneTimeRange } from '@grafana/scenes';
+import {
+  NestedScene,
+  SceneTimePicker,
+  SceneFlexLayout,
+  SceneTimeRange,
+  SceneRefreshPicker,
+  SceneFlexItem,
+  PanelBuilders,
+} from '@grafana/scenes';
 
 import { DashboardScene } from '../dashboard/DashboardScene';
-import { SceneEditManager } from '../editor/SceneEditManager';
 
 import { getQueryRunnerWithRandomWalkQuery } from './queries';
 
@@ -14,44 +21,38 @@ export function getSceneWithRows(): DashboardScene {
         new NestedScene({
           title: 'Overview',
           canCollapse: true,
-          // size: { ySizing: 'content', xSizing: 'fill' },
           body: new SceneFlexLayout({
             direction: 'row',
             children: [
-              new VizPanel({
-                pluginId: 'timeseries',
-                title: 'Fill height',
+              new SceneFlexItem({
+                body: PanelBuilders.timeseries().setTitle('Fill height').build(),
               }),
-              new VizPanel({
-                pluginId: 'timeseries',
-                title: 'Fill height',
+
+              new SceneFlexItem({
+                body: PanelBuilders.timeseries().setTitle('Fill height').build(),
               }),
             ],
           }),
         }),
         new NestedScene({
           title: 'More server details',
-          // size: { ySizing: 'content', xSizing: 'fill' },
           canCollapse: true,
           body: new SceneFlexLayout({
             direction: 'row',
             children: [
-              new VizPanel({
-                pluginId: 'timeseries',
-                title: 'Fill height',
+              new SceneFlexItem({
+                body: PanelBuilders.timeseries().setTitle('Fill height').build(),
               }),
-              new VizPanel({
-                pluginId: 'timeseries',
-                title: 'Fill height',
+              new SceneFlexItem({
+                body: PanelBuilders.timeseries().setTitle('Fill height').build(),
               }),
             ],
           }),
         }),
       ],
     }),
-    $editor: new SceneEditManager({}),
     $timeRange: new SceneTimeRange(),
     $data: getQueryRunnerWithRandomWalkQuery(),
-    actions: [new SceneTimePicker({})],
+    actions: [new SceneTimePicker({}), new SceneRefreshPicker({})],
   });
 }

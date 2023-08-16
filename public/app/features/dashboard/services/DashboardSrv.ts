@@ -2,6 +2,7 @@ import { lastValueFrom } from 'rxjs';
 
 import { AppEvents } from '@grafana/data';
 import { BackendSrvRequest } from '@grafana/runtime';
+import { Dashboard } from '@grafana/schema';
 import { appEvents } from 'app/core/app_events';
 import { t } from 'app/core/internationalization';
 import { getBackendSrv } from 'app/core/services/backend_srv';
@@ -45,18 +46,15 @@ export class DashboardSrv {
     appEvents.subscribe(RemovePanelEvent, (e) => this.onRemovePanel(e.payload));
   }
 
-  create(dashboard: any, meta: DashboardMeta) {
+  create(dashboard: Dashboard, meta: DashboardMeta) {
     return new DashboardModel(dashboard, meta);
   }
 
-  setCurrent(dashboard: DashboardModel) {
+  setCurrent(dashboard: DashboardModel | undefined) {
     this.dashboard = dashboard;
   }
 
   getCurrent(): DashboardModel | undefined {
-    if (!this.dashboard) {
-      console.warn('Calling getDashboardSrv().getCurrent() without calling getDashboardSrv().setCurrent() first.');
-    }
     return this.dashboard;
   }
 
@@ -92,19 +90,19 @@ export class DashboardSrv {
     );
   }
 
-  starDashboard(dashboardId: string, isStarred: boolean) {
+  starDashboard(dashboardUid: string, isStarred: boolean) {
     const backendSrv = getBackendSrv();
 
     const request = {
       showSuccessAlert: false,
-      url: '/api/user/stars/dashboard/' + dashboardId,
+      url: '/api/user/stars/dashboard/uid/' + dashboardUid,
       method: isStarred ? 'DELETE' : 'POST',
     };
 
     return backendSrv.request(request).then(() => {
       const newIsStarred = !isStarred;
 
-      if (this.dashboard?.id === dashboardId) {
+      if (this.dashboard?.uid === dashboardUid) {
         this.dashboard.meta.isStarred = newIsStarred;
       }
 

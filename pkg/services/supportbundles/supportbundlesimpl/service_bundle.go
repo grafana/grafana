@@ -6,10 +6,13 @@ import (
 	"compress/gzip"
 	"context"
 	"errors"
+	"fmt"
 	"io"
 	"path/filepath"
 	"runtime/debug"
 	"time"
+
+	"filippo.io/age"
 
 	"github.com/grafana/grafana/pkg/services/supportbundles"
 )
@@ -76,7 +79,7 @@ func (s *Service) bundle(ctx context.Context, collectors []string, uid string) (
 		}
 		item, err := collector.Fn(ctx)
 		if err != nil {
-			s.log.Warn("Failed to collect support bundle item", "error", err)
+			s.log.Warn("Failed to collect support bundle item", "error", err, "collector", collector.UID)
 		}
 
 		// write item to file
@@ -92,7 +95,43 @@ func (s *Service) bundle(ctx context.Context, collectors []string, uid string) (
 		return nil, errCompress
 	}
 
-	return buf.Bytes(), nil
+	final := buf
+	if len(s.encryptionPublicKeys) > 0 {
+		var err error
+		final, err = encrypt(buf, s.encryptionPublicKeys...)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return final.Bytes(), nil
+}
+
+func encrypt(buf bytes.Buffer, publicKeys ...string) (bytes.Buffer, error) {
+	final := bytes.Buffer{}
+	recipients := make([]age.Recipient, 0, len(publicKeys))
+	for _, key := range publicKeys {
+		recipient, err := age.ParseX25519Recipient(key)
+		if err != nil {
+			return final, fmt.Errorf("unable to parse support bundle recipient public key: %w", err)
+		}
+		recipients = append(recipients, recipient)
+	}
+
+	w, err := age.Encrypt(&final, recipients...)
+	if err != nil {
+		return final, fmt.Errorf("unable to open support bundle encryption header: %w", err)
+	}
+
+	if _, err = w.Write(buf.Bytes()); err != nil {
+		return final, fmt.Errorf("unable to write support bundle encryption: %w", err)
+	}
+
+	if err := w.Close(); err != nil {
+		return final, fmt.Errorf("unable to close support bundle encryption: %w", err)
+	}
+
+	return final, nil
 }
 
 func compress(files map[string][]byte, buf io.Writer) error {

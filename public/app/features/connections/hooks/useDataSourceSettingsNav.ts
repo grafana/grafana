@@ -20,15 +20,15 @@ export function useDataSourceSettingsNav(pageId?: string) {
     ...nav.main,
     text: datasource.name,
     subTitle: `Type: ${datasourcePlugin?.name}`,
-    active: true,
     children: (nav.main.children || []).map((navModelItem) => ({
       ...navModelItem,
-      url: navModelItem.url?.replace('datasources/edit/', '/connections/your-connections/datasources/edit/'),
+      url: navModelItem.url?.replace('datasources/edit/', '/connections/datasources/edit/'),
     })),
   };
 
   return {
-    navId: 'connections-your-connections-datasources',
+    navId: 'connections-datasources',
     pageNav,
+    dataSourceHeader: nav.dataSourceHeader,
   };
 }

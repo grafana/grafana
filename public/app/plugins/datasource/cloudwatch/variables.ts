@@ -9,8 +9,8 @@ import {
   SelectableValue,
 } from '@grafana/data';
 
-import { ALL_ACCOUNTS_OPTION } from './components/Account';
 import { VariableQueryEditor } from './components/VariableQueryEditor/VariableQueryEditor';
+import { ALL_ACCOUNTS_OPTION } from './components/shared/Account';
 import { CloudWatchDatasource } from './datasource';
 import { DEFAULT_VARIABLE_QUERY } from './defaultQueries';
 import { migrateVariableQuery } from './migrations/variableQueryMigrations';
@@ -62,10 +62,12 @@ export class CloudWatchVariableSupport extends CustomVariableSupport<CloudWatchD
       return [];
     }
   }
-  async handleLogGroupsQuery({ region, logGroupPrefix }: VariableQuery) {
+
+  async handleLogGroupsQuery({ region, logGroupPrefix, accountId }: VariableQuery) {
     const interpolatedPrefix = this.resources.templateSrv.replace(logGroupPrefix);
     return this.resources
       .getLogGroups({
+        accountId,
         region,
         logGroupNamePrefix: interpolatedPrefix,
         listAllLogGroups: true,
@@ -89,25 +91,33 @@ export class CloudWatchVariableSupport extends CustomVariableSupport<CloudWatchD
     return this.resources.getNamespaces().then((namespaces) => namespaces.map(selectableValueToMetricFindOption));
   }
 
-  async handleMetricsQuery({ namespace, region }: VariableQuery) {
+  async handleMetricsQuery({ namespace, region, accountId }: VariableQuery) {
     return this.resources
-      .getMetrics({ namespace, region })
+      .getMetrics({ namespace, region, accountId })
       .then((metrics) => metrics.map(selectableValueToMetricFindOption));
   }
 
-  async handleDimensionKeysQuery({ namespace, region }: VariableQuery) {
+  async handleDimensionKeysQuery({ namespace, region, accountId }: VariableQuery) {
     return this.resources
-      .getDimensionKeys({ namespace, region })
+      .getDimensionKeys({ namespace, region, accountId })
       .then((keys) => keys.map(selectableValueToMetricFindOption));
   }
 
-  async handleDimensionValuesQuery({ namespace, region, dimensionKey, metricName, dimensionFilters }: VariableQuery) {
+  async handleDimensionValuesQuery({
+    namespace,
+    accountId,
+    region,
+    dimensionKey,
+    metricName,
+    dimensionFilters,
+  }: VariableQuery) {
     if (!dimensionKey || !metricName) {
       return [];
     }
     return this.resources
       .getDimensionValues({
         region,
+        accountId,
         namespace,
         metricName,
         dimensionKey,

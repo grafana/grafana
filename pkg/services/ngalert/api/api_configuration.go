@@ -121,11 +121,11 @@ func (srv ConfigSrv) externalAlertmanagers(ctx context.Context, orgID int64) ([]
 		OrgID: orgID,
 		Type:  datasources.DS_ALERTMANAGER,
 	}
-	err := srv.datasourceService.GetDataSourcesByType(ctx, query)
+	dataSources, err := srv.datasourceService.GetDataSourcesByType(ctx, query)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch datasources for org: %w", err)
 	}
-	for _, ds := range query.Result {
+	for _, ds := range dataSources {
 		if ds.JsonData.Get(apimodels.HandleGrafanaManagedAlerts).MustBool(false) {
 			// we don't need to build the exact URL as we only need
 			// to know if any is set

@@ -4,6 +4,7 @@ import { of } from 'rxjs';
 import { DataSourceInstanceSettings, toUtc } from '@grafana/data';
 import { FetchResponse } from '@grafana/runtime';
 import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
+import { TemplateSrv } from 'app/features/templating/template_srv';
 
 import { PromApplication } from '../../../types/unified-alerting-dto';
 
@@ -12,7 +13,7 @@ import PrometheusMetricFindQuery from './metric_find_query';
 import { PromOptions } from './types';
 
 jest.mock('@grafana/runtime', () => ({
-  ...(jest.requireActual('@grafana/runtime') as unknown as object),
+  ...jest.requireActual('@grafana/runtime'),
   getBackendSrv: () => backendSrv,
 }));
 
@@ -35,7 +36,7 @@ const raw = {
 jest.mock('app/features/dashboard/services/TimeSrv', () => ({
   __esModule: true,
   getTimeSrv: jest.fn().mockReturnValue({
-    timeRange(): any {
+    timeRange() {
       return {
         from: raw.from,
         to: raw.to,
@@ -46,9 +47,9 @@ jest.mock('app/features/dashboard/services/TimeSrv', () => ({
 }));
 
 const templateSrvStub = {
-  getAdhocFilters: jest.fn(() => [] as any[]),
-  replace: jest.fn((a: string) => a),
-} as any;
+  getAdhocFilters: jest.fn().mockImplementation(() => []),
+  replace: jest.fn().mockImplementation((a: string) => a),
+} as unknown as TemplateSrv;
 
 beforeEach(() => {
   jest.clearAllMocks();

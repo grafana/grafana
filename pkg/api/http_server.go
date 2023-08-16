@@ -27,12 +27,12 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	loginpkg "github.com/grafana/grafana/pkg/login"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/middleware/csrf"
+	"github.com/grafana/grafana/pkg/middleware/loggermw"
+	"github.com/grafana/grafana/pkg/middleware/requestmeta"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/plugincontext"
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	"github.com/grafana/grafana/pkg/registry/corekind"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -42,7 +42,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/cleanup"
-	"github.com/grafana/grafana/pkg/services/comments"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/correlations"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -52,11 +51,9 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/datasources/permissions"
 	"github.com/grafana/grafana/pkg/services/encryption"
-	"github.com/grafana/grafana/pkg/services/export"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/hooks"
-	"github.com/grafana/grafana/pkg/services/ldap"
 	"github.com/grafana/grafana/pkg/services/libraryelements"
 	"github.com/grafana/grafana/pkg/services/librarypanels"
 	"github.com/grafana/grafana/pkg/services/licensing"
@@ -71,13 +68,13 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/playlist"
 	"github.com/grafana/grafana/pkg/services/plugindashboards"
-	pluginSettings "github.com/grafana/grafana/pkg/services/pluginsettings"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
+	pluginSettings "github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	pref "github.com/grafana/grafana/pkg/services/preference"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	publicdashboardsApi "github.com/grafana/grafana/pkg/services/publicdashboards/api"
 	"github.com/grafana/grafana/pkg/services/query"
 	"github.com/grafana/grafana/pkg/services/queryhistory"
-	"github.com/grafana/grafana/pkg/services/querylibrary"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/services/search"
@@ -94,16 +91,14 @@ import (
 	"github.com/grafana/grafana/pkg/services/stats"
 	"github.com/grafana/grafana/pkg/services/store"
 	"github.com/grafana/grafana/pkg/services/store/entity/httpentitystore"
-	"github.com/grafana/grafana/pkg/services/store/k8saccess"
 	"github.com/grafana/grafana/pkg/services/tag"
 	"github.com/grafana/grafana/pkg/services/team"
-	"github.com/grafana/grafana/pkg/services/teamguardian"
 	tempUser "github.com/grafana/grafana/pkg/services/temp_user"
-	"github.com/grafana/grafana/pkg/services/thumbs"
 	"github.com/grafana/grafana/pkg/services/updatechecker"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/validations"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -116,7 +111,7 @@ type HTTPServer struct {
 	namedMiddlewares []routing.RegisterNamedMiddleware
 	bus              bus.Bus
 
-	PluginContextProvider        *plugincontext.Provider
+	pluginContextProvider        *plugincontext.Provider
 	RouteRegister                routing.RouteRegister
 	RenderService                rendering.Service
 	Cfg                          *setting.Cfg
@@ -130,7 +125,6 @@ type HTTPServer struct {
 	QuotaService                 quota.Service
 	RemoteCacheService           *remotecache.RemoteCache
 	ProvisioningService          provisioning.ProvisioningService
-	Login                        login.Service
 	License                      licensing.Licensing
 	AccessControl                accesscontrol.AccessControl
 	DataProxy                    *datasourceproxy.DataSourceProxyService
@@ -138,6 +132,7 @@ type HTTPServer struct {
 	pluginClient                 plugins.Client
 	pluginStore                  plugins.Store
 	pluginInstaller              plugins.Installer
+	pluginFileStore              plugins.FileStore
 	pluginDashboardService       plugindashboards.Service
 	pluginStaticRouteResolver    plugins.StaticRouteResolver
 	pluginErrorResolver          plugins.ErrorResolver
@@ -147,14 +142,11 @@ type HTTPServer struct {
 	CorrelationsService          correlations.Service
 	Live                         *live.GrafanaLive
 	LivePushGateway              *pushhttp.Gateway
-	ThumbService                 thumbs.Service
-	ExportService                export.ExportService
 	StorageService               store.StorageService
 	httpEntityStore              httpentitystore.HTTPEntityStore
 	SearchV2HTTPService          searchV2.SearchHTTPService
-	QueryLibraryHTTPService      querylibrary.HTTPService
-	QueryLibraryService          querylibrary.Service
 	ContextHandler               *contexthandler.ContextHandler
+	LoggerMiddleware             loggermw.Logger
 	SQLStore                     db.DB
 	AlertEngine                  *alerting.AlertEngine
 	AlertNG                      *ngalert.AlertNG
@@ -174,19 +166,15 @@ type HTTPServer struct {
 	grafanaUpdateChecker         *updatechecker.GrafanaService
 	pluginsUpdateChecker         *updatechecker.PluginsService
 	searchUsersService           searchusers.Service
-	ldapGroups                   ldap.Groups
-	teamGuardian                 teamguardian.TeamGuardian
-	queryDataService             *query.Service
+	queryDataService             query.Service
 	serviceAccountsService       serviceaccounts.Service
 	authInfoService              login.AuthInfoService
-	authenticator                loginpkg.Authenticator
 	teamPermissionsService       accesscontrol.TeamPermissionsService
 	NotificationService          *notifications.NotificationService
 	DashboardService             dashboards.DashboardService
 	dashboardProvisioningService dashboards.DashboardProvisioningService
 	folderService                folder.Service
 	DatasourcePermissionsService permissions.DatasourcePermissionsService
-	commentsService              *comments.Service
 	AlertNotificationService     *alerting.AlertNotificationService
 	dashboardsnapshotsService    dashboardsnapshots.Service
 	PluginSettings               pluginSettings.Service
@@ -204,19 +192,19 @@ type HTTPServer struct {
 	kvStore                      kvstore.KVStore
 	pluginsCDNService            *pluginscdn.Service
 
-	userService            user.Service
-	tempUserService        tempUser.Service
-	dashboardThumbsService thumbs.DashboardThumbService
-	loginAttemptService    loginAttempt.Service
-	orgService             org.Service
-	teamService            team.Service
-	accesscontrolService   accesscontrol.Service
-	annotationsRepo        annotations.Repository
-	tagService             tag.Service
-	oauthTokenService      oauthtoken.OAuthTokenService
-	statsService           stats.Service
-	authnService           authn.Service
-	starApi                *starApi.API
+	userService          user.Service
+	tempUserService      tempUser.Service
+	loginAttemptService  loginAttempt.Service
+	orgService           org.Service
+	teamService          team.Service
+	accesscontrolService accesscontrol.Service
+	annotationsRepo      annotations.Repository
+	tagService           tag.Service
+	oauthTokenService    oauthtoken.OAuthTokenService
+	statsService         stats.Service
+	authnService         authn.Service
+	starApi              *starApi.API
+	promRegister         prometheus.Registerer
 }
 
 type ServerOptions struct {
@@ -230,23 +218,22 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	pluginDashboardService plugindashboards.Service, pluginStore plugins.Store, pluginClient plugins.Client,
 	pluginErrorResolver plugins.ErrorResolver, pluginInstaller plugins.Installer, settingsProvider setting.Provider,
 	dataSourceCache datasources.CacheService, userTokenService auth.UserTokenService,
-	cleanUpService *cleanup.CleanUpService, shortURLService shorturls.Service, queryHistoryService queryhistory.Service, correlationsService correlations.Service,
-	thumbService thumbs.Service, remoteCache *remotecache.RemoteCache, provisioningService provisioning.ProvisioningService,
-	loginService login.Service, authenticator loginpkg.Authenticator, accessControl accesscontrol.AccessControl,
-	dataSourceProxy *datasourceproxy.DataSourceProxyService, searchService *search.SearchService,
+	cleanUpService *cleanup.CleanUpService, shortURLService shorturls.Service, queryHistoryService queryhistory.Service,
+	correlationsService correlations.Service, remoteCache *remotecache.RemoteCache, provisioningService provisioning.ProvisioningService,
+	accessControl accesscontrol.AccessControl, dataSourceProxy *datasourceproxy.DataSourceProxyService, searchService *search.SearchService,
 	live *live.GrafanaLive, livePushGateway *pushhttp.Gateway, plugCtxProvider *plugincontext.Provider,
-	contextHandler *contexthandler.ContextHandler, features *featuremgmt.FeatureManager,
+	contextHandler *contexthandler.ContextHandler, loggerMiddleware loggermw.Logger, features *featuremgmt.FeatureManager,
 	alertNG *ngalert.AlertNG, libraryPanelService librarypanels.Service, libraryElementService libraryelements.Service,
-	quotaService quota.Service, socialService social.Service, tracer tracing.Tracer, exportService export.ExportService,
+	quotaService quota.Service, socialService social.Service, tracer tracing.Tracer,
 	encryptionService encryption.Internal, grafanaUpdateChecker *updatechecker.GrafanaService,
 	pluginsUpdateChecker *updatechecker.PluginsService, searchUsersService searchusers.Service,
-	dataSourcesService datasources.DataSourceService, queryDataService *query.Service,
-	ldapGroups ldap.Groups, teamGuardian teamguardian.TeamGuardian, serviceaccountsService serviceaccounts.Service,
+	dataSourcesService datasources.DataSourceService, queryDataService query.Service, pluginFileStore plugins.FileStore,
+	serviceaccountsService serviceaccounts.Service,
 	authInfoService login.AuthInfoService, storageService store.StorageService, httpEntityStore httpentitystore.HTTPEntityStore,
 	notificationService *notifications.NotificationService, dashboardService dashboards.DashboardService,
 	dashboardProvisioningService dashboards.DashboardProvisioningService, folderService folder.Service,
 	datasourcePermissionsService permissions.DatasourcePermissionsService, alertNotificationService *alerting.AlertNotificationService,
-	dashboardsnapshotsService dashboardsnapshots.Service, commentsService *comments.Service, pluginSettings pluginSettings.Service,
+	dashboardsnapshotsService dashboardsnapshots.Service, pluginSettings pluginSettings.Service,
 	avatarCacheServer *avatar.AvatarCacheServer, preferenceService pref.Service,
 	teamsPermissionsService accesscontrol.TeamPermissionsService, folderPermissionsService accesscontrol.FolderPermissionsService,
 	dashboardPermissionsService accesscontrol.DashboardPermissionsService, dashboardVersionService dashver.Service,
@@ -256,12 +243,11 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	secretsPluginMigrator spm.SecretMigrationProvider, secretsStore secretsKV.SecretsKVStore,
 	publicDashboardsApi *publicdashboardsApi.Api, userService user.Service, tempUserService tempUser.Service,
 	loginAttemptService loginAttempt.Service, orgService org.Service, teamService team.Service,
-	accesscontrolService accesscontrol.Service, dashboardThumbsService thumbs.DashboardThumbService, navTreeService navtree.Service,
-	annotationRepo annotations.Repository, tagService tag.Service, searchv2HTTPService searchV2.SearchHTTPService,
-	queryLibraryHTTPService querylibrary.HTTPService, queryLibraryService querylibrary.Service, oauthTokenService oauthtoken.OAuthTokenService,
+	accesscontrolService accesscontrol.Service, navTreeService navtree.Service,
+	annotationRepo annotations.Repository, tagService tag.Service, searchv2HTTPService searchV2.SearchHTTPService, oauthTokenService oauthtoken.OAuthTokenService,
 	statsService stats.Service, authnService authn.Service, pluginsCDNService *pluginscdn.Service,
-	k8saccess k8saccess.K8SAccess, // required so that the router is registered
-	starApi *starApi.API,
+	starApi *starApi.API, promRegister prometheus.Registerer,
+
 ) (*HTTPServer, error) {
 	web.Env = cfg.Env
 	m := web.New()
@@ -283,6 +269,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		pluginStaticRouteResolver:    pluginStaticRouteResolver,
 		pluginDashboardService:       pluginDashboardService,
 		pluginErrorResolver:          pluginErrorResolver,
+		pluginFileStore:              pluginFileStore,
 		grafanaUpdateChecker:         grafanaUpdateChecker,
 		pluginsUpdateChecker:         pluginsUpdateChecker,
 		SettingsProvider:             settingsProvider,
@@ -293,20 +280,18 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		QueryHistoryService:          queryHistoryService,
 		CorrelationsService:          correlationsService,
 		Features:                     features,
-		ThumbService:                 thumbService,
 		StorageService:               storageService,
 		RemoteCacheService:           remoteCache,
 		ProvisioningService:          provisioningService,
-		Login:                        loginService,
 		AccessControl:                accessControl,
 		DataProxy:                    dataSourceProxy,
 		SearchV2HTTPService:          searchv2HTTPService,
 		SearchService:                searchService,
-		ExportService:                exportService,
 		Live:                         live,
 		LivePushGateway:              livePushGateway,
-		PluginContextProvider:        plugCtxProvider,
+		pluginContextProvider:        plugCtxProvider,
 		ContextHandler:               contextHandler,
+		LoggerMiddleware:             loggerMiddleware,
 		AlertNG:                      alertNG,
 		LibraryPanelService:          libraryPanelService,
 		LibraryElementService:        libraryElementService,
@@ -325,18 +310,14 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		httpEntityStore:              httpEntityStore,
 		DataSourcesService:           dataSourcesService,
 		searchUsersService:           searchUsersService,
-		ldapGroups:                   ldapGroups,
-		teamGuardian:                 teamGuardian,
 		queryDataService:             queryDataService,
 		serviceAccountsService:       serviceaccountsService,
 		authInfoService:              authInfoService,
-		authenticator:                authenticator,
 		NotificationService:          notificationService,
 		DashboardService:             dashboardService,
 		dashboardProvisioningService: dashboardProvisioningService,
 		folderService:                folderService,
 		DatasourcePermissionsService: datasourcePermissionsService,
-		commentsService:              commentsService,
 		teamPermissionsService:       teamsPermissionsService,
 		AlertNotificationService:     alertNotificationService,
 		dashboardsnapshotsService:    dashboardsnapshotsService,
@@ -355,7 +336,6 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		PublicDashboardsApi:          publicDashboardsApi,
 		userService:                  userService,
 		tempUserService:              tempUserService,
-		dashboardThumbsService:       dashboardThumbsService,
 		loginAttemptService:          loginAttemptService,
 		orgService:                   orgService,
 		teamService:                  teamService,
@@ -363,13 +343,12 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		accesscontrolService:         accesscontrolService,
 		annotationsRepo:              annotationRepo,
 		tagService:                   tagService,
-		QueryLibraryHTTPService:      queryLibraryHTTPService,
-		QueryLibraryService:          queryLibraryService,
 		oauthTokenService:            oauthTokenService,
 		statsService:                 statsService,
 		authnService:                 authnService,
 		pluginsCDNService:            pluginsCDNService,
 		starApi:                      starApi,
+		promRegister:                 promRegister,
 	}
 	if hs.Listener != nil {
 		hs.log.Debug("Using provided listener")
@@ -518,21 +497,22 @@ func (hs *HTTPServer) configureHttps() error {
 		return fmt.Errorf(`cannot find SSL key_file at %q`, hs.Cfg.KeyFile)
 	}
 
+	minTlsVersion, err := util.TlsNameToVersion(hs.Cfg.MinTLSVersion)
+	if err != nil {
+		return err
+	}
+
+	tlsCiphers := hs.getDefaultCiphers(minTlsVersion, string(setting.HTTPSScheme))
+	if err != nil {
+		return err
+	}
+
+	hs.log.Info("HTTP Server TLS settings", "Min TLS Version", hs.Cfg.MinTLSVersion,
+		"configured ciphers", util.TlsCipherIdsToString(tlsCiphers))
+
 	tlsCfg := &tls.Config{
-		MinVersion: tls.VersionTLS12,
-		CipherSuites: []uint16{
-			tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
-			tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
-			tls.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
-			tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
-			tls.TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA,
-			tls.TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA,
-			tls.TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA,
-			tls.TLS_RSA_WITH_AES_128_GCM_SHA256,
-			tls.TLS_RSA_WITH_AES_256_GCM_SHA384,
-			tls.TLS_RSA_WITH_AES_128_CBC_SHA,
-			tls.TLS_RSA_WITH_AES_256_CBC_SHA,
-		},
+		MinVersion:   minTlsVersion,
+		CipherSuites: tlsCiphers,
 	}
 
 	hs.httpSrv.TLSConfig = tlsCfg
@@ -558,20 +538,20 @@ func (hs *HTTPServer) configureHttp2() error {
 		return fmt.Errorf("cannot find SSL key_file at %q", hs.Cfg.KeyFile)
 	}
 
+	minTlsVersion, err := util.TlsNameToVersion(hs.Cfg.MinTLSVersion)
+	if err != nil {
+		return err
+	}
+
+	tlsCiphers := hs.getDefaultCiphers(minTlsVersion, string(setting.HTTP2Scheme))
+
+	hs.log.Info("HTTP Server TLS settings", "Min TLS Version", hs.Cfg.MinTLSVersion,
+		"configured ciphers", util.TlsCipherIdsToString(tlsCiphers))
+
 	tlsCfg := &tls.Config{
-		MinVersion: tls.VersionTLS12,
-		CipherSuites: []uint16{
-			tls.TLS_CHACHA20_POLY1305_SHA256,
-			tls.TLS_AES_128_GCM_SHA256,
-			tls.TLS_AES_256_GCM_SHA384,
-			tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
-			tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
-			tls.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
-			tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
-			tls.TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,
-			tls.TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,
-		},
-		NextProtos: []string{"h2", "http/1.1"},
+		MinVersion:   minTlsVersion,
+		CipherSuites: tlsCiphers,
+		NextProtos:   []string{"h2", "http/1.1"},
 	}
 
 	hs.httpSrv.TLSConfig = tlsCfg
@@ -591,10 +571,11 @@ func (hs *HTTPServer) applyRoutes() {
 func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 	m := hs.web
 
+	m.Use(requestmeta.SetupRequestMetadata())
 	m.Use(middleware.RequestTracing(hs.tracer))
-	m.Use(middleware.RequestMetrics(hs.Features))
+	m.Use(middleware.RequestMetrics(hs.Features, hs.Cfg, hs.promRegister))
 
-	m.UseMiddleware(middleware.Logger(hs.Cfg))
+	m.UseMiddleware(hs.LoggerMiddleware.Middleware())
 
 	if hs.Cfg.EnableGzip {
 		m.UseMiddleware(middleware.Gziper())
@@ -619,6 +600,7 @@ func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 
 	if hs.Cfg.ServeFromSubPath && hs.Cfg.AppSubURL != "" {
 		m.SetURLPrefix(hs.Cfg.AppSubURL)
+		m.UseMiddleware(middleware.SubPathRedirect(hs.Cfg))
 	}
 
 	m.UseMiddleware(web.Renderer(filepath.Join(hs.Cfg.StaticRootPath, "views"), "[[", "]]"))
@@ -633,14 +615,13 @@ func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 
 	m.UseMiddleware(hs.ContextHandler.Middleware)
 	m.Use(middleware.OrgRedirect(hs.Cfg, hs.userService))
-	m.Use(accesscontrol.LoadPermissionsMiddleware(hs.accesscontrolService))
 
 	// needs to be after context handler
 	if hs.Cfg.EnforceDomain {
 		m.Use(middleware.ValidateHostHeader(hs.Cfg))
 	}
 
-	m.Use(middleware.HandleNoCacheHeader)
+	m.Use(middleware.HandleNoCacheHeaders)
 
 	if hs.Cfg.CSPEnabled || hs.Cfg.CSPReportOnlyEnabled {
 		m.UseMiddleware(middleware.ContentSecurityPolicy(hs.Cfg, hs.log))
@@ -749,4 +730,39 @@ func (hs *HTTPServer) mapStatic(m *web.Mux, rootDir string, dir string, prefix s
 
 func (hs *HTTPServer) metricsEndpointBasicAuthEnabled() bool {
 	return hs.Cfg.MetricsEndpointBasicAuthUsername != "" && hs.Cfg.MetricsEndpointBasicAuthPassword != ""
+}
+
+func (hs *HTTPServer) getDefaultCiphers(tlsVersion uint16, protocol string) []uint16 {
+	if tlsVersion != tls.VersionTLS12 {
+		return nil
+	}
+	if protocol == "https" {
+		return []uint16{
+			tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
+			tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
+			tls.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
+			tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
+			tls.TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA,
+			tls.TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA,
+			tls.TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA,
+			tls.TLS_RSA_WITH_AES_128_GCM_SHA256,
+			tls.TLS_RSA_WITH_AES_256_GCM_SHA384,
+			tls.TLS_RSA_WITH_AES_128_CBC_SHA,
+			tls.TLS_RSA_WITH_AES_256_CBC_SHA,
+		}
+	}
+	if protocol == "h2" {
+		return []uint16{
+			tls.TLS_CHACHA20_POLY1305_SHA256,
+			tls.TLS_AES_128_GCM_SHA256,
+			tls.TLS_AES_256_GCM_SHA384,
+			tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
+			tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
+			tls.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
+			tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
+			tls.TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,
+			tls.TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,
+		}
+	}
+	return nil
 }

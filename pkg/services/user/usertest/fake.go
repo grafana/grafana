@@ -14,9 +14,11 @@ type FakeUserService struct {
 	ExpectedSearchUsers      user.SearchUserQueryResult
 	ExpectedUserProfileDTO   *user.UserProfileDTO
 	ExpectedUserProfileDTOs  []*user.UserProfileDTO
+	ExpectedUsageStats       map[string]interface{}
 
 	GetSignedInUserFn func(ctx context.Context, query *user.GetSignedInUserQuery) (*user.SignedInUser, error)
 	CreateFn          func(ctx context.Context, cmd *user.CreateUserCommand) (*user.User, error)
+	DisableFn         func(ctx context.Context, cmd *user.DisableUserCommand) error
 
 	counter int
 }
@@ -25,15 +27,15 @@ func NewUserServiceFake() *FakeUserService {
 	return &FakeUserService{}
 }
 
+func (f FakeUserService) GetUsageStats(ctx context.Context) map[string]interface{} {
+	return f.ExpectedUsageStats
+}
+
 func (f *FakeUserService) Create(ctx context.Context, cmd *user.CreateUserCommand) (*user.User, error) {
 	if f.CreateFn != nil {
 		return f.CreateFn(ctx, cmd)
 	}
 
-	return f.ExpectedUser, f.ExpectedError
-}
-
-func (f *FakeUserService) CreateUserForTests(ctx context.Context, cmd *user.CreateUserCommand) (*user.User, error) {
 	return f.ExpectedUser, f.ExpectedError
 }
 
@@ -96,6 +98,9 @@ func (f *FakeUserService) Search(ctx context.Context, query *user.SearchUsersQue
 }
 
 func (f *FakeUserService) Disable(ctx context.Context, cmd *user.DisableUserCommand) error {
+	if f.DisableFn != nil {
+		return f.DisableFn(ctx, cmd)
+	}
 	return f.ExpectedError
 }
 

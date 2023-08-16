@@ -8,7 +8,7 @@ export interface RevertDashboardModalProps {
   version: number;
 }
 
-export const RevertDashboardModal: React.FC<RevertDashboardModalProps> = ({ hideModal, version }) => {
+export const RevertDashboardModal = ({ hideModal, version }: RevertDashboardModalProps) => {
   // TODO: how should state.error be handled?
   const { state, onRestoreDashboard } = useDashboardRestore(version);
 

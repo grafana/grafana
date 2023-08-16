@@ -14,10 +14,11 @@ import {
   setMetricType,
 } from './functions';
 import { newMockDatasource } from './specs/testData';
-import { AlignmentTypes, MetricDescriptor, MetricKind, TimeSeriesList, ValueTypes } from './types';
+import { AlignmentTypes, TimeSeriesList, MetricKind, ValueTypes } from './types/query';
+import { MetricDescriptor } from './types/types';
 
 jest.mock('@grafana/runtime', () => ({
-  ...(jest.requireActual('@grafana/runtime') as unknown as object),
+  ...jest.requireActual('@grafana/runtime'),
   getTemplateSrv: () => ({
     replace: jest.fn().mockImplementation((s: string) => s),
   }),
@@ -123,7 +124,7 @@ describe('functions', () => {
   });
 
   describe('getAlignmentOptionsByMetric', () => {
-    let result: any;
+    let result: ReturnType<typeof getAlignmentOptionsByMetric>;
     describe('when double and gauge is passed', () => {
       beforeEach(() => {
         result = getAlignmentOptionsByMetric(ValueTypes.DOUBLE, MetricKind.GAUGE);
@@ -131,7 +132,7 @@ describe('functions', () => {
 
       it('should return all alignment options except two', () => {
         expect(result.length).toBe(10);
-        expect(result.map((o: any) => o.value)).toEqual(
+        expect(result.map((o) => o.value)).toEqual(
           expect.not.arrayContaining(['REDUCE_COUNT_TRUE', 'REDUCE_COUNT_FALSE'])
         );
       });
@@ -144,7 +145,7 @@ describe('functions', () => {
 
       it('should return all alignment options except four', () => {
         expect(result.length).toBe(9);
-        expect(result.map((o: any) => o.value)).toEqual(
+        expect(result.map((o) => o.value)).toEqual(
           expect.not.arrayContaining([
             'ALIGN_COUNT_TRUE',
             'ALIGN_COUNT_FALSE',

@@ -40,7 +40,7 @@ func (api *API) Register{{classname}}Endpoints(srv {{classname}}, m *metrics.API
 		metrics.Instrument(
 			http.Method{{httpMethod}},
 			"{{{path}}}",
-			srv.{{nickname}},
+			api.Hooks.Wrap(srv.{{nickname}}),
 			m,
 		),
   ){{/operation}}{{/operations}}

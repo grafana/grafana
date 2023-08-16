@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"strings"
@@ -81,10 +82,12 @@ func TestServiceAccountsAPI_CreateServiceAccount(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
 			server := setupTests(t, func(a *ServiceAccountsAPI) {
-				a.service = &fakeService{ExpectedServiceAccount: tt.expectedSA, ExpectedErr: tt.expectedErr}
+				a.service = &fakeServiceAccountService{ExpectedServiceAccount: tt.expectedSA, ExpectedErr: tt.expectedErr}
 			})
 			req := server.NewRequest(http.MethodPost, "/api/serviceaccounts/", strings.NewReader(tt.body))
-			webtest.RequestWithSignedInUser(req, &user.SignedInUser{OrgRole: tt.basicRole, OrgID: 1, Permissions: map[int64]map[string][]string{1: accesscontrol.GroupScopesByAction(tt.permissions)}})
+			webtest.RequestWithSignedInUser(req, &user.SignedInUser{
+				OrgRole: tt.basicRole, OrgID: 1, IsAnonymous: true,
+				Permissions: map[int64]map[string][]string{1: accesscontrol.GroupScopesByAction(tt.permissions)}})
 			res, err := server.SendJSON(req)
 			require.NoError(t, err)
 
@@ -159,7 +162,7 @@ func TestServiceAccountsAPI_RetrieveServiceAccount(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
 			server := setupTests(t, func(a *ServiceAccountsAPI) {
-				a.service = &fakeService{ExpectedServiceAccountProfile: tt.expectedSA}
+				a.service = &fakeServiceAccountService{ExpectedServiceAccountProfile: tt.expectedSA}
 			})
 			req := server.NewGetRequest(fmt.Sprintf("/api/serviceaccounts/%d", tt.id))
 			webtest.RequestWithSignedInUser(req, &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{1: accesscontrol.GroupScopesByAction(tt.permissions)}})
@@ -221,7 +224,7 @@ func TestServiceAccountsAPI_UpdateServiceAccount(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
 			server := setupTests(t, func(a *ServiceAccountsAPI) {
-				a.service = &fakeService{ExpectedServiceAccountProfile: tt.expectedSA}
+				a.service = &fakeServiceAccountService{ExpectedServiceAccountProfile: tt.expectedSA}
 			})
 
 			req := server.NewRequest(http.MethodPatch, fmt.Sprintf("/api/serviceaccounts/%d", tt.id), strings.NewReader(tt.body))
@@ -235,12 +238,72 @@ func TestServiceAccountsAPI_UpdateServiceAccount(t *testing.T) {
 	}
 }
 
+func TestServiceAccountsAPI_MigrateApiKeysToServiceAccounts(t *testing.T) {
+	type TestCase struct {
+		desc                    string
+		orgId                   int64
+		basicRole               org.RoleType
+		permissions             []accesscontrol.Permission
+		expectedMigrationResult *serviceaccounts.MigrationResult
+		expectedCode            int
+	}
+
+	tests := []TestCase{
+		{
+			desc:      "should be able to migrate API keys to service accounts with correct permissions",
+			orgId:     1,
+			basicRole: org.RoleAdmin,
+			permissions: []accesscontrol.Permission{
+				{Action: serviceaccounts.ActionCreate, Scope: serviceaccounts.ScopeAll},
+			},
+			expectedMigrationResult: &serviceaccounts.MigrationResult{
+				Total:         5,
+				Migrated:      4,
+				Failed:        1,
+				FailedDetails: []string{"API key name: failedKey - Error: migration error"},
+			},
+			expectedCode: http.StatusOK,
+		},
+		{
+			desc:      "should not be able to migrate API keys to service accounts with wrong permissions",
+			orgId:     2,
+			basicRole: org.RoleAdmin,
+			permissions: []accesscontrol.Permission{
+				{Action: serviceaccounts.ActionCreate, Scope: serviceaccounts.ScopeAll},
+			},
+			expectedCode: http.StatusForbidden,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			server := setupTests(t, func(a *ServiceAccountsAPI) {
+				a.service = &fakeServiceAccountService{ExpectedMigrationResult: tt.expectedMigrationResult}
+			})
+
+			req := server.NewRequest(http.MethodPost, "/api/serviceaccounts/migrate", nil)
+			webtest.RequestWithSignedInUser(req, &user.SignedInUser{OrgRole: tt.basicRole, OrgID: tt.orgId, Permissions: map[int64]map[string][]string{1: accesscontrol.GroupScopesByAction(tt.permissions)}})
+			res, err := server.SendJSON(req)
+			require.NoError(t, err)
+
+			assert.Equal(t, tt.expectedCode, res.StatusCode)
+			if tt.expectedCode == http.StatusOK {
+				var result serviceaccounts.MigrationResult
+				err := json.NewDecoder(res.Body).Decode(&result)
+				require.NoError(t, err)
+				assert.Equal(t, tt.expectedMigrationResult, &result)
+			}
+			require.NoError(t, res.Body.Close())
+		})
+	}
+}
+
 func setupTests(t *testing.T, opts ...func(a *ServiceAccountsAPI)) *webtest.Server {
 	t.Helper()
 	cfg := setting.NewCfg()
 	api := &ServiceAccountsAPI{
 		cfg:                  cfg,
-		service:              &fakeService{},
+		service:              &fakeServiceAccountService{},
 		accesscontrolService: &actest.FakeService{},
 		accesscontrol:        acimpl.ProvideAccessControl(cfg),
 		RouterRegister:       routing.NewRouteRegister(),
@@ -255,41 +318,47 @@ func setupTests(t *testing.T, opts ...func(a *ServiceAccountsAPI)) *webtest.Serv
 	return webtest.NewServer(t, api.RouterRegister)
 }
 
-var _ service = new(fakeService)
+var _ service = new(fakeServiceAccountService)
 
-type fakeService struct {
+type fakeServiceAccountService struct {
 	service
 	ExpectedErr                   error
 	ExpectedAPIKey                *apikey.APIKey
 	ExpectedServiceAccountTokens  []apikey.APIKey
 	ExpectedServiceAccount        *serviceaccounts.ServiceAccountDTO
 	ExpectedServiceAccountProfile *serviceaccounts.ServiceAccountProfileDTO
+	ExpectedMigrationResult       *serviceaccounts.MigrationResult
 }
 
-func (f *fakeService) CreateServiceAccount(ctx context.Context, orgID int64, saForm *serviceaccounts.CreateServiceAccountForm) (*serviceaccounts.ServiceAccountDTO, error) {
+func (f *fakeServiceAccountService) CreateServiceAccount(ctx context.Context, orgID int64, saForm *serviceaccounts.CreateServiceAccountForm) (*serviceaccounts.ServiceAccountDTO, error) {
 	return f.ExpectedServiceAccount, f.ExpectedErr
 }
 
-func (f *fakeService) DeleteServiceAccount(ctx context.Context, orgID, id int64) error {
+func (f *fakeServiceAccountService) DeleteServiceAccount(ctx context.Context, orgID, id int64) error {
 	return f.ExpectedErr
 }
 
-func (f *fakeService) RetrieveServiceAccount(ctx context.Context, orgID, id int64) (*serviceaccounts.ServiceAccountProfileDTO, error) {
+func (f *fakeServiceAccountService) RetrieveServiceAccount(ctx context.Context, orgID, id int64) (*serviceaccounts.ServiceAccountProfileDTO, error) {
 	return f.ExpectedServiceAccountProfile, f.ExpectedErr
 }
 
-func (f *fakeService) ListTokens(ctx context.Context, query *serviceaccounts.GetSATokensQuery) ([]apikey.APIKey, error) {
+func (f *fakeServiceAccountService) ListTokens(ctx context.Context, query *serviceaccounts.GetSATokensQuery) ([]apikey.APIKey, error) {
 	return f.ExpectedServiceAccountTokens, f.ExpectedErr
 }
 
-func (f *fakeService) UpdateServiceAccount(ctx context.Context, orgID, id int64, cmd *serviceaccounts.UpdateServiceAccountForm) (*serviceaccounts.ServiceAccountProfileDTO, error) {
+func (f *fakeServiceAccountService) UpdateServiceAccount(ctx context.Context, orgID, id int64, cmd *serviceaccounts.UpdateServiceAccountForm) (*serviceaccounts.ServiceAccountProfileDTO, error) {
 	return f.ExpectedServiceAccountProfile, f.ExpectedErr
 }
 
-func (f *fakeService) AddServiceAccountToken(ctx context.Context, id int64, cmd *serviceaccounts.AddServiceAccountTokenCommand) (*apikey.APIKey, error) {
+func (f *fakeServiceAccountService) AddServiceAccountToken(ctx context.Context, id int64, cmd *serviceaccounts.AddServiceAccountTokenCommand) (*apikey.APIKey, error) {
 	return f.ExpectedAPIKey, f.ExpectedErr
 }
 
-func (f *fakeService) DeleteServiceAccountToken(ctx context.Context, orgID, id, tokenID int64) error {
+func (f *fakeServiceAccountService) DeleteServiceAccountToken(ctx context.Context, orgID, id, tokenID int64) error {
 	return f.ExpectedErr
+}
+
+func (f *fakeServiceAccountService) MigrateApiKeysToServiceAccounts(ctx context.Context, orgID int64) (*serviceaccounts.MigrationResult, error) {
+	fmt.Printf("fake migration result: %v", f.ExpectedMigrationResult)
+	return f.ExpectedMigrationResult, f.ExpectedErr
 }

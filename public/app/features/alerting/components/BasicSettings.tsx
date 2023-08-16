@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { Field, Input, InputControl, Select } from '@grafana/ui';
@@ -15,7 +15,7 @@ interface Props extends NotificationSettingsProps {
   resetSecureField: (key: string) => void;
 }
 
-export const BasicSettings: FC<Props> = ({
+export const BasicSettings = ({
   control,
   currentFormValues,
   errors,
@@ -24,7 +24,7 @@ export const BasicSettings: FC<Props> = ({
   channels,
   register,
   resetSecureField,
-}) => {
+}: Props) => {
   return (
     <>
       <Field label="Name" invalid={!!errors.name} error={errors.name && errors.name.message}>

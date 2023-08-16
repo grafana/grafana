@@ -1,6 +1,6 @@
-import { map, clone } from 'lodash';
+import { clone, map } from 'lodash';
 
-import { QueryPartDef, QueryPart, functionRenderer, suffixRenderer } from 'app/features/alerting/state/query_part';
+import { functionRenderer, QueryPart, QueryPartDef, suffixRenderer } from 'app/features/alerting/state/query_part';
 
 const index: any[] = [];
 const categories: any = {
@@ -33,11 +33,24 @@ function aliasRenderer(part: { params: string[] }, innerExpr: string) {
   return innerExpr + ' AS ' + '"' + part.params[0] + '"';
 }
 
-function fieldRenderer(part: { params: string[] }, innerExpr: any) {
-  if (part.params[0] === '*') {
+function fieldRenderer(part: { params: string[] }) {
+  const param = part.params[0];
+
+  if (param === '*') {
     return '*';
   }
-  return '"' + part.params[0] + '"';
+
+  let escapedParam = `"${param}"`;
+
+  if (param.endsWith('::tag')) {
+    escapedParam = `"${param.slice(0, -5)}"::tag`;
+  }
+
+  if (param.endsWith('::field')) {
+    escapedParam = `"${param.slice(0, -7)}"::field`;
+  }
+
+  return escapedParam;
 }
 
 function replaceAggregationAddStrategy(selectParts: any[], partModel: { def: { type: string } }) {

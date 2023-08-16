@@ -1,8 +1,8 @@
-import { renderHook } from '@testing-library/react-hooks';
+import { renderHook, waitFor } from '@testing-library/react';
 
 import { useAsyncState } from './useAsyncState';
 
-interface WaitableMock extends jest.Mock<any, any> {
+interface WaitableMock extends jest.Mock {
   waitToBeCalled(): Promise<unknown>;
 }
 
@@ -36,10 +36,11 @@ describe('useAsyncState', () => {
     const apiCall = () => Promise.resolve(['a', 'b', 'c']);
     const setError = jest.fn();
 
-    const { result, waitForNextUpdate } = renderHook(() => useAsyncState(apiCall, setError, []));
-    await waitForNextUpdate();
+    const { result } = renderHook(() => useAsyncState(apiCall, setError, []));
 
-    expect(result.current).toEqual(['a', 'b', 'c']);
+    await waitFor(() => {
+      expect(result.current).toEqual(['a', 'b', 'c']);
+    });
   });
 
   it('should report errors through setError', async () => {
@@ -47,20 +48,22 @@ describe('useAsyncState', () => {
     const apiCall = () => Promise.reject(error);
     const setError = createWaitableMock();
 
-    const { result, waitForNextUpdate } = renderHook(() => useAsyncState(apiCall, setError, []));
-    await Promise.race([waitForNextUpdate(), setError.waitToBeCalled()]);
+    const { result } = renderHook(() => useAsyncState(apiCall, setError, []));
 
-    expect(result.current).toEqual([]);
-    expect(setError).toHaveBeenCalledWith(MOCKED_RANDOM_VALUE, error);
+    await waitFor(() => {
+      expect(result.current).toEqual([]);
+      expect(setError).toHaveBeenCalledWith(MOCKED_RANDOM_VALUE, error);
+    });
   });
 
   it('should clear the error once the request is successful', async () => {
     const apiCall = () => Promise.resolve(['a', 'b', 'c']);
     const setError = createWaitableMock();
 
-    const { waitForNextUpdate } = renderHook(() => useAsyncState(apiCall, setError, []));
-    await Promise.race([waitForNextUpdate(), setError.waitToBeCalled()]);
+    renderHook(() => useAsyncState(apiCall, setError, []));
 
-    expect(setError).toHaveBeenCalledWith(MOCKED_RANDOM_VALUE, undefined);
+    await waitFor(() => {
+      expect(setError).toHaveBeenCalledWith(MOCKED_RANDOM_VALUE, undefined);
+    });
   });
 });

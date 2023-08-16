@@ -188,10 +188,10 @@ async function getJSONObject(show: ShowContent, panel?: PanelModel, data?: Panel
   return { note: t('dashboard.inspect-json.unknown', 'Unknown Object: {{show}}', { show }) };
 }
 
-function getPrettyJSON(obj: any): string {
+function getPrettyJSON(obj: unknown): string {
   let r = '';
   try {
-    r = JSON.stringify(obj, null, 2);
+    r = JSON.stringify(obj, getCircularReplacer(), 2);
   } catch (e) {
     if (
       e instanceof Error &&
@@ -203,4 +203,22 @@ function getPrettyJSON(obj: any): string {
     }
   }
   return r;
+}
+
+function getCircularReplacer() {
+  const seen = new WeakSet();
+
+  return (key: string, value: unknown) => {
+    if (key === '__dataContext') {
+      return 'Filtered out in JSON serialization';
+    }
+
+    if (typeof value === 'object' && value !== null) {
+      if (seen.has(value)) {
+        return;
+      }
+      seen.add(value);
+    }
+    return value;
+  };
 }

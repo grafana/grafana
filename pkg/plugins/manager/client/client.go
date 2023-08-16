@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/http"
 	"net/textproto"
 	"strings"
 
@@ -16,7 +17,18 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 )
 
+const (
+	setCookieHeaderName   = "Set-Cookie"
+	contentTypeHeaderName = "Content-Type"
+	defaultContentType    = "application/json"
+)
+
 var _ plugins.Client = (*Service)(nil)
+
+var (
+	errNilRequest = errors.New("req cannot be nil")
+	errNilSender  = errors.New("sender cannot be nil")
+)
 
 type Service struct {
 	pluginRegistry registry.Service
@@ -32,7 +44,7 @@ func ProvideService(pluginRegistry registry.Service, cfg *config.Cfg) *Service {
 
 func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	if req == nil {
-		return nil, fmt.Errorf("req cannot be nil")
+		return nil, errNilRequest
 	}
 
 	p, exists := s.plugin(ctx, req.PluginContext.PluginID)
@@ -40,11 +52,16 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 		return nil, plugins.ErrPluginNotRegistered.Errorf("%w", backendplugin.ErrPluginNotRegistered)
 	}
 
+	var totalBytes float64
+	for _, v := range req.Queries {
+		totalBytes += float64(len(v.JSON))
+	}
+
 	var resp *backend.QueryDataResponse
 	err := instrumentation.InstrumentQueryDataRequest(ctx, &req.PluginContext, instrumentation.Cfg{
 		LogDatasourceRequests: s.cfg.LogDatasourceRequests,
 		Target:                p.Target(),
-	}, func() (innerErr error) {
+	}, totalBytes, func() (innerErr error) {
 		resp, innerErr = p.QueryData(ctx, req)
 		return
 	})
@@ -75,30 +92,41 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 
 func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
 	if req == nil {
-		return fmt.Errorf("req cannot be nil")
+		return errNilRequest
 	}
 
 	if sender == nil {
-		return fmt.Errorf("sender cannot be nil")
+		return errNilSender
 	}
 
 	p, exists := s.plugin(ctx, req.PluginContext.PluginID)
 	if !exists {
 		return backendplugin.ErrPluginNotRegistered
 	}
+
+	totalBytes := float64(len(req.Body))
 	err := instrumentation.InstrumentCallResourceRequest(ctx, &req.PluginContext, instrumentation.Cfg{
 		LogDatasourceRequests: s.cfg.LogDatasourceRequests,
 		Target:                p.Target(),
-	}, func() error {
+	}, totalBytes, func() error {
 		removeConnectionHeaders(req.Headers)
 		removeHopByHopHeaders(req.Headers)
+		removeNonAllowedHeaders(req.Headers)
 
+		processedStreams := 0
 		wrappedSender := callResourceResponseSenderFunc(func(res *backend.CallResourceResponse) error {
-			if res != nil && len(res.Headers) > 0 {
-				removeConnectionHeaders(res.Headers)
-				removeHopByHopHeaders(res.Headers)
+			// Expected that headers and status are only part of first stream
+			if processedStreams == 0 && res != nil {
+				if len(res.Headers) > 0 {
+					removeConnectionHeaders(res.Headers)
+					removeHopByHopHeaders(res.Headers)
+					removeNonAllowedHeaders(res.Headers)
+				}
+
+				ensureContentTypeHeader(res)
 			}
 
+			processedStreams++
 			return sender.Send(res)
 		})
 
@@ -117,7 +145,7 @@ func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceReq
 
 func (s *Service) CollectMetrics(ctx context.Context, req *backend.CollectMetricsRequest) (*backend.CollectMetricsResult, error) {
 	if req == nil {
-		return nil, fmt.Errorf("req cannot be nil")
+		return nil, errNilRequest
 	}
 
 	p, exists := s.plugin(ctx, req.PluginContext.PluginID)
@@ -142,7 +170,7 @@ func (s *Service) CollectMetrics(ctx context.Context, req *backend.CollectMetric
 
 func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
 	if req == nil {
-		return nil, fmt.Errorf("req cannot be nil")
+		return nil, errNilRequest
 	}
 
 	p, exists := s.plugin(ctx, req.PluginContext.PluginID)
@@ -168,7 +196,7 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 			return nil, err
 		}
 
-		return nil, fmt.Errorf("%v: %w", "failed to check plugin health", backendplugin.ErrHealthCheckFailed)
+		return nil, fmt.Errorf("%w: %w", backendplugin.ErrHealthCheckFailed, err)
 	}
 
 	return resp, nil
@@ -176,7 +204,7 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 
 func (s *Service) SubscribeStream(ctx context.Context, req *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error) {
 	if req == nil {
-		return nil, fmt.Errorf("req cannot be nil")
+		return nil, errNilRequest
 	}
 
 	plugin, exists := s.plugin(ctx, req.PluginContext.PluginID)
@@ -189,7 +217,7 @@ func (s *Service) SubscribeStream(ctx context.Context, req *backend.SubscribeStr
 
 func (s *Service) PublishStream(ctx context.Context, req *backend.PublishStreamRequest) (*backend.PublishStreamResponse, error) {
 	if req == nil {
-		return nil, fmt.Errorf("req cannot be nil")
+		return nil, errNilRequest
 	}
 
 	plugin, exists := s.plugin(ctx, req.PluginContext.PluginID)
@@ -202,11 +230,11 @@ func (s *Service) PublishStream(ctx context.Context, req *backend.PublishStreamR
 
 func (s *Service) RunStream(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender) error {
 	if req == nil {
-		return fmt.Errorf("req cannot be nil")
+		return errNilRequest
 	}
 
 	if sender == nil {
-		return fmt.Errorf("sender cannot be nil")
+		return errNilSender
 	}
 
 	plugin, exists := s.plugin(ctx, req.PluginContext.PluginID)
@@ -283,6 +311,33 @@ func removeHopByHopHeaders(h map[string][]string) {
 				break
 			}
 		}
+	}
+}
+
+func removeNonAllowedHeaders(h map[string][]string) {
+	for k := range h {
+		if textproto.CanonicalMIMEHeaderKey(k) == setCookieHeaderName {
+			delete(h, k)
+		}
+	}
+}
+
+// ensureContentTypeHeader makes sure a content type always is returned in response.
+func ensureContentTypeHeader(res *backend.CallResourceResponse) {
+	if res == nil {
+		return
+	}
+
+	var hasContentType bool
+	for k := range res.Headers {
+		if textproto.CanonicalMIMEHeaderKey(k) == contentTypeHeaderName {
+			hasContentType = true
+			break
+		}
+	}
+
+	if !hasContentType && res.Status != http.StatusNoContent {
+		res.Headers[contentTypeHeaderName] = []string{defaultContentType}
 	}
 }
 

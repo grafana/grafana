@@ -25,6 +25,8 @@ type Service interface {
 	MakeUserAdmin(ctx context.Context, orgID int64, userID, folderID int64, setViewAndEditPermissions bool) error
 	// Move changes a folder's parent folder to the requested new parent.
 	Move(ctx context.Context, cmd *MoveFolderCommand) (*Folder, error)
+	RegisterService(service RegistryService) error
+	GetDescendantCounts(ctx context.Context, cmd *GetDescendantCountsQuery) (DescendantCounts, error)
 }
 
 // FolderStore is a folder store.
@@ -37,4 +39,6 @@ type FolderStore interface {
 	GetFolderByUID(ctx context.Context, orgID int64, uid string) (*Folder, error)
 	// GetFolderByID retrieves a folder by its ID
 	GetFolderByID(ctx context.Context, orgID int64, id int64) (*Folder, error)
+	// GetFolders returns all folders for the given orgID and UIDs.
+	GetFolders(ctx context.Context, orgID int64, uids []string) (map[string]*Folder, error)
 }

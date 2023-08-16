@@ -121,11 +121,11 @@ export function getLocalTimeZone() {
   const utcOffset = '&tz=UTC' + encodeURIComponent(dateTime().format('Z'));
 
   // Older browser does not the internationalization API
-  if (!(window as any).Intl) {
+  if (!window.Intl) {
     return utcOffset;
   }
 
-  const dateFormat = (window as any).Intl.DateTimeFormat();
+  const dateFormat = window.Intl.DateTimeFormat();
   if (!dateFormat.resolvedOptions) {
     return utcOffset;
   }
@@ -137,3 +137,16 @@ export function getLocalTimeZone() {
 
   return '&tz=' + encodeURIComponent(options.timeZone);
 }
+
+export const shareDashboardType: {
+  [key: string]: string;
+} = {
+  link: 'link',
+  snapshot: 'snapshot',
+  export: 'export',
+  embed: 'embed',
+  libraryPanel: 'library_panel',
+  pdf: 'pdf',
+  report: 'report',
+  publicDashboard: 'public_dashboard',
+};

@@ -238,10 +238,10 @@ func generateConflictUsersFile(r *ConflictResolver) (*os.File, error) {
 	if err != nil {
 		return nil, err
 	}
-	if _, err := tmpFile.Write([]byte(getDocumentationForFile())); err != nil {
+	if _, err := tmpFile.WriteString(getDocumentationForFile()); err != nil {
 		return nil, err
 	}
-	if _, err := tmpFile.Write([]byte(r.ToStringPresentation())); err != nil {
+	if _, err := tmpFile.WriteString(r.ToStringPresentation()); err != nil {
 		return nil, err
 	}
 	return tmpFile, nil
@@ -280,7 +280,7 @@ func getValidConflictUsers(r *ConflictResolver, b []byte) error {
 			continue
 		}
 
-		entryRow := matchingExpression.Match([]byte(row))
+		entryRow := matchingExpression.MatchString(row)
 		// not an entry row -> is a conflict block row
 		if !entryRow {
 			// check for malformed row

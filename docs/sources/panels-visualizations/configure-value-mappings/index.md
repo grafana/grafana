@@ -9,6 +9,11 @@ aliases:
   - ../panels/format-data/map-a-special-value/
   - ../panels/format-data/map-a-value/
   - ../panels/value-mappings/
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 menuTitle: Configure value mappings
 title: Configure value mappings
 weight: 600
@@ -18,15 +23,17 @@ weight: 600
 
 In addition to field overrides, value mapping is a technique that you can use to change the visual treatment of data that appears in a visualization.
 
-Values mapped via value mappings bypass the unit formatting. This means that a text value mapped to a numerical value is not formatted using the configured unit.
+Values mapped using value mappings bypass the unit formatting. This means that a text value mapped to a numerical value is not formatted using the configured unit.
 
 ![Value mappings example](/static/img/docs/value-mappings/value-mappings-example-8-0.png)
 
 If value mappings are present in a panel, then Grafana displays a summary in the side pane of the panel editor.
 
-> **Note:** The new value mappings are not compatible with some visualizations, such as Graph (old), Text, and Heatmap.
-
 ## Types of value mappings
+
+{{% admonition type="note" %}}
+The new value mappings are not compatible with some visualizations, such as Graph (old), Text, and Heatmap.
+{{% /admonition %}}
 
 Grafana supports the following value mappings:
 
@@ -121,7 +128,7 @@ Map a special value when you want to format uncommon, boolean, or empty values.
 
 ## Edit a value mapping
 
-You can change a value mapping at any time.
+You can edit a value mapping at any time.
 
 1. Edit the panel that contains the value mapping you want to edit.
 1. In the panel display options, in the **Value mappings** section, click **Edit value mappings**.

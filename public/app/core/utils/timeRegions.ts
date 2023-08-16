@@ -6,6 +6,8 @@ export interface TimeRegionConfig {
 
   to?: string;
   toDayOfWeek?: number; // 1-7
+
+  timezone?: string;
 }
 
 interface ParsedTime {
@@ -32,8 +34,8 @@ export function calculateTimesWithin(cfg: TimeRegionConfig, tRange: TimeRange): 
   }
 
   const hRange = {
-    from: parseTimeRange(timeRegion.from),
-    to: parseTimeRange(timeRegion.to),
+    from: parseTimeOfDay(timeRegion.from),
+    to: parseTimeOfDay(timeRegion.to),
   };
 
   if (!timeRegion.fromDayOfWeek && timeRegion.toDayOfWeek) {
@@ -78,10 +80,11 @@ export function calculateTimesWithin(cfg: TimeRegionConfig, tRange: TimeRange): 
 
   const regions: AbsoluteTimeRange[] = [];
 
-  const fromStart = dateTime(tRange.from);
+  const fromStart = dateTime(tRange.from).utc();
   fromStart.set('hour', 0);
   fromStart.set('minute', 0);
   fromStart.set('second', 0);
+  fromStart.set('millisecond', 0);
   fromStart.add(hRange.from.h, 'hours');
   fromStart.add(hRange.from.m, 'minutes');
   fromStart.add(hRange.from.s, 'seconds');
@@ -95,7 +98,7 @@ export function calculateTimesWithin(cfg: TimeRegionConfig, tRange: TimeRange): 
       break;
     }
 
-    const fromEnd = dateTime(fromStart);
+    const fromEnd = dateTime(fromStart).utc();
 
     if (fromEnd.hour) {
       if (hRange.from.h <= hRange.to.h) {
@@ -134,35 +137,36 @@ export function calculateTimesWithin(cfg: TimeRegionConfig, tRange: TimeRange): 
   return regions;
 }
 
-function parseTimeRange(str?: string): ParsedTime {
+export function parseTimeOfDay(str?: string): ParsedTime {
   const result: ParsedTime = {};
   if (!str?.length) {
     return result;
   }
 
-  const timeRegex = /^([\d]+):?(\d{2})?/;
-  const match = timeRegex.exec(str);
-
-  if (!match) {
+  const match = str.split(':');
+  if (!match?.length) {
     return result;
   }
 
+  result.h = Math.min(23, Math.max(0, Number(match[0])));
   if (match.length > 1) {
-    result.h = Number(match[1]);
-    result.m = 0;
-
-    if (match.length > 2 && match[2] !== undefined) {
-      result.m = Number(match[2]);
-    }
-
-    if (result.h > 23) {
-      result.h = 23;
-    }
-
-    if (result.m > 59) {
-      result.m = 59;
+    result.m = Math.min(60, Math.max(0, Number(match[1])));
+    if (match.length > 2) {
+      result.s = Math.min(60, Math.max(0, Number(match[2])));
     }
   }
-
   return result;
+}
+
+export function formatTimeOfDayString(t?: ParsedTime): string {
+  if (!t || (t.h == null && t.m == null && t.s == null)) {
+    return '';
+  }
+
+  let str = String(t.h ?? 0).padStart(2, '0') + ':' + String(t.m ?? 0).padStart(2, '0');
+  if (t.s != null) {
+    str += String(t.s ?? 0).padStart(2, '0');
+  }
+
+  return str;
 }

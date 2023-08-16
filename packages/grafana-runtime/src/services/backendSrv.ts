@@ -96,6 +96,7 @@ export interface FetchResponse<T = any> {
   readonly type: ResponseType;
   readonly url: string;
   readonly config: BackendSrvRequest;
+  readonly traceId?: string;
 }
 
 /**
@@ -118,9 +119,11 @@ export interface FetchError<T = any> {
   status: number;
   statusText?: string;
   data: T;
+  message?: string;
   cancelled?: boolean;
   isHandled?: boolean;
   config: BackendSrvRequest;
+  traceId?: string;
 }
 
 export function isFetchError(e: unknown): e is FetchError {

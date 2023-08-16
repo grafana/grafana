@@ -6,6 +6,7 @@ import { QueryEditor, Props } from './QueryEditor';
 import { scenarios } from './__mocks__/scenarios';
 import { defaultQuery } from './constants';
 import { TestDataQueryType } from './dataquery.gen';
+import { TestDataDataSource } from './datasource';
 import { defaultStreamQuery } from './runStreams';
 
 beforeEach(() => {
@@ -19,7 +20,7 @@ const props = {
   onChange: mockOnChange,
   datasource: {
     getScenarios: () => Promise.resolve(scenarios),
-  } as any,
+  } as TestDataDataSource,
 };
 
 const setup = (testProps?: Partial<Props>) => {
