@@ -134,7 +134,7 @@ func TestPluginManager_Add_Remove(t *testing.T) {
 			inst.pluginLoader = &fakes.FakeLoader{
 				UnloadFunc: func(_ context.Context, p *plugins.Plugin) (*plugins.Plugin, error) {
 					unloadedPlugins = append(unloadedPlugins, p.ID)
-					return pluginV1, nil
+					return p, nil
 				},
 			}
 
