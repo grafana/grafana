@@ -12,7 +12,6 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/middleware"
-	"github.com/grafana/grafana/pkg/middleware/requestmeta"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
@@ -166,7 +165,6 @@ func (api *API) RegisterRulerApiEndpoints(srv RulerApi, m *metrics.API) {
 		)
 		group.Get(
 			toMacaronPath("/api/ruler/grafana/api/v1/rules"),
-			requestmeta.SetOwner(requestmeta.TeamAlerting),
 			api.authorize(http.MethodGet, "/api/ruler/grafana/api/v1/rules"),
 			metrics.Instrument(
 				http.MethodGet,
@@ -177,7 +175,6 @@ func (api *API) RegisterRulerApiEndpoints(srv RulerApi, m *metrics.API) {
 		)
 		group.Get(
 			toMacaronPath("/api/ruler/grafana/api/v1/rules/{Namespace}"),
-			requestmeta.SetOwner(requestmeta.TeamAlerting),
 			api.authorize(http.MethodGet, "/api/ruler/grafana/api/v1/rules/{Namespace}"),
 			metrics.Instrument(
 				http.MethodGet,
@@ -188,7 +185,6 @@ func (api *API) RegisterRulerApiEndpoints(srv RulerApi, m *metrics.API) {
 		)
 		group.Get(
 			toMacaronPath("/api/ruler/{DatasourceUID}/api/v1/rules/{Namespace}"),
-			requestmeta.SetOwner(requestmeta.TeamAlerting),
 			api.authorize(http.MethodGet, "/api/ruler/{DatasourceUID}/api/v1/rules/{Namespace}"),
 			metrics.Instrument(
 				http.MethodGet,
@@ -199,7 +195,6 @@ func (api *API) RegisterRulerApiEndpoints(srv RulerApi, m *metrics.API) {
 		)
 		group.Get(
 			toMacaronPath("/api/ruler/{DatasourceUID}/api/v1/rules/{Namespace}/{Groupname}"),
-			requestmeta.SetOwner(requestmeta.TeamAlerting),
 			api.authorize(http.MethodGet, "/api/ruler/{DatasourceUID}/api/v1/rules/{Namespace}/{Groupname}"),
 			metrics.Instrument(
 				http.MethodGet,
@@ -210,7 +205,6 @@ func (api *API) RegisterRulerApiEndpoints(srv RulerApi, m *metrics.API) {
 		)
 		group.Get(
 			toMacaronPath("/api/ruler/{DatasourceUID}/api/v1/rules"),
-			requestmeta.SetOwner(requestmeta.TeamAlerting),
 			api.authorize(http.MethodGet, "/api/ruler/{DatasourceUID}/api/v1/rules"),
 			metrics.Instrument(
 				http.MethodGet,
