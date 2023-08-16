@@ -139,16 +139,16 @@ Grafana Explore is a workflow for troubleshooting and data exploration. In this 
 > Ad-hoc queries are queries that are made interactively, with the purpose of exploring data. An ad-hoc query is commonly followed by another, more specific query.
 
 1. Click the menu icon and, in the sidebar, click **Explore**. The Prometheus data source that you added will already be selected.
-1. Confirm that you're in code mode by checking the **Builder/Code** toggle at the top right corner of the query panel. 
+1. Confirm that you're in code mode by checking the **Builder/Code** toggle at the top right corner of the query panel.
 1. In the query editor, where it says _Enter a PromQL query…_, enter `tns_request_duration_seconds_count` and then press Shift + Enter.
-   A graph appears. 
+   A graph appears.
 1. In the top right corner, click the dropdown arrow on the **Run Query** button, and then select **5s**. Grafana runs your query and updates the graph every 5 seconds.
 
    You just made your first _PromQL_ query! [PromQL](https://prometheus.io/docs/prometheus/latest/querying/basics/) is a powerful query language that lets you select and aggregate time series data stored in Prometheus.
 
    `tns_request_duration_seconds_count` is a _counter_, a type of metric whose value only ever increases. Rather than visualizing the actual value, you can use counters to calculate the _rate of change_, i.e. how fast the value increases.
 
-1. Add the [`rate`](https://prometheus.io/docs/prometheus/latest/querying/functions/#rate) function to your query to visualize the rate of requests per second. Enter the following in the **Query editor** and then press Shift + Enter.
+1. Add the [`rate`](https://prometheus.io/docs/prometheus/latest/querying/functions/#rate) function to your query to visualize the rate of requests per second. Enter the following in the query editor and then press Shift + Enter.
 
    ```
    rate(tns_request_duration_seconds_count[5m])
@@ -186,9 +186,10 @@ Loki is now available as a data source in Grafana.
 
 Grafana Explore not only lets you make ad-hoc queries for metrics, but lets you explore your logs as well.
 
-1. In the sidebar, click the **Explore** (compass) icon.
+1. Click the menu icon and, in the sidebar, click **Explore**.
 1. In the data source list at the top, select the **Loki** data source.
-1. In the **Query editor**, enter:
+1. Confirm that you're in code mode by checking the **Builder/Code** toggle at the top right corner of the query panel.
+1. Enter the following in the query editor, and then press Shift + Enter:
 
    ```
    {filename="/var/log/tns-app.log"}
@@ -259,6 +260,7 @@ Add a region annotation:
 1. Press Ctrl (or Cmd on macOS), then click and drag across the graph to select an area.
 1. In **Description**, enter **Performed load tests**.
 1. In **Tags**, enter **testing**.
+1. Click **Save**.
 
 Manually annotating your dashboard is fine for those single events. For regularly occurring events, such as deploying a new release, Grafana supports querying annotations from one of your data sources. Let's create an annotation using the Loki data source we added earlier.
 
@@ -292,14 +294,14 @@ Grafana's new alerting platform debuted with Grafana 8. A year later, with Grafa
 
 The most basic alert consists of two parts:
 
-1. A _Contact Point_ - A Contact point defines how Grafana delivers an alert. When the conditions of an _alert rule_ are met, Grafana notifies the contact points, or channels, configured for that alert. Some popular channels include email, webhooks, Slack notifications, and PagerDuty notifications.
+1. A _Contact point_ - A Contact point defines how Grafana delivers an alert. When the conditions of an _alert rule_ are met, Grafana notifies the contact points, or channels, configured for that alert. Some popular channels include email, webhooks, Slack notifications, and PagerDuty notifications.
 1. An _Alert rule_ - An Alert rule defines one or more _conditions_ that Grafana regularly evaluates. When these evaluations meet the rule's criteria, the alert is triggered.
 
-To begin, let's set up a webhook Contact Point. Once we have a usable endpoint, we'll write an alert rule and trigger a notification.
+To begin, let's set up a webhook contact point. Once we have a usable endpoint, we'll write an alert rule and trigger a notification.
 
-### Create a Contact Point for Grafana Managed Alerts
+### Create a contact point for Grafana Managed Alerts
 
-In this step, we'll set up a new Contact Point. This contact point will use the _webhooks_ channel. In order to make this work, we also need an endpoint for our webhook channel to receive the alert. We will use [requestbin.com](https://requestbin.com) to quickly set up that test endpoint. This way we can make sure that our alert is actually sending a notification somewhere.
+In this step, we'll set up a new contact point. This contact point will use the _webhooks_ channel. In order to make this work, we also need an endpoint for our webhook channel to receive the alert. We will use [requestbin.com](https://requestbin.com) to quickly set up that test endpoint. This way we can make sure that our alert is actually sending a notification somewhere.
 
 1. Browse to [requestbin.com](https://requestbin.com).
 1. Under the **Create Request Bin** button, click the **public bin** link.
