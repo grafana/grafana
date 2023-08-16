@@ -248,8 +248,8 @@ func (s *FakePluginStorage) Extract(ctx context.Context, pluginID string, dirNam
 }
 
 type FakeProcessManager struct {
-	StartFunc func(_ context.Context, pluginID string) error
-	StopFunc  func(_ context.Context, pluginID string) error
+	StartFunc func(_ context.Context, p *plugins.Plugin) error
+	StopFunc  func(_ context.Context, p *plugins.Plugin) error
 	Started   map[string]int
 	Stopped   map[string]int
 }
@@ -261,18 +261,18 @@ func NewFakeProcessManager() *FakeProcessManager {
 	}
 }
 
-func (m *FakeProcessManager) Start(ctx context.Context, pluginID string) error {
-	m.Started[pluginID]++
+func (m *FakeProcessManager) Start(ctx context.Context, p *plugins.Plugin) error {
+	m.Started[p.ID]++
 	if m.StartFunc != nil {
-		return m.StartFunc(ctx, pluginID)
+		return m.StartFunc(ctx, p)
 	}
 	return nil
 }
 
-func (m *FakeProcessManager) Stop(ctx context.Context, pluginID string) error {
-	m.Stopped[pluginID]++
+func (m *FakeProcessManager) Stop(ctx context.Context, p *plugins.Plugin) error {
+	m.Stopped[p.ID]++
 	if m.StopFunc != nil {
-		return m.StopFunc(ctx, pluginID)
+		return m.StopFunc(ctx, p)
 	}
 	return nil
 }
@@ -517,4 +517,69 @@ func (f *FakeTerminator) Terminate(ctx context.Context, pluginID string) error {
 		return f.TerminateFunc(ctx, pluginID)
 	}
 	return nil
+}
+
+type FakeBackendPlugin struct {
+	Managed bool
+
+	StartCount     int
+	StopCount      int
+	Decommissioned bool
+	Running        bool
+
+	mutex sync.RWMutex
+	backendplugin.Plugin
+}
+
+func NewFakeBackendPlugin(managed bool) *FakeBackendPlugin {
+	return &FakeBackendPlugin{
+		Managed: managed,
+	}
+}
+
+func (p *FakeBackendPlugin) Start(_ context.Context) error {
+	p.mutex.Lock()
+	defer p.mutex.Unlock()
+	p.Running = true
+	p.StartCount++
+	return nil
+}
+
+func (p *FakeBackendPlugin) Stop(_ context.Context) error {
+	p.mutex.Lock()
+	defer p.mutex.Unlock()
+	p.Running = false
+	p.StopCount++
+	return nil
+}
+
+func (p *FakeBackendPlugin) Decommission() error {
+	p.mutex.Lock()
+	defer p.mutex.Unlock()
+	p.Decommissioned = true
+	return nil
+}
+
+func (p *FakeBackendPlugin) IsDecommissioned() bool {
+	p.mutex.RLock()
+	defer p.mutex.RUnlock()
+	return p.Decommissioned
+}
+
+func (p *FakeBackendPlugin) IsManaged() bool {
+	p.mutex.RLock()
+	defer p.mutex.RUnlock()
+	return p.Managed
+}
+
+func (p *FakeBackendPlugin) Exited() bool {
+	p.mutex.RLock()
+	defer p.mutex.RUnlock()
+	return !p.Running
+}
+
+func (p *FakeBackendPlugin) Kill() {
+	p.mutex.Lock()
+	defer p.mutex.Unlock()
+	p.Running = false
 }
