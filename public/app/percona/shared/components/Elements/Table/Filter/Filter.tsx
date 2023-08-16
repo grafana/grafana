@@ -167,7 +167,14 @@ export const Filter = ({ columns, rawData, setFilteredData, hasBackendFiltering 
               )}
             </div>
           )}
-          {!hasBackendFiltering && <FormSpy onChange={(state) => onFormChange(state.values)}></FormSpy>}
+          {!hasBackendFiltering && (
+            <FormSpy
+              subscription={{
+                values: true,
+              }}
+              onChange={(state) => onFormChange(state.values)}
+            ></FormSpy>
+          )}
         </form>
       )}
     />

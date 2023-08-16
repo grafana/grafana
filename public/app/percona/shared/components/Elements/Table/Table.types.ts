@@ -34,6 +34,7 @@ export type ExtendedColumn<D extends object = {}> = Column<D> & {
   label?: string;
   noHiddenOverflow?: boolean;
   tooltipInfo?: PopoverContent;
+  hidden?: boolean;
 };
 
 export enum FilterFieldTypes {

@@ -2,7 +2,9 @@ export const Messages = {
   services: {
     add: 'Add Service',
     columns: {
+      nodeId: 'Node ID',
       status: 'Status',
+      serviceId: 'Service ID',
       serviceName: 'Service Name',
       nodeName: 'Node Name',
       monitoring: 'Monitoring',
@@ -51,6 +53,7 @@ export const Messages = {
     forceConfirmation: 'Force mode is going to delete all agents and services associated with the nodes',
     emptyTable: 'No nodes available',
     noServices: 'No services',
+    servicesCount: (count: number) => `${count} services`,
     columns: {
       nodeName: 'Node Name',
       nodeId: 'Node ID',

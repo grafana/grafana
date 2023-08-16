@@ -63,6 +63,7 @@ export const Table: FC<TableProps> = ({
   const manualPagination = !!(totalPages && totalPages >= 0);
   const initialState: Partial<PaginatedTableState> = {
     pageIndex: propPageIndex,
+    hiddenColumns: columns.filter((c) => c.hidden && c.id).map((c) => c.id!),
   };
   const tableOptions: PaginatedTableOptions = {
     columns,

@@ -4,7 +4,7 @@ import { Form } from 'react-final-form';
 import { Row } from 'react-table';
 
 import { AppEvents } from '@grafana/data';
-import { Badge, Button, HorizontalGroup, Icon, Modal, TagList, useStyles2 } from '@grafana/ui';
+import { Badge, Button, HorizontalGroup, Icon, Link, Modal, TagList, useStyles2 } from '@grafana/ui';
 import { OldPage } from 'app/core/components/Page/Page';
 import { Action } from 'app/percona/dbaas/components/MultipleActions';
 import { CheckboxField } from 'app/percona/shared/components/Elements/Checkbox';
@@ -33,7 +33,7 @@ import { FlattenNode, MonitoringStatus, Node } from '../Inventory.types';
 import { StatusBadge } from '../components/StatusBadge/StatusBadge';
 import { StatusLink } from '../components/StatusLink/StatusLink';
 
-import { stripNodeId } from './Nodes.utils';
+import { getServiceLink, stripNodeId } from './Nodes.utils';
 import { getBadgeColorForServiceStatus, getBadgeIconForServiceStatus } from './Services.utils';
 import { getStyles } from './Tabs.styles';
 
@@ -67,6 +67,13 @@ export const NodesTab = () => {
 
   const columns = useMemo(
     (): Array<ExtendedColumn<Node>> => [
+      {
+        Header: Messages.services.columns.nodeId,
+        id: 'nodeId',
+        accessor: 'nodeId',
+        hidden: true,
+        type: FilterFieldTypes.TEXT,
+      },
       {
         Header: Messages.services.columns.status,
         accessor: 'status',
@@ -145,12 +152,21 @@ export const NodesTab = () => {
           if (!value || value.length < 1) {
             return <div>{Messages.nodes.noServices}</div>;
           }
-          return <div>{value.length > 1 ? `${value.length} services` : value[0].serviceName}</div>;
+
+          if (value.length === 1) {
+            return (
+              <Link className={styles.link} href={getServiceLink(value[0].serviceId)}>
+                {value[0].serviceName}
+              </Link>
+            );
+          }
+
+          return <div>{Messages.nodes.servicesCount(value.length)}</div>;
         },
       },
       getExpandAndActionsCol(getActions),
     ],
-    [getActions]
+    [styles, getActions]
   );
 
   const loadData = useCallback(async () => {
@@ -189,7 +205,11 @@ export const NodesTab = () => {
           {row.original.services && row.original.services.length && (
             <DetailsRow.Contents title={Messages.nodes.details.serviceNames}>
               {row.original.services.map((service) => (
-                <div key={service.serviceId}>{service.serviceName}</div>
+                <div key={service.serviceId}>
+                  <Link className={styles.link} href={getServiceLink(service.serviceId)}>
+                    {service.serviceName}
+                  </Link>
+                </div>
               ))}
             </DetailsRow.Contents>
           )}
@@ -214,7 +234,7 @@ export const NodesTab = () => {
         </DetailsRow>
       );
     },
-    [styles.tagList]
+    [styles.tagList, styles.link]
   );
 
   const deletionMsg = useMemo(() => {

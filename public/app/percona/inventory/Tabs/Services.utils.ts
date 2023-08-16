@@ -2,7 +2,9 @@ import { BadgeColor, IconName } from '@grafana/ui';
 import { capitalizeText } from 'app/percona/shared/helpers/capitalizeText';
 import { DbAgent, ServiceStatus } from 'app/percona/shared/services/services/Services.types';
 
-import { MonitoringStatus, ServiceAgentStatus } from '../Inventory.types';
+import { FlattenService, MonitoringStatus, ServiceAgentStatus } from '../Inventory.types';
+
+import { stripNodeId } from './Nodes.utils';
 
 const SERVICE_STATUS_TO_BADGE_COLOR: Record<ServiceStatus, BadgeColor> = {
   [ServiceStatus.UP]: 'green',
@@ -46,4 +48,20 @@ export const getAgentsMonitoringStatus = (agents: DbAgent[]) => {
       agent.status === ServiceAgentStatus.RUNNING || agent.status === ServiceAgentStatus.STARTING || !!agent.isConnected
   );
   return allAgentsOk ? MonitoringStatus.OK : MonitoringStatus.FAILED;
+};
+
+export const stripServiceId = (serviceId: string) => {
+  const regex = /\/service_id\/(.*)/gm;
+  const match = regex.exec(serviceId);
+
+  if (match && match.length > 0) {
+    return match[1] || '';
+  }
+
+  return '';
+};
+
+export const getNodeLink = (service: FlattenService) => {
+  const nodeId = service.nodeId === 'pmm-server' ? 'pmm-server' : stripNodeId(service.nodeId);
+  return `/inventory/nodes?search-text-input=${nodeId}&search-select=nodeId`;
 };

@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
-export const getStyles = ({ spacing }: GrafanaTheme2) => ({
+export const getStyles = ({ colors, spacing }: GrafanaTheme2) => ({
   detailsWrapper: css`
     display: flex;
     flex-direction: column;
@@ -52,5 +52,8 @@ export const getStyles = ({ spacing }: GrafanaTheme2) => ({
   `,
   goBack: css`
     vertical-align: middle;
+  `,
+  link: css`
+    color: ${colors.text.link};
   `,
 });
