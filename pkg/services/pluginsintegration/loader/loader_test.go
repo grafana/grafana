@@ -30,7 +30,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-var compareOpts = []cmp.Option{cmpopts.IgnoreFields(plugins.Plugin{}, "client", "log"), fsComparer}
+var compareOpts = []cmp.Option{cmpopts.IgnoreFields(plugins.Plugin{}, "client", "log", "mu"), fsComparer}
 
 var fsComparer = cmp.Comparer(func(fs1 plugins.FS, fs2 plugins.FS) bool {
 	fs1Files, err := fs1.Files()
@@ -1311,7 +1311,7 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 	})
 }
 
-func newLoader(t *testing.T, cfg *config.Cfg, reg registry.Service, proc process.Service,
+func newLoader(t *testing.T, cfg *config.Cfg, reg registry.Service, proc process.Manager,
 	backendFactory plugins.BackendFactoryProvider, sigErrTracker pluginerrs.SignatureErrorTracker) *Loader {
 	assets := assetpath.ProvideService(pluginscdn.ProvideService(cfg))
 	lic := fakes.NewFakeLicensingService()

@@ -3604,13 +3604,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/aws-sdk@npm:0.0.47":
-  version: 0.0.47
-  resolution: "@grafana/aws-sdk@npm:0.0.47"
+"@grafana/aws-sdk@npm:0.1.1":
+  version: 0.1.1
+  resolution: "@grafana/aws-sdk@npm:0.1.1"
   dependencies:
     "@grafana/async-query-data": 0.1.4
     "@grafana/experimental": 1.1.0
-  checksum: 1e9f57bddf08f0c0b432bb8bdd5ad63382c2d40e9d8282469e3add0ea970a80bcd31e852f050412e0d41620d71e53839510261f92333d026bf79a88d7346c626
+  checksum: 12d1b27b0959a4d16ddf643b360ce067f6debd4141eb28652ff36fece98a99087f865aa2b9f6fda78df2b9e38870a6a7cfa48e0fd1a1ec03de63bc340b344f05
   languageName: node
   linkType: hard
 
@@ -19268,7 +19268,7 @@ __metadata:
     "@emotion/eslint-plugin": 11.11.0
     "@emotion/react": 11.11.1
     "@glideapps/glide-data-grid": ^5.2.1
-    "@grafana/aws-sdk": 0.0.47
+    "@grafana/aws-sdk": 0.1.1
     "@grafana/data": "workspace:*"
     "@grafana/e2e": "workspace:*"
     "@grafana/e2e-selectors": "workspace:*"
