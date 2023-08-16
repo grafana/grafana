@@ -2,7 +2,7 @@
   <!-- global variables -->
   <mj-include path="./partials/_globals.mjml" />
   <!-- css styling -->
-  <mj-include path="./partials/layout/theme.css" type="css" />
+  <mj-include path="./partials/layout/theme.css" type="css" css-inline="inline" />
   <mj-head>
     <!-- ⬇ Don't forget to specifify an email subject! Use the HTML comment below ⬇ -->
     <mj-title>
