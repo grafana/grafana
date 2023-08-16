@@ -73,7 +73,7 @@ export const GrafanaReceiverForm = ({ existing, alertManagerSourceName, config }
   }, [existing, isLoadingNotifiers, grafanaNotifiers, extendOnCalReceivers, isLoadingOnCallIntegration]);
 
   const onSubmit = async (values: ReceiverFormValues<GrafanaChannelValues>) => {
-    const newReceiver = formValuesToGrafanaReceiver(values, id2original, defaultChannelValues);
+    const newReceiver = formValuesToGrafanaReceiver(values, id2original, defaultChannelValues, grafanaNotifiers);
     const receiverWithOnCall = await createOnCallIntegrations(newReceiver);
 
     const newConfig = updateConfigWithReceiver(config, receiverWithOnCall, existing?.name);

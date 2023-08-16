@@ -69,14 +69,22 @@ func (b *Bootstrap) Bootstrap(ctx context.Context, src plugins.PluginSource, fou
 		return ps, nil
 	}
 
+	bootstrappedPlugins := make([]*plugins.Plugin, 0, len(ps))
 	for _, p := range ps {
-		for _, decorator := range b.decorateSteps {
-			p, err = decorator(ctx, p)
+		var ip *plugins.Plugin
+		stepFailed := false
+		for _, decorate := range b.decorateSteps {
+			ip, err = decorate(ctx, p)
 			if err != nil {
-				return nil, err
+				stepFailed = true
+				b.log.Error("Could not decorate plugin", "pluginId", p.ID, "error", err)
+				break
 			}
+		}
+		if !stepFailed {
+			bootstrappedPlugins = append(bootstrappedPlugins, ip)
 		}
 	}
 
-	return ps, nil
+	return bootstrappedPlugins, nil
 }
