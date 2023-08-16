@@ -130,7 +130,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     position: relative;
   `,
   footerSectionStyles: css`
-    padding: ${theme.spacing(2)};
+    padding: ${theme.spacing(1)};
     background-color: ${theme.colors.background.primary};
     position: sticky;
     bottom: -24px; /* offset the padding on modal */
@@ -139,6 +139,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
   selector: css`
     font-family: ${theme.typography.fontFamilyMonospace};
     margin-bottom: ${theme.spacing(1)};
+    overflow: scroll;
+    width: 100%;
   `,
   status: css`
     margin-bottom: ${theme.spacing(1)};
@@ -148,8 +150,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
     text-overflow: ellipsis;
     transition: opacity 100ms linear;
     opacity: 0;
-    font-size: ${theme.typography.pxToRem(12)};
-    height: calc(${theme.typography.pxToRem(12)} + 10px);
+    font-size: ${theme.typography.bodySmall.fontSize};
+    height: calc(${theme.typography.bodySmall.fontSize} + 10px);
   `,
   statusShowing: css`
     opacity: 1;
