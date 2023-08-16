@@ -42,16 +42,20 @@ export function NavToolbar({
 
   return (
     <div data-testid={Components.NavToolbar.container} className={styles.pageToolbar}>
-      <div className={styles.menuButton}>
-        <IconButton
-          name="bars"
-          tooltip={t('navigation.toolbar.toggle-menu', 'Toggle menu')}
-          tooltipPlacement="bottom"
-          size="xl"
-          onClick={onToggleMegaMenu}
-        />
-      </div>
-      <Breadcrumbs breadcrumbs={breadcrumbs} className={styles.breadcrumbsWrapper} />
+      {state.kioskMode !== KioskMode.Embed && (
+        <>
+          <div className={styles.menuButton}>
+            <IconButton
+              name="bars"
+              tooltip={t('navigation.toolbar.toggle-menu', 'Toggle menu')}
+              tooltipPlacement="bottom"
+              size="xl"
+              onClick={onToggleMegaMenu}
+            />
+          </div>
+          <Breadcrumbs breadcrumbs={breadcrumbs} className={styles.breadcrumbsWrapper} />
+        </>
+      )}
       <div className={styles.actions}>
         {actions}
         {state.kioskMode !== KioskMode.Embed && (
