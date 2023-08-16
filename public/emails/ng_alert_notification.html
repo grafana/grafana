@@ -115,43 +115,6 @@
 
   </style>
   <style type="text/css">
-    .canvas {
-      background-color: transparent;
-    }
-
-    .background {
-      background-color: #FFF;
-      border: 1px solid #e4e5e6;
-    }
-
-    .border-bottom {
-      border-bottom: 1px solid #e4e5e6;
-    }
-
-    .border-top {
-      border-top: 1px solid #e4e5e6;
-    }
-
-    .well {
-      background-color: #F4F5F5;
-      border: 1px solid #e4e5e6;
-    }
-
-    .txt div,
-    .token div {
-      color: #24292e;
-    }
-
-    .txt tbody tr td {
-      color: #24292e;
-    }
-
-    .token {
-      background-color: #F4F5F5;
-      border: 1px solid #e4e5e6;
-      padding: 10px 25px;
-    }
-
   </style>
   {{ $numberOfFiringInstance := (len .Alerts.Firing) }}
   {{ $numberOfResolvedAlerts := (len .Alerts.Resolved) }}
@@ -179,7 +142,7 @@
       {{ end }}
     </mj-raw>
   </div>
-  <div class="canvas" style>
+  <div class="canvas" style="background-color: transparent;">
     {{ __dangerouslyInjectHTML `<!--[if mso | IE]><table align="center" border="0" cellpadding="0" cellspacing="0" class="" role="presentation" style="width:600px;" width="600" ><tr><td style="line-height:0px;font-size:0px;mso-line-height-rule:exactly;"><![endif]-->` }}
     <div style="margin:0px auto;max-width:600px;">
       <table align="center" border="0" cellpadding="0" cellspacing="0" role="presentation" style="width:100%;">
@@ -225,7 +188,7 @@
                     {{ if eq (.GroupLabels.SortedPairs.Names | join ",") "alertname,grafana_folder" }}
                     <tr>
                       <td align="left" class="txt" style="font-size:0px;padding:0;word-break:break-word;">
-                        <div style="font-family:Inter, Helvetica, Arial;font-size:13px;line-height:150%;text-align:left;color:#000000;">
+                        <div style="font-family: Inter, Helvetica, Arial; font-size: 13px; line-height: 150%; text-align: left; color: #000000;">
                           <h2>📁 {{ .GroupLabels.grafana_folder }} &rsaquo; {{ .GroupLabels.alertname }}</h2>
                         </div>
                       </td>
@@ -233,7 +196,7 @@
                     {{ else }}
                     <tr>
                       <td align="left" class="txt" style="font-size:0px;padding:0;word-break:break-word;">
-                        <div style="font-family:Inter, Helvetica, Arial;font-size:13px;line-height:150%;text-align:left;color:#000000;">
+                        <div style="font-family: Inter, Helvetica, Arial; font-size: 13px; line-height: 150%; text-align: left; color: #000000;">
                           <h2> 📁 Grouped by&nbsp; </h2>
                           <mj-raw>
                             {{ range .GroupLabels.SortedPairs }}
@@ -258,7 +221,7 @@
     {{ __dangerouslyInjectHTML `<!--[if mso | IE]></td></tr></table><![endif]-->` }}
     {{ if .Message }}
     {{ __dangerouslyInjectHTML `<!--[if mso | IE]><table align="center" border="0" cellpadding="0" cellspacing="0" class="background-outlook" role="presentation" style="width:600px;" width="600" ><tr><td style="line-height:0px;font-size:0px;mso-line-height-rule:exactly;"><![endif]-->` }}
-    <div class="background" style="margin:0px auto;max-width:600px;">
+    <div class="background" style="background-color: #FFF; border: 1px solid #e4e5e6; margin: 0px auto; max-width: 600px;">
       <table align="center" border="0" cellpadding="0" cellspacing="0" role="presentation" style="width:100%;">
         <tbody>
           <tr>
@@ -275,7 +238,7 @@
                             <tbody>
                               <tr>
                                 <td align="left" class="txt" style="font-size:0px;padding:10px 25px;word-break:break-word;">
-                                  <div style="font-family:Inter, Helvetica, Arial;font-size:13px;line-height:150%;text-align:left;color:#000000;">
+                                  <div style="font-family: Inter, Helvetica, Arial; font-size: 13px; line-height: 150%; text-align: left; color: #000000;">
                                     <mj-raw>
                                       {{ range $line := (splitList "\n" .Message) }}
                                     </mj-raw>
@@ -315,7 +278,7 @@
                   <tbody>
                     <tr>
                       <td align="left" class="txt" style="font-size:0px;padding:0;word-break:break-word;">
-                        <div style="font-family:Inter, Helvetica, Arial;font-size:13px;line-height:150%;text-align:left;color:#000000;">
+                        <div style="font-family: Inter, Helvetica, Arial; font-size: 13px; line-height: 150%; text-align: left; color: #000000;">
                           <h3>🔥 {{ .Alerts.Firing | len }} firing instances</h3>
                         </div>
                       </td>
@@ -332,13 +295,13 @@
     {{ __dangerouslyInjectHTML `<!--[if mso | IE]></td></tr></table><![endif]-->` }}
     {{ range .Alerts.Firing }}
     {{ __dangerouslyInjectHTML `<!--[if mso | IE]><table align="center" border="0" cellpadding="0" cellspacing="0" class="background-outlook" role="presentation" style="width:600px;" width="600" ><tr><td style="line-height:0px;font-size:0px;mso-line-height-rule:exactly;"><![endif]-->` }}
-    <div class="background" style="margin:0px auto;max-width:600px;">
+    <div class="background" style="background-color: #FFF; border: 1px solid #e4e5e6; margin: 0px auto; max-width: 600px;">
       <table align="center" border="0" cellpadding="0" cellspacing="0" role="presentation" style="width:100%;">
         <tbody>
           <tr>
             <td style="direction:ltr;font-size:0px;padding:0;text-align:center;">
               {{ __dangerouslyInjectHTML `<!--[if mso | IE]><table role="presentation" border="0" cellpadding="0" cellspacing="0"><tr><td class="border-bottom-outlook" width="600px" ><table align="center" border="0" cellpadding="0" cellspacing="0" class="border-bottom-outlook" role="presentation" style="width:600px;" width="600" ><tr><td style="line-height:0px;font-size:0px;mso-line-height-rule:exactly;"><![endif]-->` }}
-              <div class="border-bottom" style="margin:0px auto;max-width:600px;">
+              <div class="border-bottom" style="border-bottom: 1px solid #e4e5e6; margin: 0px auto; max-width: 600px;">
                 <table align="center" border="0" cellpadding="0" cellspacing="0" role="presentation" style="width:100%;">
                   <tbody>
                     <tr>
@@ -369,7 +332,7 @@
                             <tbody>
                               <tr>
                                 <td align="center" class="txt" style="font-size:0px;padding:0;word-break:break-word;">
-                                  <div style="font-family:Inter, Helvetica, Arial;font-size:13px;line-height:150%;text-align:center;color:#000000;"><strong>{{ .Labels.alertname }}</strong></div>
+                                  <div style="font-family: Inter, Helvetica, Arial; font-size: 13px; line-height: 150%; text-align: center; color: #000000;"><strong>{{ .Labels.alertname }}</strong></div>
                                 </td>
                               </tr>
                             </tbody>
@@ -414,7 +377,7 @@
                     <tr>
                       <td style="direction:ltr;font-size:0px;padding:0;text-align:center;">
                         {{ __dangerouslyInjectHTML `<!--[if mso | IE]><table role="presentation" border="0" cellpadding="0" cellspacing="0"><tr><td class="border-bottom-outlook" style="vertical-align:top;width:600px;" ><![endif]-->` }}
-                        <div class="mj-column-per-100 mj-outlook-group-fix border-bottom" style="font-size:0px;text-align:left;direction:ltr;display:inline-block;vertical-align:top;width:100%;">
+                        <div class="mj-column-per-100 mj-outlook-group-fix border-bottom" style="border-bottom: 1px solid #e4e5e6; font-size: 0px; text-align: left; direction: ltr; display: inline-block; vertical-align: top; width: 100%;">
                           <table border="0" cellpadding="0" cellspacing="0" role="presentation" style="vertical-align:top;" width="100%">
                             <tbody>
                               <tr>
@@ -450,7 +413,7 @@
                     <tr>
                       <td style="direction:ltr;font-size:0px;padding:0;text-align:center;">
                         {{ __dangerouslyInjectHTML `<!--[if mso | IE]><table role="presentation" border="0" cellpadding="0" cellspacing="0"><tr><td class="border-bottom-outlook" style="vertical-align:top;width:600px;" ><![endif]-->` }}
-                        <div class="mj-column-per-100 mj-outlook-group-fix border-bottom" style="font-size:0px;text-align:left;direction:ltr;display:inline-block;vertical-align:top;width:100%;">
+                        <div class="mj-column-per-100 mj-outlook-group-fix border-bottom" style="border-bottom: 1px solid #e4e5e6; font-size: 0px; text-align: left; direction: ltr; display: inline-block; vertical-align: top; width: 100%;">
                           <table border="0" cellpadding="0" cellspacing="0" role="presentation" style="vertical-align:top;" width="100%">
                             <tbody>
                               <tr>
@@ -490,23 +453,23 @@
                               {{ if .Annotations.summary }}
                               <tr>
                                 <td align="left" class="txt" style="font-size:0px;padding:10px 25px;word-break:break-word;">
-                                  <div style="font-family:Inter, Helvetica, Arial;font-size:13px;line-height:150%;text-align:left;color:#000000;"><strong>Summary</strong></div>
+                                  <div style="font-family: Inter, Helvetica, Arial; font-size: 13px; line-height: 150%; text-align: left; color: #000000;"><strong>Summary</strong></div>
                                 </td>
                               </tr>
                               <tr>
                                 <td align="left" class="txt" style="font-size:0px;padding:10px 25px;word-break:break-word;">
-                                  <div style="font-family:Inter, Helvetica, Arial;font-size:13px;line-height:150%;text-align:left;color:#000000;">{{- .Annotations.summary -}}</div>
+                                  <div style="font-family: Inter, Helvetica, Arial; font-size: 13px; line-height: 150%; text-align: left; color: #000000;">{{- .Annotations.summary -}}</div>
                                 </td>
                               </tr>
                               {{ end }}{{ if .Annotations.description }}
                               <tr>
                                 <td align="left" class="txt" style="font-size:0px;padding:10px 25px;word-break:break-word;">
-                                  <div style="font-family:Inter, Helvetica, Arial;font-size:13px;line-height:150%;text-align:left;color:#000000;"><strong>Description</strong></div>
+                                  <div style="font-family: Inter, Helvetica, Arial; font-size: 13px; line-height: 150%; text-align: left; color: #000000;"><strong>Description</strong></div>
                                 </td>
                               </tr>
                               <tr>
                                 <td align="left" class="txt" style="font-size:0px;padding:10px 25px;word-break:break-word;">
-                                  <div style="font-family:Inter, Helvetica, Arial;font-size:13px;line-height:150%;text-align:left;color:#000000;">
+                                  <div style="font-family: Inter, Helvetica, Arial; font-size: 13px; line-height: 150%; text-align: left; color: #000000;">
                                     <mj-raw>{{ range $line := (splitList "\n" .Annotations.description) }}</mj-raw>
                                     {{ $line }}<br>
                                     <mj-raw>{{ end }}</mj-raw>
@@ -537,7 +500,7 @@
                             <tbody>
                               <tr>
                                 <td align="left" class="txt" style="font-size:0px;padding:10px 25px;word-break:break-word;">
-                                  <div style="font-family:Inter, Helvetica, Arial;font-size:13px;line-height:150%;text-align:left;color:#000000;"><strong>Values</strong></div>
+                                  <div style="font-family: Inter, Helvetica, Arial; font-size: 13px; line-height: 150%; text-align: left; color: #000000;"><strong>Values</strong></div>
                                 </td>
                               </tr>
                             </tbody>
@@ -556,7 +519,7 @@
                     <tr>
                       <td style="direction:ltr;font-size:0px;padding:0 25px;text-align:left;">
                         {{ __dangerouslyInjectHTML `<!--[if mso | IE]><table role="presentation" border="0" cellpadding="0" cellspacing="0"><tr><td class="well-outlook" style="vertical-align:top;width:550px;" ><![endif]-->` }}
-                        <div class="mj-column-per-100 mj-outlook-group-fix well" style="font-size:0px;text-align:left;direction:ltr;display:inline-block;vertical-align:top;width:100%;">
+                        <div class="mj-column-per-100 mj-outlook-group-fix well" style="background-color: #F4F5F5; border: 1px solid #e4e5e6; font-size: 0px; text-align: left; direction: ltr; display: inline-block; vertical-align: top; width: 100%;">
                           <table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%">
                             <tbody>
                               <tr>
@@ -565,7 +528,7 @@
                                     <tbody>
                                       <tr>
                                         <td align="left" class="txt" style="font-size:0px;padding:10px 25px;word-break:break-word;">
-                                          <div style="font-family:Inter, Helvetica, Arial;font-size:13px;line-height:150%;text-align:left;color:#000000;">
+                                          <div style="font-family: Inter, Helvetica, Arial; font-size: 13px; line-height: 150%; text-align: left; color: #000000;">
                                             <mj-raw>{{ range $refID, $value := .Values }}</mj-raw>
                                             {{ $refID }}={{ $value }}&nbsp; <mj-raw>{{ end }}</mj-raw>
                                           </div>
@@ -599,7 +562,7 @@
                               {{ if .Labels.SortedPairs }}
                               <tr>
                                 <td align="left" class="txt" style="font-size:0px;padding:10px 25px;word-break:break-word;">
-                                  <div style="font-family:Inter, Helvetica, Arial;font-size:13px;line-height:150%;text-align:left;color:#000000;"><strong>Labels</strong></div>
+                                  <div style="font-family: Inter, Helvetica, Arial; font-size: 13px; line-height: 150%; text-align: left; color: #000000;"><strong>Labels</strong></div>
                                 </td>
                               </tr>
                               <tr>
@@ -619,7 +582,7 @@
                               {{ end }}{{ if (without .Annotations.SortedPairs.Names "description" "summary") }}
                               <tr>
                                 <td align="left" class="txt" style="font-size:0px;padding:10px 25px;word-break:break-word;">
-                                  <div style="font-family:Inter, Helvetica, Arial;font-size:13px;line-height:150%;text-align:left;color:#000000;"><strong>Annotations</strong></div>
+                                  <div style="font-family: Inter, Helvetica, Arial; font-size: 13px; line-height: 150%; text-align: left; color: #000000;"><strong>Annotations</strong></div>
                                 </td>
                               </tr>
                               <tr>
@@ -649,7 +612,7 @@
                 </table>
               </div>
               {{ __dangerouslyInjectHTML `<!--[if mso | IE]></td></tr></table></td></tr><tr><td class="border-top-outlook" width="600px" ><table align="center" border="0" cellpadding="0" cellspacing="0" class="border-top-outlook" role="presentation" style="width:600px;" width="600" ><tr><td style="line-height:0px;font-size:0px;mso-line-height-rule:exactly;"><![endif]-->` }}
-              <div class="border-top" style="margin:0px auto;max-width:600px;">
+              <div class="border-top" style="border-top: 1px solid #e4e5e6; margin: 0px auto; max-width: 600px;">
                 <table align="center" border="0" cellpadding="0" cellspacing="0" role="presentation" style="width:100%;">
                   <tbody>
                     <tr>
@@ -751,7 +714,7 @@
                 </table>
               </div>
               {{ __dangerouslyInjectHTML `<!--[if mso | IE]></td></tr></table></td></tr><tr><td class="border-top-outlook" width="600px" ><table align="center" border="0" cellpadding="0" cellspacing="0" class="border-top-outlook" role="presentation" style="width:600px;" width="600" ><tr><td style="line-height:0px;font-size:0px;mso-line-height-rule:exactly;"><![endif]-->` }}
-              <div class="border-top" style="margin:0px auto;max-width:600px;">
+              <div class="border-top" style="border-top: 1px solid #e4e5e6; margin: 0px auto; max-width: 600px;">
                 <table align="center" border="0" cellpadding="0" cellspacing="0" role="presentation" style="width:100%;">
                   <tbody>
                     <tr>
@@ -762,7 +725,7 @@
                             <tbody>
                               <tr>
                                 <td align="left" class="txt" style="font-size:0px;padding:10px 25px;word-break:break-word;">
-                                  <div style="font-family:Inter, Helvetica, Arial;font-size:13px;line-height:150%;text-align:left;color:#91929e;">Observed <strong>{{ ago .StartsAt }}</strong> before this notification was delivered, at <strong>{{ .StartsAt }}</strong></div>
+                                  <div style="font-family: Inter, Helvetica, Arial; font-size: 13px; line-height: 150%; text-align: left; color: #91929e;">Observed <strong>{{ ago .StartsAt }}</strong> before this notification was delivered, at <strong>{{ .StartsAt }}</strong></div>
                                 </td>
                               </tr>
                             </tbody>
@@ -806,7 +769,7 @@
                   <tbody>
                     <tr>
                       <td align="left" class="txt" style="font-size:0px;padding:0;word-break:break-word;">
-                        <div style="font-family:Inter, Helvetica, Arial;font-size:13px;line-height:150%;text-align:left;color:#000000;">
+                        <div style="font-family: Inter, Helvetica, Arial; font-size: 13px; line-height: 150%; text-align: left; color: #000000;">
                           <h3>✅ {{ .Alerts.Resolved | len }} resolved instances</h3>
                         </div>
                       </td>
@@ -823,13 +786,13 @@
     {{ __dangerouslyInjectHTML `<!--[if mso | IE]></td></tr></table><![endif]-->` }}
     {{ range .Alerts.Resolved }}
     {{ __dangerouslyInjectHTML `<!--[if mso | IE]><table align="center" border="0" cellpadding="0" cellspacing="0" class="background-outlook" role="presentation" style="width:600px;" width="600" ><tr><td style="line-height:0px;font-size:0px;mso-line-height-rule:exactly;"><![endif]-->` }}
-    <div class="background" style="margin:0px auto;max-width:600px;">
+    <div class="background" style="background-color: #FFF; border: 1px solid #e4e5e6; margin: 0px auto; max-width: 600px;">
       <table align="center" border="0" cellpadding="0" cellspacing="0" role="presentation" style="width:100%;">
         <tbody>
           <tr>
             <td style="direction:ltr;font-size:0px;padding:0;text-align:center;">
               {{ __dangerouslyInjectHTML `<!--[if mso | IE]><table role="presentation" border="0" cellpadding="0" cellspacing="0"><tr><td class="border-bottom-outlook" width="600px" ><table align="center" border="0" cellpadding="0" cellspacing="0" class="border-bottom-outlook" role="presentation" style="width:600px;" width="600" ><tr><td style="line-height:0px;font-size:0px;mso-line-height-rule:exactly;"><![endif]-->` }}
-              <div class="border-bottom" style="margin:0px auto;max-width:600px;">
+              <div class="border-bottom" style="border-bottom: 1px solid #e4e5e6; margin: 0px auto; max-width: 600px;">
                 <table align="center" border="0" cellpadding="0" cellspacing="0" role="presentation" style="width:100%;">
                   <tbody>
                     <tr>
@@ -860,7 +823,7 @@
                             <tbody>
                               <tr>
                                 <td align="center" class="txt" style="font-size:0px;padding:0;word-break:break-word;">
-                                  <div style="font-family:Inter, Helvetica, Arial;font-size:13px;line-height:150%;text-align:center;color:#000000;"><strong>{{ .Labels.alertname }}</strong></div>
+                                  <div style="font-family: Inter, Helvetica, Arial; font-size: 13px; line-height: 150%; text-align: center; color: #000000;"><strong>{{ .Labels.alertname }}</strong></div>
                                 </td>
                               </tr>
                             </tbody>
@@ -905,7 +868,7 @@
                     <tr>
                       <td style="direction:ltr;font-size:0px;padding:0;text-align:center;">
                         {{ __dangerouslyInjectHTML `<!--[if mso | IE]><table role="presentation" border="0" cellpadding="0" cellspacing="0"><tr><td class="border-bottom-outlook" style="vertical-align:top;width:600px;" ><![endif]-->` }}
-                        <div class="mj-column-per-100 mj-outlook-group-fix border-bottom" style="font-size:0px;text-align:left;direction:ltr;display:inline-block;vertical-align:top;width:100%;">
+                        <div class="mj-column-per-100 mj-outlook-group-fix border-bottom" style="border-bottom: 1px solid #e4e5e6; font-size: 0px; text-align: left; direction: ltr; display: inline-block; vertical-align: top; width: 100%;">
                           <table border="0" cellpadding="0" cellspacing="0" role="presentation" style="vertical-align:top;" width="100%">
                             <tbody>
                               <tr>
@@ -941,7 +904,7 @@
                     <tr>
                       <td style="direction:ltr;font-size:0px;padding:0;text-align:center;">
                         {{ __dangerouslyInjectHTML `<!--[if mso | IE]><table role="presentation" border="0" cellpadding="0" cellspacing="0"><tr><td class="border-bottom-outlook" style="vertical-align:top;width:600px;" ><![endif]-->` }}
-                        <div class="mj-column-per-100 mj-outlook-group-fix border-bottom" style="font-size:0px;text-align:left;direction:ltr;display:inline-block;vertical-align:top;width:100%;">
+                        <div class="mj-column-per-100 mj-outlook-group-fix border-bottom" style="border-bottom: 1px solid #e4e5e6; font-size: 0px; text-align: left; direction: ltr; display: inline-block; vertical-align: top; width: 100%;">
                           <table border="0" cellpadding="0" cellspacing="0" role="presentation" style="vertical-align:top;" width="100%">
                             <tbody>
                               <tr>
@@ -981,23 +944,23 @@
                               {{ if .Annotations.summary }}
                               <tr>
                                 <td align="left" class="txt" style="font-size:0px;padding:10px 25px;word-break:break-word;">
-                                  <div style="font-family:Inter, Helvetica, Arial;font-size:13px;line-height:150%;text-align:left;color:#000000;"><strong>Summary</strong></div>
+                                  <div style="font-family: Inter, Helvetica, Arial; font-size: 13px; line-height: 150%; text-align: left; color: #000000;"><strong>Summary</strong></div>
                                 </td>
                               </tr>
                               <tr>
                                 <td align="left" class="txt" style="font-size:0px;padding:10px 25px;word-break:break-word;">
-                                  <div style="font-family:Inter, Helvetica, Arial;font-size:13px;line-height:150%;text-align:left;color:#000000;">{{- .Annotations.summary -}}</div>
+                                  <div style="font-family: Inter, Helvetica, Arial; font-size: 13px; line-height: 150%; text-align: left; color: #000000;">{{- .Annotations.summary -}}</div>
                                 </td>
                               </tr>
                               {{ end }}{{ if .Annotations.description }}
                               <tr>
                                 <td align="left" class="txt" style="font-size:0px;padding:10px 25px;word-break:break-word;">
-                                  <div style="font-family:Inter, Helvetica, Arial;font-size:13px;line-height:150%;text-align:left;color:#000000;"><strong>Description</strong></div>
+                                  <div style="font-family: Inter, Helvetica, Arial; font-size: 13px; line-height: 150%; text-align: left; color: #000000;"><strong>Description</strong></div>
                                 </td>
                               </tr>
                               <tr>
                                 <td align="left" class="txt" style="font-size:0px;padding:10px 25px;word-break:break-word;">
-                                  <div style="font-family:Inter, Helvetica, Arial;font-size:13px;line-height:150%;text-align:left;color:#000000;">
+                                  <div style="font-family: Inter, Helvetica, Arial; font-size: 13px; line-height: 150%; text-align: left; color: #000000;">
                                     <mj-raw>{{ range $line := (splitList "\n" .Annotations.description) }}</mj-raw>
                                     {{ $line }}<br>
                                     <mj-raw>{{ end }}</mj-raw>
@@ -1028,7 +991,7 @@
                             <tbody>
                               <tr>
                                 <td align="left" class="txt" style="font-size:0px;padding:10px 25px;word-break:break-word;">
-                                  <div style="font-family:Inter, Helvetica, Arial;font-size:13px;line-height:150%;text-align:left;color:#000000;"><strong>Values</strong></div>
+                                  <div style="font-family: Inter, Helvetica, Arial; font-size: 13px; line-height: 150%; text-align: left; color: #000000;"><strong>Values</strong></div>
                                 </td>
                               </tr>
                             </tbody>
@@ -1047,7 +1010,7 @@
                     <tr>
                       <td style="direction:ltr;font-size:0px;padding:0 25px;text-align:left;">
                         {{ __dangerouslyInjectHTML `<!--[if mso | IE]><table role="presentation" border="0" cellpadding="0" cellspacing="0"><tr><td class="well-outlook" style="vertical-align:top;width:550px;" ><![endif]-->` }}
-                        <div class="mj-column-per-100 mj-outlook-group-fix well" style="font-size:0px;text-align:left;direction:ltr;display:inline-block;vertical-align:top;width:100%;">
+                        <div class="mj-column-per-100 mj-outlook-group-fix well" style="background-color: #F4F5F5; border: 1px solid #e4e5e6; font-size: 0px; text-align: left; direction: ltr; display: inline-block; vertical-align: top; width: 100%;">
                           <table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%">
                             <tbody>
                               <tr>
@@ -1056,7 +1019,7 @@
                                     <tbody>
                                       <tr>
                                         <td align="left" class="txt" style="font-size:0px;padding:10px 25px;word-break:break-word;">
-                                          <div style="font-family:Inter, Helvetica, Arial;font-size:13px;line-height:150%;text-align:left;color:#000000;">
+                                          <div style="font-family: Inter, Helvetica, Arial; font-size: 13px; line-height: 150%; text-align: left; color: #000000;">
                                             <mj-raw>{{ range $refID, $value := .Values }}</mj-raw>
                                             {{ $refID }}={{ $value }}&nbsp; <mj-raw>{{ end }}</mj-raw>
                                           </div>
@@ -1090,7 +1053,7 @@
                               {{ if .Labels.SortedPairs }}
                               <tr>
                                 <td align="left" class="txt" style="font-size:0px;padding:10px 25px;word-break:break-word;">
-                                  <div style="font-family:Inter, Helvetica, Arial;font-size:13px;line-height:150%;text-align:left;color:#000000;"><strong>Labels</strong></div>
+                                  <div style="font-family: Inter, Helvetica, Arial; font-size: 13px; line-height: 150%; text-align: left; color: #000000;"><strong>Labels</strong></div>
                                 </td>
                               </tr>
                               <tr>
@@ -1110,7 +1073,7 @@
                               {{ end }}{{ if (without .Annotations.SortedPairs.Names "description" "summary") }}
                               <tr>
                                 <td align="left" class="txt" style="font-size:0px;padding:10px 25px;word-break:break-word;">
-                                  <div style="font-family:Inter, Helvetica, Arial;font-size:13px;line-height:150%;text-align:left;color:#000000;"><strong>Annotations</strong></div>
+                                  <div style="font-family: Inter, Helvetica, Arial; font-size: 13px; line-height: 150%; text-align: left; color: #000000;"><strong>Annotations</strong></div>
                                 </td>
                               </tr>
                               <tr>
@@ -1140,7 +1103,7 @@
                 </table>
               </div>
               {{ __dangerouslyInjectHTML `<!--[if mso | IE]></td></tr></table></td></tr><tr><td class="border-top-outlook" width="600px" ><table align="center" border="0" cellpadding="0" cellspacing="0" class="border-top-outlook" role="presentation" style="width:600px;" width="600" ><tr><td style="line-height:0px;font-size:0px;mso-line-height-rule:exactly;"><![endif]-->` }}
-              <div class="border-top" style="margin:0px auto;max-width:600px;">
+              <div class="border-top" style="border-top: 1px solid #e4e5e6; margin: 0px auto; max-width: 600px;">
                 <table align="center" border="0" cellpadding="0" cellspacing="0" role="presentation" style="width:100%;">
                   <tbody>
                     <tr>
@@ -1242,7 +1205,7 @@
                 </table>
               </div>
               {{ __dangerouslyInjectHTML `<!--[if mso | IE]></td></tr></table></td></tr><tr><td class="border-top-outlook" width="600px" ><table align="center" border="0" cellpadding="0" cellspacing="0" class="border-top-outlook" role="presentation" style="width:600px;" width="600" ><tr><td style="line-height:0px;font-size:0px;mso-line-height-rule:exactly;"><![endif]-->` }}
-              <div class="border-top" style="margin:0px auto;max-width:600px;">
+              <div class="border-top" style="border-top: 1px solid #e4e5e6; margin: 0px auto; max-width: 600px;">
                 <table align="center" border="0" cellpadding="0" cellspacing="0" role="presentation" style="width:100%;">
                   <tbody>
                     <tr>
@@ -1253,7 +1216,7 @@
                             <tbody>
                               <tr>
                                 <td align="left" class="txt" style="font-size:0px;padding:10px 25px;word-break:break-word;">
-                                  <div style="font-family:Inter, Helvetica, Arial;font-size:13px;line-height:150%;text-align:left;color:#91929e;">Observed <strong>{{ ago .StartsAt }}</strong> before this notification was delivered, at <strong>{{ .StartsAt }}</strong></div>
+                                  <div style="font-family: Inter, Helvetica, Arial; font-size: 13px; line-height: 150%; text-align: left; color: #91929e;">Observed <strong>{{ ago .StartsAt }}</strong> before this notification was delivered, at <strong>{{ .StartsAt }}</strong></div>
                                 </td>
                               </tr>
                             </tbody>
@@ -1297,7 +1260,7 @@
                   <tbody>
                     <tr>
                       <td align="center" class="txt" style="font-size:0px;padding:10px 25px;word-break:break-word;">
-                        <div style="font-family:Inter, Helvetica, Arial;font-size:13px;line-height:150%;text-align:center;color:#000000;">&copy; {{ now | date "2006" }} Grafana Labs. Sent by <a href="{{ .AppUrl }}" style="color: #6E9FFF;">Grafana v{{ .BuildVersion }}</a>.</div>
+                        <div style="font-family: Inter, Helvetica, Arial; font-size: 13px; line-height: 150%; text-align: center; color: #000000;">&copy; {{ now | date "2006" }} Grafana Labs. Sent by <a href="{{ .AppUrl }}" style="color: #6E9FFF;">Grafana v{{ .BuildVersion }}</a>.</div>
                       </td>
                     </tr>
                   </tbody>

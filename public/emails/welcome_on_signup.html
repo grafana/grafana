@@ -95,48 +95,11 @@
 
   </style>
   <style type="text/css">
-    .canvas {
-      background-color: transparent;
-    }
-
-    .background {
-      background-color: #FFF;
-      border: 1px solid #e4e5e6;
-    }
-
-    .border-bottom {
-      border-bottom: 1px solid #e4e5e6;
-    }
-
-    .border-top {
-      border-top: 1px solid #e4e5e6;
-    }
-
-    .well {
-      background-color: #F4F5F5;
-      border: 1px solid #e4e5e6;
-    }
-
-    .txt div,
-    .token div {
-      color: #24292e;
-    }
-
-    .txt tbody tr td {
-      color: #24292e;
-    }
-
-    .token {
-      background-color: #F4F5F5;
-      border: 1px solid #e4e5e6;
-      padding: 10px 25px;
-    }
-
   </style>
 </head>
 
 <body style="word-spacing:normal;">
-  <div class="canvas" style>
+  <div class="canvas" style="background-color: transparent;">
     {{ __dangerouslyInjectHTML `<!--[if mso | IE]><table align="center" border="0" cellpadding="0" cellspacing="0" class="" role="presentation" style="width:600px;" width="600" ><tr><td style="line-height:0px;font-size:0px;mso-line-height-rule:exactly;"><![endif]-->` }}
     <div style="margin:0px auto;max-width:600px;">
       <table align="center" border="0" cellpadding="0" cellspacing="0" role="presentation" style="width:100%;">
@@ -170,7 +133,7 @@
       </table>
     </div>
     {{ __dangerouslyInjectHTML `<!--[if mso | IE]></td></tr></table><table align="center" border="0" cellpadding="0" cellspacing="0" class="background-outlook" role="presentation" style="width:600px;" width="600" ><tr><td style="line-height:0px;font-size:0px;mso-line-height-rule:exactly;"><![endif]-->` }}
-    <div class="background" style="margin:0px auto;max-width:600px;">
+    <div class="background" style="background-color: #FFF; border: 1px solid #e4e5e6; margin: 0px auto; max-width: 600px;">
       <table align="center" border="0" cellpadding="0" cellspacing="0" role="presentation" style="width:100%;">
         <tbody>
           <tr>
@@ -181,19 +144,19 @@
                   <tbody>
                     <tr>
                       <td align="left" class="txt" style="font-size:0px;padding:10px 25px;word-break:break-word;">
-                        <div style="font-family:Inter, Helvetica, Arial;font-size:13px;line-height:150%;text-align:left;color:#000000;">
+                        <div style="font-family: Inter, Helvetica, Arial; font-size: 13px; line-height: 150%; text-align: left; color: #000000;">
                           <h2>Hi {{ .Name }},</h2>
                         </div>
                       </td>
                     </tr>
                     <tr>
                       <td align="left" class="txt" style="font-size:0px;padding:10px 25px;word-break:break-word;">
-                        <div style="font-family:Inter, Helvetica, Arial;font-size:13px;line-height:150%;text-align:left;color:#000000;">Welcome! Ready to start building some beautiful metric and analytic dashboards?</div>
+                        <div style="font-family: Inter, Helvetica, Arial; font-size: 13px; line-height: 150%; text-align: left; color: #000000;">Welcome! Ready to start building some beautiful metric and analytic dashboards?</div>
                       </td>
                     </tr>
                     <tr>
                       <td align="left" class="txt" style="font-size:0px;padding:10px 25px;word-break:break-word;">
-                        <div style="font-family:Inter, Helvetica, Arial;font-size:13px;line-height:150%;text-align:left;color:#000000;">If you are new to Grafana, refer to the <a href="https://grafana.com/docs/grafana/latest/getting-started/getting-started/" style="color: #6E9FFF;">Getting started with Grafana</a> guide.</div>
+                        <div style="font-family: Inter, Helvetica, Arial; font-size: 13px; line-height: 150%; text-align: left; color: #000000;">If you are new to Grafana, refer to the <a href="https://grafana.com/docs/grafana/latest/getting-started/getting-started/" style="color: #6E9FFF;">Getting started with Grafana</a> guide.</div>
                       </td>
                     </tr>
                     <tr>
@@ -211,12 +174,12 @@
                     </tr>
                     <tr>
                       <td align="left" class="txt" style="font-size:0px;padding:10px 25px;word-break:break-word;">
-                        <div style="font-family:Inter, Helvetica, Arial;font-size:13px;line-height:150%;text-align:left;color:#000000;">Thank you for joining our community.</div>
+                        <div style="font-family: Inter, Helvetica, Arial; font-size: 13px; line-height: 150%; text-align: left; color: #000000;">Thank you for joining our community.</div>
                       </td>
                     </tr>
                     <tr>
                       <td align="left" class="txt" style="font-size:0px;padding:10px 25px;word-break:break-word;">
-                        <div style="font-family:Inter, Helvetica, Arial;font-size:13px;line-height:150%;text-align:left;color:#000000;">The Grafana Team</div>
+                        <div style="font-family: Inter, Helvetica, Arial; font-size: 13px; line-height: 150%; text-align: left; color: #000000;">The Grafana Team</div>
                       </td>
                     </tr>
                   </tbody>
@@ -240,7 +203,7 @@
                   <tbody>
                     <tr>
                       <td align="center" class="txt" style="font-size:0px;padding:10px 25px;word-break:break-word;">
-                        <div style="font-family:Inter, Helvetica, Arial;font-size:13px;line-height:150%;text-align:center;color:#000000;">&copy; {{ now | date "2006" }} Grafana Labs. Sent by <a href="{{ .AppUrl }}" style="color: #6E9FFF;">Grafana v{{ .BuildVersion }}</a>.</div>
+                        <div style="font-family: Inter, Helvetica, Arial; font-size: 13px; line-height: 150%; text-align: center; color: #000000;">&copy; {{ now | date "2006" }} Grafana Labs. Sent by <a href="{{ .AppUrl }}" style="color: #6E9FFF;">Grafana v{{ .BuildVersion }}</a>.</div>
                       </td>
                     </tr>
                   </tbody>

@@ -95,48 +95,11 @@
 
   </style>
   <style type="text/css">
-    .canvas {
-      background-color: transparent;
-    }
-
-    .background {
-      background-color: #FFF;
-      border: 1px solid #e4e5e6;
-    }
-
-    .border-bottom {
-      border-bottom: 1px solid #e4e5e6;
-    }
-
-    .border-top {
-      border-top: 1px solid #e4e5e6;
-    }
-
-    .well {
-      background-color: #F4F5F5;
-      border: 1px solid #e4e5e6;
-    }
-
-    .txt div,
-    .token div {
-      color: #24292e;
-    }
-
-    .txt tbody tr td {
-      color: #24292e;
-    }
-
-    .token {
-      background-color: #F4F5F5;
-      border: 1px solid #e4e5e6;
-      padding: 10px 25px;
-    }
-
   </style>
 </head>
 
 <body style="word-spacing:normal;">
-  <div class="canvas" style>
+  <div class="canvas" style="background-color: transparent;">
     {{ __dangerouslyInjectHTML `<!--[if mso | IE]><table align="center" border="0" cellpadding="0" cellspacing="0" class="" role="presentation" style="width:600px;" width="600" ><tr><td style="line-height:0px;font-size:0px;mso-line-height-rule:exactly;"><![endif]-->` }}
     <div style="margin:0px auto;max-width:600px;">
       <table align="center" border="0" cellpadding="0" cellspacing="0" role="presentation" style="width:100%;">
@@ -170,7 +133,7 @@
       </table>
     </div>
     {{ __dangerouslyInjectHTML `<!--[if mso | IE]></td></tr></table><table align="center" border="0" cellpadding="0" cellspacing="0" class="background-outlook" role="presentation" style="width:600px;" width="600" ><tr><td style="line-height:0px;font-size:0px;mso-line-height-rule:exactly;"><![endif]-->` }}
-    <div class="background" style="margin:0px auto;max-width:600px;">
+    <div class="background" style="background-color: #FFF; border: 1px solid #e4e5e6; margin: 0px auto; max-width: 600px;">
       <table align="center" border="0" cellpadding="0" cellspacing="0" role="presentation" style="width:100%;">
         <tbody>
           <tr>
@@ -187,14 +150,14 @@
                             <tbody>
                               <tr>
                                 <td align="left" class="txt" style="font-size:0px;padding:10px 25px;word-break:break-word;">
-                                  <div style="font-family:Inter, Helvetica, Arial;font-size:13px;line-height:150%;text-align:left;color:#000000;">
+                                  <div style="font-family: Inter, Helvetica, Arial; font-size: 13px; line-height: 150%; text-align: left; color: #000000;">
                                     <h2>Complete the signup</h2>
                                   </div>
                                 </td>
                               </tr>
                               <tr>
                                 <td align="left" class="txt" style="font-size:0px;padding:10px 25px;word-break:break-word;">
-                                  <div style="font-family:Inter, Helvetica, Arial;font-size:13px;line-height:150%;text-align:left;color:#000000;">Copy and paste the email verification code in the sign up form <strong>or</strong> use the link below.</div>
+                                  <div style="font-family: Inter, Helvetica, Arial; font-size: 13px; line-height: 150%; text-align: left; color: #000000;">Copy and paste the email verification code in the sign up form <strong>or</strong> use the link below.</div>
                                 </td>
                               </tr>
                             </tbody>
@@ -213,12 +176,12 @@
                     <tr>
                       <td style="direction:ltr;font-size:0px;padding:10px 25px;text-align:center;">
                         {{ __dangerouslyInjectHTML `<!--[if mso | IE]><table role="presentation" border="0" cellpadding="0" cellspacing="0"><tr><td class="well-outlook" style="vertical-align:top;width:550px;" ><![endif]-->` }}
-                        <div class="mj-column-per-100 mj-outlook-group-fix well" style="font-size:0px;text-align:left;direction:ltr;display:inline-block;vertical-align:top;width:100%;">
+                        <div class="mj-column-per-100 mj-outlook-group-fix well" style="background-color: #F4F5F5; border: 1px solid #e4e5e6; font-size: 0px; text-align: left; direction: ltr; display: inline-block; vertical-align: top; width: 100%;">
                           <table border="0" cellpadding="0" cellspacing="0" role="presentation" style="vertical-align:top;" width="100%">
                             <tbody>
                               <tr>
                                 <td align="center" class="txt" style="font-size:0px;padding:10px 25px;word-break:break-word;">
-                                  <div style="font-family:Inter, Helvetica, Arial;font-size:22px;font-weight:bold;line-height:150%;text-align:center;color:#000000;">{{ .Code }}</div>
+                                  <div style="font-family: Inter, Helvetica, Arial; font-size: 22px; font-weight: bold; line-height: 150%; text-align: center; color: #000000;">{{ .Code }}</div>
                                 </td>
                               </tr>
                             </tbody>
@@ -255,12 +218,12 @@
                               </tr>
                               <tr>
                                 <td align="left" class="txt" style="font-size:0px;padding:10px 25px;word-break:break-word;">
-                                  <div style="font-family:Inter, Helvetica, Arial;font-size:13px;line-height:150%;text-align:left;color:#000000;">You can also copy and paste this link into your browser directly:</div>
+                                  <div style="font-family: Inter, Helvetica, Arial; font-size: 13px; line-height: 150%; text-align: left; color: #000000;">You can also copy and paste this link into your browser directly:</div>
                                 </td>
                               </tr>
                               <tr>
                                 <td align="left" class="txt" style="font-size:0px;padding:10px 25px;word-break:break-word;">
-                                  <div style="font-family:Inter, Helvetica, Arial;font-size:13px;line-height:150%;text-align:left;color:#000000;"><a rel="noopener" href="{{ .LinkUrl }}" style="color: #6E9FFF;">{{ .SignUpUrl }}</a></div>
+                                  <div style="font-family: Inter, Helvetica, Arial; font-size: 13px; line-height: 150%; text-align: left; color: #000000;"><a rel="noopener" href="{{ .LinkUrl }}" style="color: #6E9FFF;">{{ .SignUpUrl }}</a></div>
                                 </td>
                               </tr>
                             </tbody>
@@ -290,7 +253,7 @@
                   <tbody>
                     <tr>
                       <td align="center" class="txt" style="font-size:0px;padding:10px 25px;word-break:break-word;">
-                        <div style="font-family:Inter, Helvetica, Arial;font-size:13px;line-height:150%;text-align:center;color:#000000;">&copy; {{ now | date "2006" }} Grafana Labs. Sent by <a href="{{ .AppUrl }}" style="color: #6E9FFF;">Grafana v{{ .BuildVersion }}</a>.</div>
+                        <div style="font-family: Inter, Helvetica, Arial; font-size: 13px; line-height: 150%; text-align: center; color: #000000;">&copy; {{ now | date "2006" }} Grafana Labs. Sent by <a href="{{ .AppUrl }}" style="color: #6E9FFF;">Grafana v{{ .BuildVersion }}</a>.</div>
                       </td>
                     </tr>
                   </tbody>
