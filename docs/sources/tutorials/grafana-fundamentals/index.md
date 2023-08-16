@@ -138,10 +138,10 @@ Grafana Explore is a workflow for troubleshooting and data exploration. In this 
 
 > Ad-hoc queries are queries that are made interactively, with the purpose of exploring data. An ad-hoc query is commonly followed by another, more specific query.
 
-1. In the sidebar, click the **Explore** (compass) icon. The Prometheus data source that you added will already be selected.
-1. In the **Query editor**, where it says _Enter a PromQL query…_, enter `tns_request_duration_seconds_count` and then press Shift + Enter.
-   A graph appears. Note, it may start you in the The Prometheus query builder, if this is the case, select the `Code` toggle in the top right of the query window, just below the `Run Query` button.
-   <img width="167" alt="image" src="https://github.com/glitchwizard/grafana/assets/40527412/f5247425-ab0b-4e78-a608-feb11c3b4b8e">
+1. Click the menu icon and, in the sidebar, click **Explore**. The Prometheus data source that you added will already be selected.
+1. Confirm that you're in code mode by checking the **Builder/Code** toggle at the top right corner of the query panel. 
+1. In the query editor, where it says _Enter a PromQL query…_, enter `tns_request_duration_seconds_count` and then press Shift + Enter.
+   A graph appears. 
 1. In the top right corner, click the dropdown arrow on the **Run Query** button, and then select **5s**. Grafana runs your query and updates the graph every 5 seconds.
 
    You just made your first _PromQL_ query! [PromQL](https://prometheus.io/docs/prometheus/latest/querying/basics/) is a powerful query language that lets you select and aggregate time series data stored in Prometheus.
@@ -174,7 +174,7 @@ Depending on your use case, you might want to group on other labels. Try groupin
 
 Grafana supports log data sources, like [Loki](/oss/loki/). Just like for metrics, you first need to add your data source to Grafana.
 
-1. In the sidebar, click **Connections** and then **Data sources**.
+1. Click the menu icon and, in the sidebar, click **Connections** and then **Data sources**.
 1. Click **+ Add new data source**.
 1. In the list of data sources, click **Loki**.
 1. In the URL box, enter [http://loki:3100](http://loki:3100).
@@ -223,7 +223,7 @@ Dashboards consist of _panels_, each representing a part of the story you want y
 
 Every panel consists of a _query_ and a _visualization_. The query defines _what_ data you want to display, whereas the visualization defines _how_ the data is displayed.
 
-1. In the sidebar, click **Dashboards**.
+1. Click the menu icon and, in the sidebar, click **Dashboards**.
 1. On the **Dashboards** page, click **New** in top right corner and select **New Dashboard** in the drop-down.
 1. Click **+ Add visualization**.
 1. In the modal that opens, select the Prometheus data source that you just added.
@@ -234,7 +234,7 @@ Every panel consists of a _query_ and a _visualization_. The query defines _what
    ```
 
 1. Click **Options** under the query field to open the panel.
-1. In the **Legend** field, select Custom and then enter `route` to rename the series in the legend. The graph legend updates when you click outside the field.
+1. In the **Legend** field, select **Custom** and then enter `route` to rename the series in the legend. The graph legend updates when you click outside the field.
 1. In the panel editor on the right, under **Panel options**, change the panel title to "Traffic".
 1. Click **Apply** in the top-right corner to save the panel and go back to the dashboard view.
 1. Click the **Save dashboard** (disk) icon at the top of the dashboard to save your dashboard.
@@ -274,9 +274,9 @@ Manually annotating your dashboard is fine for those single events. For regularl
 
 <!--this add button is gone rn. look into this -->
 
-1. Click **Apply**. Grafana displays the Annotations list, with your new annotation.
-1. Click the **Go back** arrow to return to your dashboard.
-1. At the top of your dashboard, there is now a toggle with the name **Errors** to display the results of the newly created annotation query.
+1. Click **Apply**. Grafana displays the **Annotations** page, with your new annotation in the list.
+1. Click the name of the dashboard in the breadcrumb at the top of the screen to return to your dashboard.
+1. At the top of your dashboard, there is now a toggle with the name **Errors** to display the results of the newly created annotation query. The toggle is enabled by default.
 
 The log lines returned by your query are now displayed as annotations in the graph.
 
@@ -310,7 +310,7 @@ Your request bin is now waiting for the first request.
 
 Next, let's configure a Contact Point in Grafana's Alerting UI to send notifications to our Request Bin.
 
-1. Return to Grafana. In Grafana's sidebar, click **Alerting** and then **Contact points**.
+1. Return to Grafana. Click the menu icon and, in the sidebar, click **Alerting** and then **Contact points**.
 1. Click **+ Add contact point**.
 1. In **Name**, write **RequestBin**.
 1. In the **Integration** dropdown menu, choose **Webhook**.
@@ -325,8 +325,8 @@ We have now created a dummy webhook endpoint and created a new Alerting Contact 
 
 Now that Grafana knows how to notify us, it's time to set up an alert rule:
 
-1. In Grafana's sidebar, click **Alerting** and then **Alert rules**.
-1. Click the **Create alert rule** button.
+1. In the sidebar, click **Alert rules**.
+1. Click **Create alert rule**.
 1. In section **1**, name the rule `fundamentals-test`.
 1. For section **2**, select **Grafana Managed Alert** as the rule type. Next, find query box **A**. Choose your Prometheus datasource and enter the same query that we used in our earlier panel: `sum(rate(tns_request_duration_seconds_count[5m])) by(route)`. Click **Run queries**. You should see some data in the graph.
 1. Now scroll down to query box **B**. Change the operation from **Reduce** to **Classic condition**. [You can read more about classic and multi-dimensional conditions here](/docs/grafana/latest/alerting/unified-alerting/alerting-rules/create-grafana-managed-rule/#single-and-multi-dimensional-rule). For conditions enter the following: `WHEN last() OF A IS ABOVE 0.2`. Delete query **C**.
@@ -334,7 +334,7 @@ Now that Grafana knows how to notify us, it's time to set up an alert rule:
 1. In section **4**, you can add some sample text to your summary message. [Read more about message templating here](/docs/grafana/latest/alerting/unified-alerting/message-templating/).
 1. In the top right corner of the page, click **Save rule and exit**.
 1. In the sidebar, click **Notification policies**.
-1. Under **Default policy**, select **...** &rsaquo; **Edit** and change the **Default contact point** to **RequestBin**.
+1. Under **Default policy**, click the button with the three dots and select **Edit**. Change the **Default contact point** to **RequestBin**. Click **Update default policy**.
    As a system grows, admins can use the **Notification policies** setting to organize and match alert rules to
    specific contact points.
 
