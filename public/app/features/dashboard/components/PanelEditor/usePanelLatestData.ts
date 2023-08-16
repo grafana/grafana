@@ -1,14 +1,14 @@
 import { useEffect, useRef, useState } from 'react';
 import { Unsubscribable } from 'rxjs';
 
-import { DataQueryError, LoadingState, PanelData } from '@grafana/data';
+import { LoadingState, PanelData } from '@grafana/data';
 
 import { GetDataOptions } from '../../../query/state/PanelQueryRunner';
 import { PanelModel } from '../../state';
 
 interface UsePanelLatestData {
   data?: PanelData;
-  error?: DataQueryError;
+  hasError: boolean;
   isLoading: boolean;
   hasSeries: boolean;
 }
@@ -61,10 +61,15 @@ export const usePanelLatestData = (
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [panel, options.withTransforms]);
 
+  const hasError = Boolean(
+    latestData && (latestData.error || latestData?.errors?.length || latestData.state === LoadingState.Error)
+  );
+  console.log({ hasError, latestData });
+
   return {
     data: latestData,
-    error: latestData && latestData.error,
     isLoading: latestData ? latestData.state === LoadingState.Loading : true,
     hasSeries: latestData ? !!latestData.series : false,
+    hasError,
   };
 };

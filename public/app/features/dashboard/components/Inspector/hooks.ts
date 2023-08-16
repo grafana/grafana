@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import useAsync from 'react-use/lib/useAsync';
 
-import { DataQueryError, DataSourceApi, PanelData, PanelPlugin } from '@grafana/data';
+import { DataSourceApi, PanelData, PanelPlugin } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { t } from 'app/core/internationalization';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
@@ -40,7 +40,7 @@ export const useInspectTabs = (
   panel: PanelModel,
   dashboard: DashboardModel,
   plugin: PanelPlugin | undefined | null,
-  error?: DataQueryError,
+  hasError?: boolean,
   metaDs?: DataSourceApi
 ) => {
   return useMemo(() => {
@@ -56,7 +56,7 @@ export const useInspectTabs = (
 
     tabs.push({ label: t('dashboard.inspect.json-tab', 'JSON'), value: InspectTab.JSON });
 
-    if (error && error.message) {
+    if (hasError) {
       tabs.push({ label: t('dashboard.inspect.error-tab', 'Error'), value: InspectTab.Error });
     }
 
@@ -64,5 +64,5 @@ export const useInspectTabs = (
       tabs.push({ label: t('dashboard.inspect.query-tab', 'Query'), value: InspectTab.Query });
     }
     return tabs;
-  }, [plugin, metaDs, dashboard, error]);
+  }, [plugin, metaDs, dashboard, hasError]);
 };

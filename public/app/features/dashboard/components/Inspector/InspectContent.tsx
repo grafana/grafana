@@ -1,7 +1,15 @@
 import { isEmpty } from 'lodash';
 import React, { useState } from 'react';
 
-import { CoreApp, DataSourceApi, formattedValueToString, getValueFormat, PanelData, PanelPlugin } from '@grafana/data';
+import {
+  CoreApp,
+  DataSourceApi,
+  formattedValueToString,
+  getValueFormat,
+  PanelData,
+  PanelPlugin,
+  LoadingState,
+} from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 import { Drawer, Tab, TabsBar } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
@@ -52,8 +60,16 @@ export const InspectContent = ({
   }
 
   let errors = data?.errors;
-  if (!errors?.length && data?.error) {
-    errors = [data.error];
+  if (!errors?.length) {
+    if (data?.error) {
+      errors = [data.error];
+    } else if (data?.state === LoadingState.Error) {
+      errors = [
+        {
+          message: 'Error loading data',
+        },
+      ];
+    }
   }
 
   // Validate that the active tab is actually valid and allowed
