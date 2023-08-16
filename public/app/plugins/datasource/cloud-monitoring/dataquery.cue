@@ -23,7 +23,7 @@ composableKinds: DataQuery: {
 
 	lineage: {
 		schemas: [{
-			version: [0, 0] //do i update this?
+			version: [0, 0]
 			schema: {
 				#CloudMonitoringQuery: common.DataQuery & {
 					// Aliases can be set to modify the legend labels. e.g. {{metric.label.xxx}}. See docs for more detail.
