@@ -6,7 +6,6 @@
   "version": "10.2.0-pre",
   "repository": "github:grafana/grafana",
   "scripts": {
-    "postinstall": "node ./scripts/cleanupHusky.mjs",
     "build": "yarn i18n:compile && NODE_ENV=production webpack --progress --config scripts/webpack/webpack.prod.js",
     "build:nominify": "yarn run build --env noMinify=1",
     "dev": "yarn i18n:compile && NODE_ENV=dev webpack --progress --color --config scripts/webpack/webpack.dev.js",
