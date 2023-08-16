@@ -197,4 +197,4 @@ deployment_tools_config.json
 .pr-body.txt
 
 # Old husky directory. Contributors are safe to delete this folder if they want to
-.husky
+# .husky
