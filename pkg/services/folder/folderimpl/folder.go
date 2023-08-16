@@ -174,6 +174,7 @@ func (s *Service) GetChildren(ctx context.Context, cmd *folder.GetChildrenQuery)
 	}
 
 	canView := false
+	canTraverse := false
 	if cmd.UID != "" {
 		g, err := guardian.NewByUID(ctx, cmd.UID, cmd.OrgID, cmd.SignedInUser)
 		if err != nil {
@@ -185,9 +186,11 @@ func (s *Service) GetChildren(ctx context.Context, cmd *folder.GetChildrenQuery)
 			return nil, err
 		}
 
-		canTraverse, err := g.CanTraverse()
-		if err != nil {
-			return nil, err
+		if !canView {
+			canTraverse, err = g.CanTraverse()
+			if err != nil {
+				return nil, err
+			}
 		}
 
 		if !canView && !canTraverse {
@@ -233,15 +236,20 @@ func (s *Service) GetChildren(ctx context.Context, cmd *folder.GetChildrenQuery)
 		if err != nil {
 			return nil, err
 		}
-		canView, err := g.CanView()
+
+		canViewChild, err := g.CanView()
 		if err != nil {
 			return nil, err
 		}
-		canTraverse, err := g.CanTraverse()
-		if err != nil {
-			return nil, err
+
+		canTraverseChild := false
+		if !canViewChild {
+			canTraverseChild, err = g.CanTraverse()
+			if err != nil {
+				return nil, err
+			}
 		}
-		if canView || canTraverse {
+		if canViewChild || canTraverseChild {
 			filtered = append(filtered, f)
 		}
 	}
