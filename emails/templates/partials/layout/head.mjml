@@ -1,8 +1,14 @@
+<!-- various styles and attributes -->
+<mj-font name="Inter" href="https://fonts.googleapis.com/css?family=Inter" />
+
 <mj-attributes>
-  <mj-text align="left" color="#FFF" line-height="1.5" />
+  <mj-text css-class="txt" align="left" line-height="150%" />
+  <mj-table css-class="txt" />
   <mj-button background-color="#3D71D9" rel="noopener" />
-  <mj-body background-color="#111217" />
+  <mj-body css-class="canvas" />
+  <mj-all font-family="Inter, Helvetica, Arial" />
 </mj-attributes>
+
 <mj-style inline="inline">
   a {
     color: #6E9FFF;
