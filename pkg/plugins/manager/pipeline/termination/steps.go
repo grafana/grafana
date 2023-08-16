@@ -9,39 +9,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 )
 
-// TerminablePluginResolver implements a ResolveFunc for resolving a plugin that can be terminated.
-type TerminablePluginResolver struct {
-	pluginRegistry registry.Service
-	log            log.Logger
-}
-
-// TerminablePluginResolverStep returns a new ResolveFunc for resolving a plugin that can be terminated.
-func TerminablePluginResolverStep(pluginRegistry registry.Service) ResolveFunc {
-	return newTerminablePluginResolver(pluginRegistry).Resolve
-}
-
-func newTerminablePluginResolver(pluginRegistry registry.Service) *TerminablePluginResolver {
-	return &TerminablePluginResolver{
-		pluginRegistry: pluginRegistry,
-		log:            log.New("plugins.resolver"),
-	}
-}
-
-// Resolve returns a plugin that can be terminated.
-func (r *TerminablePluginResolver) Resolve(ctx context.Context, pluginID string) (*plugins.Plugin, error) {
-	p, exists := r.pluginRegistry.Plugin(ctx, pluginID)
-	if !exists {
-		return nil, plugins.ErrPluginNotInstalled
-	}
-
-	// core plugins and bundled plugins cannot be terminated
-	if p.IsCorePlugin() || p.IsBundledPlugin() {
-		return nil, plugins.ErrUninstallCorePlugin
-	}
-
-	return p, nil
-}
-
 // BackendProcessTerminator implements a TerminateFunc for stopping a backend plugin process.
 //
 // It uses the process.Manager to stop the backend plugin process.
@@ -91,15 +58,5 @@ func (d *Deregister) Deregister(ctx context.Context, p *plugins.Plugin) error {
 		return err
 	}
 	d.log.Debug("Plugin unregistered", "pluginId", p.ID)
-	return nil
-}
-
-// FSRemoval implements a TerminateFunc for removing plugin files from the filesystem.
-func FSRemoval(_ context.Context, p *plugins.Plugin) error {
-	if remover, ok := p.FS.(plugins.FSRemover); ok {
-		if err := remover.Remove(); err != nil {
-			return err
-		}
-	}
 	return nil
 }
