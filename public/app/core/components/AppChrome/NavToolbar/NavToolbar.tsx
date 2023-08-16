@@ -4,9 +4,10 @@ import React from 'react';
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { Components } from '@grafana/e2e-selectors';
 import { Icon, IconButton, ToolbarButton, useStyles2 } from '@grafana/ui';
+import { useGrafana } from 'app/core/context/GrafanaContext';
 import { t } from 'app/core/internationalization';
 import { HOME_NAV_ID } from 'app/core/reducers/navModel';
-import { useSelector } from 'app/types';
+import { KioskMode, useSelector } from 'app/types';
 
 import { Breadcrumbs } from '../../Breadcrumbs/Breadcrumbs';
 import { buildBreadcrumbs } from '../../Breadcrumbs/utils';
@@ -36,6 +37,8 @@ export function NavToolbar({
   const homeNav = useSelector((state) => state.navIndex)[HOME_NAV_ID];
   const styles = useStyles2(getStyles);
   const breadcrumbs = buildBreadcrumbs(sectionNav, pageNav, homeNav);
+  const { chrome } = useGrafana();
+  const state = chrome.useState();
 
   return (
     <div data-testid={Components.NavToolbar.container} className={styles.pageToolbar}>
@@ -51,22 +54,26 @@ export function NavToolbar({
       <Breadcrumbs breadcrumbs={breadcrumbs} className={styles.breadcrumbsWrapper} />
       <div className={styles.actions}>
         {actions}
-        {actions && <NavToolbarSeparator />}
-        {searchBarHidden && (
-          <ToolbarButton
-            onClick={onToggleKioskMode}
-            narrow
-            title={t('navigation.toolbar.enable-kiosk', 'Enable kiosk mode')}
-            icon="monitor"
-          />
+        {state.kioskMode !== KioskMode.Embed && (
+          <>
+            {actions && <NavToolbarSeparator />}
+            {searchBarHidden && (
+              <ToolbarButton
+                onClick={onToggleKioskMode}
+                narrow
+                title={t('navigation.toolbar.enable-kiosk', 'Enable kiosk mode')}
+                icon="monitor"
+              />
+            )}
+            <ToolbarButton
+              onClick={onToggleSearchBar}
+              narrow
+              title={t('navigation.toolbar.toggle-search-bar', 'Toggle top search bar')}
+            >
+              <Icon name={searchBarHidden ? 'angle-down' : 'angle-up'} size="xl" />
+            </ToolbarButton>
+          </>
         )}
-        <ToolbarButton
-          onClick={onToggleSearchBar}
-          narrow
-          title={t('navigation.toolbar.toggle-search-bar', 'Toggle top search bar')}
-        >
-          <Icon name={searchBarHidden ? 'angle-down' : 'angle-up'} size="xl" />
-        </ToolbarButton>
       </div>
     </div>
   );

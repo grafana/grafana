@@ -3,7 +3,7 @@ import classNames from 'classnames';
 import React, { PropsWithChildren } from 'react';
 
 import { GrafanaTheme2, PageLayoutType } from '@grafana/data';
-import { useStyles2, LinkButton } from '@grafana/ui';
+import { LinkButton, useStyles2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { CommandPalette } from 'app/features/commandPalette/CommandPalette';
 import { KioskMode } from 'app/types';
@@ -21,7 +21,7 @@ export function AppChrome({ children }: Props) {
   const { chrome } = useGrafana();
   const state = chrome.useState();
 
-  const searchBarHidden = state.searchBarHidden || state.kioskMode === KioskMode.TV;
+  const searchBarHidden = state.searchBarHidden || [KioskMode.Embed, KioskMode.TV].includes(state.kioskMode!);
 
   const contentClass = cx({
     [styles.content]: true,
