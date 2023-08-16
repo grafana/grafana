@@ -40,7 +40,7 @@ func (i *FakePluginInstaller) Remove(ctx context.Context, pluginID string) error
 
 type FakeLoader struct {
 	LoadFunc   func(_ context.Context, _ plugins.PluginSource) ([]*plugins.Plugin, error)
-	UnloadFunc func(_ context.Context, _ string) (*plugins.Plugin, error)
+	UnloadFunc func(_ context.Context, _ *plugins.Plugin) (*plugins.Plugin, error)
 }
 
 func (l *FakeLoader) Load(ctx context.Context, src plugins.PluginSource) ([]*plugins.Plugin, error) {
@@ -50,9 +50,9 @@ func (l *FakeLoader) Load(ctx context.Context, src plugins.PluginSource) ([]*plu
 	return nil, nil
 }
 
-func (l *FakeLoader) Unload(ctx context.Context, pluginID string) (*plugins.Plugin, error) {
+func (l *FakeLoader) Unload(ctx context.Context, p *plugins.Plugin) (*plugins.Plugin, error) {
 	if l.UnloadFunc != nil {
-		return l.UnloadFunc(ctx, pluginID)
+		return l.UnloadFunc(ctx, p)
 	}
 	return nil, nil
 }
@@ -509,12 +509,12 @@ func (f *FakeInitializer) Initialize(ctx context.Context, ps []*plugins.Plugin) 
 }
 
 type FakeTerminator struct {
-	TerminateFunc func(ctx context.Context, pluginID string) (*plugins.Plugin, error)
+	TerminateFunc func(ctx context.Context, p *plugins.Plugin) (*plugins.Plugin, error)
 }
 
-func (f *FakeTerminator) Terminate(ctx context.Context, pluginID string) (*plugins.Plugin, error) {
+func (f *FakeTerminator) Terminate(ctx context.Context, p *plugins.Plugin) (*plugins.Plugin, error) {
 	if f.TerminateFunc != nil {
-		return f.TerminateFunc(ctx, pluginID)
+		return f.TerminateFunc(ctx, p)
 	}
 	return nil, nil
 }

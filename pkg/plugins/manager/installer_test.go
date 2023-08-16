@@ -40,8 +40,8 @@ func TestPluginManager_Add_Remove(t *testing.T) {
 				require.Equal(t, []string{zipNameV1}, src.PluginURIs(ctx))
 				return []*plugins.Plugin{pluginV1}, nil
 			},
-			UnloadFunc: func(_ context.Context, _ string) (*plugins.Plugin, error) {
-				return pluginV1, nil
+			UnloadFunc: func(_ context.Context, p *plugins.Plugin) (*plugins.Plugin, error) {
+				return p, nil
 			},
 		}
 
@@ -132,8 +132,8 @@ func TestPluginManager_Add_Remove(t *testing.T) {
 
 			var unloadedPlugins []string
 			inst.pluginLoader = &fakes.FakeLoader{
-				UnloadFunc: func(_ context.Context, id string) (*plugins.Plugin, error) {
-					unloadedPlugins = append(unloadedPlugins, id)
+				UnloadFunc: func(_ context.Context, p *plugins.Plugin) (*plugins.Plugin, error) {
+					unloadedPlugins = append(unloadedPlugins, p.ID)
 					return pluginV1, nil
 				},
 			}
