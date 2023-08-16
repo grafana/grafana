@@ -347,12 +347,11 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 	logger := sch.log.FromContext(grafanaCtx)
 	logger.Debug("Alert rule routine started")
 
-	orgID := fmt.Sprint(key.OrgID)
-	evalTotal := sch.metrics.EvalTotal.WithLabelValues(orgID)
-	evalDuration := sch.metrics.EvalDuration.WithLabelValues(orgID)
-	evalTotalFailures := sch.metrics.EvalFailures.WithLabelValues(orgID)
-	processDuration := sch.metrics.ProcessDuration.WithLabelValues(orgID)
-	sendDuration := sch.metrics.SendDuration.WithLabelValues(orgID)
+	evalTotal := sch.metrics.EvalTotal
+	evalDuration := sch.metrics.EvalDuration
+	evalTotalFailures := sch.metrics.EvalFailures
+	processDuration := sch.metrics.ProcessDuration
+	sendDuration := sch.metrics.SendDuration
 
 	notify := func(states []state.StateTransition) {
 		expiredAlerts := state.FromAlertsStateToStoppedAlert(states, sch.appURL, sch.clock)
