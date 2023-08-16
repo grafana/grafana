@@ -2,15 +2,12 @@ package server
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net"
 	"os"
 	"path/filepath"
 	"strconv"
 	"sync"
-
-	"golang.org/x/sync/errgroup"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/modules"
@@ -19,10 +16,8 @@ import (
 
 // NewModule returns an instances of a ModuleServer, responsible for managing
 // dskit modules (services).
-func NewModule(opts Options, cfg *setting.Cfg,
-	moduleService modules.Engine,
-) (*ModuleServer, error) {
-	s, err := newModuleServer(opts, cfg, moduleService)
+func NewModule(opts Options, cfg *setting.Cfg) (*ModuleServer, error) {
+	s, err := newModuleServer(opts, cfg)
 	if err != nil {
 		return nil, err
 	}
@@ -34,15 +29,11 @@ func NewModule(opts Options, cfg *setting.Cfg,
 	return s, nil
 }
 
-func newModuleServer(opts Options, cfg *setting.Cfg,
-	moduleService modules.Engine,
-) (*ModuleServer, error) {
+func newModuleServer(opts Options, cfg *setting.Cfg) (*ModuleServer, error) {
 	rootCtx, shutdownFn := context.WithCancel(context.Background())
-	childRoutines, childCtx := errgroup.WithContext(rootCtx)
 
 	s := &ModuleServer{
-		context:          childCtx,
-		childRoutines:    childRoutines,
+		context:          rootCtx,
 		shutdownFn:       shutdownFn,
 		shutdownFinished: make(chan struct{}),
 		log:              log.New("base-server"),
@@ -51,7 +42,6 @@ func newModuleServer(opts Options, cfg *setting.Cfg,
 		version:          opts.Version,
 		commit:           opts.Commit,
 		buildBranch:      opts.BuildBranch,
-		moduleService:    moduleService,
 	}
 
 	return s, nil
@@ -62,7 +52,6 @@ func newModuleServer(opts Options, cfg *setting.Cfg,
 type ModuleServer struct {
 	context          context.Context
 	shutdownFn       context.CancelFunc
-	childRoutines    *errgroup.Group
 	log              log.Logger
 	cfg              *setting.Cfg
 	shutdownOnce     sync.Once
@@ -74,8 +63,6 @@ type ModuleServer struct {
 	version     string
 	commit      string
 	buildBranch string
-
-	moduleService modules.Engine
 }
 
 // init initializes the server and its services.
@@ -92,8 +79,7 @@ func (s *ModuleServer) init() error {
 		return err
 	}
 
-	// Initialize dskit modules.
-	return s.moduleService.Init(s.context)
+	return nil
 }
 
 // Run initializes and starts services. This will block until all services have
@@ -105,18 +91,11 @@ func (s *ModuleServer) Run() error {
 		return err
 	}
 
-	// Start dskit modules.
-	s.childRoutines.Go(func() error {
-		err := s.moduleService.Run(s.context)
-		if err != nil && !errors.Is(err, context.Canceled) {
-			return err
-		}
-		return nil
-	})
-
 	s.notifySystemd("READY=1")
 	s.log.Debug("Waiting on services...")
-	return s.childRoutines.Wait()
+
+	m := modules.New(s.cfg.Target)
+	return m.Run(s.context)
 }
 
 // Shutdown initiates Grafana graceful shutdown. This shuts down all
@@ -126,9 +105,6 @@ func (s *ModuleServer) Shutdown(ctx context.Context, reason string) error {
 	var err error
 	s.shutdownOnce.Do(func() {
 		s.log.Info("Shutdown started", "reason", reason)
-		if err := s.moduleService.Shutdown(ctx); err != nil {
-			s.log.Error("Failed to shutdown modules", "error", err)
-		}
 		// Call cancel func to stop background services.
 		s.shutdownFn()
 		// Wait for server to shut down
