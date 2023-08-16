@@ -106,6 +106,9 @@ When you set up a correlation with admin page you can use the target query edito
 
 1. Open Explore.
 1. Select the data source you want to use as the target of the correlation.
+
+   Choose a data source from the drop-down list or click **Open advanced data source picker** to see more options, including adding a data source.
+
 1. Open the inspector tab and select “Query”.
 1. Run a sample query.
 1. Inspect results.
