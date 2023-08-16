@@ -234,4 +234,10 @@ func addDashboardMigration(mg *Migrator) {
 	mg.AddMigration("Add isPublic for dashboard", NewAddColumnMigration(dashboardV2, &Column{
 		Name: "is_public", Type: DB_Bool, Nullable: false, Default: "0",
 	}))
+
+	mg.AddMigration("clean up mangled slugs", NewRawSQLMigration("").
+		SQLite("UPDATE dashboard SET slug=replace(replace(replace(replace(slug,'%2f',''),'%',''),'---','-'),'--','-') WHERE slug GLOB '*[-%]*'").
+		Postgres("UPDATE dashboard SET slug=replace(replace(replace(replace(slug,'%2f',''),'%',''),'---','-'),'--','-') WHERE slug ~ '[-%]+'").
+		Mysql("UPDATE dashboard SET slug=replace(replace(replace(replace(slug,'%2f',''),'%',''),'---','-'),'--','-') WHERE slug REGEXP '[-%]+'"),
+	)
 }
