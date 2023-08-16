@@ -62,8 +62,12 @@ validate-api-spec: $(MERGED_SPEC_TARGET) $(SWAGGER) ## Validate API spec
 clean-api-spec:
 	rm -f $(SPEC_TARGET) $(MERGED_SPEC_TARGET) $(OAPI_SPEC_TARGET)
 
+.PHONY: cleanup-old-git-hooks
+cleanup-old-git-hooks:
+	bash scripts/cleanup-husky.sh
+
 .PHONY: lefthook-install
-lefthook-install: $(LEFTHOOK)
+lefthook-install: cleanup-old-git-hooks $(LEFTHOOK) # install lefthook for pre-commit hooks
 	$(LEFTHOOK) install -f
 
 .PHONY: lefthook-uninstall

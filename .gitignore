@@ -195,6 +195,3 @@ deployment_tools_config.json
 
 # Temporary file for backporting PRs
 .pr-body.txt
-
-# Old husky directory. Contributors are safe to delete this folder if they want to
-# .husky
