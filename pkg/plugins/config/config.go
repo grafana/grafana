@@ -15,8 +15,9 @@ type Cfg struct {
 
 	PluginsPath string
 
-	PluginSettings       setting.PluginSettings
-	PluginsAllowUnsigned []string
+	PluginSettings               setting.PluginSettings
+	PluginsAllowUnsigned         []string
+	CoreDatasourcePluginsEnabled []string
 
 	// AWS Plugin Auth
 	AWSAllowedAuthProviders []string
@@ -46,28 +47,29 @@ type Cfg struct {
 	AngularSupportEnabled bool
 }
 
-func NewCfg(devMode bool, pluginsPath string, pluginSettings setting.PluginSettings, pluginsAllowUnsigned []string,
+func NewCfg(devMode bool, pluginsPath string, pluginSettings setting.PluginSettings, pluginsAllowUnsigned []string, coreDatasourcePluginsEnabled []string,
 	awsAllowedAuthProviders []string, awsAssumeRoleEnabled bool, awsExternalId string, azure *azsettings.AzureSettings, secureSocksDSProxy setting.SecureSocksDSProxySettings,
 	grafanaVersion string, logDatasourceRequests bool, pluginsCDNURLTemplate string, appURL string, tracing Tracing, features plugins.FeatureToggles, angularSupportEnabled bool,
 	grafanaComURL string) *Cfg {
 	return &Cfg{
-		log:                     log.New("plugin.cfg"),
-		PluginsPath:             pluginsPath,
-		BuildVersion:            grafanaVersion,
-		DevMode:                 devMode,
-		PluginSettings:          pluginSettings,
-		PluginsAllowUnsigned:    pluginsAllowUnsigned,
-		AWSAllowedAuthProviders: awsAllowedAuthProviders,
-		AWSAssumeRoleEnabled:    awsAssumeRoleEnabled,
-		AWSExternalId:           awsExternalId,
-		Azure:                   azure,
-		ProxySettings:           secureSocksDSProxy,
-		LogDatasourceRequests:   logDatasourceRequests,
-		PluginsCDNURLTemplate:   pluginsCDNURLTemplate,
-		Tracing:                 tracing,
-		GrafanaComURL:           grafanaComURL,
-		GrafanaAppURL:           appURL,
-		Features:                features,
-		AngularSupportEnabled:   angularSupportEnabled,
+		log:                          log.New("plugin.cfg"),
+		PluginsPath:                  pluginsPath,
+		BuildVersion:                 grafanaVersion,
+		DevMode:                      devMode,
+		PluginSettings:               pluginSettings,
+		PluginsAllowUnsigned:         pluginsAllowUnsigned,
+		CoreDatasourcePluginsEnabled: coreDatasourcePluginsEnabled,
+		AWSAllowedAuthProviders:      awsAllowedAuthProviders,
+		AWSAssumeRoleEnabled:         awsAssumeRoleEnabled,
+		AWSExternalId:                awsExternalId,
+		Azure:                        azure,
+		ProxySettings:                secureSocksDSProxy,
+		LogDatasourceRequests:        logDatasourceRequests,
+		PluginsCDNURLTemplate:        pluginsCDNURLTemplate,
+		Tracing:                      tracing,
+		GrafanaComURL:                grafanaComURL,
+		GrafanaAppURL:                appURL,
+		Features:                     features,
+		AngularSupportEnabled:        angularSupportEnabled,
 	}
 }

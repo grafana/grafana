@@ -40,9 +40,17 @@ func (cfg *Cfg) readPluginSettings(iniFile *ini.File) error {
 		cfg.PluginsAllowUnsigned = append(cfg.PluginsAllowUnsigned, plug)
 	}
 
+	coreDatasourcePluginsEnabled := pluginsSection.Key("core_datasource_plugins_enabled").MustString("")
+
+	for _, plug := range strings.Split(coreDatasourcePluginsEnabled, ",") {
+		plug = strings.TrimSpace(plug)
+		cfg.CoreDatasourcePluginsEnabled = append(cfg.CoreDatasourcePluginsEnabled, plug)
+	}
+
 	cfg.PluginCatalogURL = pluginsSection.Key("plugin_catalog_url").MustString("https://grafana.com/grafana/plugins/")
 	cfg.PluginAdminEnabled = pluginsSection.Key("plugin_admin_enabled").MustBool(true)
 	cfg.PluginAdminExternalManageEnabled = pluginsSection.Key("plugin_admin_external_manage_enabled").MustBool(false)
+	cfg.PluginGrafanaCloudHidden = pluginsSection.Key("plugin_grafana_cloud_hidden").MustBool(false)
 	catalogHiddenPlugins := pluginsSection.Key("plugin_catalog_hidden_plugins").MustString("")
 
 	for _, plug := range strings.Split(catalogHiddenPlugins, ",") {

@@ -197,6 +197,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		PluginCatalogURL:                 hs.Cfg.PluginCatalogURL,
 		PluginAdminEnabled:               hs.Cfg.PluginAdminEnabled,
 		PluginAdminExternalManageEnabled: hs.Cfg.PluginAdminEnabled && hs.Cfg.PluginAdminExternalManageEnabled,
+		PluginGrafanaCloudHidden:         hs.Cfg.PluginGrafanaCloudHidden,
 		PluginCatalogHiddenPlugins:       hs.Cfg.PluginCatalogHiddenPlugins,
 		ExpressionsEnabled:               hs.Cfg.ExpressionsEnabled,
 		AwsAllowedAuthProviders:          hs.Cfg.AWSAllowedAuthProviders,

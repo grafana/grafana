@@ -1,5 +1,5 @@
 import { DataSourcePluginMeta, PluginType } from '@grafana/data';
-import { featureEnabled } from '@grafana/runtime';
+import { config, featureEnabled } from '@grafana/runtime';
 import { DataSourcePluginCategory } from 'app/types';
 
 export function buildCategories(plugins: DataSourcePluginMeta[]): DataSourcePluginCategory[] {
@@ -46,22 +46,24 @@ export function buildCategories(plugins: DataSourcePluginMeta[]): DataSourcePlug
     pluginIndex[plugin.id] = plugin;
   }
 
-  for (const category of categories) {
-    // add phantom plugin
-    if (category.id === 'cloud') {
-      category.plugins.push(getGrafanaCloudPhantomPlugin());
-    }
+  if (!config.pluginGrafanaCloudHidden) {
+    for (const category of categories) {
+      // add phantom plugin
+      if (category.id === 'cloud') {
+        category.plugins.push(getGrafanaCloudPhantomPlugin());
+      }
 
-    // add phantom plugins
-    if (category.id === 'enterprise') {
-      for (const plugin of enterprisePlugins) {
-        if (!pluginIndex[plugin.id]) {
-          category.plugins.push(plugin);
+      // add phantom plugins
+      if (category.id === 'enterprise') {
+        for (const plugin of enterprisePlugins) {
+          if (!pluginIndex[plugin.id]) {
+            category.plugins.push(plugin);
+          }
         }
       }
-    }
 
-    sortPlugins(category.plugins);
+      sortPlugins(category.plugins);
+    }
   }
 
   // Only show categories with plugins

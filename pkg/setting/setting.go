@@ -238,12 +238,14 @@ type Cfg struct {
 	PluginsAppsSkipVerifyTLS         bool
 	PluginSettings                   PluginSettings
 	PluginsAllowUnsigned             []string
+	CoreDatasourcePluginsEnabled     []string
 	PluginCatalogURL                 string
 	PluginCatalogHiddenPlugins       []string
 	PluginAdminEnabled               bool
 	PluginAdminExternalManageEnabled bool
 	PluginForcePublicKeyDownload     bool
 	PluginSkipPublicKeyDownload      bool
+	PluginGrafanaCloudHidden         bool
 
 	PluginsCDNURLTemplate    string
 	PluginLogBackendRequests bool

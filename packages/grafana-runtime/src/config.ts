@@ -116,6 +116,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
   pluginCatalogURL = 'https://grafana.com/grafana/plugins/';
   pluginAdminEnabled = true;
   pluginAdminExternalManageEnabled = false;
+  pluginGrafanaCloudHidden = false;
   pluginCatalogHiddenPlugins: string[] = [];
   pluginsCDNBaseURL = '';
   expressionsEnabled = false;

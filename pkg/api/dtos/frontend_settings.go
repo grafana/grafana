@@ -193,6 +193,7 @@ type FrontendSettingsDTO struct {
 	PluginCatalogURL                 string                         `json:"pluginCatalogURL"`
 	PluginAdminEnabled               bool                           `json:"pluginAdminEnabled"`
 	PluginAdminExternalManageEnabled bool                           `json:"pluginAdminExternalManageEnabled"`
+	PluginGrafanaCloudHidden         bool                           `json:"pluginGrafanaCloudHidden"`
 	PluginCatalogHiddenPlugins       []string                       `json:"pluginCatalogHiddenPlugins"`
 	ExpressionsEnabled               bool                           `json:"expressionsEnabled"`
 	AwsAllowedAuthProviders          []string                       `json:"awsAllowedAuthProviders"`

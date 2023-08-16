@@ -53,3 +53,53 @@ func (d *DuplicatePluginValidation) Filter(ctx context.Context, bundles []*plugi
 
 	return res, nil
 }
+
+// CoreDSPluginValidation is a filter step that will filter out any core data source plugins that are not explicitly enabled if
+// core_datasource_plugins_enabled is set. This includes both the primary plugin and any child plugins, which are matched using the plugin ID field.
+type CoreDSPluginValidation struct {
+	cfg *config.Cfg
+	log log.Logger
+}
+
+// NewCoreDSPluginFilterStep returns a new CoreDSPluginValidation.
+func NewCoreDSPluginFilterStep(cfg *config.Cfg) *CoreDSPluginValidation {
+	return &CoreDSPluginValidation{
+		cfg: cfg,
+		log: log.New("plugins.core-ds-filter"),
+	}
+}
+
+// Filter will filter out any plugins that are not explicitly enabled if core_datasource_plugins_enabled is set.
+func (c *CoreDSPluginValidation) Filter(ctx context.Context, pc plugins.Class, bundles []*plugins.FoundBundle) ([]*plugins.FoundBundle, error) {
+	res := make([]*plugins.FoundBundle, 0, len(bundles))
+	for _, b := range bundles {
+		if !c.isPluginEnabled(pc, &b.Primary.JSONData) {
+			c.log.Warn("Skipping plugin loading as it's disabled", "pluginID", b.Primary.JSONData.ID)
+			continue
+		}
+
+		for _, child := range b.Children {
+			if !c.isPluginEnabled(pc, &child.JSONData) {
+				c.log.Warn("Skipping loading of child plugin as it's disabled", "pluginId", child.JSONData.ID)
+				continue
+			}
+		}
+		res = append(res, b)
+	}
+
+	return res, nil
+}
+
+func (c *CoreDSPluginValidation) isPluginEnabled(pc plugins.Class, plugin *plugins.JSONData) bool {
+	if pc != plugins.ClassCore || plugin.Type != plugins.TypeDataSource || len(c.cfg.CoreDatasourcePluginsEnabled) == 0 || c.cfg.CoreDatasourcePluginsEnabled[0] == "" {
+		return true
+	}
+
+	for _, pID := range c.cfg.CoreDatasourcePluginsEnabled {
+		if pID == plugin.ID {
+			return true
+		}
+	}
+
+	return false
+}
