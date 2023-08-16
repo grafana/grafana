@@ -34,7 +34,6 @@ func (n *Manager) ApplyConfig(conf *config.Config, headers map[string]map[string
 	amSets := make(map[string]*alertmanagerSet)
 
 	for k, cfg := range conf.AlertingConfig.AlertmanagerConfigs.ToMap() {
-		// Note: acá crea un am set, puedo usar esto?
 		ams, err := newAlertmanagerSet(cfg, n.logger, n.metrics)
 		if err != nil {
 			return err
