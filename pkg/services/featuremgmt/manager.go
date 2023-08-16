@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"reflect"
 
+	"github.com/google/cel-go/cel"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/licensing"
 )
@@ -85,6 +86,26 @@ func (fm *FeatureManager) meetsRequirements(ff *FeatureFlag) bool {
 
 // Update
 func (fm *FeatureManager) update() {
+	vars := map[string]any{
+		// "track": "fast",
+		// "xyz":   100,
+		// "num":   1.234,
+	}
+	// add any configured variables to the status
+	if fm.vars != nil {
+		for k, v := range fm.vars {
+			vars[k] = v
+		}
+	}
+
+	opts := []cel.EnvOption{}
+	opts = append(opts, cel.Variable("vars", cel.MapType(cel.StringType, cel.DynType)))
+
+	env, err := cel.NewEnv(opts...)
+	if err != nil {
+		fm.log.Error("error initializing feature environment")
+	}
+
 	enabled := make(map[string]bool)
 	for _, flag := range fm.flags {
 		// if grafana cannot run the feature, omit metrics around it
@@ -94,10 +115,29 @@ func (fm *FeatureManager) update() {
 
 		// Update the registry
 		track := 0.0
-		// TODO: CEL - expression
-		if flag.Expression == "true" {
-			track = 1
-			enabled[flag.Name] = true
+		if flag.Expression != "" {
+			ast, iss := env.Compile(flag.Expression)
+			// Check iss for compilation errors.
+			if iss.Err() != nil {
+				fm.log.Error("error compiling expression", "feature", flag.Name, "err", iss.Err())
+			}
+			prg, err := env.Program(ast)
+			if err != nil {
+				fm.log.Error("error compiling program", "feature", flag.Name, "err", iss.Err())
+			}
+			out, _, err := prg.Eval(map[string]any{
+				"vars": vars,
+			})
+			if err != nil {
+				fm.log.Error("error running program", "feature", flag.Name, "err", iss.Err())
+			}
+
+			// Check if the value is true or not
+			if out.Value() == true {
+				track = 1
+				enabled[flag.Name] = true
+				fmt.Printf("enabled: %s\n", flag.Name)
+			}
 		}
 
 		// Register value with prometheus metric

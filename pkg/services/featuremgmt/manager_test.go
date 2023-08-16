@@ -27,6 +27,9 @@ func TestFeatureManager(t *testing.T) {
 	t.Run("check license validation", func(t *testing.T) {
 		ft := FeatureManager{
 			flags: map[string]*FeatureFlag{},
+			vars: map[string]interface{}{
+				"channel": "fast",
+			},
 		}
 		ft.registerFlags(FeatureFlag{
 			Name:            "a",
@@ -35,16 +38,16 @@ func TestFeatureManager(t *testing.T) {
 			Expression:      "true",
 		}, FeatureFlag{
 			Name:       "b",
-			Expression: "true",
+			Expression: "vars.channel == 'fast'",
 		})
 		require.False(t, ft.IsEnabled("a"))
-		require.True(t, ft.IsEnabled("b"))
-		require.False(t, ft.IsEnabled("c")) // uknown flag
+		require.True(t, ft.IsEnabled("b"))  // uses variable
+		require.False(t, ft.IsEnabled("c")) // unknown flag
 
 		// Try changing "requires license"
 		ft.registerFlags(FeatureFlag{
 			Name:            "a",
-			RequiresLicense: false, // shuld still require license!
+			RequiresLicense: false, // should still require license!
 		}, FeatureFlag{
 			Name:            "b",
 			RequiresLicense: true, // expression is still "true"
