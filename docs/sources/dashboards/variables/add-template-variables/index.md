@@ -147,7 +147,7 @@ _Data source_ variables enable you to quickly change the data source for an enti
 1. [Enter general options](#enter-general-options).
 1. In the **Type** list, select the target data source for the variable.
 
-   Choose a data source from the drop-down list or click **Open advanced data source picker** to see more options, including adding a data source (Admins only). For more information about data sources, refer to [Add a data source]({{< relref "../../../administration/data-source-management#add-a-data-source" >}}).
+   You can also click **Open advanced data source picker** to see more options, including adding a data source (Admins only). For more information about data sources, refer to [Add a data source]({{< relref "../../../administration/data-source-management#add-a-data-source" >}}).
 
 1. (Optional) In **Instance name filter**, enter a regex filter for which data source instances to choose from in the variable value drop-down list. Leave this field empty to display all instances.
 1. (Optional) Enter [Selection Options]({{< relref "#configure-variable-selection-options" >}}).
@@ -193,7 +193,7 @@ Ad hoc filter variables only work with Prometheus, Loki, InfluxDB, and Elasticse
 1. [Enter general options](#enter-general-options).
 1. In the **Data source** list, select the target data source.
 
-Choose a data source from the drop-down list or click **Open advanced data source picker** to see more options, including adding a data source (Admins only). For more information about data sources, refer to [Add a data source]({{< relref "../../../administration/data-source-management#add-a-data-source" >}}).
+   You can also click **Open advanced data source picker** to see more options, including adding a data source (Admins only). For more information about data sources, refer to [Add a data source]({{< relref "../../../administration/data-source-management#add-a-data-source" >}}).
 
 1. Click **Add** to add the variable to the dashboard.
 
