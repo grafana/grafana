@@ -3,8 +3,10 @@ package store
 import (
 	"context"
 	"sort"
+	"sync"
 
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/manager/sources"
@@ -25,6 +27,12 @@ func ProvideService(pluginRegistry registry.Service, pluginSources sources.Regis
 		}
 	}
 	return New(pluginRegistry), nil
+}
+
+func (s *Service) Run(ctx context.Context) error {
+	<-ctx.Done()
+	s.shutdown(ctx)
+	return ctx.Err()
 }
 
 func New(pluginRegistry registry.Service) *Service {
@@ -119,4 +127,20 @@ func (s *Service) Routes(ctx context.Context) []*plugins.StaticRoute {
 		}
 	}
 	return staticRoutes
+}
+
+func (s *Service) shutdown(ctx context.Context) {
+	var wg sync.WaitGroup
+	for _, p := range s.pluginRegistry.Plugins(ctx) {
+		wg.Add(1)
+		go func(p backendplugin.Plugin, ctx context.Context) {
+			defer wg.Done()
+			p.Logger().Debug("Stopping plugin")
+			if err := p.Stop(ctx); err != nil {
+				p.Logger().Error("Failed to stop plugin", "error", err)
+			}
+			p.Logger().Debug("Plugin stopped")
+		}(p, ctx)
+	}
+	wg.Wait()
 }

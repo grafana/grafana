@@ -1301,6 +1301,7 @@ func (cfg *Cfg) handleAWSConfig() {
 	}
 
 	cfg.AWSExternalId = awsPluginSec.Key("external_id").Value()
+	err = os.Setenv(awsds.GrafanaAssumeRoleExternalIdKeyName, cfg.AWSExternalId)
 	if err != nil {
 		cfg.Logger.Error(fmt.Sprintf("could not set environment variable '%s'", awsds.GrafanaAssumeRoleExternalIdKeyName), err)
 	}

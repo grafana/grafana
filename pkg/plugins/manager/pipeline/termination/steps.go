@@ -44,18 +44,18 @@ func (r *TerminablePluginResolver) Resolve(ctx context.Context, pluginID string)
 
 // BackendProcessTerminator implements a TerminateFunc for stopping a backend plugin process.
 //
-// It uses the process.Service to stop the backend plugin process.
+// It uses the process.Manager to stop the backend plugin process.
 type BackendProcessTerminator struct {
-	processManager process.Service
+	processManager process.Manager
 	log            log.Logger
 }
 
 // BackendProcessTerminatorStep returns a new TerminateFunc for stopping a backend plugin process.
-func BackendProcessTerminatorStep(processManager process.Service) TerminateFunc {
+func BackendProcessTerminatorStep(processManager process.Manager) TerminateFunc {
 	return newBackendProcessTerminator(processManager).Terminate
 }
 
-func newBackendProcessTerminator(processManager process.Service) *BackendProcessTerminator {
+func newBackendProcessTerminator(processManager process.Manager) *BackendProcessTerminator {
 	return &BackendProcessTerminator{
 		processManager: processManager,
 		log:            log.New("plugins.backend.termination"),
@@ -64,9 +64,7 @@ func newBackendProcessTerminator(processManager process.Service) *BackendProcess
 
 // Terminate stops a backend plugin process.
 func (t *BackendProcessTerminator) Terminate(ctx context.Context, p *plugins.Plugin) error {
-	t.log.Debug("Stopping plugin process", "pluginId", p.ID)
-
-	return t.processManager.Stop(ctx, p.ID)
+	return t.processManager.Stop(ctx, p)
 }
 
 // Deregister implements a TerminateFunc for removing a plugin from the plugin registry.

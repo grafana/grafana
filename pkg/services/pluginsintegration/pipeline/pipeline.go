@@ -53,7 +53,7 @@ func ProvideValidationStage(cfg *config.Cfg, sv signature.Validator, ai angulari
 }
 
 func ProvideInitializationStage(cfg *config.Cfg, pr registry.Service, l plugins.Licensing,
-	bp plugins.BackendFactoryProvider, pm process.Service, externalServiceRegistry oauth.ExternalServiceRegistry,
+	bp plugins.BackendFactoryProvider, pm process.Manager, externalServiceRegistry oauth.ExternalServiceRegistry,
 	roleRegistry plugins.RoleRegistry) *initialization.Initialize {
 	return initialization.New(cfg, initialization.Opts{
 		InitializeFuncs: []initialization.InitializeFunc{
@@ -67,7 +67,7 @@ func ProvideInitializationStage(cfg *config.Cfg, pr registry.Service, l plugins.
 	})
 }
 
-func ProvideTerminationStage(cfg *config.Cfg, pr registry.Service, pm process.Service) (*termination.Terminate, error) {
+func ProvideTerminationStage(cfg *config.Cfg, pr registry.Service, pm process.Manager) (*termination.Terminate, error) {
 	return termination.New(cfg, termination.Opts{
 		ResolveFunc: termination.TerminablePluginResolverStep(pr),
 		TerminateFuncs: []termination.TerminateFunc{
