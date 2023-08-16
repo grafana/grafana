@@ -73,7 +73,6 @@ func ProvideTerminationStage(cfg *config.Cfg, pr registry.Service, pm process.Ma
 		TerminateFuncs: []termination.TerminateFunc{
 			termination.BackendProcessTerminatorStep(pm),
 			termination.DeregisterStep(pr),
-			termination.FSRemoval,
 		},
 	})
 }

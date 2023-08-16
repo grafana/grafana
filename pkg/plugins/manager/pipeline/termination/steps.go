@@ -93,13 +93,3 @@ func (d *Deregister) Deregister(ctx context.Context, p *plugins.Plugin) error {
 	d.log.Debug("Plugin unregistered", "pluginId", p.ID)
 	return nil
 }
-
-// FSRemoval implements a TerminateFunc for removing plugin files from the filesystem.
-func FSRemoval(_ context.Context, p *plugins.Plugin) error {
-	if remover, ok := p.FS.(plugins.FSRemover); ok {
-		if err := remover.Remove(); err != nil {
-			return err
-		}
-	}
-	return nil
-}
