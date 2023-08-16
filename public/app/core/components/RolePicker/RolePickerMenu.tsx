@@ -62,6 +62,7 @@ interface RolePickerMenuProps {
   basicRoleDisabled?: boolean;
   disabledMessage?: string;
   showBasicRole?: boolean;
+  showAdvancedRoles?: boolean;
   onSelect: (roles: Role[]) => void;
   onBasicRoleSelect?: (role: OrgRole) => void;
   onUpdate: (newRoles: Role[], newBuiltInRole?: OrgRole) => void;
@@ -78,6 +79,7 @@ export const RolePickerMenu = ({
   basicRoleDisabled,
   disabledMessage,
   showBasicRole,
+  showAdvancedRoles,
   onSelect,
   onBasicRoleSelect,
   onUpdate,
@@ -231,23 +233,24 @@ export const RolePickerMenu = ({
               />
             </div>
           )}
-          {Object.entries(rolesCollection).map(([groupId, collection]) => (
-            <RoleMenuGroupsSection
-              key={groupId}
-              roles={collection.roles}
-              renderedName={collection.renderedName}
-              showGroups={showGroups}
-              optionGroups={collection.optionGroup}
-              groupSelected={(group: string) => groupSelected(collection.groupType, group)}
-              groupPartiallySelected={(group: string) => groupPartiallySelected(collection.groupType, group)}
-              onGroupChange={(group: string) => onGroupChange(collection.groupType, group)}
-              subMenuNode={subMenuNode?.current!}
-              selectedOptions={selectedOptions}
-              onRoleChange={onChange}
-              onClearSubMenu={onClearSubMenu}
-              showOnLeftSubMenu={offset.horizontal > 0}
-            />
-          ))}
+          {showAdvancedRoles &&
+            Object.entries(rolesCollection).map(([groupId, collection]) => (
+              <RoleMenuGroupsSection
+                key={groupId}
+                roles={collection.roles}
+                renderedName={collection.renderedName}
+                showGroups={showGroups}
+                optionGroups={collection.optionGroup}
+                groupSelected={(group: string) => groupSelected(collection.groupType, group)}
+                groupPartiallySelected={(group: string) => groupPartiallySelected(collection.groupType, group)}
+                onGroupChange={(group: string) => onGroupChange(collection.groupType, group)}
+                subMenuNode={subMenuNode?.current!}
+                selectedOptions={selectedOptions}
+                onRoleChange={onChange}
+                onClearSubMenu={onClearSubMenu}
+                showOnLeftSubMenu={offset.horizontal > 0}
+              />
+            ))}
         </CustomScrollbar>
         <div className={customStyles.menuButtonRow}>
           <HorizontalGroup justify="flex-end">

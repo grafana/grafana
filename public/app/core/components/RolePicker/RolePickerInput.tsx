@@ -16,6 +16,7 @@ interface InputProps extends HTMLProps<HTMLInputElement> {
   basicRole?: string;
   query: string;
   showBasicRole?: boolean;
+  showAdvancedRoles?: boolean;
   isFocused?: boolean;
   disabled?: boolean;
   onQueryChange: (query?: string) => void;
@@ -30,6 +31,7 @@ export const RolePickerInput = ({
   isFocused,
   query,
   showBasicRole,
+  showAdvancedRoles,
   onOpen,
   onClose,
   onQueryChange,
@@ -56,14 +58,18 @@ export const RolePickerInput = ({
     // eslint-disable-next-line jsx-a11y/no-static-element-interactions
     <div className={cx(styles.wrapper, styles.selectedRoles)} onMouseDown={onOpen}>
       {showBasicRole && <ValueContainer>{basicRole}</ValueContainer>}
-      <RolesLabel appliedRoles={appliedRoles} numberOfRoles={numberOfRoles} showBuiltInRole={showBasicRole} />
+      <RolesLabel
+        appliedRoles={appliedRoles}
+        numberOfRoles={numberOfRoles}
+        showBasicRole={showBasicRole}
+        showAdvancedRoles={showAdvancedRoles}
+      />
     </div>
   ) : (
     <div className={styles.wrapper}>
       {showBasicRole && <ValueContainer>{basicRole}</ValueContainer>}
-      {appliedRoles.map((role) => (
-        <ValueContainer key={role.uid}>{role.displayName || role.name}</ValueContainer>
-      ))}
+      {showAdvancedRoles &&
+        appliedRoles.map((role) => <ValueContainer key={role.uid}>{role.displayName || role.name}</ValueContainer>)}
 
       {!disabled && (
         <input
@@ -88,11 +94,17 @@ RolePickerInput.displayName = 'RolePickerInput';
 
 interface RolesLabelProps {
   appliedRoles: Role[];
-  showBuiltInRole?: boolean;
+  showBasicRole?: boolean;
+  showAdvancedRoles?: boolean;
   numberOfRoles: number;
 }
 
-export const RolesLabel = ({ showBuiltInRole, numberOfRoles, appliedRoles }: RolesLabelProps): JSX.Element => {
+export const RolesLabel = ({
+  showBasicRole,
+  showAdvancedRoles,
+  numberOfRoles,
+  appliedRoles,
+}: RolesLabelProps): JSX.Element => {
   const styles = useStyles2((theme) => getTooltipStyles(theme));
 
   return (
@@ -105,12 +117,12 @@ export const RolesLabel = ({ showBuiltInRole, numberOfRoles, appliedRoles }: Rol
             </div>
           }
         >
-          <ValueContainer>{`${showBuiltInRole ? '+' : ''}${numberOfRoles} role${
+          <ValueContainer>{`${showBasicRole ? '+' : ''}${numberOfRoles} role${
             numberOfRoles > 1 ? 's' : ''
           }`}</ValueContainer>
         </Tooltip>
       ) : (
-        !showBuiltInRole && <ValueContainer>No roles assigned</ValueContainer>
+        !showBasicRole && <ValueContainer>No roles assigned</ValueContainer>
       )}
     </>
   );

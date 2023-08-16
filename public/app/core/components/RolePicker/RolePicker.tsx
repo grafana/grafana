@@ -16,6 +16,7 @@ export interface Props {
   basicRoleDisabled?: boolean;
   basicRoleDisabledMessage?: string;
   showBasicRole?: boolean;
+  showAdvancedRoles?: boolean;
   onRolesChange: (newRoles: Role[]) => void;
   onBasicRoleChange?: (newRole: OrgRole) => void;
   canUpdateRoles?: boolean;
@@ -35,6 +36,7 @@ export const RolePicker = ({
   basicRoleDisabled,
   basicRoleDisabledMessage,
   showBasicRole,
+  showAdvancedRoles,
   onRolesChange,
   onBasicRoleChange,
   canUpdateRoles = true,
@@ -175,6 +177,7 @@ export const RolePicker = ({
           isFocused={isOpen}
           disabled={disabled}
           showBasicRole={showBasicRole}
+          showAdvancedRoles={showAdvancedRoles}
         />
         {isOpen && (
           <RolePickerMenu
@@ -188,6 +191,7 @@ export const RolePicker = ({
             basicRoleDisabled={basicRoleDisabled}
             disabledMessage={basicRoleDisabledMessage}
             showBasicRole={showBasicRole}
+            showAdvancedRoles={showAdvancedRoles}
             updateDisabled={basicRoleDisabled && !canUpdateRoles}
             apply={apply}
             offset={offset}
