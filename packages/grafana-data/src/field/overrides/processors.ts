@@ -130,7 +130,7 @@ export interface UnitFieldConfigSettings {
 }
 
 export const unitOverrideProcessor = (
-  value: boolean,
+  value: { type: string; scalable: boolean },
   _context: FieldOverrideContext,
   _settings?: UnitFieldConfigSettings
 ) => {

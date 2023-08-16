@@ -25,7 +25,6 @@ export function UnitValueEditor({ value, onChange, item }: Props) {
   // const [scalable, setScalable] = useState(true);
 
   // const styles = useStyles2(getStyles);
-  // console.log({ component: 'UnitValueEditor', value, item });
 
   // if (item?.settings?.isClearable && value != null) {
   //   return (
@@ -41,20 +40,13 @@ export function UnitValueEditor({ value, onChange, item }: Props) {
   // }
   return (
     <>
-      <UnitPicker
-        value={value.type}
-        onChange={() => onChange({ type: value.type, scalable: value.scalable })}
-        scalable={value.scalable}
-      />
+      <UnitPicker value={value?.type} onChange={onChange} scalable={value.scalable} />
       <div style={{ marginTop: '16px' }}>
         <Label>Scalable</Label>
         <Switch
           value={value.scalable}
           id="scalable"
-          onChange={() => {
-            // setScalable(!scalable);
-            onChange({ type: value.type, scalable: !value.scalable });
-          }}
+          onChange={() => onChange({ type: value.type, scalable: !value.scalable })}
         />
       </div>
     </>

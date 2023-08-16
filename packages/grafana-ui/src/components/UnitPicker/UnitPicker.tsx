@@ -22,7 +22,7 @@ export class UnitPicker extends PureComponent<UnitPickerProps> {
   // };
 
   onChange = (value: string) => {
-    this.props.onChange({ type: value, scalable: true });
+    this.props.onChange({ type: value, scalable: this.props.scalable || true });
   };
 
   render() {
@@ -68,8 +68,7 @@ export class UnitPicker extends PureComponent<UnitPickerProps> {
         formatCreateLabel={formatCreateLabel}
         options={groupOptions}
         placeholder="Choose"
-        // onSelect={this.props.onChange}
-        onSelect={() => this.onChange.bind(this)}
+        onSelect={this.onChange}
       />
     );
   }

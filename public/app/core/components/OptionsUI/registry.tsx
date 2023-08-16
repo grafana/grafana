@@ -26,6 +26,7 @@ import {
   displayNameOverrideProcessor,
   FieldNamePickerConfigSettings,
   booleanOverrideProcessor,
+  UnitFieldConfigSettings,
   unitOverrideProcessor,
 } from '@grafana/data';
 import { RadioButtonGroup, TimeZonePicker, Switch } from '@grafana/ui';
@@ -229,7 +230,7 @@ export const getAllStandardFieldConfigs = () => {
     category,
   };
 
-  const unit: FieldConfigPropertyItem<any, string, StringFieldConfigSettings> = {
+  const unit: FieldConfigPropertyItem<any, string, UnitFieldConfigSettings> = {
     id: 'unit',
     path: 'unit',
     name: 'Unit',
@@ -237,12 +238,9 @@ export const getAllStandardFieldConfigs = () => {
 
     editor: standardEditorsRegistry.get('unit').editor as any,
     override: standardEditorsRegistry.get('unit').editor as any,
-    // process: stringOverrideProcessor,
     process: unitOverrideProcessor,
 
-    settings: {
-      placeholder: 'none',
-    },
+    settings: {},
 
     shouldApply: () => true,
     category,
