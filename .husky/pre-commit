@@ -1,5 +1,12 @@
 #!/bin/sh
 
+if [[ -f ".git/hooks/pre-commit" ]]; then
+  if grep -q lefthook ".git/hooks/pre-commit"; then
+    env SILENT=1 ./scripts/cleanup-husky.sh
+    ./.git/hooks/pre-commit "$@"
+  fi
+fi
+
 # This precommit hook exists only for people who still have hooksPath=.husky in their git config
 # from when we used husky. This is intended to run only on first commit after pulling the lefthook changes.
 #
@@ -13,6 +20,5 @@ echo "Or, silence this message by cleaning up the old hooks"
 echo "  $ \e[96mmake cleanup-old-git-hooks\e[0m"
 echo "\nPre-commit hooks will not run on this commit and it will be committed even if it contains lint errors."
 echo "See https://github.com/grafana/grafana/blob/main/contribute/developer-guide.md#configure-precommit-hooks for more info\n"
-
 
 exit 0

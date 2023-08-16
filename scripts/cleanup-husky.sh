@@ -4,8 +4,11 @@ set -e
 currentHooksPath=$(git config core.hooksPath || true)
 
 if [[ $currentHooksPath == ".husky" ]]; then
-  echo "Unsetting git hooks path because it was previously set to .husky."
-  echo "If you had custom git hooks in .husky you may want to move them to .git/hooks"
+  if [ -z "$SILENT" ]; then
+    echo "Unsetting git hooks path because it was previously set to .husky."
+    echo "If you had custom git hooks in .husky you may want to move them to .git/hooks"
+  fi
+
   git config --unset core.hooksPath
 fi
 
@@ -36,7 +39,10 @@ for hookName in "${oldHuskyHookNames[@]}"; do
   if [[ -f $hookPath ]]; then
     if grep -q husky "$hookPath"; then
       newHookPath="$hookPath.old"
-      echo "Renaming old husky hook $hookPath to $newHookPath"
+        if [ -z "$SILENT" ]; then
+          echo "Renaming old husky hook $hookPath to $newHookPath"
+        fi
+
       mv "$hookPath" "$newHookPath" --suffix=old --backup=numbered
     fi
   fi
