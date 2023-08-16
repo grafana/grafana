@@ -64,7 +64,7 @@ clean-api-spec:
 
 .PHONY: cleanup-old-git-hooks
 cleanup-old-git-hooks:
-	bash scripts/cleanup-husky.sh
+	./scripts/cleanup-husky.sh
 
 .PHONY: lefthook-install
 lefthook-install: cleanup-old-git-hooks $(LEFTHOOK) # install lefthook for pre-commit hooks

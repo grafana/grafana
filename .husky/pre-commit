@@ -1,10 +1,13 @@
 #!/bin/sh
 
 # Catch devs who have installed lefthook, went back into the past and reinstalled husky,
-# then came back into lefthook-land
+# then came back into lefthook-land.
 if [ -f ".git/hooks/pre-commit" ]; then
   if grep -q lefthook ".git/hooks/pre-commit"; then
+    # Remove husky from their git config
     env SILENT=1 ./scripts/cleanup-husky.sh
+
+    # And run the lefthook precommit hook instead of this
     ./.git/hooks/pre-commit "$@"
     exit $?
   fi

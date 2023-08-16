@@ -1,8 +1,10 @@
 #!/usr/bin/env bash
 set -e
 
-currentHooksPath=$(git config core.hooksPath || true)
 
+
+# Husky modified your git config to store git hooks in the repo, so do that change
+currentHooksPath=$(git config core.hooksPath || true)
 if [[ $currentHooksPath == ".husky" ]]; then
   if [ -z "$SILENT" ]; then
     echo "Unsetting git hooks path because it was previously set to .husky."
@@ -33,15 +35,19 @@ oldHuskyHookNames=(
   "update"
 )
 
+#
+# Also extra-old husky dumped a bunch of hooks into .git/hooks, so check for them
+# and rename them so they don't run
 for hookName in "${oldHuskyHookNames[@]}"; do
   hookPath=".git/hooks/$hookName"
 
   if [[ -f $hookPath ]]; then
     if grep -q husky "$hookPath"; then
       newHookPath="$hookPath.old"
-        if [ -z "$SILENT" ]; then
-          echo "Renaming old husky hook $hookPath to $newHookPath"
-        fi
+
+      if [ -z "$SILENT" ]; then
+        echo "Renaming old husky hook $hookPath to $newHookPath"
+      fi
 
       mv "$hookPath" "$newHookPath" --suffix=old --backup=numbered
     fi
