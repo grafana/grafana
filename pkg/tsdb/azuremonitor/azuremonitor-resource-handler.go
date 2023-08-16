@@ -7,6 +7,7 @@ import (
 	"net/url"
 	"strings"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/resource/httpadapter"
 
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
@@ -25,20 +26,18 @@ func getTarget(original string) (target string, err error) {
 type httpServiceProxy struct {
 }
 
-func (s *httpServiceProxy) Do(rw http.ResponseWriter, req *http.Request, cli *http.Client) http.ResponseWriter {
+func (s *httpServiceProxy) Do(rw http.ResponseWriter, req *http.Request, cli *http.Client) (http.ResponseWriter, error) {
 	res, err := cli.Do(req)
 	if err != nil {
 		rw.WriteHeader(http.StatusInternalServerError)
 		_, err = rw.Write([]byte(fmt.Sprintf("unexpected error %v", err)))
 		if err != nil {
-			logger.Error("Unable to write HTTP response", "error", err)
+			return nil, fmt.Errorf("unable to write HTTP response: %v", err)
 		}
-		return nil
+		return nil, err
 	}
 	defer func() {
-		if err := res.Body.Close(); err != nil {
-			logger.Warn("Failed to close response body", "err", err)
-		}
+		res.Body.Close()
 	}()
 
 	body, err := io.ReadAll(res.Body)
@@ -46,14 +45,14 @@ func (s *httpServiceProxy) Do(rw http.ResponseWriter, req *http.Request, cli *ht
 		rw.WriteHeader(http.StatusInternalServerError)
 		_, err = rw.Write([]byte(fmt.Sprintf("unexpected error %v", err)))
 		if err != nil {
-			logger.Error("Unable to write HTTP response", "error", err)
+			return nil, fmt.Errorf("unable to write HTTP response: %v", err)
 		}
-		return nil
+		return nil, err
 	}
 	rw.WriteHeader(res.StatusCode)
 	_, err = rw.Write(body)
 	if err != nil {
-		logger.Error("Unable to write HTTP response", "error", err)
+		return nil, fmt.Errorf("unable to write HTTP response: %v", err)
 	}
 
 	for k, v := range res.Header {
@@ -63,7 +62,7 @@ func (s *httpServiceProxy) Do(rw http.ResponseWriter, req *http.Request, cli *ht
 		}
 	}
 	// Returning the response write for testing purposes
-	return rw
+	return rw, nil
 }
 
 func (s *Service) getDataSourceFromHTTPReq(req *http.Request) (types.DatasourceInfo, error) {
@@ -84,13 +83,13 @@ func writeResponse(rw http.ResponseWriter, code int, msg string) {
 	rw.WriteHeader(http.StatusBadRequest)
 	_, err := rw.Write([]byte(msg))
 	if err != nil {
-		logger.Error("Unable to write HTTP response", "error", err)
+		log.DefaultLogger.Error("unable to write HTTP response", "error", err)
 	}
 }
 
 func (s *Service) handleResourceReq(subDataSource string) func(rw http.ResponseWriter, req *http.Request) {
 	return func(rw http.ResponseWriter, req *http.Request) {
-		logger.Debug("Received resource call", "url", req.URL.String(), "method", req.Method)
+		//log.DefaultLogger.Debug("Received resource call", "url", req.URL.String(), "method", req.Method)
 
 		newPath, err := getTarget(req.URL.Path)
 		if err != nil {
