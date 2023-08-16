@@ -143,7 +143,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
           routeName: route.routeName,
           fixUrl: false,
           keybindingSrv: this.context.keybindings,
-          dashboardDto: { dashboard: dashboardModel, meta: { canEdit: true } },
+          dashboardDto: { dashboard: dashboardModel, meta: { canEdit: true, isEmbedded: true } },
         });
       });
     } else {
