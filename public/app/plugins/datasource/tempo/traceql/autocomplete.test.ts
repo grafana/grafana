@@ -260,8 +260,8 @@ describe('CompletionProvider', () => {
       {} as monacoTypes.Position
     );
     expect((result! as monacoTypes.languages.CompletionList).suggestions).toEqual(
-      [...CompletionProvider.spansetAggregatorOps, ...CompletionProvider.spansetGroupAndSelectOps].map((s) =>
-        expect.objectContaining({ label: s, insertText: s })
+      CompletionProvider.functions.map((s) =>
+        expect.objectContaining({ label: s.label, insertText: s.insertText, documentation: s.documentation })
       )
     );
   });
