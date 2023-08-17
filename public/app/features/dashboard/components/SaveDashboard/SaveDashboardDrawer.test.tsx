@@ -23,7 +23,7 @@ jest.mock('@grafana/runtime', () => ({
   }),
 }));
 
-const store = configureStore({ dashboard: { original: {} } } as unknown as Partial<StoreState>);
+const store = configureStore({ dashboard: { getOriginal: () => ({}) } } as unknown as Partial<StoreState>);
 const mockPost = jest.fn();
 const buildMocks = () => ({
   dashboard: createDashboardModelFixture({
