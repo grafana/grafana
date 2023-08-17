@@ -111,6 +111,7 @@ type FrontendSettingsWhitelabelingDTO struct {
 	LoginSubtitle         *string                                         `json:"loginSubtitle,omitempty"`
 	LoginBoxBackground    *string                                         `json:"loginBoxBackground,omitempty"`
 	LoadingLogo           *string                                         `json:"loadingLogo,omitempty"`
+	HideEdition           *bool                                           `json:"hideEdition,omitempty"`
 	PublicDashboardFooter *FrontendSettingsPublicDashboardFooterConfigDTO `json:"publicDashboardFooter,omitempty"` // PR TODO: type this properly
 }
 
