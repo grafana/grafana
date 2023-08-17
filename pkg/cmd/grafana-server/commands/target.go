@@ -16,9 +16,8 @@ import (
 )
 
 // TargetCommand is the command for running a pared-down grafana server suitable
-// for starting background tasks and dskit modules. It can be used to start all
-// of Grafana, but by default the HTTPServer (and it's dependencies) do not
-// start.
+// for starting dskit modules. This command can be used to start all of Grafana,
+// but the command itself it does not launch the HTTP server.
 func TargetCommand(version, commit, buildBranch, buildstamp string) *cli.Command {
 	return &cli.Command{
 		Name:  "target",

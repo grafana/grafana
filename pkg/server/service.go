@@ -17,9 +17,8 @@ type service struct {
 	server  *Server
 }
 
-func NewService(cla setting.CommandLineArgs, opts Options, apiOpts api.ServerOptions) (*service, error) {
+func NewService(opts Options, apiOpts api.ServerOptions) (*service, error) {
 	s := &service{
-		cla:     cla,
 		opts:    opts,
 		apiOpts: apiOpts,
 	}

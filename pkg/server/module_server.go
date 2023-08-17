@@ -21,8 +21,8 @@ import (
 
 // NewModule returns an instances of a ModuleServer, responsible for managing
 // dskit modules (services).
-func NewModule(cla setting.CommandLineArgs, opts Options, apiOpts api.ServerOptions, cfg *setting.Cfg) (*ModuleServer, error) {
-	s, err := newModuleServer(cla, opts, apiOpts, cfg)
+func NewModule(opts Options, apiOpts api.ServerOptions, cfg *setting.Cfg) (*ModuleServer, error) {
+	s, err := newModuleServer(opts, apiOpts, cfg)
 	if err != nil {
 		return nil, err
 	}
@@ -34,11 +34,10 @@ func NewModule(cla setting.CommandLineArgs, opts Options, apiOpts api.ServerOpti
 	return s, nil
 }
 
-func newModuleServer(cla setting.CommandLineArgs, opts Options, apiOpts api.ServerOptions, cfg *setting.Cfg) (*ModuleServer, error) {
+func newModuleServer(opts Options, apiOpts api.ServerOptions, cfg *setting.Cfg) (*ModuleServer, error) {
 	rootCtx, shutdownFn := context.WithCancel(context.Background())
 
 	s := &ModuleServer{
-		cla:              cla,
 		opts:             opts,
 		apiOpts:          apiOpts,
 		context:          rootCtx,
@@ -58,7 +57,6 @@ func newModuleServer(cla setting.CommandLineArgs, opts Options, apiOpts api.Serv
 // ModuleServer is responsible for managing the lifecycle of dskit services. The
 // ModuleServer does not include the HTTP server.
 type ModuleServer struct {
-	cla     setting.CommandLineArgs
 	opts    Options
 	apiOpts api.ServerOptions
 
@@ -109,7 +107,7 @@ func (s *ModuleServer) Run() error {
 	m := modules.New(s.cfg.Target)
 
 	m.RegisterModule(modules.Core, func() (services.Service, error) {
-		return NewService(s.cla, s.opts, s.apiOpts)
+		return NewService(s.opts, s.apiOpts)
 	})
 
 	m.RegisterModule(modules.GrafanaAPIServer, func() (services.Service, error) {
