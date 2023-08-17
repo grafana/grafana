@@ -4,12 +4,12 @@ import { QueryEditorProps, SelectableValue } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { InlineField } from '@grafana/ui';
 
-import { Dimensions } from '..';
 import { CloudWatchDatasource } from '../../datasource';
 import { useAccountOptions, useDimensionKeys, useMetrics, useNamespaces, useRegions } from '../../hooks';
 import { migrateVariableQuery } from '../../migrations/variableQueryMigrations';
 import { CloudWatchJsonData, CloudWatchQuery, VariableQuery, VariableQueryType } from '../../types';
-import { ALL_ACCOUNTS_OPTION } from '../Account';
+import { ALL_ACCOUNTS_OPTION } from '../shared/Account';
+import { Dimensions } from '../shared/Dimensions/Dimensions';
 
 import { MultiFilter } from './MultiFilter';
 import { VariableQueryField } from './VariableQueryField';

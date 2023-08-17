@@ -87,7 +87,7 @@ describe('getExploreUrl', () => {
       getDataSourceById: jest.fn(),
     },
     timeSrv: {
-      timeRangeForUrl: () => '1',
+      timeRange: () => ({ raw: { from: 'now-1h', to: 'now' } }),
     },
   } as unknown as GetExploreUrlArguments;
 

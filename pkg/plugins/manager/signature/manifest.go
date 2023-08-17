@@ -116,7 +116,7 @@ func (s *Signature) Calculate(ctx context.Context, src plugins.PluginSource, plu
 		return plugins.Signature{}, fmt.Errorf("files: %w", err)
 	}
 	if len(fsFiles) == 0 {
-		s.log.Warn("No plugin file information in directory", "pluginID", plugin.JSONData.ID)
+		s.log.Warn("No plugin file information in directory", "pluginId", plugin.JSONData.ID)
 		return plugins.Signature{
 			Status: plugins.SignatureStatusInvalid,
 		}, nil
@@ -125,13 +125,13 @@ func (s *Signature) Calculate(ctx context.Context, src plugins.PluginSource, plu
 	f, err := plugin.FS.Open("MANIFEST.txt")
 	if err != nil {
 		if errors.Is(err, plugins.ErrFileNotExist) {
-			s.log.Debug("Could not find a MANIFEST.txt", "id", plugin.JSONData.ID, "err", err)
+			s.log.Debug("Could not find a MANIFEST.txt", "id", plugin.JSONData.ID, "error", err)
 			return plugins.Signature{
 				Status: plugins.SignatureStatusUnsigned,
 			}, nil
 		}
 
-		s.log.Debug("Could not open MANIFEST.txt", "id", plugin.JSONData.ID, "err", err)
+		s.log.Debug("Could not open MANIFEST.txt", "id", plugin.JSONData.ID, "error", err)
 		return plugins.Signature{
 			Status: plugins.SignatureStatusInvalid,
 		}, nil
@@ -141,7 +141,7 @@ func (s *Signature) Calculate(ctx context.Context, src plugins.PluginSource, plu
 			return
 		}
 		if err = f.Close(); err != nil {
-			s.log.Warn("Failed to close plugin MANIFEST file", "err", err)
+			s.log.Warn("Failed to close plugin MANIFEST file", "error", err)
 		}
 	}()
 
@@ -155,7 +155,7 @@ func (s *Signature) Calculate(ctx context.Context, src plugins.PluginSource, plu
 
 	manifest, err := s.readPluginManifest(ctx, byteValue)
 	if err != nil {
-		s.log.Warn("Plugin signature invalid", "id", plugin.JSONData.ID, "err", err)
+		s.log.Warn("Plugin signature invalid", "id", plugin.JSONData.ID, "error", err)
 		return plugins.Signature{
 			Status: plugins.SignatureStatusInvalid,
 		}, nil
@@ -253,7 +253,7 @@ func verifyHash(mlog log.Logger, plugin plugins.FoundPlugin, path, hash string) 
 	}
 	defer func() {
 		if err := f.Close(); err != nil {
-			mlog.Warn("Failed to close plugin file", "path", path, "err", err)
+			mlog.Warn("Failed to close plugin file", "path", path, "error", err)
 		}
 	}()
 

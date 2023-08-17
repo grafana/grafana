@@ -1,0 +1,36 @@
+.canvas {
+  background-color: #fff;
+}
+
+.background {
+  background-color: #FFF;
+  border: 1px solid #e4e5e6;
+}
+
+.border-bottom {
+  border-bottom: 1px solid #e4e5e6;
+}
+
+.border-top {
+  border-top: 1px solid #e4e5e6;
+}
+
+.well {
+  background-color: #F4F5F5;
+  border: 1px solid #e4e5e6;
+}
+
+.txt div, .token div {
+  color: #24292e;
+}
+
+.txt tbody tr td {
+  color: #24292e;
+}
+
+.token {
+  background-color: #F4F5F5;
+  border: 1px solid #e4e5e6;
+
+  padding: 10px 25px;
+}

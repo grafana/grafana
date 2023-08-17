@@ -81,9 +81,6 @@ func GenerateGrafanaVersion(buildID, grafanaDir string) (string, error) {
 		buildID = shortenBuildID(buildID)
 		verComponents := strings.Split(version, "-")
 		version = verComponents[0]
-		if len(verComponents) > 1 {
-			buildID = fmt.Sprintf("%s%s", buildID, verComponents[1])
-		}
 		version = fmt.Sprintf("%s-%s", version, buildID)
 	}
 

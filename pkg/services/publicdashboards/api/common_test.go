@@ -17,9 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
 	pluginFakes "github.com/grafana/grafana/pkg/plugins/manager/fakes"
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -47,19 +45,6 @@ func setupTestServer(
 	// build router to register routes
 	rr := routing.NewRouteRegister()
 
-	var permissions []accesscontrol.Permission
-	if user != nil && user.Permissions != nil {
-		for action, scopes := range user.Permissions[user.OrgID] {
-			for _, scope := range scopes {
-				permissions = append(permissions, accesscontrol.Permission{
-					Action: action,
-					Scope:  scope,
-				})
-			}
-		}
-	}
-
-	acService := actest.FakeService{ExpectedPermissions: permissions, ExpectedDisabled: !cfg.RBACEnabled}
 	ac := acimpl.ProvideAccessControl(cfg)
 
 	// build mux
@@ -67,7 +52,6 @@ func setupTestServer(
 
 	// set initial context
 	m.Use(contextProvider(&testContext{user}))
-	m.Use(accesscontrol.LoadPermissionsMiddleware(acService))
 
 	// build api, this will mount the routes at the same time if
 	// featuremgmt.FlagPublicDashboard is enabled

@@ -1,4 +1,8 @@
 <mjml>
+  <!-- global variables -->
+  <mj-include path="./partials/_globals.mjml" />
+  <!-- css styling -->
+  <mj-include path="./partials/layout/theme.css" type="css" css-inline="inline" />
   <mj-head>
     <!-- ⬇ Don't forget to specifify an email subject below! ⬇ -->
     <mj-title>
@@ -10,28 +14,38 @@
     <mj-section>
       <mj-include path="./partials/layout/header.mjml" />
     </mj-section>
-    <mj-section background-color="#22252b" border="1px solid #2f3037">
-      <mj-column>
-        <mj-text>
-          <h2>Complete the signup</h2>
-        </mj-text>
-        <mj-text>
-          Copy and paste the email verification code in the sign up form <strong>or</strong> use the link below.
-        </mj-text>
-        <mj-button background-color="transparent" border="1px solid #44474f" color="#ccccdd" font-size="22px" font-weight="bold">
-          {{ .Code }}
-        </mj-button>
-        <mj-button href="{{ .SignUpUrl }}">
-          Complete Sign Up
-        </mj-button>
-        <mj-text>
-          You can also copy and paste this link into your browser directly:
-        </mj-text>
-        <mj-text>
-          <a rel="noopener" href="{{ .LinkUrl }}">{{ .SignUpUrl }}</a>
-        </mj-text>
-      </mj-column>
-    </mj-section>
+    <mj-wrapper css-class="background" padding="0">
+      <mj-section padding="0">
+        <mj-column>
+          <mj-text>
+            <h2>Complete the signup</h2>
+          </mj-text>
+          <mj-text>
+            Copy and paste the email verification code in the sign up form <strong>or</strong> use the link below.
+          </mj-text>
+        </mj-column>
+      </mj-section>
+      <mj-section padding="10px 25px">
+        <mj-column css-class="well">
+          <mj-text font-size="22px" font-weight="bold" align="center">
+            {{ .Code }}
+          </mj-text>
+        </mj-column>
+      </mj-section>
+      <mj-section padding="0">
+        <mj-column>
+          <mj-button href="{{ .SignUpUrl }}">
+            Complete Sign Up
+          </mj-button>
+          <mj-text>
+            You can also copy and paste this link into your browser directly:
+          </mj-text>
+          <mj-text>
+            <a rel="noopener" href="{{ .LinkUrl }}">{{ .SignUpUrl }}</a>
+          </mj-text>
+        </mj-column>
+      </mj-section>
+    </mj-wrapper>
     <mj-section>
       <mj-include path="./partials/layout/footer.mjml" />
     </mj-section>
