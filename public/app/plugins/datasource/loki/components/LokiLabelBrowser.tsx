@@ -133,7 +133,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     padding: ${theme.spacing(1)};
     background-color: ${theme.colors.background.primary};
     position: sticky;
-    bottom: -24px; /* offset the padding on modal */
+    bottom: -${theme.spacing(3)}; /* offset the padding on modal */
     left: 0;
   `,
   selector: css`
