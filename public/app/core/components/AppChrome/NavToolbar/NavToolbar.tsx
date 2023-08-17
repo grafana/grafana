@@ -4,10 +4,9 @@ import React from 'react';
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { Components } from '@grafana/e2e-selectors';
 import { Icon, IconButton, ToolbarButton, useStyles2 } from '@grafana/ui';
-import { useGrafana } from 'app/core/context/GrafanaContext';
 import { t } from 'app/core/internationalization';
 import { HOME_NAV_ID } from 'app/core/reducers/navModel';
-import { KioskMode, useSelector } from 'app/types';
+import { useSelector } from 'app/types';
 
 import { Breadcrumbs } from '../../Breadcrumbs/Breadcrumbs';
 import { buildBreadcrumbs } from '../../Breadcrumbs/utils';
@@ -35,30 +34,32 @@ export function NavToolbar({
   onToggleKioskMode,
 }: Props) {
   const homeNav = useSelector((state) => state.navIndex)[HOME_NAV_ID];
+  const dashboard = useSelector((state) => state.dashboard.getModel());
+  const isEmbedded = dashboard?.meta.isEmbedded;
   const styles = useStyles2(getStyles);
   const breadcrumbs = buildBreadcrumbs(sectionNav, pageNav, homeNav);
-  const { chrome } = useGrafana();
-  const state = chrome.useState();
 
   return (
     <div data-testid={Components.NavToolbar.container} className={styles.pageToolbar}>
-      {state.kioskMode !== KioskMode.Embed && (
-        <>
-          <div className={styles.menuButton}>
-            <IconButton
-              name="bars"
-              tooltip={t('navigation.toolbar.toggle-menu', 'Toggle menu')}
-              tooltipPlacement="bottom"
-              size="xl"
-              onClick={onToggleMegaMenu}
-            />
-          </div>
-          <Breadcrumbs breadcrumbs={breadcrumbs} className={styles.breadcrumbsWrapper} />
-        </>
+      {!isEmbedded && (
+        <div className={styles.menuButton}>
+          <IconButton
+            name="bars"
+            tooltip={t('navigation.toolbar.toggle-menu', 'Toggle menu')}
+            tooltipPlacement="bottom"
+            size="xl"
+            onClick={onToggleMegaMenu}
+          />
+        </div>
       )}
+      <Breadcrumbs
+        // Only show dashboard title for embedded dashboards
+        breadcrumbs={isEmbedded ? breadcrumbs.slice(-1) : breadcrumbs}
+        className={styles.breadcrumbsWrapper}
+      />
       <div className={styles.actions}>
         {actions}
-        {state.kioskMode !== KioskMode.Embed && (
+        {!isEmbedded && (
           <>
             {actions && <NavToolbarSeparator />}
             {searchBarHidden && (

@@ -11,8 +11,6 @@ export function getKioskMode(queryParams: UrlQueryMap): KioskMode | null {
     case '1':
     case true:
       return KioskMode.Full;
-    case 'embed':
-      return KioskMode.Embed;
     default:
       return null;
   }

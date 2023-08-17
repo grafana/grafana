@@ -250,6 +250,7 @@ export const DashNav = React.memo<Props>((props) => {
     const { canSave, canEdit, showSettings } = dashboard.meta;
     const { snapshot } = dashboard;
     const snapshotUrl = snapshot && snapshot.originalUrl;
+
     const buttons: ReactNode[] = [];
 
     if (isPlaylistRunning()) {
@@ -260,7 +261,7 @@ export const DashNav = React.memo<Props>((props) => {
       return [renderTimeControls()];
     }
 
-    if (canEdit && !isFullscreen && kioskMode !== KioskMode.Embed) {
+    if (canEdit && !isFullscreen && !dashboard.meta.isEmbedded) {
       if (config.featureToggles.emptyDashboardPage) {
         buttons.push(<AddPanelButton dashboard={dashboard} key="panel-add-dropdown" />);
       } else {
@@ -306,7 +307,7 @@ export const DashNav = React.memo<Props>((props) => {
       );
     }
 
-    if (showSettings && kioskMode !== KioskMode.Embed) {
+    if (showSettings && !dashboard.meta.isEmbedded) {
       buttons.push(
         <ToolbarButton
           tooltip={t('dashboard.toolbar.settings', 'Dashboard settings')}
@@ -328,7 +329,7 @@ export const DashNav = React.memo<Props>((props) => {
     <AppChromeUpdate
       actions={
         <>
-          {props.kioskMode !== KioskMode.Embed && renderLeftActions()}
+          {!props.dashboard.meta.isEmbedded && renderLeftActions()}
           <NavToolbarSeparator leftActionsSeparator />
           <ToolbarButtonRow alignment="right">{renderRightActions()}</ToolbarButtonRow>
         </>
