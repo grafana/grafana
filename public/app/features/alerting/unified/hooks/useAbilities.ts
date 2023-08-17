@@ -68,7 +68,8 @@ export function useAbilities(): Abilities {
     // only Grafana flavored alertmanager supports exporting
     [Action.ExportContactPoint]: [
       isGrafanaFlavoredAlertmanager,
-      ctx.hasAccess(notificationsPermissions.provisioning.read, ctx.hasRole(OrgRole.Viewer)),
+      ctx.hasAccess(notificationsPermissions.provisioning.read, ctx.hasRole(OrgRole.Admin)) ||
+        ctx.hasAccess(notificationsPermissions.provisioning.readSecrets, ctx.hasRole(OrgRole.Admin)),
     ],
     // -- silences --
     [Action.CreateSilence]: [
