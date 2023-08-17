@@ -1,4 +1,5 @@
 import { isNearMembraneProxy, ProxyTarget } from '@locker/near-membrane-shared';
+import Prism from 'prismjs';
 
 import { DataSourceApi } from '@grafana/data';
 import { config } from '@grafana/runtime';
@@ -94,10 +95,16 @@ export function markDomElementStyleAsALiveTarget(el: Element) {
  * but not all objects, only the ones that are allowed to be modified
  */
 export function patchObjectAsLiveTarget(obj: unknown) {
+  if (!obj) {
+    return;
+  }
+
+  // do not patch it twice
+  if (Object.hasOwn(obj, SANDBOX_LIVE_VALUE)) {
+    return;
+  }
+
   if (
-    obj &&
-    // do not define it twice
-    !Object.hasOwn(obj, SANDBOX_LIVE_VALUE) &&
     // only for proxies
     isNearMembraneProxy(obj) &&
     // do not patch functions
@@ -107,6 +114,10 @@ export function patchObjectAsLiveTarget(obj: unknown) {
     (isReactClassComponent(obj) || obj instanceof DataSourceApi)
   ) {
     Reflect.defineProperty(obj, SANDBOX_LIVE_VALUE, {});
+  } else {
+    if (obj === Prism.languages) {
+      Object.defineProperty(obj, SANDBOX_LIVE_VALUE, {});
+    }
   }
 }
 
