@@ -30,7 +30,6 @@
     "packages:prepare": "lerna version --no-push --no-git-tag-version --force-publish --exact",
     "packages:pack": "mkdir -p ./npm-artifacts && lerna exec --no-private -- yarn pack --out \"../../npm-artifacts/%s-%v.tgz\"",
     "packages:typecheck": "lerna run typecheck",
-    "precommit": "yarn run lint-staged",
     "prettier:check": "prettier --check --list-different=false --log-level=warn \"**/*.{ts,tsx,scss,md,mdx}\"",
     "prettier:checkDocs": "prettier --check --list-different=false --log-level=warn \"docs/**/*.md\" \"*.md\" \"packages/**/*.{ts,tsx,scss,md,mdx}\"",
     "prettier:write": "prettier --list-different \"**/*.{js,ts,tsx,scss,md,mdx}\" --write",
@@ -46,7 +45,6 @@
     "plugins:build-bundled": "find plugins-bundled -name package.json -not -path '*/node_modules/*' -execdir yarn build \\;",
     "watch": "yarn start -d watch,start core:start --watchTheme",
     "ci:test-frontend": "yarn run test:ci",
-    "postinstall": "husky install",
     "i18n:clean": "rimraf public/locales/en-US/grafana.json",
     "i18n:extract": "yarn run i18next -c public/locales/i18next-parser.config.js 'public/**/*.{tsx,ts}' 'packages/grafana-ui/**/*.{tsx,ts}'",
     "i18n:compile": "echo 'no i18n compile yet, all good'",
@@ -59,30 +57,6 @@
   "grafana": {
     "whatsNewUrl": "https://grafana.com/docs/grafana/next/whatsnew/whats-new-in-v10-0/",
     "releaseNotesUrl": "https://grafana.com/docs/grafana/next/release-notes/"
-  },
-  "lint-staged": {
-    "*.{ts,tsx}": [
-      "betterer precommit"
-    ],
-    "*.{js,ts,tsx}": [
-      "eslint --ext .js,.tsx,.ts --cache --fix",
-      "prettier --write"
-    ],
-    "*.{json,scss,md,mdx}": [
-      "prettier --write"
-    ],
-    "*pkg/**/*.go": [
-      "gofmt -w -s"
-    ],
-    "*kinds/**/*.cue": [
-      "make fix-cue"
-    ],
-    "*public/app/plugins/**/**/*.cue": [
-      "make fix-cue"
-    ],
-    "./public/locales/en-US/grafana.json": [
-      "yarn i18n:pseudo"
-    ]
   },
   "devDependencies": {
     "@babel/core": "7.22.9",
@@ -206,7 +180,6 @@
     "html-loader": "4.2.0",
     "html-webpack-plugin": "5.5.3",
     "http-server": "14.1.1",
-    "husky": "8.0.3",
     "i18next-parser": "6.6.0",
     "jest": "29.3.1",
     "jest-canvas-mock": "2.5.2",
@@ -216,7 +189,6 @@
     "jest-junit": "16.0.0",
     "jest-matcher-utils": "29.3.1",
     "lerna": "5.5.4",
-    "lint-staged": "13.2.3",
     "mini-css-extract-plugin": "2.7.6",
     "msw": "1.2.2",
     "mutationobserver-shim": "0.3.7",
@@ -272,7 +244,7 @@
     "@grafana/lezer-traceql": "0.0.4",
     "@grafana/monaco-logql": "^0.0.7",
     "@grafana/runtime": "workspace:*",
-    "@grafana/scenes": "0.22.0",
+    "@grafana/scenes": "0.24.0",
     "@grafana/schema": "workspace:*",
     "@grafana/ui": "workspace:*",
     "@kusto/monaco-kusto": "^7.4.0",

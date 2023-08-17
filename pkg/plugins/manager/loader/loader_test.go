@@ -23,7 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 )
 
-var compareOpts = []cmp.Option{cmpopts.IgnoreFields(plugins.Plugin{}, "client", "log"), fsComparer}
+var compareOpts = []cmp.Option{cmpopts.IgnoreFields(plugins.Plugin{}, "client", "log", "mu"), fsComparer}
 
 var fsComparer = cmp.Comparer(func(fs1 plugins.FS, fs2 plugins.FS) bool {
 	fs1Files, err := fs1.Files()
@@ -478,7 +478,9 @@ func TestLoader_Load(t *testing.T) {
 
 func TestLoader_Unload(t *testing.T) {
 	t.Run("Termination stage error is returned from Unload", func(t *testing.T) {
-		pluginID := "grafana-test-panel"
+		plugin := &plugins.Plugin{
+			JSONData: plugins.JSONData{ID: "test-datasource", Type: plugins.TypeDataSource, Info: plugins.Info{Version: "1.0.0"}},
+		}
 		tcs := []struct {
 			expectedErr error
 		}{
@@ -496,13 +498,13 @@ func TestLoader_Unload(t *testing.T) {
 				&fakes.FakeValidator{},
 				&fakes.FakeInitializer{},
 				&fakes.FakeTerminator{
-					TerminateFunc: func(ctx context.Context, pID string) error {
-						require.Equal(t, pluginID, pID)
-						return tc.expectedErr
+					TerminateFunc: func(ctx context.Context, p *plugins.Plugin) (*plugins.Plugin, error) {
+						require.Equal(t, plugin, p)
+						return p, tc.expectedErr
 					},
 				})
 
-			err := l.Unload(context.Background(), pluginID)
+			_, err := l.Unload(context.Background(), plugin)
 			require.ErrorIs(t, err, tc.expectedErr)
 		}
 	})

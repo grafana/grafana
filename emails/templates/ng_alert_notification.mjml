@@ -1,4 +1,8 @@
 <mjml>
+  <!-- global variables -->
+  <mj-include path="./partials/_globals.mjml" />
+  <!-- css styling -->
+  <mj-include path="./partials/layout/theme.css" type="css" css-inline="inline" />
   <mj-head>
     <!-- ⬇ Don't forget to specifify an email subject below! ⬇ -->
     <mj-title>
@@ -20,7 +24,7 @@
     <mj-raw>
       {{ if .Message }}
     </mj-raw>
-    <mj-wrapper background-color="#22252b" border="1px solid #2f3037" padding="0">
+    <mj-wrapper css-class="background" padding="0">
       <mj-section padding="0">
         <mj-column>
           <mj-text align="left">
@@ -61,7 +65,7 @@
     <mj-raw>
       {{ range .Alerts.Firing }}
     </mj-raw>
-    <mj-wrapper background-color="#22252b" border="1px solid #2f3037" padding="0">
+    <mj-wrapper css-class="background" padding="0">
       <mj-include path="./partials/alerting/firing_instance.mjml" />
       <mj-include path="./partials/alerting/instance_details.mjml" />
     </mj-wrapper>
@@ -94,7 +98,7 @@
     <mj-raw>
       {{ range .Alerts.Resolved }}
     </mj-raw>
-    <mj-wrapper background-color="#22252b" border="1px solid #2f3037" padding="0">
+    <mj-wrapper css-class="background" padding="0">
       <mj-include path="./partials/alerting/resolved_instance.mjml" />
       <mj-include path="./partials/alerting/instance_details.mjml" />
     </mj-wrapper>

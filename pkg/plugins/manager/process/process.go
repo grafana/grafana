@@ -3,53 +3,21 @@ package process
 import (
 	"context"
 	"errors"
-	"sync"
 	"time"
 
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin"
-	"github.com/grafana/grafana/pkg/plugins/log"
-	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 )
 
-var _ Service = (*Manager)(nil)
+type Service struct{}
 
-type Manager struct {
-	pluginRegistry registry.Service
-
-	mu  sync.Mutex
-	log log.Logger
+func ProvideService() *Service {
+	return &Service{}
 }
 
-func ProvideService(pluginRegistry registry.Service) *Manager {
-	return NewManager(pluginRegistry)
-}
-
-func NewManager(pluginRegistry registry.Service) *Manager {
-	return &Manager{
-		pluginRegistry: pluginRegistry,
-		log:            log.New("plugin.process.manager"),
-	}
-}
-
-func (m *Manager) Run(ctx context.Context) error {
-	<-ctx.Done()
-	m.shutdown(ctx)
-	return ctx.Err()
-}
-
-func (m *Manager) Start(ctx context.Context, pluginID string) error {
-	p, exists := m.pluginRegistry.Plugin(ctx, pluginID)
-	if !exists {
-		return backendplugin.ErrPluginNotRegistered
-	}
-
+func (*Service) Start(ctx context.Context, p *plugins.Plugin) error {
 	if !p.IsManaged() || !p.Backend || p.SignatureError != nil {
 		return nil
 	}
-
-	m.mu.Lock()
-	defer m.mu.Unlock()
 
 	if err := startPluginAndRestartKilledProcesses(ctx, p); err != nil {
 		return err
@@ -59,15 +27,8 @@ func (m *Manager) Start(ctx context.Context, pluginID string) error {
 	return nil
 }
 
-func (m *Manager) Stop(ctx context.Context, pluginID string) error {
-	p, exists := m.pluginRegistry.Plugin(ctx, pluginID)
-	if !exists {
-		return backendplugin.ErrPluginNotRegistered
-	}
-	m.log.Debug("Stopping plugin process", "pluginId", p.ID)
-	m.mu.Lock()
-	defer m.mu.Unlock()
-
+func (*Service) Stop(ctx context.Context, p *plugins.Plugin) error {
+	p.Logger().Debug("Stopping plugin process")
 	if err := p.Decommission(); err != nil {
 		return err
 	}
@@ -77,23 +38,6 @@ func (m *Manager) Stop(ctx context.Context, pluginID string) error {
 	}
 
 	return nil
-}
-
-// shutdown stops all backend plugin processes
-func (m *Manager) shutdown(ctx context.Context) {
-	var wg sync.WaitGroup
-	for _, p := range m.pluginRegistry.Plugins(ctx) {
-		wg.Add(1)
-		go func(p backendplugin.Plugin, ctx context.Context) {
-			defer wg.Done()
-			p.Logger().Debug("Stopping plugin")
-			if err := p.Stop(ctx); err != nil {
-				p.Logger().Error("Failed to stop plugin", "error", err)
-			}
-			p.Logger().Debug("Plugin stopped")
-		}(p, ctx)
-	}
-	wg.Wait()
 }
 
 func startPluginAndRestartKilledProcesses(ctx context.Context, p *plugins.Plugin) error {
@@ -123,7 +67,7 @@ func restartKilledProcess(ctx context.Context, p *plugins.Plugin) error {
 			if err := ctx.Err(); err != nil && !errors.Is(err, context.Canceled) {
 				return err
 			}
-			return nil
+			return p.Stop(ctx)
 		case <-ticker.C:
 			if p.IsDecommissioned() {
 				p.Logger().Debug("Plugin decommissioned")

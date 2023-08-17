@@ -1,6 +1,6 @@
-<mj-section padding="10px 0" border-bottom="1px solid #2f3037">
+<mj-section padding="10px 0" css-class="border-bottom">
   <mj-column vertical-align="middle">
-    <mj-button href="{{ .GeneratorURL }}" border="1px solid #970a1b" background-color="#392228" color="#f7919d" padding="0" inner-padding="5px 12px">
+    <mj-button href="{{ .GeneratorURL }}" border="1px solid #ed8894" background-color="#fae0e3" color="#931625" padding="0" inner-padding="5px 12px">
       Firing
     </mj-button>
   </mj-column>
