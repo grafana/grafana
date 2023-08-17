@@ -14,6 +14,12 @@ interface Props {
   languageProvider: TempoLanguageProvider;
 }
 
+type MinimalCompletionItem = {
+  label: string;
+  insertText: string;
+  documentation?: string;
+};
+
 /**
  * Class that implements CompletionItemProvider interface and allows us to provide suggestion for the Monaco
  * autocomplete system.
@@ -38,8 +44,48 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
   static readonly comparisonOps: string[] = ['=', '!=', '>', '>=', '<', '<=', '=~', '!~'];
   static readonly structuralOps: string[] = ['>> ', '>', '~'];
   static readonly spansetOps: string[] = ['|', ...CompletionProvider.logicalOps, ...CompletionProvider.structuralOps];
-  static readonly spansetAggregatorOps: string[] = ['count', 'avg', 'max', 'min', 'sum'];
-  static readonly spansetGroupAndSelectOps: string[] = ['select', 'by'];
+
+  // Functions (aggregator, selector, and combining operators)
+  static readonly spansetAggregatorOps: MinimalCompletionItem[] = [
+    {
+      label: 'count',
+      insertText: 'count()$0',
+      documentation: 'Count spans in the spanset.',
+    },
+    {
+      label: 'avg',
+      insertText: 'avg($0)',
+      documentation: 'Compute the average of a given numeric attribute or intrinsic for a spanset.',
+    },
+    {
+      label: 'max',
+      insertText: 'max($0)',
+      documentation: 'Compute the max value of a given numeric attribute or intrinsic for a spanset.',
+    },
+    {
+      label: 'min',
+      insertText: 'min($0)',
+      documentation: 'Compute the min value of a given numeric attribute or intrinsic for a spanset.',
+    },
+    {
+      label: 'sum',
+      insertText: 'sum($0)',
+      documentation: 'Compute the sum value of a given numeric attribute or intrinsic for a spanset.',
+    },
+  ];
+  static readonly functions: MinimalCompletionItem[] = [
+    ...this.spansetAggregatorOps,
+    {
+      label: 'by',
+      insertText: 'by($0)',
+      documentation: 'Group by arbitrary attributes.',
+    },
+    {
+      label: 'select',
+      insertText: 'select($0)',
+      documentation: 'Select arbitrary fields from spans',
+    },
+  ];
 
   // We set these directly and ae required for the provider to function.
   monaco: Monaco | undefined;
@@ -76,6 +122,8 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
           kind: getMonacoCompletionItemKind(item.type, this.monaco!),
           label: item.label,
           insertText: item.insertText,
+          insertTextRules: item.insertTextRules,
+          documentation: item.documentation,
           sortText: index.toString().padStart(maxIndexDigits, '0'), // to force the order we have
           range,
           command: {
@@ -148,13 +196,13 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
           type: 'OPERATOR',
         }));
       case 'SPANSET_PIPELINE_AFTER_OPERATOR':
-        return [...CompletionProvider.spansetAggregatorOps, ...CompletionProvider.spansetGroupAndSelectOps].map(
-          (key) => ({
-            label: key,
-            insertText: key,
-            type: 'OPERATOR',
-          })
-        );
+        return CompletionProvider.functions.map((key) => ({
+          label: key.label,
+          insertText: key.insertText,
+          documentation: key.documentation,
+          insertTextRules: this.monaco?.languages.CompletionItemInsertTextRule?.InsertAsSnippet,
+          type: 'FUNCTION',
+        }));
       case 'SPANSET_COMPARISON_OPERATORS':
         return CompletionProvider.comparisonOps.map((key) => ({
           label: key,
@@ -248,16 +296,20 @@ function getMonacoCompletionItemKind(type: CompletionType, monaco: Monaco): mona
       return monaco.languages.CompletionItemKind.EnumMember;
     case 'SCOPE':
       return monaco.languages.CompletionItemKind.Class;
+    case 'FUNCTION':
+      return monaco.languages.CompletionItemKind.Function;
     default:
       throw new Error(`Unexpected CompletionType: ${type}`);
   }
 }
 
-export type CompletionType = 'TAG_NAME' | 'TAG_VALUE' | 'KEYWORD' | 'OPERATOR' | 'SCOPE';
+export type CompletionType = 'TAG_NAME' | 'TAG_VALUE' | 'KEYWORD' | 'OPERATOR' | 'SCOPE' | 'FUNCTION';
 type Completion = {
   type: CompletionType;
   label: string;
   insertText: string;
+  insertTextRules?: monacoTypes.languages.CompletionItemInsertTextRule;
+  documentation?: string;
 };
 
 export type Tag = {
