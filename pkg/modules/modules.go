@@ -76,6 +76,9 @@ func (m *service) Run(ctx context.Context) error {
 	}
 
 	m.serviceManager, err = services.NewManager(svcs...)
+	if err != nil {
+		return err
+	}
 
 	// we don't need to continue if no modules are registered.
 	// this behavior may need to change if dskit services replace the
