@@ -49,7 +49,7 @@ export const CloudReceiverForm = ({ existing, alertManagerSourceName, config }: 
 
   const onSubmit = async (values: ReceiverFormValues<CloudChannelValues>) => {
     const newReceiver = formValuesToCloudReceiver(values, defaultChannelValues);
-    dispatch(
+    await dispatch(
       updateAlertManagerConfigAction({
         newConfig: updateConfigWithReceiver(config, newReceiver, existing?.name),
         oldConfig: config,

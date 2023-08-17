@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 import React, { useCallback } from 'react';
 import { FieldErrors, FormProvider, useForm, Validate } from 'react-hook-form';
+import { useAsyncFn } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Alert, Button, Field, Input, LinkButton, useStyles2 } from '@grafana/ui';
@@ -9,7 +10,6 @@ import { useCleanup } from 'app/core/hooks/useCleanup';
 import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
 
 import { useControlledFieldArray } from '../../../hooks/useControlledFieldArray';
-import { useUnifiedAlertingSelector } from '../../../hooks/useUnifiedAlertingSelector';
 import { ChannelValues, CommonSettingsComponentType, ReceiverFormValues } from '../../../types/receiver-form';
 import { makeAMLink } from '../../../utils/misc';
 import { initialAsyncRequestState } from '../../../utils/redux';
@@ -70,8 +70,7 @@ export function ReceiverForm<R extends ChannelValues>({
   });
 
   useCleanup((state) => (state.unifiedAlerting.saveAMConfig = initialAsyncRequestState));
-
-  const { loading } = useUnifiedAlertingSelector((state) => state.saveAMConfig);
+  const [{ loading: isSubmitting }, onSubmitWithState] = useAsyncFn(onSubmit, []);
 
   const {
     handleSubmit,
@@ -91,7 +90,7 @@ export function ReceiverForm<R extends ChannelValues>({
   );
 
   const submitCallback = async (values: ReceiverFormValues<R>) => {
-    await onSubmit({
+    await onSubmitWithState({
       ...values,
       items: values.items.filter((item) => !item.__deleted),
     });
@@ -173,16 +172,16 @@ export function ReceiverForm<R extends ChannelValues>({
           <div className={styles.buttons}>
             {isEditable && (
               <>
-                {loading && (
+                {isSubmitting && (
                   <Button disabled={true} icon="fa fa-spinner" variant="primary">
                     Saving...
                   </Button>
                 )}
-                {!loading && <Button type="submit">Save contact point</Button>}
+                {!isSubmitting && <Button type="submit">Save contact point</Button>}
               </>
             )}
             <LinkButton
-              disabled={loading}
+              disabled={isSubmitting}
               variant="secondary"
               data-testid="cancel-button"
               href={makeAMLink('alerting/notifications', alertManagerSourceName)}

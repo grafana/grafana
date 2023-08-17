@@ -77,7 +77,7 @@ export const GrafanaReceiverForm = ({ existing, alertManagerSourceName, config }
     const receiverWithOnCall = await createOnCallIntegrations(newReceiver);
 
     const newConfig = updateConfigWithReceiver(config, receiverWithOnCall, existing?.name);
-    dispatch(
+    await dispatch(
       updateAlertManagerConfigAction({
         newConfig: newConfig,
         oldConfig: config,

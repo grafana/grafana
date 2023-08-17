@@ -47,6 +47,7 @@ export const onCallApi = alertingApi.injectEndpoints({
       query: (name) => ({
         url: `/api/plugin-proxy/grafana-oncall-app/api/internal/v1/alert_receive_channels/validate_name/`,
         params: { verbal_name: name },
+        showErrorAlert: false,
       }),
     }),
     createIntegration: build.mutation<NewOnCallIntegrationDTO, CreateIntegrationDTO>({
