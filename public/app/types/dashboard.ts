@@ -116,5 +116,5 @@ export interface DashboardState {
   initialDatasource?: DataSourceRef['uid'];
   initError: DashboardInitError | null;
   permissions: DashboardAcl[];
-  getJson?: () => Dashboard | undefined;
+  getOriginal: () => DashboardDTO['dashboard'] | null;
 }

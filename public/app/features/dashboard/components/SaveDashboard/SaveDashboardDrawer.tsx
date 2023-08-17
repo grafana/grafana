@@ -1,9 +1,7 @@
 import React, { useMemo, useState } from 'react';
-import { useAsync } from 'react-use';
 
 import { config, isFetchError } from '@grafana/runtime';
 import { Drawer, Tab, TabsBar } from '@grafana/ui';
-import { backendSrv } from 'app/core/services/backend_srv';
 import { useSelector } from 'app/types';
 
 import { jsonDiff } from '../VersionHistory/utils';
@@ -19,23 +17,9 @@ import { useDashboardSave } from './useDashboardSave';
 
 export const SaveDashboardDrawer = ({ dashboard, onDismiss, onSaveSuccess, isCopy }: SaveDashboardModalProps) => {
   const [options, setOptions] = useState<SaveDashboardOptions>({});
-  const dashboardJson = useSelector((store) => store.dashboard.getJson?.());
+  const previous = useSelector((store) => store.dashboard.getOriginal());
   const isProvisioned = dashboard.meta.provisioned;
   const isNew = dashboard.version === 0;
-
-  const previous = useAsync(async () => {
-    if (isNew) {
-      return undefined;
-    }
-
-    // If dashboardJson is set, it means that we're in the dashboard embed view
-    if (dashboardJson) {
-      return dashboardJson;
-    }
-
-    const result = await backendSrv.getDashboardByUid(dashboard.uid);
-    return result.dashboard;
-  }, [dashboard, isNew]);
 
   const data = useMemo<SaveDashboardData>(() => {
     const clone = dashboard.getSaveModelClone({
@@ -43,14 +27,14 @@ export const SaveDashboardDrawer = ({ dashboard, onDismiss, onSaveSuccess, isCop
       saveVariables: Boolean(options.saveVariables),
     });
 
-    if (!previous.value) {
+    if (!previous) {
       return { clone, diff: {}, diffCount: 0, hasChanges: false };
     }
 
     const cloneJSON = JSON.stringify(clone, null, 2);
     const cloneSafe = JSON.parse(cloneJSON); // avoids undefined issues
 
-    const diff = jsonDiff(previous.value, cloneSafe);
+    const diff = jsonDiff(previous, cloneSafe);
     let diffCount = 0;
     for (const d of Object.values(diff)) {
       diffCount += d.length;
@@ -62,7 +46,7 @@ export const SaveDashboardDrawer = ({ dashboard, onDismiss, onSaveSuccess, isCop
       diffCount,
       hasChanges: diffCount > 0 && !isNew,
     };
-  }, [dashboard, previous.value, options, isNew]);
+  }, [dashboard, previous, options, isNew]);
 
   const [showDiff, setShowDiff] = useState(false);
   const { state, onDashboardSave } = useDashboardSave(dashboard, isCopy);
@@ -75,7 +59,7 @@ export const SaveDashboardDrawer = ({ dashboard, onDismiss, onSaveSuccess, isCop
 
   const renderSaveBody = () => {
     if (showDiff) {
-      return <SaveDashboardDiff diff={data.diff} oldValue={previous.value} newValue={data.clone} />;
+      return <SaveDashboardDiff diff={data.diff} oldValue={previous} newValue={data.clone} />;
     }
 
     if (isNew || isCopy) {

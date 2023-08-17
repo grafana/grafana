@@ -9,7 +9,7 @@ import { updateDashboardName } from 'app/core/reducers/navBarTree';
 import { useSaveDashboardMutation } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
 import { DashboardModel } from 'app/features/dashboard/state';
 import { saveDashboard as saveDashboardApiCall, saveDashboardJson } from 'app/features/manage-dashboards/state/actions';
-import { useDispatch, useSelector } from 'app/types';
+import { useDispatch } from 'app/types';
 import { DashboardSavedEvent } from 'app/types/events';
 
 import { SaveDashboardOptions } from './types';
@@ -49,12 +49,11 @@ const saveDashboard = async (
 export const useDashboardSave = (dashboard: DashboardModel, isCopy = false) => {
   const dispatch = useDispatch();
   const notifyApp = useAppNotification();
-  const dashboardJson = useSelector((store) => !!store.dashboard.getJson?.());
   const [saveDashboardRtkQuery] = useSaveDashboardMutation();
   const [state, onDashboardSave] = useAsyncFn(
     async (clone: DashboardModel, options: SaveDashboardOptions, dashboard: DashboardModel) => {
       try {
-        if (dashboardJson) {
+        if (dashboard.meta.isEmbedded) {
           return saveDashboardJson(clone)
             .then(() => {
               notifyApp.success('Dashboard saved');

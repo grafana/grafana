@@ -2,9 +2,9 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 import { PanelPlugin } from '@grafana/data';
 import { AngularComponent } from '@grafana/runtime';
-import { defaultDashboard, Dashboard } from '@grafana/schema';
+import { defaultDashboard } from '@grafana/schema';
 import { processAclItems } from 'app/core/utils/acl';
-import { DashboardAclDTO, DashboardInitError, DashboardInitPhase, DashboardState } from 'app/types';
+import { DashboardAclDTO, DashboardDataDTO, DashboardInitError, DashboardInitPhase, DashboardState } from 'app/types';
 
 import { DashboardModel } from './DashboardModel';
 import { PanelModel } from './PanelModel';
@@ -15,7 +15,7 @@ export const initialState: DashboardState = {
   permissions: [],
   initError: null,
   initialDatasource: undefined,
-  getJson: () => undefined,
+  getOriginal: () => null,
 };
 
 const dashboardSlice = createSlice({
@@ -31,8 +31,12 @@ const dashboardSlice = createSlice({
     dashboardInitServices: (state) => {
       state.initPhase = DashboardInitPhase.Services;
     },
-    dashboardInitCompleted: (state, action: PayloadAction<DashboardModel>) => {
-      state.getModel = () => action.payload;
+    dashboardInitCompleted: (
+      state,
+      action: PayloadAction<{ dashboard: DashboardModel; original: DashboardDataDTO }>
+    ) => {
+      state.getModel = () => action.payload.dashboard;
+      state.getOriginal = () => action.payload.original;
       state.initPhase = DashboardInitPhase.Completed;
     },
     dashboardInitFailed: (state, action: PayloadAction<DashboardInitError>) => {
@@ -55,12 +59,6 @@ const dashboardSlice = createSlice({
     },
     setInitialDatasource: (state, action: PayloadAction<string | undefined>) => {
       state.initialDatasource = action.payload;
-    },
-    dashboardJsonLoaded: (state, action: PayloadAction<Dashboard | undefined>) => {
-      if (action.payload) {
-        state.getModel = () => new DashboardModel(action.payload!);
-        state.getJson = () => action.payload;
-      }
     },
   },
 });
@@ -89,7 +87,6 @@ export const {
   cleanUpDashboard,
   addPanel,
   setInitialDatasource,
-  dashboardJsonLoaded,
 } = dashboardSlice.actions;
 
 export const dashboardReducer = dashboardSlice.reducer;

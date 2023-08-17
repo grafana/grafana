@@ -123,7 +123,6 @@ function setup(propOverrides?: Partial<Props>) {
     initDashboard: mockInitDashboard,
     notifyApp: mockToolkitActionCreator(notifyApp),
     cleanUpDashboardAndVariables: mockCleanUpDashboardAndVariables,
-    loadDashboardJson: jest.fn(),
     cancelVariables: jest.fn(),
     templateVarsChangedInUrl: jest.fn(),
     dashboard: null,
@@ -210,7 +209,6 @@ describe('DashboardPage', () => {
         cleanUpDashboardAndVariables: mockCleanUpDashboardAndVariables,
         cancelVariables: jest.fn(),
         templateVarsChangedInUrl: jest.fn(),
-        loadDashboardJson: jest.fn(),
         dashboard: getTestDashboard(),
         theme: createTheme(),
       };
