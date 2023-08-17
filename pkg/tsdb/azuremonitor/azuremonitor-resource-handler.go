@@ -83,7 +83,7 @@ func writeResponse(rw http.ResponseWriter, code int, msg string) {
 	rw.WriteHeader(http.StatusBadRequest)
 	_, err := rw.Write([]byte(msg))
 	if err != nil {
-		log.DefaultLogger.Error("unable to write HTTP response", "error", err)
+		log.DefaultLogger.Error("unable to write HTTP response %v: %v", code, err)
 	}
 }
 
