@@ -46,7 +46,7 @@ export class AnnotationsWorker implements DashboardQueryRunnerWorker {
     const observables = annotations.map((annotation) => {
       let datasourceObservable;
 
-      datasourceObservable = from(getDatasourceSrv().get(annotation.datasource, undefined)).pipe(
+      datasourceObservable = from(getDatasourceSrv().get(annotation.datasource)).pipe(
         catchError(handleDatasourceSrvError) // because of the reduce all observables need to be completed, so an erroneous observable wont do
       );
 
