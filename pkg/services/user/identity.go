@@ -121,20 +121,15 @@ func (u *SignedInUser) GetOrgName() string {
 
 // GetPermissions returns the permissions of the active entity
 func (u *SignedInUser) GetPermissions() map[string][]string {
-	return u.GetPermissionsInOrg(u.GetOrgID())
-}
-
-// GetPermissionsInOrg returns the permissions of the active entity in the specified org
-func (u *SignedInUser) GetPermissionsInOrg(orgId int64) map[string][]string {
 	if u.Permissions == nil {
 		return make(map[string][]string)
 	}
 
-	if u.Permissions[orgId] == nil {
+	if u.Permissions[u.GetOrgID()] == nil {
 		return make(map[string][]string)
 	}
 
-	return u.Permissions[orgId]
+	return u.Permissions[u.GetOrgID()]
 }
 
 // DEPRECATED: GetTeams returns the teams the entity is a member of
