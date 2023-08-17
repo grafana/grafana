@@ -58,24 +58,13 @@ export function useDataSourceSettingsNav(pageIdParam?: string) {
     );
   }
 
-  const nav = {
-    node: pageNav.node,
-    main: {
-      ...pageNav.main,
-      text: datasource.name,
-      dataSourcePluginName: datasourcePlugin?.name || plugin?.meta.name || '',
-      active: true,
-    },
-    dataSourceHeader: {
-      alertingSupported,
-    },
-  };
-
-  const pageNavFinal = {
-    ...nav.main,
+  const connectionsPageNav = {
+    ...pageNav.main,
+    dataSourcePluginName: datasourcePlugin?.name || plugin?.meta.name || '',
+    active: true,
     text: datasource.name,
     subTitle: `Type: ${datasourcePlugin?.name}`,
-    children: (nav.main.children || []).map((navModelItem) => ({
+    children: (pageNav.main.children || []).map((navModelItem) => ({
       ...navModelItem,
       url: navModelItem.url?.replace('datasources/edit/', '/connections/datasources/edit/'),
     })),
@@ -83,7 +72,9 @@ export function useDataSourceSettingsNav(pageIdParam?: string) {
 
   return {
     navId: 'connections-datasources',
-    pageNav: pageNavFinal,
-    dataSourceHeader: nav.dataSourceHeader,
+    pageNav: connectionsPageNav,
+    dataSourceHeader: {
+      alertingSupported,
+    },
   };
 }
