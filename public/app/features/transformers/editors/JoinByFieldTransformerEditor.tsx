@@ -24,7 +24,7 @@ const modes = [
     value: JoinMode.outerTabular,
     label: 'OUTER (TABULAR)',
     description:
-      'Join on a field value with dupicated values. Non performant outer join best used for tabular(SQL like) data.',
+      'Join on a field value with duplicated values. Non performant outer join best used for tabular(SQL like) data.',
   },
   { value: JoinMode.inner, label: 'INNER', description: 'Drop rows that do not match a value in all tables.' },
 ];

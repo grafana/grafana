@@ -1,15 +1,15 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Redirect } from 'react-router-dom';
 import { useLocation } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { config, isFetchError } from '@grafana/runtime';
 import { Alert, Card, Icon, LoadingPlaceholder, useStyles2, withErrorBoundary } from '@grafana/ui';
 
 import { AlertLabels } from './components/AlertLabels';
 import { RuleViewerLayout } from './components/rule-viewer/RuleViewerLayout';
-import { useCombinedRulesMatching } from './hooks/useCombinedRule';
+import { useCloudCombinedRulesMatching } from './hooks/useCombinedRule';
 import { getRulesSourceByName } from './utils/datasource';
 import { createViewLink } from './utils/misc';
 
@@ -24,44 +24,60 @@ function useRuleFindParams() {
   // Relevant issue: https://github.com/remix-run/history/issues/505#issuecomment-453175833
   // It was probably fixed in React-Router v6
   const location = useLocation();
-  const segments = location.pathname?.replace(subUrl, '').split('/') ?? []; // ["", "alerting", "{sourceName}", "{name}]
 
-  const name = decodeURIComponent(segments[3]);
-  const sourceName = decodeURIComponent(segments[2]);
+  return useMemo(() => {
+    const segments = location.pathname?.replace(subUrl, '').split('/') ?? []; // ["", "alerting", "{sourceName}", "{name}]
 
-  return { name, sourceName };
+    const name = decodeURIComponent(segments[3]);
+    const sourceName = decodeURIComponent(segments[2]);
+
+    const searchParams = new URLSearchParams(location.search);
+
+    return {
+      name,
+      sourceName,
+      namespace: searchParams.get('namespace') ?? undefined,
+      group: searchParams.get('group') ?? undefined,
+    };
+  }, [location]);
 }
 
 export function RedirectToRuleViewer(): JSX.Element | null {
   const styles = useStyles2(getStyles);
 
-  const { name, sourceName } = useRuleFindParams();
-  const { error, loading, result: rules, dispatched } = useCombinedRulesMatching(name, sourceName);
+  const { name, sourceName, namespace, group } = useRuleFindParams();
+  const {
+    error,
+    loading,
+    rules = [],
+  } = useCloudCombinedRulesMatching(name, sourceName, { namespace, groupName: group });
+
+  if (!name || !sourceName) {
+    return <Redirect to="/notfound" />;
+  }
 
   if (error) {
     return (
       <RuleViewerLayout title={pageTitle}>
         <Alert title={`Failed to load rules from ${sourceName}`}>
-          <details className={styles.errorMessage}>
-            {error.message}
-            <br />
-            {!!error?.stack && error.stack}
-          </details>
+          {isFetchError(error) && (
+            <details className={styles.errorMessage}>
+              {error.message}
+              <br />
+              {/* {!!error?.stack && error.stack} */}
+            </details>
+          )}
         </Alert>
       </RuleViewerLayout>
     );
   }
 
-  if (loading || !dispatched || !Array.isArray(rules)) {
+  if (loading) {
     return (
       <RuleViewerLayout title={pageTitle}>
         <LoadingPlaceholder text="Loading rule..." />
       </RuleViewerLayout>
     );
-  }
-
-  if (!name || !sourceName) {
-    return <Redirect to="/notfound" />;
   }
 
   const rulesSource = getRulesSourceByName(sourceName);
@@ -80,6 +96,17 @@ export function RedirectToRuleViewer(): JSX.Element | null {
     const [rule] = rules;
     const to = createViewLink(rulesSource, rule, '/alerting/list').replace(subUrl, '');
     return <Redirect to={to} />;
+  }
+
+  if (rules.length === 0) {
+    return (
+      <RuleViewerLayout title={pageTitle}>
+        <div data-testid="no-rules">
+          No rules in <span className={styles.param}>{sourceName}</span> matched the name{' '}
+          <span className={styles.param}>{name}</span>
+        </div>
+      </RuleViewerLayout>
+    );
   }
 
   return (

@@ -86,10 +86,12 @@ function ExportAction({ receiverName }: ActionProps) {
         to={createUrl(`/api/v1/provisioning/contact-points/export/`, {
           download: 'true',
           format: 'yaml',
-          decrypt: isOrgAdmin().toString(),
+          decrypt: canReadSecrets.toString(),
           name: receiverName,
         })}
-        tooltip={isOrgAdmin() ? 'Export contact point' : 'Export redacted contact point'}
+        tooltip={
+          canReadSecrets ? 'Export contact point with decrypted secrets' : 'Export contact point with redacted secrets'
+        }
         icon="download-alt"
         target="_blank"
       />

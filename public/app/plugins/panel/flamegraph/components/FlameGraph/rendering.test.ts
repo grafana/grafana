@@ -1,4 +1,4 @@
-import { createDataFrame } from '@grafana/data';
+import { createDataFrame, FieldType } from '@grafana/data';
 
 import { FlameGraphDataContainer, LevelItem } from './dataTransform';
 import { getRectDimensionsForLevel } from './rendering';
@@ -8,6 +8,7 @@ function makeDataFrame(fields: Record<string, Array<number | string>>) {
     fields: Object.keys(fields).map((key) => ({
       name: key,
       values: fields[key],
+      type: typeof fields[key][0] === 'string' ? FieldType.string : FieldType.number,
     })),
   });
 }

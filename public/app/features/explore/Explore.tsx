@@ -326,7 +326,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
   }
 
   renderCustom(width: number) {
-    const { timeZone, queryResponse, absoluteRange } = this.props;
+    const { timeZone, queryResponse, absoluteRange, eventBus } = this.props;
 
     const groupedByPlugin = groupBy(queryResponse?.customFrames, 'meta.preferredVisualisationPluginId');
 
@@ -341,6 +341,8 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
           absoluteRange={absoluteRange}
           height={400}
           width={width}
+          splitOpenFn={this.onSplitOpen(pluginId)}
+          eventBus={eventBus}
         />
       );
     });

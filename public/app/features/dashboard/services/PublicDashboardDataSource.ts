@@ -90,8 +90,6 @@ export class PublicDashboardDataSource extends DataSourceApi<DataQuery, DataSour
       queryCachingTTL,
       range: { from: fromRange, to: toRange },
     } = request;
-    let queries: DataQuery[];
-
     // Return early if no queries exist
     if (!request.targets.length) {
       return of({ data: [] });
@@ -129,7 +127,7 @@ export class PublicDashboardDataSource extends DataSourceApi<DataQuery, DataSour
         })
         .pipe(
           switchMap((raw) => {
-            return of(toDataQueryResponse(raw, queries));
+            return of(toDataQueryResponse(raw, request.targets));
           }),
           catchError((err) => {
             return of(toDataQueryResponse(err));

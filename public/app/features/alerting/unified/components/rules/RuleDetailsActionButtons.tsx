@@ -91,7 +91,7 @@ export const RuleDetailsActionButtons = ({ rule, rulesSource, isViewMode }: Prop
         variant="primary"
         icon="chart-line"
         target="__blank"
-        href={createExploreLink(rulesSource.name, rule.query)}
+        href={createExploreLink(rulesSource, rule.query)}
       >
         See graph
       </LinkButton>

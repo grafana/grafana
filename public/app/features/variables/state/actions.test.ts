@@ -674,7 +674,7 @@ describe('shared actions', () => {
               key,
               changeVariableNameFailed({
                 newName: '#constant!',
-                errorText: 'Only word and digit characters are allowed in variable names',
+                errorText: 'Only word characters are allowed in variable names',
               })
             )
           );
