@@ -53,6 +53,7 @@ load(
     "scripts/drone/vault.star",
     "from_secret",
     "gcp_upload_artifacts_key",
+    "npm_token",
     "prerelease_bucket",
 )
 load(
@@ -122,7 +123,7 @@ def release_npm_packages_step():
         ],
         "failure": "ignore",
         "environment": {
-            "NPM_TOKEN": from_secret("npm_token"),
+            "NPM_TOKEN": from_secret(npm_token),
         },
         "commands": ["./bin/build artifacts npm release --tag ${DRONE_TAG}"],
     }

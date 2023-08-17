@@ -3949,6 +3949,12 @@ kind: secret
 name: azure_tenant
 ---
 get:
+  name: token
+  path: infra/data/ci/grafana-release-eng/npm
+kind: secret
+name: npm_token
+---
+get:
   name: public-key-b64
   path: infra/data/ci/packages-publish/gpg
 kind: secret
@@ -4063,6 +4069,6 @@ kind: secret
 name: github_token
 ---
 kind: signature
-hmac: 78bd233b91e20ae4ef7ea1b2f4ef32a7995fac3603c42fef7268ad07513c59f8
+hmac: fff3d5d91e4e04599392c2b8d218f033b8cc71516f1d709d3dea44f365e0ddef
 
 ...
