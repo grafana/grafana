@@ -8,6 +8,7 @@ import { Alert, Button, Field, InputControl, Select, useStyles2 } from '@grafana
 
 import { useUnifiedAlertingSelector } from '../../../hooks/useUnifiedAlertingSelector';
 import { ChannelValues, CommonSettingsComponentType } from '../../../types/receiver-form';
+import { OnCallIntegrationType } from '../grafanaAppReceivers/onCall/useOnCallIntegration';
 
 import { ChannelOptions } from './ChannelOptions';
 import { CollapsibleSection } from './CollapsibleSection';
@@ -69,7 +70,11 @@ export function ChannelSubForm<R extends ChannelValues>({
         setValue(fieldName('settings'), initialValues.settings);
       }
       // Restore initial value of an existing oncall integration
-      if (initialValues && name === fieldName('settings.integration_type') && value === 'existing_oncall_integration') {
+      if (
+        initialValues &&
+        name === fieldName('settings.integration_type') &&
+        value === OnCallIntegrationType.ExistingIntegration
+      ) {
         setValue(fieldName('settings.url'), initialValues.settings['url']);
       }
     });

@@ -54,7 +54,6 @@ export function RadioButtonList<T extends string | number | readonly string[]>({
             label={option.label}
             description={option.description}
             checked={isChecked}
-            value={option.value}
             disabled={isDisabled}
             onChange={handleChange}
           />

@@ -158,6 +158,7 @@ const OptionInput: FC<Props & { id: string; pathIndex?: string }> = ({
             <RadioButtonList disabled={readOnly} options={option.selectOptions ?? []} {...field} />
           )}
           control={control}
+          defaultValue={option.defaultValue?.value}
           name={name}
           rules={{
             required: option.required ? 'Option is required' : false,

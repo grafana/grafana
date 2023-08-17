@@ -1,6 +1,7 @@
 import { produce } from 'immer';
 import { useCallback, useMemo } from 'react';
 
+import { SelectableValue } from '@grafana/data';
 import { isFetchError } from '@grafana/runtime';
 
 import { Receiver } from '../../../../../../../plugins/datasource/alertmanager/types';
@@ -180,22 +181,23 @@ export function useOnCallIntegration() {
       if (notifier.type === ReceiverTypes.OnCall && isAlertingV2IntegrationEnabled) {
         const options = notifier.options.filter((o) => o.propertyName !== 'url');
 
+        const newIntegrationOption: SelectableValue<string> = {
+          value: OnCallIntegrationType.NewIntegration,
+          label: 'New OnCall integration',
+          description: 'A new OnCall integration without escalation chains will be automatically created',
+        };
+        const existingIntegrationOption: SelectableValue<string> = {
+          value: OnCallIntegrationType.ExistingIntegration,
+          label: 'Existing OnCall integration',
+          description: 'Use an existing OnCall integration',
+        };
+
         options.unshift(
           option(OnCallIntegrationSetting.IntegrationType, 'How to connect to OnCall', '', {
             required: true,
             element: 'radio',
-            selectOptions: [
-              {
-                value: OnCallIntegrationType.NewIntegration,
-                label: 'New OnCall integration',
-                description: 'A new OnCall integration without escalation chains will be automatically created',
-              },
-              {
-                value: OnCallIntegrationType.ExistingIntegration,
-                label: 'Existing OnCall integration',
-                description: 'Use an existing OnCall integration',
-              },
-            ],
+            defaultValue: newIntegrationOption,
+            selectOptions: [newIntegrationOption, existingIntegrationOption],
           }),
           option(
             OnCallIntegrationSetting.IntegrationName,
@@ -203,13 +205,13 @@ export function useOnCallIntegration() {
             'The name of the new OnCall integration',
             {
               required: true,
-              showWhen: { field: 'integration_type', is: 'new_oncall_integration' },
+              showWhen: { field: 'integration_type', is: OnCallIntegrationType.NewIntegration },
             }
           ),
           option('url', 'OnCall Integration', 'The OnCall integration to send alerts to', {
             element: 'select',
             required: true,
-            showWhen: { field: 'integration_type', is: 'existing_oncall_integration' },
+            showWhen: { field: 'integration_type', is: OnCallIntegrationType.ExistingIntegration },
             selectOptions: grafanaOnCallIntegrations.map((i) => ({
               label: i.display_name,
               description: i.integration_url,
