@@ -56,12 +56,10 @@ func newDatasourceProvisioner(log log.Logger, store Store, correlationsStore Cor
 	}
 }
 
-func (dc *DatasourceProvisioner) apply(ctx context.Context, cfg *configs, ultimatelyDeleted map[DataSourceMapKey]bool) error {
+func (dc *DatasourceProvisioner) provisionDataSources(ctx context.Context, cfg *configs, ultimatelyDeleted map[DataSourceMapKey]bool) error {
 	if err := dc.deleteDatasources(ctx, cfg.DeleteDatasources, ultimatelyDeleted); err != nil {
 		return err
 	}
-
-	correlationsToInsert := make([]correlations.CreateCorrelationCommand, 0)
 
 	for _, ds := range cfg.Datasources {
 		cmd := &datasources.GetDataSourceQuery{OrgID: ds.OrgID, Name: ds.Name}
@@ -77,34 +75,27 @@ func (dc *DatasourceProvisioner) apply(ctx context.Context, cfg *configs, ultima
 			if err != nil {
 				return err
 			}
-
-			for _, correlation := range ds.Correlations {
-				if insertCorrelationCmd, err := makeCreateCorrelationCommand(correlation, dataSource.UID, insertCmd.OrgID); err == nil {
-					correlationsToInsert = append(correlationsToInsert, insertCorrelationCmd)
-				} else {
-					dc.log.Error("failed to parse correlation", "correlation", correlation)
-					return err
-				}
-			}
 		} else {
 			updateCmd := createUpdateCommand(ds, dataSource.ID)
 			dc.log.Debug("updating datasource from configuration", "name", updateCmd.Name, "uid", updateCmd.UID)
 			if _, err := dc.store.UpdateDataSource(ctx, updateCmd); err != nil {
 				return err
 			}
+		}
+	}
 
-			for _, correlation := range ds.Correlations {
-				if insertCorrelationCmd, err := makeCreateCorrelationCommand(correlation, dataSource.UID, updateCmd.OrgID); err == nil {
-					correlationsToInsert = append(correlationsToInsert, insertCorrelationCmd)
-				} else {
-					dc.log.Error("failed to parse correlation", "correlation", correlation)
-					return err
-				}
-			}
+	return nil
+}
+
+func (dc *DatasourceProvisioner) provisionCorrelations(ctx context.Context, cfg *configs) error {
+	for _, ds := range cfg.Datasources {
+		cmd := &datasources.GetDataSourceQuery{OrgID: ds.OrgID, Name: ds.Name}
+		dataSource, err := dc.store.GetDataSource(ctx, cmd)
+
+		if errors.Is(err, datasources.ErrDataSourceNotFound) {
+			return err
 		}
 
-		// delete all provisioned correlations for that data source, they will be added
-		// after all data sources are provisioned (see below)
 		if err := dc.correlationsStore.DeleteCorrelationsBySourceUID(ctx, correlations.DeleteCorrelationsBySourceUIDCommand{
 			SourceUID:       dataSource.UID,
 			OrgId:           dataSource.OrgID,
@@ -112,15 +103,18 @@ func (dc *DatasourceProvisioner) apply(ctx context.Context, cfg *configs, ultima
 		}); err != nil {
 			return err
 		}
-	}
 
-	// upsert provisioned correlations
-	for _, createCorrelationCmd := range correlationsToInsert {
-		if _, err := dc.correlationsStore.CreateCorrelation(ctx, createCorrelationCmd); err != nil {
-			return fmt.Errorf("err=%s source=%s", err.Error(), createCorrelationCmd.SourceUID)
+		for _, correlation := range ds.Correlations {
+			createCorrelationCmd, err := makeCreateCorrelationCommand(correlation, dataSource.UID, dataSource.OrgID)
+			if err != nil {
+				dc.log.Error("failed to parse correlation", "correlation", correlation)
+				return err
+			}
+			if _, err := dc.correlationsStore.CreateCorrelation(ctx, createCorrelationCmd); err != nil {
+				return fmt.Errorf("err=%s source=%s", err.Error(), createCorrelationCmd.SourceUID)
+			}
 		}
 	}
-
 	return nil
 }
 
@@ -147,7 +141,13 @@ func (dc *DatasourceProvisioner) applyChanges(ctx context.Context, configPath st
 	}
 
 	for _, cfg := range configs {
-		if err := dc.apply(ctx, cfg, ultimatelyDeletedMap); err != nil {
+		if err := dc.provisionDataSources(ctx, cfg, ultimatelyDeletedMap); err != nil {
+			return err
+		}
+	}
+
+	for _, cfg := range configs {
+		if err := dc.provisionCorrelations(ctx, cfg); err != nil {
 			return err
 		}
 	}
