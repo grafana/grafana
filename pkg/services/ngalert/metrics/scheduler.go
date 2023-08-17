@@ -18,6 +18,8 @@ type Scheduler struct {
 	EvalTotal                           *prometheus.CounterVec
 	EvalFailures                        *prometheus.CounterVec
 	EvalDuration                        *prometheus.HistogramVec
+	ProcessDuration                     *prometheus.HistogramVec
+	SendDuration                        *prometheus.HistogramVec
 	GroupRules                          *prometheus.GaugeVec
 	SchedulePeriodicDuration            prometheus.Histogram
 	SchedulableAlertRules               prometheus.Gauge
@@ -63,8 +65,28 @@ func NewSchedulerMetrics(r prometheus.Registerer) *Scheduler {
 				Namespace: Namespace,
 				Subsystem: Subsystem,
 				Name:      "rule_evaluation_duration_seconds",
-				Help:      "The duration for a rule to execute.",
-				Buckets:   []float64{.005, .01, .025, .05, .1, .25, .5, 1, 2.5, 5, 10, 25, 50, 100},
+				Help:      "The time to evaluate a rule.",
+				Buckets:   []float64{.01, .1, .5, 1, 5, 10, 15, 30, 60, 120, 180, 240, 300},
+			},
+			[]string{"org"},
+		),
+		ProcessDuration: promauto.With(r).NewHistogramVec(
+			prometheus.HistogramOpts{
+				Namespace: Namespace,
+				Subsystem: Subsystem,
+				Name:      "rule_process_evaluation_duration_seconds",
+				Help:      "The time to process the evaluation results for a rule.",
+				Buckets:   []float64{.01, .1, .5, 1, 5, 10, 15, 30, 60, 120, 180, 240, 300},
+			},
+			[]string{"org"},
+		),
+		SendDuration: promauto.With(r).NewHistogramVec(
+			prometheus.HistogramOpts{
+				Namespace: Namespace,
+				Subsystem: Subsystem,
+				Name:      "rule_send_alerts_duration_seconds",
+				Help:      "The time to send the alerts to Alertmanager.",
+				Buckets:   []float64{.01, .1, .5, 1, 5, 10, 15, 30, 60, 120, 180, 240, 300},
 			},
 			[]string{"org"},
 		),

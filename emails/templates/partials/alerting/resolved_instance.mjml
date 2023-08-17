@@ -1,6 +1,6 @@
-<mj-section padding="10px 0" border-bottom="1px solid #2f3037">
+<mj-section padding="10px 0" css-class="border-bottom">
   <mj-column vertical-align="middle">
-    <mj-button border="1px solid #32632b" color="#a5d69e" background-color="#26322a" padding="0" inner-padding="5px 12px">
+    <mj-button border="1px solid #94cb8c" color="#32602b" background-color="#e5f2e4" padding="0" inner-padding="5px 12px">
       Resolved
     </mj-button>
   </mj-column>
