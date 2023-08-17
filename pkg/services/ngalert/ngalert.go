@@ -109,7 +109,7 @@ func ProvideService(
 }
 
 type multiOrgAlertmanager interface {
-	AlertmanagerFor(orgID int64) (*notifier.Alertmanager, error)
+	AlertmanagerFor(orgID int64) (notifier.Alertmanager, error)
 	LoadAndSyncAlertmanagersForOrgs(ctx context.Context) error
 	Run(ctx context.Context) error
 	ActivateHistoricalConfiguration(ctx context.Context, orgId int64, id int64) error

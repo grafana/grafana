@@ -7,7 +7,7 @@ import (
 )
 
 // TODO: We no longer do apimodels at this layer, move it to the API.
-func (am *Alertmanager) GetStatus() apimodels.GettableStatus {
+func (am *alertmanager) GetStatus() apimodels.GettableStatus {
 	config := &apimodels.PostableUserConfig{}
 	status := am.Base.GetStatus()
 	if status == nil {

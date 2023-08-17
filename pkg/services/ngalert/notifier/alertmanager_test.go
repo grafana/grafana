@@ -18,7 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func setupAMTest(t *testing.T) *Alertmanager {
+func setupAMTest(t *testing.T) *alertmanager {
 	dir := t.TempDir()
 	cfg := &setting.Cfg{
 		DataPath: dir,

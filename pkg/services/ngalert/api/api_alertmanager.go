@@ -32,7 +32,7 @@ type multiOrgAlertmanager interface {
 	GetAppliedAlertmanagerConfigurations(ctx context.Context, org int64, limit int) ([]*apimodels.GettableHistoricUserConfig, error)
 	ActivateHistoricalConfiguration(ctx context.Context, orgId int64, id int64) error
 	ApplyAlertmanagerConfiguration(ctx context.Context, org int64, config apimodels.PostableUserConfig) error
-	AlertmanagerFor(orgID int64) (*notifier.Alertmanager, error)
+	AlertmanagerFor(orgID int64) (notifier.Alertmanager, error)
 }
 
 type AlertmanagerSrv struct {

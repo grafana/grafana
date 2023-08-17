@@ -34,7 +34,7 @@ type MultiOrgAlertmanager struct {
 	ProvStore provisioningStore
 
 	alertmanagersMtx sync.RWMutex
-	alertmanagers    map[int64]*Alertmanager
+	alertmanagers    map[int64]*alertmanager
 
 	settings *setting.Cfg
 	logger   log.Logger
@@ -63,7 +63,7 @@ func NewMultiOrgAlertmanager(cfg *setting.Cfg, configStore AlertingStore, orgSto
 
 		logger:        l,
 		settings:      cfg,
-		alertmanagers: map[int64]*Alertmanager{},
+		alertmanagers: map[int64]*alertmanager{},
 		configStore:   configStore,
 		orgStore:      orgStore,
 		kvStore:       kvStore,
@@ -243,7 +243,7 @@ func (moa *MultiOrgAlertmanager) SyncAlertmanagersForOrgs(ctx context.Context, o
 		moa.alertmanagers[orgID] = alertmanager
 	}
 
-	amsToStop := map[int64]*Alertmanager{}
+	amsToStop := map[int64]*alertmanager{}
 	for orgId, am := range moa.alertmanagers {
 		if _, exists := orgsFound[orgId]; !exists {
 			amsToStop[orgId] = am
@@ -347,7 +347,7 @@ func (moa *MultiOrgAlertmanager) StopAndWait() {
 // AlertmanagerFor returns the Alertmanager instance for the organization provided.
 // When the organization does not have an active Alertmanager, it returns a ErrNoAlertmanagerForOrg.
 // When the Alertmanager of the organization is not ready, it returns a ErrAlertmanagerNotReady.
-func (moa *MultiOrgAlertmanager) AlertmanagerFor(orgID int64) (*Alertmanager, error) {
+func (moa *MultiOrgAlertmanager) AlertmanagerFor(orgID int64) (Alertmanager, error) {
 	moa.alertmanagersMtx.RLock()
 	defer moa.alertmanagersMtx.RUnlock()
 

@@ -23,7 +23,7 @@ import (
 )
 
 // alertmanagerForOrg is a function that given an org ID returns an Alertmanager.
-type alertmanagerForOrg func(orgID int64) (*notifier.Alertmanager, error)
+type alertmanagerForOrg func(orgID int64) (notifier.Alertmanager, error)
 
 // AlertsRouter handles alerts generated during alert rule evaluation.
 // Based on rule's orgID and the configuration for that organization,
