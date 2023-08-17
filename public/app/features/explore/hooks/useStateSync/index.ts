@@ -1,7 +1,7 @@
 import { identity, isEmpty, isEqual, isObject, mapValues, omitBy } from 'lodash';
 import { useEffect, useRef } from 'react';
 
-import { CoreApp, ExploreUrlState, RawTimeRange, DataSourceApi } from '@grafana/data';
+import { CoreApp, ExploreUrlState, DataSourceApi, toURLRange } from '@grafana/data';
 import { DataQuery, DataSourceRef } from '@grafana/schema';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { clearQueryKeys, getLastUsedDatasourceUID } from 'app/core/utils/explore';
@@ -15,7 +15,7 @@ import { clearPanes, splitClose, splitOpen, syncTimesAction } from '../../state/
 import { runQueries, setQueriesAction } from '../../state/query';
 import { selectPanes } from '../../state/selectors';
 import { changeRangeAction, updateTime } from '../../state/time';
-import { DEFAULT_RANGE, fromURLRange, toURLTimeRange } from '../../state/utils';
+import { DEFAULT_RANGE, fromURLRange } from '../../state/utils';
 import { withUniqueRefIds } from '../../utils/queries';
 import { isFulfilled } from '../utils';
 
@@ -139,7 +139,7 @@ export function useStateSync(params: ExploreQueryParams) {
               exploreId,
               datasource: datasource || '',
               queries: withUniqueRefIds(queries),
-              range,
+              range: fromURLRange(range),
               panelsState,
               position: i,
             })
@@ -207,7 +207,7 @@ export function useStateSync(params: ExploreQueryParams) {
                 exploreId,
                 datasource,
                 queries,
-                range,
+                range: fromURLRange(range),
                 panelsState,
               })
             ).unwrap();
@@ -358,7 +358,7 @@ const urlDiff = (
 } => {
   const datasource = !isEqual(currentUrlState?.datasource, oldUrlState?.datasource);
   const queries = !isEqual(currentUrlState?.queries, oldUrlState?.queries);
-  const range = !areRangesEqual(currentUrlState?.range || DEFAULT_RANGE, oldUrlState?.range || DEFAULT_RANGE);
+  const range = !isEqual(currentUrlState?.range || DEFAULT_RANGE, oldUrlState?.range || DEFAULT_RANGE);
   const panelsState = !isEqual(currentUrlState?.panelsState, oldUrlState?.panelsState);
 
   return {
@@ -369,20 +369,13 @@ const urlDiff = (
   };
 };
 
-const areRangesEqual = (a: RawTimeRange, b: RawTimeRange): boolean => {
-  const parsedA = toURLTimeRange(a);
-  const parsedB = toURLTimeRange(b);
-
-  return parsedA.from === parsedB.from && parsedA.to === parsedB.to;
-};
-
 export function getUrlStateFromPaneState(pane: ExploreItemState): ExploreUrlState {
   return {
     // datasourceInstance should not be undefined anymore here but in case there is some path for it to be undefined
     // lets just fallback instead of crashing.
     datasource: pane.datasourceInstance?.uid || '',
     queries: pane.queries.map(clearQueryKeys),
-    range: toURLTimeRange(pane.range.raw),
+    range: toURLRange(pane.range.raw),
     // don't include panelsState in the url unless a piece of state is actually set
     panelsState: pruneObject(pane.panelsState),
   };
