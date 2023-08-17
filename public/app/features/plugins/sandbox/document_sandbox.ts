@@ -115,6 +115,11 @@ export function patchObjectAsLiveTarget(obj: unknown) {
   ) {
     Reflect.defineProperty(obj, SANDBOX_LIVE_VALUE, {});
   } else {
+    // prismjs languages are defined by directly modifying the prism.languages objects.
+    // Plugins inside the sandbox can't modify objects from the blue realm and prismjs.languages
+    // is one of them.
+    // Marking it as a live target allows plugins inside the sandbox to modify the object directly
+    // and make syntax work again.
     if (obj === Prism.languages) {
       Object.defineProperty(obj, SANDBOX_LIVE_VALUE, {});
     }
