@@ -174,6 +174,7 @@ EOF
 fi
 
 SOURCES_as_code='as-code-docs'
+SOURCES_beyla='ebpf-autoinstrument'
 SOURCES_enterprise_metrics='backend-enterprise'
 SOURCES_enterprise_metrics_='backend-enterprise'
 SOURCES_grafana_cloud='website'
