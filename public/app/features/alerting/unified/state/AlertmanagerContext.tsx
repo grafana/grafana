@@ -19,9 +19,11 @@ const AlertmanagerContext = React.createContext<Context | undefined>(undefined);
 
 interface Props extends React.PropsWithChildren {
   accessType: 'instance' | 'notification';
+  // manually setting the alertmanagersource name will override all of the other sources
+  alertmanagerSourceName?: string;
 }
 
-const AlertmanagerProvider = ({ children, accessType }: Props) => {
+const AlertmanagerProvider = ({ children, accessType, alertmanagerSourceName }: Props) => {
   const [queryParams, updateQueryParams] = useQueryParams();
   const availableAlertManagers = useAlertManagersByPermission(accessType);
 
@@ -47,7 +49,7 @@ const AlertmanagerProvider = ({ children, accessType }: Props) => {
   const defaultSource = GRAFANA_RULES_SOURCE_NAME;
 
   // queryParam > localStorage > default
-  const desiredAlertmanager = sourceFromQuery ?? sourceFromStore ?? defaultSource;
+  const desiredAlertmanager = alertmanagerSourceName ?? sourceFromQuery ?? sourceFromStore ?? defaultSource;
   const selectedAlertmanager = isAlertManagerAvailable(availableAlertManagers, desiredAlertmanager)
     ? desiredAlertmanager
     : undefined;

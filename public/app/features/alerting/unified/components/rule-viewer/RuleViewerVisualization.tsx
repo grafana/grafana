@@ -14,11 +14,11 @@ import {
 import { config } from '@grafana/runtime';
 import { DataSourceRef } from '@grafana/schema';
 import { DateTimePicker, LinkButton, useStyles2 } from '@grafana/ui';
+import { contextSrv } from 'app/core/core';
 import { isExpressionQuery } from 'app/features/expressions/guards';
 import { AccessControlAction } from 'app/types';
 import { AlertDataQuery, AlertQuery } from 'app/types/unified-alerting-dto';
 
-import { Authorize } from '../Authorize';
 import { VizWrapper } from '../rule-editor/VizWrapper';
 import { ThresholdDefinition } from '../rule-editor/util';
 
@@ -64,6 +64,8 @@ export function RuleViewerVisualization({
     return null;
   }
 
+  const allowedToExploreDataSources = contextSrv.hasAccess(AccessControlAction.DataSourcesExplore, true);
+
   return (
     <div className={className}>
       <div className={styles.header}>
@@ -71,19 +73,18 @@ export function RuleViewerVisualization({
           {!isExpression && relativeTimeRange ? (
             <DateTimePicker date={setDateTime(relativeTimeRange.to)} onChange={onTimeChange} maxDate={new Date()} />
           ) : null}
-          <Authorize actions={[AccessControlAction.DataSourcesExplore]}>
-            {!isExpression && (
-              <LinkButton
-                size="md"
-                variant="secondary"
-                icon="compass"
-                target="_blank"
-                href={createExploreLink(dsSettings, model)}
-              >
-                View in Explore
-              </LinkButton>
-            )}
-          </Authorize>
+
+          {allowedToExploreDataSources && !isExpression && (
+            <LinkButton
+              size="md"
+              variant="secondary"
+              icon="compass"
+              target="_blank"
+              href={createExploreLink(dsSettings, model)}
+            >
+              View in Explore
+            </LinkButton>
+          )}
         </div>
       </div>
       <VizWrapper data={data} thresholds={thresholds?.config} thresholdsType={thresholds?.mode} />

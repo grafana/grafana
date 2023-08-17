@@ -8,7 +8,7 @@ import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { AlertmanagerAlert, Silence, SilenceState } from 'app/plugins/datasource/alertmanager/types';
 import { useDispatch } from 'app/types';
 
-import { Action, useAbility } from '../../hooks/useAbilities';
+import { AlertmanagerAction, useAlertmanagerAbility } from '../../hooks/useAbilities';
 import { expireSilenceAction } from '../../state/actions';
 import { parseMatchers } from '../../utils/alertmanager';
 import { getSilenceFiltersFromUrlParams, makeAMLink } from '../../utils/misc';
@@ -75,7 +75,7 @@ const SilencesTable = ({ silences, alertManagerAlerts, alertManagerSourceName }:
       {!!silences.length && (
         <Stack direction="column">
           <SilencesFilter />
-          <Authorize actions={[Action.CreateSilence]}>
+          <Authorize actions={[AlertmanagerAction.CreateSilence]}>
             <div className={styles.topButtonContainer}>
               <LinkButton href={makeAMLink('/alerting/silence/new', alertManagerSourceName)} icon="plus">
                 Add Silence
@@ -202,7 +202,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
 function useColumns(alertManagerSourceName: string) {
   const dispatch = useDispatch();
   const styles = useStyles2(getStyles);
-  const [updateSupported, updateAllowed] = useAbility(Action.UpdateSilence);
+  const [updateSupported, updateAllowed] = useAlertmanagerAbility(AlertmanagerAction.UpdateSilence);
 
   return useMemo((): SilenceTableColumnProps[] => {
     const handleExpireSilenceClick = (id: string) => {

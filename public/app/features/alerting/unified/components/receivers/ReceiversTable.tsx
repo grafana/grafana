@@ -1,20 +1,23 @@
 import pluralize from 'pluralize';
 import React, { useMemo, useState } from 'react';
 
-import { dateTime, dateTimeFormat } from '@grafana/data';
+import { dateTime, dateTimeFormat, OrgRole } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
 import { Badge, Button, ConfirmModal, Icon, Modal, useStyles2 } from '@grafana/ui';
+import { contextSrv } from 'app/core/core';
 import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
 import { ContactPointsState, NotifiersState, ReceiversState, useDispatch } from 'app/types';
 
 import { isOrgAdmin } from '../../../../plugins/admin/permissions';
 import { useGetContactPointsState } from '../../api/receiversApi';
 import { Authorize } from '../../components/Authorize';
-import { Action, useAbility } from '../../hooks/useAbilities';
+import { AlertmanagerAction, useAlertmanagerAbility } from '../../hooks/useAbilities';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
+import { useAlertmanager } from '../../state/AlertmanagerContext';
 import { deleteReceiverAction } from '../../state/actions';
 import { getAlertTableStyles } from '../../styles/table';
 import { SupportedPlugin } from '../../types/pluginBridges';
+import { getNotificationsPermissions } from '../../utils/access-control';
 import { isReceiverUsed } from '../../utils/alertmanager';
 import { GRAFANA_RULES_SOURCE_NAME, isVanillaPrometheusAlertManagerDataSource } from '../../utils/datasource';
 import { makeAMLink } from '../../utils/misc';
@@ -37,7 +40,7 @@ interface UpdateActionProps extends ActionProps {
 function UpdateActions({ alertManagerName, receiverName, onClickDeleteReceiver }: UpdateActionProps) {
   return (
     <>
-      <Authorize actions={[Action.EditContactPoint]}>
+      <Authorize actions={[AlertmanagerAction.UpdateContactPoint]}>
         <ActionIcon
           aria-label="Edit"
           data-testid="edit"
@@ -49,7 +52,7 @@ function UpdateActions({ alertManagerName, receiverName, onClickDeleteReceiver }
           icon="pen"
         />
       </Authorize>
-      <Authorize actions={[Action.DeleteContactPoint]}>
+      <Authorize actions={[AlertmanagerAction.DeleteContactPoint]}>
         <ActionIcon
           onClick={() => onClickDeleteReceiver(receiverName)}
           tooltip="Delete contact point"
@@ -67,7 +70,7 @@ interface ActionProps {
 
 function ViewAction({ alertManagerName, receiverName }: ActionProps) {
   return (
-    <Authorize actions={[Action.EditContactPoint]}>
+    <Authorize actions={[AlertmanagerAction.UpdateContactPoint]}>
       <ActionIcon
         data-testid="view"
         to={makeAMLink(`/alerting/notifications/receivers/${encodeURIComponent(receiverName)}/edit`, alertManagerName)}
@@ -79,8 +82,14 @@ function ViewAction({ alertManagerName, receiverName }: ActionProps) {
 }
 
 function ExportAction({ receiverName }: ActionProps) {
+  const { selectedAlertmanager } = useAlertmanager();
+  const canReadSecrets = contextSrv.hasAccess(
+    getNotificationsPermissions(selectedAlertmanager ?? '').provisioning.readSecrets,
+    contextSrv.hasRole(OrgRole.Admin)
+  );
+
   return (
-    <Authorize actions={[Action.ExportContactPoint]}>
+    <Authorize actions={[AlertmanagerAction.ExportContactPoint]}>
       <ActionIcon
         data-testid="export"
         to={createUrl(`/api/v1/provisioning/contact-points/export/`, {
@@ -291,7 +300,7 @@ export const ReceiversTable = ({ config, alertManagerName }: Props) => {
   const [receiverToDelete, setReceiverToDelete] = useState<string>();
   const [showCannotDeleteReceiverModal, setShowCannotDeleteReceiverModal] = useState(false);
 
-  const [supportsExport, allowedToExport] = useAbility(Action.ExportContactPoint);
+  const [supportsExport, allowedToExport] = useAlertmanagerAbility(AlertmanagerAction.ExportContactPoint);
   const showExport = supportsExport && allowedToExport;
 
   const onClickDeleteReceiver = (receiverName: string): void => {
@@ -340,7 +349,7 @@ export const ReceiversTable = ({ config, alertManagerName }: Props) => {
     isVanillaAM
   );
 
-  const [createSupported, createAllowed] = useAbility(Action.CreateContactPoint);
+  const [createSupported, createAllowed] = useAlertmanagerAbility(AlertmanagerAction.CreateContactPoint);
 
   return (
     <ReceiversSection
@@ -480,7 +489,13 @@ function useGetColumns(
       id: 'actions',
       label: 'Actions',
       renderCell: ({ data: { provisioned, name } }) => (
-        <Authorize actions={[Action.EditContactPoint, Action.DeleteContactPoint, Action.ExportContactPoint]}>
+        <Authorize
+          actions={[
+            AlertmanagerAction.UpdateContactPoint,
+            AlertmanagerAction.DeleteContactPoint,
+            AlertmanagerAction.ExportContactPoint,
+          ]}
+        >
           <div className={tableStyles.actionsCell}>
             {!isVanillaAM && !provisioned && (
               <UpdateActions

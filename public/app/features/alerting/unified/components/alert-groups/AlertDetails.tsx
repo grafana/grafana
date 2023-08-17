@@ -7,7 +7,7 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { AlertmanagerAlert, AlertState } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types';
 
-import { getInstancesPermissions } from '../../utils/access-control';
+import { AlertmanagerAction } from '../../hooks/useAbilities';
 import { isGrafanaRulesSource } from '../../utils/datasource';
 import { makeAMLink, makeLabelBasedSilenceLink } from '../../utils/misc';
 import { AnnotationDetailsField } from '../AnnotationDetailsField';
@@ -20,7 +20,6 @@ interface AmNotificationsAlertDetailsProps {
 
 export const AlertDetails = ({ alert, alertManagerSourceName }: AmNotificationsAlertDetailsProps) => {
   const styles = useStyles2(getStyles);
-  const instancePermissions = getInstancesPermissions(alertManagerSourceName);
 
   // For Grafana Managed alerts the Generator URL redirects to the alert rule edit page, so update permission is required
   // For external alert manager the Generator URL redirects to an external service which we don't control
@@ -32,7 +31,7 @@ export const AlertDetails = ({ alert, alertManagerSourceName }: AmNotificationsA
   return (
     <>
       <div className={styles.actionsRow}>
-        <Authorize actions={[instancePermissions.update, instancePermissions.create]} fallback={contextSrv.isEditor}>
+        <Authorize actions={[AlertmanagerAction.CreateSilence]}>
           {alert.status.state === AlertState.Suppressed && (
             <LinkButton
               href={`${makeAMLink(

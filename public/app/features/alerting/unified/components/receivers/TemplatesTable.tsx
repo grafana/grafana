@@ -1,14 +1,13 @@
 import React, { Fragment, useMemo, useState } from 'react';
 
 import { ConfirmModal, useStyles2 } from '@grafana/ui';
-import { contextSrv } from 'app/core/services/context_srv';
 import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
 import { useDispatch } from 'app/types';
 
 import { Authorize } from '../../components/Authorize';
+import { AlertmanagerAction, useAlertmanagerAbility } from '../../hooks/useAbilities';
 import { deleteTemplateAction } from '../../state/actions';
 import { getAlertTableStyles } from '../../styles/table';
-import { getNotificationsPermissions } from '../../utils/access-control';
 import { makeAMLink } from '../../utils/misc';
 import { CollapseToggle } from '../CollapseToggle';
 import { DetailsField } from '../DetailsField';
@@ -27,7 +26,9 @@ export const TemplatesTable = ({ config, alertManagerName }: Props) => {
   const dispatch = useDispatch();
   const [expandedTemplates, setExpandedTemplates] = useState<Record<string, boolean>>({});
   const tableStyles = useStyles2(getAlertTableStyles);
-  const permissions = getNotificationsPermissions(alertManagerName);
+  const [_, allowedToCreateNotificationTemplate] = useAlertmanagerAbility(
+    AlertmanagerAction.CreateNotificationTemplate
+  );
 
   const templateRows = useMemo(() => {
     const templates = Object.entries(config.template_files);
@@ -53,7 +54,7 @@ export const TemplatesTable = ({ config, alertManagerName }: Props) => {
       description="Create notification templates to customize your notifications."
       addButtonLabel="Add template"
       addButtonTo={makeAMLink('/alerting/notifications/templates/new', alertManagerName)}
-      showButton={contextSrv.hasPermission(permissions.create)}
+      showButton={allowedToCreateNotificationTemplate}
     >
       <table className={tableStyles.table} data-testid="templates-table">
         <colgroup>
@@ -65,7 +66,9 @@ export const TemplatesTable = ({ config, alertManagerName }: Props) => {
           <tr>
             <th></th>
             <th>Template</th>
-            <Authorize actions={[permissions.update, permissions.delete]}>
+            <Authorize
+              actions={[AlertmanagerAction.UpdateNotificationTemplate, AlertmanagerAction.DeleteNotificationTemplate]}
+            >
               <th>Actions</th>
             </Authorize>
           </tr>
@@ -102,7 +105,7 @@ export const TemplatesTable = ({ config, alertManagerName }: Props) => {
                       />
                     )}
                     {!provenance && (
-                      <Authorize actions={[permissions.update]}>
+                      <Authorize actions={[AlertmanagerAction.UpdateNotificationTemplate]}>
                         <ActionIcon
                           to={makeAMLink(
                             `/alerting/notifications/templates/${encodeURIComponent(name)}/edit`,
@@ -113,7 +116,7 @@ export const TemplatesTable = ({ config, alertManagerName }: Props) => {
                         />
                       </Authorize>
                     )}
-                    {contextSrv.hasPermission(permissions.create) && (
+                    {allowedToCreateNotificationTemplate && (
                       <ActionIcon
                         to={makeAMLink(
                           `/alerting/notifications/templates/${encodeURIComponent(name)}/duplicate`,
@@ -125,7 +128,7 @@ export const TemplatesTable = ({ config, alertManagerName }: Props) => {
                     )}
 
                     {!provenance && (
-                      <Authorize actions={[permissions.delete]}>
+                      <Authorize actions={[AlertmanagerAction.DeleteNotificationTemplate]}>
                         <ActionIcon
                           onClick={() => setTemplateToDelete(name)}
                           tooltip="delete template"

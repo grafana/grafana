@@ -7,7 +7,9 @@ import { Button, Icon, Modal, useStyles2 } from '@grafana/ui';
 
 import { Receiver } from '../../../../../../plugins/datasource/alertmanager/types';
 import { Stack } from '../../../../../../plugins/datasource/parca/QueryEditor/Stack';
-import { getNotificationsPermissions } from '../../../utils/access-control';
+import { AlertmanagerAction } from '../../../hooks/useAbilities';
+import { AlertmanagerProvider } from '../../../state/AlertmanagerContext';
+import { GRAFANA_DATASOURCE_NAME } from '../../../utils/datasource';
 import { makeAMLink } from '../../../utils/misc';
 import { Authorize } from '../../Authorize';
 import { Matchers } from '../../notification-policies/Matchers';
@@ -57,54 +59,57 @@ export function NotificationRouteDetailsModal({
   const styles = useStyles2(getStyles);
   const isDefault = isDefaultPolicy(route);
 
-  const permissions = getNotificationsPermissions(alertManagerSourceName);
   return (
-    <Modal
-      className={styles.detailsModal}
-      isOpen={true}
-      title="Routing details"
-      onDismiss={onClose}
-      onClickBackdrop={onClose}
-    >
-      <Stack gap={0} direction="column">
-        <div className={cx(styles.textMuted, styles.marginBottom(2))}>Your alert instances are routed as follows.</div>
-        <div>Notification policy path</div>
-        {isDefault && <div className={styles.textMuted}>Default policy</div>}
-        <div className={styles.separator(1)} />
-        {!isDefault && (
-          <>
-            <PolicyPath route={route} routesByIdMap={routesByIdMap} />
-          </>
-        )}
-        <div className={styles.separator(4)} />
-        <div className={styles.contactPoint}>
-          <Stack gap={1} direction="row" alignItems="center">
-            Contact point:
-            <span className={styles.textMuted}>{receiver.name}</span>
-          </Stack>
-          <Authorize actions={[permissions.update]}>
+    <AlertmanagerProvider accessType="notification" alertmanagerSourceName={GRAFANA_DATASOURCE_NAME}>
+      <Modal
+        className={styles.detailsModal}
+        isOpen={true}
+        title="Routing details"
+        onDismiss={onClose}
+        onClickBackdrop={onClose}
+      >
+        <Stack gap={0} direction="column">
+          <div className={cx(styles.textMuted, styles.marginBottom(2))}>
+            Your alert instances are routed as follows.
+          </div>
+          <div>Notification policy path</div>
+          {isDefault && <div className={styles.textMuted}>Default policy</div>}
+          <div className={styles.separator(1)} />
+          {!isDefault && (
+            <>
+              <PolicyPath route={route} routesByIdMap={routesByIdMap} />
+            </>
+          )}
+          <div className={styles.separator(4)} />
+          <div className={styles.contactPoint}>
             <Stack gap={1} direction="row" alignItems="center">
-              <a
-                href={makeAMLink(
-                  `/alerting/notifications/receivers/${encodeURIComponent(receiver.name)}/edit`,
-                  alertManagerSourceName
-                )}
-                className={styles.link}
-                target="_blank"
-                rel="noreferrer"
-              >
-                See details <Icon name="external-link-alt" />
-              </a>
+              Contact point:
+              <span className={styles.textMuted}>{receiver.name}</span>
             </Stack>
-          </Authorize>
-        </div>
-        <div className={styles.button}>
-          <Button variant="primary" type="button" onClick={onClose}>
-            Close
-          </Button>
-        </div>
-      </Stack>
-    </Modal>
+            <Authorize actions={[AlertmanagerAction.UpdateContactPoint]}>
+              <Stack gap={1} direction="row" alignItems="center">
+                <a
+                  href={makeAMLink(
+                    `/alerting/notifications/receivers/${encodeURIComponent(receiver.name)}/edit`,
+                    alertManagerSourceName
+                  )}
+                  className={styles.link}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  See details <Icon name="external-link-alt" />
+                </a>
+              </Stack>
+            </Authorize>
+          </div>
+          <div className={styles.button}>
+            <Button variant="primary" type="button" onClick={onClose}>
+              Close
+            </Button>
+          </div>
+        </Stack>
+      </Modal>
+    </AlertmanagerProvider>
   );
 }
 
