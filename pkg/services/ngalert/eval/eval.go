@@ -61,7 +61,7 @@ func (r *conditionEvaluator) EvaluateRaw(ctx context.Context, now time.Time) (re
 	labels := prometheus.Labels{"org": strconv.FormatInt(r.orgId, 10)}
 	if r.metrics != nil {
 		defer func() {
-			r.metrics.QueryDuration.With(labels).Observe(time.Now().Sub(start).Seconds())
+			r.metrics.QueryDuration.With(labels).Observe(time.Since(start).Seconds())
 			r.metrics.Total.With(labels).Inc()
 			if err != nil {
 				r.metrics.Failures.With(labels).Inc()
@@ -95,7 +95,7 @@ func (r *conditionEvaluator) Evaluate(ctx context.Context, now time.Time) (Resul
 	start := time.Now()
 	labels := prometheus.Labels{"org": strconv.FormatInt(r.orgId, 10)}
 	if r.metrics != nil {
-		defer func() { r.metrics.Duration.With(labels).Observe(time.Now().Sub(start).Seconds()) }()
+		defer func() { r.metrics.Duration.With(labels).Observe(time.Since(start).Seconds()) }()
 	}
 
 	response, err := r.EvaluateRaw(ctx, now)
@@ -106,7 +106,7 @@ func (r *conditionEvaluator) Evaluate(ctx context.Context, now time.Time) (Resul
 	processDurationStart := time.Now()
 	if r.metrics != nil {
 		defer func() {
-			r.metrics.ProcessDuration.With(labels).Observe(time.Now().Sub(processDurationStart).Seconds())
+			r.metrics.ProcessDuration.With(labels).Observe(time.Since(processDurationStart).Seconds())
 		}()
 	}
 

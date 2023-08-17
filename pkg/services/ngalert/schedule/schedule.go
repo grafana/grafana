@@ -417,7 +417,6 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 			logger.Debug("Skip updating the state because the context has been cancelled")
 			return
 		}
-		start = sch.clock.Now()
 		processedStates := sch.stateManager.ProcessEvalResults(
 			ctx,
 			e.scheduledAt,
