@@ -1,6 +1,7 @@
 import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
 import { config, locationService } from '@grafana/runtime';
 import {
+  behaviors,
   CustomVariable,
   DataSourceVariable,
   getUrlSyncManager,
@@ -12,7 +13,7 @@ import {
   SceneQueryRunner,
   VizPanel,
 } from '@grafana/scenes';
-import { defaultDashboard, LoadingState, Panel, RowPanel, VariableType } from '@grafana/schema';
+import { DashboardCursorSync, defaultDashboard, LoadingState, Panel, RowPanel, VariableType } from '@grafana/schema';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { createPanelJSONFixture } from 'app/features/dashboard/state/__fixtures__/dashboardFixtures';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard';
@@ -138,6 +139,20 @@ describe('DashboardLoader', () => {
       expect(scene.state?.$timeRange?.state.value.raw).toEqual(dash.time);
       expect(scene.state?.$variables?.state.variables).toHaveLength(1);
       expect(scene.state.controls).toBeDefined();
+    });
+
+    it('should apply cursor sync behavior', () => {
+      const dash = {
+        ...defaultDashboard,
+        graphTooltip: DashboardCursorSync.Crosshair,
+      };
+      const oldModel = new DashboardModel(dash);
+
+      const scene = createDashboardSceneFromDashboardModel(oldModel);
+
+      expect(scene.state.$behaviors).toHaveLength(1);
+      expect(scene.state.$behaviors![0]).toBeInstanceOf(behaviors.CursorSync);
+      expect((scene.state.$behaviors![0] as behaviors.CursorSync).state.sync).toEqual(DashboardCursorSync.Crosshair);
     });
   });
 

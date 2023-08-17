@@ -27,6 +27,7 @@ import {
   SceneObject,
   SceneControlsSpacer,
   VizPanelMenu,
+  behaviors,
 } from '@grafana/scenes';
 import { StateManagerBase } from 'app/core/services/StateManagerBase';
 import { dashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
@@ -194,6 +195,12 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel)
     }),
     $timeRange: new SceneTimeRange(oldModel.time),
     $variables: variables,
+    $behaviors: [
+      new behaviors.CursorSync({
+        key: 'dashboard',
+        sync: oldModel.graphTooltip,
+      }),
+    ],
     controls: controls,
   });
 }
