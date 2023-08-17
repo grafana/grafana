@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { useAsyncFn } from 'react-use';
 
+import { config } from '@grafana/runtime';
 import { contextSrv } from 'app/core/core';
 import { Role, OrgRole, AccessControlAction } from 'app/types';
 
@@ -83,6 +84,8 @@ export const UserRolePicker = ({
     contextSrv.hasPermission(AccessControlAction.ActionUserRolesAdd) &&
     contextSrv.hasPermission(AccessControlAction.ActionUserRolesRemove);
 
+  const showAdvancedRoles = true ? config.rbacRolesDisplay === 'advanced' : false;
+
   return (
     <RolePicker
       appliedRoles={appliedRoles}
@@ -95,6 +98,7 @@ export const UserRolePicker = ({
       basicRoleDisabled={basicRoleDisabled}
       basicRoleDisabledMessage={basicRoleDisabledMessage}
       showBasicRole
+      showAdvancedRoles={showAdvancedRoles}
       apply={apply}
       canUpdateRoles={canUpdateRoles}
       maxWidth={maxWidth}

@@ -121,6 +121,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		SigV4AuthEnabled:                    setting.SigV4AuthEnabled,
 		AzureAuthEnabled:                    setting.AzureAuthEnabled,
 		RbacEnabled:                         hs.Cfg.RBACEnabled,
+		RbacRolesDisplay:                    hs.Cfg.RBACRolesDisplay,
 		ExploreEnabled:                      setting.ExploreEnabled,
 		HelpEnabled:                         setting.HelpEnabled,
 		ProfileEnabled:                      setting.ProfileEnabled,

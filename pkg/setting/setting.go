@@ -538,6 +538,8 @@ type Cfg struct {
 	RBACPermissionValidationEnabled bool
 	// Reset basic roles permissions on start-up
 	RBACResetBasicRoles bool
+	// Sets how roles are displayed in the UI
+	RBACRolesDisplay string
 
 	// GRPC Server.
 	GRPCServerNetwork   string
@@ -1658,6 +1660,7 @@ func readAccessControlSettings(iniFile *ini.File, cfg *Cfg) {
 	cfg.RBACPermissionCache = rbac.Key("permission_cache").MustBool(true)
 	cfg.RBACPermissionValidationEnabled = rbac.Key("permission_validation_enabled").MustBool(false)
 	cfg.RBACResetBasicRoles = rbac.Key("reset_basic_roles").MustBool(false)
+	cfg.RBACRolesDisplay = strings.ToLower(rbac.Key("roles_display").In("advanced", []string{"advanced", "basic"}))
 }
 
 func readOAuth2ServerSettings(cfg *Cfg) {

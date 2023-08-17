@@ -182,6 +182,7 @@ export interface GrafanaConfig {
   verifyEmailEnabled: boolean;
   oauth: OAuthSettings;
   rbacEnabled: boolean;
+  rbacRolesDisplay: string;
   disableUserSignUp: boolean;
   loginHint: string;
   passwordHint: string;
