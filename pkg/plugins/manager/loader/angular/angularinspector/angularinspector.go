@@ -73,6 +73,6 @@ func NewDefaultStaticDetectorsProvider() angulardetector.DetectorsProvider {
 
 // NewStaticInspector returns the default Inspector, which is a PatternsListInspector that only uses the
 // static (hardcoded) angular detection patterns.
-func NewStaticInspector() (Inspector, error) {
-	return &PatternsListInspector{DetectorsProvider: NewDefaultStaticDetectorsProvider()}, nil
+func NewStaticInspector() Inspector {
+	return &PatternsListInspector{DetectorsProvider: NewDefaultStaticDetectorsProvider()}
 }

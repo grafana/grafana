@@ -3,6 +3,7 @@ package anonimpl
 import (
 	"context"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"hash/fnv"
 	"net/http"
@@ -14,38 +15,40 @@ import (
 	"github.com/grafana/grafana/pkg/infra/network"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
+	"github.com/grafana/grafana/pkg/services/anonymous"
 	"github.com/grafana/grafana/pkg/web"
 )
 
 const thirtyDays = 30 * 24 * time.Hour
-const anonCachePrefix = "anon-session"
 
-type AnonSession struct {
-	ip        string
-	userAgent string
+type Device struct {
+	Kind      anonymous.DeviceKind `json:"kind"`
+	IP        string               `json:"ip"`
+	UserAgent string               `json:"user_agent"`
+	LastSeen  time.Time            `json:"last_seen"`
 }
 
-func (a *AnonSession) Key() (string, error) {
+func (a *Device) Key() (string, error) {
 	key := strings.Builder{}
-	key.WriteString(a.ip)
-	key.WriteString(a.userAgent)
+	key.WriteString(a.IP)
+	key.WriteString(a.UserAgent)
 
 	hash := fnv.New128a()
 	if _, err := hash.Write([]byte(key.String())); err != nil {
 		return "", fmt.Errorf("failed to write to hash: %w", err)
 	}
 
-	return strings.Join([]string{anonCachePrefix, hex.EncodeToString(hash.Sum(nil))}, ":"), nil
+	return strings.Join([]string{string(a.Kind), hex.EncodeToString(hash.Sum(nil))}, ":"), nil
 }
 
-type AnonSessionService struct {
+type AnonDeviceService struct {
 	remoteCache remotecache.CacheStorage
 	log         log.Logger
 	localCache  *localcache.CacheService
 }
 
-func ProvideAnonymousSessionService(remoteCache remotecache.CacheStorage, usageStats usagestats.Service) *AnonSessionService {
-	a := &AnonSessionService{
+func ProvideAnonymousDeviceService(remoteCache remotecache.CacheStorage, usageStats usagestats.Service) *AnonDeviceService {
+	a := &AnonDeviceService{
 		remoteCache: remoteCache,
 		log:         log.New("anonymous-session-service"),
 		localCache:  localcache.New(29*time.Minute, 15*time.Minute),
@@ -56,18 +59,37 @@ func ProvideAnonymousSessionService(remoteCache remotecache.CacheStorage, usageS
 	return a
 }
 
-func (a *AnonSessionService) usageStatFn(ctx context.Context) (map[string]interface{}, error) {
-	sessionCount, err := a.remoteCache.Count(ctx, anonCachePrefix)
+func (a *AnonDeviceService) usageStatFn(ctx context.Context) (map[string]interface{}, error) {
+	anonDeviceCount, err := a.remoteCache.Count(ctx, string(anonymous.AnonDevice))
+	if err != nil {
+		return nil, nil
+	}
+
+	authedDeviceCount, err := a.remoteCache.Count(ctx, string(anonymous.AuthedDevice))
 	if err != nil {
 		return nil, nil
 	}
 
 	return map[string]interface{}{
-		"stats.anonymous.session.count": sessionCount,
+		"stats.anonymous.session.count": anonDeviceCount, // keep session for legacy data
+		"stats.users.device.count":      authedDeviceCount,
 	}, nil
 }
 
-func (a *AnonSessionService) TagSession(ctx context.Context, httpReq *http.Request) error {
+func (a *AnonDeviceService) untagDevice(ctx context.Context, device *Device) error {
+	key, err := device.Key()
+	if err != nil {
+		return err
+	}
+
+	if err := a.remoteCache.Delete(ctx, key); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (a *AnonDeviceService) TagDevice(ctx context.Context, httpReq *http.Request, kind anonymous.DeviceKind) error {
 	addr := web.RemoteAddr(httpReq)
 	ip, err := network.GetIPFromAddress(addr)
 	if err != nil {
@@ -80,12 +102,14 @@ func (a *AnonSessionService) TagSession(ctx context.Context, httpReq *http.Reque
 		clientIPStr = ""
 	}
 
-	anonSession := &AnonSession{
-		ip:        clientIPStr,
-		userAgent: httpReq.UserAgent(),
+	taggedDevice := &Device{
+		Kind:      kind,
+		IP:        clientIPStr,
+		UserAgent: httpReq.UserAgent(),
+		LastSeen:  time.Now().UTC(),
 	}
 
-	key, err := anonSession.Key()
+	key, err := taggedDevice.Key()
 	if err != nil {
 		return err
 	}
@@ -96,5 +120,27 @@ func (a *AnonSessionService) TagSession(ctx context.Context, httpReq *http.Reque
 
 	a.localCache.SetDefault(key, struct{}{})
 
-	return a.remoteCache.Set(ctx, key, []byte(key), thirtyDays)
+	deviceJSON, err := json.Marshal(taggedDevice)
+	if err != nil {
+		return err
+	}
+
+	if err := a.remoteCache.Set(ctx, key, deviceJSON, thirtyDays); err != nil {
+		return err
+	}
+
+	// remove existing tag when device switches to another kind
+	untagKind := anonymous.AnonDevice
+	if kind == anonymous.AnonDevice {
+		untagKind = anonymous.AuthedDevice
+	}
+	if err := a.untagDevice(ctx, &Device{
+		Kind:      untagKind,
+		IP:        taggedDevice.IP,
+		UserAgent: taggedDevice.UserAgent,
+	}); err != nil {
+		return err
+	}
+
+	return nil
 }

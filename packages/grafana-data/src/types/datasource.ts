@@ -383,6 +383,13 @@ export interface MetadataInspectorProps<
   data: DataFrame[];
 }
 
+export interface LegacyMetricFindQueryOptions {
+  searchFilter?: string;
+  scopedVars?: ScopedVars;
+  range?: TimeRange;
+  variable?: { name: string };
+}
+
 export interface QueryEditorProps<
   DSType extends DataSourceApi<TQuery, TOptions>,
   TQuery extends DataQuery = DataQuery,

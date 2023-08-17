@@ -147,3 +147,12 @@ The option to run a **raw document query** is deprecated as of Grafana v10.1.
 ## Use template variables
 
 You can also augment queries by using [template variables]({{< relref "./template-variables/" >}}).
+=======
+Queries of `terms` have a 500-result limit by default.
+To set a custom limit, set the `size` property in your query.
+
+{{% docs/reference %}}
+[query-transform-data]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/query-transform-data"
+[query-transform-data]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/query-transform-data"
+{{% /docs/reference %}}
+

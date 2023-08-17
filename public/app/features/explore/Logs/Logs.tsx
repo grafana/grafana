@@ -82,8 +82,8 @@ interface Props extends Themeable2 {
   loadLogsVolumeData: () => void;
   showContextToggle?: (row?: LogRowModel) => boolean;
   onChangeTime: (range: AbsoluteTimeRange) => void;
-  onClickFilterLabel: (key: string, value: string) => void;
-  onClickFilterOutLabel: (key: string, value: string) => void;
+  onClickFilterLabel?: (key: string, value: string) => void;
+  onClickFilterOutLabel?: (key: string, value: string) => void;
   onStartScanning?: () => void;
   onStopScanning?: () => void;
   getRowContext?: (row: LogRowModel, origRow: LogRowModel, options: LogRowContextOptions) => Promise<any>;
@@ -95,7 +95,7 @@ interface Props extends Themeable2 {
   eventBus: EventBus;
   panelState?: ExplorePanelsState;
   scrollElement?: HTMLDivElement;
-  isFilterLabelActive: (key: string, value: string) => Promise<boolean>;
+  isFilterLabelActive?: (key: string, value: string) => Promise<boolean>;
   logsFrames?: DataFrame[];
   range: TimeRange;
 }
@@ -454,7 +454,18 @@ class UnthemedLogs extends PureComponent<Props, State> {
     return { from: firstTimeStamp, to: lastTimeStamp };
   });
 
-  scrollToTopLogs = () => this.topLogsRef.current?.scrollIntoView();
+  scrollToTopLogs = () => {
+    if (config.featureToggles.exploreScrollableLogsContainer) {
+      if (this.logsContainer.current) {
+        this.logsContainer.current.scroll({
+          behavior: 'auto',
+          top: 0,
+        });
+      }
+    } else {
+      this.topLogsRef.current?.scrollIntoView();
+    }
+  };
 
   render() {
     const {
@@ -762,7 +773,7 @@ const getStyles = (theme: GrafanaTheme2, wrapLogMessage: boolean) => {
       flex-wrap: wrap;
       background-color: ${theme.colors.background.primary};
       padding: ${theme.spacing(1, 2)};
-      border-radius: ${theme.shape.borderRadius()};
+      border-radius: ${theme.shape.radius.default};
       margin: ${theme.spacing(0, 0, 1)};
       border: 1px solid ${theme.colors.border.medium};
     `,

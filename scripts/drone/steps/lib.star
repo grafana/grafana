@@ -8,6 +8,7 @@ load(
     "gcp_grafanauploads",
     "gcp_grafanauploads_base64",
     "gcp_upload_artifacts_key",
+    "npm_token",
     "prerelease_bucket",
 )
 load(
@@ -19,7 +20,7 @@ load(
     "windows_images",
 )
 
-grabpl_version = "v3.0.40"
+grabpl_version = "v3.0.41"
 
 trigger_oss = {
     "repo": [
@@ -261,7 +262,6 @@ def validate_modfile_step():
     return {
         "name": "validate-modfile",
         "image": images["go_image"],
-        "failure": "ignore",
         "commands": [
             "go run scripts/modowners/modowners.go check go.mod",
         ],
@@ -747,10 +747,7 @@ def codespell_step():
         "name": "codespell",
         "image": images["build_image"],
         "commands": [
-            # Important: all words have to be in lowercase, and separated by "\n".
-            'echo -e "unknwon\nreferer\nerrorstring\neror\niam\nwan" > words_to_ignore.txt',
-            "codespell -I words_to_ignore.txt docs/",
-            "rm words_to_ignore.txt",
+            "codespell -I .codespellignore docs/",
         ],
     }
 
@@ -1143,7 +1140,7 @@ def release_canary_npm_packages_step(trigger = None):
         "image": images["build_image"],
         "depends_on": end_to_end_tests_deps(),
         "environment": {
-            "NPM_TOKEN": from_secret("npm_token"),
+            "NPM_TOKEN": from_secret(npm_token),
         },
         "commands": [
             "./scripts/publish-npm-packages.sh --dist-tag 'canary' --registry 'https://registry.npmjs.org'",
@@ -1362,7 +1359,7 @@ def get_windows_steps(ver_mode, bucket = "%PRERELEASE_BUCKET%"):
                     "windows-init",
                 ],
                 "environment": {
-                    "GCP_KEY": from_secret("gcp_key"),
+                    "GCP_KEY": from_secret(gcp_grafanauploads_base64),
                     "PRERELEASE_BUCKET": from_secret(prerelease_bucket),
                     "GITHUB_TOKEN": from_secret("github_token"),
                 },

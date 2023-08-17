@@ -3,24 +3,20 @@ package sync
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strings"
 	"time"
+
+	"github.com/go-jose/go-jose/v3/jwt"
 
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/authn"
+	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/util/errutil"
-)
-
-var (
-	errExpiredAccessToken = errutil.NewBase(
-		errutil.StatusUnauthorized,
-		"oauth.expired-token",
-		errutil.WithPublicMessage("OAuth access token expired"))
 )
 
 func ProvideOAuthTokenSync(service oauthtoken.OAuthTokenService, sessionService auth.UserTokenService, socialService social.Service) *OAuthTokenSync {
@@ -64,10 +60,15 @@ func (s *OAuthTokenSync) SyncOauthTokenHook(ctx context.Context, identity *authn
 		return nil
 	}
 
+	idTokenExpiry, err := getIDTokenExpiry(token)
+	if err != nil {
+		s.log.FromContext(ctx).Error("Failed to extract expiry of ID token", "id", identity.ID, "error", err)
+	}
+
 	// token has no expire time configured, so we don't have to refresh it
 	if token.OAuthExpiry.IsZero() {
 		// cache the token check, so we don't perform it on every request
-		s.cache.Set(identity.ID, struct{}{}, getOAuthTokenCacheTTL(token.OAuthExpiry))
+		s.cache.Set(identity.ID, struct{}{}, getOAuthTokenCacheTTL(token.OAuthExpiry, idTokenExpiry))
 		return nil
 	}
 
@@ -84,11 +85,19 @@ func (s *OAuthTokenSync) SyncOauthTokenHook(ctx context.Context, identity *authn
 		return nil
 	}
 
-	expires := token.OAuthExpiry.Round(0).Add(-oauthtoken.ExpiryDelta)
+	accessTokenExpires := token.OAuthExpiry.Round(0).Add(-oauthtoken.ExpiryDelta)
+
+	hasIdTokenExpired := false
+	idTokenExpires := time.Time{}
+
+	if !idTokenExpiry.IsZero() {
+		idTokenExpires = idTokenExpiry.Round(0).Add(-oauthtoken.ExpiryDelta)
+		hasIdTokenExpired = idTokenExpires.Before(time.Now())
+	}
 	// token has not expired, so we don't have to refresh it
-	if !expires.Before(time.Now()) {
+	if !accessTokenExpires.Before(time.Now()) && !hasIdTokenExpired {
 		// cache the token check, so we don't perform it on every request
-		s.cache.Set(identity.ID, struct{}{}, getOAuthTokenCacheTTL(expires))
+		s.cache.Set(identity.ID, struct{}{}, getOAuthTokenCacheTTL(accessTokenExpires, idTokenExpires))
 		return nil
 	}
 
@@ -105,7 +114,7 @@ func (s *OAuthTokenSync) SyncOauthTokenHook(ctx context.Context, identity *authn
 			s.log.FromContext(ctx).Error("Failed to revoke session token", "id", identity.ID, "tokenId", identity.SessionToken.Id, "error", err)
 		}
 
-		return errExpiredAccessToken.Errorf("oauth access token could not be refreshed: %w", err)
+		return authn.ErrExpiredAccessToken.Errorf("oauth access token could not be refreshed: %w", err)
 	}
 
 	return nil
@@ -113,15 +122,47 @@ func (s *OAuthTokenSync) SyncOauthTokenHook(ctx context.Context, identity *authn
 
 const maxOAuthTokenCacheTTL = 10 * time.Minute
 
-func getOAuthTokenCacheTTL(t time.Time) time.Duration {
-	if t.IsZero() {
+func getOAuthTokenCacheTTL(accessTokenExpiry, idTokenExpiry time.Time) time.Duration {
+	if accessTokenExpiry.IsZero() && idTokenExpiry.IsZero() {
 		return maxOAuthTokenCacheTTL
 	}
 
-	ttl := time.Until(t)
-	if ttl > maxOAuthTokenCacheTTL {
-		return maxOAuthTokenCacheTTL
+	min := func(a, b time.Duration) time.Duration {
+		if a <= b {
+			return a
+		}
+		return b
 	}
 
-	return ttl
+	if accessTokenExpiry.IsZero() && !idTokenExpiry.IsZero() {
+		return min(time.Until(idTokenExpiry), maxOAuthTokenCacheTTL)
+	}
+
+	if !accessTokenExpiry.IsZero() && idTokenExpiry.IsZero() {
+		return min(time.Until(accessTokenExpiry), maxOAuthTokenCacheTTL)
+	}
+
+	return min(min(time.Until(accessTokenExpiry), time.Until(idTokenExpiry)), maxOAuthTokenCacheTTL)
+}
+
+// getIDTokenExpiry extracts the expiry time from the ID token
+func getIDTokenExpiry(token *login.UserAuth) (time.Time, error) {
+	if token.OAuthIdToken == "" {
+		return time.Time{}, nil
+	}
+
+	parsedToken, err := jwt.ParseSigned(token.OAuthIdToken)
+	if err != nil {
+		return time.Time{}, fmt.Errorf("error parsing id token: %w", err)
+	}
+
+	type Claims struct {
+		Exp int64 `json:"exp"`
+	}
+	var claims Claims
+	if err := parsedToken.UnsafeClaimsWithoutVerification(&claims); err != nil {
+		return time.Time{}, fmt.Errorf("error getting claims from id token: %w", err)
+	}
+
+	return time.Unix(claims.Exp, 0), nil
 }

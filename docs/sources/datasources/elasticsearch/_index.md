@@ -42,7 +42,7 @@ Our maintenance policy for Elasticsearch data source is aligned with the [Elasti
 ## Provision the data source
 
 You can define and configure the data source in YAML files as part of Grafana's provisioning system.
-For more information about provisioning, and for available configuration options, refer to [Provisioning Grafana]({{< relref "../../administration/provisioning/#data-sources" >}}).
+For more information about provisioning, and for available configuration options, refer to [Provisioning Grafana][provisioning-data-sources].
 
 {{% admonition type="note" %}}
 The previously used `database` field has now been [deprecated](https://github.com/grafana/grafana/pull/58647).
@@ -50,7 +50,7 @@ You should now use the `index` field in `jsonData` to store the index name.
 Please see the examples below.
 {{% /admonition %}}
 
-#### Provisioning examples
+### Provisioning examples
 
 **Basic provisioning**
 
@@ -115,7 +115,7 @@ For more information about AWS authentication options, refer to [AWS authenticat
 
 You can select multiple metrics and group by multiple terms or filters when using the Elasticsearch query editor.
 
-For details, see the [query editor documentation]({{< relref "./query-editor/" >}}).
+For details, see the [query editor documentation]({{< relref "./query-editor" >}}).
 
 ## Use template variables
 
@@ -123,4 +123,24 @@ Instead of hard-coding details such as server, application, and sensor names in 
 Grafana lists these variables in dropdown select boxes at the top of the dashboard to help you change the data displayed in your dashboard.
 Grafana refers to such variables as template variables.
 
-For details, see the [template variables documentation]({{< relref "./template-variables/" >}}).
+For details, see the [template variables documentation]({{< relref "./template-variables" >}}).
+
+{{% docs/reference %}}
+[build-dashboards]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/build-dashboards"
+[build-dashboards]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/build-dashboards"
+
+[configure-grafana-sigv4-auth-enabled]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-grafana/#sigv4_auth_enabled"
+[configure-grafana-sigv4-auth-enabled]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-grafana/#sigv4_auth_enabled"
+
+[data-source-management]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/administration/data-source-management"
+[data-source-management]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/administration/data-source-management"
+
+[explore]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/explore"
+[explore]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/explore"
+
+[provisioning-data-sources]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/administration/provisioning#data-sources"
+[provisioning-data-sources]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/administration/provisioning#data-sources"
+
+[query-transform-data]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/query-transform-data"
+[query-transform-data]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/query-transform-data"
+{{% /docs/reference %}}

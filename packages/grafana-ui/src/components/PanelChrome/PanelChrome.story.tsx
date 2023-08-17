@@ -215,6 +215,10 @@ export const Examples = () => {
               />,
             ],
           })}
+          {renderPanel('Collapsible panel', {
+            title: 'Default title',
+            collapsible: true,
+          })}
           {renderPanel('Panel with action link', {
             title: 'Panel with action link',
             actions: (
