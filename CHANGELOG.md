@@ -442,6 +442,19 @@ The `database` field has been deprecated in the Elasticsearch datasource provisi
 - **InteractiveTable:** Updated design and minor tweak to Correlactions page. [#66443](https://github.com/grafana/grafana/issues/66443), [@torkelo](https://github.com/torkelo)
 
 <!-- 10.0.0-preview END -->
+<!-- 9.5.8 START -->
+
+# 9.5.8 (2023-08-16)
+
+### Features and enhancements
+
+- **GenericOAuth:** Set sub as auth id. [#73223](https://github.com/grafana/grafana/issues/73223), [@kalleep](https://github.com/kalleep)
+
+### Bug fixes
+
+- **DataSourceProxy:** Fix url validation error handling. [#73320](https://github.com/grafana/grafana/issues/73320), [@ricci2511](https://github.com/ricci2511)
+
+<!-- 9.5.8 END -->
 <!-- 9.5.7 START -->
 
 # 9.5.7 (2023-07-20)
