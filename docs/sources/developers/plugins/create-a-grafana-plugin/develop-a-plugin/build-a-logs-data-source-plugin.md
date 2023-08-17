@@ -80,7 +80,9 @@ frame.SetMeta(&data.FrameMeta{
 **Example of constructing a logs data frame in TypeScript:**
 
 ```ts
-const result = new MutableDataFrame({
+import { createDataFrame, DataFrameType, FieldType } from '@grafana/data';
+
+const result = createDataFrame({
   fields: [
     { name: 'timestamp', type: FieldType.time, values: [1645030244810, 1645030247027, 1645030247027] },
     { name: 'body', type: FieldType.string, values: ['message one', 'message two', 'message three'] },
@@ -123,7 +125,9 @@ frame.Meta = &data.FrameMeta{
 **Example in TypeScript:**
 
 ```ts
-const result = new MutableDataFrame({
+import { createDataFrame } from '@grafana/data';
+
+const result = createDataFrame({
     fields: [...],
     meta: {
         preferredVisualisationType: 'logs',
@@ -151,7 +155,9 @@ frame.Meta = &data.FrameMeta{
 **Example in TypeScript:**
 
 ```ts
-const result = new MutableDataFrame({
+import { createDataFrame } from '@grafana/data';
+
+const result = createDataFrame({
     fields: [...],
     meta: {
       custom: {
@@ -186,7 +192,9 @@ frame.Meta = &data.FrameMeta{
 **Example in TypeScript:**
 
 ```ts
-const result = new MutableDataFrame({
+import { createDataFrame } from '@grafana/data';
+
+const result = createDataFrame({
     fields: [...],
     meta: {
       custom: {
@@ -194,6 +202,36 @@ const result = new MutableDataFrame({
         error: "Error information"
       }
     },
+});
+```
+
+### Logs to trace using data link with url
+
+If your log data contains **trace IDs**, you can enhance your log data frames by adding a field with _trace ID values_ and _URL data links_. These links should use the trace ID value to accurately link to the appropriate trace. This enhancement enables users to seamlessly move from log lines to the relevant traces.
+
+**Example in TypeScript:**
+
+```ts
+import { createDataFrame, FieldType } from '@grafana/data';
+
+const result = createDataFrame({
+  fields: [
+    ...,
+    { name: 'traceID',
+      type: FieldType.string,
+      values: ['a006649127e371903a2de979', 'e206649127z371903c3be12q' 'k777549127c371903a2lw34'],
+      config: {
+        links: [
+          {
+            // Be sure to adjust this example based on your data source logic.
+            title: 'Trace view',
+            url: `http://linkToTraceID/${__value.raw}` // ${__value.raw} is a variable that will be replaced with actual traceID value.
+          }
+        ]
+      }
+    }
+  ],
+  ...,
 });
 ```
 
@@ -525,6 +563,48 @@ export class ExampleDatasource
 ```
 
 For an example of how to implement the logs sample in the Elasticsearch data source, refer to [PR 70258](https://github.com/grafana/grafana/pull/70258/).
+
+### Logs to trace using internal data links
+
+{{% admonition type="note" %}} This feature is currently not supported for external plugins outside of the Grafana repo. The `@internal` API is currently under development. {{%
+/admonition %}}
+
+If you are developing a data source plugin that handles both logs and traces, and your log data contains trace IDs, you can enhance your log data frames by adding a field with trace ID values and internal data links. These links should use the trace ID value to accurately create a trace query that produces relevant trace. This enhancement enables users to seamlessly move from log lines to the traces.
+
+**Example in TypeScript:**
+
+```ts
+import { createDataFrame } from '@grafana/data';
+
+const result = createDataFrame({
+  fields: [
+    ...,
+    { name: 'traceID',
+      type: FieldType.string,
+      values: ['a006649127e371903a2de979', 'e206649127z371903c3be12q' 'k777549127c371903a2lw34'],
+      config: {
+        links: [
+          {
+            title: 'Trace view',
+            url: '',
+            internal: {
+              // Be sure to adjust this example with datasourceUid, datasourceName and query based on your data source logic.
+              datasourceUid: instanceSettings.uid,
+              datasourceName: instanceSettings.name,
+              query: {
+                { ...query, queryType: 'trace', traceId: '${__value.raw}'}, // ${__value.raw} is a variable that will be replaced with actual traceID value.
+              }
+            }
+
+          }
+        ]
+      }
+
+    }
+  ],
+  ...,
+});
+```
 
 ### Log context query editor
 

@@ -16,6 +16,8 @@ import {
   DateTime,
   isDateTime,
   toUtc,
+  URLRange,
+  URLRangeValue,
 } from '@grafana/data';
 import { DataQuery, DataSourceRef, TimeZone } from '@grafana/schema';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
@@ -144,12 +146,7 @@ export function getResultsFromCache(
   return cacheValue;
 }
 
-export function getRange(range: RawTimeRange, timeZone: TimeZone): TimeRange {
-  const raw = {
-    from: parseRawTime(range.from)!,
-    to: parseRawTime(range.to)!,
-  };
-
+export function getRange(raw: RawTimeRange, timeZone: TimeZone): TimeRange {
   return {
     from: dateMath.parse(raw.from, false, timeZone)!,
     to: dateMath.parse(raw.to, true, timeZone)!,
@@ -157,10 +154,7 @@ export function getRange(range: RawTimeRange, timeZone: TimeZone): TimeRange {
   };
 }
 
-/**
- * @param range RawTimeRange - Note: Range in the URL is not RawTimeRange compliant (see #72578 for more details)
- */
-export function fromURLRange(range: RawTimeRange): RawTimeRange {
+export function fromURLRange(range: URLRange): RawTimeRange {
   let rawTimeRange: RawTimeRange = DEFAULT_RANGE;
   let parsedRange = {
     from: parseRawTime(range.from),
@@ -172,34 +166,21 @@ export function fromURLRange(range: RawTimeRange): RawTimeRange {
   return rawTimeRange;
 }
 
-/**
- * @param range RawTimeRange - Note: Range in the URL is not RawTimeRange compliant (see #72578 for more details)
- */
-export const toURLTimeRange = (range: RawTimeRange): RawTimeRange => {
-  let from = range.from;
-  if (isDateTime(from)) {
-    from = from.valueOf().toString();
-  }
-
-  let to = range.to;
-  if (isDateTime(to)) {
-    to = to.valueOf().toString();
-  }
-
-  return {
-    from,
-    to,
-  };
-};
-
-function parseRawTime(value: string | DateTime): TimeFragment | null {
-  if (value === null) {
+function parseRawTime(urlRangeValue: URLRangeValue | DateTime): TimeFragment | null {
+  if (urlRangeValue === null) {
     return null;
   }
 
-  if (isDateTime(value)) {
-    return value;
+  if (isDateTime(urlRangeValue)) {
+    return urlRangeValue;
   }
+
+  if (typeof urlRangeValue !== 'string') {
+    return null;
+  }
+
+  // it can only be a string now
+  const value = urlRangeValue;
 
   if (value.indexOf('now') !== -1) {
     return value;

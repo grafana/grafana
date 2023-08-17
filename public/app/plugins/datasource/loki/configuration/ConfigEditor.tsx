@@ -56,7 +56,7 @@ export const ConfigEditor = (props: Props) => {
         hasRequiredFields={false}
       />
       <Divider />
-      <ConnectionSettings config={options} onChange={onOptionsChange} />
+      <ConnectionSettings config={options} onChange={onOptionsChange} urlPlaceholder="http://localhost:3100" />
       <Divider />
       <Auth
         {...convertLegacyAuthProps({
