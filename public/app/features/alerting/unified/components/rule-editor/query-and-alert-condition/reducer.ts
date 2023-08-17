@@ -80,7 +80,7 @@ export const queriesAndExpressionsReducer = createReducer(initialState, (builder
       const query = payload.recordingRuleQueries[0];
       const recordingRuleQuery = {
         ...query,
-        ...{ expr: payload.expression, model: payload.recordingRuleQueries[0].model },
+        ...{ expr: payload.expression, model: query?.model },
       };
 
       state.queries = [recordingRuleQuery];
