@@ -284,8 +284,6 @@ func (st *Manager) ProcessEvalResults(ctx context.Context, evaluatedAt time.Time
 			{Num: int64(len(states))},
 		})
 	staleStates := st.deleteStaleStatesFromCache(ctx, logger, evaluatedAt, alertRule)
-
-	start = time.Now()
 	st.deleteAlertStates(tracingCtx, logger, staleStates)
 
 	if len(staleStates) > 0 {
