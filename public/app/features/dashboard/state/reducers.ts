@@ -33,7 +33,7 @@ const dashboardSlice = createSlice({
     },
     dashboardInitCompleted: (
       state,
-      action: PayloadAction<{ dashboard: DashboardModel; original: DashboardDataDTO }>
+      action: PayloadAction<{ dashboard: DashboardModel; original: DashboardDataDTO | null }>
     ) => {
       state.getModel = () => action.payload.dashboard;
       state.getOriginal = () => action.payload.original;

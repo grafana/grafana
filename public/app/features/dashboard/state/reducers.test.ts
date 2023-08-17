@@ -34,12 +34,13 @@ describe('dashboard reducer', () => {
       state = dashboardReducer(initialState, dashboardInitFetching());
       state = dashboardReducer(
         state,
-        dashboardInitCompleted(
-          createDashboardModelFixture({
+        dashboardInitCompleted({
+          dashboard: createDashboardModelFixture({
             title: 'My dashboard',
             panels: [createPanelJSONFixture({ id: 1 }), createPanelJSONFixture({ id: 2 })],
-          })
-        )
+          }),
+          original: null,
+        })
       );
     });
 
