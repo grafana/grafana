@@ -141,4 +141,15 @@ describe('LogRow', () => {
 
     expect(screen.getByLabelText('Show context')).toBeInTheDocument();
   });
+
+  it('should highlight the original log row when showing its context', async () => {
+    const { container } = setup({ showContextToggle: jest.fn().mockReturnValue(true) });
+
+    await userEvent.hover(screen.getByText('test123'));
+    await userEvent.click(screen.getByLabelText('Show context'));
+    await userEvent.unhover(screen.getByText('test123'));
+
+    const row = container.querySelector('tr');
+    expect(row).toHaveStyle(`background-color: ${tinycolor(theme.colors.info.transparent).setAlpha(0.25).toString()}`);
+  });
 });
