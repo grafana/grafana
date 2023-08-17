@@ -266,6 +266,7 @@ func processRawDocumentResponse(res *es.SearchResponse, target *Query, queryRes 
 func processDocsToDataFrameFields(docs []map[string]interface{}, propNames []string, configuredFields es.ConfiguredFields) []*data.Field {
 	size := len(docs)
 	isFilterable := true
+	// we are appending the id field to the end of the list, that's why the `+1` is needed
 	allFields := make([]*data.Field, len(propNames)+1)
 	timeString := ""
 	timeStringOk := false
