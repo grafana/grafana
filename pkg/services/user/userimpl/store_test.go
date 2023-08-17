@@ -965,7 +965,7 @@ func TestMetricsUsage(t *testing.T) {
 
 	_, usrSvc := createOrgAndUserSvc(t, ss, ss.Cfg)
 
-	t.Run("", func(t *testing.T) {
+	t.Run("Get empty role metrics for an org", func(t *testing.T) {
 		orgId := int64(1)
 
 		// create first user
