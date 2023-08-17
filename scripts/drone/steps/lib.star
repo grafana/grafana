@@ -8,8 +8,8 @@ load(
     "gcp_grafanauploads",
     "gcp_grafanauploads_base64",
     "gcp_upload_artifacts_key",
-    "prerelease_bucket",
     "npm_token",
+    "prerelease_bucket",
 )
 load(
     "scripts/drone/utils/images.star",
