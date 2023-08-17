@@ -117,7 +117,7 @@ export const ElasticDetails = ({ value, onChange }: Props) => {
         />
       </InlineField>
 
-      <InlineField label="X-Pack enabled" labelWidth={29} tooltip="Enable or disable X-Pack">
+      <InlineField label="X-Pack enabled" labelWidth={29} tooltip="Enable or disable X-Pack specific features">
         <InlineSwitch
           id="es_config_xpackEnabled"
           value={value.jsonData.xpack || false}
