@@ -12,7 +12,6 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"golang.org/x/exp/slices"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	es "github.com/grafana/grafana/pkg/tsdb/elasticsearch/client"
@@ -152,34 +151,22 @@ func processLogsResponse(res *es.SearchResponse, target *Query, configuredFields
 			}
 		}
 
+		// we are going to add an `id` field with the concatenation of `_id` and `_index`
+		_, ok := doc["id"]
+		if !ok {
+			_, okId := doc["_id"]
+			_, okIndex := doc["_index"]
+			if okId && okIndex {
+				doc["id"] = fmt.Sprintf("%v#%v", doc["_index"], doc["_id"])
+				propNames["id"] = true
+			}
+		}
+
 		docs[hitIdx] = doc
 	}
 
 	sortedPropNames := sortPropNames(propNames, configuredFields, true)
 	fields := processDocsToDataFrameFields(docs, sortedPropNames, configuredFields)
-
-	// copy `_id` field to `id` field
-	idIdx := slices.IndexFunc(fields, func(f *data.Field) bool {
-		return f.Name == "_id"
-	})
-	indexIdx := slices.IndexFunc(fields, func(f *data.Field) bool {
-		return f.Name == "_index"
-	})
-	if idIdx != -1 && indexIdx != -1 {
-		idField := fields[idIdx]
-		indexField := fields[indexIdx]
-
-		// safeguard to only add this if index and id field have the same length
-		if idField.Len() == indexField.Len() {
-			fieldVector := make([]*string, idField.Len())
-			for i := 0; i < idField.Len(); i++ {
-				id := *indexField.At(i).(*string) + "#" + *idField.At(i).(*string)
-				fieldVector[i] = &id
-			}
-			idField = data.NewField("id", nil, fieldVector)
-			fields = append(fields, idField)
-		}
-	}
 
 	frames := data.Frames{}
 	frame := data.NewFrame("", fields...)
