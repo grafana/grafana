@@ -149,7 +149,7 @@ export class DatasourceSrv implements DataSourceService {
     }
 
     // find the metadata
-    let instanceSettings = this.getInstanceSettings(key);
+    const instanceSettings = this.getInstanceSettings(key);
     if (!instanceSettings) {
       return Promise.reject({ message: `Datasource ${key} was not found` });
     }
