@@ -103,14 +103,18 @@ func (dc *DatasourceProvisioner) apply(ctx context.Context, cfg *configs, ultima
 			}
 		}
 
+		// delete all provisioned correlations for that data source, they will be added
+		// after all data sources are provisioned (see below)
 		if err := dc.correlationsStore.DeleteCorrelationsBySourceUID(ctx, correlations.DeleteCorrelationsBySourceUIDCommand{
 			SourceUID:       dataSource.UID,
+			OrgId:           dataSource.OrgID,
 			OnlyProvisioned: true,
 		}); err != nil {
 			return err
 		}
 	}
 
+	// upsert provisioned correlations
 	for _, createCorrelationCmd := range correlationsToInsert {
 		if _, err := dc.correlationsStore.CreateCorrelation(ctx, createCorrelationCmd); err != nil {
 			return fmt.Errorf("err=%s source=%s", err.Error(), createCorrelationCmd.SourceUID)

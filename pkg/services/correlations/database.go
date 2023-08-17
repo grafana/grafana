@@ -272,13 +272,13 @@ func (s CorrelationsService) getCorrelations(ctx context.Context, cmd GetCorrela
 func (s CorrelationsService) deleteCorrelationsBySourceUID(ctx context.Context, cmd DeleteCorrelationsBySourceUIDCommand) error {
 	return s.SQLStore.WithDbSession(ctx, func(session *db.Session) error {
 		// Correlations created before the fix #72498 may have org_id = 0, but it's deprecated and will be removed in #72325
-		s = session.Where("source_uid = ? and (org_id = ? or org_id = 0)", cmd.SourceUID, cmd.OrgId)
-		if (cmd.OnlyProvisioned) {
+		db := session.Where("source_uid = ? and (org_id = ? or org_id = 0)", cmd.SourceUID, cmd.OrgId)
+		if cmd.OnlyProvisioned {
 			// bool in a struct needs to be in Where
 			// https://github.com/go-xorm/xorm/blob/v0.7.9/engine_cond.go#L102
-			s = s.And("provisioned = ?", true)
+			db = db.And("provisioned = ?", true)
 		}
-		_, err := s.Delete(&Correlation{})
+		_, err := db.Delete(&Correlation{})
 		return err
 	})
 }
