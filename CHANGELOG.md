@@ -1,3 +1,16 @@
+<!-- 9.5.8 START -->
+
+# 9.5.8 (2023-08-16)
+
+### Features and enhancements
+
+- **GenericOAuth:** Set sub as auth id. [#73223](https://github.com/grafana/grafana/issues/73223), [@kalleep](https://github.com/kalleep)
+
+### Bug fixes
+
+- **DataSourceProxy:** Fix url validation error handling. [#73320](https://github.com/grafana/grafana/issues/73320), [@ricci2511](https://github.com/ricci2511)
+
+<!-- 9.5.8 END -->
 <!-- 9.5.7 START -->
 
 # 9.5.7 (2023-07-20)
