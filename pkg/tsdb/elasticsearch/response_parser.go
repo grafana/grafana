@@ -333,13 +333,10 @@ func processDocsToDataFrameFields(docs []map[string]interface{}, propNames []str
 		}
 
 		if propName == "_id" {
+			idfield := allFields[propNameIdx]
 			fieldVector := make([]*string, size)
-			for i, doc := range docs {
-				value, ok := doc[propName].(string)
-				if !ok {
-					continue
-				}
-				fieldVector[i] = &value
+			for i := 0; i < size; i++ {
+				fieldVector[i] = idfield.At(i).(*string)
 			}
 			field := data.NewField("id", nil, fieldVector)
 			field.Config = &data.FieldConfig{Filterable: &isFilterable}
