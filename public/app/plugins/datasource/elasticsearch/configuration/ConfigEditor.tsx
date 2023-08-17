@@ -62,7 +62,7 @@ export const ConfigEditor = (props: Props) => {
         hasRequiredFields={false}
       />
       <Divider />
-      <ConnectionSettings config={options} onChange={onOptionsChange} />
+      <ConnectionSettings config={options} onChange={onOptionsChange} urlPlaceholder="http://localhost:9200" />
       <Divider />
       <div className={options.jsonData.sigV4Auth ? styles.sigV4authContainer : ''}>
         <Auth
