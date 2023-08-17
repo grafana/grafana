@@ -152,10 +152,15 @@ export class DashboardGrid extends PureComponent<Props> {
     for (const panel of this.props.dashboard.panels) {
       const panelClasses = classNames({ 'react-grid-item--fullscreen': panel.isViewing });
 
+      // sets a descending z-index to each panel to allow overflowing content to show on top of the next panel
+      const panelZIndex = this.props.dashboard.panels.length - panelElements.length;
+      const panelStyles = { zIndex: panelZIndex };
+
       panelElements.push(
         <GrafanaGridItem
           key={panel.key}
           className={panelClasses}
+          style={panelStyles}
           data-panelid={panel.id}
           gridPos={panel.gridPos}
           gridWidth={gridWidth}
