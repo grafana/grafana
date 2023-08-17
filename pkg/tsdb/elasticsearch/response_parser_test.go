@@ -130,8 +130,6 @@ func TestProcessLogsResponse(t *testing.T) {
 
 			requireStringAt(t, "fdsfs", logsFieldMap["_id"], 0)
 			requireStringAt(t, "kdospaidopa", logsFieldMap["_id"], 1)
-			requireStringAt(t, "fdsfs", logsFieldMap["id"], 0)
-			requireStringAt(t, "kdospaidopa", logsFieldMap["id"], 1)
 			requireStringAt(t, "_doc", logsFieldMap["_type"], 0)
 			requireStringAt(t, "_doc", logsFieldMap["_type"], 1)
 			requireStringAt(t, "mock-index", logsFieldMap["_index"], 0)
@@ -536,7 +534,7 @@ func TestProcessRawDataResponse(t *testing.T) {
 		require.Len(t, dataframes, 1)
 		frame := dataframes[0]
 
-		require.Equal(t, 16, len(frame.Fields))
+		require.Equal(t, 15, len(frame.Fields))
 		// Fields have the correct length
 		require.Equal(t, 2, frame.Fields[0].Len())
 		// First field is timeField

@@ -159,15 +159,18 @@ func processLogsResponse(res *es.SearchResponse, target *Query, configuredFields
 	fields := processDocsToDataFrameFields(docs, sortedPropNames, configuredFields)
 
 	// copy `_id` field to `id` field
-	idField := fields[slices.IndexFunc(fields, func(f *data.Field) bool {
+	idIdx := slices.IndexFunc(fields, func(f *data.Field) bool {
 		return f.Name == "_id"
-	})]
-	fieldVector := make([]*string, idField.Len())
-	for i := 0; i < idField.Len(); i++ {
-		fieldVector[i] = idField.At(i).(*string)
+	})
+	if idIdx != -1 {
+		idField := fields[idIdx]
+		fieldVector := make([]*string, idField.Len())
+		for i := 0; i < idField.Len(); i++ {
+			fieldVector[i] = idField.At(i).(*string)
+		}
+		idField = data.NewField("id", nil, fieldVector)
+		fields = append(fields, idField)
 	}
-	idField = data.NewField("id", nil, fieldVector)
-	fields = append(fields, idField)
 
 	frames := data.Frames{}
 	frame := data.NewFrame("", fields...)
