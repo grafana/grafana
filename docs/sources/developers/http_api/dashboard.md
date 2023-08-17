@@ -80,9 +80,6 @@ JSON Body schema:
 - **overwrite** – Set to true if you want to overwrite existing dashboard with newer version, same dashboard title in folder or same dashboard uid.
 - **message** - Set a commit message for the version history.
 
-For adding or updating an alert rule for a dashboard panel the user should declare a
-`dashboard.panels.alert` block.
-
 **Example Request for updating a dashboard**:
 
 ```http
