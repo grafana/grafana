@@ -139,7 +139,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
   selector: css`
     font-family: ${theme.typography.fontFamilyMonospace};
     margin-bottom: ${theme.spacing(1)};
-    overflow: scroll;
     width: 100%;
   `,
   status: css`
