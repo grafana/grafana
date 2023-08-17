@@ -17,6 +17,7 @@ import {
 } from '@grafana/data';
 
 import { PublicDashboardDataSource } from '../../../../public/app/features/dashboard/services/PublicDashboardDataSource';
+import { config } from '../config';
 import {
   BackendSrvRequest,
   FetchResponse,
@@ -115,7 +116,7 @@ class DataSourceWithBackend<
   readonly dataSourceApi: DataSourceApi<DataQuery, DataSourceJsonData>;
   constructor(instanceSettings: DataSourceInstanceSettings<TOptions>) {
     super(instanceSettings);
-    this.dataSourceApi = instanceSettings.isPublicDashboard
+    this.dataSourceApi = config.isPublicDashboardView
       ? new PublicDashboardDataSource(this)
       : new AuthorizedDataSource(instanceSettings);
   }

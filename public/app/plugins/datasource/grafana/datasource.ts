@@ -26,6 +26,7 @@ import {
   StreamingFrameOptions,
 } from '@grafana/runtime';
 import { DataSourceRef } from '@grafana/schema';
+import { getConfig } from 'app/core/config';
 import { migrateDatasourceNameToRef } from 'app/features/dashboard/state/DashboardMigrator';
 
 import { getDashboardSrv } from '../../../features/dashboard/services/DashboardSrv';
@@ -43,7 +44,7 @@ export class GrafanaDatasource extends DataSourceWithBackend<GrafanaQuery> {
   private readonly annotationsRunner: AnnotationsRunner;
   constructor(instanceSettings: DataSourceInstanceSettings) {
     super(instanceSettings);
-    this.annotationsRunner = instanceSettings.isPublicDashboard
+    this.annotationsRunner = getConfig().isPublicDashboardView
       ? new UnauthorizedAnnotationsRunner()
       : new AuthorizedAnnotationsRunner();
     this.annotations = {

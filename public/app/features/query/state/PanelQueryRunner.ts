@@ -398,5 +398,5 @@ async function getDataSource(
     return datasource;
   }
 
-  return await getDatasourceSrv().get(datasource, scopedVars, Boolean(publicDashboardAccessToken));
+  return await getDatasourceSrv().get(datasource, scopedVars);
 }
