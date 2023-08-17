@@ -16,8 +16,6 @@ export const settingsViewable = (scene: Scene) => ({
 
     const rect = moveable.getRect();
     return (
-      // TODO: fix keyboard a11y
-      // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
       <div
         key={'settings-viewable'}
         className={'moveable-settings'}
@@ -38,6 +36,16 @@ export const settingsViewable = (scene: Scene) => ({
           const evt = new PointerEvent('contextmenu', { clientX: event.clientX, clientY: event.clientY });
           container.dispatchEvent(evt);
         }}
+        onKeyDown={(event) => {
+          if (event.key === 'Enter') {
+            const container = moveable.getContainer();
+            const rect = event.currentTarget.getBoundingClientRect();
+            const evt = new PointerEvent('contextmenu', { clientX: rect.x, clientY: rect.y });
+            container.dispatchEvent(evt);
+          }
+        }}
+        role="button"
+        tabIndex={0}
       >
         {``}
         ⚙️
