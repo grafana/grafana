@@ -40,7 +40,9 @@ type rawNode struct {
 	QueryType  string
 	TimeRange  TimeRange
 	DataSource *datasources.DataSource
-	idx        int64
+	// We use this index as the id of the node graph so the order can remain during a the stable sort of the dependency graph execution order.
+	// Some data sources, such as cloud watch, have order dependencies between queries.
+	idx int64
 }
 
 func (rn *rawNode) GetCommandType() (c CommandType, err error) {
