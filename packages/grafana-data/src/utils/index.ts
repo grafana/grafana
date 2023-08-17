@@ -16,7 +16,7 @@ export { PanelOptionsEditorBuilder, FieldConfigEditorBuilder } from './OptionsUI
 export { arrayUtils };
 export { getFlotPairs, getFlotPairsConstant } from './flotPairs';
 export { locationUtil } from './location';
-export { urlUtil, type UrlQueryMap, type UrlQueryValue, serializeStateToUrlParam } from './url';
+export { urlUtil, type UrlQueryMap, type UrlQueryValue, serializeStateToUrlParam, toURLRange } from './url';
 export { DataLinkBuiltInVars, mapInternalLinkToExplore } from './dataLinks';
 export { DocsId } from './docs';
 export { makeClassES5Compatible } from './makeClassES5Compatible';
