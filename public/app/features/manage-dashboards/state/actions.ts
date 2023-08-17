@@ -12,7 +12,6 @@ import {
   LibraryElementExport,
   LibraryPanel,
 } from '../../dashboard/components/DashExportModal/DashboardExporter';
-import { DashboardModel } from '../../dashboard/state';
 import { getLibraryPanel } from '../../library-panels/state/api';
 import { LibraryElementDTO, LibraryElementKind } from '../../library-panels/types';
 import { DashboardSearchHit } from '../../search/types';
@@ -369,6 +368,18 @@ export function deleteFoldersAndDashboards(folderUids: string[], dashboardUids: 
 export function saveDashboard(options: SaveDashboardCommand) {
   dashboardWatcher.ignoreNextSave();
 
+  if (options.isEmbedded) {
+    const params = locationService.getSearch();
+    const callbackUrl = params.get('callbackUrl');
+    if (callbackUrl) {
+      return getBackendSrv()
+        .post(`${callbackUrl}/save-dashboard`, { dashboard: options.dashboard })
+        .then(() => ({ status: 'success' }));
+    }
+
+    return Promise.resolve({ status: 'error', message: 'Missing callbackUrl' });
+  }
+
   return getBackendSrv().post('/api/dashboards/db/', {
     dashboard: options.dashboard,
     message: options.message ?? '',
@@ -422,13 +433,4 @@ function executeInOrder(tasks: any[]): Promise<unknown> {
   return tasks.reduce((acc, task) => {
     return Promise.resolve(acc).then(task);
   }, []);
-}
-
-export function saveDashboardJson(json: DashboardModel) {
-  const params = locationService.getSearch();
-  const callbackUrl = params.get('callbackUrl');
-  if (callbackUrl) {
-    return getBackendSrv().post(`${callbackUrl}/save-dashboard`, { dashboard: json });
-  }
-  return Promise.reject('No callback URL provided');
 }

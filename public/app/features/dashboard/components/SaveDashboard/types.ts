@@ -22,6 +22,7 @@ export interface SaveDashboardCommand {
   message?: string;
   folderUid?: string;
   overwrite?: boolean;
+  isEmbedded?: boolean;
 }
 
 export interface SaveDashboardFormProps {
