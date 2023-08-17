@@ -25,7 +25,7 @@ export let getFooterLinks = (): FooterLink[] => {
       id: 'pmm-docs',
       text: 'Documentation',
       icon: 'document-info',
-      url: 'https://www.percona.com/doc/percona-monitoring-and-management/2.x/index.html?utm_source=pmm_footer',
+      url: 'https://per.co.na/pmm_documentation',
       target: '_blank',
     },
     {
@@ -33,14 +33,14 @@ export let getFooterLinks = (): FooterLink[] => {
       id: 'support',
       text: 'Support',
       icon: 'question-circle',
-      url: 'https://www.percona.com/services/support?utm_source=pmm_footer',
+      url: 'https://per.co.na/pmm_support',
     },
     {
       target: '_blank',
       id: 'community',
       text: 'Community',
       icon: 'comments-alt',
-      url: 'https://forums.percona.com/c/percona-monitoring-and-management-pmm/percona-monitoring-and-management-pmm-v2?utm_source=pmm_footer',
+      url: 'https://per.co.na/pmm_community',
     },
   ];
 };

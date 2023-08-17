@@ -119,7 +119,7 @@ export const PerconaBootstrapper = ({ onReady }: PerconaBootstrapperProps) => {
           <p>
             {Messages.moreInfo}
             <a
-              href="https://docs.percona.com/percona-monitoring-and-management/index.html"
+              href="https://per.co.na/pmm_documentation"
               target="_blank"
               rel="noreferrer noopener"
               className={styles.docsLink}

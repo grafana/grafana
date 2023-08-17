@@ -187,12 +187,7 @@ export class ShareLink extends PureComponent<Props, State> {
               {/* @PERCONA */}
               {/* We modified this text and link */}
               To render a panel image, you must install the&nbsp;
-              <a
-                href="https://docs.percona.com/percona-monitoring-and-management/how-to/share-dashboard.html#share-as-a-png-file"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="external-link"
-              >
+              <a href="https://per.co.na/share_png" target="_blank" rel="noopener noreferrer" className="external-link">
                 Image Renderer plugin
               </a>
               . Please contact your PMM administrator to install the plugin.

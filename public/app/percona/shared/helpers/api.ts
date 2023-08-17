@@ -90,15 +90,15 @@ export const translateApiError = (error: ApiErrorCode): ApiVerboseError | undefi
     },
     [ApiErrorCode.ERROR_CODE_XTRABACKUP_NOT_INSTALLED]: {
       message: 'Xtrabackup is not installed.',
-      link: 'https://www.percona.com/doc/percona-xtrabackup/8.0/installation.html',
+      link: 'https://per.co.na/install_pxb',
     },
     [ApiErrorCode.ERROR_CODE_INCOMPATIBLE_XTRABACKUP]: {
       message: 'Xtrabackup version is not compatible.',
-      link: 'https://www.percona.com/doc/percona-xtrabackup/8.0/installation.html',
+      link: 'https://per.co.na/install_pxb',
     },
     [ApiErrorCode.ERROR_CODE_INCOMPATIBLE_TARGET_MYSQL]: {
       message: 'Target MySQL version is not compatible.',
-      link: 'https://www.percona.com/doc/percona-xtrabackup/8.0/installation.html',
+      link: 'https://per.co.na/install_pxb',
     },
   };
 

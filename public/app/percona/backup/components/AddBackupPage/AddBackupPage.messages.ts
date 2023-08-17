@@ -48,13 +48,13 @@ export const Messages = {
   folderTooltip: 'Changing the default folder, if available, is not recommended',
   folderTooltipLink: (vendor: Databases | null, mode: BackupMode) => {
     if (vendor === Databases.mysql) {
-      return 'https://docs.percona.com/percona-monitoring-and-management/get-started/backup/create_mysql_backup.html#folder-field';
+      return 'https://per.co.na/mysql_folder_field';
     }
 
     if (vendor === Databases.mongodb) {
       return mode === BackupMode.PITR
-        ? 'https://docs.percona.com/percona-monitoring-and-management/get-started/backup/create_PITR_mongo.html#folder-field'
-        : 'https://docs.percona.com/percona-monitoring-and-management/get-started/backup/create_mongo_on_demand.html#folder-field';
+        ? 'https://per.co.na/mongo_pitr_folder_field'
+        : 'https://per.co.na/mongo_folder_field';
     }
 
     return;

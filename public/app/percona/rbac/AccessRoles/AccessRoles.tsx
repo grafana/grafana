@@ -47,7 +47,7 @@ const AccessRolesPage: FC = () => {
               className={styles.link}
               target="_blank"
               rel="noreferrer noopener"
-              href="https://docs.percona.com/percona-monitoring-and-management/get-started/roles-and-permissions/index.html"
+              href="https://per.co.na/roles_permissions"
             >
               {Messages.subtitle.link}
             </a>

@@ -1,6 +1,6 @@
-import { HOW_TO_DOC_URL } from 'app/percona/settings/Settings.messages';
-
-const COMMUNICATION_LINK = `${HOW_TO_DOC_URL}#communication`;
+// page is deprecated, so shortener is not needed
+const COMMUNICATION_LINK =
+  'https://docs.percona.com/percona-monitoring-and-management/how-to/integrate-platform.html#communication';
 
 export const Messages = {
   fields: {

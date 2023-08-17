@@ -60,11 +60,7 @@ export const getProductTourSteps = (
         <p>{Messages.alerting.howToUse}</p>
         <p>
           {Messages.alerting.moreInfo}
-          <a
-            href="https://docs.percona.com/percona-monitoring-and-management/using/alerting.html"
-            target="_blank"
-            rel="noreferrer noopener"
-          >
+          <a href="https://per.co.na/alerting" target="_blank" rel="noreferrer noopener">
             {Messages.alerting.docs}
           </a>
           .
@@ -81,11 +77,7 @@ export const getProductTourSteps = (
               <p>{Messages.advisors.pmmIncludes}</p>
               <p>
                 {Messages.advisors.findOutMore}
-                <a
-                  href="https://docs.percona.com/percona-platform/advisors.html"
-                  target="_blank"
-                  rel="noreferrer noopener"
-                >
+                <a href="https://per.co.na/advisors" target="_blank" rel="noreferrer noopener">
                   {Messages.advisors.docs}
                 </a>
                 .
@@ -138,11 +130,7 @@ export const getProductTourSteps = (
               <p>{Messages.configPanel.settings}</p>
               <p>
                 {Messages.configPanel.settingsDocs}{' '}
-                <a
-                  href="https://docs.percona.com/percona-monitoring-and-management/how-to/configure.html"
-                  target="_blank"
-                  rel="noreferrer noopener"
-                >
+                <a href="https://per.co.na/configure" target="_blank" rel="noreferrer noopener">
                   {Messages.configPanel.settingsDocsLink}
                 </a>
                 .

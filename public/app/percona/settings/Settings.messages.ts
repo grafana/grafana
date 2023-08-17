@@ -1,20 +1,18 @@
-export const HOW_TO_DOC_URL = 'https://www.percona.com/doc/percona-monitoring-and-management/2.x/how-to/configure.html';
-
 export const Messages = {
   advanced: {
     action: 'Apply changes',
     retentionLabel: 'Data retention',
     retentionTooltip: 'This is the value for how long data will be stored.',
     retentionUnits: 'days',
-    retentionLink: `${HOW_TO_DOC_URL}#data-retention`,
+    retentionLink: `https://per.co.na/data_retention`,
     telemetryLabel: 'Telemetry',
-    telemetryLink: `${HOW_TO_DOC_URL}#telemetry`,
+    telemetryLink: `https://per.co.na/telemetry`,
     telemetryTooltip: 'Option to send usage data back to Percona to let us make our product better.',
     telemetryDisclaimer:
       'Disabling Telemetry while Advisors/Percona Alerting is on will prevent PMM from downloading checks and alert templates.',
     telemetrySummaryTitle: 'We gather and send the following information to Percona:',
     updatesLabel: 'Check for updates',
-    updatesLink: `${HOW_TO_DOC_URL}#check-for-updates`,
+    updatesLink: `https://per.co.na/updates`,
     updatesTooltip: 'Option to check new versions and ability to update PMM from UI.',
     advisorsLabel: 'Advisors',
     sttRareIntervalLabel: 'Rare interval',
@@ -23,28 +21,27 @@ export const Messages = {
     sttCheckIntervalsLabel: 'Execution Intervals',
     sttCheckIntervalTooltip: 'Interval between check runs',
     sttCheckIntervalUnit: 'hours',
-    advisorsLink: `${HOW_TO_DOC_URL}#advisors`,
+    advisorsLink: `https://per.co.na/advisors`,
     advisorsTooltip: 'Enable Advisors and get updated checks from Percona.',
     dbaasLabel: 'Database as a Service (DBaaS)',
     azureDiscoverLabel: 'Microsoft Azure monitoring',
     azureDiscoverTooltip: 'Option to enable/disable Microsoft Azure DB instanced  discovery and monitoring',
-    azureDiscoverLink: `${HOW_TO_DOC_URL}#microsoft-azure-monitoring`,
+    azureDiscoverLink: `https://per.co.na/azure_monitoring`,
     dbaasTooltip:
       'Option to enable/disable DBaaS features. Disabling DBaaS does not suspend or remove running clusters.',
-    dbaasLink: `${HOW_TO_DOC_URL}#dbaas`,
+    dbaasLink: `https://per.co.na/dbaas`,
     accessControl: 'Access control',
     accessControlTooltip: 'Option to enable/disable Access control.',
-    accessControlLink:
-      'https://docs.percona.com/percona-monitoring-and-management/get-started/roles-and-permissions/index.html',
+    accessControlLink: 'https://per.co.na/roles_permissions',
     publicAddressLabel: 'Public Address',
     publicAddressTooltip: 'Public Address to this PMM server.',
     publicAddressButton: 'Get from browser',
     alertingLabel: 'Percona Alerting',
     alertingTooltip: 'Option to enable/disable Percona Alerting features.',
-    alertingLink: `${HOW_TO_DOC_URL}#alerting`,
+    alertingLink: `https://per.co.na/alerting`,
     backupLabel: 'Backup Management',
     backupTooltip: 'Option to enable/disable Backup Management features.',
-    backupLink: `${HOW_TO_DOC_URL}#backup-management`,
+    backupLink: `https://per.co.na/backup_management`,
     technicalPreviewLegend: 'Technical preview features',
     technicalPreviewDescription:
       'These are technical preview features, not recommended to be used in production environments. Read more\n' +
@@ -57,10 +54,10 @@ export const Messages = {
     warningPost: 'but you need to manage and configure alerts.',
     action: 'Apply Alertmanager settings',
     rulesLabel: 'Prometheus Alerting rules',
-    rulesLink: `${HOW_TO_DOC_URL}#prometheus-alertmanager-integration`,
+    rulesLink: `https://per.co.na/alertmanager`,
     rulesTooltip: 'Alerting rules in the YAML configuration format.',
     urlLabel: 'Alertmanager URL',
-    urlLink: `${HOW_TO_DOC_URL}#prometheus-alertmanager-integration`,
+    urlLink: `https://per.co.na/alertmanager`,
     urlTooltip: 'The URL of the external Alertmanager to use.',
   },
   diagnostics: {
@@ -72,7 +69,7 @@ export const Messages = {
   metrics: {
     action: 'Apply changes',
     label: 'Metrics resolution, sec',
-    link: `${HOW_TO_DOC_URL}#server-admin-gui-metrics-resolution`,
+    link: `https://per.co.na/metrics_resolution`,
     options: {
       rare: 'Rare',
       standard: 'Standard',
@@ -89,7 +86,7 @@ export const Messages = {
   ssh: {
     action: 'Apply SSH key',
     label: 'SSH key',
-    link: `${HOW_TO_DOC_URL}#ssh-key-details`,
+    link: `https://per.co.na/ssh_key`,
     tooltip: 'Public SSH key to let you login into the server using SSH.',
   },
   service: {

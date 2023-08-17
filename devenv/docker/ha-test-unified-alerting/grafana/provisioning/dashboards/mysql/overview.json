@@ -2437,7 +2437,7 @@
         {
           "title": "Detailed descriptions about metrics",
           "type": "absolute",
-          "url": "https://www.percona.com/doc/percona-monitoring-and-management/dashboard.mysql-overview.html#mysql-internal-memory-overview"
+          "url": "https://per.co.na/mysql_internal_memory_overview"
         }
       ],
       "nullPointMode": "null",
