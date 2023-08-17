@@ -6,6 +6,7 @@
   visibility: hidden;
 }
 
+// TODO: Remove these changes when https://github.com/grafana/grafana/pull/73401 is merged
 .react-grid-item {
   &:hover,
   &:focus,
