@@ -1017,6 +1017,89 @@ describe('logSeriesToLogsModel', () => {
 
     expect(logSeriesToLogsModel(logSeries)).toMatchObject(metaData);
   });
+
+  it('should not return error if tsNs is missing value', () => {
+    const logSeries: DataFrame[] = [
+      toDataFrame({
+        fields: [
+          {
+            name: 'ts',
+            type: FieldType.time,
+            values: ['1970-01-01T00:00:01Z', '1970-01-02T00:00:01Z'],
+          },
+          {
+            name: 'tsNs',
+            type: FieldType.string,
+            values: ['1'],
+          },
+          {
+            name: 'line',
+            type: FieldType.string,
+            values: [
+              'Line with ANSI \u001B[31mwarn\u001B[0m et dolor',
+              'Line with ANSI \u001B[31mwarn\u001B[0m et dolor',
+            ],
+          },
+          {
+            name: 'id',
+            type: FieldType.string,
+            values: ['0', '1'],
+          },
+        ],
+        refId: 'A',
+        meta: {},
+      }),
+    ];
+
+    const metaData = {
+      hasUniqueLabels: false,
+      meta: [],
+      rows: [{ timeEpochNs: '1' }, { timeEpochNs: undefined }],
+    };
+
+    const result = logSeriesToLogsModel(logSeries);
+
+    expect(result).toMatchObject(metaData);
+  });
+  it('should not return error if nanos is missing value', () => {
+    const logSeries: DataFrame[] = [
+      toDataFrame({
+        fields: [
+          {
+            name: 'ts',
+            type: FieldType.time,
+            values: ['1970-01-01T00:00:01Z', '1970-01-02T00:00:01Z'],
+            nanos: [1],
+          },
+          {
+            name: 'line',
+            type: FieldType.string,
+            values: [
+              'Line with ANSI \u001B[31mwarn\u001B[0m et dolor',
+              'Line with ANSI \u001B[31mwarn\u001B[0m et dolor',
+            ],
+          },
+          {
+            name: 'id',
+            type: FieldType.string,
+            values: ['0', '1'],
+          },
+        ],
+        refId: 'A',
+        meta: {},
+      }),
+    ];
+    const metaData = {
+      hasUniqueLabels: false,
+      meta: [],
+      // 1 second, 1 day
+      rows: [{ timeEpochNs: '1000000001' }, { timeEpochNs: '86401000000000' }],
+    };
+
+    const result = logSeriesToLogsModel(logSeries);
+
+    expect(result).toMatchObject(metaData);
+  });
   it('should return correct metaData when some data frames have empty fields', () => {
     const logSeries: DataFrame[] = [
       toDataFrame({
@@ -1114,6 +1197,7 @@ describe('logSeriesToLogsModel', () => {
             values: ['0', '1', '2'],
           },
         ],
+
         refId: 'A',
         meta: {},
       }),
@@ -1409,6 +1493,7 @@ describe('logs sample', () => {
     } as unknown as DataQueryRequest<TestDataQuery>;
     logsSampleProvider = queryLogsSample(datasource, request);
   }
+
   const resultAFrame1 = createFrame([{ app: 'app01' }], [100, 200, 300], ['line 1', 'line 2', 'line 3']);
   const resultAFrame2 = createFrame(
     [{ app: 'app01', level: 'error' }],
