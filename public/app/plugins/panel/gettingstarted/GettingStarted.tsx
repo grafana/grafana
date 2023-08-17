@@ -201,10 +201,6 @@ const getStyles = stylesFactory(() => {
       justify-content: center;
       align-items: center;
       height: 100%;
-      margin: 0 auto;
-    `,
-    item: css`
-      grid-column: 4 / span 1;
     `,
     loadingText: css`
       margin-right: ${theme.spacing(1)};

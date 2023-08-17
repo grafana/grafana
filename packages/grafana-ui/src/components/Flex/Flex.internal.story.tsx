@@ -19,7 +19,7 @@ const Item = ({ color, text, height }: { color: string; text?: string | number; 
         justifyContent: 'center',
       }}
     >
-      {text && <h3 color="black">{text}</h3>}
+      {text && <h3 style={{ color: 'black' }}>{text}</h3>}
     </div>
   );
 };
@@ -38,7 +38,7 @@ const meta: Meta<typeof Flex> = {
 export const Basic: StoryFn<typeof Flex> = ({ direction, wrap, alignItems, justifyContent, gap }) => {
   const theme = useTheme2();
   return (
-    <div style={{ width: '300px', height: '300px', border: '1px solid grey' }}>
+    <div style={{ width: '600px', height: '600px', border: '1px solid grey' }}>
       <Flex direction={direction} wrap={wrap} alignItems={alignItems} justifyContent={justifyContent} gap={gap}>
         {Array.from({ length: 5 }).map((_, i) => (
           <Item key={i} color={theme.colors.warning.main} text={i + 1} />
@@ -136,21 +136,21 @@ export const JustifyContentExamples: StoryFn<typeof Flex> = () => {
 export const GapExamples: StoryFn<typeof Flex> = () => {
   const theme = useTheme2();
   return (
-    <div style={{ width: '600px' }}>
+    <div style={{ width: '800px' }}>
       <p>Gap with spacingToken set to 2 (16px)</p>
-      <Flex direction="row" wrap="wrap" alignItems="flex-start" justifyContent="center" gap={2}>
+      <Flex direction="row" wrap="wrap" alignItems="flex-start" justifyContent="flex-start" gap={2}>
         {Array.from({ length: 5 }).map((_, i) => (
           <Item key={i} color={theme.colors.error.main} text={i + 1} />
         ))}
       </Flex>
       <p>Gap with spacingToken set to 8 (64px)</p>
-      <Flex direction="row" wrap="wrap" alignItems="flex-start" justifyContent="center" gap={8}>
+      <Flex direction="row" wrap="wrap" alignItems="flex-start" justifyContent="flex-start" gap={8}>
         {Array.from({ length: 5 }).map((_, i) => (
           <Item key={i} color={theme.colors.error.main} text={i + 1} />
         ))}
       </Flex>
       <p>Gap with spacingToken set to 10 (80px)</p>
-      <Flex direction="row" wrap="wrap" alignItems="flex-start" justifyContent="center" gap={10}>
+      <Flex direction="row" wrap="wrap" alignItems="flex-start" justifyContent="flex-start" gap={10}>
         {Array.from({ length: 5 }).map((_, i) => (
           <Item key={i} color={theme.colors.error.main} text={i + 1} />
         ))}
