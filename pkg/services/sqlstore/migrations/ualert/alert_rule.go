@@ -4,7 +4,9 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"strconv"
 	"time"
+	"unicode"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -429,8 +431,11 @@ func variablesToMapLookups(tokens []Token, mapName string) []Token {
 }
 
 func mapLookupString(v string, mapName string) string {
-	if bytes.ContainsAny([]byte(v), " ") {
-		return fmt.Sprintf(`index $%s "%s"`, mapName, v)
+	for _, r := range v {
+		if !(unicode.IsDigit(r) || unicode.IsLetter(r) || r == '_') {
+			v := strconv.Quote(v)
+			return fmt.Sprintf(`index $%s "%s"`, mapName, v[1:len(v)-1])
+		}
 	}
 	return fmt.Sprintf(`$%s.%s`, mapName, v)
 }

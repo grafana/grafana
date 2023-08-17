@@ -222,6 +222,22 @@ func TestTokensToTmplNewlines(t *testing.T) {
 	assert.Equal(t, "{{instance}} is down\n{{job}} is down", tokensToTmpl(tokens))
 }
 
+func TestMapLookupString(t *testing.T) {
+	assert.Equal(t, "$labels.instance", mapLookupString("instance", "labels"))
+}
+
+func TestMapLookupStringSpace(t *testing.T) {
+	assert.Equal(t, `index $labels "instance with spaces"`, mapLookupString("instance with spaces", "labels"))
+}
+
+func TestMapLookupStringQuotes(t *testing.T) {
+	assert.Equal(t, `index $labels "instance with \"quotes\""`, mapLookupString(`instance with "quotes"`, "labels"))
+}
+
+func TestMapLookupStringBackslashes(t *testing.T) {
+	assert.Equal(t, `index $labels "instance with \\backslashes\\"`, mapLookupString(`instance with \backslashes\`, "labels"))
+}
+
 func TestVariablesToMapLookups(t *testing.T) {
 	tokens := []Token{{Variable: "instance"}, {Literal: " is down"}}
 	expected := []Token{{Variable: "$labels.instance"}, {Literal: " is down"}}
