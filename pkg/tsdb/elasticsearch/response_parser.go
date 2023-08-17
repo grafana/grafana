@@ -266,7 +266,7 @@ func processRawDocumentResponse(res *es.SearchResponse, target *Query, queryRes 
 func processDocsToDataFrameFields(docs []map[string]interface{}, propNames []string, configuredFields es.ConfiguredFields) []*data.Field {
 	size := len(docs)
 	isFilterable := true
-	allFields := make([]*data.Field, len(propNames))
+	allFields := make([]*data.Field, len(propNames)+1)
 	timeString := ""
 	timeStringOk := false
 
@@ -329,6 +329,20 @@ func processDocsToDataFrameFields(docs []map[string]interface{}, propNames []str
 			field := data.NewField(propName, nil, fieldVector)
 			field.Config = &data.FieldConfig{Filterable: &isFilterable}
 			allFields[propNameIdx] = field
+		}
+
+		if propName == "_id" {
+			fieldVector := make([]*string, size)
+			for i, doc := range docs {
+				value, ok := doc[propName].(string)
+				if !ok {
+					continue
+				}
+				fieldVector[i] = &value
+			}
+			field := data.NewField("id", nil, fieldVector)
+			field.Config = &data.FieldConfig{Filterable: &isFilterable}
+			allFields[len(propNames)] = field
 		}
 	}
 
