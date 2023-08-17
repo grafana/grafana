@@ -32,6 +32,7 @@ import {
 import { StateManagerBase } from 'app/core/services/StateManagerBase';
 import { dashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
+import { getLibraryPanel } from 'app/features/library-panels/state/api';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/types';
 
 import { DashboardScene } from './DashboardScene';
@@ -129,6 +130,21 @@ export function createSceneObjectsForPanels(oldPanels: PanelModel[]): Array<Scen
           currentRowPanels = [];
         }
       }
+    } else if (panel.libraryPanel?.uid && !('model' in panel.libraryPanel)) {
+      const gridItem = new SceneGridItem({
+        body: new VizPanel({
+          title: panel.title,
+        }),
+        y: panel.gridPos.y,
+        x: panel.gridPos.x,
+        width: panel.gridPos.w,
+        height: panel.gridPos.h,
+      });
+      panels.push(gridItem);
+
+      loadLibraryPanelFromPanelModel(panel, (vizPanel) => {
+        gridItem.setState({ body: vizPanel });
+      });
     } else {
       const panelObject = createVizPanelFromPanelModel(panel);
 
@@ -325,6 +341,28 @@ export function createPanelDataProvider(panel: PanelModel): SceneDataProvider | 
   }
 
   return dataProvider;
+}
+
+export async function loadLibraryPanelFromPanelModel(panel: PanelModel, updatePanel: (panel: VizPanel) => void) {
+  let vizPanel = new VizPanel({
+    title: panel.title,
+  });
+  try {
+    const libPanel = await getLibraryPanel(panel.libraryPanel!.uid, true);
+    const libPanelModel = new PanelModel(libPanel.model);
+    vizPanel.setState({
+      options: libPanelModel.options ?? {},
+      fieldConfig: libPanelModel.fieldConfig,
+      pluginVersion: libPanelModel.pluginVersion,
+      displayMode: libPanelModel.transparent ? 'transparent' : undefined,
+      $data: createPanelDataProvider(libPanelModel),
+    });
+  } catch (err) {
+    vizPanel.setState({
+      pluginLoadError: 'Unable to load library panel: ' + panel.libraryPanel!.uid,
+    });
+  }
+  updatePanel(vizPanel);
 }
 
 let loader: DashboardLoader | null = null;
