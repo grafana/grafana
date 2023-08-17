@@ -3,8 +3,7 @@ import { compact } from 'lodash';
 import React, { lazy, Suspense } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Button, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
-import { Text } from '@grafana/ui/src/unstable';
+import { Button, LoadingPlaceholder, useStyles2, Text } from '@grafana/ui';
 import { alertRuleApi } from 'app/features/alerting/unified/api/alertRuleApi';
 import { Stack } from 'app/plugins/datasource/parca/QueryEditor/Stack';
 import { AlertQuery } from 'app/types/unified-alerting-dto';

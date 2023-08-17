@@ -106,3 +106,17 @@ export const safeParseDurationstr = (duration: string): number => {
 export const isNullDate = (date: string) => {
   return date.includes('0001-01-01T00');
 };
+
+// Format given time span in MS to the largest single unit duration string up to hours.
+export function msToSingleUnitDuration(rangeMs: number): string {
+  if (rangeMs % (1000 * 60 * 60) === 0) {
+    return rangeMs / (1000 * 60 * 60) + 'h';
+  }
+  if (rangeMs % (1000 * 60) === 0) {
+    return rangeMs / (1000 * 60) + 'm';
+  }
+  if (rangeMs % 1000 === 0) {
+    return rangeMs / 1000 + 's';
+  }
+  return rangeMs.toFixed() + 'ms';
+}

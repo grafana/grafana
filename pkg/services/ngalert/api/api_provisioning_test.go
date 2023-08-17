@@ -11,6 +11,7 @@ import (
 	"time"
 
 	prometheus "github.com/prometheus/alertmanager/config"
+	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/prometheus/alertmanager/timeinterval"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/mock"
@@ -19,10 +20,13 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/log/logtest"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/secrets"
@@ -316,7 +320,7 @@ func TestProvisioningApi(t *testing.T) {
 		})
 
 		t.Run("have reached the rule quota, POST returns 403", func(t *testing.T) {
-			env := createTestEnv(t)
+			env := createTestEnv(t, testConfig)
 			quotas := provisioning.MockQuotaChecker{}
 			quotas.EXPECT().LimitExceeded()
 			env.quotas = &quotas
@@ -810,6 +814,362 @@ func TestProvisioningApi(t *testing.T) {
 				require.Equal(t, expectedResponse, string(response.Body()))
 			})
 		})
+
+		t.Run("notification policies", func(t *testing.T) {
+			t.Run("are present, GET returns 200", func(t *testing.T) {
+				sut := createProvisioningSrvSut(t)
+				rc := createTestRequestCtx()
+
+				response := sut.RouteGetPolicyTreeExport(&rc)
+
+				require.Equal(t, 200, response.Status())
+			})
+
+			t.Run("accept header contains yaml, GET returns text yaml", func(t *testing.T) {
+				sut := createProvisioningSrvSut(t)
+				rc := createTestRequestCtx()
+
+				rc.Context.Req.Header.Add("Accept", "application/yaml")
+				response := sut.RouteGetPolicyTreeExport(&rc)
+				response.WriteTo(&rc)
+
+				require.Equal(t, 200, response.Status())
+				require.Equal(t, "text/yaml", rc.Context.Resp.Header().Get("Content-Type"))
+			})
+
+			t.Run("accept header contains json, GET returns json", func(t *testing.T) {
+				sut := createProvisioningSrvSut(t)
+				rc := createTestRequestCtx()
+
+				rc.Context.Req.Header.Add("Accept", "application/json")
+				response := sut.RouteGetPolicyTreeExport(&rc)
+				response.WriteTo(&rc)
+
+				require.Equal(t, 200, response.Status())
+				require.Equal(t, "application/json", rc.Context.Resp.Header().Get("Content-Type"))
+			})
+
+			t.Run("accept header contains json and yaml, GET returns json", func(t *testing.T) {
+				sut := createProvisioningSrvSut(t)
+				rc := createTestRequestCtx()
+
+				rc.Context.Req.Header.Add("Accept", "application/json, application/yaml")
+				response := sut.RouteGetPolicyTreeExport(&rc)
+				response.WriteTo(&rc)
+
+				require.Equal(t, 200, response.Status())
+				require.Equal(t, "application/json", rc.Context.Resp.Header().Get("Content-Type"))
+			})
+
+			t.Run("query param download=true, GET returns content disposition attachment", func(t *testing.T) {
+				sut := createProvisioningSrvSut(t)
+				rc := createTestRequestCtx()
+
+				rc.Context.Req.Form.Set("download", "true")
+				response := sut.RouteGetPolicyTreeExport(&rc)
+				response.WriteTo(&rc)
+
+				require.Equal(t, 200, response.Status())
+				require.Contains(t, rc.Context.Resp.Header().Get("Content-Disposition"), "attachment")
+			})
+
+			t.Run("query param download=false, GET returns empty content disposition", func(t *testing.T) {
+				sut := createProvisioningSrvSut(t)
+				rc := createTestRequestCtx()
+
+				rc.Context.Req.Form.Set("download", "false")
+				response := sut.RouteGetPolicyTreeExport(&rc)
+				response.WriteTo(&rc)
+
+				require.Equal(t, 200, response.Status())
+				require.Equal(t, "", rc.Context.Resp.Header().Get("Content-Disposition"))
+			})
+
+			t.Run("query param download not set, GET returns empty content disposition", func(t *testing.T) {
+				sut := createProvisioningSrvSut(t)
+				rc := createTestRequestCtx()
+
+				response := sut.RouteGetPolicyTreeExport(&rc)
+				response.WriteTo(&rc)
+
+				require.Equal(t, 200, response.Status())
+				require.Equal(t, "", rc.Context.Resp.Header().Get("Content-Disposition"))
+			})
+
+			t.Run("json body content is as expected", func(t *testing.T) {
+				sut := createProvisioningSrvSut(t)
+				sut.policies = createFakeNotificationPolicyService()
+				rc := createTestRequestCtx()
+
+				rc.Context.Req.Header.Add("Accept", "application/json")
+				expectedResponse := `{"apiVersion":1,"policies":[{"orgId":1,"Policy":{"receiver":"default-receiver","group_by":["g1","g2"],"routes":[{"receiver":"nested-receiver","group_by":["g3","g4"],"matchers":["a=\"b\""],"object_matchers":[["foo","=","bar"]],"mute_time_intervals":["interval"],"continue":true,"group_wait":"5m","group_interval":"5m","repeat_interval":"5m"}],"group_wait":"30s","group_interval":"5m","repeat_interval":"1h"}}]}`
+
+				response := sut.RouteGetPolicyTreeExport(&rc)
+
+				require.Equal(t, 200, response.Status())
+				require.Equal(t, expectedResponse, string(response.Body()))
+			})
+
+			t.Run("yaml body content is as expected", func(t *testing.T) {
+				sut := createProvisioningSrvSut(t)
+				sut.policies = createFakeNotificationPolicyService()
+				rc := createTestRequestCtx()
+
+				rc.Context.Req.Header.Add("Accept", "application/yaml")
+				expectedResponse := "apiVersion: 1\npolicies:\n    - orgId: 1\n      receiver: default-receiver\n      group_by:\n        - g1\n        - g2\n      routes:\n        - receiver: nested-receiver\n          group_by:\n            - g3\n            - g4\n          matchers:\n            - a=\"b\"\n          object_matchers:\n            - - foo\n              - =\n              - bar\n          mute_time_intervals:\n            - interval\n          continue: true\n          group_wait: 5m\n          group_interval: 5m\n          repeat_interval: 5m\n      group_wait: 30s\n      group_interval: 5m\n      repeat_interval: 1h\n"
+
+				response := sut.RouteGetPolicyTreeExport(&rc)
+
+				require.Equal(t, 200, response.Status())
+				require.Equal(t, expectedResponse, string(response.Body()))
+			})
+		})
+	})
+}
+
+func TestProvisioningApiContactPointExport(t *testing.T) {
+	t.Run("contact point export", func(t *testing.T) {
+		t.Run("are present, GET returns 200", func(t *testing.T) {
+			sut := createProvisioningSrvSut(t)
+			rc := createTestRequestCtx()
+
+			response := sut.RouteGetContactPointsExport(&rc)
+
+			require.Equal(t, 200, response.Status())
+		})
+
+		t.Run("accept header contains yaml, GET returns text yaml", func(t *testing.T) {
+			sut := createProvisioningSrvSut(t)
+			rc := createTestRequestCtx()
+
+			rc.Context.Req.Header.Add("Accept", "application/yaml")
+			response := sut.RouteGetContactPointsExport(&rc)
+			response.WriteTo(&rc)
+
+			require.Equal(t, 200, response.Status())
+			require.Equal(t, "text/yaml", rc.Context.Resp.Header().Get("Content-Type"))
+		})
+
+		t.Run("accept header contains json, GET returns json", func(t *testing.T) {
+			sut := createProvisioningSrvSut(t)
+			rc := createTestRequestCtx()
+
+			rc.Context.Req.Header.Add("Accept", "application/json")
+			response := sut.RouteGetContactPointsExport(&rc)
+			response.WriteTo(&rc)
+
+			require.Equal(t, 200, response.Status())
+			require.Equal(t, "application/json", rc.Context.Resp.Header().Get("Content-Type"))
+		})
+
+		t.Run("accept header contains json and yaml, GET returns json", func(t *testing.T) {
+			sut := createProvisioningSrvSut(t)
+			rc := createTestRequestCtx()
+
+			rc.Context.Req.Header.Add("Accept", "application/json, application/yaml")
+			response := sut.RouteGetContactPointsExport(&rc)
+			response.WriteTo(&rc)
+
+			require.Equal(t, 200, response.Status())
+			require.Equal(t, "application/json", rc.Context.Resp.Header().Get("Content-Type"))
+		})
+
+		t.Run("query param download=true, GET returns content disposition attachment", func(t *testing.T) {
+			sut := createProvisioningSrvSut(t)
+			rc := createTestRequestCtx()
+
+			rc.Context.Req.Form.Set("download", "true")
+			response := sut.RouteGetContactPointsExport(&rc)
+			response.WriteTo(&rc)
+
+			require.Equal(t, 200, response.Status())
+			require.Contains(t, rc.Context.Resp.Header().Get("Content-Disposition"), "attachment")
+		})
+
+		t.Run("query param download=false, GET returns empty content disposition", func(t *testing.T) {
+			sut := createProvisioningSrvSut(t)
+			rc := createTestRequestCtx()
+
+			rc.Context.Req.Form.Set("download", "false")
+			response := sut.RouteGetContactPointsExport(&rc)
+			response.WriteTo(&rc)
+
+			require.Equal(t, 200, response.Status())
+			require.Equal(t, "", rc.Context.Resp.Header().Get("Content-Disposition"))
+		})
+
+		t.Run("query param download not set, GET returns empty content disposition", func(t *testing.T) {
+			sut := createProvisioningSrvSut(t)
+			rc := createTestRequestCtx()
+
+			response := sut.RouteGetContactPointsExport(&rc)
+			response.WriteTo(&rc)
+
+			require.Equal(t, 200, response.Status())
+			require.Equal(t, "", rc.Context.Resp.Header().Get("Content-Disposition"))
+		})
+
+		t.Run("decrypt true without alert.provisioning.secrets:read permissions returns 403", func(t *testing.T) {
+			env := createTestEnv(t, testConfig)
+			env.ac = &recordingAccessControlFake{
+				Callback: func(user *user.SignedInUser, evaluator accesscontrol.Evaluator) (bool, error) {
+					return false, nil
+				},
+			}
+
+			sut := createProvisioningSrvSutFromEnv(t, &env)
+			rc := createTestRequestCtx()
+
+			rc.Context.Req.Form.Set("decrypt", "true")
+
+			response := sut.RouteGetContactPointsExport(&rc)
+
+			require.Equal(t, 403, response.Status())
+			require.Len(t, env.ac.EvaluateRecordings, 1)
+			require.Equal(t, accesscontrol.ActionAlertingProvisioningReadSecrets, env.ac.EvaluateRecordings[0].Evaluator.String())
+		})
+
+		t.Run("decrypt true with admin returns 200", func(t *testing.T) {
+			env := createTestEnv(t, testConfig)
+			env.ac = &recordingAccessControlFake{
+				Callback: func(user *user.SignedInUser, evaluator accesscontrol.Evaluator) (bool, error) {
+					require.Equal(t, accesscontrol.ActionAlertingProvisioningReadSecrets, evaluator.String())
+					return true, nil
+				},
+			}
+
+			sut := createProvisioningSrvSutFromEnv(t, &env)
+			rc := createTestRequestCtx()
+
+			rc.Context.Req.Form.Set("decrypt", "true")
+
+			response := sut.RouteGetContactPointsExport(&rc)
+			response.WriteTo(&rc)
+
+			require.Equal(t, 200, response.Status())
+			require.Len(t, env.ac.EvaluateRecordings, 1)
+			require.Equal(t, accesscontrol.ActionAlertingProvisioningReadSecrets, env.ac.EvaluateRecordings[0].Evaluator.String())
+		})
+
+		t.Run("json body content is as expected", func(t *testing.T) {
+			expectedRedactedResponse := `{"apiVersion":1,"contactPoints":[{"orgId":1,"name":"grafana-default-email","receivers":[{"uid":"ad95bd8a-49ed-4adc-bf89-1b444fa1aa5b","type":"email","settings":{"addresses":"\u003cexample@email.com\u003e"},"disableResolveMessage":false}]},{"orgId":1,"name":"multiple integrations","receivers":[{"uid":"c2090fda-f824-4add-b545-5a4d5c2ef082","type":"prometheus-alertmanager","settings":{"basicAuthPassword":"[REDACTED]","basicAuthUser":"test","url":"http://localhost:9093"},"disableResolveMessage":true},{"uid":"c84539ec-f87e-4fc5-9a91-7a687d34bbd1","type":"discord","settings":{"avatar_url":"some avatar","url":"some url","use_discord_username":true},"disableResolveMessage":false}]},{"orgId":1,"name":"pagerduty test","receivers":[{"uid":"b9bf06f8-bde2-4438-9d4a-bba0522dcd4d","type":"pagerduty","settings":{"client":"some client","integrationKey":"[REDACTED]","severity":"criticalish"},"disableResolveMessage":false}]},{"orgId":1,"name":"slack test","receivers":[{"uid":"cbfd0976-8228-4126-b672-4419f30a9e50","type":"slack","settings":{"text":"title body test","title":"title test","url":"[REDACTED]"},"disableResolveMessage":true}]}]}`
+			t.Run("decrypt false", func(t *testing.T) {
+				env := createTestEnv(t, testContactPointConfig)
+				sut := createProvisioningSrvSutFromEnv(t, &env)
+				rc := createTestRequestCtx()
+
+				rc.Context.Req.Header.Add("Accept", "application/json")
+				rc.Context.Req.Form.Set("decrypt", "false")
+
+				response := sut.RouteGetContactPointsExport(&rc)
+
+				require.Equal(t, 200, response.Status())
+				require.Equal(t, expectedRedactedResponse, string(response.Body()))
+			})
+			t.Run("decrypt missing", func(t *testing.T) {
+				env := createTestEnv(t, testContactPointConfig)
+				sut := createProvisioningSrvSutFromEnv(t, &env)
+				rc := createTestRequestCtx()
+
+				rc.Context.Req.Header.Add("Accept", "application/json")
+
+				response := sut.RouteGetContactPointsExport(&rc)
+
+				require.Equal(t, 200, response.Status())
+				require.Equal(t, expectedRedactedResponse, string(response.Body()))
+			})
+			t.Run("decrypt true", func(t *testing.T) {
+				env := createTestEnv(t, testContactPointConfig)
+				env.ac.Callback = func(user *user.SignedInUser, evaluator accesscontrol.Evaluator) (bool, error) {
+					return true, nil
+				}
+				sut := createProvisioningSrvSutFromEnv(t, &env)
+				rc := createTestRequestCtx()
+
+				rc.Context.Req.Header.Add("Accept", "application/json")
+				rc.Context.Req.Form.Set("decrypt", "true")
+
+				response := sut.RouteGetContactPointsExport(&rc)
+
+				expectedResponse := `{"apiVersion":1,"contactPoints":[{"orgId":1,"name":"grafana-default-email","receivers":[{"uid":"ad95bd8a-49ed-4adc-bf89-1b444fa1aa5b","type":"email","settings":{"addresses":"\u003cexample@email.com\u003e"},"disableResolveMessage":false}]},{"orgId":1,"name":"multiple integrations","receivers":[{"uid":"c2090fda-f824-4add-b545-5a4d5c2ef082","type":"prometheus-alertmanager","settings":{"basicAuthPassword":"testpass","basicAuthUser":"test","url":"http://localhost:9093"},"disableResolveMessage":true},{"uid":"c84539ec-f87e-4fc5-9a91-7a687d34bbd1","type":"discord","settings":{"avatar_url":"some avatar","url":"some url","use_discord_username":true},"disableResolveMessage":false}]},{"orgId":1,"name":"pagerduty test","receivers":[{"uid":"b9bf06f8-bde2-4438-9d4a-bba0522dcd4d","type":"pagerduty","settings":{"client":"some client","integrationKey":"some key","severity":"criticalish"},"disableResolveMessage":false}]},{"orgId":1,"name":"slack test","receivers":[{"uid":"cbfd0976-8228-4126-b672-4419f30a9e50","type":"slack","settings":{"text":"title body test","title":"title test","url":"some secure slack webhook"},"disableResolveMessage":true}]}]}`
+				require.Equal(t, 200, response.Status())
+				require.Equal(t, expectedResponse, string(response.Body()))
+			})
+			t.Run("name filters response", func(t *testing.T) {
+				env := createTestEnv(t, testContactPointConfig)
+				sut := createProvisioningSrvSutFromEnv(t, &env)
+				rc := createTestRequestCtx()
+
+				rc.Context.Req.Header.Add("Accept", "application/json")
+				rc.Context.Req.Form.Set("name", "multiple integrations")
+
+				response := sut.RouteGetContactPointsExport(&rc)
+
+				expectedResponse := `{"apiVersion":1,"contactPoints":[{"orgId":1,"name":"multiple integrations","receivers":[{"uid":"c2090fda-f824-4add-b545-5a4d5c2ef082","type":"prometheus-alertmanager","settings":{"basicAuthPassword":"[REDACTED]","basicAuthUser":"test","url":"http://localhost:9093"},"disableResolveMessage":true},{"uid":"c84539ec-f87e-4fc5-9a91-7a687d34bbd1","type":"discord","settings":{"avatar_url":"some avatar","url":"some url","use_discord_username":true},"disableResolveMessage":false}]}]}`
+				require.Equal(t, 200, response.Status())
+				require.Equal(t, expectedResponse, string(response.Body()))
+			})
+		})
+
+		t.Run("yaml body content is as expected", func(t *testing.T) {
+			expectedRedactedResponse := "apiVersion: 1\ncontactPoints:\n    - orgId: 1\n      name: grafana-default-email\n      receivers:\n        - uid: ad95bd8a-49ed-4adc-bf89-1b444fa1aa5b\n          type: email\n          settings:\n            addresses: <example@email.com>\n          disableResolveMessage: false\n    - orgId: 1\n      name: multiple integrations\n      receivers:\n        - uid: c2090fda-f824-4add-b545-5a4d5c2ef082\n          type: prometheus-alertmanager\n          settings:\n            basicAuthPassword: '[REDACTED]'\n            basicAuthUser: test\n            url: http://localhost:9093\n          disableResolveMessage: true\n        - uid: c84539ec-f87e-4fc5-9a91-7a687d34bbd1\n          type: discord\n          settings:\n            avatar_url: some avatar\n            url: some url\n            use_discord_username: true\n          disableResolveMessage: false\n    - orgId: 1\n      name: pagerduty test\n      receivers:\n        - uid: b9bf06f8-bde2-4438-9d4a-bba0522dcd4d\n          type: pagerduty\n          settings:\n            client: some client\n            integrationKey: '[REDACTED]'\n            severity: criticalish\n          disableResolveMessage: false\n    - orgId: 1\n      name: slack test\n      receivers:\n        - uid: cbfd0976-8228-4126-b672-4419f30a9e50\n          type: slack\n          settings:\n            text: title body test\n            title: title test\n            url: '[REDACTED]'\n          disableResolveMessage: true\n"
+			t.Run("decrypt false", func(t *testing.T) {
+				env := createTestEnv(t, testContactPointConfig)
+				sut := createProvisioningSrvSutFromEnv(t, &env)
+				rc := createTestRequestCtx()
+
+				rc.Context.Req.Header.Add("Accept", "application/yaml")
+				rc.Context.Req.Form.Set("decrypt", "false")
+
+				response := sut.RouteGetContactPointsExport(&rc)
+
+				require.Equal(t, 200, response.Status())
+				require.Equal(t, expectedRedactedResponse, string(response.Body()))
+			})
+			t.Run("decrypt missing", func(t *testing.T) {
+				env := createTestEnv(t, testContactPointConfig)
+				sut := createProvisioningSrvSutFromEnv(t, &env)
+				rc := createTestRequestCtx()
+
+				rc.Context.Req.Header.Add("Accept", "application/yaml")
+
+				response := sut.RouteGetContactPointsExport(&rc)
+
+				require.Equal(t, 200, response.Status())
+				require.Equal(t, expectedRedactedResponse, string(response.Body()))
+			})
+			t.Run("decrypt true", func(t *testing.T) {
+				env := createTestEnv(t, testContactPointConfig)
+				env.ac.Callback = func(user *user.SignedInUser, evaluator accesscontrol.Evaluator) (bool, error) {
+					return true, nil
+				}
+				sut := createProvisioningSrvSutFromEnv(t, &env)
+				rc := createTestRequestCtx()
+
+				rc.Context.Req.Header.Add("Accept", "application/yaml")
+				rc.Context.Req.Form.Set("decrypt", "true")
+
+				response := sut.RouteGetContactPointsExport(&rc)
+
+				expectedResponse := "apiVersion: 1\ncontactPoints:\n    - orgId: 1\n      name: grafana-default-email\n      receivers:\n        - uid: ad95bd8a-49ed-4adc-bf89-1b444fa1aa5b\n          type: email\n          settings:\n            addresses: <example@email.com>\n          disableResolveMessage: false\n    - orgId: 1\n      name: multiple integrations\n      receivers:\n        - uid: c2090fda-f824-4add-b545-5a4d5c2ef082\n          type: prometheus-alertmanager\n          settings:\n            basicAuthPassword: testpass\n            basicAuthUser: test\n            url: http://localhost:9093\n          disableResolveMessage: true\n        - uid: c84539ec-f87e-4fc5-9a91-7a687d34bbd1\n          type: discord\n          settings:\n            avatar_url: some avatar\n            url: some url\n            use_discord_username: true\n          disableResolveMessage: false\n    - orgId: 1\n      name: pagerduty test\n      receivers:\n        - uid: b9bf06f8-bde2-4438-9d4a-bba0522dcd4d\n          type: pagerduty\n          settings:\n            client: some client\n            integrationKey: some key\n            severity: criticalish\n          disableResolveMessage: false\n    - orgId: 1\n      name: slack test\n      receivers:\n        - uid: cbfd0976-8228-4126-b672-4419f30a9e50\n          type: slack\n          settings:\n            text: title body test\n            title: title test\n            url: some secure slack webhook\n          disableResolveMessage: true\n"
+				require.Equal(t, 200, response.Status())
+				require.Equal(t, expectedResponse, string(response.Body()))
+			})
+			t.Run("name filters response", func(t *testing.T) {
+				env := createTestEnv(t, testContactPointConfig)
+				sut := createProvisioningSrvSutFromEnv(t, &env)
+				rc := createTestRequestCtx()
+
+				rc.Context.Req.Header.Add("Accept", "application/yaml")
+				rc.Context.Req.Form.Set("name", "multiple integrations")
+
+				response := sut.RouteGetContactPointsExport(&rc)
+
+				expectedResponse := "apiVersion: 1\ncontactPoints:\n    - orgId: 1\n      name: multiple integrations\n      receivers:\n        - uid: c2090fda-f824-4add-b545-5a4d5c2ef082\n          type: prometheus-alertmanager\n          settings:\n            basicAuthPassword: '[REDACTED]'\n            basicAuthUser: test\n            url: http://localhost:9093\n          disableResolveMessage: true\n        - uid: c84539ec-f87e-4fc5-9a91-7a687d34bbd1\n          type: discord\n          settings:\n            avatar_url: some avatar\n            url: some url\n            use_discord_username: true\n          disableResolveMessage: false\n"
+				require.Equal(t, 200, response.Status())
+				require.Equal(t, expectedResponse, string(response.Body()))
+			})
+		})
 	})
 }
 
@@ -823,17 +1183,30 @@ type testEnvironment struct {
 	xact             provisioning.TransactionManager
 	quotas           provisioning.QuotaChecker
 	prov             provisioning.ProvisioningStore
+	ac               *recordingAccessControlFake
 }
 
-func createTestEnv(t *testing.T) testEnvironment {
+func createTestEnv(t *testing.T, testConfig string) testEnvironment {
 	t.Helper()
 
-	secrets := secrets_fakes.NewFakeSecretsService()
+	secretsService := secrets_fakes.NewFakeSecretsService()
+
+	// Encrypt secure settings.
+	c, err := notifier.Load([]byte(testConfig))
+	require.NoError(t, err)
+	err = notifier.EncryptReceiverConfigs(c.AlertmanagerConfig.Receivers, func(ctx context.Context, payload []byte) ([]byte, error) {
+		return secretsService.Encrypt(ctx, payload, secrets.WithoutScope())
+	})
+	require.NoError(t, err)
+
+	raw, err := json.Marshal(c)
+	require.NoError(t, err)
+
 	log := log.NewNopLogger()
 	configs := &provisioning.MockAMConfigStore{}
 	configs.EXPECT().
 		GetsConfig(models.AlertConfiguration{
-			AlertmanagerConfiguration: testConfig,
+			AlertmanagerConfiguration: string(raw),
 		})
 	sqlStore := db.InitTestDB(t)
 	store := store.DBstore{
@@ -863,8 +1236,10 @@ func createTestEnv(t *testing.T) testEnvironment {
 			Title: "Folder Title2",
 		}}, nil).Maybe()
 
+	ac := &recordingAccessControlFake{}
+
 	return testEnvironment{
-		secrets:          secrets,
+		secrets:          secretsService,
 		log:              log,
 		configs:          configs,
 		store:            store,
@@ -872,13 +1247,14 @@ func createTestEnv(t *testing.T) testEnvironment {
 		xact:             xact,
 		prov:             prov,
 		quotas:           quotas,
+		ac:               ac,
 	}
 }
 
 func createProvisioningSrvSut(t *testing.T) ProvisioningSrv {
 	t.Helper()
 
-	env := createTestEnv(t)
+	env := createTestEnv(t, testConfig)
 	return createProvisioningSrvSutFromEnv(t, &env)
 }
 
@@ -888,7 +1264,7 @@ func createProvisioningSrvSutFromEnv(t *testing.T, env *testEnvironment) Provisi
 	return ProvisioningSrv{
 		log:                 env.log,
 		policies:            newFakeNotificationPolicyService(),
-		contactPointService: provisioning.NewContactPointService(env.configs, env.secrets, env.prov, env.xact, env.log),
+		contactPointService: provisioning.NewContactPointService(env.configs, env.secrets, env.prov, env.xact, env.log, env.ac),
 		templates:           provisioning.NewTemplateService(env.configs, env.prov, env.xact, env.log),
 		muteTimings:         provisioning.NewMuteTimingService(env.configs, env.prov, env.xact, env.log),
 		alertRules:          provisioning.NewAlertRuleService(env.store, env.prov, env.dashboardService, env.quotas, env.xact, 60, 10, env.log),
@@ -907,6 +1283,7 @@ func createTestRequestCtx() contextmodel.ReqContext {
 		SignedInUser: &user.SignedInUser{
 			OrgID: 1,
 		},
+		Logger: &logtest.Fake{},
 	}
 }
 
@@ -921,6 +1298,39 @@ func newFakeNotificationPolicyService() *fakeNotificationPolicyService {
 			Receiver: "some-receiver",
 		},
 		prov: models.ProvenanceNone,
+	}
+}
+
+func createFakeNotificationPolicyService() *fakeNotificationPolicyService {
+	seconds := model.Duration(time.Duration(30) * time.Second)
+	minutes := model.Duration(time.Duration(5) * time.Minute)
+	hours := model.Duration(time.Duration(1) * time.Hour)
+	return &fakeNotificationPolicyService{
+		tree: definitions.Route{
+			Receiver:       "default-receiver",
+			GroupByStr:     []string{"g1", "g2"},
+			GroupWait:      &seconds,
+			GroupInterval:  &minutes,
+			RepeatInterval: &hours,
+			Routes: []*definitions.Route{{
+				Receiver:   "nested-receiver",
+				GroupByStr: []string{"g3", "g4"},
+				Matchers: prometheus.Matchers{
+					{
+						Name:  "a",
+						Type:  labels.MatchEqual,
+						Value: "b",
+					},
+				},
+				ObjectMatchers:    definitions.ObjectMatchers{{Type: 0, Name: "foo", Value: "bar"}},
+				MuteTimeIntervals: []string{"interval"},
+				Continue:          true,
+				GroupWait:         &minutes,
+				GroupInterval:     &minutes,
+				RepeatInterval:    &minutes,
+			}},
+		},
+		prov: models.ProvenanceAPI,
 	}
 }
 
@@ -1130,6 +1540,102 @@ var testConfig = `
 			"name": "interval",
 			"time_intervals": []
 		}]
+	}
+}
+`
+
+var testContactPointConfig = `
+{
+	"template_files": {
+		"a": "template"
+	},
+	"alertmanager_config": {
+		"route": {
+			"receiver": "grafana-default-email"
+		},
+		"receivers": [
+   {
+      "name":"grafana-default-email",
+      "grafana_managed_receiver_configs":[
+         {
+            "uid":"ad95bd8a-49ed-4adc-bf89-1b444fa1aa5b",
+            "name":"grafana-default-email",
+            "type":"email",
+            "disableResolveMessage":false,
+            "settings":{
+               "addresses":"<example@email.com>"
+            },
+            "secureSettings":{}
+         }
+      ]
+   },
+   {
+      "name":"multiple integrations",
+      "grafana_managed_receiver_configs":[
+         {
+            "uid":"c2090fda-f824-4add-b545-5a4d5c2ef082",
+            "name":"multiple integrations",
+            "type":"prometheus-alertmanager",
+            "disableResolveMessage":true,
+            "settings":{
+               "basicAuthUser":"test",
+               "url":"http://localhost:9093"
+            },
+            "secureSettings":{
+               "basicAuthPassword":"testpass"
+            }
+         },
+         {
+            "uid":"c84539ec-f87e-4fc5-9a91-7a687d34bbd1",
+            "name":"multiple integrations",
+            "type":"discord",
+            "disableResolveMessage":false,
+            "settings":{
+               "avatar_url":"some avatar",
+               "url":"some url",
+               "use_discord_username":true
+            },
+            "secureSettings":{}
+         }
+      ]
+   },
+   {
+      "name":"pagerduty test",
+      "grafana_managed_receiver_configs":[
+         {
+            "uid":"b9bf06f8-bde2-4438-9d4a-bba0522dcd4d",
+            "name":"pagerduty test",
+            "type":"pagerduty",
+            "disableResolveMessage":false,
+            "settings":{
+               "client":"some client",
+               "severity":"criticalish"
+            },
+            "secureSettings":{
+               "integrationKey":"some key"
+            }
+         }
+      ]
+   },
+   {
+      "name":"slack test",
+      "grafana_managed_receiver_configs":[
+         {
+            "uid":"cbfd0976-8228-4126-b672-4419f30a9e50",
+            "name":"slack test",
+            "type":"slack",
+            "disableResolveMessage":true,
+            "settings":{
+               "text":"title body test",
+               "title":"title test"
+            },
+            "secureSettings":{
+               "url":"some secure slack webhook"
+            }
+         }
+      ]
+   }
+]
 	}
 }
 `
