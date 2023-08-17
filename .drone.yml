@@ -4348,7 +4348,7 @@ name: prerelease_bucket
 ---
 get:
   name: credentials.json
-  path: infra/data/ci/grafana/releng/artifacts-uploader-service-account
+  path: infra/data/ci/grafana-release-eng/grafanauploads
 kind: secret
 name: gcp_upload_artifacts_key
 ---
@@ -4497,6 +4497,6 @@ kind: secret
 name: github_token
 ---
 kind: signature
-hmac: 1d72ea139a1295b3f69ad037d977dda4837bf9f10f04067e994ebc018da10f51
+hmac: 01df85202a2cf13ae3138a51f1e78273c0c19578734871af9315e4820e09f448
 
 ...

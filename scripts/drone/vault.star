@@ -43,7 +43,7 @@ def secrets():
         vault_secret(prerelease_bucket, "infra/data/ci/grafana/prerelease", "bucket"),
         vault_secret(
             gcp_upload_artifacts_key,
-            "infra/data/ci/grafana/releng/artifacts-uploader-service-account",
+            "infra/data/ci/grafana-release-eng/grafanauploads",
             "credentials.json",
         ),
         vault_secret(
