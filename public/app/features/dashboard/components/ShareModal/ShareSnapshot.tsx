@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 
 import { isEmptyObject, SelectableValue } from '@grafana/data';
-import { getBackendSrv, reportInteraction } from '@grafana/runtime';
+import { getBackendSrv } from '@grafana/runtime';
 import { Button, ClipboardButton, Field, Input, LinkButton, Modal, Select, Spinner } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
@@ -9,7 +9,9 @@ import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 
 import { VariableRefresh } from '../../../variables/types';
 
+import { trackDashboardSharingActionPerType } from './analytics';
 import { ShareModalTabProps } from './types';
+import { shareDashboardType } from './utils';
 
 const snapshotApiUrl = '/api/snapshots';
 
@@ -68,7 +70,6 @@ export class ShareSnapshot extends PureComponent<Props, State> {
   }
 
   componentDidMount() {
-    reportInteraction('grafana_dashboards_snapshot_share_viewed');
     this.getSnaphotShareOptions();
   }
 
@@ -114,9 +115,7 @@ export class ShareSnapshot extends PureComponent<Props, State> {
         step: 2,
       });
     } finally {
-      reportInteraction('grafana_dashboards_snapshot_created', {
-        location: external ? 'raintank' : 'local',
-      });
+      trackDashboardSharingActionPerType(external ? 'publish_snapshot' : 'local_snapshot', shareDashboardType.snapshot);
       this.setState({ isLoading: false });
     }
   };

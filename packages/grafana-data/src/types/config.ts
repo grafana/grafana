@@ -239,5 +239,5 @@ export interface AuthSettings {
   AzureADSkipOrgRoleSync?: boolean;
   GoogleSkipOrgRoleSync?: boolean;
   GenericOAuthSkipOrgRoleSync?: boolean;
-  DisableSyncLock?: boolean;
+  AuthProxyEnableLoginToken?: boolean;
 }

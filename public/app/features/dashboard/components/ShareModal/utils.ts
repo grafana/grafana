@@ -137,3 +137,16 @@ export function getLocalTimeZone() {
 
   return '&tz=' + encodeURIComponent(options.timeZone);
 }
+
+export const shareDashboardType: {
+  [key: string]: string;
+} = {
+  link: 'link',
+  snapshot: 'snapshot',
+  export: 'export',
+  embed: 'embed',
+  libraryPanel: 'library_panel',
+  pdf: 'pdf',
+  report: 'report',
+  publicDashboard: 'public_dashboard',
+};

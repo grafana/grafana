@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -33,11 +34,11 @@ import (
 // 403: forbiddenError
 // 500: internalServerError
 func (hs *HTTPServer) GetPendingOrgInvites(c *contextmodel.ReqContext) response.Response {
-	query := tempuser.GetTempUsersQuery{OrgID: c.OrgID, Status: tempuser.TmpUserInvitePending}
+	query := tempuser.GetTempUsersQuery{OrgID: c.SignedInUser.GetOrgID(), Status: tempuser.TmpUserInvitePending}
 
 	queryResult, err := hs.tempUserService.GetTempUsersQuery(c.Req.Context(), &query)
 	if err != nil {
-		return response.Error(500, "Failed to get invites from db", err)
+		return response.Error(http.StatusInternalServerError, "Failed to get invites from db", err)
 	}
 
 	for _, invite := range queryResult {
@@ -64,9 +65,9 @@ func (hs *HTTPServer) AddOrgInvite(c *contextmodel.ReqContext) response.Response
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 	if !inviteDto.Role.IsValid() {
-		return response.Error(400, "Invalid role specified", nil)
+		return response.Error(http.StatusBadRequest, "Invalid role specified", nil)
 	}
-	if !c.OrgRole.Includes(inviteDto.Role) && !c.IsGrafanaAdmin {
+	if !c.SignedInUser.GetOrgRole().Includes(inviteDto.Role) && !c.SignedInUser.GetIsGrafanaAdmin() {
 		return response.Error(http.StatusForbidden, "Cannot assign a role higher than user's role", nil)
 	}
 
@@ -75,7 +76,7 @@ func (hs *HTTPServer) AddOrgInvite(c *contextmodel.ReqContext) response.Response
 	usr, err := hs.userService.GetByLogin(c.Req.Context(), &userQuery)
 	if err != nil {
 		if !errors.Is(err, user.ErrUserNotFound) {
-			return response.Error(500, "Failed to query db for existing user check", err)
+			return response.Error(http.StatusInternalServerError, "Failed to query db for existing user check", err)
 		}
 	} else {
 		// Evaluate permissions for adding an existing user to the organization
@@ -91,25 +92,37 @@ func (hs *HTTPServer) AddOrgInvite(c *contextmodel.ReqContext) response.Response
 	}
 
 	if hs.Cfg.DisableLoginForm {
-		return response.Error(400, "Cannot invite external user when login is disabled.", nil)
+		return response.Error(http.StatusBadRequest, "Cannot invite external user when login is disabled.", nil)
 	}
 
 	cmd := tempuser.CreateTempUserCommand{}
-	cmd.OrgID = c.OrgID
+	cmd.OrgID = c.SignedInUser.GetOrgID()
 	cmd.Email = inviteDto.LoginOrEmail
 	cmd.Name = inviteDto.Name
 	cmd.Status = tempuser.TmpUserInvitePending
-	cmd.InvitedByUserID = c.UserID
+
+	namespace, identifier := c.SignedInUser.GetNamespacedID()
+	var userID int64
+	switch namespace {
+	case identity.NamespaceUser, identity.NamespaceServiceAccount:
+		var err error
+		userID, err = strconv.ParseInt(identifier, 10, 64)
+		if err != nil {
+			return response.Error(http.StatusInternalServerError, "Unrecognized user", err)
+		}
+	}
+
+	cmd.InvitedByUserID = userID
 	cmd.Code, err = util.GetRandomString(30)
 	if err != nil {
-		return response.Error(500, "Could not generate random string", err)
+		return response.Error(http.StatusInternalServerError, "Could not generate random string", err)
 	}
 	cmd.Role = inviteDto.Role
 	cmd.RemoteAddr = c.RemoteAddr()
 
 	cmdResult, err := hs.tempUserService.CreateTempUser(c.Req.Context(), &cmd)
 	if err != nil {
-		return response.Error(500, "Failed to save invite to database", err)
+		return response.Error(http.StatusInternalServerError, "Failed to save invite to database", err)
 	}
 
 	// send invite email
@@ -119,24 +132,24 @@ func (hs *HTTPServer) AddOrgInvite(c *contextmodel.ReqContext) response.Response
 			Template: "new_user_invite",
 			Data: map[string]interface{}{
 				"Name":      util.StringsFallback2(cmd.Name, cmd.Email),
-				"OrgName":   c.OrgName,
-				"Email":     c.Email,
+				"OrgName":   c.SignedInUser.GetOrgName(),
+				"Email":     c.SignedInUser.GetEmail(),
 				"LinkUrl":   setting.ToAbsUrl("invite/" + cmd.Code),
-				"InvitedBy": util.StringsFallback3(c.Name, c.Email, c.Login),
+				"InvitedBy": c.SignedInUser.GetDisplayName(),
 			},
 		}
 
 		if err := hs.AlertNG.NotificationService.SendEmailCommandHandler(c.Req.Context(), &emailCmd); err != nil {
 			if errors.Is(err, notifications.ErrSmtpNotEnabled) {
-				return response.Error(412, err.Error(), err)
+				return response.Error(http.StatusPreconditionFailed, err.Error(), err)
 			}
 
-			return response.Error(500, "Failed to send email invite", err)
+			return response.Error(http.StatusInternalServerError, "Failed to send email invite", err)
 		}
 
 		emailSentCmd := tempuser.UpdateTempUserWithEmailSentCommand{Code: cmdResult.Code}
 		if err := hs.tempUserService.UpdateTempUserWithEmailSent(c.Req.Context(), &emailSentCmd); err != nil {
-			return response.Error(500, "Failed to update invite with email sent info", err)
+			return response.Error(http.StatusInternalServerError, "Failed to update invite with email sent info", err)
 		}
 
 		return response.Success(fmt.Sprintf("Sent invite to %s", inviteDto.LoginOrEmail))
@@ -147,12 +160,12 @@ func (hs *HTTPServer) AddOrgInvite(c *contextmodel.ReqContext) response.Response
 
 func (hs *HTTPServer) inviteExistingUserToOrg(c *contextmodel.ReqContext, user *user.User, inviteDto *dtos.AddInviteForm) response.Response {
 	// user exists, add org role
-	createOrgUserCmd := org.AddOrgUserCommand{OrgID: c.OrgID, UserID: user.ID, Role: inviteDto.Role}
+	createOrgUserCmd := org.AddOrgUserCommand{OrgID: c.SignedInUser.GetOrgID(), UserID: user.ID, Role: inviteDto.Role}
 	if err := hs.orgService.AddOrgUser(c.Req.Context(), &createOrgUserCmd); err != nil {
 		if errors.Is(err, org.ErrOrgUserAlreadyAdded) {
-			return response.Error(412, fmt.Sprintf("User %s is already added to organization", inviteDto.LoginOrEmail), err)
+			return response.Error(http.StatusPreconditionFailed, fmt.Sprintf("User %s is already added to organization", inviteDto.LoginOrEmail), err)
 		}
-		return response.Error(500, "Error while trying to create org user", err)
+		return response.Error(http.StatusInternalServerError, "Error while trying to create org user", err)
 	}
 
 	if inviteDto.SendEmail && util.IsEmail(user.Email) {
@@ -161,18 +174,18 @@ func (hs *HTTPServer) inviteExistingUserToOrg(c *contextmodel.ReqContext, user *
 			Template: "invited_to_org",
 			Data: map[string]interface{}{
 				"Name":      user.NameOrFallback(),
-				"OrgName":   c.OrgName,
-				"InvitedBy": util.StringsFallback3(c.Name, c.Email, c.Login),
+				"OrgName":   c.SignedInUser.GetOrgName(),
+				"InvitedBy": c.SignedInUser.GetDisplayName(),
 			},
 		}
 
 		if err := hs.AlertNG.NotificationService.SendEmailCommandHandler(c.Req.Context(), &emailCmd); err != nil {
-			return response.Error(500, "Failed to send email invited_to_org", err)
+			return response.Error(http.StatusInternalServerError, "Failed to send email invited_to_org", err)
 		}
 	}
 
 	return response.JSON(http.StatusOK, util.DynMap{
-		"message": fmt.Sprintf("Existing Grafana user %s added to org %s", user.NameOrFallback(), c.OrgName),
+		"message": fmt.Sprintf("Existing Grafana user %s added to org %s", user.NameOrFallback(), c.SignedInUser.GetOrgName()),
 		"userId":  user.ID,
 	})
 }

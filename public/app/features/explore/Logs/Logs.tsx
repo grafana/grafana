@@ -454,7 +454,18 @@ class UnthemedLogs extends PureComponent<Props, State> {
     return { from: firstTimeStamp, to: lastTimeStamp };
   });
 
-  scrollToTopLogs = () => this.topLogsRef.current?.scrollIntoView();
+  scrollToTopLogs = () => {
+    if (config.featureToggles.exploreScrollableLogsContainer) {
+      if (this.logsContainer.current) {
+        this.logsContainer.current.scroll({
+          behavior: 'auto',
+          top: 0,
+        });
+      }
+    } else {
+      this.topLogsRef.current?.scrollIntoView();
+    }
+  };
 
   render() {
     const {
@@ -667,7 +678,6 @@ class UnthemedLogs extends PureComponent<Props, State> {
               <div className={styles.logRows} data-testid="logRowsTable">
                 {/* Width should be full width minus logsnavigation and padding */}
                 <LogsTable
-                  rows={logRows}
                   logsSortOrder={this.state.logsSortOrder}
                   range={this.props.range}
                   splitOpen={this.props.splitOpen}
@@ -763,7 +773,7 @@ const getStyles = (theme: GrafanaTheme2, wrapLogMessage: boolean) => {
       flex-wrap: wrap;
       background-color: ${theme.colors.background.primary};
       padding: ${theme.spacing(1, 2)};
-      border-radius: ${theme.shape.borderRadius()};
+      border-radius: ${theme.shape.radius.default};
       margin: ${theme.spacing(0, 0, 1)};
       border: 1px solid ${theme.colors.border.medium};
     `,

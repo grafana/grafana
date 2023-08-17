@@ -9,9 +9,10 @@ import { RuleFormType, RuleFormValues } from '../../../types/rule-form';
 import { CloudRulesSourcePicker } from '../CloudRulesSourcePicker';
 
 export interface CloudDataSourceSelectorProps {
+  disabled?: boolean;
   onChangeCloudDatasource: (datasourceUid: string) => void;
 }
-export const CloudDataSourceSelector = ({ onChangeCloudDatasource }: CloudDataSourceSelectorProps) => {
+export const CloudDataSourceSelector = ({ disabled, onChangeCloudDatasource }: CloudDataSourceSelectorProps) => {
   const {
     control,
     formState: { errors },
@@ -28,7 +29,7 @@ export const CloudDataSourceSelector = ({ onChangeCloudDatasource }: CloudDataSo
         {(ruleFormType === RuleFormType.cloudAlerting || ruleFormType === RuleFormType.cloudRecording) && (
           <Field
             className={styles.formInput}
-            label="Select data source"
+            label={disabled ? 'Data source' : 'Select data source'}
             error={errors.dataSourceName?.message}
             invalid={!!errors.dataSourceName?.message}
             data-testid="datasource-picker"
@@ -37,6 +38,7 @@ export const CloudDataSourceSelector = ({ onChangeCloudDatasource }: CloudDataSo
               render={({ field: { onChange, ref, ...field } }) => (
                 <CloudRulesSourcePicker
                   {...field}
+                  disabled={disabled}
                   onChange={(ds: DataSourceInstanceSettings) => {
                     // reset location if switching data sources, as different rules source will have different groups and namespaces
                     setValue('location', undefined);

@@ -166,6 +166,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       flexDirection: 'column',
       height: '100%',
       flex: '1 1 0',
+      minHeight: '100%',
     }),
     drawer: css({
       '.main-view &': {
