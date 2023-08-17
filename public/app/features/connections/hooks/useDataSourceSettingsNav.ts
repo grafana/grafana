@@ -8,17 +8,22 @@ import { getDataSourceLoadingNav, buildNavModel, getDataSourceNav } from 'app/fe
 import { useGetSingle } from 'app/features/plugins/admin/state/hooks';
 import { useSelector } from 'app/types';
 
-export const useDataSourceSettingsNavOriginal = (dataSourceId: string, pageId: string | null) => {
+export function useDataSourceSettingsNav(pageIdParam?: string) {
+  const { uid } = useParams<{ uid: string }>();
+  const location = useLocation();
+  const datasource = useDataSource(uid);
+  const datasourcePlugin = useGetSingle(datasource.type);
+  const params = new URLSearchParams(location.search);
+  const pageId = pageIdParam || params.get('page');
+
   const { plugin, loadError, loading } = useDataSourceSettings();
-  const dataSource = useDataSource(dataSourceId);
-  const dsi = getDataSourceSrv()?.getInstanceSettings(dataSourceId);
+  const dsi = getDataSourceSrv()?.getInstanceSettings(uid);
   const hasAlertingEnabled = Boolean(dsi?.meta?.alerting ?? false);
   const isAlertManagerDatasource = dsi?.type === 'alertmanager';
   const alertingSupported = hasAlertingEnabled || isAlertManagerDatasource;
 
-  const datasourcePlugin = useGetSingle(dataSource.type);
   const navIndex = useSelector((state) => state.navIndex);
-  const navIndexId = pageId ? `datasource-${pageId}-${dataSourceId}` : `datasource-settings-${dataSourceId}`;
+  const navIndexId = pageId ? `datasource-${pageId}-${uid}` : `datasource-settings-${uid}`;
   let pageNav: NavModel = {
     node: {
       text: 'Data Source Nav Node',
@@ -49,15 +54,15 @@ export const useDataSourceSettingsNavOriginal = (dataSourceId: string, pageId: s
     pageNav = getNavModel(
       navIndex,
       navIndexId,
-      getDataSourceNav(buildNavModel(dataSource, plugin), pageId || 'settings')
+      getDataSourceNav(buildNavModel(datasource, plugin), pageId || 'settings')
     );
   }
 
-  return {
+  const nav = {
     node: pageNav.node,
     main: {
       ...pageNav.main,
-      text: dataSource.name,
+      text: datasource.name,
       dataSourcePluginName: datasourcePlugin?.name || plugin?.meta.name || '',
       active: true,
     },
@@ -65,19 +70,8 @@ export const useDataSourceSettingsNavOriginal = (dataSourceId: string, pageId: s
       alertingSupported,
     },
   };
-};
 
-// We are extending the original useDataSourceSettingsNav in the following ways:
-// - changing the URL of the nav items to point to Connections
-// - setting the parent nav item
-export function useDataSourceSettingsNav(pageId?: string) {
-  const { uid } = useParams<{ uid: string }>();
-  const location = useLocation();
-  const datasource = useDataSource(uid);
-  const datasourcePlugin = useGetSingle(datasource.type);
-  const params = new URLSearchParams(location.search);
-  const nav = useDataSourceSettingsNavOriginal(uid, pageId || params.get('page'));
-  const pageNav = {
+  const pageNavFinal = {
     ...nav.main,
     text: datasource.name,
     subTitle: `Type: ${datasourcePlugin?.name}`,
@@ -89,7 +83,7 @@ export function useDataSourceSettingsNav(pageId?: string) {
 
   return {
     navId: 'connections-datasources',
-    pageNav,
+    pageNav: pageNavFinal,
     dataSourceHeader: nav.dataSourceHeader,
   };
 }
