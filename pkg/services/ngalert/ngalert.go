@@ -256,6 +256,7 @@ func (ng *AlertNG) init() error {
 
 	ng.api = &api.API{
 		Cfg:                  ng.Cfg,
+		Crypto:               notifier.NewCrypto(ng.SecretsService, ng.store, ng.Log),
 		DatasourceCache:      ng.DataSourceCache,
 		DatasourceService:    ng.DataSourceService,
 		RouteRegister:        ng.RouteRegister,
