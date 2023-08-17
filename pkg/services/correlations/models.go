@@ -109,6 +109,9 @@ type Correlation struct {
 	// UID of the data source the correlation originates from
 	// example: d0oxYRg4z
 	SourceUID string `json:"sourceUID" xorm:"pk 'source_uid'"`
+	// OrgID of the data source the correlation originates from
+	// Example: 1
+	OrgID int64 `json:"orgId" xorm:"pk 'org_id'"`
 	// UID of the data source the correlation points to
 	// example: PE1C5CBDA0504A6A3
 	TargetUID *string `json:"targetUID" xorm:"target_uid"`
@@ -289,9 +292,11 @@ type GetCorrelationsQuery struct {
 
 type DeleteCorrelationsBySourceUIDCommand struct {
 	SourceUID       string
+	OrgId           int64
 	OnlyProvisioned bool
 }
 
 type DeleteCorrelationsByTargetUIDCommand struct {
 	TargetUID string
+	OrgId     int64
 }
