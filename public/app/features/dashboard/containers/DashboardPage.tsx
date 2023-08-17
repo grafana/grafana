@@ -58,7 +58,6 @@ export type DashboardPageRouteSearchParams = {
   to?: string;
   refresh?: string;
   kiosk?: string | true;
-  callbackUrl?: string;
 };
 
 export const mapStateToProps = (state: StoreState) => ({
@@ -93,7 +92,6 @@ export interface State {
   scrollElement?: HTMLDivElement;
   pageNav?: NavModelItem;
   sectionNav?: NavModel;
-  dashboardJson?: string;
 }
 
 export class UnthemedDashboardPage extends PureComponent<Props, State> {
