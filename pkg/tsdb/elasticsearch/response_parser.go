@@ -12,6 +12,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"golang.org/x/exp/slices"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	es "github.com/grafana/grafana/pkg/tsdb/elasticsearch/client"
@@ -157,6 +158,17 @@ func processLogsResponse(res *es.SearchResponse, target *Query, configuredFields
 	sortedPropNames := sortPropNames(propNames, configuredFields, true)
 	fields := processDocsToDataFrameFields(docs, sortedPropNames, configuredFields)
 
+	// copy `_id` field to `id` field
+	idField := fields[slices.IndexFunc(fields, func(f *data.Field) bool {
+		return f.Name == "_id"
+	})]
+	fieldVector := make([]*string, idField.Len())
+	for i := 0; i < idField.Len(); i++ {
+		fieldVector[i] = idField.At(i).(*string)
+	}
+	idField = data.NewField("id", nil, fieldVector)
+	fields = append(fields, idField)
+
 	frames := data.Frames{}
 	frame := data.NewFrame("", fields...)
 	setPreferredVisType(frame, data.VisTypeLogs)
@@ -266,8 +278,7 @@ func processRawDocumentResponse(res *es.SearchResponse, target *Query, queryRes 
 func processDocsToDataFrameFields(docs []map[string]interface{}, propNames []string, configuredFields es.ConfiguredFields) []*data.Field {
 	size := len(docs)
 	isFilterable := true
-	// we are appending the id field to the end of the list, that's why the `+1` is needed
-	allFields := make([]*data.Field, len(propNames)+1)
+	allFields := make([]*data.Field, len(propNames))
 	timeString := ""
 	timeStringOk := false
 
@@ -330,17 +341,6 @@ func processDocsToDataFrameFields(docs []map[string]interface{}, propNames []str
 			field := data.NewField(propName, nil, fieldVector)
 			field.Config = &data.FieldConfig{Filterable: &isFilterable}
 			allFields[propNameIdx] = field
-		}
-
-		if propName == "_id" {
-			idfield := allFields[propNameIdx]
-			fieldVector := make([]*string, size)
-			for i := 0; i < size; i++ {
-				fieldVector[i] = idfield.At(i).(*string)
-			}
-			field := data.NewField("id", nil, fieldVector)
-			field.Config = &data.FieldConfig{Filterable: &isFilterable}
-			allFields[len(propNames)] = field
 		}
 	}
 

@@ -236,6 +236,17 @@
             "config": {
               "filterable": true
             }
+          },
+          {
+            "name": "id",
+            "type": "string",
+            "typeInfo": {
+              "frame": "string",
+              "nullable": true
+            },
+            "config": {
+              "filterable": true
+            }
           }
         ]
       },
@@ -575,6 +586,13 @@
               1675953597665,
               20
             ]
+          ],
+          [
+            "g2aeNoYB7vaC3bq-ezfK",
+            "gmaeNoYB7vaC3bq-eDcN",
+            "gWaeNoYB7vaC3bq-dDdL",
+            "gGaeNoYB7vaC3bq-cDeY",
+            "f2aeNoYB7vaC3bq-bDf7"
           ]
         ]
       }
