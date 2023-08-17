@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/url"
 	"regexp"
+	"sort"
 	"text/template"
 )
 
@@ -91,14 +92,46 @@ func tableLinkFunc(data string) string {
 	return fmt.Sprintf(`/explore?left={"datasource":%[1]q,"queries":[{"datasource":%[1]q,"expr":%q,"instant":true,"range":false,"refId":"A"}],"range":{"from":"now-1h","to":"now"}}`, datasource, expr)
 }
 
+func contains[T comparable](slice []T, elem T) bool {
+	for _, e := range slice {
+		if e == elem {
+			return true
+		}
+	}
+	return false
+}
+
 func deduplicateLabelsFunc(values map[string]Value) Labels {
-	res := make(Labels)
+	type uniqueLabelVals map[string]struct{}
+
+	labels := make(map[string]uniqueLabelVals)
 	for _, value := range values {
 		for k, v := range value.Labels {
-			if _, ok := res[k]; !ok {
-				res[k] = v
+			if _, ok := labels[k]; !ok {
+				labels[k] = uniqueLabelVals{v: struct{}{}}
+				continue
+			}
+			if _, ok := labels[k][v]; !ok {
+				labels[k][v] = struct{}{}
 			}
 		}
 	}
+
+	res := make(Labels)
+	for label, vals := range labels {
+		keys := make([]string, 0, len(vals))
+		for val := range vals {
+			keys = append(keys, val)
+		}
+		sort.Strings(keys)
+		for i, v := range keys {
+			if i == 0 {
+				res[label] = v
+			} else {
+				res[label] = fmt.Sprintf("%s, %s", res[label], v)
+			}
+		}
+	}
+
 	return res
 }

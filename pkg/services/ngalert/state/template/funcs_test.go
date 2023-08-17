@@ -28,8 +28,8 @@ func TestRemoveLabelsReFunc(t *testing.T) {
 
 func TestDeduplicateLabelsFunc(t *testing.T) {
 	v := map[string]Value{
-		"v1": {Labels: Labels{"foo": "bar"}, Value: 1},
-		"v2": {Labels: Labels{"foo": "bar", "bar": "baz"}, Value: 2},
+		"v1": {Labels: Labels{"foo": "bar", "bar": "foo"}, Value: 1},
+		"v2": {Labels: Labels{"foo": "bar", "bar": "baz", "baz": "bat"}, Value: 2},
 	}
-	assert.Equal(t, Labels{"foo": "bar", "bar": "baz"}, deduplicateLabelsFunc(v))
+	assert.Equal(t, Labels{"foo": "bar", "bar": "baz, foo", "baz": "bat"}, deduplicateLabelsFunc(v))
 }
