@@ -81,9 +81,7 @@ async function fetchDashboard(
         return await dashboardLoaderSrv.loadDashboard('public', args.urlSlug, args.accessToken);
       }
       case DashboardRoutes.Embedded: {
-        if (args.dashboardDto) {
-          return args.dashboardDto;
-        }
+        return dashboardLoaderSrv.loadDashboard('embedded', '', '');
       }
       case DashboardRoutes.Normal: {
         const dashDTO: DashboardDTO = await dashboardLoaderSrv.loadDashboard(args.urlType, args.urlSlug, args.urlUid);

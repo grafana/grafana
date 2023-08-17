@@ -83,6 +83,8 @@ export class DashboardLoaderSrv {
         .catch(() => {
           return this._dashboardLoadFailed('Not found', true);
         });
+    } else if (type === 'embedded') {
+      promise = this._loadFromUrl();
     } else {
       throw new Error('Dashboard uid or slug required');
     }
@@ -163,6 +165,34 @@ export class DashboardLoaderSrv {
           dashboard: data,
         };
       });
+  }
+
+  // Load dashboard JSON from a remove URL, provided as a query parameter
+  async _loadFromUrl() {
+    const params = locationService.getSearch();
+    const callbackUrl = params.get('callbackUrl');
+    if (!callbackUrl) {
+      return Promise.reject('No callback URL provided');
+    }
+    return (
+      getBackendSrv()
+        // TODO validate URL
+        .get(`${callbackUrl}/load-dashboard`)
+        .then((data) => {
+          // Remove dashboard UID from JSON
+          const { uid, ...dashboard } = data;
+          return {
+            meta: {
+              canEdit: true,
+              isEmbedded: true,
+              canDelete: false,
+              canSave: true,
+              canStar: false,
+            },
+            dashboard,
+          };
+        })
+    );
   }
 
   _executeScript(result: any) {

@@ -14,7 +14,7 @@ import { createErrorNotification } from 'app/core/copy/appNotification';
 import { getKioskMode } from 'app/core/navigation/kiosk';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { getNavModel } from 'app/core/selectors/navModel';
-import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
+import { PanelModel } from 'app/features/dashboard/state';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { getPageNavFromSlug, getRootContentNavModel } from 'app/features/storage/StorageFolderPage';
 import { DashboardRoutes, KioskMode, StoreState } from 'app/types';
@@ -34,7 +34,7 @@ import { SubMenu } from '../components/SubMenu/SubMenu';
 import { DashboardGrid } from '../dashgrid/DashboardGrid';
 import { liveTimer } from '../dashgrid/liveTimer';
 import { getTimeSrv } from '../services/TimeSrv';
-import { cleanUpDashboardAndVariables, loadDashboardJson } from '../state/actions';
+import { cleanUpDashboardAndVariables } from '../state/actions';
 import { initDashboard } from '../state/initDashboard';
 import { calculateNewPanelGridPos } from '../utils/panel';
 
@@ -74,7 +74,6 @@ const mapDispatchToProps = {
   notifyApp,
   cancelVariables,
   templateVarsChangedInUrl,
-  loadDashboardJson,
 };
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
@@ -129,42 +128,23 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
   }
 
   initDashboard() {
-    if (this.props.route.routeName === DashboardRoutes.Embedded) {
-      const { queryParams, route } = this.props;
-      const callbackUrl = queryParams.callbackUrl;
+    const { dashboard, match, queryParams } = this.props;
 
-      if (!callbackUrl) {
-        throw new Error('No callback URL provided');
-      }
-      this.props.loadDashboardJson(callbackUrl).then((dashboardJson) => {
-        const dashboardModel = new DashboardModel(dashboardJson);
-
-        this.props.initDashboard({
-          routeName: route.routeName,
-          fixUrl: false,
-          keybindingSrv: this.context.keybindings,
-          dashboardDto: { dashboard: dashboardModel, meta: { canEdit: true, isEmbedded: true } },
-        });
-      });
-    } else {
-      const { dashboard, match, queryParams } = this.props;
-
-      if (dashboard) {
-        this.closeDashboard();
-      }
-
-      this.props.initDashboard({
-        urlSlug: match.params.slug,
-        urlUid: match.params.uid,
-        urlType: match.params.type,
-        urlFolderUid: queryParams.folderUid,
-        panelType: queryParams.panelType,
-        routeName: this.props.route.routeName,
-        fixUrl: true,
-        accessToken: match.params.accessToken,
-        keybindingSrv: this.context.keybindings,
-      });
+    if (dashboard) {
+      this.closeDashboard();
     }
+
+    this.props.initDashboard({
+      urlSlug: match.params.slug,
+      urlUid: match.params.uid,
+      urlType: match.params.type,
+      urlFolderUid: queryParams.folderUid,
+      panelType: queryParams.panelType,
+      routeName: this.props.route.routeName,
+      fixUrl: true,
+      accessToken: match.params.accessToken,
+      keybindingSrv: this.context.keybindings,
+    });
 
     // small delay to start live updates
     setTimeout(this.updateLiveTimer, 250);
