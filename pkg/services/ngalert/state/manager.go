@@ -3,11 +3,13 @@ package state
 import (
 	"context"
 	"net/url"
+	"strconv"
 	"time"
 
 	"github.com/benbjohnson/clock"
 	"github.com/grafana/dskit/concurrency"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/attribute"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -257,6 +259,12 @@ func (st *Manager) ResetStateByRuleUID(ctx context.Context, rule *ngModels.Alert
 // ProcessEvalResults updates the current states that belong to a rule with the evaluation results.
 // if extraLabels is not empty, those labels will be added to every state. The extraLabels take precedence over rule labels and result labels
 func (st *Manager) ProcessEvalResults(ctx context.Context, evaluatedAt time.Time, alertRule *ngModels.AlertRule, results eval.Results, extraLabels data.Labels) []StateTransition {
+	start := time.Now()
+	labels := prometheus.Labels{"org": strconv.FormatInt(alertRule.OrgID, 10)}
+	if st.metrics != nil {
+		defer func() { st.metrics.Duration.With(labels).Observe(time.Since(start).Seconds()) }()
+	}
+
 	tracingCtx, span := st.tracer.Start(ctx, "alert rule state calculation")
 	defer span.End()
 	span.SetAttributes("rule_uid", alertRule.UID, attribute.String("rule_uid", alertRule.UID))
@@ -268,15 +276,16 @@ func (st *Manager) ProcessEvalResults(ctx context.Context, evaluatedAt time.Time
 
 	logger := st.log.FromContext(tracingCtx)
 	logger.Debug("State manager processing evaluation results", "resultCount", len(results))
-	states := st.setNextStateForRule(tracingCtx, alertRule, results, extraLabels, logger)
 
+	states := st.setNextStateForRule(tracingCtx, alertRule, results, extraLabels, logger)
 	span.AddEvents([]string{"message", "state_transitions"},
 		[]tracing.EventValue{
 			{Str: "results processed"},
 			{Num: int64(len(states))},
 		})
-
 	staleStates := st.deleteStaleStatesFromCache(ctx, logger, evaluatedAt, alertRule)
+
+	start = time.Now()
 	st.deleteAlertStates(tracingCtx, logger, staleStates)
 
 	if len(staleStates) > 0 {
@@ -287,12 +296,12 @@ func (st *Manager) ProcessEvalResults(ctx context.Context, evaluatedAt time.Time
 			})
 	}
 
+	stateSaveStart := time.Now()
 	st.saveAlertStates(tracingCtx, logger, states...)
-
-	span.AddEvents([]string{"message"},
-		[]tracing.EventValue{
-			{Str: "updated database"},
-		})
+	if st.metrics != nil {
+		st.metrics.SaveDuration.With(labels).Observe(time.Since(stateSaveStart).Seconds())
+	}
+	span.AddEvents([]string{"message"}, []tracing.EventValue{{Str: "updated database"}})
 
 	allChanges := append(states, staleStates...)
 	if st.historian != nil {

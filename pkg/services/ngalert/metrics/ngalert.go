@@ -25,6 +25,7 @@ type NGAlert struct {
 	// Registerer is used by subcomponents which register their own metrics.
 	Registerer prometheus.Registerer
 
+	eval                        *Eval
 	schedulerMetrics            *Scheduler
 	stateMetrics                *State
 	multiOrgAlertmanagerMetrics *MultiOrgAlertmanager
@@ -36,12 +37,17 @@ type NGAlert struct {
 func NewNGAlert(r prometheus.Registerer) *NGAlert {
 	return &NGAlert{
 		Registerer:                  r,
+		eval:                        NewEvalMetrics(r),
 		schedulerMetrics:            NewSchedulerMetrics(r),
 		stateMetrics:                NewStateMetrics(r),
 		multiOrgAlertmanagerMetrics: NewMultiOrgAlertmanagerMetrics(r),
 		apiMetrics:                  NewAPIMetrics(r),
 		historianMetrics:            NewHistorianMetrics(r),
 	}
+}
+
+func (ng *NGAlert) GetEvalMetrics() *Eval {
+	return ng.eval
 }
 
 func (ng *NGAlert) GetSchedulerMetrics() *Scheduler {

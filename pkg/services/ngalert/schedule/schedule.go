@@ -348,10 +348,6 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 	logger.Debug("Alert rule routine started")
 
 	orgID := fmt.Sprint(key.OrgID)
-	evalTotal := sch.metrics.EvalTotal.WithLabelValues(orgID)
-	evalDuration := sch.metrics.EvalDuration.WithLabelValues(orgID)
-	evalTotalFailures := sch.metrics.EvalFailures.WithLabelValues(orgID)
-	processDuration := sch.metrics.ProcessDuration.WithLabelValues(orgID)
 	sendDuration := sch.metrics.SendDuration.WithLabelValues(orgID)
 
 	notify := func(states []state.StateTransition) {
@@ -390,11 +386,7 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 			}
 		}
 
-		evalTotal.Inc()
-		evalDuration.Observe(dur.Seconds())
-
 		if err != nil || results.HasErrors() {
-			evalTotalFailures.Inc()
 			if results == nil {
 				results = append(results, eval.NewResultFromError(err, e.scheduledAt, dur))
 			}
@@ -433,7 +425,6 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 			results,
 			state.GetRuleExtraLabels(e.rule, e.folderTitle, !sch.disableGrafanaFolder),
 		)
-		processDuration.Observe(sch.clock.Now().Sub(start).Seconds())
 
 		start = sch.clock.Now()
 		alerts := state.FromStateTransitionToPostableAlerts(processedStates, sch.stateManager, sch.appURL)

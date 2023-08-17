@@ -15,12 +15,8 @@ const (
 type Scheduler struct {
 	Registerer                          prometheus.Registerer
 	BehindSeconds                       prometheus.Gauge
-	EvalTotal                           *prometheus.CounterVec
-	EvalFailures                        *prometheus.CounterVec
-	EvalDuration                        *prometheus.HistogramVec
-	ProcessDuration                     *prometheus.HistogramVec
-	SendDuration                        *prometheus.HistogramVec
 	GroupRules                          *prometheus.GaugeVec
+	SendDuration                        *prometheus.HistogramVec
 	SchedulePeriodicDuration            prometheus.Histogram
 	SchedulableAlertRules               prometheus.Gauge
 	SchedulableAlertRulesHash           prometheus.Gauge
@@ -38,47 +34,15 @@ func NewSchedulerMetrics(r prometheus.Registerer) *Scheduler {
 			Name:      "scheduler_behind_seconds",
 			Help:      "The total number of seconds the scheduler is behind.",
 		}),
-		// TODO: once rule groups support multiple rules, consider partitioning
-		// on rule group as well as tenant, similar to loki|cortex.
-		EvalTotal: promauto.With(r).NewCounterVec(
-			prometheus.CounterOpts{
+		// TODO: partition on rule group as well as tenant, similar to loki|cortex.
+		GroupRules: promauto.With(r).NewGaugeVec(
+			prometheus.GaugeOpts{
 				Namespace: Namespace,
 				Subsystem: Subsystem,
-				Name:      "rule_evaluations_total",
-				Help:      "The total number of rule evaluations.",
+				Name:      "rule_group_rules",
+				Help:      "The number of alert rules that are scheduled, both active and paused.",
 			},
-			[]string{"org"},
-		),
-		// TODO: once rule groups support multiple rules, consider partitioning
-		// on rule group as well as tenant, similar to loki|cortex.
-		EvalFailures: promauto.With(r).NewCounterVec(
-			prometheus.CounterOpts{
-				Namespace: Namespace,
-				Subsystem: Subsystem,
-				Name:      "rule_evaluation_failures_total",
-				Help:      "The total number of rule evaluation failures.",
-			},
-			[]string{"org"},
-		),
-		EvalDuration: promauto.With(r).NewHistogramVec(
-			prometheus.HistogramOpts{
-				Namespace: Namespace,
-				Subsystem: Subsystem,
-				Name:      "rule_evaluation_duration_seconds",
-				Help:      "The time to evaluate a rule.",
-				Buckets:   []float64{.01, .1, .5, 1, 5, 10, 15, 30, 60, 120, 180, 240, 300},
-			},
-			[]string{"org"},
-		),
-		ProcessDuration: promauto.With(r).NewHistogramVec(
-			prometheus.HistogramOpts{
-				Namespace: Namespace,
-				Subsystem: Subsystem,
-				Name:      "rule_process_evaluation_duration_seconds",
-				Help:      "The time to process the evaluation results for a rule.",
-				Buckets:   []float64{.01, .1, .5, 1, 5, 10, 15, 30, 60, 120, 180, 240, 300},
-			},
-			[]string{"org"},
+			[]string{"org", "state"},
 		),
 		SendDuration: promauto.With(r).NewHistogramVec(
 			prometheus.HistogramOpts{
@@ -89,16 +53,6 @@ func NewSchedulerMetrics(r prometheus.Registerer) *Scheduler {
 				Buckets:   []float64{.01, .1, .5, 1, 5, 10, 15, 30, 60, 120, 180, 240, 300},
 			},
 			[]string{"org"},
-		),
-		// TODO: partition on rule group as well as tenant, similar to loki|cortex.
-		GroupRules: promauto.With(r).NewGaugeVec(
-			prometheus.GaugeOpts{
-				Namespace: Namespace,
-				Subsystem: Subsystem,
-				Name:      "rule_group_rules",
-				Help:      "The number of alert rules that are scheduled, both active and paused.",
-			},
-			[]string{"org", "state"},
 		),
 		SchedulePeriodicDuration: promauto.With(r).NewHistogram(
 			prometheus.HistogramOpts{

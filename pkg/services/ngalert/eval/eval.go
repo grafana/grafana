@@ -20,8 +20,10 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 var logger = log.New("ngalert.eval")
@@ -46,13 +48,27 @@ type expressionService interface {
 }
 
 type conditionEvaluator struct {
+	orgId             int64
 	pipeline          expr.DataPipeline
 	expressionService expressionService
 	condition         models.Condition
 	evalTimeout       time.Duration
+	metrics           *metrics.Eval
 }
 
 func (r *conditionEvaluator) EvaluateRaw(ctx context.Context, now time.Time) (resp *backend.QueryDataResponse, err error) {
+	start := time.Now()
+	labels := prometheus.Labels{"org": strconv.FormatInt(r.orgId, 10)}
+	if r.metrics != nil {
+		defer func() {
+			r.metrics.QueryDuration.With(labels).Observe(time.Now().Sub(start).Seconds())
+			r.metrics.Total.With(labels).Inc()
+			if err != nil {
+				r.metrics.Failures.With(labels).Inc()
+			}
+		}()
+	}
+
 	defer func() {
 		if e := recover(); e != nil {
 			logger.FromContext(ctx).Error("alert rule panic", "error", e, "stack", string(debug.Stack()))
@@ -76,12 +92,27 @@ func (r *conditionEvaluator) EvaluateRaw(ctx context.Context, now time.Time) (re
 
 // Evaluate evaluates the condition and converts the response to Results
 func (r *conditionEvaluator) Evaluate(ctx context.Context, now time.Time) (Results, error) {
+	start := time.Now()
+	labels := prometheus.Labels{"org": strconv.FormatInt(r.orgId, 10)}
+	if r.metrics != nil {
+		defer func() { r.metrics.Duration.With(labels).Observe(time.Now().Sub(start).Seconds()) }()
+	}
+
 	response, err := r.EvaluateRaw(ctx, now)
 	if err != nil {
 		return nil, err
 	}
+
+	processDurationStart := time.Now()
+	if r.metrics != nil {
+		defer func() {
+			r.metrics.ProcessDuration.With(labels).Observe(time.Now().Sub(processDurationStart).Seconds())
+		}()
+	}
+
 	execResults := queryDataResponseToExecutionResults(r.condition, response)
-	return evaluateExecutionResult(execResults, now), nil
+	results := evaluateExecutionResult(execResults, now)
+	return results, nil
 }
 
 type evaluatorImpl struct {
@@ -89,6 +120,7 @@ type evaluatorImpl struct {
 	dataSourceCache   datasources.CacheService
 	expressionService *expr.Service
 	pluginsStore      plugins.Store
+	metrics           *metrics.Eval
 }
 
 func NewEvaluatorFactory(
@@ -96,12 +128,14 @@ func NewEvaluatorFactory(
 	datasourceCache datasources.CacheService,
 	expressionService *expr.Service,
 	pluginsStore plugins.Store,
+	metrics *metrics.Eval,
 ) EvaluatorFactory {
 	return &evaluatorImpl{
 		evaluationTimeout: cfg.EvaluationTimeout,
 		dataSourceCache:   datasourceCache,
 		expressionService: expressionService,
 		pluginsStore:      pluginsStore,
+		metrics:           metrics,
 	}
 }
 
@@ -708,10 +742,12 @@ func (e *evaluatorImpl) create(condition models.Condition, req *expr.Request) (C
 	for _, node := range pipeline {
 		if node.RefID() == condition.Condition {
 			return &conditionEvaluator{
+				orgId:             req.OrgId,
 				pipeline:          pipeline,
 				expressionService: e.expressionService,
 				condition:         condition,
 				evalTimeout:       e.evaluationTimeout,
+				metrics:           e.metrics,
 			}, nil
 		}
 		conditions = append(conditions, node.RefID())
