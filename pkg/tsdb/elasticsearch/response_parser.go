@@ -162,14 +162,23 @@ func processLogsResponse(res *es.SearchResponse, target *Query, configuredFields
 	idIdx := slices.IndexFunc(fields, func(f *data.Field) bool {
 		return f.Name == "_id"
 	})
-	if idIdx != -1 {
+	indexIdx := slices.IndexFunc(fields, func(f *data.Field) bool {
+		return f.Name == "_index"
+	})
+	if idIdx != -1 && indexIdx != -1 {
 		idField := fields[idIdx]
-		fieldVector := make([]*string, idField.Len())
-		for i := 0; i < idField.Len(); i++ {
-			fieldVector[i] = idField.At(i).(*string)
+		indexField := fields[indexIdx]
+
+		// safeguard to only add this if index and id field have the same length
+		if idField.Len() == indexField.Len() {
+			fieldVector := make([]*string, idField.Len())
+			for i := 0; i < idField.Len(); i++ {
+				id := *indexField.At(i).(*string) + "#" + *idField.At(i).(*string)
+				fieldVector[i] = &id
+			}
+			idField = data.NewField("id", nil, fieldVector)
+			fields = append(fields, idField)
 		}
-		idField = data.NewField("id", nil, fieldVector)
-		fields = append(fields, idField)
 	}
 
 	frames := data.Frames{}
