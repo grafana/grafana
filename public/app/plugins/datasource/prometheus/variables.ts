@@ -18,7 +18,6 @@ export class PrometheusVariableSupport extends CustomVariableSupport<PrometheusD
     private readonly timeSrv: TimeSrv = getTimeSrv()
   ) {
     super();
-    this.query = this.query.bind(this);
   }
 
   editor = PromVariableQueryEditor;

@@ -122,7 +122,7 @@ class StandardQueryRunner implements QueryRunner {
       return runRequest(datasource, request);
     }
 
-    return runRequest(datasource, request, datasource.variables.query);
+    return runRequest(datasource, request, datasource.variables.query.bind(datasource.variables));
   }
 }
 
@@ -146,7 +146,7 @@ class CustomQueryRunner implements QueryRunner {
       return getEmptyMetricFindValueObservable();
     }
 
-    return runRequest(datasource, request, datasource.variables.query);
+    return runRequest(datasource, request, datasource.variables.query.bind(datasource.variables));
   }
 }
 
