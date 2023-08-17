@@ -18,7 +18,7 @@ const (
 )
 
 const (
-	hashedGrafanaVersion = "9.2.0-12345pre"
+	hashedGrafanaVersion = "9.2.0-12345"
 	versionedBranch      = "v9.2.x"
 )
 
