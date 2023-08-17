@@ -173,7 +173,7 @@ func TestResponseSnapshots(t *testing.T) {
 				// we make a copy of the variable to avoid this linter-warning:
 				// "G601: Implicit memory aliasing in for loop."
 				dataResCopy := dataRes
-				experimental.CheckGoldenJSONResponse(t, "testdata_response", goldenFileName, &dataResCopy, true)
+				experimental.CheckGoldenJSONResponse(t, "testdata_response", goldenFileName, &dataResCopy, false)
 			}
 		})
 	}
