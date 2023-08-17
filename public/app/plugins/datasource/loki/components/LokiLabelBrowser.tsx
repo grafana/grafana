@@ -528,9 +528,9 @@ export class UnthemedLokiLabelBrowser extends React.Component<BrowserProps, Brow
         </div>
         <div className={styles.footerSectionStyles}>
           <Label>3. Resulting selector</Label>
-          <div aria-label="selector" className={styles.selector}>
+          <pre aria-label="selector" className={styles.selector}>
             {selector}
-          </div>
+          </pre>
           {validationStatus && <div className={styles.validationStatus}>{validationStatus}</div>}
           <div className={cx(styles.status, (status || error) && styles.statusShowing)}>
             <span className={error ? styles.error : ''}>{error || status}</span>
