@@ -28,7 +28,6 @@ import {
 import { StateManagerBase } from 'app/core/services/StateManagerBase';
 import { dashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
-import { getLibraryPanel } from 'app/features/library-panels/state/api';
 
 import { DashboardScene } from './DashboardScene';
 import { LibraryVizPanel } from './LibraryVizPanel';
@@ -302,28 +301,6 @@ export function createVizPanelFromPanelModel(panel: PanelModel) {
       }),
     }),
   });
-}
-
-export async function loadLibraryPanelFromPanelModel(panel: PanelModel, updatePanel: (panel: VizPanel) => void) {
-  let vizPanel = new VizPanel({
-    title: panel.title,
-  });
-  try {
-    const libPanel = await getLibraryPanel(panel.libraryPanel!.uid, true);
-    const libPanelModel = new PanelModel(libPanel.model);
-    vizPanel.setState({
-      options: libPanelModel.options ?? {},
-      fieldConfig: libPanelModel.fieldConfig,
-      pluginVersion: libPanelModel.pluginVersion,
-      displayMode: libPanelModel.transparent ? 'transparent' : undefined,
-      $data: createPanelDataProvider(libPanelModel),
-    });
-  } catch (err) {
-    vizPanel.setState({
-      pluginLoadError: 'Unable to load library panel: ' + panel.libraryPanel!.uid,
-    });
-  }
-  updatePanel(vizPanel);
 }
 
 let loader: DashboardLoader | null = null;
