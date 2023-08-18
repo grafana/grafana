@@ -114,7 +114,8 @@ func (api *AccessControlAPI) searchUserPermissions(c *contextmodel.ReqContext) r
 		return response.JSON(http.StatusBadRequest, "provide one of 'action' or 'actionPrefix'")
 	}
 
-	permissions, err := api.Service.SearchUserPermissions(c.Req.Context(), c.OrgID, searchOptions)
+	permissions, err := api.Service.SearchUserPermissions(c.Req.Context(),
+		c.SignedInUser.GetOrgID(), searchOptions)
 	if err != nil {
 		response.Error(http.StatusInternalServerError, "could not search user permissions", err)
 	}

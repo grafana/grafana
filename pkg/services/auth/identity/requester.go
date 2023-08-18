@@ -53,6 +53,8 @@ type Requester interface {
 
 	// Legacy
 
+	// HasRole returns true if the active entity has the given role in the active organization.
+	HasRole(role roletype.RoleType) bool
 	// GetCacheKey returns a unique key for the entity.
 	// Add an extra prefix to avoid collisions with other caches
 	GetCacheKey() (string, error)
