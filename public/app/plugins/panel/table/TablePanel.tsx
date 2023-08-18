@@ -6,6 +6,7 @@ import { PanelDataErrorView } from '@grafana/runtime';
 import { Select, Table, usePanelContext, useTheme2 } from '@grafana/ui';
 import { TableSortByFieldState } from '@grafana/ui/src/components/Table/types';
 
+import { hasDeprecatedParentRowIndex, migrateFromParentRowIndexToNestedFrames } from './migrations';
 import { Options } from './panelcfg.gen';
 
 interface Props extends PanelProps<Options> {}
@@ -15,16 +16,15 @@ export function TablePanel(props: Props) {
 
   const theme = useTheme2();
   const panelContext = usePanelContext();
-  const frames = data.series;
-  const mainFrames = frames.filter((f) => f.meta?.custom?.parentRowIndex === undefined);
-  const subFrames = frames.filter((f) => f.meta?.custom?.parentRowIndex !== undefined);
-  const count = mainFrames?.length;
-  const hasFields = mainFrames[0]?.fields.length;
-  const currentIndex = getCurrentFrameIndex(mainFrames, options);
-  const main = mainFrames[currentIndex];
+  const frames = hasDeprecatedParentRowIndex(data.series)
+    ? migrateFromParentRowIndexToNestedFrames(data.series)
+    : data.series;
+  const count = frames?.length;
+  const hasFields = frames[0]?.fields.length;
+  const currentIndex = getCurrentFrameIndex(frames, options);
+  const main = frames[currentIndex];
 
   let tableHeight = height;
-  let subData = subFrames;
 
   if (!count || !hasFields) {
     return <PanelDataErrorView panelId={id} fieldConfig={fieldConfig} data={data} />;
@@ -35,7 +35,6 @@ export function TablePanel(props: Props) {
     const padding = theme.spacing.gridSize;
 
     tableHeight = height - inputHeight - padding;
-    subData = subFrames.filter((f) => f.refId === main.refId);
   }
 
   const tableElement = (
@@ -52,7 +51,6 @@ export function TablePanel(props: Props) {
       onCellFilterAdded={panelContext.onAddAdHocFilter}
       footerOptions={options.footer}
       enablePagination={options.footer?.enablePagination}
-      subData={subData}
       cellHeight={options.cellHeight}
       timeRange={timeRange}
     />
@@ -62,7 +60,7 @@ export function TablePanel(props: Props) {
     return tableElement;
   }
 
-  const names = mainFrames.map((frame, index) => {
+  const names = frames.map((frame, index) => {
     return {
       label: getFrameDisplayName(frame),
       value: index,

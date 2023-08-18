@@ -12,7 +12,6 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/network"
-	"github.com/grafana/grafana/pkg/login"
 	"github.com/grafana/grafana/pkg/middleware/cookies"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/authn"
@@ -38,31 +37,39 @@ var getViewIndex = func() string {
 	return viewIndex
 }
 
+var (
+	errAbsoluteRedirectTo  = errors.New("absolute URLs are not allowed for redirect_to cookie value")
+	errInvalidRedirectTo   = errors.New("invalid redirect_to cookie value")
+	errForbiddenRedirectTo = errors.New("forbidden redirect_to cookie value")
+)
+
 func (hs *HTTPServer) ValidateRedirectTo(redirectTo string) error {
 	to, err := url.Parse(redirectTo)
 	if err != nil {
-		return login.ErrInvalidRedirectTo
+		return errInvalidRedirectTo
 	}
+
 	if to.IsAbs() {
-		return login.ErrAbsoluteRedirectTo
+		return errAbsoluteRedirectTo
 	}
 
 	if to.Host != "" {
-		return login.ErrForbiddenRedirectTo
+		return errForbiddenRedirectTo
 	}
 
 	// path should have exactly one leading slash
 	if !strings.HasPrefix(to.Path, "/") {
-		return login.ErrForbiddenRedirectTo
+		return errForbiddenRedirectTo
 	}
+
 	if strings.HasPrefix(to.Path, "//") {
-		return login.ErrForbiddenRedirectTo
+		return errForbiddenRedirectTo
 	}
 
 	// when using a subUrl, the redirect_to should start with the subUrl (which contains the leading slash), otherwise the redirect
 	// will send the user to the wrong location
 	if hs.Cfg.AppSubURL != "" && !strings.HasPrefix(to.Path, hs.Cfg.AppSubURL+"/") {
-		return login.ErrInvalidRedirectTo
+		return errInvalidRedirectTo
 	}
 
 	return nil
