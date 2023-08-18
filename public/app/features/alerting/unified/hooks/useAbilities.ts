@@ -11,11 +11,12 @@ import { GRAFANA_DATASOURCE_NAME } from '../utils/datasource';
 
 export enum AlertmanagerAction {
   // configuration
+  ViewExternalConfiguration = 'View-external-configuration',
   UpdateExternalConfiguration = 'update-external-configuration',
 
   // contact points
   CreateContactPoint = 'create-contact-point',
-  ViewContactPoints = 'view-contact-points',
+  ViewContactPoint = 'view-contact-point',
   UpdateContactPoint = 'edit-contact-points',
   DeleteContactPoint = 'delete-contact-point',
   ExportContactPoint = 'export-contact-point',
@@ -57,9 +58,9 @@ export function useAlertSourceAbilities(): Abilities<AlertSourceAction> {
   // TODO some sort of memoization per datasource?
 
   return {
-    [AlertSourceAction.CreateAlertRule]: [true, true],
+    [AlertSourceAction.CreateAlertRule]: [true, true], // TODO
     [AlertSourceAction.ViewAlertRule]: [true, ctx.hasAccess(AccessControlAction.AlertingRuleRead, true)],
-    [AlertSourceAction.CreateExternalAlertRule]: [true, true],
+    [AlertSourceAction.CreateExternalAlertRule]: [true, true], // TODO
     [AlertSourceAction.ViewExternalAlertRule]: [
       true,
       ctx.hasAccess(AccessControlAction.AlertingRuleExternalRead, true),
@@ -91,6 +92,10 @@ export function useAlertmanagerAbilities(): Abilities<AlertmanagerAction> {
   // list out all of the abilities, and if the user has permissions to perform them
   const abilities: Abilities<AlertmanagerAction> = {
     // -- configuration --
+    [AlertmanagerAction.ViewExternalConfiguration]: [
+      true, // all alertmanager flavours support reading / viewing the configuration
+      ctx.hasAccess(AccessControlAction.AlertingNotificationsExternalRead, ctx.hasRole(OrgRole.Admin)),
+    ],
     [AlertmanagerAction.UpdateExternalConfiguration]: [
       hasConfigurationAPI,
       ctx.hasAccess(AccessControlAction.AlertingNotificationsExternalWrite, ctx.hasRole(OrgRole.Admin)),
@@ -100,7 +105,7 @@ export function useAlertmanagerAbilities(): Abilities<AlertmanagerAction> {
       hasConfigurationAPI,
       ctx.hasAccess(notificationsPermissions.create, ctx.hasRole(OrgRole.Editor)),
     ],
-    [AlertmanagerAction.ViewContactPoints]: [
+    [AlertmanagerAction.ViewContactPoint]: [
       hasConfigurationAPI,
       ctx.hasAccess(notificationsPermissions.read, ctx.hasRole(OrgRole.Viewer)),
     ],
