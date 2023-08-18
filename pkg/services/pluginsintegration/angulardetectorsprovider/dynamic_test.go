@@ -108,6 +108,20 @@ func TestDynamicAngularDetectorsProvider(t *testing.T) {
 			require.False(t, gcom.httpCalls.called(), "gcom api should not be called")
 			require.Empty(t, svc.ProvideDetectors(context.Background()))
 		})
+
+		t.Run("returns error if status code is outside 2xx range", func(t *testing.T) {
+			errScenario := &gcomScenario{httpHandlerFunc: func(w http.ResponseWriter, req *http.Request) {
+				// Return a valid json response so json.Unmarshal succeeds
+				// but still return 500 status code
+				w.WriteHeader(http.StatusInternalServerError)
+				_, _ = w.Write([]byte("[]"))
+			}}
+			errSrv := errScenario.newHTTPTestServer()
+			t.Cleanup(errSrv.Close)
+			svc := provideDynamic(t, errSrv.URL)
+			_, err := svc.fetch(context.Background())
+			require.Error(t, err)
+		})
 	})
 
 	t.Run("updateDetectors", func(t *testing.T) {
