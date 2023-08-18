@@ -47,6 +47,7 @@ List the appropriate combination of:
 - Cloud Free
 - Cloud Pro
 - Cloud Advanced
+Or if all three:
 - Cloud
 
 ## _`DESCRIPTION`_
