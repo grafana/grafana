@@ -3,7 +3,8 @@ import { isEmpty } from 'lodash';
 import React, { FC, useEffect } from 'react';
 import { useFormContext, FieldError, DeepMap } from 'react-hook-form';
 
-import { Checkbox, Field, Input, InputControl, RadioButtonList, Select, TextArea } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
+import { Checkbox, Field, Input, InputControl, RadioButtonList, Select, TextArea, useStyles2 } from '@grafana/ui';
 import { NotificationChannelOption } from 'app/types';
 
 import { KeyValueMapInput } from './KeyValueMapInput';
@@ -58,7 +59,7 @@ export const OptionField: FC<Props> = ({
   }
   return (
     <Field
-      label={option.element !== 'checkbox' ? option.label : undefined}
+      label={option.element !== 'checkbox' && option.element !== 'radio' ? option.label : undefined}
       description={option.description || undefined}
       invalid={!!error}
       error={error?.message}
@@ -87,6 +88,7 @@ const OptionInput: FC<Props & { id: string; pathIndex?: string }> = ({
   readOnly = false,
   customValidator,
 }) => {
+  const styles = useStyles2(getStyles);
   const { control, register, unregister, getValues } = useFormContext();
   const name = `${pathPrefix}${option.propertyName}`;
 
@@ -153,21 +155,24 @@ const OptionInput: FC<Props & { id: string; pathIndex?: string }> = ({
       );
     case 'radio':
       return (
-        <InputControl
-          render={({ field: { ref, ...field } }) => (
-            <RadioButtonList disabled={readOnly} options={option.selectOptions ?? []} {...field} />
-          )}
-          control={control}
-          defaultValue={option.defaultValue?.value}
-          name={name}
-          rules={{
-            required: option.required ? 'Option is required' : false,
-            validate: {
-              validationRule: (v) => (option.validationRule ? validateOption(v, option.validationRule) : true),
-              customValidator: (v) => (customValidator ? customValidator(v) : true),
-            },
-          }}
-        />
+        <>
+          <legend className={styles.legend}>{option.label}</legend>
+          <InputControl
+            render={({ field: { ref, ...field } }) => (
+              <RadioButtonList disabled={readOnly} options={option.selectOptions ?? []} {...field} />
+            )}
+            control={control}
+            defaultValue={option.defaultValue?.value}
+            name={name}
+            rules={{
+              required: option.required ? 'Option is required' : false,
+              validate: {
+                validationRule: (v) => (option.validationRule ? validateOption(v, option.validationRule) : true),
+                customValidator: (v) => (customValidator ? customValidator(v) : true),
+              },
+            }}
+          />
+        </>
       );
     case 'textarea':
       return (
@@ -209,11 +214,14 @@ const OptionInput: FC<Props & { id: string; pathIndex?: string }> = ({
   }
 };
 
-const styles = {
+const getStyles = (theme: GrafanaTheme2) => ({
   checkbox: css`
     height: auto; // native checkbox has fixed height which does not take into account description
   `,
-};
+  legend: css`
+    font-size: ${theme.typography.h6.fontSize};
+  `,
+});
 
 const validateOption = (value: string, validationRule: string) => {
   return RegExp(validationRule).test(value) ? true : 'Invalid format';

@@ -9,6 +9,7 @@ export interface RadioButtonDotProps<T> {
   id: string;
   name: string;
   checked?: boolean;
+  value?: T;
   disabled?: boolean;
   label: React.ReactNode;
   description?: string;
@@ -20,6 +21,7 @@ export const RadioButtonDot = <T extends string | number | readonly string[]>({
   name,
   label,
   checked,
+  value,
   disabled,
   description,
   onChange,
@@ -33,6 +35,7 @@ export const RadioButtonDot = <T extends string | number | readonly string[]>({
         name={name}
         type="radio"
         checked={checked}
+        value={value}
         disabled={disabled}
         className={styles.input}
         onChange={() => onChange && onChange(id)}
