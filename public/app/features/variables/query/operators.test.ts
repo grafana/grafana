@@ -80,8 +80,7 @@ describe('operators', () => {
       ],
     });
 
-    // it.each wouldn't work here as we need the done callback
-    [
+    it.each([
       { series: null, expected: [] },
       { series: undefined, expected: [] },
       { series: [], expected: [] },
@@ -127,17 +126,16 @@ describe('operators', () => {
           { text: 'C', value: 'C', expandable: true },
         ],
       },
-    ].map((scenario) => {
-      it(`when called with series:${JSON.stringify(scenario.series, null, 0)}`, async () => {
-        const { series, expected } = scenario;
-        const panelData = { series } as PanelData;
-        const observable = of(panelData).pipe(toMetricFindValues());
-
-        await expect(observable).toEmitValuesWith((received) => {
-          const value = received[0];
-          expect(value).toEqual(expected);
-        });
-      });
+      {
+        series: [[{ id: 'foo' }, { id: 'bar' }]],
+        expected: [
+          { text: 'foo', value: 'foo' },
+          { text: 'bar', value: 'bar' },
+        ],
+      },
+    ])('%# when called with: %j', ({ series, expected }) => {
+      const panelData = { series } as PanelData;
+      expect(toMetricFindValues(panelData)).toEqual(expected);
     });
 
     describe('when called without metric find values and string fields', () => {
