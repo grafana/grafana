@@ -91,13 +91,6 @@ type RequestURIKey struct{}
 // ---------------------
 // COMMANDS
 
-type UpsertUserCommand struct {
-	ReqContext   *contextmodel.ReqContext
-	ExternalUser *ExternalUserInfo
-	UserLookupParams
-	SignupAllowed bool
-}
-
 type SetAuthInfoCommand struct {
 	AuthModule string
 	AuthId     string
