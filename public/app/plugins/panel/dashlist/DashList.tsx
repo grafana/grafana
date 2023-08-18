@@ -11,7 +11,7 @@ import {
   UrlQueryValue,
   urlUtil,
 } from '@grafana/data';
-import { CustomScrollbar, stylesFactory, useStyles2 } from '@grafana/ui';
+import { CustomScrollbar, stylesFactory, useStyles2, Tooltip } from '@grafana/ui';
 import { Icon, IconProps } from '@grafana/ui/src/components/Icon/Icon';
 import { getFocusStyles } from '@grafana/ui/src/themes/mixins';
 import { getConfig } from 'app/core/config';
@@ -183,7 +183,7 @@ export function DashList(props: PanelProps<Options>) {
                 {dash.folderTitle && <div className={css.dashlistFolder}>{dash.folderTitle}</div>}
               </div>
               <IconToggle
-                aria-label={`Star dashboard "${dash.title}".`}
+                aria-label={`${dash.isStarred ? 'Unstar' : 'Star'} dashboard "${dash.title}"`}
                 className={css.dashlistStar}
                 enabled={{ name: 'favorite', type: 'mono' }}
                 disabled={{ name: 'star', type: 'default' }}
@@ -240,7 +240,7 @@ function IconToggle({
   const iconPropsOverride = checked ? enabled : disabled;
   const iconProps = { ...otherProps, ...iconPropsOverride };
   const styles = useStyles2(getCheckboxStyles);
-  return (
+  const toggle = (
     <label className={styles.wrapper}>
       <input
         type="checkbox"
@@ -252,6 +252,10 @@ function IconToggle({
       <Icon className={cx(styles.icon, className)} {...iconProps} />
     </label>
   );
+  if (ariaLabel) {
+    return <Tooltip content={ariaLabel}>{toggle}</Tooltip>;
+  }
+  return toggle;
 }
 
 export const getCheckboxStyles = stylesFactory((theme: GrafanaTheme2) => {
