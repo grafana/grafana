@@ -405,14 +405,9 @@ async function getDataSource(
   datasource: DataSourceRef | string | DataSourceApi | null,
   scopedVars: ScopedVars
 ): Promise<DataSourceApi> {
-  if (!config.publicDashboardAccessToken && datasource && typeof datasource === 'object' && 'query' in datasource) {
+  if (datasource && typeof datasource === 'object' && 'query' in datasource) {
     return datasource;
   }
 
-  const ds = await getDatasourceSrv().get(datasource, scopedVars);
-  if (config.publicDashboardAccessToken) {
-    return new PublicDashboardDataSource(ds);
-  }
-
-  return ds;
+  return await getDatasourceSrv().get(datasource, scopedVars);
 }
