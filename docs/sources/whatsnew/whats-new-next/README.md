@@ -2,7 +2,7 @@
 
 To have a feature presented in [What's New in Grafana Cloud](https://grafana.com/docs/grafana-cloud/whatsnew/), add an entry to the [`index.md`](./index.md) file in this directory.
 
-Use the following template, replace any `<VARIABLE>` with the appropriate text, explained later:
+Use the following template, replace any `<VARIABLE>` with the appropriate text (explained after the template):
 
 ```markdown
 ## <FEATURE>
@@ -22,7 +22,7 @@ The information is intentionally commented out so that it isn't displayed in the
 
 ## _`AVAILABILITY`_
 
-One of:
+One or both of:
 
 - OSS
 - Enterprise
@@ -32,7 +32,7 @@ The information is intentionally commented out so that it isn't displayed in the
 
 ## _`CLOUD AVAILABILITY`_
 
-One of:
+One of the following [release life cycle stages](https://grafana.com/docs/release-life-cycle/):
 
 - Generally available
 - Available in public preview
