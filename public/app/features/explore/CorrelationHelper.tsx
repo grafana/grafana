@@ -1,15 +1,24 @@
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 
-import { Button, Collapse, Alert, Field, Input } from '@grafana/ui';
+import { Collapse, Alert, Field, Input } from '@grafana/ui';
 import { useDispatch } from 'app/types';
 
-import { saveCurrentCorrelation } from './state/query';
+import { changeCorrelationLabel } from './state/main';
 
 export const CorrelationHelper = ({ vars }: { vars: Array<[string, string]> }) => {
   const dispatch = useDispatch();
-  const { register, getValues } = useForm();
+  const { register, watch } = useForm();
   const [isOpen, setIsOpen] = useState(false);
+
+  React.useEffect(() => {
+    const subscription = watch((value, { name, type }) =>
+    {
+      dispatch(changeCorrelationLabel({label: value.label, description: value.description}));
+    }
+    )
+    return () => subscription.unsubscribe()
+  }, [dispatch, watch])
 
   return (
     <Alert title="Correlation Details" severity="info">
@@ -34,20 +43,6 @@ export const CorrelationHelper = ({ vars }: { vars: Array<[string, string]> }) =
           <Input {...register('description')} />
         </Field>
       </Collapse>
-      Once you&#39;re happy with your setup, click{' '}
-      <Button
-        onClick={() => {
-          const values = getValues();
-          dispatch(
-            saveCurrentCorrelation(
-              values.label === '' ? undefined : values.label,
-              values.description === '' ? undefined : values.description
-            )
-          );
-        }}
-      >
-        Save
-      </Button>
     </Alert>
   );
 };

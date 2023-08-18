@@ -10,6 +10,7 @@ import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { useDispatch, useSelector } from 'app/types';
 import { ExploreQueryParams } from 'app/types/explore';
 
+import { CorrelationEditorModeBar } from './CorrelationEditorModeBar';
 import { ExploreActions } from './ExploreActions';
 import { ExplorePaneContainer } from './ExplorePaneContainer';
 import { useExplorePageTitle } from './hooks/useExplorePageTitle';
@@ -77,7 +78,7 @@ export default function ExplorePage(props: GrafanaRouteComponentProps<{}, Explor
       })}
     >
       <ExploreActions />
-
+      {isCorrelationsEditorMode && <CorrelationEditorModeBar panes={panes} />}
       <SplitPaneWrapper
         splitOrientation="vertical"
         paneSize={widthCalc}
@@ -110,10 +111,13 @@ const getStyles = (theme: GrafanaTheme2) => {
       position: relative;
     `,
     correlationsEditorIndicator: css`
-      border-top: 8px solid ${theme.colors.primary.main};
       border-left: 4px solid ${theme.colors.primary.main};
       border-right: 4px solid ${theme.colors.primary.main};
       border-bottom: 4px solid ${theme.colors.primary.main};
+    `,
+    correlationEditorTop: css`
+      background-color: ${theme.colors.primary.main};
+      margin-top: 3px;
     `,
   };
 };

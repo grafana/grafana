@@ -55,6 +55,14 @@ export interface ExploreState {
   correlationsEditorMode: boolean;
 
   /**
+   * Details on the correlation if one is being created
+   */
+  correlationDetails?: {
+    label: string;
+    description: string;
+  }
+
+  /**
    * On a split manual resize, we calculate which pane is larger, or if they are roughly the same size. If undefined, it is not split or they are roughly the same size
    */
   largerExploreId?: keyof ExploreState['panes'];

@@ -112,6 +112,14 @@ export const changeCorrelationsEditorMode = createAction<{
   correlationsEditorMode: boolean;
 }>('explore/changeCorrelationsEditorMode');
 
+/**
+ * Moves explore into and out of correlations editor mode
+ */
+export const changeCorrelationLabel = createAction<{
+  label: string;
+  description: string;
+}>('explore/changeCorrelationLabel');
+
 export interface NavigateToExploreDependencies {
   getDataSourceSrv: () => DataSourceSrv;
   getTimeSrv: () => TimeSrv;
@@ -154,6 +162,7 @@ export const initialExploreState: ExploreState = {
   largerExploreId: undefined,
   maxedExploreId: undefined,
   evenSplitPanes: true,
+  correlationDetails: undefined
 };
 
 /**
@@ -266,6 +275,17 @@ export const exploreReducer = (state = initialExploreState, action: AnyAction): 
     return {
       ...state,
       correlationsEditorMode,
+    };
+  }
+
+  if (changeCorrelationLabel.match(action)) {
+    const { label, description } = action.payload;
+    return {
+      ...state,
+      correlationDetails: {
+        label: label,
+        description: description
+      },
     };
   }
 

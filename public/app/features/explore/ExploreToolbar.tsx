@@ -25,8 +25,7 @@ import {
   splitClose,
   splitOpen,
   maximizePaneAction,
-  evenPaneResizeAction,
-  changeCorrelationsEditorMode,
+  evenPaneResizeAction
 } from './state/main';
 import { cancelQueries, runQueries, selectIsWaitingForData } from './state/query';
 import { isSplit, selectCorrelationEditorMode, selectPanesEntries } from './state/selectors';
@@ -137,27 +136,6 @@ export function ExploreToolbar({ exploreId, topOfViewRef, onChangeTime }: Props)
     />,
     <div style={{ flex: 1 }} key="spacer0" />,
   ];
-
-  if (isCorrelationsEditorMode) {
-    navBarActions.push(
-      <DashNavButton
-        key="x"
-        tooltip="Exit Correlations Editor Mode"
-        icon="times"
-        onClick={() => {
-          dispatch(changeCorrelationsEditorMode({ correlationsEditorMode: false }));
-          panes.forEach((pane) => {
-            dispatch(removeCorrelationData(pane[0]));
-            dispatch(runQueries({ exploreId: pane[0] }));
-          });
-        }}
-        aria-label="exit correlations editor mode"
-      >
-        {' '}
-        Exit Correlation Editor
-      </DashNavButton>
-    );
-  }
 
   return (
     <div ref={topOfViewRef}>

@@ -106,8 +106,7 @@ export const decorateWithCorrelations = ({
     if (isCorrelationsEditorMode) {
       for (const frame of data.series) {
         for (const field of frame.fields) {
-          field.config.links =
-            field.config.links?.filter((link) => link.origin !== DataLinkConfigOrigin.ExploreCorrelationsEditor) || [];
+          field.config.links = []; // hide all previous links, we only want to show fake correlations in this view
 
           const availableVars: Record<string, string> = {};
           frame.fields.map((field) => {

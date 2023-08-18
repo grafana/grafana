@@ -14,3 +14,5 @@ export const isSplit = createSelector(selectPanesEntries, (panes) => panes.lengt
 export const getExploreItemSelector = (exploreId: string) => createSelector(selectPanes, (panes) => panes[exploreId]);
 
 export const selectCorrelationEditorMode = (state: Pick<StoreState, 'explore'>) => state.explore.correlationsEditorMode;
+
+export const selectCorrelationDetails = (state: Pick<StoreState, 'explore'>) => state.explore.correlationDetails;
