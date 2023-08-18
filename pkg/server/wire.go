@@ -352,7 +352,7 @@ var wireBasicSet = wire.NewSet(
 	wire.Bind(new(tag.Service), new(*tagimpl.Service)),
 	authnimpl.ProvideService,
 	wire.Bind(new(authn.Service), new(*authnimpl.Service)),
-	wire.Bind(new(authn.IdentitySyncronizer), new(*authnimpl.Service)),
+	wire.Bind(new(authn.IdentitySynchronizer), new(*authnimpl.Service)),
 	supportbundlesimpl.ProvideService,
 	grafanaapiserver.WireSet,
 	oasimpl.ProvideService,

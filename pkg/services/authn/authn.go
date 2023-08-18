@@ -84,7 +84,7 @@ type Service interface {
 	RegisterClient(c Client)
 }
 
-type IdentitySyncronizer interface {
+type IdentitySynchronizer interface {
 	SyncIdentity(ctx context.Context, identity *Identity) error
 }
 

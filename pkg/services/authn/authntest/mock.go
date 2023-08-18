@@ -7,7 +7,7 @@ import (
 )
 
 var _ authn.Service = new(MockService)
-var _ authn.IdentitySyncronizer = new(MockService)
+var _ authn.IdentitySynchronizer = new(MockService)
 
 type MockService struct {
 	SyncIdentityFunc func(ctx context.Context, identity *authn.Identity) error

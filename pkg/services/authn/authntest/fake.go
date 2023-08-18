@@ -7,7 +7,7 @@ import (
 )
 
 var _ authn.Service = new(FakeService)
-var _ authn.IdentitySyncronizer = new(FakeService)
+var _ authn.IdentitySynchronizer = new(FakeService)
 
 type FakeService struct {
 	ExpectedErr        error

@@ -50,8 +50,8 @@ var (
 // make sure service implements authn.Service interface
 var _ authn.Service = new(Service)
 
-// make sure service implements authn.IdentitySyncronizer interface
-var _ authn.IdentitySyncronizer = new(Service)
+// make sure service implements authn.IdentitySynchronizer interface
+var _ authn.IdentitySynchronizer = new(Service)
 
 func ProvideService(
 	cfg *setting.Cfg, tracer tracing.Tracer,
