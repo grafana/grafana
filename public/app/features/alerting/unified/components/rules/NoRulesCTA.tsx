@@ -1,7 +1,7 @@
 import React from 'react';
 
 import { logInfo } from '@grafana/runtime';
-import { CallToActionCard } from '@grafana/ui';
+import { Button, CallToActionCard } from '@grafana/ui';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 
 import { LogMessages } from '../../Analytics';
@@ -12,17 +12,27 @@ export const NoRulesSplash = () => {
 
   if (canCreateGrafanaRules || canCreateCloudRules) {
     return (
-      <EmptyListCTA
-        title="You haven't created any alert rules yet"
-        buttonIcon="bell"
-        buttonLink={'alerting/new/alerting'}
-        buttonTitle="New alert rule"
-        proTip="you can also create alert rules from existing panels and queries."
-        proTipLink="https://grafana.com/docs/"
-        proTipLinkTitle="Learn more"
-        proTipTarget="_blank"
-        onClick={() => logInfo(LogMessages.alertRuleFromScratch)}
-      />
+      <>
+        <EmptyListCTA
+          title="You haven't created any alert rules yet"
+          buttonIcon="bell"
+          buttonLink={'alerting/new/alerting'}
+          buttonTitle="New alert rule"
+          proTip="you can also create alert rules from existing panels and queries."
+          proTipLink="https://grafana.com/docs/"
+          proTipLinkTitle="Learn more"
+          proTipTarget="_blank"
+          onClick={() => logInfo(LogMessages.alertRuleFromScratch)}
+        />
+
+        <EmptyListCTA
+          title=""
+          buttonIcon="bell"
+          buttonLink={'alerting/new/recording'}
+          buttonTitle="New recording rule"
+          onClick={() => logInfo(LogMessages.recordingRuleFromScratch)}
+        />
+      </>
     );
   }
   return <CallToActionCard message="No rules exist yet." callToActionElement={<div />} />;
