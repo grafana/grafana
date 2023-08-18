@@ -128,12 +128,14 @@ func NewEvaluatorFactory(
 	datasourceCache datasources.CacheService,
 	expressionService *expr.Service,
 	pluginsStore plugins.Store,
+	metrics *metrics.Eval,
 ) EvaluatorFactory {
 	return &evaluatorImpl{
 		evaluationTimeout: cfg.EvaluationTimeout,
 		dataSourceCache:   datasourceCache,
 		expressionService: expressionService,
 		pluginsStore:      pluginsStore,
+		metrics:           metrics,
 	}
 }
 
