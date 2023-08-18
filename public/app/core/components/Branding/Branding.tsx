@@ -61,6 +61,7 @@ export class Branding {
   static LoginBoxBackground = LoginBoxBackground;
   static AppTitle = 'Grafana';
   static LoginTitle = 'Welcome to Grafana';
+  static HideEdition = false;
   static GetLoginSubTitle = (): null | string => {
     return null;
   };
