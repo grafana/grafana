@@ -160,9 +160,10 @@ const (
 )
 
 type Stats struct {
-	ServiceAccounts     int64 `xorm:"serviceaccounts"`
-	Tokens              int64 `xorm:"serviceaccount_tokens"`
-	ForcedExpiryEnabled bool  `xorm:"-"`
+	ServiceAccounts           int64 `xorm:"serviceaccounts"`
+	ServiceAccountsWithNoRole int64 `xorm:"serviceaccounts_with_no_role"`
+	Tokens                    int64 `xorm:"serviceaccount_tokens"`
+	ForcedExpiryEnabled       bool  `xorm:"-"`
 }
 
 // AccessEvaluator is used to protect the "Configuration > Service accounts" page access

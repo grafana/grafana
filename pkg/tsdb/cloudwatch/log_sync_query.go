@@ -108,7 +108,7 @@ func (e *cloudWatchExecutor) syncQuery(ctx context.Context, logsClient cloudwatc
 	for range ticker.C {
 		res, err := e.executeGetQueryResults(ctx, logsClient, requestParams)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("CloudWatch Error: %w", err)
 		}
 		if isTerminated(*res.Status) {
 			return res, err
