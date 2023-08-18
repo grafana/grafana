@@ -160,7 +160,6 @@ export function createSceneObjectsForPanels(oldPanels: PanelModel[]): Array<Scen
     );
   }
 
-  console.log('panels', panels);
   return panels;
 }
 
