@@ -10,7 +10,7 @@ Use the following template, replace any `<VARIABLE>` with the appropriate text (
 <!-- <CONTRIBUTOR> -->
 <!-- <ON-PREMISE OFFERING> -->
 
-<CLOUD AVAILABILITY> in Grafana <CLOUD OFFERING>
+_Available in <CLOUD AVAILABILITY> in Grafana <CLOUD OFFERING>_
 
 <DESCRIPTION>
 ```
@@ -29,6 +29,7 @@ One or both of:
 
 Intended availability of the feature when released outside of Grafana Cloud.
 The information is intentionally commented out so that it isn't displayed in the published page.
+If the feature is not going to be released outside of Grafana Cloud, omit the HTML comment entirely.
 
 ## _`CLOUD AVAILABILITY`_
 
@@ -41,7 +42,7 @@ One of the following [release life cycle stages](https://grafana.com/docs/releas
 
 ## _`CLOUD OFFERING`_
 
-One of:
+List the appropriate combination of:
 
 - Cloud Free
 - Cloud Pro
@@ -55,3 +56,17 @@ Link to any appropriate documentation.
 You must use relative path references when linking to documentation within the Grafana repository.
 Use the Hugo `relref` shortcode for build time link checking.
 For more information about the `relref` shortcode, refer to [Links and references](https://grafana.com/docs/writers-toolkit/writing-guide/references/).
+
+## Example
+
+```
+## Updated navigation
+
+<!-- Jack Baldry -->
+<!-- OSS, Enterprise -->
+
+_Available in public preview in Grafana Cloud Pro and Advanced_
+
+The navigation in Grafana Cloud has been updated in the following ways...
+
+```
