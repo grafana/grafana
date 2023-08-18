@@ -8,7 +8,7 @@ Use the following template, replace any `<VARIABLE>` with the appropriate text (
 ## <FEATURE>
 
 <!-- <CONTRIBUTOR> -->
-<!-- <AVAILABILITY> -->
+<!-- <ON-PREMISE OFFERING> -->
 
 <CLOUD AVAILABILITY> in Grafana <CLOUD OFFERING>
 
@@ -20,7 +20,7 @@ Use the following template, replace any `<VARIABLE>` with the appropriate text (
 The name of the contributor of the feature.
 The information is intentionally commented out so that it isn't displayed in the published page.
 
-## _`AVAILABILITY`_
+## _`ON-PREMISE OFFERING`_
 
 One or both of:
 
