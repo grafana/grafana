@@ -263,7 +263,7 @@ func spanEventsToLogs(events ptrace.SpanEventSlice) []*TraceLog {
 		if event.Name() != "" {
 			fields = append(fields, &KeyValue{
 				Key:   TagMessage,
-				Value: attribute.StringValue(event.Name()),
+				Value: event.Name(),
 			})
 		}
 		event.Attributes().Range(func(key string, attr pcommon.Value) bool {
