@@ -120,4 +120,5 @@ export interface FeatureToggles {
   configurableSchedulerTick?: boolean;
   influxdbSqlSupport?: boolean;
   noBasicRole?: boolean;
+  alertingNoDataErrorExecution?: boolean;
 }

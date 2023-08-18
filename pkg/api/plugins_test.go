@@ -486,7 +486,7 @@ func pluginAssetScenario(t *testing.T, desc string, url string, urlPattern strin
 		cfg.IsFeatureToggleEnabled = func(_ string) bool { return false }
 		hs := HTTPServer{
 			Cfg:             cfg,
-			pluginStore:     store.New(pluginRegistry),
+			pluginStore:     store.New(pluginRegistry, &fakes.FakeLoader{}),
 			pluginFileStore: filestore.ProvideService(pluginRegistry),
 			log:             log.NewNopLogger(),
 			pluginsCDNService: pluginscdn.ProvideService(&config.Cfg{
@@ -598,7 +598,7 @@ func Test_PluginsList_AccessControl(t *testing.T) {
 			server := SetupAPITestServer(t, func(hs *HTTPServer) {
 				hs.Cfg = setting.NewCfg()
 				hs.PluginSettings = &pluginSettings
-				hs.pluginStore = store.New(pluginRegistry)
+				hs.pluginStore = store.New(pluginRegistry, &fakes.FakeLoader{})
 				hs.pluginFileStore = filestore.ProvideService(pluginRegistry)
 				var err error
 				hs.pluginsUpdateChecker, err = updatechecker.ProvidePluginsService(hs.Cfg, nil, tracing.InitializeTracerForTest())

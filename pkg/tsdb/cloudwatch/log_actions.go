@@ -299,7 +299,14 @@ func (e *cloudWatchExecutor) executeGetQueryResults(ctx context.Context, logsCli
 		QueryId: aws.String(logsQuery.QueryId),
 	}
 
-	return logsClient.GetQueryResultsWithContext(ctx, queryInput)
+	getQueryResultsResponse, err := logsClient.GetQueryResultsWithContext(ctx, queryInput)
+	if err != nil {
+		var awsErr awserr.Error
+		if errors.As(err, &awsErr) {
+			return getQueryResultsResponse, &AWSError{Code: awsErr.Code(), Message: err.Error()}
+		}
+	}
+	return getQueryResultsResponse, err
 }
 
 func (e *cloudWatchExecutor) handleGetQueryResults(ctx context.Context, logsClient cloudwatchlogsiface.CloudWatchLogsAPI,
