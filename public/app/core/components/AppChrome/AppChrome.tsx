@@ -23,7 +23,7 @@ export function AppChrome({ children }: Props) {
   const dashboard = useSelector((state) => state.dashboard.getModel());
   const isEmbedded = dashboard?.meta.isEmbedded;
 
-  const searchBarHidden = state.searchBarHidden || KioskMode.TV === state.kioskMode || isEmbedded;
+  const searchBarHidden = state.searchBarHidden || state.kioskMode === KioskMode.TV || isEmbedded;
 
   const contentClass = cx({
     [styles.content]: true,

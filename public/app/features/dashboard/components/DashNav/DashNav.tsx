@@ -250,7 +250,6 @@ export const DashNav = React.memo<Props>((props) => {
     const { canSave, canEdit, showSettings } = dashboard.meta;
     const { snapshot } = dashboard;
     const snapshotUrl = snapshot && snapshot.originalUrl;
-
     const buttons: ReactNode[] = [];
 
     if (isPlaylistRunning()) {
