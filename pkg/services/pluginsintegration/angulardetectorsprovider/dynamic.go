@@ -117,6 +117,9 @@ func (d *Dynamic) fetch(ctx context.Context) (GCOMPatterns, error) {
 			d.log.Error("Response body close error", "error", err)
 		}
 	}()
+	if resp.StatusCode/100 != 2 {
+		return nil, fmt.Errorf("bad status code: %d", resp.StatusCode)
+	}
 	var out GCOMPatterns
 	if err := json.NewDecoder(resp.Body).Decode(&out); err != nil {
 		return nil, fmt.Errorf("json decode: %w", err)
