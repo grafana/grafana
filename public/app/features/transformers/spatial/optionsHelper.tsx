@@ -31,8 +31,8 @@ export function getTransformerOptionPane<T = any>(
   };
 
   const access: NestedValueAccess = {
-    getValue: (path: string) => lodashGet(props.options, path),
-    onChange: (path: string, value: any) => {
+    getValue: (path) => lodashGet(props.options, path),
+    onChange: (path, value) => {
       props.onChange(setOptionImmutably(props.options as any, path, value));
     },
   };

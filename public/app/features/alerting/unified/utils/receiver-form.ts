@@ -1,7 +1,9 @@
-import { isArray, isNil, omitBy } from 'lodash';
+import { isArray, omit, pick, isNil, omitBy } from 'lodash';
 
 import {
   AlertManagerCortexConfig,
+  AlertmanagerReceiver,
+  GrafanaManagedContactPoint,
   GrafanaManagedReceiverConfig,
   Receiver,
   Route,
@@ -18,7 +20,7 @@ import {
 } from '../types/receiver-form';
 
 export function grafanaReceiverToFormValues(
-  receiver: Receiver,
+  receiver: GrafanaManagedContactPoint,
   notifiers: NotifierDTO[]
 ): [ReceiverFormValues<GrafanaChannelValues>, GrafanaChannelMap] {
   const channelMap: GrafanaChannelMap = {};
@@ -77,13 +79,22 @@ export function cloudReceiverToFormValues(
 export function formValuesToGrafanaReceiver(
   values: ReceiverFormValues<GrafanaChannelValues>,
   channelMap: GrafanaChannelMap,
-  defaultChannelValues: GrafanaChannelValues
+  defaultChannelValues: GrafanaChannelValues,
+  notifiers: NotifierDTO[]
 ): Receiver {
   return {
     name: values.name,
     grafana_managed_receiver_configs: (values.items ?? []).map((channelValues) => {
       const existing: GrafanaManagedReceiverConfig | undefined = channelMap[channelValues.__id];
-      return formChannelValuesToGrafanaChannelConfig(channelValues, defaultChannelValues, values.name, existing);
+      const notifier = notifiers.find((notifier) => notifier.type === channelValues.type);
+
+      return formChannelValuesToGrafanaChannelConfig(
+        channelValues,
+        defaultChannelValues,
+        values.name,
+        existing,
+        notifier
+      );
     }),
   };
 }
@@ -92,7 +103,7 @@ export function formValuesToCloudReceiver(
   values: ReceiverFormValues<CloudChannelValues>,
   defaults: CloudChannelValues
 ): Receiver {
-  const recv: Receiver = {
+  const recv: AlertmanagerReceiver = {
     name: values.name,
   };
   values.items.forEach(({ __id, type, settings, sendResolved }) => {
@@ -101,11 +112,10 @@ export function formValuesToCloudReceiver(
       send_resolved: sendResolved ?? defaults.sendResolved,
     });
 
-    const configsKey = `${type}_configs`;
-    if (!recv[configsKey]) {
-      recv[configsKey] = [channel];
+    if (!(`${type}_configs` in recv)) {
+      recv[`${type}_configs`] = [channel];
     } else {
-      (recv[configsKey] as unknown[]).push(channel);
+      (recv[`${type}_configs`] as unknown[]).push(channel);
     }
   });
   return recv;
@@ -201,7 +211,7 @@ function grafanaChannelConfigToFormChannelValues(
 
   // work around https://github.com/grafana/alerting-squad/issues/100
   notifier?.options.forEach((option) => {
-    if (option.secure && values.settings[option.propertyName]) {
+    if (option.secure && values.secureSettings[option.propertyName]) {
       delete values.settings[option.propertyName];
       values.secureFields[option.propertyName] = true;
     }
@@ -214,7 +224,8 @@ export function formChannelValuesToGrafanaChannelConfig(
   values: GrafanaChannelValues,
   defaults: GrafanaChannelValues,
   name: string,
-  existing?: GrafanaManagedReceiverConfig
+  existing?: GrafanaManagedReceiverConfig,
+  notifier?: NotifierDTO
 ): GrafanaManagedReceiverConfig {
   const channel: GrafanaManagedReceiverConfig = {
     settings: omitEmptyValues({
@@ -227,9 +238,25 @@ export function formChannelValuesToGrafanaChannelConfig(
     disableResolveMessage:
       values.disableResolveMessage ?? existing?.disableResolveMessage ?? defaults.disableResolveMessage,
   };
+
+  // find all secure field definitions
+  const secureFieldNames: string[] =
+    notifier?.options.filter((option) => option.secure).map((option) => option.propertyName) ?? [];
+
+  // we make sure all fields that are marked as "secure" will be moved to "SecureSettings" instead of "settings"
+  const shouldBeSecure = pick(channel.settings, secureFieldNames);
+  channel.secureSettings = {
+    ...shouldBeSecure,
+    ...channel.secureSettings,
+  };
+
+  // remove the secure ones from the regular settings
+  channel.settings = omit(channel.settings, secureFieldNames);
+
   if (existing) {
     channel.uid = existing.uid;
   }
+
   return channel;
 }
 

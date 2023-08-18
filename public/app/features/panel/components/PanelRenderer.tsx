@@ -10,14 +10,14 @@ import {
   useFieldOverrides,
 } from '@grafana/data';
 import { getTemplateSrv, PanelRendererProps } from '@grafana/runtime';
-import { ErrorBoundaryAlert, useTheme2 } from '@grafana/ui';
+import { ErrorBoundaryAlert, usePanelContext, useTheme2 } from '@grafana/ui';
 import { appEvents } from 'app/core/core';
 
 import { importPanelPlugin, syncGetPanelPlugin } from '../../plugins/importPanelPlugin';
 
 const defaultFieldConfig = { defaults: {}, overrides: [] };
 
-export function PanelRenderer<P extends object = any, F extends object = any>(props: PanelRendererProps<P, F>) {
+export function PanelRenderer<P extends object = {}, F extends object = {}>(props: PanelRendererProps<P, F>) {
   const {
     pluginId,
     data,
@@ -38,7 +38,16 @@ export function PanelRenderer<P extends object = any, F extends object = any>(pr
   const [plugin, setPlugin] = useState(syncGetPanelPlugin(pluginId));
   const [error, setError] = useState<string | undefined>();
   const optionsWithDefaults = useOptionDefaults(plugin, options, fieldConfig);
-  const dataWithOverrides = useFieldOverrides(plugin, optionsWithDefaults?.fieldConfig, data, timeZone, theme, replace);
+  const { dataLinkPostProcessor } = usePanelContext();
+  const dataWithOverrides = useFieldOverrides(
+    plugin,
+    optionsWithDefaults?.fieldConfig,
+    data,
+    timeZone,
+    theme,
+    replace,
+    dataLinkPostProcessor
+  );
 
   useEffect(() => {
     // If we already have a plugin and it's correct one do nothing
@@ -98,7 +107,7 @@ export function PanelRenderer<P extends object = any, F extends object = any>(pr
   );
 }
 
-function useOptionDefaults<P extends object = any, F extends object = any>(
+function useOptionDefaults<P extends object = {}, F extends object = {}>(
   plugin: PanelPlugin | undefined,
   options: P,
   fieldConfig: FieldConfigSource<F>

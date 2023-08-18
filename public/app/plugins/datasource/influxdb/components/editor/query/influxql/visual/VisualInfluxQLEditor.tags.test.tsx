@@ -4,7 +4,7 @@ import React from 'react';
 
 import InfluxDatasource from '../../../../../datasource';
 import * as mockedMeta from '../../../../../influxql_metadata_query';
-import { InfluxQuery } from '../../../../../types';
+import { DEFAULT_POLICY, InfluxQuery } from '../../../../../types';
 
 import { VisualInfluxQLEditor } from './VisualInfluxQLEditor';
 
@@ -74,7 +74,7 @@ const ONLY_TAGS = [
 
 const query: InfluxQuery = {
   refId: 'A',
-  policy: 'default',
+  policy: DEFAULT_POLICY,
   tags: [
     {
       key: 'cpu',

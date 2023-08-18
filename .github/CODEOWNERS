@@ -13,7 +13,8 @@
 
 # Documentation
 /.changelog-archive @grafana/docs-grafana
-/CHANGELOG.md @grafana/docs-grafana
+/.codespellignore @grafana/docs-tooling
+/CHANGELOG.md @grafana/grafana-delivery
 /CODE_OF_CONDUCT.md @grafana/docs-grafana
 /CONTRIBUTING.md @grafana/docs-grafana
 /GOVERNANCE.md @RichiH
@@ -68,7 +69,6 @@
 /pkg/api/ @grafana/backend-platform
 /pkg/bus/ @grafana/backend-platform
 /pkg/cmd/ @grafana/backend-platform
-/pkg/systemd/ @grafana/backend-platform
 /pkg/components/apikeygen/ @grafana/grafana-authnz-team
 /pkg/components/satokengen/ @grafana/grafana-authnz-team
 /pkg/components/dashdiffs/ @grafana/backend-platform
@@ -101,7 +101,7 @@
 /pkg/services/certgenerator @grafana/grafana-app-platform-squad
 /pkg/services/cleanup/ @grafana/backend-platform
 /pkg/services/contexthandler/ @grafana/backend-platform
-/pkg/services/correlations/ @grafana/backend-platform
+/pkg/services/correlations/ @grafana/explore-squad
 /pkg/services/dashboardimport/ @grafana/backend-platform
 /pkg/services/dashboards/ @grafana/backend-platform
 /pkg/services/dashboardsnapshots/ @grafana/backend-platform
@@ -136,7 +136,7 @@
 /pkg/services/team/ @grafana/grafana-authnz-team
 /pkg/services/temp_user/ @grafana/backend-platform
 /pkg/services/updatechecker/ @grafana/backend-platform
-/pkg/services/user/ @grafana/backend-platform
+/pkg/services/user/ @grafana/grafana-authnz-team
 /pkg/services/validations/ @grafana/backend-platform
 /pkg/setting/ @grafana/backend-platform
 /pkg/tests/ @grafana/backend-platform
@@ -335,7 +335,6 @@ tsconfig.json @grafana/frontend-ops
 /.eslintignore @grafana/frontend-ops
 /.gitattributes @grafana/frontend-ops
 /.gitignore @grafana/frontend-ops
-/.husky/pre-commit @grafana/frontend-ops
 /.nvmrc @grafana/frontend-ops
 /.prettierignore @grafana/frontend-ops
 /.yarn @grafana/frontend-ops
@@ -352,6 +351,9 @@ lerna.json @grafana/frontend-ops
 /metadata.md @grafana/plugins-platform
 /stylelint.config.js @grafana/frontend-ops
 /tools/ @grafana/frontend-ops
+/lefthook.yml @grafana/frontend-ops
+/lefthook.rc @grafana/frontend-ops
+.husky/pre-commit @grafana/frontend-ops
 
 
 # public folder
@@ -436,7 +438,6 @@ lerna.json @grafana/frontend-ops
 /public/app/plugins/panel/welcome/ @grafana/grafana-frontend-platform
 /public/app/plugins/panel/xychart/ @grafana/dataviz-squad
 /public/app/plugins/sdk.ts @grafana/plugins-platform-frontend
-/public/app/polyfills/old-mediaquerylist.ts @grafana/grafana-frontend-platform
 /public/app/routes/ @grafana/grafana-frontend-platform
 /public/app/store/ @grafana/grafana-frontend-platform
 /public/app/types/ @grafana/grafana-frontend-platform
@@ -494,6 +495,7 @@ lerna.json @grafana/frontend-ops
 /scripts/trigger_docker_build.sh @grafana/grafana-delivery
 /scripts/trigger_grafana_packer.sh @grafana/grafana-delivery
 /scripts/trigger_windows_build.sh @grafana/grafana-delivery
+/scripts/cleanup-husky.sh @grafana/frontend-ops
 /scripts/verify-repo-update/ @grafana/grafana-delivery
 
 /scripts/webpack/ @grafana/frontend-ops
@@ -602,6 +604,7 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/codeowners-validator.yml @tolzhabayev
 /.github/workflows/codeql-analysis.yml @DanCech
 /.github/workflows/commands.yml @torkelo
+/.github/workflows/community-release.yml @grafana/grafana-delivery
 /.github/workflows/detect-breaking-changes-* @grafana/plugins-platform-frontend
 /.github/workflows/doc-validator.yml @grafana/docs-tooling
 /.github/workflows/epic-add-to-platform-ux-parent-project.yml @meanmina
@@ -615,7 +618,6 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/pr-codeql-analysis-go.yml @DanCech
 /.github/workflows/pr-codeql-analysis-javascript.yml @DanCech
 /.github/workflows/pr-codeql-analysis-python.yml @DanCech
-/.github/workflows/pr-commands-closed.yml @tolzhabayev
 /.github/workflows/pr-commands.yml @marefr
 /.github/workflows/pr-patch-check.yml @grafana/grafana-delivery
 /.github/workflows/sync-mirror.yml @grafana/grafana-delivery

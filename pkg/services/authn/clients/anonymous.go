@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/anonymous"
@@ -14,20 +15,22 @@ import (
 
 var _ authn.ContextAwareClient = new(Anonymous)
 
-func ProvideAnonymous(cfg *setting.Cfg, orgService org.Service, anonSessionService anonymous.Service) *Anonymous {
+const timeoutTag = 2 * time.Minute
+
+func ProvideAnonymous(cfg *setting.Cfg, orgService org.Service, anonDeviceService anonymous.Service) *Anonymous {
 	return &Anonymous{
-		cfg:                cfg,
-		log:                log.New("authn.anonymous"),
-		orgService:         orgService,
-		anonSessionService: anonSessionService,
+		cfg:               cfg,
+		log:               log.New("authn.anonymous"),
+		orgService:        orgService,
+		anonDeviceService: anonDeviceService,
 	}
 }
 
 type Anonymous struct {
-	cfg                *setting.Cfg
-	log                log.Logger
-	orgService         org.Service
-	anonSessionService anonymous.Service
+	cfg               *setting.Cfg
+	log               log.Logger
+	orgService        org.Service
+	anonDeviceService anonymous.Service
 }
 
 func (a *Anonymous) Name() string {
@@ -54,7 +57,10 @@ func (a *Anonymous) Authenticate(ctx context.Context, r *authn.Request) (*authn.
 				a.log.Warn("tag anon session panic", "err", err)
 			}
 		}()
-		if err := a.anonSessionService.TagSession(context.Background(), httpReqCopy); err != nil {
+
+		newCtx, cancel := context.WithTimeout(context.Background(), timeoutTag)
+		defer cancel()
+		if err := a.anonDeviceService.TagDevice(newCtx, httpReqCopy, anonymous.AnonDevice); err != nil {
 			a.log.Warn("failed to tag anonymous session", "error", err)
 		}
 	}()

@@ -36,7 +36,6 @@ func TestAuthenticateJWT(t *testing.T) {
 	jwtHeaderName := "X-Forwarded-User"
 	wantID := &authn.Identity{
 		OrgID:           0,
-		OrgCount:        0,
 		OrgName:         "",
 		OrgRoles:        map[int64]roletype.RoleType{1: roletype.RoleAdmin},
 		ID:              "",
