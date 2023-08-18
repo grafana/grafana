@@ -97,6 +97,9 @@ To add a new annotation query to a dashboard, take the following steps:
    This name is given to the toggle (checkbox) that will allow you to enable/disable showing annotation events from this query.
 
 1. Select the data source for the annotations.
+
+   You can also click **Open advanced data source picker** to see more options, including adding a data source (Admins only).
+
 1. If you don't want to use the annotation query right away, clear the **Enabled** checkbox.
 1. If you don't want the annotation query toggle to be displayed in the dashboard, select the **Hidden** checkbox.
 1. Select a color for the event markers.
