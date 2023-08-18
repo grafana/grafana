@@ -43,9 +43,13 @@ export enum AlertSourceAction {
   // internal (Grafana managed)
   CreateAlertRule = 'create-alert-rule',
   ViewAlertRule = 'view-alert-rule',
+  UpdateAlertRule = 'update-alert-rule',
+  DeleteAlertRule = 'delete-alert-rule',
   // external (any compatible alerting data source)
   CreateExternalAlertRule = 'create-external-alert-rule',
   ViewExternalAlertRule = 'view-external-alert-rule',
+  UpdateExternalAlertRule = 'update-external-alert-rule',
+  DeleteExternalAlertRule = 'delete-external-alert-rule',
 }
 
 export type Action = AlertmanagerAction | AlertSourceAction;
@@ -56,15 +60,43 @@ export type Abilities<T extends Action> = Record<T, Ability>;
 const RULER_ENABLED_ALERTMANAGER_FLAVORS = [AlertManagerImplementation.mimir, AlertManagerImplementation.cortex];
 
 export function useAlertSourceAbilities(): Abilities<AlertSourceAction> {
-  // TODO some sort of memoization per datasource?
+  // TODO add the "supported" booleans here, we currently only do authorization
 
   return {
-    [AlertSourceAction.CreateAlertRule]: [true, true], // TODO
-    [AlertSourceAction.ViewAlertRule]: [true, ctx.hasAccess(AccessControlAction.AlertingRuleRead, true)],
-    [AlertSourceAction.CreateExternalAlertRule]: [true, true], // TODO
+    // -- Grafana managed alert rules --
+    [AlertSourceAction.CreateAlertRule]: [
+      true,
+      ctx.hasAccess(AccessControlAction.AlertingRuleCreate, ctx.hasRole(OrgRole.Editor)),
+    ],
+    [AlertSourceAction.ViewAlertRule]: [
+      true,
+      ctx.hasAccess(AccessControlAction.AlertingRuleRead, ctx.hasRole(OrgRole.Viewer)),
+    ],
+    [AlertSourceAction.UpdateAlertRule]: [
+      true,
+      ctx.hasAccess(AccessControlAction.AlertingRuleUpdate, ctx.hasRole(OrgRole.Editor)),
+    ],
+    [AlertSourceAction.DeleteAlertRule]: [
+      true,
+      ctx.hasAccess(AccessControlAction.AlertingRuleDelete, ctx.hasRole(OrgRole.Editor)),
+    ],
+    // -- External alert rules (Mimir / Loki / etc) --
+    // for these we only have "read" and "write" permissions
+    [AlertSourceAction.CreateExternalAlertRule]: [
+      true,
+      ctx.hasAccess(AccessControlAction.AlertingRuleExternalWrite, ctx.hasRole(OrgRole.Editor)),
+    ],
     [AlertSourceAction.ViewExternalAlertRule]: [
       true,
-      ctx.hasAccess(AccessControlAction.AlertingRuleExternalRead, true),
+      ctx.hasAccess(AccessControlAction.AlertingRuleExternalRead, ctx.hasRole(OrgRole.Viewer)),
+    ],
+    [AlertSourceAction.UpdateExternalAlertRule]: [
+      true,
+      ctx.hasAccess(AccessControlAction.AlertingRuleExternalWrite, ctx.hasRole(OrgRole.Editor)),
+    ],
+    [AlertSourceAction.DeleteExternalAlertRule]: [
+      true,
+      ctx.hasAccess(AccessControlAction.AlertingRuleExternalWrite, ctx.hasRole(OrgRole.Editor)),
     ],
   };
 }
