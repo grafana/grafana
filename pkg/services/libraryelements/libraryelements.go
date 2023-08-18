@@ -7,6 +7,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/libraryelements/model"
@@ -14,7 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func ProvideService(cfg *setting.Cfg, sqlStore db.DB, routeRegister routing.RouteRegister, folderService folder.Service, features featuremgmt.FeatureToggles) *LibraryElementService {
+func ProvideService(cfg *setting.Cfg, sqlStore db.DB, routeRegister routing.RouteRegister, folderService folder.Service, features featuremgmt.FeatureToggles, ac accesscontrol.AccessControl) *LibraryElementService {
 	l := &LibraryElementService{
 		Cfg:           cfg,
 		SQLStore:      sqlStore,
@@ -22,6 +23,7 @@ func ProvideService(cfg *setting.Cfg, sqlStore db.DB, routeRegister routing.Rout
 		folderService: folderService,
 		log:           log.New("library-elements"),
 		features:      features,
+		AccessControl: ac,
 	}
 	l.registerAPIEndpoints()
 	return l
@@ -45,6 +47,7 @@ type LibraryElementService struct {
 	folderService folder.Service
 	log           log.Logger
 	features      featuremgmt.FeatureToggles
+	AccessControl accesscontrol.AccessControl
 }
 
 // CreateElement creates a Library Element.

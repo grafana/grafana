@@ -2,11 +2,12 @@ package libraryelements
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
-	"github.com/grafana/grafana/pkg/middleware"
+	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
@@ -15,14 +16,19 @@ import (
 )
 
 func (l *LibraryElementService) registerAPIEndpoints() {
+	authorize := ac.Middleware(l.AccessControl)
+
 	l.RouteRegister.Group("/api/library-elements", func(entities routing.RouteRegister) {
-		entities.Post("/", middleware.ReqSignedIn, routing.Wrap(l.createHandler))
-		entities.Delete("/:uid", middleware.ReqSignedIn, routing.Wrap(l.deleteHandler))
-		entities.Get("/", middleware.ReqSignedIn, routing.Wrap(l.getAllHandler))
-		entities.Get("/:uid", middleware.ReqSignedIn, routing.Wrap(l.getHandler))
-		entities.Get("/:uid/connections/", middleware.ReqSignedIn, routing.Wrap(l.getConnectionsHandler))
-		entities.Get("/name/:name", middleware.ReqSignedIn, routing.Wrap(l.getByNameHandler))
-		entities.Patch("/:uid", middleware.ReqSignedIn, routing.Wrap(l.patchHandler))
+		uidScope := ScopeLibraryPanelsProvider.GetResourceScopeUID(ac.Parameter(":uid"))
+		nameScope := ScopeLibraryPanelsProvider.GetResourceScopeName(ac.Parameter(":name"))
+
+		entities.Post("/", authorize(ac.EvalPermission(ActionLibraryPanelsCreate)), routing.Wrap(l.createHandler))
+		entities.Delete("/:uid", authorize(ac.EvalPermission(ActionLibraryPanelsDelete, uidScope)), routing.Wrap(l.deleteHandler))
+		entities.Get("/", authorize(ac.EvalPermission(ActionLibraryPanelsRead)), routing.Wrap(l.getAllHandler))
+		entities.Get("/:uid", authorize(ac.EvalPermission(ActionLibraryPanelsRead, uidScope)), routing.Wrap(l.getHandler))
+		entities.Get("/:uid/connections/", authorize(ac.EvalPermission(ActionLibraryPanelsRead, uidScope)), routing.Wrap(l.getConnectionsHandler))
+		entities.Get("/name/:name", authorize(ac.EvalPermission(ActionLibraryPanelsRead, nameScope)), routing.Wrap(l.getByNameHandler))
+		entities.Patch("/:uid", authorize(ac.EvalPermission(ActionLibraryPanelsWrite, uidScope)), routing.Wrap(l.patchHandler))
 	})
 }
 
@@ -56,7 +62,28 @@ func (l *LibraryElementService) createHandler(c *contextmodel.ReqContext) respon
 			cmd.FolderID = folder.ID
 		}
 	}
-	element, err := l.CreateElement(c.Req.Context(), c.SignedInUser, cmd)
+
+	allowed, err := l.AccessControl.Evaluate(
+		c.Req.Context(),
+		c.SignedInUser,
+		ac.EvalAny(
+			ac.EvalPermission(
+				ActionLibraryPanelsCreate,
+			),
+			ac.EvalPermission(
+				dashboards.ActionFoldersWrite,
+				dashboards.ScopeFoldersRoot+":id:"+fmt.Sprint(cmd.FolderID),
+			),
+		),
+	)
+	if err != nil {
+		return toLibraryElementError(err, "Failed to evaluate permissions")
+	}
+	if !allowed {
+		return response.Error(http.StatusForbidden, "You do not have the permissions needed to create a library element in this folder", nil)
+	}
+
+	element, err := l.createLibraryElement(c.Req.Context(), c.SignedInUser, cmd)
 	if err != nil {
 		return toLibraryElementError(err, "Failed to create library element")
 	}
@@ -89,6 +116,24 @@ func (l *LibraryElementService) createHandler(c *contextmodel.ReqContext) respon
 // 404: notFoundError
 // 500: internalServerError
 func (l *LibraryElementService) deleteHandler(c *contextmodel.ReqContext) response.Response {
+	element, err := l.getLibraryElementByUid(c.Req.Context(), c.SignedInUser,
+		model.GetLibraryElementCommand{
+			UID:        web.Params(c.Req)[":uid"],
+			FolderName: dashboards.RootFolderName,
+		},
+	)
+	if err != nil {
+		return toLibraryElementError(err, "Failed to get library element")
+	}
+
+	allowed, err := l.evalPermission(c, "delete", element.UID, element.FolderID)
+	if err != nil {
+		return toLibraryElementError(err, "Failed to evaluate permissions")
+	}
+	if !allowed {
+		return response.Error(http.StatusForbidden, "You do not have the permissions needed to delete this library element", nil)
+	}
+
 	id, err := l.deleteLibraryElement(c.Req.Context(), c.SignedInUser, web.Params(c.Req)[":uid"])
 	if err != nil {
 		return toLibraryElementError(err, "Failed to delete library element")
@@ -109,6 +154,7 @@ func (l *LibraryElementService) deleteHandler(c *contextmodel.ReqContext) respon
 // Responses:
 // 200: getLibraryElementResponse
 // 401: unauthorisedError
+// 403: forbiddenError
 // 404: notFoundError
 // 500: internalServerError
 func (l *LibraryElementService) getHandler(c *contextmodel.ReqContext) response.Response {
@@ -120,6 +166,14 @@ func (l *LibraryElementService) getHandler(c *contextmodel.ReqContext) response.
 	)
 	if err != nil {
 		return toLibraryElementError(err, "Failed to get library element")
+	}
+
+	allowed, err := l.evalPermission(c, "read", element.UID, element.FolderID)
+	if err != nil {
+		return toLibraryElementError(err, "Failed to evaluate permissions")
+	}
+	if !allowed {
+		return response.Error(http.StatusForbidden, "You do not have the permissions needed to view this library element", nil)
 	}
 
 	return response.JSON(http.StatusOK, model.LibraryElementResponse{Result: element})
@@ -154,6 +208,11 @@ func (l *LibraryElementService) getAllHandler(c *contextmodel.ReqContext) respon
 		return toLibraryElementError(err, "Failed to get library elements")
 	}
 
+	filteredPanels, err := l.filterLibraryPanelsByPermission(c, elementsResult.Elements)
+	if err != nil {
+		return toLibraryElementError(err, "Failed to evaluate permissions")
+	}
+	elementsResult.Elements = filteredPanels
 	return response.JSON(http.StatusOK, model.LibraryElementSearchResponse{Result: elementsResult})
 }
 
@@ -189,6 +248,14 @@ func (l *LibraryElementService) patchHandler(c *contextmodel.ReqContext) respons
 		}
 	}
 
+	allowed, err := l.evalPermission(c, "write", web.Params(c.Req)[":uid"], cmd.FolderID)
+	if err != nil {
+		return toLibraryElementError(err, "Failed to evaluate permissions")
+	}
+	if !allowed {
+		return response.Error(http.StatusForbidden, "You do not have the permissions needed to update this library element", nil)
+	}
+
 	element, err := l.patchLibraryElement(c.Req.Context(), c.SignedInUser, cmd, web.Params(c.Req)[":uid"])
 	if err != nil {
 		return toLibraryElementError(err, "Failed to update library element")
@@ -216,12 +283,31 @@ func (l *LibraryElementService) patchHandler(c *contextmodel.ReqContext) respons
 // Responses:
 // 200: getLibraryElementConnectionsResponse
 // 401: unauthorisedError
+// 403: forbiddenError
 // 404: notFoundError
 // 500: internalServerError
 func (l *LibraryElementService) getConnectionsHandler(c *contextmodel.ReqContext) response.Response {
 	connections, err := l.getConnections(c.Req.Context(), c.SignedInUser, web.Params(c.Req)[":uid"])
 	if err != nil {
 		return toLibraryElementError(err, "Failed to get connections")
+	}
+
+	element, err := l.getLibraryElementByUid(c.Req.Context(), c.SignedInUser,
+		model.GetLibraryElementCommand{
+			UID:        web.Params(c.Req)[":uid"],
+			FolderName: dashboards.RootFolderName,
+		},
+	)
+	if err != nil {
+		return toLibraryElementError(err, "Failed to get library element")
+	}
+
+	allowed, err := l.evalPermission(c, "read", web.Params(c.Req)[":uid"], element.FolderID)
+	if err != nil {
+		return toLibraryElementError(err, "Failed to evaluate permissions")
+	}
+	if !allowed {
+		return response.Error(http.StatusForbidden, "You do not have the permissions needed to read this library element's connections", nil)
 	}
 
 	return response.JSON(http.StatusOK, model.LibraryElementConnectionsResponse{Result: connections})
@@ -244,7 +330,50 @@ func (l *LibraryElementService) getByNameHandler(c *contextmodel.ReqContext) res
 		return toLibraryElementError(err, "Failed to get library element")
 	}
 
-	return response.JSON(http.StatusOK, model.LibraryElementArrayResponse{Result: elements})
+	filteredElements := make([]model.LibraryElementDTO, 0)
+	for _, el := range elements {
+		allowed, err := l.evalPermission(c, "read", el.UID, el.FolderID)
+		if err != nil {
+			return toLibraryElementError(err, err.Error())
+		}
+		if allowed {
+			filteredElements = append(filteredElements, el)
+		}
+	}
+
+	return response.JSON(http.StatusOK, model.LibraryElementArrayResponse{Result: filteredElements})
+}
+
+func (l *LibraryElementService) evalPermission(c *contextmodel.ReqContext, action string, elementUID string, folderID int64) (bool, error) {
+	return l.AccessControl.Evaluate(
+		c.Req.Context(),
+		c.SignedInUser,
+		ac.EvalAny(
+			ac.EvalPermission(
+				ScopeLibraryPanelsRoot+":"+action,
+				ScopeLibraryPanelsProvider.GetResourceScopeUID(elementUID),
+			),
+			ac.EvalPermission(
+				dashboards.ScopeFoldersRoot+":"+action,
+				dashboards.ScopeFoldersRoot+":id:"+fmt.Sprint(folderID),
+			),
+		),
+	)
+}
+
+func (l *LibraryElementService) filterLibraryPanelsByPermission(c *contextmodel.ReqContext, elements []model.LibraryElementDTO) ([]model.LibraryElementDTO, error) {
+	filteredPanels := make([]model.LibraryElementDTO, 0)
+	for _, p := range elements {
+		allowed, err := l.evalPermission(c, "read", p.UID, p.FolderID)
+		if err != nil {
+			return nil, err
+		}
+		if allowed {
+			filteredPanels = append(filteredPanels, p)
+		}
+	}
+
+	return filteredPanels, nil
 }
 
 func toLibraryElementError(err error, message string) response.Response {

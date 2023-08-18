@@ -7,6 +7,7 @@ import (
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/libraryelements"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
 	"github.com/grafana/grafana/pkg/tsdb/grafanads"
@@ -408,6 +409,48 @@ func (hs *HTTPServer) declareFixedRoles() error {
 		Grants: []string{"Admin"},
 	}
 
+	libraryPanelsCreatorRole := ac.RoleRegistration{
+		Role: ac.RoleDTO{
+			Name:        "fixed:library-panels:creator",
+			DisplayName: "Library panel creator",
+			Description: "Create library panel in general folder.",
+			Group:       "Library panels",
+			Permissions: []ac.Permission{
+				{Action: dashboards.ActionFoldersRead, Scope: dashboards.ScopeFoldersProvider.GetResourceScopeUID(ac.GeneralFolderUID)},
+				{Action: libraryelements.ActionLibraryPanelsCreate, Scope: dashboards.ScopeFoldersProvider.GetResourceScopeUID(ac.GeneralFolderUID)},
+			},
+		},
+		Grants: []string{"Editor"},
+	}
+
+	libraryPanelsReaderRole := ac.RoleRegistration{
+		Role: ac.RoleDTO{
+			Name:        "fixed:library-panels:reader",
+			DisplayName: "Library panel reader",
+			Description: "Read all library panels.",
+			Group:       "Library panels",
+			Permissions: []ac.Permission{
+				{Action: libraryelements.ActionLibraryPanelsRead, Scope: libraryelements.ScopeLibraryPanelsAll},
+			},
+		},
+		Grants: []string{"Admin"},
+	}
+
+	libraryPanelsWriterRole := ac.RoleRegistration{
+		Role: ac.RoleDTO{
+			Name:        "fixed:library-panels:writer",
+			DisplayName: "Library panel writer",
+			Group:       "Library panels",
+			Description: "Create, read, write or delete all library panels and their permissions.",
+			Permissions: ac.ConcatPermissions(libraryPanelsReaderRole.Role.Permissions, []ac.Permission{
+				{Action: libraryelements.ActionLibraryPanelsWrite, Scope: libraryelements.ScopeLibraryPanelsAll},
+				{Action: libraryelements.ActionLibraryPanelsDelete, Scope: libraryelements.ScopeLibraryPanelsAll},
+				{Action: libraryelements.ActionLibraryPanelsCreate, Scope: libraryelements.ScopeLibraryPanelsAll},
+			}),
+		},
+		Grants: []string{"Admin"},
+	}
+
 	publicDashboardsWriterRole := ac.RoleRegistration{
 		Role: ac.RoleDTO{
 			Name:        "fixed:dashboards.public:writer",
@@ -454,7 +497,7 @@ func (hs *HTTPServer) declareFixedRoles() error {
 		annotationsReaderRole, dashboardAnnotationsWriterRole, annotationsWriterRole,
 		dashboardsCreatorRole, dashboardsReaderRole, dashboardsWriterRole,
 		foldersCreatorRole, foldersReaderRole, foldersWriterRole, apikeyReaderRole, apikeyWriterRole,
-		publicDashboardsWriterRole, featuremgmtReaderRole, featuremgmtWriterRole,
+		publicDashboardsWriterRole, featuremgmtReaderRole, featuremgmtWriterRole, libraryPanelsCreatorRole, libraryPanelsReaderRole, libraryPanelsWriterRole,
 	)
 }
 
