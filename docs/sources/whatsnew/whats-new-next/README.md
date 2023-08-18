@@ -59,7 +59,7 @@ For more information about the `relref` shortcode, refer to [Links and reference
 
 ## Example
 
-```
+```markdown
 ## Updated navigation
 
 <!-- Jack Baldry -->
