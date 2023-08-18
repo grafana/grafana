@@ -139,22 +139,6 @@ func NewEvaluatorFactory(
 	}
 }
 
-func NewEvaluatorFactoryWithMetrics(
-	cfg setting.UnifiedAlertingSettings,
-	datasourceCache datasources.CacheService,
-	expressionService *expr.Service,
-	pluginsStore plugins.Store,
-	metrics *metrics.Eval,
-) EvaluatorFactory {
-	return &evaluatorImpl{
-		evaluationTimeout: cfg.EvaluationTimeout,
-		dataSourceCache:   datasourceCache,
-		expressionService: expressionService,
-		pluginsStore:      pluginsStore,
-		metrics:           metrics,
-	}
-}
-
 // invalidEvalResultFormatError is an error for invalid format of the alert definition evaluation results.
 type invalidEvalResultFormatError struct {
 	refID  string
