@@ -238,7 +238,6 @@ func (m *migration) SQL(dialect migrator.Dialect) string {
 
 //nolint:gocyclo
 func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
-	logger := mg.Logger
 	m.sess = sess
 	m.mg = mg
 
@@ -246,7 +245,7 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 	if err != nil {
 		return err
 	}
-	logger.Info("alerts found to migrate", "alerts", len(dashAlerts))
+	mg.Logger.Info("alerts found to migrate", "alerts", len(dashAlerts))
 
 	// [orgID, dataSourceId] -> UID
 	dsIDMap, err := m.slurpDSIDs()
