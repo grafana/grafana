@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { defaults } from 'lodash';
 import React from 'react';
 
-import { QueryEditorProps } from '@grafana/data';
+import { GrafanaTheme2, QueryEditorProps } from '@grafana/data';
 import { InlineLabel, useStyles2 } from '@grafana/ui';
 
 import { GroupByField } from '../SearchTraceQLEditor/GroupByField';
@@ -37,7 +37,9 @@ export function QueryEditor(props: Props) {
         datasource={props.datasource}
         onRunQuery={props.onRunQuery}
       />
-      <GroupByField datasource={props.datasource} onChange={props.onChange} query={query} />
+      <div className={styles.groupByContainer}>
+        <GroupByField datasource={props.datasource} onChange={props.onChange} query={query} />
+      </div>
       <div className={styles.optionsContainer}>
         <TempoQueryBuilderOptions query={query} onChange={props.onChange} />
       </div>
@@ -45,8 +47,11 @@ export function QueryEditor(props: Props) {
   );
 }
 
-const getStyles = () => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   optionsContainer: css`
     margin-top: 10px;
+  `,
+  groupByContainer: css`
+    margin-top: ${theme.spacing(1)};
   `,
 });
