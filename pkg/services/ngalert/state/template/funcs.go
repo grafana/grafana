@@ -92,15 +92,6 @@ func tableLinkFunc(data string) string {
 	return fmt.Sprintf(`/explore?left={"datasource":%[1]q,"queries":[{"datasource":%[1]q,"expr":%q,"instant":true,"range":false,"refId":"A"}],"range":{"from":"now-1h","to":"now"}}`, datasource, expr)
 }
 
-func contains[T comparable](slice []T, elem T) bool {
-	for _, e := range slice {
-		if e == elem {
-			return true
-		}
-	}
-	return false
-}
-
 func deduplicateLabelsFunc(values map[string]Value) Labels {
 	type uniqueLabelVals map[string]struct{}
 
