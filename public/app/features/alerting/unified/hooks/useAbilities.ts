@@ -27,8 +27,9 @@ export enum AlertmanagerAction {
   UpdateNotificationTemplate = 'edit-notification-template',
   DeleteNotificationTemplate = 'delete-notification-template',
 
-  // silences
+  // silences – these cannot be deleted only "expired" (updated)
   CreateSilence = 'create-silence',
+  ViewSilence = 'view-silence',
   UpdateSilence = 'update-silence',
 
   // mute timings
@@ -93,7 +94,7 @@ export function useAlertmanagerAbilities(): Abilities<AlertmanagerAction> {
   const abilities: Abilities<AlertmanagerAction> = {
     // -- configuration --
     [AlertmanagerAction.ViewExternalConfiguration]: [
-      true, // all alertmanager flavours support reading / viewing the configuration
+      true,
       ctx.hasAccess(AccessControlAction.AlertingNotificationsExternalRead, ctx.hasRole(OrgRole.Admin)),
     ],
     [AlertmanagerAction.UpdateExternalConfiguration]: [
@@ -144,6 +145,10 @@ export function useAlertmanagerAbilities(): Abilities<AlertmanagerAction> {
     [AlertmanagerAction.CreateSilence]: [
       hasConfigurationAPI,
       ctx.hasAccess(instancePermissions.create, ctx.hasRole(OrgRole.Editor)),
+    ],
+    [AlertmanagerAction.ViewSilence]: [
+      hasConfigurationAPI,
+      ctx.hasAccess(instancePermissions.read, ctx.hasRole(OrgRole.Viewer)),
     ],
     [AlertmanagerAction.UpdateSilence]: [
       hasConfigurationAPI,
