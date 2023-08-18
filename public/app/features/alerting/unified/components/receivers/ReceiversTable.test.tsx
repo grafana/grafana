@@ -13,6 +13,7 @@ import { AccessControlAction, ContactPointsState, NotifierDTO, NotifierType } fr
 import * as onCallApi from '../../api/onCallApi';
 import * as receiversApi from '../../api/receiversApi';
 import { enableRBAC, grantUserPermissions } from '../../mocks';
+import { AlertmanagerProvider } from '../../state/AlertmanagerContext';
 import { fetchGrafanaNotifiersAction } from '../../state/actions';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { createUrl } from '../../utils/url';
@@ -37,7 +38,9 @@ const renderReceieversTable = async (
 
   return render(
     <TestProvider store={store}>
-      <ReceiversTable config={config} alertManagerName={alertmanagerName} />
+      <AlertmanagerProvider accessType={'notification'}>
+        <ReceiversTable config={config} alertManagerName={alertmanagerName} />
+      </AlertmanagerProvider>
     </TestProvider>
   );
 };

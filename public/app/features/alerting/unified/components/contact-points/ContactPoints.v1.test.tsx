@@ -85,14 +85,11 @@ const dataSources = {
 };
 
 const renderReceivers = (alertManagerSourceName?: string) => {
-  locationService.push(
-    '/alerting/notifications' +
-      (alertManagerSourceName ? `?${ALERTMANAGER_NAME_QUERY_KEY}=${alertManagerSourceName}` : '')
-  );
+  locationService.push('/alerting/notifications');
 
   return render(
     <TestProvider>
-      <AlertmanagerProvider accessType="notification">
+      <AlertmanagerProvider accessType="notification" alertmanagerSourceName={alertManagerSourceName}>
         <Receivers />
       </AlertmanagerProvider>
     </TestProvider>
@@ -184,13 +181,14 @@ describe('Receivers', () => {
       ];
       return permissions.includes(action as AccessControlAction);
     });
+    mocks.contextSrv.hasAccess.mockImplementation((action) => {
+      return mocks.contextSrv.hasPermission(action);
+    });
 
     // respond with "true" when asked if we are an administrator
     mocks.contextSrv.hasRole.mockImplementation((role: string) => {
       return role === 'Admin';
     });
-
-    mocks.contextSrv.hasAccess.mockImplementation(() => true);
   });
 
   it('Template and receiver tables are rendered, alertmanager can be selected, no notification errors', async () => {
@@ -344,7 +342,7 @@ describe('Receivers', () => {
 
     mocks.api.fetchConfig.mockResolvedValue(someGrafanaAlertManagerConfig);
     mocks.api.updateConfig.mockResolvedValue();
-    mocks.contextSrv.hasPermission.mockImplementation((action) =>
+    mocks.contextSrv.hasAccess.mockImplementation((action) =>
       [AccessControlAction.AlertingNotificationsRead, AccessControlAction.AlertingNotificationsExternalRead].some(
         (a) => a === action
       )
@@ -527,7 +525,6 @@ describe('Receivers', () => {
 
     expect(templatesTable).toBeInTheDocument();
     expect(receiversTable).toBeInTheDocument();
-    expect(ui.newContactPointButton.get()).toBeInTheDocument();
   });
 
   describe('Contact points health', () => {

@@ -2,7 +2,7 @@ import * as React from 'react';
 
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import store from 'app/core/store';
-import { AlertManagerDataSourceJsonData } from 'app/plugins/datasource/alertmanager/types';
+import { AlertManagerDataSourceJsonData, AlertManagerImplementation } from 'app/plugins/datasource/alertmanager/types';
 
 import { useAlertManagersByPermission } from '../hooks/useAlertManagerSources';
 import { ALERTMANAGER_NAME_LOCAL_STORAGE_KEY, ALERTMANAGER_NAME_QUERY_KEY } from '../utils/constants';
@@ -10,12 +10,15 @@ import { AlertManagerDataSource, getDataSourceByName, GRAFANA_RULES_SOURCE_NAME 
 
 interface Context {
   selectedAlertmanager: string | undefined;
+  hasConfigurationAPI: boolean; // returns true when a configuration API is available
+  isGrafanaFlavoredAlertmanager: boolean; // returns true if we are dealing with the built-in Alertmanager
   selectedAlertmanagerConfig: AlertManagerDataSourceJsonData | undefined;
   availableAlertManagers: AlertManagerDataSource[];
   setSelectedAlertmanager: (name: string) => void;
 }
 
 const AlertmanagerContext = React.createContext<Context | undefined>(undefined);
+const RULER_ENABLED_ALERTMANAGER_FLAVORS = [AlertManagerImplementation.mimir, AlertManagerImplementation.cortex];
 
 interface Props extends React.PropsWithChildren {
   accessType: 'instance' | 'notification';
@@ -54,10 +57,21 @@ const AlertmanagerProvider = ({ children, accessType, alertmanagerSourceName }: 
     ? desiredAlertmanager
     : undefined;
 
-  const selectedAlertmanagerConfig = getDataSourceByName(selectedAlertmanager)?.jsonData;
+  const selectedAlertmanagerConfig = getDataSourceByName(selectedAlertmanager)
+    ?.jsonData as AlertManagerDataSourceJsonData;
+
+  // determine if we're dealing with an Alertmanager data source that supports the ruler API
+  const isGrafanaFlavoredAlertmanager = selectedAlertmanager === GRAFANA_RULES_SOURCE_NAME;
+  const isRulerFlavoredAlertmanager = RULER_ENABLED_ALERTMANAGER_FLAVORS.includes(
+    selectedAlertmanagerConfig?.implementation!
+  );
+
+  const hasConfigurationAPI = isGrafanaFlavoredAlertmanager || isRulerFlavoredAlertmanager;
 
   const value: Context = {
     selectedAlertmanager,
+    hasConfigurationAPI,
+    isGrafanaFlavoredAlertmanager,
     selectedAlertmanagerConfig,
     availableAlertManagers,
     setSelectedAlertmanager: updateSelectedAlertmanager,

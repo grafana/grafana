@@ -9,6 +9,7 @@ import { setDataSourceSrv } from '@grafana/runtime';
 import AlertGroups from './AlertGroups';
 import { fetchAlertGroups } from './api/alertmanager';
 import { mockAlertGroup, mockAlertmanagerAlert, mockDataSource, MockDataSourceSrv } from './mocks';
+import { AlertmanagerProvider } from './state/AlertmanagerContext';
 import { DataSourceType } from './utils/datasource';
 
 jest.mock('./api/alertmanager');
@@ -17,6 +18,7 @@ jest.mock('app/core/services/context_srv', () => ({
   contextSrv: {
     isEditor: true,
     hasAccess: () => true,
+    hasRole: () => true,
     hasPermission: () => true,
   },
 }));
@@ -29,7 +31,9 @@ const mocks = {
 const renderAmNotifications = () => {
   return render(
     <TestProvider>
-      <AlertGroups />
+      <AlertmanagerProvider accessType={'instance'}>
+        <AlertGroups />
+      </AlertmanagerProvider>
     </TestProvider>
   );
 };

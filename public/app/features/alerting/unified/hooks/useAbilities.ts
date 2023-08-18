@@ -2,13 +2,16 @@ import { useMemo } from 'react';
 
 import { OrgRole } from '@grafana/data';
 import { contextSrv as ctx } from 'app/core/services/context_srv';
-import { AlertManagerImplementation } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types';
 
 import { useAlertmanager } from '../state/AlertmanagerContext';
 import { getInstancesPermissions, getNotificationsPermissions } from '../utils/access-control';
-import { GRAFANA_DATASOURCE_NAME } from '../utils/datasource';
 
+/**
+ * These hooks will determine if
+ *  1. the action is supported in the current alertmanager or data source context
+ *  2. user is allowed to perform actions based on their set of permissions / assigned role
+ */
 export enum AlertmanagerAction {
   // configuration
   ViewExternalConfiguration = 'View-external-configuration',
@@ -57,8 +60,6 @@ export type Action = AlertmanagerAction | AlertSourceAction;
 export type Ability = [actionSupported: boolean, actionPermitted: boolean];
 export type Abilities<T extends Action> = Record<T, Ability>;
 
-const RULER_ENABLED_ALERTMANAGER_FLAVORS = [AlertManagerImplementation.mimir, AlertManagerImplementation.cortex];
-
 export function useAlertSourceAbilities(): Abilities<AlertSourceAction> {
   // TODO add the "supported" booleans here, we currently only do authorization
 
@@ -101,21 +102,8 @@ export function useAlertSourceAbilities(): Abilities<AlertSourceAction> {
   };
 }
 
-/**
- * This hook will determine if
- *  1. action is supported in the current alertmanager context
- *  2. user is allowed to perform actions based on their set of permissions / assigned role
- */
 export function useAlertmanagerAbilities(): Abilities<AlertmanagerAction> {
-  const { selectedAlertmanager, selectedAlertmanagerConfig } = useAlertmanager();
-
-  // determine if we're dealing with an Alertmanager data source that supports the ruler API
-  const isGrafanaFlavoredAlertmanager = selectedAlertmanager === GRAFANA_DATASOURCE_NAME;
-  const isRulerFlavoredAlertmanager = RULER_ENABLED_ALERTMANAGER_FLAVORS.includes(
-    selectedAlertmanagerConfig?.implementation!
-  );
-
-  const hasConfigurationAPI = isGrafanaFlavoredAlertmanager || isRulerFlavoredAlertmanager;
+  const { selectedAlertmanager, hasConfigurationAPI, isGrafanaFlavoredAlertmanager } = useAlertmanager();
 
   // These are used for interacting with Alertmanager resources where we apply alert.notifications:<name> permissions.
   // There are different permissions based on wether the built-in alertmanager is selected (grafana) or an external one.
