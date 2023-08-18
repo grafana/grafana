@@ -486,10 +486,41 @@ export class ElementState implements LayerElement {
   };
 
   onElementClick = (event: React.MouseEvent) => {
+    this.onTooltipCallback();
+  };
+
+  onElementKeyDown = (event: React.KeyboardEvent) => {
+    if (event.key === 'Enter') {
+      const scene = this.getScene();
+      if (scene?.tooltipCallback && scene.tooltip?.anchorPoint) {
+        const rect = this.div?.getBoundingClientRect();
+        scene.tooltipCallback({
+          anchorPoint: { x: rect?.right ?? scene.tooltip.anchorPoint.x, y: rect?.top ?? scene.tooltip.anchorPoint.y },
+          element: this,
+          isOpen: true,
+        });
+      }
+    }
+  };
+
+  onTooltipCallback = () => {
     const scene = this.getScene();
     if (scene?.tooltipCallback && scene.tooltip?.anchorPoint) {
       scene.tooltipCallback({
         anchorPoint: { x: scene.tooltip.anchorPoint.x, y: scene.tooltip.anchorPoint.y },
+        element: this,
+        isOpen: true,
+      });
+    }
+  };
+
+  onElementFocus = (event: React.FocusEvent) => {
+    const scene = this.getScene();
+    if (scene?.tooltipCallback) {
+      const rect = event.currentTarget.getBoundingClientRect();
+      console.log({ rect });
+      scene.tooltipCallback({
+        anchorPoint: { x: rect.right, y: rect.top },
         element: this,
         isOpen: true,
       });
@@ -503,14 +534,16 @@ export class ElementState implements LayerElement {
     const isSelected = div && scene && scene.selecto && scene.selecto.getSelectedTargets().includes(div);
 
     return (
-      // TODO: fix keyboard a11y
-      // eslint-disable-next-line jsx-a11y/click-events-have-key-events
       <div
         key={this.UID}
         ref={this.initElement}
         onMouseEnter={(e: React.MouseEvent) => this.handleMouseEnter(e, isSelected)}
         onMouseLeave={!scene?.isEditingEnabled ? this.handleMouseLeave : undefined}
         onClick={!scene?.isEditingEnabled ? this.onElementClick : undefined}
+        onKeyDown={!scene?.isEditingEnabled ? this.onElementKeyDown : undefined}
+        onFocus={!scene?.isEditingEnabled ? this.onElementFocus : undefined}
+        role="button"
+        tabIndex={0}
       >
         <item.display
           key={`${this.UID}/${this.revId}`}
