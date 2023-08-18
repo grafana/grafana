@@ -80,7 +80,7 @@ This setting supports the `$__interval` and `$__rate_interval` macros.
 
 Switch between the following format options:
 
-- **Time series** - The default time series format. See [Time series kind formats](https://grafana.github.io/dataplane/timeseries/) for information on time series data frames and how time and value fields are structured.
+- **Time series** - The default time series format. See [Time series kind formats](https://grafana.com/developers/dataplane/timeseries/) for information on time series data frames and how time and value fields are structured.
 - **Table** - This works only in a [Table panel][table].
 - **Heatmap** - Displays metrics of the Histogram type on a [Heatmap panel][heatmap] by converting cumulative histograms to regular ones and sorting the series by the bucket bound.
 
