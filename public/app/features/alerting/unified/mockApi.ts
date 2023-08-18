@@ -5,7 +5,6 @@ import 'whatwg-fetch';
 import { DataSourceInstanceSettings } from '@grafana/data';
 import { setBackendSrv } from '@grafana/runtime';
 import {
-  PromApiFeatures,
   PromBuildInfoResponse,
   PromRulesResponse,
   RulerRuleGroupDTO,
