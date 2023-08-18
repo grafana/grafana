@@ -36,7 +36,7 @@ var ResourceCachingRequestHistogram = prometheus.NewHistogramVec(prometheus.Hist
 }, []string{"plugin_id", "cache"})
 
 func getQueryType(req *contextmodel.ReqContext) string {
-	if req.IsPublicDashboardView {
+	if req.PublicDashboardAccessToken != "" {
 		return QueryPubdash
 	}
 	return QueryDashboard

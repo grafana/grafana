@@ -287,11 +287,10 @@ func TestQueryDataMultipleSources(t *testing.T) {
 		require.NoError(t, err)
 		queries := []*simplejson.Json{query1, query2}
 		reqDTO := dtos.MetricRequest{
-			From:                       "2022-01-01",
-			To:                         "2022-01-02",
-			Queries:                    queries,
-			Debug:                      false,
-			PublicDashboardAccessToken: "abc123",
+			From:    "2022-01-01",
+			To:      "2022-01-02",
+			Queries: queries,
+			Debug:   false,
 		}
 
 		req, err := http.NewRequest("POST", "http://localhost:3000", nil)
@@ -351,11 +350,10 @@ func TestQueryDataMultipleSources(t *testing.T) {
 		require.NoError(t, err)
 		queries := []*simplejson.Json{query1, query2, query3}
 		reqDTO := dtos.MetricRequest{
-			From:                       "2022-01-01",
-			To:                         "2022-01-02",
-			Queries:                    queries,
-			Debug:                      false,
-			PublicDashboardAccessToken: "abc123",
+			From:    "2022-01-01",
+			To:      "2022-01-02",
+			Queries: queries,
+			Debug:   false,
 		}
 
 		// without query parameter
@@ -406,11 +404,10 @@ func TestQueryDataMultipleSources(t *testing.T) {
 		queries := []*simplejson.Json{query1, query2}
 
 		reqDTO := dtos.MetricRequest{
-			From:                       "2022-01-01",
-			To:                         "2022-01-02",
-			Queries:                    queries,
-			Debug:                      false,
-			PublicDashboardAccessToken: "abc123",
+			From:    "2022-01-01",
+			To:      "2022-01-02",
+			Queries: queries,
+			Debug:   false,
 		}
 
 		res, err := tc.queryService.QueryData(context.Background(), tc.signedInUser, true, reqDTO)
@@ -436,11 +433,10 @@ func TestQueryDataMultipleSources(t *testing.T) {
 		require.NoError(t, err)
 		queries := []*simplejson.Json{query1}
 		reqDTO := dtos.MetricRequest{
-			From:                       "2022-01-01",
-			To:                         "2022-01-02",
-			Queries:                    queries,
-			Debug:                      false,
-			PublicDashboardAccessToken: "abc123",
+			From:    "2022-01-01",
+			To:      "2022-01-02",
+			Queries: queries,
+			Debug:   false,
 		}
 
 		_, err = tc.queryService.QueryData(context.Background(), tc.signedInUser, true, reqDTO)

@@ -1,7 +1,7 @@
 import { of } from 'rxjs';
 
 import { DataQueryRequest, DataSourceInstanceSettings, DataSourceRef, dateTime, TimeRange } from '@grafana/data';
-import { BackendSrvRequest, BackendSrv, DataSourceWithBackend } from '@grafana/runtime';
+import { BackendSrvRequest, BackendSrv, DataSourceWithBackend, config } from '@grafana/runtime';
 import { GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
@@ -45,41 +45,14 @@ describe('PublicDashboardDatasource', () => {
     expect(annotation?.queryType).toEqual(GrafanaQueryType.Annotations);
   });
 
-  test('will not fetch annotations when access token is falsey', async () => {
-    mockDatasourceRequest.mockReset();
-    mockDatasourceRequest.mockReturnValue(Promise.resolve([]));
-
-    const ds = new PublicDashboardDataSource('public');
-    const panelId = 1;
-    const publicDashboardAccessToken = undefined;
-
-    await ds.query({
-      maxDataPoints: 10,
-      intervalMs: 5000,
-      targets: [
-        {
-          refId: 'A',
-          datasource: { uid: GRAFANA_DATASOURCE_NAME, type: 'sample' },
-          queryType: GrafanaQueryType.Annotations,
-        },
-      ],
-      panelId,
-      publicDashboardAccessToken,
-      range: { from: new Date().toLocaleString(), to: new Date().toLocaleString() } as unknown as TimeRange,
-    } as DataQueryRequest);
-
-    const mock = mockDatasourceRequest.mock;
-
-    expect(mock.calls.length).toBe(0);
-  });
-
   test('fetches results from the pubdash annotations endpoint when it is an annotation query', async () => {
     mockDatasourceRequest.mockReset();
     mockDatasourceRequest.mockReturnValue(Promise.resolve([]));
 
     const ds = new PublicDashboardDataSource('public');
     const panelId = 1;
-    const publicDashboardAccessToken = 'abc123';
+
+    config.publicDashboardAccessToken = 'abc123';
 
     await ds.query({
       maxDataPoints: 10,
@@ -92,14 +65,13 @@ describe('PublicDashboardDatasource', () => {
         },
       ],
       panelId,
-      publicDashboardAccessToken,
       range: { from: new Date().toLocaleString(), to: new Date().toLocaleString() } as unknown as TimeRange,
     } as DataQueryRequest);
 
     const mock = mockDatasourceRequest.mock;
 
     expect(mock.calls.length).toBe(1);
-    expect(mock.lastCall[0]).toEqual(`/api/public/dashboards/${publicDashboardAccessToken}/annotations`);
+    expect(mock.lastCall[0]).toEqual(`/api/public/dashboards/abc123/annotations`);
   });
 
   test('fetches results from the pubdash query endpoint when not annotation query', () => {
@@ -108,7 +80,7 @@ describe('PublicDashboardDatasource', () => {
 
     const ds = new PublicDashboardDataSource('public');
     const panelId = 1;
-    const publicDashboardAccessToken = 'abc123';
+    config.publicDashboardAccessToken = 'abc123';
 
     ds.query({
       maxDataPoints: 10,
@@ -123,15 +95,12 @@ describe('PublicDashboardDatasource', () => {
           to: 'now',
         },
       },
-      publicDashboardAccessToken,
     } as DataQueryRequest);
 
     const mock = mockDatasourceRequest.mock;
 
     expect(mock.calls.length).toBe(1);
-    expect(mock.lastCall[0].url).toEqual(
-      `/api/public/dashboards/${publicDashboardAccessToken}/panels/${panelId}/query`
-    );
+    expect(mock.lastCall[0].url).toEqual(`/api/public/dashboards/abc123/panels/${panelId}/query`);
   });
 
   test('returns public datasource uid when datasource passed in is null', () => {

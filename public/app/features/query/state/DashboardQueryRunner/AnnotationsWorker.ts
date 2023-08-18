@@ -3,8 +3,7 @@ import { from, merge, Observable, of } from 'rxjs';
 import { catchError, filter, finalize, map, mergeAll, mergeMap, reduce, takeUntil } from 'rxjs/operators';
 
 import { AnnotationQuery, DataSourceApi } from '@grafana/data';
-import { getDataSourceSrv } from '@grafana/runtime';
-import { getConfig } from 'app/core/config';
+import { config, getDataSourceSrv } from '@grafana/runtime';
 
 import { AnnotationQueryFinished, AnnotationQueryStarted } from '../../../../types/events';
 import { PUBLIC_DATASOURCE, PublicDashboardDataSource } from '../../../dashboard/services/PublicDashboardDataSource';
@@ -41,14 +40,16 @@ export class AnnotationsWorker implements DashboardQueryRunnerWorker {
 
     const { dashboard, range } = options;
     let annotations = dashboard.annotations.list.filter(AnnotationsWorker.getAnnotationsToProcessFilter);
+
     // We only want to create a single PublicDashboardDatasource. This will get all annotations in one request.
-    if (dashboard.meta.publicDashboardAccessToken && annotations.length > 0) {
+    if (config.publicDashboardAccessToken && annotations.length > 0) {
       annotations = [annotations[0]];
     }
+
     const observables = annotations.map((annotation) => {
       let datasourceObservable;
 
-      if (getConfig().isPublicDashboardView) {
+      if (config.publicDashboardAccessToken) {
         const pubdashDatasource = new PublicDashboardDataSource(PUBLIC_DATASOURCE);
         datasourceObservable = of(pubdashDatasource).pipe(catchError(handleDatasourceSrvError));
       } else {
@@ -78,7 +79,7 @@ export class AnnotationsWorker implements DashboardQueryRunnerWorker {
                 annotation.snapshotData = cloneDeep(results);
               }
               // translate result
-              if (dashboard.meta.publicDashboardAccessToken) {
+              if (config.publicDashboardAccessToken) {
                 return results;
               } else {
                 return translateQueryResult(annotation, results);

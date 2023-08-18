@@ -147,7 +147,7 @@ func TestSetPublicDashboardOrgIdOnContext(t *testing.T) {
 func TestSetPublicDashboardFlag(t *testing.T) {
 	t.Run("Adds context.IsPublicDashboardView=true to request", func(t *testing.T) {
 		ctx := &contextmodel.ReqContext{}
-		SetPublicDashboardFlag(ctx)
+		SetPublicDashboardAccessToken(ctx)
 		assert.True(t, ctx.IsPublicDashboardView)
 	})
 }

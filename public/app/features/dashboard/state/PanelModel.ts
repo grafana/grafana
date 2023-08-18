@@ -359,19 +359,12 @@ export class PanelModel implements DataConfigSource, IPanelModel {
     this.render();
   }
 
-  runAllPanelQueries({
-    dashboardUID,
-    dashboardTimezone,
-    timeData,
-    width,
-    publicDashboardAccessToken,
-  }: RunPanelQueryOptions) {
+  runAllPanelQueries({ dashboardUID, dashboardTimezone, timeData, width }: RunPanelQueryOptions) {
     this.getQueryRunner().run({
       datasource: this.datasource,
       queries: this.targets,
       panelId: this.id,
       dashboardUID: dashboardUID,
-      publicDashboardAccessToken,
       timezone: dashboardTimezone,
       timeRange: timeData.timeRange,
       timeInfo: timeData.timeInfo,

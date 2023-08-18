@@ -12,7 +12,7 @@ import {
   DataSourceRef,
   toDataFrame,
 } from '@grafana/data';
-import { BackendDataSourceResponse, getBackendSrv, toDataQueryResponse } from '@grafana/runtime';
+import { BackendDataSourceResponse, config, getBackendSrv, toDataQueryResponse } from '@grafana/runtime';
 
 import { GrafanaQueryType } from '../../../plugins/datasource/grafana/types';
 import { MIXED_DATASOURCE_NAME } from '../../../plugins/datasource/mixed/MixedDataSource';
@@ -85,7 +85,6 @@ export class PublicDashboardDataSource extends DataSourceApi<DataQuery, DataSour
       intervalMs,
       maxDataPoints,
       requestId,
-      publicDashboardAccessToken,
       panelId,
       queryCachingTTL,
       range: { from: fromRange, to: toRange },
@@ -120,7 +119,7 @@ export class PublicDashboardDataSource extends DataSourceApi<DataQuery, DataSour
 
       return getBackendSrv()
         .fetch<BackendDataSourceResponse>({
-          url: `/api/public/dashboards/${publicDashboardAccessToken}/panels/${panelId}/query`,
+          url: `/api/public/dashboards/${config.publicDashboardAccessToken!}/panels/${panelId}/query`,
           method: 'POST',
           data: body,
           requestId,
@@ -138,7 +137,6 @@ export class PublicDashboardDataSource extends DataSourceApi<DataQuery, DataSour
 
   async getAnnotations(request: DataQueryRequest<DataQuery>): Promise<DataQueryResponse> {
     const {
-      publicDashboardAccessToken: accessToken,
       range: { to, from },
     } = request;
 
@@ -147,9 +145,10 @@ export class PublicDashboardDataSource extends DataSourceApi<DataQuery, DataSour
       to: to.valueOf(),
     };
 
-    const annotations = accessToken
-      ? await getBackendSrv().get(`/api/public/dashboards/${accessToken}/annotations`, params)
-      : [];
+    const annotations = await getBackendSrv().get(
+      `/api/public/dashboards/${config.publicDashboardAccessToken!}/annotations`,
+      params
+    );
 
     return { data: [toDataFrame(annotations)] };
   }

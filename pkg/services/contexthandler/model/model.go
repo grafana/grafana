@@ -30,8 +30,8 @@ type ReqContext struct {
 	Logger         log.Logger
 	Error          error
 	// RequestNonce is a cryptographic request identifier for use with Content Security Policy.
-	RequestNonce          string
-	IsPublicDashboardView bool
+	RequestNonce               string
+	PublicDashboardAccessToken string
 
 	PerfmonTimer   prometheus.Summary
 	LookupTokenErr error

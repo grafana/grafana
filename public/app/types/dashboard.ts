@@ -49,7 +49,6 @@ export interface DashboardMeta {
   fromFile?: boolean;
   hasUnsavedFolderChange?: boolean;
   annotationsPermissions?: AnnotationsPermissions;
-  publicDashboardAccessToken?: string;
   publicDashboardUid?: string;
   publicDashboardEnabled?: boolean;
   dashboardNotFound?: boolean;
