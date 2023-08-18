@@ -12,6 +12,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/expr/mathexp"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 // NodeType is the type of a DPNode. Currently either a expression command or datasource query.
@@ -44,8 +45,12 @@ type Node interface {
 	ID() int64 // ID() allows the gonum graph node interface to be fulfilled
 	NodeType() NodeType
 	RefID() string
-	Execute(ctx context.Context, now time.Time, vars mathexp.Vars, s *Service) (mathexp.Results, error)
 	String() string
+}
+
+type ExecutableNode interface {
+	Node
+	Execute(ctx context.Context, now time.Time, vars mathexp.Vars, s *Service) (mathexp.Results, error)
 }
 
 // DataPipeline is an ordered set of nodes returned from DPGraph processing.
@@ -56,7 +61,7 @@ type DataPipeline []Node
 func (dp *DataPipeline) execute(c context.Context, now time.Time, s *Service) (mathexp.Vars, error) {
 	vars := make(mathexp.Vars)
 
-	// Execute datasource nodes first, and grouped by datasource.
+	// Execute datasource nodes first, and group queries by datasource to execute in a single call per datasource.
 	dsNodes := []*DSNode{}
 	for _, node := range *dp {
 		if node.NodeType() != TypeDatasourceNode {
@@ -72,6 +77,7 @@ func (dp *DataPipeline) execute(c context.Context, now time.Time, s *Service) (m
 			continue // already executed via executeDSNodesGrouped
 		}
 
+		// Don't execute nodes that have dependent nodes that have failed
 		var hasDepError bool
 		if cmd, ok := node.(*CMDNode); ok {
 			for _, neededVar := range cmd.Command.NeedsVars() {
@@ -100,7 +106,16 @@ func (dp *DataPipeline) execute(c context.Context, now time.Time, s *Service) (m
 		}
 		defer span.End()
 
-		res, err := node.Execute(c, now, vars, s)
+		execNode, ok := node.(ExecutableNode)
+		if !ok {
+			return vars, errutil.PublicError{
+				StatusCode: 500,
+				MessageID:  "SSE.unexpectedNode",
+				Message:    fmt.Sprintf("expected executable node but got node type %s", node.NodeType()),
+			}
+		}
+
+		res, err := execNode.Execute(c, now, vars, s)
 		if err != nil {
 			res.Error = err
 		}

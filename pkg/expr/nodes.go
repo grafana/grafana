@@ -293,14 +293,6 @@ func executeDSNodesGrouped(ctx context.Context, now time.Time, vars mathexp.Vars
 	}
 }
 
-// Execute runs the node and adds the results to vars. If the node requires
-// other nodes they must have already been executed and their results must
-// already by in vars.
-func (dn *DSNode) Execute(ctx context.Context, now time.Time, _ mathexp.Vars, s *Service) (r mathexp.Results, e error) {
-	panic("Execute called on DSNode and should not be")
-	// Datasource queries are sent as a group to the datasource, see executeDSNodesGrouped.
-}
-
 func getResponseFrame(resp *backend.QueryDataResponse, refID string) (data.Frames, error) {
 	response, ok := resp.Responses[refID]
 	if !ok {
