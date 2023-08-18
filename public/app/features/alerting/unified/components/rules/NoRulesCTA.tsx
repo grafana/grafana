@@ -1,7 +1,7 @@
 import React from 'react';
 
 import { logInfo } from '@grafana/runtime';
-import { Button, CallToActionCard } from '@grafana/ui';
+import { CallToActionCard } from '@grafana/ui';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 
 import { LogMessages } from '../../Analytics';
