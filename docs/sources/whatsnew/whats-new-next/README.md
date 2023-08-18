@@ -47,7 +47,9 @@ List the appropriate combination of:
 - Cloud Free
 - Cloud Pro
 - Cloud Advanced
+
 Or if all three:
+
 - Cloud
 
 ## _`DESCRIPTION`_
@@ -69,5 +71,4 @@ For more information about the `relref` shortcode, refer to [Links and reference
 _Available in public preview in Grafana Cloud Pro and Advanced_
 
 The navigation in Grafana Cloud has been updated in the following ways...
-
 ```
