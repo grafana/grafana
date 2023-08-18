@@ -52,6 +52,7 @@ export interface Props extends Themeable2 {
   scrollIntoView?: (element: HTMLElement) => void;
   isFilterLabelActive?: (key: string, value: string) => Promise<boolean>;
   pinnedRowId?: string;
+  containerRendered?: boolean;
 }
 
 interface State {
