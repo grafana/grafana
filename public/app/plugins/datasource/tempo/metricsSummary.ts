@@ -1,5 +1,3 @@
-import { SpanStatusCode } from '@opentelemetry/api';
-
 import {
   DataSourceInstanceSettings,
   FieldDTO,
@@ -192,7 +190,7 @@ const getMetricValue = (series: Series) => {
     case 7:
       return series.value.d || 0;
     case 8:
-      return series.value.status ? SpanStatusCode[series.value.status].toLowerCase() : '';
+      return series.value.status ? getSpanStatusCode(series.value.status) : '';
     case 9:
       return series.value.kind ? getSpanKind(series.value.kind) : '';
     default:
@@ -201,10 +199,20 @@ const getMetricValue = (series: Series) => {
 };
 
 // Values set according to Tempo enum: https://github.com/grafana/tempo/blob/main/pkg/traceql/enum_statics.go
+const getSpanStatusCode = (statusCode: number) => {
+  switch (statusCode) {
+    case 0:
+      return 'error';
+    case 1:
+      return 'ok';
+    default:
+      return 'unset';
+  }
+};
+
+// Values set according to Tempo enum: https://github.com/grafana/tempo/blob/main/pkg/traceql/enum_statics.go
 const getSpanKind = (kind: number) => {
   switch (kind) {
-    case 0:
-      return 'unspecified';
     case 1:
       return 'internal';
     case 2:
@@ -216,7 +224,7 @@ const getSpanKind = (kind: number) => {
     case 5:
       return 'consumer';
     default:
-      return 'NULL';
+      return 'unspecified';
   }
 };
 
