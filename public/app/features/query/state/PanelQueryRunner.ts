@@ -225,10 +225,10 @@ export class PanelQueryRunner {
       map((series) => ({ ...data, series })),
       catchError((err) => {
         console.warn('Error running transformation:', err);
-        return of({ 
-          ...data, 
-          state: LoadingState.Error, 
-          error: toDataQueryError(err) 
+        return of({
+          ...data,
+          state: LoadingState.Error,
+          error: toDataQueryError(err),
         });
       })
     );
