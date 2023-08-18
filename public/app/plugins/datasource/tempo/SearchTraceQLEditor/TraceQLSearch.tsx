@@ -17,6 +17,7 @@ import { traceqlGrammar } from '../traceql/traceql';
 import { TempoQuery } from '../types';
 
 import DurationInput from './DurationInput';
+import { GroupByField } from './GroupByField';
 import InlineSearchField from './InlineSearchField';
 import SearchField from './SearchField';
 import TagsInput from './TagsInput';
@@ -162,11 +163,12 @@ const TraceQLSearch = ({ datasource, query, onChange }: Props) => {
               isTagsLoading={isTagsLoading}
             />
           </InlineSearchField>
+          <GroupByField datasource={datasource} onChange={onChange} query={query} />
         </div>
         <EditorRow>
           <RawQuery query={traceQlQuery} lang={{ grammar: traceqlGrammar, name: 'traceql' }} />
         </EditorRow>
-        <TempoQueryBuilderOptions onChange={onChange} query={query} datasource={datasource} />
+        <TempoQueryBuilderOptions onChange={onChange} query={query} />
       </div>
       {error ? (
         <Alert title="Unable to connect to Tempo search" severity="info" className={styles.alert}>

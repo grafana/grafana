@@ -5,6 +5,7 @@ import React from 'react';
 import { QueryEditorProps } from '@grafana/data';
 import { InlineLabel, useStyles2 } from '@grafana/ui';
 
+import { GroupByField } from '../SearchTraceQLEditor/GroupByField';
 import { TempoDatasource } from '../datasource';
 import { defaultQuery, MyDataSourceOptions, TempoQuery } from '../types';
 
@@ -36,8 +37,9 @@ export function QueryEditor(props: Props) {
         datasource={props.datasource}
         onRunQuery={props.onRunQuery}
       />
+      <GroupByField datasource={props.datasource} onChange={props.onChange} query={query} />
       <div className={styles.optionsContainer}>
-        <TempoQueryBuilderOptions query={query} onChange={props.onChange} datasource={props.datasource} />
+        <TempoQueryBuilderOptions query={query} onChange={props.onChange} />
       </div>
     </>
   );

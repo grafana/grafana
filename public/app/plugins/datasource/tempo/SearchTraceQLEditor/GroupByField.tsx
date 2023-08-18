@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { AccessoryButton, EditorField } from '@grafana/experimental';
+import { AccessoryButton } from '@grafana/experimental';
 import { HorizontalGroup, Select, useStyles2 } from '@grafana/ui';
 import { notifyApp } from 'app/core/actions';
 import { createErrorNotification } from 'app/core/copy/appNotification';
