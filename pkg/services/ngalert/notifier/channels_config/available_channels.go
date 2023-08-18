@@ -997,6 +997,7 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 					Placeholder:  "Discord webhook URL",
 					PropertyName: "url",
 					Required:     true,
+					Secure:       true,
 				},
 				{
 					Label:        "Avatar URL",

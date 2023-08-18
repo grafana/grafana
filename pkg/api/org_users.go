@@ -310,7 +310,15 @@ func (hs *HTTPServer) searchOrgUsersHelper(c *contextmodel.ReqContext, query *or
 	}
 
 	// Get accesscontrol metadata and IPD labels for users in the target org
-	accessControlMetadata := hs.getMultiAccessControlMetadata(c, query.OrgID, "users:id:", userIDs)
+	accessControlMetadata := map[string]accesscontrol.Metadata{}
+	if c.QueryBool("accesscontrol") && c.SignedInUser.Permissions != nil {
+		// TODO https://github.com/grafana/grafana-authnz-team/issues/268 - user access control service for fetching permissions from another organization
+		permissions, ok := c.SignedInUser.Permissions[query.OrgID]
+		if ok {
+			accessControlMetadata = accesscontrol.GetResourcesMetadata(c.Req.Context(), permissions, "users:id:", userIDs)
+		}
+	}
+
 	for i := range filteredUsers {
 		filteredUsers[i].AccessControl = accessControlMetadata[fmt.Sprint(filteredUsers[i].UserID)]
 		if module, ok := modules[filteredUsers[i].UserID]; ok {

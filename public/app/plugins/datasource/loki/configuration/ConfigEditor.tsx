@@ -1,9 +1,16 @@
 import React, { useCallback } from 'react';
 
 import { DataSourcePluginOptionsEditorProps, DataSourceSettings } from '@grafana/data';
-import { ConfigSection, DataSourceDescription } from '@grafana/experimental';
+import {
+  ConfigSection,
+  DataSourceDescription,
+  ConnectionSettings,
+  Auth,
+  convertLegacyAuthProps,
+  AdvancedHttpSettings,
+} from '@grafana/experimental';
 import { config, reportInteraction } from '@grafana/runtime';
-import { DataSourceHttpSettings } from '@grafana/ui';
+import { SecureSocksProxySettings } from '@grafana/ui';
 import { Divider } from 'app/core/components/Divider';
 
 import { LokiOptions } from '../types';
@@ -48,25 +55,27 @@ export const ConfigEditor = (props: Props) => {
         docsLink="https://grafana.com/docs/grafana/latest/datasources/loki"
         hasRequiredFields={false}
       />
-
       <Divider />
-
-      <DataSourceHttpSettings
-        defaultUrl={'http://localhost:3100'}
-        dataSourceConfig={options}
-        showAccessOptions={false}
-        onChange={onOptionsChange}
-        secureSocksDSProxyEnabled={config.secureSocksDSProxyEnabled}
+      <ConnectionSettings config={options} onChange={onOptionsChange} urlPlaceholder="http://localhost:3100" />
+      <Divider />
+      <Auth
+        {...convertLegacyAuthProps({
+          config: options,
+          onChange: onOptionsChange,
+        })}
       />
-
       <Divider />
-
       <ConfigSection
         title="Additional settings"
         description="Additional settings are optional settings that can be configured for more control over your data source."
         isCollapsible={true}
         isInitiallyOpen
       >
+        <AdvancedHttpSettings config={options} onChange={onOptionsChange} />
+        <Divider hideLine />
+        {config.secureSocksDSProxyEnabled && (
+          <SecureSocksProxySettings options={options} onOptionsChange={onOptionsChange} />
+        )}
         <AlertingSettings options={options} onOptionsChange={onOptionsChange} />
         <Divider hideLine />
         <QuerySettings

@@ -13,7 +13,7 @@ export const RevertDashboardModal = ({ hideModal, version }: RevertDashboardModa
   const { state, onRestoreDashboard } = useDashboardRestore(version);
 
   useEffect(() => {
-    if (state.loading === false && state.value) {
+    if (!state.loading && state.value) {
       hideModal();
     }
   }, [state, hideModal]);
