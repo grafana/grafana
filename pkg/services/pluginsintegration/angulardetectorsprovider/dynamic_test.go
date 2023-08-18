@@ -330,6 +330,28 @@ func TestDynamicAngularDetectorsProviderBackgroundService(t *testing.T) {
 	})
 }
 
+func TestRandomSkew(t *testing.T) {
+	const runs = 100
+
+	gcom := newDefaultGCOMScenario()
+	srv := gcom.newHTTPTestServer()
+	t.Cleanup(srv.Close)
+	svc := provideDynamic(t, srv.URL)
+	const ttl = time.Hour * 1
+	var different bool
+	var previous time.Duration
+	for i := 0; i < runs; i++ {
+		v := svc.randomSkew(ttl)
+		require.True(t, v >= -ttl/2 && v <= ttl/2, "returned skew must be within -ttl/2 and +ttl/2")
+		if i == 0 {
+			previous = v
+		} else if !different {
+			different = float64(previous) != float64(v)
+		}
+	}
+	require.True(t, different, "must not always return the same value")
+}
+
 var mockGCOMResponse = []byte(`[{
 	"name": "PanelCtrl",
 	"type": "contains",
