@@ -22,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 var logger = log.New("ngalert.eval")
@@ -440,6 +441,27 @@ func queryDataResponseToExecutionResults(c models.Condition, execResp *backend.Q
 					}
 				}
 			}
+		}
+	}
+
+	if len(result.Errors) > 0 && result.Error != nil {
+		if errors.Is(result.Error, expr.DependencyError) {
+			var utilError errutil.Error
+			e := result.Error
+			for {
+				errors.As(e, &utilError)
+				depRefID := utilError.PublicPayload["depRefId"].(string)
+				depError, ok := result.Errors[depRefID]
+				if !ok {
+					return result
+				}
+				if !errors.Is(depError, expr.DependencyError) {
+					result.Error = depError
+					return result
+				}
+				e = depError
+			}
+
 		}
 	}
 
