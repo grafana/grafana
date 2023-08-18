@@ -9,7 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-type service struct {
+type coreService struct {
 	*services.BasicService
 	cla     setting.CommandLineArgs
 	opts    Options
@@ -17,8 +17,8 @@ type service struct {
 	server  *Server
 }
 
-func NewService(opts Options, apiOpts api.ServerOptions) (*service, error) {
-	s := &service{
+func NewService(opts Options, apiOpts api.ServerOptions) (*coreService, error) {
+	s := &coreService{
 		opts:    opts,
 		apiOpts: apiOpts,
 	}
@@ -26,7 +26,7 @@ func NewService(opts Options, apiOpts api.ServerOptions) (*service, error) {
 	return s, nil
 }
 
-func (s *service) start(_ context.Context) error {
+func (s *coreService) start(_ context.Context) error {
 	serv, err := Initialize(s.cla, s.opts, s.apiOpts)
 	if err != nil {
 		return err
@@ -35,10 +35,10 @@ func (s *service) start(_ context.Context) error {
 	return s.server.Init()
 }
 
-func (s *service) running(_ context.Context) error {
+func (s *coreService) running(_ context.Context) error {
 	return s.server.Run()
 }
 
-func (s *service) stop(failureReason error) error {
+func (s *coreService) stop(failureReason error) error {
 	return s.server.Shutdown(context.Background(), failureReason.Error())
 }
