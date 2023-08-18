@@ -133,6 +133,9 @@ type ExecutionResults struct {
 	// Results contains the results of all queries, reduce and math expressions
 	Results map[string]data.Frames
 
+	// Errors contains a map of RefIDs that returned an error
+	Errors map[string]error
+
 	// NoData contains the DatasourceUID for RefIDs that returned no data.
 	NoData map[string]string
 
@@ -348,6 +351,16 @@ func queryDataResponseToExecutionResults(c models.Condition, execResp *backend.Q
 
 	result := ExecutionResults{Results: make(map[string]data.Frames)}
 	for refID, res := range execResp.Responses {
+		if res.Error != nil {
+			if result.Errors == nil {
+				result.Errors = make(map[string]error)
+			}
+			result.Errors[refID] = res.Error
+			if refID == c.Condition {
+				result.Error = res.Error
+			}
+		}
+
 		// There are two possible frame formats for No Data:
 		//
 		// 1. A response with no frames
