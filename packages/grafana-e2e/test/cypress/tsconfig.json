@@ -1,5 +1,4 @@
 {
-  "extends": "@grafana/toolkit/src/config/tsconfig.plugin.json",
   "include": ["**/*.ts"],
   "compilerOptions": {
     "baseUrl": "../node_modules",
