@@ -223,9 +223,13 @@ export class PanelQueryRunner {
 
     return transformDataFrame(transformations, data.series, ctx).pipe(
       map((series) => ({ ...data, series })),
-      catchError((err, got) => {
-        console.warn('Error running transformation:', err, got);
-        return of({ ...data, state: LoadingState.Error, errors: [toDataQueryError(err)] });
+      catchError((err) => {
+        console.warn('Error running transformation:', err);
+        return of({
+          ...data,
+          state: LoadingState.Error,
+          errors: [toDataQueryError(err)],
+        });
       })
     );
   }

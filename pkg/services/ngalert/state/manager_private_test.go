@@ -19,6 +19,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/log/logtest"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -311,6 +312,7 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 
 		cfg := ManagerCfg{
 			Metrics:                 testMetrics,
+			Tracer:                  tracing.InitializeTracerForTest(),
 			ExternalURL:             nil,
 			InstanceStore:           &FakeInstanceStore{},
 			Images:                  &NotAvailableImageService{},
