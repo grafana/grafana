@@ -52,14 +52,8 @@ func (promQLQ *cloudMonitoringProm) run(ctx context.Context, req *backend.QueryD
 		dr.Error = err
 		return dr, promResponse{}, "", nil
 	}
-	iter := jsoniter.Parse(jsoniter.ConfigDefault, res.Body, 1024)
-	promFormat := converter.ReadPrometheusStyleResult(iter, converter.Options{
-		MatrixWideSeries: false,
-		VectorWideSeries: false,
-		Dataplane:        false,
-	})
 
-	return dr, promFormat, r.URL.RawQuery, nil
+	return dr, parseProm(res), r.URL.RawQuery, nil
 }
 
 func doRequestProm(r *http.Request, dsInfo datasourceInfo, body map[string]interface{}) (*http.Response, error) {
@@ -79,6 +73,17 @@ func doRequestProm(r *http.Request, dsInfo datasourceInfo, body map[string]inter
 	return res, nil
 }
 
+func parseProm(res *http.Response) backend.DataResponse {
+	iter := jsoniter.Parse(jsoniter.ConfigDefault, res.Body, 1024)
+	return converter.ReadPrometheusStyleResult(iter, converter.Options{
+		MatrixWideSeries: false,
+		VectorWideSeries: false,
+		Dataplane:        false,
+	})
+}
+
+// We are not parsing the response in this function. ReadPrometheusStyleResult needs an open reader and we cannot
+// pass an open reader to this function because lint complains as it is unsafe
 func (promQLQ *cloudMonitoringProm) parseResponse(queryRes *backend.DataResponse,
 	response any, executedQueryString string) error {
 	r := response.(backend.DataResponse)
