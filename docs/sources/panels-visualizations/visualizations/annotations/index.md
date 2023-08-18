@@ -1,6 +1,6 @@
 ---
 aliases:
-  - ../../features/panels/anotations/
+  - ../../features/panels/annotations/
   - ../../panels/visualizations/annotations/
   - ../../visualizations/annotations/
 description: Annotations visualization documentation

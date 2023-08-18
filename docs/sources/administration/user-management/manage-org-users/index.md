@@ -21,6 +21,10 @@ Organization administrators can invite users to join their organization. Organiz
 
 For more information about organization user permissions, refer to [Organization users and permissions]({{< relref "../../roles-and-permissions/#organization-users-and-permissions" >}}).
 
+{{% admonition type="note" %}}
+Users added at the organization level will have access to all stacks and services by default, without the ability to be filtered by stack unless Single Sign-On (SSO) or Role-Based Access Control (RBAC) is implemented.
+{{% /admonition %}}
+
 {{< section >}}
 
 ## View a list of organization users

@@ -311,7 +311,7 @@ describe('Receivers', () => {
     // see that we're back to main page and proper api calls have been made
     await ui.receiversTable.find();
     expect(mocks.api.updateConfig).toHaveBeenCalledTimes(1);
-    expect(mocks.api.fetchConfig).toHaveBeenCalledTimes(1);
+    expect(mocks.api.fetchConfig).toHaveBeenCalledTimes(2);
     expect(locationService.getLocation().pathname).toEqual('/alerting/notifications');
     expect(mocks.api.updateConfig).toHaveBeenLastCalledWith(GRAFANA_RULES_SOURCE_NAME, {
       ...someGrafanaAlertManagerConfig,
@@ -405,7 +405,7 @@ describe('Receivers', () => {
     // see that we're back to main page and proper api calls have been made
     await ui.receiversTable.find();
     expect(mocks.api.updateConfig).toHaveBeenCalledTimes(1);
-    expect(mocks.api.fetchConfig).toHaveBeenCalledTimes(1);
+    expect(mocks.api.fetchConfig).toHaveBeenCalledTimes(2);
 
     expect(locationService.getLocation().pathname).toEqual('/alerting/notifications');
     expect(mocks.api.updateConfig).toHaveBeenLastCalledWith('CloudManager', {

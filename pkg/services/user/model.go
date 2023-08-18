@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"strings"
 	"time"
-
-	"github.com/grafana/grafana/pkg/models/roletype"
 )
 
 type HelpFlags1 uint64
@@ -28,6 +26,7 @@ var (
 	ErrProtectedUser     = errors.New("cannot adopt protected user")
 	ErrNoUniqueID        = errors.New("identifying id not found")
 	ErrLastSeenUpToDate  = errors.New("last seen is already up to date")
+	ErrUpdateInvalidID   = errors.New("unable to update invalid id")
 )
 
 type User struct {
@@ -201,27 +200,6 @@ type AnalyticsSettings struct {
 	IntercomIdentifier string
 }
 
-type SignedInUser struct {
-	UserID           int64 `xorm:"user_id"`
-	OrgID            int64 `xorm:"org_id"`
-	OrgName          string
-	OrgRole          roletype.RoleType
-	Login            string
-	Name             string
-	Email            string
-	AuthenticatedBy  string
-	ApiKeyID         int64 `xorm:"api_key_id"`
-	IsServiceAccount bool  `xorm:"is_service_account"`
-	IsGrafanaAdmin   bool
-	IsAnonymous      bool
-	IsDisabled       bool
-	HelpFlags1       HelpFlags1
-	LastSeenAt       time.Time
-	Teams            []int64
-	// Permissions grouped by orgID and actions
-	Permissions map[int64]map[string][]string `json:"-"`
-}
-
 func (u *User) NameOrFallback() string {
 	if u.Name != "" {
 		return u.Name
@@ -249,74 +227,6 @@ type UserDisplayDTO struct {
 	Name      string `json:"name,omitempty"`
 	Login     string `json:"login,omitempty"`
 	AvatarURL string `json:"avatarUrl"`
-}
-
-// ------------------------
-// DTO & Projections
-
-func (u *SignedInUser) ShouldUpdateLastSeenAt() bool {
-	return u.UserID > 0 && time.Since(u.LastSeenAt) > time.Minute*5
-}
-
-func (u *SignedInUser) NameOrFallback() string {
-	if u.Name != "" {
-		return u.Name
-	}
-	if u.Login != "" {
-		return u.Login
-	}
-	return u.Email
-}
-
-func (u *SignedInUser) ToUserDisplayDTO() *UserDisplayDTO {
-	return &UserDisplayDTO{
-		ID:    u.UserID,
-		Login: u.Login,
-		Name:  u.Name,
-	}
-}
-
-func (u *SignedInUser) HasRole(role roletype.RoleType) bool {
-	if u.IsGrafanaAdmin {
-		return true
-	}
-
-	return u.OrgRole.Includes(role)
-}
-
-// IsRealUser returns true if the user is a real user and not a service account
-func (u *SignedInUser) IsRealUser() bool {
-	// backwards compatibility
-	// checking if userId the user is a real user
-	// previously we used to check if the UserId was 0 or -1
-	// and not a service account
-	return u.UserID > 0 && !u.IsServiceAccountUser()
-}
-
-func (u *SignedInUser) IsApiKeyUser() bool {
-	return u.ApiKeyID > 0
-}
-
-// IsServiceAccountUser returns true if the user is a service account
-func (u *SignedInUser) IsServiceAccountUser() bool {
-	return u.IsServiceAccount
-}
-
-func (u *SignedInUser) HasUniqueId() bool {
-	return u.IsRealUser() || u.IsApiKeyUser() || u.IsServiceAccountUser()
-}
-
-func (u *SignedInUser) GetCacheKey() (string, error) {
-	if u.IsRealUser() {
-		return fmt.Sprintf("%d-user-%d", u.OrgID, u.UserID), nil
-	}
-	if u.IsApiKeyUser() {
-		return fmt.Sprintf("%d-apikey-%d", u.OrgID, u.ApiKeyID), nil
-	}
-	if u.IsServiceAccountUser() { // not considered a real user
-		return fmt.Sprintf("%d-service-%d", u.OrgID, u.UserID), nil
-	}
-	return "", ErrNoUniqueID
 }
 
 func (e *ErrCaseInsensitiveLoginConflict) Unwrap() error {

@@ -39,6 +39,12 @@ There are many firewall tools available, refer to the documentation for your spe
 
 Require all network requests being made by Grafana to go through a proxy server.
 
+Self-hosted reverse proxy options include but are not limited to:
+
+- [Pomerium](https://www.pomerium.com/docs), which has a [guide for securing Grafana](https://www.pomerium.com/docs/guides/grafana)
+- [NGINX](https://docs.nginx.com/nginx/) using their [guide on restricting access with HTTP basic authentication](https://docs.nginx.com/nginx/admin-guide/security-controls/configuring-http-basic-authentication/)
+- [OAuth2 proxy](https://github.com/oauth2-proxy/oauth2-proxy)
+
 ## Limit Viewer query permissions
 
 Users with the Viewer role can enter _any possible query_ in _any_ of the data sources available in the **organization**, not just the queries that are defined on the dashboards for which the user has Viewer permissions.

@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import saveAs from 'file-saver';
 import React, { ComponentProps } from 'react';
 
-import { LogLevel, LogsDedupStrategy, MutableDataFrame } from '@grafana/data';
+import { FieldType, LogLevel, LogsDedupStrategy, toDataFrame } from '@grafana/data';
 
 import { MAX_CHARACTERS } from '../../logs/components/LogRowMessage';
 import { logRowsToReadableJson } from '../../logs/utils';
@@ -150,7 +150,24 @@ describe('LogsMetaRow', () => {
       {
         rowIndex: 1,
         entryFieldIndex: 0,
-        dataFrame: new MutableDataFrame(),
+        dataFrame: toDataFrame({
+          name: 'logs',
+          fields: [
+            {
+              name: 'time',
+              type: FieldType.time,
+              values: ['1970-01-01T00:00:00Z'],
+            },
+            {
+              name: 'message',
+              type: FieldType.string,
+              values: ['INFO 1'],
+              labels: {
+                foo: 'bar',
+              },
+            },
+          ],
+        }),
         entry: 'test entry',
         hasAnsi: false,
         hasUnescapedContent: false,

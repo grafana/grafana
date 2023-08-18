@@ -5,9 +5,8 @@ import { CellProps } from 'react-table';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
-import { Icon, IconButton, Link, Spinner, useStyles2 } from '@grafana/ui';
+import { Icon, IconButton, Link, Spinner, useStyles2, Text } from '@grafana/ui';
 import { getSvgSize } from '@grafana/ui/src/components/Icon/utils';
-import { Text } from '@grafana/ui/src/unstable';
 import { getIconForKind } from 'app/features/search/service/utils';
 
 import { useChildrenByParentUIDState } from '../state';
@@ -59,7 +58,7 @@ export function NameCell({ row: { original: data }, onFolderClick }: NameCellPro
             onFolderClick(item.uid, !isOpen);
           }}
           name={isOpen ? 'angle-down' : 'angle-right'}
-          aria-label={isOpen ? 'Collapse folder' : 'Expand folder'}
+          aria-label={isOpen ? `Collapse folder ${item.title}` : `Expand folder ${item.title}`}
         />
       ) : (
         <span className={styles.folderButtonSpacer} />

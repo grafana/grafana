@@ -11,7 +11,14 @@ export default function CheckboxHeaderCell({ isSelected, onAllSelectionChange }:
     <Checkbox
       value={state === SelectionState.Selected}
       indeterminate={state === SelectionState.Mixed}
-      onChange={(ev) => onAllSelectionChange?.(ev.currentTarget.checked)}
+      onChange={(ev) => {
+        if (state === SelectionState.Mixed) {
+          // Ensure clicking an indeterminate checkbox always clears the selection
+          onAllSelectionChange?.(false);
+        } else {
+          onAllSelectionChange?.(ev.currentTarget.checked);
+        }
+      }}
     />
   );
 }
