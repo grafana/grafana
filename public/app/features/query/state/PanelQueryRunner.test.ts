@@ -272,8 +272,6 @@ describe('PanelQueryRunner', () => {
 
         ctx.runner.getData({ withTransforms: true, withFieldConfig: true }).subscribe({
           next: (data: grafanaData.PanelData) => {
-            console.log('XFORM', data);
-
             return data;
           },
         });
