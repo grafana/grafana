@@ -5,7 +5,7 @@ import { GrafanaTheme2, ThemeSpacingTokens } from '@grafana/data';
 
 import { useStyles2 } from '../../themes';
 
-type AlignItems =
+export type AlignItems =
   | 'stretch'
   | 'flex-start'
   | 'flex-end'
@@ -16,7 +16,7 @@ type AlignItems =
   | 'self-start'
   | 'self-end';
 
-type JustifyContent =
+export type JustifyContent =
   | 'flex-start'
   | 'flex-end'
   | 'center'
@@ -28,9 +28,9 @@ type JustifyContent =
   | 'left'
   | 'right';
 
-type Direction = 'row' | 'row-reverse' | 'column' | 'column-reverse';
+export type Direction = 'row' | 'row-reverse' | 'column' | 'column-reverse';
 
-type Wrap = 'nowrap' | 'wrap' | 'wrap-reverse';
+export type Wrap = 'nowrap' | 'wrap' | 'wrap-reverse';
 
 interface FlexProps {
   gap?: ThemeSpacingTokens;

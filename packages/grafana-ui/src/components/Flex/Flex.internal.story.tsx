@@ -1,10 +1,12 @@
 import { Meta, StoryFn } from '@storybook/react';
 import React from 'react';
 
+import { ThemeSpacingTokens } from '@grafana/data';
+
 import { useTheme2 } from '../../themes';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 
-import { Flex } from './Flex';
+import { Flex, JustifyContent, Wrap, Direction } from './Flex';
 import mdx from './Flex.mdx';
 
 const Item = ({ color, text, height }: { color: string; text?: string | number; height?: string }) => {
@@ -50,6 +52,7 @@ export const Basic: StoryFn<typeof Flex> = ({ direction, wrap, alignItems, justi
 
 export const AlignItemsExamples: StoryFn<typeof Flex> = () => {
   const theme = useTheme2();
+
   return (
     <div style={{ width: '600px' }}>
       <p>Align items flex-start</p>
@@ -64,15 +67,6 @@ export const AlignItemsExamples: StoryFn<typeof Flex> = () => {
           <Item key={i} color={theme.colors.error.main} text={i + 1} />
         ))}
       </Flex>
-      <p>Align items stretch</p>
-      <Flex direction="row" wrap="wrap" alignItems="stretch" justifyContent="center" gap={2}>
-        <Item color={theme.colors.error.main} height="10em" />
-        <Item color={theme.colors.error.main} />
-        <Item color={theme.colors.error.main} height="3em" />
-        <Item color={theme.colors.error.main} />
-        <Item color={theme.colors.error.main} />
-      </Flex>
-
       <p>Align items baseline</p>
       <Flex direction="row" wrap="nowrap" alignItems="baseline" justifyContent="center" gap={2}>
         {Array.from({ length: 5 }).map((_, i) => (
@@ -85,128 +79,98 @@ export const AlignItemsExamples: StoryFn<typeof Flex> = () => {
           <Item key={i} color={theme.colors.error.main} text={i + 1} />
         ))}
       </Flex>
+      <p>Align items stretch</p>
+      <Flex direction="row" wrap="wrap" alignItems="stretch" justifyContent="center" gap={2}>
+        <Item color={theme.colors.error.main} height="10em" />
+        <Item color={theme.colors.error.main} />
+        <Item color={theme.colors.error.main} height="3em" />
+        <Item color={theme.colors.error.main} />
+        <Item color={theme.colors.error.main} />
+      </Flex>
     </div>
   );
 };
 
 export const JustifyContentExamples: StoryFn<typeof Flex> = () => {
   const theme = useTheme2();
+  const justifyContentOptions: JustifyContent[] = [
+    'space-between',
+    'space-around',
+    'space-evenly',
+    'flex-start',
+    'flex-end',
+    'center',
+  ];
+
   return (
     <div style={{ width: '600px' }}>
-      <p>Justify Content space-between</p>
-      <Flex direction="row" wrap="wrap" alignItems="center" justifyContent="space-between" gap={2}>
-        {Array.from({ length: 5 }).map((_, i) => (
-          <Item key={i} color={theme.colors.warning.main} text={i + 1} />
-        ))}
-      </Flex>
-      <p>Justify Content space-around </p>
-      <Flex direction="row" wrap="wrap" alignItems="center" justifyContent="space-around" gap={2}>
-        {Array.from({ length: 5 }).map((_, i) => (
-          <Item key={i} color={theme.colors.warning.main} text={i + 1} />
-        ))}
-      </Flex>
-      <p>Justify Content space-evenly</p>
-      <Flex direction="row" wrap="wrap" alignItems="center" justifyContent="space-evenly" gap={2}>
-        {Array.from({ length: 5 }).map((_, i) => (
-          <Item key={i} color={theme.colors.warning.main} text={i + 1} />
-        ))}
-      </Flex>
-      <p>Justify Content flex-start</p>
-      <Flex direction="row" wrap="wrap" alignItems="center" justifyContent="flex-start" gap={2}>
-        {Array.from({ length: 5 }).map((_, i) => (
-          <Item key={i} color={theme.colors.warning.main} text={i + 1} />
-        ))}
-      </Flex>
-      <p>Justify Content flex-end</p>
-      <Flex direction="row" wrap="wrap" alignItems="center" justifyContent="flex-end" gap={2}>
-        {Array.from({ length: 5 }).map((_, i) => (
-          <Item key={i} color={theme.colors.warning.main} text={i + 1} />
-        ))}
-      </Flex>
-      <p>Justify Content center</p>
-      <Flex direction="row" wrap="wrap" alignItems="center" justifyContent="center" gap={2}>
-        {Array.from({ length: 5 }).map((_, i) => (
-          <Item key={i} color={theme.colors.warning.main} text={i + 1} />
-        ))}
-      </Flex>
+      {justifyContentOptions.map((justifyContent) => (
+        <>
+          <p>Justify Content {justifyContent}</p>
+          <Flex direction="row" wrap="wrap" alignItems="center" justifyContent={justifyContent} gap={2}>
+            {Array.from({ length: 5 }).map((_, i) => (
+              <Item key={i} color={theme.colors.warning.main} text={i + 1} />
+            ))}
+          </Flex>
+        </>
+      ))}
     </div>
   );
 };
 
 export const GapExamples: StoryFn<typeof Flex> = () => {
   const theme = useTheme2();
+  const gapOptions: ThemeSpacingTokens[] = [2, 8, 10];
   return (
     <div style={{ width: '800px' }}>
-      <p>Gap with spacingToken set to 2 (16px)</p>
-      <Flex direction="row" wrap="wrap" alignItems="flex-start" justifyContent="flex-start" gap={2}>
-        {Array.from({ length: 5 }).map((_, i) => (
-          <Item key={i} color={theme.colors.error.main} text={i + 1} />
-        ))}
-      </Flex>
-      <p>Gap with spacingToken set to 8 (64px)</p>
-      <Flex direction="row" wrap="wrap" alignItems="flex-start" justifyContent="flex-start" gap={8}>
-        {Array.from({ length: 5 }).map((_, i) => (
-          <Item key={i} color={theme.colors.error.main} text={i + 1} />
-        ))}
-      </Flex>
-      <p>Gap with spacingToken set to 10 (80px)</p>
-      <Flex direction="row" wrap="wrap" alignItems="flex-start" justifyContent="flex-start" gap={10}>
-        {Array.from({ length: 5 }).map((_, i) => (
-          <Item key={i} color={theme.colors.error.main} text={i + 1} />
-        ))}
-      </Flex>
+      {gapOptions.map((gap) => (
+        <>
+          <p>Gap with spacingToken set to {gap}</p>
+          <Flex direction="row" wrap="wrap" alignItems="flex-start" justifyContent="flex-start" gap={gap}>
+            {Array.from({ length: 5 }).map((_, i) => (
+              <Item key={i} color={theme.colors.error.main} text={i + 1} />
+            ))}
+          </Flex>
+        </>
+      ))}
     </div>
   );
 };
 
 export const WrapExamples: StoryFn<typeof Flex> = () => {
   const theme = useTheme2();
+  const wrapOptions: Wrap[] = ['nowrap', 'wrap', 'wrap-reverse'];
   return (
     <div style={{ width: '600px' }}>
-      <p>Wrap example with wrap and gap set to spacingToken 2 (16px)</p>
-      <Flex direction="row" wrap="wrap" alignItems="center" justifyContent="center" gap={2}>
-        {Array.from({ length: 10 }).map((_, i) => (
-          <Item key={i} color={theme.colors.warning.main} text={i + 1} />
-        ))}
-      </Flex>
-      <p>Wrap example with wrap-reverse and gap set to spacingToken 2 (16px)</p>
-      <Flex direction="row" wrap="wrap-reverse" alignItems="center" justifyContent="center" gap={2}>
-        {Array.from({ length: 10 }).map((_, i) => (
-          <Item key={i} color={theme.colors.warning.main} text={i + 1} />
-        ))}
-      </Flex>
+      {wrapOptions.map((wrap) => (
+        <>
+          <p>Wrap examples with {wrap} and gap set to spacingToken 2 (16px)</p>
+          <Flex direction="row" wrap={wrap} alignItems="center" justifyContent="center" gap={2}>
+            {Array.from({ length: 10 }).map((_, i) => (
+              <Item key={i} color={theme.colors.warning.main} text={i + 1} />
+            ))}
+          </Flex>
+        </>
+      ))}
     </div>
   );
 };
 
 export const DirectionExamples: StoryFn<typeof Flex> = () => {
   const theme = useTheme2();
+  const directionOptions: Direction[] = ['row', 'row-reverse', 'column', 'column-reverse'];
   return (
     <div style={{ width: '600px' }}>
-      <p>Direction row</p>
-      <Flex direction="row" wrap="wrap" alignItems="flex-start" justifyContent="center" gap={2}>
-        {Array.from({ length: 5 }).map((_, i) => (
-          <Item key={i} color={theme.colors.error.main} text={i + 1} />
-        ))}
-      </Flex>
-      <p>Direction row-reverse</p>
-      <Flex direction="row-reverse" wrap="wrap" alignItems="flex-start" justifyContent="center" gap={2}>
-        {Array.from({ length: 5 }).map((_, i) => (
-          <Item key={i} color={theme.colors.error.main} text={i + 1} />
-        ))}
-      </Flex>
-      <p>Direction column</p>
-      <Flex direction="column" wrap="wrap" alignItems="flex-start" justifyContent="center" gap={2}>
-        {Array.from({ length: 5 }).map((_, i) => (
-          <Item key={i} color={theme.colors.error.main} text={i + 1} />
-        ))}
-      </Flex>
-      <p>Direction column-reverse</p>
-      <Flex direction="column-reverse" wrap="wrap" alignItems="flex-start" justifyContent="center" gap={2}>
-        {Array.from({ length: 5 }).map((_, i) => (
-          <Item key={i} color={theme.colors.error.main} text={i + 1} />
-        ))}
-      </Flex>
+      {directionOptions.map((direction) => (
+        <>
+          <p>Direction {direction}</p>
+          <Flex direction={direction} wrap="wrap" alignItems="center" justifyContent="center" gap={2}>
+            {Array.from({ length: 5 }).map((_, i) => (
+              <Item key={i} color={theme.colors.warning.main} text={i + 1} />
+            ))}
+          </Flex>
+        </>
+      ))}
     </div>
   );
 };
