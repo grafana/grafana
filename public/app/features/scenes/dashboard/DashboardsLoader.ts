@@ -5,14 +5,12 @@ import {
   QueryVariableModel,
   VariableModel,
 } from '@grafana/data';
-import { config } from '@grafana/runtime';
 import {
   VizPanel,
   SceneTimePicker,
   SceneGridLayout,
   SceneGridRow,
   SceneTimeRange,
-  SceneQueryRunner,
   SceneVariableSet,
   VariableValueSelectors,
   SceneVariable,
@@ -21,9 +19,7 @@ import {
   QueryVariable,
   ConstantVariable,
   SceneRefreshPicker,
-  SceneDataTransformer,
   SceneGridItem,
-  SceneDataProvider,
   SceneObject,
   SceneControlsSpacer,
   VizPanelMenu,
@@ -33,12 +29,12 @@ import { StateManagerBase } from 'app/core/services/StateManagerBase';
 import { dashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { getLibraryPanel } from 'app/features/library-panels/state/api';
-import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/types';
 
 import { DashboardScene } from './DashboardScene';
+import { LibraryVizPanel } from './LibraryVizPanel';
 import { panelMenuBehavior } from './PanelMenuBehavior';
-import { ShareQueryDataProvider } from './ShareQueryDataProvider';
 import { getVizPanelKeyForPanelId } from './utils';
+import { createPanelDataProvider } from './utils/createPanelDataProvider';
 
 export interface DashboardLoaderState {
   dashboard?: DashboardScene;
@@ -132,8 +128,9 @@ export function createSceneObjectsForPanels(oldPanels: PanelModel[]): Array<Scen
       }
     } else if (panel.libraryPanel?.uid && !('model' in panel.libraryPanel)) {
       const gridItem = new SceneGridItem({
-        body: new VizPanel({
+        body: new LibraryVizPanel({
           title: panel.title,
+          libraryPanel: panel.libraryPanel,
         }),
         y: panel.gridPos.y,
         x: panel.gridPos.x,
@@ -141,10 +138,6 @@ export function createSceneObjectsForPanels(oldPanels: PanelModel[]): Array<Scen
         height: panel.gridPos.h,
       });
       panels.push(gridItem);
-
-      loadLibraryPanelFromPanelModel(panel, (vizPanel) => {
-        gridItem.setState({ body: vizPanel });
-      });
     } else {
       const panelObject = createVizPanelFromPanelModel(panel);
 
@@ -168,6 +161,7 @@ export function createSceneObjectsForPanels(oldPanels: PanelModel[]): Array<Scen
     );
   }
 
+  console.log('panels', panels);
   return panels;
 }
 
@@ -207,13 +201,13 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel)
     title: oldModel.title,
     uid: oldModel.uid,
     body: new SceneGridLayout({
+      isLazy: true,
       children: createSceneObjectsForPanels(oldModel.panels),
     }),
     $timeRange: new SceneTimeRange(oldModel.time),
     $variables: variables,
     $behaviors: [
       new behaviors.CursorSync({
-        key: 'dashboard',
         sync: oldModel.graphTooltip,
       }),
     ],
@@ -308,39 +302,6 @@ export function createVizPanelFromPanelModel(panel: PanelModel) {
       }),
     }),
   });
-}
-
-export function createPanelDataProvider(panel: PanelModel): SceneDataProvider | undefined {
-  // Skip setting query runner for panels without queries
-  if (!panel.targets?.length) {
-    return undefined;
-  }
-
-  // Skip setting query runner for panel plugins with skipDataQuery
-  if (config.panels[panel.type]?.skipDataQuery) {
-    return undefined;
-  }
-
-  let dataProvider: SceneDataProvider | undefined = undefined;
-
-  if (panel.datasource?.uid === SHARED_DASHBOARD_QUERY) {
-    dataProvider = new ShareQueryDataProvider({ query: panel.targets[0] });
-  } else {
-    dataProvider = new SceneQueryRunner({
-      queries: panel.targets,
-      maxDataPoints: panel.maxDataPoints ?? undefined,
-    });
-  }
-
-  // Wrap inner data provider in a data transformer
-  if (panel.transformations?.length) {
-    dataProvider = new SceneDataTransformer({
-      $data: dataProvider,
-      transformations: panel.transformations,
-    });
-  }
-
-  return dataProvider;
 }
 
 export async function loadLibraryPanelFromPanelModel(panel: PanelModel, updatePanel: (panel: VizPanel) => void) {
