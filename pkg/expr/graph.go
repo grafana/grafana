@@ -110,8 +110,8 @@ func (dp *DataPipeline) execute(c context.Context, now time.Time, s *Service) (m
 		if !ok {
 			return vars, errutil.PublicError{
 				StatusCode: 500,
-				MessageID:  "SSE.unexpectedNode",
-				Message:    fmt.Sprintf("expected executable node but got node type %s", node.NodeType()),
+				MessageID:  "SSE.unexpectedNodeType",
+				Message:    fmt.Sprintf("expected executable node type but got node type %s", node.NodeType()),
 			}
 		}
 
