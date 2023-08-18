@@ -55,7 +55,7 @@ The [PanelProps](https://github.com/grafana/grafana/blob/747b546c260f9a448e2cb56
 
 You can access the panel properties through `props`, as seen in your plugin.
 
-**src/SimplePanel.tsx**
+**src/components/SimplePanel.tsx**
 
 ```js
 const { options, data, width, height } = props;
@@ -161,19 +161,19 @@ You're almost done. You've added a new option and a corresponding control to cha
 
 1. To convert option value to the colors used by the current theme, add a `switch` statement right before the `return` statement in `SimplePanel.tsx`.
 
-   **src/SimplePanel.tsx**
+   **src/components/SimplePanel.tsx**
 
    ```ts
    let color: string;
    switch (options.color) {
      case 'red':
-       color = theme.palette.redBase;
+       color = theme.visualization.getColorByName('red');
        break;
      case 'green':
-       color = theme.palette.greenBase;
+       color = theme.visualization.getColorByName('green');
        break;
-     case 'blue':
-       color = theme.palette.blue95;
+      case 'blue':
+       color = theme.visualization.getColorByName('blue');
        break;
    }
    ```
