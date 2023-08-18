@@ -70,7 +70,7 @@ export function toMetricFindValues(): OperatorFunction<PanelData, MetricFindValu
           throw new Error("Couldn't find any field of type string in the results.");
         }
 
-        for (const frame of frames) {
+        for (const frame of processedDataFrames) {
           for (let index = 0; index < frame.length; index++) {
             const expandable = expandableIndex !== -1 ? frame.fields[expandableIndex].values[index] : undefined;
             const string = frame.fields[stringIndex].values[index];
