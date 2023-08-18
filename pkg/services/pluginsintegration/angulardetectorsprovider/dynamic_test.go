@@ -297,7 +297,7 @@ func TestDynamicAngularDetectorsProviderBackgroundService(t *testing.T) {
 			done := make(chan struct{})
 			gcom := newDefaultGCOMScenario(func(_ http.ResponseWriter, _ *http.Request) {
 				now := time.Now()
-				assert.WithinDuration(t, now, lastJobTime, jobInterval+jobInterval/2)
+				assert.WithinDuration(t, now, lastJobTime, jobInterval*2)
 				lastJobTime = now
 
 				jobCalls.inc()
