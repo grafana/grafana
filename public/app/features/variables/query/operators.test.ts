@@ -139,18 +139,15 @@ describe('operators', () => {
     });
 
     describe('when called without metric find values and string fields', () => {
-      it('then the observable throws', async () => {
+      it('then the observable throws', () => {
         const frameWithTimeField = toDataFrame({
           fields: [{ name: 'time', type: FieldType.time, values: [1, 2, 3] }],
         });
 
         const panelData = { series: [frameWithTimeField] } as PanelData;
-        const observable = of(panelData).pipe(toMetricFindValues());
-
-        await expect(observable).toEmitValuesWith((received) => {
-          const value = received[0];
-          expect(value).toEqual(new Error("Couldn't find any field of type string in the results."));
-        });
+        expect(() => toMetricFindValues(panelData)).toThrow(
+          new Error("Couldn't find any field of type string in the results.")
+        );
       });
     });
   });
