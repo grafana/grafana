@@ -6,13 +6,15 @@ labels: 'type/feature-request'
 
 <!-- Please only use this template for submitting feature requests -->
 
+**Why is this needed**:
+
+[Add a description of the problem the feature is trying to solve.]
+
+
 **What would you like to be added**:
 
 [Add a brief description of what the feature or enhancement should do.]
 
-**Why is this needed**:
-
-[Add a description of the problem the feature is trying to solve.]
 
 **Who is this feature for?**
 
