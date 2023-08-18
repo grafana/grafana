@@ -2,6 +2,7 @@ package expr
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
@@ -55,4 +56,25 @@ func MakeQueryError(refID, datasourceUID string, err error) error {
 	}
 
 	return QueryError.Build(data)
+}
+
+var depErrStr = "did not execute expression [{{ .Public.refId }}] due to a failure to of the dependent expression or query [{{.Public.depRefId}}]"
+
+var DependencyError = errutil.NewBase(
+	errutil.StatusBadRequest, "sse.dependencyError").MustTemplate(
+	depErrStr,
+	errutil.WithPublic(
+		depErrStr,
+	))
+
+func MakeDependencyError(refID, depRefID string) error {
+	data := errutil.TemplateData{
+		Public: map[string]interface{}{
+			"refId":    refID,
+			"depRefId": depRefID,
+		},
+		Error: fmt.Errorf("did not execute expression %v due to a failure to of the dependent expression or query %v", refID, depRefID),
+	}
+
+	return DependencyError.Build(data)
 }
