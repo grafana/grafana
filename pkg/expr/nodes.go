@@ -40,7 +40,9 @@ type rawNode struct {
 	QueryType  string
 	TimeRange  TimeRange
 	DataSource *datasources.DataSource
-	idx        int64
+	// We use this index as the id of the node graph so the order can remain during a the stable sort of the dependency graph execution order.
+	// Some data sources, such as cloud watch, have order dependencies between queries.
+	idx int64
 }
 
 func (rn *rawNode) GetCommandType() (c CommandType, err error) {
@@ -207,84 +209,87 @@ func executeDSNodesGrouped(ctx context.Context, now time.Time, vars mathexp.Vars
 	}
 
 	for _, nodeGroup := range byDS {
-		firstNode := nodeGroup[0]
-		pCtx, err := s.pCtxProvider.GetWithDataSource(ctx, firstNode.datasource.Type, firstNode.request.User, firstNode.datasource)
-		if err != nil {
-			for _, dn := range nodeGroup {
-				vars[dn.refID] = mathexp.Results{Error: fmt.Errorf("could not get datasource: %w", err)} // TODO errutil public
+		func() {
+			ctx, span := s.tracer.Start(ctx, "SSE.ExecuteDatasourceQuery")
+			defer span.End()
+			firstNode := nodeGroup[0]
+			pCtx, err := s.pCtxProvider.GetWithDataSource(ctx, firstNode.datasource.Type, firstNode.request.User, firstNode.datasource)
+			if err != nil {
+				for _, dn := range nodeGroup {
+					vars[dn.refID] = mathexp.Results{Error: fmt.Errorf("could not get datasource: %w", err)} // TODO errutil public
+				}
+				return
 			}
-			continue
-		}
 
-		logger := logger.FromContext(ctx).New("datasourceType", firstNode.datasource.Type,
-			"queryRefId", firstNode.refID,
-			"datasourceUid", firstNode.datasource.UID,
-			"datasourceVersion", firstNode.datasource.Version,
-		)
+			logger := logger.FromContext(ctx).New("datasourceType", firstNode.datasource.Type,
+				"queryRefId", firstNode.refID,
+				"datasourceUid", firstNode.datasource.UID,
+				"datasourceVersion", firstNode.datasource.Version,
+			)
 
-		ctx, span := s.tracer.Start(ctx, "SSE.ExecuteDatasourceQuery")
-		defer span.End()
+			span.SetAttributes("datasource.type", firstNode.datasource.Type, attribute.Key("datasource.type").String(firstNode.datasource.Type))
+			span.SetAttributes("datasource.uid", firstNode.datasource.UID, attribute.Key("datasource.uid").String(firstNode.datasource.UID))
 
-		span.SetAttributes("datasource.type", firstNode.datasource.Type, attribute.Key("datasource.type").String(firstNode.datasource.Type))
-		span.SetAttributes("datasource.uid", firstNode.datasource.UID, attribute.Key("datasource.uid").String(firstNode.datasource.UID))
+			req := &backend.QueryDataRequest{
+				PluginContext: pCtx,
+				Headers:       firstNode.request.Headers,
+			}
 
-		req := &backend.QueryDataRequest{
-			PluginContext: pCtx,
-			Headers:       firstNode.request.Headers,
-		}
+			for _, dn := range nodeGroup {
+				req.Queries = append(req.Queries, backend.DataQuery{
+					RefID:         dn.refID,
+					MaxDataPoints: dn.maxDP,
+					Interval:      time.Duration(int64(time.Millisecond) * dn.intervalMS),
+					JSON:          dn.query,
+					TimeRange:     dn.timeRange.AbsoluteTime(now),
+					QueryType:     dn.queryType,
+				})
+			}
 
-		for _, dn := range nodeGroup {
-			req.Queries = append(req.Queries, backend.DataQuery{
-				RefID:         dn.refID,
-				MaxDataPoints: dn.maxDP,
-				Interval:      time.Duration(int64(time.Millisecond) * dn.intervalMS),
-				JSON:          dn.query,
-				TimeRange:     dn.timeRange.AbsoluteTime(now),
-				QueryType:     dn.queryType,
-			})
-		}
-
-		instrument := func(e error, rt string) {
+			responseType := "unknown"
 			respStatus := "success"
-			if e != nil {
-				rt = "error"
-				respStatus = "failure"
-				span.AddEvents([]string{"error", "message"},
-					[]tracing.EventValue{
-						{Str: fmt.Sprintf("%v", err)},
-						{Str: "failed to query data source"},
-					})
-			}
-			logger.Debug("Data source queried", "responseType", rt)
-			useDataplane := strings.HasPrefix(rt, "dataplane-")
-			s.metrics.dsRequests.WithLabelValues(respStatus, fmt.Sprintf("%t", useDataplane), firstNode.datasource.Type).Inc()
-		}
 
-		resp, err := s.dataService.QueryData(ctx, req)
-		if err != nil {
+			instrument := func(e error, rt string) {
+				if e != nil {
+					responseType = "error"
+					respStatus = "failure"
+					span.AddEvents([]string{"error", "message"},
+						[]tracing.EventValue{
+							{Str: fmt.Sprintf("%v", err)},
+							{Str: "failed to query data source"},
+						})
+				}
+				logger.Debug("Data source queried", "responseType", responseType)
+				useDataplane := strings.HasPrefix(responseType, "dataplane-")
+				s.metrics.dsRequests.WithLabelValues(respStatus, fmt.Sprintf("%t", useDataplane), firstNode.datasource.Type).Inc()
+			}
+
+			resp, err := s.dataService.QueryData(ctx, req)
+			if err != nil {
+				for _, dn := range nodeGroup {
+					vars[dn.refID] = mathexp.Results{Error: MakeQueryError(firstNode.refID, firstNode.datasource.UID, err)}
+				}
+				instrument(err, "unknown")
+				return
+			}
+
 			for _, dn := range nodeGroup {
-				vars[dn.refID] = mathexp.Results{Error: MakeQueryError(firstNode.refID, firstNode.datasource.UID, err)}
-			}
-			instrument(err, "unknown")
-			continue
-		}
+				dataFrames, err := getResponseFrame(resp, dn.refID)
+				if err != nil {
+					vars[dn.refID] = mathexp.Results{Error: MakeQueryError(dn.refID, dn.datasource.UID, err)}
+					instrument(err, "unknown")
+					return
+				}
 
-		for _, dn := range nodeGroup {
-			dataFrames, err := getResponseFrame(resp, dn.refID)
-			if err != nil {
-				vars[dn.refID] = mathexp.Results{Error: MakeQueryError(dn.refID, dn.datasource.UID, err)}
-				continue
+				var result mathexp.Results
+				responseType, result, err = convertDataFramesToResults(ctx, dataFrames, dn.datasource.Type, s, logger)
+				if err != nil {
+					result.Error = MakeConversionError(dn.RefID(), err)
+				}
+				instrument(err, responseType)
+				vars[dn.refID] = result
 			}
-
-			var result mathexp.Results
-			var responseType string
-			responseType, result, err = convertDataFramesToResults(ctx, dataFrames, dn.datasource.Type, s, logger)
-			if err != nil {
-				result.Error = MakeConversionError(dn.RefID(), err)
-			}
-			instrument(err, responseType)
-			vars[dn.refID] = result
-		}
+		}()
 	}
 }
 

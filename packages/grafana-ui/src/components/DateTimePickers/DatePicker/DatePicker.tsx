@@ -71,7 +71,8 @@ export const getStyles = (theme: GrafanaTheme2) => {
       boxShadow: theme.shadows.z3,
       backgroundColor: theme.colors.background.primary,
       border: `1px solid ${theme.colors.border.weak}`,
-      borderRadius: '2px 0 0 2px',
+      borderTopLeftRadius: theme.shape.radius.default,
+      borderBottomLeftRadius: theme.shape.radius.default,
 
       'button:disabled': {
         color: theme.colors.text.disabled,

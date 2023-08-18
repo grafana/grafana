@@ -67,9 +67,6 @@ func (dp *DataPipeline) execute(c context.Context, now time.Time, s *Service) (m
 
 	executeDSNodesGrouped(c, now, vars, s, dsNodes)
 
-	// TODO: Mark Dependent nodes of vars[X] that have result.Error != nil, and then don't execute dependent nodes,
-	// but instead set them to an error and return
-
 	for _, node := range *dp {
 		if node.NodeType() == TypeDatasourceNode {
 			continue // already executed via executeDSNodesGrouped
@@ -184,6 +181,7 @@ func buildNodeRegistry(g *simple.DirectedGraph) map[string]Node {
 // buildGraph creates a new graph populated with nodes for every query.
 func (s *Service) buildGraph(req *Request) (*simple.DirectedGraph, error) {
 	dp := simple.NewDirectedGraph()
+
 	for i, query := range req.Queries {
 		if query.DataSource == nil || query.DataSource.UID == "" {
 			return nil, fmt.Errorf("missing datasource uid in query with refId %v", query.RefID)

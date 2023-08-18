@@ -3,9 +3,11 @@ import { UseFormRegister } from 'react-hook-form';
 
 import { TimeRange } from '@grafana/data/src';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
-import { reportInteraction } from '@grafana/runtime/src';
 import { FieldSet, Label, Switch, TimeRangeInput, VerticalGroup } from '@grafana/ui/src';
 import { Layout } from '@grafana/ui/src/components/Layout/Layout';
+
+import { trackDashboardSharingActionPerType } from '../../analytics';
+import { shareDashboardType } from '../../utils';
 
 import { ConfigPublicDashboardForm } from './ConfigPublicDashboard';
 
@@ -37,9 +39,10 @@ export const Configuration = ({
               {...register('isTimeSelectionEnabled')}
               data-testid={selectors.EnableTimeRangeSwitch}
               onChange={(e) => {
-                reportInteraction('grafana_dashboards_public_time_selection_clicked', {
-                  action: e.currentTarget.checked ? 'enable' : 'disable',
-                });
+                trackDashboardSharingActionPerType(
+                  e.currentTarget.checked ? 'enable_time' : 'disable_time',
+                  shareDashboardType.publicDashboard
+                );
                 onChange('isTimeSelectionEnabled', e.currentTarget.checked);
               }}
             />
@@ -49,9 +52,10 @@ export const Configuration = ({
             <Switch
               {...register('isAnnotationsEnabled')}
               onChange={(e) => {
-                reportInteraction('grafana_dashboards_public_annotations_clicked', {
-                  action: e.currentTarget.checked ? 'enable' : 'disable',
-                });
+                trackDashboardSharingActionPerType(
+                  e.currentTarget.checked ? 'enable_annotations' : 'disable_annotations',
+                  shareDashboardType.publicDashboard
+                );
                 onChange('isAnnotationsEnabled', e.currentTarget.checked);
               }}
               data-testid={selectors.EnableAnnotationsSwitch}

@@ -1,6 +1,9 @@
+import { scaleLinear } from 'd3';
 import color from 'tinycolor2';
 
 import { GrafanaTheme2 } from '@grafana/data';
+
+import { ColorSchemeDiff } from '../types';
 
 import murmurhash3_32_gc from './murmur3';
 
@@ -59,6 +62,41 @@ export function getBarColorByPackage(label: string, theme: GrafanaTheme2) {
     packageColor = packageColor.clone().brighten(15);
   }
   return packageColor;
+}
+
+// green to red
+const diffDefaultColors = ['rgb(0, 170, 0)', 'rgb(148, 142, 142)', 'rgb(200, 0, 0)'];
+export const diffDefaultGradient = `linear-gradient(90deg, ${diffDefaultColors[0]} 0%, ${diffDefaultColors[1]} 50%, ${diffDefaultColors[2]} 100%)`;
+const diffColorBlindColors = ['rgb(26, 133, 255)', 'rgb(148, 142, 142)', 'rgb(220, 50, 32)'];
+export const diffColorBlindGradient = `linear-gradient(90deg, ${diffColorBlindColors[0]} 0%, ${diffColorBlindColors[1]} 50%, ${diffColorBlindColors[2]} 100%)`;
+
+export function getBarColorByDiff(
+  ticks: number,
+  ticksRight: number,
+  totalTicks: number,
+  totalTicksRight: number,
+  colorScheme: ColorSchemeDiff
+) {
+  const ticksLeft = ticks - ticksRight;
+  const totalTicksLeft = totalTicks - totalTicksRight;
+
+  const percentageLeft = Math.round((10000 * ticksLeft) / totalTicksLeft) / 100;
+  const percentageRight = Math.round((10000 * ticksRight) / totalTicksRight) / 100;
+
+  const diff = ((percentageRight - percentageLeft) / percentageLeft) * 100;
+
+  const range = colorScheme === ColorSchemeDiff.Default ? diffDefaultColors : diffColorBlindColors;
+
+  const colorScale = scaleLinear()
+    .domain([-100, 0, 100])
+    // TODO types from DefinitelyTyped seem to mismatch
+    // @ts-ignore
+    .range(range);
+
+  // TODO types from DefinitelyTyped seem to mismatch
+  // @ts-ignore
+  const rgbString: string = colorScale(diff);
+  return color(rgbString);
 }
 
 // const getColors = memoizeOne((theme) => getFilteredColors(colors, theme));

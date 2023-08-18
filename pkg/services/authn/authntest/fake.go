@@ -7,6 +7,7 @@ import (
 )
 
 var _ authn.Service = new(FakeService)
+var _ authn.IdentitySynchronizer = new(FakeService)
 
 type FakeService struct {
 	ExpectedErr        error
@@ -66,6 +67,10 @@ func (f *FakeService) RedirectURL(ctx context.Context, client string, r *authn.R
 }
 
 func (f *FakeService) RegisterClient(c authn.Client) {}
+
+func (f *FakeService) SyncIdentity(ctx context.Context, identity *authn.Identity) error {
+	return f.ExpectedErr
+}
 
 var _ authn.ContextAwareClient = new(FakeClient)
 

@@ -2278,7 +2278,8 @@ export const tempoSearchResponse = {
   traces: [
     {
       traceID: 'e641dcac1c3a0565',
-      rootServiceName: 'c10d7ca4e3a00354',
+      rootServiceName: 'requester',
+      rootTraceName: 'app',
       startTimeUnixNano: '1643356828724000000',
       durationMs: 65,
     },
@@ -2391,87 +2392,91 @@ export const traceQlResponse = {
       rootTraceName: 'HTTP Client',
       startTimeUnixNano: '1643342166678000000',
       durationMs: 93,
-      spanSet: {
-        spans: [
-          {
-            spanID: '3b9a5c222d3ddd8f',
-            startTimeUnixNano: '1666187875397721000',
-            durationNanos: '877000',
-            attributes: [
-              {
-                key: 'http.method',
-                value: {
-                  stringValue: 'GET',
-                },
+      spanSets: [
+        {
+          attributes: [
+            {
+              key: 'by(resource.service.name)',
+              value: {
+                stringValue: 'db',
               },
-              {
-                key: 'service.name',
-                value: {
-                  stringValue: 'db',
+            },
+          ],
+          spans: [
+            {
+              spanID: '3b9a5c222d3ddd8f',
+              startTimeUnixNano: '1666187875397721000',
+              durationNanos: '877000',
+              attributes: [
+                {
+                  key: 'http.method',
+                  value: {
+                    stringValue: 'GET',
+                  },
                 },
-              },
-            ],
-          },
-          {
-            spanID: '894d90db6b5807f',
-            startTimeUnixNano: '1666187875393293000',
-            durationNanos: '11073000',
-            attributes: [
-              {
-                key: 'http.method',
-                value: {
-                  stringValue: 'GET',
+                {
+                  key: 'service.name',
+                  value: {
+                    stringValue: 'db',
+                  },
                 },
+              ],
+            },
+          ],
+          matched: 1,
+        },
+        {
+          attributes: [
+            {
+              key: 'by(resource.service.name)',
+              value: {
+                stringValue: 'app',
               },
-              {
-                key: 'service.name',
-                value: {
-                  stringValue: 'app',
+            },
+          ],
+          spans: [
+            {
+              spanID: '894d90db6b5807f',
+              startTimeUnixNano: '1666187875393293000',
+              durationNanos: '11073000',
+              attributes: [
+                {
+                  key: 'http.method',
+                  value: {
+                    stringValue: 'GET',
+                  },
                 },
-              },
-            ],
-          },
-          {
-            spanID: 'd3284e9c5081aab',
-            startTimeUnixNano: '1666187875393897000',
-            durationNanos: '10133000',
-            attributes: [
-              {
-                key: 'service.name',
-                value: {
-                  stringValue: 'app',
+                {
+                  key: 'service.name',
+                  value: {
+                    stringValue: 'app',
+                  },
                 },
-              },
-              {
-                key: 'http.method',
-                value: {
-                  stringValue: 'GET',
+              ],
+            },
+            {
+              spanID: 'd3284e9c5081aab',
+              startTimeUnixNano: '1666187875393897000',
+              durationNanos: '10133000',
+              attributes: [
+                {
+                  key: 'service.name',
+                  value: {
+                    stringValue: 'app',
+                  },
                 },
-              },
-            ],
-          },
-          {
-            spanID: '454785498fc8b1aa',
-            startTimeUnixNano: '1666187875389957000',
-            durationNanos: '13953000',
-            attributes: [
-              {
-                key: 'http.method',
-                value: {
-                  stringValue: 'GET',
+                {
+                  key: 'http.method',
+                  value: {
+                    stringValue: 'GET',
+                  },
                 },
-              },
-              {
-                key: 'service.name',
-                value: {
-                  stringValue: 'lb',
-                },
-              },
-            ],
-          },
-        ],
-        matched: 4,
-      },
+              ],
+            },
+          ],
+          matched: 2,
+        },
+      ],
     },
     {
       traceID: '480691f7c6f20',

@@ -1,4 +1,3 @@
-import { dump } from 'js-yaml';
 import React, { useMemo, useState } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
@@ -44,7 +43,7 @@ const GrafanaInspectorYamlTab = ({ alertUid }: YamlTabProps) => {
 
   const { currentData: ruleYamlConfig, isLoading } = useExportRuleQuery({ uid: alertUid, format: 'yaml' });
 
-  const yamlRule = useMemo(() => dump(ruleYamlConfig), [ruleYamlConfig]);
+  const yamlRule = useMemo(() => ruleYamlConfig, [ruleYamlConfig]);
 
   if (isLoading) {
     return <div>Loading...</div>;
@@ -59,7 +58,7 @@ const GrafanaInspectorYamlTab = ({ alertUid }: YamlTabProps) => {
               width="100%"
               height={height}
               language="yaml"
-              value={yamlRule}
+              value={yamlRule || ''}
               monacoOptions={{
                 minimap: {
                   enabled: false,
