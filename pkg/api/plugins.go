@@ -121,8 +121,7 @@ func (hs *HTTPServer) GetPluginList(c *contextmodel.ReqContext) response.Respons
 	}
 
 	// Compute metadata
-	pluginsMetadata := hs.getMultiAccessControlMetadata(c, c.OrgID,
-		pluginaccesscontrol.ScopeProvider.GetResourceScope(""), filteredPluginIDs)
+	pluginsMetadata := hs.getMultiAccessControlMetadata(c, pluginaccesscontrol.ScopeProvider.GetResourceScope(""), filteredPluginIDs)
 
 	// Prepare DTO
 	result := make(dtos.PluginList, 0)
@@ -431,8 +430,8 @@ func (hs *HTTPServer) CheckHealth(c *contextmodel.ReqContext) response.Response 
 	return response.JSON(http.StatusOK, payload)
 }
 
-func (hs *HTTPServer) GetPluginErrorsList(_ *contextmodel.ReqContext) response.Response {
-	return response.JSON(http.StatusOK, hs.pluginErrorResolver.PluginErrors())
+func (hs *HTTPServer) GetPluginErrorsList(c *contextmodel.ReqContext) response.Response {
+	return response.JSON(http.StatusOK, hs.pluginErrorResolver.PluginErrors(c.Req.Context()))
 }
 
 func (hs *HTTPServer) InstallPlugin(c *contextmodel.ReqContext) response.Response {

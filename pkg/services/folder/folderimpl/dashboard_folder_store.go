@@ -2,6 +2,7 @@ package folderimpl
 
 import (
 	"context"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -83,4 +84,39 @@ func (d *DashboardFolderStoreImpl) GetFolderByUID(ctx context.Context, orgID int
 		return nil, err
 	}
 	return dashboards.FromDashboard(&dashboard), nil
+}
+
+func (d *DashboardFolderStoreImpl) GetFolders(ctx context.Context, orgID int64, uids []string) (map[string]*folder.Folder, error) {
+	m := make(map[string]*folder.Folder, len(uids))
+	var folders []*folder.Folder
+	if err := d.store.WithDbSession(ctx, func(sess *db.Session) error {
+		b := strings.Builder{}
+		args := make([]interface{}, 0, len(uids)+1)
+
+		b.WriteString("SELECT * FROM dashboard WHERE org_id=? ")
+		args = append(args, orgID)
+		for i, uid := range uids {
+			if i == 0 {
+				b.WriteString("  AND (")
+			}
+
+			if i > 0 {
+				b.WriteString(" OR ")
+			}
+			b.WriteString(" uid=? ")
+			args = append(args, uid)
+
+			if i == len(uids)-1 {
+				b.WriteString(")")
+			}
+		}
+		return sess.SQL(b.String(), args...).Find(&folders)
+	}); err != nil {
+		return nil, err
+	}
+
+	for _, f := range folders {
+		m[f.UID] = f
+	}
+	return m, nil
 }

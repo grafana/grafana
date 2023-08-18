@@ -99,7 +99,7 @@ export class FolderPermissions extends PureComponent<Props, State> {
     const folderInfo = { title: folder.title, url: folder.url, id: folder.id };
 
     return (
-      <Page navId="browse" pageNav={pageNav.main}>
+      <Page navId="dashboards/browse" pageNav={pageNav.main}>
         <Page.Contents>
           <div className="page-action-bar">
             <h3 className="page-sub-heading">Folder Permissions</h3>

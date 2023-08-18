@@ -4,8 +4,7 @@ import { useToggle } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Button, Drawer, ToolbarButton, useStyles2 } from '@grafana/ui';
-import { H3 } from '@grafana/ui/src/unstable';
+import { Button, Drawer, ToolbarButton, useStyles2, Text } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 import { DEFAULT_FEED_URL } from 'app/plugins/panel/news/constants';
 
@@ -26,7 +25,7 @@ export function NewsContainer({ className }: NewsContainerProps) {
         <Drawer
           title={
             <div className={styles.title}>
-              <H3>{t('news.title', 'Latest from the blog')}</H3>
+              <Text element="h3">{t('news.title', 'Latest from the blog')}</Text>
               <a
                 href="https://grafana.com/blog/"
                 target="_blank"

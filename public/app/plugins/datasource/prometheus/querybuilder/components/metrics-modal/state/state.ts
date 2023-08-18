@@ -48,7 +48,6 @@ export const stateSlice = createSlice({
     setFuzzySearchQuery: (state, action: PayloadAction<string>) => {
       state.fuzzySearchQuery = action.payload;
       state.pageNum = 1;
-      state.selectedIdx = 0;
     },
     setNameHaystack: (state, action: PayloadAction<string[][]>) => {
       state.nameHaystackOrder = action.payload[0];
@@ -75,9 +74,6 @@ export const stateSlice = createSlice({
       state.fullMetaSearch = false;
       state.pageNum = 1;
     },
-    setSelectedIdx: (state, action: PayloadAction<number>) => {
-      state.selectedIdx = action.payload;
-    },
     setDisableTextWrap: (state) => {
       state.disableTextWrap = !state.disableTextWrap;
     },
@@ -88,7 +84,7 @@ export const stateSlice = createSlice({
 });
 
 /**
- * Initial state for the Metrics Modal
+ * Initial state for the metrics explorer
  * @returns
  */
 export function initialState(query?: PromVisualQuery): MetricsModalState {
@@ -112,13 +108,12 @@ export function initialState(query?: PromVisualQuery): MetricsModalState {
     selectedTypes: [],
     useBackend: query?.useBackend ?? false,
     disableTextWrap: query?.disableTextWrap ?? false,
-    selectedIdx: 0,
     showAdditionalSettings: false,
   };
 }
 
 /**
- * The Metrics Modal state object
+ * The metrics explorer state object
  */
 export interface MetricsModalState {
   /** Used for the loading spinner */
@@ -163,8 +158,6 @@ export interface MetricsModalState {
   useBackend: boolean;
   /** Disable text wrap for descriptions in the results table */
   disableTextWrap: boolean;
-  /** The selected metric in the table represented by hover style highlighting */
-  selectedIdx: number;
   /** Display toggle switches for settings */
   showAdditionalSettings: boolean;
 }

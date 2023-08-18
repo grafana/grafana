@@ -2,8 +2,8 @@
 // however there are many cases where your component may not need an aria-label
 // (a <button> with clear text, for example, does not need an aria-label as it's already labeled)
 // but you still might need to select it for testing,
-// in that case please add the attribute data-test-id={selector} in the component and
-// prefix your selector string with 'data-test-id' so that when create the selectors we know to search for it on the right attribute
+// in that case please add the attribute data-testid={selector} in the component and
+// prefix your selector string with 'data-testid' so that when create the selectors we know to search for it on the right attribute
 /**
  * Selectors grouped/defined in Components
  *
@@ -78,7 +78,7 @@ export const Components = {
       headerCornerInfo: (mode: string) => `Panel header ${mode}`,
       loadingBar: () => `Panel loading bar`,
       HoverWidget: {
-        container: 'data-test-id hover-header-container',
+        container: 'data-testid hover-header-container',
         dragIcon: 'data-testid drag-icon',
       },
     },
@@ -208,13 +208,13 @@ export const Components = {
     alertV2: (severity: string) => `data-testid Alert ${severity}`,
   },
   TransformTab: {
-    content: 'Transform editor tab content',
-    newTransform: (name: string) => `New transform ${name}`,
-    transformationEditor: (name: string) => `Transformation editor ${name}`,
-    transformationEditorDebugger: (name: string) => `Transformation editor debugger ${name}`,
+    content: 'data-testid Transform editor tab content',
+    newTransform: (name: string) => `data-testid New transform ${name}`,
+    transformationEditor: (name: string) => `data-testid Transformation editor ${name}`,
+    transformationEditorDebugger: (name: string) => `data-testid Transformation editor debugger ${name}`,
   },
   Transforms: {
-    card: (name: string) => `New transform ${name}`,
+    card: (name: string) => `data-testid New transform ${name}`,
     Reduce: {
       modeLabel: 'Transform mode label',
       calculationsLabel: 'Transform calculations label',
@@ -241,6 +241,7 @@ export const Components = {
       },
     },
     searchInput: 'search transformations',
+    addTransformationButton: 'data-testid add transformation button',
   },
   NavBar: {
     Configuration: {
@@ -306,7 +307,7 @@ export const Components = {
      * @deprecated use inputV2 instead
      */
     input: () => 'input[id="data-source-picker"]',
-    inputV2: 'Select a data source',
+    inputV2: 'data-testid Select a data source',
   },
   TimeZonePicker: {
     /**

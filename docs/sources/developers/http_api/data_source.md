@@ -10,6 +10,10 @@ keywords:
   - documentation
   - api
   - data source
+labels:
+  products:
+    - enterprise
+    - oss
 title: Data source HTTP API
 ---
 
@@ -20,6 +24,10 @@ title: Data source HTTP API
 ## Get all data sources
 
 `GET /api/datasources`
+
+{{% admonition type="warning" %}}
+This API currently doesn't handle pagination. The default maximum number of data sources returned is 5000. You can change this value in the default.ini file.
+{{% /admonition %}}
 
 **Required permissions**
 

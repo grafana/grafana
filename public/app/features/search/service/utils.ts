@@ -1,7 +1,7 @@
 import { DataFrameView, IconName } from '@grafana/data';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 
-import { DashboardViewItem } from '../types';
+import { DashboardViewItem, DashboardViewItemKind } from '../types';
 
 import { DashboardQueryResult, SearchQuery, SearchResultMeta } from './types';
 
@@ -38,16 +38,27 @@ function delay(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-export function getIconForKind(kind: string): IconName {
+export function getIconForKind(kind: string, isOpen?: boolean): IconName {
   if (kind === 'dashboard') {
     return 'apps';
   }
 
   if (kind === 'folder') {
-    return 'folder';
+    return isOpen ? 'folder-open' : 'folder';
   }
 
   return 'question-circle';
+}
+
+function parseKindString(kind: string): DashboardViewItemKind {
+  switch (kind) {
+    case 'dashboard':
+    case 'folder':
+    case 'panel':
+      return kind;
+    default:
+      return 'dashboard'; // not a great fallback, but it's the previous behaviour
+  }
 }
 
 export function queryResultToViewItem(
@@ -57,7 +68,7 @@ export function queryResultToViewItem(
   const meta = view?.dataFrame.meta?.custom as SearchResultMeta | undefined;
 
   const viewItem: DashboardViewItem = {
-    kind: 'dashboard',
+    kind: parseKindString(item.kind),
     uid: item.uid,
     title: item.name,
     url: item.url,

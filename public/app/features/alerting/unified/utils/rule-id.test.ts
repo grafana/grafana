@@ -1,3 +1,4 @@
+import { RuleIdentifier } from 'app/types/unified-alerting';
 import {
   GrafanaAlertStateDecision,
   GrafanaRuleDefinition,
@@ -61,16 +62,17 @@ describe('hashRulerRule', () => {
   });
 
   it('should correctly encode and decode unix-style path separators', () => {
-    const identifier = {
+    const identifier: RuleIdentifier = {
       ruleSourceName: 'my-datasource',
       namespace: 'folder1/folder2',
       groupName: 'group1/group2',
+      ruleName: 'CPU-firing',
       ruleHash: 'abc123',
     };
 
     const encodedIdentifier = encodeURIComponent(stringifyIdentifier(identifier));
 
-    expect(encodedIdentifier).toBe('pri%24my-datasource%24folder1%1Ffolder2%24group1%1Fgroup2%24abc123');
+    expect(encodedIdentifier).toBe('pri%24my-datasource%24folder1%1Ffolder2%24group1%1Fgroup2%24CPU-firing%24abc123');
     expect(encodedIdentifier).not.toContain('%2F');
     expect(parse(encodedIdentifier, true)).toStrictEqual(identifier);
   });
@@ -80,10 +82,13 @@ describe('hashRulerRule', () => {
       ruleSourceName: 'my-datasource',
       namespace: 'folder1/folder2',
       groupName: 'group1/group2',
+      ruleName: 'CPU-firing/burning',
       ruleHash: 'abc123',
     };
 
-    expect(parse('pri%24my-datasource%24folder1%2Ffolder2%24group1%2Fgroup2%24abc123', true)).toStrictEqual(identifier);
+    expect(
+      parse('pri%24my-datasource%24folder1%2Ffolder2%24group1%2Fgroup2%24CPU-firing%2Fburning%24abc123', true)
+    ).toStrictEqual(identifier);
   });
 
   it('should correctly encode and decode windows-style path separators', () => {
@@ -91,12 +96,13 @@ describe('hashRulerRule', () => {
       ruleSourceName: 'my-datasource',
       namespace: 'folder1\\folder2',
       groupName: 'group1\\group2',
+      ruleName: 'CPU-firing',
       ruleHash: 'abc123',
     };
 
     const encodedIdentifier = encodeURIComponent(stringifyIdentifier(identifier));
 
-    expect(encodedIdentifier).toBe('pri%24my-datasource%24folder1%1Efolder2%24group1%1Egroup2%24abc123');
+    expect(encodedIdentifier).toBe('pri%24my-datasource%24folder1%1Efolder2%24group1%1Egroup2%24CPU-firing%24abc123');
     expect(parse(encodedIdentifier, true)).toStrictEqual(identifier);
   });
 

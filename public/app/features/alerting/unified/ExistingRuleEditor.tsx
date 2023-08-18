@@ -62,5 +62,5 @@ export function ExistingRuleEditor({ identifier, id }: ExistingRuleEditorProps) 
     return <AlertWarning title="Cannot edit rule">Sorry! You do not have permission to edit this rule.</AlertWarning>;
   }
 
-  return <AlertRuleForm existing={result} id={id} />;
+  return <AlertRuleForm existing={result} />;
 }

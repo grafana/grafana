@@ -18,8 +18,8 @@ import cx from 'classnames';
 import React from 'react';
 
 import { dateTimeFormat, GrafanaTheme2, LinkModel, TimeZone } from '@grafana/data';
-import { config, reportInteraction } from '@grafana/runtime';
-import { Button, DataLinkButton, Icon, TextArea, useStyles2 } from '@grafana/ui';
+import { config, locationService, reportInteraction } from '@grafana/runtime';
+import { DataLinkButton, Icon, TextArea, useStyles2 } from '@grafana/ui';
 
 import { autoColor } from '../../Theme';
 import { Divider } from '../../common/Divider';
@@ -254,31 +254,25 @@ export default function SpanDetail(props: SpanDetailProps) {
             target: '_blank',
             origin: logLinks[0].field,
             onClick: (event: React.MouseEvent) => {
+              // DataLinkButton assumes if you provide an onClick event you would want to prevent default behavior like navigation
+              // In this case, if an onClick is not defined, restore navigation to the provided href while keeping the tracking
+              // this interaction will not be tracked with link right clicks
               reportInteraction('grafana_traces_trace_view_span_link_clicked', {
                 datasourceType: datasourceType,
                 grafana_version: config.buildInfo.version,
                 type: 'log',
                 location: 'spanDetails',
               });
-              logLinks?.[0].onClick?.(event);
+
+              if (logLinks?.[0].onClick) {
+                logLinks?.[0].onClick?.(event);
+              } else {
+                locationService.push(logLinks?.[0].href);
+              }
             },
           }}
           buttonProps={{ icon: 'gf-logs' }}
         />
-      );
-    } else {
-      logLinkButton = (
-        <Button
-          variant="primary"
-          size="sm"
-          icon={'gf-logs'}
-          disabled
-          tooltip={
-            'We did not match any variables between the link and this span. Check your configuration or this span attributes.'
-          }
-        >
-          Logs for this span
-        </Button>
       );
     }
   }
@@ -375,6 +369,8 @@ export default function SpanDetail(props: SpanDetailProps) {
         )}
         {topOfViewRefType === TopOfViewRefType.Explore && (
           <small className={styles.debugInfo}>
+            {/* TODO: fix keyboard a11y */}
+            {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
             <a
               {...focusSpanLink}
               onClick={(e) => {

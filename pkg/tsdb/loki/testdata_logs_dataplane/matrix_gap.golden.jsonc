@@ -1,0 +1,88 @@
+//  🌟 This was machine generated.  Do not edit. 🌟
+//  
+//  Frame[0] {
+//      "type": "timeseries-multi",
+//      "typeVersion": [
+//          0,
+//          0
+//      ],
+//      "executedQueryString": "Expr: up(ALERTS)\nStep: 42s"
+//  }
+//  Name: {}
+//  Dimensions: 2 Fields by 6 Rows
+//  +-----------------------------------+-----------------+
+//  | Name: Time                        | Name: Value     |
+//  | Labels:                           | Labels:         |
+//  | Type: []time.Time                 | Type: []float64 |
+//  +-----------------------------------+-----------------+
+//  | 2022-01-24 08:54:13.815 +0000 UTC | 50              |
+//  | 2022-01-24 08:59:13.815 +0000 UTC | 57              |
+//  | 2022-01-24 09:04:13.815 +0000 UTC | 55              |
+//  | 2022-01-24 09:34:13.815 +0000 UTC | 54              |
+//  | 2022-01-24 09:39:13.815 +0000 UTC | 55              |
+//  | 2022-01-24 09:44:13.815 +0000 UTC | 56              |
+//  +-----------------------------------+-----------------+
+//  
+//  
+//  🌟 This was machine generated.  Do not edit. 🌟
+{
+  "status": 200,
+  "frames": [
+    {
+      "schema": {
+        "name": "{}",
+        "meta": {
+          "type": "timeseries-multi",
+          "typeVersion": [
+            0,
+            0
+          ],
+          "executedQueryString": "Expr: up(ALERTS)\nStep: 42s"
+        },
+        "fields": [
+          {
+            "name": "Time",
+            "type": "time",
+            "typeInfo": {
+              "frame": "time.Time"
+            },
+            "config": {
+              "interval": 42000
+            }
+          },
+          {
+            "name": "Value",
+            "type": "number",
+            "typeInfo": {
+              "frame": "float64"
+            },
+            "labels": {},
+            "config": {
+              "displayNameFromDS": "{}"
+            }
+          }
+        ]
+      },
+      "data": {
+        "values": [
+          [
+            1643014453815,
+            1643014753815,
+            1643015053815,
+            1643016853815,
+            1643017153815,
+            1643017453815
+          ],
+          [
+            50,
+            57,
+            55,
+            54,
+            55,
+            56
+          ]
+        ]
+      }
+    }
+  ]
+}

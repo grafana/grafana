@@ -6,8 +6,12 @@ keywords:
   - migration
   - plugin
   - documentation
-title: Migrate plugins from Grafana version 6.x to 7.x
-menutitle: v6.x to v7.x
+labels:
+  products:
+    - enterprise
+    - oss
+menuTitle: v6.x to v7.x
+title: Migrate plugins from Grafana version 6.x to 7.0
 weight: 2500
 ---
 
@@ -23,7 +27,7 @@ Plugins built using Angular still work in the near term, but we strongly encoura
 
 ### New data format
 
-Along with the move to React, the new plugin platform introduced a new internal data format called [data frames](data-frames.md).
+Along with the move to React, the new plugin platform introduced a new internal data format called [data frames]({{< relref "../../introduction-to-plugin-development/data-frames" >}}).
 
 Previously, data source plugins could send data either as time series or tables. With data frames, data sources can send any data in a table-like structure. This gives you more flexibility to visualize your data in Grafana.
 
@@ -37,7 +41,8 @@ With Grafana 7.0, we released a new tool for making it easier to develop plugins
 
 For more information, refer to [@grafana/toolkit](https://www.npmjs.com/package/@grafana/toolkit).
 
-{{% admonition type="note" %}} As of Grafana 10.0, `@grafana/toolkit` is deprecated. It is replaced by the [`create-plugin`](https://grafana.github.io/plugin-tools/docs/creating-a-plugin) tool. %}}
+{{% admonition type="note" %}} As of Grafana 10.0, `@grafana/toolkit` is deprecated. It is replaced by the [`create-plugin`](https://grafana.github.io/plugin-tools/docs/get-started/) tool.
+{{% /admonition %}}
 
 ### Field options
 
@@ -78,7 +83,7 @@ async query(options: DataQueryRequest<MyQuery>): Promise<DataQueryResponse> {
 
 ## Troubleshoot plugin migration
 
-As of Grafana 7.0, backend plugins can now be cryptographically signed to verify their origin. By default, Grafana ignores unsigned plugins. For more information, refer to [Allow unsigned plugins]({{< relref "../../../../administration/plugin-management/#allow-unsigned-plugins" >}}).
+As of Grafana 7.0, backend plugins can now be cryptographically signed to verify their origin. By default, Grafana ignores unsigned plugins. For more information, refer to [Allow unsigned plugins]({{< relref "../../../../administration/plugin-management#allow-unsigned-plugins" >}}).
 
 ## From version 6.5.x to 7.3.0
 

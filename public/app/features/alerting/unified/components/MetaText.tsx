@@ -1,46 +1,39 @@
-import { css } from '@emotion/css';
-import classNames from 'classnames';
-import React, { HTMLAttributes } from 'react';
+import { css, cx } from '@emotion/css';
+import React, { ComponentProps, HTMLAttributes } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
-import { Icon, IconName, useStyles2 } from '@grafana/ui';
+import { Icon, IconName, useStyles2, Text } from '@grafana/ui';
 
 interface Props extends HTMLAttributes<HTMLDivElement> {
   icon?: IconName;
+  color?: ComponentProps<typeof Text>['color'];
 }
 
-const MetaText = ({ children, icon, ...rest }: Props) => {
+const MetaText = ({ children, icon, color = 'secondary', ...rest }: Props) => {
   const styles = useStyles2(getStyles);
   const interactive = typeof rest.onClick === 'function';
 
   return (
     <div
-      className={classNames({
-        [styles.metaText]: true,
+      className={cx({
         [styles.interactive]: interactive,
       })}
+      // allow passing ARIA and data- attributes
       {...rest}
     >
-      <Stack direction="row" alignItems="center" gap={0.5}>
-        {icon && <Icon name={icon} />}
-        {children}
-      </Stack>
+      <Text color={color}>
+        <Stack direction="row" alignItems="center" gap={0.5}>
+          {icon && <Icon name={icon} />}
+          {children}
+        </Stack>
+      </Text>
     </div>
   );
 };
 
-const getStyles = (theme: GrafanaTheme2) => ({
-  metaText: css`
-    font-size: ${theme.typography.bodySmall.fontSize};
-    color: ${theme.colors.text.secondary};
-  `,
+const getStyles = () => ({
   interactive: css`
     cursor: pointer;
-
-    &:hover {
-      color: ${theme.colors.text.primary};
-    }
   `,
 });
 

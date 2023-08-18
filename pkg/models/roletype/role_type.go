@@ -9,47 +9,58 @@ import (
 type RoleType string
 
 const (
+	RoleNone   RoleType = "None"
 	RoleViewer RoleType = "Viewer"
 	RoleEditor RoleType = "Editor"
 	RoleAdmin  RoleType = "Admin"
 )
 
+var rolePrecedence = map[RoleType]int{
+	RoleNone:   10,
+	RoleViewer: 20,
+	RoleEditor: 30,
+	RoleAdmin:  40,
+}
+
+// Needed to keep stable order
+var roleOrder = [...]RoleType{
+	RoleNone,
+	RoleViewer,
+	RoleEditor,
+	RoleAdmin,
+}
+
 func (r RoleType) IsValid() bool {
-	return r == RoleViewer || r == RoleAdmin || r == RoleEditor
+	_, ok := rolePrecedence[r]
+	return ok
 }
 
 func (r RoleType) Includes(other RoleType) bool {
-	if r == RoleAdmin {
-		return true
-	}
-
-	if r == RoleEditor {
-		return other != RoleAdmin
-	}
-
-	return r == other
+	return rolePrecedence[r] >= rolePrecedence[other]
 }
 
 func (r RoleType) Children() []RoleType {
-	switch r {
-	case RoleAdmin:
-		return []RoleType{RoleEditor, RoleViewer}
-	case RoleEditor:
-		return []RoleType{RoleViewer}
-	default:
-		return nil
+	children := make([]RoleType, 0, 3)
+
+	for _, role := range roleOrder {
+		if rolePrecedence[r] > rolePrecedence[role] {
+			children = append(children, role)
+		}
 	}
+
+	return children
 }
 
 func (r RoleType) Parents() []RoleType {
-	switch r {
-	case RoleEditor:
-		return []RoleType{RoleAdmin}
-	case RoleViewer:
-		return []RoleType{RoleEditor, RoleAdmin}
-	default:
-		return nil
+	parents := make([]RoleType, 0, 3)
+
+	for _, role := range roleOrder {
+		if rolePrecedence[r] < rolePrecedence[role] {
+			parents = append(parents, role)
+		}
 	}
+
+	return parents
 }
 
 func (r *RoleType) UnmarshalText(data []byte) error {

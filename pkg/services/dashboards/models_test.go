@@ -77,9 +77,9 @@ func TestSlugifyTitle(t *testing.T) {
 	testCases := map[string]string{
 		"Grafana Play Home": "grafana-play-home",
 		"snöräv-över-ån":    "snorav-over-an",
-		"漢字":                "5ryi5a2X",    // "han-zi",      // Hanzi for hanzi
-		"🇦🇶":                "8J-HpvCfh7Y", // flag of Antarctica-emoji, using fallback
-		"𒆠":                 "8JKGoA",      // cuneiform Ki, using fallback
+		"漢字":                "e6bca2-e5ad97",     // "han-zi",      // Hanzi for hanzi
+		"🇦🇶":                "f09f87a6-f09f87b6", // flag of Antarctica-emoji, using fallback
+		"𒆠":                 "f09286a0",          // cuneiform Ki, using fallback
 	}
 
 	for input, expected := range testCases {
@@ -114,7 +114,7 @@ func TestResourceConversion(t *testing.T) {
 	require.NoError(t, err)
 	fmt.Printf("%s", string(out))
 	require.JSONEq(t, `{
-		"apiVersion": "v0.0-alpha",
+		"apiVersion": "v0-0-alpha",
 		"kind": "Dashboard",
 		"metadata": {
 		  "name": "TheUID",

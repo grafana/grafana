@@ -11,6 +11,8 @@
 
 import * as common from '@grafana/schema';
 
+export const pluginVersion = "10.2.0-pre";
+
 export enum VizDisplayMode {
   Candles = 'candles',
   CandlesVolume = 'candles+volume',

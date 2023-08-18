@@ -150,9 +150,9 @@ func (api *Api) CreatePublicDashboard(c *contextmodel.ReqContext) response.Respo
 	}
 
 	// Always set the orgID and userID from the session
-	pdDTO.OrgId = c.OrgID
 	dto := &SavePublicDashboardDTO{
 		UserId:          c.UserID,
+		OrgID:           c.OrgID,
 		DashboardUid:    dashboardUid,
 		PublicDashboard: pdDTO,
 	}
@@ -167,7 +167,7 @@ func (api *Api) CreatePublicDashboard(c *contextmodel.ReqContext) response.Respo
 }
 
 // UpdatePublicDashboard Sets public dashboard for dashboard
-// PUT /api/dashboards/uid/:dashboardUid/public-dashboards/:uid
+// PATCH /api/dashboards/uid/:dashboardUid/public-dashboards/:uid
 func (api *Api) UpdatePublicDashboard(c *contextmodel.ReqContext) response.Response {
 	// exit if we don't have a valid dashboardUid
 	dashboardUid := web.Params(c.Req)[":dashboardUid"]
@@ -186,10 +186,10 @@ func (api *Api) UpdatePublicDashboard(c *contextmodel.ReqContext) response.Respo
 	}
 
 	// Always set the orgID and userID from the session
-	pdDTO.OrgId = c.OrgID
-	pdDTO.Uid = uid
 	dto := SavePublicDashboardDTO{
+		Uid:             uid,
 		UserId:          c.UserID,
+		OrgID:           c.OrgID,
 		DashboardUid:    dashboardUid,
 		PublicDashboard: pdDTO,
 	}

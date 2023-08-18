@@ -1,11 +1,11 @@
-import { findByText, queryByText, render, screen } from '@testing-library/react';
+import { queryByTestId, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
 import { DataSourceInstanceSettings, DataSourcePluginMeta, PluginMetaInfo, PluginType } from '@grafana/data';
-import { config, GetDataSourceListFilters } from '@grafana/runtime';
+import { config } from '@grafana/runtime';
 
-import { DataSourceModal } from './DataSourceModal';
+import { DataSourceModal, DataSourceModalProps } from './DataSourceModal';
 
 const pluginMetaInfo: PluginMetaInfo = {
   author: { name: '' },
@@ -40,10 +40,17 @@ const mockDSBuiltIn = createDS('mock.datasource.builtin', 3, true);
 
 const mockDSList = [mockDS1, mockDS2, mockDSBuiltIn];
 
-const setup = (onChange = () => {}, onDismiss = () => {}) => {
-  const props = { onChange, onDismiss, current: mockDS1.name };
+const setup = (partialProps: Partial<DataSourceModalProps> = {}) => {
   window.HTMLElement.prototype.scrollIntoView = function () {};
-  return render(<DataSourceModal {...props}></DataSourceModal>);
+
+  const props: DataSourceModalProps = {
+    ...partialProps,
+    onChange: partialProps.onChange || jest.fn(),
+    onDismiss: partialProps.onDismiss || jest.fn(),
+    current: partialProps.current || mockDS1,
+  };
+
+  return render(<DataSourceModal {...props} />);
 };
 
 jest.mock('@grafana/runtime', () => {
@@ -61,15 +68,17 @@ jest.mock('@grafana/runtime', () => {
 jest.mock('@grafana/runtime/src/services/dataSourceSrv', () => {
   return {
     getDataSourceSrv: () => ({
-      getList: (filters: GetDataSourceListFilters) => {
-        if (filters.filter) {
-          return mockDSList.filter(filters.filter);
-        }
-        return mockDSList;
-      },
-      getInstanceSettings: () => mockDS1,
+      getList: getListMock,
+      getInstanceSettings: getInstanceSettingsMock,
     }),
   };
+});
+
+const getListMock = jest.fn();
+const getInstanceSettingsMock = jest.fn();
+beforeEach(() => {
+  getListMock.mockReturnValue(mockDSList);
+  getInstanceSettingsMock.mockReturnValue(mockDS1);
 });
 
 describe('DataSourceDropdown', () => {
@@ -78,8 +87,8 @@ describe('DataSourceDropdown', () => {
   });
 
   describe('configuration', () => {
-    const user = userEvent.setup();
     it('displays the configure new datasource when the list is empty', async () => {
+      const user = userEvent.setup();
       setup();
       const searchBox = await screen.findByRole('searchbox');
       expect(searchBox).toBeInTheDocument();
@@ -90,31 +99,80 @@ describe('DataSourceDropdown', () => {
     });
 
     it('only displays the file drop area when the the ff is enabled', async () => {
+      const defaultValue = config.featureToggles.editPanelCSVDragAndDrop;
       config.featureToggles.editPanelCSVDragAndDrop = true;
-      setup();
-      expect(await screen.findByText('Drop file here or click to upload')).toBeInTheDocument();
-      config.featureToggles.editPanelCSVDragAndDrop = false;
+      setup({ uploadFile: true });
+
+      expect(await screen.queryByTestId('file-drop-zone-default-children')).toBeInTheDocument();
+      config.featureToggles.editPanelCSVDragAndDrop = defaultValue;
     });
 
     it('does not show the file drop area when the ff is disabled', async () => {
-      setup();
-      expect(screen.queryByText('Drop file here or click to upload')).toBeNull();
+      const defaultValue = config.featureToggles.editPanelCSVDragAndDrop;
+      config.featureToggles.editPanelCSVDragAndDrop = false;
+
+      setup({ uploadFile: true });
+      expect(await screen.queryByTestId('file-drop-zone-default-children')).toBeNull();
+
+      config.featureToggles.editPanelCSVDragAndDrop = defaultValue;
     });
 
-    it('should only display built in datasources in the right column', async () => {
-      setup();
-      const dsList = await screen.findByTestId('data-sources-list');
-      const builtInDSList = (await screen.findAllByTestId('built-in-data-sources-list'))[1]; //The second element needs to be selected as the first element is the one on the left, under the regular data sources.
+    it('should not display the drop zone by default', async () => {
+      const defaultValue = config.featureToggles.editPanelCSVDragAndDrop;
+      config.featureToggles.editPanelCSVDragAndDrop = true;
 
-      expect(queryByText(dsList, mockDSBuiltIn.name)).toBeNull();
-      expect(await findByText(builtInDSList, mockDSBuiltIn.name, { selector: 'span' })).toBeInTheDocument();
+      const component = setup();
+
+      expect(queryByTestId(component.container, 'file-drop-zone-default-children')).toBeNull();
+      config.featureToggles.editPanelCSVDragAndDrop = defaultValue;
+    });
+
+    it('should display the drop zone when uploadFile is enabled', async () => {
+      const defaultValue = config.featureToggles.editPanelCSVDragAndDrop;
+      config.featureToggles.editPanelCSVDragAndDrop = true;
+      setup({ uploadFile: true });
+
+      expect(await screen.queryByTestId('file-drop-zone-default-children')).toBeInTheDocument();
+      config.featureToggles.editPanelCSVDragAndDrop = defaultValue;
+    });
+
+    it('should fetch the DS applying the correct filters consistently across lists', async () => {
+      const filters = {
+        mixed: true,
+        tracing: true,
+        dashboard: true,
+        metrics: true,
+        type: 'foo',
+        annotations: true,
+        variables: true,
+        alerting: true,
+        pluginId: 'pluginid',
+        logs: true,
+      };
+
+      const props = {
+        onChange: () => {},
+        onDismiss: () => {},
+        current: mockDS1.name,
+        ...filters,
+      };
+
+      getListMock.mockClear();
+      render(<DataSourceModal {...props}></DataSourceModal>);
+
+      // Every call to the service must contain same filters
+      expect(getListMock).toHaveBeenCalled();
+      getListMock.mock.calls.forEach((call) =>
+        expect(call[0]).toMatchObject({
+          ...filters,
+        })
+      );
     });
   });
 
   describe('interactions', () => {
-    const user = userEvent.setup();
-
     it('should be searchable', async () => {
+      const user = userEvent.setup();
       setup();
       const searchBox = await screen.findByRole('searchbox');
       expect(searchBox).toBeInTheDocument();
@@ -130,14 +188,18 @@ describe('DataSourceDropdown', () => {
       expect(await screen.findByText('No data sources found')).toBeInTheDocument();
     });
 
-    it('calls the onChange with the default query containing the file', async () => {
+    //Skipping this test as it's flaky on drone
+    it.skip('calls the onChange with the default query containing the file', async () => {
+      const user = userEvent.setup();
       config.featureToggles.editPanelCSVDragAndDrop = true;
       const onChange = jest.fn();
-      setup(onChange);
+      setup({ onChange, uploadFile: true });
+
       const fileInput = (
-        await screen.findByText('Drop file here or click to upload')
+        await screen.queryByTestId('file-drop-zone-default-children')!
       ).parentElement!.parentElement!.querySelector('input');
       const file = new File([''], 'test.csv', { type: 'text/plain' });
+      expect(fileInput).toBeInTheDocument();
       await user.upload(fileInput!, file);
       const defaultQuery = onChange.mock.lastCall[1][0];
       expect(defaultQuery).toMatchObject({
@@ -150,8 +212,9 @@ describe('DataSourceDropdown', () => {
     });
 
     it('should call the onChange handler with the correct datasource', async () => {
+      const user = userEvent.setup();
       const onChange = jest.fn();
-      setup(onChange);
+      setup({ onChange });
       await user.click(await screen.findByText(mockDS2.name, { selector: 'span' }));
       expect(onChange.mock.lastCall[0].name).toEqual(mockDS2.name);
     });

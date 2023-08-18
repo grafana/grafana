@@ -8,6 +8,7 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana/pkg/expr/mathexp/parse"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -491,21 +492,21 @@ func TestNoData(t *testing.T) {
 					res, err := e.Execute("", makeVars(NewNoData(), NewNoData()), tracing.NewFakeTracer())
 					require.NoError(t, err)
 					require.Len(t, res.Values, 1)
-					require.Equal(t, NewNoData(), res.Values[0])
+					require.Equal(t, parse.TypeNoData, res.Values[0].Type())
 				})
 
 				t.Run("$A=nodata, $B=series", func(t *testing.T) {
 					res, err := e.Execute("", makeVars(NewNoData(), series), tracing.NewFakeTracer())
 					require.NoError(t, err)
 					require.Len(t, res.Values, 1)
-					require.Equal(t, NewNoData(), res.Values[0])
+					require.Equal(t, parse.TypeNoData, res.Values[0].Type())
 				})
 
 				t.Run("$A=series, $B=nodata", func(t *testing.T) {
 					res, err := e.Execute("", makeVars(NewNoData(), series), tracing.NewFakeTracer())
 					require.NoError(t, err)
 					require.Len(t, res.Values, 1)
-					require.Equal(t, NewNoData(), res.Values[0])
+					require.Equal(t, parse.TypeNoData, res.Values[0].Type())
 				})
 			}
 		})

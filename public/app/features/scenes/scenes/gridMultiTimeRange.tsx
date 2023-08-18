@@ -1,11 +1,11 @@
 import {
-  VizPanel,
   SceneGridRow,
   SceneTimePicker,
   SceneGridLayout,
   SceneTimeRange,
   SceneRefreshPicker,
   SceneGridItem,
+  PanelBuilders,
 } from '@grafana/scenes';
 import { TestDataQueryType } from 'app/plugins/datasource/testdata/dataquery.gen';
 
@@ -39,11 +39,7 @@ export function getGridWithMultipleTimeRanges(): DashboardScene {
               height: 5,
               isResizable: true,
               isDraggable: true,
-              body: new VizPanel({
-                pluginId: 'timeseries',
-                title: 'Row A Child1',
-                key: 'Row A Child1',
-              }),
+              body: PanelBuilders.timeseries().setTitle('Row A Child1').build(),
             }),
             new SceneGridItem({
               x: 0,
@@ -52,11 +48,7 @@ export function getGridWithMultipleTimeRanges(): DashboardScene {
               height: 5,
               isResizable: true,
               isDraggable: true,
-              body: new VizPanel({
-                pluginId: 'timeseries',
-                title: 'Row A Child2',
-                key: 'Row A Child2',
-              }),
+              body: PanelBuilders.timeseries().setTitle('Row A Child2').build(),
             }),
           ],
         }),
@@ -67,12 +59,10 @@ export function getGridWithMultipleTimeRanges(): DashboardScene {
           height: 10,
           isResizable: true,
           isDraggable: true,
-          body: new VizPanel({
-            $data: getQueryRunnerWithRandomWalkQuery(),
-            pluginId: 'timeseries',
-            title: 'Outsider, has its own query',
-            key: 'Outsider-own-query',
-          }),
+          body: PanelBuilders.timeseries()
+            .setTitle('Outsider, has its own query')
+            .setData(getQueryRunnerWithRandomWalkQuery())
+            .build(),
         }),
       ],
     }),

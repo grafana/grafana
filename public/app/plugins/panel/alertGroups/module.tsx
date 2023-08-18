@@ -1,13 +1,13 @@
 import React, { useMemo } from 'react';
 
 import { PanelPlugin } from '@grafana/data';
-import { AlertManagerPicker } from 'app/features/alerting/unified/components/AlertManagerPicker';
 import {
   getAllAlertManagerDataSources,
   GRAFANA_RULES_SOURCE_NAME,
 } from 'app/features/alerting/unified/utils/datasource';
 
 import { AlertGroupsPanel } from './AlertGroupsPanel';
+import { AlertManagerPicker } from './AlertmanagerPicker';
 import { Options } from './panelcfg.gen';
 
 export const plugin = new PanelPlugin<Options>(AlertGroupsPanel).setPanelOptions((builder) => {

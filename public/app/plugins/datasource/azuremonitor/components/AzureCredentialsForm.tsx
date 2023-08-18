@@ -1,12 +1,11 @@
 import React, { ChangeEvent } from 'react';
 
 import { SelectableValue } from '@grafana/data';
-import { LegacyForms, Button, Select, InlineField } from '@grafana/ui';
+import { ConfigSection } from '@grafana/experimental';
+import { Button, Select, Field, Input } from '@grafana/ui';
 
 import { selectors } from '../e2e/selectors';
 import { AzureAuthType, AzureCredentials } from '../types';
-
-const { Input } = LegacyForms;
 
 export interface Props {
   managedIdentityEnabled: boolean;
@@ -27,8 +26,6 @@ const authTypeOptions: Array<SelectableValue<AzureAuthType>> = [
     label: 'App Registration',
   },
 ];
-
-const LABEL_WIDTH = 18;
 
 export const AzureCredentialsForm = (props: Props) => {
   const { credentials, azureCloudOptions, onCredentialsChange, disabled, managedIdentityEnabled } = props;
@@ -94,12 +91,11 @@ export const AzureCredentialsForm = (props: Props) => {
   };
 
   return (
-    <div className="gf-form-group">
+    <ConfigSection title="Authentication">
       {managedIdentityEnabled && (
-        <InlineField
+        <Field
           label="Authentication"
-          labelWidth={LABEL_WIDTH}
-          tooltip="Choose the type of authentication to Azure services"
+          description="Choose the type of authentication to Azure services"
           data-testid={selectors.components.configEditor.authType.select}
           htmlFor="authentication-type"
         >
@@ -110,15 +106,13 @@ export const AzureCredentialsForm = (props: Props) => {
             onChange={onAuthTypeChange}
             disabled={disabled}
           />
-        </InlineField>
+        </Field>
       )}
       {credentials.authType === 'clientsecret' && (
         <>
           {azureCloudOptions && (
-            <InlineField
+            <Field
               label="Azure Cloud"
-              labelWidth={LABEL_WIDTH}
-              tooltip="Choose an Azure Cloud"
               data-testid={selectors.components.configEditor.azureCloud.input}
               htmlFor="azure-cloud-type"
               disabled={disabled}
@@ -131,45 +125,45 @@ export const AzureCredentialsForm = (props: Props) => {
                 options={azureCloudOptions}
                 onChange={onAzureCloudChange}
               />
-            </InlineField>
+            </Field>
           )}
-          <InlineField
+          <Field
             label="Directory (tenant) ID"
-            labelWidth={LABEL_WIDTH}
+            required
             data-testid={selectors.components.configEditor.tenantID.input}
             htmlFor="tenant-id"
+            invalid={!credentials.tenantId}
+            error={'Tenant ID is required'}
           >
-            <div className="width-15">
-              <Input
-                aria-label="Tenant ID"
-                className="width-30"
-                placeholder="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
-                value={credentials.tenantId || ''}
-                onChange={onTenantIdChange}
-                disabled={disabled}
-              />
-            </div>
-          </InlineField>
-          <InlineField
+            <Input
+              aria-label="Tenant ID"
+              className="width-30"
+              placeholder="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
+              value={credentials.tenantId || ''}
+              onChange={onTenantIdChange}
+              disabled={disabled}
+            />
+          </Field>
+          <Field
             label="Application (client) ID"
-            labelWidth={LABEL_WIDTH}
+            required
             data-testid={selectors.components.configEditor.clientID.input}
-            htmlFor="tenant-id"
+            htmlFor="client-id"
+            invalid={!credentials.clientId}
+            error={'Client ID is required'}
           >
-            <div className="width-15">
-              <Input
-                className="width-30"
-                aria-label="Client ID"
-                placeholder="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
-                value={credentials.clientId || ''}
-                onChange={onClientIdChange}
-                disabled={disabled}
-              />
-            </div>
-          </InlineField>
+            <Input
+              className="width-30"
+              aria-label="Client ID"
+              placeholder="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
+              value={credentials.clientId || ''}
+              onChange={onClientIdChange}
+              disabled={disabled}
+            />
+          </Field>
           {!disabled &&
             (typeof credentials.clientSecret === 'symbol' ? (
-              <InlineField label="Client Secret" labelWidth={LABEL_WIDTH} htmlFor="client-secret">
+              <Field label="Client Secret" htmlFor="client-secret" required>
                 <div className="width-30" style={{ display: 'flex', gap: '4px' }}>
                   <Input
                     aria-label="Client Secret"
@@ -181,13 +175,15 @@ export const AzureCredentialsForm = (props: Props) => {
                     Reset
                   </Button>
                 </div>
-              </InlineField>
+              </Field>
             ) : (
-              <InlineField
+              <Field
                 label="Client Secret"
-                labelWidth={LABEL_WIDTH}
                 data-testid={selectors.components.configEditor.clientSecret.input}
+                required
                 htmlFor="client-secret"
+                invalid={!credentials.clientSecret}
+                error={'Client secret is required'}
               >
                 <Input
                   className="width-30"
@@ -198,12 +194,12 @@ export const AzureCredentialsForm = (props: Props) => {
                   id="client-secret"
                   disabled={disabled}
                 />
-              </InlineField>
+              </Field>
             ))}
         </>
       )}
       {props.children}
-    </div>
+    </ConfigSection>
   );
 };
 

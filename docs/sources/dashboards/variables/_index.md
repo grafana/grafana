@@ -3,6 +3,11 @@ aliases:
   - ../variables/
   - ../variables/variable-examples/
   - ./
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: Variables
 weight: 130
 ---
@@ -45,20 +50,19 @@ To see variable settings, navigate to **Dashboard Settings > Variables**. Click 
 
 Variables can be used in titles, descriptions, text panels, and queries. Queries with text that starts with `$` are templates. Not all panels will have template queries.
 
-The following dashboards in Grafana Play provide examples of template variables.
+The following dashboards in Grafana Play provide examples of template variables:
 
-- [Elasticsearch Metrics](https://play.grafana.org/d/z8OZC66nk/elasticsearch-8-2-0-sample-flight-data?orgId=1) - Uses ad hoc filters, global variables, and a custom variable.
-- [Graphite Templated Nested](https://play.grafana.org/d/000000056/graphite-templated-nested?orgId=1) - Uses query variables, chained query variables, an interval variable, and a repeated panel.
-- [Influx DB Group By Variable](https://play.grafana.org/d/000000137/influxdb-group-by-variable?orgId=1) - Query variable, panel uses the variable results to group the metric data.
-- [InfluxDB Raw Query Template Var](https://play.grafana.org/d/000000083/influxdb-raw-query-template-var?orgId=1) - Uses query variables, chained query variables, and an interval variable.
-- [InfluxDB Server Monitoring](https://play.grafana.org/d/AAy9r_bmk/influxdb-server-monitoring?orgId=1) - Uses query variables, chained query variables, an interval variable, and an ad hoc filter.
-- [Prometheus templating](https://play.grafana.org/d/000000063/prometheus-templating?orgId=1) - Uses chained query variables.
-- [Template Redux](https://play.grafana.org/d/p-k6QtkGz/template-redux?orgId=1) - Uses query variables, chained query variables, ad hoc filters, an interval variable, a text box variable, a custom variable, and a data source variable.
+- [Graphite Templated Nested](https://play.grafana.org/d/000000056/templated-dynamic-dashboard?orgId=1&var-app=backend&var-server=backend_01&var-server=backend_02&var-server=backend_03&var-server=backend_04&var-interval=1h) - Uses query variables, chained query variables, an interval variable, and a repeated panel.
+- [Global variables and interpolation](https://play.grafana.org/d/HYaGDGIMk/templating-global-variables-and-interpolation?orgId=1&var-Server=A%27A%22A&var-Server=BB%5CB)
+- [Elasticsearch Dummy Flight Data](https://play.grafana.org/d/z8OZC66nk/elasticsearch-8-2-0-sample-flight-data?orgId=1&var-Filters=Carrier%7C%3D%7CLogstash%20Airways&var-query0=) - Uses ad hoc filters.
 - [Templating, repeated panels](https://play.grafana.org/d/000000025/templating-repeated-panels?orgId=1) - Two sets of repeated panels use query variables.
-- [Templating showcase](https://play.grafana.org/d/000000091/templating-showcase?orgId=1) - Uses custom, query, chained query, and data source variables.
-- [Templating value groups](https://play.grafana.org/d/000000024/templating-value-groups?orgId=1) - Uses query variable with value groups.
+- [Template Redux](https://play.grafana.org/d/p-k6QtkGz/template-redux?orgId=1) - Uses query variables, chained query variables, an interval variable, a text box variable, a custom variable, and a data source variable.
+- [Nested Variables Drilldown](https://play.grafana.org/d/testdata-nested-variables-drilldown/templating-nested-variables-drilldown?orgId=1&var-datacenter=A&var-server=AA&var-server=AC&var-pod=All)
 
 ## Variable best practices
 
 - Variable drop-down lists are displayed in the order they are listed in the variable list in Dashboard settings.
 - Put the variables that you will change often at the top, so they will be shown first (far left on the dashboard).
+- By default, variables don't have a default value. This means that the topmost value in the drop-down is always preselected. If you want to pre-populate a variable with an empty value, you can use the following workaround in the variable settings:
+  1. Select the **Include All Option** checkbox.
+  2. In the **Custom all value** field, enter a value like `+`.

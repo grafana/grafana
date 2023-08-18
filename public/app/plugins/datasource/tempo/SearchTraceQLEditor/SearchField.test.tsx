@@ -112,8 +112,8 @@ describe('SearchField', () => {
       expect(updateFilter).toHaveBeenCalledWith({ ...filter, value: ['driver', 'customer'] });
 
       // Remove the first value
-      const firstValRemove = await screen.findByLabelText('Remove driver');
-      await user.click(firstValRemove);
+      const firstValRemove = await screen.findAllByLabelText('Remove');
+      await user.click(firstValRemove[0]);
       expect(updateFilter).toHaveBeenCalledWith({ ...filter, value: ['customer'] });
     }
   });
@@ -128,7 +128,7 @@ describe('SearchField', () => {
     };
     const { container } = renderSearchField(updateFilter, filter, ['tag1', 'tag22', 'tag33']);
 
-    const select = await container.querySelector(`input[aria-label="select test1 tag"]`);
+    const select = container.querySelector(`input[aria-label="select test1 tag"]`);
     expect(select).not.toBeNull();
     expect(select).toBeInTheDocument();
     if (select) {
@@ -183,6 +183,7 @@ const renderSearchField = (
       }}
       tags={tags || []}
       hideTag={hideTag}
+      query={'{}'}
     />
   );
 };

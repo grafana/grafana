@@ -9,6 +9,7 @@ import { replaceAt } from '../SearchTraceQLEditor/utils';
 import { TraceqlFilter, TraceqlSearchScope } from '../dataquery.gen';
 import { TempoDatasource } from '../datasource';
 import { TempoJsonData } from '../types';
+import { getErrorMessage } from '../utils';
 
 interface Props extends DataSourcePluginOptionsEditorProps<TempoJsonData> {
   datasource?: TempoDatasource;
@@ -22,9 +23,9 @@ export function TraceQLSearchTags({ options, onOptionsChange, datasource }: Prop
 
     try {
       await datasource.languageProvider.start();
-    } catch (e) {
+    } catch (err) {
       // @ts-ignore
-      throw new Error(`${e.statusText}: ${e.data.error}`);
+      throw new Error(getErrorMessage(err.data.message, 'Unable to query Tempo'));
     }
   };
 
@@ -88,6 +89,7 @@ export function TraceQLSearchTags({ options, onOptionsChange, datasource }: Prop
           staticTags={staticTags}
           isTagsLoading={loading}
           hideValues={true}
+          query={'{}'}
         />
       ) : (
         <div>Invalid data source, please create a valid data source and try again</div>

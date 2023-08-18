@@ -1,13 +1,26 @@
 import { css } from '@emotion/css';
-import React, { createElement, CSSProperties, useCallback } from 'react';
+import React, {
+  createElement,
+  CSSProperties,
+  useCallback,
+  useEffect,
+  useImperativeHandle,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
+import ReactDomServer from 'react-dom/server';
 
 import { GrafanaTheme2, ThemeTypographyVariantTypes } from '@grafana/data';
 
 import { useStyles2 } from '../../themes';
+import { Tooltip } from '../Tooltip/Tooltip';
+
+import { customWeight, customColor, customVariant } from './utils';
 
 export interface TextProps {
-  /** Defines what HTML element is defined underneath */
-  as: 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6' | 'span' | 'p' | 'legend';
+  /** Defines what HTML element is defined underneath. "span" by default */
+  element?: 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6' | 'span' | 'p';
   /** What typograpy variant should be used for the component. Only use if default variant for the defined element is not what is needed */
   variant?: keyof ThemeTypographyVariantTypes;
   /** Override the default weight for the used variant */
@@ -16,28 +29,83 @@ export interface TextProps {
   color?: keyof GrafanaTheme2['colors']['text'] | 'error' | 'success' | 'warning' | 'info';
   /** Use to cut the text off with ellipsis if there isn't space to show all of it. On hover shows the rest of the text */
   truncate?: boolean;
+  /** If true, show the text as italic. False by default */
+  italic?: boolean;
   /** Whether to align the text to left, center or right */
   textAlignment?: CSSProperties['textAlign'];
-  children: React.ReactNode;
+  children: NonNullable<React.ReactNode>;
 }
 
 export const Text = React.forwardRef<HTMLElement, TextProps>(
-  ({ as, variant, weight, color, truncate, textAlignment, children }, ref) => {
+  ({ element = 'span', variant, weight, color, truncate, italic, textAlignment, children }, ref) => {
     const styles = useStyles2(
       useCallback(
-        (theme) => getTextStyles(theme, variant, color, weight, truncate, textAlignment),
-        [color, textAlignment, truncate, weight, variant]
+        (theme) => getTextStyles(theme, element, variant, color, weight, truncate, italic, textAlignment),
+        [color, textAlignment, truncate, italic, weight, variant, element]
       )
     );
+    const [isOverflowing, setIsOverflowing] = useState(false);
+    const internalRef = useRef<HTMLElement>(null);
 
-    return createElement(
-      as,
+    // wire up the forwarded ref to the internal ref
+    useImperativeHandle<HTMLElement | null, HTMLElement | null>(ref, () => internalRef.current);
+
+    const childElement = createElement(
+      element,
       {
         className: styles,
-        ref,
+        // when overflowing, the internalRef is passed to the tooltip which forwards it on to the child element
+        ref: isOverflowing ? undefined : internalRef,
       },
       children
     );
+
+    const resizeObserver = useMemo(
+      () =>
+        new ResizeObserver((entries) => {
+          for (const entry of entries) {
+            if (entry.target.clientWidth && entry.target.scrollWidth) {
+              if (entry.target.scrollWidth > entry.target.clientWidth) {
+                setIsOverflowing(true);
+              }
+              if (entry.target.scrollWidth <= entry.target.clientWidth) {
+                setIsOverflowing(false);
+              }
+            }
+          }
+        }),
+      []
+    );
+
+    useEffect(() => {
+      const { current } = internalRef;
+      if (current && truncate) {
+        resizeObserver.observe(current);
+      }
+      return () => {
+        resizeObserver.disconnect();
+      };
+    }, [isOverflowing, resizeObserver, truncate]);
+
+    const getTooltipText = (children: NonNullable<React.ReactNode>) => {
+      if (typeof children === 'string') {
+        return children;
+      }
+      const html = ReactDomServer.renderToStaticMarkup(<>{children}</>);
+      const getRidOfTags = html.replace(/(<([^>]+)>)/gi, '');
+      return getRidOfTags;
+    };
+    // A 'span' is an inline element therefore it can't be truncated
+    // and it should be wrapped in a parent element that is the one that will show the tooltip
+    if (truncate && isOverflowing && element !== 'span') {
+      return (
+        <Tooltip ref={internalRef} content={getTooltipText(children)}>
+          {childElement}
+        </Tooltip>
+      );
+    } else {
+      return childElement;
+    }
   }
 );
 
@@ -45,19 +113,22 @@ Text.displayName = 'Text';
 
 const getTextStyles = (
   theme: GrafanaTheme2,
+  element?: TextProps['element'],
   variant?: keyof ThemeTypographyVariantTypes,
   color?: TextProps['color'],
   weight?: TextProps['weight'],
   truncate?: TextProps['truncate'],
+  italic?: TextProps['italic'],
   textAlignment?: TextProps['textAlignment']
 ) => {
   return css([
-    variant && {
-      ...theme.typography[variant],
-    },
     {
       margin: 0,
       padding: 0,
+      ...customVariant(theme, element, variant),
+    },
+    variant && {
+      ...theme.typography[variant],
     },
     color && {
       color: customColor(color, theme),
@@ -70,37 +141,11 @@ const getTextStyles = (
       textOverflow: 'ellipsis',
       whiteSpace: 'nowrap',
     },
+    italic && {
+      fontStyle: 'italic',
+    },
     textAlignment && {
       textAlign: textAlignment,
     },
   ]);
-};
-
-const customWeight = (weight: TextProps['weight'], theme: GrafanaTheme2): number => {
-  switch (weight) {
-    case 'bold':
-      return theme.typography.fontWeightBold;
-    case 'medium':
-      return theme.typography.fontWeightMedium;
-    case 'light':
-      return theme.typography.fontWeightLight;
-    case 'regular':
-    case undefined:
-      return theme.typography.fontWeightRegular;
-  }
-};
-
-const customColor = (color: TextProps['color'], theme: GrafanaTheme2): string | undefined => {
-  switch (color) {
-    case 'error':
-      return theme.colors.error.text;
-    case 'success':
-      return theme.colors.success.text;
-    case 'info':
-      return theme.colors.info.text;
-    case 'warning':
-      return theme.colors.warning.text;
-    default:
-      return color ? theme.colors.text[color] : undefined;
-  }
 };

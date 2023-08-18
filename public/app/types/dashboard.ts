@@ -80,6 +80,7 @@ export enum DashboardRoutes {
   Path = 'path-dashboard',
   Scripted = 'scripted-dashboard',
   Public = 'public-dashboard',
+  Embedded = 'embedded-dashboard',
 }
 
 export enum DashboardInitPhase {

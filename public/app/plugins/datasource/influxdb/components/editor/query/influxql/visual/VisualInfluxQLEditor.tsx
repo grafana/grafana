@@ -23,7 +23,6 @@ import {
 } from '../../../../../queryUtils';
 import { InfluxQuery, InfluxQueryTag } from '../../../../../types';
 import { DEFAULT_RESULT_FORMAT } from '../../../constants';
-import { useRetentionPolicies } from '../hooks/useRetentionPolicies';
 import { filterTags } from '../utils/filterTags';
 import { getNewGroupByPartOptions, getNewSelectPartOptions, makePartList } from '../utils/partListUtils';
 import { withTemplateVariableOptions } from '../utils/withTemplateVariableOptions';
@@ -52,7 +51,6 @@ export const VisualInfluxQLEditor = (props: Props): JSX.Element => {
   const query = normalizeQuery(props.query);
   const { datasource } = props;
   const { measurement, policy } = query;
-  const { retentionPolicies } = useRetentionPolicies(datasource);
 
   const allTagKeys = useMemo(async () => {
     const tagKeys = (await getTagKeysForMeasurementAndTags(datasource, [], measurement, policy)).map(
@@ -121,14 +119,9 @@ export const VisualInfluxQLEditor = (props: Props): JSX.Element => {
     <div>
       <SegmentSection label="FROM" fill={true}>
         <FromSection
-          policy={policy ?? retentionPolicies[0]}
+          policy={policy}
           measurement={measurement}
-          getPolicyOptions={() =>
-            withTemplateVariableOptions(
-              allTagKeys.then(() => getAllPolicies(datasource)),
-              wrapPure
-            )
-          }
+          getPolicyOptions={() => withTemplateVariableOptions(getAllPolicies(datasource), wrapPure)}
           getMeasurementOptions={(filter) =>
             withTemplateVariableOptions(
               allTagKeys.then((keys) =>

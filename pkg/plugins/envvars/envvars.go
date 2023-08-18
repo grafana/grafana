@@ -46,6 +46,16 @@ func (s *Service) Get(_ context.Context, p *plugins.Plugin) []string {
 		hostEnv = append(hostEnv, s.license.Environment()...)
 	}
 
+	if p.ExternalService != nil {
+		hostEnv = append(
+			hostEnv,
+			fmt.Sprintf("GF_APP_URL=%s", s.cfg.GrafanaAppURL),
+			fmt.Sprintf("GF_PLUGIN_APP_CLIENT_ID=%s", p.ExternalService.ClientID),
+			fmt.Sprintf("GF_PLUGIN_APP_CLIENT_SECRET=%s", p.ExternalService.ClientSecret),
+			fmt.Sprintf("GF_PLUGIN_APP_PRIVATE_KEY=%s", p.ExternalService.PrivateKey),
+		)
+	}
+
 	hostEnv = append(hostEnv, s.awsEnvVars()...)
 	hostEnv = append(hostEnv, s.secureSocksProxyEnvVars()...)
 	hostEnv = append(hostEnv, azsettings.WriteToEnvStr(s.cfg.Azure)...)
@@ -81,6 +91,9 @@ func (s *Service) awsEnvVars() []string {
 	}
 	if len(s.cfg.AWSAllowedAuthProviders) > 0 {
 		variables = append(variables, awsds.AllowedAuthProvidersEnvVarKeyName+"="+strings.Join(s.cfg.AWSAllowedAuthProviders, ","))
+	}
+	if s.cfg.AWSExternalId != "" {
+		variables = append(variables, awsds.GrafanaAssumeRoleExternalIdKeyName+"="+s.cfg.AWSExternalId)
 	}
 
 	return variables

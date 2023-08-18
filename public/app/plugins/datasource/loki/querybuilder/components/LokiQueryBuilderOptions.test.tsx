@@ -94,10 +94,11 @@ describe('LokiQueryBuilderOptions', () => {
   });
 
   it('shows correct options for metric query', async () => {
-    setup({ expr: 'rate({foo="bar"}[5m]', step: '1m' });
+    setup({ expr: 'rate({foo="bar"}[5m]', step: '1m', resolution: 2 });
     expect(screen.queryByText('Line limit: 20')).not.toBeInTheDocument();
     expect(screen.getByText('Type: Range')).toBeInTheDocument();
     expect(screen.getByText('Step: 1m')).toBeInTheDocument();
+    expect(screen.getByText('Resolution: 1/2')).toBeInTheDocument();
   });
 
   it('does not shows resolution field if resolution is not set', async () => {
@@ -136,6 +137,18 @@ describe('LokiQueryBuilderOptions', () => {
 
   it('does not shows error when valid value in step', async () => {
     setup({ expr: 'rate({foo="bar"}[5m]', step: '1m' });
+    await userEvent.click(screen.getByRole('button', { name: /Options/ }));
+    expect(screen.queryByText(/Invalid step/)).not.toBeInTheDocument();
+  });
+
+  it('does not shows error when valid millisecond value in step', async () => {
+    setup({ expr: 'rate({foo="bar"}[5m]', step: '1ms' });
+    await userEvent.click(screen.getByRole('button', { name: /Options/ }));
+    expect(screen.queryByText(/Invalid step/)).not.toBeInTheDocument();
+  });
+
+  it('does not shows error when valid day value in step', async () => {
+    setup({ expr: 'rate({foo="bar"}[5m]', step: '1d' });
     await userEvent.click(screen.getByRole('button', { name: /Options/ }));
     expect(screen.queryByText(/Invalid step/)).not.toBeInTheDocument();
   });

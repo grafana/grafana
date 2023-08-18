@@ -6,7 +6,9 @@ import {
   addNoPipelineErrorToQuery,
   addParserToQuery,
   NodePosition,
+  queryHasFilter,
   removeCommentsFromQuery,
+  removeLabelFromQuery,
 } from './modifyQuery';
 
 describe('addLabelToQuery()', () => {
@@ -159,6 +161,7 @@ describe('removeCommentsFromQuery', () => {
     ${'{job="grafana", bar="baz"} |="test" | logfmt | label_format level=lvl #hello'} | ${'{job="grafana", bar="baz"} |="test" | logfmt | label_format level=lvl '}
     ${`#sum(rate(\n{host="containers"}\n#[1m]))`}                                     | ${`\n{host="containers"}\n`}
     ${`#sum(rate(\n{host="containers"}\n#| logfmt\n#[1m]))`}                          | ${`\n{host="containers"}\n\n`}
+    ${'{job="grafana"}\n#hello\n| logfmt'}                                            | ${'{job="grafana"}\n\n| logfmt'}
   `('strips comments in log query:  {$query}', ({ query, expectedResult }) => {
     expect(removeCommentsFromQuery(query)).toBe(expectedResult);
   });
@@ -244,5 +247,49 @@ describe('NodePosition', () => {
       expect(result.to).toBe(10);
       expect(result.type).toBe('identifier');
     });
+  });
+});
+
+describe('queryHasFilter', () => {
+  it.each([
+    ['{job="grafana"}', 'grafana'],
+    ['{job="grafana", foo="bar"}', 'grafana'],
+    ['{foo="bar", job="grafana"}', 'grafana'],
+    ['{job="\\"grafana\\""}', '"grafana"'],
+    ['{foo="bar"} | logfmt | job=`grafana`', 'grafana'],
+  ])('should return true if query has a positive filter', (query: string, value: string) => {
+    expect(queryHasFilter(query, 'job', '=', value)).toBe(true);
+  });
+
+  it.each([
+    ['{job!="grafana"}', 'grafana'],
+    ['{job!="grafana", foo="bar"}', 'grafana'],
+    ['{foo="bar", job!="grafana"}', 'grafana'],
+    ['{job!="\\"grafana\\""}', '"grafana"'],
+    ['{foo="bar"} | logfmt | job!=`grafana`', 'grafana'],
+  ])('should return true if query has a negative filter', (query: string, value: string) => {
+    expect(queryHasFilter(query, 'job', '!=', value)).toBe(true);
+  });
+});
+
+describe('removeLabelFromQuery', () => {
+  it.each([
+    ['{job="grafana"}', 'grafana', '{}'],
+    ['{job="grafana", foo="bar"}', 'grafana', '{foo="bar"}'],
+    ['{foo="bar", job="grafana"}', 'grafana', '{foo="bar"}'],
+    ['{job="\\"grafana\\""}', '"grafana"', '{}'],
+    ['{foo="bar"} | logfmt | job=`grafana`', 'grafana', '{foo="bar"} | logfmt'],
+  ])('should remove a positive label matcher from the query', (query: string, value: string, expected: string) => {
+    expect(removeLabelFromQuery(query, 'job', '=', value)).toBe(expected);
+  });
+
+  it.each([
+    ['{job!="grafana"}', 'grafana', '{}'],
+    ['{job!="grafana", foo="bar"}', 'grafana', '{foo="bar"}'],
+    ['{foo="bar", job!="grafana"}', 'grafana', '{foo="bar"}'],
+    ['{job!="\\"grafana\\""}', '"grafana"', '{}'],
+    ['{foo="bar"} | logfmt | job!=`grafana`', 'grafana', '{foo="bar"} | logfmt'],
+  ])('should remove a negative label matcher from the query', (query: string, value: string, expected: string) => {
+    expect(removeLabelFromQuery(query, 'job', '!=', value)).toBe(expected);
   });
 });

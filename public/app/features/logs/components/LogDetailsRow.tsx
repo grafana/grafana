@@ -1,16 +1,14 @@
 import { css, cx } from '@emotion/css';
 import { isEqual } from 'lodash';
 import memoizeOne from 'memoize-one';
-import React, { PureComponent } from 'react';
+import React, { PureComponent, useState } from 'react';
 
-import { CoreApp, Field, GrafanaTheme2, LinkModel, LogLabelStatsModel, LogRowModel } from '@grafana/data';
-import { reportInteraction } from '@grafana/runtime';
+import { CoreApp, Field, GrafanaTheme2, IconName, LinkModel, LogLabelStatsModel, LogRowModel } from '@grafana/data';
+import { config, reportInteraction } from '@grafana/runtime';
 import { ClipboardButton, DataLinkButton, IconButton, Themeable2, withTheme2 } from '@grafana/ui';
 
 import { LogLabelStats } from './LogLabelStats';
 import { getLogRowStyles } from './getLogRowStyles';
-
-//Components
 
 export interface Props extends Themeable2 {
   parsedValues: string[];
@@ -27,6 +25,7 @@ export interface Props extends Themeable2 {
   onClickHideField?: (key: string) => void;
   row: LogRowModel;
   app?: CoreApp;
+  isFilterLabelActive?: (key: string, value: string) => Promise<boolean>;
 }
 
 interface State {
@@ -46,7 +45,7 @@ const getStyles = memoizeOne((theme: GrafanaTheme2) => {
         color: ${theme.colors.text.secondary};
         padding: 0;
         justify-content: center;
-        border-radius: 50%;
+        border-radius: ${theme.shape.radius.circle};
         height: ${theme.spacing(theme.components.height.sm)};
         width: ${theme.spacing(theme.components.height.sm)};
         svg {
@@ -132,6 +131,14 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
       logRowUid: row.uid,
       type: 'disable',
     });
+  };
+
+  isFilterLabelActive = async () => {
+    const { isFilterLabelActive, parsedKeys, parsedValues } = this.props;
+    if (isFilterLabelActive) {
+      return await isFilterLabelActive(parsedKeys[0], parsedValues[0]);
+    }
+    return false;
   };
 
   filterLabel = () => {
@@ -267,10 +274,20 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
           <td className={style.logsDetailsIcon}>
             <div className={styles.buttonRow}>
               {hasFilteringFunctionality && (
-                <IconButton name="search-plus" tooltip="Filter for value" onClick={this.filterLabel} />
-              )}
-              {hasFilteringFunctionality && (
-                <IconButton name="search-minus" tooltip="Filter out value" onClick={this.filterOutLabel} />
+                <>
+                  {config.featureToggles.toggleLabelsInLogsUI && (
+                    // If we are using the new label toggling, we want to use the async icon button
+                    <AsyncIconButton
+                      name="search-plus"
+                      onClick={this.filterLabel}
+                      isActive={this.isFilterLabelActive}
+                    />
+                  )}
+                  {!config.featureToggles.toggleLabelsInLogsUI && (
+                    <IconButton name="search-plus" onClick={this.filterLabel} tooltip="Filter for value" />
+                  )}
+                  <IconButton name="search-minus" tooltip="Filter out value" onClick={this.filterOutLabel} />
+                </>
               )}
               {!disableActions && displayedFields && toggleFieldButton}
               {!disableActions && (
@@ -329,6 +346,29 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
     );
   }
 }
+
+interface AsyncIconButtonProps extends Pick<React.ButtonHTMLAttributes<HTMLButtonElement>, 'onClick'> {
+  name: IconName;
+  isActive(): Promise<boolean>;
+}
+
+const AsyncIconButton = ({ isActive, ...rest }: AsyncIconButtonProps) => {
+  const [active, setActive] = useState(false);
+
+  /**
+   * We purposely want to run this on every render to allow the active state to be updated
+   * when log details remains open between updates.
+   */
+  isActive().then(setActive);
+
+  return (
+    <IconButton
+      {...rest}
+      variant={active ? 'primary' : undefined}
+      tooltip={active ? 'Remove filter' : 'Filter for value'}
+    />
+  );
+};
 
 export const LogDetailsRow = withTheme2(UnThemedLogDetailsRow);
 LogDetailsRow.displayName = 'LogDetailsRow';

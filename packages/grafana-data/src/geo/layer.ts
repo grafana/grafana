@@ -5,6 +5,7 @@ import { ReactNode } from 'react';
 import { MapLayerOptions, FrameGeometrySourceMode } from '@grafana/schema';
 
 import { EventBus } from '../events';
+import { StandardEditorContext } from '../field/standardFieldConfigEditorRegistry';
 import { GrafanaTheme2 } from '../themes';
 import { PanelData } from '../types';
 import { PanelOptionsEditorBuilder } from '../utils';
@@ -39,7 +40,10 @@ export interface MapLayerHandler<TConfig = any> {
   /**
    * Show custom elements in the panel edit UI
    */
-  registerOptionsUI?: (builder: PanelOptionsEditorBuilder<MapLayerOptions<TConfig>>) => void;
+  registerOptionsUI?: (
+    builder: PanelOptionsEditorBuilder<MapLayerOptions<TConfig>>,
+    context: StandardEditorContext<any, any>
+  ) => void;
 }
 
 /**

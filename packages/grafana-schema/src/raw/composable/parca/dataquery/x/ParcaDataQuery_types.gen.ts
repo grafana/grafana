@@ -11,6 +11,8 @@
 
 import * as common from '@grafana/schema';
 
+export const pluginVersion = "10.2.0-pre";
+
 export type ParcaQueryType = ('metrics' | 'profile' | 'both');
 
 export const defaultParcaQueryType: ParcaQueryType = 'both';

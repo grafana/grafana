@@ -32,7 +32,7 @@ function getStyles(theme: GrafanaTheme2) {
       width: theme.spacing(3),
     }),
     round: css({
-      borderRadius: '50%',
+      borderRadius: theme.shape.radius.circle,
     }),
   };
 }

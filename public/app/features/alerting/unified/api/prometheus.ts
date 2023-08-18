@@ -3,7 +3,7 @@ import { lastValueFrom } from 'rxjs';
 import { getBackendSrv } from '@grafana/runtime';
 import { Matcher } from 'app/plugins/datasource/alertmanager/types';
 import { RuleIdentifier, RuleNamespace } from 'app/types/unified-alerting';
-import { PromRulesResponse } from 'app/types/unified-alerting-dto';
+import { PromRuleGroupDTO, PromRulesResponse } from 'app/types/unified-alerting-dto';
 
 import { getDatasourceAPIUid, GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 import { isCloudRuleIdentifier, isPrometheusRuleIdentifier } from '../utils/rules';
@@ -83,6 +83,26 @@ export function paramsWithMatcherAndState(
   return paramsResult;
 }
 
+export const groupRulesByFileName = (groups: PromRuleGroupDTO[], dataSourceName: string) => {
+  const nsMap: { [key: string]: RuleNamespace } = {};
+  groups.forEach((group) => {
+    group.rules.forEach((rule) => {
+      rule.query = rule.query || '';
+    });
+    if (!nsMap[group.file]) {
+      nsMap[group.file] = {
+        dataSourceName,
+        name: group.file,
+        groups: [group],
+      };
+    } else {
+      nsMap[group.file].groups.push(group);
+    }
+  });
+
+  return Object.values(nsMap);
+};
+
 export async function fetchRules(
   dataSourceName: string,
   filter?: FetchPromRulesFilter,
@@ -116,21 +136,5 @@ export async function fetchRules(
     throw e;
   });
 
-  const nsMap: { [key: string]: RuleNamespace } = {};
-  response.data.data.groups.forEach((group) => {
-    group.rules.forEach((rule) => {
-      rule.query = rule.query || '';
-    });
-    if (!nsMap[group.file]) {
-      nsMap[group.file] = {
-        dataSourceName,
-        name: group.file,
-        groups: [group],
-      };
-    } else {
-      nsMap[group.file].groups.push(group);
-    }
-  });
-
-  return Object.values(nsMap);
+  return groupRulesByFileName(response.data.data.groups, dataSourceName);
 }
