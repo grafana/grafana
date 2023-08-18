@@ -6,6 +6,7 @@ import (
 	"net/url"
 	"regexp"
 	"sort"
+	"strings"
 	"text/template"
 )
 
@@ -98,13 +99,13 @@ func deduplicateLabelsFunc(values map[string]Value) Labels {
 	labels := make(map[string]uniqueLabelVals)
 	for _, value := range values {
 		for k, v := range value.Labels {
-			if _, ok := labels[k]; !ok {
-				labels[k] = uniqueLabelVals{v: struct{}{}}
-				continue
+			var ul uniqueLabelVals
+			var ok bool
+			if ul, ok = labels[k]; !ok {
+				ul = uniqueLabelVals{}
+				labels[k] = ul
 			}
-			if _, ok := labels[k][v]; !ok {
-				labels[k][v] = struct{}{}
-			}
+			ul[v] = struct{}{}
 		}
 	}
 
@@ -115,14 +116,7 @@ func deduplicateLabelsFunc(values map[string]Value) Labels {
 			keys = append(keys, val)
 		}
 		sort.Strings(keys)
-		for i, v := range keys {
-			if i == 0 {
-				res[label] = v
-			} else {
-				res[label] = fmt.Sprintf("%s, %s", res[label], v)
-			}
-		}
+		res[label] = strings.Join(keys, ", ")
 	}
-
 	return res
 }

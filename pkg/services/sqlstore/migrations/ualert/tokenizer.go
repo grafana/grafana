@@ -39,24 +39,19 @@ func (t Token) String() string {
 }
 
 func tokenizeLiteral(in []rune) (Token, int, error) {
-	var (
-		pos   int
-		r     rune
-		runes []rune
-	)
+	pos := 0
 
-	// consume runes until the first '$' or the end of in
+	// consume runes until the first '$' or the end of `in`
 	for pos < len(in) {
-		if r = in[pos]; r == '$' {
+		if r := in[pos]; r == '$' {
 			// don't consume the '$' as this is the start of a variable
 			break
 		}
-		runes = append(runes, r)
 		// if there are more runes update pos
 		pos = pos + 1
 	}
 
-	return Token{Literal: string(runes)}, pos, nil
+	return Token{Literal: string(in[:pos])}, pos, nil
 }
 
 func tokenizeVariable(in []rune) (Token, int, error) {
@@ -129,7 +124,7 @@ func tokenizeTmpl(tmpl string) ([]Token, error) {
 			token, offset, err = tokenizeLiteral(in[pos:])
 		}
 		if err != nil {
-			return tokens, err
+			return tokens, fmt.Errorf("error tokenizing template at position %d: %w", pos, err)
 		}
 		tokens = append(tokens, token)
 		pos = pos + offset
