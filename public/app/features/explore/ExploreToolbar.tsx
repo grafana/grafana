@@ -25,7 +25,9 @@ import {
   splitClose,
   splitOpen,
   maximizePaneAction,
-  evenPaneResizeAction
+  evenPaneResizeAction,
+  changeCorrelationDetails,
+  changeCorrelationsEditorMode
 } from './state/main';
 import { cancelQueries, runQueries, selectIsWaitingForData } from './state/query';
 import { isSplit, selectCorrelationEditorMode, selectPanesEntries } from './state/selectors';
@@ -83,6 +85,7 @@ export function ExploreToolbar({ exploreId, topOfViewRef, onChangeTime }: Props)
     if (isCorrelationsEditorMode && panes[0][0] === exploreId) {
       panes.forEach((pane) => {
         dispatch(removeCorrelationData(pane[0]));
+        dispatch(changeCorrelationDetails({label: undefined, description: undefined, valid: false}));
       });
     }
   };
@@ -102,8 +105,16 @@ export function ExploreToolbar({ exploreId, topOfViewRef, onChangeTime }: Props)
     reportInteraction('grafana_explore_split_view_opened', { origin: 'menu' });
   };
 
+  // TODO make this smarter - only end correlation editor mode if needed and if not first pane
+  // also duplicate this in explore actions
   const onCloseSplitView = () => {
     dispatch(splitClose(exploreId));
+    dispatch(changeCorrelationsEditorMode({ correlationsEditorMode: false }));
+    panes.forEach((pane) => {
+      dispatch(removeCorrelationData(pane[0]));
+      dispatch(changeCorrelationDetails({label: undefined, description: undefined, valid: false}));
+      dispatch(runQueries({ exploreId: pane[0] }));
+    });
     reportInteraction('grafana_explore_split_view_closed');
   };
 

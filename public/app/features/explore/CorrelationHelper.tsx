@@ -1,24 +1,29 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 
 import { Collapse, Alert, Field, Input } from '@grafana/ui';
 import { useDispatch } from 'app/types';
 
-import { changeCorrelationLabel } from './state/main';
+import { changeCorrelationDetails } from './state/main';
 
 export const CorrelationHelper = ({ vars }: { vars: Array<[string, string]> }) => {
   const dispatch = useDispatch();
   const { register, watch } = useForm();
   const [isOpen, setIsOpen] = useState(false);
 
-  React.useEffect(() => {
+  useEffect(() => {
     const subscription = watch((value, { name, type }) =>
     {
-      dispatch(changeCorrelationLabel({label: value.label, description: value.description}));
+      dispatch(changeCorrelationDetails({label: value.label, description: value.description}));
     }
     )
     return () => subscription.unsubscribe()
   }, [dispatch, watch])
+
+  // only fire once on mount to allow save button to enable
+  useEffect(() => {
+    dispatch(changeCorrelationDetails({valid: true}));
+  }, [dispatch]);
 
   return (
     <Alert title="Correlation Details" severity="info">

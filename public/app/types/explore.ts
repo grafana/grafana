@@ -58,8 +58,9 @@ export interface ExploreState {
    * Details on the correlation if one is being created
    */
   correlationDetails?: {
-    label: string;
-    description: string;
+    valid: boolean;
+    label?: string;
+    description?: string;
   }
 
   /**

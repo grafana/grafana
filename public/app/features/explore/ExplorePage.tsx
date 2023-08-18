@@ -18,7 +18,7 @@ import { useSplitSizeUpdater } from './hooks/useSplitSizeUpdater';
 import { useStateSync } from './hooks/useStateSync';
 import { useTimeSrvFix } from './hooks/useTimeSrvFix';
 import { removeCorrelationData } from './state/explorePane';
-import { changeCorrelationsEditorMode } from './state/main';
+import { changeCorrelationDetails, changeCorrelationsEditorMode } from './state/main';
 import { runQueries } from './state/query';
 import { isSplit, selectCorrelationEditorMode, selectPanesEntries } from './state/selectors';
 
@@ -59,6 +59,7 @@ export default function ExplorePage(props: GrafanaRouteComponentProps<{}, Explor
         dispatch(changeCorrelationsEditorMode({ correlationsEditorMode: false }));
         panes.forEach((pane) => {
           dispatch(removeCorrelationData(pane[0]));
+          dispatch(changeCorrelationDetails({label: undefined, description: undefined, valid: false}));
           dispatch(runQueries({ exploreId: pane[0] }));
         });
       };

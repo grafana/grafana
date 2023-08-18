@@ -115,10 +115,11 @@ export const changeCorrelationsEditorMode = createAction<{
 /**
  * Moves explore into and out of correlations editor mode
  */
-export const changeCorrelationLabel = createAction<{
-  label: string;
-  description: string;
-}>('explore/changeCorrelationLabel');
+export const changeCorrelationDetails = createAction<{
+  valid?: boolean;
+  label?: string;
+  description?: string;
+}>('explore/changeCorrelationDetails');
 
 export interface NavigateToExploreDependencies {
   getDataSourceSrv: () => DataSourceSrv;
@@ -278,13 +279,14 @@ export const exploreReducer = (state = initialExploreState, action: AnyAction): 
     };
   }
 
-  if (changeCorrelationLabel.match(action)) {
-    const { label, description } = action.payload;
+  if (changeCorrelationDetails.match(action)) {
+    const { label, description, valid } = action.payload;
     return {
       ...state,
       correlationDetails: {
-        label: label,
-        description: description
+        valid: valid !== undefined ? valid : (state.correlationDetails?.valid || false),
+        label: label !== undefined ? label : state.correlationDetails?.label,
+        description: description !== undefined ? description : state.correlationDetails?.description
       },
     };
   }
