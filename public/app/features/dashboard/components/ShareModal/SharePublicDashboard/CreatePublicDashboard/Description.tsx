@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import cx from 'classnames';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data/src';
