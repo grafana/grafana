@@ -267,7 +267,7 @@ export interface DataFrameDTO extends QueryResultBase {
 
 export interface FieldCalcs extends Record<string, any> {}
 
-/** @deprecated check data plane docs: https://grafana.github.io/dataplane/heatmap **/
+/** @deprecated check data plane docs: https://grafana.com/developers/dataplane/heatmap **/
 export const TIME_SERIES_VALUE_FIELD_NAME = 'Value';
 export const TIME_SERIES_TIME_FIELD_NAME = 'Time';
 export const TIME_SERIES_METRIC_FIELD_NAME = 'Metric';
