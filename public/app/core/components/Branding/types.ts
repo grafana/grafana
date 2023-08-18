@@ -12,5 +12,6 @@ export interface BrandingSettings {
   menuLogo?: string;
   favIcon?: string;
   loadingLogo?: string;
+  hideEdition?: boolean;
   appleTouchIcon?: string;
 }
