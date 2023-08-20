@@ -10,7 +10,7 @@ import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
 import * as ruleActionButtons from 'app/features/alerting/unified/components/rules/RuleActionsButtons';
 import * as actions from 'app/features/alerting/unified/state/actions';
-import { AccessControlAction } from 'app/types';
+import { AccessControlAction, OrgRole } from 'app/types';
 import { PromAlertingRuleState, PromApplication } from 'app/types/unified-alerting-dto';
 
 import { LogMessages } from './Analytics';
@@ -138,6 +138,7 @@ beforeAll(() => {
 describe('RuleList', () => {
   beforeEach(() => {
     contextSrv.isEditor = true;
+    contextSrv.user.orgRole = OrgRole.Editor;
     mocks.rulesInSameGroupHaveInvalidForMock.mockReturnValue([]);
   });
 
@@ -243,6 +244,7 @@ describe('RuleList', () => {
   });
 
   it('expand rule group, rule and alert details', async () => {
+    disableRBAC();
     mocks.getAllDataSourcesMock.mockReturnValue([dataSources.prom]);
 
     setDataSourceSrv(new MockDataSourceSrv({ prom: dataSources.prom }));
@@ -392,6 +394,7 @@ describe('RuleList', () => {
   });
 
   it('filters rules and alerts by labels', async () => {
+    disableRBAC();
     mocks.getAllDataSourcesMock.mockReturnValue([dataSources.prom]);
     setDataSourceSrv(new MockDataSourceSrv({ prom: dataSources.prom }));
 
@@ -535,6 +538,7 @@ describe('RuleList', () => {
   });
 
   describe('edit lotex groups, namespaces', () => {
+    disableRBAC();
     const testDatasources = {
       prom: dataSources.prom,
     };

@@ -63,16 +63,13 @@ export type Abilities<T extends Action> = Record<T, Ability>;
 export function useAlertSourceAbilities(): Abilities<AlertSourceAction> {
   // TODO add the "supported" booleans here, we currently only do authorization
 
-  return {
+  const abilities: Abilities<AlertSourceAction> = {
     // -- Grafana managed alert rules --
     [AlertSourceAction.CreateAlertRule]: [
       true,
       ctx.hasAccess(AccessControlAction.AlertingRuleCreate, ctx.hasRole(OrgRole.Editor)),
     ],
-    [AlertSourceAction.ViewAlertRule]: [
-      true,
-      ctx.hasAccess(AccessControlAction.AlertingRuleRead, ctx.hasRole(OrgRole.Viewer)),
-    ],
+    [AlertSourceAction.ViewAlertRule]: [true, ctx.hasAccess(AccessControlAction.AlertingRuleRead, true)],
     [AlertSourceAction.UpdateAlertRule]: [
       true,
       ctx.hasAccess(AccessControlAction.AlertingRuleUpdate, ctx.hasRole(OrgRole.Editor)),
@@ -89,7 +86,7 @@ export function useAlertSourceAbilities(): Abilities<AlertSourceAction> {
     ],
     [AlertSourceAction.ViewExternalAlertRule]: [
       true,
-      ctx.hasAccess(AccessControlAction.AlertingRuleExternalRead, ctx.hasRole(OrgRole.Viewer)),
+      ctx.hasAccess(AccessControlAction.AlertingRuleExternalRead, true),
     ],
     [AlertSourceAction.UpdateExternalAlertRule]: [
       true,
@@ -100,6 +97,8 @@ export function useAlertSourceAbilities(): Abilities<AlertSourceAction> {
       ctx.hasAccess(AccessControlAction.AlertingRuleExternalWrite, ctx.hasRole(OrgRole.Editor)),
     ],
   };
+
+  return abilities;
 }
 
 export function useAlertmanagerAbilities(): Abilities<AlertmanagerAction> {
@@ -198,5 +197,10 @@ export function useAlertmanagerAbilities(): Abilities<AlertmanagerAction> {
 
 export function useAlertmanagerAbility(action: AlertmanagerAction): Ability {
   const abilities = useAlertmanagerAbilities();
+  return useMemo(() => abilities[action], [abilities, action]);
+}
+
+export function useAlertSourceAbility(action: AlertSourceAction): Ability {
+  const abilities = useAlertSourceAbilities();
   return useMemo(() => abilities[action], [abilities, action]);
 }
