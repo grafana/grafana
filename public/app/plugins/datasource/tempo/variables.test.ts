@@ -11,9 +11,17 @@ describe('TempoVariableSupport', () => {
 
   beforeEach(() => {
     const datasource = createTempoDatasource();
-    jest
-      .spyOn(datasource, 'metadataRequest')
-      .mockImplementation(createMetadataRequest({ data: { tagNames: ['label1', 'label2'] } }));
+    jest.spyOn(datasource, 'metadataRequest').mockImplementation(
+      createMetadataRequest({
+        data: {
+          tagNames: ['label1', 'label2'],
+          scopes: [
+            // @ts-ignore
+            { name: 'span', tags: ['label1', 'label2'] },
+          ],
+        },
+      })
+    );
     TempoVariableSupportMock = new TempoVariableSupport(datasource);
   });
 
