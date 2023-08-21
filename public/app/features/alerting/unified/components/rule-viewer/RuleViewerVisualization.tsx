@@ -16,7 +16,6 @@ import { DataSourceRef } from '@grafana/schema';
 import { DateTimePicker, LinkButton, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
 import { isExpressionQuery } from 'app/features/expressions/guards';
-import { AccessControlAction } from 'app/types';
 import { AlertDataQuery, AlertQuery } from 'app/types/unified-alerting-dto';
 
 import { VizWrapper } from '../rule-editor/VizWrapper';
@@ -64,7 +63,7 @@ export function RuleViewerVisualization({
     return null;
   }
 
-  const allowedToExploreDataSources = contextSrv.hasAccess(AccessControlAction.DataSourcesExplore, true);
+  const allowedToExploreDataSources = contextSrv.hasAccessToExplore();
 
   return (
     <div className={className}>

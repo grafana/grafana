@@ -4,7 +4,6 @@ import { Provider } from 'react-redux';
 import { Router } from 'react-router-dom';
 
 import { locationService } from '@grafana/runtime';
-import { contextSrv } from 'app/core/services/context_srv';
 import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
 import { configureStore } from 'app/store/configureStore';
 import { AccessControlAction } from 'app/types';
@@ -28,7 +27,6 @@ jest.mock('app/types', () => ({
 }));
 
 jest.mock('app/core/services/context_srv');
-const contextSrvMock = jest.mocked(contextSrv);
 
 const renderWithProvider = () => {
   const store = configureStore();
