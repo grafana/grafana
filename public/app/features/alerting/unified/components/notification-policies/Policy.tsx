@@ -13,6 +13,7 @@ import { RouteWithID, Receiver, ObjectMatcher, AlertmanagerGroup } from 'app/plu
 import { ReceiversState } from 'app/types';
 
 import { isOrgAdmin } from '../../../../plugins/admin/permissions';
+import { AlertmanagerAction, useAlertmanagerAbility } from '../../hooks/useAbilities';
 import { INTEGRATION_ICONS } from '../../types/contact-points';
 import { getNotificationsPermissions } from '../../utils/access-control';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
@@ -72,8 +73,14 @@ const Policy: FC<PolicyComponentProps> = ({
   const isDefaultPolicy = currentRoute === routeTree;
 
   const permissions = getNotificationsPermissions(alertManagerSourceName);
-  const canEditRoutes = contextSrv.hasPermission(permissions.update);
-  const canDeleteRoutes = contextSrv.hasPermission(permissions.delete);
+
+  const [updateTreeSupported, updateTreeAllowed] = useAlertmanagerAbility(
+    AlertmanagerAction.UpdateNotificationPolicyTree
+  );
+
+  const canDeleteRoutes = updateTreeSupported && updateTreeAllowed;
+  const canEditRoutes = updateTreeSupported && updateTreeAllowed;
+
   const canReadProvisioning =
     contextSrv.hasAccess(permissions.provisioning.read, isOrgAdmin()) ||
     contextSrv.hasPermission(permissions.provisioning.readSecrets);
@@ -158,7 +165,7 @@ const Policy: FC<PolicyComponentProps> = ({
                 {provisioned && <ProvisioningBadge />}
                 {readOnly && !showExport ? null : (
                   <Stack direction="row" gap={0.5}>
-                    {!readOnly && (
+                    {!readOnly && canEditRoutes && (
                       <ConditionalWrap shouldWrap={provisioned} wrap={ProvisionedTooltip}>
                         <Button
                           variant="secondary"
