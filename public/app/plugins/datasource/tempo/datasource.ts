@@ -124,7 +124,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
   async executeVariableQuery(query: TempoVariableQuery) {
     // Avoid failing if the user did not select the query type (label names, label values, etc.)
     if (query.type === undefined) {
-      return;
+      return new Promise<Array<{ text: string }>>(() => []);
     }
 
     switch (query.type) {
@@ -141,17 +141,30 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
   }
 
   async labelNamesQuery() {
-    const result = await this.metadataRequest('/api/search/tags');
-    return result.data.tagNames.map((value: string) => ({ text: value }));
+    await this.languageProvider.fetchTags();
+
+    const tagsResource = this.languageProvider.getTags(TraceqlSearchScope.Resource);
+    const tagsSpan = this.languageProvider.getTags(TraceqlSearchScope.Span);
+    const tags = tagsResource.concat(tagsSpan);
+
+    return tags.filter((tag) => tag !== undefined).map((tag) => ({ text: tag })) as Array<{ text: string }>;
   }
 
-  async labelValuesQuery(labelName: string | undefined) {
+  async labelValuesQuery(labelName?: string) {
     if (!labelName) {
       return [];
     }
 
-    const result = await this.metadataRequest(`/api/search/tag/${labelName}/values`);
-    return result.data.tagValues.map((value: string) => ({ text: value }));
+    let options;
+    try {
+      options = await this.languageProvider.getOptionsV2(labelName);
+    } catch {
+      options = await this.languageProvider.getOptionsV1(labelName);
+    }
+
+    return options.filter((option) => option.value !== undefined).map((option) => ({ text: option.value })) as Array<{
+      text: string;
+    }>;
   }
 
   query(options: DataQueryRequest<TempoQuery>): Observable<DataQueryResponse> {
