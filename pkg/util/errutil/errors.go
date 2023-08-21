@@ -76,7 +76,7 @@ func Unknown(msgID string, opts ...BaseOpt) Base {
 	return NewBase(StatusUnknown, msgID, opts...)
 }
 
-// Unknown initializes a new [Base] error with reason StatusUnknown.
+// Timeout initializes a new [Base] error with reason StatusTimeout.
 //
 // See NewBase for more information.
 func Timeout(msgID string, opts ...BaseOpt) Base {
