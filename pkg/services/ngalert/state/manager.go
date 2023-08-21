@@ -259,12 +259,6 @@ func (st *Manager) ResetStateByRuleUID(ctx context.Context, rule *ngModels.Alert
 // ProcessEvalResults updates the current states that belong to a rule with the evaluation results.
 // if extraLabels is not empty, those labels will be added to every state. The extraLabels take precedence over rule labels and result labels
 func (st *Manager) ProcessEvalResults(ctx context.Context, evaluatedAt time.Time, alertRule *ngModels.AlertRule, results eval.Results, extraLabels data.Labels) []StateTransition {
-	start := time.Now()
-	labels := prometheus.Labels{"org": strconv.FormatInt(alertRule.OrgID, 10)}
-	if st.metrics != nil {
-		defer func() { st.metrics.Duration.With(labels).Observe(time.Since(start).Seconds()) }()
-	}
-
 	tracingCtx, span := st.tracer.Start(ctx, "alert rule state calculation")
 	defer span.End()
 	span.SetAttributes("rule_uid", alertRule.UID, attribute.String("rule_uid", alertRule.UID))
@@ -297,6 +291,7 @@ func (st *Manager) ProcessEvalResults(ctx context.Context, evaluatedAt time.Time
 	stateSaveStart := time.Now()
 	st.saveAlertStates(tracingCtx, logger, states...)
 	if st.metrics != nil {
+		labels := prometheus.Labels{"org": strconv.FormatInt(alertRule.OrgID, 10)}
 		st.metrics.SaveDuration.With(labels).Observe(time.Since(stateSaveStart).Seconds())
 	}
 	span.AddEvents([]string{"message"}, []tracing.EventValue{{Str: "updated database"}})

@@ -92,21 +92,16 @@ func (r *conditionEvaluator) EvaluateRaw(ctx context.Context, now time.Time) (re
 
 // Evaluate evaluates the condition and converts the response to Results
 func (r *conditionEvaluator) Evaluate(ctx context.Context, now time.Time) (Results, error) {
-	start := time.Now()
-	labels := prometheus.Labels{"org": strconv.FormatInt(r.orgId, 10)}
-	if r.metrics != nil {
-		defer func() { r.metrics.Duration.With(labels).Observe(time.Since(start).Seconds()) }()
-	}
-
 	response, err := r.EvaluateRaw(ctx, now)
 	if err != nil {
 		return nil, err
 	}
 
-	processDurationStart := time.Now()
+	start := time.Now()
+	labels := prometheus.Labels{"org": strconv.FormatInt(r.orgId, 10)}
 	if r.metrics != nil {
 		defer func() {
-			r.metrics.ProcessDuration.With(labels).Observe(time.Since(processDurationStart).Seconds())
+			r.metrics.ProcessDuration.With(labels).Observe(time.Since(start).Seconds())
 		}()
 	}
 
