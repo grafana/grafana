@@ -17,8 +17,8 @@ jest.mock('app/core/core', () => {
     contextSrv: {
       hasPermission: () => true,
       hasAccess: () => true,
-      getValidIntervals: (defaultIntervals: string[]) => defaultIntervals
-    }
+      getValidIntervals: (defaultIntervals: string[]) => defaultIntervals,
+    },
   };
 });
 

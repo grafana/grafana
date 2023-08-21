@@ -1,6 +1,6 @@
 import { screen, waitFor } from '@testing-library/react';
 
-import { EventBusSrv } from "@grafana/data";
+import { EventBusSrv } from '@grafana/data';
 
 import { changeDatasource } from './helper/interactions';
 import { makeLogsQueryResponse } from './helper/query';
@@ -23,7 +23,7 @@ jest.mock('app/core/core', () => ({
   contextSrv: {
     hasAccess: () => true,
     hasPermission: () => true,
-    getValidIntervals: (defaultIntervals: string[]) => defaultIntervals
+    getValidIntervals: (defaultIntervals: string[]) => defaultIntervals,
   },
 }));
 

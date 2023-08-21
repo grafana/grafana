@@ -14,8 +14,8 @@ const starRichHistoryMock = jest.fn();
 const deleteRichHistoryMock = jest.fn();
 
 const mockEventBus = {
-  publish: jest.fn()
-}
+  publish: jest.fn(),
+};
 
 class MockDatasourceApi<T extends DataQuery> implements DataSourceApi<T> {
   name: string;

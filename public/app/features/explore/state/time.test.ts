@@ -16,7 +16,6 @@ jest.mock('@grafana/runtime', () => ({
 }));
 
 describe('Explore item reducer', () => {
-
   describe('When time is updated', () => {
     it('Time service is re-initialized and template service is updated with the new time range', async () => {
       const state = createDefaultInitialState().defaultInitialState as any;

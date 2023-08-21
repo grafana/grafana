@@ -53,7 +53,7 @@ jest.mock('app/core/core', () => ({
     hasPermission: () => true,
     hasAccess: () => true,
     isSignedIn: true,
-    getValidIntervals: (defaultIntervals: string[]) => defaultIntervals
+    getValidIntervals: (defaultIntervals: string[]) => defaultIntervals,
   },
 }));
 

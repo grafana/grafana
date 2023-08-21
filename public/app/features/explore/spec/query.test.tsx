@@ -21,7 +21,7 @@ jest.mock('../../correlations/utils', () => {
 jest.mock('app/core/core', () => ({
   contextSrv: {
     hasAccess: () => true,
-    getValidIntervals: (defaultIntervals: string[]) => defaultIntervals
+    getValidIntervals: (defaultIntervals: string[]) => defaultIntervals,
   },
 }));
 
