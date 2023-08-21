@@ -73,29 +73,33 @@ export const TempoVariableQueryEditor = ({ onChange, query, datasource }: TempoV
   };
 
   return (
-    <InlineFieldRow>
-      <InlineField label="Query type" labelWidth={20}>
-        <Select
-          aria-label="Query type"
-          onChange={onQueryTypeChange}
-          onBlur={handleBlur}
-          value={type}
-          options={variableOptions}
-          width={16}
-        />
-      </InlineField>
-      {type === TempoVariableQueryType.LabelValues && (
-        <InlineField label="Label" labelWidth={20}>
+    <>
+      <InlineFieldRow>
+        <InlineField label="Query type" labelWidth={20}>
           <Select
-            aria-label="Label"
-            onChange={onLabelChange}
+            aria-label="Query type"
+            onChange={onQueryTypeChange}
             onBlur={handleBlur}
-            value={{ label, value: label }}
-            options={labelOptions}
-            width={16}
+            value={type}
+            options={variableOptions}
+            width={32}
           />
         </InlineField>
-      )}
-    </InlineFieldRow>
+      </InlineFieldRow>
+      <InlineFieldRow>
+        {type === TempoVariableQueryType.LabelValues && (
+          <InlineField label="Label" labelWidth={20}>
+            <Select
+              aria-label="Label"
+              onChange={onLabelChange}
+              onBlur={handleBlur}
+              value={{ label, value: label }}
+              options={labelOptions}
+              width={32}
+            />
+          </InlineField>
+        )}
+      </InlineFieldRow>
+    </>
   );
 };
