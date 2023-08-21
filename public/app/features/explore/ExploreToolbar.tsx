@@ -11,7 +11,7 @@ import { createAndCopyShortLink } from 'app/core/utils/shortLinks';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 import { StoreState, useDispatch, useSelector } from 'app/types/store';
 
-import { contextSrv } from "../../core/core";
+import { contextSrv } from '../../core/core';
 import { DashNavButton } from '../dashboard/components/DashNav/DashNavButton';
 import { updateFiscalYearStartMonthForSession, updateTimeZoneForSession } from '../profile/state/reducers';
 import { getFiscalYearStartMonth, getTimeZone } from '../profile/state/selectors';

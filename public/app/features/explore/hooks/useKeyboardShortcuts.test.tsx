@@ -1,16 +1,16 @@
 import { render } from '@testing-library/react';
-import React from 'react'
+import React from 'react';
 
-import {dateTime, EventBusSrv} from "@grafana/data";
-import { getAppEvents } from "@grafana/runtime";
-import {AbsoluteTimeEvent, ShiftTimeEvent, ShiftTimeEventDirection, ZoomOutEvent} from "app/types/events";
+import { dateTime, EventBusSrv } from '@grafana/data';
+import { getAppEvents } from '@grafana/runtime';
+import { AbsoluteTimeEvent, ShiftTimeEvent, ShiftTimeEventDirection, ZoomOutEvent } from 'app/types/events';
 
-import { TestProvider } from "../../../../test/helpers/TestProvider";
-import { configureStore } from "../../../store/configureStore";
-import { initialExploreState } from "../state/main";
-import { makeExplorePaneState } from "../state/utils";
+import { TestProvider } from '../../../../test/helpers/TestProvider';
+import { configureStore } from '../../../store/configureStore';
+import { initialExploreState } from '../state/main';
+import { makeExplorePaneState } from '../state/utils';
 
-import {useKeyboardShortcuts} from "./useKeyboardShortcuts";
+import { useKeyboardShortcuts } from './useKeyboardShortcuts';
 
 const testEventBus = new EventBusSrv();
 
@@ -36,15 +36,15 @@ function setup() {
           range: {
             from: dateTime(),
             to: dateTime(),
-            raw: { from: 'now-1d', to: 'now' }
-          }
+            raw: { from: 'now-1d', to: 'now' },
+          },
         }),
         right: makeExplorePaneState({
           range: {
             from: dateTime(),
             to: dateTime(),
-            raw: { from: 'now-2d', to: 'now' }
-          }
+            raw: { from: 'now-2d', to: 'now' },
+          },
         }),
       },
     },
@@ -53,15 +53,18 @@ function setup() {
   const Wrapper = () => {
     useKeyboardShortcuts();
     return <div></div>;
-  }
+  };
 
-  render(<TestProvider store={store}><Wrapper /></TestProvider>);
+  render(
+    <TestProvider store={store}>
+      <Wrapper />
+    </TestProvider>
+  );
 
   return store;
 }
 
 describe('useKeyboardShortcuts', () => {
-
   beforeEach(() => {
     jest.useFakeTimers().setSystemTime(NOW);
   });
@@ -108,4 +111,4 @@ describe('useKeyboardShortcuts', () => {
     expect(panes[1]!.absoluteRange.from).toBe(daysFromNow(-3).getTime());
     expect(panes[1]!.absoluteRange.to).toBe(daysFromNow(1).getTime());
   });
-})
+});

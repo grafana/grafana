@@ -110,7 +110,14 @@ export function getPanelMenu(
     event.preventDefault();
     const openInNewWindow =
       event.ctrlKey || event.metaKey ? (url: string) => window.open(`${config.appSubUrl}${url}`) : undefined;
-    store.dispatch(navigateToExplore(panel, { getDataSourceSrv, timeRange: getTimeSrv().timeRange(), getExploreUrl, openInNewWindow }) as any);
+    store.dispatch(
+      navigateToExplore(panel, {
+        getDataSourceSrv,
+        timeRange: getTimeSrv().timeRange(),
+        getExploreUrl,
+        openInNewWindow,
+      }) as any
+    );
     reportInteraction('dashboards_panelheader_menu', { item: 'explore' });
   };
 

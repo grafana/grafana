@@ -1,16 +1,10 @@
 import { AnyAction, createAction } from '@reduxjs/toolkit';
 
-import {
-  AbsoluteTimeRange,
-  dateTimeForTimeZone,
-  LoadingState,
-  RawTimeRange,
-  TimeRange,
-} from '@grafana/data';
+import { AbsoluteTimeRange, dateTimeForTimeZone, LoadingState, RawTimeRange, TimeRange } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 import { RefreshPicker } from '@grafana/ui';
 import { getTimeRange, refreshIntervalToSortOrder, stopQueryState } from 'app/core/utils/explore';
-import { getShiftedTimeRange, getZoomedTimeRange} from "app/core/utils/timePicker";
+import { getShiftedTimeRange, getZoomedTimeRange } from 'app/core/utils/timePicker';
 import { sortLogsResult } from 'app/features/logs/utils';
 import { getFiscalYearStartMonth, getTimeZone } from 'app/features/profile/state/selectors';
 import { ExploreItemState, ThunkDispatch, ThunkResult } from 'app/types';
@@ -111,7 +105,14 @@ export function syncTimes(exploreId: string): ThunkResult<void> {
   };
 }
 
-function modifyExplorePanesTimeRange(modifier: (exploreId: string, exploreItemState: ExploreItemState, currentTimeRange: TimeRange, dispatch: ThunkDispatch) => void): ThunkResult<void> {
+function modifyExplorePanesTimeRange(
+  modifier: (
+    exploreId: string,
+    exploreItemState: ExploreItemState,
+    currentTimeRange: TimeRange,
+    dispatch: ThunkDispatch
+  ) => void
+): ThunkResult<void> {
   return (dispatch, getState) => {
     const timeZone = getTimeZone(getState().user);
     const fiscalYearStartMonth = getFiscalYearStartMonth(getState().user);
@@ -132,20 +133,21 @@ export function makeAbsoluteTime(): ThunkResult<void> {
   return modifyExplorePanesTimeRange((exploreId, exploreItemState, range, dispatch) => {
     const absoluteRange: AbsoluteTimeRange = { from: range.from.valueOf(), to: range.to.valueOf() };
     dispatch(updateTimeRange({ exploreId, absoluteRange }));
-  })
+  });
 }
 
 export function shiftTime(direction: number): ThunkResult<void> {
   return modifyExplorePanesTimeRange((exploreId, exploreItemState, range, dispatch) => {
-    const shiftedRange = getShiftedTimeRange(direction, range)
+    const shiftedRange = getShiftedTimeRange(direction, range);
     dispatch(updateTimeRange({ exploreId, absoluteRange: shiftedRange }));
-  })}
+  });
+}
 
 export function zoomOut(scale: number): ThunkResult<void> {
   return modifyExplorePanesTimeRange((exploreId, exploreItemState, range, dispatch) => {
-    const zoomedRange = getZoomedTimeRange(range, scale)
+    const zoomedRange = getZoomedTimeRange(range, scale);
     dispatch(updateTimeRange({ exploreId, absoluteRange: zoomedRange }));
-  })
+  });
 }
 
 /**

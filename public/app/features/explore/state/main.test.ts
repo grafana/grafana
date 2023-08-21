@@ -1,6 +1,6 @@
 import { thunkTester } from 'test/core/thunk/thunkTester';
 
-import {dateTime, ExploreUrlState} from '@grafana/data';
+import { dateTime, ExploreUrlState } from '@grafana/data';
 import { serializeStateToUrlParam } from '@grafana/data/src/utils/url';
 import { locationService } from '@grafana/runtime';
 import { PanelModel } from 'app/features/dashboard/state';
@@ -22,7 +22,7 @@ const getNavigateToExploreContext = async (openInNewWindow?: (url: string) => vo
   const get = jest.fn().mockResolvedValue(datasource);
   const getDataSourceSrv = jest.fn().mockReturnValue({ get });
   const getExploreUrl = jest.fn().mockResolvedValue(url);
-  const timeRange = { from: dateTime(), to: dateTime() }
+  const timeRange = { from: dateTime(), to: dateTime() };
 
   const dispatchedActions = await thunkTester({})
     .givenThunk(navigateToExplore)
