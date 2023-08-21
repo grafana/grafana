@@ -1,23 +1,23 @@
 import React from 'react';
 
 import { SceneComponentProps, SceneObjectBase, SceneObjectState, VizPanel } from '@grafana/scenes';
-import { LibraryPanel, LibraryPanelRef } from '@grafana/schema';
 import { PanelModel } from 'app/features/dashboard/state';
 import { getLibraryPanel } from 'app/features/library-panels/state/api';
 
 import { createPanelDataProvider } from './utils/createPanelDataProvider';
 
 interface LibraryVizPanelState extends SceneObjectState {
+  // Library panels use title from dashboard JSON's panel model, not from library panel definition, hence we pass it.
   title: string;
-  libraryPanel: LibraryPanelRef | LibraryPanel;
+  uid: string;
   panel?: VizPanel;
 }
 
 export class LibraryVizPanel extends SceneObjectBase<LibraryVizPanelState> {
   static Component = LibraryPanelRenderer;
 
-  constructor({ libraryPanel, title }: Pick<LibraryVizPanelState, 'libraryPanel' | 'title'>) {
-    super({ libraryPanel, title });
+  constructor({ uid, title }: Pick<LibraryVizPanelState, 'uid' | 'title'>) {
+    super({ uid, title });
 
     this.addActivationHandler(this._onActivate);
   }
@@ -30,7 +30,7 @@ export class LibraryVizPanel extends SceneObjectBase<LibraryVizPanelState> {
     const { title } = this.state;
     let vizPanel = new VizPanel({ title });
     try {
-      const libPanel = await getLibraryPanel(this.state.libraryPanel.uid, true);
+      const libPanel = await getLibraryPanel(this.state.uid, true);
       const libPanelModel = new PanelModel(libPanel.model);
       vizPanel.setState({
         options: libPanelModel.options ?? {},
@@ -41,7 +41,7 @@ export class LibraryVizPanel extends SceneObjectBase<LibraryVizPanelState> {
       });
     } catch (err) {
       vizPanel.setState({
-        pluginLoadError: 'Unable to load library panel: ' + this.state.libraryPanel.uid,
+        pluginLoadError: 'Unable to load library panel: ' + this.state.uid,
       });
     }
 

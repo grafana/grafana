@@ -129,7 +129,7 @@ export function createSceneObjectsForPanels(oldPanels: PanelModel[]): Array<Scen
       const gridItem = new SceneGridItem({
         body: new LibraryVizPanel({
           title: panel.title,
-          libraryPanel: panel.libraryPanel,
+          uid: panel.libraryPanel.uid,
         }),
         y: panel.gridPos.y,
         x: panel.gridPos.x,
