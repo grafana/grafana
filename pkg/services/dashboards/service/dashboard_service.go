@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"strings"
-	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 
@@ -401,49 +400,6 @@ func (dr *DashboardServiceImpl) DeleteDashboard(ctx context.Context, dashboardId
 
 func (dr *DashboardServiceImpl) GetDashboardByPublicUid(ctx context.Context, dashboardPublicUid string) (*dashboards.Dashboard, error) {
 	return nil, nil
-}
-
-func (dr *DashboardServiceImpl) MakeUserAdmin(ctx context.Context, orgID int64, userID int64, dashboardID int64, setViewAndEditPermissions bool) error {
-	rtEditor := org.RoleEditor
-	rtViewer := org.RoleViewer
-
-	items := []*dashboards.DashboardACL{
-		{
-			OrgID:       orgID,
-			DashboardID: dashboardID,
-			UserID:      userID,
-			Permission:  dashboards.PERMISSION_ADMIN,
-			Created:     time.Now(),
-			Updated:     time.Now(),
-		},
-	}
-
-	if setViewAndEditPermissions {
-		items = append(items,
-			&dashboards.DashboardACL{
-				OrgID:       orgID,
-				DashboardID: dashboardID,
-				Role:        &rtEditor,
-				Permission:  dashboards.PERMISSION_EDIT,
-				Created:     time.Now(),
-				Updated:     time.Now(),
-			},
-			&dashboards.DashboardACL{
-				OrgID:       orgID,
-				DashboardID: dashboardID,
-				Role:        &rtViewer,
-				Permission:  dashboards.PERMISSION_VIEW,
-				Created:     time.Now(),
-				Updated:     time.Now(),
-			},
-		)
-	}
-
-	if err := dr.dashboardStore.UpdateDashboardACL(ctx, dashboardID, items); err != nil {
-		return err
-	}
-
-	return nil
 }
 
 // DeleteProvisionedDashboard removes dashboard from the DB even if it is provisioned.
