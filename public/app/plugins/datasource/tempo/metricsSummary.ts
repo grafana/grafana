@@ -88,6 +88,11 @@ export function createTableFrameFromMetricsQuery(
       fields: [
         ...Object.values(dynamicMetrics).sort((a, b) => a.name.localeCompare(b.name)),
         {
+          name: 'kind',
+          type: FieldType.string,
+          config: { displayNameFromDS: 'Kind', custom: { width: 150 } },
+        },
+        {
           name: 'spanCount',
           type: FieldType.string,
           config: { displayNameFromDS: 'Span count', custom: { width: 150 } },
@@ -127,6 +132,7 @@ const transformToMetricsData = (data: MetricsSummary) => {
     : '';
 
   const metricsData: MetricsData = {
+    kind: 'server', // so the user knows all results are of kind = server
     spanCount: data.spanCount,
     errorPercentage,
     p50: data.p50,
