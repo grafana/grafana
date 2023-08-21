@@ -49,7 +49,6 @@ export const GroupByField = (props: Props) => {
         groupBy: [
           {
             id: generateId(),
-            valueType: 'string',
             scope: TraceqlSearchScope.Span,
           },
         ],
@@ -64,7 +63,6 @@ export const GroupByField = (props: Props) => {
   const addFilter = () => {
     updateFilter({
       id: generateId(),
-      valueType: 'string',
       scope: TraceqlSearchScope.Span,
     });
   };

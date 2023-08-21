@@ -206,22 +206,77 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
 
     if (targets.traceql?.length) {
       try {
-        const appliedQuery = this.applyVariables(targets.traceql[0], options.scopedVars);
-        const queryValue = appliedQuery?.query || '';
-        const hexOnlyRegex = /^[0-9A-Fa-f]*$/;
-        // Check whether this is a trace ID or traceQL query by checking if it only contains hex characters
-        if (queryValue.trim().match(hexOnlyRegex)) {
-          // There's only hex characters so let's assume that this is a trace ID
-          reportInteraction('grafana_traces_traceID_queried', {
-            datasourceType: 'tempo',
-            app: options.app ?? '',
-            grafana_version: config.buildInfo.version,
-            hasQuery: queryValue !== '' ? true : false,
-          });
+        const groupBy = targets.traceql.find((t) => this.hasGroupBy(t));
+        if (groupBy) {
+          subQueries.push(
+            this.handleMetricsSummary(groupBy, this.applyVariables(groupBy, options.scopedVars)?.query || '', options)
+          );
+        }
 
-          subQueries.push(this.handleTraceIdQuery(options, targets.traceql));
-        } else {
-          reportInteraction('grafana_traces_traceql_queried', {
+        const traceqlTargets = targets.traceql.filter((t) => !this.hasGroupBy(t));
+        if (traceqlTargets.length > 0) {
+          const appliedQuery = this.applyVariables(traceqlTargets[0], options.scopedVars);
+          const queryValue = appliedQuery?.query || '';
+          const hexOnlyRegex = /^[0-9A-Fa-f]*$/;
+          // Check whether this is a trace ID or traceQL query by checking if it only contains hex characters
+          if (queryValue.trim().match(hexOnlyRegex)) {
+            // There's only hex characters so let's assume that this is a trace ID
+            reportInteraction('grafana_traces_traceID_queried', {
+              datasourceType: 'tempo',
+              app: options.app ?? '',
+              grafana_version: config.buildInfo.version,
+              hasQuery: queryValue !== '' ? true : false,
+            });
+
+            subQueries.push(this.handleTraceIdQuery(options, traceqlTargets));
+          } else {
+            reportInteraction('grafana_traces_traceql_queried', {
+              datasourceType: 'tempo',
+              app: options.app ?? '',
+              grafana_version: config.buildInfo.version,
+              query: queryValue ?? '',
+              streaming: config.featureToggles.traceQLStreaming,
+            });
+
+            if (config.featureToggles.traceQLStreaming) {
+              subQueries.push(this.handleStreamingSearch(options, traceqlTargets));
+            } else {
+              subQueries.push(
+                this._request('/api/search', {
+                  q: queryValue,
+                  limit: options.targets[0].limit ?? DEFAULT_LIMIT,
+                  start: options.range.from.unix(),
+                  end: options.range.to.unix(),
+                }).pipe(
+                  map((response) => {
+                    return {
+                      data: createTableFrameFromTraceQlQuery(response.data.traces, this.instanceSettings),
+                    };
+                  }),
+                  catchError((err) => {
+                    return of({ error: { message: getErrorMessage(err.data.message) }, data: [] });
+                  })
+                )
+              );
+            }
+          }
+        }
+      } catch (error) {
+        return of({ error: { message: error instanceof Error ? error.message : 'Unknown error occurred' }, data: [] });
+      }
+    }
+
+    if (targets.traceqlSearch?.length) {
+      try {
+        const groupBy = targets.traceqlSearch.find((t) => this.hasGroupBy(t));
+        if (groupBy) {
+          subQueries.push(this.handleMetricsSummary(groupBy, generateQueryFromFilters(groupBy.filters), options));
+        }
+
+        const traceqlSearchTargets = targets.traceqlSearch.filter((t) => !this.hasGroupBy(t));
+        if (traceqlSearchTargets.length > 0) {
+          const queryValue = generateQueryFromFilters(traceqlSearchTargets[0].filters);
+          reportInteraction('grafana_traces_traceql_search_queried', {
             datasourceType: 'tempo',
             app: options.app ?? '',
             grafana_version: config.buildInfo.version,
@@ -229,14 +284,8 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
             streaming: config.featureToggles.traceQLStreaming,
           });
 
-          const groupBy = targets.traceql.find((t) => this.hasGroupBy(t));
-          if (groupBy) {
-            subQueries.push(
-              this.handleMetricsSummary(groupBy, this.applyVariables(groupBy, options.scopedVars)?.query || '', options)
-            );
-          }
           if (config.featureToggles.traceQLStreaming) {
-            subQueries.push(this.handleStreamingSearch(options, targets.traceql));
+            subQueries.push(this.handleStreamingSearch(options, traceqlSearchTargets, queryValue));
           } else if (!groupBy) {
             subQueries.push(
               this._request('/api/search', {
@@ -256,47 +305,6 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
               )
             );
           }
-        }
-      } catch (error) {
-        return of({ error: { message: error instanceof Error ? error.message : 'Unknown error occurred' }, data: [] });
-      }
-    }
-
-    if (targets.traceqlSearch?.length) {
-      try {
-        const queryValue = generateQueryFromFilters(targets.traceqlSearch[0].filters);
-        reportInteraction('grafana_traces_traceql_search_queried', {
-          datasourceType: 'tempo',
-          app: options.app ?? '',
-          grafana_version: config.buildInfo.version,
-          query: queryValue ?? '',
-          streaming: config.featureToggles.traceQLStreaming,
-        });
-
-        const groupBy = targets.traceqlSearch.find((t) => this.hasGroupBy(t));
-        if (groupBy) {
-          subQueries.push(this.handleMetricsSummary(groupBy, generateQueryFromFilters(groupBy.filters), options));
-        }
-        if (config.featureToggles.traceQLStreaming) {
-          subQueries.push(this.handleStreamingSearch(options, targets.traceqlSearch, queryValue));
-        } else if (!groupBy) {
-          subQueries.push(
-            this._request('/api/search', {
-              q: queryValue,
-              limit: options.targets[0].limit ?? DEFAULT_LIMIT,
-              start: options.range.from.unix(),
-              end: options.range.to.unix(),
-            }).pipe(
-              map((response) => {
-                return {
-                  data: createTableFrameFromTraceQlQuery(response.data.traces, this.instanceSettings),
-                };
-              }),
-              catchError((err) => {
-                return of({ error: { message: getErrorMessage(err.data.message) }, data: [] });
-              })
-            )
-          );
         }
       } catch (error) {
         return of({ error: { message: error instanceof Error ? error.message : 'Unknown error occurred' }, data: [] });
@@ -494,7 +502,6 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     query?: string
   ): Observable<DataQueryResponse> {
     const validTargets = targets
-      .filter((t) => !this.hasGroupBy(t))
       .filter((t) => t.query || query)
       .map((t): TempoQuery => ({ ...t, query: query || t.query.trim() }));
     if (!validTargets.length) {
