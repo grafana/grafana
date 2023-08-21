@@ -13,6 +13,5 @@ var (
 	ErrMethodNotImplemented = errutil.NotImplemented("plugin.notImplemented")
 	// ErrPluginDownstreamError error returned when a plugin method is not implemented.
 	ErrPluginDownstreamError = errutil.Internal("plugin.downstreamError",
-		errutil.WithPublicMessage("An error occurred within the plugin"),
-		errutil.WithDownstream())
+		errutil.WithPublicMessage("An error occurred within the plugin"))
 )
