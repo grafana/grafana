@@ -70,7 +70,6 @@ export function createTableFrameFromMetricsQuery(
 
     data.map((res: MetricsSummary) => {
       const configQuery = getConfigQuery(res.series, targetQuery);
-      console.log(configQuery);
 
       res.series.map((series: Series) => {
         return !dynamicMetrics[series.key]
@@ -153,8 +152,11 @@ const getConfigQuery = (series: Series[], targetQuery: string) => {
     return queryParts.push(`${x.key}=${open}` + '${__data.fields["' + x.key + '_summary"]}' + `${closing}`);
   });
 
-  const targetQueryWithoutBrackets = targetQuery.substring(1, targetQuery.length - 1);
-  return `{${queryParts.join(' && ')} && ${targetQueryWithoutBrackets}}`;
+  let targetQueryWithoutBrackets = targetQuery.substring(1, targetQuery.length - 1);
+  if (targetQueryWithoutBrackets.length > 0) {
+    targetQueryWithoutBrackets = ` && ${targetQueryWithoutBrackets}`;
+  }
+  return `{${queryParts.join(' && ')}${targetQueryWithoutBrackets}}`;
 };
 
 const getConfig = (series: Series, query: string, instanceSettings: DataSourceInstanceSettings) => {
