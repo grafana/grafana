@@ -64,5 +64,5 @@ export function createTempoDatasource(
 }
 
 export function createMetadataRequest(labelsAndValues: Record<string, Record<string, string[]>>) {
-  return async (url: string, params?: Record<string, string | number>) => labelsAndValues;
+  return async () => labelsAndValues;
 }
