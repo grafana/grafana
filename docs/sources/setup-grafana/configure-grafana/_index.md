@@ -1801,6 +1801,8 @@ Refer to https://www.jaegertracing.io/docs/1.16/sampling/#client-sampling-config
 
 Can be set with the environment variable `JAEGER_SAMPLER_TYPE`.
 
+_Setting `sampler_type` in the `tracing.opentelemetry` section will override this setting._
+
 ### sampler_param
 
 Default value is `1`.
@@ -1816,9 +1818,13 @@ This is the sampler configuration parameter. Depending on the value of `sampler_
 
 May be set with the environment variable `JAEGER_SAMPLER_PARAM`.
 
+_Setting `sampler_param` in the `tracing.opentelemetry` section will override this setting._
+
 ### sampling_server_url
 
 sampling_server_url is the URL of a sampling manager providing a sampling strategy.
+
+_Setting `sampling_server_url` in the `tracing.opentelemetry` section will override this setting._
 
 ### zipkin_propagation
 
@@ -1845,6 +1851,31 @@ Configure general parameters shared between OpenTelemetry providers.
 Comma-separated list of attributes to include in all new spans, such as `key1:value1,key2:value2`.
 
 Can be set with the environment variable `OTEL_RESOURCE_ATTRIBUTES` (use `=` instead of `:` with the environment variable).
+
+### sampler_type
+
+Default value is `const`.
+
+Specifies the type of sampler: `const`, `probabilistic`, `ratelimiting`, or `remote`.
+
+### sampler_param
+
+Default value is `1`.
+
+Sampler configuration parameter. Depending on the value of `sampler_type`, it can be `0`, `1`, or a decimal value in between.
+
+- For `const` sampler, `0` or `1` to always `false`/`true` respectively
+- For `probabilistic` sampler, a probability between `0.0` and `1.0`
+- For `rateLimiting` sampler, the number of spans per second
+- For `remote` sampler, param is the same as for `probabilistic`
+  and indicates the initial sampling rate before the actual one
+  is received from the sampling server
+
+### sampling_server_url
+
+When `sampler_type` is `remote`, this specifies the URL of the sampling server. This can be used by all tracing providers. 
+
+The sampling server should implement the Jaeger remote sampling API, which can be exposed by a jaeger-agent, jaeger-collector, opentelemetry-collector-contrib, or the Grafana Agent.
 
 <hr>
 
