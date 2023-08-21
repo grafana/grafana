@@ -36,6 +36,9 @@ exports[`Graph Migrations legend with multiple values 1`] = `
     ],
   },
   "options": {
+    "exemplars": {
+      "labels": [],
+    },
     "legend": {
       "calcs": [
         "mean",
@@ -67,6 +70,9 @@ exports[`Graph Migrations legend with single value 1`] = `
     "overrides": [],
   },
   "options": {
+    "exemplars": {
+      "labels": [],
+    },
     "legend": {
       "calcs": [
         "sum",
@@ -96,6 +102,9 @@ exports[`Graph Migrations legend without values 1`] = `
     "overrides": [],
   },
   "options": {
+    "exemplars": {
+      "labels": [],
+    },
     "legend": {
       "calcs": [],
       "displayMode": "list",
@@ -162,6 +171,9 @@ exports[`Graph Migrations preserves colors from series overrides 1`] = `
     ],
   },
   "options": {
+    "exemplars": {
+      "labels": [],
+    },
     "legend": {
       "calcs": [
         "mean",
@@ -234,6 +246,9 @@ exports[`Graph Migrations preserves series overrides using a regex alias 1`] = `
     ],
   },
   "options": {
+    "exemplars": {
+      "labels": [],
+    },
     "legend": {
       "calcs": [
         "mean",
@@ -269,6 +284,9 @@ exports[`Graph Migrations simple bars 1`] = `
     "overrides": [],
   },
   "options": {
+    "exemplars": {
+      "labels": [],
+    },
     "legend": {
       "calcs": [],
       "displayMode": "list",
@@ -353,6 +371,9 @@ exports[`Graph Migrations stacking groups 1`] = `
     ],
   },
   "options": {
+    "exemplars": {
+      "labels": [],
+    },
     "legend": {
       "calcs": [
         "mean",
@@ -411,6 +432,9 @@ exports[`Graph Migrations stacking simple 1`] = `
     ],
   },
   "options": {
+    "exemplars": {
+      "labels": [],
+    },
     "legend": {
       "calcs": [
         "mean",
@@ -451,6 +475,9 @@ exports[`Graph Migrations stairscase 1`] = `
     "overrides": [],
   },
   "options": {
+    "exemplars": {
+      "labels": [],
+    },
     "legend": {
       "calcs": [
         "mean",
@@ -507,6 +534,9 @@ exports[`Graph Migrations stepped line 1`] = `
     ],
   },
   "options": {
+    "exemplars": {
+      "labels": [],
+    },
     "legend": {
       "calcs": [],
       "displayMode": "list",
@@ -538,6 +568,9 @@ exports[`Graph Migrations time regions should migrate 1`] = `
     "overrides": [],
   },
   "options": {
+    "exemplars": {
+      "labels": [],
+    },
     "legend": {
       "calcs": [],
       "displayMode": "list",
@@ -675,6 +708,9 @@ exports[`Graph Migrations twoYAxis 1`] = `
     ],
   },
   "options": {
+    "exemplars": {
+      "labels": [],
+    },
     "legend": {
       "calcs": [],
       "displayMode": "list",

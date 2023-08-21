@@ -62,6 +62,7 @@ describe('Heatmap Migrations', () => {
           },
           "exemplars": {
             "color": "rgba(255,0,255,0.7)",
+            "labels": [],
           },
           "filterValues": {
             "le": 1e-9,
