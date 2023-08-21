@@ -131,20 +131,20 @@ function modifyExplorePanesTimeRange(modifier: (exploreId: string, exploreItemSt
 export function makeAbsoluteTime(): ThunkResult<void> {
   return modifyExplorePanesTimeRange((exploreId, exploreItemState, range, dispatch) => {
     const absoluteRange: AbsoluteTimeRange = { from: range.from.valueOf(), to: range.to.valueOf() };
-    dispatch(updateTime({ exploreId, absoluteRange }));
+    dispatch(updateTimeRange({ exploreId, absoluteRange }));
   })
 }
 
 export function shiftTime(direction: number): ThunkResult<void> {
   return modifyExplorePanesTimeRange((exploreId, exploreItemState, range, dispatch) => {
     const shiftedRange = getShiftedTimeRange(direction, range)
-    dispatch(updateTime({ exploreId, absoluteRange: shiftedRange }));
+    dispatch(updateTimeRange({ exploreId, absoluteRange: shiftedRange }));
   })}
 
 export function zoomOut(scale: number): ThunkResult<void> {
   return modifyExplorePanesTimeRange((exploreId, exploreItemState, range, dispatch) => {
     const zoomedRange = getZoomedTimeRange(range, scale)
-    dispatch(updateTime({ exploreId, absoluteRange: zoomedRange }));
+    dispatch(updateTimeRange({ exploreId, absoluteRange: zoomedRange }));
   })
 }
 
