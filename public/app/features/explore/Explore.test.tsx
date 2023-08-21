@@ -111,6 +111,7 @@ jest.mock('@grafana/runtime/src/services/dataSourceSrv', () => {
 jest.mock('app/core/core', () => ({
   contextSrv: {
     hasAccess: () => true,
+    getValidIntervals: (defaultIntervals) => defaultIntervals
   },
 }));
 

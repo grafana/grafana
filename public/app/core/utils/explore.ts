@@ -75,7 +75,7 @@ export async function getExploreUrl(args: GetExploreUrlArguments): Promise<strin
   let url: string | undefined;
 
   if (exploreDatasource) {
-    let state: Partial<ExploreUrlState> = { range: toURLRange(timeRange) };
+    let state: Partial<ExploreUrlState> = { range: toURLRange(timeRange.raw) };
     if (exploreDatasource.interpolateVariablesInQueries) {
       const scopedVars = panel.scopedVars || {};
       state = {

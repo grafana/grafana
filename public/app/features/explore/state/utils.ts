@@ -42,7 +42,7 @@ export const storeGraphStyle = (graphStyle: string): void => {
 /**
  * Returns a fresh Explore area state
  */
-export const makeExplorePaneState = (): ExploreItemState => ({
+export const makeExplorePaneState = (overrides: Partial<ExploreItemState>): ExploreItemState => ({
   containerWidth: 0,
   datasourceInstance: null,
   history: [],
@@ -73,6 +73,7 @@ export const makeExplorePaneState = (): ExploreItemState => ({
   supplementaryQueries: loadSupplementaryQueries(),
   panelsState: {},
   correlations: undefined,
+  ...overrides
 });
 
 export const createEmptyQueryResponse = (): ExplorePanelData => ({
