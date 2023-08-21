@@ -3,10 +3,10 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useAsync } from 'react-use';
 
 import { CoreApp, QueryEditorProps, TimeRange } from '@grafana/data';
-import { ButtonCascader, CascaderOption } from '@grafana/ui';
+import { Cascader, CascaderOption, LoadingPlaceholder } from '@grafana/ui';
 
 import { normalizeQuery, PhlareDataSource } from '../datasource';
-import { BackendType, PhlareDataSourceOptions, ProfileTypeMessage, Query } from '../types';
+import { PhlareDataSourceOptions, ProfileTypeMessage, Query } from '../types';
 
 import { EditorRow } from './EditorRow';
 import { EditorRows } from './EditorRows';
@@ -23,7 +23,7 @@ export function QueryEditor(props: Props) {
     onRunQuery();
   }
 
-  const { profileTypes, onProfileTypeChange, selectedProfileName } = useProfileTypes(datasource, query, onChange);
+  const profileTypes = useProfileTypes(datasource);
   const { labels, getLabelValues, onLabelSelectorChange } = useLabels(range, datasource, query, onChange);
   useNormalizeQuery(query, profileTypes, onChange, app);
 
@@ -32,9 +32,20 @@ export function QueryEditor(props: Props) {
   return (
     <EditorRows>
       <EditorRow stackProps={{ wrap: false, gap: 1 }}>
-        <ButtonCascader onChange={onProfileTypeChange} options={cascaderOptions} buttonProps={{ variant: 'secondary' }}>
-          {selectedProfileName}
-        </ButtonCascader>
+        {profileTypes ? (
+          <Cascader
+            separator={'-'}
+            displayAllSelectedLevels={true}
+            initialValue={query.profileTypeId}
+            allowCustomValue={true}
+            onSelect={(val) => {
+              onChange({ ...query, profileTypeId: val });
+            }}
+            options={cascaderOptions}
+          />
+        ) : (
+          <LoadingPlaceholder text={'Loading'} />
+        )}
         <LabelsEditor
           value={query.labelSelector}
           onChange={onLabelSelectorChange}
@@ -52,15 +63,18 @@ export function QueryEditor(props: Props) {
 
 function useNormalizeQuery(
   query: Query,
-  profileTypes: ProfileTypeMessage[],
+  profileTypes: ProfileTypeMessage[] | undefined,
   onChange: (value: Query) => void,
   app?: CoreApp
 ) {
   useEffect(() => {
+    if (!profileTypes) {
+      return;
+    }
     const normalizedQuery = normalizeQuery(query, app);
-    // Query can be stored with some old type, or we can have query from different pyro datasource
-    const selectedProfile = query.profileTypeId && profileTypes.find((p) => p.id === query.profileTypeId);
-    if (profileTypes.length && !selectedProfile) {
+    // We just check if profileTypeId is filled but don't check if it's one of the existing cause it can be template
+    // variable
+    if (!query.profileTypeId) {
       normalizedQuery.profileTypeId = defaultProfileType(profileTypes);
     }
     // Makes sure we don't have an infinite loop updates because the normalization creates a new object
@@ -127,8 +141,11 @@ function useLabels(
 }
 
 // Turn profileTypes into cascader options
-function useCascaderOptions(profileTypes: ProfileTypeMessage[]) {
+function useCascaderOptions(profileTypes?: ProfileTypeMessage[]): CascaderOption[] {
   return useMemo(() => {
+    if (!profileTypes) {
+      return [];
+    }
     let mainTypes = new Map<string, CascaderOption>();
     // Classify profile types by name then sample type.
     for (let profileType of profileTypes) {
@@ -147,11 +164,11 @@ function useCascaderOptions(profileTypes: ProfileTypeMessage[]) {
       if (!mainTypes.has(name)) {
         mainTypes.set(name, {
           label: name,
-          value: profileType.id,
-          children: [],
+          value: name,
+          items: [],
         });
       }
-      mainTypes.get(name)?.children?.push({
+      mainTypes.get(name)?.items!.push({
         label: type,
         value: profileType.id,
       });
@@ -160,8 +177,8 @@ function useCascaderOptions(profileTypes: ProfileTypeMessage[]) {
   }, [profileTypes]);
 }
 
-function useProfileTypes(datasource: PhlareDataSource, query: Query, onChange: (value: Query) => void) {
-  const [profileTypes, setProfileTypes] = useState<ProfileTypeMessage[]>([]);
+function useProfileTypes(datasource: PhlareDataSource) {
+  const [profileTypes, setProfileTypes] = useState<ProfileTypeMessage[]>();
 
   useEffect(() => {
     (async () => {
@@ -170,39 +187,5 @@ function useProfileTypes(datasource: PhlareDataSource, query: Query, onChange: (
     })();
   }, [datasource]);
 
-  const onProfileTypeChange = useCallback(
-    (value: string[], selectedOptions: CascaderOption[]) => {
-      if (selectedOptions.length === 0) {
-        return;
-      }
-
-      const id = selectedOptions[selectedOptions.length - 1].value;
-      onChange({ ...query, profileTypeId: id });
-    },
-    [onChange, query]
-  );
-
-  const selectedProfileName = useProfileName(profileTypes, query.profileTypeId, datasource.backendType);
-  return { profileTypes, onProfileTypeChange, selectedProfileName };
-}
-
-function useProfileName(
-  profileTypes: ProfileTypeMessage[],
-  profileTypeId: string,
-  backendType: BackendType = 'phlare'
-) {
-  return useMemo(() => {
-    if (!profileTypes) {
-      return 'Loading';
-    }
-    const profile = profileTypes.find((type) => type.id === profileTypeId);
-    if (!profile) {
-      if (backendType === 'pyroscope') {
-        return 'Select application';
-      }
-      return 'Select a profile type';
-    }
-
-    return profile.label;
-  }, [profileTypeId, profileTypes, backendType]);
+  return profileTypes;
 }
