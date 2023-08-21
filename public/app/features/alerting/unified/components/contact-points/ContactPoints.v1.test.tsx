@@ -27,6 +27,7 @@ import { fetchNotifiers } from '../../api/grafana';
 import * as receiversApi from '../../api/receiversApi';
 import * as grafanaApp from '../../components/receivers/grafanaAppReceivers/grafanaApp';
 import {
+  grantUserPermissions,
   mockDataSource,
   MockDataSourceSrv,
   someCloudAlertManagerConfig,
@@ -168,27 +169,15 @@ describe('Receivers', () => {
     mocks.api.discoverAlertmanagerFeatures.mockResolvedValue({ lazyConfigInit: false });
     mocks.hooks.useGetContactPointsState.mockReturnValue(emptyContactPointsState);
     setDataSourceSrv(new MockDataSourceSrv(dataSources));
-    mocks.contextSrv.isEditor = true;
+
     store.delete(ALERTMANAGER_NAME_LOCAL_STORAGE_KEY);
 
-    mocks.contextSrv.evaluatePermission.mockImplementation(() => []);
-    mocks.contextSrv.hasPermission.mockImplementation((action) => {
-      const permissions = [
-        AccessControlAction.AlertingNotificationsRead,
-        AccessControlAction.AlertingNotificationsWrite,
-        AccessControlAction.AlertingNotificationsExternalRead,
-        AccessControlAction.AlertingNotificationsExternalWrite,
-      ];
-      return permissions.includes(action as AccessControlAction);
-    });
-    mocks.contextSrv.hasAccess.mockImplementation((action) => {
-      return mocks.contextSrv.hasPermission(action);
-    });
-
-    // respond with "true" when asked if we are an administrator
-    mocks.contextSrv.hasRole.mockImplementation((role: string) => {
-      return role === 'Admin';
-    });
+    grantUserPermissions([
+      AccessControlAction.AlertingNotificationsRead,
+      AccessControlAction.AlertingNotificationsWrite,
+      AccessControlAction.AlertingNotificationsExternalRead,
+      AccessControlAction.AlertingNotificationsExternalWrite,
+    ]);
   });
 
   it('Template and receiver tables are rendered, alertmanager can be selected, no notification errors', async () => {
