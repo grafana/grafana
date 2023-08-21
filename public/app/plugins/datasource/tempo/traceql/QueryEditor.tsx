@@ -3,6 +3,7 @@ import { defaults } from 'lodash';
 import React from 'react';
 
 import { GrafanaTheme2, QueryEditorProps } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { InlineLabel, useStyles2 } from '@grafana/ui';
 
 import { GroupByField } from '../SearchTraceQLEditor/GroupByField';
@@ -37,9 +38,11 @@ export function QueryEditor(props: Props) {
         datasource={props.datasource}
         onRunQuery={props.onRunQuery}
       />
-      <div className={styles.groupByContainer}>
-        <GroupByField datasource={props.datasource} onChange={props.onChange} query={query} />
-      </div>
+      {config.featureToggles.metricsSummary && (
+        <div className={styles.groupByContainer}>
+          <GroupByField datasource={props.datasource} onChange={props.onChange} query={query} />
+        </div>
+      )}
       <div className={styles.optionsContainer}>
         <TempoQueryBuilderOptions query={query} onChange={props.onChange} />
       </div>
