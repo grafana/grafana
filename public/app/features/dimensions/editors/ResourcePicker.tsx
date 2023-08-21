@@ -100,7 +100,11 @@ export const ResourcePicker = (props: Props) => {
               ref={pickerTriggerRef}
               className={styles.pointer}
               onClick={showPopper}
-              onKeyDown={showPopper}
+              onKeyDown={(e: React.KeyboardEvent) => {
+                if (e.key === 'Enter') {
+                  showPopper();
+                }
+              }}
               role="button"
               tabIndex={0}
             >
