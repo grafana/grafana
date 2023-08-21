@@ -771,7 +771,7 @@ describe('Tempo service graph view', () => {
   });
 });
 
-describe('label names', () => {
+describe('label names - v2 tags', () => {
   let datasource: TempoDatasource;
 
   beforeEach(() => {
@@ -779,7 +779,6 @@ describe('label names', () => {
     jest.spyOn(datasource, 'metadataRequest').mockImplementation(
       createMetadataRequest({
         data: {
-          tagNames: ['label1', 'label2'],
           scopes: [{ name: 'span', tags: ['label1', 'label2'] }],
         },
       })
@@ -794,7 +793,28 @@ describe('label names', () => {
   });
 });
 
-describe('get label values', () => {
+describe('label names - v1 tags', () => {
+  let datasource: TempoDatasource;
+
+  beforeEach(() => {
+    datasource = createTempoDatasource();
+    jest.spyOn(datasource, 'metadataRequest').mockImplementationOnce(() => {throw Error}).mockImplementation(
+      createMetadataRequest({
+        data: {
+          tagNames: ['label1', 'label2'],
+        },
+      })
+    );
+  });
+
+  it('get label names', async () => {
+    // label_names()
+    const response = await datasource.executeVariableQuery({ refId: 'test', type: TempoVariableQueryType.LabelNames });
+    expect(response).toEqual([{ text: 'label1' }, { text: 'label2' }, { text: 'status.code' }]);
+  });
+});
+
+describe('label values', () => {
   let datasource: TempoDatasource;
 
   beforeEach(() => {

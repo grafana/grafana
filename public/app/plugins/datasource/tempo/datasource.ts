@@ -142,11 +142,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
 
   async labelNamesQuery() {
     await this.languageProvider.fetchTags();
-
-    const tagsResource = this.languageProvider.getTags(TraceqlSearchScope.Resource);
-    const tagsSpan = this.languageProvider.getTags(TraceqlSearchScope.Span);
-    const tags = tagsResource.concat(tagsSpan);
-
+    const tags = this.languageProvider.getAutocompleteTags();
     return tags.filter((tag) => tag !== undefined).map((tag) => ({ text: tag })) as Array<{ text: string }>;
   }
 
