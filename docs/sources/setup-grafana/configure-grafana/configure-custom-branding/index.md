@@ -73,6 +73,9 @@ The configuration file in Grafana Enterprise contains the following options. Eac
 
 # Set to complete URL to override loading logo
 ;loading_logo =
+
+# Hides the Grafana edition being used in the footer if set to "true"
+;hide_edition =
 ```
 
 You can replace the default footer links (Documentation, Support, Community) and even add your own custom links.
