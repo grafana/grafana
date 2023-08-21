@@ -22,6 +22,7 @@ import (
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	fakeDatasources "github.com/grafana/grafana/pkg/services/datasources/fakes"
+	"github.com/grafana/grafana/pkg/services/datasources/guardian"
 	datasourceService "github.com/grafana/grafana/pkg/services/datasources/service"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
@@ -100,7 +101,7 @@ func buildQueryDataService(t *testing.T, cs datasources.CacheService, fpc *fakeP
 
 	// default cache service
 	if cs == nil {
-		cs = datasourceService.ProvideCacheService(localcache.ProvideService(), store)
+		cs = datasourceService.ProvideCacheService(localcache.ProvideService(), store, guardian.ProvideGuardian())
 	}
 
 	// default fakePluginClient
