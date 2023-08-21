@@ -570,6 +570,12 @@ describe('Table', () => {
         { time: '2021-01-01 02:00:00', temperature: '12', link: '${__value.text} interpolation' },
       ]);
 
+      expect(within(rows[0]).queryByLabelText('Expand row')).not.toBeInTheDocument();
+      expect(within(rows[1]).queryByLabelText('Expand row')).toBeInTheDocument();
+      expect(within(rows[2]).queryByLabelText('Expand row')).not.toBeInTheDocument();
+      expect(within(rows[3]).queryByLabelText('Expand row')).not.toBeInTheDocument();
+      expect(within(rows[4]).queryByLabelText('Expand row')).not.toBeInTheDocument();
+
       await userEvent.click(within(rows[1]).getByLabelText('Expand row'));
       expect(screen.getAllByRole('columnheader')).toHaveLength(8);
       expect(getColumnHeader(/humidity_0/)).toBeInTheDocument();

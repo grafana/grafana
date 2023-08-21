@@ -12,7 +12,7 @@ import {
 } from 'react-table';
 import { VariableSizeList } from 'react-window';
 
-import { Field, FieldType, ReducerID } from '@grafana/data';
+import { DataFrame, Field, FieldType, ReducerID } from '@grafana/data';
 import { TableCellHeight } from '@grafana/schema';
 
 import { useTheme2 } from '../../themes';
@@ -217,14 +217,14 @@ export const Table = memo((props: Props) => {
       if (enablePagination) {
         row = page[rowIndex];
       }
-      
-      const rowSubData = subData?.find((frame) => frame.meta?.custom?.parentRowIndex === rowIndex);
 
       prepareRow(row);
 
-      if (rowSubData !== undefined && rowSubData.length > 0) {
-        row.canExpand = true;
-      }
+      const isFieldPopulated = (f:Field) => f.values.length > 0;
+      const isDataFramePopulated = (df:DataFrame) => df.fields.some((f: Field) => isFieldPopulated(f));
+      const isRowSubDataPopulated = (dfs:DataFrame[]) => dfs?.some((df: DataFrame) => isDataFramePopulated(df));
+      row.canExpand = isRowSubDataPopulated(nestedDataField?.values[rowIndex]);
+
       const expandedRowStyle = state.expanded[row.index] ? css({ '&:hover': { background: 'inherit' } }) : {};
 
       return (
