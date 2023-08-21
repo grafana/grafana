@@ -92,13 +92,9 @@ Latest Version: 1.6.2 | Signature: Grafana | Last Updated: 2023
 Plugin should continue to work even if Angular is disabled, and a full removal of Angular related code is planned.
 {{% /admonition %}}
 
-### [Moogsoft AIOps](https://grafana.com/grafana/plugins/moogsoft-aiops-app)
-
-Latest Version: 8.0.2 | Signature: Commercial | Last Updated: 2022
-
 ### [OpenNMS Helm](https://grafana.com/grafana/plugins/opennms-helm-app)
 
-Latest Version: 8.0.4 | Signature: Community | Last Updated: 2023
+Latest Version: 8.0.5 | Signature: Community | Last Updated: 2023
 
 > **Migration available - plugin superseded:** The plugin has effectively been replaced with a [new plugin](https://grafana.com/grafana/plugins/opennms-opennms-app/) based on React.
 
@@ -296,14 +292,6 @@ Latest Version: 1.4.2 | Signature: Grafana | Last Updated: 2021
 
 {{% admonition type="note" %}}
 If you're looking for an example of a data source plugin to start from, refer to [grafana-starter-datasource-backend](https://github.com/grafana/grafana-starter-datasource-backend).
-{{% /admonition %}}
-
-### [Strava](https://grafana.com/grafana/plugins/grafana-strava-datasource/)
-
-Latest Version: 1.5.1 | Signature: Grafana | Last Updated: 2022
-
-{{% admonition type="note" %}}
-Removal of any angular dependency is on the near term roadmap.
 {{% /admonition %}}
 
 ### [openHistorian](https://grafana.com/grafana/plugins/gridprotectionalliance-openhistorian-datasource/)

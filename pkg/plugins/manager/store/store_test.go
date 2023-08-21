@@ -2,12 +2,14 @@ package store
 
 import (
 	"context"
+	"sync"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
+	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
 )
 
@@ -59,7 +61,7 @@ func TestStore_Plugin(t *testing.T) {
 				p1.ID: p1,
 				p2.ID: p2,
 			},
-		})
+		}, &fakes.FakeLoader{})
 
 		p, exists := ps.Plugin(context.Background(), p1.ID)
 		require.False(t, exists)
@@ -88,7 +90,7 @@ func TestStore_Plugins(t *testing.T) {
 				p4.ID: p4,
 				p5.ID: p5,
 			},
-		})
+		}, &fakes.FakeLoader{})
 
 		pss := ps.Plugins(context.Background())
 		require.Equal(t, pss, []plugins.PluginDTO{p1.ToDTO(), p2.ToDTO(), p3.ToDTO(), p4.ToDTO()})
@@ -126,13 +128,13 @@ func TestStore_Routes(t *testing.T) {
 				p5.ID: p5,
 				p6.ID: p6,
 			},
-		})
+		}, &fakes.FakeLoader{})
 
 		sr := func(p *plugins.Plugin) *plugins.StaticRoute {
 			return &plugins.StaticRoute{PluginID: p.ID, Directory: p.FS.Base()}
 		}
 
-		rs := ps.Routes()
+		rs := ps.Routes(context.Background())
 		require.Equal(t, []*plugins.StaticRoute{sr(p1), sr(p2), sr(p4), sr(p5)}, rs)
 	})
 }
@@ -149,7 +151,7 @@ func TestStore_Renderer(t *testing.T) {
 				p2.ID: p2,
 				p3.ID: p3,
 			},
-		})
+		}, &fakes.FakeLoader{})
 
 		r := ps.Renderer(context.Background())
 		require.Equal(t, p1, r)
@@ -170,10 +172,47 @@ func TestStore_SecretsManager(t *testing.T) {
 				p3.ID: p3,
 				p4.ID: p4,
 			},
-		})
+		}, &fakes.FakeLoader{})
 
 		r := ps.SecretsManager(context.Background())
 		require.Equal(t, p3, r)
+	})
+}
+
+func TestProcessManager_shutdown(t *testing.T) {
+	p := &plugins.Plugin{JSONData: plugins.JSONData{ID: "test-datasource", Type: plugins.TypeDataSource}} // Backend: true
+	backend := &fakes.FakeBackendPlugin{}
+	p.RegisterClient(backend)
+	p.SetLogger(log.NewTestLogger())
+
+	unloaded := false
+	ps := New(&fakes.FakePluginRegistry{
+		Store: map[string]*plugins.Plugin{
+			p.ID: p,
+		},
+	}, &fakes.FakeLoader{
+		UnloadFunc: func(_ context.Context, plugin *plugins.Plugin) (*plugins.Plugin, error) {
+			require.Equal(t, p, plugin)
+			unloaded = true
+			return nil, nil
+		},
+	})
+
+	pCtx := context.Background()
+	cCtx, cancel := context.WithCancel(pCtx)
+	var wgRun sync.WaitGroup
+	wgRun.Add(1)
+	var runErr error
+	go func() {
+		runErr = ps.Run(cCtx)
+		wgRun.Done()
+	}()
+
+	t.Run("When context is cancelled the plugin is stopped", func(t *testing.T) {
+		cancel()
+		wgRun.Wait()
+		require.ErrorIs(t, runErr, context.Canceled)
+		require.True(t, unloaded)
 	})
 }
 
@@ -188,7 +227,7 @@ func TestStore_availablePlugins(t *testing.T) {
 				p1.ID: p1,
 				p2.ID: p2,
 			},
-		})
+		}, &fakes.FakeLoader{})
 
 		aps := ps.availablePlugins(context.Background())
 		require.Len(t, aps, 1)

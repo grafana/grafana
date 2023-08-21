@@ -35,13 +35,12 @@ export const colorPickerFactory = <T extends ColorPickerProps>(
     pickerTriggerRef = createRef<any>();
 
     render() {
-      const { theme, children, onChange } = this.props;
+      const { theme, children, onChange, color } = this.props;
       const styles = getStyles(theme);
       const popoverElement = React.createElement(popover, {
         ...{ ...this.props, children: null },
         onChange,
       });
-
       return (
         <PopoverController content={popoverElement} hideAfter={300}>
           {(showPopper, hidePopper, popperProps) => {
@@ -72,7 +71,8 @@ export const colorPickerFactory = <T extends ColorPickerProps>(
                     ref={this.pickerTriggerRef}
                     onClick={showPopper}
                     onMouseLeave={hidePopper}
-                    color={theme.visualization.getColorByName(this.props.color || '#000000')}
+                    color={theme.visualization.getColorByName(color || '#000000')}
+                    aria-label={color}
                   />
                 )}
               </>

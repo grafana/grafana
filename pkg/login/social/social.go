@@ -189,9 +189,10 @@ func ProvideService(cfg *setting.Cfg,
 				ss.log.Warn("Using legacy Google API URL, please update your configuration")
 			}
 			ss.socialMap["google"] = &SocialGoogle{
-				SocialBase:   newSocialBase(name, &config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
-				hostedDomain: info.HostedDomain,
-				apiUrl:       info.ApiUrl,
+				SocialBase:      newSocialBase(name, &config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
+				hostedDomain:    info.HostedDomain,
+				apiUrl:          info.ApiUrl,
+				skipOrgRoleSync: cfg.GoogleSkipOrgRoleSync,
 			}
 		}
 
@@ -239,6 +240,7 @@ func ProvideService(cfg *setting.Cfg,
 				teamIds:              sec.Key("team_ids").Strings(","),
 				allowedOrganizations: util.SplitString(sec.Key("allowed_organizations").String()),
 				allowedGroups:        util.SplitString(sec.Key("allowed_groups").String()),
+				skipOrgRoleSync:      cfg.GenericOAuthSkipOrgRoleSync,
 			}
 		}
 

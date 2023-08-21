@@ -60,6 +60,7 @@ const (
 	timeSeriesListQueryType   = dataquery.QueryTypeTimeSeriesList
 	timeSeriesQueryQueryType  = dataquery.QueryTypeTimeSeriesQuery
 	sloQueryType              = dataquery.QueryTypeSlo
+	promQLQueryType           = dataquery.QueryTypePromQL
 	crossSeriesReducerDefault = "REDUCE_NONE"
 	perSeriesAlignerDefault   = "ALIGN_MEAN"
 )
@@ -432,6 +433,15 @@ func (s *Service) buildQueryExecutors(logger log.Logger, req *backend.QueryDataR
 			}
 			cmslo.setParams(startTime, endTime, durationSeconds, query.Interval.Milliseconds())
 			queryInterface = cmslo
+		case string(dataquery.QueryTypePromQL):
+			cmp := &cloudMonitoringProm{
+				refID:      query.RefID,
+				logger:     logger,
+				aliasBy:    q.AliasBy,
+				parameters: q.PromQLQuery,
+				timeRange:  req.Queries[0].TimeRange,
+			}
+			queryInterface = cmp
 		default:
 			return nil, fmt.Errorf("unrecognized query type %q", query.QueryType)
 		}

@@ -118,5 +118,6 @@ export interface FeatureToggles {
   prometheusConfigOverhaulAuth?: boolean;
   configurableSchedulerTick?: boolean;
   influxdbSqlSupport?: boolean;
-  angularDeprecationUI?: boolean;
+  noBasicRole?: boolean;
+  alertingNoDataErrorExecution?: boolean;
 }

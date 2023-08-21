@@ -339,7 +339,7 @@ func TestProcessLogsResponse(t *testing.T) {
 		require.Len(t, dataframes, 1)
 		frame := dataframes[0]
 
-		require.Equal(t, 16, len(frame.Fields))
+		require.Equal(t, 17, len(frame.Fields))
 		// Fields have the correct length
 		require.Equal(t, 2, frame.Fields[0].Len())
 		// First field is timeField
@@ -348,7 +348,7 @@ func TestProcessLogsResponse(t *testing.T) {
 		require.Equal(t, data.FieldTypeNullableString, frame.Fields[1].Type())
 		require.Equal(t, "line", frame.Fields[1].Name)
 		// Correctly renames lvl field to level
-		require.Equal(t, "level", frame.Fields[10].Name)
+		require.Equal(t, "level", frame.Fields[11].Name)
 		// Correctly uses string types
 		require.Equal(t, data.FieldTypeNullableString, frame.Fields[1].Type())
 		// Correctly detects float64 types
@@ -356,10 +356,10 @@ func TestProcessLogsResponse(t *testing.T) {
 		// Correctly detects json types
 		require.Equal(t, data.FieldTypeNullableJSON, frame.Fields[8].Type())
 		// Correctly flattens fields
-		require.Equal(t, "nested.field.double_nested", frame.Fields[12].Name)
-		require.Equal(t, data.FieldTypeNullableString, frame.Fields[12].Type())
+		require.Equal(t, "nested.field.double_nested", frame.Fields[13].Name)
+		require.Equal(t, data.FieldTypeNullableString, frame.Fields[13].Type())
 		// Correctly detects type even if first value is null
-		require.Equal(t, data.FieldTypeNullableString, frame.Fields[15].Type())
+		require.Equal(t, data.FieldTypeNullableString, frame.Fields[16].Type())
 	})
 
 	t.Run("Log query with highlight", func(t *testing.T) {

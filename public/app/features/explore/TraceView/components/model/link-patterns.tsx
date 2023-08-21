@@ -73,7 +73,7 @@ export function processTemplate(template: unknown, encodeFn: (unencoded: any) =>
   };
 }
 
-export function createTestFunction(entry?: any) {
+export function createTestFunction(entry?: unknown) {
   if (typeof entry === 'string') {
     return (arg: unknown) => arg === entry;
   }

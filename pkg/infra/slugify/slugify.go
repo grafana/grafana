@@ -42,6 +42,7 @@ import (
 var (
 	simpleSlugger = &slugger{
 		isValidCharacter: validCharacter,
+		replaceCharacter: '-',
 		replacementMap:   getDefaultReplacements(),
 		omitMap:          getDefaultOmitments(),
 	}
@@ -64,14 +65,12 @@ func validCharacter(c rune) bool {
 	if c >= '0' && c <= '9' {
 		return true
 	}
-	if c == '_' || c == '-' {
-		return true
-	}
 	return false
 }
 
 // Slugifier based on settings
 type slugger struct {
+	replaceCharacter rune
 	isValidCharacter func(c rune) bool
 	replacementMap   map[rune]string
 	omitMap          map[rune]struct{}
@@ -81,37 +80,52 @@ type slugger struct {
 func (s slugger) Slugify(value string) string {
 	value = strings.ToLower(value)
 	var buffer bytes.Buffer
+	lastCharacterWasInvalid := false
 
 	for len(value) > 0 {
 		c, size := utf8.DecodeRuneInString(value)
 		value = value[size:]
 
 		if newCharacter, ok := s.replacementMap[c]; ok {
+			if lastCharacterWasInvalid {
+				buffer.WriteRune(s.replaceCharacter)
+			}
 			buffer.WriteString(newCharacter)
+			lastCharacterWasInvalid = false
 			continue
 		}
 
 		if s.isValidCharacter(c) {
+			if lastCharacterWasInvalid {
+				buffer.WriteRune(s.replaceCharacter)
+			}
 			buffer.WriteRune(c)
+			lastCharacterWasInvalid = false
 			continue
 		}
 
 		if _, ok := s.omitMap[c]; ok {
+			lastCharacterWasInvalid = true
 			continue
 		}
 
 		p := make([]byte, 4)
 		size = utf8.EncodeRune(p, c)
-		for i := 0; i < size; i++ {
-			buffer.WriteString(fmt.Sprintf("%%%x", p[i]))
+		if lastCharacterWasInvalid {
+			buffer.WriteRune(s.replaceCharacter)
 		}
+		for i := 0; i < size; i++ {
+			buffer.WriteString(fmt.Sprintf("%x", p[i]))
+		}
+		lastCharacterWasInvalid = true
 	}
 
-	return buffer.String()
+	return strings.Trim(buffer.String(), string(s.replaceCharacter))
 }
 
 func getDefaultOmitments() map[rune]struct{} {
 	return map[rune]struct{}{
+		' ':    {},
 		',':    {},
 		'"':    {},
 		'\'':   {},
@@ -122,13 +136,21 @@ func getDefaultOmitments() map[rune]struct{} {
 		'.':    {},
 		'(':    {},
 		')':    {},
+		'-':    {},
+		'_':    {},
+		'[':    {},
+		']':    {},
+		'/':    {},
+		'\\':   {},
+		'!':    {},
+		'{':    {},
+		'}':    {},
+		'%':    {},
 	}
 }
 
 func getDefaultReplacements() map[rune]string {
 	return map[rune]string{
-		' ': "-",
-
 		'&': "and",
 		'@': "at",
 		'©': "c",
