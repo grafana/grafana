@@ -247,7 +247,6 @@ describe('RuleList', () => {
   });
 
   it('expand rule group, rule and alert details', async () => {
-    disableRBAC();
     mocks.getAllDataSourcesMock.mockReturnValue([dataSources.prom]);
 
     setDataSourceSrv(new MockDataSourceSrv({ prom: dataSources.prom }));
@@ -397,7 +396,6 @@ describe('RuleList', () => {
   });
 
   it('filters rules and alerts by labels', async () => {
-    disableRBAC();
     mocks.getAllDataSourcesMock.mockReturnValue([dataSources.prom]);
     setDataSourceSrv(new MockDataSourceSrv({ prom: dataSources.prom }));
 
@@ -541,7 +539,6 @@ describe('RuleList', () => {
   });
 
   describe('edit lotex groups, namespaces', () => {
-    disableRBAC();
     const testDatasources = {
       prom: dataSources.prom,
     };
