@@ -154,6 +154,7 @@ func CreateMiddlewares(cfg *setting.Cfg, oAuthTokenService oauthtoken.OAuthToken
 	middlewares := []plugins.ClientMiddleware{
 		clientmiddleware.NewTracingMiddleware(tracer),
 		clientmiddleware.NewTracingHeaderMiddleware(),
+		clientmiddleware.NewFeaturesMiddleware(features),
 		clientmiddleware.NewClearAuthHeadersMiddleware(),
 		clientmiddleware.NewOAuthTokenMiddleware(oAuthTokenService),
 		clientmiddleware.NewCookiesMiddleware(skipCookiesNames),
