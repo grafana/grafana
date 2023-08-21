@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 import React, { CSSProperties, ReactElement, ReactNode, useId } from 'react';
-import { useMeasure, useToggle } from 'react-use';
+import { useMeasure } from 'react-use';
 
 import { GrafanaTheme2, LoadingState } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -71,22 +71,19 @@ interface AutoSize extends BaseProps {
 
 interface Collapsible {
   collapsible: boolean;
-  /**
-   * used to set collapsed or expanded state on initial render
-   */
-  defaultExpanded?: boolean;
+  collapsed?: boolean;
   /**
    * callback when collapsing or expanding the panel
    */
-  toggleCollapse?: () => void;
+  onToggleCollapse?: () => void;
   hoverHeader?: never;
   hoverHeaderOffset?: never;
 }
 
 interface HoverHeader {
   collapsible?: never;
-  defaultExpanded?: never;
-  toggleCollapse?: never;
+  collapsed?: never;
+  onToggleCollapse?: never;
   hoverHeader?: boolean;
   hoverHeaderOffset?: number;
 }
@@ -121,19 +118,12 @@ export function PanelChrome({
   onCancelQuery,
   onOpenMenu,
   collapsible = false,
-  defaultExpanded = true,
-  toggleCollapse,
+  collapsed = false,
+  onToggleCollapse,
 }: PanelChromeProps) {
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
   const panelContentId = useId();
-
-  const [isOpen, toggleOpen] = useToggle(defaultExpanded);
-
-  const toggle = () => {
-    toggleOpen();
-    toggleCollapse?.();
-  };
 
   const hasHeader = !hoverHeader;
 
@@ -146,7 +136,7 @@ export function PanelChrome({
     padding,
     theme,
     headerHeight,
-    isOpen,
+    collapsed,
     height,
     width
   );
@@ -156,7 +146,7 @@ export function PanelChrome({
     cursor: dragClass ? 'move' : 'auto',
   };
 
-  const containerStyles: CSSProperties = { width, height: isOpen ? height : headerHeight };
+  const containerStyles: CSSProperties = { width, height: !collapsed ? height : headerHeight };
   const [ref, { width: loadingBarWidth }] = useMeasure<HTMLDivElement>();
 
   /** Old property name now maps to actions */
@@ -171,12 +161,12 @@ export function PanelChrome({
       <button
         type="button"
         className={styles.clearButtonStyles}
-        onClick={toggle}
-        aria-expanded={isOpen}
-        aria-controls={isOpen ? panelContentId : undefined}
+        onClick={onToggleCollapse}
+        aria-expanded={!collapsed}
+        aria-controls={!collapsed ? panelContentId : undefined}
       >
         <Icon
-          name={isOpen ? 'angle-down' : 'angle-right'}
+          name={!collapsed ? 'angle-down' : 'angle-right'}
           aria-hidden={!!title}
           aria-label={!title ? 'toggle collapse panel' : undefined}
         />
@@ -282,7 +272,7 @@ export function PanelChrome({
         </div>
       )}
 
-      {isOpen && (
+      {!collapsed && (
         <div
           id={panelContentId}
           className={cx(styles.content, height === undefined && styles.containNone)}
