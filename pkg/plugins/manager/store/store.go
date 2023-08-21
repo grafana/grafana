@@ -6,7 +6,6 @@ import (
 	"sync"
 
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/manager/sources"
@@ -16,6 +15,7 @@ var _ plugins.Store = (*Service)(nil)
 
 type Service struct {
 	pluginRegistry registry.Service
+	pluginLoader   loader.Service
 }
 
 func ProvideService(pluginRegistry registry.Service, pluginSources sources.Registry,
@@ -26,7 +26,7 @@ func ProvideService(pluginRegistry registry.Service, pluginSources sources.Regis
 			return nil, err
 		}
 	}
-	return New(pluginRegistry), nil
+	return New(pluginRegistry, pluginLoader), nil
 }
 
 func (s *Service) Run(ctx context.Context) error {
@@ -35,9 +35,10 @@ func (s *Service) Run(ctx context.Context) error {
 	return ctx.Err()
 }
 
-func New(pluginRegistry registry.Service) *Service {
+func New(pluginRegistry registry.Service, pluginLoader loader.Service) *Service {
 	return &Service{
 		pluginRegistry: pluginRegistry,
+		pluginLoader:   pluginLoader,
 	}
 }
 
@@ -131,16 +132,16 @@ func (s *Service) Routes(ctx context.Context) []*plugins.StaticRoute {
 
 func (s *Service) shutdown(ctx context.Context) {
 	var wg sync.WaitGroup
-	for _, p := range s.pluginRegistry.Plugins(ctx) {
+	for _, plugin := range s.pluginRegistry.Plugins(ctx) {
 		wg.Add(1)
-		go func(p backendplugin.Plugin, ctx context.Context) {
+		go func(ctx context.Context, p *plugins.Plugin) {
 			defer wg.Done()
 			p.Logger().Debug("Stopping plugin")
-			if err := p.Stop(ctx); err != nil {
+			if _, err := s.pluginLoader.Unload(ctx, p); err != nil {
 				p.Logger().Error("Failed to stop plugin", "error", err)
 			}
 			p.Logger().Debug("Plugin stopped")
-		}(p, ctx)
+		}(ctx, plugin)
 	}
 	wg.Wait()
 }

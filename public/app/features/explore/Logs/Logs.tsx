@@ -82,8 +82,8 @@ interface Props extends Themeable2 {
   loadLogsVolumeData: () => void;
   showContextToggle?: (row?: LogRowModel) => boolean;
   onChangeTime: (range: AbsoluteTimeRange) => void;
-  onClickFilterLabel: (key: string, value: string) => void;
-  onClickFilterOutLabel: (key: string, value: string) => void;
+  onClickFilterLabel?: (key: string, value: string) => void;
+  onClickFilterOutLabel?: (key: string, value: string) => void;
   onStartScanning?: () => void;
   onStopScanning?: () => void;
   getRowContext?: (row: LogRowModel, origRow: LogRowModel, options: LogRowContextOptions) => Promise<any>;
@@ -95,7 +95,7 @@ interface Props extends Themeable2 {
   eventBus: EventBus;
   panelState?: ExplorePanelsState;
   scrollElement?: HTMLDivElement;
-  isFilterLabelActive: (key: string, value: string) => Promise<boolean>;
+  isFilterLabelActive?: (key: string, value: string) => Promise<boolean>;
   logsFrames?: DataFrame[];
   range: TimeRange;
 }
@@ -117,6 +117,7 @@ interface State {
   contextRow?: LogRowModel;
   tableFrame?: DataFrame;
   visualisationType?: VisualisationType;
+  logsContainer?: HTMLDivElement;
 }
 
 const scrollableLogsContainer = config.featureToggles.exploreScrollableLogsContainer;
@@ -144,7 +145,6 @@ class UnthemedLogs extends PureComponent<Props, State> {
   cancelFlippingTimer?: number;
   topLogsRef = createRef<HTMLDivElement>();
   logsVolumeEventBus: EventBus;
-  logsContainer = createRef<HTMLDivElement>();
 
   state: State = {
     showLabels: store.getBool(SETTINGS_KEYS.showLabels, false),
@@ -161,6 +161,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
     contextRow: undefined,
     tableFrame: undefined,
     visualisationType: 'logs',
+    logsContainer: undefined,
   };
 
   constructor(props: Props) {
@@ -202,6 +203,10 @@ class UnthemedLogs extends PureComponent<Props, State> {
         })
       );
     }
+  };
+
+  onLogsContainerRef = (node: HTMLDivElement) => {
+    this.setState({ logsContainer: node });
   };
 
   onChangeLogsSortOrder = () => {
@@ -406,11 +411,11 @@ class UnthemedLogs extends PureComponent<Props, State> {
 
   scrollIntoView = (element: HTMLElement) => {
     if (config.featureToggles.exploreScrollableLogsContainer) {
-      this.scrollToTopLogs();
-      if (this.logsContainer.current) {
-        this.logsContainer.current.scroll({
+      if (this.state.logsContainer) {
+        this.topLogsRef.current?.scrollIntoView();
+        this.state.logsContainer.scroll({
           behavior: 'smooth',
-          top: this.logsContainer.current.scrollTop + element.getBoundingClientRect().top - window.innerHeight / 2,
+          top: this.state.logsContainer.scrollTop + element.getBoundingClientRect().top - window.innerHeight / 2,
         });
       }
 
@@ -456,8 +461,8 @@ class UnthemedLogs extends PureComponent<Props, State> {
 
   scrollToTopLogs = () => {
     if (config.featureToggles.exploreScrollableLogsContainer) {
-      if (this.logsContainer.current) {
-        this.logsContainer.current.scroll({
+      if (this.state.logsContainer) {
+        this.state.logsContainer.scroll({
           behavior: 'auto',
           top: 0,
         });
@@ -688,7 +693,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
               </div>
             )}
             {this.state.visualisationType === 'logs' && hasData && (
-              <div className={styles.logRows} data-testid="logRows" ref={this.logsContainer}>
+              <div className={styles.logRows} data-testid="logRows" ref={this.onLogsContainerRef}>
                 <LogRows
                   logRows={logRows}
                   deduplicatedRows={dedupedRows}
@@ -715,6 +720,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
                   permalinkedRowId={this.props.panelState?.logs?.id}
                   scrollIntoView={this.scrollIntoView}
                   isFilterLabelActive={this.props.isFilterLabelActive}
+                  containerRendered={!!this.state.logsContainer}
                 />
               </div>
             )}
