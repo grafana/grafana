@@ -490,16 +490,12 @@ export class ElementState implements LayerElement {
   };
 
   onElementKeyDown = (event: React.KeyboardEvent) => {
-    if (event.key === 'Enter') {
+    if (
+      event.key === 'Enter' &&
+      (event.currentTarget instanceof HTMLElement || event.currentTarget instanceof SVGElement)
+    ) {
       const scene = this.getScene();
-      if (scene?.tooltipCallback && scene.tooltip?.anchorPoint) {
-        const rect = this.div?.getBoundingClientRect();
-        scene.tooltipCallback({
-          anchorPoint: { x: rect?.right ?? scene.tooltip.anchorPoint.x, y: rect?.top ?? scene.tooltip.anchorPoint.y },
-          element: this,
-          isOpen: true,
-        });
-      }
+      scene?.select({ targets: [event.currentTarget] });
     }
   };
 
@@ -508,19 +504,6 @@ export class ElementState implements LayerElement {
     if (scene?.tooltipCallback && scene.tooltip?.anchorPoint) {
       scene.tooltipCallback({
         anchorPoint: { x: scene.tooltip.anchorPoint.x, y: scene.tooltip.anchorPoint.y },
-        element: this,
-        isOpen: true,
-      });
-    }
-  };
-
-  onElementFocus = (event: React.FocusEvent) => {
-    const scene = this.getScene();
-    if (scene?.tooltipCallback) {
-      const rect = event.currentTarget.getBoundingClientRect();
-      console.log({ rect });
-      scene.tooltipCallback({
-        anchorPoint: { x: rect.right, y: rect.top },
         element: this,
         isOpen: true,
       });
@@ -541,7 +524,6 @@ export class ElementState implements LayerElement {
         onMouseLeave={!scene?.isEditingEnabled ? this.handleMouseLeave : undefined}
         onClick={!scene?.isEditingEnabled ? this.onElementClick : undefined}
         onKeyDown={!scene?.isEditingEnabled ? this.onElementKeyDown : undefined}
-        onFocus={!scene?.isEditingEnabled ? this.onElementFocus : undefined}
         role="button"
         tabIndex={0}
       >
