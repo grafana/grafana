@@ -20,6 +20,7 @@ function setup(app: CoreApp): RenderResult {
     },
     getQueryHints: () => [],
     getDataSamples: () => [],
+    getQueryStats: jest.fn(),
     maxLines: 20,
     getTimeRange: jest.fn(),
   } as unknown as LokiDatasource;

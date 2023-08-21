@@ -66,6 +66,9 @@ export function getTimeRange(
   let start: number, end: number;
   const NS_IN_MS = 1000000;
 
+  // TODO: fix this..
+  // duration nodes are empty is variable is used
+  // this is because the variable is not converted to a duration, therefore not detected as a duration node
   const durationNodes = getNodesFromQuery(query.expr, [Duration]);
   const durations = durationNodes.map((d) => query.expr.substring(d.from, d.to));
 
