@@ -212,7 +212,11 @@ export const ExemplarMarker = ({
       <div
         ref={setMarkerElement}
         onClick={onExemplarClick}
-        onKeyDown={onExemplarClick}
+        onKeyDown={(e: React.KeyboardEvent) => {
+          if (e.key === 'Enter') {
+            onExemplarClick();
+          }
+        }}
         onMouseEnter={onMouseEnter}
         onMouseLeave={onMouseLeave}
         className={styles.markerWrapper}
