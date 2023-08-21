@@ -46,6 +46,12 @@ var (
 	)
 )
 
+var (
+	errUsersQuotaReached = errors.New("users quota reached")
+	errGettingUserQuota  = errors.New("error getting user quota")
+	errSignupNotAllowed  = errors.New("system administrator has disabled signup")
+)
+
 func ProvideUserSync(userService user.Service,
 	userProtectionService login.UserProtectionService,
 	authInfoService login.AuthInfoService, quotaService quota.Service) *UserSync {
@@ -82,7 +88,7 @@ func (s *UserSync) SyncUserHook(ctx context.Context, id *authn.Identity, _ *auth
 	if errors.Is(errUserInDB, user.ErrUserNotFound) {
 		if !id.ClientParams.AllowSignUp {
 			s.log.FromContext(ctx).Warn("Failed to create user, signup is not allowed for module", "auth_module", id.AuthenticatedBy, "auth_id", id.AuthID)
-			return errUserSignupDisabled.Errorf("%w", login.ErrSignupNotAllowed)
+			return errUserSignupDisabled.Errorf("%w", errSignupNotAllowed)
 		}
 
 		// create user
@@ -259,10 +265,10 @@ func (s *UserSync) createUser(ctx context.Context, id *authn.Identity) (*user.Us
 		limitReached, errLimit := s.quotaService.CheckQuotaReached(ctx, quota.TargetSrv(srv), nil)
 		if errLimit != nil {
 			s.log.FromContext(ctx).Error("Failed to check quota", "error", errLimit)
-			return nil, errSyncUserInternal.Errorf("%w", login.ErrGettingUserQuota)
+			return nil, errSyncUserInternal.Errorf("%w", errGettingUserQuota)
 		}
 		if limitReached {
-			return nil, errSyncUserForbidden.Errorf("%w", login.ErrUsersQuotaReached)
+			return nil, errSyncUserForbidden.Errorf("%w", errUsersQuotaReached)
 		}
 	}
 
