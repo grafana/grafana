@@ -101,7 +101,7 @@
 /pkg/services/certgenerator @grafana/grafana-app-platform-squad
 /pkg/services/cleanup/ @grafana/backend-platform
 /pkg/services/contexthandler/ @grafana/backend-platform
-/pkg/services/correlations/ @grafana/backend-platform
+/pkg/services/correlations/ @grafana/explore-squad
 /pkg/services/dashboardimport/ @grafana/backend-platform
 /pkg/services/dashboards/ @grafana/backend-platform
 /pkg/services/dashboardsnapshots/ @grafana/backend-platform
@@ -136,7 +136,7 @@
 /pkg/services/team/ @grafana/grafana-authnz-team
 /pkg/services/temp_user/ @grafana/backend-platform
 /pkg/services/updatechecker/ @grafana/backend-platform
-/pkg/services/user/ @grafana/backend-platform
+/pkg/services/user/ @grafana/grafana-authnz-team
 /pkg/services/validations/ @grafana/backend-platform
 /pkg/setting/ @grafana/backend-platform
 /pkg/tests/ @grafana/backend-platform
@@ -335,7 +335,6 @@ tsconfig.json @grafana/frontend-ops
 /.eslintignore @grafana/frontend-ops
 /.gitattributes @grafana/frontend-ops
 /.gitignore @grafana/frontend-ops
-/.husky/pre-commit @grafana/frontend-ops
 /.nvmrc @grafana/frontend-ops
 /.prettierignore @grafana/frontend-ops
 /.yarn @grafana/frontend-ops
@@ -352,6 +351,9 @@ lerna.json @grafana/frontend-ops
 /metadata.md @grafana/plugins-platform
 /stylelint.config.js @grafana/frontend-ops
 /tools/ @grafana/frontend-ops
+/lefthook.yml @grafana/frontend-ops
+/lefthook.rc @grafana/frontend-ops
+.husky/pre-commit @grafana/frontend-ops
 
 
 # public folder
@@ -493,6 +495,7 @@ lerna.json @grafana/frontend-ops
 /scripts/trigger_docker_build.sh @grafana/grafana-delivery
 /scripts/trigger_grafana_packer.sh @grafana/grafana-delivery
 /scripts/trigger_windows_build.sh @grafana/grafana-delivery
+/scripts/cleanup-husky.sh @grafana/frontend-ops
 /scripts/verify-repo-update/ @grafana/grafana-delivery
 
 /scripts/webpack/ @grafana/frontend-ops

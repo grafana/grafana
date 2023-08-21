@@ -256,6 +256,10 @@ type Cfg struct {
 	MetricsEndpointBasicAuthUsername string
 	MetricsEndpointBasicAuthPassword string
 	MetricsEndpointDisableTotalStats bool
+	// MetricsIncludeTeamLabel configures grafana to set a label for
+	// the team responsible for the code at Grafana labs. We don't expect anyone else to
+	// use this setting.
+	MetricsIncludeTeamLabel          bool
 	MetricsTotalStatsIntervalSeconds int
 	MetricsGrafanaEnvironmentInfo    map[string]string
 
@@ -280,8 +284,6 @@ type Cfg struct {
 	// Not documented & not supported
 	// stand in until a more complete solution is implemented
 	AuthConfigUIAdminAccess bool
-	// TO REMOVE: Not documented & not supported. Remove with legacy handlers in 10.2
-	AuthBrokerEnabled bool
 	// TO REMOVE: Not documented & not supported. Remove in 10.3
 	TagAuthedDevices bool
 
@@ -289,6 +291,7 @@ type Cfg struct {
 	AWSAllowedAuthProviders []string
 	AWSAssumeRoleEnabled    bool
 	AWSListMetricsPageLimit int
+	AWSExternalId           string
 
 	// Azure Cloud settings
 	Azure *azsettings.AzureSettings
@@ -517,8 +520,9 @@ type Cfg struct {
 	SecureSocksDSProxy SecureSocksDSProxySettings
 
 	// SAML Auth
-	SAMLAuthEnabled     bool
-	SAMLSkipOrgRoleSync bool
+	SAMLAuthEnabled            bool
+	SAMLSkipOrgRoleSync        bool
+	SAMLRoleValuesGrafanaAdmin string
 
 	// Okta OAuth
 	OktaAuthEnabled     bool
@@ -1088,6 +1092,7 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 	cfg.MetricsEndpointBasicAuthUsername = valueAsString(iniFile.Section("metrics"), "basic_auth_username", "")
 	cfg.MetricsEndpointBasicAuthPassword = valueAsString(iniFile.Section("metrics"), "basic_auth_password", "")
 	cfg.MetricsEndpointDisableTotalStats = iniFile.Section("metrics").Key("disable_total_stats").MustBool(false)
+	cfg.MetricsIncludeTeamLabel = iniFile.Section("metrics").Key("include_team_label").MustBool(false)
 	cfg.MetricsTotalStatsIntervalSeconds = iniFile.Section("metrics").Key("total_stats_collector_interval_seconds").MustInt(1800)
 
 	analytics := iniFile.Section("analytics")
@@ -1265,6 +1270,7 @@ func (cfg *Cfg) readSAMLConfig() {
 	samlSec := cfg.Raw.Section("auth.saml")
 	cfg.SAMLAuthEnabled = samlSec.Key("enabled").MustBool(false)
 	cfg.SAMLSkipOrgRoleSync = samlSec.Key("skip_org_role_sync").MustBool(false)
+	cfg.SAMLRoleValuesGrafanaAdmin = samlSec.Key("role_values_grafana_admin").MustString("")
 }
 
 func (cfg *Cfg) readLDAPConfig() {
@@ -1297,6 +1303,12 @@ func (cfg *Cfg) handleAWSConfig() {
 	err = os.Setenv(awsds.AllowedAuthProvidersEnvVarKeyName, allowedAuthProviders)
 	if err != nil {
 		cfg.Logger.Error(fmt.Sprintf("could not set environment variable '%s'", awsds.AllowedAuthProvidersEnvVarKeyName), err)
+	}
+
+	cfg.AWSExternalId = awsPluginSec.Key("external_id").Value()
+	err = os.Setenv(awsds.GrafanaAssumeRoleExternalIdKeyName, cfg.AWSExternalId)
+	if err != nil {
+		cfg.Logger.Error(fmt.Sprintf("could not set environment variable '%s'", awsds.GrafanaAssumeRoleExternalIdKeyName), err)
 	}
 }
 
@@ -1480,7 +1492,9 @@ func readAuthGithubSettings(cfg *Cfg) {
 func readAuthGoogleSettings(cfg *Cfg) {
 	sec := cfg.SectionWithEnvOverrides("auth.google")
 	cfg.GoogleAuthEnabled = sec.Key("enabled").MustBool(false)
-	cfg.GoogleSkipOrgRoleSync = sec.Key("skip_org_role_sync").MustBool(false)
+	// FIXME: for now we skip org role sync for google auth
+	// as we do not sync organization roles from Google
+	cfg.GoogleSkipOrgRoleSync = true
 }
 
 func readAuthGitlabSettings(cfg *Cfg) {
@@ -1530,7 +1544,6 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 
 	// Do not use
 	cfg.AuthConfigUIAdminAccess = auth.Key("config_ui_admin_access").MustBool(false)
-	cfg.AuthBrokerEnabled = auth.Key("broker").MustBool(true)
 	cfg.TagAuthedDevices = auth.Key("tag_authed_devices").MustBool(true)
 
 	cfg.DisableLoginForm = auth.Key("disable_login_form").MustBool(false)
@@ -1667,6 +1680,7 @@ func readUserSettings(iniFile *ini.File, cfg *Cfg) error {
 	cfg.AutoAssignOrgId = users.Key("auto_assign_org_id").MustInt(1)
 	cfg.AutoAssignOrgRole = users.Key("auto_assign_org_role").In(
 		string(roletype.RoleViewer), []string{
+			string(roletype.RoleNone),
 			string(roletype.RoleViewer),
 			string(roletype.RoleEditor),
 			string(roletype.RoleAdmin)})

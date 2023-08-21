@@ -74,7 +74,9 @@ const Policy: FC<PolicyComponentProps> = ({
   const permissions = getNotificationsPermissions(alertManagerSourceName);
   const canEditRoutes = contextSrv.hasPermission(permissions.update);
   const canDeleteRoutes = contextSrv.hasPermission(permissions.delete);
-  const canReadProvisioning = contextSrv.hasAccess(permissions.provisioning.read, isOrgAdmin());
+  const canReadProvisioning =
+    contextSrv.hasAccess(permissions.provisioning.read, isOrgAdmin()) ||
+    contextSrv.hasPermission(permissions.provisioning.readSecrets);
 
   const contactPoint = currentRoute.receiver;
   const continueMatching = currentRoute.continue ?? false;

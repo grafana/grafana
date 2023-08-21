@@ -20,7 +20,7 @@ export function RowExpander({ row, tableStyles }: Props) {
       <Icon
         aria-label={row.isExpanded ? 'Collapse row' : 'Expand row'}
         name={row.isExpanded ? 'angle-down' : 'angle-right'}
-        size="xl"
+        size="lg"
       />
     </div>
   );

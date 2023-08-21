@@ -19,6 +19,7 @@ export function ExpanderCell<K extends object>({ row, __rowID }: CellProps<K, vo
         name={row.isExpanded ? 'angle-down' : 'angle-right'}
         aria-expanded={row.isExpanded}
         {...row.getToggleRowExpandedProps()}
+        size="lg"
       />
     </div>
   );
