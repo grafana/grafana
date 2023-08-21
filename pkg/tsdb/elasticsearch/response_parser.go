@@ -131,6 +131,12 @@ func processLogsResponse(res *es.SearchResponse, target *Query, configuredFields
 			}
 		}
 
+		// we are going to add an `id` field with the concatenation of `_id` and `_index`
+		_, ok := doc["id"]
+		if !ok {
+			doc["id"] = fmt.Sprintf("%v#%v", doc["_index"], doc["_id"])
+		}
+
 		for key := range doc {
 			propNames[key] = true
 		}
