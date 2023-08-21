@@ -1,8 +1,7 @@
 import { Meta, StoryFn } from '@storybook/react';
-import React from 'react';
+import React, { ReactNode } from 'react';
 
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
-import { Card } from '../Card/Card';
 
 import { Stack } from './Stack';
 
@@ -12,12 +11,14 @@ const meta: Meta<typeof Stack> = {
   decorators: [withCenteredStory],
 };
 
+const Item = ({ children }: { children: ReactNode }) => <div style={{ backgroundColor: 'lightgrey' }}>{children}</div>;
+
 export const Basic: StoryFn<typeof Stack> = (props) => {
   return (
     <Stack {...props}>
-      <Card> 1</Card>
-      <Card> 2</Card>
-      <Card> 3</Card>
+      <Item>Item 1</Item>
+      <Item>Item 2</Item>
+      <Item>Item 3</Item>
     </Stack>
   );
 };

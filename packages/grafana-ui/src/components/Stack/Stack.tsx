@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import React, { CSSProperties, useCallback } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, ThemeSpacingTokens } from '@grafana/data';
 
 import { useStyles2 } from '../../themes';
 
@@ -9,7 +9,7 @@ interface StackProps {
   direction?: CSSProperties['flexDirection'];
   alignItems?: CSSProperties['alignItems'];
   wrap?: boolean;
-  gap?: number;
+  gap?: ThemeSpacingTokens;
   flexGrow?: CSSProperties['flexGrow'];
 }
 
