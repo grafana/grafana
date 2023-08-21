@@ -1,4 +1,4 @@
-import {useEffect} from "react";
+import { useEffect } from "react";
 import { Unsubscribable } from "rxjs";
 
 import { getAppEvents } from "@grafana/runtime";
