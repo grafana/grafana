@@ -444,6 +444,9 @@ func queryDataResponseToExecutionResults(c models.Condition, execResp *backend.Q
 		}
 	}
 
+	// If the error of the condition is an Error that indicates the condition failed
+	// because one of its dependent query or expressions failed, then we follow
+	// the dependency chain to an error that is not a dependency error.
 	if len(result.Errors) > 0 && result.Error != nil {
 		if errors.Is(result.Error, expr.DependencyError) {
 			var utilError errutil.Error
@@ -461,7 +464,6 @@ func queryDataResponseToExecutionResults(c models.Condition, execResp *backend.Q
 				}
 				e = depError
 			}
-
 		}
 	}
 
