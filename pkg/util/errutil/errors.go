@@ -41,6 +41,76 @@ func NewBase(reason StatusReason, msgID string, opts ...BaseOpt) Base {
 	return b
 }
 
+// NotFound initializes a new [Base] error with reason StatusNotFound.
+//
+// See NewBase for more information.
+func NotFound(msgID string, opts ...BaseOpt) Base {
+	return NewBase(StatusNotFound, msgID, opts...)
+}
+
+// BadRequest initializes a new [Base] error with reason StatusBadRequest.
+//
+// See NewBase for more information.
+func BadRequest(msgID string, opts ...BaseOpt) Base {
+	return NewBase(StatusBadRequest, msgID, opts...)
+}
+
+// ValidationFailed initializes a new [Base] error with reason StatusValidationFailed.
+//
+// See NewBase for more information.
+func ValidationFailed(msgID string, opts ...BaseOpt) Base {
+	return NewBase(StatusValidationFailed, msgID, opts...)
+}
+
+// Internal initializes a new [Base] error with reason StatusInternal.
+//
+// See NewBase for more information.
+func Internal(msgID string, opts ...BaseOpt) Base {
+	return NewBase(StatusInternal, msgID, opts...)
+}
+
+// Unknown initializes a new [Base] error with reason StatusUnknown.
+//
+// See NewBase for more information.
+func Unknown(msgID string, opts ...BaseOpt) Base {
+	return NewBase(StatusUnknown, msgID, opts...)
+}
+
+// Unknown initializes a new [Base] error with reason StatusUnknown.
+//
+// See NewBase for more information.
+func Timeout(msgID string, opts ...BaseOpt) Base {
+	return NewBase(StatusTimeout, msgID, opts...)
+}
+
+// Unauthorized initializes a new [Base] error with reason StatusUnauthorized.
+//
+// See NewBase for more information.
+func Unauthorized(msgID string, opts ...BaseOpt) Base {
+	return NewBase(StatusUnauthorized, msgID, opts...)
+}
+
+// Forbidden initializes a new [Base] error with reason StatusForbidden.
+//
+// See NewBase for more information.
+func Forbidden(msgID string, opts ...BaseOpt) Base {
+	return NewBase(StatusForbidden, msgID, opts...)
+}
+
+// TooManyRequests initializes a new [Base] error with reason StatusTooManyRequests.
+//
+// See NewBase for more information.
+func TooManyRequests(msgID string, opts ...BaseOpt) Base {
+	return NewBase(StatusTooManyRequests, msgID, opts...)
+}
+
+// NotImplemented initializes a new [Base] error with reason StatusNotImplemented.
+//
+// See NewBase for more information.
+func NotImplemented(msgID string, opts ...BaseOpt) Base {
+	return NewBase(StatusNotImplemented, msgID, opts...)
+}
+
 type BaseOpt func(Base) Base
 
 // WithLogLevel sets a custom log level for all errors instantiated from
