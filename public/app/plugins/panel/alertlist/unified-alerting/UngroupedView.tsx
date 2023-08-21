@@ -147,7 +147,7 @@ const getStateTagStyles = (theme: GrafanaTheme2) => ({
 
     display: inline-block;
     color: white;
-    border-radius: ${theme.shape.borderRadius()};
+    border-radius: ${theme.shape.radius.default};
     font-size: ${theme.typography.bodySmall.fontSize};
     text-transform: capitalize;
     line-height: 1.2;

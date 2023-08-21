@@ -85,11 +85,13 @@ function buildTableDataFrame(
   let table: { [key: string]: TableData } = {};
   for (let i = 0; i < data.data.length; i++) {
     const value = data.getValue(i);
+    const valueRight = data.getValueRight(i);
     const self = data.getSelf(i);
     const label = data.getLabel(i);
     table[label] = table[label] || {};
     table[label].self = table[label].self ? table[label].self + self : self;
     table[label].total = table[label].total ? table[label].total + value : value;
+    table[label].totalRight = table[label].totalRight ? table[label].totalRight + valueRight : valueRight;
   }
 
   const actionField: Field = createActionField(onSandwich, onSearch, search, sandwichItem);
@@ -114,17 +116,57 @@ function buildTableDataFrame(
     },
   };
 
-  const selfField = createNumberField('Self', data.selfField.config.unit);
-  const totalField = createNumberField('Total', data.valueField.config.unit);
+  let frame;
 
-  for (let key in table) {
-    actionField.values.push(null);
-    symbolField.values.push(key);
-    selfField.values.push(table[key].self);
-    totalField.values.push(table[key].total);
+  if (data.isDiffFlamegraph()) {
+    symbolField.config.custom.width = width - actionColumnWidth - TOP_TABLE_COLUMN_WIDTH * 3;
+
+    const baselineField = createNumberField('Baseline', 'percent');
+    const comparisonField = createNumberField('Comparison', 'percent');
+    const diffField = createNumberField('Diff', 'percent');
+
+    // For this we don't really consider sandwich view even though you can switch it on.
+    const levels = data.getLevels();
+    const totalTicks = levels.length ? levels[0][0].value : 0;
+    const totalTicksRight = levels.length ? levels[0][0].valueRight : undefined;
+
+    for (let key in table) {
+      actionField.values.push(null);
+      symbolField.values.push(key);
+
+      const ticksLeft = table[key].total;
+      const ticksRight = table[key].totalRight;
+
+      // We are iterating over table of the data so totalTicksRight needs to be defined
+      const totalTicksLeft = totalTicks - totalTicksRight!;
+
+      const percentageLeft = Math.round((10000 * ticksLeft) / totalTicksLeft) / 100;
+      const percentageRight = Math.round((10000 * ticksRight) / totalTicksRight!) / 100;
+
+      const diff = ((percentageRight - percentageLeft) / percentageLeft) * 100;
+
+      baselineField.values.push(percentageLeft);
+      comparisonField.values.push(percentageRight);
+      diffField.values.push(diff);
+    }
+
+    frame = {
+      fields: [actionField, symbolField, baselineField, comparisonField, diffField],
+      length: symbolField.values.length,
+    };
+  } else {
+    const selfField = createNumberField('Self', data.selfField.config.unit);
+    const totalField = createNumberField('Total', data.valueField.config.unit);
+
+    for (let key in table) {
+      actionField.values.push(null);
+      symbolField.values.push(key);
+      selfField.values.push(table[key].self);
+      totalField.values.push(table[key].total);
+    }
+
+    frame = { fields: [actionField, symbolField, selfField, totalField], length: symbolField.values.length };
   }
-
-  const frame = { fields: [actionField, symbolField, selfField, totalField], length: symbolField.values.length };
 
   const dataFrames = applyFieldOverrides({
     data: [frame],

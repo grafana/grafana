@@ -15,6 +15,10 @@ jobs:
     env:
       ARTIFACT_NAME: 'levitate' # The name of the artifact that we would like to download
       ARTIFACT_FOLDER: '${{ github.workspace }}/tmp' # The name of the folder where we will download the artifact to
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: write
 
     steps:
     - uses: actions/checkout@v3
@@ -119,7 +123,7 @@ jobs:
     # Posts a notification to Slack if a PR has a breaking change and it did not have a breaking change before
     - name: Post to Slack
       id: slack
-      if: steps.levitate-run.outputs.exit_code == 1 && steps.does-label-exist.outputs.result == 0 && steps.levitate-run.outputs.shouldSkip != 'true'
+      if: steps.levitate-run.outputs.exit_code == 1 && steps.does-label-exist.outputs.result == 0 && steps.levitate-run.outputs.shouldSkip != 'true' && env.HAS_SECRETS
       uses: slackapi/slack-github-action@v1.24.0
       with:
         payload: |
@@ -132,6 +136,7 @@ jobs:
           }
       env:
         SLACK_WEBHOOK_URL: ${{ secrets.SLACK_LEVITATE_WEBHOOK_URL }}
+        HAS_SECRETS: ${{ (github.repository == 'grafana/grafana' || secrets.SLACK_LEVITATE_WEBHOOK_URL != '') || '' }}
 
     # Add the label
     - name: Add "levitate breaking change" label

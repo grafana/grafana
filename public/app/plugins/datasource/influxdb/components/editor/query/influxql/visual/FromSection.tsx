@@ -1,5 +1,6 @@
 import React from 'react';
 
+import { DEFAULT_POLICY } from '../../../../../types';
 import { toSelectableValue } from '../utils/toSelectableValue';
 
 import { Seg } from './Seg';
@@ -32,7 +33,12 @@ export const FromSection = ({
 }: Props): JSX.Element => {
   const handlePolicyLoadOptions = async () => {
     const allPolicies = await getPolicyOptions();
-    return allPolicies.map(toSelectableValue);
+    // if `default` does not exist in the list of policies, we add it
+    const allPoliciesWithDefault = allPolicies.some((p) => p === DEFAULT_POLICY)
+      ? allPolicies
+      : [DEFAULT_POLICY, ...allPolicies];
+
+    return allPoliciesWithDefault.map(toSelectableValue);
   };
 
   const handleMeasurementLoadOptions = async (filter: string) => {
@@ -44,7 +50,7 @@ export const FromSection = ({
     <>
       <Seg
         allowCustomValue
-        value={policy ?? ''}
+        value={policy ?? 'using default policy'}
         loadOptions={handlePolicyLoadOptions}
         onChange={(v) => {
           onChange(v.value, measurement);

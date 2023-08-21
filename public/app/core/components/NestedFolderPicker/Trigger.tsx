@@ -3,9 +3,8 @@ import React, { forwardRef, ReactNode, ButtonHTMLAttributes } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Icon, getInputStyles, useTheme2 } from '@grafana/ui';
+import { Icon, getInputStyles, useTheme2, Text } from '@grafana/ui';
 import { focusCss } from '@grafana/ui/src/themes/mixins';
-import { Text } from '@grafana/ui/src/unstable';
 import { Trans } from 'app/core/internationalization';
 
 interface TriggerProps extends ButtonHTMLAttributes<HTMLButtonElement> {

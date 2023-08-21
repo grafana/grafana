@@ -523,7 +523,7 @@ func TestService_SearchUsersPermissions(t *testing.T) {
 			}
 
 			siu := &user.SignedInUser{OrgID: 2, Permissions: map[int64]map[string][]string{2: tt.siuPermissions}}
-			got, err := ac.SearchUsersPermissions(ctx, siu, 2, tt.searchOption)
+			got, err := ac.SearchUsersPermissions(ctx, siu, tt.searchOption)
 			if tt.wantErr {
 				require.NotNil(t, err)
 				return

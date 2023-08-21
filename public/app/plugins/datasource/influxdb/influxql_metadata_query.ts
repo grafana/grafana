@@ -3,7 +3,6 @@ import config from 'app/core/config';
 
 import InfluxDatasource from './datasource';
 import { buildMetadataQuery } from './influxql_query_builder';
-import { replaceHardCodedRetentionPolicy } from './queryUtils';
 import { InfluxQuery, InfluxQueryTag, MetadataQueryType } from './types';
 
 type MetadataQueryOptions = {
@@ -33,9 +32,9 @@ const runExploreQuery = async (options: MetadataQueryOptions): Promise<Array<{ t
   const policy = retentionPolicy ? datasource.templateSrv.replace(retentionPolicy, {}, 'regex') : '';
   const target: InfluxQuery = {
     query,
+    policy,
     rawQuery: true,
     refId: 'metadataQuery',
-    policy: replaceHardCodedRetentionPolicy(policy, datasource.retentionPolicies),
   };
   if (config.featureToggles.influxdbBackendMigration) {
     return datasource.runMetadataQuery(target);

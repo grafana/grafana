@@ -139,6 +139,7 @@ export function PanelChrome({
 
   // hover menu is only shown on hover when not on touch devices
   const showOnHoverClass = 'show-on-hover';
+  const isPanelTransparent = displayMode === 'transparent';
 
   const headerHeight = getHeaderHeight(theme, hasHeader);
   const { contentStyle, innerWidth, innerHeight } = getContentStyle(
@@ -156,11 +157,6 @@ export function PanelChrome({
   };
 
   const containerStyles: CSSProperties = { width, height: isOpen ? height : headerHeight };
-  if (displayMode === 'transparent') {
-    containerStyles.backgroundColor = 'transparent';
-    containerStyles.border = 'none';
-  }
-
   const [ref, { width: loadingBarWidth }] = useMeasure<HTMLDivElement>();
 
   /** Old property name now maps to actions */
@@ -231,8 +227,13 @@ export function PanelChrome({
 
   return (
     // tabIndex={0} is needed for keyboard accessibility in the plot area
-    // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex
-    <div className={styles.container} style={containerStyles} data-testid={testid} tabIndex={0} ref={ref}>
+    <div
+      className={cx(styles.container, { [styles.transparentContainer]: isPanelTransparent })}
+      style={containerStyles}
+      data-testid={testid}
+      tabIndex={0} //eslint-disable-line jsx-a11y/no-noninteractive-tabindex
+      ref={ref}
+    >
       <div className={styles.loadingBarContainer}>
         {loadingState === LoadingState.Loading ? (
           <LoadingBar width={loadingBarWidth} ariaLabel="Panel loading bar" />
@@ -350,7 +351,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       backgroundColor: background,
       border: `1px solid ${borderColor}`,
       position: 'relative',
-      borderRadius: theme.shape.borderRadius(1),
+      borderRadius: theme.shape.radius.default,
       height: '100%',
       display: 'flex',
       flexDirection: 'column',
@@ -376,6 +377,15 @@ const getStyles = (theme: GrafanaTheme2) => {
           visibility: 'visible',
           opacity: '1',
         },
+      },
+    }),
+    transparentContainer: css({
+      label: 'panel-transparent-container',
+      backgroundColor: 'transparent',
+      border: '1px solid transparent',
+      boxSizing: 'border-box',
+      '&:hover': {
+        border: `1px solid ${borderColor}`,
       },
     }),
     loadingBarContainer: css({
