@@ -220,9 +220,9 @@ export const Table = memo((props: Props) => {
 
       prepareRow(row);
 
-      const isFieldPopulated = (f:Field) => f.values.length > 0;
-      const isDataFramePopulated = (df:DataFrame) => df.fields.some((f: Field) => isFieldPopulated(f));
-      const isRowSubDataPopulated = (dfs:DataFrame[]) => dfs?.some((df: DataFrame) => isDataFramePopulated(df));
+      const isFieldPopulated = (f: Field) => f.values.length > 0;
+      const isDataFramePopulated = (df: DataFrame) => df.fields.some((f: Field) => isFieldPopulated(f));
+      const isRowSubDataPopulated = (dfs: DataFrame[]) => dfs?.some((df: DataFrame) => isDataFramePopulated(df));
       row.canExpand = isRowSubDataPopulated(nestedDataField?.values[rowIndex]);
 
       const expandedRowStyle = state.expanded[row.index] ? css({ '&:hover': { background: 'inherit' } }) : {};
