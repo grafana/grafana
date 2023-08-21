@@ -1,7 +1,8 @@
 import { css } from '@emotion/css';
 import React from 'react';
 
-import { GrafanaTheme2, SelectableValue, getAppEvents } from '@grafana/data';
+import { getAppEvents } from '@grafana/data';
+import { GrafanaTheme2, SelectableValue } from '@grafana/runtime';
 import { useStyles2, Select, Button, Field, InlineField, InlineSwitch, Alert } from '@grafana/ui';
 import { notifyApp } from 'app/core/actions';
 import { createSuccessNotification } from 'app/core/copy/appNotification';
