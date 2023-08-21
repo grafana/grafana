@@ -29,20 +29,28 @@ const LokiStateHistory = ({ ruleUID }: Props) => {
   const { getValues, setValue, register, handleSubmit } = useForm({ defaultValues: { query: '' } });
 
   const { useGetRuleHistoryQuery } = stateHistoryApi;
-  const timeRange = useMemo(() => getDefaultTimeRange(), []);
+
+  // We prefer log count-based limit rather than time-based, but the API doesn't support it yet
+  const queryTimeRange = useMemo(() => getDefaultTimeRange(), []);
+
   const {
     currentData: stateHistory,
     isLoading,
     isError,
     error,
-  } = useGetRuleHistoryQuery({ ruleUid: ruleUID, from: timeRange.from.unix(), to: timeRange.to.unix() });
+  } = useGetRuleHistoryQuery({
+    ruleUid: ruleUID,
+    from: queryTimeRange.from.unix(),
+    to: queryTimeRange.to.unix(),
+    limit: 250,
+  });
 
   const { dataFrames, historyRecords, commonLabels, totalRecordsCount } = useRuleHistoryRecords(
     stateHistory,
     instancesFilter
   );
 
-  const { frameSubset, frameSubsetTimestamps } = useFrameSubset(dataFrames);
+  const { frameSubset, frameSubsetTimestamps, frameTimeRange } = useFrameSubset(dataFrames);
 
   const onLogRecordLabelClick = useCallback(
     (label: string) => {
@@ -58,14 +66,24 @@ const LokiStateHistory = ({ ruleUID }: Props) => {
     setValue('query', '');
   }, [setInstancesFilter, setValue]);
 
+  const refToHighlight = useRef<HTMLElement | undefined>(undefined);
+
   const onTimelinePointerMove = useCallback(
     (seriesIdx: number, pointIdx: number) => {
-      const timestamp = frameSubsetTimestamps[pointIdx];
+      // remove the highlight from the previous refToHighlight
+      refToHighlight.current?.classList.remove(styles.highlightedLogRecord);
 
-      const refToScroll = logsRef.current.get(timestamp);
-      refToScroll?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      const timestamp = frameSubsetTimestamps[pointIdx];
+      const newTimestampRef = logsRef.current.get(timestamp);
+
+      // now we have the new ref, add the styles
+      newTimestampRef?.classList.add(styles.highlightedLogRecord);
+      // keeping this here (commented) in case we decide we want to go back to this
+      // newTimestampRef?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+      refToHighlight.current = newTimestampRef;
     },
-    [frameSubsetTimestamps]
+    [frameSubsetTimestamps, styles.highlightedLogRecord]
   );
 
   if (isLoading) {
@@ -83,7 +101,7 @@ const LokiStateHistory = ({ ruleUID }: Props) => {
   const emptyStateMessage =
     totalRecordsCount > 0
       ? `No matches were found for the given filters among the ${totalRecordsCount} instances`
-      : 'No state transitions have occurred in the last 60 minutes';
+      : 'No state transitions have occurred in the last 30 days';
 
   return (
     <div className={styles.fullSize}>
@@ -120,7 +138,7 @@ const LokiStateHistory = ({ ruleUID }: Props) => {
       ) : (
         <>
           <div className={styles.graphWrapper}>
-            <LogTimelineViewer frames={frameSubset} timeRange={timeRange} onPointerMove={onTimelinePointerMove} />
+            <LogTimelineViewer frames={frameSubset} timeRange={frameTimeRange} onPointerMove={onTimelinePointerMove} />
           </div>
           {hasMoreInstances && (
             <div className={styles.moreInstancesWarning}>
@@ -147,7 +165,22 @@ function useFrameSubset(frames: DataFrame[]) {
     const frameSubset = take(frames, MAX_TIMELINE_SERIES);
     const frameSubsetTimestamps = sortBy(uniq(frameSubset.flatMap((frame) => frame.fields[0].values)));
 
-    return { frameSubset, frameSubsetTimestamps };
+    const minTs = Math.min(...frameSubsetTimestamps);
+    const maxTs = Math.max(...frameSubsetTimestamps);
+
+    const rangeStart = dateTime(minTs);
+    const rangeStop = dateTime(maxTs);
+
+    const frameTimeRange: TimeRange = {
+      from: rangeStart,
+      to: rangeStop,
+      raw: {
+        from: rangeStart,
+        to: rangeStop,
+      },
+    };
+
+    return { frameSubset, frameSubsetTimestamps, frameTimeRange };
   }, [frames]);
 }
 
@@ -199,7 +232,7 @@ const SearchFieldInput = React.forwardRef<HTMLInputElement, SearchFieldInputProp
 SearchFieldInput.displayName = 'SearchFieldInput';
 
 function getDefaultTimeRange(): TimeRange {
-  const fromDateTime = dateTime().subtract(1, 'h');
+  const fromDateTime = dateTime().subtract(30, 'days');
   const toDateTime = dateTime();
   return {
     from: fromDateTime,
@@ -235,6 +268,11 @@ export const getStyles = (theme: GrafanaTheme2) => ({
   commonLabels: css`
     display: grid;
     grid-template-columns: max-content auto;
+  `,
+  // we need !important here to override the list item default styles
+  highlightedLogRecord: css`
+    background: ${theme.colors.primary.transparent} !important;
+    outline: 1px solid ${theme.colors.primary.shade} !important;
   `,
 });
 

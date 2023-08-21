@@ -86,7 +86,7 @@ export const getCardContainerStyles = stylesFactory(
         width: '100%',
         padding: theme.spacing(2),
         background: theme.colors.background.secondary,
-        borderRadius: theme.shape.borderRadius(),
+        borderRadius: theme.shape.radius.default,
         marginBottom: '8px',
         pointerEvents: disabled ? 'none' : 'auto',
         transition: theme.transitions.create(['background-color', 'box-shadow', 'border-color', 'color'], {
@@ -114,7 +114,7 @@ export const getCardContainerStyles = stylesFactory(
         display: 'flex',
         width: '100%',
         background: theme.colors.background.secondary,
-        borderRadius: theme.shape.borderRadius(),
+        borderRadius: theme.shape.radius.default,
         position: 'relative',
         pointerEvents: disabled ? 'none' : 'auto',
         marginBottom: theme.spacing(1),

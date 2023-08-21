@@ -81,6 +81,7 @@ const ui = {
   loadingIndicator: byText('Loading...'),
   timestampViewer: byRole('list', { name: 'State history by timestamp' }),
   record: byRole('listitem'),
+  noRecords: byText('No state transitions have occurred in the last 30 days'),
 };
 
 describe('LokiStateHistory', () => {
@@ -95,5 +96,19 @@ describe('LokiStateHistory', () => {
     expect(timestampViewerElement).toHaveTextContent('/api/prometheus/grafana/api/v1/rules');
     expect(timestampViewerElement).toHaveTextContent('/api/live/ws');
     expect(timestampViewerElement).toHaveTextContent('/api/folders/:uid/');
+  });
+
+  it('should render no entries message when no records are returned', async () => {
+    server.use(
+      rest.get('/api/v1/rules/history', (req, res, ctx) =>
+        res(ctx.json<DataFrameJSON>({ data: { values: [] }, schema: { fields: [] } }))
+      )
+    );
+
+    render(<LokiStateHistory ruleUID="abcd" />, { wrapper: TestProvider });
+
+    await waitFor(() => expect(ui.loadingIndicator.query()).not.toBeInTheDocument());
+
+    expect(ui.noRecords.get()).toBeInTheDocument();
   });
 });

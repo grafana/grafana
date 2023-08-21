@@ -26,6 +26,8 @@ func (e *cloudWatchExecutor) newResourceMux() *http.ServeMux {
 	mux.HandleFunc("/accounts", routes.ResourceRequestMiddleware(routes.AccountsHandler, logger, e.getRequestContext))
 	mux.HandleFunc("/namespaces", routes.ResourceRequestMiddleware(routes.NamespacesHandler, logger, e.getRequestContext))
 	mux.HandleFunc("/log-group-fields", routes.ResourceRequestMiddleware(routes.LogGroupFieldsHandler, logger, e.getRequestContext))
+	mux.HandleFunc("/external-id", routes.ResourceRequestMiddleware(routes.ExternalIdHandler, logger, e.getRequestContext))
+
 	return mux
 }
 

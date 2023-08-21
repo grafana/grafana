@@ -2,11 +2,11 @@ package testdatasource
 
 import (
 	"context"
+	"embed"
 	"encoding/csv"
 	"errors"
 	"fmt"
 	"io"
-	"os"
 	"path/filepath"
 	"regexp"
 	"strconv"
@@ -15,28 +15,35 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana/pkg/components/simplejson"
 )
 
 func (s *Service) handleCsvContentScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	resp := backend.NewQueryDataResponse()
 
 	for _, q := range req.Queries {
-		model, err := simplejson.NewJson(q.JSON)
+		model, err := getModel(q.JSON)
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse query json: %v", err)
 		}
 
-		csvContent := model.Get("csvContent").MustString()
+		csvContent := model.CSVContent
 		if len(csvContent) == 0 {
 			return backend.NewQueryDataResponse(), nil
 		}
 
-		alias := model.Get("alias").MustString("")
+		alias := model.Alias
 
 		frame, err := LoadCsvContent(strings.NewReader(csvContent), alias)
 		if err != nil {
 			return nil, err
+		}
+
+		dropPercent := model.DropPercent
+		if dropPercent > 0 {
+			frame, err = dropValues(frame, dropPercent)
+			if err != nil {
+				return nil, err
+			}
 		}
 
 		respD := resp.Responses[q.RefID]
@@ -51,12 +58,12 @@ func (s *Service) handleCsvFileScenario(ctx context.Context, req *backend.QueryD
 	resp := backend.NewQueryDataResponse()
 
 	for _, q := range req.Queries {
-		model, err := simplejson.NewJson(q.JSON)
+		model, err := getModel(q.JSON)
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse query json %v", err)
 		}
 
-		fileName := model.Get("csvFileName").MustString()
+		fileName := model.CSVFileName
 
 		if len(fileName) == 0 {
 			continue
@@ -68,6 +75,14 @@ func (s *Service) handleCsvFileScenario(ctx context.Context, req *backend.QueryD
 			return nil, err
 		}
 
+		dropPercent := model.DropPercent
+		if dropPercent > 0 {
+			frame, err = dropValues(frame, dropPercent)
+			if err != nil {
+				return nil, err
+			}
+		}
+
 		respD := resp.Responses[q.RefID]
 		respD.Frames = append(respD.Frames, frame)
 		resp.Responses[q.RefID] = respD
@@ -75,6 +90,9 @@ func (s *Service) handleCsvFileScenario(ctx context.Context, req *backend.QueryD
 
 	return resp, nil
 }
+
+//go:embed data/*.csv
+var embeddedCsvFiles embed.FS
 
 func (s *Service) loadCsvFile(fileName string) (*data.Frame, error) {
 	validFileName := regexp.MustCompile(`^\w+\.csv$`)
@@ -84,11 +102,9 @@ func (s *Service) loadCsvFile(fileName string) (*data.Frame, error) {
 	}
 
 	csvFilepath := filepath.Clean(filepath.Join("/", fileName))
-	filePath := filepath.Join(s.cfg.StaticRootPath, "testdata", csvFilepath)
+	filePath := filepath.Join("data", csvFilepath)
 
-	// Can ignore gosec G304 here, because we check the file pattern above
-	// nolint:gosec
-	fileReader, err := os.Open(filePath)
+	fileReader, err := embeddedCsvFiles.Open(filePath)
 	if err != nil {
 		return nil, fmt.Errorf("failed open file: %v", err)
 	}

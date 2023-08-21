@@ -16,9 +16,8 @@ func BuildFrontend(c *cli.Context) error {
 	if err != nil {
 		return err
 	}
-	version := metadata.GrafanaVersion
 
-	cfg, mode, err := frontend.GetConfig(c, version)
+	cfg, mode, err := frontend.GetConfig(c, metadata)
 	if err != nil {
 		return err
 	}

@@ -1,3 +1,4 @@
+import { xor } from 'lodash';
 import { ValidateResult } from 'react-hook-form';
 
 import { DataFrame, ThresholdsConfig, ThresholdsMode, isTimeSeriesFrames, PanelData } from '@grafana/data';
@@ -152,7 +153,7 @@ export function getThresholdsForQueries(queries: AlertQuery[]) {
       const threshold = condition.evaluator.params;
 
       // "classic_conditions" use `condition.query.params[]` and "threshold" uses `query.model.expression`
-      const refId = condition.query.params[0] ?? query.model.expression;
+      const refId = condition.query?.params[0] ?? query.model.expression;
 
       // if an expression hasn't been linked to a data query yet, it won't have a refId
       if (!refId) {
@@ -302,4 +303,29 @@ export function translateRouteParamToRuleType(param = ''): RuleFormType {
   }
 
   return RuleFormType.grafana;
+}
+
+/**
+ * This function finds what refIds have been updated given the previous Array of queries and an Array of updated data queries.
+ * All expression queries are discarded from the arrays, since we have separate handlers for those (see "onUpdateRefId") of the ExpressionEditor
+ *
+ * This code assumes not more than 1 query refId has changed per "onChangeQueries",
+ */
+export function findRenamedDataQueryReferences(
+  previousQueries: AlertQuery[],
+  updatedQueries: AlertQuery[]
+): [string, string] {
+  const updatedDataQueries = updatedQueries
+    .filter((query) => !isExpressionQuery(query.model))
+    .map((query) => query.refId);
+  const previousDataQueries = previousQueries
+    .filter((query) => !isExpressionQuery(query.model))
+    .map((query) => query.refId);
+
+  // given the following two arrays
+  // ['A', 'B', 'C'] and ['FOO', 'B' 'C']
+  // the "xor" function will return ['A', 'FOO'] because those are not in both arrays
+  const [oldRefId, newRefId] = xor(previousDataQueries, updatedDataQueries);
+
+  return [oldRefId, newRefId];
 }

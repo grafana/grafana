@@ -8,6 +8,11 @@ keywords:
   - Prometheus
   - metrics
   - time series
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: What is Prometheus?
 weight: 300
 ---
@@ -59,7 +64,7 @@ The following gauge visualization displays the total RAM usage on a computer.
 
 The third metric type is called a `histogram`, which counts observations and organizes them into configurable groups. The following example displays floating-point numbers grouped into ranges that display how frequently each occurred.
 
-{{< figure src="/media/docs/grafana/intro-prometheus/histogram-example.png" max-width="750px" caption="Historgram visualization" >}}
+{{< figure src="/media/docs/grafana/intro-prometheus/histogram-example.png" max-width="750px" caption="Histogram visualization" >}}
 
 These core concepts of time series, metrics, labels, and aggregation functions are foundational to Grafana and observability.
 
@@ -105,6 +110,14 @@ The combination of Prometheus and Grafana Agent gives you control over the metri
 
 Now that you understand how Prometheus metrics work, what will you build?
 
-- One great next step is to [build a dashboard]({{< relref "../../dashboards/build-dashboards" >}}) in Grafana and start turning that raw Prometheus telemetry data into insights about what’s going with your services and infrastructure.
+- One great next step is to [build a dashboard][build-dashboards] in Grafana and start turning that raw Prometheus telemetry data into insights about what’s going with your services and infrastructure.
 - Another great step is to learn about [Grafana Mimir](/oss/mimir/), which is essentially a database for Prometheus data. If you’re wondering how to make this work for a large volumes of metrics with a lot of data and fast querying, check out Grafana Mimir.
-- If you’re interested in working with Prometheus data in Grafana directly, check out the [Prometheus data source]({{< relref "../../datasources/prometheus" >}}) documentation, or check out [PromQL basics](https://prometheus.io/docs/prometheus/latest/querying/basics/).
+- If you’re interested in working with Prometheus data in Grafana directly, check out the [Prometheus data source][prometheus] documentation, or check out [PromQL basics](https://prometheus.io/docs/prometheus/latest/querying/basics/).
+
+{{% docs/reference %}}
+[build-dashboards]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/build-dashboards"
+[build-dashboards]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/build-dashboards"
+
+[prometheus]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/datasources/prometheus"
+[prometheus]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/datasources/prometheus"
+{{% /docs/reference %}}

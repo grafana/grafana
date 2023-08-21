@@ -1,5 +1,96 @@
 {
-  "_comment": "Do not manually edit this file. Translations must be made in Crowdin which will sync them back into this file",
+  "_comment": "",
+  "access-control": {
+    "add-permission": {
+      "role-label": "",
+      "team-label": "",
+      "title": "",
+      "user-label": ""
+    },
+    "add-permissions": {
+      "save": ""
+    },
+    "permission-list": {
+      "permission": ""
+    },
+    "permissions": {
+      "add-label": "",
+      "no-permissions": "",
+      "permissions-change-warning": "",
+      "role": "",
+      "team": "",
+      "title": "",
+      "user": ""
+    }
+  },
+  "browse-dashboards": {
+    "action": {
+      "cancel-button": "",
+      "delete-button": "",
+      "delete-modal-text": "",
+      "delete-modal-title": "",
+      "deleting": "",
+      "manage-permissions-button": "",
+      "move-button": "",
+      "move-modal-alert": "",
+      "move-modal-field-label": "",
+      "move-modal-text": "",
+      "move-modal-title": "",
+      "moving": "",
+      "new-folder-name-required-phrase": ""
+    },
+    "counts": {
+      "alertRule__one": "",
+      "alertRule__many": "",
+      "alertRule__other": "",
+      "dashboard__one": "",
+      "dashboard__many": "",
+      "dashboard__other": "",
+      "folder__one": "",
+      "folder__many": "",
+      "folder__other": "",
+      "libraryPanel__one": "",
+      "libraryPanel__many": "",
+      "libraryPanel__other": "",
+      "total__one": "",
+      "total__many": "",
+      "total__other": ""
+    },
+    "dashboards-tree": {
+      "name-column": "",
+      "tags-column": ""
+    },
+    "folder-actions-button": {
+      "delete": "",
+      "folder-actions": "",
+      "manage-permissions": "",
+      "move": ""
+    },
+    "folder-picker": {
+      "accessible-label": "",
+      "button-label": "",
+      "empty-message": "",
+      "error-title": "",
+      "search-placeholder": "",
+      "unknown-error": ""
+    },
+    "manage-folder-nav": {
+      "alert-rules": "",
+      "dashboards": "",
+      "panels": "",
+      "permissions": "",
+      "settings": ""
+    },
+    "new-folder-form": {
+      "cancel-label": "",
+      "create-label": "",
+      "name-label": ""
+    },
+    "no-results": {
+      "clear": "",
+      "text": ""
+    }
+  },
   "clipboard-button": {
     "inline-toast": {
       "success": "Copié"
@@ -29,12 +120,21 @@
     },
     "save": "Enregistrer"
   },
+  "connections": {
+    "connect-data": {
+      "category-header-label": ""
+    },
+    "search": {
+      "placeholder": ""
+    }
+  },
   "dashboard": {
     "add-menu": {
       "import": "Importer depuis la bibliothèque",
       "paste-panel": "Coller le panneau",
       "row": "Ligne",
-      "visualization": "Visualisation"
+      "visualization": "Visualisation",
+      "widget": ""
     },
     "empty": {
       "add-import-body": "Importer des visualisations partagées avec d'autres tableaux de bord.",
@@ -45,7 +145,10 @@
       "add-row-header": "Ajouter une ligne",
       "add-visualization-body": "Sélectionnez une source de données, puis examinez et visualisez vos données avec des graphiques, des statistiques et des tableaux ou créez des listes, des markdowns et d'autres widgets.",
       "add-visualization-button": "Ajouter une visualisation",
-      "add-visualization-header": "Commencez votre nouveau tableau de bord en ajoutant une visualisation"
+      "add-visualization-header": "Commencez votre nouveau tableau de bord en ajoutant une visualisation",
+      "add-widget-body": "",
+      "add-widget-button": "",
+      "add-widget-header": ""
     },
     "inspect": {
       "data-tab": "Données",
@@ -114,6 +217,11 @@
       "unmark-favorite": "Supprimer des favoris"
     }
   },
+  "data-sources": {
+    "datasource-add-button": {
+      "label": ""
+    }
+  },
   "folder-picker": {
     "loading": "Chargement des dossiers..."
   },
@@ -122,6 +230,10 @@
       "error": "Échec du chargement des options",
       "loading": "Chargement des options...",
       "no-options": "Aucune option trouvée"
+    },
+    "select": {
+      "no-options-label": "",
+      "placeholder": ""
     }
   },
   "library-panel": {
@@ -143,7 +255,18 @@
       "success": "Panneau de bibliothèque enregistré"
     }
   },
+  "login": {
+    "error": {
+      "blocked": "",
+      "invalid-user-or-password": "",
+      "title": "",
+      "unknown": ""
+    }
+  },
   "nav": {
+    "add-new-connections": {
+      "title": ""
+    },
     "admin": {
       "subtitle": "Gérer les paramètres à l'échelle du serveur et l'accès aux ressources telles que les organisations, les utilisateurs et les licences",
       "title": "Administrateur de serveur"
@@ -192,12 +315,25 @@
       "subtitle": "Gérer et créer des clés API utilisées pour interagir avec les API HTTP de Grafana",
       "title": "Clés API"
     },
+    "application": {
+      "title": ""
+    },
     "apps": {
       "subtitle": "Plugins d'application qui prolongent l'expérience Grafana",
       "title": "Applications"
     },
+    "authentication": {
+      "title": ""
+    },
     "config": {
       "title": "Administration"
+    },
+    "connect-data": {
+      "title": ""
+    },
+    "connections": {
+      "subtitle": "",
+      "title": ""
     },
     "correlations": {
       "subtitle": "Ajouter et configurer des corrélations",
@@ -222,12 +358,22 @@
       "subtitle": "Créer et gérer des tableaux de bord pour visualiser vos données",
       "title": "Tableaux de bord"
     },
+    "data-sources": {
+      "subtitle": "",
+      "title": ""
+    },
     "datasources": {
       "subtitle": "Ajouter et configurer des sources de données",
       "title": "Sources de données"
     },
+    "detect": {
+      "title": ""
+    },
     "explore": {
       "title": "Explorer"
+    },
+    "frontend": {
+      "title": ""
     },
     "global-orgs": {
       "subtitle": "Instances isolées de Grafana exécutées sur le même serveur",
@@ -236,6 +382,9 @@
     "global-users": {
       "subtitle": "Gérer les utilisateurs dans Grafana",
       "title": "Utilisateurs"
+    },
+    "grafana-quaderno": {
+      "title": ""
     },
     "help": {
       "title": "Aide"
@@ -247,9 +396,21 @@
     "home": {
       "title": "Accueil"
     },
+    "incidents": {
+      "title": ""
+    },
+    "infrastructure": {
+      "title": ""
+    },
+    "kubernetes": {
+      "title": ""
+    },
     "library-panels": {
       "subtitle": "Panneaux réutilisables pouvant être ajoutés à plusieurs tableaux de bord",
       "title": "Panneaux de bibliothèque"
+    },
+    "machine-learning": {
+      "title": ""
     },
     "manage-folder": {
       "subtitle": "Gérer les tableaux de bord et les autorisations des dossiers"
@@ -267,9 +428,18 @@
     "new-folder": {
       "title": "Nouveau dossier"
     },
+    "observability": {
+      "title": ""
+    },
+    "oncall": {
+      "title": ""
+    },
     "org-settings": {
       "subtitle": "Gérer les préférences au sein d'une organisation",
       "title": "Préférences par défaut"
+    },
+    "performance-testing": {
+      "title": ""
     },
     "playlists": {
       "subtitle": "Groupes de tableaux de bord affichés dans une séquence",
@@ -288,8 +458,17 @@
     "profile/settings": {
       "title": "Profil"
     },
+    "profiles": {
+      "title": ""
+    },
     "public": {
       "title": "Tableaux de bord publics"
+    },
+    "recorded-queries": {
+      "title": ""
+    },
+    "reporting": {
+      "title": ""
     },
     "scenes": {
       "title": "Scènes"
@@ -311,6 +490,9 @@
     "sign-out": {
       "title": "Se déconnecter"
     },
+    "slo": {
+      "title": ""
+    },
     "snapshots": {
       "subtitle": "Représentations interactives, accessibles au public et ponctuelles des tableaux de bord",
       "title": "Instantanés"
@@ -321,6 +503,9 @@
     "starred-empty": {
       "title": "Vos tableaux de bord favoris apparaîtront ici"
     },
+    "statistics-and-licensing": {
+      "title": ""
+    },
     "storage": {
       "subtitle": "Gérer le stockage de fichiers",
       "title": "Stockage"
@@ -328,6 +513,9 @@
     "support-bundles": {
       "subtitle": "Télécharger les packs d’assistance",
       "title": "Packs d’assistance"
+    },
+    "synthetics": {
+      "title": ""
     },
     "teams": {
       "subtitle": "Groupes d'utilisateurs ayant des besoins communs en matière de tableau de bord et d'autorisations",
@@ -384,6 +572,10 @@
       "choose-interval": "Actualisation automatique désactivée. Choisir un intervalle de temps d'actualisation",
       "duration-selected": "Choisir l'intervalle de temps d'actualisation avec l'intervalle actuel {{durationAriaLabel}} sélectionné"
     },
+    "auto-option": {
+      "aria-label": "",
+      "label": ""
+    },
     "live-option": {
       "aria-label": "Activer la diffusion en direct",
       "label": "En direct"
@@ -432,6 +624,12 @@
     "search-input": {
       "include-panels-placeholder": "Rechercher des tableaux de bord et des panneaux",
       "placeholder": "Rechercher des tableaux de bord"
+    }
+  },
+  "search-view": {
+    "no-results": {
+      "clear": "",
+      "text": ""
     }
   },
   "share-modal": {

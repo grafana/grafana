@@ -1,3 +1,4 @@
+@use 'sass:map';
 .grafana-info-box {
   position: relative;
   padding: $space-lg;
@@ -33,7 +34,7 @@
   }
 
   &--max-lg {
-    max-width: map-get($grid-breakpoints, 'lg');
+    max-width: map.get($grid-breakpoints, 'lg');
   }
 }
 

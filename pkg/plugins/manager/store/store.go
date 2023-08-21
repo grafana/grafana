@@ -3,6 +3,7 @@ package store
 import (
 	"context"
 	"sort"
+	"sync"
 
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader"
@@ -14,6 +15,7 @@ var _ plugins.Store = (*Service)(nil)
 
 type Service struct {
 	pluginRegistry registry.Service
+	pluginLoader   loader.Service
 }
 
 func ProvideService(pluginRegistry registry.Service, pluginSources sources.Registry,
@@ -24,12 +26,19 @@ func ProvideService(pluginRegistry registry.Service, pluginSources sources.Regis
 			return nil, err
 		}
 	}
-	return New(pluginRegistry), nil
+	return New(pluginRegistry, pluginLoader), nil
 }
 
-func New(pluginRegistry registry.Service) *Service {
+func (s *Service) Run(ctx context.Context) error {
+	<-ctx.Done()
+	s.shutdown(ctx)
+	return ctx.Err()
+}
+
+func New(pluginRegistry registry.Service, pluginLoader loader.Service) *Service {
 	return &Service{
 		pluginRegistry: pluginRegistry,
+		pluginLoader:   pluginLoader,
 	}
 }
 
@@ -96,8 +105,10 @@ func (s *Service) plugin(ctx context.Context, pluginID string) (*plugins.Plugin,
 
 // availablePlugins returns all non-decommissioned plugins from the registry sorted by alphabetic order on `plugin.ID`
 func (s *Service) availablePlugins(ctx context.Context) []*plugins.Plugin {
-	var res []*plugins.Plugin
-	for _, p := range s.pluginRegistry.Plugins(ctx) {
+	ps := s.pluginRegistry.Plugins(ctx)
+
+	res := make([]*plugins.Plugin, 0, len(ps))
+	for _, p := range ps {
 		if !p.IsDecommissioned() {
 			res = append(res, p)
 		}
@@ -108,13 +119,29 @@ func (s *Service) availablePlugins(ctx context.Context) []*plugins.Plugin {
 	return res
 }
 
-func (s *Service) Routes() []*plugins.StaticRoute {
+func (s *Service) Routes(ctx context.Context) []*plugins.StaticRoute {
 	staticRoutes := make([]*plugins.StaticRoute, 0)
 
-	for _, p := range s.availablePlugins(context.TODO()) {
+	for _, p := range s.availablePlugins(ctx) {
 		if p.StaticRoute() != nil {
 			staticRoutes = append(staticRoutes, p.StaticRoute())
 		}
 	}
 	return staticRoutes
+}
+
+func (s *Service) shutdown(ctx context.Context) {
+	var wg sync.WaitGroup
+	for _, plugin := range s.pluginRegistry.Plugins(ctx) {
+		wg.Add(1)
+		go func(ctx context.Context, p *plugins.Plugin) {
+			defer wg.Done()
+			p.Logger().Debug("Stopping plugin")
+			if _, err := s.pluginLoader.Unload(ctx, p); err != nil {
+				p.Logger().Error("Failed to stop plugin", "error", err)
+			}
+			p.Logger().Debug("Plugin stopped")
+		}(ctx, plugin)
+	}
+	wg.Wait()
 }

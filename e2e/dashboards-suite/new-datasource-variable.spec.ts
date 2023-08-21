@@ -38,6 +38,7 @@ describe('Variables - Datasource', () => {
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('gdev-slow-prometheus').click();
 
     // Assert it was rendered
-    e2e().get('.markdown-html').should('include.text', 'VariableUnderTest: gdev-slow-prometheus');
+    e2e().get('.markdown-html').should('include.text', 'VariableUnderTest: gdev-slow-prometheus-uid');
+    e2e().get('.markdown-html').should('include.text', 'VariableUnderTestText: gdev-slow-prometheus');
   });
 });

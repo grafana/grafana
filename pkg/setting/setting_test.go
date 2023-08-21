@@ -64,11 +64,10 @@ func TestLoadingSettings(t *testing.T) {
 	})
 
 	t.Run("Should be able to override via environment variables", func(t *testing.T) {
-		err := os.Setenv("GF_SECURITY_ADMIN_USER", "superduper")
-		require.NoError(t, err)
+		t.Setenv("GF_SECURITY_ADMIN_USER", "superduper")
 
 		cfg := NewCfg()
-		err = cfg.Load(CommandLineArgs{HomePath: "../../"})
+		err := cfg.Load(CommandLineArgs{HomePath: "../../"})
 		require.Nil(t, err)
 
 		require.Equal(t, "superduper", cfg.AdminUser)
@@ -77,22 +76,20 @@ func TestLoadingSettings(t *testing.T) {
 	})
 
 	t.Run("Should replace password when defined in environment", func(t *testing.T) {
-		err := os.Setenv("GF_SECURITY_ADMIN_PASSWORD", "supersecret")
-		require.NoError(t, err)
+		t.Setenv("GF_SECURITY_ADMIN_PASSWORD", "supersecret")
 
 		cfg := NewCfg()
-		err = cfg.Load(CommandLineArgs{HomePath: "../../"})
+		err := cfg.Load(CommandLineArgs{HomePath: "../../"})
 		require.Nil(t, err)
 
 		require.Contains(t, appliedEnvOverrides, "GF_SECURITY_ADMIN_PASSWORD=*********")
 	})
 
 	t.Run("Should replace password in URL when url environment is defined", func(t *testing.T) {
-		err := os.Setenv("GF_DATABASE_URL", "mysql://user:secret@localhost:3306/database")
-		require.NoError(t, err)
+		t.Setenv("GF_DATABASE_URL", "mysql://user:secret@localhost:3306/database")
 
 		cfg := NewCfg()
-		err = cfg.Load(CommandLineArgs{HomePath: "../../"})
+		err := cfg.Load(CommandLineArgs{HomePath: "../../"})
 		require.Nil(t, err)
 
 		require.Contains(t, appliedEnvOverrides, "GF_DATABASE_URL=mysql://user:xxxxx@localhost:3306/database")
@@ -208,10 +205,9 @@ func TestLoadingSettings(t *testing.T) {
 
 	t.Run("Can use environment variables in config values", func(t *testing.T) {
 		if runtime.GOOS == windows {
-			err := os.Setenv("GF_DATA_PATH", `c:\tmp\env_override`)
-			require.NoError(t, err)
+			t.Setenv("GF_DATA_PATH", `c:\tmp\env_override`)
 			cfg := NewCfg()
-			err = cfg.Load(CommandLineArgs{
+			err := cfg.Load(CommandLineArgs{
 				HomePath: "../../",
 				Args:     []string{"cfg:paths.data=${GF_DATA_PATH}"},
 			})
@@ -219,10 +215,9 @@ func TestLoadingSettings(t *testing.T) {
 
 			require.Equal(t, `c:\tmp\env_override`, cfg.DataPath)
 		} else {
-			err := os.Setenv("GF_DATA_PATH", "/tmp/env_override")
-			require.NoError(t, err)
+			t.Setenv("GF_DATA_PATH", "/tmp/env_override")
 			cfg := NewCfg()
-			err = cfg.Load(CommandLineArgs{
+			err := cfg.Load(CommandLineArgs{
 				HomePath: "../../",
 				Args:     []string{"cfg:paths.data=${GF_DATA_PATH}"},
 			})
@@ -282,12 +277,10 @@ func TestLoadingSettings(t *testing.T) {
 	})
 
 	t.Run("grafana.com API URL can be set separately from grafana.com URL", func(t *testing.T) {
-		err := os.Setenv("GF_GRAFANA_NET_URL", "https://grafana-dev.com")
-		require.NoError(t, err)
-		err = os.Setenv("GF_GRAFANA_COM_API_URL", "http://grafana-dev.internal/api")
-		require.NoError(t, err)
+		t.Setenv("GF_GRAFANA_NET_URL", "https://grafana-dev.com")
+		t.Setenv("GF_GRAFANA_COM_API_URL", "http://grafana-dev.internal/api")
 		cfg := NewCfg()
-		err = cfg.Load(CommandLineArgs{HomePath: "../../", Config: "../../conf/defaults.ini"})
+		err := cfg.Load(CommandLineArgs{HomePath: "../../", Config: "../../conf/defaults.ini"})
 		require.Nil(t, err)
 		require.Equal(t, "https://grafana-dev.com", cfg.GrafanaComURL)
 		require.Equal(t, "http://grafana-dev.internal/api", cfg.GrafanaComAPIURL)
@@ -815,4 +808,79 @@ func TestRedactedValue(t *testing.T) {
 			require.Equal(t, tc.expected, RedactedValue(tc.key, tc.value))
 		})
 	}
+}
+
+func TestHandleAWSSettings(t *testing.T) {
+	t.Run("Should set default auth providers if not defined", func(t *testing.T) {
+		cfg := NewCfg()
+		awsSection, err := cfg.Raw.NewSection("aws")
+		require.NoError(t, err)
+		_, err = awsSection.NewKey("allowed_auth_providers", "")
+		require.NoError(t, err)
+
+		cfg.handleAWSConfig()
+		assert.Equal(t, []string{"default", "keys", "credentials"}, cfg.AWSAllowedAuthProviders)
+	})
+	t.Run("Should pass on auth providers defined in config", func(t *testing.T) {
+		cfg := NewCfg()
+		awsSection, err := cfg.Raw.NewSection("aws")
+		require.NoError(t, err)
+		_, err = awsSection.NewKey("allowed_auth_providers", "keys, credentials")
+		require.NoError(t, err)
+
+		cfg.handleAWSConfig()
+		assert.Equal(t, []string{"keys", "credentials"}, cfg.AWSAllowedAuthProviders)
+	})
+	t.Run("Should set assume role to true if not defined", func(t *testing.T) {
+		cfg := NewCfg()
+		awsSection, err := cfg.Raw.NewSection("aws")
+		require.NoError(t, err)
+		_, err = awsSection.NewKey("assume_role_enabled", "")
+		require.NoError(t, err)
+
+		cfg.handleAWSConfig()
+		assert.Equal(t, true, cfg.AWSAssumeRoleEnabled)
+	})
+	t.Run("Should set assume role to true if defined as true in the config", func(t *testing.T) {
+		cfg := NewCfg()
+		awsSection, err := cfg.Raw.NewSection("aws")
+		require.NoError(t, err)
+		_, err = awsSection.NewKey("assume_role_enabled", "true")
+		require.NoError(t, err)
+
+		cfg.handleAWSConfig()
+		assert.Equal(t, true, cfg.AWSAssumeRoleEnabled)
+	})
+	t.Run("Should set assume role to false if defined as false in the config", func(t *testing.T) {
+		cfg := NewCfg()
+		awsSection, err := cfg.Raw.NewSection("aws")
+		require.NoError(t, err)
+		_, err = awsSection.NewKey("assume_role_enabled", "false")
+		require.NoError(t, err)
+
+		cfg.handleAWSConfig()
+		assert.Equal(t, false, cfg.AWSAssumeRoleEnabled)
+	})
+	t.Run("Should set default page limit if not defined", func(t *testing.T) {
+		cfg := NewCfg()
+		awsSection, err := cfg.Raw.NewSection("aws")
+		require.NoError(t, err)
+		_, err = awsSection.NewKey("list_metrics_page_limit", "")
+		require.NoError(t, err)
+
+		cfg.handleAWSConfig()
+
+		assert.Equal(t, 500, cfg.AWSListMetricsPageLimit)
+	})
+	t.Run("Should pass on the limit if it is defined in the config", func(t *testing.T) {
+		cfg := NewCfg()
+		awsSection, err := cfg.Raw.NewSection("aws")
+		require.NoError(t, err)
+		_, err = awsSection.NewKey("list_metrics_page_limit", "400")
+		require.NoError(t, err)
+
+		cfg.handleAWSConfig()
+
+		assert.Equal(t, 400, cfg.AWSListMetricsPageLimit)
+	})
 }

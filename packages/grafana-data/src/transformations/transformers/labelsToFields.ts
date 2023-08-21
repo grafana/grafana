@@ -9,10 +9,11 @@ export enum LabelsToFieldsMode {
   Columns = 'columns', // default mode
   Rows = 'rows',
 }
+
 export interface LabelsToFieldsOptions {
   mode?: LabelsToFieldsMode;
 
-  /** When empty, this will keep all labels, otherise it will keep only labels matching the value */
+  /** When empty, this will keep all labels, otherwise it will keep only labels matching the value */
   keepLabels?: string[];
 
   /**
@@ -52,7 +53,7 @@ export const labelsToFieldsTransformer: SynchronousDataTransformerInfo<LabelsToF
           ...field,
           config: {
             ...field.config,
-            // we need to clear thes for this transform as these can contain label names that we no longer want
+            // we need to clear these for this transform as these can contain label names that we no longer want
             displayName: undefined,
             displayNameFromDS: undefined,
           },

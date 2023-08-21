@@ -1,3 +1,15 @@
+import { isNumber } from 'lodash';
+import Feature, { FeatureLike } from 'ol/Feature';
+import Map from 'ol/Map';
+import { LineString, Point, SimpleGeometry } from 'ol/geom';
+import { Group as LayerGroup } from 'ol/layer';
+import VectorLayer from 'ol/layer/Vector';
+import VectorSource from 'ol/source/Vector';
+import { Fill, Stroke, Style, Circle } from 'ol/style';
+import FlowLine from 'ol-ext/style/FlowLine';
+import { Subscription, throttleTime } from 'rxjs';
+import tinycolor from 'tinycolor2';
+
 import {
   MapLayerRegistryItem,
   PanelData,
@@ -9,28 +21,15 @@ import {
   DataFrame,
   TIME_SERIES_TIME_FIELD_NAME,
 } from '@grafana/data';
-
-import { MapLayerOptions, FrameGeometrySourceMode } from '@grafana/schema';
-
-import Map from 'ol/Map';
-import { FeatureLike } from 'ol/Feature';
-import { Subscription, throttleTime } from 'rxjs';
-import { getGeometryField, getLocationMatchers } from 'app/features/geo/utils/location';
-import { defaultStyleConfig, StyleConfig } from '../../style/types';
-import { StyleEditor } from '../../editor/StyleEditor';
-import { getStyleConfigState } from '../../style/utils';
-import VectorLayer from 'ol/layer/Vector';
-import { isNumber } from 'lodash';
-import { routeStyle } from '../../style/markers';
-import { FrameVectorSource } from 'app/features/geo/utils/frameVectorSource';
-import { Group as LayerGroup } from 'ol/layer';
-import VectorSource from 'ol/source/Vector';
-import { Fill, Stroke, Style, Circle } from 'ol/style';
-import Feature from 'ol/Feature';
 import { alpha } from '@grafana/data/src/themes/colorManipulator';
-import { LineString, Point, SimpleGeometry } from 'ol/geom';
-import FlowLine from 'ol-ext/style/FlowLine';
-import tinycolor from 'tinycolor2';
+import { MapLayerOptions, FrameGeometrySourceMode } from '@grafana/schema';
+import { FrameVectorSource } from 'app/features/geo/utils/frameVectorSource';
+import { getGeometryField, getLocationMatchers } from 'app/features/geo/utils/location';
+
+import { StyleEditor } from '../../editor/StyleEditor';
+import { routeStyle } from '../../style/markers';
+import { defaultStyleConfig, StyleConfig } from '../../style/types';
+import { getStyleConfigState } from '../../style/utils';
 import { getStyleDimension, isSegmentVisible } from '../../utils/utils';
 
 // Configuration options for Circle overlays
@@ -70,7 +69,7 @@ export const routeLayer: MapLayerRegistryItem<RouteConfig> = {
   description: 'Render data points as a route',
   isBaseMap: false,
   showLocation: true,
-  state: PluginState.alpha,
+  state: PluginState.beta,
 
   /**
    * Function that configures transformation and returns a transformer
@@ -87,7 +86,7 @@ export const routeLayer: MapLayerRegistryItem<RouteConfig> = {
     const location = await getLocationMatchers(options.location);
     const source = new FrameVectorSource(location);
     const vectorLayer = new VectorLayer({ source });
-    const hasArrows = config.arrow == 1 || config.arrow == -1;
+    const hasArrows = config.arrow === 1 || config.arrow === -1;
 
     if (!style.fields && !hasArrows) {
       // Set a global style
@@ -132,7 +131,7 @@ export const routeLayer: MapLayerRegistryItem<RouteConfig> = {
 
               const flowStyle = new FlowLine({
                 visible: true,
-                lineCap: config.arrow == 0 ? 'round' : 'square',
+                lineCap: config.arrow === 0 ? 'round' : 'square',
                 color: color1,
                 color2: color2,
                 width: (dims.size && dims.size.get(startIndex)) ?? style.base.size,
@@ -318,14 +317,14 @@ function findNearestTimeIndex(timestamps: number[], time: number): number | null
   if (time < timestamps[probableIdx]) {
     for (let i = probableIdx; i > 0; i--) {
       if (time > timestamps[i]) {
-        return i;
+        return i < lastIdx ? i + 1 : lastIdx;
       }
     }
     return 0;
   } else {
     for (let i = probableIdx; i < lastIdx; i++) {
       if (time < timestamps[i]) {
-        return i;
+        return i > 0 ? i - 1 : 0;
       }
     }
     return lastIdx;

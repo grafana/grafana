@@ -11,6 +11,9 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
+	"github.com/grafana/grafana/pkg/plugins/oauth"
+	"github.com/grafana/grafana/pkg/plugins/plugindef"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -181,9 +184,9 @@ func TestInitializer_tracingEnvironmentVariables(t *testing.T) {
 				assert.Len(t, envVars, 5)
 				assert.Equal(t, "GF_PLUGIN_TRACING=true", envVars[0])
 				assert.Equal(t, "GF_VERSION=", envVars[1])
-				assert.Equal(t, "GF_PLUGIN_VERSION=1.0.0", envVars[2])
-				assert.Equal(t, "GF_INSTANCE_OTLP_ADDRESS=127.0.0.1:4317", envVars[3])
-				assert.Equal(t, "GF_INSTANCE_OTLP_PROPAGATION=w3c", envVars[4])
+				assert.Equal(t, "GF_INSTANCE_OTLP_ADDRESS=127.0.0.1:4317", envVars[2])
+				assert.Equal(t, "GF_INSTANCE_OTLP_PROPAGATION=w3c", envVars[3])
+				assert.Equal(t, "GF_PLUGIN_VERSION=1.0.0", envVars[4])
 			},
 		},
 		{
@@ -204,9 +207,9 @@ func TestInitializer_tracingEnvironmentVariables(t *testing.T) {
 				assert.Len(t, envVars, 5)
 				assert.Equal(t, "GF_PLUGIN_TRACING=true", envVars[0])
 				assert.Equal(t, "GF_VERSION=", envVars[1])
-				assert.Equal(t, "GF_PLUGIN_VERSION=1.0.0", envVars[2])
-				assert.Equal(t, "GF_INSTANCE_OTLP_ADDRESS=127.0.0.1:4317", envVars[3])
-				assert.Equal(t, "GF_INSTANCE_OTLP_PROPAGATION=w3c,jaeger", envVars[4])
+				assert.Equal(t, "GF_INSTANCE_OTLP_ADDRESS=127.0.0.1:4317", envVars[2])
+				assert.Equal(t, "GF_INSTANCE_OTLP_PROPAGATION=w3c,jaeger", envVars[3])
+				assert.Equal(t, "GF_PLUGIN_VERSION=1.0.0", envVars[4])
 			},
 		},
 		{
@@ -301,4 +304,44 @@ func TestInitializer_tracingEnvironmentVariables(t *testing.T) {
 			tc.exp(t, envVars)
 		})
 	}
+}
+
+func TestInitializer_oauthEnvVars(t *testing.T) {
+	t.Run("backend datasource with oauth registration", func(t *testing.T) {
+		p := &plugins.Plugin{
+			JSONData: plugins.JSONData{
+				ID:                          "test",
+				ExternalServiceRegistration: &plugindef.ExternalServiceRegistration{},
+			},
+			ExternalService: &oauth.ExternalService{
+				ClientID:     "clientID",
+				ClientSecret: "clientSecret",
+				PrivateKey:   "privatePem",
+			},
+		}
+
+		envVarsProvider := NewProvider(&config.Cfg{
+			GrafanaAppURL: "https://myorg.com/",
+			Features:      featuremgmt.WithFeatures(featuremgmt.FlagExternalServiceAuth),
+		}, nil)
+		envVars := envVarsProvider.Get(context.Background(), p)
+		assert.Equal(t, "GF_VERSION=", envVars[0])
+		assert.Equal(t, "GF_APP_URL=https://myorg.com/", envVars[1])
+		assert.Equal(t, "GF_PLUGIN_APP_CLIENT_ID=clientID", envVars[2])
+		assert.Equal(t, "GF_PLUGIN_APP_CLIENT_SECRET=clientSecret", envVars[3])
+		assert.Equal(t, "GF_PLUGIN_APP_PRIVATE_KEY=privatePem", envVars[4])
+	})
+}
+
+func TestInitalizer_awsEnvVars(t *testing.T) {
+	t.Run("backend datasource with aws settings", func(t *testing.T) {
+		p := &plugins.Plugin{}
+		envVarsProvider := NewProvider(&config.Cfg{
+			AWSAssumeRoleEnabled:    true,
+			AWSAllowedAuthProviders: []string{"grafana_assume_role", "keys"},
+			AWSExternalId:           "mock_external_id",
+		}, nil)
+		envVars := envVarsProvider.Get(context.Background(), p)
+		assert.ElementsMatch(t, []string{"GF_VERSION=", "AWS_AUTH_AssumeRoleEnabled=true", "AWS_AUTH_AllowedAuthProviders=grafana_assume_role,keys", "AWS_AUTH_EXTERNAL_ID=mock_external_id"}, envVars)
+	})
 }

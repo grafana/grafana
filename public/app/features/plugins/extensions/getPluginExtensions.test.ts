@@ -48,6 +48,52 @@ describe('getPluginExtensions()', () => {
     );
   });
 
+  test('should not limit the number of extensions per plugin by default', () => {
+    // Registering 3 extensions for the same plugin for the same placement
+    const registry = createPluginExtensionRegistry([{ pluginId, extensionConfigs: [link1, link1, link1, link2] }]);
+    const { extensions } = getPluginExtensions({ registry, extensionPointId: extensionPoint1 });
+
+    expect(extensions).toHaveLength(3);
+    expect(extensions[0]).toEqual(
+      expect.objectContaining({
+        pluginId,
+        type: PluginExtensionTypes.link,
+        title: link1.title,
+        description: link1.description,
+        path: link1.path,
+      })
+    );
+  });
+
+  test('should be possible to limit the number of extensions per plugin for a given placement', () => {
+    const registry = createPluginExtensionRegistry([
+      { pluginId, extensionConfigs: [link1, link1, link1, link2] },
+      {
+        pluginId: 'my-plugin',
+        extensionConfigs: [
+          { ...link1, path: '/a/my-plugin/declare-incident' },
+          { ...link1, path: '/a/my-plugin/declare-incident' },
+          { ...link1, path: '/a/my-plugin/declare-incident' },
+          { ...link2, path: '/a/my-plugin/declare-incident' },
+        ],
+      },
+    ]);
+
+    // Limit to 1 extension per plugin
+    const { extensions } = getPluginExtensions({ registry, extensionPointId: extensionPoint1, limitPerPlugin: 1 });
+
+    expect(extensions).toHaveLength(2);
+    expect(extensions[0]).toEqual(
+      expect.objectContaining({
+        pluginId,
+        type: PluginExtensionTypes.link,
+        title: link1.title,
+        description: link1.description,
+        path: link1.path,
+      })
+    );
+  });
+
   test('should return with an empty list if there are no extensions registered for a placement yet', () => {
     const registry = createPluginExtensionRegistry([{ pluginId, extensionConfigs: [link1, link2] }]);
     const { extensions } = getPluginExtensions({ registry, extensionPointId: 'placement-with-no-extensions' });
@@ -70,6 +116,8 @@ describe('getPluginExtensions()', () => {
       title: 'Updated title',
       description: 'Updated description',
       path: `/a/${pluginId}/updated-path`,
+      icon: 'search',
+      category: 'Machine Learning',
     }));
 
     const registry = createPluginExtensionRegistry([{ pluginId, extensionConfigs: [link2] }]);
@@ -82,20 +130,34 @@ describe('getPluginExtensions()', () => {
     expect(extension.title).toBe('Updated title');
     expect(extension.description).toBe('Updated description');
     expect(extension.path).toBe(`/a/${pluginId}/updated-path`);
+    expect(extension.icon).toBe('search');
+    expect(extension.category).toBe('Machine Learning');
   });
 
-  test('should hide the extension if it tries to override not-allowed properties with the configure() function', () => {
+  test('should ignore restricted properties passed via the configure() function', () => {
     link2.configure = jest.fn().mockImplementation(() => ({
       // The following props are not allowed to override
       type: 'unknown-type',
       pluginId: 'another-plugin',
+
+      // Unknown properties
+      testing: false,
+
+      // The following props are allowed to override
+      title: 'test',
     }));
 
     const registry = createPluginExtensionRegistry([{ pluginId, extensionConfigs: [link2] }]);
     const { extensions } = getPluginExtensions({ registry, extensionPointId: extensionPoint2 });
+    const [extension] = extensions;
 
     expect(link2.configure).toHaveBeenCalledTimes(1);
-    expect(extensions).toHaveLength(0);
+    expect(extensions).toHaveLength(1);
+    expect(extension.title).toBe('test');
+    expect(extension.type).toBe('link');
+    expect(extension.pluginId).toBe('grafana-basic-app');
+    //@ts-ignore
+    expect(extension.testing).toBeUndefined();
   });
   test('should pass a read only context to the configure() function', () => {
     const context = { title: 'New title from the context!' };

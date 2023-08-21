@@ -17,7 +17,7 @@ export function applyQueryDefaults(q?: SQLQuery): SQLQuery {
     format: q?.format !== undefined ? q.format : QueryFormat.Table,
     rawSql: q?.rawSql || '',
     editorMode,
-    sql: q?.sql || {
+    sql: q?.sql ?? {
       columns: [createFunctionField()],
       groupBy: [setGroupByField()],
       limit: 50,

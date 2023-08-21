@@ -40,6 +40,7 @@ type store interface {
 	Search(context.Context, *user.SearchUsersQuery) (*user.SearchUserQueryResult, error)
 
 	Count(ctx context.Context) (int64, error)
+	CountUserAccountsWithEmptyRole(ctx context.Context) (int64, error)
 }
 
 type sqlStore struct {
@@ -368,6 +369,9 @@ func (ss *sqlStore) ChangePassword(ctx context.Context, cmd *user.ChangeUserPass
 }
 
 func (ss *sqlStore) UpdateLastSeenAt(ctx context.Context, cmd *user.UpdateUserLastSeenAtCommand) error {
+	if cmd.UserID <= 0 {
+		return user.ErrUpdateInvalidID
+	}
 	return ss.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		user := user.User{
 			ID:         cmd.UserID,
@@ -396,7 +400,6 @@ func (ss *sqlStore) GetSignedInUser(ctx context.Context, query *user.GetSignedIn
 		u.is_disabled         as is_disabled,
 		u.help_flags1         as help_flags1,
 		u.last_seen_at        as last_seen_at,
-		(SELECT COUNT(*) FROM org_user where org_user.user_id = u.id) as org_count,
 		org.name              as org_name,
 		org_user.role         as org_role,
 		org.id                as org_id,
@@ -422,6 +425,8 @@ func (ss *sqlStore) GetSignedInUser(ctx context.Context, query *user.GetSignedIn
 			} else {
 				sess.SQL(rawSQL+"WHERE u.email=?", query.Email)
 			}
+		default:
+			return user.ErrNoUniqueID
 		}
 		has, err := sess.Get(&signedInUser)
 		if err != nil {
@@ -526,6 +531,27 @@ func (ss *sqlStore) Count(ctx context.Context) (int64, error) {
 		return nil
 	})
 	return r.Count, err
+}
+
+func (ss *sqlStore) CountUserAccountsWithEmptyRole(ctx context.Context) (int64, error) {
+	sb := &db.SQLBuilder{}
+	sb.Write("SELECT ")
+	sb.Write(`(SELECT COUNT (*) from ` + ss.dialect.Quote("org_user") + ` AS ou ` +
+		`LEFT JOIN ` + ss.dialect.Quote("user") + ` AS u ON u.id = ou.user_id ` +
+		`WHERE ou.role =? ` +
+		`AND u.is_service_account = ` + ss.dialect.BooleanStr(false) + ` ` +
+		`AND u.is_disabled = ` + ss.dialect.BooleanStr(false) + `) AS user_accounts_with_no_role`)
+	sb.AddParams("None")
+
+	var countStats int64
+	if err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
+		_, err := sess.SQL(sb.GetSQLString(), sb.GetParams()...).Get(&countStats)
+		return err
+	}); err != nil {
+		return -1, err
+	}
+
+	return countStats, nil
 }
 
 // validateOneAdminLeft validate that there is an admin user left

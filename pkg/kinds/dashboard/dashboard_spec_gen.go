@@ -26,6 +26,25 @@ const (
 	LinkTypeLink       LinkType = "link"
 )
 
+// Defines values for FieldColorModeId.
+const (
+	FieldColorModeIdContinuousBlPu       FieldColorModeId = "continuous-BlPu"
+	FieldColorModeIdContinuousBlYlRd     FieldColorModeId = "continuous-BlYlRd"
+	FieldColorModeIdContinuousBlues      FieldColorModeId = "continuous-blues"
+	FieldColorModeIdContinuousGrYlRd     FieldColorModeId = "continuous-GrYlRd"
+	FieldColorModeIdContinuousGreens     FieldColorModeId = "continuous-greens"
+	FieldColorModeIdContinuousPurples    FieldColorModeId = "continuous-purples"
+	FieldColorModeIdContinuousRdYlGr     FieldColorModeId = "continuous-RdYlGr"
+	FieldColorModeIdContinuousReds       FieldColorModeId = "continuous-reds"
+	FieldColorModeIdContinuousYlBl       FieldColorModeId = "continuous-YlBl"
+	FieldColorModeIdContinuousYlRd       FieldColorModeId = "continuous-YlRd"
+	FieldColorModeIdFixed                FieldColorModeId = "fixed"
+	FieldColorModeIdPaletteClassic       FieldColorModeId = "palette-classic"
+	FieldColorModeIdPaletteClassicByName FieldColorModeId = "palette-classic-by-name"
+	FieldColorModeIdShades               FieldColorModeId = "shades"
+	FieldColorModeIdThresholds           FieldColorModeId = "thresholds"
+)
+
 // Defines values for FieldColorSeriesByMode.
 const (
 	FieldColorSeriesByModeLast FieldColorSeriesByMode = "last"
@@ -41,15 +60,6 @@ const (
 // Defines values for HeatmapPanelType.
 const (
 	HeatmapPanelTypeHeatmap HeatmapPanelType = "heatmap"
-)
-
-// Defines values for LoadingState.
-const (
-	LoadingStateDone       LoadingState = "Done"
-	LoadingStateError      LoadingState = "Error"
-	LoadingStateLoading    LoadingState = "Loading"
-	LoadingStateNotStarted LoadingState = "NotStarted"
-	LoadingStateStreaming  LoadingState = "Streaming"
 )
 
 // Defines values for MappingType.
@@ -93,18 +103,22 @@ const (
 	SpecStyleLight SpecStyle = "light"
 )
 
-// Defines values for SpecialValueMapOptionsMatch.
-const (
-	SpecialValueMapOptionsMatchFalse SpecialValueMapOptionsMatch = "false"
-	SpecialValueMapOptionsMatchTrue  SpecialValueMapOptionsMatch = "true"
-)
-
 // Defines values for SpecialValueMapType.
 const (
 	SpecialValueMapTypeRange   SpecialValueMapType = "range"
 	SpecialValueMapTypeRegex   SpecialValueMapType = "regex"
 	SpecialValueMapTypeSpecial SpecialValueMapType = "special"
 	SpecialValueMapTypeValue   SpecialValueMapType = "value"
+)
+
+// Defines values for SpecialValueMatch.
+const (
+	SpecialValueMatchEmpty   SpecialValueMatch = "empty"
+	SpecialValueMatchFalse   SpecialValueMatch = "false"
+	SpecialValueMatchNan     SpecialValueMatch = "nan"
+	SpecialValueMatchNull    SpecialValueMatch = "null"
+	SpecialValueMatchNullNan SpecialValueMatch = "null+nan"
+	SpecialValueMatchTrue    SpecialValueMatch = "true"
 )
 
 // Defines values for ThresholdsMode.
@@ -128,6 +142,13 @@ const (
 	VariableHideN2 VariableHide = 2
 )
 
+// Defines values for VariableRefresh.
+const (
+	VariableRefreshN0 VariableRefresh = 0
+	VariableRefreshN1 VariableRefresh = 1
+	VariableRefreshN2 VariableRefresh = 2
+)
+
 // Defines values for VariableType.
 const (
 	VariableTypeAdhoc      VariableType = "adhoc"
@@ -140,8 +161,12 @@ const (
 	VariableTypeTextbox    VariableType = "textbox"
 )
 
-// TODO -- should not be a public interface on its own, but required for Veneer
+// Contains the list of annotations that are associated with the dashboard.
+// Annotations are used to overlay event markers and overlay event tags on graphs.
+// Grafana comes with a native annotation store and the ability to add annotation events directly from the graph panel or via the HTTP API.
+// See https://grafana.com/docs/grafana/latest/dashboards/build-dashboards/annotate-visualizations/
 type AnnotationContainer struct {
+	// List of annotations
 	List []AnnotationQuery `json:"list,omitempty"`
 }
 
@@ -252,51 +277,98 @@ type DataSourceRef struct {
 	Uid *string `json:"uid,omitempty"`
 }
 
-// TODO docs
+// Transformations allow to manipulate data returned by a query before the system applies a visualization.
+// Using transformations you can: rename fields, join time series data, perform mathematical operations across queries,
+// use the output of one transformation as the input to another transformation, etc.
 type DataTransformerConfig struct {
 	// Disabled transformations are skipped
-	Disabled *bool          `json:"disabled,omitempty"`
-	Filter   *MatcherConfig `json:"filter,omitempty"`
+	Disabled *bool `json:"disabled,omitempty"`
+
+	// Matcher is a predicate configuration. Based on the config a set of field(s) or values is filtered in order to apply override / transformation.
+	// It comes with in id ( to resolve implementation from registry) and a configuration that’s specific to a particular matcher type.
+	Filter *MatcherConfig `json:"filter,omitempty"`
 
 	// Unique identifier of transformer
 	Id string `json:"id"`
 
 	// Options to be passed to the transformer
 	// Valid options depend on the transformer id
-	Options interface{} `json:"options"`
+	Options any `json:"options"`
 }
 
 // DynamicConfigValue defines model for DynamicConfigValue.
 type DynamicConfigValue struct {
-	Id    string       `json:"id"`
-	Value *interface{} `json:"value,omitempty"`
+	Id    string `json:"id"`
+	Value *any   `json:"value,omitempty"`
 }
 
-// TODO docs
+// Map a field to a color.
 type FieldColor struct {
-	// Stores the fixed color value if mode is fixed
+	// The fixed color value for fixed or shades color modes.
 	FixedColor *string `json:"fixedColor,omitempty"`
 
-	// The main color scheme mode
-	Mode string `json:"mode"`
+	// Color mode for a field. You can specify a single color, or select a continuous (gradient) color schemes, based on a value.
+	// Continuous color interpolates a color using the percentage of a value relative to min and max.
+	// Accepted values are:
+	// `thresholds`: From thresholds. Informs Grafana to take the color from the matching threshold
+	// `palette-classic`: Classic palette. Grafana will assign color by looking up a color in a palette by series index. Useful for Graphs and pie charts and other categorical data visualizations
+	// `palette-classic-by-name`: Classic palette (by name). Grafana will assign color by looking up a color in a palette by series name. Useful for Graphs and pie charts and other categorical data visualizations
+	// `continuous-GrYlRd`: ontinuous Green-Yellow-Red palette mode
+	// `continuous-RdYlGr`: Continuous Red-Yellow-Green palette mode
+	// `continuous-BlYlRd`: Continuous Blue-Yellow-Red palette mode
+	// `continuous-YlRd`: Continuous Yellow-Red palette mode
+	// `continuous-BlPu`: Continuous Blue-Purple palette mode
+	// `continuous-YlBl`: Continuous Yellow-Blue palette mode
+	// `continuous-blues`: Continuous Blue palette mode
+	// `continuous-reds`: Continuous Red palette mode
+	// `continuous-greens`: Continuous Green palette mode
+	// `continuous-purples`: Continuous Purple palette mode
+	// `shades`: Shades of a single color. Specify a single color, useful in an override rule.
+	// `fixed`: Fixed color mode. Specify a single color, useful in an override rule.
+	Mode FieldColorModeId `json:"mode"`
 
-	// TODO docs
+	// Defines how to assign a series color from "by value" color schemes. For example for an aggregated data points like a timeseries, the color can be assigned by the min, max or last value.
 	SeriesBy *FieldColorSeriesByMode `json:"seriesBy,omitempty"`
 }
 
-// TODO docs
+// Color mode for a field. You can specify a single color, or select a continuous (gradient) color schemes, based on a value.
+// Continuous color interpolates a color using the percentage of a value relative to min and max.
+// Accepted values are:
+// `thresholds`: From thresholds. Informs Grafana to take the color from the matching threshold
+// `palette-classic`: Classic palette. Grafana will assign color by looking up a color in a palette by series index. Useful for Graphs and pie charts and other categorical data visualizations
+// `palette-classic-by-name`: Classic palette (by name). Grafana will assign color by looking up a color in a palette by series name. Useful for Graphs and pie charts and other categorical data visualizations
+// `continuous-GrYlRd`: ontinuous Green-Yellow-Red palette mode
+// `continuous-RdYlGr`: Continuous Red-Yellow-Green palette mode
+// `continuous-BlYlRd`: Continuous Blue-Yellow-Red palette mode
+// `continuous-YlRd`: Continuous Yellow-Red palette mode
+// `continuous-BlPu`: Continuous Blue-Purple palette mode
+// `continuous-YlBl`: Continuous Yellow-Blue palette mode
+// `continuous-blues`: Continuous Blue palette mode
+// `continuous-reds`: Continuous Red palette mode
+// `continuous-greens`: Continuous Green palette mode
+// `continuous-purples`: Continuous Purple palette mode
+// `shades`: Shades of a single color. Specify a single color, useful in an override rule.
+// `fixed`: Fixed color mode. Specify a single color, useful in an override rule.
+type FieldColorModeId string
+
+// Defines how to assign a series color from "by value" color schemes. For example for an aggregated data points like a timeseries, the color can be assigned by the min, max or last value.
 type FieldColorSeriesByMode string
 
-// FieldConfig defines model for FieldConfig.
+// The data model used in Grafana, namely the data frame, is a columnar-oriented table structure that unifies both time series and table query results.
+// Each column within this structure is called a field. A field can represent a single time series or table column.
+// Field options allow you to change how the data is displayed in your visualizations.
 type FieldConfig struct {
-	// TODO docs
+	// Map a field to a color.
 	Color *FieldColor `json:"color,omitempty"`
 
 	// custom is specified by the FieldConfig field
 	// in panel plugin schemas.
-	Custom map[string]interface{} `json:"custom,omitempty"`
+	Custom map[string]any `json:"custom,omitempty"`
 
-	// Significant digits (for display)
+	// Specify the number of decimals Grafana includes in the rendered value.
+	// If you leave this field blank, Grafana automatically truncates the number of decimals based on the value.
+	// For example 1.1234 will display as 1.12 and 100.456 will display as 100.
+	// To display all decimals, set the unit to `String`.
 	Decimals *float32 `json:"decimals,omitempty"`
 
 	// Human readable field metadata
@@ -313,12 +385,16 @@ type FieldConfig struct {
 	Filterable *bool `json:"filterable,omitempty"`
 
 	// The behavior when clicking on a result
-	Links []interface{} `json:"links,omitempty"`
+	Links []any `json:"links,omitempty"`
 
 	// Convert input values into a display string
-	Mappings []interface{} `json:"mappings,omitempty"`
-	Max      *float32      `json:"max,omitempty"`
-	Min      *float32      `json:"min,omitempty"`
+	Mappings []any `json:"mappings,omitempty"`
+
+	// The maximum value used in percentage threshold calculations. Leave blank for auto calculation based on all series and fields.
+	Max *float32 `json:"max,omitempty"`
+
+	// The minimum value used in percentage threshold calculations. Leave blank for auto calculation based on all series and fields.
+	Min *float32 `json:"min,omitempty"`
 
 	// Alternative to empty string
 	NoValue *string `json:"noValue,omitempty"`
@@ -328,26 +404,47 @@ type FieldConfig struct {
 	//
 	// When defined, this value can be used as an identifier within the datasource scope, and
 	// may be used to update the results
-	Path       *string           `json:"path,omitempty"`
+	Path *string `json:"path,omitempty"`
+
+	// Thresholds configuration for the panel
 	Thresholds *ThresholdsConfig `json:"thresholds,omitempty"`
 
-	// Numeric Options
+	// Unit a field should use. The unit you select is applied to all fields except time.
+	// You can use the units ID availables in Grafana or a custom unit.
+	// Available units in Grafana: https://github.com/grafana/grafana/blob/main/packages/grafana-data/src/valueFormats/categories.ts
+	// As custom unit, you can use the following formats:
+	// `suffix:<suffix>` for custom unit that should go after value.
+	// `prefix:<prefix>` for custom unit that should go before value.
+	// `time:<format>` For custom date time formats type for example `time:YYYY-MM-DD`.
+	// `si:<base scale><unit characters>` for custom SI units. For example: `si: mF`. This one is a bit more advanced as you can specify both a unit and the source data scale. So if your source data is represented as milli (thousands of) something prefix the unit with that SI scale character.
+	// `count:<unit>` for a custom count unit.
+	// `currency:<unit>` for custom a currency unit.
 	Unit *string `json:"unit,omitempty"`
 
-	// True if data source can write a value to the path.  Auth/authz are supported separately
+	// True if data source can write a value to the path. Auth/authz are supported separately
 	Writeable *bool `json:"writeable,omitempty"`
 }
 
-// FieldConfigSource defines model for FieldConfigSource.
+// The data model used in Grafana, namely the data frame, is a columnar-oriented table structure that unifies both time series and table query results.
+// Each column within this structure is called a field. A field can represent a single time series or table column.
+// Field options allow you to change how the data is displayed in your visualizations.
 type FieldConfigSource struct {
-	Defaults  FieldConfig `json:"defaults"`
+	// The data model used in Grafana, namely the data frame, is a columnar-oriented table structure that unifies both time series and table query results.
+	// Each column within this structure is called a field. A field can represent a single time series or table column.
+	// Field options allow you to change how the data is displayed in your visualizations.
+	Defaults FieldConfig `json:"defaults"`
+
+	// Overrides are the options applied to specific fields overriding the defaults.
 	Overrides []struct {
+		// Matcher is a predicate configuration. Based on the config a set of field(s) or values is filtered in order to apply override / transformation.
+		// It comes with in id ( to resolve implementation from registry) and a configuration that’s specific to a particular matcher type.
 		Matcher    MatcherConfig        `json:"matcher"`
 		Properties []DynamicConfigValue `json:"properties"`
 	} `json:"overrides"`
 }
 
-// Support for legacy graph and heatmap panels.
+// Support for legacy graph panel.
+// @deprecated this a deprecated panel type
 type GraphPanel struct {
 	// @deprecated this is part of deprecated graph panel
 	Legend *struct {
@@ -361,25 +458,26 @@ type GraphPanel struct {
 // GraphPanelType defines model for GraphPanel.Type.
 type GraphPanelType string
 
-// GridPos defines model for GridPos.
+// Position and dimensions of a panel in the grid
 type GridPos struct {
-	// H Panel
+	// Panel height. The height is the number of rows from the top edge of the panel.
 	H int `json:"h"`
 
-	// Whether the panel is fixed within the grid
+	// Whether the panel is fixed within the grid. If true, the panel will not be affected by other panels' interactions
 	Static *bool `json:"static,omitempty"`
 
-	// W Panel
+	// Panel width. The width is the number of columns from the left edge of the panel.
 	W int `json:"w"`
 
-	// Panel x
+	// Panel x. The x coordinate is the number of columns from the left edge of the grid
 	X int `json:"x"`
 
-	// Panel y
+	// Panel y. The y coordinate is the number of rows from the top edge of the grid
 	Y int `json:"y"`
 }
 
-// HeatmapPanel defines model for HeatmapPanel.
+// Support for legacy heatmap panel.
+// @deprecated this a deprecated panel type
 type HeatmapPanel struct {
 	Type HeatmapPanelType `json:"type"`
 }
@@ -387,82 +485,91 @@ type HeatmapPanel struct {
 // HeatmapPanelType defines model for HeatmapPanel.Type.
 type HeatmapPanelType string
 
-// LibraryPanelRef defines model for LibraryPanelRef.
+// A library panel is a reusable panel that you can use in any dashboard.
+// When you make a change to a library panel, that change propagates to all instances of where the panel is used.
+// Library panels streamline reuse of panels across multiple dashboards.
 type LibraryPanelRef struct {
+	// Library panel name
 	Name string `json:"name"`
-	Uid  string `json:"uid"`
-}
 
-// LoadingState defines model for LoadingState.
-type LoadingState string
+	// Library panel uid
+	Uid string `json:"uid"`
+}
 
 // Supported value mapping types
+// `value`: Maps text values to a color or different display text and color. For example, you can configure a value mapping so that all instances of the value 10 appear as Perfection! rather than the number.
+// `range`: Maps numerical ranges to a display text and color. For example, if a value is within a certain range, you can configure a range value mapping to display Low or High rather than the number.
+// `regex`: Maps regular expressions to replacement text and a color. For example, if a value is www.example.com, you can configure a regex value mapping so that Grafana displays www and truncates the domain.
+// `special`: Maps special values like Null, NaN (not a number), and boolean values like true and false to a display text and color. See SpecialValueMatch to see the list of special values. For example, you can configure a special value mapping so that null values appear as N/A.
 type MappingType string
 
-// MatcherConfig defines model for MatcherConfig.
+// Matcher is a predicate configuration. Based on the config a set of field(s) or values is filtered in order to apply override / transformation.
+// It comes with in id ( to resolve implementation from registry) and a configuration that’s specific to a particular matcher type.
 type MatcherConfig struct {
-	Id      string       `json:"id"`
-	Options *interface{} `json:"options,omitempty"`
+	// The matcher id. This is used to find the matcher implementation from registry.
+	Id string `json:"id"`
+
+	// The matcher options. This is specific to the matcher implementation.
+	Options *any `json:"options,omitempty"`
 }
 
-// Dashboard panels. Panels are canonically defined inline
-// because they share a version timeline with the dashboard
-// schema; they do not evolve independently.
+// Dashboard panels are the basic visualization building blocks.
 type Panel struct {
-	// The datasource used in all targets.
-	Datasource *struct {
-		Type *string `json:"type,omitempty"`
-		Uid  *string `json:"uid,omitempty"`
-	} `json:"datasource,omitempty"`
+	// Ref to a DataSource instance
+	Datasource *DataSourceRef `json:"datasource,omitempty"`
 
-	// Description Description.
-	Description *string           `json:"description,omitempty"`
+	// Panel description.
+	Description *string `json:"description,omitempty"`
+
+	// The data model used in Grafana, namely the data frame, is a columnar-oriented table structure that unifies both time series and table query results.
+	// Each column within this structure is called a field. A field can represent a single time series or table column.
+	// Field options allow you to change how the data is displayed in your visualizations.
 	FieldConfig FieldConfigSource `json:"fieldConfig"`
-	GridPos     *GridPos          `json:"gridPos,omitempty"`
 
-	// TODO docs
+	// Position and dimensions of a panel in the grid
+	GridPos *GridPos `json:"gridPos,omitempty"`
+
+	// Unique identifier of the panel. Generated by Grafana when creating a new panel. It must be unique within a dashboard, but not globally.
 	Id *int `json:"id,omitempty"`
 
 	// The min time interval setting defines a lower limit for the $__interval and $__interval_ms variables.
 	// This value must be formatted as a number followed by a valid time
 	// identifier like: "40s", "3d", etc.
 	// See: https://grafana.com/docs/grafana/latest/panels-visualizations/query-transform-data/#query-options
-	Interval     *string          `json:"interval,omitempty"`
+	Interval *string `json:"interval,omitempty"`
+
+	// A library panel is a reusable panel that you can use in any dashboard.
+	// When you make a change to a library panel, that change propagates to all instances of where the panel is used.
+	// Library panels streamline reuse of panels across multiple dashboards.
 	LibraryPanel *LibraryPanelRef `json:"libraryPanel,omitempty"`
 
 	// Panel links.
-	// TODO fill this out - seems there are a couple variants?
 	Links []Link `json:"links,omitempty"`
 
 	// The maximum number of data points that the panel queries are retrieving.
 	MaxDataPoints *float32 `json:"maxDataPoints,omitempty"`
 
-	// options is specified by the Options field in panel
-	// plugin schemas.
-	Options map[string]interface{} `json:"options"`
+	// It depends on the panel plugin. They are specified by the Options field in panel plugin schemas.
+	Options map[string]any `json:"options"`
 
-	// FIXME this almost certainly has to be changed in favor of scuemata versions
+	// The version of the plugin that is used for this panel. This is used to find the plugin to display the panel and to migrate old panel configs.
 	PluginVersion *string `json:"pluginVersion,omitempty"`
 
 	// Name of template variable to repeat for.
 	Repeat *string `json:"repeat,omitempty"`
 
 	// Direction to repeat in if 'repeat' is set.
-	// "h" for horizontal, "v" for vertical.
-	// TODO this is probably optional
-	RepeatDirection PanelRepeatDirection `json:"repeatDirection"`
+	// `h` for horizontal, `v` for vertical.
+	RepeatDirection *PanelRepeatDirection `json:"repeatDirection,omitempty"`
 
 	// Id of the repeating panel.
 	RepeatPanelId *int64 `json:"repeatPanelId,omitempty"`
 
-	// TODO docs
+	// Tags for the panel.
 	Tags []string `json:"tags,omitempty"`
 
-	// TODO docs
+	// Depends on the panel plugin. See the plugin documentation for details.
 	Targets []Target `json:"targets,omitempty"`
-
-	// TODO docs - seems to be an old field from old dashboard alerts?
-	Thresholds []interface{} `json:"thresholds,omitempty"`
 
 	// Overrides the relative time range for individual panels,
 	// which causes them to be different than what is selected in
@@ -474,9 +581,6 @@ type Panel struct {
 	// See: https://grafana.com/docs/grafana/latest/panels-visualizations/query-transform-data/#query-options
 	TimeFrom *string `json:"timeFrom,omitempty"`
 
-	// TODO docs
-	TimeRegions []interface{} `json:"timeRegions,omitempty"`
-
 	// Overrides the time range for individual panels by shifting its start and end relative to the time picker.
 	// For example, you can shift the time range for the panel to be two hours earlier than the dashboard time picker setting `2h`.
 	// Note: Panel time overrides have no effect when the dashboard’s time range is absolute.
@@ -484,30 +588,37 @@ type Panel struct {
 	TimeShift *string `json:"timeShift,omitempty"`
 
 	// Panel title.
-	Title           *string                 `json:"title,omitempty"`
+	Title *string `json:"title,omitempty"`
+
+	// List of transformations that are applied to the panel data before rendering.
+	// When there are multiple transformations, Grafana applies them in the order they are listed.
+	// Each transformation creates a result set that then passes on to the next transformation in the processing pipeline.
 	Transformations []DataTransformerConfig `json:"transformations"`
 
 	// Whether to display the panel without a background.
 	Transparent bool `json:"transparent"`
 
-	// The panel plugin type id. May not be empty.
+	// The panel plugin type id. This is used to find the plugin to display the panel.
 	Type string `json:"type"`
 }
 
 // Direction to repeat in if 'repeat' is set.
-// "h" for horizontal, "v" for vertical.
-// TODO this is probably optional
+// `h` for horizontal, `v` for vertical.
 type PanelRepeatDirection string
 
-// Maps numeric ranges to a color or different display text
+// Maps numerical ranges to a display text and color.
+// For example, if a value is within a certain range, you can configure a range value mapping to display Low or High rather than the number.
 type RangeMap struct {
+	// Range to match against and the result to apply when the value is within the range
 	Options struct {
-		// From to and from are `number | null` in current ts, really not sure what to do
-		From float64 `json:"from"`
+		// Min value of the range. It can be null which means -Infinity
+		From *float64 `json:"from"`
 
-		// Result used as replacement text and color for RegexMap and SpecialValueMap
+		// Result used as replacement with text and color when the value matches
 		Result ValueMappingResult `json:"result"`
-		To     float64            `json:"to"`
+
+		// Max value of the range. It can be null which means +Infinity
+		To *float64 `json:"to"`
 	} `json:"options"`
 	Type RangeMapType `json:"type"`
 }
@@ -515,12 +626,15 @@ type RangeMap struct {
 // RangeMapType defines model for RangeMap.Type.
 type RangeMapType string
 
-// Maps regular expressions to replacement text and a color
+// Maps regular expressions to replacement text and a color.
+// For example, if a value is www.example.com, you can configure a regex value mapping so that Grafana displays www and truncates the domain.
 type RegexMap struct {
+	// Regular expression to match against and the result to apply when the value matches the regex
 	Options struct {
+		// Regular expression to match against
 		Pattern string `json:"pattern"`
 
-		// Result used as replacement text and color for RegexMap and SpecialValueMap
+		// Result used as replacement with text and color when the value matches
 		Result ValueMappingResult `json:"result"`
 	} `json:"options"`
 	Type RegexMapType `json:"type"`
@@ -531,24 +645,32 @@ type RegexMapType string
 
 // Row panel
 type RowPanel struct {
+	// Whether this row should be collapsed or not.
 	Collapsed bool `json:"collapsed"`
 
-	// Name of default datasource.
-	Datasource *struct {
-		Type *string `json:"type,omitempty"`
-		Uid  *string `json:"uid,omitempty"`
-	} `json:"datasource,omitempty"`
-	GridPos *GridPos      `json:"gridPos,omitempty"`
-	Id      int           `json:"id"`
-	Panels  []interface{} `json:"panels"`
+	// Ref to a DataSource instance
+	Datasource *DataSourceRef `json:"datasource,omitempty"`
+
+	// Position and dimensions of a panel in the grid
+	GridPos *GridPos `json:"gridPos,omitempty"`
+
+	// Unique identifier of the panel. Generated by Grafana when creating a new panel. It must be unique within a dashboard, but not globally.
+	Id int `json:"id"`
+
+	// List of panels in the row
+	Panels []any `json:"panels"`
 
 	// Name of template variable to repeat for.
-	Repeat *string      `json:"repeat,omitempty"`
-	Title  *string      `json:"title,omitempty"`
-	Type   RowPanelType `json:"type"`
+	Repeat *string `json:"repeat,omitempty"`
+
+	// Row title
+	Title *string `json:"title,omitempty"`
+
+	// The panel type
+	Type RowPanelType `json:"type"`
 }
 
-// RowPanelType defines model for RowPanel.Type.
+// The panel type
 type RowPanelType string
 
 // A dashboard snapshot shares an interactive dashboard publicly.
@@ -593,7 +715,10 @@ type Snapshot struct {
 
 // Spec defines model for Spec.
 type Spec struct {
-	// TODO -- should not be a public interface on its own, but required for Veneer
+	// Contains the list of annotations that are associated with the dashboard.
+	// Annotations are used to overlay event markers and overlay event tags on graphs.
+	// Grafana comes with a native annotation store and the ability to add annotation events directly from the graph panel or via the HTTP API.
+	// See https://grafana.com/docs/grafana/latest/dashboards/build-dashboards/annotate-visualizations/
 	Annotations *AnnotationContainer `json:"annotations,omitempty"`
 
 	// Description of dashboard.
@@ -614,29 +739,29 @@ type Spec struct {
 	GraphTooltip CursorSync `json:"graphTooltip"`
 
 	// Unique numeric identifier for the dashboard.
-	// TODO must isolate or remove identifiers local to a Grafana instance...?
-	Id *int64 `json:"id,omitempty"`
+	// `id` is internal to a specific Grafana instance. `uid` should be used to identify a dashboard across Grafana instances.
+	Id *int64 `json:"id"`
 
 	// Links with references to other dashboards or external websites.
 	Links []Link `json:"links,omitempty"`
 
 	// When set to true, the dashboard will redraw panels at an interval matching the pixel width.
-	// This will keep data "moving left" regardless of the query refresh rate.  This setting helps
+	// This will keep data "moving left" regardless of the query refresh rate. This setting helps
 	// avoid dashboards presenting stale live data
-	LiveNow *bool         `json:"liveNow,omitempty"`
-	Panels  []interface{} `json:"panels,omitempty"`
+	LiveNow *bool `json:"liveNow,omitempty"`
+
+	// List of dashboard panels
+	Panels []any `json:"panels,omitempty"`
 
 	// Refresh rate of dashboard. Represented via interval string, e.g. "5s", "1m", "1h", "1d".
-	Refresh *interface{} `json:"refresh,omitempty"`
+	Refresh *any `json:"refresh,omitempty"`
 
 	// This property should only be used in dashboards defined by plugins.  It is a quick check
-	// to see if the version has changed since the last time.  Unclear why using the version property
-	// is insufficient.
+	// to see if the version has changed since the last time.
 	Revision *int64 `json:"revision,omitempty"`
 
 	// Version of the JSON schema, incremented each time a Grafana update brings
 	// changes to said schema.
-	// TODO this is the existing schema numbering system. It will be replaced by Thema's themaVersion
 	SchemaVersion int `json:"schemaVersion"`
 
 	// A dashboard snapshot shares an interactive dashboard publicly.
@@ -647,13 +772,15 @@ type Spec struct {
 	Snapshot *Snapshot `json:"snapshot,omitempty"`
 
 	// Theme of dashboard.
+	// Default value: dark.
 	Style SpecStyle `json:"style"`
 
 	// Tags associated with dashboard.
 	Tags []string `json:"tags,omitempty"`
 
-	// Contains the list of configured template variables with their saved values along with some other metadata
+	// Configured template variables
 	Templating *struct {
+		// List of configured template variables with their saved values along with some other metadata
 		List []VariableModel `json:"list,omitempty"`
 	} `json:"templating,omitempty"`
 
@@ -699,26 +826,28 @@ type Spec struct {
 }
 
 // Theme of dashboard.
+// Default value: dark.
 type SpecStyle string
 
-// Maps special values like Null, NaN (not a number), and boolean values like true and false to a display text
-// and color
+// Maps special values like Null, NaN (not a number), and boolean values like true and false to a display text and color.
+// See SpecialValueMatch to see the list of special values.
+// For example, you can configure a special value mapping so that null values appear as N/A.
 type SpecialValueMap struct {
 	Options struct {
-		Match   SpecialValueMapOptionsMatch `json:"match"`
-		Pattern string                      `json:"pattern"`
+		// Special value types supported by the `SpecialValueMap`
+		Match SpecialValueMatch `json:"match"`
 
-		// Result used as replacement text and color for RegexMap and SpecialValueMap
+		// Result used as replacement with text and color when the value matches
 		Result ValueMappingResult `json:"result"`
 	} `json:"options"`
 	Type SpecialValueMapType `json:"type"`
 }
 
-// SpecialValueMapOptionsMatch defines model for SpecialValueMap.Options.Match.
-type SpecialValueMapOptionsMatch string
-
 // SpecialValueMapType defines model for SpecialValueMap.Type.
 type SpecialValueMapType string
+
+// Special value types supported by the `SpecialValueMap`
+type SpecialValueMatch string
 
 // Schema for panel targets is specified by datasource
 // plugins. We use a placeholder definition, which the Go
@@ -727,7 +856,7 @@ type SpecialValueMapType string
 // with types derived from plugins in the Instance variant.
 // When working directly from CUE, importers can extend this
 // type directly to achieve the same effect.
-type Target = map[string]interface{}
+type Target = map[string]any
 
 // User-defined value for a metric that triggers visual changes in a panel when this value is met or exceeded
 // They are used to conditionally style and color visualizations based on query results , and can be applied to most visualizations.
@@ -735,33 +864,27 @@ type Threshold struct {
 	// Color represents the color of the visual change that will occur in the dashboard when the threshold value is met or exceeded.
 	Color string `json:"color"`
 
-	// Threshold index, an old property that is not needed an should only appear in older dashboards
-	Index *int32 `json:"index,omitempty"`
-
-	// TODO docs
-	// TODO are the values here enumerable into a disjunction?
-	// Some seem to be listed in typescript comment
-	State *string `json:"state,omitempty"`
-
 	// Value represents a specified metric for the threshold, which triggers a visual change in the dashboard when this value is met or exceeded.
-	// FIXME the corresponding typescript field is required/non-optional, but nulls currently appear here when serializing -Infinity to JSON
-	Value *float32 `json:"value,omitempty"`
+	// Nulls currently appear here when serializing -Infinity to JSON.
+	Value *float32 `json:"value"`
 }
 
-// ThresholdsConfig defines model for ThresholdsConfig.
+// Thresholds configuration for the panel
 type ThresholdsConfig struct {
-	// Thresholds can either be absolute (specific number) or percentage (relative to min or max).
+	// Thresholds can either be `absolute` (specific number) or `percentage` (relative to min or max, it will be values between 0 and 1).
 	Mode ThresholdsMode `json:"mode"`
 
 	// Must be sorted by 'value', first value is always -Infinity
 	Steps []Threshold `json:"steps"`
 }
 
-// Thresholds can either be absolute (specific number) or percentage (relative to min or max).
+// Thresholds can either be `absolute` (specific number) or `percentage` (relative to min or max, it will be values between 0 and 1).
 type ThresholdsMode string
 
-// Maps text values to a color or different display text
+// Maps text values to a color or different display text and color.
+// For example, you can configure a value mapping so that all instances of the value 10 appear as Perfection! rather than the number.
 type ValueMap struct {
+	// Map with <value_to_match>: ValueMappingResult. For example: { "10": { text: "Perfection!", color: "green" } }
 	Options map[string]ValueMappingResult `json:"options"`
 	Type    ValueMapType                  `json:"type"`
 }
@@ -769,46 +892,107 @@ type ValueMap struct {
 // ValueMapType defines model for ValueMap.Type.
 type ValueMapType string
 
-// Result used as replacement text and color for RegexMap and SpecialValueMap
+// Result used as replacement with text and color when the value matches
 type ValueMappingResult struct {
+	// Text to use when the value matches
 	Color *string `json:"color,omitempty"`
-	Icon  *string `json:"icon,omitempty"`
-	Index *int32  `json:"index,omitempty"`
-	Text  *string `json:"text,omitempty"`
+
+	// Icon to display when the value matches. Only specific visualizations.
+	Icon *string `json:"icon,omitempty"`
+
+	// Position in the mapping array. Only used internally.
+	Index *int32 `json:"index,omitempty"`
+
+	// Text to display when the value matches
+	Text *string `json:"text,omitempty"`
 }
 
-// VariableHide defines model for VariableHide.
+// Determine if the variable shows on dashboard
+// Accepted values are 0 (show label and value), 1 (show value only), 2 (show nothing).
 type VariableHide int
 
-// FROM: packages/grafana-data/src/types/templateVars.ts
-// TODO docs
-// TODO what about what's in public/app/features/types.ts?
-// TODO there appear to be a lot of different kinds of [template] vars here? if so need a disjunction
+// A variable is a placeholder for a value. You can use variables in metric queries and in panel titles.
 type VariableModel struct {
+	// Format to use while fetching all values from data source, eg: wildcard, glob, regex, pipe, etc.
+	AllFormat *string `json:"allFormat,omitempty"`
+
+	// Option to be selected in a variable.
+	Current *VariableOption `json:"current,omitempty"`
+
 	// Ref to a DataSource instance
-	Datasource  *DataSourceRef         `json:"datasource,omitempty"`
-	Description *string                `json:"description,omitempty"`
-	Error       map[string]interface{} `json:"error,omitempty"`
-	Global      bool                   `json:"global"`
-	Hide        VariableHide           `json:"hide"`
-	Id          string                 `json:"id"`
-	Index       int                    `json:"index"`
-	Label       *string                `json:"label,omitempty"`
-	Name        string                 `json:"name"`
+	Datasource *DataSourceRef `json:"datasource,omitempty"`
 
-	// TODO: Move this into a separated QueryVariableModel type
-	Query        *interface{} `json:"query,omitempty"`
-	RootStateKey *string      `json:"rootStateKey,omitempty"`
-	SkipUrlSync  bool         `json:"skipUrlSync"`
-	State        LoadingState `json:"state"`
+	// Description of variable. It can be defined but `null`.
+	Description *string `json:"description,omitempty"`
 
-	// FROM: packages/grafana-data/src/types/templateVars.ts
-	// TODO docs
-	// TODO this implies some wider pattern/discriminated union, probably?
+	// Determine if the variable shows on dashboard
+	// Accepted values are 0 (show label and value), 1 (show value only), 2 (show nothing).
+	Hide VariableHide `json:"hide"`
+
+	// Unique numeric identifier for the variable.
+	Id string `json:"id"`
+
+	// Optional display name
+	Label *string `json:"label,omitempty"`
+
+	// Whether multiple values can be selected or not from variable value list
+	Multi *bool `json:"multi,omitempty"`
+
+	// Name of variable
+	Name string `json:"name"`
+
+	// Options that can be selected for a variable.
+	Options []VariableOption `json:"options,omitempty"`
+
+	// Query used to fetch values for a variable
+	Query *any `json:"query,omitempty"`
+
+	// Options to config when to refresh a variable
+	// `0`: Never refresh the variable
+	// `1`: Queries the data source every time the dashboard loads.
+	// `2`: Queries the data source when the dashboard time range changes.
+	Refresh *VariableRefresh `json:"refresh,omitempty"`
+
+	// Whether the variable value should be managed by URL query params or not
+	SkipUrlSync bool `json:"skipUrlSync"`
+
+	// Dashboard variable type
+	// `query`: Query-generated list of values such as metric names, server names, sensor IDs, data centers, and so on.
+	// `adhoc`: Key/value filters that are automatically added to all metric queries for a data source (Prometheus, Loki, InfluxDB, and Elasticsearch only).
+	// `constant`: 	Define a hidden constant.
+	// `datasource`: Quickly change the data source for an entire dashboard.
+	// `interval`: Interval variables represent time spans.
+	// `textbox`: Display a free text input field with an optional default value.
+	// `custom`: Define the variable options manually using a comma-separated list.
+	// `system`: Variables defined by Grafana. See: https://grafana.com/docs/grafana/latest/dashboards/variables/add-template-variables/#global-variables
 	Type VariableType `json:"type"`
 }
 
-// FROM: packages/grafana-data/src/types/templateVars.ts
-// TODO docs
-// TODO this implies some wider pattern/discriminated union, probably?
+// Option to be selected in a variable.
+type VariableOption struct {
+	// Whether the option is selected or not
+	Selected *bool `json:"selected,omitempty"`
+
+	// Text to be displayed for the option
+	Text any `json:"text"`
+
+	// Value of the option
+	Value any `json:"value"`
+}
+
+// Options to config when to refresh a variable
+// `0`: Never refresh the variable
+// `1`: Queries the data source every time the dashboard loads.
+// `2`: Queries the data source when the dashboard time range changes.
+type VariableRefresh int
+
+// Dashboard variable type
+// `query`: Query-generated list of values such as metric names, server names, sensor IDs, data centers, and so on.
+// `adhoc`: Key/value filters that are automatically added to all metric queries for a data source (Prometheus, Loki, InfluxDB, and Elasticsearch only).
+// `constant`: 	Define a hidden constant.
+// `datasource`: Quickly change the data source for an entire dashboard.
+// `interval`: Interval variables represent time spans.
+// `textbox`: Display a free text input field with an optional default value.
+// `custom`: Define the variable options manually using a comma-separated list.
+// `system`: Variables defined by Grafana. See: https://grafana.com/docs/grafana/latest/dashboards/variables/add-template-variables/#global-variables
 type VariableType string

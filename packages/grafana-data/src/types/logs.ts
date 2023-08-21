@@ -2,7 +2,7 @@ import { Observable } from 'rxjs';
 
 import { DataQuery } from '@grafana/schema';
 
-import { Labels } from './data';
+import { KeyValue, Labels } from './data';
 import { DataFrame } from './dataFrame';
 import { DataQueryRequest, DataQueryResponse } from './datasource';
 import { AbsoluteTimeRange } from './time';
@@ -54,6 +54,9 @@ export interface LogRowModel {
   // Index of the row in the dataframe. As log rows can be stitched from multiple dataFrames, this does not have to be
   // the same as rows final index when rendered.
   rowIndex: number;
+
+  // The value of the the dataframe's id field, if it exists
+  rowId?: string;
 
   // Full DataFrame from which we parsed this log.
   // TODO: refactor this so we do not need to pass whole dataframes in addition to also parsed data.
@@ -259,4 +262,43 @@ export const hasLogsContextUiSupport = (datasource: unknown): datasource is Data
   const withLogsSupport = datasource as DataSourceWithLogsContextSupport;
 
   return withLogsSupport.getLogRowContextUi !== undefined;
+};
+
+export interface QueryFilterOptions extends KeyValue<string> {}
+export interface ToggleFilterAction {
+  type: 'FILTER_FOR' | 'FILTER_OUT';
+  options: QueryFilterOptions;
+}
+/**
+ * Data sources that support toggleable filters through `toggleQueryFilter`, and displaying the active
+ * state of filters through `queryHasFilter`, in the Log Details component in Explore.
+ * @internal
+ * @alpha
+ */
+export interface DataSourceWithToggleableQueryFiltersSupport<TQuery extends DataQuery> {
+  /**
+   * Toggle filters on and off from query.
+   * If the filter is already present, it should be removed.
+   * If the opposite filter is present, it should be replaced.
+   */
+  toggleQueryFilter(query: TQuery, filter: ToggleFilterAction): TQuery;
+
+  /**
+   * Given a query, determine if it has a filter that matches the options.
+   */
+  queryHasFilter(query: TQuery, filter: QueryFilterOptions): boolean;
+}
+
+/**
+ * @internal
+ */
+export const hasToggleableQueryFiltersSupport = <TQuery extends DataQuery>(
+  datasource: unknown
+): datasource is DataSourceWithToggleableQueryFiltersSupport<TQuery> => {
+  return (
+    datasource !== null &&
+    typeof datasource === 'object' &&
+    'toggleQueryFilter' in datasource &&
+    'queryHasFilter' in datasource
+  );
 };

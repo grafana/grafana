@@ -10,15 +10,20 @@ keywords:
   - ldap
   - active directory
   - enterprise
+labels:
+  products:
+    - cloud
+    - enterprise
+menuTitle: Enhanced LDAP
 title: Configure enhanced LDAP integration
-weight: 900
+weight: 400
 ---
 
 # Configure enhanced LDAP integration
 
 The enhanced LDAP integration adds additional functionality on top of the [LDAP integration]({{< relref "../ldap" >}}) available in the open source edition of Grafana.
 
-> **Note:** Available in [Grafana Enterprise]({{< relref "../../../../introduction/grafana-enterprise" >}}) and [Grafana Cloud Advanced](/docs/grafana-cloud).
+> **Note:** Available in [Grafana Enterprise]({{< relref "../../../../introduction/grafana-enterprise" >}}) and [Grafana Cloud](/docs/grafana-cloud).
 > If you are a Grafana Cloud customer, please [open a support ticket in the Cloud Portal](/profile/org#support) to request this feature.
 
 > To control user access with role-based permissions, refer to [role-based access control]({{< relref "../../../../administration/roles-and-permissions/access-control" >}}).

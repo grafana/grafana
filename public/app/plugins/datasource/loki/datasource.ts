@@ -33,17 +33,20 @@ import {
   SupplementaryQueryOptions,
   TimeRange,
   LogRowContextOptions,
+  DataSourceWithToggleableQueryFiltersSupport,
+  ToggleFilterAction,
+  QueryFilterOptions,
+  renderLegendFormat,
 } from '@grafana/data';
 import { BackendSrvRequest, config, DataSourceWithBackend, FetchError } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
-import { queryLogsSample, queryLogsVolume } from 'app/core/logsModel';
 import { convertToWebSocketUrl } from 'app/core/utils/explore';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
 
 import { serializeParams } from '../../../core/utils/fetch';
+import { queryLogsSample, queryLogsVolume } from '../../../features/logs/logsModel';
 import { getLogLevelFromKey } from '../../../features/logs/utils';
-import { renderLegendFormat } from '../prometheus/legend';
 import { replaceVariables, returnVariables } from '../prometheus/querybuilder/shared/parsingUtils';
 
 import LanguageProvider from './LanguageProvider';
@@ -51,6 +54,7 @@ import { LiveStreams, LokiLiveTarget } from './LiveStreams';
 import { LogContextProvider } from './LogContextProvider';
 import { transformBackendResult } from './backendResultTransformer';
 import { LokiAnnotationsQueryEditor } from './components/AnnotationsQueryEditor';
+import { placeHolderScopedVars } from './components/monaco-query-field/monaco-completion-provider/validation';
 import { escapeLabelValueInSelector, isRegexSelector } from './languageUtils';
 import { labelNamesRegex, labelValuesRegex } from './migrations/variableQueryMigrations';
 import {
@@ -65,6 +69,8 @@ import {
   addLineFilter,
   findLastPosition,
   getLabelFilterPositions,
+  queryHasFilter,
+  removeLabelFromQuery,
 } from './modifyQuery';
 import { getQueryHints } from './queryHints';
 import { runSplitQuery } from './querySplitting';
@@ -74,7 +80,7 @@ import {
   getNormalizedLokiQuery,
   getStreamSelectorsFromQuery,
   isLogsQuery,
-  isValidQuery,
+  isQueryWithError,
   requestSupportsSplitting,
 } from './queryUtils';
 import { doLokiChannelStream } from './streaming';
@@ -128,12 +134,14 @@ export class LokiDatasource
     DataSourceWithLogsContextSupport,
     DataSourceWithSupplementaryQueriesSupport<LokiQuery>,
     DataSourceWithQueryImportSupport<LokiQuery>,
-    DataSourceWithQueryExportSupport<LokiQuery>
+    DataSourceWithQueryExportSupport<LokiQuery>,
+    DataSourceWithToggleableQueryFiltersSupport<LokiQuery>
 {
   private streams = new LiveStreams();
   languageProvider: LanguageProvider;
   logContextProvider: LogContextProvider;
   maxLines: number;
+  predefinedOperations: string;
 
   constructor(
     private instanceSettings: DataSourceInstanceSettings<LokiOptions>,
@@ -145,6 +153,7 @@ export class LokiDatasource
     this.languageProvider = new LanguageProvider(this);
     const settingsData = instanceSettings.jsonData || {};
     this.maxLines = parseInt(settingsData.maxLines ?? '0', 10) || DEFAULT_MAX_LINES;
+    this.predefinedOperations = settingsData.predefinedOperations ?? '';
     this.annotations = {
       QueryEditor: LokiAnnotationsQueryEditor,
     };
@@ -185,7 +194,7 @@ export class LokiDatasource
     switch (options.type) {
       case SupplementaryQueryType.LogsVolume:
         // it has to be a logs-producing range-query
-        isQuerySuitable = !!(query.expr && isLogsQuery(query.expr) && query.queryType === LokiQueryType.Range);
+        isQuerySuitable = !!(expr && isLogsQuery(expr) && normalizedQuery.queryType === LokiQueryType.Range);
         if (!isQuerySuitable) {
           return undefined;
         }
@@ -195,12 +204,12 @@ export class LokiDatasource
           refId: `${REF_ID_STARTER_LOG_VOLUME}${normalizedQuery.refId}`,
           queryType: LokiQueryType.Range,
           supportingQueryType: SupportingQueryType.LogsVolume,
-          expr: `sum by (level) (count_over_time(${expr}[$__interval]))`,
+          expr: `sum by (level) (count_over_time(${expr}[$__auto]))`,
         };
 
       case SupplementaryQueryType.LogsSample:
         // it has to be a metric query
-        isQuerySuitable = !!(query.expr && !isLogsQuery(query.expr));
+        isQuerySuitable = !!(expr && !isLogsQuery(expr));
         if (!isQuerySuitable) {
           return undefined;
         }
@@ -261,7 +270,11 @@ export class LokiDatasource
     };
 
     const streamQueries = fixedRequest.targets.filter((q) => q.queryType === LokiQueryType.Stream);
-    if (config.featureToggles.lokiLive && streamQueries.length > 0 && fixedRequest.rangeRaw?.to === 'now') {
+    if (
+      config.featureToggles.lokiExperimentalStreaming &&
+      streamQueries.length > 0 &&
+      fixedRequest.rangeRaw?.to === 'now'
+    ) {
       // this is still an in-development feature,
       // we do not support mixing stream-queries with normal-queries for now.
       const streamRequest = {
@@ -288,7 +301,11 @@ export class LokiDatasource
     }
 
     const startTime = new Date();
-    return this.runQuery(fixedRequest).pipe(tap((response) => trackQuery(response, fixedRequest, startTime)));
+    return this.runQuery(fixedRequest).pipe(
+      tap((response) =>
+        trackQuery(response, fixedRequest, startTime, { predefinedOperations: this.predefinedOperations })
+      )
+    );
   }
 
   runQuery(fixedRequest: DataQueryRequest<LokiQuery>) {
@@ -420,12 +437,26 @@ export class LokiDatasource
     }
 
     const res = await this.getResource(url, params, options);
-    return res.data ?? (res || []);
+    return res.data || [];
+  }
+
+  // We need a specific metadata method for stats endpoint as it does not return res.data,
+  // but it returns stats directly in res object.
+  async statsMetadataRequest(
+    url: string,
+    params?: Record<string, string | number>,
+    options?: Partial<BackendSrvRequest>
+  ): Promise<QueryStats> {
+    if (url.startsWith('/')) {
+      throw new Error(`invalid metadata request url: ${url}`);
+    }
+
+    return await this.getResource(url, params, options);
   }
 
   async getQueryStats(query: string): Promise<QueryStats | undefined> {
     // if query is invalid, clear stats, and don't request
-    if (!isValidQuery(query)) {
+    if (isQueryWithError(this.interpolateString(query, placeHolderScopedVars))) {
       return undefined;
     }
 
@@ -436,7 +467,7 @@ export class LokiDatasource
 
     for (const labelMatcher of labelMatchers) {
       try {
-        const data = await this.metadataRequest(
+        const data = await this.statsMetadataRequest(
           'index/stats',
           { query: labelMatcher, start, end },
           { showErrorAlert: false }
@@ -544,7 +575,7 @@ export class LokiDatasource
 
   async getDataSamples(query: LokiQuery): Promise<DataFrame[]> {
     // Currently works only for logs sample
-    if (!isValidQuery(query.expr) || !isLogsQuery(query.expr)) {
+    if (!isLogsQuery(query.expr) || isQueryWithError(this.interpolateString(query.expr, placeHolderScopedVars))) {
       return [];
     }
 
@@ -582,6 +613,48 @@ export class LokiDatasource
 
     const escapedValues = lodashMap(value, lokiSpecialRegexEscape);
     return escapedValues.join('|');
+  }
+
+  toggleQueryFilter(query: LokiQuery, filter: ToggleFilterAction): LokiQuery {
+    let expression = query.expr ?? '';
+    switch (filter.type) {
+      case 'FILTER_FOR': {
+        if (filter.options?.key && filter.options?.value) {
+          const value = escapeLabelValueInSelector(filter.options.value);
+
+          // This gives the user the ability to toggle a filter on and off.
+          expression = queryHasFilter(expression, filter.options.key, '=', value)
+            ? removeLabelFromQuery(expression, filter.options.key, '=', value)
+            : addLabelToQuery(expression, filter.options.key, '=', value);
+        }
+        break;
+      }
+      case 'FILTER_OUT': {
+        if (filter.options?.key && filter.options?.value) {
+          const value = escapeLabelValueInSelector(filter.options.value);
+
+          /**
+           * If there is a filter with the same key and value, remove it.
+           * This prevents the user from seeing no changes in the query when they apply
+           * this filter.
+           */
+          if (queryHasFilter(expression, filter.options.key, '=', value)) {
+            expression = removeLabelFromQuery(expression, filter.options.key, '=', value);
+          }
+
+          expression = addLabelToQuery(expression, filter.options.key, '!=', value);
+        }
+        break;
+      }
+      default:
+        break;
+    }
+    return { ...query, expr: expression };
+  }
+
+  queryHasFilter(query: LokiQuery, filter: QueryFilterOptions): boolean {
+    let expression = query.expr ?? '';
+    return queryHasFilter(expression, filter.key, '=', filter.value);
   }
 
   modifyQuery(query: LokiQuery, action: QueryFixAction): LokiQuery {
@@ -813,8 +886,9 @@ export class LokiDatasource
 
   // Used when running queries through backend
   applyTemplateVariables(target: LokiQuery, scopedVars: ScopedVars): LokiQuery {
-    // We want to interpolate these variables on backend
-    const { __interval, __interval_ms, ...rest } = scopedVars || {};
+    // We want to interpolate these variables on backend because we support using them in
+    // alerting/ML queries and we want to have consistent interpolation for all queries
+    const { __auto, __interval, __interval_ms, __range, __range_s, __range_ms, ...rest } = scopedVars || {};
 
     const exprWithAdHoc = this.addAdHocFilters(target.expr);
 

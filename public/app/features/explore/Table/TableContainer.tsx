@@ -1,18 +1,23 @@
 import React, { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
-import { ValueLinkConfig, applyFieldOverrides, TimeZone, SplitOpen, DataFrame, LoadingState } from '@grafana/data';
+import { applyFieldOverrides, TimeZone, SplitOpen, DataFrame, LoadingState, FieldType } from '@grafana/data';
 import { Table, AdHocFilterItem, PanelChrome } from '@grafana/ui';
 import { config } from 'app/core/config';
+import {
+  hasDeprecatedParentRowIndex,
+  migrateFromParentRowIndexToNestedFrames,
+} from 'app/plugins/panel/table/migrations';
 import { StoreState } from 'app/types';
-import { ExploreId, ExploreItemState } from 'app/types/explore';
+import { ExploreItemState } from 'app/types/explore';
 
 import { MetaInfoText } from '../MetaInfoText';
-import { getFieldLinksForExplore } from '../utils/links';
+import { selectIsWaitingForData } from '../state/query';
+import { exploreDataLinkPostProcessorFactory } from '../utils/links';
 
 interface TableContainerProps {
   ariaLabel?: string;
-  exploreId: ExploreId;
+  exploreId: string;
   width: number;
   timeZone: TimeZone;
   onCellFilterAdded?: (filter: AdHocFilterItem) => void;
@@ -22,7 +27,8 @@ interface TableContainerProps {
 function mapStateToProps(state: StoreState, { exploreId }: TableContainerProps) {
   const explore = state.explore;
   const item: ExploreItemState = explore.panes[exploreId]!;
-  const { loading: loadingInState, tableResult, range } = item;
+  const { tableResult, range } = item;
+  const loadingInState = selectIsWaitingForData(exploreId);
   const loading = tableResult && tableResult.length > 0 ? false : loadingInState;
   return { loading, tableResult, range };
 }
@@ -32,27 +38,24 @@ const connector = connect(mapStateToProps, {});
 type Props = TableContainerProps & ConnectedProps<typeof connector>;
 
 export class TableContainer extends PureComponent<Props> {
-  getMainFrame(frames: DataFrame[] | null) {
-    return frames?.find((df) => df.meta?.custom?.parentRowIndex === undefined) || frames?.[0];
-  }
+  hasSubFrames = (data: DataFrame) => data.fields.some((f) => f.type === FieldType.nestedFrames);
 
-  getTableHeight() {
-    const { tableResult } = this.props;
-    const mainFrame = this.getMainFrame(tableResult);
-
-    if (!mainFrame || mainFrame.length === 0) {
+  getTableHeight(rowCount: number, hasSubFrames: boolean) {
+    if (rowCount === 0) {
       return 200;
     }
-
-    // tries to estimate table height
-    return Math.min(600, Math.max(mainFrame.length * 36, 300) + 40 + 46);
+    // tries to estimate table height, with a min of 300 and a max of 600
+    // if there are multiple tables, there is no min
+    return Math.min(600, Math.max(rowCount * 36, hasSubFrames ? 300 : 0) + 40 + 46);
   }
 
   render() {
     const { loading, onCellFilterAdded, tableResult, width, splitOpenFn, range, ariaLabel, timeZone } = this.props;
-    const height = this.getTableHeight();
 
-    let dataFrames = tableResult;
+    let dataFrames = hasDeprecatedParentRowIndex(tableResult)
+      ? migrateFromParentRowIndexToNestedFrames(tableResult)
+      : tableResult;
+    const dataLinkPostProcessor = exploreDataLinkPostProcessorFactory(splitOpenFn, range);
 
     if (dataFrames?.length) {
       dataFrames = applyFieldOverrides({
@@ -64,52 +67,43 @@ export class TableContainer extends PureComponent<Props> {
           defaults: {},
           overrides: [],
         },
+        dataLinkPostProcessor,
       });
-      // Bit of code smell here. We need to add links here to the frame modifying the frame on every render.
-      // Should work fine in essence but still not the ideal way to pass props. In logs container we do this
-      // differently and sidestep this getLinks API on a dataframe
-      for (const frame of dataFrames) {
-        for (const field of frame.fields) {
-          field.getLinks = (config: ValueLinkConfig) => {
-            return getFieldLinksForExplore({
-              field,
-              rowIndex: config.valueRowIndex!,
-              splitOpenFn,
-              range,
-              dataFrame: frame!,
-            });
-          };
-        }
-      }
     }
 
-    const mainFrame = this.getMainFrame(dataFrames);
-    const subFrames = dataFrames?.filter((df) => df.meta?.custom?.parentRowIndex !== undefined);
+    const frames = dataFrames?.filter(
+      (frame: DataFrame | undefined): frame is DataFrame => !!frame && frame.length !== 0
+    );
 
     return (
-      <PanelChrome
-        title="Table"
-        width={width}
-        height={height}
-        loadingState={loading ? LoadingState.Loading : undefined}
-      >
-        {(innerWidth, innerHeight) => (
-          <>
-            {mainFrame?.length ? (
-              <Table
-                ariaLabel={ariaLabel}
-                data={mainFrame}
-                subData={subFrames}
-                width={innerWidth}
-                height={innerHeight}
-                onCellFilterAdded={onCellFilterAdded}
-              />
-            ) : (
-              <MetaInfoText metaItems={[{ value: '0 series returned' }]} />
-            )}
-          </>
+      <>
+        {frames && frames.length === 0 && (
+          <PanelChrome title={'Table'} width={width} height={200}>
+            {() => <MetaInfoText metaItems={[{ value: '0 series returned' }]} />}
+          </PanelChrome>
         )}
-      </PanelChrome>
+        {frames &&
+          frames.length > 0 &&
+          frames.map((data, i) => (
+            <PanelChrome
+              key={data.refId || `table-${i}`}
+              title={dataFrames && dataFrames.length > 1 ? `Table - ${data.name || data.refId || i}` : 'Table'}
+              width={width}
+              height={this.getTableHeight(data.length, this.hasSubFrames(data))}
+              loadingState={loading ? LoadingState.Loading : undefined}
+            >
+              {(innerWidth, innerHeight) => (
+                <Table
+                  ariaLabel={ariaLabel}
+                  data={data}
+                  width={innerWidth}
+                  height={innerHeight}
+                  onCellFilterAdded={onCellFilterAdded}
+                />
+              )}
+            </PanelChrome>
+          ))}
+      </>
     );
   }
 }

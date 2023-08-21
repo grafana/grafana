@@ -65,10 +65,13 @@ export interface DashboardViewItem {
   icon?: string;
 
   parentUID?: string;
+  /** @deprecated Not used in new Browse UI */
   parentTitle?: string;
+  /** @deprecated Not used in new Browse UI */
   parentKind?: string;
 
   // Used only for psuedo-folders, such as Starred or Recent
+  /** @deprecated Not used in new Browse UI */
   itemsUIDs?: string[];
 
   // For enterprise sort options

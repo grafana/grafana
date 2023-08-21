@@ -6,34 +6,43 @@ keywords:
   - migration
   - plugin
   - documentation
-title: Migrating plugins from Grafana version 6.x to 7.x
-menutitle: v6.x to v7.x
+labels:
+  products:
+    - enterprise
+    - oss
+menuTitle: v6.x to v7.x
+title: Migrate plugins from Grafana version 6.x to 7.0
 weight: 2500
 ---
 
-# Migrating plugins from Grafana version 6.x to 7.0
+# Migrate plugins from Grafana version 6.x to 7.0
+
+Follow the instructions in this section to upgrade Grafana from version 6.x to 7.0.
 
 ## What's new in Grafana 7.0?
 
-Grafana 7.0 introduced a whole new plugin platform based on React. The new platform supersedes the previous Angular-based plugin platform.
+Grafana 7.0 introduced a whole new plugin platform based on React. This new platform supersedes the previous Angular-based plugin platform.
 
-Plugins built using Angular still work for the foreseeable future, but we encourage new plugin authors to develop with the new platform.
+Plugins built using Angular still work in the near term, but we strongly encourage new plugin authors to develop with the new platform.
 
 ### New data format
 
-Along with the move to React, the new plugin platform introduced a new internal data format called [data frames](data-frames.md).
+Along with the move to React, the new plugin platform introduced a new internal data format called [data frames]({{< relref "../../introduction-to-plugin-development/data-frames" >}}).
 
 Previously, data source plugins could send data either as time series or tables. With data frames, data sources can send any data in a table-like structure. This gives you more flexibility to visualize your data in Grafana.
 
 ### Improved TypeScript support
 
-While the previous Angular-based plugin SDK did support TypeScript, for the React platform, we’ve greatly improved the support. All our APIs are now TypeScript, which might require existing code to update to the new stricter type definitions. Grafana 7.0 also introduced several new APIs for plugin developers that take advantage of many of the new features in Grafana 7.0.
+Although the previous Angular-based plugin SDK supported TypeScript, we’ve greatly improved the support for the React platform. All our APIs are now written in TypeScript, which might require existing code to update to the new stricter type definitions. Grafana 7.0 also introduced several new APIs for plugin developers that take advantage of many of the new features in Grafana 7.0.
 
 ### Grafana Toolkit
 
 With Grafana 7.0, we released a new tool for making it easier to develop plugins. Before, you’d use Gulp, Grunt, or similar tools to generate the minified assets. Grafana Toolkit takes care of building and testing your plugin without complicated configuration files.
 
 For more information, refer to [@grafana/toolkit](https://www.npmjs.com/package/@grafana/toolkit).
+
+{{% admonition type="note" %}} As of Grafana 10.0, `@grafana/toolkit` is deprecated. It is replaced by the [`create-plugin`](https://grafana.github.io/plugin-tools/docs/get-started/) tool.
+{{% /admonition %}}
 
 ### Field options
 
@@ -43,7 +52,7 @@ For plugins prior to Grafana 7.0, all options are considered _Display options_. 
 
 ### Backend plugins
 
-While backend plugins were available as an experimental feature in previous versions of Grafana, the support has been greatly improved for Grafana 7. Backend plugins for Grafana 7.0 are backwards-compatible and will continue to work. However, the old backend plugin system has been deprecated, and we recommend that you use the new SDK for backend plugins.
+While backend plugins were available as an experimental feature in previous versions of Grafana, their support has been greatly improved for Grafana 7. Backend plugins for Grafana 7.0 are backwards-compatible and will continue to work. However, the old backend plugin system has been deprecated, and we recommend that you use the new SDK for backend plugins.
 
 Since Grafana 7.0 introduced signing of backend plugins, community plugins won’t load by default if they’re unsigned.
 
@@ -74,9 +83,11 @@ async query(options: DataQueryRequest<MyQuery>): Promise<DataQueryResponse> {
 
 ## Troubleshoot plugin migration
 
-As of Grafana 7.0, backend plugins can now be cryptographically signed to verify their origin. By default, Grafana ignores unsigned plugins. For more information, refer to [Allow unsigned plugins]({{< relref "../../../../administration/plugin-management/#allow-unsigned-plugins" >}}).
+As of Grafana 7.0, backend plugins can now be cryptographically signed to verify their origin. By default, Grafana ignores unsigned plugins. For more information, refer to [Allow unsigned plugins]({{< relref "../../../../administration/plugin-management#allow-unsigned-plugins" >}}).
 
 ## From version 6.5.x to 7.3.0
+
+Follow the instructions in this section to upgrade Grafana from version 6.5.x to 7.3.0.
 
 ### getColorForTheme changes
 
@@ -104,6 +115,8 @@ const themeColor = getColorForTheme(color, theme);
 
 ## From 6.2.x to v7.4.x
 
+Follow the instructions in this section to upgrade Grafana from version 6.2.x to v7.4.x.
+
 ### Legend components
 
 The Legend components have been refactored and introduced the following changes within the `@grafana/ui` package.
@@ -116,5 +129,5 @@ import { LegendItem, LegendOptions, GraphLegend } from '@grafana/ui';
 import { VizLegendItem, VizLegendOptions, VizLegend } from '@grafana/ui';
 ```
 
-- `LegendPlacement` has been updated from `'under' | 'right' | 'over'` to `'bottom' | 'right'` so you can not place the legend above the visualization anymore.
-- The `isVisible` in the `LegendItem` has been renamed to `disabled` in `VizLegendItem`.
+- `LegendPlacement` has been updated from `'under' | 'right' | 'over'` to `'bottom' | 'right'`, so you can't place the legend above the visualization anymore.
+- The `isVisible` attribute in the `LegendItem` has been renamed to `disabled` in `VizLegendItem`.

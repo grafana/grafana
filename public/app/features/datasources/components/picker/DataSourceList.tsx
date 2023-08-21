@@ -54,7 +54,6 @@ export function DataSourceList(props: DataSourceListProps) {
   const styles = getStyles(theme, selectedItemCssSelector);
 
   const { className, current, onChange, enableKeyboardNavigation, onClickEmptyStateCTA } = props;
-  // QUESTION: Should we use data from the Redux store as admin DS view does?
   const dataSources = useDatasources({
     alerting: props.alerting,
     annotations: props.annotations,
@@ -72,7 +71,7 @@ export function DataSourceList(props: DataSourceListProps) {
   const filteredDataSources = props.filter ? dataSources.filter(props.filter) : dataSources;
 
   return (
-    <div ref={containerRef} className={cx(className, styles.container)}>
+    <div ref={containerRef} className={cx(className, styles.container)} data-testid="data-sources-list">
       {filteredDataSources.length === 0 && (
         <EmptyState className={styles.emptyState} onClickCTA={onClickEmptyStateCTA} />
       )}
@@ -80,13 +79,14 @@ export function DataSourceList(props: DataSourceListProps) {
         .sort(getDataSourceCompareFn(current, recentlyUsedDataSources, getDataSourceVariableIDs()))
         .map((ds) => (
           <DataSourceCard
+            data-testid="data-source-card"
             key={ds.uid}
             ds={ds}
             onClick={() => {
               pushRecentlyUsedDataSource(ds);
               onChange(ds);
             }}
-            selected={!!isDataSourceMatch(ds, current)}
+            selected={isDataSourceMatch(ds, current)}
             {...(enableKeyboardNavigation ? navigatableProps : {})}
           />
         ))}

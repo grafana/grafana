@@ -59,7 +59,6 @@ export const FiltersSettingsEditor = ({ bucketAgg }: Props) => {
                 <QueryField
                   placeholder="Lucene Query"
                   portalOrigin="elasticsearch"
-                  onBlur={() => {}}
                   onChange={(query) => dispatch(changeFilter({ index, filter: { ...filter, query } }))}
                   query={filter.query}
                 />

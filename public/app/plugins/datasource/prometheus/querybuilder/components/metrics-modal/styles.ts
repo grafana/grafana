@@ -17,10 +17,14 @@ export const getStyles = (theme: GrafanaTheme2, disableTextWrap: boolean) => {
       display: flex;
       flex-direction: row;
       flex-wrap: wrap;
-      gap: ${theme.spacing(2)};
     `,
     inputItemFirst: css`
       flex-basis: 40%;
+      padding-right: 16px;
+      ${theme.breakpoints.down('md')} {
+        padding-right: 0px;
+        padding-bottom: 16px;
+      }
     `,
     inputItem: css`
       flex-grow: 1;
@@ -79,6 +83,9 @@ export const getStyles = (theme: GrafanaTheme2, disableTextWrap: boolean) => {
     `,
     settingsBtn: css`
       float: right;
+    `,
+    noBorder: css`
+      border: none;
     `,
     resultsPerPageLabel: css`
       color: ${theme.colors.text.secondary};

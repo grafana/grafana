@@ -1,6 +1,7 @@
 package social
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -43,7 +44,7 @@ func (s *SocialGrafanaCom) IsOrganizationMember(organizations []OrgRecord) bool 
 }
 
 // UserInfo is used for login credentials for the user
-func (s *SocialGrafanaCom) UserInfo(client *http.Client, _ *oauth2.Token) (*BasicUserInfo, error) {
+func (s *SocialGrafanaCom) UserInfo(ctx context.Context, client *http.Client, _ *oauth2.Token) (*BasicUserInfo, error) {
 	var data struct {
 		Id    int         `json:"id"`
 		Name  string      `json:"name"`
@@ -53,7 +54,8 @@ func (s *SocialGrafanaCom) UserInfo(client *http.Client, _ *oauth2.Token) (*Basi
 		Orgs  []OrgRecord `json:"orgs"`
 	}
 
-	response, err := s.httpGet(client, s.url+"/api/oauth2/user")
+	response, err := s.httpGet(ctx, client, s.url+"/api/oauth2/user")
+
 	if err != nil {
 		return nil, fmt.Errorf("Error getting user info: %s", err)
 	}
@@ -77,7 +79,9 @@ func (s *SocialGrafanaCom) UserInfo(client *http.Client, _ *oauth2.Token) (*Basi
 	}
 
 	if !s.IsOrganizationMember(data.Orgs) {
-		return nil, ErrMissingOrganizationMembership
+		return nil, ErrMissingOrganizationMembership.Errorf(
+			"User is not a member of any of the allowed organizations: %v. Returned Organizations: %v",
+			s.allowedOrganizations, data.Orgs)
 	}
 
 	return userInfo, nil

@@ -107,7 +107,7 @@ func InitializeForTest(cla setting.CommandLineArgs, opts Options, apiOpts api.Se
 
 ## Background services
 
-A background service runs in the background of the lifecycle between Grafana startup and shutdown. To run your service in the background, it must satisfy the `registry.BackgroundService` interface. Pass it through to the `NewBackgroundServiceRegistry` call in the [ProvideBackgroundServiceRegistry](/pkg/server/backgroundsvcs/background_services.go) function to register it.
+A background service runs in the background of the lifecycle between Grafana startup and shutdown. To run your service in the background, it must satisfy the `registry.BackgroundService` interface. Pass it through to the `NewBackgroundServiceRegistry` call in the [ProvideBackgroundServiceRegistry](/pkg/registry/backgroundsvcs/background_services.go) function to register it.
 
 You can see an example implementation above of the Run method.
 
@@ -131,7 +131,7 @@ There's a [wireexts_oss.go](/pkg/server/wireexts_oss.go) that has the `wireinjec
 
 Similarly, there's a wireexts_enterprise.go file in the Enterprise source code repository where other service implementations can be overridden/be registered.
 
-To extend an OSS background service, create a specific background interface for that type and inject that type to [ProvideBackgroundServiceRegistry](/pkg/server/backgroundsvcs/background_services.go) instead of the concrete type. Then add a wire binding for that interface in [wireexts_oss.go](/pkg/server/wireexts_oss.go) and in the enterprise wireexts file.
+To extend an OSS background service, create a specific background interface for that type and inject that type to [ProvideBackgroundServiceRegistry](/pkg/registry/backgroundsvcs/background_services.go) instead of the concrete type. Then add a wire binding for that interface in [wireexts_oss.go](/pkg/server/wireexts_oss.go) and in the enterprise wireexts file.
 
 ## Methods
 

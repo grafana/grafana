@@ -3,6 +3,10 @@ aliases:
   - ../administration/configuration/
   - ../installation/configuration/
 description: Configuration documentation
+labels:
+  products:
+    - enterprise
+    - oss
 title: Configure Grafana
 weight: 200
 ---
@@ -371,7 +375,7 @@ Set to `true` to log the sql calls and execution times.
 
 ### ssl_mode
 
-For Postgres, use either `disable`, `require` or `verify-full`.
+For Postgres, use use any [valid libpq `sslmode`](https://www.postgresql.org/docs/current/libpq-ssl.html#LIBPQ-SSL-SSLMODE-STATEMENTS), e.g.`disable`, `require`, `verify-full`, etc.
 For MySQL, use either `true`, `false`, or `skip-verify`.
 
 ### isolation_level
@@ -424,7 +428,7 @@ Set to `true` to add metrics and tracing for database queries. The default value
 
 ## [remote_cache]
 
-Caches authentication details and session information in the configured database, Redis or Memcached. This setting does not configure [Query Caching in Grafana Enterprise]({{< relref "../../administration/data-source-management#query-caching" >}}).
+Caches authentication details and session information in the configured database, Redis or Memcached. This setting does not configure [Query Caching in Grafana Enterprise]({{< relref "../../administration/data-source-management#query-and-resource-caching" >}}).
 
 ### type
 
@@ -509,6 +513,11 @@ Sets a custom value for the `User-Agent` header for outgoing data proxy requests
 <hr />
 
 ## [analytics]
+
+### enabled
+
+This option is also known as _usage analytics_. When `false`, this option disables the writers that read/write from and to the Grafana databases. The default
+value is `true`.
 
 ### reporting_enabled
 
@@ -615,7 +624,7 @@ Define a whitelist of allowed IP addresses or domains, with ports, to be used in
 
 ### disable_brute_force_login_protection
 
-Set to `true` to disable [brute force login protection](https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html#account-lockout). Default is `false`.
+Set to `true` to disable [brute force login protection](https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html#account-lockout). Default is `false`. An existing user's account will be locked after 5 attempts in 5 minutes.
 
 ### cookie_secure
 
@@ -677,17 +686,15 @@ Set the policy template that will be used when adding the `Content-Security-Poli
 ### angular_support_enabled
 
 This currently defaults to `true` but will default to `false` in a future release. When set to false the angular framework and support components will not be loaded. This means that
-all plugins and core features that depend on angular support will stop working.
+all [plugins]({{< relref "../../developers/angular_deprecation/angular-plugins" >}}) and core features that depend on angular support will stop working.
 
-Current core features that will stop working:
+The core features that depend on angular are:
 
-- Heatmap panel
 - Old graph panel
 - Old table panel
-- Postgres, MySQL and MSSQL data source query editors
 - Legacy alerting edit rule UI
 
-Before we disable angular support by default we plan to migrate these remaining areas to React.
+These features each have supported alternatives, and we recommend using them.
 
 ### csrf_trusted_origins
 
@@ -700,6 +707,11 @@ List of allowed headers to be set by the user. Suggested to use for if authentic
 ### csrf_always_check
 
 Set to `true` to execute the CSRF check even if the login cookie is not in a request (default `false`).
+
+### disable_frontend_sandbox_for_plugins
+
+Comma-separated list of plugins ids that won't be loaded inside the frontend sandbox. It is recommended to only use this
+option for plugins that are known to have problems running inside the frontend sandbox.
 
 ## [snapshots]
 
@@ -824,7 +836,9 @@ Sets the default UI theme: `dark`, `light`, or `system`. The default theme is `d
 
 ### default_language
 
-This setting configures the default UI language, which must be a supported IETF language tag, such as `en-US`.
+This option will set the default UI language if a supported IETF language tag like `en-US` is available.
+If set to `detect`, the default UI language will be determined by browser preference.
+The default is `en-US`.
 
 ### home_page
 
@@ -921,11 +935,13 @@ reset to the default organization role on every login. [See `auto_assign_org_rol
 
 `skip_org_role_sync` prevents the synchronization of organization roles for a specific OAuth integration, while the deprecated setting `oauth_skip_org_role_update_sync` affects all configured OAuth providers.
 
-`skip_org_role_sync` default value is `false`.
+The default value for `skip_org_role_sync` is `false`.
 
-With `skip_org_role_sync` set to `false`, the users' organization and role is reset on every new login, based on the external provider's role. See provider specifities in the tables below.
+With `skip_org_role_sync` set to `false`, the users' organization and role is reset on every new login, based on the external provider's role. See your provider in the tables below.
 
 With `skip_org_role_sync` set to `true`, when a user logs in for the first time, Grafana sets the organization role based on the value specified in `auto_assign_org_role` and forces the organization to `auto_assign_org_id` when specified, otherwise it falls back to OrgID `1`.
+
+> **Note**: Enabling `skip_org_role_sync` also disables the synchronization of Grafana Admins from the external provider, as such `allow_assign_grafana_admin` is ignored.
 
 Use this setting when you want to manage the organization roles of your users from within Grafana and be able to manually assign them to multiple organizations, or to prevent synchronization conflicts when they can be synchronized from another provider.
 
@@ -1248,6 +1264,10 @@ Options are "debug", "info", "warn", "error", and "critical". Default is `info`.
 
 Optional settings to set different levels for specific loggers.
 For example: `filters = sqlstore:debug`
+
+### user_facing_default_error
+
+Use this configuration option to set the default error message shown to users. This message is displayed instead of sensitive backend errors, which should be obfuscated. The default message is `Please inspect the Grafana server log for details.`.
 
 <hr>
 
@@ -1662,6 +1682,14 @@ Enable or disable the Profile section. Default is `enabled`.
 
 Enables the news feed section. Default is `true`
 
+<hr>
+
+## [query]
+
+### concurrent_query_limit
+
+Set the number of queries that can be executed concurrently in a mixed data source panel. Default is the number of CPUs.
+
 ## [query_history]
 
 Configures Query history in Explore.
@@ -1669,6 +1697,8 @@ Configures Query history in Explore.
 ### enabled
 
 Enable or disable the Query history. Default is `enabled`.
+
+<hr>
 
 ## [metrics]
 
@@ -1685,6 +1715,10 @@ Flush/write interval when sending metrics to external TSDB. Defaults to `10`.
 ### disable_total_stats
 
 If set to `true`, then total stats generation (`stat_totals_*` metrics) is disabled. Default is `false`.
+
+### total_stats_collector_interval_seconds
+
+Sets the total stats collector interval. The default is 1800 seconds (30 minutes).
 
 ### basic_auth_username and basic_auth_password
 
@@ -2033,6 +2067,14 @@ Custom install/learn more URL for enterprise plugins. Defaults to https://grafan
 
 Enter a comma-separated list of plugin identifiers to hide in the plugin catalog.
 
+### public_key_retrieval_disabled
+
+Disable download of the public key for verifying plugin signature. The default is `false`. If disabled, it will use the hardcoded public key.
+
+### public_key_retrieval_on_startup
+
+Force download of the public key for verifying plugin signature on startup. The default is `false`. If disabled, the public key will be retrieved every 10 days. Requires `public_key_retrieval_disabled` to be false to have any effect.
+
 <hr>
 
 ## [live]
@@ -2224,6 +2266,36 @@ Keys of features to enable, separated by space.
   
 Some feature toggles for stable features are on by default. Use this setting to disable an on-by-default feature toggle with the name FEATURE_TOGGLE_NAME, for example, `exploreMixedDatasource = false`.
 
+<hr>
+
+## [feature_management]
+
+The options in this section configure the experimental Feature Toggle Admin Page feature, which is enabled using the `featureToggleAdminPage` feature toggle. Grafana Labs offers support on a best-effort basis, and breaking changes might occur prior to the feature being made generally available.
+
+Please see [Configure feature toggles]({{< relref "/feature-toggles" >}}) for more information.
+
+### allow_editing
+
+Lets you switch the feature toggle state in the feature management page. The default is `false`.
+
+### update_controller_url
+
+Set the URL of the controller that manages the feature toggle updates. If not set, feature toggles in the feature management page will be read-only.
+
+{{% admonition type="note" %}}
+The API for feature toggle updates has not been defined yet.
+{{% /admonition %}}
+
+### hidden_toggles
+
+Hide additional specific feature toggles from the feature management page. By default, feature toggles in the `unknown`, `experimental`, and `private preview` stages are hidden from the UI. Use this option to hide toggles in the `public preview`, `general availability`, and `deprecated` stages.
+
+### read_only_toggles
+
+Use to disable updates for additional specific feature toggles in the feature management page. By default, feature toggles can only be updated if they are in the `general availability` and `deprecated`stages. Use this option to disable updates for toggles in those stages.
+
+<hr>
+
 ## [date_formats]
 
 {{% admonition type="note" %}}
@@ -2302,3 +2374,12 @@ Set this to `false` to disable loading other custom base maps and hide them in t
 ## [rbac]
 
 Refer to [Role-based access control]({{< relref "../../administration/roles-and-permissions/access-control" >}}) for more information.
+
+## [navigation.app_sections]
+
+Move an app plugin (referenced by its id), including all its pages, to a specific navigation section. Format: <pluginId> = <sectionId> <sortWeight>
+
+## [navigation.app_standalone_pages]
+
+Move an individual app plugin page (referenced by its `path` field) to a specific navigation section.
+Format: <pageUrl> = <sectionId> <sortWeight>

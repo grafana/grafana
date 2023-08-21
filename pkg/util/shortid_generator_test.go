@@ -1,6 +1,7 @@
 package util
 
 import (
+	"sync"
 	"testing"
 
 	"github.com/google/uuid"
@@ -14,6 +15,25 @@ func TestAllowedCharMatchesUidPattern(t *testing.T) {
 			t.Fatalf("charset for creating new shortids contains chars not present in uid pattern")
 		}
 	}
+}
+
+// Run with "go test -race -run ^TestThreadSafe$ github.com/grafana/grafana/pkg/util"
+func TestThreadSafe(t *testing.T) {
+	// This test was used to showcase the bug, unfortunately there is
+	// no way to enable the -race flag programmatically.
+	t.Skip()
+	// Use 1000 go routines to create 100 UIDs each at roughly the same time.
+	var wg sync.WaitGroup
+	for i := 0; i < 1000; i++ {
+		go func() {
+			for ii := 0; ii < 100; ii++ {
+				_ = GenerateShortUID()
+			}
+			wg.Done()
+		}()
+		wg.Add(1)
+	}
+	wg.Wait()
 }
 
 func TestRandomUIDs(t *testing.T) {

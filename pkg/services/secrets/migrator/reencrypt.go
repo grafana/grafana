@@ -13,7 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
-func (s simpleSecret) reencrypt(ctx context.Context, secretsSrv *manager.SecretsService, sqlStore db.DB) bool {
+func (s simpleSecret) ReEncrypt(ctx context.Context, secretsSrv *manager.SecretsService, sqlStore db.DB) bool {
 	var rows []struct {
 		Id     int
 		Secret []byte
@@ -72,7 +72,7 @@ func (s simpleSecret) reencrypt(ctx context.Context, secretsSrv *manager.Secrets
 	return !anyFailure
 }
 
-func (s b64Secret) reencrypt(ctx context.Context, secretsSrv *manager.SecretsService, sqlStore db.DB) bool {
+func (s b64Secret) ReEncrypt(ctx context.Context, secretsSrv *manager.SecretsService, sqlStore db.DB) bool {
 	var rows []struct {
 		Id     int
 		Secret string
@@ -143,7 +143,7 @@ func (s b64Secret) reencrypt(ctx context.Context, secretsSrv *manager.SecretsSer
 	return !anyFailure
 }
 
-func (s jsonSecret) reencrypt(ctx context.Context, secretsSrv *manager.SecretsService, sqlStore db.DB) bool {
+func (s jsonSecret) ReEncrypt(ctx context.Context, secretsSrv *manager.SecretsService, sqlStore db.DB) bool {
 	var rows []struct {
 		Id             int
 		SecureJsonData map[string][]byte
@@ -206,7 +206,7 @@ func (s jsonSecret) reencrypt(ctx context.Context, secretsSrv *manager.SecretsSe
 	return !anyFailure
 }
 
-func (s alertingSecret) reencrypt(ctx context.Context, secretsSrv *manager.SecretsService, sqlStore db.DB) bool {
+func (s alertingSecret) ReEncrypt(ctx context.Context, secretsSrv *manager.SecretsService, sqlStore db.DB) bool {
 	var results []struct {
 		Id                        int
 		AlertmanagerConfiguration string

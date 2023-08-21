@@ -226,47 +226,6 @@ describe('BarChart utils', () => {
     `);
     });
 
-    it('should sort fields when legend sortBy and sortDesc are set', () => {
-      const frame = new MutableDataFrame({
-        fields: [
-          { name: 'string', type: FieldType.string, values: ['a', 'b', 'c'] },
-          { name: 'a', values: [-10, 20, 10], state: { calcs: { min: -10 } } },
-          { name: 'b', values: [20, 20, 20], state: { calcs: { min: 20 } } },
-          { name: 'c', values: [10, 10, 10], state: { calcs: { min: 10 } } },
-        ],
-      });
-
-      const resultAsc = prepareBarChartDisplayValues([frame], createTheme(), {
-        legend: { sortBy: 'Min', sortDesc: false },
-      } as Options);
-      const displayValuesAsc = assertIsDefined('viz' in resultAsc ? resultAsc : null).viz[0];
-      expect(displayValuesAsc.fields[0].type).toBe(FieldType.string);
-      expect(displayValuesAsc.fields[1].name).toBe('a');
-      expect(displayValuesAsc.fields[2].name).toBe('c');
-      expect(displayValuesAsc.fields[3].name).toBe('b');
-
-      const displayLegendValuesAsc = assertIsDefined('legend' in resultAsc ? resultAsc : null).legend;
-      expect(displayLegendValuesAsc.fields[0].type).toBe(FieldType.string);
-      expect(displayLegendValuesAsc.fields[1].name).toBe('a');
-      expect(displayLegendValuesAsc.fields[2].name).toBe('c');
-      expect(displayLegendValuesAsc.fields[3].name).toBe('b');
-
-      const resultDesc = prepareBarChartDisplayValues([frame], createTheme(), {
-        legend: { sortBy: 'Min', sortDesc: true },
-      } as Options);
-      const displayValuesDesc = assertIsDefined('viz' in resultDesc ? resultDesc : null).viz[0];
-      expect(displayValuesDesc.fields[0].type).toBe(FieldType.string);
-      expect(displayValuesDesc.fields[1].name).toBe('b');
-      expect(displayValuesDesc.fields[2].name).toBe('c');
-      expect(displayValuesDesc.fields[3].name).toBe('a');
-
-      const displayLegendValuesDesc = assertIsDefined('legend' in resultDesc ? resultDesc : null).legend;
-      expect(displayLegendValuesDesc.fields[0].type).toBe(FieldType.string);
-      expect(displayLegendValuesDesc.fields[1].name).toBe('b');
-      expect(displayLegendValuesDesc.fields[2].name).toBe('c');
-      expect(displayLegendValuesDesc.fields[3].name).toBe('a');
-    });
-
     it('should remove unit from legend values when stacking is percent', () => {
       const frame = new MutableDataFrame({
         fields: [

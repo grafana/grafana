@@ -35,6 +35,7 @@ import { RuleHealth } from '../search/rulesSearchParser';
 import { RULER_NOT_SUPPORTED_MSG } from './constants';
 import { getRulesSourceName } from './datasource';
 import { AsyncRequestState } from './redux';
+import { safeParseDurationstr } from './time';
 
 export function isAlertingRule(rule: Rule | undefined): rule is AlertingRule {
   return typeof rule === 'object' && rule.type === PromRuleType.Alerting;
@@ -168,17 +169,20 @@ export function getFirstActiveAt(promRule?: AlertingRule) {
   if (!promRule?.alerts) {
     return null;
   }
-  return promRule.alerts.reduce((prev, alert) => {
-    const isNotNormal =
-      mapStateWithReasonToBaseState(alert.state as GrafanaAlertStateWithReason) !== GrafanaAlertState.Normal;
-    if (alert.activeAt && isNotNormal) {
-      const activeAt = new Date(alert.activeAt);
-      if (prev === null || prev.getTime() > activeAt.getTime()) {
-        return activeAt;
+  return promRule.alerts.reduce(
+    (prev, alert) => {
+      const isNotNormal =
+        mapStateWithReasonToBaseState(alert.state as GrafanaAlertStateWithReason) !== GrafanaAlertState.Normal;
+      if (alert.activeAt && isNotNormal) {
+        const activeAt = new Date(alert.activeAt);
+        if (prev === null || prev.getTime() > activeAt.getTime()) {
+          return activeAt;
+        }
       }
-    }
-    return prev;
-  }, null as Date | null);
+      return prev;
+    },
+    null as Date | null
+  );
 }
 
 /**
@@ -205,3 +209,46 @@ export function getRuleName(rule: RulerRuleDTO) {
 
   return '';
 }
+
+export interface AlertInfo {
+  alertName: string;
+  forDuration: string;
+  evaluationsToFire: number;
+}
+
+export const getAlertInfo = (alert: RulerRuleDTO, currentEvaluation: string): AlertInfo => {
+  const emptyAlert: AlertInfo = {
+    alertName: '',
+    forDuration: '0s',
+    evaluationsToFire: 0,
+  };
+  if (isGrafanaRulerRule(alert)) {
+    return {
+      alertName: alert.grafana_alert.title,
+      forDuration: alert.for,
+      evaluationsToFire: getNumberEvaluationsToStartAlerting(alert.for, currentEvaluation),
+    };
+  }
+  if (isAlertingRulerRule(alert)) {
+    return {
+      alertName: alert.alert,
+      forDuration: alert.for ?? '1m',
+      evaluationsToFire: getNumberEvaluationsToStartAlerting(alert.for ?? '1m', currentEvaluation),
+    };
+  }
+  return emptyAlert;
+};
+
+export const getNumberEvaluationsToStartAlerting = (forDuration: string, currentEvaluation: string) => {
+  const evalNumberMs = safeParseDurationstr(currentEvaluation);
+  const forNumber = safeParseDurationstr(forDuration);
+  if (forNumber === 0 && evalNumberMs !== 0) {
+    return 1;
+  }
+  if (evalNumberMs === 0) {
+    return 0;
+  } else {
+    const evaluationsBeforeCeil = forNumber / evalNumberMs;
+    return evaluationsBeforeCeil < 1 ? 0 : Math.ceil(forNumber / evalNumberMs) + 1;
+  }
+};

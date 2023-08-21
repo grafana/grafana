@@ -281,7 +281,7 @@ describe(`Traces Filters`, () => {
       rerender
     );
 
-    const removeButtons = screen.getAllByLabelText('Remove');
+    const removeButtons = screen.getAllByLabelText('Remove filter');
 
     mockQuery = {
       ...mockQuery,
@@ -388,9 +388,9 @@ describe(`Traces Filters`, () => {
         ],
       },
     };
-    const removeLabel = screen.getByLabelText(`Remove test-app-id-2`);
+    const removeLabel = screen.getAllByLabelText(`Remove`);
     await act(async () => {
-      await userEvent.click(removeLabel);
+      await userEvent.click(removeLabel[1]);
     });
 
     rerender(

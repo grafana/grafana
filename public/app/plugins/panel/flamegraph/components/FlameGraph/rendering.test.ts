@@ -1,4 +1,4 @@
-import { createDataFrame } from '@grafana/data';
+import { createDataFrame, FieldType } from '@grafana/data';
 
 import { FlameGraphDataContainer, LevelItem } from './dataTransform';
 import { getRectDimensionsForLevel } from './rendering';
@@ -8,13 +8,14 @@ function makeDataFrame(fields: Record<string, Array<number | string>>) {
     fields: Object.keys(fields).map((key) => ({
       name: key,
       values: fields[key],
+      type: typeof fields[key][0] === 'string' ? FieldType.string : FieldType.number,
     })),
   });
 }
 
 describe('getRectDimensionsForLevel', () => {
   it('should render a single item', () => {
-    const level: LevelItem[] = [{ start: 0, itemIndex: 0 }];
+    const level: LevelItem[] = [{ start: 0, itemIndexes: [0], children: [], value: 100 }];
     const container = new FlameGraphDataContainer(makeDataFrame({ value: [100], level: [1], label: ['1'], self: [0] }));
     const result = getRectDimensionsForLevel(container, level, 1, 100, 0, 10);
     expect(result).toEqual([
@@ -34,9 +35,9 @@ describe('getRectDimensionsForLevel', () => {
 
   it('should render a multiple items', () => {
     const level: LevelItem[] = [
-      { start: 0, itemIndex: 0 },
-      { start: 100, itemIndex: 1 },
-      { start: 150, itemIndex: 2 },
+      { start: 0, itemIndexes: [0], children: [], value: 100 },
+      { start: 100, itemIndexes: [1], children: [], value: 50 },
+      { start: 150, itemIndexes: [2], children: [], value: 50 },
     ];
     const container = new FlameGraphDataContainer(
       makeDataFrame({ value: [100, 50, 50], level: [2, 2, 2], label: ['1', '2', '3'], self: [0, 0, 0] })
@@ -71,9 +72,9 @@ describe('getRectDimensionsForLevel', () => {
 
   it('should render a collapsed items', () => {
     const level: LevelItem[] = [
-      { start: 0, itemIndex: 0 },
-      { start: 100, itemIndex: 1 },
-      { start: 102, itemIndex: 2 },
+      { start: 0, itemIndexes: [0], children: [], value: 100 },
+      { start: 100, itemIndexes: [1], children: [], value: 2 },
+      { start: 102, itemIndexes: [2], children: [], value: 1 },
     ];
     const container = new FlameGraphDataContainer(
       makeDataFrame({ value: [100, 2, 1], level: [2, 2, 2], label: ['1', '2', '3'], self: [0, 0, 0] })

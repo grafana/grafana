@@ -2,9 +2,17 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { DataSourcePluginOptionsEditorProps, GrafanaTheme2 } from '@grafana/data';
-import { ConfigSection, ConfigSubSection } from '@grafana/experimental';
+import {
+  AdvancedHttpSettings,
+  Auth,
+  ConfigSection,
+  ConfigSubSection,
+  ConnectionSettings,
+  convertLegacyAuthProps,
+  DataSourceDescription,
+} from '@grafana/experimental';
 import { config } from '@grafana/runtime';
-import { DataSourceHttpSettings, useStyles2 } from '@grafana/ui';
+import { SecureSocksProxySettings, useStyles2 } from '@grafana/ui';
 import { ConfigDescriptionLink } from 'app/core/components/ConfigDescriptionLink';
 import { Divider } from 'app/core/components/Divider';
 import { NodeGraphSection } from 'app/core/components/NodeGraphSettings';
@@ -14,7 +22,6 @@ import { SpanBarSection } from 'app/features/explore/TraceView/components/settin
 
 import { LokiSearchSettings } from './LokiSearchSettings';
 import { QuerySettings } from './QuerySettings';
-import { SearchSettings } from './SearchSettings';
 import { ServiceGraphSettings } from './ServiceGraphSettings';
 import { TraceQLSearchSettings } from './TraceQLSearchSettings';
 
@@ -25,13 +32,27 @@ export const ConfigEditor = ({ options, onOptionsChange }: Props) => {
 
   return (
     <div className={styles.container}>
-      <DataSourceHttpSettings
-        defaultUrl="http://tempo"
-        dataSourceConfig={options}
-        showAccessOptions={false}
-        onChange={onOptionsChange}
-        secureSocksDSProxyEnabled={config.secureSocksDSProxyEnabled}
+      <DataSourceDescription
+        dataSourceName="Tempo"
+        docsLink="https://grafana.com/docs/grafana/latest/datasources/tempo"
+        hasRequiredFields={false}
       />
+
+      <Divider />
+
+      <ConnectionSettings config={options} onChange={onOptionsChange} />
+
+      <Divider />
+
+      <Auth
+        {...convertLegacyAuthProps({
+          config: options,
+          onChange: onOptionsChange,
+        })}
+      />
+      {config.secureSocksDSProxyEnabled && (
+        <SecureSocksProxySettings options={options} onOptionsChange={onOptionsChange} />
+      )}
 
       <Divider />
 
@@ -52,6 +73,10 @@ export const ConfigEditor = ({ options, onOptionsChange }: Props) => {
         isCollapsible={true}
         isInitiallyOpen={false}
       >
+        <AdvancedHttpSettings config={options} onChange={onOptionsChange} />
+
+        <Divider hideLine={true} />
+
         <ConfigSubSection
           title="Service graph"
           description={
@@ -80,11 +105,7 @@ export const ConfigEditor = ({ options, onOptionsChange }: Props) => {
             />
           }
         >
-          {config.featureToggles.traceqlSearch ? (
-            <TraceQLSearchSettings options={options} onOptionsChange={onOptionsChange} />
-          ) : (
-            <SearchSettings options={options} onOptionsChange={onOptionsChange} />
-          )}
+          <TraceQLSearchSettings options={options} onOptionsChange={onOptionsChange} />
         </ConfigSubSection>
 
         <Divider hideLine={true} />
@@ -129,6 +150,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
   container: css`
     label: container;
     margin-bottom: ${theme.spacing(2)};
-    max-width: '578px';
+    max-width: 900px;
   `,
 });

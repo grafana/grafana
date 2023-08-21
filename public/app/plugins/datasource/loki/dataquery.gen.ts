@@ -10,8 +10,6 @@
 
 import * as common from '@grafana/schema';
 
-export const DataQueryModelVersion = Object.freeze([0, 0]);
-
 export enum QueryEditorMode {
   Builder = 'builder',
   Code = 'code',
@@ -57,7 +55,11 @@ export interface Loki extends common.DataQuery {
    */
   range?: boolean;
   /**
-   * Used to scale the interval value.
+   * @deprecated, now use step.
    */
   resolution?: number;
+  /**
+   * Used to set step value for range queries.
+   */
+  step?: string;
 }

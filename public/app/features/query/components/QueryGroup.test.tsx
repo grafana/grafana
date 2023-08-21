@@ -80,7 +80,7 @@ describe('QueryGroup', () => {
     await userEvent.click(addExpressionButton);
 
     const lastQueryEditorRow = (await screen.findAllByTestId('query-editor-row')).at(-1);
-    const lastEditorToggleRow = (await screen.findAllByLabelText('toggle collapse and expand query row')).at(-1);
+    const lastEditorToggleRow = (await screen.findAllByLabelText('Collapse query row')).at(-1);
 
     expect(lastEditorToggleRow?.getAttribute('aria-expanded')).toBe('true');
     expect(lastQueryEditorRow?.firstElementChild?.children.length).toBe(2);
@@ -97,7 +97,7 @@ describe('QueryGroup', () => {
     await userEvent.click(addQueryButton);
 
     const lastQueryEditorRow = (await screen.findAllByTestId('query-editor-row')).at(-1);
-    const lastEditorToggleRow = (await screen.findAllByLabelText('toggle collapse and expand query row')).at(-1);
+    const lastEditorToggleRow = (await screen.findAllByLabelText('Collapse query row')).at(-1);
 
     expect(lastEditorToggleRow?.getAttribute('aria-expanded')).toBe('true');
     expect(lastQueryEditorRow?.firstElementChild?.children.length).toBe(2);
@@ -122,6 +122,36 @@ describe('QueryGroup', () => {
     await screen.findByTestId('query-tab-add-query');
     const addExpressionButton = screen.queryByTestId('query-tab-add-expression');
     expect(addExpressionButton).not.toBeInTheDocument();
+  });
+
+  describe('Angular deprecation', () => {
+    const deprecationText = /legacy platform based on AngularJS/i;
+
+    const oldAngularDetected = mockDS.angularDetected;
+    const oldDatasources = config.datasources;
+
+    afterEach(() => {
+      mockDS.angularDetected = oldAngularDetected;
+      config.datasources = oldDatasources;
+    });
+
+    it('Should render angular deprecation notice for angular plugins', async () => {
+      mockDS.angularDetected = true;
+      config.datasources[mockDS.name] = mockDS;
+      renderScenario({});
+      await waitFor(async () => {
+        expect(await screen.findByText(deprecationText)).toBeInTheDocument();
+      });
+    });
+
+    it('Should not render angular deprecation notice for non-angular plugins', async () => {
+      mockDS.angularDetected = false;
+      config.datasources[mockDS.name] = mockDS;
+      renderScenario({});
+      await waitFor(async () => {
+        expect(await screen.queryByText(deprecationText)).not.toBeInTheDocument();
+      });
+    });
   });
 });
 

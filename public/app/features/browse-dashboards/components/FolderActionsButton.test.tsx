@@ -4,8 +4,10 @@ import React from 'react';
 import { TestProvider } from 'test/helpers/TestProvider';
 
 import { appEvents, contextSrv } from 'app/core/core';
-import { AccessControlAction, FolderDTO } from 'app/types';
+import { AccessControlAction } from 'app/types';
 import { ShowModalReactEvent } from 'app/types/events';
+
+import { mockFolderDTO } from '../fixtures/folder.fixture';
 
 import { DeleteModal } from './BrowseActions/DeleteModal';
 import { MoveModal } from './BrowseActions/MoveModal';
@@ -21,22 +23,7 @@ jest.mock('app/core/components/AccessControl', () => ({
 }));
 
 describe('browse-dashboards FolderActionsButton', () => {
-  const mockFolder: FolderDTO = {
-    canAdmin: true,
-    canDelete: true,
-    canEdit: true,
-    canSave: true,
-    created: '',
-    createdBy: '',
-    hasAcl: true,
-    id: 1,
-    title: 'myFolder',
-    uid: '12345',
-    updated: '',
-    updatedBy: '',
-    url: '',
-    version: 1,
-  };
+  const mockFolder = mockFolderDTO();
 
   beforeEach(() => {
     jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
@@ -107,7 +94,7 @@ describe('browse-dashboards FolderActionsButton', () => {
 
     await userEvent.click(screen.getByRole('button', { name: 'Folder actions' }));
     await userEvent.click(screen.getByRole('menuitem', { name: 'Manage permissions' }));
-    expect(screen.getByRole('dialog', { name: 'Drawer title Permissions' })).toBeInTheDocument();
+    expect(screen.getByRole('dialog', { name: 'Drawer title Manage permissions' })).toBeInTheDocument();
   });
 
   it('clicking the "Move" option opens the move modal', async () => {

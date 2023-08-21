@@ -1,12 +1,10 @@
-import { cx } from '@emotion/css';
-import memoizeOne from 'memoize-one';
-import React, { PureComponent } from 'react';
+import React, { useMemo } from 'react';
 import Highlighter from 'react-highlight-words';
 
-import { LogRowModel, findHighlightChunksInText, CoreApp } from '@grafana/data';
-import { ClipboardButton, IconButton, Tooltip } from '@grafana/ui';
+import { CoreApp, findHighlightChunksInText, LogRowModel } from '@grafana/data';
 
 import { LogMessageAnsi } from './LogMessageAnsi';
+import { LogRowMenuCell } from './LogRowMenuCell';
 import { LogRowStyles } from './getLogRowStyles';
 
 export const MAX_CHARACTERS = 100000;
@@ -18,20 +16,28 @@ interface Props {
   app?: CoreApp;
   showContextToggle?: (row?: LogRowModel) => boolean;
   onOpenContext: (row: LogRowModel) => void;
+  onPermalinkClick?: (row: LogRowModel) => Promise<void>;
+  onPinLine?: (row: LogRowModel) => void;
+  onUnpinLine?: (row: LogRowModel) => void;
+  pinned?: boolean;
+  styles: LogRowStyles;
+  mouseIsOver: boolean;
+  onBlur: () => void;
+}
+
+interface LogMessageProps {
+  hasAnsi: boolean;
+  entry: string;
+  highlights: string[] | undefined;
   styles: LogRowStyles;
 }
 
-function renderLogMessage(
-  hasAnsi: boolean,
-  entry: string,
-  highlights: string[] | undefined,
-  highlightClassName: string
-) {
+const LogMessage = ({ hasAnsi, entry, highlights, styles }: LogMessageProps) => {
   const needsHighlighter =
     highlights && highlights.length > 0 && highlights[0] && highlights[0].length > 0 && entry.length < MAX_CHARACTERS;
   const searchWords = highlights ?? [];
   if (hasAnsi) {
-    const highlight = needsHighlighter ? { searchWords, highlightClassName } : undefined;
+    const highlight = needsHighlighter ? { searchWords, highlightClassName: styles.logsRowMatchHighLight } : undefined;
     return <LogMessageAnsi value={entry} highlight={highlight} />;
   } else if (needsHighlighter) {
     return (
@@ -39,15 +45,14 @@ function renderLogMessage(
         textToHighlight={entry}
         searchWords={searchWords}
         findChunks={findHighlightChunksInText}
-        highlightClassName={highlightClassName}
+        highlightClassName={styles.logsRowMatchHighLight}
       />
     );
-  } else {
-    return entry;
   }
-}
+  return <>{entry}</>;
+};
 
-const restructureLog = memoizeOne((line: string, prettifyLogMessage: boolean): string => {
+const restructureLog = (line: string, prettifyLogMessage: boolean): string => {
   if (prettifyLogMessage) {
     try {
       return JSON.stringify(JSON.parse(line), undefined, 2);
@@ -56,74 +61,58 @@ const restructureLog = memoizeOne((line: string, prettifyLogMessage: boolean): s
     }
   }
   return line;
+};
+
+export const LogRowMessage = React.memo((props: Props) => {
+  const {
+    row,
+    wrapLogMessage,
+    prettifyLogMessage,
+    showContextToggle,
+    styles,
+    onOpenContext,
+    onPermalinkClick,
+    onUnpinLine,
+    onPinLine,
+    pinned,
+    mouseIsOver,
+    onBlur,
+  } = props;
+  const { hasAnsi, raw } = row;
+  const restructuredEntry = useMemo(() => restructureLog(raw, prettifyLogMessage), [raw, prettifyLogMessage]);
+  const shouldShowMenu = useMemo(() => mouseIsOver || pinned, [mouseIsOver, pinned]);
+  return (
+    <>
+      {
+        // When context is open, the position has to be NOT relative. // Setting the postion as inline-style to
+        // overwrite the more sepecific style definition from `styles.logsRowMessage`.
+      }
+      <td className={styles.logsRowMessage}>
+        <div className={wrapLogMessage ? styles.positionRelative : styles.horizontalScroll}>
+          <button className={`${styles.logLine} ${styles.positionRelative}`}>
+            <LogMessage hasAnsi={hasAnsi} entry={restructuredEntry} highlights={row.searchWords} styles={styles} />
+          </button>
+        </div>
+      </td>
+      <td className={`log-row-menu-cell ${styles.logRowMenuCell}`}>
+        {shouldShowMenu && (
+          <LogRowMenuCell
+            logText={restructuredEntry}
+            row={row}
+            showContextToggle={showContextToggle}
+            onOpenContext={onOpenContext}
+            onPermalinkClick={onPermalinkClick}
+            onPinLine={onPinLine}
+            onUnpinLine={onUnpinLine}
+            pinned={pinned}
+            styles={styles}
+            mouseIsOver={mouseIsOver}
+            onBlur={onBlur}
+          />
+        )}
+      </td>
+    </>
+  );
 });
 
-export class LogRowMessage extends PureComponent<Props> {
-  onShowContextClick = (e: React.SyntheticEvent<HTMLElement, Event>) => {
-    const { onOpenContext } = this.props;
-    e.stopPropagation();
-    onOpenContext(this.props.row);
-  };
-
-  onLogRowClick = (e: React.SyntheticEvent) => {
-    e.stopPropagation();
-  };
-
-  getLogText = () => {
-    const { row, prettifyLogMessage } = this.props;
-    const { raw } = row;
-    return restructureLog(raw, prettifyLogMessage);
-  };
-
-  render() {
-    const { row, wrapLogMessage, prettifyLogMessage, showContextToggle, styles } = this.props;
-    const { hasAnsi, raw } = row;
-    const restructuredEntry = restructureLog(raw, prettifyLogMessage);
-    const shouldShowContextToggle = showContextToggle ? showContextToggle(row) : false;
-
-    return (
-      <>
-        {
-          // When context is open, the position has to be NOT relative. // Setting the postion as inline-style to
-          // overwrite the more sepecific style definition from `styles.logsRowMessage`.
-        }
-        <td className={styles.logsRowMessage}>
-          <div
-            className={cx(
-              { [styles.positionRelative]: wrapLogMessage },
-              { [styles.horizontalScroll]: !wrapLogMessage }
-            )}
-          >
-            <button className={cx(styles.logLine, styles.positionRelative)}>
-              {renderLogMessage(hasAnsi, restructuredEntry, row.searchWords, styles.logsRowMatchHighLight)}
-            </button>
-          </div>
-        </td>
-        <td className={cx('log-row-menu-cell', styles.logRowMenuCell)}>
-          <span
-            className={cx('log-row-menu', styles.rowMenu, {
-              [styles.rowMenuWithContextButton]: shouldShowContextToggle,
-            })}
-            onClick={this.onLogRowClick}
-          >
-            {shouldShowContextToggle && (
-              <Tooltip placement="top" content={'Show context'}>
-                <IconButton size="md" name="gf-show-context" onClick={this.onShowContextClick} />
-              </Tooltip>
-            )}
-            <ClipboardButton
-              className={styles.copyLogButton}
-              icon="copy"
-              variant="secondary"
-              fill="text"
-              size="md"
-              getText={this.getLogText}
-              tooltip="Copy"
-              tooltipPlacement="top"
-            />
-          </span>
-        </td>
-      </>
-    );
-  }
-}
+LogRowMessage.displayName = 'LogRowMessage';

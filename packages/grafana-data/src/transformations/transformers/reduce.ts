@@ -15,6 +15,7 @@ export enum ReduceTransformerMode {
   SeriesToRows = 'seriesToRows', // default
   ReduceFields = 'reduceFields', // same structure, add additional row for each type
 }
+
 export interface ReduceTransformerOptions {
   reducers: ReducerID[];
   fields?: MatcherConfig; // Assume all fields
@@ -26,13 +27,13 @@ export interface ReduceTransformerOptions {
 export const reduceTransformer: DataTransformerInfo<ReduceTransformerOptions> = {
   id: DataTransformerID.reduce,
   name: 'Reduce',
-  description: 'Reduce all rows or data points to a single value using a function like max, min, mean or last',
+  description: 'Reduce all rows or data points to a single value using a function like max, min, mean or last.',
   defaultOptions: {
     reducers: [ReducerID.max],
   },
 
   /**
-   * Return a modified copy of the series.  If the transform is not or should not
+   * Return a modified copy of the series. If the transform is not or should not
    * be applied, just return the input series
    */
   operator: (options) => (source) =>

@@ -73,11 +73,22 @@ function render(...[ui, options]: Parameters<typeof rtlRender>) {
   };
 }
 
-jest.mock('app/features/search/service/folders', () => {
+jest.mock('app/features/browse-dashboards/api/services', () => {
+  const orig = jest.requireActual('app/features/browse-dashboards/api/services');
+
   return {
-    getFolderChildren(parentUID?: string) {
+    ...orig,
+    listFolders(parentUID?: string) {
       const childrenForUID = mockTree
-        .filter((v) => v.item.kind !== 'ui-empty-folder' && v.item.parentUID === parentUID)
+        .filter((v) => v.item.kind === 'folder' && v.item.parentUID === parentUID)
+        .map((v) => v.item);
+
+      return Promise.resolve(childrenForUID);
+    },
+
+    listDashboards(parentUID?: string) {
+      const childrenForUID = mockTree
+        .filter((v) => v.item.kind === 'dashboard' && v.item.parentUID === parentUID)
         .map((v) => v.item);
 
       return Promise.resolve(childrenForUID);
@@ -174,6 +185,12 @@ describe('browse-dashboards BrowseDashboardsPage', () => {
       expect(screen.queryByRole('button', { name: 'Folder actions' })).not.toBeInTheDocument();
     });
 
+    it('does not show an "Edit title" button', async () => {
+      render(<BrowseDashboardsPage {...props} />);
+      expect(await screen.findByRole('heading', { name: 'Dashboards' })).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Edit title' })).not.toBeInTheDocument();
+    });
+
     it('does not show any tabs', async () => {
       render(<BrowseDashboardsPage {...props} />);
       expect(await screen.findByRole('heading', { name: 'Dashboards' })).toBeInTheDocument();
@@ -197,7 +214,7 @@ describe('browse-dashboards BrowseDashboardsPage', () => {
     it('selecting an item hides the filters and shows the actions instead', async () => {
       render(<BrowseDashboardsPage {...props} />);
 
-      const checkbox = await screen.findByTestId(selectors.pages.BrowseDashbards.table.checkbox(dashbdD.item.uid));
+      const checkbox = await screen.findByTestId(selectors.pages.BrowseDashboards.table.checkbox(dashbdD.item.uid));
       await userEvent.click(checkbox);
 
       // Check the filters are now hidden
@@ -212,7 +229,7 @@ describe('browse-dashboards BrowseDashboardsPage', () => {
     it('navigating into a child item resets the selected state', async () => {
       const { rerender } = render(<BrowseDashboardsPage {...props} />);
 
-      const checkbox = await screen.findByTestId(selectors.pages.BrowseDashbards.table.checkbox(folderA.item.uid));
+      const checkbox = await screen.findByTestId(selectors.pages.BrowseDashboards.table.checkbox(folderA.item.uid));
       await userEvent.click(checkbox);
 
       // Check the actions are now visible
@@ -278,6 +295,24 @@ describe('browse-dashboards BrowseDashboardsPage', () => {
       expect(screen.queryByRole('button', { name: 'Folder actions' })).not.toBeInTheDocument();
     });
 
+    it('shows an "Edit title" button', async () => {
+      render(<BrowseDashboardsPage {...props} />);
+      expect(await screen.findByRole('button', { name: 'Edit title' })).toBeInTheDocument();
+    });
+
+    it('does not show the "Edit title" button if the user does not have permissions', async () => {
+      jest.spyOn(permissions, 'getFolderPermissions').mockImplementation(() => {
+        return {
+          canEditInFolder: false,
+          canCreateDashboards: false,
+          canCreateFolder: false,
+        };
+      });
+      render(<BrowseDashboardsPage {...props} />);
+      expect(await screen.findByRole('heading', { name: folderA.item.title })).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Edit title' })).not.toBeInTheDocument();
+    });
+
     it('displays all the folder tabs and shows the "Dashboards" tab as selected', async () => {
       render(<BrowseDashboardsPage {...props} />);
       expect(await screen.findByRole('tab', { name: 'Tab Dashboards' })).toBeInTheDocument();
@@ -305,7 +340,7 @@ describe('browse-dashboards BrowseDashboardsPage', () => {
       render(<BrowseDashboardsPage {...props} />);
 
       const checkbox = await screen.findByTestId(
-        selectors.pages.BrowseDashbards.table.checkbox(folderA_folderA.item.uid)
+        selectors.pages.BrowseDashboards.table.checkbox(folderA_folderA.item.uid)
       );
       await userEvent.click(checkbox);
 

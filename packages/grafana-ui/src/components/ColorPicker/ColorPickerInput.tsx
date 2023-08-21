@@ -80,19 +80,19 @@ ColorPickerInput.displayName = 'ColorPickerInput';
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    wrapper: css`
-      position: relative;
-    `,
-    picker: css`
-      &.react-colorful {
-        position: absolute;
-        width: 100%;
-        z-index: 11;
-        bottom: 36px;
-      }
-    `,
-    inner: css`
-      position: absolute;
-    `,
+    wrapper: css({
+      position: 'relative',
+    }),
+    picker: css({
+      '&.react-colorful': {
+        position: 'absolute',
+        width: '100%',
+        zIndex: 11,
+        bottom: '36px',
+      },
+    }),
+    inner: css({
+      position: 'absolute',
+    }),
   };
 };

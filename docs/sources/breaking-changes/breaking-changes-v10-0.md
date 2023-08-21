@@ -6,6 +6,11 @@ keywords:
   - documentation
   - '10.0'
   - release notes
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: Breaking changes in Grafana v10.0
 weight: -1
 ---
@@ -76,7 +81,7 @@ Grafana legacy alerting (dashboard alerts) has been deprecated since Grafana v9.
 
 #### Migration path
 
-The new Grafana Alerting was introduced in Grafana 8 and is a superset of legacy alerting. Learn how to migrate your alerts in the [Upgrade Alerting documentation]({{< relref "../alerting/migrating-alerts/" >}}).
+The new Grafana Alerting was introduced in Grafana 8 and is a superset of legacy alerting. Learn how to migrate your alerts in the [Upgrade Alerting documentation]({{< relref "../alerting/set-up/migrating-alerts/" >}}).
 
 ### API keys are migrating to service accounts
 
@@ -158,6 +163,38 @@ We've built a [CLI tool](https://grafana.com/blog/2022/12/12/guide-to-using-the-
 
 - [Blog post describing usage of the new CLI command](https://grafana.com/blog/2022/12/12/guide-to-using-the-new-grafana-cli-user-identity-conflict-tool-in-grafana-9.3/)
 
+### Grafana OAuth integrations do not work anymore with email lookups
+
+#### You are affected if:
+
+- You have configured Grafana to use multiple identity providers, and you have users with the same email address in multiple identity providers.
+- You have configured Grafana to use Generic OAuth with an identity provider that does not support a unique ID field.
+
+#### Background
+
+Grafana used to validate identity provider accounts based on the email claim. On many identity providers, the email field is not unique, and this could open a possible account vector to perform an account takeover and authentication bypass in certain scenarios.
+This change also ensures that Grafana is protected against the [CVE-2023-3128](https://grafana.com/security/security-advisories/CVE-2023-3128) vulnerability.
+
+#### Change in Grafana v10
+
+Grafana will not allow the affected users to sign in.
+
+#### Migration path
+
+In order to address any errors, we have provided an escape hatch that allows you to activate email lookup. You can use the following configuration in your Grafana instance to return the previous behavior.
+
+```
+[auth]
+oauth_allow_insecure_email_lookup = true
+```
+
+We strongly recommend not doing this in case you are using Azure AD as an identity provider with a multi-tenant app.
+
+#### Learn more
+
+- [CVE-2023-3128 Advisory](https://grafana.com/security/security-advisories/CVE-2023-3128)
+- [Enable email lookup]({{< relref "../setup-grafana/configure-security/configure-authentication/" >}})
+
 ### The "Alias" field in the CloudWatch data source is removed
 
 #### You are affected if:
@@ -203,6 +240,24 @@ Grafana v10.0.0 ships with the new React 18 upgrade. In turn, changes in the bat
 #### Migration path
 
 Update the plugin to version 1.8.3 or higher in your Grafana instance management console. This will ensure your plugin query editor works as intended.
+
+### DoiT International BigQuery plugin no longer supported
+
+#### You are affected if:
+
+You've installed and are using the [DoiT International BigQuery data source plugin](https://github.com/doitintl/bigquery-grafana).
+
+#### Description
+
+In v10.0.0, Grafana no longer supports the use of the [DoiT International BigQuery data source plugin](https://github.com/doitintl/bigquery-grafana), which was moved to a "retired" state in the latter half of 2022, and for which the GitHub repository was archived in December 2022. For BigQuery data sources to continue functioning, you're required to migrate to the [Official Grafana BigQuery data source plugin](https://github.com/grafana/google-bigquery-datasource/).
+
+#### Migration path
+
+For everyone using Grafana v8.5+, it’s possible to import queries created with the DoiT International BigQuery community plugin by simply changing the data source to Grafana BigQuery in the data source selector in the affected panel. Please note that [queries will be imported](https://github.com/grafana/google-bigquery-datasource#importing-queries-created-with-doit-international-bigquery-datasource-plugin) as raw SQL queries.
+
+#### Learn more
+
+- [Information about importing DoiT International BigQuery queries](https://github.com/grafana/google-bigquery-datasource#importing-queries-created-with-doit-international-bigquery-datasource-plugin).
 
 ## For Plugin Developers
 
@@ -288,7 +343,7 @@ Here are some of the benefits of create-plugin:
 
 - **Improved testing capabilities:** Testing plugins with @grafana/create-plugin is much easier with GitHub workflows that automate unit and e2e test runs whenever changes are pushed to GitHub.
 
-- **Better documentation:** The [documentation](https://grafana.github.io/plugin-tools/docs/creating-a-plugin) for @grafana/create-plugin is more comprehensive and easier to discover than that of @grafana/toolkit.
+- **Better documentation:** The [documentation](https://grafana.github.io/plugin-tools/docs/get-started/) for @grafana/create-plugin is more comprehensive and easier to discover than that of @grafana/toolkit.
 
 #### Migration path
 
@@ -306,4 +361,8 @@ npx @grafana/create-plugin@latest migrate
 
 #### Learn more
 
-- [Migration guide](https://grafana.github.io/plugin-tools/docs/migrating-from-toolkit/)
+- [Migration guide](https://grafana.github.io/plugin-tools/docs/get-started/migrate-from-toolkit)
+
+## Deprecations
+
+Changing the folder UID through the API is deprecated. This functionality will be removed in a future release.

@@ -140,6 +140,7 @@ export function TagSection({
               className="gf-form-input"
               value={curTagKey ? toOption('' + curTagKey) : undefined}
               placeholder="key"
+              allowCustomValue
               onOpenMenu={async () => {
                 updKeyIsLoading(true);
                 const tKs = await suggestTagKeys(query);

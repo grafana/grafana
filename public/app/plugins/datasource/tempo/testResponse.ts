@@ -1836,6 +1836,42 @@ export const otlpDataFrameFromResponse = new MutableDataFrame({
       values: ['db'],
     },
     {
+      name: 'kind',
+      type: 'string',
+      config: {},
+      values: ['client'],
+    },
+    {
+      name: 'statusCode',
+      type: 'number',
+      config: {},
+      values: [2],
+    },
+    {
+      name: 'statusMessage',
+      type: 'string',
+      config: {},
+      values: ['message'],
+    },
+    {
+      name: 'instrumentationLibraryName',
+      type: 'string',
+      config: {},
+      values: ['libraryName'],
+    },
+    {
+      name: 'instrumentationLibraryVersion',
+      type: 'string',
+      config: {},
+      values: ['libraryVersion'],
+    },
+    {
+      name: 'traceState',
+      type: 'string',
+      config: {},
+      values: ['traceState'],
+    },
+    {
       name: 'serviceTags',
       type: 'other',
       config: {},
@@ -1930,10 +1966,6 @@ export const otlpDataFrameFromResponse = new MutableDataFrame({
             key: 'component',
             value: 'net/http',
           },
-          {
-            key: 'span.kind',
-            value: 'client',
-          },
         ],
       ],
     },
@@ -1992,6 +2024,60 @@ export const otlpDataFrameToResponse = new MutableDataFrame({
       values: ['db'],
       state: {
         displayName: 'serviceName',
+      },
+    },
+    {
+      name: 'kind',
+      type: 'string',
+      config: {},
+      values: ['client'],
+      state: {
+        displayName: 'kind',
+      },
+    },
+    {
+      name: 'statusCode',
+      type: 'number',
+      config: {},
+      values: [2],
+      state: {
+        displayName: 'statusCode',
+      },
+    },
+    {
+      name: 'statusMessage',
+      type: 'string',
+      config: {},
+      values: ['message'],
+      state: {
+        displayName: 'statusMessage',
+      },
+    },
+    {
+      name: 'instrumentationLibraryName',
+      type: 'string',
+      config: {},
+      values: ['libraryName'],
+      state: {
+        displayName: 'instrumentationLibraryName',
+      },
+    },
+    {
+      name: 'instrumentationLibraryVersion',
+      type: 'string',
+      config: {},
+      values: ['libraryVersion'],
+      state: {
+        displayName: 'instrumentationLibraryVersion',
+      },
+    },
+    {
+      name: 'traceState',
+      type: 'string',
+      config: {},
+      values: ['traceState'],
+      state: {
+        displayName: 'traceState',
       },
     },
     {
@@ -2079,10 +2165,6 @@ export const otlpDataFrameToResponse = new MutableDataFrame({
             key: 'component',
             value: 'net/http',
           },
-          {
-            key: 'span.kind',
-            value: 'client',
-          },
         ],
       ],
       state: {
@@ -2135,6 +2217,10 @@ export const otlpResponse = {
       },
       instrumentationLibrarySpans: [
         {
+          instrumentationLibrary: {
+            name: 'libraryName',
+            version: 'libraryVersion',
+          },
           spans: [
             {
               traceId: '000000000000000060ba2abb44f13eae',
@@ -2142,6 +2228,11 @@ export const otlpResponse = {
               parentSpanId: '398f0f21a3db99ae',
               name: 'HTTP GET - root',
               kind: 'SPAN_KIND_CLIENT',
+              status: {
+                code: 2,
+                message: 'message',
+              },
+              traceState: 'traceState',
               startTimeUnixNano: 1627471657255809000,
               endTimeUnixNano: 1627471657256268000,
               attributes: [
@@ -2187,7 +2278,8 @@ export const tempoSearchResponse = {
   traces: [
     {
       traceID: 'e641dcac1c3a0565',
-      rootServiceName: 'c10d7ca4e3a00354',
+      rootServiceName: 'requester',
+      rootTraceName: 'app',
       startTimeUnixNano: '1643356828724000000',
       durationMs: 65,
     },
@@ -2300,87 +2392,91 @@ export const traceQlResponse = {
       rootTraceName: 'HTTP Client',
       startTimeUnixNano: '1643342166678000000',
       durationMs: 93,
-      spanSet: {
-        spans: [
-          {
-            spanID: '3b9a5c222d3ddd8f',
-            startTimeUnixNano: '1666187875397721000',
-            durationNanos: '877000',
-            attributes: [
-              {
-                key: 'http.method',
-                value: {
-                  stringValue: 'GET',
-                },
+      spanSets: [
+        {
+          attributes: [
+            {
+              key: 'by(resource.service.name)',
+              value: {
+                stringValue: 'db',
               },
-              {
-                key: 'service.name',
-                value: {
-                  stringValue: 'db',
+            },
+          ],
+          spans: [
+            {
+              spanID: '3b9a5c222d3ddd8f',
+              startTimeUnixNano: '1666187875397721000',
+              durationNanos: '877000',
+              attributes: [
+                {
+                  key: 'http.method',
+                  value: {
+                    stringValue: 'GET',
+                  },
                 },
-              },
-            ],
-          },
-          {
-            spanID: '894d90db6b5807f',
-            startTimeUnixNano: '1666187875393293000',
-            durationNanos: '11073000',
-            attributes: [
-              {
-                key: 'http.method',
-                value: {
-                  stringValue: 'GET',
+                {
+                  key: 'service.name',
+                  value: {
+                    stringValue: 'db',
+                  },
                 },
+              ],
+            },
+          ],
+          matched: 1,
+        },
+        {
+          attributes: [
+            {
+              key: 'by(resource.service.name)',
+              value: {
+                stringValue: 'app',
               },
-              {
-                key: 'service.name',
-                value: {
-                  stringValue: 'app',
+            },
+          ],
+          spans: [
+            {
+              spanID: '894d90db6b5807f',
+              startTimeUnixNano: '1666187875393293000',
+              durationNanos: '11073000',
+              attributes: [
+                {
+                  key: 'http.method',
+                  value: {
+                    stringValue: 'GET',
+                  },
                 },
-              },
-            ],
-          },
-          {
-            spanID: 'd3284e9c5081aab',
-            startTimeUnixNano: '1666187875393897000',
-            durationNanos: '10133000',
-            attributes: [
-              {
-                key: 'service.name',
-                value: {
-                  stringValue: 'app',
+                {
+                  key: 'service.name',
+                  value: {
+                    stringValue: 'app',
+                  },
                 },
-              },
-              {
-                key: 'http.method',
-                value: {
-                  stringValue: 'GET',
+              ],
+            },
+            {
+              spanID: 'd3284e9c5081aab',
+              startTimeUnixNano: '1666187875393897000',
+              durationNanos: '10133000',
+              attributes: [
+                {
+                  key: 'service.name',
+                  value: {
+                    stringValue: 'app',
+                  },
                 },
-              },
-            ],
-          },
-          {
-            spanID: '454785498fc8b1aa',
-            startTimeUnixNano: '1666187875389957000',
-            durationNanos: '13953000',
-            attributes: [
-              {
-                key: 'http.method',
-                value: {
-                  stringValue: 'GET',
+                {
+                  key: 'http.method',
+                  value: {
+                    stringValue: 'GET',
+                  },
                 },
-              },
-              {
-                key: 'service.name',
-                value: {
-                  stringValue: 'lb',
-                },
-              },
-            ],
-          },
-        ],
-        matched: 4,
-      },
+              ],
+            },
+          ],
+          matched: 2,
+        },
+      ],
     },
     {
       traceID: '480691f7c6f20',

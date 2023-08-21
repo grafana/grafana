@@ -22,6 +22,7 @@ export { defaultAccessPolicy } from './raw/accesspolicy/x/accesspolicy_types.gen
 export type {
   AnnotationTarget,
   AnnotationPanelFilter,
+  VariableOption,
   DashboardLink,
   DashboardLinkType,
   VariableType,
@@ -37,7 +38,6 @@ export type {
   SpecialValueMap,
   ValueMappingResult,
   LibraryPanelRef,
-  RowPanel,
   GraphPanel,
   HeatmapPanel
 } from './raw/dashboard/x/dashboard_types.gen';
@@ -46,6 +46,8 @@ export type {
 export {
   defaultAnnotationTarget,
   defaultAnnotationPanelFilter,
+  VariableRefresh,
+  VariableSort,
   LoadingState,
   defaultDashboardLink,
   FieldColorModeId,
@@ -55,8 +57,7 @@ export {
   MappingType,
   SpecialValueMatch,
   DashboardCursorSync,
-  defaultDashboardCursorSync,
-  defaultRowPanel
+  defaultDashboardCursorSync
 } from './raw/dashboard/x/dashboard_types.gen';
 
 // The following exported declarations correspond to types in the dashboard@0.0 kind's
@@ -78,7 +79,8 @@ export type {
   Panel,
   FieldConfigSource,
   MatcherConfig,
-  FieldConfig
+  FieldConfig,
+  RowPanel
 } from './veneer/dashboard.types';
 
 // The following exported declarations correspond to types in the dashboard@0.0 kind's
@@ -99,7 +101,8 @@ export {
   defaultPanel,
   defaultFieldConfigSource,
   defaultMatcherConfig,
-  defaultFieldConfig
+  defaultFieldConfig,
+  defaultRowPanel
 } from './veneer/dashboard.types';
 
 // Raw generated types from Folder kind.
@@ -134,7 +137,8 @@ export { defaultPlaylist } from './raw/playlist/x/playlist_types.gen';
 // Raw generated types from Preferences kind.
 export type {
   Preferences,
-  QueryHistoryPreference
+  QueryHistoryPreference,
+  CookiePreferences
 } from './raw/preferences/x/preferences_types.gen';
 
 // Raw generated types from PublicDashboard kind.

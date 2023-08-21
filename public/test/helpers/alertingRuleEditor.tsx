@@ -28,9 +28,6 @@ export const ui = {
     save: byRole('button', { name: 'Save rule' }),
     addAnnotation: byRole('button', { name: /Add info/ }),
     addLabel: byRole('button', { name: /Add label/ }),
-    // alert type buttons
-    grafanaManagedAlert: byRole('button', { name: /Grafana managed/ }),
-    lotexAlert: byRole('button', { name: /Mimir or Loki alert/ }),
   },
 };
 

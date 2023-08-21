@@ -128,7 +128,7 @@ type DeleteFolderCommand struct {
 }
 
 // GetFolderQuery is used for all folder Get requests. Only one of UID, ID, or
-// Title should be set; if multilpe fields are set by the caller the dashboard
+// Title should be set; if multiple fields are set by the caller the dashboard
 // service will select the field with the most specificity, in order: ID, UID,
 // Title.
 type GetFolderQuery struct {

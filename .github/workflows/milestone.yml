@@ -10,12 +10,10 @@ jobs:
     uses: grafana/grafana/.github/workflows/remove-milestone.yml@main
     with:
       version_call: ${{ github.event.inputs.version_input }}
-    secrets:
-      token: ${{ secrets.GH_BOT_ACCESS_TOKEN }}
+    secrets: inherit
   call-close-milestone:
     uses: grafana/grafana/.github/workflows/close-milestone.yml@main
     with:
       version_call: ${{ github.event.inputs.version_input }}
-    secrets:
-      token: ${{ secrets.GH_BOT_ACCESS_TOKEN }}
+    secrets: inherit
     needs: call-remove-milestone

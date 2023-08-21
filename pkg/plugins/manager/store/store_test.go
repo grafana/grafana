@@ -2,12 +2,14 @@ package store
 
 import (
 	"context"
+	"sync"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
+	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
 )
 
@@ -25,7 +27,7 @@ func TestStore_ProvideService(t *testing.T) {
 			return []plugins.PluginSource{
 				&fakes.FakePluginSource{
 					PluginClassFunc: func(ctx context.Context) plugins.Class {
-						return plugins.Bundled
+						return plugins.ClassBundled
 					},
 					PluginURIsFunc: func(ctx context.Context) []string {
 						return []string{"path1"}
@@ -33,7 +35,7 @@ func TestStore_ProvideService(t *testing.T) {
 				},
 				&fakes.FakePluginSource{
 					PluginClassFunc: func(ctx context.Context) plugins.Class {
-						return plugins.External
+						return plugins.ClassExternal
 					},
 					PluginURIsFunc: func(ctx context.Context) []string {
 						return []string{"path2", "path3"}
@@ -54,10 +56,12 @@ func TestStore_Plugin(t *testing.T) {
 		p1.RegisterClient(&DecommissionedPlugin{})
 		p2 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "test-panel"}}
 
-		ps := New(newFakePluginRegistry(map[string]*plugins.Plugin{
-			p1.ID: p1,
-			p2.ID: p2,
-		}))
+		ps := New(&fakes.FakePluginRegistry{
+			Store: map[string]*plugins.Plugin{
+				p1.ID: p1,
+				p2.ID: p2,
+			},
+		}, &fakes.FakeLoader{})
 
 		p, exists := ps.Plugin(context.Background(), p1.ID)
 		require.False(t, exists)
@@ -71,77 +75,83 @@ func TestStore_Plugin(t *testing.T) {
 
 func TestStore_Plugins(t *testing.T) {
 	t.Run("Plugin returns all non-decommissioned plugins by type", func(t *testing.T) {
-		p1 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "a-test-datasource", Type: plugins.DataSource}}
-		p2 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "b-test-panel", Type: plugins.Panel}}
-		p3 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "c-test-panel", Type: plugins.Panel}}
-		p4 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "d-test-app", Type: plugins.App}}
-		p5 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "e-test-panel", Type: plugins.Panel}}
+		p1 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "a-test-datasource", Type: plugins.TypeDataSource}}
+		p2 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "b-test-panel", Type: plugins.TypePanel}}
+		p3 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "c-test-panel", Type: plugins.TypePanel}}
+		p4 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "d-test-app", Type: plugins.TypeApp}}
+		p5 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "e-test-panel", Type: plugins.TypePanel}}
 		p5.RegisterClient(&DecommissionedPlugin{})
 
-		ps := New(newFakePluginRegistry(map[string]*plugins.Plugin{
-			p1.ID: p1,
-			p2.ID: p2,
-			p3.ID: p3,
-			p4.ID: p4,
-			p5.ID: p5,
-		}))
+		ps := New(&fakes.FakePluginRegistry{
+			Store: map[string]*plugins.Plugin{
+				p1.ID: p1,
+				p2.ID: p2,
+				p3.ID: p3,
+				p4.ID: p4,
+				p5.ID: p5,
+			},
+		}, &fakes.FakeLoader{})
 
 		pss := ps.Plugins(context.Background())
 		require.Equal(t, pss, []plugins.PluginDTO{p1.ToDTO(), p2.ToDTO(), p3.ToDTO(), p4.ToDTO()})
 
-		pss = ps.Plugins(context.Background(), plugins.App)
+		pss = ps.Plugins(context.Background(), plugins.TypeApp)
 		require.Equal(t, pss, []plugins.PluginDTO{p4.ToDTO()})
 
-		pss = ps.Plugins(context.Background(), plugins.Panel)
+		pss = ps.Plugins(context.Background(), plugins.TypePanel)
 		require.Equal(t, pss, []plugins.PluginDTO{p2.ToDTO(), p3.ToDTO()})
 
-		pss = ps.Plugins(context.Background(), plugins.DataSource)
+		pss = ps.Plugins(context.Background(), plugins.TypeDataSource)
 		require.Equal(t, pss, []plugins.PluginDTO{p1.ToDTO()})
 
-		pss = ps.Plugins(context.Background(), plugins.DataSource, plugins.App, plugins.Panel)
+		pss = ps.Plugins(context.Background(), plugins.TypeDataSource, plugins.TypeApp, plugins.TypePanel)
 		require.Equal(t, pss, []plugins.PluginDTO{p1.ToDTO(), p2.ToDTO(), p3.ToDTO(), p4.ToDTO()})
 	})
 }
 
 func TestStore_Routes(t *testing.T) {
 	t.Run("Routes returns all static routes for non-decommissioned plugins", func(t *testing.T) {
-		p1 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "a-test-renderer", Type: plugins.Renderer}, FS: fakes.NewFakePluginFiles("/some/dir")}
-		p2 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "b-test-panel", Type: plugins.Panel}, FS: fakes.NewFakePluginFiles("/grafana/")}
-		p3 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "c-test-secrets", Type: plugins.SecretsManager}, FS: fakes.NewFakePluginFiles("./secrets"), Class: plugins.Core}
-		p4 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "d-test-datasource", Type: plugins.DataSource}, FS: fakes.NewFakePluginFiles("../test")}
-		p5 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "e-test-app", Type: plugins.App}, FS: fakes.NewFakePluginFiles("any/path")}
-		p6 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "f-test-app", Type: plugins.App}}
+		p1 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "a-test-renderer", Type: plugins.TypeRenderer}, FS: fakes.NewFakePluginFiles("/some/dir")}
+		p2 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "b-test-panel", Type: plugins.TypePanel}, FS: fakes.NewFakePluginFiles("/grafana/")}
+		p3 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "c-test-secrets", Type: plugins.TypeSecretsManager}, FS: fakes.NewFakePluginFiles("./secrets"), Class: plugins.ClassCore}
+		p4 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "d-test-datasource", Type: plugins.TypeDataSource}, FS: fakes.NewFakePluginFiles("../test")}
+		p5 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "e-test-app", Type: plugins.TypeApp}, FS: fakes.NewFakePluginFiles("any/path")}
+		p6 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "f-test-app", Type: plugins.TypeApp}}
 		p6.RegisterClient(&DecommissionedPlugin{})
 
-		ps := New(newFakePluginRegistry(map[string]*plugins.Plugin{
-			p1.ID: p1,
-			p2.ID: p2,
-			p3.ID: p3,
-			p4.ID: p4,
-			p5.ID: p5,
-			p6.ID: p6,
-		}))
+		ps := New(&fakes.FakePluginRegistry{
+			Store: map[string]*plugins.Plugin{
+				p1.ID: p1,
+				p2.ID: p2,
+				p3.ID: p3,
+				p4.ID: p4,
+				p5.ID: p5,
+				p6.ID: p6,
+			},
+		}, &fakes.FakeLoader{})
 
 		sr := func(p *plugins.Plugin) *plugins.StaticRoute {
 			return &plugins.StaticRoute{PluginID: p.ID, Directory: p.FS.Base()}
 		}
 
-		rs := ps.Routes()
+		rs := ps.Routes(context.Background())
 		require.Equal(t, []*plugins.StaticRoute{sr(p1), sr(p2), sr(p4), sr(p5)}, rs)
 	})
 }
 
 func TestStore_Renderer(t *testing.T) {
 	t.Run("Renderer returns a single (non-decommissioned) renderer plugin", func(t *testing.T) {
-		p1 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "test-renderer", Type: plugins.Renderer}}
-		p2 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "test-panel", Type: plugins.Panel}}
-		p3 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "test-app", Type: plugins.App}}
+		p1 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "test-renderer", Type: plugins.TypeRenderer}}
+		p2 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "test-panel", Type: plugins.TypePanel}}
+		p3 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "test-app", Type: plugins.TypeApp}}
 
-		ps := New(newFakePluginRegistry(map[string]*plugins.Plugin{
-			p1.ID: p1,
-			p2.ID: p2,
-			p3.ID: p3,
-		}))
+		ps := New(&fakes.FakePluginRegistry{
+			Store: map[string]*plugins.Plugin{
+				p1.ID: p1,
+				p2.ID: p2,
+				p3.ID: p3,
+			},
+		}, &fakes.FakeLoader{})
 
 		r := ps.Renderer(context.Background())
 		require.Equal(t, p1, r)
@@ -150,20 +160,59 @@ func TestStore_Renderer(t *testing.T) {
 
 func TestStore_SecretsManager(t *testing.T) {
 	t.Run("Renderer returns a single (non-decommissioned) secrets manager plugin", func(t *testing.T) {
-		p1 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "test-renderer", Type: plugins.Renderer}}
-		p2 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "test-panel", Type: plugins.Panel}}
-		p3 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "test-secrets", Type: plugins.SecretsManager}}
-		p4 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "test-datasource", Type: plugins.DataSource}}
+		p1 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "test-renderer", Type: plugins.TypeRenderer}}
+		p2 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "test-panel", Type: plugins.TypePanel}}
+		p3 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "test-secrets", Type: plugins.TypeSecretsManager}}
+		p4 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "test-datasource", Type: plugins.TypeDataSource}}
 
-		ps := New(newFakePluginRegistry(map[string]*plugins.Plugin{
-			p1.ID: p1,
-			p2.ID: p2,
-			p3.ID: p3,
-			p4.ID: p4,
-		}))
+		ps := New(&fakes.FakePluginRegistry{
+			Store: map[string]*plugins.Plugin{
+				p1.ID: p1,
+				p2.ID: p2,
+				p3.ID: p3,
+				p4.ID: p4,
+			},
+		}, &fakes.FakeLoader{})
 
 		r := ps.SecretsManager(context.Background())
 		require.Equal(t, p3, r)
+	})
+}
+
+func TestProcessManager_shutdown(t *testing.T) {
+	p := &plugins.Plugin{JSONData: plugins.JSONData{ID: "test-datasource", Type: plugins.TypeDataSource}} // Backend: true
+	backend := &fakes.FakeBackendPlugin{}
+	p.RegisterClient(backend)
+	p.SetLogger(log.NewTestLogger())
+
+	unloaded := false
+	ps := New(&fakes.FakePluginRegistry{
+		Store: map[string]*plugins.Plugin{
+			p.ID: p,
+		},
+	}, &fakes.FakeLoader{
+		UnloadFunc: func(_ context.Context, plugin *plugins.Plugin) (*plugins.Plugin, error) {
+			require.Equal(t, p, plugin)
+			unloaded = true
+			return nil, nil
+		},
+	})
+
+	pCtx := context.Background()
+	cCtx, cancel := context.WithCancel(pCtx)
+	var wgRun sync.WaitGroup
+	wgRun.Add(1)
+	var runErr error
+	go func() {
+		runErr = ps.Run(cCtx)
+		wgRun.Done()
+	}()
+
+	t.Run("When context is cancelled the plugin is stopped", func(t *testing.T) {
+		cancel()
+		wgRun.Wait()
+		require.ErrorIs(t, runErr, context.Canceled)
+		require.True(t, unloaded)
 	})
 }
 
@@ -173,12 +222,12 @@ func TestStore_availablePlugins(t *testing.T) {
 		p1.RegisterClient(&DecommissionedPlugin{})
 		p2 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "test-app"}}
 
-		ps := New(
-			newFakePluginRegistry(map[string]*plugins.Plugin{
+		ps := New(&fakes.FakePluginRegistry{
+			Store: map[string]*plugins.Plugin{
 				p1.ID: p1,
 				p2.ID: p2,
-			}),
-		)
+			},
+		}, &fakes.FakeLoader{})
 
 		aps := ps.availablePlugins(context.Background())
 		require.Len(t, aps, 1)
@@ -196,37 +245,4 @@ func (p *DecommissionedPlugin) Decommission() error {
 
 func (p *DecommissionedPlugin) IsDecommissioned() bool {
 	return true
-}
-
-type fakePluginRegistry struct {
-	store map[string]*plugins.Plugin
-}
-
-func newFakePluginRegistry(m map[string]*plugins.Plugin) *fakePluginRegistry {
-	return &fakePluginRegistry{
-		store: m,
-	}
-}
-
-func (f *fakePluginRegistry) Plugin(_ context.Context, id string) (*plugins.Plugin, bool) {
-	p, exists := f.store[id]
-	return p, exists
-}
-
-func (f *fakePluginRegistry) Plugins(_ context.Context) []*plugins.Plugin {
-	var res []*plugins.Plugin
-	for _, p := range f.store {
-		res = append(res, p)
-	}
-	return res
-}
-
-func (f *fakePluginRegistry) Add(_ context.Context, p *plugins.Plugin) error {
-	f.store[p.ID] = p
-	return nil
-}
-
-func (f *fakePluginRegistry) Remove(_ context.Context, id string) error {
-	delete(f.store, id)
-	return nil
 }

@@ -2,7 +2,6 @@ package datasources
 
 import (
 	"context"
-	"os"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -192,10 +191,9 @@ func TestDatasourceAsConfig(t *testing.T) {
 	})
 
 	t.Run("can read all properties from version 1", func(t *testing.T) {
-		_ = os.Setenv("TEST_VAR", "name")
+		t.Setenv("TEST_VAR", "name")
 		cfgProvider := &configReader{log: log.New("test logger"), orgService: &orgtest.FakeOrgService{}}
 		cfg, err := cfgProvider.readConfig(context.Background(), allProperties)
-		_ = os.Unsetenv("TEST_VAR")
 		if err != nil {
 			t.Fatalf("readConfig return an error %v", err)
 		}

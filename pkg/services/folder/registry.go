@@ -7,7 +7,7 @@ import (
 )
 
 type RegistryService interface {
-	DeleteInFolder(ctx context.Context, orgID int64, uid string) error
-	CountInFolder(ctx context.Context, orgID int64, uid string, user *user.SignedInUser) (int64, error)
+	DeleteInFolder(ctx context.Context, orgID int64, folderUID string, user *user.SignedInUser) error
+	CountInFolder(ctx context.Context, orgID int64, folderUID string, user *user.SignedInUser) (int64, error)
 	Kind() string
 }

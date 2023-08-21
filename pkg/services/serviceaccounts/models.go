@@ -4,8 +4,8 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
@@ -36,6 +36,14 @@ var (
 	ErrInvalidTokenExpiration            = errutil.NewBase(errutil.StatusValidationFailed, "serviceaccounts.ErrInvalidInput", errutil.WithPublicMessage("invalid SecondsToLive value"))
 	ErrDuplicateToken                    = errutil.NewBase(errutil.StatusBadRequest, "serviceaccounts.ErrTokenAlreadyExists", errutil.WithPublicMessage("service account token with given name already exists in the organization"))
 )
+
+type MigrationResult struct {
+	Total           int      `json:"total"`
+	Migrated        int      `json:"migrated"`
+	Failed          int      `json:"failed"`
+	FailedApikeyIDs []int64  `json:"failedApikeyIDs"`
+	FailedDetails   []string `json:"failedDetails"`
+}
 
 type ServiceAccount struct {
 	Id int64
@@ -98,7 +106,7 @@ type SearchOrgServiceAccountsQuery struct {
 	Filter       ServiceAccountFilter
 	Page         int
 	Limit        int
-	SignedInUser *user.SignedInUser
+	SignedInUser identity.Requester
 }
 
 func (q *SearchOrgServiceAccountsQuery) SetDefaults() {
@@ -152,9 +160,10 @@ const (
 )
 
 type Stats struct {
-	ServiceAccounts     int64 `xorm:"serviceaccounts"`
-	Tokens              int64 `xorm:"serviceaccount_tokens"`
-	ForcedExpiryEnabled bool  `xorm:"-"`
+	ServiceAccounts           int64 `xorm:"serviceaccounts"`
+	ServiceAccountsWithNoRole int64 `xorm:"serviceaccounts_with_no_role"`
+	Tokens                    int64 `xorm:"serviceaccount_tokens"`
+	ForcedExpiryEnabled       bool  `xorm:"-"`
 }
 
 // AccessEvaluator is used to protect the "Configuration > Service accounts" page access

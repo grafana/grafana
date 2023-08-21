@@ -17,17 +17,20 @@ import {
   LogRowContextOptions,
   DataSourceWithLogsContextSupport,
   DataSourceApi,
+  hasToggleableQueryFiltersSupport,
 } from '@grafana/data';
+import { getDataSourceSrv } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import { Collapse } from '@grafana/ui';
 import { StoreState } from 'app/types';
-import { ExploreId, ExploreItemState } from 'app/types/explore';
+import { ExploreItemState } from 'app/types/explore';
 
 import { getTimeZone } from '../../profile/state/selectors';
 import {
   addResultsToCache,
   clearCache,
   loadSupplementaryQueryData,
+  selectIsWaitingForData,
   setSupplementaryQueryEnabled,
 } from '../state/query';
 import { updateTimeRange } from '../state/time';
@@ -40,7 +43,7 @@ import { LogsCrossFadeTransition } from './utils/LogsCrossFadeTransition';
 
 interface LogsContainerProps extends PropsFromRedux {
   width: number;
-  exploreId: ExploreId;
+  exploreId: string;
   scanRange?: RawTimeRange;
   syncedTimes: boolean;
   loadingState: LoadingState;
@@ -50,9 +53,54 @@ interface LogsContainerProps extends PropsFromRedux {
   onStopScanning: () => void;
   eventBus: EventBus;
   splitOpenFn: SplitOpen;
+  scrollElement?: HTMLDivElement;
+  isFilterLabelActive: (key: string, value: string) => Promise<boolean>;
 }
 
-class LogsContainer extends PureComponent<LogsContainerProps> {
+interface LogsContainerState {
+  logDetailsFilterAvailable: boolean;
+}
+
+class LogsContainer extends PureComponent<LogsContainerProps, LogsContainerState> {
+  state: LogsContainerState = {
+    logDetailsFilterAvailable: false,
+  };
+
+  componentDidMount() {
+    this.checkFiltersAvailability();
+  }
+
+  componentDidUpdate(prevProps: LogsContainerProps) {
+    this.checkFiltersAvailability();
+  }
+
+  private checkFiltersAvailability() {
+    const { logsQueries, datasourceInstance } = this.props;
+
+    if (!logsQueries) {
+      return;
+    }
+
+    if (datasourceInstance?.modifyQuery || hasToggleableQueryFiltersSupport(datasourceInstance)) {
+      this.setState({ logDetailsFilterAvailable: true });
+      return;
+    }
+
+    const promises = [];
+    for (const query of logsQueries) {
+      if (query.datasource) {
+        promises.push(getDataSourceSrv().get(query.datasource));
+      }
+    }
+
+    Promise.all(promises).then((dataSources) => {
+      const logDetailsFilterAvailable = dataSources.some(
+        (ds) => ds.modifyQuery || hasToggleableQueryFiltersSupport(ds)
+      );
+      this.setState({ logDetailsFilterAvailable });
+    });
+  }
+
   onChangeTime = (absoluteRange: AbsoluteTimeRange) => {
     const { exploreId, updateTimeRange } = this.props;
     updateTimeRange({ exploreId, absoluteRange });
@@ -70,11 +118,15 @@ class LogsContainer extends PureComponent<LogsContainerProps> {
     );
   }
 
-  getLogRowContext = async (row: LogRowModel, options?: LogRowContextOptions): Promise<DataQueryResponse | []> => {
+  getLogRowContext = async (
+    row: LogRowModel,
+    origRow: LogRowModel,
+    options: LogRowContextOptions
+  ): Promise<DataQueryResponse | []> => {
     const { datasourceInstance, logsQueries } = this.props;
 
     if (hasLogsContextSupport(datasourceInstance)) {
-      const query = this.getQuery(logsQueries, row, datasourceInstance);
+      const query = this.getQuery(logsQueries, origRow, datasourceInstance);
       return datasourceInstance.getLogRowContext(row, options, query);
     }
 
@@ -144,7 +196,9 @@ class LogsContainer extends PureComponent<LogsContainerProps> {
       addResultsToCache,
       clearCache,
       logsVolume,
+      scrollElement,
     } = this.props;
+    const { logDetailsFilterAvailable } = this.state;
 
     if (!logRows) {
       return null;
@@ -189,8 +243,8 @@ class LogsContainer extends PureComponent<LogsContainerProps> {
             loadingState={loadingState}
             loadLogsVolumeData={() => loadSupplementaryQueryData(exploreId, SupplementaryQueryType.LogsVolume)}
             onChangeTime={this.onChangeTime}
-            onClickFilterLabel={onClickFilterLabel}
-            onClickFilterOutLabel={onClickFilterOutLabel}
+            onClickFilterLabel={logDetailsFilterAvailable ? onClickFilterLabel : undefined}
+            onClickFilterOutLabel={logDetailsFilterAvailable ? onClickFilterOutLabel : undefined}
             onStartScanning={onStartScanning}
             onStopScanning={onStopScanning}
             absoluteRange={absoluteRange}
@@ -206,6 +260,11 @@ class LogsContainer extends PureComponent<LogsContainerProps> {
             addResultsToCache={() => addResultsToCache(exploreId)}
             clearCache={() => clearCache(exploreId)}
             eventBus={this.props.eventBus}
+            panelState={this.props.panelState}
+            logsFrames={this.props.logsFrames}
+            scrollElement={scrollElement}
+            isFilterLabelActive={logDetailsFilterAvailable ? this.props.isFilterLabelActive : undefined}
+            range={range}
           />
         </LogsCrossFadeTransition>
       </>
@@ -213,12 +272,11 @@ class LogsContainer extends PureComponent<LogsContainerProps> {
   }
 }
 
-function mapStateToProps(state: StoreState, { exploreId }: { exploreId: ExploreId }) {
+function mapStateToProps(state: StoreState, { exploreId }: { exploreId: string }) {
   const explore = state.explore;
   const item: ExploreItemState = explore.panes[exploreId]!;
   const {
     logsResult,
-    loading,
     scanning,
     datasourceInstance,
     isLive,
@@ -228,6 +286,8 @@ function mapStateToProps(state: StoreState, { exploreId }: { exploreId: ExploreI
     absoluteRange,
     supplementaryQueries,
   } = item;
+  const loading = selectIsWaitingForData(exploreId)(state);
+  const panelState = item.panelsState;
   const timeZone = getTimeZone(state.user);
   const logsVolume = supplementaryQueries[SupplementaryQueryType.LogsVolume];
 
@@ -247,6 +307,8 @@ function mapStateToProps(state: StoreState, { exploreId }: { exploreId: ExploreI
     range,
     absoluteRange,
     logsVolume,
+    panelState,
+    logsFrames: item.queryResponse.logsFrames,
   };
 }
 

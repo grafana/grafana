@@ -1,6 +1,12 @@
 import React, { useCallback } from 'react';
 
-import { DataTransformerID, standardTransformers, TransformerRegistryItem, TransformerUIProps } from '@grafana/data';
+import {
+  DataTransformerID,
+  standardTransformers,
+  TransformerRegistryItem,
+  TransformerUIProps,
+  TransformerCategory,
+} from '@grafana/data';
 import { SortByField, SortByTransformerOptions } from '@grafana/data/src/transformations/transformers/sortBy';
 import { InlineField, InlineSwitch, InlineFieldRow, Select } from '@grafana/ui';
 
@@ -17,7 +23,7 @@ export const SortByTransformerEditor = ({ input, options, onChange }: Transforme
     [onChange, options]
   );
 
-  const sorts = options.sort?.length ? options.sort : [{} as SortByField];
+  const sorts: SortByField[] = options.sort?.length ? options.sort : [{} as SortByField];
 
   return (
     <div>
@@ -55,4 +61,5 @@ export const sortByTransformRegistryItem: TransformerRegistryItem<SortByTransfor
   transformation: standardTransformers.sortByTransformer,
   name: standardTransformers.sortByTransformer.name,
   description: standardTransformers.sortByTransformer.description,
+  categories: new Set([TransformerCategory.ReorderAndRename]),
 };

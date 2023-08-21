@@ -14,17 +14,9 @@
 
 import { createSelector } from 'reselect';
 
-import { fuzzyMatch } from '@grafana/ui';
-
-import { TraceSpan, TraceSpanData, TraceSpanReference } from '../types/trace';
-
-import { getProcessServiceName } from './process';
+import { TraceSpanData, TraceSpanReference } from '../types/trace';
 
 export const getSpanId = (span: TraceSpanData) => span.spanID;
-export const getSpanName = (span: TraceSpanData) => span.operationName;
-export const getSpanDuration = (span: TraceSpanData) => span.duration;
-export const getSpanTimestamp = (span: TraceSpanData) => span.startTime;
-export const getSpanProcessId = (span: TraceSpanData) => span.processID;
 export const getSpanReferences = (span: TraceSpanData) => span.references || [];
 export const getSpanReferenceByType = createSelector(
   createSelector(({ span }: { span: TraceSpanData }) => span, getSpanReferences),
@@ -34,33 +26,4 @@ export const getSpanReferenceByType = createSelector(
 export const getSpanParentId = createSelector(
   (span: TraceSpanData) => getSpanReferenceByType({ span, type: 'CHILD_OF' }),
   (childOfRef) => (childOfRef ? childOfRef.spanID : null)
-);
-
-export const getSpanProcess = (span: TraceSpan) => {
-  if (!span.process) {
-    throw new Error(
-      `
-      you must hydrate the spans with the processes, perhaps
-      using hydrateSpansWithProcesses(), before accessing a span's process
-    `
-    );
-  }
-  return span.process;
-};
-
-export const getSpanServiceName = createSelector(getSpanProcess, getProcessServiceName);
-
-export const filterSpansForTimestamps = createSelector(
-  ({ spans }: { spans: TraceSpanData[] }) => spans,
-  ({ leftBound }: { leftBound: number }) => leftBound,
-  ({ rightBound }: { rightBound: number }) => rightBound,
-  (spans, leftBound, rightBound) =>
-    spans.filter((span) => getSpanTimestamp(span) >= leftBound && getSpanTimestamp(span) <= rightBound)
-);
-
-export const filterSpansForText = createSelector(
-  ({ spans }: { spans: TraceSpan[] }) => spans,
-  ({ text }: { text: string }) => text,
-  (spans, text) =>
-    spans.filter((span) => (span ? fuzzyMatch(`${getSpanServiceName(span)} ${getSpanName(span)}`, text).found : false))
 );

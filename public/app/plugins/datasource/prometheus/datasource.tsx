@@ -1,5 +1,5 @@
 import { cloneDeep, defaults } from 'lodash';
-import LRU from 'lru-cache';
+import { LRUCache } from 'lru-cache';
 import React from 'react';
 import { forkJoin, lastValueFrom, merge, Observable, of, OperatorFunction, pipe, throwError } from 'rxjs';
 import { catchError, filter, map, tap } from 'rxjs/operators';
@@ -23,6 +23,7 @@ import {
   rangeUtil,
   ScopedVars,
   TimeRange,
+  renderLegendFormat,
 } from '@grafana/data';
 import {
   BackendDataSourceResponse,
@@ -52,7 +53,6 @@ import {
   getPrometheusTime,
   getRangeSnapInterval,
 } from './language_utils';
-import { renderLegendFormat } from './legend';
 import PrometheusMetricFindQuery from './metric_find_query';
 import { getInitHints, getQueryHints } from './query_hints';
 import { QueryEditorMode } from './querybuilder/shared/types';
@@ -92,7 +92,7 @@ export class PrometheusDatasource
   access: 'direct' | 'proxy';
   basicAuth: any;
   withCredentials: any;
-  metricsNameCache = new LRU<string, string[]>({ max: 10 });
+  metricsNameCache = new LRUCache<string, string[]>({ max: 10 });
   interval: string;
   queryTimeout: string | undefined;
   httpMethod: string;
@@ -102,12 +102,13 @@ export class PrometheusDatasource
   customQueryParameters: any;
   datasourceConfigurationPrometheusFlavor?: PromApplication;
   datasourceConfigurationPrometheusVersion?: string;
+  disableRecordingRules: boolean;
   defaultEditor?: QueryEditorMode;
   exemplarsAvailable: boolean;
   subType: PromApplication;
   rulerEnabled: boolean;
   cacheLevel: PrometheusCacheLevel;
-  cache: QueryCache;
+  cache: QueryCache<PromQuery>;
 
   constructor(
     instanceSettings: DataSourceInstanceSettings<PromOptions>,
@@ -140,12 +141,16 @@ export class PrometheusDatasource
     this.datasourceConfigurationPrometheusFlavor = instanceSettings.jsonData.prometheusType;
     this.datasourceConfigurationPrometheusVersion = instanceSettings.jsonData.prometheusVersion;
     this.defaultEditor = instanceSettings.jsonData.defaultEditor;
+    this.disableRecordingRules = instanceSettings.jsonData.disableRecordingRules ?? false;
     this.variables = new PrometheusVariableSupport(this, this.templateSrv, this.timeSrv);
     this.exemplarsAvailable = true;
     this.cacheLevel = instanceSettings.jsonData.cacheLevel ?? PrometheusCacheLevel.Low;
-    this.cache = new QueryCache(
-      instanceSettings.jsonData.incrementalQueryOverlapWindow ?? defaultPrometheusQueryOverlapWindow
-    );
+
+    this.cache = new QueryCache({
+      getTargetSignature: this.getPrometheusTargetSignature.bind(this),
+      overlapString: instanceSettings.jsonData.incrementalQueryOverlapWindow ?? defaultPrometheusQueryOverlapWindow,
+      profileFunction: this.getPrometheusProfileData.bind(this),
+    });
 
     // This needs to be here and cannot be static because of how annotations typing affects casting of data source
     // objects to DataSourceApi types.
@@ -157,12 +162,34 @@ export class PrometheusDatasource
   }
 
   init = async () => {
-    this.loadRules();
+    if (!this.disableRecordingRules) {
+      this.loadRules();
+    }
     this.exemplarsAvailable = await this.areExemplarsAvailable();
   };
 
   getQueryDisplayText(query: PromQuery) {
     return query.expr;
+  }
+
+  getPrometheusProfileData(request: DataQueryRequest<PromQuery>, targ: PromQuery) {
+    return {
+      interval: targ.interval ?? request.interval,
+      expr: this.interpolateString(targ.expr),
+      datasource: 'Prometheus',
+    };
+  }
+
+  /**
+   * Get target signature for query caching
+   * @param request
+   * @param query
+   */
+  getPrometheusTargetSignature(request: DataQueryRequest<PromQuery>, query: PromQuery) {
+    const targExpr = this.interpolateString(query.expr);
+    return `${targExpr}|${query.interval ?? request.interval}|${JSON.stringify(request.rangeRaw ?? '')}|${
+      query.exemplar
+    }`;
   }
 
   hasLabelsMatchAPISupport(): boolean {
@@ -451,12 +478,19 @@ export class PrometheusDatasource
     return processedTargets;
   }
 
+  intepolateStringHelper = (query: PromQuery): string => {
+    return this.interpolateString(query.expr);
+  };
+
   query(request: DataQueryRequest<PromQuery>): Observable<DataQueryResponse> {
     if (this.access === 'proxy') {
       let fullOrPartialRequest: DataQueryRequest<PromQuery>;
-      let requestInfo: CacheRequestInfo | undefined = undefined;
-      if (this.hasIncrementalQuery) {
-        requestInfo = this.cache.requestInfo(request, this.interpolateString.bind(this));
+      let requestInfo: CacheRequestInfo<PromQuery> | undefined = undefined;
+      const hasInstantQuery = request.targets.some((target) => target.instant);
+
+      // Don't cache instant queries
+      if (this.hasIncrementalQuery && !hasInstantQuery) {
+        requestInfo = this.cache.requestInfo(request);
         fullOrPartialRequest = requestInfo.requests[0];
       } else {
         fullOrPartialRequest = request;
@@ -478,7 +512,7 @@ export class PrometheusDatasource
           trackQuery(response, request, startTime);
         })
       );
-      // Run queries trough browser/proxy
+      // Run queries through browser/proxy
     } else {
       const start = getPrometheusTime(request.range.from, false);
       const end = getPrometheusTime(request.range.to, true);
@@ -937,7 +971,7 @@ export class PrometheusDatasource
   // this is used to get label keys, a.k.a label names
   // it is used in metric_find_query.ts
   // and in Tempo here grafana/public/app/plugins/datasource/tempo/QueryEditor/ServiceGraphSection.tsx
-  async getTagKeys(options?: any) {
+  async getTagKeys(options?: { series: string[] }) {
     if (options?.series) {
       // Get tags for the provided series only
       const seriesLabels: Array<Record<string, string[]>> = await Promise.all(
@@ -1203,7 +1237,7 @@ export class PrometheusDatasource
     return finalQuery;
   }
 
-  // Used when running queries trough backend
+  // Used when running queries through backend
   filterQuery(query: PromQuery): boolean {
     if (query.hide || !query.expr) {
       return false;
@@ -1211,7 +1245,7 @@ export class PrometheusDatasource
     return true;
   }
 
-  // Used when running queries trough backend
+  // Used when running queries through backend
   applyTemplateVariables(target: PromQuery, scopedVars: ScopedVars): Record<string, any> {
     const variables = cloneDeep(scopedVars);
 
@@ -1265,7 +1299,12 @@ export class PrometheusDatasource
   }
 
   getDefaultQuery(app: CoreApp): PromQuery {
-    const defaults = promDefaultBaseQuery();
+    const defaults = {
+      refId: 'A',
+      expr: '',
+      range: true,
+      instant: false,
+    };
 
     if (app === CoreApp.UnifiedAlerting) {
       return {
@@ -1334,13 +1373,4 @@ export function prometheusRegularEscape(value: any) {
 
 export function prometheusSpecialRegexEscape(value: any) {
   return typeof value === 'string' ? value.replace(/\\/g, '\\\\\\\\').replace(/[$^*{}\[\]\'+?.()|]/g, '\\\\$&') : value;
-}
-
-export function promDefaultBaseQuery(): PromQuery {
-  return {
-    refId: 'A',
-    expr: '',
-    range: true,
-    instant: false,
-  };
 }

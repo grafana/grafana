@@ -5,8 +5,12 @@ keywords:
   - configuration
   - documentation
   - upgrade
-title: Upgrade to Grafana v8.1
+labels:
+  products:
+    - enterprise
+    - oss
 menutitle: Upgrade to v8.1
+title: Upgrade to Grafana v8.1
 weight: 2800
 ---
 

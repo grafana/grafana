@@ -33,6 +33,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/middleware"
+	"github.com/grafana/grafana/pkg/middleware/requestmeta"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/auth"
@@ -70,7 +71,7 @@ func (hs *HTTPServer) registerRoutes() {
 
 	// not logged in views
 	r.Get("/logout", hs.Logout)
-	r.Post("/login", quota(string(auth.QuotaTargetSrv)), routing.Wrap(hs.LoginPost))
+	r.Post("/login", requestmeta.SetOwner(requestmeta.TeamAuth), quota(string(auth.QuotaTargetSrv)), routing.Wrap(hs.LoginPost))
 	r.Get("/login/:name", quota(string(auth.QuotaTargetSrv)), hs.OAuthLogin)
 	r.Get("/login", hs.LoginView)
 	r.Get("/invite/:code", hs.Index)
@@ -106,11 +107,17 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/admin/orgs", authorizeInOrg(ac.UseGlobalOrg, ac.OrgsAccessEvaluator), hs.Index)
 	r.Get("/admin/orgs/edit/:id", authorizeInOrg(ac.UseGlobalOrg, ac.OrgsAccessEvaluator), hs.Index)
 	r.Get("/admin/stats", authorize(ac.EvalPermission(ac.ActionServerStatsRead)), hs.Index)
-	r.Get("/admin/ldap", authorize(ac.EvalPermission(ac.ActionLDAPStatusRead)), hs.Index)
+	r.Get("/admin/authentication/ldap", authorize(ac.EvalPermission(ac.ActionLDAPStatusRead)), hs.Index)
 	if hs.Features.IsEnabled(featuremgmt.FlagStorage) {
 		r.Get("/admin/storage", reqSignedIn, hs.Index)
 		r.Get("/admin/storage/*", reqSignedIn, hs.Index)
 	}
+
+	// feature toggle admin page
+	if hs.Features.IsEnabled(featuremgmt.FlagFeatureToggleAdminPage) {
+		r.Get("/admin/featuretoggles", authorize(ac.EvalPermission(ac.ActionFeatureManagementRead)), hs.Index)
+	}
+
 	r.Get("/styleguide", reqSignedIn, hs.Index)
 
 	r.Get("/live", reqGrafanaAdmin, hs.Index)
@@ -147,6 +154,10 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/dashboards/", reqSignedIn, hs.Index)
 	r.Get("/dashboards/*", reqSignedIn, hs.Index)
 	r.Get("/goto/:uid", reqSignedIn, hs.redirectFromShortURL, hs.Index)
+
+	if hs.Features.IsEnabled(featuremgmt.FlagDashboardEmbed) {
+		r.Get("/d-embed", reqSignedIn, middleware.AddAllowEmbeddingHeader(), hs.Index)
+	}
 
 	if hs.Features.IsEnabled(featuremgmt.FlagPublicDashboards) {
 		// list public dashboards
@@ -209,10 +220,7 @@ func (hs *HTTPServer) registerRoutes() {
 		r.Get("/user/auth-tokens/rotate", routing.Wrap(hs.RotateUserAuthTokenRedirect))
 	}
 
-	if hs.License.FeatureEnabled("saml") && hs.Features.IsEnabled(featuremgmt.FlagAuthenticationConfigUI) {
-		// TODO change the scope when we extend the auth UI to more providers
-		r.Get("/admin/authentication/", authorize(ac.EvalPermission(ac.ActionSettingsWrite, ac.ScopeSettingsSAML)), hs.Index)
-	}
+	r.Get("/admin/authentication/", authorize(evalAuthenticationSettings()), hs.Index)
 
 	// authed api
 	r.Group("/api", func(apiRoute routing.RouteRegister) {
@@ -420,6 +428,13 @@ func (hs *HTTPServer) registerRoutes() {
 			pluginRoute.Get("/:pluginId/metrics", reqOrgAdmin, routing.Wrap(hs.CollectPluginMetrics))
 		})
 
+		if hs.Features.IsEnabled(featuremgmt.FlagFeatureToggleAdminPage) {
+			apiRoute.Group("/featuremgmt", func(featuremgmtRoute routing.RouteRegister) {
+				featuremgmtRoute.Get("/", authorize(ac.EvalPermission(ac.ActionFeatureManagementRead)), hs.GetFeatureToggles)
+				featuremgmtRoute.Post("/", authorize(ac.EvalPermission(ac.ActionFeatureManagementWrite)), hs.UpdateFeatureToggle)
+			})
+		}
+
 		apiRoute.Get("/frontend/settings/", hs.GetFrontendSettings)
 		apiRoute.Any("/datasources/proxy/:id/*", authorize(ac.EvalPermission(datasources.ActionQuery)), hs.ProxyDataSourceRequest)
 		apiRoute.Any("/datasources/proxy/uid/:uid/*", authorize(ac.EvalPermission(datasources.ActionQuery)), hs.ProxyDataSourceRequestWithUID)
@@ -525,7 +540,7 @@ func (hs *HTTPServer) registerRoutes() {
 			alertsRoute.Get("/:alertId", hs.ValidateOrgAlert, routing.Wrap(hs.GetAlert))
 			alertsRoute.Get("/", routing.Wrap(hs.GetAlerts))
 			alertsRoute.Get("/states-for-dashboard", routing.Wrap(hs.GetAlertStatesForDashboard))
-		})
+		}, requestmeta.SetOwner(requestmeta.TeamAlerting))
 
 		var notifiersAuthHandler web.Handler
 		if hs.Cfg.UnifiedAlerting.IsEnabled() {
@@ -534,7 +549,7 @@ func (hs *HTTPServer) registerRoutes() {
 			notifiersAuthHandler = reqEditorRole
 		}
 
-		apiRoute.Get("/alert-notifiers", notifiersAuthHandler, routing.Wrap(
+		apiRoute.Get("/alert-notifiers", notifiersAuthHandler, requestmeta.SetOwner(requestmeta.TeamAlerting), routing.Wrap(
 			hs.GetAlertNotifiers(hs.Cfg.UnifiedAlerting.IsEnabled())),
 		)
 
@@ -548,12 +563,12 @@ func (hs *HTTPServer) registerRoutes() {
 			alertNotifications.Get("/uid/:uid", routing.Wrap(hs.GetAlertNotificationByUID))
 			alertNotifications.Put("/uid/:uid", routing.Wrap(hs.UpdateAlertNotificationByUID))
 			alertNotifications.Delete("/uid/:uid", routing.Wrap(hs.DeleteAlertNotificationByUID))
-		}, reqEditorRole)
+		}, reqEditorRole, requestmeta.SetOwner(requestmeta.TeamAlerting))
 
 		// alert notifications without requirement of user to be org editor
 		apiRoute.Group("/alert-notifications", func(orgRoute routing.RouteRegister) {
 			orgRoute.Get("/lookup", routing.Wrap(hs.GetAlertNotificationLookup))
-		})
+		}, requestmeta.SetOwner(requestmeta.TeamAlerting))
 
 		apiRoute.Get("/annotations", authorize(ac.EvalPermission(ac.ActionAnnotationsRead)), routing.Wrap(hs.GetAnnotations))
 		apiRoute.Post("/annotations/mass-delete", authorize(ac.EvalPermission(ac.ActionAnnotationsDelete)), routing.Wrap(hs.MassDeleteAnnotations))
@@ -644,4 +659,11 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/api/snapshots/:key", routing.Wrap(hs.GetDashboardSnapshot))
 	r.Get("/api/snapshots-delete/:deleteKey", reqSnapshotPublicModeOrSignedIn, routing.Wrap(hs.DeleteDashboardSnapshotByDeleteKey))
 	r.Delete("/api/snapshots/:key", reqSignedIn, routing.Wrap(hs.DeleteDashboardSnapshot))
+}
+
+func evalAuthenticationSettings() ac.Evaluator {
+	return ac.EvalAny(ac.EvalAll(
+		ac.EvalPermission(ac.ActionSettingsWrite, ac.ScopeSettingsSAML),
+		ac.EvalPermission(ac.ActionSettingsRead, ac.ScopeSettingsSAML),
+	), ac.EvalPermission(ac.ActionLDAPStatusRead))
 }

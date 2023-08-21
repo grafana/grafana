@@ -11,6 +11,8 @@
 
 import * as common from '@grafana/schema';
 
+export const pluginVersion = "10.2.0-pre";
+
 export interface MetricStat {
   /**
    * The ID of the AWS account to query for the metric, specifying `all` will query all accounts that the monitoring account is permitted to query.

@@ -24,6 +24,8 @@ describe('browse-dashboards DashboardsTree', () => {
   const dashboard = wellFormedDashboard(2);
   const noop = () => {};
   const isSelected = () => SelectionState.Unselected;
+  const allItemsAreLoaded = () => true;
+  const requestLoadMore = () => Promise.resolve();
 
   it('renders a dashboard item', () => {
     render(
@@ -36,12 +38,13 @@ describe('browse-dashboards DashboardsTree', () => {
         onFolderClick={noop}
         onItemSelectionChange={noop}
         onAllSelectionChange={noop}
+        isItemLoaded={allItemsAreLoaded}
+        requestLoadMore={requestLoadMore}
       />
     );
     expect(screen.queryByText(dashboard.item.title)).toBeInTheDocument();
-    expect(screen.queryByText('Dashboard')).toBeInTheDocument();
     expect(screen.queryByText(assertIsDefined(dashboard.item.tags)[0])).toBeInTheDocument();
-    expect(screen.getByTestId(selectors.pages.BrowseDashbards.table.checkbox(dashboard.item.uid))).toBeInTheDocument();
+    expect(screen.getByTestId(selectors.pages.BrowseDashboards.table.checkbox(dashboard.item.uid))).toBeInTheDocument();
   });
 
   it('does not render checkbox when disabled', () => {
@@ -55,10 +58,12 @@ describe('browse-dashboards DashboardsTree', () => {
         onFolderClick={noop}
         onItemSelectionChange={noop}
         onAllSelectionChange={noop}
+        isItemLoaded={allItemsAreLoaded}
+        requestLoadMore={requestLoadMore}
       />
     );
     expect(
-      screen.queryByTestId(selectors.pages.BrowseDashbards.table.checkbox(dashboard.item.uid))
+      screen.queryByTestId(selectors.pages.BrowseDashboards.table.checkbox(dashboard.item.uid))
     ).not.toBeInTheDocument();
   });
 
@@ -73,10 +78,11 @@ describe('browse-dashboards DashboardsTree', () => {
         onFolderClick={noop}
         onItemSelectionChange={noop}
         onAllSelectionChange={noop}
+        isItemLoaded={allItemsAreLoaded}
+        requestLoadMore={requestLoadMore}
       />
     );
     expect(screen.queryByText(folder.item.title)).toBeInTheDocument();
-    expect(screen.queryByText('Folder')).toBeInTheDocument();
   });
 
   it('calls onFolderClick when a folder button is clicked', async () => {
@@ -91,12 +97,14 @@ describe('browse-dashboards DashboardsTree', () => {
         onFolderClick={handler}
         onItemSelectionChange={noop}
         onAllSelectionChange={noop}
+        isItemLoaded={allItemsAreLoaded}
+        requestLoadMore={requestLoadMore}
       />
     );
-    const folderButton = screen.getByLabelText('Collapse folder');
+    const folderButton = screen.getByLabelText(`Expand folder ${folder.item.title}`);
     await userEvent.click(folderButton);
 
-    expect(handler).toHaveBeenCalledWith(folder.item.uid, false);
+    expect(handler).toHaveBeenCalledWith(folder.item.uid, true);
   });
 
   it('renders empty folder indicators', () => {
@@ -110,9 +118,10 @@ describe('browse-dashboards DashboardsTree', () => {
         onFolderClick={noop}
         onItemSelectionChange={noop}
         onAllSelectionChange={noop}
+        isItemLoaded={allItemsAreLoaded}
+        requestLoadMore={requestLoadMore}
       />
     );
     expect(screen.queryByText('No items')).toBeInTheDocument();
-    expect(screen.queryByText(emptyFolderIndicator.item.kind)).not.toBeInTheDocument();
   });
 });

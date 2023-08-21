@@ -9,12 +9,12 @@ const addDataSource = () => {
       'Unable to connect with Loki (Failed to call resource). Please check the server logs for more details.',
     name: dataSourceName,
     form: () => {
-      e2e.components.DataSource.DataSourceHttpSettings.urlInput().type('http://loki-url:3100');
+      e2e().get('#connection-url').type('http://loki-url:3100');
     },
   });
 };
 
-const finalQuery = 'rate({instance=~"instance1|instance2"} | logfmt | __error__=`` [$__interval]';
+const finalQuery = 'rate({instance=~"instance1|instance2"} | logfmt | __error__=`` [$__auto]';
 
 describe('Loki query builder', () => {
   beforeEach(() => {
@@ -31,13 +31,21 @@ describe('Loki query builder', () => {
   });
 
   it('should be able to use all modes', () => {
-    e2e().intercept(/labels?/, (req) => {
-      req.reply({ status: 'success', data: ['instance', 'job', 'source'] });
-    });
+    e2e()
+      .intercept(/labels\?/, (req) => {
+        req.reply({ status: 'success', data: ['instance', 'job', 'source'] });
+      })
+      .as('labelsRequest');
 
     e2e().intercept(/series?/, (req) => {
       req.reply({ status: 'success', data: [{ instance: 'instance1' }] });
     });
+
+    e2e()
+      .intercept(/values/, (req) => {
+        req.reply({ status: 'success', data: ['instance1', 'instance2'] });
+      })
+      .as('valuesRequest');
 
     // Go to Explore and choose Loki data source
     e2e.pages.Explore.visit();
@@ -56,19 +64,22 @@ describe('Loki query builder', () => {
     e2e().contains('Operations').should('be.visible').click();
     e2e().contains('Range functions').should('be.visible').click();
     e2e().contains('Rate').should('be.visible').click();
-    e2e().contains('rate({} | logfmt | __error__=`` [$__interval]').should('be.visible');
+    e2e().contains('rate({} | logfmt | __error__=`` [$__auto]').should('be.visible');
 
     // Check for expected error
     e2e().contains(MISSING_LABEL_FILTER_ERROR_MESSAGE).should('be.visible');
 
     // Add labels to remove error
-    e2e.components.QueryBuilder.labelSelect().should('be.visible').click().type('instance{enter}');
+    e2e.components.QueryBuilder.labelSelect().should('be.visible').click();
+    // wait until labels are loaded and set on the component before starting to type
+    e2e().wait('@labelsRequest');
+    e2e().wait(100);
+    e2e.components.QueryBuilder.labelSelect().type('instance{enter}');
     e2e.components.QueryBuilder.matchOperatorSelect().should('be.visible').click().type('=~{enter}');
-    e2e.components.QueryBuilder.valueSelect()
-      .should('be.visible')
-      .click()
-      .type('instance1{enter}')
-      .type('instance2{enter}');
+    e2e.components.QueryBuilder.valueSelect().should('be.visible').click();
+    e2e().wait('@valuesRequest');
+    e2e().wait(100);
+    e2e.components.QueryBuilder.valueSelect().type('instance1{enter}').type('instance2{enter}');
     e2e().contains(MISSING_LABEL_FILTER_ERROR_MESSAGE).should('not.exist');
     e2e().contains(finalQuery).should('be.visible');
 
@@ -79,7 +90,7 @@ describe('Loki query builder', () => {
     e2e().contains('instance1|instance2').should('be.visible');
     e2e().contains('logfmt').should('be.visible');
     e2e().contains('__error__').should('be.visible');
-    e2e().contains('$__interval').should('be.visible');
+    e2e().contains('$__auto').should('be.visible');
 
     // Checks the explain mode toggle
     e2e().contains('label', 'Explain').click();

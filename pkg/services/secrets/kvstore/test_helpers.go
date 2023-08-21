@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/secretsmanagerplugin"
+	pluginsLogger "github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	secretsmng "github.com/grafana/grafana/pkg/services/secrets/manager"
@@ -255,6 +256,10 @@ func (pc *fakePluginClient) Start(_ context.Context) error {
 
 func (pc *fakePluginClient) Stop(_ context.Context) error {
 	return nil
+}
+
+func (pc *fakePluginClient) Logger() pluginsLogger.Logger {
+	return pluginsLogger.NewTestLogger()
 }
 
 func SetupFatalCrashTest(

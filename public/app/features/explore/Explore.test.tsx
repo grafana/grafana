@@ -3,13 +3,15 @@ import React from 'react';
 import { AutoSizerProps } from 'react-virtualized-auto-sizer';
 import { TestProvider } from 'test/helpers/TestProvider';
 
-import { DataSourceApi, LoadingState, CoreApp, createTheme, EventBusSrv } from '@grafana/data';
+import { DataSourceApi, LoadingState, CoreApp, createTheme, EventBusSrv, PluginExtensionTypes } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { ExploreId } from 'app/types';
+import { getPluginLinkExtensions } from '@grafana/runtime';
+import { configureStore } from 'app/store/configureStore';
 
 import { Explore, Props } from './Explore';
+import { initialExploreState } from './state/main';
 import { scanStopAction } from './state/query';
-import { createEmptyQueryResponse } from './state/utils';
+import { createEmptyQueryResponse, makeExplorePaneState } from './state/utils';
 
 const resizeWindow = (x: number, y: number) => {
   global.innerWidth = x;
@@ -59,8 +61,7 @@ const dummyProps: Props = {
       QueryEditorHelp: {},
     },
   } as DataSourceApi,
-  datasourceMissing: false,
-  exploreId: ExploreId.left,
+  exploreId: 'left',
   loading: false,
   modifyQueries: jest.fn(),
   scanStart: jest.fn(),
@@ -85,11 +86,11 @@ const dummyProps: Props = {
   showLogs: true,
   showTable: true,
   showTrace: true,
+  showCustom: true,
   showNodeGraph: true,
   showFlameGraph: true,
   splitOpen: jest.fn(),
   splitted: false,
-  isFromCompactUrl: false,
   eventBus: new EventBusSrv(),
   showRawPrometheus: false,
   showLogsSample: false,
@@ -113,16 +114,31 @@ jest.mock('app/core/core', () => ({
   },
 }));
 
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getPluginLinkExtensions: jest.fn(() => ({ extensions: [] })),
+}));
+
 // for the AutoSizer component to have a width
 jest.mock('react-virtualized-auto-sizer', () => {
   return ({ children }: AutoSizerProps) => children({ height: 1, width: 1 });
 });
 
+const getPluginLinkExtensionsMock = jest.mocked(getPluginLinkExtensions);
+
 const setup = (overrideProps?: Partial<Props>) => {
+  const store = configureStore({
+    explore: {
+      ...initialExploreState,
+      panes: {
+        left: makeExplorePaneState(),
+      },
+    },
+  });
   const exploreProps = { ...dummyProps, ...overrideProps };
 
   return render(
-    <TestProvider>
+    <TestProvider store={store}>
       <Explore {...exploreProps} />
     </TestProvider>
   );
@@ -139,13 +155,41 @@ describe('Explore', () => {
   });
 
   it('should render no data with done loading state', async () => {
-    const queryResp = makeEmptyQueryResponse(LoadingState.Done);
-    setup({ queryResponse: queryResp });
+    setup({ queryResponse: makeEmptyQueryResponse(LoadingState.Done) });
 
     // Wait for the Explore component to render
     await screen.findByTestId(selectors.components.DataSourcePicker.container);
 
     expect(screen.getByTestId('explore-no-data')).toBeInTheDocument();
+  });
+
+  it('should render toolbar extension point if extensions is available', async () => {
+    getPluginLinkExtensionsMock.mockReturnValueOnce({
+      extensions: [
+        {
+          id: '1',
+          pluginId: 'grafana',
+          title: 'Test 1',
+          description: '',
+          type: PluginExtensionTypes.link,
+          onClick: () => {},
+        },
+        {
+          id: '2',
+          pluginId: 'grafana',
+          title: 'Test 2',
+          description: '',
+          type: PluginExtensionTypes.link,
+          onClick: () => {},
+        },
+      ],
+    });
+
+    setup({ queryResponse: makeEmptyQueryResponse(LoadingState.Done) });
+    // Wait for the Explore component to render
+    await screen.findByTestId(selectors.components.DataSourcePicker.container);
+
+    expect(screen.getByRole('button', { name: 'Add' })).toBeVisible();
   });
 
   describe('On small screens', () => {

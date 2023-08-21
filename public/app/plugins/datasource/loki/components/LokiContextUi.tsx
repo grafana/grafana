@@ -2,13 +2,31 @@ import { css } from '@emotion/css';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useAsync } from 'react-use';
 
-import { GrafanaTheme2, LogRowModel, SelectableValue } from '@grafana/data';
+import { GrafanaTheme2, LogRowModel, renderMarkdown, SelectableValue } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
-import { Button, Collapse, Icon, Label, MultiSelect, Spinner, Tooltip, useStyles2 } from '@grafana/ui';
+import {
+  Button,
+  Collapse,
+  Icon,
+  InlineField,
+  InlineFieldRow,
+  InlineSwitch,
+  Label,
+  MultiSelect,
+  RenderUserContentAsHTML,
+  Spinner,
+  Tooltip,
+  useStyles2,
+} from '@grafana/ui';
 import store from 'app/core/store';
 
 import { RawQuery } from '../../prometheus/querybuilder/shared/RawQuery';
-import { LogContextProvider, LOKI_LOG_CONTEXT_PRESERVED_LABELS, PreservedLabels } from '../LogContextProvider';
+import {
+  LogContextProvider,
+  LOKI_LOG_CONTEXT_PRESERVED_LABELS,
+  PreservedLabels,
+  SHOULD_INCLUDE_PIPELINE_OPERATIONS,
+} from '../LogContextProvider';
 import { escapeLabelValueInSelector } from '../languageUtils';
 import { isQueryWithParser } from '../queryUtils';
 import { lokiGrammar } from '../syntax';
@@ -20,6 +38,7 @@ export interface LokiContextUiProps {
   updateFilter: (value: ContextFilter[]) => void;
   onClose: () => void;
   origQuery?: LokiQuery;
+  runContextQuery?: () => void;
 }
 
 function getStyles(theme: GrafanaTheme2) {
@@ -55,7 +74,8 @@ function getStyles(theme: GrafanaTheme2) {
       text-align: start;
       line-break: anywhere;
       margin-top: -${theme.spacing(0.25)};
-      margin-right: ${theme.spacing(4)};
+      margin-right: ${theme.spacing(6)};
+      min-height: ${theme.spacing(4)};
     `,
     ui: css`
       background-color: ${theme.colors.background.secondary};
@@ -73,13 +93,22 @@ function getStyles(theme: GrafanaTheme2) {
       right: ${theme.spacing(1)};
       z-index: ${theme.zIndex.navbarFixed};
     `,
+    operationsToggle: css`
+      margin: ${theme.spacing(1)} 0 ${theme.spacing(-1)} 0;
+      & > div {
+        margin: 0;
+        & > label {
+          padding: 0;
+        }
+      }
+    `,
   };
 }
 
-const IS_LOKI_LOG_CONTEXT_UI_OPEN = 'isLogContextQueryUiOpen';
+export const IS_LOKI_LOG_CONTEXT_UI_OPEN = 'isLogContextQueryUiOpen';
 
 export function LokiContextUi(props: LokiContextUiProps) {
-  const { row, logContextProvider, updateFilter, onClose, origQuery } = props;
+  const { row, logContextProvider, updateFilter, onClose, origQuery, runContextQuery } = props;
   const styles = useStyles2(getStyles);
 
   const [contextFilters, setContextFilters] = useState<ContextFilter[]>([]);
@@ -87,19 +116,27 @@ export function LokiContextUi(props: LokiContextUiProps) {
   const [initialized, setInitialized] = useState(false);
   const [loading, setLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(store.getBool(IS_LOKI_LOG_CONTEXT_UI_OPEN, false));
+  const [includePipelineOperations, setIncludePipelineOperations] = useState(
+    store.getBool(SHOULD_INCLUDE_PIPELINE_OPERATIONS, false)
+  );
 
   const timerHandle = React.useRef<number>();
   const previousInitialized = React.useRef<boolean>(false);
   const previousContextFilters = React.useRef<ContextFilter[]>([]);
 
-  const isInitialQuery = useMemo(() => {
+  const isInitialState = useMemo(() => {
     // Initial query has all regular labels enabled and all parsed labels disabled
     if (initialized && contextFilters.some((filter) => filter.fromParser === filter.enabled)) {
       return false;
     }
 
+    // if we include pipeline operations, we also want to enable the revert button
+    if (includePipelineOperations && logContextProvider.queryContainsValidPipelineStages(origQuery)) {
+      return false;
+    }
+
     return true;
-  }, [contextFilters, initialized]);
+  }, [contextFilters, includePipelineOperations, initialized, logContextProvider, origQuery]);
 
   useEffect(() => {
     if (!initialized) {
@@ -199,6 +236,10 @@ export function LokiContextUi(props: LokiContextUiProps) {
   // Currently we support adding of parser and showing parsed labels only if there is 1 parser
   const showParsedLabels = origQuery && isQueryWithParser(origQuery.expr).parserCount === 1 && parsedLabels.length > 0;
 
+  let queryExpr = logContextProvider.prepareExpression(
+    contextFilters.filter(({ enabled }) => enabled),
+    origQuery
+  );
   return (
     <div className={styles.wrapper}>
       <Tooltip content={'Revert to initial log context query.'}>
@@ -207,7 +248,7 @@ export function LokiContextUi(props: LokiContextUiProps) {
             data-testid="revert-button"
             icon="history-alt"
             variant="secondary"
-            disabled={isInitialQuery}
+            disabled={isInitialState}
             onClick={(e) => {
               reportInteraction('grafana_explore_logs_loki_log_context_reverted', {
                 logRowUid: row.uid,
@@ -221,6 +262,8 @@ export function LokiContextUi(props: LokiContextUiProps) {
               });
               // We are removing the preserved labels from local storage so we can preselect the labels in the UI
               store.delete(LOKI_LOG_CONTEXT_PRESERVED_LABELS);
+              store.delete(SHOULD_INCLUDE_PIPELINE_OPERATIONS);
+              setIncludePipelineOperations(false);
             }}
           />
         </div>
@@ -241,15 +284,7 @@ export function LokiContextUi(props: LokiContextUiProps) {
           <div className={styles.rawQueryContainer}>
             {initialized ? (
               <>
-                <RawQuery
-                  lang={{ grammar: lokiGrammar, name: 'loki' }}
-                  query={logContextProvider.processContextFiltersToExpr(
-                    row,
-                    contextFilters.filter(({ enabled }) => enabled),
-                    origQuery
-                  )}
-                  className={styles.rawQuery}
-                />
+                <RawQuery lang={{ grammar: lokiGrammar, name: 'loki' }} query={queryExpr} className={styles.rawQuery} />
                 <Tooltip content="The initial log context query is created from all labels defining the stream for the selected log line. Use the editor below to customize the log context query.">
                   <Icon name="info-circle" size="sm" className={styles.queryDescription} />
                 </Tooltip>
@@ -343,6 +378,37 @@ export function LokiContextUi(props: LokiContextUiProps) {
                 }}
               />
             </>
+          )}
+          {logContextProvider.queryContainsValidPipelineStages(origQuery) && (
+            <InlineFieldRow className={styles.operationsToggle}>
+              <InlineField
+                label="Include LogQL pipeline operations"
+                tooltip={
+                  <RenderUserContentAsHTML
+                    content={renderMarkdown(
+                      "This will include LogQL operations such as `line_format` or `label_format`. It won't include line or label filter operations."
+                    )}
+                  />
+                }
+              >
+                <InlineSwitch
+                  value={includePipelineOperations}
+                  showLabel={true}
+                  transparent={true}
+                  onChange={(e) => {
+                    reportInteraction('grafana_explore_logs_loki_log_context_pipeline_toggled', {
+                      logRowUid: row.uid,
+                      action: e.currentTarget.checked ? 'enable' : 'disable',
+                    });
+                    store.set(SHOULD_INCLUDE_PIPELINE_OPERATIONS, e.currentTarget.checked);
+                    setIncludePipelineOperations(e.currentTarget.checked);
+                    if (runContextQuery) {
+                      runContextQuery();
+                    }
+                  }}
+                />
+              </InlineField>
+            </InlineFieldRow>
           )}
         </div>
       </Collapse>

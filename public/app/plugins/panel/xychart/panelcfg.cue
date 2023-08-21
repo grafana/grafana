@@ -16,11 +16,7 @@ package grafanaplugin
 
 import (
 	"github.com/grafana/grafana/packages/grafana-schema/src/common"
-	"github.com/grafana/grafana/pkg/plugins/pfs"
 )
-
-// This file (with its sibling .cue files) implements pfs.GrafanaPlugin
-pfs.GrafanaPlugin
 
 composableKinds: PanelCfg: {
 	maturity: "experimental"
@@ -39,24 +35,27 @@ composableKinds: PanelCfg: {
 					exclude?: [...string]
 				} @cuetsy(kind="interface")
 
-				ScatterFieldConfig: {
+				FieldConfig: {
 					common.HideableFieldConfig
 					common.AxisConfig
 
 					show?: ScatterShow & (*"points" | _)
 
 					pointSize?:  common.ScaleDimensionConfig
-					lineColor?:  common.ColorDimensionConfig
 					pointColor?: common.ColorDimensionConfig
-					labelValue?: common.TextDimensionConfig
+					// pointSymbol?: common.ResourceDimensionConfig
+					// fillOpacity?: number & >=0 & <=1 | *0.5
 
+					lineColor?: common.ColorDimensionConfig
 					lineWidth?: int32 & >=0
 					lineStyle?: common.LineStyle
-					label?:     common.VisibilityMode & (*"auto" | _)
+
+					label?:      common.VisibilityMode & (*"auto" | _)
+					labelValue?: common.TextDimensionConfig
 				} @cuetsy(kind="interface",TSVeneer="type")
 
 				ScatterSeriesConfig: {
-					ScatterFieldConfig
+					FieldConfig
 					x?:    string
 					y?:    string
 					name?: string

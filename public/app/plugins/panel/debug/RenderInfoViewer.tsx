@@ -74,7 +74,7 @@ export class RenderInfoViewer extends Component<Props> {
     return (
       <div>
         <div>
-          <IconButton name="step-backward" title="reset counters" onClick={this.resetCounters} />
+          <IconButton name="step-backward" title="reset counters" onClick={this.resetCounters} tooltip="Step back" />
           <span>
             {showCounters.render && <span>Render: {this.counters.render}&nbsp;</span>}
             {showCounters.dataChanged && <span>Data: {this.counters.dataChanged}&nbsp;</span>}

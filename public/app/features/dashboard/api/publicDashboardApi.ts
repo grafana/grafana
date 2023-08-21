@@ -11,7 +11,10 @@ import {
   SessionUser,
 } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
 import { DashboardModel } from 'app/features/dashboard/state';
-import { ListPublicDashboardResponse } from 'app/features/manage-dashboards/types';
+import {
+  PublicDashboardListWithPagination,
+  PublicDashboardListWithPaginationResponse,
+} from 'app/features/manage-dashboards/types';
 
 type ReqOptions = {
   manageError?: (err: unknown) => { error: unknown };
@@ -137,9 +140,13 @@ export const publicDashboardApi = createApi({
       }),
       providesTags: (result, _, email) => [{ type: 'ActiveUserDashboards', id: email }],
     }),
-    listPublicDashboards: builder.query<ListPublicDashboardResponse[], void>({
-      query: () => ({
-        url: '/dashboards/public-dashboards',
+    listPublicDashboards: builder.query<PublicDashboardListWithPagination, number | void>({
+      query: (page = 1) => ({
+        url: `/dashboards/public-dashboards?page=${page}&perpage=8`,
+      }),
+      transformResponse: (response: PublicDashboardListWithPaginationResponse) => ({
+        ...response,
+        totalPages: Math.ceil(response.totalCount / response.perPage),
       }),
       providesTags: ['AuditTablePublicDashboard'],
     }),

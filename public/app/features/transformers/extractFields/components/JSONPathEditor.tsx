@@ -67,7 +67,7 @@ export function JSONPathEditor({ options, onChange }: Props) {
                 />
               </InlineField>
               <InlineField className={cx(style.removeIcon)}>
-                <IconButton onClick={() => removeJSONPath(key)} name={'trash-alt'} />
+                <IconButton onClick={() => removeJSONPath(key)} name={'trash-alt'} tooltip="Remove path" />
               </InlineField>
             </InlineFieldRow>
           </li>

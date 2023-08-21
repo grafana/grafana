@@ -113,7 +113,7 @@ describe('browse-dashboards MoveModal', () => {
   it('calls onDismiss when clicking the X', async () => {
     render(<MoveModal {...props} />);
 
-    await userEvent.click(await screen.findByRole('button', { name: 'Close dialog' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Close' }));
     expect(mockOnDismiss).toHaveBeenCalled();
   });
 });

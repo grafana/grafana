@@ -116,7 +116,7 @@ func (c *OAuth) Authenticate(ctx context.Context, r *authn.Request) (*authn.Iden
 	}
 	token.TokenType = "Bearer"
 
-	userInfo, err := c.connector.UserInfo(c.connector.Client(clientCtx, token), token)
+	userInfo, err := c.connector.UserInfo(ctx, c.connector.Client(clientCtx, token), token)
 	if err != nil {
 		var sErr *social.Error
 		if errors.As(err, &sErr) {
@@ -140,16 +140,21 @@ func (c *OAuth) Authenticate(ctx context.Context, r *authn.Request) (*authn.Iden
 		return userInfo.Role, userInfo.IsGrafanaAdmin, nil
 	})
 
+	lookupParams := login.UserLookupParams{}
+	if c.cfg.OAuthAllowInsecureEmailLookup {
+		lookupParams.Email = &userInfo.Email
+	}
+
 	return &authn.Identity{
-		Login:          userInfo.Login,
-		Name:           userInfo.Name,
-		Email:          userInfo.Email,
-		IsGrafanaAdmin: isGrafanaAdmin,
-		AuthModule:     c.moduleName,
-		AuthID:         userInfo.Id,
-		Groups:         userInfo.Groups,
-		OAuthToken:     token,
-		OrgRoles:       orgRoles,
+		Login:           userInfo.Login,
+		Name:            userInfo.Name,
+		Email:           userInfo.Email,
+		IsGrafanaAdmin:  isGrafanaAdmin,
+		AuthenticatedBy: c.moduleName,
+		AuthID:          userInfo.Id,
+		Groups:          userInfo.Groups,
+		OAuthToken:      token,
+		OrgRoles:        orgRoles,
 		ClientParams: authn.ClientParams{
 			SyncUser:        true,
 			SyncTeams:       true,
@@ -158,7 +163,7 @@ func (c *OAuth) Authenticate(ctx context.Context, r *authn.Request) (*authn.Iden
 			AllowSignUp:     c.connector.IsSignupAllowed(),
 			// skip org role flag is checked and handled in the connector. For now we can skip the hook if no roles are passed
 			SyncOrgRoles: len(orgRoles) > 0,
-			LookUpParams: login.UserLookupParams{Email: &userInfo.Email},
+			LookUpParams: lookupParams,
 		},
 	}, nil
 }

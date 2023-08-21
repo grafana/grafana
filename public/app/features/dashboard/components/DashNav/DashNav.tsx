@@ -23,7 +23,7 @@ import { appEvents } from 'app/core/core';
 import { useBusEvent } from 'app/core/hooks/useBusEvent';
 import { t, Trans } from 'app/core/internationalization';
 import { setStarred } from 'app/core/reducers/navBarTree';
-import { AddPanelButton } from 'app/features/dashboard/components/AddPanelButton/AddPanelButton';
+import AddPanelButton from 'app/features/dashboard/components/AddPanelButton/AddPanelButton';
 import { SaveDashboardDrawer } from 'app/features/dashboard/components/SaveDashboard/SaveDashboardDrawer';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { DashboardModel } from 'app/features/dashboard/state';
@@ -196,6 +196,17 @@ export const DashNav = React.memo<Props>((props) => {
       );
     }
 
+    if (config.featureToggles.scenes) {
+      buttons.push(
+        <DashNavButton
+          key="button-scenes"
+          tooltip={'View as Scene'}
+          icon="apps"
+          onClick={() => locationService.push(`/scenes/dashboard/${dashboard.uid}`)}
+        />
+      );
+    }
+
     addCustomContent(customLeftActions, buttons);
     return buttons;
   };
@@ -310,16 +321,6 @@ export const DashNav = React.memo<Props>((props) => {
 
     buttons.push(renderTimeControls());
 
-    if (config.featureToggles.scenes) {
-      buttons.push(
-        <ToolbarButton
-          key="button-scenes"
-          tooltip={'View as Scene'}
-          icon="apps"
-          onClick={() => locationService.push(`/scenes/dashboard/${dashboard.uid}`)}
-        />
-      );
-    }
     return buttons;
   };
 

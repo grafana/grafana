@@ -11,13 +11,13 @@ import {
   SplitOpen,
   SupplementaryQueryType,
 } from '@grafana/data';
-import { reportInteraction } from '@grafana/runtime';
+import { config, reportInteraction } from '@grafana/runtime';
 import { DataQuery, TimeZone } from '@grafana/schema';
 import { Button, Collapse, Icon, Tooltip, useStyles2 } from '@grafana/ui';
-import { dataFrameToLogsModel } from 'app/core/logsModel';
 import store from 'app/core/store';
 
 import { LogRows } from '../../logs/components/LogRows';
+import { dataFrameToLogsModel } from '../../logs/logsModel';
 import { SupplementaryResultError } from '../SupplementaryResultError';
 
 import { SETTINGS_KEYS } from './utils/logs';
@@ -107,6 +107,7 @@ export function LogsSamplePanel(props: Props) {
 
   return queryResponse?.state !== LoadingState.NotStarted ? (
     <Collapse
+      className={styles.logsSamplePanel}
       label={
         <div>
           Logs sample
@@ -124,16 +125,25 @@ export function LogsSamplePanel(props: Props) {
   ) : null;
 }
 
-const getStyles = (theme: GrafanaTheme2) => ({
-  logSamplesButton: css`
-    position: absolute;
-    top: ${theme.spacing(1)};
-    right: ${theme.spacing(1)};
-  `,
-  logContainer: css`
-    overflow-x: scroll;
-  `,
-  infoTooltip: css`
-    margin-left: ${theme.spacing(1)};
-  `,
-});
+const getStyles = (theme: GrafanaTheme2) => {
+  const scrollableLogsContainer = config.featureToggles.exploreScrollableLogsContainer;
+
+  return {
+    logsSamplePanel: css`
+      ${scrollableLogsContainer && 'max-height: calc(100vh - 115px);'}
+    `,
+    logSamplesButton: css`
+      position: absolute;
+      top: ${theme.spacing(1)};
+      right: ${theme.spacing(1)};
+    `,
+    logContainer: css`
+      ${scrollableLogsContainer && 'position: relative;'}
+      ${scrollableLogsContainer && 'height: 100%;'}
+      overflow: scroll;
+    `,
+    infoTooltip: css`
+      margin-left: ${theme.spacing(1)};
+    `,
+  };
+};

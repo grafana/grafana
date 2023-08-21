@@ -26,6 +26,7 @@ export function fromRulerRule(
     ruleSourceName,
     namespace,
     groupName,
+    ruleName: isAlertingRulerRule(rule) ? rule.alert : rule.record,
     rulerRuleHash: hashRulerRule(rule),
   };
 }
@@ -35,6 +36,7 @@ export function fromRule(ruleSourceName: string, namespace: string, groupName: s
     ruleSourceName,
     namespace,
     groupName,
+    ruleName: rule.name,
     ruleHash: hashRule(rule),
   };
 }
@@ -67,6 +69,7 @@ export function equal(a: RuleIdentifier, b: RuleIdentifier) {
     return (
       a.groupName === b.groupName &&
       a.namespace === b.namespace &&
+      a.ruleName === b.ruleName &&
       a.rulerRuleHash === b.rulerRuleHash &&
       a.ruleSourceName === b.ruleSourceName
     );
@@ -76,6 +79,7 @@ export function equal(a: RuleIdentifier, b: RuleIdentifier) {
     return (
       a.groupName === b.groupName &&
       a.namespace === b.namespace &&
+      a.ruleName === b.ruleName &&
       a.ruleHash === b.ruleHash &&
       a.ruleSourceName === b.ruleSourceName
     );
@@ -118,15 +122,17 @@ export function parse(value: string, decodeFromUri = false): RuleIdentifier {
     return { uid: value, ruleSourceName: 'grafana' };
   }
 
-  if (parts.length === 5) {
-    const [prefix, ruleSourceName, namespace, groupName, hash] = parts.map(unescapeDollars).map(unescapePathSeparators);
+  if (parts.length === 6) {
+    const [prefix, ruleSourceName, namespace, groupName, ruleName, hash] = parts
+      .map(unescapeDollars)
+      .map(unescapePathSeparators);
 
     if (prefix === cloudRuleIdentifierPrefix) {
-      return { ruleSourceName, namespace, groupName, rulerRuleHash: hash };
+      return { ruleSourceName, namespace, groupName, ruleName, rulerRuleHash: hash };
     }
 
     if (prefix === prometheusRuleIdentifierPrefix) {
-      return { ruleSourceName, namespace, groupName, ruleHash: hash };
+      return { ruleSourceName, namespace, groupName, ruleName, ruleHash: hash };
     }
   }
 
@@ -156,6 +162,7 @@ export function stringifyIdentifier(identifier: RuleIdentifier): string {
       identifier.ruleSourceName,
       identifier.namespace,
       identifier.groupName,
+      identifier.ruleName,
       identifier.rulerRuleHash,
     ]
       .map(String)
@@ -169,6 +176,7 @@ export function stringifyIdentifier(identifier: RuleIdentifier): string {
     identifier.ruleSourceName,
     identifier.namespace,
     identifier.groupName,
+    identifier.ruleName,
     identifier.ruleHash,
   ]
     .map(String)
