@@ -488,24 +488,6 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     return request;
   }
 
-  handleSearch(queryValue: string, options: DataQueryRequest<TempoQuery>, targets: TempoQuery[]) {
-    return this._request('/api/search', {
-      q: queryValue,
-      limit: options.targets[0].limit ?? DEFAULT_LIMIT,
-      start: options.range.from.unix(),
-      end: options.range.to.unix(),
-    }).pipe(
-      map((response) => {
-        return {
-          data: createTableFrameFromTraceQlQuery(response.data.traces, this.instanceSettings),
-        };
-      }),
-      catchError((err) => {
-        return of({ error: { message: getErrorMessage(err.data.message) }, data: [] });
-      })
-    );
-  }
-
   handleStreamingSearch(
     options: DataQueryRequest<TempoQuery>,
     targets: TempoQuery[],
