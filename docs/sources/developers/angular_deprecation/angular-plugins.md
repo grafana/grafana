@@ -748,7 +748,7 @@ Latest Version: 0.0.7 | Signature: Community | Last Updated: 2021
 Lack of recent activity in the [project repository](https://github.com/NatelEnergy/grafana-plotly-panel) in the past 2 years suggests project _may_ not be actively maintained.
 {{% /admonition %}}
 
-> **Migration available - potential alternative:** other plugins exist which provide similar capabilities - [nline-plotlyjs-panel/](https://grafana.com/grafana/plugins/nline-plotlyjs-panel/) and [ae3e-plotly-panel/](https://grafana.com/grafana/plugins/ae3e-plotly-panel/).
+> **Migration available - potential alternative:** other plugins exist which provide similar capabilities - [nline-plotlyjs-panel](https://grafana.com/grafana/plugins/nline-plotlyjs-panel/) and [ae3e-plotly-panel](https://grafana.com/grafana/plugins/ae3e-plotly-panel/).
 
 ### [Cal-HeatMap](https://grafana.com/grafana/plugins/neocat-cal-heatmap-panel/)
 
