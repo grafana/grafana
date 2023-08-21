@@ -28,10 +28,12 @@ func (hs *HTTPServer) ProxyPluginRequest(c *contextmodel.ReqContext) {
 			},
 			Proxy: http.ProxyFromEnvironment,
 			DialContext: (&net.Dialer{
-				Timeout:   30 * time.Second,
-				KeepAlive: 30 * time.Second,
+				Timeout:   time.Duration(hs.Cfg.DataProxyTimeout) * time.Second,
+				KeepAlive: time.Duration(hs.Cfg.DataProxyKeepAlive) * time.Second,
 			}).DialContext,
-			TLSHandshakeTimeout: 10 * time.Second,
+			TLSHandshakeTimeout:   time.Duration(hs.Cfg.DataProxyTLSHandshakeTimeout) * time.Second,
+			IdleConnTimeout:       time.Duration(hs.Cfg.DataProxyIdleConnTimeout) * time.Second,
+			ExpectContinueTimeout: time.Duration(hs.Cfg.DataProxyExpectContinueTimeout) * time.Second,
 		}
 	})
 
