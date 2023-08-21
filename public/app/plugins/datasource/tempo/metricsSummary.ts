@@ -43,6 +43,7 @@ type MetricsData = {
 
 export function createTableFrameFromMetricsQuery(
   data: MetricsSummary[],
+  targetQuery: string,
   instanceSettings: DataSourceInstanceSettings,
   state: LoadingState
 ) {
@@ -62,18 +63,21 @@ export function createTableFrameFromMetricsQuery(
       },
     });
     frame.add({
-      state: 'Loading..',
+      state: 'Loading...',
     });
   } else {
     const dynamicMetrics: Record<string, FieldDTO> = {};
 
     data.map((res: MetricsSummary) => {
+      const configQuery = getConfigQuery(res.series, targetQuery);
+      console.log(configQuery);
+
       res.series.map((series: Series) => {
         return !dynamicMetrics[series.key]
           ? (dynamicMetrics[series.key] = {
               name: `${series.key}_summary`,
               type: FieldType.string,
-              config: getMetricConfig(series, instanceSettings),
+              config: getConfig(series, configQuery, instanceSettings),
             })
           : dynamicMetrics[series.key];
       });
@@ -139,13 +143,21 @@ const transformToMetricsData = (data: MetricsSummary) => {
   return metricsData;
 };
 
-const getMetricConfig = (series: Series, instanceSettings: DataSourceInstanceSettings) => {
-  const isNumber = series.value.type === 3 || series.value.type === 4 || series.value.type === 7;
-  let query = `{${series.key}=`;
-  query += isNumber ? '' : '"';
-  query += '${__value.raw}';
-  query += isNumber ? '}' : '"}';
+const getConfigQuery = (series: Series[], targetQuery: string) => {
+  const queryParts: string[] = [];
 
+  series.map((x: Series) => {
+    const isNumber = x.value.type === 3 || x.value.type === 4 || x.value.type === 7;
+    const open = isNumber ? '' : '"';
+    const closing = isNumber ? '' : '"';
+    return queryParts.push(`${x.key}=${open}` + '${__data.fields["' + x.key + '_summary"]}' + `${closing}`);
+  });
+
+  const targetQueryWithoutBrackets = targetQuery.substring(1, targetQuery.length - 1);
+  return `{${queryParts.join(' && ')} && ${targetQueryWithoutBrackets}}`;
+};
+
+const getConfig = (series: Series, query: string, instanceSettings: DataSourceInstanceSettings) => {
   const commonConfig = {
     displayNameFromDS: series.key,
     links: [

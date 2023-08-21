@@ -420,17 +420,17 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
                 `No summary data for '${groupBy}'. Note: the metrics summary API only considers spans of kind = server. Please check if the attributes exist by running a TraceQL query like { attr_key = attr_value && kind = server }`
               ),
             },
-            data: createTableFrameFromMetricsQuery([], this.instanceSettings, LoadingState.Error),
+            data: createTableFrameFromMetricsQuery([], query, this.instanceSettings, LoadingState.Error),
           };
         }
         return {
-          data: createTableFrameFromMetricsQuery(response.data.summaries, this.instanceSettings, response.state),
+          data: createTableFrameFromMetricsQuery(response.data.summaries, query, this.instanceSettings, response.state),
         };
       }),
       catchError((error) => {
         return of({
           error: { message: error.data.message },
-          data: createTableFrameFromMetricsQuery([], this.instanceSettings, LoadingState.Error),
+          data: createTableFrameFromMetricsQuery([], query, this.instanceSettings, LoadingState.Error),
         });
       })
     );
