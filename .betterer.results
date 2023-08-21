@@ -7,8 +7,7 @@ exports[`better eslint`] = {
   value: `{
     "packages/grafana-data/src/dataframe/ArrayDataFrame.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Do not use any type assertions.", "1"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "2"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
     ],
     "packages/grafana-data/src/dataframe/CircularDataFrame.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
@@ -792,12 +791,6 @@ exports[`better eslint`] = {
     "packages/grafana-runtime/src/analytics/types.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
-    "packages/grafana-runtime/src/components/PanelRenderer.tsx:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "3"]
-    ],
     "packages/grafana-runtime/src/config.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Do not use any type assertions.", "1"],
@@ -844,9 +837,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "17"]
     ],
     "packages/grafana-runtime/src/services/live.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "2"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
     "packages/grafana-runtime/src/utils/DataSourceWithBackend.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -887,17 +878,9 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "1"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "2"]
     ],
-    "packages/grafana-ui/src/components/Card/Card.tsx:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
-    ],
-    "packages/grafana-ui/src/components/ClickOutsideWrapper/ClickOutsideWrapper.tsx:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
-    ],
     "packages/grafana-ui/src/components/ColorPicker/ColorPicker.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
-      [0, 0, 0, "Do not use any type assertions.", "2"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
     ],
     "packages/grafana-ui/src/components/DataLinks/DataLinkInput.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
@@ -959,9 +942,6 @@ exports[`better eslint`] = {
     "packages/grafana-ui/src/components/Forms/Legacy/Select/SelectOption.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
-    ],
-    "packages/grafana-ui/src/components/Graph/Graph.tsx:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
     "packages/grafana-ui/src/components/Graph/GraphContextMenu.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
