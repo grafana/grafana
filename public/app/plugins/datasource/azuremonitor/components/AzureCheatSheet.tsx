@@ -1,6 +1,3 @@
-// import { css } from '@emotion/css';
-// import { stripIndent, stripIndents } from 'common-tags';
-// import Prism from 'prismjs';
 import { css } from '@emotion/css';
 import React, { useEffect, useState } from 'react';
 
@@ -10,7 +7,7 @@ import { Button, Card, Collapse, useStyles2 } from '@grafana/ui';
 
 import tokenizer from '../../cloudwatch/language/cloudwatch-logs/syntax';
 import { RawQuery } from '../../prometheus/querybuilder/shared/RawQuery';
-import { AzureMonitorQuery } from '../types';
+import { AzureMonitorQuery, AzureQueryType } from '../types';
 
 type CategoriesCheatsheet = {
   id: string;
@@ -114,6 +111,7 @@ type Props = {
 const AzureCheatSheet = (props: Props) => {
   const [cheatsheetQueries, setCheatsheetQueries] = useState<Cheatsheet | null>(null);
   const [isLogsOpen, setIsLogsOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const styles = useStyles2(getStyles);
   const lang = { grammar: tokenizer, name: 'kql' };
 
@@ -123,6 +121,7 @@ const AzureCheatSheet = (props: Props) => {
       .then((result) => {
         console.log('result', result);
         setCheatsheetQueries(result);
+        setIsLoading(false);
       });
   };
 
@@ -136,7 +135,7 @@ const AzureCheatSheet = (props: Props) => {
     <div>
       <h3>Azure Monitor cheat sheet</h3>
       <Collapse label="Logs" collapsible={true} isOpen={isLogsOpen} onToggle={(isOpen) => setIsLogsOpen(isOpen)}>
-        {cheatsheetQueries &&
+        {!isLoading && cheatsheetQueries ?
           cheatsheetQueries.queries.map((query) => {
             return (
               <Card className={styles.card} key={query.id}>
@@ -150,13 +149,13 @@ const AzureCheatSheet = (props: Props) => {
                   />
                 </div>
                 <Card.Actions>
-                  <Button size="sm" aria-label="use this query button" onClick={() => {}}>
+                  <Button size="sm" aria-label="use this query button" onClick={() => props.onClickExample({refId: "A", queryType: AzureQueryType.LogAnalytics})}>
                     Use this query
                   </Button>
                 </Card.Actions>
               </Card>
             );
-          })}
+          }) : "Loading..."}
       </Collapse>
     </div>
   );
