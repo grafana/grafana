@@ -48,7 +48,6 @@ export const TempoVariableQueryEditor = ({ onChange, query, datasource }: TempoV
       onChange({
         type: newType.value,
         label,
-        stream: undefined,
         refId,
       });
     }
