@@ -20,7 +20,7 @@ import { TemplateSrv } from 'app/features/templating/template_srv';
 import { store } from 'app/store/store';
 import { AppNotificationTimeout } from 'app/types';
 
-import { ThrottlingErrorMessage } from '../components/ThrottlingErrorMessage';
+import { ThrottlingErrorMessage } from '../components/Errors/ThrottlingErrorMessage';
 import memoizedDebounce from '../memoizedDebounce';
 import { migrateMetricQuery } from '../migrations/metricQueryMigrations';
 import {

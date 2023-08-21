@@ -125,7 +125,7 @@ export function Drawer({
                 />
               </div>
               <div className={styles.titleWrapper}>
-                <Text as="h3" {...titleProps}>
+                <Text element="h3" {...titleProps}>
                   {title}
                 </Text>
                 {subtitle && <div className={styles.subtitle}>{subtitle}</div>}
@@ -166,6 +166,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       flexDirection: 'column',
       height: '100%',
       flex: '1 1 0',
+      minHeight: '100%',
     }),
     drawer: css({
       '.main-view &': {

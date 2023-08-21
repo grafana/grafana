@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/middleware/cookies"
 	"github.com/grafana/grafana/pkg/models/usertoken"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -37,6 +38,7 @@ const (
 const (
 	MetaKeyUsername   = "username"
 	MetaKeyAuthModule = "authModule"
+	MetaKeyIsLogin    = "isLogin"
 )
 
 // ClientParams are hints to the auth service about how to handle the identity management
@@ -80,6 +82,10 @@ type Service interface {
 	RedirectURL(ctx context.Context, client string, r *Request) (*Redirect, error)
 	// RegisterClient will register a new authn.Client that can be used for authentication
 	RegisterClient(c Client)
+}
+
+type IdentitySynchronizer interface {
+	SyncIdentity(ctx context.Context, identity *Identity) error
 }
 
 type Client interface {
@@ -171,16 +177,14 @@ type Redirect struct {
 }
 
 const (
-	NamespaceUser           = "user"
-	NamespaceAPIKey         = "api-key"
-	NamespaceServiceAccount = "service-account"
+	NamespaceUser           = identity.NamespaceUser
+	NamespaceAPIKey         = identity.NamespaceAPIKey
+	NamespaceServiceAccount = identity.NamespaceServiceAccount
 )
 
 type Identity struct {
 	// OrgID is the active organization for the entity.
 	OrgID int64
-	// OrgCount is the number of organizations the entity is a member of.
-	OrgCount int
 	// OrgName is the name of the active organization.
 	OrgName string
 	// OrgRoles is the list of organizations the entity is a member of and their roles.
@@ -270,7 +274,6 @@ func (i *Identity) SignedInUser() *user.SignedInUser {
 		Name:            i.Name,
 		Email:           i.Email,
 		AuthenticatedBy: i.AuthenticatedBy,
-		OrgCount:        i.OrgCount,
 		IsGrafanaAdmin:  isGrafanaAdmin,
 		IsAnonymous:     i.IsAnonymous,
 		IsDisabled:      i.IsDisabled,
@@ -319,7 +322,6 @@ func IdentityFromSignedInUser(id string, usr *user.SignedInUser, params ClientPa
 		Name:            usr.Name,
 		Email:           usr.Email,
 		AuthenticatedBy: authenticatedBy,
-		OrgCount:        usr.OrgCount,
 		IsGrafanaAdmin:  &usr.IsGrafanaAdmin,
 		IsDisabled:      usr.IsDisabled,
 		HelpFlags1:      usr.HelpFlags1,
@@ -340,9 +342,7 @@ type RedirectValidator func(url string) error
 // HandleLoginResponse is a utility function to perform common operations after a successful login and returns response.NormalResponse
 func HandleLoginResponse(r *http.Request, w http.ResponseWriter, cfg *setting.Cfg, identity *Identity, validator RedirectValidator) *response.NormalResponse {
 	result := map[string]interface{}{"message": "Logged in"}
-	if redirectURL := handleLogin(r, w, cfg, identity, validator); redirectURL != cfg.AppSubURL+"/" {
-		result["redirectUrl"] = redirectURL
-	}
+	result["redirectUrl"] = handleLogin(r, w, cfg, identity, validator)
 	return response.JSON(http.StatusOK, result)
 }
 
@@ -359,9 +359,11 @@ func HandleLoginRedirectResponse(r *http.Request, w http.ResponseWriter, cfg *se
 
 func handleLogin(r *http.Request, w http.ResponseWriter, cfg *setting.Cfg, identity *Identity, validator RedirectValidator) string {
 	redirectURL := cfg.AppSubURL + "/"
-	if redirectTo := getRedirectURL(r); len(redirectTo) > 0 && validator(redirectTo) == nil {
-		cookies.DeleteCookie(w, "redirect_to", nil)
-		redirectURL = redirectTo
+	if redirectTo := getRedirectURL(r); len(redirectTo) > 0 {
+		if validator(redirectTo) == nil {
+			redirectURL = redirectTo
+		}
+		cookies.DeleteCookie(w, "redirect_to", cookieOptions(cfg))
 	}
 
 	WriteSessionCookie(w, cfg, identity.SessionToken)
@@ -389,17 +391,32 @@ func WriteSessionCookie(w http.ResponseWriter, cfg *setting.Cfg, token *usertoke
 	cookies.WriteCookie(w, cfg.LoginCookieName, url.QueryEscape(token.UnhashedToken), maxAge, nil)
 	expiry := token.NextRotation(time.Duration(cfg.TokenRotationIntervalMinutes) * time.Minute)
 	cookies.WriteCookie(w, sessionExpiryCookie, url.QueryEscape(strconv.FormatInt(expiry.Unix(), 10)), maxAge, func() cookies.CookieOptions {
-		opts := cookies.NewCookieOptions()
+		opts := cookieOptions(cfg)()
 		opts.NotHttpOnly = true
 		return opts
 	})
 }
 
 func DeleteSessionCookie(w http.ResponseWriter, cfg *setting.Cfg) {
-	cookies.DeleteCookie(w, cfg.LoginCookieName, nil)
+	cookies.DeleteCookie(w, cfg.LoginCookieName, cookieOptions(cfg))
 	cookies.DeleteCookie(w, sessionExpiryCookie, func() cookies.CookieOptions {
-		opts := cookies.NewCookieOptions()
+		opts := cookieOptions(cfg)()
 		opts.NotHttpOnly = true
 		return opts
 	})
+}
+
+func cookieOptions(cfg *setting.Cfg) func() cookies.CookieOptions {
+	return func() cookies.CookieOptions {
+		path := "/"
+		if len(cfg.AppSubURL) > 0 {
+			path = cfg.AppSubURL
+		}
+		return cookies.CookieOptions{
+			Path:             path,
+			Secure:           cfg.CookieSecure,
+			SameSiteDisabled: cfg.CookieSameSiteDisabled,
+			SameSiteMode:     cfg.CookieSameSiteMode,
+		}
+	}
 }

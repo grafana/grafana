@@ -8,18 +8,20 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
 )
 
-func NewStore(sql db.DB) *store {
-	return &store{sql}
+func NewStore(sql db.DB, features featuremgmt.FeatureToggles) *store {
+	return &store{sql, features}
 }
 
 type store struct {
-	sql db.DB
+	sql      db.DB
+	features featuremgmt.FeatureToggles
 }
 
 type flatResourcePermission struct {
@@ -648,6 +650,9 @@ func (s *store) createPermissions(sess *db.Session, roleID int64, resource, reso
 		p.RoleID = roleID
 		p.Created = time.Now()
 		p.Updated = time.Now()
+		if s.features.IsEnabled(featuremgmt.FlagSplitScopes) {
+			p.Kind, p.Attribute, p.Identifier = p.SplitScope()
+		}
 		permissions = append(permissions, p)
 	}
 

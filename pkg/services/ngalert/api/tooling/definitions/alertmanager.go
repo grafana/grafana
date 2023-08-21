@@ -2,7 +2,6 @@ package definitions
 
 import (
 	"context"
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"reflect"
@@ -16,8 +15,6 @@ import (
 	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/prometheus/common/model"
 	"gopkg.in/yaml.v3"
-
-	"github.com/grafana/grafana/pkg/util"
 )
 
 // swagger:route POST /api/alertmanager/grafana/config/api/v1/alerts alertmanager RoutePostGrafanaAlertingConfig
@@ -274,14 +271,6 @@ type TestReceiversConfigParams struct {
 type TestReceiversConfigBodyParams struct {
 	Alert     *TestReceiversConfigAlertParams `yaml:"alert,omitempty" json:"alert,omitempty"`
 	Receivers []*PostableApiReceiver          `yaml:"receivers,omitempty" json:"receivers,omitempty"`
-}
-
-func (c *TestReceiversConfigBodyParams) ProcessConfig(encrypt EncryptFn) error {
-	err := encryptReceiverConfigs(c.Receivers, encrypt)
-	if err != nil {
-		return err
-	}
-	return assignReceiverConfigsUIDs(c.Receivers)
 }
 
 type TestReceiversConfigAlertParams struct {
@@ -617,16 +606,6 @@ func (c *PostableUserConfig) GetGrafanaReceiverMap() map[string]*PostableGrafana
 		}
 	}
 	return UIDs
-}
-
-// EncryptConfig parses grafana receivers and encrypts secrets.
-func (c *PostableUserConfig) EncryptConfig(encrypt EncryptFn) error {
-	return encryptReceiverConfigs(c.AlertmanagerConfig.Receivers, encrypt)
-}
-
-// AssignMissingConfigUIDs assigns missing UUIDs to receiver configs.
-func (c *PostableUserConfig) AssignMissingConfigUIDs() error {
-	return assignReceiverConfigsUIDs(c.AlertmanagerConfig.Receivers)
 }
 
 // MarshalYAML implements yaml.Marshaller.
@@ -1293,55 +1272,6 @@ type PostableGrafanaReceivers struct {
 }
 
 type EncryptFn func(ctx context.Context, payload []byte) ([]byte, error)
-
-func encryptReceiverConfigs(c []*PostableApiReceiver, encrypt EncryptFn) error {
-	// encrypt secure settings for storing them in DB
-	for _, r := range c {
-		switch r.Type() {
-		case GrafanaReceiverType:
-			for _, gr := range r.PostableGrafanaReceivers.GrafanaManagedReceivers {
-				for k, v := range gr.SecureSettings {
-					encryptedData, err := encrypt(context.Background(), []byte(v))
-					if err != nil {
-						return fmt.Errorf("failed to encrypt secure settings: %w", err)
-					}
-					gr.SecureSettings[k] = base64.StdEncoding.EncodeToString(encryptedData)
-				}
-			}
-		default:
-		}
-	}
-	return nil
-}
-
-func assignReceiverConfigsUIDs(c []*PostableApiReceiver) error {
-	seenUIDs := make(map[string]struct{})
-	// encrypt secure settings for storing them in DB
-	for _, r := range c {
-		switch r.Type() {
-		case GrafanaReceiverType:
-			for _, gr := range r.PostableGrafanaReceivers.GrafanaManagedReceivers {
-				if gr.UID == "" {
-					retries := 5
-					for i := 0; i < retries; i++ {
-						gen := util.GenerateShortUID()
-						_, ok := seenUIDs[gen]
-						if !ok {
-							gr.UID = gen
-							break
-						}
-					}
-					if gr.UID == "" {
-						return fmt.Errorf("all %d attempts to generate UID for receiver have failed; please retry", retries)
-					}
-				}
-				seenUIDs[gr.UID] = struct{}{}
-			}
-		default:
-		}
-	}
-	return nil
-}
 
 // ObjectMatchers is Matchers with a different Unmarshal and Marshal methods that accept matchers as objects
 // that have already been parsed.

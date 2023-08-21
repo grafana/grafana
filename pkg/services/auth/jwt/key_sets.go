@@ -125,7 +125,7 @@ func (s *AuthService) initKeySet() error {
 
 		s.keySet = &keySetJWKS{
 			jose.JSONWebKeySet{
-				Keys: []jose.JSONWebKey{{Key: key}},
+				Keys: []jose.JSONWebKey{{Key: key, KeyID: s.Cfg.JWTAuthKeyID}},
 			},
 		}
 	} else if keyFilePath := s.Cfg.JWTAuthJWKSetFile; keyFilePath != "" {

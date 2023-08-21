@@ -16,15 +16,15 @@ import {
   toDataFrame,
   MutableDataFrame,
   AnnotationQuery,
+  getSearchFilterScopedVar,
 } from '@grafana/data';
 import { DataSourceWithBackend, getBackendSrv, getGrafanaLiveSrv, getTemplateSrv, TemplateSrv } from '@grafana/runtime';
-import { getSearchFilterScopedVar } from 'app/features/variables/utils';
 
 import { Scenario, TestData, TestDataQueryType } from './dataquery.gen';
 import { queryMetricTree } from './metricTree';
 import { generateRandomEdges, generateRandomNodes, savedNodesResponse } from './nodeGraphUtils';
 import { runStream } from './runStreams';
-import { flameGraphData } from './testData/flameGraphResponse';
+import { flameGraphData, flameGraphDataDiff } from './testData/flameGraphResponse';
 import { TestDataVariableSupport } from './variables';
 
 export class TestDataDataSource extends DataSourceWithBackend<TestData> {
@@ -243,7 +243,8 @@ export class TestDataDataSource extends DataSourceWithBackend<TestData> {
   }
 
   flameGraphQuery(target: TestData): Observable<DataQueryResponse> {
-    return of({ data: [{ ...flameGraphData, refId: target.refId }] }).pipe(delay(100));
+    const data = target.flamegraphDiff ? flameGraphDataDiff : flameGraphData;
+    return of({ data: [{ ...data, refId: target.refId }] }).pipe(delay(100));
   }
 
   trace(target: TestData, options: DataQueryRequest<TestData>): Observable<DataQueryResponse> {

@@ -15,6 +15,7 @@ export interface Props {
   roleOptions: Role[];
   disabled?: boolean;
   basicRoleDisabled?: boolean;
+  basicRoleDisabledMessage?: string;
   /**
    * Set whether the component should send a request with the new roles to the
    * backend in UserRolePicker.onRolesChange (apply=false), or call {@link onApplyRoles}
@@ -40,6 +41,7 @@ export const UserRolePicker = ({
   roleOptions,
   disabled,
   basicRoleDisabled,
+  basicRoleDisabledMessage,
   apply = false,
   onApplyRoles,
   pendingRoles,
@@ -91,6 +93,7 @@ export const UserRolePicker = ({
       isLoading={loading}
       disabled={disabled}
       basicRoleDisabled={basicRoleDisabled}
+      basicRoleDisabledMessage={basicRoleDisabledMessage}
       showBasicRole
       apply={apply}
       canUpdateRoles={canUpdateRoles}

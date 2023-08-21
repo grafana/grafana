@@ -1,8 +1,7 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 
 import { Stack } from '@grafana/experimental';
-import { Alert, Button, Icon, LoadingPlaceholder, Tab, TabContent, TabsBar } from '@grafana/ui';
-import { H1, Span } from '@grafana/ui/src/unstable';
+import { Alert, Button, Icon, LoadingPlaceholder, Tab, TabContent, TabsBar, Text } from '@grafana/ui';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { GrafanaAlertState } from 'app/types/unified-alerting-dto';
 
@@ -36,10 +35,17 @@ enum Tabs {
 // add provisioning and federation stuff back in
 const RuleViewer = ({ match }: RuleViewerProps) => {
   const { id } = match.params;
-  const identifier = ruleId.tryParse(id, true);
   const [activeTab, setActiveTab] = useState<Tabs>(Tabs.Instances);
 
-  const { loading, error, result: rule } = useCombinedRule(identifier, identifier?.ruleSourceName);
+  const identifier = useMemo(() => {
+    if (!id) {
+      throw new Error('Rule ID is required');
+    }
+
+    return ruleId.parse(id, true);
+  }, [id]);
+
+  const { loading, error, result: rule } = useCombinedRule({ ruleIdentifier: identifier });
 
   // we're setting the document title and the breadcrumb manually
   useRuleViewerPageTitle(rule);
@@ -129,18 +135,18 @@ interface BreadcrumbProps {
 
 const BreadCrumb = ({ folder, evaluationGroup }: BreadcrumbProps) => (
   <Stack alignItems="center" gap={0.5}>
-    <Span color="secondary">
+    <Text color="secondary">
       <Icon name="folder" />
-    </Span>
-    <Span variant="body" color="primary">
+    </Text>
+    <Text variant="body" color="primary">
       {folder}
-    </Span>
-    <Span variant="body" color="secondary">
+    </Text>
+    <Text variant="body" color="secondary">
       <Icon name="angle-right" />
-    </Span>
-    <Span variant="body" color="primary">
+    </Text>
+    <Text variant="body" color="primary">
       {evaluationGroup}
-    </Span>
+    </Text>
   </Stack>
 );
 
@@ -154,9 +160,9 @@ const Title = ({ name, state }: TitleProps) => (
     <Stack alignItems={'center'} gap={1}>
       <AlertStateDot size="md" state={state} />
       {/* <Button variant="secondary" fill="outline" icon="angle-left" /> */}
-      <H1 variant="h2" weight="bold">
+      <Text element="h1" variant="h2" weight="bold">
         {name}
-      </H1>
+      </Text>
       {/* <Badge color="red" text={state} icon="exclamation-circle" /> */}
     </Stack>
   </header>
@@ -167,9 +173,9 @@ interface SummaryProps {
 }
 
 const Summary = ({ text }: SummaryProps) => (
-  <Span variant="body" color="secondary">
+  <Text variant="body" color="secondary">
     {text}
-  </Span>
+  </Text>
 );
 
 export default RuleViewer;

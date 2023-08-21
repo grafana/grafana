@@ -299,7 +299,7 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
     const max = timeRange.to.valueOf();
     const yaxes = this.getYAxes(series);
 
-    const flotOptions: any = {
+    const flotOptions = {
       legend: {
         show: false,
       },

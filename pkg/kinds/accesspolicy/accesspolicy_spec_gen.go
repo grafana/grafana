@@ -19,7 +19,7 @@ const (
 
 // AccessRule defines model for AccessRule.
 type AccessRule struct {
-	// The kind this rule applies to (dashboars, alert, etc)
+	// The kind this rule applies to (dashboards, alert, etc)
 	Kind string `json:"kind"`
 
 	// Specific sub-elements like "alert.rules" or "dashboard.permissions"????

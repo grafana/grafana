@@ -99,49 +99,49 @@ func BenchmarkFolderListAndSearch(b *testing.B) {
 			desc:        "get root folders with nested folders feature enabled",
 			url:         "/api/folders",
 			expectedLen: LEVEL0_FOLDER_NUM,
-			features:    featuremgmt.WithFeatures("nestedFolders"),
+			features:    featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders, featuremgmt.FlagPermissionsFilterRemoveSubquery),
 		},
 		{
 			desc:        "get subfolders with nested folders feature enabled",
 			url:         "/api/folders?parentUid=folder0",
 			expectedLen: LEVEL1_FOLDER_NUM,
-			features:    featuremgmt.WithFeatures("nestedFolders"),
+			features:    featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders, featuremgmt.FlagPermissionsFilterRemoveSubquery),
 		},
 		{
 			desc:        "list all inherited dashboards with nested folders feature enabled",
 			url:         "/api/search?type=dash-db&limit=5000",
 			expectedLen: withLimit(all),
-			features:    featuremgmt.WithFeatures("nestedFolders"),
+			features:    featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders, featuremgmt.FlagPermissionsFilterRemoveSubquery),
 		},
 		{
 			desc:        "search for pattern with nested folders feature enabled",
 			url:         "/api/search?type=dash-db&query=dashboard_0_0&limit=5000",
 			expectedLen: withLimit(1 + LEVEL1_DASHBOARD_NUM + LEVEL2_FOLDER_NUM*LEVEL2_DASHBOARD_NUM),
-			features:    featuremgmt.WithFeatures("nestedFolders"),
+			features:    featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders, featuremgmt.FlagPermissionsFilterRemoveSubquery),
 		},
 		{
 			desc:        "search for specific dashboard nested folders feature enabled",
 			url:         "/api/search?type=dash-db&query=dashboard_0_0_0_0",
 			expectedLen: 1,
-			features:    featuremgmt.WithFeatures("nestedFolders"),
+			features:    featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders, featuremgmt.FlagPermissionsFilterRemoveSubquery),
 		},
 		{
 			desc:        "get root folders with nested folders feature disabled",
 			url:         "/api/folders?limit=5000",
 			expectedLen: withLimit(LEVEL0_FOLDER_NUM),
-			features:    featuremgmt.WithFeatures(),
+			features:    featuremgmt.WithFeatures(featuremgmt.FlagPermissionsFilterRemoveSubquery),
 		},
 		{
 			desc:        "list all dashboards with nested folders feature disabled",
 			url:         "/api/search?type=dash-db&limit=5000",
 			expectedLen: withLimit(LEVEL0_FOLDER_NUM * LEVEL0_DASHBOARD_NUM),
-			features:    featuremgmt.WithFeatures(),
+			features:    featuremgmt.WithFeatures(featuremgmt.FlagPermissionsFilterRemoveSubquery),
 		},
 		{
 			desc:        "search specific dashboard with nested folders feature disabled",
 			url:         "/api/search?type=dash-db&query=dashboard_0_0",
 			expectedLen: 1,
-			features:    featuremgmt.WithFeatures(),
+			features:    featuremgmt.WithFeatures(featuremgmt.FlagPermissionsFilterRemoveSubquery),
 		},
 	}
 	for _, bm := range benchmarks {
@@ -425,10 +425,10 @@ func setupServer(b testing.TB, sc benchScenario, features *featuremgmt.FeatureMa
 	folderServiceWithFlagOn := folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), sc.cfg, dashStore, folderStore, sc.db, features)
 
 	folderPermissions, err := ossaccesscontrol.ProvideFolderPermissions(
-		sc.cfg, routing.NewRouteRegister(), sc.db, ac, license, &dashboards.FakeDashboardStore{}, folderServiceWithFlagOn, acSvc, sc.teamSvc, sc.userSvc)
+		features, routing.NewRouteRegister(), sc.db, ac, license, &dashboards.FakeDashboardStore{}, folderServiceWithFlagOn, acSvc, sc.teamSvc, sc.userSvc)
 	require.NoError(b, err)
 	dashboardPermissions, err := ossaccesscontrol.ProvideDashboardPermissions(
-		sc.cfg, routing.NewRouteRegister(), sc.db, ac, license, &dashboards.FakeDashboardStore{}, folderServiceWithFlagOn, acSvc, sc.teamSvc, sc.userSvc)
+		features, routing.NewRouteRegister(), sc.db, ac, license, &dashboards.FakeDashboardStore{}, folderServiceWithFlagOn, acSvc, sc.teamSvc, sc.userSvc)
 	require.NoError(b, err)
 
 	dashboardSvc, err := dashboardservice.ProvideDashboardServiceImpl(

@@ -2,6 +2,8 @@ import { monacoTypes } from '@grafana/ui';
 
 import { LanguageDefinition } from './register';
 
+export type CompletionItem = monacoTypes.languages.CompletionItem;
+
 export interface TokenTypes {
   Parenthesis: string;
   Whitespace: string;
@@ -113,6 +115,11 @@ export enum SuggestionKind {
   Operators,
   Statistic,
   Period,
+
+  // logs
+  Command,
+  Function,
+  InKeyword,
 }
 
 export enum CompletionItemPriority {
