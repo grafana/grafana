@@ -86,8 +86,9 @@ export const TempoVariableQueryEditor = ({ onChange, query, datasource }: TempoV
           />
         </InlineField>
       </InlineFieldRow>
-      <InlineFieldRow>
-        {type === TempoVariableQueryType.LabelValues && (
+
+      {type === TempoVariableQueryType.LabelValues && (
+        <InlineFieldRow>
           <InlineField label="Label" labelWidth={20}>
             <Select
               aria-label="Label"
@@ -98,8 +99,8 @@ export const TempoVariableQueryEditor = ({ onChange, query, datasource }: TempoV
               width={32}
             />
           </InlineField>
-        )}
-      </InlineFieldRow>
+        </InlineFieldRow>
+      )}
     </>
   );
 };
