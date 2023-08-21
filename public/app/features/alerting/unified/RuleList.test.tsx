@@ -7,10 +7,9 @@ import { byRole, byTestId, byText } from 'testing-library-selector';
 
 import { DataSourceSrv, locationService, logInfo, setBackendSrv, setDataSourceSrv } from '@grafana/runtime';
 import { backendSrv } from 'app/core/services/backend_srv';
-import { contextSrv } from 'app/core/services/context_srv';
 import * as ruleActionButtons from 'app/features/alerting/unified/components/rules/RuleActionsButtons';
 import * as actions from 'app/features/alerting/unified/state/actions';
-import { AccessControlAction, OrgRole } from 'app/types';
+import { AccessControlAction } from 'app/types';
 import { PromAlertingRuleState, PromApplication } from 'app/types/unified-alerting-dto';
 
 import { LogMessages } from './Analytics';
@@ -137,8 +136,12 @@ beforeAll(() => {
 
 describe('RuleList', () => {
   beforeEach(() => {
-    contextSrv.isEditor = true;
-    contextSrv.user.orgRole = OrgRole.Editor;
+    grantUserPermissions([
+      AccessControlAction.AlertingRuleRead,
+      AccessControlAction.AlertingRuleUpdate,
+      AccessControlAction.AlertingRuleExternalRead,
+      AccessControlAction.AlertingRuleExternalWrite,
+    ]);
     mocks.rulesInSameGroupHaveInvalidForMock.mockReturnValue([]);
   });
 

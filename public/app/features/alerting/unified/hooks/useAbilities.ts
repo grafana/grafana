@@ -73,7 +73,10 @@ export function useAlertSourceAbilities(): Abilities<AlertSourceAction> {
       true,
       ctx.hasAccess(AccessControlAction.AlertingRuleCreate, ctx.hasRole(OrgRole.Editor)),
     ],
-    [AlertSourceAction.ViewAlertRule]: [true, ctx.hasAccess(AccessControlAction.AlertingRuleRead, true)],
+    [AlertSourceAction.ViewAlertRule]: [
+      true,
+      ctx.hasAccess(AccessControlAction.AlertingRuleRead, ctx.hasRole(OrgRole.Viewer)),
+    ],
     [AlertSourceAction.UpdateAlertRule]: [
       true,
       ctx.hasAccess(AccessControlAction.AlertingRuleUpdate, ctx.hasRole(OrgRole.Editor)),
@@ -90,7 +93,7 @@ export function useAlertSourceAbilities(): Abilities<AlertSourceAction> {
     ],
     [AlertSourceAction.ViewExternalAlertRule]: [
       true,
-      ctx.hasAccess(AccessControlAction.AlertingRuleExternalRead, true),
+      ctx.hasAccess(AccessControlAction.AlertingRuleExternalRead, ctx.hasRole(OrgRole.Viewer)),
     ],
     [AlertSourceAction.UpdateExternalAlertRule]: [
       true,
