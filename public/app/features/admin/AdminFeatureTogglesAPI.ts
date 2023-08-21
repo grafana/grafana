@@ -3,11 +3,23 @@ import { lastValueFrom } from 'rxjs';
 
 import { getBackendSrv } from '@grafana/runtime';
 
+type QueryArgs = {
+  url: string;
+  method?: string;
+  body?: FeatureToggle[];
+};
+
 const backendSrvBaseQuery =
-  ({ baseUrl }: { baseUrl: string }): BaseQueryFn<{ url: string }> =>
-  async ({ url }) => {
+  ({ baseUrl }: { baseUrl: string }): BaseQueryFn<QueryArgs> =>
+  async ({ url, method = 'GET', body }) => {
     try {
-      const { data } = await lastValueFrom(getBackendSrv().fetch({ url: baseUrl + url }));
+      const { data } = await lastValueFrom(
+        getBackendSrv().fetch({
+          url: baseUrl + url,
+          method,
+          data: body,
+        })
+      );
       return { data };
     } catch (error) {
       return { error };
@@ -21,14 +33,22 @@ export const togglesApi = createApi({
     getFeatureToggles: builder.query<FeatureToggle[], void>({
       query: () => ({ url: '/featuremgmt' }),
     }),
+    updateFeatureToggles: builder.mutation<void, FeatureToggle[]>({
+      query: (updatedToggles) => ({
+        url: '/featuremgmt',
+        method: 'POST',
+        body: updatedToggles,
+      }),
+    }),
   }),
 });
 
 type FeatureToggle = {
   name: string;
-  enabled: boolean;
   description: string;
+  enabled: boolean;
+  readOnly?: boolean;
 };
 
-export const { useGetFeatureTogglesQuery } = togglesApi;
+export const { useGetFeatureTogglesQuery, useUpdateFeatureTogglesMutation } = togglesApi;
 export type { FeatureToggle };
