@@ -776,9 +776,17 @@ describe('label names', () => {
 
   beforeEach(() => {
     datasource = createTempoDatasource();
-    jest
-      .spyOn(datasource, 'metadataRequest')
-      .mockImplementation(createMetadataRequest({ data: { tagNames: ['label1', 'label2'] } }));
+    jest.spyOn(datasource, 'metadataRequest').mockImplementation(
+      createMetadataRequest({
+        data: {
+          tagNames: ['label1', 'label2'],
+          scopes: [
+            // @ts-ignore
+            { name: 'span', tags: ['label1', 'label2'] },
+          ],
+        },
+      })
+    );
   });
 
   it('get label names', async () => {
@@ -794,9 +802,26 @@ describe('get label values', () => {
 
   beforeEach(() => {
     datasource = createTempoDatasource();
-    jest
-      .spyOn(datasource, 'metadataRequest')
-      .mockImplementation(createMetadataRequest({ data: { tagValues: ['value1', 'value2'] } }));
+    jest.spyOn(datasource, 'metadataRequest').mockImplementation(
+      createMetadataRequest({
+        data: {
+          tagValues: [
+            // @ts-ignore
+            {
+              type: 'value1',
+              value: 'value1',
+              label: 'value1',
+            },
+            // @ts-ignore
+            {
+              type: 'value2',
+              value: 'value2',
+              label: 'value2',
+            },
+          ],
+        },
+      })
+    );
   });
 
   it('get label values for given label', async () => {
