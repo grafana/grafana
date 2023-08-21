@@ -39,7 +39,6 @@ describe('TempoVariableQueryEditor', () => {
     expect(onChange).toHaveBeenCalledWith({
       type: TempoVariableQueryType.LabelNames,
       label: '',
-      stream: undefined,
       refId,
     });
   });
@@ -63,7 +62,6 @@ describe('TempoVariableQueryEditor', () => {
     expect(onChange).toHaveBeenCalledWith({
       type: TempoVariableQueryType.LabelValues,
       label: 'luna',
-      stream: undefined,
       refId,
     });
   });

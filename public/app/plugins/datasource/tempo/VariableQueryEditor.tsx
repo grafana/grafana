@@ -60,7 +60,6 @@ export const TempoVariableQueryEditor = ({ onChange, query, datasource }: TempoV
       onChange({
         type,
         label: newLabelValue,
-        stream: undefined,
         refId,
       });
     }
@@ -68,7 +67,7 @@ export const TempoVariableQueryEditor = ({ onChange, query, datasource }: TempoV
 
   const handleBlur = () => {
     if (type !== undefined) {
-      onChange({ type, label, stream: undefined, refId });
+      onChange({ type, label, refId });
     }
   };
 
