@@ -357,6 +357,9 @@ export function graphToTimeseriesOptions(angular: any): {
       mode: TooltipDisplayMode.Single,
       sort: SortOrder.None,
     },
+    exemplars: {
+      labels: [],
+    },
   };
 
   // Legend config migration

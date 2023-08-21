@@ -46,9 +46,10 @@ Controls cell value options
 
 Controls exemplar options
 
-| Property | Type   | Required | Default | Description                            |
-|----------|--------|----------|---------|----------------------------------------|
-| `color`  | string | **Yes**  |         | Sets the color of the exemplar markers |
+| Property | Type     | Required | Default | Description                            |
+|----------|----------|----------|---------|----------------------------------------|
+| `color`  | string   | **Yes**  |         | Sets the color of the exemplar markers |
+| `labels` | string[] | **Yes**  |         |                                        |
 
 ### FieldConfig
 

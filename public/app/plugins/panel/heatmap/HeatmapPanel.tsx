@@ -222,6 +222,7 @@ export const HeatmapPanel = ({
               showHistogram={options.tooltip.yHistogram}
               replaceVars={replaceVariables}
               scopedVars={scopedVarsFromRawData}
+              exemplarLabels={options.exemplars?.labels}
             />
           </VizTooltipContainer>
         )}

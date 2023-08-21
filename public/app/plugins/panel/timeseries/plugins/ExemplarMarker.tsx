@@ -14,6 +14,7 @@ import {
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { FieldLinkList, Portal, UPlotConfigBuilder, useStyles2 } from '@grafana/ui';
+import { PanelModel } from 'app/features/dashboard/state';
 
 import { ExemplarModalHeader } from '../../heatmap/ExemplarModalHeader';
 
@@ -25,6 +26,7 @@ interface ExemplarMarkerProps {
   exemplarColor?: string;
   clickedExemplarFieldIndex: DataFrameFieldIndex | undefined;
   setClickedExemplarFieldIndex: React.Dispatch<DataFrameFieldIndex | undefined>;
+  options: PanelModel['options'] | undefined;
 }
 
 export const ExemplarMarker = ({
@@ -35,6 +37,7 @@ export const ExemplarMarker = ({
   exemplarColor,
   clickedExemplarFieldIndex,
   setClickedExemplarFieldIndex,
+  options,
 }: ExemplarMarkerProps) => {
   const styles = useStyles2(getExemplarMarkerStyles);
   const [isOpen, setIsOpen] = useState(false);
@@ -122,13 +125,25 @@ export const ExemplarMarker = ({
   }, [setIsOpen]);
 
   const renderMarker = useCallback(() => {
-    //Put fields with links on the top
-    const fieldsWithLinks =
-      dataFrame.fields.filter((field) => field.config.links?.length && field.config.links?.length > 0) || [];
-    const orderedDataFrameFields = [
-      ...fieldsWithLinks,
-      ...dataFrame.fields.filter((field) => !fieldsWithLinks.includes(field)),
-    ];
+    // Show only configured labels and in the same order
+    const exemplarLabels = options?.exemplars?.labels;
+    let orderedDataFrameFields = [];
+    if (!exemplarLabels || exemplarLabels?.length === 0) {
+      const fieldsWithLinks =
+        dataFrame.fields.filter((field) => field.config.links?.length && field.config.links?.length > 0) || [];
+      orderedDataFrameFields = [
+        ...fieldsWithLinks,
+        ...dataFrame.fields.filter((field) => !fieldsWithLinks.includes(field)),
+      ];
+    } else {
+      for (let i in exemplarLabels) {
+        const label = exemplarLabels[i];
+        const field = dataFrame.fields.find((field) => field.name === label);
+        if (field) {
+          orderedDataFrameFields.push(field);
+        }
+      }
+    }
 
     const timeFormatter = (value: number) => {
       return dateTimeFormat(value, {
@@ -196,6 +211,7 @@ export const ExemplarMarker = ({
     timeZone,
     isLocked,
     setClickedExemplarFieldIndex,
+    options,
   ]);
 
   const seriesColor = config

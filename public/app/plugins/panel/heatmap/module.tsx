@@ -14,6 +14,7 @@ import { ColorScale } from 'app/core/components/ColorScale/ColorScale';
 import { addHeatmapCalculationOptions } from 'app/features/transformers/calculateHeatmap/editor/helper';
 import { readHeatmapRowsCustomMeta } from 'app/features/transformers/calculateHeatmap/heatmap';
 
+import { ExemplarLabelEditor } from './ExemplarLabelEditor';
 import { HeatmapPanel } from './HeatmapPanel';
 import { prepareHeatmapData } from './fields';
 import { heatmapChangedHandler, heatmapMigrationHandler } from './migrations';
@@ -411,6 +412,14 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(HeatmapPanel)
       path: 'exemplars.color',
       name: 'Color',
       defaultValue: defaultOptions.exemplars.color,
+      category,
+    });
+
+    builder.addCustomEditor({
+      id: 'exemplar labels',
+      path: 'exemplars.labels',
+      name: 'Labels',
+      editor: ExemplarLabelEditor,
       category,
     });
   })

@@ -1,6 +1,8 @@
 import { PanelPlugin } from '@grafana/data';
 import { commonOptionsBuilder } from '@grafana/ui';
 
+import { ExemplarLabelEditor } from '../heatmap/ExemplarLabelEditor';
+
 import { TimeSeriesPanel } from './TimeSeriesPanel';
 import { TimezonesEditor } from './TimezonesEditor';
 import { defaultGraphConfig, getGraphFieldConfig } from './config';
@@ -22,6 +24,14 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TimeSeriesPanel)
       category: ['Axis'],
       editor: TimezonesEditor,
       defaultValue: undefined,
+    });
+
+    builder.addCustomEditor({
+      id: 'exemplar labels',
+      path: 'exemplars.labels',
+      name: 'Labels',
+      editor: ExemplarLabelEditor,
+      category: ['Exemplars'],
     });
   })
   .setSuggestionsSupplier(new TimeSeriesSuggestionsSupplier())

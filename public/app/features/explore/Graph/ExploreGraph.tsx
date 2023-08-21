@@ -192,6 +192,9 @@ export function ExploreGraph({
         placement: 'bottom',
         calcs: [],
       },
+      exemplars: {
+        labels: [],
+      },
     }),
     [tooltipDisplayMode]
   );

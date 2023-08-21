@@ -18,10 +18,17 @@ title: TimeSeriesPanelCfg kind
 
 
 
-| Property      | Type                                  | Required | Default | Description |
-|---------------|---------------------------------------|----------|---------|-------------|
-| `FieldConfig` | [GraphFieldConfig](#graphfieldconfig) | **Yes**  |         | TODO docs   |
-| `Options`     | [object](#options)                    | **Yes**  |         |             |
+| Property         | Type                                  | Required | Default | Description |
+|------------------|---------------------------------------|----------|---------|-------------|
+| `ExemplarConfig` | [object](#exemplarconfig)             | **Yes**  |         |             |
+| `FieldConfig`    | [GraphFieldConfig](#graphfieldconfig) | **Yes**  |         | TODO docs   |
+| `Options`        | [object](#options)                    | **Yes**  |         |             |
+
+### ExemplarConfig
+
+| Property | Type     | Required | Default | Description |
+|----------|----------|----------|---------|-------------|
+| `labels` | string[] | **Yes**  |         |             |
 
 ### GraphFieldConfig
 
@@ -189,11 +196,12 @@ TODO docs
 
 It extends [OptionsWithTimezones](#optionswithtimezones).
 
-| Property   | Type                                    | Required | Default | Description                                                      |
-|------------|-----------------------------------------|----------|---------|------------------------------------------------------------------|
-| `legend`   | [VizLegendOptions](#vizlegendoptions)   | **Yes**  |         | TODO docs                                                        |
-| `tooltip`  | [VizTooltipOptions](#viztooltipoptions) | **Yes**  |         | TODO docs                                                        |
-| `timezone` | string[]                                | No       |         | *(Inherited from [OptionsWithTimezones](#optionswithtimezones))* |
+| Property    | Type                                    | Required | Default | Description                                                      |
+|-------------|-----------------------------------------|----------|---------|------------------------------------------------------------------|
+| `exemplars` | [ExemplarConfig](#exemplarconfig)       | **Yes**  |         |                                                                  |
+| `legend`    | [VizLegendOptions](#vizlegendoptions)   | **Yes**  |         | TODO docs                                                        |
+| `tooltip`   | [VizTooltipOptions](#viztooltipoptions) | **Yes**  |         | TODO docs                                                        |
+| `timezone`  | string[]                                | No       |         | *(Inherited from [OptionsWithTimezones](#optionswithtimezones))* |
 
 ### OptionsWithTimezones
 

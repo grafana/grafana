@@ -21,6 +21,7 @@ export interface Props {
   sortOrder?: SortOrder;
   mode?: TooltipDisplayMode | null;
   header?: string;
+  exemplarLabels?: string[];
 }
 
 interface DisplayValue {
@@ -30,7 +31,15 @@ interface DisplayValue {
   highlight: boolean;
 }
 
-export const DataHoverView = ({ data, rowIndex, columnIndex, sortOrder, mode, header = undefined }: Props) => {
+export const DataHoverView = ({
+  data,
+  rowIndex,
+  columnIndex,
+  sortOrder,
+  mode,
+  header = undefined,
+  exemplarLabels,
+}: Props) => {
   const styles = useStyles2(getStyles);
 
   if (!data || rowIndex == null) {
@@ -41,12 +50,23 @@ export const DataHoverView = ({ data, rowIndex, columnIndex, sortOrder, mode, he
   });
   const visibleFields = fields.filter((f) => !Boolean(f.config.custom?.hideFrom?.tooltip));
   const traceIDField = visibleFields.find((field) => field.name === 'traceID') || fields[0];
-  const orderedVisibleFields = [];
-  // Only include traceID if it's visible and put it in front.
-  if (visibleFields.filter((field) => traceIDField === field).length > 0) {
-    orderedVisibleFields.push(traceIDField);
+
+  let orderedVisibleFields = [];
+  if (exemplarLabels && exemplarLabels.length > 0) {
+    for (let i in exemplarLabels) {
+      const label = exemplarLabels[i];
+      const field = visibleFields.find((field) => field.name === label);
+      if (field) {
+        orderedVisibleFields.push(field);
+      }
+    }
+  } else {
+    // Only include traceID if it's visible and put it in front.
+    if (visibleFields.filter((field) => traceIDField === field).length > 0) {
+      orderedVisibleFields.push(traceIDField);
+    }
+    orderedVisibleFields.push(...visibleFields.filter((field) => traceIDField !== field));
   }
-  orderedVisibleFields.push(...visibleFields.filter((field) => traceIDField !== field));
 
   if (orderedVisibleFields.length === 0) {
     return null;

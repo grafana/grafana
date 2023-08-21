@@ -150,6 +150,7 @@ export const TimeSeriesPanel = ({
                 config={config}
                 exemplars={data.annotations}
                 timeZone={timeZone}
+                options={options}
               />
             )}
 

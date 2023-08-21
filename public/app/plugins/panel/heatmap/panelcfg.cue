@@ -92,6 +92,7 @@ composableKinds: PanelCfg: lineage: {
 			ExemplarConfig: {
 				// Sets the color of the exemplar markers
 				color: string
+				labels: [...string]
 			} @cuetsy(kind="interface")
 			// Controls frame rows options
 			RowsHeatmapOptions: {
@@ -149,6 +150,7 @@ composableKinds: PanelCfg: lineage: {
 				// Controls exemplar options
 				exemplars: ExemplarConfig | *{
 					color: "rgba(255,0,255,0.7)"
+					labels: []
 				}
 			} @cuetsy(kind="interface")
 			FieldConfig: {

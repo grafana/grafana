@@ -10,6 +10,7 @@ import {
   TimeZone,
 } from '@grafana/data';
 import { EventsCanvas, FIXED_UNIT, UPlotConfigBuilder } from '@grafana/ui';
+import { PanelModel } from 'app/features/dashboard/state';
 
 import { ExemplarMarker } from './ExemplarMarker';
 
@@ -18,9 +19,10 @@ interface ExemplarsPluginProps {
   exemplars: DataFrame[];
   timeZone: TimeZone;
   visibleSeries?: VisibleExemplarLabels;
+  options?: PanelModel['options'];
 }
 
-export const ExemplarsPlugin = ({ exemplars, timeZone, config, visibleSeries }: ExemplarsPluginProps) => {
+export const ExemplarsPlugin = ({ exemplars, timeZone, config, visibleSeries, options }: ExemplarsPluginProps) => {
   const plotInstance = useRef<uPlot>();
 
   const [lockedExemplarFieldIndex, setLockedExemplarFieldIndex] = useState<DataFrameFieldIndex | undefined>();
@@ -83,10 +85,11 @@ export const ExemplarsPlugin = ({ exemplars, timeZone, config, visibleSeries }: 
           dataFrameFieldIndex={dataFrameFieldIndex}
           config={config}
           exemplarColor={markerColor}
+          options={options}
         />
       );
     },
-    [config, timeZone, visibleSeries, setLockedExemplarFieldIndex, lockedExemplarFieldIndex]
+    [config, timeZone, visibleSeries, setLockedExemplarFieldIndex, lockedExemplarFieldIndex, options]
   );
 
   return (

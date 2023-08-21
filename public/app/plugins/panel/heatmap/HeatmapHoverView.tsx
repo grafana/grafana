@@ -28,11 +28,19 @@ type Props = {
   timeRange: TimeRange;
   replaceVars: InterpolateFunction;
   scopedVars: ScopedVars[];
+  exemplarLabels: string[];
 };
 
 export const HeatmapHoverView = (props: Props) => {
   if (props.hover.seriesIdx === 2) {
-    return <DataHoverView data={props.data.exemplars} rowIndex={props.hover.dataIdx} header={'Exemplar'} />;
+    return (
+      <DataHoverView
+        data={props.data.exemplars}
+        rowIndex={props.hover.dataIdx}
+        header={'Exemplar'}
+        exemplarLabels={props.exemplarLabels}
+      />
+    );
   }
   return <HeatmapHoverCell {...props} />;
 };

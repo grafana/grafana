@@ -154,7 +154,12 @@ export interface ExemplarConfig {
    * Sets the color of the exemplar markers
    */
   color: string;
+  labels: Array<string>;
 }
+
+export const defaultExemplarConfig: Partial<ExemplarConfig> = {
+  labels: [],
+};
 
 /**
  * Controls frame rows options
@@ -250,6 +255,7 @@ export const defaultOptions: Partial<Options> = {
   },
   exemplars: {
     color: 'rgba(255,0,255,0.7)',
+    labels: [],
   },
   filterValues: {
     le: 1e-09,
