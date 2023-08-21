@@ -798,13 +798,18 @@ describe('label names - v1 tags', () => {
 
   beforeEach(() => {
     datasource = createTempoDatasource();
-    jest.spyOn(datasource, 'metadataRequest').mockImplementationOnce(() => {throw Error}).mockImplementation(
-      createMetadataRequest({
-        data: {
-          tagNames: ['label1', 'label2'],
-        },
+    jest
+      .spyOn(datasource, 'metadataRequest')
+      .mockImplementationOnce(() => {
+        throw Error;
       })
-    );
+      .mockImplementation(
+        createMetadataRequest({
+          data: {
+            tagNames: ['label1', 'label2'],
+          },
+        })
+      );
   });
 
   it('get label names', async () => {
