@@ -2222,7 +2222,7 @@ Keys of features to enable, separated by space.
 
 ### FEATURE_TOGGLE_NAME = false 
   
-Some feature toggles for stable features are on by default. Use this setting to explicitly disable an on-by-default feature toggle with the name FEATURE_TOGGLE_NAME, for example `exploreMixedDatasource = false`.
+Some feature toggles for stable features are on by default. Use this setting to disable an on-by-default feature toggle with the name FEATURE_TOGGLE_NAME, for example, `exploreMixedDatasource = false`.
 
 ## [date_formats]
 
