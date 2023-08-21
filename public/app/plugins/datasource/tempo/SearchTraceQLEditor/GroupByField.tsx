@@ -90,7 +90,7 @@ export const GroupByField = (props: Props) => {
   return (
     <InlineSearchField
       label="Group By"
-      tooltip="Select a tag to see group by metrics. Note: the metrics summary API only considers spans of kind = server."
+      tooltip="Select a tag to see the metrics summary. Note: the metrics summary API only considers spans of kind = server."
     >
       <>
         {query.groupBy?.map((f, i) => (
@@ -103,6 +103,7 @@ export const GroupByField = (props: Props) => {
                   updateFilter({ ...f, scope: v?.value });
                 }}
                 placeholder="Select scope"
+                aria-label={`Select scope for ${f.id}`}
               />
               <Select
                 options={getTags(f).map((t) => ({
@@ -114,6 +115,7 @@ export const GroupByField = (props: Props) => {
                   updateFilter({ ...f, tag: v?.value });
                 }}
                 placeholder="Select tag"
+                aria-label={`Select tag for ${f.id}`}
                 isLoading={isTagsLoading}
                 isClearable
               />

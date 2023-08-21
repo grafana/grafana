@@ -41,7 +41,7 @@ type MetricsData = {
   [key: string]: string | number;
 };
 
-export function createTableFrameFromMetricsQuery(
+export function createTableFrameFromMetricsSummaryQuery(
   data: MetricsSummary[],
   targetQuery: string,
   instanceSettings: DataSourceInstanceSettings,
@@ -67,14 +67,12 @@ export function createTableFrameFromMetricsQuery(
     });
   } else {
     const dynamicMetrics: Record<string, FieldDTO> = {};
-
     data.map((res: MetricsSummary) => {
       const configQuery = getConfigQuery(res.series, targetQuery);
-
       res.series.map((series: Series) => {
         return !dynamicMetrics[series.key]
           ? (dynamicMetrics[series.key] = {
-              name: `${series.key}_summary`,
+              name: `${series.key}`,
               type: FieldType.string,
               config: getConfig(series, configQuery, instanceSettings),
             })
@@ -142,7 +140,7 @@ const transformToMetricsData = (data: MetricsSummary) => {
   };
 
   data.series.map((series: Series) => {
-    metricsData[`${series.key}_summary`] = getMetricValue(series);
+    metricsData[`${series.key}`] = getMetricValue(series) || '';
   });
 
   return metricsData;
@@ -153,9 +151,8 @@ const getConfigQuery = (series: Series[], targetQuery: string) => {
 
   series.map((x: Series) => {
     const isNumber = x.value.type === 3 || x.value.type === 4 || x.value.type === 7;
-    const open = isNumber ? '' : '"';
-    const closing = isNumber ? '' : '"';
-    return queryParts.push(`${x.key}=${open}` + '${__data.fields["' + x.key + '_summary"]}' + `${closing}`);
+    const surround = isNumber ? '' : '"';
+    return queryParts.push(`${x.key}=${surround}` + '${__data.fields["' + x.key + '"]}' + `${surround}`);
   });
 
   let targetQueryWithoutBrackets = targetQuery.substring(1, targetQuery.length - 1);
@@ -200,26 +197,30 @@ const getMetricValue = (series: Series) => {
 
   switch (series.value.type) {
     case 3:
-      return series.value.n || 0;
+      return series.value.n;
     case 4:
-      return series.value.f || 0;
+      return series.value.f;
     case 5:
-      return series.value.s || '';
+      return series.value.s;
     case 6:
-      return series.value.b || '';
+      return series.value.b;
     case 7:
-      return series.value.d || 0;
+      return series.value.d;
     case 8:
-      return series.value.status ? getSpanStatusCode(series.value.status) : '';
+      return getSpanStatusCode(series.value.status);
     case 9:
-      return series.value.kind ? getSpanKind(series.value.kind) : '';
+      return getSpanKind(series.value.kind);
     default:
       return 'NULL';
   }
 };
 
 // Values set according to Tempo enum: https://github.com/grafana/tempo/blob/main/pkg/traceql/enum_statics.go
-const getSpanStatusCode = (statusCode: number) => {
+const getSpanStatusCode = (statusCode: number | undefined) => {
+  if (!statusCode) {
+    return '';
+  }
+
   switch (statusCode) {
     case 0:
       return 'error';
@@ -231,7 +232,11 @@ const getSpanStatusCode = (statusCode: number) => {
 };
 
 // Values set according to Tempo enum: https://github.com/grafana/tempo/blob/main/pkg/traceql/enum_statics.go
-const getSpanKind = (kind: number) => {
+const getSpanKind = (kind: number | undefined) => {
+  if (!kind) {
+    return '';
+  }
+
   switch (kind) {
     case 1:
       return 'internal';
@@ -262,7 +267,7 @@ const getPercentileRow = (name: string) => {
   };
 };
 
-export const emptyResponse = new MutableDataFrame({
+const emptyResponse = new MutableDataFrame({
   name: 'Metrics Summary',
   refId: 'metrics-summary',
   fields: [],

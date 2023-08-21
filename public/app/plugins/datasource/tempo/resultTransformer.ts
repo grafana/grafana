@@ -579,7 +579,7 @@ export function createTableFrameFromTraceQlQuery(
 ): DataFrame[] {
   const frame = createDataFrame({
     name: 'Traces',
-    refId: 'streaming-traces',
+    refId: 'traces',
     fields: [
       {
         name: 'traceID',

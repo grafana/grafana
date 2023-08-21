@@ -16,11 +16,12 @@ export const TempoQueryBuilderOptions = React.memo<Props>(({ onChange, query }) 
   if (!query.hasOwnProperty('limit')) {
     query.limit = DEFAULT_LIMIT;
   }
-  const collapsedInfoList = [`Limit: ${query.limit || DEFAULT_LIMIT}`];
 
   const onLimitChange = (e: React.FormEvent<HTMLInputElement>) => {
     onChange({ ...query, limit: parseInt(e.currentTarget.value, 10) });
   };
+
+  const collapsedInfoList = [`Limit: ${query.limit || DEFAULT_LIMIT}`];
 
   return (
     <>

@@ -52,7 +52,7 @@ import {
   defaultTableFilter,
 } from './graphTransform';
 import TempoLanguageProvider from './language_provider';
-import { createTableFrameFromMetricsQuery } from './metricsSummary';
+import { createTableFrameFromMetricsSummaryQuery } from './metricsSummary';
 import {
   transformTrace,
   transformTraceList,
@@ -285,8 +285,8 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
           });
 
           if (config.featureToggles.traceQLStreaming) {
-            subQueries.push(this.handleStreamingSearch(options, traceqlSearchTargets, queryValue));
-          } else if (!groupBy) {
+            subQueries.push(this.handleStreamingSearch(options, traceqlSearchTargets));
+          } else {
             subQueries.push(
               this._request('/api/search', {
                 q: queryValue,
@@ -428,17 +428,22 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
                 `No summary data for '${groupBy}'. Note: the metrics summary API only considers spans of kind = server. Please check if the attributes exist by running a TraceQL query like { attr_key = attr_value && kind = server }`
               ),
             },
-            data: createTableFrameFromMetricsQuery([], query, this.instanceSettings, LoadingState.Error),
+            data: createTableFrameFromMetricsSummaryQuery([], query, this.instanceSettings, LoadingState.Error),
           };
         }
         return {
-          data: createTableFrameFromMetricsQuery(response.data.summaries, query, this.instanceSettings, response.state),
+          data: createTableFrameFromMetricsSummaryQuery(
+            response.data.summaries,
+            query,
+            this.instanceSettings,
+            response.state
+          ),
         };
       }),
       catchError((error) => {
         return of({
           error: { message: error.data.message },
-          data: createTableFrameFromMetricsQuery([], query, this.instanceSettings, LoadingState.Error),
+          data: createTableFrameFromMetricsSummaryQuery([], query, this.instanceSettings, LoadingState.Error),
         });
       })
     );
