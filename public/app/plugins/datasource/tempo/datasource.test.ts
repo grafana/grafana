@@ -780,10 +780,7 @@ describe('label names', () => {
       createMetadataRequest({
         data: {
           tagNames: ['label1', 'label2'],
-          scopes: [
-            // @ts-ignore
-            { name: 'span', tags: ['label1', 'label2'] },
-          ],
+          scopes: [{ name: 'span', tags: ['label1', 'label2'] }],
         },
       })
     );
@@ -806,13 +803,11 @@ describe('get label values', () => {
       createMetadataRequest({
         data: {
           tagValues: [
-            // @ts-ignore
             {
               type: 'value1',
               value: 'value1',
               label: 'value1',
             },
-            // @ts-ignore
             {
               type: 'value2',
               value: 'value2',

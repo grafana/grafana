@@ -63,6 +63,6 @@ export function createTempoDatasource(
   return new TempoDatasource(customSettings, templateSrvMock, timeSrvStub);
 }
 
-export function createMetadataRequest(labelsAndValues: Record<string, Record<string, string[]>>) {
+export function createMetadataRequest(labelsAndValues: Record<string, Record<string, unknown>>) {
   return async () => labelsAndValues;
 }
