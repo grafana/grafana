@@ -3,7 +3,7 @@ import React from 'react';
 
 import { Input } from '@grafana/ui';
 
-import { useShadowedState } from '../../hooks/useShadowedState';
+import { useShadowedState } from '../hooks/useShadowedState';
 
 import { paddingRightClass } from './styles';
 

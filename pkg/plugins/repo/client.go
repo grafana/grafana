@@ -7,6 +7,7 @@ import (
 	"crypto/sha256"
 	"crypto/tls"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net"
@@ -42,7 +43,7 @@ func (c *Client) Download(_ context.Context, pluginZipURL, checksum string, comp
 	}
 	defer func() {
 		if err := os.Remove(tmpFile.Name()); err != nil {
-			c.log.Warn("Failed to remove temporary file", "file", tmpFile.Name(), "err", err)
+			c.log.Warn("Failed to remove temporary file", "file", tmpFile.Name(), "error", err)
 		}
 	}()
 
@@ -51,7 +52,7 @@ func (c *Client) Download(_ context.Context, pluginZipURL, checksum string, comp
 	err = c.downloadFile(tmpFile, pluginZipURL, checksum, compatOpts)
 	if err != nil {
 		if err := tmpFile.Close(); err != nil {
-			c.log.Warn("Failed to close file", "err", err)
+			c.log.Warn("Failed to close file", "error", err)
 		}
 		return nil, fmt.Errorf("failed to download plugin archive: %w", err)
 	}
@@ -80,7 +81,7 @@ func (c *Client) SendReq(url *url.URL, compatOpts CompatOpts) ([]byte, error) {
 	}
 	defer func() {
 		if err = bodyReader.Close(); err != nil {
-			c.log.Warn("Failed to close stream", "err", err)
+			c.log.Warn("Failed to close stream", "error", err)
 		}
 	}()
 	return io.ReadAll(bodyReader)
@@ -99,7 +100,7 @@ func (c *Client) downloadFile(tmpFile *os.File, pluginURL, checksum string, comp
 		}
 		defer func() {
 			if err := f.Close(); err != nil {
-				c.log.Warn("Failed to close file", "err", err)
+				c.log.Warn("Failed to close file", "error", err)
 			}
 		}()
 		_, err = io.Copy(tmpFile, f)
@@ -129,7 +130,7 @@ func (c *Client) downloadFile(tmpFile *os.File, pluginURL, checksum string, comp
 				c.retryCount = 0
 				failure := fmt.Sprintf("%v", r)
 				if failure == "runtime error: makeslice: len out of range" {
-					err = fmt.Errorf("corrupt HTTP response from source, please try again")
+					err = errors.New("corrupt HTTP response from source, please try again")
 				} else {
 					panic(r)
 				}
@@ -150,7 +151,7 @@ func (c *Client) downloadFile(tmpFile *os.File, pluginURL, checksum string, comp
 	}
 	defer func() {
 		if err := bodyReader.Close(); err != nil {
-			c.log.Warn("Failed to close body", "err", err)
+			c.log.Warn("Failed to close body", "error", err)
 		}
 	}()
 
@@ -208,7 +209,7 @@ func (c *Client) handleResp(res *http.Response, compatOpts CompatOpts) (io.ReadC
 		body, err := io.ReadAll(res.Body)
 		defer func() {
 			if err := res.Body.Close(); err != nil {
-				c.log.Warn("Failed to close response body", "err", err)
+				c.log.Warn("Failed to close response body", "error", err)
 			}
 		}()
 		if err != nil || len(body) == 0 {

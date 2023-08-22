@@ -132,7 +132,7 @@ type CloudWatchAnnotationQuery struct {
 	// For non mixed scenarios this is undefined.
 	// TODO find a better way to do this ^ that's friendly to schema
 	// TODO this shouldn't be unknown but DataSourceRef | null
-	Datasource *interface{} `json:"datasource,omitempty"`
+	Datasource *any `json:"datasource,omitempty"`
 
 	// A name/value pair that is part of the identity of a metric. For example, you can get statistics for a specific EC2 instance by specifying the InstanceId dimension when you search for metrics.
 	Dimensions *Dimensions `json:"dimensions,omitempty"`
@@ -178,7 +178,7 @@ type CloudWatchAnnotationQuery struct {
 }
 
 // CloudWatchDataQuery defines model for CloudWatchDataQuery.
-type CloudWatchDataQuery = map[string]interface{}
+type CloudWatchDataQuery = map[string]any
 
 // CloudWatchLogsQuery defines model for CloudWatchLogsQuery.
 type CloudWatchLogsQuery struct {
@@ -191,7 +191,7 @@ type CloudWatchLogsQuery struct {
 	// For non mixed scenarios this is undefined.
 	// TODO find a better way to do this ^ that's friendly to schema
 	// TODO this shouldn't be unknown but DataSourceRef | null
-	Datasource *interface{} `json:"datasource,omitempty"`
+	Datasource *any `json:"datasource,omitempty"`
 
 	// The CloudWatch Logs Insights query to execute
 	Expression *string `json:"expression,omitempty"`
@@ -244,7 +244,7 @@ type CloudWatchMetricsQuery struct {
 	// For non mixed scenarios this is undefined.
 	// TODO find a better way to do this ^ that's friendly to schema
 	// TODO this shouldn't be unknown but DataSourceRef | null
-	Datasource *interface{} `json:"datasource,omitempty"`
+	Datasource *any `json:"datasource,omitempty"`
 
 	// A name/value pair that is part of the identity of a metric. For example, you can get statistics for a specific EC2 instance by specifying the InstanceId dimension when you search for metrics.
 	Dimensions *Dimensions `json:"dimensions,omitempty"`
@@ -312,7 +312,7 @@ type DataQuery struct {
 	// For non mixed scenarios this is undefined.
 	// TODO find a better way to do this ^ that's friendly to schema
 	// TODO this shouldn't be unknown but DataSourceRef | null
-	Datasource *interface{} `json:"datasource,omitempty"`
+	Datasource *any `json:"datasource,omitempty"`
 
 	// Hide true if query is disabled (ie should not be returned to the dashboard)
 	// Note this does not always imply that the query should not be executed since
@@ -330,7 +330,7 @@ type DataQuery struct {
 }
 
 // A name/value pair that is part of the identity of a metric. For example, you can get statistics for a specific EC2 instance by specifying the InstanceId dimension when you search for metrics.
-type Dimensions map[string]interface{}
+type Dimensions map[string]any
 
 // LogGroup defines model for LogGroup.
 type LogGroup struct {
@@ -385,7 +385,7 @@ type MetricStat struct {
 
 // QueryEditorArrayExpression defines model for QueryEditorArrayExpression.
 type QueryEditorArrayExpression struct {
-	Expressions []interface{}                  `json:"expressions"`
+	Expressions []any                          `json:"expressions"`
 	Type        QueryEditorArrayExpressionType `json:"type"`
 }
 
@@ -425,8 +425,8 @@ type QueryEditorGroupByExpressionType string
 
 // TS type is QueryEditorOperator<T extends QueryEditorOperatorValueType>, extended in veneer
 type QueryEditorOperator struct {
-	Name  *string      `json:"name,omitempty"`
-	Value *interface{} `json:"value,omitempty"`
+	Name  *string `json:"name,omitempty"`
+	Value *any    `json:"value,omitempty"`
 }
 
 // QueryEditorOperatorExpression defines model for QueryEditorOperatorExpression.
@@ -461,7 +461,7 @@ type QueryEditorPropertyType string
 // SQLExpression defines model for SQLExpression.
 type SQLExpression struct {
 	// FROM part of the SQL expression
-	From    *interface{}                `json:"from,omitempty"`
+	From    *any                        `json:"from,omitempty"`
 	GroupBy *QueryEditorArrayExpression `json:"groupBy,omitempty"`
 
 	// LIMIT part of the SQL expression

@@ -11,12 +11,12 @@ export interface SceneRadioToggleState extends SceneObjectState {
 }
 
 export class SceneRadioToggle extends SceneObjectBase<SceneRadioToggleState> {
-  public onChange = (value: string) => {
+  onChange = (value: string) => {
     this.setState({ value });
     this.state.onChange(value);
   };
 
-  public static Component = ({ model }: SceneComponentProps<SceneRadioToggle>) => {
+  static Component = ({ model }: SceneComponentProps<SceneRadioToggle>) => {
     const { options, value } = model.useState();
 
     return <RadioButtonGroup options={options} value={value} onChange={model.onChange} />;

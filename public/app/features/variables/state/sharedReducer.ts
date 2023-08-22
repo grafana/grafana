@@ -52,7 +52,7 @@ const sharedReducerSlice = createSlice({
       instanceState.state = LoadingState.Done;
       instanceState.error = null;
     },
-    variableStateFailed: (state: VariablesState, action: PayloadAction<VariablePayload<{ error: any }>>) => {
+    variableStateFailed: (state: VariablesState, action: PayloadAction<VariablePayload<{ error: unknown }>>) => {
       const instanceState = getInstanceState(state, action.payload.id);
       if (!instanceState) {
         // we might have cancelled a batch so then this state has been removed
@@ -73,8 +73,29 @@ const sharedReducerSlice = createSlice({
       }
     },
     duplicateVariable: (state: VariablesState, action: PayloadAction<VariablePayload<{ newId: string }>>) => {
+      function escapeRegExp(string: string): string {
+        return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      }
+
       const original = cloneDeep<VariableModel>(state[action.payload.id]);
-      const name = `copy_of_${original.name}`;
+      const copyRegex = new RegExp(`^copy_of_${escapeRegExp(original.name)}(_(\\d+))?$`);
+
+      const copies = Object.values(state)
+        .map(({ name }) => name.match(copyRegex))
+        .filter((v): v is RegExpMatchArray => v != null);
+      const numberedCopies = copies.map((match) => match[2]).filter((v): v is string => v != null);
+
+      const suffix = ((): number | null => {
+        if (copies.length === 0) {
+          return null;
+        }
+        if (numberedCopies.length === 0) {
+          return 1;
+        }
+        return numberedCopies.map((v) => +v).sort((a, b) => b - a)[0] + 1;
+      })();
+
+      const name = `copy_of_${original.name}${suffix ? `_${suffix}` : ''}`;
       const newId = action.payload.data?.newId ?? name;
       const index = getNextVariableIndex(Object.values(state));
       state[newId] = {

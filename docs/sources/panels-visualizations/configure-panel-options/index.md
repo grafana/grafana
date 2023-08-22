@@ -12,6 +12,11 @@ keywords:
   - title
   - description
   - JSON model
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 menuTitle: Configure panel options
 title: Configure panel options
 weight: 2
@@ -19,7 +24,7 @@ weight: 2
 
 # Configure panel options
 
-A Grafana panel is the user interface you use to define a data source query, and transform and format data that appears in visualizations.
+A Grafana panel is a visual representation of data that you can customize by defining a data source query, transforming and formatting data, and configuring visualization settings.
 
 A panel editor includes a query builder and a series of options that you can use to transform data and add information to your panels.
 
@@ -28,7 +33,7 @@ This topic describes how to:
 - Open a panel for editing
 - Add a panel title and description
 - View a panel JSON model
-- Add repeating rows and panels
+- Configure repeating rows and panels
 
 ## Edit a panel
 
@@ -78,7 +83,7 @@ Explore and export panel, panel data, and data frame JSON models.
 
    - **Panel JSON:** Displays a JSON object representing the panel.
    - **Panel data:** Displays a JSON object representing the data that was passed to the panel.
-   - **DataFrame structure:** Displays the raw result set with transformations, field configurations, and override configurations applied.
+   - **DataFrame structure:** Displays the data structure of the panel, including any transformations, field configurations, and override configurations that have been applied.
 
 1. To explore the JSON, click `>` to expand or collapse portions of the JSON model.
 

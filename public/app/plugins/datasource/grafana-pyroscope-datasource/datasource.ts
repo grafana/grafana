@@ -3,6 +3,7 @@ import { Observable, of } from 'rxjs';
 
 import {
   AbstractQuery,
+  CoreApp,
   DataQueryRequest,
   DataQueryResponse,
   DataSourceInstanceSettings,
@@ -12,7 +13,7 @@ import { DataSourceWithBackend, getTemplateSrv, TemplateSrv } from '@grafana/run
 
 import { extractLabelMatchers, toPromLikeExpr } from '../prometheus/language_utils';
 
-import { normalizeQuery } from './QueryEditor/QueryEditor';
+import { defaultGrafanaPyroscope, defaultPhlareQueryType } from './dataquery.gen';
 import { PhlareDataSourceOptions, Query, ProfileTypeMessage, BackendType } from './types';
 
 export class PhlareDataSource extends DataSourceWithBackend<Query, PhlareDataSourceOptions> {
@@ -101,6 +102,25 @@ export class PhlareDataSource extends DataSourceWithBackend<Query, PhlareDataSou
       labelMatchers: extractLabelMatchers(tokens),
     };
   }
+
+  getDefaultQuery(app: CoreApp): Partial<Query> {
+    return defaultQuery;
+  }
+}
+
+export const defaultQuery: Partial<Query> = {
+  ...defaultGrafanaPyroscope,
+  queryType: defaultPhlareQueryType,
+};
+
+export function normalizeQuery(query: Query, app?: CoreApp | string) {
+  let normalized = { ...defaultQuery, ...query };
+  if (app !== CoreApp.Explore && normalized.queryType === 'both') {
+    // In dashboards and other places, we can't show both types of graphs at the same time.
+    // This will also be a default when having 'both' query and adding it from explore to dashboard
+    normalized.queryType = 'profile';
+  }
+  return normalized;
 }
 
 const grammar: Grammar = {

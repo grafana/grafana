@@ -29,6 +29,7 @@ export const LoginLayout = ({ children, branding, isChangingPassword }: React.Pr
   const loginTitle = branding?.loginTitle ?? Branding.LoginTitle;
   const loginBoxBackground = branding?.loginBoxBackground || Branding.LoginBoxBackground();
   const loginLogo = branding?.loginLogo;
+  const hideEdition = branding?.hideEdition ?? Branding.HideEdition;
 
   useEffect(() => setStartAnim(true), []);
 
@@ -36,23 +37,25 @@ export const LoginLayout = ({ children, branding, isChangingPassword }: React.Pr
     <Branding.LoginBackground
       className={cx(loginStyles.container, startAnim && loginStyles.loginAnim, branding?.loginBackground)}
     >
-      <div className={cx(loginStyles.loginContent, loginBoxBackground, 'login-content-box')}>
-        <div className={loginStyles.loginLogoWrapper}>
-          <Branding.LoginLogo className={loginStyles.loginLogo} logo={loginLogo} />
-          <div className={loginStyles.titleWrapper}>
-            {isChangingPassword ? (
-              <h1 className={loginStyles.mainTitle}>Update your password</h1>
-            ) : (
-              <>
-                <h1 className={loginStyles.mainTitle}>{loginTitle}</h1>
-                {subTitle && <h3 className={loginStyles.subTitle}>{subTitle}</h3>}
-              </>
-            )}
+      <div className={loginStyles.loginMain}>
+        <div className={cx(loginStyles.loginContent, loginBoxBackground, 'login-content-box')}>
+          <div className={loginStyles.loginLogoWrapper}>
+            <Branding.LoginLogo className={loginStyles.loginLogo} logo={loginLogo} />
+            <div className={loginStyles.titleWrapper}>
+              {isChangingPassword ? (
+                <h1 className={loginStyles.mainTitle}>Update your password</h1>
+              ) : (
+                <>
+                  <h1 className={loginStyles.mainTitle}>{loginTitle}</h1>
+                  {subTitle && <h3 className={loginStyles.subTitle}>{subTitle}</h3>}
+                </>
+              )}
+            </div>
           </div>
+          <div className={loginStyles.loginOuterBox}>{children}</div>
         </div>
-        <div className={loginStyles.loginOuterBox}>{children}</div>
       </div>
-      {branding?.hideFooter ? <></> : <Footer customLinks={branding?.footerLinks} />}
+      {branding?.hideFooter ? <></> : <Footer hideEdition={hideEdition} customLinks={branding?.footerLinks} />}
     </Branding.LoginBackground>
   );
 };
@@ -70,6 +73,14 @@ to{
 
 export const getLoginStyles = (theme: GrafanaTheme2) => {
   return {
+    loginMain: css({
+      flexGrow: 1,
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      minWidth: '100%',
+    }),
     container: css({
       minHeight: '100%',
       backgroundPosition: 'center',

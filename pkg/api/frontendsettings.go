@@ -38,7 +38,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 	}
 
 	apps := make(map[string]*plugins.AppDTO, 0)
-	for _, ap := range availablePlugins[plugins.App] {
+	for _, ap := range availablePlugins[plugins.TypeApp] {
 		apps[ap.Plugin.ID] = newAppDTO(
 			ap.Plugin,
 			ap.Settings,
@@ -58,9 +58,9 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 	}
 
 	panels := make(map[string]plugins.PanelDTO)
-	for _, ap := range availablePlugins[plugins.Panel] {
+	for _, ap := range availablePlugins[plugins.TypePanel] {
 		panel := ap.Plugin
-		if panel.State == plugins.AlphaRelease && !hs.Cfg.PluginsEnableAlpha {
+		if panel.State == plugins.ReleaseStateAlpha && !hs.Cfg.PluginsEnableAlpha {
 			continue
 		}
 
@@ -151,6 +151,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		CSPReportOnlyEnabled:                hs.Cfg.CSPReportOnlyEnabled,
 		DateFormats:                         hs.Cfg.DateFormats,
 		SecureSocksDSProxyEnabled:           hs.Cfg.SecureSocksDSProxy.Enabled && hs.Cfg.SecureSocksDSProxy.ShowUI,
+		DisableFrontendSandboxForPlugins:    hs.Cfg.DisableFrontendSandboxForPlugins,
 
 		Auth: dtos.FrontendSettingsAuthDTO{
 			OAuthSkipOrgRoleUpdateSync:  hs.Cfg.OAuthSkipOrgRoleUpdateSync,
@@ -164,7 +165,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 			GithubSkipOrgRoleSync:       hs.Cfg.GitHubSkipOrgRoleSync,
 			GitLabSkipOrgRoleSync:       hs.Cfg.GitLabSkipOrgRoleSync,
 			OktaSkipOrgRoleSync:         hs.Cfg.OktaSkipOrgRoleSync,
-			DisableSyncLock:             hs.Cfg.DisableSyncLock,
+			AuthProxyEnableLoginToken:   hs.Cfg.AuthProxyEnableLoginToken,
 		},
 
 		BuildInfo: dtos.FrontendSettingsBuildInfoDTO{
@@ -285,7 +286,7 @@ func (hs *HTTPServer) getFSDataSources(c *contextmodel.ReqContext, availablePlug
 			// If RBAC is enabled, it will filter out all datasources for a public user, so we need to skip it
 			orgDataSources = dataSources
 		} else {
-			filtered, err := hs.filterDatasourcesByQueryPermission(c.Req.Context(), c.SignedInUser, dataSources)
+			filtered, err := hs.dsGuardian.New(c.SignedInUser.OrgID, c.SignedInUser).FilterDatasourcesByQueryPermissions(dataSources)
 			if err != nil {
 				return nil, err
 			}
@@ -313,7 +314,7 @@ func (hs *HTTPServer) getFSDataSources(c *contextmodel.ReqContext, availablePlug
 			ReadOnly:  ds.ReadOnly,
 		}
 
-		ap, exists := availablePlugins.Get(plugins.DataSource, ds.Type)
+		ap, exists := availablePlugins.Get(plugins.TypeDataSource, ds.Type)
 		if !exists {
 			c.Logger.Error("Could not find plugin definition for data source", "datasource_type", ds.Type)
 			continue
@@ -399,7 +400,7 @@ func (hs *HTTPServer) getFSDataSources(c *contextmodel.ReqContext, availablePlug
 
 	// add data sources that are built in (meaning they are not added via data sources page, nor have any entry in
 	// the datasource table)
-	for _, ds := range hs.pluginStore.Plugins(c.Req.Context(), plugins.DataSource) {
+	for _, ds := range hs.pluginStore.Plugins(c.Req.Context(), plugins.TypeDataSource) {
 		if ds.BuiltIn {
 			dto := plugins.DataSourceDTO{
 				Type:     string(ds.Type),
@@ -512,7 +513,7 @@ func (hs *HTTPServer) availablePlugins(ctx context.Context, orgID int64) (Availa
 	}
 
 	apps := make(map[string]*availablePluginDTO)
-	for _, app := range hs.pluginStore.Plugins(ctx, plugins.App) {
+	for _, app := range hs.pluginStore.Plugins(ctx, plugins.TypeApp) {
 		if s, exists := pluginSettingMap[app.ID]; exists {
 			app.Pinned = s.Pinned
 			apps[app.ID] = &availablePluginDTO{
@@ -521,10 +522,10 @@ func (hs *HTTPServer) availablePlugins(ctx context.Context, orgID int64) (Availa
 			}
 		}
 	}
-	ap[plugins.App] = apps
+	ap[plugins.TypeApp] = apps
 
 	dataSources := make(map[string]*availablePluginDTO)
-	for _, ds := range hs.pluginStore.Plugins(ctx, plugins.DataSource) {
+	for _, ds := range hs.pluginStore.Plugins(ctx, plugins.TypeDataSource) {
 		if s, exists := pluginSettingMap[ds.ID]; exists {
 			dataSources[ds.ID] = &availablePluginDTO{
 				Plugin:   ds,
@@ -532,10 +533,10 @@ func (hs *HTTPServer) availablePlugins(ctx context.Context, orgID int64) (Availa
 			}
 		}
 	}
-	ap[plugins.DataSource] = dataSources
+	ap[plugins.TypeDataSource] = dataSources
 
 	panels := make(map[string]*availablePluginDTO)
-	for _, p := range hs.pluginStore.Plugins(ctx, plugins.Panel) {
+	for _, p := range hs.pluginStore.Plugins(ctx, plugins.TypePanel) {
 		if s, exists := pluginSettingMap[p.ID]; exists {
 			panels[p.ID] = &availablePluginDTO{
 				Plugin:   p,
@@ -543,7 +544,7 @@ func (hs *HTTPServer) availablePlugins(ctx context.Context, orgID int64) (Availa
 			}
 		}
 	}
-	ap[plugins.Panel] = panels
+	ap[plugins.TypePanel] = panels
 
 	return ap, nil
 }
@@ -561,7 +562,7 @@ func (hs *HTTPServer) pluginSettings(ctx context.Context, orgID int64) (map[stri
 	}
 
 	// fill settings from app plugins
-	for _, plugin := range hs.pluginStore.Plugins(ctx, plugins.App) {
+	for _, plugin := range hs.pluginStore.Plugins(ctx, plugins.TypeApp) {
 		// ignore settings that already exist
 		if _, exists := pluginSettings[plugin.ID]; exists {
 			continue

@@ -4,12 +4,12 @@ import { QueryEditorProps, SelectableValue } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { InlineField } from '@grafana/ui';
 
-import { Dimensions } from '..';
 import { CloudWatchDatasource } from '../../datasource';
 import { useAccountOptions, useDimensionKeys, useMetrics, useNamespaces, useRegions } from '../../hooks';
 import { migrateVariableQuery } from '../../migrations/variableQueryMigrations';
 import { CloudWatchJsonData, CloudWatchQuery, VariableQuery, VariableQueryType } from '../../types';
-import { ALL_ACCOUNTS_OPTION } from '../Account';
+import { ALL_ACCOUNTS_OPTION } from '../shared/Account';
+import { Dimensions } from '../shared/Dimensions/Dimensions';
 
 import { MultiFilter } from './MultiFilter';
 import { VariableQueryField } from './VariableQueryField';
@@ -217,6 +217,7 @@ export const VariableQueryEditor = ({ query, datasource, onChange }: Props) => {
           <InlineField
             label="Filters"
             labelWidth={20}
+            shrink
             tooltip={
               <>
                 <a
@@ -247,7 +248,7 @@ export const VariableQueryEditor = ({ query, datasource, onChange }: Props) => {
             onBlur={(value: string) => onQueryChange({ ...parsedQuery, resourceType: value })}
             label="Resource type"
           />
-          <InlineField label="Tags" labelWidth={20} tooltip="Tags to filter the returned values on.">
+          <InlineField label="Tags" shrink labelWidth={20} tooltip="Tags to filter the returned values on.">
             <MultiFilter
               filters={parsedQuery.tags}
               onChange={(filters) => {

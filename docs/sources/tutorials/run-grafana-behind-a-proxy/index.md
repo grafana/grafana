@@ -1,14 +1,22 @@
 ---
-title: Run Grafana behind a reverse proxy
-summary: Learn how to run Grafana behind a reverse proxy
+Feedback Link: https://github.com/grafana/tutorials/issues/new
+aliases:
+  - /docs/grafana/latest/installation/behind_proxy/
+authors:
+  - grafana_labs
+categories:
+  - administration
 description: Learn how to run Grafana behind a reverse proxy
 id: run-grafana-behind-a-proxy
-categories: ['administration']
-tags: ['advanced']
+labels:
+  products:
+    - enterprise
+    - oss
 status: Published
-authors: ['grafana_labs']
-Feedback Link: https://github.com/grafana/tutorials/issues/new
-aliases: ['/docs/grafana/latest/installation/behind_proxy/']
+summary: Learn how to run Grafana behind a reverse proxy
+tags:
+  - advanced
+title: Run Grafana behind a reverse proxy
 ---
 
 ## Introduction
@@ -69,7 +77,7 @@ server {
     proxy_pass http://grafana;
   }
 
-  # Proxy Grafana Live WebSocket connections.
+# Proxy Grafana Live WebSocket connections.
   location /api/live/ {
     proxy_http_version 1.1;
     proxy_set_header Upgrade $http_upgrade;
@@ -126,6 +134,10 @@ If your Grafana configuration does not set `serve_from_sub_path` to true then yo
 ```
  rewrite  ^/grafana/(.*)  /$1 break;
 ```
+
+{{% admonition type="note" %}}
+If Grafana is being served from behind a NGINX proxy with TLS termination enabled, then the `root_url` should be set accordingly. For example, if Grafana is being served from `https://example.com/grafana` then the `root_url` should be set to `https://example.com/grafana/` or `https://%(domain)s/grafana/` (and the corresponding `domain` should be set to `example.com`) in the `server` section of the Grafana configuration file. The `protocol` setting should be set to `http`, because the TLS handshake is being handled by NGINX.
+{{% /admonition %}}
 
 ## Configure HAProxy
 

@@ -29,7 +29,7 @@ type OperatorState struct {
 	DescriptiveState *string `json:"descriptiveState,omitempty"`
 
 	// details contains any extra information that is operator-specific
-	Details map[string]interface{} `json:"details,omitempty"`
+	Details map[string]any `json:"details,omitempty"`
 
 	// lastEvaluation is the ResourceVersion last evaluated
 	LastEvaluation string `json:"lastEvaluation"`
@@ -46,7 +46,7 @@ type OperatorStateState string
 // Status defines model for Status.
 type Status struct {
 	// additionalFields is reserved for future use
-	AdditionalFields map[string]interface{} `json:"additionalFields,omitempty"`
+	AdditionalFields map[string]any `json:"additionalFields,omitempty"`
 
 	// operatorStates is a map of operator ID to operator state evaluations.
 	// Any operator which consumes this kind SHOULD add its state evaluation information to this field.
@@ -59,7 +59,7 @@ type StatusOperatorState struct {
 	DescriptiveState *string `json:"descriptiveState,omitempty"`
 
 	// details contains any extra information that is operator-specific
-	Details map[string]interface{} `json:"details,omitempty"`
+	Details map[string]any `json:"details,omitempty"`
 
 	// lastEvaluation is the ResourceVersion last evaluated
 	LastEvaluation string `json:"lastEvaluation"`

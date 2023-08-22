@@ -132,14 +132,14 @@ export const GraphContextMenuHeader = ({
 
 function getStyles(theme: GrafanaTheme2) {
   return {
-    wrapper: css`
-      padding: ${theme.spacing(0.5)} ${theme.spacing(1)};
-      font-size: ${theme.typography.size.sm};
-      z-index: ${theme.zIndex.tooltip};
-    `,
-    displayName: css`
-      white-space: nowrap;
-      padding-left: ${theme.spacing(0.5)};
-    `,
+    wrapper: css({
+      padding: theme.spacing(0.5, 1),
+      fontSize: theme.typography.size.sm,
+      zIndex: theme.zIndex.tooltip,
+    }),
+    displayName: css({
+      whiteSpace: 'nowrap',
+      paddingLeft: theme.spacing(0.5),
+    }),
   };
 }

@@ -67,41 +67,45 @@ export const Threshold = ({ labelWidth, onChange, refIds, query }: Props) => {
     condition.evaluator.type === EvalFunction.IsWithinRange || condition.evaluator.type === EvalFunction.IsOutsideRange;
 
   return (
-    <InlineFieldRow>
-      <InlineField label="Input" labelWidth={labelWidth}>
-        <Select onChange={onRefIdChange} options={refIds} value={query.expression} width={20} />
-      </InlineField>
-      <ButtonSelect
-        className={styles.buttonSelectText}
-        options={thresholdFunctions}
-        onChange={onEvalFunctionChange}
-        value={thresholdFunction}
-      />
-      {isRange ? (
-        <>
+    <>
+      <InlineFieldRow>
+        <InlineField label="Input" labelWidth={labelWidth}>
+          <Select onChange={onRefIdChange} options={refIds} value={query.expression} width={20} />
+        </InlineField>
+      </InlineFieldRow>
+      <InlineFieldRow>
+        <ButtonSelect
+          className={styles.buttonSelectText}
+          options={thresholdFunctions}
+          onChange={onEvalFunctionChange}
+          value={thresholdFunction}
+        />
+        {isRange ? (
+          <>
+            <Input
+              type="number"
+              width={10}
+              onChange={(event) => onEvaluateValueChange(event, 0)}
+              defaultValue={condition.evaluator.params[0]}
+            />
+            <div className={styles.button}>TO</div>
+            <Input
+              type="number"
+              width={10}
+              onChange={(event) => onEvaluateValueChange(event, 1)}
+              defaultValue={condition.evaluator.params[1]}
+            />
+          </>
+        ) : (
           <Input
             type="number"
             width={10}
             onChange={(event) => onEvaluateValueChange(event, 0)}
-            defaultValue={condition.evaluator.params[0]}
+            defaultValue={conditions[0].evaluator.params[0] || 0}
           />
-          <div className={styles.button}>TO</div>
-          <Input
-            type="number"
-            width={10}
-            onChange={(event) => onEvaluateValueChange(event, 1)}
-            defaultValue={condition.evaluator.params[1]}
-          />
-        </>
-      ) : (
-        <Input
-          type="number"
-          width={10}
-          onChange={(event) => onEvaluateValueChange(event, 0)}
-          defaultValue={conditions[0].evaluator.params[0] || 0}
-        />
-      )}
-    </InlineFieldRow>
+        )}
+      </InlineFieldRow>
+    </>
   );
 };
 
@@ -138,7 +142,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
 
     display: flex;
     align-items: center;
-    border-radius: ${theme.shape.borderRadius(1)};
+    border-radius: ${theme.shape.radius.default};
     font-weight: ${theme.typography.fontWeightBold};
     border: 1px solid ${theme.colors.border.medium};
     white-space: nowrap;

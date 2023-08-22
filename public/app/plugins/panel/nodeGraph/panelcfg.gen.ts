@@ -8,8 +8,6 @@
 //
 // Run 'make gen-cue' from repository root to regenerate.
 
-export const PanelCfgModelVersion = Object.freeze([0, 0]);
-
 export interface ArcOption {
   /**
    * The color of the arc.

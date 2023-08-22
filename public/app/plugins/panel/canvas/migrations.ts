@@ -1,6 +1,6 @@
 import { PanelModel } from '@grafana/data';
 
-import { Options } from './models.gen';
+import { Options } from './panelcfg.gen';
 
 export const canvasMigrationHandler = (panel: PanelModel): Partial<Options> => {
   const pluginVersion = panel?.pluginVersion ?? '';

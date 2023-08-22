@@ -1,6 +1,7 @@
 package social
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -11,6 +12,7 @@ import (
 	"golang.org/x/oauth2"
 
 	"github.com/grafana/grafana/pkg/models/roletype"
+	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 type SocialGithub struct {
@@ -31,16 +33,22 @@ type GithubTeam struct {
 }
 
 var (
-	ErrMissingTeamMembership         = Error{"user not a member of one of the required teams"}
-	ErrMissingOrganizationMembership = Error{"user not a member of one of the required organizations"}
+	ErrMissingTeamMembership = errutil.Unauthorized(
+		"auth.missing_team",
+		errutil.WithPublicMessage(
+			"User is not a member of one of the required teams. Please contact identity provider administrator."))
+	ErrMissingOrganizationMembership = errutil.Unauthorized(
+		"auth.missing_organization",
+		errutil.WithPublicMessage(
+			"User is not a member of one of the required organizations. Please contact identity provider administrator."))
 )
 
-func (s *SocialGithub) IsTeamMember(client *http.Client) bool {
+func (s *SocialGithub) IsTeamMember(ctx context.Context, client *http.Client) bool {
 	if len(s.teamIds) == 0 {
 		return true
 	}
 
-	teamMemberships, err := s.FetchTeamMemberships(client)
+	teamMemberships, err := s.FetchTeamMemberships(ctx, client)
 	if err != nil {
 		return false
 	}
@@ -56,12 +64,13 @@ func (s *SocialGithub) IsTeamMember(client *http.Client) bool {
 	return false
 }
 
-func (s *SocialGithub) IsOrganizationMember(client *http.Client, organizationsUrl string) bool {
+func (s *SocialGithub) IsOrganizationMember(ctx context.Context,
+	client *http.Client, organizationsUrl string) bool {
 	if len(s.allowedOrganizations) == 0 {
 		return true
 	}
 
-	organizations, err := s.FetchOrganizations(client, organizationsUrl)
+	organizations, err := s.FetchOrganizations(ctx, client, organizationsUrl)
 	if err != nil {
 		return false
 	}
@@ -77,14 +86,14 @@ func (s *SocialGithub) IsOrganizationMember(client *http.Client, organizationsUr
 	return false
 }
 
-func (s *SocialGithub) FetchPrivateEmail(client *http.Client) (string, error) {
+func (s *SocialGithub) FetchPrivateEmail(ctx context.Context, client *http.Client) (string, error) {
 	type Record struct {
 		Email    string `json:"email"`
 		Primary  bool   `json:"primary"`
 		Verified bool   `json:"verified"`
 	}
 
-	response, err := s.httpGet(client, fmt.Sprintf(s.apiUrl+"/emails"))
+	response, err := s.httpGet(ctx, client, fmt.Sprintf(s.apiUrl+"/emails"))
 	if err != nil {
 		return "", fmt.Errorf("Error getting email address: %s", err)
 	}
@@ -106,13 +115,13 @@ func (s *SocialGithub) FetchPrivateEmail(client *http.Client) (string, error) {
 	return email, nil
 }
 
-func (s *SocialGithub) FetchTeamMemberships(client *http.Client) ([]GithubTeam, error) {
+func (s *SocialGithub) FetchTeamMemberships(ctx context.Context, client *http.Client) ([]GithubTeam, error) {
 	url := fmt.Sprintf(s.apiUrl + "/teams?per_page=100")
 	hasMore := true
 	teams := make([]GithubTeam, 0)
 
 	for hasMore {
-		response, err := s.httpGet(client, url)
+		response, err := s.httpGet(ctx, client, url)
 		if err != nil {
 			return nil, fmt.Errorf("Error getting team memberships: %s", err)
 		}
@@ -150,7 +159,7 @@ func (s *SocialGithub) HasMoreRecords(headers http.Header) (string, bool) {
 	return url, true
 }
 
-func (s *SocialGithub) FetchOrganizations(client *http.Client, organizationsUrl string) ([]string, error) {
+func (s *SocialGithub) FetchOrganizations(ctx context.Context, client *http.Client, organizationsUrl string) ([]string, error) {
 	url := organizationsUrl
 	hasMore := true
 	logins := make([]string, 0)
@@ -160,7 +169,7 @@ func (s *SocialGithub) FetchOrganizations(client *http.Client, organizationsUrl 
 	}
 
 	for hasMore {
-		response, err := s.httpGet(client, url)
+		response, err := s.httpGet(ctx, client, url)
 		if err != nil {
 			return nil, fmt.Errorf("error getting organizations: %s", err)
 		}
@@ -181,7 +190,7 @@ func (s *SocialGithub) FetchOrganizations(client *http.Client, organizationsUrl 
 	return logins, nil
 }
 
-func (s *SocialGithub) UserInfo(client *http.Client, token *oauth2.Token) (*BasicUserInfo, error) {
+func (s *SocialGithub) UserInfo(ctx context.Context, client *http.Client, token *oauth2.Token) (*BasicUserInfo, error) {
 	var data struct {
 		Id    int    `json:"id"`
 		Login string `json:"login"`
@@ -189,7 +198,7 @@ func (s *SocialGithub) UserInfo(client *http.Client, token *oauth2.Token) (*Basi
 		Name  string `json:"name"`
 	}
 
-	response, err := s.httpGet(client, s.apiUrl)
+	response, err := s.httpGet(ctx, client, s.apiUrl)
 	if err != nil {
 		return nil, fmt.Errorf("error getting user info: %s", err)
 	}
@@ -198,7 +207,7 @@ func (s *SocialGithub) UserInfo(client *http.Client, token *oauth2.Token) (*Basi
 		return nil, fmt.Errorf("error unmarshalling user info: %s", err)
 	}
 
-	teamMemberships, err := s.FetchTeamMemberships(client)
+	teamMemberships, err := s.FetchTeamMemberships(ctx, client)
 	if err != nil {
 		return nil, fmt.Errorf("error getting user teams: %s", err)
 	}
@@ -210,10 +219,9 @@ func (s *SocialGithub) UserInfo(client *http.Client, token *oauth2.Token) (*Basi
 
 	if !s.skipOrgRoleSync {
 		var grafanaAdmin bool
-		role, grafanaAdmin = s.extractRoleAndAdmin(response.Body, teams, true)
-
-		if s.roleAttributeStrict && !role.IsValid() {
-			return nil, &InvalidBasicRoleError{idP: "Github", assignedRole: string(role)}
+		role, grafanaAdmin, err = s.extractRoleAndAdmin(response.Body, teams)
+		if err != nil {
+			return nil, err
 		}
 
 		if s.allowAssignGrafanaAdmin {
@@ -241,16 +249,18 @@ func (s *SocialGithub) UserInfo(client *http.Client, token *oauth2.Token) (*Basi
 
 	organizationsUrl := fmt.Sprintf(s.apiUrl + "/orgs?per_page=100")
 
-	if !s.IsTeamMember(client) {
-		return nil, ErrMissingTeamMembership
+	if !s.IsTeamMember(ctx, client) {
+		return nil, ErrMissingTeamMembership.Errorf("User is not a member of any of the allowed teams: %v", s.teamIds)
 	}
 
-	if !s.IsOrganizationMember(client, organizationsUrl) {
-		return nil, ErrMissingOrganizationMembership
+	if !s.IsOrganizationMember(ctx, client, organizationsUrl) {
+		return nil, ErrMissingOrganizationMembership.Errorf(
+			"User is not a member of any of the allowed organizations: %v",
+			s.allowedOrganizations)
 	}
 
 	if userInfo.Email == "" {
-		userInfo.Email, err = s.FetchPrivateEmail(client)
+		userInfo.Email, err = s.FetchPrivateEmail(ctx, client)
 		if err != nil {
 			return nil, err
 		}

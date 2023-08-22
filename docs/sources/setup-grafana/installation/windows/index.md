@@ -2,9 +2,13 @@
 aliases:
   - ../../installation/windows/
 description: How to install Grafana OSS or Enterprise on Windows
+labels:
+  products:
+    - enterprise
+    - oss
+menuTitle: Windows
 title: Install Grafana on Windows
-menutitle: Windows
-weight: 500
+weight: 700
 ---
 
 # Install Grafana on Windows

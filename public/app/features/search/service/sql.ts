@@ -20,6 +20,7 @@ interface APIQuery {
   // DashboardIds []int64
   dashboardUID?: string[];
   folderIds?: number[];
+  folderUIDs?: string[];
   sort?: string;
   starred?: boolean;
 }
@@ -42,24 +43,19 @@ export class SQLSearcher implements GrafanaSearcher {
   private async composeQuery(apiQuery: APIQuery, searchOptions: SearchQuery): Promise<APIQuery> {
     const query = await replaceCurrentFolderQuery(searchOptions);
 
-    if (query.query === '*') {
-      if (query.kind?.length === 1 && TYPE_KIND_MAP[query.kind[0]]) {
-        apiQuery.type = TYPE_KIND_MAP[query.kind[0]];
-      }
-    } else if (query.query?.length) {
+    if (query.query?.length && query.query !== '*') {
       apiQuery.query = query.query;
+    }
+
+    // search v1 supports only one kind
+    if (query.kind?.length === 1 && TYPE_KIND_MAP[query.kind[0]]) {
+      apiQuery.type = TYPE_KIND_MAP[query.kind[0]];
     }
 
     if (query.uid) {
       apiQuery.dashboardUID = query.uid;
     } else if (query.location?.length) {
-      let info = this.locationInfo[query.location];
-      if (!info) {
-        // This will load all folder folders
-        await this.doAPIQuery({ type: DashboardSearchItemType.DashFolder, limit: 999 });
-        info = this.locationInfo[query.location];
-      }
-      apiQuery.folderIds = [info?.folderId ?? 0];
+      apiQuery.folderUIDs = [query.location];
     }
 
     return apiQuery;

@@ -15,6 +15,7 @@ import { useGrafana } from 'app/core/context/GrafanaContext';
  */
 export function useTimeSrvFix() {
   const { location } = useGrafana();
+
   useEffect(() => {
     const searchParams = location.getSearchObject();
     if (searchParams.from || searchParams.to) {

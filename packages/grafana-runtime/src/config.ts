@@ -79,7 +79,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
   disableUserSignUp = false;
   loginHint = '';
   passwordHint = '';
-  loginError = undefined;
+  loginError: string | undefined = undefined;
   viewersCanEdit = false;
   editorsCanAdmin = false;
   disableSanitizeHtml = false;
@@ -162,6 +162,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
   };
 
   tokenExpirationDayLimit: undefined;
+  disableFrontendSandboxForPlugins: string[] = [];
 
   constructor(options: GrafanaBootConfig) {
     this.bootData = options.bootData;
@@ -194,7 +195,11 @@ export class GrafanaBootConfig implements GrafanaConfig {
       systemDateFormats.update(this.dateFormats);
     }
 
-    overrideFeatureTogglesFromUrl(this);
+    if (this.buildInfo.env === 'development') {
+      overrideFeatureTogglesFromUrl(this);
+    }
+
+    overrideFeatureTogglesFromLocalStorage(this);
 
     if (this.featureToggles.disableAngular) {
       this.angularSupportEnabled = false;
@@ -204,9 +209,24 @@ export class GrafanaBootConfig implements GrafanaConfig {
     this.theme2 = getThemeById(this.bootData.user.theme);
     this.bootData.user.lightTheme = this.theme2.isLight;
     this.theme = this.theme2.v1;
+  }
+}
 
-    // Special feature toggle that impact theme/component looks
-    this.theme2.flags.topnav = this.featureToggles.topnav;
+// localstorage key: grafana.featureToggles
+// example value: panelEditor=1,panelInspector=1
+function overrideFeatureTogglesFromLocalStorage(config: GrafanaBootConfig) {
+  const featureToggles = config.featureToggles;
+  const localStorageKey = 'grafana.featureToggles';
+  const localStorageValue = window.localStorage.getItem(localStorageKey);
+  if (localStorageValue) {
+    const features = localStorageValue.split(',');
+    for (const feature of features) {
+      const [featureName, featureValue] = feature.split('=');
+      const toggleState = featureValue === 'true' || featureValue === '1';
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      featureToggles[featureName as keyof FeatureToggles] = toggleState;
+      console.log(`Setting feature toggle ${featureName} = ${toggleState} via localstorage`);
+    }
   }
 }
 
@@ -223,7 +243,7 @@ function overrideFeatureTogglesFromUrl(config: GrafanaBootConfig) {
       const toggleState = value === 'true' || value === ''; // browser rewrites true as ''
       if (toggleState !== featureToggles[key]) {
         featureToggles[featureName] = toggleState;
-        console.log(`Setting feature toggle ${featureName} = ${toggleState}`);
+        console.log(`Setting feature toggle ${featureName} = ${toggleState} via url`);
       }
     }
   });

@@ -11,15 +11,17 @@ export const maxSize: Modifier<'maxSize', {}> = {
   fn({ state, name, options }: ModifierArguments<{}>) {
     const overflow = detectOverflow(state, options);
     const { x, y } = state.modifiersData.preventOverflow || { x: 0, y: 0 };
-    const { width, height } = state.rects.popper;
+    const { width: contentW, height: contentH } = state.rects.popper;
+    const { width: triggerW } = state.rects.reference;
     const [basePlacement] = state.placement.split('-');
 
     const widthProp = basePlacement === 'left' ? 'left' : 'right';
     const heightProp = basePlacement === 'top' ? 'top' : 'bottom';
 
     state.modifiersData[name] = {
-      width: width - overflow[widthProp] - x,
-      height: height - overflow[heightProp] - y,
+      maxWidth: contentW - overflow[widthProp] - x,
+      maxHeight: contentH - overflow[heightProp] - y,
+      minWidth: triggerW,
     };
   },
 };
@@ -30,9 +32,11 @@ export const applyMaxSize: Modifier<'applyMaxSize', {}> = {
   phase: 'beforeWrite',
   requires: ['maxSize'],
   fn({ state }: ModifierArguments<{}>) {
-    const { height, width } = state.modifiersData.maxSize;
-    state.styles.popper.maxHeight = `${height - MODAL_MARGIN}px`;
-    state.styles.popper.minHeight = `${FLIP_THRESHOLD}px`;
-    state.styles.popper.maxWidth = width;
+    const { maxHeight, maxWidth, minWidth } = state.modifiersData.maxSize;
+
+    state.styles.popper.maxHeight ??= `${maxHeight - MODAL_MARGIN}px`;
+    state.styles.popper.minHeight ??= `${FLIP_THRESHOLD}px`;
+    state.styles.popper.maxWidth ??= maxWidth;
+    state.styles.popper.minWidth ??= minWidth;
   },
 };

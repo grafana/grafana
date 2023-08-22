@@ -2,7 +2,6 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
 
 import { SortOrder } from 'app/core/utils/richHistory';
-import { ExploreId } from 'app/types';
 
 import { RichHistoryStarredTab, RichHistoryStarredTabProps } from './RichHistoryStarredTab';
 
@@ -26,7 +25,7 @@ const setup = (propOverrides?: Partial<RichHistoryStarredTabProps>) => {
     updateFilters: jest.fn(),
     loadMoreRichHistory: jest.fn(),
     clearRichHistoryResults: jest.fn(),
-    exploreId: ExploreId.left,
+    exploreId: 'left',
     richHistorySettings: {
       retentionPeriod: 7,
       starredTabAsFirstTab: false,

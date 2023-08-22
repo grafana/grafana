@@ -3,11 +3,14 @@ import { Observable, Subscriber, Subscription, tap } from 'rxjs';
 import { v4 as uuidv4 } from 'uuid';
 
 import {
+  arrayToDataFrame,
   DataQueryRequest,
   DataQueryResponse,
+  DataTopic,
   dateTime,
   durationToMilliseconds,
   parseDuration,
+  rangeUtil,
   TimeRange,
 } from '@grafana/data';
 import { LoadingState } from '@grafana/schema';
@@ -15,7 +18,7 @@ import { LoadingState } from '@grafana/schema';
 import { LokiDatasource } from './datasource';
 import { splitTimeRange as splitLogsTimeRange } from './logsTimeSplitting';
 import { splitTimeRange as splitMetricTimeRange } from './metricTimeSplitting';
-import { isLogsQuery, isQueryWithDistinct } from './queryUtils';
+import { isLogsQuery, isQueryWithDistinct, isQueryWithRangeVariable } from './queryUtils';
 import { combineResponses } from './responseUtils';
 import { trackGroupedQueries } from './tracking';
 import { LokiGroupedRequest, LokiQuery, LokiQueryType } from './types';
@@ -23,24 +26,15 @@ import { LokiGroupedRequest, LokiQuery, LokiQueryType } from './types';
 export function partitionTimeRange(
   isLogsQuery: boolean,
   originalTimeRange: TimeRange,
-  intervalMs: number,
-  resolution: number,
+  stepMs: number,
   duration: number
 ): TimeRange[] {
-  // the `step` value that will be finally sent to Loki is rougly the same as `intervalMs`,
-  // but there are some complications.
-  // we need to replicate this algo:
-  //
-  // https://github.com/grafana/grafana/blob/main/pkg/tsdb/loki/step.go#L23
   const start = originalTimeRange.from.toDate().getTime();
   const end = originalTimeRange.to.toDate().getTime();
 
-  const safeStep = Math.ceil((end - start) / 11000);
-  const step = Math.max(intervalMs * resolution, safeStep);
-
   const ranges = isLogsQuery
     ? splitLogsTimeRange(start, end, duration)
-    : splitMetricTimeRange(start, end, step, duration);
+    : splitMetricTimeRange(start, end, stepMs, duration);
 
   return ranges.map(([start, end]) => {
     const from = dateTime(start);
@@ -84,6 +78,7 @@ function adjustTargetsFromResponseState(targets: LokiQuery[], response: DataQuer
 export function runSplitGroupedQueries(datasource: LokiDatasource, requests: LokiGroupedRequest[]) {
   let mergedResponse: DataQueryResponse = { data: [], state: LoadingState.Streaming };
   const totalRequests = Math.max(...requests.map(({ partition }) => partition.length));
+  const longestPartition = requests.filter(({ partition }) => partition.length === totalRequests)[0].partition;
 
   let shouldStop = false;
   let subquerySubsciption: Subscription | null = null;
@@ -126,6 +121,7 @@ export function runSplitGroupedQueries(datasource: LokiDatasource, requests: Lok
     subquerySubsciption = datasource.runQuery(subRequest).subscribe({
       next: (partialResponse) => {
         mergedResponse = combineResponses(mergedResponse, partialResponse);
+        mergedResponse = updateLoadingFrame(mergedResponse, subRequest, longestPartition, requestN);
         if ((mergedResponse.errors ?? []).length > 0 || mergedResponse.error != null) {
           shouldStop = true;
         }
@@ -153,6 +149,44 @@ export function runSplitGroupedQueries(datasource: LokiDatasource, requests: Lok
   return response;
 }
 
+function updateLoadingFrame(
+  response: DataQueryResponse,
+  request: DataQueryRequest<LokiQuery>,
+  partition: TimeRange[],
+  requestN: number
+): DataQueryResponse {
+  if (isLogsQuery(request.targets[0].expr) || isLogsVolumeRequest(request)) {
+    return response;
+  }
+  const loadingFrameName = 'loki-splitting-progress';
+  response.data = response.data.filter((frame) => frame.name !== loadingFrameName);
+
+  if (requestN <= 1) {
+    return response;
+  }
+
+  const loadingFrame = arrayToDataFrame([
+    {
+      time: partition[0].from.valueOf(),
+      timeEnd: partition[requestN - 2].to.valueOf(),
+      isRegion: true,
+      color: 'rgba(120, 120, 120, 0.1)',
+    },
+  ]);
+  loadingFrame.name = loadingFrameName;
+  loadingFrame.meta = {
+    dataTopic: DataTopic.Annotations,
+  };
+
+  response.data.push(loadingFrame);
+
+  return response;
+}
+
+function isLogsVolumeRequest(request: DataQueryRequest<LokiQuery>): boolean {
+  return request.targets.some((target) => target.refId.startsWith('log-volume'));
+}
+
 function getNextRequestPointers(requests: LokiGroupedRequest[], requestGroup: number, requestN: number) {
   // There's a pending request from the next group:
   for (let i = requestGroup + 1; i < requests.length; i++) {
@@ -171,13 +205,19 @@ function getNextRequestPointers(requests: LokiGroupedRequest[], requestGroup: nu
   };
 }
 
-function querySupporstSplitting(query: LokiQuery) {
-  return query.queryType !== LokiQueryType.Instant && !isQueryWithDistinct(query.expr);
+function querySupportsSplitting(query: LokiQuery) {
+  return (
+    query.queryType !== LokiQueryType.Instant &&
+    !isQueryWithDistinct(query.expr) &&
+    // Queries with $__range variable should not be split because then the interpolated $__range variable is incorrect
+    // because it is interpolated on the backend with the split timeRange
+    !isQueryWithRangeVariable(query.expr)
+  );
 }
 
 export function runSplitQuery(datasource: LokiDatasource, request: DataQueryRequest<LokiQuery>) {
-  const queries = request.targets.filter((query) => !query.hide);
-  const [nonSplittingQueries, normalQueries] = partition(queries, (query) => !querySupporstSplitting(query));
+  const queries = request.targets.filter((query) => !query.hide).filter((query) => query.expr);
+  const [nonSplittingQueries, normalQueries] = partition(queries, (query) => !querySupportsSplitting(query));
   const [logQueries, metricQueries] = partition(normalQueries, (query) => isLogsQuery(query.expr));
 
   request.queryGroupId = uuidv4();
@@ -195,29 +235,20 @@ export function runSplitQuery(datasource: LokiDatasource, request: DataQueryRequ
     for (const resolution in resolutionPartition) {
       requests.push({
         request: { ...request, targets: resolutionPartition[resolution] },
-        partition: partitionTimeRange(
-          true,
-          request.range,
-          request.intervalMs,
-          Number(resolution),
-          Number(chunkRangeMs)
-        ),
+        partition: partitionTimeRange(true, request.range, request.intervalMs, Number(chunkRangeMs)),
       });
     }
   }
 
   for (const [chunkRangeMs, queries] of Object.entries(rangePartitionedMetricQueries)) {
-    const resolutionPartition = groupBy(queries, (query) => query.resolution || 1);
-    for (const resolution in resolutionPartition) {
+    const stepMsPartition = groupBy(queries, (query) =>
+      calculateStep(request.intervalMs, request.range, query.resolution || 1, query.step)
+    );
+
+    for (const stepMs in stepMsPartition) {
       requests.push({
-        request: { ...request, targets: resolutionPartition[resolution] },
-        partition: partitionTimeRange(
-          false,
-          request.range,
-          request.intervalMs,
-          Number(resolution),
-          Number(chunkRangeMs)
-        ),
+        request: { ...request, targets: stepMsPartition[stepMs] },
+        partition: partitionTimeRange(false, request.range, Number(stepMs), Number(chunkRangeMs)),
       });
     }
   }
@@ -233,8 +264,25 @@ export function runSplitQuery(datasource: LokiDatasource, request: DataQueryRequ
   return runSplitGroupedQueries(datasource, requests).pipe(
     tap((response) => {
       if (response.state === LoadingState.Done) {
-        trackGroupedQueries(response, requests, request, startTime);
+        trackGroupedQueries(response, requests, request, startTime, {
+          predefinedOperations: datasource.predefinedOperations,
+        });
       }
     })
   );
+}
+
+// Replicate from backend for split queries for now, until we can move query splitting to the backend
+// https://github.com/grafana/grafana/blob/main/pkg/tsdb/loki/step.go#L23
+function calculateStep(intervalMs: number, range: TimeRange, resolution: number, step: string | undefined) {
+  // If we can parse step,the we use it
+  // Otherwise we will calculate step based on interval
+  const interval_regex = /(-?\d+(?:\.\d+)?)(ms|[Mwdhmsy])/;
+  if (step?.match(interval_regex)) {
+    return rangeUtil.intervalToMs(step) * resolution;
+  }
+
+  const newStep = intervalMs * resolution;
+  const safeStep = Math.round((range.to.valueOf() - range.from.valueOf()) / 11000);
+  return Math.max(newStep, safeStep);
 }

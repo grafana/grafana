@@ -1,4 +1,4 @@
-import { uniqBy } from 'lodash';
+import { first, uniqBy } from 'lodash';
 import { useCallback } from 'react';
 
 import {
@@ -16,6 +16,7 @@ import {
   DataLinkConfigOrigin,
   CoreApp,
   SplitOpenOptions,
+  DataLinkPostProcessor,
 } from '@grafana/data';
 import { getTemplateSrv, reportInteraction, VariableInterpolation } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
@@ -50,6 +51,41 @@ export interface ExploreFieldLinkModel extends LinkModel<Field> {
 const DATA_LINK_USAGE_KEY = 'grafana_data_link_clicked';
 
 /**
+ * Creates an internal link supplier specific to Explore
+ */
+export const exploreDataLinkPostProcessorFactory = (
+  splitOpenFn: SplitOpen | undefined,
+  range: TimeRange
+): DataLinkPostProcessor => {
+  const exploreDataLinkPostProcessor: DataLinkPostProcessor = (options) => {
+    const { field, dataLinkScopedVars: vars, frame: dataFrame, link, linkModel } = options;
+    const { valueRowIndex: rowIndex } = options.config;
+
+    if (!link.internal || rowIndex === undefined) {
+      return linkModel;
+    }
+
+    /**
+     * Even though getFieldLinksForExplore can produce internal and external links we re-use the logic for creating
+     * internal links only. Eventually code from getFieldLinksForExplore can be moved here and getFieldLinksForExplore
+     * can be removed (once all Explore panels start using field.getLinks).
+     */
+    const links = getFieldLinksForExplore({
+      field,
+      rowIndex,
+      splitOpenFn,
+      range,
+      vars,
+      dataFrame,
+      linksToProcess: [link],
+    });
+
+    return links.length ? first(links) : undefined;
+  };
+  return exploreDataLinkPostProcessor;
+};
+
+/**
  * Get links from the field of a dataframe and in addition check if there is associated
  * metadata with datasource in which case we will add onClick to open the link in new split window. This assumes
  * that we just supply datasource name and field value and Explore split window will know how to render that
@@ -58,6 +94,7 @@ const DATA_LINK_USAGE_KEY = 'grafana_data_link_clicked';
  *
  * Note: accessing a field via ${__data.fields.variable} will stay consistent with dashboards and return as existing but with an empty string
  * Accessing a field with ${variable} will return undefined as this is unique to explore.
+ * @deprecated Use field.getLinks directly
  */
 export const getFieldLinksForExplore = (options: {
   field: Field;
@@ -66,6 +103,8 @@ export const getFieldLinksForExplore = (options: {
   range: TimeRange;
   vars?: ScopedVars;
   dataFrame?: DataFrame;
+  // if not provided, field.config.links are used
+  linksToProcess?: DataLink[];
 }): ExploreFieldLinkModel[] => {
   const { field, vars, splitOpenFn, range, rowIndex, dataFrame } = options;
   const scopedVars: ScopedVars = { ...(vars || {}) };
@@ -108,8 +147,10 @@ export const getFieldLinksForExplore = (options: {
     };
   }
 
-  if (field.config.links) {
-    const links = field.config.links.filter((link) => {
+  const linksToProcess = options.linksToProcess || field.config.links;
+
+  if (linksToProcess) {
+    const links = linksToProcess.filter((link) => {
       return DATA_LINK_FILTERS.every((filter) => filter(link, scopedVars));
     });
 
@@ -187,7 +228,10 @@ export const getFieldLinksForExplore = (options: {
   return [];
 };
 
-function getTitleFromHref(href: string): string {
+/**
+ * @internal
+ */
+export function getTitleFromHref(href: string): string {
   // The URL constructor needs the url to have protocol
   if (href.indexOf('://') < 0) {
     // Doesn't really matter what protocol we use.
@@ -230,6 +274,23 @@ export function useLinks(range: TimeRange, splitOpenFn?: SplitOpen) {
   );
 }
 
+// See https://grafana.com/docs/grafana/latest/dashboards/variables/add-template-variables/#global-variables
+const builtInVariables = [
+  '__from',
+  '__to',
+  '__interval',
+  '__interval_ms',
+  '__org',
+  '__user',
+  '__range',
+  '__rate_interval',
+  '__timeFilter',
+  'timeFilter',
+  // These are only applicable in dashboards so should not affect this for Explore
+  // '__dashboard',
+  //'__name',
+];
+
 /**
  * Use variable map from templateSrv to determine if all variables have values
  * @param query
@@ -241,14 +302,20 @@ export function getVariableUsageInfo<T extends DataLink>(
 ): { variables: VariableInterpolation[]; allVariablesDefined: boolean } {
   let variables: VariableInterpolation[] = [];
   const replaceFn = getTemplateSrv().replace.bind(getTemplateSrv());
+  // This adds info to the variables array while interpolating
   replaceFn(getStringsFromObject(query), scopedVars, undefined, variables);
   variables = uniqBy(variables, 'variableName');
   return {
     variables: variables,
-    allVariablesDefined: variables.every((variable) => variable.found),
+    allVariablesDefined: variables
+      // We filter out builtin variables as they should be always defined but sometimes only later, like
+      // __range_interval which is defined in prometheus at query time.
+      .filter((v) => !builtInVariables.includes(v.variableName))
+      .every((variable) => variable.found),
   };
 }
 
+// Recursively get all strings from an object into a simple list with space as separator.
 function getStringsFromObject(obj: Object): string {
   let acc = '';
   let k: keyof typeof obj;

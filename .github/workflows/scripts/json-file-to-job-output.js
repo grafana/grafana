@@ -1,7 +1,7 @@
 module.exports = async ({ core, filePath }) => {
     try {
         const fs = require('fs').promises;
-        const content = await fs.readFile(filepath)
+        const content = await fs.readFile(filePath)
         const result = JSON.parse(content);
     
         core.startGroup('Parsing json file...');
@@ -13,6 +13,6 @@ module.exports = async ({ core, filePath }) => {
 
         core.endGroup();
     } catch (error) {
-        core.restFailed(error.message);
+        core.setFailed(error.message);
     }
 }

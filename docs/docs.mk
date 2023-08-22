@@ -1,5 +1,5 @@
 # The source of this file is https://raw.githubusercontent.com/grafana/writers-toolkit/main/docs/docs.mk.
-# 2.0.0 (2023-05-18)
+# A changelog is included in the head of the `make-docs` script.
 include variables.mk
 -include variables.mk.local
 
@@ -76,7 +76,7 @@ docs-rm: ## Remove the docs container.
 
 .PHONY: docs-pull
 docs-pull: ## Pull documentation base image.
-	$(PODMAN) pull $(DOCS_IMAGE)
+	$(PODMAN) pull -q $(DOCS_IMAGE)
 
 make-docs: ## Fetch the latest make-docs script.
 make-docs:
@@ -104,11 +104,6 @@ docs-debug: make-docs
 doc-validator: ## Run doc-validator on the entire docs folder.
 doc-validator: make-docs
 	DOCS_IMAGE=$(DOC_VALIDATOR_IMAGE) $(PWD)/make-docs $(PROJECTS)
-
-.PHONY: doc-validator/%
-doc-validator/%: ## Run doc-validator on a specific path. To lint the path /docs/sources/administration, run 'make doc-validator/administration'.
-doc-validator/%: make-docs
-	DOCS_IMAGE=$(DOC_VALIDATOR_IMAGE) DOC_VALIDATOR_INCLUDE=$(subst doc-validator/,,$@) $(PWD)/make-docs $(PROJECTS)
 
 .PHONY: vale
 vale: ## Run vale on the entire docs folder.

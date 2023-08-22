@@ -14,13 +14,14 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/tsdb/cloud-monitoring/kinds/dataquery"
 )
 
 type (
 	cloudMonitoringQueryExecutor interface {
 		run(ctx context.Context, req *backend.QueryDataRequest, s *Service, dsInfo datasourceInfo, tracer tracing.Tracer) (
-			*backend.DataResponse, cloudMonitoringResponse, string, error)
-		parseResponse(dr *backend.DataResponse, data cloudMonitoringResponse, executedQueryString string) error
+			*backend.DataResponse, any, string, error)
+		parseResponse(dr *backend.DataResponse, data any, executedQueryString string) error
 		buildDeepLink() string
 		getRefID() string
 		getAliasBy() string
@@ -30,57 +31,18 @@ type (
 	// Plugin API query data request used to generate
 	// a cloudMonitoringTimeSeriesList or cloudMonitoringTimeSeriesQuery
 	grafanaQuery struct {
-		AliasBy         string           `json:"aliasBy"`
-		TimeSeriesList  *timeSeriesList  `json:"timeSeriesList,omitempty"`
-		TimeSeriesQuery *timeSeriesQuery `json:"timeSeriesQuery,omitempty"`
-		SloQuery        *sloQuery        `json:"sloQuery,omitempty"`
+		AliasBy         string                     `json:"aliasBy"`
+		TimeSeriesList  *dataquery.TimeSeriesList  `json:"timeSeriesList,omitempty"`
+		TimeSeriesQuery *dataquery.TimeSeriesQuery `json:"timeSeriesQuery,omitempty"`
+		SloQuery        *dataquery.SLOQuery        `json:"sloQuery,omitempty"`
+		PromQLQuery     *dataquery.PromQLQuery     `json:"promQLQuery,omitempty"`
 	}
 
-	// These should reflect GCM APIs
-	// timeSeries.list https://cloud.google.com/monitoring/api/ref_v3/rest/v3/projects.timeSeries/list
-	timeSeriesList struct {
-		ProjectName                 string   `json:"projectName"`
-		CrossSeriesReducer          string   `json:"crossSeriesReducer"`
-		AlignmentPeriod             string   `json:"alignmentPeriod"`
-		PerSeriesAligner            string   `json:"perSeriesAligner"`
-		GroupBys                    []string `json:"groupBys"`
-		Filters                     []string `json:"filters"`
-		View                        string   `json:"view"`
-		SecondaryAlignmentPeriod    string   `json:"secondaryAlignmentPeriod"`
-		SecondaryCrossSeriesReducer string   `json:"secondaryCrossSeriesReducer"`
-		SecondaryPerSeriesAligner   string   `json:"secondaryPerSeriesAligner"`
-		SecondaryGroupBys           []string `json:"secondaryGroupBys"`
-		// Preprocessor is not part of the GCM API but added for simplicity
-		// It will overwrite AligmentPeriod, CrossSeriesReducer, PerSeriesAligner, GroupBys
-		// and its secondary counterparts
-		Preprocessor string `json:"preprocessor"`
-	}
-
-	// sloQuery is an internal convention but the API is the same as timeSeriesList
-	sloQuery struct {
-		ProjectName     string `json:"projectName"`
-		SelectorName    string `json:"selectorName"`
-		ServiceId       string `json:"serviceId"`
-		SloId           string `json:"sloId"`
-		AlignmentPeriod string `json:"alignmentPeriod"`
-		LookbackPeriod  string `json:"lookbackPeriod"`
-	}
-
-	// timeSeries.query https://cloud.google.com/monitoring/api/ref_v3/rest/v3/projects.timeSeries/query
-	timeSeriesQuery struct {
-		ProjectName string `json:"projectName"`
-		Query       string `json:"query"`
-		// Not part of the GCM API, will be added to Query
-		GraphPeriod string `json:"graphPeriod"`
-	}
-
-	// Internal structs. Include computed values
-	// cloudMonitoringTimeSeriesList is used to build time series with a filter
 	cloudMonitoringTimeSeriesList struct {
 		refID      string
 		aliasBy    string
 		logger     log.Logger
-		parameters *timeSeriesList
+		parameters *dataquery.TimeSeriesList
 		// Processed properties
 		params url.Values
 	}
@@ -89,9 +51,19 @@ type (
 		refID      string
 		aliasBy    string
 		logger     log.Logger
-		parameters *sloQuery
+		parameters *dataquery.SLOQuery
 		// Processed properties
 		params url.Values
+	}
+
+	// cloudMonitoringProm is used to build a promQL queries
+	cloudMonitoringProm struct {
+		refID      string
+		aliasBy    string
+		logger     log.Logger
+		parameters *dataquery.PromQLQuery
+		timeRange  backend.TimeRange
+		IntervalMS int64
 	}
 
 	// cloudMonitoringTimeSeriesQuery is used to build MQL queries
@@ -99,7 +71,7 @@ type (
 		refID      string
 		aliasBy    string
 		logger     log.Logger
-		parameters *timeSeriesQuery
+		parameters *dataquery.TimeSeriesQuery
 		// Processed properties
 		timeRange  backend.TimeRange
 		IntervalMS int64
@@ -127,6 +99,14 @@ type (
 		TimeSeriesData       []timeSeriesData     `json:"timeSeriesData"`
 		Unit                 string               `json:"unit"`
 		NextPageToken        string               `json:"nextPageToken"`
+	}
+
+	promResponse struct {
+		Status string `json:"status"`
+		Data   struct {
+			Result     any    `json:"result"`
+			ResultType string `json:"resultType"`
+		} `json:"data"`
 	}
 )
 
@@ -208,7 +188,7 @@ func (ts timeSeriesData) getLabels(labelDescriptors []LabelDescriptor) (data.Lab
 			seriesLabels[key] = labelValue.StringValue
 		}
 
-		if strings.Contains(key, "metric.label") || strings.Contains(key, "resource.label") {
+		if strings.Contains(key, "metric.label") || strings.Contains(key, "resource.label") || strings.Contains(key, "metadata.label") {
 			defaultMetricName += seriesLabels[key] + " "
 		}
 	}

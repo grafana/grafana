@@ -15,6 +15,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/sqleng"
 )
 
@@ -74,7 +75,7 @@ func TestIntegrationMySQL(t *testing.T) {
 
 	rowTransformer := mysqlQueryResultTransformer{}
 
-	exe, err := sqleng.NewQueryDataHandler(config, &rowTransformer, newMysqlMacroEngine(logger), logger)
+	exe, err := sqleng.NewQueryDataHandler(setting.NewCfg(), config, &rowTransformer, newMysqlMacroEngine(logger, setting.NewCfg()), logger)
 
 	require.NoError(t, err)
 
@@ -1165,7 +1166,7 @@ func TestIntegrationMySQL(t *testing.T) {
 
 			queryResultTransformer := mysqlQueryResultTransformer{}
 
-			handler, err := sqleng.NewQueryDataHandler(config, &queryResultTransformer, newMysqlMacroEngine(logger), logger)
+			handler, err := sqleng.NewQueryDataHandler(setting.NewCfg(), config, &queryResultTransformer, newMysqlMacroEngine(logger, setting.NewCfg()), logger)
 			require.NoError(t, err)
 
 			t.Run("When doing a table query that returns 2 rows should limit the result to 1 row", func(t *testing.T) {

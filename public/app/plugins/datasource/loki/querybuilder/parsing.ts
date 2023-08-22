@@ -597,7 +597,7 @@ function isIntervalVariableError(node: SyntaxNode) {
   return node?.parent?.type.id === Range;
 }
 
-function handleQuotes(string: string) {
+export function handleQuotes(string: string) {
   if (string[0] === `"` && string[string.length - 1] === `"`) {
     return string
       .substring(1, string.length - 1)

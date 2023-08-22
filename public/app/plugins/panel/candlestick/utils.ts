@@ -2,7 +2,7 @@ import uPlot from 'uplot';
 
 import { colorManipulator } from '@grafana/data';
 
-import { VizDisplayMode, ColorStrategy, CandleStyle } from './models.gen';
+import { VizDisplayMode, ColorStrategy, CandleStyle } from './types';
 
 const { alpha } = colorManipulator;
 

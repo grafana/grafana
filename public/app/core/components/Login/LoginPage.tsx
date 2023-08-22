@@ -3,9 +3,10 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 // Components
-import { HorizontalGroup, LinkButton } from '@grafana/ui';
+import { Alert, HorizontalGroup, LinkButton } from '@grafana/ui';
 import { Branding } from 'app/core/components/Branding/Branding';
 import config from 'app/core/config';
+import { t } from 'app/core/internationalization';
 
 import { ChangePassword } from '../ForgottenPassword/ChangePassword';
 
@@ -19,6 +20,10 @@ const forgottenPasswordStyles = css`
   padding: 0;
   margin-top: 4px;
 `;
+
+const alertStyles = css({
+  width: '100%',
+});
 
 export const LoginPage = () => {
   document.title = Branding.AppTitle;
@@ -35,10 +40,17 @@ export const LoginPage = () => {
         skipPasswordChange,
         isChangingPassword,
         showDefaultPasswordWarning,
+        loginErrorMessage,
       }) => (
         <LoginLayout isChangingPassword={isChangingPassword}>
           {!isChangingPassword && (
             <InnerBox>
+              {loginErrorMessage && (
+                <Alert className={alertStyles} severity="error" title={t('login.error.title', 'Login failed')}>
+                  {loginErrorMessage}
+                </Alert>
+              )}
+
               {!disableLoginForm && (
                 <LoginForm onSubmit={login} loginHint={loginHint} passwordHint={passwordHint} isLoggingIn={isLoggingIn}>
                   <HorizontalGroup justify="flex-end">
@@ -56,6 +68,7 @@ export const LoginPage = () => {
               {!disableUserSignUp && <UserSignup />}
             </InnerBox>
           )}
+
           {isChangingPassword && (
             <InnerBox>
               <ChangePassword

@@ -8,6 +8,13 @@ export const initialApiKeysState: ApiKeysState = {
   keys: [],
   keysIncludingExpired: [],
   searchQuery: '',
+  migrationResult: {
+    total: 0,
+    migrated: 0,
+    failed: 0,
+    failedApikeyIDs: [0],
+    failedDetails: [],
+  },
 };
 
 const apiKeysSlice = createSlice({
@@ -31,10 +38,14 @@ const apiKeysSlice = createSlice({
     isFetching: (state): ApiKeysState => {
       return { ...state, hasFetched: false };
     },
+    setMigrationResult: (state, action): ApiKeysState => {
+      return { ...state, migrationResult: action.payload };
+    },
   },
 });
 
-export const { apiKeysLoaded, includeExpiredToggled, isFetching, setSearchQuery } = apiKeysSlice.actions;
+export const { apiKeysLoaded, includeExpiredToggled, isFetching, setSearchQuery, setMigrationResult } =
+  apiKeysSlice.actions;
 
 export const apiKeysReducer = apiKeysSlice.reducer;
 

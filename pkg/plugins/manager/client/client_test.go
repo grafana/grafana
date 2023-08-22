@@ -72,6 +72,64 @@ func TestQueryData(t *testing.T) {
 	})
 }
 
+func TestCheckHealth(t *testing.T) {
+	t.Run("empty plugin registry should return plugin not registered error", func(t *testing.T) {
+		registry := fakes.NewFakePluginRegistry()
+		client := ProvideService(registry, &config.Cfg{})
+		_, err := client.CheckHealth(context.Background(), &backend.CheckHealthRequest{})
+		require.Error(t, err)
+		require.ErrorIs(t, err, backendplugin.ErrPluginNotRegistered)
+	})
+
+	t.Run("non-empty plugin registry", func(t *testing.T) {
+		tcs := []struct {
+			err           error
+			expectedError error
+		}{
+			{
+				err:           backendplugin.ErrPluginUnavailable,
+				expectedError: backendplugin.ErrPluginUnavailable,
+			},
+			{
+
+				err:           backendplugin.ErrMethodNotImplemented,
+				expectedError: backendplugin.ErrMethodNotImplemented,
+			},
+			{
+				err:           errors.New("surprise surprise"),
+				expectedError: backendplugin.ErrHealthCheckFailed,
+			},
+		}
+
+		for _, tc := range tcs {
+			t.Run(fmt.Sprintf("Plugin client error %q should return expected error", tc.err), func(t *testing.T) {
+				registry := fakes.NewFakePluginRegistry()
+				p := &plugins.Plugin{
+					JSONData: plugins.JSONData{
+						ID: "grafana",
+					},
+				}
+				p.RegisterClient(&fakePluginBackend{
+					chr: func(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
+						return nil, tc.err
+					},
+				})
+				err := registry.Add(context.Background(), p)
+				require.NoError(t, err)
+
+				client := ProvideService(registry, &config.Cfg{})
+				_, err = client.CheckHealth(context.Background(), &backend.CheckHealthRequest{
+					PluginContext: backend.PluginContext{
+						PluginID: "grafana",
+					},
+				})
+				require.Error(t, err)
+				require.ErrorIs(t, err, tc.expectedError)
+			})
+		}
+	})
+}
+
 func TestCallResource(t *testing.T) {
 	registry := fakes.NewFakePluginRegistry()
 	p := &plugins.Plugin{
@@ -321,6 +379,7 @@ func TestCallResource(t *testing.T) {
 type fakePluginBackend struct {
 	qdr backend.QueryDataHandlerFunc
 	crr backend.CallResourceHandlerFunc
+	chr backend.CheckHealthHandlerFunc
 
 	backendplugin.Plugin
 }
@@ -342,4 +401,11 @@ func (f *fakePluginBackend) CallResource(ctx context.Context, req *backend.CallR
 
 func (f *fakePluginBackend) IsDecommissioned() bool {
 	return false
+}
+
+func (f *fakePluginBackend) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
+	if f.chr != nil {
+		return f.chr(ctx, req)
+	}
+	return &backend.CheckHealthResult{}, nil
 }

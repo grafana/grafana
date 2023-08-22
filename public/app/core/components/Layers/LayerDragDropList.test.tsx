@@ -25,15 +25,15 @@ describe('LayerDragDropList', () => {
   it('showActions', () => {
     renderScenario({ showActions: () => true });
 
-    expect(screen.getAllByLabelText('Duplicate button').length).toEqual(2);
-    expect(screen.getAllByLabelText('Remove button').length).toEqual(2);
+    expect(screen.getAllByLabelText('Duplicate').length).toEqual(2);
+    expect(screen.getAllByLabelText('Remove').length).toEqual(2);
   });
 
   it('showActions - no duplicate', () => {
     renderScenario({ showActions: () => true, onDuplicate: undefined });
 
-    expect(screen.getAllByLabelText('Remove button').length).toEqual(2);
-    expect(screen.queryAllByLabelText('Duplicate button').length).toEqual(0);
+    expect(screen.getAllByLabelText('Remove').length).toEqual(2);
+    expect(screen.queryAllByLabelText('Duplicate').length).toEqual(0);
   });
 
   it('renders draggable icon', () => {

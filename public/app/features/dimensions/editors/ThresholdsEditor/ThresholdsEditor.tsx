@@ -199,10 +199,10 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
         }
         suffix={
           <IconButton
-            aria-label={`Remove ${ariaLabel}`}
             className={styles.trashIcon}
             name="trash-alt"
             onClick={() => this.onRemoveThreshold(threshold)}
+            tooltip={`Remove ${ariaLabel}`}
           />
         }
       />

@@ -40,6 +40,8 @@ jest.mock('debounce-promise', () => {
   return debounce;
 });
 
+jest.spyOn(api, 'getConnectedDashboards').mockResolvedValue([]);
+jest.spyOn(api, 'deleteLibraryPanel').mockResolvedValue({ message: 'success' });
 async function getTestContext(
   propOverrides: Partial<LibraryPanelsSearchProps> = {},
   searchResult: LibraryElementsSearchResult = { elements: [], perPage: 40, page: 1, totalCount: 0 }
@@ -316,7 +318,57 @@ describe('LibraryPanelsSearch', () => {
       expect(card()).toBeInTheDocument();
       expect(within(card()).getByText(/library panel name/i)).toBeInTheDocument();
       expect(within(card()).getByText(/library panel description/i)).toBeInTheDocument();
-      expect(within(card()).getByLabelText(/delete button on panel type card/i)).toBeInTheDocument();
+      expect(within(card()).getByLabelText(/Delete/i)).toBeInTheDocument();
+    });
+  });
+
+  describe('when mounted with showSecondaryActions and a specific folder', () => {
+    describe('and user deletes a panel', () => {
+      it('should call api with correct params', async () => {
+        const { getLibraryPanelsSpy } = await getTestContext(
+          { showSecondaryActions: true, currentFolderUID: 'wfTJJL5Wz' },
+          {
+            elements: [
+              {
+                name: 'Library Panel Name',
+                uid: 'uid',
+                description: 'Library Panel Description',
+                folderUid: 'wfTJJL5Wz',
+                model: { type: 'timeseries', title: 'A title' } as Panel,
+                type: 'timeseries',
+                version: 1,
+                meta: {
+                  folderName: 'General',
+                  folderUid: '',
+                  connectedDashboards: 0,
+                  created: '2021-01-01 12:00:00',
+                  createdBy: { id: 1, name: 'Admin', avatarUrl: '' },
+                  updated: '2021-01-01 12:00:00',
+                  updatedBy: { id: 1, name: 'Admin', avatarUrl: '' },
+                },
+              },
+            ],
+            perPage: 40,
+            page: 1,
+            totalCount: 1,
+          }
+        );
+
+        await userEvent.click(screen.getByLabelText('Delete'));
+        await waitFor(() => expect(screen.getByText('Do you want to delete this panel?')).toBeInTheDocument());
+        await userEvent.click(screen.getAllByRole('button', { name: 'Delete' })[1]);
+
+        await waitFor(() => {
+          expect(getLibraryPanelsSpy).toHaveBeenCalledWith({
+            searchString: '',
+            folderFilterUIDs: ['wfTJJL5Wz'],
+            page: 1,
+            typeFilter: [],
+            sortDirection: undefined,
+            perPage: 40,
+          });
+        });
+      });
     });
   });
 });

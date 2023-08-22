@@ -15,75 +15,92 @@ export type IconButtonVariant = 'primary' | 'secondary' | 'destructive';
 
 type LimitedIconSize = ComponentSize | 'xl';
 
-export interface Props extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+interface BaseProps extends Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, 'aria-label'> {
   /** Name of the icon **/
   name: IconName;
   /** Icon size - sizes xxl and xxxl are deprecated and when used being decreased to xl*/
   size?: IconSize;
   /** Type of the icon - mono or default */
   iconType?: IconType;
-  /** Tooltip content to display on hover */
-  tooltip?: PopoverContent;
-  /** Position of the tooltip */
-  tooltipPlacement?: TooltipPlacement;
   /** Variant to change the color of the Icon */
   variant?: IconButtonVariant;
-  /** Text avilable ony for screenscreen readers. Will use tooltip text as fallback. */
-  ariaLabel?: string;
 }
 
-export const IconButton = React.forwardRef<HTMLButtonElement, Props>(
-  (
-    {
-      name,
-      size = 'md',
-      iconType,
-      tooltip,
-      tooltipPlacement,
-      ariaLabel,
-      className,
-      variant = 'secondary',
-      ...restProps
-    },
-    ref
-  ) => {
-    const theme = useTheme2();
-    let limitedIconSize: LimitedIconSize;
+export interface BasePropsWithTooltip extends BaseProps {
+  /** Tooltip content to display on hover and as the aria-label */
+  tooltip: PopoverContent;
+  /** Position of the tooltip */
+  tooltipPlacement?: TooltipPlacement;
+}
 
-    // very large icons (xl to xxxl) are unified to size xl
-    if (size === 'xxl' || size === 'xxxl') {
-      deprecationWarning('IconButton', 'size="xxl" and size="xxxl"', 'size="xl"');
-      limitedIconSize = 'xl';
-    } else {
-      limitedIconSize = size;
-    }
+interface BasePropsWithAriaLabel extends BaseProps {
+  /** @deprecated use aria-label instead*/
+  ariaLabel?: string;
+  /** Text available only for screen readers. No tooltip will be set in this case. */
+  ['aria-label']: string;
+}
 
-    const styles = getStyles(theme, limitedIconSize, variant);
-    const tooltipString = typeof tooltip === 'string' ? tooltip : '';
+export type Props = BasePropsWithTooltip | BasePropsWithAriaLabel;
 
-    // When using tooltip, ref is forwarded to Tooltip component instead for https://github.com/grafana/grafana/issues/65632
-    const button = (
+export const IconButton = React.forwardRef<HTMLButtonElement, Props>((props, ref) => {
+  const { size = 'md', variant = 'secondary' } = props;
+
+  const theme = useTheme2();
+  let limitedIconSize: LimitedIconSize;
+
+  // very large icons (xl to xxxl) are unified to size xl
+  if (size === 'xxl' || size === 'xxxl') {
+    deprecationWarning('IconButton', 'size="xxl" and size="xxxl"', 'size="xl"');
+    limitedIconSize = 'xl';
+  } else {
+    limitedIconSize = size;
+  }
+
+  const styles = getStyles(theme, limitedIconSize, variant);
+
+  let ariaLabel: string | undefined;
+  let buttonRef: typeof ref | undefined;
+
+  if ('tooltip' in props) {
+    const { tooltip } = props;
+    ariaLabel = typeof tooltip === 'string' ? tooltip : undefined;
+  } else if ('ariaLabel' in props || 'aria-label' in props) {
+    const { ariaLabel: deprecatedAriaLabel, ['aria-label']: ariaLabelProp } = props;
+    ariaLabel = ariaLabelProp || deprecatedAriaLabel;
+    buttonRef = ref;
+  }
+
+  // When using tooltip, ref is forwarded to Tooltip component instead for https://github.com/grafana/grafana/issues/65632
+  if ('tooltip' in props) {
+    const { name, iconType, className, tooltip, tooltipPlacement, ...restProps } = props;
+    return (
+      <Tooltip ref={ref} content={tooltip} placement={tooltipPlacement}>
+        <button
+          {...restProps}
+          ref={buttonRef}
+          aria-label={ariaLabel}
+          className={cx(styles.button, className)}
+          type="button"
+        >
+          <Icon name={name} size={limitedIconSize} className={styles.icon} type={iconType} />
+        </button>
+      </Tooltip>
+    );
+  } else {
+    const { name, iconType, className, ...restProps } = props;
+    return (
       <button
-        ref={tooltip ? undefined : ref}
-        aria-label={ariaLabel || tooltipString}
         {...restProps}
+        ref={buttonRef}
+        aria-label={ariaLabel}
         className={cx(styles.button, className)}
+        type="button"
       >
         <Icon name={name} size={limitedIconSize} className={styles.icon} type={iconType} />
       </button>
     );
-
-    if (tooltip) {
-      return (
-        <Tooltip ref={ref} content={tooltip} placement={tooltipPlacement}>
-          {button}
-        </Tooltip>
-      );
-    }
-
-    return button;
   }
-);
+});
 
 IconButton.displayName = 'IconButton';
 
@@ -101,59 +118,52 @@ const getStyles = stylesFactory((theme: GrafanaTheme2, size, variant: IconButton
   }
 
   return {
-    button: css`
-      z-index: 0;
-      position: relative;
-      margin: 0 ${theme.spacing(0.5)} 0 0;
-      box-shadow: none;
-      border: none;
-      display: inline-flex;
-      background: transparent;
-      justify-content: center;
-      align-items: center;
-      padding: 0;
-      color: ${iconColor};
+    button: css({
+      zIndex: 0,
+      position: 'relative',
+      margin: `0 ${theme.spacing.x0_5} 0 0`,
+      boxShadow: 'none',
+      border: 'none',
+      display: 'inline-flex',
+      background: 'transparent',
+      justifyContent: 'center',
+      alignItems: 'center',
+      padding: 0,
+      color: iconColor,
 
-      &[disabled],
-      &:disabled {
-        cursor: not-allowed;
-        color: ${theme.colors.action.disabledText};
-        opacity: 0.65;
-      }
+      '&[disabled], &:disabled': {
+        cursor: 'not-allowed',
+        color: theme.colors.action.disabledText,
+        opacity: 0.65,
+      },
 
-      &:before {
-        z-index: -1;
-        position: absolute;
-        opacity: 0;
-        width: ${hoverSize}px;
-        height: ${hoverSize}px;
-        border-radius: ${theme.shape.radius.default};
-        content: '';
-        transition-duration: 0.2s;
-        transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-        transition-property: opacity;
-      }
+      '&:before': {
+        zIndex: -1,
+        position: 'absolute',
+        opacity: 0,
+        width: `${hoverSize}px`,
+        height: `${hoverSize}px`,
+        borderRadius: theme.shape.radius.default,
+        content: '""',
+        transitionDuration: '0.2s',
+        transitionTimingFunction: 'cubic-bezier(0.4, 0, 0.2, 1)',
+        transitionProperty: 'opacity',
+      },
 
-      &:focus,
-      &:focus-visible {
-        ${getFocusStyles(theme)}
-      }
+      '&:focus, &:focus-visible': getFocusStyles(theme),
 
-      &:focus:not(:focus-visible) {
-        ${getMouseFocusStyles(theme)}
-      }
+      '&:focus:not(:focus-visible)': getMouseFocusStyles(theme),
 
-      &:hover {
-        &:before {
-          background-color: ${variant === 'secondary'
-            ? theme.colors.action.hover
-            : colorManipulator.alpha(iconColor, 0.12)};
-          opacity: 1;
-        }
-      }
-    `,
-    icon: css`
-      vertical-align: baseline;
-    `,
+      '&:hover': {
+        '&:before': {
+          backgroundColor:
+            variant === 'secondary' ? theme.colors.action.hover : colorManipulator.alpha(iconColor, 0.12),
+          opacity: 1,
+        },
+      },
+    }),
+    icon: css({
+      verticalAlign: 'baseline',
+    }),
   };
 });

@@ -3,7 +3,7 @@ import React from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2, isTimeSeriesFrames, PanelData, ThresholdsConfig } from '@grafana/data';
-import { GraphTresholdsStyleMode, LoadingState } from '@grafana/schema';
+import { GraphTresholdsStyleMode } from '@grafana/schema';
 import { useStyles2 } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import { GraphContainer } from 'app/features/explore/Graph/GraphContainer';
@@ -37,7 +37,6 @@ export const VizWrapper = ({ data, thresholds, thresholdsType }: Props) => {
           <div style={{ width }}>
             {isTimeSeriesData ? (
               <GraphContainer
-                loading={data.state === LoadingState.Loading}
                 statusMessage={statusMessage}
                 data={data.series}
                 eventBus={appEvents}
@@ -71,7 +70,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   `,
   instantVectorResultWrapper: css`
     border: solid 1px ${theme.colors.border.medium};
-    border-radius: ${theme.shape.borderRadius()};
+    border-radius: ${theme.shape.radius.default};
     padding: 0;
 
     display: flex;

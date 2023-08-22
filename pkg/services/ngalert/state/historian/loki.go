@@ -43,7 +43,7 @@ const defaultQueryRange = 6 * time.Hour
 type remoteLokiClient interface {
 	ping(context.Context) error
 	push(context.Context, []stream) error
-	rangeQuery(ctx context.Context, logQL string, start, end int64) (queryRes, error)
+	rangeQuery(ctx context.Context, logQL string, start, end, limit int64) (queryRes, error)
 }
 
 // RemoteLokibackend is a state.Historian that records state history to an external Loki instance.
@@ -126,7 +126,7 @@ func (h *RemoteLokiBackend) Query(ctx context.Context, query models.HistoryQuery
 	}
 
 	// Timestamps are expected in RFC3339Nano.
-	res, err := h.client.rangeQuery(ctx, logQL, query.From.UnixNano(), query.To.UnixNano())
+	res, err := h.client.rangeQuery(ctx, logQL, query.From.UnixNano(), query.To.UnixNano(), int64(query.Limit))
 	if err != nil {
 		return nil, err
 	}
@@ -150,15 +150,6 @@ func buildSelectors(query models.HistoryQuery) ([]Selector, error) {
 		return nil, err
 	}
 	selectors[1] = selector
-
-	// Set the optional special selector rule_id
-	if query.RuleUID != "" {
-		rsel, err := NewSelector(RuleUIDLabel, "=", query.RuleUID)
-		if err != nil {
-			return nil, err
-		}
-		selectors = append(selectors, rsel)
-	}
 
 	return selectors, nil
 }
@@ -245,7 +236,6 @@ func statesToStream(rule history_model.RuleMeta, states []state.StateTransition,
 	// System-defined labels take precedence over user-defined external labels.
 	labels[StateHistoryLabelKey] = StateHistoryLabelValue
 	labels[OrgIDLabel] = fmt.Sprint(rule.OrgID)
-	labels[RuleUIDLabel] = fmt.Sprint(rule.UID)
 	labels[GroupLabel] = fmt.Sprint(rule.Group)
 	labels[FolderUIDLabel] = fmt.Sprint(rule.NamespaceUID)
 
@@ -265,6 +255,7 @@ func statesToStream(rule history_model.RuleMeta, states []state.StateTransition,
 			DashboardUID:   rule.DashboardUID,
 			PanelID:        rule.PanelID,
 			Fingerprint:    labelFingerprint(sanitizedLabels),
+			RuleUID:        rule.UID,
 			InstanceLabels: sanitizedLabels,
 		}
 		if state.State.State == eval.Error {
@@ -309,6 +300,7 @@ type lokiEntry struct {
 	DashboardUID  string           `json:"dashboardUID"`
 	PanelID       int64            `json:"panelID"`
 	Fingerprint   string           `json:"fingerprint"`
+	RuleUID       string           `json:"ruleUID"`
 	// InstanceLabels is exactly the set of labels associated with the alert instance in Alertmanager.
 	// These should not be conflated with labels associated with log streams.
 	InstanceLabels map[string]string `json:"labels"`
@@ -378,6 +370,20 @@ func buildLogQuery(query models.HistoryQuery) (string, error) {
 
 	logQL := selectorString(selectors)
 
+	if queryHasLogFilters(query) {
+		logQL = fmt.Sprintf("%s | json", logQL)
+	}
+
+	if query.RuleUID != "" {
+		logQL = fmt.Sprintf("%s | ruleUID=%q", logQL, query.RuleUID)
+	}
+	if query.DashboardUID != "" {
+		logQL = fmt.Sprintf("%s | dashboardUID=%q", logQL, query.DashboardUID)
+	}
+	if query.PanelID != 0 {
+		logQL = fmt.Sprintf("%s | panelID=%d", logQL, query.PanelID)
+	}
+
 	labelFilters := ""
 	labelKeys := make([]string, 0, len(query.Labels))
 	for k := range query.Labels {
@@ -388,10 +394,14 @@ func buildLogQuery(query models.HistoryQuery) (string, error) {
 	for _, k := range labelKeys {
 		labelFilters += fmt.Sprintf(" | labels_%s=%q", k, query.Labels[k])
 	}
-
-	if labelFilters != "" {
-		logQL = fmt.Sprintf("%s | json%s", logQL, labelFilters)
-	}
+	logQL += labelFilters
 
 	return logQL, nil
+}
+
+func queryHasLogFilters(query models.HistoryQuery) bool {
+	return query.RuleUID != "" ||
+		query.DashboardUID != "" ||
+		query.PanelID != 0 ||
+		len(query.Labels) > 0
 }

@@ -39,6 +39,10 @@ jest.mock('./components/rule-editor/RecordingRuleEditor', () => ({
   },
 }));
 
+jest.mock('app/core/components/AppChrome/AppChromeUpdate', () => ({
+  AppChromeUpdate: ({ actions }: { actions: React.ReactNode }) => <div>{actions}</div>,
+}));
+
 jest.mock('./api/buildInfo');
 jest.mock('./api/ruler');
 jest.mock('../../../../app/features/manage-dashboards/state/actions');

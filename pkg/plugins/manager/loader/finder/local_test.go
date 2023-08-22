@@ -3,7 +3,6 @@ package finder
 import (
 	"context"
 	"errors"
-	"fmt"
 	"os"
 	"path/filepath"
 	"sort"
@@ -44,7 +43,7 @@ func TestFinder_Find(t *testing.T) {
 					Primary: plugins.FoundPlugin{
 						JSONData: plugins.JSONData{
 							ID:   "test-datasource",
-							Type: plugins.DataSource,
+							Type: plugins.TypeDataSource,
 							Name: "Test",
 							Info: plugins.Info{
 								Author: plugins.InfoLink{
@@ -58,7 +57,7 @@ func TestFinder_Find(t *testing.T) {
 								GrafanaVersion: "*",
 								Plugins:        []plugins.Dependency{},
 							},
-							State:      plugins.AlphaRelease,
+							State:      plugins.ReleaseStateAlpha,
 							Backend:    true,
 							Executable: "test",
 						},
@@ -75,7 +74,7 @@ func TestFinder_Find(t *testing.T) {
 					Primary: plugins.FoundPlugin{
 						JSONData: plugins.JSONData{
 							ID:   "test-app",
-							Type: plugins.DataSource,
+							Type: plugins.TypeDataSource,
 							Name: "Parent",
 							Info: plugins.Info{
 								Author: plugins.InfoLink{
@@ -97,7 +96,7 @@ func TestFinder_Find(t *testing.T) {
 						{
 							JSONData: plugins.JSONData{
 								ID:   "test-app",
-								Type: plugins.DataSource,
+								Type: plugins.TypeDataSource,
 								Name: "Child",
 								Info: plugins.Info{
 									Author: plugins.InfoLink{
@@ -127,7 +126,7 @@ func TestFinder_Find(t *testing.T) {
 					Primary: plugins.FoundPlugin{
 						JSONData: plugins.JSONData{
 							ID:   "test-app",
-							Type: plugins.App,
+							Type: plugins.TypeApp,
 							Name: "Test App",
 							Info: plugins.Info{
 								Author: plugins.InfoLink{
@@ -186,7 +185,7 @@ func TestFinder_Find(t *testing.T) {
 				Primary: plugins.FoundPlugin{
 					JSONData: plugins.JSONData{
 						ID:   "test-app",
-						Type: plugins.DataSource,
+						Type: plugins.TypeDataSource,
 						Name: "Parent",
 						Info: plugins.Info{
 							Author: plugins.InfoLink{
@@ -208,7 +207,7 @@ func TestFinder_Find(t *testing.T) {
 					{
 						JSONData: plugins.JSONData{
 							ID:   "test-app",
-							Type: plugins.DataSource,
+							Type: plugins.TypeDataSource,
 							Name: "Child",
 							Info: plugins.Info{
 								Author: plugins.InfoLink{
@@ -232,7 +231,7 @@ func TestFinder_Find(t *testing.T) {
 					Primary: plugins.FoundPlugin{
 						JSONData: plugins.JSONData{
 							ID:   "test-datasource",
-							Type: plugins.DataSource,
+							Type: plugins.TypeDataSource,
 							Name: "Test",
 							Info: plugins.Info{
 								Author: plugins.InfoLink{
@@ -245,7 +244,7 @@ func TestFinder_Find(t *testing.T) {
 								GrafanaVersion: "*",
 								Plugins:        []plugins.Dependency{},
 							},
-							State:   plugins.AlphaRelease,
+							State:   plugins.ReleaseStateAlpha,
 							Backend: true,
 						},
 						FS: mustNewStaticFSForTests(t, filepath.Join(testData, "invalid-v1-signature/plugin")),
@@ -256,7 +255,7 @@ func TestFinder_Find(t *testing.T) {
 	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			f := NewLocalFinder(pCfg)
+			f := NewLocalFinder(pCfg.DevMode)
 			pluginBundles, err := f.Find(context.Background(), &fakes.FakePluginSource{
 				PluginURIsFunc: func(ctx context.Context) []string {
 					return tc.pluginDirs
@@ -293,7 +292,7 @@ func TestFinder_getAbsPluginJSONPaths(t *testing.T) {
 			walk = origWalk
 		})
 
-		finder := NewLocalFinder(pCfg)
+		finder := NewLocalFinder(pCfg.DevMode)
 		paths, err := finder.getAbsPluginJSONPaths("test")
 		require.NoError(t, err)
 		require.Empty(t, paths)
@@ -308,7 +307,7 @@ func TestFinder_getAbsPluginJSONPaths(t *testing.T) {
 			walk = origWalk
 		})
 
-		finder := NewLocalFinder(pCfg)
+		finder := NewLocalFinder(pCfg.DevMode)
 		paths, err := finder.getAbsPluginJSONPaths("test")
 		require.NoError(t, err)
 		require.Empty(t, paths)
@@ -317,13 +316,13 @@ func TestFinder_getAbsPluginJSONPaths(t *testing.T) {
 	t.Run("When scanning a folder that returns a non-handled error should return that error", func(t *testing.T) {
 		origWalk := walk
 		walk = func(path string, followSymlinks, detectSymlinkInfiniteLoop bool, walkFn util.WalkFunc) error {
-			return walkFn(path, nil, fmt.Errorf("random error"))
+			return walkFn(path, nil, errors.New("random error"))
 		}
 		t.Cleanup(func() {
 			walk = origWalk
 		})
 
-		finder := NewLocalFinder(pCfg)
+		finder := NewLocalFinder(pCfg.DevMode)
 		paths, err := finder.getAbsPluginJSONPaths("test")
 		require.Error(t, err)
 		require.Empty(t, paths)

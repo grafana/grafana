@@ -10,6 +10,10 @@ keywords:
   - api
   - alerting
   - alerts
+labels:
+  products:
+    - enterprise
+    - oss
 title: 'Alerting Provisioning HTTP API '
 ---
 
@@ -52,20 +56,26 @@ title: 'Alerting Provisioning HTTP API '
 
 ### Contact points
 
-| Method | URI                                       | Name                                                      | Summary                           |
-| ------ | ----------------------------------------- | --------------------------------------------------------- | --------------------------------- |
-| DELETE | /api/v1/provisioning/contact-points/{UID} | [route delete contactpoints](#route-delete-contactpoints) | Delete a contact point.           |
-| GET    | /api/v1/provisioning/contact-points       | [route get contactpoints](#route-get-contactpoints)       | Get all the contact points.       |
-| POST   | /api/v1/provisioning/contact-points       | [route post contactpoints](#route-post-contactpoints)     | Create a contact point.           |
-| PUT    | /api/v1/provisioning/contact-points/{UID} | [route put contactpoint](#route-put-contactpoint)         | Update an existing contact point. |
+**Note:**
+
+Contact point provisioning is for Grafana-managed alerts only.
+
+| Method | URI                                        | Name                                                              | Summary                                                |
+| ------ | ------------------------------------------ | ----------------------------------------------------------------- | ------------------------------------------------------ |
+| DELETE | /api/v1/provisioning/contact-points/{UID}  | [route delete contactpoints](#route-delete-contactpoints)         | Delete a contact point.                                |
+| GET    | /api/v1/provisioning/contact-points        | [route get contactpoints](#route-get-contactpoints)               | Get all the contact points.                            |
+| GET    | /api/v1/provisioning/contact-points/export | [route get contactpoints export](#route-get-contactpoints-export) | Export all contact points in provisioning file format. |
+| POST   | /api/v1/provisioning/contact-points        | [route post contactpoints](#route-post-contactpoints)             | Create a contact point.                                |
+| PUT    | /api/v1/provisioning/contact-points/{UID}  | [route put contactpoint](#route-put-contactpoint)                 | Update an existing contact point.                      |
 
 ### Notification policies
 
-| Method | URI                           | Name                                                | Summary                              |
-| ------ | ----------------------------- | --------------------------------------------------- | ------------------------------------ |
-| DELETE | /api/v1/provisioning/policies | [route reset policy tree](#route-reset-policy-tree) | Clears the notification policy tree. |
-| GET    | /api/v1/provisioning/policies | [route get policy tree](#route-get-policy-tree)     | Get the notification policy tree.    |
-| PUT    | /api/v1/provisioning/policies | [route put policy tree](#route-put-policy-tree)     | Sets the notification policy tree.   |
+| Method | URI                                  | Name                                                          | Summary                                                          |
+| ------ | ------------------------------------ | ------------------------------------------------------------- | ---------------------------------------------------------------- |
+| DELETE | /api/v1/provisioning/policies        | [route reset policy tree](#route-reset-policy-tree)           | Clears the notification policy tree.                             |
+| GET    | /api/v1/provisioning/policies        | [route get policy tree](#route-get-policy-tree)               | Get the notification policy tree.                                |
+| GET    | /api/v1/provisioning/policies/export | [route get policy tree export](#route-get-policy-tree-export) | Export the notification policy tree in provisioning file format. |
+| PUT    | /api/v1/provisioning/policies        | [route put policy tree](#route-put-policy-tree)               | Sets the notification policy tree.                               |
 
 ### Mute timings
 
@@ -97,10 +107,12 @@ DELETE /api/v1/provisioning/alert-rules/{UID}
 #### Parameters
 
 {{% responsive-table %}}
-| Name | Source | Type | Go type | Separator | Required | Default | Description |
-| -------------------- | -------- | ------ | -------- | --------- | :------: | ------- | -------------- |
-| UID | `path` | string | `string` | | ✓ | | Alert rule UID |
-| X-Disable-Provenance | `header` | string | `string` | | | | |
+
+| Name                 | Source   | Type   | Go type  | Separator | Required | Default | Description                                               |
+| -------------------- | -------- | ------ | -------- | --------- | :------: | ------- | --------------------------------------------------------- |
+| UID                  | `path`   | string | `string` |           |    ✓     |         | Alert rule UID                                            |
+| X-Disable-Provenance | `header` | string | `string` |           |          |         | Allows editing of provisioned resources in the Grafana UI |
+
 {{% /responsive-table %}}
 
 #### All responses
@@ -248,11 +260,11 @@ GET /api/v1/provisioning/alert-rules/{UID}/export
 
 #### Parameters
 
-| Name     | Source  | Type     | Go type  | Separator | Required | Default  | Description                                                                                                                       |
-| -------- | ------- | -------- | -------- | --------- | :------: | -------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| UID      | `path`  | string   | `string` |           |    ✓     |          | Alert rule UID                                                                                                                    |
-| download | `query` | boolean  | `bool`   |           |          |          | Whether to initiate a download of the file or not.                                                                                |
-| format   | `query` | `string` | string   |           |          | `"yaml"` | Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence. |
+| Name     | Source  | Type    | Go type  | Separator | Required | Default  | Description                                                                                                                       |
+| -------- | ------- | ------- | -------- | --------- | :------: | -------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| UID      | `path`  | string  | `string` |           |    ✓     |          | Alert rule UID                                                                                                                    |
+| download | `query` | boolean | `bool`   |           |          |          | Whether to initiate a download of the file or not.                                                                                |
+| format   | `query` | string  | `string` |           |          | `"yaml"` | Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence. |
 
 #### All responses
 
@@ -327,12 +339,12 @@ GET /api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}/export
 
 #### Parameters
 
-| Name      | Source  | Type     | Go type  | Separator | Required | Default  | Description                                                                                                                       |
-| --------- | ------- | -------- | -------- | --------- | :------: | -------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| FolderUID | `path`  | string   | `string` |           |    ✓     |          |                                                                                                                                   |
-| Group     | `path`  | string   | `string` |           |    ✓     |          |                                                                                                                                   |
-| download  | `query` | boolean  | `bool`   |           |          |          | Whether to initiate a download of the file or not.                                                                                |
-| format    | `query` | `string` | string   |           |          | `"yaml"` | Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence. |
+| Name      | Source  | Type    | Go type  | Separator | Required | Default  | Description                                                                                                                       |
+| --------- | ------- | ------- | -------- | --------- | :------: | -------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| FolderUID | `path`  | string  | `string` |           |    ✓     |          |                                                                                                                                   |
+| Group     | `path`  | string  | `string` |           |    ✓     |          |                                                                                                                                   |
+| download  | `query` | boolean | `bool`   |           |          |          | Whether to initiate a download of the file or not.                                                                                |
+| format    | `query` | string  | `string` |           |          | `"yaml"` | Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence. |
 
 #### All responses
 
@@ -387,10 +399,10 @@ GET /api/v1/provisioning/alert-rules/export
 
 #### Parameters
 
-| Name     | Source  | Type     | Go type | Separator | Required | Default  | Description                                                                                                                       |
-| -------- | ------- | -------- | ------- | --------- | :------: | -------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| download | `query` | boolean  | `bool`  |           |          |          | Whether to initiate a download of the file or not.                                                                                |
-| format   | `query` | `string` | string  |           |          | `"yaml"` | Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence. |
+| Name     | Source  | Type    | Go type  | Separator | Required | Default  | Description                                                                                                                       |
+| -------- | ------- | ------- | -------- | --------- | :------: | -------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| download | `query` | boolean | `bool`   |           |          |          | Whether to initiate a download of the file or not.                                                                                |
+| format   | `query` | string  | `string` |           |          | `"yaml"` | Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence. |
 
 #### All responses
 
@@ -442,6 +454,46 @@ Status: OK
 ###### <span id="route-get-contactpoints-200-schema"></span> Schema
 
 [ContactPoints](#contact-points)
+
+### <span id="route-get-contactpoints-export"></span> Export all contact points in provisioning file format. (_RouteGetContactpointsExport_)
+
+```
+GET /api/v1/provisioning/contact-points/export
+```
+
+#### Parameters
+
+| Name     | Source  | Type    | Go type  | Separator | Required | Default  | Description                                                                                                                                                                                     |
+| -------- | ------- | ------- | -------- | --------- | :------: | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| decrypt  | `query` | boolean | `bool`   |           |          |          | Whether any contained secure settings should be decrypted or left redacted. Redacted settings will contain RedactedValue instead. Currently, only org admin can view decrypted secure settings. |
+| download | `query` | boolean | `bool`   |           |          |          | Whether to initiate a download of the file or not.                                                                                                                                              |
+| format   | `query` | string  | `string` |           |          | `"yaml"` | Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence.                                                               |
+| name     | `query` | string  | `string` |           |          |          | Filter by name                                                                                                                                                                                  |
+
+#### All responses
+
+| Code                                       | Status    | Description        | Has headers | Schema                                               |
+| ------------------------------------------ | --------- | ------------------ | :---------: | ---------------------------------------------------- |
+| [200](#route-get-contactpoints-export-200) | OK        | AlertingFileExport |             | [schema](#route-get-contactpoints-export-200-schema) |
+| [403](#route-get-contactpoints-export-403) | Forbidden | PermissionDenied   |             | [schema](#route-get-contactpoints-export-403-schema) |
+
+#### Responses
+
+##### <span id="route-get-contactpoints-export-200"></span> 200 - AlertingFileExport
+
+Status: OK
+
+###### <span id="route-get-contactpoints-export-200-schema"></span> Schema
+
+[AlertingFileExport](#alerting-file-export)
+
+##### <span id="route-get-contactpoints-export-403"></span> 403 - PermissionDenied
+
+Status: Forbidden
+
+###### <span id="route-get-contactpoints-export-403-schema"></span> Schema
+
+[PermissionDenied](#permission-denied)
 
 ### <span id="route-get-mute-timing"></span> Get a mute timing. (_RouteGetMuteTiming_)
 
@@ -522,6 +574,37 @@ Status: OK
 
 [Route](#route)
 
+### <span id="route-get-policy-tree-export"></span> Export the notification policy tree in provisioning file format. (_RouteGetPolicyTreeExport_)
+
+```
+GET /api/v1/provisioning/policies/export
+```
+
+#### All responses
+
+| Code                                     | Status    | Description        | Has headers | Schema                                             |
+| ---------------------------------------- | --------- | ------------------ | :---------: | -------------------------------------------------- |
+| [200](#route-get-policy-tree-export-200) | OK        | AlertingFileExport |             | [schema](#route-get-policy-tree-export-200-schema) |
+| [404](#route-get-policy-tree-export-404) | Not Found | NotFound           |             | [schema](#route-get-policy-tree-export-404-schema) |
+
+#### Responses
+
+##### <span id="route-get-policy-tree-export-200"></span> 200 - AlertingFileExport
+
+Status: OK
+
+###### <span id="route-get-policy-tree-export-200-schema"></span> Schema
+
+[AlertingFileExport](#alerting-file-export)
+
+##### <span id="route-get-policy-tree-export-404"></span> 404 - NotFound
+
+Status: Not Found
+
+###### <span id="route-get-policy-tree-export-404-schema"></span> Schema
+
+[NotFound](#not-found)
+
 ### <span id="route-get-template"></span> Get a notification template. (_RouteGetTemplate_)
 
 ```
@@ -598,10 +681,14 @@ POST /api/v1/provisioning/alert-rules
 
 #### Parameters
 
-| Name                 | Source   | Type                                            | Go type                       | Separator | Required | Default | Description |
-| -------------------- | -------- | ----------------------------------------------- | ----------------------------- | --------- | :------: | ------- | ----------- |
-| X-Disable-Provenance | `header` | string                                          | `string`                      |           |          |         |             |
-| Body                 | `body`   | [ProvisionedAlertRule](#provisioned-alert-rule) | `models.ProvisionedAlertRule` |           |          |         |             |
+{{% responsive-table %}}
+
+| Name                 | Source   | Type                                            | Go type                       | Separator | Required | Default | Description                                               |
+| -------------------- | -------- | ----------------------------------------------- | ----------------------------- | --------- | :------: | ------- | --------------------------------------------------------- |
+| X-Disable-Provenance | `header` | string                                          | `string`                      |           |          |         | Allows editing of provisioned resources in the Grafana UI |
+| Body                 | `body`   | [ProvisionedAlertRule](#provisioned-alert-rule) | `models.ProvisionedAlertRule` |           |          |         |                                                           |
+
+{{% /responsive-table %}}
 
 #### All responses
 
@@ -640,10 +727,14 @@ POST /api/v1/provisioning/contact-points
 
 #### Parameters
 
-| Name                 | Source   | Type                                            | Go type                       | Separator | Required | Default | Description |
-| -------------------- | -------- | ----------------------------------------------- | ----------------------------- | --------- | :------: | ------- | ----------- |
-| X-Disable-Provenance | `header` | string                                          | `string`                      |           |          |         |             |
-| Body                 | `body`   | [EmbeddedContactPoint](#embedded-contact-point) | `models.EmbeddedContactPoint` |           |          |         |             |
+{{% responsive-table %}}
+
+| Name                 | Source   | Type                                            | Go type                       | Separator | Required | Default | Description                                               |
+| -------------------- | -------- | ----------------------------------------------- | ----------------------------- | --------- | :------: | ------- | --------------------------------------------------------- |
+| X-Disable-Provenance | `header` | string                                          | `string`                      |           |          |         | Allows editing of provisioned resources in the Grafana UI |
+| Body                 | `body`   | [EmbeddedContactPoint](#embedded-contact-point) | `models.EmbeddedContactPoint` |           |          |         |                                                           |
+
+{{% /responsive-table %}}
 
 #### All responses
 
@@ -682,10 +773,14 @@ POST /api/v1/provisioning/mute-timings
 
 #### Parameters
 
-| Name                 | Source   | Type                                    | Go type                   | Separator | Required | Default | Description |
-| -------------------- | -------- | --------------------------------------- | ------------------------- | --------- | :------: | ------- | ----------- |
-| X-Disable-Provenance | `header` | string                                  | `string`                  |           |          |         |             |
-| Body                 | `body`   | [MuteTimeInterval](#mute-time-interval) | `models.MuteTimeInterval` |           |          |         |             |
+{{% responsive-table %}}
+
+| Name                 | Source   | Type                                    | Go type                   | Separator | Required | Default | Description                                               |
+| -------------------- | -------- | --------------------------------------- | ------------------------- | --------- | :------: | ------- | --------------------------------------------------------- |
+| X-Disable-Provenance | `header` | string                                  | `string`                  |           |          |         | Allows editing of provisioned resources in the Grafana UI |
+| Body                 | `body`   | [MuteTimeInterval](#mute-time-interval) | `models.MuteTimeInterval` |           |          |         |                                                           |
+
+{{% /responsive-table %}}
 
 #### All responses
 
@@ -724,11 +819,15 @@ PUT /api/v1/provisioning/alert-rules/{UID}
 
 #### Parameters
 
-| Name                 | Source   | Type                                            | Go type                       | Separator | Required | Default | Description    |
-| -------------------- | -------- | ----------------------------------------------- | ----------------------------- | --------- | :------: | ------- | -------------- |
-| UID                  | `path`   | string                                          | `string`                      |           |    ✓     |         | Alert rule UID |
-| X-Disable-Provenance | `header` | string                                          | `string`                      |           |          |         |                |
-| Body                 | `body`   | [ProvisionedAlertRule](#provisioned-alert-rule) | `models.ProvisionedAlertRule` |           |          |         |                |
+{{% responsive-table %}}
+
+| Name                 | Source   | Type                                            | Go type                       | Separator | Required | Default | Description                                               |
+| -------------------- | -------- | ----------------------------------------------- | ----------------------------- | --------- | :------: | ------- | --------------------------------------------------------- |
+| UID                  | `path`   | string                                          | `string`                      |           |    ✓     |         | Alert rule UID                                            |
+| X-Disable-Provenance | `header` | string                                          | `string`                      |           |          |         | Allows editing of provisioned resources in the Grafana UI |
+| Body                 | `body`   | [ProvisionedAlertRule](#provisioned-alert-rule) | `models.ProvisionedAlertRule` |           |          |         |                                                           |
+
+{{% /responsive-table %}}
 
 #### All responses
 
@@ -767,12 +866,16 @@ PUT /api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}
 
 #### Parameters
 
-| Name                 | Source   | Type                                | Go type                 | Separator | Required | Default | Description |
-| -------------------- | -------- | ----------------------------------- | ----------------------- | --------- | :------: | ------- | ----------- |
-| FolderUID            | `path`   | string                              | `string`                |           |    ✓     |         |             |
-| Group                | `path`   | string                              | `string`                |           |    ✓     |         |             |
-| X-Disable-Provenance | `header` | string                              | `string`                |           |          |         |             |
-| Body                 | `body`   | [AlertRuleGroup](#alert-rule-group) | `models.AlertRuleGroup` |           |          |         |             |
+{{% responsive-table %}}
+
+| Name                 | Source   | Type                                | Go type                 | Separator | Required | Default | Description                                               |
+| -------------------- | -------- | ----------------------------------- | ----------------------- | --------- | :------: | ------- | --------------------------------------------------------- |
+| FolderUID            | `path`   | string                              | `string`                |           |    ✓     |         |                                                           |
+| Group                | `path`   | string                              | `string`                |           |    ✓     |         |                                                           |
+| X-Disable-Provenance | `header` | string                              | `string`                |           |          |         | Allows editing of provisioned resources in the Grafana UI |
+| Body                 | `body`   | [AlertRuleGroup](#alert-rule-group) | `models.AlertRuleGroup` |           |          |         |                                                           |
+
+{{% /responsive-table %}}
 
 #### All responses
 
@@ -811,11 +914,15 @@ PUT /api/v1/provisioning/contact-points/{UID}
 
 #### Parameters
 
-| Name                 | Source   | Type                                            | Go type                       | Separator | Required | Default | Description                                |
-| -------------------- | -------- | ----------------------------------------------- | ----------------------------- | --------- | :------: | ------- | ------------------------------------------ |
-| UID                  | `path`   | string                                          | `string`                      |           |    ✓     |         | UID is the contact point unique identifier |
-| X-Disable-Provenance | `header` | string                                          | `string`                      |           |          |         |                                            |
-| Body                 | `body`   | [EmbeddedContactPoint](#embedded-contact-point) | `models.EmbeddedContactPoint` |           |          |         |                                            |
+{{% responsive-table %}}
+
+| Name                 | Source   | Type                                            | Go type                       | Separator | Required | Default | Description                                               |
+| -------------------- | -------- | ----------------------------------------------- | ----------------------------- | --------- | :------: | ------- | --------------------------------------------------------- |
+| UID                  | `path`   | string                                          | `string`                      |           |    ✓     |         | UID is the contact point unique identifier                |
+| X-Disable-Provenance | `header` | string                                          | `string`                      |           |          |         | Allows editing of provisioned resources in the Grafana UI |
+| Body                 | `body`   | [EmbeddedContactPoint](#embedded-contact-point) | `models.EmbeddedContactPoint` |           |          |         |                                                           |
+
+{{% /responsive-table %}}
 
 #### All responses
 
@@ -854,11 +961,15 @@ PUT /api/v1/provisioning/mute-timings/{name}
 
 #### Parameters
 
-| Name                 | Source   | Type                                    | Go type                   | Separator | Required | Default | Description      |
-| -------------------- | -------- | --------------------------------------- | ------------------------- | --------- | :------: | ------- | ---------------- |
-| name                 | `path`   | string                                  | `string`                  |           |    ✓     |         | Mute timing name |
-| X-Disable-Provenance | `header` | string                                  | `string`                  |           |          |         |                  |
-| Body                 | `body`   | [MuteTimeInterval](#mute-time-interval) | `models.MuteTimeInterval` |           |          |         |                  |
+{{% responsive-table %}}
+
+| Name                 | Source   | Type                                    | Go type                   | Separator | Required | Default | Description                                               |
+| -------------------- | -------- | --------------------------------------- | ------------------------- | --------- | :------: | ------- | --------------------------------------------------------- |
+| name                 | `path`   | string                                  | `string`                  |           |    ✓     |         | Mute timing name                                          |
+| X-Disable-Provenance | `header` | string                                  | `string`                  |           |          |         | Allows editing of provisioned resources in the Grafana UI |
+| Body                 | `body`   | [MuteTimeInterval](#mute-time-interval) | `models.MuteTimeInterval` |           |          |         |                                                           |
+
+{{% /responsive-table %}}
 
 #### All responses
 
@@ -897,10 +1008,14 @@ PUT /api/v1/provisioning/policies
 
 #### Parameters
 
-| Name                 | Source   | Type            | Go type        | Separator | Required | Default | Description                              |
-| -------------------- | -------- | --------------- | -------------- | --------- | :------: | ------- | ---------------------------------------- |
-| X-Disable-Provenance | `header` | string          | `string`       |           |          |         |                                          |
-| Body                 | `body`   | [Route](#route) | `models.Route` |           |          |         | The new notification routing tree to use |
+{{% responsive-table %}}
+
+| Name                 | Source   | Type            | Go type        | Separator | Required | Default | Description                                               |
+| -------------------- | -------- | --------------- | -------------- | --------- | :------: | ------- | --------------------------------------------------------- |
+| X-Disable-Provenance | `header` | string          | `string`       |           |          |         | Allows editing of provisioned resources in the Grafana UI |
+| Body                 | `body`   | [Route](#route) | `models.Route` |           |          |         | The new notification routing tree to use                  |
+
+{{% /responsive-table %}}
 
 #### All responses
 
@@ -937,13 +1052,17 @@ PUT /api/v1/provisioning/templates/{name}
 
 - application/json
 
+{{% responsive-table %}}
+
 #### Parameters
 
-| Name                 | Source   | Type                                                          | Go type                              | Separator | Required | Default | Description   |
-| -------------------- | -------- | ------------------------------------------------------------- | ------------------------------------ | --------- | :------: | ------- | ------------- |
-| name                 | `path`   | string                                                        | `string`                             |           |    ✓     |         | Template Name |
-| X-Disable-Provenance | `header` | string                                                        | `string`                             |           |          |         |               |
-| Body                 | `body`   | [NotificationTemplateContent](#notification-template-content) | `models.NotificationTemplateContent` |           |          |         |               |
+| Name                 | Source   | Type                                                          | Go type                              | Separator | Required | Default | Description                                               |
+| -------------------- | -------- | ------------------------------------------------------------- | ------------------------------------ | --------- | :------: | ------- | --------------------------------------------------------- |
+| name                 | `path`   | string                                                        | `string`                             |           |    ✓     |         | Template Name                                             |
+| X-Disable-Provenance | `header` | string                                                        | `string`                             |           |          |         | Allows editing of provisioned resources in the Grafana UI |
+| Body                 | `body`   | [NotificationTemplateContent](#notification-template-content) | `models.NotificationTemplateContent` |           |          |         |                                                           |
+
+{{% /responsive-table %}}
 
 #### All responses
 
@@ -1006,6 +1125,8 @@ Status: Accepted
 
 **Properties**
 
+{{% responsive-table %}}
+
 | Name                                                      | Type                                      | Go type             | Required | Default | Description                                                                                            | Example |
 | --------------------------------------------------------- | ----------------------------------------- | ------------------- | :------: | ------- | ------------------------------------------------------------------------------------------------------ | ------- |
 | datasourceUid                                             | string                                    | `string`            |          |         | Grafana data source unique identifier; it should be '**expr**' for a Server Side Expression operation. |         |
@@ -1015,9 +1136,13 @@ Status: Accepted
 | refId                                                     | string                                    | `string`            |          |         | RefID is the unique identifier of the query, set by the frontend call.                                 |         |
 | relativeTimeRange                                         | [RelativeTimeRange](#relative-time-range) | `RelativeTimeRange` |          |         |                                                                                                        |         |
 
+{{% /responsive-table %}}
+
 ### <span id="alert-query-export"></span> AlertQueryExport
 
 **Properties**
+
+{{% responsive-table %}}
 
 | Name              | Type                                      | Go type             | Required | Default | Description | Example |
 | ----------------- | ----------------------------------------- | ------------------- | :------: | ------- | ----------- | ------- |
@@ -1027,38 +1152,51 @@ Status: Accepted
 | refId             | string                                    | `string`            |          |         |             |         |
 | relativeTimeRange | [RelativeTimeRange](#relative-time-range) | `RelativeTimeRange` |          |         |             |         |
 
+{{% /responsive-table %}}
+
 ### <span id="alert-rule-export"></span> AlertRuleExport
 
 **Properties**
+
+{{% responsive-table %}}
 
 | Name         | Type                                      | Go type               | Required | Default | Description | Example |
 | ------------ | ----------------------------------------- | --------------------- | :------: | ------- | ----------- | ------- |
 | annotations  | map of string                             | `map[string]string`   |          |         |             |         |
 | condition    | string                                    | `string`              |          |         |             |         |
 | dasboardUid  | string                                    | `string`              |          |         |             |         |
-| data         | [][alertqueryexport](#alert-query-export) | `[]*AlertQueryExport` |          |         |             |         |
+| data         | [][AlertQueryExport](#alert-query-export) | `[]*AlertQueryExport` |          |         |             |         |
 | execErrState | string                                    | `string`              |          |         |             |         |
 | for          | [Duration](#duration)                     | `Duration`            |          |         |             |         |
+| isPaused     | boolean                                   | `bool`                |          |         |             |         |
 | labels       | map of string                             | `map[string]string`   |          |         |             |         |
 | noDataState  | string                                    | `string`              |          |         |             |         |
 | panelId      | int64 (formatted integer)                 | `int64`               |          |         |             |         |
 | title        | string                                    | `string`              |          |         |             |         |
 | uid          | string                                    | `string`              |          |         |             |         |
 
+{{% /responsive-table %}}
+
 ### <span id="alert-rule-group"></span> AlertRuleGroup
 
 **Properties**
+
+{{% responsive-table %}}
 
 | Name      | Type                                              | Go type                   | Required | Default | Description | Example |
 | --------- | ------------------------------------------------- | ------------------------- | :------: | ------- | ----------- | ------- |
 | folderUid | string                                            | `string`                  |          |         |             |         |
 | interval  | int64 (formatted integer)                         | `int64`                   |          |         |             |         |
-| rules     | [][provisionedalertrule](#provisioned-alert-rule) | `[]*ProvisionedAlertRule` |          |         |             |         |
+| rules     | [][ProvisionedAlertRule](#provisioned-alert-rule) | `[]*ProvisionedAlertRule` |          |         |             |         |
 | title     | string                                            | `string`                  |          |         |             |         |
+
+{{% /responsive-table %}}
 
 ### <span id="alert-rule-group-export"></span> AlertRuleGroupExport
 
 **Properties**
+
+{{% responsive-table %}}
 
 | Name     | Type                                    | Go type              | Required | Default | Description | Example |
 | -------- | --------------------------------------- | -------------------- | :------: | ------- | ----------- | ------- |
@@ -1066,20 +1204,38 @@ Status: Accepted
 | interval | [Duration](#duration)                   | `Duration`           |          |         |             |         |
 | name     | string                                  | `string`             |          |         |             |         |
 | orgId    | int64 (formatted integer)               | `int64`              |          |         |             |         |
-| rules    | [][alertruleexport](#alert-rule-export) | `[]*AlertRuleExport` |          |         |             |         |
+| rules    | [][AlertRuleExport](#alert-rule-export) | `[]*AlertRuleExport` |          |         |             |         |
+
+{{% /responsive-table %}}
 
 ### <span id="alerting-file-export"></span> AlertingFileExport
 
 **Properties**
 
-| Name       | Type                                               | Go type                   | Required | Default | Description | Example |
-| ---------- | -------------------------------------------------- | ------------------------- | :------: | ------- | ----------- | ------- |
-| apiVersion | int64 (formatted integer)                          | `int64`                   |          |         |             |         |
-| groups     | [][alertrulegroupexport](#alert-rule-group-export) | `[]*AlertRuleGroupExport` |          |         |             |         |
+{{% responsive-table %}}
+
+| Name          | Type                                                      | Go type                       | Required | Default | Description | Example |
+| ------------- | --------------------------------------------------------- | ----------------------------- | :------: | ------- | ----------- | ------- |
+| apiVersion    | int64 (formatted integer)                                 | `int64`                       |          |         |             |         |
+| contactPoints | [][ContactPointExport](#contact-point-export)             | `[]*ContactPointExport`       |          |         |             |         |
+| groups        | [][AlertRuleGroupExport](#alert-rule-group-export)        | `[]*AlertRuleGroupExport`     |          |         |             |         |
+| policies      | [][NotificationPolicyExport](#notification-policy-export) | `[]*NotificationPolicyExport` |          |         |             |         |
+
+{{% /responsive-table %}}
+
+### <span id="contact-point-export"></span> ContactPointExport
+
+**Properties**
+
+| Name      | Type                                 | Go type             | Required | Default | Description | Example |
+| --------- | ------------------------------------ | ------------------- | :------: | ------- | ----------- | ------- |
+| name      | string                               | `string`            |          |         |             |         |
+| orgId     | int64 (formatted integer)            | `int64`             |          |         |             |         |
+| receivers | [][ReceiverExport](#receiver-export) | `[]*ReceiverExport` |          |         |             |         |
 
 ### <span id="contact-points"></span> ContactPoints
 
-[][embeddedcontactpoint](#embedded-contact-point)
+[][EmbeddedContactPoint](#embedded-contact-point)
 
 ### <span id="duration"></span> Duration
 
@@ -1094,6 +1250,8 @@ Status: Accepted
 
 **Properties**
 
+{{% responsive-table %}}
+
 | Name                                 | Type                    | Go type  | Required | Default | Description                                                       | Example   |
 | ------------------------------------ | ----------------------- | -------- | :------: | ------- | ----------------------------------------------------------------- | --------- |
 | disableResolveMessage                | boolean                 | `bool`   |          |         |                                                                   | `false`   |
@@ -1104,6 +1262,8 @@ Status: Accepted
 | type                                 | string                  | `string` |    ✓     |         |                                                                   | `webhook` |
 | uid                                  | string                  | `string` |          |         | UID is the unique identifier of the contact point. The UID can be |
 | set by the user.                     | `my_external_reference` |
+
+{{% /responsive-table %}}
 
 ### <span id="json"></span> Json
 
@@ -1123,11 +1283,15 @@ Status: Accepted
 
 **Properties**
 
+{{% responsive-table %}}
+
 | Name  | Type                     | Go type     | Required | Default | Description | Example |
 | ----- | ------------------------ | ----------- | :------: | ------- | ----------- | ------- |
 | Name  | string                   | `string`    |          |         |             |         |
 | Type  | [MatchType](#match-type) | `MatchType` |          |         |             |         |
 | Value | string                   | `string`    |          |         |             |         |
+
+{{% /responsive-table %}}
 
 ### <span id="matchers"></span> Matchers
 
@@ -1135,24 +1299,43 @@ Status: Accepted
 > provides a Matches method to match a LabelSet against all Matchers in the
 > slice. Note that some users of Matchers might require it to be sorted.
 
-[][matcher](#matcher)
+[][Matcher](#matcher)
 
 ### <span id="mute-time-interval"></span> MuteTimeInterval
 
 **Properties**
 
+{{% responsive-table %}}
+
 | Name           | Type                             | Go type           | Required | Default | Description | Example |
 | -------------- | -------------------------------- | ----------------- | :------: | ------- | ----------- | ------- |
 | name           | string                           | `string`          |          |         |             |         |
-| time_intervals | [][timeinterval](#time-interval) | `[]*TimeInterval` |          |         |             |         |
+| time_intervals | [][TimeInterval](#time-interval) | `[]*TimeInterval` |          |         |             |         |
+
+{{% /responsive-table %}}
 
 ### <span id="mute-timings"></span> MuteTimings
 
-[][mutetimeinterval](#mute-time-interval)
+[][MuteTimeInterval](#mute-time-interval)
+
+### <span id="not-found"></span> NotFound
+
+[interface{}](#interface)
+
+### <span id="notification-policy-export"></span> NotificationPolicyExport
+
+**Properties**
+
+| Name   | Type                         | Go type       | Required | Default | Description | Example |
+| ------ | ---------------------------- | ------------- | :------: | ------- | ----------- | ------- |
+| Policy | [RouteExport](#route-export) | `RouteExport` |          |         | inline      |         |
+| orgId  | int64 (formatted integer)    | `int64`       |          |         |             |         |
 
 ### <span id="notification-template"></span> NotificationTemplate
 
 **Properties**
+
+{{% responsive-table %}}
 
 | Name       | Type                      | Go type      | Required | Default | Description | Example |
 | ---------- | ------------------------- | ------------ | :------: | ------- | ----------- | ------- |
@@ -1160,23 +1343,33 @@ Status: Accepted
 | provenance | [Provenance](#provenance) | `Provenance` |          |         |             |         |
 | template   | string                    | `string`     |          |         |             |         |
 
+{{% /responsive-table %}}
+
 ### <span id="notification-template-content"></span> NotificationTemplateContent
 
 **Properties**
+
+{{% responsive-table %}}
 
 | Name     | Type   | Go type  | Required | Default | Description | Example |
 | -------- | ------ | -------- | :------: | ------- | ----------- | ------- |
 | template | string | `string` |          |         |             |         |
 
+{{% /responsive-table %}}
+
 ### <span id="notification-templates"></span> NotificationTemplates
 
-[][notificationtemplate](#notification-template)
+[][NotificationTemplate](#notification-template)
 
 ### <span id="object-matchers"></span> ObjectMatchers
 
 [Matchers](#matchers)
 
 #### Inlined models
+
+### <span id="permission-denied"></span> PermissionDenied
+
+[interface{}](#interface)
 
 ### <span id="provenance"></span> Provenance
 
@@ -1188,15 +1381,18 @@ Status: Accepted
 
 **Properties**
 
+{{% responsive-table %}}
+
 | Name         | Type                         | Go type             | Required | Default | Description | Example                                                                                                                                                                                                                                                                                                                                                                                                                          |
 | ------------ | ---------------------------- | ------------------- | :------: | ------- | ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | annotations  | map of string                | `map[string]string` |          |         |             | `{"runbook_url":"https://supercoolrunbook.com/page/13"}`                                                                                                                                                                                                                                                                                                                                                                         |
 | condition    | string                       | `string`            |    ✓     |         |             | `A`                                                                                                                                                                                                                                                                                                                                                                                                                              |
-| data         | [][alertquery](#alert-query) | `[]*AlertQuery`     |    ✓     |         |             | `[{"datasourceUid":"__expr__","model":{"conditions":[{"evaluator":{"params":[0,0],"type":"gt"},"operator":{"type":"and"},"query":{"params":[]},"reducer":{"params":[],"type":"avg"},"type":"query"}],"datasource":{"type":"__expr__","uid":"__expr__"},"expression":"1 == 1","hide":false,"intervalMs":1000,"maxDataPoints":43200,"refId":"A","type":"math"},"queryType":"","refId":"A","relativeTimeRange":{"from":0,"to":0}}]` |
+| data         | [][AlertQuery](#alert-query) | `[]*AlertQuery`     |    ✓     |         |             | `[{"datasourceUid":"__expr__","model":{"conditions":[{"evaluator":{"params":[0,0],"type":"gt"},"operator":{"type":"and"},"query":{"params":[]},"reducer":{"params":[],"type":"avg"},"type":"query"}],"datasource":{"type":"__expr__","uid":"__expr__"},"expression":"1 == 1","hide":false,"intervalMs":1000,"maxDataPoints":43200,"refId":"A","type":"math"},"queryType":"","refId":"A","relativeTimeRange":{"from":0,"to":0}}]` |
 | execErrState | string                       | `string`            |    ✓     |         |             |                                                                                                                                                                                                                                                                                                                                                                                                                                  |
 | folderUID    | string                       | `string`            |    ✓     |         |             | `project_x`                                                                                                                                                                                                                                                                                                                                                                                                                      |
 | for          | [Duration](#duration)        | `Duration`          |    ✓     |         |             |                                                                                                                                                                                                                                                                                                                                                                                                                                  |
 | id           | int64 (formatted integer)    | `int64`             |          |         |             |                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| isPaused     | boolean                      | `bool`              |          |         |             | `false`                                                                                                                                                                                                                                                                                                                                                                                                                          |
 | labels       | map of string                | `map[string]string` |          |         |             | `{"team":"sre-team-1"}`                                                                                                                                                                                                                                                                                                                                                                                                          |
 | noDataState  | string                       | `string`            |    ✓     |         |             |                                                                                                                                                                                                                                                                                                                                                                                                                                  |
 | orgID        | int64 (formatted integer)    | `int64`             |    ✓     |         |             |                                                                                                                                                                                                                                                                                                                                                                                                                                  |
@@ -1206,9 +1402,26 @@ Status: Accepted
 | uid          | string                       | `string`            |          |         |             |                                                                                                                                                                                                                                                                                                                                                                                                                                  |
 | updated      | date-time (formatted string) | `strfmt.DateTime`   |          |         |             |                                                                                                                                                                                                                                                                                                                                                                                                                                  |
 
+{{% /responsive-table %}}
+
 ### <span id="provisioned-alert-rules"></span> ProvisionedAlertRules
 
-[][provisionedalertrule](#provisioned-alert-rule)
+[][ProvisionedAlertRule](#provisioned-alert-rule)
+
+### <span id="raw-message"></span> RawMessage
+
+[interface{}](#interface)
+
+### <span id="receiver-export"></span> ReceiverExport
+
+**Properties**
+
+| Name                  | Type                       | Go type      | Required | Default | Description | Example |
+| --------------------- | -------------------------- | ------------ | :------: | ------- | ----------- | ------- |
+| disableResolveMessage | boolean                    | `bool`       |          |         |             |         |
+| settings              | [RawMessage](#raw-message) | `RawMessage` |          |         |             |         |
+| type                  | string                     | `string`     |          |         |             |         |
+| uid                   | string                     | `string`     |          |         |             |         |
 
 ### <span id="regexp"></span> Regexp
 
@@ -1224,10 +1437,14 @@ Status: Accepted
 
 **Properties**
 
+{{% responsive-table %}}
+
 | Name | Type                  | Go type    | Required | Default | Description | Example |
 | ---- | --------------------- | ---------- | :------: | ------- | ----------- | ------- |
 | from | [Duration](#duration) | `Duration` |          |         |             |         |
 | to   | [Duration](#duration) | `Duration` |          |         |             |         |
+
+{{% /responsive-table %}}
 
 ### <span id="route"></span> Route
 
@@ -1235,6 +1452,8 @@ Status: Accepted
 > from the upstream alertmanager in that it adds the ObjectMatchers property.
 
 **Properties**
+
+{{% responsive-table %}}
 
 | Name                | Type                               | Go type             | Required | Default | Description                             | Example |
 | ------------------- | ---------------------------------- | ------------------- | :------: | ------- | --------------------------------------- | ------- |
@@ -1250,7 +1469,31 @@ Status: Accepted
 | provenance          | [Provenance](#provenance)          | `Provenance`        |          |         |                                         |         |
 | receiver            | string                             | `string`            |          |         |                                         |         |
 | repeat_interval     | string                             | `string`            |          |         |                                         |         |
-| routes              | [][route](#route)                  | `[]*Route`          |          |         |                                         |         |
+| routes              | [][Route](#route)                  | `[]*Route`          |          |         |                                         |         |
+
+{{% /responsive-table %}}
+
+### <span id="route-export"></span> RouteExport
+
+> RouteExport is the provisioned file export of definitions.Route. This is needed to hide fields that aren't useable in
+> provisioning file format. An alternative would be to define a custom MarshalJSON and MarshalYAML that excludes them.
+
+**Properties**
+
+| Name                | Type                               | Go type             | Required | Default | Description                             | Example |
+| ------------------- | ---------------------------------- | ------------------- | :------: | ------- | --------------------------------------- | ------- |
+| continue            | boolean                            | `bool`              |          |         |                                         |         |
+| group_by            | []string                           | `[]string`          |          |         |                                         |         |
+| group_interval      | string                             | `string`            |          |         |                                         |         |
+| group_wait          | string                             | `string`            |          |         |                                         |         |
+| match               | map of string                      | `map[string]string` |          |         | Deprecated. Remove before v1.0 release. |         |
+| match_re            | [MatchRegexps](#match-regexps)     | `MatchRegexps`      |          |         |                                         |         |
+| matchers            | [Matchers](#matchers)              | `Matchers`          |          |         |                                         |         |
+| mute_time_intervals | []string                           | `[]string`          |          |         |                                         |         |
+| object_matchers     | [ObjectMatchers](#object-matchers) | `ObjectMatchers`    |          |         |                                         |         |
+| receiver            | string                             | `string`            |          |         |                                         |         |
+| repeat_interval     | string                             | `string`            |          |         |                                         |         |
+| routes              | [][RouteExport](#route-export)     | `[]*RouteExport`    |          |         |                                         |         |
 
 ### <span id="time-interval"></span> TimeInterval
 
@@ -1259,14 +1502,18 @@ Status: Accepted
 
 **Properties**
 
+{{% responsive-table %}}
+
 | Name          | Type                       | Go type        | Required | Default | Description | Example |
 | ------------- | -------------------------- | -------------- | :------: | ------- | ----------- | ------- |
 | days_of_month | []string                   | `[]string`     |          |         |             |         |
 | location      | string                     | `string`       |          |         |             |         |
 | months        | []string                   | `[]string`     |          |         |             |         |
-| times         | [][timerange](#time-range) | `[]*TimeRange` |          |         |             |         |
+| times         | [][TimeRange](#time-range) | `[]*TimeRange` |          |         |             |         |
 | weekdays      | []string                   | `[]string`     |          |         |             |         |
 | years         | []string                   | `[]string`     |          |         |             |         |
+
+{{% /responsive-table %}}
 
 ### <span id="time-range"></span> TimeRange
 
@@ -1274,15 +1521,23 @@ Status: Accepted
 
 **Properties**
 
+{{% responsive-table %}}
+
 | Name        | Type                      | Go type | Required | Default | Description | Example |
 | ----------- | ------------------------- | ------- | :------: | ------- | ----------- | ------- |
 | EndMinute   | int64 (formatted integer) | `int64` |          |         |             |         |
 | StartMinute | int64 (formatted integer) | `int64` |          |         |             |         |
 
+{{% /responsive-table %}}
+
 ### <span id="validation-error"></span> ValidationError
 
 **Properties**
 
+{{% responsive-table %}}
+
 | Name | Type   | Go type  | Required | Default | Description | Example         |
 | ---- | ------ | -------- | :------: | ------- | ----------- | --------------- |
 | msg  | string | `string` |          |         |             | `error message` |
+
+{{% /responsive-table %}}

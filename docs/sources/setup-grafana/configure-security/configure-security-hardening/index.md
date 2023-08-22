@@ -1,7 +1,12 @@
 ---
 aliases:
   - /docs/grafana/latest/setup-grafana/configure-security/configure-security-hardening/
-description: Security hardening enables you to apply additional security which might stop certain vulnerabilities from being exploited by a malicious attacker.
+description: Security hardening enables you to apply additional security which might
+  stop certain vulnerabilities from being exploited by a malicious attacker.
+labels:
+  products:
+    - enterprise
+    - oss
 title: Configure security hardening
 ---
 

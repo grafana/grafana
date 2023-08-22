@@ -4,11 +4,19 @@ import React from 'react';
 
 import { DataFrame, FieldType } from '@grafana/data';
 import { convertFieldType } from '@grafana/data/src/transformations/transformers/convertFieldType';
+import { reportInteraction } from '@grafana/runtime';
 import { ContextMenu, MenuGroup, MenuItem } from '@grafana/ui';
 import { MenuDivider } from '@grafana/ui/src/components/Menu/MenuDivider';
 
 import { DatagridAction, DatagridActionType } from '../state';
-import { cleanStringFieldAfterConversion, DatagridContextMenuData, deleteRows, EMPTY_DF } from '../utils';
+import {
+  cleanStringFieldAfterConversion,
+  DatagridContextMenuData,
+  deleteRows,
+  EMPTY_DF,
+  INTERACTION_EVENT_NAME,
+  INTERACTION_ITEM,
+} from '../utils';
 
 interface ContextMenuProps {
   menuData: DatagridContextMenuData;
@@ -72,6 +80,10 @@ export const DatagridContextMenu = ({
             }
 
             if (row !== undefined && row >= 0) {
+              reportInteraction(INTERACTION_EVENT_NAME, {
+                item: INTERACTION_ITEM.CONTEXT_MENU_ACTION,
+                menu_action: 'row_delete',
+              });
               saveData(deleteRows(data, [row], true));
             }
           }}
@@ -91,6 +103,10 @@ export const DatagridContextMenu = ({
             }
 
             if (column !== undefined && column >= 0) {
+              reportInteraction(INTERACTION_EVENT_NAME, {
+                item: INTERACTION_ITEM.CONTEXT_MENU_ACTION,
+                menu_action: 'column_delete',
+              });
               saveData({
                 ...data,
                 fields: data.fields.filter((_, index) => index !== column),
@@ -104,6 +120,10 @@ export const DatagridContextMenu = ({
         <MenuItem
           label="Clear row"
           onClick={() => {
+            reportInteraction(INTERACTION_EVENT_NAME, {
+              item: INTERACTION_ITEM.CONTEXT_MENU_ACTION,
+              menu_action: 'row_clear',
+            });
             saveData(deleteRows(data, [row]));
           }}
         />
@@ -114,6 +134,10 @@ export const DatagridContextMenu = ({
           onClick={() => {
             const field = data.fields[column];
             field.values = field.values.map(() => null);
+            reportInteraction(INTERACTION_EVENT_NAME, {
+              item: INTERACTION_ITEM.CONTEXT_MENU_ACTION,
+              menu_action: 'column_clear',
+            });
             saveData({
               ...data,
             });
@@ -124,10 +148,23 @@ export const DatagridContextMenu = ({
       <MenuItem
         label="Remove all data"
         onClick={() => {
+          reportInteraction(INTERACTION_EVENT_NAME, {
+            item: INTERACTION_ITEM.CONTEXT_MENU_ACTION,
+            menu_action: 'remove_all',
+          });
           saveData(EMPTY_DF);
         }}
       />
-      <MenuItem label="Search..." onClick={() => dispatch({ type: DatagridActionType.openSearch })} />
+      <MenuItem
+        label="Search..."
+        onClick={() => {
+          reportInteraction(INTERACTION_EVENT_NAME, {
+            item: INTERACTION_ITEM.CONTEXT_MENU_ACTION,
+            menu_action: 'open_search',
+          });
+          dispatch({ type: DatagridActionType.openSearch });
+        }}
+      />
     </>
   );
 
@@ -197,6 +234,10 @@ export const DatagridContextMenu = ({
                   };
                   copy.fields[column] = field;
 
+                  reportInteraction(INTERACTION_EVENT_NAME, {
+                    item: INTERACTION_ITEM.HEADER_MENU_ACTION,
+                    menu_action: 'convert_field',
+                  });
                   saveData(copy);
                 }}
               />
@@ -207,6 +248,10 @@ export const DatagridContextMenu = ({
         <MenuItem
           label={columnFreezeLabel}
           onClick={() => {
+            reportInteraction(INTERACTION_EVENT_NAME, {
+              item: INTERACTION_ITEM.HEADER_MENU_ACTION,
+              menu_action: 'column_freeze',
+            });
             if (columnFreezeIndex === columnIndex) {
               dispatch({ type: DatagridActionType.columnFreezeReset });
             } else {
@@ -219,6 +264,10 @@ export const DatagridContextMenu = ({
         <MenuItem
           label="Delete column"
           onClick={() => {
+            reportInteraction(INTERACTION_EVENT_NAME, {
+              item: INTERACTION_ITEM.HEADER_MENU_ACTION,
+              menu_action: 'delete_column',
+            });
             saveData({
               ...data,
               fields: data.fields.filter((_, index) => index !== column),
@@ -233,6 +282,10 @@ export const DatagridContextMenu = ({
           onClick={() => {
             const field = data.fields[column];
             field.values = field.values.map(() => null);
+            reportInteraction(INTERACTION_EVENT_NAME, {
+              item: INTERACTION_ITEM.HEADER_MENU_ACTION,
+              menu_action: 'clear_column',
+            });
             saveData({
               ...data,
             });

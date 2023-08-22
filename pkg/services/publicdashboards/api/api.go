@@ -90,7 +90,24 @@ func (api *Api) RegisterAPIEndpoints() {
 // ListPublicDashboards Gets list of public dashboards by orgId
 // GET /api/dashboards/public-dashboards
 func (api *Api) ListPublicDashboards(c *contextmodel.ReqContext) response.Response {
-	resp, err := api.PublicDashboardService.FindAll(c.Req.Context(), c.SignedInUser, c.OrgID)
+	perPage := c.QueryInt("perpage")
+	if perPage <= 0 {
+		perPage = 1000
+	}
+
+	page := c.QueryInt("page")
+	if page < 1 {
+		page = 1
+	}
+
+	resp, err := api.PublicDashboardService.FindAllWithPagination(c.Req.Context(), &PublicDashboardListQuery{
+		OrgID: c.OrgID,
+		Query: c.Query("query"),
+		Page:  page,
+		Limit: perPage,
+		User:  c.SignedInUser,
+	})
+
 	if err != nil {
 		return response.Err(err)
 	}
@@ -133,9 +150,9 @@ func (api *Api) CreatePublicDashboard(c *contextmodel.ReqContext) response.Respo
 	}
 
 	// Always set the orgID and userID from the session
-	pdDTO.OrgId = c.OrgID
 	dto := &SavePublicDashboardDTO{
 		UserId:          c.UserID,
+		OrgID:           c.OrgID,
 		DashboardUid:    dashboardUid,
 		PublicDashboard: pdDTO,
 	}
@@ -150,7 +167,7 @@ func (api *Api) CreatePublicDashboard(c *contextmodel.ReqContext) response.Respo
 }
 
 // UpdatePublicDashboard Sets public dashboard for dashboard
-// PUT /api/dashboards/uid/:dashboardUid/public-dashboards/:uid
+// PATCH /api/dashboards/uid/:dashboardUid/public-dashboards/:uid
 func (api *Api) UpdatePublicDashboard(c *contextmodel.ReqContext) response.Response {
 	// exit if we don't have a valid dashboardUid
 	dashboardUid := web.Params(c.Req)[":dashboardUid"]
@@ -169,10 +186,10 @@ func (api *Api) UpdatePublicDashboard(c *contextmodel.ReqContext) response.Respo
 	}
 
 	// Always set the orgID and userID from the session
-	pdDTO.OrgId = c.OrgID
-	pdDTO.Uid = uid
 	dto := SavePublicDashboardDTO{
+		Uid:             uid,
 		UserId:          c.UserID,
+		OrgID:           c.OrgID,
 		DashboardUid:    dashboardUid,
 		PublicDashboard: pdDTO,
 	}

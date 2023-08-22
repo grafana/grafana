@@ -20,12 +20,20 @@ func (f *ProvisioningApiHandler) handleRouteGetPolicyTree(ctx *contextmodel.ReqC
 	return f.svc.RouteGetPolicyTree(ctx)
 }
 
+func (f *ProvisioningApiHandler) handleRouteGetPolicyTreeExport(ctx *contextmodel.ReqContext) response.Response {
+	return f.svc.RouteGetPolicyTreeExport(ctx)
+}
+
 func (f *ProvisioningApiHandler) handleRoutePutPolicyTree(ctx *contextmodel.ReqContext, route apimodels.Route) response.Response {
 	return f.svc.RoutePutPolicyTree(ctx, route)
 }
 
 func (f *ProvisioningApiHandler) handleRouteGetContactpoints(ctx *contextmodel.ReqContext) response.Response {
 	return f.svc.RouteGetContactPoints(ctx)
+}
+
+func (f *ProvisioningApiHandler) handleRouteGetContactpointsExport(ctx *contextmodel.ReqContext) response.Response {
+	return f.svc.RouteGetContactPointsExport(ctx)
 }
 
 func (f *ProvisioningApiHandler) handleRoutePostContactpoints(ctx *contextmodel.ReqContext, cp apimodels.EmbeddedContactPoint) response.Response {

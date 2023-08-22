@@ -10,8 +10,6 @@
 
 import * as common from '@grafana/schema';
 
-export const DataQueryModelVersion = Object.freeze([0, 0]);
-
 export interface AzureMonitorQuery extends common.DataQuery {
   /**
    * Azure Monitor Logs sub-query properties.
@@ -163,6 +161,10 @@ export const defaultAzureMetricQuery: Partial<AzureMetricQuery> = {
  * Azure Monitor Logs sub-query properties
  */
 export interface AzureLogsQuery {
+  /**
+   * If set to true the intersection of time ranges specified in the query and Grafana will be used. Otherwise the query time ranges will be used. Defaults to false
+   */
+  intersectTime?: boolean;
   /**
    * KQL query to be executed.
    */

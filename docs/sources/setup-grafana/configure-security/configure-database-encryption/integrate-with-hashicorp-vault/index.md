@@ -3,6 +3,10 @@ aliases:
   - ../../../enterprise/vault/
 description: Learn how to integrate Grafana with Hashicorp Vault so that you can use
   secrets for configuration and provisioning.
+labels:
+  products:
+    - enterprise
+    - oss
 title: Integrate Grafana with Hashicorp Vault
 weight: 500
 ---
@@ -12,7 +16,7 @@ weight: 500
 If you manage your secrets with [Hashicorp Vault](https://www.hashicorp.com/products/vault), you can use them for [Configuration]({{< relref "../../../configure-grafana" >}}) and [Provisioning]({{< relref "../../../../administration/provisioning" >}}).
 
 {{% admonition type="note" %}}
-Available in [Grafana Enterprise]({{< relref "../../../../introduction/grafana-enterprise" >}}) and [Grafana Cloud Advanced](/docs/grafana-cloud).
+Available in [Grafana Enterprise]({{< relref "../../../../introduction/grafana-enterprise" >}}) and [Grafana Cloud](/docs/grafana-cloud).
 {{% /admonition %}}
 
 {{% admonition type="note" %}}

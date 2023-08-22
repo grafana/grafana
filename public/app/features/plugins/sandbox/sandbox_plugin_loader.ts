@@ -1,17 +1,28 @@
 import createVirtualEnvironment from '@locker/near-membrane-dom';
 import { ProxyTarget } from '@locker/near-membrane-shared';
 
-import { GrafanaPlugin, PluginMeta } from '@grafana/data';
+import { PluginMeta } from '@grafana/data';
 
 import { getPluginSettings } from '../pluginSettings';
 
-import { getGeneralSandboxDistortionMap } from './distortion_map';
+import { getPluginCode } from './code_loader';
+import { getGeneralSandboxDistortionMap, distortLiveApis } from './distortion_map';
+import {
+  getSafeSandboxDomElement,
+  isDomElement,
+  isLiveTarget,
+  markDomElementStyleAsALiveTarget,
+  patchObjectAsLiveTarget,
+} from './document_sandbox';
 import { sandboxPluginDependencies } from './plugin_dependencies';
+import { sandboxPluginComponents } from './sandbox_components';
+import { CompartmentDependencyModule, PluginFactoryFunction, SandboxEnvironment } from './types';
+import { logError } from './utils';
 
-type CompartmentDependencyModule = unknown;
-type PluginFactoryFunction = (...args: CompartmentDependencyModule[]) => {
-  plugin: GrafanaPlugin;
-};
+// Loads near membrane custom formatter for near membrane proxy objects.
+if (process.env.NODE_ENV !== 'production') {
+  require('@locker/near-membrane-dom/custom-devtools-formatter');
+}
 
 const pluginImportCache = new Map<string, Promise<unknown>>();
 
@@ -23,35 +34,62 @@ export async function importPluginModuleInSandbox({ pluginId }: { pluginId: stri
     }
     return pluginImportCache.get(pluginId);
   } catch (e) {
-    throw new Error(`Could not import plugin ${pluginId} inside sandbox: ` + e);
+    const error = new Error(`Could not import plugin ${pluginId} inside sandbox: ` + e);
+    logError(error, {
+      pluginId,
+      error: String(e),
+    });
+    throw error;
   }
 }
 
 async function doImportPluginModuleInSandbox(meta: PluginMeta): Promise<unknown> {
-  const generalDistortionMap = getGeneralSandboxDistortionMap();
-
-  function distortionCallback(v: ProxyTarget): ProxyTarget {
-    return generalDistortionMap.get(v) ?? v;
-  }
-
   return new Promise(async (resolve, reject) => {
+    const generalDistortionMap = getGeneralSandboxDistortionMap();
+    let sandboxEnvironment: SandboxEnvironment;
+    /*
+     * this function is executed every time a plugin calls any DOM API
+     * it must be kept as lean and performant as possible and sync
+     */
+    function distortionCallback(originalValue: ProxyTarget): ProxyTarget {
+      if (isDomElement(originalValue)) {
+        const element = getSafeSandboxDomElement(originalValue, meta.id);
+        // the element.style attribute should be a live target to work in chrome
+        markDomElementStyleAsALiveTarget(element);
+        return element;
+      } else {
+        patchObjectAsLiveTarget(originalValue);
+      }
+      distortLiveApis();
+      const distortion = generalDistortionMap.get(originalValue);
+      if (distortion) {
+        return distortion(originalValue, meta, sandboxEnvironment) as ProxyTarget;
+      }
+      return originalValue;
+    }
     // each plugin has its own sandbox
-    const sandboxEnvironment = createVirtualEnvironment(window, {
+    sandboxEnvironment = createVirtualEnvironment(window, {
       // distortions are interceptors to modify the behavior of objects when
       // the code inside the sandbox tries to access them
       distortionCallback,
+      liveTargetCallback: isLiveTarget,
       // endowments are custom variables we make available to plugins in their window object
       endowments: Object.getOwnPropertyDescriptors({
+        // window.location is unforgeable, we make the location available via endowments
+        // when the plugin code is loaded, the sandbox replaces the window.location with
+        // window.locationSandbox. In the future `window.location` could be a proxy if we
+        // want to intercept calls to it.
+        locationSandbox: window.location,
         // Plugins builds use the AMD module system. Their code consists
         // of a single function call to `define()` that internally contains all the plugin code.
         // This is that `define` function the plugin will call.
         // More info about how AMD works https://github.com/amdjs/amdjs-api/blob/master/AMD.md
         // Plugins code normally use the "anonymous module" signature: define(depencies, factoryFunction)
-        define(
+        async define(
           idOrDependencies: string | string[],
           maybeDependencies: string[] | PluginFactoryFunction,
           maybeFactory?: PluginFactoryFunction
-        ): void {
+        ): Promise<void> {
           let dependencies: string[];
           let factory: PluginFactoryFunction;
           if (Array.isArray(idOrDependencies)) {
@@ -65,13 +103,19 @@ async function doImportPluginModuleInSandbox(meta: PluginMeta): Promise<unknown>
           try {
             const resolvedDeps = resolvePluginDependencies(dependencies);
             // execute the plugin's code
-            const pluginExports: { plugin: GrafanaPlugin } = factory.apply(null, resolvedDeps);
+            const pluginExportsRaw = factory.apply(null, resolvedDeps);
             // only after the plugin has been executed
             // we can return the plugin exports.
             // This is what grafana effectively gets.
+            const pluginExports = await sandboxPluginComponents(pluginExportsRaw, meta);
             resolve(pluginExports);
           } catch (e) {
-            reject(new Error(`Could not execute plugin ${meta.id}: ` + e));
+            const error = new Error(`Could not execute plugin's define ${meta.id}: ` + e);
+            logError(error, {
+              pluginId: meta.id,
+              error: String(e),
+            });
+            reject(error);
           }
         },
       }),
@@ -93,24 +137,29 @@ async function doImportPluginModuleInSandbox(meta: PluginMeta): Promise<unknown>
       },
     });
 
-    // fetch and evalute the plugin code inside the sandbox
+    // fetch plugin's code
+    let pluginCode = '';
     try {
-      let pluginCode = await getPluginCode(meta.module);
-      pluginCode = patchPluginSourceMap(meta, pluginCode);
+      pluginCode = await getPluginCode(meta);
+    } catch (e) {
+      throw new Error(`Could not load plugin ${meta.id}: ` + e);
+      reject(new Error(`Could not load plugin ${meta.id}: ` + e));
+    }
 
+    try {
       // runs the code inside the sandbox environment
       // this evaluate will eventually run the `define` function inside
       // of endowments.
       sandboxEnvironment.evaluate(pluginCode);
     } catch (e) {
-      reject(new Error(`Could not execute plugin ${meta.id}: ` + e));
+      const error = new Error(`Could not run plugin ${meta.id} inside sandbox: ` + e);
+      logError(error, {
+        pluginId: meta.id,
+        error: String(e),
+      });
+      reject(error);
     }
   });
-}
-
-async function getPluginCode(modulePath: string) {
-  const response = await fetch('public/' + modulePath + '.js');
-  return await response.text();
 }
 
 function getActivityErrorHandler(pluginId: string) {
@@ -134,31 +183,6 @@ function getActivityErrorHandler(pluginId: string) {
     console.log(`[sandbox] Error from plugin ${pluginId}`);
     console.error(newError);
   };
-}
-
-/**
- * Patches the plugin's module.js source code references to sourcemaps to include the full url
- * of the module.js file instead of the regular relative reference.
- *
- * Because the plugin module.js code is loaded via fetch and then "eval" as a string
- * it can't find the references to the module.js.map directly and we need to patch it
- * to point to the correct location
- */
-function patchPluginSourceMap(meta: PluginMeta, pluginCode: string): string {
-  // skips inlined and files without source maps
-  if (pluginCode.includes('//# sourceMappingURL=module.js.map')) {
-    let replaceWith = '';
-    // make sure we don't add the sourceURL twice
-    if (!pluginCode.includes('//# sourceURL') || !pluginCode.includes('//@ sourceUrl')) {
-      replaceWith += `//# sourceURL=module.js\n`;
-    }
-    // modify the source map url to point to the correct location
-    const sourceCodeMapUrl = `/public/${meta.module}.js.map`;
-    replaceWith += `//# sourceMappingURL=${sourceCodeMapUrl}`;
-
-    return pluginCode.replace('//# sourceMappingURL=module.js.map', replaceWith);
-  }
-  return pluginCode;
 }
 
 function resolvePluginDependencies(deps: string[]) {

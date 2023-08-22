@@ -449,7 +449,7 @@ export interface Threshold {
    * Value represents a specified metric for the threshold, which triggers a visual change in the dashboard when this value is met or exceeded.
    * Nulls currently appear here when serializing -Infinity to JSON.
    */
-  value: number;
+  value: (number | null);
 }
 
 /**
@@ -521,11 +521,11 @@ export interface RangeMap {
     /**
      * Min value of the range. It can be null which means -Infinity
      */
-    from: number;
+    from: (number | null);
     /**
      * Max value of the range. It can be null which means +Infinity
      */
-    to: number;
+    to: (number | null);
     /**
      * Config to apply when the value is within the range
      */
@@ -1021,7 +1021,7 @@ export interface Dashboard {
    * Unique numeric identifier for the dashboard.
    * `id` is internal to a specific Grafana instance. `uid` should be used to identify a dashboard across Grafana instances.
    */
-  id?: number;
+  id?: (number | null); // TODO eliminate this null option
   /**
    * Links with references to other dashboards or external websites.
    */

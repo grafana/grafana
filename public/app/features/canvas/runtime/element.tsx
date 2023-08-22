@@ -36,7 +36,11 @@ export class ElementState implements LayerElement {
   // Calculated
   data?: any; // depends on the type
 
-  constructor(public item: CanvasElementItem, public options: CanvasElementOptions, public parent?: FrameState) {
+  constructor(
+    public item: CanvasElementItem,
+    public options: CanvasElementOptions,
+    public parent?: FrameState
+  ) {
     const fallbackName = `Element ${Date.now()}`;
     if (!options) {
       this.options = { type: item.id, name: fallbackName };
@@ -482,6 +486,20 @@ export class ElementState implements LayerElement {
   };
 
   onElementClick = (event: React.MouseEvent) => {
+    this.onTooltipCallback();
+  };
+
+  onElementKeyDown = (event: React.KeyboardEvent) => {
+    if (
+      event.key === 'Enter' &&
+      (event.currentTarget instanceof HTMLElement || event.currentTarget instanceof SVGElement)
+    ) {
+      const scene = this.getScene();
+      scene?.select({ targets: [event.currentTarget] });
+    }
+  };
+
+  onTooltipCallback = () => {
     const scene = this.getScene();
     if (scene?.tooltipCallback && scene.tooltip?.anchorPoint) {
       scene.tooltipCallback({
@@ -505,6 +523,9 @@ export class ElementState implements LayerElement {
         onMouseEnter={(e: React.MouseEvent) => this.handleMouseEnter(e, isSelected)}
         onMouseLeave={!scene?.isEditingEnabled ? this.handleMouseLeave : undefined}
         onClick={!scene?.isEditingEnabled ? this.onElementClick : undefined}
+        onKeyDown={!scene?.isEditingEnabled ? this.onElementKeyDown : undefined}
+        role="button"
+        tabIndex={0}
       >
         <item.display
           key={`${this.UID}/${this.revId}`}

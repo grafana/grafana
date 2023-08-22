@@ -19,9 +19,9 @@ import { setQueries } from 'app/features/explore/state/query';
 import { dispatch } from 'app/store/store';
 import { StoreState } from 'app/types';
 import { ShowConfirmModalEvent } from 'app/types/events';
-import { RichHistoryQuery, ExploreId } from 'app/types/explore';
+import { RichHistoryQuery } from 'app/types/explore';
 
-function mapStateToProps(state: StoreState, { exploreId }: { exploreId: ExploreId }) {
+function mapStateToProps(state: StoreState, { exploreId }: { exploreId: string }) {
   const explore = state.explore;
   const { datasourceInstance } = explore.panes[exploreId]!;
   return {
@@ -62,7 +62,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       border: 1px solid ${theme.colors.border.weak};
       margin: ${theme.spacing(1)} 0;
       background-color: ${cardColor};
-      border-radius: ${theme.shape.borderRadius(1)};
+      border-radius: ${theme.shape.radius.default};
       .starred {
         color: ${theme.v1.palette.orange};
       }
@@ -304,18 +304,18 @@ export function RichHistoryCard(props: Props) {
       <IconButton
         name="comment-alt"
         onClick={toggleActiveUpdateComment}
-        title={query.comment?.length > 0 ? 'Edit comment' : 'Add comment'}
+        tooltip={query.comment?.length > 0 ? 'Edit comment' : 'Add comment'}
       />
-      <IconButton name="copy" onClick={onCopyQuery} title="Copy query to clipboard" />
+      <IconButton name="copy" onClick={onCopyQuery} tooltip="Copy query to clipboard" />
       {value?.dsInstance && (
-        <IconButton name="share-alt" onClick={onCreateShortLink} title="Copy shortened link to clipboard" />
+        <IconButton name="share-alt" onClick={onCreateShortLink} tooltip="Copy shortened link to clipboard" />
       )}
-      <IconButton name="trash-alt" title={'Delete query'} onClick={onDeleteQuery} />
+      <IconButton name="trash-alt" title="Delete query" tooltip="Delete query" onClick={onDeleteQuery} />
       <IconButton
         name={query.starred ? 'favorite' : 'star'}
         iconType={query.starred ? 'mono' : 'default'}
         onClick={onStarrQuery}
-        title={query.starred ? 'Unstar query' : 'Star query'}
+        tooltip={query.starred ? 'Unstar query' : 'Star query'}
       />
     </div>
   );
@@ -403,14 +403,13 @@ const Query = ({ query, showDsInfo = false }: QueryProps) => {
   );
 };
 
-const getDsInfoStyles = (size: 'sm' | 'md') => (theme: GrafanaTheme2) =>
-  css`
-    display: flex;
-    align-items: center;
-    font-size: ${theme.typography[size === 'sm' ? 'bodySmall' : 'body'].fontSize};
-    font-weight: ${theme.typography.fontWeightMedium};
-    white-space: nowrap;
-  `;
+const getDsInfoStyles = (size: 'sm' | 'md') => (theme: GrafanaTheme2) => css`
+  display: flex;
+  align-items: center;
+  font-size: ${theme.typography[size === 'sm' ? 'bodySmall' : 'body'].fontSize};
+  font-weight: ${theme.typography.fontWeightMedium};
+  white-space: nowrap;
+`;
 
 function DatasourceInfo({ dsApi, size }: { dsApi?: DataSourceApi; size: 'sm' | 'md' }) {
   const getStyles = useCallback((theme: GrafanaTheme2) => getDsInfoStyles(size)(theme), [size]);

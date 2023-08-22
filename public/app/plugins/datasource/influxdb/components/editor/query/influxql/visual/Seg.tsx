@@ -6,7 +6,7 @@ import { useAsyncFn } from 'react-use';
 import { SelectableValue } from '@grafana/data';
 import { AsyncSelect, InlineLabel, Input, Select } from '@grafana/ui';
 
-import { useShadowedState } from '../../hooks/useShadowedState';
+import { useShadowedState } from '../hooks/useShadowedState';
 
 // this file is a simpler version of `grafana-ui / SegmentAsync.tsx`
 // with some changes:

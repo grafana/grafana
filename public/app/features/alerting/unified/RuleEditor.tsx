@@ -64,13 +64,13 @@ const RuleEditor = ({ match }: RuleEditorProps) => {
     }
 
     if (identifier) {
-      return <ExistingRuleEditor key={id} identifier={identifier} />;
+      return <ExistingRuleEditor key={id} identifier={identifier} id={id} />;
     }
 
     if (copyFromIdentifier) {
       return <CloneRuleEditor sourceRuleId={copyFromIdentifier} />;
     }
-
+    // new alert rule
     return <AlertRuleForm />;
   }, [canCreateCloudRules, canCreateGrafanaRules, canEditRules, copyFromIdentifier, id, identifier, loading]);
 

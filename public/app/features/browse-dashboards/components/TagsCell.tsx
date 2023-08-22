@@ -10,7 +10,16 @@ import { DashboardsTreeItem } from '../types';
 export function TagsCell({ row: { original: data } }: CellProps<DashboardsTreeItem, unknown>) {
   const styles = useStyles2(getStyles);
   const item = data.item;
-  if (item.kind === 'ui' || !item.tags) {
+
+  if (item.kind === 'ui') {
+    if (item.uiKind === 'pagination-placeholder') {
+      return <TagList.Skeleton />;
+    } else {
+      return null;
+    }
+  }
+
+  if (!item.tags) {
     return null;
   }
 
@@ -22,6 +31,7 @@ function getStyles(theme: GrafanaTheme2) {
     // TagList is annoying and has weird default alignment
     tagList: css({
       justifyContent: 'flex-start',
+      flexWrap: 'nowrap',
     }),
   };
 }

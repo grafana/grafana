@@ -13,12 +13,12 @@ const SHIFT_MULTIPLIER = 2 as const;
 const KNOWN_KEYS = new Set(['ArrowRight', 'ArrowLeft', 'ArrowUp', 'ArrowDown', 'Shift', ' ']);
 
 const initHook = (u: uPlot) => {
-  let vizLayoutViz: HTMLElement | null = u.root.closest('[tabindex]');
+  let parentWithFocus: HTMLElement | null = u.root.closest('[tabindex]');
   let pressedKeys = new Set<string>();
   let dragStartX: number | null = null;
   let keysLastHandledAt: number | null = null;
 
-  if (!vizLayoutViz) {
+  if (!parentWithFocus) {
     return;
   }
 
@@ -133,7 +133,7 @@ const initHook = (u: uPlot) => {
 
   const onFocus = () => {
     // We only want to initialize the cursor if the user is using keyboard controls
-    if (!vizLayoutViz?.matches(':focus-visible')) {
+    if (!parentWithFocus?.matches(':focus-visible')) {
       return;
     }
 
@@ -150,18 +150,17 @@ const initHook = (u: uPlot) => {
     u.setSelect({ left: 0, top: 0, width: 0, height: 0 }, false);
   };
 
-  vizLayoutViz.addEventListener('keydown', onKeyDown);
-  vizLayoutViz.addEventListener('keyup', onKeyUp);
-  vizLayoutViz.addEventListener('focus', onFocus);
-  vizLayoutViz.addEventListener('blur', onBlur);
+  parentWithFocus.addEventListener('keydown', onKeyDown);
+  parentWithFocus.addEventListener('keyup', onKeyUp);
+  parentWithFocus.addEventListener('focus', onFocus);
+  parentWithFocus.addEventListener('blur', onBlur);
 
   const onDestroy = () => {
-    vizLayoutViz?.removeEventListener('keydown', onKeyDown);
-    vizLayoutViz?.removeEventListener('keyup', onKeyUp);
-    vizLayoutViz?.removeEventListener('focus', onFocus);
-    vizLayoutViz?.removeEventListener('blur', onBlur);
-
-    vizLayoutViz = null;
+    parentWithFocus?.removeEventListener('keydown', onKeyDown);
+    parentWithFocus?.removeEventListener('keyup', onKeyUp);
+    parentWithFocus?.removeEventListener('focus', onFocus);
+    parentWithFocus?.removeEventListener('blur', onBlur);
+    parentWithFocus = null;
   };
 
   (u.hooks.destroy ??= []).push(onDestroy);

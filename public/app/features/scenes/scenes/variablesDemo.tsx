@@ -1,5 +1,4 @@
 import {
-  VizPanel,
   SceneCanvasText,
   SceneTimePicker,
   SceneFlexLayout,
@@ -13,6 +12,7 @@ import {
   SceneRefreshPicker,
   TextBoxVariable,
   SceneFlexItem,
+  PanelBuilders,
 } from '@grafana/scenes';
 
 import { DashboardScene } from '../dashboard/DashboardScene';
@@ -75,13 +75,14 @@ export function getVariablesDemo(): DashboardScene {
                 body: new SceneFlexLayout({
                   children: [
                     new SceneFlexItem({
-                      body: new VizPanel({
-                        pluginId: 'timeseries',
-                        title: 'handler: $handler',
-                        $data: getQueryRunnerWithRandomWalkQuery({
-                          alias: 'handler: $handler',
-                        }),
-                      }),
+                      body: PanelBuilders.timeseries()
+                        .setTitle('handler: $handler')
+                        .setData(
+                          getQueryRunnerWithRandomWalkQuery({
+                            alias: 'handler: $handler',
+                          })
+                        )
+                        .build(),
                     }),
                     new SceneFlexItem({
                       body: new SceneCanvasText({
@@ -109,13 +110,14 @@ export function getVariablesDemo(): DashboardScene {
                     direction: 'row',
                     children: [
                       new SceneFlexItem({
-                        body: new VizPanel({
-                          pluginId: 'timeseries',
-                          title: 'handler: $handler',
-                          $data: getQueryRunnerWithRandomWalkQuery({
-                            alias: 'handler: $handler',
-                          }),
-                        }),
+                        body: PanelBuilders.timeseries()
+                          .setTitle('handler: $handler')
+                          .setData(
+                            getQueryRunnerWithRandomWalkQuery({
+                              alias: 'handler: $handler',
+                            })
+                          )
+                          .build(),
                       }),
                     ],
                   }),
@@ -175,13 +177,14 @@ export function getVariablesDemoWithAll(): DashboardScene {
       direction: 'row',
       children: [
         new SceneFlexItem({
-          body: new VizPanel({
-            pluginId: 'timeseries',
-            title: 'handler: $handler',
-            $data: getQueryRunnerWithRandomWalkQuery({
-              alias: 'handler: $handler',
-            }),
-          }),
+          body: PanelBuilders.timeseries()
+            .setTitle('handler: $handler')
+            .setData(
+              getQueryRunnerWithRandomWalkQuery({
+                alias: 'handler: $handler',
+              })
+            )
+            .build(),
         }),
         new SceneFlexItem({
           width: '40%',

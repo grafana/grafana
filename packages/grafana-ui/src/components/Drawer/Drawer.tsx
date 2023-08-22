@@ -125,7 +125,7 @@ export function Drawer({
                 />
               </div>
               <div className={styles.titleWrapper}>
-                <Text as="h3" {...titleProps}>
+                <Text element="h3" {...titleProps}>
                   {title}
                 </Text>
                 {subtitle && <div className={styles.subtitle}>{subtitle}</div>}
@@ -161,30 +161,31 @@ function useBodyClassWhileOpen() {
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    container: css`
-      display: flex;
-      flex-direction: column;
-      height: 100%;
-      flex: 1 1 0;
-    `,
-    drawer: css`
-      .main-view & {
-        top: 81px;
-      }
+    container: css({
+      display: 'flex',
+      flexDirection: 'column',
+      height: '100%',
+      flex: '1 1 0',
+      minHeight: '100%',
+    }),
+    drawer: css({
+      '.main-view &': {
+        top: '81px',
+      },
 
-      .main-view--search-bar-hidden & {
-        top: 41px;
-      }
+      '.main-view--search-bar-hidden &': {
+        top: '41px',
+      },
 
-      .rc-drawer-content-wrapper {
-        box-shadow: ${theme.shadows.z3};
+      '.rc-drawer-content-wrapper': {
+        boxShadow: theme.shadows.z3,
 
-        ${theme.breakpoints.down('sm')} {
-          width: calc(100% - ${theme.spacing(2)}) !important;
-          min-width: 0 !important;
-        }
-      }
-    `,
+        [theme.breakpoints.down('sm')]: {
+          width: `calc(100% - ${theme.spacing(2)}) !important`,
+          minWidth: '0 !important',
+        },
+      },
+    }),
     sizes: {
       sm: css({
         '.rc-drawer-content-wrapper': {
@@ -213,38 +214,38 @@ const getStyles = (theme: GrafanaTheme2) => {
         },
       }),
     },
-    drawerContent: css`
-      background-color: ${theme.colors.background.primary} !important;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-      z-index: ${theme.zIndex.dropdown};
-    `,
-    drawerMotion: css`
-      &-appear {
-        transform: translateX(100%);
-        transition: none !important;
+    drawerContent: css({
+      backgroundColor: `${theme.colors.background.primary} !important`,
+      display: 'flex',
+      flexDirection: 'column',
+      overflow: 'hidden',
+      zIndex: theme.zIndex.dropdown,
+    }),
+    drawerMotion: css({
+      '&-appear': {
+        transform: 'translateX(100%)',
+        transition: 'none !important',
 
-        &-active {
-          transition: ${theme.transitions.create('transform')} !important;
-          transform: translateX(0);
-        }
-      }
-    `,
-    mask: css`
-      background-color: ${theme.components.overlay.background} !important;
-      backdrop-filter: blur(1px);
-    `,
-    maskMotion: css`
-      &-appear {
-        opacity: 0;
+        '&-active': {
+          transition: `${theme.transitions.create('transform')} !important`,
+          transform: 'translateX(0)',
+        },
+      },
+    }),
+    mask: css({
+      backgroundColor: `${theme.components.overlay.background} !important`,
+      backdropFilter: 'blur(1px)',
+    }),
+    maskMotion: css({
+      '&-appear': {
+        opacity: 0,
 
-        &-active {
-          opacity: 1;
-          transition: ${theme.transitions.create('opacity')};
-        }
-      }
-    `,
+        '&-active': {
+          opacity: 1,
+          transition: theme.transitions.create('opacity'),
+        },
+      },
+    }),
     header: css({
       flexGrow: 0,
       padding: theme.spacing(3, 2),
@@ -258,9 +259,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       right: theme.spacing(1),
       top: theme.spacing(2),
     }),
-    titleWrapper: css`
-      overflow-wrap: break-word;
-    `,
+    titleWrapper: css({
+      overflowWrap: 'break-word',
+    }),
     subtitle: css({
       color: theme.colors.text.secondary,
       paddingTop: theme.spacing(1),

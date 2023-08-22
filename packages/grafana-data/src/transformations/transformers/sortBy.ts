@@ -22,7 +22,7 @@ export interface SortByTransformerOptions {
 export const sortByTransformer: DataTransformerInfo<SortByTransformerOptions> = {
   id: DataTransformerID.sortBy,
   name: 'Sort by',
-  description: 'Sort fields in a frame',
+  description: 'Sort fields in a frame.',
   defaultOptions: {
     fields: {},
   },

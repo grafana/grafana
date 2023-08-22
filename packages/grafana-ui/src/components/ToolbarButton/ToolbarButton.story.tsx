@@ -130,10 +130,10 @@ export const Examples: StoryFn<typeof ToolbarButton> = (args) => {
         <br />
         Wrapped in noSpacing ButtonGroup
         <ButtonGroup>
-          <ToolbarButton variant="canvas" icon="clock-nine" tooltip="Time picker">
+          <ToolbarButton variant="active" icon="clock-nine" tooltip="Time picker">
             2020-10-02
           </ToolbarButton>
-          <ToolbarButton variant="canvas" icon="search-minus" />
+          <ToolbarButton variant="active" icon="search-minus" />
         </ButtonGroup>
         <br />
         <ButtonGroup>

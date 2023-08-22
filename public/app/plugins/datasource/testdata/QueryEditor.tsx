@@ -3,7 +3,7 @@ import { useAsync } from 'react-use';
 
 import { QueryEditorProps, SelectableValue } from '@grafana/data';
 import { selectors as editorSelectors } from '@grafana/e2e-selectors';
-import { InlineField, InlineFieldRow, InlineSwitch, Input, Select, TextArea } from '@grafana/ui';
+import { InlineField, InlineFieldRow, InlineSwitch, Input, Select, Icon, TextArea } from '@grafana/ui';
 
 import { RandomWalkEditor, StreamingClientEditor } from './components';
 import { CSVContentEditor } from './components/CSVContentEditor';
@@ -21,7 +21,6 @@ import { CSVWave, NodesQuery, TestData, TestDataQueryType, USAQuery } from './da
 import { TestDataDataSource } from './datasource';
 import { defaultStreamQuery } from './runStreams';
 
-const showLabelsFor = ['random_walk', 'predictable_pulse'];
 const endpoints = [
   { value: 'datasources', label: 'Data Sources' },
   { value: 'search', label: 'Search' },
@@ -173,7 +172,15 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
         .sort((a, b) => a.label.localeCompare(b.label)),
     [scenarioList]
   );
-  const showLabels = useMemo(() => showLabelsFor.includes(query.scenarioId ?? ''), [query]);
+
+  // Common options that can be added to various scenarios
+  const show = useMemo(() => {
+    const scenarioId = query.scenarioId ?? '';
+    return {
+      labels: ['random_walk', 'predictable_pulse'].includes(scenarioId),
+      dropPercent: ['csv_content', 'csv_file'].includes(scenarioId),
+    };
+  }, [query?.scenarioId]);
 
   if (loading) {
     return null;
@@ -217,7 +224,23 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
             />
           </InlineField>
         )}
-        {showLabels && (
+        {show.dropPercent && (
+          <InlineField label="Drop" tooltip={'Drop a random set of points'}>
+            <Input
+              type="number"
+              min={0}
+              max={100}
+              step={5}
+              width={8}
+              onChange={onInputChange}
+              name="dropPercent"
+              placeholder="0"
+              value={query.dropPercent}
+              suffix={<Icon name="percentage" />}
+            />
+          </InlineField>
+        )}
+        {show.labels && (
           <InlineField
             label="Labels"
             labelWidth={14}
@@ -317,6 +340,17 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
             rows={10}
             placeholder="Copy base64 text data from query result"
             onChange={onInputChange}
+          />
+        </InlineField>
+      )}
+
+      {scenarioId === TestDataQueryType.FlameGraph && (
+        <InlineField label={'Diff profile'} grow>
+          <InlineSwitch
+            value={Boolean(query.flamegraphDiff)}
+            onChange={(e) => {
+              onUpdate({ ...query, flamegraphDiff: e.currentTarget.checked });
+            }}
           />
         </InlineField>
       )}

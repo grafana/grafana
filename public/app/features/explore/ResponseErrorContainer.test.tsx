@@ -4,7 +4,6 @@ import { TestProvider } from 'test/helpers/TestProvider';
 
 import { DataQueryError, LoadingState } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { ExploreId } from 'app/types';
 
 import { configureStore } from '../../store/configureStore';
 
@@ -60,7 +59,7 @@ function setup(error: DataQueryError) {
 
   render(
     <TestProvider store={store}>
-      <ResponseErrorContainer exploreId={ExploreId.left} />
+      <ResponseErrorContainer exploreId="left" />
     </TestProvider>
   );
 }

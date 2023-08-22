@@ -35,13 +35,45 @@ func TestMigrateAlertRuleQueries(t *testing.T) {
 			input:    simplejson.NewFromAny(map[string]interface{}{"hide": true}),
 			expected: `{}`,
 		},
+		{
+			name: "when prometheus both type query, convert to range",
+			input: simplejson.NewFromAny(map[string]interface{}{
+				"datasource": map[string]string{
+					"type": "prometheus",
+				},
+				"instant": true,
+				"range":   true,
+			}),
+			expected: `{"datasource":{"type":"prometheus"},"instant":false,"range":true}`,
+		},
+		{
+			name: "when prometheus instant type query, do nothing",
+			input: simplejson.NewFromAny(map[string]interface{}{
+				"datasource": map[string]string{
+					"type": "prometheus",
+				},
+				"instant": true,
+			}),
+			expected: `{"datasource":{"type":"prometheus"},"instant":true}`,
+		},
+		{
+			name: "when non-prometheus with instant and range, do nothing",
+			input: simplejson.NewFromAny(map[string]interface{}{
+				"datasource": map[string]string{
+					"type": "something",
+				},
+				"instant": true,
+				"range":   true,
+			}),
+			expected: `{"datasource":{"type":"something"},"instant":true,"range":true}`,
+		},
 	}
 
 	for _, tt := range tc {
 		t.Run(tt.name, func(t *testing.T) {
 			model, err := tt.input.Encode()
 			require.NoError(t, err)
-			queries, err := migrateAlertRuleQueries([]alertQuery{{Model: model}})
+			queries, err := migrateAlertRuleQueries(&logtest.Fake{}, []alertQuery{{Model: model}})
 			if tt.err != nil {
 				require.Error(t, err)
 				require.EqualError(t, err, tt.err.Error())

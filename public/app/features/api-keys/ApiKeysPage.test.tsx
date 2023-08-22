@@ -44,6 +44,7 @@ const setup = (propOverrides: Partial<Props>) => {
     includeExpiredDisabled: false,
     toggleIncludeExpired: toggleIncludeExpiredMock,
     canCreate: true,
+    migrationResult: undefined,
   };
 
   Object.assign(props, propOverrides);

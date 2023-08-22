@@ -262,7 +262,7 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 				},
 				{ // New in 8.0.
 					Label:        "Message",
-					Description:  "Optional message to include with the email. You can use template variables",
+					Description:  "Optional message. You can use templates to customize this field. Using a custom message will replace the default message",
 					Element:      ElementTypeTextArea,
 					PropertyName: "message",
 				},
@@ -270,7 +270,7 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 					Label:        "Subject",
 					Element:      ElementTypeInput,
 					InputType:    InputTypeText,
-					Description:  "Templated subject of the email",
+					Description:  "Optional subject. You can use templates to customize this field",
 					PropertyName: "subject",
 					Placeholder:  alertingTemplates.DefaultMessageTitleEmbed,
 				},
@@ -997,6 +997,7 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 					Placeholder:  "Discord webhook URL",
 					PropertyName: "url",
 					Required:     true,
+					Secure:       true,
 				},
 				{
 					Label:        "Avatar URL",

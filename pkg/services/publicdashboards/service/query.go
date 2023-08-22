@@ -2,10 +2,13 @@ package service
 
 import (
 	"context"
+	"strconv"
+	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -14,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/publicdashboards/validation"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/tsdb/grafanads"
+	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 )
 
 // FindAnnotations returns annotations for a public dashboard
@@ -106,7 +110,6 @@ func (pd *PublicDashboardServiceImpl) GetMetricRequest(ctx context.Context, dash
 	}
 
 	metricReqDTO, err := pd.buildMetricRequest(
-		ctx,
 		dashboard,
 		publicDashboard,
 		panelId,
@@ -151,7 +154,7 @@ func (pd *PublicDashboardServiceImpl) GetQueryDataResponse(ctx context.Context, 
 }
 
 // buildMetricRequest merges public dashboard parameters with dashboard and returns a metrics request to be sent to query backend
-func (pd *PublicDashboardServiceImpl) buildMetricRequest(ctx context.Context, dashboard *dashboards.Dashboard, publicDashboard *models.PublicDashboard, panelId int64, reqDTO models.PublicDashboardQueryDTO) (dtos.MetricRequest, error) {
+func (pd *PublicDashboardServiceImpl) buildMetricRequest(dashboard *dashboards.Dashboard, publicDashboard *models.PublicDashboard, panelId int64, reqDTO models.PublicDashboardQueryDTO) (dtos.MetricRequest, error) {
 	// group queries by panel
 	queriesByPanel := groupQueriesByPanelId(dashboard.Data)
 	queries, ok := queriesByPanel[panelId]
@@ -159,7 +162,7 @@ func (pd *PublicDashboardServiceImpl) buildMetricRequest(ctx context.Context, da
 		return dtos.MetricRequest{}, models.ErrPanelNotFound.Errorf("buildMetricRequest: public dashboard panel not found")
 	}
 
-	ts := publicDashboard.BuildTimeSettings(dashboard, reqDTO)
+	ts := buildTimeSettings(dashboard, reqDTO, publicDashboard)
 
 	// determine safe resolution to query data at
 	safeInterval, safeResolution := pd.getSafeIntervalAndMaxDataPoints(reqDTO, ts)
@@ -222,9 +225,9 @@ func getUniqueDashboardDatasourceUids(dashboard *simplejson.Json) []string {
 
 		// if uid is for a mixed datasource, get the datasource uids from the targets
 		if uid == "-- Mixed --" {
-			for _, target := range panel.Get("targets").MustArray() {
-				target := simplejson.NewFromAny(target)
-				datasourceUid := target.Get("datasource").Get("uid").MustString()
+			for _, targetObj := range panel.Get("targets").MustArray() {
+				target := simplejson.NewFromAny(targetObj)
+				datasourceUid := getDataSourceUidFromJson(target)
 				if _, ok := exists[datasourceUid]; !ok {
 					datasourceUids = append(datasourceUids, datasourceUid)
 					exists[datasourceUid] = true
@@ -278,11 +281,19 @@ func extractQueriesFromPanels(panels []interface{}, result map[int64][]*simplejs
 		}
 
 		var panelQueries []*simplejson.Json
+		hasExpression := panelHasAnExpression(panel)
 
 		for _, queryObj := range panel.Get("targets").MustArray() {
 			query := simplejson.NewFromAny(queryObj)
 
-			// We dont support exemplars for public dashboards currently
+			// it the panel doesn't have an expression and the query is disabled (hide is true), skip the query
+			// the expression handler will take care later of removing hidden queries which could be necessary to calculate
+			// the value of other queries
+			if !hasExpression && query.Get("hide").MustBool() {
+				continue
+			}
+
+			// We don't support exemplars for public dashboards currently
 			query.Del("exemplar")
 
 			// if query target has no datasource, set it to have the datasource on the panel
@@ -296,6 +307,17 @@ func extractQueriesFromPanels(panels []interface{}, result map[int64][]*simplejs
 
 		result[panel.Get("id").MustInt64()] = panelQueries
 	}
+}
+
+func panelHasAnExpression(panel *simplejson.Json) bool {
+	var hasExpression bool
+	for _, queryObj := range panel.Get("targets").MustArray() {
+		query := simplejson.NewFromAny(queryObj)
+		if expr.NodeTypeFromDatasourceUID(getDataSourceUidFromJson(query)) == expr.TypeCMDNode {
+			hasExpression = true
+		}
+	}
+	return hasExpression
 }
 
 func getDataSourceUidFromJson(query *simplejson.Json) string {
@@ -318,4 +340,58 @@ func sanitizeMetadataFromQueryData(res *backend.QueryDataResponse) {
 			}
 		}
 	}
+}
+
+// NewDataTimeRange declared to be able to stub this function in tests
+var NewDataTimeRange = legacydata.NewDataTimeRange
+
+// BuildTimeSettings build time settings object using selected values if enabled and are valid or dashboard default values
+func buildTimeSettings(d *dashboards.Dashboard, reqDTO models.PublicDashboardQueryDTO, pd *models.PublicDashboard) models.TimeSettings {
+	from, to, timezone := getTimeRangeValuesOrDefault(reqDTO, d, pd.TimeSelectionEnabled)
+
+	timeRange := NewDataTimeRange(from, to)
+
+	timeFrom, _ := timeRange.ParseFrom(
+		legacydata.WithLocation(timezone),
+	)
+	timeTo, _ := timeRange.ParseTo(
+		legacydata.WithLocation(timezone),
+	)
+	timeToAsEpoch := timeTo.UnixMilli()
+	timeFromAsEpoch := timeFrom.UnixMilli()
+
+	// Were using epoch ms because this is used to build a MetricRequest, which is used by query caching, which want the time range in epoch milliseconds.
+	return models.TimeSettings{
+		From: strconv.FormatInt(timeFromAsEpoch, 10),
+		To:   strconv.FormatInt(timeToAsEpoch, 10),
+	}
+}
+
+// returns from, to and timezone from the request if the timeSelection is enabled or the dashboard default values
+func getTimeRangeValuesOrDefault(reqDTO models.PublicDashboardQueryDTO, d *dashboards.Dashboard, timeSelectionEnabled bool) (string, string, *time.Location) {
+	from := d.Data.GetPath("time", "from").MustString()
+	to := d.Data.GetPath("time", "to").MustString()
+	dashboardTimezone := d.Data.GetPath("timezone").MustString()
+
+	// we use the values from the request if the time selection is enabled and the values are valid
+	if timeSelectionEnabled {
+		if reqDTO.TimeRange.From != "" && reqDTO.TimeRange.To != "" {
+			from = reqDTO.TimeRange.From
+			to = reqDTO.TimeRange.To
+		}
+
+		if reqDTO.TimeRange.Timezone != "" {
+			if userTimezone, err := time.LoadLocation(reqDTO.TimeRange.Timezone); err == nil {
+				return from, to, userTimezone
+			}
+		}
+	}
+
+	// if the dashboardTimezone is blank or there is an error default is UTC
+	timezone, err := time.LoadLocation(dashboardTimezone)
+	if err != nil {
+		return from, to, time.UTC
+	}
+
+	return from, to, timezone
 }

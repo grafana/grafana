@@ -1,13 +1,17 @@
-import { getBackendSrv } from '@grafana/runtime';
-import { DeleteDashboardResponse } from 'app/features/manage-dashboards/types';
 import { GENERAL_FOLDER_UID } from 'app/features/search/constants';
 import { DashboardViewItem, DashboardViewItemKind } from 'app/features/search/types';
-import { createAsyncThunk, DashboardDTO } from 'app/types';
+import { createAsyncThunk } from 'app/types';
 
-import { listDashboards, listFolders } from '../api/services';
+import { listDashboards, listFolders, PAGE_SIZE } from '../api/services';
+import { DashboardViewItemWithUIItems, UIDashboardViewItem } from '../types';
+
+import { findItem } from './utils';
 
 interface FetchNextChildrenPageArgs {
   parentUID: string | undefined;
+
+  // Allow UI items to be excluded (they're always excluded) for convenience for callers
+  excludeKinds?: Array<DashboardViewItemWithUIItems['kind'] | UIDashboardViewItem['uiKind']>;
   pageSize: number;
 }
 
@@ -29,6 +33,25 @@ interface RefetchChildrenResult {
   page: number;
   lastPageOfKind: boolean;
 }
+
+export const refreshParents = createAsyncThunk(
+  'browseDashboards/refreshParents',
+  async (uids: string[], { getState, dispatch }) => {
+    const { browseDashboards } = getState();
+    const { rootItems, childrenByParentUID } = browseDashboards;
+    const parentsToRefresh = new Set<string | undefined>();
+
+    for (const uid of uids) {
+      // find the parent folder uid
+      const item = findItem(rootItems?.items ?? [], childrenByParentUID, uid);
+      parentsToRefresh.add(item?.parentUID);
+    }
+
+    for (const parentUID of parentsToRefresh) {
+      dispatch(refetchChildren({ parentUID, pageSize: PAGE_SIZE }));
+    }
+  }
+);
 
 export const refetchChildren = createAsyncThunk(
   'browseDashboards/refetchChildren',
@@ -68,9 +91,12 @@ export const refetchChildren = createAsyncThunk(
 export const fetchNextChildrenPage = createAsyncThunk(
   'browseDashboards/fetchNextChildrenPage',
   async (
-    { parentUID, pageSize }: FetchNextChildrenPageArgs,
+    { parentUID, excludeKinds = [], pageSize }: FetchNextChildrenPageArgs,
     thunkAPI
   ): Promise<undefined | FetchNextChildrenPageResult> => {
+    // TODO: invert prop to `includeKinds`, but also support not loading folders
+    const loadDashboards = !excludeKinds.includes('dashboard');
+
     const uid = parentUID === GENERAL_FOLDER_UID ? undefined : parentUID;
 
     const state = thunkAPI.getState().browseDashboards;
@@ -88,13 +114,13 @@ export const fetchNextChildrenPage = createAsyncThunk(
       fetchKind = 'folder';
     } else if (collection.lastFetchedKind === 'dashboard' && !collection.lastKindHasMoreItems) {
       // There's nothing to load at all
-      console.warn(`FetchedChildren called for ${uid} but that collection is fully loaded`);
+      console.warn(`fetchNextChildrenPage called for ${uid} but that collection is fully loaded`);
       // return;
     } else if (collection.lastFetchedKind === 'folder' && collection.lastKindHasMoreItems) {
       // Load additional pages of folders
       page = collection.lastFetchedPage + 1;
       fetchKind = 'folder';
-    } else {
+    } else if (loadDashboards) {
       // We've already checked if there's more folders to load, so if the last fetched is folder
       // then we fetch first page of dashboards
       page = collection.lastFetchedKind === 'folder' ? 1 : collection.lastFetchedPage + 1;
@@ -114,7 +140,7 @@ export const fetchNextChildrenPage = createAsyncThunk(
 
     // If we've loaded all folders, load the first page of dashboards.
     // This ensures dashboards are loaded if a folder contains only dashboards.
-    if (fetchKind === 'folder' && lastPageOfKind) {
+    if (fetchKind === 'folder' && lastPageOfKind && loadDashboards) {
       fetchKind = 'dashboard';
       page = 1;
 
@@ -125,39 +151,9 @@ export const fetchNextChildrenPage = createAsyncThunk(
 
     return {
       children,
-      lastPageOfKind: lastPageOfKind,
+      lastPageOfKind,
       page,
       kind: fetchKind,
     };
-  }
-);
-
-export const deleteDashboard = createAsyncThunk('browseDashboards/deleteDashboard', async (dashboardUID: string) => {
-  return getBackendSrv().delete<DeleteDashboardResponse>(`/api/dashboards/uid/${dashboardUID}`);
-});
-
-export const deleteFolder = createAsyncThunk('browseDashboards/deleteFolder', async (folderUID: string) => {
-  return getBackendSrv().delete(`/api/folders/${folderUID}`, undefined, {
-    // TODO: Revisit this field when this permissions issue is resolved
-    // https://github.com/grafana/grafana-enterprise/issues/5144
-    params: { forceDeleteRules: false },
-  });
-});
-
-export const moveDashboard = createAsyncThunk(
-  'browseDashboards/moveDashboard',
-  async ({ dashboardUID, destinationUID }: { dashboardUID: string; destinationUID: string }) => {
-    const fullDash: DashboardDTO = await getBackendSrv().get(`/api/dashboards/uid/${dashboardUID}`);
-
-    const options = {
-      dashboard: fullDash.dashboard,
-      folderUid: destinationUID,
-      overwrite: false,
-    };
-
-    return getBackendSrv().post('/api/dashboards/db', {
-      message: '',
-      ...options,
-    });
   }
 );

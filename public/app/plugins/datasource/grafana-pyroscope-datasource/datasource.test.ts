@@ -1,8 +1,9 @@
-import { AbstractLabelOperator, DataSourceInstanceSettings, PluginMetaInfo, PluginType } from '@grafana/data';
+import { AbstractLabelOperator, CoreApp, DataSourceInstanceSettings, PluginMetaInfo, PluginType } from '@grafana/data';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 
 import { defaultPhlareQueryType } from './dataquery.gen';
-import { PhlareDataSource } from './datasource';
+import { normalizeQuery, PhlareDataSource } from './datasource';
+import { Query } from './types';
 
 describe('Phlare data source', () => {
   let ds: PhlareDataSource;
@@ -75,6 +76,42 @@ describe('Phlare data source', () => {
       });
       expect(templateSrv.replace).toBeCalledTimes(1);
       expect(query.labelSelector).toBe(`{${interpolationText}="${interpolationText}"}`);
+    });
+  });
+});
+
+describe('normalizeQuery', () => {
+  it('correctly normalizes the query', () => {
+    // We need the type assertion here because the query types are inherently wrong in explore.
+    let normalized = normalizeQuery({} as Query);
+    expect(normalized).toMatchObject({
+      labelSelector: '{}',
+      groupBy: [],
+      queryType: 'profile',
+    });
+
+    normalized = normalizeQuery({
+      labelSelector: '{app="myapp"}',
+      groupBy: ['app'],
+      queryType: 'metrics',
+      profileTypeId: 'cpu',
+      refId: '',
+    });
+    expect(normalized).toMatchObject({
+      labelSelector: '{app="myapp"}',
+      groupBy: ['app'],
+      queryType: 'metrics',
+      profileTypeId: 'cpu',
+    });
+  });
+
+  it('correctly normalizes the query when in explore', () => {
+    // We need the type assertion here because the query types are inherently wrong in explore.
+    const normalized = normalizeQuery({} as Query, CoreApp.Explore);
+    expect(normalized).toMatchObject({
+      labelSelector: '{}',
+      groupBy: [],
+      queryType: 'both',
     });
   });
 });

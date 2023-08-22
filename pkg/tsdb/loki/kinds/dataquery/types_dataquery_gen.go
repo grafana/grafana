@@ -43,7 +43,7 @@ type DataQuery struct {
 	// For non mixed scenarios this is undefined.
 	// TODO find a better way to do this ^ that's friendly to schema
 	// TODO this shouldn't be unknown but DataSourceRef | null
-	Datasource *interface{} `json:"datasource,omitempty"`
+	Datasource *any `json:"datasource,omitempty"`
 
 	// Hide true if query is disabled (ie should not be returned to the dashboard)
 	// Note this does not always imply that the query should not be executed since
@@ -71,7 +71,7 @@ type LokiDataQuery struct {
 	// For non mixed scenarios this is undefined.
 	// TODO find a better way to do this ^ that's friendly to schema
 	// TODO this shouldn't be unknown but DataSourceRef | null
-	Datasource *interface{}     `json:"datasource,omitempty"`
+	Datasource *any             `json:"datasource,omitempty"`
 	EditorMode *QueryEditorMode `json:"editorMode,omitempty"`
 
 	// The LogQL query.
@@ -103,7 +103,7 @@ type LokiDataQuery struct {
 	// By default, the UI will assign A->Z; however setting meaningful names may be useful.
 	RefId string `json:"refId"`
 
-	// Used to scale the interval value.
+	// @deprecated, now use step.
 	Resolution *int64 `json:"resolution,omitempty"`
 
 	// Used to set step value for range queries.

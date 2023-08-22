@@ -16,11 +16,7 @@ package grafanaplugin
 
 import (
 	"github.com/grafana/grafana/packages/grafana-schema/src/common"
-	"github.com/grafana/grafana/pkg/plugins/pfs"
 )
-
-// This file (with its sibling .cue files) implements pfs.GrafanaPlugin
-pfs.GrafanaPlugin
 
 composableKinds: DataQuery: {
 	maturity: "experimental"
@@ -37,7 +33,7 @@ composableKinds: DataQuery: {
 				legendFormat?: string
 				// Used to limit the number of log rows returned.
 				maxLines?: int64
-				// Used to scale the interval value.
+				// @deprecated, now use step.
 				resolution?: int64
 				editorMode?: #QueryEditorMode
 				// @deprecated, now use queryType.

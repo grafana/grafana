@@ -14,11 +14,8 @@ import { useCleanup } from '../../../core/hooks/useCleanup';
 
 import { alertmanagerApi } from './api/alertmanagerApi';
 import { useGetContactPointsState } from './api/receiversApi';
-import { AlertManagerPicker } from './components/AlertManagerPicker';
-import { AlertingPageWrapper } from './components/AlertingPageWrapper';
+import { AlertmanagerPageWrapper } from './components/AlertingPageWrapper';
 import { GrafanaAlertmanagerDeliveryWarning } from './components/GrafanaAlertmanagerDeliveryWarning';
-import { NoAlertManagerWarning } from './components/NoAlertManagerWarning';
-import { ProvisionedResource, ProvisioningAlert } from './components/Provisioning';
 import { MuteTimingsTable } from './components/mute-timings/MuteTimingsTable';
 import {
   computeInheritedTree,
@@ -32,10 +29,9 @@ import {
   useAlertGroupsModal,
 } from './components/notification-policies/Modals';
 import { Policy } from './components/notification-policies/Policy';
-import { useAlertManagerSourceName } from './hooks/useAlertManagerSourceName';
-import { useAlertManagersByPermission } from './hooks/useAlertManagerSources';
-import { useUnifiedAlertingSelector } from './hooks/useUnifiedAlertingSelector';
-import { fetchAlertManagerConfigAction, updateAlertManagerConfigAction } from './state/actions';
+import { useAlertmanagerConfig } from './hooks/useAlertmanagerConfig';
+import { useAlertmanager } from './state/AlertmanagerContext';
+import { updateAlertManagerConfigAction } from './state/actions';
 import { FormAmRoute } from './types/amroutes';
 import { useRouteGroupsMatcher } from './useRouteGroupsMatcher';
 import { addUniqueIdentifierToRoute } from './utils/amroutes';
@@ -64,31 +60,26 @@ const AmRoutes = () => {
   const [labelMatchersFilter, setLabelMatchersFilter] = useState<ObjectMatcher[]>([]);
 
   const { getRouteGroupsMap } = useRouteGroupsMatcher();
+  const { selectedAlertmanager } = useAlertmanager();
 
-  const alertManagers = useAlertManagersByPermission('notification');
-  const [alertManagerSourceName, setAlertManagerSourceName] = useAlertManagerSourceName(alertManagers);
-
-  const amConfigs = useUnifiedAlertingSelector((state) => state.amConfigs);
-  const contactPointsState = useGetContactPointsState(alertManagerSourceName ?? '');
-
-  useEffect(() => {
-    if (alertManagerSourceName) {
-      dispatch(fetchAlertManagerConfigAction(alertManagerSourceName));
-    }
-  }, [alertManagerSourceName, dispatch]);
-
-  const { currentData: alertGroups, refetch: refetchAlertGroups } = useGetAlertmanagerAlertGroupsQuery(
-    { amSourceName: alertManagerSourceName ?? '' },
-    { skip: !alertManagerSourceName }
-  );
+  const contactPointsState = useGetContactPointsState(selectedAlertmanager ?? '');
 
   const {
-    result,
-    loading: resultLoading,
+    currentData: result,
+    isLoading: resultLoading,
     error: resultError,
-  } = (alertManagerSourceName && amConfigs[alertManagerSourceName]) || initialAsyncRequestState;
+  } = useAlertmanagerConfig(selectedAlertmanager, {
+    refetchOnFocus: true,
+    refetchOnReconnect: true,
+  });
 
   const config = result?.alertmanager_config;
+
+  const { currentData: alertGroups, refetch: refetchAlertGroups } = useGetAlertmanagerAlertGroupsQuery(
+    { amSourceName: selectedAlertmanager ?? '' },
+    { skip: !selectedAlertmanager }
+  );
+
   const receivers = config?.receivers ?? [];
 
   const rootRoute = useMemo(() => {
@@ -125,7 +116,7 @@ const AmRoutes = () => {
     if (!rootRoute) {
       return;
     }
-    const newRouteTree = mergePartialAmRouteWithRouteTree(alertManagerSourceName ?? '', partialRoute, rootRoute);
+    const newRouteTree = mergePartialAmRouteWithRouteTree(selectedAlertmanager ?? '', partialRoute, rootRoute);
     updateRouteTree(newRouteTree);
   }
 
@@ -142,7 +133,7 @@ const AmRoutes = () => {
       return;
     }
 
-    const newRouteTree = addRouteToParentRoute(alertManagerSourceName ?? '', partialRoute, parentRoute, rootRoute);
+    const newRouteTree = addRouteToParentRoute(selectedAlertmanager ?? '', partialRoute, parentRoute, rootRoute);
     updateRouteTree(newRouteTree);
   }
 
@@ -163,14 +154,13 @@ const AmRoutes = () => {
           },
         },
         oldConfig: result,
-        alertManagerSourceName: alertManagerSourceName!,
+        alertManagerSourceName: selectedAlertmanager!,
         successMessage: 'Updated notification policies',
-        refetch: true,
       })
     )
       .unwrap()
       .then(() => {
-        if (alertManagerSourceName) {
+        if (selectedAlertmanager) {
           refetchAlertGroups();
         }
         closeEditModal();
@@ -185,7 +175,7 @@ const AmRoutes = () => {
   // edit, add, delete modals
   const [addModal, openAddModal, closeAddModal] = useAddPolicyModal(receivers, handleAdd, updatingTree);
   const [editModal, openEditModal, closeEditModal] = useEditPolicyModal(
-    alertManagerSourceName ?? '',
+    selectedAlertmanager ?? '',
     receivers,
     handleSave,
     updatingTree
@@ -195,21 +185,17 @@ const AmRoutes = () => {
 
   useCleanup((state) => (state.unifiedAlerting.saveAMConfig = initialAsyncRequestState));
 
-  if (!alertManagerSourceName) {
-    return (
-      <AlertingPageWrapper pageId="am-routes">
-        <NoAlertManagerWarning availableAlertManagers={alertManagers} />
-      </AlertingPageWrapper>
-    );
+  if (!selectedAlertmanager) {
+    return null;
   }
 
-  const vanillaPrometheusAlertManager = isVanillaPrometheusAlertManagerDataSource(alertManagerSourceName);
-  const readOnlyPolicies = vanillaPrometheusAlertManager || isProvisioned;
+  const vanillaPrometheusAlertManager = isVanillaPrometheusAlertManagerDataSource(selectedAlertmanager);
+  const readOnlyPolicies = vanillaPrometheusAlertManager;
   const readOnlyMuteTimings = vanillaPrometheusAlertManager;
 
   const numberOfMuteTimings = result?.alertmanager_config.mute_time_intervals?.length ?? 0;
   const haveData = result && !resultError && !resultLoading;
-  const isLoading = !result && resultLoading;
+  const isFetching = !result && resultLoading;
   const haveError = resultError && !resultLoading;
 
   const muteTimingsTabActive = activeTab === ActiveTab.MuteTimings;
@@ -217,11 +203,6 @@ const AmRoutes = () => {
 
   return (
     <>
-      <AlertManagerPicker
-        current={alertManagerSourceName}
-        onChange={setAlertManagerSourceName}
-        dataSources={alertManagers}
-      />
       <TabsBar>
         <Tab
           label={'Notification Policies'}
@@ -242,7 +223,7 @@ const AmRoutes = () => {
         />
       </TabsBar>
       <TabContent className={styles.tabContent}>
-        {isLoading && <LoadingPlaceholder text="Loading Alertmanager config..." />}
+        {isFetching && <LoadingPlaceholder text="Loading Alertmanager config..." />}
         {haveError && (
           <Alert severity="error" title="Error loading Alertmanager config">
             {resultError.message || 'Unknown error.'}
@@ -252,8 +233,7 @@ const AmRoutes = () => {
           <>
             {policyTreeTabActive && (
               <>
-                <GrafanaAlertmanagerDeliveryWarning currentAlertmanager={alertManagerSourceName} />
-                {isProvisioned && <ProvisioningAlert resource={ProvisionedResource.RootNotificationPolicy} />}
+                <GrafanaAlertmanagerDeliveryWarning currentAlertmanager={selectedAlertmanager} />
                 <Stack direction="column" gap={1}>
                   {rootRoute && (
                     <NotificationPoliciesFilter
@@ -270,7 +250,8 @@ const AmRoutes = () => {
                       alertGroups={alertGroups ?? []}
                       contactPointsState={contactPointsState.receivers}
                       readOnly={readOnlyPolicies}
-                      alertManagerSourceName={alertManagerSourceName}
+                      provisioned={isProvisioned}
+                      alertManagerSourceName={selectedAlertmanager}
                       onAddPolicy={openAddModal}
                       onEditPolicy={openEditModal}
                       onDeletePolicy={openDeleteModal}
@@ -287,7 +268,7 @@ const AmRoutes = () => {
               </>
             )}
             {muteTimingsTabActive && (
-              <MuteTimingsTable alertManagerSourceName={alertManagerSourceName} hideActions={readOnlyMuteTimings} />
+              <MuteTimingsTable alertManagerSourceName={selectedAlertmanager} hideActions={readOnlyMuteTimings} />
             )}
           </>
         )}
@@ -356,12 +337,10 @@ function getActiveTabFromUrl(queryParams: UrlQueryMap): QueryParamValues {
   };
 }
 
-function NotificationPoliciesPage() {
-  return (
-    <AlertingPageWrapper pageId="am-routes">
-      <AmRoutes />
-    </AlertingPageWrapper>
-  );
-}
+const NotificationPoliciesPage = () => (
+  <AlertmanagerPageWrapper pageId="am-routes" accessType="notification">
+    <AmRoutes />
+  </AlertmanagerPageWrapper>
+);
 
 export default withErrorBoundary(NotificationPoliciesPage, { style: 'page' });

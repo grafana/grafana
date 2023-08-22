@@ -3,8 +3,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { isFetchError } from '@grafana/runtime';
-import { Field, IconButton, Input, useStyles2 } from '@grafana/ui';
-import { H1 } from '@grafana/ui/src/unstable';
+import { Field, IconButton, Input, useStyles2, Text } from '@grafana/ui';
 
 export interface Props {
   value: string;
@@ -13,7 +12,7 @@ export interface Props {
 
 export const EditableTitle = ({ value, onEdit }: Props) => {
   const styles = useStyles2(getStyles);
-  const [localValue, setLocalValue] = useState<string>();
+  const [localValue, setLocalValue] = useState(value);
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string>();
@@ -61,7 +60,9 @@ export const EditableTitle = ({ value, onEdit }: Props) => {
           this is to prevent the title from flickering back to the old value after the user has edited
           caused by the delay between the save completing and the new value being refetched
         */}
-        <H1 truncate>{localValue}</H1>
+        <Text element="h1" truncate>
+          {localValue}
+        </Text>
         <IconButton name="pen" size="lg" tooltip="Edit title" onClick={() => setIsEditing(true)} />
       </div>
     </div>

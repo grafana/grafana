@@ -12,6 +12,7 @@ export interface Props {
   buttonTitle: string;
   buttonDisabled?: boolean;
   description?: string;
+  onClick?: () => void;
 }
 
 const ConfigureAuthCTA: React.FunctionComponent<Props> = ({
@@ -21,6 +22,7 @@ const ConfigureAuthCTA: React.FunctionComponent<Props> = ({
   buttonTitle,
   buttonDisabled,
   description,
+  onClick,
 }) => {
   const styles = useStyles2(getStyles);
   const footer = description ? <span key="proTipFooter">{description}</span> : '';
@@ -34,6 +36,7 @@ const ConfigureAuthCTA: React.FunctionComponent<Props> = ({
       className={ctaElementClassName}
       data-testid={selectors.components.CallToActionCard.buttonV2(buttonTitle)}
       disabled={buttonDisabled}
+      onClick={() => onClick && onClick()}
     >
       {buttonTitle}
     </LinkButton>

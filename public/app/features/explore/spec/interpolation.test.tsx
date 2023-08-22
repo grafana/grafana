@@ -29,6 +29,12 @@ jest.mock('react-virtualized-auto-sizer', () => {
   };
 });
 
+jest.mock('../../correlations/utils', () => {
+  return {
+    getCorrelationsBySourceUIDs: jest.fn().mockReturnValue({ correlations: [] }),
+  };
+});
+
 describe('Explore: interpolation', () => {
   // support-escalations/issues/1459
   it('Time is interpolated when explore is opened with a URL', async () => {

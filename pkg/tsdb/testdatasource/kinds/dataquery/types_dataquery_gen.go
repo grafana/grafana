@@ -79,7 +79,7 @@ type DataQuery struct {
 	// For non mixed scenarios this is undefined.
 	// TODO find a better way to do this ^ that's friendly to schema
 	// TODO this shouldn't be unknown but DataSourceRef | null
-	Datasource *interface{} `json:"datasource,omitempty"`
+	Datasource *any `json:"datasource,omitempty"`
 
 	// Hide true if query is disabled (ie should not be returned to the dashboard)
 	// Note this does not always imply that the query should not be executed since
@@ -125,7 +125,7 @@ type Scenario struct {
 
 // SimulationQuery defines model for SimulationQuery.
 type SimulationQuery struct {
-	Config map[string]interface{} `json:"config,omitempty"`
+	Config map[string]any `json:"config,omitempty"`
 	Key    struct {
 		Tick float64 `json:"tick"`
 		Type string  `json:"type"`
@@ -154,17 +154,21 @@ type TestDataDataQuery struct {
 	// Specific implementations will *extend* this interface, adding the required
 	// properties for the given context.
 	DataQuery
-	Alias           *string            `json:"alias,omitempty"`
-	Channel         *string            `json:"channel,omitempty"`
-	CsvContent      *string            `json:"csvContent,omitempty"`
-	CsvFileName     *string            `json:"csvFileName,omitempty"`
-	CsvWave         []CSVWave          `json:"csvWave,omitempty"`
+	Alias       *string   `json:"alias,omitempty"`
+	Channel     *string   `json:"channel,omitempty"`
+	CsvContent  *string   `json:"csvContent,omitempty"`
+	CsvFileName *string   `json:"csvFileName,omitempty"`
+	CsvWave     []CSVWave `json:"csvWave,omitempty"`
+
+	// Drop percentage (the chance we will lose a point 0-100)
+	DropPercent     *float64           `json:"dropPercent,omitempty"`
 	ErrorType       *ErrorType         `json:"errorType,omitempty"`
+	FlamegraphDiff  *bool              `json:"flamegraphDiff,omitempty"`
 	Labels          *string            `json:"labels,omitempty"`
 	LevelColumn     *bool              `json:"levelColumn,omitempty"`
 	Lines           *int64             `json:"lines,omitempty"`
 	Nodes           *NodesQuery        `json:"nodes,omitempty"`
-	Points          [][]interface{}    `json:"points,omitempty"`
+	Points          [][]any            `json:"points,omitempty"`
 	PulseWave       *PulseWaveQuery    `json:"pulseWave,omitempty"`
 	RawFrameContent *string            `json:"rawFrameContent,omitempty"`
 	ScenarioId      *TestDataQueryType `json:"scenarioId,omitempty"`

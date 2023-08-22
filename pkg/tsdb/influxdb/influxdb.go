@@ -14,10 +14,12 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 
+	"github.com/grafana/grafana/pkg/tsdb/influxdb/flux"
+	"github.com/grafana/grafana/pkg/tsdb/influxdb/fsql"
+
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/tsdb/influxdb/flux"
 	"github.com/grafana/grafana/pkg/tsdb/influxdb/models"
 )
 
@@ -57,22 +59,27 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 		if err != nil {
 			return nil, fmt.Errorf("error reading settings: %w", err)
 		}
+
 		httpMode := jsonData.HTTPMode
 		if httpMode == "" {
 			httpMode = "GET"
 		}
+
 		maxSeries := jsonData.MaxSeries
 		if maxSeries == 0 {
 			maxSeries = 1000
 		}
+
 		version := jsonData.Version
 		if version == "" {
 			version = influxVersionInfluxQL
 		}
+
 		database := jsonData.DbName
 		if database == "" {
 			database = settings.Database
 		}
+
 		model := &models.DatasourceInfo{
 			HTTPClient:    client,
 			URL:           settings.URL,
@@ -82,7 +89,9 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 			TimeInterval:  jsonData.TimeInterval,
 			DefaultBucket: jsonData.DefaultBucket,
 			Organization:  jsonData.Organization,
+			Metadata:      jsonData.Metadata,
 			MaxSeries:     maxSeries,
+			SecureGrpc:    true,
 			Token:         settings.DecryptedSecureJSONData["token"],
 		}
 		return model, nil
@@ -98,8 +107,11 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 		return nil, err
 	}
 	version := dsInfo.Version
-	if version == "Flux" {
+	if version == influxVersionFlux {
 		return flux.Query(ctx, dsInfo, *req)
+	}
+	if version == influxVersionSQL {
+		return fsql.Query(ctx, dsInfo, *req)
 	}
 
 	logger.Debug("Making a non-Flux type query")
@@ -142,11 +154,8 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 			logger.Warn("Failed to close response body", "err", err)
 		}
 	}()
-	if res.StatusCode/100 != 2 {
-		return &backend.QueryDataResponse{}, fmt.Errorf("InfluxDB returned error status: %s", res.Status)
-	}
 
-	resp := s.responseParser.Parse(res.Body, queries)
+	resp := s.responseParser.Parse(res.Body, res.StatusCode, queries)
 
 	return resp, nil
 }

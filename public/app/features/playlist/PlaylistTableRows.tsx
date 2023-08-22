@@ -80,8 +80,7 @@ export const PlaylistTableRows = ({ items, onDelete }: Props) => {
                   name="times"
                   size="md"
                   onClick={() => onDelete(index)}
-                  aria-label={selectors.pages.PlaylistForm.itemDelete}
-                  type="button"
+                  tooltip={selectors.pages.PlaylistForm.itemDelete}
                 />
                 <Icon title="Drag and drop to reorder" name="draggabledots" size="md" />
               </div>

@@ -47,7 +47,7 @@ describe('deduplicateTags()', () => {
       { key: 'a.ip', value: '8.8.8.8' },
     ]);
 
-    expect(tagsInfo.tags).toEqual([
+    expect(tagsInfo.dedupedTags).toEqual([
       { key: 'b.ip', value: '8.8.4.4' },
       { key: 'b.ip', value: '8.8.8.8' },
       { key: 'a.ip', value: '8.8.8.8' },

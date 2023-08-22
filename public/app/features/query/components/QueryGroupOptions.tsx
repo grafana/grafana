@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import React, { PureComponent, ChangeEvent, FocusEvent } from 'react';
 
 import { rangeUtil, PanelData, DataSourceApi } from '@grafana/data';
-import { Switch, Input, InlineField, InlineFormLabel, stylesFactory } from '@grafana/ui';
+import { Switch, Input, InlineFormLabel, stylesFactory } from '@grafana/ui';
 import { QueryOperationRow } from 'app/core/components/QueryOperationRow/QueryOperationRow';
 import { config } from 'app/core/config';
 import { QueryGroupOptions } from 'app/types';
@@ -129,7 +129,7 @@ export class QueryGroupOptionsEditor extends PureComponent<Props, State> {
   onMaxDataPointsBlur = (event: ChangeEvent<HTMLInputElement>) => {
     const { options, onChange } = this.props;
 
-    let maxDataPoints: number | null = parseInt(event.target.value as string, 10);
+    let maxDataPoints: number | null = parseInt(event.currentTarget.value, 10);
 
     if (isNaN(maxDataPoints) || maxDataPoints === 0) {
       maxDataPoints = null;
@@ -288,7 +288,8 @@ export class QueryGroupOptionsEditor extends PureComponent<Props, State> {
               tooltip={
                 <>
                   The evaluated interval that is sent to data source and is used in <code>$__interval</code> and{' '}
-                  <code>$__interval_ms</code>
+                  <code>$__interval_ms</code>. This value is not exactly equal to{' '}
+                  <code>Time range / max data points</code>, it will approximate a series of magic number.
                 </>
               }
             >
@@ -358,7 +359,19 @@ export class QueryGroupOptionsEditor extends PureComponent<Props, State> {
         {this.renderQueryCachingTTLOption()}
 
         <div className="gf-form">
-          <InlineFormLabel width={9}>Relative time</InlineFormLabel>
+          <InlineFormLabel
+            width={9}
+            tooltip={
+              <>
+                Overrides the relative time range for individual panels, which causes them to be different than what is
+                selected in the dashboard time picker in the top-right corner of the dashboard. For example to configure
+                the Last 5 minutes the Relative time should be <code>now-5m</code> and <code>5m</code>, or variables
+                like <code>$_relativeTime</code>.
+              </>
+            }
+          >
+            Relative time
+          </InlineFormLabel>
           <Input
             type="text"
             className="width-6"
@@ -371,7 +384,18 @@ export class QueryGroupOptionsEditor extends PureComponent<Props, State> {
         </div>
 
         <div className="gf-form">
-          <span className="gf-form-label width-9">Time shift</span>
+          <InlineFormLabel
+            width={9}
+            tooltip={
+              <>
+                Overrides the time range for individual panels by shifting its start and end relative to the time
+                picker. For example to configure the Last 1h the Time shift should be <code>now-1h</code> and{' '}
+                <code>1h</code>, or variables like <code>$_timeShift</code>.
+              </>
+            }
+          >
+            Time shift
+          </InlineFormLabel>
           <Input
             type="text"
             className="width-6"
@@ -383,10 +407,9 @@ export class QueryGroupOptionsEditor extends PureComponent<Props, State> {
           />
         </div>
         {(timeShift || relativeTime) && (
-          <div className="gf-form-inline">
-            <InlineField label="Hide time info" labelWidth={18}>
-              <Switch value={hideTimeOverride} onChange={this.onToggleTimeOverride} />
-            </InlineField>
+          <div className="gf-form-inline align-items-center">
+            <InlineFormLabel width={9}>Hide time info</InlineFormLabel>
+            <Switch value={hideTimeOverride} onChange={this.onToggleTimeOverride} />
           </div>
         )}
       </QueryOperationRow>

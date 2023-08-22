@@ -19,3 +19,13 @@ export function setFormatAs(query: AzureMonitorQuery, formatAs: ResultFormat): A
     },
   };
 }
+
+export function setIntersectTime(query: AzureMonitorQuery, intersectTime: boolean): AzureMonitorQuery {
+  return {
+    ...query,
+    azureLogAnalytics: {
+      ...query.azureLogAnalytics,
+      intersectTime,
+    },
+  };
+}
