@@ -63,8 +63,8 @@ describe('Format String Transformer', () => {
     const newFrame = formatter(frame.fields);
     expect(newFrame[0].values).toEqual([
       'Alice',
-      'BOB',
-      'CharliE',
+      'Bob',
+      'Charlie',
       'David Frederick Attenborough',
       'Emma Fakename',
       '',

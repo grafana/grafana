@@ -58,24 +58,22 @@ export const createStringFormatter = (stringField: string, outputFormat: string)
           case FormatStringOutput.FirstLetter:
             return value.charAt(0).toUpperCase() + value.slice(1);
           case FormatStringOutput.EveryFirstLetter:
-            const arr = value.split(' ');
-            for (var i = 0; i < arr.length; i++) {
-              arr[i] = arr[i].charAt(0).toUpperCase() + arr[i].slice(1);
-            }
-            return arr.join(' ');
           case FormatStringOutput.PascalCase:
-            const arrPascal = value.split(' ');
-            for (var i = 0; i < arrPascal.length; i++) {
-              arrPascal[i] = arrPascal[i].charAt(0).toUpperCase() + arrPascal[i].slice(1).toLowerCase();
-            }
-            return arrPascal.join('');
           case FormatStringOutput.CamelCase:
-            const arrCamel = value.split(' ');
-            for (var i = 0; i < arrCamel.length; i++) {
-              arrCamel[i] = arrCamel[i].charAt(0).toUpperCase() + arrCamel[i].slice(1).toLowerCase();
+            const arr = value.split(' ');
+            for (let i = 0; i < arr.length; i++) {
+              arr[i] = arr[i].charAt(0).toUpperCase() + arr[i].slice(1).toLowerCase();
             }
-            value = arrCamel.join('');
-            return value.charAt(0).toLowerCase() + value.slice(1);
+
+            switch (outputFormat) {
+              case FormatStringOutput.EveryFirstLetter:
+                return arr.join(' ');
+              case FormatStringOutput.PascalCase:
+                return arr.join('');
+              case FormatStringOutput.CamelCase:
+                value = arr.join('');
+                return value.charAt(0).toLowerCase() + value.slice(1);
+            }
         }
         return value;
       });
