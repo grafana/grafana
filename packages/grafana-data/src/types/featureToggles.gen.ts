@@ -120,4 +120,5 @@ export interface FeatureToggles {
   influxdbSqlSupport?: boolean;
   noBasicRole?: boolean;
   alertingNoDataErrorExecution?: boolean;
+  reportingRetries?: boolean;
 }
