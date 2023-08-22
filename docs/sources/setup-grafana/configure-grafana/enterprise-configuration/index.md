@@ -84,7 +84,7 @@ Set to complete URL to override Apple/iOS icon.
 
 ### hide_edition
 
-Hides the Grafana edition from being used in the footer if set to "true"
+Set to `true` to remove the Grafana edition from appearing in the footer.
 
 ### footer_links
 
