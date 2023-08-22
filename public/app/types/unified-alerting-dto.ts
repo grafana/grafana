@@ -79,6 +79,7 @@ export interface PromBuildInfoResponse {
       query_sharding?: 'true' | 'false';
       federated_rules?: 'true' | 'false';
     };
+    [key: string]: unknown;
   };
   status: 'success';
 }
