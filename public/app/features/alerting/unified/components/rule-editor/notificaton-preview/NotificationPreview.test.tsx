@@ -3,7 +3,6 @@ import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { byRole, byTestId, byText } from 'testing-library-selector';
 
-import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import 'core-js/stable/structured-clone';
@@ -35,7 +34,6 @@ jest.spyOn(notificationPreview, 'useGetAlertManagersSourceNamesAndImage').mockRe
 
 jest.spyOn(dataSource, 'getDatasourceAPIUid').mockImplementation((ds: string) => ds);
 jest.mock('app/core/services/context_srv');
-const contextSrvMock = jest.mocked(contextSrv);
 
 const useGetAlertManagersSourceNamesAndImageMock = useGetAlertManagersSourceNamesAndImage as jest.MockedFunction<
   typeof useGetAlertManagersSourceNamesAndImage
