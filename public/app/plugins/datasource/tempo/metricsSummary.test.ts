@@ -1,7 +1,12 @@
 import { LoadingState } from '@grafana/data';
 
 import { defaultSettings } from './datasource.test';
-import { createTableFrameFromMetricsSummaryQuery, emptyResponse } from './metricsSummary';
+import {
+  createTableFrameFromMetricsSummaryQuery,
+  emptyResponse,
+  getConfigQuery,
+  transformToMetricsData,
+} from './metricsSummary';
 
 describe('MetricsSummary', () => {
   describe('createTableFrameFromMetricsSummaryQuery', () => {
@@ -45,7 +50,7 @@ describe('MetricsSummary', () => {
       const data = [
         {
           spanCount: '10',
-          errorSpanCount: '0',
+          errorSpanCount: '1',
           p50: '1',
           p90: '2',
           p95: '3',
@@ -56,6 +61,13 @@ describe('MetricsSummary', () => {
               value: {
                 type: 3,
                 n: 208,
+              },
+            },
+            {
+              key: 'temperature',
+              value: {
+                type: 4,
+                f: 38.1,
               },
             },
           ],
@@ -81,7 +93,7 @@ describe('MetricsSummary', () => {
                         "datasourceName": "tempo",
                         "datasourceUid": "gdev-tempo",
                         "query": {
-                          "query": "{name="HTTP POST - post" && span.http.status_code=\${__data.fields["span.http.status_code"]}} | by(resource.service.name)",
+                          "query": "{name="HTTP POST - post" && span.http.status_code=\${__data.fields["span.http.status_code"]} && temperature=\${__data.fields["temperature"]}} | by(resource.service.name)",
                           "queryType": "traceql",
                         },
                       },
@@ -94,6 +106,30 @@ describe('MetricsSummary', () => {
                 "type": "string",
                 "values": [
                   208,
+                ],
+              },
+              {
+                "config": {
+                  "displayNameFromDS": "temperature",
+                  "links": [
+                    {
+                      "internal": {
+                        "datasourceName": "tempo",
+                        "datasourceUid": "gdev-tempo",
+                        "query": {
+                          "query": "{name="HTTP POST - post" && span.http.status_code=\${__data.fields["span.http.status_code"]} && temperature=\${__data.fields["temperature"]}} | by(resource.service.name)",
+                          "queryType": "traceql",
+                        },
+                      },
+                      "title": "Query in explore",
+                      "url": "",
+                    },
+                  ],
+                },
+                "name": "temperature",
+                "type": "string",
+                "values": [
+                  38.1,
                 ],
               },
               {
@@ -133,7 +169,7 @@ describe('MetricsSummary', () => {
                 "name": "errorPercentage",
                 "type": "string",
                 "values": [
-                  "0",
+                  "10",
                 ],
               },
               {
@@ -207,5 +243,109 @@ describe('MetricsSummary', () => {
         ]
       `);
     });
+
+    it('transformToMetricsData should return correctly', () => {
+      const data = {
+        spanCount: '10',
+        errorSpanCount: '1',
+        p50: '1',
+        p90: '2',
+        p95: '3',
+        p99: '4',
+        series,
+      };
+      const result = transformToMetricsData(data);
+      expect(result).toMatchInlineSnapshot(`
+        {
+          "contains_sink": "true",
+          "errorPercentage": "10",
+          "kind": "server",
+          "p50": "1",
+          "p90": "2",
+          "p95": "3",
+          "p99": "4",
+          "room": "kitchen",
+          "span.http.status_code": 208,
+          "spanCount": "10",
+          "spanKind": "server",
+          "spanStatus": "ok",
+          "temperature": 38.1,
+          "window_open": "8h",
+        }
+      `);
+    });
+
+    it('getConfigQuery should return correctly for empty target query', () => {
+      const result = getConfigQuery(series, '{}');
+      expect(result).toEqual(
+        '{span.http.status_code=${__data.fields["span.http.status_code"]} && temperature=${__data.fields["temperature"]} && room="${__data.fields["room"]}" && contains_sink="${__data.fields["contains_sink"]}" && window_open="${__data.fields["window_open"]}" && spanStatus=${__data.fields["spanStatus"]} && spanKind=${__data.fields["spanKind"]}}'
+      );
+    });
+
+    it('getConfigQuery should return correctly for target query', () => {
+      const result = getConfigQuery(series, '{name="HTTP POST - post"} | by(resource.service.name)');
+      expect(result).toEqual(
+        '{name="HTTP POST - post" && span.http.status_code=${__data.fields["span.http.status_code"]} && temperature=${__data.fields["temperature"]} && room="${__data.fields["room"]}" && contains_sink="${__data.fields["contains_sink"]}" && window_open="${__data.fields["window_open"]}" && spanStatus=${__data.fields["spanStatus"]} && spanKind=${__data.fields["spanKind"]}} | by(resource.service.name)'
+      );
+    });
+
+    it('getConfigQuery should return correctly for target query without brackets', () => {
+      const result = getConfigQuery(series, 'by(resource.service.name)');
+      expect(result).toEqual(
+        '{span.http.status_code=${__data.fields["span.http.status_code"]} && temperature=${__data.fields["temperature"]} && room="${__data.fields["room"]}" && contains_sink="${__data.fields["contains_sink"]}" && window_open="${__data.fields["window_open"]}" && spanStatus=${__data.fields["spanStatus"]} && spanKind=${__data.fields["spanKind"]}} | by(resource.service.name)'
+      );
+    });
   });
 });
+
+const series = [
+  {
+    key: 'span.http.status_code',
+    value: {
+      type: 3,
+      n: 208,
+    },
+  },
+  {
+    key: 'temperature',
+    value: {
+      type: 4,
+      f: 38.1,
+    },
+  },
+  {
+    key: 'room',
+    value: {
+      type: 5,
+      s: 'kitchen',
+    },
+  },
+  {
+    key: 'contains_sink',
+    value: {
+      type: 6,
+      b: 'true',
+    },
+  },
+  {
+    key: 'window_open',
+    value: {
+      type: 7,
+      d: '8h',
+    },
+  },
+  {
+    key: 'spanStatus',
+    value: {
+      type: 8,
+      status: 1,
+    },
+  },
+  {
+    key: 'spanKind',
+    value: {
+      type: 9,
+      kind: 3,
+    },
+  },
+];

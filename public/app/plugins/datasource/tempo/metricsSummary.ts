@@ -128,7 +128,7 @@ export function createTableFrameFromMetricsSummaryQuery(
   return [frame];
 }
 
-const transformToMetricsData = (data: MetricsSummary) => {
+export const transformToMetricsData = (data: MetricsSummary) => {
   const errorPercentage = data.errorSpanCount
     ? ((parseInt(data.errorSpanCount, 10) / parseInt(data.spanCount, 10)) * 100).toString()
     : '';
@@ -150,7 +150,7 @@ const transformToMetricsData = (data: MetricsSummary) => {
   return metricsData;
 };
 
-const getConfigQuery = (series: Series[], targetQuery: string) => {
+export const getConfigQuery = (series: Series[], targetQuery: string) => {
   const queryParts = series.map((x: Series) => {
     const isNumber = x.value.type === 3 || x.value.type === 4;
     const isIntrinsic = x.value.type === 8 || x.value.type === 9;
