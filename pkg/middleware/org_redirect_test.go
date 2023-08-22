@@ -48,7 +48,7 @@ func TestOrgRedirectMiddleware(t *testing.T) {
 		for _, u := range appSubURL {
 			middlewareScenario(t, fmt.Sprintf("%s with appSubURL=%s", tc.desc, u), func(t *testing.T, sc *scenarioContext) {
 				sc.withAppSubURL(u)
-        sc.withIdentity(&authn.Identity{})
+				sc.withIdentity(&authn.Identity{})
 				sc.m.Get(u, sc.defaultHandler)
 				sc.fakeReq("GET", tc.input).exec()
 
