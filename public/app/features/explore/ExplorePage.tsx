@@ -12,6 +12,7 @@ import { ExploreQueryParams } from 'app/types/explore';
 import { ExploreActions } from './ExploreActions';
 import { ExplorePaneContainer } from './ExplorePaneContainer';
 import { useExplorePageTitle } from './hooks/useExplorePageTitle';
+import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { useSplitSizeUpdater } from './hooks/useSplitSizeUpdater';
 import { useStateSync } from './hooks/useStateSync';
 import { useTimeSrvFix } from './hooks/useTimeSrvFix';
@@ -54,6 +55,8 @@ export default function ExplorePage(props: GrafanaRouteComponentProps<{}, Explor
   useEffect(() => {
     keybindings.setupTimeRangeBindings(false);
   }, [keybindings]);
+
+  useKeyboardShortcuts();
 
   return (
     <div className={styles.pageScrollbarWrapper}>
