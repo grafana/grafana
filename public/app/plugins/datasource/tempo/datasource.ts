@@ -193,7 +193,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     } catch {
       // This could happen if the Tempo version is from development (in that case the version is, e.g., `main-12bdeff`)
       console.log(`Cannot compare ${actualVersion} and ${featuresToTempoVersion[featureName]}`);
-      return false
+      return false;
     }
   }
 
