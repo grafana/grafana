@@ -98,8 +98,15 @@ describe('LogsSamplePanel', () => {
     expect(screen.getByText('Logs sample is loading...')).toBeInTheDocument();
   });
 
-  it('shows no data message', () => {
+  it('shows no data message with no dataframe', () => {
     render(<LogsSamplePanel {...createProps({ queryResponse: { data: [], state: LoadingState.Done } })} />);
+    expect(screen.getByText('No logs sample data.')).toBeInTheDocument();
+  });
+
+  it('shows no data message with an empty dataframe', () => {
+    render(
+      <LogsSamplePanel {...createProps({ queryResponse: { data: [emptyDataFrame], state: LoadingState.Done } })} />
+    );
     expect(screen.getByText('No logs sample data.')).toBeInTheDocument();
   });
 
