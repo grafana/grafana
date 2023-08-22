@@ -23,6 +23,7 @@ import {
   Tab,
 } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
+import ConditionalWrap from 'app/features/alerting/components/ConditionalWrap';
 import { isOrgAdmin } from 'app/features/plugins/admin/permissions';
 import { receiverTypeNames } from 'app/plugins/datasource/alertmanager/consts';
 import { GrafanaManagedReceiverConfig } from 'app/plugins/datasource/alertmanager/types';
@@ -132,7 +133,7 @@ const ContactPoints = () => {
                             key={contactPointKey}
                             name={contactPoint.name}
                             disabled={disabled}
-                            onDelete={showDeleteModal}
+                            onDelete={(name) => showDeleteModal(name)}
                             receivers={contactPoint.grafana_managed_receiver_configs}
                             provisioned={provisioned}
                             policies={policies}
@@ -298,13 +299,25 @@ const ContactPointHeader = (props: ContactPointHeaderProps) => {
                   <Menu.Divider />
                 </>
               )}
-              <Menu.Item
-                label="Delete"
-                icon="trash-alt"
-                destructive
-                disabled={disabled || provisioned}
-                onClick={() => onDelete(name)}
-              />
+              <ConditionalWrap
+                shouldWrap={policies > 0}
+                wrap={(children) => (
+                  <Tooltip
+                    content={'Contact point is currently in use by one or more notification policies'}
+                    placement="top"
+                  >
+                    <span>{children}</span>
+                  </Tooltip>
+                )}
+              >
+                <Menu.Item
+                  label="Delete"
+                  icon="trash-alt"
+                  destructive
+                  disabled={disabled || provisioned || policies > 0}
+                  onClick={() => onDelete(name)}
+                />
+              </ConditionalWrap>
             </Menu>
           }
         >
