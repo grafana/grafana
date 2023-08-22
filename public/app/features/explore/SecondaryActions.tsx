@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Components } from '@grafana/e2e-selectors';
 import { HorizontalGroup, ToolbarButton, useTheme2 } from '@grafana/ui';
 
 type Props = {
@@ -46,6 +47,7 @@ export function SecondaryActions(props: Props) {
             variant={props.richHistoryButtonActive ? 'active' : 'canvas'}
             aria-label="Query history"
             onClick={props.onClickRichHistoryButton}
+            data-testid={Components.QueryTab.queryHistoryButton}
             icon="history"
           >
             Query history
