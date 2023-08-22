@@ -90,22 +90,21 @@ type UnifiedAlertingSettings struct {
 	BaseInterval time.Duration
 	// DefaultRuleEvaluationInterval default interval between evaluations of a rule.
 	DefaultRuleEvaluationInterval time.Duration
-	ExternalAlertmanager          UnifiedAlertingExternalAMSettings
 	Screenshots                   UnifiedAlertingScreenshotSettings
 	ReservedLabels                UnifiedAlertingReservedLabelSettings
 	StateHistory                  UnifiedAlertingStateHistorySettings
+	RemoteAlertmanager            RemoteAlertmanagerSettings
 	// MaxStateSaveConcurrency controls the number of goroutines (per rule) that can save alert state in parallel.
 	MaxStateSaveConcurrency int
 }
 
-// UnifiedAlertingExternalAMSettings contains the configuration needed
+// RemoteAlertmanagerSettings contains the configuration needed
 // to disable the internal Alertmanager and use an external one instead.
-type UnifiedAlertingExternalAMSettings struct {
-	DisableInternalAlertmanager       bool
-	MainAlertmanagerURL               string
-	MainAlertmanagerTenantID          string
-	MainAlertmanagerBasicAuthUser     string
-	MainAlertmanagerBasicAuthPassword string
+type RemoteAlertmanagerSettings struct {
+	Enable   bool
+	URL      string
+	TenantID string
+	Password string
 }
 
 type UnifiedAlertingScreenshotSettings struct {
@@ -345,15 +344,14 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 		uaCfg.DefaultRuleEvaluationInterval = uaMinInterval
 	}
 
-	externalAlertmanager := iniFile.Section("unified_alerting.external_alertmanager")
-	uaCfgExternalAM := UnifiedAlertingExternalAMSettings{
-		DisableInternalAlertmanager:       externalAlertmanager.Key("disable_internal_alertmanager").MustBool(false),
-		MainAlertmanagerURL:               externalAlertmanager.Key("main_alertmanager_url").MustString(""),
-		MainAlertmanagerTenantID:          externalAlertmanager.Key("main_alertmanager_tenant_id").MustString(""),
-		MainAlertmanagerBasicAuthUser:     externalAlertmanager.Key("main_alertmanager_basic_auth_username").MustString(""),
-		MainAlertmanagerBasicAuthPassword: externalAlertmanager.Key("main_alertmanager_basic_auth_password").MustString(""),
+	remoteAlertmanager := iniFile.Section("remote.alertmanager")
+	uaCfgRemoteAM := RemoteAlertmanagerSettings{
+		Enable:   remoteAlertmanager.Key("enabled").MustBool(false),
+		URL:      remoteAlertmanager.Key("url").MustString(""),
+		TenantID: remoteAlertmanager.Key("tenant").MustString(""),
+		Password: remoteAlertmanager.Key("password").MustString(""),
 	}
-	uaCfg.ExternalAlertmanager = uaCfgExternalAM
+	uaCfg.RemoteAlertmanager = uaCfgRemoteAM
 
 	screenshots := iniFile.Section("unified_alerting.screenshots")
 	uaCfgScreenshots := uaCfg.Screenshots
