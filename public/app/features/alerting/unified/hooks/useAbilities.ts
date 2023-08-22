@@ -1,6 +1,5 @@
 import { useMemo } from 'react';
 
-import { OrgRole } from '@grafana/data';
 import { contextSrv as ctx } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types';
 
@@ -69,39 +68,24 @@ export function useAlertSourceAbilities(): Abilities<AlertSourceAction> {
 
   const abilities: Abilities<AlertSourceAction> = {
     // -- Grafana managed alert rules --
-    [AlertSourceAction.CreateAlertRule]: [
-      true,
-      ctx.hasAccess(AccessControlAction.AlertingRuleCreate, ctx.hasRole(OrgRole.Editor)),
-    ],
-    [AlertSourceAction.ViewAlertRule]: [
-      true,
-      ctx.hasAccess(AccessControlAction.AlertingRuleRead, ctx.hasRole(OrgRole.Viewer)),
-    ],
-    [AlertSourceAction.UpdateAlertRule]: [
-      true,
-      ctx.hasAccess(AccessControlAction.AlertingRuleUpdate, ctx.hasRole(OrgRole.Editor)),
-    ],
-    [AlertSourceAction.DeleteAlertRule]: [
-      true,
-      ctx.hasAccess(AccessControlAction.AlertingRuleDelete, ctx.hasRole(OrgRole.Editor)),
-    ],
+    [AlertSourceAction.CreateAlertRule]: [true, ctx.hasPermission(AccessControlAction.AlertingRuleCreate)],
+    [AlertSourceAction.ViewAlertRule]: [true, ctx.hasPermission(AccessControlAction.AlertingRuleRead)],
+    [AlertSourceAction.UpdateAlertRule]: [true, ctx.hasPermission(AccessControlAction.AlertingRuleUpdate)],
+    [AlertSourceAction.DeleteAlertRule]: [true, ctx.hasPermission(AccessControlAction.AlertingRuleDelete)],
     // -- External alert rules (Mimir / Loki / etc) --
     // for these we only have "read" and "write" permissions
     [AlertSourceAction.CreateExternalAlertRule]: [
       true,
-      ctx.hasAccess(AccessControlAction.AlertingRuleExternalWrite, ctx.hasRole(OrgRole.Editor)),
+      ctx.hasPermission(AccessControlAction.AlertingRuleExternalWrite),
     ],
-    [AlertSourceAction.ViewExternalAlertRule]: [
-      true,
-      ctx.hasAccess(AccessControlAction.AlertingRuleExternalRead, ctx.hasRole(OrgRole.Viewer)),
-    ],
+    [AlertSourceAction.ViewExternalAlertRule]: [true, ctx.hasPermission(AccessControlAction.AlertingRuleExternalRead)],
     [AlertSourceAction.UpdateExternalAlertRule]: [
       true,
-      ctx.hasAccess(AccessControlAction.AlertingRuleExternalWrite, ctx.hasRole(OrgRole.Editor)),
+      ctx.hasPermission(AccessControlAction.AlertingRuleExternalWrite),
     ],
     [AlertSourceAction.DeleteExternalAlertRule]: [
       true,
-      ctx.hasAccess(AccessControlAction.AlertingRuleExternalWrite, ctx.hasRole(OrgRole.Editor)),
+      ctx.hasPermission(AccessControlAction.AlertingRuleExternalWrite),
     ],
   };
 
@@ -121,91 +105,58 @@ export function useAlertmanagerAbilities(): Abilities<AlertmanagerAction> {
     // -- configuration --
     [AlertmanagerAction.ViewExternalConfiguration]: [
       true,
-      ctx.hasAccess(AccessControlAction.AlertingNotificationsExternalRead, ctx.hasRole(OrgRole.Admin)),
+      ctx.hasPermission(AccessControlAction.AlertingNotificationsExternalRead),
     ],
     [AlertmanagerAction.UpdateExternalConfiguration]: [
       hasConfigurationAPI,
-      ctx.hasAccess(AccessControlAction.AlertingNotificationsExternalWrite, ctx.hasRole(OrgRole.Admin)),
+      ctx.hasPermission(AccessControlAction.AlertingNotificationsExternalWrite),
     ],
     // -- contact points --
-    [AlertmanagerAction.CreateContactPoint]: [
-      hasConfigurationAPI,
-      ctx.hasAccess(notificationsPermissions.create, ctx.hasRole(OrgRole.Editor)),
-    ],
-    [AlertmanagerAction.ViewContactPoint]: [
-      hasConfigurationAPI,
-      ctx.hasAccess(notificationsPermissions.read, ctx.hasRole(OrgRole.Viewer)),
-    ],
-    [AlertmanagerAction.UpdateContactPoint]: [
-      hasConfigurationAPI,
-      ctx.hasAccess(notificationsPermissions.update, ctx.hasRole(OrgRole.Editor)),
-    ],
-    [AlertmanagerAction.DeleteContactPoint]: [
-      hasConfigurationAPI,
-      ctx.hasAccess(notificationsPermissions.delete, ctx.hasRole(OrgRole.Admin)),
-    ],
+    [AlertmanagerAction.CreateContactPoint]: [hasConfigurationAPI, ctx.hasPermission(notificationsPermissions.create)],
+    [AlertmanagerAction.ViewContactPoint]: [hasConfigurationAPI, ctx.hasPermission(notificationsPermissions.read)],
+    [AlertmanagerAction.UpdateContactPoint]: [hasConfigurationAPI, ctx.hasPermission(notificationsPermissions.update)],
+    [AlertmanagerAction.DeleteContactPoint]: [hasConfigurationAPI, ctx.hasPermission(notificationsPermissions.delete)],
     // only Grafana flavored alertmanager supports exporting
     [AlertmanagerAction.ExportContactPoint]: [
       isGrafanaFlavoredAlertmanager,
-      ctx.hasAccess(notificationsPermissions.provisioning.read, ctx.hasRole(OrgRole.Admin)) ||
-        ctx.hasAccess(notificationsPermissions.provisioning.readSecrets, ctx.hasRole(OrgRole.Admin)),
+      ctx.hasPermission(notificationsPermissions.provisioning.read) ||
+        ctx.hasPermission(notificationsPermissions.provisioning.readSecrets),
     ],
     // -- notification templates --
     [AlertmanagerAction.CreateNotificationTemplate]: [
       hasConfigurationAPI,
-      ctx.hasAccess(notificationsPermissions.create, ctx.hasRole(OrgRole.Editor)),
+      ctx.hasPermission(notificationsPermissions.create),
     ],
     [AlertmanagerAction.ViewNotificationTemplate]: [
       hasConfigurationAPI,
-      ctx.hasAccess(notificationsPermissions.read, ctx.hasRole(OrgRole.Viewer)),
+      ctx.hasPermission(notificationsPermissions.read),
     ],
     [AlertmanagerAction.UpdateNotificationTemplate]: [
       hasConfigurationAPI,
-      ctx.hasAccess(notificationsPermissions.update, ctx.hasRole(OrgRole.Editor)),
+      ctx.hasPermission(notificationsPermissions.update),
     ],
     [AlertmanagerAction.DeleteNotificationTemplate]: [
       hasConfigurationAPI,
-      ctx.hasAccess(notificationsPermissions.delete, ctx.hasRole(OrgRole.Admin)),
+      ctx.hasPermission(notificationsPermissions.delete),
     ],
     // -- notification policies --
     [AlertmanagerAction.UpdateNotificationPolicyTree]: [
       hasConfigurationAPI,
-      ctx.hasAccess(notificationsPermissions.update, ctx.hasRole(OrgRole.Editor)),
+      ctx.hasPermission(notificationsPermissions.update),
     ],
     [AlertmanagerAction.ViewNotificationPolicyTree]: [
       hasConfigurationAPI,
-      ctx.hasAccess(notificationsPermissions.read, ctx.hasRole(OrgRole.Viewer)),
+      ctx.hasPermission(notificationsPermissions.read),
     ],
     // -- silences --
-    [AlertmanagerAction.CreateSilence]: [
-      hasConfigurationAPI,
-      ctx.hasAccess(instancePermissions.create, ctx.hasRole(OrgRole.Editor)),
-    ],
-    [AlertmanagerAction.ViewSilence]: [
-      hasConfigurationAPI,
-      ctx.hasAccess(instancePermissions.read, ctx.hasRole(OrgRole.Viewer)),
-    ],
-    [AlertmanagerAction.UpdateSilence]: [
-      hasConfigurationAPI,
-      ctx.hasAccess(instancePermissions.update, ctx.hasRole(OrgRole.Editor)),
-    ],
+    [AlertmanagerAction.CreateSilence]: [hasConfigurationAPI, ctx.hasPermission(instancePermissions.create)],
+    [AlertmanagerAction.ViewSilence]: [hasConfigurationAPI, ctx.hasPermission(instancePermissions.read)],
+    [AlertmanagerAction.UpdateSilence]: [hasConfigurationAPI, ctx.hasPermission(instancePermissions.update)],
     // -- mute timtings --
-    [AlertmanagerAction.CreateMuteTiming]: [
-      hasConfigurationAPI,
-      ctx.hasAccess(notificationsPermissions.create, ctx.hasRole(OrgRole.Editor)),
-    ],
-    [AlertmanagerAction.UpdateMuteTiming]: [
-      hasConfigurationAPI,
-      ctx.hasAccess(notificationsPermissions.update, ctx.hasRole(OrgRole.Editor)),
-    ],
-    [AlertmanagerAction.DeleteMuteTiming]: [
-      hasConfigurationAPI,
-      ctx.hasAccess(notificationsPermissions.delete, ctx.hasRole(OrgRole.Editor)),
-    ],
-    [AlertmanagerAction.ViewMuteTiming]: [
-      true,
-      ctx.hasAccess(notificationsPermissions.read, ctx.hasRole(OrgRole.Viewer)),
-    ],
+    [AlertmanagerAction.CreateMuteTiming]: [hasConfigurationAPI, ctx.hasPermission(notificationsPermissions.create)],
+    [AlertmanagerAction.UpdateMuteTiming]: [hasConfigurationAPI, ctx.hasPermission(notificationsPermissions.update)],
+    [AlertmanagerAction.DeleteMuteTiming]: [hasConfigurationAPI, ctx.hasPermission(notificationsPermissions.delete)],
+    [AlertmanagerAction.ViewMuteTiming]: [true, ctx.hasPermission(notificationsPermissions.read)],
   };
 
   return abilities;

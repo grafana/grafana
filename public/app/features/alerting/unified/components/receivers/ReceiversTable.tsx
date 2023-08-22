@@ -1,7 +1,7 @@
 import pluralize from 'pluralize';
 import React, { useMemo, useState } from 'react';
 
-import { dateTime, dateTimeFormat, OrgRole } from '@grafana/data';
+import { dateTime, dateTimeFormat } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
 import { Badge, Button, ConfirmModal, Icon, Modal, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
@@ -83,9 +83,8 @@ function ViewAction({ alertManagerName, receiverName }: ActionProps) {
 
 function ExportAction({ receiverName }: ActionProps) {
   const { selectedAlertmanager } = useAlertmanager();
-  const canReadSecrets = contextSrv.hasAccess(
-    getNotificationsPermissions(selectedAlertmanager ?? '').provisioning.readSecrets,
-    contextSrv.hasRole(OrgRole.Admin)
+  const canReadSecrets = contextSrv.hasPermission(
+    getNotificationsPermissions(selectedAlertmanager ?? '').provisioning.readSecrets
   );
 
   return (

@@ -331,11 +331,10 @@ describe('Receivers', () => {
 
     mocks.api.fetchConfig.mockResolvedValue(someGrafanaAlertManagerConfig);
     mocks.api.updateConfig.mockResolvedValue();
-    mocks.contextSrv.hasAccess.mockImplementation((action) =>
-      [AccessControlAction.AlertingNotificationsRead, AccessControlAction.AlertingNotificationsExternalRead].some(
-        (a) => a === action
-      )
-    );
+    grantUserPermissions([
+      AccessControlAction.AlertingNotificationsRead,
+      AccessControlAction.AlertingNotificationsExternalRead,
+    ]);
     mocks.hooks.useGetContactPointsState.mockReturnValue(emptyContactPointsState);
     renderReceivers();
     await ui.receiversTable.find();

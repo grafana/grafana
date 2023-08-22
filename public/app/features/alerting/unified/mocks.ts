@@ -582,10 +582,6 @@ export const grantUserPermissions = (permissions: AccessControlAction[]) => {
   jest
     .spyOn(contextSrv, 'hasPermission')
     .mockImplementation((action) => permissions.includes(action as AccessControlAction));
-
-  jest
-    .spyOn(contextSrv, 'hasAccess')
-    .mockImplementation((action, fallback) => contextSrv.hasPermission(action) ?? fallback);
 };
 
 export function mockDataSourcesStore(partial?: Partial<StoreState['dataSources']>) {

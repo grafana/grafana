@@ -18,7 +18,6 @@ import { discoverFeatures } from './api/buildInfo';
 import { fetchRules } from './api/prometheus';
 import { deleteNamespace, deleteRulerRulesGroup, fetchRulerRules, setRulerRuleGroup } from './api/ruler';
 import {
-  disableRBAC,
   enableRBAC,
   grantUserPermissions,
   mockDataSource,
@@ -151,7 +150,6 @@ describe('RuleList', () => {
   });
 
   it('load & show rule groups from multiple cloud data sources', async () => {
-    disableRBAC();
     mocks.getAllDataSourcesMock.mockReturnValue(Object.values(dataSources));
 
     setDataSourceSrv(new MockDataSourceSrv(dataSources));
