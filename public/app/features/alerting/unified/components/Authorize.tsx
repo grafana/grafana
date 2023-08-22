@@ -58,10 +58,10 @@ const AuthorizeAlertsource = ({ actions, children }: ActionsProps<AlertSourceAct
   }
 };
 
-function isAlertmanagerAction(action: Action): action is AlertmanagerAction {
-  return Object.values(AlertmanagerAction).includes(action as AlertmanagerAction);
+function isAlertmanagerAction(action: AlertmanagerAction) {
+  return Object.values(AlertmanagerAction).includes(action);
 }
 
-function isAlertSourceAction(action: Action): action is AlertSourceAction {
-  return Object.values(AlertSourceAction).includes(action as AlertSourceAction);
+function isAlertSourceAction(action: AlertSourceAction) {
+  return Object.values(AlertSourceAction).includes(action);
 }
