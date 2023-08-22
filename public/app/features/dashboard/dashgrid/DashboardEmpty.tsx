@@ -5,6 +5,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config, locationService, reportInteraction } from '@grafana/runtime';
 import { Button, useStyles2, Text } from '@grafana/ui';
+import { Box } from '@grafana/ui/src/unstable';
 import { Trans } from 'app/core/internationalization';
 import { DashboardModel } from 'app/features/dashboard/state';
 import { onAddLibraryPanel, onCreateNewPanel, onCreateNewRow } from 'app/features/dashboard/utils/dashboard';
@@ -26,13 +27,13 @@ const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
     <div className={styles.centeredContent}>
       <div className={cx(styles.centeredContent, styles.wrapper)}>
         <div className={cx(styles.containerBox, styles.centeredContent, styles.visualizationContainer)}>
-          <div className={styles.headerBig}>
+          <Box margin={{ bottom: 2 }}>
             <Text element="h1" textAlignment="center" weight="medium">
               <Trans i18nKey="dashboard.empty.add-visualization-header">
                 Start your new dashboard by adding a visualization
               </Trans>
             </Text>
-          </div>
+          </Box>
           <div className={styles.bodyBig}>
             <Text element="p" textAlignment="center" color="secondary">
               <Trans i18nKey="dashboard.empty.add-visualization-body">
@@ -59,16 +60,16 @@ const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
         <div className={cx(styles.centeredContent, styles.others)}>
           {config.featureToggles.vizAndWidgetSplit && (
             <div className={cx(styles.containerBox, styles.centeredContent, styles.widgetContainer)}>
-              <div className={styles.headerSmall}>
+              <Box margin={{ bottom: 1 }}>
                 <Text element="h3" textAlignment="center" weight="medium">
                   <Trans i18nKey="dashboard.empty.add-widget-header">Add a widget</Trans>
                 </Text>
-              </div>
-              <div className={styles.bodySmall}>
+              </Box>
+              <Box margin={{ bottom: 3 }}>
                 <Text element="p" textAlignment="center" color="secondary">
                   <Trans i18nKey="dashboard.empty.add-widget-body">Create lists, markdowns and other widgets</Trans>
                 </Text>
-              </div>
+              </Box>
               <Button
                 icon="plus"
                 fill="outline"
@@ -84,18 +85,18 @@ const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
             </div>
           )}
           <div className={cx(styles.containerBox, styles.centeredContent, styles.rowContainer)}>
-            <div className={styles.headerSmall}>
+            <Box margin={{ bottom: 1 }}>
               <Text element="h3" textAlignment="center" weight="medium">
                 <Trans i18nKey="dashboard.empty.add-row-header">Add a row</Trans>
               </Text>
-            </div>
-            <div className={styles.bodySmall}>
+            </Box>
+            <Box margin={{ bottom: 3 }}>
               <Text element="p" textAlignment="center" color="secondary">
                 <Trans i18nKey="dashboard.empty.add-row-body">
                   Group your visualizations into expandable sections.
                 </Trans>
               </Text>
-            </div>
+            </Box>
             <Button
               icon="plus"
               fill="outline"
@@ -110,18 +111,18 @@ const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
             </Button>
           </div>
           <div className={cx(styles.containerBox, styles.centeredContent, styles.libraryContainer)}>
-            <div className={styles.headerSmall}>
+            <Box margin={{ bottom: 1 }}>
               <Text element="h3" textAlignment="center" weight="medium">
                 <Trans i18nKey="dashboard.empty.add-import-header">Import panel</Trans>
               </Text>
-            </div>
-            <div className={styles.bodySmall}>
+            </Box>
+            <Box margin={{ bottom: 3 }}>
               <Text element="p" textAlignment="center" color="secondary">
                 <Trans i18nKey="dashboard.empty.add-import-body">
                   Import visualizations that are shared with other dashboards.
                 </Trans>
               </Text>
-            </div>
+            </Box>
             <Button
               icon="plus"
               fill="outline"
@@ -198,18 +199,9 @@ function getStyles(theme: GrafanaTheme2) {
       padding: theme.spacing.gridSize * 3,
       flex: 1,
     }),
-    headerBig: css({
-      marginBottom: theme.spacing.gridSize * 2,
-    }),
-    headerSmall: css({
-      marginBottom: theme.spacing.gridSize,
-    }),
     bodyBig: css({
       maxWidth: '75%',
       marginBottom: theme.spacing.gridSize * 4,
-    }),
-    bodySmall: css({
-      marginBottom: theme.spacing.gridSize * 3,
     }),
   };
 }
