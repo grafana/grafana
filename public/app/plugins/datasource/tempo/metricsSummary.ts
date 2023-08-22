@@ -65,7 +65,7 @@ export function createTableFrameFromMetricsSummaryQuery(
     frame.add({
       state: 'Loading...',
     });
-  } else {
+  } else if (state === LoadingState.Done && data?.length) {
     const dynamicMetrics: Record<string, FieldDTO> = {};
     data.map((res: MetricsSummary) => {
       const configQuery = getConfigQuery(res.series, targetQuery);
@@ -111,7 +111,7 @@ export function createTableFrameFromMetricsSummaryQuery(
     });
 
     if (!data?.length) {
-      return frame;
+      return emptyResponse;
     }
 
     const metricsData = data.map(transformToMetricsData);
@@ -119,6 +119,10 @@ export function createTableFrameFromMetricsSummaryQuery(
       frame.add(trace);
     }
     frame = sortDataFrame(frame, 0);
+  }
+
+  if (!frame) {
+    frame = emptyResponse;
   }
 
   return [frame];

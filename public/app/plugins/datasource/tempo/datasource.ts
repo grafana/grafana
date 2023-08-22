@@ -436,7 +436,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
             response.data.summaries,
             query,
             this.instanceSettings,
-            response.state
+            LoadingState.Done
           ),
         };
       }),
