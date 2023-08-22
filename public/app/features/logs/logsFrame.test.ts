@@ -186,6 +186,31 @@ describe('parseLogsFrame should parse different logs-dataframe formats', () => {
     expect(result!.getAttributes()).toBeNull();
     expect(result?.extraFields).toStrictEqual([]);
   });
+
+  it('should parse an old-style frame with a hidden string field', () => {
+    const time = makeTime('Time', [1687185711795, 1687185711995]);
+    const hidden = makeString('Hidden', ['hidden1', 'hidden2']);
+    const line = makeString('Line', ['line1', 'line2']);
+
+    hidden.config.custom = {
+      hidden: true,
+    };
+
+    const result = parseLogsFrame({
+      fields: [time, hidden, line],
+      length: 2,
+    });
+
+    expect(result).not.toBeNull();
+
+    expect(result!.timeField.values[0]).toBe(time.values[0]);
+    expect(result!.bodyField.values[0]).toBe(line.values[0]);
+    expect(result!.severityField).toBeNull();
+    expect(result!.idField).toBeNull();
+    expect(result!.timeNanosecondField).toBeNull();
+    expect(result!.getAttributesAsLabels()).toBeNull();
+    expect(result!.getAttributes()).toBeNull();
+  });
 });
 
 describe('attributesToLabels', () => {

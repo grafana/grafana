@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { Meta } from '@storybook/addon-docs/blocks';
+import { Meta, Preview } from '@storybook/addon-docs/blocks';
 import { PanelChrome } from './PanelChrome';
 
 import { action } from '@storybook/addon-actions';
@@ -486,6 +486,54 @@ Component used for rendering content wrapped in the same style as grafana panels
     width={400}
     height={200}
   >
+    {(innerwidth, innerheight) => {
+      return (
+        <div
+          style={{
+            width: innerwidth,
+            height: innerheight,
+            background: 'rgba(230,0,0,0.05)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          Content
+        </div>
+      );
+    }}
+  </PanelChrome>
+</Preview>
+
+### Collapsible
+
+The panel can be collapsed/expanded by clicking on the chevron or the title.
+
+> _Note: `collapsible` and `hoverHeader` props are mutually exclusive and cannot be used in the same panel._
+
+```tsx
+<PanelChrome title="My awesome panel title" width={400} height={200} collapsible={true}>
+  {(innerwidth, innerheight) => {
+    return (
+      <div
+        style={{
+          width: innerwidth,
+          height: innerheight,
+          background: 'rgba(230,0,0,0.05)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        Content
+      </div>
+    );
+  }}
+</PanelChrome>
+```
+
+<Preview>
+  <PanelChrome title="My awesome panel title" width={400} height={200} collapsible={true}>
     {(innerwidth, innerheight) => {
       return (
         <div

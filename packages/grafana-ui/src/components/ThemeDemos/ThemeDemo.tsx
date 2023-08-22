@@ -230,7 +230,7 @@ export function RichColorDemo({ theme, color }: RichColorDemoProps) {
         <div
           className={css({
             background: color.main,
-            borderRadius: theme.shape.borderRadius(),
+            borderRadius: theme.shape.radius.default,
             color: color.contrastText,
             padding: '8px',
             fontWeight: 500,
@@ -244,7 +244,7 @@ export function RichColorDemo({ theme, color }: RichColorDemoProps) {
           className={css({
             background: color.shade,
             color: color.contrastText,
-            borderRadius: '4px',
+            borderRadius: theme.shape.radius.default,
             padding: '8px',
           })}
         >
@@ -255,7 +255,7 @@ export function RichColorDemo({ theme, color }: RichColorDemoProps) {
         <div
           className={css({
             background: color.transparent,
-            borderRadius: '4px',
+            borderRadius: theme.shape.radius.default,
             padding: '8px',
           })}
         >
@@ -267,7 +267,7 @@ export function RichColorDemo({ theme, color }: RichColorDemoProps) {
           className={css({
             border: `1px solid ${color.border}`,
             color: color.text,
-            borderRadius: '4px',
+            borderRadius: theme.shape.radius.default,
             padding: '8px',
           })}
         >

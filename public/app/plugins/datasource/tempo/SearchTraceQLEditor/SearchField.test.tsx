@@ -128,7 +128,7 @@ describe('SearchField', () => {
     };
     const { container } = renderSearchField(updateFilter, filter, ['tag1', 'tag22', 'tag33']);
 
-    const select = await container.querySelector(`input[aria-label="select test1 tag"]`);
+    const select = container.querySelector(`input[aria-label="select test1 tag"]`);
     expect(select).not.toBeNull();
     expect(select).toBeInTheDocument();
     if (select) {
@@ -183,6 +183,7 @@ const renderSearchField = (
       }}
       tags={tags || []}
       hideTag={hideTag}
+      query={'{}'}
     />
   );
 };

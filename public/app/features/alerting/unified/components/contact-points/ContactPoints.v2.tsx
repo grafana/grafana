@@ -12,16 +12,16 @@ import {
   Button,
   Dropdown,
   Icon,
-  LinkButton,
   LoadingPlaceholder,
   Menu,
-  Tab,
-  TabContent,
-  TabsBar,
   Tooltip,
   useStyles2,
+  Text,
+  LinkButton,
+  TabsBar,
+  TabContent,
+  Tab,
 } from '@grafana/ui';
-import { Text } from '@grafana/ui/src/unstable';
 import { contextSrv } from 'app/core/core';
 import { isOrgAdmin } from 'app/features/plugins/admin/permissions';
 import { receiverTypeNames } from 'app/plugins/datasource/alertmanager/consts';
@@ -461,7 +461,7 @@ const ContactPointReceiverMetadataRow = ({ diagnostics, sendingResolved }: Conta
 
 const getStyles = (theme: GrafanaTheme2) => ({
   contactPointWrapper: css`
-    border-radius: ${theme.shape.borderRadius()};
+    border-radius: ${theme.shape.radius.default};
     border: solid 1px ${theme.colors.border.weak};
     border-bottom: none;
   `,
@@ -478,12 +478,14 @@ const getStyles = (theme: GrafanaTheme2) => ({
     padding: ${theme.spacing(1)} ${theme.spacing(1.5)};
 
     border-bottom: solid 1px ${theme.colors.border.weak};
-    border-top-left-radius: ${theme.shape.borderRadius()};
-    border-top-right-radius: ${theme.shape.borderRadius()};
+    border-top-left-radius: ${theme.shape.radius.default};
+    border-top-right-radius: ${theme.shape.radius.default};
   `,
   metadataRow: css`
-    border-bottom-left-radius: ${theme.shape.borderRadius()};
-    border-bottom-right-radius: ${theme.shape.borderRadius()};
+    padding: 0 ${theme.spacing(1.5)} ${theme.spacing(1.5)} ${theme.spacing(1.5)};
+
+    border-bottom-left-radius: ${theme.shape.radius.default};
+    border-bottom-right-radius: ${theme.shape.radius.default};
   `,
   receiversWrapper: css``,
 });
