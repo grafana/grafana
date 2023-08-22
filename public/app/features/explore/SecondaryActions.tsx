@@ -33,7 +33,7 @@ export function SecondaryActions(props: Props) {
         {!props.addQueryRowButtonHidden && (
           <ToolbarButton
             variant="canvas"
-            aria-label="Add row button"
+            aria-label="Add query"
             onClick={props.onClickAddQueryRowButton}
             disabled={props.addQueryRowButtonDisabled}
             icon="plus"
@@ -44,7 +44,7 @@ export function SecondaryActions(props: Props) {
         {!props.richHistoryRowButtonHidden && (
           <ToolbarButton
             variant={props.richHistoryButtonActive ? 'active' : 'canvas'}
-            aria-label="Rich history button"
+            aria-label="Query history"
             onClick={props.onClickRichHistoryButton}
             icon="history"
           >
@@ -53,11 +53,11 @@ export function SecondaryActions(props: Props) {
         )}
         <ToolbarButton
           variant={props.queryInspectorButtonActive ? 'active' : 'canvas'}
-          aria-label="Query inspector button"
+          aria-label="Query inspector"
           onClick={props.onClickQueryInspectorButton}
           icon="info-circle"
         >
-          Inspector
+          Query inspector
         </ToolbarButton>
       </HorizontalGroup>
     </div>
