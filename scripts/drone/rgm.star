@@ -73,7 +73,7 @@ tag_trigger = {
     },
 }
 
-def rgm_build(script = "drone_publish_main.sh"):
+def rgm_build(script = "drone_publish_main.sh", canFail = True):
     rgm_build_step = {
         "name": "rgm-build",
         "image": "grafana/grafana-build:main",
@@ -85,8 +85,9 @@ def rgm_build(script = "drone_publish_main.sh"):
         # The docker socket is a requirement for running dagger programs
         # In the future we should find a way to use dagger without mounting the docker socket.
         "volumes": [{"name": "docker", "path": "/var/run/docker.sock"}],
-        "failure": "ignore",
     }
+    if canFail:
+        rgm_build_step["failure"] = "ignore"
 
     return [
         rgm_build_step,
@@ -107,7 +108,7 @@ def rgm_main():
     return pipeline(
         name = "rgm-main-prerelease",
         trigger = trigger,
-        steps = rgm_build(),
+        steps = rgm_build(canFail = True),
         depends_on = ["main-test-backend", "main-test-frontend"],
     )
 
@@ -115,7 +116,7 @@ def rgm_tag():
     return pipeline(
         name = "rgm-tag-prerelease",
         trigger = tag_trigger,
-        steps = rgm_build(script = "drone_publish_tag_grafana.sh"),
+        steps = rgm_build(script = "drone_publish_tag_grafana.sh", canFail = False),
         depends_on = ["release-test-backend", "release-test-frontend"],
     )
 
