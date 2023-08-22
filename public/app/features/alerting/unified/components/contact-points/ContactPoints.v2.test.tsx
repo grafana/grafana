@@ -54,7 +54,7 @@ describe('ContactPoints', () => {
     });
   });
 
-  describe.skip('Mimir-flavored alertmanager', () => {
+  describe('Mimir-flavored alertmanager', () => {
     setupMimirFlavoredServer();
 
     it('should show / hide loading states', async () => {
