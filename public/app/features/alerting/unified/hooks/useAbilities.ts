@@ -113,7 +113,7 @@ export function useAlertmanagerAbilities(): Abilities<AlertmanagerAction> {
     ],
     // -- contact points --
     [AlertmanagerAction.CreateContactPoint]: [hasConfigurationAPI, ctx.hasPermission(notificationsPermissions.create)],
-    [AlertmanagerAction.ViewContactPoint]: [hasConfigurationAPI, ctx.hasPermission(notificationsPermissions.read)],
+    [AlertmanagerAction.ViewContactPoint]: [true, ctx.hasPermission(notificationsPermissions.read)],
     [AlertmanagerAction.UpdateContactPoint]: [hasConfigurationAPI, ctx.hasPermission(notificationsPermissions.update)],
     [AlertmanagerAction.DeleteContactPoint]: [hasConfigurationAPI, ctx.hasPermission(notificationsPermissions.delete)],
     // only Grafana flavored alertmanager supports exporting
@@ -127,10 +127,7 @@ export function useAlertmanagerAbilities(): Abilities<AlertmanagerAction> {
       hasConfigurationAPI,
       ctx.hasPermission(notificationsPermissions.create),
     ],
-    [AlertmanagerAction.ViewNotificationTemplate]: [
-      hasConfigurationAPI,
-      ctx.hasPermission(notificationsPermissions.read),
-    ],
+    [AlertmanagerAction.ViewNotificationTemplate]: [true, ctx.hasPermission(notificationsPermissions.read)],
     [AlertmanagerAction.UpdateNotificationTemplate]: [
       hasConfigurationAPI,
       ctx.hasPermission(notificationsPermissions.update),
@@ -144,19 +141,16 @@ export function useAlertmanagerAbilities(): Abilities<AlertmanagerAction> {
       hasConfigurationAPI,
       ctx.hasPermission(notificationsPermissions.update),
     ],
-    [AlertmanagerAction.ViewNotificationPolicyTree]: [
-      hasConfigurationAPI,
-      ctx.hasPermission(notificationsPermissions.read),
-    ],
+    [AlertmanagerAction.ViewNotificationPolicyTree]: [true, ctx.hasPermission(notificationsPermissions.read)],
     // -- silences --
     [AlertmanagerAction.CreateSilence]: [hasConfigurationAPI, ctx.hasPermission(instancePermissions.create)],
-    [AlertmanagerAction.ViewSilence]: [hasConfigurationAPI, ctx.hasPermission(instancePermissions.read)],
+    [AlertmanagerAction.ViewSilence]: [true, ctx.hasPermission(instancePermissions.read)],
     [AlertmanagerAction.UpdateSilence]: [hasConfigurationAPI, ctx.hasPermission(instancePermissions.update)],
     // -- mute timtings --
     [AlertmanagerAction.CreateMuteTiming]: [hasConfigurationAPI, ctx.hasPermission(notificationsPermissions.create)],
+    [AlertmanagerAction.ViewMuteTiming]: [true, ctx.hasPermission(notificationsPermissions.read)],
     [AlertmanagerAction.UpdateMuteTiming]: [hasConfigurationAPI, ctx.hasPermission(notificationsPermissions.update)],
     [AlertmanagerAction.DeleteMuteTiming]: [hasConfigurationAPI, ctx.hasPermission(notificationsPermissions.delete)],
-    [AlertmanagerAction.ViewMuteTiming]: [true, ctx.hasPermission(notificationsPermissions.read)],
   };
 
   return abilities;
