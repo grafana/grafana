@@ -235,11 +235,7 @@ export function getPanelMenu(
     });
   }
 
-  // TODO: Re-implement real feature toggle
-
-  const featureToggleEnabled = true;
-
-  if (featureToggleEnabled) {
+  if (config.featureToggles.panelExport) {
     menu.push({
       type: 'submenu',
       text: t('panel.header-menu.export', `Export`),

@@ -117,4 +117,5 @@ export interface FeatureToggles {
   azureMonitorDataplane?: boolean;
   prometheusConfigOverhaulAuth?: boolean;
   configurableSchedulerTick?: boolean;
+  panelExport?: boolean;
 }

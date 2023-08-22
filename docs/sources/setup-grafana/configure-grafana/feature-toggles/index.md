@@ -128,6 +128,7 @@ Experimental features might be changed or removed without prior notice.
 | `featureToggleAdminPage`                    | Enable admin page for managing feature toggles from the Grafana front-end                                                                                                                |
 | `awsAsyncQueryCaching`                      | Enable caching for async queries for Redshift and Athena. Requires that the `useCachingService` feature toggle is enabled and the datasource has caching and async query support enabled |
 | `prometheusConfigOverhaulAuth`              | Update the Prometheus configuration page with the new auth component                                                                                                                     |
+| `panelExport`                               | Enables an Export feature in the panel menu allowing for quick downloading of panel contents                                                                                             |
 
 ## Development feature toggles
 

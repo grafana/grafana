@@ -683,5 +683,12 @@ var (
 			RequiresRestart: true,
 			HideFromDocs:    true,
 		},
+		{
+			Name:         "panelExport",
+			Description:  "Enables an Export feature in the panel menu allowing for quick downloading of panel contents",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaBiSquad,
+		},
 	}
 )

@@ -402,4 +402,8 @@ const (
 	// FlagConfigurableSchedulerTick
 	// Enable changing the scheduler base interval via configuration option unified_alerting.scheduler_tick_interval
 	FlagConfigurableSchedulerTick = "configurableSchedulerTick"
+
+	// FlagPanelExport
+	// Enables an Export feature in the panel menu allowing for quick downloading of panel contents
+	FlagPanelExport = "panelExport"
 )
