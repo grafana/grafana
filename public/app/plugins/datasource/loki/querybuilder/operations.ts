@@ -536,7 +536,7 @@ Example: \`\`error_level=\`level\` \`\`
       id: LokiOperationId.Keep,
       name: 'Keep',
       params: [
-        // As drop can support both labels (e.g. job) and expressions (e.g. job="grafana"), we
+        // As keep can support both labels (e.g. job) and expressions (e.g. job="grafana"), we
         // use input and not LabelParamEditor.
         {
           name: 'Label',
