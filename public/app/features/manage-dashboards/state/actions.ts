@@ -369,7 +369,7 @@ export function deleteFoldersAndDashboards(folderUids: string[], dashboardUids: 
 export function saveDashboard(options: SaveDashboardCommand) {
   dashboardWatcher.ignoreNextSave();
 
-  if (options.isEmbedded) {
+  if (options.isEditorEmbedded) {
     const callbackUrl = getCallbackUrl();
     if (callbackUrl) {
       return getBackendSrv()

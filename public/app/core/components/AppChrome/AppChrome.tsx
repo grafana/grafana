@@ -21,9 +21,9 @@ export function AppChrome({ children }: Props) {
   const { chrome } = useGrafana();
   const state = chrome.useState();
   const dashboard = useSelector((state) => state.dashboard.getModel());
-  const isEmbedded = dashboard?.meta.isEmbedded;
+  const isEditorEmbedded = dashboard?.meta.isEditorEmbedded;
 
-  const searchBarHidden = state.searchBarHidden || state.kioskMode === KioskMode.TV || isEmbedded;
+  const searchBarHidden = state.searchBarHidden || state.kioskMode === KioskMode.TV || isEditorEmbedded;
 
   const contentClass = cx({
     [styles.content]: true,

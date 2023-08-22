@@ -19,7 +19,7 @@ export const SaveDashboardDrawer = ({ dashboard, onDismiss, onSaveSuccess, isCop
   const [options, setOptions] = useState<SaveDashboardOptions>({});
   const previous = useSelector((store) => store.dashboard.getOriginal());
   const isProvisioned = dashboard.meta.provisioned;
-  const isNew = dashboard.version === 0 && !dashboard.meta.isEmbedded;
+  const isNew = dashboard.version === 0 && !dashboard.meta.isEditorEmbedded;
 
   const data = useMemo<SaveDashboardData>(() => {
     const clone = dashboard.getSaveModelClone({

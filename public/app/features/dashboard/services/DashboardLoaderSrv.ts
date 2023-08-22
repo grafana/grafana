@@ -94,7 +94,7 @@ export class DashboardLoaderSrv {
             canSave: false,
             canEdit: false,
             dashboardNotFound: true,
-            isEmbedded: true,
+            isEditorEmbedded: true,
           },
           dashboard: { title: '' },
         };
@@ -195,7 +195,7 @@ export class DashboardLoaderSrv {
         return {
           meta: {
             canEdit: true,
-            isEmbedded: true,
+            isEditorEmbedded: true,
             canDelete: false,
             canSave: true,
             canStar: false,

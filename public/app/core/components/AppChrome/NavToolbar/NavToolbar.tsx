@@ -35,13 +35,13 @@ export function NavToolbar({
 }: Props) {
   const homeNav = useSelector((state) => state.navIndex)[HOME_NAV_ID];
   const dashboard = useSelector((state) => state.dashboard.getModel());
-  const isEmbedded = dashboard?.meta.isEmbedded;
+  const isEditorEmbedded = dashboard?.meta.isEditorEmbedded;
   const styles = useStyles2(getStyles);
   const breadcrumbs = buildBreadcrumbs(sectionNav, pageNav, homeNav);
 
   return (
     <div data-testid={Components.NavToolbar.container} className={styles.pageToolbar}>
-      {!isEmbedded && (
+      {!isEditorEmbedded && (
         <div className={styles.menuButton}>
           <IconButton
             name="bars"
@@ -54,12 +54,12 @@ export function NavToolbar({
       )}
       <Breadcrumbs
         // Only show dashboard title for embedded dashboards
-        breadcrumbs={isEmbedded ? breadcrumbs.slice(-1) : breadcrumbs}
+        breadcrumbs={isEditorEmbedded ? breadcrumbs.slice(-1) : breadcrumbs}
         className={styles.breadcrumbsWrapper}
       />
       <div className={styles.actions}>
         {actions}
-        {!isEmbedded && (
+        {!isEditorEmbedded && (
           <>
             {actions && <NavToolbarSeparator />}
             {searchBarHidden && (

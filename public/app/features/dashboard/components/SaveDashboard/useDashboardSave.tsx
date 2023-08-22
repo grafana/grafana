@@ -22,9 +22,9 @@ const saveDashboard = async (
   dashboard: DashboardModel,
   saveDashboardRtkQuery: ReturnType<typeof useSaveDashboardMutation>[0]
 ) => {
-  const { isEmbedded } = dashboard.meta;
+  const { isEditorEmbedded } = dashboard.meta;
 
-  if (config.featureToggles.nestedFolders && !isEmbedded) {
+  if (config.featureToggles.nestedFolders && !isEditorEmbedded) {
     const query = await saveDashboardRtkQuery({
       dashboard: saveModel,
       folderUid: options.folderUid ?? dashboard.meta.folderUid ?? saveModel.meta.folderUid,
@@ -48,9 +48,9 @@ const saveDashboard = async (
     ...options,
     folderUid,
     dashboard: saveModel,
-    isEmbedded,
+    isEditorEmbedded,
   });
-  if (!isEmbedded) {
+  if (!isEditorEmbedded) {
     // fetch updated access control permissions
     await contextSrv.fetchUserPermissions();
   }
@@ -71,7 +71,7 @@ export const useDashboardSave = (dashboard: DashboardModel, isCopy = false) => {
         // important that these happen before location redirect below
         appEvents.publish(new DashboardSavedEvent());
         notifyApp.success('Dashboard saved');
-        if (dashboard.meta.isEmbedded) {
+        if (dashboard.meta.isEditorEmbedded) {
           return result;
         }
 

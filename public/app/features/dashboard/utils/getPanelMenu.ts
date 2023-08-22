@@ -123,7 +123,7 @@ export function getPanelMenu(
   const menu: PanelMenuItem[] = [];
 
   // Embedded dashboard's panels can only be edited
-  if (dashboard.meta.isEmbedded) {
+  if (dashboard.meta.isEditorEmbedded) {
     if (dashboard.canEditPanel(panel) && !panel.isEditing) {
       menu.push({
         text: t('panel.header-menu.edit', `Edit`),

@@ -260,7 +260,7 @@ export const DashNav = React.memo<Props>((props) => {
       return [renderTimeControls()];
     }
 
-    if (canEdit && !isFullscreen && !dashboard.meta.isEmbedded) {
+    if (canEdit && !isFullscreen && !dashboard.meta.isEditorEmbedded) {
       if (config.featureToggles.emptyDashboardPage) {
         buttons.push(<AddPanelButton dashboard={dashboard} key="panel-add-dropdown" />);
       } else {
@@ -306,7 +306,7 @@ export const DashNav = React.memo<Props>((props) => {
       );
     }
 
-    if (showSettings && !dashboard.meta.isEmbedded) {
+    if (showSettings && !dashboard.meta.isEditorEmbedded) {
       buttons.push(
         <ToolbarButton
           tooltip={t('dashboard.toolbar.settings', 'Dashboard settings')}
@@ -328,7 +328,7 @@ export const DashNav = React.memo<Props>((props) => {
     <AppChromeUpdate
       actions={
         <>
-          {!props.dashboard.meta.isEmbedded && renderLeftActions()}
+          {!props.dashboard.meta.isEditorEmbedded && renderLeftActions()}
           <NavToolbarSeparator leftActionsSeparator />
           <ToolbarButtonRow alignment="right">{renderRightActions()}</ToolbarButtonRow>
         </>

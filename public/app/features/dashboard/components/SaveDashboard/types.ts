@@ -22,7 +22,7 @@ export interface SaveDashboardCommand {
   message?: string;
   folderUid?: string;
   overwrite?: boolean;
-  isEmbedded?: boolean;
+  isEditorEmbedded?: boolean;
 }
 
 export interface SaveDashboardFormProps {
