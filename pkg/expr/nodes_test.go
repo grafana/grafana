@@ -275,7 +275,6 @@ func TestConvertDataFramesToResults(t *testing.T) {
 
 			for _, dtype := range supported {
 				t.Run(dtype, func(t *testing.T) {
-
 					res, err := execute(frames, dtype)
 					require.NoError(t, err)
 					require.Len(t, res.Values, 2)
