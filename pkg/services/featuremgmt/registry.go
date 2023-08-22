@@ -705,6 +705,7 @@ var (
 			Stage:           FeatureStagePrivatePreview,
 			FrontendOnly:    false,
 			Owner:           grafanaAlertingSquad,
+			RequiresRestart: true,
 		},
 		{
 			Name:            "reportingRetries",

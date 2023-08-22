@@ -100,5 +100,5 @@ prometheusConfigOverhaulAuth,experimental,@grafana/observability-metrics,false,f
 configurableSchedulerTick,experimental,@grafana/alerting-squad,false,false,true,false
 influxdbSqlSupport,experimental,@grafana/observability-metrics,false,false,false,false
 noBasicRole,experimental,@grafana/grafana-authnz-team,false,false,true,true
-alertingNoDataErrorExecution,privatePreview,@grafana/alerting-squad,false,false,false,false
+alertingNoDataErrorExecution,privatePreview,@grafana/alerting-squad,false,false,true,false
 reportingRetries,preview,@grafana/grafana-as-code,false,false,true,false
