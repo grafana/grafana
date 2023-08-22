@@ -48,6 +48,19 @@ export const filterByValueTransformer: DataTransformerInfo<FilterByValueTransfor
       return source.pipe(noopTransformer.operator({}, ctx));
     }
 
+    const interpolatedFilters = filters.map((filter) => {
+      if (filter.config.options.value) {
+        const interpolatedValue = ctx.interpolate(filter.config.options.value);
+        const newFilter = {
+          ...filter,
+          config: { ...filter.config, options: { ...filter.config.options, value: interpolatedValue } },
+        };
+        newFilter.config.options.value! = interpolatedValue;
+        return newFilter;
+      }
+      return filter;
+    });
+
     return source.pipe(
       map((data) => {
         if (!Array.isArray(data) || data.length === 0) {
@@ -58,7 +71,7 @@ export const filterByValueTransformer: DataTransformerInfo<FilterByValueTransfor
 
         for (const frame of data) {
           const fieldIndexByName = groupFieldIndexByName(frame, data);
-          const matchers = createFilterValueMatchers(filters, fieldIndexByName);
+          const matchers = createFilterValueMatchers(interpolatedFilters, fieldIndexByName);
 
           for (let index = 0; index < frame.length; index++) {
             if (rows.has(index)) {

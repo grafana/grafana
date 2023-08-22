@@ -109,6 +109,47 @@ describe('FilterByValue transformer', () => {
     });
   });
 
+  it('should interpolate dashboard variables', async () => {
+    const lower: MatcherConfig<BasicValueMatcherOptions<number>> = {
+      id: ValueMatcherID.lower,
+      options: { value: 6 },
+    };
+
+    const cfg: DataTransformerConfig<FilterByValueTransformerOptions> = {
+      id: DataTransformerID.filterByValue,
+      options: {
+        type: FilterByValueType.exclude,
+        match: FilterByValueMatch.all,
+        filters: [
+          {
+            fieldName: 'numbers',
+            config: lower,
+          },
+        ],
+      },
+    };
+
+    await expect(transformDataFrame([cfg], [seriesAWithSingleField])).toEmitValuesWith((received) => {
+      const processed = received[0];
+
+      expect(processed.length).toEqual(1);
+      expect(processed[0].fields).toEqual([
+        {
+          name: 'time',
+          type: FieldType.time,
+          values: [6000, 7000],
+          state: {},
+        },
+        {
+          name: 'numbers',
+          type: FieldType.number,
+          values: [6, 7],
+          state: {},
+        },
+      ]);
+    });
+  });
+
   it('should match any condition', async () => {
     const lowerOrEqual: MatcherConfig<BasicValueMatcherOptions<number>> = {
       id: ValueMatcherID.lowerOrEqual,

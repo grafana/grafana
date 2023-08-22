@@ -4,7 +4,6 @@ import { ValueMatcherID, RangeValueMatcherOptions } from '@grafana/data';
 import { Input } from '@grafana/ui';
 
 import { ValueMatcherEditorConfig, ValueMatcherUIProps, ValueMatcherUIRegistryItem } from './types';
-import { convertToType } from './utils';
 
 type PropNames = 'from' | 'to';
 
@@ -38,10 +37,10 @@ export function rangeMatcherEditor<T = any>(
 
         onChange({
           ...options,
-          [prop]: convertToType(value, field),
+          [prop]: value,
         });
       },
-      [options, onChange, isInvalid, field]
+      [options, onChange, isInvalid]
     );
 
     return (
@@ -73,10 +72,8 @@ export const getRangeValueMatchersUI = (): Array<ValueMatcherUIRegistryItem<Rang
     {
       name: 'Is between',
       id: ValueMatcherID.between,
-      component: rangeMatcherEditor<number>({
-        validator: (value) => {
-          return !isNaN(value);
-        },
+      component: rangeMatcherEditor<string | number>({
+        validator: () => true,
       }),
     },
   ];
