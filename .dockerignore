@@ -22,3 +22,5 @@ node_modules
 !.yarn/plugins
 !.yarn/versions
 !.yarn/cache
+public/plugins/**/.yarn
+public/plugins/**/pkg

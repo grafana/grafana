@@ -44,7 +44,8 @@ RUN if grep -i -q alpine /etc/issue; then \
 
 WORKDIR /tmp/grafana
 
-COPY go.* ./
+COPY go.mod ./
+COPY go.sum ./
 COPY .bingo .bingo
 
 RUN go mod download
