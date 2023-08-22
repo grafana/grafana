@@ -460,34 +460,29 @@ func (dr *DashboardServiceImpl) GetDashboardsByPluginID(ctx context.Context, que
 
 func (dr *DashboardServiceImpl) setDefaultPermissions(ctx context.Context, dto *dashboards.SaveDashboardDTO, dash *dashboards.Dashboard, provisioned bool) error {
 	inFolder := dash.FolderID > 0
-	if !accesscontrol.IsDisabled(dr.cfg) {
-		var permissions []accesscontrol.SetResourcePermissionCommand
-		if !provisioned && dto.User.IsRealUser() && !dto.User.IsAnonymous {
-			permissions = append(permissions, accesscontrol.SetResourcePermissionCommand{
-				UserID: dto.User.UserID, Permission: dashboards.PERMISSION_ADMIN.String(),
-			})
-		}
+	var permissions []accesscontrol.SetResourcePermissionCommand
 
-		if !inFolder {
-			permissions = append(permissions, []accesscontrol.SetResourcePermissionCommand{
-				{BuiltinRole: string(org.RoleEditor), Permission: dashboards.PERMISSION_EDIT.String()},
-				{BuiltinRole: string(org.RoleViewer), Permission: dashboards.PERMISSION_VIEW.String()},
-			}...)
-		}
+	if !provisioned && dto.User.IsRealUser() && !dto.User.IsAnonymous {
+		permissions = append(permissions, accesscontrol.SetResourcePermissionCommand{
+			UserID: dto.User.UserID, Permission: dashboards.PERMISSION_ADMIN.String(),
+		})
+	}
 
-		svc := dr.dashboardPermissions
-		if dash.IsFolder {
-			svc = dr.folderPermissions
-		}
+	if !inFolder {
+		permissions = append(permissions, []accesscontrol.SetResourcePermissionCommand{
+			{BuiltinRole: string(org.RoleEditor), Permission: dashboards.PERMISSION_EDIT.String()},
+			{BuiltinRole: string(org.RoleViewer), Permission: dashboards.PERMISSION_VIEW.String()},
+		}...)
+	}
 
-		_, err := svc.SetPermissions(ctx, dto.OrgID, dash.UID, permissions...)
-		if err != nil {
-			return err
-		}
-	} else if dr.cfg.EditorsCanAdmin && !provisioned && dto.User.IsRealUser() && !dto.User.IsAnonymous {
-		if err := dr.MakeUserAdmin(ctx, dto.OrgID, dto.User.UserID, dash.ID, !inFolder); err != nil {
-			return err
-		}
+	svc := dr.dashboardPermissions
+	if dash.IsFolder {
+		svc = dr.folderPermissions
+	}
+
+	_, err := svc.SetPermissions(ctx, dto.OrgID, dash.UID, permissions...)
+	if err != nil {
+		return err
 	}
 
 	return nil
