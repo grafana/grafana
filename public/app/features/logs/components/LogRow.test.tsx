@@ -61,7 +61,7 @@ describe('LogRow', () => {
   describe('with permalinking', () => {
     it('reports via feature tracking when log line matches', () => {
       const scrollIntoView = jest.fn();
-      setup({ permalinkedRowId: 'log-row-id', scrollIntoView });
+      setup({ permalinkedRowId: 'log-row-id', scrollIntoView, containerRendered: true });
       expect(reportInteraction).toHaveBeenCalledWith('grafana_explore_logs_permalink_opened', {
         logRowUid: 'log-row-id',
         datasourceType: 'unknown',
@@ -70,7 +70,11 @@ describe('LogRow', () => {
     });
 
     it('highlights row with same permalink-id', () => {
-      const { container } = setup({ permalinkedRowId: 'log-row-id' });
+      const { container } = setup({
+        permalinkedRowId: 'log-row-id',
+        containerRendered: true,
+        scrollIntoView: jest.fn(),
+      });
       const row = container.querySelector('tr');
       expect(row).toHaveStyle(
         `background-color: ${tinycolor(theme.colors.info.transparent).setAlpha(0.25).toString()}`
@@ -78,7 +82,12 @@ describe('LogRow', () => {
     });
 
     it('does not highlight row details with different permalink-id', async () => {
-      const { container } = setup({ permalinkedRowId: 'log-row-id', enableLogDetails: true });
+      const { container } = setup({
+        permalinkedRowId: 'log-row-id',
+        enableLogDetails: true,
+        containerRendered: true,
+        scrollIntoView: jest.fn(),
+      });
       const row = container.querySelector('tr');
       await userEvent.click(row!);
       const allRows = container.querySelectorAll('tr');
@@ -101,21 +110,27 @@ describe('LogRow', () => {
 
     it('calls `scrollIntoView` if permalink matches', () => {
       const scrollIntoView = jest.fn();
-      setup({ permalinkedRowId: 'log-row-id', scrollIntoView });
+      setup({ permalinkedRowId: 'log-row-id', scrollIntoView, containerRendered: true });
       expect(scrollIntoView).toHaveBeenCalled();
     });
 
     it('does not call `scrollIntoView` if permalink does not match', () => {
       const scrollIntoView = jest.fn();
-      setup({ permalinkedRowId: 'wrong-log-row-id', scrollIntoView });
+      setup({ permalinkedRowId: 'wrong-log-row-id', scrollIntoView, containerRendered: true });
       expect(scrollIntoView).not.toHaveBeenCalled();
     });
 
     it('calls `scrollIntoView` once', async () => {
       const scrollIntoView = jest.fn();
-      setup({ permalinkedRowId: 'log-row-id', scrollIntoView });
+      setup({ permalinkedRowId: 'log-row-id', scrollIntoView, containerRendered: true });
       await userEvent.hover(screen.getByText('test123'));
       expect(scrollIntoView).toHaveBeenCalledTimes(1);
+    });
+
+    it('does not call `scrollIntoView` if permalink matches but container is not rendered yet', () => {
+      const scrollIntoView = jest.fn();
+      setup({ permalinkedRowId: 'log-row-id', scrollIntoView, containerRendered: false });
+      expect(scrollIntoView).not.toHaveBeenCalled();
     });
   });
 
@@ -140,5 +155,16 @@ describe('LogRow', () => {
     await userEvent.hover(screen.getByText('test=field value'));
 
     expect(screen.getByLabelText('Show context')).toBeInTheDocument();
+  });
+
+  it('should highlight the original log row when showing its context', async () => {
+    const { container } = setup({ showContextToggle: jest.fn().mockReturnValue(true) });
+
+    await userEvent.hover(screen.getByText('test123'));
+    await userEvent.click(screen.getByLabelText('Show context'));
+    await userEvent.unhover(screen.getByText('test123'));
+
+    const row = container.querySelector('tr');
+    expect(row).toHaveStyle(`background-color: ${tinycolor(theme.colors.info.transparent).setAlpha(0.25).toString()}`);
   });
 });

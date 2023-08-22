@@ -4,9 +4,10 @@ import { QueryEditorProps, toOption } from '@grafana/data';
 import { EditorRows } from '@grafana/experimental';
 
 import CloudMonitoringDatasource from '../datasource';
-import { CloudMonitoringQuery, QueryType, SLOQuery } from '../types/query';
+import { CloudMonitoringQuery, PromQLQuery, QueryType, SLOQuery } from '../types/query';
 import { CloudMonitoringOptions } from '../types/types';
 
+import { PromQLQueryEditor } from './PromQLEditor';
 import { QueryHeader } from './QueryHeader';
 import { defaultQuery as defaultSLOQuery } from './SLOQueryEditor';
 
@@ -35,6 +36,14 @@ export const QueryEditor = (props: Props) => {
     onRunQuery();
   };
 
+  const promQLQuery = {
+    ...{ projectName: datasource.getDefaultProject(), expr: '', step: '10s' },
+    ...query.promQLQuery,
+  };
+  const onPromQLQueryChange = (q: PromQLQuery) => {
+    onChange({ ...query, promQLQuery: q });
+  };
+
   const meta = props.data?.series.length ? props.data?.series[0].meta : {};
   const customMetaData = meta?.custom ?? {};
   const variableOptionGroup = {
@@ -54,6 +63,18 @@ export const QueryEditor = (props: Props) => {
   return (
     <EditorRows>
       <QueryHeader query={query} onChange={onChange} onRunQuery={onRunQuery} />
+
+      {queryType === QueryType.PROMQL && (
+        <PromQLQueryEditor
+          refId={query.refId}
+          variableOptionGroup={variableOptionGroup}
+          onChange={onPromQLQueryChange}
+          onRunQuery={onRunQuery}
+          datasource={datasource}
+          query={promQLQuery}
+        />
+      )}
+
       {queryType !== QueryType.SLO && (
         <MetricQueryEditor
           refId={query.refId}

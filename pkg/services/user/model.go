@@ -26,6 +26,7 @@ var (
 	ErrProtectedUser     = errors.New("cannot adopt protected user")
 	ErrNoUniqueID        = errors.New("identifying id not found")
 	ErrLastSeenUpToDate  = errors.New("last seen is already up to date")
+	ErrUpdateInvalidID   = errors.New("unable to update invalid id")
 )
 
 type User struct {
