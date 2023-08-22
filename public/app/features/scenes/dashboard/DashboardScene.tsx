@@ -18,6 +18,7 @@ import {
 import appEvents from 'app/core/app_events';
 
 import { DashboardSceneRenderer } from './DashboardSceneRenderer';
+import { forceRenderChildren } from './utils';
 
 export interface DashboardSceneState extends SceneObjectState {
   title: string;
@@ -80,7 +81,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     // Make grid draggable
     if (this.state.body instanceof SceneGridLayout) {
       this.state.body.setState({ isDraggable: true, isResizable: true });
-      sceneGraph.forceRenderChildren(this.state.body, true);
+      forceRenderChildren(this.state.body, true);
     }
   };
 
@@ -92,7 +93,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     // Disable grid dragging
     if (this.state.body instanceof SceneGridLayout) {
       this.state.body.setState({ isDraggable: false, isResizable: false });
-      sceneGraph.forceRenderChildren(this.state.body, true);
+      forceRenderChildren(this.state.body, true);
     }
   };
 
