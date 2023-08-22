@@ -36,6 +36,28 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
     )
     .addItem(
       new OptionsPaneItemDescriptor({
+        title: 'Title Position',
+        value: panel.titlePosition,
+        popularRank: 1,
+        render: function renderRepeatOptions() {
+          const directionOptions = [
+            { label: 'Left', value: 'left' },
+            { label: 'Center', value: 'center' },
+            { label: 'Right', value: 'right' },
+          ];
+
+          return (
+            <RadioButtonGroup
+              options={directionOptions}
+              value={panel.titlePosition || 'center'}
+              onChange={(value) => onPanelConfigChange('titlePosition', value)}
+            />
+          );
+        },
+      })
+    )
+    .addItem(
+      new OptionsPaneItemDescriptor({
         title: 'Description',
         description: panel.description,
         value: panel.description,

@@ -146,6 +146,7 @@ export class PanelModel implements DataConfigSource, IPanelModel {
   gridPos!: GridPos;
   type!: string;
   title!: string;
+  titlePosition?: string;
   alert?: any;
   scopedVars?: ScopedVars;
   repeat?: string;

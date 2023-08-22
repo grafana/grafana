@@ -26,6 +26,7 @@ export type PanelChromeProps = (AutoSize | FixedDimensions) & (Collapsible | Hov
 interface BaseProps {
   padding?: PanelPadding;
   title?: string;
+  titlePlacement?: TitlePlacement;
   description?: string | (() => string);
   titleItems?: ReactNode;
   menu?: ReactElement | (() => ReactElement);
@@ -89,12 +90,18 @@ export type PanelPadding = 'none' | 'md';
 /**
  * @internal
  */
+export type TitlePlacement = 'left' | 'center' | 'right';
+
+/**
+ * @internal
+ */
 export function PanelChrome({
   width,
   height,
   children,
   padding = 'md',
   title = '',
+  titlePlacement = 'center',
   description = '',
   displayMode = 'default',
   titleItems,
@@ -137,7 +144,25 @@ export function PanelChrome({
   const headerStyles: CSSProperties = {
     height: headerHeight,
     cursor: dragClass ? 'move' : 'auto',
+    justifyContent: 'space-between',
   };
+
+  const containerStyles: CSSProperties = { width, height };
+  if (displayMode === 'transparent') {
+    containerStyles.backgroundColor = 'transparent';
+    containerStyles.border = 'none';
+  }
+
+  const getTitlePlacementStyle = (pos: TitlePlacement) => {
+    const placements = {
+      left: styles.alignTitleLeft,
+      center: styles.alignTitleCenter,
+      right: styles.alignTitleRight,
+    };
+    return placements[pos];
+  };
+
+  const titleStyle = getTitlePlacementStyle(titlePlacement);
 
   const containerStyles: CSSProperties = { width, height: isOpen ? height : headerHeight };
   const [ref, { width: loadingBarWidth }] = useMeasure<HTMLDivElement>();
@@ -173,50 +198,46 @@ export function PanelChrome({
       {collapsible
         ? collapsibleHeader
         : title && (
-            <h6 title={title} className={styles.title}>
-              {title}
-            </h6>
-          )}
-
-      <div className={cx(styles.titleItems, dragClassCancel)} data-testid="title-items-container">
-        <PanelDescription description={description} className={dragClassCancel} />
-        {titleItems}
-      </div>
-      {loadingState === LoadingState.Streaming && (
-        <Tooltip content={onCancelQuery ? 'Stop streaming' : 'Streaming'}>
-          <TitleItem className={dragClassCancel} data-testid="panel-streaming" onClick={onCancelQuery}>
-            <Icon name="circle-mono" size="md" className={styles.streaming} />
-          </TitleItem>
-        </Tooltip>
+        <h6 title={title} className={cx(styles.title, titleStyle)}>
+          {title}
+        </h6>
       )}
-      {loadingState === LoadingState.Loading && onCancelQuery && (
-        <DelayRender delay={2000}>
-          <Tooltip content="Cancel query">
-            <TitleItem
-              className={cx(dragClassCancel, styles.pointer)}
-              data-testid="panel-cancel-query"
-              onClick={onCancelQuery}
-            >
-              <Icon name="sync-slash" size="md" />
+      <div>
+        <div className={cx(styles.titleItems, dragClassCancel)} data-testid="title-items-container">
+          <PanelDescription description={description} className={dragClassCancel} />
+          {titleItems}
+        </div>
+        {loadingState === LoadingState.Streaming && (
+          <Tooltip content={onCancelQuery ? 'Stop streaming' : 'Streaming'}>
+            <TitleItem className={dragClassCancel} data-testid="panel-streaming" onClick={onCancelQuery}>
+              <Icon name="circle-mono" size="md" className={styles.streaming} />
             </TitleItem>
           </Tooltip>
-        </DelayRender>
-      )}
-      <div className={styles.rightAligned}>
-        {actions && <div className={styles.rightActions}>{itemsRenderer(actions, (item) => item)}</div>}
+        )}
+        {loadingState === LoadingState.Loading && onCancelQuery && (
+          <DelayRender delay={2000}>
+            <Tooltip content="Cancel query">
+              <TitleItem
+                className={cx(dragClassCancel, styles.pointer)}
+                data-testid="panel-cancel-query"
+                onClick={onCancelQuery}
+              >
+                <Icon name="sync-slash" size="md" />
+              </TitleItem>
+            </Tooltip>
+          </DelayRender>
+        )}
+        <div className={styles.rightAligned}>
+          {actions && <div className={styles.rightActions}>{itemsRenderer(actions, (item) => item)}</div>}
+        </div>
       </div>
     </>
   );
 
   return (
     // tabIndex={0} is needed for keyboard accessibility in the plot area
-    <div
-      className={cx(styles.container, { [styles.transparentContainer]: isPanelTransparent })}
-      style={containerStyles}
-      data-testid={testid}
-      tabIndex={0} //eslint-disable-line jsx-a11y/no-noninteractive-tabindex
-      ref={ref}
-    >
+    // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex
+    <div className={styles.container} style={containerStyles} data-testid={testid} tabIndex={0} ref={ref}>
       <div className={styles.loadingBarContainer}>
         {loadingState === LoadingState.Loading ? (
           <LoadingBar width={loadingBarWidth} ariaLabel="Panel loading bar" />
@@ -308,6 +329,10 @@ const getContentStyle = (
   if (width) {
     innerWidth = width - panelPadding - panelBorder;
   }
+
+  const contentStyle: CSSProperties = {
+    padding: chromePadding,
+  };
 
   let innerHeight = 0;
   if (height) {
@@ -405,7 +430,6 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     title: css({
       label: 'panel-title',
-      display: 'flex',
       marginBottom: 0, // override default h6 margin-bottom
       padding: theme.spacing(0, padding),
       textOverflow: 'ellipsis',
@@ -413,6 +437,19 @@ const getStyles = (theme: GrafanaTheme2) => {
       whiteSpace: 'nowrap',
       fontSize: theme.typography.h6.fontSize,
       fontWeight: theme.typography.h6.fontWeight,
+    }),
+    alignTitleLeft: css({
+      label: 'title-left-aligned',
+      marginRight: 'auto',
+    }),
+    alignTitleRight: css({
+      label: 'title-right-aligned',
+      marginLeft: 'auto',
+    }),
+    alignTitleCenter: css({
+      label: 'title-center-aligned',
+      marginLeft: 'auto',
+      marginRight: 'auto',
     }),
     items: css({
       display: 'flex',
