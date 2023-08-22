@@ -29,7 +29,7 @@ You can use data link variables or data links to create links between panels.
 
 ## Data link variables
 
-You can use variables in data links to refer to series fields, labels, and values. For more information about data links, refer to [Data links]({{< relref "#data-links" >}}).
+You can use variables in data links to refer to series fields, labels, and values. For more information about data links, refer to [Data links](#data-links).
 
 To see a list of available variables, type `$` in the data link **URL** field to see a list of variables that you can use.
 
@@ -37,14 +37,14 @@ To see a list of available variables, type `$` in the data link **URL** field to
 These variables changed in 6.4 so if you have an older version of Grafana, then use the version picker to select docs for an older version of Grafana.
 {{% /admonition %}}
 
-You can also use template variables in your data links URLs, refer to [Templates and variables]({{< relref "../../dashboards/variables/" >}}) for more information on template variables.
+You can also use template variables in your data links URLs, refer to [Templates and variables][] for more information on template variables.
 
 ## Time range panel variables
 
 These variables allow you to include the current time range in the data link URL.
 
 - `__url_time_range` - current dashboard's time range (i.e. `?from=now-6h&to=now`)
-- `$__from and $__to` - For more information, refer to [Global variables]({{< relref "../../dashboards/variables/add-template-variables/#__from-and-__to" >}}).
+- `$__from and $__to` - For more information, refer to [Global variables][].
 
 ## Series variables
 
@@ -90,7 +90,7 @@ Data links allow you to provide more granular context to your links. You can cre
 The link itself is accessible in different ways depending on the visualization. For the Graph you need to click on a data point or line, for a panel like
 Stat, Gauge, or Bar Gauge you can click anywhere on the visualization to open the context menu.
 
-You can use variables in data links to send people to a detailed dashboard with preserved data filters. For example, you could use variables to specify a time range, series, and variable selection. For more information, refer to [Data link variables]({{< relref "#data-link-variables" >}}).
+You can use variables in data links to send people to a detailed dashboard with preserved data filters. For example, you could use variables to specify a time range, series, and variable selection. For more information, refer to [Data link variables](#data-link-variables).
 
 ### Typeahead suggestions
 
@@ -110,7 +110,7 @@ When creating or updating a data link, press Cmd+Space or Ctrl+Space on your key
 1. Enter a **Title**. **Title** is a human-readable label for the link that will be displayed in the UI.
 1. Enter the **URL** you want to link to.
 
-   You can even add one of the template variables defined in the dashboard. Click in the **URL** field and then type `$` or press Ctrl+Space or Cmd+Space to see a list of available variables. By adding template variables to your panel link, the link sends the user to the right context, with the relevant variables already set. For more information, refer to [Data link variables]({{< relref "#data-link-variables" >}}).
+   You can even add one of the template variables defined in the dashboard. Click in the **URL** field and then type `$` or press Ctrl+Space or Cmd+Space to see a list of available variables. By adding template variables to your panel link, the link sends the user to the right context, with the relevant variables already set. For more information, refer to [Data link variables](#data-link-variables).
 
 1. If you want the link to open in a new tab, then select **Open in a new tab**.
 1. Click **Save** to save changes and close the window.
@@ -129,3 +129,11 @@ When creating or updating a data link, press Cmd+Space or Ctrl+Space on your key
 1. Scroll down to the Data links section, expand it, and find the link that you want to delete.
 1. Click the **X** icon next to the link you want to delete.
 1. Click **Save** in the upper right to save your changes to the dashboard.
+
+{{% docs/reference %}}
+[Templates and variables]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables"
+[Templates and variables]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables"
+
+[Global variables]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables/add-template-variables#__from-and-__to"
+[Global variables]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables/add-template-variables#__from-and-__to"
+{{% /docs/reference %}}

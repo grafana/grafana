@@ -20,7 +20,7 @@ weight: 1200
 
 The trend panel should be used for datasets that have a sequential, numeric X that is not time. Some examples are function graphs, rpm/torque curves, supply/demand relationships, and elevation or heart rate plots along a race course (with x as distance or duration from start).
 
-The trend panel supports all visual styles and options available in the [Time series panel]({{< relref "../time-series" >}}) with these exceptions:
+The trend panel supports all visual styles and options available in the [Time series panel][] with these exceptions:
 
 - No annotations or time regions
 - No shared cursor/crosshair
@@ -36,3 +36,8 @@ Use this option to select a field that contains increasing numeric values.
 For example, you could represent engine power and torque versus speed where speed is plotted on the x axis and power and torque are plotted on the y axes.
 
 {{< figure src="/media/docs/grafana/screenshot-grafana-10-0-trend-panel-new-colors.png" max-width="750px" caption="Trend engine power and torque curves" >}}
+
+{{% docs/reference %}}
+[Time series panel]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/time-series"
+[Time series panel]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/time-series"
+{{% /docs/reference %}}

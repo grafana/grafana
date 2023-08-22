@@ -24,7 +24,7 @@ Server-side expressions allow you to manipulate data returned from queries with 
 
 ### Using expressions
 
-Expressions are most commonly used for [Grafana Alerting]({{< relref "../../../alerting/" >}}). The processing is done server-side, so expressions can operate without a browser session. However, expressions can also be used with backend data sources and visualization.
+Expressions are most commonly used for [Grafana Alerting][]. The processing is done server-side, so expressions can operate without a browser session. However, expressions can also be used with backend data sources and visualization.
 
 {{% admonition type="note" %}}
 Expressions do not work with legacy dashboard alerts.
@@ -36,7 +36,7 @@ Expressions are meant to augment data sources by enabling queries from different
 When possible, you should do data processing inside the data source. Copying data from storage to the Grafana server for processing is inefficient, so expressions are targeted at lightweight data processing.
 {{% /admonition %}}
 
-Expressions work with data source queries that return time series or number data. They also operate on [multiple-dimensional data]({{< relref "../../../fundamentals/timeseries-dimensions/" >}}). For example, a query that returns multiple series, where each series is identified by labels or tags.
+Expressions work with data source queries that return time series or number data. They also operate on [multiple-dimensional data][]. For example, a query that returns multiple series, where each series is identified by labels or tags.
 
 An individual expression takes one or more queries or other expressions as input and adds data to the result. Each individual expression or query is represented by a variable that is a named identifier known as its RefID (e.g., the default letter `A` or `B`).
 
@@ -49,7 +49,7 @@ Expressions work with two types of data.
 - A collection of time series.
 - A collection of numbers, where each number is an item.
 
-Each collection is returned from a single data source query or expression and represented by the RefID. Each collection is a set, where each item in the set is uniquely identified by its dimensions which are stored as [labels]({{< relref "../../../fundamentals/timeseries-dimensions/#labels" >}}) or key-value pairs.
+Each collection is returned from a single data source query or expression and represented by the RefID. Each collection is a set, where each item in the set is uniquely identified by its dimensions which are stored as [labels][] or key-value pairs.
 
 ### Data source queries
 
@@ -220,13 +220,13 @@ Resample changes the time stamps in each time series to have a consistent time i
 
 If your data source supports them, then Grafana displays the **Expression** button and shows any existing expressions in the query editor list.
 
-For more information about expressions, refer to [About expressions]({{< relref "#about-expressions" >}}).
+For more information about expressions, refer to [About expressions](#about-expressions).
 
 1. Open the panel.
 1. Below the query, click **Expression**.
 1. In the **Operation** field, select the type of expression you want to write.
 
-   For more information about expression operations, refer to [About expressions]({{< relref "#about-expressions" >}}).
+   For more information about expression operations, refer to [About expressions](#about-expressions).
 
 1. Write the expression.
 1. Click **Apply**.
@@ -235,6 +235,17 @@ For more information about expressions, refer to [About expressions]({{< relref 
 
 When any queried data source returns no series or numbers, the expression engine returns `NoData`. For example, if a request contains two data source queries that are merged by an expression, if `NoData` is returned by at least one of the data source queries, then the returned result for the entire query is `NoData`.
 
-For more information about how [Grafana Alerting]({{< relref "../../../alerting/" >}}) processes `NoData` results, refer to [No data and error handling]({{< relref "../../../alerting/alerting-rules/create-grafana-managed-rule/#no-data-and-error-handling" >}}).
+For more information about how [Grafana Alerting][] processes `NoData` results, refer to [No data and error handling][].
 
 In the case of using an expression on multiple queries, the expression engine requires that all of the queries return an identical timestamp. For example, if using math to combine the results of multiple SQL queries which each use `SELECT NOW() AS "time"`, the expression will only work if all queries evaluate `NOW()` to an identical timestamp; which does not always happen. To resolve this, you can replace `NOW()` with an arbitrary time, such as `SELECT 1 AS "time"`, or any other valid UNIX timestamp.
+
+{{% docs/reference %}}
+[multiple-dimensional data]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/fundamentals/timeseries-dimensions"
+[multiple-dimensional data]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/fundamentals/timeseries-dimensions"
+
+[Grafana Alerting]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/alerting"
+[Grafana Alerting]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/alerting"
+
+[labels]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/fundamentals/timeseries-dimensions#labels"
+[labels]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/fundamentals/timeseries-dimensions#labels"
+{{% /docs/reference %}}

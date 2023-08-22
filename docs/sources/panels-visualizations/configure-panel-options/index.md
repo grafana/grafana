@@ -67,7 +67,7 @@ Add a title and description to a panel to share with users any important informa
 
    Text entered in this field appears in a tooltip in the upper-left corner of the panel.
 
-   You can use [variables you have defined]({{< relref "../../dashboards/variables/" >}}) in the **Title** and **Description** field, but not [global variables]({{< relref "../../dashboards/variables/add-template-variables/#global-variables" >}}).
+   You can use [variables you have defined][] in the **Title** and **Description** field, but not [global variables][].
 
    ![](/static/img/docs/panels/panel-options-8-0.png)
 
@@ -113,3 +113,8 @@ To see an example of repeating panels, refer to [Prometheus dashboard with repea
    - Choose `vertical` to arrange panels in a column. The width of repeated panels is the same as the original, repeated panel.
 
 1. To propagate changes to all panels, reload the dashboard.
+
+{{% docs/reference %}}
+[variables you have defined]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables"
+[variables you have defined]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables"
+{{% /docs/reference %}}

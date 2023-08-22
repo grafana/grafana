@@ -31,7 +31,7 @@ To limit the number of lines rendered, you can use the **Max data points** setti
 
 ## Log level
 
-For logs where a **level** label is specified, we use the value of the label to determine the log level and update color accordingly. If the log doesn't have a level label specified, we try to find out if its content matches any of the supported expressions (see below for more information). The log level is always determined by the first match. In case Grafana is not able to determine a log level, it will be visualized with **unknown** log level. See [supported log levels and mappings of log level abbreviation and expressions]({{< relref "../../../explore/logs-integration/#log-level" >}}).
+For logs where a **level** label is specified, we use the value of the label to determine the log level and update color accordingly. If the log doesn't have a level label specified, we try to find out if its content matches any of the supported expressions (see below for more information). The log level is always determined by the first match. In case Grafana is not able to determine a log level, it will be visualized with **unknown** log level. See [supported log levels and mappings of log level abbreviation and expressions][].
 
 ## Log details
 
@@ -52,3 +52,8 @@ Use these settings to refine your visualization:
 - **Prettify JSON -** Set this to `true` to pretty print all JSON logs. This setting does not affect logs in any format other than JSON.
 - **Enable log details -** Toggle option to see the log details view for each log row. The default setting is true.
 - **Order -** Display results in descending or ascending time order. The default is **Descending**, showing the newest logs first. Set to **Ascending** to show the oldest log lines first.
+
+{{% docs/reference %}}
+[supported log levels and mappings of log level abbreviation and expressions]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>"
+[supported log levels and mappings of log level abbreviation and expressions]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>"
+{{% /docs/reference %}}
