@@ -32,9 +32,9 @@ const (
 var proxyFields = [...]string{proxyFieldName, proxyFieldEmail, proxyFieldLogin, proxyFieldRole, proxyFieldGroups}
 
 var (
-	errNotAcceptedIP      = errutil.NewBase(errutil.StatusUnauthorized, "auth-proxy.invalid-ip")
-	errEmptyProxyHeader   = errutil.NewBase(errutil.StatusUnauthorized, "auth-proxy.empty-header")
-	errInvalidProxyHeader = errutil.NewBase(errutil.StatusInternal, "auth-proxy.invalid-proxy-header")
+	errNotAcceptedIP      = errutil.Unauthorized("auth-proxy.invalid-ip")
+	errEmptyProxyHeader   = errutil.Unauthorized("auth-proxy.empty-header")
+	errInvalidProxyHeader = errutil.Internal("auth-proxy.invalid-proxy-header")
 )
 
 var (
