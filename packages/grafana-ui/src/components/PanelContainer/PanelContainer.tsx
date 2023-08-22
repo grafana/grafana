@@ -16,8 +16,9 @@ export const PanelContainer = ({ children, className, ...props }: Props) => {
   );
 };
 
-const getStyles = (theme: GrafanaTheme2) => css`
-  background-color: ${theme.components.panel.background};
-  border: 1px solid ${theme.components.panel.borderColor};
-  border-radius: ${theme.shape.radius.default};
-`;
+const getStyles = (theme: GrafanaTheme2) =>
+  css({
+    backgroundColor: theme.components.panel.background,
+    border: `1px solid ${theme.components.panel.borderColor}`,
+    borderRadius: theme.shape.radius.default,
+  });

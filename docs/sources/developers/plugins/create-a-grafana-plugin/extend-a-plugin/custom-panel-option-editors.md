@@ -1,5 +1,4 @@
 ---
-title: Build a custom panel option editor
 aliases:
   - ../../../plugins/custom-panel-option-editors/
 description: How to build a custom panel option editor.
@@ -10,6 +9,11 @@ keywords:
   - custom panel option editor
   - customizing panel options
   - panel options
+labels:
+  products:
+    - enterprise
+    - oss
+title: Build a custom panel option editor
 weight: 700
 ---
 

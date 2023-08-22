@@ -10,6 +10,10 @@ keywords:
   - api
   - alerting
   - alerts
+labels:
+  products:
+    - enterprise
+    - oss
 title: Legacy Alerting API
 ---
 

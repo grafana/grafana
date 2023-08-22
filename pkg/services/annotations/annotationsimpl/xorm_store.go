@@ -66,7 +66,7 @@ func (r *xormRepositoryImpl) Add(ctx context.Context, item *annotations.Item) er
 		if _, err := sess.Table("annotation").Insert(item); err != nil {
 			return err
 		}
-		return r.synchronizeTags(ctx, item)
+		return r.ensureTags(ctx, item.ID, item.Tags)
 	})
 }
 
@@ -115,29 +115,12 @@ func (r *xormRepositoryImpl) AddMany(ctx context.Context, items []annotations.It
 			if _, err := sess.Table("annotation").Insert(item); err != nil {
 				return err
 			}
-			if err := r.synchronizeTags(ctx, &hasTags[i]); err != nil {
+			itemWithID := &hasTags[i]
+			if err := r.ensureTags(ctx, itemWithID.ID, itemWithID.Tags); err != nil {
 				return err
 			}
 		}
 
-		return nil
-	})
-}
-
-func (r *xormRepositoryImpl) synchronizeTags(ctx context.Context, item *annotations.Item) error {
-	// Will re-use session if one has already been opened with the same ctx.
-	return r.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		if item.Tags != nil {
-			tags, err := r.tagService.EnsureTagsExist(ctx, tag.ParseTagPairs(item.Tags))
-			if err != nil {
-				return err
-			}
-			for _, tag := range tags {
-				if _, err := sess.Exec("INSERT INTO annotation_tag (annotation_id, tag_id) VALUES(?,?)", item.ID, tag.Id); err != nil {
-					return err
-				}
-			}
-		}
 		return nil
 	})
 }
@@ -180,17 +163,9 @@ func (r *xormRepositoryImpl) update(ctx context.Context, item *annotations.Item)
 		}
 
 		if item.Tags != nil {
-			tags, err := r.tagService.EnsureTagsExist(ctx, tag.ParseTagPairs(item.Tags))
+			err := r.ensureTags(ctx, existing.ID, item.Tags)
 			if err != nil {
 				return err
-			}
-			if _, err := sess.Exec("DELETE FROM annotation_tag WHERE annotation_id = ?", existing.ID); err != nil {
-				return err
-			}
-			for _, tag := range tags {
-				if _, err := sess.Exec("INSERT INTO annotation_tag (annotation_id, tag_id) VALUES(?,?)", existing.ID, tag.Id); err != nil {
-					return err
-				}
 			}
 		}
 
@@ -203,6 +178,63 @@ func (r *xormRepositoryImpl) update(ctx context.Context, item *annotations.Item)
 		_, err = sess.Table("annotation").ID(existing.ID).Cols("epoch", "text", "epoch_end", "updated", "tags", "data").Update(existing)
 		return err
 	})
+}
+
+func (r *xormRepositoryImpl) ensureTags(ctx context.Context, annotationID int64, tags []string) error {
+	return r.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		var tagsInsert []annotationTag
+		var tagsDelete []int64
+
+		expectedTags, err := r.tagService.EnsureTagsExist(ctx, tag.ParseTagPairs(tags))
+		if err != nil {
+			return err
+		}
+		expected := tagSet(func(t *tag.Tag) int64 {
+			return t.Id
+		}, expectedTags)
+
+		existingTags := make([]annotationTag, 0)
+		if err := sess.SQL("SELECT annotation_id, tag_id FROM annotation_tag WHERE annotation_id = ?", annotationID).Find(&existingTags); err != nil {
+			return err
+		}
+		existing := tagSet(func(t annotationTag) int64 {
+			return t.TagID
+		}, existingTags)
+
+		for t := range expected {
+			if _, exists := existing[t]; !exists {
+				tagsInsert = append(tagsInsert, annotationTag{
+					AnnotationID: annotationID,
+					TagID:        t,
+				})
+			}
+		}
+		for t := range existing {
+			if _, exists := expected[t]; !exists {
+				tagsDelete = append(tagsDelete, t)
+			}
+		}
+
+		if len(tagsDelete) != 0 {
+			if _, err := sess.MustCols("annotation_id", "tag_id").In("tag_id", tagsDelete).Delete(annotationTag{AnnotationID: annotationID}); err != nil {
+				return err
+			}
+		}
+		if len(tagsInsert) != 0 {
+			if _, err := sess.InsertMulti(tagsInsert); err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+}
+
+func tagSet[T any](fn func(T) int64, list []T) map[int64]struct{} {
+	set := make(map[int64]struct{}, len(list))
+	for _, item := range list {
+		set[fn(item)] = struct{}{}
+	}
+	return set
 }
 
 func (r *xormRepositoryImpl) Get(ctx context.Context, query *annotations.ItemQuery) ([]*annotations.ItemDTO, error) {
@@ -383,7 +415,11 @@ func (r *xormRepositoryImpl) getAccessControlFilter(user *user.SignedInUser) (ac
 			filterRBAC := permissions.NewAccessControlDashboardPermissionFilter(user, dashboards.PERMISSION_VIEW, searchstore.TypeDashboard, r.features, recursiveQueriesAreSupported)
 			dashboardFilter, dashboardParams := filterRBAC.Where()
 			recQueries, recQueriesParams = filterRBAC.With()
+			leftJoin := filterRBAC.LeftJoin()
 			filter := fmt.Sprintf("a.dashboard_id IN(SELECT id FROM dashboard WHERE %s)", dashboardFilter)
+			if leftJoin != "" {
+				filter = fmt.Sprintf("a.dashboard_id IN(SELECT dashboard.id FROM dashboard LEFT OUTER JOIN %s WHERE %s)", leftJoin, dashboardFilter)
+			}
 			filters = append(filters, filter)
 			params = dashboardParams
 		}
@@ -573,4 +609,9 @@ func (r *xormRepositoryImpl) executeUntilDoneOrCancelled(ctx context.Context, sq
 			}
 		}
 	}
+}
+
+type annotationTag struct {
+	AnnotationID int64 `xorm:"annotation_id"`
+	TagID        int64 `xorm:"tag_id"`
 }

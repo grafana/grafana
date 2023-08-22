@@ -4,6 +4,10 @@ aliases:
   - ../../enterprise/enterprise-encryption/
 description: If you have a Grafana Enterprise license, you can integrate with a variety
   of key management system providers.
+labels:
+  products:
+    - enterprise
+    - oss
 title: Configure database encryption
 weight: 700
 ---

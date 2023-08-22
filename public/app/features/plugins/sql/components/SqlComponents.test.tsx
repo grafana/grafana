@@ -2,10 +2,14 @@ import { render, waitFor } from '@testing-library/react';
 import React from 'react';
 
 import { config } from '@grafana/runtime';
+import { customBuilder } from 'app/features/variables/shared/testing/builders';
+
+import { SQLExpression } from '../types';
 
 import { DatasetSelector } from './DatasetSelector';
 import { buildMockDatasetSelectorProps, buildMockTableSelectorProps } from './SqlComponents.testHelpers';
 import { TableSelector } from './TableSelector';
+import { removeQuotesForMultiVariables } from './visual-query-builder/SQLWhereRow';
 
 beforeEach(() => {
   config.featureToggles.sqlDatasourceDatabaseSelection = true;
@@ -61,5 +65,43 @@ describe('TableSelector', () => {
     await waitFor(() => {
       expect(mockProps.db.tables).not.toHaveBeenCalled();
     });
+  });
+});
+
+describe('SQLWhereRow', () => {
+  it('should remove quotes in a where clause including multi-value variable', () => {
+    const exp: SQLExpression = {
+      whereString: "hostname IN ('${multiHost}')",
+    };
+
+    const multiVar = customBuilder().withId('multiVar').withName('multiHost').build();
+    const nonMultiVar = customBuilder().withId('nonMultiVar').withName('host').build();
+
+    multiVar.multi = true;
+    nonMultiVar.multi = false;
+
+    const variables = [multiVar, nonMultiVar];
+
+    removeQuotesForMultiVariables(exp, variables);
+
+    expect(exp.whereString).toBe('hostname IN (${multiHost})');
+  });
+
+  it('should not remove quotes in a where clause not including a multi-value variable', () => {
+    const exp: SQLExpression = {
+      whereString: "hostname IN ('${nonMultiHost}')",
+    };
+
+    const multiVar = customBuilder().withId('multiVar').withName('multiHost').build();
+    const nonMultiVar = customBuilder().withId('nonMultiVar').withName('host').build();
+
+    multiVar.multi = true;
+    nonMultiVar.multi = false;
+
+    const variables = [multiVar, nonMultiVar];
+
+    removeQuotesForMultiVariables(exp, variables);
+
+    expect(exp.whereString).toBe("hostname IN ('${nonMultiHost}')");
   });
 });

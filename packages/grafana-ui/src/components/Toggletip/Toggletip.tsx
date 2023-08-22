@@ -143,8 +143,8 @@ export const getStyles = (theme: GrafanaTheme2) => {
   return {
     info,
     error,
-    fitContent: css`
-      max-width: fit-content;
-    `,
+    fitContent: css({
+      maxWidth: 'fit-content',
+    }),
   };
 };

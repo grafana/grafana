@@ -24,6 +24,11 @@ keywords:
   - reporting
   - export
   - pdf
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 menuTitle: Sharing
 title: Share dashboards and panels
 weight: 85
@@ -96,7 +101,7 @@ Grafana dashboards can easily be exported and imported. For more information, re
 You can generate and save PDF files of any dashboard.
 
 {{% admonition type="note" %}}
-Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise/" >}}).
+Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise/" >}}) and [Grafana Cloud](/docs/grafana-cloud/).
 {{% /admonition %}}
 
 1. Click **Dashboards** in the left-side menu.

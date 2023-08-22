@@ -1,7 +1,5 @@
 ---
-title: Build a panel plugin with D3.js
 description: how to use D3.js in your panel plugins.
-weight: 200
 keywords:
   - grafana
   - plugins
@@ -10,6 +8,12 @@ keywords:
   - d3
   - panel
   - panel plugin
+labels:
+  products:
+    - enterprise
+    - oss
+title: Build a panel plugin with D3.js
+weight: 200
 ---
 
 ## Introduction

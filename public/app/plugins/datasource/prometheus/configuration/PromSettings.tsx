@@ -8,6 +8,7 @@ import {
   SelectableValue,
   updateDatasourcePluginJsonDataOption,
 } from '@grafana/data';
+import { ConfigSubSection } from '@grafana/experimental';
 import { getBackendSrv } from '@grafana/runtime/src';
 import { InlineField, Input, Select, Switch, useTheme2 } from '@grafana/ui';
 
@@ -171,346 +172,353 @@ export const PromSettings = (props: Props) => {
 
   return (
     <>
-      <h3 className="page-heading">Interval behaviour</h3>
-      <div className="gf-form-group">
-        {/* Scrape interval */}
-        <div className="gf-form-inline">
-          <div className="gf-form">
-            <InlineField
-              label="Scrape interval"
-              labelWidth={PROM_CONFIG_LABEL_WIDTH}
-              tooltip={
+      <ConfigSubSection title="Interval behaviour" className={styles.container}>
+        <div className="gf-form-group">
+          {/* Scrape interval */}
+          <div className="gf-form-inline">
+            <div className="gf-form">
+              <InlineField
+                label="Scrape interval"
+                labelWidth={PROM_CONFIG_LABEL_WIDTH}
+                tooltip={
+                  <>
+                    This interval is how frequently Prometheus scrapes targets. Set this to the typical scrape and
+                    evaluation interval configured in your Prometheus config file. If you set this to a greater value
+                    than your Prometheus config file interval, Grafana will evaluate the data according to this interval
+                    and you will see less data points. Defaults to 15s. {docsTip()}
+                  </>
+                }
+                interactive={true}
+                disabled={options.readOnly}
+              >
                 <>
-                  This interval is how frequently Prometheus scrapes targets. Set this to the typical scrape and
-                  evaluation interval configured in your Prometheus config file. If you set this to a greater value than
-                  your Prometheus config file interval, Grafana will evaluate the data according to this interval and
-                  you will see less data points. Defaults to 15s. {docsTip()}
+                  <Input
+                    className="width-20"
+                    value={options.jsonData.timeInterval}
+                    spellCheck={false}
+                    placeholder="15s"
+                    onChange={onChangeHandler('timeInterval', options, onOptionsChange)}
+                    onBlur={(e) => updateValidDuration({ ...validDuration, timeInterval: e.currentTarget.value })}
+                  />
+                  {validateInput(validDuration.timeInterval, DURATION_REGEX, durationError)}
                 </>
-              }
-              interactive={true}
-              disabled={options.readOnly}
-            >
-              <>
-                <Input
-                  className="width-20"
-                  value={options.jsonData.timeInterval}
-                  spellCheck={false}
-                  placeholder="15s"
-                  onChange={onChangeHandler('timeInterval', options, onOptionsChange)}
-                  onBlur={(e) => updateValidDuration({ ...validDuration, timeInterval: e.currentTarget.value })}
-                />
-                {validateInput(validDuration.timeInterval, DURATION_REGEX, durationError)}
-              </>
-            </InlineField>
+              </InlineField>
+            </div>
+          </div>
+          {/* Query Timeout */}
+          <div className="gf-form-inline">
+            <div className="gf-form">
+              <InlineField
+                label="Query timeout"
+                labelWidth={PROM_CONFIG_LABEL_WIDTH}
+                tooltip={<>Set the Prometheus query timeout. {docsTip()}</>}
+                interactive={true}
+                disabled={options.readOnly}
+              >
+                <>
+                  <Input
+                    className="width-20"
+                    value={options.jsonData.queryTimeout}
+                    onChange={onChangeHandler('queryTimeout', options, onOptionsChange)}
+                    spellCheck={false}
+                    placeholder="60s"
+                    onBlur={(e) => updateValidDuration({ ...validDuration, queryTimeout: e.currentTarget.value })}
+                  />
+                  {validateInput(validDuration.queryTimeout, DURATION_REGEX, durationError)}
+                </>
+              </InlineField>
+            </div>
           </div>
         </div>
-        {/* Query Timeout */}
-        <div className="gf-form-inline">
+      </ConfigSubSection>
+
+      <ConfigSubSection title="Query editor" className={styles.container}>
+        <div className="gf-form-group">
           <div className="gf-form">
             <InlineField
-              label="Query timeout"
+              label="Default editor"
               labelWidth={PROM_CONFIG_LABEL_WIDTH}
-              tooltip={<>Set the Prometheus query timeout. {docsTip()}</>}
-              interactive={true}
-              disabled={options.readOnly}
-            >
-              <>
-                <Input
-                  className="width-20"
-                  value={options.jsonData.queryTimeout}
-                  onChange={onChangeHandler('queryTimeout', options, onOptionsChange)}
-                  spellCheck={false}
-                  placeholder="60s"
-                  onBlur={(e) => updateValidDuration({ ...validDuration, queryTimeout: e.currentTarget.value })}
-                />
-                {validateInput(validDuration.queryTimeout, DURATION_REGEX, durationError)}
-              </>
-            </InlineField>
-          </div>
-        </div>
-      </div>
-
-      <h3 className="page-heading">Query editor</h3>
-      <div className="gf-form-group">
-        <div className="gf-form">
-          <InlineField
-            label="Default editor"
-            labelWidth={PROM_CONFIG_LABEL_WIDTH}
-            tooltip={<>Set default editor option for all users of this data source. {docsTip()}</>}
-            interactive={true}
-            disabled={options.readOnly}
-          >
-            <Select
-              aria-label={`Default Editor (Code or Builder)`}
-              options={editorOptions}
-              value={
-                editorOptions.find((o) => o.value === options.jsonData.defaultEditor) ??
-                editorOptions.find((o) => o.value === QueryEditorMode.Builder)
-              }
-              onChange={onChangeHandler('defaultEditor', options, onOptionsChange)}
-              width={40}
-            />
-          </InlineField>
-        </div>
-        <div className="gf-form">
-          <InlineField
-            labelWidth={PROM_CONFIG_LABEL_WIDTH}
-            label="Disable metrics lookup"
-            tooltip={
-              <>
-                Checking this option will disable the metrics chooser and metric/label support in the query field&apos;s
-                autocomplete. This helps if you have performance issues with bigger Prometheus instances. {docsTip()}
-              </>
-            }
-            interactive={true}
-            disabled={options.readOnly}
-            className={styles.switchField}
-          >
-            <Switch
-              value={options.jsonData.disableMetricsLookup ?? false}
-              onChange={onUpdateDatasourceJsonDataOptionChecked(props, 'disableMetricsLookup')}
-            />
-          </InlineField>
-        </div>
-      </div>
-
-      <h3 className="page-heading">Performance</h3>
-      {!options.jsonData.prometheusType && !options.jsonData.prometheusVersion && options.readOnly && (
-        <div className={styles.versionMargin}>
-          For more information on configuring prometheus type and version in data sources, see the{' '}
-          <a
-            className={styles.textUnderline}
-            href="https://grafana.com/docs/grafana/latest/administration/provisioning/"
-          >
-            provisioning documentation
-          </a>
-          .
-        </div>
-      )}
-      <div className="gf-form-group">
-        <div className="gf-form-inline">
-          <div className="gf-form">
-            <InlineField
-              label="Prometheus type"
-              labelWidth={PROM_CONFIG_LABEL_WIDTH}
-              tooltip={
-                <>
-                  Set this to the type of your prometheus database, e.g. Prometheus, Cortex, Mimir or Thanos. Changing
-                  this field will save your current settings, and attempt to detect the version. Certain types of
-                  Prometheus support or do not support various APIs. For example, some types support regex matching for
-                  label queries to improve performance. Some types have an API for metadata. If you set this incorrectly
-                  you may experience odd behavior when querying metrics and labels. Please check your Prometheus
-                  documentation to ensure you enter the correct type. {docsTip()}
-                </>
-              }
+              tooltip={<>Set default editor option for all users of this data source. {docsTip()}</>}
               interactive={true}
               disabled={options.readOnly}
             >
               <Select
-                aria-label="Prometheus type"
-                options={prometheusFlavorSelectItems}
-                value={prometheusFlavorSelectItems.find((o) => o.value === options.jsonData.prometheusType)}
-                onChange={onChangeHandler(
-                  'prometheusType',
-                  {
-                    ...options,
-                    jsonData: { ...options.jsonData, prometheusVersion: undefined },
-                  },
-                  (options) => {
-                    // Check buildinfo api and set default version if we can
-                    setPrometheusVersion(options, onOptionsChange, onUpdate);
-                    return onOptionsChange({
-                      ...options,
-                      jsonData: { ...options.jsonData, prometheusVersion: undefined },
-                    });
-                  }
-                )}
+                aria-label={`Default Editor (Code or Builder)`}
+                options={editorOptions}
+                value={
+                  editorOptions.find((o) => o.value === options.jsonData.defaultEditor) ??
+                  editorOptions.find((o) => o.value === QueryEditorMode.Builder)
+                }
+                onChange={onChangeHandler('defaultEditor', options, onOptionsChange)}
                 width={40}
               />
             </InlineField>
           </div>
+          <div className="gf-form">
+            <InlineField
+              labelWidth={PROM_CONFIG_LABEL_WIDTH}
+              label="Disable metrics lookup"
+              tooltip={
+                <>
+                  Checking this option will disable the metrics chooser and metric/label support in the query
+                  field&apos;s autocomplete. This helps if you have performance issues with bigger Prometheus instances.{' '}
+                  {docsTip()}
+                </>
+              }
+              interactive={true}
+              disabled={options.readOnly}
+              className={styles.switchField}
+            >
+              <Switch
+                value={options.jsonData.disableMetricsLookup ?? false}
+                onChange={onUpdateDatasourceJsonDataOptionChecked(props, 'disableMetricsLookup')}
+              />
+            </InlineField>
+          </div>
         </div>
-        <div className="gf-form-inline">
-          {options.jsonData.prometheusType && (
+      </ConfigSubSection>
+
+      <ConfigSubSection title="Performance" className={styles.container}>
+        {!options.jsonData.prometheusType && !options.jsonData.prometheusVersion && options.readOnly && (
+          <div className={styles.versionMargin}>
+            For more information on configuring prometheus type and version in data sources, see the{' '}
+            <a
+              className={styles.textUnderline}
+              href="https://grafana.com/docs/grafana/latest/administration/provisioning/"
+            >
+              provisioning documentation
+            </a>
+            .
+          </div>
+        )}
+        <div className="gf-form-group">
+          <div className="gf-form-inline">
             <div className="gf-form">
               <InlineField
-                label={`${options.jsonData.prometheusType} version`}
+                label="Prometheus type"
                 labelWidth={PROM_CONFIG_LABEL_WIDTH}
                 tooltip={
                   <>
-                    Use this to set the version of your {options.jsonData.prometheusType} instance if it is not
-                    automatically configured. {docsTip()}
+                    Set this to the type of your prometheus database, e.g. Prometheus, Cortex, Mimir or Thanos. Changing
+                    this field will save your current settings, and attempt to detect the version. Certain types of
+                    Prometheus support or do not support various APIs. For example, some types support regex matching
+                    for label queries to improve performance. Some types have an API for metadata. If you set this
+                    incorrectly you may experience odd behavior when querying metrics and labels. Please check your
+                    Prometheus documentation to ensure you enter the correct type. {docsTip()}
                   </>
                 }
                 interactive={true}
                 disabled={options.readOnly}
               >
                 <Select
-                  aria-label={`${options.jsonData.prometheusType} type`}
-                  options={PromFlavorVersions[options.jsonData.prometheusType]}
-                  value={PromFlavorVersions[options.jsonData.prometheusType]?.find(
-                    (o) => o.value === options.jsonData.prometheusVersion
+                  aria-label="Prometheus type"
+                  options={prometheusFlavorSelectItems}
+                  value={prometheusFlavorSelectItems.find((o) => o.value === options.jsonData.prometheusType)}
+                  onChange={onChangeHandler(
+                    'prometheusType',
+                    {
+                      ...options,
+                      jsonData: { ...options.jsonData, prometheusVersion: undefined },
+                    },
+                    (options) => {
+                      // Check buildinfo api and set default version if we can
+                      setPrometheusVersion(options, onOptionsChange, onUpdate);
+                      return onOptionsChange({
+                        ...options,
+                        jsonData: { ...options.jsonData, prometheusVersion: undefined },
+                      });
+                    }
                   )}
-                  onChange={onChangeHandler('prometheusVersion', options, onOptionsChange)}
                   width={40}
                 />
               </InlineField>
             </div>
+          </div>
+          <div className="gf-form-inline">
+            {options.jsonData.prometheusType && (
+              <div className="gf-form">
+                <InlineField
+                  label={`${options.jsonData.prometheusType} version`}
+                  labelWidth={PROM_CONFIG_LABEL_WIDTH}
+                  tooltip={
+                    <>
+                      Use this to set the version of your {options.jsonData.prometheusType} instance if it is not
+                      automatically configured. {docsTip()}
+                    </>
+                  }
+                  interactive={true}
+                  disabled={options.readOnly}
+                >
+                  <Select
+                    aria-label={`${options.jsonData.prometheusType} type`}
+                    options={PromFlavorVersions[options.jsonData.prometheusType]}
+                    value={PromFlavorVersions[options.jsonData.prometheusType]?.find(
+                      (o) => o.value === options.jsonData.prometheusVersion
+                    )}
+                    onChange={onChangeHandler('prometheusVersion', options, onOptionsChange)}
+                    width={40}
+                  />
+                </InlineField>
+              </div>
+            )}
+          </div>
+          {config.featureToggles.prometheusResourceBrowserCache && (
+            <div className="gf-form-inline">
+              <div className="gf-form max-width-30">
+                <InlineField
+                  label="Cache level"
+                  labelWidth={PROM_CONFIG_LABEL_WIDTH}
+                  tooltip={
+                    <>
+                      Sets the browser caching level for editor queries. Higher cache settings are recommended for high
+                      cardinality data sources.
+                    </>
+                  }
+                  interactive={true}
+                  disabled={options.readOnly}
+                >
+                  <Select
+                    width={40}
+                    onChange={onChangeHandler('cacheLevel', options, onOptionsChange)}
+                    options={cacheValueOptions}
+                    value={
+                      cacheValueOptions.find((o) => o.value === options.jsonData.cacheLevel) ?? PrometheusCacheLevel.Low
+                    }
+                  />
+                </InlineField>
+              </div>
+            </div>
           )}
-        </div>
-        {config.featureToggles.prometheusResourceBrowserCache && (
+
           <div className="gf-form-inline">
             <div className="gf-form max-width-30">
               <InlineField
-                label="Cache level"
+                label="Incremental querying (beta)"
                 labelWidth={PROM_CONFIG_LABEL_WIDTH}
                 tooltip={
                   <>
-                    Sets the browser caching level for editor queries. Higher cache settings are recommended for high
-                    cardinality data sources.
+                    This feature will change the default behavior of relative queries to always request fresh data from
+                    the prometheus instance, instead query results will be cached, and only new records are requested.
+                    Turn this on to decrease database and network load.
+                  </>
+                }
+                interactive={true}
+                className={styles.switchField}
+                disabled={options.readOnly}
+              >
+                <Switch
+                  value={options.jsonData.incrementalQuerying ?? false}
+                  onChange={onUpdateDatasourceJsonDataOptionChecked(props, 'incrementalQuerying')}
+                />
+              </InlineField>
+            </div>
+          </div>
+
+          <div className="gf-form-inline">
+            {options.jsonData.incrementalQuerying && (
+              <InlineField
+                label="Query overlap window"
+                labelWidth={PROM_CONFIG_LABEL_WIDTH}
+                tooltip={
+                  <>
+                    Set a duration like 10m or 120s or 0s. Default of 10 minutes. This duration will be added to the
+                    duration of each incremental request.
                   </>
                 }
                 interactive={true}
                 disabled={options.readOnly}
               >
-                <Select
-                  width={40}
-                  onChange={onChangeHandler('cacheLevel', options, onOptionsChange)}
-                  options={cacheValueOptions}
-                  value={
-                    cacheValueOptions.find((o) => o.value === options.jsonData.cacheLevel) ?? PrometheusCacheLevel.Low
-                  }
+                <>
+                  <Input
+                    onBlur={(e) =>
+                      updateValidDuration({ ...validDuration, incrementalQueryOverlapWindow: e.currentTarget.value })
+                    }
+                    className="width-20"
+                    value={options.jsonData.incrementalQueryOverlapWindow ?? defaultPrometheusQueryOverlapWindow}
+                    onChange={onChangeHandler('incrementalQueryOverlapWindow', options, onOptionsChange)}
+                    spellCheck={false}
+                  />
+                  {validateInput(validDuration.incrementalQueryOverlapWindow, MULTIPLE_DURATION_REGEX, durationError)}
+                </>
+              </InlineField>
+            )}
+          </div>
+
+          <div className="gf-form-inline">
+            <div className="gf-form max-width-30">
+              <InlineField
+                label="Disable recording rules (beta)"
+                labelWidth={PROM_CONFIG_LABEL_WIDTH}
+                tooltip={<>This feature will disable recording rules Turn this on to improve dashboard performance</>}
+                interactive={true}
+                className={styles.switchField}
+                disabled={options.readOnly}
+              >
+                <Switch
+                  value={options.jsonData.disableRecordingRules ?? false}
+                  onChange={onUpdateDatasourceJsonDataOptionChecked(props, 'disableRecordingRules')}
                 />
               </InlineField>
             </div>
           </div>
-        )}
-
-        <div className="gf-form-inline">
-          <div className="gf-form max-width-30">
-            <InlineField
-              label="Incremental querying (beta)"
-              labelWidth={PROM_CONFIG_LABEL_WIDTH}
-              tooltip={
-                <>
-                  This feature will change the default behavior of relative queries to always request fresh data from
-                  the prometheus instance, instead query results will be cached, and only new records are requested.
-                  Turn this on to decrease database and network load.
-                </>
-              }
-              interactive={true}
-              className={styles.switchField}
-              disabled={options.readOnly}
-            >
-              <Switch
-                value={options.jsonData.incrementalQuerying ?? false}
-                onChange={onUpdateDatasourceJsonDataOptionChecked(props, 'incrementalQuerying')}
-              />
-            </InlineField>
-          </div>
         </div>
+      </ConfigSubSection>
 
-        <div className="gf-form-inline">
-          {options.jsonData.incrementalQuerying && (
-            <InlineField
-              label="Query overlap window"
-              labelWidth={PROM_CONFIG_LABEL_WIDTH}
-              tooltip={
-                <>
-                  Set a duration like 10m or 120s or 0s. Default of 10 minutes. This duration will be added to the
-                  duration of each incremental request.
-                </>
-              }
-              interactive={true}
-              disabled={options.readOnly}
-            >
-              <>
+      <ConfigSubSection title="Other" className={styles.container}>
+        <div className="gf-form-group">
+          <div className="gf-form-inline">
+            <div className="gf-form max-width-30">
+              <InlineField
+                label="Custom query parameters"
+                labelWidth={PROM_CONFIG_LABEL_WIDTH}
+                tooltip={
+                  <>
+                    Add custom parameters to the Prometheus query URL. For example timeout, partial_response, dedup, or
+                    max_source_resolution. Multiple parameters should be concatenated together with an ‘&’. {docsTip()}
+                  </>
+                }
+                interactive={true}
+                disabled={options.readOnly}
+              >
                 <Input
-                  onBlur={(e) =>
-                    updateValidDuration({ ...validDuration, incrementalQueryOverlapWindow: e.currentTarget.value })
-                  }
-                  className="width-25"
-                  value={options.jsonData.incrementalQueryOverlapWindow ?? defaultPrometheusQueryOverlapWindow}
-                  onChange={onChangeHandler('incrementalQueryOverlapWindow', options, onOptionsChange)}
+                  className="width-20"
+                  value={options.jsonData.customQueryParameters}
+                  onChange={onChangeHandler('customQueryParameters', options, onOptionsChange)}
                   spellCheck={false}
+                  placeholder="Example: max_source_resolution=5m&timeout=10"
                 />
-                {validateInput(validDuration.incrementalQueryOverlapWindow, MULTIPLE_DURATION_REGEX, durationError)}
-              </>
-            </InlineField>
-          )}
+              </InlineField>
+            </div>
+          </div>
+          <div className="gf-form-inline">
+            {/* HTTP Method */}
+            <div className="gf-form">
+              <InlineField
+                labelWidth={PROM_CONFIG_LABEL_WIDTH}
+                tooltip={
+                  <>
+                    You can use either POST or GET HTTP method to query your Prometheus data source. POST is the
+                    recommended method as it allows bigger queries. Change this to GET if you have a Prometheus version
+                    older than 2.1 or if POST requests are restricted in your network. {docsTip()}
+                  </>
+                }
+                interactive={true}
+                label="HTTP method"
+                disabled={options.readOnly}
+              >
+                <Select
+                  width={40}
+                  aria-label="Select HTTP method"
+                  options={httpOptions}
+                  value={httpOptions.find((o) => o.value === options.jsonData.httpMethod)}
+                  onChange={onChangeHandler('httpMethod', options, onOptionsChange)}
+                />
+              </InlineField>
+            </div>
+          </div>
         </div>
+      </ConfigSubSection>
 
-        <div className="gf-form-inline">
-          <div className="gf-form max-width-30">
-            <InlineField
-              label="Disable recording rules (beta)"
-              labelWidth={PROM_CONFIG_LABEL_WIDTH}
-              tooltip={<>This feature will disable recording rules Turn this on to improve dashboard performance</>}
-              interactive={true}
-              className={styles.switchField}
-              disabled={options.readOnly}
-            >
-              <Switch
-                value={options.jsonData.disableRecordingRules ?? false}
-                onChange={onUpdateDatasourceJsonDataOptionChecked(props, 'disableRecordingRules')}
-              />
-            </InlineField>
-          </div>
-        </div>
-      </div>
-      <h3 className="page-heading">Other</h3>
-      <div className="gf-form-group">
-        <div className="gf-form-inline">
-          <div className="gf-form max-width-30">
-            <InlineField
-              label="Custom query parameters"
-              labelWidth={PROM_CONFIG_LABEL_WIDTH}
-              tooltip={
-                <>
-                  Add custom parameters to the Prometheus query URL. For example timeout, partial_response, dedup, or
-                  max_source_resolution. Multiple parameters should be concatenated together with an ‘&’. {docsTip()}
-                </>
-              }
-              interactive={true}
-              disabled={options.readOnly}
-            >
-              <Input
-                className="width-20"
-                value={options.jsonData.customQueryParameters}
-                onChange={onChangeHandler('customQueryParameters', options, onOptionsChange)}
-                spellCheck={false}
-                placeholder="Example: max_source_resolution=5m&timeout=10"
-              />
-            </InlineField>
-          </div>
-        </div>
-        <div className="gf-form-inline">
-          {/* HTTP Method */}
-          <div className="gf-form">
-            <InlineField
-              labelWidth={PROM_CONFIG_LABEL_WIDTH}
-              tooltip={
-                <>
-                  You can use either POST or GET HTTP method to query your Prometheus data source. POST is the
-                  recommended method as it allows bigger queries. Change this to GET if you have a Prometheus version
-                  older than 2.1 or if POST requests are restricted in your network. {docsTip()}
-                </>
-              }
-              interactive={true}
-              label="HTTP method"
-              disabled={options.readOnly}
-            >
-              <Select
-                width={40}
-                aria-label="Select HTTP method"
-                options={httpOptions}
-                value={httpOptions.find((o) => o.value === options.jsonData.httpMethod)}
-                onChange={onChangeHandler('httpMethod', options, onOptionsChange)}
-              />
-            </InlineField>
-          </div>
-        </div>
-      </div>
       <ExemplarsSettings
         options={options.jsonData.exemplarTraceIdDestinations}
         onChange={(exemplarOptions) =>

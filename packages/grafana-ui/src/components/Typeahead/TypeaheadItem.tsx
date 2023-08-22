@@ -21,48 +21,45 @@ interface Props {
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  typeaheadItem: css`
-    border: none;
-    background: none;
-    text-align: left;
-    label: type-ahead-item;
-    height: auto;
-    font-family: ${theme.typography.fontFamilyMonospace};
-    padding: ${theme.spacing(1, 1, 1, 2)};
-    font-size: ${theme.typography.bodySmall.fontSize};
-    text-overflow: ellipsis;
-    overflow: hidden;
-    z-index: 11;
-    display: block;
-    white-space: nowrap;
-    cursor: pointer;
+  typeaheadItem: css({
+    border: 'none',
+    background: 'none',
+    textAlign: 'left',
+    label: 'type-ahead-item',
+    height: 'auto',
+    fontFamily: theme.typography.fontFamilyMonospace,
+    padding: theme.spacing(1, 1, 1, 2),
+    fontSize: theme.typography.bodySmall.fontSize,
+    textOverflow: 'ellipsis',
+    overflow: 'hidden',
+    zIndex: 11,
+    display: 'block',
+    whiteSpace: 'nowrap',
+    cursor: 'pointer',
     transition:
-      color 0.3s cubic-bezier(0.645, 0.045, 0.355, 1),
-      border-color 0.3s cubic-bezier(0.645, 0.045, 0.355, 1),
-      background 0.3s cubic-bezier(0.645, 0.045, 0.355, 1),
-      padding 0.15s cubic-bezier(0.645, 0.045, 0.355, 1);
-  `,
+      'color 0.3s cubic-bezier(0.645, 0.045, 0.355, 1), border-color 0.3s cubic-bezier(0.645, 0.045, 0.355, 1), background 0.3s cubic-bezier(0.645, 0.045, 0.355, 1), padding 0.15s cubic-bezier(0.645, 0.045, 0.355, 1)',
+  }),
 
-  typeaheadItemSelected: css`
-    label: type-ahead-item-selected;
-    background-color: ${theme.colors.background.secondary};
-  `,
+  typeaheadItemSelected: css({
+    label: 'type-ahead-item-selected',
+    backgroundColor: theme.colors.background.secondary,
+  }),
 
-  typeaheadItemMatch: css`
-    label: type-ahead-item-match;
-    color: ${theme.v1.palette.yellow};
-    border-bottom: 1px solid ${theme.v1.palette.yellow};
-    padding: inherit;
-    background: inherit;
-  `,
+  typeaheadItemMatch: css({
+    label: 'type-ahead-item-match',
+    color: theme.v1.palette.yellow,
+    borderBottom: `1px solid ${theme.v1.palette.yellow}`,
+    padding: 'inherit',
+    background: 'inherit',
+  }),
 
-  typeaheadItemGroupTitle: css`
-    label: type-ahead-item-group-title;
-    color: ${theme.colors.text.secondary};
-    font-size: ${theme.typography.bodySmall.fontSize};
-    line-height: ${theme.typography.body.lineHeight};
-    padding: ${theme.spacing(1)};
-  `,
+  typeaheadItemGroupTitle: css({
+    label: 'type-ahead-item-group-title',
+    color: theme.colors.text.secondary,
+    fontSize: theme.typography.bodySmall.fontSize,
+    lineHeight: theme.typography.body.lineHeight,
+    padding: theme.spacing(1),
+  }),
 });
 
 export const TypeaheadItem = (props: Props) => {

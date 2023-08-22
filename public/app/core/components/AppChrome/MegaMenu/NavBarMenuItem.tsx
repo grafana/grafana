@@ -98,7 +98,7 @@ const getStyles = (theme: GrafanaTheme2, isActive: Props['isActive'], isChild: P
     color: isActive ? theme.colors.text.primary : theme.colors.text.secondary,
     padding: theme.spacing(1, 1, 1, isChild ? 5 : 0),
     ...(isChild && {
-      borderRadius: theme.shape.borderRadius(),
+      borderRadius: theme.shape.radius.default,
     }),
     width: '100%',
     '&:hover, &:focus-visible': {
@@ -123,7 +123,7 @@ const getStyles = (theme: GrafanaTheme2, isActive: Props['isActive'], isChild: P
       top: '50%',
       transform: 'translateY(-50%)',
       width: theme.spacing(0.5),
-      borderRadius: theme.shape.borderRadius(1),
+      borderRadius: theme.shape.radius.default,
       backgroundImage: theme.colors.gradients.brandVertical,
     },
   }),

@@ -189,9 +189,10 @@ func ProvideService(cfg *setting.Cfg,
 				ss.log.Warn("Using legacy Google API URL, please update your configuration")
 			}
 			ss.socialMap["google"] = &SocialGoogle{
-				SocialBase:   newSocialBase(name, &config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
-				hostedDomain: info.HostedDomain,
-				apiUrl:       info.ApiUrl,
+				SocialBase:      newSocialBase(name, &config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
+				hostedDomain:    info.HostedDomain,
+				apiUrl:          info.ApiUrl,
+				skipOrgRoleSync: cfg.GoogleSkipOrgRoleSync,
 			}
 		}
 
@@ -239,6 +240,7 @@ func ProvideService(cfg *setting.Cfg,
 				teamIds:              sec.Key("team_ids").Strings(","),
 				allowedOrganizations: util.SplitString(sec.Key("allowed_organizations").String()),
 				allowedGroups:        util.SplitString(sec.Key("allowed_groups").String()),
+				skipOrgRoleSync:      cfg.GenericOAuthSkipOrgRoleSync,
 			}
 		}
 
@@ -388,11 +390,37 @@ func (s *SocialBase) SupportBundleContent(bf *bytes.Buffer) error {
 	return nil
 }
 
-func (s *SocialBase) extractRoleAndAdmin(rawJSON []byte, groups []string, legacy bool) (org.RoleType, bool) {
+func (s *SocialBase) extractRoleAndAdminOptional(rawJSON []byte, groups []string) (org.RoleType, bool, error) {
 	if s.roleAttributePath == "" {
-		return s.defaultRole(legacy), false
+		if s.roleAttributeStrict {
+			return "", false, errRoleAttributePathNotSet.Errorf("role_attribute_path not set and role_attribute_strict is set")
+		}
+		return "", false, nil
 	}
 
+	if role, gAdmin := s.searchRole(rawJSON, groups); role.IsValid() {
+		return role, gAdmin, nil
+	} else if role != "" {
+		return "", false, errInvalidRole.Errorf("invalid role: %s", role)
+	}
+
+	if s.roleAttributeStrict {
+		return "", false, errRoleAttributeStrictViolation.Errorf("idP did not return a role attribute, but role_attribute_strict is set")
+	}
+
+	return "", false, nil
+}
+
+func (s *SocialBase) extractRoleAndAdmin(rawJSON []byte, groups []string) (org.RoleType, bool, error) {
+	role, gAdmin, err := s.extractRoleAndAdminOptional(rawJSON, groups)
+	if role == "" {
+		role = s.defaultRole()
+	}
+
+	return role, gAdmin, err
+}
+
+func (s *SocialBase) searchRole(rawJSON []byte, groups []string) (org.RoleType, bool) {
 	role, err := s.searchJSONForStringAttr(s.roleAttributePath, rawJSON)
 	if err == nil && role != "" {
 		return getRoleFromSearch(role)
@@ -405,29 +433,19 @@ func (s *SocialBase) extractRoleAndAdmin(rawJSON []byte, groups []string, legacy
 		}
 	}
 
-	return s.defaultRole(legacy), false
+	return "", false
 }
 
 // defaultRole returns the default role for the user based on the autoAssignOrgRole setting
 // if legacy is enabled "" is returned indicating the previous role assignment is used.
-func (s *SocialBase) defaultRole(legacy bool) org.RoleType {
-	if s.roleAttributeStrict {
-		s.log.Debug("RoleAttributeStrict is set, returning no role.")
-		return ""
-	}
-
-	if s.autoAssignOrgRole != "" && !legacy {
+func (s *SocialBase) defaultRole() org.RoleType {
+	if s.autoAssignOrgRole != "" {
 		s.log.Debug("No role found, returning default.")
 		return org.RoleType(s.autoAssignOrgRole)
 	}
 
-	if legacy && !s.skipOrgRoleSync {
-		s.log.Warn("No valid role found. Skipping role sync. " +
-			"In Grafana 10, this will result in the user being assigned the default role and overriding manual assignment. " +
-			"If role sync is not desired, set skip_org_role_sync for your provider to true")
-	}
-
-	return ""
+	// should never happen
+	return org.RoleViewer
 }
 
 // match grafana admin role and translate to org role and bool.

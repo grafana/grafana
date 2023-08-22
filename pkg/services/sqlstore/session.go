@@ -19,7 +19,7 @@ import (
 )
 
 var sessionLogger = log.New("sqlstore.session")
-var ErrMaximumRetriesReached = errutil.NewBase(errutil.StatusInternal, "sqlstore.max-retries-reached")
+var ErrMaximumRetriesReached = errutil.Internal("sqlstore.max-retries-reached")
 
 type DBSession struct {
 	*xorm.Session

@@ -9,7 +9,7 @@ import {
   NodeGraphDataFrameFieldNames,
 } from '@grafana/data';
 
-import { EdgeDatum, NodeDatum, NodeDatumFromEdge, NodeGraphOptions } from './types';
+import { EdgeDatum, GraphFrame, NodeDatum, NodeDatumFromEdge, NodeGraphOptions } from './types';
 
 type Line = { x1: number; y1: number; x2: number; y2: number };
 
@@ -592,4 +592,19 @@ export const findConnectedNodesForNode = (nodes: NodeDatum[], edges: EdgeDatum[]
     ];
   }
   return [];
+};
+
+export const getGraphFrame = (frames: DataFrame[]) => {
+  return frames.reduce<GraphFrame>(
+    (acc, frame) => {
+      const sourceField = frame.fields.filter((f) => f.name === 'source');
+      if (sourceField.length) {
+        acc.edges.push(frame);
+      } else {
+        acc.nodes.push(frame);
+      }
+      return acc;
+    },
+    { edges: [], nodes: [] }
+  );
 };

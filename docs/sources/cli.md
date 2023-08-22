@@ -7,6 +7,10 @@ keywords:
   - cli
   - grafana cli
   - command line interface
+labels:
+  products:
+    - enterprise
+    - oss
 title: Grafana CLI
 weight: 400
 ---

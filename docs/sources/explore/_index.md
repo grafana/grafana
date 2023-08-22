@@ -5,6 +5,11 @@ keywords:
   - explore
   - loki
   - logs
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: Explore
 weight: 90
 ---
@@ -36,9 +41,12 @@ To access Explore:
 
    Alternately to start with an existing query in a panel, choose the Explore option from the Panel menu. This opens an Explore tab with the query from the panel and allows you to tweak or iterate in the query outside of your dashboard.
 
-   {{< figure src="/static/img/docs/explore/panel_dropdown-7-4.png" class="docs-image--no-shadow" max-width= "650px" caption="Screenshot of the new Explore option in the panel menu" >}}
+   {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-panel-menu-10.1.png" class="docs-image--no-shadow" max-width= "650px" caption="Screenshot of the panel menu including the Explore option" >}}
 
-1. Choose your data source from the dropdown in the top left.
+1. Choose your data source from the drop-down in the top left.
+
+   You can also click **Open advanced data source picker** to see more options, including adding a data source (Admins only).
+
 1. Write the query using a query editor provided by the selected data source. Please check [data sources documentation]({{< relref "../datasources" >}}) to see how to use various query editors.
 1. For general documentation on querying data sources in Grafana, see [Query and transform data]({{< relref "../panels-visualizations/query-transform-data" >}}).
 1. Run the query using the button in the top right corner.
@@ -53,11 +61,51 @@ To open the split view:
 
 It is possible to select another data source for the new query which for example, allows you to compare the same query for two different servers or to compare the staging environment to the production environment.
 
-{{< figure src="/static/img/docs/explore/explore_split-7-4.png" max-width= "950px" caption="Screenshot of Explore option in the panel menu" >}}
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-explore-split-10.1.png" max-width= "950px" caption="Screenshot of Explore screen split" >}}
 
 In split view, timepickers for both panels can be linked (if you change one, the other gets changed as well) by clicking on one of the time-sync buttons attached to the timepickers. Linking of timepickers helps with keeping the start and the end times of the split view queries in sync. It ensures that you’re looking at the same time interval in both split panels.
 
 To close the newly created query, click on the Close Split button.
+
+## Share Explore URLs
+
+When using Explore, the URL in the browser address bar updates as you make changes to the queries. You can share or bookmark this URL.
+
+### Generating Explore URLs from external tools
+
+Because Explore URLs have a defined structure, you can build a URL from external tools and open it in Grafana. The URL structure is:
+
+```
+http://<grafana_url>/explore?panes=<panes>&schemaVersion=<schema_version>&orgId=<org_id>
+```
+
+where:
+
+- `org_id` is the organization ID
+- `schema_version` is the schema version (should be set to the latest version which is `1`)
+- `panes` is a url-encoded JSON object of panes, where each key is the pane ID and each value is an object matching the following schema:
+
+```
+{
+  datasource: string; // the pane's root datasource UID, or `-- Mixed --` for mixed datasources
+  queries: {
+    refId: string; // an alphanumeric identifier for this query, must be unique within the pane, i.e. "A", "B", "C", etc.
+    datasource: {
+      uid: string; // the query's datasource UID ie: "AD7864H6422"
+      type: string; // the query's datasource type-id, i.e: "loki"
+    }
+    // ... any other datasource-specific query parameters
+  }[]; // array of queries for this pane
+  range: {
+    from: string; // the start time, in milliseconds since epoch
+    to: string; // the end time, in milliseconds since epoch
+  }
+}
+```
+
+{{% admonition type="note" %}}
+The `from` and `to` also accept relative ranges defined in [Time units and relative ranges]({{< relref "../dashboards/use-dashboards/#time-units-and-relative-ranges" >}}).
+{{% /admonition %}}
 
 ## Share shortened link
 

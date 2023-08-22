@@ -142,6 +142,7 @@ type ExecutionResults struct {
 // Results is a slice of evaluated alert instances states.
 type Results []Result
 
+// HasErrors returns true when Results contains at least one element with error
 func (evalResults Results) HasErrors() bool {
 	for _, r := range evalResults {
 		if r.State == Error {
@@ -149,6 +150,26 @@ func (evalResults Results) HasErrors() bool {
 		}
 	}
 	return false
+}
+
+// HasErrors returns true when Results contains at least one element and all elements are errors
+func (evalResults Results) IsError() bool {
+	for _, r := range evalResults {
+		if r.State != Error {
+			return false
+		}
+	}
+	return len(evalResults) > 0
+}
+
+// IsNoData returns true when all items are NoData or Results is empty
+func (evalResults Results) IsNoData() bool {
+	for _, result := range evalResults {
+		if result.State != NoData {
+			return false
+		}
+	}
+	return true
 }
 
 // Result contains the evaluated State of an alert instance
@@ -302,14 +323,20 @@ type NumberValueCapture struct {
 }
 
 func queryDataResponseToExecutionResults(c models.Condition, execResp *backend.QueryDataResponse) ExecutionResults {
-	// eval captures for the '__value_string__' annotation and the Value property of the API response.
-	captures := make([]NumberValueCapture, 0, len(execResp.Responses))
-	captureVal := func(refID string, labels data.Labels, value *float64) {
-		captures = append(captures, NumberValueCapture{
+	// captures contains the values of all instant queries and expressions for each dimension
+	captures := make(map[string]map[data.Fingerprint]NumberValueCapture)
+	captureFn := func(refID string, labels data.Labels, value *float64) {
+		m := captures[refID]
+		if m == nil {
+			m = make(map[data.Fingerprint]NumberValueCapture)
+		}
+		fp := labels.Fingerprint()
+		m[fp] = NumberValueCapture{
 			Var:    refID,
 			Value:  value,
 			Labels: labels.Copy(),
-		})
+		}
+		captures[refID] = m
 	}
 
 	// datasourceUIDsForRefIDs is a short-lived lookup table of RefID to DatasourceUID
@@ -318,8 +345,6 @@ func queryDataResponseToExecutionResults(c models.Condition, execResp *backend.Q
 	for _, next := range c.Data {
 		datasourceUIDsForRefIDs[next.RefID] = next.DatasourceUID
 	}
-	// datasourceExprUID is a special DatasourceUID for expressions
-	datasourceExprUID := strconv.FormatInt(expr.DatasourceID, 10)
 
 	result := ExecutionResults{Results: make(map[string]data.Frames)}
 	for refID, res := range execResp.Responses {
@@ -341,7 +366,7 @@ func queryDataResponseToExecutionResults(c models.Condition, execResp *backend.Q
 			hasNoFrames := len(res.Frames) == 0
 			hasNoFields := len(res.Frames) == 1 && len(res.Frames[0].Fields) == 0
 			if hasNoFrames || hasNoFields {
-				if s, ok := datasourceUIDsForRefIDs[refID]; ok && s != datasourceExprUID {
+				if s, ok := datasourceUIDsForRefIDs[refID]; ok && expr.NodeTypeFromDatasourceUID(s) == expr.TypeDatasourceNode { // TODO perhaps extract datasource UID from ML expression too.
 					result.NoData[refID] = s
 				}
 			}
@@ -357,7 +382,7 @@ func queryDataResponseToExecutionResults(c models.Condition, execResp *backend.Q
 			if frame.Fields[0].Len() == 1 {
 				v = frame.At(0, 0).(*float64) // type checked above
 			}
-			captureVal(frame.RefID, frame.Fields[0].Labels, v)
+			captureFn(frame.RefID, frame.Fields[0].Labels, v)
 		}
 
 		if refID == c.Condition {
@@ -379,13 +404,27 @@ func queryDataResponseToExecutionResults(c models.Condition, execResp *backend.Q
 
 		if len(frame.Fields) == 1 {
 			theseLabels := frame.Fields[0].Labels
-			for _, cap := range captures {
-				// matching labels are equal labels, or when one set of labels includes the labels of the other.
-				if theseLabels.Equals(cap.Labels) || theseLabels.Contains(cap.Labels) || cap.Labels.Contains(theseLabels) {
+			fp := theseLabels.Fingerprint()
+
+			for _, fps := range captures {
+				// First look for a capture whose labels are an exact match
+				if v, ok := fps[fp]; ok {
 					if frame.Meta.Custom == nil {
 						frame.Meta.Custom = []NumberValueCapture{}
 					}
-					frame.Meta.Custom = append(frame.Meta.Custom.([]NumberValueCapture), cap)
+					frame.Meta.Custom = append(frame.Meta.Custom.([]NumberValueCapture), v)
+				} else {
+					// If no exact match was found, look for captures whose labels are either subsets
+					// or supersets
+					for _, v := range fps {
+						// matching labels are equal labels, or when one set of labels includes the labels of the other.
+						if theseLabels.Equals(v.Labels) || theseLabels.Contains(v.Labels) || v.Labels.Contains(theseLabels) {
+							if frame.Meta.Custom == nil {
+								frame.Meta.Custom = []NumberValueCapture{}
+							}
+							frame.Meta.Custom = append(frame.Meta.Custom.([]NumberValueCapture), v)
+						}
+					}
 				}
 			}
 		}

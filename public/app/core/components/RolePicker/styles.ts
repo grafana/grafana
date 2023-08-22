@@ -50,7 +50,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
     container: css`
       padding: ${theme.spacing(1)};
       border: 1px ${theme.colors.border.weak} solid;
-      border-radius: ${theme.shape.borderRadius(1)};
+      border-radius: ${theme.shape.radius.default};
       background-color: ${theme.colors.background.primary};
       z-index: ${theme.zIndex.modal};
     `,
@@ -86,7 +86,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
       color: ${theme.colors.text.disabled};
     `,
     basicRoleSelector: css`
-      margin: ${theme.spacing(1, 1.25, 1, 1)};
+      margin: ${theme.spacing(1, 1.25, 1, 1.5)};
     `,
     subMenuPortal: css`
       height: 100%;

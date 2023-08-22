@@ -8,6 +8,7 @@ We know you're excited to create your first pull request. Before we get started,
 
 - Learn how to start [Contributing to Grafana](/CONTRIBUTING.md).
 - Make sure your code follows the relevant [style guides](/contribute/style-guides).
+- It's recommened you [set up precommit hooks](/contribute/developer-guide.md) to auto-format when you commit
 
 ## Your first pull request
 

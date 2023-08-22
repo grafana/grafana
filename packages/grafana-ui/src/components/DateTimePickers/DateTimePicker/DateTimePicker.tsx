@@ -217,9 +217,9 @@ const DateTimeInput = React.forwardRef<HTMLInputElement, InputProps>(
       <InlineField
         label={label}
         invalid={!!(internalDate.value && internalDate.invalid)}
-        className={css`
-          margin-bottom: 0;
-        `}
+        className={css({
+          marginBottom: 0,
+        })}
       >
         <Input
           onChange={onChangeDate}
@@ -325,25 +325,25 @@ const DateTimeCalendar = React.forwardRef<HTMLDivElement, DateTimeCalendarProps>
 DateTimeCalendar.displayName = 'DateTimeCalendar';
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  container: css`
-    padding: ${theme.spacing(1)};
-    border: 1px ${theme.colors.border.weak} solid;
-    border-radius: ${theme.shape.borderRadius(1)};
-    background-color: ${theme.colors.background.primary};
-    z-index: ${theme.zIndex.modal};
-  `,
-  fullScreen: css`
-    position: absolute;
-  `,
-  time: css`
-    margin-bottom: ${theme.spacing(2)};
-  `,
-  modal: css`
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    z-index: ${theme.zIndex.modal};
-    max-width: 280px;
-  `,
+  container: css({
+    padding: theme.spacing(1),
+    border: `1px ${theme.colors.border.weak} solid`,
+    borderRadius: theme.shape.radius.default,
+    backgroundColor: theme.colors.background.primary,
+    zIndex: theme.zIndex.modal,
+  }),
+  fullScreen: css({
+    position: 'absolute',
+  }),
+  time: css({
+    marginBottom: theme.spacing(2),
+  }),
+  modal: css({
+    position: 'fixed',
+    top: '50%',
+    left: '50%',
+    transform: 'translate(-50%, -50%)',
+    zIndex: theme.zIndex.modal,
+    maxWidth: '280px',
+  }),
 });

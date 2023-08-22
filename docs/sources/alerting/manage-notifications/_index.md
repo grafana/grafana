@@ -1,10 +1,16 @@
 ---
-menuTitle: Manage
+canonical: https://grafana.com/docs/grafana/latest/alerting/manage-notifications/
 description: Manage alert notifications
 keywords:
   - grafana
   - alert
   - notifications
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
+menuTitle: Manage
 title: Manage your alerts
 weight: 160
 ---

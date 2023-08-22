@@ -3,6 +3,7 @@ aliases:
   - ../fundamentals/state-and-health/
   - ../unified-alerting/alerting-rules/state-and-health/
   - ../view-state-health/
+canonical: https://grafana.com/docs/grafana/latest/alerting/manage-notifications/view-state-health/
 description: State and Health of alerting rules
 keywords:
   - grafana
@@ -10,6 +11,11 @@ keywords:
   - guide
   - state
   - health
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: View the state and health of alert rules
 weight: 420
 ---

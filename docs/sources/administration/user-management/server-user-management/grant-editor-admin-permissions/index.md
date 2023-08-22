@@ -1,6 +1,10 @@
 ---
 aliases:
   - ../../manage-users-and-permissions/manage-server-users/grant-editor-admin-permissions/
+labels:
+  products:
+    - enterprise
+    - oss
 title: Grant editors administrator permissions
 weight: 60
 ---

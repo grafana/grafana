@@ -1,6 +1,120 @@
 #!/bin/sh
 # The source of this file is https://raw.githubusercontent.com/grafana/writers-toolkit/main/docs/make-docs.
-# 4.1.0 (2023-06-16)
+# # `make-docs` procedure changelog
+#
+# Updates should conform to the guidelines in https://keepachangelog.com/en/1.1.0/.
+# [Semantic versioning](https://semver.org/) is used to help the reader identify the significance of changes.
+# Changes are relevant to this script and the support docs.mk GNU Make interface.
+
+# ## 4.1.1 (2023-07-20)
+
+# ### Fixed
+
+# - Replaced use of `realpath` with POSIX compatible alternative to determine default value for REPOS_PATH.
+
+# ## 4.1.0 (2023-06-16)
+
+# ### Added
+
+# - Mounts of `layouts` and `config` directories for the `website` project.
+#   Ensures that local changes to mounts or shortcodes are reflected in the development server.
+
+# ### Fixed
+
+# - Version inference for versioned docs pages.
+#   Pages in versioned projects now have the `versioned: true` front matter set to ensure that "version" in $.Page.Scratch is set on builds.
+
+# ## 4.0.0 (2023-06-06)
+
+# ### Removed
+
+# - `doc-validator/%` target.
+#   The behavior of the target was not as described.
+#   Instead, to limit `doc-validator` to only specific files, refer to https://grafana.com/docs/writers-toolkit/writing-guide/tooling-and-workflows/validate-technical-documentation/#run-on-specific-files.
+
+# ## 3.0.0 (2023-05-18)
+
+# ### Fixed
+
+# - Compatibility with the updated Make targets in the `website` repository.
+#   `docs` now runs this script itself, `server-docs` builds the site with the `docs` Hugo environment.
+
+# ## 2.0.0 (2023-05-18)
+
+# ### Added
+
+# - Support for the grafana-cloud/frontend-observability/faro-web-sdk project.
+# - Use of `doc-validator` v2.0.x which includes breaking changes to command line options.
+
+# ### Fixed
+
+# - Source grafana-cloud project from website repository.
+
+# ### Added
+
+# - Support for running the Vale linter with `make vale`.
+
+# ## 1.2.1 (2023-05-05)
+
+# ### Fixed
+
+# - Use `latest` tag of `grafana/vale` image by default instead of hardcoded older version.
+# - Fix mounting multiple projects broken by the changes in 1.0.1
+
+# ## 1.2.0 (2023-05-05)
+
+# ### Added
+
+# - Support for running the Vale linter with `make vale`.
+
+# ### Fixed
+
+# ## 1.1.0 (2023-05-05)
+
+# ### Added
+
+# - Rewrite error output so it can be followed by text editors.
+
+# ### Fixed
+
+# - Fix `docs-debug` container process port.
+
+# ## 1.0.1 (2023-05-04)
+
+# ### Fixed
+
+# - Ensure complete section hierarchy so that all projects have a visible menu.
+
+# ## 1.0.0 (2023-05-04)
+
+# ### Added
+
+# - Build multiple projects simultaneously if all projects are checked out locally.
+# - Run [`doc-validator`](https://github.com/grafana/technical-documentation/tree/main/tools/cmd/doc-validator) over projects.
+# - Redirect project root to mounted version.
+#   For example redirect `/docs/grafana/` to `/docs/grafana/latest/`.
+# - Support for Podman or Docker containers with `PODMAN` environment variable.
+# - Support for projects:
+#   - agent
+#   - enterprise-logs
+#   - enterprise-metrics
+#   - enterprise-traces
+#   - grafana
+#   - grafana-cloud
+#   - grafana-cloud/machine-learning
+#   - helm-charts/mimir-distributed
+#   - helm-charts/tempo-distributed
+#   - incident
+#   - loki
+#   - mimir
+#   - oncall
+#   - opentelemetry
+#   - phlare
+#   - plugins
+#   - slo
+#   - tempo
+#   - writers-toolkit
+
 
 set -ef
 
@@ -18,6 +132,21 @@ readonly WEBSITE_EXEC="${WEBSITE_EXEC:-make server-docs}"
 readonly WEBSITE_MOUNTS="${WEBSITE_MOUNTS:-}"
 
 PODMAN="$(if command -v podman >/dev/null 2>&1; then echo podman; else echo docker; fi)"
+
+if ! command -v curl >/dev/null 2>&1; then
+  if ! command -v wget >/dev/null 2>&1; then
+    errr 'either `curl` or `wget` must be installed for this script to work.'
+
+    exit 1
+  fi
+fi
+
+if ! command -v "${PODMAN}" >/dev/null 2>&1; then
+  errr 'either `podman` or `docker` must be installed for this script to work.'
+
+  exit 1
+fi
+
 
 about() {
   cat <<EOF
@@ -48,7 +177,7 @@ EOF
   exit 1
 fi
 
-readonly REPOS_PATH="${REPOS_PATH:-$(realpath "$(git rev-parse --show-toplevel)/..")}"
+readonly REPOS_PATH="${REPOS_PATH:-$(cd "$(git rev-parse --show-toplevel)/.." && echo "${PWD}")}"
 
 if [ -z "${REPOS_PATH}" ]; then
   cat <<EOF >&2
@@ -60,6 +189,7 @@ EOF
 fi
 
 SOURCES_as_code='as-code-docs'
+SOURCES_beyla='ebpf-autoinstrument'
 SOURCES_enterprise_metrics='backend-enterprise'
 SOURCES_enterprise_metrics_='backend-enterprise'
 SOURCES_grafana_cloud='website'
@@ -217,9 +347,10 @@ repo_path() {
   done
   unset IFS
 
-  echo "ERRR: could not find project '${_repo}' in any of the paths in REPOS_PATH '${REPOS_PATH}'." >&2
-  echo "NOTE: you must have a checkout of the project '${_repo}' at '${REPOS_PATH##:*}/${_repo}'." >&2
-  echo "NOTE: if you have cloned the repository into a directory with a different name, consider changing it to ${_repo}." >&2
+  errr "could not find project '${_repo}' in any of the paths in REPOS_PATH '${REPOS_PATH}'."
+  note "you must have a checkout of the project '${_repo}' at '${REPOS_PATH##:*}/${_repo}'."
+  note "if you have cloned the repository into a directory with a different name, consider changing it to ${_repo}."
+
   unset _repo
   exit 1
 }
@@ -305,6 +436,50 @@ POSIX_HERESTRING
   unset _project _version _repo _path
 }
 
+await_build() {
+  url="$1"
+  req="$(if command -v curl >/dev/null 2>&1; then echo 'curl -s -o /dev/null'; else echo 'wget -q'; fi)"
+
+  sleep 2
+
+  if ${req} "${url}"; then
+    echo
+    echo "View documentation locally:"
+    for x in ${url_src_dst_vers}; do
+      IFS='^' read -r url _ _ <<POSIX_HERESTRING
+$x
+POSIX_HERESTRING
+
+      if [ -n "${url}" ]; then
+        if [ "${_url}" != "arbitrary" ]; then
+          echo "  ${url}"
+        fi
+      fi
+    done
+    echo
+    echo 'Press Ctrl+C to stop the server'
+  else
+    echo
+    errr 'The build was interrupted or a build error occurred, check the previous logs for possible causes.'
+  fi
+
+  unset url req
+}
+
+debg() {
+  if [ -n "${DEBUG}" ]; then
+    echo "DEBG: $1" >&2
+  fi
+}
+
+errr() {
+  echo "ERRR: $1" >&2
+}
+
+note() {
+  echo "NOTE: $1" >&2
+}
+
 url_src_dst_vers="$(url_src_dst_vers "$@")"
 
 volumes=""
@@ -330,13 +505,14 @@ POSIX_HERESTRING
 
   if [ "${_url}" != "arbitrary" ]; then
     if [ ! -f "${_src}/_index.md" ]; then
-      echo "ERRR: Index file '${_src}/_index.md' does not exist." >&2
-      echo "Is '${_src}' the correct source directory?" >&2
+      errr "Index file '${_src}/_index.md' does not exist."
+      note "Is '${_src}' the correct source directory?"
       exit 1
     fi
   fi
 
-  echo "DEBG: Mounting '${_src}' at container path '${_dst}'" >&2
+  debg "DEBG: Mounting '${_src}' at container path '${_dst}'"
+
   if [ -z "${volumes}" ]; then
     volumes="--volume=${_src}:${_dst}"
   else
@@ -362,35 +538,35 @@ case "${image}" in
     proj="$(new_proj "$1")"
     echo
     "${PODMAN}" run \
-      --init \
-      --interactive \
-      --name "${DOCS_CONTAINER}" \
-      --platform linux/amd64 \
-      --rm \
-      --tty \
-      ${volumes} \
-      "${DOCS_IMAGE}" \
-      "--include=${DOC_VALIDATOR_INCLUDE}" \
-      "--skip-checks=${DOC_VALIDATOR_SKIP_CHECKS}" \
-      /hugo/content/docs \
-      "$(proj_canonical "${proj}")" | sed "s#$(proj_dst "${proj}")#sources#"
+                --init \
+                --interactive \
+                --name "${DOCS_CONTAINER}" \
+                --platform linux/amd64 \
+                --rm \
+                --tty \
+                ${volumes} \
+                "${DOCS_IMAGE}" \
+                "--include=${DOC_VALIDATOR_INCLUDE}" \
+                "--skip-checks=${DOC_VALIDATOR_SKIP_CHECKS}" \
+                /hugo/content/docs \
+                "$(proj_canonical "${proj}")" | sed "s#$(proj_dst "${proj}")#sources#"
     ;;
   'grafana/vale')
     proj="$(new_proj "$1")"
     echo
     "${PODMAN}" run \
-      --init \
-      --interactive \
-      --name "${DOCS_CONTAINER}" \
-      --platform linux/amd64 \
-      --rm \
-      --tty \
-      ${volumes} \
-      "${DOCS_IMAGE}" \
-      "--minAlertLevel=${VALE_MINALERTLEVEL}" \
-      --config=/etc/vale/.vale.ini \
-      --output=line \
-      /hugo/content/docs | sed "s#$(proj_dst "${proj}")#sources#"
+                --init \
+                --interactive \
+                --name "${DOCS_CONTAINER}" \
+                --platform linux/amd64 \
+                --rm \
+                --tty \
+                ${volumes} \
+                "${DOCS_IMAGE}" \
+                "--minAlertLevel=${VALE_MINALERTLEVEL}" \
+                --config=/etc/vale/.vale.ini \
+                --output=line \
+                /hugo/content/docs | sed "s#$(proj_dst "${proj}")#sources#"
     ;;
   *)
     tempfile="$(mktemp -t make-docs.XXX)"
@@ -417,36 +593,41 @@ fi
 ${WEBSITE_EXEC}
 EOF
     chmod +x "${tempfile}"
-    volumes="${volumes} --volume=$(realpath "${tempfile}"):/entrypoint"
+    volumes="${volumes} --volume=${tempfile}:/entrypoint"
     readonly volumes
 
-    echo
-    echo "Documentation will be served at the following URLs:"
-    for x in ${url_src_dst_vers}; do
-      IFS='^' read -r url _ _ <<POSIX_HERESTRING
-$x
-POSIX_HERESTRING
+    IFS='' read -r cmd <<EOF
+${PODMAN} run \
+  --env=HUGO_REFLINKSERRORLEVEL=${HUGO_REFLINKSERRORLEVEL} \
+  --init \
+  --interactive \
+  --name=${DOCS_CONTAINER} \
+  --platform=linux/amd64 \
+  --publish=${DOCS_HOST_PORT}:3002 \
+  --publish=3003:3003 \
+  --rm \
+  --tty \
+  ${volumes} \
+  ${DOCS_IMAGE} \
+  /entrypoint
+EOF
+    await_build http://localhost:3002 &
 
-      if [ -n "${url}" ]; then
-        if [ "${_url}" != "arbitrary" ]; then
-          echo "  ${url}"
-        fi
-      fi
-    done
-
-    echo
-    "${PODMAN}" run \
-      --env "HUGO_REFLINKSERRORLEVEL=${HUGO_REFLINKSERRORLEVEL}" \
-      --init \
-      --interactive \
-      --name "${DOCS_CONTAINER}" \
-      --platform linux/amd64 \
-      --publish "${DOCS_HOST_PORT}:3002" \
-      --publish "3003:3003" \
-      --rm \
-      --tty \
-      ${volumes} \
-      "${DOCS_IMAGE}" \
-      /entrypoint
+    if [ -n "${DEBUG}" ]; then
+      ${cmd}
+    else
+      ${cmd} 2>&1| sed \
+                     -e '/Web Server is available at http:\/\/localhost:3003\/ (bind address 0.0.0.0)/ d' \
+                     -e '/^hugo server/ d' \
+                     -e '/fatal: not a git repository (or any parent up to mount point \/)/ d' \
+                     -e '/Stopping at filesystem boundary (GIT_DISCOVERY_ACROSS_FILESYSTEM not set)./ d' \
+                     -e "/Makefile:[0-9]*: warning: overriding recipe for target 'docs'/ d" \
+                     -e "/docs.mk:[0-9]*: warning: ignoring old recipe for target 'docs'/ d" \
+                     -e '/\/usr\/bin\/make -j 2 proxy hserver-docs HUGO_PORT=3003/ d' \
+                     -e '/website-proxy/ d' \
+                     -e '/rm -rf dist*/ d' \
+                     -e '/Press Ctrl+C to stop/ d' \
+                     -e '/make/ d' || echo
+    fi
     ;;
 esac

@@ -7,8 +7,13 @@ keywords:
   - configuration
   - documentation
   - oauth
-title: Configure Azure AD OAuth2 authentication
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 menuTitle: Azure AD OAuth2
+title: Configure Azure AD OAuth2 authentication
 weight: 800
 ---
 

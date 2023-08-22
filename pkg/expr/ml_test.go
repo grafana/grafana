@@ -213,7 +213,7 @@ func TestMLNodeExecute(t *testing.T) {
 		}
 
 		_, err := node.Execute(context.Background(), timeNow, nil, s)
-		require.IsType(t, err, QueryError{})
+		require.IsType(t, err, MakeQueryError("A", "", expectedError{}))
 		require.ErrorIs(t, err, cmd.Error)
 	})
 }

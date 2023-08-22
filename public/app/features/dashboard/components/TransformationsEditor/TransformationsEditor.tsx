@@ -1,4 +1,4 @@
-import { css } from '@emotion/css';
+import { cx, css } from '@emotion/css';
 import React, { ChangeEvent } from 'react';
 import { DragDropContext, Droppable, DropResult } from 'react-beautiful-dnd';
 import { Unsubscribable } from 'rxjs';
@@ -270,26 +270,30 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
   };
 
   renderTransformationEditors = () => {
-    const { data, transformations } = this.state;
+    const styles = getStyles(config.theme2);
+    const { data, transformations, showPicker } = this.state;
+    const hide = config.featureToggles.transformationsRedesign && showPicker;
 
     return (
-      <DragDropContext onDragEnd={this.onDragEnd}>
-        <Droppable droppableId="transformations-list" direction="vertical">
-          {(provided) => {
-            return (
-              <div ref={provided.innerRef} {...provided.droppableProps}>
-                <TransformationOperationRows
-                  configs={transformations}
-                  data={data}
-                  onRemove={this.onTransformationRemove}
-                  onChange={this.onTransformationChange}
-                />
-                {provided.placeholder}
-              </div>
-            );
-          }}
-        </Droppable>
-      </DragDropContext>
+      <div className={cx({ [styles.hide]: hide })}>
+        <DragDropContext onDragEnd={this.onDragEnd}>
+          <Droppable droppableId="transformations-list" direction="vertical">
+            {(provided) => {
+              return (
+                <div ref={provided.innerRef} {...provided.droppableProps}>
+                  <TransformationOperationRows
+                    configs={transformations}
+                    data={data}
+                    onRemove={this.onTransformationRemove}
+                    onChange={this.onTransformationChange}
+                  />
+                  {provided.placeholder}
+                </div>
+              );
+            }}
+          </Droppable>
+        </DragDropContext>
+      </div>
     );
   };
 
@@ -348,7 +352,7 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
 
     return (
       <>
-        {noTransforms && (
+        {noTransforms && !config.featureToggles.transformationsRedesign && (
           <Container grow={1}>
             <LocalStorageValueProvider<boolean> storageKey={LOCAL_STORAGE_KEY} defaultValue={false}>
               {(isDismissed, onDismiss) => {
@@ -550,9 +554,7 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
                 />
               </div>
             )}
-            {hasTransforms &&
-              (!config.featureToggles.transformationsRedesign || !this.state.showPicker) &&
-              this.renderTransformationEditors()}
+            {hasTransforms && this.renderTransformationEditors()}
             {this.renderTransformsPicker()}
           </div>
         </Container>
@@ -587,6 +589,9 @@ function TransformationCard({ transform, onClick }: TransformationCardProps) {
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
+    hide: css`
+      display: none;
+    `,
     card: css`
       margin: 0;
       padding: ${theme.spacing(1)};
@@ -600,9 +605,6 @@ const getStyles = (theme: GrafanaTheme2) => {
     `,
     newCard: css`
       grid-template-rows: min-content 0 1fr 0;
-    `,
-    badge: css`
-      padding: 4px 3px;
     `,
     heading: css`
       font-weight: 400;
@@ -696,7 +698,7 @@ function TransformationsGrid({ showIllustrations, transformations, onClick }: Tr
             <>
               <span>{transform.name}</span>
               <span className={styles.pluginStateInfoWrapper}>
-                <PluginStateInfo className={styles.badge} state={transform.state} />
+                <PluginStateInfo state={transform.state} />
               </span>
             </>
           </Card.Heading>

@@ -65,9 +65,7 @@ func ProvideService(
 		db:                   db,
 		registry:             make(map[string]folder.RegistryService),
 	}
-	if features.IsEnabled(featuremgmt.FlagNestedFolders) {
-		srv.DBMigration(db)
-	}
+	srv.DBMigration(db)
 
 	ac.RegisterScopeAttributeResolver(dashboards.NewFolderNameScopeResolver(folderStore, srv))
 	ac.RegisterScopeAttributeResolver(dashboards.NewFolderIDScopeResolver(folderStore, srv))
@@ -127,7 +125,7 @@ func (s *Service) Get(ctx context.Context, cmd *folder.GetFolderQuery) (*folder.
 	// do not get guardian by the folder ID because it differs from the nested folder ID
 	// and the legacy folder ID has been associated with the permissions:
 	// use the folde UID instead that is the same for both
-	g, err := guardian.NewByUID(ctx, dashFolder.UID, dashFolder.OrgID, cmd.SignedInUser)
+	g, err := guardian.NewByFolder(ctx, dashFolder, dashFolder.OrgID, cmd.SignedInUser)
 	if err != nil {
 		return nil, err
 	}
@@ -186,14 +184,25 @@ func (s *Service) GetChildren(ctx context.Context, cmd *folder.GetChildrenQuery)
 		return nil, err
 	}
 
+	childrenUIDs := make([]string, 0, len(children))
+	for _, f := range children {
+		childrenUIDs = append(childrenUIDs, f.UID)
+	}
+
+	dashFolders, err := s.dashboardFolderStore.GetFolders(ctx, cmd.OrgID, childrenUIDs)
+	if err != nil {
+		return nil, folder.ErrInternal.Errorf("failed to fetch subfolders from dashboard store: %w", err)
+	}
+
 	filtered := make([]*folder.Folder, 0, len(children))
 	for _, f := range children {
 		// fetch folder from dashboard store
-		dashFolder, err := s.dashboardFolderStore.GetFolderByUID(ctx, f.OrgID, f.UID)
-		if err != nil {
-			s.log.Error("failed to fetch folder by UID from dashboard store", "uid", f.UID, "error", err)
+		dashFolder, ok := dashFolders[f.UID]
+		if !ok {
+			s.log.Error("failed to fetch folder by UID from dashboard store", "uid", f.UID)
 			continue
 		}
+
 		// always expose the dashboard store sequential ID
 		f.ID = dashFolder.ID
 
@@ -204,7 +213,7 @@ func (s *Service) GetChildren(ctx context.Context, cmd *folder.GetChildrenQuery)
 			continue
 		}
 
-		g, err := guardian.NewByUID(ctx, f.UID, f.OrgID, cmd.SignedInUser)
+		g, err := guardian.NewByFolder(ctx, dashFolder, dashFolder.OrgID, cmd.SignedInUser)
 		if err != nil {
 			return nil, err
 		}
@@ -502,14 +511,19 @@ func (s *Service) Delete(ctx context.Context, cmd *folder.DeleteFolderCommand) e
 			result = append(result, subfolders...)
 		}
 
+		dashFolders, err := s.dashboardFolderStore.GetFolders(ctx, cmd.OrgID, result)
+		if err != nil {
+			return folder.ErrInternal.Errorf("failed to fetch subfolders from dashboard store: %w", err)
+		}
+
 		for _, folder := range result {
-			dashFolder, err := s.dashboardFolderStore.GetFolderByUID(ctx, cmd.OrgID, folder)
-			if err != nil {
+			dashFolder, ok := dashFolders[folder]
+			if !ok {
 				return err
 			}
 
 			if cmd.ForceDeleteRules {
-				if err := s.deleteChildrenInFolder(ctx, dashFolder.OrgID, dashFolder.UID); err != nil {
+				if err := s.deleteChildrenInFolder(ctx, dashFolder.OrgID, dashFolder.UID, cmd.SignedInUser); err != nil {
 					return err
 				}
 			}
@@ -525,9 +539,9 @@ func (s *Service) Delete(ctx context.Context, cmd *folder.DeleteFolderCommand) e
 	return err
 }
 
-func (s *Service) deleteChildrenInFolder(ctx context.Context, orgID int64, folderUID string) error {
+func (s *Service) deleteChildrenInFolder(ctx context.Context, orgID int64, folderUID string, user *user.SignedInUser) error {
 	for _, v := range s.registry {
-		if err := v.DeleteInFolder(ctx, orgID, folderUID); err != nil {
+		if err := v.DeleteInFolder(ctx, orgID, folderUID, user); err != nil {
 			return err
 		}
 	}
