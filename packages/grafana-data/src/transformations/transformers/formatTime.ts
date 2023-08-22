@@ -15,7 +15,7 @@ export interface FormatTimeTransformerOptions {
 
 export const formatTimeTransformer: DataTransformerInfo<FormatTimeTransformerOptions> = {
   id: DataTransformerID.formatTime,
-  name: 'Format Time',
+  name: 'Format time',
   description: 'Set the output format of a time field',
   defaultOptions: { timeField: '', outputFormat: '', useTimezone: true },
   operator: (options) => (source) =>
