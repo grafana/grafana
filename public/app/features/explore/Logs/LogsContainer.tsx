@@ -47,8 +47,8 @@ interface LogsContainerProps extends PropsFromRedux {
   scanRange?: RawTimeRange;
   syncedTimes: boolean;
   loadingState: LoadingState;
-  onClickFilterLabel: (key: string, value: string) => void;
-  onClickFilterOutLabel: (key: string, value: string) => void;
+  onClickFilterLabel: (key: string, value: string, row?: LogRowModel) => void;
+  onClickFilterOutLabel: (key: string, value: string, row?: LogRowModel) => void;
   onStartScanning: () => void;
   onStopScanning: () => void;
   eventBus: EventBus;

@@ -20,8 +20,8 @@ export interface Props extends Themeable2 {
   app?: CoreApp;
   styles: LogRowStyles;
 
-  onClickFilterLabel?: (key: string, value: string) => void;
-  onClickFilterOutLabel?: (key: string, value: string) => void;
+  onClickFilterLabel?: (key: string, value: string, row?: LogRowModel) => void;
+  onClickFilterOutLabel?: (key: string, value: string, row?: LogRowModel) => void;
   getFieldLinks?: (field: Field, rowIndex: number, dataFrame: DataFrame) => Array<LinkModel<Field>>;
   displayedFields?: string[];
   onClickShowField?: (key: string) => void;

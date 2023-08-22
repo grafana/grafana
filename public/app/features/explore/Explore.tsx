@@ -209,14 +209,14 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
   /**
    * Used by Logs details.
    */
-  onClickFilterLabel = (key: string, value: string) => {
+  onClickFilterLabel = (key: string, value: string, row?: LogRowModel) => {
     this.onModifyQueries({ type: 'ADD_FILTER', options: { key, value } });
   };
 
   /**
    * Used by Logs details.
    */
-  onClickFilterOutLabel = (key: string, value: string) => {
+  onClickFilterOutLabel = (key: string, value: string, row?: LogRowModel) => {
     this.onModifyQueries({ type: 'ADD_FILTER_OUT', options: { key, value } });
   };
 
