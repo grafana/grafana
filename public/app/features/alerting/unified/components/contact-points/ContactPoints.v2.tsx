@@ -196,7 +196,7 @@ export const ContactPoint = ({
           onDelete={onDelete}
         />
         {showFullMetadata ? (
-          <div className={styles.receiversWrapper}>
+          <div>
             {receivers?.map((receiver) => {
               const diagnostics = receiver[RECEIVER_STATUS_KEY];
               const sendingResolved = !Boolean(receiver.disableResolveMessage);
@@ -213,7 +213,7 @@ export const ContactPoint = ({
             })}
           </div>
         ) : (
-          <div className={styles.receiversWrapper}>
+          <div>
             <ContactPointReceiverSummary receivers={receivers} />
           </div>
         )}
@@ -482,12 +482,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
     border-top-right-radius: ${theme.shape.radius.default};
   `,
   metadataRow: css`
-    padding: 0 ${theme.spacing(1.5)} ${theme.spacing(1.5)} ${theme.spacing(1.5)};
-
     border-bottom-left-radius: ${theme.shape.radius.default};
     border-bottom-right-radius: ${theme.shape.radius.default};
   `,
-  receiversWrapper: css``,
 });
 
 export default ContactPoints;
