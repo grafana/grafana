@@ -9,7 +9,10 @@ import {
   getFieldDisplayName,
   PluginState,
 } from '@grafana/data';
-import { FormatStringOutput, FormatStringTransformerOptions } from '@grafana/data/src/transformations/transformers/formatString';
+import {
+  FormatStringOutput,
+  FormatStringTransformerOptions,
+} from '@grafana/data/src/transformations/transformers/formatString';
 import { Select, InlineFieldRow, InlineField } from '@grafana/ui';
 
 export function FormatStringTransfomerEditor({
@@ -55,19 +58,10 @@ export function FormatStringTransfomerEditor({
     <>
       <InlineFieldRow>
         <InlineField label="String Field" labelWidth={15}>
-          <Select
-            options={stringFields}
-            value={options.stringField}
-            onChange={onSelectField}
-            placeholder=""
-          />
+          <Select options={stringFields} value={options.stringField} onChange={onSelectField} placeholder="" />
         </InlineField>
 
-        <InlineField
-          label="Format"
-          labelWidth={10}
-          interactive={true}
-        >
+        <InlineField label="Format" labelWidth={10} interactive={true}>
           <Select
             options={[
               { label: FormatStringOutput.UpperCase, value: FormatStringOutput.UpperCase },
@@ -89,7 +83,7 @@ export function FormatStringTransfomerEditor({
 export const formatStringTransformerRegistryItem: TransformerRegistryItem<FormatStringTransformerOptions> = {
   id: DataTransformerID.formatString,
   editor: FormatStringTransfomerEditor,
-  transformation: standardTransformers.formatStringTransformer, 
+  transformation: standardTransformers.formatStringTransformer,
   name: standardTransformers.formatStringTransformer.name,
   state: PluginState.alpha,
   description: standardTransformers.formatStringTransformer.description,
