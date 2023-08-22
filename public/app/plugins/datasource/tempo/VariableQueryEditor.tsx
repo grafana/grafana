@@ -96,6 +96,7 @@ export const TempoVariableQueryEditor = ({ onChange, query, datasource }: TempoV
               value={{ label, value: label }}
               options={labelOptions}
               width={32}
+              allowCustomValue
             />
           </InlineField>
         </InlineFieldRow>
