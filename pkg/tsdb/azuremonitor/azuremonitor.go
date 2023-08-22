@@ -298,6 +298,12 @@ func checkAzureMonitorResourceGraphHealth(dsInfo types.DatasourceInfo, subscript
 func metricCheckHealth(dsInfo types.DatasourceInfo) (message string, defaultSubscription string, status backend.HealthStatus) {
 	defaultSubscription = dsInfo.Settings.SubscriptionId
 	metricsRes, err := queryMetricHealth(dsInfo)
+	if err != nil {
+		if ok := errors.Is(err, types.ErrorAzureHealthCheck); ok {
+			return fmt.Sprintf("Error connecting to Azure Monitor endpoint: %s", err.Error()), defaultSubscription, backend.HealthStatusError
+		}
+		return err.Error(), defaultSubscription, backend.HealthStatusError
+	}
 	defer func() {
 		err := metricsRes.Body.Close()
 		if err != nil {
@@ -305,12 +311,6 @@ func metricCheckHealth(dsInfo types.DatasourceInfo) (message string, defaultSubs
 			status = backend.HealthStatusError
 		}
 	}()
-	if err != nil {
-		if ok := errors.Is(err, types.ErrorAzureHealthCheck); ok {
-			return fmt.Sprintf("Error connecting to Azure Monitor endpoint: %s", err.Error()), defaultSubscription, backend.HealthStatusError
-		}
-		return err.Error(), defaultSubscription, backend.HealthStatusError
-	}
 	if metricsRes.StatusCode != 200 {
 		body, err := io.ReadAll(metricsRes.Body)
 		if err != nil {
@@ -331,13 +331,6 @@ func metricCheckHealth(dsInfo types.DatasourceInfo) (message string, defaultSubs
 
 func logAnalytricsCheckHealth(dsInfo types.DatasourceInfo, defaultSubscription string) (message string, status backend.HealthStatus) {
 	logsRes, err := checkAzureLogAnalyticsHealth(dsInfo, defaultSubscription)
-	defer func() {
-		err := logsRes.Body.Close()
-		if err != nil {
-			message += err.Error()
-			status = backend.HealthStatusError
-		}
-	}()
 	if err != nil {
 		if err.Error() == "no default workspace found" {
 			return "No Log Analytics workspaces found.", backend.HealthStatusUnknown
@@ -347,6 +340,13 @@ func logAnalytricsCheckHealth(dsInfo types.DatasourceInfo, defaultSubscription s
 		}
 		return err.Error(), backend.HealthStatusError
 	}
+	defer func() {
+		err := logsRes.Body.Close()
+		if err != nil {
+			message += err.Error()
+			status = backend.HealthStatusError
+		}
+	}()
 	if logsRes.StatusCode != 200 {
 		body, err := io.ReadAll(logsRes.Body)
 		if err != nil {
@@ -359,6 +359,12 @@ func logAnalytricsCheckHealth(dsInfo types.DatasourceInfo, defaultSubscription s
 
 func graphLogHealthCheck(dsInfo types.DatasourceInfo, defaultSubscription string) (message string, status backend.HealthStatus) {
 	resourceGraphRes, err := checkAzureMonitorResourceGraphHealth(dsInfo, defaultSubscription)
+	if err != nil {
+		if ok := errors.Is(err, types.ErrorAzureHealthCheck); ok {
+			return fmt.Sprintf("Error connecting to Azure Resource Graph endpoint: %s", err.Error()), backend.HealthStatusError
+		}
+		return err.Error(), backend.HealthStatusError
+	}
 	defer func() {
 		err := resourceGraphRes.Body.Close()
 		if err != nil {
@@ -366,12 +372,6 @@ func graphLogHealthCheck(dsInfo types.DatasourceInfo, defaultSubscription string
 			status = backend.HealthStatusError
 		}
 	}()
-	if err != nil {
-		if ok := errors.Is(err, types.ErrorAzureHealthCheck); ok {
-			return fmt.Sprintf("Error connecting to Azure Resource Graph endpoint: %s", err.Error()), backend.HealthStatusError
-		}
-		return err.Error(), backend.HealthStatusError
-	}
 	if resourceGraphRes.StatusCode != 200 {
 		body, err := io.ReadAll(resourceGraphRes.Body)
 		if err != nil {

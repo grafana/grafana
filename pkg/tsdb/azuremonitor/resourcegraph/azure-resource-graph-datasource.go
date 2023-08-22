@@ -95,7 +95,6 @@ func (e *AzureResourceGraphDatasource) buildQueries(queries []backend.DataQuery,
 		}
 
 		azureResourceGraphTarget := queryJSONModel.AzureResourceGraph
-		//logger.Debug("AzureResourceGraph", "target", azureResourceGraphTarget)
 
 		resultFormat := azureResourceGraphTarget.ResultFormat
 		if resultFormat == "" {
@@ -162,7 +161,6 @@ func (e *AzureResourceGraphDatasource) executeQuery(ctx context.Context, query *
 
 	tracer.Inject(ctx, req.Header, span)
 
-	//logger.Debug("AzureResourceGraph", "Request ApiURL", req.URL.String())
 	res, err := client.Do(req)
 	if err != nil {
 		return nil, err
@@ -205,7 +203,6 @@ func (e *AzureResourceGraphDatasource) executeQuery(ctx context.Context, query *
 func (e *AzureResourceGraphDatasource) createRequest(ctx context.Context, reqBody []byte, url string) (*http.Request, error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewBuffer(reqBody))
 	if err != nil {
-		//logger.Debug("Failed to create request", "error", err)
 		return nil, fmt.Errorf("%v: %w", "failed to create request", err)
 	}
 	req.URL.Path = "/"
@@ -222,7 +219,6 @@ func (e *AzureResourceGraphDatasource) unmarshalResponse(res *http.Response) (Az
 	defer res.Body.Close()
 
 	if res.StatusCode/100 != 2 {
-		//logger.Debug("Request failed", "status", res.Status, "body", string(body))
 		return AzureResourceGraphResponse{}, fmt.Errorf("%s. Azure Resource Graph error: %s", res.Status, string(body))
 	}
 
@@ -231,7 +227,6 @@ func (e *AzureResourceGraphDatasource) unmarshalResponse(res *http.Response) (Az
 	d.UseNumber()
 	err = d.Decode(&data)
 	if err != nil {
-		//logger.Debug("Failed to unmarshal azure resource graph response", "error", err, "status", res.Status, "body", string(body))
 		return AzureResourceGraphResponse{}, err
 	}
 

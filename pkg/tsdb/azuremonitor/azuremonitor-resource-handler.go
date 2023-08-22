@@ -89,8 +89,6 @@ func writeResponse(rw http.ResponseWriter, code int, msg string) {
 
 func (s *Service) handleResourceReq(subDataSource string) func(rw http.ResponseWriter, req *http.Request) {
 	return func(rw http.ResponseWriter, req *http.Request) {
-		//log.DefaultLogger.Debug("Received resource call", "url", req.URL.String(), "method", req.Method)
-
 		newPath, err := getTarget(req.URL.Path)
 		if err != nil {
 			writeResponse(rw, http.StatusBadRequest, err.Error())

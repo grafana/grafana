@@ -116,7 +116,6 @@ func (e *AzureLogAnalyticsDatasource) buildQueries(ctx context.Context, queries 
 			}
 
 			azureLogAnalyticsTarget := queryJSONModel.AzureLogAnalytics
-			//logger.Debug("AzureLogAnalytics", "target", azureLogAnalyticsTarget)
 
 			if azureLogAnalyticsTarget.ResultFormat != nil {
 				resultFormat = *azureLogAnalyticsTarget.ResultFormat
@@ -157,7 +156,6 @@ func (e *AzureLogAnalyticsDatasource) buildQueries(ctx context.Context, queries 
 			}
 
 			azureTracesTarget := queryJSONModel.AzureTraces
-			//logger.Debug("AzureTraces", "target", azureTracesTarget)
 
 			if azureTracesTarget.ResultFormat == nil {
 				resultFormat = types.Table
@@ -286,7 +284,6 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, query *A
 
 	tracer.Inject(ctx, req.Header, span)
 
-	//logger.Debug("AzureLogAnalytics", "Request ApiURL", req.URL.String())
 	res, err := client.Do(req)
 	if err != nil {
 		return nil, err
@@ -453,7 +450,6 @@ func (e *AzureLogAnalyticsDatasource) createRequest(ctx context.Context, queryUR
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, queryURL, bytes.NewBuffer(jsonValue))
 	if err != nil {
-		//logger.Debug("Failed to create request", "error", err)
 		return nil, fmt.Errorf("%v: %w", "failed to create request", err)
 	}
 	req.URL.Path = "/"
@@ -537,7 +533,6 @@ func getCorrelationWorkspaces(ctx context.Context, baseResource string, resource
 	callCorrelationAPI := func(url string) (AzureCorrelationAPIResponse, error) {
 		req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewBuffer([]byte{}))
 		if err != nil {
-			//logger.Debug("Failed to create request", "error", err)
 			return AzureCorrelationAPIResponse{}, fmt.Errorf("%v: %w", "failed to create request", err)
 		}
 		req.URL.Path = url
@@ -556,7 +551,6 @@ func getCorrelationWorkspaces(ctx context.Context, baseResource string, resource
 
 		tracer.Inject(ctx, req.Header, span)
 
-		//logger.Debug("AzureLogAnalytics", "Traces Correlation ApiURL", req.URL.String())
 		res, err := azMonService.HTTPClient.Do(req)
 		if err != nil {
 			return AzureCorrelationAPIResponse{}, err
@@ -565,15 +559,9 @@ func getCorrelationWorkspaces(ctx context.Context, baseResource string, resource
 		if err != nil {
 			return AzureCorrelationAPIResponse{}, err
 		}
-		defer func() {
-			err := res.Body.Close()
-			if err != nil {
-				//logger.Warn("failed to close response body", "error", err)
-			}
-		}()
+		defer res.Body.Close()
 
 		if res.StatusCode/100 != 2 {
-			//logger.Debug("Request failed", "status", res.Status, "body", string(body))
 			return AzureCorrelationAPIResponse{}, fmt.Errorf("request failed, status: %s, body: %s", res.Status, string(body))
 		}
 		var data AzureCorrelationAPIResponse
@@ -581,7 +569,6 @@ func getCorrelationWorkspaces(ctx context.Context, baseResource string, resource
 		d.UseNumber()
 		err = d.Decode(&data)
 		if err != nil {
-			//logger.Debug("Failed to unmarshal Azure Traces correlation API response", "error", err, "status", res.Status, "body", string(body))
 			return AzureCorrelationAPIResponse{}, err
 		}
 
@@ -672,14 +659,9 @@ func (e *AzureLogAnalyticsDatasource) unmarshalResponse(res *http.Response) (Azu
 	if err != nil {
 		return AzureLogAnalyticsResponse{}, err
 	}
-	defer func() {
-		if err := res.Body.Close(); err != nil {
-			//logger.Warn("Failed to close response body", "err", err)
-		}
-	}()
+	defer res.Body.Close()
 
 	if res.StatusCode/100 != 2 {
-		//logger.Debug("Request failed", "status", res.Status, "body", string(body))
 		return AzureLogAnalyticsResponse{}, fmt.Errorf("request failed, status: %s, body: %s", res.Status, string(body))
 	}
 
@@ -688,7 +670,6 @@ func (e *AzureLogAnalyticsDatasource) unmarshalResponse(res *http.Response) (Azu
 	d.UseNumber()
 	err = d.Decode(&data)
 	if err != nil {
-		//logger.Debug("Failed to unmarshal Azure Log Analytics response", "error", err, "status", res.Status, "body", string(body))
 		return AzureLogAnalyticsResponse{}, err
 	}
 

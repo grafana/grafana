@@ -117,7 +117,6 @@ func (m *kqlMacroEngine) evaluateMacro(name string, defaultTimeField string, arg
 			var queryInterval interval
 			err := json.Unmarshal(m.query.JSON, &queryInterval)
 			if err != nil {
-				//logger.Warn("Unable to parse model from query", "JSON", m.query.JSON)
 				it = defaultInterval
 			} else {
 				var (
@@ -129,7 +128,6 @@ func (m *kqlMacroEngine) evaluateMacro(name string, defaultTimeField string, arg
 				}
 				it, err = intervalv2.GetIntervalFrom(dsInterval, queryInterval.Interval, queryInterval.IntervalMs, defaultInterval)
 				if err != nil {
-					//logger.Warn("Unable to get interval from query", "model", queryInterval)
 					it = defaultInterval
 				}
 			}
