@@ -11,7 +11,7 @@ labels:
     - enterprise
     - oss
 title: Alert instances
-weight: 104
+weight: 105
 ---
 
 # Alert instances

@@ -10,21 +10,30 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/libraryelements"
 	"github.com/grafana/grafana/pkg/services/libraryelements/model"
+	"github.com/grafana/grafana/pkg/services/store/entity"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 func ProvideService(cfg *setting.Cfg, sqlStore db.DB, routeRegister routing.RouteRegister,
-	libraryElementService libraryelements.Service) *LibraryPanelService {
-	return &LibraryPanelService{
+	libraryElementService libraryelements.Service, folderService folder.Service) (*LibraryPanelService, error) {
+	lps := LibraryPanelService{
 		Cfg:                   cfg,
 		SQLStore:              sqlStore,
 		RouteRegister:         routeRegister,
 		LibraryElementService: libraryElementService,
+		FolderService:         folderService,
 		log:                   log.New("library-panels"),
 	}
+
+	if err := folderService.RegisterService(lps); err != nil {
+		return nil, err
+	}
+
+	return &lps, nil
 }
 
 // Service is a service for operating on library panels.
@@ -44,6 +53,7 @@ type LibraryPanelService struct {
 	SQLStore              db.DB
 	RouteRegister         routing.RouteRegister
 	LibraryElementService libraryelements.Service
+	FolderService         folder.Service
 	log                   log.Logger
 }
 
@@ -130,7 +140,7 @@ func importLibraryPanelsRecursively(c context.Context, service libraryelements.S
 			return errLibraryPanelHeaderUIDMissing
 		}
 
-		_, err := service.GetElement(c, signedInUser, UID)
+		_, err := service.GetElement(c, signedInUser, model.GetLibraryElementCommand{UID: UID, FolderName: dashboards.RootFolderName})
 		if err == nil {
 			continue
 		}
@@ -171,3 +181,28 @@ func importLibraryPanelsRecursively(c context.Context, service libraryelements.S
 
 	return nil
 }
+
+// CountInFolder is a handler for retrieving the number of library panels contained
+// within a given folder and for a specific organisation.
+func (lps LibraryPanelService) CountInFolder(ctx context.Context, orgID int64, folderUID string, u *user.SignedInUser) (int64, error) {
+	var count int64
+	return count, lps.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
+		folder, err := lps.FolderService.Get(ctx, &folder.GetFolderQuery{UID: &folderUID, OrgID: orgID, SignedInUser: u})
+		if err != nil {
+			return err
+		}
+
+		q := sess.Table("library_element").Where("org_id = ?", u.OrgID).
+			Where("folder_id = ?", folder.ID).Where("kind = ?", int64(model.PanelElement))
+		count, err = q.Count()
+		return err
+	})
+}
+
+// DeleteInFolder deletes the library panels contained in a given folder.
+func (lps LibraryPanelService) DeleteInFolder(ctx context.Context, orgID int64, folderUID string, user *user.SignedInUser) error {
+	return lps.LibraryElementService.DeleteLibraryElementsInFolder(ctx, user, folderUID)
+}
+
+// Kind returns the name of the library panel type of entity.
+func (lps LibraryPanelService) Kind() string { return entity.StandardKindLibraryPanel }

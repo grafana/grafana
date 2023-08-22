@@ -70,11 +70,12 @@ Contact point provisioning is for Grafana-managed alerts only.
 
 ### Notification policies
 
-| Method | URI                           | Name                                                | Summary                              |
-| ------ | ----------------------------- | --------------------------------------------------- | ------------------------------------ |
-| DELETE | /api/v1/provisioning/policies | [route reset policy tree](#route-reset-policy-tree) | Clears the notification policy tree. |
-| GET    | /api/v1/provisioning/policies | [route get policy tree](#route-get-policy-tree)     | Get the notification policy tree.    |
-| PUT    | /api/v1/provisioning/policies | [route put policy tree](#route-put-policy-tree)     | Sets the notification policy tree.   |
+| Method | URI                                  | Name                                                          | Summary                                                          |
+| ------ | ------------------------------------ | ------------------------------------------------------------- | ---------------------------------------------------------------- |
+| DELETE | /api/v1/provisioning/policies        | [route reset policy tree](#route-reset-policy-tree)           | Clears the notification policy tree.                             |
+| GET    | /api/v1/provisioning/policies        | [route get policy tree](#route-get-policy-tree)               | Get the notification policy tree.                                |
+| GET    | /api/v1/provisioning/policies/export | [route get policy tree export](#route-get-policy-tree-export) | Export the notification policy tree in provisioning file format. |
+| PUT    | /api/v1/provisioning/policies        | [route put policy tree](#route-put-policy-tree)               | Sets the notification policy tree.                               |
 
 ### Mute timings
 
@@ -107,10 +108,10 @@ DELETE /api/v1/provisioning/alert-rules/{UID}
 
 {{% responsive-table %}}
 
-| Name                 | Source   | Type   | Go type  | Separator | Required | Default | Description    |
-| -------------------- | -------- | ------ | -------- | --------- | :------: | ------- | -------------- |
-| UID                  | `path`   | string | `string` |           |    ✓     |         | Alert rule UID |
-| X-Disable-Provenance | `header` | string | `string` |           |          |         |                |
+| Name                 | Source   | Type   | Go type  | Separator | Required | Default | Description                                               |
+| -------------------- | -------- | ------ | -------- | --------- | :------: | ------- | --------------------------------------------------------- |
+| UID                  | `path`   | string | `string` |           |    ✓     |         | Alert rule UID                                            |
+| X-Disable-Provenance | `header` | string | `string` |           |          |         | Allows editing of provisioned resources in the Grafana UI |
 
 {{% /responsive-table %}}
 
@@ -573,6 +574,37 @@ Status: OK
 
 [Route](#route)
 
+### <span id="route-get-policy-tree-export"></span> Export the notification policy tree in provisioning file format. (_RouteGetPolicyTreeExport_)
+
+```
+GET /api/v1/provisioning/policies/export
+```
+
+#### All responses
+
+| Code                                     | Status    | Description        | Has headers | Schema                                             |
+| ---------------------------------------- | --------- | ------------------ | :---------: | -------------------------------------------------- |
+| [200](#route-get-policy-tree-export-200) | OK        | AlertingFileExport |             | [schema](#route-get-policy-tree-export-200-schema) |
+| [404](#route-get-policy-tree-export-404) | Not Found | NotFound           |             | [schema](#route-get-policy-tree-export-404-schema) |
+
+#### Responses
+
+##### <span id="route-get-policy-tree-export-200"></span> 200 - AlertingFileExport
+
+Status: OK
+
+###### <span id="route-get-policy-tree-export-200-schema"></span> Schema
+
+[AlertingFileExport](#alerting-file-export)
+
+##### <span id="route-get-policy-tree-export-404"></span> 404 - NotFound
+
+Status: Not Found
+
+###### <span id="route-get-policy-tree-export-404-schema"></span> Schema
+
+[NotFound](#not-found)
+
 ### <span id="route-get-template"></span> Get a notification template. (_RouteGetTemplate_)
 
 ```
@@ -651,10 +683,10 @@ POST /api/v1/provisioning/alert-rules
 
 {{% responsive-table %}}
 
-| Name                 | Source   | Type                                            | Go type                       | Separator | Required | Default | Description |
-| -------------------- | -------- | ----------------------------------------------- | ----------------------------- | --------- | :------: | ------- | ----------- |
-| X-Disable-Provenance | `header` | string                                          | `string`                      |           |          |         |             |
-| Body                 | `body`   | [ProvisionedAlertRule](#provisioned-alert-rule) | `models.ProvisionedAlertRule` |           |          |         |             |
+| Name                 | Source   | Type                                            | Go type                       | Separator | Required | Default | Description                                               |
+| -------------------- | -------- | ----------------------------------------------- | ----------------------------- | --------- | :------: | ------- | --------------------------------------------------------- |
+| X-Disable-Provenance | `header` | string                                          | `string`                      |           |          |         | Allows editing of provisioned resources in the Grafana UI |
+| Body                 | `body`   | [ProvisionedAlertRule](#provisioned-alert-rule) | `models.ProvisionedAlertRule` |           |          |         |                                                           |
 
 {{% /responsive-table %}}
 
@@ -697,10 +729,10 @@ POST /api/v1/provisioning/contact-points
 
 {{% responsive-table %}}
 
-| Name                 | Source   | Type                                            | Go type                       | Separator | Required | Default | Description |
-| -------------------- | -------- | ----------------------------------------------- | ----------------------------- | --------- | :------: | ------- | ----------- |
-| X-Disable-Provenance | `header` | string                                          | `string`                      |           |          |         |             |
-| Body                 | `body`   | [EmbeddedContactPoint](#embedded-contact-point) | `models.EmbeddedContactPoint` |           |          |         |             |
+| Name                 | Source   | Type                                            | Go type                       | Separator | Required | Default | Description                                               |
+| -------------------- | -------- | ----------------------------------------------- | ----------------------------- | --------- | :------: | ------- | --------------------------------------------------------- |
+| X-Disable-Provenance | `header` | string                                          | `string`                      |           |          |         | Allows editing of provisioned resources in the Grafana UI |
+| Body                 | `body`   | [EmbeddedContactPoint](#embedded-contact-point) | `models.EmbeddedContactPoint` |           |          |         |                                                           |
 
 {{% /responsive-table %}}
 
@@ -743,10 +775,10 @@ POST /api/v1/provisioning/mute-timings
 
 {{% responsive-table %}}
 
-| Name                 | Source   | Type                                    | Go type                   | Separator | Required | Default | Description |
-| -------------------- | -------- | --------------------------------------- | ------------------------- | --------- | :------: | ------- | ----------- |
-| X-Disable-Provenance | `header` | string                                  | `string`                  |           |          |         |             |
-| Body                 | `body`   | [MuteTimeInterval](#mute-time-interval) | `models.MuteTimeInterval` |           |          |         |             |
+| Name                 | Source   | Type                                    | Go type                   | Separator | Required | Default | Description                                               |
+| -------------------- | -------- | --------------------------------------- | ------------------------- | --------- | :------: | ------- | --------------------------------------------------------- |
+| X-Disable-Provenance | `header` | string                                  | `string`                  |           |          |         | Allows editing of provisioned resources in the Grafana UI |
+| Body                 | `body`   | [MuteTimeInterval](#mute-time-interval) | `models.MuteTimeInterval` |           |          |         |                                                           |
 
 {{% /responsive-table %}}
 
@@ -789,11 +821,11 @@ PUT /api/v1/provisioning/alert-rules/{UID}
 
 {{% responsive-table %}}
 
-| Name                 | Source   | Type                                            | Go type                       | Separator | Required | Default | Description    |
-| -------------------- | -------- | ----------------------------------------------- | ----------------------------- | --------- | :------: | ------- | -------------- |
-| UID                  | `path`   | string                                          | `string`                      |           |    ✓     |         | Alert rule UID |
-| X-Disable-Provenance | `header` | string                                          | `string`                      |           |          |         |                |
-| Body                 | `body`   | [ProvisionedAlertRule](#provisioned-alert-rule) | `models.ProvisionedAlertRule` |           |          |         |                |
+| Name                 | Source   | Type                                            | Go type                       | Separator | Required | Default | Description                                               |
+| -------------------- | -------- | ----------------------------------------------- | ----------------------------- | --------- | :------: | ------- | --------------------------------------------------------- |
+| UID                  | `path`   | string                                          | `string`                      |           |    ✓     |         | Alert rule UID                                            |
+| X-Disable-Provenance | `header` | string                                          | `string`                      |           |          |         | Allows editing of provisioned resources in the Grafana UI |
+| Body                 | `body`   | [ProvisionedAlertRule](#provisioned-alert-rule) | `models.ProvisionedAlertRule` |           |          |         |                                                           |
 
 {{% /responsive-table %}}
 
@@ -836,12 +868,12 @@ PUT /api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}
 
 {{% responsive-table %}}
 
-| Name                 | Source   | Type                                | Go type                 | Separator | Required | Default | Description |
-| -------------------- | -------- | ----------------------------------- | ----------------------- | --------- | :------: | ------- | ----------- |
-| FolderUID            | `path`   | string                              | `string`                |           |    ✓     |         |             |
-| Group                | `path`   | string                              | `string`                |           |    ✓     |         |             |
-| X-Disable-Provenance | `header` | string                              | `string`                |           |          |         |             |
-| Body                 | `body`   | [AlertRuleGroup](#alert-rule-group) | `models.AlertRuleGroup` |           |          |         |             |
+| Name                 | Source   | Type                                | Go type                 | Separator | Required | Default | Description                                               |
+| -------------------- | -------- | ----------------------------------- | ----------------------- | --------- | :------: | ------- | --------------------------------------------------------- |
+| FolderUID            | `path`   | string                              | `string`                |           |    ✓     |         |                                                           |
+| Group                | `path`   | string                              | `string`                |           |    ✓     |         |                                                           |
+| X-Disable-Provenance | `header` | string                              | `string`                |           |          |         | Allows editing of provisioned resources in the Grafana UI |
+| Body                 | `body`   | [AlertRuleGroup](#alert-rule-group) | `models.AlertRuleGroup` |           |          |         |                                                           |
 
 {{% /responsive-table %}}
 
@@ -884,11 +916,11 @@ PUT /api/v1/provisioning/contact-points/{UID}
 
 {{% responsive-table %}}
 
-| Name                 | Source   | Type                                            | Go type                       | Separator | Required | Default | Description                                |
-| -------------------- | -------- | ----------------------------------------------- | ----------------------------- | --------- | :------: | ------- | ------------------------------------------ |
-| UID                  | `path`   | string                                          | `string`                      |           |    ✓     |         | UID is the contact point unique identifier |
-| X-Disable-Provenance | `header` | string                                          | `string`                      |           |          |         |                                            |
-| Body                 | `body`   | [EmbeddedContactPoint](#embedded-contact-point) | `models.EmbeddedContactPoint` |           |          |         |                                            |
+| Name                 | Source   | Type                                            | Go type                       | Separator | Required | Default | Description                                               |
+| -------------------- | -------- | ----------------------------------------------- | ----------------------------- | --------- | :------: | ------- | --------------------------------------------------------- |
+| UID                  | `path`   | string                                          | `string`                      |           |    ✓     |         | UID is the contact point unique identifier                |
+| X-Disable-Provenance | `header` | string                                          | `string`                      |           |          |         | Allows editing of provisioned resources in the Grafana UI |
+| Body                 | `body`   | [EmbeddedContactPoint](#embedded-contact-point) | `models.EmbeddedContactPoint` |           |          |         |                                                           |
 
 {{% /responsive-table %}}
 
@@ -931,11 +963,11 @@ PUT /api/v1/provisioning/mute-timings/{name}
 
 {{% responsive-table %}}
 
-| Name                 | Source   | Type                                    | Go type                   | Separator | Required | Default | Description      |
-| -------------------- | -------- | --------------------------------------- | ------------------------- | --------- | :------: | ------- | ---------------- |
-| name                 | `path`   | string                                  | `string`                  |           |    ✓     |         | Mute timing name |
-| X-Disable-Provenance | `header` | string                                  | `string`                  |           |          |         |                  |
-| Body                 | `body`   | [MuteTimeInterval](#mute-time-interval) | `models.MuteTimeInterval` |           |          |         |                  |
+| Name                 | Source   | Type                                    | Go type                   | Separator | Required | Default | Description                                               |
+| -------------------- | -------- | --------------------------------------- | ------------------------- | --------- | :------: | ------- | --------------------------------------------------------- |
+| name                 | `path`   | string                                  | `string`                  |           |    ✓     |         | Mute timing name                                          |
+| X-Disable-Provenance | `header` | string                                  | `string`                  |           |          |         | Allows editing of provisioned resources in the Grafana UI |
+| Body                 | `body`   | [MuteTimeInterval](#mute-time-interval) | `models.MuteTimeInterval` |           |          |         |                                                           |
 
 {{% /responsive-table %}}
 
@@ -978,10 +1010,10 @@ PUT /api/v1/provisioning/policies
 
 {{% responsive-table %}}
 
-| Name                 | Source   | Type            | Go type        | Separator | Required | Default | Description                              |
-| -------------------- | -------- | --------------- | -------------- | --------- | :------: | ------- | ---------------------------------------- |
-| X-Disable-Provenance | `header` | string          | `string`       |           |          |         |                                          |
-| Body                 | `body`   | [Route](#route) | `models.Route` |           |          |         | The new notification routing tree to use |
+| Name                 | Source   | Type            | Go type        | Separator | Required | Default | Description                                               |
+| -------------------- | -------- | --------------- | -------------- | --------- | :------: | ------- | --------------------------------------------------------- |
+| X-Disable-Provenance | `header` | string          | `string`       |           |          |         | Allows editing of provisioned resources in the Grafana UI |
+| Body                 | `body`   | [Route](#route) | `models.Route` |           |          |         | The new notification routing tree to use                  |
 
 {{% /responsive-table %}}
 
@@ -1024,11 +1056,11 @@ PUT /api/v1/provisioning/templates/{name}
 
 #### Parameters
 
-| Name                 | Source   | Type                                                          | Go type                              | Separator | Required | Default | Description   |
-| -------------------- | -------- | ------------------------------------------------------------- | ------------------------------------ | --------- | :------: | ------- | ------------- |
-| name                 | `path`   | string                                                        | `string`                             |           |    ✓     |         | Template Name |
-| X-Disable-Provenance | `header` | string                                                        | `string`                             |           |          |         |               |
-| Body                 | `body`   | [NotificationTemplateContent](#notification-template-content) | `models.NotificationTemplateContent` |           |          |         |               |
+| Name                 | Source   | Type                                                          | Go type                              | Separator | Required | Default | Description                                               |
+| -------------------- | -------- | ------------------------------------------------------------- | ------------------------------------ | --------- | :------: | ------- | --------------------------------------------------------- |
+| name                 | `path`   | string                                                        | `string`                             |           |    ✓     |         | Template Name                                             |
+| X-Disable-Provenance | `header` | string                                                        | `string`                             |           |          |         | Allows editing of provisioned resources in the Grafana UI |
+| Body                 | `body`   | [NotificationTemplateContent](#notification-template-content) | `models.NotificationTemplateContent` |           |          |         |                                                           |
 
 {{% /responsive-table %}}
 
@@ -1182,11 +1214,12 @@ Status: Accepted
 
 {{% responsive-table %}}
 
-| Name          | Type                                               | Go type                   | Required | Default | Description | Example |
-| ------------- | -------------------------------------------------- | ------------------------- | :------: | ------- | ----------- | ------- |
-| apiVersion    | int64 (formatted integer)                          | `int64`                   |          |         |             |         |
-| contactPoints | [][ContactPointExport](#contact-point-export)      | `[]*ContactPointExport`   |          |         |             |         |
-| groups        | [][AlertRuleGroupExport](#alert-rule-group-export) | `[]*AlertRuleGroupExport` |          |         |             |         |
+| Name          | Type                                                      | Go type                       | Required | Default | Description | Example |
+| ------------- | --------------------------------------------------------- | ----------------------------- | :------: | ------- | ----------- | ------- |
+| apiVersion    | int64 (formatted integer)                                 | `int64`                       |          |         |             |         |
+| contactPoints | [][ContactPointExport](#contact-point-export)             | `[]*ContactPointExport`       |          |         |             |         |
+| groups        | [][AlertRuleGroupExport](#alert-rule-group-export)        | `[]*AlertRuleGroupExport`     |          |         |             |         |
+| policies      | [][NotificationPolicyExport](#notification-policy-export) | `[]*NotificationPolicyExport` |          |         |             |         |
 
 {{% /responsive-table %}}
 
@@ -1285,6 +1318,19 @@ Status: Accepted
 
 [][MuteTimeInterval](#mute-time-interval)
 
+### <span id="not-found"></span> NotFound
+
+[interface{}](#interface)
+
+### <span id="notification-policy-export"></span> NotificationPolicyExport
+
+**Properties**
+
+| Name   | Type                         | Go type       | Required | Default | Description | Example |
+| ------ | ---------------------------- | ------------- | :------: | ------- | ----------- | ------- |
+| Policy | [RouteExport](#route-export) | `RouteExport` |          |         | inline      |         |
+| orgId  | int64 (formatted integer)    | `int64`       |          |         |             |         |
+
 ### <span id="notification-template"></span> NotificationTemplate
 
 **Properties**
@@ -1362,16 +1408,20 @@ Status: Accepted
 
 [][ProvisionedAlertRule](#provisioned-alert-rule)
 
+### <span id="raw-message"></span> RawMessage
+
+[interface{}](#interface)
+
 ### <span id="receiver-export"></span> ReceiverExport
 
 **Properties**
 
-| Name                  | Type          | Go type  | Required | Default | Description | Example |
-| --------------------- | ------------- | -------- | :------: | ------- | ----------- | ------- |
-| disableResolveMessage | boolean       | `bool`   |          |         |             |         |
-| settings              | [JSON](#json) | `JSON`   |          |         |             |         |
-| type                  | string        | `string` |          |         |             |         |
-| uid                   | string        | `string` |          |         |             |         |
+| Name                  | Type                       | Go type      | Required | Default | Description | Example |
+| --------------------- | -------------------------- | ------------ | :------: | ------- | ----------- | ------- |
+| disableResolveMessage | boolean                    | `bool`       |          |         |             |         |
+| settings              | [RawMessage](#raw-message) | `RawMessage` |          |         |             |         |
+| type                  | string                     | `string`     |          |         |             |         |
+| uid                   | string                     | `string`     |          |         |             |         |
 
 ### <span id="regexp"></span> Regexp
 
@@ -1422,6 +1472,28 @@ Status: Accepted
 | routes              | [][Route](#route)                  | `[]*Route`          |          |         |                                         |         |
 
 {{% /responsive-table %}}
+
+### <span id="route-export"></span> RouteExport
+
+> RouteExport is the provisioned file export of definitions.Route. This is needed to hide fields that aren't useable in
+> provisioning file format. An alternative would be to define a custom MarshalJSON and MarshalYAML that excludes them.
+
+**Properties**
+
+| Name                | Type                               | Go type             | Required | Default | Description                             | Example |
+| ------------------- | ---------------------------------- | ------------------- | :------: | ------- | --------------------------------------- | ------- |
+| continue            | boolean                            | `bool`              |          |         |                                         |         |
+| group_by            | []string                           | `[]string`          |          |         |                                         |         |
+| group_interval      | string                             | `string`            |          |         |                                         |         |
+| group_wait          | string                             | `string`            |          |         |                                         |         |
+| match               | map of string                      | `map[string]string` |          |         | Deprecated. Remove before v1.0 release. |         |
+| match_re            | [MatchRegexps](#match-regexps)     | `MatchRegexps`      |          |         |                                         |         |
+| matchers            | [Matchers](#matchers)              | `Matchers`          |          |         |                                         |         |
+| mute_time_intervals | []string                           | `[]string`          |          |         |                                         |         |
+| object_matchers     | [ObjectMatchers](#object-matchers) | `ObjectMatchers`    |          |         |                                         |         |
+| receiver            | string                             | `string`            |          |         |                                         |         |
+| repeat_interval     | string                             | `string`            |          |         |                                         |         |
+| routes              | [][RouteExport](#route-export)     | `[]*RouteExport`    |          |         |                                         |         |
 
 ### <span id="time-interval"></span> TimeInterval
 

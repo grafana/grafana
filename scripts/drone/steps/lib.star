@@ -8,6 +8,7 @@ load(
     "gcp_grafanauploads",
     "gcp_grafanauploads_base64",
     "gcp_upload_artifacts_key",
+    "npm_token",
     "prerelease_bucket",
 )
 load(
@@ -19,7 +20,7 @@ load(
     "windows_images",
 )
 
-grabpl_version = "v3.0.40"
+grabpl_version = "v3.0.41"
 
 trigger_oss = {
     "repo": [
@@ -261,7 +262,6 @@ def validate_modfile_step():
     return {
         "name": "validate-modfile",
         "image": images["go_image"],
-        "failure": "ignore",
         "commands": [
             "go run scripts/modowners/modowners.go check go.mod",
         ],
@@ -747,10 +747,7 @@ def codespell_step():
         "name": "codespell",
         "image": images["build_image"],
         "commands": [
-            # Important: all words have to be in lowercase, and separated by "\n".
-            'echo -e "unknwon\nreferer\nerrorstring\neror\niam\nwan" > words_to_ignore.txt',
-            "codespell -I words_to_ignore.txt docs/",
-            "rm words_to_ignore.txt",
+            "codespell -I .codespellignore docs/",
         ],
     }
 
@@ -1143,7 +1140,7 @@ def release_canary_npm_packages_step(trigger = None):
         "image": images["build_image"],
         "depends_on": end_to_end_tests_deps(),
         "environment": {
-            "NPM_TOKEN": from_secret("npm_token"),
+            "NPM_TOKEN": from_secret(npm_token),
         },
         "commands": [
             "./scripts/publish-npm-packages.sh --dist-tag 'canary' --registry 'https://registry.npmjs.org'",
@@ -1222,7 +1219,7 @@ def publish_grafanacom_step(ver_mode):
         ],
         "environment": {
             "GRAFANA_COM_API_KEY": from_secret("grafana_api_key"),
-            "GCP_KEY": from_secret(gcp_grafanauploads),
+            "GCP_KEY": from_secret(gcp_grafanauploads_base64),
         },
         "commands": [
             cmd,
@@ -1245,7 +1242,7 @@ def publish_linux_packages_step(package_manager = "deb"):
             "gpg_passphrase": from_secret("packages_gpg_passphrase"),
             "gpg_public_key": from_secret("packages_gpg_public_key"),
             "gpg_private_key": from_secret("packages_gpg_private_key"),
-            "package_path": "gs://grafana-prerelease/artifacts/downloads/*$${{DRONE_TAG}}/oss/**.{}".format(
+            "package_path": "gs://grafana-prerelease/artifacts/downloads/*${{DRONE_TAG}}/oss/**.{}".format(
                 package_manager,
             ),
         },
@@ -1264,13 +1261,12 @@ def windows_clone_step():
         ],
     }
 
-def get_windows_steps(ver_mode, bucket = "%PRERELEASE_BUCKET%", edition = "oss"):
+def get_windows_steps(ver_mode, bucket = "%PRERELEASE_BUCKET%"):
     """Generate the list of Windows steps.
 
     Args:
       ver_mode: used to differentiate steps for different version modes.
       bucket: used to override prerelease bucket.
-      edition: used to override edition for RGM builds.
 
     Returns:
       List of Drone steps.
@@ -1319,17 +1315,12 @@ def get_windows_steps(ver_mode, bucket = "%PRERELEASE_BUCKET%", edition = "oss")
             "cp C:\\App\\nssm-2.24.zip .",
         ]
 
-        sfx = ""
-        if edition != "oss":
-            sfx = "-{}".format(edition)
-
         if ver_mode in ("release",):
             version = "${DRONE_TAG:1}"
             installer_commands.extend(
                 [
-                    ".\\grabpl.exe windows-installer --target {} --edition {} {}".format(
-                        "gs://{}/{}/{}/{}/grafana{}-{}.windows-amd64.zip".format(gcp_bucket, ver_part, edition, ver_mode, sfx, version),
-                        edition,
+                    ".\\grabpl.exe windows-installer --target {} --edition oss {}".format(
+                        "gs://{}/{}/oss/{}/grafana-{}.windows-amd64.zip".format(gcp_bucket, ver_part, ver_mode, version),
                         ver_part,
                     ),
                     '$$fname = ((Get-Childitem grafana*.msi -name) -split "`n")[0]',
@@ -1338,10 +1329,9 @@ def get_windows_steps(ver_mode, bucket = "%PRERELEASE_BUCKET%", edition = "oss")
             if ver_mode == "main":
                 installer_commands.extend(
                     [
-                        "gsutil cp $$fname gs://{}/{}/{}/".format(gcp_bucket, edition, dir),
-                        'gsutil cp "$$fname.sha256" gs://{}/{}/{}/'.format(
+                        "gsutil cp $$fname gs://{}/oss/{}/".format(gcp_bucket, dir),
+                        'gsutil cp "$$fname.sha256" gs://{}/oss/{}/'.format(
                             gcp_bucket,
-                            edition,
                             dir,
                         ),
                     ],
@@ -1349,16 +1339,14 @@ def get_windows_steps(ver_mode, bucket = "%PRERELEASE_BUCKET%", edition = "oss")
             else:
                 installer_commands.extend(
                     [
-                        "gsutil cp $$fname gs://{}/{}/{}/{}/".format(
+                        "gsutil cp $$fname gs://{}/{}/oss/{}/".format(
                             gcp_bucket,
                             ver_part,
-                            edition,
                             dir,
                         ),
-                        'gsutil cp "$$fname.sha256" gs://{}/{}/{}/{}/'.format(
+                        'gsutil cp "$$fname.sha256" gs://{}/{}/oss/{}/'.format(
                             gcp_bucket,
                             ver_part,
-                            edition,
                             dir,
                         ),
                     ],

@@ -10,11 +10,24 @@ load(
 )
 load(
     "scripts/drone/utils/utils.star",
+    "ignore_failure",
     "pipeline",
 )
 load(
     "scripts/drone/events/release.star",
     "verify_release_pipeline",
+)
+load(
+    "scripts/drone/pipelines/test_frontend.star",
+    "test_frontend",
+)
+load(
+    "scripts/drone/pipelines/test_backend.star",
+    "test_backend",
+)
+load(
+    "scripts/drone/pipelines/whats_new_checker.star",
+    "whats_new_checker_pipeline",
 )
 load(
     "scripts/drone/vault.star",
@@ -33,6 +46,31 @@ rgm_env_secrets = {
     "GPG_PRIVATE_KEY": from_secret("packages_gpg_private_key"),
     "GPG_PUBLIC_KEY": from_secret("packages_gpg_public_key"),
     "GPG_PASSPHRASE": from_secret("packages_gpg_passphrase"),
+}
+
+docs_paths = {
+    "exclude": [
+        "*.md",
+        "docs/**",
+        "packages/**/*.md",
+        "latest.json",
+    ],
+}
+
+tag_trigger = {
+    "event": {
+        "exclude": [
+            "promote",
+        ],
+    },
+    "ref": {
+        "include": [
+            "refs/tags/v*",
+        ],
+        "exclude": [
+            "refs/tags/*-cloud*",
+        ],
+    },
 }
 
 def rgm_build(script = "drone_publish_main.sh"):
@@ -54,15 +92,6 @@ def rgm_build(script = "drone_publish_main.sh"):
         rgm_build_step,
     ]
 
-docs_paths = {
-    "exclude": [
-        "*.md",
-        "docs/**",
-        "packages/**/*.md",
-        "latest.json",
-    ],
-}
-
 def rgm_main():
     trigger = {
         "event": [
@@ -70,6 +99,9 @@ def rgm_main():
         ],
         "branch": "main",
         "paths": docs_paths,
+        "repo": [
+            "grafana/grafana",
+        ],
     }
 
     return pipeline(
@@ -79,58 +111,43 @@ def rgm_main():
         depends_on = ["main-test-backend", "main-test-frontend"],
     )
 
-tag_trigger = {
-    "event": {
-        "exclude": [
-            "promote",
-        ],
-    },
-    "ref": {
-        "include": [
-            "refs/tags/v*",
-        ],
-        "exclude": [
-            "refs/tags/*-cloud*",
-        ],
-    },
-}
-
 def rgm_tag():
     return pipeline(
         name = "rgm-tag-prerelease",
         trigger = tag_trigger,
-        steps = rgm_build(script = "drone_publish_tag.sh"),
-        depends_on = [],
+        steps = rgm_build(script = "drone_publish_tag_grafana.sh"),
+        depends_on = ["release-test-backend", "release-test-frontend"],
     )
 
-def rgm_windows(edition = "oss"):
+def rgm_windows():
     return pipeline(
-        name = "rgm-tag-prerelease-windows-{}".format(edition),
+        name = "rgm-tag-prerelease-windows",
         trigger = tag_trigger,
-        steps = get_windows_steps(
-            ver_mode = "release",
-            bucket = "grafana-prerelease-dev",
-            edition = edition,
+        steps = ignore_failure(
+            get_windows_steps(
+                ver_mode = "release",
+                bucket = "grafana-prerelease",
+            ),
         ),
         depends_on = ["rgm-tag-prerelease"],
         platform = "windows",
-        environment = {"EDITION": edition},
     )
 
 def rgm():
     return [
+        whats_new_checker_pipeline(tag_trigger),
+        test_frontend(tag_trigger, "release"),
+        test_backend(tag_trigger, "release"),
         rgm_main(),
         rgm_tag(),
-        rgm_windows(edition = "oss"),
-        rgm_windows(edition = "enterprise"),
+        rgm_windows(),
         verify_release_pipeline(
             trigger = tag_trigger,
             name = "rgm-tag-verify-prerelease-assets",
-            bucket = "grafana-prerelease-dev",
+            bucket = "grafana-prerelease",
             depends_on = [
                 "rgm-tag-prerelease",
-                "rgm-tag-prerelease-windows-oss",
-                "rgm-tag-prerelease-windows-enterprise",
+                "rgm-tag-prerelease-windows",
             ],
         ),
     ]

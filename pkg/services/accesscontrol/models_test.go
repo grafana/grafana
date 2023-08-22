@@ -64,7 +64,7 @@ func TestSaveExternalServiceRoleCommand_Validate(t *testing.T) {
 				Permissions:       []Permission{{Action: "users:read", Scope: "users:id:1"}},
 			},
 			wantErr: false,
-			wantID:  "thisis-a-very-strange-___-app-name",
+			wantID:  "thisis-a-very-strange-app-name",
 		},
 		{
 			name: "invalid empty Action",

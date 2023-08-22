@@ -1,6 +1,4 @@
-import { DataQueryResponseData, isDataFrame } from '@grafana/data';
-
-import { StreamingDataFrame } from './StreamingDataFrame';
+import { DataQueryResponseData, isDataFrame, StreamingDataFrame } from '@grafana/data';
 
 /**
  * @alpha -- experimental

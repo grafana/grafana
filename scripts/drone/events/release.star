@@ -55,6 +55,7 @@ load(
     "scripts/drone/vault.star",
     "from_secret",
     "gcp_upload_artifacts_key",
+    "npm_token",
     "prerelease_bucket",
 )
 load(
@@ -108,7 +109,7 @@ def retrieve_npm_packages_step():
         ],
         "failure": "ignore",
         "environment": {
-            "GCP_KEY": from_secret("gcp_key"),
+            "GCP_KEY": from_secret(gcp_upload_artifacts_key),
             "PRERELEASE_BUCKET": from_secret(prerelease_bucket),
         },
         "commands": ["./bin/build artifacts npm retrieve --tag ${DRONE_TAG}"],
@@ -124,7 +125,7 @@ def release_npm_packages_step():
         ],
         "failure": "ignore",
         "environment": {
-            "NPM_TOKEN": from_secret("npm_token"),
+            "NPM_TOKEN": from_secret(npm_token),
         },
         "commands": ["./bin/build artifacts npm release --tag ${DRONE_TAG}"],
     }
@@ -270,7 +271,7 @@ def publish_artifacts_step():
         "name": "publish-artifacts",
         "image": images["publish_image"],
         "environment": {
-            "GCP_KEY": from_secret("gcp_key"),
+            "GCP_KEY": from_secret(gcp_upload_artifacts_key),
             "PRERELEASE_BUCKET": from_secret("prerelease_bucket"),
         },
         "commands": [
@@ -284,7 +285,7 @@ def publish_static_assets_step():
         "name": "publish-static-assets",
         "image": images["publish_image"],
         "environment": {
-            "GCP_KEY": from_secret("gcp_key"),
+            "GCP_KEY": from_secret(gcp_upload_artifacts_key),
             "PRERELEASE_BUCKET": from_secret("prerelease_bucket"),
             "STATIC_ASSET_EDITIONS": from_secret("static_asset_editions"),
         },
@@ -299,7 +300,7 @@ def publish_storybook_step():
         "name": "publish-storybook",
         "image": images["publish_image"],
         "environment": {
-            "GCP_KEY": from_secret("gcp_key"),
+            "GCP_KEY": from_secret(gcp_upload_artifacts_key),
             "PRERELEASE_BUCKET": from_secret("prerelease_bucket"),
         },
         "commands": [
@@ -438,7 +439,7 @@ def integration_test_pipelines():
 def verify_release_pipeline(
         name = "verify-prerelease-assets",
         bucket = from_secret(prerelease_bucket),
-        gcp_key = from_secret("gcp_key"),
+        gcp_key = from_secret(gcp_upload_artifacts_key),
         version = "${DRONE_TAG}",
         trigger = release_trigger,
         depends_on = [
@@ -463,8 +464,10 @@ def verify_release_pipeline(
             "apt-get update && apt-get install -yq gettext",
             "printenv GCP_KEY | base64 -d > /tmp/key.json",
             "gcloud auth activate-service-account --key-file=/tmp/key.json",
-            "! ./scripts/list-release-artifacts.sh {} | xargs -n1 gsutil stat | grep \"No URLs matched\"".format(version),
+            "./scripts/list-release-artifacts.sh {} | xargs -n1 gsutil stat >> /tmp/stat.log".format(version),
+            "! cat /tmp/stat.log | grep \"No URLs matched\"",
         ],
+        "failure": "ignore",
     }
     return pipeline(
         depends_on = depends_on,

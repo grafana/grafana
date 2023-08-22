@@ -3,7 +3,6 @@ package sync
 import (
 	"context"
 	"errors"
-	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/authn"
@@ -47,6 +46,12 @@ var (
 	)
 )
 
+var (
+	errUsersQuotaReached = errors.New("users quota reached")
+	errGettingUserQuota  = errors.New("error getting user quota")
+	errSignupNotAllowed  = errors.New("system administrator has disabled signup")
+)
+
 func ProvideUserSync(userService user.Service,
 	userProtectionService login.UserProtectionService,
 	authInfoService login.AuthInfoService, quotaService quota.Service) *UserSync {
@@ -83,7 +88,7 @@ func (s *UserSync) SyncUserHook(ctx context.Context, id *authn.Identity, _ *auth
 	if errors.Is(errUserInDB, user.ErrUserNotFound) {
 		if !id.ClientParams.AllowSignUp {
 			s.log.FromContext(ctx).Warn("Failed to create user, signup is not allowed for module", "auth_module", id.AuthenticatedBy, "auth_id", id.AuthID)
-			return errUserSignupDisabled.Errorf("%w", login.ErrSignupNotAllowed)
+			return errUserSignupDisabled.Errorf("%w", errSignupNotAllowed)
 		}
 
 		// create user
@@ -129,16 +134,21 @@ func (s *UserSync) FetchSyncedUserHook(ctx context.Context, identity *authn.Iden
 	return nil
 }
 
-func (s *UserSync) SyncLastSeenHook(ctx context.Context, identity *authn.Identity, _ *authn.Request) error {
-	namespace, id := identity.NamespacedID()
-
-	if namespace != authn.NamespaceUser && namespace != authn.NamespaceServiceAccount {
-		// skip sync
+func (s *UserSync) SyncLastSeenHook(ctx context.Context, identity *authn.Identity, r *authn.Request) error {
+	if r.GetMeta(authn.MetaKeyIsLogin) != "" {
+		// Do not sync last seen for login requests
 		return nil
 	}
 
-	if !shouldUpdateLastSeen(identity.LastSeenAt) {
-		return nil
+	namespace, id := identity.NamespacedID()
+
+	// do not sync invalid users
+	if id <= 0 {
+		return nil // skip sync
+	}
+
+	if namespace != authn.NamespaceUser && namespace != authn.NamespaceServiceAccount {
+		return nil // skip sync
 	}
 
 	go func(userID int64) {
@@ -148,7 +158,9 @@ func (s *UserSync) SyncLastSeenHook(ctx context.Context, identity *authn.Identit
 			}
 		}()
 
-		if err := s.userService.UpdateLastSeenAt(context.Background(), &user.UpdateUserLastSeenAtCommand{UserID: userID}); err != nil {
+		if err := s.userService.UpdateLastSeenAt(context.Background(),
+			&user.UpdateUserLastSeenAtCommand{UserID: userID, OrgID: r.OrgID}); err != nil &&
+			!errors.Is(err, user.ErrLastSeenUpToDate) {
 			s.log.Error("Failed to update last_seen_at", "err", err, "userId", userID)
 		}
 	}(id)
@@ -253,10 +265,10 @@ func (s *UserSync) createUser(ctx context.Context, id *authn.Identity) (*user.Us
 		limitReached, errLimit := s.quotaService.CheckQuotaReached(ctx, quota.TargetSrv(srv), nil)
 		if errLimit != nil {
 			s.log.FromContext(ctx).Error("Failed to check quota", "error", errLimit)
-			return nil, errSyncUserInternal.Errorf("%w", login.ErrGettingUserQuota)
+			return nil, errSyncUserInternal.Errorf("%w", errGettingUserQuota)
 		}
 		if limitReached {
-			return nil, errSyncUserForbidden.Errorf("%w", login.ErrUsersQuotaReached)
+			return nil, errSyncUserForbidden.Errorf("%w", errUsersQuotaReached)
 		}
 	}
 
@@ -385,15 +397,10 @@ func syncSignedInUserToIdentity(usr *user.SignedInUser, identity *authn.Identity
 	identity.Email = usr.Email
 	identity.OrgID = usr.OrgID
 	identity.OrgName = usr.OrgName
-	identity.OrgCount = usr.OrgCount
 	identity.OrgRoles = map[int64]org.RoleType{identity.OrgID: usr.OrgRole}
 	identity.HelpFlags1 = usr.HelpFlags1
 	identity.Teams = usr.Teams
 	identity.LastSeenAt = usr.LastSeenAt
 	identity.IsDisabled = usr.IsDisabled
 	identity.IsGrafanaAdmin = &usr.IsGrafanaAdmin
-}
-
-func shouldUpdateLastSeen(t time.Time) bool {
-	return time.Since(t) > time.Minute*5
 }

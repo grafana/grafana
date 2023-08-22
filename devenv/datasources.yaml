@@ -63,6 +63,9 @@ datasources:
       alertmanagerUid: gdev-alertmanager
       prometheusType: Prometheus #Cortex | Mimir | Prometheus | Thanos
       prometheusVersion: 2.40.0
+      exemplarTraceIdDestinations:
+      - name: traceID
+        datasourceUid: gdev-tempo
     secureJsonData:
       basicAuthPassword: admin #https://grafana.com/docs/grafana/latest/administration/provisioning/#using-environment-variables
 

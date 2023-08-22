@@ -9,4 +9,4 @@
  * be subject to the standard policies
  */
 
-export * from './components/Text/Text';
+export {};

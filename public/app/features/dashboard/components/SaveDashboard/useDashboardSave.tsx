@@ -12,6 +12,8 @@ import { saveDashboard as saveDashboardApiCall } from 'app/features/manage-dashb
 import { useDispatch } from 'app/types';
 import { DashboardSavedEvent } from 'app/types/events';
 
+import { updateDashboardUidLastUsedDatasource } from '../../utils/dashboard';
+
 import { SaveDashboardOptions } from './types';
 
 const saveDashboard = async (
@@ -60,6 +62,10 @@ export const useDashboardSave = (dashboard: DashboardModel, isCopy = false) => {
         // important that these happen before location redirect below
         appEvents.publish(new DashboardSavedEvent());
         notifyApp.success('Dashboard saved');
+
+        //Update local storage dashboard to handle things like last used datasource
+        updateDashboardUidLastUsedDatasource(result.uid);
+
         if (isCopy) {
           reportInteraction('grafana_dashboard_copied', {
             name: dashboard.title,

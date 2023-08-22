@@ -120,12 +120,22 @@ func (l *LibraryElementService) createLibraryElement(c context.Context, signedIn
 			return model.LibraryElementDTO{}, model.ErrLibraryElementUIDTooLong
 		}
 	}
+
+	updatedModel := cmd.Model
+	var err error
+	if cmd.Kind == int64(model.PanelElement) {
+		updatedModel, err = l.addUidToLibraryPanel(cmd.Model, createUID)
+		if err != nil {
+			return model.LibraryElementDTO{}, err
+		}
+	}
+
 	element := model.LibraryElement{
 		OrgID:    signedInUser.OrgID,
 		FolderID: cmd.FolderID,
 		UID:      createUID,
 		Name:     cmd.Name,
-		Model:    cmd.Model,
+		Model:    updatedModel,
 		Version:  1,
 		Kind:     cmd.Kind,
 
@@ -140,7 +150,7 @@ func (l *LibraryElementService) createLibraryElement(c context.Context, signedIn
 		return model.LibraryElementDTO{}, err
 	}
 
-	err := l.SQLStore.WithTransactionalDbSession(c, func(session *db.Session) error {
+	err = l.SQLStore.WithTransactionalDbSession(c, func(session *db.Session) error {
 		if err := l.requireEditPermissionsOnFolder(c, signedInUser, cmd.FolderID); err != nil {
 			return err
 		}
@@ -228,7 +238,7 @@ func (l *LibraryElementService) deleteLibraryElement(c context.Context, signedIn
 }
 
 // getLibraryElements gets a Library Element where param == value
-func getLibraryElements(c context.Context, store db.DB, cfg *setting.Cfg, signedInUser *user.SignedInUser, params []Pair, features featuremgmt.FeatureToggles) ([]model.LibraryElementDTO, error) {
+func (l *LibraryElementService) getLibraryElements(c context.Context, store db.DB, cfg *setting.Cfg, signedInUser *user.SignedInUser, params []Pair, features featuremgmt.FeatureToggles, cmd model.GetLibraryElementCommand) ([]model.LibraryElementDTO, error) {
 	libraryElements := make([]model.LibraryElementWithMeta, 0)
 
 	recursiveQueriesAreSupported, err := store.RecursiveQueriesAreSupported()
@@ -239,10 +249,10 @@ func getLibraryElements(c context.Context, store db.DB, cfg *setting.Cfg, signed
 	err = store.WithDbSession(c, func(session *db.Session) error {
 		builder := db.NewSqlBuilder(cfg, features, store.GetDialect(), recursiveQueriesAreSupported)
 		builder.Write(selectLibraryElementDTOWithMeta)
-		builder.Write(", 'General' as folder_name ")
+		builder.Write(", ? as folder_name ", cmd.FolderName)
 		builder.Write(", '' as folder_uid ")
 		builder.Write(getFromLibraryElementDTOWithMeta(store.GetDialect()))
-		writeParamSelectorSQL(&builder, append(params, Pair{"folder_id", 0})...)
+		writeParamSelectorSQL(&builder, append(params, Pair{"folder_id", cmd.FolderID})...)
 		builder.Write(" UNION ")
 		builder.Write(selectLibraryElementDTOWithMeta)
 		builder.Write(", dashboard.title as folder_name ")
@@ -267,6 +277,14 @@ func getLibraryElements(c context.Context, store db.DB, cfg *setting.Cfg, signed
 
 	leDtos := make([]model.LibraryElementDTO, len(libraryElements))
 	for i, libraryElement := range libraryElements {
+		var updatedModel json.RawMessage
+		if libraryElement.Kind == int64(model.PanelElement) {
+			updatedModel, err = l.addUidToLibraryPanel(libraryElement.Model, libraryElement.UID)
+			if err != nil {
+				return []model.LibraryElementDTO{}, err
+			}
+		}
+
 		leDtos[i] = model.LibraryElementDTO{
 			ID:          libraryElement.ID,
 			OrgID:       libraryElement.OrgID,
@@ -277,7 +295,7 @@ func getLibraryElements(c context.Context, store db.DB, cfg *setting.Cfg, signed
 			Kind:        libraryElement.Kind,
 			Type:        libraryElement.Type,
 			Description: libraryElement.Description,
-			Model:       libraryElement.Model,
+			Model:       updatedModel,
 			Version:     libraryElement.Version,
 			Meta: model.LibraryElementDTOMeta{
 				FolderName:          libraryElement.FolderName,
@@ -303,8 +321,8 @@ func getLibraryElements(c context.Context, store db.DB, cfg *setting.Cfg, signed
 }
 
 // getLibraryElementByUid gets a Library Element by uid.
-func (l *LibraryElementService) getLibraryElementByUid(c context.Context, signedInUser *user.SignedInUser, UID string) (model.LibraryElementDTO, error) {
-	libraryElements, err := getLibraryElements(c, l.SQLStore, l.Cfg, signedInUser, []Pair{{key: "org_id", value: signedInUser.OrgID}, {key: "uid", value: UID}}, l.features)
+func (l *LibraryElementService) getLibraryElementByUid(c context.Context, signedInUser *user.SignedInUser, cmd model.GetLibraryElementCommand) (model.LibraryElementDTO, error) {
+	libraryElements, err := l.getLibraryElements(c, l.SQLStore, l.Cfg, signedInUser, []Pair{{key: "org_id", value: signedInUser.OrgID}, {key: "uid", value: cmd.UID}}, l.features, cmd)
 	if err != nil {
 		return model.LibraryElementDTO{}, err
 	}
@@ -317,7 +335,10 @@ func (l *LibraryElementService) getLibraryElementByUid(c context.Context, signed
 
 // getLibraryElementByName gets a Library Element by name.
 func (l *LibraryElementService) getLibraryElementsByName(c context.Context, signedInUser *user.SignedInUser, name string) ([]model.LibraryElementDTO, error) {
-	return getLibraryElements(c, l.SQLStore, l.Cfg, signedInUser, []Pair{{"org_id", signedInUser.OrgID}, {"name", name}}, l.features)
+	return l.getLibraryElements(c, l.SQLStore, l.Cfg, signedInUser, []Pair{{"org_id", signedInUser.OrgID}, {"name", name}}, l.features,
+		model.GetLibraryElementCommand{
+			FolderName: dashboards.RootFolderName,
+		})
 }
 
 // getAllLibraryElements gets all Library Elements.

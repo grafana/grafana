@@ -52,6 +52,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	"github.com/grafana/grafana/pkg/services/publicdashboards/api"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
+	"github.com/grafana/grafana/pkg/services/star/startest"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/team/teamtest"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -160,6 +161,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 			dashboardVersionService: fakeDashboardVersionService,
 			Kinds:                   corekind.NewBase(nil),
 			QuotaService:            quotatest.New(false, nil),
+			starService:             startest.NewStarServiceFake(),
 			userService: &usertest.FakeUserService{
 				ExpectedUser: &user.User{ID: 1, Login: "test-user"},
 			},
@@ -933,6 +935,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 				DashboardService:             dashboardService,
 				Features:                     featuremgmt.WithFeatures(),
 				Kinds:                        corekind.NewBase(nil),
+				starService:                  startest.NewStarServiceFake(),
 			}
 			hs.callGetDashboard(sc)
 
@@ -1121,6 +1124,7 @@ func getDashboardShouldReturn200WithConfig(t *testing.T, sc *scenarioContext, pr
 		DashboardService:             dashboardService,
 		Features:                     featuremgmt.WithFeatures(),
 		Kinds:                        corekind.NewBase(nil),
+		starService:                  startest.NewStarServiceFake(),
 	}
 
 	hs.callGetDashboard(sc)
@@ -1359,7 +1363,7 @@ func (l *mockLibraryElementService) CreateElement(c context.Context, signedInUse
 }
 
 // GetElement gets an element from a UID.
-func (l *mockLibraryElementService) GetElement(c context.Context, signedInUser *user.SignedInUser, UID string) (model.LibraryElementDTO, error) {
+func (l *mockLibraryElementService) GetElement(c context.Context, signedInUser *user.SignedInUser, cmd model.GetLibraryElementCommand) (model.LibraryElementDTO, error) {
 	return model.LibraryElementDTO{}, nil
 }
 

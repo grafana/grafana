@@ -207,14 +207,11 @@ e2e.scenario({
         zone: 'Coordinated Universal Time',
       },
     });
-    e2e()
-      .intercept(/locations/)
-      .as('locations');
     e2e.flows.addPanel({
       dataSourceName,
       visitDashboardAtStart: false,
       queriesForm: () => {
-        e2eSelectors.queryEditor.resourcePicker.select.button().click().wait('@locations');
+        e2eSelectors.queryEditor.resourcePicker.select.button().click();
         e2eSelectors.queryEditor.resourcePicker.search
           .input()
           .wait(100)

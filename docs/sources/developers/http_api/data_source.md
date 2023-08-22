@@ -25,6 +25,10 @@ title: Data source HTTP API
 
 `GET /api/datasources`
 
+{{% admonition type="warning" %}}
+This API currently doesn't handle pagination. The default maximum number of data sources returned is 5000. You can change this value in the default.ini file.
+{{% /admonition %}}
+
 **Required permissions**
 
 See note in the [introduction]({{< ref "#data-source-api" >}}) for an explanation.

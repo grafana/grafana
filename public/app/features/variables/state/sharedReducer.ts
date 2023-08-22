@@ -52,7 +52,7 @@ const sharedReducerSlice = createSlice({
       instanceState.state = LoadingState.Done;
       instanceState.error = null;
     },
-    variableStateFailed: (state: VariablesState, action: PayloadAction<VariablePayload<{ error: any }>>) => {
+    variableStateFailed: (state: VariablesState, action: PayloadAction<VariablePayload<{ error: unknown }>>) => {
       const instanceState = getInstanceState(state, action.payload.id);
       if (!instanceState) {
         // we might have cancelled a batch so then this state has been removed
