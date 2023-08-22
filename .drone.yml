@@ -3051,7 +3051,6 @@ steps:
       from_secret: packages_gpg_private_key
     GPG_PUBLIC_KEY:
       from_secret: packages_gpg_public_key
-  failure: ignore
   image: grafana/grafana-build:main
   name: rgm-build
   volumes:
@@ -3165,8 +3164,7 @@ steps:
   environment:
     BUCKET: grafana-prerelease
     GCP_KEY:
-      from_secret: gcp_upload_artifacts_key
-  failure: ignore
+      from_secret: gcp_key_base64
   image: google/cloud-sdk:431.0.0
   name: gsutil-stat
 trigger:
@@ -4548,6 +4546,6 @@ kind: secret
 name: delivery-bot-app-private-key
 ---
 kind: signature
-hmac: 728c159587c47f2df5132626abb56674bc7271f227a930893783926ffe645157
+hmac: 817f3bced5bee4efded1e879a1bd1a747d93ca412a2bbe3848434dde93bd6fdf
 
 ...
