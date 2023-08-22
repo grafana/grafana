@@ -148,23 +148,29 @@ const transformToMetricsData = (data: MetricsSummary) => {
 
 const getConfigQuery = (series: Series[], targetQuery: string) => {
   const queryParts = series.map((x: Series) => {
-    const isNumber = x.value.type === 3 || x.value.type === 4 || x.value.type === 7;
-    const surround = isNumber ? '' : '"';
+    const isNumber = x.value.type === 3 || x.value.type === 4;
+    const isIntrinsic = x.value.type === 8 || x.value.type === 9;
+    const surround = isNumber || isIntrinsic ? '' : '"';
     return `${x.key}=${surround}` + '${__data.fields["' + x.key + '"]}' + `${surround}`;
   });
 
+  let configQuery = '';
   const closingBracketIndex = targetQuery.indexOf('}');
-  const queryAfterClosingBracket = targetQuery.substring(closingBracketIndex + 1);
 
-  let updatedTargetQuery = targetQuery.substring(0, closingBracketIndex);
-  if (queryParts.length > 0) {
-    updatedTargetQuery += targetQuery.replace(/\s/g, '').includes('{}') ? '' : ' && ';
-    updatedTargetQuery += `${queryParts.join(' && ')}`;
-    updatedTargetQuery += `}`;
+  if (closingBracketIndex !== -1) {
+    const queryAfterClosingBracket = targetQuery.substring(closingBracketIndex + 1);
+    configQuery = targetQuery.substring(0, closingBracketIndex);
+    if (queryParts.length > 0) {
+      configQuery += targetQuery.replace(/\s/g, '').includes('{}') ? '' : ' && ';
+      configQuery += `${queryParts.join(' && ')}`;
+      configQuery += `}`;
+    }
+    configQuery += `${queryAfterClosingBracket}`;
+  } else {
+    configQuery = `{${queryParts.join(' && ')}} | ${targetQuery}`;
   }
-  updatedTargetQuery += `${queryAfterClosingBracket}`;
 
-  return updatedTargetQuery;
+  return configQuery;
 };
 
 const getConfig = (series: Series, query: string, instanceSettings: DataSourceInstanceSettings) => {
@@ -195,9 +201,11 @@ const getConfig = (series: Series, query: string, instanceSettings: DataSourceIn
   return { ...commonConfig };
 };
 
+const NO_VALUE = '';
+
 const getMetricValue = (series: Series) => {
   if (!series.value.type) {
-    return 'NULL';
+    return NO_VALUE;
   }
 
   switch (series.value.type) {
@@ -216,14 +224,14 @@ const getMetricValue = (series: Series) => {
     case 9:
       return getSpanKind(series.value.kind);
     default:
-      return 'NULL';
+      return NO_VALUE;
   }
 };
 
 // Values set according to Tempo enum: https://github.com/grafana/tempo/blob/main/pkg/traceql/enum_statics.go
 const getSpanStatusCode = (statusCode: number | undefined) => {
   if (!statusCode) {
-    return '';
+    return NO_VALUE;
   }
 
   switch (statusCode) {
@@ -239,7 +247,7 @@ const getSpanStatusCode = (statusCode: number | undefined) => {
 // Values set according to Tempo enum: https://github.com/grafana/tempo/blob/main/pkg/traceql/enum_statics.go
 const getSpanKind = (kind: number | undefined) => {
   if (!kind) {
-    return '';
+    return NO_VALUE;
   }
 
   switch (kind) {
