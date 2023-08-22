@@ -8,6 +8,7 @@ load(
     "gcp_grafanauploads",
     "gcp_grafanauploads_base64",
     "gcp_upload_artifacts_key",
+    "npm_token",
     "prerelease_bucket",
 )
 load(
@@ -19,7 +20,7 @@ load(
     "windows_images",
 )
 
-grabpl_version = "v3.0.40"
+grabpl_version = "v3.0.41"
 
 trigger_oss = {
     "repo": [
@@ -1139,7 +1140,7 @@ def release_canary_npm_packages_step(trigger = None):
         "image": images["build_image"],
         "depends_on": end_to_end_tests_deps(),
         "environment": {
-            "NPM_TOKEN": from_secret("npm_token"),
+            "NPM_TOKEN": from_secret(npm_token),
         },
         "commands": [
             "./scripts/publish-npm-packages.sh --dist-tag 'canary' --registry 'https://registry.npmjs.org'",

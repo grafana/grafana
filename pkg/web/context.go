@@ -40,7 +40,7 @@ type Context struct {
 	template *template.Template
 }
 
-var errMissingWrite = errutil.NewBase(errutil.StatusInternal, "web.missingWrite")
+var errMissingWrite = errutil.Internal("web.missingWrite")
 
 func (ctx *Context) run() {
 	h := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))

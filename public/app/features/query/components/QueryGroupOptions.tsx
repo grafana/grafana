@@ -129,7 +129,7 @@ export class QueryGroupOptionsEditor extends PureComponent<Props, State> {
   onMaxDataPointsBlur = (event: ChangeEvent<HTMLInputElement>) => {
     const { options, onChange } = this.props;
 
-    let maxDataPoints: number | null = parseInt(event.target.value as string, 10);
+    let maxDataPoints: number | null = parseInt(event.currentTarget.value, 10);
 
     if (isNaN(maxDataPoints) || maxDataPoints === 0) {
       maxDataPoints = null;

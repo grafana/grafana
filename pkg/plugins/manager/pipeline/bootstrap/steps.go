@@ -49,12 +49,12 @@ func (c *DefaultConstructor) Construct(ctx context.Context, src plugins.PluginSo
 	for _, bundle := range bundles {
 		sig, err := c.signatureCalculator.Calculate(ctx, src, bundle.Primary)
 		if err != nil {
-			c.log.Warn("Could not calculate plugin signature state", "pluginID", bundle.Primary.JSONData.ID, "err", err)
+			c.log.Warn("Could not calculate plugin signature state", "pluginId", bundle.Primary.JSONData.ID, "error", err)
 			continue
 		}
 		plugin, err := c.pluginFactoryFunc(bundle.Primary, src.PluginClass(ctx), sig)
 		if err != nil {
-			c.log.Error("Could not create primary plugin base", "pluginID", bundle.Primary.JSONData.ID, "err", err)
+			c.log.Error("Could not create primary plugin base", "pluginId", bundle.Primary.JSONData.ID, "error", err)
 			continue
 		}
 		res = append(res, plugin)
@@ -63,7 +63,7 @@ func (c *DefaultConstructor) Construct(ctx context.Context, src plugins.PluginSo
 		for _, child := range bundle.Children {
 			cp, err := c.pluginFactoryFunc(*child, plugin.Class, sig)
 			if err != nil {
-				c.log.Error("Could not create child plugin base", "pluginID", child.JSONData.ID, "err", err)
+				c.log.Error("Could not create child plugin base", "pluginId", child.JSONData.ID, "error", err)
 				continue
 			}
 			cp.Parent = plugin

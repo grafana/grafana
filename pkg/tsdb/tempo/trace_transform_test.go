@@ -18,13 +18,19 @@ func TestTraceToFrame(t *testing.T) {
 		// like json. You could tediously create the structures manually using all the setters for everything or use
 		// https://github.com/grafana/tempo/tree/master/pkg/tempopb to create the protobuf structs from something like
 		// json. At the moment just saving some real tempo proto response into file and loading was the easiest and
-		// as my patience was diminished trying to figure this out, I say it's good enough.
+		// as my patience was diminished trying to figure this out, I say it's good enough. You can also just modify
+		// the trace afterward as you wish.
 		proto, err := os.ReadFile("testData/tempo_proto_response")
 		require.NoError(t, err)
 
 		pbUnmarshaler := ptrace.ProtoUnmarshaler{}
 		otTrace, err := pbUnmarshaler.UnmarshalTraces(proto)
 		require.NoError(t, err)
+
+		// For some reason the trace does not have named events (probably was generated some time ago) so we just set
+		// one here for testing
+		origSpan := findSpan(otTrace, "7198307df9748606")
+		origSpan.Events().At(0).SetName("test event")
 
 		frame, err := TraceToFrame(otTrace)
 		require.NoError(t, err)
@@ -51,7 +57,7 @@ func TestTraceToFrame(t *testing.T) {
 		require.Equal(t, json.RawMessage("[{\"value\":\"loki-all\",\"key\":\"service.name\"},{\"value\":\"Jaeger-Go-2.25.0\",\"key\":\"opencensus.exporterversion\"},{\"value\":\"4d019a031941\",\"key\":\"host.hostname\"},{\"value\":\"172.18.0.6\",\"key\":\"ip\"},{\"value\":\"4b19ace06df8e4de\",\"key\":\"client-uuid\"}]"), span["serviceTags"])
 		require.Equal(t, 1616072924072.852, span["startTime"])
 		require.Equal(t, 0.094, span["duration"])
-		require.Equal(t, json.RawMessage("[{\"timestamp\":1616072924072.856,\"fields\":[{\"value\":1,\"key\":\"chunks requested\"}]},{\"timestamp\":1616072924072.9448,\"fields\":[{\"value\":1,\"key\":\"chunks fetched\"}]}]"), span["logs"])
+		require.Equal(t, "[{\"timestamp\":1616072924072.856,\"fields\":[{\"value\":\"test event\",\"key\":\"message\"},{\"value\":1,\"key\":\"chunks requested\"}]},{\"timestamp\":1616072924072.9448,\"fields\":[{\"value\":1,\"key\":\"chunks fetched\"}]}]", string(span["logs"].(json.RawMessage)))
 	})
 
 	t.Run("should transform correct traceID", func(t *testing.T) {
@@ -135,6 +141,22 @@ func fieldNames(frame *data.Frame) []string {
 		names = append(names, f.Name)
 	}
 	return names
+}
+
+func findSpan(trace ptrace.Traces, spanId string) *ptrace.Span {
+	for i := 0; i < trace.ResourceSpans().Len(); i++ {
+		scope := trace.ResourceSpans().At(i).ScopeSpans()
+		for j := 0; j < scope.Len(); j++ {
+			spans := scope.At(j).Spans()
+			for k := 0; k < spans.Len(); k++ {
+				if spans.At(k).SpanID().String() == spanId {
+					found := spans.At(k)
+					return &found
+				}
+			}
+		}
+	}
+	return nil
 }
 
 var fields = []string{

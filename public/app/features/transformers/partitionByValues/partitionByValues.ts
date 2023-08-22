@@ -98,6 +98,11 @@ export function partitionByValues(
   options?: PartitionByValuesTransformerOptions
 ): DataFrame[] {
   const keyFields = frame.fields.filter((f) => matcher(f, frame, [frame]))!;
+
+  if (!keyFields.length) {
+    return [frame];
+  }
+
   const keyFieldsVals = keyFields.map((f) => f.values);
   const names = keyFields.map((f) => f.name);
 

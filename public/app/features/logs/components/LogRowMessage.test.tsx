@@ -42,6 +42,11 @@ describe('LogRowMessage', () => {
     expect(screen.queryByText('test123')).toBeInTheDocument();
   });
 
+  it('should hide the menu if the mouse is not over', async () => {
+    setup({ showContextToggle: () => true, mouseIsOver: false });
+    expect(screen.queryByLabelText('Show context')).not.toBeInTheDocument();
+  });
+
   describe('with show context', () => {
     it('should show context button', async () => {
       setup({ showContextToggle: () => true });

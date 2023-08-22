@@ -1,14 +1,12 @@
 package middleware
 
 import (
-	"context"
 	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/services/auth"
-	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/services/authn"
 )
 
 func TestOrgRedirectMiddleware(t *testing.T) {
@@ -50,15 +48,7 @@ func TestOrgRedirectMiddleware(t *testing.T) {
 		for _, u := range appSubURL {
 			middlewareScenario(t, fmt.Sprintf("%s with appSubURL=%s", tc.desc, u), func(t *testing.T, sc *scenarioContext) {
 				sc.withAppSubURL(u)
-				sc.withTokenSessionCookie("token")
-				sc.userService.ExpectedSignedInUser = &user.SignedInUser{OrgID: 1, UserID: 12}
-				sc.userAuthTokenService.LookupTokenProvider = func(ctx context.Context, unhashedToken string) (*auth.UserToken, error) {
-					return &auth.UserToken{
-						UserId:        0,
-						UnhashedToken: "",
-					}, nil
-				}
-
+        sc.withIdentity(&authn.Identity{})
 				sc.m.Get(u, sc.defaultHandler)
 				sc.fakeReq("GET", tc.input).exec()
 
@@ -69,19 +59,11 @@ func TestOrgRedirectMiddleware(t *testing.T) {
 	}
 
 	middlewareScenario(t, "when setting an invalid org for user", func(t *testing.T, sc *scenarioContext) {
-		sc.withTokenSessionCookie("token")
+		sc.withIdentity(&authn.Identity{})
 		sc.userService.ExpectedSetUsingOrgError = fmt.Errorf("")
-		sc.userService.ExpectedSignedInUser = &user.SignedInUser{OrgID: 1, UserID: 12}
-
-		sc.userAuthTokenService.LookupTokenProvider = func(ctx context.Context, unhashedToken string) (*auth.UserToken, error) {
-			return &auth.UserToken{
-				UserId:        12,
-				UnhashedToken: "",
-			}, nil
-		}
 
 		sc.m.Get("/", sc.defaultHandler)
-		sc.fakeReq("GET", "/?orgId=3").exec()
+		sc.fakeReq("GET", "/?orgId=1").exec()
 
 		require.Equal(t, 404, sc.resp.Code)
 	})

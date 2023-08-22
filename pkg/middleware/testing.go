@@ -8,69 +8,35 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/infra/db/dbtest"
-	"github.com/grafana/grafana/pkg/infra/remotecache"
-	"github.com/grafana/grafana/pkg/services/apikey/apikeytest"
-	"github.com/grafana/grafana/pkg/services/auth/authtest"
-	"github.com/grafana/grafana/pkg/services/auth/jwt"
-	"github.com/grafana/grafana/pkg/services/contexthandler"
+	"github.com/grafana/grafana/pkg/services/authn"
+	"github.com/grafana/grafana/pkg/services/authn/authntest"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
-	"github.com/grafana/grafana/pkg/services/login/loginservice"
-	"github.com/grafana/grafana/pkg/services/org/orgtest"
 	"github.com/grafana/grafana/pkg/services/user/usertest"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 )
 
 type scenarioContext struct {
-	t                    *testing.T
-	m                    *web.Mux
-	context              *contextmodel.ReqContext
-	resp                 *httptest.ResponseRecorder
-	apiKey               string
-	authHeader           string
-	jwtAuthHeader        string
-	tokenSessionCookie   string
-	respJson             map[string]interface{}
-	handlerFunc          handlerFunc
-	defaultHandler       web.Handler
-	url                  string
-	userAuthTokenService *authtest.FakeUserAuthTokenService
-	jwtAuthService       *jwt.FakeJWTService
-	remoteCacheService   *remotecache.RemoteCache
-	cfg                  *setting.Cfg
-	sqlStore             db.DB
-	mockSQLStore         *dbtest.FakeDB
-	contextHandler       *contexthandler.ContextHandler
-	loginService         *loginservice.LoginServiceMock
-	apiKeyService        *apikeytest.Service
-	userService          *usertest.FakeUserService
-	oauthTokenService    *authtest.FakeOAuthTokenService
-	orgService           *orgtest.FakeOrgService
+	t              *testing.T
+	m              *web.Mux
+	context        *contextmodel.ReqContext
+	resp           *httptest.ResponseRecorder
+	respJson       map[string]interface{}
+	handlerFunc    handlerFunc
+	defaultHandler web.Handler
+	url            string
+	authnService   *authntest.FakeService
+	userService    *usertest.FakeUserService
+	cfg            *setting.Cfg
 
 	req *http.Request
 }
 
-func (sc *scenarioContext) withValidApiKey() *scenarioContext {
-	sc.apiKey = "eyJrIjoidjVuQXdwTWFmRlA2em5hUzR1cmhkV0RMUzU1MTFNNDIiLCJuIjoiYXNkIiwiaWQiOjF9"
-	return sc
-}
-
-func (sc *scenarioContext) withTokenSessionCookie(unhashedToken string) *scenarioContext {
-	sc.tokenSessionCookie = unhashedToken
-	return sc
-}
-
-func (sc *scenarioContext) withAuthorizationHeader(authHeader string) *scenarioContext {
-	sc.authHeader = authHeader
-	return sc
-}
-
-func (sc *scenarioContext) withJWTAuthHeader(jwtAuthHeader string) *scenarioContext {
-	sc.jwtAuthHeader = jwtAuthHeader
-	return sc
+// set identity to use for request
+func (sc *scenarioContext) withIdentity(identity *authn.Identity) {
+	sc.authnService.ExpectedErr = nil
+	sc.authnService.ExpectedIdentity = identity
 }
 
 func (sc *scenarioContext) withAppSubURL(subURL string) *scenarioContext {
@@ -120,29 +86,6 @@ func (sc *scenarioContext) fakeReqWithParams(method, url string, queryParams map
 
 func (sc *scenarioContext) exec() {
 	sc.t.Helper()
-
-	if sc.apiKey != "" {
-		sc.t.Logf(`Adding header "Authorization: Bearer %s"`, sc.apiKey)
-		sc.req.Header.Set("Authorization", "Bearer "+sc.apiKey)
-	}
-
-	if sc.authHeader != "" {
-		sc.t.Logf(`Adding header "Authorization: %s"`, sc.authHeader)
-		sc.req.Header.Set("Authorization", sc.authHeader)
-	}
-
-	if sc.jwtAuthHeader != "" {
-		sc.t.Logf(`Adding header "%s: %s"`, sc.cfg.JWTAuthHeaderName, sc.jwtAuthHeader)
-		sc.req.Header.Set(sc.cfg.JWTAuthHeaderName, sc.jwtAuthHeader)
-	}
-
-	if sc.tokenSessionCookie != "" {
-		sc.t.Log(`Adding cookie`, "name", sc.cfg.LoginCookieName, "value", sc.tokenSessionCookie)
-		sc.req.AddCookie(&http.Cookie{
-			Name:  sc.cfg.LoginCookieName,
-			Value: sc.tokenSessionCookie,
-		})
-	}
 
 	sc.m.ServeHTTP(sc.resp, sc.req)
 
