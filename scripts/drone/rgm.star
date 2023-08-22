@@ -10,7 +10,6 @@ load(
 )
 load(
     "scripts/drone/utils/utils.star",
-    "ignore_failure",
     "pipeline",
 )
 load(
@@ -85,7 +84,6 @@ def rgm_build(script = "drone_publish_main.sh"):
         # The docker socket is a requirement for running dagger programs
         # In the future we should find a way to use dagger without mounting the docker socket.
         "volumes": [{"name": "docker", "path": "/var/run/docker.sock"}],
-        "failure": "ignore",
     }
 
     return [
@@ -123,11 +121,9 @@ def rgm_windows():
     return pipeline(
         name = "rgm-tag-prerelease-windows",
         trigger = tag_trigger,
-        steps = ignore_failure(
-            get_windows_steps(
-                ver_mode = "release",
-                bucket = "grafana-prerelease",
-            ),
+        steps = get_windows_steps(
+            ver_mode = "release",
+            bucket = "grafana-prerelease",
         ),
         depends_on = ["rgm-tag-prerelease"],
         platform = "windows",

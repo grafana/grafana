@@ -2690,7 +2690,6 @@ steps:
       from_secret: packages_gpg_private_key
     GPG_PUBLIC_KEY:
       from_secret: packages_gpg_public_key
-  failure: ignore
   image: grafana/grafana-build:main
   name: rgm-build
   volumes:
@@ -2748,7 +2747,6 @@ steps:
       from_secret: packages_gpg_private_key
     GPG_PUBLIC_KEY:
       from_secret: packages_gpg_public_key
-  failure: ignore
   image: grafana/grafana-build:main
   name: rgm-build
   volumes:
@@ -2785,14 +2783,12 @@ services: []
 steps:
 - commands:
   - echo $env:DRONE_RUNNER_NAME
-  failure: ignore
   image: mcr.microsoft.com/windows:1809
   name: identify-runner
 - commands:
   - $$ProgressPreference = "SilentlyContinue"
   - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.41/windows/grabpl.exe
     -OutFile grabpl.exe
-  failure: ignore
   image: grafana/ci-wix:0.1.1
   name: windows-init
 - commands:
@@ -2817,7 +2813,6 @@ steps:
       from_secret: github_token
     PRERELEASE_BUCKET:
       from_secret: prerelease_bucket
-  failure: ignore
   image: grafana/ci-wix:0.1.1
   name: build-windows-installer
 trigger:
@@ -2862,7 +2857,7 @@ steps:
   environment:
     BUCKET: grafana-prerelease
     GCP_KEY:
-      from_secret: gcp_upload_artifacts_key
+      from_secret: gcp_key_base64
   failure: ignore
   image: google/cloud-sdk:431.0.0
   name: gsutil-stat
@@ -4192,6 +4187,6 @@ kind: secret
 name: delivery-bot-app-private-key
 ---
 kind: signature
-hmac: 50e07de5e688a14cc76c3e8cc992a2c01fd6285708683ab54b9662baa6212f46
+hmac: cfd4179de22a070bc047261b534a5b070ab65e883281208bbdc56f95c0c293d9
 
 ...
