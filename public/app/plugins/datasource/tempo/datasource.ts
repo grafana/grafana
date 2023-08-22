@@ -76,10 +76,10 @@ enum FeatureName {
  ** target version, the feature is disabled in Grafana (frontend).
  */
 const featuresToTempoVersion = {
-  [FeatureName.streaming]: 'v2.2', // TODO v2.2
+  [FeatureName.streaming]: '2.2.0',
 };
 
-const minimumTempoVersionWithStatusInfoEndpoint = 'v.2.2'; // TODO v2.2
+const minimumTempoVersionWithStatusInfoEndpoint = '2.2.0';
 
 export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJsonData> {
   tracesToLogs?: TraceToLogsOptions;
@@ -104,7 +104,10 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
   languageProvider: TempoLanguageProvider;
 
   // The version of Tempo running on the backend
-  tempoVersion: string | undefined;
+  tempoVersionBackend?: string | null;
+
+  // The version of Tempo that we want to enforce in Grafana frontend through configuration
+  tempoVersionFrontend?: string;
 
   constructor(
     private instanceSettings: DataSourceInstanceSettings<TempoJsonData>,
@@ -133,6 +136,9 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
         ],
       };
     }
+
+    const envVar = ''; // TODO env var
+    this.tempoVersionFrontend = envVar;
   }
 
   init = async () => {
@@ -141,34 +147,54 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
         map((response) => response),
         catchError((error) => {
           console.error('Failure in retrieving build information', error.data.message);
-          return of({ error, data: {} });
+          return of({ error, data: { version: null } }); // unknown version
         })
       )
     );
-    // TODO use semantic version as type?
-    // TODO remove `v` from `v2.2`
-    this.tempoVersion = response.data.version;
+    this.tempoVersionBackend = response.data.version;
   };
 
   /**
-   * Check, for the given feature, whether the running Tempo instance exposes that feature.
-   * This is done by checking that the version - fetched from the backend and stored in the object - of
-   * the Tempo instance running on the user's backend is greater than the version required to have
-   * that feature available.
+   * Check, for the given feature, whether it is available in Grafana.
+   *
+   * The check is done based on the version of the Tempo instance running on the backend and the minimum
+   * version required by the given feature to work.
    *
    * @param featureName - the name of the feature to consider
    * @return true if the feature is available, false otherwise
    */
   private isFeatureAvailable(featureName: FeatureName) {
-    // Version of Tempo running on the backend.
-    // If we couldn't fetch the Tempo version by calling the dedicated endpoint in `init()`, since that
-    // endpoint has been exposed in v2.2, we assume that the running Tempo instance is before v2.2
-    // (e.g., v2.1).
-    // (Note that we are ignoring the brief moment were `this.tempoVersion` is undefined because we
-    // haven't fetched it from the backend yet.)
-    const actualVersion = this.tempoVersion ?? minimumTempoVersionWithStatusInfoEndpoint;
+    // If we are enforcing a Tempo version through configuration, use that as reference
+    if (this.tempoVersionFrontend) {
+      try {
+        return semver.gte(this.tempoVersionFrontend, featuresToTempoVersion[featureName]);
+      } catch {
+        // It should never happen, unless we are manually passing a wrong version.
+        // We catch this to prevent a silent failure due to catching at higher level.
+        console.error(
+          `Version comparison impossible between ${this.tempoVersionFrontend} and ${featuresToTempoVersion[featureName]}`
+        );
+        return false;
+      }
+    }
 
-    return semver.gte(actualVersion, featuresToTempoVersion[featureName]);
+    // If the Tempo version has not been retrieved yet, temporarily hide the feature
+    if (this.tempoVersionBackend === undefined) {
+      return false;
+    }
+
+    // If the Tempo version is unknown for whaterver reason, we assume the running Tempo instance is
+    // before the version when we released the endpoint to retrieve such information
+    const actualVersion =
+      this.tempoVersionBackend !== null ? this.tempoVersionBackend : minimumTempoVersionWithStatusInfoEndpoint;
+
+    try {
+      return semver.gte(actualVersion, featuresToTempoVersion[featureName]);
+    } catch {
+      // This could happen if the Tempo version is from development (in that case the version is, e.g., `main-12bdeff`)
+      console.log(`Cannot compare ${actualVersion} and ${featuresToTempoVersion[featureName]}`);
+      return false
+    }
   }
 
   query(options: DataQueryRequest<TempoQuery>): Observable<DataQueryResponse> {
