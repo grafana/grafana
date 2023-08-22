@@ -147,19 +147,24 @@ const transformToMetricsData = (data: MetricsSummary) => {
 };
 
 const getConfigQuery = (series: Series[], targetQuery: string) => {
-  const queryParts: string[] = [];
-
-  series.map((x: Series) => {
+  const queryParts = series.map((x: Series) => {
     const isNumber = x.value.type === 3 || x.value.type === 4 || x.value.type === 7;
     const surround = isNumber ? '' : '"';
-    return queryParts.push(`${x.key}=${surround}` + '${__data.fields["' + x.key + '"]}' + `${surround}`);
+    return `${x.key}=${surround}` + '${__data.fields["' + x.key + '"]}' + `${surround}`;
   });
 
-  let targetQueryWithoutBrackets = targetQuery.substring(1, targetQuery.length - 1);
-  if (targetQueryWithoutBrackets.length > 0) {
-    targetQueryWithoutBrackets = ` && ${targetQueryWithoutBrackets}`;
+  const closingBracketIndex = targetQuery.indexOf('}');
+  const queryAfterClosingBracket = targetQuery.substring(closingBracketIndex + 1);
+
+  let updatedTargetQuery = targetQuery.substring(0, closingBracketIndex);
+  if (queryParts.length > 0) {
+    updatedTargetQuery += targetQuery.replace(/\s/g, '').includes('{}') ? '' : ' && ';
+    updatedTargetQuery += `${queryParts.join(' && ')}`;
+    updatedTargetQuery += `}`;
   }
-  return `{${queryParts.join(' && ')}${targetQueryWithoutBrackets}}`;
+  updatedTargetQuery += `${queryAfterClosingBracket}`;
+
+  return updatedTargetQuery;
 };
 
 const getConfig = (series: Series, query: string, instanceSettings: DataSourceInstanceSettings) => {
