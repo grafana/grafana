@@ -2,14 +2,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React, { ComponentProps } from 'react';
 
-import {
-  FieldType,
-  LoadingState,
-  MutableDataFrame,
-  SupplementaryQueryType,
-  DataSourceApi,
-  createDataFrame,
-} from '@grafana/data';
+import { FieldType, LoadingState, SupplementaryQueryType, DataSourceApi, createDataFrame } from '@grafana/data';
 import { DataQuery } from '@grafana/schema';
 
 import { LogsSamplePanel } from './LogsSamplePanel';
