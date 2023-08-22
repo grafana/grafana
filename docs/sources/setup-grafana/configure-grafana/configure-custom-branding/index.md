@@ -74,7 +74,7 @@ The configuration file in Grafana Enterprise contains the following options. Eac
 # Set to complete URL to override loading logo
 ;loading_logo =
 
-# Hides the Grafana edition being used in the footer if set to "true"
+# Set to `true` to remove the Grafana edition from appearing in the footer
 ;hide_edition =
 ```
 
