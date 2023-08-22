@@ -18,18 +18,6 @@ Thank you for sending a pull request! Here are some tips:
 
 -->
 
-**What is this feature?**
-
-[Add a brief description of what the feature or update does.]
-
-**Why do we need this feature?**
-
-[Add a description of the problem the feature is trying to solve.]
-
-**Who is this feature for?**
-
-[Add information on what kind of user the feature is for.]
-
 **Which issue(s) does this PR fix?**:
 
 <!--
@@ -41,6 +29,18 @@ Usage: "Fixes #<issue number>", or "Fixes (paste link of issue)"
 -->
 
 Fixes #
+
+**What is this feature?**
+
+[Add a brief description of what the feature or update does.]
+
+**Why do we need this feature?**
+
+[Add a description of the problem the feature is trying to solve.]
+
+**Who is this feature for?**
+
+[Add information on what kind of user the feature is for.]
 
 **Special notes for your reviewer:**
 
