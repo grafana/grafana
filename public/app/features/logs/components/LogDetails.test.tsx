@@ -1,7 +1,9 @@
 import { render, screen, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import React from 'react';
 
 import { Field, LogLevel, LogRowModel, MutableDataFrame, createTheme, FieldType } from '@grafana/data';
+import { config } from '@grafana/runtime';
 
 import { LogDetails, Props } from './LogDetails';
 import { createLogRow } from './__mocks__/logRow';
@@ -58,6 +60,39 @@ describe('LogDetails', () => {
       expect(screen.getByLabelText('Filter for value')).toBeInTheDocument();
       expect(screen.getByLabelText('Filter out value')).toBeInTheDocument();
     });
+    describe('With toggleLabelsInLogsUI=true', () => {
+      beforeAll(() => {
+        config.featureToggles.toggleLabelsInLogsUI = true;
+      });
+      afterAll(() => {
+        config.featureToggles.toggleLabelsInLogsUI = false;
+      });
+      it('should provide the log row to Explore filter functions', async () => {
+        const onClickFilterLabelMock = jest.fn();
+        const onClickFilterOutLabelMock = jest.fn();
+        const isFilterLabelActiveMock = jest.fn().mockResolvedValue(true);
+        const mockRow = createLogRow({ logLevel: LogLevel.error, timeEpochMs: 1546297200000, labels: { key1: 'label1' } });
+  
+        setup(
+          {
+            onClickFilterLabel: onClickFilterLabelMock,
+            onClickFilterOutLabel: onClickFilterOutLabelMock,
+            isFilterLabelActive: isFilterLabelActiveMock,
+            row: mockRow
+          }
+        );
+  
+        expect(isFilterLabelActiveMock).toHaveBeenCalledWith('key1', 'label1', mockRow);
+        
+        await userEvent.click(screen.getByLabelText('Filter for value'));
+        expect(onClickFilterLabelMock).toHaveBeenCalledTimes(1);
+        expect(onClickFilterLabelMock).toHaveBeenCalledWith('key1', 'label1', mockRow);
+  
+        await userEvent.click(screen.getByLabelText('Filter out value'));
+        expect(onClickFilterOutLabelMock).toHaveBeenCalledTimes(1);
+        expect(onClickFilterOutLabelMock).toHaveBeenCalledWith('key1', 'label1', mockRow);
+      });
+    })
     it('should not render filter controls when the callbacks are not provided', () => {
       setup(
         {
