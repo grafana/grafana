@@ -6,10 +6,10 @@ import (
 	"database/sql/driver"
 	"errors"
 
-	mssql "github.com/grafana/go-mssqldb"
 	sdkproxy "github.com/grafana/grafana-plugin-sdk-go/backend/proxy"
 	"github.com/grafana/grafana/pkg/tsdb/sqleng"
 	"github.com/grafana/grafana/pkg/util"
+	mssql "github.com/microsoft/go-mssqldb"
 	"golang.org/x/net/proxy"
 	"xorm.io/core"
 )

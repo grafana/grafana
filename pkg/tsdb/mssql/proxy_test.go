@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"testing"
 
-	mssql "github.com/grafana/go-mssqldb"
 	"github.com/grafana/grafana/pkg/tsdb/sqleng"
 	"github.com/grafana/grafana/pkg/tsdb/sqleng/proxyutil"
+	mssql "github.com/microsoft/go-mssqldb"
 	"github.com/stretchr/testify/require"
 	"xorm.io/core"
 )
