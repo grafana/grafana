@@ -16,8 +16,8 @@ var (
 	ErrLastOrgAdmin                            = errors.New("cannot remove last organization admin")
 	ErrOrgUserNotFound                         = errors.New("cannot find the organization user")
 	ErrOrgUserAlreadyAdded                     = errors.New("user is already added to organization")
-	ErrOrgNotFound                             = errutil.NewBase(errutil.StatusNotFound, "org.notFound", errutil.WithPublicMessage("organization not found"))
-	ErrCannotChangeRoleForExternallySyncedUser = errutil.NewBase(errutil.StatusForbidden, "org.externallySynced", errutil.WithPublicMessage("cannot change role for externally synced user"))
+	ErrOrgNotFound                             = errutil.NotFound("org.notFound", errutil.WithPublicMessage("organization not found"))
+	ErrCannotChangeRoleForExternallySyncedUser = errutil.Forbidden("org.externallySynced", errutil.WithPublicMessage("cannot change role for externally synced user"))
 )
 
 type Org struct {

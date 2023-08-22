@@ -15,6 +15,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/middleware/cookies"
 	"github.com/grafana/grafana/pkg/models/usertoken"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/authn"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -30,7 +31,7 @@ func Middleware(ac AccessControl) func(Evaluator) web.Handler {
 			if c.AllowAnonymous {
 				forceLogin, _ := strconv.ParseBool(c.Req.URL.Query().Get("forceLogin")) // ignoring error, assuming false for non-true values is ok.
 				orgID, err := strconv.ParseInt(c.Req.URL.Query().Get("orgId"), 10, 64)
-				if err == nil && orgID > 0 && orgID != c.OrgID {
+				if err == nil && orgID > 0 && orgID != c.SignedInUser.GetOrgID() {
 					forceLogin = true
 				}
 
@@ -56,9 +57,9 @@ func Middleware(ac AccessControl) func(Evaluator) web.Handler {
 	}
 }
 
-func authorize(c *contextmodel.ReqContext, ac AccessControl, user *user.SignedInUser, evaluator Evaluator) {
+func authorize(c *contextmodel.ReqContext, ac AccessControl, user identity.Requester, evaluator Evaluator) {
 	injected, err := evaluator.MutateScopes(c.Req.Context(), scopeInjector(scopeParams{
-		OrgID:     c.OrgID,
+		OrgID:     user.GetOrgID(),
 		URLParams: web.Params(c.Req),
 	}))
 	if err != nil {
@@ -78,9 +79,11 @@ func deny(c *contextmodel.ReqContext, evaluator Evaluator, err error) {
 	if err != nil {
 		c.Logger.Error("Error from access control system", "error", err, "accessErrorID", id)
 	} else {
+		namespace, identifier := c.SignedInUser.GetNamespacedID()
 		c.Logger.Info(
 			"Access denied",
-			"userID", c.UserID,
+			"namespace", namespace,
+			"userID", identifier,
 			"accessErrorID", id,
 			"permissions", evaluator.GoString(),
 		)
