@@ -255,7 +255,7 @@ func (dn *DSNode) Execute(ctx context.Context, now time.Time, _ mathexp.Vars, s 
 		return mathexp.Results{}, err
 	}
 
-	vals := make([]mathexp.Value, 0)
+	var vals []mathexp.Value
 	response, ok := resp.Responses[dn.refID]
 	if !ok {
 		if len(resp.Responses) > 0 {
