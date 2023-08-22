@@ -16,6 +16,7 @@ import { getLibraryPanel } from '../../library-panels/state/api';
 import { LibraryElementDTO, LibraryElementKind } from '../../library-panels/types';
 import { DashboardSearchHit } from '../../search/types';
 import { DashboardJson, DeleteDashboardResponse } from '../types';
+import { getCallbackUrl } from '../utils/url';
 
 import {
   clearDashboard,
@@ -369,15 +370,14 @@ export function saveDashboard(options: SaveDashboardCommand) {
   dashboardWatcher.ignoreNextSave();
 
   if (options.isEmbedded) {
-    const params = locationService.getSearch();
-    const callbackUrl = params.get('callbackUrl');
+    const callbackUrl = getCallbackUrl();
     if (callbackUrl) {
       return getBackendSrv()
         .post(`${callbackUrl}/save-dashboard`, { dashboard: options.dashboard })
         .then(() => ({ status: 'success' }));
     }
 
-    return Promise.resolve({ status: 'error', message: 'Missing callbackUrl' });
+    return Promise.reject({ status: 'error', message: 'Missing or invalid callbackUrl' });
   }
 
   return getBackendSrv().post('/api/dashboards/db/', {

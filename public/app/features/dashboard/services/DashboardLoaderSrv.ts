@@ -11,6 +11,7 @@ import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { DashboardDataDTO, DashboardDTO, DashboardMeta } from 'app/types';
 
 import { appEvents } from '../../../core/core';
+import { getCallbackUrl } from '../../manage-dashboards/utils/url';
 
 import { getDashboardSrv } from './DashboardSrv';
 
@@ -84,7 +85,20 @@ export class DashboardLoaderSrv {
           return this._dashboardLoadFailed('Not found', true);
         });
     } else if (type === 'embedded') {
-      promise = this._loadFromUrl();
+      promise = this._loadFromUrl().catch(() => {
+        return {
+          meta: {
+            canStar: false,
+            isSnapshot: false,
+            canDelete: false,
+            canSave: false,
+            canEdit: false,
+            dashboardNotFound: true,
+            isEmbedded: true,
+          },
+          dashboard: { title: '' },
+        };
+      });
     } else {
       throw new Error('Dashboard uid or slug required');
     }
@@ -167,32 +181,28 @@ export class DashboardLoaderSrv {
       });
   }
 
-  // Load dashboard JSON from a remove URL, provided as a query parameter
+  // Load dashboard JSON from a remote URL, provided as a query parameter
   async _loadFromUrl() {
-    const params = locationService.getSearch();
-    const callbackUrl = params.get('callbackUrl');
+    const callbackUrl = getCallbackUrl();
     if (!callbackUrl) {
-      return Promise.reject('No callback URL provided');
+      return Promise.reject('Missing or invalid callbackUrl');
     }
-    return (
-      getBackendSrv()
-        // TODO validate URL
-        .get(`${callbackUrl}/load-dashboard`)
-        .then((data) => {
-          // Remove dashboard UID from JSON
-          const { uid, ...dashboard } = data;
-          return {
-            meta: {
-              canEdit: true,
-              isEmbedded: true,
-              canDelete: false,
-              canSave: true,
-              canStar: false,
-            },
-            dashboard,
-          };
-        })
-    );
+    return getBackendSrv()
+      .get(`${callbackUrl}/load-dashboard`)
+      .then((data) => {
+        // Remove dashboard UID from JSON
+        const { uid, ...dashboard } = data;
+        return {
+          meta: {
+            canEdit: true,
+            isEmbedded: true,
+            canDelete: false,
+            canSave: true,
+            canStar: false,
+          },
+          dashboard,
+        };
+      });
   }
 
   _executeScript(result: any) {
