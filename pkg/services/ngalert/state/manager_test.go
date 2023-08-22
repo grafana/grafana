@@ -1300,8 +1300,21 @@ func TestProcessEvalResults(t *testing.T) {
         	            grafana_alerting_state_calculation_duration_seconds_bucket{le="+Inf"} %[1]d
         	            grafana_alerting_state_calculation_duration_seconds_sum 0
         	            grafana_alerting_state_calculation_duration_seconds_count %[1]d
+						# HELP grafana_alerting_state_save_duration_seconds The total time taken to save the alert instances to the database.
+						# TYPE grafana_alerting_state_save_duration_seconds histogram
+						grafana_alerting_state_save_duration_seconds_bucket{org="1",le="1"} %[1]d
+            	        grafana_alerting_state_save_duration_seconds_bucket{org="1",le="5"} %[1]d
+            	        grafana_alerting_state_save_duration_seconds_bucket{org="1",le="10"} %[1]d
+            	        grafana_alerting_state_save_duration_seconds_bucket{org="1",le="15"} %[1]d
+            	        grafana_alerting_state_save_duration_seconds_bucket{org="1",le="30"} %[1]d
+            	        grafana_alerting_state_save_duration_seconds_bucket{org="1",le="60"} %[1]d
+            	        grafana_alerting_state_save_duration_seconds_bucket{org="1",le="120"} %[1]d
+            	        grafana_alerting_state_save_duration_seconds_bucket{org="1",le="240"} %[1]d
+            	        grafana_alerting_state_save_duration_seconds_bucket{org="1",le="+Inf"} %[1]d
+            	        grafana_alerting_state_save_duration_seconds_sum{org="1"} 0
+            	        grafana_alerting_state_save_duration_seconds_count{org="1"} %[1]d
 						`, results)
-			err := testutil.GatherAndCompare(reg, bytes.NewBufferString(expectedMetric), "grafana_alerting_state_calculation_duration_seconds", "grafana_alerting_state_calculation_total")
+			err := testutil.GatherAndCompare(reg, bytes.NewBufferString(expectedMetric), "grafana_alerting_state_calculation_duration_seconds", "grafana_alerting_state_save_duration_seconds_bucket", "grafana_alerting_state_save_duration_seconds_count")
 			require.NoError(t, err)
 		})
 	}

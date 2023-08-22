@@ -1,6 +1,7 @@
 package eval
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"math/rand"
@@ -9,6 +10,8 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -19,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 	fakes "github.com/grafana/grafana/pkg/services/datasources/fakes"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -717,6 +721,8 @@ func TestEvaluate(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
+			r := prometheus.NewPedanticRegistry()
+			metrics := metrics.NewEvalMetrics(r)
 			ev := conditionEvaluator{
 				pipeline: nil,
 				expressionService: &fakeExpressionService{
@@ -725,6 +731,7 @@ func TestEvaluate(t *testing.T) {
 					},
 				},
 				condition: tc.cond,
+				metrics:   metrics,
 			}
 			results, err := ev.Evaluate(context.Background(), time.Now())
 			if tc.error != "" {
@@ -738,6 +745,27 @@ func TestEvaluate(t *testing.T) {
 					assert.Equal(t, tc.expected[i], results[i])
 				}
 			}
+
+			expectedMetrics := fmt.Sprintf(
+				`# HELP grafana_alerting_evaluation_query_duration_seconds The total time taken to execute any queries and expressions.
+						# TYPE grafana_alerting_evaluation_query_duration_seconds histogram
+						grafana_alerting_evaluation_query_duration_seconds_bucket{org="0",le="1"} %[1]d
+						grafana_alerting_evaluation_query_duration_seconds_bucket{org="0",le="5"} %[1]d
+						grafana_alerting_evaluation_query_duration_seconds_bucket{org="0",le="10"} %[1]d
+						grafana_alerting_evaluation_query_duration_seconds_bucket{org="0",le="15"} %[1]d
+						grafana_alerting_evaluation_query_duration_seconds_bucket{org="0",le="30"} %[1]d
+						grafana_alerting_evaluation_query_duration_seconds_bucket{org="0",le="60"} %[1]d
+						grafana_alerting_evaluation_query_duration_seconds_bucket{org="0",le="120"} %[1]d
+						grafana_alerting_evaluation_query_duration_seconds_bucket{org="0",le="240"} %[1]d
+						grafana_alerting_evaluation_query_duration_seconds_bucket{org="0",le="+Inf"} %[1]d
+						grafana_alerting_evaluation_query_duration_seconds_sum{org="0"} 0
+						grafana_alerting_evaluation_query_duration_seconds_count{org="0"} %[1]d
+						# HELP grafana_alerting_evaluations_total The total number of evaluations.
+						# TYPE grafana_alerting_evaluations_total counter
+						grafana_alerting_evaluations_total{org="0"} %[1]d
+					`, 1)
+			err = testutil.GatherAndCompare(r, bytes.NewBufferString(expectedMetrics), "grafana_alerting_evaluations_total", "grafana_alerting_evaluations_total", "grafana_alerting_evaluation_query_duration_seconds_bucket", "grafana_alerting_evaluation_query_duration_seconds_count")
+			require.NoError(t, err)
 		})
 	}
 }
