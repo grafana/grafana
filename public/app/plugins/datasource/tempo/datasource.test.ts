@@ -800,7 +800,7 @@ function setupBackendSrv(frame: DataFrame) {
   } as any);
 }
 
-const defaultSettings: DataSourceInstanceSettings<TempoJsonData> = {
+export const defaultSettings: DataSourceInstanceSettings<TempoJsonData> = {
   id: 0,
   uid: 'gdev-tempo',
   type: 'tracing',

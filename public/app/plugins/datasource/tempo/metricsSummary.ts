@@ -7,7 +7,7 @@ import {
   sortDataFrame,
 } from '@grafana/data';
 
-type MetricsSummary = {
+export type MetricsSummary = {
   spanCount: string;
   errorSpanCount?: string;
   p50: string;
@@ -284,7 +284,7 @@ const getPercentileRow = (name: string) => {
   };
 };
 
-const emptyResponse = new MutableDataFrame({
+export const emptyResponse = new MutableDataFrame({
   name: 'Metrics Summary',
   refId: 'metrics-summary',
   fields: [],
