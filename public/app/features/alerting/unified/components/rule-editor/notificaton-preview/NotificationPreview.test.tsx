@@ -33,7 +33,6 @@ jest.spyOn(notificationPreview, 'useGetAlertManagersSourceNamesAndImage').mockRe
 ]);
 
 jest.spyOn(dataSource, 'getDatasourceAPIUid').mockImplementation((ds: string) => ds);
-jest.mock('app/core/services/context_srv');
 
 const useGetAlertManagersSourceNamesAndImageMock = useGetAlertManagersSourceNamesAndImage as jest.MockedFunction<
   typeof useGetAlertManagersSourceNamesAndImage
