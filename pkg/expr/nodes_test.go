@@ -12,10 +12,8 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/expr/mathexp"
-	"github.com/grafana/grafana/pkg/infra/log/logtest"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/datasources"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	datasources2 "github.com/grafana/grafana/pkg/services/datasources/fakes"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -180,11 +178,27 @@ func TestCheckIfSeriesNeedToBeFixed(t *testing.T) {
 }
 
 func TestConvertDataFramesToResults(t *testing.T) {
-	s := &Service{
-		cfg:      setting.NewCfg(),
-		features: &featuremgmt.FeatureManager{},
-		tracer:   tracing.InitializeTracerForTest(),
-		metrics:  newMetrics(nil),
+	execute := func(frames []*data.Frame, datasourceType string) (mathexp.Results, error) {
+		dsNode := DSNode{
+			baseNode: baseNode{
+				refID: "A",
+			},
+			datasource: &datasources.DataSource{
+				Type: datasourceType,
+			},
+			timeRange: RelativeTimeRange{
+				From: 0,
+				To:   0,
+			},
+		}
+		s := &Service{
+			cfg: setting.NewCfg(),
+			dataService: &mockEndpoint{
+				Frames: frames,
+			},
+			dataSourceService: &datasources2.FakeDataSourceService{},
+		}
+		return dsNode.Execute(context.Background(), time.Now(), nil, s)
 	}
 
 	t.Run("should add name label if no labels and specific data source", func(t *testing.T) {
@@ -202,9 +216,8 @@ func TestConvertDataFramesToResults(t *testing.T) {
 
 				for _, dtype := range supported {
 					t.Run(dtype, func(t *testing.T) {
-						resultType, res, err := convertDataFramesToResults(context.Background(), frames, dtype, s, &logtest.Fake{})
+						res, err := execute(frames, dtype)
 						require.NoError(t, err)
-						assert.Equal(t, "single frame series", resultType)
 						require.Len(t, res.Values, 2)
 
 						var names []string
@@ -230,9 +243,8 @@ func TestConvertDataFramesToResults(t *testing.T) {
 
 				for _, dtype := range supported {
 					t.Run(dtype, func(t *testing.T) {
-						resultType, res, err := convertDataFramesToResults(context.Background(), frames, dtype, s, &logtest.Fake{})
+						res, err := execute(frames, dtype)
 						require.NoError(t, err)
-						assert.Equal(t, "multi frame series", resultType)
 						require.Len(t, res.Values, 2)
 
 						var names []string
@@ -263,9 +275,9 @@ func TestConvertDataFramesToResults(t *testing.T) {
 
 			for _, dtype := range supported {
 				t.Run(dtype, func(t *testing.T) {
-					resultType, res, err := convertDataFramesToResults(context.Background(), frames, dtype, s, &logtest.Fake{})
+
+					res, err := execute(frames, dtype)
 					require.NoError(t, err)
-					assert.Equal(t, "multi frame series", resultType)
 					require.Len(t, res.Values, 2)
 
 					var names []string
