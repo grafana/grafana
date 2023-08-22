@@ -26,7 +26,7 @@ import {
 } from '../../mocks';
 import { mockAlertmanagerChoiceResponse } from '../../mocks/alertmanagerApi';
 import { mockPluginSettings } from '../../mocks/plugins';
-import { setupDatasources } from '../../testSetup/datasources';
+import { setupDataSources } from '../../testSetup/datasources';
 import { SupportedPlugin } from '../../types/pluginBridges';
 import * as ruleId from '../../utils/rule-id';
 
@@ -96,7 +96,7 @@ beforeAll(() => {
     uid: dsName,
   });
 
-  setupDatasources(promDsSettings);
+  setupDataSources(promDsSettings);
 
   mockAlertRuleApi(server).rulerRules('grafana', {
     [mockGrafanaRule.namespace.name]: [

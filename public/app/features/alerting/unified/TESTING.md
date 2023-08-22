@@ -2,14 +2,14 @@
 
 ## Mocking API requests
 
-We should strive to use **msw** for mocking API as often as possible.
+We should strive to use **MSW** for mocking API as often as possible.
 It gives us the closest behaviour to the real server.
 
 `public/app/features/alerting/unified/mockApi.ts` contains helper functions that speed up mocking API configuration with MSW.
 
 If you don't find a helper for an endpoint you're looking for, please add it.
 
-**Mocking using MWS forces developers to handle loading states in tests which gives us a chance to discover UI inconsistencies at very early stages**
+**Mocking using MSW forces developers to handle loading states in tests which gives us a chance to discover UI inconsistencies at very early stages**
 
 ### Common API requests
 

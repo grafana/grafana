@@ -65,7 +65,7 @@ export function mockDataSource<T extends DataSourceJsonData = DataSourceJsonData
 
   return {
     id,
-    uid: uid,
+    uid,
     type: 'prometheus',
     name: `Prometheus-${id}`,
     access: 'proxy',

@@ -14,7 +14,7 @@ import { ExpressionEditorProps } from './components/rule-editor/ExpressionEditor
 import { mockApi, mockFeatureDiscoveryApi, setupMswServer } from './mockApi';
 import { disableRBAC, mockDataSource } from './mocks';
 import { fetchRulerRulesIfNotFetchedYet } from './state/actions';
-import { setupDatasources } from './testSetup/datasources';
+import { setupDataSources } from './testSetup/datasources';
 import { buildInfoResponse } from './testSetup/featureDiscovery';
 
 jest.mock('./components/rule-editor/ExpressionEditor', () => ({
@@ -43,7 +43,7 @@ jest.mock('app/core/components/AppChrome/AppChromeUpdate', () => ({
   AppChromeUpdate: ({ actions }: { actions: React.ReactNode }) => <div>{actions}</div>,
 }));
 
-setupDatasources(dataSources.default);
+setupDataSources(dataSources.default);
 
 const server = setupMswServer();
 
