@@ -210,14 +210,14 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
    * Used by Logs details.
    */
   onClickFilterLabel = (key: string, value: string, row?: LogRowModel) => {
-    this.onModifyQueries({ type: 'ADD_FILTER', options: { key, value } });
+    this.onModifyQueries({ type: 'ADD_FILTER', options: { key, value } }, row);
   };
 
   /**
    * Used by Logs details.
    */
   onClickFilterOutLabel = (key: string, value: string, row?: LogRowModel) => {
-    this.onModifyQueries({ type: 'ADD_FILTER_OUT', options: { key, value } });
+    this.onModifyQueries({ type: 'ADD_FILTER_OUT', options: { key, value } }, row);
   };
 
   onClickAddQueryRowButton = () => {
@@ -233,8 +233,13 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
   /**
    * Used by Logs details.
    */
-  onModifyQueries = (action: QueryFixAction) => {
+  onModifyQueries = (action: QueryFixAction, row?: LogRowModel) => {
     const modifier = async (query: DataQuery, modification: QueryFixAction) => {
+      // This gives Logs Details support to modify the query that produced the log line.
+      // If not present, all queries are modified.
+      if (row && row.dataFrame.refId !== query.refId) {
+        return query;
+      }
       const { datasource } = query;
       if (datasource == null) {
         return query;
