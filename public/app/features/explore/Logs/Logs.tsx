@@ -95,7 +95,7 @@ interface Props extends Themeable2 {
   eventBus: EventBus;
   panelState?: ExplorePanelsState;
   scrollElement?: HTMLDivElement;
-  isFilterLabelActive?: (key: string, value: string) => Promise<boolean>;
+  isFilterLabelActive?: (key: string, value: string, row: LogRowModel) => Promise<boolean>;
   logsFrames?: DataFrame[];
   range: TimeRange;
 }

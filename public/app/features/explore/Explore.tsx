@@ -16,6 +16,7 @@ import {
   SplitOpenOptions,
   SupplementaryQueryType,
   hasToggleableQueryFiltersSupport,
+  LogRowModel,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config, getDataSourceSrv, reportInteraction } from '@grafana/runtime';
@@ -190,23 +191,19 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
    * TODO: In the future, we would like to return active filters based the query that produced the log line.
    * @alpha
    */
-  isFilterLabelActive = async (key: string, value: string) => {
+  isFilterLabelActive = async (key: string, value: string, row: LogRowModel) => {
     if (!config.featureToggles.toggleLabelsInLogsUI) {
       return false;
     }
-    if (this.props.queries.length === 0) {
+    const query = this.props.queries.find((q) => q.refId === row.dataFrame.refId);
+    if (!query) {
       return false;
     }
-    for (const query of this.props.queries) {
-      const ds = await getDataSourceSrv().get(query.datasource);
-      if (!hasToggleableQueryFiltersSupport(ds)) {
-        return false;
-      }
-      if (!ds.queryHasFilter(query, { key, value })) {
-        return false;
-      }
+    const ds = await getDataSourceSrv().get(query.datasource);
+    if (hasToggleableQueryFiltersSupport(ds) && ds.queryHasFilter(query, { key, value })) {
+      return true;
     }
-    return true;
+    return false;
   };
 
   /**

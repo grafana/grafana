@@ -25,7 +25,7 @@ export interface Props extends Themeable2 {
   onClickHideField?: (key: string) => void;
   row: LogRowModel;
   app?: CoreApp;
-  isFilterLabelActive?: (key: string, value: string) => Promise<boolean>;
+  isFilterLabelActive?: (key: string, value: string, row: LogRowModel) => Promise<boolean>;
 }
 
 interface State {
@@ -134,9 +134,9 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
   };
 
   isFilterLabelActive = async () => {
-    const { isFilterLabelActive, parsedKeys, parsedValues } = this.props;
+    const { isFilterLabelActive, parsedKeys, parsedValues, row } = this.props;
     if (isFilterLabelActive) {
-      return await isFilterLabelActive(parsedKeys[0], parsedValues[0]);
+      return await isFilterLabelActive(parsedKeys[0], parsedValues[0], row);
     }
     return false;
   };
