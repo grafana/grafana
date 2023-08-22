@@ -1,12 +1,23 @@
 import { css } from '@emotion/css';
 import debounce from 'debounce-promise';
-import React, { useCallback, useState } from 'react';
+import React, { RefCallback, useCallback, useState } from 'react';
 import Highlighter from 'react-highlight-words';
 
 import { GrafanaTheme2, SelectableValue, toOption } from '@grafana/data';
 import { EditorField, EditorFieldGroup } from '@grafana/experimental';
 import { config } from '@grafana/runtime';
-import { AsyncSelect, Button, FormatOptionLabelMeta, Icon, InlineField, InlineFieldRow, useStyles2 } from '@grafana/ui';
+import {
+  AsyncSelect,
+  Button,
+  CustomScrollbar,
+  FormatOptionLabelMeta,
+  getSelectStyles,
+  Icon,
+  InlineField,
+  InlineFieldRow,
+  useStyles2,
+  useTheme2,
+} from '@grafana/ui';
 import { SelectMenuOptions } from '@grafana/ui/src/components/Select/SelectMenu';
 
 import { PrometheusDatasource } from '../../datasource';
@@ -57,7 +68,7 @@ export function MetricSelect({
     {
       value: 'BrowseMetrics',
       label: 'Metrics explorer',
-      description: 'Browse and filter metrics and metadata with a fuzzy search',
+      description: 'Browse and filter all metrics and metadata with a fuzzy search',
     },
   ];
 
@@ -201,6 +212,42 @@ export function MetricSelect({
     return SelectMenuOptions(props);
   };
 
+  interface SelectMenuProps {
+    maxHeight: number;
+    innerRef: RefCallback<HTMLDivElement>;
+    innerProps: {};
+  }
+
+  const CustomMenu = ({ children, maxHeight, innerRef, innerProps }: React.PropsWithChildren<SelectMenuProps>) => {
+    const theme = useTheme2();
+    const stylesMenu = getSelectStyles(theme);
+
+    // Show the open modal button only if the options are loaded
+    // The children are a react node(options loading node) or an array(not a valid element)
+    const optionsLoaded = !React.isValidElement(children);
+
+    return (
+      <div
+        {...innerProps}
+        className={`${stylesMenu.menu} ${styles.customMenuContainer}`}
+        style={{ maxHeight }}
+        aria-label="Select options menu"
+      >
+        <CustomScrollbar scrollRefCallback={innerRef} autoHide={false} autoHeightMax="inherit" hideHorizontalTrack>
+          {children}
+        </CustomScrollbar>
+        {optionsLoaded && (
+          <div className={styles.customMenuFooter}>
+            <div>
+              Only the top 1000 metrics are displayed in the metric select. Use the metrics explorer to view all
+              metrics.
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   const asyncSelect = () => {
     return (
       <AsyncSelect
@@ -252,7 +299,9 @@ export function MetricSelect({
             onChange({ ...query, metric: '' });
           }
         }}
-        components={prometheusMetricEncyclopedia ? { Option: CustomOption } : {}}
+        components={
+          prometheusMetricEncyclopedia ? { Option: CustomOption, MenuList: CustomMenu } : { MenuList: CustomMenu }
+        }
         onBlur={onBlur ? onBlur : () => {}}
       />
     );
@@ -323,6 +372,20 @@ const getStyles = (theme: GrafanaTheme2) => ({
   `,
   customOptionWidth: css`
     min-width: 400px;
+  `,
+  customMenuFooter: css`
+    flex: 0;
+    display: flex;
+    justify-content: space-between;
+    padding: ${theme.spacing(1.5)};
+    border-top: 1px solid ${theme.colors.border.weak};
+    color: ${theme.colors.text.secondary};
+  `,
+  customMenuContainer: css`
+    display: flex;
+    flex-direction: column;
+    background: ${theme.colors.background.primary};
+    box-shadow: ${theme.shadows.z3};
   `,
 });
 
