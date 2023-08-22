@@ -65,7 +65,7 @@ import {
   setSupplementaryQueryEnabled,
 } from './state/query';
 import { isSplit } from './state/selectors';
-import { makeAbsoluteTime, updateTimeRange } from './state/time';
+import { updateTimeRange } from './state/time';
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
@@ -645,7 +645,6 @@ const mapDispatchToProps = {
   scanStopAction,
   setQueries,
   updateTimeRange,
-  makeAbsoluteTime,
   addQueryRow,
   splitOpen,
   setSupplementaryQueryEnabled,
