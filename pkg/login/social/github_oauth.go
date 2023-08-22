@@ -33,11 +33,11 @@ type GithubTeam struct {
 }
 
 var (
-	ErrMissingTeamMembership = errutil.NewBase(errutil.StatusUnauthorized,
+	ErrMissingTeamMembership = errutil.Unauthorized(
 		"auth.missing_team",
 		errutil.WithPublicMessage(
 			"User is not a member of one of the required teams. Please contact identity provider administrator."))
-	ErrMissingOrganizationMembership = errutil.NewBase(errutil.StatusUnauthorized,
+	ErrMissingOrganizationMembership = errutil.Unauthorized(
 		"auth.missing_organization",
 		errutil.WithPublicMessage(
 			"User is not a member of one of the required organizations. Please contact identity provider administrator."))
