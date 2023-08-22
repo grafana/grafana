@@ -1,9 +1,9 @@
 import deepEqual from 'fast-deep-equal';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import { useAsync } from 'react-use';
 
 import { CoreApp, QueryEditorProps, TimeRange } from '@grafana/data';
-import { Cascader, CascaderOption, LoadingPlaceholder } from '@grafana/ui';
+import { LoadingPlaceholder } from '@grafana/ui';
 
 import { normalizeQuery, PhlareDataSource } from '../datasource';
 import { PhlareDataSourceOptions, ProfileTypeMessage, Query } from '../types';
@@ -11,6 +11,7 @@ import { PhlareDataSourceOptions, ProfileTypeMessage, Query } from '../types';
 import { EditorRow } from './EditorRow';
 import { EditorRows } from './EditorRows';
 import { LabelsEditor } from './LabelsEditor';
+import { ProfileTypesCascader, useProfileTypes } from './ProfileTypesCascader';
 import { QueryOptions } from './QueryOptions';
 
 export type Props = QueryEditorProps<PhlareDataSource, Query, PhlareDataSourceOptions>;
@@ -27,21 +28,16 @@ export function QueryEditor(props: Props) {
   const { labels, getLabelValues, onLabelSelectorChange } = useLabels(range, datasource, query, onChange);
   useNormalizeQuery(query, profileTypes, onChange, app);
 
-  const cascaderOptions = useCascaderOptions(profileTypes);
-
   return (
     <EditorRows>
       <EditorRow stackProps={{ wrap: false, gap: 1 }}>
         {profileTypes ? (
-          <Cascader
-            separator={'-'}
-            displayAllSelectedLevels={true}
-            initialValue={query.profileTypeId}
-            allowCustomValue={true}
-            onSelect={(val) => {
+          <ProfileTypesCascader
+            profileTypes={profileTypes}
+            initialProfileTypeId={query.profileTypeId}
+            onChange={(val) => {
               onChange({ ...query, profileTypeId: val });
             }}
-            options={cascaderOptions}
           />
         ) : (
           <LoadingPlaceholder text={'Loading'} />
@@ -138,54 +134,4 @@ function useLabels(
   );
 
   return { labels: labelsResult.value, getLabelValues, onLabelSelectorChange };
-}
-
-// Turn profileTypes into cascader options
-function useCascaderOptions(profileTypes?: ProfileTypeMessage[]): CascaderOption[] {
-  return useMemo(() => {
-    if (!profileTypes) {
-      return [];
-    }
-    let mainTypes = new Map<string, CascaderOption>();
-    // Classify profile types by name then sample type.
-    for (let profileType of profileTypes) {
-      let parts: string[];
-      // Phlare uses : as delimiter while Pyro uses .
-      if (profileType.id.indexOf(':') > -1) {
-        parts = profileType.id.split(':');
-      } else {
-        parts = profileType.id.split('.');
-        const last = parts.pop()!;
-        parts = [parts.join('.'), last];
-      }
-
-      const [name, type] = parts;
-
-      if (!mainTypes.has(name)) {
-        mainTypes.set(name, {
-          label: name,
-          value: name,
-          items: [],
-        });
-      }
-      mainTypes.get(name)?.items!.push({
-        label: type,
-        value: profileType.id,
-      });
-    }
-    return Array.from(mainTypes.values());
-  }, [profileTypes]);
-}
-
-function useProfileTypes(datasource: PhlareDataSource) {
-  const [profileTypes, setProfileTypes] = useState<ProfileTypeMessage[]>();
-
-  useEffect(() => {
-    (async () => {
-      const profileTypes = await datasource.getProfileTypes();
-      setProfileTypes(profileTypes);
-    })();
-  }, [datasource]);
-
-  return profileTypes;
 }

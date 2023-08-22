@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React from 'react';
+import { useAsync } from 'react-use';
 import { from, map, Observable, of } from 'rxjs';
 
 import {
@@ -7,11 +8,13 @@ import {
   DataQueryResponse,
   MetricFindValue,
   QueryEditorProps,
+  SelectableValue,
 } from '@grafana/data';
-import { InlineField, InlineFieldRow, Select } from '@grafana/ui';
+import { InlineField, InlineFieldRow, LoadingPlaceholder, Select } from '@grafana/ui';
 
 import { getTimeSrv, TimeSrv } from '../../../features/dashboard/services/TimeSrv';
 
+import { ProfileTypesCascader, useProfileTypes } from './QueryEditor/ProfileTypesCascader';
 import { PhlareDataSource } from './datasource';
 import { Query } from './types';
 
@@ -37,26 +40,30 @@ export class VariableSupport extends CustomVariableSupport<PhlareDataSource> {
     }
 
     if (request.targets[0].type === 'label') {
-      if (!request.targets[0].profileTypeId) {
-        return of({ data: [] });
-      }
       return from(
         this.datasource.getLabelNames(
-          request.targets[0].profileTypeId,
+          request.targets[0].profileTypeId + '{}',
           this.timeSrv.timeRange().from.valueOf(),
           this.timeSrv.timeRange().to.valueOf()
         )
       ).pipe(
         map((values) => {
-          return { data: values };
+          return { data: values.map((v) => ({ text: v })) };
         })
       );
     }
 
     if (request.targets[0].type === 'labelValue') {
-      return from(this.datasource.getProfileTypes()).pipe(
+      return from(
+        this.datasource.getLabelValues(
+          request.targets[0].profileTypeId + '{}',
+          request.targets[0].labelName,
+          this.timeSrv.timeRange().from.valueOf(),
+          this.timeSrv.timeRange().to.valueOf()
+        )
+      ).pipe(
         map((values) => {
-          return { data: values };
+          return { data: values.map((v) => ({ text: v })) };
         })
       );
     }
@@ -135,16 +142,103 @@ function VariableQueryEditor(props: QueryEditorProps<PhlareDataSource, Query, {}
         </InlineField>
       </InlineFieldRow>
 
-      {/*{props.query.type === 'label' && <InlineFieldRow>*/}
-      {/*    <InlineField*/}
-      {/*        label="Query type"*/}
-      {/*        labelWidth={20}*/}
-      {/*        tooltip={*/}
-      {/*          <div>The Prometheus data source plugin provides the following query types for template variables.</div>*/}
-      {/*        }*/}
-      {/*    >*/}
-      {/*    </InlineField>*/}
-      {/*</InlineFieldRow>}*/}
+      {(props.query.type === 'labelValue' || props.query.type === 'label') && (
+        <ProfileTypeRow
+          datasource={props.datasource}
+          initialValue={props.query.profileTypeId}
+          onChange={(val) => {
+            // To make TS happy
+            if (props.query.type === 'label' || props.query.type === 'labelValue') {
+              props.onChange({ ...props.query, profileTypeId: val });
+            }
+          }}
+        />
+      )}
+
+      {props.query.type === 'labelValue' && (
+        <LabelRow
+          value={props.query.labelName}
+          datasource={props.datasource}
+          profileTypeId={props.query.profileTypeId}
+          onChange={(val) => {
+            if (props.query.type === 'labelValue') {
+              props.onChange({ ...props.query, labelName: val });
+            }
+          }}
+          from={props.range?.from.valueOf() || Date.now().valueOf() - 1000 * 60 * 60 * 24}
+          to={props.range?.to.valueOf() || Date.now().valueOf()}
+        />
+      )}
     </>
+  );
+}
+
+function LabelRow(props: {
+  value: string;
+  datasource: PhlareDataSource;
+  profileTypeId: string;
+  from: number;
+  to: number;
+  onChange: (val: string) => void;
+}) {
+  const labelsResult = useAsync(() => {
+    return props.datasource.getLabelNames(props.profileTypeId + '{}', props.from, props.to);
+  }, [props.datasource, props.profileTypeId, props.to, props.from]);
+
+  const options = labelsResult.value ? labelsResult.value.map<SelectableValue>((v) => ({ label: v, value: v })) : [];
+  if (labelsResult.value && !labelsResult.value.find((v) => v === props.value)) {
+    options.push({ value: props.value, label: props.value });
+  }
+
+  return (
+    <InlineFieldRow>
+      <InlineField
+        label={'Label'}
+        labelWidth={20}
+        tooltip={<div>Select label for which to retrieve available values</div>}
+      >
+        <Select
+          allowCustomValue={true}
+          placeholder="Select label"
+          aria-label="Select label"
+          width={25}
+          options={options}
+          onChange={(option) => props.onChange(option.value)}
+          value={props.value}
+        />
+      </InlineField>
+    </InlineFieldRow>
+  );
+}
+
+function ProfileTypeRow(props: {
+  datasource: PhlareDataSource;
+  onChange: (val: string) => void;
+  initialValue?: string;
+}) {
+  const profileTypes = useProfileTypes(props.datasource);
+  return (
+    <InlineFieldRow>
+      <InlineField
+        label={props.datasource.backendType === 'phlare' ? 'Profile type' : 'Application'}
+        labelWidth={20}
+        tooltip={
+          <div>
+            Select {props.datasource.backendType === 'phlare' ? 'profile type' : 'application'} for which to retrieve
+            available labels
+          </div>
+        }
+      >
+        {profileTypes ? (
+          <ProfileTypesCascader
+            onChange={props.onChange}
+            profileTypes={profileTypes}
+            initialProfileTypeId={props.initialValue}
+          />
+        ) : (
+          <LoadingPlaceholder text={'Loading'} />
+        )}
+      </InlineField>
+    </InlineFieldRow>
   );
 }
