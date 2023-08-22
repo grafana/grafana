@@ -145,7 +145,10 @@ Constant variables are useful when you have complex values that you need to incl
 _Data source_ variables enable you to quickly change the data source for an entire dashboard. They are useful if you have multiple instances of a data source, perhaps in different environments.
 
 1. [Enter general options](#enter-general-options).
-1. In the **Type** list, select the target data source for the variable. For more information about data sources, refer to [Add a data source]({{< relref "../../../administration/data-source-management#add-a-data-source" >}}).
+1. In the **Type** list, select the target data source for the variable.
+
+   You can also click **Open advanced data source picker** to see more options, including adding a data source (Admins only). For more information about data sources, refer to [Add a data source]({{< relref "../../../administration/data-source-management#add-a-data-source" >}}).
+
 1. (Optional) In **Instance name filter**, enter a regex filter for which data source instances to choose from in the variable value drop-down list. Leave this field empty to display all instances.
 1. (Optional) Enter [Selection Options]({{< relref "#configure-variable-selection-options" >}}).
 1. In **Preview of values**, Grafana displays a list of the current variable values. Review them to ensure they match what you expect.
@@ -188,7 +191,10 @@ Ad hoc filter variables only work with Prometheus, Loki, InfluxDB, and Elasticse
 {{% /admonition %}}
 
 1. [Enter general options](#enter-general-options).
-1. In the **Data source** list, select the target data source. For more information about data sources, refer to [Add a data source]({{< relref "../../../administration/data-source-management#add-a-data-source" >}}).
+1. In the **Data source** list, select the target data source.
+
+   You can also click **Open advanced data source picker** to see more options, including adding a data source (Admins only). For more information about data sources, refer to [Add a data source]({{< relref "../../../administration/data-source-management#add-a-data-source" >}}).
+
 1. Click **Add** to add the variable to the dashboard.
 
 ### Create ad hoc filters

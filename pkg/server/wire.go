@@ -40,6 +40,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/annotations/annotationsimpl"
 	"github.com/grafana/grafana/pkg/services/apikey/apikeyimpl"
 	"github.com/grafana/grafana/pkg/services/auth/jwt"
+	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/authn/authnimpl"
 	"github.com/grafana/grafana/pkg/services/certgenerator"
 	"github.com/grafana/grafana/pkg/services/cleanup"
@@ -76,7 +77,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/login/authinfoservice"
 	authinfodatabase "github.com/grafana/grafana/pkg/services/login/authinfoservice/database"
-	"github.com/grafana/grafana/pkg/services/login/loginservice"
 	"github.com/grafana/grafana/pkg/services/loginattempt"
 	"github.com/grafana/grafana/pkg/services/loginattempt/loginattemptimpl"
 	"github.com/grafana/grafana/pkg/services/navtree/navtreeimpl"
@@ -214,8 +214,6 @@ var wireBasicSet = wire.NewSet(
 	quotaimpl.ProvideService,
 	remotecache.ProvideService,
 	wire.Bind(new(remotecache.CacheStorage), new(*remotecache.RemoteCache)),
-	loginservice.ProvideService,
-	wire.Bind(new(login.Service), new(*loginservice.Implementation)),
 	authinfoservice.ProvideAuthInfoService,
 	wire.Bind(new(login.AuthInfoService), new(*authinfoservice.Implementation)),
 	authinfodatabase.ProvideAuthInfoStore,
@@ -256,6 +254,8 @@ var wireBasicSet = wire.NewSet(
 	elasticsearch.ProvideService,
 	pyroscope.ProvideService,
 	parca.ProvideService,
+	datasourceservice.ProvideCacheService,
+	wire.Bind(new(datasources.CacheService), new(*datasourceservice.CacheServiceImpl)),
 	encryptionservice.ProvideEncryptionService,
 	wire.Bind(new(encryption.Internal), new(*encryptionservice.Service)),
 	secretsManager.ProvideSecretsService,
@@ -350,6 +350,8 @@ var wireBasicSet = wire.NewSet(
 	tagimpl.ProvideService,
 	wire.Bind(new(tag.Service), new(*tagimpl.Service)),
 	authnimpl.ProvideService,
+	wire.Bind(new(authn.Service), new(*authnimpl.Service)),
+	wire.Bind(new(authn.IdentitySynchronizer), new(*authnimpl.Service)),
 	supportbundlesimpl.ProvideService,
 	grafanaapiserver.WireSet,
 	oasimpl.ProvideService,

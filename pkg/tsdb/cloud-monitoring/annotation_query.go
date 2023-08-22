@@ -38,7 +38,7 @@ func (s *Service) executeAnnotationQuery(ctx context.Context, req *backend.Query
 	if err != nil {
 		return resp, nil
 	}
-	err = parseToAnnotations(req.Queries[0].RefID, queryRes, dr, tslq.TimeSeriesList.Title, tslq.TimeSeriesList.Text)
+	err = parseToAnnotations(req.Queries[0].RefID, queryRes, dr.(cloudMonitoringResponse), tslq.TimeSeriesList.Title, tslq.TimeSeriesList.Text)
 	resp.Responses[firstQuery.RefID] = *queryRes
 
 	return resp, err

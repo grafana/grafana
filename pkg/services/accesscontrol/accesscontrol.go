@@ -64,7 +64,7 @@ type SearchOptions struct {
 }
 
 type TeamPermissionsService interface {
-	GetPermissions(ctx context.Context, user *user.SignedInUser, resourceID string) ([]ResourcePermission, error)
+	GetPermissions(ctx context.Context, user identity.Requester, resourceID string) ([]ResourcePermission, error)
 	SetUserPermission(ctx context.Context, orgID int64, user User, resourceID, permission string) (*ResourcePermission, error)
 }
 
@@ -86,7 +86,7 @@ type ServiceAccountPermissionsService interface {
 
 type PermissionsService interface {
 	// GetPermissions returns all permissions for given resourceID
-	GetPermissions(ctx context.Context, user *user.SignedInUser, resourceID string) ([]ResourcePermission, error)
+	GetPermissions(ctx context.Context, user identity.Requester, resourceID string) ([]ResourcePermission, error)
 	// SetUserPermission sets permission on resource for a user
 	SetUserPermission(ctx context.Context, orgID int64, user User, resourceID, permission string) (*ResourcePermission, error)
 	// SetTeamPermission sets permission on resource for a team
@@ -151,13 +151,13 @@ var ReqSignedIn = func(c *contextmodel.ReqContext) bool {
 }
 
 var ReqGrafanaAdmin = func(c *contextmodel.ReqContext) bool {
-	return c.IsGrafanaAdmin
+	return c.SignedInUser.GetIsGrafanaAdmin()
 }
 
 // ReqHasRole generates a fallback to check whether the user has a role
 // ReqHasRole(org.RoleAdmin) will always return true for Grafana server admins, eg, a Grafana Admin / Viewer role combination
 func ReqHasRole(role org.RoleType) func(c *contextmodel.ReqContext) bool {
-	return func(c *contextmodel.ReqContext) bool { return c.HasRole(role) }
+	return func(c *contextmodel.ReqContext) bool { return c.SignedInUser.HasRole(role) }
 }
 
 func BuildPermissionsMap(permissions []Permission) map[string]bool {
