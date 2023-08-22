@@ -10,6 +10,7 @@ import { AsyncSelect, Button, FormatOptionLabelMeta, Icon, InlineField, InlineFi
 import { SelectMenuOptions } from '@grafana/ui/src/components/Select/SelectMenu';
 
 import { PrometheusDatasource } from '../../datasource';
+import { truncateResult } from '../../language_utils';
 import { regexifyLabelValuesQueryString } from '../shared/parsingUtils';
 import { QueryBuilderLabelFilter } from '../shared/types';
 import { PromVisualQuery } from '../types';
@@ -126,10 +127,7 @@ export function MetricSelect({
     // Since some customers can have millions of metrics, whenever the user changes the autocomplete text we want to call the backend and request all metrics that match the current query string
     const results = datasource.metricFindQuery(formatKeyValueStringsForLabelValuesQuery(query, labelsFilters));
     return results.then((results) => {
-      if (results.length > PROMETHEUS_QUERY_BUILDER_MAX_RESULTS) {
-        results.splice(0, results.length - PROMETHEUS_QUERY_BUILDER_MAX_RESULTS);
-      }
-
+      truncateResult(results);
       const resultsOptions = results.map((result) => {
         return {
           label: result.text,
@@ -220,7 +218,7 @@ export function MetricSelect({
           const metrics = await onGetMetrics();
           const initialMetrics: string[] = metrics.map((m) => m.value);
           if (metrics.length > PROMETHEUS_QUERY_BUILDER_MAX_RESULTS) {
-            metrics.splice(0, metrics.length - PROMETHEUS_QUERY_BUILDER_MAX_RESULTS);
+            truncateResult(metrics);
           }
 
           if (prometheusMetricEncyclopedia) {
