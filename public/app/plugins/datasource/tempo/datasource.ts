@@ -429,7 +429,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
   handleStreamingSearch(
     options: DataQueryRequest<TempoQuery>,
     targets: TempoQuery[],
-    query?: string
+    query: string
   ): Observable<DataQueryResponse> {
     const validTargets = targets
       .filter((t) => t.query || query)
