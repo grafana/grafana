@@ -1,6 +1,6 @@
 <!-- 10.0.3 START -->
 
-# 10.0.3 (2023-07-18)
+# 10.0.3 (2023-07-26)
 
 ### Features and enhancements
 
@@ -8,12 +8,14 @@
 - **Alerting:** No longer silence paused alerts during legacy migration. [#71761](https://github.com/grafana/grafana/issues/71761), [@JacobsonMT](https://github.com/JacobsonMT)
 - **Auth:** Add support for custom signing keys in auth.azure_ad. [#71708](https://github.com/grafana/grafana/issues/71708), [@Jguer](https://github.com/Jguer)
 - **Chore:** Upgrade Go to 1.20.6. [#71445](https://github.com/grafana/grafana/issues/71445), [@sakjur](https://github.com/sakjur)
+- **Auth:** Remove ldap init sync. (Enterprise)
 - **Chore:** Upgrade Go to 1.20.6. (Enterprise)
 
 ### Bug fixes
 
 - **Alerting:** Fix edit / view of webhook contact point when no authorization is set. [#71972](https://github.com/grafana/grafana/issues/71972), [@gillesdemey](https://github.com/gillesdemey)
 - **AzureMonitor:** Set timespan in Logs Portal URL link. [#71910](https://github.com/grafana/grafana/issues/71910), [@aangelisc](https://github.com/aangelisc)
+- **AzureMonitor:** Fix resource selection growing over resource selection table. [#71862](https://github.com/grafana/grafana/issues/71862), [@adamyeats](https://github.com/adamyeats)
 - **Plugins:** Only configure plugin proxy transport once. [#71742](https://github.com/grafana/grafana/issues/71742), [@wbrowne](https://github.com/wbrowne)
 - **Elasticsearch:** Fix multiple max depth flatten of multi-level objects. [#71636](https://github.com/grafana/grafana/issues/71636), [@fridgepoet](https://github.com/fridgepoet)
 - **Elasticsearch:** Fix histogram colors in backend mode. [#71447](https://github.com/grafana/grafana/issues/71447), [@gabor](https://github.com/gabor)
@@ -29,6 +31,7 @@
 - **AzureMonitor:** Fix metric names for multi-resources. [#70994](https://github.com/grafana/grafana/issues/70994), [@asimpson](https://github.com/asimpson)
 - **Logs:** Do not insert log-line into log-fields in json download. [#70954](https://github.com/grafana/grafana/issues/70954), [@gabor](https://github.com/gabor)
 - **Loki:** Fix wrong query expression with inline comments. [#70948](https://github.com/grafana/grafana/issues/70948), [@svennergr](https://github.com/svennergr)
+- **License:** Enable FeatureUserLimit for all products. (Enterprise)
 
 <!-- 10.0.3 END -->
 <!-- 10.0.2 START -->
@@ -87,7 +90,7 @@
 - **XYChart:** Fix variable interpolation in datalinks/toggletip. [#70210](https://github.com/grafana/grafana/issues/70210), [@leeoniya](https://github.com/leeoniya)
 - **XYChart:** Fix formatting of axis ticks (units, decimals). [#70193](https://github.com/grafana/grafana/issues/70193), [@leeoniya](https://github.com/leeoniya)
 - **Auth:** Show invite button if disable login form is set to false. [#70155](https://github.com/grafana/grafana/issues/70155), [@IevaVasiljeva](https://github.com/IevaVasiljeva)
-- **TextPanel:** Fix <summary> styling missing the disclosure triangle. [#70138](https://github.com/grafana/grafana/issues/70138), [@joshhunt](https://github.com/joshhunt)
+- **TextPanel:** Fix &lt;summary&gt; styling missing the disclosure triangle. [#70138](https://github.com/grafana/grafana/issues/70138), [@joshhunt](https://github.com/joshhunt)
 - **Alerting:** Fix email template for text/plain emails. [#70111](https://github.com/grafana/grafana/issues/70111), [@grobinson-grafana](https://github.com/grobinson-grafana)
 - **Explore:** Fixed Starred query history tab to show all starred queries. [#70092](https://github.com/grafana/grafana/issues/70092), [@harisrozajac](https://github.com/harisrozajac)
 - **CodeEditor:** Ensure suggestions only apply to the instance of the edit…. [#70067](https://github.com/grafana/grafana/issues/70067), [@ashharrison90](https://github.com/ashharrison90)
@@ -368,7 +371,7 @@ Issue [#67014](https://github.com/grafana/grafana/issues/67014)
 
 Grafana requires an Elasticsearch version of 7.16 or newer. If you use an older Elasticsearch version, you will get warnings in the query editor and on the datasource configuration page. Issue [#66928](https://github.com/grafana/grafana/issues/66928)
 
-The deprecated `plugin:create` and `component:create` commands in the Grafana Toolkit have been removed in this release. The replacement `create-plugin` tool is recommended for [scaffolding new plugins](https://grafana.github.io/plugin-tools/docs/creating-a-plugin) and a migration guide for moving from the toolkit is available [here](https://grafana.github.io/plugin-tools/docs/migrating-from-toolkit). Issue [#66729](https://github.com/grafana/grafana/issues/66729)
+The deprecated `plugin:create` and `component:create` commands in the Grafana Toolkit have been removed in this release. The replacement `create-plugin` tool is recommended for [scaffolding new plugins](https://grafana.github.io/plugin-tools/docs/getting-started/creating-a-plugin) and a migration guide for moving from the toolkit is available [here](https://grafana.github.io/plugin-tools/docs/getting-started/migrating-from-toolkit). Issue [#66729](https://github.com/grafana/grafana/issues/66729)
 
 We've removed some now unused properties from the `NavModel` interface. Issue [#66548](https://github.com/grafana/grafana/issues/66548)
 
@@ -440,6 +443,19 @@ The `database` field has been deprecated in the Elasticsearch datasource provisi
 - **InteractiveTable:** Updated design and minor tweak to Correlactions page. [#66443](https://github.com/grafana/grafana/issues/66443), [@torkelo](https://github.com/torkelo)
 
 <!-- 10.0.0-preview END -->
+<!-- 9.5.8 START -->
+
+# 9.5.8 (2023-08-16)
+
+### Features and enhancements
+
+- **GenericOAuth:** Set sub as auth id. [#73223](https://github.com/grafana/grafana/issues/73223), [@kalleep](https://github.com/kalleep)
+
+### Bug fixes
+
+- **DataSourceProxy:** Fix url validation error handling. [#73320](https://github.com/grafana/grafana/issues/73320), [@ricci2511](https://github.com/ricci2511)
+
+<!-- 9.5.8 END -->
 <!-- 9.5.7 START -->
 
 # 9.5.7 (2023-07-20)

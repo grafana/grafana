@@ -270,8 +270,9 @@ export const Pages = {
     interval: 'Playlist interval',
     itemDelete: 'Delete playlist item',
   },
-  BrowseDashbards: {
+  BrowseDashboards: {
     table: {
+      body: 'data-testid browse-dashboards-table',
       row: (uid: string) => `data-testid ${uid} row`,
       checkbox: (uid: string) => `data-testid ${uid} checkbox`,
     },
@@ -318,5 +319,8 @@ export const Pages = {
         listItem: (uid: string) => `data-testid dashboards-list-item-${uid}`,
       },
     },
+  },
+  ProfilePage: {
+    url: '/profile',
   },
 };

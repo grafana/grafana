@@ -109,7 +109,7 @@ export function getLokiQueryType(query: LokiQuery): LokiQueryType {
 }
 
 const tagsToObscure = ['String', 'Identifier', 'LineComment', 'Number'];
-const partsToKeep = ['__error__', '__interval', '__interval_ms'];
+const partsToKeep = ['__error__', '__interval', '__interval_ms', '__auto'];
 export function obfuscate(query: string): string {
   let obfuscatedQuery: string = query;
   const tree = parser.parse(query);

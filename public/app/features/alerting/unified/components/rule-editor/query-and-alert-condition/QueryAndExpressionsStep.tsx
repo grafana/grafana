@@ -340,7 +340,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
     >
       {/* This is the cloud data source selector */}
       {(type === RuleFormType.cloudRecording || type === RuleFormType.cloudAlerting) && (
-        <CloudDataSourceSelector onChangeCloudDatasource={onChangeCloudDatasource} />
+        <CloudDataSourceSelector onChangeCloudDatasource={onChangeCloudDatasource} disabled={editingExistingRule} />
       )}
 
       {/* This is the PromQL Editor for recording rules */}

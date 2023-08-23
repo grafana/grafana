@@ -41,11 +41,14 @@ func (s *QueryData) parseResponse(ctx context.Context, q *models.Query, res *htt
 	}
 
 	// The ExecutedQueryString can be viewed in QueryInspector in UI
-	for _, frame := range r.Frames {
+	for i, frame := range r.Frames {
 		if s.enableWideSeries {
 			addMetadataToWideFrame(q, frame)
 		} else {
 			addMetadataToMultiFrame(q, frame, s.enableDataplane)
+			if i == 0 {
+				frame.Meta.ExecutedQueryString = executedQueryString(q)
+			}
 		}
 	}
 
@@ -112,7 +115,6 @@ func addMetadataToMultiFrame(q *models.Query, frame *data.Frame, enableDataplane
 	if frame.Meta == nil {
 		frame.Meta = &data.FrameMeta{}
 	}
-	frame.Meta.ExecutedQueryString = executedQueryString(q)
 	if len(frame.Fields) < 2 {
 		return
 	}

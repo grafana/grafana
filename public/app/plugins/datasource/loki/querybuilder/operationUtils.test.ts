@@ -15,7 +15,7 @@ describe('createRangeOperation', () => {
       id: 'test_range_operation',
       name: 'Test range operation',
       params: [{ name: 'Range', type: 'string' }],
-      defaultParams: ['$__interval'],
+      defaultParams: ['$__auto'],
       alternativesKey: 'range function',
       category: LokiVisualQueryOperationCategory.RangeFunctions,
     });
@@ -34,7 +34,7 @@ describe('createRangeOperation', () => {
           optional: true,
         },
       ],
-      defaultParams: ['$__interval'],
+      defaultParams: ['$__auto'],
       alternativesKey: 'range function',
       category: LokiVisualQueryOperationCategory.RangeFunctions,
     });
@@ -49,7 +49,7 @@ describe('createRangeOperation', () => {
         { name: 'Quantile', type: 'number' },
         { name: 'By label', type: 'string', restParam: true, optional: true },
       ],
-      defaultParams: ['$__interval', '0.95'],
+      defaultParams: ['$__auto', '0.95'],
       alternativesKey: 'range function',
       category: LokiVisualQueryOperationCategory.RangeFunctions,
     });
@@ -68,7 +68,7 @@ describe('createRangeOperationWithGrouping', () => {
         { name: 'Quantile', type: 'number' },
         { name: 'By label', type: 'string', restParam: true, optional: true },
       ],
-      defaultParams: ['$__interval', '0.95'],
+      defaultParams: ['$__auto', '0.95'],
       alternativesKey: 'range function',
       category: LokiVisualQueryOperationCategory.RangeFunctions,
     });
@@ -81,7 +81,7 @@ describe('createRangeOperationWithGrouping', () => {
         { name: 'Quantile', type: 'number' },
         { name: 'Label', type: 'string', restParam: true, optional: true },
       ],
-      defaultParams: ['$__interval', '0.95', ''],
+      defaultParams: ['$__auto', '0.95', ''],
       alternativesKey: 'range function with grouping',
       category: LokiVisualQueryOperationCategory.RangeFunctions,
     });
@@ -94,7 +94,7 @@ describe('createRangeOperationWithGrouping', () => {
         { name: 'Quantile', type: 'number' },
         { name: 'Label', type: 'string', restParam: true, optional: true },
       ],
-      defaultParams: ['$__interval', '0.95', ''],
+      defaultParams: ['$__auto', '0.95', ''],
       alternativesKey: 'range function with grouping',
       category: LokiVisualQueryOperationCategory.RangeFunctions,
     });

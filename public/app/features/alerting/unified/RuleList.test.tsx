@@ -696,6 +696,21 @@ describe('RuleList', () => {
         await userEvent.click(ui.moreButton.get());
         expect(ui.exportButton.get()).toBeInTheDocument();
       });
+      it('Export button should be visible when the user has alert provisioning read secrets permissions', async () => {
+        enableRBAC();
+
+        grantUserPermissions([AccessControlAction.AlertingProvisioningReadSecrets]);
+
+        mocks.getAllDataSourcesMock.mockReturnValue([]);
+        setDataSourceSrv(new MockDataSourceSrv({}));
+        mocks.api.fetchRules.mockResolvedValue([]);
+        mocks.api.fetchRulerRules.mockResolvedValue({});
+
+        renderRuleList();
+
+        await userEvent.click(ui.moreButton.get());
+        expect(ui.exportButton.get()).toBeInTheDocument();
+      });
       it('Export button should not be visible when the user has no alert provisioning read permissions', async () => {
         enableRBAC();
 

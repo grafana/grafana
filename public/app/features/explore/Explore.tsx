@@ -4,37 +4,34 @@ import memoizeOne from 'memoize-one';
 import React, { createRef } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 import AutoSizer from 'react-virtualized-auto-sizer';
-import { Unsubscribable } from 'rxjs';
 
 import {
   AbsoluteTimeRange,
+  EventBus,
   GrafanaTheme2,
+  hasToggleableQueryFiltersSupport,
   LoadingState,
   QueryFixAction,
   RawTimeRange,
-  EventBus,
   SplitOpenOptions,
   SupplementaryQueryType,
-  hasToggleableQueryFiltersSupport,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config, getDataSourceSrv, reportInteraction } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import {
+  AdHocFilterItem,
   CustomScrollbar,
   ErrorBoundaryAlert,
+  PanelContainer,
   Themeable2,
   withTheme2,
-  PanelContainer,
-  AdHocFilterItem,
 } from '@grafana/ui';
 import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR } from '@grafana/ui/src/components/Table/types';
-import appEvents from 'app/core/app_events';
 import { supportedFeatures } from 'app/core/history/richHistoryStorageProvider';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 import { getNodeGraphDataFrames } from 'app/plugins/panel/nodeGraph/utils';
 import { StoreState } from 'app/types';
-import { AbsoluteTimeEvent } from 'app/types/events';
 
 import { getTimeZone } from '../profile/state/selectors';
 
@@ -67,7 +64,7 @@ import {
   setSupplementaryQueryEnabled,
 } from './state/query';
 import { isSplit } from './state/selectors';
-import { makeAbsoluteTime, updateTimeRange } from './state/time';
+import { updateTimeRange } from './state/time';
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
@@ -141,10 +138,10 @@ export type Props = ExploreProps & ConnectedProps<typeof connector>;
  */
 export class Explore extends React.PureComponent<Props, ExploreState> {
   scrollElement: HTMLDivElement | undefined;
-  absoluteTimeUnsubsciber: Unsubscribable | undefined;
   topOfViewRef = createRef<HTMLDivElement>();
   graphEventBus: EventBus;
   logsEventBus: EventBus;
+  memoizedGetNodeGraphDataFrames = memoizeOne(getNodeGraphDataFrames);
 
   constructor(props: Props) {
     super(props);
@@ -153,14 +150,6 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
     };
     this.graphEventBus = props.eventBus.newScopedBus('graph', { onlyLocal: false });
     this.logsEventBus = props.eventBus.newScopedBus('logs', { onlyLocal: false });
-  }
-
-  componentDidMount() {
-    this.absoluteTimeUnsubsciber = appEvents.subscribe(AbsoluteTimeEvent, this.onMakeAbsoluteTime);
-  }
-
-  componentWillUnmount() {
-    this.absoluteTimeUnsubsciber?.unsubscribe();
   }
 
   onChangeTime = (rawRange: RawTimeRange) => {
@@ -226,11 +215,6 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
   onClickAddQueryRowButton = () => {
     const { exploreId, queryKeys } = this.props;
     this.props.addQueryRow(exploreId, queryKeys.length);
-  };
-
-  onMakeAbsoluteTime = () => {
-    const { makeAbsoluteTime } = this.props;
-    makeAbsoluteTime();
   };
 
   /**
@@ -326,7 +310,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
   }
 
   renderCustom(width: number) {
-    const { timeZone, queryResponse, absoluteRange } = this.props;
+    const { timeZone, queryResponse, absoluteRange, eventBus } = this.props;
 
     const groupedByPlugin = groupBy(queryResponse?.customFrames, 'meta.preferredVisualisationPluginId');
 
@@ -341,6 +325,8 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
           absoluteRange={absoluteRange}
           height={400}
           width={width}
+          splitOpenFn={this.onSplitOpen(pluginId)}
+          eventBus={eventBus}
         />
       );
     });
@@ -447,8 +433,6 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
       />
     );
   }
-
-  memoizedGetNodeGraphDataFrames = memoizeOne(getNodeGraphDataFrames);
 
   renderFlameGraphPanel() {
     const { queryResponse } = this.props;
@@ -658,7 +642,6 @@ const mapDispatchToProps = {
   scanStopAction,
   setQueries,
   updateTimeRange,
-  makeAbsoluteTime,
   addQueryRow,
   splitOpen,
   setSupplementaryQueryEnabled,

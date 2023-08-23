@@ -6,8 +6,7 @@ import { Link } from 'react-router-dom';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
-import { Badge, Button, Dropdown, getTagColorsFromName, Icon, Menu, Tooltip, useStyles2 } from '@grafana/ui';
-import { Text } from '@grafana/ui/src/unstable';
+import { Badge, Button, Dropdown, getTagColorsFromName, Icon, Menu, Tooltip, useStyles2, Text } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
 import ConditionalWrap from 'app/features/alerting/components/ConditionalWrap';
 import { RouteWithID, Receiver, ObjectMatcher, AlertmanagerGroup } from 'app/plugins/datasource/alertmanager/types';
@@ -75,7 +74,9 @@ const Policy: FC<PolicyComponentProps> = ({
   const permissions = getNotificationsPermissions(alertManagerSourceName);
   const canEditRoutes = contextSrv.hasPermission(permissions.update);
   const canDeleteRoutes = contextSrv.hasPermission(permissions.delete);
-  const canReadProvisioning = contextSrv.hasAccess(permissions.provisioning.read, isOrgAdmin());
+  const canReadProvisioning =
+    contextSrv.hasAccess(permissions.provisioning.read, isOrgAdmin()) ||
+    contextSrv.hasPermission(permissions.provisioning.readSecrets);
 
   const contactPoint = currentRoute.receiver;
   const continueMatching = currentRoute.continue ?? false;
@@ -278,8 +279,11 @@ const Policy: FC<PolicyComponentProps> = ({
                     <MuteTimings timings={muteTimings} alertManagerSourceName={alertManagerSourceName} />
                   </MetaText>
                 )}
-                {timingOptions && Object.values(timingOptions).some(Boolean) && (
-                  <TimingOptionsMeta timingOptions={timingOptions} />
+                {timingOptions && (
+                  // for the default policy we will also merge the default timings, that way a user can observe what the timing options would be
+                  <TimingOptionsMeta
+                    timingOptions={isDefaultPolicy ? { ...timingOptions, ...TIMING_OPTIONS_DEFAULTS } : timingOptions}
+                  />
                 )}
                 {hasInheritedProperties && (
                   <>
@@ -440,28 +444,39 @@ const MuteTimings: FC<{ timings: string[]; alertManagerSourceName: string }> = (
 };
 
 const TimingOptionsMeta: FC<{ timingOptions: TimingOptions }> = ({ timingOptions }) => {
-  const groupWait = timingOptions.group_wait ?? TIMING_OPTIONS_DEFAULTS.group_wait;
-  const groupInterval = timingOptions.group_interval ?? TIMING_OPTIONS_DEFAULTS.group_interval;
+  const groupWait = timingOptions.group_wait;
+  const groupInterval = timingOptions.group_interval;
+
+  // we don't have any timing options to show – we're inheriting everything from the parent
+  // and those show up in a separate "inherited properties" component
+  if (!groupWait && !groupInterval) {
+    return null;
+  }
 
   return (
     <MetaText icon="hourglass" data-testid="timing-options">
       <span>Wait</span>
-      <Tooltip
-        placement="top"
-        content="How long to initially wait to send a notification for a group of alert instances."
-      >
-        <span>
-          <Strong>{groupWait}</Strong> <span>to group instances</span>,
-        </span>
-      </Tooltip>
-      <Tooltip
-        placement="top"
-        content="How long to wait before sending a notification about new alerts that are added to a group of alerts for which an initial notification has already been sent."
-      >
-        <span>
-          <Strong>{groupInterval}</Strong> <span>before sending updates</span>
-        </span>
-      </Tooltip>
+      {groupWait && (
+        <Tooltip
+          placement="top"
+          content="How long to initially wait to send a notification for a group of alert instances."
+        >
+          <span>
+            <Strong>{groupWait}</Strong> <span>to group instances</span>
+            {groupWait && groupInterval && ','}
+          </span>
+        </Tooltip>
+      )}
+      {groupInterval && (
+        <Tooltip
+          placement="top"
+          content="How long to wait before sending a notification about new alerts that are added to a group of alerts for which an initial notification has already been sent."
+        >
+          <span>
+            <Strong>{groupInterval}</Strong> <span>before sending updates</span>
+          </span>
+        </Tooltip>
+      )}
     </MetaText>
   );
 };
@@ -607,7 +622,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
         font-size: ${theme.typography.bodySmall.fontSize};
 
         border: solid 1px ${borderColor};
-        border-radius: ${theme.shape.borderRadius(1)};
+        border-radius: ${theme.shape.radius.default};
       `,
     };
   },
@@ -640,7 +655,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     position: relative;
     background: ${theme.colors.background.secondary};
 
-    border-radius: ${theme.shape.borderRadius(1)};
+    border-radius: ${theme.shape.radius.default};
     border: solid 1px ${theme.colors.border.weak};
 
     ${hasFocus &&
@@ -674,7 +689,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     text-align: center;
 
     border: solid 1px ${theme.colors.border.weak};
-    border-radius: ${theme.shape.borderRadius(1)};
+    border-radius: ${theme.shape.radius.default};
 
     padding: 0;
   `,

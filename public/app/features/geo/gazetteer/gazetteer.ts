@@ -31,7 +31,7 @@ export function loadGazetteer(path: string, data: any): Gazetteer {
   let frame: DataFrame | undefined = undefined;
 
   if (Array.isArray(data)) {
-    const first = data[0] as any;
+    const first = data[0];
     // Check for legacy worldmap syntax
     if (first.latitude && first.longitude && (first.key || first.keys)) {
       return loadWorldmapPoints(path, data);
