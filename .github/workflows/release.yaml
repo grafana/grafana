@@ -16,6 +16,11 @@ jobs:
         name: Checkout
         uses: actions/checkout@v3
       -
+        name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+        with:
+          platforms: arm64
+      -
         name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
       -
@@ -42,13 +47,14 @@ jobs:
         run: echo "GF_VERSION=$(npm pkg get version | tr -d '"')" >> $GITHUB_ENV
       -
         name: Build Docker Image
-        uses: docker/build-push-action@v3
+        uses: docker/build-push-action@v4
         with:
           context: .
           push: true
           target: groundcover
           cache-from: type=gha
           cache-to: type=gha,mode=max
+          platforms: linux/amd64,linux/arm64
           build-args: GF_VERSION=${{ env.GF_VERSION }}
           tags: |
             quay.io/groundcover/grafana-groundcover:${{ github.ref_name	}}-grafana${{ env.GF_VERSION }}
