@@ -462,7 +462,8 @@ const TimingOptionsMeta: FC<{ timingOptions: TimingOptions }> = ({ timingOptions
           content="How long to initially wait to send a notification for a group of alert instances."
         >
           <span>
-            <Strong>{groupWait}</Strong> <span>to group instances</span>,
+            <Strong>{groupWait}</Strong> <span>to group instances</span>
+            {groupWait && groupInterval && ','}
           </span>
         </Tooltip>
       )}
