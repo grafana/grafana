@@ -113,6 +113,9 @@ export function ExploreToolbar({ exploreId, topOfViewRef, onChangeTime }: Props)
     dispatch(changeRefreshInterval({ exploreId, refreshInterval }));
   };
 
+  // TODO: haris
+  // onContentOutlineToogle - dispatch action to toggle content outline
+
   return (
     <div ref={topOfViewRef}>
       {refreshInterval && <SetInterval func={onRunQuery} interval={refreshInterval} loading={loading} />}
@@ -233,6 +236,15 @@ export function ExploreToolbar({ exploreId, topOfViewRef, onChangeTime }: Props)
               }}
             </LiveTailControls>
           ),
+          <ToolbarButton
+            key="content-outline"
+            variant="canvas"
+            tooltip="Content Outline"
+            icon="list-ui-alt"
+            iconOnly={splitted}
+          >
+            Outline
+          </ToolbarButton>,
         ].filter(Boolean)}
       </PageToolbar>
     </div>

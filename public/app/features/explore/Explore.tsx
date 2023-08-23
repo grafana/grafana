@@ -476,6 +476,9 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
     );
   }
 
+  // TODO: haris
+  // render content outline component
+
   render() {
     const {
       datasourceInstance,
