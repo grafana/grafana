@@ -342,7 +342,7 @@ func sanitizeMetadataFromQueryData(res *backend.QueryDataResponse) {
 	}
 }
 
-// sanitizeData removes the query expressions from the dashboard data
+// sanitizeData removes the target information except refId from the panel json
 func sanitizeData(data *simplejson.Json) {
 	for _, panelObj := range data.Get("panels").MustArray() {
 		panel := simplejson.NewFromAny(panelObj)
@@ -354,12 +354,17 @@ func sanitizeData(data *simplejson.Json) {
 			continue
 		}
 
+		// return only the refId value for each target
+		newTargets := make([]map[string]string, 0)
 		for _, targetObj := range panel.Get("targets").MustArray() {
 			target := simplejson.NewFromAny(targetObj)
-			target.Del("expr")
-			target.Del("query")
-			target.Del("rawSql")
+			newTargets = append(newTargets, map[string]string{
+				"refId": target.Get("refId").MustString(),
+			})
 		}
+
+		// set sanitized targets
+		panel.Set("targets", simplejson.NewFromAny(newTargets))
 	}
 }
 

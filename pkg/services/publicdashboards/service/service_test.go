@@ -433,6 +433,8 @@ func TestGetPublicDashboardForView(t *testing.T) {
 						assert.Empty(t, target.Get("expr").MustString())
 						assert.Empty(t, target.Get("query").MustString())
 						assert.Empty(t, target.Get("rawSql").MustString())
+
+						assert.NotEmptyf(t, target.Get("refId").MustString(), "refId is empty for panel %v", panel.Get("id").MustInt64())
 					}
 				}
 			}
