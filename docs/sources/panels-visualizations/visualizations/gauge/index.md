@@ -49,8 +49,32 @@ Show a separate stat for every row. If you select this option, then you can also
 
 Adjust how the gauge is displayed.
 
+### Orientation
+
+Choose a stacking direction.
+
+- **Auto -** Gauges display in rows and columns.
+- **Horizontal -** Gauges display top to bottom.
+- **Vertical -** Gauges display left to right.
+
 - **Show threshold labels -** Controls if threshold values are shown.
 - **Show threshold markers -** Controls if a threshold band is shown outside the inner gauge value band.
+
+### Min width
+
+Set the minimum width of vertically-oriented gauges.
+
+If you set a minimum width, the x-axis scrollbar is automatically displayed when there's a large amount of data.
+
+### Min height
+
+Set the minimum height of horizontally-oriented gauges.
+
+If you set a minimum height, the y-axis scrollbar is automatically displayed when there's a large amount of data.
+
+### Neutral
+
+Set the starting value from which every gauge will be filled.
 
 ## Text size
 
