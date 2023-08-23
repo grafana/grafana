@@ -52,15 +52,15 @@ export class PhlareDataSource extends DataSourceWithBackend<Query, PhlareDataSou
   }
 
   async getProfileTypes(): Promise<ProfileTypeMessage[]> {
-    return await super.getResource('profileTypes');
+    return await this.getResource('profileTypes');
   }
 
   async getLabelNames(query: string, start: number, end: number): Promise<string[]> {
-    return await super.getResource('labelNames', { query: this.templateSrv.replace(query), start, end });
+    return await this.getResource('labelNames', { query: this.templateSrv.replace(query), start, end });
   }
 
   async getLabelValues(query: string, label: string, start: number, end: number): Promise<string[]> {
-    return await super.getResource('labelValues', {
+    return await this.getResource('labelValues', {
       label: this.templateSrv.replace(label),
       query: this.templateSrv.replace(query),
       start,

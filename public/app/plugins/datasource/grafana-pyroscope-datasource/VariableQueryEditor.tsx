@@ -1,100 +1,13 @@
-import React from 'react';
-import { useAsync } from 'react-use';
-import { from, map, Observable, of } from 'rxjs';
+import React, { useEffect, useState } from 'react';
 
-import {
-  CustomVariableSupport,
-  DataQueryRequest,
-  DataQueryResponse,
-  MetricFindValue,
-  QueryEditorProps,
-  SelectableValue,
-} from '@grafana/data';
+import { QueryEditorProps, SelectableValue } from '@grafana/data';
 import { InlineField, InlineFieldRow, LoadingPlaceholder, Select } from '@grafana/ui';
-
-import { getTimeSrv, TimeSrv } from '../../../features/dashboard/services/TimeSrv';
 
 import { ProfileTypesCascader, useProfileTypes } from './QueryEditor/ProfileTypesCascader';
 import { PhlareDataSource } from './datasource';
-import { Query } from './types';
+import { Query, VariableQuery } from './types';
 
-export class VariableSupport extends CustomVariableSupport<PhlareDataSource> {
-  constructor(
-    private readonly datasource: PhlareDataSource,
-    private readonly timeSrv: TimeSrv = getTimeSrv()
-  ) {
-    super();
-    // This is needed because code in queryRunners.ts passes this method without binding it.
-    this.query = this.query.bind(this);
-  }
-
-  editor = VariableQueryEditor;
-
-  query(request: DataQueryRequest<VariableQuery>): Observable<DataQueryResponse> {
-    if (request.targets[0].type === 'profileType') {
-      return from(this.datasource.getProfileTypes()).pipe(
-        map((values) => {
-          return { data: values.map<MetricFindValue>((v) => ({ text: v.label, value: v.id })) };
-        })
-      );
-    }
-
-    if (request.targets[0].type === 'label') {
-      return from(
-        this.datasource.getLabelNames(
-          request.targets[0].profileTypeId + '{}',
-          this.timeSrv.timeRange().from.valueOf(),
-          this.timeSrv.timeRange().to.valueOf()
-        )
-      ).pipe(
-        map((values) => {
-          return { data: values.map((v) => ({ text: v })) };
-        })
-      );
-    }
-
-    if (request.targets[0].type === 'labelValue') {
-      return from(
-        this.datasource.getLabelValues(
-          request.targets[0].profileTypeId + '{}',
-          request.targets[0].labelName,
-          this.timeSrv.timeRange().from.valueOf(),
-          this.timeSrv.timeRange().to.valueOf()
-        )
-      ).pipe(
-        map((values) => {
-          return { data: values.map((v) => ({ text: v })) };
-        })
-      );
-    }
-
-    return of({ data: [] });
-  }
-}
-
-// type QueryTypes = 'profileType' | 'label' | 'labelValue';
-
-type ProfileTypeQuery = {
-  type: 'profileType';
-  refId: string;
-};
-
-type LabelQuery = {
-  type: 'label';
-  profileTypeId: string;
-  refId: string;
-};
-
-type LabelValueQuery = {
-  type: 'labelValue';
-  profileTypeId: string;
-  labelName: string;
-  refId: string;
-};
-
-type VariableQuery = ProfileTypeQuery | LabelQuery | LabelValueQuery;
-
-function VariableQueryEditor(props: QueryEditorProps<PhlareDataSource, Query, {}, VariableQuery>) {
+export function VariableQueryEditor(props: QueryEditorProps<PhlareDataSource, Query, {}, VariableQuery>) {
   return (
     <>
       <InlineFieldRow>
@@ -181,12 +94,15 @@ function LabelRow(props: {
   to: number;
   onChange: (val: string) => void;
 }) {
-  const labelsResult = useAsync(() => {
-    return props.datasource.getLabelNames(props.profileTypeId + '{}', props.from, props.to);
+  const [labels, setLabels] = useState<string[]>();
+  useEffect(() => {
+    (async () => {
+      setLabels(await props.datasource.getLabelNames(props.profileTypeId + '{}', props.from, props.to));
+    })();
   }, [props.datasource, props.profileTypeId, props.to, props.from]);
 
-  const options = labelsResult.value ? labelsResult.value.map<SelectableValue>((v) => ({ label: v, value: v })) : [];
-  if (labelsResult.value && !labelsResult.value.find((v) => v === props.value)) {
+  const options = labels ? labels.map<SelectableValue>((v) => ({ label: v, value: v })) : [];
+  if (labels && !labels.find((v) => v === props.value)) {
     options.push({ value: props.value, label: props.value });
   }
 
@@ -217,10 +133,12 @@ function ProfileTypeRow(props: {
   initialValue?: string;
 }) {
   const profileTypes = useProfileTypes(props.datasource);
+  const label = props.datasource.backendType === 'phlare' ? 'Profile type' : 'Application';
   return (
     <InlineFieldRow>
       <InlineField
-        label={props.datasource.backendType === 'phlare' ? 'Profile type' : 'Application'}
+        label={label}
+        aria-label={label}
         labelWidth={20}
         tooltip={
           <div>
