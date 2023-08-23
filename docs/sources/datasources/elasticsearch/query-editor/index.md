@@ -138,7 +138,7 @@ Click on a specific log to get an expanded details view of each log, which provi
 
 Run a raw data query to retrieve a table of all fields that are associated with each log line.
 
-- **Raw data size** - Number of raw data log lines. You can specify a different amount. The default is `500`.
+- **Raw data size** - Number of raw data documents. You can specify a different amount. The default is `500`.
 
 {{% admonition type="note" %}}
 The option to run a **raw document query** is deprecated as of Grafana v10.1.
