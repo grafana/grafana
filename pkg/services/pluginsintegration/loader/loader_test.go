@@ -425,6 +425,46 @@ func TestLoader_Load(t *testing.T) {
 				},
 			},
 		},
+		{
+			name:  "Load a plugin with app sub url set",
+			class: plugins.ClassExternal,
+			cfg: &config.Cfg{
+				DevMode:          true,
+				GrafanaAppSubURL: "grafana",
+			},
+			pluginPaths: []string{filepath.Join(testDataDir(t), "unsigned-datasource")},
+			want: []*plugins.Plugin{
+				{
+					JSONData: plugins.JSONData{
+						ID:   "test-datasource",
+						Type: plugins.TypeDataSource,
+						Name: "Test",
+						Info: plugins.Info{
+							Author: plugins.InfoLink{
+								Name: "Grafana Labs",
+								URL:  "https://grafana.com",
+							},
+							Logos: plugins.Logos{
+								Small: "/grafana/public/img/icn-datasource.svg",
+								Large: "/grafana/public/img/icn-datasource.svg",
+							},
+							Description: "Test",
+						},
+						Dependencies: plugins.Dependencies{
+							GrafanaVersion: "*",
+							Plugins:        []plugins.Dependency{},
+						},
+						Backend: true,
+						State:   plugins.ReleaseStateAlpha,
+					},
+					Class:     plugins.ClassExternal,
+					Module:    "/grafana/public/plugins/test-datasource/module.js",
+					BaseURL:   "/grafana/public/plugins/test-datasource",
+					FS:        mustNewStaticFSForTests(t, filepath.Join(testDataDir(t), "unsigned-datasource/plugin")),
+					Signature: plugins.SignatureStatusUnsigned,
+				},
+			},
+		},
 	}
 	for _, tt := range tests {
 		reg := fakes.NewFakePluginRegistry()
