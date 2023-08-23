@@ -6,35 +6,38 @@ import {
   standardTransformers,
   TransformerRegistryItem,
   TransformerUIProps,
-  getFieldDisplayName,
   PluginState,
+  FieldType,
+  StandardEditorsRegistryItem,
+  FieldNamePickerConfigSettings,
 } from '@grafana/data';
 import {
   FormatStringOutput,
   FormatStringTransformerOptions,
 } from '@grafana/data/src/transformations/transformers/formatString';
 import { Select, InlineFieldRow, InlineField } from '@grafana/ui';
+import { FieldNamePicker } from '@grafana/ui/src/components/MatchersUI/FieldNamePicker';
+
+const fieldNamePickerSettings: StandardEditorsRegistryItem<string, FieldNamePickerConfigSettings> = {
+  settings: {
+    width: 30,
+    filter: (f) => f.type === FieldType.string,
+    placeholderText: 'Select text field',
+    noFieldsMessage: 'No text fields found',
+  },
+  name: '',
+  id: '',
+  editor: () => null,
+};
 
 export function FormatStringTransfomerEditor({
   input,
   options,
   onChange,
 }: TransformerUIProps<FormatStringTransformerOptions>) {
-  const stringFields: Array<SelectableValue<string>> = [];
-
-  // Get time fields
-  for (const frame of input) {
-    for (const field of frame.fields) {
-      if (field.type === 'string') {
-        const name = getFieldDisplayName(field, frame, input);
-        stringFields.push({ label: name, value: name });
-      }
-    }
-  }
-
   const onSelectField = useCallback(
-    (value: SelectableValue<string>) => {
-      const val = value?.value !== undefined ? value.value : '';
+    (value: string | undefined) => {
+      const val = value ?? '';
       onChange({
         ...options,
         stringField: val,
@@ -44,8 +47,8 @@ export function FormatStringTransfomerEditor({
   );
 
   const onFormatChange = useCallback(
-    (value: SelectableValue<string>) => {
-      const val = value.value ?? '';
+    (value: SelectableValue<FormatStringOutput>) => {
+      const val = value.value ?? FormatStringOutput.UpperCase;
       onChange({
         ...options,
         outputFormat: val,
@@ -57,19 +60,26 @@ export function FormatStringTransfomerEditor({
   return (
     <>
       <InlineFieldRow>
-        <InlineField label="String Field" labelWidth={15}>
-          <Select options={stringFields} value={options.stringField} onChange={onSelectField} placeholder="" />
+        <InlineField label={'Field'} labelWidth={12}>
+          <FieldNamePicker
+            context={{ data: input }}
+            value={options.stringField ?? ''}
+            onChange={onSelectField}
+            item={fieldNamePickerSettings}
+          />
         </InlineField>
 
-        <InlineField label="Format" labelWidth={10} interactive={true}>
+        <InlineField label="Format" labelWidth={10}>
           <Select
             options={[
               { label: FormatStringOutput.UpperCase, value: FormatStringOutput.UpperCase },
               { label: FormatStringOutput.LowerCase, value: FormatStringOutput.LowerCase },
-              { label: FormatStringOutput.FirstLetter, value: FormatStringOutput.FirstLetter },
-              { label: FormatStringOutput.EveryFirstLetter, value: FormatStringOutput.EveryFirstLetter },
+              { label: FormatStringOutput.SentenceCase, value: FormatStringOutput.SentenceCase },
+              { label: FormatStringOutput.TitleCase, value: FormatStringOutput.TitleCase },
               { label: FormatStringOutput.PascalCase, value: FormatStringOutput.PascalCase },
               { label: FormatStringOutput.CamelCase, value: FormatStringOutput.CamelCase },
+              { label: FormatStringOutput.SnakeCase, value: FormatStringOutput.SnakeCase },
+              { label: FormatStringOutput.KebabCase, value: FormatStringOutput.KebabCase },
             ]}
             value={options.outputFormat}
             onChange={onFormatChange}
