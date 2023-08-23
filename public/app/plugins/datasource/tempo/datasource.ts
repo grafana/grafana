@@ -1,6 +1,6 @@
 import { identity, pick, pickBy, groupBy, startCase } from 'lodash';
 import { EMPTY, from, lastValueFrom, merge, Observable, of, throwError } from 'rxjs';
-import { catchError, concatMap, map, mergeMap, startWith, toArray } from 'rxjs/operators';
+import { catchError, concatMap, map, mergeMap, toArray } from 'rxjs/operators';
 
 import {
   CoreApp,
@@ -52,7 +52,7 @@ import {
   defaultTableFilter,
 } from './graphTransform';
 import TempoLanguageProvider from './language_provider';
-import { createTableFrameFromMetricsSummaryQuery } from './metricsSummary';
+import { createTableFrameFromMetricsSummaryQuery, emptyResponse } from './metricsSummary';
 import {
   transformTrace,
   transformTraceList,
@@ -416,34 +416,25 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
       start: options.range.from.unix(),
       end: options.range.to.unix(),
     }).pipe(
-      startWith({
-        data: [],
-        state: LoadingState.Loading,
-      }),
       map((response) => {
-        if (response.state !== LoadingState.Loading && !response.data.summaries) {
+        if (!response.data.summaries) {
           return {
             error: {
               message: getErrorMessage(
                 `No summary data for '${groupBy}'. Note: the metrics summary API only considers spans of kind = server. Please check if the attributes exist by running a TraceQL query like { attr_key = attr_value && kind = server }`
               ),
             },
-            data: createTableFrameFromMetricsSummaryQuery([], query, this.instanceSettings, LoadingState.Error),
+            data: emptyResponse,
           };
         }
         return {
-          data: createTableFrameFromMetricsSummaryQuery(
-            response.data.summaries,
-            query,
-            this.instanceSettings,
-            LoadingState.Done
-          ),
+          data: createTableFrameFromMetricsSummaryQuery(response.data.summaries, query, this.instanceSettings),
         };
       }),
       catchError((error) => {
         return of({
           error: { message: error.data.message },
-          data: createTableFrameFromMetricsSummaryQuery([], query, this.instanceSettings, LoadingState.Error),
+          data: emptyResponse,
         });
       })
     );

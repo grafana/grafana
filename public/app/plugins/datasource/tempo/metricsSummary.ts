@@ -1,11 +1,4 @@
-import {
-  DataSourceInstanceSettings,
-  FieldDTO,
-  FieldType,
-  LoadingState,
-  MutableDataFrame,
-  sortDataFrame,
-} from '@grafana/data';
+import { DataSourceInstanceSettings, FieldDTO, FieldType, MutableDataFrame, sortDataFrame } from '@grafana/data';
 
 export type MetricsSummary = {
   spanCount: string;
@@ -44,86 +37,63 @@ type MetricsData = {
 export function createTableFrameFromMetricsSummaryQuery(
   data: MetricsSummary[],
   targetQuery: string,
-  instanceSettings: DataSourceInstanceSettings,
-  state: LoadingState
+  instanceSettings: DataSourceInstanceSettings
 ) {
   let frame;
 
-  if (state === LoadingState.Error) {
-    frame = emptyResponse;
-  } else if (state === LoadingState.Loading) {
-    frame = new MutableDataFrame({
-      name: 'Metrics Summary',
-      refId: 'metrics-summary',
-      fields: [
-        { name: 'state', type: FieldType.string, config: { displayNameFromDS: 'State', custom: { width: 300 } } },
-      ],
-      meta: {
-        preferredVisualisationType: 'table',
-      },
-    });
-    frame.add({
-      state: 'Loading...',
-    });
-  } else if (state === LoadingState.Done && data?.length) {
-    const dynamicMetrics: Record<string, FieldDTO> = {};
-    data.map((res: MetricsSummary) => {
-      const configQuery = getConfigQuery(res.series, targetQuery);
-      res.series.map((series: Series) => {
-        return !dynamicMetrics[series.key]
-          ? (dynamicMetrics[series.key] = {
-              name: `${series.key}`,
-              type: FieldType.string,
-              config: getConfig(series, configQuery, instanceSettings),
-            })
-          : dynamicMetrics[series.key];
-      });
-    });
-
-    frame = new MutableDataFrame({
-      name: 'Metrics Summary',
-      refId: 'metrics-summary',
-      fields: [
-        ...Object.values(dynamicMetrics).sort((a, b) => a.name.localeCompare(b.name)),
-        {
-          name: 'kind',
-          type: FieldType.string,
-          config: { displayNameFromDS: 'Kind', custom: { width: 150 } },
-        },
-        {
-          name: 'spanCount',
-          type: FieldType.string,
-          config: { displayNameFromDS: 'Span count', custom: { width: 150 } },
-        },
-        {
-          name: 'errorPercentage',
-          type: FieldType.string,
-          config: { displayNameFromDS: 'Error', unit: 'percent', custom: { width: 150 } },
-        },
-        getPercentileRow('p50'),
-        getPercentileRow('p90'),
-        getPercentileRow('p95'),
-        getPercentileRow('p99'),
-      ],
-      meta: {
-        preferredVisualisationType: 'table',
-      },
-    });
-
-    if (!data?.length) {
-      return emptyResponse;
-    }
-
-    const metricsData = data.map(transformToMetricsData);
-    for (const trace of metricsData) {
-      frame.add(trace);
-    }
-    frame = sortDataFrame(frame, 0);
+  if (!data.length) {
+    return emptyResponse;
   }
 
-  if (!frame) {
-    frame = emptyResponse;
+  const dynamicMetrics: Record<string, FieldDTO> = {};
+  data.map((res: MetricsSummary) => {
+    const configQuery = getConfigQuery(res.series, targetQuery);
+    res.series.map((series: Series) => {
+      return !dynamicMetrics[series.key]
+        ? (dynamicMetrics[series.key] = {
+            name: `${series.key}`,
+            type: FieldType.string,
+            config: getConfig(series, configQuery, instanceSettings),
+          })
+        : dynamicMetrics[series.key];
+    });
+  });
+
+  frame = new MutableDataFrame({
+    name: 'Metrics Summary',
+    refId: 'metrics-summary',
+    fields: [
+      ...Object.values(dynamicMetrics).sort((a, b) => a.name.localeCompare(b.name)),
+      {
+        name: 'kind',
+        type: FieldType.string,
+        config: { displayNameFromDS: 'Kind', custom: { width: 150 } },
+      },
+      {
+        name: 'spanCount',
+        type: FieldType.string,
+        config: { displayNameFromDS: 'Span count', custom: { width: 150 } },
+      },
+      {
+        name: 'errorPercentage',
+        type: FieldType.string,
+        config: { displayNameFromDS: 'Error', unit: 'percent', custom: { width: 150 } },
+      },
+      getPercentileRow('p50'),
+      getPercentileRow('p90'),
+      getPercentileRow('p95'),
+      getPercentileRow('p99'),
+    ],
+    meta: {
+      preferredVisualisationType: 'table',
+    },
+  });
+
+  const metricsData = data.map(transformToMetricsData);
+  for (const trace of metricsData) {
+    frame.add(trace);
   }
+  frame = sortDataFrame(frame, 0);
 
   return [frame];
 }
