@@ -411,7 +411,7 @@ func (hs *HTTPServer) declareFixedRoles() error {
 
 	libraryPanelsCreatorRole := ac.RoleRegistration{
 		Role: ac.RoleDTO{
-			Name:        "fixed:library-panels:creator",
+			Name:        "fixed:library.panels:creator",
 			DisplayName: "Library panel creator",
 			Description: "Create library panel in general folder.",
 			Group:       "Library panels",
@@ -425,7 +425,7 @@ func (hs *HTTPServer) declareFixedRoles() error {
 
 	libraryPanelsReaderRole := ac.RoleRegistration{
 		Role: ac.RoleDTO{
-			Name:        "fixed:library-panels:reader",
+			Name:        "fixed:library.panels:reader",
 			DisplayName: "Library panel reader",
 			Description: "Read all library panels.",
 			Group:       "Library panels",
@@ -438,7 +438,7 @@ func (hs *HTTPServer) declareFixedRoles() error {
 
 	libraryPanelsWriterRole := ac.RoleRegistration{
 		Role: ac.RoleDTO{
-			Name:        "fixed:library-panels:writer",
+			Name:        "fixed:library.panels:writer",
 			DisplayName: "Library panel writer",
 			Group:       "Library panels",
 			Description: "Create, read, write or delete all library panels and their permissions.",
