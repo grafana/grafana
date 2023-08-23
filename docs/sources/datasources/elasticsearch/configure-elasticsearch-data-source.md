@@ -146,7 +146,7 @@ Each data link configuration consists of:
 
 - **Field** - Sets the name of the field used by the data link.
 
-- **URL/query** Sets the full link URL if the link is external. If the link is internal, this input serves as a query for the target data source.<br/>In both cases, you can interpolate the value from the field with the `${__value.raw }` macro.
+- **URL/query** - Sets the full link URL if the link is external. If the link is internal, this input serves as a query for the target data source.<br/>In both cases, you can interpolate the value from the field with the `${__value.raw }` macro.
 
 - **URL Label** (Optional) Sets a custom display label for the link. The link label defaults to the full external URL or name of the linked internal data source and is overridden by this setting.
 
