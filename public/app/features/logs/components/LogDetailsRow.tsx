@@ -16,8 +16,8 @@ export interface Props extends Themeable2 {
   disableActions: boolean;
   wrapLogMessage?: boolean;
   isLabel?: boolean;
-  onClickFilterLabel?: (key: string, value: string, row?: LogRowModel) => void;
-  onClickFilterOutLabel?: (key: string, value: string, row?: LogRowModel) => void;
+  onClickFilterLabel?: (key: string, value: string, refId?: string) => void;
+  onClickFilterOutLabel?: (key: string, value: string, refId?: string) => void;
   links?: Array<LinkModel<Field>>;
   getStats: () => LogLabelStatsModel[] | null;
   displayedFields?: string[];
@@ -25,7 +25,7 @@ export interface Props extends Themeable2 {
   onClickHideField?: (key: string) => void;
   row: LogRowModel;
   app?: CoreApp;
-  isFilterLabelActive?: (key: string, value: string, row: LogRowModel) => Promise<boolean>;
+  isFilterLabelActive?: (key: string, value: string, refId?: string) => Promise<boolean>;
 }
 
 interface State {
@@ -136,7 +136,7 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
   isFilterLabelActive = async () => {
     const { isFilterLabelActive, parsedKeys, parsedValues, row } = this.props;
     if (isFilterLabelActive) {
-      return await isFilterLabelActive(parsedKeys[0], parsedValues[0], row);
+      return await isFilterLabelActive(parsedKeys[0], parsedValues[0], row.dataFrame.refId);
     }
     return false;
   };
@@ -144,7 +144,7 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
   filterLabel = () => {
     const { onClickFilterLabel, parsedKeys, parsedValues, row } = this.props;
     if (onClickFilterLabel) {
-      onClickFilterLabel(parsedKeys[0], parsedValues[0], row);
+      onClickFilterLabel(parsedKeys[0], parsedValues[0], row.dataFrame.refId);
     }
 
     reportInteraction('grafana_explore_logs_log_details_filter_clicked', {
@@ -157,7 +157,7 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
   filterOutLabel = () => {
     const { onClickFilterOutLabel, parsedKeys, parsedValues, row } = this.props;
     if (onClickFilterOutLabel) {
-      onClickFilterOutLabel(parsedKeys[0], parsedValues[0], row);
+      onClickFilterOutLabel(parsedKeys[0], parsedValues[0], row.dataFrame.refId);
     }
 
     reportInteraction('grafana_explore_logs_log_details_filter_clicked', {

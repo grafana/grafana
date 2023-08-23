@@ -20,13 +20,13 @@ export interface Props extends Themeable2 {
   app?: CoreApp;
   styles: LogRowStyles;
 
-  onClickFilterLabel?: (key: string, value: string, row?: LogRowModel) => void;
-  onClickFilterOutLabel?: (key: string, value: string, row?: LogRowModel) => void;
+  onClickFilterLabel?: (key: string, value: string, refId?: string) => void;
+  onClickFilterOutLabel?: (key: string, value: string, refId?: string) => void;
   getFieldLinks?: (field: Field, rowIndex: number, dataFrame: DataFrame) => Array<LinkModel<Field>>;
   displayedFields?: string[];
   onClickShowField?: (key: string) => void;
   onClickHideField?: (key: string) => void;
-  isFilterLabelActive?: (key: string, value: string, row: LogRowModel) => Promise<boolean>;
+  isFilterLabelActive?: (key: string, value: string, refId?: string) => Promise<boolean>;
 }
 
 class UnThemedLogDetails extends PureComponent<Props> {

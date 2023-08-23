@@ -16,7 +16,6 @@ import {
   SplitOpenOptions,
   SupplementaryQueryType,
   hasToggleableQueryFiltersSupport,
-  LogRowModel,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config, getDataSourceSrv, reportInteraction } from '@grafana/runtime';
@@ -191,11 +190,11 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
    * TODO: In the future, we would like to return active filters based the query that produced the log line.
    * @alpha
    */
-  isFilterLabelActive = async (key: string, value: string, row: LogRowModel) => {
+  isFilterLabelActive = async (key: string, value: string, refId?: string) => {
     if (!config.featureToggles.toggleLabelsInLogsUI) {
       return false;
     }
-    const query = this.props.queries.find((q) => q.refId === row.dataFrame.refId);
+    const query = this.props.queries.find((q) => q.refId === refId);
     if (!query) {
       return false;
     }
@@ -209,15 +208,15 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
   /**
    * Used by Logs details.
    */
-  onClickFilterLabel = (key: string, value: string, row?: LogRowModel) => {
-    this.onModifyQueries({ type: 'ADD_FILTER', options: { key, value } }, row);
+  onClickFilterLabel = (key: string, value: string, refId?: string) => {
+    this.onModifyQueries({ type: 'ADD_FILTER', options: { key, value } }, refId);
   };
 
   /**
    * Used by Logs details.
    */
-  onClickFilterOutLabel = (key: string, value: string, row?: LogRowModel) => {
-    this.onModifyQueries({ type: 'ADD_FILTER_OUT', options: { key, value } }, row);
+  onClickFilterOutLabel = (key: string, value: string, refId?: string) => {
+    this.onModifyQueries({ type: 'ADD_FILTER_OUT', options: { key, value } }, refId);
   };
 
   onClickAddQueryRowButton = () => {
@@ -233,11 +232,11 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
   /**
    * Used by Logs details.
    */
-  onModifyQueries = (action: QueryFixAction, row?: LogRowModel) => {
+  onModifyQueries = (action: QueryFixAction, refId?: string) => {
     const modifier = async (query: DataQuery, modification: QueryFixAction) => {
       // This gives Logs Details support to modify the query that produced the log line.
       // If not present, all queries are modified.
-      if (row && row.dataFrame.refId !== query.refId) {
+      if (refId && refId !== query.refId) {
         return query;
       }
       const { datasource } = query;
