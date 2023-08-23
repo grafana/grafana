@@ -443,6 +443,17 @@ func copyPubDir(grafanaDir, tmpDir string) error {
 		return fmt.Errorf("failed to copy %q to %q: %w", srcPubDir, tgtPubDir, err)
 	}
 
+	// Remove plugin backend code.
+	pluBeFiles, err := filepath.Glob(filepath.Join(tgtPubDir, "plugins", "*", "pkg"))
+	if err != nil {
+		return err
+	}
+	for _, p := range pluBeFiles {
+		if err := os.RemoveAll(p); err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
