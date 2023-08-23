@@ -101,7 +101,7 @@ export const GroupByField = (props: Props) => {
                   updateFilter({ ...f, scope: v?.value });
                 }}
                 placeholder="Select scope"
-                aria-label={`Select scope for ${f.id}`}
+                aria-label={`Select scope for filter ${i + 1}`}
               />
               <Select
                 options={getTags(f).map((t) => ({
@@ -113,7 +113,7 @@ export const GroupByField = (props: Props) => {
                   updateFilter({ ...f, tag: v?.value });
                 }}
                 placeholder="Select tag"
-                aria-label={`Select tag for ${f.id}`}
+                aria-label={`Select tag for filter ${i + 1}`}
                 isLoading={isTagsLoading}
                 isClearable
               />
