@@ -7,6 +7,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 
+	"github.com/grafana/grafana/pkg/infra/httpclient/httpclientprovider"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/azureauth"
@@ -29,7 +30,7 @@ func CreateTransportOptions(settings backend.DataSourceInstanceSettings, cfg *se
 	}
 	httpMethod, _ := maputil.GetStringOptional(jsonData, "httpMethod")
 
-	opts.Middlewares = middlewares(logger, httpMethod)
+	opts.Middlewares = middlewares(cfg, logger, httpMethod)
 
 	// Set SigV4 service namespace
 	if opts.SigV4 != nil {
@@ -47,11 +48,12 @@ func CreateTransportOptions(settings backend.DataSourceInstanceSettings, cfg *se
 	return &opts, nil
 }
 
-func middlewares(logger log.Logger, httpMethod string) []sdkhttpclient.Middleware {
+func middlewares(cfg *setting.Cfg, logger log.Logger, httpMethod string) []sdkhttpclient.Middleware {
 	middlewares := []sdkhttpclient.Middleware{
 		// TODO: probably isn't needed anymore and should by done by http infra code
 		middleware.CustomQueryParameters(logger),
 		sdkhttpclient.CustomHeadersMiddleware(),
+		httpclientprovider.ResponseLimitMiddleware(cfg.ResponseLimit),
 	}
 
 	// Needed to control GET vs POST method of the requests
