@@ -314,7 +314,7 @@ func NewKindRegistry() (*kindRegistry, error) {
 	defer file.Close()
 
 	// Get the repository archive URL
-	archiveURL, _, err := client.Repositories.GetArchiveLink(ctx, GITHUB_OWNER, GITHUB_REPO, github.Zipball, &github.RepositoryContentGetOptions{Ref: "fix-composable-package-name"})
+	archiveURL, _, err := client.Repositories.GetArchiveLink(ctx, GITHUB_OWNER, GITHUB_REPO, github.Zipball, &github.RepositoryContentGetOptions{})
 	if err != nil {
 		return nil, fmt.Errorf("failed to get archive URL: %w", err)
 	}
