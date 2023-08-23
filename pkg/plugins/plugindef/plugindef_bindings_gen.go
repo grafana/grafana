@@ -10,7 +10,6 @@
 package plugindef
 
 import (
-	"cuelang.org/go/cue"
 	"cuelang.org/go/cue/build"
 	"github.com/grafana/thema"
 )
@@ -68,7 +67,6 @@ func baseLineage(rt *thema.Runtime, opts ...thema.BindOption) (thema.Lineage, er
 	}
 
 	raw := rt.Context().BuildInstance(inst)
-	raw = raw.LookupPath(cue.ParsePath(""))
 
 	// An error returned from thema.BindLineage indicates one of the following:
 	//   - The parsed path does not exist in the loaded CUE file (["github.com/grafana/thema/errors".ErrValueNotExist])
