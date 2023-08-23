@@ -38,7 +38,7 @@ const rangeOptions: TimeOption[] = [
     to: 'now-7d/d',
     display: 'This day last week',
   },
-  { from: 'now-1w/w', to: 'now-1w/w', display: 'Previous week' },
+  { from: 'now-1w/w', to: 'now-1w/w', display: 'Last week' },
   { from: 'now-1M/M', to: 'now-1M/M', display: 'Previous month' },
   { from: 'now-1Q/fQ', to: 'now-1Q/fQ', display: 'Previous fiscal quarter' },
   { from: 'now-1y/y', to: 'now-1y/y', display: 'Previous year' },
