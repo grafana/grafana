@@ -41,8 +41,8 @@ To integrate your Okta OAuth2 provider with Grafana using our Okta OAuth2 integr
    | Field                        | Description                                                                                                   |
    | ---------------------------- | ------------------------------------------------------------------------------------------------------------- |
    | `client_id`, `client_secret` | These values must match the client ID and client secret from your Okta OAuth2 app.                            |
-   | `auth_url`                   | The authorization endpoint of your OAuth2 provider. `https://<okta-tenant-id>.okta.com/oauth2/v1/authorize`     |
-   | `token_url`                  | The token endpoint of your Okta OAuth2 provider. `https://<okta-tenant-id>.okta.com/oauth2/v1/token`                    |
+   | `auth_url`                   | The authorization endpoint of your OAuth2 provider. `https://<okta-tenant-id>.okta.com/oauth2/v1/authorize`   |
+   | `token_url`                  | The token endpoint of your Okta OAuth2 provider. `https://<okta-tenant-id>.okta.com/oauth2/v1/token`          |
    | `api_url`                    | The user information endpoint of your Okta OAuth2 provider. `https://<tenant-id>.okta.com/oauth2/v1/userinfo` |
    | `enabled`                    | Enables Okta OAuth2 authentication. Set this value to `true`.                                                 |
 
