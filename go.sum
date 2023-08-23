@@ -1810,8 +1810,8 @@ github.com/grafana/prometheus-alertmanager v0.25.1-0.20230508090422-7d5630522a53
 github.com/grafana/regexp v0.0.0-20221122212121-6b5c0a4cb7fd/go.mod h1:M5qHK+eWfAv8VR/265dIuEpL3fNfeC21tXXp9itM24A=
 github.com/grafana/regexp v0.0.0-20221123153739-15dc172cd2db h1:7aN5cccjIqCLTzedH7MZzRZt5/lsAHch6Z3L2ZGn5FA=
 github.com/grafana/regexp v0.0.0-20221123153739-15dc172cd2db/go.mod h1:M5qHK+eWfAv8VR/265dIuEpL3fNfeC21tXXp9itM24A=
-github.com/grafana/saml v0.4.13-0.20230331080031-67cbfa09c7b6 h1:oHn/OOUkECNX06DPHksS7R3UY5Qdye04b/sBj2/OJ5E=
-github.com/grafana/saml v0.4.13-0.20230331080031-67cbfa09c7b6/go.mod h1:igEejV+fihTIlHXYP8zOec3V5A8y3lws5bQBFsTm4gA=
+github.com/grafana/saml v0.4.13-0.20230823151800-99004118fff5 h1:F0fY72CD+fFUFQVbqVXqszdm/T3b/LUqv2EssTAwm14=
+github.com/grafana/saml v0.4.13-0.20230823151800-99004118fff5/go.mod h1:igEejV+fihTIlHXYP8zOec3V5A8y3lws5bQBFsTm4gA=
 github.com/grafana/sqlds/v2 v2.3.10 h1:HWKhE0vR6LoEiE+Is8CSZOgaB//D1yqb2ntkass9Fd4=
 github.com/grafana/sqlds/v2 v2.3.10/go.mod h1:c6ibxnxRVGxV/0YkEgvy7QpQH/lyifFyV7K/14xvdIs=
 github.com/grafana/tempo v1.5.1-0.20230524121406-1dc1bfe7085b h1:mDlkqgTEJuK7vjPG44f3ZMtId5AAYLWHvBVbiGqIOOQ=
