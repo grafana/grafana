@@ -1,5 +1,3 @@
-import { LoadingState } from '@grafana/data';
-
 import { defaultSettings } from './datasource.test';
 import {
   createTableFrameFromMetricsSummaryQuery,
@@ -11,39 +9,8 @@ import {
 describe('MetricsSummary', () => {
   describe('createTableFrameFromMetricsSummaryQuery', () => {
     it('should return emptyResponse when state is LoadingState.Error', () => {
-      const result = createTableFrameFromMetricsSummaryQuery([], '', defaultSettings, LoadingState.Error);
-      expect(result).toEqual([emptyResponse]);
-    });
-
-    it('should return correctly when state is LoadingState.Loading', () => {
-      const result = createTableFrameFromMetricsSummaryQuery([], '', defaultSettings, LoadingState.Loading);
-      expect(result).toMatchInlineSnapshot(`
-        [
-          {
-            "fields": [
-              {
-                "config": {
-                  "custom": {
-                    "width": 300,
-                  },
-                  "displayNameFromDS": "State",
-                },
-                "name": "state",
-                "type": "string",
-                "values": [
-                  "Loading...",
-                ],
-              },
-            ],
-            "length": 1,
-            "meta": {
-              "preferredVisualisationType": "table",
-            },
-            "name": "Metrics Summary",
-            "refId": "metrics-summary",
-          },
-        ]
-      `);
+      const result = createTableFrameFromMetricsSummaryQuery([], '', defaultSettings);
+      expect(result).toEqual(emptyResponse);
     });
 
     it('should return correctly when state is LoadingState.Done', () => {
@@ -76,8 +43,7 @@ describe('MetricsSummary', () => {
       const result = createTableFrameFromMetricsSummaryQuery(
         data,
         '{name="HTTP POST - post"} | by(resource.service.name)',
-        defaultSettings,
-        LoadingState.Done
+        defaultSettings
       );
       expect(result).toMatchInlineSnapshot(`
         [

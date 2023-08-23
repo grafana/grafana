@@ -3,7 +3,7 @@ import {
   DataSourceInstanceSettings,
   FieldDTO,
   FieldType,
-  LoadingState,
+  MutableDataFrame,
   sortDataFrame,
 } from '@grafana/data';
 
@@ -44,85 +44,64 @@ type MetricsData = {
 export function createTableFrameFromMetricsSummaryQuery(
   data: MetricsSummary[],
   targetQuery: string,
-  instanceSettings: DataSourceInstanceSettings,
-  state: LoadingState
+  instanceSettings: DataSourceInstanceSettings
 ) {
   let frame;
 
-  if (state === LoadingState.Error) {
-    frame = emptyResponse;
-  } else if (state === LoadingState.Loading) {
-    frame = createDataFrame({
-      name: 'Metrics Summary',
-      refId: 'metrics-summary',
-      fields: [
-        {
-          name: 'state',
-          type: FieldType.string,
-          config: { displayNameFromDS: 'State', custom: { width: 300 } },
-          values: ['Loading...'],
-        },
-      ],
-      meta: {
-        preferredVisualisationType: 'table',
-      },
-    });
-  } else if (state === LoadingState.Done && data?.length) {
-    if (!data?.length) {
-      return [emptyResponse];
-    }
-
-    const dynamicMetrics: Record<string, FieldDTO> = {};
-    data.forEach((res: MetricsSummary) => {
-      const configQuery = getConfigQuery(res.series, targetQuery);
-      res.series.forEach((series: Series) => {
-        dynamicMetrics[series.key] = {
-          name: `${series.key}`,
-          type: FieldType.string,
-          config: getConfig(series, configQuery, instanceSettings),
-        };
-      });
-    });
-
-    frame = createDataFrame({
-      name: 'Metrics Summary',
-      refId: 'metrics-summary',
-      fields: [
-        ...Object.values(dynamicMetrics).sort((a, b) => a.name.localeCompare(b.name)),
-        {
-          name: 'kind',
-          type: FieldType.string,
-          config: { displayNameFromDS: 'Kind', custom: { width: 150 } },
-        },
-        {
-          name: 'spanCount',
-          type: FieldType.string,
-          config: { displayNameFromDS: 'Span count', custom: { width: 150 } },
-        },
-        {
-          name: 'errorPercentage',
-          type: FieldType.string,
-          config: { displayNameFromDS: 'Error', unit: 'percent', custom: { width: 150 } },
-        },
-        getPercentileRow('p50'),
-        getPercentileRow('p90'),
-        getPercentileRow('p95'),
-        getPercentileRow('p99'),
-      ],
-      meta: {
-        preferredVisualisationType: 'table',
-      },
-    });
-
-    const metricsData = data.map(transformToMetricsData);
-    frame.length = metricsData.length;
-    for (const trace of metricsData) {
-      for (const field of frame.fields) {
-        field.values.push(trace[field.name]);
-      }
-    }
-    frame = sortDataFrame(frame, 0);
+  if (!data.length) {
+    return emptyResponse;
   }
+
+  const dynamicMetrics: Record<string, FieldDTO> = {};
+  data.forEach((res: MetricsSummary) => {
+    const configQuery = getConfigQuery(res.series, targetQuery);
+    res.series.forEach((series: Series) => {
+      dynamicMetrics[series.key] = {
+        name: `${series.key}`,
+        type: FieldType.string,
+        config: getConfig(series, configQuery, instanceSettings),
+      };
+    });
+  });
+
+  frame = createDataFrame({
+    name: 'Metrics Summary',
+    refId: 'metrics-summary',
+    fields: [
+      ...Object.values(dynamicMetrics).sort((a, b) => a.name.localeCompare(b.name)),
+      {
+        name: 'kind',
+        type: FieldType.string,
+        config: { displayNameFromDS: 'Kind', custom: { width: 150 } },
+      },
+      {
+        name: 'spanCount',
+        type: FieldType.string,
+        config: { displayNameFromDS: 'Span count', custom: { width: 150 } },
+      },
+      {
+        name: 'errorPercentage',
+        type: FieldType.string,
+        config: { displayNameFromDS: 'Error', unit: 'percent', custom: { width: 150 } },
+      },
+      getPercentileRow('p50'),
+      getPercentileRow('p90'),
+      getPercentileRow('p95'),
+      getPercentileRow('p99'),
+    ],
+    meta: {
+      preferredVisualisationType: 'table',
+    },
+  });
+
+  const metricsData = data.map(transformToMetricsData);
+  frame.length = metricsData.length;
+  for (const trace of metricsData) {
+    for (const field of frame.fields) {
+      field.values.push(trace[field.name]);
+    }
+  }
+  frame = sortDataFrame(frame, 0);
 
   return [frame];
 }
@@ -283,7 +262,7 @@ const getPercentileRow = (name: string) => {
   };
 };
 
-export const emptyResponse = createDataFrame({
+export const emptyResponse = new MutableDataFrame({
   name: 'Metrics Summary',
   refId: 'metrics-summary',
   fields: [],
