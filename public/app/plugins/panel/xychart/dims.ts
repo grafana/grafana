@@ -1,7 +1,7 @@
 import { DataFrame, Field, FieldMatcher, FieldType, getFieldDisplayName } from '@grafana/data';
 import { XYFieldMatchers } from '@grafana/ui/src/components/GraphNG/types';
 
-import { XYDimensionConfig } from './types';
+import { XYDimensionConfig } from './panelcfg.gen';
 
 // TODO: fix import
 

@@ -150,7 +150,7 @@ func (gen *genTSVeneerIndex) extractTSIndexVeneerElements(def kindsys.Kind, tf *
 		return nil, terr
 	}
 
-	vpath := fmt.Sprintf("v%v", thema.LatestVersion(lin)[0])
+	vpath := fmt.Sprintf("v%v", thema.Lineage.Latest(lin).Version())
 	if def.Props().Common().Maturity.Less(kindsys.MaturityStable) {
 		vpath = "x"
 	}
@@ -182,7 +182,7 @@ func (gen *genTSVeneerIndex) extractTSIndexVeneerElements(def kindsys.Kind, tf *
 // and exports all the symbols in the list.
 //
 // TODO generate code such that tsc enforces type compatibility between raw and veneer decls`,
-		lin.Name(), thema.LatestVersion(lin), filepath.ToSlash(filepath.Join(gen.dir, vtfile)))
+		lin.Name(), thema.Lineage.Latest(lin).Version(), filepath.ToSlash(filepath.Join(gen.dir, vtfile)))
 
 	customComments := []ast.Comment{{Text: customstr}}
 	if len(custom) > 0 {

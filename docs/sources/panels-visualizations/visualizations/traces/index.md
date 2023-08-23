@@ -7,6 +7,11 @@ keywords:
   - documentation
   - panels
   - traces
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: Traces
 weight: 850
 ---

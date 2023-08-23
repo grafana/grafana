@@ -6,28 +6,28 @@ import { stylesFactory } from '../../themes';
 
 const getStyles = stylesFactory((duration: number, measurement: 'width' | 'height', size: number) => {
   return {
-    enter: css`
-      label: enter;
-      ${measurement}: 0;
-      opacity: 0;
-    `,
-    enterActive: css`
-      label: enterActive;
-      ${measurement}: ${size}px;
-      opacity: 1;
-      transition: opacity ${duration}ms ease-out, ${measurement} ${duration}ms ease-out;
-    `,
-    exit: css`
-      label: exit;
-      ${measurement}: ${size}px;
-      opacity: 1;
-    `,
-    exitActive: css`
-      label: exitActive;
-      opacity: 0;
-      ${measurement}: 0;
-      transition: opacity ${duration}ms ease-out, ${measurement} ${duration}ms ease-out;
-    `,
+    enter: css({
+      label: 'enter',
+      [`${measurement}`]: 0,
+      opacity: 0,
+    }),
+    enterActive: css({
+      label: 'enterActive',
+      [`${measurement}`]: `${size}px`,
+      opacity: 1,
+      transition: `opacity ${duration}ms ease-out, ${measurement} ${duration}ms ease-out`,
+    }),
+    exit: css({
+      label: 'exit',
+      [`${measurement}`]: `${size}px`,
+      opacity: 1,
+    }),
+    exitActive: css({
+      label: 'exitActive',
+      opacity: 0,
+      [`${measurement}`]: 0,
+      transition: `opacity ${duration}ms ease-out, ${measurement} ${duration}ms ease-out`,
+    }),
   };
 });
 

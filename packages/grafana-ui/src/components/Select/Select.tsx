@@ -12,11 +12,11 @@ import {
   VirtualizedSelectAsyncProps,
 } from './types';
 
-export function Select<T>(props: SelectCommonProps<T>) {
+export function Select<T, Rest = {}>(props: SelectCommonProps<T> & Rest) {
   return <SelectBase {...props} />;
 }
 
-export function MultiSelect<T>(props: MultiSelectCommonProps<T>) {
+export function MultiSelect<T, Rest = {}>(props: MultiSelectCommonProps<T> & Rest) {
   // @ts-ignore
   return <SelectBase {...props} isMulti />;
 }
@@ -26,15 +26,15 @@ export interface AsyncSelectProps<T> extends Omit<SelectCommonProps<T>, 'options
   value?: T | SelectableValue<T> | null;
 }
 
-export function AsyncSelect<T>(props: AsyncSelectProps<T>) {
+export function AsyncSelect<T, Rest = {}>(props: AsyncSelectProps<T> & Rest) {
   return <SelectBase {...props} />;
 }
 
-export function VirtualizedSelect<T>(props: VirtualizedSelectProps<T>) {
+export function VirtualizedSelect<T, Rest = {}>(props: VirtualizedSelectProps<T> & Rest) {
   return <SelectBase virtualized {...props} />;
 }
 
-export function AsyncVirtualizedSelect<T>(props: VirtualizedSelectAsyncProps<T>) {
+export function AsyncVirtualizedSelect<T, Rest = {}>(props: VirtualizedSelectAsyncProps<T> & Rest) {
   return <SelectBase virtualized {...props} />;
 }
 
@@ -43,7 +43,7 @@ interface AsyncMultiSelectProps<T> extends Omit<MultiSelectCommonProps<T>, 'opti
   value?: Array<SelectableValue<T>>;
 }
 
-export function AsyncMultiSelect<T>(props: AsyncMultiSelectProps<T>) {
+export function AsyncMultiSelect<T, Rest = {}>(props: AsyncMultiSelectProps<T> & Rest) {
   // @ts-ignore
   return <SelectBase {...props} isMulti />;
 }

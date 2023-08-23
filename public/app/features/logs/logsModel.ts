@@ -424,7 +424,7 @@ export function logSeriesToLogsModel(logSeries: DataFrame[], queries: DataQuery[
 
       const datasourceType = queries.find((query) => query.refId === series.refId)?.datasource?.type;
 
-      rows.push({
+      const row: LogRowModel = {
         entryFieldIndex: stringField.index,
         rowIndex: j,
         dataFrame: series,
@@ -444,7 +444,13 @@ export function logSeriesToLogsModel(logSeries: DataFrame[], queries: DataQuery[
         // prepend refId to uid to make it unique across all series in a case when series contain duplicates
         uid: `${series.refId}_${idField ? idField.values[j] : j.toString()}`,
         datasourceType,
-      });
+      };
+
+      if (idField !== null) {
+        row.rowId = idField.values[j];
+      }
+
+      rows.push(row);
     }
   }
 

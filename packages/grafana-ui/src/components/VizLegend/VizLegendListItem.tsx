@@ -93,33 +93,33 @@ export const VizLegendListItem = <T = unknown,>({
 VizLegendListItem.displayName = 'VizLegendListItem';
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  label: css`
-    label: LegendLabel;
-    white-space: nowrap;
-    background: none;
-    border: none;
-    font-size: inherit;
-    padding: 0;
-    user-select: text;
-    max-width: 600px;
-    text-overflow: ellipsis;
-    overflow: hidden;
-  `,
-  itemDisabled: css`
-    label: LegendLabelDisabled;
-    color: ${theme.colors.text.disabled};
-  `,
-  itemWrapper: css`
-    label: LegendItemWrapper;
-    display: flex;
-    white-space: nowrap;
-    align-items: center;
-    flex-grow: 1;
-  `,
-  value: css`
-    text-align: right;
-  `,
-  yAxisLabel: css`
-    color: ${theme.v1.palette.gray2};
-  `,
+  label: css({
+    label: 'LegendLabel',
+    whiteSpace: 'nowrap',
+    background: 'none',
+    border: 'none',
+    fontSize: 'inherit',
+    padding: 0,
+    userSelect: 'text',
+    maxWidth: '600px',
+    textOverflow: 'ellipsis',
+    overflow: 'hidden',
+  }),
+  itemDisabled: css({
+    label: 'LegendLabelDisabled',
+    color: theme.colors.text.disabled,
+  }),
+  itemWrapper: css({
+    label: 'LegendItemWrapper',
+    display: 'flex',
+    whiteSpace: 'nowrap',
+    alignItems: 'center',
+    flexGrow: 1,
+  }),
+  value: css({
+    textAlign: 'right',
+  }),
+  yAxisLabel: css({
+    color: theme.v1.palette.gray2,
+  }),
 });

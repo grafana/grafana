@@ -7,92 +7,95 @@ keywords:
   - configuration
   - documentation
   - oauth
-title: Configure GitLab OAuth2 authentication
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 menuTitle: GitLab OAuth2
+title: Configure GitLab OAuth2 authentication
 weight: 1000
 ---
 
 # Configure GitLab OAuth2 authentication
 
-To enable GitLab OAuth2 you must register the application in GitLab. GitLab will generate a client ID and secret key for you to use.
+{{< docs/shared "auth/intro.md" >}}
 
-## Create GitLab OAuth keys
+This topic describes how to configure GitLab OAuth2 authentication.
 
-You need to [create a GitLab OAuth application](https://docs.gitlab.com/ce/integration/oauth_provider.html).
-Choose a descriptive _Name_, and use the following _Redirect URI_:
+## Before you begin
 
-```
-https://grafana.example.com/login/gitlab
-```
+To follow this guide:
 
-where `https://grafana.example.com` is the URL you use to connect to Grafana.
-Adjust it as needed if you don't use HTTPS or if you use a different port; for
-instance, if you access Grafana at `http://203.0.113.31:3000`, you should use
+- Ensure that you have access to the [Grafana configuration file]({{< relref "../../../configure-grafana#configuration-file-location" >}}).
+- Ensure you know how to create a GitLab OAuth application. Consult GitLab's documentation on [creating a GitLab OAuth application](https://docs.gitlab.com/ee/integration/oauth_provider.html) for more information.
 
-```
-http://203.0.113.31:3000/login/gitlab
-```
+## Steps
 
-Finally, select `openid`, `email` and `profile` as the scopes and submit the form.
+To configure GitLab authentication with Grafana, follow these steps:
 
-You'll get an _Application Id_ and a _Secret_ in return; we'll call them
-`GITLAB_APPLICATION_ID` and `GITLAB_SECRET` respectively for the rest of this
-section.
+1. Create an OAuth application in GitLab.
 
-## Enable GitLab in Grafana
+   1. Set the redirect URI to `http://<my_grafana_server_name_or_ip>:<grafana_server_port>/login/gitlab`.
 
-In this example, we'll assume you use the public `gitlab.com` instance, but you
-can use your own instance of GitLab instead by replacing `auth_url`, `token_url` with the URL of your instance.
+      Ensure that the Redirect URI is the complete HTTP address that you use to access Grafana via your browser, but with the appended path of `/login/gitlab`.
 
-You can find these URLs in the `well known` configuration file of your GitLab instance, for example `https://gitlab.com/.well-known/openid-configuration`.
+      For the Redirect URI to be correct, it might be necessary to set the `root_url` option in the `[server]`section of the Grafana configuration file. For example, if you are serving Grafana behind a proxy.
 
-Add the following to your Grafana configuration file to enable GitLab
-authentication:
+   1. Set the OAuth2 scopes to `openid`, `email` and `profile`.
 
-```bash
-[auth.gitlab]
-enabled = true
-allow_sign_up = true
-auto_login = false
-client_id = GITLAB_APPLICATION_ID
-client_secret = GITLAB_SECRET
-scopes = openid email profile
-auth_url = https://gitlab.com/oauth/authorize
-token_url = https://gitlab.com/oauth/token
-allowed_groups =
-role_attribute_path =
-role_attribute_strict = false
-allow_assign_grafana_admin = false
-tls_skip_verify_insecure = false
-tls_client_cert =
-tls_client_key =
-tls_client_ca =
-use_pkce = true
-```
+1. Refer to the following table to update field values located in the `[auth.gitlab]` section of the Grafana configuration file:
 
-You may have to set the `root_url` option of `[server]` for the callback URL to be
-correct. For example in case you are serving Grafana behind a proxy.
+   | Field                        | Description                                                                                  |
+   | ---------------------------- | -------------------------------------------------------------------------------------------- |
+   | `client_id`, `client_secret` | These values must match the client ID and client secret from your GitLab OAuth2 application. |
+   | `enabled`                    | Enables GitLab authentication. Set this value to `true`.                                     |
 
-Restart the Grafana backend for your changes to take effect.
+   Review the list of other GitLab [configuration options]({{< relref "#configuration-options" >}}) and complete them, as necessary.
 
-With `allow_sign_up` set to `false`, only existing users will be able to login
-using their GitLab account, but with `allow_sign_up` set to `true`, _any_ user
-who can authenticate on GitLab will be able to login on your Grafana instance;
-if you use the public `gitlab.com`, it means anyone in the world would be able
-to login on your Grafana instance.
+1. Optional: [Configure a refresh token]({{< relref "#configure-a-refresh-token" >}}):
 
-You can limit access to only members of a given group or list of
-groups by setting the `allowed_groups` option.
+   a. Enable `accessTokenExpirationCheck` feature toggle.
 
-You can also specify the SSL/TLS configuration used by the client.
+   b. Set `use_refresh_token` to `true` in `[auth.gitlab]` section in Grafana configuration file.
 
-- Set `tls_client_cert` to the path of the certificate.
-- Set `tls_client_key` to the path containing the key.
-- Set `tls_client_ca` to the path containing a trusted certificate authority list.
+1. [Configure role mapping]({{< relref "#configure-role-mapping" >}}).
+1. Optional: [Configure team synchronization]({{< relref "#configure-team-synchronization" >}}).
+1. Restart Grafana.
 
-`tls_skip_verify_insecure` controls whether a client verifies the server's certificate chain and host name. If it is true, then SSL/TLS accepts any certificate presented by the server and any host name in that certificate. _You should only use this for testing_, because this mode leaves SSL/TLS susceptible to man-in-the-middle attacks.
+   You should now see a GitLab login button on the login page and be able to log in or sign up with your GitLab accounts.
 
-### Configure refresh token
+## Configuration options
+
+The table below describes all GitLab OAuth configuration options. Like any other Grafana configuration, you can apply these options as environment variables.
+
+| Setting                      | Required | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       | Default                              |
+| ---------------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------ |
+| `enabled`                    | Yes      | Whether GitLab OAuth authentication is allowed.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   | `false`                              |
+| `client_id`                  | Yes      | Client ID provided by your GitLab OAuth app.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |                                      |
+| `client_secret`              | Yes      | Client secret provided by your GitLab OAuth app.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |                                      |
+| `auth_url`                   | Yes      | Authorization endpoint of your GitLab OAuth provider. If you use your own instance of GitLab instead of gitlab.com, adjust `auth_url` by replacing the `gitlab.com` hostname with your own.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       | `https://gitlab.com/oauth/authorize` |
+| `token_url`                  | Yes      | Endpoint used to obtain GitLab OAuth access token. If you use your own instance of GitLab instead of gitlab.com, adjust `token_url` by replacing the `gitlab.com` hostname with your own.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         | `https://gitlab.com/oauth/token`     |
+| `api_url`                    | No       | Grafana uses `<api_url>/user` endpoint to obtain GitLab user information compatible with [OpenID UserInfo](https://connect2id.com/products/server/docs/api/userinfo).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             | `https://gitlab.com/api/v4`          |
+| `name`                       | No       | Name used to refer to the GitLab authentication in the Grafana user interface.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    | `GitLab`                             |
+| `icon`                       | No       | Icon used for GitLab authentication in the Grafana user interface.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                | `gitlab`                             |
+| `scopes`                     | No       | List of comma- or space-separated GitLab OAuth scopes.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            | `openid email profile`               |
+| `allow_sign_up`              | No       | Whether to allow new Grafana user creation through GitLab login. If set to `false`, then only existing Grafana users can log in with GitLab OAuth.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                | `true`                               |
+| `auto_login`                 | No       | Set to `true` to enable users to bypass the login screen and automatically log in. This setting is ignored if you configure multiple auth providers to use auto-login.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            | `false`                              |
+| `role_attribute_path`        | No       | [JMESPath](http://jmespath.org/examples.html) expression to use for Grafana role lookup. Grafana will first evaluate the expression using the GitLab OAuth token. If no role is found, Grafana creates a JSON data with `groups` key that maps to groups obtained from GitLab's `/oauth/userinfo` endpoint, and evaluates the expression using this data. Finally, if a valid role is still not found, the expression is evaluated against the user information retrieved from `api_url/users` endpoint and groups retrieved from `api_url/groups` endpoint. The result of the evaluation should be a valid Grafana role (`Viewer`, `Editor`, `Admin` or `GrafanaAdmin`). For more information on user role mapping, refer to [Configure role mapping]({{< relref "#configure-role-mapping" >}}). |                                      |
+| `role_attribute_strict`      | No       | Set to `true` to deny user login if the Grafana role cannot be extracted using `role_attribute_path`. For more information on user role mapping, refer to [Configure role mapping]({{< relref "#configure-role-mapping" >}}).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     | `false`                              |
+| `allow_assign_grafana_admin` | No       | Set to `true` to enable automatic sync of the Grafana server administrator role. If this option is set to `true` and the result of evaluating `role_attribute_path` for a user is `GrafanaAdmin`, Grafana grants the user the server administrator privileges and organization administrator role. If this option is set to `false` and the result of evaluating `role_attribute_path` for a user is `GrafanaAdmin`, Grafana grants the user only organization administrator role. For more information on user role mapping, refer to [Configure role mapping]({{< relref "#configure-role-mapping" >}}).                                                                                                                                                                                        | `false`                              |
+| `skip_org_role_sync`         | No       | Set to `true` to stop automatically syncing user roles.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           | `false`                              |
+| `allowed_domains`            | No       | List of comma- or space-separated domains. User must belong to at least one domain to log in.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |                                      |
+| `allowed_groups`             | No       | List of comma- or space-separated groups. The user should be a member of at least one group to log in.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |                                      |
+| `tls_skip_verify_insecure`   | No       | If set to `true`, the client accepts any certificate presented by the server and any host name in that certificate. _You should only use this for testing_, because this mode leaves SSL/TLS susceptible to man-in-the-middle attacks.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            | `false`                              |
+| `tls_client_cert`            | No       | The path to the certificate.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |                                      |
+| `tls_client_key`             | No       | The path to the key.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |                                      |
+| `tls_client_ca`              | No       | The path to the trusted certificate authority list.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |                                      |
+| `use_pkce`                   | No       | Set to `true` to use [Proof Key for Code Exchange (PKCE)](https://datatracker.ietf.org/doc/html/rfc7636). Grafana uses the SHA256 based `S256` challenge method and a 128 bytes (base64url encoded) code verifier.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                | `true`                               |
+| `use_refresh_token`          | No       | Set to `true` to use refresh token and check access token expiration. The `accessTokenExpirationCheck` feature toggle should also be enabled to use refresh token.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                | `true`                               |
+
+### Configure a refresh token
 
 > Available in Grafana v9.3 and later versions.
 
@@ -104,169 +107,99 @@ Grafana uses a refresh token to obtain a new access token without requiring the 
 
 By default, GitLab provides a refresh token.
 
-### allowed_groups
+Refresh token fetching and access token expiration check is enabled by default for the GitLab provider since Grafana v10.1.0 if the `accessTokenExpirationCheck` feature toggle is enabled. If you would like to disable access token expiration check then set the `use_refresh_token` configuration value to `false`.
+
+> **Note:** The `accessTokenExpirationCheck` feature toggle will be removed in Grafana v10.2.0 and the `use_refresh_token` configuration value will be used instead for configuring refresh token fetching and access token expiration check.
+
+### Configure allowed groups
 
 To limit access to authenticated users that are members of one or more [GitLab
 groups](https://docs.gitlab.com/ce/user/group/index.html), set `allowed_groups`
-to a comma- or space-separated list of groups. For instance, if you want to
-only give access to members of the `example` group, set
+to a comma- or space-separated list of groups.
+
+GitLab's groups are referenced by the group name. For example, `developers`. To reference a subgroup `frontend`, use `developers/frontend`.
+Note that in GitLab, the group or subgroup name does not always match its display name, especially if the display name contains spaces or special characters.
+Make sure you always use the group or subgroup name as it appears in the URL of the group or subgroup.
+
+## Configure role mapping
+
+Unless `skip_org_role_sync` option is enabled, the user's role will be set to the role retrieved from GitLab upon user login.
+
+The user's role is retrieved using a [JMESPath](http://jmespath.org/examples.html) expression from the `role_attribute_path` configuration option.
+To map the server administrator role, use the `allow_assign_grafana_admin` configuration option.
+Refer to [configuration options]({{< relref "#configuration-options" >}}) for more information.
+
+If no valid role is found, the user is assigned the role specified by [the `auto_assign_org_role` option]({{< relref "../../../configure-grafana#auto_assign_org_role" >}}).
+You can disable this default role assignment by setting `role_attribute_strict = true`.
+This setting denies user access if no role or an invalid role is returned.
+
+To ease configuration of a proper JMESPath expression, go to [JMESPath](http://jmespath.org/) to test and evaluate expressions with custom payloads.
+
+### Role mapping examples
+
+This section includes examples of JMESPath expressions used for role mapping.
+
+#### Map roles using user information from OAuth token
+
+In this example, the user with email `admin@company.com` has been granted the `Admin` role.
+All other users are granted the `Viewer` role.
 
 ```ini
-allowed_groups = example
+role_attribute_path = email=='admin@company.com' && 'Admin' || 'Viewer'
 ```
-
-If you want to also give access to members of the subgroup `bar`, which is in
-the group `foo`, set
-
-```ini
-allowed_groups = example, foo/bar
-```
-
-To put values containing spaces in the list, use the following JSON syntax:
-
-```ini
-allowed_groups = ["Admins", "Software Engineers"]
-```
-
-Note that in GitLab, the group or subgroup name doesn't always match its
-display name, especially if the display name contains spaces or special
-characters. Make sure you always use the group or subgroup name as it appears
-in the URL of the group or subgroup.
-
-Here's a complete example with `allow_sign_up` enabled, with access limited to
-the `example` and `foo/bar` groups. The example also promotes all GitLab Admins to Grafana organization admins:
-
-```ini
-[auth.gitlab]
-enabled = true
-allow_sign_up = true
-auto_login = false
-client_id = GITLAB_APPLICATION_ID
-client_secret = GITLAB_SECRET
-scopes = openid email profile
-auth_url = https://gitlab.com/oauth/authorize
-token_url = https://gitlab.com/oauth/token
-allowed_groups = example, foo/bar
-role_attribute_path = is_admin && 'Admin' || 'Viewer'
-role_attribute_strict = true
-allow_assign_grafana_admin = false
-tls_skip_verify_insecure = false
-tls_client_cert =
-tls_client_key =
-tls_client_ca =
-use_pkce = true
-```
-
-### PKCE
-
-IETF's [RFC 7636](https://datatracker.ietf.org/doc/html/rfc7636)
-introduces "proof key for code exchange" (PKCE) which provides
-additional protection against some forms of authorization code
-interception attacks. PKCE will be required in [OAuth 2.1](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-v2-1-03).
-
-> You can disable PKCE in Grafana by setting `use_pkce` to `false` in the`[auth.gitlab]` section.
-
-```
-use_pkce = true
-```
-
-Grafana always uses the SHA256 based `S256` challenge method and a 128 bytes (base64url encoded) code verifier.
-
-### Configure automatic login
-
-Set `auto_login` option to true to attempt login automatically, skipping the login screen.
-This setting is ignored if multiple auth providers are configured to use auto login.
-
-```
-auto_login = true
-```
-
-### Map roles
-
-You can use GitLab OAuth to map roles. During mapping, Grafana checks for the presence of a role using the [JMESPath](http://jmespath.org/examples.html) specified via the `role_attribute_path` configuration option.
-
-For the path lookup, Grafana uses JSON obtained from querying GitLab's API [`/api/v4/user`](https://docs.gitlab.com/ee/api/users.html#list-current-user-for-normal-users) endpoint and a `groups` key containing all of the user's teams. The result of evaluating the `role_attribute_path` JMESPath expression must be a valid Grafana role, for example, `Viewer`, `Editor` or `Admin`. For more information about roles and permissions in Grafana, refer to [Roles and permissions]({{< relref "../../../../administration/roles-and-permissions" >}}).
-
-{{% admonition type="warning" %}}
-Currently if no organization role mapping is found for a user, Grafana doesn't
-update the user's organization role. This is going to change in Grafana 10. To avoid overriding manually set roles,
-enable the `skip_org_role_sync` option.
-See [Configure Grafana]({{< relref "../../../configure-grafana#authgitlab" >}}) for more information.
-{{% /admonition %}}
-
-On first login, if the`role_attribute_path` property does not return a role, then the user is assigned the role
-specified by [the `auto_assign_org_role` option]({{< relref "../../../configure-grafana#auto_assign_org_role" >}}).
-You can disable this default role assignment by setting `role_attribute_strict = true`.
-It denies user access if no role or an invalid role is returned.
-
-{{% admonition type="warning" %}}
-With Grafana 10, **on every login**, if the`role_attribute_path` property does not return a role,
-then the user is assigned the role specified by
-[the `auto_assign_org_role` option]({{< relref "../../../configure-grafana#auto_assign_org_role" >}}).
-{{% /admonition %}}
-
-An example Query could look like the following:
-
-```ini
-role_attribute_path = is_admin && 'Admin' || 'Viewer'
-```
-
-This allows every GitLab Admin to be an Admin in Grafana.
 
 #### Map roles using groups
 
-Groups can also be used to map roles. Group name (lowercased and unique) is used instead of display name for identifying groups
-
-For instance, if you have a group with display name 'Example-Group' you can use the following snippet to
-ensure those members inherit the role 'Editor'.
+In this example, the user from GitLab group 'example-group' have been granted the `Editor` role.
+All other users are granted the `Viewer` role.
 
 ```ini
 role_attribute_path = contains(groups[*], 'example-group') && 'Editor' || 'Viewer'
 ```
 
-Note: If a match is found in other fields, groups will be ignored.
+#### Map server administrator role
 
-#### Map server administrator privileges
+In this example, the user with email `admin@company.com` has been granted the `Admin` organization role as well as the Grafana server admin role.
+All other users are granted the `Viewer` role.
 
-> Available in Grafana v9.2 and later versions.
-
-If the application role received by Grafana is `GrafanaAdmin`, Grafana grants the user server administrator privileges.  
-This is useful if you want to grant server administrator privileges to a subset of users.  
-Grafana also assigns the user the `Admin` role of the default organization.
-
-The setting `allow_assign_grafana_admin` under `[auth.gitlab]` must be set to `true` for this to work.  
-If the setting is set to `false`, the user is assigned the role of `Admin` of the default organization, but not server administrator privileges.
-
-```ini
-allow_assign_grafana_admin = true
+```bash
+role_attribute_path = email=='admin@company.com' && 'GrafanaAdmin' || 'Viewer'
 ```
 
-Example:
+## Configure team synchronization
 
-```ini
-role_attribute_path = is_admin && 'GrafanaAdmin' || 'Viewer'
-```
+> **Note:** Available in [Grafana Enterprise]({{< relref "../../../../introduction/grafana-enterprise" >}}) and [Grafana Cloud](/docs/grafana-cloud/).
 
-### Team Sync (Enterprise only)
+By using Team Sync, you can map GitLab groups to teams within Grafana. This will automatically assign users to the appropriate teams.
+Teams for each user are synchronized when the user logs in.
 
-> Only available in Grafana Enterprise v6.4+
+GitLab groups are referenced by the group name. For example, `developers`. To reference a subgroup `frontend`, use `developers/frontend`.
+Note that in GitLab, the group or subgroup name does not always match its display name, especially if the display name contains spaces or special characters.
+Make sure you always use the group or subgroup name as it appears in the URL of the group or subgroup.
 
-With Team Sync you can map your GitLab groups to teams in Grafana so that your users will automatically be added to
-the correct teams.
+To learn more about Team Sync, refer to [Configure team sync]({{< relref "../../configure-team-sync" >}}).
 
-Your GitLab groups can be referenced in the same way as `allowed_groups`, like `example` or `foo/bar`.
+## Example of GitLab configuration in Grafana
 
-[Learn more about Team Sync]({{< relref "../../configure-team-sync" >}})
+This section includes an example of GitLab configuration in the Grafana configuration file.
 
-## Skip organization role sync
-
-To prevent the sync of organization roles from GitLab, set `skip_org_role_sync` to `true`. This is useful if you want to manage the organization roles for your users from within Grafana.
-This also impacts the `allow_assign_grafana_admin` setting by not syncing the Grafana admin role from GitLab.
-
-```ini
+```bash
 [auth.gitlab]
-# ..
-# prevents the sync of org roles from Github
-skip_org_role_sync = true
-``
+enabled = true
+allow_sign_up = true
+auto_login = false
+client_id = YOUR_GITLAB_APPLICATION_ID
+client_secret = YOUR_GITLAB_APPLICATION_SECRET
+scopes = openid email profile
+auth_url = https://gitlab.com/oauth/authorize
+token_url = https://gitlab.com/oauth/token
+api_url = https://gitlab.com/api/v4
+role_attribute_path = contains(groups[*], 'example-group') && 'Editor' || 'Viewer'
+role_attribute_strict = false
+allow_assign_grafana_admin = false
+allowed_groups = ["admins", "software engineers", "developers/frontend"]
+allowed_domains = mycompany.com mycompany.org
+tls_skip_verify_insecure = false
+use_pkce = true
+use_refresh_token = true
 ```

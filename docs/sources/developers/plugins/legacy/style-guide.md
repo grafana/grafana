@@ -1,8 +1,12 @@
 ---
-title: Legacy code style guide
 aliases:
   - ../../../plugins/developing/code-styleguide/
 description: Deprecated guide for Angular plugin development.
+labels:
+  products:
+    - enterprise
+    - oss
+title: Legacy code style guide
 ---
 
 # Legacy code style guide

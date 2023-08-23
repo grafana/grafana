@@ -14,8 +14,8 @@ export const STATS = 'stats';
 export const SORT = 'sort';
 export const LIMIT = 'limit';
 export const PARSE = 'parse';
-export const UNMASK = 'unmask'; //make sure we support this one
-export const LOGS_COMMANDS = [DISPLAY, FIELDS, FILTER, STATS, SORT, LIMIT, PARSE, UNMASK];
+export const DEDUP = 'dedup';
+export const LOGS_COMMANDS = [DISPLAY, FIELDS, FILTER, STATS, SORT, LIMIT, PARSE, DEDUP];
 
 export const LOGS_LOGIC_OPERATORS = ['and', 'or', 'not'];
 
@@ -71,9 +71,12 @@ export const LOGS_FUNCTION_OPERATORS = [
   'substr',
   'replace',
   'strcontains',
+  // field
+  'unmask',
 ];
 
-export const LOGS_KEYWORDS = ['like', 'by', 'in', 'desc', 'asc', 'as'];
+export const SORT_DIRECTION_KEYWORDS = ['asc', 'desc'];
+export const LOGS_KEYWORDS = ['like', 'by', 'in', 'as', ...SORT_DIRECTION_KEYWORDS];
 
 export const language: CloudWatchLogsLanguage = {
   defaultToken: 'invalid',

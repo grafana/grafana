@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/db/dbtest"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -50,7 +51,7 @@ func TestFolderPermissionAPIEndpoint(t *testing.T) {
 		folderPermissionsService:    folderPermissions,
 		dashboardPermissionsService: dashboardPermissions,
 		DashboardService:            dashboardService,
-		AccessControl:               accesscontrolmock.New().WithDisabled(),
+		AccessControl:               ac,
 	}
 
 	t.Run("Given folder not exists", func(t *testing.T) {
@@ -135,7 +136,6 @@ func TestFolderPermissionAPIEndpoint(t *testing.T) {
 		})
 
 		folderService.ExpectedFolder = &folder.Folder{ID: 1, UID: "uid", Title: "Folder"}
-		dashboardStore.On("UpdateDashboardACL", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 		mockSQLStore := dbtest.NewFakeDB()
 
 		loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/folders/uid/permissions", "/api/folders/:uid/permissions", org.RoleAdmin, func(sc *scenarioContext) {
@@ -157,6 +157,7 @@ func TestFolderPermissionAPIEndpoint(t *testing.T) {
 			},
 		}
 
+		folderPermissions.On("SetPermissions", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]accesscontrol.ResourcePermission{}, nil).Once()
 		updateFolderPermissionScenario(t, updatePermissionContext{
 			desc:         "When calling POST on",
 			url:          "/api/folders/uid/permissions",
@@ -167,14 +168,12 @@ func TestFolderPermissionAPIEndpoint(t *testing.T) {
 				assert.Equal(t, 200, sc.resp.Code)
 
 				var resp struct {
-					ID    int64
-					Title string
+					Message string
 				}
 				err := json.Unmarshal(sc.resp.Body.Bytes(), &resp)
 				require.NoError(t, err)
 
-				assert.Equal(t, int64(1), resp.ID)
-				assert.Equal(t, "Folder", resp.Title)
+				assert.Equal(t, "Folder permissions updated", resp.Message)
 			},
 		}, hs)
 	})
@@ -299,12 +298,7 @@ func TestFolderPermissionAPIEndpoint(t *testing.T) {
 			},
 		})
 
-		var gotItems []*dashboards.DashboardACL
-
 		folderService.ExpectedFolder = &folder.Folder{ID: 1, UID: "uid", Title: "Folder"}
-		dashboardStore.On("UpdateDashboardACL", mock.Anything, mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
-			gotItems = args.Get(2).([]*dashboards.DashboardACL)
-		}).Return(nil).Once()
 
 		var resp []*dashboards.DashboardACLInfoDTO
 		mockSQLStore := dbtest.NewFakeDB()
@@ -335,6 +329,7 @@ func TestFolderPermissionAPIEndpoint(t *testing.T) {
 		}
 		assert.Len(t, cmd.Items, 3)
 
+		folderPermissions.On("SetPermissions", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]accesscontrol.ResourcePermission{}, nil).Once()
 		updateFolderPermissionScenario(t, updatePermissionContext{
 			desc:         "When calling POST on",
 			url:          "/api/folders/uid/permissions",
@@ -343,7 +338,6 @@ func TestFolderPermissionAPIEndpoint(t *testing.T) {
 			fn: func(sc *scenarioContext) {
 				sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
 				assert.Equal(t, 200, sc.resp.Code)
-				assert.Len(t, gotItems, 4)
 			},
 		}, hs)
 	})

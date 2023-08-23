@@ -1,5 +1,5 @@
 import { chain, difference, once } from 'lodash';
-import LRU from 'lru-cache';
+import { LRUCache } from 'lru-cache';
 import Prism from 'prismjs';
 import { Value } from 'slate';
 
@@ -121,8 +121,8 @@ export default class PromQlLanguageProvider extends LanguageProvider {
    *  not account for different size of a response. If that is needed a `length` function can be added in the options.
    *  10 as a max size is totally arbitrary right now.
    */
-  private labelsCache = new LRU<string, Record<string, string[]>>({ max: 10 });
-  private labelValuesCache = new LRU<string, string[]>({ max: 10 });
+  private labelsCache = new LRUCache<string, Record<string, string[]>>({ max: 10 });
+  private labelValuesCache = new LRUCache<string, string[]>({ max: 10 });
   constructor(datasource: PrometheusDatasource, initialValues?: Partial<PromQlLanguageProvider>) {
     super();
 
@@ -567,10 +567,11 @@ export default class PromQlLanguageProvider extends LanguageProvider {
    */
   fetchSeriesValuesWithMatch = async (name: string, match?: string): Promise<string[]> => {
     const interpolatedName = name ? this.datasource.interpolateString(name) : null;
+    const interpolatedMatch = match ? this.datasource.interpolateString(match) : null;
     const range = this.datasource.getAdjustedInterval();
     const urlParams = {
       ...range,
-      ...(match && { 'match[]': match }),
+      ...(interpolatedMatch && { 'match[]': interpolatedMatch }),
     };
 
     // @todo clean up prometheusResourceBrowserCache feature flag

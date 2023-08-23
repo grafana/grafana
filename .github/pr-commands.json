@@ -187,7 +187,7 @@
     "type": "author",
     "name": "pr/external",
     "notMemberOf": { "org": "grafana" },
-    "ignoreList": ["renovate[bot]","dependabot[bot]"],
+    "ignoreList": ["renovate[bot]","dependabot[bot]","grafana-delivery-bot[bot]","grafanabot"],
     "action": "updateLabel",
     "addLabel": "pr/external"
   },

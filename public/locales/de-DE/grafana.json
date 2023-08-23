@@ -1,5 +1,5 @@
 {
-  "_comment": "Do not manually edit this file. Translations must be made in Crowdin which will sync them back into this file",
+  "_comment": "",
   "access-control": {
     "add-permission": {
       "role-label": "",
@@ -39,6 +39,18 @@
       "moving": "",
       "new-folder-name-required-phrase": ""
     },
+    "counts": {
+      "alertRule__one": "",
+      "alertRule__other": "",
+      "dashboard__one": "",
+      "dashboard__other": "",
+      "folder__one": "",
+      "folder__other": "",
+      "libraryPanel__one": "",
+      "libraryPanel__other": "",
+      "total__one": "",
+      "total__other": ""
+    },
     "dashboards-tree": {
       "name-column": "",
       "tags-column": ""
@@ -48,6 +60,14 @@
       "folder-actions": "",
       "manage-permissions": "",
       "move": ""
+    },
+    "folder-picker": {
+      "accessible-label": "",
+      "button-label": "",
+      "empty-message": "",
+      "error-title": "",
+      "search-placeholder": "",
+      "unknown-error": ""
     },
     "manage-folder-nav": {
       "alert-rules": "",
@@ -108,7 +128,8 @@
       "import": "Aus Bibliothek importieren",
       "paste-panel": "Panel einfügen",
       "row": "Zeile",
-      "visualization": "Visualisierung"
+      "visualization": "Visualisierung",
+      "widget": ""
     },
     "empty": {
       "add-import-body": "Visualisierungen importieren, die mit anderen Dashboards geteilt werden.",
@@ -119,7 +140,10 @@
       "add-row-header": "Eine Zeile hinzufügen",
       "add-visualization-body": "Wählen Sie eine Datenquelle aus und visualisieren und fragen Sie dann Ihre Daten mit Diagrammen, Statistiken und Tabellen ab oder erstellen Sie Listen, Markierungen und andere Widgets.",
       "add-visualization-button": "Visualisierung hinzufügen",
-      "add-visualization-header": "Starten Sie Ihr neues Dashboard, indem Sie eine Visualisierung hinzufügen"
+      "add-visualization-header": "Starten Sie Ihr neues Dashboard, indem Sie eine Visualisierung hinzufügen",
+      "add-widget-body": "",
+      "add-widget-button": "",
+      "add-widget-header": ""
     },
     "inspect": {
       "data-tab": "Daten",
@@ -230,6 +254,7 @@
     "error": {
       "blocked": "",
       "invalid-user-or-password": "",
+      "title": "",
       "unknown": ""
     }
   },
@@ -285,12 +310,21 @@
       "subtitle": "Verwalte und erstelle API-Schlüssel, die für die Interaktion mit HTTP-APIs von Grafana verwendet werden",
       "title": "API-Schlüssel"
     },
+    "application": {
+      "title": ""
+    },
     "apps": {
       "subtitle": "App-Plug-ins, die das Grafana-Erlebnis erweitern",
       "title": "Apps"
     },
+    "authentication": {
+      "title": ""
+    },
     "config": {
       "title": "Verwaltung"
+    },
+    "connect-data": {
+      "title": ""
     },
     "connections": {
       "subtitle": "",
@@ -327,8 +361,14 @@
       "subtitle": "Füge Datenquellen hinzu und konfiguriere sie",
       "title": "Datenquellen"
     },
+    "detect": {
+      "title": ""
+    },
     "explore": {
       "title": "Entdecken"
+    },
+    "frontend": {
+      "title": ""
     },
     "global-orgs": {
       "subtitle": "Isolierte Instanzen von Grafana auf dem gleichen Server",
@@ -337,6 +377,9 @@
     "global-users": {
       "subtitle": "Benutzer in Grafana verwalten",
       "title": "Benutzer"
+    },
+    "grafana-quaderno": {
+      "title": ""
     },
     "help": {
       "title": "Hilfe"
@@ -348,9 +391,21 @@
     "home": {
       "title": "Home"
     },
+    "incidents": {
+      "title": ""
+    },
+    "infrastructure": {
+      "title": ""
+    },
+    "kubernetes": {
+      "title": ""
+    },
     "library-panels": {
       "subtitle": "Wiederverwendbare Panels, die zu mehreren Dashboards hinzugefügt werden können",
       "title": "Bibliotheks-Panels"
+    },
+    "machine-learning": {
+      "title": ""
     },
     "manage-folder": {
       "subtitle": "Ordner-Dashboards und Berechtigungen verwalten"
@@ -368,9 +423,18 @@
     "new-folder": {
       "title": "Neuer Ordner"
     },
+    "observability": {
+      "title": ""
+    },
+    "oncall": {
+      "title": ""
+    },
     "org-settings": {
       "subtitle": "Verwalte Einstellungen in der gesamten Organisation",
       "title": "Standardeinstellungen"
+    },
+    "performance-testing": {
+      "title": ""
     },
     "playlists": {
       "subtitle": "Gruppen von Dashboards, die in einer bestimmten Reihenfolge angezeigt werden",
@@ -389,8 +453,17 @@
     "profile/settings": {
       "title": "Profil"
     },
+    "profiles": {
+      "title": ""
+    },
     "public": {
       "title": "Öffentliche Dashboards"
+    },
+    "recorded-queries": {
+      "title": ""
+    },
+    "reporting": {
+      "title": ""
     },
     "scenes": {
       "title": "Szenen"
@@ -412,6 +485,9 @@
     "sign-out": {
       "title": "Abmelden"
     },
+    "slo": {
+      "title": ""
+    },
     "snapshots": {
       "subtitle": "Interaktive, öffentlich verfügbare Point-in-Time-Darstellungen von Dashboards",
       "title": "Schnappschüsse"
@@ -422,6 +498,9 @@
     "starred-empty": {
       "title": "Deine hervorgehobenen Dashboards werden hier angezeigt"
     },
+    "statistics-and-licensing": {
+      "title": ""
+    },
     "storage": {
       "subtitle": "Dateispeicher verwalten",
       "title": "Speicher"
@@ -429,6 +508,9 @@
     "support-bundles": {
       "subtitle": "Support-Bundles herunterladen",
       "title": "Support-Bundles"
+    },
+    "synthetics": {
+      "title": ""
     },
     "teams": {
       "subtitle": "Gruppen von Benutzern mit gemeinsamen Dashboards und Benachrichtigungen",

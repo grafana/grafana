@@ -11,7 +11,7 @@
 
 import * as common from '@grafana/schema';
 
-export const pluginVersion = "10.1.0-pre";
+export const pluginVersion = "10.2.0-pre";
 
 export interface TempoQuery extends common.DataQuery {
   filters: Array<TraceqlFilter>;
@@ -20,11 +20,11 @@ export interface TempoQuery extends common.DataQuery {
    */
   limit?: number;
   /**
-   * Define the maximum duration to select traces. Use duration format, for example: 1.2s, 100ms
+   * @deprecated Define the maximum duration to select traces. Use duration format, for example: 1.2s, 100ms
    */
   maxDuration?: string;
   /**
-   * Define the minimum duration to select traces. Use duration format, for example: 1.2s, 100ms
+   * @deprecated Define the minimum duration to select traces. Use duration format, for example: 1.2s, 100ms
    */
   minDuration?: string;
   /**
@@ -32,19 +32,23 @@ export interface TempoQuery extends common.DataQuery {
    */
   query: string;
   /**
-   * Logfmt query to filter traces by their tags. Example: http.status_code=200 error=true
+   * @deprecated Logfmt query to filter traces by their tags. Example: http.status_code=200 error=true
    */
   search?: string;
+  /**
+   * Use service.namespace in addition to service.name to uniquely identify a service.
+   */
+  serviceMapIncludeNamespace?: boolean;
   /**
    * Filters to be included in a PromQL query to select data for the service graph. Example: {client="app",service="app"}
    */
   serviceMapQuery?: string;
   /**
-   * Query traces by service name
+   * @deprecated Query traces by service name
    */
   serviceName?: string;
   /**
-   * Query traces by span name
+   * @deprecated Query traces by span name
    */
   spanName?: string;
 }
@@ -56,7 +60,17 @@ export const defaultTempoQuery: Partial<TempoQuery> = {
 /**
  * search = Loki search, nativeSearch = Tempo search for backwards compatibility
  */
-export type TempoQueryType = ('traceql' | 'traceqlSearch' | 'search' | 'serviceMap' | 'upload' | 'nativeSearch' | 'clear');
+export type TempoQueryType = ('traceql' | 'traceqlSearch' | 'search' | 'serviceMap' | 'upload' | 'nativeSearch' | 'traceId' | 'clear');
+
+/**
+ * The state of the TraceQL streaming search query
+ */
+export enum SearchStreamingState {
+  Done = 'done',
+  Error = 'error',
+  Pending = 'pending',
+  Streaming = 'streaming',
+}
 
 /**
  * static fields are pre-set in the UI, dynamic fields are added by the user

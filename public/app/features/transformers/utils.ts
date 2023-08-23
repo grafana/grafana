@@ -9,7 +9,7 @@ export function useAllFieldNamesFromDataFrames(input: DataFrame[]): string[] {
     }
 
     return Object.keys(
-      input.reduce((names, frame) => {
+      input.reduce<Record<string, boolean>>((names, frame) => {
         if (!frame || !Array.isArray(frame.fields)) {
           return names;
         }
@@ -19,7 +19,7 @@ export function useAllFieldNamesFromDataFrames(input: DataFrame[]): string[] {
           names[t] = true;
           return names;
         }, names);
-      }, {} as Record<string, boolean>)
+      }, {})
     );
   }, [input]);
 }

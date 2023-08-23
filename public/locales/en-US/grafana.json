@@ -1,5 +1,5 @@
 {
-  "_comment": "Do not manually edit this file, or update these source phrases in Crowdin. The source of truth for English strings are in the code source",
+  "_comment": "This file is the source of truth for English strings. Edit this to change plurals and other phrases for the UI.",
   "access-control": {
     "add-permission": {
       "role-label": "Role",
@@ -39,6 +39,18 @@
       "moving": "Moving...",
       "new-folder-name-required-phrase": "Folder name is required."
     },
+    "counts": {
+      "alertRule__one": "{{count}} alert rule",
+      "alertRule__other": "{{count}} alert rules",
+      "dashboard__one": "{{count}} dashboard",
+      "dashboard__other": "{{count}} dashboards",
+      "folder__one": "{{count}} folder",
+      "folder__other": "{{count}} folders",
+      "libraryPanel__one": "{{count}} library panel",
+      "libraryPanel__other": "{{count}} library panels",
+      "total__one": "{{count}} item",
+      "total__other": "{{count}} items"
+    },
     "dashboards-tree": {
       "name-column": "Name",
       "tags-column": "Tags"
@@ -48,6 +60,14 @@
       "folder-actions": "Folder actions",
       "manage-permissions": "Manage permissions",
       "move": "Move"
+    },
+    "folder-picker": {
+      "accessible-label": "Select folder: {{ label }} currently selected",
+      "button-label": "Select folder",
+      "empty-message": "No folders found",
+      "error-title": "Error loading folders",
+      "search-placeholder": "Search folders",
+      "unknown-error": "Unknown error"
     },
     "manage-folder-nav": {
       "alert-rules": "Alert rules",
@@ -108,7 +128,8 @@
       "import": "Import from library",
       "paste-panel": "Paste panel",
       "row": "Row",
-      "visualization": "Visualization"
+      "visualization": "Visualization",
+      "widget": "Widget"
     },
     "empty": {
       "add-import-body": "Import visualizations that are shared with other dashboards.",
@@ -119,7 +140,10 @@
       "add-row-header": "Add a row",
       "add-visualization-body": "Select a data source and then query and visualize your data with charts, stats and tables or create lists, markdowns and other widgets.",
       "add-visualization-button": "Add visualization",
-      "add-visualization-header": "Start your new dashboard by adding a visualization"
+      "add-visualization-header": "Start your new dashboard by adding a visualization",
+      "add-widget-body": "Create lists, markdowns and other widgets",
+      "add-widget-button": "Add widget",
+      "add-widget-header": "Add a widget"
     },
     "inspect": {
       "data-tab": "Data",
@@ -230,6 +254,7 @@
     "error": {
       "blocked": "You have exceeded the number of login attempts for this user. Please try again later.",
       "invalid-user-or-password": "Invalid username or password",
+      "title": "Login failed",
       "unknown": "Unknown error occurred"
     }
   },
@@ -285,12 +310,21 @@
       "subtitle": "Manage and create API keys that are used to interact with Grafana HTTP APIs",
       "title": "API keys"
     },
+    "application": {
+      "title": "Application (preview)"
+    },
     "apps": {
       "subtitle": "App plugins that extend the Grafana experience",
       "title": "Apps"
     },
+    "authentication": {
+      "title": "Authentication"
+    },
     "config": {
       "title": "Administration"
+    },
+    "connect-data": {
+      "title": "Connect data"
     },
     "connections": {
       "subtitle": "Browse and create new connections",
@@ -327,8 +361,14 @@
       "subtitle": "Add and configure data sources",
       "title": "Data sources"
     },
+    "detect": {
+      "title": "Detect"
+    },
     "explore": {
       "title": "Explore"
+    },
+    "frontend": {
+      "title": "Frontend"
     },
     "global-orgs": {
       "subtitle": "Isolated instances of Grafana running on the same server",
@@ -337,6 +377,9 @@
     "global-users": {
       "subtitle": "Manage users in Grafana",
       "title": "Users"
+    },
+    "grafana-quaderno": {
+      "title": "Grafana Quaderno"
     },
     "help": {
       "title": "Help"
@@ -348,9 +391,21 @@
     "home": {
       "title": "Home"
     },
+    "incidents": {
+      "title": "Incidents"
+    },
+    "infrastructure": {
+      "title": "Infrastructure"
+    },
+    "kubernetes": {
+      "title": "Kubernetes"
+    },
     "library-panels": {
       "subtitle": "Reusable panels that can be added to multiple dashboards",
       "title": "Library panels"
+    },
+    "machine-learning": {
+      "title": "Machine learning"
     },
     "manage-folder": {
       "subtitle": "Manage folder dashboards and permissions"
@@ -368,9 +423,18 @@
     "new-folder": {
       "title": "New folder"
     },
+    "observability": {
+      "title": "Observability"
+    },
+    "oncall": {
+      "title": "OnCall"
+    },
     "org-settings": {
       "subtitle": "Manage preferences across an organization",
       "title": "Default preferences"
+    },
+    "performance-testing": {
+      "title": "Performance testing"
     },
     "playlists": {
       "subtitle": "Groups of dashboards that are displayed in a sequence",
@@ -389,8 +453,17 @@
     "profile/settings": {
       "title": "Profile"
     },
+    "profiles": {
+      "title": "Profiles"
+    },
     "public": {
       "title": "Public dashboards"
+    },
+    "recorded-queries": {
+      "title": "Recorded queries"
+    },
+    "reporting": {
+      "title": "Reporting"
     },
     "scenes": {
       "title": "Scenes"
@@ -412,6 +485,9 @@
     "sign-out": {
       "title": "Sign out"
     },
+    "slo": {
+      "title": "SLO"
+    },
     "snapshots": {
       "subtitle": "Interactive, publically available, point-in-time representations of dashboards",
       "title": "Snapshots"
@@ -422,6 +498,9 @@
     "starred-empty": {
       "title": "Your starred dashboards will appear here"
     },
+    "statistics-and-licensing": {
+      "title": "Statistics and licensing"
+    },
     "storage": {
       "subtitle": "Manage file storage",
       "title": "Storage"
@@ -429,6 +508,9 @@
     "support-bundles": {
       "subtitle": "Download support bundles",
       "title": "Support bundles"
+    },
+    "synthetics": {
+      "title": "Synthetics"
     },
     "teams": {
       "subtitle": "Groups of users that have common dashboard and permission needs",

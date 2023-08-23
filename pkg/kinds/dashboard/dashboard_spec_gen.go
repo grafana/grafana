@@ -612,13 +612,13 @@ type RangeMap struct {
 	// Range to match against and the result to apply when the value is within the range
 	Options struct {
 		// Min value of the range. It can be null which means -Infinity
-		From *float32 `json:"from"`
+		From *float64 `json:"from"`
 
 		// Result used as replacement with text and color when the value matches
 		Result ValueMappingResult `json:"result"`
 
 		// Max value of the range. It can be null which means +Infinity
-		To *float32 `json:"to"`
+		To *float64 `json:"to"`
 	} `json:"options"`
 	Type RangeMapType `json:"type"`
 }
@@ -740,7 +740,7 @@ type Spec struct {
 
 	// Unique numeric identifier for the dashboard.
 	// `id` is internal to a specific Grafana instance. `uid` should be used to identify a dashboard across Grafana instances.
-	Id *int64 `json:"id,omitempty"`
+	Id *int64 `json:"id"`
 
 	// Links with references to other dashboards or external websites.
 	Links []Link `json:"links,omitempty"`

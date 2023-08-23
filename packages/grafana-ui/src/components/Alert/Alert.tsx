@@ -101,6 +101,7 @@ Alert.displayName = 'Alert';
 export const getIconFromSeverity = (severity: AlertVariant): IconName => {
   switch (severity) {
     case 'error':
+      return 'exclamation-circle';
     case 'warning':
       return 'exclamation-triangle';
     case 'info':
@@ -119,70 +120,71 @@ const getStyles = (
   topSpacing?: number
 ) => {
   const color = theme.colors[severity];
-  const borderRadius = theme.shape.borderRadius();
+  const borderRadius = theme.shape.radius.default;
   const borderColor = tinycolor2(color.border).setAlpha(0.2).toString();
 
   return {
-    alert: css`
-      flex-grow: 1;
-      position: relative;
-      border-radius: ${borderRadius};
-      display: flex;
-      flex-direction: row;
-      align-items: stretch;
-      background: ${color.transparent};
-      box-shadow: ${elevated ? theme.shadows.z3 : 'none'};
-      padding: ${theme.spacing(1, 2)};
-      border: 1px solid ${borderColor};
-      margin-bottom: ${theme.spacing(bottomSpacing ?? 2)};
-      margin-top: ${theme.spacing(topSpacing ?? 0)};
+    alert: css({
+      label: 'alert',
+      flexGrow: 1,
+      position: 'relative',
+      borderRadius,
+      display: 'flex',
+      flexDirection: 'row',
+      alignItems: 'stretch',
+      background: color.transparent,
+      boxShadow: elevated ? theme.shadows.z3 : 'none',
+      padding: theme.spacing(1, 2),
+      border: `1px solid ${borderColor}`,
+      marginBottom: theme.spacing(bottomSpacing ?? 2),
+      marginTop: theme.spacing(topSpacing ?? 0),
 
-      &:before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        bottom: 0;
-        right: 0;
-        background: ${theme.colors.background.primary};
-        z-index: -1;
-      }
-    `,
-    icon: css`
-      padding: ${theme.spacing(1, 2, 0, 0)};
-      color: ${color.text};
-      display: flex;
-    `,
+      '&:before': {
+        content: '""',
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        bottom: 0,
+        right: 0,
+        background: theme.colors.background.primary,
+        zIndex: -1,
+      },
+    }),
+    icon: css({
+      padding: theme.spacing(1, 2, 0, 0),
+      color: color.text,
+      display: 'flex',
+    }),
     title: css({
       fontWeight: theme.typography.fontWeightMedium,
     }),
-    body: css`
-      padding: ${theme.spacing(1, 0)};
-      flex-grow: 1;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      overflow-wrap: break-word;
-      word-break: break-word;
-    `,
-    content: css`
-      padding-top: ${hasTitle ? theme.spacing(0.5) : 0};
-      max-height: 50vh;
-      overflow-y: auto;
-    `,
-    buttonWrapper: css`
-      margin-left: ${theme.spacing(1)};
-      display: flex;
-      align-items: center;
-      align-self: center;
-    `,
-    close: css`
-      position: relative;
-      color: ${theme.colors.text.secondary};
-      background: none;
-      display: flex;
-      top: -6px;
-      right: -14px;
-    `,
+    body: css({
+      padding: theme.spacing(1, 0),
+      flexGrow: 1,
+      display: 'flex',
+      flexDirection: 'column',
+      justifyContent: 'center',
+      overflowWrap: 'break-word',
+      wordBreak: 'break-word',
+    }),
+    content: css({
+      paddingTop: hasTitle ? theme.spacing(0.5) : 0,
+      maxHeight: '50vh',
+      overflowY: 'auto',
+    }),
+    buttonWrapper: css({
+      marginLeft: theme.spacing(1),
+      display: 'flex',
+      alignItems: 'center',
+      alignSelf: 'center',
+    }),
+    close: css({
+      position: 'relative',
+      color: theme.colors.text.secondary,
+      background: 'none',
+      display: 'flex',
+      top: '-6px',
+      right: '-14px',
+    }),
   };
 };

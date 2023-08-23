@@ -6,20 +6,24 @@ import { Link } from 'react-router-dom';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
-import { Badge, Button, Dropdown, getTagColorsFromName, Icon, Menu, Tooltip, useStyles2 } from '@grafana/ui';
-import { Span } from '@grafana/ui/src/unstable';
+import { Badge, Button, Dropdown, getTagColorsFromName, Icon, Menu, Tooltip, useStyles2, Text } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
+import ConditionalWrap from 'app/features/alerting/components/ConditionalWrap';
 import { RouteWithID, Receiver, ObjectMatcher, AlertmanagerGroup } from 'app/plugins/datasource/alertmanager/types';
 import { ReceiversState } from 'app/types';
 
+import { isOrgAdmin } from '../../../../plugins/admin/permissions';
 import { INTEGRATION_ICONS } from '../../types/contact-points';
 import { getNotificationsPermissions } from '../../utils/access-control';
+import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { normalizeMatchers } from '../../utils/matchers';
 import { createContactPointLink, createMuteTimingLink } from '../../utils/misc';
 import { getInheritedProperties, InhertitableProperties } from '../../utils/notification-policies';
+import { createUrl } from '../../utils/url';
 import { HoverCard } from '../HoverCard';
 import { Label } from '../Label';
 import { MetaText } from '../MetaText';
+import { ProvisioningBadge } from '../Provisioning';
 import { Spacer } from '../Spacer';
 import { Strong } from '../Strong';
 
@@ -31,6 +35,7 @@ interface PolicyComponentProps {
   alertGroups?: AlertmanagerGroup[];
   contactPointsState?: ReceiversState;
   readOnly?: boolean;
+  provisioned?: boolean;
   inheritedProperties?: Partial<InhertitableProperties>;
   routesMatchingFilters?: RouteWithID[];
   // routeAlertGroupsMap?: Map<string, AlertmanagerGroup[]>;
@@ -50,6 +55,7 @@ const Policy: FC<PolicyComponentProps> = ({
   receivers = [],
   contactPointsState,
   readOnly = false,
+  provisioned = false,
   alertGroups = [],
   alertManagerSourceName,
   currentRoute,
@@ -68,6 +74,9 @@ const Policy: FC<PolicyComponentProps> = ({
   const permissions = getNotificationsPermissions(alertManagerSourceName);
   const canEditRoutes = contextSrv.hasPermission(permissions.update);
   const canDeleteRoutes = contextSrv.hasPermission(permissions.delete);
+  const canReadProvisioning =
+    contextSrv.hasAccess(permissions.provisioning.read, isOrgAdmin()) ||
+    contextSrv.hasPermission(permissions.provisioning.readSecrets);
 
   const contactPoint = currentRoute.receiver;
   const continueMatching = currentRoute.continue ?? false;
@@ -118,6 +127,9 @@ const Policy: FC<PolicyComponentProps> = ({
     ? sumBy(matchingAlertGroups, (group) => group.alerts.length)
     : undefined;
 
+  const isGrafanaAM = alertManagerSourceName === GRAFANA_RULES_SOURCE_NAME;
+  const showExport = isGrafanaAM && isDefaultPolicy && canReadProvisioning;
+
   // TODO dead branch detection, warnings for all sort of configs that won't work or will never be activated
   return (
     <Stack direction="column" gap={1.5}>
@@ -143,35 +155,60 @@ const Policy: FC<PolicyComponentProps> = ({
                 <Spacer />
                 {/* TODO maybe we should move errors to the gutter instead? */}
                 {errors.length > 0 && <Errors errors={errors} />}
-                {!readOnly && (
+                {provisioned && <ProvisioningBadge />}
+                {readOnly && !showExport ? null : (
                   <Stack direction="row" gap={0.5}>
-                    <Button
-                      variant="secondary"
-                      icon="plus"
-                      size="sm"
-                      onClick={() => onAddPolicy(currentRoute)}
-                      type="button"
-                    >
-                      New nested policy
-                    </Button>
+                    {!readOnly && (
+                      <ConditionalWrap shouldWrap={provisioned} wrap={ProvisionedTooltip}>
+                        <Button
+                          variant="secondary"
+                          icon="plus"
+                          size="sm"
+                          onClick={() => onAddPolicy(currentRoute)}
+                          disabled={provisioned}
+                          type="button"
+                        >
+                          New nested policy
+                        </Button>
+                      </ConditionalWrap>
+                    )}
+
                     <Dropdown
                       overlay={
                         <Menu>
-                          <Menu.Item
-                            icon="edit"
-                            disabled={!isEditable}
-                            label="Edit"
-                            onClick={() => onEditPolicy(currentRoute, isDefaultPolicy)}
-                          />
-                          {isDeletable && (
+                          {!readOnly && (
+                            <ConditionalWrap shouldWrap={provisioned} wrap={ProvisionedTooltip}>
+                              <Menu.Item
+                                icon="edit"
+                                disabled={!isEditable || provisioned}
+                                label="Edit"
+                                onClick={() => onEditPolicy(currentRoute, isDefaultPolicy)}
+                              />
+                            </ConditionalWrap>
+                          )}
+                          {showExport && (
+                            <Menu.Item
+                              icon="download-alt"
+                              label="Export"
+                              url={createUrl('/api/v1/provisioning/policies/export', {
+                                download: 'true',
+                                format: 'yaml',
+                              })}
+                              target="_blank"
+                            />
+                          )}
+                          {!readOnly && isDeletable && (
                             <>
                               <Menu.Divider />
-                              <Menu.Item
-                                destructive
-                                icon="trash-alt"
-                                label="Delete"
-                                onClick={() => onDeletePolicy(currentRoute)}
-                              />
+                              <ConditionalWrap shouldWrap={provisioned} wrap={ProvisionedTooltip}>
+                                <Menu.Item
+                                  destructive
+                                  icon="trash-alt"
+                                  disabled={!isDeletable || provisioned}
+                                  label="Delete"
+                                  onClick={() => onDeletePolicy(currentRoute)}
+                                />
+                              </ConditionalWrap>
                             </>
                           )}
                         </Menu>
@@ -270,7 +307,7 @@ const Policy: FC<PolicyComponentProps> = ({
               currentRoute={child}
               receivers={receivers}
               contactPointsState={contactPointsState}
-              readOnly={readOnly}
+              readOnly={readOnly || provisioned}
               inheritedProperties={childInheritedProperties}
               onAddPolicy={onAddPolicy}
               onEditPolicy={onEditPolicy}
@@ -287,6 +324,12 @@ const Policy: FC<PolicyComponentProps> = ({
     </Stack>
   );
 };
+
+const ProvisionedTooltip = (children: ReactNode) => (
+  <Tooltip content="Provisioned items cannot be edited in the UI" placement="top">
+    <span>{children}</span>
+  </Tooltip>
+);
 
 const Errors: FC<{ errors: React.ReactNode[] }> = ({ errors }) => (
   <HoverCard
@@ -536,17 +579,17 @@ const routePropertyToValue = (
 
   if (isNotGrouping) {
     return (
-      <Span variant="bodySmall" color="secondary">
+      <Text variant="bodySmall" color="secondary">
         Not grouping
-      </Span>
+      </Text>
     );
   }
 
   if (isSingleGroup) {
     return (
-      <Span variant="bodySmall" color="secondary">
+      <Text variant="bodySmall" color="secondary">
         Single group
-      </Span>
+      </Text>
     );
   }
 
@@ -565,7 +608,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
         font-size: ${theme.typography.bodySmall.fontSize};
 
         border: solid 1px ${borderColor};
-        border-radius: ${theme.shape.borderRadius(1)};
+        border-radius: ${theme.shape.radius.default};
       `,
     };
   },
@@ -598,7 +641,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     position: relative;
     background: ${theme.colors.background.secondary};
 
-    border-radius: ${theme.shape.borderRadius(1)};
+    border-radius: ${theme.shape.radius.default};
     border: solid 1px ${theme.colors.border.weak};
 
     ${hasFocus &&
@@ -632,7 +675,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     text-align: center;
 
     border: solid 1px ${theme.colors.border.weak};
-    border-radius: ${theme.shape.borderRadius(1)};
+    border-radius: ${theme.shape.radius.default};
 
     padding: 0;
   `,

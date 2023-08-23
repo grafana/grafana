@@ -1,11 +1,11 @@
 import { css } from '@emotion/css';
-import produce from 'immer';
+import { produce } from 'immer';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useObservable, useToggle } from 'react-use';
 
 import { GrafanaTheme2, LoadingState, PanelData, RelativeTimeRange } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
-import { config } from '@grafana/runtime';
+import { config, isFetchError } from '@grafana/runtime';
 import { Alert, Button, Collapse, Icon, IconButton, LoadingPlaceholder, useStyles2, VerticalGroup } from '@grafana/ui';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 
@@ -44,9 +44,16 @@ export function RuleViewer({ match }: RuleViewerProps) {
   const [expandQuery, setExpandQuery] = useToggle(false);
 
   const { id } = match.params;
-  const identifier = ruleId.tryParse(id, true);
+  const identifier = useMemo(() => {
+    if (!id) {
+      throw new Error('Rule ID is required');
+    }
 
-  const { loading, error, result: rule } = useCombinedRule(identifier, identifier?.ruleSourceName);
+    return ruleId.parse(id, true);
+  }, [id]);
+
+  const { loading, error, result: rule } = useCombinedRule({ ruleIdentifier: identifier });
+
   const runner = useMemo(() => new AlertingQueryRunner(), []);
   const data = useObservable(runner.get());
   const queries = useMemo(() => alertRuleToQueries(rule), [rule]);
@@ -120,9 +127,10 @@ export function RuleViewer({ match }: RuleViewerProps) {
     return (
       <Alert title={errorTitle}>
         <details className={styles.errorMessage}>
-          {error?.message ?? errorMessage}
+          {isFetchError(error) ? error.message : errorMessage}
           <br />
-          {!!error?.stack && error.stack}
+          {/* TODO  Fix typescript */}
+          {/* {error && error?.stack} */}
         </details>
       </Alert>
     );
@@ -171,7 +179,7 @@ export function RuleViewer({ match }: RuleViewerProps) {
             )}
             {!!rule.labels && !!Object.keys(rule.labels).length && (
               <DetailsField label="Labels" horizontal={true}>
-                <AlertLabels labels={rule.labels} className={styles.labels} />
+                <AlertLabels labels={rule.labels} />
               </DetailsField>
             )}
             <RuleDetailsExpression rulesSource={rulesSource} rule={rule} annotations={annotations} />
@@ -268,7 +276,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     collapse: css`
       margin-top: ${theme.spacing(2)};
       border-color: ${theme.colors.border.weak};
-      border-radius: ${theme.shape.borderRadius()};
+      border-radius: ${theme.shape.radius.default};
     `,
     queriesTitle: css`
       padding: ${theme.spacing(2, 0.5)};
@@ -297,6 +305,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     `,
     leftSide: css`
       flex: 1;
+      overflow: hidden;
     `,
     rightSide: css`
       padding-right: ${theme.spacing(3)};

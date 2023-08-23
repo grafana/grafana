@@ -9,6 +9,10 @@ keywords:
   - guide
   - rules
   - troubleshoot
+labels:
+  products:
+    - enterprise
+    - oss
 title: Troubleshoot alerts
 weight: 500
 ---

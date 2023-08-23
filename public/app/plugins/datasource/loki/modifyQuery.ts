@@ -16,6 +16,7 @@ import {
   Selector,
   UnwrapExpr,
   String,
+  PipelineStage,
 } from '@grafana/lezer-logql';
 
 import { QueryBuilderLabelFilter } from '../prometheus/querybuilder/shared/types';
@@ -70,7 +71,7 @@ export function removeLabelFromQuery(query: string, key: string, operator: strin
 
 function removeLabelFilter(query: string, matcher: SyntaxNode): string {
   const pipelineStage = matcher.parent?.parent;
-  if (!pipelineStage) {
+  if (!pipelineStage || pipelineStage.type.id !== PipelineStage) {
     return query;
   }
   return (query.substring(0, pipelineStage.from) + query.substring(pipelineStage.to)).trim();
@@ -96,7 +97,7 @@ function removeSelector(query: string, matcher: SyntaxNode): string {
   return prefix + modeller.renderQuery(matchVisQuery.query) + suffix;
 }
 
-function getMatchersWithFilter(query: string, key: string, operator: string, value: string): SyntaxNode[] {
+function getMatchersWithFilter(query: string, label: string, operator: string, value: string): SyntaxNode[] {
   const tree = parser.parse(query);
   const matchers: SyntaxNode[] = [];
   tree.iterate({
@@ -114,7 +115,7 @@ function getMatchersWithFilter(query: string, key: string, operator: string, val
       return false;
     }
     const labelName = query.substring(labelNode.from, labelNode.to);
-    if (labelName !== key) {
+    if (labelName !== label) {
       return false;
     }
     const labelValue = query.substring(valueNode.from, valueNode.to);

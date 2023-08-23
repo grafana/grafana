@@ -1,11 +1,17 @@
 ---
-title: Notifications
+canonical: https://grafana.com/docs/grafana/latest/alerting/fundamentals/notification-policies/
 description: Introduction to notifications Policies
-weight: 107
 keywords:
   - grafana
   - alerting
   - notification policies
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
+title: Notifications
+weight: 107
 ---
 
 # Notifications

@@ -28,17 +28,17 @@ Footer.displayName = 'Footer';
 
 const getFooterStyles = (theme: GrafanaTheme2) => {
   return {
-    container: css`
-      background-color: ${theme.colors.background.primary};
-      display: flex;
-      justify-content: center;
-      padding: 10px;
-      align-items: stretch;
-    `,
-    apply: css`
-      margin-right: 4px;
-      width: 100%;
-      justify-content: center;
-    `,
+    container: css({
+      backgroundColor: theme.colors.background.primary,
+      display: 'flex',
+      justifyContent: 'center',
+      padding: '10px',
+      alignItems: 'stretch',
+    }),
+    apply: css({
+      marginRight: '4px',
+      width: '100%',
+      justifyContent: 'center',
+    }),
   };
 };

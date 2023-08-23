@@ -21,7 +21,7 @@ import {
   BarGaugeDisplayMode,
   TableAutoCellOptions,
   TableCellBackgroundDisplayMode,
-  TableCellOptions,
+  TableCellDisplayMode,
 } from '@grafana/schema';
 
 import { BarGaugeCell } from './BarGaugeCell';
@@ -34,7 +34,7 @@ import { RowExpander } from './RowExpander';
 import { SparklineCell } from './SparklineCell';
 import {
   CellComponent,
-  TableCellDisplayMode,
+  TableCellOptions,
   TableFieldOptions,
   FooterItem,
   GrafanaTableColumn,
@@ -102,7 +102,7 @@ export function getColumns(
 
   for (const [fieldIndex, field] of data.fields.entries()) {
     const fieldTableOptions = (field.config.custom || {}) as TableFieldOptions;
-    if (fieldTableOptions.hidden) {
+    if (fieldTableOptions.hidden || field.type === FieldType.nestedFrames) {
       continue;
     }
 
@@ -130,7 +130,7 @@ export function getColumns(
       Cell,
       id: fieldIndex.toString(),
       field: field,
-      Header: getFieldDisplayName(field, data),
+      Header: fieldTableOptions.hideHeader ? '' : getFieldDisplayName(field, data),
       accessor: (_row: any, i: number) => {
         return field.values[i];
       },
@@ -169,6 +169,7 @@ export function getColumns(
 
 export function getCellComponent(displayMode: TableCellDisplayMode, field: Field): CellComponent {
   switch (displayMode) {
+    case TableCellDisplayMode.Custom:
     case TableCellDisplayMode.ColorText:
     case TableCellDisplayMode.ColorBackground:
       return DefaultCell;
@@ -256,7 +257,7 @@ export function rowToFieldValue(row: any, field?: Field): string {
 
 export function valuesToOptions(unique: Record<string, any>): SelectableValue[] {
   return Object.keys(unique)
-    .reduce((all, key) => all.concat({ value: unique[key], label: key }), [] as SelectableValue[])
+    .reduce<SelectableValue[]>((all, key) => all.concat({ value: unique[key], label: key }), [])
     .sort(sortOptions);
 }
 
@@ -408,7 +409,7 @@ export function getCellOptions(field: Field): TableCellOptions {
     return defaultCellOptions;
   }
 
-  return (field.config.custom as TableFieldOptions).cellOptions;
+  return field.config.custom.cellOptions;
 }
 
 /**
@@ -475,7 +476,7 @@ function addMissingColumnIndex(columns: Array<{ id: string; field?: Field } | un
   const missingIndex = columns.findIndex((field, index) => field?.id !== String(index));
 
   // Base case
-  if (missingIndex === -1) {
+  if (missingIndex === -1 || columns[missingIndex]?.id === 'expander') {
     return;
   }
 

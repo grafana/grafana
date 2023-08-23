@@ -13,7 +13,6 @@ The following checklist/summary should give you a quick overview of what to ask/
 - Reviewed and approved?
 - All checks passed?
 - Proper pull request title?
-- Milestone assigned?
 - Add to changelog/release notes?
 - Needs backporting?
 
@@ -40,14 +39,17 @@ See [formatting guidelines](create-pull-request.md#formatting-guidelines) for mo
 
 ### Assign a milestone
 
-A milestone **should** be added to every pull request. Several things in the Grafana release process requires at least pull requests to be in a milestone, for example [generating changelog/release notes](#include-in-changelog-and-release-notes).
+Several things in the Grafana release process requires at least pull requests to be in a milestone, for example [generating changelog/release notes](#include-in-changelog-and-release-notes).
 
 This makes it easier to track what changes go into a certain release. Without this information, release managers have to go through git commits which is not an efficient process.
 
-Always assign the milestone for the version that a PR is merged into.
+That being said, _you don't have to assign a milestone manually_ to a pull request.
+Instead, when it is merged & closed then a bot will look for the most appropriate miletone and assign it to the pull request.
+
+That milestone should always reflect the branch that the pull request is merged into.
 For every major and minor release there is a milestone ending with `.x` (e.g. `10.0.x` for the 10.0.x releases).
-PRs targetting `main` should use the `.x` milestone of the next minor (or major) version (you can find that version number inside the `package.json` file).
-Backport PRs should use the version of the target branch (e.g. `9.4.x` for the `v9.4.x` branch).
+Pull requests targetting `main` should use the `.x` milestone of the next minor (or major) version (you can find that version number inside the `package.json` file).
+Backport pull requestss should use the version of the target branch (e.g. `9.4.x` for the `v9.4.x` branch).
 
 ### Include in changelog and release notes?
 
@@ -83,15 +85,15 @@ The changelog/release notes are divided into sections and here's a description o
 
 **Features and enhancements:**
 
-Milestone assigned and labeled with `add to changelog` and any of the other section rules don't apply.
+Labeled with `add to changelog` and any of the other section rules don't apply.
 
 **Bug fixes:**
 
-Milestone assigned and labeled with `add to changelog` and either labeled with `type/bug` or the pull request title contains `fix` or `fixes`.
+Labeled with `add to changelog` and either labeled with `type/bug` or the pull request title contains `fix` or `fixes`.
 
 **Plugin development fixes & changes:**
 
-Milestone assigned and labeled with `area/grafana/toolkit`, `area/grafana/ui` or `area/grafana/runtime`.
+Labeled with `area/grafana/toolkit`, `area/grafana/ui` or `area/grafana/runtime`.
 
 **Deprecations:**
 

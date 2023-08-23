@@ -3,9 +3,12 @@ package query
 import (
 	"context"
 	"fmt"
+	"net/http"
+	"runtime"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"golang.org/x/exp/slices"
 	"golang.org/x/sync/errgroup"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -13,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -48,6 +52,7 @@ func ProvideService(
 		pluginClient:           pluginClient,
 		pCtxProvider:           pCtxProvider,
 		log:                    log.New("query_data"),
+		concurrentQueryLimit:   cfg.SectionWithEnvOverrides("query").Key("concurrent_query_limit").MustInt(runtime.NumCPU()),
 	}
 	g.log.Info("Query Service initialization")
 	return g
@@ -70,6 +75,7 @@ type ServiceImpl struct {
 	pluginClient           plugins.Client
 	pCtxProvider           *plugincontext.Provider
 	log                    log.Logger
+	concurrentQueryLimit   int
 }
 
 // Run ServiceImpl.
@@ -98,14 +104,17 @@ func (s *ServiceImpl) QueryData(ctx context.Context, user *user.SignedInUser, sk
 	return s.executeConcurrentQueries(ctx, user, skipDSCache, reqDTO, parsedReq.parsedQueries)
 }
 
+// splitResponse contains the results of a concurrent data source query - the response and any headers
+type splitResponse struct {
+	responses backend.Responses
+	header    http.Header
+}
+
 // executeConcurrentQueries executes queries to multiple datasources concurrently and returns the aggregate result.
 func (s *ServiceImpl) executeConcurrentQueries(ctx context.Context, user *user.SignedInUser, skipDSCache bool, reqDTO dtos.MetricRequest, queriesbyDs map[string][]parsedQuery) (*backend.QueryDataResponse, error) {
 	g, ctx := errgroup.WithContext(ctx)
-	// TODO: Temporarily limiting concurrency here to 1 to avoid concurrent map writes in the plugin middleware that crash the app
-	// This is a workaround to mitigate the security issue. We will implement a more thread-safe way of handling concurrent queries as a next step.
-	g.SetLimit(1)
-	// g.SetLimit(8) // arbitrary limit to prevent too many concurrent requests
-	rchan := make(chan backend.Responses, len(queriesbyDs))
+	g.SetLimit(s.concurrentQueryLimit) // prevent too many concurrent requests
+	rchan := make(chan splitResponse, len(queriesbyDs))
 
 	// Create panic recovery function for loop below
 	recoveryFn := func(queries []*simplejson.Json) {
@@ -135,9 +144,14 @@ func (s *ServiceImpl) executeConcurrentQueries(ctx context.Context, user *user.S
 			// Handle panics in the datasource qery
 			defer recoveryFn(subDTO.Queries)
 
-			subResp, err := s.QueryData(ctx, user, skipDSCache, subDTO)
+			ctxCopy := contexthandler.CopyWithReqContext(ctx)
+			subResp, err := s.QueryData(ctxCopy, user, skipDSCache, subDTO)
 			if err == nil {
-				rchan <- subResp.Responses
+				reqCtx, header := contexthandler.FromContext(ctxCopy), http.Header{}
+				if reqCtx != nil {
+					header = reqCtx.Resp.Header()
+				}
+				rchan <- splitResponse{subResp.Responses, header}
 			} else {
 				// If there was an error, return an error response for each query for this datasource
 				rchan <- buildErrorResponses(err, subDTO.Queries)
@@ -151,9 +165,21 @@ func (s *ServiceImpl) executeConcurrentQueries(ctx context.Context, user *user.S
 	}
 	close(rchan)
 	resp := backend.NewQueryDataResponse()
+	reqCtx := contexthandler.FromContext(ctx)
 	for result := range rchan {
-		for refId, dataResponse := range result {
+		for refId, dataResponse := range result.responses {
 			resp.Responses[refId] = dataResponse
+		}
+		if reqCtx != nil {
+			for k, v := range result.header {
+				for _, val := range v {
+					if !slices.Contains(reqCtx.Resp.Header().Values(k), val) {
+						reqCtx.Resp.Header().Add(k, val)
+					} else {
+						s.log.Warn("skipped duplicate response header", "header", k, "value", val)
+					}
+				}
+			}
 		}
 	}
 
@@ -161,14 +187,14 @@ func (s *ServiceImpl) executeConcurrentQueries(ctx context.Context, user *user.S
 }
 
 // buildErrorResponses applies the provided error to each query response in the list. These queries should all belong to the same datasource.
-func buildErrorResponses(err error, queries []*simplejson.Json) backend.Responses {
+func buildErrorResponses(err error, queries []*simplejson.Json) splitResponse {
 	er := backend.Responses{}
 	for _, query := range queries {
 		er[query.Get("refId").MustString("A")] = backend.DataResponse{
 			Error: err,
 		}
 	}
-	return er
+	return splitResponse{er, http.Header{}}
 }
 
 // handleExpressions handles POST /api/ds/query when there is an expression.

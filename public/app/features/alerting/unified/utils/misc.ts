@@ -1,6 +1,7 @@
 import { sortBy } from 'lodash';
 
 import { UrlQueryMap, Labels, DataSourceInstanceSettings, DataSourceJsonData } from '@grafana/data';
+import { DataSourceRef } from '@grafana/schema';
 import { alertInstanceKey } from 'app/features/alerting/unified/utils/rules';
 import { SortOrder } from 'app/plugins/panel/alertlist/types';
 import { Alert, CombinedRule, FilterState, RulesSource, SilenceFilterState } from 'app/types/unified-alerting';
@@ -27,11 +28,13 @@ export function createViewLink(ruleSource: RulesSource, rule: CombinedRule, retu
   return createUrl(`/alerting/${paramSource}/${paramId}/view`, { returnTo });
 }
 
-export function createExploreLink(dataSourceName: string, query: string) {
+export function createExploreLink(datasource: DataSourceRef, query: string) {
+  const { uid, type } = datasource;
+
   return createUrl(`/explore`, {
     left: JSON.stringify({
-      datasource: dataSourceName,
-      queries: [{ refId: 'A', datasource: dataSourceName, expr: query }],
+      datasource: datasource.uid,
+      queries: [{ refId: 'A', datasource: { uid, type }, expr: query }],
       range: { from: 'now-1h', to: 'now' },
     }),
   });
@@ -102,7 +105,15 @@ export function makeAMLink(path: string, alertManagerName?: string, options?: UR
   return `${path}?${search.toString()}`;
 }
 
+export const escapeQuotes = (input: string) => input.replace(/\"/g, '\\"');
+
+export function wrapWithQuotes(input: string) {
+  const alreadyWrapped = input.startsWith('"') && input.endsWith('"');
+  return alreadyWrapped ? escapeQuotes(input) : `"${escapeQuotes(input)}"`;
+}
+
 export function makeRuleBasedSilenceLink(alertManagerSourceName: string, rule: CombinedRule) {
+  // we wrap the name of the alert with quotes since it might contain starting and trailing spaces
   const labels: Labels = {
     alertname: rule.name,
     ...rule.labels,

@@ -5,6 +5,10 @@ aliases:
   - ../plugins/installation/
   - ../plugins/plugin-signature-verification/
   - ../plugins/plugin-signatures/
+labels:
+  products:
+    - enterprise
+    - oss
 title: Plugin management
 weight: 600
 ---
@@ -19,7 +23,7 @@ Grafana supports three types of plugins: [panels](/grafana/plugins?type=panel), 
 
 ## Panel plugins
 
-Add new visualizations to your dashboard with panel plugins, such as the [Worldmap Panel](/grafana/plugins/grafana-worldmap-panel), [Clock](/grafana/plugins/grafana-clock-panel), and [Pie Chart](/grafana/plugins/grafana-piechart-panel).
+Add new visualizations to your dashboard with panel plugins, such as the [Clock](/grafana/plugins/grafana-clock-panel), [Mosaic](/grafana/plugins/boazreicher-mosaicplot-panel) and [Variable](/grafana/plugins/volkovlabs-variable-panel) panels.
 
 Use panel plugins when you want to:
 

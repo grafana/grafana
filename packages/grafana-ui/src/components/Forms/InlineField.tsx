@@ -85,20 +85,20 @@ InlineField.displayName = 'InlineField';
 
 const getStyles = (theme: GrafanaTheme2, grow?: boolean, shrink?: boolean) => {
   return {
-    container: css`
-      display: flex;
-      flex-direction: row;
-      align-items: flex-start;
-      text-align: left;
-      position: relative;
-      flex: ${grow ? 1 : 0} ${shrink ? 1 : 0} auto;
-      margin: 0 ${theme.spacing(0.5)} ${theme.spacing(0.5)} 0;
-    `,
-    childContainer: css`
-      flex: ${grow ? 1 : 0} ${shrink ? 1 : 0} auto;
-    `,
-    fieldValidationWrapper: css`
-      margin-top: ${theme.spacing(0.5)};
-    `,
+    container: css({
+      display: 'flex',
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      textAlign: 'left',
+      position: 'relative',
+      flex: `${grow ? 1 : 0} ${shrink ? 1 : 0} auto`,
+      margin: `0 ${theme.spacing(0.5)} ${theme.spacing(0.5)} 0`,
+    }),
+    childContainer: css({
+      flex: `${grow ? 1 : 0} ${shrink ? 1 : 0} auto`,
+    }),
+    fieldValidationWrapper: css({
+      marginTop: theme.spacing(0.5),
+    }),
   };
 };

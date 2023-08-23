@@ -62,6 +62,18 @@ validate-api-spec: $(MERGED_SPEC_TARGET) $(SWAGGER) ## Validate API spec
 clean-api-spec:
 	rm -f $(SPEC_TARGET) $(MERGED_SPEC_TARGET) $(OAPI_SPEC_TARGET)
 
+.PHONY: cleanup-old-git-hooks
+cleanup-old-git-hooks:
+	./scripts/cleanup-husky.sh
+
+.PHONY: lefthook-install
+lefthook-install: cleanup-old-git-hooks $(LEFTHOOK) # install lefthook for pre-commit hooks
+	$(LEFTHOOK) install -f
+
+.PHONY: lefthook-uninstall
+lefthook-uninstall: $(LEFTHOOK)
+	$(LEFTHOOK) uninstall
+
 ##@ OpenAPI 3
 OAPI_SPEC_TARGET = public/openapi3.json
 
@@ -206,7 +218,7 @@ build-docker-full-ubuntu: ## Build Docker image based on Ubuntu for development.
 	--build-arg COMMIT_SHA=$$(git rev-parse --short HEAD) \
 	--build-arg BUILD_BRANCH=$$(git rev-parse --abbrev-ref HEAD) \
 	--build-arg BASE_IMAGE=ubuntu:20.04 \
-	--build-arg GO_IMAGE=golang:1.20.4 \
+	--build-arg GO_IMAGE=golang:1.20.6 \
 	--tag grafana/grafana$(TAG_SUFFIX):dev-ubuntu \
 	$(DOCKER_BUILD_ARGS)
 

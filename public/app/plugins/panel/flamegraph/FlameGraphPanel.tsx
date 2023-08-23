@@ -1,15 +1,17 @@
 import React from 'react';
 
 import { CoreApp, PanelProps } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { PanelDataErrorView } from '@grafana/runtime';
 
+import { checkFields, getMessageCheckFieldsResult } from './components/FlameGraph/dataTransform';
 import FlameGraphContainer from './components/FlameGraphContainer';
-import FlameGraphContainerV2 from './flamegraphV2/components/FlameGraphContainer';
 
 export const FlameGraphPanel = (props: PanelProps) => {
-  return config.featureToggles.flameGraphV2 ? (
-    <FlameGraphContainerV2 data={props.data.series[0]} app={CoreApp.Unknown} />
-  ) : (
-    <FlameGraphContainer data={props.data.series[0]} app={CoreApp.Unknown} />
-  );
+  const wrongFields = checkFields(props.data.series[0]);
+  if (wrongFields) {
+    return (
+      <PanelDataErrorView panelId={props.id} data={props.data} message={getMessageCheckFieldsResult(wrongFields)} />
+    );
+  }
+  return <FlameGraphContainer data={props.data.series[0]} app={CoreApp.Unknown} />;
 };

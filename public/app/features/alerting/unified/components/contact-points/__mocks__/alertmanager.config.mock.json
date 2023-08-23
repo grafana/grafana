@@ -1,0 +1,71 @@
+{
+  "template_files": {},
+  "alertmanager_config": {
+    "receivers": [
+      {
+        "name": "grafana-default-email",
+        "grafana_managed_receiver_configs": [
+          {
+            "uid": "xeKQrBrnk",
+            "name": "grafana-default-email",
+            "type": "email",
+            "disableResolveMessage": false,
+            "settings": { "addresses": "gilles.demey@grafana.com", "singleEmail": false },
+            "secureFields": {}
+          }
+        ]
+      },
+      {
+        "name": "provisioned-contact-point",
+        "grafana_managed_receiver_configs": [
+          {
+            "uid": "s8SdCVjnk",
+            "name": "provisioned-contact-point",
+            "type": "email",
+            "disableResolveMessage": false,
+            "settings": { "addresses": "gilles.demey@grafana.com", "singleEmail": false },
+            "secureFields": {},
+            "provenance": "api"
+          }
+        ]
+      },
+      {
+        "name": "lotsa-emails",
+        "grafana_managed_receiver_configs": [
+          {
+            "uid": "af306c96-35a2-4d6e-908a-4993e245dbb2",
+            "name": "lotsa-emails",
+            "type": "email",
+            "disableResolveMessage": false,
+            "settings": {
+              "addresses": "gilles.demey+1@grafana.com, gilles.demey+2@grafana.com, gilles.demey+3@grafana.com, gilles.demey+4@grafana.com",
+              "singleEmail": false
+            },
+            "secureFields": {}
+          }
+        ]
+      },
+      {
+        "name": "Slack with multiple channels",
+        "grafana_managed_receiver_configs": [
+          {
+            "uid": "c02ad56a-31da-46b9-becb-4348ec0890fd",
+            "name": "Slack with multiple channels",
+            "type": "slack",
+            "disableResolveMessage": false,
+            "settings": { "recipient": "test-alerts" },
+            "secureFields": { "token": true }
+          },
+          {
+            "uid": "b286a3be-f690-49e2-8605-b075cbace2df",
+            "name": "Slack with multiple channels",
+            "type": "slack",
+            "disableResolveMessage": false,
+            "settings": { "recipient": "test-alerts2" },
+            "secureFields": { "token": true }
+          }
+        ]
+      }
+    ]
+  }
+}

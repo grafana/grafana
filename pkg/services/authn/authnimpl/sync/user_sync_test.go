@@ -268,12 +268,12 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 			args: args{
 				ctx: context.Background(),
 				id: &authn.Identity{
-					ID:         "",
-					AuthID:     "2032",
-					AuthModule: "oauth",
-					Login:      "test",
-					Name:       "test",
-					Email:      "test",
+					ID:              "",
+					AuthID:          "2032",
+					AuthenticatedBy: "oauth",
+					Login:           "test",
+					Name:            "test",
+					Email:           "test",
 					ClientParams: authn.ClientParams{
 						SyncUser: true,
 						LookUpParams: login.UserLookupParams{
@@ -286,13 +286,13 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 			},
 			wantErr: false,
 			wantID: &authn.Identity{
-				ID:             "user:1",
-				AuthID:         "2032",
-				AuthModule:     "oauth",
-				Login:          "test",
-				Name:           "test",
-				Email:          "test",
-				IsGrafanaAdmin: ptrBool(false),
+				ID:              "user:1",
+				AuthID:          "2032",
+				AuthenticatedBy: "oauth",
+				Login:           "test",
+				Name:            "test",
+				Email:           "test",
+				IsGrafanaAdmin:  ptrBool(false),
 				ClientParams: authn.ClientParams{
 					SyncUser: true,
 					LookUpParams: login.UserLookupParams{
@@ -313,12 +313,12 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 			args: args{
 				ctx: context.Background(),
 				id: &authn.Identity{
-					ID:         "",
-					Login:      "test",
-					Name:       "test",
-					Email:      "test",
-					AuthModule: "oauth",
-					AuthID:     "2032",
+					ID:              "",
+					Login:           "test",
+					Name:            "test",
+					Email:           "test",
+					AuthenticatedBy: "oauth",
+					AuthID:          "2032",
 					ClientParams: authn.ClientParams{
 						SyncUser: true,
 						LookUpParams: login.UserLookupParams{
@@ -341,13 +341,13 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 			args: args{
 				ctx: context.Background(),
 				id: &authn.Identity{
-					ID:             "",
-					Login:          "test_create",
-					Name:           "test_create",
-					IsGrafanaAdmin: ptrBool(true),
-					Email:          "test_create",
-					AuthModule:     "oauth",
-					AuthID:         "2032",
+					ID:              "",
+					Login:           "test_create",
+					Name:            "test_create",
+					IsGrafanaAdmin:  ptrBool(true),
+					Email:           "test_create",
+					AuthenticatedBy: "oauth",
+					AuthID:          "2032",
 					ClientParams: authn.ClientParams{
 						SyncUser:            true,
 						AllowSignUp:         true,
@@ -362,13 +362,13 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 			},
 			wantErr: false,
 			wantID: &authn.Identity{
-				ID:             "user:2",
-				Login:          "test_create",
-				Name:           "test_create",
-				Email:          "test_create",
-				AuthModule:     "oauth",
-				AuthID:         "2032",
-				IsGrafanaAdmin: ptrBool(true),
+				ID:              "user:2",
+				Login:           "test_create",
+				Name:            "test_create",
+				Email:           "test_create",
+				AuthenticatedBy: "oauth",
+				AuthID:          "2032",
+				IsGrafanaAdmin:  ptrBool(true),
 				ClientParams: authn.ClientParams{
 					SyncUser:            true,
 					AllowSignUp:         true,

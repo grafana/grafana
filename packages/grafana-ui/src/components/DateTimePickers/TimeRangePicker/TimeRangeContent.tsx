@@ -223,12 +223,12 @@ function isValid(value: string, roundUp?: boolean, timeZone?: TimeZone): boolean
 
 function getStyles(theme: GrafanaTheme2) {
   return {
-    fieldContainer: css`
-      display: flex;
-    `,
-    tooltip: css`
-      padding-left: ${theme.spacing(1)};
-      padding-top: ${theme.spacing(3)};
-    `,
+    fieldContainer: css({
+      display: 'flex',
+    }),
+    tooltip: css({
+      paddingLeft: theme.spacing(1),
+      paddingTop: theme.spacing(3),
+    }),
   };
 }

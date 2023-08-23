@@ -16,40 +16,41 @@ import { Header } from './CalendarHeader';
 
 export const getStyles = (theme: GrafanaTheme2, isReversed = false) => {
   return {
-    container: css`
-      top: 0px;
-      position: absolute;
-      ${isReversed ? 'left' : 'right'}: 544px;
-      box-shadow: ${theme.shadows.z3};
-      background-color: ${theme.colors.background.primary};
-      z-index: -1;
-      border: 1px solid ${theme.colors.border.weak};
-      border-radius: 2px 0 0 2px;
+    container: css({
+      top: 0,
+      position: 'absolute',
+      [`${isReversed ? 'left' : 'right'}`]: '544px',
+      boxShadow: theme.shadows.z3,
+      backgroundColor: theme.colors.background.primary,
+      zIndex: -1,
+      border: `1px solid ${theme.colors.border.weak}`,
+      borderTopLeftRadius: theme.shape.radius.default,
+      borderBottomLeftRadius: theme.shape.radius.default,
 
-      &:after {
-        display: block;
-        background-color: ${theme.colors.background.primary};
-        width: 19px;
-        height: 100%;
-        content: ${!isReversed ? ' ' : ''};
-        position: absolute;
-        top: 0;
-        right: -19px;
-        border-left: 1px solid ${theme.colors.border.weak};
-      }
-    `,
-    modal: css`
-      box-shadow: ${theme.shadows.z3};
-      left: 50%;
-      position: fixed;
-      top: 50%;
-      transform: translate(-50%, -50%);
-      z-index: ${theme.zIndex.modal};
-    `,
-    content: css`
-      margin: 0 auto;
-      width: 268px;
-    `,
+      '&:after': {
+        display: 'block',
+        backgroundColor: theme.colors.background.primary,
+        width: '19px',
+        height: '100%',
+        content: `${!isReversed ? '" "' : '""'}`,
+        position: 'absolute',
+        top: 0,
+        right: '-19px',
+        borderLeft: `1px solid ${theme.colors.border.weak}`,
+      },
+    }),
+    modal: css({
+      boxShadow: theme.shadows.z3,
+      left: '50%',
+      position: 'fixed',
+      top: '50%',
+      transform: 'translate(-50%, -50%)',
+      zIndex: theme.zIndex.modal,
+    }),
+    content: css({
+      margin: '0 auto',
+      width: '268px',
+    }),
   };
 };
 

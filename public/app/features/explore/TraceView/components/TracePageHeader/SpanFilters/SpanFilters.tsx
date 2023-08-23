@@ -17,24 +17,16 @@ import { SpanStatusCode } from '@opentelemetry/api';
 import { uniq } from 'lodash';
 import React, { useState, useEffect, memo, useCallback } from 'react';
 
-import { SelectableValue, toOption } from '@grafana/data';
+import { GrafanaTheme2, SelectableValue, toOption } from '@grafana/data';
 import { AccessoryButton } from '@grafana/experimental';
-import {
-  Collapse,
-  HorizontalGroup,
-  Icon,
-  InlineField,
-  InlineFieldRow,
-  Input,
-  Select,
-  Tooltip,
-  useStyles2,
-} from '@grafana/ui';
+import { Collapse, HorizontalGroup, Icon, InlineField, InlineFieldRow, Select, Tooltip, useStyles2 } from '@grafana/ui';
+import { IntervalInput } from 'app/core/components/IntervalInput/IntervalInput';
 
 import { defaultFilters, randomId, SearchProps, Tag } from '../../../useSearch';
-import { KIND, LIBRARY_NAME, LIBRARY_VERSION, STATUS, STATUS_MESSAGE, TRACE_STATE } from '../../constants/span';
+import { KIND, LIBRARY_NAME, LIBRARY_VERSION, STATUS, STATUS_MESSAGE, TRACE_STATE, ID } from '../../constants/span';
 import { Trace } from '../../types';
-import NewTracePageSearchBar from '../NewTracePageSearchBar';
+import NextPrevResult from '../SearchBar/NextPrevResult';
+import TracePageSearchBar from '../SearchBar/TracePageSearchBar';
 
 export type SpanFilterProps = {
   trace: Trace;
@@ -67,6 +59,9 @@ export const SpanFilters = memo((props: SpanFilterProps) => {
   const [spanNames, setSpanNames] = useState<Array<SelectableValue<string>>>();
   const [tagKeys, setTagKeys] = useState<Array<SelectableValue<string>>>();
   const [tagValues, setTagValues] = useState<{ [key: string]: Array<SelectableValue<string>> }>({});
+  const [focusedSpanIndexForSearch, setFocusedSpanIndexForSearch] = useState(-1);
+
+  const durationRegex = /^\d+(?:\.\d)?\d*(?:ns|us|µs|ms|s|m|h)$/;
 
   const clear = useCallback(() => {
     setServiceNames(undefined);
@@ -83,6 +78,12 @@ export const SpanFilters = memo((props: SpanFilterProps) => {
   if (!trace) {
     return null;
   }
+
+  const setSpanFiltersSearch = (spanSearch: SearchProps) => {
+    setFocusedSpanIndexForSearch(-1);
+    setFocusedSpanIdForSearch('');
+    setSearch(spanSearch);
+  };
 
   const getServiceNames = () => {
     if (!serviceNames) {
@@ -140,6 +141,7 @@ export const SpanFilters = memo((props: SpanFilterProps) => {
         if (span.traceState) {
           keys.push(TRACE_STATE);
         }
+        keys.push(ID);
       });
       keys = uniq(keys).sort();
       logKeys = uniq(logKeys).sort();
@@ -200,6 +202,9 @@ export const SpanFilters = memo((props: SpanFilterProps) => {
             values.push(span.traceState);
           }
           break;
+        case ID:
+          values.push(span.spanID);
+          break;
         default:
           break;
       }
@@ -258,15 +263,31 @@ export const SpanFilters = memo((props: SpanFilterProps) => {
   };
 
   const collapseLabel = (
-    <Tooltip
-      content="Filter your spans below. The more filters, the more specific the filtered spans."
-      placement="right"
-    >
-      <span className={styles.collapseLabel}>
-        Span Filters
-        <Icon size="md" name="info-circle" />
-      </span>
-    </Tooltip>
+    <>
+      <Tooltip
+        content="Filter your spans below. You can continue to apply filters until you have narrowed down your resulting spans to the select few you are most interested in."
+        placement="right"
+      >
+        <span className={styles.collapseLabel}>
+          Span Filters
+          <Icon size="md" name="info-circle" />
+        </span>
+      </Tooltip>
+
+      {!showSpanFilters && (
+        <div className={styles.nextPrevResult}>
+          <NextPrevResult
+            trace={trace}
+            spanFilterMatches={spanFilterMatches}
+            setFocusedSpanIdForSearch={setFocusedSpanIdForSearch}
+            focusedSpanIndexForSearch={focusedSpanIndexForSearch}
+            setFocusedSpanIndexForSearch={setFocusedSpanIndexForSearch}
+            datasourceType={datasourceType}
+            showSpanFilters={showSpanFilters}
+          />
+        </div>
+      )}
+    </>
   );
 
   return (
@@ -277,14 +298,14 @@ export const SpanFilters = memo((props: SpanFilterProps) => {
             <HorizontalGroup spacing={'xs'}>
               <Select
                 aria-label="Select service name operator"
-                onChange={(v) => setSearch({ ...search, serviceNameOperator: v.value! })}
+                onChange={(v) => setSpanFiltersSearch({ ...search, serviceNameOperator: v.value! })}
                 options={[toOption('='), toOption('!=')]}
                 value={search.serviceNameOperator}
               />
               <Select
                 aria-label="Select service name"
                 isClearable
-                onChange={(v) => setSearch({ ...search, serviceName: v?.value || '' })}
+                onChange={(v) => setSpanFiltersSearch({ ...search, serviceName: v?.value || '' })}
                 onOpenMenu={getServiceNames}
                 options={serviceNames}
                 placeholder="All service names"
@@ -298,14 +319,14 @@ export const SpanFilters = memo((props: SpanFilterProps) => {
             <HorizontalGroup spacing={'xs'}>
               <Select
                 aria-label="Select span name operator"
-                onChange={(v) => setSearch({ ...search, spanNameOperator: v.value! })}
+                onChange={(v) => setSpanFiltersSearch({ ...search, spanNameOperator: v.value! })}
                 options={[toOption('='), toOption('!=')]}
                 value={search.spanNameOperator}
               />
               <Select
                 aria-label="Select span name"
                 isClearable
-                onChange={(v) => setSearch({ ...search, spanName: v?.value || '' })}
+                onChange={(v) => setSpanFiltersSearch({ ...search, spanName: v?.value || '' })}
                 onOpenMenu={getSpanNames}
                 options={spanNames}
                 placeholder="All span names"
@@ -315,38 +336,48 @@ export const SpanFilters = memo((props: SpanFilterProps) => {
           </InlineField>
         </InlineFieldRow>
         <InlineFieldRow>
-          <InlineField label="Duration" labelWidth={16}>
-            <HorizontalGroup spacing={'xs'}>
+          <InlineField
+            label="Duration"
+            labelWidth={16}
+            tooltip="Filter by duration. Accepted units are ns, us, ms, s, m, h"
+          >
+            <HorizontalGroup spacing="xs" align="flex-start">
               <Select
-                aria-label="Select from operator"
-                onChange={(v) => setSearch({ ...search, fromOperator: v.value! })}
+                aria-label="Select min span operator"
+                onChange={(v) => setSpanFiltersSearch({ ...search, fromOperator: v.value! })}
                 options={[toOption('>'), toOption('>=')]}
                 value={search.fromOperator}
               />
-              <Input
-                aria-label="Select from value"
-                onChange={(v) => setSearch({ ...search, from: v.currentTarget.value })}
-                placeholder="e.g. 100ms, 1.2s"
-                value={search.from || ''}
-                width={18}
-              />
+              <div className={styles.intervalInput}>
+                <IntervalInput
+                  ariaLabel="Select min span duration"
+                  onChange={(val) => setSpanFiltersSearch({ ...search, from: val })}
+                  isInvalidError="Invalid duration"
+                  placeholder="e.g. 100ms, 1.2s"
+                  width={18}
+                  value={search.from || ''}
+                  validationRegex={durationRegex}
+                />
+              </div>
               <Select
-                aria-label="Select to operator"
-                onChange={(v) => setSearch({ ...search, toOperator: v.value! })}
+                aria-label="Select max span operator"
+                onChange={(v) => setSpanFiltersSearch({ ...search, toOperator: v.value! })}
                 options={[toOption('<'), toOption('<=')]}
                 value={search.toOperator}
               />
-              <Input
-                aria-label="Select to value"
-                onChange={(v) => setSearch({ ...search, to: v.currentTarget.value })}
+              <IntervalInput
+                ariaLabel="Select max span duration"
+                onChange={(val) => setSpanFiltersSearch({ ...search, to: val })}
+                isInvalidError="Invalid duration"
                 placeholder="e.g. 100ms, 1.2s"
-                value={search.to || ''}
                 width={18}
+                value={search.to || ''}
+                validationRegex={durationRegex}
               />
             </HorizontalGroup>
           </InlineField>
         </InlineFieldRow>
-        <InlineFieldRow>
+        <InlineFieldRow className={styles.tagsRow}>
           <InlineField label="Tags" labelWidth={16} tooltip="Filter by tags, process tags or log fields in your spans.">
             <div>
               {search.tags.map((tag, i) => (
@@ -365,7 +396,7 @@ export const SpanFilters = memo((props: SpanFilterProps) => {
                     <Select
                       aria-label="Select tag operator"
                       onChange={(v) => {
-                        setSearch({
+                        setSpanFiltersSearch({
                           ...search,
                           tags: search.tags?.map((x) => {
                             return x.id === tag.id ? { ...x, operator: v.value! } : x;
@@ -381,7 +412,7 @@ export const SpanFilters = memo((props: SpanFilterProps) => {
                         isClearable
                         key={tag.value}
                         onChange={(v) => {
-                          setSearch({
+                          setSpanFiltersSearch({
                             ...search,
                             tags: search.tags?.map((x) => {
                               return x.id === tag.id ? { ...x, value: v?.value || '' } : x;
@@ -418,15 +449,18 @@ export const SpanFilters = memo((props: SpanFilterProps) => {
           </InlineField>
         </InlineFieldRow>
 
-        <NewTracePageSearchBar
+        <TracePageSearchBar
+          trace={trace}
           search={search}
           spanFilterMatches={spanFilterMatches}
           showSpanFilterMatchesOnly={showSpanFilterMatchesOnly}
           setShowSpanFilterMatchesOnly={setShowSpanFilterMatchesOnly}
           setFocusedSpanIdForSearch={setFocusedSpanIdForSearch}
+          focusedSpanIndexForSearch={focusedSpanIndexForSearch}
+          setFocusedSpanIndexForSearch={setFocusedSpanIndexForSearch}
           datasourceType={datasourceType}
           clear={clear}
-          totalSpans={trace.spans.length}
+          showSpanFilters={showSpanFilters}
         />
       </Collapse>
     </div>
@@ -435,10 +469,10 @@ export const SpanFilters = memo((props: SpanFilterProps) => {
 
 SpanFilters.displayName = 'SpanFilters';
 
-const getStyles = () => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     container: css`
-      margin: 0.5em 0 -8px 0;
+      margin: 0.5em 0 -${theme.spacing(1)} 0;
       z-index: 5;
 
       & > div {
@@ -455,8 +489,21 @@ const getStyles = () => {
     addTag: css`
       margin: 0 0 0 10px;
     `,
+    intervalInput: css`
+      margin: 0 -4px 0 0;
+    `,
+    tagsRow: css`
+      margin: -4px 0 0 0;
+    `,
     tagValues: css`
       max-width: 200px;
+    `,
+    nextPrevResult: css`
+      flex: 1;
+      align-items: center;
+      display: flex;
+      justify-content: flex-end;
+      margin-right: ${theme.spacing(1)};
     `,
   };
 };

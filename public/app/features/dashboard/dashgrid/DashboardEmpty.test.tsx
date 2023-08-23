@@ -3,6 +3,7 @@ import React from 'react';
 
 import { locationService, reportInteraction } from '@grafana/runtime';
 import { defaultDashboard } from '@grafana/schema';
+import config from 'app/core/config';
 
 import { createDashboardModelFixture } from '../state/__fixtures__/dashboardFixtures';
 import { onCreateNewPanel, onCreateNewRow, onAddLibraryPanel } from '../utils/dashboard';
@@ -41,6 +42,7 @@ function setup(options?: Partial<Props>) {
 }
 
 beforeEach(() => {
+  config.featureToggles = { vizAndWidgetSplit: false };
   jest.clearAllMocks();
 });
 
@@ -100,4 +102,23 @@ it('adds a library panel when clicked Import library panel', () => {
   expect(reportInteraction).toHaveBeenCalledWith('dashboards_emptydashboard_clicked', { item: 'import_from_library' });
   expect(locationService.partial).not.toHaveBeenCalled();
   expect(onAddLibraryPanel).toHaveBeenCalled();
+});
+
+it('renders page without Add Widget button when feature flag is disabled', () => {
+  setup();
+
+  expect(screen.getByRole('button', { name: 'Add visualization' })).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Add row' })).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Import library panel' })).toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: 'Add widget' })).not.toBeInTheDocument();
+});
+
+it('renders page with Add Widget button when feature flag is enabled', () => {
+  config.featureToggles.vizAndWidgetSplit = true;
+  setup();
+
+  expect(screen.getByRole('button', { name: 'Add visualization' })).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Add row' })).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Import library panel' })).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Add widget' })).toBeInTheDocument();
 });

@@ -28,7 +28,7 @@ func TestTeamConversion(t *testing.T) {
 	require.NoError(t, err)
 	fmt.Printf("%s", string(out))
 	require.JSONEq(t, `{
-		"apiVersion": "v0.0-alpha",
+		"apiVersion": "v0-0-alpha",
 		"kind": "Team",
 		"metadata": {
 		  "name": "abc",

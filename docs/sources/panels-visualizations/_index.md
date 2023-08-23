@@ -8,6 +8,11 @@ keywords:
   - configure
   - panels
   - visualizations
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 menuTitle: Panels and visualizations
 title: Panels and visualizations
 weight: 80

@@ -1,5 +1,5 @@
 import uFuzzy from '@leeoniya/ufuzzy';
-import produce from 'immer';
+import { produce } from 'immer';
 import { compact, isEmpty } from 'lodash';
 import { useCallback, useEffect, useMemo } from 'react';
 

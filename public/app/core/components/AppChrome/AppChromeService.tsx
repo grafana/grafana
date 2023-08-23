@@ -167,7 +167,7 @@ export class AppChromeService {
 /**
  * Checks if text, url, active child url and parent are the same
  **/
-function navItemsAreTheSame(a: NavModelItem | undefined, b: NavModelItem | undefined) {
+function navItemsAreTheSame(a: NavModelItem | undefined, b: NavModelItem | undefined): boolean {
   if (a === b) {
     return true;
   }
@@ -179,6 +179,6 @@ function navItemsAreTheSame(a: NavModelItem | undefined, b: NavModelItem | undef
     a?.text === b?.text &&
     a?.url === b?.url &&
     aActiveChild?.url === bActiveChild?.url &&
-    a?.parentItem === b?.parentItem
+    navItemsAreTheSame(a?.parentItem, b?.parentItem)
   );
 }

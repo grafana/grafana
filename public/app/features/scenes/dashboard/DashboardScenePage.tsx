@@ -15,7 +15,7 @@ export const DashboardScenePage = ({ match }: Props) => {
   const { dashboard, isLoading } = loader.useState();
 
   useEffect(() => {
-    loader.load(match.params.uid);
+    loader.loadAndInit(match.params.uid);
     return () => {
       loader.clearState();
     };
