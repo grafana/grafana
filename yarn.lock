@@ -3893,6 +3893,7 @@ __metadata:
     "@grafana/data": 10.2.0-pre
     "@grafana/e2e-selectors": 10.2.0-pre
     "@grafana/faro-web-sdk": 1.1.2
+    "@grafana/schema": "workspace:^"
     "@grafana/tsconfig": ^1.2.0-rc1
     "@grafana/ui": 10.2.0-pre
     "@rollup/plugin-commonjs": 25.0.2
@@ -3947,7 +3948,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/schema@10.2.0-pre, @grafana/schema@workspace:*, @grafana/schema@workspace:packages/grafana-schema":
+"@grafana/schema@10.2.0-pre, @grafana/schema@workspace:*, @grafana/schema@workspace:^, @grafana/schema@workspace:packages/grafana-schema":
   version: 0.0.0-use.local
   resolution: "@grafana/schema@workspace:packages/grafana-schema"
   dependencies:
