@@ -142,7 +142,7 @@ In this section you can configure which fields the data source uses for log mess
 
 Data links create a link from a specified field that can be accessed in Explore's logs view. You can add multiple data links
 
-Each data link configuration consists off:
+Each data link configuration consists of:
 
 - **Field** - Sets the name of the field used by the data link.
 
