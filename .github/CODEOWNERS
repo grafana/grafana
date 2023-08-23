@@ -50,8 +50,8 @@
 /docs/sources/panels-visualizations/                                         @imatwawana
 /docs/sources/release-notes/                                                 @Eve832 @GrafanaWriter
 /docs/sources/setup-grafana/                                                 @chri2547
-/docs/sources/upgrade-guide/                                                 @chri2547 @imatwawana
-/docs/sources/whatsnew/                                                      @chri2547 @imatwawana
+/docs/sources/upgrade-guide/                                                 @imatwawana
+/docs/sources/whatsnew/                                                      @imatwawana
 /docs/sources/developers/plugins/                                            @Eve832 @josmperez @grafana/plugins-platform-frontend @grafana/plugins-platform-backend
 /docs/sources/developers/plugins/introduction-to-plugin-development/backend/ @Eve832 @grafana/plugins-platform-backend
 
@@ -372,10 +372,10 @@ lerna.json @grafana/frontend-ops
 /public/app/features/geo/ @grafana/dataviz-squad
 /public/app/features/visualization/data-hover/ @grafana/dataviz-squad
 /public/app/features/commandPalette/ @grafana/grafana-frontend-platform
-/public/app/features/connections/ @grafana/plugins-platform-frontend
+/public/app/features/connections/ @grafana/plugins-platform-frontend @mikkancso
 /public/app/features/correlations/ @grafana/explore-squad
 /public/app/features/dashboard/ @grafana/dashboards-squad
-/public/app/features/datasources/ @grafana/plugins-platform-frontend
+/public/app/features/datasources/ @grafana/plugins-platform-frontend @mikkancso
 /public/app/features/dimensions/ @grafana/dataviz-squad
 /public/app/features/dataframe-import/ @grafana/grafana-bi-squad
 /public/app/features/explore/ @grafana/explore-squad

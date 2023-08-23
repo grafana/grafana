@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React, { ComponentProps } from 'react';
 
-import { FieldType, LoadingState, MutableDataFrame, SupplementaryQueryType, DataSourceApi } from '@grafana/data';
+import { FieldType, LoadingState, SupplementaryQueryType, DataSourceApi, createDataFrame } from '@grafana/data';
 import { DataQuery } from '@grafana/schema';
 
 import { LogsSamplePanel } from './LogsSamplePanel';
@@ -28,7 +28,8 @@ const createProps = (propOverrides?: Partial<ComponentProps<typeof LogsSamplePan
   return { ...props, ...propOverrides };
 };
 
-const sampleDataFrame = new MutableDataFrame({
+const emptyDataFrame = createDataFrame({ fields: [] });
+const sampleDataFrame = createDataFrame({
   meta: {
     custom: { frameType: 'LabeledTimeValues' },
   },
@@ -53,6 +54,31 @@ const sampleDataFrame = new MutableDataFrame({
     },
   ],
 });
+const sampleDataFrame2 = createDataFrame({
+  meta: {
+    custom: { frameType: 'LabeledTimeValues' },
+  },
+  fields: [
+    {
+      name: 'labels',
+      type: FieldType.other,
+      values: [
+        { place: 'luna', source: 'data' },
+        { place: 'luna', source: 'data' },
+      ],
+    },
+    {
+      name: 'Time',
+      type: FieldType.time,
+      values: ['2023-02-22T09:28:11.352440161Z', '2023-02-22T14:42:50.991981292Z'],
+    },
+    {
+      name: 'Line',
+      type: FieldType.string,
+      values: ['line3', 'line4'],
+    },
+  ],
+});
 
 describe('LogsSamplePanel', () => {
   it('shows empty panel if no data', () => {
@@ -65,8 +91,15 @@ describe('LogsSamplePanel', () => {
     expect(screen.getByText('Logs sample is loading...')).toBeInTheDocument();
   });
 
-  it('shows no data message', () => {
+  it('shows no data message with no dataframe', () => {
     render(<LogsSamplePanel {...createProps({ queryResponse: { data: [], state: LoadingState.Done } })} />);
+    expect(screen.getByText('No logs sample data.')).toBeInTheDocument();
+  });
+
+  it('shows no data message with an empty dataframe', () => {
+    render(
+      <LogsSamplePanel {...createProps({ queryResponse: { data: [emptyDataFrame], state: LoadingState.Done } })} />
+    );
     expect(screen.getByText('No logs sample data.')).toBeInTheDocument();
   });
 
@@ -78,6 +111,35 @@ describe('LogsSamplePanel', () => {
     expect(screen.getByText('line1')).toBeInTheDocument();
     expect(screen.getByText('2022-02-22 09:42:50.991')).toBeInTheDocument();
     expect(screen.getByText('line2')).toBeInTheDocument();
+  });
+
+  it('shows logs sample data with multiple frames', () => {
+    render(
+      <LogsSamplePanel
+        {...createProps({ queryResponse: { data: [sampleDataFrame, sampleDataFrame2], state: LoadingState.Done } })}
+      />
+    );
+    expect(screen.getByText('2022-02-22 04:28:11.352')).toBeInTheDocument();
+    expect(screen.getByText('line1')).toBeInTheDocument();
+    expect(screen.getByText('2022-02-22 09:42:50.991')).toBeInTheDocument();
+    expect(screen.getByText('line2')).toBeInTheDocument();
+
+    expect(screen.getByText('2023-02-22 04:28:11.352')).toBeInTheDocument();
+    expect(screen.getByText('line3')).toBeInTheDocument();
+    expect(screen.getByText('2023-02-22 09:42:50.991')).toBeInTheDocument();
+    expect(screen.getByText('line4')).toBeInTheDocument();
+  });
+
+  it('shows logs sample data with multiple frames and first frame empty', () => {
+    render(
+      <LogsSamplePanel
+        {...createProps({ queryResponse: { data: [emptyDataFrame, sampleDataFrame2], state: LoadingState.Done } })}
+      />
+    );
+    expect(screen.getByText('2023-02-22 04:28:11.352')).toBeInTheDocument();
+    expect(screen.getByText('line3')).toBeInTheDocument();
+    expect(screen.getByText('2023-02-22 09:42:50.991')).toBeInTheDocument();
+    expect(screen.getByText('line4')).toBeInTheDocument();
   });
 
   it('shows log details', async () => {

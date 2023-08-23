@@ -109,7 +109,7 @@
     "@types/gtag.js": "^0.0.12",
     "@types/history": "4.7.11",
     "@types/hoist-non-react-statics": "3.3.1",
-    "@types/jest": "29.2.3",
+    "@types/jest": "29.5.4",
     "@types/jquery": "3.5.16",
     "@types/js-yaml": "^4.0.5",
     "@types/jsurl": "^1.2.28",
