@@ -23,6 +23,8 @@ describe('validatePort test', () => {
 });
 
 describe('validateKeyValue test', () => {
+  const errorMessage = 'Values have to be in key:value format, and separated with new line or space';
+
   it('return empty string when key:value is separated by whitespace', () => {
     const testString = 'key:value key2:value2';
 
@@ -35,8 +37,49 @@ describe('validateKeyValue test', () => {
     expect(validators.validateKeyValue(testString)).toEqual(undefined);
   });
 
+  it('returns empty string if value containts dash', () => {
+    const testString = 'key:value-';
+
+    expect(validators.validateKeyValue(testString)).toEqual(undefined);
+  });
+
+  it('returns empty string if key starts with a dash', () => {
+    const testString = '_key:value';
+
+    expect(validators.validateKeyValue(testString)).toEqual(undefined);
+  });
+
+  it('returns correct error message when key contains dash', () => {
+    const testString = 'key-:value';
+
+    expect(validators.validateKeyValue(testString)).toEqual(errorMessage);
+  });
+
+  it('returns correct error message when key starts with two underscores', () => {
+    const testString = '__key:value';
+
+    expect(validators.validateKeyValue(testString)).toEqual(errorMessage);
+  });
+
+  it('returns correct error message when key starts with two underscores', () => {
+    const testString = '__key:value';
+
+    expect(validators.validateKeyValue(testString)).toEqual(errorMessage);
+  });
+
+  it('returns correct error message when key starts with number', () => {
+    const testString = '0key:value';
+
+    expect(validators.validateKeyValue(testString)).toEqual(errorMessage);
+  });
+
+  it('returns correct error message when key contains non ASCII character', () => {
+    const testString = 'keý:value';
+
+    expect(validators.validateKeyValue(testString)).toEqual(errorMessage);
+  });
+
   it('return correct error message when value is invalid', () => {
-    const errorMessage = 'Values have to be in key:value format, and separated with new line or space';
     const testString = 'key:value-key2:value2';
 
     expect(validators.validateKeyValue(testString)).toEqual(errorMessage);
