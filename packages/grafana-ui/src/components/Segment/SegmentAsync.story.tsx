@@ -14,11 +14,10 @@ const AddButton = (
   </span>
 );
 
-const toOption = (value: any) => ({ label: value, value: value });
+const toOption = <T,>(value: T): SelectableValue<T> => ({ label: String(value), value: value });
 const options = ['Option1', 'Option2', 'OptionWithLooongLabel', 'Option4'].map(toOption);
 
-const loadOptions = (options: any): Promise<Array<SelectableValue<string>>> =>
-  new Promise((res) => setTimeout(() => res(options), 2000));
+const loadOptions = <T,>(options: T): Promise<T> => new Promise((res) => setTimeout(() => res(options), 2000));
 
 const loadOptionsErr = (): Promise<Array<SelectableValue<string>>> =>
   new Promise((_, rej) => setTimeout(() => rej(Error('Could not find data')), 2000));
@@ -37,7 +36,7 @@ const SegmentFrame = ({ loadOptions, children }: any) => (
 );
 
 export const ArrayOptions = () => {
-  const [value, setValue] = useState<any>(options[0]);
+  const [value, setValue] = useState(options[0]);
   return (
     <SegmentFrame loadOptions={() => loadOptions(options)}>
       <SegmentAsync
@@ -73,7 +72,10 @@ export const ArrayOptionsWithPrimitiveValue = () => {
   );
 };
 
-const groupedOptions: any = [
+const groupedOptions: Array<{
+  label: string;
+  options: Array<SelectableValue<string | number>>;
+}> = [
   { label: 'Names', options: ['Jane', 'Tom', 'Lisa'].map(toOption) },
   { label: 'Prime', options: [2, 3, 5, 7, 11, 13].map(toOption) },
 ];
@@ -82,7 +84,7 @@ export const GroupedArrayOptions = () => {
   const [value, setValue] = useState(groupedOptions[0].options[0]);
   return (
     <SegmentFrame loadOptions={() => loadOptions(groupedOptions)}>
-      <SegmentAsync
+      <SegmentAsync<string | number>
         value={value}
         loadOptions={() => loadOptions(groupedOptions)}
         onChange={(item) => {
@@ -111,13 +113,15 @@ export const CustomOptionsAllowed = () => {
   );
 };
 
-const CustomLabelComponent = ({ value }: any) => <div className="gf-form-label">custom({value})</div>;
+const CustomLabelComponent = ({ value }: { value: unknown }) => (
+  <div className="gf-form-label">custom({String(value)})</div>
+);
 
 export const CustomLabel = () => {
   const [value, setValue] = useState(groupedOptions[0].options[0].value);
   return (
     <SegmentFrame loadOptions={() => loadOptions(groupedOptions)}>
-      <SegmentAsync
+      <SegmentAsync<string | number>
         Component={<CustomLabelComponent value={value} />}
         loadOptions={() => loadOptions(groupedOptions)}
         onChange={({ value }) => {
@@ -146,7 +150,7 @@ export const CustomStateMessageHandler = () => {
     return '';
   };
 
-  const [value, setValue] = useState<any>(options[0]);
+  const [value, setValue] = useState(options[0].value);
   return (
     <>
       <SegmentFrame loadOptions={() => loadOptions(groupedOptions)}>
@@ -187,7 +191,7 @@ export const CustomStateMessageHandler = () => {
 };
 
 export const HtmlAttributes = () => {
-  const [value, setValue] = useState<any>(options[0]);
+  const [value, setValue] = useState(options[0]);
   return (
     <SegmentFrame loadOptions={() => loadOptions(options)}>
       <SegmentAsync
