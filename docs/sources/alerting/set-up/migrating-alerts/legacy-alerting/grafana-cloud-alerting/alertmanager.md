@@ -4,7 +4,7 @@ aliases:
   - /docs/grafana-cloud/how-do-i/grafana-cloud-alerting/alertmanager/
   - /docs/grafana-cloud/legacy-alerting/grafana-cloud-alerting/alertmanager/
 canonical: https://grafana.com/docs/grafana/latest/alerting/set-up/migrating-alerts/legacy-alerting/grafana-cloud-alerting/alertmanager/
-description: Alertmanager
+description: Alertmanager (legacy)
 labels:
   products:
     - cloud
@@ -14,7 +14,7 @@ title: Alertmanager
 weight: 500
 ---
 
-# Alertmanager
+# Alertmanager (legacy)
 
 Grafana Cloud Alerting allows you to edit and view configuration for your Alertmanager directly inside of Grafana. See the official [Alertmanager documentation](https://prometheus.io/docs/alerting/latest/configuration/) to learn how to configure.
 
