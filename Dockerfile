@@ -166,6 +166,7 @@ RUN if [ ! $(getent group "$GF_GID") ]; then \
 
 COPY --from=go-src /tmp/grafana/bin/grafana* /tmp/grafana/bin/*/grafana* ./bin/
 COPY --from=js-src /tmp/grafana/public ./public
+RUN rm -rf ./public/plugins/*/pkg
 
 EXPOSE 3000
 
