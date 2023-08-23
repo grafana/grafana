@@ -65,12 +65,7 @@ export const SingleValue = <T extends unknown>(props: Props<T>) => {
       className={cx(styles.singleValue, isDisabled && styles.disabled, props.selectProps.menuIsOpen && styles.isOpen)}
     >
       {data.imgUrl ? (
-        <FadeWithImage
-          loading={loading}
-          imgUrl={data.imgUrl}
-          styles={styles}
-          alt={(data.label ?? data.value) as string}
-        />
+        <FadeWithImage loading={loading} imgUrl={data.imgUrl} styles={styles} alt={String(data.label ?? data.value)} />
       ) : (
         <>
           <SlideOutTransition horizontal size={16} visible={loading} duration={150}>

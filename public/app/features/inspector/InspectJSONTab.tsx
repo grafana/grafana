@@ -188,7 +188,7 @@ async function getJSONObject(show: ShowContent, panel?: PanelModel, data?: Panel
   return { note: t('dashboard.inspect-json.unknown', 'Unknown Object: {{show}}', { show }) };
 }
 
-function getPrettyJSON(obj: any): string {
+function getPrettyJSON(obj: unknown): string {
   let r = '';
   try {
     r = JSON.stringify(obj, getCircularReplacer(), 2);

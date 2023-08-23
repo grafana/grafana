@@ -212,14 +212,16 @@ func (ng *AlertNG) init() error {
 		return err
 	}
 	cfg := state.ManagerCfg{
-		Metrics:                 ng.Metrics.GetStateMetrics(),
-		ExternalURL:             appUrl,
-		InstanceStore:           ng.store,
-		Images:                  ng.ImageService,
-		Clock:                   clk,
-		Historian:               history,
-		DoNotSaveNormalState:    ng.FeatureToggles.IsEnabled(featuremgmt.FlagAlertingNoNormalState),
-		MaxStateSaveConcurrency: ng.Cfg.UnifiedAlerting.MaxStateSaveConcurrency,
+		Metrics:                        ng.Metrics.GetStateMetrics(),
+		ExternalURL:                    appUrl,
+		InstanceStore:                  ng.store,
+		Images:                         ng.ImageService,
+		Clock:                          clk,
+		Historian:                      history,
+		DoNotSaveNormalState:           ng.FeatureToggles.IsEnabled(featuremgmt.FlagAlertingNoNormalState),
+		MaxStateSaveConcurrency:        ng.Cfg.UnifiedAlerting.MaxStateSaveConcurrency,
+		ApplyNoDataAndErrorToAllStates: ng.FeatureToggles.IsEnabled(featuremgmt.FlagAlertingNoDataErrorExecution),
+		Tracer:                         ng.tracer,
 	}
 	stateManager := state.NewManager(cfg)
 	scheduler := schedule.NewScheduler(schedCfg, stateManager)
@@ -267,6 +269,7 @@ func (ng *AlertNG) init() error {
 		AppUrl:               appUrl,
 		Historian:            history,
 		Hooks:                api.NewHooks(ng.Log),
+		Tracer:               ng.tracer,
 	}
 	ng.api.RegisterAPIEndpoints(ng.Metrics.GetAPIMetrics())
 

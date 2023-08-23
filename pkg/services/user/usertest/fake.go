@@ -16,9 +16,10 @@ type FakeUserService struct {
 	ExpectedUserProfileDTOs  []*user.UserProfileDTO
 	ExpectedUsageStats       map[string]interface{}
 
-	GetSignedInUserFn func(ctx context.Context, query *user.GetSignedInUserQuery) (*user.SignedInUser, error)
-	CreateFn          func(ctx context.Context, cmd *user.CreateUserCommand) (*user.User, error)
-	DisableFn         func(ctx context.Context, cmd *user.DisableUserCommand) error
+	GetSignedInUserFn   func(ctx context.Context, query *user.GetSignedInUserQuery) (*user.SignedInUser, error)
+	CreateFn            func(ctx context.Context, cmd *user.CreateUserCommand) (*user.User, error)
+	DisableFn           func(ctx context.Context, cmd *user.DisableUserCommand) error
+	BatchDisableUsersFn func(ctx context.Context, cmd *user.BatchDisableUsersCommand) error
 
 	counter int
 }
@@ -105,6 +106,9 @@ func (f *FakeUserService) Disable(ctx context.Context, cmd *user.DisableUserComm
 }
 
 func (f *FakeUserService) BatchDisableUsers(ctx context.Context, cmd *user.BatchDisableUsersCommand) error {
+	if f.BatchDisableUsersFn != nil {
+		return f.BatchDisableUsersFn(ctx, cmd)
+	}
 	return f.ExpectedError
 }
 
