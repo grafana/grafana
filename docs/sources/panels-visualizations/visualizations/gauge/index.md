@@ -53,7 +53,7 @@ Adjust how the gauge is displayed.
 
 Choose a stacking direction.
 
-- **Auto -** Grafana selects what it thinks is the best orientation.
+- **Auto -** Orientation is set based on the number and size of gauges.
 - **Horizontal -** Gauges display top to bottom.
 - **Vertical -** Gauges display left to right.
 
