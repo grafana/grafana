@@ -27,7 +27,7 @@ const Item = ({ color, text, height }: { color: string; text?: string | number; 
 };
 
 const meta: Meta<typeof Flex> = {
-  title: 'General/Flex',
+  title: 'General/Layout/Flex',
   component: Flex,
   decorators: [withCenteredStory],
   parameters: {
