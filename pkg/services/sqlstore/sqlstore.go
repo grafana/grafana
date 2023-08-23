@@ -213,7 +213,19 @@ func (ss *SQLStore) ensureMainOrgAndAdminUser(test bool) error {
 				return fmt.Errorf("could not determine if admin user exists: %w", err)
 			}
 			if stats.Count > 0 {
-				return nil
+				if !ss.Cfg.ResetAdminEveryTimeRun {
+					return nil
+				}
+
+				ss.log.Debug("Reset admin user name and password")
+				if _, err := ss.resetAdminUser(ctx, sess, user.CreateUserCommand{
+					Name:     ss.Cfg.AdminUser,
+					Login:    ss.Cfg.AdminUser,
+					Email:    ss.Cfg.AdminEmail,
+					Password: ss.Cfg.AdminPassword,
+				}); err != nil {
+					return fmt.Errorf("failed to update admin user: %s", err)
+				}
 			}
 		}
 

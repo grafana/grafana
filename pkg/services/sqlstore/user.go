@@ -132,6 +132,37 @@ func (ss *SQLStore) createUser(ctx context.Context, sess *DBSession, args user.C
 	return usr, nil
 }
 
+func (ss *SQLStore) resetAdminUser(ctx context.Context, sess *DBSession, args user.CreateUserCommand) (user.User, error) {
+	usr := user.User{
+		Login:   args.Login,
+		Email:   args.Email,
+		IsAdmin: true,
+	}
+
+	salt, err := util.GetRandomString(10)
+	if err != nil {
+		return usr, err
+	}
+	usr.Salt = salt
+	rands, err := util.GetRandomString(10)
+	if err != nil {
+		return usr, err
+	}
+	usr.Rands = rands
+
+	if len(args.Password) > 0 {
+		encodedPassword, err := util.EncodePassword(args.Password, usr.Salt)
+		if err != nil {
+			return usr, err
+		}
+		usr.Password = encodedPassword
+	}
+
+	_, err = sess.ID(1).Update(usr)
+
+	return usr, err
+}
+
 func verifyExistingOrg(sess *DBSession, orgId int64) error {
 	var orga org.Org
 	has, err := sess.Where("id=?", orgId).Get(&orga)
