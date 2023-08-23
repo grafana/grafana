@@ -1,4 +1,12 @@
-import { createTheme, DataFrame, DisplayProcessor, Field, getDisplayProcessor, GrafanaTheme2 } from '@grafana/data';
+import {
+  createTheme,
+  DataFrame,
+  DisplayProcessor,
+  Field,
+  FieldType,
+  getDisplayProcessor,
+  GrafanaTheme2,
+} from '@grafana/data';
 
 import { SampleUnit } from '../types';
 
@@ -9,7 +17,10 @@ export type LevelItem = {
   start: number;
   // Value here can be different from a value of items in the data frame as for callers tree in sandwich view we have
   // to trim the value to correspond only to the part used by the children in the subtree.
+  // In case of diff profile this is actually left + right value.
   value: number;
+  // Only exists for diff profiles.
+  valueRight?: number;
   // Index into the data frame. It is an array because for sandwich views we may be merging multiple items into single
   // node.
   itemIndexes: number[];
@@ -38,7 +49,10 @@ export function nestedSetToLevels(container: FlameGraphDataContainer): [LevelIte
       // We are going down a level or staying at the same level, so we are adding a sibling to the last item in a level.
       // So we have to compute the correct offset based on the last sibling.
       const lastSibling = levels[currentLevel][levels[currentLevel].length - 1];
-      offset = lastSibling.start + container.getValue(lastSibling.itemIndexes[0]);
+      offset =
+        lastSibling.start +
+        container.getValue(lastSibling.itemIndexes[0]) +
+        container.getValueRight(lastSibling.itemIndexes[0]);
       // we assume there is always a single root node so lastSibling should always have a parent.
       // Also it has to have the same parent because of how the items are ordered.
       parent = lastSibling.parents![0];
@@ -46,7 +60,8 @@ export function nestedSetToLevels(container: FlameGraphDataContainer): [LevelIte
 
     const newItem: LevelItem = {
       itemIndexes: [i],
-      value: container.getValue(i),
+      value: container.getValue(i) + container.getValueRight(i),
+      valueRight: container.isDiffFlamegraph() ? container.getValueRight(i) : undefined,
       start: offset,
       parents: parent && [parent],
       children: [],
@@ -69,12 +84,67 @@ export function nestedSetToLevels(container: FlameGraphDataContainer): [LevelIte
   return [levels, uniqueLabels];
 }
 
+export function getMessageCheckFieldsResult(wrongFields: CheckFieldsResult) {
+  if (wrongFields.missingFields.length) {
+    return `Data is missing fields: ${wrongFields.missingFields.join(', ')}`;
+  }
+
+  if (wrongFields.wrongTypeFields.length) {
+    return `Data has fields of wrong type: ${wrongFields.wrongTypeFields
+      .map((f) => `${f.name} has type ${f.type} but should be ${f.expectedTypes.join(' or ')}`)
+      .join(', ')}`;
+  }
+
+  return '';
+}
+
+export type CheckFieldsResult = {
+  wrongTypeFields: Array<{ name: string; expectedTypes: FieldType[]; type: FieldType }>;
+  missingFields: string[];
+};
+
+export function checkFields(data: DataFrame): CheckFieldsResult | undefined {
+  const fields: Array<[string, FieldType[]]> = [
+    ['label', [FieldType.string, FieldType.enum]],
+    ['level', [FieldType.number]],
+    ['value', [FieldType.number]],
+    ['self', [FieldType.number]],
+  ];
+
+  const missingFields = [];
+  const wrongTypeFields = [];
+
+  for (const field of fields) {
+    const [name, types] = field;
+    const frameField = data.fields.find((f) => f.name === name);
+    if (!frameField) {
+      missingFields.push(name);
+      continue;
+    }
+    if (!types.includes(frameField.type)) {
+      wrongTypeFields.push({ name, expectedTypes: types, type: frameField.type });
+    }
+  }
+
+  if (missingFields.length > 0 || wrongTypeFields.length > 0) {
+    return {
+      wrongTypeFields,
+      missingFields,
+    };
+  }
+  return undefined;
+}
+
 export class FlameGraphDataContainer {
   data: DataFrame;
   labelField: Field;
   levelField: Field;
   valueField: Field;
   selfField: Field;
+
+  // Optional fields for diff view
+  valueRightField?: Field;
+  selfRightField?: Field;
 
   labelDisplayProcessor: DisplayProcessor;
   valueDisplayProcessor: DisplayProcessor;
@@ -85,13 +155,24 @@ export class FlameGraphDataContainer {
 
   constructor(data: DataFrame, theme: GrafanaTheme2 = createTheme()) {
     this.data = data;
+
+    const wrongFields = checkFields(data);
+    if (wrongFields) {
+      throw new Error(getMessageCheckFieldsResult(wrongFields));
+    }
+
     this.labelField = data.fields.find((f) => f.name === 'label')!;
     this.levelField = data.fields.find((f) => f.name === 'level')!;
     this.valueField = data.fields.find((f) => f.name === 'value')!;
     this.selfField = data.fields.find((f) => f.name === 'self')!;
 
-    if (!(this.labelField && this.levelField && this.valueField && this.selfField)) {
-      throw new Error('Malformed dataFrame: value, level and label and self fields are required.');
+    this.valueRightField = data.fields.find((f) => f.name === 'valueRight')!;
+    this.selfRightField = data.fields.find((f) => f.name === 'selfRight')!;
+
+    if ((this.valueField || this.selfField) && !(this.valueField && this.selfField)) {
+      throw new Error(
+        'Malformed dataFrame: both valueRight and selfRight has to be present if one of them is present.'
+      );
     }
 
     const enumConfig = this.labelField?.config?.type?.enum;
@@ -115,6 +196,10 @@ export class FlameGraphDataContainer {
     });
   }
 
+  isDiffFlamegraph() {
+    return this.valueRightField && this.selfRightField;
+  }
+
   getLabel(index: number) {
     return this.labelDisplayProcessor(this.labelField.values[index]).text;
   }
@@ -124,21 +209,19 @@ export class FlameGraphDataContainer {
   }
 
   getValue(index: number | number[]) {
-    let indexArray: number[] = typeof index === 'number' ? [index] : index;
-    return indexArray.reduce((acc, index) => {
-      return acc + this.valueField.values[index];
-    }, 0);
+    return fieldAccessor(this.valueField, index);
   }
 
-  getValueDisplay(index: number | number[]) {
-    return this.valueDisplayProcessor(this.getValue(index));
+  getValueRight(index: number | number[]) {
+    return fieldAccessor(this.valueRightField, index);
   }
 
   getSelf(index: number | number[]) {
-    let indexArray: number[] = typeof index === 'number' ? [index] : index;
-    return indexArray.reduce((acc, index) => {
-      return acc + this.selfField.values[index];
-    }, 0);
+    return fieldAccessor(this.selfField, index);
+  }
+
+  getSelfRight(index: number | number[]) {
+    return fieldAccessor(this.selfRightField, index);
   }
 
   getSelfDisplay(index: number | number[]) {
@@ -165,11 +248,11 @@ export class FlameGraphDataContainer {
     return this.levels!;
   }
 
-  getSandwichLevels(label: string) {
+  getSandwichLevels(label: string): [LevelItem[][], LevelItem[][]] {
     const nodes = this.getNodesWithLabel(label);
 
     if (!nodes?.length) {
-      return [];
+      return [[], []];
     }
 
     const callers = mergeParentSubtrees(nodes, this);
@@ -190,4 +273,16 @@ export class FlameGraphDataContainer {
       this.uniqueLabelsMap = uniqueLabelsMap;
     }
   }
+}
+
+// Access field value with either single index or array of indexes. This is needed as we sometimes merge multiple
+// into one, and we want to access aggregated values.
+function fieldAccessor(field: Field | undefined, index: number | number[]) {
+  if (!field) {
+    return 0;
+  }
+  let indexArray: number[] = typeof index === 'number' ? [index] : index;
+  return indexArray.reduce((acc, index) => {
+    return acc + field.values[index];
+  }, 0);
 }

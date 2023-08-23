@@ -49,10 +49,7 @@ const CardContext = React.createContext<{
  */
 export const Card: CardInterface = ({ disabled, href, onClick, children, isSelected, className, ...htmlProps }) => {
   const hasHeadingComponent = useMemo(
-    () =>
-      React.Children.toArray(children).some(
-        (c) => React.isValidElement(c) && (c.type as any).displayName === Heading.displayName
-      ),
+    () => React.Children.toArray(children).some((c) => React.isValidElement(c) && c.type === Heading),
     [children]
   );
 
@@ -133,7 +130,7 @@ const getHeadingStyles = (theme: GrafanaTheme2) => ({
       bottom: 0,
       left: 0,
       right: 0,
-      borderRadius: theme.shape.borderRadius(1),
+      borderRadius: theme.shape.radius.default,
     },
 
     '&:focus-visible': {

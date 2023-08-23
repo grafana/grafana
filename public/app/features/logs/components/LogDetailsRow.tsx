@@ -4,7 +4,7 @@ import memoizeOne from 'memoize-one';
 import React, { PureComponent, useState } from 'react';
 
 import { CoreApp, Field, GrafanaTheme2, IconName, LinkModel, LogLabelStatsModel, LogRowModel } from '@grafana/data';
-import { reportInteraction } from '@grafana/runtime';
+import { config, reportInteraction } from '@grafana/runtime';
 import { ClipboardButton, DataLinkButton, IconButton, Themeable2, withTheme2 } from '@grafana/ui';
 
 import { LogLabelStats } from './LogLabelStats';
@@ -274,10 +274,20 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
           <td className={style.logsDetailsIcon}>
             <div className={styles.buttonRow}>
               {hasFilteringFunctionality && (
-                <AsyncIconButton name="search-plus" onClick={this.filterLabel} isActive={this.isFilterLabelActive} />
-              )}
-              {hasFilteringFunctionality && (
-                <IconButton name="search-minus" tooltip="Filter out value" onClick={this.filterOutLabel} />
+                <>
+                  {config.featureToggles.toggleLabelsInLogsUI && (
+                    // If we are using the new label toggling, we want to use the async icon button
+                    <AsyncIconButton
+                      name="search-plus"
+                      onClick={this.filterLabel}
+                      isActive={this.isFilterLabelActive}
+                    />
+                  )}
+                  {!config.featureToggles.toggleLabelsInLogsUI && (
+                    <IconButton name="search-plus" onClick={this.filterLabel} tooltip="Filter for value" />
+                  )}
+                  <IconButton name="search-minus" tooltip="Filter out value" onClick={this.filterOutLabel} />
+                </>
               )}
               {!disableActions && displayedFields && toggleFieldButton}
               {!disableActions && (

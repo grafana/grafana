@@ -89,12 +89,13 @@ describe('AngularDeprecationPluginNotice', () => {
   });
 
   it('reports interaction when clicking on the link', async () => {
-    render(<AngularDeprecationPluginNotice pluginId="test-id" />);
+    render(<AngularDeprecationPluginNotice pluginId="test-id" interactionElementId="some-identifier" />);
     const c = 'Read our deprecation notice and migration advice.';
     expect(screen.getByText(c)).toBeInTheDocument();
     await userEvent.click(screen.getByText(c));
     expect(reportInteraction).toHaveBeenCalledWith('angular_deprecation_docs_clicked', {
       pluginId: 'test-id',
+      elementId: 'some-identifier',
     });
   });
 });

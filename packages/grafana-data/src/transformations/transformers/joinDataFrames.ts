@@ -151,6 +151,10 @@ export function joinDataFrames(options: JoinOptions): DataFrame | undefined {
   const nullModes: JoinNullMode[][] = [];
   const allData: AlignedData[] = [];
   const originalFields: Field[] = [];
+  // store frame field order for tabular data join
+  const originalFieldsOrderByFrame: number[][] = [];
+  // all other fields that are not the join on are in the 1+ position (join is always the 0)
+  let fieldsOrder = 1;
   const joinFieldMatcher = getJoinMatcher(options);
 
   for (let frameIndex = 0; frameIndex < options.frames.length; frameIndex++) {
@@ -163,6 +167,7 @@ export function joinDataFrames(options: JoinOptions): DataFrame | undefined {
     const nullModesFrame: JoinNullMode[] = [NULL_REMOVE];
     let join: Field | undefined = undefined;
     let fields: Field[] = [];
+    let frameFieldsOrder = [];
 
     for (let fieldIndex = 0; fieldIndex < frame.fields.length; fieldIndex++) {
       const field = frame.fields[fieldIndex];
@@ -220,12 +225,22 @@ export function joinDataFrames(options: JoinOptions): DataFrame | undefined {
       originalFields.push(field);
       // clear field displayName state
       delete field.state?.displayName;
+      // store frame field order for tabular data join
+      frameFieldsOrder.push(fieldsOrder);
+      fieldsOrder++;
     }
-
+    // store frame field order for tabular data join
+    originalFieldsOrderByFrame.push(frameFieldsOrder);
     allData.push(a);
   }
 
-  const joined = join(allData, nullModes, options.mode);
+  let joined: Array<Array<number | string | null | undefined>> = [];
+
+  if (options.mode === JoinMode.outerTabular) {
+    joined = joinOuterTabular(allData, originalFieldsOrderByFrame, originalFields.length, nullModes);
+  } else {
+    joined = join(allData, nullModes, options.mode);
+  }
 
   return {
     // ...options.data[0], // keep name, meta?
@@ -235,6 +250,98 @@ export function joinDataFrames(options: JoinOptions): DataFrame | undefined {
       values: joined[index],
     })),
   };
+}
+
+// The following full outer join allows for multiple/duplicated joined fields values where as the performant join from uplot creates a unique set of field values to be joined on
+// http://www.silota.com/docs/recipes/sql-join-tutorial-javascript-examples.html
+// The frame field value which is used join on is sorted to the 0 position of each table data in both tables and nullModes
+// (not sure if we need nullModes) for nullModes, the field to join on is given NULL_REMOVE and all other fields are given NULL_EXPAND
+function joinOuterTabular(
+  tables: AlignedData[],
+  originalFieldsOrderByFrame: number[][],
+  numberOfFields: number,
+  nullModes?: number[][]
+) {
+  // we will iterate through all frames and check frames for matches preventing duplicates.
+  // we will store each matched frame "row" or field values at the same index in the following hash.
+  let duplicateHash: { [key: string]: Array<number | string | null | undefined> } = {};
+
+  // iterate through the tables (frames)
+  // for each frame we get the field data where the data in the 0 pos is the value to join on
+  for (let tableIdx = 0; tableIdx < tables.length; tableIdx++) {
+    // the table (frame) to check for matches in other tables
+    let table = tables[tableIdx];
+    // the field value to join on (the join value is always in the 0 position)
+    let joinOnTableField = table[0];
+
+    // now we iterate through the other table (frame) data to look for matches
+    for (let otherTablesIdx = 0; otherTablesIdx < tables.length; otherTablesIdx++) {
+      // do not match on the same table
+      if (otherTablesIdx === tableIdx) {
+        continue;
+      }
+
+      let otherTable = tables[otherTablesIdx];
+      let otherTableJoinOnField = otherTable[0];
+
+      // iterate through the field to join on from the first table
+      for (
+        let joinTableFieldValuesIdx = 0;
+        joinTableFieldValuesIdx < joinOnTableField.length;
+        joinTableFieldValuesIdx++
+      ) {
+        // create the joined data
+        // this has the orignalFields length and should start out undefined
+        // joined row + number of other fields in each frame
+        // the order of each field is important in how we
+        // 1 check for duplicates
+        // 2 transform the row back into fields for the joined frame
+        // 3 when there is no match for the row we keep the vals undefined
+        const tableJoinOnValue = joinOnTableField[joinTableFieldValuesIdx];
+        const allOtherFields = numberOfFields - 1;
+        let joinedRow: Array<number | string | null | undefined> = [tableJoinOnValue].concat(new Array(allOtherFields));
+
+        let tableFieldValIdx = 0;
+        for (let fieldsIdx = 1; fieldsIdx < table.length; fieldsIdx++) {
+          const joinRowIdx = originalFieldsOrderByFrame[tableIdx][tableFieldValIdx];
+          joinedRow[joinRowIdx] = table[fieldsIdx][joinTableFieldValuesIdx];
+          tableFieldValIdx++;
+        }
+
+        for (let otherTableValuesIdx = 0; otherTableValuesIdx < otherTableJoinOnField.length; otherTableValuesIdx++) {
+          if (joinOnTableField[joinTableFieldValuesIdx] === otherTableJoinOnField[otherTableValuesIdx]) {
+            let tableFieldValIdx = 0;
+            for (let fieldsIdx = 1; fieldsIdx < otherTable.length; fieldsIdx++) {
+              const joinRowIdx = originalFieldsOrderByFrame[otherTablesIdx][tableFieldValIdx];
+              joinedRow[joinRowIdx] = otherTable[fieldsIdx][otherTableValuesIdx];
+              tableFieldValIdx++;
+            }
+
+            break;
+          }
+        }
+
+        // prevent duplicates by entering rows in a hash where keys are the rows
+        duplicateHash[JSON.stringify(joinedRow)] = joinedRow;
+      }
+    }
+  }
+
+  // transform the joined rows into data for a dataframe
+  let data: Array<Array<number | string | null | undefined>> = [];
+  for (let field = 0; field < numberOfFields; field++) {
+    data.push(new Array(0));
+  }
+
+  for (let key in duplicateHash) {
+    const row = duplicateHash[key];
+
+    for (let valIdx = 0; valIdx < row.length; valIdx++) {
+      data[valIdx].push(row[valIdx]);
+    }
+  }
+
+  return data;
 }
 
 //--------------------------------------------------------------------------------

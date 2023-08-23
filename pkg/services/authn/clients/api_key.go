@@ -19,9 +19,9 @@ import (
 )
 
 var (
-	errAPIKeyInvalid = errutil.NewBase(errutil.StatusUnauthorized, "api-key.invalid", errutil.WithPublicMessage("Invalid API key"))
-	errAPIKeyExpired = errutil.NewBase(errutil.StatusUnauthorized, "api-key.expired", errutil.WithPublicMessage("Expired API key"))
-	errAPIKeyRevoked = errutil.NewBase(errutil.StatusUnauthorized, "api-key.revoked", errutil.WithPublicMessage("Revoked API key"))
+	errAPIKeyInvalid = errutil.Unauthorized("api-key.invalid", errutil.WithPublicMessage("Invalid API key"))
+	errAPIKeyExpired = errutil.Unauthorized("api-key.expired", errutil.WithPublicMessage("Expired API key"))
+	errAPIKeyRevoked = errutil.Unauthorized("api-key.revoked", errutil.WithPublicMessage("Revoked API key"))
 )
 
 var _ authn.HookClient = new(APIKey)

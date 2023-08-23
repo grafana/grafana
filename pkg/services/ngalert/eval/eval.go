@@ -142,6 +142,7 @@ type ExecutionResults struct {
 // Results is a slice of evaluated alert instances states.
 type Results []Result
 
+// HasErrors returns true when Results contains at least one element with error
 func (evalResults Results) HasErrors() bool {
 	for _, r := range evalResults {
 		if r.State == Error {
@@ -149,6 +150,26 @@ func (evalResults Results) HasErrors() bool {
 		}
 	}
 	return false
+}
+
+// HasErrors returns true when Results contains at least one element and all elements are errors
+func (evalResults Results) IsError() bool {
+	for _, r := range evalResults {
+		if r.State != Error {
+			return false
+		}
+	}
+	return len(evalResults) > 0
+}
+
+// IsNoData returns true when all items are NoData or Results is empty
+func (evalResults Results) IsNoData() bool {
+	for _, result := range evalResults {
+		if result.State != NoData {
+			return false
+		}
+	}
+	return true
 }
 
 // Result contains the evaluated State of an alert instance
@@ -324,8 +345,6 @@ func queryDataResponseToExecutionResults(c models.Condition, execResp *backend.Q
 	for _, next := range c.Data {
 		datasourceUIDsForRefIDs[next.RefID] = next.DatasourceUID
 	}
-	// datasourceExprUID is a special DatasourceUID for expressions
-	datasourceExprUID := strconv.FormatInt(expr.DatasourceID, 10)
 
 	result := ExecutionResults{Results: make(map[string]data.Frames)}
 	for refID, res := range execResp.Responses {
@@ -347,7 +366,7 @@ func queryDataResponseToExecutionResults(c models.Condition, execResp *backend.Q
 			hasNoFrames := len(res.Frames) == 0
 			hasNoFields := len(res.Frames) == 1 && len(res.Frames[0].Fields) == 0
 			if hasNoFrames || hasNoFields {
-				if s, ok := datasourceUIDsForRefIDs[refID]; ok && s != datasourceExprUID {
+				if s, ok := datasourceUIDsForRefIDs[refID]; ok && expr.NodeTypeFromDatasourceUID(s) == expr.TypeDatasourceNode { // TODO perhaps extract datasource UID from ML expression too.
 					result.NoData[refID] = s
 				}
 			}

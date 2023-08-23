@@ -38,10 +38,9 @@ describe('Variables - Query - Add variable', () => {
     e2e().get('label').contains('Show on dashboard').should('be.visible');
 
     e2e.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsDataSourceSelect()
-      .should('be.visible')
-      .within((select) => {
-        e2e.components.Select.singleValue().should('have.text', 'gdev-testdata');
-      });
+      .get('input[placeholder="gdev-testdata"]')
+      .scrollIntoView()
+      .should('be.visible');
 
     e2e().get('label').contains('Refresh').scrollIntoView().should('be.visible');
     e2e().get('label').contains('On dashboard load').scrollIntoView().should('be.visible');
@@ -89,7 +88,7 @@ describe('Variables - Query - Add variable', () => {
 
     e2e().get('[placeholder="Descriptive text"]').should('be.visible').clear().type('a description');
 
-    e2e.components.DataSourcePicker.inputV2().should('be.visible').type('gdev-testdata{enter}');
+    e2e.components.DataSourcePicker.container().should('be.visible').type('gdev-testdata{enter}');
 
     e2e.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsQueryInput()
       .should('be.visible')
@@ -137,7 +136,7 @@ describe('Variables - Query - Add variable', () => {
 
     e2e().get('[placeholder="Descriptive text"]').should('be.visible').clear().type('a description');
 
-    e2e.components.DataSourcePicker.inputV2().type('gdev-testdata{enter}');
+    e2e.components.DataSourcePicker.container().type('gdev-testdata{enter}');
 
     e2e.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsQueryInput()
       .should('be.visible')

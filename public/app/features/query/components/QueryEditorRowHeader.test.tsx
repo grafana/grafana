@@ -83,7 +83,7 @@ describe('QueryEditorRowHeader', () => {
   it('should render variables in the data source picker', async () => {
     renderScenario({ onChangeDataSource: () => {} });
 
-    const dsSelect = screen.getByLabelText(selectors.components.DataSourcePicker.inputV2);
+    const dsSelect = screen.getByTestId(selectors.components.DataSourcePicker.container).querySelector('input')!;
     openMenu(dsSelect);
     expect(await screen.findByText('${dsVariable}')).toBeInTheDocument();
   });

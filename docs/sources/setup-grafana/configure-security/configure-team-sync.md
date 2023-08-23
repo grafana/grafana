@@ -31,6 +31,7 @@ This mechanism allows Grafana to remove an existing synchronized user from a tea
 - [Azure AD]({{< relref "./configure-authentication/azuread#team-sync-enterprise-only" >}})
 - [GitHub OAuth]({{< relref "./configure-authentication/github#configure-team-synchronization" >}})
 - [GitLab OAuth]({{< relref "./configure-authentication/gitlab#configure-team-synchronization" >}})
+- [Google OAuth]({{< relref "./configure-authentication/google#configure-team-sync-for-google-oauth" >}})
 - [LDAP]({{< relref "./configure-authentication/enhanced-ldap#ldap-group-synchronization-for-teams" >}})
 - [Okta]({{< relref "./configure-authentication/okta#configure-team-synchronization-enterprise-only" >}})
 - [SAML]({{< relref "./configure-authentication/saml#configure-team-sync" >}})

@@ -20,6 +20,8 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/log/logtest"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
@@ -27,7 +29,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
-	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	secrets_fakes "github.com/grafana/grafana/pkg/services/secrets/fakes"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -1008,8 +1009,15 @@ func TestProvisioningApiContactPointExport(t *testing.T) {
 			require.Equal(t, "", rc.Context.Resp.Header().Get("Content-Disposition"))
 		})
 
-		t.Run("decrypt true without admin returns 403", func(t *testing.T) {
-			sut := createProvisioningSrvSut(t)
+		t.Run("decrypt true without alert.provisioning.secrets:read permissions returns 403", func(t *testing.T) {
+			env := createTestEnv(t, testConfig)
+			env.ac = &recordingAccessControlFake{
+				Callback: func(user *user.SignedInUser, evaluator accesscontrol.Evaluator) (bool, error) {
+					return false, nil
+				},
+			}
+
+			sut := createProvisioningSrvSutFromEnv(t, &env)
 			rc := createTestRequestCtx()
 
 			rc.Context.Req.Form.Set("decrypt", "true")
@@ -1017,19 +1025,30 @@ func TestProvisioningApiContactPointExport(t *testing.T) {
 			response := sut.RouteGetContactPointsExport(&rc)
 
 			require.Equal(t, 403, response.Status())
+			require.Len(t, env.ac.EvaluateRecordings, 1)
+			require.Equal(t, accesscontrol.ActionAlertingProvisioningReadSecrets, env.ac.EvaluateRecordings[0].Evaluator.String())
 		})
 
 		t.Run("decrypt true with admin returns 200", func(t *testing.T) {
-			sut := createProvisioningSrvSut(t)
+			env := createTestEnv(t, testConfig)
+			env.ac = &recordingAccessControlFake{
+				Callback: func(user *user.SignedInUser, evaluator accesscontrol.Evaluator) (bool, error) {
+					require.Equal(t, accesscontrol.ActionAlertingProvisioningReadSecrets, evaluator.String())
+					return true, nil
+				},
+			}
+
+			sut := createProvisioningSrvSutFromEnv(t, &env)
 			rc := createTestRequestCtx()
 
-			rc.SignedInUser.OrgRole = org.RoleAdmin
 			rc.Context.Req.Form.Set("decrypt", "true")
 
 			response := sut.RouteGetContactPointsExport(&rc)
 			response.WriteTo(&rc)
 
 			require.Equal(t, 200, response.Status())
+			require.Len(t, env.ac.EvaluateRecordings, 1)
+			require.Equal(t, accesscontrol.ActionAlertingProvisioningReadSecrets, env.ac.EvaluateRecordings[0].Evaluator.String())
 		})
 
 		t.Run("json body content is as expected", func(t *testing.T) {
@@ -1061,10 +1080,12 @@ func TestProvisioningApiContactPointExport(t *testing.T) {
 			})
 			t.Run("decrypt true", func(t *testing.T) {
 				env := createTestEnv(t, testContactPointConfig)
+				env.ac.Callback = func(user *user.SignedInUser, evaluator accesscontrol.Evaluator) (bool, error) {
+					return true, nil
+				}
 				sut := createProvisioningSrvSutFromEnv(t, &env)
 				rc := createTestRequestCtx()
 
-				rc.SignedInUser.OrgRole = org.RoleAdmin
 				rc.Context.Req.Header.Add("Accept", "application/json")
 				rc.Context.Req.Form.Set("decrypt", "true")
 
@@ -1119,10 +1140,12 @@ func TestProvisioningApiContactPointExport(t *testing.T) {
 			})
 			t.Run("decrypt true", func(t *testing.T) {
 				env := createTestEnv(t, testContactPointConfig)
+				env.ac.Callback = func(user *user.SignedInUser, evaluator accesscontrol.Evaluator) (bool, error) {
+					return true, nil
+				}
 				sut := createProvisioningSrvSutFromEnv(t, &env)
 				rc := createTestRequestCtx()
 
-				rc.SignedInUser.OrgRole = org.RoleAdmin
 				rc.Context.Req.Header.Add("Accept", "application/yaml")
 				rc.Context.Req.Form.Set("decrypt", "true")
 
@@ -1160,6 +1183,7 @@ type testEnvironment struct {
 	xact             provisioning.TransactionManager
 	quotas           provisioning.QuotaChecker
 	prov             provisioning.ProvisioningStore
+	ac               *recordingAccessControlFake
 }
 
 func createTestEnv(t *testing.T, testConfig string) testEnvironment {
@@ -1212,6 +1236,8 @@ func createTestEnv(t *testing.T, testConfig string) testEnvironment {
 			Title: "Folder Title2",
 		}}, nil).Maybe()
 
+	ac := &recordingAccessControlFake{}
+
 	return testEnvironment{
 		secrets:          secretsService,
 		log:              log,
@@ -1221,6 +1247,7 @@ func createTestEnv(t *testing.T, testConfig string) testEnvironment {
 		xact:             xact,
 		prov:             prov,
 		quotas:           quotas,
+		ac:               ac,
 	}
 }
 
@@ -1237,7 +1264,7 @@ func createProvisioningSrvSutFromEnv(t *testing.T, env *testEnvironment) Provisi
 	return ProvisioningSrv{
 		log:                 env.log,
 		policies:            newFakeNotificationPolicyService(),
-		contactPointService: provisioning.NewContactPointService(env.configs, env.secrets, env.prov, env.xact, env.log),
+		contactPointService: provisioning.NewContactPointService(env.configs, env.secrets, env.prov, env.xact, env.log, env.ac),
 		templates:           provisioning.NewTemplateService(env.configs, env.prov, env.xact, env.log),
 		muteTimings:         provisioning.NewMuteTimingService(env.configs, env.prov, env.xact, env.log),
 		alertRules:          provisioning.NewAlertRuleService(env.store, env.prov, env.dashboardService, env.quotas, env.xact, 60, 10, env.log),
@@ -1256,6 +1283,7 @@ func createTestRequestCtx() contextmodel.ReqContext {
 		SignedInUser: &user.SignedInUser{
 			OrgID: 1,
 		},
+		Logger: &logtest.Fake{},
 	}
 }
 

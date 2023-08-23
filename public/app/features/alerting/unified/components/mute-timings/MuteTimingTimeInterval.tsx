@@ -236,7 +236,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
 
     border: solid 1px ${theme.colors.border.medium};
     background: none;
-    border-radius: ${theme.shape.borderRadius()};
+    border-radius: ${theme.shape.radius.default};
 
     color: ${theme.colors.text.secondary};
 

@@ -17,7 +17,7 @@ labels:
     - enterprise
     - oss
 title: Configure data source-managed alert rules
-weight: 400
+weight: 200
 ---
 
 # Configure data source-managed alert rules
@@ -48,12 +48,6 @@ In the following sections, we’ll guide you through the process of creating you
 
 To create a data source-managed alert rule, use the in-product alert creation flow and follow these steps to help you.
 
-1. Enter an alert rule name
-2. Define query and alert condition
-3. Set evaluation behavior
-4. Add annotations
-5. Configure notifications
-
 ## Set alert rule name
 
 1. Click **Alerts & IRM** -> **Alert rules** -> **+ New alert rule**.
@@ -69,7 +63,10 @@ Define a query to get the data you want to measure and a condition that needs to
 
 All alert rules are managed by Grafana by default. To switch to a data source-managed alert rule, click **Switch to data source-managed alert rule**.
 
-1. Select a data source.
+1. Select a data source from the drop-down list.
+
+   You can also click **Open advanced data source picker** to see more options, including adding a data source (Admins only).
+
 1. Enter a PromQL or LogQL query.
 1. Click **Preview alerts**.
 

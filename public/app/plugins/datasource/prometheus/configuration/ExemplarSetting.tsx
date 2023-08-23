@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 
+import { DataSourceInstanceSettings } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { DataSourcePicker } from '@grafana/runtime';
 import { Button, InlineField, Input, Switch, useTheme2 } from '@grafana/ui';
+import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 
 import { ExemplarTraceIdDestination } from '../types';
 
@@ -58,7 +59,7 @@ export default function ExemplarSetting({ value, onChange, onDelete, disabled }:
             current={value.datasourceUid}
             noDefault={true}
             width={40}
-            onChange={(ds) =>
+            onChange={(ds: DataSourceInstanceSettings) =>
               onChange({
                 ...value,
                 datasourceUid: ds.uid,

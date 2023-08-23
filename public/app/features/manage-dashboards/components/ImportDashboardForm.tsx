@@ -1,7 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { BaseSyntheticEvent, useEffect, useState } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { DataSourcePicker } from '@grafana/runtime';
 import { ExpressionDatasourceRef } from '@grafana/runtime/src/utils/DataSourceWithBackend';
 import {
   Button,
@@ -15,6 +14,7 @@ import {
   Legend,
 } from '@grafana/ui';
 import { OldFolderPicker } from 'app/core/components/Select/OldFolderPicker';
+import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 
 import {
   DashboardInput,
@@ -60,7 +60,7 @@ export const ImportDashboardForm = ({
   */
   useEffect(() => {
     if (isSubmitted && (errors.title || errors.uid)) {
-      onSubmit(getValues(), {} as any);
+      onSubmit(getValues(), {} as BaseSyntheticEvent);
     }
   }, [errors, getValues, isSubmitted, onSubmit]);
   const newLibraryPanels = inputs?.libraryPanels?.filter((i) => i.state === LibraryPanelInputState.New) ?? [];
@@ -113,17 +113,18 @@ export const ImportDashboardForm = ({
           if (input.pluginId === ExpressionDatasourceRef.type) {
             return null;
           }
-          const dataSourceOption = `dataSources[${index}]`;
+          const dataSourceOption = `dataSources.${index}` as const;
           const current = watchDataSources ?? [];
           return (
             <Field
               label={input.label}
+              description={input.description}
               key={dataSourceOption}
               invalid={errors.dataSources && !!errors.dataSources[index]}
               error={errors.dataSources && errors.dataSources[index] && 'A data source is required'}
             >
               <InputControl
-                name={dataSourceOption as any}
+                name={dataSourceOption}
                 render={({ field: { ref, ...field } }) => (
                   <DataSourcePicker
                     {...field}
@@ -141,7 +142,7 @@ export const ImportDashboardForm = ({
         })}
       {inputs.constants &&
         inputs.constants.map((input: DashboardInput, index) => {
-          const constantIndex = `constants[${index}]`;
+          const constantIndex = `constants.${index}` as const;
           return (
             <Field
               label={input.label}
@@ -149,7 +150,7 @@ export const ImportDashboardForm = ({
               invalid={errors.constants && !!errors.constants[index]}
               key={constantIndex}
             >
-              <Input {...register(constantIndex as any, { required: true })} defaultValue={input.value} />
+              <Input {...register(constantIndex, { required: true })} defaultValue={input.value} />
             </Field>
           );
         })}

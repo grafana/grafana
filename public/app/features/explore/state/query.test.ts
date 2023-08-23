@@ -614,6 +614,94 @@ describe('reducer', () => {
           queryKeys: ['initialRow-0', 'mockKey-1'],
         } as unknown as ExploreItemState);
     });
+
+    describe('addQueryRow', () => {
+      it('adds a query from root datasource if root is not mixed and there are no queries', async () => {
+        const { dispatch, getState }: { dispatch: ThunkDispatch; getState: () => StoreState } = configureStore({
+          ...defaultInitialState,
+          explore: {
+            ...defaultInitialState.explore,
+            panes: {
+              left: {
+                ...defaultInitialState.explore.panes.left,
+                queries: [],
+                datasourceInstance: {
+                  meta: {
+                    mixed: false,
+                  },
+                  getRef() {
+                    return { type: 'loki', uid: 'uid-loki' };
+                  },
+                },
+              },
+            },
+          },
+        } as unknown as Partial<StoreState>);
+
+        await dispatch(addQueryRow('left', 0));
+
+        expect(getState().explore.panes.left?.queries).toEqual([
+          expect.objectContaining({ datasource: { type: 'loki', uid: 'uid-loki' } }),
+        ]);
+      });
+
+      it('adds a query from root datasource if root is not mixed and there are queries without a datasource specified', async () => {
+        const { dispatch, getState }: { dispatch: ThunkDispatch; getState: () => StoreState } = configureStore({
+          ...defaultInitialState,
+          explore: {
+            panes: {
+              left: {
+                ...defaultInitialState.explore.panes.left,
+                queries: [{ expr: 1 }],
+                datasourceInstance: {
+                  meta: {
+                    mixed: false,
+                  },
+                  getRef() {
+                    return { type: 'loki', uid: 'uid-loki' };
+                  },
+                },
+              },
+            },
+          },
+        } as unknown as Partial<StoreState>);
+
+        await dispatch(addQueryRow('left', 0));
+
+        expect(getState().explore.panes.left?.queries).toEqual([
+          expect.anything(),
+          expect.objectContaining({ datasource: { type: 'loki', uid: 'uid-loki' } }),
+        ]);
+      });
+
+      it('adds a query from default datasource if root is mixed and there are no queries', async () => {
+        const { dispatch, getState }: { dispatch: ThunkDispatch; getState: () => StoreState } = configureStore({
+          ...defaultInitialState,
+          explore: {
+            panes: {
+              left: {
+                ...defaultInitialState.explore.panes.left,
+                queries: [],
+                datasourceInstance: {
+                  meta: {
+                    mixed: true,
+                  },
+                  getRef() {
+                    return { type: 'mixed', uid: '-- Mixed --' };
+                  },
+                },
+              },
+            },
+          },
+        } as unknown as Partial<StoreState>);
+
+        await dispatch(addQueryRow('left', 0));
+
+        expect(getState().explore.panes.left?.queries).toEqual([
+          expect.objectContaining({ datasource: { type: 'postgres', uid: 'ds1' } }),
+        ]);
+      });
+    });
   });
 
   describe('caching', () => {

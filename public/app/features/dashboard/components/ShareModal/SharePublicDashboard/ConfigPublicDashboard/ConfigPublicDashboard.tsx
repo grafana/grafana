@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data/src';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
-import { config, featureEnabled, reportInteraction } from '@grafana/runtime/src';
+import { config, featureEnabled } from '@grafana/runtime/src';
 import {
   ClipboardButton,
   Field,
@@ -25,6 +25,8 @@ import { isOrgAdmin } from '../../../../../plugins/admin/permissions';
 import { useGetPublicDashboardQuery, useUpdatePublicDashboardMutation } from '../../../../api/publicDashboardApi';
 import { useIsDesktop } from '../../../../utils/screen';
 import { ShareModal } from '../../ShareModal';
+import { trackDashboardSharingActionPerType } from '../../analytics';
+import { shareDashboardType } from '../../utils';
 import { NoUpsertPermissionsAlert } from '../ModalAlerts/NoUpsertPermissionsAlert';
 import { SaveDashboardChangesAlert } from '../ModalAlerts/SaveDashboardChangesAlert';
 import { UnsupportedDataSourcesAlert } from '../ModalAlerts/UnsupportedDataSourcesAlert';
@@ -100,9 +102,13 @@ const ConfigPublicDashboard = () => {
     showModal(ShareModal, {
       dashboard,
       onDismiss: hideModal,
-      activeTab: 'public-dashboard',
+      activeTab: shareDashboardType.publicDashboard,
     });
   };
+
+  function onCopyURL() {
+    trackDashboardSharingActionPerType('copy_public_url', shareDashboardType.publicDashboard);
+  }
 
   return (
     <div className={styles.configContainer}>
@@ -127,6 +133,7 @@ const ConfigPublicDashboard = () => {
               variant="primary"
               disabled={!publicDashboard?.isEnabled}
               getText={() => generatePublicDashboardUrl(publicDashboard!.accessToken!)}
+              onClipboardCopy={onCopyURL}
             >
               Copy
             </ClipboardButton>
@@ -140,9 +147,10 @@ const ConfigPublicDashboard = () => {
             {...register('isPaused')}
             disabled={disableInputs}
             onChange={(e) => {
-              reportInteraction('grafana_dashboards_public_enable_clicked', {
-                action: e.currentTarget.checked ? 'disable' : 'enable',
-              });
+              trackDashboardSharingActionPerType(
+                e.currentTarget.checked ? 'disable_sharing' : 'enable_sharing',
+                shareDashboardType.publicDashboard
+              );
               onChange('isPaused', e.currentTarget.checked);
             }}
             data-testid={selectors.PauseSwitch}

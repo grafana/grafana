@@ -10,7 +10,7 @@ import (
 )
 
 var (
-	errSyncPermissionsForbidden = errutil.NewBase(errutil.StatusForbidden, "permissions.sync.forbidden")
+	errSyncPermissionsForbidden = errutil.Forbidden("permissions.sync.forbidden")
 )
 
 func ProvidePermissionsSync(acService accesscontrol.Service) *PermissionsSync {

@@ -99,8 +99,10 @@ func (s *HeadlessScreenshotService) Take(ctx context.Context, opts ScreenshotOpt
 	p := u.Query()
 	p.Add("orgId", strconv.FormatInt(dashboard.OrgID, 10))
 	p.Add("panelId", strconv.FormatInt(opts.PanelID, 10))
-	p.Add("from", opts.From)
-	p.Add("to", opts.To)
+	if opts.From != "" && opts.To != "" {
+		p.Add("from", opts.From)
+		p.Add("to", opts.To)
+	}
 	u.RawQuery = p.Encode()
 
 	renderOpts := rendering.Opts{

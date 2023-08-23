@@ -103,7 +103,7 @@ type InternalStreamMessage<T = InternalStreamMessageType> = T extends InternalSt
 const reduceNewValuesSameSchemaMessages = (
   packets: Array<InternalStreamMessage<InternalStreamMessageType.NewValuesSameSchema>>
 ) => ({
-  values: packets.reduce((acc, { values }) => {
+  values: packets.reduce<unknown[][]>((acc, { values }) => {
     for (let i = 0; i < values.length; i++) {
       if (!acc[i]) {
         acc[i] = [];
@@ -113,7 +113,7 @@ const reduceNewValuesSameSchemaMessages = (
       }
     }
     return acc;
-  }, [] as unknown[][]),
+  }, []),
   type: InternalStreamMessageType.NewValuesSameSchema,
 });
 
@@ -149,7 +149,7 @@ export class LiveDataStream<T = unknown> {
     }
   };
 
-  private onError = (err: any) => {
+  private onError = (err: unknown) => {
     console.log('LiveQuery [error]', { err }, this.deps.channelId);
     this.stream.next({
       type: InternalStreamMessageType.Error,
