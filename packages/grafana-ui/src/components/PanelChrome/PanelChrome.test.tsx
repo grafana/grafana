@@ -19,7 +19,7 @@ const setup = (propOverrides?: Partial<PanelChromeProps>) => {
   return render(<PanelChrome {...props} />);
 };
 
-const setupWithToggle = (propOverrides?: Partial<PanelChromeProps>) => {
+const setupWithToggleCollapsed = (propOverrides?: Partial<PanelChromeProps>) => {
   const props: PanelChromeProps = {
     width: 100,
     height: 100,
@@ -147,8 +147,25 @@ it('renders streaming indicator in the panel header if loadingState is streaming
   expect(screen.getByTestId('panel-streaming')).toBeInTheDocument();
 });
 
-it('collapses the panel when user clicks on the chevron or the title', () => {
-  setupWithToggle({ title: 'Default title' });
+it('collapses the controlled panel when user clicks on the chevron or the title', () => {
+  setupWithToggleCollapsed({ title: 'Default title' });
+
+  expect(screen.getByText("Panel's Content")).toBeInTheDocument();
+
+  const button = screen.getByText('Default title');
+  // collapse button should have same aria-controls as the panel's content
+  expect(button.getAttribute('aria-controls')).toBe(button.parentElement?.parentElement?.nextElementSibling?.id);
+
+  fireEvent.click(button);
+
+  expect(screen.queryByText("Panel's Content")).not.toBeInTheDocument();
+  // aria-controls should be removed when panel is collapsed
+  expect(button).not.toHaveAttribute('aria-controlls');
+  expect(button.parentElement?.parentElement?.nextElementSibling?.id).toBe(undefined);
+});
+
+it('collapses the uncontrolled panel when user clicks on the chevron or the title', () => {
+  setup({ title: 'Default title', collapsible: true });
 
   expect(screen.getByText("Panel's Content")).toBeInTheDocument();
 

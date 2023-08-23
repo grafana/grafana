@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 import React, { CSSProperties, ReactElement, ReactNode, useId } from 'react';
-import { useMeasure } from 'react-use';
+import { useMeasure, useToggle } from 'react-use';
 
 import { GrafanaTheme2, LoadingState } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -75,7 +75,7 @@ interface Collapsible {
   /**
    * callback when collapsing or expanding the panel
    */
-  onToggleCollapse?: () => void;
+  onToggleCollapse?: (collapsed: boolean) => void;
   hoverHeader?: never;
   hoverHeaderOffset?: never;
 }
@@ -118,7 +118,7 @@ export function PanelChrome({
   onCancelQuery,
   onOpenMenu,
   collapsible = false,
-  collapsed = false,
+  collapsed,
   onToggleCollapse,
 }: PanelChromeProps) {
   const theme = useTheme2();
@@ -126,6 +126,13 @@ export function PanelChrome({
   const panelContentId = useId();
 
   const hasHeader = !hoverHeader;
+
+  const [isOpen, toggleOpen] = useToggle(true);
+
+  // if collapsed is not defined, then component is uncontrolled and state is managed internally
+  if (collapsed === undefined) {
+    collapsed = !isOpen;
+  }
 
   // hover menu is only shown on hover when not on touch devices
   const showOnHoverClass = 'show-on-hover';
@@ -161,7 +168,12 @@ export function PanelChrome({
       <button
         type="button"
         className={styles.clearButtonStyles}
-        onClick={onToggleCollapse}
+        onClick={() => {
+          toggleOpen();
+          if (onToggleCollapse) {
+            onToggleCollapse(!collapsed);
+          }
+        }}
         aria-expanded={!collapsed}
         aria-controls={!collapsed ? panelContentId : undefined}
       >
