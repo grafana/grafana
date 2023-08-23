@@ -91,9 +91,7 @@ export class ContextSrv {
     this.hasEditPermissionInFolders = this.user.hasEditPermissionInFolders;
     this.minRefreshInterval = config.minRefreshInterval;
 
-    if (this.canScheduleRotation()) {
-      this.scheduleTokenRotationJob();
-    }
+    this.scheduleTokenRotationJob();
   }
 
   async fetchUserPermissions() {
@@ -213,14 +211,6 @@ export class ContextSrv {
       // get the time token is going to expire
       let expires = this.getSessionExpiry();
 
-      // if expires is 0 we run rotation now and reschedule the job
-      // this can happen if user was signed in before upgrade
-      // after a successful rotation the expiry cookie will be present
-      if (expires === 0) {
-        this.rotateToken().then();
-        return;
-      }
-
       // because this job is scheduled for every tab we have open that shares a session we try
       // to distribute the scheduling of the job. For now this can be between 1 and 20 seconds
       const expiresWithDistribution = expires - Math.floor(Math.random() * (20 - 1) + 1);
@@ -252,20 +242,12 @@ export class ContextSrv {
       return false;
     }
 
-    const params = new URLSearchParams(window.location.search);
-
-    // skip if this is a render request
-    if (!!params.get('render')) {
-      return false;
-    }
-
-    // skip if we are using auth_token in url
-    if (!!params.get('auth_token')) {
-      return false;
-    }
-
-    // skip if the user has been authenticated by authproxy and does not have a login token
-    if (this.user.authenticatedBy === 'authproxy' && !config.auth.AuthProxyEnableLoginToken) {
+    // skip if there is no session to rotate
+    // if a user has a session but not yet a session expiry cookie, can happen during upgrade
+    // from an older version of grafana, we never schedule the job and the fallback logic
+    // in backend_srv will take care of rotations until first rotation has been made and
+    // page has been reloaded.
+    if (this.getSessionExpiry() === 0) {
       return false;
     }
 

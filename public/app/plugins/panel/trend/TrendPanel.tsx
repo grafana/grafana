@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 
-import { DataFrame, FieldType, getFieldDisplayName, PanelProps, TimeRange } from '@grafana/data';
+import { DataFrame, FieldMatcherID, fieldMatchers, FieldType, PanelProps, TimeRange } from '@grafana/data';
 import { isLikelyAscendingVector } from '@grafana/data/src/transformations/transformers/joinDataFrames';
 import { config, PanelDataErrorView } from '@grafana/runtime';
 import {
@@ -38,9 +38,7 @@ export const TrendPanel = ({
   const preparePlotFrameTimeless = (frames: DataFrame[], dimFields: XYFieldMatchers, timeRange?: TimeRange | null) => {
     dimFields = {
       ...dimFields,
-      x: (field, frame, frames) => {
-        return getFieldDisplayName(field, frame, frames) === trendXFieldName;
-      },
+      x: fieldMatchers.get(FieldMatcherID.byName).get(trendXFieldName),
     };
 
     return preparePlotFrame(frames, dimFields);

@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana/pkg/registry"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -14,7 +15,7 @@ import (
 
 type AccessControl interface {
 	// Evaluate evaluates access to the given resources.
-	Evaluate(ctx context.Context, user *user.SignedInUser, evaluator Evaluator) (bool, error)
+	Evaluate(ctx context.Context, user identity.Requester, evaluator Evaluator) (bool, error)
 	// RegisterScopeAttributeResolver allows the caller to register a scope resolver for a
 	// specific scope prefix (ex: datasources:name:)
 	RegisterScopeAttributeResolver(prefix string, resolver ScopeAttributeResolver)
@@ -25,11 +26,11 @@ type AccessControl interface {
 type Service interface {
 	registry.ProvidesUsageStats
 	// GetUserPermissions returns user permissions with only action and scope fields set.
-	GetUserPermissions(ctx context.Context, user *user.SignedInUser, options Options) ([]Permission, error)
+	GetUserPermissions(ctx context.Context, user identity.Requester, options Options) ([]Permission, error)
 	// SearchUsersPermissions returns all users' permissions filtered by an action prefix
-	SearchUsersPermissions(ctx context.Context, user *user.SignedInUser, orgID int64, options SearchOptions) (map[int64][]Permission, error)
+	SearchUsersPermissions(ctx context.Context, user identity.Requester, options SearchOptions) (map[int64][]Permission, error)
 	// ClearUserPermissionCache removes the permission cache entry for the given user
-	ClearUserPermissionCache(user *user.SignedInUser)
+	ClearUserPermissionCache(user identity.Requester)
 	// SearchUserPermissions returns single user's permissions filtered by an action prefix or an action
 	SearchUserPermissions(ctx context.Context, orgID int64, filterOptions SearchOptions) ([]Permission, error)
 	// DeleteUserPermissions removes all permissions user has in org and all permission to that user
@@ -63,7 +64,7 @@ type SearchOptions struct {
 }
 
 type TeamPermissionsService interface {
-	GetPermissions(ctx context.Context, user *user.SignedInUser, resourceID string) ([]ResourcePermission, error)
+	GetPermissions(ctx context.Context, user identity.Requester, resourceID string) ([]ResourcePermission, error)
 	SetUserPermission(ctx context.Context, orgID int64, user User, resourceID, permission string) (*ResourcePermission, error)
 }
 
@@ -85,7 +86,7 @@ type ServiceAccountPermissionsService interface {
 
 type PermissionsService interface {
 	// GetPermissions returns all permissions for given resourceID
-	GetPermissions(ctx context.Context, user *user.SignedInUser, resourceID string) ([]ResourcePermission, error)
+	GetPermissions(ctx context.Context, user identity.Requester, resourceID string) ([]ResourcePermission, error)
 	// SetUserPermission sets permission on resource for a user
 	SetUserPermission(ctx context.Context, orgID int64, user User, resourceID, permission string) (*ResourcePermission, error)
 	// SetTeamPermission sets permission on resource for a team
@@ -150,13 +151,13 @@ var ReqSignedIn = func(c *contextmodel.ReqContext) bool {
 }
 
 var ReqGrafanaAdmin = func(c *contextmodel.ReqContext) bool {
-	return c.IsGrafanaAdmin
+	return c.SignedInUser.GetIsGrafanaAdmin()
 }
 
 // ReqHasRole generates a fallback to check whether the user has a role
 // ReqHasRole(org.RoleAdmin) will always return true for Grafana server admins, eg, a Grafana Admin / Viewer role combination
 func ReqHasRole(role org.RoleType) func(c *contextmodel.ReqContext) bool {
-	return func(c *contextmodel.ReqContext) bool { return c.HasRole(role) }
+	return func(c *contextmodel.ReqContext) bool { return c.SignedInUser.HasRole(role) }
 }
 
 func BuildPermissionsMap(permissions []Permission) map[string]bool {
@@ -375,10 +376,10 @@ func IsDisabled(cfg *setting.Cfg) bool {
 }
 
 // GetOrgRoles returns legacy org roles for a user
-func GetOrgRoles(user *user.SignedInUser) []string {
-	roles := []string{string(user.OrgRole)}
+func GetOrgRoles(user identity.Requester) []string {
+	roles := []string{string(user.GetOrgRole())}
 
-	if user.IsGrafanaAdmin {
+	if user.GetIsGrafanaAdmin() {
 		roles = append(roles, RoleGrafanaAdmin)
 	}
 

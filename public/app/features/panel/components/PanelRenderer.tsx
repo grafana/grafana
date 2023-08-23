@@ -17,7 +17,7 @@ import { importPanelPlugin, syncGetPanelPlugin } from '../../plugins/importPanel
 
 const defaultFieldConfig = { defaults: {}, overrides: [] };
 
-export function PanelRenderer<P extends object = any, F extends object = any>(props: PanelRendererProps<P, F>) {
+export function PanelRenderer<P extends object = {}, F extends object = {}>(props: PanelRendererProps<P, F>) {
   const {
     pluginId,
     data,
@@ -107,7 +107,7 @@ export function PanelRenderer<P extends object = any, F extends object = any>(pr
   );
 }
 
-function useOptionDefaults<P extends object = any, F extends object = any>(
+function useOptionDefaults<P extends object = {}, F extends object = {}>(
   plugin: PanelPlugin | undefined,
   options: P,
   fieldConfig: FieldConfigSource<F>
