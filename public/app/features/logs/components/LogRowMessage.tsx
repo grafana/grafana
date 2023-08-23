@@ -80,7 +80,7 @@ export const LogRowMessage = React.memo((props: Props) => {
   } = props;
   const { hasAnsi, raw } = row;
   const restructuredEntry = useMemo(() => restructureLog(raw, prettifyLogMessage), [raw, prettifyLogMessage]);
-  const shouldShowMenu = useMemo(() => mouseIsOver || pinned || true, [mouseIsOver, pinned]);
+  const shouldShowMenu = useMemo(() => mouseIsOver || pinned, [mouseIsOver, pinned]);
   return (
     <>
       {

@@ -183,8 +183,8 @@ export const Components = {
   QueryTab: {
     content: 'Query editor tab content',
     queryInspectorButton: 'Query inspector button',
-    queryHistoryButton: 'Rich history button',
-    addQuery: 'Query editor add query button',
+    queryHistoryButton: 'data-testid query-history-button',
+    addQuery: 'data-testid query-tab-add-query',
   },
   QueryHistory: {
     queryText: 'Query text',

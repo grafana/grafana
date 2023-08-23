@@ -6,14 +6,16 @@ import (
 	"testing"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/stretchr/testify/mock"
+
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	"github.com/grafana/grafana/pkg/services/ngalert/state/historian"
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/stretchr/testify/mock"
 )
 
 func BenchmarkProcessEvalResults(b *testing.B) {
@@ -25,6 +27,7 @@ func BenchmarkProcessEvalResults(b *testing.B) {
 	cfg := state.ManagerCfg{
 		Historian:               hist,
 		MaxStateSaveConcurrency: 1,
+		Tracer:                  tracing.InitializeTracerForTest(),
 	}
 	sut := state.NewManager(cfg)
 	now := time.Now().UTC()

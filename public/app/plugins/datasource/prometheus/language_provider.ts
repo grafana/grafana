@@ -567,10 +567,11 @@ export default class PromQlLanguageProvider extends LanguageProvider {
    */
   fetchSeriesValuesWithMatch = async (name: string, match?: string): Promise<string[]> => {
     const interpolatedName = name ? this.datasource.interpolateString(name) : null;
+    const interpolatedMatch = match ? this.datasource.interpolateString(match) : null;
     const range = this.datasource.getAdjustedInterval();
     const urlParams = {
       ...range,
-      ...(match && { 'match[]': match }),
+      ...(interpolatedMatch && { 'match[]': interpolatedMatch }),
     };
 
     // @todo clean up prometheusResourceBrowserCache feature flag
