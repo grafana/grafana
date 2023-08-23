@@ -62,7 +62,7 @@ Choose a stacking direction.
 
 ### Min width
 
-Limit the minimum width of the bar column in the vertical direction.
+Set the minimum width of vertically-oriented gauges.
 
 Automatically show x-axis scrollbar when there is a large amount of data.
 
