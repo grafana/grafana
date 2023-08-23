@@ -64,7 +64,7 @@ Choose a stacking direction.
 
 Set the minimum width of vertically-oriented gauges.
 
-Automatically show x-axis scrollbar when there is a large amount of data.
+If you set a minimum width, the x-axis scrollbar is automatically displayed when there's a large amount of data.
 
 ### Min height
 
