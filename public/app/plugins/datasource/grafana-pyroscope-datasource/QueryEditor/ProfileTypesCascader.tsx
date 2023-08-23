@@ -34,6 +34,7 @@ function useCascaderOptions(profileTypes?: ProfileTypeMessage[]): CascaderOption
     }
     let mainTypes = new Map<string, CascaderOption>();
     // Classify profile types by name then sample type.
+    // The profileTypes are something like cpu:sample:nanoseconds:sample:count or app.something.something
     for (let profileType of profileTypes) {
       let parts: string[];
       // Phlare uses : as delimiter while Pyro uses .
@@ -63,6 +64,13 @@ function useCascaderOptions(profileTypes?: ProfileTypeMessage[]): CascaderOption
   }, [profileTypes]);
 }
 
+/**
+ * Loads the profile types.
+ *
+ * This is exported and not used directly in the ProfileTypesCascader component because in some case we need to know
+ * the profileTypes before rendering the cascader.
+ * @param datasource
+ */
 export function useProfileTypes(datasource: PhlareDataSource) {
   const [profileTypes, setProfileTypes] = useState<ProfileTypeMessage[]>();
 
