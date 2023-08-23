@@ -57,8 +57,13 @@ Choose a stacking direction.
 - **Horizontal -** Gauges display top to bottom.
 - **Vertical -** Gauges display left to right.
 
-- **Show threshold labels -** Controls if threshold values are shown.
-- **Show threshold markers -** Controls if a threshold band is shown outside the inner gauge value band.
+### Show threshold labels
+
+Controls if threshold values are shown.
+
+### Show threshold markers
+
+Controls if a threshold band is shown outside the inner gauge value band.
 
 ### Min width
 
