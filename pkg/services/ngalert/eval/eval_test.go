@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/benbjohnson/clock"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/prometheus/client_golang/prometheus"
@@ -724,6 +725,7 @@ func TestEvaluate(t *testing.T) {
 			r := prometheus.NewPedanticRegistry()
 			metrics := metrics.NewEvalMetrics(r)
 			ev := conditionEvaluator{
+				clock:    clock.NewMock(),
 				pipeline: nil,
 				expressionService: &fakeExpressionService{
 					hook: func(ctx context.Context, now time.Time, pipeline expr.DataPipeline) (*backend.QueryDataResponse, error) {
@@ -775,6 +777,7 @@ func TestEvaluateRaw(t *testing.T) {
 		unexpectedResponse := &backend.QueryDataResponse{}
 
 		e := conditionEvaluator{
+			clock:    clock.NewMock(),
 			pipeline: nil,
 			expressionService: &fakeExpressionService{
 				hook: func(ctx context.Context, now time.Time, pipeline expr.DataPipeline) (*backend.QueryDataResponse, error) {

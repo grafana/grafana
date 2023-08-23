@@ -6,6 +6,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/benbjohnson/clock"
+
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/expr"
@@ -17,6 +19,7 @@ func BenchmarkEvaluate(b *testing.B) {
 	var dataResp backend.QueryDataResponse
 	seedDataResponse(&dataResp, 10000)
 	var evaluator ConditionEvaluator = &conditionEvaluator{
+		clock: clock.NewMock(),
 		expressionService: &fakeExpressionService{
 			hook: func(ctx context.Context, now time.Time, pipeline expr.DataPipeline) (*backend.QueryDataResponse, error) {
 				return &dataResp, nil

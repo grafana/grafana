@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/benbjohnson/clock"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
@@ -48,6 +49,7 @@ type expressionService interface {
 }
 
 type conditionEvaluator struct {
+	clock             clock.Clock
 	orgId             int64
 	pipeline          expr.DataPipeline
 	expressionService expressionService
@@ -57,7 +59,7 @@ type conditionEvaluator struct {
 }
 
 func (r *conditionEvaluator) EvaluateRaw(ctx context.Context, now time.Time) (resp *backend.QueryDataResponse, err error) {
-	start := time.Now()
+	start := r.clock.Now()
 	labels := prometheus.Labels{"org": strconv.FormatInt(r.orgId, 10)}
 	if r.metrics != nil {
 		defer func() {
@@ -97,7 +99,7 @@ func (r *conditionEvaluator) Evaluate(ctx context.Context, now time.Time) (Resul
 		return nil, err
 	}
 
-	start := time.Now()
+	start := r.clock.Now()
 	labels := prometheus.Labels{"org": strconv.FormatInt(r.orgId, 10)}
 	if r.metrics != nil {
 		defer func() {
@@ -751,6 +753,7 @@ func (e *evaluatorImpl) create(condition models.Condition, req *expr.Request) (C
 	for _, node := range pipeline {
 		if node.RefID() == condition.Condition {
 			return &conditionEvaluator{
+				clock:             clock.New(),
 				orgId:             req.OrgId,
 				pipeline:          pipeline,
 				expressionService: e.expressionService,
