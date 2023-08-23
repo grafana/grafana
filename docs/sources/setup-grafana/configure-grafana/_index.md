@@ -606,9 +606,9 @@ The password of the default Grafana Admin.
 Default is `admin`.
 
 > In Grafana < v10.1, only set once on first-run.
-> In Grafana v10.1+, the behavior depends on the `reset_admin_every_time_run` value. When `reset_admin_every_time_run` is `false`, the password is set once on first run.
+> In Grafana v10.1+, the behavior depends on the `reset_admin_password_at_start` value. When `reset_admin_password_at_start` is `false`, the password is set once on first run.
 
-### reset_admin_every_time_run
+### reset_admin_password_at_start
 
 > Available in Grafana v10.1+
 

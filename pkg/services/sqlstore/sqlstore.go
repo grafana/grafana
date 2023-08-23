@@ -213,7 +213,7 @@ func (ss *SQLStore) ensureMainOrgAndAdminUser(test bool) error {
 				return fmt.Errorf("could not determine if admin user exists: %w", err)
 			}
 			if stats.Count > 0 {
-				if !ss.Cfg.ResetAdminEveryTimeRun {
+				if !ss.Cfg.ResetAdminPasswordAtStart {
 					return nil
 				}
 

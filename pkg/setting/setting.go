@@ -209,7 +209,7 @@ type Cfg struct {
 
 	// Security
 	DisableInitAdminCreation          bool
-	ResetAdminEveryTimeRun            bool
+	ResetAdminPasswordAtStart         bool
 	DisableBruteForceLoginProtection  bool
 	CookieSecure                      bool
 	CookieSameSiteDisabled            bool
@@ -1463,7 +1463,7 @@ func readSecuritySettings(iniFile *ini.File, cfg *Cfg) error {
 	cfg.DisableInitAdminCreation = security.Key("disable_initial_admin_creation").MustBool(false)
 	cfg.AdminUser = valueAsString(security, "admin_user", "")
 	cfg.AdminPassword = valueAsString(security, "admin_password", "")
-	cfg.ResetAdminEveryTimeRun = security.Key("reset_admin_every_time_run").MustBool(false)
+	cfg.ResetAdminPasswordAtStart = security.Key("reset_admin_password_at_start").MustBool(false)
 	cfg.AdminEmail = valueAsString(security, "admin_email", fmt.Sprintf("%s@localhost", cfg.AdminUser))
 
 	return nil
