@@ -24,7 +24,7 @@ func TestCreateTransportOptions(t *testing.T) {
 		opts, err := CreateTransportOptions(settings, &setting.Cfg{}, &logtest.Fake{})
 		require.NoError(t, err)
 		require.Equal(t, map[string]string{"foo": "bar"}, opts.Headers)
-		require.Equal(t, 2, len(opts.Middlewares))
+		require.Equal(t, 3, len(opts.Middlewares))
 	})
 
 	t.Run("add azure credentials if configured", func(t *testing.T) {
@@ -40,6 +40,6 @@ func TestCreateTransportOptions(t *testing.T) {
 		}
 		opts, err := CreateTransportOptions(settings, &setting.Cfg{AzureAuthEnabled: true, Azure: &azsettings.AzureSettings{}}, &logtest.Fake{})
 		require.NoError(t, err)
-		require.Equal(t, 3, len(opts.Middlewares))
+		require.Equal(t, 4, len(opts.Middlewares))
 	})
 }
