@@ -79,7 +79,9 @@ const featuresToTempoVersion = {
   [FeatureName.streaming]: '2.2.0',
 };
 
-const minimumTempoVersionWithStatusInfoEndpoint = '2.2.0';
+// The version that we use as default in case we cannot retrieve it from the backend.
+// This is the last minor version of Tempo that does not expose the endpoint for build information.
+const defaultTempoVersion = '2.1.0';
 
 export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJsonData> {
   tracesToLogs?: TraceToLogsOptions;
@@ -103,11 +105,8 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
   spanBar?: SpanBarOptions;
   languageProvider: TempoLanguageProvider;
 
-  // The version of Tempo running on the backend
-  tempoVersionBackend?: string | null;
-
-  // The version of Tempo that we want to enforce in Grafana frontend through configuration
-  tempoVersionFrontend?: string;
+  // The version of Tempo running on the backend. `null` if we cannot retrieve it for whatever reason
+  tempoVersion?: string | null;
 
   constructor(
     private instanceSettings: DataSourceInstanceSettings<TempoJsonData>,
@@ -136,9 +135,6 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
         ],
       };
     }
-
-    const envVar = ''; // TODO env var
-    this.tempoVersionFrontend = envVar;
   }
 
   init = async () => {
@@ -151,48 +147,28 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
         })
       )
     );
-    this.tempoVersionBackend = response.data.version;
+    this.tempoVersion = response.data.version;
   };
 
   /**
    * Check, for the given feature, whether it is available in Grafana.
    *
-   * The check is done based on the version of the Tempo instance running on the backend and the minimum
-   * version required by the given feature to work.
+   * The check is done based on the version of the Tempo instance running on the backend and
+   * the minimum version required by the given feature to work.
    *
    * @param featureName - the name of the feature to consider
    * @return true if the feature is available, false otherwise
    */
   private isFeatureAvailable(featureName: FeatureName) {
-    // If we are enforcing a Tempo version through configuration, use that as reference
-    if (this.tempoVersionFrontend) {
-      try {
-        return semver.gte(this.tempoVersionFrontend, featuresToTempoVersion[featureName]);
-      } catch {
-        // It should never happen, unless we are manually passing a wrong version.
-        // We catch this to prevent a silent failure due to catching at higher level.
-        console.error(
-          `Version comparison impossible between ${this.tempoVersionFrontend} and ${featuresToTempoVersion[featureName]}`
-        );
-        return false;
-      }
-    }
-
-    // If the Tempo version has not been retrieved yet, temporarily hide the feature
-    if (this.tempoVersionBackend === undefined) {
-      return false;
-    }
-
-    // If the Tempo version is unknown for whaterver reason, we assume the running Tempo instance is
-    // before the version when we released the endpoint to retrieve such information
-    const actualVersion =
-      this.tempoVersionBackend !== null ? this.tempoVersionBackend : minimumTempoVersionWithStatusInfoEndpoint;
+    // We know for old Tempo instances we don't know their version, so resort to default
+    const actualVersion = this.tempoVersion ?? defaultTempoVersion;
 
     try {
       return semver.gte(actualVersion, featuresToTempoVersion[featureName]);
     } catch {
-      // This could happen if the Tempo version is from development (in that case the version is, e.g., `main-12bdeff`)
-      console.log(`Cannot compare ${actualVersion} and ${featuresToTempoVersion[featureName]}`);
+      // An error could still happen if Tempo is running locally. In that case, the version is not a
+      // semantic version and instead it is in the form `<branch>-<revision>` (e.g., `main-12bdeff`).
+      console.error(`Cannot compare ${actualVersion} and ${featuresToTempoVersion[featureName]}`);
       return false;
     }
   }
