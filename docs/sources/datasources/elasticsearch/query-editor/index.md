@@ -87,7 +87,7 @@ Use the **plus icon** to the right to add multiple metrics to your query. Click 
   - histogram - Depicts frequency distributions. See [Histogram aggregation](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-bucket-histogram-aggregation.html).
   - nested (experimental) - See [Nested aggregation](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-bucket-nested-aggregation.html).
 
-- **@timestamp** - Depicts timestamp data options. Set this when configuring the Elasticsearch data source in the **Time field name** under the [**Elasticsearch details**](/docs/grafana/latest/datasources/elasticsearch/configure-elasticsearch-data-source/#elasticsearch-details) section.
+- **Time field** - Depicts date data options. The default option can be specified when configuring the Elasticsearch data source in the **Time field name** under the [**Elasticsearch details**](/docs/grafana/latest/datasources/elasticsearch/configure-elasticsearch-data-source/#elasticsearch-details) section. Otherwise **@timestamp** field will be used as a default option. 
 
 - **Interval** - Group by a type of interval. There are option to choose from the dropdown menu to select seconds, minutes, hours or day. You can also add a custom interval such as `30d` (30 days). `Auto` is the default option.
 
