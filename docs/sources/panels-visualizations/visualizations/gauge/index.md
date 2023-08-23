@@ -68,7 +68,7 @@ If you set a minimum width, the x-axis scrollbar is automatically displayed when
 
 ### Min height
 
-Limit the minimum height of the bar row in the horizontal direction.
+Set the minimum height of horizontally-oriented gauges.
 
 Automatically show y-axis scrollbar when there is a large amount of data.
 
