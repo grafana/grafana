@@ -102,7 +102,7 @@ The following settings are specific to the Elasticsearch data source.
 
 - **Time field name** - Name of the time field. The default value is @timestamp. You can enter a different name.
 
-- **Max concurrent shard requests** - Sets the number of shards being queried at the same time. The default is `5``. For more information on shards see [Elasticsearch's documentation](https://www.elastic.co/guide/en/elasticsearch/reference/8.9/scalability.html#scalability).
+- **Max concurrent shard requests** - Sets the number of shards being queried at the same time. The default is `5`. For more information on shards see [Elasticsearch's documentation](https://www.elastic.co/guide/en/elasticsearch/reference/8.9/scalability.html#scalability).
 
 - **Min time interval** - Defines a lower limit for the auto group-by time interval. This value **must** be formatted as a number followed by a valid time identifier:
 
