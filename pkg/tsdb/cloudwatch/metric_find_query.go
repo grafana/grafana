@@ -302,11 +302,11 @@ func (e *cloudWatchExecutor) handleGetLogGroups(ctx context.Context, pluginCtx b
 		logGroupLimit = intLimit
 	}
 
-	var response *cloudwatchlogs.DescribeLogGroupsOutput = nil
 	input := &cloudwatchlogs.DescribeLogGroupsInput{Limit: aws.Int64(logGroupLimit)}
 	if len(logGroupNamePrefix) > 0 {
 		input.LogGroupNamePrefix = aws.String(logGroupNamePrefix)
 	}
+	var response *cloudwatchlogs.DescribeLogGroupsOutput = nil
 	response, err = logsClient.DescribeLogGroups(input)
 	if err != nil || response == nil {
 		return nil, err
