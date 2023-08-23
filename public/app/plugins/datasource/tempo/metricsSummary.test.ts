@@ -28,7 +28,6 @@ describe('MetricsSummary', () => {
                   },
                   "displayNameFromDS": "State",
                 },
-                "labels": undefined,
                 "name": "state",
                 "type": "string",
                 "values": [
@@ -36,6 +35,7 @@ describe('MetricsSummary', () => {
                 ],
               },
             ],
+            "length": 1,
             "meta": {
               "preferredVisualisationType": "table",
             },
@@ -82,7 +82,6 @@ describe('MetricsSummary', () => {
       expect(result).toMatchInlineSnapshot(`
         [
           {
-            "creator": [Function],
             "fields": [
               {
                 "config": {
@@ -229,15 +228,11 @@ describe('MetricsSummary', () => {
                 ],
               },
             ],
-            "first": [
-              208,
-            ],
             "length": 1,
             "meta": {
               "preferredVisualisationType": "table",
             },
             "name": "Metrics Summary",
-            "parsers": undefined,
             "refId": "metrics-summary",
           },
         ]
