@@ -36,7 +36,6 @@ import { isStreamingDataFrame } from 'app/features/live/data/utils';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 
 import { isSharedDashboardQuery, runSharedRequest } from '../../../plugins/datasource/dashboard';
-import { PublicDashboardDataSource } from '../../dashboard/services/PublicDashboardDataSource';
 import { PanelModel } from '../../dashboard/state';
 
 import { getDashboardQueryRunner } from './DashboardQueryRunner/DashboardQueryRunner';
@@ -51,7 +50,6 @@ export interface QueryRunnerOptions<
   queries: TQuery[];
   panelId?: number;
   dashboardUID?: string;
-  publicDashboardAccessToken?: string;
   timezone: TimeZone;
   timeRange: TimeRange;
   timeInfo?: string; // String description of time range for display
@@ -241,7 +239,6 @@ export class PanelQueryRunner {
       datasource,
       panelId,
       dashboardUID,
-      publicDashboardAccessToken,
       timeRange,
       timeInfo,
       cacheTimeout,
@@ -263,7 +260,6 @@ export class PanelQueryRunner {
       timezone,
       panelId,
       dashboardUID,
-      publicDashboardAccessToken,
       range: timeRange,
       timeInfo,
       interval: '',
@@ -278,7 +274,7 @@ export class PanelQueryRunner {
     };
 
     try {
-      const ds = await getDataSource(datasource, request.scopedVars, publicDashboardAccessToken);
+      const ds = await getDataSource(datasource, request.scopedVars);
       const isMixedDS = ds.meta?.mixed;
 
       // Attach the data source to each query
@@ -416,8 +412,7 @@ export class PanelQueryRunner {
 
 async function getDataSource(
   datasource: DataSourceRef | string | DataSourceApi | null,
-  scopedVars: ScopedVars,
-  publicDashboardAccessToken?: string
+  scopedVars: ScopedVars
 ): Promise<DataSourceApi> {
   if (datasource && typeof datasource === 'object' && 'query' in datasource) {
     return datasource;
