@@ -54,7 +54,7 @@ load(
 load(
     "scripts/drone/vault.star",
     "from_secret",
-    "gcp_upload_artifacts_key",
+    "gcp_grafanauploads_base64",
     "npm_token",
     "prerelease_bucket",
 )
@@ -93,7 +93,7 @@ def store_npm_packages_step():
             "build-frontend-packages",
         ],
         "environment": {
-            "GCP_KEY": from_secret(gcp_upload_artifacts_key),
+            "GCP_KEY": from_secret(gcp_grafanauploads_base64),
             "PRERELEASE_BUCKET": from_secret(prerelease_bucket),
         },
         "commands": ["./bin/build artifacts npm store --tag ${DRONE_TAG}"],
@@ -109,7 +109,7 @@ def retrieve_npm_packages_step():
         ],
         "failure": "ignore",
         "environment": {
-            "GCP_KEY": from_secret(gcp_upload_artifacts_key),
+            "GCP_KEY": from_secret(gcp_grafanauploads_base64),
             "PRERELEASE_BUCKET": from_secret(prerelease_bucket),
         },
         "commands": ["./bin/build artifacts npm retrieve --tag ${DRONE_TAG}"],
@@ -270,7 +270,7 @@ def publish_artifacts_step():
         "name": "publish-artifacts",
         "image": images["publish_image"],
         "environment": {
-            "GCP_KEY": from_secret(gcp_upload_artifacts_key),
+            "GCP_KEY": from_secret(gcp_grafanauploads_base64),
             "PRERELEASE_BUCKET": from_secret("prerelease_bucket"),
         },
         "commands": [
@@ -284,7 +284,7 @@ def publish_static_assets_step():
         "name": "publish-static-assets",
         "image": images["publish_image"],
         "environment": {
-            "GCP_KEY": from_secret(gcp_upload_artifacts_key),
+            "GCP_KEY": from_secret(gcp_grafanauploads_base64),
             "PRERELEASE_BUCKET": from_secret("prerelease_bucket"),
             "STATIC_ASSET_EDITIONS": from_secret("static_asset_editions"),
         },
@@ -299,7 +299,7 @@ def publish_storybook_step():
         "name": "publish-storybook",
         "image": images["publish_image"],
         "environment": {
-            "GCP_KEY": from_secret(gcp_upload_artifacts_key),
+            "GCP_KEY": from_secret(gcp_grafanauploads_base64),
             "PRERELEASE_BUCKET": from_secret("prerelease_bucket"),
         },
         "commands": [
@@ -437,7 +437,7 @@ def integration_test_pipelines():
 def verify_release_pipeline(
         name = "verify-prerelease-assets",
         bucket = from_secret(prerelease_bucket),
-        gcp_key = from_secret(gcp_upload_artifacts_key),
+        gcp_key = from_secret(gcp_grafanauploads_base64),
         version = "${DRONE_TAG}",
         trigger = release_trigger,
         depends_on = [
