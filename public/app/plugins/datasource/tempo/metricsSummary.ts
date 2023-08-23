@@ -109,7 +109,7 @@ export function createTableFrameFromMetricsSummaryQuery(
 export const transformToMetricsData = (data: MetricsSummary) => {
   const errorPercentage = data.errorSpanCount
     ? ((parseInt(data.errorSpanCount, 10) / parseInt(data.spanCount, 10)) * 100).toString()
-    : '';
+    : '0%';
 
   const metricsData: MetricsData = {
     kind: 'server', // so the user knows all results are of kind = server
@@ -144,12 +144,12 @@ export const getConfigQuery = (series: Series[], targetQuery: string) => {
     configQuery = targetQuery.substring(0, closingBracketIndex);
     if (queryParts.length > 0) {
       configQuery += targetQuery.replace(/\s/g, '').includes('{}') ? '' : ' && ';
-      configQuery += `${queryParts.join(' && ')}`;
+      configQuery += `${queryParts.join(' && ')} && kind=server`;
       configQuery += `}`;
     }
     configQuery += `${queryAfterClosingBracket}`;
   } else {
-    configQuery = `{${queryParts.join(' && ')}} | ${targetQuery}`;
+    configQuery = `{${queryParts.join(' && ')} && kind=server} | ${targetQuery}`;
   }
 
   return configQuery;
@@ -251,7 +251,7 @@ const getSpanKind = (kind: number | undefined) => {
 const getPercentileRow = (name: string) => {
   return {
     name: name,
-    type: FieldType.string,
+    type: FieldType.number,
     config: {
       displayNameFromDS: name,
       unit: 'ns',

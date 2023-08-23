@@ -206,14 +206,16 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
 
     if (targets.traceql?.length) {
       try {
-        const groupBy = targets.traceql.find((t) => this.hasGroupBy(t));
-        if (groupBy) {
-          subQueries.push(
-            this.handleMetricsSummary(groupBy, this.applyVariables(groupBy, options.scopedVars)?.query || '', options)
-          );
+        if (config.featureToggles.metricsSummary) {
+          const groupBy = targets.traceql.find((t) => this.hasGroupBy(t));
+          if (groupBy) {
+            subQueries.push(
+              this.handleMetricsSummary(groupBy, this.applyVariables(groupBy, options.scopedVars)?.query || '', options)
+            );
+          }
         }
 
-        const traceqlTargets = targets.traceql.filter((t) => !this.hasGroupBy(t));
+        const traceqlTargets = config.featureToggles.metricsSummary ? targets.traceql.filter((t) => !this.hasGroupBy(t)) : targets.traceql;
         if (traceqlTargets.length > 0) {
           const appliedQuery = this.applyVariables(traceqlTargets[0], options.scopedVars);
           const queryValue = appliedQuery?.query || '';
@@ -268,12 +270,14 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
 
     if (targets.traceqlSearch?.length) {
       try {
-        const groupBy = targets.traceqlSearch.find((t) => this.hasGroupBy(t));
-        if (groupBy) {
-          subQueries.push(this.handleMetricsSummary(groupBy, generateQueryFromFilters(groupBy.filters), options));
+        if (config.featureToggles.metricsSummary) {
+          const groupBy = targets.traceqlSearch.find((t) => this.hasGroupBy(t));
+          if (groupBy) {
+            subQueries.push(this.handleMetricsSummary(groupBy, generateQueryFromFilters(groupBy.filters), options));
+          }
         }
 
-        const traceqlSearchTargets = targets.traceqlSearch.filter((t) => !this.hasGroupBy(t));
+        const traceqlSearchTargets = config.featureToggles.metricsSummary ? targets.traceqlSearch.filter((t) => !this.hasGroupBy(t)) : targets.traceqlSearch;
         if (traceqlSearchTargets.length > 0) {
           const queryValue = generateQueryFromFilters(traceqlSearchTargets[0].filters);
           reportInteraction('grafana_traces_traceql_search_queried', {

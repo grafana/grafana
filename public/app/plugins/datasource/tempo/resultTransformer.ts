@@ -506,6 +506,8 @@ export function transformTrace(response: DataQueryResponse, nodeGraph = false): 
 
 export function createTableFrameFromSearch(data: TraceSearchMetadata[], instanceSettings: DataSourceInstanceSettings) {
   const frame = new MutableDataFrame({
+    name: 'Traces',
+    refId: 'traces',
     fields: [
       {
         name: 'traceID',
