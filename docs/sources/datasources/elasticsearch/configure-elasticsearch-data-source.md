@@ -77,7 +77,7 @@ Use TLS (Transport Layer Security) for an additional layer of security when work
 
 - **Skip TLS verify** - Toggle on to bypass TLS certificate validation.
 
-- **Forward OAuth identity** - Forward the OAuth access token (and also the OIDC ID token if available) of the user querying the data source.
+- **Forward OAuth identity** - Forward the OAuth access token (and the OIDC ID token if available) of the user querying the data source.
 
 ### Custom HTTP headers
 
