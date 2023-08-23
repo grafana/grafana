@@ -39,7 +39,7 @@ export default function ExplorePage(props: GrafanaRouteComponentProps<{}, Explor
   // if we were to update the URL on state change, the title would not match the URL.
   // Ultimately the URL is the single source of truth from which state is derived, the page title is not different
   useExplorePageTitle(props.queryParams);
-  const { keybindings, chrome } = useGrafana();
+  const { chrome } = useGrafana();
   const navModel = useNavModel('explore');
   const { updateSplitSize, widthCalc } = useSplitSizeUpdater(MIN_PANE_WIDTH);
 
@@ -51,10 +51,6 @@ export default function ExplorePage(props: GrafanaRouteComponentProps<{}, Explor
     //We should probably abstract this out at some point
     chrome.update({ sectionNav: navModel });
   }, [chrome, navModel]);
-
-  useEffect(() => {
-    keybindings.setupTimeRangeBindings(false);
-  }, [keybindings]);
 
   useKeyboardShortcuts();
 
