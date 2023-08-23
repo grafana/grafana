@@ -1,4 +1,5 @@
 import classNames from 'classnames';
+import { indexOf } from 'lodash';
 import React from 'react';
 import { Unsubscribable } from 'rxjs';
 
@@ -6,6 +7,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { getTemplateSrv, RefreshEvent } from '@grafana/runtime';
 import { Icon } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
+import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/types';
 
 import { ShowConfirmModalEvent } from '../../../../types/events';
 import { DashboardModel } from '../../state/DashboardModel';
@@ -36,6 +38,16 @@ export class DashboardRow extends React.Component<DashboardRowProps> {
 
   onToggle = () => {
     this.props.dashboard.toggleRow(this.props.panel);
+  };
+
+  getWarningMessage = () => {
+    const panels = !!this.props.panel.panels?.length
+      ? this.props.panel.panels
+      : this.props.dashboard.getRowPanels(indexOf(this.props.dashboard.panels, this.props.panel));
+    const isAnyPanelUsingDashboardDS = panels.some((p) => p.datasource?.uid === SHARED_DASHBOARD_QUERY);
+    if (isAnyPanelUsingDashboardDS) {
+      return 'Warning: Dashboard ds may not work for this row';
+    }
   };
 
   onUpdate = (title: string, repeat?: string | null) => {
@@ -94,6 +106,7 @@ export class DashboardRow extends React.Component<DashboardRowProps> {
               title={this.props.panel.title}
               repeat={this.props.panel.repeat}
               onUpdate={this.onUpdate}
+              message={this.getWarningMessage()}
             />
             <button type="button" className="pointer" onClick={this.onDelete} aria-label="Delete row">
               <Icon name="trash-alt" />

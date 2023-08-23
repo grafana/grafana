@@ -10,12 +10,14 @@ export interface RowOptionsModalProps {
   repeat?: string | null;
   onDismiss: () => void;
   onUpdate: OnRowOptionsUpdate;
+  message?: string;
 }
 
-export const RowOptionsModal = ({ repeat, title, onDismiss, onUpdate }: RowOptionsModalProps) => {
+export const RowOptionsModal = ({ repeat, title, onDismiss, onUpdate, message }: RowOptionsModalProps) => {
   const styles = getStyles();
   return (
     <Modal isOpen={true} title="Row options" icon="copy" onDismiss={onDismiss} className={styles.modal}>
+      {message && <p>{message}</p>}
       <RowOptionsForm repeat={repeat} title={title} onCancel={onDismiss} onUpdate={onUpdate} />
     </Modal>
   );
