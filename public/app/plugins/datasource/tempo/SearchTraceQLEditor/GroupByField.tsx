@@ -68,8 +68,7 @@ export const GroupByField = (props: Props) => {
   };
 
   const removeFilter = (filter: TraceqlFilter) => {
-    const copy = { ...query };
-    onChange({ ...copy, groupBy: copy.groupBy?.filter((f) => f.id !== filter.id) });
+    onChange({ ...query, groupBy: query.groupBy?.filter((f) => f.id !== filter.id) });
   };
 
   const updateFilter = (filter: TraceqlFilter) => {
@@ -77,7 +76,6 @@ export const GroupByField = (props: Props) => {
     copy.groupBy ||= [];
     const indexOfFilter = copy.groupBy.findIndex((f) => f.id === filter.id);
     if (indexOfFilter >= 0) {
-      // update in place if the filter already exists, for consistency and to avoid UI bugs
       copy.groupBy = replaceAt(copy.groupBy, indexOfFilter, filter);
     } else {
       copy.groupBy.push(filter);

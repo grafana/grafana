@@ -1,9 +1,9 @@
 import {
+  createDataFrame,
   DataSourceInstanceSettings,
   FieldDTO,
   FieldType,
   LoadingState,
-  MutableDataFrame,
   sortDataFrame,
 } from '@grafana/data';
 
@@ -52,35 +52,39 @@ export function createTableFrameFromMetricsSummaryQuery(
   if (state === LoadingState.Error) {
     frame = emptyResponse;
   } else if (state === LoadingState.Loading) {
-    frame = new MutableDataFrame({
+    frame = createDataFrame({
       name: 'Metrics Summary',
       refId: 'metrics-summary',
       fields: [
-        { name: 'state', type: FieldType.string, config: { displayNameFromDS: 'State', custom: { width: 300 } } },
+        {
+          name: 'state',
+          type: FieldType.string,
+          config: { displayNameFromDS: 'State', custom: { width: 300 } },
+          values: ['Loading...'],
+        },
       ],
       meta: {
         preferredVisualisationType: 'table',
       },
     });
-    frame.add({
-      state: 'Loading...',
-    });
   } else if (state === LoadingState.Done && data?.length) {
+    if (!data?.length) {
+      return [emptyResponse];
+    }
+
     const dynamicMetrics: Record<string, FieldDTO> = {};
-    data.map((res: MetricsSummary) => {
+    data.forEach((res: MetricsSummary) => {
       const configQuery = getConfigQuery(res.series, targetQuery);
-      res.series.map((series: Series) => {
-        return !dynamicMetrics[series.key]
-          ? (dynamicMetrics[series.key] = {
-              name: `${series.key}`,
-              type: FieldType.string,
-              config: getConfig(series, configQuery, instanceSettings),
-            })
-          : dynamicMetrics[series.key];
+      res.series.forEach((series: Series) => {
+        dynamicMetrics[series.key] = {
+          name: `${series.key}`,
+          type: FieldType.string,
+          config: getConfig(series, configQuery, instanceSettings),
+        };
       });
     });
 
-    frame = new MutableDataFrame({
+    frame = createDataFrame({
       name: 'Metrics Summary',
       refId: 'metrics-summary',
       fields: [
@@ -110,19 +114,14 @@ export function createTableFrameFromMetricsSummaryQuery(
       },
     });
 
-    if (!data?.length) {
-      return emptyResponse;
-    }
-
     const metricsData = data.map(transformToMetricsData);
+    frame.length = metricsData.length;
     for (const trace of metricsData) {
-      frame.add(trace);
+      for (const field of frame.fields) {
+        field.values.push(trace[field.name]);
+      }
     }
     frame = sortDataFrame(frame, 0);
-  }
-
-  if (!frame) {
-    frame = emptyResponse;
   }
 
   return [frame];
@@ -143,7 +142,7 @@ export const transformToMetricsData = (data: MetricsSummary) => {
     p99: data.p99,
   };
 
-  data.series.map((series: Series) => {
+  data.series.forEach((series: Series) => {
     metricsData[`${series.key}`] = getMetricValue(series) || '';
   });
 
@@ -284,7 +283,7 @@ const getPercentileRow = (name: string) => {
   };
 };
 
-export const emptyResponse = new MutableDataFrame({
+export const emptyResponse = createDataFrame({
   name: 'Metrics Summary',
   refId: 'metrics-summary',
   fields: [],

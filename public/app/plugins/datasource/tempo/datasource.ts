@@ -400,9 +400,11 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
   }
 
   handleMetricsSummary = (target: TempoQuery, query: string, options: DataQueryRequest<TempoQuery>) => {
+    const groupBy = target.groupBy ? this.formatGroupBy(target.groupBy) : '';
+
     return this._request('/api/metrics/summary', {
       q: query,
-      groupBy: target.groupBy ? this.formatGroupBy(target.groupBy) : '',
+      groupBy,
       start: options.range.from.unix(),
       end: options.range.to.unix(),
     }).pipe(
@@ -426,7 +428,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
             response.data.summaries,
             query,
             this.instanceSettings,
-            LoadingState.Done
+            response.state || LoadingState.Done // if it's not loading (via startWith), it's done
           ),
         };
       }),
