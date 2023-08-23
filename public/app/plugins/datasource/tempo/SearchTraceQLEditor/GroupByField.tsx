@@ -88,7 +88,7 @@ export const GroupByField = (props: Props) => {
   return (
     <InlineSearchField
       label="Group By"
-      tooltip="Select a tag to see the metrics summary. Note: the metrics summary API only considers spans of kind = server."
+      tooltip="Select one or more tags to see the metrics summary. Note: the metrics summary API only considers spans of kind = server."
     >
       <>
         {query.groupBy?.map((f, i) => (

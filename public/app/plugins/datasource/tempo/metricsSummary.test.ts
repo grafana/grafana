@@ -146,7 +146,7 @@ describe('MetricsSummary', () => {
                   "unit": "ns",
                 },
                 "name": "p50",
-                "type": "string",
+                "type": "number",
                 "values": [
                   "1",
                 ],
@@ -160,7 +160,7 @@ describe('MetricsSummary', () => {
                   "unit": "ns",
                 },
                 "name": "p90",
-                "type": "string",
+                "type": "number",
                 "values": [
                   "2",
                 ],
@@ -174,7 +174,7 @@ describe('MetricsSummary', () => {
                   "unit": "ns",
                 },
                 "name": "p95",
-                "type": "string",
+                "type": "number",
                 "values": [
                   "3",
                 ],
@@ -188,7 +188,7 @@ describe('MetricsSummary', () => {
                   "unit": "ns",
                 },
                 "name": "p99",
-                "type": "string",
+                "type": "number",
                 "values": [
                   "4",
                 ],

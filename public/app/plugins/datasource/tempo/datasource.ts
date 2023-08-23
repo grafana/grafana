@@ -215,7 +215,9 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
           }
         }
 
-        const traceqlTargets = config.featureToggles.metricsSummary ? targets.traceql.filter((t) => !this.hasGroupBy(t)) : targets.traceql;
+        const traceqlTargets = config.featureToggles.metricsSummary
+          ? targets.traceql.filter((t) => !this.hasGroupBy(t))
+          : targets.traceql;
         if (traceqlTargets.length > 0) {
           const appliedQuery = this.applyVariables(traceqlTargets[0], options.scopedVars);
           const queryValue = appliedQuery?.query || '';
@@ -277,7 +279,9 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
           }
         }
 
-        const traceqlSearchTargets = config.featureToggles.metricsSummary ? targets.traceqlSearch.filter((t) => !this.hasGroupBy(t)) : targets.traceqlSearch;
+        const traceqlSearchTargets = config.featureToggles.metricsSummary
+          ? targets.traceqlSearch.filter((t) => !this.hasGroupBy(t))
+          : targets.traceqlSearch;
         if (traceqlSearchTargets.length > 0) {
           const queryValue = generateQueryFromFilters(traceqlSearchTargets[0].filters);
           reportInteraction('grafana_traces_traceql_search_queried', {
