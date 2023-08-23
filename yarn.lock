@@ -3604,13 +3604,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/aws-sdk@npm:0.1.1":
-  version: 0.1.1
-  resolution: "@grafana/aws-sdk@npm:0.1.1"
+"@grafana/aws-sdk@npm:0.1.2":
+  version: 0.1.2
+  resolution: "@grafana/aws-sdk@npm:0.1.2"
   dependencies:
     "@grafana/async-query-data": 0.1.4
     "@grafana/experimental": 1.1.0
-  checksum: 12d1b27b0959a4d16ddf643b360ce067f6debd4141eb28652ff36fece98a99087f865aa2b9f6fda78df2b9e38870a6a7cfa48e0fd1a1ec03de63bc340b344f05
+  checksum: ea0248c8458caeccfb5326db60fba36692868bf71ed17cb9aa9c6797e6acb9a90687cceaa274416841935b2f2ba362f80dec22f603351f180724f56bf2ed0450
   languageName: node
   linkType: hard
 
@@ -3719,6 +3719,7 @@ __metadata:
     "@babel/preset-env": 7.22.9
     "@cypress/webpack-preprocessor": 5.17.1
     "@grafana/e2e-selectors": 10.2.0-pre
+    "@grafana/schema": 10.2.0-pre
     "@grafana/tsconfig": ^1.2.0-rc1
     "@mochajs/json-file-reporter": ^1.2.0
     "@rollup/plugin-node-resolve": 15.1.0
@@ -3857,14 +3858,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/lezer-logql@npm:0.1.8":
-  version: 0.1.8
-  resolution: "@grafana/lezer-logql@npm:0.1.8"
+"@grafana/lezer-logql@npm:0.1.9":
+  version: 0.1.9
+  resolution: "@grafana/lezer-logql@npm:0.1.9"
   dependencies:
     lodash: ^4.17.21
   peerDependencies:
     "@lezer/lr": ^1.0.0
-  checksum: f0f301b6d4fbd2d79563b5b4e34303257be0ea995b2b9fa1f012648654b4afaa9cea91642bc59eddb70e9fa24ec8804489c161f7065b41eef49db68d3a2ca561
+  checksum: 6cceb18586413864137ef2305bbe2fdce054796c61a3fde4864e3f2d30ea3dac853aa701728867bf609a4009334dbf92fddbc06f7291dbca9459a86c9dc29e67
   languageName: node
   linkType: hard
 
@@ -19234,7 +19235,7 @@ __metadata:
     "@emotion/eslint-plugin": 11.11.0
     "@emotion/react": 11.11.1
     "@glideapps/glide-data-grid": ^5.2.1
-    "@grafana/aws-sdk": 0.1.1
+    "@grafana/aws-sdk": 0.1.2
     "@grafana/data": "workspace:*"
     "@grafana/e2e": "workspace:*"
     "@grafana/e2e-selectors": "workspace:*"
@@ -19244,7 +19245,7 @@ __metadata:
     "@grafana/faro-core": 1.1.2
     "@grafana/faro-web-sdk": 1.1.2
     "@grafana/google-sdk": 0.1.1
-    "@grafana/lezer-logql": 0.1.8
+    "@grafana/lezer-logql": 0.1.9
     "@grafana/lezer-traceql": 0.0.4
     "@grafana/monaco-logql": ^0.0.7
     "@grafana/runtime": "workspace:*"

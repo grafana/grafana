@@ -1,12 +1,22 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import React, { ComponentProps } from 'react';
 
-import { FieldType, LogRowModel, LogsSortOrder, standardTransformersRegistry, toUtc } from '@grafana/data';
+import { DataFrame, FieldType, LogsSortOrder, standardTransformersRegistry, toUtc } from '@grafana/data';
 import { organizeFieldsTransformer } from '@grafana/data/src/transformations/transformers/organize';
 import { config } from '@grafana/runtime';
 import { extractFieldsTransformer } from 'app/features/transformers/extractFields/extractFields';
 
 import { LogsTable } from './LogsTable';
+
+jest.mock('@grafana/runtime', () => {
+  const actual = jest.requireActual('@grafana/runtime');
+  return {
+    ...actual,
+    getTemplateSrv: () => ({
+      replace: (val: string) => (val ? val.replace('$input', '10').replace('$window', '10s') : val),
+    }),
+  };
+});
 
 describe('LogsTable', () => {
   beforeAll(() => {
@@ -25,7 +35,7 @@ describe('LogsTable', () => {
     });
   });
 
-  const getComponent = (partialProps?: Partial<ComponentProps<typeof LogsTable>>, logs?: LogRowModel[]) => {
+  const getComponent = (partialProps?: Partial<ComponentProps<typeof LogsTable>>, logs?: DataFrame) => {
     const testDataFrame = {
       fields: [
         {
@@ -69,12 +79,12 @@ describe('LogsTable', () => {
           to: toUtc('2019-01-01 16:00:00'),
           raw: { from: 'now-1h', to: 'now' },
         }}
-        logsFrames={[testDataFrame]}
+        logsFrames={[logs ?? testDataFrame]}
         {...partialProps}
       />
     );
   };
-  const setup = (partialProps?: Partial<ComponentProps<typeof LogsTable>>, logs?: LogRowModel[]) => {
+  const setup = (partialProps?: Partial<ComponentProps<typeof LogsTable>>, logs?: DataFrame) => {
     return render(getComponent(partialProps, logs));
   };
 
@@ -128,6 +138,50 @@ describe('LogsTable', () => {
       const columns = screen.queryAllByRole('columnheader', { name: 'tsNs' });
 
       expect(columns.length).toBe(0);
+    });
+  });
+
+  it('should render a datalink for each row', async () => {
+    render(
+      getComponent(
+        {},
+        {
+          fields: [
+            {
+              config: {},
+              name: 'Time',
+              type: FieldType.time,
+              values: ['2019-01-01 10:00:00', '2019-01-01 11:00:00', '2019-01-01 12:00:00'],
+            },
+            {
+              config: {},
+              name: 'line',
+              type: FieldType.string,
+              values: ['log message 1', 'log message 2', 'log message 3'],
+            },
+            {
+              config: {
+                links: [
+                  {
+                    url: 'http://example.com',
+                    title: 'foo',
+                  },
+                ],
+              },
+              name: 'link',
+              type: FieldType.string,
+              values: ['ts1', 'ts2', 'ts3'],
+            },
+          ],
+          length: 3,
+        }
+      )
+    );
+
+    await waitFor(() => {
+      const links = screen.getAllByRole('link');
+
+      expect(links.length).toBe(3);
     });
   });
 });
