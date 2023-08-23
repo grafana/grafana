@@ -49,7 +49,7 @@ The first option to configure is the name of your connection:
 
 - **Name** - The data source name. This is how you refer to the data source in panels and queries. Examples: elastic-1, elasticsearch_metrics.
 
-- **Default** - Toggle to select as the default name in dashboard panels. When you go to a dashboard panel this will be the default selected data source.
+- **Default** - Toggle to select as the default data source option. When you go to a dashboard panel or Explore, this will be the default selected data source.
 
 ### HTTP section
 
