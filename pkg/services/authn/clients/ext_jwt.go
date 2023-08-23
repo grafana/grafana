@@ -240,7 +240,12 @@ func (s *ExtendedJWT) signingPublicKey() (crypto.PublicKey, error) {
 		if errGetKey != nil {
 			return nil, fmt.Errorf("could not fetch remote key at '%s': %w", s.cfg.ExtendedJWTPublicKeyURL, errGetKey)
 		}
-		defer resp.Body.Close()
+		defer func() {
+			if err := resp.Body.Close(); err != nil {
+				s.log.Warn("could not clode key response body")
+			}
+			return
+		}()
 		body, errReadBody := io.ReadAll(resp.Body)
 		if errReadBody != nil {
 			return nil, fmt.Errorf("could not read response from '%s': %w", s.cfg.ExtendedJWTPublicKeyURL, errReadBody)
