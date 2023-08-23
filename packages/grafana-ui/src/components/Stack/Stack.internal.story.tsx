@@ -7,7 +7,7 @@ import { Stack } from './Stack';
 import mdx from './Stack.mdx';
 
 const meta: Meta<typeof Stack> = {
-  title: 'General/Stack',
+  title: 'General/Layout/Stack',
   component: Stack,
   decorators: [withCenteredStory],
   parameters: {
@@ -19,29 +19,12 @@ const meta: Meta<typeof Stack> = {
 
 const Item = ({ children }: { children: ReactNode }) => <div style={{ backgroundColor: 'lightgrey' }}>{children}</div>;
 
-export const Basic: StoryFn<typeof Stack> = (props) => {
+export const Basic: StoryFn<typeof Stack> = (args) => {
   return (
-    <Stack {...props}>
+    <Stack {...args}>
       <Item>Item 1</Item>
       <Item>Item 2</Item>
       <Item>Item 3</Item>
-    </Stack>
-  );
-};
-
-export const FlexGrowExample: StoryFn<typeof Stack> = () => {
-  return (
-    <Stack>
-      <Stack direction="column">
-        <Item>Item 1</Item>
-        <Item>Item 2</Item>
-        <Item>Item 3</Item>
-      </Stack>
-      <Stack flexGrow={3}>
-        <Item>This Stack</Item>
-        <Item>uses</Item>
-        <Item>flexGrow={3}</Item>
-      </Stack>
     </Stack>
   );
 };
