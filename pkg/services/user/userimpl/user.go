@@ -72,6 +72,14 @@ func (s *Service) GetUsageStats(ctx context.Context) map[string]interface{} {
 	}
 
 	stats["stats.case_insensitive_login.count"] = caseInsensitiveLoginVal
+
+	count, err := s.store.CountUserAccountsWithEmptyRole(ctx)
+	if err != nil {
+		return nil
+	}
+
+	stats["stats.user.role_none.count"] = count
+
 	return stats
 }
 

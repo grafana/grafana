@@ -17,7 +17,6 @@ type FrontendSettingsAuthDTO struct {
 	GithubSkipOrgRoleSync       bool `json:"GithubSkipOrgRoleSync"`
 	GitLabSkipOrgRoleSync       bool `json:"GitLabSkipOrgRoleSync"`
 	OktaSkipOrgRoleSync         bool `json:"OktaSkipOrgRoleSync"`
-	DisableSyncLock             bool `json:"DisableSyncLock"`
 	AuthProxyEnableLoginToken   bool `json:"AuthProxyEnableLoginToken"`
 }
 
@@ -112,6 +111,7 @@ type FrontendSettingsWhitelabelingDTO struct {
 	LoginSubtitle         *string                                         `json:"loginSubtitle,omitempty"`
 	LoginBoxBackground    *string                                         `json:"loginBoxBackground,omitempty"`
 	LoadingLogo           *string                                         `json:"loadingLogo,omitempty"`
+	HideEdition           *bool                                           `json:"hideEdition,omitempty"`
 	PublicDashboardFooter *FrontendSettingsPublicDashboardFooterConfigDTO `json:"publicDashboardFooter,omitempty"` // PR TODO: type this properly
 }
 

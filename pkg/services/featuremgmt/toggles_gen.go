@@ -259,10 +259,6 @@ const (
 	// Uses JWT-based auth for rendering instead of relying on remote cache
 	FlagRenderAuthJWT = "renderAuthJWT"
 
-	// FlagPyroscopeFlameGraph
-	// Changes flame graph to pyroscope one
-	FlagPyroscopeFlameGraph = "pyroscopeFlameGraph"
-
 	// FlagExternalServiceAuth
 	// Starts an OAuth2 authentication provider for external services
 	FlagExternalServiceAuth = "externalServiceAuth"
@@ -395,6 +391,10 @@ const (
 	// Adds dataplane compliant frame metadata in the Azure Monitor datasource
 	FlagAzureMonitorDataplane = "azureMonitorDataplane"
 
+	// FlagPermissionsFilterRemoveSubquery
+	// Alternative permission filter implementation that does not use subqueries for fetching the dashboard folder
+	FlagPermissionsFilterRemoveSubquery = "permissionsFilterRemoveSubquery"
+
 	// FlagPrometheusConfigOverhaulAuth
 	// Update the Prometheus configuration page with the new auth component
 	FlagPrometheusConfigOverhaulAuth = "prometheusConfigOverhaulAuth"
@@ -402,4 +402,16 @@ const (
 	// FlagConfigurableSchedulerTick
 	// Enable changing the scheduler base interval via configuration option unified_alerting.scheduler_tick_interval
 	FlagConfigurableSchedulerTick = "configurableSchedulerTick"
+
+	// FlagInfluxdbSqlSupport
+	// Enable InfluxDB SQL query language support with new querying UI
+	FlagInfluxdbSqlSupport = "influxdbSqlSupport"
+
+	// FlagNoBasicRole
+	// Enables a new role that has no permissions by default
+	FlagNoBasicRole = "noBasicRole"
+
+	// FlagAlertingNoDataErrorExecution
+	// Changes how Alerting state manager handles execution of NoData/Error
+	FlagAlertingNoDataErrorExecution = "alertingNoDataErrorExecution"
 )

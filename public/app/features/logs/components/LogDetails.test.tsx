@@ -47,6 +47,28 @@ describe('LogDetails', () => {
       expect(screen.getByRole('cell', { name: 'key2' })).toBeInTheDocument();
       expect(screen.getByRole('cell', { name: 'label2' })).toBeInTheDocument();
     });
+    it('should render filter controls when the callbacks are provided', () => {
+      setup(
+        {
+          onClickFilterLabel: () => {},
+          onClickFilterOutLabel: () => {},
+        },
+        { labels: { key1: 'label1' } }
+      );
+      expect(screen.getByLabelText('Filter for value')).toBeInTheDocument();
+      expect(screen.getByLabelText('Filter out value')).toBeInTheDocument();
+    });
+    it('should not render filter controls when the callbacks are not provided', () => {
+      setup(
+        {
+          onClickFilterLabel: undefined,
+          onClickFilterOutLabel: undefined,
+        },
+        { labels: { key1: 'label1' } }
+      );
+      expect(screen.queryByLabelText('Filter for value')).not.toBeInTheDocument();
+      expect(screen.queryByLabelText('Filter out value')).not.toBeInTheDocument();
+    });
   });
   describe('when log row has error', () => {
     it('should not render log level border', () => {

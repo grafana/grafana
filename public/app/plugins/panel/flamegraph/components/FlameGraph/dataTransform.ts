@@ -17,7 +17,10 @@ export type LevelItem = {
   start: number;
   // Value here can be different from a value of items in the data frame as for callers tree in sandwich view we have
   // to trim the value to correspond only to the part used by the children in the subtree.
+  // In case of diff profile this is actually left + right value.
   value: number;
+  // Only exists for diff profiles.
+  valueRight?: number;
   // Index into the data frame. It is an array because for sandwich views we may be merging multiple items into single
   // node.
   itemIndexes: number[];
@@ -46,7 +49,10 @@ export function nestedSetToLevels(container: FlameGraphDataContainer): [LevelIte
       // We are going down a level or staying at the same level, so we are adding a sibling to the last item in a level.
       // So we have to compute the correct offset based on the last sibling.
       const lastSibling = levels[currentLevel][levels[currentLevel].length - 1];
-      offset = lastSibling.start + container.getValue(lastSibling.itemIndexes[0]);
+      offset =
+        lastSibling.start +
+        container.getValue(lastSibling.itemIndexes[0]) +
+        container.getValueRight(lastSibling.itemIndexes[0]);
       // we assume there is always a single root node so lastSibling should always have a parent.
       // Also it has to have the same parent because of how the items are ordered.
       parent = lastSibling.parents![0];
@@ -54,7 +60,8 @@ export function nestedSetToLevels(container: FlameGraphDataContainer): [LevelIte
 
     const newItem: LevelItem = {
       itemIndexes: [i],
-      value: container.getValue(i),
+      value: container.getValue(i) + container.getValueRight(i),
+      valueRight: container.isDiffFlamegraph() ? container.getValueRight(i) : undefined,
       start: offset,
       parents: parent && [parent],
       children: [],
@@ -135,6 +142,10 @@ export class FlameGraphDataContainer {
   valueField: Field;
   selfField: Field;
 
+  // Optional fields for diff view
+  valueRightField?: Field;
+  selfRightField?: Field;
+
   labelDisplayProcessor: DisplayProcessor;
   valueDisplayProcessor: DisplayProcessor;
   uniqueLabels: string[];
@@ -154,6 +165,15 @@ export class FlameGraphDataContainer {
     this.levelField = data.fields.find((f) => f.name === 'level')!;
     this.valueField = data.fields.find((f) => f.name === 'value')!;
     this.selfField = data.fields.find((f) => f.name === 'self')!;
+
+    this.valueRightField = data.fields.find((f) => f.name === 'valueRight')!;
+    this.selfRightField = data.fields.find((f) => f.name === 'selfRight')!;
+
+    if ((this.valueField || this.selfField) && !(this.valueField && this.selfField)) {
+      throw new Error(
+        'Malformed dataFrame: both valueRight and selfRight has to be present if one of them is present.'
+      );
+    }
 
     const enumConfig = this.labelField?.config?.type?.enum;
     // Label can actually be an enum field so depending on that we have to access it through display processor. This is
@@ -176,6 +196,10 @@ export class FlameGraphDataContainer {
     });
   }
 
+  isDiffFlamegraph() {
+    return this.valueRightField && this.selfRightField;
+  }
+
   getLabel(index: number) {
     return this.labelDisplayProcessor(this.labelField.values[index]).text;
   }
@@ -185,21 +209,19 @@ export class FlameGraphDataContainer {
   }
 
   getValue(index: number | number[]) {
-    let indexArray: number[] = typeof index === 'number' ? [index] : index;
-    return indexArray.reduce((acc, index) => {
-      return acc + this.valueField.values[index];
-    }, 0);
+    return fieldAccessor(this.valueField, index);
   }
 
-  getValueDisplay(index: number | number[]) {
-    return this.valueDisplayProcessor(this.getValue(index));
+  getValueRight(index: number | number[]) {
+    return fieldAccessor(this.valueRightField, index);
   }
 
   getSelf(index: number | number[]) {
-    let indexArray: number[] = typeof index === 'number' ? [index] : index;
-    return indexArray.reduce((acc, index) => {
-      return acc + this.selfField.values[index];
-    }, 0);
+    return fieldAccessor(this.selfField, index);
+  }
+
+  getSelfRight(index: number | number[]) {
+    return fieldAccessor(this.selfRightField, index);
   }
 
   getSelfDisplay(index: number | number[]) {
@@ -226,11 +248,11 @@ export class FlameGraphDataContainer {
     return this.levels!;
   }
 
-  getSandwichLevels(label: string) {
+  getSandwichLevels(label: string): [LevelItem[][], LevelItem[][]] {
     const nodes = this.getNodesWithLabel(label);
 
     if (!nodes?.length) {
-      return [];
+      return [[], []];
     }
 
     const callers = mergeParentSubtrees(nodes, this);
@@ -251,4 +273,16 @@ export class FlameGraphDataContainer {
       this.uniqueLabelsMap = uniqueLabelsMap;
     }
   }
+}
+
+// Access field value with either single index or array of indexes. This is needed as we sometimes merge multiple
+// into one, and we want to access aggregated values.
+function fieldAccessor(field: Field | undefined, index: number | number[]) {
+  if (!field) {
+    return 0;
+  }
+  let indexArray: number[] = typeof index === 'number' ? [index] : index;
+  return indexArray.reduce((acc, index) => {
+    return acc + field.values[index];
+  }, 0);
 }

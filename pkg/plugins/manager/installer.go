@@ -128,7 +128,7 @@ func (m *PluginInstaller) Add(ctx context.Context, pluginID, version string, opt
 
 	_, err = m.pluginLoader.Load(ctx, sources.NewLocalSource(plugins.ClassExternal, pathsToScan))
 	if err != nil {
-		m.log.Error("Could not load plugins", "paths", pathsToScan, "err", err)
+		m.log.Error("Could not load plugins", "paths", pathsToScan, "error", err)
 		return err
 	}
 
@@ -145,9 +145,17 @@ func (m *PluginInstaller) Remove(ctx context.Context, pluginID string) error {
 		return plugins.ErrUninstallCorePlugin
 	}
 
-	if err := m.pluginLoader.Unload(ctx, plugin.ID); err != nil {
+	p, err := m.pluginLoader.Unload(ctx, plugin)
+	if err != nil {
 		return err
 	}
+
+	if remover, ok := p.FS.(plugins.FSRemover); ok {
+		if err = remover.Remove(); err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 

@@ -1,8 +1,9 @@
 import { cloneDeep } from 'lodash';
 import { Observable, of, ReplaySubject, Unsubscribable } from 'rxjs';
-import { map, mergeMap } from 'rxjs/operators';
+import { map, mergeMap, catchError } from 'rxjs/operators';
 
 import {
+  ApplyFieldOverrideOptions,
   applyFieldOverrides,
   compareArrayValues,
   compareDataFrameStructures,
@@ -19,18 +20,18 @@ import {
   getDefaultTimeRange,
   LoadingState,
   PanelData,
+  preProcessPanelData,
   rangeUtil,
   ScopedVars,
+  StreamingDataFrame,
   TimeRange,
   TimeZone,
   toDataFrame,
   transformDataFrame,
-  preProcessPanelData,
-  ApplyFieldOverrideOptions,
-  StreamingDataFrame,
 } from '@grafana/data';
 import { getTemplateSrv, toDataQueryError } from '@grafana/runtime';
 import { ExpressionDatasourceRef } from '@grafana/runtime/src/utils/DataSourceWithBackend';
+import { updatePanelDataWithASHFromLoki } from 'app/features/alerting/unified/components/rules/state-history/common';
 import { isStreamingDataFrame } from 'app/features/live/data/utils';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 
@@ -220,7 +221,17 @@ export class PanelQueryRunner {
       interpolate: (v: string) => getTemplateSrv().replace(v, data?.request?.scopedVars),
     };
 
-    return transformDataFrame(transformations, data.series, ctx).pipe(map((series) => ({ ...data, series })));
+    return transformDataFrame(transformations, data.series, ctx).pipe(
+      map((series) => ({ ...data, series })),
+      catchError((err) => {
+        console.warn('Error running transformation:', err);
+        return of({
+          ...data,
+          state: LoadingState.Error,
+          error: toDataQueryError(err),
+        });
+      })
+    );
   }
 
   async run(options: QueryRunnerOptions) {
@@ -324,8 +335,11 @@ export class PanelQueryRunner {
     }
 
     this.subscription = panelData.subscribe({
-      next: (data) => {
-        this.lastResult = skipPreProcess ? data : preProcessPanelData(data, this.lastResult);
+      next: async (data) => {
+        this.lastResult = skipPreProcess
+          ? data
+          : await updatePanelDataWithASHFromLoki(preProcessPanelData(data, this.lastResult));
+
         // Store preprocessed query results for applying overrides later on in the pipeline
         this.subject.next(this.lastResult);
       },
