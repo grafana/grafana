@@ -293,6 +293,20 @@ export async function getAfterSelectorCompletions(
     documentation: explainOperator(LokiOperationId.Distinct),
   });
 
+  completions.push({
+    type: 'PIPE_OPERATION',
+    label: 'drop',
+    insertText: `${prefix}drop`,
+    documentation: explainOperator(LokiOperationId.Drop),
+  });
+
+  completions.push({
+    type: 'PIPE_OPERATION',
+    label: 'keep',
+    insertText: `${prefix}keep`,
+    documentation: explainOperator(LokiOperationId.Keep),
+  });
+
   // Let's show label options only if query has parser
   if (hasQueryParser) {
     extractedLabelKeys.forEach((key) => {
@@ -357,6 +371,18 @@ async function getAfterDistinctCompletions(logQuery: string, dataProvider: Compl
   return [...labelCompletions];
 }
 
+async function getAfterKeepAndDropCompletions(logQuery: string, dataProvider: CompletionDataProvider) {
+  const { extractedLabelKeys } = await dataProvider.getParserAndLabelKeys(logQuery);
+  const labelCompletions: Completion[] = extractedLabelKeys.map((label) => ({
+    type: 'LABEL_NAME',
+    label,
+    insertText: label,
+    triggerOnInsert: false,
+  }));
+
+  return [...labelCompletions];
+}
+
 export async function getCompletions(
   situation: Situation,
   dataProvider: CompletionDataProvider
@@ -393,6 +419,8 @@ export async function getCompletions(
       return [...FUNCTION_COMPLETIONS, ...AGGREGATION_COMPLETIONS];
     case 'AFTER_DISTINCT':
       return getAfterDistinctCompletions(situation.logQuery, dataProvider);
+    case 'AFTER_KEEP_AND_DROP':
+      return getAfterKeepAndDropCompletions(situation.logQuery, dataProvider);
     default:
       throw new NeverCaseError(situation);
   }
