@@ -13,10 +13,14 @@ interface StackProps {
   flexGrow?: CSSProperties['flexGrow'];
 }
 
-export const Stack = ({ children, ...props }: React.PropsWithChildren<StackProps>) => {
+const Stack = React.forwardRef<HTMLDivElement, React.PropsWithChildren<StackProps>>((props, ref) => {
   const styles = useStyles2(useCallback((theme) => getStyles(theme, props), [props]));
-  return <div className={styles.root}>{children}</div>;
-};
+  return (
+    <div ref={ref} className={styles.root}>
+      {props.children}
+    </div>
+  );
+});
 
 const getStyles = (theme: GrafanaTheme2, props: StackProps) => ({
   root: css({
@@ -28,3 +32,6 @@ const getStyles = (theme: GrafanaTheme2, props: StackProps) => ({
     flexGrow: props.flexGrow,
   }),
 });
+
+Stack.displayName = 'Stack';
+export { Stack };
