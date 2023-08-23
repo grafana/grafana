@@ -1768,9 +1768,6 @@ exports[`better eslint`] = {
     "public/app/features/alerting/unified/components/alert-groups/GroupBy.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
-    "public/app/features/alerting/unified/components/alert-groups/MatcherFilter.tsx:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
     "public/app/features/alerting/unified/components/contact-points/ContactPoints.v2.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
@@ -1833,9 +1830,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
     "public/app/features/alerting/unified/components/silences/SilencesEditor.tsx:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
-    "public/app/features/alerting/unified/components/silences/SilencesFilter.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
     "public/app/features/alerting/unified/hooks/useAlertmanagerConfig.ts:5381": [
@@ -2328,8 +2322,7 @@ exports[`better eslint`] = {
     ],
     "public/app/features/dashboard/utils/getPanelMenu.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
-      [0, 0, 0, "Do not use any type assertions.", "2"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
     ],
     "public/app/features/dashboard/utils/panelMerge.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
@@ -3618,9 +3611,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "3"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "4"],
       [0, 0, 0, "Do not use any type assertions.", "5"],
-      [0, 0, 0, "Do not use any type assertions.", "6"],
-      [0, 0, 0, "Do not use any type assertions.", "7"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "8"]
+      [0, 0, 0, "Do not use any type assertions.", "6"]
     ],
     "public/app/plugins/datasource/grafana/components/SearchEditor.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
