@@ -54,7 +54,6 @@ load(
 load(
     "scripts/drone/vault.star",
     "from_secret",
-    "gcp_upload_artifacts_key",
     "gcp_grafanauploads_base64",
     "npm_token",
     "prerelease_bucket",
