@@ -123,6 +123,20 @@ func NewEvaluatorFactory(
 	datasourceCache datasources.CacheService,
 	expressionService *expr.Service,
 	pluginsStore plugins.Store,
+) EvaluatorFactory {
+	return &evaluatorImpl{
+		evaluationTimeout: cfg.EvaluationTimeout,
+		dataSourceCache:   datasourceCache,
+		expressionService: expressionService,
+		pluginsStore:      pluginsStore,
+	}
+}
+
+func NewEvaluatorFactoryWithMetrics(
+	cfg setting.UnifiedAlertingSettings,
+	datasourceCache datasources.CacheService,
+	expressionService *expr.Service,
+	pluginsStore plugins.Store,
 	metrics *metrics.Eval,
 ) EvaluatorFactory {
 	return &evaluatorImpl{
