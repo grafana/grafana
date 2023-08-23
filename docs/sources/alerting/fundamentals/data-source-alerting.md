@@ -6,7 +6,7 @@ labels:
     - cloud
     - enterprise
     - oss
-title: Data sources
+title: Data sources for Alerting
 weight: 100
 ---
 

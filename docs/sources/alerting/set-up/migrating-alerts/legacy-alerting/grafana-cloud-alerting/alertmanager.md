@@ -10,7 +10,7 @@ labels:
     - cloud
     - enterprise
     - oss
-title: Alertmanager
+title: Alertmanager (legacy)
 weight: 500
 ---
 
