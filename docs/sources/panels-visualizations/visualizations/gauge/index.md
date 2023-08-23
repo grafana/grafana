@@ -74,7 +74,7 @@ If you set a minimum height, the y-axis scrollbar is automatically displayed whe
 
 ### Neutral
 
-Set the starting value from which every gauge will be filled from.
+Set the starting value from which every gauge will be filled.
 
 ## Text size
 
