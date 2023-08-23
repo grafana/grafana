@@ -53,7 +53,7 @@ Adjust how the gauge is displayed.
 
 Choose a stacking direction.
 
-- **Auto -** Gauges displayed in rows and columns.
+- **Auto -** Gauges display in rows and columns.
 - **Horizontal -** Gauges display top to bottom.
 - **Vertical -** Gauges display left to right.
 
