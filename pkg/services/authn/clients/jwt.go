@@ -24,11 +24,11 @@ const authQueryParamName = "auth_token"
 var _ authn.ContextAwareClient = new(JWT)
 
 var (
-	errJWTInvalid = errutil.NewBase(errutil.StatusUnauthorized,
+	errJWTInvalid = errutil.Unauthorized(
 		"jwt.invalid", errutil.WithPublicMessage("Failed to verify JWT"))
-	errJWTMissingClaim = errutil.NewBase(errutil.StatusUnauthorized,
+	errJWTMissingClaim = errutil.Unauthorized(
 		"jwt.missing_claim", errutil.WithPublicMessage("Missing mandatory claim in JWT"))
-	errJWTInvalidRole = errutil.NewBase(errutil.StatusForbidden,
+	errJWTInvalidRole = errutil.Forbidden(
 		"jwt.invalid_role", errutil.WithPublicMessage("Invalid Role in claim"))
 )
 
