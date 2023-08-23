@@ -1,3 +1,27 @@
+<!-- 10.0.4 START -->
+
+# 10.0.4 (2023-08-22)
+
+### Features and enhancements
+
+- **Usage stats:** Tune collector execution startup and interval. [#72789](https://github.com/grafana/grafana/issues/72789), [@papagian](https://github.com/papagian)
+- **Prometheus:** Add present_over_time syntax highlighting. [#72368](https://github.com/grafana/grafana/issues/72368), [@arnaudlemaignen](https://github.com/arnaudlemaignen)
+- **Alerting:** Improve performance of matching captures. [#71999](https://github.com/grafana/grafana/issues/71999), [@grobinson-grafana](https://github.com/grobinson-grafana)
+
+### Bug fixes
+
+- **AzureMonitor:** Allow `serviceTags` and `tags` to be empty for trace results. [#73196](https://github.com/grafana/grafana/issues/73196), [@aangelisc](https://github.com/aangelisc)
+- **Cloud Monitoring:** Support AliasBy property in MQL mode. [#73165](https://github.com/grafana/grafana/issues/73165), [@alyssabull](https://github.com/alyssabull)
+- **Alerting:** Exclude expression refIDs from NoData state. [#72394](https://github.com/grafana/grafana/issues/72394), [@yuri-tceretian](https://github.com/yuri-tceretian)
+- **Alerting:** Fix state manager to not keep datasource_uid and ref_id labels in state after Error. [#72393](https://github.com/grafana/grafana/issues/72393), [@yuri-tceretian](https://github.com/yuri-tceretian)
+- **Dashboard:** New Datasource picker link is keyboard accessible. [#72371](https://github.com/grafana/grafana/issues/72371), [@polibb](https://github.com/polibb)
+- **AzureMonitor:** Fix ResourcePicker hanging. [#72357](https://github.com/grafana/grafana/issues/72357), [@asimpson](https://github.com/asimpson)
+- **Alerting:** Fix refetching grafana rules on alert list panel. [#72333](https://github.com/grafana/grafana/issues/72333), [@konrad147](https://github.com/konrad147)
+- **Alerting:** Fix contact point testing with secure settings. [#72282](https://github.com/grafana/grafana/issues/72282), [@JacobsonMT](https://github.com/JacobsonMT)
+- **TimeSeries:** Fix zoom not working after editing panel. [#72224](https://github.com/grafana/grafana/issues/72224), [@leeoniya](https://github.com/leeoniya)
+- **CloudMonitoring:** Correctly set title and text fields for annotations. [#72153](https://github.com/grafana/grafana/issues/72153), [@aangelisc](https://github.com/aangelisc)
+
+<!-- 10.0.4 END -->
 <!-- 10.0.3 START -->
 
 # 10.0.3 (2023-07-26)
