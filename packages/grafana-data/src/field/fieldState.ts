@@ -72,7 +72,7 @@ export function getFieldDisplayName(field: Field, frame?: DataFrame, allFrames?:
  */
 export function calculateFieldDisplayName(field: Field, frame?: DataFrame, allFrames?: DataFrame[]): string {
   const hasConfigTitle = field.config?.displayName && field.config?.displayName.length;
-  const isComparisonSeries = Boolean(frame?.meta?.comparisonResponseDiff);
+  const isComparisonSeries = Boolean(frame?.meta?.timeCompare?.isTimeShiftQuery);
   let displayName = hasConfigTitle ? field.config!.displayName! : field.name;
 
   if (hasConfigTitle) {

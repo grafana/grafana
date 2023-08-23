@@ -94,8 +94,11 @@ export interface QueryResultMeta {
    */
   pathSeparator?: string;
 
-  /** A time shift diff provided with comparison query */
-  comparisonResponseDiff?: number;
+  /** A time shift metadata indicating a result of comparison */
+  timeCompare?: {
+    diffMs: number;
+    isTimeShiftQuery: boolean;
+  };
 
   /**
    * Legacy data source specific, should be moved to custom
