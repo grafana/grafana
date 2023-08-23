@@ -105,11 +105,11 @@ func (s *ExtendedJWT) Authenticate(ctx context.Context, r *authn.Request) (*auth
 		OrgRoles:        map[int64]roletype.RoleType{defaultOrgID: roletype.RoleNone}, // With external auth: Role None => use permissions only
 		ID:              authn.NamespacedID(namespace, id),
 		Login:           claims.Login,
-		Name:            namespace,
+		Name:            claims.Name,
 		Email:           claims.Email,
 		IsGrafanaAdmin:  new(bool),
 		AuthenticatedBy: login.ExtendedJWTModule,
-		LastSeenAt:      time.Now(),
+		LastSeenAt:      timeNow(),
 		Teams:           []int64{},  // TODO
 		Groups:          []string{}, // TODO
 		ClientParams:    authn.ClientParams{SyncPermissions: false},

@@ -35,6 +35,9 @@ var (
 			Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC)),
 			IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
 		},
+		Name:     "John Doe",
+		Login:    "johndoe",
+		Email:    "johndoe@example.org",
 		ClientID: "grafana",
 		Scopes:   []string{"profile", "groups"},
 		Entitlements: map[string][]string{
@@ -145,18 +148,18 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 					OrgID:   1,
 					OrgRole: roletype.RoleAdmin,
 					Name:    "John Doe",
-					Email:   "johndoe@grafana.com",
+					Email:   "johndoe@example.org",
 					Login:   "johndoe",
 				}
 			},
 			want: &authn.Identity{
 				OrgID:           1,
 				OrgName:         "",
-				OrgRoles:        map[int64]roletype.RoleType{1: roletype.RoleAdmin},
+				OrgRoles:        map[int64]roletype.RoleType{1: roletype.RoleNone},
 				ID:              "user:2",
 				Login:           "johndoe",
 				Name:            "John Doe",
-				Email:           "johndoe@grafana.com",
+				Email:           "johndoe@example.org",
 				IsGrafanaAdmin:  boolPtr(false),
 				AuthenticatedBy: login.ExtendedJWTModule,
 				AuthID:          "",
@@ -188,6 +191,8 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 						Login:  nil,
 					},
 				},
+				Teams:  []int64{},
+				Groups: []string{},
 			},
 			wantErr: false,
 		},
@@ -313,6 +318,7 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 				require.Error(t, err)
 			} else {
 				require.NoError(t, err)
+				tc.want.LastSeenAt = timeNow()
 				assert.EqualValues(t, tc.want, id, fmt.Sprintf("%+v", id))
 			}
 		})
