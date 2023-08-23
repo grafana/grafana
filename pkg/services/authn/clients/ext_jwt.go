@@ -244,7 +244,6 @@ func (s *ExtendedJWT) signingPublicKey() (crypto.PublicKey, error) {
 			if err := resp.Body.Close(); err != nil {
 				s.log.Warn("could not clode key response body")
 			}
-			return
 		}()
 		body, errReadBody := io.ReadAll(resp.Body)
 		if errReadBody != nil {
