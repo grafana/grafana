@@ -226,6 +226,7 @@ func (ss *SQLStore) ensureMainOrgAndAdminUser(test bool) error {
 				}); err != nil {
 					return fmt.Errorf("failed to update admin user: %s", err)
 				}
+				return nil
 			}
 		}
 

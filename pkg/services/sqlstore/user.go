@@ -14,6 +14,7 @@ import (
 )
 
 const mainOrgName = "Main Org."
+const defaultAdminUserID = 1
 
 func (ss *SQLStore) getOrgIDForNewUser(sess *DBSession, args user.CreateUserCommand) (int64, error) {
 	if ss.Cfg.AutoAssignOrg && args.OrgID != 0 {
@@ -133,33 +134,27 @@ func (ss *SQLStore) createUser(ctx context.Context, sess *DBSession, args user.C
 }
 
 func (ss *SQLStore) resetAdminUser(ctx context.Context, sess *DBSession, args user.CreateUserCommand) (user.User, error) {
+	// get current admin user
 	usr := user.User{
 		Login:   args.Login,
 		Email:   args.Email,
 		IsAdmin: true,
 	}
-
-	salt, err := util.GetRandomString(10)
+	has, err := sess.ID(defaultAdminUserID).Where(ss.notServiceAccountFilter()).Get(&usr)
 	if err != nil {
 		return usr, err
 	}
-	usr.Salt = salt
-	rands, err := util.GetRandomString(10)
+	if !has {
+		return usr, fmt.Errorf("unable to find admin user with id %d", defaultAdminUserID)
+	}
+
+	usr.Updated = time.Now()
+	usr, err = setupAdminPassword(usr, args.Password)
 	if err != nil {
 		return usr, err
 	}
-	usr.Rands = rands
 
-	if len(args.Password) > 0 {
-		encodedPassword, err := util.EncodePassword(args.Password, usr.Salt)
-		if err != nil {
-			return usr, err
-		}
-		usr.Password = encodedPassword
-	}
-
-	_, err = sess.ID(1).Update(usr)
-
+	_, err = sess.ID(defaultAdminUserID).Where(ss.notServiceAccountFilter()).Update(&usr)
 	return usr, err
 }
 
@@ -221,4 +216,35 @@ func (ss *SQLStore) getOrCreateOrg(sess *DBSession, orgName string) (int64, erro
 	})
 
 	return org.ID, nil
+}
+
+func (ss *SQLStore) notServiceAccountFilter() string {
+	return fmt.Sprintf("%s.is_service_account = %s",
+		ss.Dialect.Quote("user"),
+		ss.Dialect.BooleanStr(false))
+}
+
+// setupAdminPassword sets up the password for the admin user using the provided
+// password. It returns a new User with the updated Salt, Rands and Password.
+func setupAdminPassword(usr user.User, password string) (user.User, error) {
+	ret := usr
+	salt, err := util.GetRandomString(10)
+	if err != nil {
+		return ret, err
+	}
+	ret.Salt = salt
+	rands, err := util.GetRandomString(10)
+	if err != nil {
+		return ret, err
+	}
+	ret.Rands = rands
+
+	if len(password) > 0 {
+		encodedPassword, err := util.EncodePassword(password, usr.Salt)
+		if err != nil {
+			return ret, err
+		}
+		ret.Password = encodedPassword
+	}
+	return ret, nil
 }
