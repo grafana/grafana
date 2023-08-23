@@ -25,7 +25,7 @@
     "lint:sass": "yarn stylelint '{public/sass,packages}/**/*.scss' --cache",
     "test:ci": "yarn i18n:compile && mkdir -p reports/junit && JEST_JUNIT_OUTPUT_DIR=reports/junit jest --ci --reporters=default --reporters=jest-junit -w ${TEST_MAX_WORKERS:-100%}",
     "lint:fix": "yarn lint:ts --fix",
-    "packages:build": "lerna run build --ignore @grafana-plugins/input-datasource",
+    "packages:build": "lerna run build --ignore '@grafana-plugins/*'",
     "packages:clean": "rimraf ./npm-artifacts && lerna run clean --parallel",
     "packages:prepare": "lerna version --no-push --no-git-tag-version --force-publish --exact",
     "packages:pack": "mkdir -p ./npm-artifacts && lerna exec --no-private -- yarn pack --out \"../../npm-artifacts/%s-%v.tgz\"",
