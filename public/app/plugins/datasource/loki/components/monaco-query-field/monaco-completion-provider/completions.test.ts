@@ -130,6 +130,18 @@ const afterSelectorCompletions = [
     label: 'distinct',
     type: 'PIPE_OPERATION',
   },
+  {
+    documentation: 'Operator docs',
+    insertText: '| drop',
+    label: 'drop',
+    type: 'PIPE_OPERATION',
+  },
+  {
+    documentation: 'Operator docs',
+    insertText: '| keep',
+    label: 'keep',
+    type: 'PIPE_OPERATION',
+  },
 ];
 
 function buildAfterSelectorCompletions(
@@ -390,6 +402,32 @@ describe('getCompletions', () => {
 
   test('Returns completion options when the situation is AFTER_DISTINCT', async () => {
     const situation: Situation = { type: 'AFTER_DISTINCT', logQuery: '{label="value"}' };
+    const completions = await getCompletions(situation, completionProvider);
+
+    expect(completions).toEqual([
+      {
+        insertText: 'extracted',
+        label: 'extracted',
+        triggerOnInsert: false,
+        type: 'LABEL_NAME',
+      },
+      {
+        insertText: 'place',
+        label: 'place',
+        triggerOnInsert: false,
+        type: 'LABEL_NAME',
+      },
+      {
+        insertText: 'source',
+        label: 'source',
+        triggerOnInsert: false,
+        type: 'LABEL_NAME',
+      },
+    ]);
+  });
+
+  test('Returns completion options when the situation is AFTER_KEEP_AND_DROP', async () => {
+    const situation: Situation = { type: 'AFTER_KEEP_AND_DROP', logQuery: '{label="value"}' };
     const completions = await getCompletions(situation, completionProvider);
 
     expect(completions).toEqual([
