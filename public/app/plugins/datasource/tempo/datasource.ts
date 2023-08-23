@@ -426,22 +426,21 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     return request;
   }
 
+  // This function can probably be simplified by avoiding passing both `targets` and `query`,
+  // since `query` is built from `targets`, if you look at how this function is currently called
   handleStreamingSearch(
     options: DataQueryRequest<TempoQuery>,
     targets: TempoQuery[],
     query: string
   ): Observable<DataQueryResponse> {
-    const validTargets = targets
-      .filter((t) => t.query || query)
-      .map((t): TempoQuery => ({ ...t, query: query || t.query.trim() }));
-    if (!validTargets.length) {
+    if (query === '') {
       return EMPTY;
     }
 
     return merge(
-      ...validTargets.map((q) =>
+      ...targets.map((target) =>
         doTempoChannelStream(
-          q,
+          { ...target, query },
           this, // the datasource
           options,
           this.instanceSettings
