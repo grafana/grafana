@@ -14,15 +14,11 @@ import {
   PluginType,
   CoreApp,
 } from '@grafana/data';
-import {
-  BackendDataSourceResponse,
-  FetchResponse,
-  setBackendSrv,
-  setDataSourceSrv,
-  TemplateSrv,
-} from '@grafana/runtime';
+import { BackendDataSourceResponse, FetchResponse, setBackendSrv, setDataSourceSrv } from '@grafana/runtime';
 import { BarGaugeDisplayMode, TableCellDisplayMode } from '@grafana/schema';
+import { TemplateSrv } from 'app/features/templating/template_srv';
 
+import { TraceqlSearchScope } from './dataquery.gen';
 import {
   DEFAULT_LIMIT,
   TempoDatasource,
@@ -265,6 +261,18 @@ describe('Tempo data source', () => {
       maxDuration: duration,
       limit: 10,
     });
+  });
+
+  it('should format groupBy query correctly', () => {
+    const ds = new TempoDatasource(defaultSettings, {} as TemplateSrv);
+    const queryGroupBy = [
+      { id: '1', scope: TraceqlSearchScope.Unscoped, tag: 'component' },
+      { id: '2', scope: TraceqlSearchScope.Span, tag: 'name' },
+      { id: '3', scope: TraceqlSearchScope.Resource, tag: 'service.name' },
+      { id: '4', scope: TraceqlSearchScope.Intrinsic, tag: 'kind' },
+    ];
+    const groupBy = ds.formatGroupBy(queryGroupBy);
+    expect(groupBy).toEqual('.component, span.name, resource.service.name, kind');
   });
 
   it('should include a default limit', () => {

@@ -400,19 +400,9 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
   }
 
   handleMetricsSummary = (target: TempoQuery, query: string, options: DataQueryRequest<TempoQuery>) => {
-    const groupBy = target.groupBy
-      ?.filter((f) => f.tag)
-      .map((f) => {
-        if (f.scope === TraceqlSearchScope.Unscoped) {
-          return `.${f.tag}`;
-        }
-        return f.scope !== TraceqlSearchScope.Intrinsic ? `${f.scope}.${f.tag}` : f.tag;
-      })
-      .join(', ');
-
     return this._request('/api/metrics/summary', {
       q: query,
-      groupBy,
+      groupBy: target.groupBy ? this.formatGroupBy(target.groupBy) : '',
       start: options.range.from.unix(),
       end: options.range.to.unix(),
     }).pipe(
@@ -447,6 +437,18 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
         });
       })
     );
+  };
+
+  formatGroupBy = (groupBy: TraceqlFilter[]) => {
+    return groupBy
+      ?.filter((f) => f.tag)
+      .map((f) => {
+        if (f.scope === TraceqlSearchScope.Unscoped) {
+          return `.${f.tag}`;
+        }
+        return f.scope !== TraceqlSearchScope.Intrinsic ? `${f.scope}.${f.tag}` : f.tag;
+      })
+      .join(', ');
   };
 
   hasGroupBy = (query: TempoQuery) => {
