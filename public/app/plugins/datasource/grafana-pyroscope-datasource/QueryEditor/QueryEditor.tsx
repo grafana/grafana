@@ -31,7 +31,10 @@ export function QueryEditor(props: Props) {
   return (
     <EditorRows>
       <EditorRow stackProps={{ wrap: false, gap: 1 }}>
-        {profileTypes ? (
+        {/* we have to wait for query.profileTypeId to be set before we can render cascader as we cannot later change the value.
+            We set a default value in useNormalizeQuery if it's not set, so it should be always set eventually.
+         */}
+        {profileTypes && query.profileTypeId ? (
           <ProfileTypesCascader
             profileTypes={profileTypes}
             initialProfileTypeId={query.profileTypeId}
