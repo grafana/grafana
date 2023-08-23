@@ -69,7 +69,7 @@ export const routeLayer: MapLayerRegistryItem<RouteConfig> = {
   description: 'Render data points as a route',
   isBaseMap: false,
   showLocation: true,
-  state: PluginState.alpha,
+  state: PluginState.beta,
 
   /**
    * Function that configures transformation and returns a transformer
@@ -317,14 +317,14 @@ function findNearestTimeIndex(timestamps: number[], time: number): number | null
   if (time < timestamps[probableIdx]) {
     for (let i = probableIdx; i > 0; i--) {
       if (time > timestamps[i]) {
-        return i;
+        return i < lastIdx ? i + 1 : lastIdx;
       }
     }
     return 0;
   } else {
     for (let i = probableIdx; i < lastIdx; i++) {
       if (time < timestamps[i]) {
-        return i;
+        return i > 0 ? i - 1 : 0;
       }
     }
     return lastIdx;

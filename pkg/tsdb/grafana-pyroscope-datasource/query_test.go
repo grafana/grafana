@@ -196,6 +196,7 @@ func Test_treeToNestedDataFrame(t *testing.T) {
 				},
 				{Value: 30, Level: 1, Self: 3, Name: "func2", Nodes: []*ProfileTree{
 					{Value: 15, Level: 2, Self: 4, Name: "func1:func3"},
+					{Value: 10, Level: 2, Self: 4, Name: "func1"},
 				}},
 			},
 		}
@@ -211,10 +212,10 @@ func Test_treeToNestedDataFrame(t *testing.T) {
 		}
 		require.Equal(t,
 			[]*data.Field{
-				data.NewField("level", nil, []int64{0, 1, 1, 2}),
-				data.NewField("value", nil, []int64{100, 40, 30, 15}).SetConfig(&data.FieldConfig{Unit: "short"}),
-				data.NewField("self", nil, []int64{1, 2, 3, 4}).SetConfig(&data.FieldConfig{Unit: "short"}),
-				data.NewField("label", nil, []data.EnumItemIndex{0, 1, 2, 3}).SetConfig(labelConfig),
+				data.NewField("level", nil, []int64{0, 1, 1, 2, 2}),
+				data.NewField("value", nil, []int64{100, 40, 30, 15, 10}).SetConfig(&data.FieldConfig{Unit: "short"}),
+				data.NewField("self", nil, []int64{1, 2, 3, 4, 4}).SetConfig(&data.FieldConfig{Unit: "short"}),
+				data.NewField("label", nil, []data.EnumItemIndex{0, 1, 2, 3, 1}).SetConfig(labelConfig),
 			}, frame.Fields)
 	})
 

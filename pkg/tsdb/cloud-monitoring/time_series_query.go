@@ -16,19 +16,19 @@ import (
 func (timeSeriesQuery *cloudMonitoringTimeSeriesQuery) appendGraphPeriod(req *backend.QueryDataRequest) string {
 	// GraphPeriod needs to be explicitly disabled.
 	// If not set, the default behavior is to set an automatic value
-	if timeSeriesQuery.parameters.GraphPeriod != "disabled" {
-		if timeSeriesQuery.parameters.GraphPeriod == "auto" || timeSeriesQuery.parameters.GraphPeriod == "" {
+	if timeSeriesQuery.parameters.GraphPeriod == nil || *timeSeriesQuery.parameters.GraphPeriod != "disabled" {
+		if timeSeriesQuery.parameters.GraphPeriod == nil || *timeSeriesQuery.parameters.GraphPeriod == "auto" || *timeSeriesQuery.parameters.GraphPeriod == "" {
 			intervalCalculator := intervalv2.NewCalculator(intervalv2.CalculatorOptions{})
 			interval := intervalCalculator.Calculate(req.Queries[0].TimeRange, time.Duration(timeSeriesQuery.IntervalMS/1000)*time.Second, req.Queries[0].MaxDataPoints)
-			timeSeriesQuery.parameters.GraphPeriod = interval.Text
+			timeSeriesQuery.parameters.GraphPeriod = &interval.Text
 		}
-		return fmt.Sprintf(" | graph_period %s", timeSeriesQuery.parameters.GraphPeriod)
+		return fmt.Sprintf(" | graph_period %s", *timeSeriesQuery.parameters.GraphPeriod)
 	}
 	return ""
 }
 
 func (timeSeriesQuery *cloudMonitoringTimeSeriesQuery) run(ctx context.Context, req *backend.QueryDataRequest,
-	s *Service, dsInfo datasourceInfo, tracer tracing.Tracer) (*backend.DataResponse, cloudMonitoringResponse, string, error) {
+	s *Service, dsInfo datasourceInfo, tracer tracing.Tracer) (*backend.DataResponse, any, string, error) {
 	timeSeriesQuery.parameters.Query += timeSeriesQuery.appendGraphPeriod(req)
 	from := req.Queries[0].TimeRange.From
 	to := req.Queries[0].TimeRange.To
@@ -41,7 +41,8 @@ func (timeSeriesQuery *cloudMonitoringTimeSeriesQuery) run(ctx context.Context, 
 }
 
 func (timeSeriesQuery *cloudMonitoringTimeSeriesQuery) parseResponse(queryRes *backend.DataResponse,
-	response cloudMonitoringResponse, executedQueryString string) error {
+	res any, executedQueryString string) error {
+	response := res.(cloudMonitoringResponse)
 	frames := data.Frames{}
 
 	for _, series := range response.TimeSeriesData {

@@ -7,16 +7,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
-type LoginServiceFake struct{}
-
-func (l *LoginServiceFake) UpsertUser(ctx context.Context, cmd *login.UpsertUserCommand) (*user.User, error) {
-	return nil, nil
-}
-func (l *LoginServiceFake) DisableExternalUser(ctx context.Context, username string) error {
-	return nil
-}
-func (l *LoginServiceFake) SetTeamSyncFunc(login.TeamSyncFunc) {}
-
 type AuthInfoServiceFake struct {
 	login.AuthInfoService
 	LatestUserID         int64
@@ -69,15 +59,5 @@ func (a *AuthInfoServiceFake) GetExternalUserInfoByLogin(ctx context.Context, qu
 }
 
 func (a *AuthInfoServiceFake) DeleteUserAuthInfo(ctx context.Context, userID int64) error {
-	return a.ExpectedError
-}
-
-type AuthenticatorFake struct {
-	ExpectedUser  *user.User
-	ExpectedError error
-}
-
-func (a *AuthenticatorFake) AuthenticateUser(c context.Context, query *login.LoginUserQuery) error {
-	query.User = a.ExpectedUser
 	return a.ExpectedError
 }

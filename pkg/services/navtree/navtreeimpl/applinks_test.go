@@ -294,7 +294,6 @@ func TestAddAppLinks(t *testing.T) {
 	})
 
 	t.Run("Should replace page from plugin", func(t *testing.T) {
-		service.features = featuremgmt.WithFeatures(featuremgmt.FlagDataConnectionsConsole)
 		service.navigationAppConfig = map[string]NavigationAppConfig{}
 		service.navigationAppPathConfig = map[string]NavigationAppConfig{
 			"/connections/add-new-connection": {SectionID: "connections"},
@@ -334,7 +333,6 @@ func TestAddAppLinks(t *testing.T) {
 	})
 
 	t.Run("Should not register pages under the app plugin section unless AddToNav=true", func(t *testing.T) {
-		service.features = featuremgmt.WithFeatures(featuremgmt.FlagDataConnectionsConsole)
 		service.navigationAppPathConfig = map[string]NavigationAppConfig{} // We don't configure it as a standalone plugin page
 
 		treeRoot := navtree.NavTreeRoot{}

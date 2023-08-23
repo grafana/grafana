@@ -60,13 +60,11 @@ export interface FeatureToggles {
   alertingBacktesting?: boolean;
   editPanelCSVDragAndDrop?: boolean;
   alertingNoNormalState?: boolean;
-  logsSampleInExplore?: boolean;
   logsContextDatasourceUi?: boolean;
   lokiQuerySplitting?: boolean;
   lokiQuerySplittingConfig?: boolean;
   individualCookiePreferences?: boolean;
-  onlyExternalOrgRoleSync?: boolean;
-  traceqlSearch?: boolean;
+  gcomOnlyExternalOrgRoleSync?: boolean;
   prometheusMetricEncyclopedia?: boolean;
   timeSeriesTable?: boolean;
   prometheusResourceBrowserCache?: boolean;
@@ -83,7 +81,6 @@ export interface FeatureToggles {
   alertStateHistoryLokiOnly?: boolean;
   unifiedRequestLog?: boolean;
   renderAuthJWT?: boolean;
-  pyroscopeFlameGraph?: boolean;
   externalServiceAuth?: boolean;
   refactorVariablesTimeRange?: boolean;
   useCachingService?: boolean;
@@ -104,16 +101,23 @@ export interface FeatureToggles {
   recordedQueriesMulti?: boolean;
   pluginsDynamicAngularDetectionPatterns?: boolean;
   alertingLokiRangeToInstant?: boolean;
-  elasticToggleableFilters?: boolean;
   vizAndWidgetSplit?: boolean;
   prometheusIncrementalQueryInstrumentation?: boolean;
   logsExploreTableVisualisation?: boolean;
   awsDatasourcesTempCredentials?: boolean;
   transformationsRedesign?: boolean;
+  toggleLabelsInLogsUI?: boolean;
   mlExpressions?: boolean;
-  disableTraceQLStreaming?: boolean;
+  traceQLStreaming?: boolean;
   grafanaAPIServer?: boolean;
   featureToggleAdminPage?: boolean;
   awsAsyncQueryCaching?: boolean;
   splitScopes?: boolean;
+  azureMonitorDataplane?: boolean;
+  permissionsFilterRemoveSubquery?: boolean;
+  prometheusConfigOverhaulAuth?: boolean;
+  configurableSchedulerTick?: boolean;
+  influxdbSqlSupport?: boolean;
+  noBasicRole?: boolean;
+  alertingNoDataErrorExecution?: boolean;
 }

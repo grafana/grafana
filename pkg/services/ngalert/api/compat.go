@@ -260,3 +260,41 @@ func ReceiverExportFromEmbeddedContactPoint(contact definitions.EmbeddedContactP
 		DisableResolveMessage: contact.DisableResolveMessage,
 	}, nil
 }
+
+// AlertingFileExportFromRoute creates a definitions.AlertingFileExport DTO from definitions.Route.
+func AlertingFileExportFromRoute(orgID int64, route definitions.Route) (definitions.AlertingFileExport, error) {
+	f := definitions.AlertingFileExport{
+		APIVersion: 1,
+		Policies: []definitions.NotificationPolicyExport{{
+			OrgID:  orgID,
+			Policy: RouteExportFromRoute(&route),
+		}},
+	}
+	return f, nil
+}
+
+// RouteExportFromRoute creates a definitions.RouteExport DTO from definitions.Route.
+func RouteExportFromRoute(route *definitions.Route) *definitions.RouteExport {
+	export := definitions.RouteExport{
+		Receiver:          route.Receiver,
+		GroupByStr:        route.GroupByStr,
+		Match:             route.Match,
+		MatchRE:           route.MatchRE,
+		Matchers:          route.Matchers,
+		ObjectMatchers:    route.ObjectMatchers,
+		MuteTimeIntervals: route.MuteTimeIntervals,
+		Continue:          route.Continue,
+		GroupWait:         route.GroupWait,
+		GroupInterval:     route.GroupInterval,
+		RepeatInterval:    route.RepeatInterval,
+	}
+
+	if len(route.Routes) > 0 {
+		export.Routes = make([]*definitions.RouteExport, 0, len(route.Routes))
+		for _, r := range route.Routes {
+			export.Routes = append(export.Routes, RouteExportFromRoute(r))
+		}
+	}
+
+	return &export
+}

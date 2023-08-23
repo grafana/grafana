@@ -115,65 +115,65 @@ export class LokiQueryModeller extends LokiAndPromQueryModellerBase {
       {
         name: 'Query on value inside a log line',
         type: LokiQueryPatternType.Metric,
-        // sum(sum_over_time({ | logfmt | __error__=`` | unwrap | __error__=`` [$__interval]))
+        // sum(sum_over_time({ | logfmt | __error__=`` | unwrap | __error__=`` [$__auto]))
         operations: [
           { id: LokiOperationId.LineContains, params: [''] },
           { id: LokiOperationId.Logfmt, params: [] },
           { id: LokiOperationId.LabelFilterNoErrors, params: [] },
           { id: LokiOperationId.Unwrap, params: [''] },
           { id: LokiOperationId.LabelFilterNoErrors, params: [] },
-          { id: LokiOperationId.SumOverTime, params: ['$__interval'] },
+          { id: LokiOperationId.SumOverTime, params: ['$__auto'] },
           { id: LokiOperationId.Sum, params: [] },
         ],
       },
       {
         name: 'Total requests per label of streams',
         type: LokiQueryPatternType.Metric,
-        // sum by() (count_over_time({}[$__interval)
+        // sum by() (count_over_time({}[$__auto)
         operations: [
           { id: LokiOperationId.LineContains, params: [''] },
-          { id: LokiOperationId.CountOverTime, params: ['$__interval'] },
+          { id: LokiOperationId.CountOverTime, params: ['$__auto'] },
           { id: LokiOperationId.Sum, params: [] },
         ],
       },
       {
         name: 'Total requests per parsed label or label of streams',
         type: LokiQueryPatternType.Metric,
-        // sum by() (count_over_time({}| logfmt | __error__=`` [$__interval))
+        // sum by() (count_over_time({}| logfmt | __error__=`` [$__auto))
         operations: [
           { id: LokiOperationId.LineContains, params: [''] },
           { id: LokiOperationId.Logfmt, params: [] },
           { id: LokiOperationId.LabelFilterNoErrors, params: [] },
-          { id: LokiOperationId.CountOverTime, params: ['$__interval'] },
+          { id: LokiOperationId.CountOverTime, params: ['$__auto'] },
           { id: LokiOperationId.Sum, params: [] },
         ],
       },
       {
         name: 'Bytes used by a log stream',
         type: LokiQueryPatternType.Metric,
-        // bytes_over_time({}[$__interval])
+        // bytes_over_time({}[$__auto])
         operations: [
           { id: LokiOperationId.LineContains, params: [''] },
-          { id: LokiOperationId.BytesOverTime, params: ['$__interval'] },
+          { id: LokiOperationId.BytesOverTime, params: ['$__auto'] },
         ],
       },
       {
         name: 'Count of log lines per stream',
         type: LokiQueryPatternType.Metric,
-        // count_over_time({}[$__interval])
+        // count_over_time({}[$__auto])
         operations: [
           { id: LokiOperationId.LineContains, params: [''] },
-          { id: LokiOperationId.CountOverTime, params: ['$__interval'] },
+          { id: LokiOperationId.CountOverTime, params: ['$__auto'] },
         ],
       },
       {
         name: 'Top N results by label or parsed label',
         type: LokiQueryPatternType.Metric,
-        // topk(10, sum by () (count_over_time({} | logfmt | __error__=`` [$__interval])))
+        // topk(10, sum by () (count_over_time({} | logfmt | __error__=`` [$__auto])))
         operations: [
           { id: LokiOperationId.Logfmt, params: [] },
           { id: LokiOperationId.LabelFilterNoErrors, params: [] },
-          { id: LokiOperationId.CountOverTime, params: ['$__interval'] },
+          { id: LokiOperationId.CountOverTime, params: ['$__auto'] },
           { id: LokiOperationId.Sum, params: [] },
           { id: LokiOperationId.TopK, params: [10] },
         ],
@@ -181,13 +181,13 @@ export class LokiQueryModeller extends LokiAndPromQueryModellerBase {
       {
         name: 'Extracted quantile',
         type: LokiQueryPatternType.Metric,
-        // quantile_over_time(0.5,{} | logfmt | unwrap latency[$__interval]) by ()
+        // quantile_over_time(0.5,{} | logfmt | unwrap latency[$__auto]) by ()
         operations: [
           { id: LokiOperationId.Logfmt, params: [] },
           { id: LokiOperationId.LabelFilterNoErrors, params: [] },
           { id: LokiOperationId.Unwrap, params: ['latency'] },
           { id: LokiOperationId.LabelFilterNoErrors, params: [] },
-          { id: LokiOperationId.QuantileOverTime, params: ['$__interval', 0.5] },
+          { id: LokiOperationId.QuantileOverTime, params: ['$__auto', 0.5] },
           { id: LokiOperationId.Sum, params: [] },
         ],
       },

@@ -1,6 +1,6 @@
 import { createSelector } from '@reduxjs/toolkit';
 
-import { PluginError, PluginErrorCode, PluginType, unEscapeStringFromRegex } from '@grafana/data';
+import { PluginError, PluginType, unEscapeStringFromRegex } from '@grafana/data';
 
 import { RequestStatus, PluginCatalogStoreState } from '../types';
 
@@ -63,18 +63,19 @@ export const selectPlugins = (filters: PluginFilters) =>
     });
   });
 
-export const selectPluginErrors = createSelector(selectAll, (plugins) =>
-  plugins
-    ? plugins
-        .filter((p) => Boolean(p.error))
-        .map(
-          (p): PluginError => ({
-            pluginId: p.id,
-            errorCode: p!.error as PluginErrorCode,
-          })
-        )
-    : []
-);
+export const selectPluginErrors = createSelector(selectAll, (plugins) => {
+  const pluginErrors: PluginError[] = [];
+  for (const plugin of plugins) {
+    if (plugin.error) {
+      pluginErrors.push({
+        pluginId: plugin.id,
+        errorCode: plugin.error,
+      });
+    }
+  }
+
+  return pluginErrors;
+});
 
 // The following selectors are used to get information about the outstanding or completed plugins-related network requests.
 export const selectRequest = (actionType: string) =>

@@ -1,14 +1,14 @@
 import React, { PureComponent } from 'react';
 
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
-import { reportInteraction } from '@grafana/runtime/src';
 import { Alert, ClipboardButton, Field, FieldSet, Icon, Input, Switch } from '@grafana/ui';
 import config from 'app/core/config';
 import { t, Trans } from 'app/core/internationalization';
 
 import { ThemePicker } from './ThemePicker';
+import { trackDashboardSharingActionPerType } from './analytics';
 import { ShareModalTabProps } from './types';
-import { buildImageUrl, buildShareUrl } from './utils';
+import { buildImageUrl, buildShareUrl, shareDashboardType } from './utils';
 
 export interface Props extends ShareModalTabProps {}
 
@@ -33,7 +33,6 @@ export class ShareLink extends PureComponent<Props, State> {
   }
 
   componentDidMount() {
-    reportInteraction('grafana_dashboards_link_share_viewed');
     this.buildUrl();
   }
 
@@ -73,6 +72,10 @@ export class ShareLink extends PureComponent<Props, State> {
   getShareUrl = () => {
     return this.state.shareUrl;
   };
+
+  onCopy() {
+    trackDashboardSharingActionPerType('copy_link', shareDashboardType.link);
+  }
 
   render() {
     const { panel, dashboard } = this.props;
@@ -118,7 +121,7 @@ export class ShareLink extends PureComponent<Props, State> {
               value={shareUrl}
               readOnly
               addonAfter={
-                <ClipboardButton icon="copy" variant="primary" getText={this.getShareUrl}>
+                <ClipboardButton icon="copy" variant="primary" getText={this.getShareUrl} onClipboardCopy={this.onCopy}>
                   <Trans i18nKey="share-modal.link.copy-link-button">Copy</Trans>
                 </ClipboardButton>
               }

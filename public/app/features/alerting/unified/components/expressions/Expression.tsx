@@ -427,7 +427,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
       border: solid 1px ${theme.colors.border.medium};
       flex: 1;
       flex-basis: 400px;
-      border-radius: ${theme.shape.borderRadius()};
+      border-radius: ${theme.shape.radius.default};
     `,
     stack: css`
       display: flex;
@@ -532,7 +532,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   editable: css`
     padding: ${theme.spacing(0.5)} ${theme.spacing(1)};
     border: solid 1px ${theme.colors.border.weak};
-    border-radius: ${theme.shape.borderRadius()};
+    border-radius: ${theme.shape.radius.default};
 
     display: flex;
     flex-direction: row;

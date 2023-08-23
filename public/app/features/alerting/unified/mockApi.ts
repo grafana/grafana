@@ -2,17 +2,26 @@ import { rest } from 'msw';
 import { setupServer, SetupServer } from 'msw/node';
 import 'whatwg-fetch';
 
+import { DataSourceInstanceSettings } from '@grafana/data';
 import { setBackendSrv } from '@grafana/runtime';
+import {
+  PromBuildInfoResponse,
+  PromRulesResponse,
+  RulerRuleGroupDTO,
+  RulerRulesConfigDTO,
+} from 'app/types/unified-alerting-dto';
 
 import { backendSrv } from '../../../core/services/backend_srv';
 import {
   AlertmanagerConfig,
   AlertManagerCortexConfig,
+  AlertmanagerReceiver,
   EmailConfig,
   MatcherOperator,
-  Receiver,
   Route,
 } from '../../../plugins/datasource/alertmanager/types';
+
+import { AlertingQueryResponse } from './state/AlertingQueryRunner';
 
 class AlertmanagerConfigBuilder {
   private alertmanagerConfig: AlertmanagerConfig = { receivers: [] };
@@ -84,7 +93,7 @@ class EmailConfigBuilder {
 }
 
 class AlertmanagerReceiverBuilder {
-  private receiver: Receiver = { name: '', email_configs: [] };
+  private receiver: AlertmanagerReceiver = { name: '', email_configs: [] };
 
   withName(name: string): AlertmanagerReceiverBuilder {
     this.receiver.name = name;
@@ -121,10 +130,60 @@ export function mockApi(server: SetupServer) {
         )
       );
     },
+
+    eval: (response: AlertingQueryResponse) => {
+      server.use(
+        rest.post('/api/v1/eval', (_, res, ctx) => {
+          return res(ctx.status(200), ctx.json(response));
+        })
+      );
+    },
   };
 }
 
-// Creates a MSW server and sets up beforeAll and afterAll handlers for it
+export function mockAlertRuleApi(server: SetupServer) {
+  return {
+    prometheusRuleNamespaces: (dsName: string, response: PromRulesResponse) => {
+      server.use(
+        rest.get(`api/prometheus/${dsName}/api/v1/rules`, (req, res, ctx) =>
+          res(ctx.status(200), ctx.json<PromRulesResponse>(response))
+        )
+      );
+    },
+    rulerRules: (dsName: string, response: RulerRulesConfigDTO) => {
+      server.use(
+        rest.get(`/api/ruler/${dsName}/api/v1/rules`, (req, res, ctx) => res(ctx.status(200), ctx.json(response)))
+      );
+    },
+    rulerRuleGroup: (dsName: string, namespace: string, group: string, response: RulerRuleGroupDTO) => {
+      server.use(
+        rest.get(`/api/ruler/${dsName}/api/v1/rules/${namespace}/${group}`, (req, res, ctx) =>
+          res(ctx.status(200), ctx.json(response))
+        )
+      );
+    },
+  };
+}
+
+/**
+ * Used to mock the response from the /api/v1/status/buildinfo endpoint
+ */
+export function mockFeatureDiscoveryApi(server: SetupServer) {
+  return {
+    /**
+     *
+     * @param dsSettings Use `mockDataSource` to create a faks data source settings
+     * @param response Use `buildInfoResponse` to get a pre-defined response for Prometheus and Mimir
+     */
+    discoverDsFeatures: (dsSettings: DataSourceInstanceSettings, response: PromBuildInfoResponse) => {
+      server.use(
+        rest.get(`${dsSettings.url}/api/v1/status/buildinfo`, (_, res, ctx) => res(ctx.status(200), ctx.json(response)))
+      );
+    },
+  };
+}
+
+// Creates a MSW server and sets up beforeAll, afterAll and beforeEach handlers for it
 export function setupMswServer() {
   const server = setupServer();
 

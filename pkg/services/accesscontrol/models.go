@@ -13,7 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
-var ErrInternal = errutil.NewBase(errutil.StatusInternal, "accesscontrol.internal")
+var ErrInternal = errutil.Internal("accesscontrol.internal")
 
 // RoleRegistration stores a role and its assignments to built-in roles
 // (Viewer, Editor, Admin, Grafana Admin)
@@ -455,8 +455,13 @@ const (
 	ActionAlertingNotificationsExternalRead  = "alert.notifications.external:read"
 
 	// Alerting provisioning actions
-	ActionAlertingProvisioningRead  = "alert.provisioning:read"
-	ActionAlertingProvisioningWrite = "alert.provisioning:write"
+	ActionAlertingProvisioningRead        = "alert.provisioning:read"
+	ActionAlertingProvisioningReadSecrets = "alert.provisioning.secrets:read"
+	ActionAlertingProvisioningWrite       = "alert.provisioning:write"
+
+	// Feature Management actions
+	ActionFeatureManagementRead  = "featuremgmt.read"
+	ActionFeatureManagementWrite = "featuremgmt.write"
 )
 
 var (

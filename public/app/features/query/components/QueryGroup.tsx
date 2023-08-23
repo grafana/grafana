@@ -9,6 +9,7 @@ import {
   getDefaultTimeRange,
   LoadingState,
   PanelData,
+  PluginType,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { getDataSourceSrv, locationService } from '@grafana/runtime';
@@ -21,10 +22,12 @@ import { addQuery, queryIsEmpty } from 'app/core/utils/query';
 import { DataSourceModal } from 'app/features/datasources/components/picker/DataSourceModal';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 import { dataSource as expressionDatasource } from 'app/features/expressions/ExpressionDatasource';
+import { AngularDeprecationPluginNotice } from 'app/features/plugins/angularDeprecation/AngularDeprecationPluginNotice';
 import { DashboardQueryEditor, isSharedDashboardQuery } from 'app/plugins/datasource/dashboard';
 import { GrafanaQuery } from 'app/plugins/datasource/grafana/types';
 import { QueryGroupOptions } from 'app/types';
 
+import { isAngularDatasourcePlugin } from '../../plugins/angularDeprecation/utils';
 import { PanelQueryRunner } from '../state/PanelQueryRunner';
 import { updateQueries } from '../state/updateQueries';
 
@@ -252,6 +255,15 @@ export class QueryGroup extends PureComponent<Props, State> {
             </>
           )}
         </div>
+        {dataSource && isAngularDatasourcePlugin(dataSource.uid) && (
+          <AngularDeprecationPluginNotice
+            pluginId={dataSource.type}
+            pluginType={PluginType.datasource}
+            angularSupportEnabled={config?.angularSupportEnabled}
+            showPluginDetailsLink={true}
+            interactionElementId="datasource-query"
+          />
+        )}
       </div>
     );
   }
@@ -359,10 +371,9 @@ export class QueryGroup extends PureComponent<Props, State> {
             icon="plus"
             onClick={this.onAddQueryClick}
             variant="secondary"
-            aria-label={selectors.components.QueryTab.addQuery}
-            data-testid="query-tab-add-query"
+            data-testid={selectors.components.QueryTab.addQuery}
           >
-            Query
+            Add query
           </Button>
         )}
         {config.expressionsEnabled && this.isExpressionsSupported(dsSettings) && (

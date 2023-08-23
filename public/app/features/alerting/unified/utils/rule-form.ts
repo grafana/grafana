@@ -94,7 +94,7 @@ export function formValuesToRulerRuleDTO(values: RuleFormValues): RulerRuleDTO {
   throw new Error(`unexpected rule type: ${type}`);
 }
 
-function listifyLabelsOrAnnotations(
+export function listifyLabelsOrAnnotations(
   item: Labels | Annotations | undefined,
   addEmpty: boolean
 ): Array<{ key: string; value: string }> {
@@ -106,7 +106,7 @@ function listifyLabelsOrAnnotations(
 }
 
 //make sure default annotations are always shown in order even if empty
-function normalizeDefaultAnnotations(annotations: Array<{ key: string; value: string }>) {
+export function normalizeDefaultAnnotations(annotations: Array<{ key: string; value: string }>) {
   const orderedAnnotations = [...annotations];
   const defaultAnnotationKeys = defaultAnnotations.map((annotation) => annotation.key);
 
@@ -174,11 +174,28 @@ export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleF
     }
   } else {
     if (isAlertingRulerRule(rule)) {
+      const datasourceUid = getDataSourceSrv().getInstanceSettings(ruleSourceName)?.uid ?? '';
+
+      const defaultQuery = {
+        refId: 'A',
+        datasourceUid,
+        queryType: '',
+        relativeTimeRange: getDefaultRelativeTimeRange(),
+        expr: rule.expr,
+        model: {
+          refId: 'A',
+          hide: false,
+          expr: rule.expr,
+        },
+      };
+
       const alertingRuleValues = alertingRulerRuleToRuleForm(rule);
 
       return {
         ...defaultFormValues,
         ...alertingRuleValues,
+        queries: [defaultQuery],
+        annotations: normalizeDefaultAnnotations(listifyLabelsOrAnnotations(rule.annotations, false)),
         type: RuleFormType.cloudAlerting,
         dataSourceName: ruleSourceName,
         namespace,

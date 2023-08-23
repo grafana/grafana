@@ -10,7 +10,7 @@ import { config, locationService, setPluginImportUtils } from '@grafana/runtime'
 import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps';
 
 import { DashboardScenePage, Props } from './DashboardScenePage';
-import { mockResizeObserver, setupLoadDashboardMock } from './test-utils';
+import { setupLoadDashboardMock } from './test-utils';
 
 function setup() {
   const context = getGrafanaContextMock();
@@ -78,8 +78,6 @@ setPluginImportUtils({
   importPanelPlugin: (id: string) => Promise.resolve(panelPlugin),
   getPanelPluginFromCache: (id: string) => undefined,
 });
-
-mockResizeObserver();
 
 describe('DashboardScenePage', () => {
   beforeEach(() => {

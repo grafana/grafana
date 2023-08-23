@@ -23,7 +23,7 @@ func newMetrics(reg prometheus.Registerer) *metrics {
 			Subsystem: metricsSubSystem,
 			Name:      "ds_queries_total",
 			Help:      "Number of datasource queries made via server side expression requests",
-		}, []string{"error", "dataplane"}),
+		}, []string{"error", "dataplane", "datasource_type"}),
 
 		// older (No Namespace or Subsystem)
 		expressionsQuerySummary: prometheus.NewSummaryVec(

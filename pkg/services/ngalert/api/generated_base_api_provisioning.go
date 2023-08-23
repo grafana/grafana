@@ -34,6 +34,7 @@ type ProvisioningApi interface {
 	RouteGetMuteTiming(*contextmodel.ReqContext) response.Response
 	RouteGetMuteTimings(*contextmodel.ReqContext) response.Response
 	RouteGetPolicyTree(*contextmodel.ReqContext) response.Response
+	RouteGetPolicyTreeExport(*contextmodel.ReqContext) response.Response
 	RouteGetTemplate(*contextmodel.ReqContext) response.Response
 	RouteGetTemplates(*contextmodel.ReqContext) response.Response
 	RoutePostAlertRule(*contextmodel.ReqContext) response.Response
@@ -112,6 +113,9 @@ func (f *ProvisioningApiHandler) RouteGetMuteTimings(ctx *contextmodel.ReqContex
 }
 func (f *ProvisioningApiHandler) RouteGetPolicyTree(ctx *contextmodel.ReqContext) response.Response {
 	return f.handleRouteGetPolicyTree(ctx)
+}
+func (f *ProvisioningApiHandler) RouteGetPolicyTreeExport(ctx *contextmodel.ReqContext) response.Response {
+	return f.handleRouteGetPolicyTreeExport(ctx)
 }
 func (f *ProvisioningApiHandler) RouteGetTemplate(ctx *contextmodel.ReqContext) response.Response {
 	// Parse Path Parameters
@@ -357,6 +361,16 @@ func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApi, m *metrics
 				http.MethodGet,
 				"/api/v1/provisioning/policies",
 				api.Hooks.Wrap(srv.RouteGetPolicyTree),
+				m,
+			),
+		)
+		group.Get(
+			toMacaronPath("/api/v1/provisioning/policies/export"),
+			api.authorize(http.MethodGet, "/api/v1/provisioning/policies/export"),
+			metrics.Instrument(
+				http.MethodGet,
+				"/api/v1/provisioning/policies/export",
+				api.Hooks.Wrap(srv.RouteGetPolicyTreeExport),
 				m,
 			),
 		)

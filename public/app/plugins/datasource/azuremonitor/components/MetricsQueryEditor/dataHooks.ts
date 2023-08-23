@@ -128,7 +128,8 @@ const defaultMetricMetadata: MetricMetadata = {
 export const useMetricMetadata = (query: AzureMonitorQuery, datasource: Datasource, onChange: OnChangeFn) => {
   const [metricMetadata, setMetricMetadata] = useState<MetricMetadata>(defaultMetricMetadata);
   const { subscription } = query;
-  const { resources, metricNamespace, metricName, aggregation, timeGrain, customNamespace } = query.azureMonitor ?? {};
+  const { resources, metricNamespace, metricName, aggregation, timeGrain, customNamespace, region } =
+    query.azureMonitor ?? {};
   const { resourceGroup, resourceName } = getResourceGroupAndName(resources);
   const multipleResources = (resources && resources.length > 1) ?? false;
 
@@ -138,11 +139,11 @@ export const useMetricMetadata = (query: AzureMonitorQuery, datasource: Datasour
       setMetricMetadata(defaultMetricMetadata);
       return;
     }
-
     datasource.azureMonitorDatasource
       .getMetricMetadata(
         { subscription, resourceGroup, resourceName, metricNamespace, metricName, customNamespace },
-        multipleResources
+        multipleResources,
+        region
       )
       .then((metadata) => {
         // TODO: Move the aggregationTypes and timeGrain defaults into `getMetricMetadata`
@@ -161,6 +162,7 @@ export const useMetricMetadata = (query: AzureMonitorQuery, datasource: Datasour
         });
       });
   }, [
+    region,
     datasource,
     subscription,
     resourceGroup,

@@ -51,7 +51,7 @@ import (
 //     Responses:
 //       204: description: The contact point was deleted successfully.
 
-// swagger:parameters RoutePutContactpoint RouteDeleteContactpoints RouteGetContactpoint RouteGetContactpointExport
+// swagger:parameters RoutePutContactpoint RouteDeleteContactpoints
 type ContactPointUIDReference struct {
 	// UID is the contact point unique identifier
 	// in:path

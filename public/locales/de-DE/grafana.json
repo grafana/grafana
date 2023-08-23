@@ -254,6 +254,7 @@
     "error": {
       "blocked": "",
       "invalid-user-or-password": "",
+      "title": "",
       "unknown": ""
     }
   },
