@@ -17,12 +17,12 @@ WORKDIR /tmp/grafana
 COPY package.json yarn.lock .yarnrc.yml ./
 COPY .yarn .yarn
 COPY packages packages
+COPY public public
 COPY plugins-bundled plugins-bundled
 
 RUN yarn install --immutable
 
 COPY tsconfig.json .eslintrc .editorconfig .browserslistrc .prettierrc.js babel.config.json .linguirc ./
-COPY public public
 COPY scripts scripts
 COPY emails emails
 
@@ -44,8 +44,8 @@ RUN if grep -i -q alpine /etc/issue; then \
 
 WORKDIR /tmp/grafana
 
-COPY go.mod ./
-COPY go.sum ./
+COPY go.* ./
+COPY public/plugins public/plugins
 COPY .bingo .bingo
 
 RUN go mod download
@@ -166,6 +166,7 @@ RUN if [ ! $(getent group "$GF_GID") ]; then \
 
 COPY --from=go-src /tmp/grafana/bin/grafana* /tmp/grafana/bin/*/grafana* ./bin/
 COPY --from=js-src /tmp/grafana/public ./public
+# Skip backend files for decoupled plugins
 RUN rm -rf ./public/plugins/*/pkg
 
 EXPOSE 3000
