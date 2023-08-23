@@ -1,6 +1,6 @@
-import { AuthProviderStatus, Settings, SettingsSection } from 'app/types';
+import { Settings, SettingsSection } from 'app/types';
 
-import { AuthProviderInfo, GetStatusHook } from './types';
+import { AuthProviderInfo, GetStatusHook, AuthProviderStatus } from './types';
 
 export * from './types';
 

@@ -1,6 +1,7 @@
 import { isEmpty } from 'lodash';
 
 import { dispatch } from 'app/store/store';
+import { ReceiversStateDTO } from 'app/types/alerting';
 
 import {
   AlertmanagerAlert,
@@ -225,6 +226,31 @@ export const alertmanagerApi = alertingApi.injectEndpoints({
         ...rest,
       }),
       invalidatesTags: ['AlertmanagerConfiguration'],
+    }),
+
+    // Grafana Managed Alertmanager only
+    getContactPointsStatus: build.query<ReceiversStateDTO[], void>({
+      query: () => ({
+        url: `/api/alertmanager/${getDatasourceAPIUid(GRAFANA_RULES_SOURCE_NAME)}/config/api/v1/receivers`,
+      }),
+      // this transformer basically fixes the weird "0001-01-01T00:00:00.000Z" and "0001-01-01T00:00:00.00Z" timestamps
+      // and sets both last attempt and duration to an empty string to indicate there hasn't been an attempt yet
+      transformResponse: (response: ReceiversStateDTO[]) => {
+        const isLastNotifyNullDate = (lastNotify: string) => lastNotify.startsWith('0001-01-01');
+
+        return response.map((receiversState) => ({
+          ...receiversState,
+          integrations: receiversState.integrations.map((integration) => {
+            const noAttempt = isLastNotifyNullDate(integration.lastNotifyAttempt);
+
+            return {
+              ...integration,
+              lastNotifyAttempt: noAttempt ? '' : integration.lastNotifyAttempt,
+              lastNotifyAttemptDuration: noAttempt ? '' : integration.lastNotifyAttemptDuration,
+            };
+          }),
+        }));
+      },
     }),
   }),
 });

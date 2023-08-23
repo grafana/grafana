@@ -4,6 +4,10 @@ aliases:
   - ../guides/gettingstarted/
   - getting-started/
 description: Learn how to get started with Grafana by adding a preconfigured dashboard.
+labels:
+  products:
+    - enterprise
+    - oss
 title: Build your first dashboard
 weight: 200
 ---

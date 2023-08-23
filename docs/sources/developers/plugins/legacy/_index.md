@@ -1,5 +1,4 @@
 ---
-title: Work with legacy plugins
 aliases:
   - ../../plugins/development/
   - /docs/grafana/next/plugins/apps/
@@ -7,6 +6,11 @@ aliases:
   - /docs/grafana/next/plugins/developing/development/
   - /docs/grafana/next/plugins/panels/
 description: Deprecated guide for Angular plugin development.
+labels:
+  products:
+    - enterprise
+    - oss
+title: Work with legacy plugins
 weight: 600
 ---
 

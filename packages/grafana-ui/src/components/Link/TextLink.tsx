@@ -53,7 +53,7 @@ export const TextLink = forwardRef<HTMLAnchorElement, TextLinkProps>(
     const externalIcon = icon || 'external-link-alt';
 
     return external ? (
-      <a href={validUrl} ref={ref} target="_blank" rel="noreferrer" {...rest} className={styles}>
+      <a href={validUrl} ref={ref} {...rest} target="_blank" rel="noreferrer" className={styles}>
         {children}
         <Icon size={svgSizes[variant] || 'md'} name={externalIcon} />
       </a>

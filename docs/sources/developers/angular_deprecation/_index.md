@@ -4,6 +4,10 @@ keywords:
   - documentation
   - developers
   - resources
+labels:
+  products:
+    - enterprise
+    - oss
 title: Angular support deprecation
 weight: 500
 ---

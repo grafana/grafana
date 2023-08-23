@@ -33,7 +33,7 @@ export interface UIDashboardViewItem {
   uid: string;
 }
 
-type DashboardViewItemWithUIItems = DashboardViewItem | UIDashboardViewItem;
+export type DashboardViewItemWithUIItems = DashboardViewItem | UIDashboardViewItem;
 
 export interface DashboardsTreeItem<T extends DashboardViewItemWithUIItems = DashboardViewItemWithUIItems> {
   item: T;

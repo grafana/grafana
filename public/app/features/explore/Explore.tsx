@@ -15,6 +15,7 @@ import {
   EventBus,
   SplitOpenOptions,
   SupplementaryQueryType,
+  hasToggleableQueryFiltersSupport,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config, getDataSourceSrv, reportInteraction } from '@grafana/runtime';
@@ -183,10 +184,41 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
     }
   };
 
+  /**
+   * Used by Logs details.
+   * Returns true if all queries have the filter, otherwise false.
+   * TODO: In the future, we would like to return active filters based the query that produced the log line.
+   * @alpha
+   */
+  isFilterLabelActive = async (key: string, value: string) => {
+    if (!config.featureToggles.toggleLabelsInLogsUI) {
+      return false;
+    }
+    if (this.props.queries.length === 0) {
+      return false;
+    }
+    for (const query of this.props.queries) {
+      const ds = await getDataSourceSrv().get(query.datasource);
+      if (!hasToggleableQueryFiltersSupport(ds)) {
+        return false;
+      }
+      if (!ds.queryHasFilter(query, { key, value })) {
+        return false;
+      }
+    }
+    return true;
+  };
+
+  /**
+   * Used by Logs details.
+   */
   onClickFilterLabel = (key: string, value: string) => {
     this.onModifyQueries({ type: 'ADD_FILTER', options: { key, value } });
   };
 
+  /**
+   * Used by Logs details.
+   */
   onClickFilterOutLabel = (key: string, value: string) => {
     this.onModifyQueries({ type: 'ADD_FILTER_OUT', options: { key, value } });
   };
@@ -201,6 +233,9 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
     makeAbsoluteTime();
   };
 
+  /**
+   * Used by Logs details.
+   */
   onModifyQueries = (action: QueryFixAction) => {
     const modifier = async (query: DataQuery, modification: QueryFixAction) => {
       const { datasource } = query;
@@ -208,6 +243,12 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
         return query;
       }
       const ds = await getDataSourceSrv().get(datasource);
+      if (hasToggleableQueryFiltersSupport(ds) && config.featureToggles.toggleLabelsInLogsUI) {
+        return ds.toggleQueryFilter(query, {
+          type: modification.type === 'ADD_FILTER' ? 'FILTER_FOR' : 'FILTER_OUT',
+          options: modification.options ?? {},
+        });
+      }
       if (ds.modifyQuery) {
         return ds.modifyQuery(query, modification);
       } else {
@@ -285,7 +326,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
   }
 
   renderCustom(width: number) {
-    const { timeZone, queryResponse, absoluteRange } = this.props;
+    const { timeZone, queryResponse, absoluteRange, eventBus } = this.props;
 
     const groupedByPlugin = groupBy(queryResponse?.customFrames, 'meta.preferredVisualisationPluginId');
 
@@ -300,6 +341,8 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
           absoluteRange={absoluteRange}
           height={400}
           width={width}
+          splitOpenFn={this.onSplitOpen(pluginId)}
+          eventBus={eventBus}
         />
       );
     });
@@ -369,6 +412,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
         eventBus={this.logsEventBus}
         splitOpenFn={this.onSplitOpen('logs')}
         scrollElement={this.scrollElement}
+        isFilterLabelActive={this.isFilterLabelActive}
       />
     );
   }
@@ -517,9 +561,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
                           {showNodeGraph && <ErrorBoundaryAlert>{this.renderNodeGraphPanel()}</ErrorBoundaryAlert>}
                           {showFlameGraph && <ErrorBoundaryAlert>{this.renderFlameGraphPanel()}</ErrorBoundaryAlert>}
                           {showTrace && <ErrorBoundaryAlert>{this.renderTraceViewPanel()}</ErrorBoundaryAlert>}
-                          {config.featureToggles.logsSampleInExplore && showLogsSample && (
-                            <ErrorBoundaryAlert>{this.renderLogsSamplePanel()}</ErrorBoundaryAlert>
-                          )}
+                          {showLogsSample && <ErrorBoundaryAlert>{this.renderLogsSamplePanel()}</ErrorBoundaryAlert>}
                           {showCustom && <ErrorBoundaryAlert>{this.renderCustom(width)}</ErrorBoundaryAlert>}
                           {showNoData && <ErrorBoundaryAlert>{this.renderNoData()}</ErrorBoundaryAlert>}
                         </>

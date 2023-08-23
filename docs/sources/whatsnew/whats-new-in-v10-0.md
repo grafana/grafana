@@ -6,6 +6,11 @@ keywords:
   - documentation
   - '10.0'
   - release notes
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: What's new in Grafana v10.0
 weight: -37
 ---
@@ -356,7 +361,7 @@ Data types are now being defined to create a data plane layer between producers 
 
 Learn more:
 
-- [Data plane contract - Technical specification](https://grafana.github.io/dataplane/contract/)
+- [Data plane contract - Technical specification](https://grafana.com/developers/dataplane/)
 - [Example typed dataframes and Go lib to use them in tests](https://github.com/grafana/dataplane/tree/main/examples)
 - [Go library for reading and writing dataplane data](https://github.com/grafana/dataplane/tree/main/sdata)
 

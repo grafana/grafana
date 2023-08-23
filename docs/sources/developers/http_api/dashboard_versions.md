@@ -11,6 +11,10 @@ keywords:
   - api
   - dashboard
   - versions
+labels:
+  products:
+    - enterprise
+    - oss
 title: 'Dashboard Versions HTTP API '
 ---
 

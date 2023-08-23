@@ -740,7 +740,7 @@ type Spec struct {
 
 	// Unique numeric identifier for the dashboard.
 	// `id` is internal to a specific Grafana instance. `uid` should be used to identify a dashboard across Grafana instances.
-	Id *int64 `json:"id,omitempty"`
+	Id *int64 `json:"id"`
 
 	// Links with references to other dashboards or external websites.
 	Links []Link `json:"links,omitempty"`

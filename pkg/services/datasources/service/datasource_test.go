@@ -187,6 +187,96 @@ func TestService_UpdateDataSource(t *testing.T) {
 		_, err = dsService.UpdateDataSource(context.Background(), cmd)
 		require.ErrorIs(t, err, datasources.ErrDataSourceNameExists)
 	})
+
+	t.Run("should merge cmd.SecureJsonData with db data", func(t *testing.T) {
+		sqlStore := db.InitTestDB(t)
+		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
+		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
+		quotaService := quotatest.New(false, nil)
+		mockPermission := acmock.NewMockedPermissionsService()
+		dsService, err := ProvideService(sqlStore, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), actest.FakeAccessControl{}, mockPermission, quotaService)
+		require.NoError(t, err)
+
+		mockPermission.On("SetPermissions", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]accesscontrol.ResourcePermission{}, nil)
+
+		expectedDbKey := "db-secure-key"
+		expectedDbValue := "db-secure-value"
+		ds, err := dsService.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
+			OrgID: 1,
+			Name:  "test-datasource",
+			SecureJsonData: map[string]string{
+				expectedDbKey: expectedDbValue,
+			},
+		})
+		require.NoError(t, err)
+
+		expectedOgKey := "cmd-secure-key"
+		expectedOgValue := "cmd-secure-value"
+
+		cmd := &datasources.UpdateDataSourceCommand{
+			ID:    ds.ID,
+			OrgID: ds.OrgID,
+			Name:  "test-datasource-updated",
+			SecureJsonData: map[string]string{
+				expectedOgKey: expectedOgValue,
+			},
+		}
+
+		ds, err = dsService.UpdateDataSource(context.Background(), cmd)
+		require.NoError(t, err)
+
+		secret, err := dsService.DecryptedValues(context.Background(), ds)
+		require.NoError(t, err)
+
+		assert.Equal(t, secret[expectedDbKey], expectedDbValue)
+		assert.Equal(t, secret[expectedOgKey], expectedOgValue)
+	})
+
+	t.Run("should preserve cmd.SecureJsonData when cmd.IgnoreOldSecureJsonData=true", func(t *testing.T) {
+		sqlStore := db.InitTestDB(t)
+		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
+		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
+		quotaService := quotatest.New(false, nil)
+		mockPermission := acmock.NewMockedPermissionsService()
+		dsService, err := ProvideService(sqlStore, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), actest.FakeAccessControl{}, mockPermission, quotaService)
+		require.NoError(t, err)
+
+		mockPermission.On("SetPermissions", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]accesscontrol.ResourcePermission{}, nil)
+
+		notExpectedDbKey := "db-secure-key"
+		dbValue := "db-secure-value"
+		ds, err := dsService.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
+			OrgID: 1,
+			Name:  "test-datasource",
+			SecureJsonData: map[string]string{
+				notExpectedDbKey: dbValue,
+			},
+		})
+		require.NoError(t, err)
+
+		expectedOgKey := "cmd-secure-key"
+		expectedOgValue := "cmd-secure-value"
+
+		cmd := &datasources.UpdateDataSourceCommand{
+			ID:    ds.ID,
+			OrgID: ds.OrgID,
+			Name:  "test-datasource-updated",
+			SecureJsonData: map[string]string{
+				expectedOgKey: expectedOgValue,
+			},
+			IgnoreOldSecureJsonData: true,
+		}
+
+		ds, err = dsService.UpdateDataSource(context.Background(), cmd)
+		require.NoError(t, err)
+
+		secret, err := dsService.DecryptedValues(context.Background(), ds)
+		require.NoError(t, err)
+
+		assert.Equal(t, secret[expectedOgKey], expectedOgValue)
+		_, ok := secret[notExpectedDbKey]
+		assert.False(t, ok)
+	})
 }
 
 func TestService_NameScopeResolver(t *testing.T) {
@@ -755,6 +845,84 @@ func TestService_GetHttpTransport(t *testing.T) {
 		require.NotNil(t, configuredOpts)
 		require.NotNil(t, configuredOpts.SigV4)
 		require.Equal(t, "es", configuredOpts.SigV4.Service)
+	})
+}
+
+func TestService_getProxySettings(t *testing.T) {
+	sqlStore := db.InitTestDB(t)
+	secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
+	secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
+	quotaService := quotatest.New(false, nil)
+	dsService, err := ProvideService(sqlStore, secretsService, secretsStore, &setting.Cfg{}, featuremgmt.WithFeatures(), acmock.New(), acmock.NewMockedPermissionsService(), quotaService)
+	require.NoError(t, err)
+
+	t.Run("Should default to disabled", func(t *testing.T) {
+		ds := datasources.DataSource{
+			ID:    1,
+			OrgID: 1,
+			UID:   "uid",
+			Name:  "graphite",
+			URL:   "http://test:8001",
+			Type:  "Graphite",
+		}
+
+		opts, err := dsService.httpClientOptions(context.Background(), &ds)
+		require.NoError(t, err)
+		require.Nil(t, opts.ProxyOptions)
+	})
+
+	t.Run("Username should default to datasource UID", func(t *testing.T) {
+		sjson := simplejson.New()
+		sjson.Set("enableSecureSocksProxy", true)
+		ds := datasources.DataSource{
+			ID:       1,
+			OrgID:    1,
+			UID:      "uid",
+			Name:     "graphite",
+			URL:      "http://test:8001",
+			Type:     "Graphite",
+			JsonData: sjson,
+		}
+
+		opts, err := dsService.httpClientOptions(context.Background(), &ds)
+		require.NoError(t, err)
+		require.True(t, opts.ProxyOptions.Enabled)
+		require.Equal(t, opts.ProxyOptions.Auth.Username, ds.UID)
+	})
+
+	t.Run("Can override options", func(t *testing.T) {
+		sjson := simplejson.New()
+		pass := "testpass"
+		user := "testuser"
+		sjson.Set("enableSecureSocksProxy", true)
+		sjson.Set("secureSocksProxyUsername", user)
+		sjson.Set("timeout", 10)
+		sjson.Set("keepAlive", 5)
+		ds := datasources.DataSource{
+			ID:       1,
+			OrgID:    1,
+			UID:      "uid",
+			Name:     "graphite",
+			URL:      "http://test:8001",
+			Type:     "Graphite",
+			JsonData: sjson,
+		}
+
+		secureJsonData, err := json.Marshal(map[string]string{
+			"secureSocksProxyPassword": pass,
+		})
+		require.NoError(t, err)
+
+		err = secretsStore.Set(context.Background(), ds.OrgID, ds.Name, secretskvs.DataSourceSecretType, string(secureJsonData))
+		require.NoError(t, err)
+
+		opts, err := dsService.httpClientOptions(context.Background(), &ds)
+		require.NoError(t, err)
+		require.True(t, opts.ProxyOptions.Enabled)
+		require.Equal(t, opts.ProxyOptions.Auth.Username, user)
+		require.Equal(t, opts.ProxyOptions.Auth.Password, pass)
+		require.Equal(t, opts.ProxyOptions.Timeouts.Timeout, 10*time.Second)
+		require.Equal(t, opts.ProxyOptions.Timeouts.KeepAlive, 5*time.Second)
 	})
 }
 

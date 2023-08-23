@@ -12,10 +12,12 @@ export const LogMessages = {
   leavingRuleGroupEdit: 'leaving rule group edit without saving',
   alertRuleFromPanel: 'creating alert rule from panel',
   alertRuleFromScratch: 'creating alert rule from scratch',
+  recordingRuleFromScratch: 'creating recording rule from scratch',
   clickingAlertStateFilters: 'clicking alert state filters',
   cancelSavingAlertRule: 'user canceled alert rule creation',
   successSavingAlertRule: 'alert rule saved successfully',
   unknownMessageFromError: 'unknown messageFromError',
+  errorGettingLokiHistory: 'error getting Loki history',
 };
 
 // logInfo from '@grafana/runtime' should be used, but it doesn't handle Grafana JS Agent correctly

@@ -16,10 +16,7 @@ package grafanaplugin
 
 import (
 	"github.com/grafana/grafana/packages/grafana-schema/src/common"
-	"github.com/grafana/grafana/pkg/plugins/pfs"
 )
-
-pfs.GrafanaPlugin
 
 composableKinds: DataQuery: {
 	maturity: "merged"
@@ -34,17 +31,19 @@ composableKinds: DataQuery: {
 					// GCM query type.
 					// queryType: #QueryType
 					// Time Series List sub-query properties.
-					timeSeriesList?: #TimeSeriesList | #AnnotationQuery
+					timeSeriesList?: #TimeSeriesList
 					// Time Series sub-query properties.
 					timeSeriesQuery?: #TimeSeriesQuery
 					// SLO sub-query properties.
 					sloQuery?: #SLOQuery
+					// PromQL sub-query properties.
+					promQLQuery?: #PromQLQuery
 					// Time interval in milliseconds.
 					intervalMs?: number
 				} @cuetsy(kind="interface")
 
 				// Defines the supported queryTypes.
-				#QueryType: "timeSeriesList" | "timeSeriesQuery" | "slo" | "annotation" @cuetsy(kind="enum", memberNames="TIME_SERIES_LIST|TIME_SERIES_QUERY|SLO|ANNOTATION")
+				#QueryType: "timeSeriesList" | "timeSeriesQuery" | "slo" | "annotation" | "promQL" @cuetsy(kind="enum", memberNames="TIME_SERIES_LIST|TIME_SERIES_QUERY|SLO|ANNOTATION|PROMQL")
 
 				// Time Series List sub-query properties.
 				#TimeSeriesList: {
@@ -63,6 +62,11 @@ composableKinds: DataQuery: {
 					// Data view, defaults to FULL.
 					view?: string
 
+					// Annotation title.
+					title?: string
+					// Annotation text.
+					text?: string
+
 					// Only present if a preprocessor is selected. Reducer applied across a set of time-series values. Defaults to REDUCE_NONE.
 					secondaryCrossSeriesReducer?: string
 					// Only present if a preprocessor is selected. Alignment period to use when regularizing data. Defaults to cloud-monitoring-auto.
@@ -79,14 +83,6 @@ composableKinds: DataQuery: {
 
 				// Types of pre-processor available. Defined by the metric.
 				#PreprocessorType: "none" | "rate" | "delta" @cuetsy(kind="enum")
-
-				// Annotation sub-query properties.
-				#AnnotationQuery: #TimeSeriesList & {
-					// Annotation title.
-					title?: string
-					// Annotation text.
-					text?: string
-				} @cuetsy(kind="interface")
 
 				// Time Series sub-query properties.
 				#TimeSeriesQuery: {
@@ -120,6 +116,16 @@ composableKinds: DataQuery: {
 					goal?: number
 					// Specific lookback period for the SLO.
 					lookbackPeriod?: string
+				} @cuetsy(kind="interface")
+
+				// PromQL sub-query properties.
+				#PromQLQuery: {
+					// GCP project to execute the query against.
+					projectName: string
+					// PromQL expression/query to be executed.
+					expr: string
+					// PromQL min step
+					step: string
 				} @cuetsy(kind="interface")
 
 				// @deprecated This type is for migration purposes only. Replaced by TimeSeriesList Metric sub-query properties.
@@ -157,7 +163,7 @@ composableKinds: DataQuery: {
 
 				#AlignmentTypes: "ALIGN_DELTA" | "ALIGN_RATE" | "ALIGN_INTERPOLATE" | "ALIGN_NEXT_OLDER" | "ALIGN_MIN" | "ALIGN_MAX" | "ALIGN_MEAN" | "ALIGN_COUNT" | "ALIGN_SUM" | "ALIGN_STDDEV" | "ALIGN_COUNT_TRUE" | "ALIGN_COUNT_FALSE" | "ALIGN_FRACTION_TRUE" | "ALIGN_PERCENTILE_99" | "ALIGN_PERCENTILE_95" | "ALIGN_PERCENTILE_50" | "ALIGN_PERCENTILE_05" | "ALIGN_PERCENT_CHANGE" | "ALIGN_NONE" @cuetsy(kind="enum")
 
-				// @deprecated Use AnnotationQuery instead. Legacy annotation query properties for migration purposes.
+				// @deprecated Use TimeSeriesList instead. Legacy annotation query properties for migration purposes.
 				#LegacyCloudMonitoringAnnotationQuery: {
 					// GCP project to execute the query against.
 					projectName: string

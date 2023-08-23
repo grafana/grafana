@@ -13,6 +13,11 @@ aliases:
   - ../../panels/transformations/config-from-query/
   - ../../panels/transformations/rows-to-fields/
   - ../../panels/transformations/types-options/
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: Transform data
 weight: 100
 ---
@@ -64,6 +69,16 @@ To see the input and the output result sets of the transformation, click the bug
 The input and output results sets can help you debug a transformation.
 
 {{< figure src="/static/img/docs/transformations/debug-transformations-7-0.png" class="docs-image--no-shadow" max-width= "1100px" >}}
+
+## Disable a transformation
+
+You can disable or hide one or more transformations by clicking on the eye icon on the top right side of the transformation row. This disables the applied actions of that specific transformation and can help to identify issues when you change several transformations one after another.
+
+## Filter a transformation
+
+If your panel uses more than one query, you can filter these and apply the selected transformation to only one of the queries. To do this, click the filter icon on the top right of the transformation row. This opens a drop-down with a list of queries used on the panel. From here, you can select the query you want to transform.
+
+Note that the filter icon is always displayed if your panel has more than one query, but it may not work if previous transformations for merging the queries' outputs are applied. This is because one transformation takes the output of the previous one.
 
 ## Delete a transformation
 
@@ -165,7 +180,101 @@ The result:
 | 2019-01-01 00:00:00 | below | 29    |
 | 2020-01-01 00:00:00 | above | 22    |
 
-### Filter data by name
+### Create heatmap
+
+Use this transformation to prepare histogram data to be visualized over time. Similar to the [Heatmap panel]({{< relref "../../visualizations/heatmap" >}}), this transformation allows you to convert histogram metrics to buckets over time.
+
+#### X Bucket
+
+This setting determines how the x-axis is split into buckets.
+
+- **Size** - Specify a time interval in the input field. For example, a time range of `1h` makes the cells one hour wide on the x-axis.
+- **Count** - For non-time related series, use this option to define the number of elements in a bucket.
+
+#### Y Bucket
+
+This setting determines how the y-axis is split into buckets.
+
+#### Y Bucket scale
+
+Use this option to set the scale of the y-axes. Select from:
+
+- **Linear**
+- **Logarithmic** - Use a base 2 or base 10.
+- **Symlog** - A symmetrical logarithmic scale. Use a base 2 or base 10; allows negative values.
+
+### Extract fields
+
+Use this transformation to select one source of data and extract content from it in different formats. Set the following fields:
+
+- **Source** - Select the field for the source of data.
+- **Format** - Select one of the following:
+  - **JSON** - To parse JSON content from the source.
+  - **Key+value parse** - To parse content in the format `a=b` or `c:d` from the source.
+  - **Auto** - To discover fields automatically.
+- **Replace all fields** - Optional: Select this option if you want to hide all other fields and display only your calculated field in the visualization.
+- **Keep time** - Optional: Only available if **Replace all fields** is true. Keep the time field in the output.
+
+Consider the following data set:
+
+| Timestamp           | json_data     |
+| ------------------- | ------------- |
+| 1636678740000000000 | {"value": 1}  |
+| 1636678680000000000 | {"value": 5}  |
+| 1636678620000000000 | {"value": 12} |
+
+You could prepare the data to be used by a [Time series panel]({{< relref "../../visualizations/time-series" >}}) with this configuration:
+
+- Source: json_data
+- Format: JSON
+  - Field: value
+  - alias: my_value
+- Replace all fields: true
+- Keep time: true
+
+This will generate the following output:
+
+| Timestamp           | my_value |
+| ------------------- | -------- |
+| 1636678740000000000 | 1        |
+| 1636678680000000000 | 5        |
+| 1636678620000000000 | 12       |
+
+### Field lookup
+
+Use this transformation on a field value to look up additional fields from an external source.
+
+- **Field** - Select a text field.
+- **Lookup** - Select from **Countries**, **USA States**, and **Airports**.
+
+This transformation currently supports spatial data.
+
+For example, if you have this data:
+
+| Location  | Values |
+| --------- | ------ |
+| AL        | 0      |
+| AK        | 10     |
+| Arizona   | 5      |
+| Arkansas  | 1      |
+| Somewhere | 5      |
+
+With this configuration:
+
+- Field: location
+- Lookup: USA States
+
+You'll get the following output:
+
+| Location  | ID  | Name     | Lng         | Lat       | Values |
+| --------- | --- | -------- | ----------- | --------- | ------ |
+| AL        | AL  | Alabama  | -80.891064  | 12.448457 | 0      |
+| AK        | AK  | Arkansas | -100.891064 | 24.448457 | 10     |
+| Arizona   |     |          |             |           | 5      |
+| Arkansas  |     |          |             |           | 1      |
+| Somewhere |     |          |             |           | 5      |
+
+### Filter by name
 
 Use this transformation to remove portions of the query results.
 
@@ -323,6 +432,72 @@ We would then get :
 
 This transformation enables you to extract key information from your time series and display it in a convenient way.
 
+### Grouping to matrix
+
+Use this transformation to combine three fields-that will be used as input for the **Column**, **Row**, and **Cell value** fields-from the query output, and generate a matrix. This matrix will be calculated as follows:
+
+**Original data**
+
+| Server ID | CPU Temperature | Server Status |
+| --------- | --------------- | ------------- |
+| server 1  | 82              | OK            |
+| server 2  | 88.6            | OK            |
+| server 3  | 59.6            | Shutdown      |
+
+We can generate a matrix using the values of `Server Status` as column names, the `Server ID` values as row names, and the `CPU Temperature` as content of each cell. The content of each cell will appear for the existing column (`Server Status`) and row combination (`Server ID`). For the rest of the cells, you can select which value to display between: **Null**, **True**, **False**, or **Empty**.
+
+**Output**
+
+| Server ID\Server Status | OK   | Shutdown |
+| ----------------------- | ---- | -------- |
+| server 1                | 82   |          |
+| server 2                | 88.6 |          |
+| server 3                |      | 59.6     |
+
+### Histogram
+
+Use this transformation to generate a histogram based on the input data.
+
+- **Bucket size** - The distance between the lowest item in the bucket (xMin) and the highest item in the bucket (xMax).
+- **Bucket offset** - The offset for non-zero based buckets.
+- **Combine series** - Create a histogram using all the available series.
+
+**Original data**
+
+Series 1:
+
+| A   | B   | C   |
+| --- | --- | --- |
+| 1   | 3   | 5   |
+| 2   | 4   | 6   |
+| 3   | 5   | 7   |
+| 4   | 6   | 8   |
+| 5   | 7   | 9   |
+
+Series 2:
+
+| C   |
+| --- |
+| 5   |
+| 6   |
+| 7   |
+| 8   |
+| 9   |
+
+**Output**
+
+| xMin | xMax | A   | B   | C   | C   |
+| ---- | ---- | --- | --- | --- | --- |
+| 1    | 2    | 1   | 0   | 0   | 0   |
+| 2    | 3    | 1   | 0   | 0   | 0   |
+| 3    | 4    | 1   | 1   | 0   | 0   |
+| 4    | 5    | 1   | 1   | 0   | 0   |
+| 5    | 6    | 1   | 1   | 1   | 1   |
+| 6    | 7    | 0   | 1   | 1   | 1   |
+| 7    | 8    | 0   | 1   | 1   | 1   |
+| 8    | 9    | 0   | 0   | 1   | 1   |
+| 9    | 10   | 0   | 0   | 1   | 1   |
+
 ### Join by field
 
 Use this transformation to join multiple results into a single table. This is especially useful for converting multiple
@@ -398,6 +573,52 @@ In the following example, a template query displays time series data from multip
 I applied a transformation to join the query results using the time field. Now I can run calculations, combine, and organize the results in this new table.
 
 {{< figure src="/static/img/docs/transformations/join-fields-after-7-0.png" class="docs-image--no-shadow" max-width= "1100px" >}}
+
+### Join by labels
+
+Use this transformation to join multiple results into a single table. This is especially useful for converting multiple
+time series results into a single wide table with a shared **Label** field.
+
+- **Join** - Select the label to join by between the labels available or common across all time series.
+- **Value** - The name for the output result.
+
+#### Example
+
+##### Input
+
+serie1{what="Temp", cluster="A", job="J1"}
+
+| Time | Value |
+| ---- | ----- |
+| 1    | 10    |
+| 2    | 200   |
+
+serie2{what="Temp", cluster="B", job="J1"}
+
+| Time | Value |
+| ---- | ----- |
+| 1    | 10    |
+| 2    | 200   |
+
+serie3{what="Speed", cluster="B", job="J1"}
+
+| Time | Value |
+| ---- | ----- |
+| 22   | 22    |
+| 28   | 77    |
+
+##### Config
+
+value: "what"
+
+##### Output
+
+| cluster | job | Temp | Speed |
+| ------- | --- | ---- | ----- |
+| A       | J1  | 10   |       |
+| A       | J1  | 200  |       |
+| B       | J1  | 10   | 22    |
+| B       | J1  | 200  | 77    |
 
 ### Labels to fields
 
@@ -750,3 +971,11 @@ This transformation is available in Grafana 9.5+ as an opt-in beta feature. Modi
 {{% /admonition %}}
 
 Use this transformation to convert time series result into a table, converting time series data frame into a "Trend" field. "Trend" field can then be rendered using [sparkline cell type]({{< relref "../../visualizations/table/#sparkline" >}}), producing an inline sparkline for each table row. If there are multiple time series queries, each will result in a separate table data frame. These can be joined using join or merge transforms to produce a single table with multiple sparklines per row.
+
+### Format Time
+
+{{% admonition type="note" %}}
+This transformation is available in Grafana 10.1+ as an alpha feature.
+{{% /admonition %}}
+
+Use this transformation to format the output of a time field. Output can be formatted using (Moment.js format strings)[https://momentjs.com/docs/#/displaying/]. For instance, if you would like to display only the year of a time field the format string `YYYY` can be used to show the calendar year (e.g. 1999, 2012, etc.).

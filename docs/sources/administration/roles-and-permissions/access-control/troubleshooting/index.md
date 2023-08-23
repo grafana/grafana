@@ -1,12 +1,11 @@
 ---
 aliases:
   - ../../../enterprise/access-control/troubleshooting/
+description: RBAC troubleshooting guide.
 labels:
   products:
     - cloud
     - enterprise
-    - oss
-description: RBAC troubleshooting guide.
 menuTitle: Troubleshooting RBAC
 title: Troubleshooting RBAC
 weight: 80

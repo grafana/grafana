@@ -1,12 +1,16 @@
 ---
-title: Create a Grafana plugin
-menuTitle: Create a plugin
+description: An index of how-to topics for Grafana plugin development.
 keywords:
   - grafana
   - plugins
   - plugin
   - documentation
-description: An index of how-to topics for Grafana plugin development.
+labels:
+  products:
+    - enterprise
+    - oss
+menuTitle: Create a plugin
+title: Create a Grafana plugin
 weight: 300
 ---
 

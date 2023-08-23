@@ -2,8 +2,12 @@
 aliases:
   - ../../installation/mac/
 description: How to install Grafana OSS or Enterprise on macOS
-title: Install Grafana on macOS
+labels:
+  products:
+    - enterprise
+    - oss
 menuTitle: macOS
+title: Install Grafana on macOS
 weight: 600
 ---
 

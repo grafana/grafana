@@ -192,7 +192,7 @@ export const MultiPlainValue: Story = (args) => {
         options={generateOptions()}
         value={value}
         onChange={(v) => {
-          setValue(v.map((v: any) => v.value));
+          setValue(v.map((v) => v.value!));
         }}
         prefix={getPrefix(args.icon)}
         {...args}
@@ -213,7 +213,7 @@ export const MultiSelectWithOptionGroups: Story = (args) => {
         ]}
         value={value}
         onChange={(v) => {
-          setValue(v.map((v: any) => v.value));
+          setValue(v.map((v) => v.value!));
           action('onChange')(v);
         }}
         prefix={getPrefix(args.icon)}

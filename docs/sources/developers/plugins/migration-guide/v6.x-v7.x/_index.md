@@ -1,6 +1,4 @@
 ---
-title: Migrate plugins from Grafana version 6.x to 7.0
-menuTitle: v6.x to v7.x
 description: Guide for migrating plugins from Grafana v6.x to v7.x
 keywords:
   - grafana
@@ -8,6 +6,12 @@ keywords:
   - migration
   - plugin
   - documentation
+labels:
+  products:
+    - enterprise
+    - oss
+menuTitle: v6.x to v7.x
+title: Migrate plugins from Grafana version 6.x to 7.0
 weight: 2500
 ---
 
@@ -37,7 +41,7 @@ With Grafana 7.0, we released a new tool for making it easier to develop plugins
 
 For more information, refer to [@grafana/toolkit](https://www.npmjs.com/package/@grafana/toolkit).
 
-{{% admonition type="note" %}} As of Grafana 10.0, `@grafana/toolkit` is deprecated. It is replaced by the [`create-plugin`](https://grafana.github.io/plugin-tools/docs/creating-a-plugin) tool.
+{{% admonition type="note" %}} As of Grafana 10.0, `@grafana/toolkit` is deprecated. It is replaced by the [`create-plugin`](https://grafana.github.io/plugin-tools/docs/get-started/) tool.
 {{% /admonition %}}
 
 ### Field options

@@ -28,6 +28,7 @@ const getShortcuts = (modKey: string) => {
       { keys: ['d', 'a'], description: 'Toggle auto fit panels (experimental feature)' },
       { keys: [`${modKey} + o`], description: 'Toggle shared graph crosshair' },
       { keys: ['d', 'l'], description: 'Toggle all panel legends' },
+      { keys: ['d', 'x'], description: 'Toggle exemplars in all panel' },
     ],
     'Focused Panel': [
       { keys: ['e'], description: 'Toggle panel edit view' },

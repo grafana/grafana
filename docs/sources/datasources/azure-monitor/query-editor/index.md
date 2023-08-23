@@ -13,6 +13,11 @@ keywords:
   - queries
   - traces
   - application insights
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 menuTitle: Query editor
 title: Azure Monitor query editor
 weight: 300
@@ -21,16 +26,16 @@ weight: 300
 # Azure Monitor query editor
 
 This topic explains querying specific to the Azure Monitor data source.
-For general documentation on querying data sources in Grafana, see [Query and transform data]({{< relref "../../../panels-visualizations/query-transform-data" >}}).
+For general documentation on querying data sources in Grafana, see [Query and transform data][query-transform-data].
 
 ## Choose a query editing mode
 
 The Azure Monitor data source's query editor has three modes depending on which Azure service you want to query:
 
-- **Metrics** for [Azure Monitor Metrics]({{< relref "#query-azure-monitor-metrics" >}})
-- **Logs** for [Azure Monitor Logs]({{< relref "#query-azure-monitor-logs" >}})
-- [**Azure Resource Graph**]({{< relref "#query-azure-resource-graph" >}})
-- **Traces** for [Application Insights Traces]({{< relref "#query-application-insights-traces" >}})
+- **Metrics** for [Azure Monitor Metrics](#query-azure-monitor-metrics)
+- **Logs** for [Azure Monitor Logs](#query-azure-monitor-logs)
+- [**Azure Resource Graph**](#query-azure-resource-graph)
+- **Traces** for [Application Insights Traces](#query-application-insights-traces)
 
 ## Query Azure Monitor Metrics
 
@@ -69,7 +74,7 @@ Optionally, you can apply further aggregations or filter by dimensions.
 
 The available options change depending on what is relevant to the selected metric.
 
-You can also augment queries by using [template variables]({{< relref "./template-variables/" >}}).
+You can also augment queries by using [template variables]({{< relref "./template-variables" >}}).
 
 ### Format legend aliases
 
@@ -128,7 +133,7 @@ You can also perform complex analysis of Logs data by using KQL.
 
 1. Enter your KQL query.
 
-You can also augment queries by using [template variables]({{< relref "./template-variables/" >}}).
+You can also augment queries by using [template variables]({{< relref "./template-variables" >}}).
 
 ### Logs query examples
 
@@ -208,7 +213,7 @@ To help you write queries, you can use several Grafana macros in the `where` cla
 | `$__escapeMulti($myVar)`        | Escapes illegal characters in multi-value template variables.<br/>If `$myVar` has the values `'\\grafana-vm\Network(eth0)\Total','\\hello!'` as a string, use this to expand it to `@'\\grafana-vm\Network(eth0)\Total', @'\\hello!'`.<br/><br/>If using single-value variables, escape the variable inline instead: `@'\$myVar'`.                                                                                                                                                              |
 | `$__contains(colName, $myVar)`  | Expands multi-value template variables.<br/>If `$myVar` has the value `'value1','value2'`, use this to expand it to `colName in ('value1','value2')`.<br/><br/>If using the `All` option, check the `Include All Option` checkbox, and type the value `all` in the `Custom all value` field. If `$myVar` has the value `all`, the macro instead expands to `1 == 1`.<br/>For template variables with many options, this avoids building a large "where..in" clause, which improves performance. |
 
-Additionally, Grafana has the built-in [`$__interval` macro]({{< relref "../../../panels-visualizations/query-transform-data#query-options" >}}), which calculates an interval in seconds.
+Additionally, Grafana has the built-in [`$__interval` macro][query-transform-data-query-options], which calculates an interval in seconds.
 
 ## Query Azure Resource Graph
 
@@ -331,9 +336,17 @@ Selecting the trace format will filter events with the `trace` type.
 1. Specify event types to filter by.
 1. Specify event properties to filter by.
 
-You can also augment queries by using [template variables]({{< relref "./template-variables/" >}}).
+You can also augment queries by using [template variables]({{< relref "./template-variables" >}}).
 
 ## Working with large Azure resource data sets
 
 If a request exceeds the [maximum allowed value of records](https://docs.microsoft.com/en-us/azure/governance/resource-graph/concepts/work-with-data#paging-results), the result is paginated and only the first page of results are returned.
 You can use filters to reduce the amount of records returned under that value.
+
+{{% docs/reference %}}
+[query-transform-data-query-options]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/query-transform-data#query-options"
+[query-transform-data-query-options]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/query-transform-data#query-options"
+
+[query-transform-data]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/query-transform-data"
+[query-transform-data]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/query-transform-data"
+{{% /docs/reference %}}

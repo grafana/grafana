@@ -1,5 +1,6 @@
-import { Meta, Preview, ArgTypes } from '@storybook/blocks';
+import { Meta, Props, Preview, ArgsTable } from '@storybook/addon-docs/blocks';
 import { TextLink } from './TextLink';
+import { Basic } from './TextLink.story.tsx';
 
 <Meta title="MDX|TextLink" component={TextLink} />
 
@@ -7,4 +8,148 @@ import { TextLink } from './TextLink';
 
 The TextLink component renders an anchor tag `<a>` that takes users to another page, external or internal to Grafana.
 
-<ArgTypes of={TextLink} />
+---
+
+In this documentation you can find:
+
+1. [Usage](#usage)
+1. [Types](#types)
+1. [Behaviour](#behaviour)
+   <br />
+   4.1. [Inline](#inline-behaviour)
+   <br />
+   4.2. [Standalone](#standalone-behaviour)
+   <br />
+   4.3. [Icons](#icons-behaviour)
+1. [Props table](#propstable)
+1. [Related](#related)
+
+<br />
+<br />
+
+## <a name="usage"/> Usage
+
+<br />
+
+### **When to use**
+
+- To redirect the user to another page, external or internal
+- When redirecting the user through a link in a word or phrase within a paragraph.
+- When redirecting the user through a link in a word or phrase, not within a paragraph but surrounded by other blocks of text.
+
+### **When not to use**
+
+- When its purpose is to trigger an action, please use a Button or IconButton component
+- When it still redirects the user but it should have the same appearance as a button, please use the LinkButton component.
+- When the link is just comprised by an icon use IconButton component.
+
+### **Do’s**
+
+- Use the default styles as the first and main option as they are though to be accessible and consistent.
+- Use the external icon (the default one) when the TextLink goes to an external page as its meaning is broadly known.
+- In case the default icon does not fit, please use one of the icons of our [library](https://developers.grafana.com/ui/latest/index.html?path=/story/docs-overview-icon--icons-overview).
+
+### **Don’ts**
+
+- Do not use ‘primary’ color in a standalone link unless it is a special use case such as the ‘Dashboard list’, menu items or similar.
+- Do not override any styles in any way. Instead, ask the Design System team for an improvement of this component.
+- Do not attempt to add a new icon. You should fulfil a contribution path to first add the icon to our Design System and then use it in this component.
+
+  <br />
+  <br />
+
+## <a name="types"/> Types
+
+Within Grafana, there are two different types of _text links_, 'inline' or 'standalone', whether they are wrapped by text or being a standalone element.
+
+- **Inline**: It is part of a broader text. It will be surrounded by text, before, after or in both directions. Although it can show an icon at its end, we advise not to do that.
+- **Standalone**: It is a block not surrounded immediately by more text.
+
+### **Subtypes**
+
+Both inline or standalone text links will redirect the user to a specific page, therefore, depending on this they can be internal or external.
+
+- **Internal**: Redirect the user to a page inside Grafana.
+- **External**: Redirect the user to a page outside Grafana. The page will open on a new window. By default, an external text link will show the ‘external-link-alt’ icon.
+
+  <br />
+  <br />
+
+## <a name="behaviour"/> Behaviour
+
+The following is the default behaviour and so, it will be applied according to its type.
+
+### <a name="inline-behaviour"/>**Inline**:<br/>
+
+<Preview>
+  <TextLink href="https://google.es" external inline>
+    {'This an inline link example'}
+  </TextLink>
+</Preview>
+- _Initial appearence_: Blue and underlined at first. - _On hover_: blue and not underlined
+
+### <a name="standalone-behaviour"/>**Standalone**:
+
+<Preview>
+  <TextLink href="https://google.es" inline={false} external>
+    {'This an standalone link example'}
+  </TextLink>
+</Preview>
+- _Initial appearence_: Blue and not underlined at first. - _On hover_: blue and underlined.
+
+_Example_: We should take into account that through the color prop the user will be able to change this value,
+but the rest will be kept. So, in this example, if the user renders an external and standalone _text link_ setting the color value to 'primary' the result will be a text link 'white' in dark theme or 'black' in light theme, as set by the user, and not underlined at first while blue and underlined when onhover, as it inherits from the standalone default behaviour.
+
+<Preview>
+  <TextLink href="https://google.es" color="primary" inline={false} external>
+    {'This an external standalone link example'}
+  </TextLink>
+</Preview>
+
+```jsx
+<TextLink href="https://google.es" color="primary" inline={false} external>
+  This an external standalone link example
+</TextLink>
+```
+
+### <a name="icons-behaviour"/>**Icons**:
+
+By default, **external _text links_** will show an `external-alt-icon`. If by design reasons, the user needs to set another icon it can be done through the correspondent prop.
+
+<Preview>
+  <TextLink href="https://google.es" external>
+    {'This an external with the default icon'}
+  </TextLink>
+</Preview>
+
+```jsx
+<TextLink href="https://google.es" external>
+  This an external with the default icon
+</TextLink>
+```
+
+Both, **external** and **internal** links can show a specific icon using the `icon` prop.
+
+<Preview>
+  <TextLink href="https://google.es" icon="google" external>
+    {'This an external with a specific icon'}
+  </TextLink>
+</Preview>
+```jsx
+<TextLink href="https://google.es" icon="google" external>
+  This an external with a specific icon
+</TextLink>
+```
+
+## <a name="propstable"/>Props table
+
+<ArgsTable of={TextLink} />
+
+## <a name="related"/>Related
+
+Links to related components:
+
+- [Button](/docs/buttons-button--docs)
+- [LinkButton](/docs/buttons-button--docs#links)
+- [IconButton](/docs/buttons-iconbutton--docs)
+- [Icon](/docs-overview-icon--docs)

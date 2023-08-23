@@ -35,7 +35,7 @@ jest.mock('../state/hooks', () => ({
   }),
 }));
 
-describe('PluginDetailsAngularDeprecation', () => {
+describe('PluginDetailsPage Angular deprecation', () => {
   afterAll(() => {
     jest.resetAllMocks();
   });

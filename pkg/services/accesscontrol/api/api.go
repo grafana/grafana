@@ -82,7 +82,7 @@ func (api *AccessControlAPI) searchUsersPermissions(c *contextmodel.ReqContext) 
 	}
 
 	// Compute metadata
-	permissions, err := api.Service.SearchUsersPermissions(c.Req.Context(), c.SignedInUser, c.OrgID, searchOptions)
+	permissions, err := api.Service.SearchUsersPermissions(c.Req.Context(), c.SignedInUser, searchOptions)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "could not get org user permissions", err)
 	}
@@ -116,7 +116,8 @@ func (api *AccessControlAPI) searchUserPermissions(c *contextmodel.ReqContext) r
 	// 	return response.JSON(http.StatusBadRequest, "provide one of 'action' or 'actionPrefix'")
 	// }
 
-	permissions, err := api.Service.SearchUserPermissions(c.Req.Context(), c.OrgID, searchOptions)
+	permissions, err := api.Service.SearchUserPermissions(c.Req.Context(),
+		c.SignedInUser.GetOrgID(), searchOptions)
 	if err != nil {
 		response.Error(http.StatusInternalServerError, "could not search user permissions", err)
 	}

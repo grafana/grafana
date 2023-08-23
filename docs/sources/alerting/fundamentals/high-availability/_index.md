@@ -2,6 +2,7 @@
 aliases:
   - ../high-availability/
   - ../unified-alerting/high-availability/
+canonical: https://grafana.com/docs/grafana/latest/alerting/fundamentals/high-availability/
 description: High availability
 keywords:
   - grafana
@@ -9,6 +10,11 @@ keywords:
   - tutorials
   - ha
   - high availability
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: Alerting high availability
 weight: 430
 ---

@@ -19,6 +19,7 @@ const setup = (propOverrides?: Partial<ComponentProps<typeof LogRowMessage>>, ro
     app: CoreApp.Explore,
     styles,
     mouseIsOver: true,
+    onBlur: jest.fn(),
     ...(propOverrides || {}),
   };
 
@@ -39,6 +40,11 @@ describe('LogRowMessage', () => {
   it('renders row entry', () => {
     setup();
     expect(screen.queryByText('test123')).toBeInTheDocument();
+  });
+
+  it('should hide the menu if the mouse is not over', async () => {
+    setup({ showContextToggle: () => true, mouseIsOver: false });
+    expect(screen.queryByLabelText('Show context')).not.toBeInTheDocument();
   });
 
   describe('with show context', () => {

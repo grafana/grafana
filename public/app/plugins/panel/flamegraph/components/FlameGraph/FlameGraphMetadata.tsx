@@ -46,7 +46,9 @@ const FlameGraphMetadata = React.memo(
           <Icon size={'sm'} name={'angle-right'} />
           <div className={styles.metadataPill}>
             <Icon size={'sm'} name={'gf-show-context'} />{' '}
-            {sandwichedLabel.substring(sandwichedLabel.lastIndexOf('/') + 1)}
+            <span className={styles.metadataPillName}>
+              {sandwichedLabel.substring(sandwichedLabel.lastIndexOf('/') + 1)}
+            </span>
             <IconButton
               className={styles.pillCloseButton}
               name={'times'}
@@ -89,7 +91,8 @@ FlameGraphMetadata.displayName = 'FlameGraphMetadata';
 const getStyles = (theme: GrafanaTheme2) => ({
   metadataPill: css`
     label: metadataPill;
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
     background: ${theme.colors.background.secondary};
     border-radius: ${theme.shape.borderRadius(8)};
     padding: ${theme.spacing(0.5, 1)};
@@ -107,6 +110,14 @@ const getStyles = (theme: GrafanaTheme2) => ({
   metadata: css`
     margin: 8px 0;
     text-align: center;
+  `,
+  metadataPillName: css`
+    label: metadataPillName;
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    margin-left: ${theme.spacing(0.5)};
   `,
 });
 

@@ -98,7 +98,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     pageInner: css({
       label: 'page-inner',
       padding: theme.spacing(2),
-      borderRadius: theme.shape.borderRadius(1),
+      borderRadius: theme.shape.radius.default,
       border: `1px solid ${theme.colors.border.weak}`,
       borderBottom: 'none',
       background: theme.colors.background.primary,
