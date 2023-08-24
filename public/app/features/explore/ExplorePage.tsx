@@ -54,8 +54,6 @@ export default function ExplorePage(props: GrafanaRouteComponentProps<{}, Explor
 
   useKeyboardShortcuts();
 
-  useKeyboardShortcuts();
-
   return (
     <div className={styles.pageScrollbarWrapper}>
       <ExploreActions />
