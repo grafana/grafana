@@ -92,6 +92,10 @@ func ReadPrometheusStyleResult(iter *jsoniter.Iterator, opt Options) backend.Dat
 		}
 	}
 
+	// if len(iter.CurrentBuffer()) > 0 {
+	// 	rsp.Error = fmt.Errorf("failed to complete parsing of prometheus json response at : %s", iter.CurrentBuffer())
+	// }
+
 	return rsp
 }
 
@@ -115,7 +119,20 @@ func readWarnings(iter *jsoniter.Iterator) []data.Notice {
 }
 
 func readPrometheusData(iter *jsoniter.Iterator, opt Options) backend.DataResponse {
+	var rsp backend.DataResponse
+	iterError := func() bool {
+		if iter.Error == nil {
+			return false
+		}
+		rsp.Error = iter.Error
+		return true
+	}
+
 	t := iter.WhatIsNext()
+	if iterError() {
+		return rsp
+	}
+
 	if t == jsoniter.ArrayValue {
 		return readArrayData(iter)
 	}
@@ -127,14 +144,6 @@ func readPrometheusData(iter *jsoniter.Iterator, opt Options) backend.DataRespon
 	}
 
 	resultType := ""
-	var rsp backend.DataResponse
-	iterError := func() bool {
-		if iter.Error == nil {
-			return false
-		}
-		rsp.Error = iter.Error
-		return true
-	}
 
 	for l1Field := iter.ReadObject(); l1Field != ""; l1Field = iter.ReadObject() {
 		if iterError() {
@@ -150,14 +159,30 @@ func readPrometheusData(iter *jsoniter.Iterator, opt Options) backend.DataRespon
 			switch resultType {
 			case "matrix", "vector":
 				rsp = readMatrixOrVectorMulti(iter, resultType, opt)
+				if rsp.Error != nil {
+					return rsp
+				}
 			case "streams":
 				rsp = readStream(iter)
+				if rsp.Error != nil {
+					return rsp
+				}
 			case "string":
 				rsp = readString(iter)
+				if rsp.Error != nil {
+					return rsp
+				}
 			case "scalar":
 				rsp = readScalar(iter)
+				if rsp.Error != nil {
+					return rsp
+				}
 			default:
 				iter.Skip()
+				if iter.Error != nil {
+					rsp.Error = iter.Error
+					return rsp
+				}
 				rsp = backend.DataResponse{
 					Error: fmt.Errorf("unknown result type: %s", resultType),
 				}
@@ -197,16 +222,41 @@ func readArrayData(iter *jsoniter.Iterator) backend.DataResponse {
 
 	var labelFrame *data.Frame
 	rsp := backend.DataResponse{}
+	iterError := func() bool {
+		if iter.Error == nil {
+			return false
+		}
+		rsp.Error = iter.Error
+		return true
+	}
+
 	stringField := data.NewFieldFromFieldType(data.FieldTypeString, 0)
 	stringField.Name = "Value"
 	for iter.ReadArray() {
-		switch iter.WhatIsNext() {
+		if iterError() {
+			return rsp
+		}
+
+		next := iter.WhatIsNext()
+		if iterError() {
+			return rsp
+		}
+
+		switch next {
 		case jsoniter.StringValue:
-			stringField.Append(iter.ReadString())
+			s := iter.ReadString()
+			if iterError() {
+				return rsp
+			}
+			stringField.Append(s)
 
 		// Either label or exemplars
 		case jsoniter.ObjectValue:
-			exemplar, labelPairs := readLabelsOrExemplars(iter)
+			exemplar, labelPairs, err := readLabelsOrExemplars(iter)
+			if err != nil {
+				rsp.Error = err
+				return rsp
+			}
 			if exemplar != nil {
 				rsp.Frames = append(rsp.Frames, exemplar)
 			} else if labelPairs != nil {
@@ -244,6 +294,9 @@ func readArrayData(iter *jsoniter.Iterator) backend.DataResponse {
 		default:
 			{
 				ext := iter.ReadAny()
+				if iterError() {
+					return rsp
+				}
 				v := fmt.Sprintf("%v", ext)
 				stringField.Append(v)
 			}
@@ -258,23 +311,37 @@ func readArrayData(iter *jsoniter.Iterator) backend.DataResponse {
 }
 
 // For consistent ordering read values to an array not a map
-func readLabelsAsPairs(iter *jsoniter.Iterator) [][2]string {
+func readLabelsAsPairs(iter *jsoniter.Iterator) ([][2]string, error) {
 	pairs := make([][2]string, 0, 10)
 	for k := iter.ReadObject(); k != ""; k = iter.ReadObject() {
-		pairs = append(pairs, [2]string{k, iter.ReadString()})
+		if iter.Error != nil {
+			return nil, iter.Error
+		}
+		v := iter.ReadString()
+		if iter.Error != nil {
+			return nil, iter.Error
+		}
+		pairs = append(pairs, [2]string{k, v})
 	}
-	return pairs
+	return pairs, nil
 }
 
-func readLabelsOrExemplars(iter *jsoniter.Iterator) (*data.Frame, [][2]string) {
+func readLabelsOrExemplars(iter *jsoniter.Iterator) (*data.Frame, [][2]string, error) {
 	pairs := make([][2]string, 0, 10)
 	labels := data.Labels{}
 	var frame *data.Frame
 
 	for l1Field := iter.ReadObject(); l1Field != ""; l1Field = iter.ReadObject() {
+		if iter.Error != nil {
+			return nil, nil, iter.Error
+		}
 		switch l1Field {
 		case "seriesLabels":
 			iter.ReadVal(&labels)
+			if iter.Error != nil {
+				return nil, nil, iter.Error
+			}
+
 		case "exemplars":
 			lookup := make(map[string]*data.Field)
 			timeField := data.NewFieldFromFieldType(data.FieldTypeTime, 0)
@@ -287,20 +354,41 @@ func readLabelsOrExemplars(iter *jsoniter.Iterator) (*data.Frame, [][2]string) {
 				Custom: resultTypeToCustomMeta("exemplar"),
 			}
 			for iter.ReadArray() {
+				if iter.Error != nil {
+					return nil, nil, iter.Error
+				}
 				for l2Field := iter.ReadObject(); l2Field != ""; l2Field = iter.ReadObject() {
+					if iter.Error != nil {
+						return nil, nil, iter.Error
+					}
 					switch l2Field {
 					// nolint:goconst
 					case "value":
-						v, _ := strconv.ParseFloat(iter.ReadString(), 64)
+						s := iter.ReadString()
+						if iter.Error != nil {
+							return nil, nil, iter.Error
+						}
+						v, err := strconv.ParseFloat(s, 64)
+						if err != nil {
+							return nil, nil, err
+						}
 						valueField.Append(v)
 
 					case "timestamp":
-						ts := timeFromFloat(iter.ReadFloat64())
+						f := iter.ReadFloat64()
+						if iter.Error != nil {
+							return nil, nil, iter.Error
+						}
+						ts := timeFromFloat(f)
 						timeField.Append(ts)
 
 					case "labels":
 						max := 0
-						for _, pair := range readLabelsAsPairs(iter) {
+						pairs, err := readLabelsAsPairs(iter)
+						if err != nil {
+							return nil, nil, iter.Error
+						}
+						for _, pair := range pairs {
 							k := pair[0]
 							v := pair[1]
 							f, ok := lookup[k]
@@ -326,6 +414,9 @@ func readLabelsOrExemplars(iter *jsoniter.Iterator) (*data.Frame, [][2]string) {
 
 					default:
 						iter.Skip()
+						if iter.Error != nil {
+							return nil, nil, iter.Error
+						}
 						frame.AppendNotices(data.Notice{
 							Severity: data.NoticeSeverityError,
 							Text:     fmt.Sprintf("unable to parse key: %s in response body", l2Field),
@@ -339,10 +430,19 @@ func readLabelsOrExemplars(iter *jsoniter.Iterator) (*data.Frame, [][2]string) {
 		}
 	}
 
-	return frame, pairs
+	return frame, pairs, nil
 }
 
 func readString(iter *jsoniter.Iterator) backend.DataResponse {
+	rsp := backend.DataResponse{}
+	iterError := func() bool {
+		if iter.Error == nil {
+			return false
+		}
+		rsp.Error = iter.Error
+		return true
+	}
+
 	timeField := data.NewFieldFromFieldType(data.FieldTypeTime, 0)
 	timeField.Name = data.TimeSeriesTimeFieldName
 	valueField := data.NewFieldFromFieldType(data.FieldTypeString, 0)
@@ -350,10 +450,29 @@ func readString(iter *jsoniter.Iterator) backend.DataResponse {
 	valueField.Labels = data.Labels{}
 
 	iter.ReadArray()
+	if iterError() {
+		return rsp
+	}
+
 	t := iter.ReadFloat64()
+	if iterError() {
+		return rsp
+	}
+
 	iter.ReadArray()
+	if iterError() {
+		return rsp
+	}
+
 	v := iter.ReadString()
+	if iterError() {
+		return rsp
+	}
+
 	iter.ReadArray()
+	if iterError() {
+		return rsp
+	}
 
 	tt := timeFromFloat(t)
 	timeField.Append(tt)
@@ -371,6 +490,8 @@ func readString(iter *jsoniter.Iterator) backend.DataResponse {
 }
 
 func readScalar(iter *jsoniter.Iterator) backend.DataResponse {
+	rsp := backend.DataResponse{}
+
 	timeField := data.NewFieldFromFieldType(data.FieldTypeTime, 0)
 	timeField.Name = data.TimeSeriesTimeFieldName
 	valueField := data.NewFieldFromFieldType(data.FieldTypeFloat64, 0)
@@ -378,10 +499,12 @@ func readScalar(iter *jsoniter.Iterator) backend.DataResponse {
 	valueField.Labels = data.Labels{}
 
 	t, v, err := readTimeValuePair(iter)
-	if err == nil {
-		timeField.Append(t)
-		valueField.Append(v)
+	if err != nil {
+		rsp.Error = err
+		return rsp
 	}
+	timeField.Append(t)
+	valueField.Append(v)
 
 	frame := data.NewFrame("", timeField, valueField)
 	frame.Meta = &data.FrameMeta{
@@ -425,10 +548,12 @@ func readMatrixOrVectorMulti(iter *jsoniter.Iterator, resultType string, opt Opt
 				}
 			case "value":
 				t, v, err := readTimeValuePair(iter)
-				if err == nil {
-					timeField.Append(t)
-					valueField.Append(v)
+				if err != nil {
+					rsp.Error = err
+					return rsp
 				}
+				timeField.Append(t)
+				valueField.Append(v)
 
 			// nolint:goconst
 			case "values":
@@ -437,10 +562,12 @@ func readMatrixOrVectorMulti(iter *jsoniter.Iterator, resultType string, opt Opt
 						return rsp
 					}
 					t, v, err := readTimeValuePair(iter)
-					if err == nil {
-						timeField.Append(t)
-						valueField.Append(v)
+					if err != nil {
+						rsp.Error = err
+						return rsp
 					}
+					timeField.Append(t)
+					valueField.Append(v)
 				}
 
 			case "histogram":
@@ -622,10 +749,15 @@ func readHistogram(iter *jsoniter.Iterator, hist *histogramInfo) error {
 }
 
 func appendValueFromString(iter *jsoniter.Iterator, field *data.Field) error {
-	v, err := strconv.ParseFloat(iter.ReadString(), 64)
+	s := iter.ReadString()
+	if iter.Error != nil {
+		return iter.Error
+	}
+	v, err := strconv.ParseFloat(s, 64)
 	if err != nil {
 		return err
 	}
+
 	field.Append(v)
 	return nil
 }
@@ -661,6 +793,9 @@ func readStream(iter *jsoniter.Iterator) backend.DataResponse {
 
 	for iter.ReadArray() {
 		for l1Field := iter.ReadObject(); l1Field != ""; l1Field = iter.ReadObject() {
+			if iterError() {
+				return rsp
+			}
 			switch l1Field {
 			case "stream":
 				// we need to clear `labels`, because `iter.ReadVal`
@@ -677,6 +812,10 @@ func readStream(iter *jsoniter.Iterator) backend.DataResponse {
 
 			case "values":
 				for iter.ReadArray() {
+					if iterError() {
+						return rsp
+					}
+
 					iter.ReadArray()
 					if iterError() {
 						return rsp

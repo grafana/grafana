@@ -15,7 +15,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-const update = true
+const update = false
 
 var files = []string{
 	"prom-labels",
@@ -50,7 +50,7 @@ func TestReadLimited(t *testing.T) {
 		require.NoError(t, err)
 		size := stat.Size()
 
-		for i := int64(1); i < size; i += size / 10 {
+		for i := int64(10); i < size; i += size / 10 {
 			t.Run(fmt.Sprintf("%v_%v", name, i), func(t *testing.T) {
 				f, err := os.Open(p)
 				require.NoError(t, err)
@@ -85,6 +85,7 @@ func runScenario(name string, opts Options) func(t *testing.T) {
 			require.Error(t, rsp.Error)
 			return
 		}
+		require.NoError(t, rsp.Error)
 
 		fname := name + "-frame"
 		experimental.CheckGoldenJSONResponse(t, "testdata", fname, &rsp, update)
