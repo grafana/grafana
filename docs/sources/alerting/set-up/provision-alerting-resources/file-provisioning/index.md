@@ -158,7 +158,7 @@ contactPoints:
     # <string, required> name of the contact point
     name: cp_1
     receivers:
-      # <string, required> unique identifier for the receiver
+      # <string, required> unique identifier for the receiver. Should not exceed 40 symbols. Allowed only letters, numbers, - (hyphen), and _ (underscore).
       - uid: first_uid
         # <string, required> type of the receiver
         type: prometheus-alertmanager
