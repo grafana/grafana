@@ -6,7 +6,7 @@ import { GrafanaTheme2, PageLayoutType } from '@grafana/data';
 import { LinkButton, useStyles2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { CommandPalette } from 'app/features/commandPalette/CommandPalette';
-import { KioskMode, useSelector } from 'app/types';
+import { KioskMode } from 'app/types';
 
 import { MegaMenu } from './MegaMenu/MegaMenu';
 import { NavToolbar } from './NavToolbar/NavToolbar';
@@ -20,10 +20,7 @@ export function AppChrome({ children }: Props) {
   const styles = useStyles2(getStyles);
   const { chrome } = useGrafana();
   const state = chrome.useState();
-  const dashboard = useSelector((state) => state.dashboard.getModel());
-  const isEditorEmbedded = dashboard?.meta.isEditorEmbedded;
-
-  const searchBarHidden = state.searchBarHidden || state.kioskMode === KioskMode.TV || isEditorEmbedded;
+  const searchBarHidden = state.searchBarHidden || state.kioskMode === KioskMode.TV || state.isEmbeddedRoute;
 
   const contentClass = cx({
     [styles.content]: true,

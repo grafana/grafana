@@ -7,7 +7,7 @@ import appEvents from 'app/core/app_events';
 import { t } from 'app/core/internationalization';
 import store from 'app/core/store';
 import { isShallowEqual } from 'app/core/utils/isShallowEqual';
-import { KioskMode } from 'app/types';
+import { DashboardRoutes, KioskMode } from 'app/types';
 
 import { RouteDescriptor } from '../../navigation/types';
 
@@ -20,6 +20,7 @@ export interface AppChromeState {
   megaMenuOpen?: boolean;
   kioskMode: KioskMode | null;
   layout: PageLayoutType;
+  isEmbeddedRoute?: boolean;
 }
 
 export class AppChromeService {
@@ -33,6 +34,7 @@ export class AppChromeService {
     searchBarHidden: store.getBool(this.searchBarStorageKey, false),
     kioskMode: null,
     layout: PageLayoutType.Canvas,
+    isEmbeddedRoute: this.currentRoute?.routeName === DashboardRoutes.Embedded,
   });
 
   setMatchedRoute(route: RouteDescriptor) {
@@ -55,6 +57,7 @@ export class AppChromeService {
       newState.sectionNav = { node: { text: t('nav.home.title', 'Home') }, main: { text: '' } };
       newState.chromeless = this.currentRoute?.chromeless;
       newState.layout = PageLayoutType.Standard;
+      newState.isEmbeddedRoute = this.currentRoute?.routeName === DashboardRoutes.Embedded;
       this.routeChangeHandled = true;
     }
 
