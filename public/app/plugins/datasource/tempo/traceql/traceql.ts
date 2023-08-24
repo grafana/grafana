@@ -78,8 +78,6 @@ export const language = {
       [/"/, 'string', '@string_double'],
       [/'/, 'string', '@string_single'],
 
-      { include: '@whitespace' },
-
       // delimiters and operators
       [/[{}()\[\]]/, 'delimiter.bracket'],
       [
