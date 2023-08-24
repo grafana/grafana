@@ -15,7 +15,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	acdb "github.com/grafana/grafana/pkg/services/accesscontrol/database"
-	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -31,6 +30,7 @@ import (
 )
 
 const (
+	orgID            = 1
 	dashUID          = "1"
 	folderID         = 42
 	folderUID        = "42"
@@ -1011,63 +1011,6 @@ func TestAccessControlDashboardGuardian_CanCreate(t *testing.T) {
 			can, err := guardian.CanCreate(tt.folderID, tt.isFolder)
 			require.NoError(t, err)
 			assert.Equal(t, tt.expected, can)
-		})
-	}
-}
-
-type accessControlGuardianGetHiddenACLTestCase struct {
-	desc        string
-	permissions []accesscontrol.ResourcePermission
-	hiddenUsers map[string]struct{}
-	isFolder    bool
-}
-
-func TestAccessControlDashboardGuardian_GetHiddenACL(t *testing.T) {
-	tests := []accessControlGuardianGetHiddenACLTestCase{
-		{
-			desc: "should only return permissions containing hidden users",
-			permissions: []accesscontrol.ResourcePermission{
-				{RoleName: "managed:users:1:permissions", UserId: 1, UserLogin: "user1", IsManaged: true},
-				{RoleName: "managed:teams:1:permissions", TeamId: 1, Team: "team1", IsManaged: true},
-				{RoleName: "managed:users:2:permissions", UserId: 2, UserLogin: "user2", IsManaged: true},
-				{RoleName: "managed:users:3:permissions", UserId: 3, UserLogin: "user3", IsManaged: true},
-				{RoleName: "managed:users:4:permissions", UserId: 4, UserLogin: "user4", IsManaged: true},
-			},
-			hiddenUsers: map[string]struct{}{"user2": {}, "user3": {}},
-		},
-		{
-			desc: "should only return permissions containing hidden users",
-			permissions: []accesscontrol.ResourcePermission{
-				{RoleName: "managed:users:1:permissions", UserId: 1, UserLogin: "user1", IsManaged: true},
-				{RoleName: "managed:teams:1:permissions", TeamId: 1, Team: "team1", IsManaged: true},
-				{RoleName: "managed:users:2:permissions", UserId: 2, UserLogin: "user2", IsManaged: true},
-				{RoleName: "managed:users:3:permissions", UserId: 3, UserLogin: "user3", IsManaged: true},
-				{RoleName: "managed:users:4:permissions", UserId: 4, UserLogin: "user4", IsManaged: true},
-			},
-			hiddenUsers: map[string]struct{}{"user2": {}, "user3": {}},
-			isFolder:    true,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.desc, func(t *testing.T) {
-			mocked := accesscontrolmock.NewMockedPermissionsService()
-			mocked.On("MapActions", mock.Anything).Return("View")
-			mocked.On("GetPermissions", mock.Anything, mock.Anything, mock.Anything).Return(tt.permissions, nil)
-			guardian := setupAccessControlGuardianTest(t, &dashboards.Dashboard{OrgID: orgID, UID: "1", IsFolder: tt.isFolder}, nil, nil, mocked, mocked)
-
-			cfg := setting.NewCfg()
-			cfg.HiddenUsers = tt.hiddenUsers
-			permissions, err := guardian.GetHiddenACL(cfg)
-			require.NoError(t, err)
-			var hiddenUserNames []string
-			for name := range tt.hiddenUsers {
-				hiddenUserNames = append(hiddenUserNames, name)
-			}
-			assert.Len(t, permissions, len(hiddenUserNames))
-			for _, p := range permissions {
-				assert.Contains(t, hiddenUserNames, fmt.Sprintf("user%d", p.UserID))
-			}
 		})
 	}
 }
