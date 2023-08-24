@@ -65,7 +65,7 @@ groups:
     interval: 60s
     # <list, required> list of rules that are part of the rule group
     rules:
-      # <string, required> unique identifier for the rule
+      # <string, required> unique identifier for the rule. Should not exceed 40 symbols. Allowed only letters, numbers, - (hyphen), and _ (underscore).
       - uid: my_id_1
         # <string, required> title of the rule that will be displayed in the UI
         title: my_first_rule
