@@ -87,22 +87,23 @@ export class BackendSrv implements BackendService {
     this.fetchQueue = new FetchQueue();
     this.responseQueue = new ResponseQueue(this.fetchQueue, this.internalFetch);
 
-    this.initGrafanaDeviceID().then((grafanaId) => {
-      if (grafanaId) {
-        this.deviceID = grafanaId;
-      }
-    });
+    this.initGrafanaDeviceID();
 
     new FetchQueueWorker(this.fetchQueue, this.responseQueue, getConfig());
   }
 
-  async initGrafanaDeviceID(): Promise<string | void> {
-    return FingerprintJS.load()
-      .then((fp) => fp.get())
-      .then((result): string => result.visitorId)
-      .catch((error) => {
-        console.error(error);
-      });
+  async initGrafanaDeviceID() {
+    if (config.buildInfo.edition === GrafanaEdition.OpenSource) {
+      return;
+    }
+
+    try {
+      const fp = await FingerprintJS.load();
+      const result = await fp.get();
+      this.deviceID = result.visitorId;
+    } catch (error) {
+      console.error(error);
+    }
   }
 
   async request<T = any>(options: BackendSrvRequest): Promise<T> {
