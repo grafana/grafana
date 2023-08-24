@@ -8,17 +8,22 @@ import { OnRowOptionsUpdate, RowOptionsForm } from './RowOptionsForm';
 export interface RowOptionsModalProps {
   title: string;
   repeat?: string | null;
+  warningMessage?: string;
   onDismiss: () => void;
   onUpdate: OnRowOptionsUpdate;
-  message?: string;
 }
 
-export const RowOptionsModal = ({ repeat, title, onDismiss, onUpdate, message }: RowOptionsModalProps) => {
+export const RowOptionsModal = ({ repeat, title, onDismiss, onUpdate, warningMessage }: RowOptionsModalProps) => {
   const styles = getStyles();
   return (
     <Modal isOpen={true} title="Row options" icon="copy" onDismiss={onDismiss} className={styles.modal}>
-      {message && <p>{message}</p>}
-      <RowOptionsForm repeat={repeat} title={title} onCancel={onDismiss} onUpdate={onUpdate} />
+      <RowOptionsForm
+        repeat={repeat}
+        title={title}
+        onCancel={onDismiss}
+        onUpdate={onUpdate}
+        warningMessage={warningMessage}
+      />
     </Modal>
   );
 };

@@ -9,10 +9,10 @@ export interface RowOptionsButtonProps {
   title: string;
   repeat?: string | null;
   onUpdate: OnRowOptionsUpdate;
-  message?: string;
+  warningMessage?: string;
 }
 
-export const RowOptionsButton = ({ repeat, title, onUpdate, message }: RowOptionsButtonProps) => {
+export const RowOptionsButton = ({ repeat, title, onUpdate, warningMessage }: RowOptionsButtonProps) => {
   const onUpdateChange = (hideModal: () => void) => (title: string, repeat?: string | null) => {
     onUpdate(title, repeat);
     hideModal();
@@ -27,7 +27,13 @@ export const RowOptionsButton = ({ repeat, title, onUpdate, message }: RowOption
             className="pointer"
             aria-label="Row options"
             onClick={() => {
-              showModal(RowOptionsModal, { title, repeat, onDismiss: hideModal, onUpdate: onUpdateChange(hideModal), message });
+              showModal(RowOptionsModal, {
+                title,
+                repeat,
+                onDismiss: hideModal,
+                onUpdate: onUpdateChange(hideModal),
+                warningMessage,
+              });
             }}
           >
             <Icon name="cog" />

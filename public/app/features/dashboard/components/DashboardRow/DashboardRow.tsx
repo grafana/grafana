@@ -46,8 +46,11 @@ export class DashboardRow extends React.Component<DashboardRowProps> {
       : this.props.dashboard.getRowPanels(indexOf(this.props.dashboard.panels, this.props.panel));
     const isAnyPanelUsingDashboardDS = panels.some((p) => p.datasource?.uid === SHARED_DASHBOARD_QUERY);
     if (isAnyPanelUsingDashboardDS) {
-      return 'Warning: Dashboard ds may not work for this row';
+      return `There are panels in the row that uses ${SHARED_DASHBOARD_QUERY} data source. These will reference the panel
+      in the original row and not in the repeated rows.`;
     }
+
+    return undefined;
   };
 
   onUpdate = (title: string, repeat?: string | null) => {
@@ -106,7 +109,7 @@ export class DashboardRow extends React.Component<DashboardRowProps> {
               title={this.props.panel.title}
               repeat={this.props.panel.repeat}
               onUpdate={this.onUpdate}
-              message={this.getWarningMessage()}
+              warningMessage={this.getWarningMessage()}
             />
             <button type="button" className="pointer" onClick={this.onDelete} aria-label="Delete row">
               <Icon name="trash-alt" />

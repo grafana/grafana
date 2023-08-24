@@ -180,6 +180,13 @@ export const Pages = {
     Annotations: {
       marker: 'data-testid annotation-marker',
     },
+    Rows: {
+      Repeated: {
+        ConfigSection: {
+          warningMessage: 'data-testid Repeated rows warning message',
+        },
+      },
+    },
   },
   Dashboards: {
     url: '/dashboards',
