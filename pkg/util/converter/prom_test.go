@@ -59,7 +59,7 @@ func TestReadLimited(t *testing.T) {
 				iter := jsoniter.Parse(jsoniter.ConfigDefault, mbr, 1024)
 				rsp := ReadPrometheusStyleResult(iter, Options{})
 
-				require.Error(t, rsp.Error)
+				require.ErrorContains(t, rsp.Error, "response body too large")
 			})
 		}
 	}
