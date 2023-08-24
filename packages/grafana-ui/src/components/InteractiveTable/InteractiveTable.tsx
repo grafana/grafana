@@ -33,7 +33,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       width: '100%',
     }),
     table: css({
-      borderRadius: theme.shape.borderRadius(),
+      borderRadius: theme.shape.radius.default,
       width: '100%',
 
       td: {

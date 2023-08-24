@@ -29,6 +29,7 @@ describe('FlameGraphHeader', () => {
         showResetButton={true}
         colorScheme={ColorScheme.ValueBased}
         onColorSchemeChange={onSchemeChange}
+        isDiffMode={false}
         {...props}
       />
     );
@@ -71,5 +72,15 @@ describe('FlameGraphHeader', () => {
     await userEvent.click(byPackageButton);
 
     expect(handlers.onSchemeChange).toHaveBeenCalledTimes(1);
+  });
+
+  it('shows diff color scheme switch when diff', async () => {
+    setup({ isDiffMode: true });
+    const changeButton = screen.getByLabelText(/Change color scheme/);
+    expect(changeButton).toBeInTheDocument();
+    await userEvent.click(changeButton);
+
+    expect(screen.getByText(/Default/)).toBeInTheDocument();
+    expect(screen.getByText(/Color blind/)).toBeInTheDocument();
   });
 });

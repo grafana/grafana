@@ -1,10 +1,12 @@
 import {
+  ArrayVector,
   DataFrame,
   Field,
   FieldType,
   getDisplayProcessor,
   getLinksSupplier,
   GrafanaTheme2,
+  DataLinkPostProcessor,
   InterpolateFunction,
   isBooleanUnit,
   SortedVector,
@@ -14,6 +16,58 @@ import { convertFieldType } from '@grafana/data/src/transformations/transformers
 import { GraphFieldConfig, LineInterpolation } from '@grafana/schema';
 import { applyNullInsertThreshold } from '@grafana/ui/src/components/GraphNG/nullInsertThreshold';
 import { nullToValue } from '@grafana/ui/src/components/GraphNG/nullToValue';
+import { buildScaleKey } from '@grafana/ui/src/components/GraphNG/utils';
+
+type ScaleKey = string;
+
+// this will re-enumerate all enum fields on the same scale to create one ordinal progression
+// e.g. ['a','b'][0,1,0] + ['c','d'][1,0,1] -> ['a','b'][0,1,0] + ['c','d'][3,2,3]
+function reEnumFields(frames: DataFrame[]) {
+  let allTextsByKey: Map<ScaleKey, string[]> = new Map();
+
+  let frames2: DataFrame[] = frames.map((frame) => {
+    return {
+      ...frame,
+      fields: frame.fields.map((field) => {
+        if (field.type === FieldType.enum) {
+          let scaleKey = buildScaleKey(field.config, field.type);
+          let allTexts = allTextsByKey.get(scaleKey);
+
+          if (!allTexts) {
+            allTexts = [];
+            allTextsByKey.set(scaleKey, allTexts);
+          }
+
+          let idxs: number[] = field.values.toArray().slice();
+          let txts = field.config.type!.enum!.text!;
+
+          // by-reference incrementing
+          if (allTexts.length > 0) {
+            for (let i = 0; i < idxs.length; i++) {
+              idxs[i] += allTexts.length;
+            }
+          }
+
+          allTexts.push(...txts);
+
+          // shared among all enum fields on same scale
+          field.config.type!.enum!.text! = allTexts;
+
+          return {
+            ...field,
+            values: new ArrayVector(idxs),
+          };
+
+          // TODO: update displayProcessor?
+        }
+
+        return field;
+      }),
+    };
+  });
+
+  return frames2;
+}
 
 /**
  * Returns null if there are no graphable fields
@@ -48,6 +102,17 @@ export function prepareGraphableFields(
     for (let field of frame.fields) {
       if (field.type === FieldType.time && typeof field.values[0] !== 'number') {
         field.values = convertFieldType(field, { destinationType: FieldType.time }).values;
+      }
+    }
+  }
+
+  let enumFieldsCount = 0;
+
+  loopy: for (let frame of series) {
+    for (let field of frame.fields) {
+      if (field.type === FieldType.enum && ++enumFieldsCount > 1) {
+        series = reEnumFields(series);
+        break loopy;
       }
     }
   }
@@ -94,6 +159,8 @@ export function prepareGraphableFields(
 
           fields.push(copy);
           break; // ok
+        case FieldType.enum:
+          hasValueField = true;
         case FieldType.string:
           copy = {
             ...field,
@@ -150,18 +217,37 @@ export function prepareGraphableFields(
 
   if (frames.length) {
     setClassicPaletteIdxs(frames, theme, 0);
+    matchEnumColorToSeriesColor(frames, theme);
     return frames;
   }
 
   return null;
 }
 
+const matchEnumColorToSeriesColor = (frames: DataFrame[], theme: GrafanaTheme2) => {
+  const { palette } = theme.visualization;
+  for (const frame of frames) {
+    for (const field of frame.fields) {
+      if (field.type === FieldType.enum) {
+        const namedColor = palette[field.state?.seriesIndex! % palette.length];
+        const hexColor = theme.visualization.getColorByName(namedColor);
+        const enumConfig = field.config.type!.enum!;
+
+        enumConfig.color = Array(enumConfig.text!.length).fill(hexColor);
+        field.display = getDisplayProcessor({ field, theme });
+      }
+    }
+  }
+};
+
 const setClassicPaletteIdxs = (frames: DataFrame[], theme: GrafanaTheme2, skipFieldIdx?: number) => {
   let seriesIndex = 0;
   frames.forEach((frame) => {
     frame.fields.forEach((field, fieldIdx) => {
-      // TODO: also add FieldType.enum type here after https://github.com/grafana/grafana/pull/60491
-      if (fieldIdx !== skipFieldIdx && (field.type === FieldType.number || field.type === FieldType.boolean)) {
+      if (
+        fieldIdx !== skipFieldIdx &&
+        (field.type === FieldType.number || field.type === FieldType.boolean || field.type === FieldType.enum)
+      ) {
         field.state = {
           ...field.state,
           seriesIndex: seriesIndex++, // TODO: skip this for fields with custom renderers (e.g. Candlestick)?
@@ -183,7 +269,8 @@ export function regenerateLinksSupplier(
   alignedDataFrame: DataFrame,
   frames: DataFrame[],
   replaceVariables: InterpolateFunction,
-  timeZone: string
+  timeZone: string,
+  dataLinkPostProcessor?: DataLinkPostProcessor
 ): DataFrame {
   alignedDataFrame.fields.forEach((field) => {
     if (field.state?.origin?.frameIndex === undefined || frames[field.state?.origin?.frameIndex] === undefined) {
@@ -212,7 +299,14 @@ export function regenerateLinksSupplier(
       length: alignedDataFrame.fields.length + tempFields.length,
     };
 
-    field.getLinks = getLinksSupplier(tempFrame, field, field.state!.scopedVars!, replaceVariables, timeZone);
+    field.getLinks = getLinksSupplier(
+      tempFrame,
+      field,
+      field.state!.scopedVars!,
+      replaceVariables,
+      timeZone,
+      dataLinkPostProcessor
+    );
   });
 
   return alignedDataFrame;

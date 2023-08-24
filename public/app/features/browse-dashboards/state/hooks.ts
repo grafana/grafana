@@ -144,10 +144,11 @@ export function createFlatTree(
   childrenByUID: BrowseDashboardsState['childrenByParentUID'],
   openFolders: Record<string, boolean>,
   level = 0,
-  excludeKinds: Array<DashboardViewItemWithUIItems['kind'] | UIDashboardViewItem['uiKind']> = []
+  excludeKinds: Array<DashboardViewItemWithUIItems['kind'] | UIDashboardViewItem['uiKind']> = [],
+  excludeUIDs: string[] = []
 ): DashboardsTreeItem[] {
   function mapItem(item: DashboardViewItem, parentUID: string | undefined, level: number): DashboardsTreeItem[] {
-    if (excludeKinds.includes(item.kind)) {
+    if (excludeKinds.includes(item.kind) || excludeUIDs.includes(item.uid)) {
       return [];
     }
 
@@ -157,7 +158,8 @@ export function createFlatTree(
       childrenByUID,
       openFolders,
       level + 1,
-      excludeKinds
+      excludeKinds,
+      excludeUIDs
     );
 
     const isOpen = Boolean(openFolders[item.uid]);
@@ -193,7 +195,16 @@ export function createFlatTree(
     return mapItem(item, folderUID, level);
   });
 
-  if ((level === 0 && !collection) || (isOpen && collection && !collection.isFullyLoaded)) {
+  // this is very custom to the folder picker right now
+  // we exclude dashboards, but if you have more than 1 page of dashboards collection.isFullyLoaded is false
+  // so we need to check that we're ignoring dashboards and we've fetched all the folders
+  // TODO generalize this properly (e.g. split state by kind?)
+  const isConsideredLoaded = excludeKinds.includes('dashboard') && collection?.lastFetchedKind === 'dashboard';
+
+  const showPlaceholders =
+    (level === 0 && !collection) || (isOpen && collection && !(collection.isFullyLoaded || isConsideredLoaded));
+
+  if (showPlaceholders) {
     children = children.concat(getPaginationPlaceholders(PAGE_SIZE, folderUID, level));
   }
 

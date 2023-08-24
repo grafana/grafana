@@ -88,7 +88,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       background: theme.colors.background.primary,
       boxShadow: theme.shadows.z3,
       display: 'inline-block',
-      borderRadius: theme.shape.borderRadius(),
+      borderRadius: theme.shape.radius.default,
     }),
     pushLeft: css({
       right: '100%',

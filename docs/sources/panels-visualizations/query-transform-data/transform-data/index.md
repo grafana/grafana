@@ -74,6 +74,8 @@ The input and output results sets can help you debug a transformation.
 
 You can disable or hide one or more transformations by clicking on the eye icon on the top right side of the transformation row. This disables the applied actions of that specific transformation and can help to identify issues when you change several transformations one after another.
 
+{{< figure src="/static/img/docs/transformations/screenshot-example-disable-transformation.png" class="docs-image--no-shadow" max-width= "1100px" >}}
+
 ## Filter a transformation
 
 If your panel uses more than one query, you can filter these and apply the selected transformation to only one of the queries. To do this, click the filter icon on the top right of the transformation row. This opens a drop-down with a list of queries used on the panel. From here, you can select the query you want to transform.
@@ -93,6 +95,8 @@ We recommend that you remove transformations that you don't need. When you delet
 1. Open a panel for editing.
 1. Click the **Transform** tab.
 1. Click the trash icon next to the transformation you want to delete.
+
+{{< figure src="/static/img/docs/transformations/screenshot-example-remove-transformation.png" class="docs-image--no-shadow" max-width= "1100px" >}}
 
 ## Transformation functions
 
@@ -971,3 +975,11 @@ This transformation is available in Grafana 9.5+ as an opt-in beta feature. Modi
 {{% /admonition %}}
 
 Use this transformation to convert time series result into a table, converting time series data frame into a "Trend" field. "Trend" field can then be rendered using [sparkline cell type]({{< relref "../../visualizations/table/#sparkline" >}}), producing an inline sparkline for each table row. If there are multiple time series queries, each will result in a separate table data frame. These can be joined using join or merge transforms to produce a single table with multiple sparklines per row.
+
+### Format Time
+
+{{% admonition type="note" %}}
+This transformation is available in Grafana 10.1+ as an alpha feature.
+{{% /admonition %}}
+
+Use this transformation to format the output of a time field. Output can be formatted using (Moment.js format strings)[https://momentjs.com/docs/#/displaying/]. For instance, if you would like to display only the year of a time field the format string `YYYY` can be used to show the calendar year (e.g. 1999, 2012, etc.).

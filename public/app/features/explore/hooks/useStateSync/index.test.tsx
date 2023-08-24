@@ -396,6 +396,40 @@ describe('useStateSync', () => {
     expect(store.getState().explore.panes['one']?.range.raw).toMatchObject({ from: 'now-6h', to: 'now' });
   });
 
+  it('Changes time range when the range in the URL is updated to absolute range', async () => {
+    const { waitForNextUpdate, rerender, store } = setup({
+      queryParams: {
+        panes: JSON.stringify({
+          one: { datasource: 'loki-uid', queries: [{ expr: 'a' }], range: { from: 'now-1h', to: 'now' } },
+        }),
+        schemaVersion: 1,
+      },
+    });
+
+    await waitForNextUpdate();
+
+    expect(store.getState().explore.panes['one']?.range.raw).toMatchObject({ from: 'now-1h', to: 'now' });
+
+    rerender({
+      children: null,
+      params: {
+        panes: JSON.stringify({
+          one: {
+            datasource: 'loki-uid',
+            queries: [{ expr: 'a' }],
+            range: { from: '1500000000000', to: '1500000001000' },
+          },
+        }),
+        schemaVersion: 1,
+      },
+    });
+
+    await waitForNextUpdate();
+
+    expect(store.getState().explore.panes['one']?.range.raw.from.valueOf().toString()).toEqual('1500000000000');
+    expect(store.getState().explore.panes['one']?.range.raw.to.valueOf().toString()).toEqual('1500000001000');
+  });
+
   it('uses the first query datasource if no root datasource is specified in the URL', async () => {
     const { waitForNextUpdate, store } = setup({
       queryParams: {

@@ -74,6 +74,18 @@ func parsePanelKey(rule history_model.RuleMeta, logger log.Logger) *PanelKey {
 	return nil
 }
 
+func (p PanelKey) OrgID() int64 {
+	return p.orgID
+}
+
+func (p PanelKey) DashUID() string {
+	return p.dashUID
+}
+
+func (p PanelKey) PanelID() int64 {
+	return p.panelID
+}
+
 func mergeLabels(base, into data.Labels) data.Labels {
 	for k, v := range into {
 		base[k] = v

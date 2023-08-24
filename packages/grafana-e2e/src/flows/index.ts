@@ -13,6 +13,7 @@ export * from './saveDashboard';
 export * from './selectOption';
 export * from './importDashboard';
 export * from './importDashboards';
+export * from './userPreferences';
 
 export {
   VISUALIZATION_ALERT_LIST,

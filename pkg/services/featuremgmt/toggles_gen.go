@@ -104,7 +104,7 @@ const (
 	FlagDataConnectionsConsole = "dataConnectionsConsole"
 
 	// FlagTopnav
-	// Enables new top navigation and page layouts
+	// Enables topnav support in external plugins. The new Grafana navigation cannot be disabled.
 	FlagTopnav = "topnav"
 
 	// FlagGrpcServer
@@ -148,16 +148,12 @@ const (
 	FlagNestedFolders = "nestedFolders"
 
 	// FlagNestedFolderPicker
-	// Enables the still in-development new folder picker to support nested folders
+	// Enables the new folder picker to work with nested folders. Requires the folderPicker feature flag
 	FlagNestedFolderPicker = "nestedFolderPicker"
 
 	// FlagAccessTokenExpirationCheck
 	// Enable OAuth access_token expiration check and token refresh using the refresh_token
 	FlagAccessTokenExpirationCheck = "accessTokenExpirationCheck"
-
-	// FlagShowTraceId
-	// Show trace ids for requests
-	FlagShowTraceId = "showTraceId"
 
 	// FlagEmptyDashboardPage
 	// Enable the redesigned user interface of a dashboard page that includes no panels
@@ -179,10 +175,6 @@ const (
 	// Stop maintaining state of alerts that are not firing
 	FlagAlertingNoNormalState = "alertingNoNormalState"
 
-	// FlagLogsSampleInExplore
-	// Enables access to the logs sample feature in Explore
-	FlagLogsSampleInExplore = "logsSampleInExplore"
-
 	// FlagLogsContextDatasourceUi
 	// Allow datasource to provide custom UI for context view
 	FlagLogsContextDatasourceUi = "logsContextDatasourceUi"
@@ -199,13 +191,9 @@ const (
 	// Support overriding cookie preferences per user
 	FlagIndividualCookiePreferences = "individualCookiePreferences"
 
-	// FlagOnlyExternalOrgRoleSync
-	// Prohibits a user from changing organization roles synced with external auth providers
-	FlagOnlyExternalOrgRoleSync = "onlyExternalOrgRoleSync"
-
-	// FlagTraceqlSearch
-	// Enables the &#39;TraceQL Search&#39; tab for the Tempo datasource which provides a UI to generate TraceQL queries
-	FlagTraceqlSearch = "traceqlSearch"
+	// FlagGcomOnlyExternalOrgRoleSync
+	// Prohibits a user from changing organization roles synced with Grafana Cloud auth provider
+	FlagGcomOnlyExternalOrgRoleSync = "gcomOnlyExternalOrgRoleSync"
 
 	// FlagPrometheusMetricEncyclopedia
 	// Adds the metrics explorer component to the Prometheus query builder as an option in metric select
@@ -271,10 +259,6 @@ const (
 	// Uses JWT-based auth for rendering instead of relying on remote cache
 	FlagRenderAuthJWT = "renderAuthJWT"
 
-	// FlagPyroscopeFlameGraph
-	// Changes flame graph to pyroscope one
-	FlagPyroscopeFlameGraph = "pyroscopeFlameGraph"
-
 	// FlagExternalServiceAuth
 	// Starts an OAuth2 authentication provider for external services
 	FlagExternalServiceAuth = "externalServiceAuth"
@@ -331,6 +315,10 @@ const (
 	// Enables previous SQL data source dataset dropdown behavior
 	FlagSqlDatasourceDatabaseSelection = "sqlDatasourceDatabaseSelection"
 
+	// FlagLokiFormatQuery
+	// Enables the ability to format Loki queries
+	FlagLokiFormatQuery = "lokiFormatQuery"
+
 	// FlagCloudWatchLogsMonacoEditor
 	// Enables the Monaco editor for CloudWatch Logs queries
 	FlagCloudWatchLogsMonacoEditor = "cloudWatchLogsMonacoEditor"
@@ -350,10 +338,6 @@ const (
 	// FlagAlertingLokiRangeToInstant
 	// Rewrites eligible loki range queries to instant queries
 	FlagAlertingLokiRangeToInstant = "alertingLokiRangeToInstant"
-
-	// FlagElasticToggleableFilters
-	// Enable support to toggle filters off from the query through the Logs Details component
-	FlagElasticToggleableFilters = "elasticToggleableFilters"
 
 	// FlagVizAndWidgetSplit
 	// Split panels between vizualizations and widgets
@@ -375,13 +359,17 @@ const (
 	// Enables the transformations redesign
 	FlagTransformationsRedesign = "transformationsRedesign"
 
+	// FlagToggleLabelsInLogsUI
+	// Enable toggleable filters in log details view
+	FlagToggleLabelsInLogsUI = "toggleLabelsInLogsUI"
+
 	// FlagMlExpressions
 	// Enable support for Machine Learning in server-side expressions
 	FlagMlExpressions = "mlExpressions"
 
-	// FlagDisableTraceQLStreaming
-	// Disables the option to stream the response of TraceQL queries of the Tempo data source
-	FlagDisableTraceQLStreaming = "disableTraceQLStreaming"
+	// FlagTraceQLStreaming
+	// Enables response streaming of TraceQL queries of the Tempo data source
+	FlagTraceQLStreaming = "traceQLStreaming"
 
 	// FlagGrafanaAPIServer
 	// Enable Kubernetes API Server for Grafana resources
@@ -390,4 +378,40 @@ const (
 	// FlagFeatureToggleAdminPage
 	// Enable admin page for managing feature toggles from the Grafana front-end
 	FlagFeatureToggleAdminPage = "featureToggleAdminPage"
+
+	// FlagAwsAsyncQueryCaching
+	// Enable caching for async queries for Redshift and Athena. Requires that the `useCachingService` feature toggle is enabled and the datasource has caching and async query support enabled
+	FlagAwsAsyncQueryCaching = "awsAsyncQueryCaching"
+
+	// FlagSplitScopes
+	// Support faster dashboard and folder search by splitting permission scopes into parts
+	FlagSplitScopes = "splitScopes"
+
+	// FlagAzureMonitorDataplane
+	// Adds dataplane compliant frame metadata in the Azure Monitor datasource
+	FlagAzureMonitorDataplane = "azureMonitorDataplane"
+
+	// FlagPermissionsFilterRemoveSubquery
+	// Alternative permission filter implementation that does not use subqueries for fetching the dashboard folder
+	FlagPermissionsFilterRemoveSubquery = "permissionsFilterRemoveSubquery"
+
+	// FlagPrometheusConfigOverhaulAuth
+	// Update the Prometheus configuration page with the new auth component
+	FlagPrometheusConfigOverhaulAuth = "prometheusConfigOverhaulAuth"
+
+	// FlagConfigurableSchedulerTick
+	// Enable changing the scheduler base interval via configuration option unified_alerting.scheduler_tick_interval
+	FlagConfigurableSchedulerTick = "configurableSchedulerTick"
+
+	// FlagInfluxdbSqlSupport
+	// Enable InfluxDB SQL query language support with new querying UI
+	FlagInfluxdbSqlSupport = "influxdbSqlSupport"
+
+	// FlagNoBasicRole
+	// Enables a new role that has no permissions by default
+	FlagNoBasicRole = "noBasicRole"
+
+	// FlagAlertingNoDataErrorExecution
+	// Changes how Alerting state manager handles execution of NoData/Error
+	FlagAlertingNoDataErrorExecution = "alertingNoDataErrorExecution"
 )

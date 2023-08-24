@@ -62,6 +62,7 @@
       "move": "Move"
     },
     "folder-picker": {
+      "accessible-label": "Select folder: {{ label }} currently selected",
       "button-label": "Select folder",
       "empty-message": "No folders found",
       "error-title": "Error loading folders",
@@ -253,6 +254,7 @@
     "error": {
       "blocked": "You have exceeded the number of login attempts for this user. Please try again later.",
       "invalid-user-or-password": "Invalid username or password",
+      "title": "Login failed",
       "unknown": "Unknown error occurred"
     }
   },
@@ -452,7 +454,7 @@
       "title": "Profile"
     },
     "profiles": {
-      "title": "Profiles (preview)"
+      "title": "Profiles"
     },
     "public": {
       "title": "Public dashboards"

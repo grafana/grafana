@@ -15,8 +15,6 @@ import { DashboardsTreeItem } from 'app/features/browse-dashboards/types';
 import { DashboardViewItem } from 'app/features/search/types';
 import { useSelector } from 'app/types';
 
-import { FolderUID } from './types';
-
 const ROW_HEIGHT = 40;
 const CHEVRON_SIZE = 'md';
 
@@ -27,7 +25,7 @@ interface NestedFolderListProps {
   focusedItemIndex: number;
   foldersAreOpenable: boolean;
   idPrefix: string;
-  selectedFolder: FolderUID | undefined;
+  selectedFolder: string | undefined;
   onFolderExpand: (uid: string, newOpenState: boolean) => void;
   onFolderSelect: (item: DashboardViewItem) => void;
   isItemLoaded: (itemIndex: number) => boolean;
@@ -209,9 +207,7 @@ function Row({ index, style: virtualStyles, data }: RowProps) {
         )}
 
         <label className={styles.label} id={labelId}>
-          <Text as="span" truncate>
-            {item.title}
-          </Text>
+          <Text truncate>{item.title}</Text>
         </label>
       </div>
     </div>

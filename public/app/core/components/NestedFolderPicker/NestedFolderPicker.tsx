@@ -1,13 +1,11 @@
 import { css } from '@emotion/css';
 import React, { useCallback, useId, useMemo, useState } from 'react';
-import Skeleton from 'react-loading-skeleton';
 import { usePopperTooltip } from 'react-popper-tooltip';
 import { useAsync } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Alert, Button, Icon, Input, LoadingBar, useStyles2 } from '@grafana/ui';
-import { Text } from '@grafana/ui/src/components/Text/Text';
-import { Trans, t } from 'app/core/internationalization';
+import { Alert, Icon, Input, LoadingBar, useStyles2 } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 import { skipToken, useGetFolderQuery } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
 import { PAGE_SIZE } from 'app/features/browse-dashboards/api/services';
 import {
@@ -26,19 +24,35 @@ import { DashboardViewItem } from 'app/features/search/types';
 import { useDispatch, useSelector } from 'app/types/store';
 
 import { getDOMId, NestedFolderList } from './NestedFolderList';
+import Trigger from './Trigger';
 import { useTreeInteractions } from './hooks';
-import { FolderChange, FolderUID } from './types';
 
-interface NestedFolderPickerProps {
-  value?: FolderUID;
-  // TODO: think properly (and pragmatically) about how to communicate moving to general folder,
-  // vs removing selection (if possible?)
-  onChange?: (folder: FolderChange) => void;
+export interface NestedFolderPickerProps {
+  /* Folder UID to show as selected */
+  value?: string;
+
+  /** Show an invalid state around the folder picker */
+  invalid?: boolean;
+
+  /* Whether to show the root 'Dashboards' (formally General) folder as selectable */
+  showRootFolder?: boolean;
+
+  /* Folder UIDs to exclude from the picker, to prevent invalid operations */
+  excludeUIDs?: string[];
+
+  /* Callback for when the user selects a folder */
+  onChange?: (folderUID: string, folderName: string) => void;
 }
 
 const EXCLUDED_KINDS = ['empty-folder' as const, 'dashboard' as const];
 
-export function NestedFolderPicker({ value, onChange }: NestedFolderPickerProps) {
+export function NestedFolderPicker({
+  value,
+  invalid,
+  showRootFolder = true,
+  excludeUIDs,
+  onChange,
+}: NestedFolderPickerProps) {
   const styles = useStyles2(getStyles);
   const dispatch = useDispatch();
   const selectedFolder = useGetFolderQuery(value || skipToken);
@@ -101,10 +115,7 @@ export function NestedFolderPicker({ value, onChange }: NestedFolderPickerProps)
   const handleFolderSelect = useCallback(
     (item: DashboardViewItem) => {
       if (onChange) {
-        onChange({
-          uid: item.uid,
-          title: item.title,
-        });
+        onChange(item.uid, item.title);
       }
       setOverlayOpen(false);
     },
@@ -137,25 +148,35 @@ export function NestedFolderPicker({ value, onChange }: NestedFolderPickerProps)
         items: searchResults.items ?? [],
       };
 
-      return createFlatTree(undefined, searchCollection, childrenCollections, {}, 0, EXCLUDED_KINDS);
+      return createFlatTree(undefined, searchCollection, childrenCollections, {}, 0, EXCLUDED_KINDS, excludeUIDs);
     }
 
-    let flatTree = createFlatTree(undefined, rootCollection, childrenCollections, folderOpenState, 0, EXCLUDED_KINDS);
+    let flatTree = createFlatTree(
+      undefined,
+      rootCollection,
+      childrenCollections,
+      folderOpenState,
+      0,
+      EXCLUDED_KINDS,
+      excludeUIDs
+    );
 
-    // Increase the level of each item to 'make way' for the fake root Dashboards item
-    for (const item of flatTree) {
-      item.level += 1;
+    if (showRootFolder) {
+      // Increase the level of each item to 'make way' for the fake root Dashboards item
+      for (const item of flatTree) {
+        item.level += 1;
+      }
+
+      flatTree.unshift({
+        isOpen: true,
+        level: 0,
+        item: {
+          kind: 'folder',
+          title: 'Dashboards',
+          uid: '',
+        },
+      });
     }
-
-    flatTree.unshift({
-      isOpen: true,
-      level: 0,
-      item: {
-        kind: 'folder',
-        title: 'Dashboards',
-        uid: '',
-      },
-    });
 
     // If the root collection hasn't loaded yet, create loading placeholders
     if (!rootCollection) {
@@ -163,7 +184,7 @@ export function NestedFolderPicker({ value, onChange }: NestedFolderPickerProps)
     }
 
     return flatTree;
-  }, [search, searchState.value, rootCollection, childrenCollections, folderOpenState]);
+  }, [search, searchState.value, rootCollection, childrenCollections, folderOpenState, excludeUIDs, showRootFolder]);
 
   const isItemLoaded = useCallback(
     (itemIndex: number) => {
@@ -198,22 +219,20 @@ export function NestedFolderPicker({ value, onChange }: NestedFolderPickerProps)
 
   if (!visible) {
     return (
-      <Button
+      <Trigger
+        label={label}
+        invalid={invalid}
+        isLoading={selectedFolder.isLoading}
         autoFocus={autoFocusButton}
-        className={styles.button}
-        variant="secondary"
-        icon={value !== undefined ? 'folder' : undefined}
         ref={setTriggerRef}
-        aria-label={label ? `Select folder: ${label} currently selected` : undefined}
-      >
-        {selectedFolder.isLoading ? (
-          <Skeleton width={100} />
-        ) : (
-          <Text as="span" truncate>
-            {label ?? <Trans i18nKey="browse-dashboards.folder-picker.button-label">Select folder</Trans>}
-          </Text>
-        )}
-      </Button>
+        aria-label={
+          label
+            ? t('browse-dashboards.folder-picker.accessible-label', 'Select folder: {{ label }} currently selected', {
+                label,
+              })
+            : undefined
+        }
+      />
     );
   }
 
@@ -222,8 +241,10 @@ export function NestedFolderPicker({ value, onChange }: NestedFolderPickerProps)
       <Input
         ref={setTriggerRef}
         autoFocus
+        prefix={label ? <Icon name="folder" /> : null}
         placeholder={label ?? t('browse-dashboards.folder-picker.search-placeholder', 'Search folders')}
         value={search}
+        invalid={invalid}
         className={styles.search}
         onKeyDown={handleKeyDown}
         onChange={(e) => setSearch(e.currentTarget.value)}
