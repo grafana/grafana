@@ -55,6 +55,12 @@ export interface PluginsAPIDashboardModel {
    */
   title: string;
   /**
+   * @readonly
+   * @deprecated use `getPanels()`
+   */
+  panels: PluginsAPIPanelModel[];
+
+  /**
    * The panels of the dashboard
    * Get the panels in the current dashboard
    *
@@ -62,9 +68,8 @@ export interface PluginsAPIDashboardModel {
    * and are not persisted.
    *
    * The user is responsible for saving the dashboard after any changes
-   * @readonly
    */
-  panels: PluginsAPIPanelModel[];
+  getPanels(): PluginsAPIPanelModel[];
 
   /**
    * Update the panels in the current dashboard by replacing them with
