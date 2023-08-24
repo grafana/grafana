@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/models/usertoken"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -19,8 +20,9 @@ import (
 
 type ReqContext struct {
 	*web.Context
-	*user.SignedInUser
-	UserToken *usertoken.UserToken
+	*user.SignedInUser // deprecated: to be replaced by identity.Requester
+	Requester          identity.Requester
+	UserToken          *usertoken.UserToken
 
 	IsSignedIn     bool
 	IsRenderCall   bool
