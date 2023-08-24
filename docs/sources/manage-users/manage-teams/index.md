@@ -18,7 +18,7 @@ Teams members are assigned one of two permissions:
 
 See the complete list of teams in your Grafana organization.
 
-{{< docs/shared "manage-users/view-team-list.md" >}}
+{{< docs/shared lookup="manage-users/view-team-list.md" source="grafana" version="<GRAFANA VERSION>" >}}
 
 ### Org Admin view
 
@@ -33,7 +33,7 @@ See the complete list of teams in your Grafana organization.
 Add a team to your Grafana organization.
 
 {{< docs/list >}}
-{{< docs/shared "manage-users/view-team-list.md" >}}
+{{< docs/shared lookup="manage-users/view-team-list.md" source="grafana" version="<GRAFANA VERSION>" >}}
 1. Click **New Team**.
 1. Enter team information:
    - **Name -** Enter the name of the new team.
@@ -46,7 +46,7 @@ Add a team to your Grafana organization.
 Add an existing user account to a team.
 
 {{< docs/list >}}
-{{< docs/shared "manage-users/view-team-list.md" >}}
+{{< docs/shared lookup="manage-users/view-team-list.md" source="grafana" version="<GRAFANA VERSION>" >}}
 1. Click the name of the team that you want to add users to.
 1. Click **Add member**.
 1. In the **Add team member** list, click the user account that you want to add to the team. You can also type in the field to filter the list.
@@ -61,7 +61,7 @@ Add an existing user account to a team.
 Remove a user account from the team.
 
 {{< docs/list >}}
-{{< docs/shared "manage-users/view-team-list.md" >}}
+{{< docs/shared lookup="manage-users/view-team-list.md" source="grafana" version="<GRAFANA VERSION>" >}}
 1. Click the name of the team that you want to remove users from.
 1. Click the red **X** next to the name of the user that you want to remove from the team and then click **Delete**.
 {{< /docs/list >}}
@@ -71,7 +71,7 @@ Remove a user account from the team.
 Change team member permission levels.
 
 {{< docs/list >}}
-{{< docs/shared "manage-users/view-team-list.md" >}}
+{{< docs/shared lookup="manage-users/view-team-list.md" source="grafana" version="<GRAFANA VERSION>" >}}
 1. Click the name of the team in which you want to change user permissions.
 1. In the team member list, find and click the user account that you want to change. You can use the search field to filter the list if necessary.
 1. Click the **Permission** list, and then click the new user permission level.
@@ -84,6 +84,6 @@ Change team member permission levels.
 Permanently delete the team and all special permissions assigned to it.
 
 {{< docs/list >}}
-{{< docs/shared "manage-users/view-team-list.md" >}}
+{{< docs/shared lookup="manage-users/view-team-list.md" source="grafana" version="<GRAFANA VERSION>" >}}
 1. Click the red **X** next to the team that you want to delete and then click **Delete**.
 {{< /docs/list >}}

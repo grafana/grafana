@@ -9,7 +9,7 @@ weight = 200
 
 In Grafana, you can modify the UI theme configured in the Settings or Preferences. Set the UI theme for the server, an organization, a team, or your personal user account using the instructions in this topic.
 
-{{< docs/shared "preferences/some-tasks-require-permissions.md" >}}
+{{< docs/shared lookup="preferences/some-tasks-require-permissions.md" source="grafana" version="<GRAFANA VERSION>" >}}
 
 ## Theme options
 
@@ -42,8 +42,8 @@ To see what the current settings are, refer to [View server settings]({{< relref
 Organization administrators can change the UI theme for all users in an organization.
 
 {{< docs/list >}}
-{{< docs/shared "preferences/org-preferences-list.md" >}}
-{{< docs/shared "preferences/select-ui-theme-list.md" >}}
+{{< docs/shared lookup="preferences/org-preferences-list.md" source="grafana" version="<GRAFANA VERSION>" >}}
+{{< docs/shared lookup="preferences/select-ui-theme-list.md" source="grafana" version="<GRAFANA VERSION>" >}}
 {{< /docs/list >}}
 
 ## Change team UI theme
@@ -51,9 +51,9 @@ Organization administrators can change the UI theme for all users in an organiza
 Organization and team administrators can change the UI theme for all users in a team.
 
 {{< docs/list >}}
-{{< docs/shared "manage-users/view-team-list.md" >}}
+{{< docs/shared lookup="manage-users/view-team-list.md" source="grafana" version="<GRAFANA VERSION>" >}}
 1. Click on the team that you want to change the UI theme for and then navigate to the **Settings** tab.
-{{< docs/shared "preferences/select-ui-theme-list.md" >}}
+{{< docs/shared lookup="preferences/select-ui-theme-list.md" source="grafana" version="<GRAFANA VERSION>" >}}
 {{< /docs/list >}}
 
 ## Change your personal UI theme
@@ -61,6 +61,6 @@ Organization and team administrators can change the UI theme for all users in a 
 You can change the UI theme for your user account. This setting overrides UI theme settings at higher levels.
 
 {{< docs/list >}}
-{{< docs/shared "preferences/navigate-user-preferences-list.md" >}}
-{{< docs/shared "preferences/select-ui-theme-list.md" >}}
+{{< docs/shared lookup="preferences/navigate-user-preferences-list.md" source="grafana" version="<GRAFANA VERSION>" >}}
+{{< docs/shared lookup="preferences/select-ui-theme-list.md" source="grafana" version="<GRAFANA VERSION>" >}}
 {{< /docs/list >}}

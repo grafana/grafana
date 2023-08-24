@@ -7,9 +7,9 @@ weight = 250
 
 # Getting started with Grafana and InfluxDB
 
-{{< docs/shared "influxdb/intro.md" >}}
+{{< docs/shared lookup="influxdb/intro.md" source="grafana" version="<GRAFANA VERSION>" >}}
 
-{{< docs/shared "getting-started/first-step.md" >}}
+{{< docs/shared lookup="getting-started/first-step.md" source="grafana" version="<GRAFANA VERSION>" >}}
 
 ## Step 2. Get InfluxDB
 
