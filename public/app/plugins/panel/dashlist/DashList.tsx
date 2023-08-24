@@ -172,7 +172,7 @@ export function DashList(props: PanelProps<Options>) {
                 {dash.folderTitle && <div className={css.dashlistFolder}>{dash.folderTitle}</div>}
               </div>
               <IconButton
-                tooltip={dash.isStarred ? `Unmark as favorite` : `Mark as favorite`}
+                tooltip={dash.isStarred ? `Unmark "${dash.title}" as favorite` : `Mark "${dash.title}" as favorite`}
                 name={dash.isStarred ? 'favorite' : 'star'}
                 iconType={dash.isStarred ? 'mono' : 'default'}
                 onClick={(e) => toggleDashboardStar(e, dash)}
