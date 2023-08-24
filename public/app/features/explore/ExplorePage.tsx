@@ -14,6 +14,7 @@ import { CorrelationEditorModeBar } from './CorrelationEditorModeBar';
 import { ExploreActions } from './ExploreActions';
 import { ExplorePaneContainer } from './ExplorePaneContainer';
 import { useExplorePageTitle } from './hooks/useExplorePageTitle';
+import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { useSplitSizeUpdater } from './hooks/useSplitSizeUpdater';
 import { useStateSync } from './hooks/useStateSync';
 import { useTimeSrvFix } from './hooks/useTimeSrvFix';
@@ -34,7 +35,7 @@ export default function ExplorePage(props: GrafanaRouteComponentProps<{}, Explor
   // if we were to update the URL on state change, the title would not match the URL.
   // Ultimately the URL is the single source of truth from which state is derived, the page title is not different
   useExplorePageTitle(props.queryParams);
-  const { keybindings, chrome } = useGrafana();
+  const { chrome } = useGrafana();
   const navModel = useNavModel('explore');
   const dispatch = useDispatch();
   const { updateSplitSize, widthCalc } = useSplitSizeUpdater(MIN_PANE_WIDTH);
@@ -68,9 +69,7 @@ export default function ExplorePage(props: GrafanaRouteComponentProps<{}, Explor
     }
   }, [chrome, isCorrelationsEditorMode, navModel, dispatch, panes]);
 
-  useEffect(() => {
-    keybindings.setupTimeRangeBindings(false);
-  }, [keybindings]);
+  useKeyboardShortcuts();
 
   return (
     <div

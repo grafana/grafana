@@ -22,6 +22,10 @@ import {
   UnwrapExpr,
   DistinctFilter,
   DistinctLabel,
+  DropLabelsExpr,
+  KeepLabelsExpr,
+  DropLabels,
+  KeepLabels,
 } from '@grafana/lezer-logql';
 
 import { getLogQueryFromMetricsQuery } from '../../../queryUtils';
@@ -131,6 +135,10 @@ export type Situation =
   | {
       type: 'AFTER_DISTINCT';
       logQuery: string;
+    }
+  | {
+      type: 'AFTER_KEEP_AND_DROP';
+      logQuery: string;
     };
 
 type Resolver = {
@@ -204,6 +212,22 @@ const RESOLVERS: Resolver[] = [
   {
     path: [ERROR_NODE_ID, DistinctLabel],
     fun: resolveAfterDistinct,
+  },
+  {
+    path: [ERROR_NODE_ID, DropLabelsExpr],
+    fun: resolveAfterKeepAndDrop,
+  },
+  {
+    path: [ERROR_NODE_ID, DropLabels],
+    fun: resolveAfterKeepAndDrop,
+  },
+  {
+    path: [ERROR_NODE_ID, KeepLabelsExpr],
+    fun: resolveAfterKeepAndDrop,
+  },
+  {
+    path: [ERROR_NODE_ID, KeepLabels],
+    fun: resolveAfterKeepAndDrop,
   },
 ];
 
@@ -528,6 +552,28 @@ function resolveAfterDistinct(node: SyntaxNode, text: string, pos: number): Situ
 
   return {
     type: 'AFTER_DISTINCT',
+    logQuery,
+  };
+}
+
+function resolveAfterKeepAndDrop(node: SyntaxNode, text: string, pos: number): Situation | null {
+  let logQuery = getLogQueryFromMetricsQuery(text).trim();
+  let keepAndDropParent: SyntaxNode | null = null;
+  let parent = node.parent;
+  while (parent !== null) {
+    if (parent.type.id === PipelineStage) {
+      keepAndDropParent = parent;
+      break;
+    }
+    parent = parent.parent;
+  }
+
+  if (keepAndDropParent?.type.id === PipelineStage) {
+    logQuery = logQuery.slice(0, keepAndDropParent.from);
+  }
+
+  return {
+    type: 'AFTER_KEEP_AND_DROP',
     logQuery,
   };
 }
