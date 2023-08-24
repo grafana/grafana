@@ -43,6 +43,7 @@ func (u *SignedInUser) NameOrFallback() string {
 	return u.Email
 }
 
+// TODO: what are we going to do with this?
 func (u *SignedInUser) ToUserDisplayDTO() *UserDisplayDTO {
 	return &UserDisplayDTO{
 		ID:    u.UserID,
