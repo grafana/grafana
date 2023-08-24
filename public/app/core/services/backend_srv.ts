@@ -151,19 +151,18 @@ export class BackendSrv implements BackendService {
     }
 
     options = this.parseRequestOptions(options);
-    if (!options.headers) {
-      options.headers = {};
-    }
 
     const token = loadUrlToken();
     if (token !== null && token !== '') {
       if (config.jwtUrlLogin && config.jwtHeaderName) {
+        options.headers = options.headers ?? {};
         options.headers[config.jwtHeaderName] = `${token}`;
       }
     }
 
     // Add device id header if not OSS build
     if (config.buildInfo.edition !== GrafanaEdition.OpenSource && this.deviceID) {
+      options.headers = options.headers ?? {};
       options.headers['X-Grafana-Device-Id'] = `${this.deviceID}`;
     }
 
