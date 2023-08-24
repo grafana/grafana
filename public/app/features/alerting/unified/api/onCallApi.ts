@@ -1,4 +1,5 @@
 import { GRAFANA_ONCALL_INTEGRATION_TYPE } from '../components/receivers/grafanaAppReceivers/onCall/onCall';
+import { SupportedPlugin } from '../types/pluginBridges';
 
 import { alertingApi } from './alertingApi';
 
@@ -14,7 +15,7 @@ export interface OnCallPaginatedResult<T> {
   results: T[];
 }
 
-type AlertReceiveChannesResult = OnCallPaginatedResult<OnCallIntegrationDTO> | OnCallIntegrationDTO[];
+type AlertReceiveChannelsResult = OnCallPaginatedResult<OnCallIntegrationDTO> | OnCallIntegrationDTO[];
 
 export interface OnCallIntegrationDTO {
   value: string;
@@ -27,15 +28,17 @@ export interface CreateIntegrationDTO {
   verbal_name: string;
 }
 
+const getProxyApiUrl = (path: string) => `/api/plugin-proxy/${SupportedPlugin.OnCall}${path}`;
+
 export const onCallApi = alertingApi.injectEndpoints({
   endpoints: (build) => ({
     grafanaOnCallIntegrations: build.query<OnCallIntegrationDTO[], void>({
       query: () => ({
-        url: '/api/plugin-proxy/grafana-oncall-app/api/internal/v1/alert_receive_channels/',
+        url: getProxyApiUrl('/api/internal/v1/alert_receive_channels/'),
         // legacy_grafana_alerting is necessary for OnCall. We no need to differentiate between these two on our side
         params: { filters: true, integration: [GRAFANA_ONCALL_INTEGRATION_TYPE, 'legacy_grafana_alerting'] },
       }),
-      transformResponse: (response: AlertReceiveChannesResult) => {
+      transformResponse: (response: AlertReceiveChannelsResult) => {
         if (isPaginatedResponse(response)) {
           return response.results;
         }
@@ -45,29 +48,30 @@ export const onCallApi = alertingApi.injectEndpoints({
     }),
     validateIntegrationName: build.query<boolean, string>({
       query: (name) => ({
-        url: `/api/plugin-proxy/grafana-oncall-app/api/internal/v1/alert_receive_channels/validate_name/`,
+        url: getProxyApiUrl('/api/internal/v1/alert_receive_channels/validate_name/'),
         params: { verbal_name: name },
         showErrorAlert: false,
       }),
     }),
     createIntegration: build.mutation<NewOnCallIntegrationDTO, CreateIntegrationDTO>({
       query: (integration) => ({
-        url: '/api/plugin-proxy/grafana-oncall-app/api/internal/v1/alert_receive_channels/',
+        url: getProxyApiUrl('/api/internal/v1/alert_receive_channels/'),
         data: integration,
         method: 'POST',
+        showErrorAlert: true,
       }),
       invalidatesTags: ['OnCallIntegrations'],
     }),
     features: build.query<string[], void>({
       query: () => ({
-        url: '/api/plugin-proxy/grafana-oncall-app/api/internal/v1/features/',
+        url: getProxyApiUrl('/api/internal/v1/features/'),
       }),
     }),
   }),
 });
 
 function isPaginatedResponse(
-  response: AlertReceiveChannesResult
+  response: AlertReceiveChannelsResult
 ): response is OnCallPaginatedResult<OnCallIntegrationDTO> {
   return 'results' in response && Array.isArray(response.results);
 }

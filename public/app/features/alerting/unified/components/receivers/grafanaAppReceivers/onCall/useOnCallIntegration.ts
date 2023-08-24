@@ -119,7 +119,7 @@ export function useOnCallIntegration() {
     };
   }, [grafanaOnCallIntegrations, validateIntegrationNameQuery, isAlertingV2IntegrationEnabled]);
 
-  const extendOnCalReceivers = useCallback(
+  const extendOnCallReceivers = useCallback(
     (receiver: Receiver): Receiver => {
       if (!isAlertingV2IntegrationEnabled) {
         return receiver;
@@ -160,6 +160,9 @@ export function useOnCallIntegration() {
 
       return produce(receiver, (draft) => {
         draft.grafana_managed_receiver_configs?.forEach((c) => {
+          // Clean up the settings before sending the receiver to the backend
+          // The settings object can contain any additional data but integration type and name are purely frontend thing
+          // and should not be sent and kept in the backend
           if (c.type === ReceiverTypes.OnCall) {
             delete c.settings[OnCallIntegrationSetting.IntegrationType];
             delete c.settings[OnCallIntegrationSetting.IntegrationName];
@@ -239,7 +242,7 @@ export function useOnCallIntegration() {
       iconUrl: GRAFANA_APP_RECEIVERS_SOURCE_IMAGE[SupportedPlugin.OnCall],
     },
     extendOnCallNotifierFeatures,
-    extendOnCalReceivers,
+    extendOnCallReceivers,
     createOnCallIntegrations,
     onCallFormValidators,
     isLoadingOnCallIntegration: isLoadingOnCallIntegrations || isOnCallStatusLoading,

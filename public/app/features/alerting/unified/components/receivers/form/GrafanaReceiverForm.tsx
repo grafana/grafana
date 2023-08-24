@@ -48,7 +48,7 @@ export const GrafanaReceiverForm = ({ existing, alertManagerSourceName, config }
   const {
     onCallNotifierMeta,
     extendOnCallNotifierFeatures,
-    extendOnCalReceivers,
+    extendOnCallReceivers,
     onCallFormValidators,
     createOnCallIntegrations,
     isLoadingOnCallIntegration,
@@ -69,8 +69,8 @@ export const GrafanaReceiverForm = ({ existing, alertManagerSourceName, config }
       return [undefined, {}];
     }
 
-    return grafanaReceiverToFormValues(extendOnCalReceivers(existing), grafanaNotifiers);
-  }, [existing, isLoadingNotifiers, grafanaNotifiers, extendOnCalReceivers, isLoadingOnCallIntegration]);
+    return grafanaReceiverToFormValues(extendOnCallReceivers(existing), grafanaNotifiers);
+  }, [existing, isLoadingNotifiers, grafanaNotifiers, extendOnCallReceivers, isLoadingOnCallIntegration]);
 
   const onSubmit = async (values: ReceiverFormValues<GrafanaChannelValues>) => {
     const newReceiver = formValuesToGrafanaReceiver(values, id2original, defaultChannelValues, grafanaNotifiers);

@@ -32,9 +32,9 @@ describe('useOnCallIntegration', () => {
 
       await waitFor(() => expect(result.current.isLoadingOnCallIntegration).toBe(false));
 
-      const { extendOnCalReceivers } = result.current;
+      const { extendOnCallReceivers } = result.current;
 
-      const receiver = extendOnCalReceivers({
+      const receiver = extendOnCallReceivers({
         name: 'OnCall Conctact point',
         grafana_managed_receiver_configs: [
           {
@@ -141,9 +141,9 @@ describe('useOnCallIntegration', () => {
 
       await waitFor(() => expect(result.current.isLoadingOnCallIntegration).toBe(false));
 
-      const { extendOnCalReceivers } = result.current;
+      const { extendOnCallReceivers } = result.current;
 
-      const receiver = extendOnCalReceivers({
+      const receiver = extendOnCallReceivers({
         name: 'OnCall Conctact point',
         grafana_managed_receiver_configs: [
           {
@@ -195,9 +195,9 @@ describe('useOnCallIntegration', () => {
 
       await waitFor(() => expect(result.current.isLoadingOnCallIntegration).toBe(false));
 
-      const { extendOnCalReceivers } = result.current;
+      const { extendOnCallReceivers } = result.current;
 
-      const receiver = extendOnCalReceivers({
+      const receiver = extendOnCallReceivers({
         name: 'OnCall Conctact point',
         grafana_managed_receiver_configs: [
           {

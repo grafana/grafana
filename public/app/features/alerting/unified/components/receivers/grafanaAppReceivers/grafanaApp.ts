@@ -15,13 +15,7 @@ export const useGetGrafanaReceiverTypeChecker = () => {
   const getGrafanaReceiverType = (receiver: Receiver): SupportedPlugin | undefined => {
     //CHECK FOR ONCALL PLUGIN
     const onCallIntegrations = data ?? [];
-    if (
-      isOnCallEnabled &&
-      isOnCallReceiver(
-        receiver,
-        onCallIntegrations.map((i) => i.integration_url)
-      )
-    ) {
+    if (isOnCallEnabled && isOnCallReceiver(receiver, onCallIntegrations)) {
       return SupportedPlugin.OnCall;
     }
     //WE WILL ADD IN HERE IF THERE ARE MORE TYPES TO CHECK
