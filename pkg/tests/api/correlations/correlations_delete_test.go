@@ -242,6 +242,7 @@ func TestIntegrationDeleteCorrelation(t *testing.T) {
 			user: adminUser,
 		})
 		require.Equal(t, http.StatusOK, res.StatusCode)
+		require.NoError(t, res.Body.Close())
 
 		res = ctx.Get(GetParams{
 			url:  "/api/datasources/correlations",
