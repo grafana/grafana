@@ -20,6 +20,7 @@ var hexLetters = []rune("abcdef")
 var (
 	ErrUIDTooLong       = fmt.Errorf("UID is longer than %d symbols", MaxUIDLength)
 	ErrUIDFormatInvalid = errors.New("invalid format of UID. Only letters, numbers, '-' and '_' are allowed")
+	ErrUIDEmpty         = fmt.Errorf("UID is empty")
 )
 
 // We want to protect our number generator as they are not thread safe. Not using
@@ -63,6 +64,9 @@ func GenerateShortUID() string {
 
 // ValidateUID checks the format and length of the string and returns error if it does not pass the condition
 func ValidateUID(uid string) error {
+	if len(uid) == 0 {
+		return ErrUIDEmpty
+	}
 	if IsShortUIDTooLong(uid) {
 		return ErrUIDTooLong
 	}
