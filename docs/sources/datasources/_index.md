@@ -1,6 +1,6 @@
 +++
 title = "Data sources"
-aliases = ["/docs/grafana/latest/datasources/overview/"]
+aliases = ["/docs/grafana/v7.4/datasources/overview/"]
 weight = 60
 +++
 
@@ -19,7 +19,7 @@ The following data sources are officially supported:
 - [AWS CloudWatch]({{< relref "cloudwatch.md" >}})
 - [Azure Monitor]({{< relref "azuremonitor.md" >}})
 - [Elasticsearch]({{< relref "elasticsearch.md" >}})
-- [Google Cloud Monitoring]({{< relref "cloudmonitoring.md" >}})
+- [Google Cloud Monitoring]({{< relref "google-cloud-monitoring/_index.md" >}})
 - [Graphite]({{< relref "graphite.md" >}})
 - [InfluxDB]({{< relref "influxdb.md" >}})
 - [Loki]({{< relref "loki.md" >}})

@@ -1,7 +1,7 @@
 +++
 title = "Legacy app plugins"
 keywords = ["grafana", "plugins", "documentation"]
-aliases = ["/docs/grafana/latest/plugins/developing/apps/"]
+aliases = ["/docs/grafana/v7.4/plugins/developing/apps/"]
 +++
 
 # Legacy app plugins
@@ -10,7 +10,7 @@ App plugins are Grafana plugins that can bundle data source and panel plugins wi
 
 Data source and panel plugins will show up like normal plugins. The app pages will be available in the main menu.
 
-{{< imgbox img="/img/docs/v3/app-in-main-menu.png" caption="App in Main Menu" >}}
+{{< figure class="float-right"  src="/static/img/docs/v3/app-in-main-menu.png" caption="App in Main Menu" >}}
 
 ## Enabling app plugins
 
@@ -45,7 +45,7 @@ ConfigCtrl.templateUrl = 'components/config/config.html';
 
 If possible, a link to a dashboard or custom page should be shown after enabling the app to guide the user to the appropriate place.
 
-{{< imgbox img="/img/docs/app_plugin_after_enable.png" caption="After enabling" >}}
+{{< figure class="float-right"  src="/static/img/docs/app_plugin_after_enable.png" caption="After enabling" >}}
 
 ### Develop your own App
 

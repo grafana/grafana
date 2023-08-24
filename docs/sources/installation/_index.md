@@ -2,7 +2,7 @@
 title = "Installation"
 description = "Installation guide for Grafana"
 keywords = ["grafana", "installation", "documentation"]
-aliases = ["/docs/grafana/latest/installation/installation/", "/docs/grafana/v2.1/installation/install/", "/docs/grafana/latest/install"]
+aliases = ["/docs/grafana/v7.4/installation/installation/", "/docs/grafana/v2.1/installation/install/", "/docs/grafana/v7.4/install"]
 weight = 30
 +++
 
@@ -17,3 +17,5 @@ This section discusses the hardware and software requirements as well as the pro
 - [Install on Windows]({{< relref "windows" >}})
 - [Run Docker image]({{< relref "docker" >}})
 
+Refer to [Upgrade Grafana]({{< relref "upgrading.md" >}}) topic. If you need to restart Grafana, refer to the [Restart Grafana]({{< relref "Restart-grafana.md" >}})
+topic for detailed information.

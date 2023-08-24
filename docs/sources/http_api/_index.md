@@ -2,7 +2,7 @@
 title = "HTTP API"
 description = "Grafana HTTP API"
 keywords = ["grafana", "http", "documentation", "api", "overview"]
-aliases = ["/docs/grafana/latest/overview"]
+aliases = ["/docs/grafana/v7.4/overview"]
 weight = 170
 +++
 

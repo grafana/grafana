@@ -1,6 +1,6 @@
 +++
 title = "Add a data source variable"
-aliases = ["/docs/grafana/latest/variables/add-data-source-variable.md"]
+aliases = ["/docs/grafana/v7.4/variables/add-data-source-variable.md"]
 weight = 500
 +++
 

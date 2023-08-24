@@ -1,7 +1,7 @@
 +++
 title = "Alert list panel"
 keywords = ["grafana", "alert list", "documentation", "panel", "alertlist"]
-aliases = ["/docs/grafana/latest/reference/alertlist/", "/docs/grafana/latest/features/panels/alertlist/"]
+aliases = ["/docs/grafana/v7.4/reference/alertlist/", "/docs/grafana/v7.4/features/panels/alertlist/"]
 weight = 100
 +++
 
@@ -9,7 +9,7 @@ weight = 100
 
 The Alert list panel allows you to display your dashboards alerts. You can configure the list to show current state or recent state changes. You can read more about alerts in [Alerts overview]({{< relref "../../alerting/_index.md" >}}).
 
-{{< docs-imagebox img="/img/docs/v45/alert-list-panel.png" max-width="850px" >}}
+{{< figure src="/static/img/docs/v45/alert-list-panel.png" max-width="850px" >}}
 
 Use these settings to refine your visualization.
 

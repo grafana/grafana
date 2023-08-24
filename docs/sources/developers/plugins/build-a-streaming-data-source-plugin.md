@@ -76,12 +76,17 @@ Grafana uses [RxJS](https://rxjs.dev/) to continuously send data from a data sou
 1. Use `subscriber.next()` to send the updated data frame whenever you receive new updates.
 
    ```ts
+   import { LoadingState } from '@grafana/data';
+   ```
+
+   ```ts
    const intervalId = setInterval(() => {
      frame.add({ time: Date.now(), value: Math.random() });
 
      subscriber.next({
        data: [frame],
        key: query.refId,
+       state: LoadingState.Streaming,
      });
    }, 500);
 

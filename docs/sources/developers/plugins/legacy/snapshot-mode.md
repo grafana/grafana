@@ -1,15 +1,15 @@
 +++
 title = "Legacy snapshot mode"
-aliases = ["/docs/grafana/latest/plugins/developing/snapshot-mode/"]
+aliases = ["/docs/grafana/v7.4/plugins/developing/snapshot-mode/"]
 +++
 
 # Legacy snapshot mode
 
-{{< imgbox img="/img/docs/Grafana-snapshot-example.png" caption="A dashboard using snapshot data and not live data." >}}
+{{< figure class="float-right"  src="/static/img/docs/Grafana-snapshot-example.png" caption="A dashboard using snapshot data and not live data." >}}
 
 Grafana has this great feature where you can [save a snapshot of your dashboard]({{< relref "../../../dashboards/json-model.md" >}}). Instead of sending a screenshot of a dashboard to someone, you can send them a working, interactive Grafana dashboard with the snapshot data embedded inside it. The snapshot can be saved on your Grafana server and is available to all your co-workers. Raintank also hosts a [snapshot server](http://snapshot.raintank.io/) if you want to send the snapshot to someone who does not have access to your Grafana server.
 
-{{< imgbox img="/img/docs/animated_gifs/snapshots.gif" caption="Selecting a snapshot" >}}
+{{< figure class="float-right"  src="/static/img/docs/animated_gifs/snapshots.gif" caption="Selecting a snapshot" >}}
 
 This all works because Grafana saves a snapshot of the current data in the dashboard json instead of fetching the data from a data source. However, if you are building a custom panel plugin then this will not work straight out of the box. You will need to make some small (and easy!) changes first.
 
@@ -41,7 +41,7 @@ This will cover most use cases for snapshot support. Sometimes you will want to 
 
 Data that is not time series data from a Grafana data source is not saved automatically by Grafana. Saving custom data for snapshot mode has to be done manually.
 
-{{< imgbox img="/img/docs/Grafana-save-snapshot.png" caption="Save snapshot" >}}
+{{< figure class="float-right"  src="/static/img/docs/Grafana-save-snapshot.png" caption="Save snapshot" >}}
 
 Grafana gives us a chance to save data to the dashboard json when it is creating a snapshot. In the 'data-received' event handler, you can check the snapshot flag on the dashboard object. If this is true, then Grafana is creating a snapshot and you can manually save custom data to the panel json. In the example, a new field called snapshotLocationData in the panel json is initialized with a snapshot of the custom data.
 

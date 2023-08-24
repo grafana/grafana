@@ -2,7 +2,7 @@
 title = "HTTP Preferences API "
 description = "Grafana HTTP API"
 keywords = ["grafana", "http", "documentation", "api", "preferences"]
-aliases = ["/docs/grafana/latest/http_api/preferences/"]
+aliases = ["/docs/grafana/v7.4/http_api/preferences/"]
 +++
 
 # User and Org Preferences API

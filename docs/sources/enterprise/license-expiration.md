@@ -1,5 +1,5 @@
 +++
-title = "License Expiration"
+title = "License expiration"
 description = ""
 keywords = ["grafana", "licensing"]
 weight = 120
@@ -7,7 +7,7 @@ weight = 120
 
 # License expiration
 
-If your license has expired most of Grafana keeps working as normal. Some enterprise functionality stops or runs with reduced functionality and Grafana displays a banner informing the users that Grafana is running on an expired license. Your Grafana admin needs to upload a new license file to restore full functionality.
+If your license has expired, most of Grafana keeps working as normal. Some enterprise functionality stops or runs with reduced functionality and Grafana displays a banner informing the users that Grafana is running on an expired license. Your Grafana admin needs to upload a new license file to restore full functionality.
 
 > Replace your license as soon as possible. Running Grafana Enterprise with an expired license is unsupported and can lead to unexpected consequences.
 
@@ -47,7 +47,7 @@ SAML authentication is not affected by an expired license.
 ### Reporting
 
 - You're unable to configure new reports or generate previews.
-- Scheduled reports are not generated or sent.
+- Existing reports continue to be sent.
 
 ### Enterprise plugins
 
@@ -59,7 +59,9 @@ The white labeling feature is turned off, meaning that any white labeling option
 
 ### Usage insights
 
-All the usage insights features are turned off, meaning that you won't be able to look at dashboard usage, presence indicator or to use improved search. Grafana still collects usage data and you will have access to it as soon as you update your license.
+Exporting usage insights logs to Loki will be turned off for licenses expired for more than 7 days.
+
+All the other usage insights features are turned off as soon as the license expires, meaning that you will not be able to see dashboard usage, presence indicators, or use improved search. Grafana continues to collect usage data and you will have access to it as soon as you update your license.
 
 ### Vault integration
 

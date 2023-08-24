@@ -2,7 +2,7 @@
 title = "What's new in Grafana v4.5"
 description = "Feature and improvement highlights for Grafana v4.5"
 keywords = ["grafana", "new", "documentation", "4.5", "release notes"]
-aliases = ["/docs/grafana/latest/guides/whats-new-in-v4-5/"]
+aliases = ["/docs/grafana/v7.4/guides/whats-new-in-v4-5/"]
 weight = -12
 [_build]
 list = false
@@ -16,20 +16,20 @@ list = false
 
 The new query editor has full syntax highlighting. As well as auto complete for metrics, functions, and range vectors. There are also integrated function docs right from the query editor!
 
-{{< docs-imagebox img="/img/docs/v45/prometheus_query_editor_still.png" class="docs-image--block" animated-gif="/img/docs/v45/prometheus_query_editor.gif" >}}
+{{< figure src="/static/img/docs/v45/prometheus_query_editor_still.png" class="docs-image--block" animated-gif="/static/img/docs/v45/prometheus_query_editor.gif" >}}
 
 ### Elasticsearch: Add ad-hoc filters from the table panel
 
-{{< docs-imagebox img="/img/docs/v45/elastic_ad_hoc_filters.png" class="docs-image--block" >}}
+{{< figure src="/static/img/docs/v45/elastic_ad_hoc_filters.png" class="docs-image--block" >}}
 
 ### Table cell links!
 Create column styles that turn cells into links that use the value in the cell  (or other row values) to generate a URL to another dashboard or system:
-![](/img/docs/v45/table_links.jpg)
+![](/static/img/docs/v45/table_links.jpg)
 
 ### Query Inspector
 Query Inspector is a new feature that shows query requests and responses. This can be helpful if a graph is not shown or shows something very different than what you expected.
 For more information about query inspector, refer to [using grafanas query inspector to troubleshoot issues](https://community.grafana.com/t/using-grafanas-query-inspector-to-troubleshoot-issues/2630).
-![](/img/docs/v45/query_inspector.png)
+![](/static/img/docs/v45/query_inspector.png)
 
 ## Changelog
 

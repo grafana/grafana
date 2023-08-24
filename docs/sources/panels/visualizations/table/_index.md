@@ -1,7 +1,7 @@
 +++
 title = "Table panel"
 keywords = ["grafana", "dashboard", "documentation", "panels", "table panel"]
-aliases = ["/docs/grafana/latest/reference/table/", "/docs/grafana/latest/features/panels/table_panel/"]
+aliases = ["/docs/grafana/v7.4/reference/table/", "/docs/grafana/v7.4/features/panels/table_panel/"]
 weight = 1000
 +++
 
@@ -9,7 +9,7 @@ weight = 1000
 
 The table panel is very flexible, supporting multiple modes for time series and for tables, annotation, and raw JSON data. This panel also provides date formatting, value formatting, and coloring options.
 
-{{< docs-imagebox img="/img/docs/tables/table_visualization.png" max-width="1200px" lightbox="true" caption="Table visualization" >}}
+{{< figure src="/static/img/docs/tables/table_visualization.png" max-width="1200px" lightbox="true" caption="Table visualization" >}}
 
 ## Data and field options
 
@@ -26,7 +26,7 @@ Table visualizations allow you to apply:
 - **Show header -** Show or hide column names imported from your data source.
 - **Sort ascending/descending -** Click a column title to change the sort order from default to descending to ascending. Each time you click, the sort order changes to the next option in the cycle. You can only sort by one column at a time.
 
-  ![Sort descending](/img/docs/tables/sort-descending.png "Sort descending")
+  ![Sort descending](/static/img/docs/tables/sort-descending.png "Sort descending")
 
 - [Table field options]({{< relref "table-field-options.md" >}}) allow you to change [field options]({{< relref "../../field-options/_index.md" >}}) such as column width, alignment, and cell display mode.
 - [Filter table columns]({{< relref "filter-table-columns.md" >}}) - You can temporarily change how column data is displayed. For example, you can order values from highest to lowest or hide specific values.

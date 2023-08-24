@@ -2,7 +2,7 @@
 title = "InfluxDB"
 description = "Guide for using InfluxDB in Grafana"
 keywords = ["grafana", "influxdb", "guide", "flux"]
-aliases = ["/docs/grafana/latest/features/datasources/influxdb"]
+aliases = ["/docs/grafana/v7.4/features/datasources/influxdb"]
 weight = 700
 +++
 
@@ -33,6 +33,8 @@ Name        | Description
 `User`      | Name of your database user
 `Password`  | Database user's password
 `HTTP mode` | How to query the database (`GET` or `POST` HTTP verb). The `POST` verb allows heavy queries that would return an error using the `GET` verb. Default is `GET`.
+`Min time interval` | Refer to [Min time interval]({{< relref "#min-time-interval" >}}).
+`Max series`| Limits the number of series/tables that Grafana processes. Lower this number to prevent abuse, and increase it if you have lots of small time series and not all are shown. Defaults to 1000.
 
 Access mode controls how requests to the data source will be handled. Server should be the preferred way if nothing else stated.
 
@@ -62,7 +64,7 @@ Identifier   | Description
 
 ## Query Editor
 
-{{< docs-imagebox img="/img/docs/v45/influxdb_query_still.png" class="docs-image--no-shadow" animated-gif="/img/docs/v45/influxdb_query.gif" >}}
+{{< figure src="/static/img/docs/v45/influxdb_query_still.png" class="docs-image--no-shadow" animated-gif="/static/img/docs/v45/influxdb_query.gif" >}}
 
 You can access the InfluxDB editor under the metrics tab when you are in the edit mode of the Graph or Singlestat panels.
 Enter edit mode by clicking the panel title and clicking **Edit**. The editor allows you to select metrics and tags.
@@ -79,7 +81,7 @@ You can type in regex patterns for metric names or tag filter values. Be sure to
 In the `SELECT` row you can specify what fields and functions you want to use. If you have a
 group by time you need an aggregation function. Some functions like derivative require an aggregation function. The editor tries to simplify and unify this part of the query. For example:
 
-![](/img/docs/influxdb/select_editor.png)
+![](/static/img/docs/influxdb/select_editor.png)
 
 The above generates the following InfluxDB `SELECT` clause:
 
@@ -130,6 +132,8 @@ Name             | Description
 `Organization`   | The [Influx organization](https://v2.docs.influxdata.com/v2.0/organizations/) that will be used for Flux queries.  This is also used to for the `v.organization` query macro
 `Token`          | The authentication token used for Flux queries. With Influx 2.0, use the [influx authentication token to function](https://v2.docs.influxdata.com/v2.0/security/tokens/create-token/).  For influx 1.8, the token is `username:password`
 `Default Bucket` | The [Influx bucket](https://v2.docs.influxdata.com/v2.0/organizations/buckets/) that will be used for the `v.defaultBucket` macro in Flux queries
+`Min time interval` | Refer to [Min time interval]({{< relref "#min-time-interval" >}}).
+`Max series`| Limits the number of series/tables that Grafana processes. Lower this number to prevent abuse, and increase it if you have lots of small time series and not all are shown. Defaults to 1000.
 
 You can use the [Flux query and scripting language](https://www.influxdata.com/products/flux/). Grafana's Flux query editor is a text editor for raw Flux queries with Macro support.
 

@@ -2,7 +2,7 @@
 title = "Time series dimensions"
 description = "time series dimensions"
 keywords = ["grafana", "intro", "guide", "concepts", "timeseries", "labels"]
-aliases = ["/docs/grafana/latest/guides/timeseries-dimensions"]
+aliases = ["/docs/grafana/v7.4/guides/timeseries-dimensions"]
 weight = 600
 +++
 
@@ -14,7 +14,7 @@ In [Introduction to time series]({{< relref "timeseries.md#time-series-databases
 
 With time series data, the data often contain more than a single series, and is a set of multiple time series. Many Grafana data sources support this type of data.
 
-{{< docs-imagebox img="/img/docs/example_graph_multi_dim.png" class="docs-image--no-shadow" max-width="850px" >}}
+{{< figure src="/static/img/docs/example_graph_multi_dim.png" class="docs-image--no-shadow" max-width="850px" >}}
 
 The common case is issuing a single query for a measurement with one or more additional properties as dimensions. For example, querying a temperature measurement along with a location property. In this case, multiple series are returned back from that single query and each series has unique location as a dimension.
 

@@ -139,7 +139,7 @@ This section contains important information if you want to migrate from previous
 
 ### Migrate to v7.3 or later
 
-The Grafana Docker image runs with the `root` group (id 1) instead of the `grafana` group (id 472), for better compatibility with OpenShift. If you extend the official Docker image you may need to change your scripts to use the `root` group instead of `grafana`.
+The Grafana Docker image runs with the `root` group (id 0) instead of the `grafana` group (id 472), for better compatibility with OpenShift. If you extend the official Docker image you may need to change your scripts to use the `root` group instead of `grafana`.
 
 ### Migrate to v6.5 or later
 

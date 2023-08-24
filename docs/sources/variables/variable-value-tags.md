@@ -3,13 +3,13 @@ title = "Variable value group tags"
 weight = 500
 +++
 
-# Configure variable value group tags 
+# Configure variable value group tags
 
 > **Note:** This is an experimental feature that will be deprecated in Grafana v8.
 
 Value groups/tags are a feature you can use to organize variable options. If you have many options in the dropdown for a multi-value variable, then you can use this feature to group the values into selectable tags.
 
-{{< docs-imagebox img="/img/docs/v50/variable_dropdown_tags.png" max-width="300px" >}}
+{{< figure src="/static/img/docs/v50/variable_dropdown_tags.png" max-width="300px" >}}
 
 This feature is off by default. Click **Enabled** to turn the feature on.
 

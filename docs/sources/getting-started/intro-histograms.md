@@ -18,7 +18,7 @@ and the bar height represents the frequency (such as count) of values that fell 
 This histogram shows the value distribution of a couple of time series. You can easily see that
 most values land between 240-300 with a peak between 260-280.
 
-![](/img/docs/v43/heatmap_histogram.png)
+![](/static/img/docs/v43/heatmap_histogram.png)
 
 Histograms only look at _value distributions_ over a specific time range. The problem with histograms is you cannot see any trends or changes in the distribution over time.
 This is where heatmaps become useful.
@@ -29,7 +29,7 @@ A _heatmap_ is like a histogram, but over time where each time slice represents 
 
 In this example, you can clearly see what values are more common and how they trend over time.
 
-![](/img/docs/v43/heatmap_histogram_over_time.png)
+![](/static/img/docs/v43/heatmap_histogram_over_time.png)
 
 ## Pre-bucketed data
 

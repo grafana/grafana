@@ -1,6 +1,6 @@
 +++
 title = "Add a constant variable"
-aliases = ["/docs/grafana/latest/variables/add-constant-variable.md"]
+aliases = ["/docs/grafana/v7.4/variables/add-constant-variable.md"]
 weight = 400
 +++
 

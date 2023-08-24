@@ -1,7 +1,7 @@
 +++
 title = "TestData"
 keywords = ["grafana", "dashboard", "documentation", "panels", "testdata"]
-aliases = ["/docs/grafana/latest/features/datasources/testdata"]
+aliases = ["/docs/grafana/v7.4/features/datasources/testdata"]
 weight = 1500
 +++
 
@@ -24,14 +24,14 @@ The `TestData DB` data source is not enabled by default. To enable it:
 
 Once `TestData DB` is enabled, you can use it as a data source in any metric panel.
 
-![](/img/docs/v41/test_data_add.png)
+![](/static/img/docs/v41/test_data_add.png)
 
 ## CSV
 
 The comma separated values scenario is the most powerful one since it lets you create any kind of graph you like.
 Once you provided the numbers, `TestData DB` distributes them evenly based on the time range of your query.
 
-![](/img/docs/v41/test_data_csv_example.png)
+![](/static/img/docs/v41/test_data_csv_example.png)
 
 ## Dashboards
 
