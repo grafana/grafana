@@ -5490,7 +5490,10 @@
           "example": "Always firing"
         },
         "uid": {
-          "type": "string"
+          "type": "string",
+          "maxLength": 40,
+          "minLength": 1,
+          "pattern": "^[a-zA-Z0-9-_]+$"
         },
         "updated": {
           "type": "string",
