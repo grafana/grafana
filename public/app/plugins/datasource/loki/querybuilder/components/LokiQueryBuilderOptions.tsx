@@ -1,7 +1,7 @@
 import { trim } from 'lodash';
 import React, { useMemo, useState } from 'react';
 
-import { CoreApp, isValidDuration, SelectableValue } from '@grafana/data';
+import { CoreApp, isValidDuration, isValidGrafanaDuration, SelectableValue } from '@grafana/data';
 import { EditorField, EditorRow } from '@grafana/experimental';
 import { config, reportInteraction } from '@grafana/runtime';
 import { Alert, AutoSizeInput, RadioButtonGroup, Select } from '@grafana/ui';
@@ -71,7 +71,7 @@ export const LokiQueryBuilderOptions = React.memo<Props>(
     const isLogQuery = isLogsQuery(query.expr);
 
     const isValidStep = useMemo(() => {
-      if (!query.step || isValidDuration(query.step) || !isNaN(Number(query.step))) {
+      if (!query.step || isValidGrafanaDuration(query.step) || !isNaN(Number(query.step))) {
         return true;
       }
       return false;

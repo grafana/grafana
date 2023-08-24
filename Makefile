@@ -62,6 +62,18 @@ validate-api-spec: $(MERGED_SPEC_TARGET) $(SWAGGER) ## Validate API spec
 clean-api-spec:
 	rm -f $(SPEC_TARGET) $(MERGED_SPEC_TARGET) $(OAPI_SPEC_TARGET)
 
+.PHONY: cleanup-old-git-hooks
+cleanup-old-git-hooks:
+	./scripts/cleanup-husky.sh
+
+.PHONY: lefthook-install
+lefthook-install: cleanup-old-git-hooks $(LEFTHOOK) # install lefthook for pre-commit hooks
+	$(LEFTHOOK) install -f
+
+.PHONY: lefthook-uninstall
+lefthook-uninstall: $(LEFTHOOK)
+	$(LEFTHOOK) uninstall
+
 ##@ OpenAPI 3
 OAPI_SPEC_TARGET = public/openapi3.json
 

@@ -1,6 +1,3 @@
-import React from 'react';
-import { Redirect } from 'react-router-dom';
-
 import { SafeDynamicImport } from 'app/core/components/DynamicImports/SafeDynamicImport';
 import { RouteDescriptor } from 'app/core/navigation/types';
 
@@ -27,11 +24,6 @@ const DEFAULT_ROUTES = [
     roles: () => ['Admin', 'ServerAdmin'],
     routeName: PluginAdminRoutes.Details,
     component: SafeDynamicImport(() => import(/* webpackChunkName: "PluginPage" */ './pages/PluginDetails')),
-  },
-  {
-    path: '/admin/plugins/*',
-    navId: 'admin-plugins',
-    component: () => <Redirect to="/plugins" />,
   },
 ];
 

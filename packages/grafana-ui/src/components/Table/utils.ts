@@ -257,7 +257,7 @@ export function rowToFieldValue(row: any, field?: Field): string {
 
 export function valuesToOptions(unique: Record<string, any>): SelectableValue[] {
   return Object.keys(unique)
-    .reduce((all, key) => all.concat({ value: unique[key], label: key }), [] as SelectableValue[])
+    .reduce<SelectableValue[]>((all, key) => all.concat({ value: unique[key], label: key }), [])
     .sort(sortOptions);
 }
 
@@ -409,7 +409,7 @@ export function getCellOptions(field: Field): TableCellOptions {
     return defaultCellOptions;
   }
 
-  return (field.config.custom as TableFieldOptions).cellOptions;
+  return field.config.custom.cellOptions;
 }
 
 /**
