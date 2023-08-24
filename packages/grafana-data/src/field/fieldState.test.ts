@@ -19,12 +19,15 @@ describe('getFieldDisplayName', () => {
   it('Should add suffix for comparison frames', () => {
     const frame = toDataFrame({
       meta: {
-        comparisonResponseDiff: -86400000,
+        timeCompare: {
+          diffMs: -86400000,
+          isTimeShiftQuery: true,
+        },
       },
       fields: [
         { name: TIME_SERIES_TIME_FIELD_NAME, values: [1, 2, 3], type: FieldType.time },
         {
-          name: TIME_SERIES_VALUE_FIELD_NAME,
+          name: 'Value 1',
           values: [1, 2, 3],
           type: FieldType.number,
           config: {
@@ -32,7 +35,7 @@ describe('getFieldDisplayName', () => {
           },
         },
         {
-          name: TIME_SERIES_VALUE_FIELD_NAME,
+          name: 'Value 2',
           values: [1, 2, 3],
           type: FieldType.number,
           config: {
@@ -40,7 +43,7 @@ describe('getFieldDisplayName', () => {
           },
         },
         {
-          name: TIME_SERIES_VALUE_FIELD_NAME,
+          name: 'Value 3',
           values: [1, 2, 3],
           type: FieldType.number,
         },
