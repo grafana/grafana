@@ -10,6 +10,7 @@ import (
 	"golang.org/x/exp/slices"
 	"golang.org/x/oauth2"
 
+	"github.com/grafana/grafana/pkg/models/roletype"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -30,6 +31,7 @@ type googleUserData struct {
 	Email         string `json:"email"`
 	Name          string `json:"name"`
 	EmailVerified bool   `json:"email_verified"`
+	rawJSON       []byte
 }
 
 func (s *SocialGoogle) UserInfo(ctx context.Context, client *http.Client, token *oauth2.Token) (*BasicUserInfo, error) {
@@ -59,13 +61,34 @@ func (s *SocialGoogle) UserInfo(ctx context.Context, client *http.Client, token 
 		s.log.Warn("Error retrieving groups", "error", errPage)
 	}
 
+	var role roletype.RoleType
+	var isGrafanaAdmin *bool = nil
+
+	if !s.skipOrgRoleSync {
+		var grafanaAdmin bool
+		var errExtractRole error
+		role, grafanaAdmin, errExtractRole = s.extractRoleAndAdmin(data.rawJSON, groups)
+		if errExtractRole != nil {
+			return nil, errExtractRole
+		}
+
+		if s.allowAssignGrafanaAdmin {
+			isGrafanaAdmin = &grafanaAdmin
+		}
+	}
+
+	// we skip allowing assignment of GrafanaAdmin if skipOrgRoleSync is present
+	if s.allowAssignGrafanaAdmin && s.skipOrgRoleSync {
+		s.log.Debug("allowAssignGrafanaAdmin and skipOrgRoleSync are both set, Grafana Admin role will not be synced, consider setting one or the other")
+	}
+
 	userInfo := &BasicUserInfo{
 		Id:             data.ID,
 		Name:           data.Name,
 		Email:          data.Email,
 		Login:          data.Email,
-		Role:           "",
-		IsGrafanaAdmin: nil,
+		Role:           role,
+		IsGrafanaAdmin: isGrafanaAdmin,
 		Groups:         groups,
 	}
 
@@ -98,6 +121,7 @@ func (s *SocialGoogle) extractFromAPI(ctx context.Context, client *http.Client) 
 			Name:          data.Name,
 			Email:         data.Email,
 			EmailVerified: data.EmailVerified,
+			rawJSON:       response.Body,
 		}, nil
 	}
 
@@ -144,6 +168,7 @@ func (s *SocialGoogle) extractFromToken(ctx context.Context, client *http.Client
 	if err := json.Unmarshal(rawJSON, &data); err != nil {
 		return nil, fmt.Errorf("Error getting user info: %s", err)
 	}
+	data.rawJSON = rawJSON
 
 	return &data, nil
 }
