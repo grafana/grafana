@@ -37,7 +37,7 @@ export class PluginsAPIDashboardModelWrapper implements PluginsAPIDashboardModel
     // reset the weakmap
     this.#panelsMap = new WeakMap();
 
-    //return a proxy for each panel, cached if exists
+    //return a wrapper for each panel, cached if exists
     return this.#dashboard.panels.map((panel) => {
       const panelWrapper = new PluginsAPIPanelModelWrapper(panel);
       // store the original panel in a symbol that can't be accessed directly
@@ -57,7 +57,6 @@ export class PluginsAPIDashboardModelWrapper implements PluginsAPIDashboardModel
         return originalPanel;
       }
       // a custom panel object from user-input
-      // eslint-ignore-next-line
       if (isCorePanelModel(panel)) {
         return panel;
       }
