@@ -3,18 +3,18 @@ import { uniq } from 'lodash';
 import {
   AbsoluteTimeRange,
   DataSourceApi,
+  dateMath,
+  DateTime,
   EventBusExtended,
   getDefaultTimeRange,
   HistoryItem,
+  isDateTime,
   LoadingState,
   LogRowModel,
   PanelData,
   RawTimeRange,
   TimeFragment,
   TimeRange,
-  dateMath,
-  DateTime,
-  isDateTime,
   toUtc,
   URLRange,
   URLRangeValue,
@@ -42,7 +42,7 @@ export const storeGraphStyle = (graphStyle: string): void => {
 /**
  * Returns a fresh Explore area state
  */
-export const makeExplorePaneState = (): ExploreItemState => ({
+export const makeExplorePaneState = (overrides?: Partial<ExploreItemState>): ExploreItemState => ({
   containerWidth: 0,
   datasourceInstance: null,
   history: [],
@@ -73,6 +73,7 @@ export const makeExplorePaneState = (): ExploreItemState => ({
   supplementaryQueries: loadSupplementaryQueries(),
   panelsState: {},
   correlations: undefined,
+  ...overrides,
 });
 
 export const createEmptyQueryResponse = (): ExplorePanelData => ({
