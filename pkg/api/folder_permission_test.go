@@ -3,8 +3,10 @@ package api
 import (
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/web/webtest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -14,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/db/dbtest"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -25,6 +28,64 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
 )
+
+func TestHTTPServer_GetFolderPermissionList(t *testing.T) {
+	t.Run("should not be able to list acl when user does not have permission to do so", func(t *testing.T) {
+		server := SetupAPITestServer(t, func(hs *HTTPServer) {})
+
+		res, err := server.Send(webtest.RequestWithSignedInUser(server.NewGetRequest("/api/folders/1/permissions"), userWithPermissions(1, nil)))
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusForbidden, res.StatusCode)
+	})
+
+	t.Run("should be able to list acl with correct permission", func(t *testing.T) {
+		server := SetupAPITestServer(t, func(hs *HTTPServer) {
+			hs.folderService = &foldertest.FakeService{ExpectedFolder: &folder.Folder{ID: 1, UID: "1"}}
+			hs.folderPermissionsService = &actest.FakePermissionsService{
+				ExpectedPermissions: []accesscontrol.ResourcePermission{},
+			}
+		})
+
+		res, err := server.Send(webtest.RequestWithSignedInUser(server.NewGetRequest("/api/folders/1/permissions"), userWithPermissions(1, []accesscontrol.Permission{
+			{Action: dashboards.ActionFoldersPermissionsRead, Scope: "folders:uid:1"},
+			{Action: dashboards.ActionFoldersPermissionsWrite, Scope: "folders:uid:1"},
+		})))
+
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusOK, res.StatusCode)
+	})
+
+	t.Run("should filter out hidden users from acl", func(t *testing.T) {
+		server := SetupAPITestServer(t, func(hs *HTTPServer) {
+			cfg := setting.NewCfg()
+			cfg.HiddenUsers = map[string]struct{}{"hidden": {}}
+			hs.Cfg = cfg
+			hs.folderService = &foldertest.FakeService{ExpectedFolder: &folder.Folder{ID: 1, UID: "1"}}
+
+			hs.folderPermissionsService = &actest.FakePermissionsService{
+				ExpectedPermissions: []accesscontrol.ResourcePermission{
+					{UserId: 1, UserLogin: "regular", IsManaged: true},
+					{UserId: 2, UserLogin: "hidden", IsManaged: true},
+				},
+			}
+		})
+
+		res, err := server.Send(webtest.RequestWithSignedInUser(server.NewGetRequest("/api/folders/1/permissions"), userWithPermissions(1, []accesscontrol.Permission{
+			{Action: dashboards.ActionFoldersPermissionsRead, Scope: "folders:uid:1"},
+			{Action: dashboards.ActionFoldersPermissionsWrite, Scope: "folders:uid:1"},
+		})))
+
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusOK, res.StatusCode)
+
+		var result []dashboards.DashboardACLInfoDTO
+		require.NoError(t, json.NewDecoder(res.Body).Decode(&result))
+
+		assert.Len(t, result, 1)
+		assert.Equal(t, result[0].UserLogin, "regular")
+		require.NoError(t, res.Body.Close())
+	})
+}
 
 func TestFolderPermissionAPIEndpoint(t *testing.T) {
 	settings := setting.NewCfg()
