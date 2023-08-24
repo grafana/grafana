@@ -63,7 +63,7 @@ export class BackendSrv implements BackendService {
   private readonly fetchQueue: FetchQueue;
   private readonly responseQueue: ResponseQueue;
   private _tokenRotationInProgress?: Observable<FetchResponse> | null = null;
-  private deviceID!: string | null;
+  private deviceID?: string | null = null;
 
   private dependencies: BackendSrvDependencies = {
     fromFetch: fromFetch,
@@ -89,7 +89,7 @@ export class BackendSrv implements BackendService {
 
     this.initGrafanaDeviceID().then((grafanaId) => {
       if (grafanaId) {
-        this.deviceID = grafanaId as string;
+        this.deviceID = grafanaId;
       }
     });
 
@@ -99,7 +99,7 @@ export class BackendSrv implements BackendService {
   async initGrafanaDeviceID(): Promise<string | void> {
     return FingerprintJS.load()
       .then((fp) => fp.get())
-      .then((result) => result.visitorId)
+      .then((result): string => result.visitorId)
       .catch((error) => {
         console.error(error);
       });
@@ -156,8 +156,6 @@ export class BackendSrv implements BackendService {
 
     const token = loadUrlToken();
     if (token !== null && token !== '') {
-
-
       if (config.jwtUrlLogin && config.jwtHeaderName) {
         options.headers[config.jwtHeaderName] = `${token}`;
       }
