@@ -254,7 +254,6 @@ func TestDatasourceAsConfig(t *testing.T) {
 			require.Equal(t, 1, len(store.inserted))
 			require.Equal(t, 1, len(correlationsStore.deletedBySourceUID))
 			require.Equal(t, true, correlationsStore.deletedBySourceUID[0].OnlyProvisioned)
-			require.Equal(t, 0, len(correlationsStore.deletedByTargetUID))
 		})
 
 		t.Run("Updating existing datasource deletes existing correlations and creates two", func(t *testing.T) {
@@ -272,7 +271,6 @@ func TestDatasourceAsConfig(t *testing.T) {
 			require.Equal(t, 1, len(store.updated))
 			require.Equal(t, 1, len(correlationsStore.deletedBySourceUID))
 			require.Equal(t, true, correlationsStore.deletedBySourceUID[0].OnlyProvisioned)
-			require.Equal(t, 0, len(correlationsStore.deletedByTargetUID))
 		})
 
 		t.Run("Deleting datasource deletes existing correlations", func(t *testing.T) {
@@ -287,12 +285,9 @@ func TestDatasourceAsConfig(t *testing.T) {
 			}
 
 			require.Equal(t, 0, len(correlationsStore.created))
-			// publish event is not skipped to delete correlations in correlations.go
 			require.Equal(t, 1, len(store.deleted))
+			// publish event is not skipped because data source is actually deleted
 			require.Equal(t, false, store.deleted[0].SkipPublish)
-			// no clean-up as nothing is inserted
-			require.Equal(t, 0, len(correlationsStore.deletedBySourceUID))
-			require.Equal(t, 0, len(correlationsStore.deletedByTargetUID))
 		})
 
 		t.Run("Re-creating datasource does not delete existing correlations", func(t *testing.T) {
@@ -309,13 +304,15 @@ func TestDatasourceAsConfig(t *testing.T) {
 
 			require.Equal(t, 0, len(correlationsStore.created))
 			require.Equal(t, 1, len(store.deleted))
-			// publish is skipped so correlations are not removed in correlations.go handler
+			// publish event is skipped because...
 			require.Equal(t, true, store.deleted[0].SkipPublish)
-			// we expect the same data source is added later
+			// ... the data source is re-created...
 			require.Equal(t, 1, len(store.inserted))
 			require.Equal(t, store.deleted[0].Name, store.inserted[0].Name)
+
+			// correlations for provisioned data sources are re-recreated
 			require.Equal(t, 1, len(correlationsStore.deletedBySourceUID))
-			require.Equal(t, 0, len(correlationsStore.deletedByTargetUID))
+			require.Equal(t, true, correlationsStore.deletedBySourceUID[0].OnlyProvisioned)
 		})
 
 		t.Run("Using correct organization id", func(t *testing.T) {
@@ -329,33 +326,11 @@ func TestDatasourceAsConfig(t *testing.T) {
 			}
 
 			require.Equal(t, 2, len(correlationsStore.created))
-			// triggered twice - clean up on delete + update (because of the store setup above)
-			require.Equal(t, 2, len(correlationsStore.deletedBySourceUID))
-			require.Equal(t, int64(2), correlationsStore.deletedBySourceUID[0].OrgId)
+			// triggered for each provisioned data source
+			require.Equal(t, 3, len(correlationsStore.deletedBySourceUID))
+			require.Equal(t, int64(1), correlationsStore.deletedBySourceUID[0].OrgId)
 			require.Equal(t, int64(2), correlationsStore.deletedBySourceUID[1].OrgId)
-			// triggered once - just the  clean up
-			require.Equal(t, 1, len(correlationsStore.deletedByTargetUID))
-			require.Equal(t, int64(2), correlationsStore.deletedByTargetUID[0].OrgId)
-		})
-
-		t.Run("Using correct organization id", func(t *testing.T) {
-			store := &spyStore{items: []*datasources.DataSource{{Name: "Foo", OrgID: 2, ID: 1}}}
-			orgFake := &orgtest.FakeOrgService{}
-			correlationsStore := &mockCorrelationsStore{}
-			dc := newDatasourceProvisioner(logger, store, correlationsStore, orgFake)
-			err := dc.applyChanges(context.Background(), correlationsDifferentOrganizations)
-			if err != nil {
-				t.Fatalf("applyChanges return an error %v", err)
-			}
-
-			require.Equal(t, 2, len(correlationsStore.created))
-			// triggered twice - clean up on delete + update (because of the store setup above)
-			require.Equal(t, 2, len(correlationsStore.deletedBySourceUID))
-			require.Equal(t, int64(2), correlationsStore.deletedBySourceUID[0].OrgId)
-			require.Equal(t, int64(2), correlationsStore.deletedBySourceUID[1].OrgId)
-			// triggered once - just the  clean up
-			require.Equal(t, 1, len(correlationsStore.deletedByTargetUID))
-			require.Equal(t, int64(2), correlationsStore.deletedByTargetUID[0].OrgId)
+			require.Equal(t, int64(3), correlationsStore.deletedBySourceUID[2].OrgId)
 		})
 	})
 }

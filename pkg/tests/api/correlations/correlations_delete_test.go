@@ -50,6 +50,7 @@ func TestIntegrationDeleteCorrelation(t *testing.T) {
 	}
 	dataSource = ctx.createDs(createDsCommand)
 	writableDs := dataSource.UID
+	writableDsId := dataSource.ID
 	writableDsOrgId := dataSource.OrgID
 
 	t.Run("Unauthenticated users shouldn't be able to delete correlations", func(t *testing.T) {
@@ -219,5 +220,45 @@ func TestIntegrationDeleteCorrelation(t *testing.T) {
 		})
 		require.NoError(t, res.Body.Close())
 		require.Equal(t, http.StatusNotFound, res.StatusCode)
+	})
+
+	t.Run("deleting data source removes related correlations", func(t *testing.T) {
+		ctx.createCorrelation(correlations.CreateCorrelationCommand{
+			SourceUID:   writableDs,
+			TargetUID:   &readOnlyDS,
+			OrgId:       writableDsOrgId,
+			Provisioned: false,
+		})
+
+		ctx.createCorrelation(correlations.CreateCorrelationCommand{
+			SourceUID:   writableDs,
+			TargetUID:   &readOnlyDS,
+			OrgId:       writableDsOrgId,
+			Provisioned: true,
+		})
+
+		res := ctx.Delete(DeleteParams{
+			url:  fmt.Sprintf("/api/datasources/%d", writableDsId),
+			user: adminUser,
+		})
+		require.Equal(t, http.StatusOK, res.StatusCode)
+
+		res = ctx.Get(GetParams{
+			url:  "/api/datasources/correlations",
+			user: adminUser,
+			page: "0",
+		})
+		require.Equal(t, http.StatusOK, res.StatusCode)
+
+		responseBody, err := io.ReadAll(res.Body)
+		require.NoError(t, err)
+
+		var response correlations.GetCorrelationsResponseBody
+		err = json.Unmarshal(responseBody, &response)
+		require.NoError(t, err)
+
+		require.Len(t, response.Correlations, 0)
+
+		require.NoError(t, res.Body.Close())
 	})
 }
