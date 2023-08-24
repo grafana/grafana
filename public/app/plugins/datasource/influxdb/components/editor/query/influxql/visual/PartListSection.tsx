@@ -126,9 +126,8 @@ export const PartListSection = ({
   return (
     <>
       {parts.map((part, index) => (
-        <>
+        <React.Fragment key={index}>
           <Part
-            key={index}
             name={part.name}
             params={part.params}
             onRemove={() => {
@@ -147,7 +146,7 @@ export const PartListSection = ({
               onRemovePart(index);
             }}
           />
-        </>
+        </React.Fragment>
       ))}
       <AddButton loadOptions={getNewPartOptions} onAdd={onAddNewPart} />
     </>
