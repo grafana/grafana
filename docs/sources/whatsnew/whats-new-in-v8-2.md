@@ -3,7 +3,7 @@ title = "What's new in Grafana v8.2"
 description = "Feature and improvement highlights for Grafana v8.2"
 keywords = ["grafana", "new", "documentation", "8.2", "release notes"]
 weight = -33
-aliases = ["/docs/grafana/latest/guides/whats-new-in-v8-2/"]
+aliases = ["/docs/grafana/v8.2/guides/whats-new-in-v8-2/"]
 [_build]
 list = false
 +++
@@ -22,7 +22,7 @@ We’ve summarized what’s new in the release here, but you might also be inter
 
 ## Community Contributions
 
-Grafana 8.2 includes a number of important community contributions including support for OAuth role mapping with GitLab accounts ([#30025](https://github.com/grafana/grafana/pull/30025)), a new wide-to-long function ([#38670](https://github.com/grafana/grafana/pull/38670)) included in the [prepare time series transformation](https://grafana.com/docs/grafana/latest/panels/transformations/types-options/#prepare-time-series). A number of additions to the Azure Monitor data source were submitted, including an overview dashboard([#38801](https://github.com/grafana/grafana/pull/38801)) and support for parsing numeric fields in the Azure Resource Graph([#38728](https://github.com/grafana/grafana/pull/38728)). Contributions also included [regular-expression based value mapping](https://grafana.com/docs/grafana/next/panels/value-mappings/#map-a-regular-expression) ([#38931](https://github.com/grafana/grafana/pull/38931)) and improvements to our systemd unit for Grafana installations ([#38109](https://github.com/grafana/grafana/pull/38109)). This list is by no means exhaustive or comprehensive. We greatly appreciate _all_ the contributions submitted for inclusion in Grafana.
+Grafana 8.2 includes a number of important community contributions including support for OAuth role mapping with GitLab accounts ([#30025](https://github.com/grafana/grafana/pull/30025)), a new wide-to-long function ([#38670](https://github.com/grafana/grafana/pull/38670)) included in the [prepare time series transformation](https://grafana.com/docs/grafana/v8.2/panels/transformations/types-options/#prepare-time-series). A number of additions to the Azure Monitor data source were submitted, including an overview dashboard([#38801](https://github.com/grafana/grafana/pull/38801)) and support for parsing numeric fields in the Azure Resource Graph([#38728](https://github.com/grafana/grafana/pull/38728)). Contributions also included [regular-expression based value mapping](https://grafana.com/docs/grafana/next/panels/value-mappings/#map-a-regular-expression) ([#38931](https://github.com/grafana/grafana/pull/38931)) and improvements to our systemd unit for Grafana installations ([#38109](https://github.com/grafana/grafana/pull/38109)). This list is by no means exhaustive or comprehensive. We greatly appreciate _all_ the contributions submitted for inclusion in Grafana.
 
 ## Accessibility
 
@@ -30,7 +30,7 @@ We’ve taken our first, measured but important step towards improving the acces
 
 ## Dashboards
 
-The biggest change to dashboards in Grafana 8.2 is the inclusion of a configurable fiscal year in the time picker. This option enables fiscal quarters as time ranges, which can be helpful for business-focused and executive dashboards in addition to many other common use cases. Please see the [time range controls documentation](https://grafana.com/docs/grafana/latest/dashboards/time-range-controls/) for more information.
+The biggest change to dashboards in Grafana 8.2 is the inclusion of a configurable fiscal year in the time picker. This option enables fiscal quarters as time ranges, which can be helpful for business-focused and executive dashboards in addition to many other common use cases. Please see the [time range controls documentation](https://grafana.com/docs/grafana/v8.2/dashboards/time-range-controls/) for more information.
 
 {{< figure src="/static/img/docs/time-range-controls/fiscal_year-8-2.png" max-width="1200px" caption="Fiscal Year Time Range Settings" >}}
 
@@ -42,7 +42,7 @@ We have continued to improve how you manage your plugins within Grafana. The new
 
 ## Grafana 8 Alerting
 
-We’ve continued to bolster the new, unified alerting system launched in Grafana 8. This update includes the addition of a UI to edit the Cortex/Loki namespace, edit the alert group name, and edit the alert group evaluation interval. We've also added a Test button to test an alert notification contact point. There's even more to explore here including custom grouping for alert manager notifications and several small but significant changes to improve creation editing and managing alert rules. Please see the [alerting documentation](https://grafana.com/docs/grafana/latest/alerting/unified-alerting/) for more details and information on how you can enable the unified alerting system in your instance of Grafana.
+We’ve continued to bolster the new, unified alerting system launched in Grafana 8. This update includes the addition of a UI to edit the Cortex/Loki namespace, edit the alert group name, and edit the alert group evaluation interval. We've also added a Test button to test an alert notification contact point. There's even more to explore here including custom grouping for alert manager notifications and several small but significant changes to improve creation editing and managing alert rules. Please see the [alerting documentation](https://grafana.com/docs/grafana/v8.2/alerting/unified-alerting/) for more details and information on how you can enable the unified alerting system in your instance of Grafana.
 
 ## Image Renderer performance improvements and measurement
 
@@ -52,24 +52,24 @@ You can use Grafana’s image renderer to generate images of panels and dashboar
 
 ## Brand-new license and stats screen
 
-We’ve revamped the Stats and License sections of Grafana for administrators. The new combined screen makes it easier to understand a license’s term and user counts, and find out early when you need to renew or expand a license. It’s also easier to parse Grafana statistics like the number of dashboards, data sources, and alerts in a given instance. This screen also includes an interactive list of dashboard and folder permissions, which can affect your users’ licensed roles in Grafana. Learn more about Grafana Enterprise on our [website](https://grafana.com/products/enterprise/grafana/), and more about licenses in particular in our [docs](https://grafana.com/docs/grafana/latest/enterprise/license/license-restrictions/).
+We’ve revamped the Stats and License sections of Grafana for administrators. The new combined screen makes it easier to understand a license’s term and user counts, and find out early when you need to renew or expand a license. It’s also easier to parse Grafana statistics like the number of dashboards, data sources, and alerts in a given instance. This screen also includes an interactive list of dashboard and folder permissions, which can affect your users’ licensed roles in Grafana. Learn more about Grafana Enterprise on our [website](https://grafana.com/products/enterprise/grafana/), and more about licenses in particular in our [docs](https://grafana.com/docs/grafana/v8.2/enterprise/license/license-restrictions/).
 
 {{< figure src="/static/img/docs/enterprise/8_2_stats_licensing_screen.png" max-width="1200px" caption="Stats and licensing" >}}
 
 ## New fine-grained access control permissions
 
-Fine-grained access control now covers data source and provisioning permissions. You can decide which roles (Viewers, Editors, and Admins) can manage data sources and data source permissions in Grafana, and which roles can reload provisioning configuration for dashboards, data sources, and other provisioned resources. We’ll continue adding fine-grained access control to more Grafana services, like dashboards and API Keys, in upcoming releases. Learn more about fine-grained access control in our [release post](https://grafana.com/blog/2021/06/23/new-in-grafana-enterprise-8.0-fine-grained-access-control-for-reporting-and-user-management/) and our [docs](https://grafana.com/docs/grafana/latest/enterprise/access-control/).
+Fine-grained access control now covers data source and provisioning permissions. You can decide which roles (Viewers, Editors, and Admins) can manage data sources and data source permissions in Grafana, and which roles can reload provisioning configuration for dashboards, data sources, and other provisioned resources. We’ll continue adding fine-grained access control to more Grafana services, like dashboards and API Keys, in upcoming releases. Learn more about fine-grained access control in our [release post](https://grafana.com/blog/2021/06/23/new-in-grafana-enterprise-8.0-fine-grained-access-control-for-reporting-and-user-management/) and our [docs](https://grafana.com/docs/grafana/v8.2/enterprise/access-control/).
 
 {{< figure src="/static/img/docs/enterprise/8_2_data_source_permissions.png" max-width="1200px" caption="Stats and licensing" >}}
 
 ## Export usage insights logs as server logs
 
-Usage Insights Logs contain valuable information about user dashboard visits, queries, and front-end errors that are otherwise impossible to track in Grafana. You can now export those logs alongside your regular server logs to identify problematic dashboards and data sources and improve users’ experience with Grafana. Previously, these metrics could only be exported directly to Loki. Learn more in the [documentation about exporting logs](https://grafana.com/docs/grafana/latest/enterprise/usage-insights/export-logs/)
+Usage Insights Logs contain valuable information about user dashboard visits, queries, and front-end errors that are otherwise impossible to track in Grafana. You can now export those logs alongside your regular server logs to identify problematic dashboards and data sources and improve users’ experience with Grafana. Previously, these metrics could only be exported directly to Loki. Learn more in the [documentation about exporting logs](https://grafana.com/docs/grafana/v8.2/enterprise/usage-insights/export-logs/)
 
 {{< figure src="/static/img/docs/enterprise/8_2_export_usage_insights.png" max-width="1200px" caption="Stats and licensing" >}}
 
 ## Create a report from the dashboard Share dialogue
 
-Reports offer a powerful way to deliver insights directly to your email inboxes. Now you can create a report directly from any dashboard, using the Share button. This is especially useful when combined with fine-grained access control, which you can use to grant Editors or Viewers the ability to create reports in Grafana. To learn more, see the [reporting documentation](https://grafana.com/docs/grafana/latest/enterprise/reporting/).
+Reports offer a powerful way to deliver insights directly to your email inboxes. Now you can create a report directly from any dashboard, using the Share button. This is especially useful when combined with fine-grained access control, which you can use to grant Editors or Viewers the ability to create reports in Grafana. To learn more, see the [reporting documentation](https://grafana.com/docs/grafana/v8.2/enterprise/reporting/).
 
 {{< figure src="/static/img/docs/enterprise/enterprise-report-from-share-8-2.png" max-width="1200px" caption="Create a report from the dashboard share dialogue" >}}

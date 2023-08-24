@@ -2,7 +2,7 @@
 title = "Azure Monitor"
 description = "Guide for using Azure Monitor in Grafana"
 keywords = ["grafana", "microsoft", "azure", "monitor", "application", "insights", "log", "analytics", "guide"]
-aliases = ["/docs/grafana/latest/features/datasources/azuremonitor"]
+aliases = ["/docs/grafana/v8.2/features/datasources/azuremonitor"]
 weight = 300
 +++
 
@@ -265,7 +265,7 @@ See the following topics to learn more about the Azure Monitor data source:
 
 Customers who host Grafana in Azure (e.g. App Service, Azure Virtual Machines) and have managed identity enabled on their VM, will now be able to use the managed identity to configure Azure Monitor in Grafana. This will simplify the data source configuration, requiring the data source to be securely authenticated without having to manually configure credentials via Azure AD App Registrations for each data source. For more details on Azure managed identities, refer to the [Azure documentation](https://docs.microsoft.com/en-us/azure/active-directory/managed-identities-azure-resources/overview).
 
-To enable managed identity for Grafana, set the `managed_identity_enabled` flag in the `[azure]` section of the [Grafana server config](https://grafana.com/docs/grafana/latest/administration/configuration/#azure).
+To enable managed identity for Grafana, set the `managed_identity_enabled` flag in the `[azure]` section of the [Grafana server config](https://grafana.com/docs/grafana/v8.2/administration/configuration/#azure).
 
 ```ini
 [azure]

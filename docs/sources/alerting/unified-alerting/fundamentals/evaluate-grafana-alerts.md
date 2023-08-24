@@ -1,6 +1,6 @@
 +++
 title = "Alerting on numeric data"
-aliases = ["/docs/grafana/latest/alerting/metrics/"]
+aliases = ["/docs/grafana/v8.2/alerting/metrics/"]
 weight = 116
 +++
 

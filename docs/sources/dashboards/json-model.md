@@ -1,7 +1,7 @@
 +++
 title = "JSON model"
 keywords = ["grafana", "dashboard", "documentation", "json", "model"]
-aliases = ["/docs/grafana/latest/reference/dashboard/"]
+aliases = ["/docs/grafana/v8.2/reference/dashboard/"]
 weight = 1200
 +++
 

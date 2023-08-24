@@ -1,6 +1,6 @@
 +++
 title = "Panels"
-aliases = ["/docs/grafana/latest/features/panels/panels/"]
+aliases = ["/docs/grafana/v8.2/features/panels/panels/"]
 weight = 70
 +++
 
