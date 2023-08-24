@@ -36,7 +36,8 @@ func ReadPrometheusStyleResult(iter *jsoniter.Iterator, opt Options) backend.Dat
 		return true
 	}
 
-	for l1Field := iter.ReadObject(); l1Field != ""; l1Field = iter.ReadObject() {
+l1Fields:
+	for l1Field := iter.ReadObject(); ; l1Field = iter.ReadObject() {
 		if iterError() {
 			return rsp
 		}
@@ -67,6 +68,12 @@ func ReadPrometheusStyleResult(iter *jsoniter.Iterator, opt Options) backend.Dat
 
 		case "warnings":
 			warnings = readWarnings(iter)
+
+		case "":
+			if iterError() {
+				return rsp
+			}
+			break l1Fields
 
 		default:
 			v := iter.Read()

@@ -50,7 +50,7 @@ func TestReadLimited(t *testing.T) {
 		require.NoError(t, err)
 		size := stat.Size()
 
-		for i := int64(10); i < size; i += size / 10 {
+		for i := int64(10); i < size-1; i += size / 10 {
 			t.Run(fmt.Sprintf("%v_%v", name, i), func(t *testing.T) {
 				f, err := os.Open(p)
 				require.NoError(t, err)
@@ -58,9 +58,6 @@ func TestReadLimited(t *testing.T) {
 
 				iter := jsoniter.Parse(jsoniter.ConfigDefault, mbr, 1024)
 				rsp := ReadPrometheusStyleResult(iter, Options{})
-
-				//offset, err := f.Seek(0, io.SeekCurrent)
-				//require.NoError(t, err)
 
 				require.Error(t, rsp.Error)
 			})
