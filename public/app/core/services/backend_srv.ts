@@ -92,8 +92,8 @@ export class BackendSrv implements BackendService {
     new FetchQueueWorker(this.fetchQueue, this.responseQueue, getConfig());
   }
 
-  async initGrafanaDeviceID() {
-    if (config.buildInfo.edition === GrafanaEdition.OpenSource) {
+  private async initGrafanaDeviceID() {
+    if (config.buildInfo && config.buildInfo.edition === GrafanaEdition.OpenSource) {
       return;
     }
 
