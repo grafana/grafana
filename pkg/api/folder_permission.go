@@ -103,19 +103,14 @@ func (hs *HTTPServer) UpdateFolderPermissions(c *contextmodel.ReqContext) respon
 		})
 	}
 
-	hiddenACL, err := hs.getHiddenFolderACL(c.Req.Context(), c.SignedInUser, folder)
-	if err != nil {
-		return response.Error(http.StatusInternalServerError, "Error while retrieving hidden permissions", err)
-	}
-
-	items = append(items, hiddenACL...)
-
-	old, err := hs.getFolderACL(c.Req.Context(), c.SignedInUser, folder)
+	acl, err := hs.getFolderACL(c.Req.Context(), c.SignedInUser, folder)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Error while checking folder permissions", err)
 	}
 
-	if err := hs.updateDashboardAccessControl(c.Req.Context(), c.OrgID, folder.UID, true, items, old); err != nil {
+	items = append(items, hs.filterHiddenACL(c.SignedInUser, acl)...)
+
+	if err := hs.updateDashboardAccessControl(c.Req.Context(), c.OrgID, folder.UID, true, items, acl); err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to create permission", err)
 	}
 
@@ -172,40 +167,6 @@ func (hs *HTTPServer) getFolderACL(ctx context.Context, user identity.Requester,
 	}
 
 	return acl, nil
-}
-
-func (hs *HTTPServer) getHiddenFolderACL(ctx context.Context, user identity.Requester, folder *folder.Folder) ([]*dashboards.DashboardACL, error) {
-	var hiddenACL []*dashboards.DashboardACL
-
-	if user.GetIsGrafanaAdmin() {
-		return hiddenACL, nil
-	}
-
-	existingPermissions, err := hs.getFolderACL(ctx, user, folder)
-	if err != nil {
-		return hiddenACL, err
-	}
-
-	for _, item := range existingPermissions {
-		if item.Inherited || item.UserLogin == user.GetLogin() {
-			continue
-		}
-
-		if _, hidden := hs.Cfg.HiddenUsers[item.UserLogin]; hidden {
-			hiddenACL = append(hiddenACL, &dashboards.DashboardACL{
-				OrgID:       item.OrgID,
-				DashboardID: item.DashboardID,
-				UserID:      item.UserID,
-				TeamID:      item.TeamID,
-				Role:        item.Role,
-				Permission:  item.Permission,
-				Created:     item.Created,
-				Updated:     item.Updated,
-			})
-		}
-	}
-
-	return hiddenACL, nil
 }
 
 // swagger:parameters getFolderPermissionList
