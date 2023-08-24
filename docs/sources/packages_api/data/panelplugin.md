@@ -37,7 +37,7 @@ import { PanelPlugin } from '@grafana/data';
 |  [noPadding](#nopadding-property) |  | <code>boolean</code> |  |
 |  [onPanelMigration](#onpanelmigration-property) |  | <code>PanelMigrationHandler&lt;TOptions&gt;</code> |  |
 |  [onPanelTypeChanged](#onpaneltypechanged-property) |  | <code>PanelTypeChangedHandler&lt;TOptions&gt;</code> |  |
-|  [optionEditors](#optioneditors-property) |  | <code>PanelOptionEditorsRegistry &#124; undefined</code> |  |
+|  [optionEditors](#optioneditors-property) |  | <code>PanelOptionEditorsRegistry</code> |  |
 |  [panel](#panel-property) |  | <code>ComponentType&lt;PanelProps&lt;TOptions&gt;&gt; &#124; null</code> |  |
 
 <b>Methods</b>
@@ -138,7 +138,7 @@ onPanelTypeChanged?: PanelTypeChangedHandler<TOptions>;
 <b>Signature</b>
 
 ```typescript
-get optionEditors(): PanelOptionEditorsRegistry | undefined;
+get optionEditors(): PanelOptionEditorsRegistry;
 ```
 
 ### panel property

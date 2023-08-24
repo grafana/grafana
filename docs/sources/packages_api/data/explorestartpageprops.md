@@ -25,7 +25,6 @@ import { ExploreStartPageProps } from '@grafana/data';
 |  --- | --- | --- |
 |  [datasource](#datasource-property) | <code>DataSourceApi</code> |  |
 |  [exploreId](#exploreid-property) | <code>any</code> |  |
-|  [exploreMode](#exploremode-property) | <code>ExploreMode</code> |  |
 |  [onClickExample](#onclickexample-property) | <code>(query: DataQuery) =&gt; void</code> |  |
 
 ### datasource property
@@ -33,7 +32,7 @@ import { ExploreStartPageProps } from '@grafana/data';
 <b>Signature</b>
 
 ```typescript
-datasource?: DataSourceApi;
+datasource: DataSourceApi;
 ```
 
 ### exploreId property
@@ -42,14 +41,6 @@ datasource?: DataSourceApi;
 
 ```typescript
 exploreId?: any;
-```
-
-### exploreMode property
-
-<b>Signature</b>
-
-```typescript
-exploreMode: ExploreMode;
 ```
 
 ### onClickExample property

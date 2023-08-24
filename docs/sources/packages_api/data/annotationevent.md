@@ -25,6 +25,7 @@ import { AnnotationEvent } from '@grafana/data';
 |  --- | --- | --- |
 |  [annotation](#annotation-property) | <code>any</code> |  |
 |  [avatarUrl](#avatarurl-property) | <code>string</code> |  |
+|  [color](#color-property) | <code>string</code> |  |
 |  [dashboardId](#dashboardid-property) | <code>number</code> |  |
 |  [email](#email-property) | <code>string</code> |  |
 |  [id](#id-property) | <code>string</code> |  |
@@ -54,6 +55,14 @@ annotation?: any;
 
 ```typescript
 avatarUrl?: string;
+```
+
+### color property
+
+<b>Signature</b>
+
+```typescript
+color?: string;
 ```
 
 ### dashboardId property

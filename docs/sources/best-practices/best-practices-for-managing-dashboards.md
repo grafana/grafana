@@ -3,6 +3,8 @@ title = "Best practices for managing dashboards"
 description = "Best practices for managing dashboards in Grafana"
 type = "docs"
 [menu.docs]
+identifier = "best-practices-for-managing-dashboards"
+parent = "best-practices"
 weight = 200
 +++
 

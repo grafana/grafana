@@ -23,12 +23,23 @@ import { PanelData } from '@grafana/data';
 
 |  Property | Type | Description |
 |  --- | --- | --- |
+|  [annotations](#annotations-property) | <code>DataFrame[]</code> | A list of annotation items |
 |  [error](#error-property) | <code>DataQueryError</code> | Any query errors |
 |  [request](#request-property) | <code>DataQueryRequest</code> | Request contains the queries and properties sent to the datasource |
 |  [series](#series-property) | <code>DataFrame[]</code> | Contains data frames with field overrides applied |
 |  [state](#state-property) | <code>LoadingState</code> | State of the data (loading, done, error, streaming) |
 |  [timeRange](#timerange-property) | <code>TimeRange</code> | Contains the range from the request or a shifted time range if a request uses relative time |
 |  [timings](#timings-property) | <code>DataQueryTimings</code> | Timing measurements |
+
+### annotations property
+
+A list of annotation items
+
+<b>Signature</b>
+
+```typescript
+annotations?: DataFrame[];
+```
 
 ### error property
 

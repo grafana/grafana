@@ -24,12 +24,15 @@ standardTransformers: {
     organizeFieldsTransformer: import("..").DataTransformerInfo<import("./transformers/organize").OrganizeFieldsTransformerOptions>;
     appendTransformer: import("..").DataTransformerInfo<import("./transformers/append").AppendOptions>;
     reduceTransformer: import("..").DataTransformerInfo<import("./transformers/reduce").ReduceTransformerOptions>;
+    concatenateTransformer: import("..").DataTransformerInfo<import("./transformers/concat").ConcatenateTransformerOptions>;
     calculateFieldTransformer: import("..").DataTransformerInfo<import("./transformers/calculateField").CalculateFieldTransformerOptions>;
     seriesToColumnsTransformer: import("..").DataTransformerInfo<import("./transformers/seriesToColumns").SeriesToColumnsOptions>;
+    seriesToRowsTransformer: import("..").DataTransformerInfo<import("./transformers/seriesToRows").SeriesToRowsTransformerOptions>;
     renameFieldsTransformer: import("..").DataTransformerInfo<import("./transformers/rename").RenameFieldsTransformerOptions>;
     labelsToFieldsTransformer: import("..").DataTransformerInfo<import("./transformers/labelsToFields").LabelsToFieldsOptions>;
     ensureColumnsTransformer: import("..").DataTransformerInfo<any>;
-    mergeTransformer: import("..").DataTransformerInfo<import("./transformers/merge/merge").MergeTransformerOptions>;
+    groupByTransformer: import("..").DataTransformerInfo<import("./transformers/groupBy").GroupByTransformerOptions>;
+    mergeTransformer: import("..").DataTransformerInfo<import("./transformers/merge").MergeTransformerOptions>;
 }
 ```
 <b>Import</b>

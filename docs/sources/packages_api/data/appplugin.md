@@ -33,7 +33,7 @@ import { AppPlugin } from '@grafana/data';
 |  --- | --- | --- |
 |  [init(meta)](#init-method) |  | Called after the module has loaded, and before the app is used. This function may be called multiple times on the same instance. The first time, <code>this.meta</code> will be undefined |
 |  [setComponentsFromLegacyExports(pluginExports)](#setcomponentsfromlegacyexports-method) |  |  |
-|  [setRootPage(root, rootNav)](#setrootpage-method) |  | Set the component displayed under: /a/$<!-- -->{<!-- -->plugin-id<!-- -->}<!-- -->/\* |
+|  [setRootPage(root, rootNav)](#setrootpage-method) |  | Set the component displayed under: /a/$<!-- -->{<!-- -->plugin-id<!-- -->}<!-- -->/\*<!-- -->If the NavModel is configured, the page will have a managed frame, otheriwse it has full control.<!-- -->NOTE: this structure will change in 7.2+ so that it is managed with a normal react router |
 
 ### angularPages property
 
@@ -100,6 +100,10 @@ setComponentsFromLegacyExports(pluginExports: any): void;
 ### setRootPage method
 
 Set the component displayed under: /a/$<!-- -->{<!-- -->plugin-id<!-- -->}<!-- -->/\*
+
+If the NavModel is configured, the page will have a managed frame, otheriwse it has full control.
+
+NOTE: this structure will change in 7.2+ so that it is managed with a normal react router
 
 <b>Signature</b>
 

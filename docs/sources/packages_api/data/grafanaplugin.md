@@ -30,6 +30,7 @@ import { GrafanaPlugin } from '@grafana/data';
 |  Property | Modifiers | Type | Description |
 |  --- | --- | --- | --- |
 |  [angularConfigCtrl](#angularconfigctrl-property) |  | <code>any</code> |  |
+|  [channelSupport](#channelsupport-property) |  | <code>LiveChannelSupport</code> | Live streaming support<!-- -->Note: <code>plugin.json</code> must also define <code>live: true</code> |
 |  [configPages](#configpages-property) |  | <code>Array&lt;PluginConfigPage&lt;T&gt;&gt;</code> |  |
 |  [loadError](#loaderror-property) |  | <code>boolean</code> |  |
 |  [meta](#meta-property) |  | <code>T</code> |  |
@@ -39,6 +40,7 @@ import { GrafanaPlugin } from '@grafana/data';
 |  Method | Modifiers | Description |
 |  --- | --- | --- |
 |  [addConfigPage(tab)](#addconfigpage-method) |  |  |
+|  [setChannelSupport(support)](#setchannelsupport-method) |  | Specify how the plugin should support paths within the live streaming environment |
 
 ### constructor()
 
@@ -56,6 +58,18 @@ constructor();
 
 ```typescript
 angularConfigCtrl?: any;
+```
+
+### channelSupport property
+
+Live streaming support
+
+Note: `plugin.json` must also define `live: true`
+
+<b>Signature</b>
+
+```typescript
+channelSupport?: LiveChannelSupport;
 ```
 
 ### configPages property
@@ -94,6 +108,25 @@ addConfigPage(tab: PluginConfigPage<T>): this;
 |  Parameter | Type | Description |
 |  --- | --- | --- |
 |  tab | <code>PluginConfigPage&lt;T&gt;</code> |  |
+
+<b>Returns:</b>
+
+`this`
+
+### setChannelSupport method
+
+Specify how the plugin should support paths within the live streaming environment
+
+<b>Signature</b>
+
+```typescript
+setChannelSupport(support: LiveChannelSupport): this;
+```
+<b>Parameters</b>
+
+|  Parameter | Type | Description |
+|  --- | --- | --- |
+|  support | <code>LiveChannelSupport</code> |  |
 
 <b>Returns:</b>
 

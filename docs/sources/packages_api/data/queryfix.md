@@ -25,7 +25,6 @@ import { QueryFix } from '@grafana/data';
 |  --- | --- | --- |
 |  [action](#action-property) | <code>QueryFixAction</code> |  |
 |  [label](#label-property) | <code>string</code> |  |
-|  [type](#type-property) | <code>string</code> |  |
 
 ### action property
 
@@ -41,12 +40,4 @@ action?: QueryFixAction;
 
 ```typescript
 label: string;
-```
-
-### type property
-
-<b>Signature</b>
-
-```typescript
-type: string;
 ```

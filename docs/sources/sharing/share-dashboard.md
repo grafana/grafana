@@ -20,7 +20,7 @@ A dashboard snapshot is an instant way to share an interactive dashboard publicl
 (metric, template and annotation) and panel links, leaving only the visible metric data and series names embedded into your dashboard. Dashboard
 snapshots can be accessed by anyone who has the link and can reach the URL.
 
-{{< docs-imagebox img="/img/docs/v50/share_panel_modal.png" max-width="700px" >}}
+{{< figure src="/static/img/docs/v50/share_panel_modal.png" max-width="700px" >}}
 
 ## Publish snapshots
 

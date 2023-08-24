@@ -25,6 +25,7 @@ import { DataSourceJsonData } from '@grafana/data';
 |  --- | --- | --- |
 |  [authType](#authtype-property) | <code>string</code> |  |
 |  [defaultRegion](#defaultregion-property) | <code>string</code> |  |
+|  [profile](#profile-property) | <code>string</code> |  |
 
 ### authType property
 
@@ -40,4 +41,12 @@ authType?: string;
 
 ```typescript
 defaultRegion?: string;
+```
+
+### profile property
+
+<b>Signature</b>
+
+```typescript
+profile?: string;
 ```

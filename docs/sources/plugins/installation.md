@@ -12,7 +12,7 @@ weight = 1
 Grafana supports data source, panel, and app plugins. Having panels as plugins makes it easy to create and add any kind of panel, to show your data, or improve your favorite dashboards. Apps enable the bundling of data sources, panels, dashboards, and Grafana pages into a cohesive experience.
 
 1. In a web browser, navigate to the official [Grafana Plugins page](https://grafana.com/plugins) and find a plugin that you want to install.
-2. Click the plugin, and then click the **Installation** tab.
+1. Click the plugin, and then click the **Installation** tab.
 
 ## Install plugin on Grafana Cloud
 

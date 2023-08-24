@@ -23,6 +23,7 @@ getLogRowStyles: (theme: GrafanaTheme, logLevel?: LogLevel | undefined) => {
     logsRow: string;
     logsRowDuplicates: string;
     logsRowLevel: string;
+    logIconError: string;
     logsRowToggleDetails: string;
     logsRowLocalTime: string;
     logsRowLabels: string;

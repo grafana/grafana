@@ -7,7 +7,7 @@ type = "docs"
 name = "Enhanced LDAP"
 identifier = "enhanced-ldap"
 parent = "authentication"
-weight = 3
+weight = 400
 +++
 
 # Enhanced LDAP integration

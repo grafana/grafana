@@ -24,7 +24,7 @@ import { FieldConfigEditorProps } from '@grafana/data';
 |  Property | Type | Description |
 |  --- | --- | --- |
 |  [context](#context-property) | <code>FieldOverrideContext</code> |  |
-|  [item](#item-property) | <code>FieldConfigPropertyItem&lt;TValue, TSettings&gt;</code> |  |
+|  [item](#item-property) | <code>FieldConfigPropertyItem&lt;any, TValue, TSettings&gt;</code> |  |
 |  [onChange](#onchange-property) | <code>(value?: TValue) =&gt; void</code> |  |
 |  [value](#value-property) | <code>TValue</code> |  |
 
@@ -41,7 +41,7 @@ context: FieldOverrideContext;
 <b>Signature</b>
 
 ```typescript
-item: FieldConfigPropertyItem<TValue, TSettings>;
+item: FieldConfigPropertyItem<any, TValue, TSettings>;
 ```
 
 ### onChange property

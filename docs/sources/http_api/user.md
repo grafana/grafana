@@ -2,7 +2,7 @@
 title = "User HTTP API "
 description = "Grafana User HTTP API"
 keywords = ["grafana", "http", "documentation", "api", "user"]
-aliases = ["/docs/grafana/latest/http_api/user/"]
+aliases = ["/docs/grafana/v7.2/http_api/user/"]
 type = "docs"
 [menu.docs]
 name = "Users"

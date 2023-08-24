@@ -26,6 +26,7 @@ import { FieldState } from '@grafana/data';
 |  [calcs](#calcs-property) | <code>FieldCalcs</code> | Cache of reduced values |
 |  [displayName](#displayname-property) | <code>string &#124; null</code> | An appropriate name for the field (does not include frame info) |
 |  [scopedVars](#scopedvars-property) | <code>ScopedVars</code> | Appropriate values for templating |
+|  [seriesIndex](#seriesindex-property) | <code>number</code> | Series index is index for this field in a larger data set that can span multiple DataFrames Useful for assigning color to series by looking up a color in a palette using this index |
 
 ### calcs property
 
@@ -55,4 +56,14 @@ Appropriate values for templating
 
 ```typescript
 scopedVars?: ScopedVars;
+```
+
+### seriesIndex property
+
+Series index is index for this field in a larger data set that can span multiple DataFrames Useful for assigning color to series by looking up a color in a palette using this index
+
+<b>Signature</b>
+
+```typescript
+seriesIndex?: number;
 ```

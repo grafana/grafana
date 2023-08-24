@@ -26,12 +26,12 @@ import { QueryEditorProps } from '@grafana/data';
 |  [data](#data-property) | <code>PanelData</code> | Contains query response filtered by refId of QueryResultBase and possible query error |
 |  [datasource](#datasource-property) | <code>DSType</code> |  |
 |  [exploreId](#exploreid-property) | <code>any</code> |  |
-|  [exploreMode](#exploremode-property) | <code>ExploreMode</code> |  |
 |  [history](#history-property) | <code>HistoryItem[]</code> |  |
 |  [onBlur](#onblur-property) | <code>() =&gt; void</code> |  |
 |  [onChange](#onchange-property) | <code>(value: TQuery) =&gt; void</code> |  |
 |  [onRunQuery](#onrunquery-property) | <code>() =&gt; void</code> |  |
 |  [query](#query-property) | <code>TQuery</code> |  |
+|  [range](#range-property) | <code>TimeRange</code> |  |
 
 ### data property
 
@@ -57,14 +57,6 @@ datasource: DSType;
 
 ```typescript
 exploreId?: any;
-```
-
-### exploreMode property
-
-<b>Signature</b>
-
-```typescript
-exploreMode?: ExploreMode;
 ```
 
 ### history property
@@ -105,4 +97,12 @@ onRunQuery: () => void;
 
 ```typescript
 query: TQuery;
+```
+
+### range property
+
+<b>Signature</b>
+
+```typescript
+range?: TimeRange;
 ```

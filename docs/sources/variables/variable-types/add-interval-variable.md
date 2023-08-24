@@ -1,9 +1,11 @@
 +++
 title = "Add an interval variable"
 type = "docs"
-aliases = ["/docs/grafana/latest/variables/add-interval-variable.md"]
+aliases = ["/docs/grafana/v7.2/variables/add-interval-variable.md"]
 [menu.docs]
-weight = 500
+identifier = "add-interval-variable"
+parent = "variable-types"
+weight = 600
 +++
 
 # Add an interval variable

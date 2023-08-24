@@ -4,7 +4,6 @@
 # -----------------------------------------------------------------------
 title = "EmptySearchResult"
 keywords = ["grafana","documentation","sdk","@grafana/ui"]
-type = "docs"
 +++
 
 ## EmptySearchResult variable

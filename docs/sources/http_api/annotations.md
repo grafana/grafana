@@ -2,7 +2,7 @@
 title = "Annotations HTTP API "
 description = "Grafana Annotations HTTP API"
 keywords = ["grafana", "http", "documentation", "api", "annotation", "annotations", "comment"]
-aliases = ["/docs/grafana/latest/http_api/annotations/"]
+aliases = ["/docs/grafana/v7.2/http_api/annotations/"]
 type = "docs"
 [menu.docs]
 name = "Annotations"

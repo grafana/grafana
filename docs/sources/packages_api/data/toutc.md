@@ -14,7 +14,7 @@ type = "docs"
 <b>Signature</b>
 
 ```typescript
-toUtc: (input?: string | number | DateTime | Date | (string | number)[] | undefined, formatInput?: FormatInput) => DateTime
+toUtc: (input?: string | number | DateTime | Date | (string | number)[] | null | undefined, formatInput?: FormatInput) => DateTime
 ```
 <b>Import</b>
 

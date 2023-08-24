@@ -3,12 +3,12 @@ title = "LDAP Authentication"
 description = "Grafana LDAP Authentication Guide "
 keywords = ["grafana", "configuration", "documentation", "ldap", "active directory"]
 type = "docs"
-aliases = ["/docs/grafana/latest/installation/ldap/"]
+aliases = ["/docs/grafana/v7.2/installation/ldap/"]
 [menu.docs]
 name = "LDAP"
 identifier = "ldap"
 parent = "authentication"
-weight = 2
+weight = 300
 +++
 
 # LDAP Authentication
@@ -105,19 +105,19 @@ bind_password = "${LDAP_ADMIN_PASSWORD}"
 > Only available in Grafana v6.4+
 
 Grafana has an LDAP debug view built-in which allows you to test your LDAP configuration directly within Grafana. At the moment of writing, only Grafana admins can use the LDAP debug view.
- 
+
 Within this view, you'll be able to see which LDAP servers are currently reachable and test your current configuration.
 
-{{< docs-imagebox img="/img/docs/ldap_debug.png" class="docs-image--no-shadow" max-width="600px" >}}
+{{< figure src="/static/img/docs/ldap_debug.png" class="docs-image--no-shadow" max-width="600px" >}}
 
 
 To use the debug view:
 
  1. Type the username of a user that exists within any of your LDAP server(s)
- 2. Then, press "Run"
- 3. If the user is found within any of your LDAP instances, the mapping information is displayed
+ 1. Then, press "Run"
+ 1. If the user is found within any of your LDAP instances, the mapping information is displayed
 
-{{< docs-imagebox img="/img/docs/ldap_debug_mapping_testing.png" class="docs-image--no-shadow" max-width="600px" >}}
+{{< figure src="/static/img/docs/ldap_debug_mapping_testing.png" class="docs-image--no-shadow" max-width="600px" >}}
 
 ### Bind
 
@@ -200,8 +200,8 @@ Users with nested/recursive group membership must have an LDAP server that suppo
 and configure `group_search_filter` in a way that it returns the groups the submitted username is a member of.
 
 To configure `group_search_filter`:
-* You can set `group_search_base_dns` to specify where the matching groups are defined.
-* If you do not use `group_search_base_dns`, then the previously defined `search_base_dns` is used.
+- You can set `group_search_base_dns` to specify where the matching groups are defined.
+- If you do not use `group_search_base_dns`, then the previously defined `search_base_dns` is used.
 
 **Active Directory example:**
 
@@ -320,9 +320,9 @@ org_role = "Viewer"
 
 Assuming the following Active Directory server setup:
 
-* IP address: `10.0.0.1`
-* Domain: `CORP`
-* DNS name: `corp.local`
+- IP address: `10.0.0.1`
+- Domain: `CORP`
+- DNS name: `corp.local`
 
 **LDAP specific configuration file (ldap.toml):**
 ```bash

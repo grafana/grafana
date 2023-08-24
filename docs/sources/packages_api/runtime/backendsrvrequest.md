@@ -19,11 +19,16 @@ Used to initiate a remote call via the [BackendSrv](./runtime/backendsrv.md)
 export declare type BackendSrvRequest = {
     url: string;
     retry?: number;
-    headers?: any;
+    headers?: Record<string, any>;
     method?: string;
     showSuccessAlert?: boolean;
+    showErrorAlert?: boolean;
     requestId?: string;
-    [key: string]: any;
+    hideFromInspector?: boolean;
+    data?: any;
+    params?: Record<string, any>;
+    credentials?: RequestCredentials;
+    withCredentials?: boolean;
 };
 ```
 <b>Import</b>

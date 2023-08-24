@@ -34,6 +34,7 @@ import { PluginMeta } from '@grafana/data';
 |  [info](#info-property) | <code>PluginMetaInfo</code> |  |
 |  [jsonData](#jsondata-property) | <code>T</code> |  |
 |  [latestVersion](#latestversion-property) | <code>string</code> |  |
+|  [live](#live-property) | <code>boolean</code> |  |
 |  [module](#module-property) | <code>string</code> |  |
 |  [name](#name-property) | <code>string</code> |  |
 |  [pinned](#pinned-property) | <code>boolean</code> |  |
@@ -128,6 +129,14 @@ jsonData?: T;
 
 ```typescript
 latestVersion?: string;
+```
+
+### live property
+
+<b>Signature</b>
+
+```typescript
+live?: boolean;
 ```
 
 ### module property

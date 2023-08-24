@@ -23,7 +23,17 @@ import { MetricFindValue } from '@grafana/data';
 
 |  Property | Type | Description |
 |  --- | --- | --- |
+|  [expandable](#expandable-property) | <code>boolean</code> |  |
 |  [text](#text-property) | <code>string</code> |  |
+|  [value](#value-property) | <code>string &#124; number</code> |  |
+
+### expandable property
+
+<b>Signature</b>
+
+```typescript
+expandable?: boolean;
+```
 
 ### text property
 
@@ -31,4 +41,12 @@ import { MetricFindValue } from '@grafana/data';
 
 ```typescript
 text: string;
+```
+
+### value property
+
+<b>Signature</b>
+
+```typescript
+value?: string | number;
 ```

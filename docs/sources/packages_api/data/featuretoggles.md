@@ -25,20 +25,11 @@ import { FeatureToggles } from '@grafana/data';
 
 |  Property | Type | Description |
 |  --- | --- | --- |
-|  [datasourceInsights](#datasourceinsights-property) | <code>boolean</code> |  |
 |  [expressions](#expressions-property) | <code>boolean</code> |  |
+|  [live](#live-property) | <code>boolean</code> |  |
 |  [meta](#meta-property) | <code>boolean</code> |  |
-|  [newEdit](#newedit-property) | <code>boolean</code> |  |
-|  [reportGrid](#reportgrid-property) | <code>boolean</code> |  |
-|  [transformations](#transformations-property) | <code>boolean</code> |  |
-
-### datasourceInsights property
-
-<b>Signature</b>
-
-```typescript
-datasourceInsights: boolean;
-```
+|  [ngalert](#ngalert-property) | <code>boolean</code> |  |
+|  [traceToLogs](#tracetologs-property) | <code>boolean</code> |  |
 
 ### expressions property
 
@@ -46,6 +37,14 @@ datasourceInsights: boolean;
 
 ```typescript
 expressions: boolean;
+```
+
+### live property
+
+<b>Signature</b>
+
+```typescript
+live: boolean;
 ```
 
 ### meta property
@@ -60,26 +59,18 @@ meta: boolean;
 
 Available only in Grafana Enterprise
 
-### newEdit property
+### ngalert property
 
 <b>Signature</b>
 
 ```typescript
-newEdit: boolean;
+ngalert: boolean;
 ```
 
-### reportGrid property
+### traceToLogs property
 
 <b>Signature</b>
 
 ```typescript
-reportGrid: boolean;
-```
-
-### transformations property
-
-<b>Signature</b>
-
-```typescript
-transformations: boolean;
+traceToLogs: boolean;
 ```

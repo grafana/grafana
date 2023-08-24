@@ -46,6 +46,15 @@
       "type": "string",
       "description": "The first part of the file name of the backend component executable. There can be multiple executables built for different operating system and architecture. Grafana will check for executables named `<executable>_<$GOOS>_<lower case $GOARCH><.exe for Windows>`, e.g. `plugin_linux_amd64`. Combination of $GOOS and $GOARCH can be found here: https://golang.org/doc/install/source#environment."
     },
+    "preload": {
+      "type": "boolean",
+      "description": "Initialize plugin on startup. By default, the plugin initializes on first use."
+    },
+    "state": {
+      "type": "string",
+      "description": "Marks a plugin as a pre-release.",
+      "enum": ["alpha", "beta"]
+    },
     "includes": {
       "type": "array",
       "items": {
@@ -99,7 +108,8 @@
       "description": "Not to be used by external plugins. Special property for the built-in mixed plugin."
     },
     "module": {
-      "type": "string"
+      "type": "string",
+      "description": ""
     },
     "sort": {
       "type": "number",

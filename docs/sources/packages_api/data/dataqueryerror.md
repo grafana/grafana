@@ -23,20 +23,12 @@ import { DataQueryError } from '@grafana/data';
 
 |  Property | Type | Description |
 |  --- | --- | --- |
-|  [cancelled](#cancelled-property) | <code>boolean</code> |  |
 |  [data](#data-property) | <code>{</code><br/><code>        message?: string;</code><br/><code>        error?: string;</code><br/><code>    }</code> |  |
 |  [message](#message-property) | <code>string</code> |  |
 |  [refId](#refid-property) | <code>string</code> |  |
 |  [status](#status-property) | <code>string</code> |  |
 |  [statusText](#statustext-property) | <code>string</code> |  |
-
-### cancelled property
-
-<b>Signature</b>
-
-```typescript
-cancelled?: boolean;
-```
+|  [type](#type-property) | <code>DataQueryErrorType</code> |  |
 
 ### data property
 
@@ -79,4 +71,12 @@ status?: string;
 
 ```typescript
 statusText?: string;
+```
+
+### type property
+
+<b>Signature</b>
+
+```typescript
+type?: DataQueryErrorType;
 ```

@@ -30,6 +30,7 @@ A library containing services, configurations etc. used to interact with the Gra
 
 |  Function | Description |
 |  --- | --- |
+|  [frameToMetricFindValue(frame)](./frametometricfindvalue/) | Return the first string or non-time field as the value |
 |  [getAngularLoader()](./getangularloader/) | Used to retrieve the [AngularLoader](./runtime/angularloader.md) that enables the use of Angular components within a React component.<!-- -->Please see the [AngularComponent](./runtime/angularcomponent.md) for a proper example. |
 |  [getDataSourceSrv()](./getdatasourcesrv/) | Used to retrieve the [DataSourceSrv](./runtime/datasourcesrv.md) that is the entry point for communicating with a datasource that is added as a plugin (both external and internal). |
 |  [getEchoSrv()](./getechosrv/) | Used to retrieve the [EchoSrv](./runtime/echosrv.md) that can be used to report events to registered echo backends. |
@@ -54,6 +55,9 @@ A library containing services, configurations etc. used to interact with the Gra
 |  [EchoEvent](./echoevent/) | Describes an echo event. |
 |  [EchoMeta](./echometa/) | Describes the meta information that are sent together with each event. |
 |  [EchoSrv](./echosrv/) | Used to send events to all the registered backends. This should be accessed via the [getEchoSrv()](./runtime/getechosrv.md) function. Will, by default, flush events to the backends every 10s or when the flush function is triggered. |
+|  [FetchError](./fetcherror/) | Error type for fetch function in [BackendSrv](./runtime/backendsrv.md) |
+|  [FetchErrorDataProps](./fetcherrordataprops/) | Error type for fetch function in [BackendSrv](./runtime/backendsrv.md) |
+|  [FetchResponse](./fetchresponse/) | Response for fetch function in [BackendSrv](./runtime/backendsrv.md) |
 |  [HealthCheckResult](./healthcheckresult/) | Describes the payload returned when checking the health of a data source plugin. |
 |  [LocationSrv](./locationsrv/) | If you need to automatically navigate the user to a new place in the application this should be done via the LocationSrv and it will make sure to update the application state accordingly. |
 |  [LocationUpdate](./locationupdate/) |  |
@@ -68,6 +72,7 @@ A library containing services, configurations etc. used to interact with the Gra
 |  --- | --- |
 |  [config](./config/) | Use this to access the [GrafanaBootConfig](./runtime/grafanabootconfig.md) for the current running Grafana instance. |
 |  [getBackendSrv](./getbackendsrv/) | Used to retrieve the [BackendSrv](./runtime/backendsrv.md) that can be used to communicate via http(s) to a remote backend such as the Grafana backend, a datasource etc. |
+|  [getGrafanaLiveSrv](./getgrafanalivesrv/) | Used to retrieve the GrafanaLiveSrv that allows you to subscribe to server side events and streams<!-- -->-- experimental |
 |  [getLegacyAngularInjector](./getlegacyangularinjector/) | <b><i>(BETA)</i></b> WARNING: this function provides a temporary way for plugins to access anything in the angular injector. While the migration from angular to react continues, there are a few options that do not yet have good alternatives. Note that use of this function will be removed in the future. |
 |  [getTemplateSrv](./gettemplatesrv/) | Used to retrieve the [TemplateSrv](./runtime/templatesrv.md) that can be used to fetch available template variables. |
 |  [registerEchoBackend](./registerechobackend/) | Used to register echo backends that will receive Grafana echo events during application runtime. |

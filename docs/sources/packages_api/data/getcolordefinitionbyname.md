@@ -7,17 +7,27 @@ keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
 +++
 
-## getColorDefinitionByName variable
+## getColorDefinitionByName() function
 
-### getColorDefinitionByName variable
+### getColorDefinitionByName() function
 
 <b>Signature</b>
 
 ```typescript
-getColorDefinitionByName: (name: Color) => ColorDefinition
+export declare function getColorDefinitionByName(name: Color): ColorDefinition;
 ```
 <b>Import</b>
 
 ```typescript
 import { getColorDefinitionByName } from '@grafana/data';
 ```
+<b>Parameters</b>
+
+|  Parameter | Type | Description |
+|  --- | --- | --- |
+|  name | <code>Color</code> |  |
+
+<b>Returns:</b>
+
+`ColorDefinition`
+

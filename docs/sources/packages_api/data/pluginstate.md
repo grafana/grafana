@@ -11,6 +11,8 @@ type = "docs"
 
 ### PluginState enum
 
+Describes plugins life cycle status
+
 <b>Signature</b>
 
 ```typescript

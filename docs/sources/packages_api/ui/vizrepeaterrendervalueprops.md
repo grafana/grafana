@@ -24,6 +24,7 @@ import { VizRepeaterRenderValueProps } from '@grafana/ui';
 |  Property | Type | Description |
 |  --- | --- | --- |
 |  [alignmentFactors](#alignmentfactors-property) | <code>D</code> |  |
+|  [count](#count-property) | <code>number</code> | Total number of values being shown in repeater |
 |  [height](#height-property) | <code>number</code> |  |
 |  [orientation](#orientation-property) | <code>VizOrientation</code> |  |
 |  [value](#value-property) | <code>V</code> |  |
@@ -35,6 +36,16 @@ import { VizRepeaterRenderValueProps } from '@grafana/ui';
 
 ```typescript
 alignmentFactors: D;
+```
+
+### count property
+
+Total number of values being shown in repeater
+
+<b>Signature</b>
+
+```typescript
+count: number;
 ```
 
 ### height property

@@ -14,7 +14,7 @@ type = "docs"
 <b>Signature</b>
 
 ```typescript
-FormLabel: FunctionComponent<Props>
+InlineFormLabel: React.FunctionComponent<Props>
 ```
 <b>Import</b>
 

@@ -28,12 +28,12 @@ import { FieldConfigProperty } from '@grafana/data';
 |  --- | --- | --- |
 |  Color | <code>&quot;color&quot;</code> |  |
 |  Decimals | <code>&quot;decimals&quot;</code> |  |
+|  DisplayName | <code>&quot;displayName&quot;</code> |  |
 |  Links | <code>&quot;links&quot;</code> |  |
 |  Mappings | <code>&quot;mappings&quot;</code> |  |
 |  Max | <code>&quot;max&quot;</code> |  |
 |  Min | <code>&quot;min&quot;</code> |  |
 |  NoValue | <code>&quot;noValue&quot;</code> |  |
 |  Thresholds | <code>&quot;thresholds&quot;</code> |  |
-|  Title | <code>&quot;title&quot;</code> |  |
 |  Unit | <code>&quot;unit&quot;</code> |  |
 

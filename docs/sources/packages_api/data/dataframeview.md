@@ -136,7 +136,7 @@ Helper function to return the [DisplayProcessor](./data/displayprocessor.md) for
 <b>Signature</b>
 
 ```typescript
-getFieldDisplayProcessor(colIndex: number): DisplayProcessor | null;
+getFieldDisplayProcessor(colIndex: number): DisplayProcessor | undefined;
 ```
 <b>Parameters</b>
 
@@ -146,7 +146,7 @@ getFieldDisplayProcessor(colIndex: number): DisplayProcessor | null;
 
 <b>Returns:</b>
 
-`DisplayProcessor | null`
+`DisplayProcessor | undefined`
 
 > This API is provided as a preview for developers and may change based on feedback that we receive. Do not use this API in a production environment.
 > 

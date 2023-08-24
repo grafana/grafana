@@ -56,4 +56,3 @@ default_home_dashboard_path = data/main-dashboard.json
 1. Star this dashboard by clicking on the star next to the dashboard title. 
 1. On the left menu, hover your cursor over your avatar and then click **Preferences**.
 1. In the **Home Dashboard** field, select the dashboard you want to use for your home dashboard. Options include all starred dashboards. 
-

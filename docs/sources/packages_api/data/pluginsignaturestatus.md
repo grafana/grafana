@@ -11,6 +11,8 @@ type = "docs"
 
 ### PluginSignatureStatus enum
 
+Describes status of [plugin signature](https://grafana.com/docs/grafana/latest/plugins/plugin-signature-verification/)
+
 <b>Signature</b>
 
 ```typescript
@@ -28,7 +30,7 @@ import { PluginSignatureStatus } from '@grafana/data';
 |  --- | --- | --- |
 |  internal | <code>&quot;internal&quot;</code> |  |
 |  invalid | <code>&quot;invalid&quot;</code> |  |
+|  missing | <code>&quot;missing&quot;</code> |  |
 |  modified | <code>&quot;modified&quot;</code> |  |
-|  unsigned | <code>&quot;unsigned&quot;</code> |  |
 |  valid | <code>&quot;valid&quot;</code> |  |
 

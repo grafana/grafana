@@ -2,7 +2,8 @@
 title = "Variables types"
 type = "docs"
 [menu.docs]
-weight = 300
+identifier = "variable-types"
+weight = 140
 +++
 
 # Variables types

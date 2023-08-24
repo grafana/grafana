@@ -34,7 +34,7 @@ Result set of panel queries
 <b>Signature</b>
 
 ```typescript
-data: PanelData;
+data?: PanelData;
 ```
 
 ### onOptionsChange property

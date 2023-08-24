@@ -2,7 +2,7 @@
 title = "Backend plugins"
 keywords = ["grafana", "plugins", "backend", "plugin", "backend-plugins", "documentation"]
 type = "docs"
-aliases = ["/docs/grafana/latest/plugins/developing/backend-plugins-guide/"]
+aliases = ["/docs/grafana/v7.2/plugins/developing/backend-plugins-guide/"]
 +++
 
 # Backend plugins
@@ -42,7 +42,7 @@ Grafana's backend plugin system exposes a couple of different capabilities, or b
 
 ### Query data
 
-The query data capability allows a backend plugin to handle data source queries that are submitted from a [dashboard]({{< relref "../../../features/dashboard/dashboards.md" >}}), [Explore]({{< relref "../../../features/explore/index.md" >}}) or [Grafana Alerting]({{< relref "../../../alerting" >}}). The response contains [data frames]({{< relref "../data-frames.md" >}}), which are used to visualize metrics, logs, and traces. The query data capability is required to implement for a backend data source plugin.
+The query data capability allows a backend plugin to handle data source queries that are submitted from a [dashboard]({{< relref "../../../dashboards/_index.md" >}}), [Explore]({{< relref "../../../explore/index.md" >}}) or [Grafana Alerting]({{< relref "../../../alerting" >}}). The response contains [data frames]({{< relref "../data-frames.md" >}}), which are used to visualize metrics, logs, and traces. The query data capability is required to implement for a backend data source plugin.
 
 ### Resources
 

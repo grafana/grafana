@@ -28,6 +28,7 @@ import { CSVConfig } from '@grafana/data';
 |  [headerStyle](#headerstyle-property) | <code>CSVHeaderStyle</code> |  |
 |  [newline](#newline-property) | <code>string</code> |  |
 |  [quoteChar](#quotechar-property) | <code>string</code> |  |
+|  [useExcelHeader](#useexcelheader-property) | <code>boolean</code> |  |
 
 ### delimiter property
 
@@ -67,4 +68,12 @@ newline?: string;
 
 ```typescript
 quoteChar?: string;
+```
+
+### useExcelHeader property
+
+<b>Signature</b>
+
+```typescript
+useExcelHeader?: boolean;
 ```

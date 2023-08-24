@@ -30,8 +30,9 @@ import { FieldConfig } from '@grafana/data';
 |  [color](#color-property) | <code>FieldColor</code> |  |
 |  [custom](#custom-property) | <code>TOptions</code> |  |
 |  [decimals](#decimals-property) | <code>number &#124; null</code> |  |
-|  [displayName](#displayname-property) | <code>string</code> |  |
-|  [filterable](#filterable-property) | <code>boolean</code> |  |
+|  [displayName](#displayname-property) | <code>string</code> | The display value for this field. This supports template variables blank is auto |
+|  [displayNameFromDS](#displaynamefromds-property) | <code>string</code> | This can be used by data sources that return and explicit naming structure for values and labels When this property is configured, this value is used rather than the default naming strategy. |
+|  [filterable](#filterable-property) | <code>boolean</code> | True if data source field supports ad-hoc filters |
 |  [links](#links-property) | <code>DataLink[]</code> |  |
 |  [mappings](#mappings-property) | <code>ValueMapping[]</code> |  |
 |  [max](#max-property) | <code>number &#124; null</code> |  |
@@ -67,13 +68,27 @@ decimals?: number | null;
 
 ### displayName property
 
+The display value for this field. This supports template variables blank is auto
+
 <b>Signature</b>
 
 ```typescript
 displayName?: string;
 ```
 
+### displayNameFromDS property
+
+This can be used by data sources that return and explicit naming structure for values and labels When this property is configured, this value is used rather than the default naming strategy.
+
+<b>Signature</b>
+
+```typescript
+displayNameFromDS?: string;
+```
+
 ### filterable property
+
+True if data source field supports ad-hoc filters
 
 <b>Signature</b>
 

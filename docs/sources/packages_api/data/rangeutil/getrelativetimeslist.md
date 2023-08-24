@@ -120,17 +120,35 @@ export declare function getRelativeTimesList(timepickerSettings: any, currentDis
     to: string;
     display: string;
     section: number;
-}, fromIndex?: number | undefined) => number) | ((callbackfn: (value: {
-    from: string;
-    to: string;
-    display: string;
-    section: number;
-}, index: number, array: {
-    from: string;
-    to: string;
-    display: string;
-    section: number;
-}[]) => unknown, thisArg?: any) => boolean) | ((callbackfn: (value: {
+}, fromIndex?: number | undefined) => number) | {
+    <S extends {
+        from: string;
+        to: string;
+        display: string;
+        section: number;
+    }>(predicate: (value: {
+        from: string;
+        to: string;
+        display: string;
+        section: number;
+    }, index: number, array: {
+        from: string;
+        to: string;
+        display: string;
+        section: number;
+    }[]) => value is S, thisArg?: any): this is S[];
+    (predicate: (value: {
+        from: string;
+        to: string;
+        display: string;
+        section: number;
+    }, index: number, array: {
+        from: string;
+        to: string;
+        display: string;
+        section: number;
+    }[]) => unknown, thisArg?: any): boolean;
+} | ((predicate: (value: {
     from: string;
     to: string;
     display: string;
@@ -161,12 +179,12 @@ export declare function getRelativeTimesList(timepickerSettings: any, currentDis
     display: string;
     section: number;
 }[]) => U, thisArg?: any) => U[]) | {
-    <S extends {
+    <S_1 extends {
         from: string;
         to: string;
         display: string;
         section: number;
-    }>(callbackfn: (value: {
+    }>(predicate: (value: {
         from: string;
         to: string;
         display: string;
@@ -176,8 +194,8 @@ export declare function getRelativeTimesList(timepickerSettings: any, currentDis
         to: string;
         display: string;
         section: number;
-    }[]) => value is S, thisArg?: any): S[];
-    (callbackfn: (value: {
+    }[]) => value is S_1, thisArg?: any): S_1[];
+    (predicate: (value: {
         from: string;
         to: string;
         display: string;
@@ -332,7 +350,7 @@ export declare function getRelativeTimesList(timepickerSettings: any, currentDis
         section: number;
     }[]) => U_2, initialValue: U_2): U_2;
 } | {
-    <S_1 extends {
+    <S_2 extends {
         from: string;
         to: string;
         display: string;
@@ -347,7 +365,7 @@ export declare function getRelativeTimesList(timepickerSettings: any, currentDis
         to: string;
         display: string;
         section: number;
-    }[]) => value is S_1, thisArg?: any): S_1 | undefined;
+    }[]) => value is S_2, thisArg?: any): S_2 | undefined;
     (predicate: (value: {
         from: string;
         to: string;
@@ -414,40 +432,7 @@ export declare function getRelativeTimesList(timepickerSettings: any, currentDis
     to: string;
     display: string;
     section: number;
-}[]) => U_3 | readonly U_3[], thisArg?: This | undefined) => U_3[]) | (<A, D extends number = 1>(this: A, depth?: D | undefined) => {
-    done: A;
-    recur: A extends readonly (infer InnerArr)[] ? {
-        done: InnerArr;
-        recur: InnerArr extends readonly (infer InnerArr)[] ? {
-            done: InnerArr;
-            recur: InnerArr extends readonly (infer InnerArr)[] ? {
-                done: InnerArr;
-                recur: InnerArr extends readonly (infer InnerArr)[] ? {
-                    done: InnerArr;
-                    recur: InnerArr extends readonly (infer InnerArr)[] ? {
-                        done: InnerArr;
-                        recur: InnerArr extends readonly (infer InnerArr)[] ? {
-                            done: InnerArr;
-                            recur: InnerArr extends readonly (infer InnerArr)[] ? {
-                                done: InnerArr;
-                                recur: InnerArr extends readonly (infer InnerArr)[] ? {
-                                    done: InnerArr;
-                                    recur: InnerArr extends readonly (infer InnerArr)[] ? {
-                                        done: InnerArr;
-                                        recur: InnerArr extends readonly (infer InnerArr)[] ? {
-                                            done: InnerArr;
-                                            recur: InnerArr extends readonly (infer InnerArr)[] ? any[[-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20][[-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20][[-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20][[-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20][[-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20][[-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20][[-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20][[-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20][[-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20][[-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20][[-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20][D]]]]]]]]]]] extends -1 ? "done" : "recur"] : InnerArr;
-                                        }[[-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20][[-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20][[-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20][[-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20][[-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20][[-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20][[-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20][[-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20][[-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20][[-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20][D]]]]]]]]]] extends -1 ? "done" : "recur"] : InnerArr;
-                                    }[[-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20][[-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20][[-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20][[-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20][[-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20][[-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20][[-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20][[-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20][[-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20][D]]]]]]]]] extends -1 ? "done" : "recur"] : InnerArr;
-                                }[[-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20][[-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20][[-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20][[-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20][[-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20][[-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20][[-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20][[-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20][D]]]]]]]] extends -1 ? "done" : "recur"] : InnerArr;
-                            }[[-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20][[-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20][[-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20][[-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20][[-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20][[-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20][[-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20][D]]]]]]] extends -1 ? "done" : "recur"] : InnerArr;
-                        }[[-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20][[-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20][[-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20][[-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20][[-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20][[-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20][D]]]]]] extends -1 ? "done" : "recur"] : InnerArr;
-                    }[[-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20][[-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20][[-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20][[-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20][[-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20][D]]]]] extends -1 ? "done" : "recur"] : InnerArr;
-                }[[-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20][[-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20][[-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20][[-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20][D]]]] extends -1 ? "done" : "recur"] : InnerArr;
-            }[[-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20][[-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20][[-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20][D]]] extends -1 ? "done" : "recur"] : InnerArr;
-        }[[-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20][[-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20][D]] extends -1 ? "done" : "recur"] : InnerArr;
-    }[[-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20][D] extends -1 ? "done" : "recur"] : A;
-}[D extends -1 ? "done" : "recur"][]))[]>;
+}[]) => U_3 | readonly U_3[], thisArg?: This | undefined) => U_3[]) | (<A, D extends number = 1>(this: A, depth?: D | undefined) => FlatArray<A, D>[]))[]>;
 ```
 <b>Import</b>
 
@@ -570,17 +555,35 @@ const { getRelativeTimesList } = rangeUtil;
     to: string;
     display: string;
     section: number;
-}, fromIndex?: number | undefined) => number) | ((callbackfn: (value: {
-    from: string;
-    to: string;
-    display: string;
-    section: number;
-}, index: number, array: {
-    from: string;
-    to: string;
-    display: string;
-    section: number;
-}[]) => unknown, thisArg?: any) => boolean) | ((callbackfn: (value: {
+}, fromIndex?: number | undefined) => number) | {
+    <S extends {
+        from: string;
+        to: string;
+        display: string;
+        section: number;
+    }>(predicate: (value: {
+        from: string;
+        to: string;
+        display: string;
+        section: number;
+    }, index: number, array: {
+        from: string;
+        to: string;
+        display: string;
+        section: number;
+    }[]) => value is S, thisArg?: any): this is S[];
+    (predicate: (value: {
+        from: string;
+        to: string;
+        display: string;
+        section: number;
+    }, index: number, array: {
+        from: string;
+        to: string;
+        display: string;
+        section: number;
+    }[]) => unknown, thisArg?: any): boolean;
+} | ((predicate: (value: {
     from: string;
     to: string;
     display: string;
@@ -611,12 +614,12 @@ const { getRelativeTimesList } = rangeUtil;
     display: string;
     section: number;
 }[]) => U, thisArg?: any) => U[]) | {
-    <S extends {
+    <S_1 extends {
         from: string;
         to: string;
         display: string;
         section: number;
-    }>(callbackfn: (value: {
+    }>(predicate: (value: {
         from: string;
         to: string;
         display: string;
@@ -626,8 +629,8 @@ const { getRelativeTimesList } = rangeUtil;
         to: string;
         display: string;
         section: number;
-    }[]) => value is S, thisArg?: any): S[];
-    (callbackfn: (value: {
+    }[]) => value is S_1, thisArg?: any): S_1[];
+    (predicate: (value: {
         from: string;
         to: string;
         display: string;
@@ -782,7 +785,7 @@ const { getRelativeTimesList } = rangeUtil;
         section: number;
     }[]) => U_2, initialValue: U_2): U_2;
 } | {
-    <S_1 extends {
+    <S_2 extends {
         from: string;
         to: string;
         display: string;
@@ -797,7 +800,7 @@ const { getRelativeTimesList } = rangeUtil;
         to: string;
         display: string;
         section: number;
-    }[]) => value is S_1, thisArg?: any): S_1 | undefined;
+    }[]) => value is S_2, thisArg?: any): S_2 | undefined;
     (predicate: (value: {
         from: string;
         to: string;
@@ -864,38 +867,5 @@ const { getRelativeTimesList } = rangeUtil;
     to: string;
     display: string;
     section: number;
-}[]) => U_3 | readonly U_3[], thisArg?: This | undefined) => U_3[]) | (<A, D extends number = 1>(this: A, depth?: D | undefined) => {
-    done: A;
-    recur: A extends readonly (infer InnerArr)[] ? {
-        done: InnerArr;
-        recur: InnerArr extends readonly (infer InnerArr)[] ? {
-            done: InnerArr;
-            recur: InnerArr extends readonly (infer InnerArr)[] ? {
-                done: InnerArr;
-                recur: InnerArr extends readonly (infer InnerArr)[] ? {
-                    done: InnerArr;
-                    recur: InnerArr extends readonly (infer InnerArr)[] ? {
-                        done: InnerArr;
-                        recur: InnerArr extends readonly (infer InnerArr)[] ? {
-                            done: InnerArr;
-                            recur: InnerArr extends readonly (infer InnerArr)[] ? {
-                                done: InnerArr;
-                                recur: InnerArr extends readonly (infer InnerArr)[] ? {
-                                    done: InnerArr;
-                                    recur: InnerArr extends readonly (infer InnerArr)[] ? {
-                                        done: InnerArr;
-                                        recur: InnerArr extends readonly (infer InnerArr)[] ? {
-                                            done: InnerArr;
-                                            recur: InnerArr extends readonly (infer InnerArr)[] ? any[[-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20][[-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20][[-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20][[-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20][[-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20][[-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20][[-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20][[-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20][[-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20][[-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20][[-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20][D]]]]]]]]]]] extends -1 ? "done" : "recur"] : InnerArr;
-                                        }[[-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20][[-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20][[-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20][[-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20][[-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20][[-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20][[-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20][[-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20][[-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20][[-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20][D]]]]]]]]]] extends -1 ? "done" : "recur"] : InnerArr;
-                                    }[[-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20][[-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20][[-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20][[-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20][[-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20][[-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20][[-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20][[-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20][[-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20][D]]]]]]]]] extends -1 ? "done" : "recur"] : InnerArr;
-                                }[[-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20][[-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20][[-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20][[-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20][[-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20][[-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20][[-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20][[-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20][D]]]]]]]] extends -1 ? "done" : "recur"] : InnerArr;
-                            }[[-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20][[-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20][[-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20][[-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20][[-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20][[-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20][[-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20][D]]]]]]] extends -1 ? "done" : "recur"] : InnerArr;
-                        }[[-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20][[-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20][[-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20][[-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20][[-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20][[-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20][D]]]]]] extends -1 ? "done" : "recur"] : InnerArr;
-                    }[[-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20][[-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20][[-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20][[-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20][[-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20][D]]]]] extends -1 ? "done" : "recur"] : InnerArr;
-                }[[-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20][[-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20][[-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20][[-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20][D]]]] extends -1 ? "done" : "recur"] : InnerArr;
-            }[[-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20][[-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20][[-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20][D]]] extends -1 ? "done" : "recur"] : InnerArr;
-        }[[-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20][[-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20][D]] extends -1 ? "done" : "recur"] : InnerArr;
-    }[[-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20][D] extends -1 ? "done" : "recur"] : A;
-}[D extends -1 ? "done" : "recur"][]))[]>`
+}[]) => U_3 | readonly U_3[], thisArg?: This | undefined) => U_3[]) | (<A, D extends number = 1>(this: A, depth?: D | undefined) => FlatArray<A, D>[]))[]>`
 

@@ -14,7 +14,7 @@ type = "docs"
 <b>Signature</b>
 
 ```typescript
-LogRows: React.FunctionComponent<Pick<Props, "timeZone" | "getRowContext" | "onClickFilterLabel" | "onClickFilterOutLabel" | "getFieldLinks" | "highlighterExpressions" | "wrapLogMessage" | "showContextToggle" | "showLabels" | "showTime" | "allowDetails" | "logRows" | "deduplicatedRows" | "dedupStrategy" | "rowLimit" | "previewLimit" | "disableCustomHorizontalScroll">>
+LogRows: React.FunctionComponent<Pick<Props, "timeZone" | "getRowContext" | "logsSortOrder" | "highlighterExpressions" | "wrapLogMessage" | "showContextToggle" | "onClickFilterLabel" | "onClickFilterOutLabel" | "showParsedFields" | "onClickShowParsedField" | "onClickHideParsedField" | "getFieldLinks" | "showLabels" | "showTime" | "allowDetails" | "logRows" | "deduplicatedRows" | "dedupStrategy" | "rowLimit" | "previewLimit" | "disableCustomHorizontalScroll">>
 ```
 <b>Import</b>
 

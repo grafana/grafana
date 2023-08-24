@@ -25,25 +25,14 @@ import { DateTimeOptionsWithFormat } from '@grafana/data';
 
 |  Property | Type | Description |
 |  --- | --- | --- |
-|  [defaultWithMS](#defaultwithms-property) | <code>boolean</code> | Set this value to <code>true</code> if you want to include milliseconds when formatting date and time values in the default [DEFAULT\_DATE\_TIME\_FORMAT](./data/default_date_time_format.md) format. |
-|  [format](#format-property) | <code>string</code> | Specify a [momentjs](https://momentjs.com/docs/#/displaying/format) format to use a custom formatting pattern of the date and time value. If no format is set, then [DEFAULT\_DATE\_TIME\_FORMAT](./data/default_date_time_format.md) is used. |
+|  [defaultWithMS](#defaultwithms-property) | <code>boolean</code> | Set this value to <code>true</code> if you want to include milliseconds when formatting date and time |
 
 ### defaultWithMS property
 
-Set this value to `true` if you want to include milliseconds when formatting date and time values in the default [DEFAULT\_DATE\_TIME\_FORMAT](./data/default_date_time_format.md) format.
+Set this value to `true` if you want to include milliseconds when formatting date and time
 
 <b>Signature</b>
 
 ```typescript
 defaultWithMS?: boolean;
-```
-
-### format property
-
-Specify a [momentjs](https://momentjs.com/docs/#/displaying/format) format to use a custom formatting pattern of the date and time value. If no format is set, then [DEFAULT\_DATE\_TIME\_FORMAT](./data/default_date_time_format.md) is used.
-
-<b>Signature</b>
-
-```typescript
-format?: string;
 ```

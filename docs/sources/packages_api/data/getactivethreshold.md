@@ -14,7 +14,7 @@ type = "docs"
 <b>Signature</b>
 
 ```typescript
-export declare function getActiveThreshold(value: number, thresholds: Threshold[]): Threshold;
+export declare function getActiveThreshold(value: number, thresholds: Threshold[] | undefined): Threshold;
 ```
 <b>Import</b>
 
@@ -26,7 +26,7 @@ import { getActiveThreshold } from '@grafana/data';
 |  Parameter | Type | Description |
 |  --- | --- | --- |
 |  value | <code>number</code> |  |
-|  thresholds | <code>Threshold[]</code> |  |
+|  thresholds | <code>Threshold[] &#124; undefined</code> |  |
 
 <b>Returns:</b>
 

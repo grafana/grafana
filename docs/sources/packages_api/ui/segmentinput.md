@@ -14,7 +14,7 @@ type = "docs"
 <b>Signature</b>
 
 ```typescript
-export declare function SegmentInput<T>({ value: initialValue, onChange, Component, className, placeholder, autofocus, }: React.PropsWithChildren<SegmentInputProps<T>>): JSX.Element;
+export declare function SegmentInput<T>({ value: initialValue, onChange, Component, className, placeholder, autofocus, ...rest }: React.PropsWithChildren<SegmentInputProps<T>>): JSX.Element;
 ```
 <b>Import</b>
 
@@ -25,7 +25,7 @@ import { SegmentInput } from '@grafana/ui';
 
 |  Parameter | Type | Description |
 |  --- | --- | --- |
-|  { value: initialValue, onChange, Component, className, placeholder, autofocus, } | <code>React.PropsWithChildren&lt;SegmentInputProps&lt;T&gt;&gt;</code> |  |
+|  { value: initialValue, onChange, Component, className, placeholder, autofocus, ...rest } | <code>React.PropsWithChildren&lt;SegmentInputProps&lt;T&gt;&gt;</code> |  |
 
 <b>Returns:</b>
 

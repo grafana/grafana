@@ -50,5 +50,5 @@ origin: T;
 <b>Signature</b>
 
 ```typescript
-scopedVars: ScopedVars;
+scopedVars?: ScopedVars;
 ```

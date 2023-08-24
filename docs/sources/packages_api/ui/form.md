@@ -14,7 +14,7 @@ type = "docs"
 <b>Signature</b>
 
 ```typescript
-export declare function Form<T>({ defaultValues, onSubmit, validateOnMount, validateFieldsOnMount, children, validateOn, maxWidth, }: FormProps<T>): JSX.Element;
+export declare function Form<T>({ defaultValues, onSubmit, validateOnMount, validateFieldsOnMount, children, validateOn, maxWidth, ...htmlProps }: FormProps<T>): JSX.Element;
 ```
 <b>Import</b>
 
@@ -25,7 +25,7 @@ import { Form } from '@grafana/ui';
 
 |  Parameter | Type | Description |
 |  --- | --- | --- |
-|  { defaultValues, onSubmit, validateOnMount, validateFieldsOnMount, children, validateOn, maxWidth, } | <code>FormProps&lt;T&gt;</code> |  |
+|  { defaultValues, onSubmit, validateOnMount, validateFieldsOnMount, children, validateOn, maxWidth, ...htmlProps } | <code>FormProps&lt;T&gt;</code> |  |
 
 <b>Returns:</b>
 

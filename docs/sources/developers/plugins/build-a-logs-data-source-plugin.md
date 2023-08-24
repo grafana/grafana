@@ -47,7 +47,7 @@ frame.add({ time: 1589189388597, content: 'user registered' });
 frame.add({ time: 1589189406480, content: 'user logged in' });
 ```
 
-That's all you need to start returning log data from your data source. Go ahead and try it out in [Explore]({{< relref "../../features/explore/index.md" >}}) or by adding a [Logs panel]({{< relref "../../panels/visualizations/logs-panel.md" >}}).
+That's all you need to start returning log data from your data source. Go ahead and try it out in [Explore]({{< relref "../../explore/index.md" >}}) or by adding a [Logs panel]({{< relref "../../panels/visualizations/logs-panel.md" >}}).
 
 Congratulations, you just wrote your first logs data source plugin! Next, let's look at a couple of features that can further improve the experience for the user.
 
@@ -76,7 +76,7 @@ frame.add({ time: 1589189406480, content: 'user logged in' });
 
 You can add additional information about each log line by adding more data frame fields.
 
-If a data frame has more than one text field, then Grafana assumes the first field in the data frame to be the actual log line. Any subsequent text fields are treated as [parsed fields]({{< relref "../../features/explore/index.md#labels-and-parsed-fields" >}}).
+If a data frame has more than one text field, then Grafana assumes the first field in the data frame to be the actual log line. Any subsequent text fields are treated as [parsed fields]({{< relref "../../explore/index.md#labels-and-parsed-fields" >}}).
 
 While you can add any number of custom fields to your data frame, Grafana comes with a couple of dedicated fields: `levels` and `id`. Let's have a closer look at each one.
 

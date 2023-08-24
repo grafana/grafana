@@ -14,9 +14,7 @@ type = "docs"
 <b>Signature</b>
 
 ```typescript
-export declare type KeyValue<T = any> = {
-    [s: string]: T;
-};
+export declare type KeyValue<T = any> = Record<string, T>;
 ```
 <b>Import</b>
 

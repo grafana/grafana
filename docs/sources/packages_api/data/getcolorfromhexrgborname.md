@@ -7,17 +7,28 @@ keywords = ["grafana","documentation","sdk","@grafana/data"]
 type = "docs"
 +++
 
-## getColorFromHexRgbOrName variable
+## getColorFromHexRgbOrName() function
 
-### getColorFromHexRgbOrName variable
+### getColorFromHexRgbOrName() function
 
 <b>Signature</b>
 
 ```typescript
-getColorFromHexRgbOrName: (color: string, theme?: GrafanaThemeType | undefined) => string
+export declare function getColorFromHexRgbOrName(color: string, type?: GrafanaThemeType): string;
 ```
 <b>Import</b>
 
 ```typescript
 import { getColorFromHexRgbOrName } from '@grafana/data';
 ```
+<b>Parameters</b>
+
+|  Parameter | Type | Description |
+|  --- | --- | --- |
+|  color | <code>string</code> |  |
+|  type | <code>GrafanaThemeType</code> |  |
+
+<b>Returns:</b>
+
+`string`
+

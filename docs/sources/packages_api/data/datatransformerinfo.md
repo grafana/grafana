@@ -9,6 +9,8 @@ type = "docs"
 
 ## DataTransformerInfo interface
 
+Function that transform data frames (AKA transformer)
+
 <b>Signature</b>
 
 ```typescript
@@ -23,14 +25,14 @@ import { DataTransformerInfo } from '@grafana/data';
 
 |  Property | Type | Description |
 |  --- | --- | --- |
-|  [transformer](#transformer-property) | <code>(options: TOptions) =&gt; DataTransformer</code> | Function that configures transformation and returns a transformer |
+|  [operator](#operator-property) | <code>(options: TOptions) =&gt; MonoTypeOperatorFunction&lt;DataFrame[]&gt;</code> | Function that configures transformation and returns a transformer |
 
-### transformer property
+### operator property
 
 Function that configures transformation and returns a transformer
 
 <b>Signature</b>
 
 ```typescript
-transformer: (options: TOptions) => DataTransformer;
+operator: (options: TOptions) => MonoTypeOperatorFunction<DataFrame[]>;
 ```

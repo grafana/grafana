@@ -23,10 +23,12 @@ import { QueryResultMeta } from '@grafana/data';
 
 |  Property | Type | Description |
 |  --- | --- | --- |
-|  [alignmentPeriod](#alignmentperiod-property) | <code>string</code> |  |
+|  [alignmentPeriod](#alignmentperiod-property) | <code>number</code> |  |
 |  [custom](#custom-property) | <code>Record&lt;string, any&gt;</code> | DatasSource Specific Values |
+|  [dataTopic](#datatopic-property) | <code>DataTopic</code> | Optionally identify which topic the frame should be assigned to. A value specified in the response will override what the request asked for. |
 |  [executedQueryString](#executedquerystring-property) | <code>string</code> | This is the raw query sent to the underlying system. All macros and templating as been applied. When metadata contains this value, it will be shown in the query inspector |
 |  [gmdMeta](#gmdmeta-property) | <code>any[]</code> | Legacy data source specific, should be moved to custom |
+|  [instant](#instant-property) | <code>boolean</code> |  |
 |  [json](#json-property) | <code>boolean</code> |  |
 |  [limit](#limit-property) | <code>number</code> |  |
 |  [notices](#notices-property) | <code>QueryResultMetaNotice[]</code> | Meta Notices |
@@ -40,7 +42,7 @@ import { QueryResultMeta } from '@grafana/data';
 <b>Signature</b>
 
 ```typescript
-alignmentPeriod?: string;
+alignmentPeriod?: number;
 ```
 
 ### custom property
@@ -51,6 +53,16 @@ DatasSource Specific Values
 
 ```typescript
 custom?: Record<string, any>;
+```
+
+### dataTopic property
+
+Optionally identify which topic the frame should be assigned to. A value specified in the response will override what the request asked for.
+
+<b>Signature</b>
+
+```typescript
+dataTopic?: DataTopic;
 ```
 
 ### executedQueryString property
@@ -71,6 +83,14 @@ Legacy data source specific, should be moved to custom
 
 ```typescript
 gmdMeta?: any[];
+```
+
+### instant property
+
+<b>Signature</b>
+
+```typescript
+instant?: boolean;
 ```
 
 ### json property

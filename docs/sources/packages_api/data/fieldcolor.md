@@ -24,8 +24,7 @@ import { FieldColor } from '@grafana/data';
 |  Property | Type | Description |
 |  --- | --- | --- |
 |  [fixedColor](#fixedcolor-property) | <code>string</code> |  |
-|  [mode](#mode-property) | <code>FieldColorMode</code> |  |
-|  [schemeName](#schemename-property) | <code>ColorScheme</code> |  |
+|  [mode](#mode-property) | <code>FieldColorModeId</code> |  |
 
 ### fixedColor property
 
@@ -40,13 +39,5 @@ fixedColor?: string;
 <b>Signature</b>
 
 ```typescript
-mode: FieldColorMode;
-```
-
-### schemeName property
-
-<b>Signature</b>
-
-```typescript
-schemeName?: ColorScheme;
+mode: FieldColorModeId;
 ```

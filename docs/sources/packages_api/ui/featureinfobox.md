@@ -14,7 +14,7 @@ type = "docs"
 <b>Signature</b>
 
 ```typescript
-FeatureInfoBox: React.MemoExoticComponent<React.ForwardRefExoticComponent<FeatureInfoBox & React.RefAttributes<HTMLDivElement>>>
+FeatureInfoBox: React.MemoExoticComponent<React.ForwardRefExoticComponent<FeatureInfoBoxProps & React.RefAttributes<HTMLDivElement>>>
 ```
 <b>Import</b>
 
