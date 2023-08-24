@@ -153,7 +153,7 @@ type DeleteDataSourceCommand struct {
 	// Optional way to skip publishing delete event for data sources that are
 	// deleted just to be re-created with the same UID during provisioning.
 	// In such case we don't want to publish the event that triggers clean-up
-	// of related data
+	// of related resources (like correlations)
 	SkipPublish bool
 }
 
