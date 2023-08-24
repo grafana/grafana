@@ -2,11 +2,6 @@
 title = "Requirements"
 description = "Requirements for Grafana"
 keywords = ["grafana", "installation", "documentation"]
-type = "docs"
-[menu.docs]
-name = "Requirements"
-identifier = "requirements"
-parent = "installation"
 weight = 100
 +++
 
@@ -14,7 +9,9 @@ weight = 100
 
 This page lists the minimum hardware and software requirements to install Grafana.
 
-To run Grafana, you must have a supported operating system, hardware that meets or exceeds minimum requirements, a supported database, and a supported browser
+To run Grafana, you must have a supported operating system, hardware that meets or exceeds minimum requirements, a supported database, and a supported browser.
+
+Grafana uses other open source software. Refer to [package.json](https://github.com/grafana/grafana/blob/master/package.json) for a complete list.
 
 ## Supported operating systems
 
@@ -29,7 +26,7 @@ Installation of Grafana on other operating systems is possible, but it is neithe
 
 ## Hardware recommendations
 
-Grafana does not use a lot of resources and is very lightweight in use of memory and CPU. 
+Grafana does not use a lot of resources and is very lightweight in use of memory and CPU.
 
 Minimum recommended memory: 255 MB
 Minimum recommended CPU: 1
@@ -37,7 +34,7 @@ Minimum recommended CPU: 1
 Some features might require more memory or CPUs. Features require more resources include:
 
 - [Server side rendering of images]({{< relref "../administration/image_rendering/#requirements" >}})
-- [Alerting]({{< relref "../alerting/alerts-overview" >}})
+- [Alerting]({{< relref "../alerting" >}})
 - [Data source proxy]({{< relref "../http_api/data_source" >}})
 
 ## Supported databases
@@ -62,6 +59,6 @@ Grafana is supported in the current version of the following browsers. Older ver
 - Firefox
 - Safari
 - Microsoft Edge
-- Internet Explorer 11 is only fully supported in Grafana versions prior v6.0.
+- Internet Explorer 11 is only fully supported in Grafana versions prior to v6.0.
 
 > **Note:** Always enable JavaScript in your browser. Running Grafana without JavaScript enabled in the browser is not supported.

@@ -2,11 +2,7 @@
 title = "Cloud Monitoring"
 description = "Guide for using Google Cloud Monitoring in Grafana"
 keywords = ["grafana", "stackdriver", "google", "guide", "cloud", "monitoring"]
-type = "docs"
-aliases = ["/docs/grafana/latest/features/datasources/stackdriver", "/docs/grafana/latest/features/datasources/cloudmonitoring/"]
-[menu.docs]
-name = "Google Cloud Monitoring"
-parent = "datasources"
+aliases = ["/docs/grafana/v7.3/features/datasources/stackdriver", "/docs/grafana/v7.3/features/datasources/cloudmonitoring/"]
 weight = 200
 +++
 
@@ -30,9 +26,9 @@ Grafana ships with built-in support for Google Cloud Monitoring. Just add it as 
 
 | Name                  | Description                                                                           |
 | --------------------- | ------------------------------------------------------------------------------------- |
-| _Name_                | The data source name. This is how you refer to the data source in panels and queries. |
-| _Default_             | Default data source means that it will be pre-selected for new panels.                |
-| _Service Account Key_ | Service Account Key File for a GCP Project. Instructions below on how to create it.   |
+| `Name`                | The data source name. This is how you refer to the data source in panels and queries. |
+| `Default`             | Default data source means that it will be pre-selected for new panels.                |
+| `Service Account Key` | Service Account Key File for a GCP Project. Instructions below on how to create it.   |
 
 ## Authentication
 
@@ -51,31 +47,31 @@ The following APIs need to be enabled first:
 
 Click on the links above and click the `Enable` button:
 
-{{< docs-imagebox img="/img/docs/v71/cloudmonitoring_enable_api.png" class="docs-image--no-shadow" caption="Enable GCP APIs" >}}
+{{< figure src="/static/img/docs/v71/cloudmonitoring_enable_api.png" class="docs-image--no-shadow" caption="Enable GCP APIs" >}}
 
 #### Create a GCP Service Account for a Project
 
 1. Navigate to the [APIs and Services Credentials page](https://console.cloud.google.com/apis/credentials).
 1. Click on the `Create credentials` dropdown/button and choose the `Service account key` option.
 
-   {{< docs-imagebox img="/img/docs/v71/cloudmonitoring_create_service_account_button.png" class="docs-image--no-shadow" caption="Create service account button" >}}
+   {{< figure src="/static/img/docs/v71/cloudmonitoring_create_service_account_button.png" class="docs-image--no-shadow" caption="Create service account button" >}}
 
 1. On the `Create service account key` page, choose key type `JSON`. Then in the `Service Account` dropdown, choose the `New service account` option:
 
-   {{< docs-imagebox img="/img/docs/v71/cloudmonitoring_create_service_account_key.png" class="docs-image--no-shadow" caption="Create service account key" >}}
+   {{< figure src="/static/img/docs/v71/cloudmonitoring_create_service_account_key.png" class="docs-image--no-shadow" caption="Create service account key" >}}
 
 1. Some new fields will appear. Fill in a name for the service account in the `Service account name` field and then choose the `Monitoring Viewer` role from the `Role` dropdown:
 
-   {{< docs-imagebox img="/img/docs/v71/cloudmonitoring_service_account_choose_role.png" class="docs-image--no-shadow" caption="Choose role" >}}
+   {{< figure src="/static/img/docs/v71/cloudmonitoring_service_account_choose_role.png" class="docs-image--no-shadow" caption="Choose role" >}}
 
 1. Click the Create button. A JSON key file will be created and downloaded to your computer. Store this file in a secure place as it allows access to your Google Cloud Monitoring data.
 1. Upload it to Grafana on the data source Configuration page. You can either upload the file or paste in the contents of the file.
 
-   {{< docs-imagebox img="/img/docs/v71/cloudmonitoring_grafana_upload_key.png" class="docs-image--no-shadow" caption="Upload service key file to Grafana" >}}
+   {{< figure src="/static/img/docs/v71/cloudmonitoring_grafana_upload_key.png" class="docs-image--no-shadow" caption="Upload service key file to Grafana" >}}
 
 1. The file contents will be encrypted and saved in the Grafana database. Don't forget to save after uploading the file!
 
-   {{< docs-imagebox img="/img/docs/v71/cloudmonitoring_grafana_key_uploaded.png" class="docs-image--no-shadow" caption="Service key file is uploaded to Grafana" >}}
+   {{< figure src="/static/img/docs/v71/cloudmonitoring_grafana_key_uploaded.png" class="docs-image--no-shadow" caption="Service key file is uploaded to Grafana" >}}
 
 ### Using GCE Default Service Account
 
@@ -93,7 +89,7 @@ The Google Cloud Monitoring query editor allows you to build two types of querie
 
 ### Metric Queries
 
-{{< docs-imagebox img="/img/docs/v70/metric-query-builder.png" max-width= "400px" class="docs-image--right" >}}
+{{< figure src="/static/img/docs/v70/metric-query-builder.png" max-width= "400px" class="docs-image--right" >}}
 
 The metric query editor allows you to select metrics, group/aggregate by labels and by time, and use filters to specify which time series you want in the results.
 
@@ -189,7 +185,7 @@ Example Result: `gce_instance - compute.googleapis.com/instance/cpu/usage_time`
 
 > Only available in Grafana v7.0+
 
-{{< docs-imagebox img="/img/docs/v70/slo-query-builder.png" max-width= "400px" class="docs-image--right" >}}
+{{< figure src="/static/img/docs/v70/slo-query-builder.png" max-width= "400px" class="docs-image--right" >}}
 
 The SLO query builder in the Google Cloud Monitoring data source allows you to display SLO data in time series format. To get an understanding of the basic concepts in service monitoring, please refer to Google Cloud Monitoring's [official docs](https://cloud.google.com/monitoring/service-monitoring).
 
@@ -226,6 +222,27 @@ The Alias By field allows you to control the format of the legend keys for SLO q
 
 SLO queries use the same [alignment period functionality as metric queries]({{< relref "#metric-queries" >}}).
 
+### MQL (Monitoring Query Language) queries
+
+> **Note:** Only available in Grafana v7.4+.
+
+The MQL query builder in the Google Cloud Monitoring data source allows you to display MQL results in time series format. To get an understanding of the basic concepts in MQL, refer to [Introduction to Monitoring Query Language](https://cloud.google.com/monitoring/mql).
+
+#### Create an MQL query
+
+To create an MQL query, follow these steps:
+
+1. In the **Query Type** list, select **Metrics**.
+2. Click **<> Edit MQL** right next to the **Query Type** field. This will toggle the metric query builder mode so that raw MQL queries can be used.
+3. Choose a project from the **Project** list.
+4. Add the [MQL](https://cloud.google.com/monitoring/mql/query-language) query of your choice in the text area.
+
+#### Alias patterns for MQL queries
+
+MQL queries use the same alias patterns as [metric queries]({{< relref "#metric-queries" >}}).
+
+`{{metric.service}}` is not supported. `{{metric.type}}` and `{{metric.name}}` show the time series key in the response.
+
 ## Templating
 
 Instead of hard-coding things like server, application and sensor name in your metric queries you can use variables in their place.
@@ -241,16 +258,16 @@ Variable of the type _Query_ allows you to query Google Cloud Monitoring for var
 
 | Name                             | Description                                                                                                   |
 | -------------------------------- | ------------------------------------------------------------------------------------------------------------- |
-| _Metric Types_                   | Returns a list of metric type names that are available for the specified service.                             |
-| _Labels Keys_                    | Returns a list of keys for `metric label` and `resource label` in the specified metric.                       |
-| _Labels Values_                  | Returns a list of values for the label in the specified metric.                                               |
-| _Resource Types_                 | Returns a list of resource types for the specified metric.                                                    |
-| _Aggregations_                   | Returns a list of aggregations (cross series reducers) for the specified metric.                              |
-| _Aligners_                       | Returns a list of aligners (per series aligners) for the specified metric.                                    |
-| _Alignment periods_              | Returns a list of all alignment periods that are available in Google Cloud Monitoring query editor in Grafana |
-| _Selectors_                      | Returns a list of selectors that can be used in SLO (Service Level Objectives) queries                        |
-| _SLO Services_                   | Returns a list of Service Monitoring services that can be used in SLO queries                                 |
-| _Service Level Objectives (SLO)_ | Returns a list of SLO's for the specified SLO service                                                         |
+| `Metric Types`                   | Returns a list of metric type names that are available for the specified service.                             |
+| `Labels Keys`                    | Returns a list of keys for `metric label` and `resource label` in the specified metric.                       |
+| `Labels Values`                  | Returns a list of values for the label in the specified metric.                                               |
+| `Resource Types`                 | Returns a list of resource types for the specified metric.                                                    |
+| `Aggregations`                   | Returns a list of aggregations (cross series reducers) for the specified metric.                              |
+| `Aligners`                       | Returns a list of aligners (per series aligners) for the specified metric.                                    |
+| `Alignment periods`              | Returns a list of all alignment periods that are available in Google Cloud Monitoring query editor in Grafana |
+| `Selectors`                      | Returns a list of selectors that can be used in SLO (Service Level Objectives) queries                        |
+| `SLO Services`                   | Returns a list of Service Monitoring services that can be used in SLO queries                                 |
+| `Service Level Objectives (SLO)` | Returns a list of SLO's for the specified SLO service                                                         |
 
 ### Using variables in queries
 
@@ -263,7 +280,7 @@ Why two ways? The first syntax is easier to read and write but does not allow yo
 
 ## Annotations
 
-{{< docs-imagebox img="/img/docs/v71/cloudmonitoring_annotations_query_editor.png" max-width= "400px" class="docs-image--right" >}}
+{{< figure src="/static/img/docs/v71/cloudmonitoring_annotations_query_editor.png" max-width= "400px" class="docs-image--right" >}}
 
 [Annotations]({{< relref "../dashboards/annotations.md" >}}) allow you to overlay rich event information on top of graphs. You add annotation
 queries via the Dashboard menu / Annotations view. Annotation rendering is expensive so it is important to limit the number of rows returned. There is no support for showing Google Cloud Monitoring annotations and events yet but it works well with [custom metrics](https://cloud.google.com/monitoring/custom-metrics/) in Google Cloud Monitoring.
@@ -329,7 +346,7 @@ datasources:
 
 Only available in Grafana v7.1+.
 
-{{< docs-imagebox img="/img/docs/v71/cloudmonitoring_deep_linking.png" max-width="500px" class="docs-image--right" caption="Google Cloud Monitoring deep linking" >}}
+{{< figure src="/static/img/docs/v71/cloudmonitoring_deep_linking.png" max-width="500px" class="docs-image--right" caption="Google Cloud Monitoring deep linking" >}}
 
 > **Note:** This feature is only available for Metric queries.
 
@@ -355,4 +372,4 @@ The dashboards have a template variable which is populated with the projects acc
 
 To customize the dashboard, we recommend saving the dashboard under a different name, because otherwise the dashboard will be overwritten when a new version of the dashboard is released.
 
-{{< docs-imagebox img="/img/docs/v73/cloud-monitoring-dashboard-import.png" caption="Cloud Monitoring dashboard import" >}}
+{{< figure src="/static/img/docs/v73/cloud-monitoring-dashboard-import.png" caption="Cloud Monitoring dashboard import" >}}

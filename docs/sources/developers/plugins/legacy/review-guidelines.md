@@ -1,7 +1,6 @@
 +++
 title = "Legacy review guidelines"
-type = "docs"
-aliases = ["/docs/grafana/latest/plugins/developing/plugin-review-guidelines/"]
+aliases = ["/docs/grafana/v7.3/plugins/developing/plugin-review-guidelines/"]
 +++
 
 # Legacy review guidelines
@@ -135,7 +134,7 @@ Use the `width-x` and `max-width-x` classes to control the width of your labels 
 ## Data Sources
 For more information about data sources, refer to the [basic guide for data sources](http://docs.grafana.org/plugins/developing/datasources/).
 
-### Config Page Guidelines
+### Configuration Page Guidelines
 
 - It should be as easy as possible for a user to configure a URL. If the data source is using the `datasource-http-settings` component, it should use the `suggest-url` attribute to suggest the default URL or a URL that is similar to what it should be (especially important if the URL refers to a REST endpoint that is not common knowledge for most users e.g. `https://yourserver:4000/api/custom-endpoint`).
 
@@ -155,7 +154,7 @@ If possible, any passwords or secrets should be saved in the `secureJsonData` bl
 
 Read more here about how [authentication for data sources]({{< relref "../add-authentication-for-data-source-plugins.md" >}}) works.
 
-If using the proxy feature, the Config page should use the `secureJsonData` blob like this:
+If using the proxy feature, the Configuration page should use the `secureJsonData` blob like this:
 
   - good: `<input type="password" class="gf-form-input" ng-model='ctrl.current.secureJsonData.password' placeholder="password"></input>`
   - bad: `<input type="password" class="gf-form-input" ng-model='ctrl.current.password' placeholder="password"></input>`

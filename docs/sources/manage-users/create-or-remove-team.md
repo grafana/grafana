@@ -2,10 +2,6 @@
 title = "Create or remove a team"
 keywords = ["grafana", "configuration", "documentation", "users",
 "teams"]
-type = "docs"
-[menu.docs]
-identifier = "create-or-remove-team"
-parent = "manage-users"
 weight = 400
 +++
 

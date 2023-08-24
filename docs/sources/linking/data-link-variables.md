@@ -1,8 +1,7 @@
 +++
 title = "URL variables"
 keywords = ["grafana", "url variables", "documentation", "variables", "data link"]
-aliases = ["/docs/grafana/latest/variables/url-variables.md","/docs/grafana/latest/variables/variable-types/url-variables.md"]
-type = "docs"
+aliases = ["/docs/grafana/v7.3/variables/url-variables.md","/docs/grafana/v7.3/variables/variable-types/url-variables.md"]
 weight = 400
 +++
 
@@ -28,13 +27,13 @@ These variables allow you to include the current time range in the data link URL
 Series specific variables are available under ``__series`` namespace:
 
 - ``__series.name`` - series name to the URL
-- ``__series.labels.<LABEL>`` - label's value to the URL. If your label contains dots, then use ``__series.labels["<LABEL>"]`` syntax.
 
 ## Field variables
 
 Field-specific variables are available under ``__field`` namespace:
 
 - ``__field.name`` - the name of the field
+- ``__field.labels.<LABEL>`` - label's value to the URL. If your label contains dots, then use ``__field.labels["<LABEL>"]`` syntax.
 
 ## Value variables
 
@@ -50,6 +49,6 @@ Value-specific variables are available under ``__value`` namespace:
 
 When linking to another dashboard that uses template variables, select variable values for whoever clicks the link.
 
-``var-myvar=${myvar}`` - where ``myvar`` is a name of the template variable that matches one in the current dashboard that you want to use. 
+``var-myvar=${myvar}`` - where ``myvar`` is a name of the template variable that matches one in the current dashboard that you want to use.
 
 If you want to add all of the current dashboard's variables to the URL, then use  ``__all_variables``.

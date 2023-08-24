@@ -2,10 +2,7 @@
 title = "Reporting"
 description = ""
 keywords = ["grafana", "reporting"]
-type = "docs"
-aliases = ["/docs/grafana/latest/administration/reports"]
-[menu.docs]
-parent = "enterprise"
+aliases = ["/docs/grafana/v7.3/administration/reports"]
 weight = 400
 +++
 
@@ -15,7 +12,7 @@ Reporting allows you to automatically generate PDFs from any of your dashboards 
 
 > Only available in Grafana Enterprise v6.4+.
 
-{{< docs-imagebox img="/img/docs/enterprise/reports_list.png" max-width="500px" class="docs-image--no-shadow" >}}
+{{< figure src="/static/img/docs/enterprise/reports_list.png" max-width="500px" class="docs-image--no-shadow" >}}
 
 Any changes you make to a dashboard used in a report are reflected the next time the report is sent. For example, if you change the time range in the dashboard, then the time range in the report changes as well.
 
@@ -38,12 +35,12 @@ Currently only Organization Admins can create reports.
    - **Time range -** (optional) Use custom time range for the report. For more information check [Report time range]({{< relref "#report-time-range" >}}).
 1. **Preview PDF** to make sure the report appears as you expect. Update if necessary.
 1. Enter scheduling information. Options vary depending on the frequency you select.
-1. Select the orientation option for generated report: **Portrait** or **Landscape**.  
-1. Select the layout option for generated report: **Simple** or **Grid**.  
+1. Select the orientation option for generated report: **Portrait** or **Landscape**.
+1. Select the layout option for generated report: **Simple** or **Grid**.
 1. **Save** the report.
 1. **Send test email** to verify that the whole configuration is working as expected.
 
-{{< docs-imagebox img="/img/docs/enterprise/reports_create_new.png" max-width="500px" class="docs-image--no-shadow" >}}
+{{< figure src="/static/img/docs/enterprise/reports_create_new.png" max-width="500px" class="docs-image--no-shadow" >}}
 
 ### Layout and orientation
 
@@ -51,10 +48,10 @@ Currently only Organization Admins can create reports.
 
 Layout | Orientation | Support | Description | Preview
 ------ | ----------- | ------- | ----------- | -------
-Simple | Portrait | v6.4+ | Generates an A4 page in portrait mode with three panels per page. | {{< docs-imagebox img="/img/docs/enterprise/reports_portrait_preview.png" max-width="500px" max-height="500px" class="docs-image--no-shadow" >}}
-Simple | Landscape | v6.7+ | Generates an A4 page in landscape mode with a single panel per page. | {{< docs-imagebox img="/img/docs/enterprise/reports_landscape_preview.png" max-width="500px" class="docs-image--no-shadow" >}}
-Grid | Portrait | v7.2+ | Generates an A4 page in portrait mode with panels arranged in the same way as at the original dashboard. | {{< docs-imagebox img="/img/docs/enterprise/reports_grid_portrait_preview.png" max-width="500px" max-height="500px" class="docs-image--no-shadow" >}}
-Grid | Landscape | v7.2+ | Generates an A4 page in landscape mode with panels arranged in the same way as at the original dashboard. | {{< docs-imagebox img="/img/docs/enterprise/reports_grid_landscape_preview.png" max-width="500px" class="docs-image--no-shadow" >}}
+Simple | Portrait | v6.4+ | Generates an A4 page in portrait mode with three panels per page. | {{< figure src="/static/img/docs/enterprise/reports_portrait_preview.png" max-width="500px" max-height="500px" class="docs-image--no-shadow" >}}
+Simple | Landscape | v6.7+ | Generates an A4 page in landscape mode with a single panel per page. | {{< figure src="/static/img/docs/enterprise/reports_landscape_preview.png" max-width="500px" class="docs-image--no-shadow" >}}
+Grid | Portrait | v7.2+ | Generates an A4 page in portrait mode with panels arranged in the same way as at the original dashboard. | {{< figure src="/static/img/docs/enterprise/reports_grid_portrait_preview.png" max-width="500px" max-height="500px" class="docs-image--no-shadow" >}}
+Grid | Landscape | v7.2+ | Generates an A4 page in landscape mode with panels arranged in the same way as at the original dashboard. | {{< figure src="/static/img/docs/enterprise/reports_grid_landscape_preview.png" max-width="500px" class="docs-image--no-shadow" >}}
 
 ### Scheduling
 
@@ -67,7 +64,7 @@ All scheduling indicates when the reporting service will start rendering the das
 Hourly reports are generated once per hour. All fields are required.
 
 - **At minute -** The number of minutes after full hour when the report should be generated.
-- **Time zone -** Time zone to determine the offset of the full hour. Does not currently change the time in the rendered report. 
+- **Time zone -** Time zone to determine the offset of the full hour. Does not currently change the time in the rendered report.
 
 #### Daily
 
@@ -111,7 +108,7 @@ If you want to use email addresses from the report, then select the **Use emails
 
 The last saved version of the report will be sent to selected emails. You can use this to verify emails are working and to make sure the report is generated and displayed as you expect.
 
-{{< docs-imagebox img="/img/docs/enterprise/reports_send_test_mail.png" max-width="500px" class="docs-image--no-shadow" >}}
+{{< figure src="/static/img/docs/enterprise/reports_send_test_mail.png" max-width="500px" class="docs-image--no-shadow" >}}
 
 ## Send report via the API
 
@@ -141,12 +138,12 @@ image_scale_factor = 2
 > Setting custom report time range is available in Grafana Enterprise v7.2+.
 
 By default, reports use the saved time range of the dashboard. Changing the time range of the report can be done by:
-- Saving a modified time range to the dashboard. 
+- Saving a modified time range to the dashboard.
 - Setting a time range via **Time range** field in the report form. If specified, then this custom time range overrides the one from the report's dashboard.
 
 The page header of the report displays the time range for the dashboard's data queries. Dashboards set to use the browser's time zone will use the time zone on the Grafana server.
 
-If the time zone is set differently between your Grafana server and its remote image renderer, then the time ranges in the report might be different between the page header and the time axes in the panels. We advise always setting the time zone to UTC for dashboards when using a remote renderer to avoid this. 
+If the time zone is set differently between your Grafana server and its remote image renderer, then the time ranges in the report might be different between the page header and the time axes in the panels. We advise always setting the time zone to UTC for dashboards when using a remote renderer to avoid this.
 
 ## Reports settings
 
@@ -154,7 +151,7 @@ If the time zone is set differently between your Grafana server and its remote i
 
 You can configure organization-wide report settings in the **Settings** tab on the **Reporting** page. Settings are applied to all the reports for current organization.
 
-You can customize the branding options.  
+You can customize the branding options.
 
 Report branding:
 **Company logo URL** - Company logo displayed in the report PDF. Defaults to the Grafana logo.
@@ -163,9 +160,9 @@ Email branding:
 - **Company logo URL** - Company logo displayed in the report PDF. Defaults to the Grafana logo.
 - **Email footer** - Toggle to enable report email footer. Select **Sent by** or **None**.
 - **Footer link text** - Text for the link in the report email footer. Defaults to "Grafana".
-- **Footer link URL** - Link for the report email footer.  
-  
-{{< docs-imagebox img="/img/docs/enterprise/reports_settings.png" max-width="500px" class="docs-image--no-shadow" >}}
+- **Footer link URL** - Link for the report email footer.
+
+{{< figure src="/static/img/docs/enterprise/reports_settings.png" max-width="500px" class="docs-image--no-shadow" >}}
 
 ## Troubleshoot reporting
 

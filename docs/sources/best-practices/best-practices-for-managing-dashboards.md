@@ -1,10 +1,6 @@
 +++
 title = "Best practices for managing dashboards"
 description = "Best practices for managing dashboards in Grafana"
-type = "docs"
-[menu.docs]
-identifier = "best-practices-for-managing-dashboards"
-parent = "best-practices"
 weight = 200
 +++
 
@@ -18,7 +14,7 @@ Here are some principles to consider before you start managing dashboards.
 
 ### Strategic observability
 
-There are several [common observability strategies]({{< relref "common-observability-strategies.md" >}}). You should research them and decide whether one of them works for you or if you want to come up with your own. Either way, have a plan, write it down, and stick to it. 
+There are several [common observability strategies]({{< relref "common-observability-strategies.md" >}}). You should research them and decide whether one of them works for you or if you want to come up with your own. Either way, have a plan, write it down, and stick to it.
 
 Adapt your strategy to changing needs as necessary.
 

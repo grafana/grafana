@@ -1,6 +1,6 @@
 +++
-title = "Build a plugin."
-type = "docs"
+title = "Build a plugin"
+aliases = ["/docs/grafana/v7.3/plugins/developing/"]
 +++
 
 # Build a plugin
@@ -19,8 +19,8 @@ npx @grafana/toolkit plugin:create my-grafana-plugin
 
 If you want a more guided introduction to plugin development, check out our tutorials:
 
-- [Build a panel plugin]({{< relref "../../../../../tutorials/build-a-panel-plugin.md" >}})
-- [Build a data source plugin]({{< relref "../../../../../tutorials/build-a-data-source-plugin.md" >}})
+- [Build a panel plugin]({{< relref "/tutorials/build-a-panel-plugin.md" >}})
+- [Build a data source plugin]({{< relref "/tutorials/build-a-data-source-plugin.md" >}})
 
 ## Go further
 
@@ -30,13 +30,13 @@ Learn more about specific areas of plugin development.
 
 If you're looking to build your first plugin, check out these introductory tutorials:
 
-- [Build a panel plugin]({{< relref "../../../../../tutorials/build-a-panel-plugin.md" >}})
-- [Build a data source plugin]({{< relref "../../../../../tutorials/build-a-data-source-plugin.md" >}})
-- [Build a data source backend plugin]({{< relref "../../../../../tutorials/build-a-data-source-backend-plugin.md" >}})
+- [Build a panel plugin]({{< relref "/tutorials/build-a-panel-plugin.md" >}})
+- [Build a data source plugin]({{< relref "/tutorials/build-a-data-source-plugin.md" >}})
+- [Build a data source backend plugin]({{< relref "/tutorials/build-a-data-source-backend-plugin.md" >}})
 
 Ready to learn more? Check out our other tutorials:
 
-- [Build a panel plugin with D3.js]({{< relref "../../../../../tutorials/build-a-panel-plugin-with-d3.md" >}})
+- [Build a panel plugin with D3.js]({{< relref "/tutorials/build-a-panel-plugin-with-d3.md" >}})
 
 ### Guides
 
@@ -46,6 +46,7 @@ Improve an existing plugin with one of our guides:
 - [Add support for annotations]({{< relref "add-support-for-annotations.md" >}})
 - [Add support for Explore queries]({{< relref "add-support-for-explore-queries.md" >}})
 - [Add support for variables]({{< relref "add-support-for-variables.md" >}})
+- [Add a query editor help component]({{< relref "add-query-editor-help.md" >}})
 - [Build a logs data source plugin]({{< relref "build-a-logs-data-source-plugin.md" >}})
 - [Build a streaming data source plugin]({{< relref "build-a-streaming-data-source-plugin.md" >}})
 - [Error handling]({{< relref "error-handling.md" >}})
@@ -82,3 +83,5 @@ Learn more about Grafana options and packages.
 #### Go
 
 - [Grafana Plugin SDK for Go]({{< relref "backend/grafana-plugin-sdk-for-go" >}})
+
+

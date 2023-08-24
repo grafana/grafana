@@ -2,12 +2,7 @@
 title = "Graphite"
 description = "Guide for using graphite in Grafana"
 keywords = ["grafana", "graphite", "guide"]
-type = "docs"
-aliases = ["/docs/grafana/latest/features/datasources/graphite"]
-[menu.docs]
-name = "Graphite"
-identifier = "graphite"
-parent = "datasources"
+aliases = ["/docs/grafana/v7.3/features/datasources/graphite"]
 weight = 600
 +++
 
@@ -23,22 +18,22 @@ Refer to [Add a data source]({{< relref "add-a-data-source.md" >}}) for instruct
 
 To access Graphite settings, hover your mouse over the **Configuration** (gear) icon, then click **Data Sources**, and then click the Graphite data source.
 
-Name | Description
------------- | -------------
-Name | The data source name. This is how you refer to the data source in panels and queries.
-Default | Default data source means that it will be pre-selected for new panels.
-URL | The HTTP protocol, IP, and port of your graphite-web or graphite-api install.
-Access | Server (default) = URL needs to be accessible from the Grafana backend/server, Browser = URL needs to be accessible from the browser.
-Auth | Refer to [Authentication]({{< relref "../auth/_index.md" >}}) for more information.
-Basic Auth  | Enable basic authentication to the data source.
-User | User name for basic authentication.
-Password | Password for basic authentication.
-Custom HTTP Headers | Click **Add header** to add a custom HTTP header.
-Header | Enter the custom header name.
-Value |  Enter the custom header value.
-Graphite details | 
-Version | Select your version of Graphite.
-Type | Select your type of Graphite.
+Name                  | Description
+--------------------- | -------------
+`Name`                | The data source name. This is how you refer to the data source in panels and queries.
+`Default`             | Default data source means that it will be pre-selected for new panels.
+`URL`                 | The HTTP protocol, IP, and port of your graphite-web or graphite-api install.
+`Access`              | Server (default) = URL needs to be accessible from the Grafana backend/server, Browser = URL needs to be accessible from the browser.
+`Auth`                | Refer to [Authentication]({{< relref "../auth/_index.md" >}}) for more information.
+`Basic Auth`          | Enable basic authentication to the data source.
+`User`                | User name for basic authentication.
+`Password`            | Password for basic authentication.
+`Custom HTTP Headers` | Click **Add header** to add a custom HTTP header.
+`Header`              | Enter the custom header name.
+`Value`               |  Enter the custom header value.
+`Graphite details`    |
+`Version`             | Select your version of Graphite.
+`Type`                | Select your type of Graphite.
 
 Access mode controls how requests to the data source will be handled. Server should be the preferred way if nothing else is stated.
 
@@ -60,8 +55,8 @@ To see the raw text of the query that is sent to Graphite, click the **Toggle te
 
 Click **Select metric** to start navigating the metric space. Once you start, you can continue using the mouse or keyboard arrow keys. You can select a wildcard and still continue.
 
-{{< docs-imagebox img="/img/docs/graphite/graphite-query-editor-still.png"
-                  animated-gif="/img/docs/graphite/graphite-query-editor.gif" >}}
+{{< figure src="/static/img/docs/graphite/graphite-query-editor-still.png"
+                  animated-gif="/static/img/docs/graphite/graphite-query-editor.gif" >}}
 
 ### Functions
 
@@ -70,8 +65,8 @@ a function is selected, it will be added and your focus will be in the text box 
 - To edit or change a parameter, click on it and it will turn into a text box.
 - To delete a function, click the function name followed by the x icon.
 
-{{< docs-imagebox img="/img/docs/graphite/graphite-functions-still.png"
-                  animated-gif="/img/docs/graphite/graphite-functions-demo.gif" >}}
+{{< figure src="/static/img/docs/graphite/graphite-functions-still.png"
+                  animated-gif="/static/img/docs/graphite/graphite-functions-demo.gif" >}}
 
 Some functions like aliasByNode support an optional second argument. To add an argument, hover your mouse over the first argument and then click the `+` symbol that appears. To remove the second optional parameter, click on it and leave it blank and the editor will remove it.
 
@@ -129,13 +124,13 @@ For more information, refer to [Variables and templates]({{< relref "../variable
 
 Graphite 1.1 introduced tags and Grafana added support for Graphite queries with tags in version 5.0. To create a variable using tag values, use the Grafana functions `tags` and `tag_values`.
 
-Query | Description
------------- | -------------
-tags() | Returns all tags.
-tags(server=~backend\*) | Returns only tags that occur in series matching the filter expression.
-tag_values(server)  | Return tag values for the specified tag.
-tag_values(server, server=~backend\*)  | Returns filtered tag values that occur for the specified tag in series matching those expressions.
-tag_values(server, server=~backend\*, app=~${apps:regex}) | Multiple filter expressions and expressions can contain other variables.
+Query                                                       | Description
+----------------------------------------------------------- | -------------
+`tags()`                                                    | Returns all tags.
+`tags(server=~backend\*)`                                   | Returns only tags that occur in series matching the filter expression.
+`tag_values(server)`                                        | Return tag values for the specified tag.
+`tag_values(server, server=~backend\*)`                     | Returns filtered tag values that occur for the specified tag in series matching those expressions.
+`tag_values(server, server=~backend\*, app=~${apps:regex})` | Multiple filter expressions and expressions can contain other variables.
 
 For more details, see the [Graphite docs on the autocomplete API for tags](http://graphite.readthedocs.io/en/latest/tags.html#auto-complete-support).
 
@@ -168,7 +163,7 @@ tag_values(server, server=~${__searchFilter:regex})
 ### Variable usage
 
 You can use a variable in a metric node path or as a parameter to a function.
-![variable](/img/docs/v2/templated_variable_parameter.png)
+![variable](/static/img/docs/v2/templated_variable_parameter.png)
 
 There are two syntaxes:
 

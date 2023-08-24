@@ -2,11 +2,7 @@
 title = "Admin HTTP API "
 description = "Grafana Admin HTTP API"
 keywords = ["grafana", "http", "documentation", "api", "admin"]
-aliases = ["/docs/grafana/latest/http_api/admin/"]
-type = "docs"
-[menu.docs]
-name = "Admin"
-parent = "http_api"
+aliases = ["/docs/grafana/v7.3/http_api/admin/"]
 +++
 
 # Admin API
@@ -471,7 +467,7 @@ Content-Type: application/json
 
 Reloads the provisioning config files for specified type and provision entities again. It won't return
 until the new provisioned entities are already stored in the database. In case of dashboards, it will stop
-polling for changes in dashboard files and then restart it with new configs after returning.
+polling for changes in dashboard files and then restart it with new configurations after returning.
 
 Only works with Basic Authentication (username and password). See [introduction](http://docs.grafana.org/http_api/admin/#admin-api) for an explanation.
 

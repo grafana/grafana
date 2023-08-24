@@ -2,17 +2,13 @@
 title = "Team sync"
 description = "Grafana Team Sync"
 keywords = ["grafana", "auth", "documentation"]
-aliases = ["/docs/grafana/latest/auth/saml/"]
-type = "docs"
-[menu.docs]
-name = "Team sync"
-parent = "enterprise"
+aliases = ["/docs/grafana/v7.3/auth/saml/"]
 weight = 600
 +++
 
 # Team sync
 
-{{< docs-imagebox img="/img/docs/enterprise/team_members_ldap.png" class="docs-image--no-shadow docs-image--right" max-width= "600px" >}}
+{{< figure src="/static/img/docs/enterprise/team_members_ldap.png" class="docs-image--no-shadow docs-image--right" max-width= "600px" >}}
 
 Team sync lets you set up synchronization between your auth providers teams and teams in Grafana. This enables LDAP, OAuth, or SAML users who are members of certain teams or groups to automatically be added or removed as members of certain teams in Grafana.
 
@@ -39,7 +35,7 @@ This mechanism allows Grafana to remove an existing synchronized user from a tea
 
 If you have already grouped some users into a team, then you can synchronize that team with an external group.
 
-{{< docs-imagebox img="/img/docs/enterprise/team_add_external_group.png" class="docs-image--no-shadow docs-image--right" max-width= "600px" >}}
+{{< figure src="/static/img/docs/enterprise/team_add_external_group.png" class="docs-image--no-shadow docs-image--right" max-width= "600px" >}}
 
 1. In Grafana, navigate to **Configuration > Teams**.
 1. Select a team.

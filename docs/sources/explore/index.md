@@ -1,11 +1,7 @@
 +++
 title = "Explore"
 keywords = ["explore", "loki", "logs"]
-type = "docs"
-aliases = ["/docs/grafana/latest/features/explore/"]
-[menu.docs]
-name = "Explore"
-identifier = "explore"
+aliases = ["/docs/grafana/v7.3/features/explore/"]
 weight = 90
 +++
 
@@ -29,11 +25,11 @@ If you just want to explore your data and do not want to create a dashboard, the
 
 There is an Explore icon on the menu bar to the left. This opens an empty Explore tab.
 
-{{< docs-imagebox img="/img/docs/v65/explore_menu.png" class="docs-image--no-shadow" caption="Screenshot of the new Explore Icon" >}}
+{{< figure src="/static/img/docs/v65/explore_menu.png" class="docs-image--no-shadow" caption="Screenshot of the new Explore Icon" >}}
 
 If you want to start with an existing query in a panel, choose the Explore option from the Panel menu. This opens an Explore tab with the query from the panel and allows you to tweak or iterate in the query outside of your dashboard.
 
-{{< docs-imagebox img="/img/docs/v65/explore_panel_menu.png" class="docs-image--no-shadow" caption="Screenshot of the new Explore option in the panel menu" >}}
+{{< figure src="/static/img/docs/v65/explore_panel_menu.png" class="docs-image--no-shadow" caption="Screenshot of the new Explore option in the panel menu" >}}
 
 Choose your data source from the dropdown in the top left. [Prometheus](https://grafana.com/oss/prometheus/) has a custom Explore implementation, the other data sources use their standard query editor.
 
@@ -43,7 +39,7 @@ The query field is where you can write your query and explore your data. There a
 
 The split view feature is an easy way to compare graphs and tables side-by-side or to look at related data together on one page. Click the split button to duplicate the current query and split the page into two side-by-side queries. It is possible to select another data source for the new query which for example, allows you to compare the same query for two different servers or to compare the staging environment to the production environment.
 
-{{< docs-imagebox img="/img/docs/v65/explore_split.png" class="docs-image--no-shadow" caption="Screenshot of the new Explore option in the panel menu" >}}
+{{< figure src="/static/img/docs/v65/explore_split.png" class="docs-image--no-shadow" caption="Screenshot of the new Explore option in the panel menu" >}}
 
 In split view, timepickers for both panels can be linked (if you change one, the other gets changed as well) by clicking on one of the time-sync buttons attached to the timepickers. Linking of timepickers helps with keeping the start and the end times of the split view queries in sync and it will ensure that you’re looking at the same time interval in both split panels.
 
@@ -129,7 +125,7 @@ The first version of Explore features a custom querying experience for Prometheu
 
 On the left side of the query field, click **Metrics** to open the Metric Explorer. This shows a hierarchical menu with metrics grouped by their prefix. For example, all Alertmanager metrics are grouped under the `alertmanager` prefix. This is a good starting point if you just want to explore which metrics are available.
 
-{{< docs-imagebox img="/img/docs/v65/explore_metric_explorer.png" class="docs-image--no-shadow" caption="Screenshot of the new Explore option in the panel menu" >}}
+{{< figure src="/static/img/docs/v65/explore_metric_explorer.png" class="docs-image--no-shadow" caption="Screenshot of the new Explore option in the panel menu" >}}
 
 ### Query field
 
@@ -145,7 +141,7 @@ Suggestions can appear under the query field - click on them to update your quer
 
 ### Table filters
 
-Click on the filter button <span title="Filter for label" class="logs-label__icon fa fa-search-plus"></span> in a labels column in the Table panel to add filters to the query expression. This works with multiple queries too - the filter will be added for all the queries.
+Click on the filter button in the "label" column of a Table panel to add filters to the query expression. You can add filters for multiple queries as well - the filter is added for all the queries.
 
 ## Logs integration
 
@@ -154,6 +150,37 @@ Along with metrics, Explore allows you to investigate your logs with the followi
 - [Loki](../datasources/loki)
 - [InfluxDB](../datasources/influxdb)
 - [Elasticsearch](../datasources/elasticsearch)
+
+### Logs visualization
+
+Results of log queries are shown as histograms in the graph and individual logs are displayed below. If the data source does not send histogram data for the requested time range, the logs model computes a time series based on the log row counts bucketed by an automatically calculated time interval and the start of the histogram is then anchored by the first log row's timestamp from the result. The end of the time series is anchored to the time picker's **To** range.
+
+#### Log level
+
+For logs where a **level** label is specified, we use the value of the label to determine the log level and update color accordingly. If the log doesn't have a level label specified, we parse the log to find out if its content matches any of the supported expressions (see below for more information). The log level is always determined by the first match. In case Grafana is not able to determine a log level, it will be visualized with **unknown** log level.
+
+**Supported log levels and mapping of log level abbreviation and expressions:**
+
+
+|  Supported expressions      | Log level     | Color       |
+| --------------------------- |:-------------:| -----------:|
+| emerg                       | critical      | purple      |
+| fatal                       | critical      | purple      |
+| alert                       | critical      | purple      |
+| crit                        | critical      | purple      |
+| critical                    | critical      | purple      |
+| err                         | error         | red         |
+| eror                        | error         | red         |
+| error                       | error         | red         |
+| warn                        | warning       | yellow      |
+| warning                     | warning       | yellow      |
+| info                        | info          | green       |
+| information                 | info          | green       |
+| notice                      | info          | green       |
+| dbug                        | debug         | blue        |
+| debug                       | debug         | blue        |
+| trace                       | trace         | light blue  |
+| *                           | unknown       | grey        |
 
 ### Visualization options
 
@@ -183,17 +210,17 @@ Log data can be very repetitive and Explore can help by hiding duplicate log lin
 
 You can change the order of received logs from the default descending order (newest first) to ascending order (oldest first).
 
-### Labels and parsed fields
+### Labels and detected fields
 
-Each log row has an extendable area with its labels and parsed fields, for more robust interaction. For all labels we have added the ability to filter for (positive filter) and filter out (negative filter) selected labels. Each field or label also has a stats icon to display ad-hoc statistics in relation to all displayed logs.
+Each log row has an extendable area with its labels and detected fields, for more robust interaction. For all labels we have added the ability to filter for (positive filter) and filter out (negative filter) selected labels. Each field or label also has a stats icon to display ad-hoc statistics in relation to all displayed logs.
 
-### Toggle parsed fields
+### Toggle detected fields
 
 > **Note:** This feature is only available in Grafana 7.2+.
 
-If your logs are structured in `json` or `logfmt`, then you can show or hide parsed fields. Expand a log line and then click the eye icon to show or hide fields.
+If your logs are structured in `json` or `logfmt`, then you can show or hide detected fields. Expand a log line and then click the eye icon to show or hide fields.
 
-{{< docs-imagebox img="/img/docs/explore/parsed-fields-7-2.gif" max-width="800px" caption="Toggling parsed fields in Explore" >}}
+{{< figure src="/static/img/docs/explore/parsed-fields-7-2.gif" max-width="800px" caption="Toggling detected fields in Explore" >}}
 
 ### Loki-specific features
 
@@ -221,7 +248,7 @@ Click the **Live** button in the Explore toolbar to switch to Live tail view.
 
 While in Live tail view new logs will come from the bottom of the screen and will have fading contrasting background so you can keep track of what is new. Click the **Pause** button or scroll the logs view to pause the Live tailing and explore previous logs without interruption. Click **Resume** button to resume the Live tailing or click **Stop** button to exit Live tailing and go back to standard Explore view.
 
-{{< docs-imagebox img="/img/docs/v64/explore_live_tailing.gif" class="docs-image--no-shadow" caption="Explore Live tailing in action" >}}
+{{< figure src="/static/img/docs/v64/explore_live_tailing.gif" class="docs-image--no-shadow" caption="Explore Live tailing in action" >}}
 
 ## Tracing integration
 
@@ -231,14 +258,16 @@ You can visualize traces from tracing data sources in explore. Data sources curr
 
 - [Jaeger]({{< relref "../datasources/jaeger.md" >}})
 - [Zipkin]({{< relref "../datasources/zipkin.md" >}})
+- [Tempo]({{< relref "../datasources/tempo.md" >}})
+- [X-Ray](https://grafana.com/grafana/plugins/grafana-x-ray-datasource)
 
 For information about how to use the query editor see documentation for specific data source.
 
-{{< docs-imagebox img="/img/docs/v70/explore-trace-view-full.png" class="docs-image--no-shadow" caption="Screenshot of the trace view" >}}
+{{< figure src="/static/img/docs/v70/explore-trace-view-full.png" class="docs-image--no-shadow" caption="Screenshot of the trace view" >}}
 
 ##### Header
 
-{{< docs-imagebox img="/img/docs/v70/explore-trace-view-header.png" class="docs-image--no-shadow" caption="Screenshot of the trace view header" >}}
+{{< figure src="/static/img/docs/v70/explore-trace-view-header.png" class="docs-image--no-shadow" caption="Screenshot of the trace view header" >}}
 
 - Header title: Shows the name of the root span and trace ID.
 - Search: Highlights spans containing the searched text.
@@ -246,13 +275,13 @@ For information about how to use the query editor see documentation for specific
 
 ##### Minimap
 
-{{< docs-imagebox img="/img/docs/v70/explore-trace-view-minimap.png" class="docs-image--no-shadow" caption="Screenshot of the trace view minimap" >}}
+{{< figure src="/static/img/docs/v70/explore-trace-view-minimap.png" class="docs-image--no-shadow" caption="Screenshot of the trace view minimap" >}}
 
 Shows condensed view or the trace timeline. Drag your mouse over the minimap to zoom into smaller time range. Zooming will also update the main timeline, so it is easy to see shorter spans. Hovering over the minimap, when zoomed, will show Reset Selection button which resets the zoom.
 
 ##### Timeline
 
-{{< docs-imagebox img="/img/docs/v70/explore-trace-view-timeline.png" class="docs-image--no-shadow" caption="Screenshot of the trace view timeline" >}}
+{{< figure src="/static/img/docs/v70/explore-trace-view-timeline.png" class="docs-image--no-shadow" caption="Screenshot of the trace view timeline" >}}
 
 Shows list of spans within the trace. Each span row consists of these components:
 
@@ -265,7 +294,7 @@ Clicking anywhere on the span row shows span details.
 
 ##### Span details
 
-{{< docs-imagebox img="/img/docs/v70/explore-trace-view-span-details.png" class="docs-image--no-shadow" caption="Screenshot of the trace view span details" >}}
+{{< figure src="/static/img/docs/v70/explore-trace-view-span-details.png" class="docs-image--no-shadow" caption="Screenshot of the trace view span details" >}}
 
 - Operation name
 - Span metadata
@@ -273,21 +302,30 @@ Clicking anywhere on the span row shows span details.
 - Process metadata: Metadata about the process that logged this span.
 - Logs: List of logs logged by this span and associated key values. In case of Zipkin logs section shows Zipkin annotations.
 
-## Navigating between Explore and a dashboard
+##### Trace to logs
 
-To help accelerate workflows that involve regularly switching from Explore to a dashboard and vice-versa, we've added the ability to return to the origin dashboard
-after navigating to Explore from the panel's dropdown.
+> This feature is only available in Grafana 7.4+.
 
-{{< docs-imagebox img="/img/docs/v64/panel_dropdown.png" class="docs-image--no-shadow" caption="Screenshot of the panel dropdown" >}}
+You can navigate from a span in a trace view directly to logs relevant for that span. This is available for Tempo, Jaeger, and Zipkin data source at this moment. See their relevant documentation for instruction how to configure this feature.
+
+![Trace to logs](/static/img/docs/explore/trace-to-log-7-4.png "Screenshot of the trace to logs")
+
+Click the document icon to open a split view in Explore with the configured data source and query relevant logs for the span.
+
+## Navigate between Explore and a dashboard
+
+To help accelerate workflows that involve regularly switching from Explore to a dashboard and vice-versa, we've added the ability to return to the origin dashboard after navigating to Explore from the panel's dropdown.
+
+{{< figure src="/static/img/docs/v64/panel_dropdown.png" class="docs-image--no-shadow" caption="Screenshot of the panel dropdown" >}}
 
 After you've navigated to Explore, you should notice a "Back" button in the Explore toolbar.
 
-{{< docs-imagebox img="/img/docs/v64/explore_toolbar.png" class="docs-image--no-shadow" caption="Screenshot of the explore toolbar" >}}
+{{< figure src="/static/img/docs/v64/explore_toolbar.png" class="docs-image--no-shadow" caption="Screenshot of the explore toolbar" >}}
 
 Simply clicking the button will return you to the origin dashboard, or, if you'd like to bring changes you make in Explore back to the dashboard, simply click
 the arrow next to the button to reveal a "Return to panel with changes" menu item.
 
-{{< docs-imagebox img="/img/docs/v64/explore_return_dropdown.png" class="docs-image--no-shadow" caption="Screenshot of the expanded explore return dropdown" >}}
+{{< figure src="/static/img/docs/v64/explore_return_dropdown.png" class="docs-image--no-shadow" caption="Screenshot of the expanded explore return dropdown" >}}
 
 ## Query inspector
 
@@ -295,4 +333,6 @@ To help with debugging queries, Explore allows you to investigate query requests
 This functionality is similar to the panel inspector [Stats tab]({{< relref "../panels/inspect-panel.md#inspect-query-performance" >}}) and
 [Query tab]({{< relref "../panels/inspect-panel.md##view-raw-request-and-response-to-data-source" >}}).
 
-{{< docs-imagebox img="/img/docs/v71/query_inspector_explore.png" class="docs-image--no-shadow" caption="Screenshot of the query inspector button in Explore" >}}
+{{< figure src="/static/img/docs/v71/query_inspector_explore.png" class="docs-image--no-shadow" caption="Screenshot of the query inspector button in Explore" >}}
+
+

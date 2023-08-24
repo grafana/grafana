@@ -1,10 +1,6 @@
 +++
 title = "Plugins"
-type = "docs"
-[menu.docs]
-name = "Plugins"
-identifier = "plugins"
-weight = 1
+weight = 160
 +++
 
 # Plugins
@@ -44,5 +40,7 @@ Use app plugins when you want to create an custom out-of-the-box monitoring expe
 ## Learn more
 
 - [Install plugins]({{< relref "./installation.md" >}})
-- [Plugin signature verification]({{< relref "./plugin-signature-verification.md" >}})
+- [Plugin signatures]({{< relref "./plugin-signatures.md" >}})
 - Browse the available [Plugins](https://grafana.com/grafana/plugins)
+
+

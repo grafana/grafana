@@ -2,11 +2,7 @@
 title = "Loki"
 description = "Guide for using Loki in Grafana"
 keywords = ["grafana", "loki", "logging", "guide"]
-type = "docs"
-aliases = ["/docs/grafana/latest/features/datasources/loki"]
-[menu.docs]
-name = "Loki"
-parent = "datasources"
+aliases = ["/docs/grafana/v7.3/features/datasources/loki"]
 weight = 800
 +++
 
@@ -31,10 +27,10 @@ Just add it as a data source and you are ready to query your log data in [Explor
 
 | Name            | Description                                                                                                                                   |
 | --------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| _Name_          | The data source name. This is how you refer to the data source in panels, queries, and Explore.                                               |
-| _Default_       | Default data source means that it will be pre-selected for new panels.                                                                        |
-| _URL_           | The URL of the Loki instance, e.g., `http://localhost:3100`                                                                                   |
-| _Maximum lines_ | Upper limit for number of log lines returned by Loki (default is 1000). Decrease if your browser is sluggish when displaying logs in Explore. |
+| `Name`          | The data source name. This is how you refer to the data source in panels, queries, and Explore.                                               |
+| `Default`       | Default data source means that it will be pre-selected for new panels.                                                                        |
+| `URL`           | The URL of the Loki instance, e.g., `http://localhost:3100`                                                                                   |
+| `Maximum lines` | Upper limit for number of log lines returned by Loki (default is 1000). Decrease if your browser is sluggish when displaying logs in Explore. |
 
 ### Derived fields
 
@@ -43,8 +39,8 @@ The Derived Fields configuration allows you to:
 - Add fields parsed from the log message.
 - Add a link that uses the value of the field.
 
-You can use this functionality to link to your tracing backend directly from your logs, or link to a user profile page if a userId is present in the log line. These links appear in the [log details](/explore/#labels-and-parsed-fields).
-{{< docs-imagebox img="/img/docs/v65/loki_derived_fields.png" class="docs-image--no-shadow" caption="Screenshot of the derived fields configuration" >}}
+You can use this functionality to link to your tracing backend directly from your logs, or link to a user profile page if a userId is present in the log line. These links appear in the [log details](/explore/#labels-and-detected-fields).
+{{< figure src="/static/img/docs/v65/loki_derived_fields.png" class="docs-image--no-shadow" caption="Screenshot of the derived fields configuration" >}}
 Each derived field consists of:
 
 - **Name -** Shown in the log details as a label.
@@ -53,10 +49,10 @@ Each derived field consists of:
 - **Internal link -** Select if the link is internal or external. In case of internal link, a data source selector allows you to select the target data source. Only tracing data sources are supported.
 
 You can use a debug section to see what your fields extract and how the URL is interpolated. Click **Show example log message** to show the text area where you can enter a log message.
-{{< docs-imagebox img="/img/docs/v65/loki_derived_fields_debug.png" class="docs-image--no-shadow" caption="Screenshot of the derived fields debugging" >}}
+{{< figure src="/static/img/docs/v65/loki_derived_fields_debug.png" class="docs-image--no-shadow" caption="Screenshot of the derived fields debugging" >}}
 
 The new field with the link shown in log details:
-{{< docs-imagebox img="/img/docs/v65/loki_derived_fields_detail.png" class="docs-image--no-shadow" caption="Screenshot of the derived field in log detail" >}}
+{{< figure src="/static/img/docs/v65/loki_derived_fields_detail.png" class="docs-image--no-shadow" caption="Screenshot of the derived field in log detail" >}}
 
 ## Querying Logs
 
@@ -72,7 +68,7 @@ Once the result is returned, the log panel shows a list of log rows and a bar ch
 
 <div class="medium-6 columns">
   <video width="800" height="500" controls>
-    <source src="/assets/videos/explore_loki.mp4" type="video/mp4">
+    <source src="/static/assets/videos/explore_loki.mp4" type="video/mp4">
     Your browser does not support the video tag.
   </video>
 </div>
@@ -134,8 +130,37 @@ Note that Live Tailing relies on two Websocket connections: one between the brow
 ```
 ProxyPassMatch "^/(api/datasources/proxy/\d+/loki/api/v1/tail)" "ws://127.0.0.1:3000/$1"
 ```
+The following example shows basic NGINX proxy configuration. It assumes that the Grafana server is available at `http://localhost:3000/`, Loki server is running locally without proxy, and your external site uses HTTPS. If you also host Loki behind NGINX proxy, then you might want to repeat the following configuration for Loki as well.
 
-> **Note:** This feature is only available in Grafana v6.3+
+In the `http` section of NGINX configuration, add the following map definition:
+```
+  map $http_upgrade $connection_upgrade {
+    default upgrade;
+    '' close;
+  }
+```
+In your `server` section, add the following configuration:
+```
+  location ~ /(api/datasources/proxy/\d+/loki/api/v1/tail) {
+      proxy_pass          http://localhost:3000$request_uri;
+      proxy_set_header    Host              $host;
+      proxy_set_header    X-Real-IP         $remote_addr;
+      proxy_set_header    X-Forwarded-for   $proxy_add_x_forwarded_for;
+      proxy_set_header    X-Forwarded-Proto "https";
+      proxy_set_header    Connection        $connection_upgrade;
+      proxy_set_header    Upgrade           $http_upgrade;
+  }
+
+  location / {
+      proxy_pass          http://localhost:3000/;
+      proxy_set_header    Host              $host;
+      proxy_set_header    X-Real-IP         $remote_addr;
+      proxy_set_header    X-Forwarded-for   $proxy_add_x_forwarded_for;
+      proxy_set_header    X-Forwarded-Proto "https";
+  }
+```
+
+> **Note:** This feature is only available in Grafana v6.3+.
 
 ## Log Context
 
@@ -205,4 +230,16 @@ datasources:
         - matcherRegex: "traceID=(\\w+)"
           name: TraceID
           url: "http://localhost:16686/trace/$${__value.raw}"
+```
+
+Here's an example of a Jaeger data source corresponding to the above example. Note that the Jaeger `uid` value does match the Loki `datasourceUid` value.
+
+```
+datasources:
+    - name: Jaeger
+      type: jaeger
+      url: http://jaeger-tracing-query:16686/
+      access: proxy
+      # UID should match the datasourceUid in dervidedFields.
+      uid: my_jaeger_uid
 ```

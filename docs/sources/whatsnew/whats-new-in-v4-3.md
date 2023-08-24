@@ -2,13 +2,10 @@
 title = "What's new in Grafana v4.3"
 description = "Feature and improvement highlights for Grafana v4.3"
 keywords = ["grafana", "new", "documentation", "4.3.0", "release notes"]
-type = "docs"
-aliases = ["/docs/grafana/latest/guides/whats-new-in-v4-3/"]
-[menu.docs]
-name = "Version 4.3"
-identifier = "v4.3"
-parent = "whatsnew"
-weight = -2
+aliases = ["/docs/grafana/v7.3/guides/whats-new-in-v4-3/"]
+weight = -10
+[_build]
+list = false
 +++
 
 ## What's new in Grafana v4.3
@@ -32,7 +29,7 @@ A Histogram is a kind of bar chart that groups numbers into ranges, often called
 
 The Graph Panel now supports Histograms.
 
-![](/img/docs/v43/heatmap_histogram.png)
+![](/static/img/docs/v43/heatmap_histogram.png)
 
 ## Histogram Aggregation Support for Elasticsearch
 
@@ -44,7 +41,7 @@ The Histogram support in the Graph Panel does not show changes over time - it ag
 
 Every column in a Heatmap is a histogram snapshot. Instead of visualizing higher values with higher bars, a heatmap visualizes higher values with color. The histogram shown above is equivalent to one column in the heatmap shown below.
 
-![](/img/docs/v43/heatmap_histogram_over_time.png)
+![](/static/img/docs/v43/heatmap_histogram_over_time.png)
 
 The Heatmap panel also works with Elasticsearch Histogram Aggregations for more accurate server side bucketing.
 
@@ -59,11 +56,11 @@ labeling the state of the data source as Alpha. Instead of holding up the releas
 
 **The query editor can show the generated and interpolated SQL that is sent to the MySQL server.**
 
-![](/img/docs/v43/mysql_table_query.png)
+![](/static/img/docs/v43/mysql_table_query.png)
 
 **The query editor will also show any errors that resulted from running the query (very useful when you have a syntax error!).**
 
-![](/img/docs/v43/mysql_query_error.png)
+![](/static/img/docs/v43/mysql_query_error.png)
 
 ## Health Check Endpoint
 
@@ -77,7 +74,7 @@ Grafana now delays loading panels until they become visible (scrolled into view)
 
 The Prometheus data source now supports the Table Data format by automatically assigning a column to a label. This makes it really easy to browse data in the table panel.
 
-![](/img/docs/v43/prom_table_cols_as_labels.png)
+![](/static/img/docs/v43/prom_table_cols_as_labels.png)
 
 ## Other Highlights From The Changelog
 

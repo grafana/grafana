@@ -2,11 +2,7 @@
 title = "Folder Permissions HTTP API "
 description = "Grafana Folder Permissions HTTP API"
 keywords = ["grafana", "http", "documentation", "api", "folder", "permission", "permissions", "acl"]
-aliases = ["/docs/grafana/latest/http_api/dashboardpermissions/"]
-type = "docs"
-[menu.docs]
-name = "Folder Permissions"
-parent = "http_api"
+aliases = ["/docs/grafana/v7.3/http_api/dashboardpermissions/"]
 +++
 
 # Folder Permissions API

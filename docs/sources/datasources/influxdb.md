@@ -2,11 +2,7 @@
 title = "InfluxDB"
 description = "Guide for using InfluxDB in Grafana"
 keywords = ["grafana", "influxdb", "guide", "flux"]
-type = "docs"
-aliases = ["/docs/grafana/latest/features/datasources/influxdb"]
-[menu.docs]
-name = "InfluxDB"
-parent = "datasources"
+aliases = ["/docs/grafana/v7.3/features/datasources/influxdb"]
 weight = 700
 +++
 
@@ -27,16 +23,16 @@ Grafana ships with a feature-rich data source plugin for InfluxDB. The plugin in
 
 ### InfluxQL (classic InfluxDB query)
 
-Name | Description
------------- | -------------
-*Name* | The data source name. This is how you refer to the data source in panels and queries.
-*Default* | Default data source means that it will be pre-selected for new panels.
-*URL* | The HTTP protocol, IP address and port of your InfluxDB API (InfluxDB API port is by default 8086)
-*Access* | Server (default) = URL needs to be accessible from the Grafana backend/server, Browser = URL needs to be accessible from the browser.
-*Database* | Name of your InfluxDB database
-*User* | Name of your database user
-*Password* | Database user's password
-*HTTP mode* | How to query the database (`GET` or `POST` HTTP verb). The `POST` verb allows heavy queries that would return an error using the `GET` verb. Default is `GET`.
+Name        | Description
+----------- | -------------
+`Name`      | The data source name. This is how you refer to the data source in panels and queries.
+`Default`   | Default data source means that it will be pre-selected for new panels.
+`URL`       | The HTTP protocol, IP address and port of your InfluxDB API (InfluxDB API port is by default 8086)
+`Access`    | Server (default) = URL needs to be accessible from the Grafana backend/server, Browser = URL needs to be accessible from the browser.
+`Database`  | Name of your InfluxDB database
+`User`      | Name of your database user
+`Password`  | Database user's password
+`HTTP mode` | How to query the database (`GET` or `POST` HTTP verb). The `POST` verb allows heavy queries that would return an error using the `GET` verb. Default is `GET`.
 
 Access mode controls how requests to the data source will be handled. Server should be the preferred way if nothing else stated.
 
@@ -53,22 +49,22 @@ A lower limit for the auto group by time interval. Recommended to be set to writ
 This option can also be overridden/configured in a dashboard panel under data source options. It's important to note that this value **needs** to be formatted as a
 number followed by a valid time identifier, e.g. `1m` (1 minute) or `30s` (30 seconds). The following time identifiers are supported:
 
-Identifier | Description
+Identifier   | Description
 ------------ | -------------
-`y`   | year
-`M`   | month
-`w`   | week
-`d`   | day
-`h`   | hour
-`m`   | minute
-`s`   | second
-`ms`  | millisecond
+`y`          | year
+`M`          | month
+`w`          | week
+`d`          | day
+`h`          | hour
+`m`          | minute
+`s`          | second
+`ms`         | millisecond
 
 ## Query Editor
 
-{{< docs-imagebox img="/img/docs/v45/influxdb_query_still.png" class="docs-image--no-shadow" animated-gif="/img/docs/v45/influxdb_query.gif" >}}
+{{< figure src="/static/img/docs/v45/influxdb_query_still.png" class="docs-image--no-shadow" animated-gif="/static/img/docs/v45/influxdb_query.gif" >}}
 
-You can access the InfluxDB editor under the metrics tab when you are in the edit mode of the Graph or Singlestat panels. 
+You can access the InfluxDB editor under the metrics tab when you are in the edit mode of the Graph or Singlestat panels.
 Enter edit mode by clicking the panel title and clicking **Edit**. The editor allows you to select metrics and tags.
 
 ### Filter data (WHERE)
@@ -83,7 +79,7 @@ You can type in regex patterns for metric names or tag filter values. Be sure to
 In the `SELECT` row you can specify what fields and functions you want to use. If you have a
 group by time you need an aggregation function. Some functions like derivative require an aggregation function. The editor tries to simplify and unify this part of the query. For example:
 
-![](/img/docs/influxdb/select_editor.png)
+![](/static/img/docs/influxdb/select_editor.png)
 
 The above generates the following InfluxDB `SELECT` clause:
 
@@ -128,12 +124,12 @@ change the option `Format As` to `Table` if you want to show raw data in the `Ta
 The client supports Flux running on InfluxDB 1.8+.  See [1.8 compatibility](https://github.com/influxdata/influxdb-client-go/#influxdb-18-api-compatibility) for more information and connection details.
 
 
-Name | Description
------------- | -------------
-*URL* | The HTTP protocol, IP address and port of your InfluxDB API (InfluxDB 2.0 API port is by default 9999)
-*Organization* | The [Influx organization](https://v2.docs.influxdata.com/v2.0/organizations/) that will be used for Flux queries.  This is also used to for the `v.organization` query macro
-*Token* | The authentication token used for Flux queries. With Influx 2.0, use the [influx authentication token to function](https://v2.docs.influxdata.com/v2.0/security/tokens/create-token/).  For influx 1.8, the token is `username:password` 
-*Default Bucket* | The [Influx bucket](https://v2.docs.influxdata.com/v2.0/organizations/buckets/) that will be used for the `v.defaultBucket` macro in Flux queries
+Name             | Description
+---------------- | -------------
+`URL`            | The HTTP protocol, IP address and port of your InfluxDB API (InfluxDB 2.0 API port is by default 9999)
+`Organization`   | The [Influx organization](https://v2.docs.influxdata.com/v2.0/organizations/) that will be used for Flux queries.  This is also used to for the `v.organization` query macro
+`Token`          | The authentication token used for Flux queries. With Influx 2.0, use the [influx authentication token to function](https://v2.docs.influxdata.com/v2.0/security/tokens/create-token/).  For influx 1.8, the token is `username:password`
+`Default Bucket` | The [Influx bucket](https://v2.docs.influxdata.com/v2.0/organizations/buckets/) that will be used for the `v.defaultBucket` macro in Flux queries
 
 You can use the [Flux query and scripting language](https://www.influxdata.com/products/flux/). Grafana's Flux query editor is a text editor for raw Flux queries with Macro support.
 
@@ -142,13 +138,13 @@ You can use the [Flux query and scripting language](https://www.influxdata.com/p
 
 The macros support copying and pasting from [Chronograph](https://www.influxdata.com/time-series-platform/chronograf/).
 
-Macro example | Description
------------- | -------------
-*`v.timeRangeStart`* | Will be replaced by the start of the currently active time selection. For example, *2020-06-11T13:31:00Z*
-*`v.timeRangeEnd`* | Will be replaced by the end of the currently active time selection. For example, *2020-06-11T14:31:00Z*
-*`v.windowPeriod`* | Will be replaced with an interval string compatible with Flux that corresponds to Grafana's calculated interval based on the time range of the active time selection. For example, *5s*
-*`v.defaultBucket`* | Will be replaced with the data source configuration's "Default Bucket" setting
-*`v.organization`* | Will be replaced with the data source configuration's "Organization" setting
+Macro example        | Description
+------------         | -------------
+`v.timeRangeStart`   | Will be replaced by the start of the currently active time selection. For example, *2020-06-11T13:31:00Z*
+`v.timeRangeEnd`     | Will be replaced by the end of the currently active time selection. For example, *2020-06-11T14:31:00Z*
+`v.windowPeriod`     | Will be replaced with an interval string compatible with Flux that corresponds to Grafana's calculated interval based on the time range of the active time selection. For example, *5s*
+`v.defaultBucket`    | Will be replaced with the data source configuration's "Default Bucket" setting
+`v.organization`     | Will be replaced with the data source configuration's "Organization" setting
 
 For example, the following query will be interpolated as the query that follows it, with interval and time period values changing according to active time selection\):
 
@@ -180,7 +176,7 @@ You can view the interpolated version of a query with the Query Inspector.
 
 > Only available in Grafana v6.3+.
 
-Querying and displaying log data from InfluxDB is available in [Explore]({{< relref "../explore" >}}), and in the [logs panel]({{< relref "../panels/visualizations/logs-panel.md" >}}) in dashboards. 
+Querying and displaying log data from InfluxDB is available in [Explore]({{< relref "../explore" >}}), and in the [logs panel]({{< relref "../panels/visualizations/logs-panel.md" >}}) in dashboards.
 Select the InfluxDB data source, and then enter a query to display your logs.
 
 ### Log Queries
@@ -290,12 +286,12 @@ datasources:
       httpMode: GET
 ```
 
-### InfluxDB 2.x example
+### InfluxDB 2.x for Flux example
 ```yaml
 apiVersion: 1
 
 datasources:
-  - name: InfluxDB_v2
+  - name: InfluxDB_v2_Flux
     type: influxdb
     access: proxy
     url: http://localhost:8086
@@ -306,4 +302,23 @@ datasources:
       organization: organization
       defaultBucket: bucket
       tlsSkipVerify: true
+```
+
+### InfluxDB 2.x for InfluxQl example
+```yaml
+apiVersion: 1
+
+datasources:
+  - name: InfluxDB_v2_InfluxQL
+    type: influxdb
+    access: proxy
+    url: http://localhost:8086
+    # This database should be mapped to a bucket
+    database: site
+    jsonData:
+      httpMode: GET
+      httpHeaderName1: 'Authorization'
+    secureJsonData:
+      httpHeaderValue1: 'Token <token>'
+
 ```

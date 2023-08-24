@@ -2,13 +2,10 @@
 title = "What's new in Grafana v6.5"
 description = "Feature and improvement highlights for Grafana v6.5"
 keywords = ["grafana", "new", "documentation", "6.5", "release notes"]
-type = "docs"
-aliases = ["/docs/grafana/latest/guides/whats-new-in-v6-5/"]
-[menu.docs]
-name = "Version 6.5"
-identifier = "v6.5"
-parent = "whatsnew"
-weight = -16
+aliases = ["/docs/grafana/v7.3/guides/whats-new-in-v6-5/"]
+weight = -24
+[_build]
+list = false
 +++
 
 # What's new in Grafana v6.5
@@ -59,7 +56,7 @@ While GetMetricStatistics qualified for the CloudWatch API free tier, this is no
 
 In Grafana 6.5 or higher, you can monitor a dynamic list of metrics by using the asterisk (\*) wildcard for one or more dimension values.
 
-{{< docs-imagebox img="/img/docs/v65/cloudwatch-dimension-wildcard.png" max-width="800px" class="docs-image--right" caption="CloudWatch dimension wildcard" >}}
+{{< figure src="/static/img/docs/v65/cloudwatch-dimension-wildcard.png" max-width="800px" class="docs-image--right" caption="CloudWatch dimension wildcard" >}}
 
 The example queries all metrics in the namespace `AWS/EC2` with a metric name of `CPUUtilization` and _any_ value for the `InstanceId` dimension. This can help you monitor metrics for AWS resources, like EC2 instances or containers. For example, when new instances get created as part of an auto scaling event, they automatically appear in the graph without you having to track new instance IDs. You can click `Show Query Preview` to see the search expression that is automatically built to support wildcards. To learn more about search expressions, visit the [CloudWatch documentation](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/search-expression-syntax.html).
 
@@ -69,7 +66,7 @@ You can untoggle `Match Exact` to include metrics that have other dimensions def
 
 #### Deep linking from Grafana panels to the CloudWatch console
 
-{{< docs-imagebox img="/img/docs/v65/cloudwatch-deep-linking.png" max-width="500px" class="docs-image--right" caption="CloudWatch deep linking" >}}
+{{< figure src="/static/img/docs/v65/cloudwatch-deep-linking.png" max-width="500px" class="docs-image--right" caption="CloudWatch deep linking" >}}
 
 Left-clicking a time series in the panel displays a context menu with a link to `View in CloudWatch console`. Clicking that link opens  the CloudWatch console and displays all the metrics for that query. If you are not currently logged in to the CloudWatch console, then the link opens the login page. The link is valid for any account, but it only displays the right metrics if you are logged in to the account that corresponds to the selected data source in Grafana.
 
@@ -99,7 +96,7 @@ The updated CloudWatch data source is shipped with pre-configured dashboards for
 
 To import the pre-configured dashboards, go to the configuration page of your CloudWatch data source and click on the `Dashboards` tab. Click `Import` for the dashboard you would like to use. To customize the dashboard, we recommend to save the dashboard under a different name, because otherwise the dashboard will be overwritten when a new version of the dashboard is released.
 
-{{< docs-imagebox img="/img/docs/v65/cloudwatch-dashboard-import.png" max-width="600px" caption="CloudWatch dashboard import" >}}
+{{< figure src="/static/img/docs/v65/cloudwatch-dashboard-import.png" max-width="600px" caption="CloudWatch dashboard import" >}}
 
 ### Dynamic typeahead support in query variables
 
@@ -141,7 +138,7 @@ You can try it out by enabling a feature flag in the Grafana configuration file:
 enable = inspect
 ```
 
-{{< docs-imagebox img="/img/docs/v65/panel-inspector.png" max-width="400px" caption="New Panel Inspector modal" >}}
+{{< figure src="/static/img/docs/v65/panel-inspector.png" max-width="400px" caption="New Panel Inspector modal" >}}
 
 In Grafana 6.6, this will have a more user friendly display. In the future, additional Metrictank functionality will become available when the Graphite datasource option is set to the `Metrictank` type.
 
@@ -149,7 +146,7 @@ In Grafana 6.6, this will have a more user friendly display. In the future, addi
 
 We finally got around to implementing the series hover that shows values of the timeseries you hover over. This has been a requested feature ever since Explore was released. The graph component has been rewritten from scratch, making it more composable for future interactions with the graph data.
 
-{{< docs-imagebox img="/img/docs/v65/explore_tooltip.png" max-width="500px" caption="Explore graph tooltip/hover" >}}
+{{< figure src="/static/img/docs/v65/explore_tooltip.png" max-width="500px" caption="Explore graph tooltip/hover" >}}
 
 ### Explore/Logs: Log row details
 
@@ -157,7 +154,7 @@ We have massively simplified the way we display both log row labels/fields as we
 
 So far labels had been squashed into their own column, making long label values difficult to read or interact with. Similarly, the parsed fields (available for logfmt and JSON structured logs) were too fiddly for mouse interaction. To solve this we took both and put them into a collapsed area below each row for more robust interaction. We have also added the ability to filter out labels, i.e., turn them into a negative filter on click (in addition to a positive filter).
 
-{{< docs-imagebox img="/img/docs/v65/explore_log_details.gif" caption="Explore Log row details" >}}
+{{< figure src="/static/img/docs/v65/explore_log_details.gif" caption="Explore Log row details" >}}
 
 ### Loki/Explore: Derived fields
 
@@ -171,11 +168,11 @@ This release starts with support for Loki, but we will bring this concept to oth
 
 In the Explore split view, you can now link the two timepickers so that if you change one, the other gets changed as well. This helps with keeping start and end times of the split view queries in sync and will ensure that you're looking at the same time interval in both split panes.
 
-{{< docs-imagebox img="/img/docs/v65/explore_time_sync.gif" caption="Time-sync of split views in Explore" >}}
+{{< figure src="/static/img/docs/v65/explore_time_sync.gif" caption="Time-sync of split views in Explore" >}}
 
 ### Alerting support for Azure Application Insights
 
-The [Azure Monitor]({{< relref "../datasources/azuremonitor/" >}}) data source supports multiple services in the Azure cloud. Before Grafana v6.5, only the Azure Monitor service had support for [Grafana Alerting]({{< relref "../alerting/alerts-overview" >}}). In Grafana 6.5, alerting support has been implemented for the [Application Insights service]({{< relref "../datasources/azuremonitor/#querying-the-application-insights-service" >}}).
+The [Azure Monitor]({{< relref "../datasources/azuremonitor/" >}}) data source supports multiple services in the Azure cloud. Before Grafana v6.5, only the Azure Monitor service had support for [Grafana Alerting]({{< relref "../alerting" >}}). In Grafana 6.5, alerting support has been implemented for the [Application Insights service]({{< relref "../datasources/azuremonitor/#querying-the-application-insights-service" >}}).
 
 ### Allow saving of provisioned dashboards from UI
 

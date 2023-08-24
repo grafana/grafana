@@ -1,9 +1,6 @@
 +++
 title = "Best practices"
 description = "Best practices for working with Grafana"
-type = "docs"
-[menu.docs]
-identifier = "best-practices"
 weight = 20
 +++
 
@@ -15,4 +12,5 @@ This section provides information about best practices for intermediate Grafana 
 - [Best practices for managing dashboards]({{< relref "best-practices-for-managing-dashboards" >}})
 - [Common observability strategies]({{< relref "common-observability-strategies" >}})
 - [Dashboard management maturity model]({{< relref "dashboard-management-maturity-levels" >}})
+
   

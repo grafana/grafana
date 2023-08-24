@@ -1,9 +1,6 @@
 +++
 title = "Install plugins"
-type = "docs"
-aliases = ["/docs/plugins/installation/"]
-[menu.docs]
-parent = "plugins"
+aliases = ["/docs/grafana/v7.3/plugins/installation/"]
 weight = 1
 +++
 
@@ -25,3 +22,11 @@ Grafana Cloud handles the plugin installation automatically.
 Follow the instructions on the Install tab. You can either install the plugin with a Grafana CLI command or by downloading and uncompress a .zip file into the Grafana plugins directory. We recommend using Grafana CLI in most instances. The .zip option is available if your Grafana server does not have access to the internet.
 
 For more information about Grafana CLI plugin commands, refer to [Plugin commands]({{< relref "../administration/cli.md#plugins-commands" >}}).
+
+### Install a packaged plugin
+
+After the user has downloaded the archive containing the plugin assets, they can install it by extracting the archive into their plugin directory.
+
+```
+unzip my-plugin-0.2.0.zip -d YOUR_PLUGIN_DIR/my-plugin
+```

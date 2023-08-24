@@ -1,10 +1,7 @@
 +++
 title = "Scripted dashboards"
 keywords = ["grafana", "dashboard", "documentation", "scripted"]
-type = "docs"
-aliases = ["/docs/grafana/latest/reference/scripting/"]
-[menu.docs]
-parent = "dashboard_features"
+aliases = ["/docs/grafana/v7.3/reference/scripting/"]
 weight = 1500
 +++
 

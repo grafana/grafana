@@ -2,19 +2,15 @@
 title = "What's New in Grafana v7.2"
 description = "Feature and improvement highlights for Grafana v7.2"
 keywords = ["grafana", "new", "documentation", "7.2", "release notes"]
-type = "docs"
-aliases = ["/docs/grafana/latest/guides/whats-new-in-v7-2/"]
-[menu.docs]
-name = "Version 7.2"
-identifier = "v7.2"
-parent = "whatsnew"
-weight = -15
+aliases = ["/docs/grafana/v7.3/guides/whats-new-in-v7-2/"]
+weight = -29
+[_build]
+list = false
 +++
 
 # What's new in Grafana v7.2
 
 This topic includes the release notes for the Grafana v7.2. For all details, read the full [CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELOG.md).
-
 
 The main highlights are:
 
@@ -42,7 +38,7 @@ You can now customize how dates are formatted in Grafana. Custom date formats ap
 
 This screenshot shows both a custom full date format with a 12 hour clock and am/pm suffix. The graph is also showing the same 12-hour clock format and a customized month and day format compared to the Grafana default `MM/DD` format.
 
-{{< docs-imagebox img="/img/docs/v72/date_formats.png" max-width="800px" caption="Custom date time formats" >}}
+{{< figure src="/static/img/docs/v72/date_formats.png" max-width="800px" caption="Custom date time formats" >}}
 
 Date formats are set for a Grafana instance by adjusting [server-wide settings]({{< relref "../administration/configuration.md#date_formats" >}}) in the Grafana configuration file. We hope to add org- and user-level settings in the future.
 
@@ -67,9 +63,9 @@ After lots of testing and user feedback, we removed the beta label from the conf
 
 ### Added table column filters
 
-You can now dynamically apply value filters to any table column. This option is can be enabled for all columns or one specific column using an override rule.
+You can now dynamically apply value filters to any table column. This option can be enabled for all columns or one specific column using an override rule.
 
-{{< docs-imagebox img="/img/docs/v72/table_column_filters.png" max-width="800px" caption="Table column filters" >}}
+{{< figure src="/static/img/docs/v72/table_column_filters.png" max-width="800px" caption="Table column filters" >}}
 
 [Filter table columns]({{< relref "../panels/visualizations/table/filter-table-columns.md" >}}) has been added as a result of this feature.
 
@@ -87,13 +83,13 @@ Grafana 7.2 includes the following transformation enhancements:
 - The [Labels to fields]({{< relref "../panels/transformations/types-options.md#labels-to-fields">}}) transformation now allows you to pick one label and use that as the name of the value field.
 - You can drag transformations to reorder them. Remember that transformations are processed in the order they are listed in the UI, so think before you move something!
 
-{{< docs-imagebox img="/img/docs/v72/transformations.gif" max-width="800px" caption="Group by and reordering of transformations" >}}
+{{< figure src="/static/img/docs/v72/transformations.gif" max-width="800px" caption="Group by and reordering of transformations" >}}
 
 ## Drag to reorder queries
 
 The up and down arrows, which were previously the only way to change query order, have been removed. Instead, there is now a grab icon that allows you to drag and drop queries in a list to change their order.
 
-{{< docs-imagebox img="/img/docs/v72/drag-queries.gif" max-width="800px" caption="Drag to reorder queries" >}}
+{{< figure src="/static/img/docs/v72/drag-queries.gif" max-width="800px" caption="Drag to reorder queries" >}}
 
 The [Queries]({{< relref "../panels/queries.md" >}}) topic has been updated as a result of this change.
 
@@ -109,9 +105,9 @@ You can now use the new variable `$__rate_interval` in Prometheus for rate funct
 
 With this awesome contribution from one of our community members, you can now toggle parsed fields in Explore if your logs are structured in `json` or `logfmt`.
 
-{{< docs-imagebox img="/img/docs/v72/explore-toggle-parsed-fields.gif" max-width="800px" caption="Toggling parsed fields in Explore" >}}
+{{< figure src="/static/img/docs/v72/explore-toggle-parsed-fields.gif" max-width="800px" caption="Toggling parsed fields in Explore" >}}
 
-The [Toggle parsed fields]({{< relref "../explore/index.md#toggle-parsed-fields" >}}) section has been added to [Explore]({{< relref "../explore/index.md" >}}) as a result of this feature.
+The [Toggle parsed fields]({{< relref "../explore/index.md#toggle-detected-fields" >}}) section has been added to [Explore]({{< relref "../explore/index.md" >}}) as a result of this feature.
 
 ## Sensitive alert channel settings are now encrypted
 
@@ -129,7 +125,7 @@ A new layout option is available when rendering reports: the grid layout. With t
 
 The grid layout is also available for the [Export dashboard as PDF]({{< relref "../enterprise/export-pdf.md" >}}) feature.
 
-{{< docs-imagebox img="/img/docs/enterprise/reports_grid_landscape_preview.png" max-width="500px" class="docs-image--no-shadow" >}}
+{{< figure src="/static/img/docs/enterprise/reports_grid_landscape_preview.png" max-width="500px" class="docs-image--no-shadow" >}}
 
 ### Report time range
 
@@ -141,7 +137,7 @@ For more information, refer to [Reports time range]({{< relref "../enterprise/re
 
 You can now configure organization-wide report settings, such as report branding, in the Settings tab on the Reporting page. Settings are applied to all the reports of your current organization.
 
-{{< docs-imagebox img="/img/docs/enterprise/reports_settings.png" max-width="500px" class="docs-image--no-shadow" caption="Reports settings" >}}
+{{< figure src="/static/img/docs/enterprise/reports_settings.png" max-width="500px" class="docs-image--no-shadow" caption="Reports settings" >}}
 
 For more information, refer to [Reports settings]({{< relref "../enterprise/reporting.md#reports-settings" >}}).
 
@@ -159,7 +155,7 @@ Check out [CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELO
 
 In collaboration with Microsoft, we have improved the usability of our ADX datasource plugin by adding a visual query builder. The goal is to make it easier for users, regardless of their previous knowledge of writing KQL (Kusto Query Language) queries, to query and visualize their data.
 
-{{< docs-imagebox img="/img/docs/v72/adx-ds.png" max-width="800px" caption="ADX visual query builder" >}}
+{{< figure src="/static/img/docs/v72/adx-ds.png" max-width="800px" caption="ADX visual query builder" >}}
 
 ### X-Ray data source plugin
 

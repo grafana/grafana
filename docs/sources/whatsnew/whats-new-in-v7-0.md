@@ -1,14 +1,11 @@
 +++
-title = "What's New in Grafana v7"
+title = "What's New in Grafana v7.0"
 description = "Feature and improvement highlights for Grafana v7"
 keywords = ["grafana", "new", "documentation", "7.0", "release notes"]
-type = "docs"
-aliases = ["/docs/grafana/latest/guides/whats-new-in-v7-0/"]
-[menu.docs]
-name = "Version 7.0"
-identifier = "v7.0"
-parent = "whatsnew"
-weight = -17
+aliases = ["/docs/grafana/v7.3/guides/whats-new-in-v7-0/"]
+weight = -27
+[_build]
+list = false
 +++
 
 # What's new in Grafana v7.0
@@ -55,7 +52,7 @@ You can use the new trace view in Explore either directly to search for a partic
 
 In the future we will add more workflows and integrations so that correlating between metrics, logs and traces is even easier.
 
-{{< docs-imagebox img="/img/docs/v70/tracing_ui.png" max-width="1024px" caption="Tracing UI" >}}
+{{< figure src="/static/img/docs/v70/tracing_ui.png" max-width="1024px" caption="Tracing UI" >}}
 
 ## Transformations
 
@@ -95,7 +92,7 @@ Learn more about this feature in [Field options]({{< relref "../panels/field-opt
 
 ## Inspect panels and export data to CSV
 
-{{< docs-imagebox img="/img/docs/v70/panel_edit_export_raw_data.png" max-width="800px" class="docs-image--right" caption="Panel Edit - Export raw data to CSV" >}}
+{{< figure src="/static/img/docs/v70/panel_edit_export_raw_data.png" max-width="800px" class="docs-image--right" caption="Panel Edit - Export raw data to CSV" >}}
 
 Another new feature of Grafana 7.0 is the panel inspector. Inspect allows you to view the raw data for any Grafana panel as well as export that data to a CSV file. With Panel inspect you will also be able to perform simple raw data transformations like join, view query stats or detailed execution data.
 
@@ -145,7 +142,7 @@ Plugins can be monitored with the new metrics and health check capabilities. The
 
 With this release, we are deprecating the unofficial first version of backend plugins which will be removed in a future release.
 
-To learn more, start with the [overview]({{< relref "../developers/plugins/backend/_index.md" >}}). Next, in this [tutorial](https://grafana.com/tutorials/build-a-data-source-backend-plugin/) you'll learn how to build a backend for a data source plugin and enable it for use with [Grafana Alerting]({{< relref "../alerting/alerts-overview.md" >}}). Make sure to keep an eye out for additional documentation and tutorials that will be published after the Grafana v7.0 release.
+To learn more, start with the [overview]({{< relref "../developers/plugins/backend/_index.md" >}}). Next, in this [tutorial](https://grafana.com/tutorials/build-a-data-source-backend-plugin/) you'll learn how to build a backend for a data source plugin and enable it for use with [Grafana Alerting]({{< relref "../alerting/_index.md" >}}). Make sure to keep an eye out for additional documentation and tutorials that will be published after the Grafana v7.0 release.
 
 ## New tutorials
 
@@ -158,7 +155,7 @@ To help you get started with Grafana, we’ve launched a brand new tutorials pla
 
 ## Rollup indicator for Metrictank queries
 
-{{< docs-imagebox img="/img/docs/v70/metrictank_rollup_metadata.png" max-width="800px" class="docs-image--right" caption="Metrictank rollup metadata" >}}
+{{< figure src="/static/img/docs/v70/metrictank_rollup_metadata.png" max-width="800px" class="docs-image--right" caption="Metrictank rollup metadata" >}}
 
 Depending on the cardinality of the data and the time range MetricTank may return rolled up (aggregated) data. This can be as subtle as potentially only 1 or 2 graphs out of nine being rolled up. The new rollup indicator is visible in the panel title and you can also inspect extensive metadata and stats about the Metrictank query result and its rollups.
 
@@ -207,13 +204,13 @@ This includes problems like:
 - How to identify dashboards that are not being used
 - Who created or last viewed this dashboard?
 
-{{< docs-imagebox img="/img/docs/v70/dashboard_insights_users.png" max-width="1024px" caption="Dashboard Insights Users" >}}
+{{< figure src="/static/img/docs/v70/dashboard_insights_users.png" max-width="1024px" caption="Dashboard Insights Users" >}}
 
 ### Usage insights and Presence indicator
 
 This release includes a series of features that build on our new usage analytics engine. This “Grafana about Grafana” feature will help our large customers get better insight into the behavior and utilization of their users, dashboards, and data sources. The improved [dashboard search]({{< relref "../enterprise/usage-insights/#improved-dashboard-search" >}}) allows you to sort dashboards by usage and errors. When a user opens a dashboard, they will see a [presence indicator]({{< relref "../enterprise/usage-insights/#presence-indicator" >}}) of who else is viewing the same dashboard. And finally [Dashboard insights]({{< relref "../enterprise/usage-insights/#dashboard-insights" >}}) allows you to view recent dashboard usage.
 
-{{< docs-imagebox img="/img/docs/v70/presence_indicator.jpg" max-width="1024px" caption="Grafana Enterprise - Presence indicator" >}}
+{{< figure src="/static/img/docs/v70/presence_indicator.jpg" max-width="1024px" caption="Grafana Enterprise - Presence indicator" >}}
 
 ### SAML Role and Team Sync
 

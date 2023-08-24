@@ -2,12 +2,7 @@
 title = "Configuration"
 description = "Configuration documentation"
 keywords = ["grafana", "configuration", "documentation"]
-type = "docs"
-aliases = ["/docs/grafana/latest/installation/configuration/"]
-[menu.docs]
-name = "Configuration"
-identifier = "config"
-parent = "admin"
+aliases = ["/docs/grafana/v7.3/installation/configuration/"]
 weight = 300
 +++
 
@@ -16,6 +11,8 @@ weight = 300
 Grafana has a number of configuration options that you can specify in a `.ini` configuration file or specified using environment variables.
 
 > **Note:** You must restart Grafana for any configuration changes to take effect.
+
+To see all settings currently applied to the Grafana server, refer to [View server settings]({{< relref "view-server-settings.md" >}}).
 
 ## Config file locations
 
@@ -89,9 +86,7 @@ export GF_PLUGIN_GRAFANA_IMAGE_RENDERER_RENDERING_IGNORE_HTTPS_ERRORS=true
 
 ## Variable expansion
 
-> Only available in Grafana 7.1+.
-
-> For any changes to `conf/grafana.ini` (or corresponding environment variables) to take effect, you must restart Grafana.
+> **Note:** Only available in Grafana 7.1+.
 
 If any of your options contains the expression `$__<provider>{<argument>}`
 or `${<environment variable>}`, then they will be processed by Grafana's
@@ -163,7 +158,7 @@ How long temporary images in `data` directory should be kept. Defaults to: `24h`
 
 Path to where Grafana stores logs. This path is usually specified via command line in the init.d script or the systemd service file. You can override it in the configuration file or in the default environment variable file. However, please note that by overriding this the default log path will be used temporarily until Grafana has fully initialized/started.
 
-Override log path using the command line argument `cfg:default.paths.log`:
+Override log path using the command line argument `cfg:default.paths.logs`:
 
 ```bash
 ./grafana-server --config /custom/config.ini --homepath /custom/homepath cfg:default.paths.logs=/custom/path
@@ -615,8 +610,7 @@ If you manage users externally you can replace the user invite button for organi
 
 ### viewers_can_edit
 
-Viewers can edit/inspect dashboard settings in the browser, but not save the dashboard.
-Default is `false`.
+Viewers can access and use [Explore]({{< relref "../explore/_index.md" >}}) and perform temporary edits on panels in dashboards they have access to. They cannot save their changes. Default is `false`.
 
 ### editors_can_admin
 
@@ -887,6 +881,8 @@ Enable daily rotation of files, valid options are `false` or `true`. Default is 
 
 Maximum number of days to keep log files. Default is `7`.
 
+<hr>
+
 ## [log.syslog]
 
 Only applicable when "syslog" used in `[log]` mode.
@@ -910,6 +906,36 @@ Syslog facility. Valid options are user, daemon or local0 through local7. Defaul
 ### tag
 
 Syslog tag. By default, the process's `argv[0]` is used.
+
+<hr>
+
+## [log.frontend]
+
+**Note:** This feature is available in Grafana 7.4+.
+
+### enabled
+
+Sentry javascript agent is initialized. Default is `false`.
+
+### sentry_dsn
+
+Sentry DSN if you want to send events to Sentry
+
+### custom_endpoint
+
+Custom HTTP endpoint to send events captured by the Sentry agent to. Default, `/log`, will log the events to stdout.
+
+### sample_rate
+
+Rate of events to be reported between `0` (none) and `1` (all, default), float.
+
+### log_endpoint_requests_per_second_limit
+
+Requests per second limit enforced per an extended period, for Grafana backend log ingestion endpoint, `/log`. Default is `3`.
+
+### log_endpoint_burst_limit
+
+Maximum requests accepted per short interval of time for Grafana backend log ingestion endpoint, `/log`. Default is `15`.
 
 <hr>
 
@@ -965,7 +991,7 @@ Sets a global limit on number of users that can be logged in at one time. Defaul
 
 ## [alerting]
 
-For more information about the Alerting feature in Grafana, refer to [Alerts overview]({{< relref "../alerting/alerts-overview.md" >}}).
+For more information about the Alerting feature in Grafana, refer to [Alerts overview]({{< relref "../alerting/_index.md" >}}).
 
 ### enabled
 

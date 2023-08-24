@@ -1,9 +1,7 @@
 +++
 title = "Set up Grafana for high availability"
-type = "docs"
 keywords = ["grafana", "tutorials", "HA", "high availability"]
-aliases = ["/docs/grafana/latest/tutorials/ha_setup/"]
-[menu.docs]
+aliases = ["/docs/grafana/v7.3/tutorials/ha_setup/"]
 weight = 1200
 +++
 
@@ -13,7 +11,7 @@ Setting up Grafana for high availability is fairly simple. You just need a share
 and other persistent data. So the default embedded SQLite database will not work, you will have to switch to MySQL or Postgres.
 
 <div class="text-center">
-  <img src="/img/docs/tutorials/grafana-high-availability.png"  max-width= "800px" class="center" />
+  <img src="/static/img/docs/tutorials/grafana-high-availability.png"  max-width= "800px" class="center" />
 </div>
 
 ## Configure multiple servers to use the same database

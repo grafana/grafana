@@ -2,11 +2,7 @@
 title = "MySQL"
 description = "Guide for using MySQL in Grafana"
 keywords = ["grafana", "mysql", "guide"]
-type = "docs"
-aliases = ["/docs/grafana/latest/features/datasources/mysql/"]
-[menu.docs]
-name = "MySQL"
-parent = "datasources"
+aliases = ["/docs/grafana/v7.3/features/datasources/mysql/"]
 weight = 1000
 +++
 
@@ -25,17 +21,17 @@ Grafana ships with a built-in MySQL data source plugin that allows you to query 
 
 ### Data source options
 
-Name | Description
------------- | -------------
-*Name* | The data source name. This is how you refer to the data source in panels and queries.
-*Default* | Default data source means that it will be pre-selected for new panels.
-*Host* | The IP address/hostname and optional port of your MySQL instance.
-*Database* | Name of your MySQL database.
-*User* | Database user's login/username
-*Password* | Database user's password
-*Max open* | The maximum number of open connections to the database, default `unlimited` (Grafana v5.4+).
-*Max idle* | The maximum number of connections in the idle connection pool, default `2` (Grafana v5.4+).
-*Max lifetime* | The maximum amount of time in seconds a connection may be reused, default `14400`/4 hours. This should always be lower than configured [wait_timeout](https://dev.mysql.com/doc/refman/8.0/en/server-system-variables.html#sysvar_wait_timeout) in MySQL (Grafana v5.4+).
+Name           | Description
+-------------- | -------------
+`Name`         | The data source name. This is how you refer to the data source in panels and queries.
+`Default`      | Default data source means that it will be pre-selected for new panels.
+`Host`         | The IP address/hostname and optional port of your MySQL instance.
+`Database`     | Name of your MySQL database.
+`User`         | Database user's login/username
+`Password`     | Database user's password
+`Max open`     | The maximum number of open connections to the database, default `unlimited` (Grafana v5.4+).
+`Max idle`     | The maximum number of connections in the idle connection pool, default `2` (Grafana v5.4+).
+`Max lifetime` | The maximum amount of time in seconds a connection may be reused, default `14400`/4 hours. This should always be lower than configured [wait_timeout](https://dev.mysql.com/doc/refman/8.0/en/server-system-variables.html#sysvar_wait_timeout) in MySQL (Grafana v5.4+).
 
 ### Min time interval
 
@@ -44,16 +40,16 @@ Recommended to be set to write frequency, for example `1m` if your data is writt
 This option can also be overridden/configured in a dashboard panel under data source options. It's important to note that this value **needs** to be formatted as a
 number followed by a valid time identifier, e.g. `1m` (1 minute) or `30s` (30 seconds). The following time identifiers are supported:
 
-Identifier | Description
------------- | -------------
-`y`   | year
-`M`   | month
-`w`   | week
-`d`   | day
-`h`   | hour
-`m`   | minute
-`s`   | second
-`ms`  | millisecond
+| Identifier | Description |
+| ---------- | ----------- |
+| `y`        | year        |
+| `M`        | month       |
+| `w`        | week        |
+| `d`        | day         |
+| `h`        | hour        |
+| `m`        | minute      |
+| `s`        | second      |
+| `ms`       | millisecond |
 
 ### Database User Permissions (Important!)
 
@@ -75,7 +71,7 @@ You can use wildcards (`*`)  in place of database or table if you want to grant 
 
 > Only available in Grafana v5.4+.
 
-{{< docs-imagebox img="/img/docs/v54/mysql_query_still.png" class="docs-image--no-shadow" animated-gif="/img/docs/v54/mysql_query.gif" >}}
+{{< figure src="/static/img/docs/v54/mysql_query_still.png" class="docs-image--no-shadow" animated-gif="/static/img/docs/v54/mysql_query.gif" >}}
 
 You find the MySQL query editor in the metrics tab in a panel's edit mode. You enter edit mode by clicking the
 panel title, then edit.
@@ -127,26 +123,26 @@ You can switch to the raw query editor mode by clicking the hamburger icon and s
 
 To simplify syntax and to allow for dynamic parts, like date range filters, the query can contain macros.
 
-Macro example | Description
------------- | -------------
-*`$__time(dateColumn)`* | Will be replaced by an expression to convert to a UNIX timestamp and rename the column to `time_sec`. For example, *UNIX_TIMESTAMP(dateColumn) as time_sec*
-*`$__timeEpoch(dateColumn)`* | Will be replaced by an expression to convert to a UNIX timestamp and rename the column to `time_sec`. For example, *UNIX_TIMESTAMP(dateColumn) as time_sec*
-*`$__timeFilter(dateColumn)`* | Will be replaced by a time range filter using the specified column name. For example, *dateColumn BETWEEN FROM_UNIXTIME(1494410783) AND FROM_UNIXTIME(1494410983)*
-*`$__timeFrom()`* | Will be replaced by the start of the currently active time selection. For example, *FROM_UNIXTIME(1494410783)*
-*`$__timeTo()`* | Will be replaced by the end of the currently active time selection. For example, *FROM_UNIXTIME(1494410983)*
-*`$__timeGroup(dateColumn,'5m')`* | Will be replaced by an expression usable in GROUP BY clause. For example, *cast(cast(UNIX_TIMESTAMP(dateColumn)/(300) as signed)*300 as signed),*
-*`$__timeGroup(dateColumn,'5m', 0)`* | Same as above but with a fill parameter so missing points in that series will be added by grafana and 0 will be used as value.
-*`$__timeGroup(dateColumn,'5m', NULL)`* | Same as above but NULL will be used as value for missing points.
-*`$__timeGroup(dateColumn,'5m', previous)`* | Same as above but the previous value in that series will be used as fill value if no value has been seen yet NULL will be used (only available in Grafana 5.3+).
-*`$__timeGroupAlias(dateColumn,'5m')`* | Will be replaced identical to $__timeGroup but with an added column alias (only available in Grafana 5.3+).
-*`$__unixEpochFilter(dateColumn)`* | Will be replaced by a time range filter using the specified column name with times represented as Unix timestamp. For example, *dateColumn > 1494410783 AND dateColumn < 1494497183*
-*`$__unixEpochFrom()`* | Will be replaced by the start of the currently active time selection as Unix timestamp. For example, *1494410783*
-*`$__unixEpochTo()`* | Will be replaced by the end of the currently active time selection as Unix timestamp. For example, *1494497183*
-*`$__unixEpochNanoFilter(dateColumn)`* | Will be replaced by a time range filter using the specified column name with times represented as nanosecond timestamp. For example, *dateColumn > 1494410783152415214 AND dateColumn < 1494497183142514872*
-*`$__unixEpochNanoFrom()`* | Will be replaced by the start of the currently active time selection as nanosecond timestamp. For example, *1494410783152415214*
-*`$__unixEpochNanoTo()`* | Will be replaced by the end of the currently active time selection as nanosecond timestamp. For example, *1494497183142514872*
-*`$__unixEpochGroup(dateColumn,'5m', [fillmode])`* | Same as $__timeGroup but for times stored as Unix timestamp (only available in Grafana 5.3+).
-*`$__unixEpochGroupAlias(dateColumn,'5m', [fillmode])`* | Same as above but also adds a column alias (only available in Grafana 5.3+).
+Macro example                                          | Description
+------------------------------------------------------ | -------------
+`$__time(dateColumn)`                                  | Will be replaced by an expression to convert to a UNIX timestamp and rename the column to `time_sec`. For example, *UNIX_TIMESTAMP(dateColumn) as time_sec*
+`$__timeEpoch(dateColumn)`                             | Will be replaced by an expression to convert to a UNIX timestamp and rename the column to `time_sec`. For example, *UNIX_TIMESTAMP(dateColumn) as time_sec*
+`$__timeFilter(dateColumn)`                            | Will be replaced by a time range filter using the specified column name. For example, *dateColumn BETWEEN FROM_UNIXTIME(1494410783) AND FROM_UNIXTIME(1494410983)*
+`$__timeFrom()`                                        | Will be replaced by the start of the currently active time selection. For example, *FROM_UNIXTIME(1494410783)*
+`$__timeTo()`                                          | Will be replaced by the end of the currently active time selection. For example, *FROM_UNIXTIME(1494410983)*
+`$__timeGroup(dateColumn,'5m')`                        | Will be replaced by an expression usable in GROUP BY clause. For example, *cast(cast(UNIX_TIMESTAMP(dateColumn)/(300) as signed)*300 as signed),*
+`$__timeGroup(dateColumn,'5m', 0)`                     | Same as above but with a fill parameter so missing points in that series will be added by grafana and 0 will be used as value.
+`$__timeGroup(dateColumn,'5m', NULL)`                  | Same as above but NULL will be used as value for missing points.
+`$__timeGroup(dateColumn,'5m', previous)`              | Same as above but the previous value in that series will be used as fill value if no value has been seen yet NULL will be used (only available in Grafana 5.3+).
+`$__timeGroupAlias(dateColumn,'5m')`                   | Will be replaced identical to $__timeGroup but with an added column alias (only available in Grafana 5.3+).
+`$__unixEpochFilter(dateColumn)`                       | Will be replaced by a time range filter using the specified column name with times represented as Unix timestamp. For example, *dateColumn > 1494410783 AND dateColumn < 1494497183*
+`$__unixEpochFrom()`                                   | Will be replaced by the start of the currently active time selection as Unix timestamp. For example, *1494410783*
+`$__unixEpochTo()`                                     | Will be replaced by the end of the currently active time selection as Unix timestamp. For example, *1494497183*
+`$__unixEpochNanoFilter(dateColumn)`                   | Will be replaced by a time range filter using the specified column name with times represented as nanosecond timestamp. For example, *dateColumn > 1494410783152415214 AND dateColumn < 1494497183142514872*
+`$__unixEpochNanoFrom()`                               | Will be replaced by the start of the currently active time selection as nanosecond timestamp. For example, *1494410783152415214*
+`$__unixEpochNanoTo()`                                 | Will be replaced by the end of the currently active time selection as nanosecond timestamp. For example, *1494497183142514872*
+`$__unixEpochGroup(dateColumn,'5m', [fillmode])`       | Same as $__timeGroup but for times stored as Unix timestamp (only available in Grafana 5.3+).
+`$__unixEpochGroupAlias(dateColumn,'5m', [fillmode])`  | Same as above but also adds a column alias (only available in Grafana 5.3+).
 
 We plan to add many more macros. If you have suggestions for what macros you would like to see, please [open an issue](https://github.com/grafana/grafana) in our GitHub repo.
 
@@ -158,7 +154,7 @@ If the `Format as` query option is set to `Table` then you can basically do any 
 
 Query editor with example query:
 
-{{< docs-imagebox img="/img/docs/v45/mysql_table_query.png" >}}
+{{< figure src="/static/img/docs/v45/mysql_table_query.png" >}}
 
 The query:
 
@@ -176,7 +172,7 @@ You can control the name of the Table panel columns by using regular `as ` SQL c
 
 The resulting table panel:
 
-![](/img/docs/v43/mysql_table.png)
+![](/static/img/docs/v43/mysql_table.png)
 
 ## Time series queries
 
@@ -377,12 +373,12 @@ WHERE
   $__timeFilter(native_date_time)
 ```
 
-Name | Description
------------- | -------------
-time | The name of the date/time field. Could be a column with a native SQL date/time data type or epoch value.
-timeend | Optional name of the end date/time field. Could be a column with a native SQL date/time data type or epoch value. (Grafana v6.6+)
-text | Event description field.
-tags | Optional field name to use for event tags as a comma separated string.
+Name        | Description
+----------- | -------------
+`time`      | The name of the date/time field. Could be a column with a native SQL date/time data type or epoch value.
+`timeend`   | Optional name of the end date/time field. Could be a column with a native SQL date/time data type or epoch value. (Grafana v6.6+)
+`text`      | Event description field.
+`tags`      | Optional field name to use for event tags as a comma separated string.
 
 ## Alerting
 

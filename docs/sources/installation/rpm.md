@@ -2,12 +2,7 @@
 title = "Install on RPM-based Linux"
 description = "Grafana Installation guide for RPM-based Linux, such as Centos, Fedora, OpenSuse, and Red Hat."
 keywords = ["grafana", "installation", "documentation", "centos", "fedora", "opensuse", "redhat"]
-aliases = ["/docs/grafana/latest/installation/installation/rpm"]
-type = "docs"
-[menu.docs]
-name = "Install on RPM-based Linux"
-identifier = "rpm"
-parent = "installation"
+aliases = ["/docs/grafana/v7.3/installation/installation/rpm"]
 weight = 300
 +++
 
@@ -84,7 +79,7 @@ sudo yum install grafana-enterprise
 
 If you install manually with YUM, then you will need to manually update Grafana for each new version. To enable automatic updates for your Grafana installation please use the instructions below to install via our YUM repository.
 
-1. On the [Grafana download page](https://grafana.com/grafana/download), select the Grafana version you want to install. 
+1. On the [Grafana download page](https://grafana.com/grafana/download), select the Grafana version you want to install.
    - The most recent Grafana version is selected by default.
    - The **Version** field displays only finished releases. If you want to install a beta version, click **Nightly Builds** and then select a version.
 1. Select an **Edition**.
@@ -109,7 +104,7 @@ If you install with RPM, then you will need to manually update Grafana for each 
 
 **Note:** The .rpm files are signed, you can verify the signature with this [public GPG key](https://packages.grafana.com/gpg.key).
 
-1. On the [Grafana download page](https://grafana.com/grafana/download), select the Grafana version you want to install. 
+1. On the [Grafana download page](https://grafana.com/grafana/download), select the Grafana version you want to install.
    - The most recent Grafana version is selected by default.
    - The **Version** field displays only finished releases. If you want to install a beta version, click **Nightly Builds** and then select a version.
 1. Select an **Edition**.
@@ -185,7 +180,7 @@ sudo /sbin/chkconfig --add grafana-server
 
 The `grafana-server` binary needs the working directory to be the root install directory where the binary and the `public` folder are located.
 
-Start Grafana by running: 
+Start Grafana by running:
 ```bash
 ./bin/grafana-server web
 ```

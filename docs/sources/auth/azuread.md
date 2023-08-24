@@ -2,11 +2,6 @@
 title = "Azure AD OAuth2 authentication"
 description = "Grafana Azure AD OAuth Guide "
 keywords = ["grafana", "configuration", "documentation", "oauth"]
-type = "docs"
-[menu.docs]
-name = "Azure AD"
-identifier = "azuread_oauth2"
-parent = "authentication"
 weight = 700
 +++
 
@@ -24,7 +19,7 @@ To enable the Azure AD OAuth2 you must register your application with Azure AD.
 
 1. Under **Manage** in the side menu, click **App Registrations** and then **New Registration**. Provide a fitting name.
 
-1. Under **Redirect URI**, select **Web** as the app type. 
+1. Under **Redirect URI**, select **Web** as the app type.
 
 1. Add the redirect URL `https://<grafana domain>/login/azuread`, then click **Register**.
 
@@ -88,7 +83,7 @@ To enable the Azure AD OAuth2 you must register your application with Azure AD.
 
 1. Go to **Azure Active Directory** and then to **Enterprise Applications**. Search for your application and click on it.
 
-1. Click on **Users and Groups** and add Users/Groups to the Grafana roles by using **Add User**. 
+1. Click on **Users and Groups** and add Users/Groups to the Grafana roles by using **Add User**.
 
 ## Enable Azure AD OAuth in Grafana
 
@@ -123,7 +118,7 @@ allowed_groups = 8bab1c86-8fba-33e5-2089-1d1c80ec267d
 You'll need to ensure that you've [enabled group attributes](https://docs.microsoft.com/en-us/azure/active-directory/hybrid/how-to-connect-fed-group-claims#configure-the-azure-ad-application-registration-for-group-attributes) in your Azure AD Application Registration manifest file (Azure Portal -> Azure Active Directory -> Application Registrations -> Select Application -> Manifest)
 
 ```json
-"groupMembershipClaims": "ApplicationGroup"
+"groupMembershipClaims": "ApplicationGroup, SecurityGroup"
 ```
 
 The `allowed_domains` option limits access to the users belonging to the specific domains. Domains should be separated by space or comma.

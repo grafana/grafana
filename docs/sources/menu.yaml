@@ -1,10 +1,10 @@
 - name: Getting started
   link: /getting-started/
   children:
-    - name: What is Grafana?
-      link: /getting-started/what-is-grafana/
-    - name: Getting started
+    - name: With Grafana
       link: /getting-started/getting-started/
+    - name: With Grafana and Prometheus
+      link: /getting-started/getting-started-prometheus/
     - name: Intro to time series
       link: /getting-started/timeseries/
     - name: Time series dimensions
@@ -56,6 +56,8 @@
       link: /administration/preferences/
     - name: Configuration
       link: /administration/configuration/
+    - name: View server settings
+      link: /administration/view-server-settings/
     - name: Configure Docker image
       link: /administration/configure-docker/
     - name: Security
@@ -106,6 +108,8 @@
       link: /administration/cli/
     - name: Internal metrics
       link: /administration/metrics/
+    - name: View server stats
+      link: /administration/view-server-stats/
     - name: Jaeger instrumentation
       link: /administration/jaeger-instrumentation/
     - name: Set up Grafana for high availability
@@ -399,6 +403,10 @@
   children:
     - name: Overview
       link: /enterprise/
+    - name: Activate license
+      link: /enterprise/activate-license/
+    - name: Auditing
+      link: /enterprise/auditing/
     - name: Configuration
       link: /enterprise/enterprise-configuration/
     - name: Data source permissions
@@ -428,8 +436,8 @@
       link: /plugins/
     - name: Install plugins
       link: /plugins/installation/
-    - name: Plugin signature verification
-      link: /plugins/plugin-signature-verification/
+    - name: Plugin signatures
+      link: /plugins/plugin-signatures/
 - name: HTTP APIs
   link: /http_api/
   children:
@@ -527,8 +535,8 @@
               name: Plugin protocol
             - link: /developers/plugins/backend/grafana-plugin-sdk-for-go/
               name: Grafana plugin SDK for Go
-        - name: Share a plugin
-          link: /developers/plugins/share-a-plugin/
+        - name: Package a plugin
+          link: /developers/plugins/package-a-plugin/
         - name: Error handling
           link: /developers/plugins/error-handling/
         - name: Plugin migration guide

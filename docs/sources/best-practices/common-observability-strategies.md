@@ -2,11 +2,7 @@
 title = "Common observability strategies"
 description = "Common observability strategies"
 keywords = ["grafana", "intro", "guide", "concepts", "methods"]
-aliases = ["/docs/grafana/latest/getting-started/strategies/"]
-type = "docs"
-[menu.docs]
-identifier = "common-observability-strategies"
-parent = "best-practices"
+aliases = ["/docs/grafana/v7.3/getting-started/strategies/"]
 weight = 300
 +++
 
@@ -19,7 +15,7 @@ A logical strategy allows you to make uniform dashboards and scale your observab
 ## Guidelines for usage
 
 - The USE method tells you how happy your machines are, the RED method tells you how happy your users are.
-- USE reports on causes of issues. 
+- USE reports on causes of issues.
 - RED reports on user experience and is more likely to report symptoms of problems.
 - The best practice of alerting is to alert on symptoms rather than causes, so alerting should be done on RED dashboards.
 

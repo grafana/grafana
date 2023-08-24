@@ -2,11 +2,7 @@
 title = "SAML Authentication"
 description = "Grafana SAML Authentication"
 keywords = ["grafana", "saml", "documentation", "saml-auth"]
-aliases = ["/docs/grafana/latest/auth/saml/"]
-type = "docs"
-[menu.docs]
-name = "SAML"
-parent = "authentication"
+aliases = ["/docs/grafana/v7.3/auth/saml/"]
 weight = 500
 +++
 
@@ -30,10 +26,10 @@ Grafana supports the following SAML 2.0 bindings:
   - `HTTP-POST` binding
 
 In terms of security:
-- Grafana supports signed and encrypted assertions. 
+- Grafana supports signed and encrypted assertions.
 - Grafana does not support signed or encrypted requests.
 
-In terms of initiation: 
+In terms of initiation:
 - Grafana supports SP-initiated requests.
 - Grafana does not support IdP-initiated request.
 
@@ -67,7 +63,7 @@ The table below describes all SAML configuration options. Continue reading below
 
 ### Enable SAML authentication
 
-To use the SAML integration, in the `auth.saml` section of in the Grafana custom configuration file, set `enabled` to `true`. 
+To use the SAML integration, in the `auth.saml` section of in the Grafana custom configuration file, set `enabled` to `true`.
 
 Refer to [Configuration]({{< relref "../administration/configuration.md" >}}) for more information about configuring Grafana.
 
@@ -75,8 +71,8 @@ Refer to [Configuration]({{< relref "../administration/configuration.md" >}}) fo
 
 The SAML SSO standard uses asymmetric encryption to exchange information between the SP (Grafana) and the IdP. To perform such encryption, you need a public part and a private part. In this case, the X.509 certificate provides the public part, while the private key provides the private part.
 
-Grafana supports two ways of specifying both the `certificate` and `private_key`. 
-- Without a suffix (`certificate` or `private_key`), the configuration assumes you've supplied the base64-encoded file contents. 
+Grafana supports two ways of specifying both the `certificate` and `private_key`.
+- Without a suffix (`certificate` or `private_key`), the configuration assumes you've supplied the base64-encoded file contents.
 - With the `_path` suffix (`certificate_path` or `private_key_path`), then Grafana treats the value entered as a file path and attempts to read the file from the file system.
 
 You can only use one form of each configuration option. Using multiple forms, such as both `certificate` and `certificate_path`, results in an error.
@@ -91,7 +87,7 @@ The SAML standard recommends using a digital signature for some types of message
 
 You also need to define the public part of the IdP for message verification. The SAML IdP metadata XML defines where and how Grafana exchanges user information.
 
-Grafana supports three ways of specifying the IdP metadata. 
+Grafana supports three ways of specifying the IdP metadata.
 - Without a suffix `idp_metadata`, Grafana assumes base64-encoded XML file contents.
 - With the `_path` suffix, Grafana assumes a file path and attempts to read the file from the file system.
 - With the `_url` suffix, Grafana assumes a URL and attempts to load the metadata from the given location.
@@ -139,7 +135,6 @@ For Grafana to map the user information, it looks at the individual attributes w
 
 Grafana provides configuration options that let you modify which keys to look at for these values. The data we need to create the user in Grafana is Name, Login handle, and email.
 
-An example is `assertion_attribute_name = "givenName"` where Grafana looks within the assertion for an attribute with a friendly name or name of `givenName`. Both, the friendly name (e.g. `givenName`) or the name (e.g. `urn:oid:2.5.4.42`) can be used interchangeably as the value for the configuration option.
 
 ### Configure team sync
 
@@ -180,12 +175,12 @@ role_values_grafana_admin = superadmin
 
 > Only available in Grafana v7.0+
 
-Organization mapping allows you to assign users to particular organization in Grafana depending on attribute value obtained from identity provider. 
+Organization mapping allows you to assign users to particular organization in Grafana depending on attribute value obtained from identity provider.
 
 1. In configuration file, set [`assertion_attribute_org`]({{< relref "./enterprise-configuration.md#assertion-attribute-org" >}}) to the attribute name you store organization info in.
 1. Set [`org_mapping`]({{< relref "./enterprise-configuration.md#org-mapping" >}}) option to the comma-separated list of `Organization:OrgId` pairs to map organization from IdP to Grafana organization specified by id.
 
-For example, use following config to assign users from `Engineering` organization to the Grafana organization with id `2` and users from `Sales` - to the org with id `3`, based on `Org` assertion attribute value:
+For example, use following configuration to assign users from `Engineering` organization to the Grafana organization with id `2` and users from `Sales` - to the org with id `3`, based on `Org` assertion attribute value:
 
 ```bash
 [auth.saml]
@@ -250,13 +245,13 @@ To configure SAML integration with Okta, create integration inside the Okta orga
     - In the **Audience URI (SP Entity ID)** field, use the `/saml/metadata` endpoint URL, for example, `https://grafana.example.com/saml/metadata`.
     - Leave the default values for **Name ID format** and **Application username**.
     - In the **ATTRIBUTE STATEMENTS (OPTIONAL)** section, enter the SAML attributes to be shared with Grafana, for example:
-      
+
       | Attribute name (in Grafana) | Value (in Okta profile)                |
       | --------------------------- | -------------------------------------- |
       | Login                       | `user.login`                           |
       | Email                       | `user.email`                           |
       | DisplayName                 | `user.firstName + " " + user.lastName` |
-    
+
     - In the **GROUP ATTRIBUTE STATEMENTS (OPTIONAL)** section, enter a group attribute name (for example, `Group`) and set filter to `Matches regex .*` to return all user groups.
 1. Click **Next**.
 1. On the final Feedback tab, fill out the form and then click **Finish**.
@@ -269,7 +264,7 @@ Once the application is created, configure Grafana to use it for SAML authentica
 1. Configure the [certificate and private key]({{< relref "#certificate-and-private-key" >}}).
 1. On the Okta application page where you have been redirected after application created, navigate to the **Sign On** tab and find **Identity Provider metadata** link in the **Settings** section.
 1. Set the [`idp_metadata_url`]({{< relref "./enterprise-configuration.md#idp-metadata-url" >}}) to the URL obtained from the previous step. The URL should look like `https://<your-org-id>.okta.com/app/<application-id>/sso/saml/metadata`.
-1. Set the following options to the attribute names configured at the **step 10** of the SAML integration setup. You can find this attributes on the **General** tab of the application page (**ATTRIBUTE STATEMENTS** and **GROUP ATTRIBUTE STATEMENTS** in the **SAML Settings** section). 
+1. Set the following options to the attribute names configured at the **step 10** of the SAML integration setup. You can find this attributes on the **General** tab of the application page (**ATTRIBUTE STATEMENTS** and **GROUP ATTRIBUTE STATEMENTS** in the **SAML Settings** section).
     - [`assertion_attribute_login`]({{< relref "./enterprise-configuration.md#assertion-attribute-login" >}})
     - [`assertion_attribute_email`]({{< relref "./enterprise-configuration.md#assertion-attribute-email" >}})
     - [`assertion_attribute_name`]({{< relref "./enterprise-configuration.md#assertion-attribute-name" >}})

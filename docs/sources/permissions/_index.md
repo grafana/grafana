@@ -2,11 +2,7 @@
 title = "Permissions"
 description = "Permissions"
 keywords = ["grafana", "configuration", "documentation", "admin", "users", "datasources", "permissions"]
-type = "docs"
-aliases = ["/docs/grafana/latest/permissions/overview/"]
-[menu.docs]
-name = "Permissions"
-identifier = "permissions"
+aliases = ["/docs/grafana/v7.3/permissions/overview/"]
 weight = 50
 +++
 
@@ -20,11 +16,12 @@ There are three types of permissions:
 - Permissions granted to a specific folder or dashboard
 
 You can be granted permissions based on:
-- Grafana server admin status
-- Organization role (Admin, Editor, or Viewer)
-- Folder or dashboard permissions assigned to your team (Admin, Editor, or Viewer)
-- Folder or dashboard permissions assigned to your user account (Admin, Editor, or Viewer)
+- Grafana server admin status.
+- Organization role (Admin, Editor, or Viewer).
+- Folder or dashboard permissions assigned to your team (Admin, Editor, or Viewer).
+- Folder or dashboard permissions assigned to your user account (Admin, Editor, or Viewer).
 - (Grafana Enterprise) Data source permissions. For more information, refer to [Data source permissions]({{< relref "../enterprise/datasource_permissions.md" >}}) in [Grafana Enterprise]({{< relref "../enterprise" >}}).
+- (Grafana Cloud) Grafana Cloud has additional roles. For more information, refer to [Grafana Cloud roles and permissions](/docs/grafana-cloud/cloud-portal/cloud-roles/).
 
 ## Grafana server admin
 

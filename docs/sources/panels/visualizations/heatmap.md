@@ -2,11 +2,7 @@
 title = "Heatmap"
 description = "Heatmap visualization documentation"
 keywords = ["grafana", "heatmap", "panel", "documentation"]
-type = "docs"
-aliases =["/docs/grafana/latest/features/panels/heatmap/"]
-[menu.docs]
-name = "Heatmap"
-parent = "visualizations"
+aliases =["/docs/grafana/v7.3/features/panels/heatmap/"]
 weight = 600
 +++
 
@@ -14,7 +10,7 @@ weight = 600
 
 The Heatmap panel visualization allows you to view histograms over time. For more information about histograms, refer to [Introduction to histograms and heatmaps]({{< relref "../../getting-started/intro-histograms.md" >}}).
 
-![](/img/docs/v43/heatmap_panel_cover.jpg)
+![](/static/img/docs/v43/heatmap_panel_cover.jpg)
 
 ## Axes options
 
