@@ -501,8 +501,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
 
     let correlationsBox = undefined;
     if (isCorrelationsEditorMode && panelsState && panelsState.correlations !== undefined) {
-      const vars = Object.entries(panelsState.correlations.vars);
-      correlationsBox = <CorrelationHelper vars={vars} />;
+      correlationsBox = <CorrelationHelper correlations={panelsState.correlations} />;
     }
 
     return (

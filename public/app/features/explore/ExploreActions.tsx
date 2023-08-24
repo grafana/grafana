@@ -2,7 +2,8 @@ import { useRegisterActions, useKBar, Action, Priority } from 'kbar';
 import { useEffect, useState } from 'react';
 
 import { config } from '@grafana/runtime';
-import { useDispatch, useSelector } from 'app/types';
+import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
+import { ExploreItemState, useDispatch, useSelector } from 'app/types';
 
 import { splitOpen, splitClose, changeCorrelationsEditorMode } from './state/main';
 import { runQueries } from './state/query';
@@ -66,7 +67,14 @@ export const ExploreActions = () => {
         });
       }
     } else {
-      if (config.featureToggles.correlations) {
+      // command palette doesn't know what pane we're in, only show option if not split and no datasource is mixed
+      const hasMixed = Object.entries(panes)
+        .map((pane) => pane[1])
+        .some((pane: ExploreItemState | undefined) => {
+          return pane?.datasourceInstance?.uid === MIXED_DATASOURCE_NAME;
+        });
+
+      if (config.featureToggles.correlations && !hasMixed) {
         actionsArr.push({
           id: 'correlations-editor',
           name: 'Correlations editor',

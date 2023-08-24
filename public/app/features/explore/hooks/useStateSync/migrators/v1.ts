@@ -1,4 +1,4 @@
-import { ExploreUrlState } from '@grafana/data';
+import { ExploreUrlState, URLPanelsState } from '@grafana/data';
 import { generateExploreId, safeParseJson } from 'app/core/utils/explore';
 import { DEFAULT_RANGE } from 'app/features/explore/state/utils';
 
@@ -67,6 +67,10 @@ function applyDefaults(input: unknown): ExploreUrlState {
     return DEFAULT_STATE;
   }
 
+  const panelsState: URLPanelsState | undefined =  (hasKey('panelsState', input) &&
+  !!input.panelsState &&
+  typeof input.panelsState === 'object') ? {...input.panelsState } : undefined;
+
   return {
     ...DEFAULT_STATE,
     // queries
@@ -74,9 +78,7 @@ function applyDefaults(input: unknown): ExploreUrlState {
     // datasource
     ...(hasKey('datasource', input) && typeof input.datasource === 'string' && { datasource: input.datasource }),
     // panelsState
-    ...(hasKey('panelsState', input) &&
-      !!input.panelsState &&
-      typeof input.panelsState === 'object' && { panelsState: input.panelsState }),
+    ...(panelsState !== undefined && { panelsState: {logs: {...panelsState.logs}, trace: {...panelsState.trace}}}),
     // range
     ...(hasKey('range', input) &&
       !!input.range &&

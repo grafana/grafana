@@ -71,6 +71,13 @@ export default function ExplorePage(props: GrafanaRouteComponentProps<{}, Explor
 
   useKeyboardShortcuts();
 
+
+  useEffect(() => {
+    return () => {
+      dispatch(changeCorrelationsEditorMode({ correlationsEditorMode: false }));
+    }
+  }, [dispatch]);
+
   return (
     <div
       className={cx(styles.pageScrollbarWrapper, {

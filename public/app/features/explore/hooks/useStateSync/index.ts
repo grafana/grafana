@@ -370,6 +370,8 @@ const urlDiff = (
 };
 
 export function getUrlStateFromPaneState(pane: ExploreItemState): ExploreUrlState {
+  let panelsState = {...pane.panelsState};
+  panelsState.correlations = undefined;
   return {
     // datasourceInstance should not be undefined anymore here but in case there is some path for it to be undefined
     // lets just fallback instead of crashing.
@@ -377,7 +379,7 @@ export function getUrlStateFromPaneState(pane: ExploreItemState): ExploreUrlStat
     queries: pane.queries.map(clearQueryKeys),
     range: toURLRange(pane.range.raw),
     // don't include panelsState in the url unless a piece of state is actually set
-    panelsState: pruneObject(pane.panelsState),
+    panelsState: pruneObject(panelsState),
   };
 }
 

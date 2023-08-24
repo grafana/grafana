@@ -90,6 +90,9 @@ function useExtensionPointContext(props: Props): PluginExtensionExploreContext {
   const panes = useSelector(selectPanes);
   const { queries, queryResponse, range } = useSelector(getExploreItemSelector(exploreId))!;
 
+  const queryUids = queries.map(query => query?.datasource?.uid).filter(uid => uid !== undefined);
+  const numUniqueIds = [...new Set(queryUids)].length;
+
   return useMemo(() => {
     return {
       exploreId,
@@ -98,9 +101,9 @@ function useExtensionPointContext(props: Props): PluginExtensionExploreContext {
       timeRange: range.raw,
       timeZone: timeZone,
       shouldShowAddCorrelation:
-        config.featureToggles.correlations === true && !isCorrelationsEditorMode && Object.keys(panes)[0] === exploreId,
+        config.featureToggles.correlations === true && !isCorrelationsEditorMode && Object.keys(panes)[0] === exploreId && numUniqueIds === 1,
     };
-  }, [exploreId, isCorrelationsEditorMode, panes, queries, queryResponse, range, timeZone]);
+  }, [exploreId, isCorrelationsEditorMode, panes, queries, queryResponse, range, timeZone, numUniqueIds]);
 }
 
 function useExtensionLinks(context: PluginExtensionExploreContext): PluginExtensionLink[] {

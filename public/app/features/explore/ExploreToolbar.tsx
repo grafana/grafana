@@ -159,7 +159,7 @@ export function ExploreToolbar({ exploreId, topOfViewRef, onChangeTime }: Props)
         leftItems={[
           <DataSourcePicker
             key={`${exploreId}-ds-picker`}
-            mixed
+            mixed={!isCorrelationsEditorMode}
             onChange={onChangeDatasource}
             current={datasourceInstance?.getRef()}
             hideTextValue={showSmallDataSourcePicker}
