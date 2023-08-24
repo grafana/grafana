@@ -3,13 +3,11 @@ package converter
 import (
 	"encoding/json"
 	"fmt"
-	"sort"
 	"strconv"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana-plugin-sdk-go/experimental"
 	jsoniter "github.com/json-iterator/go"
 )
 
@@ -19,9 +17,7 @@ func logf(format string, a ...interface{}) {
 }
 
 type Options struct {
-	MatrixWideSeries bool
-	VectorWideSeries bool
-	Dataplane        bool
+	Dataplane bool
 }
 
 // ReadPrometheusStyleResult will read results from a prometheus or loki server and return data frames
@@ -114,18 +110,8 @@ func readPrometheusData(iter *jsoniter.Iterator, opt Options) backend.DataRespon
 
 		case "result":
 			switch resultType {
-			case "matrix":
-				if opt.MatrixWideSeries {
-					rsp = readMatrixOrVectorWide(iter, resultType, opt)
-				} else {
-					rsp = readMatrixOrVectorMulti(iter, resultType, opt)
-				}
-			case "vector":
-				if opt.VectorWideSeries {
-					rsp = readMatrixOrVectorWide(iter, resultType, opt)
-				} else {
-					rsp = readMatrixOrVectorMulti(iter, resultType, opt)
-				}
+			case "matrix", "vector":
+				rsp = readMatrixOrVectorMulti(iter, resultType, opt)
 			case "streams":
 				rsp = readStream(iter)
 			case "string":
@@ -364,123 +350,6 @@ func readScalar(iter *jsoniter.Iterator) backend.DataResponse {
 	}
 }
 
-func readMatrixOrVectorWide(iter *jsoniter.Iterator, resultType string, opt Options) backend.DataResponse {
-	rowIdx := 0
-	timeMap := map[int64]int{}
-	timeField := data.NewFieldFromFieldType(data.FieldTypeTime, 0)
-	timeField.Name = data.TimeSeriesTimeFieldName
-	frame := data.NewFrame("", timeField)
-
-	frame.Meta = &data.FrameMeta{ // Overwritten if histogram
-		Type:   data.FrameTypeTimeSeriesWide,
-		Custom: resultTypeToCustomMeta(resultType),
-	}
-
-	if opt.Dataplane && resultType == "vector" {
-		frame.Meta.Type = data.FrameTypeNumericWide
-	}
-	if opt.Dataplane {
-		frame.Meta.TypeVersion = data.FrameTypeVersion{0, 1}
-	}
-
-	rsp := backend.DataResponse{
-		Frames: []*data.Frame{},
-	}
-
-	for iter.ReadArray() {
-		valueField := data.NewFieldFromFieldType(data.FieldTypeNullableFloat64, frame.Rows())
-		valueField.Name = data.TimeSeriesValueFieldName
-		valueField.Labels = data.Labels{}
-		frame.Fields = append(frame.Fields, valueField)
-
-		var histogram *histogramInfo
-
-		for l1Field := iter.ReadObject(); l1Field != ""; l1Field = iter.ReadObject() {
-			switch l1Field {
-			case "metric":
-				iter.ReadVal(&valueField.Labels)
-
-			case "value":
-				timeMap, rowIdx = addValuePairToFrame(frame, timeMap, rowIdx, iter)
-
-			// nolint:goconst
-			case "values":
-				for iter.ReadArray() {
-					timeMap, rowIdx = addValuePairToFrame(frame, timeMap, rowIdx, iter)
-				}
-
-			case "histogram":
-				if histogram == nil {
-					histogram = newHistogramInfo()
-				}
-				err := readHistogram(iter, histogram)
-				if err != nil {
-					rsp.Error = err
-				}
-
-			case "histograms":
-				if histogram == nil {
-					histogram = newHistogramInfo()
-				}
-				for iter.ReadArray() {
-					err := readHistogram(iter, histogram)
-					if err != nil {
-						rsp.Error = err
-					}
-				}
-
-			default:
-				iter.Skip()
-				logf("readMatrixOrVector: %s\n", l1Field)
-			}
-		}
-
-		if histogram != nil {
-			histogram.yMin.Labels = valueField.Labels
-			frame := data.NewFrame(valueField.Name, histogram.time, histogram.yMin, histogram.yMax, histogram.count, histogram.yLayout)
-			frame.Meta = &data.FrameMeta{
-				Type: "heatmap-cells",
-			}
-			if frame.Name == data.TimeSeriesValueFieldName {
-				frame.Name = "" // only set the name if useful
-			}
-			rsp.Frames = append(rsp.Frames, frame)
-		}
-	}
-
-	if len(rsp.Frames) == 0 {
-		sorter := experimental.NewFrameSorter(frame, frame.Fields[0])
-		sort.Sort(sorter)
-		rsp.Frames = append(rsp.Frames, frame)
-	}
-
-	return rsp
-}
-
-func addValuePairToFrame(frame *data.Frame, timeMap map[int64]int, rowIdx int, iter *jsoniter.Iterator) (map[int64]int, int) {
-	timeField := frame.Fields[0]
-	valueField := frame.Fields[len(frame.Fields)-1]
-
-	t, v, err := readTimeValuePair(iter)
-	if err != nil {
-		return timeMap, rowIdx
-	}
-
-	ns := t.UnixNano()
-	i, ok := timeMap[ns]
-	if !ok {
-		timeMap[ns] = rowIdx
-		i = rowIdx
-		expandFrame(frame, i)
-		rowIdx++
-	}
-
-	timeField.Set(i, t)
-	valueField.Set(i, &v)
-
-	return timeMap, rowIdx
-}
-
 func readMatrixOrVectorMulti(iter *jsoniter.Iterator, resultType string, opt Options) backend.DataResponse {
 	rsp := backend.DataResponse{}
 
@@ -580,14 +449,6 @@ func readTimeValuePair(iter *jsoniter.Iterator) (time.Time, float64, error) {
 	tt := timeFromFloat(t)
 	fv, err := strconv.ParseFloat(v, 64)
 	return tt, fv, err
-}
-
-func expandFrame(frame *data.Frame, idx int) {
-	for _, f := range frame.Fields {
-		if idx+1 > f.Len() {
-			f.Extend(idx + 1 - f.Len())
-		}
-	}
 }
 
 type histogramInfo struct {
