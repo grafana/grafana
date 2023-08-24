@@ -24,6 +24,7 @@ func TestHTTPServer_GetDashboardPermissionList(t *testing.T) {
 		res, err := server.Send(webtest.RequestWithSignedInUser(server.NewGetRequest("/api/dashboards/uid/1/permissions"), userWithPermissions(1, nil)))
 		require.NoError(t, err)
 		assert.Equal(t, http.StatusForbidden, res.StatusCode)
+		require.NoError(t, res.Body.Close())
 	})
 
 	t.Run("should be able to list acl with correct permission", func(t *testing.T) {
@@ -42,6 +43,7 @@ func TestHTTPServer_GetDashboardPermissionList(t *testing.T) {
 
 		require.NoError(t, err)
 		assert.Equal(t, http.StatusOK, res.StatusCode)
+		require.NoError(t, res.Body.Close())
 	})
 
 	t.Run("should filter out hidden users from acl", func(t *testing.T) {
@@ -85,6 +87,7 @@ func TestHTTPServer_UpdateDashboardPermissions(t *testing.T) {
 		res, err := server.Send(webtest.RequestWithSignedInUser(server.NewPostRequest("/api/dashboards/uid/1/permissions", nil), userWithPermissions(1, nil)))
 		require.NoError(t, err)
 		assert.Equal(t, http.StatusForbidden, res.StatusCode)
+		require.NoError(t, res.Body.Close())
 	})
 
 	t.Run("should be able to update acl with correct permissions", func(t *testing.T) {
@@ -103,6 +106,7 @@ func TestHTTPServer_UpdateDashboardPermissions(t *testing.T) {
 
 		require.NoError(t, err)
 		assert.Equal(t, http.StatusOK, res.StatusCode)
+		require.NoError(t, res.Body.Close())
 	})
 
 	t.Run("should not be able to specify team and user in same acl", func(t *testing.T) {
@@ -118,6 +122,7 @@ func TestHTTPServer_UpdateDashboardPermissions(t *testing.T) {
 
 		require.NoError(t, err)
 		assert.Equal(t, http.StatusBadRequest, res.StatusCode)
+		require.NoError(t, res.Body.Close())
 	})
 
 	t.Run("should not be able to specify team and role in same acl", func(t *testing.T) {
@@ -133,6 +138,7 @@ func TestHTTPServer_UpdateDashboardPermissions(t *testing.T) {
 
 		require.NoError(t, err)
 		assert.Equal(t, http.StatusBadRequest, res.StatusCode)
+		require.NoError(t, res.Body.Close())
 	})
 
 	t.Run("should not be able to specify user and role in same acl", func(t *testing.T) {
@@ -148,5 +154,6 @@ func TestHTTPServer_UpdateDashboardPermissions(t *testing.T) {
 
 		require.NoError(t, err)
 		assert.Equal(t, http.StatusBadRequest, res.StatusCode)
+		require.NoError(t, res.Body.Close())
 	})
 }
