@@ -10,7 +10,7 @@ weight = 300
 
 The home dashboard you set is the one all users will see by default when they log in. You can set the home dashboard for the server, an organization, a team, or your personal user account. This topic provides instructions for each task.
 
-{{< docs/shared "preferences/some-tasks-require-permissions.md" >}}
+{{< docs/shared lookup="preferences/some-tasks-require-permissions.md" source="grafana" version="<GRAFANA VERSION>" >}}
 
 ## Navigate to the home dashboard
 
@@ -45,9 +45,9 @@ default_home_dashboard_path = data/main-dashboard.json
 Organization administrators can choose a home dashboard for their organization.
 
 {{< docs/list >}}
-{{< docs/shared "preferences/navigate-to-the-dashboard-list.md" >}}
-{{< docs/shared "preferences/org-preferences-list.md" >}}
-{{< docs/shared "preferences/select-home-dashboard-list.md" >}}
+{{< docs/shared lookup="preferences/navigate-to-the-dashboard-list.md" source="grafana" version="<GRAFANA VERSION>" >}}
+{{< docs/shared lookup="preferences/org-preferences-list.md" source="grafana" version="<GRAFANA VERSION>" >}}
+{{< docs/shared lookup="preferences/select-home-dashboard-list.md" source="grafana" version="<GRAFANA VERSION>" >}}
 {{< /docs/list >}}
 
 ## Set home dashboard for your team
@@ -55,10 +55,10 @@ Organization administrators can choose a home dashboard for their organization.
 Organization administrators and Team Admins can choose a home dashboard for a team.
 
 {{< docs/list >}}
-{{< docs/shared "preferences/navigate-to-the-dashboard-list.md" >}}
-{{< docs/shared "manage-users/view-team-list.md" >}}
+{{< docs/shared lookup="preferences/navigate-to-the-dashboard-list.md" source="grafana" version="<GRAFANA VERSION>" >}}
+{{< docs/shared lookup="manage-users/view-team-list.md" source="grafana" version="<GRAFANA VERSION>" >}}
 1. Click on the team that you want to change the home dashboard for and then navigate to the **Settings** tab.
-{{< docs/shared "preferences/select-home-dashboard-list.md" >}}
+{{< docs/shared lookup="preferences/select-home-dashboard-list.md" source="grafana" version="<GRAFANA VERSION>" >}}
 {{< /docs/list >}}
 
 ## Set your personal home dashboard
@@ -66,7 +66,7 @@ Organization administrators and Team Admins can choose a home dashboard for a te
 You can choose your own personal home dashboard. This setting overrides all home dashboards set at higher levels.
 
 {{< docs/list >}}
-{{< docs/shared "preferences/navigate-to-the-dashboard-list.md" >}}
-{{< docs/shared "preferences/navigate-user-preferences-list.md" >}}
-{{< docs/shared "preferences/select-home-dashboard-list.md" >}}
+{{< docs/shared lookup="preferences/navigate-to-the-dashboard-list.md" source="grafana" version="<GRAFANA VERSION>" >}}
+{{< docs/shared lookup="preferences/navigate-user-preferences-list.md" source="grafana" version="<GRAFANA VERSION>" >}}
+{{< docs/shared lookup="preferences/select-home-dashboard-list.md" source="grafana" version="<GRAFANA VERSION>" >}}
 {{< /docs/list >}}
