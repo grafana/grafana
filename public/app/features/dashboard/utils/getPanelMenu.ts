@@ -122,20 +122,6 @@ export function getPanelMenu(
 
   const menu: PanelMenuItem[] = [];
 
-  // Embedded dashboard's panels can only be edited
-  if (dashboard.meta.isEditorEmbedded) {
-    if (dashboard.canEditPanel(panel) && !panel.isEditing) {
-      menu.push({
-        text: t('panel.header-menu.edit', `Edit`),
-        iconClassName: 'edit',
-        onClick: onEditPanel,
-        shortcut: 'e',
-      });
-    }
-
-    return menu;
-  }
-
   if (!panel.isEditing) {
     menu.push({
       text: t('panel.header-menu.view', `View`),
