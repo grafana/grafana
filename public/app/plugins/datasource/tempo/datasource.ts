@@ -255,7 +255,11 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     }
     if (targets.traceqlSearch?.length) {
       try {
-        const queryValue = generateQueryFromFilters(targets.traceqlSearch[0].filters);
+        const queryValueFromFilters = generateQueryFromFilters(targets.traceqlSearch[0].filters);
+
+        // We want to support template variables also in Search for consistency with other data sources
+        const queryValue = this.templateSrv.replace(queryValueFromFilters, options.scopedVars);
+
         reportInteraction('grafana_traces_traceql_search_queried', {
           datasourceType: 'tempo',
           app: options.app ?? '',

@@ -159,8 +159,8 @@ export const TimeRangeContent = (props: Props) => {
       <TimePickerCalendar
         isFullscreen={isFullscreen}
         isOpen={isOpen}
-        from={dateTimeParse(from.value)}
-        to={dateTimeParse(to.value)}
+        from={dateTimeParse(from.value, { timeZone })}
+        to={dateTimeParse(to.value, { timeZone })}
         onApply={onApply}
         onClose={() => setOpen(false)}
         onChange={onChange}

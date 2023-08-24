@@ -6,6 +6,7 @@ import {
   getUrlSyncManager,
   sceneGraph,
   SceneGridItem,
+  SceneGridLayout,
   SceneObject,
   SceneObjectBase,
   SceneObjectState,
@@ -17,6 +18,7 @@ import {
 import appEvents from 'app/core/app_events';
 
 import { DashboardSceneRenderer } from './DashboardSceneRenderer';
+import { forceRenderChildren } from './utils';
 
 export interface DashboardSceneState extends SceneObjectState {
   title: string;
@@ -75,12 +77,24 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
 
   onEnterEditMode = () => {
     this.setState({ isEditing: true });
+
+    // Make grid draggable
+    if (this.state.body instanceof SceneGridLayout) {
+      this.state.body.setState({ isDraggable: true, isResizable: true });
+      forceRenderChildren(this.state.body, true);
+    }
   };
 
   onDiscard = () => {
     // TODO open confirm modal if dirty
     // TODO actually discard changes
     this.setState({ isEditing: false });
+
+    // Disable grid dragging
+    if (this.state.body instanceof SceneGridLayout) {
+      this.state.body.setState({ isDraggable: false, isResizable: false });
+      forceRenderChildren(this.state.body, true);
+    }
   };
 
   onCloseInspectDrawer = () => {
