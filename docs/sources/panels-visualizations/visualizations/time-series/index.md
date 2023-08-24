@@ -47,13 +47,13 @@ You can migrate from the old Graph visualization to the new Time series visualiz
 
 Tooltip options control the information overlay that appears when you hover over data points in the graph.
 
-{{< docs/shared "visualizations/tooltip-mode.md" >}}
+{{< docs/shared lookup="visualizations/tooltip-mode.md" source="grafana" version="<GRAFANA VERSION>" >}}
 
 ## Legend options
 
 Legend options control the series names and statistics that appear under or to the right of the graph.
 
-{{< docs/shared "visualizations/legend-mode.md" >}}
+{{< docs/shared lookup="visualizations/legend-mode.md" source="grafana" version="<GRAFANA VERSION>" >}}
 
 ## Graph styles
 
