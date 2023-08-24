@@ -178,6 +178,8 @@ func (ss *SQLStore) getOrCreateOrg(sess *DBSession, orgName string) (int64, erro
 		}
 	} else {
 		org.Name = orgName
+		org.Created = time.Now()
+		org.Updated = org.Created
 		if _, err := sess.InsertOne(&org); err != nil {
 			return 0, err
 		}
