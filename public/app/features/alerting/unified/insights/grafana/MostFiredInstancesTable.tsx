@@ -13,7 +13,7 @@ import {
 import { DataSourceRef } from '@grafana/schema';
 import { Icon, Link } from '@grafana/ui';
 
-import { createUrl } from '../utils/url';
+import { createUrl } from '../../utils/url';
 
 const TOP_5_FIRING_INSTANCES =
   'topk(5, sum by(labels_alertname, ruleUID) (count_over_time({from="state-history"} | json | current = `Alerting` [1w])))';
@@ -95,7 +95,7 @@ export function getMostFiredInstancesScene(timeRange: SceneTimeRange, datasource
   });
 
   return new SceneFlexItem({
-    width: 'calc(50% - 8px)',
+    width: '100%',
     height: 300,
     body: PanelBuilders.table().setTitle(panelTitle).setData(transformation).build(),
   });
