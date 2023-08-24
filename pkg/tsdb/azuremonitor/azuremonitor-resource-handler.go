@@ -7,7 +7,7 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/resource/httpadapter"
 
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
@@ -37,7 +37,9 @@ func (s *httpServiceProxy) Do(rw http.ResponseWriter, req *http.Request, cli *ht
 		return nil, err
 	}
 	defer func() {
-		res.Body.Close()
+		if err := res.Body.Close(); err == nil {
+			backend.Logger.Warn("Failed to close response body", "err", err)
+		}
 	}()
 
 	body, err := io.ReadAll(res.Body)
@@ -83,12 +85,14 @@ func writeResponse(rw http.ResponseWriter, code int, msg string) {
 	rw.WriteHeader(http.StatusBadRequest)
 	_, err := rw.Write([]byte(msg))
 	if err != nil {
-		log.DefaultLogger.Error("unable to write HTTP response %v: %v", code, err)
+		backend.Logger.Error("Unable to write HTTP response", "error", err)
 	}
 }
 
 func (s *Service) handleResourceReq(subDataSource string) func(rw http.ResponseWriter, req *http.Request) {
 	return func(rw http.ResponseWriter, req *http.Request) {
+		backend.Logger.Debug("Received resource call", "url", req.URL.String(), "method", req.Method)
+
 		newPath, err := getTarget(req.URL.Path)
 		if err != nil {
 			writeResponse(rw, http.StatusBadRequest, err.Error())

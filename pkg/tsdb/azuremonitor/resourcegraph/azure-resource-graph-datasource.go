@@ -166,7 +166,10 @@ func (e *AzureResourceGraphDatasource) executeQuery(ctx context.Context, query *
 		return nil, err
 	}
 
-	defer res.Body.Close()
+	defer func() {
+		err := res.Body.Close()
+		backend.Logger.Error("Failed to close response body", "err", err)
+	}()
 
 	argResponse, err := e.unmarshalResponse(res)
 	if err != nil {
@@ -216,7 +219,11 @@ func (e *AzureResourceGraphDatasource) unmarshalResponse(res *http.Response) (Az
 	if err != nil {
 		return AzureResourceGraphResponse{}, err
 	}
-	defer res.Body.Close()
+
+	defer func() {
+		err := res.Body.Close()
+		backend.Logger.Error("Failed to close response body", "err", err)
+	}()
 
 	if res.StatusCode/100 != 2 {
 		return AzureResourceGraphResponse{}, fmt.Errorf("%s. Azure Resource Graph error: %s", res.Status, string(body))

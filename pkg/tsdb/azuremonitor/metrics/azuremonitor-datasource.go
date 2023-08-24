@@ -263,7 +263,11 @@ func (e *AzureMonitorDatasource) retrieveSubscriptionDetails(cli *http.Client, c
 	if err != nil {
 		return "", fmt.Errorf("failed to request subscription details: %s", err)
 	}
-	defer res.Body.Close()
+
+	defer func() {
+		err := res.Body.Close()
+		backend.Logger.Error("Failed to close response body", "err", err)
+	}()
 
 	body, err := io.ReadAll(res.Body)
 	if err != nil {
@@ -311,7 +315,11 @@ func (e *AzureMonitorDatasource) executeQuery(ctx context.Context, query *types.
 	if err != nil {
 		return nil, err
 	}
-	defer res.Body.Close()
+
+	defer func() {
+		err := res.Body.Close()
+		backend.Logger.Error("Failed to close response body", "err", err)
+	}()
 
 	data, err := e.unmarshalResponse(res)
 	if err != nil {

@@ -329,7 +329,7 @@ func metricCheckHealth(dsInfo types.DatasourceInfo) (message string, defaultSubs
 	return "Successfully connected to Azure Monitor endpoint.", defaultSubscription, backend.HealthStatusOk
 }
 
-func logAnalytricsCheckHealth(dsInfo types.DatasourceInfo, defaultSubscription string) (message string, status backend.HealthStatus) {
+func logAnalyticsCheckHealth(dsInfo types.DatasourceInfo, defaultSubscription string) (message string, status backend.HealthStatus) {
 	logsRes, err := checkAzureLogAnalyticsHealth(dsInfo, defaultSubscription)
 	if err != nil {
 		if err.Error() == "no default workspace found" {
@@ -392,7 +392,10 @@ func parseSubscriptions(res *http.Response) ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer res.Body.Close()
+	defer func() {
+		err := res.Body.Close()
+		backend.Logger.Error("Failed to close response body", "err", err)
+	}()
 
 	result := make([]string, len(target.Value))
 	for i, v := range target.Value {
@@ -418,7 +421,7 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 		status = metricsStatus
 	}
 
-	logAnalyticsLog, logAnalyticsStatus := logAnalytricsCheckHealth(dsInfo, defaultSubscription)
+	logAnalyticsLog, logAnalyticsStatus := logAnalyticsCheckHealth(dsInfo, defaultSubscription)
 	if logAnalyticsStatus != backend.HealthStatusOk {
 		status = logAnalyticsStatus
 	}
