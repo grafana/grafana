@@ -95,7 +95,7 @@ func (s *ServiceImpl) GetNavTree(c *contextmodel.ReqContext, prefs *pref.Prefere
 		})
 	}
 
-	if c.PublicDashboardAccessToken != "" || hasAccess(ac.EvalAny(
+	if c.IsPublicDashboardView() || hasAccess(ac.EvalAny(
 		ac.EvalPermission(dashboards.ActionFoldersRead), ac.EvalPermission(dashboards.ActionFoldersCreate),
 		ac.EvalPermission(dashboards.ActionDashboardsRead), ac.EvalPermission(dashboards.ActionDashboardsCreate)),
 	) {

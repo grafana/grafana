@@ -60,6 +60,10 @@ func (ctx *ReqContext) IsApiRequest() bool {
 	return strings.HasPrefix(ctx.Req.URL.Path, "/api")
 }
 
+func (ctx *ReqContext) IsPublicDashboardView() bool {
+	return ctx.PublicDashboardAccessToken != ""
+}
+
 func (ctx *ReqContext) JsonApiErr(status int, message string, err error) {
 	resp := make(map[string]interface{})
 	traceID := tracing.TraceIDFromContext(ctx.Req.Context(), false)

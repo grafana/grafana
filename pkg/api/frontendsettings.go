@@ -283,7 +283,7 @@ func (hs *HTTPServer) getFSDataSources(c *contextmodel.ReqContext, availablePlug
 			return nil, err
 		}
 
-		if c.PublicDashboardAccessToken != "" {
+		if c.IsPublicDashboardView() {
 			// If RBAC is enabled, it will filter out all datasources for a public user, so we need to skip it
 			orgDataSources = dataSources
 		} else {
