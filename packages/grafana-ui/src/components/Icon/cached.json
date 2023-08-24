@@ -160,8 +160,6 @@
   "custom/gf-logs",
   "custom/gf-movepane-left",
   "custom/gf-movepane-right",
-  "custom/gf-prometheus",
-  "custom/gf-traces",
   "mono/favorite",
   "mono/grafana",
   "mono/heart",
