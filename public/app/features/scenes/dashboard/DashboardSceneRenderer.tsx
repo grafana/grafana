@@ -9,15 +9,13 @@ import { Page } from 'app/core/components/Page/Page';
 
 import { DashboardScene } from './DashboardScene';
 import { NavToolbarActions } from './NavToolbarActions';
-import { ScenePanelInspector } from './ScenePanelInspector';
 
 export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardScene>) {
-  const { body, controls, inspectPanelKey, viewPanelKey } = model.useState();
+  const { controls, viewPanelKey, drawer } = model.useState();
   const styles = useStyles2(getStyles);
-  const inspectPanel = model.findPanel(inspectPanelKey);
-  const viewPanel = model.findPanel(viewPanelKey);
   const location = useLocation();
   const pageNav = model.getPageNav(location);
+  const bodyToRender = model.getBodyToRender(viewPanelKey);
 
   return (
     <Page navId="scenes" pageNav={pageNav} layout={PageLayoutType.Custom}>
@@ -31,18 +29,12 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
               ))}
             </div>
           )}
-          {viewPanel ? (
-            <div className={styles.viewPanel}>
-              <viewPanel.Component model={viewPanel} />
-            </div>
-          ) : (
-            <div className={styles.body}>
-              <body.Component model={body} />
-            </div>
-          )}
+          <div className={styles.body}>
+            <bodyToRender.Component model={bodyToRender} />
+          </div>
         </div>
       </CustomScrollbar>
-      {inspectPanel && <ScenePanelInspector panel={inspectPanel} dashboard={model} />}
+      {drawer && <drawer.Component model={drawer} />}
     </Page>
   );
 }
@@ -62,11 +54,6 @@ function getStyles(theme: GrafanaTheme2) {
       flexGrow: 1,
       display: 'flex',
       gap: '8px',
-    }),
-    viewPanel: css({
-      display: 'flex',
-      position: 'relative',
-      flexGrow: 1,
       marginBottom: theme.spacing(2),
     }),
     controls: css({
