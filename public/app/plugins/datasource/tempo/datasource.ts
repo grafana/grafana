@@ -206,63 +206,49 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
 
     if (targets.traceql?.length) {
       try {
-        if (config.featureToggles.metricsSummary) {
-          const groupBy = targets.traceql.find((t) => this.hasGroupBy(t));
-          if (groupBy) {
-            subQueries.push(
-              this.handleMetricsSummary(groupBy, this.applyVariables(groupBy, options.scopedVars)?.query || '', options)
-            );
-          }
-        }
+        const appliedQuery = this.applyVariables(targets.traceql[0], options.scopedVars);
+        const queryValue = appliedQuery?.query || '';
+        const hexOnlyRegex = /^[0-9A-Fa-f]*$/;
+        // Check whether this is a trace ID or traceQL query by checking if it only contains hex characters
+        if (queryValue.trim().match(hexOnlyRegex)) {
+          // There's only hex characters so let's assume that this is a trace ID
+          reportInteraction('grafana_traces_traceID_queried', {
+            datasourceType: 'tempo',
+            app: options.app ?? '',
+            grafana_version: config.buildInfo.version,
+            hasQuery: queryValue !== '' ? true : false,
+          });
 
-        const traceqlTargets = config.featureToggles.metricsSummary
-          ? targets.traceql.filter((t) => !this.hasGroupBy(t))
-          : targets.traceql;
-        if (traceqlTargets.length > 0) {
-          const appliedQuery = this.applyVariables(traceqlTargets[0], options.scopedVars);
-          const queryValue = appliedQuery?.query || '';
-          const hexOnlyRegex = /^[0-9A-Fa-f]*$/;
-          // Check whether this is a trace ID or traceQL query by checking if it only contains hex characters
-          if (queryValue.trim().match(hexOnlyRegex)) {
-            // There's only hex characters so let's assume that this is a trace ID
-            reportInteraction('grafana_traces_traceID_queried', {
-              datasourceType: 'tempo',
-              app: options.app ?? '',
-              grafana_version: config.buildInfo.version,
-              hasQuery: queryValue !== '' ? true : false,
-            });
+          subQueries.push(this.handleTraceIdQuery(options, targets.traceql));
+        } else {
+          reportInteraction('grafana_traces_traceql_queried', {
+            datasourceType: 'tempo',
+            app: options.app ?? '',
+            grafana_version: config.buildInfo.version,
+            query: queryValue ?? '',
+            streaming: config.featureToggles.traceQLStreaming,
+          });
 
-            subQueries.push(this.handleTraceIdQuery(options, traceqlTargets));
+          if (config.featureToggles.traceQLStreaming) {
+            subQueries.push(this.handleStreamingSearch(options, targets.traceql));
           } else {
-            reportInteraction('grafana_traces_traceql_queried', {
-              datasourceType: 'tempo',
-              app: options.app ?? '',
-              grafana_version: config.buildInfo.version,
-              query: queryValue ?? '',
-              streaming: config.featureToggles.traceQLStreaming,
-            });
-
-            if (config.featureToggles.traceQLStreaming) {
-              subQueries.push(this.handleStreamingSearch(options, traceqlTargets));
-            } else {
-              subQueries.push(
-                this._request('/api/search', {
-                  q: queryValue,
-                  limit: options.targets[0].limit ?? DEFAULT_LIMIT,
-                  start: options.range.from.unix(),
-                  end: options.range.to.unix(),
-                }).pipe(
-                  map((response) => {
-                    return {
-                      data: createTableFrameFromTraceQlQuery(response.data.traces, this.instanceSettings),
-                    };
-                  }),
-                  catchError((err) => {
-                    return of({ error: { message: getErrorMessage(err.data.message) }, data: [] });
-                  })
-                )
-              );
-            }
+            subQueries.push(
+              this._request('/api/search', {
+                q: queryValue,
+                limit: options.targets[0].limit ?? DEFAULT_LIMIT,
+                start: options.range.from.unix(),
+                end: options.range.to.unix(),
+              }).pipe(
+                map((response) => {
+                  return {
+                    data: createTableFrameFromTraceQlQuery(response.data.traces, this.instanceSettings),
+                  };
+                }),
+                catchError((err) => {
+                  return of({ error: { message: getErrorMessage(err.data.message) }, data: [] });
+                })
+              )
+            );
           }
         }
       } catch (error) {
