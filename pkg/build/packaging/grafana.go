@@ -444,11 +444,15 @@ func copyPubDir(grafanaDir, tmpDir string) error {
 	}
 
 	// Remove plugin backend code.
-	pluBeFiles, err := filepath.Glob(filepath.Join(tgtPubDir, "plugins", "*", "pkg"))
+	pluginFiles, err := filepath.Glob(filepath.Join(tgtPubDir, "plugins", "*", "*"))
 	if err != nil {
 		return err
 	}
-	for _, p := range pluBeFiles {
+	for _, p := range pluginFiles {
+		if filepath.Base(p) == "src" {
+			// Src directory is the only one necessary
+			continue
+		}
 		if err := os.RemoveAll(p); err != nil {
 			return err
 		}
