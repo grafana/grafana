@@ -2,7 +2,6 @@ package api
 
 import (
 	"context"
-	"errors"
 	"net/http"
 	"time"
 
@@ -13,7 +12,6 @@ import (
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
-	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -91,20 +89,6 @@ func (hs *HTTPServer) UpdateFolderPermissions(c *contextmodel.ReqContext) respon
 		return apierrors.ToFolderErrorResponse(err)
 	}
 
-	g, err := guardian.New(c.Req.Context(), folder.ID, c.OrgID, c.SignedInUser)
-	if err != nil {
-		return response.Err(err)
-	}
-
-	canAdmin, err := g.CanAdmin()
-	if err != nil {
-		return apierrors.ToFolderErrorResponse(err)
-	}
-
-	if !canAdmin {
-		return apierrors.ToFolderErrorResponse(dashboards.ErrFolderAccessDenied)
-	}
-
 	items := make([]*dashboards.DashboardACL, 0, len(apiCmd.Items))
 	for _, item := range apiCmd.Items {
 		items = append(items, &dashboards.DashboardACL{
@@ -119,32 +103,22 @@ func (hs *HTTPServer) UpdateFolderPermissions(c *contextmodel.ReqContext) respon
 		})
 	}
 
-	hiddenACL, err := g.GetHiddenACL(hs.Cfg)
+	hiddenACL, err := hs.getHiddenFolderACL(c.Req.Context(), c.SignedInUser, folder)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Error while retrieving hidden permissions", err)
 	}
+
 	items = append(items, hiddenACL...)
 
-	if okToUpdate, err := g.CheckPermissionBeforeUpdate(dashboards.PERMISSION_ADMIN, items); err != nil || !okToUpdate {
-		if err != nil {
-			if errors.Is(err, guardian.ErrGuardianPermissionExists) ||
-				errors.Is(err, guardian.ErrGuardianOverride) {
-				return response.Error(http.StatusBadRequest, err.Error(), err)
-			}
-
-			return response.Error(http.StatusInternalServerError, "Error while checking folder permissions", err)
-		}
-
-		return response.Error(http.StatusForbidden, "Cannot remove own admin permission for a folder", nil)
-	}
-
-	old, err := g.GetACL()
+	old, err := hs.getFolderACL(c.Req.Context(), c.SignedInUser, folder)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Error while checking folder permissions", err)
 	}
+
 	if err := hs.updateDashboardAccessControl(c.Req.Context(), c.OrgID, folder.UID, true, items, old); err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to create permission", err)
 	}
+
 	return response.Success("Folder permissions updated")
 }
 
@@ -198,6 +172,40 @@ func (hs *HTTPServer) getFolderACL(ctx context.Context, user identity.Requester,
 	}
 
 	return acl, nil
+}
+
+func (hs *HTTPServer) getHiddenFolderACL(ctx context.Context, user identity.Requester, folder *folder.Folder) ([]*dashboards.DashboardACL, error) {
+	var hiddenACL []*dashboards.DashboardACL
+
+	if user.GetIsGrafanaAdmin() {
+		return hiddenACL, nil
+	}
+
+	existingPermissions, err := hs.getFolderACL(ctx, user, folder)
+	if err != nil {
+		return hiddenACL, err
+	}
+
+	for _, item := range existingPermissions {
+		if item.Inherited || item.UserLogin == user.GetLogin() {
+			continue
+		}
+
+		if _, hidden := hs.Cfg.HiddenUsers[item.UserLogin]; hidden {
+			hiddenACL = append(hiddenACL, &dashboards.DashboardACL{
+				OrgID:       item.OrgID,
+				DashboardID: item.DashboardID,
+				UserID:      item.UserID,
+				TeamID:      item.TeamID,
+				Role:        item.Role,
+				Permission:  item.Permission,
+				Created:     item.Created,
+				Updated:     item.Updated,
+			})
+		}
+	}
+
+	return hiddenACL, nil
 }
 
 // swagger:parameters getFolderPermissionList
