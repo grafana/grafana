@@ -15,7 +15,7 @@ weight: 300
 
 # Panel links
 
-{{< docs/shared "panels/panel-links-intro.md" >}}
+{{< docs/shared lookup="panels/panel-links-intro.md" source="grafana" version="<GRAFANA VERSION>" >}}
 
 Click the icon on the top left corner of a panel to see available panel links.
 
