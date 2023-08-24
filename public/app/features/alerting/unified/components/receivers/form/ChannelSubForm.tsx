@@ -55,6 +55,10 @@ export function ChannelSubForm<R extends ChannelValues>({
   const selectedType = watch(fieldName('type')) ?? defaultValues.type; // nope, setting "default" does not work at all.
   const { loading: testingReceiver } = useUnifiedAlertingSelector((state) => state.testReceivers);
 
+  // TODO I don't like integration specific code here but other ways require a bigger refactoring
+  const onCallIntegrationType = watch(fieldName('settings.integration_type'));
+  const isTestAvailable = onCallIntegrationType !== OnCallIntegrationType.NewIntegration;
+
   useEffect(() => {
     register(`${pathPrefix}.__id`);
     /* Need to manually register secureFields or else they'll
@@ -148,7 +152,7 @@ export function ChannelSubForm<R extends ChannelValues>({
           </Field>
         </div>
         <div className={styles.buttons}>
-          {isTestable && onTest && (
+          {isTestable && onTest && isTestAvailable && (
             <Button
               disabled={testingReceiver}
               size="xs"
