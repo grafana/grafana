@@ -1,9 +1,14 @@
-+++
-title = "Alerting HTTP API "
-description = "Grafana Alerts HTTP API"
-keywords = ["grafana", "http", "documentation", "api", "alerting", "alerts"]
-aliases = ["/docs/grafana/latest/http_api/alerting/"]
-+++
+---
+description: Grafana Alerts HTTP API
+keywords:
+  - grafana
+  - http
+  - documentation
+  - api
+  - alerting
+  - alerts
+title: 'Alerting HTTP API '
+---
 
 # Alerting API
 
@@ -22,21 +27,21 @@ Accept: application/json
 Content-Type: application/json
 Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 ```
-  Querystring Parameters:
 
-  These parameters are used as querystring parameters. For example:
+Querystring Parameters:
 
-  `/api/alerts?dashboardId=1`
+These parameters are used as querystring parameters. For example:
 
-  - **dashboardId** – Limit response to alerts in specified dashboard(s). You can specify multiple dashboards, e.g. dashboardId=23&dashboardId=35.
-  - **panelId** – Limit response to alert for a specified panel on a dashboard.
-  - **query** - Limit response to alerts having a name like this value.
-  - **state** - Return alerts with one or more of the following alert states: `ALL`,`no_data`, `paused`, `alerting`, `ok`, `pending`. To specify multiple states use the following format: `?state=paused&state=alerting`
-  - **limit** - Limit response to *X* number of alerts.
-  - **folderId** – Limit response to alerts of dashboards in specified folder(s). You can specify multiple folders, e.g. folderId=23&folderId=35.
-  - **dashboardQuery** - Limit response to alerts having a dashboard name like this value.
-  - **dashboardTag** - Limit response to alerts of dashboards with specified tags. To do an "AND" filtering with multiple tags, specify the tags parameter multiple times e.g. dashboardTag=tag1&dashboardTag=tag2.
+`/api/alerts?dashboardId=1`
 
+- **dashboardId** – Limit response to alerts in specified dashboard(s). You can specify multiple dashboards, e.g. dashboardId=23&dashboardId=35.
+- **panelId** – Limit response to alert for a specified panel on a dashboard.
+- **query** - Limit response to alerts having a name like this value.
+- **state** - Return alerts with one or more of the following alert states: `ALL`,`no_data`, `paused`, `alerting`, `ok`, `pending`. To specify multiple states use the following format: `?state=paused&state=alerting`
+- **limit** - Limit response to _X_ number of alerts.
+- **folderId** – Limit response to alerts of dashboards in specified folder(s). You can specify multiple folders, e.g. folderId=23&folderId=35.
+- **dashboardQuery** - Limit response to alerts having a dashboard name like this value.
+- **dashboardTag** - Limit response to alerts of dashboards with specified tags. To do an "AND" filtering with multiple tags, specify the tags parameter multiple times e.g. dashboardTag=tag1&dashboardTag=tag2.
 
 **Example Response**:
 

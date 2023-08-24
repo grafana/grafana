@@ -1,8 +1,8 @@
-+++
-title = "Best practices"
-description = "Best practices for working with Grafana"
-weight = 20
-+++
+---
+description: Best practices for working with Grafana
+title: Best practices
+weight: 20
+---
 
 # Best practices
 

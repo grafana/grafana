@@ -1,9 +1,14 @@
-+++
-title = "Time series"
-description = "Introduction to time series"
-keywords = ["grafana", "intro", "guide", "concepts", "timeseries"]
-weight = 400
-+++
+---
+description: Introduction to time series
+keywords:
+- grafana
+- intro
+- guide
+- concepts
+- timeseries
+title: Time series
+weight: 400
+---
 
 # Introduction to time series
 

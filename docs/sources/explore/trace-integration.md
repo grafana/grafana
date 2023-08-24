@@ -1,9 +1,11 @@
-+++
-title = "Tracing in Explore"
-description = "Tracing in Explore"
-keywords = ["explore", "trace",]
-weight = 20
-+++
+---
+description: Tracing in Explore
+keywords:
+  - explore
+  - trace
+title: Tracing in Explore
+weight: 20
+---
 
 # Tracing in Explore
 
@@ -61,7 +63,7 @@ Clicking anywhere on the span row shows span details.
 
 > **Note:** Available in Grafana 7.4 and later versions.
 
-You can navigate from a span in a trace view directly to logs relevant for that span. This is available for Tempo, Jaeger and Zipkin data source at this moment.  their relevant documentation for instruction how to configure this feature.
+You can navigate from a span in a trace view directly to logs relevant for that span. This is available for Tempo, Jaeger and Zipkin data source at this moment. their relevant documentation for instruction how to configure this feature.
 
 {{< figure src="/static/img/docs/explore/trace-to-log-7-4.png" class="docs-image--no-shadow" max-width= "600px"  caption="Screenshot of the trace view in Explore with icon next to the spans" >}}
 
@@ -77,24 +79,24 @@ Data source needs to return data frame and set `frame.meta.preferredVisualisatio
 
 Required fields:
 
-| Field name | Type    | Description |
-|------------|---------|-------------|
-| traceID    | string  | Identifier for the entire trace. There should be only one trace in the data frame. |
-| spanID     | string  | Identifier for the current span. SpanIDs should be unique per trace. |
-| parentSpanID | string  | SpanID of the parent span to create child parent relationship in the trace view. Can be `undefined` for root span without parent. |
-| serviceName | string  | Name of the service this span is part of. |
-| serviceTags | TraceKeyValuePair[] | List of tags relevant for the service. |
-| startTime  | number | Start time of the span in millisecond epoch time. |
-| duration   | number | Duration of the span in milliseconds. |
+| Field name   | Type                | Description                                                                                                                       |
+| ------------ | ------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| traceID      | string              | Identifier for the entire trace. There should be only one trace in the data frame.                                                |
+| spanID       | string              | Identifier for the current span. SpanIDs should be unique per trace.                                                              |
+| parentSpanID | string              | SpanID of the parent span to create child parent relationship in the trace view. Can be `undefined` for root span without parent. |
+| serviceName  | string              | Name of the service this span is part of.                                                                                         |
+| serviceTags  | TraceKeyValuePair[] | List of tags relevant for the service.                                                                                            |
+| startTime    | number              | Start time of the span in millisecond epoch time.                                                                                 |
+| duration     | number              | Duration of the span in milliseconds.                                                                                             |
 
 Optional fields:
 
-| Field name | Type    | Description |
-|------------|---------|-------------|
-| logs       | TraceLog[] | List of logs associated with the current span. |
-| tags       | TraceKeyValuePair[]  | List of tags associated with the current span. |
-| warnings   | string[]  | List of warnings associated with the current span. |
-| stackTraces | string[] | List of stack traces associated with the current span. |
-| errorIconColor | string | Color of the error icon in case span is tagged with `error: true`. |
+| Field name     | Type                | Description                                                        |
+| -------------- | ------------------- | ------------------------------------------------------------------ |
+| logs           | TraceLog[]          | List of logs associated with the current span.                     |
+| tags           | TraceKeyValuePair[] | List of tags associated with the current span.                     |
+| warnings       | string[]            | List of warnings associated with the current span.                 |
+| stackTraces    | string[]            | List of stack traces associated with the current span.             |
+| errorIconColor | string              | Color of the error icon in case span is tagged with `error: true`. |
 
 For details about the types see [TraceSpanRow](https://grafana.com/docs/grafana/latest/packages_api/data/tracespanrow/), [TraceKeyValuePair](https://grafana.com/docs/grafana/latest/packages_api/data/tracekeyvaluepair/) and [TraceLog](https://grafana.com/docs/grafana/latest/packages_api/data/tracelog/)

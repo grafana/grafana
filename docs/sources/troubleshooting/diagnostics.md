@@ -1,7 +1,7 @@
-+++
-title = "Enable diagnostics"
-weight = 200
-+++
+---
+title: Enable diagnostics
+weight: 200
+---
 
 # Enable diagnostics
 

@@ -1,8 +1,8 @@
-+++
-title = "Overview"
-description = "Overview for auth"
-weight = 1
-+++
+---
+description: Overview for auth
+title: Overview
+weight: 1
+---
 
 # User Authentication Overview
 
@@ -119,11 +119,6 @@ Defaults to `false`.
 [auth]
 oauth_auto_login = true
 ```
-
-### Avoid automatic OAuth login
-
-To sign in with a username and password and avoid automatic OAuth login, add the `disableAutoLogin` parameter to your login URL. 
-For example:  `grafana.example.com/login?disableAutoLogin` or `grafana.example.com/login?disableAutoLogin=true`
 
 ### Hide sign-out menu
 

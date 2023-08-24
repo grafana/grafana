@@ -1,8 +1,15 @@
-+++
-title = "Repeat panels or rows"
-keywords = ["grafana", "templating", "documentation", "guide", "template", "variable", "repeat"]
-weight = 800
-+++
+---
+keywords:
+- grafana
+- templating
+- documentation
+- guide
+- template
+- variable
+- repeat
+title: Repeat panels or rows
+weight: 800
+---
 
 # Repeat panels or rows
 

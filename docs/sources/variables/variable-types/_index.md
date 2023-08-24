@@ -1,7 +1,7 @@
-+++
-title = "Add variables"
-weight = 140
-+++
+---
+title: Add variables
+weight: 140
+---
 
 # Variables types
 

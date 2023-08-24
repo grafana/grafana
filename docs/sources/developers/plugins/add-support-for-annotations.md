@@ -1,6 +1,6 @@
-+++
-title = "Add support for annotations"
-+++
+---
+title: Add support for annotations
+---
 
 # Add support for annotations
 

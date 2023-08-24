@@ -1,9 +1,12 @@
-+++
-title = "Request security"
-description = "Grafana Enterprise request security"
-keywords = ["grafana", "security", "enterprise"]
-weight = 110
-+++
+---
+description: Grafana Enterprise request security
+keywords:
+- grafana
+- security
+- enterprise
+title: Request security
+weight: 110
+---
 
 # Request security
 

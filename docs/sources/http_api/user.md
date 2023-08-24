@@ -1,9 +1,13 @@
-+++
-title = "User HTTP API "
-description = "Grafana User HTTP API"
-keywords = ["grafana", "http", "documentation", "api", "user"]
-aliases = ["/docs/grafana/latest/http_api/user/"]
-+++
+---
+description: Grafana User HTTP API
+keywords:
+  - grafana
+  - http
+  - documentation
+  - api
+  - user
+title: 'User HTTP API '
+---
 
 # User HTTP resources / actions
 
@@ -119,6 +123,7 @@ Accept: application/json
 Content-Type: application/json
 Authorization: Basic YWRtaW46YWRtaW4=
 ```
+
 Requires basic authentication and that the authenticated user is a Grafana Admin.
 
 **Example Response**:
@@ -284,7 +289,6 @@ Content-Type: application/json
   }
 ]
 ```
-
 
 ## User
 

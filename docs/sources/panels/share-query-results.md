@@ -1,7 +1,7 @@
-+++
-title = "Share query results"
-weight = 310
-+++
+---
+title: Share query results
+weight: 310
+---
 
 # Share query results between panels
 

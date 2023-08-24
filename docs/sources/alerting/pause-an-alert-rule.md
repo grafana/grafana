@@ -1,9 +1,14 @@
-+++
-title = "Pause alert rule"
-description = "Pause an existing alert rule"
-keywords = ["grafana", "alerting", "guide", "rules", "view"]
-weight = 400
-+++
+---
+description: Pause an existing alert rule
+keywords:
+- grafana
+- alerting
+- guide
+- rules
+- view
+title: Pause alert rule
+weight: 400
+---
 
 # Pause an alert rule
 

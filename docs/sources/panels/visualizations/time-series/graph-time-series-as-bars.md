@@ -1,8 +1,13 @@
-+++
-title = "Graph time series as bars"
-keywords = ["grafana", "time series panel", "documentation", "guide", "graph"]
-weight = 200
-+++
+---
+keywords:
+- grafana
+- time series panel
+- documentation
+- guide
+- graph
+title: Graph time series as bars
+weight: 200
+---
 
 # Graph time series as bars
 

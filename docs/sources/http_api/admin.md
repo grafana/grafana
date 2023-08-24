@@ -1,9 +1,13 @@
-+++
-title = "Admin HTTP API "
-description = "Grafana Admin HTTP API"
-keywords = ["grafana", "http", "documentation", "api", "admin"]
-aliases = ["/docs/grafana/latest/http_api/admin/"]
-+++
+---
+description: Grafana Admin HTTP API
+keywords:
+  - grafana
+  - http
+  - documentation
+  - api
+  - admin
+title: 'Admin HTTP API '
+---
 
 # Admin API
 
@@ -169,6 +173,7 @@ Content-Type: application/json
   }
 }
 ```
+
 ## Grafana Stats
 
 `GET /api/admin/stats`

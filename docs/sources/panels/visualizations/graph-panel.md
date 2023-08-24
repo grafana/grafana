@@ -1,9 +1,16 @@
-+++
-title = "Graph panel"
-keywords = ["grafana", "graph panel", "documentation", "guide", "graph"]
-aliases = ["/docs/grafana/latest/reference/graph/", "/docs/grafana/latest/features/panels/graph/"]
-weight = 500
-+++
+---
+aliases:
+- ../../features/panels/graph/
+- ../../reference/graph/
+keywords:
+- grafana
+- graph panel
+- documentation
+- guide
+- graph
+title: Graph panel
+weight: 500
+---
 
 # Graph panel
 

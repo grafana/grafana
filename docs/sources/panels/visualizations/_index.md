@@ -1,7 +1,7 @@
-+++
-title = "Visualizations"
-weight = 600
-+++
+---
+title: Visualizations
+weight: 600
+---
 
 # Visualizations
 

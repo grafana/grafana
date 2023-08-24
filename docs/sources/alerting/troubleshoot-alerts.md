@@ -1,9 +1,14 @@
-+++
-title = "Troubleshoot alerts"
-description = "Troubleshoot alert rules"
-keywords = ["grafana", "alerting", "guide", "rules", "troubleshoot"]
-weight = 500
-+++
+---
+description: Troubleshoot alert rules
+keywords:
+- grafana
+- alerting
+- guide
+- rules
+- troubleshoot
+title: Troubleshoot alerts
+weight: 500
+---
 
 # Troubleshoot alerts
 

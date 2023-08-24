@@ -1,8 +1,14 @@
-+++
-title = "Alert notification templating"
-keywords = ["grafana", "documentation", "alerting", "alerts", "notification", "templating"]
-weight = 110
-+++
+---
+keywords:
+- grafana
+- documentation
+- alerting
+- alerts
+- notification
+- templating
+title: Alert notification templating
+weight: 110
+---
 
 # Alert notification templating
 

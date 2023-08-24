@@ -1,8 +1,10 @@
-+++
-title = "Pie chart panel"
-keywords = ["grafana", "pie chart"]
-weight = 850
-+++
+---
+keywords:
+- grafana
+- pie chart
+title: Pie chart panel
+weight: 850
+---
 
 # Pie chart v2 panel
 

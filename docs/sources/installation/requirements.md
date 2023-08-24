@@ -1,9 +1,12 @@
-+++
-title = "Requirements"
-description = "Requirements for Grafana"
-keywords = ["grafana", "installation", "documentation"]
-weight = 100
-+++
+---
+description: Requirements for Grafana
+keywords:
+- grafana
+- installation
+- documentation
+title: Requirements
+weight: 100
+---
 
 # Grafana requirements
 
@@ -59,6 +62,6 @@ Grafana is supported in the current version of the following browsers. Older ver
 - Firefox
 - Safari
 - Microsoft Edge
-- Internet Explorer 11 is only fully supported in Grafana versions prior v6.0.
+- Internet Explorer 11 is only fully supported in Grafana versions prior to v6.0.
 
 > **Note:** Always enable JavaScript in your browser. Running Grafana without JavaScript enabled in the browser is not supported.

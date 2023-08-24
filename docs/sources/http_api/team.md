@@ -1,19 +1,19 @@
-+++
-title = "Team HTTP API "
-description = "Grafana Team HTTP API"
-keywords = ["grafana", "http", "documentation", "api", "team", "teams", "group"]
-aliases = ["/docs/grafana/latest/http_api/team/"]
-+++
+---
+description: Grafana Team HTTP API
+keywords:
+  - grafana
+  - http
+  - documentation
+  - api
+  - team
+  - teams
+  - group
+title: 'Team HTTP API '
+---
 
 # Team API
 
-This API can be used to manage Teams and Team Memberships.
-
-Access to these API endpoints is restricted as follows:
-
-- All authenticated users are able to view details of teams they are a member of.
-- Organization Admins are able to manage all teams and team members.
-- If the `editors_can_admin` configuration flag is enabled, Organization Editors are able to view details of all teams and to manage teams that they are Admin members of.
+This API can be used to create/update/delete Teams and to add/remove users to Teams. All actions require that the user has the Admin role for the organization.
 
 ## Team Search With Paging
 
@@ -366,9 +366,9 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 
 JSON Body Schema:
 
-- **theme** - One of: ``light``, ``dark``, or an empty string for the default theme
-- **homeDashboardId** - The numerical ``:id`` of a dashboard, default: ``0``
-- **timezone** - One of: ``utc``, ``browser``, or an empty string for the default
+- **theme** - One of: `light`, `dark`, or an empty string for the default theme
+- **homeDashboardId** - The numerical `:id` of a dashboard, default: `0`
+- **timezone** - One of: `utc`, `browser`, or an empty string for the default
 
 Omitting a key will cause the current value to be replaced with the system default value.
 

@@ -1,8 +1,12 @@
-+++
-title = "Table field options"
-keywords = ["grafana", "table options", "documentation", "format tables"]
-weight = 500
-+++
+---
+keywords:
+- grafana
+- table options
+- documentation
+- format tables
+title: Table field options
+weight: 500
+---
 
 # Table field options
 

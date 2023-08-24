@@ -1,12 +1,18 @@
-+++
-title = "What's new in Grafana v4.1"
-description = "Feature and improvement highlights for Grafana v4.1"
-keywords = ["grafana", "new", "documentation", "4.1.0", "release notes"]
-aliases = ["/docs/grafana/latest/guides/whats-new-in-v4-1/"]
-weight = -8
-[_build]
-list = false
-+++
+---
+_build:
+  list: false
+aliases:
+- ../guides/whats-new-in-v4-1/
+description: Feature and improvement highlights for Grafana v4.1
+keywords:
+- grafana
+- new
+- documentation
+- 4.1.0
+- release notes
+title: What's new in Grafana v4.1
+weight: -8
+---
 
 ## What's new in Grafana v4.1
 - **Graph**: Support for shared tooltip on all graphs as you hover over one graph. [#1578](https://github.com/grafana/grafana/pull/1578), [#6274](https://github.com/grafana/grafana/pull/6274)

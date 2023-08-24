@@ -1,8 +1,7 @@
-+++
-title = "Install plugins"
-aliases = ["/docs/grafana/latest/plugins/installation/"]
-weight = 1
-+++
+---
+title: Install plugins
+weight: 1
+---
 
 # Install Grafana plugins
 

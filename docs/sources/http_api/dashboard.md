@@ -1,9 +1,13 @@
-+++
-title = "Dashboard HTTP API "
-description = "Grafana Dashboard HTTP API"
-keywords = ["grafana", "http", "documentation", "api", "dashboard"]
-aliases = ["/docs/grafana/latest/http_api/dashboard/"]
-+++
+---
+description: Grafana Dashboard HTTP API
+keywords:
+  - grafana
+  - http
+  - documentation
+  - api
+  - dashboard
+title: 'Dashboard HTTP API '
+---
 
 # Dashboard API
 
@@ -249,7 +253,7 @@ There can be different reasons for this:
 - A dashboard with the same uid already exists, `status=name-exists`
 - The dashboard belongs to plugin `<plugin title>`, `status=plugin-dashboard`
 
- The response body will have the following properties:
+The response body will have the following properties:
 
 ```http
 HTTP/1.1 412 Precondition Failed
@@ -434,13 +438,16 @@ Content-Type: application/json
 ```
 
 ## Dashboard Search
+
 See [Folder/Dashboard Search API]({{< relref "folder_dashboard_search.md" >}}).
 
 ## Deprecated resources
+
 Please note that these resource have been deprecated and will be removed in a future release.
 
 ### Get dashboard by slug
-**Deprecated starting from Grafana v5.0. Please update to use the new *Get dashboard by uid* resource instead**
+
+**Deprecated starting from Grafana v5.0. Please update to use the new _Get dashboard by uid_ resource instead**
 
 `GET /api/dashboards/db/:slug`
 
@@ -488,7 +495,8 @@ Status Codes:
 - **404** – Not found
 
 ### Delete dashboard by slug
-**Deprecated starting from Grafana v5.0. Please update to use the *Delete dashboard by uid* resource instead.**
+
+**Deprecated starting from Grafana v5.0. Please update to use the _Delete dashboard by uid_ resource instead.**
 
 `DELETE /api/dashboards/db/:slug`
 

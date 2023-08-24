@@ -1,9 +1,16 @@
-+++
-title = "Logs panel"
-keywords = ["grafana", "dashboard", "documentation", "panels", "logs panel"]
-aliases = ["/docs/grafana/latest/reference/logs/", "/docs/grafana/latest/features/panels/logs/",]
-weight = 700
-+++
+---
+aliases:
+- ../../features/panels/logs/
+- ../../reference/logs/
+keywords:
+- grafana
+- dashboard
+- documentation
+- panels
+- logs panel
+title: Logs panel
+weight: 700
+---
 
 # Logs panel
 

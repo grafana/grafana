@@ -1,8 +1,14 @@
-+++
-title = "Time series panel"
-keywords = ["grafana", "graph panel", "time series panel", "documentation", "guide", "graph"]
-weight = 1200
-+++
+---
+keywords:
+- grafana
+- graph panel
+- time series panel
+- documentation
+- guide
+- graph
+title: Time series panel
+weight: 1200
+---
 
 # Time series panel
 

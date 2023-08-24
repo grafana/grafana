@@ -1,9 +1,13 @@
-+++
-title = "Create alerts"
-description = "Configure alert rules"
-keywords = ["grafana", "alerting", "guide", "rules"]
-weight = 200
-+++
+---
+description: Configure alert rules
+keywords:
+- grafana
+- alerting
+- guide
+- rules
+title: Create alerts
+weight: 200
+---
 
 # Create alerts
 

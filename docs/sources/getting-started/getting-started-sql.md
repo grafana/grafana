@@ -1,10 +1,18 @@
-+++
-title = "With Grafana and MS SQL Server"
-description = "Guide for getting started with Grafana and MS SQL Server"
-keywords = ["grafana", "intro", "guide", "started", "SQL", "MSSQL"]
-aliases = ["/docs/grafana/latest/guides/gettingstarted","/docs/grafana/latest/guides/getting_started"]
-weight = 400
-+++
+---
+aliases:
+- ../guides/getting_started/
+- ../guides/gettingstarted/
+description: Guide for getting started with Grafana and MS SQL Server
+keywords:
+- grafana
+- intro
+- guide
+- started
+- SQL
+- MSSQL
+title: With Grafana and MS SQL Server
+weight: 400
+---
 
 # Getting started with Grafana and MS SQL Server
 

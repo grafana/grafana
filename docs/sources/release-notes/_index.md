@@ -1,17 +1,13 @@
-+++
-title = "Release notes"
-weight = 10000
-+++
+---
+title: Release notes
+weight: 10000
+---
 
 # Release notes
 
 Here you can find detailed release notes that list everything that is included in every release as well as notices
 about deprecations, breaking changes as well as changes that relate to plugin development.
 
-- [Release notes for 7.5.11]({{< relref "release-notes-7-5-11" >}})
-- [Release notes for 7.5.10]({{< relref "release-notes-7-5-10" >}})
-- [Release notes for 7.5.9]({{< relref "release-notes-7-5-9" >}})
-- [Release notes for 7.5.8]({{< relref "release-notes-7-5-8" >}})
 - [Release notes for 7.5.7]({{< relref "release-notes-7-5-7" >}})
 - [Release notes for 7.5.6]({{< relref "release-notes-7-5-6" >}})
 - [Release notes for 7.5.5]({{< relref "release-notes-7-5-5" >}})
