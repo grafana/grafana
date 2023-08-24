@@ -436,7 +436,7 @@ export class PanelModel implements DataConfigSource, IPanelModel {
     this.options = options.options;
   }
 
-  pluginLoaded(plugin: PanelPlugin) {
+  async pluginLoaded(plugin: PanelPlugin) {
     this.plugin = plugin;
 
     const version = getPluginVersion(plugin);
@@ -458,7 +458,8 @@ export class PanelModel implements DataConfigSource, IPanelModel {
 
     if (plugin.onPanelMigration) {
       if (version !== this.pluginVersion) {
-        this.options = plugin.onPanelMigration(this);
+        const newPanelOptions = plugin.onPanelMigration(this);
+        this.options = await newPanelOptions;
         this.pluginVersion = version;
       }
     }

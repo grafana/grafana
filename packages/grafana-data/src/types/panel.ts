@@ -137,7 +137,9 @@ export interface PanelEditorProps<T = any> {
 /**
  * Called when a panel is first loaded with current panel model
  */
-export type PanelMigrationHandler<TOptions = any> = (panel: PanelModel<TOptions>) => Partial<TOptions>;
+export type PanelMigrationHandler<TOptions = any> = (
+  panel: PanelModel<TOptions>
+) => Partial<TOptions> | Promise<Partial<TOptions>>;
 
 /**
  * Called before a panel is initialized. Allows panel inspection for any updates before changing the panel type.
