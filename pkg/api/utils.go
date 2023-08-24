@@ -1,7 +1,6 @@
 package api
 
 import (
-	"encoding/json"
 	"net/mail"
 
 	"github.com/grafana/grafana/pkg/middleware/cookies"
