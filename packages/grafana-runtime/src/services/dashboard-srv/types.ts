@@ -1,4 +1,4 @@
-import { PanelModel } from '@grafana/data';
+import { PanelModel as CorePanelModel } from '@grafana/data';
 import { GridPos } from '@grafana/schema';
 
 /**
@@ -6,18 +6,18 @@ import { GridPos } from '@grafana/schema';
  *
  * @public
  */
-export class PublicDashboardSrv {
+export class PluginsAPIDashboardSrv {
   /**
    * The current dashboard. Undefined if not dashboard is loaded
    */
-  dashboard?: PublicDashboardModel;
+  dashboard?: PluginsAPIDashboardModel;
 }
 
 /**
  * Used to interact with the current Grafana dashboard.
  * @public
  */
-export interface PublicDashboardModel {
+export interface PluginsAPIDashboardModel {
   /**
    * The uid of the dashboard
    * @remarks
@@ -34,17 +34,23 @@ export interface PublicDashboardModel {
    * The panels of the dashboard
    *  Making changes to this attribute, such as adding or removing items, will directly impact the panels displayed in the dashboard.
    */
-  panels: PublicPanelModel[];
+  panels: PluginsAPIPanelModel[];
 }
 
 /**
  * A panel in a grafana dashboard.
  * @public
  */
-export interface PublicPanelModel extends Pick<PanelModel, 'id' | 'title' | 'type'> {
+export interface PluginsAPIPanelModel extends Pick<CorePanelModel, 'id' | 'title' | 'type' | 'options'> {
   /**
    *  The panel's grid position is defined by its x and y coordinates, as well as its width (w) and height (h).
    * Static panels remain unaffected by other panels' positioning changes.
    */
   gridPos: GridPos;
+  /**
+   * Forces the panel to re-render in the dashboard
+   * fetching new data.
+   * Use it to see changes to the panel properties
+   */
+  refresh(): void;
 }
