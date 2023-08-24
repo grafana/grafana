@@ -40,13 +40,13 @@ This section describes the fields you fill out to create a recording rule.
 - **Namespace -** Select an existing rule namespace or click **Add new** and enter a name to create a new one. Namespaces can contain one or more rule groups and have only organizational purpose.
 - **Group -** Select an existing group within the selected namespace or click **Add new** to create a new group. Newly created rules are added to the end of this group. Rules within a group are run sequentially at a regular interval, with the same evaluation time.
 
-![Rule type section screenshot](/static/img/docs/alerting/unified/rule-edit-cortex-recording-rule-8-2.png 'Rule type section screenshot')
+![Rule type section screenshot](/static/img/docs/alerting/unified/rule-edit-mimir-recording-rule-8-2.png 'Rule type section screenshot')
 
 ### Query
 
 Enter a PromQL or LogQL expression. The result of this expression will get recorded as the value for the new metric.
 
-![Query section](/static/img/docs/alerting/unified/rule-edit-cortex-recording-rule-query-8-2.png 'Query section screenshot')
+![Query section](/static/img/docs/alerting/unified/rule-edit-mimir-recording-rule-query-8-2.png 'Query section screenshot')
 
 
 ### Details

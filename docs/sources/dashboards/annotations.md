@@ -1,7 +1,7 @@
 +++
 title = "Annotations"
 keywords = ["grafana", "annotations", "documentation", "guide"]
-aliases = ["/docs/grafana/latest/reference/annotations/"]
+aliases = ["/docs/grafana/v8.1/reference/annotations/"]
 weight = 2
 +++
 

@@ -2,7 +2,7 @@
 title = "Histogram"
 description = "Histogram visualization"
 keywords = ["grafana", "docs", "bar chart", "panel", "barchart"]
-aliases =["/docs/grafana/latest/features/panels/histogram/", "/docs/grafana/latest/panels/visualizations/histogram/"]
+aliases =["/docs/grafana/v8.1/features/panels/histogram/", "/docs/grafana/v8.1/panels/visualizations/histogram/"]
 weight = 605
 +++
 

@@ -1,7 +1,7 @@
 +++
 title = "Plugin signatures"
 type = "docs"
-aliases = ["/docs/grafana/latest/plugins/plugin-signature-verification"]
+aliases = ["/docs/grafana/v8.1/plugins/plugin-signature-verification"]
 +++
 
 # Plugin signatures

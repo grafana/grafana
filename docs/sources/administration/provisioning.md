@@ -2,7 +2,7 @@
 title = "Provisioning"
 description = ""
 keywords = ["grafana", "provisioning"]
-aliases = ["/docs/grafana/latest/installation/provisioning"]
+aliases = ["/docs/grafana/v8.1/installation/provisioning"]
 weight = 800
 +++
 

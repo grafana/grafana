@@ -2,7 +2,7 @@
 title = "Image rendering"
 description = "Image rendering"
 keywords = ["grafana", "image", "rendering", "plugin"]
-aliases = ["/docs/grafana/latest/administration/image_rendering/"]
+aliases = ["/docs/grafana/v8.1/administration/image_rendering/"]
 weight = 55
 +++
 

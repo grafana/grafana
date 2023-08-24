@@ -1,7 +1,7 @@
 +++
 title = "Introduction to Grafana"
 weight = 5
-aliases = ["/docs/grafana/latest/guides/what-is-grafana"]
+aliases = ["/docs/grafana/v8.1/guides/what-is-grafana"]
 +++
 
 # Introduction to Grafana

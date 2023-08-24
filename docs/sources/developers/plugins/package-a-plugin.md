@@ -1,7 +1,7 @@
 +++
 title = "Package a plugin"
 type = "docs"
-aliases = ["/docs/grafana/latest/developers/plugins/share-a-plugin/"]
+aliases = ["/docs/grafana/v8.1/developers/plugins/share-a-plugin/"]
 +++
 
 # Package a plugin
