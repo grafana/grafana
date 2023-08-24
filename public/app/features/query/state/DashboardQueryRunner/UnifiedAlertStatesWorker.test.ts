@@ -45,6 +45,10 @@ function getTestContext() {
 describe('UnifiedAlertStatesWorker', () => {
   const worker = new UnifiedAlertStatesWorker();
 
+  beforeEach(() => {
+    config.publicDashboardAccessToken = '';
+  });
+
   beforeAll(() => {
     disableRBAC();
   });
