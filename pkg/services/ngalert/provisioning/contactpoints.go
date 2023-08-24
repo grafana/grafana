@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"sort"
 	"strings"
@@ -190,6 +191,8 @@ func (ecp *ContactPointService) CreateContactPoint(ctx context.Context, orgID in
 
 	if contactPoint.UID == "" {
 		contactPoint.UID = util.GenerateShortUID()
+	} else if err := util.ValidateUID(contactPoint.UID); err != nil {
+		return apimodels.EmbeddedContactPoint{}, errors.Join(ErrValidation, fmt.Errorf("cannot create contact point with UID '%s': %w", contactPoint.UID, err))
 	}
 
 	jsonData, err := contactPoint.Settings.MarshalJSON()
