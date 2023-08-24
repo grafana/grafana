@@ -2,7 +2,7 @@
 title = "Stat"
 description = "Stat panel documentation"
 keywords = ["grafana", "docs", "stat panel"]
-aliases = ["/docs/grafana/latest/features/panels/stat/", "/docs/grafana/latest/features/panels/singlestat/", "/docs/grafana/latest/reference/singlestat/", "/docs/grafana/latest/panels/visualizations/stat-panel/"]
+aliases = ["/docs/grafana/v8.3/features/panels/stat/", "/docs/grafana/v8.3/features/panels/singlestat/", "/docs/grafana/v8.3/reference/singlestat/", "/docs/grafana/v8.3/panels/visualizations/stat-panel/"]
 weight = 900
 +++
 

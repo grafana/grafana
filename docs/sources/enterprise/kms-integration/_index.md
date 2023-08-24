@@ -11,7 +11,7 @@ You can choose to encrypt secrets stored in the Grafana database using a key fro
 
 Grafana integrates with the following key management systems:
 
-- [AWS KMS]({{< relref "/using-aws-kms-to-encrypt-database-secrets.md" >}})
-- [Azure Key Vault]({{< relref "/using-azure-key-vault-to-encrypt-database-secrets.md" >}})
+- [AWS KMS]({{< relref "./using-aws-kms-to-encrypt-database-secrets.md" >}})
+- [Azure Key Vault]({{< relref "./using-azure-key-vault-to-encrypt-database-secrets.md" >}})
 
 Refer to [Database encryption]({{< relref "../../administration/database-encryption.md" >}}) to learn more about how Grafana encrypts secrets in the database.

@@ -2,7 +2,7 @@
 title = "Reporting API"
 description = "Grafana Enterprise APIs"
 keywords = ["grafana", "enterprise", "api", "reporting"]
-aliases = ["/docs/grafana/latest/http_api/reporting/"]
+aliases = ["/docs/grafana/v8.3/http_api/reporting/"]
 +++
 
 # Reporting API

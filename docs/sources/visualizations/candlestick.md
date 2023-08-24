@@ -2,7 +2,7 @@
 title = "Candlestick"
 description = "Candlestick visualization documentation"
 keywords = ["grafana", "Candlestick", "OHLC", "panel", "documentation"]
-aliases = ["/docs/grafana/latest/features/panels/candlestick/", "/docs/grafana/latest/panels/visualizations/candlestick/"]
+aliases = ["/docs/grafana/v8.3/features/panels/candlestick/", "/docs/grafana/v8.3/panels/visualizations/candlestick/"]
 weight = 600
 +++
 

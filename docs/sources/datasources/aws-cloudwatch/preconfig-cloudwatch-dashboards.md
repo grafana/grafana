@@ -2,7 +2,7 @@
 title = "Curated CloudWatch dashboards"
 description = "Guide for using AWS CloudWatch in Grafana"
 keywords = ["grafana", "stackdriver", "google", "guide", "cloud", "monitoring"]
-aliases = ["/docs/grafana/latest/datasources/cloudwatch"]
+aliases = ["/docs/grafana/v8.3/datasources/cloudwatch"]
 weight = 15
 +++
 

@@ -2,7 +2,7 @@
 title = "State timeline"
 description = "State timeline visualization"
 keywords = ["grafana", "docs", "state timeline", "panel"]
-aliases = ["/docs/grafana/latest/panels/visualizations/state-timeline/"]
+aliases = ["/docs/grafana/v8.3/panels/visualizations/state-timeline/"]
 weight = 900
 +++
 

@@ -3,7 +3,7 @@ title = "What's new in Grafana v8.3"
 description = "Feature and improvement highlights for Grafana v8.3"
 keywords = ["grafana", "new", "documentation", "8.3", "release notes"]
 weight = -33
-aliases = ["/docs/grafana/latest/guides/whats-new-in-v8-3/"]
+aliases = ["/docs/grafana/v8.3/guides/whats-new-in-v8-3/"]
 [_build]
 list = false
 +++
@@ -90,14 +90,14 @@ In order to support this, we’ve upgraded Grafana Enterprise to use envelope en
 
 ## Pay the same for all users, regardless of their permissions
 
-Are you tired of managing user permissions because your license only allows a certain number of Viewers and Editors or Admins? So were we. We’ve added support for combined user pricing, where all users cost the same and fall into the same license bucket in Grafana Enterprise. This is a specific license option and must be updated in your contract. To learn more, refer to our [licensing docs](https://grafana.com/docs/grafana/latest/enterprise/license/license-restrictions/). To switch to combined user pricing, contact your Grafana Labs account team.
+Are you tired of managing user permissions because your license only allows a certain number of Viewers and Editors or Admins? So were we. We’ve added support for combined user pricing, where all users cost the same and fall into the same license bucket in Grafana Enterprise. This is a specific license option and must be updated in your contract. To learn more, refer to our [licensing docs](https://grafana.com/docs/grafana/v8.3/enterprise/license/license-restrictions/). To switch to combined user pricing, contact your Grafana Labs account team.
 
 {{< figure src="/static/img/docs/enterprise/enterprise_users_8_3.png" max-width="1200px" caption="Grafana Enterprise User Pricing" >}}
 
 ## Author dashboards faster with resource caching
 
-Your query editor just became faster. [Query caching](https://grafana.com/docs/grafana/latest/enterprise/query-caching/) improves query performance and sometimes reduces cost, by reducing the number of repetitive queries performed against data sources. Resource caching does the same thing but for resource calls, like retrieving the list of applications in the AppDynamics editor, the list of metrics from Datadog, or the list of values in a template variable dropdown. This makes for a zippier user experience for everyone writing queries in Grafana.
+Your query editor just became faster. [Query caching](https://grafana.com/docs/grafana/v8.3/enterprise/query-caching/) improves query performance and sometimes reduces cost, by reducing the number of repetitive queries performed against data sources. Resource caching does the same thing but for resource calls, like retrieving the list of applications in the AppDynamics editor, the list of metrics from Datadog, or the list of values in a template variable dropdown. This makes for a zippier user experience for everyone writing queries in Grafana.
 
 ## Review audit logs for more services, like alerting
 
-[Audit logs](https://grafana.com/docs/grafana/latest/enterprise/auditing/) are a record of the actions users perform in Grafana, which you can investigate in case of a security incident or to understand Grafana usage better. We’ve added audit logs for new actions performed against plugins, data sources, library elements, and Grafana’s new alerting service. This ensures that if a user makes a change anywhere in Grafana Enterprise, you’ll have a record of it. For details, refer to the [Auditing docs](https://grafana.com/docs/grafana/latest/enterprise/auditing/).
+[Audit logs](https://grafana.com/docs/grafana/v8.3/enterprise/auditing/) are a record of the actions users perform in Grafana, which you can investigate in case of a security incident or to understand Grafana usage better. We’ve added audit logs for new actions performed against plugins, data sources, library elements, and Grafana’s new alerting service. This ensures that if a user makes a change anywhere in Grafana Enterprise, you’ll have a record of it. For details, refer to the [Auditing docs](https://grafana.com/docs/grafana/v8.3/enterprise/auditing/).

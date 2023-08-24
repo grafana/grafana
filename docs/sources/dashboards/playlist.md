@@ -1,7 +1,7 @@
 +++
 title = "Playlist"
 keywords = ["grafana", "dashboard", "documentation", "playlist"]
-aliases = ["/docs/grafana/latest/reference/playlist/"]
+aliases = ["/docs/grafana/v8.3/reference/playlist/"]
 weight = 4
 +++
 
