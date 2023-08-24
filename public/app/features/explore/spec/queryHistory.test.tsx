@@ -13,13 +13,13 @@ import {
   assertQueryHistoryComment,
   assertQueryHistoryElementsShown,
   assertQueryHistoryExists,
+  assertQueryHistoryIsEmpty,
   assertQueryHistoryIsStarred,
   assertQueryHistoryTabIsSelected,
-  assertQueryHistoryIsEmpty,
 } from './helper/assert';
 import {
-  commentQueryHistory,
   closeQueryHistory,
+  commentQueryHistory,
   deleteQueryHistory,
   inputQuery,
   loadMoreQueryHistory,
