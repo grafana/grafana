@@ -12,7 +12,7 @@ weight: 1995
 
 # Upgrade to Grafana v9.4
 
-{{< docs/shared "upgrade/upgrade-common-tasks.md" >}}
+{{< docs/shared lookup="upgrade/upgrade-common-tasks.md" source="grafana" version="<GRAFANA VERSION>" >}}
 
 ## Technical notes
 
