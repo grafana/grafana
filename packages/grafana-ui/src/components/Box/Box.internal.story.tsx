@@ -14,6 +14,7 @@ const meta: Meta<typeof Box> = {
     docs: {
       page: mdx,
     },
+    controls: { exclude: ['element'] },
   },
 };
 

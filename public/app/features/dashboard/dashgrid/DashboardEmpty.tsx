@@ -27,7 +27,7 @@ const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
     <div className={styles.centeredContent}>
       <div className={cx(styles.centeredContent, styles.wrapper)}>
         <div className={cx(styles.containerBox, styles.centeredContent, styles.visualizationContainer)}>
-          <Box margin={{ bottom: 2 }}>
+          <Box marginBottom={2}>
             <Text element="h1" textAlignment="center" weight="medium">
               <Trans i18nKey="dashboard.empty.add-visualization-header">
                 Start your new dashboard by adding a visualization
@@ -60,12 +60,12 @@ const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
         <div className={cx(styles.centeredContent, styles.others)}>
           {config.featureToggles.vizAndWidgetSplit && (
             <div className={cx(styles.containerBox, styles.centeredContent, styles.widgetContainer)}>
-              <Box margin={{ bottom: 1 }}>
+              <Box marginBottom={1}>
                 <Text element="h3" textAlignment="center" weight="medium">
                   <Trans i18nKey="dashboard.empty.add-widget-header">Add a widget</Trans>
                 </Text>
               </Box>
-              <Box margin={{ bottom: 3 }}>
+              <Box marginBottom={3}>
                 <Text element="p" textAlignment="center" color="secondary">
                   <Trans i18nKey="dashboard.empty.add-widget-body">Create lists, markdowns and other widgets</Trans>
                 </Text>
@@ -85,12 +85,12 @@ const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
             </div>
           )}
           <div className={cx(styles.containerBox, styles.centeredContent, styles.rowContainer)}>
-            <Box margin={{ bottom: 1 }}>
+            <Box marginBottom={1}>
               <Text element="h3" textAlignment="center" weight="medium">
                 <Trans i18nKey="dashboard.empty.add-row-header">Add a row</Trans>
               </Text>
             </Box>
-            <Box margin={{ bottom: 3 }}>
+            <Box marginBottom={3}>
               <Text element="p" textAlignment="center" color="secondary">
                 <Trans i18nKey="dashboard.empty.add-row-body">
                   Group your visualizations into expandable sections.
@@ -111,12 +111,12 @@ const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
             </Button>
           </div>
           <div className={cx(styles.containerBox, styles.centeredContent, styles.libraryContainer)}>
-            <Box margin={{ bottom: 1 }}>
+            <Box marginBottom={1}>
               <Text element="h3" textAlignment="center" weight="medium">
                 <Trans i18nKey="dashboard.empty.add-import-header">Import panel</Trans>
               </Text>
             </Box>
-            <Box margin={{ bottom: 3 }}>
+            <Box marginBottom={3}>
               <Text element="p" textAlignment="center" color="secondary">
                 <Trans i18nKey="dashboard.empty.add-import-body">
                   Import visualizations that are shared with other dashboards.
