@@ -3,7 +3,6 @@ import React from 'react';
 import { AccessoryButton } from '@grafana/experimental';
 
 import { DEFAULT_POLICY } from '../../../../../types';
-
 import { toSelectableValue } from '../utils/toSelectableValue';
 
 import { Seg } from './Seg';
