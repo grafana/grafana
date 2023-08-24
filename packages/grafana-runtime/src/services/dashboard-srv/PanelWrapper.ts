@@ -4,6 +4,7 @@ import { PluginsAPIPanelModel } from './types';
 
 export class PluginsAPIPanelModelWrapper implements PluginsAPIPanelModel {
   #panel: PluginsAPIPanelModel;
+
   constructor(panel: PluginsAPIPanelModel) {
     this.#panel = panel;
   }
