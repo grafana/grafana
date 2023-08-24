@@ -3,49 +3,56 @@ import { useLocation } from 'react-router-dom';
 
 import { locationUtil } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
-import { SceneComponentProps, SceneObjectBase, SceneObjectState, SceneObject, sceneGraph } from '@grafana/scenes';
+import {
+  SceneComponentProps,
+  SceneObjectBase,
+  SceneObjectState,
+  SceneObject,
+  sceneGraph,
+  VizPanel,
+} from '@grafana/scenes';
 import { Drawer, Tab, TabsBar } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 import { supportsDataQuery } from 'app/features/dashboard/components/PanelEditor/utils';
 
-import { InspectTab } from '../../inspector/types';
-
-import { findVizPanel } from './utils/findVizPanel';
+import { InspectDataTab } from './InspectDataTab';
+import { InspectStatsTab } from './InspectStatsTab';
+import { InspectTabState } from './types';
 
 interface ScenePanelInspectorState extends SceneObjectState {
-  panelKey: string;
   tabs?: Array<SceneObject<InspectTabState>>;
 }
 
 export class ScenePanelInspector extends SceneObjectBase<ScenePanelInspectorState> {
   static Component = ScenePanelInspectorRenderer;
+  // Not stored in state as this is just a reference and it never changes
+  private _panel: VizPanel;
 
-  constructor(state: ScenePanelInspectorState) {
-    super(state);
+  constructor(panel: VizPanel) {
+    super({});
 
-    this.addActivationHandler(() => this.onActivate());
+    this._panel = panel;
+    this.buildTabs();
   }
 
-  onActivate() {
-    const panel = findVizPanel(this, this.state.panelKey)!;
-    const plugin = panel.getPlugin();
+  buildTabs() {
+    const plugin = this._panel.getPlugin();
     const tabs: Array<SceneObject<InspectTabState>> = [];
 
     if (!plugin) {
+      // TODO handle this case
       return;
     }
 
     if (supportsDataQuery(plugin)) {
-      tabs.push(new InspectDataTab());
-      tabs.push(new InspectStatsTab());
+      tabs.push(new InspectDataTab(this._panel));
+      tabs.push(new InspectStatsTab(this._panel));
     }
 
     this.setState({ tabs });
   }
 
   getDrawerTitle() {
-    const panel = findVizPanel(this, this.state.panelKey)!;
-    return sceneGraph.interpolate(this, `Inspect: ${panel.state.title}`);
+    return sceneGraph.interpolate(this._panel, `Inspect: ${this._panel.state.title}`);
   }
 
   onClose = () => {
@@ -89,29 +96,4 @@ function ScenePanelInspectorRenderer({ model }: SceneComponentProps<ScenePanelIn
       {currentTab.Component && <currentTab.Component model={currentTab} />}
     </Drawer>
   );
-}
-
-interface InspectTabState extends SceneObjectState {
-  label: string;
-  value: InspectTab;
-}
-
-class InspectDataTab extends SceneObjectBase<InspectTabState> {
-  constructor() {
-    super({ label: t('dashboard.inspect.data-tab', 'Data'), value: InspectTab.Data });
-  }
-
-  static Component = ({ model }: SceneComponentProps<InspectDataTab>) => {
-    return <div>Data tab</div>;
-  };
-}
-
-class InspectStatsTab extends SceneObjectBase<InspectTabState> {
-  constructor() {
-    super({ label: t('dashboard.inspect.stats-tab', 'Stats'), value: InspectTab.Stats });
-  }
-
-  static Component = ({ model }: SceneComponentProps<InspectStatsTab>) => {
-    return <div>Stats tab</div>;
-  };
 }

@@ -16,7 +16,7 @@ import {
 import appEvents from 'app/core/app_events';
 
 import { DashboardSceneRenderer } from './DashboardSceneRenderer';
-import { ScenePanelInspector } from './ScenePanelInspector';
+import { ScenePanelInspector } from './inspector/ScenePanelInspector';
 import { forceRenderChildren } from './utils';
 import { findVizPanel } from './utils/findVizPanel';
 
@@ -137,7 +137,7 @@ class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
       }
 
       update.inspectPanelKey = values.inspect;
-      update.drawer = new ScenePanelInspector({ panelKey: values.inspect });
+      update.drawer = new ScenePanelInspector(panel);
     } else if (inspectPanelKey) {
       update.inspectPanelKey = undefined;
       update.drawer = undefined;
