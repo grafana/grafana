@@ -15,7 +15,7 @@ Auditing allows you to track important changes to your Grafana instance. By defa
 
 Audit logs are JSON objects representing user actions like:
 
-- Modifications to resources such as dashboards and data sources.
+- Modifications ro resources such as dashboards and data sources.
 - A user failing to log in.
 
 ### Format

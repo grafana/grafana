@@ -2,7 +2,7 @@
 title = "What's new in Grafana v4.3"
 description = "Feature and improvement highlights for Grafana v4.3"
 keywords = ["grafana", "new", "documentation", "4.3.0", "release notes"]
-aliases = ["/docs/grafana/latest/guides/whats-new-in-v4-3/"]
+aliases = ["/docs/grafana/v8.0/guides/whats-new-in-v4-3/"]
 weight = -10
 [_build]
 list = false

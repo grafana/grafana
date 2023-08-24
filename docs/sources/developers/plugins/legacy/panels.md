@@ -1,7 +1,7 @@
 +++
 title = "Legacy panel plugins"
 keywords = ["grafana", "plugins", "panel", "documentation"]
-aliases = ["/docs/grafana/latest/plugins/developing/panels/"]
+aliases = ["/docs/grafana/v8.0/plugins/developing/panels/"]
 +++
 
 # Legacy panel plugins

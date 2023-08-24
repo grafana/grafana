@@ -2,7 +2,7 @@
 title = "Admin HTTP API "
 description = "Grafana Admin HTTP API"
 keywords = ["grafana", "http", "documentation", "api", "admin"]
-aliases = ["/docs/grafana/latest/http_api/admin/"]
+aliases = ["/docs/grafana/v8.0/http_api/admin/"]
 +++
 
 # Admin API

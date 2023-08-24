@@ -1,7 +1,7 @@
 +++
 title = "Share a panel"
 keywords = ["grafana", "dashboard", "documentation", "sharing", "library panel"]
-aliases = ["/docs/grafana/latest/dashboards/share-dashboard/","/docs/grafana/latest/reference/share_panel/"]
+aliases = ["/docs/grafana/v8.0/dashboards/share-dashboard/","/docs/grafana/v8.0/reference/share_panel/"]
 weight = 6
 +++
 
@@ -61,7 +61,7 @@ If you created a snapshot by mistake, click **delete snapshot** to remove the sn
 
 You can embed a panel using an iframe on another web site. A viewer must be signed into Grafana to view the graph. 
 
-**> Note:** As of Grafana 8.0, anonymous access permission is no longer available for Grafana Cloud.
+**> Note:** As of Grafana 8.0, anonymous access permission is no available for Grafana Cloud.
 
 ![Panel share embed](/static/img/docs/sharing/share-panel-embedded-link-8-0.png)
 

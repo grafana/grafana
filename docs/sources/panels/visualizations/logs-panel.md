@@ -1,7 +1,7 @@
 +++
 title = "Logs panel"
 keywords = ["grafana", "dashboard", "documentation", "panels", "logs panel"]
-aliases = ["/docs/grafana/latest/reference/logs/", "/docs/grafana/latest/features/panels/logs/",]
+aliases = ["/docs/grafana/v8.0/reference/logs/", "/docs/grafana/v8.0/features/panels/logs/",]
 weight = 700
 +++
 

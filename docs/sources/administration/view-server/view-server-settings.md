@@ -2,7 +2,7 @@
 title = "View server settings"
 description = "How to view server settings in the Grafana UI"
 keywords = ["grafana", "configuration", "server", "settings"]
-aliases = ["/docs/grafana/latest/admin/view-server-settings/"]
+aliases = ["/docs/grafana/v8.0/admin/view-server-settings/"]
 weight = 300
 +++
 

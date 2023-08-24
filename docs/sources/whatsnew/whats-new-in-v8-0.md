@@ -3,7 +3,7 @@ title = "What's new in Grafana v8.0"
 description = "Feature and improvement highlights for Grafana v8.0"
 keywords = ["grafana", "new", "documentation", "8.0", "release notes"]
 weight = -33
-aliases = ["/docs/grafana/latest/guides/whats-new-in-v8-0/"]
+aliases = ["/docs/grafana/v8.0/guides/whats-new-in-v8-0/"]
 [_build]
 list = false
 +++
@@ -180,7 +180,7 @@ The Azure Monitor data source now supports Managed Identity for users hosting Gr
 
 Also, in addition to querying Log Analytics Workspaces, you can now query the logs for any individual [supported resource](https://docs.microsoft.com/en-us/azure/azure-monitor/essentials/metrics-supported), or for all resources in a subscription or resource group.
 
-> **Note:** In Grafana 7.5 we started the deprecation for separate Application Insights queries, in favor of querying Application Insights resources through Metrics and Logs. In Grafana 8.0 new Application Insights and Insights Analytics queries cannot be made, and existing queries have been made read-only. For more details, refer to the [Deprecating Application Insights]({{< relref "../datasources/azuremonitor/_index.md#deprecating-application-insights" >}}).
+> **Note:** In Grafana 7.5 we started the deprecation for separate Application Insights queries, in favor of querying Application Insights resources through Metrics and Logs. In Grafana 8.0 new Application Insights and Insights Analytics queries cannot be made, and existing queries have been made read-only. For more details, refer to the [Deprecating Application Insights]({{< relref "../datasources/azuremonitor/_index.md#deprecating-application-insights" >}}.
 
 [Azure Monitor data source]({{< relref "../datasources/azuremonitor/_index.md" >}}) was updated as a result of these changes.
 

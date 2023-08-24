@@ -1,7 +1,7 @@
 +++
 title = "Standard field options"
 keywords = ["grafana", "table options", "documentation", "format tables"]
-aliases = ["/docs/grafana/latest/panels/field-options/standard-field-options/"]
+aliases = ["/docs/grafana/v8.0/panels/field-options/standard-field-options/"]
 weight = 430
 +++
 

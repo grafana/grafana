@@ -1,12 +1,12 @@
 +++
 title = "Add a custom variable"
-aliases = ["/docs/grafana/latest/variables/add-custom-variable.md"]
+aliases = ["/docs/grafana/v8.0/variables/add-custom-variable.md"]
 weight = 200
 +++
 
 # Add a custom variable
 
-Use a _custom_ variable for a value that does not change, such as a number or a string.
+Use a _custom_ variable for values that do not change. This might be numbers, strings, or even other variables.
 
 For example, if you have server names or region names that never change, then you might want to create them as custom variables rather than query variables. Because they do not change, you might use them in [chained variables]({{< relref "chained-variables.md" >}}) rather than other query variables. That would reduce the number of queries Grafana must send when chained variables are updated.
 
@@ -24,7 +24,7 @@ For example, if you have server names or region names that never change, then yo
 
 ## Enter Custom Options
 
-1. In the **Values separated by comma** list, enter the values for this variable in a comma-separated list. You can include numbers, strings, or key/value pairs separated by a space and a colon. For example, `key1 : value1,key2 : value2`.
+1. In the **Values separated by comma** list, enter the values for this variable in a comma-separated list. You can include numbers, strings, other variables or key/value pairs separated by a space and a colon, i.e. `key1 : value1,key2 : value2`.
 1. (optional) Enter [Selection Options]({{< relref "../variable-selection-options.md" >}}).
 1. In **Preview of values**, Grafana displays a list of the current variable values. Review them to ensure they match what you expect.
 1. Click **Add** to add the variable to the dashboard.

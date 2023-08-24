@@ -1,6 +1,6 @@
 +++
 title = "Preferences"
-aliases =["/docs/grafana/latest/administration/preferences.md"]
+aliases =["/docs/grafana/v8.0/administration/preferences.md"]
 weight = 50
 +++
 

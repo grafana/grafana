@@ -2,7 +2,7 @@
 title = "InfluxDB data source"
 description = "Guide for using InfluxDB in Grafana"
 keywords = ["grafana", "influxdb", "guide", "flux"]
-aliases = ["/docs/grafana/latest/features/datasources/influxdb", "/docs/grafana/latest/datasources/influxdb"]
+aliases = ["/docs/grafana/v8.0/features/datasources/influxdb", "/docs/grafana/v8.0/datasources/influxdb"]
 weight = 700
 +++
 
