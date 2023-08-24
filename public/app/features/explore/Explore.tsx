@@ -38,6 +38,7 @@ import { AbsoluteTimeEvent } from 'app/types/events';
 
 import { getTimeZone } from '../profile/state/selectors';
 
+import ContentOutline from './ContentOutline/ContentOutline';
 import { CustomContainer } from './CustomContainer';
 import ExploreQueryInspector from './ExploreQueryInspector';
 import { ExploreToolbar } from './ExploreToolbar';
@@ -91,9 +92,12 @@ const getStyles = (theme: GrafanaTheme2) => {
     exploreContainer: css`
       display: flex;
       flex: 1 1 auto;
-      flex-direction: column;
       padding: ${theme.spacing(2)};
       padding-top: 0;
+    `,
+    columnWrapper: css`
+      display: flex;
+      flex-direction: column;
     `,
   };
 };
@@ -526,69 +530,72 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
         <ExploreToolbar exploreId={exploreId} onChangeTime={this.onChangeTime} topOfViewRef={this.topOfViewRef} />
         {datasourceInstance ? (
           <div className={styles.exploreContainer}>
-            <PanelContainer className={styles.queryContainer}>
-              <QueryRows exploreId={exploreId} />
-              <SecondaryActions
-                addQueryRowButtonDisabled={isLive}
-                // We cannot show multiple traces at the same time right now so we do not show add query button.
-                //TODO:unification
-                addQueryRowButtonHidden={false}
-                richHistoryRowButtonHidden={richHistoryRowButtonHidden}
-                richHistoryButtonActive={showRichHistory}
-                queryInspectorButtonActive={showQueryInspector}
-                onClickAddQueryRowButton={this.onClickAddQueryRowButton}
-                onClickRichHistoryButton={this.toggleShowRichHistory}
-                onClickQueryInspectorButton={this.toggleShowQueryInspector}
-              />
-              <ResponseErrorContainer exploreId={exploreId} />
-            </PanelContainer>
-            <AutoSizer onResize={this.onResize} disableHeight>
-              {({ width }) => {
-                if (width === 0) {
-                  return null;
-                }
+            <div className={styles.columnWrapper}>
+              <PanelContainer className={styles.queryContainer}>
+                <QueryRows exploreId={exploreId} />
+                <SecondaryActions
+                  addQueryRowButtonDisabled={isLive}
+                  // We cannot show multiple traces at the same time right now so we do not show add query button.
+                  //TODO:unification
+                  addQueryRowButtonHidden={false}
+                  richHistoryRowButtonHidden={richHistoryRowButtonHidden}
+                  richHistoryButtonActive={showRichHistory}
+                  queryInspectorButtonActive={showQueryInspector}
+                  onClickAddQueryRowButton={this.onClickAddQueryRowButton}
+                  onClickRichHistoryButton={this.toggleShowRichHistory}
+                  onClickQueryInspectorButton={this.toggleShowQueryInspector}
+                />
+                <ResponseErrorContainer exploreId={exploreId} />
+              </PanelContainer>
+              <AutoSizer onResize={this.onResize} disableHeight>
+                {({ width }) => {
+                  if (width === 0) {
+                    return null;
+                  }
 
-                return (
-                  <main className={cx(styles.exploreMain)} style={{ width }}>
-                    <ErrorBoundaryAlert>
-                      {showPanels && (
-                        <>
-                          {showMetrics && graphResult && (
-                            <ErrorBoundaryAlert>{this.renderGraphPanel(width)}</ErrorBoundaryAlert>
-                          )}
-                          {showRawPrometheus && (
-                            <ErrorBoundaryAlert>{this.renderRawPrometheus(width)}</ErrorBoundaryAlert>
-                          )}
-                          {showTable && <ErrorBoundaryAlert>{this.renderTablePanel(width)}</ErrorBoundaryAlert>}
-                          {showLogs && <ErrorBoundaryAlert>{this.renderLogsPanel(width)}</ErrorBoundaryAlert>}
-                          {showNodeGraph && <ErrorBoundaryAlert>{this.renderNodeGraphPanel()}</ErrorBoundaryAlert>}
-                          {showFlameGraph && <ErrorBoundaryAlert>{this.renderFlameGraphPanel()}</ErrorBoundaryAlert>}
-                          {showTrace && <ErrorBoundaryAlert>{this.renderTraceViewPanel()}</ErrorBoundaryAlert>}
-                          {showLogsSample && <ErrorBoundaryAlert>{this.renderLogsSamplePanel()}</ErrorBoundaryAlert>}
-                          {showCustom && <ErrorBoundaryAlert>{this.renderCustom(width)}</ErrorBoundaryAlert>}
-                          {showNoData && <ErrorBoundaryAlert>{this.renderNoData()}</ErrorBoundaryAlert>}
-                        </>
-                      )}
-                      {showRichHistory && (
-                        <RichHistoryContainer
-                          width={width}
-                          exploreId={exploreId}
-                          onClose={this.toggleShowRichHistory}
-                        />
-                      )}
-                      {showQueryInspector && (
-                        <ExploreQueryInspector
-                          exploreId={exploreId}
-                          width={width}
-                          onClose={this.toggleShowQueryInspector}
-                          timeZone={timeZone}
-                        />
-                      )}
-                    </ErrorBoundaryAlert>
-                  </main>
-                );
-              }}
-            </AutoSizer>
+                  return (
+                    <main className={cx(styles.exploreMain)} style={{ width }}>
+                      <ErrorBoundaryAlert>
+                        {showPanels && (
+                          <>
+                            {showMetrics && graphResult && (
+                              <ErrorBoundaryAlert>{this.renderGraphPanel(width)}</ErrorBoundaryAlert>
+                            )}
+                            {showRawPrometheus && (
+                              <ErrorBoundaryAlert>{this.renderRawPrometheus(width)}</ErrorBoundaryAlert>
+                            )}
+                            {showTable && <ErrorBoundaryAlert>{this.renderTablePanel(width)}</ErrorBoundaryAlert>}
+                            {showLogs && <ErrorBoundaryAlert>{this.renderLogsPanel(width)}</ErrorBoundaryAlert>}
+                            {showNodeGraph && <ErrorBoundaryAlert>{this.renderNodeGraphPanel()}</ErrorBoundaryAlert>}
+                            {showFlameGraph && <ErrorBoundaryAlert>{this.renderFlameGraphPanel()}</ErrorBoundaryAlert>}
+                            {showTrace && <ErrorBoundaryAlert>{this.renderTraceViewPanel()}</ErrorBoundaryAlert>}
+                            {showLogsSample && <ErrorBoundaryAlert>{this.renderLogsSamplePanel()}</ErrorBoundaryAlert>}
+                            {showCustom && <ErrorBoundaryAlert>{this.renderCustom(width)}</ErrorBoundaryAlert>}
+                            {showNoData && <ErrorBoundaryAlert>{this.renderNoData()}</ErrorBoundaryAlert>}
+                          </>
+                        )}
+                        {showRichHistory && (
+                          <RichHistoryContainer
+                            width={width}
+                            exploreId={exploreId}
+                            onClose={this.toggleShowRichHistory}
+                          />
+                        )}
+                        {showQueryInspector && (
+                          <ExploreQueryInspector
+                            exploreId={exploreId}
+                            width={width}
+                            onClose={this.toggleShowQueryInspector}
+                            timeZone={timeZone}
+                          />
+                        )}
+                      </ErrorBoundaryAlert>
+                    </main>
+                  );
+                }}
+              </AutoSizer>
+            </div>
+            <ContentOutline />
           </div>
         ) : (
           this.renderEmptyState(styles.exploreContainer)
