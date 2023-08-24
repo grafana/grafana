@@ -5,5 +5,5 @@ import (
 )
 
 var (
-	ErrInvalidGRN = errutil.NewBase(errutil.StatusValidationFailed, "grn.InvalidGRN")
+	ErrInvalidGRN = errutil.ValidationFailed("grn.InvalidGRN")
 )

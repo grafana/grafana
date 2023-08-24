@@ -218,8 +218,6 @@ To understand basic MQL concepts, refer to [Introduction to Monitoring Query Lan
 **To create an MQL query:**
 
 1. Select the **Metrics** option in the **Query Type** dropdown.
-1. Select **<> Edit MQL** next to the **Query Type** field.
-   This toggles the MQL query builder mode.
 1. Select a project from the **Project** dropdown.
 1. Enter your MQL query in the text area.
 
@@ -273,6 +271,15 @@ The **Alias By** field helps you control the format of legend keys for SLO queri
 ### Alignment period and group-by time for SLO queries
 
 SLO queries use the same alignment period functionality as [metric queries](#define-the-alignment-period).
+
+### Create a Prometheus query
+
+**To create an Prometheus query:**
+
+1. Select the **PromQL** option in the **Query Type** dropdown.
+1. Select a project from the **Project** dropdown.
+1. Enter your Prometheus query in the text area.
+1. Enter a Min Step interval. The **Min step** setting defines the lower bounds on the interval between data points. For example, set this to `1h` to hint that measurements are taken hourly. This setting supports the `$__interval` and `$__rate_interval` macros.
 
 ## Apply annotations
 
