@@ -157,7 +157,7 @@ func (ctx *ReqContext) writeErrOrFallback(status int, message string, err error)
 }
 
 func (ctx *ReqContext) HasUserRole(role org.RoleType) bool {
-	return ctx.SignedInUser.GetOrgRole().Includes(role)
+	return ctx.Requester.GetOrgRole().Includes(role)
 }
 
 func (ctx *ReqContext) HasHelpFlag(flag user.HelpFlags1) bool {
