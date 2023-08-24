@@ -80,7 +80,7 @@ You can create TraceQL queries using the Query editor or using Search query tab 
 
 [//]: # 'Include content for preview of Search tab featuring TraceQL query builder'
 
-{{< docs/shared source="grafana" lookup="datasources/tempo-search-traceql.md" leveloffset="+1" >}}
+{{< docs/shared source="grafana" lookup="datasources/tempo-search-traceql.md" leveloffset="+1" version="<GRAFANA VERSION>" >}}
 
 ## Query Loki for traces
 
