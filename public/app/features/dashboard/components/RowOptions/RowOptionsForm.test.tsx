@@ -1,9 +1,8 @@
 import { render, screen } from '@testing-library/react';
 import React from 'react';
+import { TestProvider } from 'test/helpers/TestProvider';
 
 import { selectors } from '@grafana/e2e-selectors';
-
-import { TestProvider } from '../../../../../../scripts/grafana-server/tmp/public/test/helpers/TestProvider';
 
 import { RowOptionsForm } from './RowOptionsForm';
 
