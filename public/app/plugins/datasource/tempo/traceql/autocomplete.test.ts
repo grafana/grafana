@@ -185,9 +185,10 @@ describe('CompletionProvider', () => {
       model as unknown as monacoTypes.editor.ITextModel,
       {} as monacoTypes.Position
     );
+
     expect((result! as monacoTypes.languages.CompletionList).suggestions).toEqual(
       [...CompletionProvider.logicalOps, ...CompletionProvider.operators].map((s) =>
-        expect.objectContaining({ label: s, insertText: s })
+        expect.objectContaining({ label: s.label, insertText: s.insertText })
       )
     );
   });
@@ -233,7 +234,7 @@ describe('CompletionProvider', () => {
     );
     expect((result! as monacoTypes.languages.CompletionList).suggestions).toEqual(
       [...CompletionProvider.logicalOps, ...CompletionProvider.operators].map((s) =>
-        expect.objectContaining({ label: s, insertText: s })
+        expect.objectContaining({ label: s.label, insertText: s.insertText })
       )
     );
   });
@@ -245,7 +246,7 @@ describe('CompletionProvider', () => {
       {} as monacoTypes.Position
     );
     expect((result! as monacoTypes.languages.CompletionList).suggestions).toEqual(
-      CompletionProvider.spansetOps.map((s) => expect.objectContaining({ label: s, insertText: s }))
+      CompletionProvider.spansetOps.map((s) => expect.objectContaining({ label: s.label, insertText: s.insertText }))
     );
   });
 
@@ -276,7 +277,7 @@ describe('CompletionProvider', () => {
       {} as monacoTypes.Position
     );
     expect((result! as monacoTypes.languages.CompletionList).suggestions).toEqual(
-      CompletionProvider.comparisonOps.map((s) => expect.objectContaining({ label: s, insertText: s }))
+      CompletionProvider.comparisonOps.map((s) => expect.objectContaining({ label: s.label, insertText: s.insertText }))
     );
   });
 
@@ -289,9 +290,7 @@ describe('CompletionProvider', () => {
       model as unknown as monacoTypes.editor.ITextModel,
       {} as monacoTypes.Position
     );
-    expect((result! as monacoTypes.languages.CompletionList).suggestions).toEqual(
-      [].map((s) => expect.objectContaining({ label: s, insertText: s }))
-    );
+    expect((result! as monacoTypes.languages.CompletionList).suggestions).toEqual([]);
   });
 });
 

@@ -42,7 +42,48 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
   triggerCharacters = ['{', '.', '[', '(', '=', '~', ' ', '"'];
 
   // Operators
-  static readonly operators: string[] = ['=', '-', '+', '<', '>', '>=', '<=', '=~'];
+  static readonly operators: MinimalCompletionItem[] = [
+    {
+      label: '=',
+      insertText: '=',
+      detail: 'Equal',
+    },
+    {
+      label: '-',
+      insertText: '-',
+      detail: 'Minus',
+    },
+    {
+      label: '+',
+      insertText: '+',
+      detail: 'Plus',
+    },
+    {
+      label: '<',
+      insertText: '<',
+      detail: 'Less than',
+    },
+    {
+      label: '>',
+      insertText: '>',
+      detail: 'Greater than',
+    },
+    {
+      label: '<=',
+      insertText: '<=',
+      detail: 'Less than or equal to',
+    },
+    {
+      label: '>=',
+      insertText: '>=',
+      detail: 'Greater than or equal to',
+    },
+    {
+      label: '=~',
+      insertText: '=~',
+      detail: 'Regular expression',
+    },
+  ];
 
   static readonly logicalOps: MinimalCompletionItem[] = [
     {
@@ -283,13 +324,13 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
       case 'SPANSET_IN_NAME_SCOPE':
         return this.getTagsCompletions(undefined, situation.scope);
       case 'SPANSET_EXPRESSION_OPERATORS':
-        return [...CompletionProvider.logicalOps.map((l) => l.insertText), ...CompletionProvider.operators].map(
-          (key) => ({
-            label: key,
-            insertText: key,
-            type: 'OPERATOR',
-          })
-        );
+        return [...CompletionProvider.logicalOps, ...CompletionProvider.operators].map((key) => ({
+          label: key.label,
+          insertText: key.insertText,
+          detail: key.detail,
+          documentation: key.documentation,
+          type: 'OPERATOR',
+        }));
       case 'SPANSET_COMBINING_OPERATORS':
         return CompletionProvider.spansetOps.map((key) => ({
           label: key.label,
