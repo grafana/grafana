@@ -10,6 +10,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -48,10 +49,12 @@ type expressionService interface {
 }
 
 type conditionEvaluator struct {
-	pipeline          expr.DataPipeline
-	expressionService expressionService
-	condition         models.Condition
-	evalTimeout       time.Duration
+	mtx                 sync.Mutex
+	pipeline            expr.DataPipeline
+	expressionService   expressionService
+	condition           models.Condition
+	evalTimeout         time.Duration
+	loadedMetricsReader AlertingResultsReader
 }
 
 func (r *conditionEvaluator) EvaluateRaw(ctx context.Context, now time.Time) (resp *backend.QueryDataResponse, err error) {
@@ -66,6 +69,28 @@ func (r *conditionEvaluator) EvaluateRaw(ctx context.Context, now time.Time) (re
 			}
 		}
 	}()
+
+	// patching the hysteresis commands with the current loaded metrics.
+	// This optimization is to save resources on marshalling AlertQuery.
+	// Mutex is to make sure that the evaluation is synchronous.
+	r.mtx.Lock()
+	defer r.mtx.Unlock()
+	if r.loadedMetricsReader != nil {
+		cmds := expr.GetCommandsFromPipeline[*expr.HysteresisCommand](r.pipeline)
+		if len(cmds) > 0 {
+			loaded := r.loadedMetricsReader.Read()
+			logger.FromContext(ctx).Debug("Populating loaded metrics for hysteresis command", "commands", len(cmds), "loaded", len(loaded))
+			for _, cmd := range cmds {
+				cmd.LoadedDimensions = loaded
+			}
+			// reset the data after evaluation
+			defer func() {
+				for _, cmd := range cmds {
+					cmd.LoadedDimensions = nil
+				}
+			}()
+		}
+	}
 
 	execCtx := ctx
 	if r.evalTimeout >= 0 {
