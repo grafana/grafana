@@ -39,7 +39,8 @@ export class ScenePanelInspector extends SceneObjectBase<ScenePanelInspectorStat
     const tabs: Array<SceneObject<InspectTabState>> = [];
 
     if (!plugin) {
-      // TODO handle this case
+      // TODO temp fix
+      setTimeout(() => this.buildTabs(), 100);
       return;
     }
 
