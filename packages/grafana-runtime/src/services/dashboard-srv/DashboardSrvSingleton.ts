@@ -1,12 +1,19 @@
 import { PluginsAPIPanelModelWrapper } from './PanelWrapper';
-import { PluginsAPIDashboardModel, PluginsAPIDashboardSrv, PluginsAPIPanelModel } from './types';
+import {
+  CoreDashboardModel,
+  CoreDashboardSrv,
+  CorePanelModel,
+  PluginsAPIDashboardModel,
+  PluginsAPIDashboardSrv,
+  PluginsAPIPanelModel,
+} from './types';
 
 export class PluginsAPIDashboardModelWrapper implements PluginsAPIDashboardModel {
-  #dashboard: PluginsAPIDashboardModel | undefined;
+  #dashboard: CoreDashboardModel | undefined;
 
   // store panel references in a weakmap to avoid memory leaks
-  #panelsMap = new WeakMap<PluginsAPIPanelModel, PluginsAPIPanelModel>();
-  setCurrentDashboard(dashboard: PluginsAPIDashboardModel) {
+  #panelsMap = new WeakMap<PluginsAPIPanelModel, CorePanelModel>();
+  setCurrentDashboard(dashboard: CoreDashboardModel) {
     this.#dashboard = dashboard;
   }
 
@@ -19,6 +26,10 @@ export class PluginsAPIDashboardModelWrapper implements PluginsAPIDashboardModel
   }
 
   get panels() {
+    return this.getPanels();
+  }
+
+  getPanels() {
     if (!this.#dashboard) {
       return [];
     }
@@ -35,34 +46,50 @@ export class PluginsAPIDashboardModelWrapper implements PluginsAPIDashboardModel
     });
   }
 
-  set panels(panels: PluginsAPIPanelModel[]) {
+  updatePanels(panels: PluginsAPIPanelModel[]) {
     if (!this.#dashboard) {
       return;
     }
-    const panelsToSet = panels.map((panel) => {
+    const panelsToSet: CorePanelModel[] = panels.map((panel) => {
       // if it is a panel wrapper, unwrap it
-      if (this.#panelsMap.has(panel)) {
-        return this.#panelsMap.get(panel)!;
+      const originalPanel = this.#panelsMap.get(panel);
+      if (originalPanel) {
+        return originalPanel;
       }
-      // a custom panel object
-      return panel;
+      // a custom panel object from user-input
+      // eslint-ignore-next-line
+      if (isCorePanelModel(panel)) {
+        return panel;
+      }
+      throw new Error('Invalid panel');
     });
-    this.#dashboard.panels = panelsToSet;
+    this.#dashboard.updatePanels(panelsToSet);
   }
+}
+
+function isCorePanelModel(panel: PluginsAPIPanelModel): panel is CorePanelModel {
+  return 'fieldConfig' in panel;
 }
 
 export class PluginsAPIDashboardSrvSingleton implements PluginsAPIDashboardSrv {
   // This is the original internal grafana-core dashboard service singleton
   // we don't want to expose this to the public API
-  #internalSingletonInstance: PluginsAPIDashboardSrv;
+  #internalSingletonInstance: CoreDashboardSrv;
   #dashboardWrapper: PluginsAPIDashboardModelWrapper;
 
-  constructor(instance: Partial<PluginsAPIDashboardSrv>) {
+  constructor(instance: CoreDashboardSrv) {
+    if (!instance) {
+      throw new Error('Can not construct a DashboardSrv with an empty object');
+    }
     this.#internalSingletonInstance = instance;
     this.#dashboardWrapper = new PluginsAPIDashboardModelWrapper();
   }
 
-  get dashboard(): PluginsAPIDashboardModel | undefined {
+  get dashboard() {
+    return this.getCurrentDashboard();
+  }
+
+  getCurrentDashboard(): PluginsAPIDashboardModel | undefined {
     if (!this.#internalSingletonInstance.dashboard) {
       return undefined;
     }

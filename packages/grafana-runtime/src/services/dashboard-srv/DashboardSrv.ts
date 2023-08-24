@@ -2,7 +2,7 @@
 // we expose it to the public via getDashboardSrv
 
 import { PluginsAPIDashboardSrvSingleton } from './DashboardSrvSingleton';
-import { PluginsAPIDashboardSrv } from './types';
+import { CoreDashboardSrv } from './types';
 
 // do not export
 let publicSingletonInstance: PluginsAPIDashboardSrvSingleton;
@@ -13,7 +13,7 @@ let publicSingletonInstance: PluginsAPIDashboardSrvSingleton;
  * exported to the public API
  * @private
  */
-export function __setDashboardSrv(instance: Partial<PluginsAPIDashboardSrv>) {
+export function __setDashboardSrv(instance: CoreDashboardSrv) {
   if (publicSingletonInstance) {
     throw new Error('DashboardSrv can only be set once.');
   }

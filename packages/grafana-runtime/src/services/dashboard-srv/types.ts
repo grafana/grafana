@@ -1,16 +1,40 @@
-import { PanelModel as CorePanelModel } from '@grafana/data';
+import { PanelModel as BaseCorePanelModel } from '@grafana/data';
 import { GridPos } from '@grafana/schema';
+
+// Middle types to glue Public Plugin APIs types with internal Grafana types
+export interface CorePanelModel extends BaseCorePanelModel {
+  gridPos: GridPos;
+  refresh: () => void;
+}
+
+export interface CoreDashboardModel {
+  panels: CorePanelModel[];
+  uid: string;
+  title: string;
+  updatePanels: (panels: CorePanelModel[]) => unknown;
+}
+
+export interface CoreDashboardSrv {
+  dashboard?: CoreDashboardModel;
+}
+
+// Public types
 
 /**
  * Used to interact with the current Grafana dashboard.
  *
  * @public
  */
-export class PluginsAPIDashboardSrv {
+export interface PluginsAPIDashboardSrv {
+  /**
+   * The current dashboard. Undefined if not dashboard is loaded
+   * @deprecated use `getCurrentDashboard()` instead
+   */
+  dashboard?: PluginsAPIDashboardModel;
   /**
    * The current dashboard. Undefined if not dashboard is loaded
    */
-  dashboard?: PluginsAPIDashboardModel;
+  getCurrentDashboard(): PluginsAPIDashboardModel | undefined;
 }
 
 /**
@@ -32,9 +56,30 @@ export interface PluginsAPIDashboardModel {
   title: string;
   /**
    * The panels of the dashboard
-   *  Making changes to this attribute, such as adding or removing items, will directly impact the panels displayed in the dashboard.
+   * Get the panels in the current dashboard
+   *
+   * Changes to the panels are not instantly reflected in the dashboard
+   * and are not persisted.
+   *
+   * The user is responsible for saving the dashboard after any changes
+   * @readonly
    */
   panels: PluginsAPIPanelModel[];
+
+  /**
+   * Update the panels in the current dashboard by replacing them with
+   * the ones passed in.
+   *
+   * Use `dashboard.panels` to get the current panels.
+   *
+   * Changes to the panels are reflected in the dashboard instantly
+   * but not persisted.
+   *
+   * The user is responsible for saving the dashboard after any changes
+   *
+   * @public
+   */
+  updatePanels(panels: PluginsAPIPanelModel[]): void;
 }
 
 /**
@@ -51,6 +96,10 @@ export interface PluginsAPIPanelModel extends Pick<CorePanelModel, 'id' | 'title
    * Forces the panel to re-render in the dashboard
    * fetching new data.
    * Use it to see changes to the panel properties
+   *
+   * Changes to the panel are reflected in the dashboard instantly but not persisted.
+   *
+   * The user is responsible for saving the dashboard after any changes
    */
   refresh(): void;
 }

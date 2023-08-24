@@ -1,11 +1,11 @@
 import { GridPos } from '@grafana/schema';
 
-import { PluginsAPIPanelModel } from './types';
+import { CorePanelModel, PluginsAPIPanelModel } from './types';
 
 export class PluginsAPIPanelModelWrapper implements PluginsAPIPanelModel {
-  #panel: PluginsAPIPanelModel;
+  #panel: CorePanelModel;
 
-  constructor(panel: PluginsAPIPanelModel) {
+  constructor(panel: CorePanelModel) {
     this.#panel = panel;
   }
 
