@@ -4,6 +4,7 @@ import (
 	"sync"
 	"testing"
 
+	"cuelang.org/go/pkg/strings"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/util/validation"
@@ -81,6 +82,40 @@ func TestIsShortUIDTooLong(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			require.Equal(t, tt.expected, IsShortUIDTooLong(tt.uid))
+		})
+	}
+}
+
+func TestValidate(t *testing.T) {
+	var tests = []struct {
+		name     string
+		uid      string
+		expected error
+	}{
+		{
+			name:     "no error when string is of correct length",
+			uid:      "f8cc010c-ee72-4681-89d2-d46e1bd47d33",
+			expected: nil,
+		},
+		{
+			name:     "error when it is too long",
+			uid:      strings.Repeat("1", MaxUIDLength+1),
+			expected: ErrUIDTooLong,
+		},
+		{
+			name:     "error when it has invalid characters",
+			uid:      "f8cc010c.ee72.4681;89d2+d46e1bd47d33",
+			expected: ErrUIDFormatInvalid,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := ValidateUID(tt.uid)
+			if tt.expected == nil {
+				require.NoError(t, err)
+			} else {
+				require.ErrorIs(t, err, tt.expected)
+			}
 		})
 	}
 }
