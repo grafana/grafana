@@ -448,8 +448,9 @@ func (g *dashboardGuardianImpl) GetHiddenACL(cfg *setting.Cfg) ([]*dashboards.Da
 
 // nolint:unused
 type FakeDashboardGuardian struct {
-	DashID                           int64
-	DashUID                          string
+	DashID  int64
+	DashUID string
+	// OrgID can be retrieved from the identity.Requester.GetOrgID
 	OrgID                            int64
 	User                             identity.Requester
 	CanSaveValue                     bool
