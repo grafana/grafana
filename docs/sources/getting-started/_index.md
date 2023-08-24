@@ -9,7 +9,7 @@ weight: 10
 
 This section provides a high-level look at Grafana, the Grafana process, and Grafana features. It's a good place to learn how to use the Grafana software.
 
-{{< docs/shared "basics/what-is-grafana.md" >}}
+{{< docs/shared lookup="basics/what-is-grafana.md" source="grafana" version="<GRAFANA VERSION>" >}}
 
 After creating a dashboard like you do in [Getting started]({{< relref "getting-started.md" >}}), there are many possible things you might do next. It all depends on your needs and your use case.
 
@@ -73,6 +73,6 @@ Refer to [Provisioning]({{< relref "../administration/provisioning.md" >}}) for 
 
 When organizations have one Grafana and multiple teams, they often want the ability to both keep things separate and share dashboards. You can create a team of users and then set [permissions]({{< relref "../permissions/_index.md" >}}) on folders, dashboards, and down to the [data source level]({{< relref "../enterprise/datasource_permissions.md" >}}) if you're using [Grafana Enterprise]({{< relref "../enterprise/_index.md" >}}).
 
-{{< docs/shared "basics/grafana-cloud.md" >}}
+{{< docs/shared lookup="basics/grafana-cloud.md" source="grafana" version="<GRAFANA VERSION>" >}}
 
-{{< docs/shared "basics/grafana-enterprise.md" >}}
+{{< docs/shared lookup="basics/grafana-enterprise.md" source="grafana" version="<GRAFANA VERSION>" >}}

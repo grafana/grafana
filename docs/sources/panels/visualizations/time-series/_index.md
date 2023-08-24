@@ -47,7 +47,7 @@ When you hover your cursor over the graph, Grafana can display tooltips. Choose 
 
 > **Note:** Use an override to hide individual series from the tooltip.
 
-{{< docs/shared "visualizations/legend-mode.md" >}}
+{{< docs/shared lookup="visualizations/legend-mode.md" source="grafana" version="<GRAFANA VERSION>" >}}
 
 ### Legend calculations
 

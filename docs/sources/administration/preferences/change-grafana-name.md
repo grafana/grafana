@@ -12,7 +12,7 @@ weight: 100
 
 In Grafana, you can change your names and emails associated with groups or accounts in the Settings or Preferences. This topic provides instructions for each task.
 
-{{< docs/shared "preferences/some-tasks-require-permissions.md" >}}
+{{< docs/shared lookup="preferences/some-tasks-require-permissions.md" source="grafana" version="<GRAFANA VERSION>" >}}
 
 ## Change organization name
 
@@ -23,7 +23,7 @@ Grafana server administrators and organization administrators can change organiz
 Follow these instructions if you are a Grafana Server Admin.
 
 {{< docs/list >}}
-{{< docs/shared "manage-users/view-server-org-list.md" >}}
+{{< docs/shared lookup="manage-users/view-server-org-list.md" source="grafana" version="<GRAFANA VERSION>" >}}
 1. In the organization list, click the name of the organization that you want to change.
 1. In **Name**, enter the new organization name.
 1. Click **Update**.
@@ -34,7 +34,7 @@ Follow these instructions if you are a Grafana Server Admin.
 If you are an Organization Admin, follow these steps:
 
 {{< docs/list >}}
-{{< docs/shared "preferences/org-preferences-list.md" >}}
+{{< docs/shared lookup="preferences/org-preferences-list.md" source="grafana" version="<GRAFANA VERSION>" >}}
 1. In **Organization name**, enter the new name.
 1. Click **Update organization name**.
 {{< /docs/list >}}
