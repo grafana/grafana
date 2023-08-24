@@ -27,7 +27,7 @@ export const runQuery = async (exploreId = 'left') => {
 
 export const openQueryHistory = async (exploreId = 'left') => {
   const selector = withinExplore(exploreId);
-  const button = selector.getByRole('button', { name: 'Rich history button' });
+  const button = selector.getByRole('button', { name: 'Query history' });
   await userEvent.click(button);
   expect(await selector.findByPlaceholderText('Search queries')).toBeInTheDocument();
 };
