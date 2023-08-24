@@ -1,3 +1,4 @@
+import FingerprintJS from '@fingerprintjs/fingerprintjs';
 import { from, lastValueFrom, MonoTypeOperatorFunction, Observable, Subject, Subscription, throwError } from 'rxjs';
 import { fromFetch } from 'rxjs/fetch';
 import {
@@ -15,6 +16,7 @@ import {
 import { v4 as uuidv4 } from 'uuid';
 
 import { AppEvents, DataQueryErrorType } from '@grafana/data';
+import { GrafanaEdition } from '@grafana/data/src/types/config';
 import { BackendSrv as BackendService, BackendSrvRequest, config, FetchError, FetchResponse } from '@grafana/runtime';
 import appEvents from 'app/core/app_events';
 import { getConfig } from 'app/core/config';
@@ -61,6 +63,7 @@ export class BackendSrv implements BackendService {
   private readonly fetchQueue: FetchQueue;
   private readonly responseQueue: ResponseQueue;
   private _tokenRotationInProgress?: Observable<FetchResponse> | null = null;
+  private deviceID!: string | null;
 
   private dependencies: BackendSrvDependencies = {
     fromFetch: fromFetch,
@@ -83,7 +86,23 @@ export class BackendSrv implements BackendService {
     this.internalFetch = this.internalFetch.bind(this);
     this.fetchQueue = new FetchQueue();
     this.responseQueue = new ResponseQueue(this.fetchQueue, this.internalFetch);
+
+    this.initGrafanaDeviceID().then((grafanaId) => {
+      if (grafanaId) {
+        this.deviceID = grafanaId as string;
+      }
+    });
+
     new FetchQueueWorker(this.fetchQueue, this.responseQueue, getConfig());
+  }
+
+  async initGrafanaDeviceID(): Promise<string | void> {
+    return FingerprintJS.load()
+      .then((fp) => fp.get())
+      .then((result) => result.visitorId)
+      .catch((error) => {
+        console.error(error);
+      });
   }
 
   async request<T = any>(options: BackendSrvRequest): Promise<T> {
@@ -131,16 +150,22 @@ export class BackendSrv implements BackendService {
     }
 
     options = this.parseRequestOptions(options);
+    if (!options.headers) {
+      options.headers = {};
+    }
 
     const token = loadUrlToken();
     if (token !== null && token !== '') {
-      if (!options.headers) {
-        options.headers = {};
-      }
+
 
       if (config.jwtUrlLogin && config.jwtHeaderName) {
         options.headers[config.jwtHeaderName] = `${token}`;
       }
+    }
+
+    // Add device id header if not OSS build
+    if (config.buildInfo.edition !== GrafanaEdition.OpenSource && this.deviceID) {
+      options.headers['X-Grafana-Device-Id'] = `${this.deviceID}`;
     }
 
     return this.getFromFetchStream<T>(options).pipe(
