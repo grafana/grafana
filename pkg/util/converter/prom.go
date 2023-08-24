@@ -28,25 +28,51 @@ func ReadPrometheusStyleResult(iter *jsoniter.Iterator, opt Options) backend.Dat
 	err := ""
 	warnings := []data.Notice{}
 
+	iterError := func() bool {
+		if iter.Error == nil {
+			return false
+		}
+		rsp.Error = iter.Error
+		return true
+	}
+
 	for l1Field := iter.ReadObject(); l1Field != ""; l1Field = iter.ReadObject() {
+		if iterError() {
+			return rsp
+		}
 		switch l1Field {
 		case "status":
 			status = iter.ReadString()
+			if iterError() {
+				return rsp
+			}
 
 		case "data":
 			rsp = readPrometheusData(iter, opt)
+			if rsp.Error != nil {
+				return rsp
+			}
 
 		case "error":
 			err = iter.ReadString()
+			if iterError() {
+				return rsp
+			}
 
 		case "errorType":
 			errorType = iter.ReadString()
+			if iterError() {
+				return rsp
+			}
 
 		case "warnings":
 			warnings = readWarnings(iter)
 
 		default:
 			v := iter.Read()
+			if iterError() {
+				return rsp
+			}
 			logf("[ROOT] TODO, support key: %s / %v\n", l1Field, v)
 		}
 	}
@@ -102,12 +128,24 @@ func readPrometheusData(iter *jsoniter.Iterator, opt Options) backend.DataRespon
 
 	resultType := ""
 	var rsp backend.DataResponse
+	iterError := func() bool {
+		if iter.Error == nil {
+			return false
+		}
+		rsp.Error = iter.Error
+		return true
+	}
 
 	for l1Field := iter.ReadObject(); l1Field != ""; l1Field = iter.ReadObject() {
+		if iterError() {
+			return rsp
+		}
 		switch l1Field {
 		case "resultType":
 			resultType = iter.ReadString()
-
+			if iterError() {
+				return rsp
+			}
 		case "result":
 			switch resultType {
 			case "matrix", "vector":
@@ -127,6 +165,9 @@ func readPrometheusData(iter *jsoniter.Iterator, opt Options) backend.DataRespon
 
 		case "stats":
 			v := iter.Read()
+			if iterError() {
+				return rsp
+			}
 			if len(rsp.Frames) > 0 {
 				meta := rsp.Frames[0].Meta
 				if meta == nil {
@@ -140,6 +181,9 @@ func readPrometheusData(iter *jsoniter.Iterator, opt Options) backend.DataRespon
 
 		default:
 			v := iter.Read()
+			if iterError() {
+				return rsp
+			}
 			logf("[data] TODO, support key: %s / %v\n", l1Field, v)
 		}
 	}
@@ -352,6 +396,13 @@ func readScalar(iter *jsoniter.Iterator) backend.DataResponse {
 
 func readMatrixOrVectorMulti(iter *jsoniter.Iterator, resultType string, opt Options) backend.DataResponse {
 	rsp := backend.DataResponse{}
+	iterError := func() bool {
+		if iter.Error == nil {
+			return false
+		}
+		rsp.Error = iter.Error
+		return true
+	}
 
 	for iter.ReadArray() {
 		timeField := data.NewFieldFromFieldType(data.FieldTypeTime, 0)
@@ -363,10 +414,15 @@ func readMatrixOrVectorMulti(iter *jsoniter.Iterator, resultType string, opt Opt
 		var histogram *histogramInfo
 
 		for l1Field := iter.ReadObject(); l1Field != ""; l1Field = iter.ReadObject() {
+			if iterError() {
+				return rsp
+			}
 			switch l1Field {
 			case "metric":
 				iter.ReadVal(&valueField.Labels)
-
+				if iterError() {
+					return rsp
+				}
 			case "value":
 				t, v, err := readTimeValuePair(iter)
 				if err == nil {
@@ -377,6 +433,9 @@ func readMatrixOrVectorMulti(iter *jsoniter.Iterator, resultType string, opt Opt
 			// nolint:goconst
 			case "values":
 				for iter.ReadArray() {
+					if iterError() {
+						return rsp
+					}
 					t, v, err := readTimeValuePair(iter)
 					if err == nil {
 						timeField.Append(t)
@@ -398,6 +457,9 @@ func readMatrixOrVectorMulti(iter *jsoniter.Iterator, resultType string, opt Opt
 					histogram = newHistogramInfo()
 				}
 				for iter.ReadArray() {
+					if iterError() {
+						return rsp
+					}
 					err := readHistogram(iter, histogram)
 					if err != nil {
 						rsp.Error = err
@@ -406,6 +468,9 @@ func readMatrixOrVectorMulti(iter *jsoniter.Iterator, resultType string, opt Opt
 
 			default:
 				iter.Skip()
+				if iterError() {
+					return rsp
+				}
 				logf("readMatrixOrVector: %s\n", l1Field)
 			}
 		}
@@ -441,10 +506,29 @@ func readMatrixOrVectorMulti(iter *jsoniter.Iterator, resultType string, opt Opt
 
 func readTimeValuePair(iter *jsoniter.Iterator) (time.Time, float64, error) {
 	iter.ReadArray()
+	if iter.Error != nil {
+		return time.Time{}, 0, iter.Error
+	}
+
 	t := iter.ReadFloat64()
+	if iter.Error != nil {
+		return time.Time{}, 0, iter.Error
+	}
+
 	iter.ReadArray()
+	if iter.Error != nil {
+		return time.Time{}, 0, iter.Error
+	}
+
 	v := iter.ReadString()
+	if iter.Error != nil {
+		return time.Time{}, 0, iter.Error
+	}
+
 	iter.ReadArray()
+	if iter.Error != nil {
+		return time.Time{}, 0, iter.Error
+	}
 
 	tt := timeFromFloat(t)
 	fv, err := strconv.ParseFloat(v, 64)
@@ -548,6 +632,13 @@ func appendValueFromString(iter *jsoniter.Iterator, field *data.Field) error {
 
 func readStream(iter *jsoniter.Iterator) backend.DataResponse {
 	rsp := backend.DataResponse{}
+	iterError := func() bool {
+		if iter.Error == nil {
+			return false
+		}
+		rsp.Error = iter.Error
+		return true
+	}
 
 	labelsField := data.NewFieldFromFieldType(data.FieldTypeJSON, 0)
 	labelsField.Name = "__labels" // avoid automatically spreading this by labels
@@ -576,6 +667,9 @@ func readStream(iter *jsoniter.Iterator) backend.DataResponse {
 				// only appends to it
 				labels := data.Labels{}
 				iter.ReadVal(&labels)
+				if iterError() {
+					return rsp
+				}
 				labelJson, err = labelsToRawJson(labels)
 				if err != nil {
 					return backend.DataResponse{Error: err}
@@ -584,12 +678,35 @@ func readStream(iter *jsoniter.Iterator) backend.DataResponse {
 			case "values":
 				for iter.ReadArray() {
 					iter.ReadArray()
-					ts := iter.ReadString()
-					iter.ReadArray()
-					line := iter.ReadString()
-					iter.ReadArray()
+					if iterError() {
+						return rsp
+					}
 
-					t := timeFromLokiString(ts)
+					ts := iter.ReadString()
+					if iterError() {
+						return rsp
+					}
+
+					iter.ReadArray()
+					if iterError() {
+						return rsp
+					}
+
+					line := iter.ReadString()
+					if iterError() {
+						return rsp
+					}
+
+					iter.ReadArray()
+					if iterError() {
+						return rsp
+					}
+
+					t, err := timeFromLokiString(ts)
+					if err != nil {
+						rsp.Error = err
+						return rsp
+					}
 
 					labelsField.Append(labelJson)
 					timeField.Append(t)
@@ -615,7 +732,7 @@ func timeFromFloat(fv float64) time.Time {
 	return time.UnixMilli(int64(fv * 1000.0)).UTC()
 }
 
-func timeFromLokiString(str string) time.Time {
+func timeFromLokiString(str string) (time.Time, error) {
 	// normal time values look like: 1645030246277587968
 	// and are less than: math.MaxInt65=9223372036854775807
 	// This will do a fast path for any date before 2033
@@ -623,13 +740,17 @@ func timeFromLokiString(str string) time.Time {
 	if s < 19 || (s == 19 && str[0] == '1') {
 		ns, err := strconv.ParseInt(str, 10, 64)
 		if err == nil {
-			return time.Unix(0, ns).UTC()
+			return time.Unix(0, ns).UTC(), nil
 		}
+	}
+
+	if s < 10 {
+		return time.Time{}, fmt.Errorf("unexpected time format '%v' in response. response may have been truncated", str)
 	}
 
 	ss, _ := strconv.ParseInt(str[0:10], 10, 64)
 	ns, _ := strconv.ParseInt(str[10:], 10, 64)
-	return time.Unix(ss, ns).UTC()
+	return time.Unix(ss, ns).UTC(), nil
 }
 
 func labelsToRawJson(labels data.Labels) (json.RawMessage, error) {
