@@ -24,9 +24,9 @@ Time series visualization is the default and primary way to visualize time serie
 
 These options are available whether you are graphing your time series as lines, bars, or points.
 
-{{< docs/shared "visualizations/tooltip-mode.md" >}}
+{{< docs/shared lookup="visualizations/tooltip-mode.md" source="grafana" version="<GRAFANA VERSION>" >}}
 
-{{< docs/shared "visualizations/legend-mode.md" >}}
+{{< docs/shared lookup="visualizations/legend-mode.md" source="grafana" version="<GRAFANA VERSION>" >}}
 
 ### Legend calculations
 
