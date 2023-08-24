@@ -15,7 +15,7 @@ In order to perform any of these tasks, you must be logged in to Grafana on an a
 
 See a complete list of organizations set up on your Grafana server.
 
-{{< docs/shared "manage-users/view-server-org-list.md" >}}
+{{< docs/shared lookup="manage-users/view-server-org-list.md" source="grafana" version="<GRAFANA VERSION>" >}}
 
 Grafana displays all organizations set up on the server, listed in alphabetical order by organization name. The following information is displayed:
 
@@ -29,7 +29,7 @@ Grafana displays all organizations set up on the server, listed in alphabetical 
 Add an organization to your Grafana server.
 
 {{< docs/list >}}
-{{< docs/shared "manage-users/view-server-org-list.md" >}}
+{{< docs/shared lookup="manage-users/view-server-org-list.md" source="grafana" version="<GRAFANA VERSION>" >}}
 
 1. Click **+ New org**.
 1. Enter the name of the new organization and then click **Create**.
@@ -49,7 +49,7 @@ Permanently remove an organization from your Grafana server.
 **Warning:** Deleting the organization also deletes all teams and dashboards for this organization.
 
 {{< docs/list >}}
-{{< docs/shared "manage-users/view-server-org-list.md" >}}
+{{< docs/shared lookup="manage-users/view-server-org-list.md" source="grafana" version="<GRAFANA VERSION>" >}}
 
 1. Click the red **X** next to the organization that you want to remove.
 1. Click **Delete**.
@@ -66,7 +66,7 @@ Grafana Server Admins can perform some organization management tasks that are al
 See which user accounts are assigned to the organization and their assigned roles.
 
 {{< docs/list >}}
-{{< docs/shared "manage-users/view-server-org-list.md" >}}
+{{< docs/shared lookup="manage-users/view-server-org-list.md" source="grafana" version="<GRAFANA VERSION>" >}}
 
 1. Click the name of the organization for which you want to view members.
 1. Scroll down to the Organization Users section. User accounts are displayed in alphabetical order.
@@ -75,7 +75,7 @@ See which user accounts are assigned to the organization and their assigned role
 ### Change organization name
 
 {{< docs/list >}}
-{{< docs/shared "manage-users/view-server-org-list-and-edit.md" >}}
+{{< docs/shared lookup="manage-users/view-server-org-list-and-edit.md" source="grafana" version="<GRAFANA VERSION>" >}}
 
 1. In the **Name** field, type the new organization name.
 1. Click **Update**.
@@ -86,7 +86,7 @@ See which user accounts are assigned to the organization and their assigned role
 Change the organization role assigned to a user account that is assigned to the organization you are editing.
 
 {{< docs/list >}}
-{{< docs/shared "manage-users/view-server-org-list-and-edit.md" >}}
+{{< docs/shared lookup="manage-users/view-server-org-list-and-edit.md" source="grafana" version="<GRAFANA VERSION>" >}}
 
 1. In the Organization Users section, locate the user account that you want to change the role of.
 1. In the **Role** field, select the new role that you want to assign.
@@ -95,7 +95,7 @@ Change the organization role assigned to a user account that is assigned to the 
 ## Remove a user from an organization
 
 {{< docs/list >}}
-{{< docs/shared "manage-users/view-server-org-list-and-edit.md" >}}
+{{< docs/shared lookup="manage-users/view-server-org-list-and-edit.md" source="grafana" version="<GRAFANA VERSION>" >}}
 
 1. In the Organization Users section, locate the user account that you want to change the role of.
 1. Click the red **X** next to the user account listing and then click **Delete**.
