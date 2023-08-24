@@ -17,11 +17,7 @@ import { useGetContactPointsState } from './api/receiversApi';
 import { AlertmanagerPageWrapper } from './components/AlertingPageWrapper';
 import { GrafanaAlertmanagerDeliveryWarning } from './components/GrafanaAlertmanagerDeliveryWarning';
 import { MuteTimingsTable } from './components/mute-timings/MuteTimingsTable';
-import {
-  computeInheritedTree,
-  findRoutesMatchingPredicate,
-  NotificationPoliciesFilter,
-} from './components/notification-policies/Filters';
+import { findRoutesMatchingPredicate, NotificationPoliciesFilter } from './components/notification-policies/Filters';
 import {
   useAddPolicyModal,
   useEditPolicyModal,
@@ -37,6 +33,7 @@ import { useRouteGroupsMatcher } from './useRouteGroupsMatcher';
 import { addUniqueIdentifierToRoute } from './utils/amroutes';
 import { isVanillaPrometheusAlertManagerDataSource } from './utils/datasource';
 import { normalizeMatchers } from './utils/matchers';
+import { computeInheritedTree } from './utils/notification-policies';
 import { initialAsyncRequestState } from './utils/redux';
 import { addRouteToParentRoute, mergePartialAmRouteWithRouteTree, omitRouteFromRouteTree } from './utils/routeTree';
 

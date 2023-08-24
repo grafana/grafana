@@ -14,33 +14,27 @@ import (
 )
 
 var (
-	errUserSignupDisabled = errutil.NewBase(
-		errutil.StatusUnauthorized,
+	errUserSignupDisabled = errutil.Unauthorized(
 		"user.sync.signup-disabled",
 		errutil.WithPublicMessage("Sign up is disabled"),
 	)
-	errSyncUserForbidden = errutil.NewBase(
-		errutil.StatusForbidden,
+	errSyncUserForbidden = errutil.Forbidden(
 		"user.sync.forbidden",
 		errutil.WithPublicMessage("User sync forbidden"),
 	)
-	errSyncUserInternal = errutil.NewBase(
-		errutil.StatusInternal,
+	errSyncUserInternal = errutil.Internal(
 		"user.sync.internal",
 		errutil.WithPublicMessage("User sync failed"),
 	)
-	errUserProtection = errutil.NewBase(
-		errutil.StatusForbidden,
+	errUserProtection = errutil.Forbidden(
 		"user.sync.protected-role",
 		errutil.WithPublicMessage("Unable to sync due to protected role"),
 	)
-	errFetchingSignedInUser = errutil.NewBase(
-		errutil.StatusInternal,
+	errFetchingSignedInUser = errutil.Internal(
 		"user.sync.fetch",
 		errutil.WithPublicMessage("Insufficient information to authenticate user"),
 	)
-	errFetchingSignedInUserNotFound = errutil.NewBase(
-		errutil.StatusUnauthorized,
+	errFetchingSignedInUserNotFound = errutil.Unauthorized(
 		"user.sync.fetch-not-found",
 		errutil.WithPublicMessage("User not found"),
 	)

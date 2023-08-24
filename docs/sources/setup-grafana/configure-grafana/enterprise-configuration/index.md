@@ -82,6 +82,10 @@ Set to complete URL to override fav icon (icon shown in browser tab).
 
 Set to complete URL to override Apple/iOS icon.
 
+### hide_edition
+
+Set to `true` to remove the Grafana edition from appearing in the footer.
+
 ### footer_links
 
 List the link IDs to use here. Grafana will look for matching link configurations, the link IDs should be space-separated and contain no whitespace.
