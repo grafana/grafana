@@ -125,6 +125,8 @@ export const availableIconsIndex = {
   'gf-service-account': true,
   'gf-show-context': true,
   'gf-pin': true,
+  'gf-prometheus': true,
+  'gf-traces': true,
   grafana: true,
   'graph-bar': true,
   'grafana-ml': true,
