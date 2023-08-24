@@ -89,6 +89,7 @@ export function TraceQLSearchTags({ options, onOptionsChange, datasource }: Prop
           staticTags={staticTags}
           isTagsLoading={loading}
           hideValues={true}
+          query={'{}'}
         />
       ) : (
         <div>Invalid data source, please create a valid data source and try again</div>

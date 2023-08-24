@@ -35,6 +35,10 @@ export class ResourcesAPI extends CloudWatchRequest {
     return getBackendSrv().get(`/api/datasources/${this.instanceSettings.id}/resources/${subtype}`, parameters);
   }
 
+  async getExternalId(): Promise<string> {
+    return await this.memoizedGetRequest<{ externalId: string }>('external-id').then(({ externalId }) => externalId);
+  }
+
   getAccounts({ region }: ResourceRequest): Promise<Account[]> {
     return this.memoizedGetRequest<Array<ResourceResponse<Account>>>('accounts', {
       region: this.templateSrv.replace(this.getActualRegion(region)),

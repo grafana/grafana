@@ -17,7 +17,6 @@ newDBLibrary,preview,@grafana/backend-platform,false,false,false,false
 validateDashboardsOnSave,preview,@grafana/grafana-as-code,false,false,true,false
 autoMigrateOldPanels,preview,@grafana/dataviz-squad,false,false,false,true
 disableAngular,preview,@grafana/dataviz-squad,false,false,false,true
-prometheusWideSeries,experimental,@grafana/observability-metrics,false,false,false,false
 canvasPanelNesting,experimental,@grafana/dataviz-squad,false,false,false,true
 scenes,experimental,@grafana/dashboards-squad,false,false,false,true
 disableSecretsCompatibility,experimental,@grafana/hosted-grafana-team,false,false,true,false
@@ -42,7 +41,7 @@ alertingBacktesting,experimental,@grafana/alerting-squad,false,false,false,false
 editPanelCSVDragAndDrop,experimental,@grafana/grafana-bi-squad,false,false,false,true
 alertingNoNormalState,preview,@grafana/alerting-squad,false,false,false,false
 logsContextDatasourceUi,GA,@grafana/observability-logs,false,false,false,true
-lokiQuerySplitting,GA,@grafana/observability-logs,false,false,false,true
+lokiQuerySplitting,experimental,@grafana/observability-logs,false,false,false,true
 lokiQuerySplittingConfig,experimental,@grafana/observability-logs,false,false,false,true
 individualCookiePreferences,experimental,@grafana/backend-platform,false,false,false,false
 gcomOnlyExternalOrgRoleSync,GA,@grafana/grafana-authnz-team,false,false,false,false
@@ -65,7 +64,7 @@ renderAuthJWT,preview,@grafana/grafana-as-code,false,false,false,false
 externalServiceAuth,experimental,@grafana/grafana-authnz-team,true,false,false,false
 refactorVariablesTimeRange,preview,@grafana/dashboards-squad,false,false,false,false
 useCachingService,GA,@grafana/grafana-operator-experience-squad,false,false,true,false
-enableElasticsearchBackendQuerying,preview,@grafana/observability-logs,false,false,false,false
+enableElasticsearchBackendQuerying,GA,@grafana/observability-logs,false,false,false,false
 advancedDataSourcePicker,GA,@grafana/dashboards-squad,false,false,false,true
 faroDatasourceSelector,preview,@grafana/app-o11y,false,false,false,true
 enableDatagridEditing,preview,@grafana/grafana-bi-squad,false,false,false,true
@@ -99,3 +98,5 @@ permissionsFilterRemoveSubquery,experimental,@grafana/backend-platform,false,fal
 prometheusConfigOverhaulAuth,experimental,@grafana/observability-metrics,false,false,false,false
 configurableSchedulerTick,experimental,@grafana/alerting-squad,false,false,true,false
 influxdbSqlSupport,experimental,@grafana/observability-metrics,false,false,false,false
+noBasicRole,experimental,@grafana/grafana-authnz-team,false,false,true,true
+alertingNoDataErrorExecution,privatePreview,@grafana/alerting-squad,false,false,true,false

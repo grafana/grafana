@@ -33,6 +33,8 @@ export const Box = ({ children, ...props }: React.PropsWithChildren<BoxProps>) =
   return <Element className={styles.root}>{children}</Element>;
 };
 
+Box.displayName = 'Box';
+
 const getStyles = (theme: GrafanaTheme2, props: BoxProps) => {
   const {
     margin,
