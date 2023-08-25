@@ -15,15 +15,17 @@ import { Drawer, Tab, TabsBar } from '@grafana/ui';
 import { supportsDataQuery } from 'app/features/dashboard/components/PanelEditor/utils';
 
 import { InspectDataTab } from './InspectDataTab';
+import { InspectJsonTab } from './InspectJsonTab';
 import { InspectStatsTab } from './InspectStatsTab';
 import { InspectTabState } from './types';
 
-interface ScenePanelInspectorState extends SceneObjectState {
+interface PanelInspectDrawerState extends SceneObjectState {
   tabs?: Array<SceneObject<InspectTabState>>;
 }
 
-export class ScenePanelInspector extends SceneObjectBase<ScenePanelInspectorState> {
+export class PanelInspectDrawer extends SceneObjectBase<PanelInspectDrawerState> {
   static Component = ScenePanelInspectorRenderer;
+
   // Not stored in state as this is just a reference and it never changes
   private _panel: VizPanel;
 
@@ -38,16 +40,14 @@ export class ScenePanelInspector extends SceneObjectBase<ScenePanelInspectorStat
     const plugin = this._panel.getPlugin();
     const tabs: Array<SceneObject<InspectTabState>> = [];
 
-    if (!plugin) {
-      // TODO temp fix
-      setTimeout(() => this.buildTabs(), 100);
-      return;
+    if (plugin) {
+      if (supportsDataQuery(plugin)) {
+        tabs.push(new InspectDataTab(this._panel));
+        tabs.push(new InspectStatsTab(this._panel));
+      }
     }
 
-    if (supportsDataQuery(plugin)) {
-      tabs.push(new InspectDataTab(this._panel));
-      tabs.push(new InspectStatsTab(this._panel));
-    }
+    tabs.push(new InspectJsonTab(this._panel));
 
     this.setState({ tabs });
   }
@@ -57,11 +57,11 @@ export class ScenePanelInspector extends SceneObjectBase<ScenePanelInspectorStat
   }
 
   onClose = () => {
-    locationService.partial({ inspect: null });
+    locationService.partial({ inspect: null, inspectTab: null });
   };
 }
 
-function ScenePanelInspectorRenderer({ model }: SceneComponentProps<ScenePanelInspector>) {
+function ScenePanelInspectorRenderer({ model }: SceneComponentProps<PanelInspectDrawer>) {
   const { tabs } = model.useState();
   const location = useLocation();
   const queryParams = new URLSearchParams(location.search);

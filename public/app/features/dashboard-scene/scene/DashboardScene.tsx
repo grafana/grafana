@@ -15,7 +15,7 @@ import {
 } from '@grafana/scenes';
 import appEvents from 'app/core/app_events';
 
-import { ScenePanelInspector } from '../inspector/ScenePanelInspector';
+import { PanelInspectDrawer } from '../inspect/PanelInspectDrawer';
 import { DashboardSceneRenderer } from '../scene/DashboardSceneRenderer';
 import { findVizPanel } from '../utils/findVizPanel';
 import { forceRenderChildren } from '../utils/utils';
@@ -137,7 +137,7 @@ class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
       }
 
       update.inspectPanelKey = values.inspect;
-      update.drawer = new ScenePanelInspector(panel);
+      update.drawer = new PanelInspectDrawer(panel);
     } else if (inspectPanelKey) {
       update.inspectPanelKey = undefined;
       update.drawer = undefined;
