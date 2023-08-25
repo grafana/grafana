@@ -92,11 +92,9 @@ func (s *Service) featureToggleEnableVar(ctx context.Context) []string {
 		enabledFeatures := s.cfg.Features.GetEnabled(ctx)
 
 		if len(enabledFeatures) > 0 {
-			features := make([]string, len(enabledFeatures))
-			i := 0
+			features := make([]string, 0, len(enabledFeatures))
 			for feat := range enabledFeatures {
-				features[i] = feat
-				i++
+				features = append(features, feat)
 			}
 			variables = append(variables, fmt.Sprintf("GF_INSTANCE_FEATURE_TOGGLES_ENABLE=%s", strings.Join(features, ",")))
 		}
