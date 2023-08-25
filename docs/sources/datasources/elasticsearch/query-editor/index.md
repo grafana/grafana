@@ -98,6 +98,29 @@ The following options are specific to the **date histogram** group by option.
   - **Offset** - Changes the start value of each bucket by the specified positive(+) or negative (-) offset duration. Examples include `1h` for 1 hour, `5s` for 5 seconds or `1d` for 1 day.
   - **Timezone** - Select a timezone from the dropdown menu. The default is `Coordinated universal time`.
 
+Configure the following options for the **terms** group by option:
+
+  - **Order** - Sets the order of data.  Options are `top` or `bottom.`
+  - **Size** - Limits the size of the data set.  You can set a custom number or `no limit`.
+  - **Min doc count** - The minimum amount of data to include in your query. The default is `0`.
+  - **Order by** - Order terms by `term value![Alt text](image.png)`, `doc count` or `count`.
+  - **Missing** - 
+
+Configure the following options for the **filters** group by option:
+
+  - **Query** - Sets the order of data.  Options are `top` or `bottom.`
+  - **Label** - Add any labels to filter by.
+
+Configure the following options for the **geo hash grid** group by option:
+
+   - **Precision** - Specifies the number of characters of the geo hash.
+
+Configure the following options for the **histogram** group by option:
+
+  - **Interval** - Group by a type of interval. There are option to choose from the dropdown menu to select seconds, minutes, hours or day. You can also add a custom interval such as `30d` (30 days). `Auto` is the default option.
+  - **Min doc count** - The minimum amount of data to include in your query. The default is `0`
+
+The **nested** group by option is currently experimental, you can select a field and then settings specific to that field. 
 
 Click the **+ sign** to add multiple group by options. The data will grouped in order (first by, then by).
 
