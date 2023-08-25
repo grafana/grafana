@@ -1,13 +1,11 @@
 <!-- 10.1.0 START -->
 
-# 10.1.0 (2023-08-01)
+# 10.1.0 (2023-08-23)
 
 ### Features and enhancements
 
-- **Usage stats:** Tune collector execution startup and interval. [#72790](https://github.com/grafana/grafana/issues/72790), [@papagian](https://github.com/papagian)
 - **Prometheus:** Add support for day_of_year. [#72403](https://github.com/grafana/grafana/issues/72403), [@gtk-grafana](https://github.com/gtk-grafana)
 - **Transforms:** Add Alpha Format Time Transform. [#72319](https://github.com/grafana/grafana/issues/72319), [@codeincarnate](https://github.com/codeincarnate)
-- **Prometheus:** Add present_over_time syntax highlighting. [#72283](https://github.com/grafana/grafana/issues/72283), [@arnaudlemaignen](https://github.com/arnaudlemaignen)
 - **Login:** Show oauth error messages inline. [#72255](https://github.com/grafana/grafana/issues/72255), [@RoxanaAnamariaTurc](https://github.com/RoxanaAnamariaTurc)
 - **Geomap:** Promote route + photos layer to beta, promote geojson layer to stable. [#72233](https://github.com/grafana/grafana/issues/72233), [@nmarrs](https://github.com/nmarrs)
 - **Dashboards:** Add Angular deprecation alert in data source query editor. [#72211](https://github.com/grafana/grafana/issues/72211), [@xnyo](https://github.com/xnyo)
@@ -29,7 +27,6 @@
 - **Traces:** Enable showing trace ids. [#71950](https://github.com/grafana/grafana/issues/71950), [@gabor](https://github.com/gabor)
 - **RBAC:** Split non-empty scopes into `kind`, `attribute` and `identifier` fields for better search performance. [#71933](https://github.com/grafana/grafana/issues/71933), [@IevaVasiljeva](https://github.com/IevaVasiljeva)
 - **Adminstration:** Feature toggle for feature toggle admin page. [#71887](https://github.com/grafana/grafana/issues/71887), [@IbrahimCSAE](https://github.com/IbrahimCSAE)
-- **Alerting:** Improve performance of matching captures. [#71828](https://github.com/grafana/grafana/issues/71828), [@grobinson-grafana](https://github.com/grobinson-grafana)
 - **CommandPalette:** Remove parent search and fuzzy search for pages. [#71825](https://github.com/grafana/grafana/issues/71825), [@tskarhed](https://github.com/tskarhed)
 - **Tracing:** Remove newTraceViewHeader feature toggle. [#71818](https://github.com/grafana/grafana/issues/71818), [@joey-grafana](https://github.com/joey-grafana)
 - **FlameGraph:** Add column in table with buttons to filter and sandwich a symbol. [#71773](https://github.com/grafana/grafana/issues/71773), [@aocenas](https://github.com/aocenas)
@@ -125,7 +122,7 @@
 - **Alerting:** Repurpose rule testing endpoint to return potential alerts. [#69755](https://github.com/grafana/grafana/issues/69755), [@JacobsonMT](https://github.com/JacobsonMT)
 - **NestedFolders:** Move `New folder` into a drawer. [#69706](https://github.com/grafana/grafana/issues/69706), [@ashharrison90](https://github.com/ashharrison90)
 - **Loki:** Implement step editor. [#69648](https://github.com/grafana/grafana/issues/69648), [@ivanahuckova](https://github.com/ivanahuckova)
-- **DataFrame:** Align frame (series.name) and field naming (field.name) . [#69621](https://github.com/grafana/grafana/issues/69621), [@torkelo](https://github.com/torkelo)
+- **DataFrame:** Align frame (__series.name) and field naming (__field.name) . [#69621](https://github.com/grafana/grafana/issues/69621), [@torkelo](https://github.com/torkelo)
 - **Auth:** Use auth broker by default. [#69620](https://github.com/grafana/grafana/issues/69620), [@Jguer](https://github.com/Jguer)
 - **Dashboards:** Add dashboard embed route. [#69596](https://github.com/grafana/grafana/issues/69596), [@Clarity-89](https://github.com/Clarity-89)
 - **Nested folders:** Improve loading states. [#69556](https://github.com/grafana/grafana/issues/69556), [@ashharrison90](https://github.com/ashharrison90)
@@ -229,7 +226,6 @@
 ### Bug fixes
 
 - **DataSourceProxy:** Fix url validation error handling. [#73322](https://github.com/grafana/grafana/issues/73322), [@ricci2511](https://github.com/ricci2511)
-- **AzureMonitor:** Allow `serviceTags` and `tags` to be empty for trace results. [#73197](https://github.com/grafana/grafana/issues/73197), [@aangelisc](https://github.com/aangelisc)
 - **UserSync:** Avoid UpdateLastSeenAt with invalid user ids. [#72784](https://github.com/grafana/grafana/issues/72784), [@ryantxu](https://github.com/ryantxu)
 - **Nested folders:** Fix search query for empty self-contained permissions. [#72733](https://github.com/grafana/grafana/issues/72733), [@papagian](https://github.com/papagian)
 - **Auth:** Lock down Grafana admin role updates if the role is externally synced. [#72691](https://github.com/grafana/grafana/issues/72691), [@IevaVasiljeva](https://github.com/IevaVasiljeva)
@@ -238,15 +234,7 @@
 - **Data sources:** Dashboards page now loads correctly from direct url. [#72495](https://github.com/grafana/grafana/issues/72495), [@ashharrison90](https://github.com/ashharrison90)
 - **Provisioning:** Fix overwrite SecureJSONData on provisioning. [#72455](https://github.com/grafana/grafana/issues/72455), [@oshirohugo](https://github.com/oshirohugo)
 - **Loki:** Run logs volume for query when switching from trace to logs. [#72268](https://github.com/grafana/grafana/issues/72268), [@ivanahuckova](https://github.com/ivanahuckova)
-- **Alerting:** Fix refetching grafana rules on alert list panel. [#72242](https://github.com/grafana/grafana/issues/72242), [@konrad147](https://github.com/konrad147)
-- **Alerting:** Fix contact point testing with secure settings. [#72235](https://github.com/grafana/grafana/issues/72235), [@JacobsonMT](https://github.com/JacobsonMT)
-- **Alerting:** Exclude expression refIDs from NoData state. [#72219](https://github.com/grafana/grafana/issues/72219), [@yuri-tceretian](https://github.com/yuri-tceretian)
-- **Alerting:** Fix state manager to not keep datasource_uid and ref_id labels in state after Error. [#72216](https://github.com/grafana/grafana/issues/72216), [@yuri-tceretian](https://github.com/yuri-tceretian)
 - **Dashboards:** Fix small drop target for importing dashboards. [#72170](https://github.com/grafana/grafana/issues/72170), [@kunxl-gg](https://github.com/kunxl-gg)
-- **TimeSeries:** Fix zoom not working after editing panel. [#72163](https://github.com/grafana/grafana/issues/72163), [@leeoniya](https://github.com/leeoniya)
-- **Dashboard:** New Datasource picker link is keyboard accessible. [#72134](https://github.com/grafana/grafana/issues/72134), [@polibb](https://github.com/polibb)
-- **CloudMonitoring:** Correctly set title and text fields for annotations. [#71888](https://github.com/grafana/grafana/issues/71888), [@aangelisc](https://github.com/aangelisc)
-- **AzureMonitor:** Fix ResourcePicker hanging. [#71886](https://github.com/grafana/grafana/issues/71886), [@asimpson](https://github.com/asimpson)
 - **Fix:** Hide Forward OAuth Identity toggle when azure auth is enabled. [#71640](https://github.com/grafana/grafana/issues/71640), [@itsmylife](https://github.com/itsmylife)
 - **Flamegraph:** Fix wrong positioning of tooltip in dashboards. [#71396](https://github.com/grafana/grafana/issues/71396), [@aocenas](https://github.com/aocenas)
 - **Dashboards:** Save tags on dashboard creation. [#71394](https://github.com/grafana/grafana/issues/71394), [@evictorero](https://github.com/evictorero)
@@ -326,7 +314,7 @@ To avoid overriding manually set roles, enable the `skip_org_role_sync` option i
 
 InfluxDB backend parser returns incompatible data with frontend. The data was being parsed by frontend and we moving towards migrating InfluxDB fully backend. One caveat is Frontend is generating data frames with fields `Time` and `Value`. The backend parser, however, generates `time` and `value`. This is causing issues and inconsistencies for the features (i.e. transformations) relying on those. In order to have a unique approach we choose to support what most of the users already have. Existing Transformations that depend on `time` fields have to be updated to use `Time` fields. Issue [#69865](https://github.com/grafana/grafana/issues/69865)
 
-For accessibility reasons `tooltip` or `aria-label` are now required properties for `IconButton`. In order to continue to use `IconButton`, you must ensure all `IconButton` components have a corresponding tooltip or aria-label text. The tooltip text will also be used as the aria-label if you didn't set one separately. In case you add an aria-label the IconButton will not show a tooltip. Issue [#69699](https://github.com/grafana/grafana/issues/69699)
+For accessibility reasons `tooltip` or `aria-label` are now required properties for `IconButton`. In order to continue to use `IconButton`, you must ensure all `IconButton` components have  a corresponding tooltip or aria-label text. The tooltip text will also be used as the aria-label if you didn't set one separately. In case you add an aria-label the IconButton will not show a tooltip. Issue [#69699](https://github.com/grafana/grafana/issues/69699)
 
 The implementation for template macro `${__series.name}` was not always correct, resulting in an interpolation that was very different from the series name displayed in the visualization. We have now fixed this issue so that it does show the same name. Depending on how `${__series.name}` is used this could result in a minor breaking change. Issue [#69621](https://github.com/grafana/grafana/issues/69621)
 
@@ -339,32 +327,25 @@ ${datasourceVariable}<br/>
 Name: ${datasourceVariable:text}<br/>
 UID: ${datasourceVariable:raw}
 ```
-
 was previously interpolated as:
-
 ```
 grafanacloud-k8smonitoring-prom
 Name: grafanacloud-k8smonitoring-prom
 UID: grafanacloud-k8smonitoring-prom
 ```
-
 After these changes, it's interpolated as:
-
 ```
 d7bbe725-9e48-4af8-a0cb-6cb255d873a3
 Name: grafanacloud-k8smonitoring-prom
 UID: d7bbe725-9e48-4af8-a0cb-6cb255d873a3
 ```
-
 Any dashboards that are relying on the data source name being returned by `${datasourceVariable}` will have to update all their usages to `${datasourceVariable:text}` in order to get the previous behavior.
 
 Affected use cases:
-
 - Using `${datasourceVariable}` to display the data source name in text panel or in the panel title.
 - Using `${datasourceVariable}` to use the data source name as part of the query content.
 
 Unaffected use cases:
-
 - Using the `${datasourceVariable}` to choose which data source to use for a query (through its data source picker) will not be affected since it can use both the name and the uid Issue [#69259](https://github.com/grafana/grafana/issues/69259)
 
 We are changing the logic that creates `uid` in `LogRowModel`. Previously, for `uid` we used `id` field from log's data frame. Unfortunately, when users run multiple queries that returned duplicate logs data, `uid` was not unique which was causing bugs. To make `uid` unique across multiple queries that return duplicate logs data, we are now prepending `uid` with `refId` of query that produced the log line. We recommend not to rely on `LogRowModel` `uid` and instead use `dataFrame` `id` field. Issue [#68569](https://github.com/grafana/grafana/issues/68569)
