@@ -20,6 +20,7 @@ export type instantQueryRawVirtualizedListData = { Value: string; __name__: stri
 
 export interface RawListContainerProps {
   tableResult: DataFrame;
+  exploreId: string;
 }
 
 const styles = {
@@ -61,7 +62,7 @@ const numberOfColumnsBeforeExpandedViewIsDefault = 2;
  * @constructor
  */
 const RawListContainer = (props: RawListContainerProps) => {
-  const { tableResult } = props;
+  const { tableResult, exploreId } = props;
   const dataFrame = cloneDeep(tableResult);
   const listRef = useRef<List | null>(null);
 
@@ -118,7 +119,13 @@ const RawListContainer = (props: RawListContainerProps) => {
       <header className={styles.header}>
         <Field className={styles.switchWrapper} label={`Expand results`} htmlFor={'isExpandedView'}>
           <div className={styles.switch}>
-            <Switch onChange={onContentClick} id="isExpandedView" value={isExpandedView} label={`Expand results`} />
+            <Switch
+              key={exploreId}
+              onChange={onContentClick}
+              id={`isExpandedView ${exploreId}`}
+              value={isExpandedView}
+              label={`Expand results`}
+            />
           </div>
         </Field>
 
