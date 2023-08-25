@@ -221,6 +221,9 @@
     "loading": "Ordner werden geladen …"
   },
   "grafana-ui": {
+    "modal": {
+      "close-tooltip": ""
+    },
     "segment-async": {
       "error": "Fehler beim Laden der Optionen",
       "loading": "Optionen werden geladen ...",
@@ -297,9 +300,6 @@
       "title": "",
       "unknown": ""
     }
-  },
-  "modal": {
-    "close-tooltip": ""
   },
   "nav": {
     "add-new-connections": {

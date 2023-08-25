@@ -226,6 +226,9 @@
     "loading": "Chargement des dossiers..."
   },
   "grafana-ui": {
+    "modal": {
+      "close-tooltip": ""
+    },
     "segment-async": {
       "error": "Échec du chargement des options",
       "loading": "Chargement des options...",
@@ -302,9 +305,6 @@
       "title": "",
       "unknown": ""
     }
-  },
-  "modal": {
-    "close-tooltip": ""
   },
   "nav": {
     "add-new-connections": {

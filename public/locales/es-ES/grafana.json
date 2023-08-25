@@ -226,6 +226,9 @@
     "loading": "Cargando carpetas..."
   },
   "grafana-ui": {
+    "modal": {
+      "close-tooltip": ""
+    },
     "segment-async": {
       "error": "No se han podido cargar las opciones",
       "loading": "Cargando las opciones...",
@@ -302,9 +305,6 @@
       "title": "",
       "unknown": ""
     }
-  },
-  "modal": {
-    "close-tooltip": ""
   },
   "nav": {
     "add-new-connections": {

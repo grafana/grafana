@@ -216,6 +216,9 @@
     "loading": "正在加载文件夹..."
   },
   "grafana-ui": {
+    "modal": {
+      "close-tooltip": ""
+    },
     "segment-async": {
       "error": "加载选项失败",
       "loading": "正在加载选项...",
@@ -292,9 +295,6 @@
       "title": "",
       "unknown": ""
     }
-  },
-  "modal": {
-    "close-tooltip": ""
   },
   "nav": {
     "add-new-connections": {

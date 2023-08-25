@@ -85,7 +85,12 @@ export function Modal(props: PropsWithChildren<Props>) {
               typeof title !== 'string' && title
             }
             <div className={styles.modalHeaderClose}>
-              <IconButton name="times" size="xl" onClick={onDismiss} tooltip={t('modal.close-tooltip', 'Close')} />
+              <IconButton
+                name="times"
+                size="xl"
+                onClick={onDismiss}
+                tooltip={t('grafana-ui.modal.close-tooltip', 'Close')}
+              />
             </div>
           </div>
           <div className={cx(styles.modalContent, contentClassName)}>{children}</div>

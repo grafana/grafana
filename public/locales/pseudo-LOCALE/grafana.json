@@ -221,6 +221,9 @@
     "loading": "Ŀőäđįŉģ ƒőľđęřş..."
   },
   "grafana-ui": {
+    "modal": {
+      "close-tooltip": ""
+    },
     "segment-async": {
       "error": "Fäįľęđ ŧő ľőäđ őpŧįőŉş",
       "loading": "Ŀőäđįŉģ őpŧįőŉş...",
@@ -297,9 +300,6 @@
       "title": "Ŀőģįŉ ƒäįľęđ",
       "unknown": "Ůŉĸŉőŵŉ ęřřőř őččūřřęđ"
     }
-  },
-  "modal": {
-    "close-tooltip": ""
   },
   "nav": {
     "add-new-connections": {

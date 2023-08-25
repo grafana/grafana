@@ -221,6 +221,9 @@
     "loading": "Loading folders..."
   },
   "grafana-ui": {
+    "modal": {
+      "close-tooltip": "Close"
+    },
     "segment-async": {
       "error": "Failed to load options",
       "loading": "Loading options...",
@@ -297,9 +300,6 @@
       "title": "Login failed",
       "unknown": "Unknown error occurred"
     }
-  },
-  "modal": {
-    "close-tooltip": "Close"
   },
   "nav": {
     "add-new-connections": {
