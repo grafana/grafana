@@ -141,17 +141,10 @@ func (h *DashboardHandler) OnPublish(ctx context.Context, requester identity.Req
 			return model.PublishReply{}, backend.PublishStreamStatusNotFound, nil // NOOP
 		}
 
-		userID, err := identity.IntIdentifier(requester.GetNamespacedID())
-		if err != nil {
-			userID = -1 // TODO
-		}
-
 		// Tell everyone who is editing
-		event.User = &user.UserDisplayDTO{
-			ID:    userID,
-			Name:  requester.GetDisplayName(),
-			Login: requester.GetLogin(),
-			// TODO: missing AvatarURL
+		event.User, err = user.NewUserDisplayDTOFromRequester(requester)
+		if err != nil {
+			return model.PublishReply{}, backend.PublishStreamStatusNotFound, err
 		}
 
 		msg, err := json.Marshal(event)

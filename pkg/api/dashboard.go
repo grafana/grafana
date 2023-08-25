@@ -355,19 +355,13 @@ func (hs *HTTPServer) deleteDashboard(c *contextmodel.ReqContext) response.Respo
 		return response.Error(500, "Failed to delete dashboard", err)
 	}
 
-	userID, err := identity.IntIdentifier(namespaceID, userIDStr)
+	userDTODisplay, err := user.NewUserDisplayDTOFromRequester(c.SignedInUser)
 	if err != nil {
-		userID = -1 // TODO
+		return response.Error(500, "Error while parsing the user DTO model", err)
 	}
 
 	if hs.Live != nil {
-		userDisplay := &user.UserDisplayDTO{
-			ID:    userID,
-			Name:  c.SignedInUser.GetDisplayName(),
-			Login: c.SignedInUser.GetLogin(),
-			// TODO: missing AvatarURL
-		}
-		err := hs.Live.GrafanaScope.Dashboards.DashboardDeleted(c.SignedInUser.GetOrgID(), userDisplay, dash.UID)
+		err := hs.Live.GrafanaScope.Dashboards.DashboardDeleted(c.SignedInUser.GetOrgID(), userDTODisplay, dash.UID)
 		if err != nil {
 			hs.log.Error("Failed to broadcast delete info", "dashboard", dash.UID, "error", err)
 		}
@@ -499,16 +493,15 @@ func (hs *HTTPServer) postDashboard(c *contextmodel.ReqContext, cmd dashboards.S
 			dashboard = dash // the original request
 		}
 
+		userDTODisplay, err := user.NewUserDisplayDTOFromRequester(c.SignedInUser)
+		if err != nil {
+			return response.Error(500, "Error while parsing the user DTO model", err)
+		}
+
 		// This will broadcast all save requests only if a `gitops` observer exists.
 		// gitops is useful when trying to save dashboards in an environment where the user can not save
 		channel := hs.Live.GrafanaScope.Dashboards
-		userDisplay := &user.UserDisplayDTO{
-			ID:    userID,
-			Name:  c.SignedInUser.GetDisplayName(),
-			Login: c.SignedInUser.GetLogin(),
-			// TODO: missing AvatarURL
-		}
-		liveerr := channel.DashboardSaved(c.SignedInUser.GetOrgID(), userDisplay, cmd.Message, dashboard, err)
+		liveerr := channel.DashboardSaved(c.SignedInUser.GetOrgID(), userDTODisplay, cmd.Message, dashboard, err)
 
 		// When an error exists, but the value broadcast to a gitops listener return 202
 		if liveerr == nil && err != nil && channel.HasGitOpsObserver(c.SignedInUser.GetOrgID()) {
@@ -561,7 +554,7 @@ func (hs *HTTPServer) postDashboard(c *contextmodel.ReqContext, cmd dashboards.S
 func (hs *HTTPServer) GetHomeDashboard(c *contextmodel.ReqContext) response.Response {
 	userID, err := identity.IntIdentifier(c.SignedInUser.GetNamespacedID())
 	if err != nil {
-		return response.Error(500, "failed to get user id", err) // TODO
+		return response.Error(500, "failed to get user id", err)
 	}
 	prefsQuery := pref.GetPreferenceWithDefaultsQuery{OrgID: c.SignedInUser.GetOrgID(), UserID: userID, Teams: c.SignedInUser.GetTeams()}
 	homePage := hs.Cfg.HomePage

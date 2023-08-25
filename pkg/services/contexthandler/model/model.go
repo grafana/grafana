@@ -19,8 +19,8 @@ import (
 
 type ReqContext struct {
 	*web.Context
-	*user.SignedInUser // deprecated: to be replaced by identity.Requester
-	UserToken          *usertoken.UserToken
+	*user.SignedInUser
+	UserToken *usertoken.UserToken
 
 	IsSignedIn     bool
 	IsRenderCall   bool

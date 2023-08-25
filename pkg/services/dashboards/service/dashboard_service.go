@@ -184,9 +184,9 @@ func (dr *DashboardServiceImpl) BuildSaveDashboardCommand(ctx context.Context, d
 
 	userID, err := identity.IntIdentifier(dto.User.GetNamespacedID())
 	if err != nil {
-		userID = -1 // TODO
-		// return nil, dashboards.ErrDashboardUpdateAccessDenied
+		return nil, err
 	}
+
 	cmd := &dashboards.SaveDashboardCommand{
 		Dashboard: dash.Data,
 		Message:   dto.Message,

@@ -45,8 +45,7 @@ type DashboardGuardian interface {
 }
 
 type dashboardGuardianImpl struct {
-	cfg *setting.Cfg
-	// user             *user.SignedInUser
+	cfg              *setting.Cfg
 	user             identity.Requester
 	dashId           int64
 	orgId            int64
@@ -210,7 +209,7 @@ func (g *dashboardGuardianImpl) CanCreate(_ int64, _ bool) (bool, error) {
 }
 
 func (g *dashboardGuardianImpl) HasPermission(permission dashboards.PermissionType) (bool, error) {
-	if g.user.GetOrgRole() == org.RoleAdmin {
+	if g.user.HasRole(org.RoleAdmin) {
 		return g.logHasPermissionResult(permission, true, nil)
 	}
 
@@ -228,26 +227,15 @@ func (g *dashboardGuardianImpl) logHasPermissionResult(permission dashboards.Per
 		return hasPermission, err
 	}
 
-	namespaceID, identifier := g.user.GetNamespacedID()
+	var debugMessage string
 	if hasPermission {
-		g.log.Debug(
-			"User granted access to execute action",
-			"namespaceID", namespaceID,
-			"identifier", identifier,
-			"orgId", g.orgId,
-			"uname", g.user.GetLogin(),
-			"dashId", g.dashId,
-			"action", permission)
+		debugMessage = "User granted access to execute action"
 	} else {
-		g.log.Debug(
-			"User denied access to execute action",
-			"namespaceID", namespaceID,
-			"identifier", identifier,
-			"orgId", g.orgId,
-			"orgId", g.orgId,
-			"uname", g.user.GetLogin(),
-			"dashId", g.dashId, "action", permission)
+		debugMessage = "User denied access to execute action"
 	}
+
+	namespaceID, identifier := g.user.GetNamespacedID()
+	g.log.Debug(debugMessage, "namespaceID", namespaceID, "identifier", identifier, "orgId", g.orgId, "uname", g.user.GetLogin(), "dashId", g.dashId, "action", permission)
 
 	return hasPermission, err
 }
@@ -339,7 +327,7 @@ func (g *dashboardGuardianImpl) CheckPermissionBeforeUpdate(permission dashboard
 		}
 	}
 
-	if g.user.GetOrgRole() == org.RoleAdmin {
+	if g.user.HasRole(org.RoleAdmin) {
 		return true, nil
 	}
 
