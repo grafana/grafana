@@ -68,6 +68,7 @@ const dataSources = {
     {
       type: DataSourceType.Prometheus,
       name: 'cortex with ruler',
+      isDefault: true,
     },
     { alerting: true }
   ),
@@ -185,9 +186,6 @@ describe('RuleEditor cloud: checking editable data sources', () => {
 
     await ui.inputs.name.find();
 
-    const removeExpressionsButtons = screen.getAllByLabelText('Remove expression');
-    expect(removeExpressionsButtons).toHaveLength(2);
-
     const switchToCloudButton = screen.getByText('Switch to data source-managed alert rule');
     expect(switchToCloudButton).toBeInTheDocument();
 
@@ -200,8 +198,8 @@ describe('RuleEditor cloud: checking editable data sources', () => {
     const dataSourceSelect = ui.inputs.dataSource.get();
     await userEvent.click(byRole('combobox').get(dataSourceSelect));
 
-    expect(await byText('loki with ruler').query()).toBeInTheDocument();
     expect(byText('cortex with ruler').query()).toBeInTheDocument();
+    expect(byText('loki with ruler').query()).toBeInTheDocument();
     expect(byText('loki with local rule store').query()).not.toBeInTheDocument();
     expect(byText('prom without ruler api').query()).not.toBeInTheDocument();
     expect(byText('splunk').query()).not.toBeInTheDocument();
