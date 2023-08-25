@@ -43,7 +43,7 @@ export function getElementStyles(theme: GrafanaTheme2) {
     button: {
       letterSpacing: theme.typography.body.letterSpacing,
 
-      // '&:focus-visible': getFocusStyles(theme),
+      '&:focus-visible': getFocusStyles(theme),
       '&:focus': {
         outline: 'none',
       },

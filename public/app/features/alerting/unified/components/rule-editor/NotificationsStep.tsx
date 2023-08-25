@@ -86,7 +86,7 @@ export const NotificationsStep = ({ alertUid }: NotificationsStepProps) => {
   return (
     <RuleEditorSection
       stepNo={type === RuleFormType.cloudRecording ? 4 : 5}
-      title={type === RuleFormType.cloudRecording ? 'Labels' : 'Configure notifications'}
+      title={type === RuleFormType.cloudRecording ? 'Add labels' : 'Configure notifications'}
       description={
         type === RuleFormType.cloudRecording ? (
           'Add labels to help you better manage your recording rules'

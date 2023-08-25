@@ -8,6 +8,7 @@ import { backendSrv } from 'app/core/services/backend_srv'; // will use the vers
 
 import { BROWSER_MODE_DISABLED_MESSAGE } from '../constants';
 import InfluxDatasource from '../datasource';
+import { InfluxVersion } from '../types';
 
 //@ts-ignore
 const templateSrv = new TemplateSrvStub();
@@ -295,7 +296,7 @@ describe('InfluxDataSource', () => {
 
     describe('when interpolating query variables for dashboard->explore', () => {
       it('should interpolate all variables with Flux mode', () => {
-        ds.isFlux = true;
+        ds.version = InfluxVersion.Flux;
         const fluxQuery = {
           refId: 'x',
           query: '$interpolationVar,$interpolationVar2',
@@ -309,7 +310,7 @@ describe('InfluxDataSource', () => {
       });
 
       it('should interpolate all variables with InfluxQL mode', () => {
-        ds.isFlux = false;
+        ds.version = InfluxVersion.InfluxQL;
         const queries = ds.interpolateVariablesInQueries([influxQuery], {
           interpolationVar: { text: text, value: text },
           interpolationVar2: { text: text2, value: text2 },
@@ -320,7 +321,7 @@ describe('InfluxDataSource', () => {
 
     describe('when interpolating template variables', () => {
       it('should apply all template variables with Flux mode', () => {
-        ds.isFlux = true;
+        ds.version = InfluxVersion.Flux;
         const fluxQuery = {
           refId: 'x',
           query: '$interpolationVar',
@@ -336,7 +337,7 @@ describe('InfluxDataSource', () => {
       });
 
       it('should apply all template variables with InfluxQL mode', () => {
-        ds.isFlux = false;
+        ds.version = ds.version = InfluxVersion.InfluxQL;
         ds.access = 'proxy';
         config.featureToggles.influxdbBackendMigration = true;
         const query = ds.applyTemplateVariables(influxQuery, {
@@ -347,7 +348,7 @@ describe('InfluxDataSource', () => {
       });
 
       it('should apply all scopedVars to tags', () => {
-        ds.isFlux = false;
+        ds.version = InfluxVersion.InfluxQL;
         ds.access = 'proxy';
         config.featureToggles.influxdbBackendMigration = true;
         const query = ds.applyTemplateVariables(influxQuery, {

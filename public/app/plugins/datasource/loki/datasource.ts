@@ -194,7 +194,7 @@ export class LokiDatasource
     switch (options.type) {
       case SupplementaryQueryType.LogsVolume:
         // it has to be a logs-producing range-query
-        isQuerySuitable = !!(query.expr && isLogsQuery(query.expr) && query.queryType === LokiQueryType.Range);
+        isQuerySuitable = !!(expr && isLogsQuery(expr) && normalizedQuery.queryType === LokiQueryType.Range);
         if (!isQuerySuitable) {
           return undefined;
         }
@@ -204,12 +204,12 @@ export class LokiDatasource
           refId: `${REF_ID_STARTER_LOG_VOLUME}${normalizedQuery.refId}`,
           queryType: LokiQueryType.Range,
           supportingQueryType: SupportingQueryType.LogsVolume,
-          expr: `sum by (level) (count_over_time(${expr}[$__interval]))`,
+          expr: `sum by (level) (count_over_time(${expr}[$__auto]))`,
         };
 
       case SupplementaryQueryType.LogsSample:
         // it has to be a metric query
-        isQuerySuitable = !!(query.expr && !isLogsQuery(query.expr));
+        isQuerySuitable = !!(expr && !isLogsQuery(expr));
         if (!isQuerySuitable) {
           return undefined;
         }
@@ -888,7 +888,7 @@ export class LokiDatasource
   applyTemplateVariables(target: LokiQuery, scopedVars: ScopedVars): LokiQuery {
     // We want to interpolate these variables on backend because we support using them in
     // alerting/ML queries and we want to have consistent interpolation for all queries
-    const { __interval, __interval_ms, __range, __range_s, __range_ms, ...rest } = scopedVars || {};
+    const { __auto, __interval, __interval_ms, __range, __range_s, __range_ms, ...rest } = scopedVars || {};
 
     const exprWithAdHoc = this.addAdHocFilters(target.expr);
 

@@ -1237,7 +1237,6 @@ describe('toggleQueryFilter', () => {
   let ds: ElasticDatasource;
   beforeEach(() => {
     ds = getTestContext().ds;
-    config.featureToggles.elasticToggleableFilters = true;
   });
   describe('with empty query', () => {
     let query: ElasticsearchQuery;
@@ -1361,6 +1360,15 @@ describe('addAdhocFilters', () => {
 
       const query = ds.addAdHocFilters('');
       expect(query).toBe('field\\:name:"field:value"');
+    });
+
+    it('should escape characters in filter values', () => {
+      jest
+        .mocked(templateSrvMock.getAdhocFilters)
+        .mockReturnValue([{ key: 'field:name', operator: '=', value: 'field "value"', condition: '' }]);
+
+      const query = ds.addAdHocFilters('');
+      expect(query).toBe('field\\:name:"field \\"value\\""');
     });
   });
 

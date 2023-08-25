@@ -151,7 +151,6 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 			},
 			want: &authn.Identity{
 				OrgID:           1,
-				OrgCount:        0,
 				OrgName:         "",
 				OrgRoles:        map[int64]roletype.RoleType{1: roletype.RoleAdmin},
 				ID:              "user:2",

@@ -17,7 +17,7 @@ labels:
     - enterprise
     - oss
 title: Configure recording rules
-weight: 400
+weight: 300
 ---
 
 # Configure recording rules
@@ -46,21 +46,21 @@ This setting has precedence over each individual rule frequency. If a rule frequ
 
 To create recording rules, follow these steps.
 
-1. Click **Alerts & IRM** and then **Alerting**.
-1. Click **Alert rules**.
+1. Click **Alerts & IRM** -> **Alerting** ->
+   **Alert rules**.
 1. Click the **More** dropdown and then **New recording rule**.
 
-1. Add the rule name.
+1. Set rule name.
 
    The recording rule name must be a Prometheus metric name and contain no whitespace.
 
-1. Select a data source.
+1. Define query.
    - Select your Loki or Prometheus data source.
    - Enter a query.
-1. Add a namespace and a group.
+1. Add namespace and group.
    - From the **Namespace** dropdown, select an existing rule namespace or add a new one. Namespaces can contain one or more rule groups and only have an organizational purpose. For more information, see [Grafana Mimir or Loki rule groups and namespaces][edit-mimir-loki-namespace-group].
    - From the **Group** dropdown, select an existing group within the selected namespace or add a new one. Newly created rules are appended to the end of the group. Rules within a group are run sequentially at a regular interval, with the same evaluation time.
-1. Add custom labels.
+1. Add labels.
    - Add custom labels selecting existing key-value pairs from the drop down, or add new labels by entering the new key or value .
 1. Click **Save rule** to save the rule or **Save rule and exit** to save the rule and go back to the Alerting page.
 

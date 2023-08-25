@@ -1093,6 +1093,24 @@ describe('LokiDatasource', () => {
     });
 
     describe('logs volume', () => {
+      // The default queryType value is Range
+      it('returns logs volume for query with no queryType', () => {
+        expect(
+          ds.getSupplementaryQuery(
+            { type: SupplementaryQueryType.LogsVolume },
+            {
+              expr: '{label=value}',
+              refId: 'A',
+            }
+          )
+        ).toEqual({
+          expr: 'sum by (level) (count_over_time({label=value}[$__auto]))',
+          queryType: LokiQueryType.Range,
+          refId: 'log-volume-A',
+          supportingQueryType: SupportingQueryType.LogsVolume,
+        });
+      });
+
       it('returns logs volume query for range log query', () => {
         expect(
           ds.getSupplementaryQuery(
@@ -1104,7 +1122,7 @@ describe('LokiDatasource', () => {
             }
           )
         ).toEqual({
-          expr: 'sum by (level) (count_over_time({label=value}[$__interval]))',
+          expr: 'sum by (level) (count_over_time({label=value}[$__auto]))',
           queryType: LokiQueryType.Range,
           refId: 'log-volume-A',
           supportingQueryType: SupportingQueryType.LogsVolume,

@@ -139,10 +139,10 @@ function getLinkExtensionOverrides(pluginId: string, config: PluginExtensionLink
     assertStringProps({ title, description }, ['title', 'description']);
 
     if (Object.keys(rest).length > 0) {
-      throw new Error(
-        `Invalid extension "${config.title}". Trying to override not-allowed properties: ${Object.keys(rest).join(
+      logWarning(
+        `Extension "${config.title}", is trying to override restricted properties: ${Object.keys(rest).join(
           ', '
-        )}`
+        )} which will be ignored.`
       );
     }
 

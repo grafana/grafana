@@ -2,9 +2,17 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { DataSourcePluginOptionsEditorProps, GrafanaTheme2 } from '@grafana/data';
-import { ConfigSection, ConfigSubSection, DataSourceDescription } from '@grafana/experimental';
+import {
+  AdvancedHttpSettings,
+  Auth,
+  ConfigSection,
+  ConfigSubSection,
+  ConnectionSettings,
+  convertLegacyAuthProps,
+  DataSourceDescription,
+} from '@grafana/experimental';
 import { config } from '@grafana/runtime';
-import { DataSourceHttpSettings, useStyles2 } from '@grafana/ui';
+import { SecureSocksProxySettings, useStyles2 } from '@grafana/ui';
 import { ConfigDescriptionLink } from 'app/core/components/ConfigDescriptionLink';
 import { Divider } from 'app/core/components/Divider';
 import { NodeGraphSection } from 'app/core/components/NodeGraphSettings';
@@ -32,13 +40,19 @@ export const ConfigEditor = ({ options, onOptionsChange }: Props) => {
 
       <Divider />
 
-      <DataSourceHttpSettings
-        defaultUrl="http://tempo"
-        dataSourceConfig={options}
-        showAccessOptions={false}
-        onChange={onOptionsChange}
-        secureSocksDSProxyEnabled={config.secureSocksDSProxyEnabled}
+      <ConnectionSettings config={options} onChange={onOptionsChange} />
+
+      <Divider />
+
+      <Auth
+        {...convertLegacyAuthProps({
+          config: options,
+          onChange: onOptionsChange,
+        })}
       />
+      {config.secureSocksDSProxyEnabled && (
+        <SecureSocksProxySettings options={options} onOptionsChange={onOptionsChange} />
+      )}
 
       <Divider />
 
@@ -59,6 +73,10 @@ export const ConfigEditor = ({ options, onOptionsChange }: Props) => {
         isCollapsible={true}
         isInitiallyOpen={false}
       >
+        <AdvancedHttpSettings config={options} onChange={onOptionsChange} />
+
+        <Divider hideLine={true} />
+
         <ConfigSubSection
           title="Service graph"
           description={

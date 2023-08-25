@@ -254,6 +254,7 @@
     "error": {
       "blocked": "You have exceeded the number of login attempts for this user. Please try again later.",
       "invalid-user-or-password": "Invalid username or password",
+      "title": "Login failed",
       "unknown": "Unknown error occurred"
     }
   },
@@ -453,7 +454,7 @@
       "title": "Profile"
     },
     "profiles": {
-      "title": "Profiles (preview)"
+      "title": "Profiles"
     },
     "public": {
       "title": "Public dashboards"
@@ -654,7 +655,7 @@
       "info-text": "Create a direct link to this dashboard or panel, customized with the options below.",
       "link-url": "Link URL",
       "render-alert": "Image renderer plugin not installed",
-      "render-instructions": "To render a panel image, you must install the&nbsp;<1>Grafana image renderer plugin</1>. Please contact your Grafana administrator to install the plugin.",
+      "render-instructions": "To render a panel image, you must install the <1>Grafana image renderer plugin</1>. Please contact your Grafana administrator to install the plugin.",
       "rendered-image": "Direct link rendered image",
       "save-alert": "Dashboard is not saved",
       "save-dashboard": "To render a panel image, you must save the dashboard first.",
