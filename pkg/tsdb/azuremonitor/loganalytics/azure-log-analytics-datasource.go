@@ -565,7 +565,9 @@ func getCorrelationWorkspaces(ctx context.Context, baseResource string, resource
 
 		defer func() {
 			err := res.Body.Close()
+		if err != nil {
 			backend.Logger.Error("Failed to close response body", "err", err)
+		}
 		}()
 
 		if res.StatusCode/100 != 2 {
