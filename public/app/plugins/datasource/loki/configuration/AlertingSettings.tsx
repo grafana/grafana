@@ -10,13 +10,16 @@ export function AlertingSettings({
   onOptionsChange,
 }: Pick<DataSourcePluginOptionsEditorProps, 'options' | 'onOptionsChange'>) {
   return (
-    <ConfigSubSection title="Alerting" description={
+    <ConfigSubSection
+      title="Alerting"
+      description={
         <ConfigDescriptionLink
           description="Manage alert rules for the Loki data source."
           suffix="loki/configure-loki-data-source/#alerting"
           feature="alerting"
         />
-      }>
+      }
+    >
       <InlineField
         labelWidth={29}
         label="Manage alert rules in Alerting UI"
