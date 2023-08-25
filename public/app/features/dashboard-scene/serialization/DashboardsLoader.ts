@@ -29,11 +29,11 @@ import { StateManagerBase } from 'app/core/services/StateManagerBase';
 import { dashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 
-import { DashboardScene } from './DashboardScene';
-import { LibraryVizPanel } from './LibraryVizPanel';
-import { panelMenuBehavior } from './PanelMenuBehavior';
-import { getVizPanelKeyForPanelId } from './utils';
-import { createPanelDataProvider } from './utils/createPanelDataProvider';
+import { DashboardScene } from '../scene/DashboardScene';
+import { LibraryVizPanel } from '../scene/LibraryVizPanel';
+import { panelMenuBehavior } from '../scene/PanelMenuBehavior';
+import { createPanelDataProvider } from '../utils/createPanelDataProvider';
+import { getVizPanelKeyForPanelId } from '../utils/utils';
 
 export interface DashboardLoaderState {
   dashboard?: DashboardScene;
