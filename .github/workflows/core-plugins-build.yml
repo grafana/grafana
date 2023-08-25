@@ -91,26 +91,32 @@ jobs:
             docker --version
             echo "======================================="
         - name: test:frontend
+          working-directory: ./public/plugins/${{ inputs.plugin_id }}
           shell: bash
           run: |
             yarn test:ci
         - name: lint:frontend
+          working-directory: ./public/plugins/${{ inputs.plugin_id }}
           shell: bash
           run: |
             yarn lint
         - name: build:frontend
+          working-directory: ./public/plugins/${{ inputs.plugin_id }}
           shell: bash
           run: |
             yarn build
         - name: lint:backend
+          working-directory: ./public/plugins/${{ inputs.plugin_id }}
           shell: bash
           run: |
             mage lint
         - name: test:backend
+          working-directory: ./public/plugins/${{ inputs.plugin_id }}
           shell: bash
           run: |
             mage test
         - name: build:backend
+          working-directory: ./public/plugins/${{ inputs.plugin_id }}
           shell: bash
           run: |
             mage -v
