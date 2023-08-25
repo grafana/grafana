@@ -848,7 +848,6 @@ def e2e_tests_step(suite, port = 3001, tries = None):
             "HOST": "grafana-server",
         },
         "commands": [
-            "apt-get install -y netcat",
             cmd,
         ],
     }

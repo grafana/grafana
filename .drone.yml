@@ -627,40 +627,36 @@ steps:
   image: grafana/build-container:1.7.5
   name: grafana-server
 - commands:
-  - apt-get install -y netcat
   - ./bin/build e2e-tests --port 3001 --suite dashboards-suite
   depends_on:
   - grafana-server
   environment:
     HOST: grafana-server
-  image: cypress/included:9.5.1-node16.14.0-slim-chrome99-ff97
+  image: cypress/included:12.15.0
   name: end-to-end-tests-dashboards-suite
 - commands:
-  - apt-get install -y netcat
   - ./bin/build e2e-tests --port 3001 --suite smoke-tests-suite
   depends_on:
   - grafana-server
   environment:
     HOST: grafana-server
-  image: cypress/included:9.5.1-node16.14.0-slim-chrome99-ff97
+  image: cypress/included:12.15.0
   name: end-to-end-tests-smoke-tests-suite
 - commands:
-  - apt-get install -y netcat
   - ./bin/build e2e-tests --port 3001 --suite panels-suite
   depends_on:
   - grafana-server
   environment:
     HOST: grafana-server
-  image: cypress/included:9.5.1-node16.14.0-slim-chrome99-ff97
+  image: cypress/included:12.15.0
   name: end-to-end-tests-panels-suite
 - commands:
-  - apt-get install -y netcat
   - ./bin/build e2e-tests --port 3001 --suite various-suite
   depends_on:
   - grafana-server
   environment:
     HOST: grafana-server
-  image: cypress/included:9.5.1-node16.14.0-slim-chrome99-ff97
+  image: cypress/included:12.15.0
   name: end-to-end-tests-various-suite
 - commands:
   - cd /
@@ -1786,40 +1782,36 @@ steps:
   image: grafana/build-container:1.7.5
   name: grafana-server
 - commands:
-  - apt-get install -y netcat
   - ./bin/build e2e-tests --port 3001 --suite dashboards-suite
   depends_on:
   - grafana-server
   environment:
     HOST: grafana-server
-  image: cypress/included:9.5.1-node16.14.0-slim-chrome99-ff97
+  image: cypress/included:12.15.0
   name: end-to-end-tests-dashboards-suite
 - commands:
-  - apt-get install -y netcat
   - ./bin/build e2e-tests --port 3001 --suite smoke-tests-suite
   depends_on:
   - grafana-server
   environment:
     HOST: grafana-server
-  image: cypress/included:9.5.1-node16.14.0-slim-chrome99-ff97
+  image: cypress/included:12.15.0
   name: end-to-end-tests-smoke-tests-suite
 - commands:
-  - apt-get install -y netcat
   - ./bin/build e2e-tests --port 3001 --suite panels-suite
   depends_on:
   - grafana-server
   environment:
     HOST: grafana-server
-  image: cypress/included:9.5.1-node16.14.0-slim-chrome99-ff97
+  image: cypress/included:12.15.0
   name: end-to-end-tests-panels-suite
 - commands:
-  - apt-get install -y netcat
   - ./bin/build e2e-tests --port 3001 --suite various-suite
   depends_on:
   - grafana-server
   environment:
     HOST: grafana-server
-  image: cypress/included:9.5.1-node16.14.0-slim-chrome99-ff97
+  image: cypress/included:12.15.0
   name: end-to-end-tests-various-suite
 - commands:
   - cd /
@@ -3387,40 +3379,36 @@ steps:
   image: grafana/build-container:1.7.5
   name: grafana-server
 - commands:
-  - apt-get install -y netcat
   - ./bin/build e2e-tests --port 3001 --suite dashboards-suite --tries 3
   depends_on:
   - grafana-server
   environment:
     HOST: grafana-server
-  image: cypress/included:9.5.1-node16.14.0-slim-chrome99-ff97
+  image: cypress/included:12.15.0
   name: end-to-end-tests-dashboards-suite
 - commands:
-  - apt-get install -y netcat
   - ./bin/build e2e-tests --port 3001 --suite smoke-tests-suite --tries 3
   depends_on:
   - grafana-server
   environment:
     HOST: grafana-server
-  image: cypress/included:9.5.1-node16.14.0-slim-chrome99-ff97
+  image: cypress/included:12.15.0
   name: end-to-end-tests-smoke-tests-suite
 - commands:
-  - apt-get install -y netcat
   - ./bin/build e2e-tests --port 3001 --suite panels-suite --tries 3
   depends_on:
   - grafana-server
   environment:
     HOST: grafana-server
-  image: cypress/included:9.5.1-node16.14.0-slim-chrome99-ff97
+  image: cypress/included:12.15.0
   name: end-to-end-tests-panels-suite
 - commands:
-  - apt-get install -y netcat
   - ./bin/build e2e-tests --port 3001 --suite various-suite --tries 3
   depends_on:
   - grafana-server
   environment:
     HOST: grafana-server
-  image: cypress/included:9.5.1-node16.14.0-slim-chrome99-ff97
+  image: cypress/included:12.15.0
   name: end-to-end-tests-various-suite
 - commands:
   - apt-get update
@@ -4304,7 +4292,7 @@ steps:
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/drone-downstream
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/docker-puppeteer:1.1.0
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/docs-base:dbd975af06
-  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM cypress/included:9.5.1-node16.14.0-slim-chrome99-ff97
+  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM cypress/included:12.15.0
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM us-docker.pkg.dev/grafanalabs-dev/cloud-data-sources/e2e:latest
   image: aquasec/trivy:0.21.0
   name: scan-unknown-low-medium-vulnerabilities
@@ -4326,7 +4314,7 @@ steps:
   - trivy --exit-code 1 --severity HIGH,CRITICAL grafana/drone-downstream
   - trivy --exit-code 1 --severity HIGH,CRITICAL grafana/docker-puppeteer:1.1.0
   - trivy --exit-code 1 --severity HIGH,CRITICAL grafana/docs-base:dbd975af06
-  - trivy --exit-code 1 --severity HIGH,CRITICAL cypress/included:9.5.1-node16.14.0-slim-chrome99-ff97
+  - trivy --exit-code 1 --severity HIGH,CRITICAL cypress/included:12.15.0
   - trivy --exit-code 1 --severity HIGH,CRITICAL us-docker.pkg.dev/grafanalabs-dev/cloud-data-sources/e2e:latest
   image: aquasec/trivy:0.21.0
   name: scan-high-critical-vulnerabilities
@@ -4544,6 +4532,6 @@ kind: secret
 name: delivery-bot-app-private-key
 ---
 kind: signature
-hmac: 303fb59b2da9a39e5bc46dcb962894895697c46477d0c94b2a65c290e87ea57e
+hmac: fb4663860a2a5292a6cb0148afa5e66e778213fc52be9bd6e2cbec896d37329e
 
 ...
