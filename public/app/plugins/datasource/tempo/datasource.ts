@@ -140,21 +140,36 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     }
   }
 
-  async labelNamesQuery() {
+  async labelNamesQuery(): Promise<Array<{ text: string }>> {
     await this.languageProvider.fetchTags();
     const tags = this.languageProvider.getAutocompleteTags();
     return tags.filter((tag) => tag !== undefined).map((tag) => ({ text: tag })) as Array<{ text: string }>;
   }
 
-  async labelValuesQuery(labelName?: string) {
+  async labelValuesQuery(labelName?: string): Promise<Array<{ text: string }>> {
     if (!labelName) {
       return [];
     }
 
     let options;
     try {
-      options = await this.languageProvider.getOptionsV2(labelName);
+      // Retrieve the scope of the tag
+      // Example: given `http.status_code`, we want scope `span`
+      const scope: string | undefined = (this.languageProvider.tagsV2 || [])
+        // flatten the Scope objects
+        .flatMap((tagV2) => tagV2.tags.map((tag) => ({ scope: tagV2.name, name: tag })))
+        // find associated scope
+        .find((tag) => tag.name === labelName)?.scope;
+      if (!scope) {
+        throw Error(`Scope for tag ${labelName} not found`);
+      }
+
+      // For V2, we need to send scope and tag name, e.g. `span.http.status_code`,
+      // unless the tag has intrinsic scope
+      const scopeAndTag = scope === 'intrinsic' ? labelName : `${scope}.${labelName}`;
+      options = await this.languageProvider.getOptionsV2(scopeAndTag);
     } catch {
+      // For V1, the tag name (e.g. `http.status_code`) is enough
       options = await this.languageProvider.getOptionsV1(labelName);
     }
 
