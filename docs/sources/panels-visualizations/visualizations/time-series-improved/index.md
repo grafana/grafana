@@ -297,12 +297,12 @@ There are other common configuration options for the Time series visualization:
 
 <!--above can be a bit of shared content to ensure wording is consistent with guidance indicating that you should create an alphabetical list of other relevant options linked to that content-->
 
-### Data Links
+- ### Data Links
 
-Some placeholder text with a link to:
+    - Some placeholder text with a link to:
 [Data links]({{< relref "../../../panels-visualizations/configure-data-links/" >}})
 
-### Field overrides
+- ### Field overrides
 
 Some placeholder text with a link to:
 [Field overrides]({{< relref "../../../panels-visualizations/configure-overrides/" >}})
