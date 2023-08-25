@@ -176,7 +176,7 @@ func (s *UserSync) updateUserAttributes(ctx context.Context, usr *user.User, id 
 	}
 
 	if needsUpdate {
-		s.log.Debug("Syncing user info", "id", usr.ID, "update", updateCmd)
+		s.log.Debug("Syncing user info", "id", id.ID, "update", fmt.Sprintf("%v", updateCmd))
 		if err := s.userService.Update(ctx, updateCmd); err != nil {
 			return err
 		}
