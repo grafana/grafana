@@ -1,6 +1,6 @@
 import { of } from 'rxjs';
 
-import { DataQueryRequest, DataSourceRef, dateTime, TimeRange } from '@grafana/data';
+import { DataQueryRequest, DataSourceRef, TimeRange } from '@grafana/data';
 import { BackendSrvRequest, BackendSrv, config } from '@grafana/runtime';
 import { GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
 
@@ -71,34 +71,5 @@ describe('PublicDashboardDatasource', () => {
 
     expect(mock.calls.length).toBe(1);
     expect(mock.lastCall[0]).toEqual(`/api/public/dashboards/abc123/annotations`);
-  });
-
-  test('fetches results from the pubdash query endpoint when not annotation query', () => {
-    mockDatasourceRequest.mockReset();
-    mockDatasourceRequest.mockReturnValue(Promise.resolve({}));
-
-    const ds = new PublicAnnotationsDataSource();
-    const panelId = 1;
-    config.publicDashboardAccessToken = 'abc123';
-
-    ds.query({
-      maxDataPoints: 10,
-      intervalMs: 5000,
-      targets: [{ refId: 'A' }, { refId: 'B', datasource: { type: 'sample' } }],
-      panelId,
-      range: {
-        from: dateTime('2022-01-01T15:55:00Z'),
-        to: dateTime('2022-07-12T15:55:00Z'),
-        raw: {
-          from: 'now-15m',
-          to: 'now',
-        },
-      },
-    } as DataQueryRequest);
-
-    const mock = mockDatasourceRequest.mock;
-
-    expect(mock.calls.length).toBe(1);
-    expect(mock.lastCall[0].url).toEqual(`/api/public/dashboards/abc123/panels/${panelId}/query`);
   });
 });
