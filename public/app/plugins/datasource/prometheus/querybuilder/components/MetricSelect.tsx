@@ -61,6 +61,7 @@ export function MetricSelect({
     isLoading?: boolean;
     metricsModalOpen?: boolean;
     initialMetrics?: string[];
+    resultsTruncated?: boolean;
   }>({});
 
   const prometheusMetricEncyclopedia = config.featureToggles.prometheusMetricEncyclopedia;
@@ -86,6 +87,7 @@ export function MetricSelect({
       }
 
       const searchWords = searchQuery.split(splitSeparator);
+
       return searchWords.reduce((acc, cur) => {
         const matcheSearch = label.toLowerCase().includes(cur.toLowerCase());
 
@@ -138,7 +140,15 @@ export function MetricSelect({
     // Since some customers can have millions of metrics, whenever the user changes the autocomplete text we want to call the backend and request all metrics that match the current query string
     const results = datasource.metricFindQuery(formatKeyValueStringsForLabelValuesQuery(query, labelsFilters));
     return results.then((results) => {
+      const resultsLength = results.length;
       truncateResult(results);
+
+      if (resultsLength > results.length) {
+        setState({ ...state, resultsTruncated: true });
+      } else {
+        setState({ ...state, resultsTruncated: false });
+      }
+
       const resultsOptions = results.map((result) => {
         return {
           label: result.text,
@@ -220,9 +230,9 @@ export function MetricSelect({
     const theme = useTheme2();
     const stylesMenu = getSelectStyles(theme);
 
-    // Show the open modal button only if the options are loaded
+    // Show the results trucated warning only if the options are loaded and the results are truncated
     // The children are a react node(options loading node) or an array(not a valid element)
-    const optionsLoaded = !React.isValidElement(children);
+    const optionsLoaded = !React.isValidElement(children) && state.resultsTruncated;
 
     return (
       <div
@@ -264,6 +274,8 @@ export function MetricSelect({
           setState({ isLoading: true });
           const metrics = await onGetMetrics();
           const initialMetrics: string[] = metrics.map((m) => m.value);
+          const resultsLength = metrics.length;
+
           if (metrics.length > PROMETHEUS_QUERY_BUILDER_MAX_RESULTS) {
             truncateResult(metrics);
           }
@@ -275,9 +287,14 @@ export function MetricSelect({
               isLoading: undefined,
               // pass the initial metrics into the metrics explorer
               initialMetrics: initialMetrics,
+              resultsTruncated: resultsLength > metrics.length,
             });
           } else {
-            setState({ metrics, isLoading: undefined });
+            setState({
+              metrics,
+              isLoading: undefined,
+              resultsTruncated: resultsLength > metrics.length,
+            });
           }
         }}
         loadOptions={metricLookupDisabled ? metricLookupDisabledSearch : debouncedSearch}
