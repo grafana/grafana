@@ -149,7 +149,7 @@ export class TimeSrv {
   }
 
   private initTimeFromUrl() {
-    if (config.isPublicDashboardView && this.timeModel?.timepicker?.hidden) {
+    if (config.publicDashboardAccessToken && this.timeModel?.timepicker?.hidden) {
       return;
     }
 
