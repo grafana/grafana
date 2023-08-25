@@ -9,10 +9,10 @@ export interface RowOptionsButtonProps {
   title: string;
   repeat?: string | null;
   onUpdate: OnRowOptionsUpdate;
-  warningMessage?: string;
+  warning?: React.ReactNode;
 }
 
-export const RowOptionsButton = ({ repeat, title, onUpdate, warningMessage }: RowOptionsButtonProps) => {
+export const RowOptionsButton = ({ repeat, title, onUpdate, warning }: RowOptionsButtonProps) => {
   const onUpdateChange = (hideModal: () => void) => (title: string, repeat?: string | null) => {
     onUpdate(title, repeat);
     hideModal();
@@ -32,7 +32,7 @@ export const RowOptionsButton = ({ repeat, title, onUpdate, warningMessage }: Ro
                 repeat,
                 onDismiss: hideModal,
                 onUpdate: onUpdateChange(hideModal),
-                warningMessage,
+                warning,
               });
             }}
           >

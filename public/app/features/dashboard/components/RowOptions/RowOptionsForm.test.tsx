@@ -13,13 +13,7 @@ describe('DashboardRow', () => {
   it('Should show warning component when has warningMessage prop', () => {
     render(
       <TestProvider>
-        <RowOptionsForm
-          repeat={'3'}
-          title=""
-          onCancel={jest.fn()}
-          onUpdate={jest.fn()}
-          warningMessage="a warning message"
-        />
+        <RowOptionsForm repeat={'3'} title="" onCancel={jest.fn()} onUpdate={jest.fn()} warning="a warning message" />
       </TestProvider>
     );
     expect(

@@ -40,13 +40,18 @@ export class DashboardRow extends React.Component<DashboardRowProps> {
     this.props.dashboard.toggleRow(this.props.panel);
   };
 
-  getWarningMessage = () => {
+  getWarning = () => {
     const panels = !!this.props.panel.panels?.length
       ? this.props.panel.panels
       : this.props.dashboard.getRowPanels(indexOf(this.props.dashboard.panels, this.props.panel));
     const isAnyPanelUsingDashboardDS = panels.some((p) => p.datasource?.uid === SHARED_DASHBOARD_QUERY);
     if (isAnyPanelUsingDashboardDS) {
-      return `Panels in this row use the ${SHARED_DASHBOARD_QUERY} data source. These panels will reference the panel in the original row, not the ones in the repeated rows.`;
+      return (
+        <p>
+          Panels in this row use the {SHARED_DASHBOARD_QUERY} data source. These panels will reference the panel in the
+          original row, not the ones in the repeated rows.
+        </p>
+      );
     }
 
     return undefined;
@@ -108,7 +113,7 @@ export class DashboardRow extends React.Component<DashboardRowProps> {
               title={this.props.panel.title}
               repeat={this.props.panel.repeat}
               onUpdate={this.onUpdate}
-              warningMessage={this.getWarningMessage()}
+              warning={this.getWarning()}
             />
             <button type="button" className="pointer" onClick={this.onDelete} aria-label="Delete row">
               <Icon name="trash-alt" />
