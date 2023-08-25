@@ -224,7 +224,6 @@ func setupSimpleHTTPServer(features *featuremgmt.FeatureManager) *HTTPServer {
 		features = featuremgmt.WithFeatures()
 	}
 	cfg := setting.NewCfg()
-	cfg.RBACEnabled = false
 	cfg.IsFeatureToggleEnabled = features.IsEnabled
 
 	return &HTTPServer{
