@@ -188,7 +188,7 @@ func (api *LokiAPI) DataQuery(ctx context.Context, query lokiQuery, responseOpts
 
 	iter := jsoniter.Parse(jsoniter.ConfigDefault, resp.Body, 1024)
 	res := converter.ReadPrometheusStyleResult(iter, converter.Options{Dataplane: responseOpts.metricDataplane})
-  took = time.Since(start)
+	took = time.Since(start)
 
 	if res.Error != nil {
 		span.RecordError(res.Error)
