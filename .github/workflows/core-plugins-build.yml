@@ -1,4 +1,7 @@
 on:
+    push:
+        branches:
+          - testdataDecoupled_ci
     workflow_dispatch:
       inputs:
         tags:
