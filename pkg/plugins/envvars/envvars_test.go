@@ -358,8 +358,7 @@ func TestInitializer_featureToggleEnvVar(t *testing.T) {
 		envVarsProvider := NewProvider(&config.Cfg{
 			Features: featuremgmt.WithFeatures(expectedFeatures[0], true, expectedFeatures[1], true),
 		}, nil)
-		envVars, err := envVarsProvider.Get(context.Background(), p)
-		require.NoError(t, err)
+		envVars := envVarsProvider.Get(context.Background(), p)
 
 		assert.Equal(t, 2, len(envVars))
 
