@@ -166,7 +166,7 @@ const TraceQLSearch = ({ datasource, query, onChange }: Props) => {
             />
           </InlineSearchField>
           {config.featureToggles.metricsSummary && (
-            <GroupByField datasource={datasource} onChange={onChange} query={query} />
+            <GroupByField datasource={datasource} onChange={onChange} query={query} isTagsLoading={isTagsLoading} />
           )}
         </div>
         <EditorRow>

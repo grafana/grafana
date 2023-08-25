@@ -32,15 +32,13 @@ export function TraceQLEditor(props: Props) {
   // and wouldn't get new version of onRunQuery
   const onRunQueryRef = useRef(onRunQuery);
   onRunQueryRef.current = onRunQuery;
-  const onChangeRef = useRef(onChange);
-  onChangeRef.current = onChange;
 
   return (
     <CodeEditor
       value={props.value}
       language={langId}
       onBlur={onChange}
-      onChange={(value) => onChangeRef.current(value)}
+      onChange={onChange}
       containerStyles={styles.queryField}
       readOnly={props.readOnly}
       monacoOptions={{

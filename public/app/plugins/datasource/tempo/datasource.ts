@@ -52,7 +52,7 @@ import {
   defaultTableFilter,
 } from './graphTransform';
 import TempoLanguageProvider from './language_provider';
-import { createTableFrameFromMetricsSummaryQuery, emptyResponse } from './metricsSummary';
+import { createTableFrameFromMetricsSummaryQuery, emptyResponse, MetricsSummary } from './metricsSummary';
 import {
   transformTrace,
   transformTraceList,
@@ -394,8 +394,17 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
   }
 
   handleMetricsSummary = (target: TempoQuery, query: string, options: DataQueryRequest<TempoQuery>) => {
-    const groupBy = target.groupBy ? this.formatGroupBy(target.groupBy) : '';
+    if (query === '{}') {
+      return of({
+        error: {
+          message:
+            'Please ensure you do not have an empty query. This is so filters are applied and the metrics summary is not generated from all spans.',
+        },
+        data: emptyResponse,
+      });
+    }
 
+    const groupBy = target.groupBy ? this.formatGroupBy(target.groupBy) : '';
     return this._request('/api/metrics/summary', {
       q: query,
       groupBy,
@@ -407,8 +416,18 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
           return {
             error: {
               message: getErrorMessage(
-                `No summary data for '${groupBy}'. Note: the metrics summary API only considers spans of kind = server. Please check if the attributes exist by running a TraceQL query like { attr_key = attr_value && kind = server }`
+                `No summary data for '${groupBy}'. Note: the metrics summary API only considers spans of kind = server. You can check if the attributes exist by running a TraceQL query like { attr_key = attr_value && kind = server }`
               ),
+            },
+            data: emptyResponse,
+          };
+        }
+        // Check if any of the results have series data as older versions of Tempo placed the series data in a different structure
+        const hasSeries = response.data.summaries.some((summary: MetricsSummary) => summary.series.length > 0);
+        if (!hasSeries) {
+          return {
+            error: {
+              message: getErrorMessage(`No series data. Ensure you are using an up to date version of Tempo`),
             },
             data: emptyResponse,
           };
@@ -419,7 +438,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
       }),
       catchError((error) => {
         return of({
-          error: { message: error.data.message },
+          error: { message: getErrorMessage(error.data.message) },
           data: emptyResponse,
         });
       })

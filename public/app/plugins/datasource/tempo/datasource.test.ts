@@ -263,7 +263,7 @@ describe('Tempo data source', () => {
     });
   });
 
-  it('should format groupBy query correctly', () => {
+  it('should format metrics summary query correctly', () => {
     const ds = new TempoDatasource(defaultSettings, {} as TemplateSrv);
     const queryGroupBy = [
       { id: '1', scope: TraceqlSearchScope.Unscoped, tag: 'component' },

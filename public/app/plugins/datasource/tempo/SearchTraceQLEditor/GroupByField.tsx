@@ -1,13 +1,10 @@
 import { css } from '@emotion/css';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { AccessoryButton } from '@grafana/experimental';
 import { HorizontalGroup, Select, useStyles2 } from '@grafana/ui';
-import { notifyApp } from 'app/core/actions';
-import { createErrorNotification } from 'app/core/copy/appNotification';
-import { dispatch } from 'app/store/store';
 
 import { TraceqlFilter, TraceqlSearchScope } from '../dataquery.gen';
 import { TempoDatasource } from '../datasource';
@@ -20,27 +17,13 @@ interface Props {
   datasource: TempoDatasource;
   onChange: (value: TempoQuery) => void;
   query: Partial<TempoQuery> & TempoQuery;
+  isTagsLoading: boolean;
 }
 
 export const GroupByField = (props: Props) => {
-  const { datasource, onChange, query } = props;
+  const { datasource, onChange, query, isTagsLoading } = props;
   const styles = useStyles2(getStyles);
   const generateId = () => uuidv4().slice(0, 8);
-  const [isTagsLoading, setIsTagsLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchTags = async () => {
-      try {
-        await datasource.languageProvider.start();
-        setIsTagsLoading(false);
-      } catch (error) {
-        if (error instanceof Error) {
-          dispatch(notifyApp(createErrorNotification('Error', error)));
-        }
-      }
-    };
-    fetchTags();
-  }, [datasource]);
 
   useEffect(() => {
     if (!query.groupBy || query.groupBy.length === 0) {
@@ -87,7 +70,7 @@ export const GroupByField = (props: Props) => {
 
   return (
     <InlineSearchField
-      label="Group By"
+      label="Group By Metrics"
       tooltip="Select one or more tags to see the metrics summary. Note: the metrics summary API only considers spans of kind = server."
     >
       <>
@@ -104,7 +87,7 @@ export const GroupByField = (props: Props) => {
                 aria-label={`Select scope for filter ${i + 1}`}
               />
               <Select
-                options={getTags(f).map((t) => ({
+                options={getTags(f)?.map((t) => ({
                   label: t,
                   value: t,
                 }))}
@@ -117,11 +100,23 @@ export const GroupByField = (props: Props) => {
                 isLoading={isTagsLoading}
                 isClearable
               />
-              <AccessoryButton variant="secondary" icon="times" onClick={() => removeFilter(f)} tooltip="Remove tag" />
+              <AccessoryButton
+                variant="secondary"
+                icon="times"
+                onClick={() => removeFilter(f)}
+                tooltip="Remove tag"
+                aria-label={`Remove tag for filter ${i + 1}`}
+              />
 
               {i === (query.groupBy?.length ?? 0) - 1 && (
                 <span className={styles.addFilter}>
-                  <AccessoryButton variant="secondary" icon="plus" onClick={() => addFilter()} title="Add tag" />
+                  <AccessoryButton
+                    variant="secondary"
+                    icon="plus"
+                    onClick={() => addFilter()}
+                    tooltip="Add tag"
+                    aria-label="Add tag"
+                  />
                 </span>
               )}
             </HorizontalGroup>
