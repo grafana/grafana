@@ -13,10 +13,17 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 )
 
+// LoadedMetricsReader is an interface that is used by HysteresisCommand to read the loaded metrics
 type LoadedMetricsReader interface {
+	// Read returns a hash set of fingerprints of labels that should be considered as loaded
 	Read(ctx context.Context) (map[data.Fingerprint]struct{}, error)
 }
 
+// HysteresisCommand implements a two-level threshold command expression that determines whether a metric is above threshold:
+// - one threshold, called "loading", is used when the metric is determined as not loaded.
+// - another threshold, called "unloading", is used when the metric is determined as loaded.
+// To determine whether a metric is loaded, the command uses LoadedMetricsReader that provides a set of fingerprints of labels of metrics that should be considered as loaded.
+// The result of the execution of the command is the same as ThresholdCommand: 0 or 1 for each metric.
 type HysteresisCommand struct {
 	RefID                  string
 	ReferenceVar           string
@@ -143,6 +150,5 @@ func UnmarshalHysteresisCommand(rn *rawNode, r LoadedMetricsReader) (*Hysteresis
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize unload condition command: %w", err)
 	}
-
 	return NewHysteresisCommand(rn.RefID, referenceVar, *loadThresholdCmd, *unloadConditionCmd, r), nil
 }
