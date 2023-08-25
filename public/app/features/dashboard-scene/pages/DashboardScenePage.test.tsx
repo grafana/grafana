@@ -9,8 +9,9 @@ import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
 import { config, locationService, setPluginImportUtils } from '@grafana/runtime';
 import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps';
 
+import { setupLoadDashboardMock } from '../utils/test-utils';
+
 import { DashboardScenePage, Props } from './DashboardScenePage';
-import { setupLoadDashboardMock } from './test-utils';
 
 function setup() {
   const context = getGrafanaContextMock();
