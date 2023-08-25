@@ -93,7 +93,7 @@ export class BackendSrv implements BackendService {
   }
 
   private async initGrafanaDeviceID() {
-    if (config.buildInfo && config.buildInfo.edition === GrafanaEdition.OpenSource) {
+    if (config.buildInfo?.edition === GrafanaEdition.OpenSource) {
       return;
     }
 
@@ -161,7 +161,7 @@ export class BackendSrv implements BackendService {
     }
 
     // Add device id header if not OSS build
-    if (config.buildInfo && config.buildInfo.edition !== GrafanaEdition.OpenSource && this.deviceID) {
+    if (config.buildInfo?.edition !== GrafanaEdition.OpenSource && this.deviceID) {
       options.headers = options.headers ?? {};
       options.headers['X-Grafana-Device-Id'] = `${this.deviceID}`;
     }
