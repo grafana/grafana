@@ -155,6 +155,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     try {
       // Retrieve the scope of the tag
       // Example: given `http.status_code`, we want scope `span`
+      // Note that we ignore possible name clashes, e.g., `http.status_code` in both `span` and `resource`
       const scope: string | undefined = (this.languageProvider.tagsV2 || [])
         // flatten the Scope objects
         .flatMap((tagV2) => tagV2.tags.map((tag) => ({ scope: tagV2.name, name: tag })))
