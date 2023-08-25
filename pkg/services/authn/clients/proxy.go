@@ -88,22 +88,22 @@ func (c *Proxy) Authenticate(ctx context.Context, r *authn.Request) (*authn.Iden
 			uid, err := strconv.ParseInt(string(entry), 10, 64)
 			if err != nil {
 				c.log.FromContext(ctx).Warn("failed to parse user id from cache", "error", err, "userId", string(entry))
-			}
+			} else {
+				usr, err := c.userSrv.GetSignedInUserWithCacheCtx(ctx, &user.GetSignedInUserQuery{
+					UserID: uid,
+					OrgID:  r.OrgID,
+				})
 
-			usr, err := c.userSrv.GetSignedInUserWithCacheCtx(ctx, &user.GetSignedInUserQuery{
-				UserID: uid,
-				OrgID:  r.OrgID,
-			})
+				if err != nil {
+					c.log.FromContext(ctx).Warn("Could not resolved cached user", "error", err, "userId", string(entry))
+				}
 
-			if err != nil {
-				c.log.FromContext(ctx).Warn("Could not resolved cached user", "error", err, "userId", string(entry))
-			}
-
-			// if we for some reason cannot find the user we proceed with the normal flow, authenticate with ProxyClient
-			// and perform syncs
-			if usr != nil {
-				c.log.FromContext(ctx).Debug("User was loaded from cache, skip syncs", "userId", usr.UserID)
-				return authn.IdentityFromSignedInUser(authn.NamespacedID(authn.NamespaceUser, usr.UserID), usr, authn.ClientParams{SyncPermissions: true}, login.AuthProxyAuthModule), nil
+				// if we for some reason cannot find the user we proceed with the normal flow, authenticate with ProxyClient
+				// and perform syncs
+				if usr != nil {
+					c.log.FromContext(ctx).Debug("User was loaded from cache, skip syncs", "userId", usr.UserID)
+					return authn.IdentityFromSignedInUser(authn.NamespacedID(authn.NamespaceUser, usr.UserID), usr, authn.ClientParams{SyncPermissions: true}, login.AuthProxyAuthModule), nil
+				}
 			}
 		}
 	}
