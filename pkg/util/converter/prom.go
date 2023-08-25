@@ -414,7 +414,7 @@ l1Fields:
 						max := 0
 						pairs, err := readLabelsAsPairs(iter)
 						if err != nil {
-							return nil, nil, iter.Error
+							return nil, nil, err
 						}
 						for _, pair := range pairs {
 							k := pair[0]
@@ -736,6 +736,9 @@ func readHistogram(iter *jsoniter.Iterator, hist *histogramInfo) error {
 	// next object element
 	iter.ReadArray()
 	for l1Field := iter.ReadObject(); l1Field != ""; l1Field = iter.ReadObject() {
+		if iter.Error != nil {
+			return iter.Error
+		}
 		switch l1Field {
 		case "count":
 			iter.Skip()
