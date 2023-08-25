@@ -4,7 +4,7 @@ import { SceneComponentProps, SceneObjectBase, SceneObjectState, VizPanel } from
 import { PanelModel } from 'app/features/dashboard/state';
 import { getLibraryPanel } from 'app/features/library-panels/state/api';
 
-import { createPanelDataProvider } from './utils/createPanelDataProvider';
+import { createPanelDataProvider } from '../utils/createPanelDataProvider';
 
 interface LibraryVizPanelState extends SceneObjectState {
   // Library panels use title from dashboard JSON's panel model, not from library panel definition, hence we pass it.
