@@ -18,7 +18,6 @@ env:
     NODEJS_VERSION: 16.19.1
     GO_VERSION: 1.21.0
     GO_LINT_VERSION: 1.51.1
-    GO_SEC_VERSION: 2.16.0
     GRABPL_VERSION: 2.9.51
 
 jobs:
@@ -55,10 +54,6 @@ jobs:
           shell: bash
           run: |
             curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v${{ env.GO_LINT_VERSION }}
-        - name: Install gosec
-          shell: bash
-          run: |
-            wget -O - -q https://raw.githubusercontent.com/securego/gosec/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v${{ env.GO_SEC_VERSION }}
         - name: Download grabpl executable
           shell: sh
           run: |
