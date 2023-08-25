@@ -373,6 +373,7 @@ lerna.json @grafana/frontend-ops
 /public/app/features/connections/ @grafana/plugins-platform-frontend @mikkancso
 /public/app/features/correlations/ @grafana/explore-squad
 /public/app/features/dashboard/ @grafana/dashboards-squad
+/public/app/features/dashboard-scene/ @grafana/dashboards-squad
 /public/app/features/datasources/ @grafana/plugins-platform-frontend @mikkancso
 /public/app/features/dimensions/ @grafana/dataviz-squad
 /public/app/features/dataframe-import/ @grafana/grafana-bi-squad
