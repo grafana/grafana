@@ -47,6 +47,11 @@ const getCanSwitch = ({
   ruleFormType: RuleFormType | undefined;
   editingExistingRule: boolean;
 }) => {
+  // we don't say anything about switching when editing existing rules
+  if (editingExistingRule) {
+    return false;
+  }
+
   // get available rule types
   const availableRuleTypes = getAvailableRuleTypes();
 
@@ -83,39 +88,21 @@ export interface SmartAlertTypeDetectorProps {
   onClickSwitch: () => void;
 }
 
-const getContentText = (ruleFormType: RuleFormType, isEditing: boolean, dataSourceName: string, canSwitch: boolean) => {
-  if (isEditing) {
-    if (ruleFormType === RuleFormType.grafana) {
-      return {
-        contentText: `Grafana-managed alert rules allow you to create alerts that can act on data from any of our supported data sources, including having multiple data sources in the same rule. You can also add expressions to transform your data and set alert conditions. Using images in alert notifications is also supported. `,
-        title: `This alert rule is managed by Grafana.`,
-      };
-    } else {
-      return {
-        contentText: `Data source-managed alert rules can be used for Grafana Mimir or Grafana Loki data sources which have been configured to support rule creation. The use of expressions or multiple queries is not supported.`,
-        title: `This alert rule is managed by the data source ${dataSourceName}.`,
-      };
-    }
-  }
-  if (canSwitch) {
-    if (ruleFormType === RuleFormType.cloudAlerting) {
-      return {
-        contentText:
-          'Data source-managed alert rules can be used for Grafana Mimir or Grafana Loki data sources which have been configured to support rule creation. The use of expressions or multiple queries is not supported.',
-        title: `This alert rule is managed by the data source ${dataSourceName}. If you want to use expressions or have multiple queries, switch to a Grafana-managed alert rule.`,
-      };
-    } else {
-      return {
-        contentText:
-          'Grafana-managed alert rules allow you to create alerts that can act on data from any of our supported data sources, including having multiple data sources in the same rule. You can also add expressions to transform your data and set alert conditions. Using images in alert notifications is also supported.',
-        title: `This alert rule will be managed by Grafana. The selected data source is configured to support rule creation.`,
-      };
-    }
-  } else {
-    // it can be only grafana rule
+const getContentText = (ruleFormType: RuleFormType) => {
+  if (ruleFormType === RuleFormType.cloudAlerting) {
     return {
-      contentText: `Grafana-managed alert rules allow you to create alerts that can act on data from any of our supported data sources, including having multiple data sources in the same rule. You can also add expressions to transform your data and set alert conditions. Using images in alert notifications is also supported.`,
-      title: `Based on the data sources selected, this alert rule is managed by Grafana.`,
+      infoText:
+        'Data source-managed alert rules can be used for Grafana Mimir or Grafana Loki data sources which have been configured to support rule creation. The use of expressions or multiple queries is not supported.',
+      title: `This can be a Grafana managed alert rule.`,
+      description:
+        'If you want to use multiple queries, images in notifications and various other features switch to a Grafana-managed alert rule.',
+    };
+  } else {
+    return {
+      infoText:
+        'Grafana-managed alert rules allow you to create alerts that can act on data from any of our supported data sources, including having multiple data sources in the same rule. You can also add expressions to transform your data and set alert conditions. Using images in alert notifications is also supported.',
+      description: 'The selected data source is configured to support rule creation.',
+      title: `This can be a data source managed alert rule.`,
     };
   }
 };
@@ -128,53 +115,47 @@ export function SmartAlertTypeDetector({
 }: SmartAlertTypeDetectorProps) {
   const { getValues } = useFormContext<RuleFormValues>();
 
-  const [ruleFormType, dataSourceName] = getValues(['type', 'dataSourceName']);
+  const [ruleFormType = RuleFormType.grafana] = getValues(['type']);
   const styles = useStyles2(getStyles);
 
   const canSwitch = getCanSwitch({ queries, ruleFormType, editingExistingRule, rulesSourcesWithRuler });
-
-  const typeTitle =
-    ruleFormType === RuleFormType.cloudAlerting ? 'Data source-managed alert rule' : 'Grafana-managed alert rule';
-  const switchToLabel = ruleFormType !== RuleFormType.cloudAlerting ? 'data source-managed' : 'Grafana-managed';
-
-  const content = ruleFormType
-    ? getContentText(ruleFormType, editingExistingRule, dataSourceName ?? '', canSwitch)
-    : undefined;
+  const content = canSwitch ? getContentText(ruleFormType) : undefined;
 
   return (
     <div className={styles.alert}>
-      <Alert
-        severity="info"
-        title={typeTitle}
-        onRemove={canSwitch ? onClickSwitch : undefined}
-        buttonContent={`Switch to ${switchToLabel} alert rule`}
-      >
-        <Stack gap={0.5} direction="row" alignItems={'baseline'}>
-          <div className={styles.alertText}>{content?.title}</div>
-          <div className={styles.needInfo}>
-            <NeedHelpInfo
-              contentText={content?.contentText ?? ''}
-              externalLink={`https://grafana.com/docs/grafana/latest/alerting/fundamentals/alert-rules/alert-rule-types/`}
-              linkText={`Read about alert rule types`}
-              title=" Alert rule types"
-            />
-          </div>
-        </Stack>
-      </Alert>
+      {canSwitch && content && (
+        <Alert
+          severity="info"
+          title={content?.title}
+          onRemove={canSwitch ? onClickSwitch : undefined}
+          buttonContent={
+            ruleFormType === RuleFormType.grafana
+              ? 'Evaluate this rule in the data source'
+              : 'Evaluate this rule in Grafana'
+          }
+        >
+          <Stack gap={0.5} direction="row" alignItems={'baseline'}>
+            <div className={styles.alertText}>
+              {content.description}{' '}
+              <NeedHelpInfo
+                contentText={content?.infoText ?? ''}
+                externalLink={`https://grafana.com/docs/grafana/latest/alerting/fundamentals/alert-rules/alert-rule-types/`}
+                linkText={`Read about alert rule types`}
+                title="Alert rule types"
+              />
+            </div>
+          </Stack>
+        </Alert>
+      )}
     </div>
   );
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
   alertText: css`
-    max-width: fit-content;
     flex: 1;
   `,
   alert: css`
     margin-top: ${theme.spacing(2)};
-  `,
-  needInfo: css`
-    flex: 1;
-    max-width: fit-content;
   `,
 });

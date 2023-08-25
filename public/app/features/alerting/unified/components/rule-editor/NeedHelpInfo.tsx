@@ -24,20 +24,20 @@ export function NeedHelpInfo({ contentText, externalLink, linkText, title }: Nee
       }
       footer={
         externalLink ? (
-          <a href={externalLink} target="_blank" rel="noreferrer">
-            <div className={styles.infoLink}>
-              {linkText} <Icon name="external-link-alt" />
-            </div>
+          <a href={externalLink} target="_blank" rel="noreferrer" className={styles.infoLink}>
+            {linkText} <Icon name="external-link-alt" />
           </a>
         ) : undefined
       }
       closeButton={true}
       placement="bottom-start"
     >
-      <div className={styles.helpInfo}>
-        <Icon name="question-circle" />
-        <div className={styles.helpInfoText}>Need help?</div>
-      </div>
+      <span className={styles.helpInfo}>
+        <Stack alignItems="baseline" gap={0.5}>
+          <Icon name="question-circle" />
+          <div className={styles.helpInfoText}>Need help?</div>
+        </Stack>
+      </span>
     </Toggletip>
   );
 }
@@ -48,21 +48,20 @@ const getStyles = (theme: GrafanaTheme2) => ({
     font-size: ${theme.typography.size.sm};
   `,
   helpInfo: css`
-    display: flex;
+    display: inline-flex;
     flex-direction: row;
     align-items: center;
     width: fit-content;
     font-weight: ${theme.typography.fontWeightMedium};
-    margin-left: ${theme.spacing(1)};
     font-size: ${theme.typography.size.sm};
     cursor: pointer;
     color: ${theme.colors.text.primary};
   `,
   helpInfoText: css`
-    margin-left: ${theme.spacing(0.5)};
     text-decoration: underline;
   `,
   infoLink: css`
-    color: ${theme.colors.text.link};
+    color: ${theme.colors.text.link} !important;
+    vertical-align: middle;
   `,
 });
