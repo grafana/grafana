@@ -24,7 +24,6 @@ import (
 func setupTestEnv(t testing.TB) *Service {
 	t.Helper()
 	cfg := setting.NewCfg()
-	cfg.RBACEnabled = true
 
 	ac := &Service{
 		cfg:           cfg,
@@ -41,12 +40,10 @@ func setupTestEnv(t testing.TB) *Service {
 func TestUsageMetrics(t *testing.T) {
 	tests := []struct {
 		name          string
-		enabled       bool
 		expectedValue int
 	}{
 		{
 			name:          "Expecting metric with value 1",
-			enabled:       true,
 			expectedValue: 1,
 		},
 	}
@@ -54,7 +51,6 @@ func TestUsageMetrics(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			cfg := setting.NewCfg()
-			cfg.RBACEnabled = tt.enabled
 
 			s := ProvideOSSService(
 				cfg,

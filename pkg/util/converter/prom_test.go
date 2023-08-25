@@ -38,7 +38,6 @@ func TestReadPromFrames(t *testing.T) {
 
 	for _, name := range files {
 		t.Run(name, runScenario(name, Options{}))
-		t.Run(name, runScenario(name, Options{MatrixWideSeries: true, VectorWideSeries: true}))
 	}
 }
 
@@ -51,10 +50,6 @@ func runScenario(name string, opts Options) func(t *testing.T) {
 		// nolint:gosec
 		f, err := os.Open(path.Join("testdata", name+".json"))
 		require.NoError(t, err)
-
-		if opts.MatrixWideSeries || opts.VectorWideSeries {
-			name = name + "-wide"
-		}
 
 		iter := jsoniter.Parse(jsoniter.ConfigDefault, f, 1024)
 		rsp := ReadPrometheusStyleResult(iter, opts)

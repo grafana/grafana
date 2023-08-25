@@ -99,7 +99,6 @@ func TestAPIViewPublicDashboard(t *testing.T) {
 				Return(test.DashboardResult, test.Err).Maybe()
 
 			cfg := setting.NewCfg()
-			cfg.RBACEnabled = false
 
 			testServer := setupTestServer(
 				t,
@@ -337,7 +336,6 @@ func TestIntegrationUnauthenticatedUserCanGetPubdashPanelQueryData(t *testing.T)
 	cfg := setting.NewCfg()
 	ac := acmock.New()
 	ws := publicdashboardsService.ProvideServiceWrapper(store)
-	cfg.RBACEnabled = false
 	service := publicdashboardsService.ProvideService(cfg, store, qds, annotationsService, ac, ws)
 	pubdash, err := service.Create(context.Background(), &user.SignedInUser{}, savePubDashboardCmd)
 	require.NoError(t, err)
@@ -426,7 +424,6 @@ func TestAPIGetAnnotations(t *testing.T) {
 	for _, test := range testCases {
 		t.Run(test.Name, func(t *testing.T) {
 			cfg := setting.NewCfg()
-			cfg.RBACEnabled = false
 			service := publicdashboards.NewFakePublicDashboardService(t)
 
 			if test.ExpectedServiceCalled {
