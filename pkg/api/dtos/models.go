@@ -77,8 +77,6 @@ type MetricRequest struct {
 	Queries []*simplejson.Json `json:"queries"`
 	// required: false
 	Debug bool `json:"debug"`
-
-	PublicDashboardAccessToken string `json:"publicDashboardAccessToken"`
 }
 
 func (mr *MetricRequest) GetUniqueDatasourceTypes() []string {
