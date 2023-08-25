@@ -8,6 +8,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana/pkg/util/converter/jsonitere"
 	jsoniter "github.com/json-iterator/go"
 )
 
@@ -21,7 +22,8 @@ type Options struct {
 }
 
 // ReadPrometheusStyleResult will read results from a prometheus or loki server and return data frames
-func ReadPrometheusStyleResult(iter *jsoniter.Iterator, opt Options) backend.DataResponse {
+func ReadPrometheusStyleResult(jIter *jsoniter.Iterator, opt Options) backend.DataResponse {
+	iter := jsonitere.NewIterator(jIter)
 	var rsp backend.DataResponse
 	status := "unknown"
 	errorType := ""
@@ -81,8 +83,9 @@ l1Fields:
 			break l1Fields
 
 		default:
-			v := iter.Read()
-			if iterError() {
+			v, err := iter.Read()
+			if err != nil {
+				rsp.Error = err
 				return rsp
 			}
 			logf("[ROOT] TODO, support key: %s / %v\n", l1Field, v)
@@ -107,7 +110,7 @@ l1Fields:
 	return rsp
 }
 
-func readWarnings(iter *jsoniter.Iterator) ([]data.Notice, error) {
+func readWarnings(iter *jsonitere.Iterator) ([]data.Notice, error) {
 	warnings := []data.Notice{}
 	next := iter.WhatIsNext()
 	if iter.Error != nil {
@@ -118,8 +121,8 @@ func readWarnings(iter *jsoniter.Iterator) ([]data.Notice, error) {
 		return warnings, nil
 	}
 
-	for iter.ReadArray() {
-		if iter.Error != nil {
+	for more, err := iter.ReadArray(); more; more, err = iter.ReadArray() {
+		if err != nil {
 			return nil, iter.Error
 		}
 		next := iter.WhatIsNext()
@@ -138,7 +141,7 @@ func readWarnings(iter *jsoniter.Iterator) ([]data.Notice, error) {
 	return warnings, nil
 }
 
-func readPrometheusData(iter *jsoniter.Iterator, opt Options) backend.DataResponse {
+func readPrometheusData(iter *jsonitere.Iterator, opt Options) backend.DataResponse {
 	var rsp backend.DataResponse
 	iterError := func() bool {
 		if iter.Error == nil {
@@ -210,8 +213,9 @@ l1Fields:
 			}
 
 		case "stats":
-			v := iter.Read()
-			if iterError() {
+			v, err := iter.Read()
+			if err != nil {
+				rsp.Error = iter.Error
 				return rsp
 			}
 			if len(rsp.Frames) > 0 {
@@ -232,8 +236,9 @@ l1Fields:
 			break l1Fields
 
 		default:
-			v := iter.Read()
-			if iterError() {
+			v, err := iter.Read()
+			if err != nil {
+				rsp.Error = iter.Error
 				return rsp
 			}
 			logf("[data] TODO, support key: %s / %v\n", l1Field, v)
@@ -244,7 +249,7 @@ l1Fields:
 }
 
 // will return strings or exemplars
-func readArrayData(iter *jsoniter.Iterator) backend.DataResponse {
+func readArrayData(iter *jsonitere.Iterator) backend.DataResponse {
 	lookup := make(map[string]*data.Field)
 
 	var labelFrame *data.Frame
@@ -259,8 +264,9 @@ func readArrayData(iter *jsoniter.Iterator) backend.DataResponse {
 
 	stringField := data.NewFieldFromFieldType(data.FieldTypeString, 0)
 	stringField.Name = "Value"
-	for iter.ReadArray() {
-		if iterError() {
+	for more, err := iter.ReadArray(); more; more, err = iter.ReadArray() {
+		if err != nil {
+			rsp.Error = err
 			return rsp
 		}
 
@@ -320,8 +326,9 @@ func readArrayData(iter *jsoniter.Iterator) backend.DataResponse {
 
 		default:
 			{
-				ext := iter.ReadAny()
-				if iterError() {
+				ext, err := iter.ReadAny()
+				if err != nil {
+					rsp.Error = err
 					return rsp
 				}
 				v := fmt.Sprintf("%v", ext)
@@ -338,7 +345,7 @@ func readArrayData(iter *jsoniter.Iterator) backend.DataResponse {
 }
 
 // For consistent ordering read values to an array not a map
-func readLabelsAsPairs(iter *jsoniter.Iterator) ([][2]string, error) {
+func readLabelsAsPairs(iter *jsonitere.Iterator) ([][2]string, error) {
 	pairs := make([][2]string, 0, 10)
 	for k := iter.ReadObject(); k != ""; k = iter.ReadObject() {
 		if iter.Error != nil {
@@ -353,7 +360,7 @@ func readLabelsAsPairs(iter *jsoniter.Iterator) ([][2]string, error) {
 	return pairs, nil
 }
 
-func readLabelsOrExemplars(iter *jsoniter.Iterator) (*data.Frame, [][2]string, error) {
+func readLabelsOrExemplars(iter *jsonitere.Iterator) (*data.Frame, [][2]string, error) {
 	pairs := make([][2]string, 0, 10)
 	labels := data.Labels{}
 	var frame *data.Frame
@@ -381,9 +388,9 @@ l1Fields:
 			frame.Meta = &data.FrameMeta{
 				Custom: resultTypeToCustomMeta("exemplar"),
 			}
-			for iter.ReadArray() {
-				if iter.Error != nil {
-					return nil, nil, iter.Error
+			for more, err := iter.ReadArray(); more; more, err = iter.ReadArray() {
+				if err != nil {
+					return nil, nil, err
 				}
 				for l2Field := iter.ReadObject(); l2Field != ""; l2Field = iter.ReadObject() {
 					if iter.Error != nil {
@@ -459,7 +466,11 @@ l1Fields:
 			break l1Fields
 
 		default:
-			v := fmt.Sprintf("%v", iter.Read())
+			iV, err := iter.Read()
+			if err != nil {
+				return nil, nil, err
+			}
+			v := fmt.Sprintf("%v", iV)
 			pairs = append(pairs, [2]string{l1Field, v})
 		}
 	}
@@ -467,7 +478,7 @@ l1Fields:
 	return frame, pairs, nil
 }
 
-func readString(iter *jsoniter.Iterator) backend.DataResponse {
+func readString(iter *jsonitere.Iterator) backend.DataResponse {
 	rsp := backend.DataResponse{}
 	iterError := func() bool {
 		if iter.Error == nil {
@@ -523,7 +534,7 @@ func readString(iter *jsoniter.Iterator) backend.DataResponse {
 	}
 }
 
-func readScalar(iter *jsoniter.Iterator) backend.DataResponse {
+func readScalar(iter *jsonitere.Iterator) backend.DataResponse {
 	rsp := backend.DataResponse{}
 
 	timeField := data.NewFieldFromFieldType(data.FieldTypeTime, 0)
@@ -551,7 +562,7 @@ func readScalar(iter *jsoniter.Iterator) backend.DataResponse {
 	}
 }
 
-func readMatrixOrVectorMulti(iter *jsoniter.Iterator, resultType string, opt Options) backend.DataResponse {
+func readMatrixOrVectorMulti(iter *jsonitere.Iterator, resultType string, opt Options) backend.DataResponse {
 	rsp := backend.DataResponse{}
 	iterError := func() bool {
 		if iter.Error == nil {
@@ -561,7 +572,11 @@ func readMatrixOrVectorMulti(iter *jsoniter.Iterator, resultType string, opt Opt
 		return true
 	}
 
-	for iter.ReadArray() {
+	for more, err := iter.ReadArray(); more; more, err = iter.ReadArray() {
+		if err != nil {
+			rsp.Error = err
+			return rsp
+		}
 		timeField := data.NewFieldFromFieldType(data.FieldTypeTime, 0)
 		timeField.Name = data.TimeSeriesTimeFieldName
 		valueField := data.NewFieldFromFieldType(data.FieldTypeFloat64, 0)
@@ -591,8 +606,9 @@ func readMatrixOrVectorMulti(iter *jsoniter.Iterator, resultType string, opt Opt
 
 			// nolint:goconst
 			case "values":
-				for iter.ReadArray() {
-					if iterError() {
+				for more, err := iter.ReadArray(); more; more, err = iter.ReadArray() {
+					if err != nil {
+						rsp.Error = err
 						return rsp
 					}
 					t, v, err := readTimeValuePair(iter)
@@ -617,8 +633,9 @@ func readMatrixOrVectorMulti(iter *jsoniter.Iterator, resultType string, opt Opt
 				if histogram == nil {
 					histogram = newHistogramInfo()
 				}
-				for iter.ReadArray() {
-					if iterError() {
+				for more, err := iter.ReadArray(); more; more, err = iter.ReadArray() {
+					if err != nil {
+						rsp.Error = err
 						return rsp
 					}
 					err := readHistogram(iter, histogram)
@@ -665,10 +682,9 @@ func readMatrixOrVectorMulti(iter *jsoniter.Iterator, resultType string, opt Opt
 	return rsp
 }
 
-func readTimeValuePair(iter *jsoniter.Iterator) (time.Time, float64, error) {
-	iter.ReadArray()
-	if iter.Error != nil {
-		return time.Time{}, 0, iter.Error
+func readTimeValuePair(iter *jsonitere.Iterator) (time.Time, float64, error) {
+	if _, err := iter.ReadArray(); err != nil {
+		return time.Time{}, 0, err
 	}
 
 	t := iter.ReadFloat64()
@@ -723,15 +739,13 @@ func newHistogramInfo() *histogramInfo {
 
 // This will read a single sparse histogram
 // [ time, { count, sum, buckets: [...] }]
-func readHistogram(iter *jsoniter.Iterator, hist *histogramInfo) error {
+func readHistogram(iter *jsonitere.Iterator, hist *histogramInfo) error {
 	// first element
 	iter.ReadArray()
 	if iter.Error != nil {
 		return iter.Error
 	}
 	t := timeFromFloat(iter.ReadFloat64())
-
-	var err error
 
 	// next object element
 	iter.ReadArray()
@@ -752,9 +766,9 @@ func readHistogram(iter *jsoniter.Iterator, hist *histogramInfo) error {
 			}
 
 		case "buckets":
-			for iter.ReadArray() {
-				if iter.Error != nil {
-					return iter.Error
+			for more, err := iter.ReadArray(); more; more, err = iter.ReadArray() {
+				if err != nil {
+					return err
 				}
 				hist.time.Append(t)
 
@@ -791,9 +805,9 @@ func readHistogram(iter *jsoniter.Iterator, hist *histogramInfo) error {
 					return err
 				}
 
-				if iter.ReadArray() {
-					if iter.Error != nil {
-						return iter.Error
+				for more, err := iter.ReadArray(); more; more, err = iter.ReadArray() {
+					if err != nil {
+						return err
 					}
 					return fmt.Errorf("expected close array")
 				}
@@ -805,8 +819,8 @@ func readHistogram(iter *jsoniter.Iterator, hist *histogramInfo) error {
 		}
 	}
 
-	if iter.ReadArray() {
-		if iter.Error != nil {
+	if more, err := iter.ReadArray(); more || err != nil {
+		if err != nil {
 			return iter.Error
 		}
 		return fmt.Errorf("expected to be done")
@@ -815,7 +829,7 @@ func readHistogram(iter *jsoniter.Iterator, hist *histogramInfo) error {
 	return nil
 }
 
-func appendValueFromString(iter *jsoniter.Iterator, field *data.Field) error {
+func appendValueFromString(iter *jsonitere.Iterator, field *data.Field) error {
 	s := iter.ReadString()
 	if iter.Error != nil {
 		return iter.Error
@@ -829,7 +843,7 @@ func appendValueFromString(iter *jsoniter.Iterator, field *data.Field) error {
 	return nil
 }
 
-func readStream(iter *jsoniter.Iterator) backend.DataResponse {
+func readStream(iter *jsonitere.Iterator) backend.DataResponse {
 	rsp := backend.DataResponse{}
 	iterError := func() bool {
 		if iter.Error == nil {
@@ -858,8 +872,9 @@ func readStream(iter *jsoniter.Iterator) backend.DataResponse {
 		return backend.DataResponse{Error: err}
 	}
 
-	for iter.ReadArray() {
-		if iterError() {
+	for more, err := iter.ReadArray(); more; more, err = iter.ReadArray() {
+		if err != nil {
+			rsp.Error = err
 			return rsp
 		}
 	l1Fields:
@@ -882,8 +897,9 @@ func readStream(iter *jsoniter.Iterator) backend.DataResponse {
 				}
 
 			case "values":
-				for iter.ReadArray() {
-					if iterError() {
+				for more, err := iter.ReadArray(); more; more, err = iter.ReadArray() {
+					if err != nil {
+						rsp.Error = err
 						return rsp
 					}
 
