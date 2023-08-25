@@ -15,10 +15,10 @@ import {
 } from '@grafana/scenes';
 import appEvents from 'app/core/app_events';
 
-import { DashboardSceneRenderer } from './DashboardSceneRenderer';
-import { ScenePanelInspector } from './inspector/ScenePanelInspector';
-import { forceRenderChildren } from './utils';
-import { findVizPanel } from './utils/findVizPanel';
+import { ScenePanelInspector } from '../inspector/ScenePanelInspector';
+import { DashboardSceneRenderer } from '../scene/DashboardSceneRenderer';
+import { findVizPanel } from '../utils/findVizPanel';
+import { forceRenderChildren } from '../utils/utils';
 
 export interface DashboardSceneState extends SceneObjectState {
   title: string;

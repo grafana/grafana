@@ -6,7 +6,7 @@ import { Page } from 'app/core/components/Page/Page';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 
-import { getDashboardLoader } from './DashboardsLoader';
+import { getDashboardLoader } from '../loading/DashboardsLoader';
 
 export interface Props extends GrafanaRouteComponentProps<{ uid: string }> {}
 

@@ -3,8 +3,8 @@ import React from 'react';
 import { SceneComponentProps, sceneGraph, SceneObjectBase, VizPanel } from '@grafana/scenes';
 import { t } from 'app/core/internationalization';
 
-import { InspectStatsTab as OldInspectStatsTab } from '../../../inspector/InspectStatsTab';
-import { InspectTab } from '../../../inspector/types';
+import { InspectStatsTab as OldInspectStatsTab } from '../../inspector/InspectStatsTab';
+import { InspectTab } from '../../inspector/types';
 
 import { InspectTabState } from './types';
 
