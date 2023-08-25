@@ -215,6 +215,10 @@ function grafanaChannelConfigToFormChannelValues(
       delete values.settings[option.propertyName];
       values.secureFields[option.propertyName] = true;
     }
+    if (option.secure && values.settings[option.propertyName]) {
+      values.secureSettings[option.propertyName] = values.settings[option.propertyName];
+      delete values.settings[option.propertyName];
+    }
   });
 
   return values;
