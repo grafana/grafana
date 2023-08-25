@@ -37,7 +37,7 @@ export class PluginsAPIDashboardModelWrapper implements PluginsAPIDashboardModel
     // reset the weakmap
     this.#panelsMap = new WeakMap();
 
-    //return a wrapper for each panel, cached if exists
+    //return a wrapper for each panel
     return this.#dashboard.panels.map((panel) => {
       const panelWrapper = new PluginsAPIPanelModelWrapper(panel);
       // store the original panel in a symbol that can't be accessed directly
