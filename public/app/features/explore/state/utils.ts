@@ -73,6 +73,7 @@ export const makeExplorePaneState = (): ExploreItemState => ({
   supplementaryQueries: loadSupplementaryQueries(),
   panelsState: {},
   correlations: undefined,
+  contentOutlineVisible: false,
 });
 
 export const createEmptyQueryResponse = (): ExplorePanelData => ({

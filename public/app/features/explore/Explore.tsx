@@ -480,11 +480,9 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
     );
   }
 
-  // TODO: haris
-  // render content outline component
-
   render() {
     const {
+      contentOutlineVisible,
       datasourceInstance,
       exploreId,
       graphResult,
@@ -595,7 +593,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
                 }}
               </AutoSizer>
             </div>
-            <ContentOutline />
+            {contentOutlineVisible && <ContentOutline />}
           </div>
         ) : (
           this.renderEmptyState(styles.exploreContainer)
@@ -612,6 +610,7 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
 
   const timeZone = getTimeZone(state.user);
   const {
+    contentOutlineVisible,
     datasourceInstance,
     queryKeys,
     queries,
@@ -638,6 +637,7 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
   const showLogsSample = !!(logsSample.dataProvider !== undefined && !logsResult && (graphResult || tableResult));
 
   return {
+    contentOutlineVisible,
     datasourceInstance,
     queryKeys,
     queries,

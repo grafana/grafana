@@ -20,6 +20,7 @@ import { ExploreTimeControls } from './ExploreTimeControls';
 import { LiveTailButton } from './LiveTailButton';
 import { ToolbarExtensionPoint } from './extensions/ToolbarExtensionPoint';
 import { changeDatasource } from './state/datasource';
+import { contentOutlineAction } from './state/explorePane';
 import { splitClose, splitOpen, maximizePaneAction, evenPaneResizeAction } from './state/main';
 import { cancelQueries, runQueries, selectIsWaitingForData } from './state/query';
 import { isSplit, selectPanesEntries } from './state/selectors';
@@ -57,6 +58,7 @@ export function ExploreToolbar({ exploreId, topOfViewRef, onChangeTime }: Props)
   const showSmallDataSourcePicker = useSelector(
     (state) => state.explore.panes[exploreId]!.containerWidth < (splitted ? 700 : 800)
   );
+  const isContentOutlineVisible = useSelector((state) => state.explore.panes[exploreId]!.contentOutlineVisible);
 
   const panes = useSelector(selectPanesEntries);
 
@@ -113,8 +115,9 @@ export function ExploreToolbar({ exploreId, topOfViewRef, onChangeTime }: Props)
     dispatch(changeRefreshInterval({ exploreId, refreshInterval }));
   };
 
-  // TODO: haris
-  // onContentOutlineToogle - dispatch action to toggle content outline
+  const onContentOutlineToogle = () => {
+    dispatch(contentOutlineAction({ exploreId, visible: !isContentOutlineVisible }));
+  };
 
   return (
     <div ref={topOfViewRef}>
@@ -242,6 +245,7 @@ export function ExploreToolbar({ exploreId, topOfViewRef, onChangeTime }: Props)
             tooltip="Content Outline"
             icon="list-ui-alt"
             iconOnly={splitted}
+            onClick={onContentOutlineToogle}
           >
             Outline
           </ToolbarButton>,
