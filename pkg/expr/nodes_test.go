@@ -294,7 +294,7 @@ func TestWideToMany(t *testing.T) {
 		f.AppendRow(row...)
 	}
 
-	ser, err := WideToMany(f)
+	ser, err := WideToMany(f, nil)
 	if err != nil {
 		require.NoError(t, err)
 	}

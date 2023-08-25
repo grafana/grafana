@@ -67,6 +67,11 @@ func TestSeriesSort(t *testing.T) {
 }
 
 func TestSeriesFromFrameFields(t *testing.T) {
+	meta := &data.FrameMeta{
+		Type:        data.FrameTypeTimeSeriesMulti,
+		TypeVersion: data.FrameTypeVersion{0, 1},
+	}
+
 	var tests = []struct {
 		name   string
 		frame  *data.Frame
@@ -86,6 +91,7 @@ func TestSeriesFromFrameFields(t *testing.T) {
 			Is:    assert.Equal,
 			Series: Series{
 				Frame: &data.Frame{
+					Meta: meta,
 					Fields: []*data.Field{
 						data.NewField("time", nil, []time.Time{}),
 						data.NewField("value", nil, []*float64{}),
@@ -96,6 +102,7 @@ func TestSeriesFromFrameFields(t *testing.T) {
 		{
 			name: "[]*float, []time frame should convert",
 			frame: &data.Frame{
+				Meta: meta,
 				Fields: []*data.Field{
 					data.NewField("time", nil, []time.Time{time.Unix(5, 0)}),
 					data.NewField("value", nil, []*float64{float64Pointer(5)}),
@@ -105,6 +112,7 @@ func TestSeriesFromFrameFields(t *testing.T) {
 			Is:    assert.Equal,
 			Series: Series{
 				Frame: &data.Frame{
+					Meta: meta,
 					Fields: []*data.Field{
 						data.NewField("time", nil, []time.Time{time.Unix(5, 0)}),
 						data.NewField("value", nil, []*float64{float64Pointer(5)}),
@@ -115,6 +123,7 @@ func TestSeriesFromFrameFields(t *testing.T) {
 		{
 			name: "[]*int, []*time frame should convert",
 			frame: &data.Frame{
+				Meta: meta,
 				Fields: []*data.Field{
 					data.NewField("time", nil, []*time.Time{unixTimePointer(5, 0)}),
 					data.NewField("value", nil, []*int64{int64Pointer(5)}),
@@ -124,6 +133,7 @@ func TestSeriesFromFrameFields(t *testing.T) {
 			Is:    assert.Equal,
 			Series: Series{
 				Frame: &data.Frame{
+					Meta: meta,
 					Fields: []*data.Field{
 						data.NewField("time", nil, []time.Time{time.Unix(5, 0)}),
 						data.NewField("value", nil, []*float64{float64Pointer(5)}),
@@ -143,6 +153,7 @@ func TestSeriesFromFrameFields(t *testing.T) {
 			Is:    assert.Equal,
 			Series: Series{
 				Frame: &data.Frame{
+					Meta: meta,
 					Fields: []*data.Field{
 						data.NewField("time", nil, []time.Time{time.Unix(5, 0)}),
 						data.NewField("value", nil, []*float64{float64Pointer(5)}),
@@ -162,6 +173,7 @@ func TestSeriesFromFrameFields(t *testing.T) {
 			Is:    assert.Equal,
 			Series: Series{
 				Frame: &data.Frame{
+					Meta: meta,
 					Fields: []*data.Field{
 						data.NewField("time", nil, []time.Time{time.Unix(5, 0)}),
 						data.NewField("value", nil, []*float64{float64Pointer(5)}),
@@ -181,6 +193,7 @@ func TestSeriesFromFrameFields(t *testing.T) {
 			Is:    assert.Equal,
 			Series: Series{
 				Frame: &data.Frame{
+					Meta: meta,
 					Fields: []*data.Field{
 						data.NewField("time", nil, []time.Time{time.Unix(5, 0)}),
 						data.NewField("value", nil, []*float64{float64Pointer(5)}),
@@ -191,6 +204,7 @@ func TestSeriesFromFrameFields(t *testing.T) {
 		{
 			name: "[]bool, []*time frame should convert",
 			frame: &data.Frame{
+				Meta: meta,
 				Fields: []*data.Field{
 					data.NewField("time", nil, []*time.Time{unixTimePointer(5, 0)}),
 					data.NewField("value", nil, []bool{true}),
@@ -200,6 +214,7 @@ func TestSeriesFromFrameFields(t *testing.T) {
 			Is:    assert.Equal,
 			Series: Series{
 				Frame: &data.Frame{
+					Meta: meta,
 					Fields: []*data.Field{
 						data.NewField("time", nil, []time.Time{time.Unix(5, 0)}),
 						data.NewField("value", nil, []*float64{float64Pointer(1)}),
@@ -210,6 +225,7 @@ func TestSeriesFromFrameFields(t *testing.T) {
 		{
 			name: "[]*bool, []*time frame should convert",
 			frame: &data.Frame{
+				Meta: meta,
 				Fields: []*data.Field{
 					data.NewField("time", nil, []*time.Time{unixTimePointer(5, 0)}),
 					data.NewField("value", nil, []*bool{boolPointer(true)}),
@@ -219,6 +235,7 @@ func TestSeriesFromFrameFields(t *testing.T) {
 			Is:    assert.Equal,
 			Series: Series{
 				Frame: &data.Frame{
+					Meta: meta,
 					Fields: []*data.Field{
 						data.NewField("time", nil, []time.Time{time.Unix(5, 0)}),
 						data.NewField("value", nil, []*float64{float64Pointer(1)}),
@@ -238,6 +255,7 @@ func TestSeriesFromFrameFields(t *testing.T) {
 			Is:    assert.Equal,
 			Series: Series{
 				Frame: &data.Frame{
+					Meta: meta,
 					Fields: []*data.Field{
 						data.NewField("time", nil, []time.Time{time.Unix(5, 0)}),
 						data.NewField("time", nil, []*float64{float64Pointer(5000)}),
@@ -270,7 +288,7 @@ func TestSeriesFromFrameFields(t *testing.T) {
 			s, err := SeriesFromFrameFields(tt.frame, 0, 1)
 			tt.errIs(t, err)
 			if err == nil {
-				tt.Is(t, s, tt.Series)
+				tt.Is(t, tt.Series, s)
 			}
 		})
 	}

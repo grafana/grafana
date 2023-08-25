@@ -34,7 +34,7 @@ func BenchmarkWideToMany(b *testing.B) {
 		b.ResetTimer()
 
 		for i := 0; i < b.N; i++ {
-			_, err := WideToMany(f)
+			_, err := WideToMany(f, nil)
 			if err != nil {
 				panic(err)
 			}
@@ -65,7 +65,7 @@ func BenchmarkWideToMany(b *testing.B) {
 		b.ResetTimer()
 
 		for i := 0; i < b.N; i++ {
-			_, err := WideToMany(f)
+			_, err := WideToMany(f, nil)
 			if err != nil {
 				panic(err)
 			}
