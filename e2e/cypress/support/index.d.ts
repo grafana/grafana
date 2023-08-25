@@ -13,5 +13,6 @@ declare namespace Cypress {
     getJSONFilesFromDir(dirPath: string): Chainable;
     startBenchmarking(testName: string): void;
     stopBenchmarking(testName: string, appStats: Record<string, unknown>): void;
+    checkHealthRetryable(fn: Function, retryCount: number): Chainable;
   }
 }

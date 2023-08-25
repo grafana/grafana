@@ -9,7 +9,7 @@ describe('Repeating a panel horizontally', () => {
   it('should be able to repeat a panel horizontally', () => {
     e2e.flows.openDashboard({ uid: PAGE_UNDER_TEST });
     let prevLeft = Number.NEGATIVE_INFINITY;
-    let prevTop = null;
+    let prevTop: number | null = null;
     const panelTitles = ['Panel Title 1', 'Panel Title 2', 'Panel Title 3'];
     panelTitles.forEach((title) => {
       e2e.components.Panels.Panel.title(title)
@@ -30,7 +30,7 @@ describe('Repeating a panel horizontally', () => {
   it('responds to changes to the variables', () => {
     e2e.flows.openDashboard({ uid: PAGE_UNDER_TEST });
     let prevLeft = Number.NEGATIVE_INFINITY;
-    let prevTop = null;
+    let prevTop: number | null = null;
     const panelTitles = ['Panel Title 1', 'Panel Title 2', 'Panel Title 3'];
     panelTitles.forEach((title) => {
       e2e.components.Panels.Panel.title(title).should('be.visible');
@@ -68,7 +68,7 @@ describe('Repeating a panel horizontally', () => {
     // Have to manually add the queryParams to the url because they have the same name
     e2e.flows.openDashboard({ uid: `${PAGE_UNDER_TEST}?var-horizontal=1&var-horizontal=3` });
     let prevLeft = Number.NEGATIVE_INFINITY;
-    let prevTop = null;
+    let prevTop: number | null = null;
     const panelsShown = ['Panel Title 1', 'Panel Title 3'];
     const panelsNotShown = ['Panel Title 2'];
     // Check correct panels are displayed

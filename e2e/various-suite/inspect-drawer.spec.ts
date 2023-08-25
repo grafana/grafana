@@ -33,7 +33,6 @@ e2e.scenario({
       return true;
     });
 
-    const viewPortWidth = e2e.config().viewportWidth;
     e2e.flows.openDashboard({ uid: 'wfTJJL5Wz' });
 
     // testing opening inspect drawer directly by clicking on Inspect in header menu

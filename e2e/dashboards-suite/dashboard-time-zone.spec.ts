@@ -36,7 +36,7 @@ e2e.scenario({
     const timesInUtc: Record<string, string> = {};
 
     for (const title of panelsToCheck) {
-      e2e.components.Panels.Panel.containerByTitle(title)
+      e2e.components.Panels.Panel.title(title)
         .should('be.visible')
         .within(() =>
           e2e.components.Panels.Visualization.Graph.xAxis
@@ -61,11 +61,11 @@ e2e.scenario({
     e2e.components.Select.option().should('be.visible').contains(toTimeZone).click();
 
     // click to go back to the dashboard.
-    e2e.components.BackButton.backArrow().click({ force: true });
+    e2e.pages.Dashboard.Settings.Actions.close().click();
     e2e.components.RefreshPicker.runButtonV2().should('be.visible').click();
 
     for (const title of panelsToCheck) {
-      e2e.components.Panels.Panel.containerByTitle(title)
+      e2e.components.Panels.Panel.title(title)
         .should('be.visible')
         .within(() =>
           e2e.components.Panels.Visualization.Graph.xAxis
@@ -76,9 +76,7 @@ e2e.scenario({
               const inUtc = timesInUtc[title];
               const inTz = element.text();
               const isCorrect = isTimeCorrect(inUtc, inTz, offset);
-              expect(isCorrect, `Expect the panel "${title}" to have the new timezone applied but isn't`).to.be.equal(
-                true
-              );
+              expect(isCorrect).to.be.equal(true);
             })
         );
     }
