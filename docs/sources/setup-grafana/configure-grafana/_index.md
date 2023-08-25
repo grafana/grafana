@@ -514,6 +514,11 @@ Sets a custom value for the `User-Agent` header for outgoing data proxy requests
 
 ## [analytics]
 
+### enabled
+
+This option is also known as _usage analytics_. When `false`, this option disables the writers that read/write from and to the Grafana databases. The default
+value is `true`.
+
 ### reporting_enabled
 
 When enabled Grafana will send anonymous usage statistics to
@@ -2255,7 +2260,11 @@ For more information about Grafana Enterprise, refer to [Grafana Enterprise]({{<
 
 ### enable
 
-Keys of alpha features to enable, separated by space.
+Keys of features to enable, separated by space.
+
+### FEATURE_TOGGLE_NAME = false
+
+Some feature toggles for stable features are on by default. Use this setting to disable an on-by-default feature toggle with the name FEATURE_TOGGLE_NAME, for example, `exploreMixedDatasource = false`.
 
 <hr>
 

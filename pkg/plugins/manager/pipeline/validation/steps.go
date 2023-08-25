@@ -60,12 +60,12 @@ func (v *ModuleJSValidator) Validate(_ context.Context, p *plugins.Plugin) error
 		f, err := p.FS.Open("module.js")
 		if err != nil {
 			if errors.Is(err, plugins.ErrFileNotExist) {
-				v.log.Warn("Plugin missing module.js", "pluginID", p.ID,
+				v.log.Warn("Plugin missing module.js", "pluginId", p.ID,
 					"warning", "Missing module.js, If you loaded this plugin from git, make sure to compile it.")
 			}
 		} else if f != nil {
 			if err = f.Close(); err != nil {
-				v.log.Warn("Could not close module.js", "pluginID", p.ID, "err", err)
+				v.log.Warn("Could not close module.js", "pluginId", p.ID, "error", err)
 			}
 		}
 	}
@@ -99,12 +99,12 @@ func (a *AngularDetector) Validate(ctx context.Context, p *plugins.Plugin) error
 		canc()
 
 		if err != nil {
-			a.log.Warn("Could not inspect plugin for angular", "pluginID", p.ID, "err", err)
+			a.log.Warn("Could not inspect plugin for angular", "pluginId", p.ID, "error", err)
 		}
 
 		// Do not initialize plugins if they're using Angular and Angular support is disabled
 		if p.AngularDetected && !a.cfg.AngularSupportEnabled {
-			a.log.Error("Refusing to initialize plugin because it's using Angular, which has been disabled", "pluginID", p.ID)
+			a.log.Error("Refusing to initialize plugin because it's using Angular, which has been disabled", "pluginId", p.ID)
 			return errors.New("angular plugins are not supported")
 		}
 	}

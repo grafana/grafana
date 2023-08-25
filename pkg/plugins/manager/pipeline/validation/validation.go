@@ -2,7 +2,6 @@ package validation
 
 import (
 	"context"
-	"errors"
 
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/config"
@@ -41,27 +40,26 @@ func New(cfg *config.Cfg, opts Opts) *Validate {
 }
 
 // Validate will execute the Validate steps of the Validation stage.
-func (t *Validate) Validate(ctx context.Context, ps []*plugins.Plugin) ([]*plugins.Plugin, error) {
-	if len(t.validateSteps) == 0 {
+func (v *Validate) Validate(ctx context.Context, ps []*plugins.Plugin) ([]*plugins.Plugin, error) {
+	if len(v.validateSteps) == 0 {
 		return ps, nil
 	}
 
-	var err error
-	verifiedPlugins := make([]*plugins.Plugin, 0, len(ps))
+	validatedPlugins := make([]*plugins.Plugin, 0, len(ps))
 	for _, p := range ps {
 		stepFailed := false
-		for _, validate := range t.validateSteps {
-			err = validate(ctx, p)
-			if err != nil && !errors.Is(err, nil) {
+		for _, validate := range v.validateSteps {
+			err := validate(ctx, p)
+			if err != nil {
 				stepFailed = true
-				t.log.Error("Plugin verification failed", "pluginID", p.ID, "err", err)
+				v.log.Error("Plugin validation failed", "pluginId", p.ID, "error", err)
 				break
 			}
 		}
 		if !stepFailed {
-			verifiedPlugins = append(verifiedPlugins, p)
+			validatedPlugins = append(validatedPlugins, p)
 		}
 	}
 
-	return verifiedPlugins, nil
+	return validatedPlugins, nil
 }

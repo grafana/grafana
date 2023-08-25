@@ -61,7 +61,7 @@ var WireSet = wire.NewSet(
 	ProvideClientDecorator,
 	wire.Bind(new(plugins.Client), new(*client.Decorator)),
 	process.ProvideService,
-	wire.Bind(new(process.Service), new(*process.Manager)),
+	wire.Bind(new(process.Manager), new(*process.Service)),
 	coreplugin.ProvideCoreRegistry,
 	pluginscdn.ProvideService,
 	assetpath.ProvideService,

@@ -28,7 +28,7 @@ To follow this guide:
 
 To integrate your Okta OAuth2 provider with Grafana using our Okta OAuth2 integration, follow these steps:
 
-1. [Create an SWA app](https://help.okta.com/en-us/Content/Topics/Apps/Apps_App_Integration_Wizard_SWA.htm) or [OCID app](https://help.okta.com/en-us/Content/Topics/Apps/Apps_App_Integration_Wizard_OIDC.htm) at the Okta applications section.
+1. [Create an SWA app](https://help.okta.com/en-us/Content/Topics/Apps/Apps_App_Integration_Wizard_SWA.htm) or [OIDC app](https://help.okta.com/en-us/Content/Topics/Apps/Apps_App_Integration_Wizard_OIDC.htm) in the Okta applications section.
 
 1. Set the callback URL for your OAuth2 app to `http://<my_grafana_server_name_or_ip>:<grafana_server_port>/login/okta`.
 
@@ -41,8 +41,8 @@ To integrate your Okta OAuth2 provider with Grafana using our Okta OAuth2 integr
    | Field                        | Description                                                                                                   |
    | ---------------------------- | ------------------------------------------------------------------------------------------------------------- |
    | `client_id`, `client_secret` | These values must match the client ID and client secret from your Okta OAuth2 app.                            |
-   | `auth_url`                   | The authorization endpoint of your OAuth2 provider. `https://<okta-tenant-id>.okta.com/oauth2v1authorize`     |
-   | `token_url`                  | The token endpoint of your Okta OAuth2 provider. `https://<okta-tenant-id>.okta.com/token`                    |
+   | `auth_url`                   | The authorization endpoint of your OAuth2 provider. `https://<okta-tenant-id>.okta.com/oauth2/v1/authorize`   |
+   | `token_url`                  | The token endpoint of your Okta OAuth2 provider. `https://<okta-tenant-id>.okta.com/oauth2/v1/token`          |
    | `api_url`                    | The user information endpoint of your Okta OAuth2 provider. `https://<tenant-id>.okta.com/oauth2/v1/userinfo` |
    | `enabled`                    | Enables Okta OAuth2 authentication. Set this value to `true`.                                                 |
 
@@ -131,4 +131,4 @@ the correct teams.
 
 Okta groups can be referenced by group names, like `Admins` or `Editors`.
 
-To learn more about Team Sync, refer to [Confgure Team Sync]({{< relref "../../configure-team-sync" >}}).
+To learn more about Team Sync, refer to [Configure Team Sync]({{< relref "../../configure-team-sync" >}}).
