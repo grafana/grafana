@@ -3,30 +3,39 @@ import { useForm } from 'react-hook-form';
 
 import { ExploreCorrelationsPanelState } from '@grafana/data';
 import { Collapse, Alert, Field, Input } from '@grafana/ui';
-import { useDispatch } from 'app/types';
+import { useDispatch, useSelector } from 'app/types';
 
 import { changeCorrelationDetails } from './state/main';
+import { selectCorrelationDetails } from './state/selectors';
 
 export const CorrelationHelper = ({ correlations }: { correlations: ExploreCorrelationsPanelState }) => {
   const dispatch = useDispatch();
   const { register, watch } = useForm();
   const [isOpen, setIsOpen] = useState(false);
+  const correlationDetails = useSelector(selectCorrelationDetails);
 
   useEffect(() => {
     const subscription = watch((value, { name, type }) =>
     {
-      dispatch(changeCorrelationDetails({label: value.label, description: value.description}));
+      let dirty = false;
+
+      if (!correlationDetails?.dirty && (value.label !== '' || value.description !== '')) {
+        dirty = true;
+      } else if (correlationDetails?.dirty && value.label.trim() === '' && value.description.trim() === '' ) {
+        dirty = false;
+      }
+      dispatch(changeCorrelationDetails({label: value.label, description: value.description, dirty: dirty}));
     }
     )
     return () => subscription.unsubscribe()
-  }, [dispatch, watch])
+  }, [correlationDetails?.dirty, dispatch, watch])
 
   // only fire once on mount to allow save button to enable
   useEffect(() => {
-    dispatch(changeCorrelationDetails({valid: true}));
+    dispatch(changeCorrelationDetails({canSave: true}));
 
     return () => {
-      dispatch(changeCorrelationDetails({valid: false}));
+      dispatch(changeCorrelationDetails({canSave: false}));
     }
   }, [dispatch]);
 

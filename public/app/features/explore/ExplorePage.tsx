@@ -21,7 +21,7 @@ import { useTimeSrvFix } from './hooks/useTimeSrvFix';
 import { removeCorrelationData } from './state/explorePane';
 import { changeCorrelationDetails, changeCorrelationsEditorMode } from './state/main';
 import { runQueries } from './state/query';
-import { isSplit, selectCorrelationEditorMode, selectPanesEntries } from './state/selectors';
+import { isSplit, selectCorrelationDetails, selectCorrelationEditorMode, selectPanesEntries } from './state/selectors';
 
 const MIN_PANE_WIDTH = 200;
 
@@ -43,6 +43,9 @@ export default function ExplorePage(props: GrafanaRouteComponentProps<{}, Explor
   const panes = useSelector(selectPanesEntries);
   const hasSplit = useSelector(isSplit);
   const isCorrelationsEditorMode = useSelector(selectCorrelationEditorMode);
+  const correlationDetails = useSelector(selectCorrelationDetails);
+  // show correlation editor mode UX elements if we are in the editor mode or if we are trying to exit in a dirty state
+  const showCorrelationEditorMode = isCorrelationsEditorMode || (!isCorrelationsEditorMode && correlationDetails?.dirty);
 
   useEffect(() => {
     //This is needed for breadcrumbs and topnav.
@@ -51,23 +54,24 @@ export default function ExplorePage(props: GrafanaRouteComponentProps<{}, Explor
   }, [chrome, navModel]);
 
   useEffect(() => {
-    if (isCorrelationsEditorMode) {
+    if (showCorrelationEditorMode) {
       const exploreNavItem = { ...navModel.node };
       exploreNavItem.text = 'Correlations Editor';
       exploreNavItem.parentItem = navModel.node;
       exploreNavItem.parentItem.url = undefined;
       exploreNavItem.parentItem.onClick = () => {
         dispatch(changeCorrelationsEditorMode({ correlationsEditorMode: false }));
+        console.log('breadcrumb click');
         panes.forEach((pane) => {
           dispatch(removeCorrelationData(pane[0]));
-          dispatch(changeCorrelationDetails({label: undefined, description: undefined, valid: false}));
+          dispatch(changeCorrelationDetails({label: undefined, description: undefined, canSave: false, dirty: false}));
           dispatch(runQueries({ exploreId: pane[0] }));
         });
       };
       navModel.node = exploreNavItem;
       chrome.update({ sectionNav: navModel });
     }
-  }, [chrome, isCorrelationsEditorMode, navModel, dispatch, panes]);
+  }, [chrome, showCorrelationEditorMode, navModel, dispatch, panes]);
 
   useKeyboardShortcuts();
 
@@ -81,11 +85,11 @@ export default function ExplorePage(props: GrafanaRouteComponentProps<{}, Explor
   return (
     <div
       className={cx(styles.pageScrollbarWrapper, {
-        [styles.correlationsEditorIndicator]: isCorrelationsEditorMode,
+        [styles.correlationsEditorIndicator]: showCorrelationEditorMode,
       })}
     >
       <ExploreActions />
-      {isCorrelationsEditorMode && <CorrelationEditorModeBar panes={panes} />}
+      {showCorrelationEditorMode && <CorrelationEditorModeBar panes={panes} />}
       <SplitPaneWrapper
         splitOrientation="vertical"
         paneSize={widthCalc}

@@ -5,7 +5,7 @@ import { SplitOpenOptions } from '@grafana/data';
 import { DataSourceSrv, locationService } from '@grafana/runtime';
 import { generateExploreId, GetExploreUrlArguments } from 'app/core/utils/explore';
 import { PanelModel } from 'app/features/dashboard/state';
-import { ExploreItemState, ExploreState } from 'app/types/explore';
+import { CorrelationDetails, ExploreItemState, ExploreState } from 'app/types/explore';
 
 import { RichHistoryResults } from '../../../core/history/RichHistoryStorage';
 import { RichHistorySearchFilters, RichHistorySettings } from '../../../core/utils/richHistoryTypes';
@@ -115,11 +115,7 @@ export const changeCorrelationsEditorMode = createAction<{
 /**
  * Moves explore into and out of correlations editor mode
  */
-export const changeCorrelationDetails = createAction<{
-  valid?: boolean;
-  label?: string;
-  description?: string;
-}>('explore/changeCorrelationDetails');
+export const changeCorrelationDetails = createAction<CorrelationDetails>('explore/changeCorrelationDetails');
 
 export interface NavigateToExploreDependencies {
   getDataSourceSrv: () => DataSourceSrv;
@@ -280,13 +276,14 @@ export const exploreReducer = (state = initialExploreState, action: AnyAction): 
   }
 
   if (changeCorrelationDetails.match(action)) {
-    const { label, description, valid } = action.payload;
+    const { label, description, canSave, dirty } = action.payload;
     return {
       ...state,
       correlationDetails: {
-        valid: valid !== undefined ? valid : (state.correlationDetails?.valid || false),
+        canSave: canSave !== undefined ? canSave : (state.correlationDetails?.canSave || false),
         label: label !== undefined ? label : state.correlationDetails?.label,
-        description: description !== undefined ? description : state.correlationDetails?.description
+        description: description !== undefined ? description : state.correlationDetails?.description,
+        dirty: dirty !== undefined ? dirty : (state.correlationDetails?.dirty || false)
       },
     };
   }

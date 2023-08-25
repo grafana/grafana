@@ -22,6 +22,14 @@ import { RichHistorySearchFilters, RichHistorySettings } from 'app/core/utils/ri
 import { CorrelationData } from '../features/correlations/useCorrelations';
 
 export type ExploreQueryParams = UrlQueryMap;
+
+export interface CorrelationDetails {
+    canSave?: boolean;
+    dirty?: boolean;
+    label?: string;
+    description?: string;
+};
+
 /**
  * Global Explore state
  */
@@ -57,11 +65,7 @@ export interface ExploreState {
   /**
    * Details on the correlation if one is being created
    */
-  correlationDetails?: {
-    valid: boolean;
-    label?: string;
-    description?: string;
-  }
+  correlationDetails?: CorrelationDetails;
 
   /**
    * On a split manual resize, we calculate which pane is larger, or if they are roughly the same size. If undefined, it is not split or they are roughly the same size
