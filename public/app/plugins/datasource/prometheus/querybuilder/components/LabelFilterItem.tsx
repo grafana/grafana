@@ -6,9 +6,8 @@ import { selectors } from '@grafana/e2e-selectors';
 import { AccessoryButton, InputGroup } from '@grafana/experimental';
 import { AsyncSelect, Select } from '@grafana/ui';
 
+import { truncateResult } from '../../language_utils';
 import { QueryBuilderLabelFilter } from '../shared/types';
-
-import { PROMETHEUS_QUERY_BUILDER_MAX_RESULTS } from './MetricSelect';
 
 export interface Props {
   defaultOp: string;
@@ -136,9 +135,7 @@ export function LabelFilterItem({
           onOpenMenu={async () => {
             setState({ isLoadingLabelValues: true });
             const labelValues = await onGetLabelValues(item);
-            if (labelValues.length > PROMETHEUS_QUERY_BUILDER_MAX_RESULTS) {
-              labelValues.splice(0, labelValues.length - PROMETHEUS_QUERY_BUILDER_MAX_RESULTS);
-            }
+            truncateResult(labelValues);
             setLabelValuesMenuOpen(true);
             setState({
               ...state,
