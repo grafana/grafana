@@ -135,7 +135,8 @@ export interface PanelEditorProps<T = any> {
 }
 
 /**
- * Called when a panel is first loaded with current panel model
+ * Called when a panel is first loaded with current panel model to migrate panel options if needed.
+ * Can return panel options, or a Promise that resolves to panel options for async migrations
  */
 export type PanelMigrationHandler<TOptions = any> = (
   panel: PanelModel<TOptions>
