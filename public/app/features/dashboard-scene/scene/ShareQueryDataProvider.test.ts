@@ -8,8 +8,9 @@ import {
   SceneObjectState,
 } from '@grafana/scenes';
 
+import { activateFullSceneTree, getVizPanelKeyForPanelId } from '../utils/utils';
+
 import { ShareQueryDataProvider } from './ShareQueryDataProvider';
-import { activateFullSceneTree, getVizPanelKeyForPanelId } from './utils';
 
 export class SceneDummyPanel extends SceneObjectBase<SceneObjectState> {}
 
