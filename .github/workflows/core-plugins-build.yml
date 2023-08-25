@@ -4,14 +4,134 @@ on:
           - testdataDecoupled_ci
     workflow_dispatch:
       inputs:
-        tags:
-          description: 'Test scenario tags'
-          required: true
-          type: string
+        plugin_id:
+            description: "ID of the plugin you want to publish"
+            required: true
+            type: choice
+            options:
+              - "grafana-helloworld-datasource"
+    
+concurrency:
+    group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}-${{ inputs.plugin_id }}
+    cancel-in-progress: true
+env:
+    NODEJS_VERSION: 16.19.1
+    GO_VERSION: 1.21.0
+    GO_LINT_VERSION: 1.51.1
+    GO_SEC_VERSION: 2.16.0
+    GRABPL_VERSION: 2.9.51
 
 jobs:
-    print-tag:
-      runs-on: ubuntu-latest
+    build:
+      name: build
+      runs-on:
+        labels: ubuntu-latest-8-cores
       steps:
-        - name: Print the input tag to STDOUT
-          run: echo  The tags are ${{ inputs.tags }} 
+        - name: checkout
+          uses: actions/checkout@v3
+        - name: Setup nodejs environment
+          uses: actions/setup-node@v3
+          with:
+            node-version: ${{ env.NODEJS_VERSION }}
+            cache: yarn
+        - name: Install frontend dependencies
+          shell: bash
+          working-directory: ./public/plugins/${{ inputs.plugin_id }}
+          run: |
+           yarn install --immutable --prefer-offline
+        - name: Setup golang environment
+          uses: actions/setup-go@v3
+          with:
+            go-version: ${{ env.GO_VERSION }}
+        - name: Install Mage
+          shell: bash
+          run: |
+            go install github.com/magefile/mage
+        - name: Install golangci-lint
+          shell: bash
+          run: |
+            curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v${{ env.GO_LINT_VERSION }}
+        - name: Install gosec
+          shell: bash
+          run: |
+            wget -O - -q https://raw.githubusercontent.com/securego/gosec/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v${{ env.GO_SEC_VERSION }}
+        - name: Download grabpl executable
+          shell: sh
+          run: |
+            [ ! -d bin ] && mkdir -pv bin || true
+            curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v${{ env.GRABPL_VERSION }}/grabpl
+            chmod 0755 bin/grabpl
+        - name: Validate environment
+          shell: bash
+          run: |
+            echo "======================================="
+            echo "    Frontend tools"
+            echo "======================================="
+            echo "-------- node version -----"
+            node --version
+            echo "-------- npm version -----"
+            npm --version
+            echo "-------- yarn version -----"
+            yarn --version
+            echo "======================================="
+            echo "    Backend tools"
+            echo "======================================="
+            echo "-------- go version -----"
+            go version
+            echo "-------- mage version -----"
+            mage --version
+            echo "-------- golangci-lint version -----"
+            golangci-lint --version
+            echo "------- gosec version ------"
+            gosec --version
+            echo "======================================="
+            echo "    Misc tools"
+            echo "======================================="
+            echo "-------- docker version -----"
+            docker --version
+            echo "======================================="
+        - name: test:frontend
+          shell: bash
+          run: |
+            yarn test:ci
+        - name: lint:frontend
+          shell: bash
+          run: |
+            yarn lint
+        - name: build:frontend
+          shell: bash
+          run: |
+            yarn build
+        - name: lint:backend
+          shell: bash
+          run: |
+            mage lint
+        - name: test:backend
+          shell: bash
+          run: |
+            mage test
+        - name: build:backend
+          shell: bash
+          run: |
+            mage -v
+        - name: package
+          working-directory: ./public/plugins/${{ inputs.plugin_id }}
+          run: |
+              mkdir -p ci/jobs/package
+              bin/grabpl plugin package
+          env:
+            GRAFANA_API_KEY: TBD # ${{ secrets.GRAFANA_PLUGINS_SIGN_AND_PUBLISH_TOKEN }}
+            PLUGIN_SIGNATURE_TYPE: grafana
+        - name: store build artifacts
+          uses: actions/upload-artifact@v3
+          with:
+            name: build-artifacts
+            path: ./public/plugins/${{ inputs.plugin_id }}/ci/packages/*.zip
+        - name: Publish release to Google Cloud Storage
+          run: |
+            echo "Publish release to Google Cloud Storage: NOT IMPLEMENTED YET"
+        - name: Publish new plugin version on grafana.com
+          working-directory: plugins/${{ inputs.plugin_id }}
+          run: |
+            echo "Publish new plugin version on grafana.com: NOT IMPLEMENTED YET"
+            
