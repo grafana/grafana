@@ -31,7 +31,7 @@ func (hs *HTTPServer) CreateTeam(c *contextmodel.ReqContext) response.Response {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 
-	t, err := hs.teamService.CreateTeam(cmd.Name, cmd.Email, c.Requester.GetOrgID())
+	t, err := hs.teamService.CreateTeam(cmd.Name, cmd.Email, c.SignedInUser.GetOrgID())
 	if err != nil {
 		if errors.Is(err, team.ErrTeamNameTaken) {
 			return response.Error(http.StatusConflict, "Team name taken", err)
@@ -41,12 +41,12 @@ func (hs *HTTPServer) CreateTeam(c *contextmodel.ReqContext) response.Response {
 
 	// Clear permission cache for the user who's created the team, so that new permissions are fetched for their next call
 	// Required for cases when caller wants to immediately interact with the newly created object
-	hs.accesscontrolService.ClearUserPermissionCache(c.Requester)
+	hs.accesscontrolService.ClearUserPermissionCache(c.SignedInUser)
 
 	// if the request is authenticated using API tokens
 	// the SignedInUser is an empty struct therefore
 	// an additional check whether it is an actual user is required
-	namespace, identifier := c.Requester.GetNamespacedID()
+	namespace, identifier := c.SignedInUser.GetNamespacedID()
 	switch namespace {
 	case identity.NamespaceUser:
 		userID, err := strconv.ParseInt(identifier, 10, 64)
@@ -54,7 +54,7 @@ func (hs *HTTPServer) CreateTeam(c *contextmodel.ReqContext) response.Response {
 			c.Logger.Error("Could not add creator to team because user id is not a number", "error", err)
 			break
 		}
-		if err := addOrUpdateTeamMember(c.Req.Context(), hs.teamPermissionsService, userID, c.Requester.GetOrgID(),
+		if err := addOrUpdateTeamMember(c.Req.Context(), hs.teamPermissionsService, userID, c.SignedInUser.GetOrgID(),
 			t.ID, dashboards.PERMISSION_ADMIN.String()); err != nil {
 			c.Logger.Error("Could not add creator to team", "error", err)
 		}
@@ -85,7 +85,7 @@ func (hs *HTTPServer) UpdateTeam(c *contextmodel.ReqContext) response.Response {
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	cmd.OrgID = c.Requester.GetOrgID()
+	cmd.OrgID = c.SignedInUser.GetOrgID()
 	cmd.ID, err = strconv.ParseInt(web.Params(c.Req)[":teamId"], 10, 64)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "teamId is invalid", err)
@@ -112,7 +112,7 @@ func (hs *HTTPServer) UpdateTeam(c *contextmodel.ReqContext) response.Response {
 // 404: notFoundError
 // 500: internalServerError
 func (hs *HTTPServer) DeleteTeamByID(c *contextmodel.ReqContext) response.Response {
-	orgID := c.Requester.GetOrgID()
+	orgID := c.SignedInUser.GetOrgID()
 	teamID, err := strconv.ParseInt(web.Params(c.Req)[":teamId"], 10, 64)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "teamId is invalid", err)
@@ -147,12 +147,12 @@ func (hs *HTTPServer) SearchTeams(c *contextmodel.ReqContext) response.Response 
 	}
 
 	query := team.SearchTeamsQuery{
-		OrgID:        c.Requester.GetOrgID(),
+		OrgID:        c.SignedInUser.GetOrgID(),
 		Query:        c.Query("query"),
 		Name:         c.Query("name"),
 		Page:         page,
 		Limit:        perPage,
-		SignedInUser: c.Requester,
+		SignedInUser: c.SignedInUser,
 		HiddenUsers:  hs.Cfg.HiddenUsers,
 	}
 
@@ -197,9 +197,9 @@ func (hs *HTTPServer) GetTeamByID(c *contextmodel.ReqContext) response.Response 
 	}
 
 	query := team.GetTeamByIDQuery{
-		OrgID:        c.Requester.GetOrgID(),
+		OrgID:        c.SignedInUser.GetOrgID(),
 		ID:           teamId,
-		SignedInUser: c.Requester,
+		SignedInUser: c.SignedInUser,
 		HiddenUsers:  hs.Cfg.HiddenUsers,
 	}
 
@@ -213,7 +213,7 @@ func (hs *HTTPServer) GetTeamByID(c *contextmodel.ReqContext) response.Response 
 	}
 
 	// Add accesscontrol metadata
-	queryResult.AccessControl = hs.getAccessControlMetadata(c, c.Requester.GetOrgID(), "teams:id:", strconv.FormatInt(queryResult.ID, 10))
+	queryResult.AccessControl = hs.getAccessControlMetadata(c, c.SignedInUser.GetOrgID(), "teams:id:", strconv.FormatInt(queryResult.ID, 10))
 
 	queryResult.AvatarURL = dtos.GetGravatarUrlWithDefault(queryResult.Email, queryResult.Name)
 	return response.JSON(http.StatusOK, &queryResult)
@@ -233,7 +233,7 @@ func (hs *HTTPServer) GetTeamPreferences(c *contextmodel.ReqContext) response.Re
 		return response.Error(http.StatusBadRequest, "teamId is invalid", err)
 	}
 
-	return hs.getPreferencesFor(c.Req.Context(), c.Requester.GetOrgID(), 0, teamId)
+	return hs.getPreferencesFor(c.Req.Context(), c.SignedInUser.GetOrgID(), 0, teamId)
 }
 
 // swagger:route PUT /teams/{team_id}/preferences teams updateTeamPreferences
@@ -256,7 +256,7 @@ func (hs *HTTPServer) UpdateTeamPreferences(c *contextmodel.ReqContext) response
 		return response.Error(http.StatusBadRequest, "teamId is invalid", err)
 	}
 
-	return hs.updatePreferencesFor(c.Req.Context(), c.Requester.GetOrgID(), 0, teamId, &dtoCmd)
+	return hs.updatePreferencesFor(c.Req.Context(), c.SignedInUser.GetOrgID(), 0, teamId, &dtoCmd)
 }
 
 // swagger:parameters updateTeamPreferences

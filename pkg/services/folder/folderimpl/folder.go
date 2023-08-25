@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
@@ -763,12 +764,17 @@ func (s *Service) BuildSaveDashboardCommand(ctx context.Context, dto *dashboards
 		}
 	}
 
+	userID, err := identity.IntIdentifier(dto.User.GetNamespacedID())
+	if err != nil {
+		return nil, err
+	}
+
 	cmd := &dashboards.SaveDashboardCommand{
 		Dashboard: dash.Data,
 		Message:   dto.Message,
 		OrgID:     dto.OrgID,
 		Overwrite: dto.Overwrite,
-		UserID:    dto.User.UserID,
+		UserID:    userID,
 		FolderID:  dash.FolderID,
 		IsFolder:  dash.IsFolder,
 		PluginID:  dash.PluginID,
@@ -783,7 +789,7 @@ func (s *Service) BuildSaveDashboardCommand(ctx context.Context, dto *dashboards
 
 // getGuardianForSavePermissionCheck returns the guardian to be used for checking permission of dashboard
 // It replaces deleted Dashboard.GetDashboardIdForSavePermissionCheck()
-func getGuardianForSavePermissionCheck(ctx context.Context, d *dashboards.Dashboard, user *user.SignedInUser) (guardian.DashboardGuardian, error) {
+func getGuardianForSavePermissionCheck(ctx context.Context, d *dashboards.Dashboard, user identity.Requester) (guardian.DashboardGuardian, error) {
 	newDashboard := d.ID == 0
 
 	if newDashboard {

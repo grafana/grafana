@@ -10,7 +10,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/models/usertoken"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -21,7 +20,6 @@ import (
 type ReqContext struct {
 	*web.Context
 	*user.SignedInUser // deprecated: to be replaced by identity.Requester
-	Requester          identity.Requester
 	UserToken          *usertoken.UserToken
 
 	IsSignedIn     bool
@@ -157,7 +155,7 @@ func (ctx *ReqContext) writeErrOrFallback(status int, message string, err error)
 }
 
 func (ctx *ReqContext) HasUserRole(role org.RoleType) bool {
-	return ctx.Requester.GetOrgRole().Includes(role)
+	return ctx.SignedInUser.GetOrgRole().Includes(role)
 }
 
 func (ctx *ReqContext) HasHelpFlag(flag user.HelpFlags1) bool {
