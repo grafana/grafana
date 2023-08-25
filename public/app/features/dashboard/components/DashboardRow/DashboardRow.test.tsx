@@ -80,7 +80,7 @@ describe('DashboardRow', () => {
     });
     const rowPanel = new PanelModel({ collapsed: true, panels: [panel] });
     const dashboardRow = new DashboardRow({ panel: rowPanel, dashboard: dashboardMock });
-    expect(dashboardRow.getWarningMessage()).toBeDefined();
+    expect(dashboardRow.getWarning()).toBeDefined();
   });
 
   it('Should not return warning message when row panel does not have a panel with dashboard ds set', async () => {
@@ -92,6 +92,6 @@ describe('DashboardRow', () => {
     });
     const rowPanel = new PanelModel({ collapsed: true, panels: [panel] });
     const dashboardRow = new DashboardRow({ panel: rowPanel, dashboard: dashboardMock });
-    expect(dashboardRow.getWarningMessage()).not.toBeDefined();
+    expect(dashboardRow.getWarning()).not.toBeDefined();
   });
 });
