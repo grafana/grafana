@@ -4,5 +4,5 @@
     "resolveJsonModule": true
   },
   "extends": "@grafana/tsconfig/base.json",
-  "include": ["**/*.ts"]
+  "include": ["**/*.ts", "cypress/support/index.js"]
 }

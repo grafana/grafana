@@ -19289,6 +19289,7 @@ __metadata:
     "@betterer/cli": 5.4.0
     "@betterer/eslint": 5.4.0
     "@betterer/regexp": 5.4.0
+    "@cypress/webpack-preprocessor": 5.17.1
     "@daybrush/utils": 1.13.0
     "@emotion/css": 11.11.2
     "@emotion/eslint-plugin": 11.11.0
@@ -19427,12 +19428,14 @@ __metadata:
     babel-plugin-angularjs-annotate: 0.10.0
     babel-plugin-macros: 3.1.0
     baron: 3.0.3
+    blink-diff: 1.0.13
     blob-polyfill: 7.0.20220408
     brace: 0.11.1
     browserslist: ^4.21.4
     calculate-size: 1.1.1
     centrifuge: 4.0.1
     chance: ^1.0.10
+    chrome-remote-interface: 0.32.2
     classnames: 2.3.2
     codeowners: ^5.1.1
     combokeys: ^3.0.0
@@ -19443,6 +19446,7 @@ __metadata:
     css-loader: 6.8.1
     css-minimizer-webpack-plugin: 5.0.1
     cypress: 12.15.0
+    cypress-file-upload: 5.0.8
     d3: 7.8.5
     d3-force: 3.0.0
     d3-scale-chromatic: 3.0.0
@@ -19596,6 +19600,7 @@ __metadata:
     testing-library-selector: 0.2.1
     tether-drop: "https://github.com/torkelo/drop"
     tinycolor2: 1.6.0
+    tracelib: 1.0.1
     ts-jest: 29.1.1
     ts-loader: 9.3.1
     ts-node: 10.9.1
@@ -19615,6 +19620,7 @@ __metadata:
     webpack-merge: 5.9.0
     whatwg-fetch: 3.6.2
     xlsx: "https://cdn.sheetjs.com/xlsx-0.19.1/xlsx-0.19.1.tgz"
+    yaml: ^2.0.0
     yargs: ^17.5.1
   dependenciesMeta:
     prettier@3.0.0:
