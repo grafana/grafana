@@ -139,7 +139,6 @@ func (s *StandardSearchService) createAllowedActions(ctx context.Context, orgId 
 
 func (s *StandardSearchService) getAllowedActionsByUid(ctx context.Context, user *user.SignedInUser,
 	orgID int64, prefix string, resourceIDs []string) map[string][]string {
-
 	if user.Permissions == nil {
 		return map[string][]string{}
 	}
