@@ -31,7 +31,7 @@ func NewProvider(cfg *config.Cfg, license plugins.Licensing) *Service {
 	}
 }
 
-func (s *Service) Get(_ context.Context, p *plugins.Plugin) []string {
+func (s *Service) Get(ctx context.Context, p *plugins.Plugin) []string {
 	hostEnv := []string{
 		fmt.Sprintf("GF_VERSION=%s", s.cfg.BuildVersion),
 	}
@@ -56,7 +56,7 @@ func (s *Service) Get(_ context.Context, p *plugins.Plugin) []string {
 		)
 	}
 
-	hostEnv = append(hostEnv, s.featureToggleEnableVar()...)
+	hostEnv = append(hostEnv, s.featureToggleEnableVar(ctx)...)
 	hostEnv = append(hostEnv, s.awsEnvVars()...)
 	hostEnv = append(hostEnv, s.secureSocksProxyEnvVars()...)
 	hostEnv = append(hostEnv, azsettings.WriteToEnvStr(s.cfg.Azure)...)
@@ -85,11 +85,11 @@ func (s *Service) tracingEnvVars(plugin *plugins.Plugin) []string {
 	return vars
 }
 
-func (s *Service) featureToggleEnableVar() []string {
+func (s *Service) featureToggleEnableVar(ctx context.Context) []string {
 	var variables []string // an array is used for consistency and keep the logic simpler for no features case
 
 	if s.cfg.Features != nil {
-		enabledFeatures := s.cfg.Features.GetEnabled(context.Background())
+		enabledFeatures := s.cfg.Features.GetEnabled(ctx)
 
 		if len(enabledFeatures) > 0 {
 			features := make([]string, 0, len(enabledFeatures))
