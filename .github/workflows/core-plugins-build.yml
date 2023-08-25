@@ -8,7 +8,6 @@ on:
             description: "ID of the plugin you want to publish"
             required: true
             type: choice
-            default: "testdata"
             options:
               - "testdata"
     
@@ -40,7 +39,7 @@ jobs:
             cache: yarn
         - name: Install frontend dependencies
           shell: bash
-          working-directory: ./public/plugins/${{ inputs.plugin_id }}
+          working-directory: ./public/plugins/testdata # ${{ inputs.plugin_id }}
           run: |
            pwd
            yarn install --immutable
@@ -96,37 +95,37 @@ jobs:
             docker --version
             echo "======================================="
         - name: test:frontend
-          working-directory: ./public/plugins/${{ inputs.plugin_id }}
+          working-directory: ./public/plugins/testdata # ${{ inputs.plugin_id }}
           shell: bash
           run: |
             yarn test:ci
         - name: lint:frontend
-          working-directory: ./public/plugins/${{ inputs.plugin_id }}
+          working-directory: ./public/plugins/testdata # ${{ inputs.plugin_id }}
           shell: bash
           run: |
             yarn lint
         - name: build:frontend
-          working-directory: ./public/plugins/${{ inputs.plugin_id }}
+          working-directory: ./public/plugins/testdata # ${{ inputs.plugin_id }}
           shell: bash
           run: |
             yarn build
         - name: lint:backend
-          working-directory: ./public/plugins/${{ inputs.plugin_id }}
+          working-directory: ./public/plugins/testdata # ${{ inputs.plugin_id }}
           shell: bash
           run: |
             mage lint
         - name: test:backend
-          working-directory: ./public/plugins/${{ inputs.plugin_id }}
+          working-directory: ./public/plugins/testdata # ${{ inputs.plugin_id }}
           shell: bash
           run: |
             mage test
         - name: build:backend
-          working-directory: ./public/plugins/${{ inputs.plugin_id }}
+          working-directory: ./public/plugins/testdata # ${{ inputs.plugin_id }}
           shell: bash
           run: |
             mage -v
         - name: package
-          working-directory: ./public/plugins/${{ inputs.plugin_id }}
+          working-directory: ./public/plugins/testdata # ${{ inputs.plugin_id }}
           run: |
               mkdir -p ci/jobs/package
               bin/grabpl plugin package
@@ -137,11 +136,11 @@ jobs:
           uses: actions/upload-artifact@v3
           with:
             name: build-artifacts
-            path: ./public/plugins/${{ inputs.plugin_id }}/ci/packages/*.zip
+            path: ./public/plugins/testdata/ci/packages/*.zip # ${{ inputs.plugin_id }}/ci/packages/*.zip
         - name: Publish release to Google Cloud Storage
           run: |
             echo "Publish release to Google Cloud Storage: NOT IMPLEMENTED YET"
         - name: Publish new plugin version on grafana.com
-          working-directory: plugins/${{ inputs.plugin_id }}
+          working-directory: ./public/plugins/testdata # ${{ inputs.plugin_id }}
           run: |
             echo "Publish new plugin version on grafana.com: NOT IMPLEMENTED YET"
