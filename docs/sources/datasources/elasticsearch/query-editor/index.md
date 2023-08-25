@@ -89,7 +89,7 @@ Use the **plus icon** to the right to add multiple metrics to your query. Click 
 
 Each group by option will have a different subset of options to further narrow your query.  
 
-The following options are specific to the **date histogram** group by option.
+The following options are specific to the **date histogram** bucket aggregation option.
 
   - **Time field** - Depicts date data options. The default option can be specified when configuring the Elasticsearch data source in the **Time field name** under the [**Elasticsearch details**](/docs/grafana/latest/datasources/elasticsearch/configure-elasticsearch-data-source/#elasticsearch-details) section. Otherwise **@timestamp** field will be used as a default option. 
   - **Interval** - Group by a type of interval. There are option to choose from the dropdown menu to select seconds, minutes, hours or day. You can also add a custom interval such as `30d` (30 days). `Auto` is the default option.
@@ -98,24 +98,24 @@ The following options are specific to the **date histogram** group by option.
   - **Offset** - Changes the start value of each bucket by the specified positive(+) or negative (-) offset duration. Examples include `1h` for 1 hour, `5s` for 5 seconds or `1d` for 1 day.
   - **Timezone** - Select a timezone from the dropdown menu. The default is `Coordinated universal time`.
 
-Configure the following options for the **terms** group by option:
+Configure the following options for the **terms** bucket aggregation option:
 
   - **Order** - Sets the order of data.  Options are `top` or `bottom.`
   - **Size** - Limits the size of the data set.  You can set a custom number or `no limit`.
   - **Min doc count** - The minimum amount of data to include in your query. The default is `0`.
-  - **Order by** - Order terms by `term value![Alt text](image.png)`, `doc count` or `count`.
+  - **Order by** - Order terms by `term value`, `doc count` or `count`.
   - **Missing** - 
 
-Configure the following options for the **filters** group by option:
+Configure the following options for the **filters** bucket aggregation option:
 
   - **Query** - Sets the order of data.  Options are `top` or `bottom.`
   - **Label** - Add any labels to filter by.
 
-Configure the following options for the **geo hash grid** group by option:
+Configure the following options for the **geo hash grid** bucket aggregation option:
 
    - **Precision** - Specifies the number of characters of the geo hash.
 
-Configure the following options for the **histogram** group by option:
+Configure the following options for the **histogram** bucket aggregation option:
 
   - **Interval** - Group by a type of interval. There are option to choose from the dropdown menu to select seconds, minutes, hours or day. You can also add a custom interval such as `30d` (30 days). `Auto` is the default option.
   - **Min doc count** - The minimum amount of data to include in your query. The default is `0`
@@ -173,7 +173,7 @@ The option to run a **raw document query** is deprecated as of Grafana v10.1.
 ## Use template variables
 
 You can also augment queries by using [template variables]({{< relref "./template-variables/" >}}).
-=======
+
 Queries of `terms` have a 500-result limit by default.
 To set a custom limit, set the `size` property in your query.
 
