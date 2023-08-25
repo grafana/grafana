@@ -17,7 +17,6 @@ import { GRAFANA_DATASOURCE_NAME } from 'app/features/alerting/unified/utils/dat
 import { GrafanaQueryType } from '../../../plugins/datasource/grafana/types';
 
 export const PUBLIC_DATASOURCE = '-- Public --';
-export const DEFAULT_INTERVAL = '1min';
 
 export class PublicDashboardDataSource extends DataSourceApi<DataQuery, DataSourceJsonData, {}> {
   constructor() {
@@ -50,7 +49,6 @@ export class PublicDashboardDataSource extends DataSourceApi<DataQuery, DataSour
       return of({ data: [] });
     }
 
-    // Its an annotations query
     // Currently, annotations requests come in one at a time, so there will only be one target
     const target = request.targets[0];
 
@@ -71,7 +69,7 @@ export class PublicDashboardDataSource extends DataSourceApi<DataQuery, DataSour
     };
 
     const annotations = await getBackendSrv().get(
-      `/api/public/dashboards/${config.publicDashboardAccessToken!}/annotations`,
+      `/api/public/dashboards/${config.publicDashboardAccessToken}/annotations`,
       params
     );
 

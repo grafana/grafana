@@ -6,7 +6,7 @@ import { AnnotationQuery, DataSourceApi } from '@grafana/data';
 import { config, getDataSourceSrv } from '@grafana/runtime';
 
 import { AnnotationQueryFinished, AnnotationQueryStarted } from '../../../../types/events';
-import { PUBLIC_DATASOURCE, PublicDashboardDataSource } from '../../../dashboard/services/PublicDashboardDataSource';
+import { PublicDashboardDataSource } from '../../../dashboard/services/PublicDashboardDataSource';
 
 import { AnnotationsQueryRunner } from './AnnotationsQueryRunner';
 import { getDashboardQueryRunner } from './DashboardQueryRunner';

@@ -1,6 +1,6 @@
-import { catchError, from, Observable, of, switchMap } from 'rxjs';
+import { catchError, Observable, of, switchMap } from 'rxjs';
 
-import { DataQuery, DataQueryRequest, DataQueryResponse, toDataFrame } from '@grafana/data';
+import { DataQuery, DataQueryRequest, DataQueryResponse } from '@grafana/data';
 
 import { config } from '../config';
 import { getBackendSrv } from '../services/backendSrv';
@@ -21,33 +21,30 @@ export function publicDashboardQueryHandler(request: DataQueryRequest<DataQuery>
     return of({ data: [] });
   }
 
-  // Its a datasource query
-  else {
-    const body = {
-      intervalMs,
-      maxDataPoints,
-      queryCachingTTL,
-      timeRange: {
-        from: fromRange.valueOf().toString(),
-        to: toRange.valueOf().toString(),
-        timezone: request.timezone,
-      },
-    };
+  const body = {
+    intervalMs,
+    maxDataPoints,
+    queryCachingTTL,
+    timeRange: {
+      from: fromRange.valueOf().toString(),
+      to: toRange.valueOf().toString(),
+      timezone: request.timezone,
+    },
+  };
 
-    return getBackendSrv()
-      .fetch<BackendDataSourceResponse>({
-        url: `/api/public/dashboards/${config.publicDashboardAccessToken!}/panels/${panelId}/query`,
-        method: 'POST',
-        data: body,
-        requestId,
+  return getBackendSrv()
+    .fetch<BackendDataSourceResponse>({
+      url: `/api/public/dashboards/${config.publicDashboardAccessToken!}/panels/${panelId}/query`,
+      method: 'POST',
+      data: body,
+      requestId,
+    })
+    .pipe(
+      switchMap((raw) => {
+        return of(toDataQueryResponse(raw, request.targets));
+      }),
+      catchError((err) => {
+        return of(toDataQueryResponse(err));
       })
-      .pipe(
-        switchMap((raw) => {
-          return of(toDataQueryResponse(raw, request.targets));
-        }),
-        catchError((err) => {
-          return of(toDataQueryResponse(err));
-        })
-      );
-  }
+    );
 }
