@@ -29,7 +29,7 @@ import {
   toDataFrame,
   transformDataFrame,
 } from '@grafana/data';
-import { getTemplateSrv, toDataQueryError } from '@grafana/runtime';
+import { config, getTemplateSrv, toDataQueryError } from '@grafana/runtime';
 import { ExpressionDatasourceRef } from '@grafana/runtime/src/utils/DataSourceWithBackend';
 import { updatePanelDataWithASHFromLoki } from 'app/features/alerting/unified/components/rules/state-history/common';
 import { isStreamingDataFrame } from 'app/features/live/data/utils';

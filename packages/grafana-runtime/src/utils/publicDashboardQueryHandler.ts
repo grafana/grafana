@@ -7,9 +7,6 @@ import { getBackendSrv } from '../services/backendSrv';
 
 import { BackendDataSourceResponse, toDataQueryResponse } from './queryResponse';
 
-// Unify this a bit so we do not have duplicates
-export const GRAFANA_DATASOURCE_NAME = '-- Grafana --';
-
 export function publicDashboardQueryHandler(request: DataQueryRequest<DataQuery>): Observable<DataQueryResponse> {
   const {
     intervalMs,
@@ -21,16 +18,6 @@ export function publicDashboardQueryHandler(request: DataQueryRequest<DataQuery>
   } = request;
   // Return early if no queries exist
   if (!request.targets.length) {
-    return of({ data: [] });
-  }
-
-  // Its an annotations query
-  // Currently, annotations requests come in one at a time, so there will only be one target
-  const target = request.targets[0];
-  if (target.queryType === 'annotations') {
-    if (target?.datasource?.uid === GRAFANA_DATASOURCE_NAME) {
-      return from(getAnnotations(request));
-    }
     return of({ data: [] });
   }
 
@@ -63,22 +50,4 @@ export function publicDashboardQueryHandler(request: DataQueryRequest<DataQuery>
         })
       );
   }
-}
-
-async function getAnnotations(request: DataQueryRequest<DataQuery>): Promise<DataQueryResponse> {
-  const {
-    range: { to, from },
-  } = request;
-
-  const params = {
-    from: from.valueOf(),
-    to: to.valueOf(),
-  };
-
-  const annotations = await getBackendSrv().get(
-    `/api/public/dashboards/${config.publicDashboardAccessToken!}/annotations`,
-    params
-  );
-
-  return { data: [toDataFrame(annotations)] };
 }
