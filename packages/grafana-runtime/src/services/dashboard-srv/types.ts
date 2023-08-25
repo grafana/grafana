@@ -45,7 +45,7 @@ export interface PluginsAPIDashboardModel {
   /**
    * The uid of the dashboard
    * @remarks
-   * The ID attribute is deprecated and therefore not included in the public API.
+   * Note: The old `id` attribute is deprecated and therefore not included in the public API.
    * @readonly
    */
   uid: string;
@@ -61,26 +61,22 @@ export interface PluginsAPIDashboardModel {
   panels: PluginsAPIPanelModel[];
 
   /**
-   * The panels of the dashboard
-   * Get the panels in the current dashboard
+   * Returns the panels within the current dashboard.
    *
-   * Changes to the panels are not instantly reflected in the dashboard
-   * and are not persisted.
+   * Note: Modifications to the panels are not immediately visible on the dashboard and are not automatically saved.
    *
-   * The user is responsible for saving the dashboard after any changes
+   * Users must manually save the dashboard to persist any changes.
    */
   getPanels(): PluginsAPIPanelModel[];
 
   /**
-   * Update the panels in the current dashboard by replacing them with
-   * the ones passed in.
+   * Replaces the existing panels on the current dashboard with the provided ones.
    *
-   * Use `dashboard.panels` to get the current panels.
+   * To retrieve current panels, refer to `getPanels()`.
    *
-   * Changes to the panels are reflected in the dashboard instantly
-   * but not persisted.
+   * Note: While panel changes are instantly reflected on the dashboard, they are not automatically saved.
    *
-   * The user is responsible for saving the dashboard after any changes
+   * Users must manually save the dashboard to persist any modifications.
    *
    * @public
    */
@@ -91,20 +87,38 @@ export interface PluginsAPIDashboardModel {
  * A panel in a grafana dashboard.
  * @public
  */
-export interface PluginsAPIPanelModel extends Pick<CorePanelModel, 'id' | 'title' | 'type' | 'options'> {
+export interface PluginsAPIPanelModel extends Pick<CorePanelModel, 'options'> {
+  /**
+   * The panel's unique ID
+   */
+  id: number;
+  /**
+   * The panel's title
+   */
+  title: string;
+  /**
+   * Represents the type of the panel, such as 'graph', 'table', and so on.
+   * In case of panels provided by a plugin, this will contain the plugin's ID.
+   */
+  type: string;
   /**
    *  The panel's grid position is defined by its x and y coordinates, as well as its width (w) and height (h).
    * Static panels remain unaffected by other panels' positioning changes.
    */
   gridPos: GridPos;
   /**
-   * Forces the panel to re-render in the dashboard
-   * fetching new data.
-   * Use it to see changes to the panel properties
+   * Contains user-defined panel options, set via the panel editor.
    *
-   * Changes to the panel are reflected in the dashboard instantly but not persisted.
+   * This also includes custom fields provided by any plugins.
+   */
+  options: CorePanelModel['options'];
+  /**
+   * Triggers a re-render of the panel on the dashboard, fetching fresh data.
+   * Useful for visualizing immediate changes to panel properties.
    *
-   * The user is responsible for saving the dashboard after any changes
+   * Note: While changes are instantly visible on the dashboard, they are not automatically saved.
+   *
+   * Users must manually save the dashboard to persist any modifications.
    */
   refresh(): void;
 }
