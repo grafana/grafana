@@ -1,6 +1,7 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
+import { initTemplateSrv } from 'test/helpers/initTemplateSrv';
 
 import { config } from '@grafana/runtime';
 
@@ -41,6 +42,8 @@ jest.mock('../language_provider', () => {
 });
 
 describe('TraceQLSearch', () => {
+  initTemplateSrv('key', []);
+
   let user: ReturnType<typeof userEvent.setup>;
 
   const datasource: TempoDatasource = {

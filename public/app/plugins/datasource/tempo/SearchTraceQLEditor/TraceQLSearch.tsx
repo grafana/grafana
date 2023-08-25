@@ -3,7 +3,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { EditorRow } from '@grafana/experimental';
-import { config, FetchError } from '@grafana/runtime';
+import { config, FetchError, getTemplateSrv } from '@grafana/runtime';
 import { Alert, HorizontalGroup, useStyles2 } from '@grafana/ui';
 
 import { createErrorNotification } from '../../../../core/copy/appNotification';
@@ -36,6 +36,8 @@ const TraceQLSearch = ({ datasource, query, onChange }: Props) => {
 
   const [isTagsLoading, setIsTagsLoading] = useState(true);
   const [traceQlQuery, setTraceQlQuery] = useState<string>('');
+
+  const templateSrv = getTemplateSrv();
 
   const updateFilter = useCallback(
     (s: TraceqlFilter) => {
@@ -170,7 +172,7 @@ const TraceQLSearch = ({ datasource, query, onChange }: Props) => {
           )}
         </div>
         <EditorRow>
-          <RawQuery query={traceQlQuery} lang={{ grammar: traceqlGrammar, name: 'traceql' }} />
+          <RawQuery query={templateSrv.replace(traceQlQuery)} lang={{ grammar: traceqlGrammar, name: 'traceql' }} />
         </EditorRow>
         <TempoQueryBuilderOptions onChange={onChange} query={query} />
       </div>

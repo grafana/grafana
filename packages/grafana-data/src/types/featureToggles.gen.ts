@@ -36,7 +36,6 @@ export interface FeatureToggles {
   validateDashboardsOnSave?: boolean;
   autoMigrateOldPanels?: boolean;
   disableAngular?: boolean;
-  prometheusWideSeries?: boolean;
   canvasPanelNesting?: boolean;
   scenes?: boolean;
   disableSecretsCompatibility?: boolean;

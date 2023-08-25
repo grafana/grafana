@@ -126,12 +126,6 @@ var (
 			Owner:        grafanaDatavizSquad,
 		},
 		{
-			Name:        "prometheusWideSeries",
-			Description: "Enable wide series responses in the Prometheus datasource",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaObservabilityMetricsSquad,
-		},
-		{
 			Name:         "canvasPanelNesting",
 			Description:  "Allow elements nesting",
 			Stage:        FeatureStageExperimental,
