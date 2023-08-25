@@ -45,7 +45,7 @@ datasources:
 
   - name: gdev-alertmanager
     type: alertmanager
-    uid: gdev-alertmanager12312312312312=234234322
+    uid: gdev-alertmanager
     access: proxy
     url: http://localhost:9093
     jsonData:
