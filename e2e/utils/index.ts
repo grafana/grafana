@@ -1,8 +1,3 @@
-/**
- * A library for writing end-to-end tests for Grafana and its ecosystem.
- *
- * @packageDocumentation
- */
 import { E2ESelectors, Selectors, selectors } from '@grafana/e2e-selectors';
 
 import * as flows from './flows';
