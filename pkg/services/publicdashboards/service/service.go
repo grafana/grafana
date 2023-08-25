@@ -72,20 +72,19 @@ func (pd *PublicDashboardServiceImpl) GetPublicDashboardForView(ctx context.Cont
 	}
 
 	meta := dtos.DashboardMeta{
-		Slug:                       dash.Slug,
-		Type:                       dashboards.DashTypeDB,
-		CanStar:                    false,
-		CanSave:                    false,
-		CanEdit:                    false,
-		CanAdmin:                   false,
-		CanDelete:                  false,
-		Created:                    dash.Created,
-		Updated:                    dash.Updated,
-		Version:                    dash.Version,
-		IsFolder:                   false,
-		FolderId:                   dash.FolderID,
-		PublicDashboardAccessToken: pubdash.AccessToken,
-		PublicDashboardEnabled:     pubdash.IsEnabled,
+		Slug:                   dash.Slug,
+		Type:                   dashboards.DashTypeDB,
+		CanStar:                false,
+		CanSave:                false,
+		CanEdit:                false,
+		CanAdmin:               false,
+		CanDelete:              false,
+		Created:                dash.Created,
+		Updated:                dash.Updated,
+		Version:                dash.Version,
+		IsFolder:               false,
+		FolderId:               dash.FolderID,
+		PublicDashboardEnabled: pubdash.IsEnabled,
 	}
 	dash.Data.Get("timepicker").Set("hidden", !pubdash.TimeSelectionEnabled)
 
