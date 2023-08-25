@@ -67,7 +67,12 @@ l1Fields:
 			}
 
 		case "warnings":
-			warnings = readWarnings(iter)
+			var wErr error
+			warnings, wErr = readWarnings(iter)
+			if wErr != nil {
+				rsp.Error = wErr
+				return rsp
+			}
 
 		case "":
 			if iterError() {
@@ -99,21 +104,29 @@ l1Fields:
 		}
 	}
 
-	// if len(iter.CurrentBuffer()) > 0 {
-	// 	rsp.Error = fmt.Errorf("failed to complete parsing of prometheus json response at : %s", iter.CurrentBuffer())
-	// }
-
 	return rsp
 }
 
-func readWarnings(iter *jsoniter.Iterator) []data.Notice {
+func readWarnings(iter *jsoniter.Iterator) ([]data.Notice, error) {
 	warnings := []data.Notice{}
-	if iter.WhatIsNext() != jsoniter.ArrayValue {
-		return warnings
+	next := iter.WhatIsNext()
+	if iter.Error != nil {
+		return nil, iter.Error
+	}
+
+	if next != jsoniter.ArrayValue {
+		return warnings, nil
 	}
 
 	for iter.ReadArray() {
-		if iter.WhatIsNext() == jsoniter.StringValue {
+		if iter.Error != nil {
+			return nil, iter.Error
+		}
+		next := iter.WhatIsNext()
+		if iter.Error != nil {
+			return nil, iter.Error
+		}
+		if next == jsoniter.StringValue {
 			notice := data.Notice{
 				Severity: data.NoticeSeverityWarning,
 				Text:     iter.ReadString(),
@@ -122,7 +135,7 @@ func readWarnings(iter *jsoniter.Iterator) []data.Notice {
 		}
 	}
 
-	return warnings
+	return warnings, nil
 }
 
 func readPrometheusData(iter *jsoniter.Iterator, opt Options) backend.DataResponse {
@@ -152,7 +165,8 @@ func readPrometheusData(iter *jsoniter.Iterator, opt Options) backend.DataRespon
 
 	resultType := ""
 
-	for l1Field := iter.ReadObject(); l1Field != ""; l1Field = iter.ReadObject() {
+l1Fields:
+	for l1Field := iter.ReadObject(); ; l1Field = iter.ReadObject() {
 		if iterError() {
 			return rsp
 		}
@@ -210,6 +224,12 @@ func readPrometheusData(iter *jsoniter.Iterator, opt Options) backend.DataRespon
 					"stats": v,
 				}
 			}
+
+		case "":
+			if iterError() {
+				return rsp
+			}
+			break l1Fields
 
 		default:
 			v := iter.Read()
@@ -338,7 +358,8 @@ func readLabelsOrExemplars(iter *jsoniter.Iterator) (*data.Frame, [][2]string, e
 	labels := data.Labels{}
 	var frame *data.Frame
 
-	for l1Field := iter.ReadObject(); l1Field != ""; l1Field = iter.ReadObject() {
+l1Fields:
+	for l1Field := iter.ReadObject(); ; l1Field = iter.ReadObject() {
 		if iter.Error != nil {
 			return nil, nil, iter.Error
 		}
@@ -431,6 +452,12 @@ func readLabelsOrExemplars(iter *jsoniter.Iterator) (*data.Frame, [][2]string, e
 					}
 				}
 			}
+		case "":
+			if iter.Error != nil {
+				return nil, nil, iter.Error
+			}
+			break l1Fields
+
 		default:
 			v := fmt.Sprintf("%v", iter.Read())
 			pairs = append(pairs, [2]string{l1Field, v})
@@ -699,6 +726,9 @@ func newHistogramInfo() *histogramInfo {
 func readHistogram(iter *jsoniter.Iterator, hist *histogramInfo) error {
 	// first element
 	iter.ReadArray()
+	if iter.Error != nil {
+		return iter.Error
+	}
 	t := timeFromFloat(iter.ReadFloat64())
 
 	var err error
@@ -709,35 +739,59 @@ func readHistogram(iter *jsoniter.Iterator, hist *histogramInfo) error {
 		switch l1Field {
 		case "count":
 			iter.Skip()
+			if iter.Error != nil {
+				return iter.Error
+			}
 		case "sum":
 			iter.Skip()
+			if iter.Error != nil {
+				return iter.Error
+			}
 
 		case "buckets":
 			for iter.ReadArray() {
+				if iter.Error != nil {
+					return iter.Error
+				}
 				hist.time.Append(t)
 
 				iter.ReadArray()
+				if iter.Error != nil {
+					return iter.Error
+				}
 				hist.yLayout.Append(iter.ReadInt8())
 
 				iter.ReadArray()
+				if iter.Error != nil {
+					return iter.Error
+				}
 				err = appendValueFromString(iter, hist.yMin)
 				if err != nil {
 					return err
 				}
 
 				iter.ReadArray()
+				if iter.Error != nil {
+					return iter.Error
+				}
 				err = appendValueFromString(iter, hist.yMax)
 				if err != nil {
 					return err
 				}
 
 				iter.ReadArray()
+				if iter.Error != nil {
+					return iter.Error
+				}
 				err = appendValueFromString(iter, hist.count)
 				if err != nil {
 					return err
 				}
 
 				if iter.ReadArray() {
+					if iter.Error != nil {
+						return iter.Error
+					}
 					return fmt.Errorf("expected close array")
 				}
 			}
@@ -749,6 +803,9 @@ func readHistogram(iter *jsoniter.Iterator, hist *histogramInfo) error {
 	}
 
 	if iter.ReadArray() {
+		if iter.Error != nil {
+			return iter.Error
+		}
 		return fmt.Errorf("expected to be done")
 	}
 
@@ -799,7 +856,11 @@ func readStream(iter *jsoniter.Iterator) backend.DataResponse {
 	}
 
 	for iter.ReadArray() {
-		for l1Field := iter.ReadObject(); l1Field != ""; l1Field = iter.ReadObject() {
+		if iterError() {
+			return rsp
+		}
+	l1Fields:
+		for l1Field := iter.ReadObject(); ; l1Field = iter.ReadObject() {
 			if iterError() {
 				return rsp
 			}
@@ -859,6 +920,11 @@ func readStream(iter *jsoniter.Iterator) backend.DataResponse {
 					lineField.Append(line)
 					tsField.Append(ts)
 				}
+			case "":
+				if iterError() {
+					return rsp
+				}
+				break l1Fields
 			}
 		}
 	}
