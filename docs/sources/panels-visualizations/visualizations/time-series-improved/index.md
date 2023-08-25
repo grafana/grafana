@@ -297,12 +297,12 @@ There are other common configuration options for the Time series visualization:
 
 <!--above can be a bit of shared content to ensure wording is consistent with guidance indicating that you should create an alphabetical list of other relevant options linked to that content-->
 
-- ### Data Links
+### Data Links
 
-    - Some placeholder text with a link to:
+Some placeholder text with a link to:
 [Data links]({{< relref "../../../panels-visualizations/configure-data-links/" >}})
 
-- ### Field overrides
+### Field overrides
 
 Some placeholder text with a link to:
 [Field overrides]({{< relref "../../../panels-visualizations/configure-overrides/" >}})
@@ -331,3 +331,51 @@ Some placeholder text with a link to:
 
 Some placeholder text with a link to:
 [Value mappings]({{< relref "../../../panels-visualizations/configure-value mappings/" >}})
+
+## Other visualization options v3
+
+There are other common configuration options for the Time series visualization:
+
+<!--above can be a bit of shared content to ensure wording is consistent with guidance indicating that you should create an alphabetical list of other relevant options linked to that content-->
+
+- ### Data Links
+
+      - Some placeholder text with a link to:
+
+  [Data links]({{< relref "../../../panels-visualizations/configure-data-links/" >}})
+
+- ### Field overrides
+
+      - Some placeholder text with a link to:
+
+  [Field overrides]({{< relref "../../../panels-visualizations/configure-overrides/" >}})
+
+- ### Legends
+
+      - Some placeholder text with a link to:
+
+  [Legends]({{< relref "../../../panels-visualizations/configure-legend/" >}})
+
+- ### Standard options
+
+      - Some placeholder text with a link to:
+
+  [Standard options]({{< relref "../../../panels-visualizations/configure-standard-options/" >}})
+
+- ### Thresholds
+
+      - Some placeholder text with a link to:
+
+  [Thresholds]({{< relref "../../../panels-visualizations/configure-thresholds/" >}})
+
+- ### Tooltips
+
+      - Some placeholder text with a link to:
+
+  [Tooltips]({{< relref "../../../panels-visualizations/configure-tooltips/" >}})
+
+- ### Value mappings
+
+      - Some placeholder text with a link to:
+
+  [Value mappings]({{< relref "../../../panels-visualizations/configure-value mappings/" >}})
