@@ -27,12 +27,11 @@ export interface CoreDashboardSrv {
  */
 export interface PluginsAPIDashboardSrv {
   /**
-   * The current dashboard. Undefined if not dashboard is loaded
    * @deprecated use `getCurrentDashboard()` instead
    */
   dashboard?: PluginsAPIDashboardModel;
   /**
-   * The current dashboard. Undefined if not dashboard is loaded
+   * Represents the currently loaded dashboard. Returns 'undefined' if no dashboard is loaded.
    */
   getCurrentDashboard(): PluginsAPIDashboardModel | undefined;
 }
