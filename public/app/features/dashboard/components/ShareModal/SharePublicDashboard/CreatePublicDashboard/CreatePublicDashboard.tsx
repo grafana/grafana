@@ -18,7 +18,6 @@ import { UnsupportedTemplateVariablesAlert } from '../ModalAlerts/UnsupportedTem
 import { dashboardHasTemplateVariables, getUnsupportedDashboardDatasources } from '../SharePublicDashboardUtils';
 
 import { AcknowledgeCheckboxes } from './AcknowledgeCheckboxes';
-import { Description } from './Description';
 
 const selectors = e2eSelectors.pages.ShareDashboardModal.PublicDashboard;
 
@@ -48,7 +47,7 @@ const CreatePublicDashboard = ({ isError }: { isError: boolean }) => {
     <div className={styles.container}>
       <div>
         <p className={styles.title}>Welcome to public dashboards public preview!</p>
-        <Description />
+        <p className={styles.description}>Currently, we don’t support template variables or frontend data sources</p>
       </div>
 
       {!hasWritePermissions && <NoUpsertPermissionsAlert mode="create" />}
@@ -92,6 +91,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
   title: css`
     font-size: ${theme.typography.h4.fontSize};
     margin: ${theme.spacing(0, 0, 2)};
+  `,
+  description: css`
+    color: ${theme.colors.text.secondary};
+    margin-bottom: ${theme.spacing(0)};
   `,
   checkboxes: css`
     margin: ${theme.spacing(0, 0, 4)};
