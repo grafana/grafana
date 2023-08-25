@@ -121,7 +121,6 @@ func TestHTTPServer_DeleteDashboardSnapshot(t *testing.T) {
 		assert.Equal(t, http.StatusOK, res.StatusCode)
 		require.NoError(t, res.Body.Close())
 	})
-
 }
 
 func TestDashboardSnapshotAPIEndpoint_singleSnapshot(t *testing.T) {
