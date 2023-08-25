@@ -16,7 +16,7 @@ export const UnsupportedDataSourcesAlert = ({ unsupportedDataSources }: { unsupp
       severity="warning"
       title="Unsupported data sources"
       data-testid={selectors.UnsupportedDataSourcesWarningAlert}
-      bottomSpacing={2}
+      bottomSpacing={0}
     >
       <p className={styles.unsupportedDataSourceDescription}>
         There are data sources in this dashboard that are unsupported for public dashboards. Panels that use these data

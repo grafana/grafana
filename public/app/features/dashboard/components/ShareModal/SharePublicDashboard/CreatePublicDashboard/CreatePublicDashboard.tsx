@@ -45,14 +45,20 @@ const CreatePublicDashboard = ({ isError }: { isError: boolean }) => {
   };
 
   return (
-    <div>
-      <p className={styles.title}>Welcome to public dashboards public preview!</p>
-      <Description />
+    <div className={styles.container}>
+      <div>
+        <p className={styles.title}>Welcome to public dashboards public preview!</p>
+        <Description />
+      </div>
+
       {!hasWritePermissions && <NoUpsertPermissionsAlert mode="create" />}
+
       {dashboardHasTemplateVariables(dashboard.getVariables()) && <UnsupportedTemplateVariablesAlert />}
+
       {!!unsupportedDataSources.length && (
         <UnsupportedDataSourcesAlert unsupportedDataSources={unsupportedDataSources.join(', ')} />
       )}
+
       <Form onSubmit={onCreate} validateOn="onChange" maxWidth="none">
         {({
           register,
@@ -78,6 +84,11 @@ const CreatePublicDashboard = ({ isError }: { isError: boolean }) => {
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
+  container: css`
+    display: flex;
+    flex-direction: column;
+    gap: ${theme.spacing(4)};
+  `,
   title: css`
     font-size: ${theme.typography.h4.fontSize};
     margin: ${theme.spacing(0, 0, 2)};
