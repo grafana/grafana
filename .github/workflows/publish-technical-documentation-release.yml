@@ -51,6 +51,12 @@ jobs:
         # The IT helpdesk can update the organization secret.
         run: "git clone --single-branch --no-tags --depth 1 -b master https://grafanabot:${{ secrets.WEBSITE_SYNC_TOKEN }}@github.com/grafana/website-sync ./.github/actions/website-sync"
 
+      - name: "Switch to HEAD of version branch for tags"
+        # Tags aren't necessarily made to the HEAD of the version branch.
+        # The documentation to be published is always on the HEAD of the version branch.
+        if: "steps.has-matching-release-tag.outputs.bool == 'true' && github.ref_type == 'tag'"
+        run: "git switch --force-create ${{ steps.target.output.target }}.x"
+
       - name: "Publish to website repository (release)"
         if: "steps.has-matching-release-tag.outputs.bool == 'true'"
         uses: "./.github/actions/website-sync"
