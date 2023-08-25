@@ -43,13 +43,13 @@ function getGrafanaScenes() {
     body: new SceneFlexLayout({
       wrap: 'wrap',
       children: [
-        getMostFiredInstancesScene(THIS_WEEK_TIME_RANGE, ashDs, 'Top 5 firing instance this week'),
+        getMostFiredInstancesScene(THIS_WEEK_TIME_RANGE, ashDs, 'Top 10 firing instances this week'),
+
+        getFiringAlertsRateScene(THIS_WEEK_TIME_RANGE, ashDs, 'Alerts firing per minute'),
 
         getFiringAlertsScene(THIS_WEEK_TIME_RANGE, ashDs, 'Firing alerts this week'),
 
         getFiringAlertsScene(LAST_WEEK_TIME_RANGE, ashDs, 'Firing alerts last week'),
-
-        getFiringAlertsRateScene(THIS_WEEK_TIME_RANGE, ashDs, 'Alerts firing per minute'),
       ],
     }),
   });

@@ -15,8 +15,8 @@ import { Icon, Link } from '@grafana/ui';
 
 import { createUrl } from '../../utils/url';
 
-const TOP_5_FIRING_INSTANCES =
-  'topk(5, sum by(labels_alertname, ruleUID) (count_over_time({from="state-history"} | json | current = `Alerting` [1w])))';
+const TOP_FIRING_INSTANCES =
+  'topk(10, sum by(labels_alertname, ruleUID) (count_over_time({from="state-history"} | json | current = `Alerting` [1w])))';
 
 export function getMostFiredInstancesScene(timeRange: SceneTimeRange, datasource: DataSourceRef, panelTitle: string) {
   const query = new SceneQueryRunner({
@@ -24,7 +24,7 @@ export function getMostFiredInstancesScene(timeRange: SceneTimeRange, datasource
     queries: [
       {
         refId: 'A',
-        expr: TOP_5_FIRING_INSTANCES,
+        expr: TOP_FIRING_INSTANCES,
         instant: true,
       },
     ],
@@ -39,14 +39,18 @@ export function getMostFiredInstancesScene(timeRange: SceneTimeRange, datasource
           return {
             ...frame,
             fields: frame.fields.map((field) => {
-              if (field.name === 'ruleUID') {
+              if (field.name === 'labels_alertname') {
                 return {
                   ...field,
-                  values: field.values.map((v) => (
-                    <Link key={v} target="_blank" href={createUrl(`/alerting/grafana/${v}/view`)}>
-                      <Icon name="external-link-alt" />
-                    </Link>
-                  )),
+                  values: field.values.map((v, index) => {
+                    const ruleUIDs = frame.fields.find((field) => field.name === 'ruleUID');
+                    const ruleUID = ruleUIDs?.values[index];
+                    return (
+                      <Link key={v} target="_blank" href={createUrl(`/alerting/grafana/${ruleUID}/view`)}>
+                        {v} <Icon name="external-link-alt" />
+                      </Link>
+                    );
+                  }),
                 };
               }
               return field;
@@ -78,16 +82,15 @@ export function getMostFiredInstancesScene(timeRange: SceneTimeRange, datasource
         options: {
           excludeByName: {
             Time: true,
+            ruleUID: true,
           },
           indexByName: {
             labels_alertname: 0,
             'Value #A': 1,
-            ruleUID: 2,
           },
           renameByName: {
             labels_alertname: 'Alert Name',
             'Value #A': 'Fires this week',
-            ruleUID: 'Link',
           },
         },
       },
@@ -95,7 +98,7 @@ export function getMostFiredInstancesScene(timeRange: SceneTimeRange, datasource
   });
 
   return new SceneFlexItem({
-    width: '100%',
+    width: 'calc(50% - 8px)',
     height: 300,
     body: PanelBuilders.table().setTitle(panelTitle).setData(transformation).build(),
   });
