@@ -236,6 +236,46 @@
       "placeholder": ""
     }
   },
+  "help-modal": {
+    "shortcuts-category": {
+      "dashboard": "",
+      "focused-panel": "",
+      "global": "",
+      "time-range": ""
+    },
+    "shortcuts-description": {
+      "change-theme": "",
+      "collapse-all-rows": "",
+      "dashboard-settings": "",
+      "duplicate-panel": "",
+      "exit-edit/setting-views": "",
+      "expand-all-rows": "",
+      "go-to-dashboards": "",
+      "go-to-explore": "",
+      "go-to-home-dashboard": "",
+      "go-to-profile": "",
+      "make-time-range-permanent": "",
+      "move-time-range-back": "",
+      "move-time-range-forward": "",
+      "open-search": "",
+      "open-shared-modal": "",
+      "refresh-all-panels": "",
+      "remove-panel": "",
+      "save-dashboard": "",
+      "show-all-shortcuts": "",
+      "toggle-active-mode": "",
+      "toggle-all-panel-legends": "",
+      "toggle-auto-fit": "",
+      "toggle-exemplars": "",
+      "toggle-graph-crosshair": "",
+      "toggle-kiosk": "",
+      "toggle-panel-edit": "",
+      "toggle-panel-fullscreen": "",
+      "toggle-panel-legend": "",
+      "zoom-out-time-range": ""
+    },
+    "title": ""
+  },
   "library-panel": {
     "add-modal": {
       "cancel": "Cancelar",
@@ -262,6 +302,9 @@
       "title": "",
       "unknown": ""
     }
+  },
+  "modal": {
+    "close-tooltip": ""
   },
   "nav": {
     "add-new-connections": {
