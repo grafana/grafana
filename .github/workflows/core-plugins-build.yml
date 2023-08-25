@@ -38,7 +38,7 @@ jobs:
           shell: bash
           working-directory: ./public/plugins/${{ inputs.plugin_id }}
           run: |
-           yarn install --immutable --prefer-offline
+           yarn install --immutable
         - name: Setup golang environment
           uses: actions/setup-go@v3
           with:
@@ -134,4 +134,3 @@ jobs:
           working-directory: plugins/${{ inputs.plugin_id }}
           run: |
             echo "Publish new plugin version on grafana.com: NOT IMPLEMENTED YET"
-            
