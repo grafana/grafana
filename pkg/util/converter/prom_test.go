@@ -52,6 +52,7 @@ func TestReadLimited(t *testing.T) {
 
 		for i := int64(10); i < size-1; i += size / 10 {
 			t.Run(fmt.Sprintf("%v_%v", name, i), func(t *testing.T) {
+				//nolint:gosec
 				f, err := os.Open(p)
 				require.NoError(t, err)
 				mbr := httpclient.MaxBytesReader(f, i)
