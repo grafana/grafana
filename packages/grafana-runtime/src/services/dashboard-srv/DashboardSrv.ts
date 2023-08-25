@@ -13,7 +13,7 @@ let publicSingletonInstance: PluginsAPIDashboardSrvSingleton;
  * exported to the public API
  * @private
  */
-export function __setDashboardSrv(instance: CoreDashboardSrv) {
+export function setDashboardSrv(instance: CoreDashboardSrv) {
   if (publicSingletonInstance) {
     throw new Error('DashboardSrv can only be set once.');
   }
