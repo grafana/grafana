@@ -19,15 +19,15 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/config"
-	pluginClient "github.com/grafana/grafana/pkg/plugins/manager/client"
 	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
-	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	fakeDatasources "github.com/grafana/grafana/pkg/services/datasources/fakes"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	pluginClient "github.com/grafana/grafana/pkg/services/pluginsintegration/client"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	pluginSettings "github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings/service"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/registry"
 	"github.com/grafana/grafana/pkg/services/query"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	secretstest "github.com/grafana/grafana/pkg/services/secrets/fakes"
@@ -284,7 +284,7 @@ func TestDataSourceQueryError(t *testing.T) {
 				},
 			})
 			srv := SetupAPITestServer(t, func(hs *HTTPServer) {
-				r := registry.NewInMemory()
+				r := registry.NewSinglePluginVersion()
 				err := r.Add(context.Background(), p)
 				require.NoError(t, err)
 				ds := &fakeDatasources.FakeDataSourceService{}

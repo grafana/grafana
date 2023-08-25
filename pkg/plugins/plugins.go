@@ -115,6 +115,10 @@ func (p PluginDTO) IsCorePlugin() bool {
 	return p.Class == ClassCore
 }
 
+func (p PluginDTO) IsBundledPlugin() bool {
+	return p.Class == ClassBundled
+}
+
 // JSONData represents the plugin's plugin.json
 type JSONData struct {
 	// Common settings

@@ -2,8 +2,8 @@ package termination
 
 import (
 	"context"
+	"errors"
 
-	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/plugins/manager/process"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
@@ -13,24 +13,30 @@ import (
 //
 // It uses the process.Manager to stop the backend plugin process.
 type BackendProcessTerminator struct {
+	pluginRegistry registry.Service
 	processManager process.Manager
 	log            log.Logger
 }
 
 // BackendProcessTerminatorStep returns a new TerminateFunc for stopping a backend plugin process.
-func BackendProcessTerminatorStep(processManager process.Manager) TerminateFunc {
-	return newBackendProcessTerminator(processManager).Terminate
+func BackendProcessTerminatorStep(pluginRegistry registry.Service, processManager process.Manager) TerminateFunc {
+	return newBackendProcessTerminator(pluginRegistry, processManager).Terminate
 }
 
-func newBackendProcessTerminator(processManager process.Manager) *BackendProcessTerminator {
+func newBackendProcessTerminator(pluginRegistry registry.Service, processManager process.Manager) *BackendProcessTerminator {
 	return &BackendProcessTerminator{
+		pluginRegistry: pluginRegistry,
 		processManager: processManager,
 		log:            log.New("plugins.backend.termination"),
 	}
 }
 
 // Terminate stops a backend plugin process.
-func (t *BackendProcessTerminator) Terminate(ctx context.Context, p *plugins.Plugin) error {
+func (t *BackendProcessTerminator) Terminate(ctx context.Context, pluginID, version string) error {
+	p, exists := t.pluginRegistry.Plugin(ctx, pluginID, version)
+	if !exists {
+		return errors.New("cannot terminate plugin process: plugin not found")
+	}
 	return t.processManager.Stop(ctx, p)
 }
 
@@ -53,10 +59,10 @@ func newDeregister(pluginRegistry registry.Service) *Deregister {
 }
 
 // Deregister removes a plugin from the plugin registry.
-func (d *Deregister) Deregister(ctx context.Context, p *plugins.Plugin) error {
-	if err := d.pluginRegistry.Remove(ctx, p.ID); err != nil {
+func (d *Deregister) Deregister(ctx context.Context, pluginID, version string) error {
+	if err := d.pluginRegistry.Remove(ctx, pluginID, version); err != nil {
 		return err
 	}
-	d.log.Debug("Plugin unregistered", "pluginId", p.ID)
+	d.log.Debug("Plugin unregistered", "pluginId", pluginID, "version", version)
 	return nil
 }

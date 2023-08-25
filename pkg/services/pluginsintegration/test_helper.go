@@ -10,7 +10,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/provider"
 	pluginsCfg "github.com/grafana/grafana/pkg/plugins/config"
-	"github.com/grafana/grafana/pkg/plugins/manager/client"
 	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/angular/angularinspector"
@@ -22,23 +21,25 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/termination"
 	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/validation"
 	"github.com/grafana/grafana/pkg/plugins/manager/process"
-	"github.com/grafana/grafana/pkg/plugins/manager/registry"
+	pluginRegistry "github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature/statickey"
 	"github.com/grafana/grafana/pkg/plugins/manager/sources"
 	"github.com/grafana/grafana/pkg/plugins/manager/store"
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/client"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/config"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pipeline"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginerrs"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/registry"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 type IntegrationTestCtx struct {
 	PluginClient   plugins.Client
 	PluginStore    *store.Service
-	PluginRegistry registry.Service
+	PluginRegistry pluginRegistry.Service
 }
 
 func CreateIntegrationTestCtx(t *testing.T, cfg *setting.Cfg, coreRegistry *coreplugin.Registry) *IntegrationTestCtx {

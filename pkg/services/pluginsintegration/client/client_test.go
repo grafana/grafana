@@ -8,9 +8,11 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/config"
+	"github.com/grafana/grafana/pkg/plugins/manager/client"
 	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
 	"github.com/stretchr/testify/require"
 )
@@ -162,7 +164,7 @@ func TestCallResource(t *testing.T) {
 		}
 
 		responses := []*backend.CallResourceResponse{}
-		sender := callResourceResponseSenderFunc(func(res *backend.CallResourceResponse) error {
+		sender := client.CallResourceResponseSenderFunc(func(res *backend.CallResourceResponse) error {
 			responses = append(responses, res)
 			return nil
 		})
@@ -225,7 +227,7 @@ func TestCallResource(t *testing.T) {
 		}
 
 		responses := []*backend.CallResourceResponse{}
-		sender := callResourceResponseSenderFunc(func(res *backend.CallResourceResponse) error {
+		sender := client.CallResourceResponseSenderFunc(func(res *backend.CallResourceResponse) error {
 			responses = append(responses, res)
 			return nil
 		})
@@ -273,7 +275,7 @@ func TestCallResource(t *testing.T) {
 		}
 
 		responses := []*backend.CallResourceResponse{}
-		sender := callResourceResponseSenderFunc(func(res *backend.CallResourceResponse) error {
+		sender := client.CallResourceResponseSenderFunc(func(res *backend.CallResourceResponse) error {
 			responses = append(responses, res)
 			return nil
 		})
@@ -341,7 +343,7 @@ func TestCallResource(t *testing.T) {
 				}
 
 				responses := []*backend.CallResourceResponse{}
-				sender := callResourceResponseSenderFunc(func(res *backend.CallResourceResponse) error {
+				sender := client.CallResourceResponseSenderFunc(func(res *backend.CallResourceResponse) error {
 					responses = append(responses, res)
 					return nil
 				})

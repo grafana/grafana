@@ -8,28 +8,29 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 )
 
-type InMemory struct {
+// SinglePluginVersion is a registry that only allows a single version of a plugin to be registered at a time.
+type SinglePluginVersion struct {
 	store map[string]*plugins.Plugin
 	alias map[string]*plugins.Plugin
 	mu    sync.RWMutex
 }
 
-func ProvideService() *InMemory {
-	return NewInMemory()
+func ProvideService() *SinglePluginVersion {
+	return NewSinglePluginVersion()
 }
 
-func NewInMemory() *InMemory {
-	return &InMemory{
+func NewSinglePluginVersion() *SinglePluginVersion {
+	return &SinglePluginVersion{
 		store: make(map[string]*plugins.Plugin),
 		alias: make(map[string]*plugins.Plugin),
 	}
 }
 
-func (i *InMemory) Plugin(_ context.Context, pluginID string) (*plugins.Plugin, bool) {
+func (i *SinglePluginVersion) Plugin(_ context.Context, pluginID, _ string) (*plugins.Plugin, bool) {
 	return i.plugin(pluginID)
 }
 
-func (i *InMemory) Plugins(_ context.Context) []*plugins.Plugin {
+func (i *SinglePluginVersion) Plugins(_ context.Context) []*plugins.Plugin {
 	i.mu.RLock()
 	defer i.mu.RUnlock()
 
@@ -41,7 +42,7 @@ func (i *InMemory) Plugins(_ context.Context) []*plugins.Plugin {
 	return res
 }
 
-func (i *InMemory) Add(_ context.Context, p *plugins.Plugin) error {
+func (i *SinglePluginVersion) Add(_ context.Context, p *plugins.Plugin) error {
 	if i.isRegistered(p.ID) {
 		return fmt.Errorf("plugin %s is already registered", p.ID)
 	}
@@ -56,7 +57,7 @@ func (i *InMemory) Add(_ context.Context, p *plugins.Plugin) error {
 	return nil
 }
 
-func (i *InMemory) Remove(_ context.Context, pluginID string) error {
+func (i *SinglePluginVersion) Remove(_ context.Context, pluginID, _ string) error {
 	p, ok := i.plugin(pluginID)
 	if !ok {
 		return fmt.Errorf("plugin %s is not registered", pluginID)
@@ -72,7 +73,7 @@ func (i *InMemory) Remove(_ context.Context, pluginID string) error {
 	return nil
 }
 
-func (i *InMemory) plugin(pluginID string) (*plugins.Plugin, bool) {
+func (i *SinglePluginVersion) plugin(pluginID string) (*plugins.Plugin, bool) {
 	i.mu.RLock()
 	defer i.mu.RUnlock()
 	p, exists := i.store[pluginID]
@@ -87,7 +88,7 @@ func (i *InMemory) plugin(pluginID string) (*plugins.Plugin, bool) {
 	return p, true
 }
 
-func (i *InMemory) isRegistered(pluginID string) bool {
+func (i *SinglePluginVersion) isRegistered(pluginID string) bool {
 	p, exists := i.plugin(pluginID)
 
 	// This may have matched based on an alias

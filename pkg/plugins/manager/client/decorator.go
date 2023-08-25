@@ -8,6 +8,10 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 )
 
+var (
+	errNilRequest = errors.New("req cannot be nil")
+)
+
 // Decorator allows a plugins.Client to be decorated with middlewares.
 type Decorator struct {
 	client      plugins.Client

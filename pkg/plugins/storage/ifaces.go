@@ -5,8 +5,8 @@ import (
 	"context"
 )
 
-type ZipExtractor interface {
-	Extract(ctx context.Context, pluginID string, destDir DirNameGeneratorFunc, rc *zip.ReadCloser) (*ExtractedPluginArchive, error)
+type Extractor interface {
+	Extract(ctx context.Context, pluginID string, destDir NamerFunc, rc *zip.ReadCloser) (*ExtractedPluginArchive, error)
 }
 
-type DirNameGeneratorFunc = func(pluginID string) string
+type NamerFunc = func(pluginID string) string

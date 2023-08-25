@@ -9,7 +9,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader"
-	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/manager/sources"
 	"github.com/grafana/grafana/pkg/plugins/repo"
 	"github.com/grafana/grafana/pkg/plugins/storage"
@@ -18,29 +17,32 @@ import (
 var _ plugins.Installer = (*PluginInstaller)(nil)
 
 type PluginInstaller struct {
-	pluginRepo           repo.Service
-	pluginStorage        storage.ZipExtractor
-	pluginStorageDirFunc storage.DirNameGeneratorFunc
-	pluginRegistry       registry.Service
-	pluginLoader         loader.Service
-	log                  log.Logger
+	pluginStore            plugins.Store
+	pluginLoader           loader.Service
+	pluginRepo             repo.Service
+	pluginStorageExtractor storage.Extractor
+	pluginStorageNamerFunc storage.NamerFunc
+	pluginFileStore        plugins.FileStore
+	log                    log.Logger
 }
 
-func ProvideInstaller(cfg *config.Cfg, pluginRegistry registry.Service, pluginLoader loader.Service,
-	pluginRepo repo.Service) *PluginInstaller {
-	return New(pluginRegistry, pluginLoader, pluginRepo,
-		storage.FileSystem(log.NewPrettyLogger("installer.fs"), cfg.PluginsPath), storage.SimpleDirNameGeneratorFunc)
+func ProvideInstaller(cfg *config.Cfg, pluginStore plugins.Store, pluginLoader loader.Service,
+	pluginRepo repo.Service, pluginFileStore plugins.FileStore) *PluginInstaller {
+	return New(pluginStore, pluginLoader, pluginRepo,
+		storage.FileSystem(log.NewPrettyLogger("installer.fs"), cfg.PluginsPath),
+		storage.SimpleDirNameGeneratorFunc, pluginFileStore)
 }
 
-func New(pluginRegistry registry.Service, pluginLoader loader.Service, pluginRepo repo.Service,
-	pluginStorage storage.ZipExtractor, pluginStorageDirFunc storage.DirNameGeneratorFunc) *PluginInstaller {
+func New(pluginStore plugins.Store, pluginLoader loader.Service, pluginRepo repo.Service,
+	pluginStorageExtractor storage.Extractor, pluginStorageNamerFunc storage.NamerFunc, pluginFileStore plugins.FileStore) *PluginInstaller {
 	return &PluginInstaller{
-		pluginLoader:         pluginLoader,
-		pluginRegistry:       pluginRegistry,
-		pluginRepo:           pluginRepo,
-		pluginStorage:        pluginStorage,
-		pluginStorageDirFunc: pluginStorageDirFunc,
-		log:                  log.New("plugin.installer"),
+		pluginLoader:           pluginLoader,
+		pluginStore:            pluginStore,
+		pluginRepo:             pluginRepo,
+		pluginStorageExtractor: pluginStorageExtractor,
+		pluginStorageNamerFunc: pluginStorageNamerFunc,
+		pluginFileStore:        pluginFileStore,
+		log:                    log.New("plugin.installer"),
 	}
 }
 
@@ -104,7 +106,7 @@ func (m *PluginInstaller) Add(ctx context.Context, pluginID, version string, opt
 		}
 	}
 
-	extractedArchive, err := m.pluginStorage.Extract(ctx, pluginID, m.pluginStorageDirFunc, pluginArchive.File)
+	extractedArchive, err := m.pluginStorageExtractor.Extract(ctx, pluginID, m.pluginStorageNamerFunc, pluginArchive.File)
 	if err != nil {
 		return err
 	}
@@ -118,7 +120,7 @@ func (m *PluginInstaller) Add(ctx context.Context, pluginID, version string, opt
 			return fmt.Errorf("%v: %w", fmt.Sprintf("failed to download plugin %s from repository", dep.ID), err)
 		}
 
-		depArchive, err := m.pluginStorage.Extract(ctx, dep.ID, m.pluginStorageDirFunc, d.File)
+		depArchive, err := m.pluginStorageExtractor.Extract(ctx, dep.ID, m.pluginStorageNamerFunc, d.File)
 		if err != nil {
 			return err
 		}
@@ -145,25 +147,24 @@ func (m *PluginInstaller) Remove(ctx context.Context, pluginID string) error {
 		return plugins.ErrUninstallCorePlugin
 	}
 
-	p, err := m.pluginLoader.Unload(ctx, plugin)
+	err := m.pluginLoader.Unload(ctx, plugin.ID, plugin.Info.Version)
 	if err != nil {
 		return err
 	}
 
-	if remover, ok := p.FS.(plugins.FSRemover); ok {
-		if err = remover.Remove(); err != nil {
-			return err
-		}
+	err = m.pluginFileStore.RemoveAll(ctx, plugin.ID, plugin.Info.Version)
+	if err != nil {
+		return err
 	}
 
 	return nil
 }
 
 // plugin finds a plugin with `pluginID` from the store
-func (m *PluginInstaller) plugin(ctx context.Context, pluginID string) (*plugins.Plugin, bool) {
-	p, exists := m.pluginRegistry.Plugin(ctx, pluginID)
+func (m *PluginInstaller) plugin(ctx context.Context, pluginID string) (plugins.PluginDTO, bool) {
+	p, exists := m.pluginStore.Plugin(ctx, pluginID)
 	if !exists {
-		return nil, false
+		return plugins.PluginDTO{}, false
 	}
 
 	return p, true

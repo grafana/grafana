@@ -9,7 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/provider"
 	pCfg "github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/manager"
-	"github.com/grafana/grafana/pkg/plugins/manager/client"
+	pluginClient "github.com/grafana/grafana/pkg/plugins/manager/client"
 	"github.com/grafana/grafana/pkg/plugins/manager/filestore"
 	pluginLoader "github.com/grafana/grafana/pkg/plugins/manager/loader"
 	pAngularInspector "github.com/grafana/grafana/pkg/plugins/manager/loader/angular/angularinspector"
@@ -21,7 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/termination"
 	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/validation"
 	"github.com/grafana/grafana/pkg/plugins/manager/process"
-	"github.com/grafana/grafana/pkg/plugins/manager/registry"
+	pluginRegistry "github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
 	"github.com/grafana/grafana/pkg/plugins/manager/sources"
 	"github.com/grafana/grafana/pkg/plugins/manager/store"
@@ -34,6 +34,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/angulardetectorsprovider"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/angularinspector"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/angularpatternsstore"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/client"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/clientmiddleware"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/config"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/keyretriever"
@@ -46,6 +47,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginerrs"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	pluginSettings "github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings/service"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/registry"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/serviceregistration"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -59,7 +61,7 @@ var WireSet = wire.NewSet(
 	wire.Bind(new(plugins.SecretsPluginManager), new(*store.Service)),
 	wire.Bind(new(plugins.StaticRouteResolver), new(*store.Service)),
 	ProvideClientDecorator,
-	wire.Bind(new(plugins.Client), new(*client.Decorator)),
+	wire.Bind(new(plugins.Client), new(*pluginClient.Decorator)),
 	process.ProvideService,
 	wire.Bind(new(process.Manager), new(*process.Service)),
 	coreplugin.ProvideCoreRegistry,
@@ -93,7 +95,7 @@ var WireSet = wire.NewSet(
 	manager.ProvideInstaller,
 	wire.Bind(new(plugins.Installer), new(*manager.PluginInstaller)),
 	registry.ProvideService,
-	wire.Bind(new(registry.Service), new(*registry.InMemory)),
+	wire.Bind(new(pluginRegistry.Service), new(*registry.SinglePluginVersion)),
 	repo.ProvideService,
 	wire.Bind(new(repo.Service), new(*repo.Manager)),
 	plugincontext.ProvideService,
@@ -129,24 +131,24 @@ var WireExtensionSet = wire.NewSet(
 
 func ProvideClientDecorator(
 	cfg *setting.Cfg, pCfg *pCfg.Cfg,
-	pluginRegistry registry.Service,
+	pluginRegistry pluginRegistry.Service,
 	oAuthTokenService oauthtoken.OAuthTokenService,
 	tracer tracing.Tracer,
 	cachingService caching.CachingService,
 	features *featuremgmt.FeatureManager,
-) (*client.Decorator, error) {
+) (*pluginClient.Decorator, error) {
 	return NewClientDecorator(cfg, pCfg, pluginRegistry, oAuthTokenService, tracer, cachingService, features)
 }
 
 func NewClientDecorator(
 	cfg *setting.Cfg, pCfg *pCfg.Cfg,
-	pluginRegistry registry.Service, oAuthTokenService oauthtoken.OAuthTokenService,
+	pluginRegistry pluginRegistry.Service, oAuthTokenService oauthtoken.OAuthTokenService,
 	tracer tracing.Tracer, cachingService caching.CachingService, features *featuremgmt.FeatureManager,
-) (*client.Decorator, error) {
+) (*pluginClient.Decorator, error) {
 	c := client.ProvideService(pluginRegistry, pCfg)
 	middlewares := CreateMiddlewares(cfg, oAuthTokenService, tracer, cachingService, features)
 
-	return client.NewDecorator(c, middlewares...)
+	return pluginClient.NewDecorator(c, middlewares...)
 }
 
 func CreateMiddlewares(cfg *setting.Cfg, oAuthTokenService oauthtoken.OAuthTokenService, tracer tracing.Tracer, cachingService caching.CachingService, features *featuremgmt.FeatureManager) []plugins.ClientMiddleware {

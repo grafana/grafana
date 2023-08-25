@@ -90,8 +90,9 @@ func (s *Service) SecretsManager(ctx context.Context) *plugins.Plugin {
 }
 
 // plugin finds a plugin with `pluginID` from the registry that is not decommissioned
+// Note: version is empty because we don't support multiple versions of plugins
 func (s *Service) plugin(ctx context.Context, pluginID string) (*plugins.Plugin, bool) {
-	p, exists := s.pluginRegistry.Plugin(ctx, pluginID)
+	p, exists := s.pluginRegistry.Plugin(ctx, pluginID, "")
 	if !exists {
 		return nil, false
 	}
@@ -137,7 +138,7 @@ func (s *Service) shutdown(ctx context.Context) {
 		go func(ctx context.Context, p *plugins.Plugin) {
 			defer wg.Done()
 			p.Logger().Debug("Stopping plugin")
-			if _, err := s.pluginLoader.Unload(ctx, p); err != nil {
+			if err := s.pluginLoader.Unload(ctx, p.ID, p.Info.Version); err != nil {
 				p.Logger().Error("Failed to stop plugin", "error", err)
 			}
 			p.Logger().Debug("Plugin stopped")

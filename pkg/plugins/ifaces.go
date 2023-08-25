@@ -33,7 +33,9 @@ type PluginSource interface {
 
 type FileStore interface {
 	// File retrieves a plugin file.
-	File(ctx context.Context, pluginID, filename string) (*File, error)
+	File(ctx context.Context, pluginID, version, filename string) (*File, error)
+	// RemoveAll removes all files associated with plugin.
+	RemoveAll(ctx context.Context, pluginID, version string) error
 }
 
 type File struct {

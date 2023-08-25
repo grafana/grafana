@@ -40,7 +40,7 @@ func (i *FakePluginInstaller) Remove(ctx context.Context, pluginID string) error
 
 type FakeLoader struct {
 	LoadFunc   func(_ context.Context, _ plugins.PluginSource) ([]*plugins.Plugin, error)
-	UnloadFunc func(_ context.Context, _ *plugins.Plugin) (*plugins.Plugin, error)
+	UnloadFunc func(_ context.Context, _, _ string) error
 }
 
 func (l *FakeLoader) Load(ctx context.Context, src plugins.PluginSource) ([]*plugins.Plugin, error) {
@@ -50,11 +50,11 @@ func (l *FakeLoader) Load(ctx context.Context, src plugins.PluginSource) ([]*plu
 	return nil, nil
 }
 
-func (l *FakeLoader) Unload(ctx context.Context, p *plugins.Plugin) (*plugins.Plugin, error) {
+func (l *FakeLoader) Unload(ctx context.Context, pluginID, version string) error {
 	if l.UnloadFunc != nil {
-		return l.UnloadFunc(ctx, p)
+		return l.UnloadFunc(ctx, pluginID, version)
 	}
-	return nil, nil
+	return nil
 }
 
 type FakePluginClient struct {
@@ -176,7 +176,7 @@ func NewFakePluginRegistry() *FakePluginRegistry {
 	}
 }
 
-func (f *FakePluginRegistry) Plugin(_ context.Context, id string) (*plugins.Plugin, bool) {
+func (f *FakePluginRegistry) Plugin(_ context.Context, id, _ string) (*plugins.Plugin, bool) {
 	p, exists := f.Store[id]
 	return p, exists
 }
@@ -195,7 +195,7 @@ func (f *FakePluginRegistry) Add(_ context.Context, p *plugins.Plugin) error {
 	return nil
 }
 
-func (f *FakePluginRegistry) Remove(_ context.Context, id string) error {
+func (f *FakePluginRegistry) Remove(_ context.Context, id, _ string) error {
 	delete(f.Store, id)
 	return nil
 }
@@ -232,15 +232,15 @@ func (r *FakePluginRepo) GetPluginArchiveInfo(ctx context.Context, pluginID, ver
 	return &repo.PluginArchiveInfo{}, nil
 }
 
-type FakePluginStorage struct {
-	ExtractFunc func(_ context.Context, pluginID string, dirNameFunc storage.DirNameGeneratorFunc, z *zip.ReadCloser) (*storage.ExtractedPluginArchive, error)
+type FakePluginExtractor struct {
+	ExtractFunc func(_ context.Context, pluginID string, dirNameFunc storage.NamerFunc, z *zip.ReadCloser) (*storage.ExtractedPluginArchive, error)
 }
 
-func NewFakePluginStorage() *FakePluginStorage {
-	return &FakePluginStorage{}
+func NewFakePluginExtractor() *FakePluginExtractor {
+	return &FakePluginExtractor{}
 }
 
-func (s *FakePluginStorage) Extract(ctx context.Context, pluginID string, dirNameFunc storage.DirNameGeneratorFunc, z *zip.ReadCloser) (*storage.ExtractedPluginArchive, error) {
+func (s *FakePluginExtractor) Extract(ctx context.Context, pluginID string, dirNameFunc storage.NamerFunc, z *zip.ReadCloser) (*storage.ExtractedPluginArchive, error) {
 	if s.ExtractFunc != nil {
 		return s.ExtractFunc(ctx, pluginID, dirNameFunc, z)
 	}
@@ -415,14 +415,22 @@ func (s *FakePluginSource) DefaultSignature(ctx context.Context) (plugins.Signat
 }
 
 type FakePluginFileStore struct {
-	FileFunc func(ctx context.Context, pluginID, filename string) (*plugins.File, error)
+	FileFunc      func(ctx context.Context, pluginID, version, filename string) (*plugins.File, error)
+	RemoveAllFunc func(ctx context.Context, pluginID, version string) error
 }
 
-func (f *FakePluginFileStore) File(ctx context.Context, pluginID, filename string) (*plugins.File, error) {
+func (f *FakePluginFileStore) File(ctx context.Context, pluginID, version, filename string) (*plugins.File, error) {
 	if f.FileFunc != nil {
-		return f.FileFunc(ctx, pluginID, filename)
+		return f.FileFunc(ctx, pluginID, version, filename)
 	}
 	return nil, nil
+}
+
+func (f *FakePluginFileStore) RemoveAll(ctx context.Context, pluginID, version string) error {
+	if f.RemoveAllFunc != nil {
+		return f.RemoveAllFunc(ctx, pluginID, version)
+	}
+	return nil
 }
 
 type FakeOauthService struct {
@@ -435,6 +443,12 @@ func (f *FakeOauthService) RegisterExternalService(ctx context.Context, name str
 
 type FakePluginStore struct {
 	PluginList []plugins.PluginDTO
+}
+
+func NewFakePluginStore(ps ...plugins.PluginDTO) *FakePluginStore {
+	return &FakePluginStore{
+		PluginList: ps,
+	}
 }
 
 func (pr *FakePluginStore) Plugin(_ context.Context, pluginID string) (plugins.PluginDTO, bool) {
@@ -509,14 +523,14 @@ func (f *FakeInitializer) Initialize(ctx context.Context, ps []*plugins.Plugin) 
 }
 
 type FakeTerminator struct {
-	TerminateFunc func(ctx context.Context, p *plugins.Plugin) (*plugins.Plugin, error)
+	TerminateFunc func(ctx context.Context, pluginID, version string) error
 }
 
-func (f *FakeTerminator) Terminate(ctx context.Context, p *plugins.Plugin) (*plugins.Plugin, error) {
+func (f *FakeTerminator) Terminate(ctx context.Context, pluginID, version string) error {
 	if f.TerminateFunc != nil {
-		return f.TerminateFunc(ctx, p)
+		return f.TerminateFunc(ctx, pluginID, version)
 	}
-	return nil, nil
+	return nil
 }
 
 type FakeBackendPlugin struct {

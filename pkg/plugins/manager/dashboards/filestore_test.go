@@ -132,7 +132,7 @@ func TestDashboardFileStore(t *testing.T) {
 					Data: []byte("dash2"),
 				},
 			}
-			openDashboardFile = func(ctx context.Context, pluginFiles plugins.FileStore, pluginID, name string) (*plugins.File, error) {
+			openDashboardFile = func(ctx context.Context, pluginFiles plugins.FileStore, pluginID, version, name string) (*plugins.File, error) {
 				f, err := mapFs.Open(name)
 				require.NoError(t, err)
 

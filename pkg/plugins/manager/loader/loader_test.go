@@ -498,13 +498,14 @@ func TestLoader_Unload(t *testing.T) {
 				&fakes.FakeValidator{},
 				&fakes.FakeInitializer{},
 				&fakes.FakeTerminator{
-					TerminateFunc: func(ctx context.Context, p *plugins.Plugin) (*plugins.Plugin, error) {
-						require.Equal(t, plugin, p)
-						return p, tc.expectedErr
+					TerminateFunc: func(ctx context.Context, pluginID, version string) error {
+						require.Equal(t, plugin.ID, pluginID)
+						require.Equal(t, plugin.Info.Version, version)
+						return tc.expectedErr
 					},
 				})
 
-			_, err := l.Unload(context.Background(), plugin)
+			err := l.Unload(context.Background(), plugin.ID, plugin.Info.Version)
 			require.ErrorIs(t, err, tc.expectedErr)
 		}
 	})

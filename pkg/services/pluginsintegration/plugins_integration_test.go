@@ -265,11 +265,11 @@ func verifyPluginStaticRoutes(t *testing.T, ctx context.Context, rr plugins.Stat
 
 	require.Len(t, routes, 2)
 
-	inputPlugin, _ := reg.Plugin(ctx, "input")
+	inputPlugin, _ := reg.Plugin(ctx, "input", "")
 	require.NotNil(t, routes["input"])
 	require.Equal(t, routes["input"].Directory, inputPlugin.FS.Base())
 
-	testAppPlugin, _ := reg.Plugin(ctx, "test-app")
+	testAppPlugin, _ := reg.Plugin(ctx, "test-app", "")
 	require.Contains(t, routes, "test-app")
 	require.Equal(t, routes["test-app"].Directory, testAppPlugin.FS.Base())
 }

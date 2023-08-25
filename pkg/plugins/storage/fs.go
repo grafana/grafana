@@ -16,7 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/log"
 )
 
-var _ ZipExtractor = (*FS)(nil)
+var _ Extractor = (*FS)(nil)
 
 var reGitBuild = regexp.MustCompile("^[a-zA-Z0-9_.-]*/")
 
@@ -36,7 +36,7 @@ var SimpleDirNameGeneratorFunc = func(pluginID string) string {
 	return pluginID
 }
 
-func (fs *FS) Extract(ctx context.Context, pluginID string, dirNameFunc DirNameGeneratorFunc, pluginArchive *zip.ReadCloser) (
+func (fs *FS) Extract(ctx context.Context, pluginID string, dirNameFunc NamerFunc, pluginArchive *zip.ReadCloser) (
 	*ExtractedPluginArchive, error) {
 	pluginDir, err := fs.extractFiles(ctx, pluginArchive, pluginID, dirNameFunc)
 	if err != nil {
@@ -66,7 +66,7 @@ func (fs *FS) Extract(ctx context.Context, pluginID string, dirNameFunc DirNameG
 	}, nil
 }
 
-func (fs *FS) extractFiles(_ context.Context, pluginArchive *zip.ReadCloser, pluginID string, dirNameFunc DirNameGeneratorFunc) (string, error) {
+func (fs *FS) extractFiles(_ context.Context, pluginArchive *zip.ReadCloser, pluginID string, dirNameFunc NamerFunc) (string, error) {
 	pluginDirName := dirNameFunc(pluginID)
 	installDir := filepath.Join(fs.pluginsDir, pluginDirName)
 	if _, err := os.Stat(installDir); !os.IsNotExist(err) {

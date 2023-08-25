@@ -21,8 +21,8 @@ func ProvideService(pluginRegistry registry.Service) *Service {
 	}
 }
 
-func (s *Service) File(ctx context.Context, pluginID, filename string) (*plugins.File, error) {
-	if p, exists := s.pluginRegistry.Plugin(ctx, pluginID); exists {
+func (s *Service) File(ctx context.Context, pluginID, version, filename string) (*plugins.File, error) {
+	if p, exists := s.pluginRegistry.Plugin(ctx, pluginID, version); exists {
 		f, err := p.File(filename)
 		if err != nil {
 			return nil, err
@@ -51,4 +51,15 @@ func (s *Service) File(ctx context.Context, pluginID, filename string) (*plugins
 	} else {
 		return nil, plugins.ErrPluginNotInstalled
 	}
+}
+
+func (s *Service) RemoveAll(ctx context.Context, pluginID, version string) error {
+	if p, exists := s.pluginRegistry.Plugin(ctx, pluginID, version); exists {
+		if remover, ok := p.FS.(plugins.FSRemover); ok {
+			if err := remover.Remove(); err != nil {
+				s.log.Error("Could not remove plugin files", "pluginId", pluginID, "version", version)
+			}
+		}
+	}
+	return nil
 }

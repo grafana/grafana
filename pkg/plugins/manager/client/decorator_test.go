@@ -42,7 +42,7 @@ func TestDecorator(t *testing.T) {
 	_, _ = d.QueryData(context.Background(), &backend.QueryDataRequest{})
 	require.True(t, queryDataCalled)
 
-	sender := callResourceResponseSenderFunc(func(res *backend.CallResourceResponse) error {
+	sender := CallResourceResponseSenderFunc(func(res *backend.CallResourceResponse) error {
 		return nil
 	})
 

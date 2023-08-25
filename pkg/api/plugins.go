@@ -268,7 +268,12 @@ func (hs *HTTPServer) GetPluginMarkdown(c *contextmodel.ReqContext) response.Res
 	pluginID := web.Params(c.Req)[":pluginId"]
 	name := web.Params(c.Req)[":name"]
 
-	content, err := hs.pluginMarkdown(c.Req.Context(), pluginID, name)
+	p, exists := hs.pluginStore.Plugin(c.Req.Context(), pluginID)
+	if !exists {
+		return response.Error(http.StatusNotFound, "Plugin not found", nil)
+	}
+
+	content, err := hs.pluginMarkdown(c.Req.Context(), p.ID, p.Info.Version, name)
 	if err != nil {
 		var notFound plugins.NotFoundError
 		if errors.As(err, &notFound) {
@@ -280,7 +285,7 @@ func (hs *HTTPServer) GetPluginMarkdown(c *contextmodel.ReqContext) response.Res
 
 	// fallback try readme
 	if len(content) == 0 {
-		content, err = hs.pluginMarkdown(c.Req.Context(), pluginID, "readme")
+		content, err = hs.pluginMarkdown(c.Req.Context(), p.ID, p.Info.Version, "readme")
 		if err != nil {
 			if errors.Is(err, plugins.ErrFileNotExist) {
 				return response.Error(http.StatusNotFound, plugins.ErrFileNotExist.Error(), nil)
@@ -348,7 +353,7 @@ func (hs *HTTPServer) getPluginAssets(c *contextmodel.ReqContext) {
 
 // serveLocalPluginAsset returns the content of a plugin asset file from the local filesystem to the http client.
 func (hs *HTTPServer) serveLocalPluginAsset(c *contextmodel.ReqContext, plugin plugins.PluginDTO, assetPath string) {
-	f, err := hs.pluginFileStore.File(c.Req.Context(), plugin.ID, assetPath)
+	f, err := hs.pluginFileStore.File(c.Req.Context(), plugin.ID, plugin.Info.Version, assetPath)
 	if err != nil {
 		if errors.Is(err, plugins.ErrFileNotExist) {
 			c.JsonApiErr(404, "Plugin file not found", nil)
@@ -510,19 +515,19 @@ func translatePluginRequestErrorToAPIError(err error) response.Response {
 	return response.Error(500, "Plugin request failed", err)
 }
 
-func (hs *HTTPServer) pluginMarkdown(ctx context.Context, pluginID string, name string) ([]byte, error) {
+func (hs *HTTPServer) pluginMarkdown(ctx context.Context, pluginID, version string, name string) ([]byte, error) {
 	file, err := mdFilepath(strings.ToUpper(name))
 	if err != nil {
 		return make([]byte, 0), err
 	}
 
-	md, err := hs.pluginFileStore.File(ctx, pluginID, file)
+	md, err := hs.pluginFileStore.File(ctx, pluginID, version, file)
 	if err != nil {
 		if errors.Is(err, plugins.ErrPluginNotInstalled) {
 			return make([]byte, 0), plugins.NotFoundError{PluginID: pluginID}
 		}
 
-		md, err = hs.pluginFileStore.File(ctx, pluginID, strings.ToLower(file))
+		md, err = hs.pluginFileStore.File(ctx, pluginID, version, strings.ToLower(file))
 		if err != nil {
 			return make([]byte, 0), nil
 		}

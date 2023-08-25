@@ -70,7 +70,7 @@ func ProvideInitializationStage(cfg *config.Cfg, pr registry.Service, l plugins.
 func ProvideTerminationStage(cfg *config.Cfg, pr registry.Service, pm process.Manager) (*termination.Terminate, error) {
 	return termination.New(cfg, termination.Opts{
 		TerminateFuncs: []termination.TerminateFunc{
-			termination.BackendProcessTerminatorStep(pm),
+			termination.BackendProcessTerminatorStep(pr, pm),
 			termination.DeregisterStep(pr),
 		},
 	})

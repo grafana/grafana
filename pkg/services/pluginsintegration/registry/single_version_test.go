@@ -11,29 +11,41 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 )
 
-const pluginID = "test-ds"
+const (
+	pluginID = "test-ds"
+	v1       = "1.0.0"
+	v2       = "2.0.0"
+)
 
-func TestInMemory(t *testing.T) {
+func TestSinglePluginVersion(t *testing.T) {
 	t.Run("Test mix of registry operations", func(t *testing.T) {
-		i := NewInMemory()
+		i := NewSinglePluginVersion()
 		ctx := context.Background()
 
-		p, exists := i.Plugin(ctx, pluginID)
+		p, exists := i.Plugin(ctx, pluginID, v1)
 		require.False(t, exists)
 		require.Nil(t, p)
 
-		err := i.Remove(ctx, pluginID)
+		err := i.Remove(ctx, pluginID, v1)
 		require.EqualError(t, err, fmt.Errorf("plugin %s is not registered", pluginID).Error())
 
-		p = &plugins.Plugin{JSONData: plugins.JSONData{ID: pluginID}}
+		p = &plugins.Plugin{JSONData: plugins.JSONData{ID: pluginID, Info: plugins.Info{Version: v1}}}
 		err = i.Add(ctx, p)
 		require.NoError(t, err)
 
-		existingP, exists := i.Plugin(ctx, pluginID)
+		p = &plugins.Plugin{JSONData: plugins.JSONData{ID: pluginID, Info: plugins.Info{Version: v2}}}
+		err = i.Add(ctx, p)
+		require.Errorf(t, err, fmt.Sprintf("plugin %s is already registered", pluginID))
+
+		existingP, exists := i.Plugin(ctx, pluginID, v1)
 		require.True(t, exists)
 		require.Equal(t, p, existingP)
 
-		err = i.Remove(ctx, pluginID)
+		p = &plugins.Plugin{JSONData: plugins.JSONData{ID: pluginID}}
+		err = i.Add(ctx, p)
+		require.Error(t, err)
+
+		err = i.Remove(ctx, pluginID, v1)
 		require.NoError(t, err)
 
 		existingPlugins := i.Plugins(ctx)
@@ -41,7 +53,7 @@ func TestInMemory(t *testing.T) {
 	})
 }
 
-func TestInMemory_Add(t *testing.T) {
+func TestSinglePluginVersion_Add(t *testing.T) {
 	type mocks struct {
 		store map[string]*plugins.Plugin
 	}
@@ -87,10 +99,32 @@ func TestInMemory_Add(t *testing.T) {
 			},
 			err: fmt.Errorf("plugin %s is already registered", pluginID),
 		},
+		{
+			name: "Cannot add a plugin to the registry even if it has a different version",
+			mocks: mocks{
+				store: map[string]*plugins.Plugin{
+					pluginID: {
+						JSONData: plugins.JSONData{
+							ID:   pluginID,
+							Info: plugins.Info{Version: v1},
+						},
+					},
+				},
+			},
+			args: args{
+				p: &plugins.Plugin{
+					JSONData: plugins.JSONData{
+						ID:   pluginID,
+						Info: plugins.Info{Version: v2},
+					},
+				},
+			},
+			err: fmt.Errorf("plugin %s is already registered", pluginID),
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			i := &InMemory{
+			i := &SinglePluginVersion{
 				store: tt.mocks.store,
 			}
 			err := i.Add(context.Background(), tt.args.p)
@@ -99,7 +133,7 @@ func TestInMemory_Add(t *testing.T) {
 	}
 }
 
-func TestInMemory_Plugin(t *testing.T) {
+func TestSinglePluginVersion_Plugin(t *testing.T) {
 	type mocks struct {
 		store map[string]*plugins.Plugin
 	}
@@ -148,19 +182,19 @@ func TestInMemory_Plugin(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			i := &InMemory{
+			i := &SinglePluginVersion{
 				store: tt.mocks.store,
 			}
-			p, exists := i.Plugin(context.Background(), tt.args.pluginID)
+			p, exists := i.Plugin(context.Background(), tt.args.pluginID, v1)
 			if exists != tt.exists {
-				t.Errorf("Plugin() got1 = %v, expected %v", exists, tt.exists)
+				t.Errorf("Plugin() got = %v, expected %v", exists, tt.exists)
 			}
 			require.Equal(t, tt.expected, p)
 		})
 	}
 }
 
-func TestInMemory_Plugins(t *testing.T) {
+func TestSinglePluginVersion_Plugins(t *testing.T) {
 	type mocks struct {
 		store map[string]*plugins.Plugin
 	}
@@ -208,7 +242,7 @@ func TestInMemory_Plugins(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			i := &InMemory{
+			i := &SinglePluginVersion{
 				store: tt.mocks.store,
 			}
 			result := i.Plugins(context.Background())
@@ -222,7 +256,7 @@ func TestInMemory_Plugins(t *testing.T) {
 	}
 }
 
-func TestInMemory_Remove(t *testing.T) {
+func TestSinglePluginVersion_Remove(t *testing.T) {
 	type mocks struct {
 		store map[string]*plugins.Plugin
 	}
@@ -262,10 +296,10 @@ func TestInMemory_Remove(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			i := &InMemory{
+			i := &SinglePluginVersion{
 				store: tt.mocks.store,
 			}
-			err := i.Remove(context.Background(), tt.args.pluginID)
+			err := i.Remove(context.Background(), tt.args.pluginID, v1)
 			require.Equal(t, tt.err, err)
 		})
 	}
@@ -273,13 +307,13 @@ func TestInMemory_Remove(t *testing.T) {
 
 func TestAliasSupport(t *testing.T) {
 	t.Run("Test alias operations", func(t *testing.T) {
-		i := NewInMemory()
+		i := NewSinglePluginVersion()
 		ctx := context.Background()
 
 		pluginIdNew := "plugin-new"
 		pluginIdOld := "plugin-old"
 
-		p, exists := i.Plugin(ctx, pluginIdNew)
+		p, exists := i.Plugin(ctx, pluginIdNew, v1)
 		require.False(t, exists)
 		require.Nil(t, p)
 
@@ -293,12 +327,12 @@ func TestAliasSupport(t *testing.T) {
 		require.NoError(t, err)
 
 		// Can lookup by the new ID
-		found, exists := i.Plugin(ctx, pluginIdNew)
+		found, exists := i.Plugin(ctx, pluginIdNew, v1)
 		require.True(t, exists)
 		require.Equal(t, pluginNew, found)
 
 		// Can lookup by the old ID
-		found, exists = i.Plugin(ctx, pluginIdOld)
+		found, exists = i.Plugin(ctx, pluginIdOld, v1)
 		require.True(t, exists)
 		require.Equal(t, pluginNew, found)
 
@@ -307,7 +341,7 @@ func TestAliasSupport(t *testing.T) {
 			ID: pluginIdOld,
 		}}
 		require.NoError(t, i.Add(ctx, pluginOld))
-		found, exists = i.Plugin(ctx, pluginIdOld)
+		found, exists = i.Plugin(ctx, pluginIdOld, v1)
 		require.True(t, exists)
 		require.Equal(t, pluginOld, found)
 	})

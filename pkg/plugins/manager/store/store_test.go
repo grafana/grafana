@@ -191,10 +191,11 @@ func TestProcessManager_shutdown(t *testing.T) {
 			p.ID: p,
 		},
 	}, &fakes.FakeLoader{
-		UnloadFunc: func(_ context.Context, plugin *plugins.Plugin) (*plugins.Plugin, error) {
-			require.Equal(t, p, plugin)
+		UnloadFunc: func(_ context.Context, pluginID, version string) error {
+			require.Equal(t, p.ID, pluginID)
+			require.Equal(t, p.Info.Version, version)
 			unloaded = true
-			return nil, nil
+			return nil
 		},
 	})
 

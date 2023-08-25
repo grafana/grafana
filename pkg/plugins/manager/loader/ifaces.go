@@ -11,5 +11,5 @@ type Service interface {
 	// Load will return a list of plugins found in the provided file system paths.
 	Load(ctx context.Context, src plugins.PluginSource) ([]*plugins.Plugin, error)
 	// Unload will unload a specified plugin from the file system.
-	Unload(ctx context.Context, p *plugins.Plugin) (*plugins.Plugin, error)
+	Unload(ctx context.Context, pluginID, version string) error
 }
