@@ -27,8 +27,8 @@ If you don't want to install Grafana on your local machine, you can use [Docker]
 
 To set up Grafana for plugin development using Docker, run the following command:
 
-```
-docker run -d -p 3000:3000 -v "$(pwd)"/grafana-plugins:/var/lib/grafana/plugins --name=grafana grafana/grafana:7.0.0
+```bash
+docker run -d -p 3000:3000 -v "$(pwd)"/grafana-plugins:/var/lib/grafana/plugins -e GF_DEFAULT_APP_MODE=development --name=grafana grafana/grafana:7.0.0
 ```
 
 Since Grafana only loads plugins on start-up, you need to restart the container whenever you add or remove a plugin.
