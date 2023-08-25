@@ -37,7 +37,7 @@ func (s *httpServiceProxy) Do(rw http.ResponseWriter, req *http.Request, cli *ht
 		return nil, err
 	}
 	defer func() {
-		if err := res.Body.Close(); err == nil {
+		if err := res.Body.Close(); err != nil {
 			backend.Logger.Warn("Failed to close response body", "err", err)
 		}
 	}()
