@@ -46,7 +46,7 @@ export class DashboardRow extends React.Component<DashboardRowProps> {
       : this.props.dashboard.getRowPanels(indexOf(this.props.dashboard.panels, this.props.panel));
     const isAnyPanelUsingDashboardDS = panels.some((p) => p.datasource?.uid === SHARED_DASHBOARD_QUERY);
     if (isAnyPanelUsingDashboardDS) {
-      return `Panels in this row use the ${SHARED_DASHBOARD_QUERY} data source. These panels will reference the panel in the original row, not the one in the repeated row.`;
+      return `Panels in this row use the ${SHARED_DASHBOARD_QUERY} data source. These panels will reference the panel in the original row, not the ones in the repeated rows.`;
     }
 
     return undefined;
