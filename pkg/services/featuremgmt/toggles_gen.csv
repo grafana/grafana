@@ -17,7 +17,6 @@ newDBLibrary,preview,@grafana/backend-platform,false,false,false,false
 validateDashboardsOnSave,preview,@grafana/grafana-as-code,false,false,true,false
 autoMigrateOldPanels,preview,@grafana/dataviz-squad,false,false,false,true
 disableAngular,preview,@grafana/dataviz-squad,false,false,false,true
-prometheusWideSeries,experimental,@grafana/observability-metrics,false,false,false,false
 canvasPanelNesting,experimental,@grafana/dataviz-squad,false,false,false,true
 scenes,experimental,@grafana/dashboards-squad,false,false,false,true
 disableSecretsCompatibility,experimental,@grafana/hosted-grafana-team,false,false,true,false
