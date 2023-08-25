@@ -1,0 +1,14 @@
+on:
+    workflow_dispatch:
+      inputs:
+        tags:
+          description: 'Test scenario tags'
+          required: true
+          type: string
+
+jobs:
+    print-tag:
+      runs-on: ubuntu-latest
+      steps:
+        - name: Print the input tag to STDOUT
+          run: echo  The tags are ${{ inputs.tags }} 
