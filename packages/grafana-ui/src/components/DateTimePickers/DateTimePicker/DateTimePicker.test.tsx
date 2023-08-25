@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
@@ -27,16 +27,15 @@ describe('Date time picker', () => {
 
   it('input should have a value', () => {
     renderDatetimePicker();
-
     expect(screen.queryByDisplayValue('2021-05-05 12:00:00')).toBeInTheDocument();
   });
 
-  it('should update date onblur', () => {
+  it('should update date onblur', async () => {
     renderDatetimePicker();
     const dateTimeInput = screen.getByTestId('date-time-input');
-    fireEvent.change(dateTimeInput, { target: { value: '2021-07-31 12:30:30' } });
-    fireEvent.blur(dateTimeInput);
-
+    await userEvent.clear(dateTimeInput);
+    await userEvent.type(dateTimeInput, '2021-07-31 12:30:30');
+    userEvent.click(document.body);
     expect(dateTimeInput).toHaveDisplayValue('2021-07-31 12:30:30');
   });
 
