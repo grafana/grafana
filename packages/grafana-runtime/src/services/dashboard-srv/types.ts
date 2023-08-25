@@ -94,7 +94,7 @@ export interface PluginsAPIPanelModel extends Pick<CorePanelModel, 'options'> {
   /**
    * The panel's title
    */
-  title: string;
+  title?: string;
   /**
    * Represents the type of the panel, such as 'graph', 'table', and so on.
    * In case of panels provided by a plugin, this will contain the plugin's ID.
