@@ -404,7 +404,7 @@ func (pd *PublicDashboardServiceImpl) newCreatePublicDashboard(ctx context.Conte
 
 	existingPubdash, err := pd.store.Find(ctx, dto.PublicDashboard.Uid)
 	if existingPubdash != nil {
-		return nil, ErrDashboardIsPublic.Errorf("Create: public dashboard for dashboard %s already exists", dto.Uid) //create new error
+		return nil, ErrPublicDashboardUidExists.Errorf("Create: public dashboard uid %s already exists", dto.Uid) //create new error
 	}
 
 	if dto.PublicDashboard.Uid != "" {
