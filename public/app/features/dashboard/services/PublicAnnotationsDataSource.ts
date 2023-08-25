@@ -18,7 +18,7 @@ import { GrafanaQueryType } from '../../../plugins/datasource/grafana/types';
 
 export const PUBLIC_DATASOURCE = '-- Public --';
 
-export class PublicDashboardDataSource extends DataSourceApi<DataQuery, DataSourceJsonData, {}> {
+export class PublicAnnotationsDataSource extends DataSourceApi<DataQuery, DataSourceJsonData, {}> {
   constructor() {
     let meta = {} as DataSourcePluginMeta;
 

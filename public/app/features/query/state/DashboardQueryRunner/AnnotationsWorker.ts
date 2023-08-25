@@ -6,7 +6,7 @@ import { AnnotationQuery, DataSourceApi } from '@grafana/data';
 import { config, getDataSourceSrv } from '@grafana/runtime';
 
 import { AnnotationQueryFinished, AnnotationQueryStarted } from '../../../../types/events';
-import { PublicDashboardDataSource } from '../../../dashboard/services/PublicDashboardDataSource';
+import { PublicAnnotationsDataSource } from '../../../dashboard/services/PublicAnnotationsDataSource';
 
 import { AnnotationsQueryRunner } from './AnnotationsQueryRunner';
 import { getDashboardQueryRunner } from './DashboardQueryRunner';
@@ -50,7 +50,7 @@ export class AnnotationsWorker implements DashboardQueryRunnerWorker {
       let datasourceObservable;
 
       if (config.publicDashboardAccessToken) {
-        const pubdashDatasource = new PublicDashboardDataSource();
+        const pubdashDatasource = new PublicAnnotationsDataSource();
         datasourceObservable = of(pubdashDatasource).pipe(catchError(handleDatasourceSrvError));
       } else {
         datasourceObservable = from(getDataSourceSrv().get(annotation.datasource)).pipe(

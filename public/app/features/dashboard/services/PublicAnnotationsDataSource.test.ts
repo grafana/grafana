@@ -6,7 +6,7 @@ import { GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
 
 import { GRAFANA_DATASOURCE_NAME } from '../../alerting/unified/utils/datasource';
 
-import { PublicDashboardDataSource } from './PublicDashboardDataSource';
+import { PublicAnnotationsDataSource } from './PublicAnnotationsDataSource';
 
 const mockDatasourceRequest = jest.fn();
 
@@ -31,7 +31,7 @@ jest.mock('@grafana/runtime', () => ({
 
 describe('PublicDashboardDatasource', () => {
   test('will add annotation query type to annotations', () => {
-    const ds = new PublicDashboardDataSource();
+    const ds = new PublicAnnotationsDataSource();
     const annotationQuery = {
       enable: true,
       name: 'someName',
@@ -48,7 +48,7 @@ describe('PublicDashboardDatasource', () => {
     mockDatasourceRequest.mockReset();
     mockDatasourceRequest.mockReturnValue(Promise.resolve([]));
 
-    const ds = new PublicDashboardDataSource();
+    const ds = new PublicAnnotationsDataSource();
     const panelId = 1;
 
     config.publicDashboardAccessToken = 'abc123';
@@ -77,7 +77,7 @@ describe('PublicDashboardDatasource', () => {
     mockDatasourceRequest.mockReset();
     mockDatasourceRequest.mockReturnValue(Promise.resolve({}));
 
-    const ds = new PublicDashboardDataSource();
+    const ds = new PublicAnnotationsDataSource();
     const panelId = 1;
     config.publicDashboardAccessToken = 'abc123';
 
