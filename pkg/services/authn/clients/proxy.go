@@ -26,7 +26,7 @@ const (
 	proxyFieldLogin  = "Login"
 	proxyFieldRole   = "Role"
 	proxyFieldGroups = "Groups"
-	proxyCachePrefix = "auth-proxy-sync-ttl"
+	proxyCachePrefix = "authn-proxy-sync-ttl"
 )
 
 var proxyFields = [...]string{proxyFieldName, proxyFieldEmail, proxyFieldLogin, proxyFieldRole, proxyFieldGroups}
@@ -84,7 +84,7 @@ func (c *Proxy) Authenticate(ctx context.Context, r *authn.Request) (*authn.Iden
 	if ok {
 		// See if we have cached the user id, in that case we can fetch the signed-in user and skip sync.
 		// Error here means that we could not find anything in cache, so we can proceed as usual
-		if entry, err := c.cache.Get(ctx, cacheKey); err == nil {
+		if entry, err := c.cache.Get(ctx, cacheKey); err == nil && len(entry) == 8 {
 			uid := int64(binary.LittleEndian.Uint64(entry))
 
 			usr, err := c.userSrv.GetSignedInUserWithCacheCtx(ctx, &user.GetSignedInUserQuery{
