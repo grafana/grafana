@@ -15,6 +15,8 @@ import (
 	"github.com/grafana/grafana/pkg/models/roletype"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/login"
+	"github.com/grafana/grafana/pkg/services/oauthserver"
+	"github.com/grafana/grafana/pkg/services/oauthserver/oastest"
 	"github.com/grafana/grafana/pkg/services/signingkeys/signingkeystest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/usertest"
@@ -49,7 +51,7 @@ var (
 	pk, _ = rsa.GenerateKey(rand.Reader, 4096)
 )
 
-func TestExtendedJWTTest(t *testing.T) {
+func TestExtendedJWT_Test(t *testing.T) {
 	type testCase struct {
 		name           string
 		cfg            *setting.Cfg
@@ -105,7 +107,7 @@ func TestExtendedJWTTest(t *testing.T) {
 	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			extJwtClient := setupTestCtx(t, nil, tc.cfg)
+			env := setupTestCtx(t, tc.cfg)
 
 			validHTTPReq := &http.Request{
 				Header: map[string][]string{
@@ -113,7 +115,7 @@ func TestExtendedJWTTest(t *testing.T) {
 				},
 			}
 
-			actual := extJwtClient.Test(context.Background(), &authn.Request{
+			actual := env.s.Test(context.Background(), &authn.Request{
 				HTTPRequest: validHTTPReq,
 				Resp:        nil,
 			})
@@ -123,22 +125,22 @@ func TestExtendedJWTTest(t *testing.T) {
 	}
 }
 
-func TestExtendedJWTAuthenticate(t *testing.T) {
+func TestExtendedJWT_Authenticate(t *testing.T) {
 	type testCase struct {
-		name         string
-		payload      ExtendedJWTClaims
-		orgID        int64
-		want         *authn.Identity
-		userSvcSetup func(userSvc *usertest.FakeUserService)
-		wantErr      bool
+		name        string
+		payload     ExtendedJWTClaims
+		orgID       int64
+		want        *authn.Identity
+		initTestEnv func(env *testEnv)
+		wantErr     bool
 	}
 	testCases := []testCase{
 		{
 			name:    "successful authentication",
 			payload: validPayload,
 			orgID:   1,
-			userSvcSetup: func(userSvc *usertest.FakeUserService) {
-				userSvc.ExpectedSignedInUser = &user.SignedInUser{
+			initTestEnv: func(env *testEnv) {
+				env.userSvc.ExpectedSignedInUser = &user.SignedInUser{
 					UserID:  2,
 					OrgID:   1,
 					OrgRole: roletype.RoleAdmin,
@@ -148,19 +150,18 @@ func TestExtendedJWTAuthenticate(t *testing.T) {
 				}
 			},
 			want: &authn.Identity{
-				OrgID:          1,
-				OrgCount:       0,
-				OrgName:        "",
-				OrgRoles:       map[int64]roletype.RoleType{1: roletype.RoleAdmin},
-				ID:             "user:2",
-				Login:          "johndoe",
-				Name:           "John Doe",
-				Email:          "johndoe@grafana.com",
-				IsGrafanaAdmin: boolPtr(false),
-				AuthModule:     "",
-				AuthID:         "",
-				IsDisabled:     false,
-				HelpFlags1:     0,
+				OrgID:           1,
+				OrgName:         "",
+				OrgRoles:        map[int64]roletype.RoleType{1: roletype.RoleAdmin},
+				ID:              "user:2",
+				Login:           "johndoe",
+				Name:            "John Doe",
+				Email:           "johndoe@grafana.com",
+				IsGrafanaAdmin:  boolPtr(false),
+				AuthenticatedBy: login.ExtendedJWTModule,
+				AuthID:          "",
+				IsDisabled:      false,
+				HelpFlags1:      0,
 				Permissions: map[int64]map[string][]string{
 					1: {
 						"dashboards:create": {
@@ -242,8 +243,8 @@ func TestExtendedJWTAuthenticate(t *testing.T) {
 			},
 			orgID: 1,
 			want:  nil,
-			userSvcSetup: func(userSvc *usertest.FakeUserService) {
-				userSvc.ExpectedError = user.ErrUserNotFound
+			initTestEnv: func(env *testEnv) {
+				env.userSvc.ExpectedError = user.ErrUserNotFound
 			},
 			wantErr: true,
 		},
@@ -265,33 +266,34 @@ func TestExtendedJWTAuthenticate(t *testing.T) {
 			want:    nil,
 			wantErr: true,
 		},
-		// {
-		// 	name: "should return error when the entitlements are not in the correct format",
-		// 	payload: ExtendedJWTClaims{
-		// 		Claims: jwt.Claims{
-		// 			Issuer:   "http://localhost:3000",
-		// 			Subject:  "user:id:2",
-		// 			Audience: jwt.Audience{"http://localhost:3000"},
-		// 			ID:       "1234567890",
-		// 			Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC)),
-		// 			IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
-		// 		},
-		// 		ClientID:     "grafana",
-		// 		Scopes:       []string{"profile", "groups"},
-		// 		Entitlements: []string{"dashboards:create", "folders:read"},
-		// 	},
-		// 	orgID:   1,
-		// 	want:    nil,
-		// 	wantErr: true,
-		// },
+		{
+			name: "should return error when the client was not found",
+			payload: ExtendedJWTClaims{
+				Claims: jwt.Claims{
+					Issuer:   "http://localhost:3000",
+					Subject:  "user:id:2",
+					Audience: jwt.Audience{"http://localhost:3000"},
+					ID:       "1234567890",
+					Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC)),
+					IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
+				},
+				ClientID: "unknown-client-id",
+				Scopes:   []string{"profile", "groups"},
+			},
+			initTestEnv: func(env *testEnv) {
+				env.oauthSvc.ExpectedErr = oauthserver.ErrClientNotFound("unknown-client-id")
+			},
+			orgID:   1,
+			want:    nil,
+			wantErr: true,
+		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			userSvc := &usertest.FakeUserService{}
-			extJwtClient := setupTestCtx(t, userSvc, nil)
-			if tc.userSvcSetup != nil {
-				tc.userSvcSetup(userSvc)
+			env := setupTestCtx(t, nil)
+			if tc.initTestEnv != nil {
+				tc.initTestEnv(env)
 			}
 
 			validHTTPReq := &http.Request{
@@ -302,7 +304,7 @@ func TestExtendedJWTAuthenticate(t *testing.T) {
 
 			mockTimeNow(time.Date(2023, 5, 2, 0, 1, 0, 0, time.UTC))
 
-			id, err := extJwtClient.Authenticate(context.Background(), &authn.Request{
+			id, err := env.s.Authenticate(context.Background(), &authn.Request{
 				OrgID:       tc.orgID,
 				HTTPRequest: validHTTPReq,
 				Resp:        nil,
@@ -487,7 +489,7 @@ func TestVerifyRFC9068TokenFailureScenarios(t *testing.T) {
 		},
 	}
 
-	extJwtClient := setupTestCtx(t, nil, nil)
+	env := setupTestCtx(t, nil)
 	mockTimeNow(time.Date(2023, 5, 2, 0, 1, 0, 0, time.UTC))
 
 	for _, tc := range testCases {
@@ -496,13 +498,13 @@ func TestVerifyRFC9068TokenFailureScenarios(t *testing.T) {
 				tc.alg = jose.RS256
 			}
 			tokenToTest := generateToken(tc.payload, pk, tc.alg)
-			_, err := extJwtClient.verifyRFC9068Token(context.Background(), tokenToTest)
+			_, err := env.s.verifyRFC9068Token(context.Background(), tokenToTest)
 			require.Error(t, err)
 		})
 	}
 }
 
-func setupTestCtx(t *testing.T, userSvc user.Service, cfg *setting.Cfg) *ExtendedJWT {
+func setupTestCtx(t *testing.T, cfg *setting.Cfg) *testEnv {
 	if cfg == nil {
 		cfg = &setting.Cfg{
 			ExtendedJWTAuthEnabled:    true,
@@ -514,8 +516,22 @@ func setupTestCtx(t *testing.T, userSvc user.Service, cfg *setting.Cfg) *Extende
 	signingKeysSvc := &signingkeystest.FakeSigningKeysService{}
 	signingKeysSvc.ExpectedServerPublicKey = &pk.PublicKey
 
-	extJwtClient := ProvideExtendedJWT(userSvc, cfg, signingKeysSvc)
-	return extJwtClient
+	userSvc := &usertest.FakeUserService{}
+	oauthSvc := &oastest.FakeService{}
+
+	extJwtClient := ProvideExtendedJWT(userSvc, cfg, signingKeysSvc, oauthSvc)
+
+	return &testEnv{
+		oauthSvc: oauthSvc,
+		userSvc:  userSvc,
+		s:        extJwtClient,
+	}
+}
+
+type testEnv struct {
+	oauthSvc *oastest.FakeService
+	userSvc  *usertest.FakeUserService
+	s        *ExtendedJWT
 }
 
 func generateToken(payload ExtendedJWTClaims, signingKey interface{}, alg jose.SignatureAlgorithm) string {

@@ -195,8 +195,7 @@ export default class ListView extends React.Component<TListViewProps> {
     this._htmlTopOffset = -1;
     this._windowScrollListenerAdded = false;
     // _htmlElm is only relevant if props.windowScroller is true
-    // eslint-disable-next-line
-    this._htmlElm = document.documentElement as any;
+    this._htmlElm = document.documentElement;
     this._wrapperElm = undefined;
     this._itemHolderElm = undefined;
   }
@@ -379,29 +378,30 @@ export default class ListView extends React.Component<TListViewProps> {
     const nodes = this._itemHolderElm.childNodes;
     const max = nodes.length;
     for (let i = 0; i < max; i++) {
-      // eslint-disable-next-line
-      const node: HTMLElement = nodes[i] as any;
-      // use `.getAttribute(...)` instead of `.dataset` for jest / JSDOM
-      const itemKey = node.getAttribute('data-item-key');
-      if (!itemKey) {
-        // eslint-disable-next-line no-console
-        console.warn('itemKey not found');
-        continue;
-      }
-      // measure the first child, if it's available, otherwise the node itself
-      // (likely not transferable to other contexts, and instead is specific to
-      // how we have the items rendered)
-      const measureSrc: Element = node.firstElementChild || node;
-      const observed = measureSrc.clientHeight;
-      const known = this._knownHeights.get(itemKey);
-      if (observed !== known) {
-        this._knownHeights.set(itemKey, observed);
-        if (!isDirty) {
-          isDirty = true;
-          // eslint-disable-next-line no-multi-assign
-          lowDirtyKey = highDirtyKey = itemKey;
-        } else {
-          highDirtyKey = itemKey;
+      const node = nodes[i];
+      if (node instanceof HTMLElement) {
+        // use `.getAttribute(...)` instead of `.dataset` for jest / JSDOM
+        const itemKey = node.getAttribute('data-item-key');
+        if (!itemKey) {
+          // eslint-disable-next-line no-console
+          console.warn('itemKey not found');
+          continue;
+        }
+        // measure the first child, if it's available, otherwise the node itself
+        // (likely not transferable to other contexts, and instead is specific to
+        // how we have the items rendered)
+        const measureSrc: Element = node.firstElementChild || node;
+        const observed = measureSrc.clientHeight;
+        const known = this._knownHeights.get(itemKey);
+        if (observed !== known) {
+          this._knownHeights.set(itemKey, observed);
+          if (!isDirty) {
+            isDirty = true;
+            // eslint-disable-next-line no-multi-assign
+            lowDirtyKey = highDirtyKey = itemKey;
+          } else {
+            highDirtyKey = itemKey;
+          }
         }
       }
     }
@@ -492,7 +492,7 @@ export default class ListView extends React.Component<TListViewProps> {
       wrapperProps.style.overflowY = 'auto';
     }
     const scrollerStyle = {
-      position: 'relative' as 'relative',
+      position: 'relative' as const,
       height: this._yPositions.getEstimatedHeight(),
     };
     return (

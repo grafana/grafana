@@ -2,8 +2,13 @@
 aliases:
   - ../../../auth/grafana/
 description: Grafana OAuthentication Guide
+labels:
+  products:
+    - enterprise
+    - oss
+menuTitle: Basic auth
 title: Configure Grafana authentication
-weight: 1000
+weight: 200
 ---
 
 ## Configure Grafana authentication
@@ -16,7 +21,7 @@ provider (listed above). There is also options for allowing self sign up.
 
 > The following applies when using Grafana's built in user authentication, LDAP (without Auth proxy) or OAuth integration.
 
-Grafana are using short-lived tokens as a mechanism for verifying authenticated users.
+Grafana uses short-lived tokens as a mechanism for verifying authenticated users.
 These short-lived tokens are rotated each `token_rotation_interval_minutes` for an active authenticated user.
 
 An active authenticated user that gets it token rotated will extend the `login_maximum_inactive_lifetime_duration` time from "now" that Grafana will remember the user.
@@ -125,7 +130,9 @@ signout_redirect_url =
 
 ### Protected roles
 
-> **Note:** Available in [Grafana Enterprise]({{< relref "../../../../introduction/grafana-enterprise" >}}) and [Grafana Cloud Advanced]({{< relref "../../../../introduction/grafana-cloud" >}}).
+{{% admonition type="note" %}}
+Available in [Grafana Enterprise]({{< relref "../../../../introduction/grafana-enterprise" >}}) and [Grafana Cloud]({{< relref "../../../../introduction/grafana-cloud" >}}).
+{{% /admonition %}}
 
 By default, after you configure an authorization provider, Grafana will adopt existing users into the new authentication scheme. For example, if you have created a user with basic authentication having the login `jsmith@example.com`, then set up SAML authentication where `jsmith@example.com` is an account, the user's authentication type will be changed to SAML if they perform a SAML sign-in.
 

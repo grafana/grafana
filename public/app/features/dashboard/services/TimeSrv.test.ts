@@ -82,7 +82,7 @@ describe('timeSrv', () => {
       timeSrv = new TimeSrv(new ContextSrvStub());
 
       // dashboard saved with refresh on
-      _dashboard.refresh = true;
+      _dashboard.refresh = '10s';
       timeSrv.init(_dashboard);
 
       expect(timeSrv.refresh).toBe(false);
@@ -296,6 +296,11 @@ describe('timeSrv', () => {
       expect(timeSrv.refreshTimer).toBeUndefined();
 
       timeSrv.resumeAutoRefresh();
+      expect(timeSrv.refreshTimer).not.toBeUndefined();
+    });
+
+    it('should allow an auto refresh value', () => {
+      timeSrv.setAutoRefresh('auto');
       expect(timeSrv.refreshTimer).not.toBeUndefined();
     });
   });

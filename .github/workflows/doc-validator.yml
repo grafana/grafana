@@ -7,7 +7,7 @@ jobs:
   doc-validator:
     runs-on: "ubuntu-latest"
     container:
-      image: "grafana/doc-validator:c2a784f"
+      image: "grafana/doc-validator:v3.2.1"
     steps:
       - name: "Checkout code"
         uses: "actions/checkout@v3"
@@ -15,12 +15,12 @@ jobs:
         # Only run doc-validator on specific directories.
         run: >
           doc-validator
-          '--include=^docs/sources/(?:fundamentals|getting-started|introduction|setup-grafana|upgrade-guide|whatsnew/whats-new-in-v(?:9|10))/.+\.md$'
-          '--skip-checks=^image'
+          '--include=^docs/sources/(?:alerting|fundamentals|getting-started|introduction|setup-grafana|upgrade-guide|whatsnew/whats-new-in-v(?:9|10))/.+\.md$'
+          '--skip-checks=^(?:image.+|canonical-does-not-match-pretty-URL)$'
           ./docs/sources
           /docs/grafana/latest
           | reviewdog
-          '--efm=ERROR: %f:%l:%c %m'
+          -f=rdjsonl
           --fail-on-error
           --filter-mode=nofilter
           --name=doc-validator

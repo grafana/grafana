@@ -4,7 +4,6 @@ import {
   DataSourceSettings,
   PanelData,
   SelectableValue,
-  TableData,
 } from '@grafana/data';
 
 import Datasource from '../datasource';
@@ -75,6 +74,8 @@ export interface AzureDataSourceJsonData extends DataSourceJsonData {
 
   // App Insights
   appInsightsAppId?: string;
+
+  enableSecureSocksProxy?: boolean;
 }
 
 export interface AzureDataSourceSecureJsonData {
@@ -101,23 +102,6 @@ export interface AzureMonitorMetricMetadataItem {
   metricAvailabilities?: AzureMonitorMetricAvailabilityMetadata[];
 }
 
-export interface AzureMonitorMetricNamespacesResponse {
-  value: AzureMonitorMetricNamespaceItem[];
-}
-
-export interface AzureMonitorMetricNamespaceItem {
-  name: string;
-  properties: { metricNamespacename: string };
-}
-
-export interface AzureMonitorMetricNamesResponse {
-  value: AzureMonitorMetricNameItem[];
-}
-
-export interface AzureMonitorMetricNameItem {
-  name: { value: string; localizedValue: string };
-}
-
 export interface AzureMonitorMetricAvailabilityMetadata {
   timeGrain: string;
   retention: string;
@@ -128,28 +112,9 @@ export interface AzureMonitorLocalizedValue {
   localizedValue: string;
 }
 
-export interface AzureMonitorResourceGroupsResponse {
-  data: {
-    value: Array<{ name: string }>;
-  };
-  status: number;
-  statusText: string;
-}
-
 export interface AzureLogsVariable {
   text: string;
   value: string;
-}
-
-export interface AzureLogsTableData extends TableData {
-  columns: AzureLogsTableColumn[];
-  rows: any[];
-  type: string;
-}
-
-export interface AzureLogsTableColumn {
-  text: string;
-  type: string;
 }
 
 export interface AzureMonitorOption<T = string> {
@@ -293,11 +258,17 @@ export interface ProviderResourceType {
   capabilities: string;
 }
 
-export interface AzureMonitorLocationsResponse {
-  value: Location[];
+export interface AzureAPIResponse<T> {
+  value: T[];
+  count?: {
+    type: string;
+    value: number;
+  };
+  status?: number;
+  statusText?: string;
 }
 
-interface Location {
+export interface Location {
   id: string;
   name: string;
   displayName: string;
@@ -318,4 +289,101 @@ interface LocationMetadata {
 interface LocationPairedRegion {
   name: string;
   id: string;
+}
+
+export interface Subscription {
+  id: string;
+  authorizationSource: string;
+  subscriptionId: string;
+  tenantId: string;
+  displayName: string;
+  state: string;
+  subscriptionPolicies: {
+    locationPlacementId: string;
+    quotaId: string;
+    spendingLimit: string;
+  };
+}
+
+export interface Workspace {
+  properties: {
+    customerId: string;
+    provisioningState: string;
+    sku: {
+      name: string;
+    };
+    retentionInDays: number;
+    publicNetworkAccessForQuery: string;
+    publicNetworkAccessForIngestion: string;
+  };
+  id: string;
+  name: string;
+  type: string;
+  location: string;
+  tags: Record<string, string>;
+}
+
+export interface Resource {
+  changedTime: string;
+  createdTime: string;
+  extendedLocation: { name: string; type: string };
+  id: string;
+  identity: { principalId: string; tenantId: string; type: string; userAssignedIdentities: string[] };
+  kind: string;
+  location: string;
+  managedBy: string;
+  name: string;
+  plan: { name: string; product: string; promotionCode: string; publisher: string; version: string };
+  properties: Record<string, string>;
+  provisioningState: string;
+  sku: { capacity: number; family: string; model: string; name: string; size: string; tier: string };
+  tags: Record<string, string>;
+  type: string;
+}
+
+export interface ResourceGroup {
+  id: string;
+  location: string;
+  managedBy: string;
+  name: string;
+  properties: { provisioningState: string };
+  tags: object;
+  type: string;
+}
+
+export interface Namespace {
+  classification: {
+    Custom: string;
+    Platform: string;
+    Qos: string;
+  };
+  id: string;
+  name: string;
+  properties: { metricNamespaceName: string };
+  type: string;
+}
+
+export interface Metric {
+  displayDescription: string;
+  errorCode: string;
+  errorMessage: string;
+  id: string;
+  name: AzureMonitorLocalizedValue;
+  timeseries: Array<{ data: MetricValue[]; metadatavalues: MetricMetadataValue[] }>;
+  type: string;
+  unit: string;
+}
+
+interface MetricValue {
+  average: number;
+  count: number;
+  maximum: number;
+  minimum: number;
+  timeStamp: string;
+  total: number;
+}
+
+interface MetricMetadataValue {
+  name: AzureMonitorLocalizedValue;
+  value: string;
 }

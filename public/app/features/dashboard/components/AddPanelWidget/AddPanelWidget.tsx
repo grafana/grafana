@@ -213,7 +213,7 @@ const AddPanelWidgetHandle = ({ children, onBack, onCancel, styles }: AddPanelWi
     <div className={cx(styles.headerRow, 'grid-drag-handle')}>
       {onBack && (
         <div className={styles.backButton}>
-          <IconButton aria-label="Go back" name="arrow-left" onClick={onBack} size="xl" />
+          <IconButton name="arrow-left" onClick={onBack} size="xl" tooltip="Go back" />
         </div>
       )}
       {!onBack && (
@@ -223,7 +223,7 @@ const AddPanelWidgetHandle = ({ children, onBack, onCancel, styles }: AddPanelWi
       )}
       {children && <span>{children}</span>}
       <div className="flex-grow-1" />
-      <IconButton aria-label="Close 'Add Panel' widget" name="times" onClick={onCancel} />
+      <IconButton aria-label="Close 'Add Panel' widget" name="times" onClick={onCancel} tooltip="Close widget" />
     </div>
   );
 };
@@ -232,10 +232,10 @@ const getStyles = (theme: GrafanaTheme2) => {
   const pulsate = keyframes`
     0% {box-shadow: 0 0 0 2px ${theme.colors.background.canvas}, 0 0 0px 4px ${theme.colors.primary.main};}
     50% {box-shadow: 0 0 0 2px ${theme.components.dashboard.background}, 0 0 0px 4px ${tinycolor(
-    theme.colors.primary.main
-  )
-    .darken(20)
-    .toHexString()};}
+      theme.colors.primary.main
+    )
+      .darken(20)
+      .toHexString()};}
     100% {box-shadow: 0 0 0 2px ${theme.components.dashboard.background}, 0 0 0px 4px  ${theme.colors.primary.main};}
   `;
 
@@ -249,7 +249,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       overflow: hidden;
       outline: 2px dotted transparent;
       outline-offset: 2px;
-      box-shadow: 0 0 0 2px black, 0 0 0px 4px #1f60c4;
+      box-shadow:
+        0 0 0 2px black,
+        0 0 0px 4px #1f60c4;
       animation: ${pulsate} 2s ease infinite;
     `,
     actionsWrapper: css`

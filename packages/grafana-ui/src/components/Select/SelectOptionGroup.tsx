@@ -22,26 +22,26 @@ interface State {
 
 const getSelectOptionGroupStyles = stylesFactory((theme: GrafanaTheme2) => {
   return {
-    header: css`
-      display: flex;
-      align-items: center;
-      justify-content: flex-start;
-      justify-items: center;
-      cursor: pointer;
-      padding: 7px 10px;
-      width: 100%;
-      border-bottom: 1px solid ${theme.colors.background.secondary};
+    header: css({
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'flex-start',
+      justifyItems: 'center',
+      cursor: 'pointer',
+      padding: '7px 10px',
+      width: '100%',
+      borderBottom: `1px solid ${theme.colors.background.secondary}`,
 
-      &:hover {
-        color: ${theme.colors.text.maxContrast};
-      }
-    `,
-    label: css`
-      flex-grow: 1;
-    `,
-    icon: css`
-      padding-right: 2px;
-    `,
+      '&:hover': {
+        color: theme.colors.text.maxContrast,
+      },
+    }),
+    label: css({
+      flexGrow: 1,
+    }),
+    icon: css({
+      paddingRight: '2px',
+    }),
   };
 });
 
@@ -81,9 +81,11 @@ class UnthemedSelectOptionGroup extends PureComponent<ExtendedGroupProps, State>
 
     return (
       <div>
-        <div className={styles.header} onClick={this.onToggleChildren}>
+        {/*React Select doesn't support focusable option group headers, this will be skipped when using
+      the keyboard */}
+        <div className={styles.header} onClick={this.onToggleChildren} role="presentation">
           <span className={styles.label}>{label}</span>
-          <Icon className={styles.icon} name={expanded ? 'angle-up' : 'angle-down'} />{' '}
+          <Icon className={styles.icon} name={expanded ? 'angle-up' : 'angle-down'} />
         </div>
         {expanded && children}
       </div>

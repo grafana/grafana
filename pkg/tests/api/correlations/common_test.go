@@ -51,12 +51,13 @@ type User struct {
 type GetParams struct {
 	url  string
 	user User
+	page string
 }
 
 func (c TestContext) Get(params GetParams) *http.Response {
 	c.t.Helper()
-
-	resp, err := http.Get(c.getURL(params.url, params.user))
+	fmtUrl := fmt.Sprintf("%s?page=%s", params.url, params.page)
+	resp, err := http.Get(c.getURL(fmtUrl, params.user))
 	require.NoError(c.t, err)
 
 	return resp
@@ -131,6 +132,18 @@ func (c TestContext) getURL(url string, user User) string {
 		baseUrl,
 		url,
 	)
+}
+
+func (c TestContext) createOrg(name string) int64 {
+	c.t.Helper()
+	store := c.env.SQLStore
+	store.Cfg.AutoAssignOrg = false
+	quotaService := quotaimpl.ProvideService(store, store.Cfg)
+	orgService, err := orgimpl.ProvideService(store, store.Cfg, quotaService)
+	require.NoError(c.t, err)
+	orgId, err := orgService.GetOrCreate(context.Background(), name)
+	require.NoError(c.t, err)
+	return orgId
 }
 
 func (c TestContext) createUser(cmd user.CreateUserCommand) User {

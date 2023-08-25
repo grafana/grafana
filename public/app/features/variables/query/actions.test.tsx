@@ -558,6 +558,45 @@ describe('query actions', () => {
     });
   });
 
+  describe('when changeQueryVariableQuery is dispatched with empty string definition', () => {
+    it('then correct actions are dispatched', async () => {
+      const optionsMetrics = [createMetric('A'), createMetric('B')];
+      const variable = createVariable({ datasource: { uid: 'datasource' }, includeAll: true });
+
+      const query = '$datasource';
+      const definition = '';
+
+      mockDatasourceMetrics({ ...variable, query }, optionsMetrics);
+
+      const tester = await reduxTester<RootReducerType>()
+        .givenRootReducer(getRootReducer())
+        .whenActionIsDispatched(
+          toKeyedAction('key', addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
+        )
+        .whenActionIsDispatched(toKeyedAction('key', variablesInitTransaction({ uid: 'key' })))
+        .whenAsyncActionIsDispatched(
+          changeQueryVariableQuery(toKeyedVariableIdentifier(variable), query, definition),
+          true
+        );
+
+      const option = createOption(ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE);
+      const update = { results: optionsMetrics, templatedRegex: '' };
+
+      tester.thenDispatchedActionsShouldEqual(
+        toKeyedAction('key', removeVariableEditorError({ errorProp: 'query' })),
+        toKeyedAction('key', changeVariableProp(toVariablePayload(variable, { propName: 'query', propValue: query }))),
+        toKeyedAction(
+          'key',
+          changeVariableProp(toVariablePayload(variable, { propName: 'definition', propValue: definition }))
+        ),
+        toKeyedAction('key', variableStateFetching(toVariablePayload(variable))),
+        toKeyedAction('key', updateVariableOptions(toVariablePayload(variable, update))),
+        toKeyedAction('key', setCurrentVariableValue(toVariablePayload(variable, { option }))),
+        toKeyedAction('key', variableStateCompleted(toVariablePayload(variable)))
+      );
+    });
+  });
+
   describe('hasSelfReferencingQuery', () => {
     it('when called with a string', () => {
       const query = '$query';

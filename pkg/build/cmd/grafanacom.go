@@ -177,8 +177,8 @@ func publishPackages(cfg packaging.PublishConfig) error {
 		Version:     cfg.Version,
 		ReleaseDate: time.Now().UTC(),
 		Builds:      builds,
-		Stable:      cfg.ReleaseMode.Mode == config.TagMode && !cfg.ReleaseMode.IsBeta && !cfg.ReleaseMode.IsTest,
-		Beta:        cfg.ReleaseMode.IsBeta,
+		Stable:      cfg.ReleaseMode.Mode == config.TagMode && !cfg.ReleaseMode.IsPreview && !cfg.ReleaseMode.IsTest,
+		Beta:        cfg.ReleaseMode.IsPreview,
 		Nightly:     cfg.ReleaseMode.Mode == config.CronjobMode,
 	}
 	if cfg.ReleaseMode.Mode == config.TagMode || r.Beta {

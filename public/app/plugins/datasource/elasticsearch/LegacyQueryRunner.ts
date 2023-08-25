@@ -7,6 +7,7 @@ import {
   DataQueryRequest,
   DataQueryResponse,
   dateTime,
+  ensureTimeField,
   Field,
   LogRowContextOptions,
   LogRowContextQueryDirection,
@@ -75,7 +76,7 @@ export class LegacyQueryRunner {
             const message = err.data.error?.reason ?? err.data.message ?? 'Unknown error';
 
             return throwError({
-              message: 'Elasticsearch error: ' + message,
+              message,
               error: err.data.error,
             });
           }
@@ -134,12 +135,13 @@ export class LegacyQueryRunner {
      */
     const timestampField = dataFrame.fields.find((f: Field) => f.name === this.datasource.timeField);
     const lineField = dataFrame.fields.find((f: Field) => f.name === this.datasource.logMessageField);
+    const otherFields = dataFrame.fields.filter((f: Field) => f !== timestampField && f !== lineField);
     if (timestampField && lineField) {
       return {
         data: [
           {
             ...dataFrame,
-            fields: [...dataFrame.fields, { ...timestampField, name: 'ts' }, { ...lineField, name: 'line' }],
+            fields: [ensureTimeField(timestampField), lineField, ...otherFields],
           },
         ],
       };

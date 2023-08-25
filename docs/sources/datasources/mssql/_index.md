@@ -10,6 +10,11 @@ keywords:
   - SQL
   - guide
   - Azure SQL Database
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 menuTitle: Microsoft SQL Server
 title: Microsoft SQL Server data source
 weight: 900
@@ -22,11 +27,11 @@ You can query and visualize data from any Microsoft SQL Server 2005 or newer, in
 
 This topic explains configuration specific to the Microsoft SQL Server data source.
 
-For instructions on how to add a data source to Grafana, refer to the [administration documentation]({{< relref "../../administration/data-source-management/" >}}).
+For instructions on how to add a data source to Grafana, refer to the [administration documentation][data-source-management].
 Only users with the organization administrator role can add data sources.
-Administrators can also [configure the data source via YAML]({{< relref "#provision-the-data-source" >}}) with Grafana's provisioning system.
+Administrators can also [configure the data source via YAML](#provision-the-data-source) with Grafana's provisioning system.
 
-Once you've added the Microsoft SQL Server data source, you can [configure it]({{< relref "#configure-the-data-source" >}}) so that your Grafana instance's users can create queries in its [query editor]({{< relref "./query-editor/" >}}) when they [build dashboards]({{< relref "../../dashboards/build-dashboards/" >}}) and use [Explore]({{< relref "../../explore/" >}}).
+Once you've added the Microsoft SQL Server data source, you can [configure it](#configure-the-data-source) so that your Grafana instance's users can create queries in its [query editor]({{< relref "./query-editor" >}}) when they [build dashboards][build-dashboards] and use [Explore][explore].
 
 ## Configure the data source
 
@@ -41,26 +46,26 @@ To configure basic settings for the data source, complete the following steps:
 
 1. Set the data source's basic configuration options:
 
-| Name                | Description                                                                                                                                                                                                                                     |
-| ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Name**            | Sets the name you use to refer to the data source in panels and queries.                                                                                                                                                                        |
-| **Default**         | Sets the data source that's pre-selected for new panels.                                                                                                                                                                                        |
-| **Host**            | Sets the IP address/hostname and optional port of your MS SQL instance. Default port is 0, the driver default. You can specify multiple connection properties, such as `ApplicationIntent`, by separating each property with a semicolon (`;`). |
-| **Database**        | Sets the name of your MS SQL database.                                                                                                                                                                                                          |
-| **Authentication**  | Sets the authentication mode, either using SQL Server Authentication or Windows Authentication (single sign-on for Windows users).                                                                                                              |
-| **User**            | Defines the database user's username.                                                                                                                                                                                                           |
-| **Password**        | Defines the database user's password.                                                                                                                                                                                                           |
-| **Encrypt**         | Determines whether to negotiate a secure SSL TCP/IP connection with the server, or to which extent. Default is `false`.                                                                                                                         |
-| **Max open**        | Sets the maximum number of open connections to the database. Default is `100`.                                                                                                                                                                  |
-| **Max idle**        | Sets the maximum number of connections in the idle connection pool. Default is `100`.                                                                                                                                                           |
-| **Auto (max idle)** | If set will set the maximum number of idle connections to the number of maximum open connections (Grafana v9.5.1+). Default is `true`.                                                                                                          |
-| **Max lifetime**    | Sets the maximum number of seconds that the data source can reuse a connection. Default is `14400` (4 hours).                                                                                                                                   |
+| Name                | Description                                                                                                                                                                                                                                                                                                                                                        |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Name**            | Sets the name you use to refer to the data source in panels and queries.                                                                                                                                                                                                                                                                                           |
+| **Default**         | Sets the data source that's pre-selected for new panels.                                                                                                                                                                                                                                                                                                           |
+| **Host**            | Sets the IP address/hostname and optional port of your MS SQL instance. Default port is 0, the driver default. You can specify multiple connection properties, such as `ApplicationIntent`, by separating each property with a semicolon (`;`).                                                                                                                    |
+| **Database**        | Sets the name of your MS SQL database.                                                                                                                                                                                                                                                                                                                             |
+| **Authentication**  | Sets the authentication mode, either using SQL Server Authentication or Windows Authentication (single sign-on for Windows users).                                                                                                                                                                                                                                 |
+| **User**            | Defines the database user's username.                                                                                                                                                                                                                                                                                                                              |
+| **Password**        | Defines the database user's password.                                                                                                                                                                                                                                                                                                                              |
+| **Encrypt**         | Determines whether or to which extent a secure SSL TCP/IP connection will be negotiated with the server. Options include: `disable` - data sent between client and server is not encrypted; `false` - data sent between client and server is not encrypted beyond the login packet; `true` - data sent between client and server is encrypted. Default is `false`. |
+| **Max open**        | Sets the maximum number of open connections to the database. Default is `100`.                                                                                                                                                                                                                                                                                     |
+| **Max idle**        | Sets the maximum number of connections in the idle connection pool. Default is `100`.                                                                                                                                                                                                                                                                              |
+| **Auto (max idle)** | If set will set the maximum number of idle connections to the number of maximum open connections (Grafana v9.5.1+). Default is `true`.                                                                                                                                                                                                                             |
+| **Max lifetime**    | Sets the maximum number of seconds that the data source can reuse a connection. Default is `14400` (4 hours).                                                                                                                                                                                                                                                      |
 
 You can also configure settings specific to the Microsoft SQL Server data source. These options are described in the sections below.
 
 ### Min time interval
 
-The **Min time interval** setting defines a lower limit for the [`$__interval`]({{< relref "../../dashboards/variables/add-template-variables#__interval" >}}) and [`$__interval_ms`]({{< relref "../../dashboards/variables/add-template-variables#__interval_ms" >}}) variables.
+The **Min time interval** setting defines a lower limit for the [`$__interval`][add-template-variables-interval] and [`$__interval_ms`][add-template-variables-interval_ms] variables.
 
 This value _must_ be formatted as a number followed by a valid time identifier:
 
@@ -109,7 +114,7 @@ We recommend that you use the latest available service pack for optimal compatib
 ### Provision the data source
 
 You can define and configure the data source in YAML files as part of Grafana's provisioning system.
-For more information about provisioning, and for available configuration options, refer to [Provisioning Grafana]({{< relref "../../administration/provisioning/#data-sources" >}}).
+For more information about provisioning, and for available configuration options, refer to [Provisioning Grafana][provisioning-data-sources].
 
 #### Provisioning example
 
@@ -128,6 +133,7 @@ datasources:
       maxIdleConnsAuto: true # Grafana v9.5.1+
       connMaxLifetime: 14400 # Grafana v5.4+
       connectionTimeout: 0 # Grafana v9.3+
+      encrypt: 'false'
     secureJsonData:
       password: 'Password!'
 ```
@@ -136,7 +142,7 @@ datasources:
 
 You can create queries with the Microsoft SQL Server data source's query editor when editing a panel that uses a MS SQL data source.
 
-For details, refer to the [query editor documentation]({{< relref "./query-editor/" >}}).
+For details, refer to the [query editor documentation]({{< relref "./query-editor" >}}).
 
 ## Use template variables
 
@@ -144,4 +150,27 @@ Instead of hard-coding details such as server, application, and sensor names in 
 Grafana lists these variables in dropdown select boxes at the top of the dashboard to help you change the data displayed in your dashboard.
 Grafana refers to such variables as template variables.
 
-For details, see the [template variables documentation]({{< relref "./template-variables/" >}}).
+For details, see the [template variables documentation]({{< relref "./template-variables" >}}).
+
+{{% docs/reference %}}
+
+<!-- prettier-ignore-start -->
+[add-template-variables-interval-ms]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables/add-template-variables#__interval_ms"
+[add-template-variables-interval-ms]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables/add-template-variables#__interval_ms"
+
+[add-template-variables-interval]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables/add-template-variables#__interval"
+[add-template-variables-interval]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables/add-template-variables#__interval"
+<!-- prettier-ignore-end -->
+
+[build-dashboards]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/build-dashboards"
+[build-dashboards]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/build-dashboards"
+
+[data-source-management]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/administration/data-source-management"
+[data-source-management]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/administration/data-source-management"
+
+[explore]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/explore"
+[explore]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/explore"
+
+[provisioning-data-sources]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/administration/provisioning#data-sources"
+[provisioning-data-sources]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/administration/provisioning#data-sources"
+{{% /docs/reference %}}

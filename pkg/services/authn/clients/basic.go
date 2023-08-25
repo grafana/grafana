@@ -2,13 +2,14 @@ package clients
 
 import (
 	"context"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 var (
-	errDecodingBasicAuthHeader = errutil.NewBase(errutil.StatusBadRequest, "basic-auth.invalid-header", errutil.WithPublicMessage("Invalid Basic Auth Header"))
+	errDecodingBasicAuthHeader = errutil.BadRequest("basic-auth.invalid-header", errutil.WithPublicMessage("Invalid Basic Auth Header"))
 )
 
 var _ authn.ContextAwareClient = new(Basic)
@@ -39,6 +40,13 @@ func (c *Basic) Authenticate(ctx context.Context, r *authn.Request) (*authn.Iden
 }
 
 func (c *Basic) Test(ctx context.Context, r *authn.Request) bool {
+	if r.HTTPRequest == nil {
+		return false
+	}
+	// The OAuth2 introspection endpoint uses basic auth but is handled by the oauthserver package.
+	if strings.EqualFold(r.HTTPRequest.RequestURI, "/oauth2/introspect") {
+		return false
+	}
 	return looksLikeBasicAuthRequest(r)
 }
 

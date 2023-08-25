@@ -3,7 +3,7 @@ import React from 'react';
 import { openMenu, select } from 'react-select-event';
 
 import { createMockTimeSeriesList } from '../__mocks__/cloudMonitoringQuery';
-import { MetricDescriptor } from '../types';
+import { MetricDescriptor } from '../types/types';
 
 import { GroupBy, Props } from './GroupBy';
 

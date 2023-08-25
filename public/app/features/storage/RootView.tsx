@@ -14,6 +14,7 @@ import {
   TagList,
   useStyles2,
   VerticalGroup,
+  InlineField,
 } from '@grafana/ui';
 
 import { getGrafanaStorage } from './storage';
@@ -71,9 +72,7 @@ export function RootView({ root, onPathChange }: Props) {
                 {s.config.description}
                 {s.config.git?.remote && <a href={s.config.git?.remote}>{s.config.git?.remote}</a>}
               </Card.Meta>
-              {s.notice?.map((notice) => (
-                <Alert key={notice.text} severity={notice.severity} title={notice.text} />
-              ))}
+              {s.notice?.map((notice) => <Alert key={notice.text} severity={notice.severity} title={notice.text} />)}
 
               <Card.Tags className={styles.clickable}>
                 <HorizontalGroup>
@@ -93,9 +92,9 @@ export function RootView({ root, onPathChange }: Props) {
   return (
     <div>
       <div className="page-action-bar">
-        <div className="gf-form gf-form--grow">
+        <InlineField grow>
           <FilterInput placeholder="Search Storage" value={searchQuery} onChange={setSearchQuery} />
-        </div>
+        </InlineField>
         <Button className="pull-right" onClick={() => onPathChange('', StorageView.AddRoot)}>
           Add Root
         </Button>

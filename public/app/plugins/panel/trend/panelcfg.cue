@@ -18,25 +18,21 @@ import (
 	"github.com/grafana/grafana/packages/grafana-schema/src/common"
 )
 
-composableKinds: PanelCfg: {
-	lineage: {
-		seqs: [
-			{
-				schemas: [
-					{
-						// Identical to timeseries... except it does not have timezone settings
-						Options: {
-							legend:  common.VizLegendOptions
-							tooltip: common.VizTooltipOptions
+composableKinds: PanelCfg: lineage: {
+	schemas: [{
+		version: [0, 0]
+		schema: {
+			// Identical to timeseries... except it does not have timezone settings
+			Options: {
+				legend:  common.VizLegendOptions
+				tooltip: common.VizTooltipOptions
 
-							// Name of the x field to use (defaults to first number)
-							xField?: string
-						} @cuetsy(kind="interface")
+				// Name of the x field to use (defaults to first number)
+				xField?: string
+			} @cuetsy(kind="interface")
 
-						FieldConfig: common.GraphFieldConfig & {} @cuetsy(kind="interface")
-					},
-				]
-			},
-		]
-	}
+			FieldConfig: common.GraphFieldConfig & {} @cuetsy(kind="interface")
+		}
+	}]
+	lenses: []
 }

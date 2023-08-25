@@ -1,97 +1,122 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import React, { useEffect, useState } from 'react';
 import useDebounce from 'react-use/lib/useDebounce';
 import usePrevious from 'react-use/lib/usePrevious';
 
-import { GrafanaTheme2, CoreApp } from '@grafana/data';
-import { reportInteraction } from '@grafana/runtime';
-import { Button, Input, RadioButtonGroup, useStyles2 } from '@grafana/ui';
+import { CoreApp, GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { reportInteraction, config } from '@grafana/runtime';
+import { Button, Dropdown, Input, Menu, RadioButtonGroup, useStyles2 } from '@grafana/ui';
 
-import { config } from '../../../../core/config';
 import { MIN_WIDTH_TO_SHOW_BOTH_TOPTABLE_AND_FLAMEGRAPH } from '../constants';
 
-import { SelectedView } from './types';
+import { byPackageGradient, byValueGradient, diffColorBlindGradient, diffDefaultGradient } from './FlameGraph/colors';
+import { ColorScheme, ColorSchemeDiff, SelectedView, TextAlign } from './types';
 
 type Props = {
   app: CoreApp;
   search: string;
-  setTopLevelIndex: (level: number) => void;
-  setSelectedBarIndex: (bar: number) => void;
-  setRangeMin: (range: number) => void;
-  setRangeMax: (range: number) => void;
   setSearch: (search: string) => void;
   selectedView: SelectedView;
   setSelectedView: (view: SelectedView) => void;
   containerWidth: number;
+  onReset: () => void;
+  textAlign: TextAlign;
+  onTextAlignChange: (align: TextAlign) => void;
+  showResetButton: boolean;
+  colorScheme: ColorScheme | ColorSchemeDiff;
+  onColorSchemeChange: (colorScheme: ColorScheme | ColorSchemeDiff) => void;
+  isDiffMode: boolean;
 };
 
 const FlameGraphHeader = ({
   app,
   search,
-  setTopLevelIndex,
-  setSelectedBarIndex,
-  setRangeMin,
-  setRangeMax,
   setSearch,
   selectedView,
   setSelectedView,
   containerWidth,
+  onReset,
+  textAlign,
+  onTextAlignChange,
+  showResetButton,
+  colorScheme,
+  onColorSchemeChange,
+  isDiffMode,
 }: Props) => {
   const styles = useStyles2((theme) => getStyles(theme, app));
-
-  let viewOptions: Array<{ value: SelectedView; label: string; description: string }> = [
-    { value: SelectedView.TopTable, label: 'Top Table', description: 'Only show top table' },
-    { value: SelectedView.FlameGraph, label: 'Flame Graph', description: 'Only show flame graph' },
-  ];
-
-  if (containerWidth >= MIN_WIDTH_TO_SHOW_BOTH_TOPTABLE_AND_FLAMEGRAPH) {
-    viewOptions.push({
-      value: SelectedView.Both,
-      label: 'Both',
-      description: 'Show both the top table and flame graph',
+  function interaction(name: string, context: Record<string, string | number>) {
+    reportInteraction(`grafana_flamegraph_${name}`, {
+      app,
+      grafana_version: config.buildInfo.version,
+      ...context,
     });
   }
 
-  const onResetView = () => {
-    setTopLevelIndex(0);
-    setSelectedBarIndex(0);
-    setRangeMin(0);
-    setRangeMax(1);
-    // We could set only one and wait them to sync but there is no need to debounce this.
-    setSearch('');
-    setLocalSearch('');
-  };
-
   const [localSearch, setLocalSearch] = useSearchInput(search, setSearch);
+
+  const suffix =
+    localSearch !== '' ? (
+      <Button
+        icon="times"
+        fill="text"
+        size="sm"
+        onClick={() => {
+          // We could set only one and wait them to sync but there is no need to debounce this.
+          setSearch('');
+          setLocalSearch('');
+        }}
+      >
+        Clear
+      </Button>
+    ) : null;
 
   return (
     <div className={styles.header}>
-      <div className={styles.leftContainer}>
-        <div className={styles.inputContainer}>
-          <Input
-            value={localSearch || ''}
-            onChange={(v) => {
-              setLocalSearch(v.currentTarget.value);
-            }}
-            placeholder={'Search..'}
-            width={44}
-          />
-        </div>
-        <Button type={'button'} variant="secondary" onClick={onResetView}>
-          Reset view
-        </Button>
+      <div className={styles.inputContainer}>
+        <Input
+          value={localSearch || ''}
+          onChange={(v) => {
+            setLocalSearch(v.currentTarget.value);
+          }}
+          placeholder={'Search..'}
+          width={44}
+          suffix={suffix}
+        />
       </div>
 
       <div className={styles.rightContainer}>
+        {showResetButton && (
+          <Button
+            variant={'secondary'}
+            fill={'outline'}
+            size={'sm'}
+            icon={'history-alt'}
+            tooltip={'Reset focus and sandwich state'}
+            onClick={() => {
+              onReset();
+            }}
+            className={styles.buttonSpacing}
+            aria-label={'Reset focus and sandwich state'}
+          />
+        )}
+        <ColorSchemeButton app={app} value={colorScheme} onChange={onColorSchemeChange} isDiffMode={isDiffMode} />
+        <RadioButtonGroup<TextAlign>
+          size="sm"
+          disabled={selectedView === SelectedView.TopTable}
+          options={alignOptions}
+          value={textAlign}
+          onChange={(val) => {
+            interaction('text_align_selected', { align: val });
+            onTextAlignChange(val);
+          }}
+          className={styles.buttonSpacing}
+        />
         <RadioButtonGroup<SelectedView>
-          options={viewOptions}
+          size="sm"
+          options={getViewOptions(containerWidth)}
           value={selectedView}
           onChange={(view) => {
-            reportInteraction('grafana_flamegraph_view_selected', {
-              app,
-              grafana_version: config.buildInfo.version,
-              view,
-            });
+            interaction('view_selected', { view });
             setSelectedView(view);
           }}
         />
@@ -99,6 +124,79 @@ const FlameGraphHeader = ({
     </div>
   );
 };
+
+type ColorSchemeButtonProps = {
+  app: CoreApp;
+  value: ColorScheme | ColorSchemeDiff;
+  onChange: (colorScheme: ColorScheme | ColorSchemeDiff) => void;
+  isDiffMode: boolean;
+};
+function ColorSchemeButton(props: ColorSchemeButtonProps) {
+  const styles = useStyles2((theme) => getStyles(theme, props.app));
+
+  let menu = (
+    <Menu>
+      <Menu.Item label="By value" onClick={() => props.onChange(ColorScheme.ValueBased)} />
+      <Menu.Item label="By package name" onClick={() => props.onChange(ColorScheme.PackageBased)} />
+    </Menu>
+  );
+
+  if (props.isDiffMode) {
+    menu = (
+      <Menu>
+        <Menu.Item label="Default (green to red)" onClick={() => props.onChange(ColorSchemeDiff.Default)} />
+        <Menu.Item label="Color blind (blue to red)" onClick={() => props.onChange(ColorSchemeDiff.DiffColorBlind)} />
+      </Menu>
+    );
+  }
+
+  // Show a bit different gradient as a way to indicate selected value
+  const colorDotStyle =
+    {
+      [ColorScheme.ValueBased]: styles.colorDotByValue,
+      [ColorScheme.PackageBased]: styles.colorDotByPackage,
+      [ColorSchemeDiff.DiffColorBlind]: styles.colorDotDiffColorBlind,
+      [ColorSchemeDiff.Default]: styles.colorDotDiffDefault,
+    }[props.value] || styles.colorDotByValue;
+
+  return (
+    <Dropdown overlay={menu}>
+      <Button
+        variant={'secondary'}
+        fill={'outline'}
+        size={'sm'}
+        tooltip={'Change color scheme'}
+        onClick={() => {}}
+        className={styles.buttonSpacing}
+        aria-label={'Change color scheme'}
+      >
+        <span className={cx(styles.colorDot, colorDotStyle)} />
+      </Button>
+    </Dropdown>
+  );
+}
+
+const alignOptions: Array<SelectableValue<TextAlign>> = [
+  { value: 'left', description: 'Align text left', icon: 'align-left' },
+  { value: 'right', description: 'Align text right', icon: 'align-right' },
+];
+
+function getViewOptions(width: number): Array<SelectableValue<SelectedView>> {
+  let viewOptions: Array<{ value: SelectedView; label: string; description: string }> = [
+    { value: SelectedView.TopTable, label: 'Top Table', description: 'Only show top table' },
+    { value: SelectedView.FlameGraph, label: 'Flame Graph', description: 'Only show flame graph' },
+  ];
+
+  if (width >= MIN_WIDTH_TO_SHOW_BOTH_TOPTABLE_AND_FLAMEGRAPH) {
+    viewOptions.push({
+      value: SelectedView.Both,
+      label: 'Both',
+      description: 'Show both the top table and flame graph',
+    });
+  }
+
+  return viewOptions;
+}
 
 function useSearchInput(
   search: string,
@@ -129,23 +227,68 @@ function useSearchInput(
 
 const getStyles = (theme: GrafanaTheme2, app: CoreApp) => ({
   header: css`
-    display: flow-root;
+    label: header;
+    display: flex;
+    justify-content: space-between;
     width: 100%;
     background: ${theme.colors.background.primary};
     top: 0;
-    height: 50px;
     z-index: ${theme.zIndex.navbarFixed};
-    ${app === CoreApp.Explore ? 'position: sticky; margin-bottom: 8px; padding-top: 9px' : ''};
+    ${app === CoreApp.Explore
+      ? css`
+          position: sticky;
+          padding-bottom: ${theme.spacing(1)};
+          padding-top: ${theme.spacing(1)};
+        `
+      : ''};
   `,
   inputContainer: css`
-    float: left;
+    label: inputContainer;
     margin-right: 20px;
   `,
-  leftContainer: css`
-    float: left;
-  `,
   rightContainer: css`
-    float: right;
+    label: rightContainer;
+    display: flex;
+    align-items: flex-start;
+  `,
+  buttonSpacing: css`
+    label: buttonSpacing;
+    margin-right: ${theme.spacing(1)};
+  `,
+
+  resetButton: css`
+    label: resetButton;
+    display: flex;
+    margin-right: ${theme.spacing(2)};
+  `,
+  resetButtonIconWrapper: css`
+    label: resetButtonIcon;
+    padding: 0 5px;
+    color: ${theme.colors.text.disabled};
+  `,
+  colorDot: css`
+    label: colorDot;
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+  `,
+  colorDotByValue: css`
+    label: colorDotByValue;
+    background: ${byValueGradient};
+  `,
+  colorDotByPackage: css`
+    label: colorDotByPackage;
+    background: ${byPackageGradient};
+  `,
+  colorDotDiffDefault: css`
+    label: colorDotDiffDefault;
+    background: ${diffDefaultGradient};
+  `,
+
+  colorDotDiffColorBlind: css`
+    label: colorDotDiffColorBlind;
+    background: ${diffColorBlindGradient};
   `,
 });
 

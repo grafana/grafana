@@ -1,14 +1,11 @@
-export type ContextMenuData = {
-  e: MouseEvent;
-  levelIndex: number;
-  barIndex: number;
-};
+import { LevelItem } from './FlameGraph/dataTransform';
 
-export type Metadata = {
-  percentValue: number;
-  unitTitle: string;
-  unitValue: string;
-  samples: string;
+export type ClickedItemData = {
+  posX: number;
+  posY: number;
+  label: string;
+  item: LevelItem;
+  level: number;
 };
 
 export enum SampleUnit {
@@ -32,6 +29,8 @@ export enum SelectedView {
 export interface TableData {
   self: number;
   total: number;
+  // For diff view
+  totalRight: number;
 }
 
 export interface TopTableData {
@@ -44,3 +43,15 @@ export type TopTableValue = {
   value: number;
   unitValue: string;
 };
+
+export enum ColorScheme {
+  ValueBased = 'valueBased',
+  PackageBased = 'packageBased',
+}
+
+export enum ColorSchemeDiff {
+  Default = 'default',
+  DiffColorBlind = 'diffColorBlind',
+}
+
+export type TextAlign = 'left' | 'right';

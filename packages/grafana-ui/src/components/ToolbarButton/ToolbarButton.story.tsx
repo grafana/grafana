@@ -92,27 +92,29 @@ BasicWithIcon.args = {
 };
 
 export const Examples: StoryFn<typeof ToolbarButton> = (args) => {
-  const variants: ToolbarButtonVariant[] = ['default', 'active', 'primary', 'destructive'];
+  const variants: ToolbarButtonVariant[] = ['default', 'canvas', 'active', 'primary', 'destructive'];
 
   return (
     <DashboardStoryCanvas>
       <VerticalGroup>
         Button states
         <ToolbarButtonRow>
-          <ToolbarButton>Just text</ToolbarButton>
-          <ToolbarButton icon="sync" tooltip="Sync" />
-          <ToolbarButton imgSrc="./grafana_icon.svg">With imgSrc</ToolbarButton>
-          <ToolbarButton icon="cloud" isOpen={true}>
+          <ToolbarButton variant="canvas">Just text</ToolbarButton>
+          <ToolbarButton variant="canvas" icon="sync" tooltip="Sync" />
+          <ToolbarButton variant="canvas" imgSrc="./grafana_icon.svg">
+            With imgSrc
+          </ToolbarButton>
+          <ToolbarButton variant="canvas" icon="cloud" isOpen={true}>
             isOpen
           </ToolbarButton>
-          <ToolbarButton icon="cloud" isOpen={false}>
+          <ToolbarButton variant="canvas" icon="cloud" isOpen={false}>
             isOpen = false
           </ToolbarButton>
         </ToolbarButtonRow>
         <br />
         disabled
         <ToolbarButtonRow>
-          <ToolbarButton icon="sync" disabled>
+          <ToolbarButton variant="canvas" icon="sync" disabled>
             Disabled
           </ToolbarButton>
         </ToolbarButtonRow>
@@ -128,15 +130,15 @@ export const Examples: StoryFn<typeof ToolbarButton> = (args) => {
         <br />
         Wrapped in noSpacing ButtonGroup
         <ButtonGroup>
-          <ToolbarButton icon="clock-nine" tooltip="Time picker">
+          <ToolbarButton variant="active" icon="clock-nine" tooltip="Time picker">
             2020-10-02
           </ToolbarButton>
-          <ToolbarButton icon="search-minus" />
+          <ToolbarButton variant="active" icon="search-minus" />
         </ButtonGroup>
         <br />
         <ButtonGroup>
-          <ToolbarButton icon="sync" />
-          <ToolbarButton isOpen={false} narrow />
+          <ToolbarButton variant="canvas" icon="sync" />
+          <ToolbarButton variant="canvas" isOpen={false} narrow />
         </ButtonGroup>
         <br />
         Inside button group

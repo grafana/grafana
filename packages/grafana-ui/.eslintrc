@@ -1,9 +1,10 @@
 {
   "rules": {
+    "@emotion/syntax-preference": [2, "object"],
     "no-restricted-imports": [
       "error",
       {
-        "patterns": ["@grafana/runtime", "@grafana/data/*", "@grafana/ui", "@grafana/e2e"],
+        "patterns": ["@grafana/runtime", "@grafana/data/*", "@grafana/ui", "@grafana/e2e", "@grafana/e2e-selectors/*"],
         "paths": [
           {
             "name": "react-i18next",

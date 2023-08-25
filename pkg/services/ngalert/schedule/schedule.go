@@ -8,9 +8,6 @@ import (
 	"time"
 
 	"github.com/benbjohnson/clock"
-	alertingModels "github.com/grafana/alerting/models"
-	"github.com/hashicorp/go-multierror"
-	prometheusModel "github.com/prometheus/common/model"
 	"go.opentelemetry.io/otel/attribute"
 	"golang.org/x/sync/errgroup"
 
@@ -133,6 +130,7 @@ func NewScheduler(cfg SchedulerCfg, stateManager *state.Manager) *schedule {
 }
 
 func (sch *schedule) Run(ctx context.Context) error {
+	sch.log.Info("Starting scheduler", "tickInterval", sch.baseInterval)
 	t := ticker.New(sch.clock, sch.baseInterval, sch.metrics.Ticker)
 	defer t.Stop()
 
@@ -353,9 +351,11 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 	evalTotal := sch.metrics.EvalTotal.WithLabelValues(orgID)
 	evalDuration := sch.metrics.EvalDuration.WithLabelValues(orgID)
 	evalTotalFailures := sch.metrics.EvalFailures.WithLabelValues(orgID)
+	processDuration := sch.metrics.ProcessDuration.WithLabelValues(orgID)
+	sendDuration := sch.metrics.SendDuration.WithLabelValues(orgID)
 
 	notify := func(states []state.StateTransition) {
-		expiredAlerts := FromAlertsStateToStoppedAlert(states, sch.appURL, sch.clock)
+		expiredAlerts := state.FromAlertsStateToStoppedAlert(states, sch.appURL, sch.clock)
 		if len(expiredAlerts.PostableAlerts) > 0 {
 			sch.alertsSender.Send(key, expiredAlerts)
 		}
@@ -372,7 +372,7 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 	}
 
 	evaluate := func(ctx context.Context, f fingerprint, attempt int64, e *evaluation, span tracing.Span) {
-		logger := logger.New("version", e.rule.Version, "fingerprint", f, "attempt", attempt, "now", e.scheduledAt)
+		logger := logger.New("version", e.rule.Version, "fingerprint", f, "attempt", attempt, "now", e.scheduledAt).FromContext(ctx)
 		start := sch.clock.Now()
 
 		evalCtx := eval.NewContext(ctx, SchedulerUserFor(e.rule.OrgID))
@@ -401,7 +401,7 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 			if err == nil {
 				for _, result := range results {
 					if result.Error != nil {
-						err = multierror.Append(err, result.Error)
+						err = errors.Join(err, result.Error)
 					}
 				}
 			}
@@ -425,8 +425,18 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 			logger.Debug("Skip updating the state because the context has been cancelled")
 			return
 		}
-		processedStates := sch.stateManager.ProcessEvalResults(ctx, e.scheduledAt, e.rule, results, sch.getRuleExtraLabels(e))
-		alerts := FromStateTransitionToPostableAlerts(processedStates, sch.stateManager, sch.appURL)
+		start = sch.clock.Now()
+		processedStates := sch.stateManager.ProcessEvalResults(
+			ctx,
+			e.scheduledAt,
+			e.rule,
+			results,
+			state.GetRuleExtraLabels(e.rule, e.folderTitle, !sch.disableGrafanaFolder),
+		)
+		processDuration.Observe(sch.clock.Now().Sub(start).Seconds())
+
+		start = sch.clock.Now()
+		alerts := state.FromStateTransitionToPostableAlerts(processedStates, sch.stateManager, sch.appURL)
 		span.AddEvents(
 			[]string{"message", "state_transitions", "alerts_to_send"},
 			[]tracing.EventValue{
@@ -437,6 +447,7 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 		if len(alerts.PostableAlerts) > 0 {
 			sch.alertsSender.Send(key, alerts)
 		}
+		sendDuration.Observe(sch.clock.Now().Sub(start).Seconds())
 	}
 
 	retryIfError := func(f func(attempt int64) error) error {
@@ -556,19 +567,6 @@ func (sch *schedule) stopApplied(alertDefKey ngmodels.AlertRuleKey) {
 	}
 
 	sch.stopAppliedFunc(alertDefKey)
-}
-
-func (sch *schedule) getRuleExtraLabels(evalCtx *evaluation) map[string]string {
-	extraLabels := make(map[string]string, 4)
-
-	extraLabels[alertingModels.NamespaceUIDLabel] = evalCtx.rule.NamespaceUID
-	extraLabels[prometheusModel.AlertNameLabel] = evalCtx.rule.Title
-	extraLabels[alertingModels.RuleUIDLabel] = evalCtx.rule.UID
-
-	if !sch.disableGrafanaFolder {
-		extraLabels[ngmodels.FolderTitleLabel] = evalCtx.folderTitle
-	}
-	return extraLabels
 }
 
 func SchedulerUserFor(orgID int64) *user.SignedInUser {

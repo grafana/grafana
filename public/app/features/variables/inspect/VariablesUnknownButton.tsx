@@ -31,7 +31,7 @@ export const VariablesUnknownButton = ({ id, usages }: Props) => {
           <IconButton
             onClick={() => showModal()}
             name="code-branch"
-            title="Show usages"
+            tooltip="Show usages"
             data-testid="VariablesUnknownButton"
           />
         );

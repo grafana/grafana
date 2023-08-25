@@ -6,9 +6,12 @@ import (
 	"time"
 
 	"github.com/benbjohnson/clock"
+	"github.com/grafana/dskit/concurrency"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"go.opentelemetry.io/otel/attribute"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngModels "github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -29,6 +32,7 @@ type AlertInstanceManager interface {
 type Manager struct {
 	log     log.Logger
 	metrics *metrics.State
+	tracer  tracing.Tracer
 
 	clock       clock.Clock
 	cache       *cache
@@ -39,7 +43,9 @@ type Manager struct {
 	historian     Historian
 	externalURL   *url.URL
 
-	doNotSaveNormalState bool
+	doNotSaveNormalState           bool
+	maxStateSaveConcurrency        int
+	applyNoDataAndErrorToAllStates bool
 }
 
 type ManagerCfg struct {
@@ -51,24 +57,38 @@ type ManagerCfg struct {
 	Historian     Historian
 	// DoNotSaveNormalState controls whether eval.Normal state is persisted to the database and returned by get methods
 	DoNotSaveNormalState bool
+	// MaxStateSaveConcurrency controls the number of goroutines (per rule) that can save alert state in parallel.
+	MaxStateSaveConcurrency int
+
+	// ApplyNoDataAndErrorToAllStates makes state manager to apply exceptional results (NoData and Error)
+	// to all states when corresponding execution in the rule definition is set to either `Alerting` or `OK`
+	ApplyNoDataAndErrorToAllStates bool
+
+	Tracer tracing.Tracer
 }
 
 func NewManager(cfg ManagerCfg) *Manager {
 	return &Manager{
-		cache:                newCache(),
-		ResendDelay:          ResendDelay, // TODO: make this configurable
-		log:                  log.New("ngalert.state.manager"),
-		metrics:              cfg.Metrics,
-		instanceStore:        cfg.InstanceStore,
-		images:               cfg.Images,
-		historian:            cfg.Historian,
-		clock:                cfg.Clock,
-		externalURL:          cfg.ExternalURL,
-		doNotSaveNormalState: cfg.DoNotSaveNormalState,
+		cache:                          newCache(),
+		ResendDelay:                    ResendDelay, // TODO: make this configurable
+		log:                            log.New("ngalert.state.manager"),
+		metrics:                        cfg.Metrics,
+		instanceStore:                  cfg.InstanceStore,
+		images:                         cfg.Images,
+		historian:                      cfg.Historian,
+		clock:                          cfg.Clock,
+		externalURL:                    cfg.ExternalURL,
+		doNotSaveNormalState:           cfg.DoNotSaveNormalState,
+		maxStateSaveConcurrency:        cfg.MaxStateSaveConcurrency,
+		applyNoDataAndErrorToAllStates: cfg.ApplyNoDataAndErrorToAllStates,
+		tracer:                         cfg.Tracer,
 	}
 }
 
 func (st *Manager) Run(ctx context.Context) error {
+	if st.applyNoDataAndErrorToAllStates {
+		st.log.Info("Running in alternative execution of Error/NoData mode")
+	}
 	ticker := st.clock.Ticker(MetricsScrapeInterval)
 	for {
 		select {
@@ -237,30 +257,87 @@ func (st *Manager) ResetStateByRuleUID(ctx context.Context, rule *ngModels.Alert
 // ProcessEvalResults updates the current states that belong to a rule with the evaluation results.
 // if extraLabels is not empty, those labels will be added to every state. The extraLabels take precedence over rule labels and result labels
 func (st *Manager) ProcessEvalResults(ctx context.Context, evaluatedAt time.Time, alertRule *ngModels.AlertRule, results eval.Results, extraLabels data.Labels) []StateTransition {
-	logger := st.log.FromContext(ctx)
+	tracingCtx, span := st.tracer.Start(ctx, "alert rule state calculation")
+	defer span.End()
+	span.SetAttributes("rule_uid", alertRule.UID, attribute.String("rule_uid", alertRule.UID))
+	span.SetAttributes("org_id", alertRule.OrgID, attribute.Int64("org_id", alertRule.OrgID))
+	span.SetAttributes("rule_version", alertRule.Version, attribute.Int64("rule_version", alertRule.Version))
+	utcTick := evaluatedAt.UTC().Format(time.RFC3339Nano)
+	span.SetAttributes("tick", utcTick, attribute.String("tick", utcTick))
+	span.SetAttributes("results", len(results), attribute.Int("tick", len(results)))
+
+	logger := st.log.FromContext(tracingCtx)
 	logger.Debug("State manager processing evaluation results", "resultCount", len(results))
-	states := make([]StateTransition, 0, len(results))
+	states := st.setNextStateForRule(tracingCtx, alertRule, results, extraLabels, logger)
 
-	for _, result := range results {
-		s := st.setNextState(ctx, alertRule, result, extraLabels, logger)
-		states = append(states, s)
-	}
+	span.AddEvents([]string{"message", "state_transitions"},
+		[]tracing.EventValue{
+			{Str: "results processed"},
+			{Num: int64(len(states))},
+		})
+
 	staleStates := st.deleteStaleStatesFromCache(ctx, logger, evaluatedAt, alertRule)
-	st.deleteAlertStates(ctx, logger, staleStates)
+	st.deleteAlertStates(tracingCtx, logger, staleStates)
 
-	st.saveAlertStates(ctx, logger, states...)
+	if len(staleStates) > 0 {
+		span.AddEvents([]string{"message", "state_transitions"},
+			[]tracing.EventValue{
+				{Str: "deleted stale states"},
+				{Num: int64(len(staleStates))},
+			})
+	}
+
+	st.saveAlertStates(tracingCtx, logger, states...)
+
+	span.AddEvents([]string{"message"},
+		[]tracing.EventValue{
+			{Str: "updated database"},
+		})
 
 	allChanges := append(states, staleStates...)
 	if st.historian != nil {
-		st.historian.Record(ctx, history_model.NewRuleMeta(alertRule, logger), allChanges)
+		st.historian.Record(tracingCtx, history_model.NewRuleMeta(alertRule, logger), allChanges)
 	}
 	return allChanges
 }
 
-// Set the current state based on evaluation results
-func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRule, result eval.Result, extraLabels data.Labels, logger log.Logger) StateTransition {
-	currentState := st.cache.getOrCreate(ctx, logger, alertRule, result, extraLabels, st.externalURL)
+func (st *Manager) setNextStateForRule(ctx context.Context, alertRule *ngModels.AlertRule, results eval.Results, extraLabels data.Labels, logger log.Logger) []StateTransition {
+	if st.applyNoDataAndErrorToAllStates && results.IsNoData() && (alertRule.NoDataState == ngModels.Alerting || alertRule.NoDataState == ngModels.OK) { // If it is no data, check the mapping and switch all results to the new state
+		// TODO aggregate UID of datasources that returned NoData into one and provide as auxiliary info, probably annotation
+		transitions := st.setNextStateForAll(ctx, alertRule, results[0], logger)
+		if len(transitions) > 0 {
+			return transitions // if there are no current states for the rule. Create ones for each result
+		}
+	}
+	if st.applyNoDataAndErrorToAllStates && results.IsError() && (alertRule.ExecErrState == ngModels.AlertingErrState || alertRule.ExecErrState == ngModels.OkErrState) {
+		// TODO squash all errors into one, and provide as annotation
+		transitions := st.setNextStateForAll(ctx, alertRule, results[0], logger)
+		if len(transitions) > 0 {
+			return transitions // if there are no current states for the rule. Create ones for each result
+		}
+	}
+	transitions := make([]StateTransition, 0, len(results))
+	for _, result := range results {
+		currentState := st.cache.getOrCreate(ctx, logger, alertRule, result, extraLabels, st.externalURL)
+		s := st.setNextState(ctx, alertRule, currentState, result, logger)
+		transitions = append(transitions, s)
+	}
+	return transitions
+}
 
+func (st *Manager) setNextStateForAll(ctx context.Context, alertRule *ngModels.AlertRule, result eval.Result, logger log.Logger) []StateTransition {
+	currentStates := st.cache.getStatesForRuleUID(alertRule.OrgID, alertRule.UID, false)
+	transitions := make([]StateTransition, 0, len(currentStates))
+	for _, currentState := range currentStates {
+		t := st.setNextState(ctx, alertRule, currentState, result, logger)
+		transitions = append(transitions, t)
+	}
+	return transitions
+}
+
+// Set the current state based on evaluation results
+func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRule, currentState *State, result eval.Result, logger log.Logger) StateTransition {
+	start := st.clock.Now()
 	currentState.LastEvaluationTime = result.EvaluatedAt
 	currentState.EvaluationDuration = result.EvaluationDuration
 	currentState.Results = append(currentState.Results, Evaluation{
@@ -276,6 +353,27 @@ func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRu
 
 	// Add the instance to the log context to help correlate log lines for a state
 	logger = logger.New("instance", result.Instance)
+
+	// if the current state is Error but the result is different, then we need o clean up the extra labels
+	// that were added after the state key was calculated
+	// https://github.com/grafana/grafana/blob/1df4d332c982dc5e394201bb2ef35b442727ce63/pkg/services/ngalert/state/state.go#L298-L311
+	// Usually, it happens in the case of classic conditions when the evalResult does not have labels.
+	//
+	// This is temporary change to make sure that the labels are not persistent in the state after it was in Error state
+	// TODO yuri. Remove it when correct Error result with labels is provided
+	if currentState.State == eval.Error && result.State != eval.Error {
+		// This is possible because state was updated after the CacheID was calculated.
+		_, curOk := currentState.Labels["ref_id"]
+		_, resOk := result.Instance["ref_id"]
+		if curOk && !resOk {
+			delete(currentState.Labels, "ref_id")
+		}
+		_, curOk = currentState.Labels["datasource_uid"]
+		_, resOk = result.Instance["datasource_uid"]
+		if curOk && !resOk {
+			delete(currentState.Labels, "datasource_uid")
+		}
+	}
 
 	switch result.State {
 	case eval.Normal:
@@ -327,6 +425,10 @@ func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRu
 		PreviousStateReason: oldReason,
 	}
 
+	if st.metrics != nil {
+		st.metrics.StateUpdateDuration.Observe(st.clock.Now().Sub(start).Seconds())
+	}
+
 	return nextState
 }
 
@@ -350,17 +452,17 @@ func (st *Manager) saveAlertStates(ctx context.Context, logger log.Logger, state
 		return
 	}
 
-	logger.Debug("Saving alert states", "count", len(states))
-	for _, s := range states {
+	saveState := func(ctx context.Context, idx int) error {
+		s := states[idx]
 		// Do not save normal state to database and remove transition to Normal state but keep mapped states
 		if st.doNotSaveNormalState && IsNormalStateWithNoReason(s.State) && !s.Changed() {
-			continue
+			return nil
 		}
 
 		key, err := s.GetAlertInstanceKey()
 		if err != nil {
 			logger.Error("Failed to create a key for alert state to save it to database. The state will be ignored ", "cacheID", s.CacheID, "error", err, "labels", s.Labels.String())
-			continue
+			return nil
 		}
 		instance := ngModels.AlertInstance{
 			AlertInstanceKey:  key,
@@ -375,8 +477,15 @@ func (st *Manager) saveAlertStates(ctx context.Context, logger log.Logger, state
 		err = st.instanceStore.SaveAlertInstance(ctx, instance)
 		if err != nil {
 			logger.Error("Failed to save alert state", "labels", s.Labels.String(), "state", s.State, "error", err)
+			return nil
 		}
+		return nil
 	}
+
+	start := time.Now()
+	logger.Debug("Saving alert states", "count", len(states), "max_state_save_concurrency", st.maxStateSaveConcurrency)
+	_ = concurrency.ForEachJob(ctx, len(states), st.maxStateSaveConcurrency, saveState)
+	logger.Debug("Saving alert states done", "count", len(states), "max_state_save_concurrency", st.maxStateSaveConcurrency, "duration", time.Since(start))
 }
 
 func (st *Manager) deleteAlertStates(ctx context.Context, logger log.Logger, states []StateTransition) {

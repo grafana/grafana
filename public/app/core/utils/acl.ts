@@ -5,7 +5,7 @@ export function processAclItems(items: DashboardAclDTO[]): DashboardAcl[] {
 }
 
 function processAclItem(dto: DashboardAclDTO): DashboardAcl {
-  const item = dto as DashboardAcl;
+  const item: DashboardAcl = dto;
 
   item.sortRank = 0;
 

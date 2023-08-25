@@ -64,6 +64,8 @@ export interface UnifiedAlertingConfig {
   minInterval: string;
   // will be undefined if alerStateHistory is not enabled
   alertStateHistoryBackend?: string;
+  // will be undefined if implementation is not "multiple"
+  alertStateHistoryPrimary?: string;
 }
 
 /** Supported OAuth services
@@ -171,6 +173,7 @@ export interface GrafanaConfig {
   queryHistoryEnabled: boolean;
   helpEnabled: boolean;
   profileEnabled: boolean;
+  newsFeedEnabled: boolean;
   ldapEnabled: boolean;
   sigV4AuthEnabled: boolean;
   azureAuthEnabled: boolean;
@@ -236,5 +239,5 @@ export interface AuthSettings {
   AzureADSkipOrgRoleSync?: boolean;
   GoogleSkipOrgRoleSync?: boolean;
   GenericOAuthSkipOrgRoleSync?: boolean;
-  DisableSyncLock?: boolean;
+  AuthProxyEnableLoginToken?: boolean;
 }

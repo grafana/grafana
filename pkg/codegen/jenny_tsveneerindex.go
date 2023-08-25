@@ -9,8 +9,10 @@ import (
 	"cuelang.org/go/cue"
 	"cuelang.org/go/cue/errors"
 	"github.com/grafana/codejen"
+	"github.com/grafana/cuetsy"
 	"github.com/grafana/cuetsy/ts"
 	"github.com/grafana/cuetsy/ts/ast"
+	"github.com/grafana/grafana/pkg/cuectx"
 	"github.com/grafana/kindsys"
 	"github.com/grafana/thema"
 	"github.com/grafana/thema/encoding/typescript"
@@ -44,13 +46,22 @@ func (gen *genTSVeneerIndex) Generate(kinds ...kindsys.Kind) (*codejen.File, err
 	for _, def := range kinds {
 		sch := def.Lineage().Latest()
 		f, err := typescript.GenerateTypes(sch, &typescript.TypeConfig{
+			CuetsyConfig: &cuetsy.Config{
+				ImportMapper: cuectx.MapCUEImportToTS,
+			},
 			RootName: def.Props().Common().Name,
 			Group:    def.Props().Common().LineageIsGroup,
 		})
 		if err != nil {
 			return nil, fmt.Errorf("%s: %w", def.Props().Common().Name, err)
 		}
-		renameSpecNode(def.Props().Common().Name, f)
+		// The obvious approach would be calling renameSpecNode() here, same as in the ts resource jenny,
+		// to rename the "spec" field to the name of the kind. But that was causing extra
+		// default elements to generate that didn't actually exist. Instead,
+		// findDeclNode() is aware of "spec" and does the change on the fly. Preserving this
+		// as a reminder in case we want to switch back, though.
+		// renameSpecNode(def.Props().Common().Name, f)
+
 		elems, err := gen.extractTSIndexVeneerElements(def, f)
 		if err != nil {
 			return nil, fmt.Errorf("%s: %w", def.Props().Common().Name, err)
@@ -66,7 +77,7 @@ func (gen *genTSVeneerIndex) extractTSIndexVeneerElements(def kindsys.Kind, tf *
 	comm := def.Props().Common()
 
 	// Check the root, then walk the tree
-	rootv := lin.Latest().Underlying()
+	rootv := lin.Latest().Underlying().LookupPath(schPath)
 
 	var raw, custom, rawD, customD ast.Idents
 
@@ -85,18 +96,14 @@ func (gen *genTSVeneerIndex) extractTSIndexVeneerElements(def kindsys.Kind, tf *
 				if !(sels[0].IsDefinition() || sels[0].String() == "spec") {
 					return false
 				}
-				// It might seem to make sense that we'd strip replaceout the leading # here for
+				// It might seem to make sense that we'd strip out the leading # here for
 				// definitions. However, cuetsy's tsast actually has the # still present in its
-				// Ident types, stripping it replaceout on the fly when stringifying.
+				// Ident types, stripping it out on the fly when stringifying.
 				name = sels[0].String()
 			}
 
-			if name == "spec" {
-				name = comm.Name
-			}
-
 			// Search the generated TS AST for the type and default def nodes
-			pair := findDeclNode(name, tf)
+			pair := findDeclNode(name, comm.Name, tf)
 			if pair.T == nil {
 				// No generated type for this item, skip it
 				return false
@@ -143,7 +150,7 @@ func (gen *genTSVeneerIndex) extractTSIndexVeneerElements(def kindsys.Kind, tf *
 		return nil, terr
 	}
 
-	vpath := fmt.Sprintf("v%v", thema.LatestVersion(lin)[0])
+	vpath := fmt.Sprintf("v%v", thema.Lineage.Latest(lin).Version())
 	if def.Props().Common().Maturity.Less(kindsys.MaturityStable) {
 		vpath = "x"
 	}
@@ -175,7 +182,7 @@ func (gen *genTSVeneerIndex) extractTSIndexVeneerElements(def kindsys.Kind, tf *
 // and exports all the symbols in the list.
 //
 // TODO generate code such that tsc enforces type compatibility between raw and veneer decls`,
-		lin.Name(), thema.LatestVersion(lin), filepath.ToSlash(filepath.Join(gen.dir, vtfile)))
+		lin.Name(), thema.Lineage.Latest(lin).Version(), filepath.ToSlash(filepath.Join(gen.dir, vtfile)))
 
 	customComments := []ast.Comment{{Text: customstr}}
 	if len(custom) > 0 {
@@ -208,8 +215,13 @@ type tsVeneerAttr struct {
 	target string
 }
 
-func findDeclNode(name string, tf *ast.File) declPair {
+func findDeclNode(name, basename string, tf *ast.File) declPair {
 	var p declPair
+
+	if name == basename {
+		return declPair{}
+	}
+
 	for _, def := range tf.Nodes {
 		// Peer through export keywords
 		if ex, is := def.(ast.ExportKeyword); is {
@@ -221,10 +233,16 @@ func findDeclNode(name string, tf *ast.File) declPair {
 			if x.Name.Name == name {
 				p.T = &x.Name
 				_, p.isEnum = x.Type.(ast.EnumType)
+				if name == "spec" {
+					p.T.Name = basename
+				}
 			}
 		case ast.VarDecl:
 			if x.Names.Idents[0].Name == "default"+name {
 				p.D = &x.Names.Idents[0]
+				if name == "spec" {
+					p.D.Name = "default" + basename
+				}
 			}
 		}
 	}

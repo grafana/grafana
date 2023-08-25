@@ -8,7 +8,7 @@ Logs are files that record events, warnings and errors as they occur within a so
 
 ### Usage
 
-Use the _pkg/infra/log_ package to create a named structured logger. Example:
+Use the [pkg/infra/log](/pkg/infra/log/) package to create a named structured logger. Example:
 
 ```go
 import (
@@ -140,13 +140,15 @@ If you want to guarantee the existence of metrics before any observations has ha
 
 ### How to collect and visualize metrics locally
 
+1. Ensure you have Docker installed and running on your machine
 1. Start Prometheus
 
    ```bash
    make devenv sources=prometheus
    ```
 
-2. Use Grafana Explore or dashboards to query any exported Grafana metrics
+1. Run Grafana, and create a Prometheus datasource if you do not have one yet. Set the server URL to `http://localhost:9090`, enable basic auth, and type in the same auth you have for local Grafana
+1. Use Grafana Explore or dashboards to query any exported Grafana metrics. You can also view them at http://localhost:3000/metrics
 
 ## Traces
 

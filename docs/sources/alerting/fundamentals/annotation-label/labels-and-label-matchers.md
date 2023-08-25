@@ -1,11 +1,18 @@
 ---
+canonical: https://grafana.com/docs/grafana/latest/alerting/fundamentals/annotation-label/labels-and-label-matchers/
 description: Learn about labels and label matchers in alerting
 keywords:
   - grafana
   - alerting
   - guide
   - fundamentals
-title: Label matchers
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
+menuTitle: Label matchers
+title: How label matching works
 weight: 117
 ---
 

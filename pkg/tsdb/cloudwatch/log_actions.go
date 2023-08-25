@@ -96,7 +96,7 @@ func (e *cloudWatchExecutor) executeLogActions(ctx context.Context, logger log.L
 }
 
 func (e *cloudWatchExecutor) executeLogAction(ctx context.Context, logger log.Logger, logsQuery models.LogsQuery, query backend.DataQuery, pluginCtx backend.PluginContext) (*data.Frame, error) {
-	instance, err := e.getInstance(pluginCtx)
+	instance, err := e.getInstance(ctx, pluginCtx)
 	if err != nil {
 		return nil, err
 	}
@@ -106,7 +106,7 @@ func (e *cloudWatchExecutor) executeLogAction(ctx context.Context, logger log.Lo
 		region = logsQuery.Region
 	}
 
-	logsClient, err := e.getCWLogsClient(pluginCtx, region)
+	logsClient, err := e.getCWLogsClient(ctx, pluginCtx, region)
 	if err != nil {
 		return nil, err
 	}
@@ -299,7 +299,14 @@ func (e *cloudWatchExecutor) executeGetQueryResults(ctx context.Context, logsCli
 		QueryId: aws.String(logsQuery.QueryId),
 	}
 
-	return logsClient.GetQueryResultsWithContext(ctx, queryInput)
+	getQueryResultsResponse, err := logsClient.GetQueryResultsWithContext(ctx, queryInput)
+	if err != nil {
+		var awsErr awserr.Error
+		if errors.As(err, &awsErr) {
+			return getQueryResultsResponse, &AWSError{Code: awsErr.Code(), Message: err.Error()}
+		}
+	}
+	return getQueryResultsResponse, err
 }
 
 func (e *cloudWatchExecutor) handleGetQueryResults(ctx context.Context, logsClient cloudwatchlogsiface.CloudWatchLogsAPI,

@@ -229,9 +229,8 @@ export const TransformationsEditor = (props: Props) => {
                         {!readOnly && (
                           <div className={styles.removeButton}>
                             <IconButton
-                              type="button"
                               tooltip="Remove transformation"
-                              name={'trash-alt'}
+                              name="trash-alt"
                               onClick={() => {
                                 remove(index);
                                 const keptValsCopy: Array<{ expression?: string; mapValue?: string } | undefined> = [
@@ -240,7 +239,6 @@ export const TransformationsEditor = (props: Props) => {
                                 keptValsCopy[index] = undefined;
                                 setKeptVals(compact(keptValsCopy));
                               }}
-                              ariaLabel="Remove transformation"
                             >
                               Remove
                             </IconButton>

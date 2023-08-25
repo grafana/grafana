@@ -1,9 +1,10 @@
 import { cx, css } from '@emotion/css';
 import React, { forwardRef, HTMLAttributes } from 'react';
+import Skeleton from 'react-loading-skeleton';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
-import { useTheme2 } from '../../themes';
+import { useStyles2, useTheme2 } from '../../themes';
 import { IconName } from '../../types/icon';
 import { getTagColor, getTagColorsFromName } from '../../utils';
 import { Icon } from '../Icon/Icon';
@@ -22,7 +23,7 @@ export interface Props extends Omit<HTMLAttributes<HTMLElement>, 'onClick'> {
   onClick?: OnTagClick;
 }
 
-export const Tag = forwardRef<HTMLElement, Props>(({ name, onClick, icon, className, colorIndex, ...rest }, ref) => {
+const TagComponent = forwardRef<HTMLElement, Props>(({ name, onClick, icon, className, colorIndex, ...rest }, ref) => {
   const theme = useTheme2();
   const styles = getTagStyles(theme, name, colorIndex);
 
@@ -47,8 +48,26 @@ export const Tag = forwardRef<HTMLElement, Props>(({ name, onClick, icon, classN
     </span>
   );
 });
+TagComponent.displayName = 'Tag';
 
-Tag.displayName = 'Tag';
+const TagSkeleton = () => {
+  const styles = useStyles2(getSkeletonStyles);
+  return <Skeleton width={60} height={22} containerClassName={styles.container} />;
+};
+
+interface TagWithSkeleton extends React.ForwardRefExoticComponent<Props & React.RefAttributes<HTMLElement>> {
+  Skeleton: typeof TagSkeleton;
+}
+
+export const Tag: TagWithSkeleton = Object.assign(TagComponent, {
+  Skeleton: TagSkeleton,
+});
+
+const getSkeletonStyles = () => ({
+  container: css({
+    lineHeight: 1,
+  }),
+});
 
 const getTagStyles = (theme: GrafanaTheme2, name: string, colorIndex?: number) => {
   let colors;
@@ -58,25 +77,25 @@ const getTagStyles = (theme: GrafanaTheme2, name: string, colorIndex?: number) =
     colors = getTagColor(colorIndex);
   }
   return {
-    wrapper: css`
-      appearance: none;
-      border-style: none;
-      font-weight: ${theme.typography.fontWeightMedium};
-      font-size: ${theme.typography.size.sm};
-      line-height: ${theme.typography.bodySmall.lineHeight};
-      vertical-align: baseline;
-      background-color: ${colors.color};
-      color: ${theme.v1.palette.gray98};
-      white-space: nowrap;
-      text-shadow: none;
-      padding: 3px 6px;
-      border-radius: ${theme.shape.radius.default};
-    `,
-    hover: css`
-      &:hover {
-        opacity: 0.85;
-        cursor: pointer;
-      }
-    `,
+    wrapper: css({
+      appearance: 'none',
+      borderStyle: 'none',
+      fontWeight: theme.typography.fontWeightMedium,
+      fontSize: theme.typography.size.sm,
+      lineHeight: theme.typography.bodySmall.lineHeight,
+      verticalAlign: 'baseline',
+      backgroundColor: colors.color,
+      color: theme.v1.palette.gray98,
+      whiteSpace: 'nowrap',
+      textShadow: 'none',
+      padding: '3px 6px',
+      borderRadius: theme.shape.radius.default,
+    }),
+    hover: css({
+      '&:hover': {
+        opacity: 0.85,
+        cursor: 'pointer',
+      },
+    }),
   };
 };

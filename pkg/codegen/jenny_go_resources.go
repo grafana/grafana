@@ -3,6 +3,7 @@ package codegen
 import (
 	"bytes"
 	"fmt"
+	"go/format"
 	"strings"
 
 	"cuelang.org/go/cue"
@@ -12,6 +13,8 @@ import (
 	"github.com/grafana/thema/encoding/gocode"
 	"github.com/grafana/thema/encoding/openapi"
 )
+
+var schPath = cue.MakePath(cue.Hid("_#schema", "github.com/grafana/thema"))
 
 type ResourceGoTypesJenny struct {
 	ApplyFuncs       []dstutil.ApplyFunc
@@ -31,7 +34,7 @@ func (ag *ResourceGoTypesJenny) Generate(kind kindsys.Kind) (*codejen.File, erro
 	}
 	sch := sfg.Schema
 
-	iter, err := sch.Underlying().Fields()
+	iter, err := sch.Underlying().LookupPath(schPath).Fields()
 	if err != nil {
 		return nil, err
 	}
@@ -46,6 +49,7 @@ func (ag *ResourceGoTypesJenny) Generate(kind kindsys.Kind) (*codejen.File, erro
 	if err := tmpls.Lookup("core_resource.tmpl").Execute(buf, tvars_resource{
 		PackageName:      mname,
 		KindName:         kind.Props().Common().Name,
+		Version:          strings.Replace(sfg.Schema.Version().String(), ".", "-", -1),
 		SubresourceNames: subr,
 	}); err != nil {
 		return nil, fmt.Errorf("failed executing core resource template: %w", err)
@@ -54,7 +58,13 @@ func (ag *ResourceGoTypesJenny) Generate(kind kindsys.Kind) (*codejen.File, erro
 	if err != nil {
 		return nil, err
 	}
-	return codejen.NewFile(fmt.Sprintf("pkg/kinds/%s/%s_gen.go", mname, mname), buf.Bytes(), ag), nil
+
+	content, err := format.Source(buf.Bytes())
+	if err != nil {
+		return nil, err
+	}
+
+	return codejen.NewFile(fmt.Sprintf("pkg/kinds/%s/%s_gen.go", mname, mname), content, ag), nil
 }
 
 type SubresourceGoTypesJenny struct {
@@ -77,7 +87,7 @@ func (g *SubresourceGoTypesJenny) Generate(kind kindsys.Kind) (codejen.Files, er
 
 	// Iterate through all top-level fields and make go types for them
 	// (this should consist of "spec" and arbitrary subresources)
-	i, err := sch.Underlying().Fields()
+	i, err := sch.Underlying().LookupPath(schPath).Fields()
 	if err != nil {
 		return nil, err
 	}

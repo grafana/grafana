@@ -1,16 +1,21 @@
 import { css, cx } from '@emotion/css';
-import { capitalize, uniqueId } from 'lodash';
+import { uniqueId } from 'lodash';
 import React, { FC, useCallback, useState } from 'react';
 
 import { DataFrame, dateTimeFormat, GrafanaTheme2, isTimeSeriesFrames, LoadingState, PanelData } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
-import { AutoSizeInput, Button, clearButtonStyles, Icon, IconButton, Select, useStyles2 } from '@grafana/ui';
+import { AutoSizeInput, Button, clearButtonStyles, IconButton, useStyles2 } from '@grafana/ui';
 import { ClassicConditions } from 'app/features/expressions/components/ClassicConditions';
 import { Math } from 'app/features/expressions/components/Math';
 import { Reduce } from 'app/features/expressions/components/Reduce';
 import { Resample } from 'app/features/expressions/components/Resample';
 import { Threshold } from 'app/features/expressions/components/Threshold';
-import { ExpressionQuery, ExpressionQueryType, gelTypes } from 'app/features/expressions/types';
+import {
+  ExpressionQuery,
+  ExpressionQueryType,
+  expressionTypes,
+  getExpressionLabel,
+} from 'app/features/expressions/types';
 import { AlertQuery, PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
 import { usePagination } from '../../hooks/usePagination';
@@ -55,13 +60,13 @@ export const Expression: FC<ExpressionProps> = ({
   const isLoading = data && Object.values(data).some((d) => Boolean(d) && d.state === LoadingState.Loading);
   const hasResults = Array.isArray(data?.series) && !isLoading;
   const series = data?.series ?? [];
+  const seriesCount = series.length;
 
   const alertCondition = isAlertCondition ?? false;
-  const showSummary = isAlertCondition && hasResults;
 
   const groupedByState = {
-    [PromAlertingRuleState.Firing]: series.filter((serie) => getSeriesValue(serie) >= 1),
-    [PromAlertingRuleState.Inactive]: series.filter((serie) => getSeriesValue(serie) < 1),
+    [PromAlertingRuleState.Firing]: series.filter((serie) => getSeriesValue(serie) !== 0),
+    [PromAlertingRuleState.Inactive]: series.filter((serie) => getSeriesValue(serie) === 0),
   };
 
   const renderExpressionType = useCallback(
@@ -93,9 +98,18 @@ export const Expression: FC<ExpressionProps> = ({
     },
     [onChangeQuery, queries]
   );
+  const selectedExpressionType = expressionTypes.find((o) => o.value === queryType);
+  const selectedExpressionDescription = selectedExpressionType?.description ?? '';
 
   return (
-    <div className={cx(styles.expression.wrapper, alertCondition && styles.expression.alertCondition)}>
+    <div
+      className={cx(
+        styles.expression.wrapper,
+        alertCondition && styles.expression.alertCondition,
+        queryType === ExpressionQueryType.classic && styles.expression.classic,
+        queryType !== ExpressionQueryType.classic && styles.expression.nonClassic
+      )}
+    >
       <div className={styles.expression.stack}>
         <Header
           refId={query.refId}
@@ -103,27 +117,34 @@ export const Expression: FC<ExpressionProps> = ({
           onRemoveExpression={() => onRemoveExpression(query.refId)}
           onUpdateRefId={(newRefId) => onUpdateRefId(query.refId, newRefId)}
           onUpdateExpressionType={(type) => onUpdateExpressionType(query.refId, type)}
+          onSetCondition={onSetCondition}
+          warning={warning}
+          error={error}
+          query={query}
+          alertCondition={alertCondition}
         />
-        <div className={styles.expression.body}>{renderExpressionType(query)}</div>
-        {hasResults && <ExpressionResult series={series} isAlertCondition={isAlertCondition} />}
-
-        <div className={styles.footer}>
-          <Stack direction="row" alignItems="center">
-            <AlertConditionIndicator
-              onSetCondition={() => onSetCondition(query.refId)}
-              enabled={alertCondition}
-              error={error}
-              warning={warning}
-            />
-            <Spacer />
-            {showSummary && (
-              <PreviewSummary
-                firing={groupedByState[PromAlertingRuleState.Firing].length}
-                normal={groupedByState[PromAlertingRuleState.Inactive].length}
-              />
-            )}
-          </Stack>
+        <div className={styles.expression.body}>
+          <div className={styles.expression.description}>{selectedExpressionDescription}</div>
+          {renderExpressionType(query)}
         </div>
+        {hasResults && (
+          <>
+            <ExpressionResult series={series} isAlertCondition={isAlertCondition} />
+
+            <div className={styles.footer}>
+              <Stack direction="row" alignItems="center">
+                <Spacer />
+
+                <PreviewSummary
+                  isCondition={Boolean(isAlertCondition)}
+                  firing={groupedByState[PromAlertingRuleState.Firing].length}
+                  normal={groupedByState[PromAlertingRuleState.Inactive].length}
+                  seriesCount={seriesCount}
+                />
+              </Stack>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
@@ -196,9 +217,23 @@ export const ExpressionResult: FC<ExpressionResultProps> = ({ series, isAlertCon
   );
 };
 
-export const PreviewSummary: FC<{ firing: number; normal: number }> = ({ firing, normal }) => {
+export const PreviewSummary: FC<{ firing: number; normal: number; isCondition: boolean; seriesCount: number }> = ({
+  firing,
+  normal,
+  isCondition,
+  seriesCount,
+}) => {
   const { mutedText } = useStyles2(getStyles);
-  return <span className={mutedText}>{`${firing} firing, ${normal} normal`}</span>;
+
+  if (seriesCount === 0) {
+    return <span className={mutedText}>No series</span>;
+  }
+
+  if (isCondition) {
+    return <span className={mutedText}>{`${seriesCount} series: ${firing} firing, ${normal} normal`}</span>;
+  }
+
+  return <span className={mutedText}>{`${seriesCount} series`}</span>;
 };
 
 interface HeaderProps {
@@ -207,25 +242,37 @@ interface HeaderProps {
   onUpdateRefId: (refId: string) => void;
   onRemoveExpression: () => void;
   onUpdateExpressionType: (type: ExpressionQueryType) => void;
+  warning?: Error;
+  error?: Error;
+  onSetCondition: (refId: string) => void;
+  query: ExpressionQuery;
+  alertCondition: boolean;
 }
 
-const Header: FC<HeaderProps> = ({ refId, queryType, onUpdateRefId, onUpdateExpressionType, onRemoveExpression }) => {
+const Header: FC<HeaderProps> = ({
+  refId,
+  queryType,
+  onUpdateRefId,
+  onRemoveExpression,
+  warning,
+  onSetCondition,
+  alertCondition,
+  query,
+  error,
+}) => {
   const styles = useStyles2(getStyles);
   const clearButton = useStyles2(clearButtonStyles);
   /**
    * There are 3 edit modes:
    *
    * 1. "refId": Editing the refId (ie. A -> B)
-   * 2. "epressionType": Editing the type of the expression (ie. Reduce -> Math)
+   * 2. "expressionType": Editing the type of the expression (ie. Reduce -> Math)
    * 3. "false": This means we're not editing either of those
    */
   const [editMode, setEditMode] = useState<'refId' | 'expressionType' | false>(false);
 
   const editing = editMode !== false;
   const editingRefId = editing && editMode === 'refId';
-  const editingType = editing && editMode === 'expressionType';
-
-  const selectedExpressionType = gelTypes.find((o) => o.value === queryType);
 
   return (
     <header className={styles.header.wrapper}>
@@ -252,40 +299,21 @@ const Header: FC<HeaderProps> = ({ refId, queryType, onUpdateRefId, onUpdateExpr
               }}
             />
           )}
-          {!editingType && (
-            <button
-              type="button"
-              className={cx(clearButton, styles.editable)}
-              onClick={() => setEditMode('expressionType')}
-            >
-              <div className={styles.mutedText}>{capitalize(queryType)}</div>
-              <Icon size="xs" name="pen" className={styles.mutedIcon} onClick={() => setEditMode('expressionType')} />
-            </button>
-          )}
-          {editingType && (
-            <Select
-              isOpen
-              autoFocus
-              onChange={(selection) => {
-                onUpdateExpressionType(selection.value ?? ExpressionQueryType.classic);
-                setEditMode(false);
-              }}
-              onBlur={() => {
-                setEditMode(false);
-              }}
-              options={gelTypes}
-              value={selectedExpressionType}
-              width={25}
-            />
-          )}
+          <div>{getExpressionLabel(queryType)}</div>
         </Stack>
         <Spacer />
+        <AlertConditionIndicator
+          onSetCondition={() => onSetCondition(query.refId)}
+          enabled={alertCondition}
+          error={error}
+          warning={warning}
+        />
         <IconButton
-          type="button"
           name="trash-alt"
           variant="secondary"
           className={styles.mutedIcon}
           onClick={onRemoveExpression}
+          tooltip="Remove expression"
         />
       </Stack>
     </header>
@@ -357,7 +385,7 @@ const TimeseriesRow: FC<FrameProps & { index: number }> = ({ frame, index }) => 
 
   return (
     <div className={styles.expression.resultsRow}>
-      <Stack direction="row" gap={1} alignItems="center">
+      <Stack direction="row" alignItems="center">
         <span className={cx(styles.mutedText, styles.expression.resultLabel)} title={name}>
           {name}
         </span>
@@ -397,21 +425,33 @@ const getStyles = (theme: GrafanaTheme2) => ({
     wrapper: css`
       display: flex;
       border: solid 1px ${theme.colors.border.medium};
-
-      border-radius: ${theme.shape.borderRadius()};
-      max-width: 640px;
+      flex: 1;
+      flex-basis: 400px;
+      border-radius: ${theme.shape.radius.default};
     `,
     stack: css`
       display: flex;
       flex-direction: column;
       flex-wrap: nowrap;
       gap: 0;
+      width: 100%;
       min-width: 0; // this one is important to prevent text overflow
+    `,
+    classic: css`
+      max-width: 100%;
+    `,
+    nonClassic: css`
+      max-width: 640px;
     `,
     alertCondition: css``,
     body: css`
       padding: ${theme.spacing(1)};
       flex: 1;
+    `,
+    description: css`
+      margin-bottom: ${theme.spacing(1)};
+      font-size: ${theme.typography.size.xs};
+      color: ${theme.colors.text.secondary};
     `,
     refId: css`
       font-weight: ${theme.typography.fontWeightBold};
@@ -475,13 +515,13 @@ const getStyles = (theme: GrafanaTheme2) => ({
     wrapper: css`
       background: ${theme.colors.background.secondary};
       padding: ${theme.spacing(0.5)} ${theme.spacing(1)};
-      border-bottom: solid 1px ${theme.colors.border.medium};
+      border-bottom: solid 1px ${theme.colors.border.weak};
     `,
   },
   footer: css`
     background: ${theme.colors.background.secondary};
     padding: ${theme.spacing(1)};
-    border-top: solid 1px ${theme.colors.border.medium};
+    border-top: solid 1px ${theme.colors.border.weak};
   `,
   draggableIcon: css`
     cursor: grab;
@@ -492,7 +532,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   editable: css`
     padding: ${theme.spacing(0.5)} ${theme.spacing(1)};
     border: solid 1px ${theme.colors.border.weak};
-    border-radius: ${theme.shape.borderRadius()};
+    border-radius: ${theme.shape.radius.default};
 
     display: flex;
     flex-direction: row;

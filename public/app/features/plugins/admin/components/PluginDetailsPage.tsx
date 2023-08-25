@@ -3,11 +3,13 @@ import React from 'react';
 import { useLocation } from 'react-router-dom';
 
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { useStyles2, TabContent, Alert } from '@grafana/ui';
 import { Layout } from '@grafana/ui/src/components/Layout/Layout';
 import { Page } from 'app/core/components/Page/Page';
 import { AppNotificationSeverity } from 'app/types';
 
+import { AngularDeprecationPluginNotice } from '../../angularDeprecation/AngularDeprecationPluginNotice';
 import { Loader } from '../components/Loader';
 import { PluginDetailsBody } from '../components/PluginDetailsBody';
 import { PluginDetailsDisabledError } from '../components/PluginDetailsDisabledError';
@@ -73,6 +75,16 @@ export function PluginDetailsPage({
     <Page navId={navId} pageNav={navModel} actions={actions} subTitle={subtitle} info={info}>
       <Page.Contents>
         <TabContent className={styles.tabContent}>
+          {plugin.angularDetected && (
+            <AngularDeprecationPluginNotice
+              className={styles.alert}
+              angularSupportEnabled={config?.angularSupportEnabled}
+              pluginId={plugin.id}
+              pluginType={plugin.type}
+              showPluginDetailsLink={false}
+              interactionElementId="plugin-details-page"
+            />
+          )}
           <PluginDetailsSignature plugin={plugin} className={styles.alert} />
           <PluginDetailsDisabledError plugin={plugin} className={styles.alert} />
           <PluginDetailsBody queryParams={Object.fromEntries(queryParams)} plugin={plugin} pageId={activePageId} />

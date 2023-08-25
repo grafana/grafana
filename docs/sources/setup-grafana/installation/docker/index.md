@@ -2,258 +2,375 @@
 aliases:
   - ../../installation/docker/
 description: Guide for running Grafana using Docker
+labels:
+  products:
+    - enterprise
+    - oss
+menuTitle: Grafana Docker image
 title: Run Grafana Docker image
-weight: 200
+weight: 400
 ---
 
 # Run Grafana Docker image
 
-You can install and run Grafana using the official Docker images. Our docker images come in two editions:
+This topic guides you through installing Grafana via the official Docker images. Specifically, it covers running Grafana via the Docker command line interface (CLI) and docker-compose.
 
-**Grafana Enterprise**: `grafana/grafana-enterprise`
+Grafana Docker images come in two editions:
 
-**Grafana Open Source**: `grafana/grafana-oss`
+- **Grafana Enterprise**: `grafana/grafana-enterprise`
+- **Grafana Open Source**: `grafana/grafana-oss`
 
-Each edition is available in two variants: Alpine and Ubuntu. See below.
+> **Note:** The recommended and default edition of Grafana is Grafana Enterprise. It is free and includes all the features of the OSS edition. Additionally, you have the option to upgrade to the [full Enterprise feature set](/products/enterprise/?utm_source=grafana-install-page), which includes support for [Enterprise plugins](/grafana/plugins/?enterprise=1&utcm_source=grafana-install-page).
 
-For documentation regarding the configuration of a docker image, refer to [configure a Grafana Docker image](/docs/grafana/latest/administration/configure-docker/).
+The default images for Grafana are created using the Alpine Linux project and can be found in the Alpine official image. For instructions on configuring a Docker image for Grafana, refer to [Configure a Grafana Docker image]({{< relref "../../configure-docker" >}}).
 
-This topic also contains important information about [migrating from earlier Docker image versions](#migrate-from-previous-docker-containers-versions).
+## Run Grafana via Docker CLI
 
-## Alpine image (recommended)
+This section shows you how to run Grafana using the Docker CLI.
 
-**Grafana Enterprise edition**: `grafana/grafana-enterprise:<version>`
+> **Note:** If you are on a Linux system (for example, Debian or Ubuntu), you might need to add `sudo` before the command or add your user to the `docker` group. For more information, refer to [Linux post-installation steps for Docker Engine](https://docs.docker.com/engine/install/linux-postinstall/).
 
-**Grafana Open Source edition**: `grafana/grafana-oss:<version>`
-
-The default images are based on the popular [Alpine Linux project](http://alpinelinux.org), available in [the Alpine official image](https://hub.docker.com/_/alpine). Alpine Linux is much smaller than most distribution base images, and thus leads to slimmer and more secure images.
-
-The Alpine variant is highly recommended when security and final image size being as small as possible is desired. The main caveat to note is that it uses [musl libc](http://www.musl-libc.org) instead of [glibc and friends](http://www.etalabs.net/compare_libcs.html), so certain software might run into issues depending on the depth of their libc requirements. However, most software don't have an issue with this, so this variant is usually a very safe choice.
-
-> **Note:** Grafana docker images were based on [Ubuntu](https://ubuntu.com/) prior to version 6.4.0.
-
-## Ubuntu image
-
-**Grafana Enterprise edition**: `grafana/grafana-enterprise:<version>-ubuntu`
-
-**Grafana Open Source edition**: `grafana/grafana-oss:<version>-ubuntu`
-
-These images are based on [Ubuntu](https://ubuntu.com/), available in [the Ubuntu official image](https://hub.docker.com/_/ubuntu). It is an alternative image for those who prefer an [Ubuntu](https://ubuntu.com/) based image and/or are dependent on certain tooling not available for Alpine.
-
-## Run Grafana
-
-You can run the latest Grafana version, run a specific version, or run an unstable version based on the main branch of the [grafana/grafana GitHub repository](https://github.com/grafana/grafana).
-
-### Run the latest stable version of Grafana
-
-> **Note:** If you are on a Linux system, you might need to add `sudo` before the command or add your user to the `docker` group.
+To run the latest stable version of Grafana, run the following command:
 
 ```bash
-docker run -d -p 3000:3000 grafana/grafana-enterprise
+docker run -d -p 3000:3000 --name=grafana grafana/grafana-enterprise
 ```
 
-### Run a specific version of Grafana
+Where:
 
-> **Note:** If you are on a Linux system, you might need to add `sudo` before the command or add your user to the `docker` group.
+run = run directly from the command line
+
+`d` = run in the background
+
+`p` = assign the port number, which in this case is `3000`
+
+`name` = assign a logical name to the container, for example, `grafana`
+
+`grafana/grafana-enterprise` = the image to run in the container
+
+### Stop the Grafana container
+
+To stop the Grafana container, run the following command:
 
 ```bash
-docker run -d -p 3000:3000 --name grafana grafana/grafana-enterprise:<version number>
+# The `docker ps` command shows the processes running in Docker
+docker ps
+
+# This will display a list of containers that looks like the following:
+CONTAINER ID   IMAGE  COMMAND   CREATED  STATUS   PORTS    NAMES
+cd48d3994968   grafana/grafana-enterprise   "/run.sh"   8 seconds ago   Up 7 seconds   0.0.0.0:3000->3000/tcp   grafana
+
+# To stop the grafana container run the command
+# docker stop CONTAINER-ID or use
+# docker stop NAME, which is `grafana` as previously defined
+docker stop grafana
 ```
 
-**Example:**
+### Save your Grafana data
+
+When you use Docker containers, their data is temporary by default. If you don't specify where to store the information, all the Grafana data will be lost when you stop the Docker container. To avoid losing your data, you can set up [persistent storage](https://docs.docker.com/storage/volumes/) or [bind mounts](https://docs.docker.com/storage/bind-mounts/) for your container.
+
+> **Note:** Though both methods are similar, there is a slight difference. If you want your storage to be fully managed by Docker and accessed only through Docker containers and the Docker CLI, you should choose to use persistent storage. However, if you need full control of the storage and want to allow other processes besides Docker to access or modify the storage layer, then bind mounts is the right choice for your environment.
+
+#### Use persistent storage (recommended)
+
+It is recommended to have persistent storage because, without it, all data will be lost once the container is shut down. Use this method when you want the Docker service to manage the storage volume fully.
+
+To use persistent storage, complete the following steps:
+
+1. Create a Grafana Docker volume `grafana-storage` by running the following commands:
+
+   ```bash
+   # create a persistent volume for your data
+   docker volume create grafana-storage
+
+   # verify that the volume was created correctly
+   # you should see a json output
+   docker volume inspect grafana-storage
+   ```
+
+1. Start the Grafana container by running the following command:
+   ```bash
+   # start grafana
+   docker run -d -p 3000:3000 --name=grafana \
+     --volume grafana-storage:/var/lib/grafana \
+     grafana/grafana-enterprise
+   ```
+
+#### Use bind mounts
+
+If you plan to use folders on your host for the database or configuration when running Grafana in Docker, you must start the container with a user with permission to access and write to the folder you map.
+
+To use bind mounts, run the following command:
 
 ```bash
-docker run -d -p 3000:3000 --name grafana grafana/grafana-enterprise:8.2.0
+# create a folder for your data
+mkdir data
+
+# start grafana with your user id and using the data folder
+docker run -d -p 3000:3000 --name=grafana \
+  --user "$(id -u)" \
+  --volume "$PWD/data:/var/lib/grafana" \
+  grafana/grafana-enterprise
 ```
 
-### Run the Grafana main branch
+### Use environment variables to configure Grafana
 
-For every successful build of the main branch, we update the `grafana/grafana-oss:main` and `grafana/grafana-oss:main-ubuntu` tags. Additionally, two new tags are created, `grafana/grafana-oss-dev:<version>-<build ID>pre` and `grafana/grafana-oss-dev:<version>-<build ID>pre-ubuntu`, where _version_ is the next version of Grafana and _build ID_ is the ID of the corresponding CI build. Use these to get access to the latest main builds of Grafana.
+Grafana supports specifying custom configuration settings using [environment variables]({{< relref "../../../setup-grafana/configure-grafana#override-configuration-with-environment-variables" >}}).
 
-When running Grafana main in production, we _strongly_ recommend that you use the `grafana/grafana-oss-dev:<version>-<build ID>pre` tag. This tag guarantees that you use a specific version of Grafana instead of whatever was the most recent commit at the time.
+```bash
+# enabling public dashboard feature
 
-For a list of available tags, check out [grafana/grafana-oss](https://hub.docker.com/r/grafana/grafana-oss/tags/) and [grafana/grafana-oss-dev](https://hub.docker.com/r/grafana/grafana-oss-dev/tags/).
+docker run -d -p 3000:3000 --name=grafana \
+  -e "GF_FEATURE_TOGGLES_ENABLE=publicDashboards" \
+  grafana/grafana-enterprise
+```
 
 ## Install plugins in the Docker container
 
-You can install official and community plugins listed on the Grafana [plugins page](/grafana/plugins) or from a custom URL.
+You can install plugins in Grafana from the official and community [plugins page](/grafana/plugins) or by using a custom URL to install a private plugin. These plugins allow you to add new visualization types, data sources, and applications to help you better visualize your data.
 
-### Install official and community Grafana plugins
+Grafana currently supports three types of plugins: panel, data source, and app. For more information on managing plugins, refer to [Plugin Management]({{< relref "../../../administration/plugin-management" >}}).
 
-Pass the plugins you want installed to Docker with the `GF_INSTALL_PLUGINS` environment variable as a comma-separated list. This sends each plugin name to `grafana cli plugins install ${plugin}` and installs them when Grafana starts.
+To install plugins in the Docker container, complete the following steps:
+
+1. Pass the plugins you want to be installed to Docker with the `GF_INSTALL_PLUGINS` environment variable as a comma-separated list.
+
+   This sends each plugin name to `grafana-cli plugins install ${plugin}` and installs them when Grafana starts.
+
+   For example:
+
+   ```bash
+   docker run -d -p 3000:3000 --name=grafana \
+     -e "GF_INSTALL_PLUGINS=grafana-clock-panel, grafana-simple-json-datasource" \
+     grafana/grafana-enterprise
+   ```
+
+1. To specify the version of a plugin, add the version number to the `GF_INSTALL_PLUGINS` environment variable.
+
+   For example:
+
+   ```bash
+   docker run -d -p 3000:3000 --name=grafana \
+     -e "GF_INSTALL_PLUGINS=grafana-clock-panel 1.0.1" \
+     grafana/grafana-enterprise
+   ```
+
+   > **Note:** If you do not specify a version number, the latest version is used.
+
+1. To install a plugin from a custom URL, use the following convention to specify the URL: `<url to plugin zip>;<plugin install folder name>`.
+
+   For example:
+
+   ```bash
+   docker run -d -p 3000:3000 --name=grafana \
+     -e "GF_INSTALL_PLUGINS=https://github.com/VolkovLabs/custom-plugin.zip;custom-plugin" \
+     grafana/grafana-enterprise
+   ```
+
+## Example
+
+The following example runs the latest stable version of Grafana, listening on port 3000, with the container named `grafana`, persistent storage in the grafana-storage docker volume, the server root URL set, and the official [clock panel](/grafana/plugins/grafana-clock-panel) plugin installed.
 
 ```bash
-docker run -d \
-  -p 3000:3000 \
-  --name=grafana \
-  -e "GF_INSTALL_PLUGINS=grafana-clock-panel,grafana-simple-json-datasource" \
+# create a persistent volume for your data
+docker volume create grafana-storage
+
+# start grafana by using the above persistent storage
+# and defining environment variables
+
+docker run -d -p 3000:3000 --name=grafana \
+  --volume grafana-storage:/var/lib/grafana \
+  -e "GF_SERVER_ROOT_URL=http://my.grafana.server/" \
+  -e "GF_INSTALL_PLUGINS=grafana-clock-panel" \
   grafana/grafana-enterprise
 ```
 
-> **Note:** If you need to specify the version of a plugin, then you can add it to the `GF_INSTALL_PLUGINS` environment variable. Otherwise, the latest is used. For example: `-e "GF_INSTALL_PLUGINS=grafana-clock-panel 1.0.1,grafana-simple-json-datasource 1.3.5"`.
+## Run Grafana via Docker Compose
 
-### Install plugins from other sources
+Docker Compose is a software tool that makes it easy to define and share applications that consist of multiple containers. It works by using a YAML file, usually called `docker-compose.yaml`, which lists all the services that make up the application. You can start the containers in the correct order with a single command, and with another command, you can shut them down. For more information about the benefits of using Docker Compose and how to use it refer to [Use Docker Compose](https://docs.docker.com/get-started/08_using_compose/).
 
-> Only available in Grafana v5.3.1 and later.
+### Before you begin
 
-You can install a plugin from a custom URL by specifying the URL like this: `GF_INSTALL_PLUGINS=<url to plugin zip>;<plugin install folder name>`.
-
-```bash
-docker run -d \
-  -p 3000:3000 \
-  --name=grafana \
-  -e "GF_INSTALL_PLUGINS=http://plugin-domain.com/my-custom-plugin.zip;custom-plugin,grafana-clock-panel" \
-  grafana/grafana-enterprise
-```
-
-## Build and run a Docker image with pre-installed plugins
-
-You can build your own customized image that includes plugins. This saves time if you are creating multiple images and you want them all to have the same plugins installed on build.
-
-In the [Grafana GitHub repository](https://github.com/grafana/grafana) there is a folder called `packaging/docker/custom/`, which includes a Dockerfile that can be used to build a custom Grafana image. It accepts `GRAFANA_VERSION`, `GF_INSTALL_PLUGINS`, and `GF_INSTALL_IMAGE_RENDERER_PLUGIN` as build arguments.
-
-The `GRAFANA_VERSION` build argument must be a valid `grafana/grafana` docker image tag. By default, this builds an Alpine-based image. To build an Ubuntu-based image, append `-ubuntu` to the `GRAFANA_VERSION` build argument (available in Grafana v6.5 and later).
-
-The following example shows you how to build and run a custom Grafana Docker image based on the latest official Ubuntu-based Grafana Docker image:
+To run Grafana via Docker Compose, install the compose tool on your machine. To determine if the compose tool is available, run the following command:
 
 ```bash
-cd packaging/docker/custom
-docker build \
-  --build-arg "GRAFANA_VERSION=latest-ubuntu" \
-  -t grafana-custom .
-
-docker run -d -p 3000:3000 --name=grafana grafana-custom
+docker compose version
 ```
 
-### Build with pre-installed plugins
+If the compose tool is unavailable, refer to [Install Docker Compose](https://docs.docker.com/compose/install/).
 
-> If you need to specify the version of a plugin, you can add it to the `GF_INSTALL_PLUGINS` build argument. Otherwise, the latest will be assumed. For example: `--build-arg "GF_INSTALL_PLUGINS=grafana-clock-panel 1.0.1,grafana-simple-json-datasource 1.3.5"`
+### Run the latest stable version of Grafana
 
-Example of how to build and run:
+This section shows you how to run Grafana using Docker Compose. The examples in this section use Compose version 3. For more information about compatibility, refer to [Compose and Docker compatibility matrix](https://docs.docker.com/compose/compose-file/compose-file-v3/).
+
+> **Note:** If you are on a Linux system (for example, Debian or Ubuntu), you might need to add `sudo` before the command or add your user to the `docker` group. For more information, refer to [Linux post-installation steps for Docker Engine](https://docs.docker.com/engine/install/linux-postinstall/).
+
+To run the latest stable version of Grafana using Docker Compose, complete the following steps:
+
+1. Create a `docker-compose.yaml` file.
+
+   ```bash
+   # first go into the directory where you have created this docker-compose.yaml file
+   cd /path/to/docker-compose-folder
+
+   # now create the docker-compose.yaml file
+   touch docker-compose.yaml
+   ```
+
+1. Now, add the following code into the `docker-compose.yaml` file.
+
+   For example:
+
+   ```bash
+   version: "3.8"
+   services:
+     grafana:
+       image: grafana/grafana-enterprise
+       container_name: grafana
+       restart: unless-stopped
+       ports:
+        - '3000:3000'
+   ```
+
+1. To run `docker-compose.yaml`, run the following command:
+
+   ```bash
+   # start the grafana container
+   docker compose up -d
+   ```
+
+   Where:
+
+   d = detached mode
+
+   up = to bring the container up and running
+
+To determine that Grafana is running, open a browser window and type `IP_ADDRESS:3000`. The sign in screen should appear.
+
+### Stop the Grafana container
+
+To stop the Grafana container, run the following command:
 
 ```bash
-cd packaging/docker/custom
-docker build \
-  --build-arg "GRAFANA_VERSION=latest" \
-  --build-arg "GF_INSTALL_PLUGINS=grafana-clock-panel,grafana-simple-json-datasource" \
-  -t grafana-custom .
-
-docker run -d -p 3000:3000 --name=grafana grafana-custom
+docker compose down
 ```
 
-### Build with pre-installed plugins from other sources
+> **Note:** For more information about using Docker Compose commands, refer to [docker compose](https://docs.docker.com/engine/reference/commandline/compose/).
 
-You can build a Docker image with plugins from other sources by specifying the URL like this: `GF_INSTALL_PLUGINS=<url to plugin zip>;<plugin install folder name>`.
+### Save your Grafana data
+
+When you use Docker containers, their data is temporary by default. If you don't specify where to store the information, all the Grafana data will be lost when you stop the Docker container. To avoid losing your data, you can set up [persistent storage](https://docs.docker.com/storage/volumes/) or [bind mounts](https://docs.docker.com/storage/bind-mounts/) for your container.
+
+#### Use persistent storage (recommended)
+
+It is recommended to have persistent storage because without it, all data will be lost once the container is shut down. Use this method when you want the Docker service to fully manage the storage volume.
+
+Complete the following steps to use persistent storage.
+
+1. Create a `docker-compose.yaml` file
+
+   ```bash
+   # first go into the directory where you have created this docker-compose.yaml file
+   cd /path/to/docker-compose-folder
+
+   # now create the docker-compose.yaml file
+   touch docker-compose.yaml
+   ```
+
+1. Add the following code into the `docker-compose.yaml` file.
+
+   ```yaml
+   version: '3.8'
+   services:
+     grafana:
+       image: grafana/grafana-enterprise
+       container_name: grafana
+       restart: unless-stopped
+       ports:
+         - '3000:3000'
+       volumes:
+         - grafana_data:/var/lib/grafana
+   volumes:
+     grafana_data: {}
+   ```
+
+1. Save the file and run the following command:
+
+   ```bash
+   docker compose up -d
+   ```
+
+#### Use bind mounts
+
+If you plan to use folders on your host for the database or configuration when running Grafana in Docker, you must start the container with a user that has the permission to access and write to the folder you map.
+
+To use bind mounts, complete the following steps:
+
+1. Create a `docker-compose.yaml` file
+
+   ```bash
+   # first go into the directory where you have created this docker-compose.yaml file
+   cd /path/to/docker-compose-folder
+
+   # now create the docker-compose.yaml file
+   touch docker-compose.yaml
+   ```
+
+1. Create the folder where you will be mounting your data, in this case is `/data` e.g. in your current working directory:
+
+   ```bash
+   mkdir $PWD/data
+   ```
+
+1. Now, add the following code into the `docker-compose.yaml` file.
+
+   ```yaml
+   version: '3.8'
+   services:
+     grafana:
+       image: grafana/grafana-enterprise
+       container_name: grafana
+       restart: unless-stopped
+       # if you are running as root then set it to 0
+       # else find the right id with the id -u command
+       user: '0'
+       ports:
+         - '3000:3000'
+       # adding the mount volume point which we create earlier
+       volumes:
+         - '$PWD/data:/var/lib/grafana'
+   ```
+
+1. Save the file and run the following command:
+
+   ```bash
+   docker compose up -d
+   ```
+
+### Example
+
+The following example runs the latest stable version of Grafana, listening on port 3000, with the container named `grafana`, persistent storage in the grafana-storage docker volume, the server root URL set, and the official [clock panel](/grafana/plugins/grafana-clock-panel) plugin installed.
 
 ```bash
-cd packaging/docker/custom
-docker build \
-  --build-arg "GRAFANA_VERSION=latest" \
-  --build-arg "GF_INSTALL_PLUGINS=http://plugin-domain.com/my-custom-plugin.zip;custom-plugin,grafana-clock-panel" \
-  -t grafana-custom .
-
-docker run -d -p 3000:3000 --name=grafana grafana-custom
-```
-
-### Build with Grafana Image Renderer plugin pre-installed
-
-> Only available in Grafana v6.5 and later. This is experimental.
-
-The [Grafana Image Renderer plugin]({{< relref "../../image-rendering" >}}) does not currently work if it is installed in a Grafana Docker image. You can build a custom Docker image by using the `GF_INSTALL_IMAGE_RENDERER_PLUGIN` build argument. This installs additional dependencies needed for the Grafana Image Renderer plugin to run.
-
-Example of how to build and run:
-
-```bash
-cd packaging/docker/custom
-docker build \
-  --build-arg "GRAFANA_VERSION=latest" \
-  --build-arg "GF_INSTALL_IMAGE_RENDERER_PLUGIN=true" \
-  -t grafana-custom .
-
-docker run -d -p 3000:3000 --name=grafana grafana-custom
-```
-
-## Migrate from previous Docker containers versions
-
-This section contains important information if you want to migrate from previous Grafana container versions to a more current one.
-
-### Migrate to v7.3 or later
-
-The Grafana Docker image runs with the `root` group (id 0) instead of the `grafana` group (id 472), for better compatibility with OpenShift. If you extend the official Docker image you may need to change your scripts to use the `root` group instead of `grafana`.
-
-### Migrate to v6.5 or later
-
-Grafana Docker image now comes in two variants, one [Alpine](http://alpinelinux.org) based and one [Ubuntu](https://ubuntu.com/) based.
-
-### Migrate to v6.4 or later
-
-Grafana Docker image was changed to be based on [Alpine](http://alpinelinux.org) instead of [Ubuntu](https://ubuntu.com/).
-
-### Migrate to v5.1 or later
-
-The Docker container for Grafana has seen a major rewrite for 5.1.
-
-**Important changes**
-
-- File ownership is no longer modified during startup with `chown`.
-- Default user ID is now `472` instead of `104`.
-- Removed the following implicit volumes:
-  - `/var/lib/grafana`
-  - `/etc/grafana`
-  - `/var/log/grafana`
-
-#### Removal of implicit volumes
-
-Previously `/var/lib/grafana`, `/etc/grafana` and `/var/log/grafana` were defined as volumes in the `Dockerfile`. This led to the creation of three volumes each time a new instance of the Grafana container started, whether you wanted it or not.
-
-You should always be careful to define your own named volume for storage, but if you depended on these volumes, then you should be aware that an upgraded container will no longer have them.
-
-**Warning**: When migrating from an earlier version to 5.1 or later using Docker compose and implicit volumes, you need to use `docker inspect` to find out which volumes your container is mapped to so that you can map them to the upgraded container as well. You will also have to change file ownership (or user) as documented below.
-
-#### User ID changes
-
-In Grafana v5.1, we changed the ID and group of the Grafana user and in v7.3 we changed the group. Unfortunately this means that files created prior to v5.1 won't have the correct permissions for later versions. We made this change so that it would be more likely that the Grafana users ID would be unique to Grafana. For example, on Ubuntu 16.04 `104` is already in use by the syslog user.
-
-| Version | User    | User ID | Group   | Group ID |
-| ------- | ------- | ------- | ------- | -------- |
-| < 5.1   | grafana | 104     | grafana | 107      |
-| \>= 5.1 | grafana | 472     | grafana | 472      |
-| \>= 7.3 | grafana | 472     | root    | 0        |
-
-There are two possible solutions to this problem. Either you start the new container as the root user and change ownership from `104` to `472`, or you start the upgraded container as user `104`.
-
-##### Run Docker as a different user
-
-```bash
-docker run --user 104 --volume "<your volume mapping here>" grafana/grafana-enterprise:8.2.0
-```
-
-##### Specify a user in docker-compose.yml
-
-```yaml
-version: '2'
-
+version: "3.8"
 services:
   grafana:
-    image: grafana/grafana-enterprise:8.2.0
+    image: grafana/grafana-enterprise
+    container_name: grafana
+    restart: unless-stopped
+    environment:
+     - GF_SERVER_ROOT_URL=http://my.grafana.server/
+     - GF_INSTALL_PLUGINS=grafana-clock-panel
     ports:
-      - 3000:3000
-    user: '104'
+     - '3000:3000'
+    volumes:
+     - 'grafana_storage:/var/lib/grafana'
+volumes:
+  grafana_storage: {}
 ```
 
-#### Modify permissions
-
-The commands below run bash inside the Grafana container with your volume mapped in. This makes it possible to modify the file ownership to match the new container. Always be careful when modifying permissions.
-
-```bash
-$ docker run -ti --user root --volume "<your volume mapping here>" --entrypoint bash grafana/grafana-enterprise:8.2.0
-
-# in the container you just started:
-chown -R root:root /etc/grafana && \
-chmod -R a+r /etc/grafana && \
-chown -R grafana:grafana /var/lib/grafana && \
-chown -R grafana:grafana /usr/share/grafana
-```
+> **Note:** If you want to specify the version of a plugin, add the version number to the `GF_INSTALL_PLUGINS` environment variable. For example: `-e "GF_INSTALL_PLUGINS=grafana-clock-panel 1.0.1,grafana-simple-json-datasource 1.3.5"`. If you do not specify a version number, the latest version is used.
 
 ## Next steps
 

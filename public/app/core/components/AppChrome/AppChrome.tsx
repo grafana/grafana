@@ -34,7 +34,12 @@ export function AppChrome({ children }: Props) {
   // doesn't get re-mounted when chromeless goes from true to false.
 
   return (
-    <div className={classNames('main-view', searchBarHidden && 'main-view--search-bar-hidden')}>
+    <div
+      className={classNames('main-view', {
+        'main-view--search-bar-hidden': searchBarHidden && !state.chromeless,
+        'main-view--chrome-hidden': state.chromeless,
+      })}
+    >
       {!state.chromeless && (
         <>
           <LinkButton className={styles.skipLink} href="#pageContent">
@@ -116,6 +121,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       label: 'page-container',
       flexGrow: 1,
       minHeight: 0,
+      minWidth: 0,
     }),
     skipLink: css({
       position: 'absolute',

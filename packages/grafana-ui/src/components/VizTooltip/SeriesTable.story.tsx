@@ -4,7 +4,7 @@ import React from 'react';
 import { SeriesTable } from './SeriesTable';
 
 const meta: Meta<typeof SeriesTable> = {
-  title: 'VizTooltip/SeriesTable',
+  title: 'Visualizations/VizTooltip/SeriesTable',
   component: SeriesTable,
   argTypes: {
     timestamp: {

@@ -48,7 +48,7 @@ func (e *StandardDeviationSampler) updateAggregations(val float64) {
 	e.m2 += delta * delta2
 }
 
-// standardDeviation calculates the amount of varation in the data
+// standardDeviation calculates the amount of variation in the data
 // https://en.wikipedia.org/wiki/Standard_deviation
 func (e *StandardDeviationSampler) standardDeviation() float64 {
 	if e.count < 2 {

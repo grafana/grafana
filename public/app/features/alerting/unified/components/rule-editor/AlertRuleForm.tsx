@@ -1,33 +1,44 @@
 import { css } from '@emotion/css';
+import { omit } from 'lodash';
 import React, { useEffect, useMemo, useState } from 'react';
 import { DeepMap, FieldError, FormProvider, useForm, useFormContext, UseFormWatch } from 'react-hook-form';
-import { Link } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { config, logInfo } from '@grafana/runtime';
 import { Button, ConfirmModal, CustomScrollbar, Field, HorizontalGroup, Input, Spinner, useStyles2 } from '@grafana/ui';
+import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { contextSrv } from 'app/core/core';
 import { useCleanup } from 'app/core/hooks/useCleanup';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { useDispatch } from 'app/types';
 import { RuleWithLocation } from 'app/types/unified-alerting';
+import { RulerRuleDTO } from 'app/types/unified-alerting-dto';
 
 import { LogMessages, trackNewAlerRuleFormError } from '../../Analytics';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
 import { deleteRuleAction, saveRuleFormAction } from '../../state/actions';
 import { RuleFormType, RuleFormValues } from '../../types/rule-form';
 import { initialAsyncRequestState } from '../../utils/redux';
-import { getDefaultFormValues, getDefaultQueries, rulerRuleToFormValues } from '../../utils/rule-form';
+import {
+  getDefaultFormValues,
+  getDefaultQueries,
+  MINUTE,
+  normalizeDefaultAnnotations,
+  rulerRuleToFormValues,
+} from '../../utils/rule-form';
 import * as ruleId from '../../utils/rule-id';
 
 import { CloudEvaluationBehavior } from './CloudEvaluationBehavior';
 import { DetailsStep } from './DetailsStep';
 import { GrafanaEvaluationBehavior } from './GrafanaEvaluationBehavior';
+import { GrafanaRuleInspector } from './GrafanaRuleInspector';
 import { NotificationsStep } from './NotificationsStep';
 import { RuleEditorSection } from './RuleEditorSection';
 import { RuleInspector } from './RuleInspector';
 import { QueryAndExpressionsStep } from './query-and-alert-condition/QueryAndExpressionsStep';
+import { translateRouteParamToRuleType } from './util';
 
 const recordingRuleNameValidationPattern = {
   message:
@@ -45,7 +56,7 @@ const AlertRuleNameInput = () => {
 
   const ruleFormType = watch('type');
   return (
-    <RuleEditorSection stepNo={1} title="Set an alert rule name">
+    <RuleEditorSection stepNo={1} title="Set alert rule name.">
       <Field
         className={styles.formInput}
         label="Rule name"
@@ -66,8 +77,6 @@ const AlertRuleNameInput = () => {
   );
 };
 
-export const MINUTE = '1m';
-
 type Props = {
   existing?: RuleWithLocation;
   prefill?: Partial<RuleFormValues>; // Existing implies we modify existing rule. Prefill only provides default form values
@@ -81,30 +90,34 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
   const [showEditYaml, setShowEditYaml] = useState(false);
   const [evaluateEvery, setEvaluateEvery] = useState(existing?.group.interval ?? MINUTE);
 
+  const routeParams = useParams<{ type: string; id: string }>();
+  const ruleType = translateRouteParamToRuleType(routeParams.type);
+  const uidFromParams = routeParams.id;
+
   const returnTo: string = (queryParams['returnTo'] as string | undefined) ?? '/alerting/list';
   const [showDeleteModal, setShowDeleteModal] = useState<boolean>(false);
 
   const defaultValues: RuleFormValues = useMemo(() => {
     if (existing) {
-      return rulerRuleToFormValues(existing);
+      return formValuesFromExistingRule(existing);
     }
 
     if (prefill) {
-      return {
-        ...getDefaultFormValues(),
-        ...prefill,
-      };
+      return formValuesFromPrefill(prefill);
+    }
+
+    if (typeof queryParams['defaults'] === 'string') {
+      return formValuesFromQueryParams(queryParams['defaults'], ruleType);
     }
 
     return {
       ...getDefaultFormValues(),
-      queries: getDefaultQueries(),
       condition: 'C',
-      ...(queryParams['defaults'] ? JSON.parse(queryParams['defaults'] as string) : {}),
-      type: RuleFormType.grafana,
+      queries: getDefaultQueries(),
+      type: ruleType || RuleFormType.grafana,
       evaluateEvery: evaluateEvery,
     };
-  }, [existing, prefill, queryParams, evaluateEvery]);
+  }, [existing, prefill, queryParams, evaluateEvery, ruleType]);
 
   const formAPI = useForm<RuleFormValues>({
     mode: 'onSubmit',
@@ -187,49 +200,57 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
   const evaluateEveryInForm = watch('evaluateEvery');
   useEffect(() => setEvaluateEvery(evaluateEveryInForm), [evaluateEveryInForm]);
 
+  const actionButtons = (
+    <HorizontalGroup height="auto" justify="flex-end">
+      <Button
+        variant="primary"
+        type="button"
+        size="sm"
+        onClick={handleSubmit((values) => submit(values, false), onInvalid)}
+        disabled={submitState.loading}
+      >
+        {submitState.loading && <Spinner className={styles.buttonSpinner} inline={true} />}
+        Save rule
+      </Button>
+      <Button
+        variant="primary"
+        type="button"
+        size="sm"
+        onClick={handleSubmit((values) => submit(values, true), onInvalid)}
+        disabled={submitState.loading}
+      >
+        {submitState.loading && <Spinner className={styles.buttonSpinner} inline={true} />}
+        Save rule and exit
+      </Button>
+      <Link to={returnTo}>
+        <Button variant="secondary" disabled={submitState.loading} type="button" onClick={cancelRuleCreation} size="sm">
+          Cancel
+        </Button>
+      </Link>
+      {existing ? (
+        <Button fill="outline" variant="destructive" type="button" onClick={() => setShowDeleteModal(true)} size="sm">
+          Delete
+        </Button>
+      ) : null}
+
+      {existing ? (
+        <Button
+          variant="secondary"
+          type="button"
+          onClick={() => setShowEditYaml(true)}
+          disabled={submitState.loading}
+          size="sm"
+        >
+          {isCortexLokiOrRecordingRule(watch) ? 'Edit YAML' : 'View YAML'}
+        </Button>
+      ) : null}
+    </HorizontalGroup>
+  );
+
   return (
     <FormProvider {...formAPI}>
+      <AppChromeUpdate actions={actionButtons} />
       <form onSubmit={(e) => e.preventDefault()} className={styles.form}>
-        <HorizontalGroup height="auto" justify="flex-end">
-          <Button
-            variant="primary"
-            type="button"
-            onClick={handleSubmit((values) => submit(values, false), onInvalid)}
-            disabled={submitState.loading}
-          >
-            {submitState.loading && <Spinner className={styles.buttonSpinner} inline={true} />}
-            Save rule
-          </Button>
-          <Button
-            variant="primary"
-            type="button"
-            onClick={handleSubmit((values) => submit(values, true), onInvalid)}
-            disabled={submitState.loading}
-          >
-            {submitState.loading && <Spinner className={styles.buttonSpinner} inline={true} />}
-            Save rule and exit
-          </Button>
-          <Link to={returnTo}>
-            <Button variant="secondary" disabled={submitState.loading} type="button" onClick={cancelRuleCreation}>
-              Cancel
-            </Button>
-          </Link>
-          {existing ? (
-            <Button variant="destructive" type="button" onClick={() => setShowDeleteModal(true)}>
-              Delete
-            </Button>
-          ) : null}
-          {isCortexLokiOrRecordingRule(watch) && (
-            <Button
-              variant="secondary"
-              type="button"
-              onClick={() => setShowEditYaml(true)}
-              disabled={submitState.loading}
-            >
-              Edit YAML
-            </Button>
-          )}
-        </HorizontalGroup>
         <div className={styles.contentOuter}>
           <CustomScrollbar autoHeightMin="100%" hideHorizontalTrack={true}>
             <div className={styles.contentInner}>
@@ -239,7 +260,6 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
                 <>
                   {type === RuleFormType.grafana ? (
                     <GrafanaEvaluationBehavior
-                      initialFolder={defaultValues.folder}
                       evaluateEvery={evaluateEvery}
                       setEvaluateEvery={setEvaluateEvery}
                       existing={Boolean(existing)}
@@ -248,7 +268,7 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
                     <CloudEvaluationBehavior />
                   )}
                   <DetailsStep />
-                  <NotificationsStep />
+                  <NotificationsStep alertUid={uidFromParams} />
                 </>
               )}
             </div>
@@ -266,7 +286,13 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
           onDismiss={() => setShowDeleteModal(false)}
         />
       ) : null}
-      {showEditYaml ? <RuleInspector onClose={() => setShowEditYaml(false)} /> : null}
+      {showEditYaml ? (
+        type === RuleFormType.grafana ? (
+          <GrafanaRuleInspector alertUid={uidFromParams} onClose={() => setShowEditYaml(false)} />
+        ) : (
+          <RuleInspector onClose={() => setShowEditYaml(false)} />
+        )
+      ) : null}
     </FormProvider>
   );
 };
@@ -276,6 +302,50 @@ const isCortexLokiOrRecordingRule = (watch: UseFormWatch<RuleFormValues>) => {
 
   return (ruleType === RuleFormType.cloudAlerting || ruleType === RuleFormType.cloudRecording) && dataSourceName !== '';
 };
+
+// the backend will always execute "hidden" queries, so we have no choice but to remove the property in the front-end
+// to avoid confusion. The query editor shows them as "disabled" and that's a different semantic meaning.
+// furthermore the "AlertingQueryRunner" calls `filterQuery` on each data source and those will skip running queries that are "hidden"."
+// It seems like we have no choice but to act like "hidden" queries don't exist in alerting.
+const ignoreHiddenQueries = (ruleDefinition: RuleFormValues): RuleFormValues => {
+  return {
+    ...ruleDefinition,
+    queries: ruleDefinition.queries?.map((query) => omit(query, 'model.hide')),
+  };
+};
+
+function formValuesFromQueryParams(ruleDefinition: string, type: RuleFormType): RuleFormValues {
+  let ruleFromQueryParams: Partial<RuleFormValues>;
+
+  try {
+    ruleFromQueryParams = JSON.parse(ruleDefinition);
+  } catch (err) {
+    return {
+      ...getDefaultFormValues(),
+      queries: getDefaultQueries(),
+    };
+  }
+
+  return ignoreHiddenQueries({
+    ...getDefaultFormValues(),
+    ...ruleFromQueryParams,
+    annotations: normalizeDefaultAnnotations(ruleFromQueryParams.annotations ?? []),
+    queries: ruleFromQueryParams.queries ?? getDefaultQueries(),
+    type: type || RuleFormType.grafana,
+    evaluateEvery: MINUTE,
+  });
+}
+
+function formValuesFromPrefill(rule: Partial<RuleFormValues>): RuleFormValues {
+  return ignoreHiddenQueries({
+    ...getDefaultFormValues(),
+    ...rule,
+  });
+}
+
+function formValuesFromExistingRule(rule: RuleWithLocation<RulerRuleDTO>) {
+  return ignoreHiddenQueries(rulerRuleToFormValues(rule));
+}
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
@@ -295,7 +365,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     contentOuter: css`
       background: ${theme.colors.background.primary};
       border: 1px solid ${theme.colors.border.weak};
-      border-radius: ${theme.shape.borderRadius()};
+      border-radius: ${theme.shape.radius.default};
       overflow: hidden;
       flex: 1;
       margin-top: ${theme.spacing(1)};

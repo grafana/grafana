@@ -8,6 +8,11 @@ keywords:
   - grafana
   - opentsdb
   - guide
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 menuTitle: OpenTSDB
 title: OpenTSDB data source
 weight: 1100
@@ -18,9 +23,9 @@ weight: 1100
 Grafana ships with advanced support for OpenTSDB.
 This topic explains configuration, variables, querying, and other features specific to the OpenTSDB data source.
 
-For instructions on how to add a data source to Grafana, refer to the [administration documentation]({{< relref "../../administration/data-source-management/" >}}).
+For instructions on how to add a data source to Grafana, refer to the [administration documentation][data-source-management].
 Only users with the organization administrator role can add data sources.
-Administrators can also [configure the data source via YAML]({{< relref "#provision-the-data-source" >}}) with Grafana's provisioning system.
+Administrators can also [configure the data source via YAML](#provision-the-data-source) with Grafana's provisioning system.
 
 ## OpenTSDB settings
 
@@ -35,21 +40,20 @@ To configure basic settings for the data source, complete the following steps:
 
 1.  Set the data source's basic configuration options:
 
-        | Name                | Description                                                                             |
-
-    | ------------------- | --------------------------------------------------------------------------------------- |
-    | **Name** | The data source name. This is how you refer to the data source in panels and queries. |
-    | **Default** | Default data source means that it will be pre-selected for new panels. |
-    | **URL** | The HTTP protocol, IP, and port of your OpenTSDB server (default port is usually 4242) |
-    | **Allowed cookies** | List the names of cookies to forward to the data source. |
-    | **Version** | Version = opentsdb version, either <=2.1 or 2.2 |
-    | **Resolution** | Metrics from opentsdb may have datapoints with either second or millisecond resolution. |
-    | **Lookup limit** | Default is 1000. |
+| Name                | Description                                                                              |
+| ------------------- | ---------------------------------------------------------------------------------------- |
+| **Name**            | The data source name. This is how you refer to the data source in panels and queries.    |
+| **Default**         | Default data source that will be be pre-selected for new panels.                         |
+| **URL**             | The HTTP protocol, IP, and port of your OpenTSDB server (default port is usually 4242).  |
+| **Allowed cookies** | Listing of cookies to forward to the data source.                                        |
+| **Version**         | The OpenTSDB version.                                                                    |
+| **Resolution**      | Metrics from OpenTSDB may have data points with either second or millisecond resolution. |
+| **Lookup limit**    | Default is 1000.                                                                         |
 
 ### Provision the data source
 
 You can define and configure the data source in YAML files as part of Grafana's provisioning system.
-For more information about provisioning, and for available configuration options, refer to [Provisioning Grafana]({{< relref "../../administration/provisioning/#data-sources" >}}).
+For more information about provisioning, and for available configuration options, refer to [Provisioning Grafana][provisioning-data-sources].
 
 #### Provisioning example
 
@@ -57,7 +61,7 @@ For more information about provisioning, and for available configuration options
 apiVersion: 1
 
 datasources:
-  - name: OpenTsdb
+  - name: OpenTSDB
     type: opentsdb
     access: proxy
     url: http://localhost:4242
@@ -70,11 +74,13 @@ datasources:
 
 Open a graph in edit mode by click the title. Query editor will differ if the data source has version <=2.1 or = 2.2.
 In the former version, only tags can be used to query OpenTSDB. But in the latter version, filters as well as tags
-can be used to query opentsdb. Fill Policy is also introduced in OpenTSDB 2.2.
+can be used to query OpenTSDB. Fill Policy is also introduced in OpenTSDB 2.2.
 
 ![](/static/img/docs/v43/opentsdb_query_editor.png)
 
-> **Note:** While using OpenTSDB 2.2 data source, make sure you use either Filters or Tags as they are mutually exclusive. If used together, might give you weird results.
+{{% admonition type="note" %}}
+While using OpenTSDB 2.2 data source, make sure you use either Filters or Tags as they are mutually exclusive. If used together, might give you weird results.
+{{% /admonition %}}
 
 ### Auto complete suggestions
 
@@ -87,7 +93,7 @@ Instead of hard-coding things like server, application and sensor name in your m
 Variables are shown as dropdown select boxes at the top of the dashboard. These dropdowns make it easy to change the data
 being displayed in your dashboard.
 
-Check out the [Templating]({{< relref "../../dashboards/variables/" >}}) documentation for an introduction to the templating feature and the different
+Check out the [Templating][variables] documentation for an introduction to the templating feature and the different
 types of template variables.
 
 ### Query variable
@@ -121,3 +127,14 @@ Some examples are mentioned below to make nested template queries work successfu
 | `tag_values(cpu, hostname, env=$env, region=$region)` | Return tag values for cpu metric, selected env tag value, selected region tag value and tag key hostname |
 
 For details on OpenTSDB metric queries, check out the official [OpenTSDB documentation](http://opentsdb.net/docs/build/html/index.html)
+
+{{% docs/reference %}}
+[data-source-management]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/administration/data-source-management"
+[data-source-management]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/administration/data-source-management"
+
+[provisioning-data-sources]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/administration/provisioning#data-sources"
+[provisioning-data-sources]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/administration/provisioning#data-sources"
+
+[variables]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables"
+[variables]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables"
+{{% /docs/reference %}}

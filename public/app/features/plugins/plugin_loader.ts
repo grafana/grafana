@@ -33,6 +33,9 @@ import * as ticks from 'app/core/utils/ticks';
 import { GenericDataSourcePlugin } from '../datasources/types';
 
 import builtInPlugins from './built_in_plugins';
+import { PLUGIN_CDN_URL_KEY } from './constants';
+import { sandboxPluginDependencies } from './sandbox/plugin_dependencies';
+import { importPluginModuleInSandbox } from './sandbox/sandbox_plugin_loader';
 import { locateFromCDN, translateForCDN } from './systemjsPlugins/pluginCDN';
 import { fetchCSS, locateCSS } from './systemjsPlugins/pluginCSS';
 import { locateWithCache, registerPluginInCache } from './systemjsPlugins/pluginCacheBuster';
@@ -76,7 +79,7 @@ grafanaRuntime.SystemJS.config({
     '*.css': {
       loader: 'css',
     },
-    'plugin-cdn/*': {
+    [`${PLUGIN_CDN_URL_KEY}/*`]: {
       esModule: true,
       authorization: false,
       loader: 'cdn-loader',
@@ -88,6 +91,11 @@ export function exposeToPlugin(name: string, component: any) {
   grafanaRuntime.SystemJS.registerDynamic(name, [], true, (require: any, exports: any, module: { exports: any }) => {
     module.exports = component;
   });
+
+  // exposes this dependency to sandboxed plugins too.
+  // the following sandboxPluginDependencies don't depend or interact
+  // with SystemJS in any way.
+  sandboxPluginDependencies.set(name, component);
 }
 
 exposeToPlugin('@grafana/data', grafanaData);
@@ -186,7 +194,17 @@ for (const flotDep of flotDeps) {
   exposeToPlugin(flotDep, { fakeDep: 1 });
 }
 
-export async function importPluginModule(path: string, version?: string): Promise<any> {
+export async function importPluginModule({
+  path,
+  version,
+  isAngular,
+  pluginId,
+}: {
+  path: string;
+  pluginId: string;
+  version?: string;
+  isAngular?: boolean;
+}): Promise<any> {
   if (version) {
     registerPluginInCache({ path, version });
   }
@@ -200,11 +218,35 @@ export async function importPluginModule(path: string, version?: string): Promis
       return builtIn;
     }
   }
+
+  // the sandboxing environment code cannot work in nodejs and requires a real browser
+  if (isFrontendSandboxSupported({ isAngular, pluginId })) {
+    return importPluginModuleInSandbox({ pluginId });
+  }
+
   return grafanaRuntime.SystemJS.import(path);
 }
 
+function isFrontendSandboxSupported({ isAngular, pluginId }: { isAngular?: boolean; pluginId: string }): boolean {
+  // To fast test and debug the sandbox in the browser.
+  const sandboxQueryParam = location.search.includes('nosandbox') && config.buildInfo.env === 'development';
+  const isPluginExcepted = config.disableFrontendSandboxForPlugins.includes(pluginId);
+  return (
+    !isAngular &&
+    Boolean(config.featureToggles.pluginsFrontendSandbox) &&
+    process.env.NODE_ENV !== 'test' &&
+    !isPluginExcepted &&
+    !sandboxQueryParam
+  );
+}
+
 export function importDataSourcePlugin(meta: grafanaData.DataSourcePluginMeta): Promise<GenericDataSourcePlugin> {
-  return importPluginModule(meta.module, meta.info?.version).then((pluginExports) => {
+  return importPluginModule({
+    path: meta.module,
+    version: meta.info?.version,
+    isAngular: meta.angularDetected,
+    pluginId: meta.id,
+  }).then((pluginExports) => {
     if (pluginExports.plugin) {
       const dsPlugin = pluginExports.plugin as GenericDataSourcePlugin;
       dsPlugin.meta = meta;
@@ -227,7 +269,12 @@ export function importDataSourcePlugin(meta: grafanaData.DataSourcePluginMeta): 
 }
 
 export function importAppPlugin(meta: grafanaData.PluginMeta): Promise<grafanaData.AppPlugin> {
-  return importPluginModule(meta.module, meta.info?.version).then((pluginExports) => {
+  return importPluginModule({
+    path: meta.module,
+    version: meta.info?.version,
+    isAngular: meta.angularDetected,
+    pluginId: meta.id,
+  }).then((pluginExports) => {
     const plugin = pluginExports.plugin ? (pluginExports.plugin as grafanaData.AppPlugin) : new grafanaData.AppPlugin();
     plugin.init(meta);
     plugin.meta = meta;

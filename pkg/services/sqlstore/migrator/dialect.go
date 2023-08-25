@@ -2,6 +2,7 @@ package migrator
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 
 	"xorm.io/xorm"
@@ -61,8 +62,8 @@ type Dialect interface {
 	PreInsertId(table string, sess *xorm.Session) error
 	PostInsertId(table string, sess *xorm.Session) error
 
-	CleanDB() error
-	TruncateDBTables() error
+	CleanDB(engine *xorm.Engine) error
+	TruncateDBTables(engine *xorm.Engine) error
 	NoOpSQL() string
 
 	IsUniqueConstraintViolation(err error) bool
@@ -70,14 +71,17 @@ type Dialect interface {
 	IsDeadlock(err error) bool
 	Lock(LockCfg) error
 	Unlock(LockCfg) error
+
+	GetDBName(string) (string, error)
 }
 
 type LockCfg struct {
 	Session *xorm.Session
+	Key     string
 	Timeout int
 }
 
-type dialectFunc func(*xorm.Engine) Dialect
+type dialectFunc func() Dialect
 
 var supportedDialects = map[string]dialectFunc{
 	MySQL:                  NewMysqlDialect,
@@ -88,18 +92,16 @@ var supportedDialects = map[string]dialectFunc{
 	Postgres + "WithHooks": NewPostgresDialect,
 }
 
-func NewDialect(engine *xorm.Engine) Dialect {
-	name := engine.DriverName()
-	if fn, exist := supportedDialects[name]; exist {
-		return fn(engine)
+func NewDialect(driverName string) Dialect {
+	if fn, exist := supportedDialects[driverName]; exist {
+		return fn()
 	}
 
-	panic("Unsupported database type: " + name)
+	panic("Unsupported database type: " + driverName)
 }
 
 type BaseDialect struct {
 	dialect    Dialect
-	engine     *xorm.Engine
 	driverName string
 }
 
@@ -128,6 +130,14 @@ func (b *BaseDialect) EqStr() string {
 }
 
 func (b *BaseDialect) Default(col *Column) string {
+	if col.Type == DB_Bool {
+		// Ensure that all dialects support the same literals in the same way.
+		bl, err := strconv.ParseBool(col.Default)
+		if err != nil {
+			panic(fmt.Errorf("failed to create default value for column '%s': invalid boolean default value '%s'", col.Name, col.Default))
+		}
+		return b.dialect.BooleanStr(bl)
+	}
 	return col.Default
 }
 
@@ -302,7 +312,7 @@ func (b *BaseDialect) PostInsertId(table string, sess *xorm.Session) error {
 	return nil
 }
 
-func (b *BaseDialect) CleanDB() error {
+func (b *BaseDialect) CleanDB(engine *xorm.Engine) error {
 	return nil
 }
 
@@ -310,7 +320,7 @@ func (b *BaseDialect) NoOpSQL() string {
 	return "SELECT 0;"
 }
 
-func (b *BaseDialect) TruncateDBTables() error {
+func (b *BaseDialect) TruncateDBTables(engine *xorm.Engine) error {
 	return nil
 }
 
@@ -329,4 +339,8 @@ func (b *BaseDialect) Unlock(_ LockCfg) error {
 
 func (b *BaseDialect) OrderBy(order string) string {
 	return order
+}
+
+func (b *BaseDialect) GetDBName(_ string) (string, error) {
+	return "", nil
 }

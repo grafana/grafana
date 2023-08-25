@@ -17,13 +17,13 @@ export const CorrelationFormNavigation = () => {
   );
 
   const NextPage = (
-    <Button variant="secondary" type="submit">
+    <Button variant="primary" type="submit">
       Next
     </Button>
   );
 
   return (
-    <HorizontalGroup justify="flex-end">
+    <HorizontalGroup justify="flex-start">
       {currentPage > 0 ? (
         <Button variant="secondary" onClick={prevPage}>
           Back

@@ -3,13 +3,13 @@ import userEvent from '@testing-library/user-event';
 import lodash from 'lodash'; // eslint-disable-line lodash/import-scope
 import React from 'react';
 
-import { logInfo } from '@grafana/runtime';
+import * as runtime from '@grafana/runtime';
 
 import { LogMessages } from '../../Analytics';
 
 import { MatcherFilter } from './MatcherFilter';
 
-jest.mock('@grafana/runtime');
+const logInfoSpy = jest.spyOn(runtime, 'logInfo');
 
 describe('Analytics', () => {
   beforeEach(() => {
@@ -25,7 +25,7 @@ describe('Analytics', () => {
     const searchInput = screen.getByTestId('search-query-input');
     await userEvent.type(searchInput, 'job=');
 
-    expect(logInfo).toHaveBeenCalledWith(LogMessages.filterByLabel);
+    expect(logInfoSpy).toHaveBeenCalledWith(LogMessages.filterByLabel);
   });
 
   it('should call onChange handler', async () => {

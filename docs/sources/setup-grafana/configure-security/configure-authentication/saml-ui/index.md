@@ -1,13 +1,19 @@
 ---
 description: Learn how to configure SAML authentication in Grafana's UI.
-menuTitle: Configure SAML using the UI
+labels:
+  products:
+    - cloud
+    - enterprise
+menuTitle: SAML user interface
 title: Configure SAML authentication using the Grafana user interface
-weight: 1150
+weight: 600
 ---
 
 # Configure SAML authentication using the Grafana user interface
 
-> **Note:** Available in [Grafana Enterprise]({{< relref "../../../../introduction/grafana-enterprise" >}}) version 10.0 and later, and [Grafana Cloud Pro and Advanced](/docs/grafana-cloud/).
+{{% admonition type="note" %}}
+Available in [Grafana Enterprise]({{< relref "../../../../introduction/grafana-enterprise" >}}) version 10.0 and later, and [Grafana Cloud Pro and Advanced](/docs/grafana-cloud/).
+{{% /admonition %}}
 
 You can configure SAML authentication in Grafana through the user interface (UI) or the Grafana configuration file. For instructions on how to set up SAML using the Grafana configuration file, refer to [Configure SAML authentication using the configuration file]({{< relref "../saml" >}}).
 
@@ -18,9 +24,13 @@ The Grafana SAML UI provides the following advantages over configuring SAML in t
 - It doesn't require Grafana to be restarted after a configuration update
 - Access to the SAML UI only requires access to authentication settings, so it can be used by users with limited access to Grafana's configuration
 
-> **Note:** Any configuration changes made through the Grafana user interface (UI) will take precedence over settings specified in the Grafana configuration file or through environment variables. This means that if you modify any configuration settings in the UI, they will override any corresponding settings set via environment variables or defined in the configuration file. For more information on how Grafana determines the order of precedence for its settings, please refer to the [Settings update at runtime]({{< relref "../../../configure-grafana/settings-updates-at-runtime" >}}).
+{{% admonition type="note" %}}
+Any configuration changes made through the Grafana user interface (UI) will take precedence over settings specified in the Grafana configuration file or through environment variables. This means that if you modify any configuration settings in the UI, they will override any corresponding settings set via environment variables or defined in the configuration file. For more information on how Grafana determines the order of precedence for its settings, please refer to the [Settings update at runtime]({{< relref "../../../configure-grafana/settings-updates-at-runtime" >}}).
+{{% /admonition %}}
 
-> **Note:** Disabling the UI does not affect any configuration settings that were previously set up through the UI. Those settings will continue to function as intended even with the UI disabled.
+{{% admonition type="note" %}}
+Disabling the UI does not affect any configuration settings that were previously set up through the UI. Those settings will continue to function as intended even with the UI disabled.
+{{% /admonition %}}
 
 ## Before you begin
 

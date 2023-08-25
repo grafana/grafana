@@ -13,6 +13,7 @@ import (
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/auth"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	models2 "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -139,26 +140,6 @@ func TestAlertingProxy_createProxyContext(t *testing.T) {
 			}
 		})
 	})
-	t.Run("if access control is disabled", func(t *testing.T) {
-		t.Run("should not alter user", func(t *testing.T) {
-			proxy := AlertingProxy{
-				DataProxy: nil,
-				ac:        accesscontrolmock.New().WithDisabled(),
-			}
-
-			req := &http.Request{}
-			resp := &response.NormalResponse{}
-
-			for _, roleType := range []org.RoleType{org.RoleViewer, org.RoleEditor, org.RoleAdmin} {
-				roleCtx := *ctx
-				roleCtx.SignedInUser = &user.SignedInUser{
-					OrgRole: roleType,
-				}
-				newCtx := proxy.createProxyContext(&roleCtx, req, resp)
-				require.Equalf(t, roleCtx.SignedInUser, newCtx.SignedInUser, "user should not be altered if access control is disabled and role is %s", roleType)
-			}
-		})
-	})
 }
 
 func Test_containsProvisionedAlerts(t *testing.T) {
@@ -179,3 +160,18 @@ func Test_containsProvisionedAlerts(t *testing.T) {
 		require.Falsef(t, containsProvisionedAlerts(provenance, rules), "the group of rules is not expected to be provisioned but it is. Provenances: %v", provenance)
 	})
 }
+
+type recordingConditionValidator struct {
+	recorded []models2.Condition
+	hook     func(c models2.Condition) error
+}
+
+func (r *recordingConditionValidator) Validate(_ eval.EvaluationContext, condition models2.Condition) error {
+	r.recorded = append(r.recorded, condition)
+	if r.hook != nil {
+		return r.hook(condition)
+	}
+	return nil
+}
+
+var _ ConditionValidator = &recordingConditionValidator{}

@@ -3,6 +3,10 @@ aliases:
   - ../administration/configuration/
   - ../installation/configuration/
 description: Configuration documentation
+labels:
+  products:
+    - enterprise
+    - oss
 title: Configure Grafana
 weight: 200
 ---
@@ -11,7 +15,9 @@ weight: 200
 
 Grafana has default and custom configuration files. You can customize your Grafana instance by modifying the custom configuration file or by using environment variables. To see the list of settings for a Grafana instance, refer to [View server settings]({{< relref "../../administration/stats-and-license#view-server-settings" >}}).
 
-> **Note:** After you add custom options, [uncomment](#remove-comments-in-the-ini-files) the relevant sections of the configuration file. Restart Grafana for your changes to take effect.
+{{% admonition type="note" %}}
+After you add custom options, [uncomment](#remove-comments-in-the-ini-files) the relevant sections of the configuration file. Restart Grafana for your changes to take effect.
+{{% /admonition %}}
 
 ## Configuration file location
 
@@ -87,7 +93,9 @@ export GF_FEATURE_TOGGLES_ENABLE=newNavigation
 
 ## Variable expansion
 
-> **Note:** Only available in Grafana 7.1+.
+{{% admonition type="note" %}}
+Only available in Grafana 7.1+.
+{{% /admonition %}}
 
 If any of your options contains the expression `$__<provider>{<argument>}`
 or `${<environment variable>}`, then they will be processed by Grafana's
@@ -230,9 +238,11 @@ This is the full URL used to access Grafana from a web browser. This is
 important if you use Google or GitHub OAuth authentication (for the
 callback URL to be correct).
 
-> **Note:** This setting is also important if you have a reverse proxy
-> in front of Grafana that exposes it through a subpath. In that
-> case add the subpath to the end of this URL setting.
+{{% admonition type="note" %}}
+This setting is also important if you have a reverse proxy
+in front of Grafana that exposes it through a subpath. In that
+case add the subpath to the end of this URL setting.
+{{% /admonition %}}
 
 ### serve_from_sub_path
 
@@ -283,7 +293,9 @@ Path where the socket should be created when `protocol=socket`. Make sure Grafan
 
 ### cdn_url
 
-> **Note**: Available in Grafana v7.4 and later versions.
+{{% admonition type="note" %}}
+Available in Grafana v7.4 and later versions.
+{{% /admonition %}}
 
 Specify a full HTTP URL address to the root of your Grafana CDN assets. Grafana will add edition and version paths.
 
@@ -363,7 +375,7 @@ Set to `true` to log the sql calls and execution times.
 
 ### ssl_mode
 
-For Postgres, use either `disable`, `require` or `verify-full`.
+For Postgres, use use any [valid libpq `sslmode`](https://www.postgresql.org/docs/current/libpq-ssl.html#LIBPQ-SSL-SSLMODE-STATEMENTS), e.g.`disable`, `require`, `verify-full`, etc.
 For MySQL, use either `true`, `false`, or `skip-verify`.
 
 ### isolation_level
@@ -416,7 +428,7 @@ Set to `true` to add metrics and tracing for database queries. The default value
 
 ## [remote_cache]
 
-Caches authentication details and session information in the configured database, Redis or Memcached. This setting does not configure [Query Caching in Grafana Enterprise]({{< relref "../../administration/data-source-management#query-caching" >}}).
+Caches authentication details and session information in the configured database, Redis or Memcached. This setting does not configure [Query Caching in Grafana Enterprise]({{< relref "../../administration/data-source-management#query-and-resource-caching" >}}).
 
 ### type
 
@@ -502,6 +514,11 @@ Sets a custom value for the `User-Agent` header for outgoing data proxy requests
 
 ## [analytics]
 
+### enabled
+
+This option is also known as _usage analytics_. When `false`, this option disables the writers that read/write from and to the Grafana databases. The default
+value is `true`.
+
 ### reporting_enabled
 
 When enabled Grafana will send anonymous usage statistics to
@@ -516,7 +533,9 @@ Set to false, disables checking for new versions of Grafana from Grafana's GitHu
 
 ### check_for_plugin_updates
 
-> **Note**: Available in Grafana v8.5.0 and later versions.
+{{% admonition type="note" %}}
+Available in Grafana v8.5.0 and later versions.
+{{% /admonition %}}
 
 Set to false disables checking for new versions of installed plugins from https://grafana.com. When enabled, the check for a new plugin runs every 10 minutes. It will notify, via the UI, when a new plugin update exists. The check itself will not prompt any auto-updates of the plugin, nor will it send any sensitive information.
 
@@ -605,7 +624,7 @@ Define a whitelist of allowed IP addresses or domains, with ports, to be used in
 
 ### disable_brute_force_login_protection
 
-Set to `true` to disable [brute force login protection](https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html#account-lockout). Default is `false`.
+Set to `true` to disable [brute force login protection](https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html#account-lockout). Default is `false`. An existing user's account will be locked after 5 attempts in 5 minutes.
 
 ### cookie_secure
 
@@ -667,17 +686,15 @@ Set the policy template that will be used when adding the `Content-Security-Poli
 ### angular_support_enabled
 
 This currently defaults to `true` but will default to `false` in a future release. When set to false the angular framework and support components will not be loaded. This means that
-all plugins and core features that depend on angular support will stop working.
+all [plugins]({{< relref "../../developers/angular_deprecation/angular-plugins" >}}) and core features that depend on angular support will stop working.
 
-Current core features that will stop working:
+The core features that depend on angular are:
 
-- Heatmap panel
 - Old graph panel
 - Old table panel
-- Postgres, MySQL and MSSQL data source query editors
 - Legacy alerting edit rule UI
 
-Before we disable angular support by default we plan to migrate these remaining areas to React.
+These features each have supported alternatives, and we recommend using them.
 
 ### csrf_trusted_origins
 
@@ -690,6 +707,11 @@ List of allowed headers to be set by the user. Suggested to use for if authentic
 ### csrf_always_check
 
 Set to `true` to execute the CSRF check even if the login cookie is not in a request (default `false`).
+
+### disable_frontend_sandbox_for_plugins
+
+Comma-separated list of plugins ids that won't be loaded inside the frontend sandbox. It is recommended to only use this
+option for plugins that are known to have problems running inside the frontend sandbox.
 
 ## [snapshots]
 
@@ -738,7 +760,9 @@ As of Grafana v7.3, this also limits the refresh interval options in Explore.
 
 Path to the default home dashboard. If this value is empty, then Grafana uses StaticRootPath + "dashboards/home.json".
 
-> **Note:** On Linux, Grafana uses `/usr/share/grafana/public/dashboards/home.json` as the default home dashboard location.
+{{% admonition type="note" %}}
+On Linux, Grafana uses `/usr/share/grafana/public/dashboards/home.json` as the default home dashboard location.
+{{% /admonition %}}
 
 <hr />
 
@@ -812,7 +836,9 @@ Sets the default UI theme: `dark`, `light`, or `system`. The default theme is `d
 
 ### default_language
 
-This setting configures the default UI language, which must be a supported IETF language tag, such as `en-US`.
+This option will set the default UI language if a supported IETF language tag like `en-US` is available.
+If set to `detect`, the default UI language will be determined by browser preference.
+The default is `en-US`.
 
 ### home_page
 
@@ -879,7 +905,9 @@ URL to redirect the user to after they sign out.
 
 ### oauth_auto_login
 
-> **Note**: This option is deprecated - use `auto_login` option for specific OAuth provider instead.
+{{% admonition type="note" %}}
+This option is deprecated - use `auto_login` option for specific OAuth provider instead.
+{{% /admonition %}}
 
 Set to `true` to attempt login with OAuth automatically, skipping the login screen.
 This setting is ignored if multiple OAuth providers are configured. Default is `false`.
@@ -891,23 +919,29 @@ Administrators can increase this if they experience OAuth login state mismatch e
 
 ### oauth_skip_org_role_update_sync
 
-> **Note**: This option is deprecated in favor of OAuth provider specific `skip_org_role_sync` settings. The following sections explain settings for each provider.
+{{% admonition type="note" %}}
+This option is deprecated in favor of OAuth provider specific `skip_org_role_sync` settings. The following sections explain settings for each provider.
+{{% /admonition %}}
 
 If you want to change the `oauth_skip_org_role_update_sync` setting to `false`, then for each provider you have set up, use the `skip_org_role_sync` setting to specify whether you want to skip the synchronization.
 
-> **Warning**: Currently if no organization role mapping is found for a user, Grafana doesn't update the user's organization role.
-> With Grafana 10, if `oauth_skip_org_role_update_sync` option is set to `false`, users with no mapping will be
-> reset to the default organization role on every login. [See `auto_assign_org_role` option]({{< relref "#auto_assign_org_role" >}}).
+{{% admonition type="warning" %}}
+Currently if no organization role mapping is found for a user, Grafana doesn't update the user's organization role.
+With Grafana 10, if `oauth_skip_org_role_update_sync` option is set to `false`, users with no mapping will be
+reset to the default organization role on every login. [See `auto_assign_org_role` option]({{< relref "#auto_assign_org_role" >}}).
+{{% /admonition %}}
 
 ### skip_org_role_sync
 
 `skip_org_role_sync` prevents the synchronization of organization roles for a specific OAuth integration, while the deprecated setting `oauth_skip_org_role_update_sync` affects all configured OAuth providers.
 
-`skip_org_role_sync` default value is `false`.
+The default value for `skip_org_role_sync` is `false`.
 
-With `skip_org_role_sync` set to `false`, the users' organization and role is reset on every new login, based on the external provider's role. See provider specifities in the tables below.
+With `skip_org_role_sync` set to `false`, the users' organization and role is reset on every new login, based on the external provider's role. See your provider in the tables below.
 
 With `skip_org_role_sync` set to `true`, when a user logs in for the first time, Grafana sets the organization role based on the value specified in `auto_assign_org_role` and forces the organization to `auto_assign_org_id` when specified, otherwise it falls back to OrgID `1`.
+
+> **Note**: Enabling `skip_org_role_sync` also disables the synchronization of Grafana Admins from the external provider, as such `allow_assign_grafana_admin` is ignored.
 
 Use this setting when you want to manage the organization roles of your users from within Grafana and be able to manually assign them to multiple organizations, or to prevent synchronization conflicts when they can be synchronized from another provider.
 
@@ -937,7 +971,9 @@ The behavior of `oauth_skip_org_role_update_sync` and `skip_org_role_sync`, can 
 | false | true | User organization role is set to `auto_assign_org_role` and can be changed in Grafana. | true |
 | true | true | User organization role is set to `auto_assign_org_role` and can be changed in Grafana. | true |
 
-> **Note:** For GitLab, GitHub, Okta, Generic OAuth providers, Grafana synchronizes organization roles and sets Grafana Admins. The `allow_assign_grafana_admin` setting is also accounted for, to allow or not setting the Grafana Admin role from the external provider.
+{{% admonition type="note" %}}
+For GitLab, GitHub, Okta, Generic OAuth providers, Grafana synchronizes organization roles and sets Grafana Admins. The `allow_assign_grafana_admin` setting is also accounted for, to allow or not setting the Grafana Admin role from the external provider.
+{{% /admonition %}}
 
 **[auth.github]**
 | `oauth_skip_org_role_update_sync` | `skip_org_role_sync` | **Resulting Org Role** | Modifiable |
@@ -1156,7 +1192,7 @@ Enable this to allow Grafana to send email. Default is `false`.
 
 ### host
 
-Default is `localhost:25`.
+Default is `localhost:25`. Use port 465 for implicit TLS.
 
 ### user
 
@@ -1228,6 +1264,10 @@ Options are "debug", "info", "warn", "error", and "critical". Default is `info`.
 
 Optional settings to set different levels for specific loggers.
 For example: `filters = sqlstore:debug`
+
+### user_facing_default_error
+
+Use this configuration option to set the default error message shown to users. This message is displayed instead of sensitive backend errors, which should be obfuscated. The default message is `Please inspect the Grafana server log for details.`.
 
 <hr>
 
@@ -1636,6 +1676,20 @@ Configures the Profile section.
 
 Enable or disable the Profile section. Default is `enabled`.
 
+## [news]
+
+### news_feed_enabled
+
+Enables the news feed section. Default is `true`
+
+<hr>
+
+## [query]
+
+### concurrent_query_limit
+
+Set the number of queries that can be executed concurrently in a mixed data source panel. Default is the number of CPUs.
+
 ## [query_history]
 
 Configures Query history in Explore.
@@ -1643,6 +1697,8 @@ Configures Query history in Explore.
 ### enabled
 
 Enable or disable the Query history. Default is `enabled`.
+
+<hr>
 
 ## [metrics]
 
@@ -1659,6 +1715,10 @@ Flush/write interval when sending metrics to external TSDB. Defaults to `10`.
 ### disable_total_stats
 
 If set to `true`, then total stats generation (`stat_totals_*` metrics) is disabled. Default is `false`.
+
+### total_stats_collector_interval_seconds
+
+Sets the total stats collector interval. The default is 1800 seconds (30 minutes).
 
 ### basic_auth_username and basic_auth_password
 
@@ -1834,7 +1894,9 @@ keep the default, just leave this empty. You must still provide a `region` value
 Set this to true to force path-style addressing in S3 requests, i.e., `http://s3.amazonaws.com/BUCKET/KEY`, instead
 of the default, which is virtual hosted bucket addressing when possible (`http://BUCKET.s3.amazonaws.com/KEY`).
 
-> **Note:** This option is specific to the Amazon S3 service.
+{{% admonition type="note" %}}
+This option is specific to the Amazon S3 service.
+{{% /admonition %}}
 
 ### bucket_url
 
@@ -1946,7 +2008,9 @@ Options to configure a remote HTTP image rendering service, e.g. using https://g
 
 #### renderer_token
 
-> **Note**: Available in Grafana v9.1.2 and Image Renderer v3.6.1 or later.
+{{% admonition type="note" %}}
+Available in Grafana v9.1.2 and Image Renderer v3.6.1 or later.
+{{% /admonition %}}
 
 An auth token will be sent to and verified by the renderer. The renderer will deny any request without an auth token matching the one configured on the renderer.
 
@@ -2003,13 +2067,23 @@ Custom install/learn more URL for enterprise plugins. Defaults to https://grafan
 
 Enter a comma-separated list of plugin identifiers to hide in the plugin catalog.
 
+### public_key_retrieval_disabled
+
+Disable download of the public key for verifying plugin signature. The default is `false`. If disabled, it will use the hardcoded public key.
+
+### public_key_retrieval_on_startup
+
+Force download of the public key for verifying plugin signature on startup. The default is `false`. If disabled, the public key will be retrieved every 10 days. Requires `public_key_retrieval_disabled` to be false to have any effect.
+
 <hr>
 
 ## [live]
 
 ### max_connections
 
-> **Note**: Available in Grafana v8.0 and later versions.
+{{% admonition type="note" %}}
+Available in Grafana v8.0 and later versions.
+{{% /admonition %}}
 
 The `max_connections` option specifies the maximum number of connections to the Grafana Live WebSocket endpoint per Grafana server instance. Default is `100`.
 
@@ -2019,7 +2093,9 @@ Refer to [Grafana Live configuration documentation]({{< relref "../set-up-grafan
 
 ### allowed_origins
 
-> **Note**: Available in Grafana v8.0.4 and later versions.
+{{% admonition type="note" %}}
+Available in Grafana v8.0.4 and later versions.
+{{% /admonition %}}
 
 The `allowed_origins` option is a comma-separated list of additional origins (`Origin` header of HTTP Upgrade request during WebSocket connection establishment) that will be accepted by Grafana Live.
 
@@ -2036,7 +2112,9 @@ allowed_origins = "https://*.example.com"
 
 ### ha_engine
 
-> **Note**: Available in Grafana v8.1 and later versions.
+{{% admonition type="note" %}}
+Available in Grafana v8.1 and later versions.
+{{% /admonition %}}
 
 **Experimental**
 
@@ -2046,7 +2124,9 @@ For more information, refer to the [Configure Grafana Live HA setup]({{< relref 
 
 ### ha_engine_address
 
-> **Note**: Available in Grafana v8.1 and later versions.
+{{% admonition type="note" %}}
+Available in Grafana v8.1 and later versions.
+{{% /admonition %}}
 
 **Experimental**
 
@@ -2068,7 +2148,9 @@ Properties described in this section are available for all plugins, but you must
 
 ### tracing
 
-> **Note**: Available in Grafana v9.5.0 or later, and [OpenTelemetry must be configured as well](#tracingopentelemetry).
+{{% admonition type="note" %}}
+Available in Grafana v9.5.0 or later, and [OpenTelemetry must be configured as well](#tracingopentelemetry).
+{{% /admonition %}}
 
 If `true`, propagate the tracing context to the plugin backend and enable tracing (if the backend supports it).
 
@@ -2140,7 +2222,9 @@ When rendering_mode = clustered, you can define the maximum number of browser in
 
 ### rendering_clustering_timeout
 
-> **Note**: Available in grafana-image-renderer v3.3.0 and later versions.
+{{% admonition type="note" %}}
+Available in grafana-image-renderer v3.3.0 and later versions.
+{{% /admonition %}}
 
 When rendering_mode = clustered, you can specify the duration a rendering request can take before it will time out. Default is `30` seconds.
 
@@ -2176,11 +2260,47 @@ For more information about Grafana Enterprise, refer to [Grafana Enterprise]({{<
 
 ### enable
 
-Keys of alpha features to enable, separated by space.
+Keys of features to enable, separated by space.
+
+### FEATURE_TOGGLE_NAME = false
+
+Some feature toggles for stable features are on by default. Use this setting to disable an on-by-default feature toggle with the name FEATURE_TOGGLE_NAME, for example, `exploreMixedDatasource = false`.
+
+<hr>
+
+## [feature_management]
+
+The options in this section configure the experimental Feature Toggle Admin Page feature, which is enabled using the `featureToggleAdminPage` feature toggle. Grafana Labs offers support on a best-effort basis, and breaking changes might occur prior to the feature being made generally available.
+
+Please see [Configure feature toggles]({{< relref "/feature-toggles" >}}) for more information.
+
+### allow_editing
+
+Lets you switch the feature toggle state in the feature management page. The default is `false`.
+
+### update_controller_url
+
+Set the URL of the controller that manages the feature toggle updates. If not set, feature toggles in the feature management page will be read-only.
+
+{{% admonition type="note" %}}
+The API for feature toggle updates has not been defined yet.
+{{% /admonition %}}
+
+### hidden_toggles
+
+Hide additional specific feature toggles from the feature management page. By default, feature toggles in the `unknown`, `experimental`, and `private preview` stages are hidden from the UI. Use this option to hide toggles in the `public preview`, `general availability`, and `deprecated` stages.
+
+### read_only_toggles
+
+Use to disable updates for additional specific feature toggles in the feature management page. By default, feature toggles can only be updated if they are in the `general availability` and `deprecated`stages. Use this option to disable updates for toggles in those stages.
+
+<hr>
 
 ## [date_formats]
 
-> **Note:** The date format options below are only available in Grafana v7.2+.
+{{% admonition type="note" %}}
+The date format options below are only available in Grafana v7.2+.
+{{% /admonition %}}
 
 This section controls system-wide defaults for date formats used in time ranges, graphs, and date input boxes.
 
@@ -2220,7 +2340,9 @@ Set the default start of the week, valid values are: `saturday`, `sunday`, `mond
 
 ## [expressions]
 
-> **Note:** This feature is available in Grafana v7.4 and later versions.
+{{% admonition type="note" %}}
+This feature is available in Grafana v7.4 and later versions.
+{{% /admonition %}}
 
 ### enabled
 
@@ -2252,3 +2374,12 @@ Set this to `false` to disable loading other custom base maps and hide them in t
 ## [rbac]
 
 Refer to [Role-based access control]({{< relref "../../administration/roles-and-permissions/access-control" >}}) for more information.
+
+## [navigation.app_sections]
+
+Move an app plugin (referenced by its id), including all its pages, to a specific navigation section. Format: <pluginId> = <sectionId> <sortWeight>
+
+## [navigation.app_standalone_pages]
+
+Move an individual app plugin page (referenced by its `path` field) to a specific navigation section.
+Format: <pageUrl> = <sectionId> <sortWeight>

@@ -2,7 +2,6 @@
   "type": "datasource",
   "name": "-- Mixed --",
   "id": "mixed",
-
   "builtIn": true,
 
   "info": {
@@ -12,8 +11,8 @@
       "url": "https://grafana.com"
     },
     "logos": {
-      "small": "public/img/icn-datasource.svg",
-      "large": "public/img/icn-datasource.svg"
+      "small": "img/icn-mixeddatasources.svg",
+      "large": "img/icn-mixeddatasources.svg"
     }
   },
 

@@ -25,7 +25,7 @@ describe('Get next refId char', () => {
     expect(getNextRefIdChar([])).toEqual('A');
   });
 
-  it('should get the first avaliable character if a query has been deleted out of order', () => {
+  it('should get the first available character if a query has been deleted out of order', () => {
     expect(getNextRefIdChar(outOfOrderDataQuery)).toEqual('C');
   });
 

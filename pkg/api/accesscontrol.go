@@ -421,6 +421,32 @@ func (hs *HTTPServer) declareFixedRoles() error {
 		Grants: []string{"Admin"},
 	}
 
+	featuremgmtReaderRole := ac.RoleRegistration{
+		Role: ac.RoleDTO{
+			Name:        "fixed:featuremgmt:reader",
+			DisplayName: "Feature Management reader",
+			Description: "Read feature toggles",
+			Group:       "Feature Management",
+			Permissions: []ac.Permission{
+				{Action: ac.ActionFeatureManagementRead},
+			},
+		},
+		Grants: []string{"Admin"},
+	}
+
+	featuremgmtWriterRole := ac.RoleRegistration{
+		Role: ac.RoleDTO{
+			Name:        "fixed:featuremgmt:writer",
+			DisplayName: "Feature Management writer",
+			Description: "Write feature toggles",
+			Group:       "Feature Management",
+			Permissions: []ac.Permission{
+				{Action: ac.ActionFeatureManagementWrite},
+			},
+		},
+		Grants: []string{"Admin"},
+	}
+
 	return hs.accesscontrolService.DeclareFixedRoles(
 		provisioningWriterRole, datasourcesReaderRole, builtInDatasourceReader, datasourcesWriterRole,
 		datasourcesIdReaderRole, orgReaderRole, orgWriterRole,
@@ -428,7 +454,7 @@ func (hs *HTTPServer) declareFixedRoles() error {
 		annotationsReaderRole, dashboardAnnotationsWriterRole, annotationsWriterRole,
 		dashboardsCreatorRole, dashboardsReaderRole, dashboardsWriterRole,
 		foldersCreatorRole, foldersReaderRole, foldersWriterRole, apikeyReaderRole, apikeyWriterRole,
-		publicDashboardsWriterRole,
+		publicDashboardsWriterRole, featuremgmtReaderRole, featuremgmtWriterRole,
 	)
 }
 
@@ -437,25 +463,20 @@ func (hs *HTTPServer) declareFixedRoles() error {
 func (hs *HTTPServer) getAccessControlMetadata(c *contextmodel.ReqContext,
 	orgID int64, prefix string, resourceID string) ac.Metadata {
 	ids := map[string]bool{resourceID: true}
-	return hs.getMultiAccessControlMetadata(c, orgID, prefix, ids)[resourceID]
+	return hs.getMultiAccessControlMetadata(c, prefix, ids)[resourceID]
 }
 
 // getMultiAccessControlMetadata returns the accesscontrol metadata associated with a given set of resources
 // Context must contain permissions in the given org (see LoadPermissionsMiddleware or AuthorizeInOrgMiddleware)
 func (hs *HTTPServer) getMultiAccessControlMetadata(c *contextmodel.ReqContext,
-	orgID int64, prefix string, resourceIDs map[string]bool) map[string]ac.Metadata {
-	if hs.AccessControl.IsDisabled() || !c.QueryBool("accesscontrol") {
+	prefix string, resourceIDs map[string]bool) map[string]ac.Metadata {
+	if !c.QueryBool("accesscontrol") {
 		return map[string]ac.Metadata{}
 	}
 
-	if c.SignedInUser.Permissions == nil {
+	if len(c.SignedInUser.GetPermissions()) == 0 {
 		return map[string]ac.Metadata{}
 	}
 
-	permissions, ok := c.SignedInUser.Permissions[orgID]
-	if !ok {
-		return map[string]ac.Metadata{}
-	}
-
-	return ac.GetResourcesMetadata(c.Req.Context(), permissions, prefix, resourceIDs)
+	return ac.GetResourcesMetadata(c.Req.Context(), c.SignedInUser.GetPermissions(), prefix, resourceIDs)
 }

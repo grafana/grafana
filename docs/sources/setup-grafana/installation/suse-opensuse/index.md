@@ -1,30 +1,43 @@
 ---
 description: Install guide for Grafana on SUSE or openSUSE.
-title: Install Grafana on SUSE or openSUSE
+labels:
+  products:
+    - enterprise
+    - oss
 menuTitle: SUSE or openSUSE
-weight: 450
+title: Install Grafana on SUSE or openSUSE
+weight: 300
 ---
 
 # Install Grafana on SUSE or openSUSE
 
 This topic explains how to install Grafana dependencies, install Grafana on SUSE or openSUSE and start the Grafana server on your system.
 
-You can install Grafana using a YUM repository, using RPM, or by downloading a binary `.tar.gz` file.
+You can install Grafana using the RPM repository, or by downloading a binary `.tar.gz` file.
 
 If you install via RPM or the `.tar.gz` file, then you must manually update Grafana for each new version.
 
-## Install Grafana from the YUM repository
+## Install Grafana from the RPM repository
 
-If you install from the YUM repository, then Grafana is automatically updated every time you run `sudo zypper update`.
+If you install from the RPM repository, then Grafana is automatically updated every time you run `sudo zypper update`.
 
 | Grafana Version    | Package            | Repository                |
 | ------------------ | ------------------ | ------------------------- |
 | Grafana Enterprise | grafana-enterprise | `https://rpm.grafana.com` |
 | Grafana OSS        | grafana            | `https://rpm.grafana.com` |
 
-> **Note:** Grafana Enterprise is the recommended and default edition. It is available for free and includes all the features of the OSS edition. You can also upgrade to the [full Enterprise feature set](/products/enterprise/?utm_source=grafana-install-page), which has support for [Enterprise plugins](/grafana/plugins/?enterprise=1&utcm_source=grafana-install-page).
+{{% admonition type="note" %}}
+Grafana Enterprise is the recommended and default edition. It is available for free and includes all the features of the OSS edition. You can also upgrade to the [full Enterprise feature set](/products/enterprise/?utm_source=grafana-install-page), which has support for [Enterprise plugins](/grafana/plugins/?enterprise=1&utcm_source=grafana-install-page).
+{{% /admonition %}}
 
-To install Grafana using a YUM repository, complete the following steps:
+To install Grafana using the RPM repository, complete the following steps:
+
+1. Import the GPG key:
+
+   ```bash
+   wget -q -O gpg.key https://rpm.grafana.com/gpg.key
+   sudo rpm --import gpg.key
+   ```
 
 1. Use zypper to add the grafana repo.
 
@@ -46,7 +59,7 @@ To install Grafana using a YUM repository, complete the following steps:
 
 ## Install the Grafana RPM package manually
 
-If you install Grafana manually using YUM or RPM, then you must manually update Grafana for each new version. This method varies according to which Linux OS you are running.
+If you install Grafana manually using RPM, then you must manually update Grafana for each new version. This method varies according to which Linux OS you are running.
 
 **Note:** The RPM files are signed. You can verify the signature with this [public GPG key](https://rpm.grafana.com/gpg.key).
 
@@ -76,8 +89,42 @@ Complete the following steps to install Grafana using the standalone binaries:
 1. Select an **Edition**.
    - **Enterprise:** This is the recommended version. It is functionally identical to the open-source version but includes features you can unlock with a license if you so choose.
    - **Open Source:** This version is functionally identical to the Enterprise version, but you will need to download the Enterprise version if you want Enterprise features.
-1. Depending on which system you are running, click the **Linux** or **ARM** tab on the download page.
-1. Copy and paste the code from the installation page into your command line and run.
+1. Depending on which system you are running, click the **Linux** or **ARM** tab on the [download page](/grafana/download).
+1. Copy and paste the code from the [download page](/grafana/download) into your command line and run.
+
+## Uninstall on SUSE or openSUSE
+
+To uninstall Grafana, run the following commands in a terminal window:
+
+1. If you configured Grafana to run with systemd, stop the systemd service for Grafana server:
+
+   ```shell
+   sudo systemctl stop grafana-server
+   ```
+
+1. If you configured Grafana to run with init.d, stop the init.d service for Grafana server:
+
+   ```shell
+   sudo service grafana-server stop
+   ```
+
+1. To uninstall Grafana OSS:
+
+   ```shell
+   sudo zypper remove grafana
+   ```
+
+1. To uninstall Grafana Enterprise:
+
+   ```shell
+   sudo zypper remove grafana-enterprise
+   ```
+
+1. Optional: To remove the Grafana repository:
+
+   ```shell
+   sudo zypper removerepo grafana
+   ```
 
 ## Next steps
 

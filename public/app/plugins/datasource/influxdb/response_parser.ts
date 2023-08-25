@@ -1,7 +1,7 @@
 import { each, flatten, groupBy, isArray } from 'lodash';
 
-import { AnnotationEvent, DataFrame, DataQuery, FieldType, QueryResultMeta } from '@grafana/data';
-import { toDataQueryResponse } from '@grafana/runtime';
+import { AnnotationEvent, DataFrame, FieldType, QueryResultMeta } from '@grafana/data';
+import { BackendDataSourceResponse, FetchResponse, toDataQueryResponse } from '@grafana/runtime';
 import TableModel from 'app/core/TableModel';
 
 import { InfluxQuery } from './types';
@@ -38,20 +38,7 @@ export default class ResponseParser {
           // (while the newer versions—first).
 
           if (isValueFirst) {
-            // We want to know whether the given retention policy is the default one or not.
-            // If it is default policy then we should add it to the beginning.
-            // The index 4 gives us if that policy is default or not.
-            // https://docs.influxdata.com/influxdb/v1.8/query_language/explore-schema/#show-retention-policies
-            // Only difference is v0.9. In that version we don't receive shardGroupDuration value.
-            // https://archive.docs.influxdata.com/influxdb/v0.9/query_language/schema_exploration/#show-retention-policies
-            // Since it is always the last value we will check that last value always.
-            if (isRetentionPolicyQuery && value[value.length - 1] === true) {
-              const newSetValues = [value[0].toString(), ...Array.from(res)];
-              res.clear();
-              newSetValues.forEach((sv) => res.add(sv));
-            } else {
-              res.add(value[0].toString());
-            }
+            res.add(value[0].toString());
           } else if (value[1] !== undefined) {
             res.add(value[1].toString());
           } else {
@@ -84,14 +71,14 @@ export default class ResponseParser {
 
       // if group by tag(s) added
       if (dfs[0].fields[1] && dfs[0].fields[1].labels) {
-        let dfsByLabels: any = groupBy(dfs, (df: DataFrame) =>
+        let dfsByLabels = groupBy(dfs, (df: DataFrame) =>
           df.fields[1].labels ? Object.values(df.fields[1].labels!) : null
         );
         const labels = Object.keys(dfsByLabels);
-        dfsByLabels = Object.values(dfsByLabels);
+        const dfsByLabelValues = Object.values(dfsByLabels);
 
-        for (let i = 0; i < dfsByLabels.length; i++) {
-          table = getTableRows(dfsByLabels[i], table, [...labels[i].split(',')]);
+        for (let i = 0; i < dfsByLabelValues.length; i++) {
+          table = getTableRows(dfsByLabelValues[i], table, [...labels[i].split(',')]);
         }
       } else {
         table = getTableRows(dfs, table, []);
@@ -101,74 +88,79 @@ export default class ResponseParser {
     return table;
   }
 
-  async transformAnnotationResponse(annotation: any, data: any, target: InfluxQuery): Promise<AnnotationEvent[]> {
-    const rsp = toDataQueryResponse(data, [target] as DataQuery[]);
+  async transformAnnotationResponse(
+    annotation: InfluxQuery,
+    data: FetchResponse<BackendDataSourceResponse>,
+    target: InfluxQuery
+  ): Promise<AnnotationEvent[]> {
+    const rsp = toDataQueryResponse(data, [target]);
 
-    if (rsp) {
-      const table = this.getTable(rsp.data, target, {});
-      const list: any[] = [];
-      let titleCol: any = null;
-      let timeCol: any = null;
-      let timeEndCol: any = null;
-      const tagsCol: any = [];
-      let textCol: any = null;
-
-      each(table.columns, (column, index) => {
-        if (column.text.toLowerCase() === 'time') {
-          timeCol = index;
-          return;
-        }
-        if (column.text === annotation.titleColumn) {
-          titleCol = index;
-          return;
-        }
-        if (colContainsTag(column.text, annotation.tagsColumn)) {
-          tagsCol.push(index);
-          return;
-        }
-        if (column.text.includes(annotation.textColumn)) {
-          textCol = index;
-          return;
-        }
-        if (column.text === annotation.timeEndColumn) {
-          timeEndCol = index;
-          return;
-        }
-        // legacy case
-        if (!titleCol && textCol !== index) {
-          titleCol = index;
-        }
-      });
-
-      each(table.rows, (value) => {
-        const data = {
-          annotation: annotation,
-          time: +new Date(value[timeCol]),
-          title: value[titleCol],
-          timeEnd: value[timeEndCol],
-          // Remove empty values, then split in different tags for comma separated values
-          tags: flatten(
-            tagsCol
-              .filter((t: any) => {
-                return value[t];
-              })
-              .map((t: any) => {
-                return value[t].split(',');
-              })
-          ),
-          text: value[textCol],
-        };
-
-        list.push(data);
-      });
-
-      return list;
+    if (!rsp) {
+      return [];
     }
-    return [];
+
+    const table = this.getTable(rsp.data, target, {});
+    const list: any[] = [];
+    let titleColIndex = 0;
+    let timeColIndex = 0;
+    let timeEndColIndex = 0;
+    let textColIndex = 0;
+    const tagsColIndexes: number[] = [];
+
+    each(table.columns, (column, index) => {
+      if (column.text.toLowerCase() === 'time') {
+        timeColIndex = index;
+        return;
+      }
+      if (column.text === annotation.titleColumn) {
+        titleColIndex = index;
+        return;
+      }
+      if (colContainsTag(column.text, annotation.tagsColumn)) {
+        tagsColIndexes.push(index);
+        return;
+      }
+      if (annotation.textColumn && column.text.includes(annotation.textColumn)) {
+        textColIndex = index;
+        return;
+      }
+      if (column.text === annotation.timeEndColumn) {
+        timeEndColIndex = index;
+        return;
+      }
+      // legacy case
+      if (!titleColIndex && textColIndex !== index) {
+        titleColIndex = index;
+      }
+    });
+
+    each(table.rows, (value) => {
+      const data = {
+        annotation: annotation,
+        time: +new Date(value[timeColIndex]),
+        title: value[titleColIndex],
+        timeEnd: value[timeEndColIndex],
+        // Remove empty values, then split in different tags for comma separated values
+        tags: flatten(
+          tagsColIndexes
+            .filter((t) => {
+              return value[t];
+            })
+            .map((t) => {
+              return value[t].split(',');
+            })
+        ),
+        text: value[textColIndex],
+      };
+
+      list.push(data);
+    });
+
+    return list;
   }
 }
 
-function colContainsTag(colText: string, tagsColumn: string): boolean {
+function colContainsTag(colText: string, tagsColumn?: string): boolean {
   const tags = (tagsColumn || '').replace(' ', '').split(',');
   for (const tag of tags) {
     if (tag !== '' && colText.includes(tag)) {
@@ -183,12 +175,12 @@ function getTableCols(dfs: DataFrame[], table: TableModel, target: InfluxQuery):
 
   dfs[0].fields.forEach((field) => {
     // Time col
-    if (field.name === 'time') {
+    if (field.name.toLowerCase() === 'time') {
       table.columns.push({ text: 'Time', type: FieldType.time });
     }
 
     // Group by (label) column(s)
-    else if (field.name === 'value') {
+    else if (field.name.toLowerCase() === 'value') {
       if (field.labels) {
         Object.keys(field.labels).forEach((key) => {
           table.columns.push({ text: key });
@@ -253,7 +245,12 @@ export function getSelectedParams(target: InfluxQuery): string[] {
   target.select?.forEach((select) => {
     const selector = select.filter((x) => x.type !== 'field');
     if (selector.length > 0) {
-      allParams.push(selector[0].type);
+      const aliasIfExist = selector.find((s) => s.type === 'alias');
+      if (aliasIfExist) {
+        allParams.push(aliasIfExist.params?.[0].toString() ?? '');
+      } else {
+        allParams.push(selector[0].type);
+      }
     } else {
       if (select[0] && select[0].params && select[0].params[0]) {
         allParams.push(select[0].params[0].toString());
@@ -269,12 +266,12 @@ export function getSelectedParams(target: InfluxQuery): string[] {
   return uniqueParams;
 }
 
-function incrementName(name: string, nameIncremenet: string, params: string[], index: number): string {
-  if (params.indexOf(nameIncremenet) > -1) {
+function incrementName(name: string, nameIncrement: string, params: string[], index: number): string {
+  if (params.indexOf(nameIncrement) > -1) {
     index++;
     return incrementName(name, name + '_' + index, params, index);
   }
-  return nameIncremenet;
+  return nameIncrement;
 }
 
 function rawQuerySelectedFieldsInDataframe(query: string | undefined, dfs: DataFrame[]) {

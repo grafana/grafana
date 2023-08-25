@@ -29,7 +29,6 @@ const topOfExploreViewRef = jest.fn();
 let props = {
   childrenHiddenIDs: new Set(),
   childrenToggle: jest.fn(),
-  clearShouldScrollToFirstUiFindMatch: jest.fn(),
   currentViewRangeTime: [0.25, 0.75],
   detailLogItemToggle: jest.fn(),
   detailLogsToggle: jest.fn(),
@@ -39,10 +38,7 @@ let props = {
   detailToggle: jest.fn(),
   findMatchesIDs: null,
   registerAccessors: jest.fn(),
-  scrollToFirstVisibleSpan: jest.fn(),
   setSpanNameColumnWidth: jest.fn(),
-  setTrace: jest.fn(),
-  shouldScrollToFirstUiFindMatch: false,
   spanNameColumnWidth: 0.5,
   trace,
   uiFind: 'uiFind',
@@ -99,13 +95,5 @@ describe('<VirtualizedTraceViewImpl>', () => {
         name: /Scroll to top/i,
       })
     ).toBeInTheDocument();
-  });
-
-  it('sets the trace for global state.traceTimeline', () => {
-    const traceID = 'some-other-id';
-    const _trace = { ...trace, traceID };
-    props = { ...props, trace: _trace };
-    render(<VirtualizedTraceView {...props} />);
-    expect(jest.mocked(props.setTrace).mock.calls).toEqual([[_trace, props.uiFind]]);
   });
 });

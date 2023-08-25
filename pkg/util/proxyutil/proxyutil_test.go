@@ -110,6 +110,62 @@ func TestClearCookieHeader(t *testing.T) {
 		require.Contains(t, req.Header, "Cookie")
 		require.Equal(t, "cookie1=", req.Header.Get("Cookie"))
 	})
+
+	t.Run("Clear cookie header with cookies to keep should clear Cookie header and keep cookies with optional matching", func(t *testing.T) {
+		req, err := http.NewRequest(http.MethodGet, "/", nil)
+		require.NoError(t, err)
+		req.AddCookie(&http.Cookie{Name: "cookie1"})
+		req.AddCookie(&http.Cookie{Name: "cookie3"})
+
+		ClearCookieHeader(req, []string{"cookie[]"}, nil)
+		require.Contains(t, req.Header, "Cookie")
+		require.Equal(t, "cookie1=; cookie3=", req.Header.Get("Cookie"))
+	})
+
+	t.Run("Clear cookie header with cookies to keep should clear Cookie header and keep cookies with matching pattern but with empty matching option", func(t *testing.T) {
+		req, err := http.NewRequest(http.MethodGet, "/", nil)
+		require.NoError(t, err)
+		req.AddCookie(&http.Cookie{Name: "cookie1"})
+		req.AddCookie(&http.Cookie{Name: "cookie2"})
+		req.AddCookie(&http.Cookie{Name: "cookie3"})
+
+		ClearCookieHeader(req, []string{"cookie[]"}, []string{"cookie2"})
+		require.Contains(t, req.Header, "Cookie")
+		require.Equal(t, "cookie1=; cookie3=", req.Header.Get("Cookie"))
+	})
+
+	t.Run("Clear cookie header with cookie match pattern to keep and skip should clear Cookie header and keep cookies", func(t *testing.T) {
+		req, err := http.NewRequest(http.MethodGet, "/", nil)
+		require.NoError(t, err)
+		req.AddCookie(&http.Cookie{Name: "cook1"})
+		req.AddCookie(&http.Cookie{Name: "special23"})
+		req.AddCookie(&http.Cookie{Name: "special_1asd987dsf9a"})
+		req.AddCookie(&http.Cookie{Name: "c00k1e"})
+
+		ClearCookieHeader(req, []string{"special_[]"}, nil)
+		require.Contains(t, req.Header, "Cookie")
+		require.Equal(t, "special_1asd987dsf9a=", req.Header.Get("Cookie"))
+	})
+
+	t.Run("Clear cookie header with cookie should not match BAD pattern and return no cookies", func(t *testing.T) {
+		req, err := http.NewRequest(http.MethodGet, "/", nil)
+		require.NoError(t, err)
+		req.AddCookie(&http.Cookie{Name: "cookie1"})
+		req.AddCookie(&http.Cookie{Name: "special23"})
+
+		ClearCookieHeader(req, []string{"[]cookie"}, nil)
+		require.NotContains(t, req.Header, "Cookie")
+	})
+
+	t.Run("Clear cookie header with cookie should match all cookies when keepCookies is *", func(t *testing.T) {
+		req, err := http.NewRequest(http.MethodGet, "/", nil)
+		require.NoError(t, err)
+		req.AddCookie(&http.Cookie{Name: "cookie1"})
+		req.AddCookie(&http.Cookie{Name: "special23"})
+
+		ClearCookieHeader(req, []string{"[]"}, nil)
+		require.Equal(t, "cookie1=; special23=", req.Header.Get("Cookie"))
+	})
 }
 
 func TestApplyUserHeader(t *testing.T) {

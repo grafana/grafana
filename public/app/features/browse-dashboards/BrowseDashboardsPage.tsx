@@ -12,11 +12,11 @@ import { buildNavModel, getDashboardsTabID } from '../folders/state/navModel';
 import { useSearchStateManager } from '../search/state/SearchStateManager';
 import { getSearchPlaceholder } from '../search/tempI18nPhrases';
 
-import { skipToken, useGetFolderQuery } from './api/browseDashboardsAPI';
+import { skipToken, useGetFolderQuery, useSaveFolderMutation } from './api/browseDashboardsAPI';
 import { BrowseActions } from './components/BrowseActions/BrowseActions';
 import { BrowseFilters } from './components/BrowseFilters';
 import { BrowseView } from './components/BrowseView';
-import { CreateNewButton } from './components/CreateNewButton';
+import CreateNewButton from './components/CreateNewButton';
 import { FolderActionsButton } from './components/FolderActionsButton';
 import { SearchView } from './components/SearchView';
 import { getFolderPermissions } from './permissions';
@@ -46,6 +46,7 @@ const BrowseDashboardsPage = memo(({ match }: Props) => {
     dispatch(
       setAllSelection({
         isSelected: false,
+        folderUID: undefined,
       })
     );
   }, [dispatch, folderUID, stateManager]);
@@ -59,6 +60,7 @@ const BrowseDashboardsPage = memo(({ match }: Props) => {
   }, [isSearching, searchState.result, stateManager]);
 
   const { data: folderDTO } = useGetFolderQuery(folderUID ?? skipToken);
+  const [saveFolder] = useSaveFolderMutation();
   const navModel = useMemo(() => {
     if (!folderDTO) {
       return undefined;
@@ -78,16 +80,30 @@ const BrowseDashboardsPage = memo(({ match }: Props) => {
 
   const { canEditInFolder, canCreateDashboards, canCreateFolder } = getFolderPermissions(folderDTO);
 
+  const showEditTitle = canEditInFolder && folderUID;
+  const onEditTitle = async (newValue: string) => {
+    if (folderDTO) {
+      const result = await saveFolder({
+        ...folderDTO,
+        title: newValue,
+      });
+      if ('error' in result) {
+        throw result.error;
+      }
+    }
+  };
+
   return (
     <Page
       navId="dashboards/browse"
       pageNav={navModel}
+      onEditTitle={showEditTitle ? onEditTitle : undefined}
       actions={
         <>
           {folderDTO && <FolderActionsButton folder={folderDTO} />}
           {(canCreateDashboards || canCreateFolder) && (
             <CreateNewButton
-              inFolder={folderUID}
+              parentFolder={folderDTO}
               canCreateDashboard={canCreateDashboards}
               canCreateFolder={canCreateFolder}
             />

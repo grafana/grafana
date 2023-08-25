@@ -1,25 +1,34 @@
 ---
-description: Learn how to organize alert rules
+aliases:
+  - ../unified-alerting/alerting-rules/edit-cortex-loki-namespace-group/
+    - ../unified-alerting/alerting-rules/edit-mimir-loki-namespace-group/
+canonical: https://grafana.com/docs/grafana/latest/alerting/fundamentals/alert-rules/organising-alerts/
+description: Namespaces, folders, and groups
 keywords:
   - grafana
   - alerting
   - organization
-title: Organising alert rules
-weight: 104
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
+title: Namespaces, folders, and groups
+weight: 105
 ---
 
-## Namespaces and groups
+## Namespaces, folders, and groups
 
-Alerts can be organized using Folders for Grafana-managed rules and namespaces for Mimir or Loki rules and group names.
+Alerts can be organized using folders for Grafana-managed rules and namespaces for Mimir or Loki rules and group names.
 
-### Namespaces
+### Namespaces and folders
 
 When creating Grafana-managed rules, the folder can be used to perform access control and grant or deny access to all rules within a specific folder.
 
+A namespace contains one or more groups. The rules within a group are run sequentially at a regular interval. The default interval is one (1) minute. You can rename Grafana Mimir or Loki rule namespaces and groups, and edit group evaluation intervals.
+
 ### Groups
 
-All rules within a group are evaluated at the same **interval**.
-
-Alert rules and recording rules within a group will always be evaluated **sequentially**, meaning no rules will be evaluated at the same time and in order of appearance.
+The rules within a group are run sequentially at a regular interval, meaning no rules will be evaluated at the same time and in order of appearance.. The default interval is one (1) minute. You can rename Grafana Mimir or Loki rule namespaces and groups, and edit group evaluation intervals.
 
 > **Note** If you want rules to be evaluated concurrently and with different intervals, consider storing them in different groups.

@@ -1,22 +1,21 @@
 import { isNumber, isString } from 'lodash';
 
-import { AppEvents, Field, LinkModel, PluginState, SelectableValue } from '@grafana/data';
+import { AppEvents, Field, getFieldDisplayName, LinkModel, PluginState, SelectableValue } from '@grafana/data';
+import appEvents from 'app/core/app_events';
 import { hasAlphaPanels } from 'app/core/config';
-
-import appEvents from '../../../core/app_events';
 import {
+  defaultElementItems,
   advancedElementItems,
   CanvasElementItem,
-  CanvasElementOptions,
   canvasElementRegistry,
-  defaultElementItems,
+  CanvasElementOptions,
   TextConfig,
-} from '../../../features/canvas';
-import { notFoundItem } from '../../../features/canvas/elements/notFound';
-import { ElementState } from '../../../features/canvas/runtime/element';
-import { FrameState } from '../../../features/canvas/runtime/frame';
-import { Scene, SelectionParams } from '../../../features/canvas/runtime/scene';
-import { DimensionContext } from '../../../features/dimensions';
+} from 'app/features/canvas';
+import { notFoundItem } from 'app/features/canvas/elements/notFound';
+import { ElementState } from 'app/features/canvas/runtime/element';
+import { FrameState } from 'app/features/canvas/runtime/frame';
+import { Scene, SelectionParams } from 'app/features/canvas/runtime/scene';
+import { DimensionContext } from 'app/features/dimensions';
 
 import { AnchorPoint, ConnectionState } from './types';
 
@@ -82,8 +81,11 @@ export function getElementTypesOptions(items: CanvasElementItem[], current: stri
 
 export function onAddItem(sel: SelectableValue<string>, rootLayer: FrameState | undefined, anchorPoint?: AnchorPoint) {
   const newItem = canvasElementRegistry.getIfExists(sel.value) ?? notFoundItem;
-  const newElementOptions = newItem.getNewOptions() as CanvasElementOptions;
-  newElementOptions.type = newItem.id;
+  const newElementOptions: CanvasElementOptions = {
+    ...newItem.getNewOptions(),
+    type: newItem.id,
+    name: '',
+  };
 
   if (anchorPoint) {
     newElementOptions.placement = { ...newElementOptions.placement, top: anchorPoint.y, left: anchorPoint.x };
@@ -114,8 +116,8 @@ export function getDataLinks(ctx: DimensionContext, cfg: TextConfig, textData: s
   frames?.forEach((frame) => {
     const visibleFields = frame.fields.filter((field) => !Boolean(field.config.custom?.hideFrom?.tooltip));
 
-    if (cfg.text?.field && visibleFields.some((f) => f.name === cfg.text?.field)) {
-      const field = visibleFields.filter((field) => field.name === cfg.text?.field)[0];
+    if (cfg.text?.field && visibleFields.some((f) => getFieldDisplayName(f, frame) === cfg.text?.field)) {
+      const field = visibleFields.filter((field) => getFieldDisplayName(field, frame) === cfg.text?.field)[0];
       if (field?.getLinks) {
         const disp = field.display ? field.display(textData) : { text: `${textData}`, numeric: +textData! };
         field.getLinks({ calculatedValue: disp }).forEach((link) => {

@@ -1,11 +1,17 @@
 ---
-aliases:
+canonical: https://grafana.com/docs/grafana/latest/alerting/manage-notifications/template-notifications/using-go-templating-language/
+description: Use Go's templating language in notifications
 keywords:
   - grafana
   - alerting
   - notifications
   - templates
   - write templates
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: Using Go's templating language
 weight: 100
 ---
@@ -18,7 +24,7 @@ Before you start creating your own notification templates, we recommend that you
 
 ## Dot
 
-In text/template there is a special cursor called dot, and is written as `.`. You can think of this cursor as a variable whose value changes depending where in the template it is used. For example, at the start of a notification template `.` refers to something called [`ExtendedData`]({{< relref "./reference#extendeddata" >}}) which contains a number of fields including `Alerts`, `Status`, `GroupLabels`, `CommonLabels`, `CommonAnnotations` and `ExternalURL`. However, dot might refer to something else when used in a range over a list, when used inside a `with`, or when writing feature templates to be used in other templates. You can see examples of this in [Create notification templates]({{< relref "./create-notification-templates" >}}), and all data and functions in the [Reference]({{< relref "./reference" >}}).
+In text/template there is a special cursor called dot, and is written as `.`. You can think of this cursor as a variable whose value changes depending where in the template it is used. For example, at the start of a notification template `.` refers to something called [`ExtendedData`][extendeddata] which contains a number of fields including `Alerts`, `Status`, `GroupLabels`, `CommonLabels`, `CommonAnnotations` and `ExternalURL`. However, dot might refer to something else when used in a range over a list, when used inside a `with`, or when writing feature templates to be used in other templates. You can see examples of this in [Create notification templates][create-notification-templates], and all data and functions in the [Reference][reference].
 
 ## Opening and closing tags
 
@@ -272,3 +278,14 @@ The indentation and line breaks in the template are now absent from the text:
 alertname = "Test"
 grafana_folder = "Test alerts"
 ```
+
+{{% docs/reference %}}
+[create-notification-templates]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/alerting/manage-notifications/template-notifications/create-notification-templates"
+[create-notification-templates]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/manage-notifications/template-notifications/create-notification-templates"
+
+[extendeddata]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/alerting/manage-notifications/template-notifications/reference#extendeddata"
+[extendeddata]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/manage-notifications/template-notifications/reference#extendeddata"
+
+[reference]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/alerting/manage-notifications/template-notifications/reference"
+[reference]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/manage-notifications/template-notifications/reference"
+{{% /docs/reference %}}

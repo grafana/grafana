@@ -20,6 +20,10 @@ import (
 // - the elastic-request json
 // - the dataframe result
 
+// If you need to adjust the snapshots, go to Line 172 and change
+// `experimental.CheckGoldenJSONResponse(t, "testdata_response", goldenFileName, &dataResCopy, false)` to `experimental.CheckGoldenJSONResponse(t, "testdata_response", goldenFileName, &dataResCopy, true)`
+// then run the test once to generate the new snapshots.
+
 // a regex that matches the request-snapshot-filenames, and extracts the name of the test
 var requestRe = regexp.MustCompile(`^(.*)\.request\.line\d+\.json$`)
 
@@ -82,7 +86,7 @@ func TestRequestSnapshots(t *testing.T) {
 	queryHeader := []byte(`
 	{
 		"ignore_unavailable": true,
-		"index": ["testdb-2022.11.14"],
+		"index": "testdb-2022.11.14",
 		"search_type": "query_then_fetch"
 	}
 	`)

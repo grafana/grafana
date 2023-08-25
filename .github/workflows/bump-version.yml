@@ -3,40 +3,40 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Needs to match, exactly, the name of a milestone. The version to be released please respect: major.minor.patch or major.minor.patch-beta<number> format. example: 7.4.3 or 7.4.3-beta1'
+        description: 'Needs to match, exactly, the name of a milestone. The version to be released please respect: major.minor.patch, major.minor.patch-preview or major.minor.patch-preview<number> format. example: 7.4.3, 7.4.3-preview or 7.4.3-preview1'
         required: true
 env:
-    YARN_ENABLE_IMMUTABLE_INSTALLS: false
+  YARN_ENABLE_IMMUTABLE_INSTALLS: false
 jobs:
   main:
     runs-on: ubuntu-latest
     steps:
-    # This is a basic workflow to help you get started with Actions
+      # This is a basic workflow to help you get started with Actions
       - uses: actions-ecosystem/action-regex-match@v2.0.2
         if: ${{ github.event.inputs.version != '' }}
         id: regex-match
         with:
           text: ${{ github.event.inputs.version }}
-          regex: '^(\d+.\d+).\d+(?:-(?:(beta\d+)|(pre)))?$'
+          regex: '^(\d+.\d+).\d+(?:-(?:(preview\d?)|(pre)))?$'
       - uses: actions-ecosystem/action-regex-match@v2.0.2
         if: ${{ inputs.version_call != '' }}
         id: regex-match-version-call
         with:
           text: ${{ inputs.version_call }}
-          regex: '^(\d+.\d+).\d+(?:-(?:(beta\d+)|(pre)))?$'
+          regex: '^(\d+.\d+).\d+(?:-(?:(preview\d?)|(pre)))?$'
       - name: Validate input version
         if: ${{ steps.regex-match.outputs.match == '' && github.event.inputs.version != '' }}
         run: |
           echo "The input version format is not correct, please respect:\
-          major.minor.patch or major.minor.patch-beta.number format. \
-          example: 7.4.3 or 7.4.3-beta1"
+          major.minor.patch, major.minor.patch-preview or major.minor.patch-preview<number> format. \
+          example: 7.4.3, 7.4.3-preview or 7.4.3-preview1"
           exit 1
       - name: Validate input version call
         if: ${{ inputs.version_call != '' && steps.regex-match-version-call.outputs.match == '' }}
         run: |
           echo "The input version format is not correct, please respect:\
-          major.minor.patch or major.minor.patch-beta<number> format. \
-          example: 7.4.3 or 7.4.3-beta1"
+          major.minor.patch, major.minor.patch-preview or major.minor.patch-preview<number> format. \
+          example: 7.4.3, 7.4.3-preview or 7.4.3-preview1"
           exit 1
 
       - uses: actions/checkout@v3
@@ -49,14 +49,6 @@ jobs:
           echo "branch_name=v${{steps.regex-match.outputs.group1}}" >> $GITHUB_OUTPUT
           echo "branch_exist=$(git ls-remote --heads https://github.com/grafana/grafana.git v${{ steps.regex-match.outputs.group1 }}.x | wc -l)" >> $GITHUB_OUTPUT
 
-      - name: Check input version is aligned with branch(main)
-        if: ${{ github.event.inputs.version != '' && steps.intermedia.outputs.branch_exist == '0' && !contains(github.event.inputs.version, 'pre') && !contains(steps.intermedia.outputs.short_ref, 'main') }}
-        run: |
-          echo "When you want to deliver a new new minor version, you might want to create a new branch first \
-          with naming convention v[major].[minor].x, and just run the workflow on that branch. \
-          Run the workflow on main only when needed"
-          exit 1
-
       - name: Checkout Actions
         uses: actions/checkout@v3
         with:
@@ -68,8 +60,14 @@ jobs:
           node-version: '16'
       - name: Install Actions
         run: npm install --production --prefix ./actions
-      - name: Run bump version (manually invoked)        
+      - name: "Generate token"
+        id: generate_token
+        uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
+        with:
+          app_id: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_ID }}
+          private_key: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_PEM }}
+      - name: Run bump version (manually invoked)
         uses: ./actions/bump-version
         with:
-          token: ${{ secrets.GH_BOT_ACCESS_TOKEN }}
+          token: ${{ steps.generate_token.outputs.token }}
           metricsWriteAPIKey: ${{ secrets.GRAFANA_MISC_STATS_API_KEY }}

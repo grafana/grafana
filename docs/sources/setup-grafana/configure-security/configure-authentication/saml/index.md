@@ -8,26 +8,31 @@ aliases:
   - ../../../enterprise/saml/enable-saml/
   - ../../../enterprise/saml/set-up-saml-with-okta/
   - ../../../enterprise/saml/troubleshoot-saml/
-description: Learn how to configure SAML authentication in Grafana's configuration file.
-menuTitle: Configure SAML using the configuration file
+description: Learn how to configure SAML authentication in Grafana's configuration
+  file.
 labels:
   products:
     - cloud
     - enterprise
+menuTitle: SAML
 title: Configure SAML authentication using the configuration file
-weight: 1100
+weight: 500
 ---
 
 # Configure SAML authentication using the configuration file
 
-> **Note:** Available in [Grafana Enterprise]({{< relref "../../../../introduction/grafana-enterprise" >}}) and [Grafana Cloud Pro and Advanced](/docs/grafana-cloud).
+{{% admonition type="note" %}}
+Available in [Grafana Enterprise]({{< relref "../../../../introduction/grafana-enterprise" >}}) and [Grafana Cloud Pro and Advanced](/docs/grafana-cloud).
+{{% /admonition %}}
 
 SAML authentication integration allows your Grafana users to log in by using an external SAML 2.0 Identity Provider (IdP). To enable this, Grafana becomes a Service Provider (SP) in the authentication flow, interacting with the IdP to exchange user information.
 
 You can configure SAML authentication in Grafana through the user interface (UI) or the Grafana configuration file. For instructions on how to set up SAML through Grafana's UI, refer to [Configure SAML authentication using the Grafana user interface]({{< relref "../saml-ui" >}}).
 Both methods offer the same configuration options, but you might prefer using the Grafana configuration file if you want to keep all of Grafana's authentication settings in one place. Grafana Cloud users do not have access to Grafana configuration file, so they should configure SAML through Grafana's UI.
 
-> **Note:** Configuration in the UI takes precedence over the configuration in the Grafana configuration file. SAML settings from the UI will override any SAML configuration set in the Grafana configuration file.
+{{% admonition type="note" %}}
+Configuration in the UI takes precedence over the configuration in the Grafana configuration file. SAML settings from the UI will override any SAML configuration set in the Grafana configuration file.
+{{% /admonition %}}
 
 ## Supported SAML
 
@@ -99,7 +104,9 @@ Grafana supports two ways of specifying both the `certificate` and `private_key`
 - Without a suffix (`certificate` or `private_key`), the configuration assumes you've supplied the base64-encoded file contents.
 - With the `_path` suffix (`certificate_path` or `private_key_path`), then Grafana treats the value entered as a file path and attempts to read the file from the file system.
 
-> **Note:** You can only use one form of each configuration option. Using multiple forms, such as both `certificate` and `certificate_path`, results in an error.
+{{% admonition type="note" %}}
+You can only use one form of each configuration option. Using multiple forms, such as both `certificate` and `certificate_path`, results in an error.
+{{% /admonition %}}
 
 ---
 
@@ -111,17 +118,9 @@ An example of how to generate a self-signed certificate and private key that's v
 $ openssl req -x509 -newkey rsa:4096 -keyout key.pem -out cert.pem -days 365 -nodes​
 ```
 
-Base64-encode the cert.pem and key.pem files:
-(-w0 switch is not needed on Mac, only for Linux)
+The generated `key.pem` and `cert.pem` files are then used for certificate and private_key.
 
-```sh
-$ base64 -w0 key.pem > key.pem.base64
-$ base64 -w0 cert.pem > cert.pem.base64
-```
-
-The base64-encoded values (`key.pem.base64, cert.pem.base64` files) are then used for certificate and private_key.
-
-The keys you provide should look like:
+The key you provide should look like:
 
 ```
 -----BEGIN PRIVATE KEY-----
@@ -136,7 +135,7 @@ Grafana supports user authentication through Okta, which is useful when you want
 
 **Before you begin:**
 
-- To configure SAML integration with Okta, create integration inside the Okta organization first. [Add integration in Okta](https://help.okta.com/en/prod/Content/Topics/Apps/apps-overview-add-apps.htm)
+- To configure SAML integration with Okta, create an app integration inside the Okta organization first. [Add app integration in Okta](https://help.okta.com/en/prod/Content/Topics/Apps/apps-overview-add-apps.htm)
 - Ensure you have permission to administer SAML authentication. For more information about roles and permissions in Grafana, refer to [Roles and permissions]({{< relref "../../../../administration/roles-and-permissions" >}}).
 
 **To set up SAML with Okta:**
@@ -201,7 +200,9 @@ The table below describes all SAML configuration options. Continue reading below
 
 ### Signature algorithm
 
-> **Note:** Available in Grafana version 7.3 and later.
+{{% admonition type="note" %}}
+Available in Grafana version 7.3 and later.
+{{% /admonition %}}
 
 The SAML standard recommends using a digital signature for some types of messages, like authentication or logout requests. If the `signature_algorithm` option is configured, Grafana will put a digital signature into SAML requests. Supported signature types are `rsa-sha1`, `rsa-sha256`, `rsa-sha512`. This option should match your IdP configuration, otherwise, signature validation will fail. Grafana uses key and certificate configured with `private_key` and `certificate` options for signing SAML requests.
 
@@ -251,7 +252,9 @@ The integration provides two key endpoints as part of Grafana:
 
 ### IdP-initiated Single Sign-On (SSO)
 
-> **Note:** Available in Grafana version 7.3 and later.
+{{% admonition type="note" %}}
+Available in Grafana version 7.3 and later.
+{{% /admonition %}}
 
 By default, Grafana allows only service provider (SP) initiated logins (when the user logs in with SAML via Grafana’s login page). If you want users to log in into Grafana directly from your identity provider (IdP), set the `allow_idp_initiated` configuration option to `true` and configure `relay_state` with the same value specified in the IdP configuration.
 
@@ -259,7 +262,9 @@ IdP-initiated SSO has some security risks, so make sure you understand the risks
 
 ### Single logout
 
-> **Note:** Available in Grafana version 7.3 and later.
+{{% admonition type="note" %}}
+Available in Grafana version 7.3 and later.
+{{% /admonition %}}
 
 SAML's single logout feature allows users to log out from all applications associated with the current IdP session established via SAML SSO. If the `single_logout` option is set to `true` and a user logs out, Grafana requests IdP to end the user session which in turn triggers logout from all other applications the user is logged into using the same IdP session (applications should support single logout). Conversely, if another application connected to the same IdP logs out using single logout, Grafana receives a logout request from IdP and ends the user session.
 
@@ -305,11 +310,15 @@ auto_login = true
 
 ### Configure team sync
 
-> **Note:** Team sync support for SAML is available in Grafana version 7.0 and later.
+{{% admonition type="note" %}}
+Team sync support for SAML is available in Grafana version 7.0 and later.
+{{% /admonition %}}
 
 To use SAML Team sync, set [`assertion_attribute_groups`]({{< relref "../../../configure-grafana/enterprise-configuration#assertion_attribute_groups" >}}) to the attribute name where you store user groups. Then Grafana will use attribute values extracted from SAML assertion to add user into the groups with the same name configured on the External group sync tab.
 
-> **Note:** Teamsync allows you sync users from SAML to Grafana teams. It does not automatically create teams in Grafana. You need to create teams in Grafana before you can use this feature.
+{{% admonition type="note" %}}
+Teamsync allows you sync users from SAML to Grafana teams. It does not automatically create teams in Grafana. You need to create teams in Grafana before you can use this feature.
+{{% /admonition %}}
 
 Given the following partial SAML assertion:
 
@@ -347,7 +356,9 @@ The following `External Group ID`s would be valid for input in the desired team'
 
 ### Configure role sync
 
-> **Note:** Available in Grafana version 7.0 and later.
+{{% admonition type="note" %}}
+Available in Grafana version 7.0 and later.
+{{% /admonition %}}
 
 Role sync allows you to map user roles from an identity provider to Grafana. To enable role sync, configure role attribute and possible values for the Editor, Admin, and Grafana Admin roles. For more information about user roles, refer to [Roles and permissions]({{< relref "../../../../administration/roles-and-permissions" >}}).
 
@@ -372,7 +383,9 @@ role_values_grafana_admin = superadmin
 
 **Important**: When role sync is configured, any changes of user roles and organization membership made manually in Grafana will be overwritten on next user login. Assign user organizations and roles in the IdP instead.
 
-> **Note:** Available in Grafana version 9.2 and later.
+{{% admonition type="note" %}}
+Available in Grafana version 9.2 and later.
+{{% /admonition %}}
 
 If you don't want user organizations and roles to be synchronized with the IdP, you can use the `skip_org_role_sync` configuration option.
 
@@ -385,7 +398,9 @@ skip_org_role_sync = true
 
 ### Configure organization mapping
 
-> **Note:** Available in Grafana version 7.0 and later.
+{{% admonition type="note" %}}
+Available in Grafana version 7.0 and later.
+{{% /admonition %}}
 
 Organization mapping allows you to assign users to particular organization in Grafana depending on attribute value obtained from identity provider.
 
@@ -409,7 +424,9 @@ You can use `*` as the SAML Organization if you want all your users to be in som
 
 - `org_mapping = *:2:Editor` to map all users to `2` in Grafana as Editors.
 
-> **Note:** Available in Grafana version 9.2 and later.
+{{% admonition type="note" %}}
+Available in Grafana version 9.2 and later.
+{{% /admonition %}}
 
 You can use `*` as the Grafana organization in the mapping if you want all users from a given SAML Organization to be added to all existing Grafana organizations.
 
@@ -418,7 +435,9 @@ You can use `*` as the Grafana organization in the mapping if you want all users
 
 ### Configure allowed organizations
 
-> **Note:** Available in Grafana version 7.0 and later.
+{{% admonition type="note" %}}
+Available in Grafana version 7.0 and later.
+{{% /admonition %}}
 
 With the [`allowed_organizations`]({{< relref "../../../configure-grafana/enterprise-configuration#allowed_organizations" >}}) option you can specify a list of organizations where the user must be a member of at least one of them to be able to log in to Grafana.
 

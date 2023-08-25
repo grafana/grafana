@@ -1,7 +1,12 @@
 ---
 aliases:
   - /docs/grafana/latest/setup-grafana/configure-security/configure-security-hardening/
-description: Security hardening enables you to apply additional security which might stop certain vulnerabilities from being exploited by a malicious attacker.
+description: Security hardening enables you to apply additional security which might
+  stop certain vulnerabilities from being exploited by a malicious attacker.
+labels:
+  products:
+    - enterprise
+    - oss
 title: Configure security hardening
 ---
 
@@ -9,13 +14,17 @@ title: Configure security hardening
 
 Security hardening enables you to apply additional security, which can help stop certain vulnerabilities from being exploited by a malicious attacker.
 
-> **Note:** These settings are available in the [grafana.ini configuration file]({{< relref "../../configure-grafana#configuration-file-location" >}}). To apply changes to the configuration file, restart the Grafana server.
+{{% admonition type="note" %}}
+These settings are available in the [grafana.ini configuration file]({{< relref "../../configure-grafana#configuration-file-location" >}}). To apply changes to the configuration file, restart the Grafana server.
+{{% /admonition %}}
 
 ## Additional security for cookies
 
 If Grafana uses HTTPS, you can further secure the cookie that the system uses to authenticate access to the web UI. By applying additional security to the cookie, you might mitigate certain attacks that result from an attacker obtaining the cookie value.
 
-> **Note:** Grafana must use HTTPS for the following configurations to work properly.
+{{% admonition type="note" %}}
+Grafana must use HTTPS for the following configurations to work properly.
+{{% /admonition %}}
 
 ### Add a secure attribute to cookies
 
@@ -39,7 +48,9 @@ Example:
 cookie_samesite = strict
 ```
 
-> **Note:** By setting the SameSite attribute to "strict," only the user clicks within a Grafana instance work. The default option, "lax," does not produce this behavior.
+{{% admonition type="note" %}}
+By setting the SameSite attribute to "strict," only the user clicks within a Grafana instance work. The default option, "lax," does not produce this behavior.
+{{% /admonition %}}
 
 ### Add a prefix to cookie names
 

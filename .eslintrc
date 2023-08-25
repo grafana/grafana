@@ -7,6 +7,7 @@
     "import/external-module-folders": ["node_modules", ".yarn"]
   },
   "rules": {
+    "@grafana/no-border-radius-literal": "error",
     "react/prop-types": "off",
     // need to ignore emotion's `css` prop, see https://github.com/jsx-eslint/eslint-plugin-react/blob/master/docs/rules/no-unknown-property.md#rule-options
     "react/no-unknown-property": ["error", { "ignore": ["css"] }],
@@ -45,12 +46,6 @@
   },
   "overrides": [
     {
-      "files": ["public/app/features/scenes/**/*.{ts,tsx}"],
-      "rules": {
-        "@typescript-eslint/explicit-member-accessibility": ["error", { "accessibility": "explicit" }]
-      }
-    },
-    {
       "files": ["packages/grafana-ui/src/components/uPlot/**/*.{ts,tsx}"],
       "rules": {
         "react-hooks/rules-of-hooks": "off",
@@ -74,25 +69,56 @@
     },
     {
       "extends": ["plugin:jsx-a11y/recommended"],
-      "files": ["**/*"],
-      "excludedFiles": ["**/*.{spec,test}.{ts,tsx}"],
+      "files": ["**/*.tsx"],
+      "excludedFiles": ["**/*.{spec,test}.tsx"],
       "rules": {
         // rules marked "off" are those left in the recommended preset we need to fix
         // we should remove the corresponding line and fix them one by one
         // any marked "error" contain specific overrides we'll need to keep
-        "jsx-a11y/click-events-have-key-events": "off",
         "jsx-a11y/no-autofocus": [
           "error",
           {
             "ignoreNonDOM": true
           }
         ],
-        "jsx-a11y/no-static-element-interactions": "off",
         "jsx-a11y/label-has-associated-control": [
           "error",
           {
             "controlComponents": ["NumberInput"],
             "depth": 2
+          }
+        ]
+      }
+    },
+    {
+      "files": [
+        "public/app/plugins/datasource/testdata/*.{ts,tsx}",
+        "public/app/plugins/datasource/testdata/**/*.{ts,tsx}"
+      ],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "paths": [
+              // generic rules
+              {
+                "name": "react-redux",
+                "importNames": ["useDispatch", "useSelector"],
+                "message": "Please import from app/types instead."
+              },
+              {
+                "name": "react-i18next",
+                "importNames": ["Trans", "t"],
+                "message": "Please import from app/core/internationalization instead"
+              }
+            ],
+            // new rules
+            "patterns": [
+              {
+                "group": ["**/app/*"],
+                "message": "Core plugins are not allowed to depend on Grafana core packages"
+              }
+            ]
           }
         ]
       }

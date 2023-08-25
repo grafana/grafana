@@ -4,6 +4,10 @@ aliases:
   - ../guides/gettingstarted/
   - getting-started/
 description: Learn how to get started with Grafana by adding a preconfigured dashboard.
+labels:
+  products:
+    - enterprise
+    - oss
 title: Build your first dashboard
 weight: 200
 ---
@@ -12,7 +16,9 @@ weight: 200
 
 This topic helps you get started with Grafana and build your first dashboard using the built-in `Grafana` data source. To learn more about Grafana, refer to [Introduction to Grafana]({{< relref "../introduction" >}}).
 
-> **Note:** Grafana also offers a [free account with Grafana Cloud](/signup/cloud/connect-account?pg=gsdocs) to help getting started even easier and faster. You can install Grafana to self-host or get a free Grafana Cloud account.
+{{% admonition type="note" %}}
+Grafana also offers a [free account with Grafana Cloud](/signup/cloud/connect-account?pg=gsdocs) to help getting started even easier and faster. You can install Grafana to self-host or get a free Grafana Cloud account.
+{{% /admonition %}}
 
 #### Install Grafana
 
@@ -33,13 +39,15 @@ To sign in to Grafana for the first time:
 
 1. Click **OK** on the prompt and change your password.
 
-> **Note:** We strongly recommend that you change the default administrator password.
+{{% admonition type="note" %}}
+We strongly recommend that you change the default administrator password.
+{{% /admonition %}}
 
 #### Create a dashboard
 
 If you've already set up a data source that you know how to query, refer to [Create a dashboard]({{< relref "../dashboards/build-dashboards/create-dashboard" >}}) instead.
 
-To create your first dashboard using the built-in `Grafana` data source:
+To create your first dashboard using the built-in `-- Grafana --` data source:
 
 1. Click **Dashboards** in the left-side menu.
 1. On the Dashboards page, click **New** and select **New Dashboard** from the dropdown menu.
@@ -47,10 +55,11 @@ To create your first dashboard using the built-in `Grafana` data source:
 
    ![Empty dashboard state](/media/docs/grafana/dashboards/empty-dashboard-9.5.png)
 
-1. In the New dashboard/Edit panel view, go to the **Query** tab.
-1. Configure your [query]({{< relref "../panels-visualizations/query-transform-data#add-a-query" >}}) by selecting `-- Grafana --` from the data source selector.
+1. In the modal that opens, click `-- Grafana --`:
 
-   This generates the Random Walk dashboard.
+   {{< figure class="float-right"  src="/media/docs/grafana/dashboards/screenshot-data-source-selector-10.0.png" max-width="800px" alt="Select data source modal" >}}
+
+   This configures your [query]({{< relref "../panels-visualizations/query-transform-data#add-a-query" >}}) and generates the Random Walk dashboard.
 
 1. Click the Refresh dashboard icon to query the data source.
 

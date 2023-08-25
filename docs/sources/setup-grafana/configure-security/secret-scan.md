@@ -2,11 +2,10 @@
 description: Detect and revoke leaked Grafana service account tokens
 labels:
   products:
-    - cloud
     - enterprise
     - oss
-title: Configure Grafana secret scanning and notifications
 menuTitle: Configure secret scanning
+title: Configure Grafana secret scanning and notifications
 weight: 1000
 ---
 
@@ -20,7 +19,9 @@ Grafana instances, whether on-premises or on the cloud, can use this service to 
 
 If the service detects a leaked token, it immediately revokes it, making it useless, and logs the event.
 
-> **Note:** If the `revoke` option is disabled, the service only sends a notification to the configured webhook URL and logs the event. The token is not automatically revoked.
+{{% admonition type="note" %}}
+If the `revoke` option is disabled, the service only sends a notification to the configured webhook URL and logs the event. The token is not automatically revoked.
+{{% /admonition %}}
 
 You can also configure the service to send an outgoing webhook notification to a webhook URL.
 
@@ -38,7 +39,9 @@ Grafana has revoked this token",
 }
 ```
 
-> **Note:** Secret scanning is disabled by default. Outgoing connections are made once you enable it.
+{{% admonition type="note" %}}
+Secret scanning is disabled by default. Outgoing connections are made once you enable it.
+{{% /admonition %}}
 
 ## Before you begin
 

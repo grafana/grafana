@@ -72,6 +72,14 @@ func (s *Service) GetUsageStats(ctx context.Context) map[string]interface{} {
 	}
 
 	stats["stats.case_insensitive_login.count"] = caseInsensitiveLoginVal
+
+	count, err := s.store.CountUserAccountsWithEmptyRole(ctx)
+	if err != nil {
+		return nil
+	}
+
+	stats["stats.user.role_none.count"] = count
+
 	return stats
 }
 
@@ -219,7 +227,24 @@ func (s *Service) ChangePassword(ctx context.Context, cmd *user.ChangeUserPasswo
 }
 
 func (s *Service) UpdateLastSeenAt(ctx context.Context, cmd *user.UpdateUserLastSeenAtCommand) error {
+	u, err := s.GetSignedInUserWithCacheCtx(ctx, &user.GetSignedInUserQuery{
+		UserID: cmd.UserID,
+		OrgID:  cmd.OrgID,
+	})
+
+	if err != nil {
+		return err
+	}
+
+	if !shouldUpdateLastSeen(u.LastSeenAt) {
+		return user.ErrLastSeenUpToDate
+	}
+
 	return s.store.UpdateLastSeenAt(ctx, cmd)
+}
+
+func shouldUpdateLastSeen(t time.Time) bool {
+	return time.Since(t) > time.Minute*5
 }
 
 func (s *Service) SetUsingOrg(ctx context.Context, cmd *user.SetUsingOrgCommand) error {

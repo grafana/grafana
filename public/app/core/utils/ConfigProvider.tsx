@@ -1,10 +1,13 @@
 import React, { useEffect, useState } from 'react';
+import { SkeletonTheme } from 'react-loading-skeleton';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { ThemeChangedEvent, config } from '@grafana/runtime';
 import { ThemeContext } from '@grafana/ui';
 
 import { appEvents } from '../core';
+
+import 'react-loading-skeleton/dist/skeleton.css';
 
 export const ThemeProvider = ({ children, value }: { children: React.ReactNode; value: GrafanaTheme2 }) => {
   const [theme, setTheme] = useState(value);
@@ -18,7 +21,17 @@ export const ThemeProvider = ({ children, value }: { children: React.ReactNode; 
     return () => sub.unsubscribe();
   }, []);
 
-  return <ThemeContext.Provider value={theme}>{children}</ThemeContext.Provider>;
+  return (
+    <ThemeContext.Provider value={theme}>
+      <SkeletonTheme
+        baseColor={theme.colors.background.secondary}
+        highlightColor={theme.colors.emphasize(theme.colors.background.secondary)}
+        borderRadius={theme.shape.radius.default}
+      >
+        {children}
+      </SkeletonTheme>
+    </ThemeContext.Provider>
+  );
 };
 
 export const provideTheme = (component: React.ComponentType<any>, theme: GrafanaTheme2) => {

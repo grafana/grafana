@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 
 import { DataFrame } from '@grafana/data';
 import { CodeEditor, Modal, ModalTabsHeader, TabContent } from '@grafana/ui';
-import { DataHoverView } from 'app/plugins/panel/geomap/components/DataHoverView';
+import { DataHoverView } from 'app/features/visualization/data-hover/DataHoverView';
 
 export interface Props {
   name: string;

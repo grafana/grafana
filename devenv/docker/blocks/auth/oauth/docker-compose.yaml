@@ -1,5 +1,5 @@
   oauthkeycloakdb:
-    image: postgres:12.2
+    image: docker.io/library/postgres:12-alpine
     container_name: oauthkeycloakdb
     environment:
       POSTGRES_DB: keycloak
@@ -10,7 +10,7 @@
     restart: unless-stopped
 
   oauthkeycloak:
-    image: quay.io/keycloak/keycloak:20.0
+    image: quay.io/keycloak/keycloak:22.0
     container_name: oauthkeycloak
     command: --spi-login-protocol-openid-connect-legacy-logout-redirect-uri=true start-dev
     environment:

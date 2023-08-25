@@ -10,8 +10,6 @@
 
 import * as common from '@grafana/schema';
 
-export const PanelCfgModelVersion = Object.freeze([0, 0]);
-
 export interface Options extends common.OptionsWithLegend, common.OptionsWithTooltip {
   /**
    * Offset buckets by this amount

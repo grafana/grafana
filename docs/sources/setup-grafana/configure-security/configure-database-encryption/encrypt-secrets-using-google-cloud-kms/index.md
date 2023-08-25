@@ -2,6 +2,10 @@
 aliases:
   - ../../../enterprise/enterprise-encryption/using-google-cloud-kms-to-encrypt-database-secrets/
 description: Learn how to use Google Cloud KMS to encrypt secrets in the Grafana database.
+labels:
+  products:
+    - enterprise
+    - oss
 title: Encrypt database secrets using Google Cloud KMS
 weight: 100
 ---

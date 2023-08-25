@@ -13,6 +13,11 @@ keywords:
   - data link
   - documentation
   - playlist
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 menuTitle: Configure data links
 title: Configure data links
 weight: 400
@@ -28,7 +33,9 @@ You can use variables in data links to refer to series fields, labels, and value
 
 To see a list of available variables, type `$` in the data link **URL** field to see a list of variables that you can use.
 
-> **Note:** These variables changed in 6.4 so if you have an older version of Grafana, then use the version picker to select docs for an older version of Grafana.
+{{% admonition type="note" %}}
+These variables changed in 6.4 so if you have an older version of Grafana, then use the version picker to select docs for an older version of Grafana.
+{{% /admonition %}}
 
 You can also use template variables in your data links URLs, refer to [Templates and variables]({{< relref "../../dashboards/variables/" >}}) for more information on template variables.
 

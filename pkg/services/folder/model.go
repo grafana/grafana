@@ -10,12 +10,12 @@ import (
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
-var ErrMaximumDepthReached = errutil.NewBase(errutil.StatusBadRequest, "folder.maximum-depth-reached", errutil.WithPublicMessage("Maximum nested folder depth reached"))
-var ErrBadRequest = errutil.NewBase(errutil.StatusBadRequest, "folder.bad-request")
-var ErrDatabaseError = errutil.NewBase(errutil.StatusInternal, "folder.database-error")
-var ErrInternal = errutil.NewBase(errutil.StatusInternal, "folder.internal")
-var ErrCircularReference = errutil.NewBase(errutil.StatusBadRequest, "folder.circular-reference", errutil.WithPublicMessage("Circular reference detected"))
-var ErrTargetRegistrySrvConflict = errutil.NewBase(errutil.StatusInternal, "folder.target-registry-srv-conflict")
+var ErrMaximumDepthReached = errutil.BadRequest("folder.maximum-depth-reached", errutil.WithPublicMessage("Maximum nested folder depth reached"))
+var ErrBadRequest = errutil.BadRequest("folder.bad-request")
+var ErrDatabaseError = errutil.Internal("folder.database-error")
+var ErrInternal = errutil.Internal("folder.internal")
+var ErrCircularReference = errutil.BadRequest("folder.circular-reference", errutil.WithPublicMessage("Circular reference detected"))
+var ErrTargetRegistrySrvConflict = errutil.Internal("folder.target-registry-srv-conflict")
 
 const (
 	GeneralFolderUID     = "general"
@@ -23,7 +23,7 @@ const (
 	MaxNestedFolderDepth = 8
 )
 
-var ErrFolderNotFound = errutil.NewBase(errutil.StatusNotFound, "folder.notFound")
+var ErrFolderNotFound = errutil.NotFound("folder.notFound")
 
 type Folder struct {
 	ID          int64  `xorm:"pk autoincr 'id'"`
@@ -128,7 +128,7 @@ type DeleteFolderCommand struct {
 }
 
 // GetFolderQuery is used for all folder Get requests. Only one of UID, ID, or
-// Title should be set; if multilpe fields are set by the caller the dashboard
+// Title should be set; if multiple fields are set by the caller the dashboard
 // service will select the field with the most specificity, in order: ID, UID,
 // Title.
 type GetFolderQuery struct {

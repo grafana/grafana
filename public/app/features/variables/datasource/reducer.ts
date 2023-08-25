@@ -42,7 +42,7 @@ export const dataSourceVariableSlice = createSlice({
         }
 
         if (isValid(source, regex)) {
-          options.push({ text: source.name, value: source.name, selected: false });
+          options.push({ text: source.name, value: source.uid, selected: false });
         }
 
         if (isDefault(source, regex)) {

@@ -8,8 +8,14 @@ keywords:
   - configuration
   - documentation
   - oauth
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
+menuTitle: Keycloak OAuth2
 title: Configure Keycloak OAuth2 authentication
-weight: 200
+weight: 1300
 ---
 
 # Configure Keycloak OAuth2 authentication
@@ -43,8 +49,10 @@ role_attribute_path = contains(roles[*], 'admin') && 'Admin' || contains(roles[*
 As an example, `<PROVIDER_DOMAIN>` can be `keycloak-demo.grafana.org`
 and `<REALM_NAME>` can be `grafana`.
 
-> **Note**: api_url is not required if the id_token contains all the necessary user information and can add latency to the login process.
-> It is useful as a fallback or if the user has more than 150 group memberships.
+{{% admonition type="note" %}}
+api_url is not required if the id_token contains all the necessary user information and can add latency to the login process.
+It is useful as a fallback or if the user has more than 150 group memberships.
+{{% /admonition %}}
 
 ## Keycloak configuration
 
@@ -58,7 +66,7 @@ and `<REALM_NAME>` can be `grafana`.
 - Implicit Flow Enabled: `OFF`
 - Direct Access Grants Enabled: `ON`
 - Root URL: `<grafana_root_url>`
-- Valid Redirect URIs: `<grafana_root_url>/*`
+- Valid Redirect URIs: `<grafana_root_url>/login/generic_oauth`
 - Web Origins: `<grafana_root_url>`
 - Admin URL: `<grafana_root_url>`
 - Base URL: `<grafana_root_url>`
@@ -75,7 +83,9 @@ profile
 roles
 ```
 
-> **Warning**: these scopes do not add group claims to the id_token. Without group claims, teamsync will not work. Teamsync is covered further down in this document.
+{{% admonition type="warning" %}}
+these scopes do not add group claims to the id_token. Without group claims, teamsync will not work. Teamsync is covered further down in this document.
+{{% /admonition %}}
 
 3. For role mapping to work with the example configuration above,
    you need to create the following roles and assign them to users:
@@ -88,7 +98,9 @@ viewer
 
 ## Teamsync
 
-> **Note:** Available in [Grafana Enterprise]({{< relref "../../../../introduction/grafana-enterprise" >}}) and [Grafana Cloud Advanced](/docs/grafana-cloud/).
+{{% admonition type="note" %}}
+Available in [Grafana Enterprise]({{< relref "../../../../introduction/grafana-enterprise" >}}) and [Grafana Cloud](/docs/grafana-cloud/).
+{{% /admonition %}}
 
 [Teamsync]({{< relref "../../configure-team-sync" >}}) is a feature that allows you to map groups from your identity provider to Grafana teams. This is useful if you want to give your users access to specific dashboards or folders based on their group membership.
 
@@ -125,7 +137,7 @@ To enable Single Logout, you need to add the following option to the configurati
 
 ```ini
 [auth]
-signout_redirect_url = https://<PROVIDER_DOMAIN>/auth/realms/<REALM_NAME>/protocol/openid-connect/logout?redirect_uri=https%3A%2F%2<GRAFANA_DOMAIN>%2Flogin
+signout_redirect_url = https://<PROVIDER_DOMAIN>/auth/realms/<REALM_NAME>/protocol/openid-connect/logout?redirect_uri=https%3A%2F%2F<GRAFANA_DOMAIN>%2Flogin
 ```
 
 As an example, `<PROVIDER_DOMAIN>` can be `keycloak-demo.grafana.org`,

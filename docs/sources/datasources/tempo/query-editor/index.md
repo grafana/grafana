@@ -7,6 +7,11 @@ keywords:
   - tempo
   - traces
   - queries
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 menuTitle: Query editor
 title: Tempo query editor
 weight: 300
@@ -14,10 +19,10 @@ weight: 300
 
 # Tempo query editor
 
-The Tempo data source's query editor helps you query and display traces from Tempo in [Explore]({{< relref "../../../explore" >}}).
+The Tempo data source's query editor helps you query and display traces from Tempo in [Explore][explore].
 
 This topic explains configuration and queries specific to the Tempo data source.
-For general documentation on querying data sources in Grafana, see [Query and transform data]({{< relref "../../../panels-visualizations/query-transform-data" >}}).
+For general documentation on querying data sources in Grafana, see [Query and transform data][query-transform-data].
 
 ## Query by search
 
@@ -58,14 +63,25 @@ To configure your Tempo data source to use this feature, refer to the [Tempo doc
 
 To query a particular trace:
 
-1. Select the **TraceID** query type.
-1. Enter the trace's ID into the **Trace ID** field.
+1. Select the **TraceQL** query type.
+1. Enter the trace's ID into the query field.
 
 {{< figure src="/static/img/docs/tempo/query-editor-traceid.png" class="docs-image--no-shadow" max-width="750px" caption="Screenshot of the Tempo TraceID query type" >}}
 
 ## Query by TraceQL
 
+Inspired by PromQL and LogQL, TraceQL is a query language designed for selecting traces.
+The default traces search reviews the whole trace.
+TraceQL provides a method for formulating precise queries so you can zoom in to the data you need.
+Query results are returned faster because the queries limit what is searched.
+
 To learn more about how to query by TraceQL, refer to the [TraceQL documentation](/docs/tempo/latest/traceql).
+
+You can create TraceQL queries using the Query editor or using **Search** query type.
+
+[//]: # 'Include content for preview of Search tab featuring TraceQL query builder'
+
+{{< docs/shared source="grafana" lookup="datasources/tempo-search-traceql.md" leveloffset="+1" >}}
 
 ## Query Loki for traces
 
@@ -73,3 +89,11 @@ To find traces to visualize, you can use the [Loki query editor]({{< relref "../
 For results, you must configure [derived fields]({{< relref "../../loki#configure-derived-fields" >}}) in the Loki data source that point to this data source.
 
 {{< figure src="/static/img/docs/tempo/query-editor-search.png" class="docs-image--no-shadow" max-width="750px" caption="Screenshot of the Tempo query editor showing the Loki Search tab" >}}
+
+{{% docs/reference %}}
+[explore]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/explore"
+[explore]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/explore"
+
+[query-transform-data]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/query-transform-data"
+[query-transform-data]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/query-transform-data"
+{{% /docs/reference %}}

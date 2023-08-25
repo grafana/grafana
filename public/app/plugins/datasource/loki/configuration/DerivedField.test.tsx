@@ -67,7 +67,7 @@ describe('DerivedField', () => {
     );
     expect(await screen.findByText('Name')).toBeInTheDocument();
 
-    expect(screen.getByLabelText(selectors.components.DataSourcePicker.inputV2)).toBeInTheDocument();
+    expect(screen.getByTestId(selectors.components.DataSourcePicker.container)).toBeInTheDocument();
   });
 
   it('shows url link if uid is not set', async () => {
@@ -89,7 +89,7 @@ describe('DerivedField', () => {
     );
     expect(await screen.findByText('Name')).toBeInTheDocument();
 
-    expect(screen.queryByLabelText(selectors.components.DataSourcePicker.inputV2)).not.toBeInTheDocument();
+    expect(await screen.queryByTestId(selectors.components.DataSourcePicker.container)).not.toBeInTheDocument();
   });
 
   it('shows only tracing datasources for internal link', async () => {

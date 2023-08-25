@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -35,82 +34,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/org/orgtest"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
-	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/updatechecker"
-	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web/webtest"
 )
 
 func Test_PluginsInstallAndUninstall(t *testing.T) {
-	type tc struct {
-		pluginAdminEnabled               bool
-		pluginAdminExternalManageEnabled bool
-		expectedHTTPStatus               int
-		expectedHTTPBody                 string
-	}
-	tcs := []tc{
-		{pluginAdminEnabled: true, pluginAdminExternalManageEnabled: true, expectedHTTPStatus: 404, expectedHTTPBody: "404 page not found\n"},
-		{pluginAdminEnabled: true, pluginAdminExternalManageEnabled: false, expectedHTTPStatus: 200, expectedHTTPBody: ""},
-		{pluginAdminEnabled: false, pluginAdminExternalManageEnabled: true, expectedHTTPStatus: 404, expectedHTTPBody: "404 page not found\n"},
-		{pluginAdminEnabled: false, pluginAdminExternalManageEnabled: false, expectedHTTPStatus: 404, expectedHTTPBody: "404 page not found\n"},
-	}
-
-	testName := func(action string, testCase tc) string {
-		return fmt.Sprintf("%s request returns %d when adminEnabled: %t and externalEnabled: %t",
-			action, testCase.expectedHTTPStatus, testCase.pluginAdminEnabled, testCase.pluginAdminExternalManageEnabled)
-	}
-
-	inst := NewFakePluginInstaller()
-	for _, tc := range tcs {
-		srv := SetupAPITestServer(t, func(hs *HTTPServer) {
-			hs.Cfg = &setting.Cfg{
-				PluginAdminEnabled:               tc.pluginAdminEnabled,
-				PluginAdminExternalManageEnabled: tc.pluginAdminExternalManageEnabled,
-			}
-			hs.pluginInstaller = inst
-			hs.QuotaService = quotatest.New(false, nil)
-		})
-
-		t.Run(testName("Install", tc), func(t *testing.T) {
-			req := srv.NewPostRequest("/api/plugins/test/install", strings.NewReader("{ \"version\": \"1.0.2\" }"))
-			webtest.RequestWithSignedInUser(req, &user.SignedInUser{UserID: 1, OrgID: 1, OrgRole: org.RoleEditor, IsGrafanaAdmin: true})
-			resp, err := srv.SendJSON(req)
-			require.NoError(t, err)
-
-			body := new(strings.Builder)
-			_, err = io.Copy(body, resp.Body)
-			require.NoError(t, err)
-			require.Equal(t, tc.expectedHTTPBody, body.String())
-			require.NoError(t, resp.Body.Close())
-			require.Equal(t, tc.expectedHTTPStatus, resp.StatusCode)
-
-			if tc.expectedHTTPStatus == 200 {
-				require.Equal(t, fakePlugin{pluginID: "test", version: "1.0.2"}, inst.plugins["test"])
-			}
-		})
-
-		t.Run(testName("Uninstall", tc), func(t *testing.T) {
-			req := srv.NewPostRequest("/api/plugins/test/uninstall", strings.NewReader("{}"))
-			webtest.RequestWithSignedInUser(req, &user.SignedInUser{UserID: 1, OrgID: 1, OrgRole: org.RoleViewer, IsGrafanaAdmin: true})
-			resp, err := srv.SendJSON(req)
-			require.NoError(t, err)
-
-			body := new(strings.Builder)
-			_, err = io.Copy(body, resp.Body)
-			require.NoError(t, err)
-			require.Equal(t, tc.expectedHTTPBody, body.String())
-			require.NoError(t, resp.Body.Close())
-			require.Equal(t, tc.expectedHTTPStatus, resp.StatusCode)
-
-			if tc.expectedHTTPStatus == 200 {
-				require.Empty(t, inst.plugins)
-			}
-		})
-	}
-}
-
-func Test_PluginsInstallAndUninstall_AccessControl(t *testing.T) {
 	canInstall := []ac.Permission{{Action: pluginaccesscontrol.ActionInstall}}
 	cannotInstall := []ac.Permission{{Action: "plugins:cannotinstall"}}
 
@@ -277,7 +206,7 @@ func Test_GetPluginAssets(t *testing.T) {
 	requestedFile := filepath.Clean(tmpFile.Name())
 
 	t.Run("Given a request for an existing plugin file", func(t *testing.T) {
-		p := createPlugin(plugins.JSONData{ID: pluginID}, plugins.External, plugins.NewLocalFS(filepath.Dir(requestedFile)))
+		p := createPlugin(plugins.JSONData{ID: pluginID}, plugins.ClassExternal, plugins.NewLocalFS(filepath.Dir(requestedFile)))
 		pluginRegistry := &fakes.FakePluginRegistry{
 			Store: map[string]*plugins.Plugin{
 				p.ID: p,
@@ -295,7 +224,7 @@ func Test_GetPluginAssets(t *testing.T) {
 	})
 
 	t.Run("Given a request for a relative path", func(t *testing.T) {
-		p := createPlugin(plugins.JSONData{ID: pluginID}, plugins.External, plugins.NewFakeFS())
+		p := createPlugin(plugins.JSONData{ID: pluginID}, plugins.ClassExternal, plugins.NewFakeFS())
 		pluginRegistry := &fakes.FakePluginRegistry{
 			Store: map[string]*plugins.Plugin{
 				p.ID: p,
@@ -312,7 +241,7 @@ func Test_GetPluginAssets(t *testing.T) {
 	})
 
 	t.Run("Given a request for an existing plugin file that is not listed as a signature covered file", func(t *testing.T) {
-		p := createPlugin(plugins.JSONData{ID: pluginID}, plugins.Core, plugins.NewLocalFS(filepath.Dir(requestedFile)))
+		p := createPlugin(plugins.JSONData{ID: pluginID}, plugins.ClassCore, plugins.NewLocalFS(filepath.Dir(requestedFile)))
 		pluginRegistry := &fakes.FakePluginRegistry{
 			Store: map[string]*plugins.Plugin{
 				p.ID: p,
@@ -330,7 +259,7 @@ func Test_GetPluginAssets(t *testing.T) {
 	})
 
 	t.Run("Given a request for an non-existing plugin file", func(t *testing.T) {
-		p := createPlugin(plugins.JSONData{ID: pluginID}, plugins.External, plugins.NewFakeFS())
+		p := createPlugin(plugins.JSONData{ID: pluginID}, plugins.ClassExternal, plugins.NewFakeFS())
 		service := &fakes.FakePluginRegistry{
 			Store: map[string]*plugins.Plugin{
 				p.ID: p,
@@ -557,7 +486,7 @@ func pluginAssetScenario(t *testing.T, desc string, url string, urlPattern strin
 		cfg.IsFeatureToggleEnabled = func(_ string) bool { return false }
 		hs := HTTPServer{
 			Cfg:             cfg,
-			pluginStore:     store.New(pluginRegistry),
+			pluginStore:     store.New(pluginRegistry, &fakes.FakeLoader{}),
 			pluginFileStore: filestore.ProvideService(pluginRegistry),
 			log:             log.NewNopLogger(),
 			pluginsCDNService: pluginscdn.ProvideService(&config.Cfg{
@@ -623,13 +552,13 @@ func Test_PluginsList_AccessControl(t *testing.T) {
 		ID: "test-app", Type: "app", Name: "test-app",
 		Info: plugins.Info{
 			Version: "1.0.0",
-		}}, plugins.External, plugins.NewFakeFS())
+		}}, plugins.ClassExternal, plugins.NewFakeFS())
 	p2 := createPlugin(
 		plugins.JSONData{ID: "mysql", Type: "datasource", Name: "MySQL",
 			Info: plugins.Info{
 				Author:      plugins.InfoLink{Name: "Grafana Labs", URL: "https://grafana.com"},
 				Description: "Data source for MySQL databases",
-			}}, plugins.Core, plugins.NewFakeFS())
+			}}, plugins.ClassCore, plugins.NewFakeFS())
 
 	pluginRegistry := &fakes.FakePluginRegistry{
 		Store: map[string]*plugins.Plugin{
@@ -669,7 +598,7 @@ func Test_PluginsList_AccessControl(t *testing.T) {
 			server := SetupAPITestServer(t, func(hs *HTTPServer) {
 				hs.Cfg = setting.NewCfg()
 				hs.PluginSettings = &pluginSettings
-				hs.pluginStore = store.New(pluginRegistry)
+				hs.pluginStore = store.New(pluginRegistry, &fakes.FakeLoader{})
 				hs.pluginFileStore = filestore.ProvideService(pluginRegistry)
 				var err error
 				hs.pluginsUpdateChecker, err = updatechecker.ProvidePluginsService(hs.Cfg, nil, tracing.InitializeTracerForTest())

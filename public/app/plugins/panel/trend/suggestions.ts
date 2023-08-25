@@ -1,5 +1,5 @@
 import { VisualizationSuggestionsBuilder } from '@grafana/data';
-import { GraphDrawStyle, GraphFieldConfig } from '@grafana/schema';
+import { GraphDrawStyle, GraphFieldConfig, VizLegendOptions } from '@grafana/schema';
 import { SuggestionName } from 'app/types/suggestions';
 
 import { Options } from './panelcfg.gen';
@@ -17,7 +17,7 @@ export class TrendSuggestionsSupplier {
       name: SuggestionName.LineChart,
       pluginId: 'trend',
       options: {
-        legend: {} as any,
+        legend: {} as VizLegendOptions,
       },
       fieldConfig: {
         defaults: {

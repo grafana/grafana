@@ -22,23 +22,21 @@ composableKinds: PanelCfg: {
 	maturity: "experimental"
 
 	lineage: {
-		seqs: [
-			{
-				schemas: [
-					{
-						Options: {
-							showLabels:         bool
-							showCommonLabels:   bool
-							showTime:           bool
-							wrapLogMessage:     bool
-							prettifyLogMessage: bool
-							enableLogDetails:   bool
-							sortOrder:          common.LogsSortOrder
-							dedupStrategy:      common.LogsDedupStrategy
-						} @cuetsy(kind="interface")
-					},
-				]
-			},
-		]
+		schemas: [{
+			version: [0, 0]
+			schema: {
+				Options: {
+					showLabels:         bool
+					showCommonLabels:   bool
+					showTime:           bool
+					wrapLogMessage:     bool
+					prettifyLogMessage: bool
+					enableLogDetails:   bool
+					sortOrder:          common.LogsSortOrder
+					dedupStrategy:      common.LogsDedupStrategy
+				} @cuetsy(kind="interface")
+			}
+		}]
+		lenses: []
 	}
 }

@@ -16,26 +16,14 @@ import (
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/login"
+	"github.com/grafana/grafana/pkg/services/org"
 	pref "github.com/grafana/grafana/pkg/services/preference"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func (hs *HTTPServer) editorInAnyFolder(c *contextmodel.ReqContext) bool {
-	hasEditPermissionInFoldersQuery := folder.HasEditPermissionInFoldersQuery{SignedInUser: c.SignedInUser}
-	hasEditPermissionInFoldersQueryResult, err := hs.DashboardService.HasEditPermissionInFolders(c.Req.Context(), &hasEditPermissionInFoldersQuery)
-	if err != nil {
-		return false
-	}
-	return hasEditPermissionInFoldersQueryResult
-}
-
 func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexViewData, error) {
-	hasAccess := ac.HasAccess(hs.AccessControl, c)
-	hasEditPerm := hasAccess(hs.editorInAnyFolder, ac.EvalAny(ac.EvalPermission(dashboards.ActionDashboardsCreate), ac.EvalPermission(dashboards.ActionFoldersCreate)))
-
 	settings, err := hs.getFrontendSettings(c)
 	if err != nil {
 		return nil, err
@@ -62,7 +50,7 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 	locale := "en-US"
 	language := "" // frontend will set the default language
 
-	if hs.Features.IsEnabled(featuremgmt.FlagInternationalization) && prefs.JSONData.Language != "" {
+	if prefs.JSONData.Language != "" {
 		language = prefs.JSONData.Language
 	}
 
@@ -81,7 +69,7 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 		settings.AppSubUrl = ""
 	}
 
-	navTree, err := hs.navTreeService.GetNavTree(c, hasEditPerm, prefs)
+	navTree, err := hs.navTreeService.GetNavTree(c, prefs)
 	if err != nil {
 		return nil, err
 	}
@@ -93,6 +81,19 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 
 	theme := hs.getThemeForIndexData(prefs.Theme, c.Query("theme"))
 
+	userOrgCount := 1
+	userOrgs, err := hs.orgService.GetUserOrgList(c.Req.Context(), &org.GetUserOrgListQuery{UserID: c.UserID})
+	if err != nil {
+		hs.log.Error("Failed to count user orgs", "error", err)
+	}
+
+	if len(userOrgs) > 0 {
+		userOrgCount = len(userOrgs)
+	}
+
+	hasAccess := ac.HasAccess(hs.AccessControl, c)
+	hasEditPerm := hasAccess(ac.EvalAny(ac.EvalPermission(dashboards.ActionDashboardsCreate), ac.EvalPermission(dashboards.ActionFoldersCreate)))
+
 	data := dtos.IndexViewData{
 		User: &dtos.CurrentUser{
 			Id:                         c.UserID,
@@ -100,10 +101,10 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 			Login:                      c.Login,
 			Email:                      c.Email,
 			Name:                       c.Name,
-			OrgCount:                   c.OrgCount,
 			OrgId:                      c.OrgID,
 			OrgName:                    c.OrgName,
 			OrgRole:                    c.OrgRole,
+			OrgCount:                   userOrgCount,
 			GravatarUrl:                dtos.GetGravatarUrl(c.Email),
 			IsGrafanaAdmin:             c.IsGrafanaAdmin,
 			Theme:                      theme.ID,
@@ -115,11 +116,13 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 			HelpFlags1:                 c.HelpFlags1,
 			HasEditPermissionInFolders: hasEditPerm,
 			Analytics:                  hs.buildUserAnalyticsSettings(c.Req.Context(), c.SignedInUser),
+			AuthenticatedBy:            c.SignedInUser.AuthenticatedBy,
 		},
 		Settings:                            settings,
 		ThemeType:                           theme.Type,
 		AppUrl:                              appURL,
 		AppSubUrl:                           appSubURL,
+		NewsFeedEnabled:                     setting.NewsFeedEnabled,
 		GoogleAnalyticsId:                   settings.GoogleAnalyticsId,
 		GoogleAnalytics4Id:                  settings.GoogleAnalytics4Id,
 		GoogleAnalytics4SendManualPageViews: hs.Cfg.GoogleAnalytics4SendManualPageViews,
@@ -145,14 +148,12 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 		data.CSPContent = middleware.ReplacePolicyVariables(hs.Cfg.CSPTemplate, appURL, c.RequestNonce)
 	}
 
-	if !hs.AccessControl.IsDisabled() {
-		userPermissions, err := hs.accesscontrolService.GetUserPermissions(c.Req.Context(), c.SignedInUser, ac.Options{ReloadCache: false})
-		if err != nil {
-			return nil, err
-		}
-
-		data.User.Permissions = ac.BuildPermissionsMap(userPermissions)
+	userPermissions, err := hs.accesscontrolService.GetUserPermissions(c.Req.Context(), c.SignedInUser, ac.Options{ReloadCache: false})
+	if err != nil {
+		return nil, err
 	}
+
+	data.User.Permissions = ac.BuildPermissionsMap(userPermissions)
 
 	if setting.DisableGravatar {
 		data.User.GravatarUrl = hs.Cfg.AppSubURL + "/public/img/user_profile.png"

@@ -17,7 +17,7 @@ type FrontendSettingsAuthDTO struct {
 	GithubSkipOrgRoleSync       bool `json:"GithubSkipOrgRoleSync"`
 	GitLabSkipOrgRoleSync       bool `json:"GitLabSkipOrgRoleSync"`
 	OktaSkipOrgRoleSync         bool `json:"OktaSkipOrgRoleSync"`
-	DisableSyncLock             bool `json:"DisableSyncLock"`
+	AuthProxyEnableLoginToken   bool `json:"AuthProxyEnableLoginToken"`
 }
 
 type FrontendSettingsBuildInfoDTO struct {
@@ -64,6 +64,7 @@ type FrontendSettingsReportingDTO struct {
 type FrontendSettingsUnifiedAlertingDTO struct {
 	MinInterval              string `json:"minInterval"`
 	AlertStateHistoryBackend string `json:"alertStateHistoryBackend,omitempty"`
+	AlertStateHistoryPrimary string `json:"alertStateHistoryPrimary,omitempty"`
 }
 
 // Enterprise-only
@@ -110,6 +111,7 @@ type FrontendSettingsWhitelabelingDTO struct {
 	LoginSubtitle         *string                                         `json:"loginSubtitle,omitempty"`
 	LoginBoxBackground    *string                                         `json:"loginBoxBackground,omitempty"`
 	LoadingLogo           *string                                         `json:"loadingLogo,omitempty"`
+	HideEdition           *bool                                           `json:"hideEdition,omitempty"`
 	PublicDashboardFooter *FrontendSettingsPublicDashboardFooterConfigDTO `json:"publicDashboardFooter,omitempty"` // PR TODO: type this properly
 }
 
@@ -146,6 +148,7 @@ type FrontendSettingsDTO struct {
 	ExploreEnabled      bool `json:"exploreEnabled"`
 	HelpEnabled         bool `json:"helpEnabled"`
 	ProfileEnabled      bool `json:"profileEnabled"`
+	NewsFeedEnabled     bool `json:"newsFeedEnabled"`
 	QueryHistoryEnabled bool `json:"queryHistoryEnabled"`
 
 	GoogleAnalyticsId                   string `json:"googleAnalyticsId"`
@@ -157,22 +160,23 @@ type FrontendSettingsDTO struct {
 	RudderstackSdkUrl       string `json:"rudderstackSdkUrl"`
 	RudderstackConfigUrl    string `json:"rudderstackConfigUrl"`
 
-	FeedbackLinksEnabled                bool   `json:"feedbackLinksEnabled"`
-	ApplicationInsightsConnectionString string `json:"applicationInsightsConnectionString"`
-	ApplicationInsightsEndpointUrl      string `json:"applicationInsightsEndpointUrl"`
-	DisableLoginForm                    bool   `json:"disableLoginForm"`
-	DisableUserSignUp                   bool   `json:"disableUserSignUp"`
-	LoginHint                           string `json:"loginHint"`
-	PasswordHint                        string `json:"passwordHint"`
-	ExternalUserMngInfo                 string `json:"externalUserMngInfo"`
-	ExternalUserMngLinkUrl              string `json:"externalUserMngLinkUrl"`
-	ExternalUserMngLinkName             string `json:"externalUserMngLinkName"`
-	ViewersCanEdit                      bool   `json:"viewersCanEdit"`
-	AngularSupportEnabled               bool   `json:"angularSupportEnabled"`
-	EditorsCanAdmin                     bool   `json:"editorsCanAdmin"`
-	DisableSanitizeHtml                 bool   `json:"disableSanitizeHtml"`
-	TrustedTypesDefaultPolicyEnabled    bool   `json:"trustedTypesDefaultPolicyEnabled"`
-	CSPReportOnlyEnabled                bool   `json:"cspReportOnlyEnabled"`
+	FeedbackLinksEnabled                bool     `json:"feedbackLinksEnabled"`
+	ApplicationInsightsConnectionString string   `json:"applicationInsightsConnectionString"`
+	ApplicationInsightsEndpointUrl      string   `json:"applicationInsightsEndpointUrl"`
+	DisableLoginForm                    bool     `json:"disableLoginForm"`
+	DisableUserSignUp                   bool     `json:"disableUserSignUp"`
+	LoginHint                           string   `json:"loginHint"`
+	PasswordHint                        string   `json:"passwordHint"`
+	ExternalUserMngInfo                 string   `json:"externalUserMngInfo"`
+	ExternalUserMngLinkUrl              string   `json:"externalUserMngLinkUrl"`
+	ExternalUserMngLinkName             string   `json:"externalUserMngLinkName"`
+	ViewersCanEdit                      bool     `json:"viewersCanEdit"`
+	AngularSupportEnabled               bool     `json:"angularSupportEnabled"`
+	EditorsCanAdmin                     bool     `json:"editorsCanAdmin"`
+	DisableSanitizeHtml                 bool     `json:"disableSanitizeHtml"`
+	TrustedTypesDefaultPolicyEnabled    bool     `json:"trustedTypesDefaultPolicyEnabled"`
+	CSPReportOnlyEnabled                bool     `json:"cspReportOnlyEnabled"`
+	DisableFrontendSandboxForPlugins    []string `json:"disableFrontendSandboxForPlugins"`
 
 	Auth FrontendSettingsAuthDTO `json:"auth"`
 

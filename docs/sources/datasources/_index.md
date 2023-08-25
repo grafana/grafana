@@ -2,12 +2,12 @@
 aliases:
   - data-sources/
   - overview/
-cascade:
-  labels:
-    products:
-      - cloud
-      - enterprise
-      - oss
+  - ./features/datasources/
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: Data sources
 weight: 60
 ---
@@ -22,28 +22,28 @@ Each data source comes with a _query editor_,
 which formulates custom queries according to the source's structure.
 After you add and configure a data source, you can use it as an input for many operations, including:
 
-- Query the data with [Explore]({{< relref "../explore" >}}).
-- Visualize it in [panels]({{< relref "../panels-visualizations" >}}).
-- Create rules for [alerts]({{< relref "../alerting" >}}).
+- Query the data with [Explore][explore].
+- Visualize it in [panels][panels].
+- Create rules for [alerts][alerts].
 
 This documentation describes how to manage data sources in general,
 and how to configure or query the built-in data sources.
 For other data sources, refer to the list of [datasource plugins](/grafana/plugins/).
-To develop a custom plugin, refer to [Build a plugin]({{< relref "../developers/plugins/" >}}).
+To develop a custom plugin, refer to [Build a plugin][build-a-plugin].
 
 ## Manage data sources
 
-Only users with the [organization administrator role]({{< relref "../administration/roles-and-permissions#organization-roles" >}}) can add or remove data sources.
+Only users with the [organization administrator role][organization-roles] can add or remove data sources.
 To access data source management tools in Grafana as an administrator, navigate to **Configuration > Data Sources** in the Grafana sidebar.
 
-For details on data source management, including instructions on how to add data sources and configure user permissions for queries, refer to the [administration documentation]({{< relref "../administration/data-source-management" >}}).
+For details on data source management, including instructions on how to add data sources and configure user permissions for queries, refer to the [administration documentation][data-source-management].
 
 ## Use query editors
 
 {{< figure src="/static/img/docs/queries/influxdb-query-editor-7-2.png" class="docs-image--no-shadow" max-width="1000px" caption="The InfluxDB query editor" >}}
 
 Each data source's **query editor** provides a customized user interface that helps you write queries that take advantage of its unique capabilities.
-You use a data source's query editor when you create queries in [dashboard panels]({{< relref "../panels-visualizations/query-transform-data" >}}) or [Explore]({{< relref "../explore/" >}}).
+You use a data source's query editor when you create queries in [dashboard panels][query-transform-data] or [Explore][explore].
 
 Because of the differences between query languages, each data source query editor looks and functions differently.
 Depending on your data source, the query editor might provide auto-completion features, metric names, variable suggestions, or a visual query-building interface.
@@ -70,20 +70,43 @@ Grafana includes three special data sources:
 
 These built-in core data sources are also included in the Grafana documentation:
 
-- [Alertmanager]({{< relref "./alertmanager/" >}})
-- [AWS CloudWatch]({{< relref "./aws-cloudwatch/" >}})
-- [Azure Monitor]({{< relref "./azure-monitor/" >}})
-- [Elasticsearch]({{< relref "./elasticsearch/" >}})
-- [Google Cloud Monitoring]({{< relref "./google-cloud-monitoring/" >}})
-- [Graphite]({{< relref "./graphite/" >}})
-- [InfluxDB]({{< relref "./influxdb/" >}})
-- [Jaeger]({{< relref "./jaeger/" >}})
-- [Loki]({{< relref "./loki/" >}})
-- [Microsoft SQL Server (MSSQL)]({{< relref "./mssql/" >}})
-- [MySQL]({{< relref "./mysql/" >}})
-- [OpenTSDB]({{< relref "./opentsdb/" >}})
-- [PostgreSQL]({{< relref "./postgres/" >}})
-- [Prometheus]({{< relref "./prometheus/" >}})
-- [Tempo]({{< relref "./tempo/" >}})
-- [Testdata]({{< relref "./testdata/" >}})
-- [Zipkin]({{< relref "./zipkin/" >}})
+- [Alertmanager]({{< relref "./alertmanager" >}})
+- [AWS CloudWatch]({{< relref "./aws-cloudwatch" >}})
+- [Azure Monitor]({{< relref "./azure-monitor" >}})
+- [Elasticsearch]({{< relref "./elasticsearch" >}})
+- [Google Cloud Monitoring]({{< relref "./google-cloud-monitoring" >}})
+- [Graphite]({{< relref "./graphite" >}})
+- [InfluxDB]({{< relref "./influxdb" >}})
+- [Jaeger]({{< relref "./jaeger" >}})
+- [Loki]({{< relref "./loki" >}})
+- [Microsoft SQL Server (MSSQL)]({{< relref "./mssql" >}})
+- [MySQL]({{< relref "./mysql" >}})
+- [OpenTSDB]({{< relref "./opentsdb" >}})
+- [PostgreSQL]({{< relref "./postgres" >}})
+- [Prometheus]({{< relref "./prometheus" >}})
+- [Tempo]({{< relref "./tempo" >}})
+- [Testdata]({{< relref "./testdata" >}})
+- [Zipkin]({{< relref "./zipkin" >}})
+
+{{% docs/reference %}}
+[alerts]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/alerting"
+[alerts]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/alerting"
+
+[build-a-plugin]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/developers/plugins"
+[build-a-plugin]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/developers/plugins"
+
+[data-source-management]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/administration/data-source-management"
+[data-source-management]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/administration/data-source-management"
+
+[explore]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/explore"
+[explore]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/explore"
+
+[organization-roles]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/administration/roles-and-permissions#organization-roles"
+[organization-roles]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/administration/roles-and-permissions#organization-roles"
+
+[panels]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations"
+[panels]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations"
+
+[query-transform-data]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/query-transform-data"
+[query-transform-data]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/query-transform-data"
+{{% /docs/reference %}}

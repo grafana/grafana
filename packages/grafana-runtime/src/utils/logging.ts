@@ -1,16 +1,14 @@
-import { faro, LogLevel } from '@grafana/faro-web-sdk';
+import { faro, LogLevel, LogContext } from '@grafana/faro-web-sdk';
 
 import { config } from '../config';
 
 export { LogLevel };
 
-type Contexts = Record<string, Record<string, number | string | Record<string, string | number>>>;
-
 /**
  * Log a message at INFO level
  * @public
  */
-export function logInfo(message: string, contexts?: Contexts) {
+export function logInfo(message: string, contexts?: LogContext) {
   if (config.grafanaJavascriptAgent.enabled) {
     faro.api.pushLog([message], {
       level: LogLevel.INFO,
@@ -24,7 +22,7 @@ export function logInfo(message: string, contexts?: Contexts) {
  *
  * @public
  */
-export function logWarning(message: string, contexts?: Contexts) {
+export function logWarning(message: string, contexts?: LogContext) {
   if (config.grafanaJavascriptAgent.enabled) {
     faro.api.pushLog([message], {
       level: LogLevel.WARN,
@@ -38,7 +36,7 @@ export function logWarning(message: string, contexts?: Contexts) {
  *
  * @public
  */
-export function logDebug(message: string, contexts?: Contexts) {
+export function logDebug(message: string, contexts?: LogContext) {
   if (config.grafanaJavascriptAgent.enabled) {
     faro.api.pushLog([message], {
       level: LogLevel.DEBUG,
@@ -52,7 +50,7 @@ export function logDebug(message: string, contexts?: Contexts) {
  *
  * @public
  */
-export function logError(err: Error, contexts?: Contexts) {
+export function logError(err: Error, contexts?: LogContext) {
   if (config.grafanaJavascriptAgent.enabled) {
     faro.api.pushError(err);
   }

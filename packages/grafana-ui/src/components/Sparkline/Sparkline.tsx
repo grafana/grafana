@@ -202,9 +202,7 @@ export class Sparkline extends PureComponent<SparklineProps, State> {
 
   render() {
     const { data, configBuilder } = this.state;
-    const { width, height, sparkline } = this.props;
-    return (
-      <UPlotChart data={data} config={configBuilder} width={width} height={height} timeRange={sparkline.timeRange!} />
-    );
+    const { width, height } = this.props;
+    return <UPlotChart data={data} config={configBuilder} width={width} height={height} />;
   }
 }

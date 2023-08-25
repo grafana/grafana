@@ -9,6 +9,11 @@ keywords:
   - guide
   - template
   - variable
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: Inspect variables
 weight: 200
 ---
@@ -17,7 +22,9 @@ weight: 200
 
 The variables page lets you easily identify whether a variable is being referenced (or used) in other variables or dashboard. In addition, you can also [add]({{< relref "./add-template-variables/" >}}) and [manage variables]({{< relref "./add-template-variables/#manage-variables" >}}) on this page.
 
-> **Note:** This feature is available in Grafana 7.4 and later versions.
+{{% admonition type="note" %}}
+This feature is available in Grafana 7.4 and later versions.
+{{% /admonition %}}
 
 ![Variables list](/static/img/docs/variables-templates/variables-list-7-4.png)
 

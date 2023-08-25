@@ -7,6 +7,9 @@ on:
     paths:
       - '**/*.go'
 
+permissions:
+  security-events: write
+
 jobs:
   analyze:
     name: Analyze
@@ -21,9 +24,9 @@ jobs:
         fetch-depth: 2
 
     - name: Set go version
-      uses: actions/setup-go@v3
+      uses: actions/setup-go@v4
       with:
-        go-version: '1.20.4'
+        go-version: '1.20.6'
 
     # Initializes the CodeQL tools for scanning.
     - name: Initialize CodeQL

@@ -1,7 +1,7 @@
 import { css, CSSObject, cx } from '@emotion/css';
 import React, { AnchorHTMLAttributes, ButtonHTMLAttributes } from 'react';
 
-import { colorManipulator, GrafanaTheme2, ThemeRichColor } from '@grafana/data';
+import { GrafanaTheme2, ThemeRichColor } from '@grafana/data';
 
 import { useTheme2 } from '../../themes';
 import { getFocusStyles, getMouseFocusStyles } from '../../themes/mixins';
@@ -191,11 +191,11 @@ export const getButtonStyles = (props: StyleProps) => {
       '&[disabled]': disabledStyles,
     }),
     disabled: css(disabledStyles),
-    img: css`
-      width: 16px;
-      height: 16px;
-      margin: ${theme.spacing(0, 1, 0, 0.5)};
-    `,
+    img: css({
+      width: '16px',
+      height: '16px',
+      margin: theme.spacing(0, 1, 0, 0.5),
+    }),
     icon: iconOnly
       ? css({
           // Important not to set margin bottom here as it would override internal icon bottom margin
@@ -205,29 +205,42 @@ export const getButtonStyles = (props: StyleProps) => {
       : css({
           marginRight: theme.spacing(padding / 2),
         }),
-    content: css`
-      display: flex;
-      flex-direction: row;
-      align-items: center;
-      white-space: nowrap;
-      height: 100%;
-    `,
+    content: css({
+      display: 'flex',
+      flexDirection: 'row',
+      alignItems: 'center',
+      whiteSpace: 'nowrap',
+      overflow: 'hidden',
+      height: '100%',
+    }),
   };
 };
 
 function getButtonVariantStyles(theme: GrafanaTheme2, color: ThemeRichColor, fill: ButtonFill): CSSObject {
+  let outlineBorderColor = color.border;
+  let borderColor = 'transparent';
+  let hoverBorderColor = 'transparent';
+
+  // Secondary button has some special rules as we lack theem color token to
+  // specify border color for normal button vs border color for outline button
+  if (color.name === 'secondary') {
+    borderColor = color.border;
+    hoverBorderColor = theme.colors.emphasize(color.border, 0.25);
+    outlineBorderColor = theme.colors.border.strong;
+  }
+
   if (fill === 'outline') {
     return {
       background: 'transparent',
       color: color.text,
-      border: `1px solid ${color.border}`,
+      border: `1px solid ${outlineBorderColor}`,
       transition: theme.transitions.create(['background-color', 'border-color', 'color'], {
         duration: theme.transitions.duration.short,
       }),
 
       '&:hover': {
-        background: colorManipulator.alpha(color.main, theme.colors.action.hoverOpacity),
-        borderColor: theme.colors.emphasize(color.border, 0.25),
+        background: color.transparent,
+        borderColor: theme.colors.emphasize(outlineBorderColor, 0.25),
         color: color.text,
       },
     };
@@ -248,7 +261,7 @@ function getButtonVariantStyles(theme: GrafanaTheme2, color: ThemeRichColor, fil
       },
 
       '&:hover': {
-        background: colorManipulator.alpha(color.shade, theme.colors.action.hoverOpacity),
+        background: color.transparent,
         textDecoration: 'none',
       },
     };
@@ -257,7 +270,7 @@ function getButtonVariantStyles(theme: GrafanaTheme2, color: ThemeRichColor, fil
   return {
     background: color.main,
     color: color.contrastText,
-    border: `1px solid transparent`,
+    border: `1px solid ${borderColor}`,
     transition: theme.transitions.create(['background-color', 'box-shadow', 'border-color', 'color'], {
       duration: theme.transitions.duration.short,
     }),
@@ -266,6 +279,7 @@ function getButtonVariantStyles(theme: GrafanaTheme2, color: ThemeRichColor, fil
       background: color.shade,
       color: color.contrastText,
       boxShadow: theme.shadows.z1,
+      borderColor: hoverBorderColor,
     },
   };
 }
@@ -290,7 +304,7 @@ function getPropertiesForDisabled(theme: GrafanaTheme2, variant: ButtonVariant, 
     return {
       ...disabledStyles,
       background: 'transparent',
-      border: `1px solid ${theme.colors.action.disabledText}`,
+      border: `1px solid ${theme.colors.border.weak}`,
     };
   }
 
@@ -304,6 +318,7 @@ function getPropertiesForDisabled(theme: GrafanaTheme2, variant: ButtonVariant, 
 export function getPropertiesForVariant(theme: GrafanaTheme2, variant: ButtonVariant, fill: ButtonFill) {
   switch (variant) {
     case 'secondary':
+      // The seconday button has some special handling as it's outline border is it's default color border
       return getButtonVariantStyles(theme, theme.colors.secondary, fill);
 
     case 'destructive':
@@ -319,25 +334,25 @@ export function getPropertiesForVariant(theme: GrafanaTheme2, variant: ButtonVar
 }
 
 export const clearButtonStyles = (theme: GrafanaTheme2) => {
-  return css`
-    background: transparent;
-    color: ${theme.colors.text.primary};
-    border: none;
-    padding: 0;
-  `;
+  return css({
+    background: 'transparent',
+    color: theme.colors.text.primary,
+    border: 'none',
+    padding: 0,
+  });
 };
 
 export const clearLinkButtonStyles = (theme: GrafanaTheme2) => {
-  return css`
-    background: transparent;
-    border: none;
-    padding: 0;
-    font-family: inherit;
-    color: inherit;
-    height: 100%;
-    &:hover {
-      background: transparent;
-      color: inherit;
-    }
-  `;
+  return css({
+    background: 'transparent',
+    border: 'none',
+    padding: 0,
+    fontFamily: 'inherit',
+    color: 'inherit',
+    height: '100%',
+    '&:hover': {
+      background: 'transparent',
+      color: 'inherit',
+    },
+  });
 };

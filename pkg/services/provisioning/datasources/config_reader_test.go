@@ -2,7 +2,6 @@ package datasources
 
 import (
 	"context"
-	"os"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -29,7 +28,8 @@ var (
 	withoutDefaults                 = "testdata/appliedDefaults"
 	invalidAccess                   = "testdata/invalid-access"
 
-	oneDatasourceWithTwoCorrelations = "testdata/one-datasource-two-correlations"
+	oneDatasourceWithTwoCorrelations   = "testdata/one-datasource-two-correlations"
+	correlationsDifferentOrganizations = "testdata/correlations-different-organizations"
 )
 
 func TestDatasourceAsConfig(t *testing.T) {
@@ -192,10 +192,9 @@ func TestDatasourceAsConfig(t *testing.T) {
 	})
 
 	t.Run("can read all properties from version 1", func(t *testing.T) {
-		_ = os.Setenv("TEST_VAR", "name")
+		t.Setenv("TEST_VAR", "name")
 		cfgProvider := &configReader{log: log.New("test logger"), orgService: &orgtest.FakeOrgService{}}
 		cfg, err := cfgProvider.readConfig(context.Background(), allProperties)
-		_ = os.Unsetenv("TEST_VAR")
 		if err != nil {
 			t.Fatalf("readConfig return an error %v", err)
 		}
@@ -283,6 +282,26 @@ func TestDatasourceAsConfig(t *testing.T) {
 			require.Equal(t, 0, len(correlationsStore.created))
 			require.Equal(t, 1, len(correlationsStore.deletedBySourceUID))
 			require.Equal(t, 1, len(correlationsStore.deletedByTargetUID))
+		})
+
+		t.Run("Using correct organization id", func(t *testing.T) {
+			store := &spyStore{items: []*datasources.DataSource{{Name: "Foo", OrgID: 2, ID: 1}}}
+			orgFake := &orgtest.FakeOrgService{}
+			correlationsStore := &mockCorrelationsStore{}
+			dc := newDatasourceProvisioner(logger, store, correlationsStore, orgFake)
+			err := dc.applyChanges(context.Background(), correlationsDifferentOrganizations)
+			if err != nil {
+				t.Fatalf("applyChanges return an error %v", err)
+			}
+
+			require.Equal(t, 2, len(correlationsStore.created))
+			// triggered twice - clean up on delete + update (because of the store setup above)
+			require.Equal(t, 2, len(correlationsStore.deletedBySourceUID))
+			require.Equal(t, int64(2), correlationsStore.deletedBySourceUID[0].OrgId)
+			require.Equal(t, int64(2), correlationsStore.deletedBySourceUID[1].OrgId)
+			// triggered once - just the  clean up
+			require.Equal(t, 1, len(correlationsStore.deletedByTargetUID))
+			require.Equal(t, int64(2), correlationsStore.deletedByTargetUID[0].OrgId)
 		})
 	})
 }

@@ -3,17 +3,16 @@ aliases:
   - dashboards/configure-panels-visualizations/
   - features/panels/panels/
   - panels/
-cascade:
-  labels:
-    products:
-      - cloud
-      - enterprise
-      - oss
 keywords:
   - grafana
   - configure
   - panels
   - visualizations
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 menuTitle: Panels and visualizations
 title: Panels and visualizations
 weight: 80

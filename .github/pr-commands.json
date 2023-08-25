@@ -89,7 +89,7 @@
   },
   {
     "type": "changedfiles",
-    "matches": [ "public/app/plugins/datasource/cloud-monitoring/**/*", "pkg/tsdb/cloudmonitoring/**/*"],
+    "matches": [ "public/app/plugins/datasource/cloud-monitoring/**/*", "pkg/tsdb/cloud-monitoring/**/*"],
     "action": "updateLabel",
     "addLabel": "datasource/GoogleCloudMonitoring"
   },
@@ -187,7 +187,7 @@
     "type": "author",
     "name": "pr/external",
     "notMemberOf": { "org": "grafana" },
-    "ignoreList": ["renovate[bot]","dependabot[bot]"],
+    "ignoreList": ["renovate[bot]","dependabot[bot]","grafana-delivery-bot[bot]","grafanabot"],
     "action": "updateLabel",
     "addLabel": "pr/external"
   },
@@ -197,6 +197,258 @@
     "action":"addToProject",
     "addToProject":{
       "url":"https://github.com/orgs/grafana/projects/69"
+    }
+  },
+  {
+    "type": "changedfiles",
+    "matches": ["public/app/plugins/panel/candlestick/**/*"],
+    "action": "updateLabel",
+    "addLabel": "area/panel/candlestick"
+  },
+  {
+    "type": "label",
+    "name": "area/panel/candlestick",
+    "action": "addToProject",
+    "addToProject": {
+      "url": "https://github.com/orgs/grafana/projects/56"
+    }
+  },
+  {
+    "type": "changedfiles",
+    "matches": ["public/app/plugins/panel/canvas/**/*", "/public/app/features/canvas/**/*"],
+    "action": "updateLabel",
+    "addLabel": "area/panel/canvas"
+  },
+  {
+    "type": "label",
+    "name": "area/panel/canvas",
+    "action": "addToProject",
+    "addToProject": {
+      "url": "https://github.com/orgs/grafana/projects/56"
+    }
+  },
+  {
+    "type": "changedfiles",
+    "matches": ["public/app/plugins/panel/barchart/**/*"],
+    "action": "updateLabel",
+    "addLabel": "area/panel/barchart"
+  },
+  {
+    "type": "label",
+    "name": "area/panel/barchart",
+    "action": "addToProject",
+    "addToProject": {
+      "url": "https://github.com/orgs/grafana/projects/56"
+    }
+  },
+  {
+    "type": "changedfiles",
+    "matches": ["public/app/plugins/panel/geomap/**/*", "/public/app/features/geo/**/*"],
+    "action": "updateLabel",
+    "addLabel": "area/panel/geomap"
+  },
+  {
+    "type": "label",
+    "name": "area/panel/geomap",
+    "action": "addToProject",
+    "addToProject": {
+      "url": "https://github.com/orgs/grafana/projects/56"
+    }
+  },
+  {
+    "type": "changedfiles",
+    "matches": ["public/app/plugins/panel/graph/**/*", "/packages/grafana-ui/src/components/Graph/**/*", "/packages/grafana-ui/src/components/GraphNG/**/*"],
+    "action": "updateLabel",
+    "addLabel": "area/panel/graph"
+  },
+  {
+    "type": "label",
+    "name": "area/panel/graph",
+    "action": "addToProject",
+    "addToProject": {
+      "url": "https://github.com/orgs/grafana/projects/56"
+    }
+  },
+  {
+    "type": "changedfiles",
+    "matches": ["public/app/plugins/panel/heatmap/**/*"],
+    "action": "updateLabel",
+    "addLabel": "area/panel/heatmap"
+  },
+  {
+    "type": "label",
+    "name": "area/panel/heatmap",
+    "action": "addToProject",
+    "addToProject": {
+      "url": "https://github.com/orgs/grafana/projects/56"
+    }
+  },
+  {
+    "type": "changedfiles",
+    "matches": ["public/app/plugins/panel/histogram/**/*"],
+    "action": "updateLabel",
+    "addLabel": "area/panel/histogram"
+  },
+  {
+    "type": "label",
+    "name": "area/panel/histogram",
+    "action": "addToProject",
+    "addToProject": {
+      "url": "https://github.com/orgs/grafana/projects/56"
+    }
+  },
+  {
+    "type": "changedfiles",
+    "matches": ["public/app/plugins/panel/state-timeline/**/*"],
+    "action": "updateLabel",
+    "addLabel": "area/panel/state-timeline"
+  },
+  {
+    "type": "label",
+    "name": "area/panel/state-timeline",
+    "action": "addToProject",
+    "addToProject": {
+      "url": "https://github.com/orgs/grafana/projects/56"
+    }
+  },
+  {
+    "type": "changedfiles",
+    "matches": ["public/app/plugins/panel/status-history/**/*"],
+    "action": "updateLabel",
+    "addLabel": "area/panel/status-history"
+  },
+  {
+    "type": "label",
+    "name": "area/panel/status-history",
+    "action": "addToProject",
+    "addToProject": {
+      "url": "https://github.com/orgs/grafana/projects/56"
+    }
+  },
+  {
+    "type": "changedfiles",
+    "matches": ["public/app/plugins/panel/timeseries/**/*", "/packages/grafana-ui/src/components/TimeSeries/**/*"],
+    "action": "updateLabel",
+    "addLabel": "area/panel/timeseries"
+  },
+  {
+    "type": "label",
+    "name": "area/panel/timeseries",
+    "action": "addToProject",
+    "addToProject": {
+      "url": "https://github.com/orgs/grafana/projects/56"
+    }
+  },
+  {
+    "type": "changedfiles",
+    "matches": ["public/app/plugins/panel/xychart/**/*"],
+    "action": "updateLabel",
+    "addLabel": "area/panel/xychart"
+  },
+  {
+    "type": "label",
+    "name": "area/panel/xychart",
+    "action": "addToProject",
+    "addToProject": {
+      "url": "https://github.com/orgs/grafana/projects/56"
+    }
+  },
+  {
+    "type": "changedfiles",
+    "matches": ["public/app/plugins/panel/trend/**/*"],
+    "action": "updateLabel",
+    "addLabel": "area/panel/trend"
+  },
+  {
+    "type": "label",
+    "name": "area/panel/trend",
+    "action": "addToProject",
+    "addToProject": {
+      "url": "https://github.com/orgs/grafana/projects/56"
+    }
+  },
+  {
+    "type": "changedfiles",
+    "matches": ["/packages/grafana-ui/src/components/VizLegend/**/*"],
+    "action": "updateLabel",
+    "addLabel": "area/legend"
+  },
+  {
+    "type": "label",
+    "name": "area/legend",
+    "action": "addToProject",
+    "addToProject": {
+      "url": "https://github.com/orgs/grafana/projects/56"
+    }
+  },
+  {
+    "type": "changedfiles",
+    "matches": ["/packages/grafana-ui/src/components/VizTooltip/**/*", "public/app/feature/visualization/data-hover/**/*" ],
+    "action": "updateLabel",
+    "addLabel": "area/tooltip"
+  },
+  {
+    "type": "label",
+    "name": "area/tooltip",
+    "action": "addToProject",
+    "addToProject": {
+      "url": "https://github.com/orgs/grafana/projects/56"
+    }
+  },
+  {
+    "type": "changedfiles",
+    "matches": ["public/app/plugins/panel/gauge/**/*", "/packages/grafana-ui/src/components/Gauge/**/*"],
+    "action": "updateLabel",
+    "addLabel": "area/panel/gauge"
+  },
+  {
+    "type": "label",
+    "name": "area/panel/gauge",
+    "action": "addToProject",
+    "addToProject": {
+      "url": "https://github.com/orgs/grafana/projects/56"
+    }
+  },
+  {
+    "type": "changedfiles",
+    "matches": ["public/app/plugins/panel/bargauge/**/*", "/packages/grafana-ui/src/components/BarGauge/**/*"],
+    "action": "updateLabel",
+    "addLabel": "area/panel/gauge"
+  },
+  {
+    "type": "label",
+    "name": "area/panel/bargauge",
+    "action": "addToProject",
+    "addToProject": {
+      "url": "https://github.com/orgs/grafana/projects/56"
+    }
+  },
+  {
+    "type": "changedfiles",
+    "matches": ["public/app/plugins/panel/stat/**/*"],
+    "action": "updateLabel",
+    "addLabel": "area/panel/stat"
+  },
+  {
+    "type": "label",
+    "name": "area/panel/stat",
+    "action": "addToProject",
+    "addToProject": {
+      "url": "https://github.com/orgs/grafana/projects/56"
+    }
+  },
+  {
+    "type": "changedfiles",
+    "matches": ["public/app/plugins/panel/piechart/**/*"],
+    "action": "updateLabel",
+    "addLabel": "area/panel/piechart"
+  },
+  {
+    "type": "label",
+    "name": "area/panel/piechart",
+    "action": "addToProject",
+    "addToProject": {
+      "url": "https://github.com/orgs/grafana/projects/56"
     }
   }
 ]

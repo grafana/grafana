@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"strings"
-	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 
@@ -403,49 +402,6 @@ func (dr *DashboardServiceImpl) GetDashboardByPublicUid(ctx context.Context, das
 	return nil, nil
 }
 
-func (dr *DashboardServiceImpl) MakeUserAdmin(ctx context.Context, orgID int64, userID int64, dashboardID int64, setViewAndEditPermissions bool) error {
-	rtEditor := org.RoleEditor
-	rtViewer := org.RoleViewer
-
-	items := []*dashboards.DashboardACL{
-		{
-			OrgID:       orgID,
-			DashboardID: dashboardID,
-			UserID:      userID,
-			Permission:  dashboards.PERMISSION_ADMIN,
-			Created:     time.Now(),
-			Updated:     time.Now(),
-		},
-	}
-
-	if setViewAndEditPermissions {
-		items = append(items,
-			&dashboards.DashboardACL{
-				OrgID:       orgID,
-				DashboardID: dashboardID,
-				Role:        &rtEditor,
-				Permission:  dashboards.PERMISSION_EDIT,
-				Created:     time.Now(),
-				Updated:     time.Now(),
-			},
-			&dashboards.DashboardACL{
-				OrgID:       orgID,
-				DashboardID: dashboardID,
-				Role:        &rtViewer,
-				Permission:  dashboards.PERMISSION_VIEW,
-				Created:     time.Now(),
-				Updated:     time.Now(),
-			},
-		)
-	}
-
-	if err := dr.dashboardStore.UpdateDashboardACL(ctx, dashboardID, items); err != nil {
-		return err
-	}
-
-	return nil
-}
-
 // DeleteProvisionedDashboard removes dashboard from the DB even if it is provisioned.
 func (dr *DashboardServiceImpl) DeleteProvisionedDashboard(ctx context.Context, dashboardId int64, orgId int64) error {
 	return dr.deleteDashboard(ctx, dashboardId, orgId, false)
@@ -504,34 +460,29 @@ func (dr *DashboardServiceImpl) GetDashboardsByPluginID(ctx context.Context, que
 
 func (dr *DashboardServiceImpl) setDefaultPermissions(ctx context.Context, dto *dashboards.SaveDashboardDTO, dash *dashboards.Dashboard, provisioned bool) error {
 	inFolder := dash.FolderID > 0
-	if !accesscontrol.IsDisabled(dr.cfg) {
-		var permissions []accesscontrol.SetResourcePermissionCommand
-		if !provisioned && dto.User.IsRealUser() && !dto.User.IsAnonymous {
-			permissions = append(permissions, accesscontrol.SetResourcePermissionCommand{
-				UserID: dto.User.UserID, Permission: dashboards.PERMISSION_ADMIN.String(),
-			})
-		}
+	var permissions []accesscontrol.SetResourcePermissionCommand
 
-		if !inFolder {
-			permissions = append(permissions, []accesscontrol.SetResourcePermissionCommand{
-				{BuiltinRole: string(org.RoleEditor), Permission: dashboards.PERMISSION_EDIT.String()},
-				{BuiltinRole: string(org.RoleViewer), Permission: dashboards.PERMISSION_VIEW.String()},
-			}...)
-		}
+	if !provisioned && dto.User.IsRealUser() && !dto.User.IsAnonymous {
+		permissions = append(permissions, accesscontrol.SetResourcePermissionCommand{
+			UserID: dto.User.UserID, Permission: dashboards.PERMISSION_ADMIN.String(),
+		})
+	}
 
-		svc := dr.dashboardPermissions
-		if dash.IsFolder {
-			svc = dr.folderPermissions
-		}
+	if !inFolder {
+		permissions = append(permissions, []accesscontrol.SetResourcePermissionCommand{
+			{BuiltinRole: string(org.RoleEditor), Permission: dashboards.PERMISSION_EDIT.String()},
+			{BuiltinRole: string(org.RoleViewer), Permission: dashboards.PERMISSION_VIEW.String()},
+		}...)
+	}
 
-		_, err := svc.SetPermissions(ctx, dto.OrgID, dash.UID, permissions...)
-		if err != nil {
-			return err
-		}
-	} else if dr.cfg.EditorsCanAdmin && !provisioned && dto.User.IsRealUser() && !dto.User.IsAnonymous {
-		if err := dr.MakeUserAdmin(ctx, dto.OrgID, dto.User.UserID, dash.ID, !inFolder); err != nil {
-			return err
-		}
+	svc := dr.dashboardPermissions
+	if dash.IsFolder {
+		svc = dr.folderPermissions
+	}
+
+	_, err := svc.SetPermissions(ctx, dto.OrgID, dash.UID, permissions...)
+	if err != nil {
+		return err
 	}
 
 	return nil
@@ -618,14 +569,6 @@ func (dr *DashboardServiceImpl) GetDashboardACLInfoList(ctx context.Context, que
 	return dr.dashboardStore.GetDashboardACLInfoList(ctx, query)
 }
 
-func (dr *DashboardServiceImpl) HasAdminPermissionInDashboardsOrFolders(ctx context.Context, query *folder.HasAdminPermissionInDashboardsOrFoldersQuery) (bool, error) {
-	return dr.dashboardStore.HasAdminPermissionInDashboardsOrFolders(ctx, query)
-}
-
-func (dr *DashboardServiceImpl) HasEditPermissionInFolders(ctx context.Context, query *folder.HasEditPermissionInFoldersQuery) (bool, error) {
-	return dr.dashboardStore.HasEditPermissionInFolders(ctx, query)
-}
-
 func (dr *DashboardServiceImpl) GetDashboardTags(ctx context.Context, query *dashboards.GetDashboardTagsQuery) ([]*dashboards.DashboardTagCloudItem, error) {
 	return dr.dashboardStore.GetDashboardTags(ctx, query)
 }
@@ -634,8 +577,8 @@ func (dr *DashboardServiceImpl) DeleteACLByUser(ctx context.Context, userID int6
 	return dr.dashboardStore.DeleteACLByUser(ctx, userID)
 }
 
-func (dr DashboardServiceImpl) CountInFolder(ctx context.Context, orgID int64, uid string, u *user.SignedInUser) (int64, error) {
-	folder, err := dr.folderService.Get(ctx, &folder.GetFolderQuery{UID: &uid, OrgID: orgID, SignedInUser: u})
+func (dr DashboardServiceImpl) CountInFolder(ctx context.Context, orgID int64, folderUID string, u *user.SignedInUser) (int64, error) {
+	folder, err := dr.folderService.Get(ctx, &folder.GetFolderQuery{UID: &folderUID, OrgID: orgID, SignedInUser: u})
 	if err != nil {
 		return 0, err
 	}
@@ -643,8 +586,8 @@ func (dr DashboardServiceImpl) CountInFolder(ctx context.Context, orgID int64, u
 	return dr.dashboardStore.CountDashboardsInFolder(ctx, &dashboards.CountDashboardsInFolderRequest{FolderID: folder.ID, OrgID: orgID})
 }
 
-func (dr *DashboardServiceImpl) DeleteInFolder(ctx context.Context, orgID int64, UID string) error {
-	return dr.dashboardStore.DeleteDashboardsInFolder(ctx, &dashboards.DeleteDashboardsInFolderRequest{FolderUID: UID, OrgID: orgID})
+func (dr *DashboardServiceImpl) DeleteInFolder(ctx context.Context, orgID int64, folderUID string, u *user.SignedInUser) error {
+	return dr.dashboardStore.DeleteDashboardsInFolder(ctx, &dashboards.DeleteDashboardsInFolderRequest{FolderUID: folderUID, OrgID: orgID})
 }
 
 func (dr *DashboardServiceImpl) Kind() string { return entity.StandardKindDashboard }

@@ -1,9 +1,8 @@
 import React from 'react';
 
-import { Alert } from '@grafana/ui';
+import { Alert, Button } from '@grafana/ui';
 
 import { useDispatch } from '../../../hooks/useStatelessReducer';
-import { IconButton } from '../../IconButton';
 import { useQuery } from '../ElasticsearchQueryContext';
 import { QueryEditorRow } from '../QueryEditorRow';
 import { QueryEditorSpecialMetricRow } from '../QueryEditorSpecialMetricRow';
@@ -49,7 +48,14 @@ export const MetricAggregationsEditor = ({ nextId }: Props) => {
                 <MetricEditor value={metric} />
 
                 {metricAggregationConfig[metric.type].impliedQueryType === 'metrics' && index === 0 && (
-                  <IconButton iconName="plus" onClick={() => dispatch(addMetric(nextId))} label="add" />
+                  <Button
+                    variant="secondary"
+                    fill="text"
+                    icon="plus"
+                    onClick={() => dispatch(addMetric(nextId))}
+                    tooltip="Add metric"
+                    aria-label="Add metric"
+                  />
                 )}
               </QueryEditorRow>
             );

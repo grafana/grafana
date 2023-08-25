@@ -55,7 +55,7 @@ export const TopSearchBar = React.memo(function TopSearchBar() {
             <ToolbarButton iconOnly icon="question-circle" aria-label="Help" />
           </Dropdown>
         )}
-        <NewsContainer className={styles.newsButton} />
+        {config.newsFeedEnabled && <NewsContainer />}
         {!contextSrv.user.isSignedIn && <SignInLink />}
         {profileNode && (
           <Dropdown overlay={() => <TopNavBarMenu node={profileNode} />} placement="bottom-end">
@@ -99,15 +99,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
   profileButton: css({
     padding: theme.spacing(0, 0.25),
     img: {
-      borderRadius: '50%',
+      borderRadius: theme.shape.radius.circle,
       height: '24px',
       marginRight: 0,
       width: '24px',
-    },
-  }),
-  newsButton: css({
-    [theme.breakpoints.down('sm')]: {
-      display: 'none',
     },
   }),
 });

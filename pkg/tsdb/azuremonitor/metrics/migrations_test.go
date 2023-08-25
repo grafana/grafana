@@ -5,8 +5,7 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
-	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
+	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/kinds/dataquery"
 )
 
 func TestDimensionFiltersMigration(t *testing.T) {
@@ -15,38 +14,38 @@ func TestDimensionFiltersMigration(t *testing.T) {
 	additionalTestFilter := "testFilter2"
 	tests := []struct {
 		name                     string
-		dimensionFilters         []types.AzureMonitorDimensionFilter
-		expectedDimensionFilters []types.AzureMonitorDimensionFilter
+		dimensionFilters         []dataquery.AzureMetricDimension
+		expectedDimensionFilters []dataquery.AzureMetricDimension
 	}{
 		{
 			name:                     "will return new format unchanged",
-			dimensionFilters:         []types.AzureMonitorDimensionFilter{{Dimension: "testDimension", Operator: "eq", Filters: []string{"testFilter"}}},
-			expectedDimensionFilters: []types.AzureMonitorDimensionFilter{{Dimension: "testDimension", Operator: "eq", Filters: []string{"testFilter"}}},
+			dimensionFilters:         []dataquery.AzureMetricDimension{{Dimension: strPtr("testDimension"), Operator: strPtr("eq"), Filters: []string{"testFilter"}}},
+			expectedDimensionFilters: []dataquery.AzureMetricDimension{{Dimension: strPtr("testDimension"), Operator: strPtr("eq"), Filters: []string{"testFilter"}}},
 		},
 		{
 			name:                     "correctly updates old format with wildcard",
-			dimensionFilters:         []types.AzureMonitorDimensionFilter{{Dimension: "testDimension", Operator: "eq", Filter: &wildcard}},
-			expectedDimensionFilters: []types.AzureMonitorDimensionFilter{{Dimension: "testDimension", Operator: "eq"}},
+			dimensionFilters:         []dataquery.AzureMetricDimension{{Dimension: strPtr("testDimension"), Operator: strPtr("eq"), Filter: &wildcard}},
+			expectedDimensionFilters: []dataquery.AzureMetricDimension{{Dimension: strPtr("testDimension"), Operator: strPtr("eq")}},
 		},
 		{
 			name:                     "correctly updates old format with a value",
-			dimensionFilters:         []types.AzureMonitorDimensionFilter{{Dimension: "testDimension", Operator: "eq", Filter: &testFilter}},
-			expectedDimensionFilters: []types.AzureMonitorDimensionFilter{{Dimension: "testDimension", Operator: "eq", Filters: []string{testFilter}}},
+			dimensionFilters:         []dataquery.AzureMetricDimension{{Dimension: strPtr("testDimension"), Operator: strPtr("eq"), Filter: &testFilter}},
+			expectedDimensionFilters: []dataquery.AzureMetricDimension{{Dimension: strPtr("testDimension"), Operator: strPtr("eq"), Filters: []string{testFilter}}},
 		},
 		{
 			name:                     "correctly ignores wildcard if filters has a value",
-			dimensionFilters:         []types.AzureMonitorDimensionFilter{{Dimension: "testDimension", Operator: "eq", Filter: &wildcard, Filters: []string{testFilter}}},
-			expectedDimensionFilters: []types.AzureMonitorDimensionFilter{{Dimension: "testDimension", Operator: "eq", Filters: []string{testFilter}}},
+			dimensionFilters:         []dataquery.AzureMetricDimension{{Dimension: strPtr("testDimension"), Operator: strPtr("eq"), Filter: &wildcard, Filters: []string{testFilter}}},
+			expectedDimensionFilters: []dataquery.AzureMetricDimension{{Dimension: strPtr("testDimension"), Operator: strPtr("eq"), Filters: []string{testFilter}}},
 		},
 		{
 			name:                     "correctly merges values if filters has a value (ignores duplicates)",
-			dimensionFilters:         []types.AzureMonitorDimensionFilter{{Dimension: "testDimension", Operator: "eq", Filter: &testFilter, Filters: []string{testFilter}}},
-			expectedDimensionFilters: []types.AzureMonitorDimensionFilter{{Dimension: "testDimension", Operator: "eq", Filters: []string{testFilter}}},
+			dimensionFilters:         []dataquery.AzureMetricDimension{{Dimension: strPtr("testDimension"), Operator: strPtr("eq"), Filter: &testFilter, Filters: []string{testFilter}}},
+			expectedDimensionFilters: []dataquery.AzureMetricDimension{{Dimension: strPtr("testDimension"), Operator: strPtr("eq"), Filters: []string{testFilter}}},
 		},
 		{
 			name:                     "correctly merges values if filters has a value",
-			dimensionFilters:         []types.AzureMonitorDimensionFilter{{Dimension: "testDimension", Operator: "eq", Filter: &additionalTestFilter, Filters: []string{testFilter}}},
-			expectedDimensionFilters: []types.AzureMonitorDimensionFilter{{Dimension: "testDimension", Operator: "eq", Filters: []string{testFilter, additionalTestFilter}}},
+			dimensionFilters:         []dataquery.AzureMetricDimension{{Dimension: strPtr("testDimension"), Operator: strPtr("eq"), Filter: &additionalTestFilter, Filters: []string{testFilter}}},
+			expectedDimensionFilters: []dataquery.AzureMetricDimension{{Dimension: strPtr("testDimension"), Operator: strPtr("eq"), Filters: []string{testFilter, additionalTestFilter}}},
 		},
 	}
 
@@ -54,7 +53,7 @@ func TestDimensionFiltersMigration(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			filters := MigrateDimensionFilters(tt.dimensionFilters)
 
-			if diff := cmp.Diff(tt.expectedDimensionFilters, filters, cmpopts.IgnoreUnexported(simplejson.Json{})); diff != "" {
+			if diff := cmp.Diff(tt.expectedDimensionFilters, filters, cmpopts.IgnoreUnexported(struct{}{})); diff != "" {
 				t.Errorf("Result mismatch (-want +got):\n%s", diff)
 			}
 		})

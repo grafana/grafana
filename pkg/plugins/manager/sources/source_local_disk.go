@@ -28,9 +28,9 @@ func (s *LocalSource) PluginURIs(_ context.Context) []string {
 
 func (s *LocalSource) DefaultSignature(_ context.Context) (plugins.Signature, bool) {
 	switch s.class {
-	case plugins.Core:
+	case plugins.ClassCore:
 		return plugins.Signature{
-			Status: plugins.SignatureInternal,
+			Status: plugins.SignatureStatusInternal,
 		}, true
 	default:
 		return plugins.Signature{}, false

@@ -13,6 +13,7 @@ import {
   dateTime,
   FieldType,
   SupplementaryQueryType,
+  ToggleFilterAction,
 } from '@grafana/data';
 import {
   BackendSrv,
@@ -718,6 +719,178 @@ describe('LokiDatasource', () => {
     });
   });
 
+  describe('toggleQueryFilter', () => {
+    describe('when called with FILTER', () => {
+      let ds: LokiDatasource;
+      beforeEach(() => {
+        ds = createLokiDatasource(templateSrvStub);
+      });
+
+      describe('and query has no parser', () => {
+        it('then the correct label should be added for logs query', () => {
+          const query: LokiQuery = { refId: 'A', expr: '{bar="baz"}' };
+          const action: ToggleFilterAction = { options: { key: 'job', value: 'grafana' }, type: 'FILTER_FOR' };
+          const result = ds.toggleQueryFilter(query, action);
+
+          expect(result.refId).toEqual('A');
+          expect(result.expr).toEqual('{bar="baz", job="grafana"}');
+        });
+
+        it('then the correctly escaped label should be added for logs query', () => {
+          const query: LokiQuery = { refId: 'A', expr: '{bar="baz"}' };
+          const action: ToggleFilterAction = { options: { key: 'job', value: '\\test' }, type: 'FILTER_FOR' };
+          const result = ds.toggleQueryFilter(query, action);
+
+          expect(result.refId).toEqual('A');
+          expect(result.expr).toEqual('{bar="baz", job="\\\\test"}');
+        });
+
+        it('then the correct label should be added for metrics query', () => {
+          const query: LokiQuery = { refId: 'A', expr: 'rate({bar="baz"}[5m])' };
+          const action: ToggleFilterAction = { options: { key: 'job', value: 'grafana' }, type: 'FILTER_FOR' };
+          const result = ds.toggleQueryFilter(query, action);
+
+          expect(result.refId).toEqual('A');
+          expect(result.expr).toEqual('rate({bar="baz", job="grafana"}[5m])');
+        });
+
+        describe('and the filter is already present', () => {
+          it('then it should remove the filter', () => {
+            const query: LokiQuery = { refId: 'A', expr: '{bar="baz", job="grafana"}' };
+            const action: ToggleFilterAction = { options: { key: 'job', value: 'grafana' }, type: 'FILTER_FOR' };
+            const result = ds.toggleQueryFilter(query, action);
+
+            expect(result.refId).toEqual('A');
+            expect(result.expr).toEqual('{bar="baz"}');
+          });
+
+          it('then it should remove the filter with escaped value', () => {
+            const query: LokiQuery = { refId: 'A', expr: '{place="luna", job="\\"grafana/data\\""}' };
+            const action: ToggleFilterAction = { options: { key: 'job', value: '"grafana/data"' }, type: 'FILTER_FOR' };
+            const result = ds.toggleQueryFilter(query, action);
+
+            expect(result.refId).toEqual('A');
+            expect(result.expr).toEqual('{place="luna"}');
+          });
+        });
+      });
+
+      describe('and query has parser', () => {
+        it('then the correct label should be added for logs query', () => {
+          const query: LokiQuery = { refId: 'A', expr: '{bar="baz"} | logfmt' };
+          const action: ToggleFilterAction = { options: { key: 'job', value: 'grafana' }, type: 'FILTER_FOR' };
+          const result = ds.toggleQueryFilter(query, action);
+
+          expect(result.refId).toEqual('A');
+          expect(result.expr).toEqual('{bar="baz"} | logfmt | job=`grafana`');
+        });
+
+        it('then the correct label should be added for metrics query', () => {
+          const query: LokiQuery = { refId: 'A', expr: 'rate({bar="baz"} | logfmt [5m])' };
+          const action: ToggleFilterAction = { options: { key: 'job', value: 'grafana' }, type: 'FILTER_FOR' };
+          const result = ds.toggleQueryFilter(query, action);
+
+          expect(result.refId).toEqual('A');
+          expect(result.expr).toEqual('rate({bar="baz"} | logfmt | job=`grafana` [5m])');
+        });
+
+        describe('and the filter is already present', () => {
+          it('then it should remove the filter', () => {
+            const query: LokiQuery = { refId: 'A', expr: '{bar="baz"} | logfmt | job="grafana"' };
+            const action: ToggleFilterAction = { options: { key: 'job', value: 'grafana' }, type: 'FILTER_FOR' };
+            const result = ds.toggleQueryFilter(query, action);
+
+            expect(result.refId).toEqual('A');
+            expect(result.expr).toEqual('{bar="baz"} | logfmt');
+          });
+        });
+      });
+    });
+
+    describe('when called with FILTER_OUT', () => {
+      describe('and query has no parser', () => {
+        let ds: LokiDatasource;
+        beforeEach(() => {
+          ds = createLokiDatasource(templateSrvStub);
+        });
+
+        it('then the correct label should be added for logs query', () => {
+          const query: LokiQuery = { refId: 'A', expr: '{bar="baz"}' };
+          const action: ToggleFilterAction = { options: { key: 'job', value: 'grafana' }, type: 'FILTER_OUT' };
+          const result = ds.toggleQueryFilter(query, action);
+
+          expect(result.refId).toEqual('A');
+          expect(result.expr).toEqual('{bar="baz", job!="grafana"}');
+        });
+
+        it('then the correctly escaped label should be added for logs query', () => {
+          const query: LokiQuery = { refId: 'A', expr: '{bar="baz"}' };
+          const action: ToggleFilterAction = { options: { key: 'job', value: '"test' }, type: 'FILTER_OUT' };
+          const result = ds.toggleQueryFilter(query, action);
+
+          expect(result.refId).toEqual('A');
+          expect(result.expr).toEqual('{bar="baz", job!="\\"test"}');
+        });
+
+        it('then the correct label should be added for metrics query', () => {
+          const query: LokiQuery = { refId: 'A', expr: 'rate({bar="baz"}[5m])' };
+          const action: ToggleFilterAction = { options: { key: 'job', value: 'grafana' }, type: 'FILTER_OUT' };
+          const result = ds.toggleQueryFilter(query, action);
+
+          expect(result.refId).toEqual('A');
+          expect(result.expr).toEqual('rate({bar="baz", job!="grafana"}[5m])');
+        });
+
+        describe('and the opposite filter is present', () => {
+          it('then it should remove the filter', () => {
+            const query: LokiQuery = { refId: 'A', expr: '{bar="baz", job="grafana"}' };
+            const action: ToggleFilterAction = { options: { key: 'job', value: 'grafana' }, type: 'FILTER_OUT' };
+            const result = ds.toggleQueryFilter(query, action);
+
+            expect(result.refId).toEqual('A');
+            expect(result.expr).toEqual('{bar="baz", job!="grafana"}');
+          });
+        });
+      });
+
+      describe('and query has parser', () => {
+        let ds: LokiDatasource;
+        beforeEach(() => {
+          ds = createLokiDatasource(templateSrvStub);
+        });
+
+        it('then the correct label should be added for logs query', () => {
+          const query: LokiQuery = { refId: 'A', expr: '{bar="baz"} | logfmt' };
+          const action: ToggleFilterAction = { options: { key: 'job', value: 'grafana' }, type: 'FILTER_OUT' };
+          const result = ds.toggleQueryFilter(query, action);
+
+          expect(result.refId).toEqual('A');
+          expect(result.expr).toEqual('{bar="baz"} | logfmt | job!=`grafana`');
+        });
+
+        it('then the correct label should be added for metrics query', () => {
+          const query: LokiQuery = { refId: 'A', expr: 'rate({bar="baz"} | logfmt [5m])' };
+          const action: ToggleFilterAction = { options: { key: 'job', value: 'grafana' }, type: 'FILTER_OUT' };
+          const result = ds.toggleQueryFilter(query, action);
+
+          expect(result.refId).toEqual('A');
+          expect(result.expr).toEqual('rate({bar="baz"} | logfmt | job!=`grafana` [5m])');
+        });
+
+        describe('and the filter is already present', () => {
+          it('then it should remove the filter', () => {
+            const query: LokiQuery = { refId: 'A', expr: '{bar="baz"} | logfmt | job="grafana"' };
+            const action: ToggleFilterAction = { options: { key: 'job', value: 'grafana' }, type: 'FILTER_OUT' };
+            const result = ds.toggleQueryFilter(query, action);
+
+            expect(result.refId).toEqual('A');
+            expect(result.expr).toEqual('{bar="baz"} | logfmt | job!=`grafana`');
+          });
+        });
+      });
+    });
+  });
+
   describe('addAdHocFilters', () => {
     let ds: LokiDatasource;
     const createTemplateSrvMock = (options: { adHocFilters: AdHocFilter[] }) => {
@@ -920,6 +1093,24 @@ describe('LokiDatasource', () => {
     });
 
     describe('logs volume', () => {
+      // The default queryType value is Range
+      it('returns logs volume for query with no queryType', () => {
+        expect(
+          ds.getSupplementaryQuery(
+            { type: SupplementaryQueryType.LogsVolume },
+            {
+              expr: '{label=value}',
+              refId: 'A',
+            }
+          )
+        ).toEqual({
+          expr: 'sum by (level) (count_over_time({label=value}[$__auto]))',
+          queryType: LokiQueryType.Range,
+          refId: 'log-volume-A',
+          supportingQueryType: SupportingQueryType.LogsVolume,
+        });
+      });
+
       it('returns logs volume query for range log query', () => {
         expect(
           ds.getSupplementaryQuery(
@@ -931,7 +1122,7 @@ describe('LokiDatasource', () => {
             }
           )
         ).toEqual({
-          expr: 'sum by (level) (count_over_time({label=value}[$__interval]))',
+          expr: 'sum by (level) (count_over_time({label=value}[$__auto]))',
           queryType: LokiQueryType.Range,
           refId: 'log-volume-A',
           supportingQueryType: SupportingQueryType.LogsVolume,
@@ -1139,6 +1330,56 @@ describe('LokiDatasource', () => {
       });
     });
   });
+
+  describe('getQueryStats', () => {
+    let ds: LokiDatasource;
+    beforeEach(() => {
+      ds = createLokiDatasource(templateSrvStub);
+      ds.statsMetadataRequest = jest.fn().mockResolvedValue({ streams: 1, chunks: 1, bytes: 1, entries: 1 });
+      ds.interpolateString = jest.fn().mockImplementation((value: string) => value.replace('$__interval', '1m'));
+    });
+
+    it('uses statsMetadataRequest', async () => {
+      const result = await ds.getQueryStats('{foo="bar"}');
+
+      expect(ds.statsMetadataRequest).toHaveBeenCalled();
+      expect(result).toEqual({ streams: 1, chunks: 1, bytes: 1, entries: 1 });
+    });
+
+    it('supports queries with template variables', async () => {
+      const result = await ds.getQueryStats('rate({instance="server\\1"}[$__interval])');
+
+      expect(result).toEqual({
+        streams: 1,
+        chunks: 1,
+        bytes: 1,
+        entries: 1,
+      });
+    });
+
+    it('does not call stats if the query is invalid', async () => {
+      const result = await ds.getQueryStats('rate({label="value"}');
+
+      expect(ds.statsMetadataRequest).not.toHaveBeenCalled();
+      expect(result).toBe(undefined);
+    });
+
+    it('combines the stats of each label matcher', async () => {
+      const result = await ds.getQueryStats('count_over_time({foo="bar"}[1m]) + count_over_time({test="test"}[1m])');
+
+      expect(ds.statsMetadataRequest).toHaveBeenCalled();
+      expect(result).toEqual({ streams: 2, chunks: 2, bytes: 2, entries: 2 });
+    });
+  });
+
+  describe('statsMetadataRequest', () => {
+    it('throws error if url starts with /', () => {
+      const ds = createLokiDatasource();
+      expect(async () => {
+        await ds.statsMetadataRequest('/index');
+      }).rejects.toThrow('invalid metadata request url: /index');
+    });
+  });
 });
 
 describe('applyTemplateVariables', () => {
@@ -1147,6 +1388,86 @@ describe('applyTemplateVariables', () => {
     const spy = jest.spyOn(ds, 'addAdHocFilters');
     ds.applyTemplateVariables({ expr: '{test}', refId: 'A' }, {});
     expect(spy).toHaveBeenCalledWith('{test}');
+  });
+
+  describe('with template and built-in variables', () => {
+    const scopedVars = {
+      __interval: { text: '1m', value: '1m' },
+      __interval_ms: { text: '1000', value: '1000' },
+      __range: { text: '1m', value: '1m' },
+      __range_ms: { text: '1000', value: '1000' },
+      __range_s: { text: '60', value: '60' },
+      testVariable: { text: 'foo', value: 'foo' },
+    };
+
+    it('should not interpolate __interval variables', () => {
+      const templateSrvMock = {
+        getAdhocFilters: jest.fn().mockImplementation((query: string) => query),
+        replace: jest.fn((a: string, ...rest: unknown[]) => a),
+      } as unknown as TemplateSrv;
+
+      const ds = createLokiDatasource(templateSrvMock);
+      ds.addAdHocFilters = jest.fn().mockImplementation((query: string) => query);
+      ds.applyTemplateVariables(
+        { expr: 'rate({job="grafana"}[$__interval]) + rate({job="grafana"}[$__interval_ms])', refId: 'A' },
+        scopedVars
+      );
+      expect(templateSrvMock.replace).toHaveBeenCalledTimes(2);
+      // Interpolated legend
+      expect(templateSrvMock.replace).toHaveBeenCalledWith(
+        undefined,
+        expect.not.objectContaining({
+          __interval: { text: '1m', value: '1m' },
+          __interval_ms: { text: '1000', value: '1000' },
+        })
+      );
+      // Interpolated expr
+      expect(templateSrvMock.replace).toHaveBeenCalledWith(
+        'rate({job="grafana"}[$__interval]) + rate({job="grafana"}[$__interval_ms])',
+        expect.not.objectContaining({
+          __interval: { text: '1m', value: '1m' },
+          __interval_ms: { text: '1000', value: '1000' },
+        }),
+        expect.any(Function)
+      );
+    });
+
+    it('should not interpolate __range variables', () => {
+      const templateSrvMock = {
+        getAdhocFilters: jest.fn().mockImplementation((query: string) => query),
+        replace: jest.fn((a: string, ...rest: unknown[]) => a),
+      } as unknown as TemplateSrv;
+
+      const ds = createLokiDatasource(templateSrvMock);
+      ds.addAdHocFilters = jest.fn().mockImplementation((query: string) => query);
+      ds.applyTemplateVariables(
+        {
+          expr: 'rate({job="grafana"}[$__range]) + rate({job="grafana"}[$__range_ms]) + rate({job="grafana"}[$__range_s])',
+          refId: 'A',
+        },
+        scopedVars
+      );
+      expect(templateSrvMock.replace).toHaveBeenCalledTimes(2);
+      // Interpolated legend
+      expect(templateSrvMock.replace).toHaveBeenCalledWith(
+        undefined,
+        expect.not.objectContaining({
+          __range: { text: '1m', value: '1m' },
+          __range_ms: { text: '1000', value: '1000' },
+          __range_s: { text: '60', value: '60' },
+        })
+      );
+      // Interpolated expr
+      expect(templateSrvMock.replace).toHaveBeenCalledWith(
+        'rate({job="grafana"}[$__range]) + rate({job="grafana"}[$__range_ms]) + rate({job="grafana"}[$__range_s])',
+        expect.not.objectContaining({
+          __range: { text: '1m', value: '1m' },
+          __range_ms: { text: '1000', value: '1000' },
+          __range_s: { text: '60', value: '60' },
+        }),
+        expect.any(Function)
+      );
+    });
   });
 });
 
@@ -1181,6 +1502,22 @@ describe('showContextToggle()', () => {
     const ds = createLokiDatasource(templateSrvStub);
 
     expect(ds.showContextToggle()).toBe(true);
+  });
+});
+
+describe('queryHasFilter()', () => {
+  let ds: LokiDatasource;
+  beforeEach(() => {
+    ds = createLokiDatasource(templateSrvStub);
+  });
+  it('inspects queries for filter presence', () => {
+    const query = { refId: 'A', expr: '{grafana="awesome"}' };
+    expect(
+      ds.queryHasFilter(query, {
+        key: 'grafana',
+        value: 'awesome',
+      })
+    ).toBe(true);
   });
 });
 

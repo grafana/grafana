@@ -21,7 +21,9 @@ Auditing allows you to track important changes to your Grafana instance. By defa
 
 Only API requests or UI actions that trigger an API request generate an audit log.
 
-> **Note:** Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise" >}}) version 7.3 and later, and [Grafana Cloud Advanced](/docs/grafana-cloud).
+{{% admonition type="note" %}}
+Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise" >}}) version 7.3 and later, and [Grafana Cloud](/docs/grafana-cloud).
+{{% /admonition %}}
 
 ## Audit logs
 
@@ -367,7 +369,9 @@ Furthermore, you can also record `GET` requests. See below how to configure it.
 
 ## Configuration
 
-> **Note:** The auditing feature is disabled by default.
+{{% admonition type="note" %}}
+The auditing feature is disabled by default.
+{{% /admonition %}}
 
 Audit logs can be saved into files, sent to a Loki instance or sent to the Grafana default logger. By default, only the file exporter is enabled.
 You can choose which exporter to use in the [configuration file]({{< relref "../configure-grafana" >}}).
@@ -414,7 +418,9 @@ max_file_size_mb = 256
 
 Audit logs are sent to a [Loki](/oss/loki/) service, through HTTP or gRPC.
 
-> **Note:** The HTTP option for the Loki exporter is available only in Grafana Enterprise version 7.4 and later.
+{{% admonition type="note" %}}
+The HTTP option for the Loki exporter is available only in Grafana Enterprise version 7.4 and later.
+{{% /admonition %}}
 
 ```ini
 [auditing.logs.loki]

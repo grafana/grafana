@@ -32,5 +32,6 @@ type IndexViewData struct {
 	CSPEnabled                          bool
 	IsDevelopmentEnv                    bool
 	// Nonce is a cryptographic identifier for use with Content Security Policy.
-	Nonce string
+	Nonce           string
+	NewsFeedEnabled bool
 }

@@ -53,7 +53,7 @@ func (s *OSSService) SearchUsers(c *contextmodel.ReqContext) response.Response {
 // Get users with paging.
 //
 // Responses:
-// 200: searchUsersResponse
+// 200: searchUsersWithPagingResponse
 // 401: unauthorisedError
 // 403: forbiddenError
 // 404: notFoundError
@@ -114,4 +114,18 @@ func (s *OSSService) SearchUser(c *contextmodel.ReqContext) (*user.SearchUserQue
 	res.PerPage = perPage
 
 	return res, nil
+}
+
+// swagger:response searchUsersResponse
+type SearchUsersResponse struct {
+	// The response message
+	// in: body
+	Body []*user.UserSearchHitDTO `json:"body"`
+}
+
+// swagger:response searchUsersWithPagingResponse
+type SearchUsersWithPagingResponse struct {
+	// The response message
+	// in: body
+	Body *user.SearchUserQueryResult `json:"body"`
 }

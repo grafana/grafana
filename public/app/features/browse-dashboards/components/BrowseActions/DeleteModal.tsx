@@ -1,8 +1,8 @@
-import { css } from '@emotion/css';
-import React from 'react';
+import React, { useState } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
-import { ConfirmModal, useStyles2 } from '@grafana/ui';
+import { Space } from '@grafana/experimental';
+import { ConfirmModal, Text } from '@grafana/ui';
+import { Trans, t } from 'app/core/internationalization';
 
 import { DashboardTreeSelection } from '../../types';
 
@@ -10,39 +10,47 @@ import { DescendantCount } from './DescendantCount';
 
 export interface Props {
   isOpen: boolean;
-  onConfirm: () => void;
+  onConfirm: () => Promise<void>;
   onDismiss: () => void;
   selectedItems: DashboardTreeSelection;
 }
 
 export const DeleteModal = ({ onConfirm, onDismiss, selectedItems, ...props }: Props) => {
-  const styles = useStyles2(getStyles);
-
-  const onDelete = () => {
-    onConfirm();
-    onDismiss();
+  const [isDeleting, setIsDeleting] = useState(false);
+  const onDelete = async () => {
+    setIsDeleting(true);
+    try {
+      await onConfirm();
+      setIsDeleting(false);
+      onDismiss();
+    } catch {
+      setIsDeleting(false);
+    }
   };
 
   return (
     <ConfirmModal
       body={
-        <div className={styles.modalBody}>
-          This action will delete the following content:
+        <>
+          <Text element="p">
+            <Trans i18nKey="browse-dashboards.action.delete-modal-text">
+              This action will delete the following content:
+            </Trans>
+          </Text>
           <DescendantCount selectedItems={selectedItems} />
-        </div>
+          <Space v={2} />
+        </>
       }
       confirmationText="Delete"
-      confirmText="Delete"
+      confirmText={
+        isDeleting
+          ? t('browse-dashboards.action.deleting', 'Deleting...')
+          : t('browse-dashboards.action.delete-button', 'Delete')
+      }
       onDismiss={onDismiss}
       onConfirm={onDelete}
-      title="Delete Compute Resources"
+      title={t('browse-dashboards.action.delete-modal-title', 'Delete')}
       {...props}
     />
   );
 };
-
-const getStyles = (theme: GrafanaTheme2) => ({
-  modalBody: css({
-    ...theme.typography.body,
-  }),
-});

@@ -3,6 +3,7 @@ import React from 'react';
 
 import {
   type PluginExtensionLinkConfig,
+  type PluginExtensionComponentConfig,
   type PluginExtensionConfig,
   type PluginExtensionEventHelpers,
   PluginExtensionTypes,
@@ -19,6 +20,12 @@ export function isPluginExtensionLinkConfig(
   extension: PluginExtensionConfig | undefined
 ): extension is PluginExtensionLinkConfig {
   return typeof extension === 'object' && 'type' in extension && extension['type'] === PluginExtensionTypes.link;
+}
+
+export function isPluginExtensionComponentConfig(
+  extension: PluginExtensionConfig | undefined
+): extension is PluginExtensionComponentConfig {
+  return typeof extension === 'object' && 'type' in extension && extension['type'] === PluginExtensionTypes.component;
 }
 
 export function handleErrorsInFn(fn: Function, errorMessagePrefix = '') {
@@ -158,4 +165,31 @@ function isRecord(value: unknown): value is Record<string | number | symbol, unk
 
 export function isReadOnlyProxy(value: unknown): boolean {
   return isRecord(value) && value[_isProxy] === true;
+}
+
+export function createExtensionLinkConfig<T extends object>(
+  config: Omit<PluginExtensionLinkConfig<T>, 'type'>
+): PluginExtensionLinkConfig {
+  const linkConfig: PluginExtensionLinkConfig<T> = {
+    type: PluginExtensionTypes.link,
+    ...config,
+  };
+  assertLinkConfig(linkConfig);
+  return linkConfig;
+}
+
+function assertLinkConfig<T extends object>(
+  config: PluginExtensionLinkConfig<T>
+): asserts config is PluginExtensionLinkConfig {
+  if (config.type !== PluginExtensionTypes.link) {
+    throw Error('config is not a extension link');
+  }
+}
+
+export function truncateTitle(title: string, length: number): string {
+  if (title.length < length) {
+    return title;
+  }
+  const part = title.slice(0, length - 3);
+  return `${part.trimEnd()}...`;
 }

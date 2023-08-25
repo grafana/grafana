@@ -5,7 +5,8 @@ import { EditorField } from '@grafana/experimental';
 import { Select } from '@grafana/ui';
 
 import { getAggregationOptionsByMetric } from '../functions';
-import { MetricDescriptor, MetricKind, ValueTypes } from '../types';
+import { MetricKind, ValueTypes } from '../types/query';
+import { MetricDescriptor } from '../types/types';
 
 export interface Props {
   refId: string;

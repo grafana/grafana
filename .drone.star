@@ -11,11 +11,7 @@ load("scripts/drone/events/pr.star", "pr_pipelines")
 load("scripts/drone/events/main.star", "main_pipelines")
 load(
     "scripts/drone/events/release.star",
-    "artifacts_page_pipeline",
-    "enterprise2_pipelines",
-    "enterprise_pipelines",
     "integration_test_pipelines",
-    "oss_pipelines",
     "publish_artifacts_pipelines",
     "publish_npm_pipelines",
     "publish_packages_pipeline",
@@ -27,14 +23,12 @@ load(
 load(
     "scripts/drone/pipelines/publish_images.star",
     "publish_image_pipelines_public",
-    "publish_image_pipelines_security",
 )
 load(
     "scripts/drone/pipelines/ci_images.star",
+    "publish_ci_build_container_image_pipeline",
     "publish_ci_windows_test_image_pipeline",
 )
-load("scripts/drone/pipelines/github.star", "publish_github_pipeline")
-load("scripts/drone/pipelines/aws_marketplace.star", "publish_aws_marketplace_pipeline")
 load(
     "scripts/drone/pipelines/windows.star",
     "windows_test_backend",
@@ -47,15 +41,7 @@ def main(_ctx):
     return (
         pr_pipelines() +
         main_pipelines() +
-        oss_pipelines() +
-        enterprise_pipelines() +
-        enterprise2_pipelines() +
         publish_image_pipelines_public() +
-        publish_image_pipelines_security() +
-        publish_github_pipeline("public") +
-        publish_github_pipeline("security") +
-        publish_aws_marketplace_pipeline("public") +
-        publish_artifacts_pipelines("security") +
         publish_artifacts_pipelines("public") +
         publish_npm_pipelines() +
         publish_packages_pipeline() +
@@ -64,10 +50,10 @@ def main(_ctx):
             "event": ["promote"],
             "target": ["test-windows"],
         }, "oss", "testing")] +
-        artifacts_page_pipeline() +
         version_branch_pipelines() +
         integration_test_pipelines() +
         publish_ci_windows_test_image_pipeline() +
+        publish_ci_build_container_image_pipeline() +
         cronjobs() +
         secrets()
     )

@@ -1,6 +1,12 @@
 import React from 'react';
 
-import { DataTransformerID, standardTransformers, TransformerRegistryItem, TransformerUIProps } from '@grafana/data';
+import {
+  DataTransformerID,
+  standardTransformers,
+  TransformerRegistryItem,
+  TransformerUIProps,
+  TransformerCategory,
+} from '@grafana/data';
 import { MergeTransformerOptions } from '@grafana/data/src/transformations/transformers/merge';
 import { FieldValidationMessage } from '@grafana/ui';
 
@@ -19,4 +25,5 @@ export const mergeTransformerRegistryItem: TransformerRegistryItem<MergeTransfor
   name: 'Merge',
   description: `Merge many series/tables and return a single table where mergeable values will be combined into the same row.
                 Useful for showing multiple series, tables or a combination of both visualized in a table.`,
+  categories: new Set([TransformerCategory.Combine]),
 };

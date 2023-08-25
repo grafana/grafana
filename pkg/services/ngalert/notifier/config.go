@@ -14,9 +14,7 @@ import (
 	api "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 )
 
-var cfglogger = log.New("notifier.config")
-
-func PersistTemplates(cfg *api.PostableUserConfig, path string) ([]string, bool, error) {
+func PersistTemplates(logger log.Logger, cfg *api.PostableUserConfig, path string) ([]string, bool, error) {
 	if len(cfg.TemplateFiles) < 1 {
 		return nil, false, nil
 	}
@@ -34,7 +32,7 @@ func PersistTemplates(cfg *api.PostableUserConfig, path string) ([]string, bool,
 		}
 
 		file := filepath.Join(path, name)
-		pathSet[file] = struct{}{}
+		pathSet[name] = struct{}{}
 
 		// Check if the template file already exists and if it has changed
 		// We can safely ignore gosec here as we've previously checked the filename is clean
@@ -58,16 +56,16 @@ func PersistTemplates(cfg *api.PostableUserConfig, path string) ([]string, bool,
 	// Now that we have the list of _actual_ templates, let's remove the ones that we don't need.
 	existingFiles, err := os.ReadDir(path)
 	if err != nil {
-		cfglogger.Error("unable to read directory for deleting Alertmanager templates", "error", err, "path", path)
+		logger.Error("Unable to read directory for deleting Alertmanager templates", "error", err, "path", path)
 	}
 	for _, existingFile := range existingFiles {
 		p := filepath.Join(path, existingFile.Name())
-		_, ok := pathSet[p]
+		_, ok := pathSet[existingFile.Name()]
 		if !ok {
 			templatesChanged = true
 			err := os.Remove(p)
 			if err != nil {
-				cfglogger.Error("unable to delete template", "error", err, "file", p)
+				logger.Error("Unable to delete template", "error", err, "file", p)
 			}
 		}
 	}

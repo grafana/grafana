@@ -1,12 +1,19 @@
 import React, { PureComponent } from 'react';
 
 import { DataSourcePluginOptionsEditorProps, SelectableValue, updateDatasourcePluginOption } from '@grafana/data';
+import { ConfigSection, DataSourceDescription } from '@grafana/experimental';
 import { getBackendSrv, getTemplateSrv, isFetchError, TemplateSrv } from '@grafana/runtime';
-import { Alert, SecureSocksProxySettings } from '@grafana/ui';
+import { Alert, Divider, SecureSocksProxySettings } from '@grafana/ui';
 import { config } from 'app/core/config';
 
 import ResponseParser from '../azure_monitor/response_parser';
-import { AzureDataSourceJsonData, AzureDataSourceSecureJsonData, AzureDataSourceSettings } from '../types';
+import {
+  AzureAPIResponse,
+  AzureDataSourceJsonData,
+  AzureDataSourceSecureJsonData,
+  AzureDataSourceSettings,
+  Subscription,
+} from '../types';
 import { routeNames } from '../utils/common';
 
 import { MonitorConfig } from './MonitorConfig';
@@ -62,7 +69,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
     const query = `?api-version=2019-03-01`;
     try {
       const result = await getBackendSrv()
-        .fetch({
+        .fetch<AzureAPIResponse<Subscription>>({
           url: this.baseURL + query,
           method: 'GET',
         })
@@ -90,6 +97,12 @@ export class ConfigEditor extends PureComponent<Props, State> {
 
     return (
       <>
+        <DataSourceDescription
+          dataSourceName="Azure Monitor"
+          docsLink="https://grafana.com/docs/grafana/latest/datasources/azure-monitor/"
+          hasRequiredFields
+        />
+        <Divider />
         <MonitorConfig options={options} updateOptions={this.updateOptions} getSubscriptions={this.getSubscriptions} />
         {error && (
           <Alert severity="error" title={error.title}>
@@ -98,7 +111,17 @@ export class ConfigEditor extends PureComponent<Props, State> {
           </Alert>
         )}
         {config.secureSocksDSProxyEnabled && (
-          <SecureSocksProxySettings options={options} onOptionsChange={onOptionsChange} />
+          <>
+            <Divider />
+            <ConfigSection
+              title="Additional settings"
+              description="Additional settings are optional settings that can be configured for more control over your data source. This includes Secure Socks Proxy."
+              isCollapsible={true}
+              isInitiallyOpen={options.jsonData.enableSecureSocksProxy !== undefined}
+            >
+              <SecureSocksProxySettings options={options} onOptionsChange={onOptionsChange} />
+            </ConfigSection>
+          </>
         )}
       </>
     );
