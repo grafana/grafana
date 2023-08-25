@@ -8,8 +8,9 @@ on:
             description: "ID of the plugin you want to publish"
             required: true
             type: choice
+            default: "testdata"
             options:
-              - "grafana-helloworld-datasource"
+              - "testdata"
     
 concurrency:
     group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}-${{ inputs.plugin_id }}
