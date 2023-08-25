@@ -5,4 +5,7 @@ process.env.TZ = 'UTC';
 module.exports = {
   // Jest configuration provided by Grafana scaffolding
   ...require('./.config/jest.config'),
-};
+    moduleNameMapper: {
+      '\\.svg': '<rootDir>/../../test/mocks/svg.ts',
+    },
+  };
