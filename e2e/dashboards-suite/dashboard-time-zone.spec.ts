@@ -9,7 +9,7 @@ import {
   toDate,
 } from 'date-fns';
 
-import { e2e } from '@grafana/e2e';
+import { e2e } from '../utils';
 
 e2e.scenario({
   describeName: 'Dashboard time zone support',

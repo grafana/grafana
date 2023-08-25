@@ -1,4 +1,4 @@
-import { e2e } from '@grafana/e2e';
+import { e2e } from '../utils';
 const DASHBOARD_ID = 'XMjIZPmik';
 const DASHBOARD_NAME = 'Panel Tests - Graph Time Regions';
 

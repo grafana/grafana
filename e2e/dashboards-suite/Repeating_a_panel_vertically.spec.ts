@@ -1,4 +1,4 @@
-import { e2e } from '@grafana/e2e';
+import { e2e } from '../utils';
 const PAGE_UNDER_TEST = 'OY8Ghjt7k/repeating-a-panel-vertically';
 
 describe('Repeating a panel vertically', () => {

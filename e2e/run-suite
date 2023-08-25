@@ -16,7 +16,7 @@ echo -e "Starting Cypress scenarios"
 
 args=("$@")
 
-CMD="start"
+CMD="cypress run --browser=chrome"
 PARAMS=""
 CLEANUP=""
 
