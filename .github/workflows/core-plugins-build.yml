@@ -81,8 +81,6 @@ jobs:
             mage --version
             echo "-------- golangci-lint version -----"
             golangci-lint --version
-            echo "------- gosec version ------"
-            gosec --version
             echo "======================================="
             echo "    Misc tools"
             echo "======================================="
