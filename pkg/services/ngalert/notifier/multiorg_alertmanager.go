@@ -16,6 +16,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
+	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
@@ -29,12 +30,43 @@ var (
 	ErrAlertmanagerNotReady = fmt.Errorf("Alertmanager is not ready yet")
 )
 
+type Alertmanager interface {
+	// Configuration
+	SaveAndApplyConfig(ctx context.Context, config *apimodels.PostableUserConfig) error
+	SaveAndApplyDefaultConfig(ctx context.Context) error
+	GetStatus() apimodels.GettableStatus
+
+	// Silences
+	CreateSilence(*apimodels.PostableSilence) (string, error)
+	DeleteSilence(string) error
+	GetSilence(string) (apimodels.GettableSilence, error)
+	ListSilences([]string) (apimodels.GettableSilences, error)
+
+	// Alerts
+	GetAlerts(active, silenced, inhibited bool, filter []string, receiver string) (apimodels.GettableAlerts, error)
+	GetAlertGroups(active, silenced, inhibited bool, filter []string, receiver string) (apimodels.AlertGroups, error)
+	PutAlerts(postableAlerts apimodels.PostableAlerts) error
+
+	// Receivers
+	GetReceivers(ctx context.Context) []apimodels.Receiver
+	TestReceivers(ctx context.Context, c apimodels.TestReceiversConfigBodyParams) (*TestReceiversResult, error)
+	TestTemplate(ctx context.Context, c apimodels.TestTemplatesConfigBodyParams) (*TestTemplatesResults, error)
+	ApplyConfig(context.Context, *models.AlertConfiguration) error
+
+	// State
+	StopAndWait()
+	Ready() bool
+	FileStore() *FileStore
+	OrgID() int64
+	ConfigHash() [16]byte
+}
+
 type MultiOrgAlertmanager struct {
 	Crypto    Crypto
 	ProvStore provisioningStore
 
 	alertmanagersMtx sync.RWMutex
-	alertmanagers    map[int64]*Alertmanager
+	alertmanagers    map[int64]Alertmanager
 
 	settings *setting.Cfg
 	logger   log.Logger
@@ -63,7 +95,7 @@ func NewMultiOrgAlertmanager(cfg *setting.Cfg, configStore AlertingStore, orgSto
 
 		logger:        l,
 		settings:      cfg,
-		alertmanagers: map[int64]*Alertmanager{},
+		alertmanagers: map[int64]Alertmanager{},
 		configStore:   configStore,
 		orgStore:      orgStore,
 		kvStore:       kvStore,
@@ -243,7 +275,7 @@ func (moa *MultiOrgAlertmanager) SyncAlertmanagersForOrgs(ctx context.Context, o
 		moa.alertmanagers[orgID] = alertmanager
 	}
 
-	amsToStop := map[int64]*Alertmanager{}
+	amsToStop := map[int64]Alertmanager{}
 	for orgId, am := range moa.alertmanagers {
 		if _, exists := orgsFound[orgId]; !exists {
 			amsToStop[orgId] = am
@@ -260,7 +292,7 @@ func (moa *MultiOrgAlertmanager) SyncAlertmanagersForOrgs(ctx context.Context, o
 		am.StopAndWait()
 		moa.logger.Info("stopped Alertmanager", "org", orgID)
 		// Cleanup all the remaining resources from this alertmanager.
-		am.fileStore.CleanUp()
+		am.FileStore().CleanUp()
 	}
 
 	// We look for orphan directories and remove them. Orphan directories can
@@ -347,7 +379,7 @@ func (moa *MultiOrgAlertmanager) StopAndWait() {
 // AlertmanagerFor returns the Alertmanager instance for the organization provided.
 // When the organization does not have an active Alertmanager, it returns a ErrNoAlertmanagerForOrg.
 // When the Alertmanager of the organization is not ready, it returns a ErrAlertmanagerNotReady.
-func (moa *MultiOrgAlertmanager) AlertmanagerFor(orgID int64) (*Alertmanager, error) {
+func (moa *MultiOrgAlertmanager) AlertmanagerFor(orgID int64) (Alertmanager, error) {
 	moa.alertmanagersMtx.RLock()
 	defer moa.alertmanagersMtx.RUnlock()
 
