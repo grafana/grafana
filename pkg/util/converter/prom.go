@@ -41,8 +41,7 @@ l1Fields:
 		}
 		switch l1Field {
 		case "status":
-			status, err = iter.ReadString()
-			if err != nil {
+			if status, err = iter.ReadString(); err != nil {
 				return rspErr(err)
 			}
 
@@ -53,22 +52,18 @@ l1Fields:
 			}
 
 		case "error":
-			promErrString, err = iter.ReadString()
-			if err != nil {
+			if promErrString, err = iter.ReadString(); err != nil {
 				return rspErr(err)
 			}
 
 		case "errorType":
-			errorType, err = iter.ReadString()
-			if err != nil {
+			if errorType, err = iter.ReadString(); err != nil {
 				return rspErr(err)
 			}
 
 		case "warnings":
-			var wErr error
-			warnings, wErr = readWarnings(iter)
-			if wErr != nil {
-				return rspErr(wErr)
+			if warnings, err = readWarnings(iter); err != nil {
+				return rspErr(err)
 			}
 
 		case "":
