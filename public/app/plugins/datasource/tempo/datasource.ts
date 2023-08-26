@@ -228,7 +228,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
           });
 
           if (config.featureToggles.traceQLStreaming) {
-            subQueries.push(this.handleStreamingSearch(options, targets.traceql));
+            subQueries.push(this.handleStreamingSearch(options, targets.traceql, queryValue));
           } else {
             subQueries.push(
               this._request('/api/search', {
@@ -255,7 +255,11 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     }
     if (targets.traceqlSearch?.length) {
       try {
-        const queryValue = generateQueryFromFilters(targets.traceqlSearch[0].filters);
+        const queryValueFromFilters = generateQueryFromFilters(targets.traceqlSearch[0].filters);
+
+        // We want to support template variables also in Search for consistency with other data sources
+        const queryValue = this.templateSrv.replace(queryValueFromFilters, options.scopedVars);
+
         reportInteraction('grafana_traces_traceql_search_queried', {
           datasourceType: 'tempo',
           app: options.app ?? '',
@@ -426,22 +430,21 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     return request;
   }
 
+  // This function can probably be simplified by avoiding passing both `targets` and `query`,
+  // since `query` is built from `targets`, if you look at how this function is currently called
   handleStreamingSearch(
     options: DataQueryRequest<TempoQuery>,
     targets: TempoQuery[],
-    query?: string
+    query: string
   ): Observable<DataQueryResponse> {
-    const validTargets = targets
-      .filter((t) => t.query || query)
-      .map((t): TempoQuery => ({ ...t, query: query || t.query.trim() }));
-    if (!validTargets.length) {
+    if (query === '') {
       return EMPTY;
     }
 
     return merge(
-      ...validTargets.map((q) =>
+      ...targets.map((target) =>
         doTempoChannelStream(
-          q,
+          { ...target, query },
           this, // the datasource
           options,
           this.instanceSettings

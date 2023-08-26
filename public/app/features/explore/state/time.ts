@@ -4,12 +4,10 @@ import { AbsoluteTimeRange, dateTimeForTimeZone, LoadingState, RawTimeRange, Tim
 import { getTemplateSrv } from '@grafana/runtime';
 import { RefreshPicker } from '@grafana/ui';
 import { getTimeRange, refreshIntervalToSortOrder, stopQueryState } from 'app/core/utils/explore';
+import { getShiftedTimeRange, getZoomedTimeRange } from 'app/core/utils/timePicker';
 import { sortLogsResult } from 'app/features/logs/utils';
 import { getFiscalYearStartMonth, getTimeZone } from 'app/features/profile/state/selectors';
-import { ExploreItemState, ThunkResult } from 'app/types';
-
-import { getTimeSrv } from '../../dashboard/services/TimeSrv';
-import { TimeModel } from '../../dashboard/state/TimeModel';
+import { ExploreItemState, ThunkDispatch, ThunkResult } from 'app/types';
 
 import { syncTimesAction } from './main';
 import { runQueries } from './query';
@@ -79,21 +77,10 @@ export const updateTime = (config: {
 
     const range = getTimeRange(timeZone, rawRange, fiscalYearStartMonth);
     const absoluteRange: AbsoluteTimeRange = { from: range.from.valueOf(), to: range.to.valueOf() };
-    const timeModel: TimeModel = {
-      time: range.raw,
-      refresh: false,
-      timepicker: {},
-      getTimezone: () => timeZone,
-      timeRangeUpdated: (rawTimeRange: RawTimeRange) => {
-        dispatch(updateTimeRange({ exploreId: exploreId, rawRange: rawTimeRange }));
-      },
-    };
 
-    // We need to re-initialize TimeSrv because it might have been triggered by the other Explore pane (when split)
-    getTimeSrv().init(timeModel);
     // After re-initializing TimeSrv we need to update the time range in Template service for interpolation
     // of __from and __to variables
-    getTemplateSrv().updateTimeRange(getTimeSrv().timeRange());
+    getTemplateSrv().updateTimeRange(range);
 
     dispatch(changeRangeAction({ exploreId, range, absoluteRange }));
   };
@@ -118,22 +105,49 @@ export function syncTimes(exploreId: string): ThunkResult<void> {
   };
 }
 
-/**
- * Forces the timepicker's time into absolute time.
- * The conversion is applied to all Explore panes.
- * Useful to produce a bookmarkable URL that points to the same data.
- */
-export function makeAbsoluteTime(): ThunkResult<void> {
+function modifyExplorePanesTimeRange(
+  modifier: (
+    exploreId: string,
+    exploreItemState: ExploreItemState,
+    currentTimeRange: TimeRange,
+    dispatch: ThunkDispatch
+  ) => void
+): ThunkResult<void> {
   return (dispatch, getState) => {
     const timeZone = getTimeZone(getState().user);
     const fiscalYearStartMonth = getFiscalYearStartMonth(getState().user);
 
     Object.entries(getState().explore.panes).forEach(([exploreId, exploreItemState]) => {
       const range = getTimeRange(timeZone, exploreItemState!.range.raw, fiscalYearStartMonth);
-      const absoluteRange: AbsoluteTimeRange = { from: range.from.valueOf(), to: range.to.valueOf() };
-      dispatch(updateTime({ exploreId, absoluteRange }));
+      modifier(exploreId, exploreItemState!, range, dispatch);
     });
   };
+}
+
+/**
+ * Forces the timepicker's time into absolute time.
+ * The conversion is applied to all Explore panes.
+ * Useful to produce a bookmarkable URL that points to the same data.
+ */
+export function makeAbsoluteTime(): ThunkResult<void> {
+  return modifyExplorePanesTimeRange((exploreId, exploreItemState, range, dispatch) => {
+    const absoluteRange: AbsoluteTimeRange = { from: range.from.valueOf(), to: range.to.valueOf() };
+    dispatch(updateTimeRange({ exploreId, absoluteRange }));
+  });
+}
+
+export function shiftTime(direction: number): ThunkResult<void> {
+  return modifyExplorePanesTimeRange((exploreId, exploreItemState, range, dispatch) => {
+    const shiftedRange = getShiftedTimeRange(direction, range);
+    dispatch(updateTimeRange({ exploreId, absoluteRange: shiftedRange }));
+  });
+}
+
+export function zoomOut(scale: number): ThunkResult<void> {
+  return modifyExplorePanesTimeRange((exploreId, exploreItemState, range, dispatch) => {
+    const zoomedRange = getZoomedTimeRange(range, scale);
+    dispatch(updateTimeRange({ exploreId, absoluteRange: zoomedRange }));
+  });
 }
 
 /**

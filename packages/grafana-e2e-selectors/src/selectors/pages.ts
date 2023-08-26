@@ -320,4 +320,7 @@ export const Pages = {
       },
     },
   },
+  ProfilePage: {
+    url: '/profile',
+  },
 };
