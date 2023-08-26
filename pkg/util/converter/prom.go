@@ -204,8 +204,7 @@ l1Fields:
 		case "stats":
 			v, err := iter.Read()
 			if err != nil {
-				rsp.Error = iter.Error
-				return rsp
+				rspErr(err)
 			}
 			if len(rsp.Frames) > 0 {
 				meta := rsp.Frames[0].Meta
@@ -651,7 +650,7 @@ func readTimeValuePair(iter *jsonitere.Iterator) (time.Time, float64, error) {
 
 	var v string
 	if v, err = iter.ReadString(); err != nil {
-		return time.Time{}, 0, iter.Error
+		return time.Time{}, 0, err
 	}
 
 	if _, err = iter.ReadArray(); err != nil {
@@ -732,7 +731,11 @@ func readHistogram(iter *jsonitere.Iterator, hist *histogramInfo) error {
 					return err
 				}
 
-				hist.yLayout.Append(iter.ReadInt8())
+				v, err := iter.ReadInt8()
+				if err != nil {
+					return err
+				}
+				hist.yLayout.Append(v)
 
 				if _, err := iter.ReadArray(); err != nil {
 					return err
