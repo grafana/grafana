@@ -772,7 +772,9 @@ func readHistogram(iter *jsonitere.Iterator, hist *histogramInfo) error {
 			}
 
 		default:
-			iter.Skip()
+			if err = iter.Skip(); err != nil {
+				return err
+			}
 			logf("[SKIP]readHistogram: %s\n", l1Field)
 		}
 	}
