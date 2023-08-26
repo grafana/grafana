@@ -4,12 +4,10 @@ import { AppEvents, locationUtil, NavModelItem } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import {
   getUrlSyncManager,
-  SceneGridItem,
   SceneGridLayout,
   SceneObject,
   SceneObjectBase,
   SceneObjectState,
-  SceneObjectStateChangedEvent,
   SceneObjectUrlSyncHandler,
   SceneObjectUrlValues,
 } from '@grafana/scenes';
@@ -17,6 +15,7 @@ import appEvents from 'app/core/app_events';
 
 import { PanelInspectDrawer } from '../inspect/PanelInspectDrawer';
 import { DashboardSceneRenderer } from '../scene/DashboardSceneRenderer';
+import { DashboardChangeTracker } from '../serialization/DashboardChangeTracker';
 import { findVizPanel } from '../utils/findVizPanel';
 import { forceRenderChildren } from '../utils/utils';
 
@@ -40,31 +39,27 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   static Component = DashboardSceneRenderer;
 
   protected _urlSync = new DashboardSceneUrlSync(this);
+  private _changeTracker = new DashboardChangeTracker(this);
 
   constructor(state: DashboardSceneState) {
     super(state);
 
     this.addActivationHandler(() => {
-      return () => {
-        getUrlSyncManager().cleanUp(this);
-      };
+      return () => this.stopUrlSync();
     });
-
-    this.subscribeToEvent(SceneObjectStateChangedEvent, this.onChildStateChanged);
   }
 
-  onChildStateChanged = (event: SceneObjectStateChangedEvent) => {
-    // Temporary hacky way to detect changes
-    if (event.payload.changedObject instanceof SceneGridItem) {
-      this.setState({ isDirty: true });
-    }
-  };
-
-  initUrlSync() {
+  startUrlSync() {
     getUrlSyncManager().initSync(this);
   }
 
+  stopUrlSync() {
+    getUrlSyncManager().cleanUp(this);
+  }
+
   onEnterEditMode = () => {
+    this._changeTracker.saveOriginal();
+
     this.setState({ isEditing: true });
 
     // Make grid draggable
@@ -72,6 +67,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       this.state.body.setState({ isDraggable: true, isResizable: true });
       forceRenderChildren(this.state.body, true);
     }
+
+    this._changeTracker.startTracking();
   };
 
   onDiscard = () => {
@@ -84,6 +81,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       this.state.body.setState({ isDraggable: false, isResizable: false });
       forceRenderChildren(this.state.body, true);
     }
+
+    this._changeTracker.discard();
   };
 
   getPageNav(location: H.Location) {

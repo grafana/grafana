@@ -3,8 +3,10 @@ import {
   CustomVariableModel,
   DataSourceVariableModel,
   QueryVariableModel,
+  UrlQueryMap,
   VariableModel,
 } from '@grafana/data';
+import { locationService } from '@grafana/runtime';
 import {
   VizPanel,
   SceneTimePicker,
@@ -47,7 +49,7 @@ export class DashboardLoader extends StateManagerBase<DashboardLoaderState> {
   async loadAndInit(uid: string) {
     try {
       const scene = await this.loadScene(uid);
-      scene.initUrlSync();
+      scene.startUrlSync();
 
       this.cache[uid] = scene;
       this.setState({ dashboard: scene, isLoading: false });
@@ -80,6 +82,16 @@ export class DashboardLoader extends StateManagerBase<DashboardLoaderState> {
 
   clearState() {
     this.setState({ dashboard: undefined, loadError: undefined, isLoading: false });
+  }
+
+  revertTo(scene: DashboardScene, urlState: UrlQueryMap) {
+    this.cache[scene.state.uid!] = scene;
+    // Stop url sync for current mounted scene so we can update url state without any state changes
+    this.state.dashboard!.stopUrlSync();
+    // Update url state
+    locationService.partial(urlState, true);
+    // Now switch to the older scene version
+    this.setState({ dashboard: scene });
   }
 }
 
@@ -280,6 +292,7 @@ export function createSceneVariableFromVariableModel(variable: VariableModel): S
 
 export function createVizPanelFromPanelModel(panel: PanelModel) {
   return new SceneGridItem({
+    key: `grid-item-${panel.id}`,
     x: panel.gridPos.x,
     y: panel.gridPos.y,
     width: panel.gridPos.w,
