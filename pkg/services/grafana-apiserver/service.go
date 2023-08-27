@@ -12,6 +12,7 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/grafana/dskit/services"
 	grafanaapiserveroptions "github.com/grafana/grafana-apiserver/pkg/cmd/server/options"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	grafanaAdmission "github.com/grafana/grafana/pkg/services/grafana-apiserver/admission"
 
 	"k8s.io/apiserver/pkg/admission"
@@ -67,12 +68,18 @@ type service struct {
 	stoppedCh chan error
 }
 
-func ProvideService(cfg *setting.Cfg, rr routing.RouteRegister) (*service, error) {
+func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, rr routing.RouteRegister) (*service, error) {
 	s := &service{
 		rr:       rr,
 		log:      log.New("grafana-apiserver"),
 		dataPath: path.Join(cfg.DataPath, "k8s"),
 		stopCh:   make(chan struct{}),
+	}
+
+	// TODO: this should be changed once dskit modules are implemented; for now we return a real service instance to avoid panics, but don't start it
+	if !features.IsEnabled(featuremgmt.FlagGrafanaAPIServer) {
+		s.log.Debug("apiserver feature is disabled")
+		return s, nil
 	}
 
 	s.rr.Group("/k8s", func(k8sRoute routing.RouteRegister) {
