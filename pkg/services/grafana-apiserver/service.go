@@ -27,6 +27,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/appcontext"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/middleware"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/setting"
@@ -52,6 +53,7 @@ type RestConfigProvider interface {
 
 type service struct {
 	*services.BasicService
+	log log.Logger
 
 	restConfig *rest.Config
 	rr         routing.RouteRegister
@@ -65,11 +67,10 @@ type service struct {
 func ProvideService(cfg *setting.Cfg, rr routing.RouteRegister) (*service, error) {
 	s := &service{
 		rr:       rr,
+		log:      log.New("grafana-apiserver"),
 		dataPath: path.Join(cfg.DataPath, "k8s"),
 		stopCh:   make(chan struct{}),
 	}
-
-	s.BasicService = services.NewBasicService(s.start, s.running, nil).WithName("grafana-apiserver")
 
 	s.rr.Group("/k8s", func(k8sRoute routing.RouteRegister) {
 		handler := func(c *contextmodel.ReqContext) {
@@ -88,6 +89,16 @@ func ProvideService(cfg *setting.Cfg, rr routing.RouteRegister) (*service, error
 		k8sRoute.Any("/*", middleware.ReqSignedIn, handler)
 	})
 
+	s.BasicService = services.NewBasicService(s.start, s.running, nil).WithName("grafana-apiserver")
+	if err := s.BasicService.StartAsync(context.Background()); err != nil {
+		s.log.Error("failed to start service", "err", err)
+		return nil, err
+	}
+	if err := s.BasicService.AwaitRunning(context.Background()); err != nil {
+		s.log.Error("failed to run service", "err", err)
+		return nil, err
+	}
+	s.log.Debug("apiserver created successfully")
 	return s, nil
 }
 
@@ -114,11 +125,18 @@ func (s *service) start(ctx context.Context) error {
 	certUtil := certgenerator.CertUtil{
 		K8sDataPath: s.dataPath,
 	}
-
 	o.RecommendedOptions.SecureServing.BindAddress = net.ParseIP(certgenerator.DefaultAPIServerIp)
 	o.RecommendedOptions.SecureServing.ServerCert.CertKey = options.CertKey{
 		CertFile: certUtil.APIServerCertFile(),
 		KeyFile:  certUtil.APIServerKeyFile(),
+	}
+
+	rootCert, err := certUtil.GetK8sCACert()
+	if err != nil {
+		return err
+	}
+	if err := certUtil.EnsureApiServerPKI(certgenerator.DefaultAPIServerIp); err != nil {
+		return err
 	}
 
 	if err := o.Complete(); err != nil {
@@ -130,11 +148,6 @@ func (s *service) start(ctx context.Context) error {
 	}
 
 	serverConfig, err := o.Config()
-	if err != nil {
-		return err
-	}
-
-	rootCert, err := certUtil.GetK8sCACert()
 	if err != nil {
 		return err
 	}
@@ -225,6 +238,7 @@ func (s *service) writeKubeConfiguration(restConfig *rest.Config) error {
 		CurrentContext: "default-context",
 		AuthInfos:      authinfos,
 	}
+	s.log.Debug("writing configuration", "path", path.Join(s.dataPath, "grafana.kubeconfig"))
 	return clientcmd.WriteToFile(clientConfig, path.Join(s.dataPath, "grafana.kubeconfig"))
 }
 
