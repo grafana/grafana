@@ -16,6 +16,7 @@ import appEvents from 'app/core/app_events';
 import { PanelInspectDrawer } from '../inspect/PanelInspectDrawer';
 import { DashboardSceneRenderer } from '../scene/DashboardSceneRenderer';
 import { DashboardChangeTracker } from '../serialization/DashboardChangeTracker';
+import { SaveDashboardDrawer } from '../serialization/SaveDashboardDrawer';
 import { findVizPanel } from '../utils/findVizPanel';
 import { forceRenderChildren } from '../utils/utils';
 
@@ -39,14 +40,23 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   static Component = DashboardSceneRenderer;
 
   protected _urlSync = new DashboardSceneUrlSync(this);
-  private _changeTracker = new DashboardChangeTracker(this);
+  private _changeTracker?: DashboardChangeTracker;
 
   constructor(state: DashboardSceneState) {
     super(state);
 
-    this.addActivationHandler(() => {
-      return () => this.stopUrlSync();
-    });
+    this.addActivationHandler(() => this.onActivate());
+  }
+
+  private onActivate() {
+    if (this.state.isEditing) {
+      this._changeTracker?.startTracking();
+    }
+
+    // Deactivation logic
+    return () => {
+      this._changeTracker?.stopTracking();
+    };
   }
 
   startUrlSync() {
@@ -58,8 +68,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   }
 
   onEnterEditMode = () => {
-    this._changeTracker.saveOriginal();
-
     this.setState({ isEditing: true });
 
     // Make grid draggable
@@ -68,6 +76,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       forceRenderChildren(this.state.body, true);
     }
 
+    this._changeTracker = new DashboardChangeTracker(this);
     this._changeTracker.startTracking();
   };
 
@@ -82,7 +91,11 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       forceRenderChildren(this.state.body, true);
     }
 
-    this._changeTracker.discard();
+    this._changeTracker?.discard();
+  };
+
+  onSave = () => {
+    this.setState({ drawer: new SaveDashboardDrawer(this, this._changeTracker!) });
   };
 
   getPageNav(location: H.Location) {

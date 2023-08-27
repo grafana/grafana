@@ -11,16 +11,18 @@ import { getDashboardLoader } from './DashboardsLoader';
 export class DashboardChangeTracker {
   private _sub?: Unsubscribable;
   private _scene: DashboardScene;
-  private _original?: DashboardScene;
-  private _orignalUrlState?: UrlQueryMap;
+  private _original: DashboardScene;
+  private _orignalUrlState: UrlQueryMap;
 
   constructor(scene: DashboardScene) {
     this._scene = scene;
-  }
 
-  saveOriginal() {
     this._original = this._scene.clone();
     this._orignalUrlState = locationService.getSearchObject();
+  }
+
+  getOriginal(): DashboardScene {
+    return this._original;
   }
 
   startTracking() {
@@ -29,6 +31,10 @@ export class DashboardChangeTracker {
         this._scene.setState({ isDirty: true });
       }
     });
+  }
+
+  stopTracking() {
+    this._sub?.unsubscribe();
   }
 
   discard() {
