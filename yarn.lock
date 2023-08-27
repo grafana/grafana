@@ -2452,9 +2452,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@cypress/request@npm:^2.88.10":
-  version: 2.88.11
-  resolution: "@cypress/request@npm:2.88.11"
+"@cypress/request@npm:2.88.12":
+  version: 2.88.12
+  resolution: "@cypress/request@npm:2.88.12"
   dependencies:
     aws-sign2: ~0.7.0
     aws4: ^1.8.0
@@ -2471,10 +2471,10 @@ __metadata:
     performance-now: ^2.1.0
     qs: ~6.10.3
     safe-buffer: ^5.1.2
-    tough-cookie: ~2.5.0
+    tough-cookie: ^4.1.3
     tunnel-agent: ^0.6.0
     uuid: ^8.3.2
-  checksum: e4b3f62e0c41c4ccca6c942828461d8ea717e752fd918d685e9f74e2ebcfa8b7942427f7ce971e502635c3bf3d40011476db84dc753d3dc360c6d08350da6f93
+  checksum: 2c6fbf7f3127d41bffca8374beaa8cf95450495a8a077b00309ea9d94dd2a4da450a77fe038e8ad26c97cdd7c39b65c53c850f8338ce9bc2dbe23ce2e2b48329
   languageName: node
   linkType: hard
 
@@ -3731,7 +3731,7 @@ __metadata:
     blink-diff: 1.0.13
     chrome-remote-interface: 0.32.2
     commander: 8.3.0
-    cypress: 9.5.1
+    cypress: 12.17.4
     cypress-file-upload: 5.0.8
     devtools-protocol: 0.0.1170333
     esbuild: 0.18.12
@@ -10307,17 +10307,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/node@npm:^14.14.31":
-  version: 14.18.36
-  resolution: "@types/node@npm:14.18.36"
-  checksum: da7f479b3fc996d585e60b8329987c6e310ddbf051e14f2d900ce04f7768f42fa7b760f0eb376008d3eca130ce9431018fb5c9e44027dcb7bb139c547e44b9c5
-  languageName: node
-  linkType: hard
-
 "@types/node@npm:^16.0.0":
   version: 16.18.23
   resolution: "@types/node@npm:16.18.23"
   checksum: 00e51db28fc7a182747f37215b3f25400b1c7a8525e09fa14e55be5798891a118ebf636a49d3197335a3580fcb8222fd4ecc20c2ccff69f1c0d233fc5697465d
+  languageName: node
+  linkType: hard
+
+"@types/node@npm:^16.18.39":
+  version: 16.18.46
+  resolution: "@types/node@npm:16.18.46"
+  checksum: 1aed3fe9693f2098b8dac8c76c809c1925a456da00dd6f06c1ccb55c62ccfbbe7ec43ccfd12001f9cb4ff84e138292ae53456435dfecd5c4bb1324394c3e09c7
   languageName: node
   linkType: hard
 
@@ -14331,13 +14331,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"commander@npm:^5.1.0":
-  version: 5.1.0
-  resolution: "commander@npm:5.1.0"
-  checksum: 0b7fec1712fbcc6230fcb161d8d73b4730fa91a21dc089515489402ad78810547683f058e2a9835929c212fead1d6a6ade70db28bbb03edbc2829a9ab7d69447
-  languageName: node
-  linkType: hard
-
 "commander@npm:^6.2.1":
   version: 6.2.1
   resolution: "commander@npm:6.2.1"
@@ -15229,13 +15222,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"cypress@npm:9.5.1":
-  version: 9.5.1
-  resolution: "cypress@npm:9.5.1"
+"cypress@npm:12.17.4":
+  version: 12.17.4
+  resolution: "cypress@npm:12.17.4"
   dependencies:
-    "@cypress/request": ^2.88.10
+    "@cypress/request": 2.88.12
     "@cypress/xvfb": ^1.2.4
-    "@types/node": ^14.14.31
+    "@types/node": ^16.18.39
     "@types/sinonjs__fake-timers": 8.1.1
     "@types/sizzle": ^2.3.2
     arch: ^2.2.0
@@ -15247,12 +15240,12 @@ __metadata:
     check-more-types: ^2.24.0
     cli-cursor: ^3.1.0
     cli-table3: ~0.6.1
-    commander: ^5.1.0
+    commander: ^6.2.1
     common-tags: ^1.8.0
     dayjs: ^1.10.4
-    debug: ^4.3.2
+    debug: ^4.3.4
     enquirer: ^2.3.6
-    eventemitter2: ^6.4.3
+    eventemitter2: 6.4.7
     execa: 4.1.0
     executable: ^4.1.1
     extract-zip: 2.0.1
@@ -15265,19 +15258,20 @@ __metadata:
     listr2: ^3.8.3
     lodash: ^4.17.21
     log-symbols: ^4.0.0
-    minimist: ^1.2.5
+    minimist: ^1.2.8
     ospath: ^1.2.2
     pretty-bytes: ^5.6.0
+    process: ^0.11.10
     proxy-from-env: 1.0.0
     request-progress: ^3.0.0
-    semver: ^7.3.2
+    semver: ^7.5.3
     supports-color: ^8.1.1
     tmp: ~0.2.1
     untildify: ^4.0.0
     yauzl: ^2.10.0
   bin:
     cypress: bin/cypress
-  checksum: 96efebb8bfca52f214f793856a7eb40a6eb4a7bc06e5d7c17c7378cec8e3e3975d5777147066d04d95d88b99d4052bbf8749d96b4a25d3f79cc65e88e93f703d
+  checksum: c9c79f5493b23e9c8cfb92d45d50ea9d0fae54210dde203bfa794a79436faf60108d826fe9007a7d67fddf7919802ad8f006b7ae56c5c198c75d5bc85bbc851b
   languageName: node
   linkType: hard
 
@@ -17648,10 +17642,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"eventemitter2@npm:^6.4.3":
-  version: 6.4.9
-  resolution: "eventemitter2@npm:6.4.9"
-  checksum: be59577c1e1c35509c7ba0e2624335c35bbcfd9485b8a977384c6cc6759341ea1a98d3cb9dbaa5cea4fff9b687e504504e3f9c2cc1674cf3bd8a43a7c74ea3eb
+"eventemitter2@npm:6.4.7":
+  version: 6.4.7
+  resolution: "eventemitter2@npm:6.4.7"
+  checksum: 1b36a77e139d6965ebf3a36c01fa00c089ae6b80faa1911e52888f40b3a7057b36a2cc45dcd1ad87cda3798fe7b97a0aabcbb8175a8b96092a23bb7d0f039e66
   languageName: node
   linkType: hard
 
@@ -19383,7 +19377,7 @@ __metadata:
     core-js: 3.31.1
     css-loader: 6.8.1
     css-minimizer-webpack-plugin: 5.0.1
-    cypress: 9.5.1
+    cypress: 12.17.4
     d3: 7.8.5
     d3-force: 3.0.0
     d3-scale-chromatic: 3.0.0
@@ -23692,7 +23686,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"minimist@npm:^1.2.7":
+"minimist@npm:^1.2.7, minimist@npm:^1.2.8":
   version: 1.2.8
   resolution: "minimist@npm:1.2.8"
   checksum: 75a6d645fb122dad29c06a7597bddea977258957ed88d7a6df59b5cd3fe4a527e253e9bbf2e783e4b73657f9098b96a5fe96ab8a113655d4109108577ecf85b0
@@ -29200,7 +29194,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"semver@npm:7.5.4, semver@npm:7.x, semver@npm:^7.0.0, semver@npm:^7.1.1, semver@npm:^7.3.2, semver@npm:^7.3.4, semver@npm:^7.3.5, semver@npm:^7.3.7, semver@npm:^7.3.8, semver@npm:^7.5.1, semver@npm:^7.5.3":
+"semver@npm:7.5.4, semver@npm:7.x, semver@npm:^7.0.0, semver@npm:^7.1.1, semver@npm:^7.3.4, semver@npm:^7.3.5, semver@npm:^7.3.7, semver@npm:^7.3.8, semver@npm:^7.5.1, semver@npm:^7.5.3":
   version: 7.5.4
   resolution: "semver@npm:7.5.4"
   dependencies:
@@ -31231,6 +31225,18 @@ __metadata:
     universalify: ^0.2.0
     url-parse: ^1.5.3
   checksum: a7359e9a3e875121a84d6ba40cc184dec5784af84f67f3a56d1d2ae39b87c0e004e6ba7c7331f9622a7d2c88609032473488b28fe9f59a1fec115674589de39a
+  languageName: node
+  linkType: hard
+
+"tough-cookie@npm:^4.1.3":
+  version: 4.1.3
+  resolution: "tough-cookie@npm:4.1.3"
+  dependencies:
+    psl: ^1.1.33
+    punycode: ^2.1.1
+    universalify: ^0.2.0
+    url-parse: ^1.5.3
+  checksum: c9226afff36492a52118432611af083d1d8493a53ff41ec4ea48e5b583aec744b989e4280bcf476c910ec1525a89a4a0f1cae81c08b18fb2ec3a9b3a72b91dcc
   languageName: node
   linkType: hard
 
