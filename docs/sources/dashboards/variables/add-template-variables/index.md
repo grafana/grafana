@@ -1,4 +1,4 @@
-****---
+---
 aliases:
   - ../../reference/templating/
   - ../../variables/add-ad-hoc-filters/
