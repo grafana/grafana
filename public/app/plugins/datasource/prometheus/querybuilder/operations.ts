@@ -165,6 +165,10 @@ export function getOperationDefinitions(): QueryBuilderOperationDef[] {
       category: PromVisualQueryOperationCategory.Time,
     }),
     createFunction({
+      id: PromOperationId.DayOfYear,
+      category: PromVisualQueryOperationCategory.Time,
+    }),
+    createFunction({
       id: PromOperationId.DaysInMonth,
       category: PromVisualQueryOperationCategory.Time,
     }),

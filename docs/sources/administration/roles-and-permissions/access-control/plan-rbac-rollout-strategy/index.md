@@ -4,6 +4,10 @@ aliases:
   - ../../../enterprise/access-control/usage-scenarios/
 description: Plan your RBAC rollout strategy before you begin assigning roles to users
   and teams.
+labels:
+  products:
+    - cloud
+    - enterprise
 menuTitle: Plan your RBAC rollout strategy
 title: Plan your Grafana RBAC rollout strategy
 weight: 20
@@ -12,7 +16,7 @@ weight: 20
 # Plan your RBAC rollout strategy
 
 {{% admonition type="note" %}}
-Available in [Grafana Enterprise]({{< relref "../../../../introduction/grafana-enterprise/" >}}) and [Grafana Cloud Advanced](/docs/grafana-cloud).
+Available in [Grafana Enterprise]({{< relref "../../../../introduction/grafana-enterprise/" >}}) and [Grafana Cloud](/docs/grafana-cloud).
 {{% /admonition %}}
 
 An RBAC rollout strategy helps you determine _how_ you want to implement RBAC prior to assigning RBAC roles to users and teams.

@@ -206,7 +206,7 @@ func Test_GetPluginAssets(t *testing.T) {
 	requestedFile := filepath.Clean(tmpFile.Name())
 
 	t.Run("Given a request for an existing plugin file", func(t *testing.T) {
-		p := createPlugin(plugins.JSONData{ID: pluginID}, plugins.External, plugins.NewLocalFS(filepath.Dir(requestedFile)))
+		p := createPlugin(plugins.JSONData{ID: pluginID}, plugins.ClassExternal, plugins.NewLocalFS(filepath.Dir(requestedFile)))
 		pluginRegistry := &fakes.FakePluginRegistry{
 			Store: map[string]*plugins.Plugin{
 				p.ID: p,
@@ -224,7 +224,7 @@ func Test_GetPluginAssets(t *testing.T) {
 	})
 
 	t.Run("Given a request for a relative path", func(t *testing.T) {
-		p := createPlugin(plugins.JSONData{ID: pluginID}, plugins.External, plugins.NewFakeFS())
+		p := createPlugin(plugins.JSONData{ID: pluginID}, plugins.ClassExternal, plugins.NewFakeFS())
 		pluginRegistry := &fakes.FakePluginRegistry{
 			Store: map[string]*plugins.Plugin{
 				p.ID: p,
@@ -241,7 +241,7 @@ func Test_GetPluginAssets(t *testing.T) {
 	})
 
 	t.Run("Given a request for an existing plugin file that is not listed as a signature covered file", func(t *testing.T) {
-		p := createPlugin(plugins.JSONData{ID: pluginID}, plugins.Core, plugins.NewLocalFS(filepath.Dir(requestedFile)))
+		p := createPlugin(plugins.JSONData{ID: pluginID}, plugins.ClassCore, plugins.NewLocalFS(filepath.Dir(requestedFile)))
 		pluginRegistry := &fakes.FakePluginRegistry{
 			Store: map[string]*plugins.Plugin{
 				p.ID: p,
@@ -259,7 +259,7 @@ func Test_GetPluginAssets(t *testing.T) {
 	})
 
 	t.Run("Given a request for an non-existing plugin file", func(t *testing.T) {
-		p := createPlugin(plugins.JSONData{ID: pluginID}, plugins.External, plugins.NewFakeFS())
+		p := createPlugin(plugins.JSONData{ID: pluginID}, plugins.ClassExternal, plugins.NewFakeFS())
 		service := &fakes.FakePluginRegistry{
 			Store: map[string]*plugins.Plugin{
 				p.ID: p,
@@ -486,7 +486,7 @@ func pluginAssetScenario(t *testing.T, desc string, url string, urlPattern strin
 		cfg.IsFeatureToggleEnabled = func(_ string) bool { return false }
 		hs := HTTPServer{
 			Cfg:             cfg,
-			pluginStore:     store.New(pluginRegistry),
+			pluginStore:     store.New(pluginRegistry, &fakes.FakeLoader{}),
 			pluginFileStore: filestore.ProvideService(pluginRegistry),
 			log:             log.NewNopLogger(),
 			pluginsCDNService: pluginscdn.ProvideService(&config.Cfg{
@@ -552,13 +552,13 @@ func Test_PluginsList_AccessControl(t *testing.T) {
 		ID: "test-app", Type: "app", Name: "test-app",
 		Info: plugins.Info{
 			Version: "1.0.0",
-		}}, plugins.External, plugins.NewFakeFS())
+		}}, plugins.ClassExternal, plugins.NewFakeFS())
 	p2 := createPlugin(
 		plugins.JSONData{ID: "mysql", Type: "datasource", Name: "MySQL",
 			Info: plugins.Info{
 				Author:      plugins.InfoLink{Name: "Grafana Labs", URL: "https://grafana.com"},
 				Description: "Data source for MySQL databases",
-			}}, plugins.Core, plugins.NewFakeFS())
+			}}, plugins.ClassCore, plugins.NewFakeFS())
 
 	pluginRegistry := &fakes.FakePluginRegistry{
 		Store: map[string]*plugins.Plugin{
@@ -598,7 +598,7 @@ func Test_PluginsList_AccessControl(t *testing.T) {
 			server := SetupAPITestServer(t, func(hs *HTTPServer) {
 				hs.Cfg = setting.NewCfg()
 				hs.PluginSettings = &pluginSettings
-				hs.pluginStore = store.New(pluginRegistry)
+				hs.pluginStore = store.New(pluginRegistry, &fakes.FakeLoader{})
 				hs.pluginFileStore = filestore.ProvideService(pluginRegistry)
 				var err error
 				hs.pluginsUpdateChecker, err = updatechecker.ProvidePluginsService(hs.Cfg, nil, tracing.InitializeTracerForTest())

@@ -19,9 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
-	"github.com/grafana/grafana/pkg/services/datasources/permissions"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/adapters"
-	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
@@ -50,7 +48,7 @@ func (hs *HTTPServer) GetDataSources(c *contextmodel.ReqContext) response.Respon
 		return response.Error(500, "Failed to query datasources", err)
 	}
 
-	filtered, err := hs.filterDatasourcesByQueryPermission(c.Req.Context(), c.SignedInUser, dataSources)
+	filtered, err := hs.dsGuardian.New(c.SignedInUser.OrgID, c.SignedInUser).FilterDatasourcesByQueryPermissions(dataSources)
 	if err != nil {
 		return response.Error(500, "Failed to query datasources", err)
 	}
@@ -390,21 +388,19 @@ func (hs *HTTPServer) AddDataSource(c *contextmodel.ReqContext) response.Respons
 	dataSource, err := hs.DataSourcesService.AddDataSource(c.Req.Context(), &cmd)
 	if err != nil {
 		if errors.Is(err, datasources.ErrDataSourceNameExists) || errors.Is(err, datasources.ErrDataSourceUidExists) {
-			return response.Error(409, err.Error(), err)
+			return response.Error(http.StatusConflict, err.Error(), err)
 		}
 
 		if errors.As(err, &secretsPluginError) {
-			return response.Error(500, "Failed to add datasource: "+err.Error(), err)
+			return response.Error(http.StatusInternalServerError, "Failed to add datasource: "+err.Error(), err)
 		}
 
-		return response.Error(500, "Failed to add datasource", err)
+		return response.ErrOrFallback(http.StatusInternalServerError, "Failed to add datasource", err)
 	}
 
 	// Clear permission cache for the user who's created the data source, so that new permissions are fetched for their next call
 	// Required for cases when caller wants to immediately interact with the newly created object
-	if !hs.AccessControl.IsDisabled() {
-		hs.accesscontrolService.ClearUserPermissionCache(c.SignedInUser)
-	}
+	hs.accesscontrolService.ClearUserPermissionCache(c.SignedInUser)
 
 	ds := hs.convertModelToDtos(c.Req.Context(), dataSource)
 	return response.JSON(http.StatusOK, util.DynMap{
@@ -512,14 +508,19 @@ func (hs *HTTPServer) updateDataSourceByID(c *contextmodel.ReqContext, ds *datas
 
 	_, err := hs.DataSourcesService.UpdateDataSource(c.Req.Context(), &cmd)
 	if err != nil {
+		if errors.Is(err, datasources.ErrDataSourceNameExists) {
+			return response.Error(http.StatusConflict, "Failed to update datasource: "+err.Error(), err)
+		}
+
 		if errors.Is(err, datasources.ErrDataSourceUpdatingOldVersion) {
-			return response.Error(409, "Datasource has already been updated by someone else. Please reload and try again", err)
+			return response.Error(http.StatusConflict, "Datasource has already been updated by someone else. Please reload and try again", err)
 		}
 
 		if errors.As(err, &secretsPluginError) {
-			return response.Error(500, "Failed to update datasource: "+err.Error(), err)
+			return response.Error(http.StatusInternalServerError, "Failed to update datasource: "+err.Error(), err)
 		}
-		return response.Error(500, "Failed to update datasource", err)
+
+		return response.ErrOrFallback(http.StatusInternalServerError, "Failed to update datasource", err)
 	}
 
 	query := datasources.GetDataSourceQuery{
@@ -811,23 +812,16 @@ func (hs *HTTPServer) CheckDatasourceHealth(c *contextmodel.ReqContext) response
 }
 
 func (hs *HTTPServer) checkDatasourceHealth(c *contextmodel.ReqContext, ds *datasources.DataSource) response.Response {
-	plugin, exists := hs.pluginStore.Plugin(c.Req.Context(), ds.Type)
-	if !exists {
-		return response.Error(http.StatusInternalServerError, "Unable to find datasource plugin", nil)
-	}
-
-	dsInstanceSettings, err := adapters.ModelToInstanceSettings(ds, hs.decryptSecureJsonDataFn(c.Req.Context()))
+	pCtx, err := hs.pluginContextProvider.GetWithDataSource(c.Req.Context(), ds.Type, c.SignedInUser, ds)
 	if err != nil {
-		return response.Error(http.StatusInternalServerError, "Unable to get datasource model", err)
+		if errors.Is(err, plugincontext.ErrPluginNotFound) {
+			return response.Error(http.StatusNotFound, "Unable to find datasource plugin", nil)
+		}
+		return response.Error(http.StatusInternalServerError, "Unable to get plugin context", err)
 	}
 	req := &backend.CheckHealthRequest{
-		PluginContext: backend.PluginContext{
-			User:                       adapters.BackendUserFromSignedInUser(c.SignedInUser),
-			OrgID:                      c.OrgID,
-			PluginID:                   plugin.ID,
-			DataSourceInstanceSettings: dsInstanceSettings,
-		},
-		Headers: map[string]string{},
+		PluginContext: pCtx,
+		Headers:       map[string]string{},
 	}
 
 	var dsURL string
@@ -866,29 +860,6 @@ func (hs *HTTPServer) checkDatasourceHealth(c *contextmodel.ReqContext, ds *data
 	}
 
 	return response.JSON(http.StatusOK, payload)
-}
-
-func (hs *HTTPServer) decryptSecureJsonDataFn(ctx context.Context) func(ds *datasources.DataSource) (map[string]string, error) {
-	return func(ds *datasources.DataSource) (map[string]string, error) {
-		return hs.DataSourcesService.DecryptedValues(ctx, ds)
-	}
-}
-
-func (hs *HTTPServer) filterDatasourcesByQueryPermission(ctx context.Context, user *user.SignedInUser, ds []*datasources.DataSource) ([]*datasources.DataSource, error) {
-	query := datasources.DatasourcesPermissionFilterQuery{
-		User:        user,
-		Datasources: ds,
-	}
-
-	dataSources, err := hs.DatasourcePermissionsService.FilterDatasourcesBasedOnQueryPermissions(ctx, &query)
-	if err != nil {
-		if !errors.Is(err, permissions.ErrNotImplemented) {
-			return nil, err
-		}
-		return ds, nil
-	}
-
-	return dataSources, nil
 }
 
 // swagger:parameters checkDatasourceHealthByID

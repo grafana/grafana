@@ -18,27 +18,29 @@ import (
 var _ plugins.Installer = (*PluginInstaller)(nil)
 
 type PluginInstaller struct {
-	pluginRepo     repo.Service
-	pluginStorage  storage.ZipExtractor
-	pluginRegistry registry.Service
-	pluginLoader   loader.Service
-	log            log.Logger
+	pluginRepo           repo.Service
+	pluginStorage        storage.ZipExtractor
+	pluginStorageDirFunc storage.DirNameGeneratorFunc
+	pluginRegistry       registry.Service
+	pluginLoader         loader.Service
+	log                  log.Logger
 }
 
 func ProvideInstaller(cfg *config.Cfg, pluginRegistry registry.Service, pluginLoader loader.Service,
 	pluginRepo repo.Service) *PluginInstaller {
 	return New(pluginRegistry, pluginLoader, pluginRepo,
-		storage.FileSystem(log.NewPrettyLogger("installer.fs"), cfg.PluginsPath))
+		storage.FileSystem(log.NewPrettyLogger("installer.fs"), cfg.PluginsPath), storage.SimpleDirNameGeneratorFunc)
 }
 
 func New(pluginRegistry registry.Service, pluginLoader loader.Service, pluginRepo repo.Service,
-	pluginStorage storage.ZipExtractor) *PluginInstaller {
+	pluginStorage storage.ZipExtractor, pluginStorageDirFunc storage.DirNameGeneratorFunc) *PluginInstaller {
 	return &PluginInstaller{
-		pluginLoader:   pluginLoader,
-		pluginRegistry: pluginRegistry,
-		pluginRepo:     pluginRepo,
-		pluginStorage:  pluginStorage,
-		log:            log.New("plugin.installer"),
+		pluginLoader:         pluginLoader,
+		pluginRegistry:       pluginRegistry,
+		pluginRepo:           pluginRepo,
+		pluginStorage:        pluginStorage,
+		pluginStorageDirFunc: pluginStorageDirFunc,
+		log:                  log.New("plugin.installer"),
 	}
 }
 
@@ -102,7 +104,7 @@ func (m *PluginInstaller) Add(ctx context.Context, pluginID, version string, opt
 		}
 	}
 
-	extractedArchive, err := m.pluginStorage.Extract(ctx, pluginID, pluginArchive.File)
+	extractedArchive, err := m.pluginStorage.Extract(ctx, pluginID, m.pluginStorageDirFunc, pluginArchive.File)
 	if err != nil {
 		return err
 	}
@@ -110,13 +112,13 @@ func (m *PluginInstaller) Add(ctx context.Context, pluginID, version string, opt
 	// download dependency plugins
 	pathsToScan := []string{extractedArchive.Path}
 	for _, dep := range extractedArchive.Dependencies {
-		m.log.Info("Fetching %s dependencies...", dep.ID)
+		m.log.Info(fmt.Sprintf("Fetching %s dependencies...", dep.ID))
 		d, err := m.pluginRepo.GetPluginArchive(ctx, dep.ID, dep.Version, compatOpts)
 		if err != nil {
 			return fmt.Errorf("%v: %w", fmt.Sprintf("failed to download plugin %s from repository", dep.ID), err)
 		}
 
-		depArchive, err := m.pluginStorage.Extract(ctx, dep.ID, d.File)
+		depArchive, err := m.pluginStorage.Extract(ctx, dep.ID, m.pluginStorageDirFunc, d.File)
 		if err != nil {
 			return err
 		}
@@ -124,9 +126,9 @@ func (m *PluginInstaller) Add(ctx context.Context, pluginID, version string, opt
 		pathsToScan = append(pathsToScan, depArchive.Path)
 	}
 
-	_, err = m.pluginLoader.Load(ctx, sources.NewLocalSource(plugins.External, pathsToScan))
+	_, err = m.pluginLoader.Load(ctx, sources.NewLocalSource(plugins.ClassExternal, pathsToScan))
 	if err != nil {
-		m.log.Error("Could not load plugins", "paths", pathsToScan, "err", err)
+		m.log.Error("Could not load plugins", "paths", pathsToScan, "error", err)
 		return err
 	}
 
@@ -143,9 +145,17 @@ func (m *PluginInstaller) Remove(ctx context.Context, pluginID string) error {
 		return plugins.ErrUninstallCorePlugin
 	}
 
-	if err := m.pluginLoader.Unload(ctx, plugin.ID); err != nil {
+	p, err := m.pluginLoader.Unload(ctx, plugin)
+	if err != nil {
 		return err
 	}
+
+	if remover, ok := p.FS.(plugins.FSRemover); ok {
+		if err = remover.Remove(); err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 

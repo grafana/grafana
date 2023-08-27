@@ -327,6 +327,7 @@ describe('PanelAlertTabContent', () => {
       },
       undefined,
       undefined,
+      undefined,
       undefined
     );
   });

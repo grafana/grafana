@@ -28,7 +28,7 @@ func Test_ReadPluginJSON(t *testing.T) {
 			},
 			expected: JSONData{
 				ID:   "test-app",
-				Type: "app",
+				Type: TypeApp,
 				Name: "Test App",
 				Info: Info{
 					Author: InfoLink{
@@ -91,7 +91,7 @@ func Test_ReadPluginJSON(t *testing.T) {
 			},
 			expected: JSONData{
 				ID:   "grafana-piechart-panel",
-				Type: "panel",
+				Type: TypePanel,
 				Name: "Pie Chart (old)",
 				Dependencies: Dependencies{
 					GrafanaVersion: "*",
@@ -99,6 +99,26 @@ func Test_ReadPluginJSON(t *testing.T) {
 				},
 				Includes: []*Includes{
 					{Name: "Pie Charts", Path: "dashboards/demo.json", Type: "dashboard", Role: org.RoleViewer},
+				},
+			},
+		},
+		{
+			name: "Phlare<>Pyroscope rebranding -- hardcoded alias",
+			pluginJSON: func(t *testing.T) io.ReadCloser {
+				pJSON := `{
+					"id": "grafana-pyroscope-datasource",
+					"type": "datasource"
+				}`
+				return io.NopCloser(strings.NewReader(pJSON))
+			},
+			expected: JSONData{
+				ID:    "grafana-pyroscope-datasource",
+				Alias: "phlare", // Hardcoded from the parser
+				Type:  TypeDataSource,
+				Dependencies: Dependencies{
+					GrafanaDependency: "",
+					GrafanaVersion:    "*",
+					Plugins:           []Dependency{},
 				},
 			},
 		},
@@ -133,7 +153,7 @@ func Test_validatePluginJSON(t *testing.T) {
 			args: args{
 				data: JSONData{
 					ID:   "grafana-plugin-id",
-					Type: DataSource,
+					Type: TypeDataSource,
 				},
 			},
 		},
@@ -141,7 +161,7 @@ func Test_validatePluginJSON(t *testing.T) {
 			name: "Invalid plugin ID",
 			args: args{
 				data: JSONData{
-					Type: Panel,
+					Type: TypePanel,
 				},
 			},
 			err: ErrInvalidPluginJSON,

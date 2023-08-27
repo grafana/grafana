@@ -75,7 +75,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       gap: theme.spacing(1, 4),
       justifyContent: 'space-between',
       maxWidth: '100%',
-      minWidth: '300px',
+      minWidth: '200px',
     }),
     pageHeader: css({
       label: 'page-header',

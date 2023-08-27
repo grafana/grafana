@@ -1,9 +1,17 @@
 import React, { useMemo } from 'react';
 
-import { FieldType, PanelProps } from '@grafana/data';
+import { DataFrame, FieldMatcherID, fieldMatchers, FieldType, PanelProps, TimeRange } from '@grafana/data';
 import { isLikelyAscendingVector } from '@grafana/data/src/transformations/transformers/joinDataFrames';
 import { config, PanelDataErrorView } from '@grafana/runtime';
-import { KeyboardPlugin, TimeSeries, TooltipDisplayMode, TooltipPlugin, usePanelContext } from '@grafana/ui';
+import {
+  KeyboardPlugin,
+  preparePlotFrame,
+  TimeSeries,
+  TooltipDisplayMode,
+  TooltipPlugin,
+  usePanelContext,
+} from '@grafana/ui';
+import { XYFieldMatchers } from '@grafana/ui/src/components/GraphNG/types';
 import { findFieldIndex } from 'app/features/dimensions';
 
 import { ContextMenuPlugin } from '../timeseries/plugins/ContextMenuPlugin';
@@ -22,7 +30,19 @@ export const TrendPanel = ({
   replaceVariables,
   id,
 }: PanelProps<Options>) => {
-  const { sync } = usePanelContext();
+  const { sync, dataLinkPostProcessor } = usePanelContext();
+  // Need to fallback to first number field if no xField is set in options otherwise panel crashes 😬
+  const trendXFieldName =
+    options.xField ?? data.series[0].fields.find((field) => field.type === FieldType.number)?.name;
+
+  const preparePlotFrameTimeless = (frames: DataFrame[], dimFields: XYFieldMatchers, timeRange?: TimeRange | null) => {
+    dimFields = {
+      ...dimFields,
+      x: fieldMatchers.get(FieldMatcherID.byName).get(trendXFieldName),
+    };
+
+    return preparePlotFrame(frames, dimFields);
+  };
 
   const info = useMemo(() => {
     if (data.series.length > 1) {
@@ -90,12 +110,17 @@ export const TrendPanel = ({
       height={height}
       legend={options.legend}
       options={options}
+      preparePlotFrame={preparePlotFrameTimeless}
     >
       {(config, alignedDataFrame) => {
-        if (
-          alignedDataFrame.fields.filter((f) => f.config.links !== undefined && f.config.links.length > 0).length > 0
-        ) {
-          alignedDataFrame = regenerateLinksSupplier(alignedDataFrame, info.frames!, replaceVariables, timeZone);
+        if (alignedDataFrame.fields.some((f) => Boolean(f.config.links?.length))) {
+          alignedDataFrame = regenerateLinksSupplier(
+            alignedDataFrame,
+            info.frames!,
+            replaceVariables,
+            timeZone,
+            dataLinkPostProcessor
+          );
         }
 
         return (

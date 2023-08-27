@@ -8,6 +8,11 @@ keywords:
   - documentation
   - json
   - model
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: JSON model
 weight: 700
 ---

@@ -7,7 +7,7 @@ jobs:
   doc-validator:
     runs-on: "ubuntu-latest"
     container:
-      image: "grafana/doc-validator:c2a784f"
+      image: "grafana/doc-validator:v3.2.1"
     steps:
       - name: "Checkout code"
         uses: "actions/checkout@v3"
@@ -20,7 +20,7 @@ jobs:
           ./docs/sources
           /docs/grafana/latest
           | reviewdog
-          '--efm=ERROR: %f:%l:%c %m'
+          -f=rdjsonl
           --fail-on-error
           --filter-mode=nofilter
           --name=doc-validator

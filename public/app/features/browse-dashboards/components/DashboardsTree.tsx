@@ -7,6 +7,7 @@ import InfiniteLoader from 'react-window-infinite-loader';
 import { GrafanaTheme2, isTruthy } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { useStyles2 } from '@grafana/ui';
+import { t, Trans } from 'app/core/internationalization';
 import { DashboardViewItem } from 'app/features/search/types';
 
 import {
@@ -21,7 +22,6 @@ import CheckboxCell from './CheckboxCell';
 import CheckboxHeaderCell from './CheckboxHeaderCell';
 import { NameCell } from './NameCell';
 import { TagsCell } from './TagsCell';
-import { TypeCell } from './TypeCell';
 import { useCustomFlexLayout } from './customFlexTableLayout';
 
 interface DashboardsTreeProps {
@@ -35,11 +35,11 @@ interface DashboardsTreeProps {
   onItemSelectionChange: (item: DashboardViewItem, newState: boolean) => void;
 
   isItemLoaded: (itemIndex: number) => boolean;
-  requestLoadMore: (startIndex: number, endIndex: number) => void;
+  requestLoadMore: (folderUid: string | undefined) => void;
 }
 
-const HEADER_HEIGHT = 35;
-const ROW_HEIGHT = 35;
+const HEADER_HEIGHT = 36;
+const ROW_HEIGHT = 36;
 
 export function DashboardsTree({
   items,
@@ -76,24 +76,21 @@ export function DashboardsTree({
     const nameColumn: DashboardsTreeColumn = {
       id: 'name',
       width: 3,
-      Header: <span style={{ paddingLeft: 20 }}>Name</span>,
+      Header: (
+        <span style={{ paddingLeft: 24 }}>
+          <Trans i18nKey="browse-dashboards.dashboards-tree.name-column">Name</Trans>
+        </span>
+      ),
       Cell: (props: DashboardsTreeCellProps) => <NameCell {...props} onFolderClick={onFolderClick} />,
-    };
-
-    const typeColumn: DashboardsTreeColumn = {
-      id: 'type',
-      width: 1,
-      Header: 'Type',
-      Cell: TypeCell,
     };
 
     const tagsColumns: DashboardsTreeColumn = {
       id: 'tags',
       width: 2,
-      Header: 'Tags',
+      Header: t('browse-dashboards.dashboards-tree.tags-column', 'Tags'),
       Cell: TagsCell,
     };
-    const columns = [canSelect && checkboxColumn, nameColumn, typeColumn, tagsColumns].filter(isTruthy);
+    const columns = [canSelect && checkboxColumn, nameColumn, tagsColumns].filter(isTruthy);
 
     return columns;
   }, [onFolderClick, canSelect]);
@@ -122,9 +119,10 @@ export function DashboardsTree({
 
   const handleLoadMore = useCallback(
     (startIndex: number, endIndex: number) => {
-      requestLoadMore(startIndex, endIndex);
+      const { parentUID } = items[startIndex];
+      requestLoadMore(parentUID);
     },
-    [requestLoadMore]
+    [requestLoadMore, items]
   );
 
   return (
@@ -149,7 +147,7 @@ export function DashboardsTree({
         );
       })}
 
-      <div {...getTableBodyProps()}>
+      <div {...getTableBodyProps()} data-testid={selectors.pages.BrowseDashboards.table.body}>
         <InfiniteLoader
           ref={infiniteLoaderRef}
           itemCount={items.length}
@@ -198,7 +196,7 @@ function VirtualListRow({ index, style, data }: VirtualListRowProps) {
     <div
       {...row.getRowProps({ style })}
       className={cx(styles.row, styles.bodyRow)}
-      data-testid={selectors.pages.BrowseDashbards.table.row(row.original.item.uid)}
+      data-testid={selectors.pages.BrowseDashboards.table.row(row.original.item.uid)}
     >
       {row.cells.map((cell) => {
         const { key, ...cellProps } = cell.getCellProps();

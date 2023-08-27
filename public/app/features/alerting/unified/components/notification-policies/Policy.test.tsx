@@ -56,7 +56,7 @@ describe('Policy', () => {
     expect(within(defaultPolicy).getByText('Default policy')).toBeVisible();
 
     // click "more actions" and check if we can edit and delete
-    expect(await within(defaultPolicy).getByTestId('more-actions')).toBeInTheDocument();
+    expect(within(defaultPolicy).getByTestId('more-actions')).toBeInTheDocument();
     await userEvent.click(within(defaultPolicy).getByTestId('more-actions'));
 
     // should be editable
@@ -102,8 +102,8 @@ describe('Policy', () => {
 
       // click "more actions" and check if we can delete
       await userEvent.click(policy.getByTestId('more-actions'));
-      expect(await screen.queryByRole('menuitem', { name: 'Edit' })).not.toBeDisabled();
-      expect(await screen.queryByRole('menuitem', { name: 'Delete' })).not.toBeDisabled();
+      expect(screen.queryByRole('menuitem', { name: 'Edit' })).not.toBeDisabled();
+      expect(screen.queryByRole('menuitem', { name: 'Delete' })).not.toBeDisabled();
 
       await userEvent.click(screen.getByRole('menuitem', { name: 'Delete' }));
       expect(onDeletePolicy).toHaveBeenCalled();

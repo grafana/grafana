@@ -17,9 +17,10 @@ import { LibraryPanelsView } from '../LibraryPanelsView/LibraryPanelsView';
 interface Props {
   panel: PanelModel;
   searchQuery: string;
+  isWidget?: boolean;
 }
 
-export const PanelLibraryOptionsGroup = ({ panel, searchQuery }: Props) => {
+export const PanelLibraryOptionsGroup = ({ panel, searchQuery, isWidget = false }: Props) => {
   const [showingAddPanelModal, setShowingAddPanelModal] = useState(false);
   const [changeToPanel, setChangeToPanel] = useState<LibraryElementDTO | undefined>(undefined);
   const [panelFilter, setPanelFilter] = useState<string[]>([]);
@@ -43,7 +44,6 @@ export const PanelLibraryOptionsGroup = ({ panel, searchQuery }: Props) => {
 
   const onAddToPanelLibrary = () => setShowingAddPanelModal(true);
   const onDismissChangeToPanel = () => setChangeToPanel(undefined);
-
   return (
     <VerticalGroup spacing="md">
       {!panel.libraryPanel && (
@@ -54,7 +54,7 @@ export const PanelLibraryOptionsGroup = ({ panel, searchQuery }: Props) => {
         </VerticalGroup>
       )}
 
-      <PanelTypeFilter onChange={onPanelFilterChange} />
+      <PanelTypeFilter onChange={onPanelFilterChange} isWidget={isWidget} />
 
       <div className={styles.libraryPanelsView}>
         <LibraryPanelsView
@@ -63,6 +63,7 @@ export const PanelLibraryOptionsGroup = ({ panel, searchQuery }: Props) => {
           panelFilter={panelFilter}
           onClickCard={setChangeToPanel}
           showSecondaryActions
+          isWidget={isWidget}
         />
       </div>
 

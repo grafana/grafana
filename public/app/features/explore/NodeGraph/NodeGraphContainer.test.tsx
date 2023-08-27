@@ -2,7 +2,6 @@ import { render, screen } from '@testing-library/react';
 import React from 'react';
 
 import { getDefaultTimeRange, MutableDataFrame } from '@grafana/data';
-import { ExploreId } from 'app/types';
 
 import { UnconnectedNodeGraphContainer } from './NodeGraphContainer';
 
@@ -11,7 +10,7 @@ describe('NodeGraphContainer', () => {
     const { container } = render(
       <UnconnectedNodeGraphContainer
         dataFrames={[emptyFrame]}
-        exploreId={ExploreId.left}
+        exploreId={'left'}
         range={getDefaultTimeRange()}
         splitOpenFn={() => {}}
         withTraceView={true}
@@ -19,22 +18,22 @@ describe('NodeGraphContainer', () => {
       />
     );
 
-    // Make sure we only show header in the collapsible
-    expect(container.firstChild?.childNodes.length).toBe(1);
+    // Make sure we only show header and loading bar container from PanelChrome in the collapsible
+    expect(container.firstChild?.childNodes.length).toBe(2);
   });
 
   it('shows the graph if not with trace view', async () => {
     const { container } = render(
       <UnconnectedNodeGraphContainer
         dataFrames={[nodes]}
-        exploreId={ExploreId.left}
+        exploreId={'left'}
         range={getDefaultTimeRange()}
         splitOpenFn={() => {}}
         datasourceType={''}
       />
     );
 
-    expect(container.firstChild?.childNodes.length).toBe(2);
+    expect(container.firstChild?.childNodes.length).toBe(3);
     expect(container.querySelector('svg')).toBeInTheDocument();
     await screen.findByLabelText(/Node: tempo-querier/);
   });

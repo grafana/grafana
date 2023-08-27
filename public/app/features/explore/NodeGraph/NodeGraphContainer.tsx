@@ -5,16 +5,18 @@ import { useToggle, useWindowSize } from 'react-use';
 
 import { applyFieldOverrides, DataFrame, GrafanaTheme2, SplitOpen } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
-import { Collapse, useStyles2, useTheme2 } from '@grafana/ui';
+import { useStyles2, useTheme2, PanelChrome } from '@grafana/ui';
 
 import { NodeGraph } from '../../../plugins/panel/nodeGraph';
 import { useCategorizeFrames } from '../../../plugins/panel/nodeGraph/useCategorizeFrames';
-import { ExploreId, StoreState } from '../../../types';
+import { StoreState } from '../../../types';
 import { useLinks } from '../utils/links';
 
 const getStyles = (theme: GrafanaTheme2) => ({
   warningText: css`
     label: warningText;
+    display: flex;
+    align-items: center;
     font-size: ${theme.typography.bodySmall.fontSize};
     color: ${theme.colors.text.secondary};
   `,
@@ -23,7 +25,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
 interface OwnProps {
   // Edges and Nodes are separate frames
   dataFrames: DataFrame[];
-  exploreId: ExploreId;
+  exploreId: string;
   // When showing the node graph together with trace view we do some changes so it works better.
   withTraceView?: boolean;
   datasourceType: string;
@@ -53,9 +55,10 @@ export function UnconnectedNodeGraphContainer(props: Props) {
   });
 
   const { nodes } = useCategorizeFrames(frames);
-  const [open, toggleOpen] = useToggle(false);
+  const [collapsed, toggleCollapsed] = useToggle(true);
+
   const toggled = () => {
-    toggleOpen();
+    toggleCollapsed();
     reportInteraction('grafana_traces_node_graph_panel_clicked', {
       datasourceType: datasourceType,
       grafana_version: config.buildInfo.version,
@@ -81,12 +84,13 @@ export function UnconnectedNodeGraphContainer(props: Props) {
     ) : null;
 
   return (
-    <Collapse
-      label={<span>Node graph{countWarning} </span>}
-      collapsible={withTraceView}
+    <PanelChrome
+      title={`Node graph`}
+      titleItems={countWarning}
       // We allow collapsing this only when it is shown together with trace view.
-      isOpen={withTraceView ? open : true}
-      onToggle={withTraceView ? () => toggled() : undefined}
+      collapsible={!!withTraceView}
+      collapsed={withTraceView ? collapsed : false}
+      onToggleCollapse={withTraceView ? toggled : undefined}
     >
       <div
         ref={containerRef}
@@ -101,7 +105,7 @@ export function UnconnectedNodeGraphContainer(props: Props) {
       >
         <NodeGraph dataFrames={frames} getLinks={getLinks} />
       </div>
-    </Collapse>
+    </PanelChrome>
   );
 }
 

@@ -40,7 +40,7 @@ func TestValidateQueryPublicDashboardRequest(t *testing.T) {
 				req: PublicDashboardQueryDTO{
 					IntervalMs:    1000,
 					MaxDataPoints: 1000,
-					TimeRange: TimeSettings{
+					TimeRange: TimeRangeDTO{
 						From: "now-1h",
 						To:   "now",
 					},
@@ -88,7 +88,7 @@ func TestValidateQueryPublicDashboardRequest(t *testing.T) {
 			name: "Returns validation error when time range from is invalid",
 			args: args{
 				req: PublicDashboardQueryDTO{
-					TimeRange: TimeSettings{
+					TimeRange: TimeRangeDTO{
 						From: "invalid",
 						To:   "1622560000000",
 					},
@@ -103,7 +103,7 @@ func TestValidateQueryPublicDashboardRequest(t *testing.T) {
 			name: "Returns validation error when time range to is invalid",
 			args: args{
 				req: PublicDashboardQueryDTO{
-					TimeRange: TimeSettings{
+					TimeRange: TimeRangeDTO{
 						From: "1622560000000",
 						To:   "invalid",
 					},
@@ -118,7 +118,7 @@ func TestValidateQueryPublicDashboardRequest(t *testing.T) {
 			name: "Returns validation error when time range from or to is blank",
 			args: args{
 				req: PublicDashboardQueryDTO{
-					TimeRange: TimeSettings{
+					TimeRange: TimeRangeDTO{
 						From: "",
 						To:   "",
 					},

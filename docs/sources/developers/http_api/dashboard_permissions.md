@@ -13,6 +13,10 @@ keywords:
   - permission
   - permissions
   - acl
+labels:
+  products:
+    - enterprise
+    - oss
 title: Dashboard Permissions HTTP API
 ---
 

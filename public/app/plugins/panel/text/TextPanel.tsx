@@ -67,6 +67,8 @@ function processContent(options: Options, interpolate: InterpolateFunction, disa
     return '';
   }
 
+  // Variables must be interpolated before content is converted to markdown so using variables
+  // in URLs work properly
   content = interpolate(content, {}, options.code?.language === 'json' ? 'json' : 'html');
 
   switch (mode) {

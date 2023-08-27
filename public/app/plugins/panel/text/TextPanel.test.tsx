@@ -104,6 +104,43 @@ describe('TextPanel', () => {
     expect(waited.innerHTML).toEqual('<p>We begin by a simple sentence.\n<code>code block</code></p>\n');
   });
 
+  it('interpolates variables before content is converted to markdown', async () => {
+    const contentTest = '${myVariable}';
+    replaceVariablesMock.mockImplementationOnce((str) => {
+      return str.replace('${myVariable}', '_hello_');
+    });
+
+    const props = Object.assign({}, defaultProps, {
+      options: { content: contentTest, mode: TextMode.Markdown },
+    });
+
+    setup(props);
+
+    const waited = await screen.getByTestId('TextPanel-converted-content');
+    expect(waited.innerHTML).toEqual('<p><em>hello</em></p>\n');
+  });
+
+  // Tests https://github.com/grafana/grafana/issues/49759 explicitly
+  it('interpolates variables correctly so they can be used in markdown urls', async () => {
+    const contentTest = '[Example: ${__url_time_range}](https://example.com/?${__url_time_range})';
+    replaceVariablesMock.mockImplementationOnce((str) => {
+      return str.replace(/\${__url_time_range}/g, 'from=now-6h&to=now');
+    });
+
+    const props = Object.assign({}, defaultProps, {
+      options: { content: contentTest, mode: TextMode.Markdown },
+    });
+
+    setup(props);
+
+    const waited = await screen.getByTestId('TextPanel-converted-content');
+    // Yes, ampersands in query string in href attribute should be encoded
+    // https://stackoverflow.com/questions/3705591/do-i-encode-ampersands-in-a-href
+    expect(waited.innerHTML).toEqual(
+      '<p><a href="https://example.com/?from=now-6h&amp;to=now">Example: from=now-6h&amp;to=now</a></p>\n'
+    );
+  });
+
   it('converts content to html when in html mode', () => {
     const contentTest = 'We begin by a simple sentence.\n```This is a code block\n```';
     replaceVariablesMock.mockReturnValueOnce(contentTest);

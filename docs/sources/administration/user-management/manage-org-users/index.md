@@ -7,6 +7,10 @@ aliases:
   - ../manage-users-and-permissions/manage-org-users/manage-pending-invites/
   - ../manage-users-and-permissions/manage-org-users/remove-user-from-org/
   - ../manage-users-and-permissions/manage-org-users/view-list-org-users/
+labels:
+  products:
+    - enterprise
+    - oss
 title: Manage users in an organization
 weight: 400
 ---
@@ -16,6 +20,10 @@ weight: 400
 Organization administrators can invite users to join their organization. Organization users have access to organization resources based on their role, which is **Admin**, **Editor**, or **Viewer**. Permissions associated with each role determine the tasks a user can perform in the system.
 
 For more information about organization user permissions, refer to [Organization users and permissions]({{< relref "../../roles-and-permissions/#organization-users-and-permissions" >}}).
+
+{{% admonition type="note" %}}
+Users added at the organization level will have access to all stacks and services by default, without the ability to be filtered by stack unless Single Sign-On (SSO) or Role-Based Access Control (RBAC) is implemented.
+{{% /admonition %}}
 
 {{< section >}}
 
@@ -89,6 +97,7 @@ If you have [server administrator]({{< relref "../../roles-and-permissions/#graf
    > **Note**: It might be that you are currently in the proper organization and don't need to switch organizations.
 
 1. Navigate to **Administration > Users**.
+1. Click **Organization users**.
 1. Click **Invite**.
 1. Enter the following information:
 

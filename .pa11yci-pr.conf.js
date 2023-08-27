@@ -74,13 +74,13 @@ var config = {
         "click element button[aria-label='Login button']",
         "wait for element [aria-label='Skip change password button'] to be visible",
       ],
-      threshold: 14,
+      threshold: 15,
       rootElement: '.main-view',
     },
     {
       url: '${HOST}/?orgId=1',
       wait: 500,
-      threshold: 0,
+      threshold: 3,
     },
     {
       url: '${HOST}/d/O6f11TZWk/panel-tests-bar-gauge',
@@ -93,7 +93,7 @@ var config = {
       url: '${HOST}/?orgId=1&search=open',
       wait: 500,
       rootElement: '.main-view',
-      threshold: 0,
+      threshold: 3,
     },
     {
       url: '${HOST}/alerting/list',

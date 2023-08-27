@@ -11,6 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/models/usertoken"
+	"github.com/grafana/grafana/pkg/services/anonymous/anontest"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/auth/authtest"
 	"github.com/grafana/grafana/pkg/services/authn"
@@ -29,7 +30,7 @@ func TestSession_Test(t *testing.T) {
 	cfg := setting.NewCfg()
 	cfg.LoginCookieName = ""
 	cfg.LoginMaxLifetime = 20 * time.Second
-	s := ProvideSession(cfg, &authtest.FakeUserAuthTokenService{}, featuremgmt.WithFeatures())
+	s := ProvideSession(cfg, &authtest.FakeUserAuthTokenService{}, featuremgmt.WithFeatures(), &anontest.FakeAnonymousSessionService{})
 
 	disabled := s.Test(context.Background(), &authn.Request{HTTPRequest: validHTTPReq})
 	assert.False(t, disabled)
@@ -145,7 +146,7 @@ func TestSession_Authenticate(t *testing.T) {
 			cfg.LoginCookieName = cookieName
 			cfg.TokenRotationIntervalMinutes = 10
 			cfg.LoginMaxLifetime = 20 * time.Second
-			s := ProvideSession(cfg, tt.fields.sessionService, tt.fields.features)
+			s := ProvideSession(cfg, tt.fields.sessionService, tt.fields.features, &anontest.FakeAnonymousSessionService{})
 
 			got, err := s.Authenticate(context.Background(), tt.args.r)
 			require.True(t, (err != nil) == tt.wantErr, err)
@@ -185,7 +186,7 @@ func TestSession_Hook(t *testing.T) {
 				token.UnhashedToken = "new-token"
 				return true, token, nil
 			},
-		}, featuremgmt.WithFeatures())
+		}, featuremgmt.WithFeatures(), &anontest.FakeAnonymousSessionService{})
 
 		sampleID := &authn.Identity{
 			SessionToken: &auth.UserToken{
@@ -219,7 +220,7 @@ func TestSession_Hook(t *testing.T) {
 	})
 
 	t.Run("should not rotate token with feature flag", func(t *testing.T) {
-		s := ProvideSession(setting.NewCfg(), nil, featuremgmt.WithFeatures(featuremgmt.FlagClientTokenRotation))
+		s := ProvideSession(setting.NewCfg(), nil, featuremgmt.WithFeatures(featuremgmt.FlagClientTokenRotation), &anontest.FakeAnonymousSessionService{})
 
 		req := &authn.Request{}
 		identity := &authn.Identity{}

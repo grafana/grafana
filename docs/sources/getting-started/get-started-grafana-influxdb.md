@@ -2,6 +2,10 @@
 aliases:
   - getting-started-influxdb/
 description: Learn how to build your first InfluxDB dashboard in Grafana.
+labels:
+  products:
+    - enterprise
+    - oss
 title: Get started with Grafana and InfluxDB
 weight: 400
 ---

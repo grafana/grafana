@@ -36,9 +36,9 @@ FeatureInfoBox.displayName = 'FeatureInfoBox';
 
 const getFeatureInfoBoxStyles = (theme: GrafanaTheme2) => {
   return {
-    badge: css`
-      margin-bottom: ${theme.spacing(1)};
-    `,
+    badge: css({
+      marginBottom: theme.spacing(1),
+    }),
   };
 };
 

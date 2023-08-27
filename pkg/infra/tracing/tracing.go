@@ -11,7 +11,6 @@ import (
 	"sync"
 	"time"
 
-	"go.etcd.io/etcd/api/v3/version"
 	jaegerpropagator "go.opentelemetry.io/contrib/propagators/jaeger"
 	"go.opentelemetry.io/contrib/samplers/jaegerremote"
 	"go.opentelemetry.io/otel"
@@ -129,7 +128,7 @@ type Span interface {
 
 	// contextWithSpan returns a context.Context that holds the parent
 	// context plus a reference to this span.
-	contextWithSpan(ctx context.Context) context.Context
+	ContextWithSpan(ctx context.Context) context.Context
 }
 
 func ProvideService(cfg *setting.Cfg) (Tracer, error) {
@@ -189,7 +188,7 @@ func SpanFromContext(ctx context.Context) Span {
 // It is the equivalent of opentracing.ContextWithSpan and trace.ContextWithSpan.
 func ContextWithSpan(ctx context.Context, span Span) context.Context {
 	if span != nil {
-		return span.contextWithSpan(ctx)
+		return span.ContextWithSpan(ctx)
 	}
 	return ctx
 }
@@ -268,10 +267,14 @@ func splitCustomAttribs(s string) ([]attribute.KeyValue, error) {
 func (ots *Opentelemetry) initJaegerTracerProvider() (*tracesdk.TracerProvider, error) {
 	var ep jaeger.EndpointOption
 	// Create the Jaeger exporter: address can be either agent address (host:port) or collector URL
-	if host, port, err := net.SplitHostPort(ots.Address); err == nil {
-		ep = jaeger.WithAgentEndpoint(jaeger.WithAgentHost(host), jaeger.WithAgentPort(port))
-	} else {
+	if strings.HasPrefix(ots.Address, "http://") || strings.HasPrefix(ots.Address, "https://") {
+		ots.log.Debug("using jaeger collector", "address", ots.Address)
 		ep = jaeger.WithCollectorEndpoint(jaeger.WithEndpoint(ots.Address))
+	} else if host, port, err := net.SplitHostPort(ots.Address); err == nil {
+		ots.log.Debug("using jaeger agent", "host", host, "port", port)
+		ep = jaeger.WithAgentEndpoint(jaeger.WithAgentHost(host), jaeger.WithAgentPort(port), jaeger.WithMaxPacketSize(64000))
+	} else {
+		return nil, fmt.Errorf("invalid tracer address: %s", ots.Address)
 	}
 	exp, err := jaeger.New(ep)
 	if err != nil {
@@ -320,15 +323,15 @@ func (ots *Opentelemetry) initOTLPTracerProvider() (*tracesdk.TracerProvider, er
 		return nil, err
 	}
 
-	return initTracerProvider(exp, ots.customAttribs...)
+	return initTracerProvider(exp, ots.Cfg.BuildVersion, ots.customAttribs...)
 }
 
-func initTracerProvider(exp tracesdk.SpanExporter, customAttribs ...attribute.KeyValue) (*tracesdk.TracerProvider, error) {
+func initTracerProvider(exp tracesdk.SpanExporter, version string, customAttribs ...attribute.KeyValue) (*tracesdk.TracerProvider, error) {
 	res, err := resource.New(
 		context.Background(),
 		resource.WithAttributes(
 			semconv.ServiceNameKey.String("grafana"),
-			semconv.ServiceVersionKey.String(version.Version),
+			semconv.ServiceVersionKey.String(version),
 		),
 		resource.WithAttributes(customAttribs...),
 		resource.WithProcessRuntimeDescription(),
@@ -484,7 +487,7 @@ func (s OpentelemetrySpan) AddEvents(keys []string, values []EventValue) {
 	}
 }
 
-func (s OpentelemetrySpan) contextWithSpan(ctx context.Context) context.Context {
+func (s OpentelemetrySpan) ContextWithSpan(ctx context.Context) context.Context {
 	if s.span != nil {
 		ctx = trace.ContextWithSpan(ctx, s.span)
 		// Grafana also manages its own separate traceID in the context in addition to what opentracing handles.

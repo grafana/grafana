@@ -20,7 +20,6 @@ type TTraceTimeline = {
   childrenHiddenIDs: Set<string>;
   detailStates: Map<string, DetailState>;
   hoverIndentGuideIds: Set<string>;
-  shouldScrollToFirstUiFindMatch: boolean;
   spanNameColumnWidth: number;
   traceID: string | TNil;
 };

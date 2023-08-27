@@ -9,16 +9,23 @@ export function getFrameDisplayName(frame: DataFrame, index?: number) {
     return frame.name;
   }
 
-  // Single field with tags
-  const valuesWithLabels: Field[] = [];
+  const valueFieldNames: string[] = [];
   for (const field of frame.fields) {
-    if (field.labels && Object.keys(field.labels).length > 0) {
-      valuesWithLabels.push(field);
+    if (field.type === FieldType.time) {
+      continue;
     }
+
+    // No point in doing more
+    if (valueFieldNames.length > 1) {
+      break;
+    }
+
+    valueFieldNames.push(getFieldDisplayName(field, frame));
   }
 
-  if (valuesWithLabels.length === 1) {
-    return formatLabels(valuesWithLabels[0].labels!);
+  // If the frame has a single value field then use the name of that field as the frame name
+  if (valueFieldNames.length === 1) {
+    return valueFieldNames[0];
   }
 
   // list all the
@@ -34,6 +41,14 @@ export function getFrameDisplayName(frame: DataFrame, index?: number) {
   }
 
   return `Series (${index})`;
+}
+
+export function cacheFieldDisplayNames(frames: DataFrame[]) {
+  frames.forEach((frame) => {
+    frame.fields.forEach((field) => {
+      getFieldDisplayName(field, frame, frames);
+    });
+  });
 }
 
 export function getFieldDisplayName(field: Field, frame?: DataFrame, allFrames?: DataFrame[]): string {
@@ -57,15 +72,15 @@ export function getFieldDisplayName(field: Field, frame?: DataFrame, allFrames?:
  */
 export function calculateFieldDisplayName(field: Field, frame?: DataFrame, allFrames?: DataFrame[]): string {
   const hasConfigTitle = field.config?.displayName && field.config?.displayName.length;
-
+  const isComparisonSeries = Boolean(frame?.meta?.timeCompare?.isTimeShiftQuery);
   let displayName = hasConfigTitle ? field.config!.displayName! : field.name;
 
   if (hasConfigTitle) {
-    return displayName;
+    return isComparisonSeries ? `${displayName} (comparison)` : displayName;
   }
 
   if (frame && field.config?.displayNameFromDS) {
-    return field.config.displayNameFromDS;
+    return isComparisonSeries ? `${field.config.displayNameFromDS} (comparison)` : field.config.displayNameFromDS;
   }
 
   // This is an ugly exception for time field
@@ -136,6 +151,9 @@ export function calculateFieldDisplayName(field: Field, frame?: DataFrame, allFr
     displayName = getUniqueFieldName(field, frame);
   }
 
+  if (isComparisonSeries) {
+    displayName = `${displayName} (comparison)`;
+  }
   return displayName;
 }
 

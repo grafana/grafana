@@ -10,9 +10,10 @@ jest.spyOn(backendSrv, 'fetch');
 describe('SQLSearcher', () => {
   beforeEach(() => {
     searchMock.mockReset();
-  });
-  it('should call search api with correct query for general folder', async () => {
     searchMock.mockResolvedValue([]);
+  });
+
+  it('should call search api with correct query for general folder', async () => {
     const sqlSearcher = new SQLSearcher();
     const query = {
       query: '*',
@@ -27,13 +28,11 @@ describe('SQLSearcher', () => {
       sort: query.sort,
       tag: undefined,
       type: DashboardSearchItemType.DashDB,
-      folderIds: [0],
+      folderUIDs: ['General'],
     });
   });
 
-  it('should call search api with correct query based on its kinds', async () => {
-    searchMock.mockResolvedValue([]);
-
+  it('should call search api with correct folder kind when searching for *', async () => {
     const sqlSearcher = new SQLSearcher();
 
     const query = {
@@ -50,31 +49,36 @@ describe('SQLSearcher', () => {
       sort: query.sort,
       tag: undefined,
       type: DashboardSearchItemType.DashFolder,
-      folderIds: [0],
+      folderUIDs: ['any'],
     });
+  });
 
-    searchMock.mockClear();
+  it('should call search api with correct folder kind when searching for a specific term', async () => {
+    const sqlSearcher = new SQLSearcher();
 
-    const query2 = {
+    const query = {
       query: 'test',
       kind: ['folder'],
       location: 'any',
       sort: 'name_sort',
     };
 
-    await sqlSearcher.search(query2);
+    await sqlSearcher.search(query);
 
     expect(searchMock).toHaveBeenLastCalledWith('/api/search', {
       limit: 1000,
-      sort: query2.sort,
-      query: query2.query,
+      sort: query.sort,
+      query: query.query,
       tag: undefined,
-      folderIds: [0],
+      type: DashboardSearchItemType.DashFolder,
+      folderUIDs: ['any'],
     });
+  });
 
-    searchMock.mockClear();
+  it('should call search api with correct folder kind when searching with a specific uid', async () => {
+    const sqlSearcher = new SQLSearcher();
 
-    const query3 = {
+    const query = {
       query: 'test',
       kind: ['folder'],
       location: 'any',
@@ -82,25 +86,23 @@ describe('SQLSearcher', () => {
       uid: ['T202C0Tnk'],
     };
 
-    await sqlSearcher.search(query3);
+    await sqlSearcher.search(query);
 
     expect(searchMock).toHaveBeenLastCalledWith('/api/search', {
       limit: 1000,
-      sort: query3.sort,
-      query: query3.query,
+      sort: query.sort,
+      query: query.query,
       tag: undefined,
-      dashboardUID: query3.uid,
+      dashboardUID: query.uid,
+      type: DashboardSearchItemType.DashFolder,
     });
   });
 
   it('starred should call search api with correct query', async () => {
-    searchMock.mockResolvedValue([]);
-
     const sqlSearcher = new SQLSearcher();
 
     const query = {
       query: 'test',
-      kind: ['folder'],
       location: 'any',
       sort: 'name_sort',
       uid: ['T202C0Tnk'],
@@ -116,6 +118,32 @@ describe('SQLSearcher', () => {
       tag: undefined,
       dashboardUID: query.uid,
       starred: true,
+    });
+  });
+
+  describe('pagination', () => {
+    it.each([
+      { from: undefined, expectedPage: undefined },
+      { from: 0, expectedPage: 1 },
+      { from: 50, expectedPage: 2 },
+      { from: 150, expectedPage: 4 },
+    ])('should search page $expectedPage when skipping $from results', async ({ from, expectedPage }) => {
+      const sqlSearcher = new SQLSearcher();
+
+      await sqlSearcher.search({
+        query: '*',
+        kind: ['dashboard'],
+        from,
+        limit: 50,
+      });
+
+      expect(searchMock).toHaveBeenLastCalledWith('/api/search', {
+        limit: 50,
+        page: expectedPage,
+        sort: undefined,
+        tag: undefined,
+        type: 'dash-db',
+      });
     });
   });
 });

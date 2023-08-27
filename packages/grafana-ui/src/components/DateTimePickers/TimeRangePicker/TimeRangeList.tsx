@@ -11,21 +11,21 @@ import { TimeRangeOption } from './TimeRangeOption';
 
 const getStyles = stylesFactory(() => {
   return {
-    title: css`
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 8px 16px 5px 9px;
-    `,
+    title: css({
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      padding: '8px 16px 5px 9px',
+    }),
   };
 });
 
 const getOptionsStyles = stylesFactory(() => {
   return {
-    grow: css`
-      flex-grow: 1;
-      align-items: flex-start;
-    `,
+    grow: css({
+      flexGrow: 1,
+      alignItems: 'flex-start',
+    }),
   };
 });
 

@@ -6,8 +6,11 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/google/uuid"
+
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/search/model"
@@ -180,6 +183,11 @@ func (st DBstore) InsertAlertRules(ctx context.Context, rules []ngmodels.AlertRu
 // UpdateAlertRules is a handler for updating alert rules.
 func (st DBstore) UpdateAlertRules(ctx context.Context, rules []ngmodels.UpdateRule) error {
 	return st.SQLStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
+		err := st.preventIntermediateUniqueConstraintViolations(sess, rules)
+		if err != nil {
+			return fmt.Errorf("failed when preventing intermediate unique constraint violation: %w", err)
+		}
+
 		ruleVersions := make([]ngmodels.AlertRuleVersion, 0, len(rules))
 		for _, r := range rules {
 			var parentVersion int64
@@ -229,6 +237,77 @@ func (st DBstore) UpdateAlertRules(ctx context.Context, rules []ngmodels.UpdateR
 		}
 		return nil
 	})
+}
+
+// preventIntermediateUniqueConstraintViolations prevents unique constraint violations caused by an intermediate update.
+// The uniqueness constraint for titles within an org+folder is enforced on every update within a transaction
+// instead of on commit (deferred constraint). This means that there could be a set of updates that will throw
+// a unique constraint violation in an intermediate step even though the final state is valid.
+// For example, a chain of updates RuleA -> RuleB -> RuleC could fail if not executed in the correct order, or
+// a swap of titles RuleA <-> RuleB cannot be executed in any order without violating the constraint.
+func (st DBstore) preventIntermediateUniqueConstraintViolations(sess *db.Session, updates []ngmodels.UpdateRule) error {
+	// The exact solution to this is complex and requires determining directed paths and cycles in the update graph,
+	// adding in temporary updates to break cycles, and then executing the updates in reverse topological order.
+	// This is not implemented here. Instead, we choose a simpler solution that works in all cases but might perform
+	// more updates than necessary. This simpler solution makes a determination of whether an intermediate collision
+	// could occur and if so, adds a temporary title on all updated rules to break any cycles and remove the need for
+	// specific ordering.
+
+	titleUpdates := make([]ngmodels.UpdateRule, 0)
+	for _, update := range updates {
+		if update.Existing.Title != update.New.Title {
+			titleUpdates = append(titleUpdates, update)
+		}
+	}
+
+	// If there is no overlap then an intermediate unique constraint violation is not possible. If there is an overlap,
+	// then there is the possibility of intermediate unique constraint violation.
+	if !newTitlesOverlapExisting(titleUpdates) {
+		return nil
+	}
+	st.Logger.Debug("detected possible intermediate unique constraint violation, creating temporary title updates", "updates", len(titleUpdates))
+
+	for _, update := range titleUpdates {
+		r := update.Existing
+		u := uuid.New().String()
+
+		// Some defensive programming in case the temporary title is somehow persisted it will still be recognizable.
+		uniqueTempTitle := r.Title + u
+		if len(uniqueTempTitle) > AlertRuleMaxTitleLength {
+			uniqueTempTitle = r.Title[:AlertRuleMaxTitleLength-len(u)] + uuid.New().String()
+		}
+
+		if updated, err := sess.ID(r.ID).Cols("title").Update(&ngmodels.AlertRule{Title: uniqueTempTitle, Version: r.Version}); err != nil || updated == 0 {
+			if err != nil {
+				return fmt.Errorf("failed to set temporary rule title [%s] %s: %w", r.UID, r.Title, err)
+			}
+			return fmt.Errorf("%w: alert rule UID %s version %d", ErrOptimisticLock, r.UID, r.Version)
+		}
+		// Otherwise optimistic locking will conflict on the 2nd update.
+		r.Version++
+		// For consistency.
+		r.Title = uniqueTempTitle
+	}
+
+	return nil
+}
+
+// newTitlesOverlapExisting returns true if any new titles overlap with existing titles.
+// It does so in a case-insensitive manner as some supported databases perform case-insensitive comparisons.
+func newTitlesOverlapExisting(rules []ngmodels.UpdateRule) bool {
+	existingTitles := make(map[string]struct{}, len(rules))
+	for _, r := range rules {
+		existingTitles[strings.ToLower(r.Existing.Title)] = struct{}{}
+	}
+
+	// Check if there is any overlap between lower case existing and new titles.
+	for _, r := range rules {
+		if _, ok := existingTitles[strings.ToLower(r.New.Title)]; ok {
+			return true
+		}
+	}
+
+	return false
 }
 
 // CountInFolder is a handler for retrieving the number of alert rules of
@@ -461,7 +540,7 @@ func (st DBstore) GetAlertRulesForScheduling(ctx context.Context, query *ngmodel
 				st.Logger.Error("unable to close rows session", "error", err)
 			}
 		}()
-
+		lokiRangeToInstantEnabled := st.FeatureToggles.IsEnabled(featuremgmt.FlagAlertingLokiRangeToInstant)
 		// Deserialize each rule separately in case any of them contain invalid JSON.
 		for rows.Next() {
 			rule := new(ngmodels.AlertRule)
@@ -469,6 +548,19 @@ func (st DBstore) GetAlertRulesForScheduling(ctx context.Context, query *ngmodel
 			if err != nil {
 				st.Logger.Error("Invalid rule found in DB store, ignoring it", "func", "GetAlertRulesForScheduling", "error", err)
 				continue
+			}
+			// This was added to mitigate the high load that could be created by loki range queries.
+			// In previous versions of Grafana, Loki datasources would default to range queries
+			// instead of instant queries, sometimes creating unnecessary load. This is only
+			// done for Grafana Cloud.
+			if lokiRangeToInstantEnabled {
+				if indices, migratable := canBeInstant(rule); migratable {
+					if err := migrateToInstant(rule, indices); err != nil {
+						st.Logger.Error("Could not migrate rule from range to instant query", "rule", rule.UID, "err", err)
+					} else {
+						st.Logger.Info("Migrated rule from range to instant query", "rule", rule.UID, "migrated_queries", len(indices))
+					}
+				}
 			}
 			rules = append(rules, rule)
 		}
@@ -496,7 +588,7 @@ func (st DBstore) GetAlertRulesForScheduling(ctx context.Context, query *ngmodel
 }
 
 // DeleteInFolder deletes the rules contained in a given folder along with their associated data.
-func (st DBstore) DeleteInFolder(ctx context.Context, orgID int64, folderUID string) error {
+func (st DBstore) DeleteInFolder(ctx context.Context, orgID int64, folderUID string, user *user.SignedInUser) error {
 	rules, err := st.ListAlertRules(ctx, &ngmodels.ListAlertRulesQuery{
 		OrgID:         orgID,
 		NamespaceUIDs: []string{folderUID},

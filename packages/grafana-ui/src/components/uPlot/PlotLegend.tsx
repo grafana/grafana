@@ -140,7 +140,7 @@ export const PlotLegend = React.memo(
           getItemKey: () => `${label}-${fieldIndex.frameIndex}-${fieldIndex.fieldIndex}`,
         };
       })
-      .filter((i) => i !== undefined) as VizLegendItem[];
+      .filter((i): i is VizLegendItem => i !== undefined);
 
     return (
       <VizLayout.Legend placement={placement} {...vizLayoutLegendProps}>
@@ -150,6 +150,7 @@ export const PlotLegend = React.memo(
           displayMode={displayMode}
           sortBy={vizLayoutLegendProps.sortBy}
           sortDesc={vizLayoutLegendProps.sortDesc}
+          isSortable={true}
         />
       </VizLayout.Legend>
     );

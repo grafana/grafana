@@ -12,7 +12,7 @@ import {
   DataSourceRef,
   toDataFrame,
 } from '@grafana/data';
-import { BackendDataSourceResponse, getBackendSrv, toDataQueryResponse } from '@grafana/runtime';
+import { BackendDataSourceResponse, config, getBackendSrv, toDataQueryResponse } from '@grafana/runtime';
 
 import { GrafanaQueryType } from '../../../plugins/datasource/grafana/types';
 import { MIXED_DATASOURCE_NAME } from '../../../plugins/datasource/mixed/MixedDataSource';
@@ -85,13 +85,10 @@ export class PublicDashboardDataSource extends DataSourceApi<DataQuery, DataSour
       intervalMs,
       maxDataPoints,
       requestId,
-      publicDashboardAccessToken,
       panelId,
       queryCachingTTL,
       range: { from: fromRange, to: toRange },
     } = request;
-    let queries: DataQuery[];
-
     // Return early if no queries exist
     if (!request.targets.length) {
       return of({ data: [] });
@@ -113,19 +110,23 @@ export class PublicDashboardDataSource extends DataSourceApi<DataQuery, DataSour
         intervalMs,
         maxDataPoints,
         queryCachingTTL,
-        timeRange: { from: fromRange.valueOf().toString(), to: toRange.valueOf().toString() },
+        timeRange: {
+          from: fromRange.valueOf().toString(),
+          to: toRange.valueOf().toString(),
+          timezone: this.getBrowserTimezone(),
+        },
       };
 
       return getBackendSrv()
         .fetch<BackendDataSourceResponse>({
-          url: `/api/public/dashboards/${publicDashboardAccessToken}/panels/${panelId}/query`,
+          url: `/api/public/dashboards/${config.publicDashboardAccessToken!}/panels/${panelId}/query`,
           method: 'POST',
           data: body,
           requestId,
         })
         .pipe(
           switchMap((raw) => {
-            return of(toDataQueryResponse(raw, queries));
+            return of(toDataQueryResponse(raw, request.targets));
           }),
           catchError((err) => {
             return of(toDataQueryResponse(err));
@@ -136,7 +137,6 @@ export class PublicDashboardDataSource extends DataSourceApi<DataQuery, DataSour
 
   async getAnnotations(request: DataQueryRequest<DataQuery>): Promise<DataQueryResponse> {
     const {
-      publicDashboardAccessToken: accessToken,
       range: { to, from },
     } = request;
 
@@ -145,14 +145,20 @@ export class PublicDashboardDataSource extends DataSourceApi<DataQuery, DataSour
       to: to.valueOf(),
     };
 
-    const annotations = accessToken
-      ? await getBackendSrv().get(`/api/public/dashboards/${accessToken}/annotations`, params)
-      : [];
+    const annotations = await getBackendSrv().get(
+      `/api/public/dashboards/${config.publicDashboardAccessToken!}/annotations`,
+      params
+    );
 
     return { data: [toDataFrame(annotations)] };
   }
 
   testDatasource(): Promise<TestDataSourceResponse> {
     return Promise.resolve({ message: '', status: '' });
+  }
+
+  // Try to get the browser timezone otherwise return blank
+  getBrowserTimezone(): string {
+    return window.Intl?.DateTimeFormat().resolvedOptions()?.timeZone || '';
   }
 }

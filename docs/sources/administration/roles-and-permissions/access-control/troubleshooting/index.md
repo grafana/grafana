@@ -1,12 +1,11 @@
 ---
 aliases:
   - ../../../enterprise/access-control/troubleshooting/
+description: RBAC troubleshooting guide.
 labels:
   products:
     - cloud
     - enterprise
-    - oss
-description: RBAC troubleshooting guide.
 menuTitle: Troubleshooting RBAC
 title: Troubleshooting RBAC
 weight: 80
@@ -28,7 +27,7 @@ filters = accesscontrol:debug accesscontrol.evaluator:debug dashboard.permission
 ## Enable audit logging
 
 {{% admonition type="note" %}}
-Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise/" >}}) version 7.3 and later, and [Grafana Cloud Advanced](/docs/grafana-cloud).
+Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise/" >}}) version 7.3 and later, and [Grafana Cloud](/docs/grafana-cloud).
 {{% /admonition %}}
 
 You can enable auditing in the Grafana configuration file.

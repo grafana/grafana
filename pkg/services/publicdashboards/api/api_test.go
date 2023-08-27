@@ -22,11 +22,10 @@ import (
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
-var userAdmin = &user.SignedInUser{UserID: 1, OrgID: 1, OrgRole: org.RoleAdmin, Login: "testAdminUser"}
-var userAdminRBAC = &user.SignedInUser{UserID: 2, OrgID: 1, OrgRole: org.RoleAdmin, Login: "testAdminUserRBAC", Permissions: map[int64]map[string][]string{1: {dashboards.ActionDashboardsPublicWrite: {dashboards.ScopeDashboardsAll}}}}
-var userViewer = &user.SignedInUser{UserID: 3, OrgID: 1, OrgRole: org.RoleViewer, Login: "testViewerUser"}
-var userViewerRBAC = &user.SignedInUser{UserID: 4, OrgID: 1, OrgRole: org.RoleViewer, Login: "testViewerUserRBAC", Permissions: map[int64]map[string][]string{1: {dashboards.ActionDashboardsRead: {dashboards.ScopeDashboardsAll}}}}
-var anonymousUser *user.SignedInUser
+var userNoRBACPerms = &user.SignedInUser{UserID: 1, OrgID: 1, OrgRole: org.RoleAdmin, Login: "testAdminUserNoRBACPerms"}
+var userAdmin = &user.SignedInUser{UserID: 2, OrgID: 1, OrgRole: org.RoleAdmin, Login: "testAdminUserRBAC", Permissions: map[int64]map[string][]string{1: {dashboards.ActionDashboardsPublicWrite: {dashboards.ScopeDashboardsAll}}}}
+var userViewer = &user.SignedInUser{UserID: 4, OrgID: 1, OrgRole: org.RoleViewer, Login: "testViewerUserRBAC", Permissions: map[int64]map[string][]string{1: {dashboards.ActionDashboardsRead: {dashboards.ScopeDashboardsAll}}}}
+var anonymousUser = &user.SignedInUser{IsAnonymous: true}
 
 type JsonErrResponse struct {
 	Error string `json:"error"`
@@ -78,7 +77,6 @@ func TestAPIFeatureFlag(t *testing.T) {
 	for _, test := range testCases {
 		t.Run(test.Name, func(t *testing.T) {
 			cfg := setting.NewCfg()
-			cfg.RBACEnabled = false
 			service := publicdashboards.NewFakePublicDashboardService(t)
 			features := featuremgmt.WithFeatures()
 			testServer := setupTestServer(t, cfg, features, service, nil, userAdmin)
@@ -89,19 +87,21 @@ func TestAPIFeatureFlag(t *testing.T) {
 }
 
 func TestAPIListPublicDashboard(t *testing.T) {
-	successResp := []PublicDashboardListResponse{
-		{
-			Uid:          "1234asdfasdf",
-			AccessToken:  "asdfasdf",
-			DashboardUid: "abc1234",
-			IsEnabled:    true,
+	successResp := &PublicDashboardListResponseWithPagination{
+		PublicDashboards: []*PublicDashboardListResponse{
+			{
+				Uid:          "1234asdfasdf",
+				AccessToken:  "asdfasdf",
+				DashboardUid: "abc1234",
+				IsEnabled:    true,
+			},
 		},
 	}
 
 	testCases := []struct {
 		Name                 string
 		User                 *user.SignedInUser
-		Response             []PublicDashboardListResponse
+		Response             *PublicDashboardListResponseWithPagination
 		ResponseErr          error
 		ExpectedHttpResponse int
 	}{
@@ -131,11 +131,10 @@ func TestAPIListPublicDashboard(t *testing.T) {
 	for _, test := range testCases {
 		t.Run(test.Name, func(t *testing.T) {
 			service := publicdashboards.NewFakePublicDashboardService(t)
-			service.On("FindAll", mock.Anything, mock.Anything, mock.Anything).
+			service.On("FindAllWithPagination", mock.Anything, mock.Anything, mock.Anything).
 				Return(test.Response, test.ResponseErr).Maybe()
 
 			cfg := setting.NewCfg()
-			cfg.RBACEnabled = false
 			features := featuremgmt.WithFeatures(featuremgmt.FlagPublicDashboards)
 			testServer := setupTestServer(t, cfg, features, service, nil, test.User)
 
@@ -143,10 +142,10 @@ func TestAPIListPublicDashboard(t *testing.T) {
 			assert.Equal(t, test.ExpectedHttpResponse, response.Code)
 
 			if test.ExpectedHttpResponse == http.StatusOK {
-				var jsonResp []PublicDashboardListResponse
+				var jsonResp PublicDashboardListResponseWithPagination
 				err := json.Unmarshal(response.Body.Bytes(), &jsonResp)
 				require.NoError(t, err)
-				assert.Equal(t, jsonResp[0].Uid, "1234asdfasdf")
+				assert.Equal(t, jsonResp.PublicDashboards[0].Uid, "1234asdfasdf")
 			}
 
 			if test.ResponseErr != nil {
@@ -155,7 +154,7 @@ func TestAPIListPublicDashboard(t *testing.T) {
 				require.NoError(t, err)
 				assert.Equal(t, "Internal server error", errResp.Message)
 				assert.Equal(t, "publicdashboards.internalServerError", errResp.MessageID)
-				service.AssertNotCalled(t, "FindAll")
+				service.AssertNotCalled(t, "FindAllWithPagination")
 			}
 		})
 	}
@@ -312,7 +311,7 @@ func TestAPIGetPublicDashboard(t *testing.T) {
 			ExpectedHttpResponse:  http.StatusNotFound,
 			PublicDashboardResult: nil,
 			PublicDashboardErr:    ErrDashboardNotFound.Errorf(""),
-			User:                  userViewerRBAC,
+			User:                  userViewer,
 			ShouldCallService:     true,
 		},
 		{
@@ -321,7 +320,7 @@ func TestAPIGetPublicDashboard(t *testing.T) {
 			ExpectedHttpResponse:  http.StatusInternalServerError,
 			PublicDashboardResult: nil,
 			PublicDashboardErr:    errors.New("database broken"),
-			User:                  userViewerRBAC,
+			User:                  userViewer,
 			ShouldCallService:     true,
 		},
 		{
@@ -330,7 +329,7 @@ func TestAPIGetPublicDashboard(t *testing.T) {
 			ExpectedHttpResponse:  http.StatusOK,
 			PublicDashboardResult: pubdash,
 			PublicDashboardErr:    nil,
-			User:                  userViewerRBAC,
+			User:                  userViewer,
 			ShouldCallService:     true,
 		},
 		{
@@ -338,7 +337,7 @@ func TestAPIGetPublicDashboard(t *testing.T) {
 			ExpectedHttpResponse:  http.StatusForbidden,
 			PublicDashboardResult: pubdash,
 			PublicDashboardErr:    nil,
-			User:                  userViewer,
+			User:                  userNoRBACPerms,
 			ShouldCallService:     false,
 		},
 	}
@@ -398,7 +397,7 @@ func TestApiCreatePublicDashboard(t *testing.T) {
 			ExpectedHttpResponse: http.StatusInternalServerError,
 			publicDashboard:      &PublicDashboard{},
 			SaveDashboardErr:     ErrInternalServerError.Errorf(""),
-			User:                 userAdminRBAC,
+			User:                 userAdmin,
 			ShouldCallService:    true,
 		},
 		{
@@ -406,7 +405,7 @@ func TestApiCreatePublicDashboard(t *testing.T) {
 			ExpectedHttpResponse: http.StatusNotFound,
 			publicDashboard:      &PublicDashboard{},
 			SaveDashboardErr:     ErrDashboardNotFound.Errorf(""),
-			User:                 userAdminRBAC,
+			User:                 userAdmin,
 			ShouldCallService:    true,
 		},
 		{
@@ -415,7 +414,7 @@ func TestApiCreatePublicDashboard(t *testing.T) {
 			publicDashboard:      &PublicDashboard{IsEnabled: true},
 			ExpectedHttpResponse: http.StatusOK,
 			SaveDashboardErr:     nil,
-			User:                 userAdminRBAC,
+			User:                 userAdmin,
 			ShouldCallService:    true,
 		},
 		{
@@ -423,7 +422,7 @@ func TestApiCreatePublicDashboard(t *testing.T) {
 			ExpectedHttpResponse: http.StatusForbidden,
 			publicDashboard:      &PublicDashboard{IsEnabled: true},
 			SaveDashboardErr:     nil,
-			User:                 userAdmin,
+			User:                 userNoRBACPerms,
 			ShouldCallService:    false,
 		},
 	}

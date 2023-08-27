@@ -1,15 +1,21 @@
 import { css } from '@emotion/css';
 import React from 'react';
+import Skeleton from 'react-loading-skeleton';
 import { CellProps } from 'react-table';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { IconButton, Link, useStyles2 } from '@grafana/ui';
+import { reportInteraction } from '@grafana/runtime';
+import { Icon, IconButton, Link, Spinner, useStyles2, Text } from '@grafana/ui';
 import { getSvgSize } from '@grafana/ui/src/components/Icon/utils';
-import { Span, TextModifier } from '@grafana/ui/src/unstable';
+import { getIconForKind } from 'app/features/search/service/utils';
 
+import { useChildrenByParentUIDState } from '../state';
 import { DashboardsTreeItem } from '../types';
 
 import { Indent } from './Indent';
+
+const CHEVRON_SIZE = 'md';
+const ICON_SIZE = 'sm';
 
 type NameCellProps = CellProps<DashboardsTreeItem, unknown> & {
   onFolderClick: (uid: string, newOpenState: boolean) => void;
@@ -18,20 +24,27 @@ type NameCellProps = CellProps<DashboardsTreeItem, unknown> & {
 export function NameCell({ row: { original: data }, onFolderClick }: NameCellProps) {
   const styles = useStyles2(getStyles);
   const { item, level, isOpen } = data;
+  const childrenByParentUID = useChildrenByParentUIDState();
+  const isLoading = isOpen && !childrenByParentUID[item.uid];
+  const iconName = getIconForKind(data.item.kind, isOpen);
 
   if (item.kind === 'ui') {
     return (
       <>
         <Indent level={level} />
         <span className={styles.folderButtonSpacer} />
-        <em>
-          <TextModifier color="secondary">{item.uiKind === 'empty-folder' ? 'No items' : 'Loading...'}</TextModifier>
-        </em>
+        {item.uiKind === 'empty-folder' ? (
+          <em className={styles.emptyText}>
+            <Text variant="body" color="secondary" truncate>
+              No items
+            </Text>
+          </em>
+        ) : (
+          <Skeleton width={200} />
+        )}
       </>
     );
   }
-
-  const chevronIcon = isOpen ? 'angle-down' : 'angle-right';
 
   return (
     <>
@@ -39,33 +52,58 @@ export function NameCell({ row: { original: data }, onFolderClick }: NameCellPro
 
       {item.kind === 'folder' ? (
         <IconButton
-          size="md"
-          onClick={() => onFolderClick(item.uid, !isOpen)}
-          name={chevronIcon}
-          ariaLabel={isOpen ? 'Collapse folder' : 'Expand folder'}
+          size={CHEVRON_SIZE}
+          className={styles.chevron}
+          onClick={() => {
+            onFolderClick(item.uid, !isOpen);
+          }}
+          name={isOpen ? 'angle-down' : 'angle-right'}
+          aria-label={isOpen ? `Collapse folder ${item.title}` : `Expand folder ${item.title}`}
         />
       ) : (
         <span className={styles.folderButtonSpacer} />
       )}
-
-      <Span variant="body" truncate>
-        {item.url ? (
-          <Link href={item.url} className={styles.link}>
-            {item.title}
-          </Link>
-        ) : (
-          item.title
-        )}
-      </Span>
+      <div className={styles.iconNameContainer}>
+        {isLoading ? <Spinner size={ICON_SIZE} /> : <Icon size={ICON_SIZE} name={iconName} />}
+        <Text variant="body" truncate>
+          {item.url ? (
+            <Link
+              onClick={() => {
+                reportInteraction('manage_dashboards_result_clicked');
+              }}
+              href={item.url}
+              className={styles.link}
+            >
+              {item.title}
+            </Link>
+          ) : (
+            item.title
+          )}
+        </Text>
+      </div>
     </>
   );
 }
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
+    chevron: css({
+      marginRight: theme.spacing(1),
+      width: getSvgSize(CHEVRON_SIZE),
+    }),
+    emptyText: css({
+      // needed for text to truncate correctly
+      overflow: 'hidden',
+    }),
     // Should be the same size as the <IconButton /> so Dashboard name is aligned to Folder name siblings
     folderButtonSpacer: css({
-      paddingLeft: `calc(${getSvgSize('md')}px + ${theme.spacing(0.5)})`,
+      paddingLeft: `calc(${getSvgSize(CHEVRON_SIZE)}px + ${theme.spacing(1)})`,
+    }),
+    iconNameContainer: css({
+      alignItems: 'center',
+      display: 'flex',
+      gap: theme.spacing(1),
+      overflow: 'hidden',
     }),
     link: css({
       '&:hover': {

@@ -7,6 +7,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
@@ -101,7 +102,8 @@ func (m *Mock) WithBuiltInRoles(builtInRoles []string) *Mock {
 
 // Evaluate evaluates access to the given resource.
 // This mock uses GetUserPermissions to then call the evaluator Evaluate function.
-func (m *Mock) Evaluate(ctx context.Context, usr *user.SignedInUser, evaluator accesscontrol.Evaluator) (bool, error) {
+func (m *Mock) Evaluate(ctx context.Context, us identity.Requester, evaluator accesscontrol.Evaluator) (bool, error) {
+	usr := us.(*user.SignedInUser)
 	m.Calls.Evaluate = append(m.Calls.Evaluate, []interface{}{ctx, usr, evaluator})
 	// Use override if provided
 	if m.EvaluateFunc != nil {
@@ -138,7 +140,8 @@ func (m *Mock) Evaluate(ctx context.Context, usr *user.SignedInUser, evaluator a
 
 // GetUserPermissions returns user permissions.
 // This mock return m.permissions unless an override is provided.
-func (m *Mock) GetUserPermissions(ctx context.Context, user *user.SignedInUser, opts accesscontrol.Options) ([]accesscontrol.Permission, error) {
+func (m *Mock) GetUserPermissions(ctx context.Context, usr identity.Requester, opts accesscontrol.Options) ([]accesscontrol.Permission, error) {
+	user := usr.(*user.SignedInUser)
 	m.Calls.GetUserPermissions = append(m.Calls.GetUserPermissions, []interface{}{ctx, user, opts})
 	// Use override if provided
 	if m.GetUserPermissionsFunc != nil {
@@ -148,7 +151,8 @@ func (m *Mock) GetUserPermissions(ctx context.Context, user *user.SignedInUser, 
 	return m.permissions, nil
 }
 
-func (m *Mock) ClearUserPermissionCache(user *user.SignedInUser) {
+func (m *Mock) ClearUserPermissionCache(usr identity.Requester) {
+	user := usr.(*user.SignedInUser)
 	m.Calls.ClearUserPermissionCache = append(m.Calls.ClearUserPermissionCache, []interface{}{user})
 	// Use override if provided
 	if m.ClearUserPermissionCacheFunc != nil {
@@ -222,11 +226,12 @@ func (m *Mock) DeleteUserPermissions(ctx context.Context, orgID, userID int64) e
 }
 
 // SearchUsersPermissions returns all users' permissions filtered by an action prefix
-func (m *Mock) SearchUsersPermissions(ctx context.Context, user *user.SignedInUser, orgID int64, options accesscontrol.SearchOptions) (map[int64][]accesscontrol.Permission, error) {
-	m.Calls.SearchUsersPermissions = append(m.Calls.SearchUsersPermissions, []interface{}{ctx, user, orgID, options})
+func (m *Mock) SearchUsersPermissions(ctx context.Context, usr identity.Requester, options accesscontrol.SearchOptions) (map[int64][]accesscontrol.Permission, error) {
+	user := usr.(*user.SignedInUser)
+	m.Calls.SearchUsersPermissions = append(m.Calls.SearchUsersPermissions, []interface{}{ctx, user, options})
 	// Use override if provided
 	if m.SearchUsersPermissionsFunc != nil {
-		return m.SearchUsersPermissionsFunc(ctx, user, orgID, options)
+		return m.SearchUsersPermissionsFunc(ctx, user, usr.GetOrgID(), options)
 	}
 	return nil, nil
 }

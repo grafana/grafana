@@ -95,7 +95,7 @@ describe('situation', () => {
       type: 'AFTER_SELECTOR',
       afterPipe: true,
       hasSpace: false,
-      logQuery: '{place="luna"}| logfmt |',
+      logQuery: '{place="luna"} | logfmt |',
     });
   });
 
@@ -179,7 +179,7 @@ describe('situation', () => {
       'quantile_over_time(0.99, {cluster="ops-tools1",container="ingress-nginx"} | json | __error__ = "" | unwrap ^',
       {
         type: 'AFTER_UNWRAP',
-        logQuery: '{cluster="ops-tools1",container="ingress-nginx"}| json | __error__ = ""',
+        logQuery: '{cluster="ops-tools1",container="ingress-nginx"} | json | __error__ = ""',
       }
     );
 
@@ -273,6 +273,38 @@ describe('situation', () => {
 
     assertSituation('{label="value"} | logfmt | distinct id,^', {
       type: 'AFTER_DISTINCT',
+      logQuery: '{label="value"} | logfmt ',
+    });
+  });
+
+  it('identifies AFTER_KEEP_AND_DROP autocomplete situations', () => {
+    assertSituation('{label="value"} | logfmt | drop^', {
+      type: 'AFTER_KEEP_AND_DROP',
+      logQuery: '{label="value"} | logfmt ',
+    });
+
+    assertSituation('{label="value"} | logfmt | keep^', {
+      type: 'AFTER_KEEP_AND_DROP',
+      logQuery: '{label="value"} | logfmt ',
+    });
+
+    assertSituation('{label="value"} | logfmt | drop id,^', {
+      type: 'AFTER_KEEP_AND_DROP',
+      logQuery: '{label="value"} | logfmt ',
+    });
+
+    assertSituation('{label="value"} | logfmt | keep id,^', {
+      type: 'AFTER_KEEP_AND_DROP',
+      logQuery: '{label="value"} | logfmt ',
+    });
+
+    assertSituation('{label="value"} | logfmt | drop id, name="test",^', {
+      type: 'AFTER_KEEP_AND_DROP',
+      logQuery: '{label="value"} | logfmt ',
+    });
+
+    assertSituation('{label="value"} | logfmt | keep id, name="test",^', {
+      type: 'AFTER_KEEP_AND_DROP',
       logQuery: '{label="value"} | logfmt ',
     });
   });

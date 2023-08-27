@@ -431,10 +431,17 @@ export function sortDataFrame(data: DataFrame, sortIndex?: number, reverse = fal
   return {
     ...data,
     fields: data.fields.map((f) => {
-      return {
+      const newF = {
         ...f,
         values: f.values.map((v, i) => f.values[index[i]]),
       };
+
+      // only add .nanos if it exists
+      const { nanos } = f;
+      if (nanos !== undefined) {
+        newF.nanos = nanos.map((n, i) => nanos[index[i]]);
+      }
+      return newF;
     }),
   };
 }
@@ -448,10 +455,20 @@ export function reverseDataFrame(data: DataFrame): DataFrame {
     fields: data.fields.map((f) => {
       const values = [...f.values];
       values.reverse();
-      return {
+
+      const newF = {
         ...f,
         values,
       };
+
+      // only add .nanos if it exists
+      const { nanos } = f;
+      if (nanos !== undefined) {
+        const revNanos = [...nanos];
+        revNanos.reverse();
+        newF.nanos = revNanos;
+      }
+      return newF;
     }),
   };
 }

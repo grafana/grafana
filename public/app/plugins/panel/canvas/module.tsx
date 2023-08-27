@@ -6,7 +6,7 @@ import { getConnectionEditor } from './editor/connectionEditor';
 import { getElementEditor } from './editor/element/elementEditor';
 import { getLayerEditor } from './editor/layer/layerEditor';
 import { canvasMigrationHandler } from './migrations';
-import { Options } from './models.gen';
+import { Options } from './panelcfg.gen';
 
 export const addStandardCanvasEditorOptions = (builder: PanelOptionsEditorBuilder<Options>) => {
   builder.addBooleanSwitch({

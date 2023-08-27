@@ -3,6 +3,10 @@ aliases:
   - ../../../enterprise/access-control/custom-role-actions-scopes/
   - ../../../enterprise/access-control/permissions/
 description: Learn about Grafana RBAC permissions, actions, and scopes.
+labels:
+  products:
+    - cloud
+    - enterprise
 menuTitle: RBAC permissions, actions, and scopes
 title: Grafana RBAC permissions, actions, and scopes
 weight: 80
@@ -11,7 +15,7 @@ weight: 80
 # RBAC permissions, actions, and scopes
 
 {{% admonition type="note" %}}
-Available in [Grafana Enterprise]({{< relref "../../../../introduction/grafana-enterprise/" >}}) and [Grafana Cloud Advanced](/docs/grafana-cloud).
+Available in [Grafana Enterprise]({{< relref "../../../../introduction/grafana-enterprise/" >}}) and [Grafana Cloud](/docs/grafana-cloud).
 {{% /admonition %}}
 
 A permission is comprised of an action and a scope. When creating a custom role, consider the actions the user can perform and the resource(s) on which they can perform those actions.
@@ -43,6 +47,7 @@ The following list contains role-based access control actions.
 | `alert.rules:read`                   | `folders:*`<br>`folders:uid:*`                                                          | Read Grafana alert rules in a folder and its subfolders. Combine this permission with `folders:read` in a scope that includes the folder and `datasources:query` in the scope of data sources the user can query.   |
 | `alert.rules:write`                  | `folders:*`<br>`folders:uid:*`                                                          | Update Grafana alert rules in a folder and its subfolders. Combine this permission with `folders:read` in a scope that includes the folder and `datasources:query` in the scope of data sources the user can query. |
 | `alert.provisioning:read`            | n/a                                                                                     | Read all Grafana alert rules, notification policies, etc via provisioning API. Permissions to folders and datasource are not required.                                                                              |
+| `alert.provisioning.secrets:read`    | n/a                                                                                     | Same as `alert.provisioning:read` plus ability to export resources with decrypted secrets.                                                                                                                          |
 | `alert.provisioning:write`           | n/a                                                                                     | Update all Grafana alert rules, notification policies, etc via provisioning API. Permissions to folders and datasource are not required.                                                                            |
 | `annotations:create`                 | `annotations:*`<br>`annotations:type:*`                                                 | Create annotations.                                                                                                                                                                                                 |
 | `annotations:delete`                 | `annotations:*`<br>`annotations:type:*`                                                 | Delete annotations.                                                                                                                                                                                                 |

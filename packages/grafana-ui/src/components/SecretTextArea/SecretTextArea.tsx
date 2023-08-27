@@ -20,11 +20,11 @@ export const RESET_BUTTON_TEXT = 'Reset';
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    configuredStyle: css`
-      min-height: ${theme.spacing(theme.components.height.md)};
-      padding-top: ${theme.spacing(0.5) /** Needed to mimic vertically centered text in an input box */};
-      resize: none;
-    `,
+    configuredStyle: css({
+      minHeight: theme.spacing(theme.components.height.md),
+      paddingTop: theme.spacing(0.5) /** Needed to mimic vertically centered text in an input box */,
+      resize: 'none',
+    }),
   };
 };
 

@@ -233,7 +233,8 @@ func (s *AuthInfoStore) UpdateAuthInfo(ctx context.Context, cmd *login.UpdateAut
 
 	return s.sqlStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		upd, err := sess.MustCols("o_auth_expiry").Where("user_id = ? AND auth_module = ?", cmd.UserId, cmd.AuthModule).Update(authUser)
-		s.logger.Debug("Updated user_auth", "user_id", cmd.UserId, "auth_module", cmd.AuthModule, "rows", upd)
+		s.logger.Debug("Updated user_auth", "user_id", cmd.UserId,
+			"auth_id", cmd.AuthId, "auth_module", cmd.AuthModule, "rows", upd)
 		return err
 	})
 }

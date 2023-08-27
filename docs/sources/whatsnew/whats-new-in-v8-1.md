@@ -10,6 +10,11 @@ keywords:
   - documentation
   - '8.1'
   - release notes
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: What's new in Grafana v8.1
 weight: -33
 ---
@@ -55,7 +60,7 @@ You can also create annotations in the new Time series panel bringing it closer 
 
 ### Transformations improvements
 
-Grafana 8.1 includes some significant enhancements to transformations, including two new transformations designed around providing dynamic configuration to your panels and visulizations.
+Grafana 8.1 includes some significant enhancements to transformations, including two new transformations designed around providing dynamic configuration to your panels and visualizations.
 
 #### Config from query (Beta)
 
@@ -153,7 +158,7 @@ We’ve enhanced the scheduler for Reports to be more flexible, so you can send 
 
 ### Encrypt data in the query cache
 
-Query caching was released in Grafana 8.0 and allows you to temporarily store the results of data source queries in a cache, so that Grafana reads repeated queries from there instead of from the data source itself. This reduces load on data sources, improves dashboard load times, and can save money for data sources that charge per query. To learn more about query caching see its [overview]({{< relref "../administration/data-source-management#query-caching" >}}) page. To find out how to turn on encryption, refer to the [caching configuration]({{< relref "../setup-grafana/configure-grafana/enterprise-configuration#caching" >}}) documentation.
+Query caching was released in Grafana 8.0 and allows you to temporarily store the results of data source queries in a cache, so that Grafana reads repeated queries from there instead of from the data source itself. This reduces load on data sources, improves dashboard load times, and can save money for data sources that charge per query. To learn more about query caching see its [overview]({{< relref "../administration/data-source-management#query-and-resource-caching" >}}) page. To find out how to turn on encryption, refer to the [caching configuration]({{< relref "../setup-grafana/configure-grafana/enterprise-configuration#caching" >}}) documentation.
 
 You can now encrypt the query data cached by Grafana. This improves the security of query data, especially when your cache (like Redis) is shared with other services.
 

@@ -1,4 +1,4 @@
-import { fireEvent, getByRole, render, screen } from '@testing-library/react';
+import { fireEvent, getByRole, render, screen, cleanup } from '@testing-library/react';
 import React from 'react';
 
 import { InteractiveTable } from './InteractiveTable';
@@ -91,5 +91,50 @@ describe('InteractiveTable', () => {
       // anchestor tr's id should match the expander button's aria-controls attribute
       screen.getByTestId('test-1').parentElement?.parentElement?.id
     );
+  });
+  describe('pagination', () => {
+    it('does not render pagination controls if pageSize is not set', () => {
+      const columns: Array<Column<TableData>> = [{ id: 'id', header: 'ID' }];
+      const data: TableData[] = [{ id: '1', value: '1', country: 'Sweden' }];
+      render(<InteractiveTable columns={columns} data={data} getRowId={getRowId} />);
+
+      expect(screen.queryByRole('button', { name: /next/i })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /previous/i })).not.toBeInTheDocument();
+
+      cleanup();
+
+      render(<InteractiveTable columns={columns} data={data} getRowId={getRowId} pageSize={0} />);
+
+      expect(screen.queryByRole('button', { name: /next/i })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /previous/i })).not.toBeInTheDocument();
+    });
+
+    it('renders pagination controls if pageSize is set', () => {
+      const columns: Array<Column<TableData>> = [{ id: 'id', header: 'ID' }];
+      const data: TableData[] = [{ id: '1', value: '1', country: 'Sweden' }];
+      render(<InteractiveTable columns={columns} data={data} getRowId={getRowId} pageSize={10} />);
+
+      expect(screen.getByRole('button', { name: /next/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /previous/i })).toBeInTheDocument();
+    });
+  });
+  describe('headerTooltip', () => {
+    it('does not render tooltips if headerTooltips is not set', () => {
+      const columns: Array<Column<TableData>> = [{ id: 'id', header: 'ID' }];
+      const data: TableData[] = [{ id: '1', value: '1', country: 'Sweden' }];
+      render(<InteractiveTable columns={columns} data={data} getRowId={getRowId} />);
+
+      expect(screen.queryByTestId('header-tooltip-icon')).not.toBeInTheDocument();
+    });
+    it('renders tooltips if headerTooltips is set', () => {
+      const columns: Array<Column<TableData>> = [{ id: 'id', header: 'ID' }];
+      const data: TableData[] = [{ id: '1', value: '1', country: 'Sweden' }];
+      const headerTooltips = {
+        id: { content: 'this is the id' },
+      };
+      render(<InteractiveTable columns={columns} data={data} getRowId={getRowId} headerTooltips={headerTooltips} />);
+
+      expect(screen.getByTestId('header-tooltip-icon')).toBeInTheDocument();
+    });
   });
 });

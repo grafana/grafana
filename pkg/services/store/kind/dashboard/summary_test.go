@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"os"
+	"path"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -12,7 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestReadSummaries(t *testing.T) {
+func TestGdevReadSummaries(t *testing.T) {
 	devdash := "../../../../../devenv/dev-dashboards/panel-graph/"
 
 	ctx := context.Background()
@@ -61,6 +62,53 @@ func TestReadSummaries(t *testing.T) {
 			return nil
 		})
 	require.NoError(t, err)
+
+	// accumulated in the walk test
+	require.Equal(t, []string{}, failed)
+}
+
+func TestReadSummaries(t *testing.T) {
+	names := []string{
+		"with-library-panels",
+	}
+
+	ctx := context.Background()
+	reader := GetEntitySummaryBuilder()
+	failed := make([]string, 0, 10)
+
+	for _, name := range names {
+		fpath := path.Join("testdata", name+".json")
+		// Ignore gosec warning G304 since it's a test
+		// nolint:gosec
+		body, err := os.ReadFile(fpath)
+		if err != nil {
+			require.NoError(t, err, "error reading: "+fpath)
+		}
+
+		summary, _, err := reader(ctx, name, body)
+		if err != nil {
+			require.NoError(t, err, "error parsing: "+fpath)
+		}
+
+		out, err := json.MarshalIndent(summary, "", "  ")
+		if err != nil {
+			require.NoError(t, err, "error formatting: "+fpath)
+		}
+
+		gpath := path.Join("testdata", name+"-info.json")
+
+		// Ignore gosec warning G304 since it's a test
+		// nolint:gosec
+		golden, _ := os.ReadFile(gpath)
+
+		if !bytes.Equal(out, golden) {
+			failed = append(failed, name)
+			err = os.WriteFile(gpath, out, 0600)
+			if err != nil {
+				require.NoError(t, err, "error writing snapshot: "+fpath)
+			}
+		}
+	}
 
 	// accumulated in the walk test
 	require.Equal(t, []string{}, failed)

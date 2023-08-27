@@ -93,7 +93,7 @@ const stateSlice = createSlice({
     exprChanged: (state, action: PayloadAction<string>) => {
       if (!state.visQuery || state.expr !== action.payload) {
         state.expr = action.payload;
-        const parseResult = buildVisualQueryFromString(action.payload);
+        const parseResult = buildVisualQueryFromString(action.payload ?? '');
 
         state.visQuery = parseResult.query;
       }

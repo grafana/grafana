@@ -72,7 +72,7 @@ describe('browse-dashboards DeleteModal', () => {
   it('calls onDismiss when clicking the X', async () => {
     render(<DeleteModal {...defaultProps} />);
 
-    await userEvent.click(await screen.findByRole('button', { name: 'Close dialog' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Close' }));
     expect(mockOnDismiss).toHaveBeenCalled();
   });
 });

@@ -3,7 +3,9 @@ package service
 import (
 	"context"
 	"errors"
+	"strconv"
 	"testing"
+	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
@@ -26,6 +28,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
+	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 	"github.com/grafana/grafana/pkg/util"
 
 	"github.com/stretchr/testify/assert"
@@ -133,6 +136,15 @@ const (
           "interval": "",
           "legendFormat": "",
           "refId": "A"
+        },
+        {
+          "datasource": "6SOeCRrVk",
+          "exemplar": true,
+          "expr": "test{id=\"f0dd9b69-ad04-4342-8e79-ced8c245683b\", name=\"test\"}",
+          "hide": false,
+          "interval": "",
+          "legendFormat": "",
+          "refId": "B"
         }
       ],
       "title": "Panel Title",
@@ -309,6 +321,16 @@ const (
           "interval": "",
           "legendFormat": "",
           "refId": "B"
+        },
+        {
+          "datasource": {
+            "name": "Expression",
+            "type": "__expr__",
+            "uid": "__expr__"
+          },
+          "expression": "$A + $B",
+          "refId": "C",
+          "type": "math"
         }
       ],
       "title": "Panel Title",
@@ -346,6 +368,16 @@ const (
           "legendFormat": "",
           "refId": "B",
 		  "hide": true
+        },
+        {
+          "datasource": {
+            "name": "Expression",
+            "type": "__expr__",
+            "uid": "__expr__"
+          },
+          "expression": "$A + $B",
+          "refId": "C",
+          "type": "math"
         }
       ],
       "title": "Panel Title",
@@ -355,7 +387,7 @@ const (
   "schemaVersion": 35
 }`
 
-	dashboardWithRows = `
+	dashboardWithRowsAndOneHiddenQuery = `
 {
   "panels": [
     {
@@ -381,6 +413,7 @@ const (
           "expr": "query2",
           "interval": "",
           "legendFormat": "",
+		  "hide": true,
           "refId": "B"
         }
       ],
@@ -651,7 +684,7 @@ func TestGetQueryDataResponse(t *testing.T) {
 	sqlStore := sqlstore.InitTestDB(t)
 	dashboardStore, err := dashboardsDB.ProvideDashboardStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, sqlStore.Cfg), quotatest.New(false, nil))
 	require.NoError(t, err)
-	publicdashboardStore := database.ProvideStore(sqlStore)
+	publicdashboardStore := database.ProvideStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures())
 	serviceWrapper := ProvideServiceWrapper(publicdashboardStore)
 	fakeQueryService := &query.FakeQueryService{}
 	fakeQueryService.On("QueryData", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(&backend.QueryDataResponse{}, nil)
@@ -672,8 +705,9 @@ func TestGetQueryDataResponse(t *testing.T) {
 	t.Run("Returns query data even when the query is hidden", func(t *testing.T) {
 		hiddenQuery := map[string]interface{}{
 			"datasource": map[string]interface{}{
-				"type": "mysql",
-				"uid":  "ds1",
+				"name": "Expression",
+				"type": "__expr__",
+				"uid":  "__expr__",
 			},
 			"hide":  true,
 			"refId": "A",
@@ -692,11 +726,9 @@ func TestGetQueryDataResponse(t *testing.T) {
 		dto := &SavePublicDashboardDTO{
 			DashboardUid: dashboard.UID,
 			UserId:       7,
+			OrgID:        dashboard.OrgID,
 			PublicDashboard: &PublicDashboardDTO{
-				IsEnabled:    &isEnabled,
-				DashboardUid: "NOTTHESAME",
-				OrgId:        dashboard.OrgID,
-				TimeSettings: timeSettings,
+				IsEnabled: &isEnabled,
 			},
 		}
 		pubdashDto, err := service.Create(context.Background(), SignedInUser, dto)
@@ -1097,7 +1129,7 @@ func TestGetMetricRequest(t *testing.T) {
 	sqlStore := db.InitTestDB(t)
 	dashboardStore, err := dashboardsDB.ProvideDashboardStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, sqlStore.Cfg), quotatest.New(false, nil))
 	require.NoError(t, err)
-	publicdashboardStore := database.ProvideStore(sqlStore)
+	publicdashboardStore := database.ProvideStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures())
 	dashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, true, []map[string]interface{}{}, nil)
 	publicDashboard := &PublicDashboard{
 		Uid:          "1",
@@ -1153,9 +1185,10 @@ func TestGetUniqueDashboardDatasourceUids(t *testing.T) {
 		require.NoError(t, err)
 
 		uids := getUniqueDashboardDatasourceUids(json)
-		require.Len(t, uids, 2)
+		require.Len(t, uids, 3)
 		require.Equal(t, "abc123", uids[0])
-		require.Equal(t, "_yxMP8Ynk", uids[1])
+		require.Equal(t, "6SOeCRrVk", uids[1])
+		require.Equal(t, "_yxMP8Ynk", uids[2])
 	})
 
 	t.Run("can get no datasource uids from empty dashboard", func(t *testing.T) {
@@ -1181,7 +1214,7 @@ func TestBuildMetricRequest(t *testing.T) {
 	sqlStore := db.InitTestDB(t)
 	dashboardStore, err := dashboardsDB.ProvideDashboardStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, sqlStore.Cfg), quotatest.New(false, nil))
 	require.NoError(t, err)
-	publicdashboardStore := database.ProvideStore(sqlStore)
+	publicdashboardStore := database.ProvideStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures())
 	serviceWrapper := ProvideServiceWrapper(publicdashboardStore)
 	publicDashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, true, []map[string]interface{}{}, nil)
 	nonPublicDashboard := insertTestDashboard(t, dashboardStore, "testNonPublicDashie", 1, 0, true, []map[string]interface{}{}, nil)
@@ -1202,11 +1235,9 @@ func TestBuildMetricRequest(t *testing.T) {
 	isEnabled := true
 	dto := &SavePublicDashboardDTO{
 		DashboardUid: publicDashboard.UID,
+		OrgID:        9999999,
 		PublicDashboard: &PublicDashboardDTO{
-			IsEnabled:    &isEnabled,
-			DashboardUid: "NOTTHESAME",
-			OrgId:        9999999,
-			TimeSettings: timeSettings,
+			IsEnabled: &isEnabled,
 		},
 	}
 
@@ -1216,11 +1247,9 @@ func TestBuildMetricRequest(t *testing.T) {
 	isEnabled = false
 	nonPublicDto := &SavePublicDashboardDTO{
 		DashboardUid: nonPublicDashboard.UID,
+		OrgID:        9999999,
 		PublicDashboard: &PublicDashboardDTO{
-			IsEnabled:    &isEnabled,
-			DashboardUid: "NOTTHESAME",
-			OrgId:        9999999,
-			TimeSettings: defaultPubdashTimeSettings,
+			IsEnabled: &isEnabled,
 		},
 	}
 
@@ -1229,7 +1258,6 @@ func TestBuildMetricRequest(t *testing.T) {
 
 	t.Run("extracts queries from provided dashboard", func(t *testing.T) {
 		reqDTO, err := service.buildMetricRequest(
-			context.Background(),
 			publicDashboard,
 			publicDashboardPD,
 			1,
@@ -1280,7 +1308,6 @@ func TestBuildMetricRequest(t *testing.T) {
 
 	t.Run("returns an error when panel missing", func(t *testing.T) {
 		_, err := service.buildMetricRequest(
-			context.Background(),
 			publicDashboard,
 			publicDashboardPD,
 			49,
@@ -1319,7 +1346,6 @@ func TestBuildMetricRequest(t *testing.T) {
 		publicDashboard := insertTestDashboard(t, dashboardStore, "testDashWithHiddenQuery", 1, 0, true, []map[string]interface{}{}, customPanels)
 
 		reqDTO, err := service.buildMetricRequest(
-			context.Background(),
 			publicDashboard,
 			publicDashboardPD,
 			1,
@@ -1335,18 +1361,12 @@ func TestBuildMetricRequest(t *testing.T) {
 			require.Equal(t, publicDashboardQueryDTO.MaxDataPoints, reqDTO.Queries[i].Get("maxDataPoints").MustInt64())
 		}
 
-		require.Len(t, reqDTO.Queries, 2)
-
-		require.Equal(
-			t,
-			simplejson.NewFromAny(hiddenQuery),
-			reqDTO.Queries[0],
-		)
+		require.Len(t, reqDTO.Queries, 1)
 
 		require.Equal(
 			t,
 			simplejson.NewFromAny(nonHiddenQuery),
-			reqDTO.Queries[1],
+			reqDTO.Queries[0],
 		)
 	})
 }
@@ -1480,24 +1500,24 @@ func TestGroupQueriesByPanelId(t *testing.T) {
 		}`, string(query))
 	})
 
-	t.Run("hidden query not filtered", func(t *testing.T) {
+	t.Run("hidden queries in a panel with an expression not filtered", func(t *testing.T) {
 		json, err := simplejson.NewJson([]byte(dashboardWithOneHiddenQuery))
 		require.NoError(t, err)
 		queries := groupQueriesByPanelId(json)[2]
 
-		require.Len(t, queries, 2)
+		require.Len(t, queries, 3)
 	})
 
-	t.Run("hidden queries not filtered, so queries returned", func(t *testing.T) {
+	t.Run("all hidden queries in a panel with an expression not filtered", func(t *testing.T) {
 		json, err := simplejson.NewJson([]byte(dashboardWithAllHiddenQueries))
 		require.NoError(t, err)
 		queries := groupQueriesByPanelId(json)[2]
 
-		require.Len(t, queries, 2)
+		require.Len(t, queries, 3)
 	})
 
 	t.Run("queries inside panels inside rows are returned", func(t *testing.T) {
-		json, err := simplejson.NewJson([]byte(dashboardWithRows))
+		json, err := simplejson.NewJson([]byte(dashboardWithRowsAndOneHiddenQuery))
 		require.NoError(t, err)
 
 		queries := groupQueriesByPanelId(json)
@@ -1506,6 +1526,20 @@ func TestGroupQueriesByPanelId(t *testing.T) {
 		}
 
 		assert.Len(t, queries, 2)
+	})
+
+	t.Run("hidden queries are not returned", func(t *testing.T) {
+		json, err := simplejson.NewJson([]byte(dashboardWithRowsAndOneHiddenQuery))
+		require.NoError(t, err)
+
+		queries := groupQueriesByPanelId(json)
+		var totalQueries int
+		for idx := range queries {
+			totalQueries += len(queries[idx])
+			assert.NotNil(t, queries[idx])
+		}
+
+		assert.Equal(t, 3, totalQueries)
 	})
 }
 
@@ -1611,6 +1645,158 @@ func TestSanitizeMetadataFromQueryData(t *testing.T) {
 	})
 }
 
+func TestBuildTimeSettings(t *testing.T) {
+	var defaultDashboardData = simplejson.NewFromAny(map[string]interface{}{
+		"time": map[string]interface{}{
+			"from": "2022-09-01T00:00:00.000Z", "to": "2022-09-01T12:00:00.000Z",
+		},
+		"timezone": "America/Argentina/Mendoza",
+	})
+
+	defaultFromMs, defaultToMs := internal.GetTimeRangeFromDashboard(t, defaultDashboardData)
+
+	fakeTimezone, _ := time.LoadLocation("Europe/Madrid")
+	fakeNow := time.Date(2018, 12, 9, 20, 30, 0, 0, fakeTimezone)
+
+	// stub time range construction to have a fixed time.Now and be able to tests relative time ranges
+	NewDataTimeRange = func(from, to string) legacydata.DataTimeRange {
+		return legacydata.DataTimeRange{
+			From: from,
+			To:   to,
+			Now:  fakeNow,
+		}
+	}
+
+	startOfYesterdayMadrid, endOfYesterdayMadrid := getStartAndEndOfTheDayBefore(fakeNow, "Europe/Madrid")
+
+	// the day before fakeNow in Australia/Sydney timezone is not the same day before as in Europe/Madrid
+	startOfYesterdaySydney, endOfYesterdaySydney := getStartAndEndOfTheDayBefore(fakeNow, "Australia/Sydney")
+	startOfYesterdayUTC, endOfYesterdayUTC := getStartAndEndOfTheDayBefore(fakeNow, "UTC")
+
+	selectionFromMs := strconv.FormatInt(time.Now().UnixMilli(), 10)
+	selectionToMs := strconv.FormatInt(time.Now().Add(time.Hour).UnixMilli(), 10)
+
+	testCases := []struct {
+		name      string
+		dashboard *dashboards.Dashboard
+		pubdash   *PublicDashboard
+		reqDTO    PublicDashboardQueryDTO
+		want      TimeSettings
+	}{
+		{
+			name:      "should return default time range with timezone with relative time range",
+			dashboard: &dashboards.Dashboard{Data: buildJsonDataWithTimeRange("now-1d/d", "now-1d/d", "Australia/Sydney")},
+			pubdash:   &PublicDashboard{TimeSelectionEnabled: false},
+			reqDTO:    PublicDashboardQueryDTO{},
+			want: TimeSettings{
+				From: strconv.FormatInt(startOfYesterdaySydney.UnixMilli(), 10),
+				To:   strconv.FormatInt(endOfYesterdaySydney.UnixMilli(), 10),
+			},
+		},
+		{
+			name:      "should return default time range with UTC timezone with relative time range with unknown timezone",
+			dashboard: &dashboards.Dashboard{Data: buildJsonDataWithTimeRange("now-1d/d", "now-1d/d", "browser")},
+			pubdash:   &PublicDashboard{TimeSelectionEnabled: false},
+			reqDTO:    PublicDashboardQueryDTO{},
+			want: TimeSettings{
+				From: strconv.FormatInt(startOfYesterdayUTC.UnixMilli(), 10),
+				To:   strconv.FormatInt(endOfYesterdayUTC.UnixMilli(), 10),
+			},
+		},
+		{
+			name:      "should return default time range with timezone with relative time range if time selection is not enabled",
+			dashboard: &dashboards.Dashboard{Data: buildJsonDataWithTimeRange("now-1d/d", "now-1d/d", "Australia/Sydney")},
+			pubdash:   &PublicDashboard{TimeSelectionEnabled: false},
+			reqDTO: PublicDashboardQueryDTO{
+				TimeRange: TimeRangeDTO{
+					Timezone: "Europe/Madrid",
+				}},
+			want: TimeSettings{
+				From: strconv.FormatInt(startOfYesterdaySydney.UnixMilli(), 10),
+				To:   strconv.FormatInt(endOfYesterdaySydney.UnixMilli(), 10),
+			},
+		},
+		{
+			name:      "should return user time range with dashboard timezone with relative time range",
+			dashboard: &dashboards.Dashboard{Data: buildJsonDataWithTimeRange("now-1d/d", "now-1d/d", "Europe/Madrid")},
+			pubdash:   &PublicDashboard{TimeSelectionEnabled: false},
+			reqDTO:    PublicDashboardQueryDTO{},
+			want: TimeSettings{
+				From: strconv.FormatInt(startOfYesterdayMadrid.UnixMilli(), 10),
+				To:   strconv.FormatInt(endOfYesterdayMadrid.UnixMilli(), 10),
+			},
+		},
+		{
+			name:      "should return user time range with dashboard timezone with relative time range for the last hour",
+			dashboard: &dashboards.Dashboard{Data: buildJsonDataWithTimeRange("now-1h", "now", "Europe/Madrid")},
+			pubdash:   &PublicDashboard{TimeSelectionEnabled: false},
+			reqDTO:    PublicDashboardQueryDTO{},
+			want: TimeSettings{
+				From: strconv.FormatInt(fakeNow.Add(-time.Hour).UnixMilli(), 10),
+				To:   strconv.FormatInt(fakeNow.UnixMilli(), 10),
+			},
+		},
+		{
+			name:      "should use dashboard time if pubdash time empty",
+			dashboard: &dashboards.Dashboard{Data: defaultDashboardData},
+			pubdash:   &PublicDashboard{TimeSelectionEnabled: false},
+			reqDTO:    PublicDashboardQueryDTO{},
+			want: TimeSettings{
+				From: defaultFromMs,
+				To:   defaultToMs,
+			},
+		},
+		{
+			name:      "should use dashboard time when time selection is disabled",
+			dashboard: &dashboards.Dashboard{Data: defaultDashboardData},
+			pubdash:   &PublicDashboard{TimeSelectionEnabled: false},
+			reqDTO: PublicDashboardQueryDTO{
+				TimeRange: TimeRangeDTO{
+					From: selectionFromMs,
+					To:   selectionToMs,
+				},
+			},
+			want: TimeSettings{
+				From: defaultFromMs,
+				To:   defaultToMs,
+			},
+		},
+		{
+			name:      "should use selected values if time selection is enabled",
+			dashboard: &dashboards.Dashboard{Data: defaultDashboardData},
+			pubdash:   &PublicDashboard{TimeSelectionEnabled: true},
+			reqDTO: PublicDashboardQueryDTO{
+				TimeRange: TimeRangeDTO{
+					From: selectionFromMs,
+					To:   selectionToMs,
+				},
+			},
+			want: TimeSettings{
+				From: selectionFromMs,
+				To:   selectionToMs,
+			},
+		},
+		{
+			name:      "should use default values if time selection is enabled but the time range is empty",
+			dashboard: &dashboards.Dashboard{Data: defaultDashboardData},
+			pubdash:   &PublicDashboard{TimeSelectionEnabled: true},
+			reqDTO: PublicDashboardQueryDTO{
+				TimeRange: TimeRangeDTO{},
+			},
+			want: TimeSettings{
+				From: defaultFromMs,
+				To:   defaultToMs,
+			},
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.name, func(t *testing.T) {
+			assert.Equal(t, test.want, buildTimeSettings(test.dashboard, test.reqDTO, test.pubdash))
+		})
+	}
+}
+
 func groupQueriesByDataSource(t *testing.T, queries []*simplejson.Json) (result [][]*simplejson.Json) {
 	t.Helper()
 	byDataSource := make(map[string][]*simplejson.Json)
@@ -1625,4 +1811,22 @@ func groupQueriesByDataSource(t *testing.T, queries []*simplejson.Json) (result 
 	}
 
 	return
+}
+
+func getStartAndEndOfTheDayBefore(fakeNow time.Time, timezoneName string) (time.Time, time.Time) {
+	timezone, _ := time.LoadLocation(timezoneName)
+	fakeNowWithTimezone := fakeNow.In(timezone)
+	yy, mm, dd := fakeNowWithTimezone.Add(-24 * time.Hour).Date()
+	startOfYesterdaySydney := time.Date(yy, mm, dd, 0, 0, 0, 0, timezone)
+	endOfYesterdaySydney := time.Date(yy, mm, dd, 23, 59, 59, 999999999, timezone)
+	return startOfYesterdaySydney, endOfYesterdaySydney
+}
+
+func buildJsonDataWithTimeRange(from, to, timezone string) *simplejson.Json {
+	return simplejson.NewFromAny(map[string]interface{}{
+		"time": map[string]interface{}{
+			"from": from, "to": to,
+		},
+		"timezone": timezone,
+	})
 }

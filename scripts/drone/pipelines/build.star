@@ -49,8 +49,7 @@ def build_e2e(trigger, ver_mode):
       Drone pipeline.
     """
 
-    edition = "oss"
-    environment = {"EDITION": edition}
+    environment = {"EDITION": "oss"}
     init_steps = [
         identify_runner_step(),
         download_grabpl_step(),
@@ -73,12 +72,12 @@ def build_e2e(trigger, ver_mode):
 
     build_steps.extend(
         [
-            build_backend_step(edition = edition, ver_mode = ver_mode),
-            build_frontend_step(edition = edition, ver_mode = ver_mode),
-            build_frontend_package_step(edition = edition, ver_mode = ver_mode),
-            build_plugins_step(edition = edition, ver_mode = ver_mode),
-            package_step(edition = edition, ver_mode = ver_mode),
-            grafana_server_step(edition = edition),
+            build_backend_step(ver_mode = ver_mode),
+            build_frontend_step(ver_mode = ver_mode),
+            build_frontend_package_step(ver_mode = ver_mode),
+            build_plugins_step(ver_mode = ver_mode),
+            package_step(ver_mode = ver_mode),
+            grafana_server_step(),
             e2e_tests_step("dashboards-suite"),
             e2e_tests_step("smoke-tests-suite"),
             e2e_tests_step("panels-suite"),
@@ -101,36 +100,28 @@ def build_e2e(trigger, ver_mode):
                 store_storybook_step(trigger = trigger_oss, ver_mode = ver_mode),
                 frontend_metrics_step(trigger = trigger_oss),
                 build_docker_images_step(
-                    edition = edition,
                     publish = False,
                 ),
                 build_docker_images_step(
-                    edition = edition,
                     publish = False,
                     ubuntu = True,
                 ),
                 publish_images_step(
                     docker_repo = "grafana",
-                    edition = edition,
-                    mode = "",
                     trigger = trigger_oss,
                     ver_mode = ver_mode,
                 ),
                 publish_images_step(
                     docker_repo = "grafana-oss",
-                    edition = edition,
-                    mode = "",
                     trigger = trigger_oss,
                     ver_mode = ver_mode,
                 ),
                 release_canary_npm_packages_step(trigger = trigger_oss),
                 upload_packages_step(
-                    edition = edition,
                     trigger = trigger_oss,
                     ver_mode = ver_mode,
                 ),
                 upload_cdn_step(
-                    edition = edition,
                     trigger = trigger_oss,
                     ver_mode = ver_mode,
                 ),
@@ -143,19 +134,15 @@ def build_e2e(trigger, ver_mode):
                     archs = [
                         "amd64",
                     ],
-                    edition = edition,
                 ),
                 build_docker_images_step(
                     archs = [
                         "amd64",
                     ],
-                    edition = edition,
                     ubuntu = True,
                 ),
                 publish_images_step(
                     docker_repo = "grafana",
-                    edition = edition,
-                    mode = "",
                     trigger = trigger_oss,
                     ver_mode = ver_mode,
                 ),
@@ -168,7 +155,6 @@ def build_e2e(trigger, ver_mode):
 
     return pipeline(
         name = "{}-build-e2e{}".format(ver_mode, publish_suffix),
-        edition = "oss",
         environment = environment,
         services = [],
         steps = init_steps + build_steps,

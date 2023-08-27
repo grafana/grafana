@@ -8,8 +8,14 @@ keywords:
   - configuration
   - documentation
   - oauth
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
+menuTitle: Keycloak OAuth2
 title: Configure Keycloak OAuth2 authentication
-weight: 200
+weight: 1300
 ---
 
 # Configure Keycloak OAuth2 authentication
@@ -60,7 +66,7 @@ It is useful as a fallback or if the user has more than 150 group memberships.
 - Implicit Flow Enabled: `OFF`
 - Direct Access Grants Enabled: `ON`
 - Root URL: `<grafana_root_url>`
-- Valid Redirect URIs: `<grafana_root_url>/*`
+- Valid Redirect URIs: `<grafana_root_url>/login/generic_oauth`
 - Web Origins: `<grafana_root_url>`
 - Admin URL: `<grafana_root_url>`
 - Base URL: `<grafana_root_url>`
@@ -93,7 +99,7 @@ viewer
 ## Teamsync
 
 {{% admonition type="note" %}}
-Available in [Grafana Enterprise]({{< relref "../../../../introduction/grafana-enterprise" >}}) and [Grafana Cloud Advanced](/docs/grafana-cloud/).
+Available in [Grafana Enterprise]({{< relref "../../../../introduction/grafana-enterprise" >}}) and [Grafana Cloud](/docs/grafana-cloud/).
 {{% /admonition %}}
 
 [Teamsync]({{< relref "../../configure-team-sync" >}}) is a feature that allows you to map groups from your identity provider to Grafana teams. This is useful if you want to give your users access to specific dashboards or folders based on their group membership.
@@ -131,7 +137,7 @@ To enable Single Logout, you need to add the following option to the configurati
 
 ```ini
 [auth]
-signout_redirect_url = https://<PROVIDER_DOMAIN>/auth/realms/<REALM_NAME>/protocol/openid-connect/logout?redirect_uri=https%3A%2F%2<GRAFANA_DOMAIN>%2Flogin
+signout_redirect_url = https://<PROVIDER_DOMAIN>/auth/realms/<REALM_NAME>/protocol/openid-connect/logout?redirect_uri=https%3A%2F%2F<GRAFANA_DOMAIN>%2Flogin
 ```
 
 As an example, `<PROVIDER_DOMAIN>` can be `keycloak-demo.grafana.org`,

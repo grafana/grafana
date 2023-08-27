@@ -4,6 +4,10 @@ aliases:
   - ../../../enterprise/access-control/manage-role-assignments/manage-built-in-role-assignments/
   - ../../../enterprise/access-control/manage-role-assignments/manage-user-role-assignments/
 description: Learn how to assign RBAC roles to users and teams in Grafana.
+labels:
+  products:
+    - cloud
+    - enterprise
 menuTitle: Assign RBAC roles
 title: Assign Grafana RBAC roles
 weight: 40
@@ -12,7 +16,7 @@ weight: 40
 # Assign RBAC roles
 
 {{% admonition type="note" %}}
-Available in [Grafana Enterprise]({{< relref "../../../../introduction/grafana-enterprise/" >}}) and [Grafana Cloud Advanced](/docs/grafana-cloud).
+Available in [Grafana Enterprise]({{< relref "../../../../introduction/grafana-enterprise/" >}}) and [Grafana Cloud](/docs/grafana-cloud).
 {{% /admonition %}}
 
 In this topic you'll learn how to use the role picker, provisioning, and the HTTP API to assign fixed and custom roles to users and teams.

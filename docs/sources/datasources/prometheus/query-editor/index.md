@@ -7,6 +7,11 @@ keywords:
   - prometheus
   - logs
   - queries
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 menuTitle: Query editor
 title: Prometheus query editor
 weight: 300
@@ -16,9 +21,9 @@ weight: 300
 
 Grafana provides a query editor for the Prometheus data source to create queries in PromQL. For more information about PromQL, see [Querying Prometheus](http://prometheus.io/docs/querying/basics/).
 
-For general documentation on querying data sources in Grafana, see [Query and transform data]({{< relref "../../../panels-visualizations/query-transform-data" >}}).
+For general documentation on querying data sources in Grafana, see [Query and transform data][query-transform-data].
 
-For options and functions common to all query editors, see [Query editors]({{< relref "../../../panels-visualizations/query-transform-data" >}}).
+For options and functions common to all query editors, see [Query editors][query-transform-data].
 
 ## Choose a query editing mode
 
@@ -75,9 +80,9 @@ This setting supports the `$__interval` and `$__rate_interval` macros.
 
 Switch between the following format options:
 
-- **Time series** - The default time series format. See [Time series kind formats](https://grafana.github.io/dataplane/timeseries/) for information on time series data frames and how time and value fields are structured.
-- **Table** - This works only in a [Table panel]({{< relref "../../../panels-visualizations/visualizations/table" >}}).
-- **Heatmap** - Displays metrics of the Histogram type on a [Heatmap panel]({{< relref "../../../panels-visualizations/visualizations/heatmap" >}}) by converting cumulative histograms to regular ones and sorting the series by the bucket bound.
+- **Time series** - The default time series format. See [Time series kind formats](https://grafana.com/developers/dataplane/timeseries/) for information on time series data frames and how time and value fields are structured.
+- **Table** - This works only in a [Table panel][table].
+- **Heatmap** - Displays metrics of the Histogram type on a [Heatmap panel][heatmap] by converting cumulative histograms to regular ones and sorting the series by the bucket bound.
 
 ### Type
 
@@ -87,7 +92,7 @@ The **Type** setting sets the query type. These include:
 - **Range** - Returns a range vector consisting of a set of time series data containing a range of data points over time for each time series. You can choose lines, bars, points, stacked lines or stacked bars
 - **Instant** - Returns one data point per query and only the most recent point in the time range provided. The results can be shown in table format or as raw data. To depict instant query results in the time series panel, first add a field override, next add a property to the override named `Transform`, and finally select `Constant` from the **Transform** dropdown.
 
-For more information, refer to the [Time Series Transform option documentation]({{< relref "../../../panels-visualizations/visualizations/time-series#transform" >}}).
+For more information, refer to the [Time Series Transform option documentation][time-series-transform].
 
 {{% admonition type="note" %}}
 Grafana modifies the request dates for queries to align them with the dynamically calculated step.
@@ -96,7 +101,7 @@ This ensures a consistent display of metrics data, but it can result in a small 
 
 ### Exemplars
 
-Toggle **Exemplars** to run a query that includes exemplars in the graph. Exemplars are unique to Prometheus. For more information see [Introduction to exemplars](https://grafana.com/docs/grafana/latest/fundamentals/exemplars/).
+Toggle **Exemplars** to run a query that includes exemplars in the graph. Exemplars are unique to Prometheus. For more information see [Introduction to exemplars][exemplars].
 
 {{% admonition type="note" %}}
 There is no option to add exemplars with an **Instant** query type.
@@ -125,6 +130,24 @@ This video demonstrates how to use the visual Prometheus query builder available
 When you are ready to create a query, you can choose the specific metric name from the dropdown list under **Metric**.
 The data source requests the list of available metrics from the Prometheus server based on the selected time rage.
 You can also enter text into the selector when the dropdown is open to search and filter the list.
+
+#### Metrics explorer
+
+{{< figure src="/static/img/docs/prometheus/screenshot-grafana-prometheus-metrics-explorer-2.png" max-width="500px" class="docs-image--no-shadow" caption="Metrics explorer" >}}
+
+If you would like to explore your metrics in the query builder further, you can open the **Metrics Explorer** by clicking the first option in the metric select component of the query builder.
+
+The metrics explorer is different than the metrics browser. The metrics explorer is only found in the query builder section. The metrics browser is only found in the code editor. The metrics explorer does not have the ability to browse labels yet, but the metrics browser can display all labels on a metric name.
+
+The metrics explorer displays all metrics in a paginated table list. The list shows the total number of metrics, as well as the name, type and description for each metric. You can enter text into the search input to filter results.
+You can also filter by type.
+
+There are also additional settings for the following items:
+
+- Include description in search. Search by name **and** description
+- Include results with no metadata. Many Prometheus metrics have no metadata. This allows users to include metrics with undefined type and description.
+- Disable text wrap.
+- Enable regex search. This uses the Prometheus API to enable regex search for the metric name.
 
 ### Label filters
 
@@ -174,7 +197,7 @@ Once you are satisfied with your query, click **Run query**.
 The user interface (UI) also lets you select metrics, labels, filters and operations.
 
 You can write complex queries using the text editor with autocompletion features and syntax highlighting.
-It also contains a [Metrics browser]({{< relref "#metrics-browser" >}}) to further help you write queries.
+It also contains a [Metrics browser](#metrics-browser) to further help you write queries.
 
 ### Use autocomplete
 
@@ -184,7 +207,7 @@ The autocompletion dropdown includes documentation for the suggested items where
 ### Metrics browser
 
 The metrics browser locates metrics and selects relevant labels to help you build basic queries.
-When you click **Metrics browser**, it displays all available metrics and labels.
+When you click **Metrics browser** in `Code` mode, it displays all available metrics and labels.
 If supported by your Prometheus instance, each metric also displays its `HELP` and `TYPE` as a tooltip.
 
 {{< figure src="/static/img/docs/prometheus/metric-browser.png" max-width="500px" class="docs-image--no-shadow" caption="Metrics browser" >}}
@@ -204,3 +227,20 @@ The values section has only one search field, and its filtering applies to all l
 For example, among your labels `app`, `job`, `job_name` only one might have the value you are looking for.
 
 Once you are satisfied with your query, click **Run query**.
+
+{{% docs/reference %}}
+[exemplars]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/fundamentals/exemplars"
+[exemplars]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/fundamentals/exemplars"
+
+[heatmap]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/heatmap"
+[heatmap]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/heatmap"
+
+[query-transform-data]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/query-transform-data"
+[query-transform-data]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/query-transform-data"
+
+[table]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/table"
+[table]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/table"
+
+[time-series-transform]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/time-series#transform"
+[time-series-transform]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/time-series#transform"
+{{% /docs/reference %}}

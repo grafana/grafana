@@ -17,7 +17,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature/statickey"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 func TestReadPluginManifest(t *testing.T) {
@@ -118,7 +117,7 @@ khdr/tZ1PDgRxMqB/u+Vtbpl0xSxgblnrDOYMSI=
 		assert.Equal(t, int64(1605807018050), manifest.Time)
 		assert.Equal(t, "7e4d0c6a708866e7", manifest.KeyID)
 		assert.Equal(t, "2.0.0", manifest.ManifestVersion)
-		assert.Equal(t, plugins.PrivateSignature, manifest.SignatureType)
+		assert.Equal(t, plugins.SignatureTypePrivate, manifest.SignatureType)
 		assert.Equal(t, "willbrowne", manifest.SignedByOrg)
 		assert.Equal(t, "Will Browne", manifest.SignedByOrgName)
 		assert.Equal(t, []string{"http://localhost:3000/"}, manifest.RootURLs)
@@ -135,15 +134,15 @@ func TestCalculate(t *testing.T) {
 			{
 				appURL: "https://dev.grafana.com",
 				expectedSignature: plugins.Signature{
-					Status:     plugins.SignatureValid,
-					Type:       plugins.GrafanaSignature,
+					Status:     plugins.SignatureStatusValid,
+					Type:       plugins.SignatureTypeGrafana,
 					SigningOrg: "Grafana Labs",
 				},
 			},
 			{
 				appURL: "https://non.matching.url.com",
 				expectedSignature: plugins.Signature{
-					Status: plugins.SignatureInvalid,
+					Status: plugins.SignatureStatusInvalid,
 				},
 			},
 		}
@@ -155,17 +154,11 @@ func TestCalculate(t *testing.T) {
 		}
 
 		for _, tc := range tcs {
-			origAppURL := setting.AppUrl
-			t.Cleanup(func() {
-				setting.AppUrl = origAppURL
-			})
-			setting.AppUrl = tc.appURL
-
 			basePath := filepath.Join(parentDir, "testdata/non-pvt-with-root-url/plugin")
-			s := ProvideService(&config.Cfg{}, statickey.New())
+			s := ProvideService(&config.Cfg{GrafanaAppURL: tc.appURL}, statickey.New())
 			sig, err := s.Calculate(context.Background(), &fakes.FakePluginSource{
 				PluginClassFunc: func(ctx context.Context) plugins.Class {
-					return plugins.External
+					return plugins.ClassExternal
 				},
 			}, plugins.FoundPlugin{
 				JSONData: plugins.JSONData{
@@ -193,12 +186,12 @@ func TestCalculate(t *testing.T) {
 		s := ProvideService(&config.Cfg{}, statickey.New())
 		sig, err := s.Calculate(context.Background(), &fakes.FakePluginSource{
 			PluginClassFunc: func(ctx context.Context) plugins.Class {
-				return plugins.External
+				return plugins.ClassExternal
 			},
 		}, plugins.FoundPlugin{
 			JSONData: plugins.JSONData{
 				ID:   "test-renderer",
-				Type: plugins.Renderer,
+				Type: plugins.TypeRenderer,
 				Info: plugins.Info{
 					Version: "1.0.0",
 				},
@@ -207,8 +200,8 @@ func TestCalculate(t *testing.T) {
 		})
 		require.NoError(t, err)
 		require.Equal(t, plugins.Signature{
-			Status:     plugins.SignatureValid,
-			Type:       plugins.GrafanaSignature,
+			Status:     plugins.SignatureStatusValid,
+			Type:       plugins.SignatureTypeGrafana,
 			SigningOrg: "Grafana Labs",
 		}, sig)
 	})
@@ -261,12 +254,12 @@ func TestCalculate(t *testing.T) {
 				require.NoError(t, err)
 				sig, err := s.Calculate(context.Background(), &fakes.FakePluginSource{
 					PluginClassFunc: func(ctx context.Context) plugins.Class {
-						return plugins.External
+						return plugins.ClassExternal
 					},
 				}, plugins.FoundPlugin{
 					JSONData: plugins.JSONData{
 						ID:   "myorgid-simple-app",
-						Type: plugins.App,
+						Type: plugins.TypeApp,
 						Info: plugins.Info{
 							Version: "%VERSION%",
 						},
@@ -275,8 +268,8 @@ func TestCalculate(t *testing.T) {
 				})
 				require.NoError(t, err)
 				require.Equal(t, plugins.Signature{
-					Status:     plugins.SignatureValid,
-					Type:       plugins.GrafanaSignature,
+					Status:     plugins.SignatureStatusValid,
+					Type:       plugins.SignatureTypeGrafana,
 					SigningOrg: "Grafana Labs",
 				}, sig)
 			})
@@ -545,7 +538,7 @@ func Test_urlMatch_privateGlob(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := urlMatch(tt.args.specs, tt.args.target, plugins.PrivateGlobSignature)
+			got, err := urlMatch(tt.args.specs, tt.args.target, plugins.SignatureTypePrivateGlob)
 			require.NoError(t, err)
 			require.Equal(t, tt.shouldMatch, got)
 		})
@@ -661,7 +654,7 @@ func Test_urlMatch_private(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := urlMatch(tt.args.specs, tt.args.target, plugins.PrivateSignature)
+			got, err := urlMatch(tt.args.specs, tt.args.target, plugins.SignatureTypePrivate)
 			require.NoError(t, err)
 			require.Equal(t, tt.shouldMatch, got)
 		})
@@ -741,7 +734,7 @@ func createV2Manifest(t *testing.T, cbs ...func(*PluginManifest)) *PluginManifes
 			"plugin.json": "55556b845e91935cc48fae3aa67baf0f22694c3f",
 		},
 		ManifestVersion: "2.0.0",
-		SignatureType:   plugins.GrafanaSignature,
+		SignatureType:   plugins.SignatureTypeGrafana,
 		SignedByOrg:     "grafana",
 		SignedByOrgName: "grafana",
 	}

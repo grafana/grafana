@@ -10,8 +10,6 @@
 
 import * as common from '@grafana/schema';
 
-export const PanelCfgModelVersion = Object.freeze([0, 0]);
-
 /**
  * Identical to timeseries... except it does not have timezone settings
  */

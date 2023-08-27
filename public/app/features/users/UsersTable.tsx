@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 
 import { OrgRole } from '@grafana/data';
-import { Button, ConfirmModal } from '@grafana/ui';
+import { Button, ConfirmModal, Icon, Tooltip } from '@grafana/ui';
 import { UserRolePicker } from 'app/core/components/RolePicker/UserRolePicker';
 import { fetchRoleOptions } from 'app/core/components/RolePicker/api';
 import { TagBadge } from 'app/core/components/TagFilter/TagBadge';
@@ -10,6 +10,9 @@ import { contextSrv } from 'app/core/core';
 import { AccessControlAction, OrgUser, Role } from 'app/types';
 
 import { OrgRolePicker } from '../admin/OrgRolePicker';
+
+const disabledRoleMessage = `This user's role is not editable because it is synchronized from your auth provider.
+  Refer to the Grafana authentication docs for details.`;
 
 export interface Props {
   users: OrgUser[];
@@ -49,6 +52,7 @@ export const UsersTable = ({ users, orgId, onRoleChange, onRemoveUser }: Props) 
             <th>Name</th>
             <th>Seen</th>
             <th>Role</th>
+            <th />
             <th style={{ width: '34px' }} />
             <th>Origin</th>
             <th></th>
@@ -57,10 +61,14 @@ export const UsersTable = ({ users, orgId, onRoleChange, onRemoveUser }: Props) 
         <tbody>
           {users.map((user, index) => {
             let basicRoleDisabled = !contextSrv.hasPermissionInMetadata(AccessControlAction.OrgUsersWrite, user);
-            if (config.featureToggles.onlyExternalOrgRoleSync) {
+            let authLabel = Array.isArray(user.authLabels) && user.authLabels.length > 0 ? user.authLabels[0] : '';
+            // A GCom specific feature toggle for role locking has been introduced, as the previous implementation had a bug with locking down external users synced through GCom (https://github.com/grafana/grafana/pull/72044)
+            // Remove this conditional once FlagGcomOnlyExternalOrgRoleSync feature toggle has been removed
+            if (authLabel !== 'grafana.com' || config.featureToggles.gcomOnlyExternalOrgRoleSync) {
               const isUserSynced = user?.isExternallySynced;
               basicRoleDisabled = isUserSynced || basicRoleDisabled;
             }
+
             return (
               <tr key={`${user.userId}-${index}`}>
                 <td className="width-2 text-center">
@@ -93,6 +101,7 @@ export const UsersTable = ({ users, orgId, onRoleChange, onRemoveUser }: Props) 
                       basicRole={user.role}
                       onBasicRoleChange={(newRole) => onRoleChange(newRole, user)}
                       basicRoleDisabled={basicRoleDisabled}
+                      basicRoleDisabledMessage={disabledRoleMessage}
                     />
                   ) : (
                     <OrgRolePicker
@@ -101,6 +110,16 @@ export const UsersTable = ({ users, orgId, onRoleChange, onRemoveUser }: Props) 
                       disabled={basicRoleDisabled}
                       onChange={(newRole) => onRoleChange(newRole, user)}
                     />
+                  )}
+                </td>
+
+                <td>
+                  {basicRoleDisabled && (
+                    <div style={{ display: 'flex', alignItems: 'center' }}>
+                      <Tooltip content={disabledRoleMessage}>
+                        <Icon name="question-circle" style={{ marginLeft: '8px' }} />
+                      </Tooltip>
+                    </div>
                   )}
                 </td>
 

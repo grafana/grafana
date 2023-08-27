@@ -9,6 +9,7 @@ import { Button } from '@grafana/ui';
 import { TestProvider } from '../../../../../../test/helpers/TestProvider';
 import { RouteWithID } from '../../../../../plugins/datasource/alertmanager/types';
 import * as grafanaApp from '../../components/receivers/grafanaAppReceivers/grafanaApp';
+import { AlertmanagerProvider } from '../../state/AlertmanagerContext';
 import { FormAmRoute } from '../../types/amroutes';
 import { AmRouteReceiver } from '../receivers/grafanaAppReceivers/types';
 
@@ -142,12 +143,14 @@ function renderRouteForm(
   onSubmit: (route: Partial<FormAmRoute>) => void = noop
 ) {
   render(
-    <AmRoutesExpandedForm
-      actionButtons={<Button type="submit">Update default policy</Button>}
-      onSubmit={onSubmit}
-      receivers={receivers}
-      route={route}
-    />,
+    <AlertmanagerProvider accessType="instance">
+      <AmRoutesExpandedForm
+        actionButtons={<Button type="submit">Update default policy</Button>}
+        onSubmit={onSubmit}
+        receivers={receivers}
+        route={route}
+      />
+    </AlertmanagerProvider>,
     { wrapper: TestProvider }
   );
 }

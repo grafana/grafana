@@ -13,6 +13,7 @@ import (
 	cloudmonitoring "github.com/grafana/grafana/pkg/tsdb/cloud-monitoring"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch"
 	"github.com/grafana/grafana/pkg/tsdb/elasticsearch"
+	pyroscope "github.com/grafana/grafana/pkg/tsdb/grafana-pyroscope-datasource"
 	"github.com/grafana/grafana/pkg/tsdb/grafanads"
 	"github.com/grafana/grafana/pkg/tsdb/graphite"
 	"github.com/grafana/grafana/pkg/tsdb/influxdb"
@@ -21,7 +22,6 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/mysql"
 	"github.com/grafana/grafana/pkg/tsdb/opentsdb"
 	"github.com/grafana/grafana/pkg/tsdb/parca"
-	"github.com/grafana/grafana/pkg/tsdb/phlare"
 	"github.com/grafana/grafana/pkg/tsdb/postgres"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus"
 	"github.com/grafana/grafana/pkg/tsdb/tempo"
@@ -44,7 +44,7 @@ const (
 	MySQL           = "mysql"
 	MSSQL           = "mssql"
 	Grafana         = "grafana"
-	Phlare          = "phlare"
+	Pyroscope       = "grafana-pyroscope-datasource"
 	Parca           = "parca"
 )
 
@@ -52,6 +52,23 @@ func init() {
 	// Non-optimal global solution to replace plugin SDK default loggers for core plugins.
 	sdklog.DefaultLogger = &logWrapper{logger: log.New("plugin.coreplugin")}
 	backend.Logger = sdklog.DefaultLogger
+	backend.NewLoggerWith = func(args ...interface{}) sdklog.Logger {
+		for i, arg := range args {
+			// Obtain logger name from args.
+			if s, ok := arg.(string); ok && s == "logger" {
+				l := &logWrapper{logger: log.New(args[i+1].(string))}
+				// new args slice without logger name and logger name value
+				if len(args) > 2 {
+					newArgs := make([]interface{}, 0, len(args)-2)
+					newArgs = append(newArgs, args[:i]...)
+					newArgs = append(newArgs, args[i+2:]...)
+					return l.With(newArgs...)
+				}
+				return l
+			}
+		}
+		return sdklog.DefaultLogger
+	}
 }
 
 type Registry struct {
@@ -67,7 +84,7 @@ func NewRegistry(store map[string]backendplugin.PluginFactoryFunc) *Registry {
 func ProvideCoreRegistry(am *azuremonitor.Service, cw *cloudwatch.CloudWatchService, cm *cloudmonitoring.Service,
 	es *elasticsearch.Service, grap *graphite.Service, idb *influxdb.Service, lk *loki.Service, otsdb *opentsdb.Service,
 	pr *prometheus.Service, t *tempo.Service, td *testdatasource.Service, pg *postgres.Service, my *mysql.Service,
-	ms *mssql.Service, graf *grafanads.Service, phlare *phlare.Service, parca *parca.Service) *Registry {
+	ms *mssql.Service, graf *grafanads.Service, pyroscope *pyroscope.Service, parca *parca.Service) *Registry {
 	return NewRegistry(map[string]backendplugin.PluginFactoryFunc{
 		CloudWatch:      asBackendPlugin(cw.Executor),
 		CloudMonitoring: asBackendPlugin(cm),
@@ -84,7 +101,7 @@ func ProvideCoreRegistry(am *azuremonitor.Service, cw *cloudwatch.CloudWatchServ
 		MySQL:           asBackendPlugin(my),
 		MSSQL:           asBackendPlugin(ms),
 		Grafana:         asBackendPlugin(graf),
-		Phlare:          asBackendPlugin(phlare),
+		Pyroscope:       asBackendPlugin(pyroscope),
 		Parca:           asBackendPlugin(parca),
 	})
 }

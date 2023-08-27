@@ -31,7 +31,7 @@ func NewProvider(cfg *config.Cfg, license plugins.Licensing) *Service {
 	}
 }
 
-func (s *Service) Get(_ context.Context, p *plugins.Plugin) []string {
+func (s *Service) Get(ctx context.Context, p *plugins.Plugin) []string {
 	hostEnv := []string{
 		fmt.Sprintf("GF_VERSION=%s", s.cfg.BuildVersion),
 	}
@@ -46,6 +46,17 @@ func (s *Service) Get(_ context.Context, p *plugins.Plugin) []string {
 		hostEnv = append(hostEnv, s.license.Environment()...)
 	}
 
+	if p.ExternalService != nil {
+		hostEnv = append(
+			hostEnv,
+			fmt.Sprintf("GF_APP_URL=%s", s.cfg.GrafanaAppURL),
+			fmt.Sprintf("GF_PLUGIN_APP_CLIENT_ID=%s", p.ExternalService.ClientID),
+			fmt.Sprintf("GF_PLUGIN_APP_CLIENT_SECRET=%s", p.ExternalService.ClientSecret),
+			fmt.Sprintf("GF_PLUGIN_APP_PRIVATE_KEY=%s", p.ExternalService.PrivateKey),
+		)
+	}
+
+	hostEnv = append(hostEnv, s.featureToggleEnableVar(ctx)...)
 	hostEnv = append(hostEnv, s.awsEnvVars()...)
 	hostEnv = append(hostEnv, s.secureSocksProxyEnvVars()...)
 	hostEnv = append(hostEnv, azsettings.WriteToEnvStr(s.cfg.Azure)...)
@@ -64,15 +75,32 @@ func (s *Service) tracingEnvVars(plugin *plugins.Plugin) []string {
 		return nil
 	}
 
-	var vars []string
+	vars := []string{
+		fmt.Sprintf("GF_INSTANCE_OTLP_ADDRESS=%s", s.cfg.Tracing.OpenTelemetry.Address),
+		fmt.Sprintf("GF_INSTANCE_OTLP_PROPAGATION=%s", s.cfg.Tracing.OpenTelemetry.Propagation),
+	}
 	if plugin.Info.Version != "" {
 		vars = append(vars, fmt.Sprintf("GF_PLUGIN_VERSION=%s", plugin.Info.Version))
 	}
-	return append(
-		vars,
-		fmt.Sprintf("GF_INSTANCE_OTLP_ADDRESS=%s", s.cfg.Tracing.OpenTelemetry.Address),
-		fmt.Sprintf("GF_INSTANCE_OTLP_PROPAGATION=%s", s.cfg.Tracing.OpenTelemetry.Propagation),
-	)
+	return vars
+}
+
+func (s *Service) featureToggleEnableVar(ctx context.Context) []string {
+	var variables []string // an array is used for consistency and keep the logic simpler for no features case
+
+	if s.cfg.Features != nil {
+		enabledFeatures := s.cfg.Features.GetEnabled(ctx)
+
+		if len(enabledFeatures) > 0 {
+			features := make([]string, 0, len(enabledFeatures))
+			for feat := range enabledFeatures {
+				features = append(features, feat)
+			}
+			variables = append(variables, fmt.Sprintf("GF_INSTANCE_FEATURE_TOGGLES_ENABLE=%s", strings.Join(features, ",")))
+		}
+	}
+
+	return variables
 }
 
 func (s *Service) awsEnvVars() []string {
@@ -83,22 +111,25 @@ func (s *Service) awsEnvVars() []string {
 	if len(s.cfg.AWSAllowedAuthProviders) > 0 {
 		variables = append(variables, awsds.AllowedAuthProvidersEnvVarKeyName+"="+strings.Join(s.cfg.AWSAllowedAuthProviders, ","))
 	}
+	if s.cfg.AWSExternalId != "" {
+		variables = append(variables, awsds.GrafanaAssumeRoleExternalIdKeyName+"="+s.cfg.AWSExternalId)
+	}
 
 	return variables
 }
 
 func (s *Service) secureSocksProxyEnvVars() []string {
-	var variables []string
 	if s.cfg.ProxySettings.Enabled {
-		variables = append(variables, proxy.PluginSecureSocksProxyClientCert+"="+s.cfg.ProxySettings.ClientCert)
-		variables = append(variables, proxy.PluginSecureSocksProxyClientKey+"="+s.cfg.ProxySettings.ClientKey)
-		variables = append(variables, proxy.PluginSecureSocksProxyRootCACert+"="+s.cfg.ProxySettings.RootCA)
-		variables = append(variables, proxy.PluginSecureSocksProxyProxyAddress+"="+s.cfg.ProxySettings.ProxyAddress)
-		variables = append(variables, proxy.PluginSecureSocksProxyServerName+"="+s.cfg.ProxySettings.ServerName)
-		variables = append(variables, proxy.PluginSecureSocksProxyEnabled+"="+strconv.FormatBool(s.cfg.ProxySettings.Enabled))
+		return []string{
+			proxy.PluginSecureSocksProxyClientCert + "=" + s.cfg.ProxySettings.ClientCert,
+			proxy.PluginSecureSocksProxyClientKey + "=" + s.cfg.ProxySettings.ClientKey,
+			proxy.PluginSecureSocksProxyRootCACert + "=" + s.cfg.ProxySettings.RootCA,
+			proxy.PluginSecureSocksProxyProxyAddress + "=" + s.cfg.ProxySettings.ProxyAddress,
+			proxy.PluginSecureSocksProxyServerName + "=" + s.cfg.ProxySettings.ServerName,
+			proxy.PluginSecureSocksProxyEnabled + "=" + strconv.FormatBool(s.cfg.ProxySettings.Enabled),
+		}
 	}
-
-	return variables
+	return nil
 }
 
 type pluginSettings map[string]string

@@ -28,15 +28,15 @@ type Local struct {
 	production bool
 }
 
-func NewLocalFinder(cfg *config.Cfg) *Local {
+func NewLocalFinder(devMode bool) *Local {
 	return &Local{
-		production: !cfg.DevMode,
+		production: !devMode,
 		log:        log.New("local.finder"),
 	}
 }
 
 func ProvideLocalFinder(cfg *config.Cfg) *Local {
-	return NewLocalFinder(cfg)
+	return NewLocalFinder(cfg.DevMode)
 }
 
 func (l *Local) Find(ctx context.Context, src plugins.PluginSource) ([]*plugins.FoundBundle, error) {
@@ -44,11 +44,12 @@ func (l *Local) Find(ctx context.Context, src plugins.PluginSource) ([]*plugins.
 		return []*plugins.FoundBundle{}, nil
 	}
 
-	var pluginJSONPaths []string
-	for _, path := range src.PluginURIs(ctx) {
+	pluginURIs := src.PluginURIs(ctx)
+	pluginJSONPaths := make([]string, 0, len(pluginURIs))
+	for _, path := range pluginURIs {
 		exists, err := fs.Exists(path)
 		if err != nil {
-			l.log.Warn("Skipping finding plugins as an error occurred", "path", path, "err", err)
+			l.log.Warn("Skipping finding plugins as an error occurred", "path", path, "error", err)
 			continue
 		}
 		if !exists {
@@ -68,24 +69,20 @@ func (l *Local) Find(ctx context.Context, src plugins.PluginSource) ([]*plugins.
 	for _, pluginJSONPath := range pluginJSONPaths {
 		plugin, err := l.readPluginJSON(pluginJSONPath)
 		if err != nil {
-			l.log.Warn("Skipping plugin loading as its plugin.json could not be read", "path", pluginJSONPath, "err", err)
+			l.log.Warn("Skipping plugin loading as its plugin.json could not be read", "path", pluginJSONPath, "error", err)
 			continue
 		}
 
 		pluginJSONAbsPath, err := filepath.Abs(pluginJSONPath)
 		if err != nil {
-			l.log.Warn("Skipping plugin loading as absolute plugin.json path could not be calculated", "pluginID", plugin.ID, "err", err)
+			l.log.Warn("Skipping plugin loading as absolute plugin.json path could not be calculated", "pluginId", plugin.ID, "error", err)
 			continue
 		}
 
-		if _, dupe := foundPlugins[filepath.Dir(pluginJSONAbsPath)]; dupe {
-			l.log.Warn("Skipping plugin loading as it's a duplicate", "pluginID", plugin.ID)
-			continue
-		}
 		foundPlugins[filepath.Dir(pluginJSONAbsPath)] = plugin
 	}
 
-	var res = make(map[string]*plugins.FoundBundle)
+	res := make(map[string]*plugins.FoundBundle)
 	for pluginDir, data := range foundPlugins {
 		var pluginFs plugins.FS
 		pluginFs = plugins.NewLocalFS(pluginDir)
@@ -106,7 +103,7 @@ func (l *Local) Find(ctx context.Context, src plugins.PluginSource) ([]*plugins.
 		}
 	}
 
-	var result []*plugins.FoundBundle
+	result := make([]*plugins.FoundBundle, 0, len(foundPlugins))
 	for dir := range foundPlugins {
 		ancestors := strings.Split(dir, string(filepath.Separator))
 		ancestors = ancestors[0 : len(ancestors)-1]
@@ -141,16 +138,16 @@ func (l *Local) readPluginJSON(pluginJSONPath string) (plugins.JSONData, error) 
 			return
 		}
 		if err = reader.Close(); err != nil {
-			l.log.Warn("Failed to close plugin JSON file", "path", pluginJSONPath, "err", err)
+			l.log.Warn("Failed to close plugin JSON file", "path", pluginJSONPath, "error", err)
 		}
 	}()
 	if err != nil {
-		l.log.Warn("Skipping plugin loading as its plugin.json could not be read", "path", pluginJSONPath, "err", err)
+		l.log.Warn("Skipping plugin loading as its plugin.json could not be read", "path", pluginJSONPath, "error", err)
 		return plugins.JSONData{}, err
 	}
 	plugin, err := plugins.ReadPluginJSON(reader)
 	if err != nil {
-		l.log.Warn("Skipping plugin loading as its plugin.json could not be read", "path", pluginJSONPath, "err", err)
+		l.log.Warn("Skipping plugin loading as its plugin.json could not be read", "path", pluginJSONPath, "error", err)
 		return plugins.JSONData{}, err
 	}
 
@@ -170,11 +167,11 @@ func (l *Local) getAbsPluginJSONPaths(path string) ([]string, error) {
 		func(currentPath string, fi os.FileInfo, err error) error {
 			if err != nil {
 				if errors.Is(err, os.ErrNotExist) {
-					l.log.Error("Couldn't scan directory since it doesn't exist", "pluginDir", path, "err", err)
+					l.log.Error("Couldn't scan directory since it doesn't exist", "pluginDir", path, "error", err)
 					return nil
 				}
 				if errors.Is(err, os.ErrPermission) {
-					l.log.Error("Couldn't scan directory due to lack of permissions", "pluginDir", path, "err", err)
+					l.log.Error("Couldn't scan directory due to lack of permissions", "pluginDir", path, "error", err)
 					return nil
 				}
 

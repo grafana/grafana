@@ -13,7 +13,7 @@ import (
 
 func InitializeTracerForTest() Tracer {
 	exp := tracetest.NewInMemoryExporter()
-	tp, _ := initTracerProvider(exp)
+	tp, _ := initTracerProvider(exp, "testing")
 	otel.SetTracerProvider(tp)
 
 	ots := &Opentelemetry{Propagation: "jaeger,w3c", tracerProvider: tp}
@@ -92,7 +92,7 @@ func (t *FakeSpan) AddEvents(keys []string, values []EventValue) {
 	}
 }
 
-func (t *FakeSpan) contextWithSpan(ctx context.Context) context.Context {
+func (t *FakeSpan) ContextWithSpan(ctx context.Context) context.Context {
 	return ctx
 }
 

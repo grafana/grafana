@@ -10,7 +10,7 @@ import { doGeomeryCalculation, toLineString } from './utils';
 export const spatialTransformer: DataTransformerInfo<SpatialTransformOptions> = {
   id: DataTransformerID.spatial,
   name: 'Spatial operations',
-  description: 'Apply spatial operations to query results',
+  description: 'Apply spatial operations to query results.',
   defaultOptions: {},
 
   operator: (options) => (source) => source.pipe(mergeMap((data) => from(doSetGeometry(data, options)))),

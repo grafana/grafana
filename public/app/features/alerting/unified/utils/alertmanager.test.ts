@@ -27,7 +27,7 @@ describe('Alertmanager utils', () => {
       });
       expect(parseMatcher('foo!~ bar')).toEqual<Matcher>({
         name: 'foo',
-        value: 'bar',
+        value: ' bar',
         isRegex: true,
         isEqual: false,
       });

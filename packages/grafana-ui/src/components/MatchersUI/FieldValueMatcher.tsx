@@ -90,13 +90,13 @@ export const FieldValueMatcherEditor = ({ options, onChange }: Props) => {
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    spot: css`
-      display: flex;
-      flex-direction: row;
-      align-items: center;
-      align-content: flex-end;
-      gap: 4px;
-    `,
+    spot: css({
+      display: 'flex',
+      flexDirection: 'row',
+      alignItems: 'center',
+      alignContent: 'flex-end',
+      gap: '4px',
+    }),
   };
 };
 

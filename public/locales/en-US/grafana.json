@@ -1,5 +1,91 @@
 {
-  "_comment": "Do not manually edit this file, or update these source phrases in Crowdin. The source of truth for English strings are in the code source",
+  "_comment": "This file is the source of truth for English strings. Edit this to change plurals and other phrases for the UI.",
+  "access-control": {
+    "add-permission": {
+      "role-label": "Role",
+      "team-label": "Team",
+      "title": "Add permission for",
+      "user-label": "User"
+    },
+    "add-permissions": {
+      "save": "Save"
+    },
+    "permission-list": {
+      "permission": "Permission"
+    },
+    "permissions": {
+      "add-label": "Add a permission",
+      "no-permissions": "There are no permissions",
+      "permissions-change-warning": "This will change permissions for this folder and all its descendants. In total, this will affect:",
+      "role": "Role",
+      "team": "Team",
+      "title": "Permissions",
+      "user": "User"
+    }
+  },
+  "browse-dashboards": {
+    "action": {
+      "cancel-button": "Cancel",
+      "delete-button": "Delete",
+      "delete-modal-text": "This action will delete the following content:",
+      "delete-modal-title": "Delete",
+      "deleting": "Deleting...",
+      "manage-permissions-button": "Manage permissions",
+      "move-button": "Move",
+      "move-modal-alert": "Moving this item may change its permissions.",
+      "move-modal-field-label": "Folder name",
+      "move-modal-text": "This action will move the following content:",
+      "move-modal-title": "Move",
+      "moving": "Moving...",
+      "new-folder-name-required-phrase": "Folder name is required."
+    },
+    "counts": {
+      "alertRule__one": "{{count}} alert rule",
+      "alertRule__other": "{{count}} alert rules",
+      "dashboard__one": "{{count}} dashboard",
+      "dashboard__other": "{{count}} dashboards",
+      "folder__one": "{{count}} folder",
+      "folder__other": "{{count}} folders",
+      "libraryPanel__one": "{{count}} library panel",
+      "libraryPanel__other": "{{count}} library panels",
+      "total__one": "{{count}} item",
+      "total__other": "{{count}} items"
+    },
+    "dashboards-tree": {
+      "name-column": "Name",
+      "tags-column": "Tags"
+    },
+    "folder-actions-button": {
+      "delete": "Delete",
+      "folder-actions": "Folder actions",
+      "manage-permissions": "Manage permissions",
+      "move": "Move"
+    },
+    "folder-picker": {
+      "accessible-label": "Select folder: {{ label }} currently selected",
+      "button-label": "Select folder",
+      "empty-message": "No folders found",
+      "error-title": "Error loading folders",
+      "search-placeholder": "Search folders",
+      "unknown-error": "Unknown error"
+    },
+    "manage-folder-nav": {
+      "alert-rules": "Alert rules",
+      "dashboards": "Dashboards",
+      "panels": "Panels",
+      "permissions": "Permissions",
+      "settings": "Settings"
+    },
+    "new-folder-form": {
+      "cancel-label": "Cancel",
+      "create-label": "Create",
+      "name-label": "Folder name"
+    },
+    "no-results": {
+      "clear": "Clear search and filters",
+      "text": "No results found for your query."
+    }
+  },
   "clipboard-button": {
     "inline-toast": {
       "success": "Copied"
@@ -29,12 +115,21 @@
     },
     "save": "Save"
   },
+  "connections": {
+    "connect-data": {
+      "category-header-label": "Data sources"
+    },
+    "search": {
+      "placeholder": "Search all"
+    }
+  },
   "dashboard": {
     "add-menu": {
       "import": "Import from library",
       "paste-panel": "Paste panel",
       "row": "Row",
-      "visualization": "Visualization"
+      "visualization": "Visualization",
+      "widget": "Widget"
     },
     "empty": {
       "add-import-body": "Import visualizations that are shared with other dashboards.",
@@ -45,7 +140,10 @@
       "add-row-header": "Add a row",
       "add-visualization-body": "Select a data source and then query and visualize your data with charts, stats and tables or create lists, markdowns and other widgets.",
       "add-visualization-button": "Add visualization",
-      "add-visualization-header": "Start your new dashboard by adding a visualization"
+      "add-visualization-header": "Start your new dashboard by adding a visualization",
+      "add-widget-body": "Create lists, markdowns and other widgets",
+      "add-widget-button": "Add widget",
+      "add-widget-header": "Add a widget"
     },
     "inspect": {
       "data-tab": "Data",
@@ -114,6 +212,11 @@
       "unmark-favorite": "Unmark as favorite"
     }
   },
+  "data-sources": {
+    "datasource-add-button": {
+      "label": "Add new data source"
+    }
+  },
   "folder-picker": {
     "loading": "Loading folders..."
   },
@@ -122,6 +225,10 @@
       "error": "Failed to load options",
       "loading": "Loading options...",
       "no-options": "No options found"
+    },
+    "select": {
+      "no-options-label": "No options found",
+      "placeholder": "Choose"
     }
   },
   "library-panel": {
@@ -143,7 +250,18 @@
       "success": "Library panel saved"
     }
   },
+  "login": {
+    "error": {
+      "blocked": "You have exceeded the number of login attempts for this user. Please try again later.",
+      "invalid-user-or-password": "Invalid username or password",
+      "title": "Login failed",
+      "unknown": "Unknown error occurred"
+    }
+  },
   "nav": {
+    "add-new-connections": {
+      "title": "Add new connection"
+    },
     "admin": {
       "subtitle": "Manage server-wide settings and access to resources such as organizations, users, and licenses",
       "title": "Server admin"
@@ -192,12 +310,25 @@
       "subtitle": "Manage and create API keys that are used to interact with Grafana HTTP APIs",
       "title": "API keys"
     },
+    "application": {
+      "title": "Application (preview)"
+    },
     "apps": {
       "subtitle": "App plugins that extend the Grafana experience",
       "title": "Apps"
     },
+    "authentication": {
+      "title": "Authentication"
+    },
     "config": {
       "title": "Administration"
+    },
+    "connect-data": {
+      "title": "Connect data"
+    },
+    "connections": {
+      "subtitle": "Browse and create new connections",
+      "title": "Connections"
     },
     "correlations": {
       "subtitle": "Add and configure correlations",
@@ -222,12 +353,22 @@
       "subtitle": "Create and manage dashboards to visualize your data",
       "title": "Dashboards"
     },
+    "data-sources": {
+      "subtitle": "View and manage your connected data source connections",
+      "title": "Data sources"
+    },
     "datasources": {
       "subtitle": "Add and configure data sources",
       "title": "Data sources"
     },
+    "detect": {
+      "title": "Detect"
+    },
     "explore": {
       "title": "Explore"
+    },
+    "frontend": {
+      "title": "Frontend"
     },
     "global-orgs": {
       "subtitle": "Isolated instances of Grafana running on the same server",
@@ -236,6 +377,9 @@
     "global-users": {
       "subtitle": "Manage users in Grafana",
       "title": "Users"
+    },
+    "grafana-quaderno": {
+      "title": "Grafana Quaderno"
     },
     "help": {
       "title": "Help"
@@ -247,9 +391,21 @@
     "home": {
       "title": "Home"
     },
+    "incidents": {
+      "title": "Incidents"
+    },
+    "infrastructure": {
+      "title": "Infrastructure"
+    },
+    "kubernetes": {
+      "title": "Kubernetes"
+    },
     "library-panels": {
       "subtitle": "Reusable panels that can be added to multiple dashboards",
       "title": "Library panels"
+    },
+    "machine-learning": {
+      "title": "Machine learning"
     },
     "manage-folder": {
       "subtitle": "Manage folder dashboards and permissions"
@@ -267,9 +423,18 @@
     "new-folder": {
       "title": "New folder"
     },
+    "observability": {
+      "title": "Observability"
+    },
+    "oncall": {
+      "title": "OnCall"
+    },
     "org-settings": {
       "subtitle": "Manage preferences across an organization",
       "title": "Default preferences"
+    },
+    "performance-testing": {
+      "title": "Performance testing"
     },
     "playlists": {
       "subtitle": "Groups of dashboards that are displayed in a sequence",
@@ -288,8 +453,17 @@
     "profile/settings": {
       "title": "Profile"
     },
+    "profiles": {
+      "title": "Profiles"
+    },
     "public": {
       "title": "Public dashboards"
+    },
+    "recorded-queries": {
+      "title": "Recorded queries"
+    },
+    "reporting": {
+      "title": "Reporting"
     },
     "scenes": {
       "title": "Scenes"
@@ -311,6 +485,9 @@
     "sign-out": {
       "title": "Sign out"
     },
+    "slo": {
+      "title": "SLO"
+    },
     "snapshots": {
       "subtitle": "Interactive, publically available, point-in-time representations of dashboards",
       "title": "Snapshots"
@@ -321,6 +498,9 @@
     "starred-empty": {
       "title": "Your starred dashboards will appear here"
     },
+    "statistics-and-licensing": {
+      "title": "Statistics and licensing"
+    },
     "storage": {
       "subtitle": "Manage file storage",
       "title": "Storage"
@@ -328,6 +508,9 @@
     "support-bundles": {
       "subtitle": "Download support bundles",
       "title": "Support bundles"
+    },
+    "synthetics": {
+      "title": "Synthetics"
     },
     "teams": {
       "subtitle": "Groups of users that have common dashboard and permission needs",
@@ -384,6 +567,10 @@
       "choose-interval": "Auto refresh turned off. Choose refresh time interval",
       "duration-selected": "Choose refresh time interval with current interval {{durationAriaLabel}} selected"
     },
+    "auto-option": {
+      "aria-label": "",
+      "label": ""
+    },
     "live-option": {
       "aria-label": "Turn on live streaming",
       "label": "Live"
@@ -408,8 +595,8 @@
     "dashboard-actions": {
       "import": "Import",
       "new": "New",
-      "new-dashboard": "New Dashboard",
-      "new-folder": "New Folder"
+      "new-dashboard": "New dashboard",
+      "new-folder": "New folder"
     },
     "folder-view": {
       "go-to-folder": "Go to folder",
@@ -432,6 +619,12 @@
     "search-input": {
       "include-panels-placeholder": "Search for dashboards, folders, and panels",
       "placeholder": "Search for dashboards and folders"
+    }
+  },
+  "search-view": {
+    "no-results": {
+      "clear": "Clear search and filters",
+      "text": "No results found for your query."
     }
   },
   "share-modal": {
@@ -462,7 +655,7 @@
       "info-text": "Create a direct link to this dashboard or panel, customized with the options below.",
       "link-url": "Link URL",
       "render-alert": "Image renderer plugin not installed",
-      "render-instructions": "To render a panel image, you must install the&nbsp;<1>Grafana image renderer plugin</1>. Please contact your Grafana administrator to install the plugin.",
+      "render-instructions": "To render a panel image, you must install the <1>Grafana image renderer plugin</1>. Please contact your Grafana administrator to install the plugin.",
       "rendered-image": "Direct link rendered image",
       "save-alert": "Dashboard is not saved",
       "save-dashboard": "To render a panel image, you must save the dashboard first.",

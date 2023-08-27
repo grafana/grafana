@@ -121,13 +121,13 @@ export const MuteTimingTimeRange = ({ intervalIndex }: Props) => {
                   </InlineField>
                   <IconButton
                     className={styles.deleteTimeRange}
-                    title={'Remove'}
-                    name={'trash-alt'}
-                    type="button"
+                    title="Remove"
+                    name="trash-alt"
                     onClick={(e) => {
                       e.preventDefault();
                       removeTimeRange(index);
                     }}
+                    tooltip="Remove time range"
                   />
                 </InlineFieldRow>
               </div>
@@ -139,7 +139,7 @@ export const MuteTimingTimeRange = ({ intervalIndex }: Props) => {
         className={styles.addTimeRange}
         variant="secondary"
         type="button"
-        icon={'plus'}
+        icon="plus"
         onClick={() => addTimeRange({ start_time: '', end_time: '' })}
       >
         Add another time range

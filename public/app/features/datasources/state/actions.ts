@@ -1,15 +1,22 @@
-import { DataSourcePluginMeta, DataSourceSettings, locationUtil } from '@grafana/data';
+import {
+  DataSourcePluginMeta,
+  DataSourceSettings,
+  locationUtil,
+  TestDataSourceResponse,
+  DataSourceTestSucceeded,
+  DataSourceTestFailed,
+} from '@grafana/data';
 import {
   config,
+  DataSourceSrv,
   DataSourceWithBackend,
-  getDataSourceSrv,
   HealthCheckError,
   HealthCheckResultDetails,
   isFetchError,
   locationService,
 } from '@grafana/runtime';
 import { updateNavIndex } from 'app/core/actions';
-import { contextSrv } from 'app/core/core';
+import { appEvents, contextSrv } from 'app/core/core';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import { ROUTES as CONNECTIONS_ROUTES } from 'app/features/connections/constants';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
@@ -53,7 +60,7 @@ export interface InitDataSourceSettingDependencies {
 }
 
 export interface TestDataSourceDependencies {
-  getDatasourceSrv: typeof getDataSourceSrv;
+  getDatasourceSrv: () => Pick<DataSourceSrv, 'get'>;
   getBackendSrv: typeof getBackendSrv;
 }
 
@@ -79,14 +86,8 @@ const parseHealthCheckError = (errorResponse: any): parseDataSourceSaveResponse 
   return { message, details };
 };
 
-const parseHealthCheckSuccess = (response: any): parseDataSourceSaveResponse => {
-  let message: string | undefined;
-  let status: string;
-  let details: { message?: string; verboseMessage?: string };
-
-  status = response.status;
-  message = response.message;
-  details = response.details;
+const parseHealthCheckSuccess = (response: TestDataSourceResponse): parseDataSourceSaveResponse => {
+  const { details, message, status } = response;
 
   return { status, message, details };
 };
@@ -156,6 +157,7 @@ export const testDataSource = (
           success: true,
           path: editLink,
         });
+        appEvents.publish(new DataSourceTestSucceeded());
       } catch (err) {
         const formattedError = parseHealthCheckError(err);
 
@@ -167,6 +169,7 @@ export const testDataSource = (
           success: false,
           path: editLink,
         });
+        appEvents.publish(new DataSourceTestFailed());
       }
     });
   };
@@ -207,7 +210,7 @@ export function loadDataSource(uid: string): ThunkResult<Promise<DataSourceSetti
 
 export function loadDataSourceMeta(dataSource: DataSourceSettings): ThunkResult<void> {
   return async (dispatch) => {
-    const pluginInfo = (await getPluginSettings(dataSource.type)) as DataSourcePluginMeta;
+    const pluginInfo: DataSourcePluginMeta = await getPluginSettings(dataSource.type);
     const plugin = await importDataSourcePlugin(pluginInfo);
     const isBackend = plugin.DataSourceClass.prototype instanceof DataSourceWithBackend;
     const meta = {
@@ -282,7 +285,7 @@ export function updateDataSource(dataSource: DataSourceSettings) {
   ) => {
     try {
       await api.updateDataSource(dataSource);
-    } catch (err: any) {
+    } catch (err) {
       const formattedError = parseHealthCheckError(err);
 
       dispatch(testDataSourceFailed(formattedError));
@@ -304,9 +307,7 @@ export function deleteLoadedDataSource(): ThunkResult<void> {
       await api.deleteDataSource(uid);
       await getDatasourceSrv().reload();
 
-      const datasourcesUrl = config.featureToggles.dataConnectionsConsole
-        ? CONNECTIONS_ROUTES.DataSources
-        : '/datasources';
+      const datasourcesUrl = CONNECTIONS_ROUTES.DataSources;
 
       locationService.push(datasourcesUrl);
     } catch (err) {

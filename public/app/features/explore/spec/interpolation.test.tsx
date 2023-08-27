@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { DataQueryRequest, serializeStateToUrlParam } from '@grafana/data';
+import { DataQueryRequest, EventBusSrv, serializeStateToUrlParam } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 
 import { LokiQuery } from '../../../plugins/datasource/loki/types';
@@ -8,10 +8,13 @@ import { LokiQuery } from '../../../plugins/datasource/loki/types';
 import { makeLogsQueryResponse } from './helper/query';
 import { setupExplore, waitForExplore } from './helper/setup';
 
+const testEventBus = new EventBusSrv();
+
 const fetch = jest.fn();
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getBackendSrv: () => ({ fetch }),
+  getAppEvents: () => testEventBus,
 }));
 
 jest.mock('app/core/core', () => ({
@@ -26,6 +29,12 @@ jest.mock('react-virtualized-auto-sizer', () => {
     default(props: any) {
       return <div>{props.children({ width: 1000 })}</div>;
     },
+  };
+});
+
+jest.mock('../../correlations/utils', () => {
+  return {
+    getCorrelationsBySourceUIDs: jest.fn().mockReturnValue({ correlations: [] }),
   };
 });
 

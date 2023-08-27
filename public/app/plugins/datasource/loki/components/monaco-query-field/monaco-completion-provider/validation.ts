@@ -16,6 +16,13 @@ interface ParseError {
   node: SyntaxNode;
 }
 
+/**
+ * Conceived to work in combination with the MonacoQueryField component.
+ * Given an original query, and it's interpolated version, it will return an array of ParserErrorBoundary
+ * objects containing nodes which are actual errors. The interpolated version (even with placeholder variables)
+ * is required because variables look like errors for Lezer.
+ * @internal
+ */
 export function validateQuery(
   query: string,
   interpolatedQuery: string,
@@ -108,6 +115,7 @@ function isErrorBoundary(boundary: ParserErrorBoundary | null): boundary is Pars
 
 export const placeHolderScopedVars = {
   __interval: { text: '1s', value: '1s' },
+  __auto: { text: '1s', value: '1s' },
   __interval_ms: { text: '1000', value: 1000 },
   __range_ms: { text: '1000', value: 1000 },
   __range_s: { text: '1', value: 1 },

@@ -221,9 +221,25 @@ describe('checkLogsError()', () => {
 
 describe('logRowsToReadableJson', () => {
   const testRow: LogRowModel = {
-    rowIndex: 1,
-    entryFieldIndex: 0,
-    dataFrame: new MutableDataFrame(),
+    rowIndex: 0,
+    entryFieldIndex: 1,
+    dataFrame: {
+      length: 1,
+      fields: [
+        {
+          name: 'timestamp',
+          type: FieldType.time,
+          config: {},
+          values: [1],
+        },
+        {
+          name: 'body',
+          type: FieldType.string,
+          config: {},
+          values: ['test entry'],
+        },
+      ],
+    },
     entry: 'test entry',
     hasAnsi: false,
     hasUnescapedContent: false,
@@ -239,11 +255,32 @@ describe('logRowsToReadableJson', () => {
     timeUtc: '',
     uid: '2',
   };
-  const testDf = new MutableDataFrame();
-  testDf.addField({ name: 'foo2', values: ['bar2'] });
+  const testDf: DataFrame = {
+    length: 1,
+    fields: [
+      {
+        name: 'timestamp',
+        type: FieldType.time,
+        config: {},
+        values: [1],
+      },
+      {
+        name: 'body',
+        type: FieldType.string,
+        config: {},
+        values: ['test entry'],
+      },
+      {
+        name: 'foo2',
+        type: FieldType.string,
+        config: {},
+        values: ['bar2'],
+      },
+    ],
+  };
   const testRow2: LogRowModel = {
     rowIndex: 0,
-    entryFieldIndex: -1,
+    entryFieldIndex: 1,
     dataFrame: testDf,
     entry: 'test entry',
     hasAnsi: false,

@@ -142,7 +142,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     pointer-events: auto;
     width: 16px;
     height: 16px;
-    border-radius: 50%;
+    border-radius: ${theme.shape.radius.circle};
     display: none;
     z-index: 110;
   `,
