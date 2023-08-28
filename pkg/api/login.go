@@ -21,7 +21,6 @@ import (
 	pref "github.com/grafana/grafana/pkg/services/preference"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
@@ -252,7 +251,7 @@ func (hs *HTTPServer) Logout(c *contextmodel.ReqContext) {
 	}
 
 	idTokenHint := ""
-	postLogoutRedirect := isPostLogoutRedirectConfigured(setting.SignoutRedirectUrl)
+	postLogoutRedirect := isPostLogoutRedirectConfigured(hs.Cfg.SignoutRedirectUrl)
 
 	// Invalidate the OAuth tokens in case the User logged in with OAuth or the last external AuthEntry is an OAuth one
 	if entry, exists, _ := hs.oauthTokenService.HasOAuthEntry(c.Req.Context(), c.SignedInUser); exists {
@@ -277,10 +276,10 @@ func (hs *HTTPServer) Logout(c *contextmodel.ReqContext) {
 
 	authn.DeleteSessionCookie(c.Resp, hs.Cfg)
 
-	rdUrl := setting.SignoutRedirectUrl
+	rdUrl := hs.Cfg.SignoutRedirectUrl
 	if rdUrl != "" {
 		if postLogoutRedirect {
-			rdUrl = getPostRedirectUrl(setting.SignoutRedirectUrl, idTokenHint)
+			rdUrl = getPostRedirectUrl(hs.Cfg.SignoutRedirectUrl, idTokenHint)
 		}
 		hs.log.Debug("Redirect url would be", "signOutUrl", rdUrl)
 		c.Redirect(rdUrl)
