@@ -52,7 +52,7 @@ export function QueryOperationRow({
     setIsContentVisible(!isContentVisible);
   }, [isContentVisible, setIsContentVisible]);
 
-  // Force open when isOpen prop changes in parent.
+  // Force QueryOperationRow expansion when `isOpen` prop updates in parent component.
   useEffect(() => {
     if (isOpen) {
       setIsContentVisible(true);
