@@ -305,7 +305,7 @@ export function doStandardCalcs(field: Field, ignoreNulls: boolean, nullAsZero: 
 
     calcs.last = currentValue;
 
-    if (currentValue === null) {
+    if (currentValue == null) {
       if (ignoreNulls) {
         continue;
       }
