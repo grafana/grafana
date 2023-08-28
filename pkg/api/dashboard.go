@@ -64,9 +64,9 @@ func (hs *HTTPServer) isDashboardStarredByUser(c *contextmodel.ReqContext, dashI
 
 func dashboardGuardianResponse(err error) response.Response {
 	if err != nil {
-		return response.Error(500, "Error while checking dashboard permissions", err)
+		return response.Error(http.StatusInternalServerError, "Error while checking dashboard permissions", err)
 	}
-	return response.Error(403, "Access denied to this dashboard", nil)
+	return response.Error(http.StatusForbidden, "Access denied to this dashboard", nil)
 }
 
 // swagger:route POST /dashboards/trim dashboards trimDashboard
@@ -124,7 +124,7 @@ func (hs *HTTPServer) GetDashboard(c *contextmodel.ReqContext) response.Response
 	if hs.Features.IsEnabled(featuremgmt.FlagPublicDashboards) {
 		publicDashboard, err := hs.PublicDashboardsApi.PublicDashboardService.FindByDashboardUid(c.Req.Context(), c.SignedInUser.GetOrgID(), dash.UID)
 		if err != nil && !errors.Is(err, publicdashboardModels.ErrPublicDashboardNotFound) {
-			return response.Error(500, "Error while retrieving public dashboards", err)
+			return response.Error(http.StatusInternalServerError, "Error while retrieving public dashboards", err)
 		}
 
 		if publicDashboard != nil {
@@ -142,7 +142,7 @@ func (hs *HTTPServer) GetDashboard(c *contextmodel.ReqContext) response.Response
 			}
 		}
 		if isEmptyData {
-			return response.Error(500, "Error while loading dashboard, dashboard data is invalid", nil)
+			return response.Error(http.StatusInternalServerError, "Error while loading dashboard, dashboard data is invalid", nil)
 		}
 	}
 	guardian, err := guardian.NewByDashboard(c.Req.Context(), dash, c.SignedInUser.GetOrgID(), c.SignedInUser)
@@ -160,7 +160,7 @@ func (hs *HTTPServer) GetDashboard(c *contextmodel.ReqContext) response.Response
 
 	isStarred, err := hs.isDashboardStarredByUser(c, dash.ID)
 	if err != nil {
-		return response.Error(500, "Error while checking if dashboard was starred by user", err)
+		return response.Error(http.StatusInternalServerError, "Error while checking if dashboard was starred by user", err)
 	}
 	// Finding creator and last updater of the dashboard
 	updater, creator := anonString, anonString
@@ -204,9 +204,9 @@ func (hs *HTTPServer) GetDashboard(c *contextmodel.ReqContext) response.Response
 		queryResult, err := hs.DashboardService.GetDashboard(c.Req.Context(), &query)
 		if err != nil {
 			if errors.Is(err, dashboards.ErrFolderNotFound) {
-				return response.Error(404, "Folder not found", err)
+				return response.Error(http.StatusNotFound, "Folder not found", err)
 			}
-			return response.Error(500, "Dashboard folder could not be read", err)
+			return response.Error(http.StatusInternalServerError, "Dashboard folder could not be read", err)
 		}
 		meta.FolderUid = queryResult.UID
 		meta.FolderTitle = queryResult.Title
@@ -215,7 +215,7 @@ func (hs *HTTPServer) GetDashboard(c *contextmodel.ReqContext) response.Response
 
 	provisioningData, err := hs.dashboardProvisioningService.GetProvisionedDashboardDataByDashboardID(c.Req.Context(), dash.ID)
 	if err != nil {
-		return response.Error(500, "Error while checking if dashboard is provisioned", err)
+		return response.Error(http.StatusInternalServerError, "Error while checking if dashboard is provisioned", err)
 	}
 
 	if provisioningData != nil {
@@ -289,7 +289,7 @@ func (hs *HTTPServer) getDashboardHelper(ctx context.Context, orgID int64, id in
 
 	queryResult, err := hs.DashboardService.GetDashboard(ctx, &query)
 	if err != nil {
-		return nil, response.Error(404, "Dashboard not found", err)
+		return nil, response.Error(http.StatusNotFound, "Dashboard not found", err)
 	}
 
 	return queryResult, nil
@@ -352,12 +352,12 @@ func (hs *HTTPServer) deleteDashboard(c *contextmodel.ReqContext) response.Respo
 				return response.Error(dashboardErr.StatusCode, dashboardErr.Error(), err)
 			}
 		}
-		return response.Error(500, "Failed to delete dashboard", err)
+		return response.Error(http.StatusInternalServerError, "Failed to delete dashboard", err)
 	}
 
 	userDTODisplay, err := user.NewUserDisplayDTOFromRequester(c.SignedInUser)
 	if err != nil {
-		return response.Error(500, "Error while parsing the user DTO model", err)
+		return response.Error(http.StatusInternalServerError, "Error while parsing the user DTO model", err)
 	}
 
 	if hs.Live != nil {
@@ -425,7 +425,7 @@ func (hs *HTTPServer) postDashboard(c *contextmodel.ReqContext, cmd dashboards.S
 
 	userID, err := identity.IntIdentifier(c.SignedInUser.GetNamespacedID())
 	if err != nil {
-		return response.Error(500, "Error while checking user ID", err)
+		hs.log.Warn("Error while checking user ID", "err", err)
 	}
 
 	cmd.OrgID = c.SignedInUser.GetOrgID()
@@ -438,9 +438,9 @@ func (hs *HTTPServer) postDashboard(c *contextmodel.ReqContext, cmd dashboards.S
 		})
 		if err != nil {
 			if errors.Is(err, dashboards.ErrFolderNotFound) {
-				return response.Error(400, "Folder not found", err)
+				return response.Error(http.StatusBadRequest, "Folder not found", err)
 			}
-			return response.Error(500, "Error while checking folder ID", err)
+			return response.Error(http.StatusInternalServerError, "Error while checking folder ID", err)
 		}
 		cmd.FolderID = folder.ID
 	}
@@ -450,10 +450,10 @@ func (hs *HTTPServer) postDashboard(c *contextmodel.ReqContext, cmd dashboards.S
 	if newDashboard {
 		limitReached, err := hs.QuotaService.QuotaReached(c, dashboards.QuotaTargetSrv)
 		if err != nil {
-			return response.Error(500, "failed to get quota", err)
+			return response.Error(http.StatusInternalServerError, "failed to get quota", err)
 		}
 		if limitReached {
-			return response.Error(403, "Quota reached", nil)
+			return response.Error(http.StatusForbidden, "Quota reached", nil)
 		}
 	}
 
@@ -461,13 +461,13 @@ func (hs *HTTPServer) postDashboard(c *contextmodel.ReqContext, cmd dashboards.S
 	if dash.ID != 0 {
 		data, err := hs.dashboardProvisioningService.GetProvisionedDashboardDataByDashboardID(c.Req.Context(), dash.ID)
 		if err != nil {
-			return response.Error(500, "Error while checking if dashboard is provisioned using ID", err)
+			return response.Error(http.StatusInternalServerError, "Error while checking if dashboard is provisioned using ID", err)
 		}
 		provisioningData = data
 	} else if dash.UID != "" {
 		data, err := hs.dashboardProvisioningService.GetProvisionedDashboardDataByDashboardUID(c.Req.Context(), dash.OrgID, dash.UID)
 		if err != nil && !errors.Is(err, dashboards.ErrProvisionedDashboardNotFound) && !errors.Is(err, dashboards.ErrDashboardNotFound) {
-			return response.Error(500, "Error while checking if dashboard is provisioned", err)
+			return response.Error(http.StatusInternalServerError, "Error while checking if dashboard is provisioned", err)
 		}
 		provisioningData = data
 	}
@@ -495,7 +495,7 @@ func (hs *HTTPServer) postDashboard(c *contextmodel.ReqContext, cmd dashboards.S
 
 		userDTODisplay, err := user.NewUserDisplayDTOFromRequester(c.SignedInUser)
 		if err != nil {
-			return response.Error(500, "Error while parsing the user DTO model", err)
+			return response.Error(http.StatusInternalServerError, "Error while parsing the user DTO model", err)
 		}
 
 		// This will broadcast all save requests only if a `gitops` observer exists.
@@ -505,7 +505,7 @@ func (hs *HTTPServer) postDashboard(c *contextmodel.ReqContext, cmd dashboards.S
 
 		// When an error exists, but the value broadcast to a gitops listener return 202
 		if liveerr == nil && err != nil && channel.HasGitOpsObserver(c.SignedInUser.GetOrgID()) {
-			return response.JSON(202, util.DynMap{
+			return response.JSON(http.StatusAccepted, util.DynMap{
 				"status":  "pending",
 				"message": "changes were broadcast to the gitops listener",
 			})
@@ -529,7 +529,7 @@ func (hs *HTTPServer) postDashboard(c *contextmodel.ReqContext, cmd dashboards.S
 	// connect library panels for this dashboard after the dashboard is stored and has an ID
 	err = hs.LibraryPanelService.ConnectLibraryPanelsForDashboard(ctx, c.SignedInUser, dashboard)
 	if err != nil {
-		return response.Error(500, "Error while connecting library panels", err)
+		return response.Error(http.StatusInternalServerError, "Error while connecting library panels", err)
 	}
 
 	c.TimeRequest(metrics.MApiDashboardSave)
@@ -552,16 +552,17 @@ func (hs *HTTPServer) postDashboard(c *contextmodel.ReqContext, cmd dashboards.S
 // 401: unauthorisedError
 // 500: internalServerError
 func (hs *HTTPServer) GetHomeDashboard(c *contextmodel.ReqContext) response.Response {
-	userID, err := identity.IntIdentifier(c.SignedInUser.GetNamespacedID())
+	namespaceID, userIDstr := c.SignedInUser.GetNamespacedID()
+	userID, err := identity.IntIdentifier(namespaceID, userIDstr)
 	if err != nil {
-		return response.Error(500, "failed to get user id", err)
+		hs.log.Warn("Error while parsing user ID", "namespaceID", namespaceID, "userID", userIDstr, "err", err)
 	}
 	prefsQuery := pref.GetPreferenceWithDefaultsQuery{OrgID: c.SignedInUser.GetOrgID(), UserID: userID, Teams: c.SignedInUser.GetTeams()}
 	homePage := hs.Cfg.HomePage
 
 	preference, err := hs.preferenceService.GetWithDefaults(c.Req.Context(), &prefsQuery)
 	if err != nil {
-		return response.Error(500, "Failed to get preferences", err)
+		return response.Error(http.StatusInternalServerError, "Failed to get preferences", err)
 	}
 
 	if preference.HomeDashboardID == 0 && len(homePage) > 0 {
@@ -590,7 +591,7 @@ func (hs *HTTPServer) GetHomeDashboard(c *contextmodel.ReqContext) response.Resp
 	// nolint:gosec
 	file, err := os.Open(filePath)
 	if err != nil {
-		return response.Error(500, "Failed to load home dashboard", err)
+		return response.Error(http.StatusInternalServerError, "Failed to load home dashboard", err)
 	}
 	defer func() {
 		if err := file.Close(); err != nil {
@@ -605,7 +606,7 @@ func (hs *HTTPServer) GetHomeDashboard(c *contextmodel.ReqContext) response.Resp
 
 	jsonParser := json.NewDecoder(file)
 	if err := jsonParser.Decode(dash.Dashboard); err != nil {
-		return response.Error(500, "Failed to load home dashboard", err)
+		return response.Error(http.StatusInternalServerError, "Failed to load home dashboard", err)
 	}
 
 	hs.addGettingStartedPanelToHomeDashboard(c, dash.Dashboard)
@@ -700,7 +701,7 @@ func (hs *HTTPServer) GetDashboardVersions(c *contextmodel.ReqContext) response.
 
 	versions, err := hs.dashboardVersionService.List(c.Req.Context(), &query)
 	if err != nil {
-		return response.Error(404, fmt.Sprintf("No versions found for dashboardId %d", dash.ID), err)
+		return response.Error(http.StatusNotFound, fmt.Sprintf("No versions found for dashboardId %d", dash.ID), err)
 	}
 
 	loginMem := make(map[int64]string, len(versions))
@@ -812,7 +813,7 @@ func (hs *HTTPServer) GetDashboardVersion(c *contextmodel.ReqContext) response.R
 
 	res, err := hs.dashboardVersionService.Get(c.Req.Context(), &query)
 	if err != nil {
-		return response.Error(500, fmt.Sprintf("Dashboard version %d not found for dashboardId %d", query.Version, dash.ID), err)
+		return response.Error(http.StatusInternalServerError, fmt.Sprintf("Dashboard version %d not found for dashboardId %d", query.Version, dash.ID), err)
 	}
 
 	creator := anonString
@@ -964,9 +965,9 @@ func (hs *HTTPServer) CalculateDashboardDiff(c *contextmodel.ReqContext) respons
 	baseVersionRes, err := hs.dashboardVersionService.Get(c.Req.Context(), &baseVersionQuery)
 	if err != nil {
 		if errors.Is(err, dashver.ErrDashboardVersionNotFound) {
-			return response.Error(404, "Dashboard version not found", err)
+			return response.Error(http.StatusNotFound, "Dashboard version not found", err)
 		}
-		return response.Error(500, "Unable to compute diff", err)
+		return response.Error(http.StatusInternalServerError, "Unable to compute diff", err)
 	}
 
 	newVersionQuery := dashver.GetDashboardVersionQuery{
@@ -978,9 +979,9 @@ func (hs *HTTPServer) CalculateDashboardDiff(c *contextmodel.ReqContext) respons
 	newVersionRes, err := hs.dashboardVersionService.Get(c.Req.Context(), &newVersionQuery)
 	if err != nil {
 		if errors.Is(err, dashver.ErrDashboardVersionNotFound) {
-			return response.Error(404, "Dashboard version not found", err)
+			return response.Error(http.StatusNotFound, "Dashboard version not found", err)
 		}
-		return response.Error(500, "Unable to compute diff", err)
+		return response.Error(http.StatusInternalServerError, "Unable to compute diff", err)
 	}
 
 	baseData := baseVersionRes.Data
@@ -990,9 +991,9 @@ func (hs *HTTPServer) CalculateDashboardDiff(c *contextmodel.ReqContext) respons
 
 	if err != nil {
 		if errors.Is(err, dashver.ErrDashboardVersionNotFound) {
-			return response.Error(404, "Dashboard version not found", err)
+			return response.Error(http.StatusNotFound, "Dashboard version not found", err)
 		}
-		return response.Error(500, "Unable to compute diff", err)
+		return response.Error(http.StatusInternalServerError, "Unable to compute diff", err)
 	}
 
 	if options.DiffType == dashdiffs.DiffDelta {
@@ -1061,12 +1062,12 @@ func (hs *HTTPServer) RestoreDashboardVersion(c *contextmodel.ReqContext) respon
 	versionQuery := dashver.GetDashboardVersionQuery{DashboardID: dashID, DashboardUID: dash.UID, Version: apiCmd.Version, OrgID: c.SignedInUser.GetOrgID()}
 	version, err := hs.dashboardVersionService.Get(c.Req.Context(), &versionQuery)
 	if err != nil {
-		return response.Error(404, "Dashboard version not found", nil)
+		return response.Error(http.StatusNotFound, "Dashboard version not found", nil)
 	}
 
 	userID, err := identity.IntIdentifier(c.SignedInUser.GetNamespacedID())
 	if err != nil {
-		return response.Error(500, "failed to get user id", err)
+		return response.Error(http.StatusInternalServerError, "failed to get user id", err)
 	}
 
 	saveCmd := dashboards.SaveDashboardCommand{}
