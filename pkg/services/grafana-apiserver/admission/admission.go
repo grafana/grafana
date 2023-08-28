@@ -141,6 +141,8 @@ func (addDefaultFields) Admit(ctx context.Context, a admission.Attributes, o adm
 		}
 	case admission.Delete:
 		return nil
+	case admission.Connect:
+		return nil
 	}
 
 	return nil
