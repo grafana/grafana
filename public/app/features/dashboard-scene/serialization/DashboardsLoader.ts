@@ -78,7 +78,7 @@ export class DashboardLoader extends StateManagerBase<DashboardLoaderState> {
     throw new Error('Dashboard not found');
   }
 
-  clearState() {
+  public clearState() {
     this.setState({ dashboard: undefined, loadError: undefined, isLoading: false });
   }
 }
