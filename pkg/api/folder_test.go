@@ -120,9 +120,7 @@ func TestFoldersCreateAPIEndpoint(t *testing.T) {
 		folderPermService.On("SetPermissions", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]accesscontrol.ResourcePermission{}, nil)
 
 		srv := SetupAPITestServer(t, func(hs *HTTPServer) {
-			hs.Cfg = &setting.Cfg{
-				RBACEnabled: true,
-			}
+			hs.Cfg = setting.NewCfg()
 
 			if tc.withNestedFolders {
 				hs.Features = featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders)
@@ -232,9 +230,7 @@ func TestFoldersUpdateAPIEndpoint(t *testing.T) {
 		folderService.ExpectedError = tc.expectedFolderSvcError
 
 		srv := SetupAPITestServer(t, func(hs *HTTPServer) {
-			hs.Cfg = &setting.Cfg{
-				RBACEnabled: true,
-			}
+			hs.Cfg = setting.NewCfg()
 			hs.folderService = folderService
 		})
 
@@ -273,9 +269,7 @@ func TestHTTPServer_FolderMetadata(t *testing.T) {
 	folderService := &foldertest.FakeService{}
 	features := featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders)
 	server := SetupAPITestServer(t, func(hs *HTTPServer) {
-		hs.Cfg = &setting.Cfg{
-			RBACEnabled: true,
-		}
+		hs.Cfg = setting.NewCfg()
 		hs.folderService = folderService
 		hs.QuotaService = quotatest.New(false, nil)
 		hs.SearchService = &mockSearchService{
@@ -404,9 +398,7 @@ func TestFolderMoveAPIEndpoint(t *testing.T) {
 
 	for _, tc := range tcs {
 		srv := SetupAPITestServer(t, func(hs *HTTPServer) {
-			hs.Cfg = &setting.Cfg{
-				RBACEnabled: true,
-			}
+			hs.Cfg = setting.NewCfg()
 			hs.Features = featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders)
 			hs.folderService = folderService
 		})
@@ -479,9 +471,7 @@ func TestFolderGetAPIEndpoint(t *testing.T) {
 
 	for _, tc := range tcs {
 		srv := SetupAPITestServer(t, func(hs *HTTPServer) {
-			hs.Cfg = &setting.Cfg{
-				RBACEnabled: true,
-			}
+			hs.Cfg = setting.NewCfg()
 			hs.Features = tc.features
 			hs.folderService = folderService
 		})

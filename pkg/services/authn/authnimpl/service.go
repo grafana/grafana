@@ -43,8 +43,8 @@ const (
 )
 
 var (
-	errCantAuthenticateReq = errutil.NewBase(errutil.StatusUnauthorized, "auth.unauthorized")
-	errDisabledIdentity    = errutil.NewBase(errutil.StatusUnauthorized, "identity.disabled")
+	errCantAuthenticateReq = errutil.Unauthorized("auth.unauthorized")
+	errDisabledIdentity    = errutil.Unauthorized("identity.disabled")
 )
 
 // make sure service implements authn.Service interface

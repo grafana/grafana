@@ -18,10 +18,9 @@ import (
 var (
 	ErrGuardianPermissionExists    = errors.New("permission already exists")
 	ErrGuardianOverride            = errors.New("you can only override a permission to be higher")
-	ErrGuardianGetDashboardFailure = errutil.NewBase(errutil.StatusInternal, "guardian.getDashboardFailure", errutil.WithPublicMessage("Failed to get dashboard"))
-	ErrGuardianGetFolderFailure    = errutil.NewBase(errutil.StatusInternal, "guardian.getFolderFailure", errutil.WithPublicMessage("Failed to get folder"))
-	ErrGuardianDashboardNotFound   = errutil.NewBase(errutil.StatusNotFound, "guardian.dashboardNotFound")
-	ErrGuardianFolderNotFound      = errutil.NewBase(errutil.StatusNotFound, "guardian.folderNotFound")
+	ErrGuardianGetDashboardFailure = errutil.Internal("guardian.getDashboardFailure", errutil.WithPublicMessage("Failed to get dashboard"))
+	ErrGuardianDashboardNotFound   = errutil.NotFound("guardian.dashboardNotFound")
+	ErrGuardianFolderNotFound      = errutil.NotFound("guardian.folderNotFound")
 )
 
 // DashboardGuardian to be used for guard against operations without access on dashboard and acl
@@ -32,16 +31,6 @@ type DashboardGuardian interface {
 	CanAdmin() (bool, error)
 	CanDelete() (bool, error)
 	CanCreate(folderID int64, isFolder bool) (bool, error)
-	CheckPermissionBeforeUpdate(permission dashboards.PermissionType, updatePermissions []*dashboards.DashboardACL) (bool, error)
-
-	// GetACL returns ACL.
-	GetACL() ([]*dashboards.DashboardACLInfoDTO, error)
-
-	// GetACLWithoutDuplicates returns ACL and strips any permission
-	// that already has an inherited permission with higher or equal
-	// permission.
-	GetACLWithoutDuplicates() ([]*dashboards.DashboardACLInfoDTO, error)
-	GetHiddenACL(*setting.Cfg) ([]*dashboards.DashboardACL, error)
 }
 
 type dashboardGuardianImpl struct {
@@ -468,22 +457,6 @@ func (g *FakeDashboardGuardian) CanCreate(_ int64, _ bool) (bool, error) {
 
 func (g *FakeDashboardGuardian) HasPermission(permission dashboards.PermissionType) (bool, error) {
 	return g.HasPermissionValue, nil
-}
-
-func (g *FakeDashboardGuardian) CheckPermissionBeforeUpdate(permission dashboards.PermissionType, updatePermissions []*dashboards.DashboardACL) (bool, error) {
-	return g.CheckPermissionBeforeUpdateValue, g.CheckPermissionBeforeUpdateError
-}
-
-func (g *FakeDashboardGuardian) GetACL() ([]*dashboards.DashboardACLInfoDTO, error) {
-	return g.GetACLValue, nil
-}
-
-func (g *FakeDashboardGuardian) GetACLWithoutDuplicates() ([]*dashboards.DashboardACLInfoDTO, error) {
-	return g.GetACL()
-}
-
-func (g *FakeDashboardGuardian) GetHiddenACL(cfg *setting.Cfg) ([]*dashboards.DashboardACL, error) {
-	return g.GetHiddenACLValue, nil
 }
 
 // nolint:unused

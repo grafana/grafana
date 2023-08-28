@@ -68,7 +68,7 @@ export class AppChromeService {
     }
   }
 
-  ignoreStateUpdate(newState: AppChromeState, current: AppChromeState) {
+  private ignoreStateUpdate(newState: AppChromeState, current: AppChromeState) {
     if (isShallowEqual(newState, current)) {
       return true;
     }
