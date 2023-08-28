@@ -30,10 +30,10 @@ export class SaveDashboardDrawer extends SceneObjectBase<SaveDashboardDrawerStat
 
     const diff = jsonDiff(originalVersion, saveVersion);
 
-    let diffCount = 0;
-    for (const d of Object.values(diff)) {
-      diffCount += d.length;
-    }
+    // let diffCount = 0;
+    // for (const d of Object.values(diff)) {
+    //   diffCount += d.length;
+    // }
 
     return (
       <Drawer title="Save dashboard" subtitle={model.dashboard.state.title} scrollableContent onClose={model.onClose}>
