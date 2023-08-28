@@ -32,7 +32,7 @@ export const highlightTags = {
   post: '@/HIGHLIGHT@',
 };
 
-export const defaultPrecisionString = '3';
+export const defaultGeoHashPrecisionString = '3';
 
 export function defaultMetricAgg(id = '1'): MetricAggregation {
   return { type: 'count', id };

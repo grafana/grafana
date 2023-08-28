@@ -1,6 +1,6 @@
 import { InternalTimeZones, SelectableValue } from '@grafana/data';
 
-import { defaultPrecisionString } from '../../../queryDef';
+import { defaultGeoHashPrecisionString } from '../../../queryDef';
 import { BucketsConfiguration } from '../../../types';
 
 import { defaultFilter } from './SettingsEditor/FiltersSettingsEditor/utils';
@@ -27,7 +27,7 @@ export const bucketAggregationConfig: BucketsConfiguration = {
     label: 'Geo Hash Grid',
     requiresField: true,
     defaultSettings: {
-      precision: defaultPrecisionString,
+      precision: defaultGeoHashPrecisionString,
     },
   },
   date_histogram: {

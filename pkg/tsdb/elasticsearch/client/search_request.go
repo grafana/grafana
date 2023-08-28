@@ -9,7 +9,7 @@ const (
 	HighlightPreTagsString  = "@HIGHLIGHT@"
 	HighlightPostTagsString = "@/HIGHLIGHT@"
 	HighlightFragmentSize   = 2147483647
-	DefaultPrecision        = 3
+	DefaultGeoHashPrecision = 3
 )
 
 // SearchRequestBuilder represents a builder which can build a search request
@@ -453,7 +453,7 @@ func (b *aggBuilderImpl) Filters(key string, fn func(a *FiltersAggregation, b Ag
 func (b *aggBuilderImpl) GeoHashGrid(key, field string, fn func(a *GeoHashGridAggregation, b AggBuilder)) AggBuilder {
 	innerAgg := &GeoHashGridAggregation{
 		Field:     field,
-		Precision: DefaultPrecision,
+		Precision: DefaultGeoHashPrecision,
 	}
 	aggDef := newAggDef(key, &aggContainer{
 		Type:        "geohash_grid",

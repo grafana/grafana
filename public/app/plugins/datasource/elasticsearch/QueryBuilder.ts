@@ -7,7 +7,13 @@ import {
   isPipelineAggregation,
   isPipelineAggregationWithMultipleBucketPaths,
 } from './components/QueryEditor/MetricAggregationsEditor/aggregations';
-import { defaultBucketAgg, defaultMetricAgg, findMetricById, highlightTags, defaultPrecisionString } from './queryDef';
+import {
+  defaultBucketAgg,
+  defaultMetricAgg,
+  findMetricById,
+  highlightTags,
+  defaultGeoHashPrecisionString,
+} from './queryDef';
 import {
   ElasticsearchQuery,
   TermsQuery,
@@ -231,7 +237,7 @@ export class ElasticQueryBuilder {
         case 'geohash_grid': {
           esAgg['geohash_grid'] = {
             field: aggDef.field,
-            precision: aggDef.settings?.precision || defaultPrecisionString,
+            precision: aggDef.settings?.precision || defaultGeoHashPrecisionString,
           };
           break;
         }
