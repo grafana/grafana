@@ -283,7 +283,7 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
     trackDashboardLoaded(dashboard, versionBeforeMigration);
 
     // yay we are done
-    dispatch(dashboardInitCompleted(dashboard));
+    dispatch(dashboardInitCompleted({ dashboard, original: dashDTO.dashboard }));
   };
 }
 

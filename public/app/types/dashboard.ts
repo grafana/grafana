@@ -113,4 +113,5 @@ export interface DashboardState {
   initialDatasource?: DataSourceRef['uid'];
   initError: DashboardInitError | null;
   permissions: DashboardAcl[];
+  getOriginal: () => DashboardDataDTO | null;
 }
