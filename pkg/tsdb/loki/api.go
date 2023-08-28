@@ -158,7 +158,7 @@ func (api *LokiAPI) DataQuery(ctx context.Context, query lokiQuery, responseOpts
 		return nil, err
 	}
 
-	api.log.Debug("sending query to loki", "start", query.Start, "end", query.End, "step", query.Step, "query", query.Expr, "queryType", query.QueryType, "direction", query.Direction, "maxLines", query.MaxLines, "supportingQueryType", query.SupportingQueryType, "lokiHost", req.URL.Host, "lokiPath", req.URL.Path)
+	api.log.Debug("Sending query to loki", "start", query.Start, "end", query.End, "step", query.Step, "query", query.Expr, "queryType", query.QueryType, "direction", query.Direction, "maxLines", query.MaxLines, "supportingQueryType", query.SupportingQueryType, "lokiHost", req.URL.Host, "lokiPath", req.URL.Path)
 	start := time.Now()
 
 	resp, err := api.client.Do(req)
@@ -167,7 +167,7 @@ func (api *LokiAPI) DataQuery(ctx context.Context, query lokiQuery, responseOpts
 	}
 
 	took := time.Since(start)
-	api.log.Debug("response received from loki", "took", took, "status", resp.StatusCode, "length", resp.Header.Get("Content-Length"))
+	api.log.Debug("Response received from loki", "took", took, "status", resp.StatusCode, "length", resp.Header.Get("Content-Length"))
 
 	defer func() {
 		if err := resp.Body.Close(); err != nil {
@@ -177,7 +177,7 @@ func (api *LokiAPI) DataQuery(ctx context.Context, query lokiQuery, responseOpts
 
 	if resp.StatusCode/100 != 2 {
 		err := readLokiError(resp.Body)
-		api.log.Error("error received from loki", "err", err, "status", resp.StatusCode)
+		api.log.Error("Error received from loki", "err", err, "status", resp.StatusCode)
 		return nil, err
 	}
 
@@ -193,11 +193,11 @@ func (api *LokiAPI) DataQuery(ctx context.Context, query lokiQuery, responseOpts
 	if res.Error != nil {
 		span.RecordError(res.Error)
 		span.SetStatus(codes.Error, err.Error())
-		logger.Error("error parsing response from loki", "err", res.Error, "metricDataplane", responseOpts.metricDataplane, "took", took)
+		logger.Error("Error parsing response from loki", "err", res.Error, "metricDataplane", responseOpts.metricDataplane, "took", took)
 		return nil, res.Error
 	}
 
-	logger.Debug("response parsed from loki", "took", took, "metricDataplane", responseOpts.metricDataplane, "framesLength", len(res.Frames))
+	logger.Debug("Response parsed from loki", "took", took, "metricDataplane", responseOpts.metricDataplane, "framesLength", len(res.Frames))
 
 	return res.Frames, nil
 }

@@ -147,7 +147,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 	dsInfo, err := s.getDSInfo(ctx, req.PluginContext)
 	logger := logger.FromContext(ctx).New("api", "QueryData")
 	if err != nil {
-		logger.Error("failed to get data source info", "err", err)
+		logger.Error("Failed to get data source info", "err", err)
 		result := backend.NewQueryDataResponse()
 		return result, err
 	}
@@ -167,7 +167,7 @@ func queryData(ctx context.Context, req *backend.QueryDataRequest, dsInfo *datas
 
 	queries, err := parseQuery(req)
 	if err != nil {
-		plog.Error("failed to parse queries", "err", err)
+		plog.Error("Failed to parse queries", "err", err)
 		return result, err
 	}
 
@@ -203,7 +203,7 @@ func queryData(ctx context.Context, req *backend.QueryDataRequest, dsInfo *datas
 func runQuery(ctx context.Context, api *LokiAPI, query *lokiQuery, responseOpts ResponseOpts) (data.Frames, error) {
 	frames, err := api.DataQuery(ctx, *query, responseOpts)
 	if err != nil {
-		logger.Error("error querying loki", "err", err)
+		logger.Error("Error querying loki", "err", err)
 		return data.Frames{}, err
 	}
 
@@ -211,7 +211,7 @@ func runQuery(ctx context.Context, api *LokiAPI, query *lokiQuery, responseOpts 
 		err = adjustFrame(frame, query, !responseOpts.metricDataplane, responseOpts.logsDataplane)
 
 		if err != nil {
-			logger.Error("error adjusting frame", "err", err)
+			logger.Error("Error adjusting frame", "err", err)
 			return data.Frames{}, err
 		}
 	}
