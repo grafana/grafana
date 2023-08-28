@@ -163,4 +163,9 @@ def secrets():
             "infra/data/ci/grafana-release-eng/grafana-delivery-bot",
             "app-private-key",
         ),
+        vault_secret(
+            "gcr_credentials",
+            "secret/data/common/gcr",
+            "service-account",
+        ),
     ]
