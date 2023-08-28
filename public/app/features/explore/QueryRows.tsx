@@ -12,7 +12,7 @@ import { QueryEditorRows } from '../query/components/QueryEditorRows';
 
 import { changeCorrelationDetails } from './state/main';
 import { changeQueries, runQueries } from './state/query';
-import { getExploreItemSelector, selectCorrelationDetails, selectCorrelationEditorMode } from './state/selectors';
+import { getExploreItemSelector, selectCorrelationDetails, selectCorrelationEditorMode, isLeftPaneSelector } from './state/selectors';
 
 interface Props {
   exploreId: string;
@@ -46,7 +46,7 @@ export const QueryRows = ({ exploreId }: Props) => {
   const eventBridge = useSelector(getEventBridge);
   const isCorrelationsEditorMode = useSelector(selectCorrelationEditorMode);
   const correlationDetails = useSelector(selectCorrelationDetails);
-
+  const isLeftPane = useSelector(isLeftPaneSelector(exploreId));
 
   const onRunQueries = useCallback(() => {
     dispatch(runQueries({ exploreId }));
@@ -56,11 +56,11 @@ export const QueryRows = ({ exploreId }: Props) => {
     (newQueries: DataQuery[]) => {
       dispatch(changeQueries({ exploreId, queries: newQueries }));
 
-      if (isCorrelationsEditorMode && !correlationDetails?.dirty) {
+      if (isCorrelationsEditorMode && !correlationDetails?.dirty && isLeftPane) {
         dispatch(changeCorrelationDetails({ dirty: true }));
       }
     },
-    [correlationDetails?.dirty, dispatch, exploreId, isCorrelationsEditorMode]
+    [correlationDetails?.dirty, dispatch, exploreId, isCorrelationsEditorMode, isLeftPane]
   );
 
   const onAddQuery = useCallback(

@@ -29,7 +29,7 @@ import {
   changeCorrelationDetails
 } from './state/main';
 import { cancelQueries, runQueries, selectIsWaitingForData } from './state/query';
-import { isSplit, selectCorrelationEditorMode, selectPanesEntries } from './state/selectors';
+import { isLeftPaneSelector, isSplit, selectCorrelationEditorMode, selectPanesEntries } from './state/selectors';
 import { syncTimes, changeRefreshInterval } from './state/time';
 import { LiveTailControls } from './useLiveTailControls';
 
@@ -67,10 +67,11 @@ export function ExploreToolbar({ exploreId, topOfViewRef, onChangeTime }: Props)
 
   const panes = useSelector(selectPanesEntries);
   const isCorrelationsEditorMode = useSelector(selectCorrelationEditorMode);
+  const isLeftPane = useSelector(isLeftPaneSelector(exploreId));
 
   const shouldRotateSplitIcon = useMemo(
-    () => (exploreId === panes[0][0] && isLargerPane) || (exploreId === panes[1]?.[0] && !isLargerPane),
-    [isLargerPane, exploreId, panes]
+    () => (isLeftPane && isLargerPane) || (!isLeftPane && !isLargerPane),
+    [isLeftPane, isLargerPane]
   );
 
   const onCopyShortLink = () => {
@@ -81,7 +82,7 @@ export function ExploreToolbar({ exploreId, topOfViewRef, onChangeTime }: Props)
   const onChangeDatasource = async (dsSettings: DataSourceInstanceSettings) => {
     dispatch(changeDatasource(exploreId, dsSettings.uid, { importQueries: true }));
 
-    if (isCorrelationsEditorMode && panes[0][0] === exploreId) {
+    if (isCorrelationsEditorMode && isLeftPane) {
       panes.forEach((pane) => {
         dispatch(removeCorrelationData(pane[0]));
         console.log('change DS');

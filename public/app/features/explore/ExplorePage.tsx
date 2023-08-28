@@ -19,9 +19,7 @@ import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { useSplitSizeUpdater } from './hooks/useSplitSizeUpdater';
 import { useStateSync } from './hooks/useStateSync';
 import { useTimeSrvFix } from './hooks/useTimeSrvFix';
-import { removeCorrelationData } from './state/explorePane';
-import { changeCorrelationDetails, changeCorrelationsEditorMode } from './state/main';
-import { runQueries } from './state/query';
+import { changeCorrelationsEditorMode } from './state/main';
 import { isSplit, selectCorrelationDetails, selectCorrelationEditorMode, selectPanesEntries } from './state/selectors';
 
 const MIN_PANE_WIDTH = 200;
@@ -62,12 +60,6 @@ export default function ExplorePage(props: GrafanaRouteComponentProps<{}, Explor
       exploreNavItem.parentItem.url = undefined;
       exploreNavItem.parentItem.onClick = () => {
         dispatch(changeCorrelationsEditorMode({ correlationsEditorMode: false }));
-        console.log('breadcrumb click');
-        panes.forEach((pane) => {
-          dispatch(removeCorrelationData(pane[0]));
-          dispatch(changeCorrelationDetails({label: undefined, description: undefined, canSave: false, dirty: false}));
-          dispatch(runQueries({ exploreId: pane[0] }));
-        });
       };
       navModel.node = exploreNavItem;
       chrome.update({ sectionNav: navModel });
@@ -75,13 +67,6 @@ export default function ExplorePage(props: GrafanaRouteComponentProps<{}, Explor
   }, [chrome, showCorrelationEditorMode, navModel, dispatch, panes]);
 
   useKeyboardShortcuts();
-
-
-  useEffect(() => {
-    return () => {
-      dispatch(changeCorrelationsEditorMode({ correlationsEditorMode: false }));
-    }
-  }, [dispatch]);
 
   return (
     <div
