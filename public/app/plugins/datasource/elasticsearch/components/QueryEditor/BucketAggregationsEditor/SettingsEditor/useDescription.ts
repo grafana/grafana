@@ -61,7 +61,7 @@ export const useDescription = (bucketAgg: BucketAggregation): string => {
     }
 
     case 'geohash_grid': {
-      const precision = Math.max(Math.min(parseInt(bucketAgg.settings?.precision || '5', 10), 12), 1);
+      const precision = Math.max(Math.min(parseInt(bucketAgg.settings?.precision || '3', 10), 12), 1);
       return `Precision: ${precision}`;
     }
 
