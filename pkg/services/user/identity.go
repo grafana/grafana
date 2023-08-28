@@ -56,10 +56,7 @@ func (u *SignedInUser) ToUserDisplayDTO() *UserDisplayDTO {
 
 // Static function to parse a requester into a UserDisplayDTO
 func NewUserDisplayDTOFromRequester(requester identity.Requester) (*UserDisplayDTO, error) {
-	userID, err := identity.IntIdentifier(requester.GetNamespacedID())
-	if err != nil {
-		return nil, err
-	}
+	userID, _ := identity.IntIdentifier(requester.GetNamespacedID())
 	return &UserDisplayDTO{
 		ID:    userID,
 		Login: requester.GetLogin(),

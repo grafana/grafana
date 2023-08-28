@@ -281,7 +281,12 @@ func (s *Service) Create(ctx context.Context, cmd *folder.CreateFolderCommand) (
 	dashFolder.SetUID(trimmedUID)
 
 	user := cmd.SignedInUser
-	userID := user.UserID
+	namespaceID, userIDstr := user.GetNamespacedID()
+	userID, err := identity.IntIdentifier(namespaceID, userIDstr)
+	if err != nil {
+		s.log.Warn("failed to parse user ID", "namespaceID", namespaceID, "userID", userIDstr, "error", err)
+	}
+
 	if userID == 0 {
 		userID = -1
 	}
@@ -764,9 +769,10 @@ func (s *Service) BuildSaveDashboardCommand(ctx context.Context, dto *dashboards
 		}
 	}
 
-	userID, err := identity.IntIdentifier(dto.User.GetNamespacedID())
+	namespaceID, userIDstr := dto.User.GetNamespacedID()
+	userID, err := identity.IntIdentifier(namespaceID, userIDstr)
 	if err != nil {
-		return nil, err
+		s.log.Warn("failed to parse user ID", "namespaceID", namespaceID, "userID", userIDstr, "error", err)
 	}
 
 	cmd := &dashboards.SaveDashboardCommand{
