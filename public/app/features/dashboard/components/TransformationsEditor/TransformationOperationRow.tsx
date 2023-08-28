@@ -153,6 +153,8 @@ export const TransformationOperationRow = ({
       draggable
       actions={renderActions}
       disabled={disabled}
+      isOpen={showHelp}
+      onClose={() => toggleHelp(false)}
     >
       {showHelp && <OperationRowHelp markdown={prepMarkdown(uiConfig)} />}
       {filter && (
