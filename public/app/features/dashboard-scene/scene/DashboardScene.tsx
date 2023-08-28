@@ -53,7 +53,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     this.subscribeToEvent(SceneObjectStateChangedEvent, this.onChildStateChanged);
   }
 
-  onChildStateChanged = (event: SceneObjectStateChangedEvent) => {
+  public onChildStateChanged = (event: SceneObjectStateChangedEvent) => {
     // Temporary hacky way to detect changes
     if (event.payload.changedObject instanceof SceneGridItem) {
       this.setState({ isDirty: true });

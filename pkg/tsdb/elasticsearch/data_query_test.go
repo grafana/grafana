@@ -612,7 +612,7 @@ func TestExecuteElasticsearchDataQuery(t *testing.T) {
 						"id": "3",
 						"type": "geohash_grid",
 						"field": "@location",
-						"settings": { "precision": 3 }
+						"settings": { "precision": "6" }
 					}
 				],
 				"metrics": [{"type": "count", "id": "1" }]
@@ -625,6 +625,56 @@ func TestExecuteElasticsearchDataQuery(t *testing.T) {
 			require.Equal(t, firstLevel.Aggregation.Type, "geohash_grid")
 			ghGridAgg := firstLevel.Aggregation.Aggregation.(*es.GeoHashGridAggregation)
 			require.Equal(t, ghGridAgg.Field, "@location")
+			require.Equal(t, ghGridAgg.Precision, 6)
+		})
+
+		t.Run("With geo hash grid agg with invalid int precision", func(t *testing.T) {
+			c := newFakeClient()
+			_, err := executeElasticsearchDataQuery(c, `{
+				"bucketAggs": [
+					{
+						"id": "3",
+						"type": "geohash_grid",
+						"field": "@location",
+						"settings": { "precision": 7 }
+					}
+				],
+				"metrics": [{"type": "count", "id": "1" }]
+			}`, from, to)
+			require.NoError(t, err)
+			sr := c.multisearchRequests[0].Requests[0]
+
+			firstLevel := sr.Aggs[0]
+			require.Equal(t, firstLevel.Key, "3")
+			require.Equal(t, firstLevel.Aggregation.Type, "geohash_grid")
+			ghGridAgg := firstLevel.Aggregation.Aggregation.(*es.GeoHashGridAggregation)
+			require.Equal(t, ghGridAgg.Field, "@location")
+			// It should default to 3
+			require.Equal(t, ghGridAgg.Precision, 3)
+		})
+
+		t.Run("With geo hash grid agg with no precision", func(t *testing.T) {
+			c := newFakeClient()
+			_, err := executeElasticsearchDataQuery(c, `{
+				"bucketAggs": [
+					{
+						"id": "3",
+						"type": "geohash_grid",
+						"field": "@location",
+						"settings": {}
+					}
+				],
+				"metrics": [{"type": "count", "id": "1" }]
+			}`, from, to)
+			require.NoError(t, err)
+			sr := c.multisearchRequests[0].Requests[0]
+
+			firstLevel := sr.Aggs[0]
+			require.Equal(t, firstLevel.Key, "3")
+			require.Equal(t, firstLevel.Aggregation.Type, "geohash_grid")
+			ghGridAgg := firstLevel.Aggregation.Aggregation.(*es.GeoHashGridAggregation)
+			require.Equal(t, ghGridAgg.Field, "@location")
+			// It should default to 3
 			require.Equal(t, ghGridAgg.Precision, 3)
 		})
 
