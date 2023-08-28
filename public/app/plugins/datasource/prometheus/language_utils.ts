@@ -14,6 +14,7 @@ import {
 
 import { addLabelToQuery } from './add_label_to_query';
 import { SUGGESTIONS_LIMIT } from './language_provider';
+import { PROMETHEUS_QUERY_BUILDER_MAX_RESULTS } from './querybuilder/components/MetricSelect';
 import { PrometheusCacheLevel, PromMetricsMetadata, PromMetricsMetadataItem } from './types';
 
 export const processHistogramMetrics = (metrics: string[]) => {
@@ -415,4 +416,12 @@ export function getPrometheusTime(date: string | DateTime, roundUp: boolean) {
   }
 
   return Math.ceil(date.valueOf() / 1000);
+}
+
+export function truncateResult<T>(array: T[], limit?: number): T[] {
+  if (limit === undefined) {
+    limit = PROMETHEUS_QUERY_BUILDER_MAX_RESULTS;
+  }
+  array.length = Math.min(array.length, limit);
+  return array;
 }
