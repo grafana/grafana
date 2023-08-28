@@ -112,7 +112,9 @@ describe('ContactPoint', () => {
   });
 
   it('should disable buttons when provisioned', async () => {
-    render(<ContactPoint name={'my-contact-point'} provisioned={true} receivers={[]} onDelete={noop} />);
+    render(<ContactPoint name={'my-contact-point'} provisioned={true} receivers={[]} onDelete={noop} />, {
+      wrapper,
+    });
 
     expect(screen.getByText(/provisioned/i)).toBeInTheDocument();
 
