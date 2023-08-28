@@ -71,6 +71,12 @@ describe('addLabelToQuery()', () => {
       }
     }
   );
+
+  it('should always add label as labelFilter if force flag is given', () => {
+    expect(addLabelToQuery('{foo="bar"}', 'forcedLabel', '=', 'value', true)).toEqual(
+      '{foo="bar"} | forcedLabel=`value`'
+    );
+  });
 });
 
 describe('addParserToQuery', () => {
