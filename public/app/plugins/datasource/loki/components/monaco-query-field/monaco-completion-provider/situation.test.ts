@@ -264,16 +264,4 @@ describe('situation', () => {
       ],
     });
   });
-
-  it('identifies AFTER_DISTINCT autocomplete situations', () => {
-    assertSituation('{label="value"} | logfmt | distinct^', {
-      type: 'AFTER_DISTINCT',
-      logQuery: '{label="value"} | logfmt ',
-    });
-
-    assertSituation('{label="value"} | logfmt | distinct id,^', {
-      type: 'AFTER_DISTINCT',
-      logQuery: '{label="value"} | logfmt ',
-    });
-  });
 });

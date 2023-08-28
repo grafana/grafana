@@ -8,8 +8,6 @@ import {
   By,
   ConvOp,
   Decolorize,
-  DistinctFilter,
-  DistinctLabel,
   Filter,
   FilterOp,
   Grouping,
@@ -204,11 +202,6 @@ export function handleExpression(expr: string, node: SyntaxNode, context: Contex
         break;
       }
       context.errors.push(makeError(expr, node));
-      break;
-    }
-
-    case DistinctFilter: {
-      visQuery.operations.push(handleDistinctFilter(expr, node, context));
       break;
     }
 
@@ -642,21 +635,4 @@ function isEmptyQuery(query: LokiVisualQuery) {
     return true;
   }
   return false;
-}
-
-function handleDistinctFilter(expr: string, node: SyntaxNode, context: Context): QueryBuilderOperation {
-  const labels: string[] = [];
-  let exploringNode = node.getChild(DistinctLabel);
-  while (exploringNode) {
-    const label = getString(expr, exploringNode.getChild(Identifier));
-    if (label) {
-      labels.push(label);
-    }
-    exploringNode = exploringNode?.getChild(DistinctLabel);
-  }
-  labels.reverse();
-  return {
-    id: LokiOperationId.Distinct,
-    params: labels,
-  };
 }
