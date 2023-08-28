@@ -154,6 +154,7 @@ export const TransformationOperationRow = ({
       actions={renderActions}
       disabled={disabled}
       isOpen={showHelp}
+      // Assure that showHelp is untoggled when the row becomes collapsed.
       onClose={() => toggleHelp(false)}
     >
       {showHelp && <OperationRowHelp markdown={prepMarkdown(uiConfig)} />}
