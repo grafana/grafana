@@ -285,11 +285,6 @@ func SetupAPITestServer(t *testing.T, opts ...APITestServerOption) *webtest.Serv
 	return s
 }
 
-var (
-	viewerRole = org.RoleViewer
-	editorRole = org.RoleEditor
-)
-
 type mockSearchService struct{ ExpectedResult model.HitList }
 
 func (mss *mockSearchService) SearchHandler(_ context.Context, q *search.Query) (model.HitList, error) {
