@@ -153,7 +153,6 @@ describe('jsonDiff', () => {
       links: [],
       panels: [],
       schemaVersion: 27,
-      style: 'dark',
       tags: [],
       templating: {
         list: [],
