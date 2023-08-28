@@ -33,6 +33,16 @@ The following table shows all supported authentication providers and the feature
 | [LDAP]({{< relref "./ldap" >}})                     | yes               | yes          | yes          | yes                   | yes         | yes            | yes         | no                   | unsupported | unsupported            |
 | [JWT Proxy]({{< relref "./jwt" >}})                 | no                | yes          | yes          | yes                   | no          | no             | unsupported | no                   | unsupported | unsupported            |
 
+
+## Auth Proxy
+
+| Feature | Supported? | 
+| :-------------------------------------------------- | :---------------- | 
+| Multi Org Mapping                | no          | 
+| Enforce Sync                  | unsupported | 
+| Role Mapping                | yes          |
+
+
 **Multi Org Mapping:** Able to add a user and role map him to multiple orgs
 
 **Enforce Sync:** If the information provided by the identity provider is empty, does the integration skip setting that user’s field or does it enforce a default.
