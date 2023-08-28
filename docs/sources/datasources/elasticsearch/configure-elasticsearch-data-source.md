@@ -124,7 +124,7 @@ You can also override this setting in a dashboard panel under its data source op
 
 - **X-Pack enabled** - Toggle to enable `X-Pack`-specific features and options, which provide the [query editor]({{< relref "./query-editor/" >}}) with additional aggregations, such as `Rate` and `Top Metrics`.
 
-- **Include frozen indices** - Toggle on when the `X-Pack enabled` setting is active and the configured Elasticsearch version is higher than `6.6.0`. You can configure Grafana to include [frozen indices](https://www.elastic.co/guide/en/elasticsearch/reference/7.13/frozen-indices.html) when performing search requests.
+- **Include frozen indices** - Toggle on when the `X-Pack enabled` setting is active. You can configure Grafana to include [frozen indices](https://www.elastic.co/guide/en/elasticsearch/reference/7.13/frozen-indices.html) when performing search requests.
 
 {{% admonition type="note" %}}
 Frozen indices are [deprecated in Elasticsearch](https://www.elastic.co/guide/en/elasticsearch/reference/7.17/frozen-indices.html) since v7.14.
@@ -137,8 +137,6 @@ In this section you can configure which fields the data source uses for log mess
 - **Message field name:** - Grabs the actual log message from the default source.
 
 - **Level field name:** - Name of the field with log level/severity information. When a level label is specified, the value of this label is used to determine the log level and update the color of each log line accordingly. If the log doesn’t have a specified level label, we try to determine if its content matches any of the [supported expressions](/docs/grafana/latest/explore/logs-integration/#log-level). The first match always determines the log level. If Grafana cannot infer a log-level field, it will be visualized with an unknown log level.
-
-- **Level field name:** - Name of the field that has log level/severity information. When a level label is specified, the value of this label is used to determine the log level and update color of each log line accordingly. If the log doesn’t have specified level label, Grafana tries to find out if its content matches any of the [supported expressions](/docs/grafana/latest/explore/logs-integration/#log-level). The log level is always determined by the first match. In the case where Grafana is not able to infer a log level field, it will be visualized with an unknown log level.
 
 ### Data links
 

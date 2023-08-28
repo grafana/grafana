@@ -101,15 +101,15 @@ The following options are specific to the **date histogram** bucket aggregation 
 Configure the following options for the **terms** bucket aggregation option:
 
   - **Order** - Sets the order of data.  Options are `top` or `bottom.`
-  - **Size** - Limits the size of the data set.  You can set a custom number or `no limit`.
+  - **Size** - Limits the number of documents, or size of the data set.  You can set a custom number or `no limit`.
   - **Min doc count** - The minimum amount of data to include in your query. The default is `0`.
   - **Order by** - Order terms by `term value`, `doc count` or `count`.
-  - **Missing** - 
+  - **Missing** - Defines how documents missing a value should be treated. Missing values are ignored by default, but they can be treated as if they had a value. See [Missing value](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-bucket-terms-aggregation.html#_missing_value_5) in Elasticsearch's documentation for more information.
 
 Configure the following options for the **filters** bucket aggregation option:
 
-  - **Query** - Sets the order of data.  Options are `top` or `bottom.`
-  - **Label** - Add any labels to filter by.
+  - **Query** - Specify the query to create a bucket of documents (data). Examples are `hostname:"hostname1"`, `product:"widget5"`. Use the * wildcard to match any number of characters.
+  - **Label** - Add a label or name to the bucket.
 
 Configure the following options for the **geo hash grid** bucket aggregation option:
 
