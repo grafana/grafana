@@ -1,5 +1,8 @@
 // package jsonitere wraps json-iterator/go's Iterator methods with error returns
 // so linting can catch unchecked errors.
+// The underlying iterator's Error property is returned and not reset.
+// See json-iterator/go for method documentation and additional methods that
+// can be added to this library.
 package jsonitere
 
 import j "github.com/json-iterator/go"
@@ -19,7 +22,6 @@ func (iter *Iterator) Read() (interface{}, error) {
 }
 
 func (iter *Iterator) ReadAny() (j.Any, error) {
-	// Clear iter.i.Error?
 	return iter.i.ReadAny(), iter.i.Error
 }
 
