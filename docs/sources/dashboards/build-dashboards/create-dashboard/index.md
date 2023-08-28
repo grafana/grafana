@@ -105,9 +105,18 @@ To see an example of repeating rows, refer to [Dashboard with repeating rows](ht
 1. In the **Row Options** dialog box, add a title and select the variable for which you want to add repeating rows.
 1. Click **Update**.
 
-{{% admonition type="note" %}}
 To provide context to dashboard users, add the variable to the row title.
-{{% /admonition %}}
+
+### Repeating rows and the --Dashboard-- data source
+
+If a row includes panels using the special [Dashboard]({{ < relref="../datasources/#special-data-sources" >}}) data source&mdash;the data source that uses a result set from another panel in the same dashboard&mdash;then corresponding panels in repeated rows will reference the panel in the original row, not the ones in the repeated rows.
+
+For example, in a dashboard:
+
+- `Row 1` includes `Panel 1A` and `Panel 1B`
+- `Panel 1B` uses the `-- Dashboard --` data source and references `Panel 1A`
+- Repeating row, `Row 2`, includes `Panel 2A` and `Panel 2B`
+- `Panel 2B` references `Panel 1A`, not `Panel 2A`
 
 ## Move a panel
 
