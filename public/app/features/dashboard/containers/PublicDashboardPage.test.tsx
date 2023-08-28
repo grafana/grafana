@@ -130,7 +130,6 @@ const dashboardBase = {
   initError: null,
   initPhase: DashboardInitPhase.Completed,
   permissions: [],
-  getOriginal: () => null,
 };
 
 describe('PublicDashboardPage', () => {

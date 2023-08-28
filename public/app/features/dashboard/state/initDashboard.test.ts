@@ -267,7 +267,7 @@ describeInitScenario('Initializing new dashboard', (ctx) => {
 
   it('Should send action dashboardInitCompleted', () => {
     expect(ctx.actions[7].type).toBe(dashboardInitCompleted.type);
-    expect(ctx.actions[7].payload.dashboard.title).toBe('New dashboard');
+    expect(ctx.actions[7].payload.title).toBe('New dashboard');
   });
 
   it('Should initialize services', () => {
@@ -402,7 +402,7 @@ describeInitScenario('Initializing existing dashboard', (ctx) => {
 
   it('Should send action dashboardInitCompleted', () => {
     expect(ctx.actions[8].type).toBe(dashboardInitCompleted.type);
-    expect(ctx.actions[8].payload.dashboard.title).toBe('My cool dashboard');
+    expect(ctx.actions[8].payload.title).toBe('My cool dashboard');
   });
 
   it('Should initialize services', () => {
