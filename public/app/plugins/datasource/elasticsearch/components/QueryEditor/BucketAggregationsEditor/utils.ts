@@ -1,9 +1,9 @@
 import { InternalTimeZones, SelectableValue } from '@grafana/data';
 
+import { defaultPrecisionString } from '../../../queryDef';
 import { BucketsConfiguration } from '../../../types';
 
 import { defaultFilter } from './SettingsEditor/FiltersSettingsEditor/utils';
-export const defaultPrecisionString = '3';
 
 export const bucketAggregationConfig: BucketsConfiguration = {
   terms: {
