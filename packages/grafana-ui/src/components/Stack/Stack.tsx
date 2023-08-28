@@ -11,7 +11,7 @@ interface StackProps {
 
 const Stack = ({ gap, direction, children }: React.PropsWithChildren<StackProps>) => {
   return (
-    <Flex gap={gap} direction="column">
+    <Flex gap={gap} direction={direction}>
       {children}
     </Flex>
   );

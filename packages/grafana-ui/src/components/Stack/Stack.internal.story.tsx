@@ -17,11 +17,13 @@ const meta: Meta<typeof Stack> = {
   },
 };
 
-const Item = ({ children }: { children: ReactNode }) => <div style={{ backgroundColor: 'lightgrey' }}>{children}</div>;
+const Item = ({ children }: { children: ReactNode }) => (
+  <div style={{ backgroundColor: 'lightgrey', width: '100px', height: '50px' }}>{children}</div>
+);
 
-export const Basic: StoryFn<typeof Stack> = (args) => {
+export const Basic: StoryFn<typeof Stack> = ({ direction = 'column', gap = 2 }) => {
   return (
-    <Stack {...args}>
+    <Stack direction={direction} gap={gap}>
       <Item>Item 1</Item>
       <Item>Item 2</Item>
       <Item>Item 3</Item>
