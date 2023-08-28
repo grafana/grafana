@@ -342,6 +342,27 @@ func sanitizeMetadataFromQueryData(res *backend.QueryDataResponse) {
 	}
 }
 
+// sanitizeData removes the query expressions from the dashboard data
+func sanitizeData(data *simplejson.Json) {
+	for _, panelObj := range data.Get("panels").MustArray() {
+		panel := simplejson.NewFromAny(panelObj)
+
+		// if the panel is a row and it is collapsed, get the queries from the panels inside the row
+		if panel.Get("type").MustString() == "row" && panel.Get("collapsed").MustBool() {
+			// recursive call to get queries from panels inside a row
+			sanitizeData(panel)
+			continue
+		}
+
+		for _, targetObj := range panel.Get("targets").MustArray() {
+			target := simplejson.NewFromAny(targetObj)
+			target.Del("expr")
+			target.Del("query")
+			target.Del("rawSql")
+		}
+	}
+}
+
 // NewDataTimeRange declared to be able to stub this function in tests
 var NewDataTimeRange = legacydata.NewDataTimeRange
 

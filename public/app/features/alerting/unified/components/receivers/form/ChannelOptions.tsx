@@ -71,7 +71,6 @@ export function ChannelOptions<R extends ChannelValues>({
         )?.[option.propertyName];
 
         const defaultValue = defaultValues?.settings?.[option.propertyName];
-        const hasSecureProperty = defaultValues.secureSettings?.[option.propertyName];
 
         return (
           <OptionField
@@ -80,7 +79,7 @@ export function ChannelOptions<R extends ChannelValues>({
             key={key}
             error={error}
             pathPrefix={pathPrefix}
-            pathSuffix={option.secure && hasSecureProperty ? 'secureSettings.' : 'settings.'}
+            pathSuffix={option.secure ? 'secureSettings.' : 'settings.'}
             option={option}
             customValidator={customValidators[option.propertyName]}
           />
