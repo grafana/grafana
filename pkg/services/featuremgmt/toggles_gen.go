@@ -414,4 +414,8 @@ const (
 	// FlagAlertingNoDataErrorExecution
 	// Changes how Alerting state manager handles execution of NoData/Error
 	FlagAlertingNoDataErrorExecution = "alertingNoDataErrorExecution"
+
+	// FlagDashgpt
+	// Enable AI powered features
+	FlagDashgpt = "dashgpt"
 )

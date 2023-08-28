@@ -708,5 +708,12 @@ var (
 			Owner:           grafanaAlertingSquad,
 			RequiresRestart: true,
 		},
+		{
+			Name: 		  "dashgpt",
+			Description:  "Enable AI powered features",
+			Stage: 	      FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner: 	      grafanaDashboardsSquad,
+		},
 	}
 )
