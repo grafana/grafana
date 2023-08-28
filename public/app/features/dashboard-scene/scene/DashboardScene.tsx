@@ -4,7 +4,6 @@ import { AppEvents, locationUtil, NavModelItem } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import {
   getUrlSyncManager,
-  sceneGraph,
   SceneGridItem,
   SceneGridLayout,
   SceneObject,
@@ -13,12 +12,13 @@ import {
   SceneObjectStateChangedEvent,
   SceneObjectUrlSyncHandler,
   SceneObjectUrlValues,
-  VizPanel,
 } from '@grafana/scenes';
 import appEvents from 'app/core/app_events';
 
-import { DashboardSceneRenderer } from './DashboardSceneRenderer';
-import { forceRenderChildren } from './utils';
+import { PanelInspectDrawer } from '../inspect/PanelInspectDrawer';
+import { DashboardSceneRenderer } from '../scene/DashboardSceneRenderer';
+import { findVizPanel } from '../utils/findVizPanel';
+import { forceRenderChildren } from '../utils/utils';
 
 export interface DashboardSceneState extends SceneObjectState {
   title: string;
@@ -32,6 +32,8 @@ export interface DashboardSceneState extends SceneObjectState {
   inspectPanelKey?: string;
   /** Scene object key for object to view in fullscreen */
   viewPanelKey?: string;
+  /** Scene object that handles the current drawer */
+  drawer?: SceneObject;
 }
 
 export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
@@ -49,19 +51,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     });
 
     this.subscribeToEvent(SceneObjectStateChangedEvent, this.onChildStateChanged);
-  }
-
-  findPanel(key: string | undefined): VizPanel | null {
-    if (!key) {
-      return null;
-    }
-
-    const obj = sceneGraph.findObject(this, (obj) => obj.state.key === key);
-    if (obj instanceof VizPanel) {
-      return obj;
-    }
-
-    return null;
   }
 
   onChildStateChanged = (event: SceneObjectStateChangedEvent) => {
@@ -97,10 +86,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     }
   };
 
-  onCloseInspectDrawer = () => {
-    locationService.partial({ inspect: null });
-  };
-
   getPageNav(location: H.Location) {
     let pageNav: NavModelItem = {
       text: this.state.title,
@@ -115,6 +100,14 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     }
 
     return pageNav;
+  }
+
+  /**
+   * Returns the body (layout) or the full view panel
+   */
+  getBodyToRender(viewPanelKey?: string): SceneObject {
+    const viewPanel = findVizPanel(this, viewPanelKey);
+    return viewPanel ?? this.state.body;
   }
 }
 
@@ -136,7 +129,7 @@ class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
 
     // Handle inspect object state
     if (typeof values.inspect === 'string') {
-      const panel = this._scene.findPanel(values.inspect);
+      const panel = findVizPanel(this._scene, values.inspect);
       if (!panel) {
         appEvents.emit(AppEvents.alertError, ['Panel not found']);
         locationService.partial({ inspect: null });
@@ -144,13 +137,15 @@ class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
       }
 
       update.inspectPanelKey = values.inspect;
+      update.drawer = new PanelInspectDrawer(panel);
     } else if (inspectPanelKey) {
       update.inspectPanelKey = undefined;
+      update.drawer = undefined;
     }
 
     // Handle view panel state
     if (typeof values.viewPanel === 'string') {
-      const panel = this._scene.findPanel(values.viewPanel);
+      const panel = findVizPanel(this._scene, values.viewPanel);
       if (!panel) {
         appEvents.emit(AppEvents.alertError, ['Panel not found']);
         locationService.partial({ viewPanel: null });
