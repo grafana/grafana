@@ -34,9 +34,9 @@ Supported auth providers:
 - [Auth Proxy]({{< relref "../setup-grafana/configure-security/configure-authentication/auth-proxy#team-sync-enterprise-only" >}})
 - [Azure AD OAuth]({{< relref "../setup-grafana/configure-security/configure-authentication/azuread#team-sync-enterprise-only" >}})
 - [GitHub OAuth]({{< relref "../setup-grafana/configure-security/configure-authentication/github#configure-team-synchronization" >}})
-- [GitLab OAuth]({{< relref "../setup-grafana/configure-security/configure-authentication/gitlab#team-sync-enterprise-only" >}})
+- [GitLab OAuth]({{< relref "../setup-grafana/configure-security/configure-authentication/gitlab#configure-team-synchronization" >}})
 - [LDAP]({{< relref "../setup-grafana/configure-security/configure-authentication/enhanced-ldap#ldap-group-synchronization-for-teams" >}})
-- [Okta]({{< relref "../setup-grafana/configure-security/configure-authentication/okta#team-sync-enterprise-only" >}})
+- [Okta]({{< relref "../setup-grafana/configure-security/configure-authentication/okta#configure-team-synchronization-enterprise-only" >}})
 - [SAML]({{< relref "../setup-grafana/configure-security/configure-authentication/saml#configure-team-sync" >}})
 
 ### Enhanced LDAP integration

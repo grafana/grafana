@@ -1,4 +1,5 @@
 ---
+canonical: https://grafana.com/docs/grafana/latest/alerting/fundamentals/alert-rules/queries-conditions/
 description: Introduction to queries and conditions
 keywords:
   - grafana
@@ -11,7 +12,7 @@ labels:
     - enterprise
     - oss
 title: Queries and conditions
-weight: 103
+weight: 104
 ---
 
 # Queries and conditions

@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 
 import { Space } from '@grafana/experimental';
-import { ConfirmModal } from '@grafana/ui';
-import { P } from '@grafana/ui/src/unstable';
+import { ConfirmModal, Text } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
 
 import { DashboardTreeSelection } from '../../types';
@@ -33,11 +32,11 @@ export const DeleteModal = ({ onConfirm, onDismiss, selectedItems, ...props }: P
     <ConfirmModal
       body={
         <>
-          <P>
+          <Text element="p">
             <Trans i18nKey="browse-dashboards.action.delete-modal-text">
               This action will delete the following content:
             </Trans>
-          </P>
+          </Text>
           <DescendantCount selectedItems={selectedItems} />
           <Space v={2} />
         </>

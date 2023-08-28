@@ -10,7 +10,9 @@ import (
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing/licensingtest"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
@@ -42,7 +44,7 @@ func TestService_SetUserPermission(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			service, sql, _ := setupTestEnvironment(t, []accesscontrol.Permission{}, Options{
+			service, sql, _ := setupTestEnvironment(t, Options{
 				Resource:             "dashboards",
 				Assignments:          Assignments{Users: true},
 				PermissionsToActions: nil,
@@ -90,7 +92,7 @@ func TestService_SetTeamPermission(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			service, _, teamSvc := setupTestEnvironment(t, []accesscontrol.Permission{}, Options{
+			service, _, teamSvc := setupTestEnvironment(t, Options{
 				Resource:             "dashboards",
 				Assignments:          Assignments{Teams: true},
 				PermissionsToActions: nil,
@@ -134,7 +136,7 @@ func TestService_SetBuiltInRolePermission(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			service, _, _ := setupTestEnvironment(t, []accesscontrol.Permission{}, Options{
+			service, _, _ := setupTestEnvironment(t, Options{
 				Resource:             "dashboards",
 				Assignments:          Assignments{BuiltInRoles: true},
 				PermissionsToActions: nil,
@@ -207,7 +209,7 @@ func TestService_SetPermissions(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			service, sql, teamSvc := setupTestEnvironment(t, []accesscontrol.Permission{}, tt.options)
+			service, sql, teamSvc := setupTestEnvironment(t, tt.options)
 
 			// seed user
 			orgSvc, err := orgimpl.ProvideService(sql, sql.Cfg, quotatest.New(false, nil))
@@ -230,7 +232,7 @@ func TestService_SetPermissions(t *testing.T) {
 	}
 }
 
-func setupTestEnvironment(t *testing.T, permissions []accesscontrol.Permission, ops Options) (*Service, *sqlstore.SQLStore, team.Service) {
+func setupTestEnvironment(t *testing.T, ops Options) (*Service, *sqlstore.SQLStore, team.Service) {
 	t.Helper()
 
 	sql := db.InitTestDB(t)
@@ -240,10 +242,11 @@ func setupTestEnvironment(t *testing.T, permissions []accesscontrol.Permission, 
 	require.NoError(t, err)
 	license := licensingtest.NewFakeLicensing()
 	license.On("FeatureEnabled", "accesscontrol.enforcement").Return(true).Maybe()
-	mock := accesscontrolmock.New().WithPermissions(permissions)
+	ac := acimpl.ProvideAccessControl(cfg)
+	acService := &actest.FakeService{}
 	service, err := New(
-		ops, cfg, routing.NewRouteRegister(), license,
-		accesscontrolmock.New().WithPermissions(permissions), mock, sql, teamSvc, userSvc,
+		ops, featuremgmt.WithFeatures(), routing.NewRouteRegister(), license,
+		ac, acService, sql, teamSvc, userSvc,
 	)
 	require.NoError(t, err)
 

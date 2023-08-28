@@ -73,7 +73,7 @@ In this guide you will set up [Verdaccio](https://verdaccio.org/) registry local
 From your terminal:
 
 1. Navigate to `devenv/local-npm` directory.
-2. Run `docker-compose up`. This will start your local npm registry, available at http://localhost:4873/. Note the verdaccio config allows
+2. Run `docker-compose up`. This will start your local npm registry, available at http://localhost:4873/.
 3. To test `@grafana` packages published to your local npm registry uncomment `npmScopes` and `unsafeHttpWhitelist` properties in the `.yarnrc` file.
 
 #### Publishing packages to local npm registry
@@ -86,16 +86,28 @@ From your terminal:
 2. Run `yarn packages:prepare`.
 3. Run `yarn packages:build`.
 4. Run `yarn packages:pack`.
-5. Run `./scripts/publish-npm-packages.sh`.
+5. Run `NPM_TOKEN=NONE ./scripts/publish-npm-packages.sh`.
 6. Navigate to http://localhost:4873 and verify the version was published
 
-Locally published packages will be published under `dev` channel, so in your plugin package.json file you can use that channel. For example:
+Locally published packages will be published under `dev` or `canary` channel, so in your plugin package.json file you can use that channel. For example:
 
 ```
 // plugin's package.json
 
 dependencies: {
   //... other dependencies
-  "@grafana/data": "dev"
+  "@grafana/data": "dev" // or canary
 }
 ```
+
+or you can instruct npm to install directly the specific version you published.
+
+#### Using your local package in another package (e.g. a plugin)
+
+To use your local published package in another package you'll have to create an `.npmrc` file in that repository and add the following line:
+
+```
+@grafana:registry=http://localhost:4873/
+```
+
+Make sure there is no other line already defined for `@grafana`.

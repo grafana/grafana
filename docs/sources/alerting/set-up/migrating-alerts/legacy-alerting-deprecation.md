@@ -1,6 +1,7 @@
 ---
 aliases:
   - alerting/legacy-alerting-deprecation/
+canonical: https://grafana.com/docs/grafana/latest/alerting/set-up/migrating-alerts/legacy-alerting-deprecation/
 description: Legacy alerting deprecation notice
 keywords:
   - grafana

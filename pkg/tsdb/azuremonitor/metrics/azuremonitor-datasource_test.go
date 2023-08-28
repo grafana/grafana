@@ -366,11 +366,20 @@ func TestCustomNamespace(t *testing.T) {
 	})
 }
 
+type fakeFeatureToggles struct {
+	flags map[string]bool
+}
+
+func (f *fakeFeatureToggles) IsEnabled(feature string) bool {
+	return f.flags[feature]
+}
+
 func TestAzureMonitorParseResponse(t *testing.T) {
 	resources := map[string]dataquery.AzureMonitorResource{}
 	resources["/subscriptions/12345678-aaaa-bbbb-cccc-123456789abc/resourceGroups/grafanastaging/providers/Microsoft.Compute/virtualMachines/grafana"] =
 		dataquery.AzureMonitorResource{ResourceGroup: strPtr("grafanastaging"), ResourceName: strPtr("grafana")}
 	subscription := "12345678-aaaa-bbbb-cccc-123456789abc"
+	datasource := &AzureMonitorDatasource{Features: &fakeFeatureToggles{flags: map[string]bool{"azureMonitorDataplane": true}}}
 
 	tests := []struct {
 		name            string
@@ -378,6 +387,7 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 		mockQuery       *types.AzureMonitorQuery
 		expectedFrames  data.Frames
 		queryIntervalMS int64
+		datasource      *AzureMonitorDatasource
 	}{
 		{
 			name:         "average aggregate time series response",
@@ -390,6 +400,7 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 				Resources:    resources,
 				Subscription: subscription,
 			},
+			datasource: datasource,
 		},
 		{
 			name:         "total aggregate time series response",
@@ -402,6 +413,7 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 				Resources:    resources,
 				Subscription: subscription,
 			},
+			datasource: datasource,
 		},
 		{
 			name:         "maximum aggregate time series response",
@@ -414,6 +426,7 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 				Resources:    resources,
 				Subscription: subscription,
 			},
+			datasource: datasource,
 		},
 		{
 			name:         "minimum aggregate time series response",
@@ -426,6 +439,7 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 				Resources:    resources,
 				Subscription: subscription,
 			},
+			datasource: datasource,
 		},
 		{
 			name:         "count aggregate time series response",
@@ -438,6 +452,7 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 				Resources:    resources,
 				Subscription: subscription,
 			},
+			datasource: datasource,
 		},
 		{
 			name:         "single dimension time series response",
@@ -450,6 +465,7 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 				Resources:    resources,
 				Subscription: subscription,
 			},
+			datasource: datasource,
 		},
 		{
 			name:         "with alias patterns in the query",
@@ -463,6 +479,7 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 				Resources:    resources,
 				Subscription: subscription,
 			},
+			datasource: datasource,
 		},
 		{
 			name:         "single dimension with alias",
@@ -476,6 +493,7 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 				Resources:    resources,
 				Subscription: subscription,
 			},
+			datasource: datasource,
 		},
 		{
 			name:         "multiple dimension time series response with label alias",
@@ -489,6 +507,7 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 				Resources:    map[string]dataquery.AzureMonitorResource{"/subscriptions/12345678-aaaa-bbbb-cccc-123456789abc/resourceGroups/grafanatest/providers/Microsoft.Storage/storageAccounts/testblobaccount/blobServices/default/providers/Microsoft.Insights/metrics": {ResourceGroup: strPtr("grafanatest"), ResourceName: strPtr("testblobaccount")}},
 				Subscription: subscription,
 			},
+			datasource: datasource,
 		},
 		{
 			name:         "unspecified unit with alias should not panic",
@@ -502,6 +521,7 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 				Resources:    resources,
 				Subscription: subscription,
 			},
+			datasource: datasource,
 		},
 		{
 			name:         "with legacy azure monitor query properties and without a resource uri",
@@ -515,6 +535,7 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 				Resources:    resources,
 				Subscription: subscription,
 			},
+			datasource: datasource,
 		},
 		{
 			name:         "with legacy azure monitor query properties and with a resource uri it should use the resource uri",
@@ -528,6 +549,7 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 				Resources:    resources,
 				Subscription: subscription,
 			},
+			datasource: datasource,
 		},
 		{
 			name:         "multiple time series response",
@@ -540,6 +562,7 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 				Resources:    resources,
 				Subscription: subscription,
 			},
+			datasource: datasource,
 		},
 		{
 			name:         "multiple time series response with multiple dimensions",
@@ -552,14 +575,27 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 				Resources:    resources,
 				Subscription: subscription,
 			},
+			datasource: datasource,
+		},
+		{
+			name:         "non-dataplane compliant response",
+			responseFile: "azuremonitor/11-azure-monitor-non-dataplane-response.json",
+			mockQuery: &types.AzureMonitorQuery{
+				URL: "/subscriptions/12345678-aaaa-bbbb-cccc-123456789abc/resourceGroups/grafanastaging/providers/Microsoft.Compute/virtualMachines/grafana/providers/microsoft.insights/metrics",
+				Params: url.Values{
+					"aggregation": {"Average"},
+				},
+				Resources:    resources,
+				Subscription: subscription,
+			},
+			datasource: &AzureMonitorDatasource{Features: &fakeFeatureToggles{flags: map[string]bool{"azureMonitorDataplane": false}}},
 		},
 	}
 
-	datasource := &AzureMonitorDatasource{}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			azData := loadTestFile(t, tt.responseFile)
-			dframes, err := datasource.parseResponse(azData, tt.mockQuery, "http://ds", "")
+			dframes, err := tt.datasource.parseResponse(azData, tt.mockQuery, "http://ds", "")
 			require.NoError(t, err)
 			require.NotNil(t, dframes)
 

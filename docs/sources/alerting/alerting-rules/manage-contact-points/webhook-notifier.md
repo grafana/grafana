@@ -3,6 +3,7 @@ aliases:
   - ../contact-points/notifiers/webhook-notifier/
   - ../fundamentals/contact-points/webhook-notifier/
   - alerting/manage-notifications/manage-contact-points/webhook-notifier/
+canonical: https://grafana.com/docs/grafana/latest/alerting/alerting-rules/manage-contact-points/webhook-notifier/
 description: Configure the webhook notifier for notifications
 keywords:
   - grafana

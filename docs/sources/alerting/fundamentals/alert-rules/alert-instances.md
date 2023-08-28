@@ -1,4 +1,5 @@
 ---
+canonical: https://grafana.com/docs/grafana/latest/alerting/fundamentals/alert-rules/alert-instances/
 description: Learn about Grafana alert instances
 keywords:
   - grafana
@@ -10,7 +11,7 @@ labels:
     - enterprise
     - oss
 title: Alert instances
-weight: 104
+weight: 105
 ---
 
 # Alert instances

@@ -15,6 +15,47 @@ function checkScenario(scenario: TitleScenario): string {
   return getFieldDisplayName(field, frame, scenario.frames);
 }
 
+describe('getFieldDisplayName', () => {
+  it('Should add suffix for comparison frames', () => {
+    const frame = toDataFrame({
+      meta: {
+        timeCompare: {
+          diffMs: -86400000,
+          isTimeShiftQuery: true,
+        },
+      },
+      fields: [
+        { name: TIME_SERIES_TIME_FIELD_NAME, values: [1, 2, 3], type: FieldType.time },
+        {
+          name: 'Value 1',
+          values: [1, 2, 3],
+          type: FieldType.number,
+          config: {
+            displayName: 'ServerA',
+          },
+        },
+        {
+          name: 'Value 2',
+          values: [1, 2, 3],
+          type: FieldType.number,
+          config: {
+            displayNameFromDS: 'ServerB',
+          },
+        },
+        {
+          name: 'Value 3',
+          values: [1, 2, 3],
+          type: FieldType.number,
+        },
+      ],
+    });
+
+    expect(getFieldDisplayName(frame.fields[1], frame)).toBe('ServerA (comparison)');
+    expect(getFieldDisplayName(frame.fields[2], frame)).toBe('ServerB (comparison)');
+    expect(getFieldDisplayName(frame.fields[3], frame)).toBe('Value 3 (comparison)');
+  });
+});
+
 describe('getFrameDisplayName', () => {
   it('Should return frame name if set', () => {
     const frame = toDataFrame({

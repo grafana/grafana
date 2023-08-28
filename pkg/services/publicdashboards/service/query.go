@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -280,11 +281,19 @@ func extractQueriesFromPanels(panels []interface{}, result map[int64][]*simplejs
 		}
 
 		var panelQueries []*simplejson.Json
+		hasExpression := panelHasAnExpression(panel)
 
 		for _, queryObj := range panel.Get("targets").MustArray() {
 			query := simplejson.NewFromAny(queryObj)
 
-			// We dont support exemplars for public dashboards currently
+			// it the panel doesn't have an expression and the query is disabled (hide is true), skip the query
+			// the expression handler will take care later of removing hidden queries which could be necessary to calculate
+			// the value of other queries
+			if !hasExpression && query.Get("hide").MustBool() {
+				continue
+			}
+
+			// We don't support exemplars for public dashboards currently
 			query.Del("exemplar")
 
 			// if query target has no datasource, set it to have the datasource on the panel
@@ -298,6 +307,17 @@ func extractQueriesFromPanels(panels []interface{}, result map[int64][]*simplejs
 
 		result[panel.Get("id").MustInt64()] = panelQueries
 	}
+}
+
+func panelHasAnExpression(panel *simplejson.Json) bool {
+	var hasExpression bool
+	for _, queryObj := range panel.Get("targets").MustArray() {
+		query := simplejson.NewFromAny(queryObj)
+		if expr.NodeTypeFromDatasourceUID(getDataSourceUidFromJson(query)) == expr.TypeCMDNode {
+			hasExpression = true
+		}
+	}
+	return hasExpression
 }
 
 func getDataSourceUidFromJson(query *simplejson.Json) string {
@@ -318,6 +338,27 @@ func sanitizeMetadataFromQueryData(res *backend.QueryDataResponse) {
 			if frames[i].Meta != nil {
 				frames[i].Meta.ExecutedQueryString = ""
 			}
+		}
+	}
+}
+
+// sanitizeData removes the query expressions from the dashboard data
+func sanitizeData(data *simplejson.Json) {
+	for _, panelObj := range data.Get("panels").MustArray() {
+		panel := simplejson.NewFromAny(panelObj)
+
+		// if the panel is a row and it is collapsed, get the queries from the panels inside the row
+		if panel.Get("type").MustString() == "row" && panel.Get("collapsed").MustBool() {
+			// recursive call to get queries from panels inside a row
+			sanitizeData(panel)
+			continue
+		}
+
+		for _, targetObj := range panel.Get("targets").MustArray() {
+			target := simplejson.NewFromAny(targetObj)
+			target.Del("expr")
+			target.Del("query")
+			target.Del("rawSql")
 		}
 	}
 }

@@ -125,9 +125,9 @@ const ui = {
     namespaceInput: byRole('textbox', { name: /^Namespace/ }),
     ruleGroupInput: byRole('textbox', { name: /Evaluation group/ }),
     intervalInput: byRole('textbox', {
-      name: /Rule group evaluation interval Evaluation interval should be smaller or equal to 'For' values for existing rules in this group./i,
+      name: /Evaluation interval How often is the rule evaluated. Applies to every rule within the group./i,
     }),
-    saveButton: byRole('button', { name: /Save evaluation interval/ }),
+    saveButton: byRole('button', { name: /Save/ }),
   },
 };
 
@@ -626,12 +626,7 @@ describe('RuleList', () => {
       // make changes to form
       await userEvent.clear(ui.editGroupModal.ruleGroupInput.get());
       await userEvent.type(ui.editGroupModal.ruleGroupInput.get(), 'super group');
-      await userEvent.type(
-        screen.getByRole('textbox', {
-          name: /rule group evaluation interval evaluation interval should be smaller or equal to 'for' values for existing rules in this group\./i,
-        }),
-        '5m'
-      );
+      await userEvent.type(ui.editGroupModal.intervalInput.get(), '5m');
 
       // submit, check that appropriate calls were made
       await userEvent.click(ui.editGroupModal.saveButton.get());
@@ -690,6 +685,21 @@ describe('RuleList', () => {
         enableRBAC();
 
         grantUserPermissions([AccessControlAction.AlertingProvisioningRead]);
+
+        mocks.getAllDataSourcesMock.mockReturnValue([]);
+        setDataSourceSrv(new MockDataSourceSrv({}));
+        mocks.api.fetchRules.mockResolvedValue([]);
+        mocks.api.fetchRulerRules.mockResolvedValue({});
+
+        renderRuleList();
+
+        await userEvent.click(ui.moreButton.get());
+        expect(ui.exportButton.get()).toBeInTheDocument();
+      });
+      it('Export button should be visible when the user has alert provisioning read secrets permissions', async () => {
+        enableRBAC();
+
+        grantUserPermissions([AccessControlAction.AlertingProvisioningReadSecrets]);
 
         mocks.getAllDataSourcesMock.mockReturnValue([]);
         setDataSourceSrv(new MockDataSourceSrv({}));

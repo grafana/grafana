@@ -102,7 +102,7 @@ export const getSelectStyles = stylesFactory((theme: GrafanaTheme2) => {
       alignItems: 'center',
       lineHeight: 1,
       background: theme.colors.background.secondary,
-      borderRadius: theme.shape.borderRadius(),
+      borderRadius: theme.shape.radius.default,
       margin: theme.spacing(0.25, 1, 0.25, 0),
       padding: theme.spacing(0.25, 0, 0.25, 1),
       color: theme.colors.text.primary,

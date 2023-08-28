@@ -34,6 +34,7 @@ func ProvideConfig(settingProvider setting.Provider, grafanaCfg *setting.Cfg, fe
 		allowedUnsigned,
 		allowedAuth,
 		aws.KeyValue("assume_role_enabled").MustBool(grafanaCfg.AWSAssumeRoleEnabled),
+		aws.KeyValue("external_id").Value(),
 		grafanaCfg.Azure,
 		grafanaCfg.SecureSocksDSProxy,
 		grafanaCfg.BuildVersion,
@@ -41,7 +42,7 @@ func ProvideConfig(settingProvider setting.Provider, grafanaCfg *setting.Cfg, fe
 		grafanaCfg.PluginsCDNURLTemplate,
 		grafanaCfg.AppURL,
 		tracingCfg,
-		featuremgmt.ProvideToggles(features),
+		features,
 		grafanaCfg.AngularSupportEnabled,
 		grafanaCfg.GrafanaComURL,
 	), nil

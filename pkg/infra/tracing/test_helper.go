@@ -92,7 +92,7 @@ func (t *FakeSpan) AddEvents(keys []string, values []EventValue) {
 	}
 }
 
-func (t *FakeSpan) contextWithSpan(ctx context.Context) context.Context {
+func (t *FakeSpan) ContextWithSpan(ctx context.Context) context.Context {
 	return ctx
 }
 

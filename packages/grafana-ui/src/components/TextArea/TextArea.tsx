@@ -25,7 +25,7 @@ const getTextAreaStyle = stylesFactory((theme: GrafanaTheme2, invalid = false) =
       getFocusStyle(theme),
       css({
         display: 'block',
-        borderRadius: theme.shape.borderRadius(),
+        borderRadius: theme.shape.radius.default,
         padding: `${theme.spacing.gridSize / 4}px ${theme.spacing.gridSize}px`,
         width: '100%',
         borderColor: invalid ? theme.colors.error.border : theme.components.input.borderColor,

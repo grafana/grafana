@@ -11,6 +11,7 @@ import {
   DataSourceApi,
   DataSourceInstanceSettings,
   dateTime,
+  Field,
   FieldType,
   isValidGoDuration,
   LoadingState,
@@ -223,11 +224,11 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
             app: options.app ?? '',
             grafana_version: config.buildInfo.version,
             query: queryValue ?? '',
-            streaming: appliedQuery.streaming,
+            streaming: config.featureToggles.traceQLStreaming,
           });
 
-          if (appliedQuery.streaming) {
-            subQueries.push(this.handleStreamingSearch(options, targets.traceql));
+          if (config.featureToggles.traceQLStreaming) {
+            subQueries.push(this.handleStreamingSearch(options, targets.traceql, queryValue));
           } else {
             subQueries.push(
               this._request('/api/search', {
@@ -254,16 +255,20 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     }
     if (targets.traceqlSearch?.length) {
       try {
-        const queryValue = generateQueryFromFilters(targets.traceqlSearch[0].filters);
+        const queryValueFromFilters = generateQueryFromFilters(targets.traceqlSearch[0].filters);
+
+        // We want to support template variables also in Search for consistency with other data sources
+        const queryValue = this.templateSrv.replace(queryValueFromFilters, options.scopedVars);
+
         reportInteraction('grafana_traces_traceql_search_queried', {
           datasourceType: 'tempo',
           app: options.app ?? '',
           grafana_version: config.buildInfo.version,
           query: queryValue ?? '',
-          streaming: targets.traceqlSearch[0].streaming,
+          streaming: config.featureToggles.traceQLStreaming,
         });
 
-        if (targets.traceqlSearch[0].streaming) {
+        if (config.featureToggles.traceQLStreaming) {
           subQueries.push(this.handleStreamingSearch(options, targets.traceqlSearch, queryValue));
         } else {
           subQueries.push(
@@ -425,22 +430,21 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     return request;
   }
 
+  // This function can probably be simplified by avoiding passing both `targets` and `query`,
+  // since `query` is built from `targets`, if you look at how this function is currently called
   handleStreamingSearch(
     options: DataQueryRequest<TempoQuery>,
     targets: TempoQuery[],
-    query?: string
+    query: string
   ): Observable<DataQueryResponse> {
-    const validTargets = targets
-      .filter((t) => t.query || query)
-      .map((t): TempoQuery => ({ ...t, query: query || t.query.trim() }));
-    if (!validTargets.length) {
+    if (query === '') {
       return EMPTY;
     }
 
     return merge(
-      ...validTargets.map((q) =>
+      ...targets.map((target) =>
         doTempoChannelStream(
-          q,
+          { ...target, query },
           this, // the datasource
           options,
           this.instanceSettings
@@ -650,14 +654,16 @@ function errorAndDurationQuery(
   let durationsBySpanName: string[] = [];
 
   let labels = [];
-  if (request.app === CoreApp.Explore) {
-    if (rateResponse.data[0][0]?.fields[1]?.values) {
-      labels = rateResponse.data[0][0]?.fields[1]?.values;
+  if (rateResponse.data[0][0] && request.app === CoreApp.Explore) {
+    const spanNameField = rateResponse.data[0][0].fields.find((field: Field) => field.name === 'span_name');
+    if (spanNameField && spanNameField.values) {
+      labels = spanNameField.values;
     }
   } else if (rateResponse.data[0]) {
     rateResponse.data[0].map((df: DataFrame) => {
-      if (df.fields[1]?.labels && df.fields[1]?.labels['span_name']) {
-        labels.push(df.fields[1]?.labels['span_name']);
+      const spanNameLabels = df.fields.find((field: Field) => field.labels?.['span_name']);
+      if (spanNameLabels) {
+        labels.push(spanNameLabels.labels?.['span_name']);
       }
     });
   }
@@ -788,12 +794,14 @@ function makePromServiceMapRequest(options: DataQueryRequest<TempoQuery>): DataQ
   return {
     ...options,
     targets: serviceMapMetrics.map((metric) => {
+      const { serviceMapQuery, serviceMapIncludeNamespace: serviceMapIncludeNamespace } = options.targets[0];
+      const extraSumByFields = serviceMapIncludeNamespace ? ', client_service_namespace, server_service_namespace' : '';
       return {
         format: 'table',
         refId: metric,
         // options.targets[0] is not correct here, but not sure what should happen if you have multiple queries for
         // service map at the same time anyway
-        expr: `sum by (client, server) (rate(${metric}${options.targets[0].serviceMapQuery || ''}[$__range]))`,
+        expr: `sum by (client, server${extraSumByFields}) (rate(${metric}${serviceMapQuery || ''}[$__range]))`,
         instant: true,
       };
     }),

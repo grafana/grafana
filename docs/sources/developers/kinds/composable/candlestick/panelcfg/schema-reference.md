@@ -2,6 +2,11 @@
 keywords:
   - grafana
   - schema
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: CandlestickPanelCfg kind
 ---
 > Both documentation generation and kinds schemas are in active development and subject to change without prior notice.

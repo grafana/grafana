@@ -1,11 +1,13 @@
 import { css, cx } from '@emotion/css';
 import React, { useEffect, useRef, useState } from 'react';
 
-import { SelectableValue } from '@grafana/data';
-import { Button, CustomScrollbar, HorizontalGroup, RadioButtonGroup, useStyles2, useTheme2 } from '@grafana/ui';
+import { config } from '@grafana/runtime';
+import { Button, CustomScrollbar, HorizontalGroup, TextLink, useStyles2, useTheme2 } from '@grafana/ui';
 import { getSelectStyles } from '@grafana/ui/src/components/Select/getSelectStyles';
+import { contextSrv } from 'app/core/core';
 import { OrgRole, Role } from 'app/types';
 
+import { BuiltinRoleSelector } from './BuiltinRoleSelector';
 import { RoleMenuGroupsSection } from './RoleMenuGroupsSection';
 import { MENU_MAX_HEIGHT } from './constants';
 import { getStyles } from './styles';
@@ -29,16 +31,28 @@ interface RolesCollectionEntry {
   roles: Role[];
 }
 
-const BasicRoles = Object.values(OrgRole).filter((r) => r !== OrgRole.None);
-const BasicRoleOption: Array<SelectableValue<OrgRole>> = BasicRoles.map((r) => ({
-  label: r,
-  value: r,
-}));
-
 const fixedRoleGroupNames: Record<string, string> = {
   ldap: 'LDAP',
   current: 'Current org',
 };
+
+const noBasicRoleFlag = contextSrv.licensedAccessControlEnabled() && config.featureToggles.noBasicRole;
+const tooltipMessage = noBasicRoleFlag ? (
+  <>
+    You can now select the &quot;No basic role&quot; option and add permissions to your custom needs. You can find more
+    information in&nbsp;
+    <TextLink
+      href="https://grafana.com/docs/grafana/latest/administration/roles-and-permissions/#organization-roles"
+      variant="bodySmall"
+      external
+    >
+      our documentation
+    </TextLink>
+    .
+  </>
+) : (
+  ''
+);
 
 interface RolePickerMenuProps {
   basicRole?: OrgRole;
@@ -46,6 +60,7 @@ interface RolePickerMenuProps {
   appliedRoles: Role[];
   showGroups?: boolean;
   basicRoleDisabled?: boolean;
+  disabledMessage?: string;
   showBasicRole?: boolean;
   onSelect: (roles: Role[]) => void;
   onBasicRoleSelect?: (role: OrgRole) => void;
@@ -61,6 +76,7 @@ export const RolePickerMenu = ({
   appliedRoles,
   showGroups,
   basicRoleDisabled,
+  disabledMessage,
   showBasicRole,
   onSelect,
   onBasicRoleSelect,
@@ -206,14 +222,12 @@ export const RolePickerMenu = ({
         <CustomScrollbar autoHide={false} autoHeightMax={`${MENU_MAX_HEIGHT}px`} hideHorizontalTrack hideVerticalTrack>
           {showBasicRole && (
             <div className={customStyles.menuSection}>
-              <div className={customStyles.groupHeader}>Basic roles</div>
-              <RadioButtonGroup
-                className={customStyles.basicRoleSelector}
-                options={BasicRoleOption}
+              <BuiltinRoleSelector
                 value={selectedBuiltInRole}
                 onChange={onSelectedBuiltinRoleChange}
-                fullWidth={true}
                 disabled={basicRoleDisabled}
+                disabledMesssage={disabledMessage}
+                tooltipMessage={tooltipMessage}
               />
             </div>
           )}

@@ -76,6 +76,7 @@ For a complete list of every change, with links to pull requests and related iss
 
 ## Grafana 10
 
+- [What's new in 10.1]({{< relref "whats-new-in-v10-1/" >}})
 - [What's new in 10.0]({{< relref "whats-new-in-v10-0/" >}})
 
 ## Grafana 9

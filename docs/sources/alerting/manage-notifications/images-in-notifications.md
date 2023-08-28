@@ -1,4 +1,5 @@
 ---
+canonical: https://grafana.com/docs/grafana/latest/alerting/manage-notifications/images-in-notifications/
 description: How to use images in notifications
 keywords:
   - grafana

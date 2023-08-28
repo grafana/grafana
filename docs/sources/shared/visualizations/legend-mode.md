@@ -1,8 +1,4 @@
 ---
-labels:
-  products:
-    - enterprise
-    - oss
 title: Legend mode and legend placement
 ---
 

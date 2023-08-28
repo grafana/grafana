@@ -12,13 +12,13 @@ import { DataLinksContextMenu } from '../DataLinks/DataLinksContextMenu';
 
 import { CellActions } from './CellActions';
 import { TableStyles } from './styles';
-import { TableCellProps, TableFieldOptions, CustomCellRendererProps, TableCellOptions } from './types';
+import { TableCellProps, CustomCellRendererProps, TableCellOptions } from './types';
 import { getCellOptions } from './utils';
 
 export const DefaultCell = (props: TableCellProps) => {
   const { field, cell, tableStyles, row, cellProps, frame } = props;
 
-  const inspectEnabled = Boolean((field.config.custom as TableFieldOptions)?.inspect);
+  const inspectEnabled = Boolean(field.config.custom?.inspect);
   const displayValue = field.display!(cell.value);
 
   const showFilters = props.onCellFilterAdded && field.config.filterable;

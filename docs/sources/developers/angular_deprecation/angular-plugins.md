@@ -11,7 +11,10 @@ labels:
     - enterprise
     - oss
 title: Plugins using AngularJS
+description: An annotated list of Grafana plugins using AngularJS.
 ---
+
+# Plugins using AngularJS
 
 The use of AngularJS in Grafana has been [deprecated]({{< relref "../angular_deprecation" >}}) and support for it will be removed in a future release.
 
@@ -51,7 +54,9 @@ Latest Version: 1.2.1 | Signature: Commercial | Last Updated: 2023
 
 > [Migration issue](https://github.com/belugacdn/grafana-belugacdn-app/issues/7) has been raised.
 
-> **Warning:** Lack of recent activity in the [project repository](https://github.com/belugacdn/grafana-belugacdn-app) in the past 7 years suggests project _may_ not be actively maintained.
+{{% admonition type="warning" %}}
+Lack of recent activity in the [project repository](https://github.com/belugacdn/grafana-belugacdn-app) in the past 7 years suggests project _may_ not be actively maintained.
+{{% /admonition %}}
 
 ### [Bosun](https://grafana.com/grafana/plugins/bosun-app)
 
@@ -63,6 +68,10 @@ Latest Version: 0.0.29 | Signature: Community | Last Updated: 2023
 
 Latest Version: 0.2.4 | Signature: Commercial | Last Updated: 2022
 
+{{% admonition type="warning" %}}
+Guidance from the developer: This app is deprecated and will no longer be updated after December 31, 2023. Please consider using the [Cloudflare] Dashboard(https://dash.cloudflare.com/?to=/:account/:zone/analytics/dns) or [DNS Analytics API](https://developers.cloudflare.com/api/operations/dns-analytics-table) instead.
+{{% /admonition %}}
+
 ### [GLPI](https://grafana.com/grafana/plugins/ddurieux-glpi-app)
 
 Latest Version: 1.3.1 | Signature: Community | Last Updated: 2021
@@ -73,7 +82,9 @@ Latest Version: 1.3.1 | Signature: Community | Last Updated: 2021
 
 Latest Version: 1.5.2 | Signature: Community | Last Updated: 2021
 
-> **Warning:** [Issues](https://github.com/devopsprodigy/kubegraf/issues/71) in the project repository suggest that the project _may_ be unsupported.
+{{% admonition type="warning" %}}
+[Issues](https://github.com/devopsprodigy/kubegraf/issues/71) in the project repository suggest that the project _may_ be unsupported.
+{{% /admonition %}}
 
 > **Migration available - potential alternative:** Grafana Cloud includes a [Kubernetes integration](https://grafana.com/solutions/kubernetes/).
 
@@ -81,15 +92,13 @@ Latest Version: 1.5.2 | Signature: Community | Last Updated: 2021
 
 Latest Version: 1.6.2 | Signature: Grafana | Last Updated: 2023
 
-> **Note:** Plugin should continue to work even if Angular is disabled, and a full removal of Angular related code is planned.
-
-### [Moogsoft AIOps](https://grafana.com/grafana/plugins/moogsoft-aiops-app)
-
-Latest Version: 8.0.2 | Signature: Commercial | Last Updated: 2022
+{{% admonition type="note" %}}
+Plugin should continue to work even if Angular is disabled, and a full removal of Angular related code is planned.
+{{% /admonition %}}
 
 ### [OpenNMS Helm](https://grafana.com/grafana/plugins/opennms-helm-app)
 
-Latest Version: 8.0.4 | Signature: Community | Last Updated: 2023
+Latest Version: 8.0.5 | Signature: Community | Last Updated: 2023
 
 > **Migration available - plugin superseded:** The plugin has effectively been replaced with a [new plugin](https://grafana.com/grafana/plugins/opennms-opennms-app/) based on React.
 
@@ -97,7 +106,9 @@ Latest Version: 8.0.4 | Signature: Community | Last Updated: 2023
 
 Latest Version: 1.0.1 | Signature: Community | Last Updated: 2021
 
-> **Warning:** [Project repository](https://github.com/percona/grafana-app) was archived on June 12, 2020.
+{{% admonition type="warning" %}}
+[Project repository](https://github.com/percona/grafana-app) was archived on June 12, 2020.
+{{% /admonition %}}
 
 ### [Stagemonitor Elasticsearch](https://grafana.com/grafana/plugins/stagemonitor-elasticsearch-app)
 
@@ -105,13 +116,17 @@ Latest Version: 0.83.3 | Signature: Community | Last Updated: 2021
 
 > [Migration issue](https://github.com/stagemonitor/stagemonitor-grafana-elasticsearch/issues/1) has been raised.
 
-> **Warning:** Lack of recent activity in the [project repository](https://github.com/stagemonitor/stagemonitor-grafana-elasticsearch) in the past 4 years suggests project _may_ not be actively maintained.
+{{% admonition type="warning" %}}
+Lack of recent activity in the [project repository](https://github.com/stagemonitor/stagemonitor-grafana-elasticsearch) in the past 4 years suggests project _may_ not be actively maintained.
+{{% /admonition %}}
 
 ### [Voxter VoIP Platform Metrics](https://grafana.com/grafana/plugins/voxter-app)
 
 Latest Version: 0.0.2 | Signature: Community | Last Updated: 2021
 
-> **Warning:** Lack of recent activity in the [project repository](https://github.com/raintank/voxter-app) in the past 3 years suggests project _may_ not be actively maintained.
+{{% admonition type="warning" %}}
+Lack of recent activity in the [project repository](https://github.com/raintank/voxter-app) in the past 3 years suggests project _may_ not be actively maintained.
+{{% /admonition %}}
 
 ## Datasources
 
@@ -129,31 +144,45 @@ Latest Version: 3.1.0 | Signature: Commercial | Last Updated: 2023
 
 Latest Version: 1.3.12 | Signature: Community | Last Updated: 2021
 
-> **Warning:** [Issues](https://github.com/akumuli/Akumuli/issues/379) in the project repository suggest that the project _may_ be unsupported.
+{{% admonition type="warning" %}}
+[Issues](https://github.com/akumuli/Akumuli/issues/379) in the project repository suggest that the project _may_ be unsupported.
+{{% /admonition %}}
 
-> **Warning:** Lack of recent activity in the [project repository](https://github.com/akumuli/Akumuli/) in the past 3 years suggests project _may_ not be actively maintained.
+{{% admonition type="warning" %}}
+Lack of recent activity in the [project repository](https://github.com/akumuli/Akumuli/) in the past 3 years suggests project _may_ not be actively maintained.
+{{% /admonition %}}
 
 ### [DarkSky](https://grafana.com/grafana/plugins/andig-darksky-datasource/)
 
 Latest Version: 1.0.2 | Signature: Community | Last Updated: 2021
 
-> **Warning:** [Project repository](https://github.com/andig/grafana-darksky) was archived on September 27, 2022.
+{{% admonition type="warning" %}}
+[Project repository](https://github.com/andig/grafana-darksky) was archived on September 27, 2022.
+{{% /admonition %}}
 
-> **Warning:** Apple removed support for the DarkSky API on March 31, 2023 - [source](https://support.apple.com/en-us/HT213526).
+{{% admonition type="warning" %}}
+Apple removed support for the DarkSky API on March 31, 2023 - [source](https://support.apple.com/en-us/HT213526).
+{{% /admonition %}}
 
 ### [Finance](https://grafana.com/grafana/plugins/ayoungprogrammer-finance-datasource/)
 
 Latest Version: 1.0.1 | Signature: Community | Last Updated: 2021
 
-> **Warning:** [Issues](https://github.com/ayoungprogrammer/grafana-finance/issues/7) in the project repository suggest that the project _may_ be unsupported.
+{{% admonition type="warning" %}}
+[Issues](https://github.com/ayoungprogrammer/grafana-finance/issues/7) in the project repository suggest that the project _may_ be unsupported.
+{{% /admonition %}}
 
-> **Warning:** Lack of recent activity in the [project repository](https://github.com/ayoungprogrammer/grafana-finance) in the past 6 years suggests project _may_ not be actively maintained.
+{{% admonition type="warning" %}}
+Lack of recent activity in the [project repository](https://github.com/ayoungprogrammer/grafana-finance) in the past 6 years suggests project _may_ not be actively maintained.
+{{% /admonition %}}
 
 ### [Prometheus AlertManager](https://grafana.com/grafana/plugins/camptocamp-prometheus-alertmanager-datasource/)
 
 Latest Version: 1.2.1 | Signature: Community | Last Updated: 2022
 
-> **Warning:** Lack of recent activity in the [project repository](https://github.com/camptocamp/grafana-prometheus-alertmanager-datasource) in the past year suggests project _may_ not be actively maintained.
+{{% admonition type="warning" %}}
+Lack of recent activity in the [project repository](https://github.com/camptocamp/grafana-prometheus-alertmanager-datasource) in the past year suggests project _may_ not be actively maintained.
+{{% /admonition %}}
 
 > **Migration available - potential alternative:** Grafana includes an AlertManager data source as a Core plugin.
 
@@ -161,13 +190,17 @@ Latest Version: 1.2.1 | Signature: Community | Last Updated: 2022
 
 Latest Version: 2.2.3 | Signature: Community | Last Updated: 2022
 
-> **Warning:** Lack of recent activity in the [project repository](https://github.com/chaos-mesh/datasource) in the past year suggests project _may_ not be actively maintained.
+{{% admonition type="warning" %}}
+Lack of recent activity in the [project repository](https://github.com/chaos-mesh/datasource) in the past year suggests project _may_ not be actively maintained.
+{{% /admonition %}}
 
 ### [DeviceHive](https://grafana.com/grafana/plugins/devicehive-devicehive-datasource/)
 
 Latest Version: 2.0.2 | Signature: Community | Last Updated: 2021
 
-> **Warning:** Lack of recent activity in the [project repository](https://github.com/devicehive/devicehive-grafana-datasource) in the past 5 years suggests project _may_ not be actively maintained.
+{{% admonition type="warning" %}}
+Lack of recent activity in the [project repository](https://github.com/devicehive/devicehive-grafana-datasource) in the past 5 years suggests project _may_ not be actively maintained.
+{{% /admonition %}}
 
 ### [Google BigQuery](https://grafana.com/grafana/plugins/doitintl-bigquery-datasource/)
 
@@ -179,15 +212,21 @@ Latest Version: 2.0.3 | Signature: Community | Last Updated: 2022
 
 Latest Version: 1.0.1 | Signature: Community | Last Updated: 2021
 
-> **Warning:** [Project repository](https://github.com/open-falcon/grafana-openfalcon-datasource) suggests support for Grafana v4.2 - Grafana v5.4.
+{{% admonition type="warning" %}}
+[Project repository](https://github.com/open-falcon/grafana-openfalcon-datasource) suggests support for Grafana v4.2 - Grafana v5.4.
+{{% /admonition %}}
 
-> **Warning:** Lack of recent activity in the [project repository](https://github.com/open-falcon/grafana-openfalcon-datasource) in the past year suggests project _may_ not be actively maintained.
+{{% admonition type="warning" %}}
+Lack of recent activity in the [project repository](https://github.com/open-falcon/grafana-openfalcon-datasource) in the past year suggests project _may_ not be actively maintained.
+{{% /admonition %}}
 
 ### [GraphQL Data Source](https://grafana.com/grafana/plugins/fifemon-graphql-datasource/)
 
 Latest Version: 1.3.0 | Signature: Community | Last Updated: 2021
 
-> **Warning:** Project support is unclear after a request for new maintainers - [source](https://github.com/fifemon/graphql-datasource/issues/77).
+{{% admonition type="warning" %}}
+Project support is unclear after a request for new maintainers - [source](https://github.com/fifemon/graphql-datasource/issues/77).
+{{% /admonition %}}
 
 > **Migration available - potential alternative:** The [Infinity](https://grafana.com/grafana/plugins/yesoreyeram-infinity-datasource/) data source supports GraphQL.
 
@@ -195,31 +234,45 @@ Latest Version: 1.3.0 | Signature: Community | Last Updated: 2021
 
 Latest Version: 0.9.3 | Signature: Community | Last Updated: 2021
 
-> **Warning:** Lack of recent activity in the [project repository](https://github.com/foursquare/datasource-plugin-clouderamanager) in the past 7 years suggests project _may_ not be actively maintained.
+{{% admonition type="warning" %}}
+Lack of recent activity in the [project repository](https://github.com/foursquare/datasource-plugin-clouderamanager) in the past 7 years suggests project _may_ not be actively maintained.
+{{% /admonition %}}
 
 ### [Simple Annotations](https://grafana.com/grafana/plugins/fzakaria-simple-annotations-datasource/)
 
 Latest Version: 1.0.1 | Signature: Community | Last Updated: 2021
 
-> **Warning:** Plugin only claims support for Grafana v4.x.x.
+{{% admonition type="warning" %}}
+Plugin only claims support for Grafana v4.x.x.
+{{% /admonition %}}
 
-> **Warning:** Lack of recent activity in the [project repository](https://github.com/fzakaria/simple-annotations-plugin/) in the past 6 years suggests project _may_ not be actively maintained.
+{{% admonition type="warning" %}}
+Lack of recent activity in the [project repository](https://github.com/fzakaria/simple-annotations-plugin/) in the past 6 years suggests project _may_ not be actively maintained.
+{{% /admonition %}}
 
-> **Warning:** Developer no longer maintains the project, but is open to contributions: https://github.com/fzakaria/simple-annotations-plugin/issues/2
+{{% admonition type="warning" %}}
+Developer no longer maintains the project, but is open to contributions: https://github.com/fzakaria/simple-annotations-plugin/issues/2
+{{% /admonition %}}
 
 ### [Gnocchi](https://grafana.com/grafana/plugins/gnocchixyz-gnocchi-datasource/)
 
 Latest Version: 1.7.1 | Signature: Community | Last Updated: 2021
 
-> **Warning:** Plugin only claims support for Grafana v4.x.x
+{{% admonition type="warning" %}}
+Plugin only claims support for Grafana v4.x.x
+{{% /admonition %}}
 
-> **Warning:** Lack of recent activity in the [project repository](https://github.com/gnocchixyz/grafana-gnocchi-datasource) in the past 3 years suggests project _may_ not be actively maintained.
+{{% admonition type="warning" %}}
+Lack of recent activity in the [project repository](https://github.com/gnocchixyz/grafana-gnocchi-datasource) in the past 3 years suggests project _may_ not be actively maintained.
+{{% /admonition %}}
 
 ### [MetaQueries](https://grafana.com/grafana/plugins/goshposh-metaqueries-datasource/)
 
 Latest Version: 0.0.9 | Signature: Community | Last Updated: 2022
 
-> **Warning:** Lack of recent activity in the [project repository](https://github.com/GoshPosh/grafana-meta-queries) in the past year suggests project _may_ not be actively maintained.
+{{% admonition type="warning" %}}
+Lack of recent activity in the [project repository](https://github.com/GoshPosh/grafana-meta-queries) in the past year suggests project _may_ not be actively maintained.
+{{% /admonition %}}
 
 ### [Open Distro for Elasticsearch](https://grafana.com/grafana/plugins/grafana-es-open-distro-datasource/)
 
@@ -231,7 +284,9 @@ Latest Version: 1.0.6 | Signature: Grafana | Last Updated: 2021
 
 Latest Version: 3.0.2 | Signature: Grafana | Last Updated: 2021
 
-> **Warning:** [Project repository](https://github.com/grafana/kairosdb-datasource) was archived on August 30th, 2021 and is no longer maintained.
+{{% admonition type="warning" %}}
+[Project repository](https://github.com/grafana/kairosdb-datasource) was archived on August 30th, 2021, and is no longer maintained.
+{{% /admonition %}}
 
 ### [SimpleJson](https://grafana.com/grafana/plugins/grafana-simple-json-datasource/)
 
@@ -239,25 +294,25 @@ Latest Version: 1.4.2 | Signature: Grafana | Last Updated: 2021
 
 > **Migration available - potential alternative:** [Project repository](https://github.com/grafana/simple-json-datasource) is no longer maintained, but a number of alternatives exist, including - [Infinity](https://grafana.com/grafana/plugins/yesoreyeram-infinity-datasource/), [JSON](https://grafana.com/grafana/plugins/simpod-json-datasource) and [JSON API](https://grafana.com/grafana/plugins/marcusolsson-json-datasource).
 
-> **Note:** If you're looking for an example of a data source plugin to start from, refer to [grafana-starter-datasource-backend](https://github.com/grafana/grafana-starter-datasource-backend).
-
-### [Strava](https://grafana.com/grafana/plugins/grafana-strava-datasource/)
-
-Latest Version: 1.5.1 | Signature: Grafana | Last Updated: 2022
-
-> **Note:** Removal of any angular dependency is on the near term roadmap.
+{{% admonition type="note" %}}
+If you're looking for an example of a data source plugin to start from, refer to [grafana-starter-datasource-backend](https://github.com/grafana/grafana-starter-datasource-backend).
+{{% /admonition %}}
 
 ### [openHistorian](https://grafana.com/grafana/plugins/gridprotectionalliance-openhistorian-datasource/)
 
 Latest Version: 1.0.3 | Signature: Community | Last Updated: 2021
 
-> **Warning:** Lack of recent activity in the [project repository](https://github.com/GridProtectionAlliance/openHistorian-grafana/) in the past 2 years suggests project _may_ not be actively maintained.
+{{% admonition type="warning" %}}
+Lack of recent activity in the [project repository](https://github.com/GridProtectionAlliance/openHistorian-grafana/) in the past 2 years suggests project _may_ not be actively maintained.
+{{% /admonition %}}
 
 ### [Hawkular](https://grafana.com/grafana/plugins/hawkular-datasource/)
 
 Latest Version: 1.1.2 | Signature: Community | Last Updated: 2021
 
-> **Warning:** Lack of recent activity in the [project repository](https://github.com/hawkular/hawkular-grafana-datasource) in the past 5 years suggests project _may_ not be actively maintained.
+{{% admonition type="warning" %}}
+Lack of recent activity in the [project repository](https://github.com/hawkular/hawkular-grafana-datasource) in the past 5 years suggests project _may_ not be actively maintained.
+{{% /admonition %}}
 
 ### [Humio](https://grafana.com/grafana/plugins/humio-datasource/)
 
@@ -267,53 +322,73 @@ Latest Version: 3.3.1 | Signature: Commercial | Last Updated: 2022
 
 Latest Version: 0.9.1 | Signature: Community | Last Updated: 2021
 
-> **Warning:** Lack of recent activity in the [project repository](https://github.com/rafal-szypulka/grafana-ibm-apm) in the past 3 years suggests project _may_ not be actively maintained.
+{{% admonition type="warning" %}}
+Lack of recent activity in the [project repository](https://github.com/rafal-szypulka/grafana-ibm-apm) in the past 3 years suggests project _may_ not be actively maintained.
+{{% /admonition %}}
 
 ### [PRTG](https://grafana.com/grafana/plugins/jasonlashua-prtg-datasource/)
 
 Latest Version: 4.0.4 | Signature: Community | Last Updated: 2021
 
-> **Warning:** Lack of recent activity in the [project repository](https://github.com/neuralfraud/grafana-prtg) in the past 4 years suggests project _may_ not be actively maintained.
+{{% admonition type="warning" %}}
+Lack of recent activity in the [project repository](https://github.com/neuralfraud/grafana-prtg) in the past 4 years suggests project _may_ not be actively maintained.
+{{% /admonition %}}
 
-> **Warning:** Unmaintained since 2017 - [source](https://github.com/neuralfraud/grafana-prtg/wiki).
+{{% admonition type="warning" %}}
+Unmaintained since 2017 - [source](https://github.com/neuralfraud/grafana-prtg/wiki).
+{{% /admonition %}}
 
 ### [LinkSmart HDS Datasource](https://grafana.com/grafana/plugins/linksmart-hds-datasource/)
 
 Latest Version: 1.0.2 | Signature: Community | Last Updated: 2021
 
-> **Warning:** [Project repository](https://github.com/linksmart/grafana-hds-datasource) was archived on April 4th, 2022 and is no longer maintained.
+{{% admonition type="warning" %}}
+[Project repository](https://github.com/linksmart/grafana-hds-datasource) was archived on April 4th, 2022, and is no longer maintained.
+{{% /admonition %}}
 
 ### [LinkSmart SensorThings](https://grafana.com/grafana/plugins/linksmart-sensorthings-datasource/)
 
 Latest Version: 1.3.1 | Signature: Community | Last Updated: 2021
 
-> **Warning:** [Project repository](https://github.com/linksmart/grafana-sensorthings-datasource) was archived on April 4th, 2022 and is no longer maintained.
+{{% admonition type="warning" %}}
+[Project repository](https://github.com/linksmart/grafana-sensorthings-datasource) was archived on April 4th, 2022, and is no longer maintained.
+{{% /admonition %}}
 
 ### [Monasca](https://grafana.com/grafana/plugins/monasca-datasource/)
 
 Latest Version: 1.0.1 | Signature: Community | Last Updated: 2021
 
-> **Warning:** Lack of recent activity in the [project repository](https://github.com/openstack/monasca-grafana-datasource) in the past 2 years suggests project _may_ not be actively maintained.
+{{% admonition type="warning" %}}
+Lack of recent activity in the [project repository](https://github.com/openstack/monasca-grafana-datasource) in the past 2 years suggests project _may_ not be actively maintained.
+{{% /admonition %}}
 
-> **Warning:** Last updated to support Grafana v7.
+{{% admonition type="warning" %}}
+Last updated to support Grafana v7.
+{{% /admonition %}}
 
 ### [Monitoring Art](https://grafana.com/grafana/plugins/monitoringartist-monitoringart-datasource/)
 
 Latest Version: 1.0.1 | Signature: Community | Last Updated: 2021
 
-> **Warning:** Lack of recent activity in the [project repository](https://github.com/monitoringartist/grafana-monitoring-art) in the past 6 years suggests project _may_ not be actively maintained.
+{{% admonition type="warning" %}}
+Lack of recent activity in the [project repository](https://github.com/monitoringartist/grafana-monitoring-art) in the past 6 years suggests project _may_ not be actively maintained.
+{{% /admonition %}}
 
 ### [GoogleCalendar](https://grafana.com/grafana/plugins/mtanda-google-calendar-datasource/)
 
 Latest Version: 1.0.5 | Signature: Community | Last Updated: 2021
 
-> **Warning:** Lack of recent activity in the [project repository](https://github.com/mtanda/grafana-google-calendar-datasource) in the past 2 years suggests project _may_ not be actively maintained.
+{{% admonition type="warning" %}}
+Lack of recent activity in the [project repository](https://github.com/mtanda/grafana-google-calendar-datasource) in the past 2 years suggests project _may_ not be actively maintained.
+{{% /admonition %}}
 
 ### [USGS Water Services](https://grafana.com/grafana/plugins/natel-usgs-datasource/)
 
 Latest Version: 0.0.3 | Signature: Community | Last Updated: 2021
 
-> **Warning:** Lack of recent activity in the [project repository](https://github.com/NatelEnergy/natel-usgs-datasource) in the past 3 years suggests project _may_ not be actively maintained.
+{{% admonition type="warning" %}}
+Lack of recent activity in the [project repository](https://github.com/NatelEnergy/natel-usgs-datasource) in the past 3 years suggests project _may_ not be actively maintained.
+{{% /admonition %}}
 
 ### [ntopng](https://grafana.com/grafana/plugins/ntop-ntopng-datasource/)
 
@@ -457,13 +532,19 @@ Plugin declares itself deprecated in favour of [chaosmeshorg-datasource](https:/
 
 Latest Version: 0.9.1 | Signature: Community | Last Updated: 2021
 
-> **Warning:** Lack of recent activity in the [project repository](https://github.com/algenty/grafana-flowcharting) in the past year suggests project _may_ not be actively maintained.
+{{% admonition type="warning" %}}
+Lack of recent activity in the [project repository](https://github.com/algenty/grafana-flowcharting) in the past year suggests project _may_ not be actively maintained.
+{{% /admonition %}}
+
+> **Migration available - potential alternative:** Grafana provides the native [Canvas]({{< relref "../../panels-visualizations/visualizations/canvas/" >}}) panel.
 
 ### [HTML](https://grafana.com/grafana/plugins/aidanmountford-html-panel/)
 
 Latest Version: 0.0.2 | Signature: Community | Last Updated: 2021
 
-> **Warning:** Lack of recent activity in the [project repository](https://github.com/aidanmountford/aidanmountford-html-panel) in the past 4 years suggests project _may_ not be actively maintained.
+{{% admonition type="warning" %}}
+Lack of recent activity in the [project repository](https://github.com/aidanmountford/aidanmountford-html-panel) in the past 4 years suggests project _may_ not be actively maintained.
+{{% /admonition %}}
 
 > **Migration available - potential alternative:** The [Text]({{< relref "../../panels-visualizations/visualizations/text/#html" >}}) panel included with Grafana supports rendering HTML content.
 
@@ -471,15 +552,21 @@ Latest Version: 0.0.2 | Signature: Community | Last Updated: 2021
 
 Latest Version: 1.2.6 | Signature: Community | Last Updated: 2021
 
-> **Warning:** [Issue](https://github.com/alexandrainst/alexandra-trackmap-panel/issues/72#issuecomment-1332179974) suggests problems with ongoing maintenance unless new contributors are found.
+{{% admonition type="warning" %}}
+[Issue](https://github.com/alexandrainst/alexandra-trackmap-panel/issues/72#issuecomment-1332179974) suggests problems with ongoing maintenance unless new contributors are found.
+{{% /admonition %}}
 
-> **Warning:** [Migration issue](https://github.com/alexandrainst/alexandra-trackmap-panel/issues/105) has been marked as needing help.
+{{% admonition type="warning" %}}
+[Migration issue](https://github.com/alexandrainst/alexandra-trackmap-panel/issues/105) has been marked as needing help.
+{{% /admonition %}}
 
 ### [PictureIt](https://grafana.com/grafana/plugins/bessler-pictureit-panel/)
 
 Latest Version: 1.0.1 | Signature: Community | Last Updated: 2021
 
-> **Warning:** Lack of recent activity in the [project repository](https://github.com/vbessler/grafana-pictureit) in the past 6 years suggests project _may_ not be actively maintained.
+{{% admonition type="warning" %}}
+Lack of recent activity in the [project repository](https://github.com/vbessler/grafana-pictureit) in the past 6 years suggests project _may_ not be actively maintained.
+{{% /admonition %}}
 
 > **Migration available - potential alternative:** another plugin exists which provides similar capabilities - [ePict](https://grafana.com/grafana/plugins/larona-epict-panel/).
 
@@ -487,43 +574,57 @@ Latest Version: 1.0.1 | Signature: Community | Last Updated: 2021
 
 Latest Version: 1.1.8 | Signature: Community | Last Updated: 2021
 
-> **Warning:** Lack of recent activity in the [project repository](https://github.com/black-mirror-1/singlestat-math) in the past 5 years suggests project _may_ not be actively maintained.
+{{% admonition type="warning" %}}
+Lack of recent activity in the [project repository](https://github.com/black-mirror-1/singlestat-math) in the past 5 years suggests project _may_ not be actively maintained.
+{{% /admonition %}}
 
 ### [Status By Group Panel](https://grafana.com/grafana/plugins/blackmirror1-statusbygroup-panel/)
 
 Latest Version: 1.1.2 | Signature: Community | Last Updated: 2021
 
-> **Warning:** Lack of recent activity in the [project repository](https://github.com/black-mirror-1/Grafana_Status_panel) in the past 5 years suggests project _may_ not be actively maintained.
+{{% admonition type="warning" %}}
+Lack of recent activity in the [project repository](https://github.com/black-mirror-1/Grafana_Status_panel) in the past 5 years suggests project _may_ not be actively maintained.
+{{% /admonition %}}
 
 ### [Datatable Panel](https://grafana.com/grafana/plugins/briangann-datatable-panel/)
 
 Latest Version: 1.0.3 | Signature: Community | Last Updated: 2021
 
-> **Note:** Migration to react is planned - [issue](https://github.com/briangann/grafana-datatable-panel/issues/174).
+{{% admonition type="note" %}}
+Migration to React is planned - [issue](https://github.com/briangann/grafana-datatable-panel/issues/174).
+{{% /admonition %}}
 
 ### [D3 Gauge](https://grafana.com/grafana/plugins/briangann-gauge-panel/)
 
 Latest Version: 0.0.9 | Signature: Community | Last Updated: 2021
 
-> **Note:** Migration to react is a planned [update](https://github.com/briangann/grafana-gauge-panel/issues/740).
+{{% admonition type="note" %}}
+Migration to React is a planned [update](https://github.com/briangann/grafana-gauge-panel/issues/740).
+{{% /admonition %}}
 
 ### [GeoLoop](https://grafana.com/grafana/plugins/citilogics-geoloop-panel/)
 
 Latest Version: 1.1.2 | Signature: Community | Last Updated: 2021
 
-> **Warning:** Lack of recent activity in the [project repository](https://github.com/CitiLogics/citilogics-geoloop-panel) in the past 2 years suggests project _may_ not be actively maintained.
+{{% admonition type="warning" %}}
+Lack of recent activity in the [project repository](https://github.com/CitiLogics/citilogics-geoloop-panel) in the past 2 years suggests project _may_ not be actively maintained.
+{{% /admonition %}}
 
 ### [Progress List](https://grafana.com/grafana/plugins/corpglory-progresslist-panel/)
 
 Latest Version: 1.0.6 | Signature: Community | Last Updated: 2021
 
-> **Warning:** Lack of recent activity in the [project repository](https://github.com/CorpGlory/grafana-progress-list) in the past 2 years suggests project _may_ not be actively maintained.
+{{% admonition type="warning" %}}
+Lack of recent activity in the [project repository](https://github.com/CorpGlory/grafana-progress-list) in the past 2 years suggests project _may_ not be actively maintained.
+{{% /admonition %}}
 
 ### [Bubble Chart](https://grafana.com/grafana/plugins/digrich-bubblechart-panel/)
 
 Latest Version: 1.2.1 | Signature: Community | Last Updated: 2021
 
-> **Warning:** Lack of recent activity in the [project repository](https://github.com/digrich/bubblechart-panel) in the past 3 years suggests project _may_ not be actively maintained.
+{{% admonition type="warning" %}}
+Lack of recent activity in the [project repository](https://github.com/digrich/bubblechart-panel) in the past 3 years suggests project _may_ not be actively maintained.
+{{% /admonition %}}
 
 ### [Blendstat](https://grafana.com/grafana/plugins/farski-blendstat-panel/)
 
@@ -535,13 +636,19 @@ Latest Version: 1.0.3 | Signature: Community | Last Updated: 2021
 
 Latest Version: 0.7.1 | Signature: Community | Last Updated: 2021
 
-> **Warning:** Lack of recent activity in the [project repository](https://github.com/fatcloud/windrose-panel) in the past 4 years suggests project _may_ not be actively maintained.
+{{% admonition type="warning" %}}
+Lack of recent activity in the [project repository](https://github.com/fatcloud/windrose-panel) in the past 4 years suggests project _may_ not be actively maintained.
+{{% /admonition %}}
+
+> **Migration available - potential alternative:** another plugin exists which provides similar capabilities - [Operato Windrose](https://grafana.com/grafana/plugins/operato-windrose-panel/)
 
 ### [Statusmap](https://grafana.com/grafana/plugins/flant-statusmap-panel/)
 
 Latest Version: 0.5.1 | Signature: Community | Last Updated: 2022
 
-> **Warning:** Unknown whether migration to react will be undertaken - [migration issue](https://github.com/flant/grafana-statusmap/issues/302).
+{{% admonition type="warning" %}}
+Unknown whether migration to React will be undertaken - [migration issue](https://github.com/flant/grafana-statusmap/issues/302).
+{{% /admonition %}}
 
 ### [Singlestat](https://grafana.com/grafana/plugins/grafana-singlestat-panel/)
 
@@ -559,33 +666,41 @@ Latest Version: 1.0.3 | Signature: Grafana | Last Updated: 2023
 
 Latest Version: 1.0.1 | Signature: Community | Last Updated: 2021
 
-> **Warning:** Lack of recent activity in the [project repository](https://github.com/gretamosa/gretamosa-topology-panel) in the past 4 years suggests project _may_ not be actively maintained
+{{% admonition type="warning" %}}
+Lack of recent activity in the [project repository](https://github.com/gretamosa/gretamosa-topology-panel) in the past 4 years suggests project _may_ not be actively maintained.
+{{% /admonition %}}
 
 ### [SVG](https://grafana.com/grafana/plugins/marcuscalidus-svg-panel/)
 
 Latest Version: 0.3.4 | Signature: Community | Last Updated: 2021
 
-> **Warning:** Lack of recent activity in the [project repository](https://github.com/MarcusCalidus/marcuscalidus-svg-panel) in the past year suggests project _may_ not be actively maintained.
-
-> **Migration available - potential alternative:** another plugin exists which provides similar capabilities - [aceiot-svg-panel](https://grafana.com/grafana/plugins/aceiot-svg-panel/)
+{{% admonition type="warning" %}}
+Lack of recent activity in the [project repository](https://github.com/MarcusCalidus/marcuscalidus-svg-panel) in the past year suggests project _may_ not be actively maintained.
+{{% /admonition %}}
 
 ### [Annunciator](https://grafana.com/grafana/plugins/michaeldmoore-annunciator-panel/)
 
 Latest Version: 1.1.0 | Signature: Community | Last Updated: 2021
 
-> **Warning:** Plugin developer has indicated they will retire the plugin once Angular support is discontinued - [source](https://github.com/michaeldmoore/michaeldmoore-annunciator-panel/issues/24#issuecomment-1479372673).
+{{% admonition type="warning" %}}
+Plugin developer has indicated they will retire the plugin once Angular support is discontinued - [source](https://github.com/michaeldmoore/michaeldmoore-annunciator-panel/issues/24#issuecomment-1479372673).
+{{% /admonition %}}
 
 ### [Multistat](https://grafana.com/grafana/plugins/michaeldmoore-multistat-panel/)
 
 Latest Version: 1.7.2 | Signature: Community | Last Updated: 2021
 
-> **Warning:** Plugin developer has indicated they will retire the plugin once Angular support is discontinued - [source](https://github.com/michaeldmoore/michaeldmoore-multistat-panel/issues/71#issuecomment-1479372977).
+{{% admonition type="warning" %}}
+Plugin developer has indicated they will retire the plugin once Angular support is discontinued - [source](https://github.com/michaeldmoore/michaeldmoore-multistat-panel/issues/71#issuecomment-1479372977).
+{{% /admonition %}}
 
 ### [HeatmapEpoch](https://grafana.com/grafana/plugins/mtanda-heatmap-epoch-panel/)
 
 Latest Version: 0.1.8 | Signature: Community | Last Updated: 2021
 
-> **Warning:** Plugin advises caution as not stable; [project repository](https://github.com/mtanda/grafana-heatmap-epoch-panel) has not been updated in 7 years.
+{{% admonition type="warning" %}}
+Plugin advises caution as not stable; [project repository](https://github.com/mtanda/grafana-heatmap-epoch-panel) has not been updated in 7 years.
+{{% /admonition %}}
 
 > **Migration available - potential alternative:** Other Heatmap panels exist including natively in Grafana - [learn more]({{< relref "../../panels-visualizations/visualizations/heatmap/" >}}).
 
@@ -593,7 +708,9 @@ Latest Version: 0.1.8 | Signature: Community | Last Updated: 2021
 
 Latest Version: 0.1.7 | Signature: Community | Last Updated: 2021
 
-> **Warning:** Lack of recent activity in the [project repository](https://github.com/mtanda/grafana-histogram-panel) in the past 7 years suggests project _may_ not be actively maintained
+{{% admonition type="warning" %}}
+Lack of recent activity in the [project repository](https://github.com/mtanda/grafana-histogram-panel) in the past 7 years suggests project _may_ not be actively maintained.
+{{% /admonition %}}
 
 > **Migration available - potential alternative:** other Histogram panels exist including natively in Grafana - [learn more]({{< relref "../../panels-visualizations/visualizations/histogram/" >}}).
 
@@ -601,7 +718,9 @@ Latest Version: 0.1.7 | Signature: Community | Last Updated: 2021
 
 Latest Version: 1.0.1 | Signature: Community | Last Updated: 2021
 
-> **Warning:** Lack of recent activity in the [project repository](https://github.com/mxswat/grafana-separator-panel) in the past 5 years suggests project _may_ not be actively maintained
+{{% admonition type="warning" %}}
+Lack of recent activity in the [project repository](https://github.com/mxswat/grafana-separator-panel) in the past 5 years suggests project _may_ not be actively maintained.
+{{% /admonition %}}
 
 > **Migration available - potential alternative:** the [Text]({{< relref "../../panels-visualizations/visualizations/text/#html" >}}) panel can be used with no data to provide space within dashboards.
 
@@ -609,27 +728,35 @@ Latest Version: 1.0.1 | Signature: Community | Last Updated: 2021
 
 Latest Version: 0.1.1 | Signature: Community | Last Updated: 2021
 
-> **Warning:** Lack of recent activity in the [project repository](https://github.com/NatelEnergy/grafana-discrete-panel) in the past 3 years suggests project _may_ not be actively maintained
+{{% admonition type="warning" %}}
+Lack of recent activity in the [project repository](https://github.com/NatelEnergy/grafana-discrete-panel) in the past 3 years suggests project _may_ not be actively maintained.
+{{% /admonition %}}
 
 ### [Influx Admin](https://grafana.com/grafana/plugins/natel-influx-admin-panel/)
 
 Latest Version: 0.0.6 | Signature: Community | Last Updated: 2021
 
-> **Warning:** Lack of recent activity in the [project repository](https://github.com/NatelEnergy/grafana-influx-admin) in the past 5 years suggests project _may_ not be actively maintained.
+{{% admonition type="warning" %}}
+Lack of recent activity in the [project repository](https://github.com/NatelEnergy/grafana-influx-admin) in the past 5 years suggests project _may_ not be actively maintained.
+{{% /admonition %}}
 
 ### [Plotly](https://grafana.com/grafana/plugins/natel-plotly-panel/)
 
 Latest Version: 0.0.7 | Signature: Community | Last Updated: 2021
 
-> **Warning:** Lack of recent activity in the [project repository](https://github.com/NatelEnergy/grafana-plotly-panel) in the past 2 years suggests project _may_ not be actively maintained.
+{{% admonition type="warning" %}}
+Lack of recent activity in the [project repository](https://github.com/NatelEnergy/grafana-plotly-panel) in the past 2 years suggests project _may_ not be actively maintained.
+{{% /admonition %}}
 
-> **Migration available - potential alternative:** another plugin exists which provides similar capabilities - [nline-plotlyjs-panel/](https://grafana.com/grafana/plugins/nline-plotlyjs-panel/).
+> **Migration available - potential alternative:** other plugins exist which provide similar capabilities - [nline-plotlyjs-panel](https://grafana.com/grafana/plugins/nline-plotlyjs-panel/) and [ae3e-plotly-panel](https://grafana.com/grafana/plugins/ae3e-plotly-panel/).
 
 ### [Cal-HeatMap](https://grafana.com/grafana/plugins/neocat-cal-heatmap-panel/)
 
 Latest Version: 0.0.4 | Signature: Community | Last Updated: 2021
 
-> **Warning:** Plugin advises caution as not stable; [project repository](https://github.com/NeoCat/grafana-cal-heatmap-panel) has not been updated in 7 years.
+{{% admonition type="warning" %}}
+Plugin advises caution as not stable; [project repository](https://github.com/NeoCat/grafana-cal-heatmap-panel) has not been updated in 7 years.
+{{% /admonition %}}
 
 > **Migration available - potential alternative:** other Heatmap panels exist including natively in Grafana - [learn more]({{< relref "../../panels-visualizations/visualizations/heatmap/" >}}).
 
@@ -637,25 +764,33 @@ Latest Version: 0.0.4 | Signature: Community | Last Updated: 2021
 
 Latest Version: 0.0.2 | Signature: Community | Last Updated: 2021
 
-> **Warning:** Lack of recent activity in the [project repository](https://github.com/novalabs/grafana-annotations-panel) in the past 6 years suggests project _may_ not be actively maintained.
+{{% admonition type="warning" %}}
+Lack of recent activity in the [project repository](https://github.com/novalabs/grafana-annotations-panel) in the past 6 years suggests project _may_ not be actively maintained.
+{{% /admonition %}}
 
 ### [Carpet plot](https://grafana.com/grafana/plugins/petrslavotinek-carpetplot-panel/)
 
 Latest Version: 0.1.2 | Signature: Community | Last Updated: 2021
 
-> **Warning:** Lack of recent activity in the [project repository](https://github.com/petrslavotinek/grafana-carpetplot) in the past 6 years suggests project _may_ not be actively maintained.
+{{% admonition type="warning" %}}
+Lack of recent activity in the [project repository](https://github.com/petrslavotinek/grafana-carpetplot) in the past 6 years suggests project _may_ not be actively maintained.
+{{% /admonition %}}
 
 ### [TrackMap](https://grafana.com/grafana/plugins/pr0ps-trackmap-panel/)
 
 Latest Version: 2.1.4 | Signature: Community | Last Updated: 2023
 
-> **Warning:** Unknown whether migration to react will be undertaken - [migration issue](https://github.com/pR0Ps/grafana-trackmap-panel/issues/84).
+{{% admonition type="warning" %}}
+Unknown whether migration to React will be undertaken - [migration issue](https://github.com/pR0Ps/grafana-trackmap-panel/issues/84).
+{{% /admonition %}}
 
 ### [AJAX](https://grafana.com/grafana/plugins/ryantxu-ajax-panel/)
 
 Latest Version: 0.1.0 | Signature: Community | Last Updated: 2021
 
-> **Warning:** Lack of recent activity in the [project repository](https://github.com/ryantxu/ajax-panel) in the past 2 years suggests project _may_ not be actively maintained.
+{{% admonition type="warning" %}}
+Lack of recent activity in the [project repository](https://github.com/ryantxu/ajax-panel) in the past 2 years suggests project _may_ not be actively maintained.
+{{% /admonition %}}
 
 ### [Annotation List](https://grafana.com/grafana/plugins/ryantxu-annolist-panel/)
 
@@ -667,13 +802,17 @@ Latest Version: 0.0.2 | Signature: Community | Last Updated: 2021
 
 Latest Version: 0.1.1 | Signature: Community | Last Updated: 2021
 
-> **Warning:** Lack of recent activity in the [project repository](https://github.com/satellogic/grafana-3d-globe-panel) in the past 5 years suggests project _may_ not be actively maintained.
+{{% admonition type="warning" %}}
+Lack of recent activity in the [project repository](https://github.com/satellogic/grafana-3d-globe-panel) in the past 5 years suggests project _may_ not be actively maintained.
+{{% /admonition %}}
 
 ### [Heatmap](https://grafana.com/grafana/plugins/savantly-heatmap-panel/)
 
 Latest Version: 0.2.1 | Signature: Community | Last Updated: 2021
 
-> **Warning:** Lack of recent activity in the [project repository](https://github.com/savantly-net/grafana-heatmap) in the past 6 years suggests project _may_ not be actively maintained.
+{{% admonition type="warning" %}}
+Lack of recent activity in the [project repository](https://github.com/savantly-net/grafana-heatmap) in the past 6 years suggests project _may_ not be actively maintained.
+{{% /admonition %}}
 
 > **Migration available - potential alternative:** other Heatmap panels exist including natively in Grafana - [learn more]({{< relref "../../panels-visualizations/visualizations/heatmap/" >}}).
 
@@ -681,40 +820,54 @@ Latest Version: 0.2.1 | Signature: Community | Last Updated: 2021
 
 Latest Version: 1.0.5 | Signature: Community | Last Updated: 2021
 
-> **Warning:** Lack of recent activity in the [project repository](https://github.com/riclolsen/scadavis-synoptic-panel) in the past 3 years suggests project _may_ not be actively maintained.
+{{% admonition type="warning" %}}
+Lack of recent activity in the [project repository](https://github.com/riclolsen/scadavis-synoptic-panel) in the past 3 years suggests project _may_ not be actively maintained.
+{{% /admonition %}}
 
 ### [TrafficLight](https://grafana.com/grafana/plugins/smartmakers-trafficlight-panel/)
 
 Latest Version: 1.0.1 | Signature: Community | Last Updated: 2021
 
-> **Warning:** Lack of recent activity in the [project repository](https://github.com/smartmakers/grafana-trafficlight) in the past 5 years suggests project _may_ not be actively maintained.
+{{% admonition type="warning" %}}
+Lack of recent activity in the [project repository](https://github.com/smartmakers/grafana-trafficlight) in the past 5 years suggests project _may_ not be actively maintained.
+{{% /admonition %}}
 
 ### [Radar Graph](https://grafana.com/grafana/plugins/snuids-radar-panel/)
 
 Latest Version: 1.5.1 | Signature: Community | Last Updated: 2022
 
-> **Warning:** Unknown whether migration to react will be undertaken - [migration issue](https://github.com/snuids/grafana-radar-panel/issues/29).
+{{% admonition type="warning" %}}
+Unknown whether migration to React will be undertaken - [migration issue](https://github.com/snuids/grafana-radar-panel/issues/29).
+{{% /admonition %}}
 
 ### [Traffic Lights](https://grafana.com/grafana/plugins/snuids-trafficlights-panel/)
 
 Latest Version: 1.6.0 | Signature: Community | Last Updated: 2023
 
-> **Warning:** Unknown whether migration to react will be undertaken - [migration issue](https://github.com/snuids/trafficlights-panel/issues/44).
+{{% admonition type="warning" %}}
+Unknown whether migration to React will be undertaken - [migration issue](https://github.com/snuids/trafficlights-panel/issues/44).
+{{% /admonition %}}
 
 ### [Status Panel](https://grafana.com/grafana/plugins/vonage-status-panel/)
 
 Latest Version: 1.0.11 | Signature: Community | Last Updated: 2021
 
-> **Warning:** Lack of recent activity in the [project repository](https://github.com/Vonage/Grafana_Status_panel) in the past 3 years suggests project _may_ not be actively maintained.
+{{% admonition type="warning" %}}
+Lack of recent activity in the [project repository](https://github.com/Vonage/Grafana_Status_panel) in the past 3 years suggests project _may_ not be actively maintained.
+{{% /admonition %}}
 
 ### [Boom Table](https://grafana.com/grafana/plugins/yesoreyeram-boomtable-panel/)
 
 Latest Version: 1.4.1 | Signature: Community | Last Updated: 2021
 
-> **Warning:** Lack of recent activity in the [project repository](https://github.com/yesoreyeram/yesoreyeram-boomtable-panel) in the past 3 years suggests project _may_ not be actively maintained.
+{{% admonition type="warning" %}}
+Lack of recent activity in the [project repository](https://github.com/yesoreyeram/yesoreyeram-boomtable-panel) in the past 3 years suggests project _may_ not be actively maintained.
+{{% /admonition %}}
 
 ### [Parity Report](https://grafana.com/grafana/plugins/zuburqan-parity-report-panel/)
 
 Latest Version: 1.2.2 | Signature: Community | Last Updated: 2021
 
-> **Warning:** Unknown whether migration to react will be undertaken - [migration issue](https://github.com/zuburqan/grafana-parity-report/issues/17).
+{{% admonition type="warning" %}}
+Unknown whether migration to React will be undertaken - [migration issue](https://github.com/zuburqan/grafana-parity-report/issues/17).
+{{% /admonition %}}

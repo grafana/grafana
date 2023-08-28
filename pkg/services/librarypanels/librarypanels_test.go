@@ -319,6 +319,23 @@ func TestConnectLibraryPanelsForDashboard(t *testing.T) {
 			require.Len(t, elements, 1)
 			require.Equal(t, sc.initialResult.Result.UID, elements[sc.initialResult.Result.UID].UID)
 		})
+
+	scenarioWithLibraryPanel(t, "It should return the correct count of library panels in a folder",
+		func(t *testing.T, sc scenarioContext) {
+			count, err := sc.lps.CountInFolder(context.Background(), sc.user.OrgID, sc.folder.UID, sc.user)
+			require.NoError(t, err)
+			require.Equal(t, int64(1), count)
+		})
+
+	scenarioWithLibraryPanel(t, "It should delete library panels in a folder",
+		func(t *testing.T, sc scenarioContext) {
+			err := sc.lps.DeleteInFolder(context.Background(), sc.user.OrgID, sc.folder.UID, sc.user)
+			require.NoError(t, err)
+
+			_, err = sc.elementService.GetElement(sc.ctx, sc.user,
+				model.GetLibraryElementCommand{UID: sc.initialResult.Result.UID, FolderName: sc.folder.Title})
+			require.EqualError(t, err, model.ErrLibraryElementNotFound.Error())
+		})
 }
 
 func TestImportLibraryPanelsForDashboard(t *testing.T) {
@@ -367,14 +384,16 @@ func TestImportLibraryPanelsForDashboard(t *testing.T) {
 				},
 			}
 
-			_, err := sc.elementService.GetElement(sc.ctx, sc.user, missingUID)
+			_, err := sc.elementService.GetElement(sc.ctx, sc.user,
+				model.GetLibraryElementCommand{UID: missingUID, FolderName: dashboards.RootFolderName})
 
 			require.EqualError(t, err, model.ErrLibraryElementNotFound.Error())
 
 			err = sc.service.ImportLibraryPanelsForDashboard(sc.ctx, sc.user, simplejson.NewFromAny(libraryElements), panels, 0)
 			require.NoError(t, err)
 
-			element, err := sc.elementService.GetElement(sc.ctx, sc.user, missingUID)
+			element, err := sc.elementService.GetElement(sc.ctx, sc.user,
+				model.GetLibraryElementCommand{UID: missingUID, FolderName: dashboards.RootFolderName})
 			require.NoError(t, err)
 			var expected = getExpected(t, element, missingUID, missingName, missingModel)
 			var result = toLibraryElement(t, element)
@@ -406,13 +425,15 @@ func TestImportLibraryPanelsForDashboard(t *testing.T) {
 				},
 			}
 
-			_, err := sc.elementService.GetElement(sc.ctx, sc.user, existingUID)
+			_, err := sc.elementService.GetElement(sc.ctx, sc.user,
+				model.GetLibraryElementCommand{UID: existingUID, FolderName: dashboards.RootFolderName})
 			require.NoError(t, err)
 
 			err = sc.service.ImportLibraryPanelsForDashboard(sc.ctx, sc.user, simplejson.New(), panels, sc.folder.ID)
 			require.NoError(t, err)
 
-			element, err := sc.elementService.GetElement(sc.ctx, sc.user, existingUID)
+			element, err := sc.elementService.GetElement(sc.ctx, sc.user,
+				model.GetLibraryElementCommand{UID: existingUID, FolderName: dashboards.RootFolderName})
 			require.NoError(t, err)
 			var expected = getExpected(t, element, existingUID, existingName, sc.initialResult.Result.Model)
 			expected.FolderID = sc.initialResult.Result.FolderID
@@ -519,16 +540,15 @@ func TestImportLibraryPanelsForDashboard(t *testing.T) {
 					},
 				},
 			}
-
-			_, err := sc.elementService.GetElement(sc.ctx, sc.user, outsideUID)
+			_, err := sc.elementService.GetElement(sc.ctx, sc.user, model.GetLibraryElementCommand{UID: outsideUID, FolderName: dashboards.RootFolderName})
 			require.EqualError(t, err, model.ErrLibraryElementNotFound.Error())
-			_, err = sc.elementService.GetElement(sc.ctx, sc.user, insideUID)
+			_, err = sc.elementService.GetElement(sc.ctx, sc.user, model.GetLibraryElementCommand{UID: insideUID, FolderName: dashboards.RootFolderName})
 			require.EqualError(t, err, model.ErrLibraryElementNotFound.Error())
 
 			err = sc.service.ImportLibraryPanelsForDashboard(sc.ctx, sc.user, simplejson.NewFromAny(libraryElements), panels, 0)
 			require.NoError(t, err)
 
-			element, err := sc.elementService.GetElement(sc.ctx, sc.user, outsideUID)
+			element, err := sc.elementService.GetElement(sc.ctx, sc.user, model.GetLibraryElementCommand{UID: outsideUID, FolderName: dashboards.RootFolderName})
 			require.NoError(t, err)
 			expected := getExpected(t, element, outsideUID, outsideName, outsideModel)
 			result := toLibraryElement(t, element)
@@ -536,7 +556,7 @@ func TestImportLibraryPanelsForDashboard(t *testing.T) {
 				t.Fatalf("Result mismatch (-want +got):\n%s", diff)
 			}
 
-			element, err = sc.elementService.GetElement(sc.ctx, sc.user, insideUID)
+			element, err = sc.elementService.GetElement(sc.ctx, sc.user, model.GetLibraryElementCommand{UID: insideUID, FolderName: dashboards.RootFolderName})
 			require.NoError(t, err)
 			expected = getExpected(t, element, insideUID, insideName, insideModel)
 			result = toLibraryElement(t, element)
@@ -607,6 +627,7 @@ type scenarioContext struct {
 	folder         *folder.Folder
 	initialResult  libraryPanelResult
 	sqlStore       db.DB
+	lps            LibraryPanelService
 }
 
 func toLibraryElement(t *testing.T, res model.LibraryElementDTO) libraryElement {
@@ -726,7 +747,7 @@ func createFolder(t *testing.T, sc scenarioContext, title string) *folder.Folder
 	dashboardStore, err := database.ProvideDashboardStore(sc.sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sc.sqlStore, cfg), quotaService)
 	require.NoError(t, err)
 	folderStore := folderimpl.ProvideDashboardFolderStore(sc.sqlStore)
-	s := folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), cfg, dashboardStore, folderStore, nil, features)
+	s := folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), cfg, dashboardStore, folderStore, sc.sqlStore, features)
 
 	t.Logf("Creating folder with title and UID %q", title)
 	ctx := appcontext.WithUser(context.Background(), sc.user)
@@ -802,18 +823,19 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 			foldertest.NewFakeService(),
 		)
 		require.NoError(t, err)
-		guardian.InitAccessControlGuardian(setting.NewCfg(), sqlStore, ac, acmock.NewMockedPermissionsService(), acmock.NewMockedPermissionsService(), dashService)
+		guardian.InitAccessControlGuardian(setting.NewCfg(), ac, dashService)
 
 		dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, sqlStore.Cfg), quotaService)
 		require.NoError(t, err)
 		features := featuremgmt.WithFeatures()
-		folderService := folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), cfg, dashboardStore, folderStore, nil, features)
+		folderService := folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), cfg, dashboardStore, folderStore, sqlStore, features)
 
 		elementService := libraryelements.ProvideService(cfg, sqlStore, routing.NewRouteRegister(), folderService, featuremgmt.WithFeatures())
 		service := LibraryPanelService{
 			Cfg:                   cfg,
 			SQLStore:              sqlStore,
 			LibraryElementService: elementService,
+			FolderService:         folderService,
 		}
 
 		usr := &user.SignedInUser{
@@ -853,6 +875,7 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 			service:        &service,
 			elementService: elementService,
 			sqlStore:       sqlStore,
+			lps:            service,
 		}
 
 		foldr := createFolder(t, sc, "ScenarioFolder")
