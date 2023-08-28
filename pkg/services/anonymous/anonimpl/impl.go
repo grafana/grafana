@@ -16,10 +16,12 @@ import (
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/services/anonymous"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 )
 
 const thirtyDays = 30 * 24 * time.Hour
+const deviceIDHeader = "X-Grafana-Device-Id"
 
 type Device struct {
 	Kind      anonymous.DeviceKind `json:"kind"`
@@ -39,6 +41,10 @@ func (a *Device) Key() (string, error) {
 	}
 
 	return strings.Join([]string{string(a.Kind), hex.EncodeToString(hash.Sum(nil))}, ":"), nil
+}
+
+func (a *Device) UIKey(deviceID string) (string, error) {
+	return strings.Join([]string{string(a.Kind), deviceID}, ":"), nil
 }
 
 type AnonDeviceService struct {
@@ -70,9 +76,21 @@ func (a *AnonDeviceService) usageStatFn(ctx context.Context) (map[string]interfa
 		return nil, nil
 	}
 
+	anonUIDeviceCount, err := a.remoteCache.Count(ctx, string(anonymous.AnonDeviceUI))
+	if err != nil {
+		return nil, nil
+	}
+
+	authedUIDeviceCount, err := a.remoteCache.Count(ctx, string(anonymous.AuthedDeviceUI))
+	if err != nil {
+		return nil, nil
+	}
+
 	return map[string]interface{}{
-		"stats.anonymous.session.count": anonDeviceCount, // keep session for legacy data
-		"stats.users.device.count":      authedDeviceCount,
+		"stats.anonymous.session.count":   anonDeviceCount, // keep session for legacy data
+		"stats.users.device.count":        authedDeviceCount,
+		"stats.anonymous.device.ui.count": anonUIDeviceCount,
+		"stats.users.device.ui.count":     authedUIDeviceCount,
 	}, nil
 }
 
@@ -83,6 +101,72 @@ func (a *AnonDeviceService) untagDevice(ctx context.Context, device *Device) err
 	}
 
 	if err := a.remoteCache.Delete(ctx, key); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (a *AnonDeviceService) untagUIDevice(ctx context.Context, deviceID string, device *Device) error {
+	key, err := device.UIKey(deviceID)
+	if err != nil {
+		return err
+	}
+
+	if err := a.remoteCache.Delete(ctx, key); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (a *AnonDeviceService) tagDeviceUI(ctx context.Context, httpReq *http.Request, device Device) error {
+	deviceID := httpReq.Header.Get(deviceIDHeader)
+	if deviceID == "" {
+		return nil
+	}
+
+	if device.Kind == anonymous.AnonDevice {
+		device.Kind = anonymous.AnonDeviceUI
+	} else if device.Kind == anonymous.AuthedDevice {
+		device.Kind = anonymous.AuthedDeviceUI
+	}
+
+	key, err := device.UIKey(deviceID)
+	if err != nil {
+		return err
+	}
+
+	if setting.Env == setting.Dev {
+		a.log.Debug("tagging device for UI", "deviceID", deviceID, "device", device, "key", key)
+	}
+
+	if _, ok := a.localCache.Get(key); ok {
+		return nil
+	}
+
+	a.localCache.SetDefault(key, struct{}{})
+
+	deviceJSON, err := json.Marshal(device)
+	if err != nil {
+		return err
+	}
+
+	if err := a.remoteCache.Set(ctx, key, deviceJSON, thirtyDays); err != nil {
+		return err
+	}
+
+	// remove existing tag when device switches to another kind
+	untagKind := anonymous.AnonDeviceUI
+	if device.Kind == anonymous.AnonDeviceUI {
+		untagKind = anonymous.AuthedDeviceUI
+	}
+
+	if err := a.untagUIDevice(ctx, deviceID, &Device{
+		Kind:      untagKind,
+		IP:        device.IP,
+		UserAgent: device.UserAgent,
+	}); err != nil {
 		return err
 	}
 
@@ -109,9 +193,18 @@ func (a *AnonDeviceService) TagDevice(ctx context.Context, httpReq *http.Request
 		LastSeen:  time.Now().UTC(),
 	}
 
+	err = a.tagDeviceUI(ctx, httpReq, *taggedDevice)
+	if err != nil {
+		a.log.Debug("failed to tag device for UI", "error", err)
+	}
+
 	key, err := taggedDevice.Key()
 	if err != nil {
 		return err
+	}
+
+	if setting.Env == setting.Dev {
+		a.log.Debug("tagging device", "device", taggedDevice, "key", key)
 	}
 
 	if _, ok := a.localCache.Get(key); ok {

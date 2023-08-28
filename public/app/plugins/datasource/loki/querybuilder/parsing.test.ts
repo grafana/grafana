@@ -776,6 +776,96 @@ describe('buildVisualQueryFromString', () => {
       })
     );
   });
+
+  it('parses a log query with drop and no labels', () => {
+    expect(buildVisualQueryFromString('{app="frontend"} | drop')).toEqual(
+      noErrors({
+        labels: [
+          {
+            op: '=',
+            value: 'frontend',
+            label: 'app',
+          },
+        ],
+        operations: [{ id: LokiOperationId.Drop, params: [] }],
+      })
+    );
+  });
+
+  it('parses a log query with drop and labels', () => {
+    expect(buildVisualQueryFromString('{app="frontend"} | drop id, email')).toEqual(
+      noErrors({
+        labels: [
+          {
+            op: '=',
+            value: 'frontend',
+            label: 'app',
+          },
+        ],
+        operations: [{ id: LokiOperationId.Drop, params: ['id', 'email'] }],
+      })
+    );
+  });
+
+  it('parses a log query with drop, labels and expressions', () => {
+    expect(buildVisualQueryFromString('{app="frontend"} | drop id, email, test="test1"')).toEqual(
+      noErrors({
+        labels: [
+          {
+            op: '=',
+            value: 'frontend',
+            label: 'app',
+          },
+        ],
+        operations: [{ id: LokiOperationId.Drop, params: ['id', 'email', 'test="test1"'] }],
+      })
+    );
+  });
+
+  it('parses a log query with keep and no labels', () => {
+    expect(buildVisualQueryFromString('{app="frontend"} | keep')).toEqual(
+      noErrors({
+        labels: [
+          {
+            op: '=',
+            value: 'frontend',
+            label: 'app',
+          },
+        ],
+        operations: [{ id: LokiOperationId.Keep, params: [] }],
+      })
+    );
+  });
+
+  it('parses a log query with keep and labels', () => {
+    expect(buildVisualQueryFromString('{app="frontend"} | keep id, email')).toEqual(
+      noErrors({
+        labels: [
+          {
+            op: '=',
+            value: 'frontend',
+            label: 'app',
+          },
+        ],
+        operations: [{ id: LokiOperationId.Keep, params: ['id', 'email'] }],
+      })
+    );
+  });
+
+  it('parses a log query with keep, labels and expressions', () => {
+    expect(buildVisualQueryFromString('{app="frontend"} | keep id, email, test="test1"')).toEqual(
+      noErrors({
+        labels: [
+          {
+            op: '=',
+            value: 'frontend',
+            label: 'app',
+          },
+        ],
+        operations: [{ id: LokiOperationId.Keep, params: ['id', 'email', 'test="test1"'] }],
+      })
+    );
+  });
 });
 
 function noErrors(query: LokiVisualQuery) {
