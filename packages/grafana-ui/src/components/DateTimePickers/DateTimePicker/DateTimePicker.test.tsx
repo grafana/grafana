@@ -31,12 +31,14 @@ describe('Date time picker', () => {
   });
 
   it('should update date onblur', async () => {
-    renderDatetimePicker();
+    const onChangeInput = jest.fn();
+    render(<DateTimePicker date={dateTime('2021-05-05 12:00:00')} onChange={onChangeInput} />);
     const dateTimeInput = screen.getByTestId('date-time-input');
     await userEvent.clear(dateTimeInput);
     await userEvent.type(dateTimeInput, '2021-07-31 12:30:30');
-    userEvent.click(document.body);
     expect(dateTimeInput).toHaveDisplayValue('2021-07-31 12:30:30');
+    await userEvent.click(document.body);
+    expect(onChangeInput).toHaveBeenCalled();
   });
 
   it('should be able to select values in TimeOfDayPicker without blurring the element', async () => {

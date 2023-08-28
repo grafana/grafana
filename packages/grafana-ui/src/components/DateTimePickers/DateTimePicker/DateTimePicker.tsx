@@ -208,9 +208,7 @@ const DateTimeInput = React.forwardRef<HTMLInputElement, InputProps>(
 
     const onBlur = useCallback(() => {
       const date = dateTime(internalDate.value);
-      if (isDateTime(date)) {
-        onChange(dateTime(date));
-      }
+      onChange(dateTime(date));
     }, [internalDate.value, onChange]);
 
     const icon = <Button aria-label="Time picker" icon="calendar-alt" variant="secondary" onClick={onOpen} />;
