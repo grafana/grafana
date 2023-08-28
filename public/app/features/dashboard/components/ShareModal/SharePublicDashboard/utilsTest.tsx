@@ -53,7 +53,6 @@ export const renderSharePublicDashboard = async (
       permissions: [],
       initError: null,
       initPhase: DashboardInitPhase.Completed,
-      getOriginal: () => null,
     },
   });
 

@@ -27,7 +27,7 @@ import { variableAdapters } from 'app/features/variables/adapters';
 import { onTimeRangeUpdated } from 'app/features/variables/state/actions';
 import { GetVariables, getVariablesByKey } from 'app/features/variables/state/selectors';
 import { PromQuery } from 'app/plugins/datasource/prometheus/types';
-import { CoreEvents, DashboardMeta, KioskMode } from 'app/types';
+import { CoreEvents, DashboardDataDTO, DashboardMeta, KioskMode } from 'app/types';
 import { DashboardMetaChangedEvent, DashboardPanelsChangedEvent, RenderEvent } from 'app/types/events';
 
 import { appEvents } from '../../../core/core';
@@ -104,6 +104,7 @@ export class DashboardModel implements TimeModel {
   private appEventsSubscription: Subscription;
   private lastRefresh: number;
   private timeRangeUpdatedDuringEdit = false;
+  private originalDashboard: DashboardDataDTO | null = null;
 
   // ------------------
   // not persisted
@@ -130,6 +131,7 @@ export class DashboardModel implements TimeModel {
     panelsAffectedByVariableChange: true,
     lastRefresh: true,
     timeRangeUpdatedDuringEdit: true,
+    originalDashboard: true,
   };
 
   constructor(
@@ -1296,6 +1298,14 @@ export class DashboardModel implements TimeModel {
   private variablesChangedInUrlHandler(event: VariablesChangedInUrl) {
     this.templateVariableValueUpdated();
     this.startRefresh(event.payload);
+  }
+
+  getOriginalDashboard() {
+    return this.originalDashboard;
+  }
+
+  setOriginalDashboard(originalDashboard: DashboardDataDTO) {
+    this.originalDashboard = originalDashboard;
   }
 }
 

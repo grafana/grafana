@@ -4,7 +4,7 @@ import { PanelPlugin } from '@grafana/data';
 import { AngularComponent } from '@grafana/runtime';
 import { defaultDashboard } from '@grafana/schema';
 import { processAclItems } from 'app/core/utils/acl';
-import { DashboardAclDTO, DashboardDataDTO, DashboardInitError, DashboardInitPhase, DashboardState } from 'app/types';
+import { DashboardAclDTO, DashboardInitError, DashboardInitPhase, DashboardState } from 'app/types';
 
 import { DashboardModel } from './DashboardModel';
 import { PanelModel } from './PanelModel';
@@ -15,7 +15,6 @@ export const initialState: DashboardState = {
   permissions: [],
   initError: null,
   initialDatasource: undefined,
-  getOriginal: () => null,
 };
 
 const dashboardSlice = createSlice({
@@ -31,13 +30,9 @@ const dashboardSlice = createSlice({
     dashboardInitServices: (state) => {
       state.initPhase = DashboardInitPhase.Services;
     },
-    dashboardInitCompleted: (
-      state,
-      action: PayloadAction<{ dashboard: DashboardModel; original: DashboardDataDTO | null }>
-    ) => {
-      state.getModel = () => action.payload.dashboard;
+    dashboardInitCompleted: (state, action: PayloadAction<DashboardModel>) => {
+      state.getModel = () => action.payload;
       state.initPhase = DashboardInitPhase.Completed;
-      state.getOriginal = () => action.payload.original;
     },
     dashboardInitFailed: (state, action: PayloadAction<DashboardInitError>) => {
       state.initPhase = DashboardInitPhase.Failed;

@@ -2,7 +2,6 @@ import React, { useMemo, useState } from 'react';
 
 import { config, isFetchError } from '@grafana/runtime';
 import { Drawer, Tab, TabsBar } from '@grafana/ui';
-import { useSelector } from 'app/types';
 
 import { jsonDiff } from '../VersionHistory/utils';
 
@@ -17,7 +16,7 @@ import { useDashboardSave } from './useDashboardSave';
 
 export const SaveDashboardDrawer = ({ dashboard, onDismiss, onSaveSuccess, isCopy }: SaveDashboardModalProps) => {
   const [options, setOptions] = useState<SaveDashboardOptions>({});
-  const previous = useSelector((store) => store.dashboard.getOriginal());
+  const previous = dashboard.getOriginalDashboard();
   const isProvisioned = dashboard.meta.provisioned;
   const isNew = dashboard.version === 0;
 
