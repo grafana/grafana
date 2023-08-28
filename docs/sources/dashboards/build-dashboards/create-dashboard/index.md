@@ -107,14 +107,14 @@ To see an example of repeating rows, refer to [Dashboard with repeating rows](ht
 
 To provide context to dashboard users, add the variable to the row title.
 
-### Repeating rows and the --Dashboard-- data source
+### Repeating rows and the Dashboard special data source
 
-If a row includes panels using the special [Dashboard]({{ < relref="../datasources/#special-data-sources" >}}) data source&mdash;the data source that uses a result set from another panel in the same dashboard&mdash;then corresponding panels in repeated rows will reference the panel in the original row, not the ones in the repeated rows.
+If a row includes panels using the special [Dashboard]({{< relref "../../../datasources/#special-data-sources" >}}) data source&mdash;the data source that uses a result set from another panel in the same dashboard&mdash;then corresponding panels in repeated rows will reference the panel in the original row, not the ones in the repeated rows.
 
 For example, in a dashboard:
 
 - `Row 1` includes `Panel 1A` and `Panel 1B`
-- `Panel 1B` uses the `-- Dashboard --` data source and references `Panel 1A`
+- `Panel 1B` uses the `-- Dashboard --` data source, using the results from `Panel 1A`
 - Repeating row, `Row 2`, includes `Panel 2A` and `Panel 2B`
 - `Panel 2B` references `Panel 1A`, not `Panel 2A`
 
