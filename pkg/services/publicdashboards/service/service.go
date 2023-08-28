@@ -433,7 +433,7 @@ func (pd *PublicDashboardServiceImpl) newCreatePublicDashboard(ctx context.Conte
 
 	existingPubdash, err := pd.store.Find(ctx, dto.PublicDashboard.Uid)
 	if existingPubdash != nil {
-		return nil, ErrPublicDashboardUidExists.Errorf("Create: public dashboard uid %s already exists", dto.Uid) //create new error
+		return nil, ErrPublicDashboardUidExists.Errorf("Create: public dashboard uid %s already exists", dto.Uid)
 	}
 
 	if dto.PublicDashboard.Uid != "" {
@@ -443,6 +443,11 @@ func (pd *PublicDashboardServiceImpl) newCreatePublicDashboard(ctx context.Conte
 		if err != nil {
 			return nil, err
 		}
+	}
+
+	accessToken, err := pd.NewPublicDashboardAccessToken(ctx)
+	if err != nil {
+		return nil, err
 	}
 
 	isEnabled := returnValueOrDefault(dto.PublicDashboard.IsEnabled, false)
