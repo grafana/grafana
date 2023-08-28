@@ -1,24 +1,15 @@
 import * as H from 'history';
 
-import { AppEvents, locationUtil, NavModelItem } from '@grafana/data';
-import { locationService } from '@grafana/runtime';
-import {
-  getUrlSyncManager,
-  SceneGridLayout,
-  SceneObject,
-  SceneObjectBase,
-  SceneObjectState,
-  SceneObjectUrlSyncHandler,
-  SceneObjectUrlValues,
-} from '@grafana/scenes';
-import appEvents from 'app/core/app_events';
+import { locationUtil, NavModelItem } from '@grafana/data';
+import { getUrlSyncManager, SceneGridLayout, SceneObject, SceneObjectBase, SceneObjectState } from '@grafana/scenes';
 
-import { PanelInspectDrawer } from '../inspect/PanelInspectDrawer';
 import { DashboardSceneRenderer } from '../scene/DashboardSceneRenderer';
 import { DashboardChangeTracker } from '../serialization/DashboardChangeTracker';
 import { SaveDashboardDrawer } from '../serialization/SaveDashboardDrawer';
 import { findVizPanel } from '../utils/findVizPanel';
 import { forceRenderChildren } from '../utils/utils';
+
+import { DashboardSceneUrlSync } from './DashboardSceneUrlSync';
 
 export interface DashboardSceneState extends SceneObjectState {
   title: string;
@@ -56,18 +47,19 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     // Deactivation logic
     return () => {
       this._changeTracker?.stopTracking();
+      this.stopUrlSync();
     };
   }
 
-  startUrlSync() {
+  public startUrlSync() {
     getUrlSyncManager().initSync(this);
   }
 
-  stopUrlSync() {
+  public stopUrlSync() {
     getUrlSyncManager().cleanUp(this);
   }
 
-  onEnterEditMode = () => {
+  public onEnterEditMode = () => {
     this.setState({ isEditing: true });
 
     // Make grid draggable
@@ -80,7 +72,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     this._changeTracker.startTracking();
   };
 
-  onDiscard = () => {
+  public onDiscard = () => {
     // TODO open confirm modal if dirty
     // TODO actually discard changes
     this.setState({ isEditing: false });
@@ -94,11 +86,11 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     this._changeTracker?.discard();
   };
 
-  onSave = () => {
+  public onSave = () => {
     this.setState({ drawer: new SaveDashboardDrawer(this, this._changeTracker!) });
   };
 
-  getPageNav(location: H.Location) {
+  public getPageNav(location: H.Location) {
     let pageNav: NavModelItem = {
       text: this.state.title,
       url: locationUtil.getUrlForPartial(location, { viewPanel: null, inspect: null }),
@@ -117,60 +109,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   /**
    * Returns the body (layout) or the full view panel
    */
-  getBodyToRender(viewPanelKey?: string): SceneObject {
+  public getBodyToRender(viewPanelKey?: string): SceneObject {
     const viewPanel = findVizPanel(this, viewPanelKey);
     return viewPanel ?? this.state.body;
-  }
-}
-
-class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
-  constructor(private _scene: DashboardScene) {}
-
-  getKeys(): string[] {
-    return ['inspect', 'viewPanel'];
-  }
-
-  getUrlState(): SceneObjectUrlValues {
-    const state = this._scene.state;
-    return { inspect: state.inspectPanelKey, viewPanel: state.viewPanelKey };
-  }
-
-  updateFromUrl(values: SceneObjectUrlValues): void {
-    const { inspectPanelKey, viewPanelKey } = this._scene.state;
-    const update: Partial<DashboardSceneState> = {};
-
-    // Handle inspect object state
-    if (typeof values.inspect === 'string') {
-      const panel = findVizPanel(this._scene, values.inspect);
-      if (!panel) {
-        appEvents.emit(AppEvents.alertError, ['Panel not found']);
-        locationService.partial({ inspect: null });
-        return;
-      }
-
-      update.inspectPanelKey = values.inspect;
-      update.drawer = new PanelInspectDrawer(panel);
-    } else if (inspectPanelKey) {
-      update.inspectPanelKey = undefined;
-      update.drawer = undefined;
-    }
-
-    // Handle view panel state
-    if (typeof values.viewPanel === 'string') {
-      const panel = findVizPanel(this._scene, values.viewPanel);
-      if (!panel) {
-        appEvents.emit(AppEvents.alertError, ['Panel not found']);
-        locationService.partial({ viewPanel: null });
-        return;
-      }
-
-      update.viewPanelKey = values.viewPanel;
-    } else if (viewPanelKey) {
-      update.viewPanelKey = undefined;
-    }
-
-    if (Object.keys(update).length > 0) {
-      this._scene.setState(update);
-    }
   }
 }
