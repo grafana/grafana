@@ -18,7 +18,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
 const scrollIntoView = (ref: string) => {
   const el = document.getElementById(ref);
   if (el) {
-    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    el.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 };
 
@@ -27,7 +27,12 @@ const ContentOutline = () => {
   return (
     <div className={style.content}>
       <h1>co</h1>
+      <ToolbarButton icon="gf-prometheus" />
+      <ToolbarButton icon="table" />
+      <ToolbarButton icon="gf-logs" />
       <ToolbarButton icon="code-branch" onClick={() => scrollIntoView('node-graph')} />
+      <ToolbarButton icon="graph-bar" />
+      <ToolbarButton icon="gf-trace" />
     </div>
   );
 };
