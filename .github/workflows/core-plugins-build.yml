@@ -18,7 +18,7 @@ env:
     NODEJS_VERSION: 16.19.1
     GO_VERSION: 1.21.0
     GO_LINT_VERSION: 1.51.1
-    GRABPL_VERSION: 2.9.51
+    GRABPL_VERSION: 3.0.41
 
 jobs:
     build:
@@ -57,9 +57,10 @@ jobs:
         - name: Download grabpl executable
           shell: sh
           run: |
-            [ ! -d bin ] && mkdir -pv bin || true
-            curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v${{ env.GRABPL_VERSION }}/grabpl
-            chmod 0755 bin/grabpl
+            # ${{ inputs.plugin_id }}
+            [ ! -d ./public/plugins/testdata/bin ] && mkdir -pv ./public/plugins/testdata/bin || true
+            curl -fL -o ./public/plugins/testdata/bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v${{ env.GRABPL_VERSION }}/grabpl
+            chmod 0755 ./public/plugins/testdata/bin/grabpl
         - name: Validate environment
           shell: bash
           run: |

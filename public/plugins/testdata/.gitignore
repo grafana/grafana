@@ -34,3 +34,4 @@ e2e-results/
 .idea
 
 .eslintcache
+bin/
