@@ -9,8 +9,8 @@ import {
 } from 'app/plugins/datasource/alertmanager/types';
 import { NotifierStatus, ReceiversStateDTO } from 'app/types';
 
+import { computeInheritedTree } from '../../utils/notification-policies';
 import { extractReceivers } from '../../utils/receivers';
-import { computeInheritedTree } from '../notification-policies/Filters';
 
 import { RECEIVER_STATUS_KEY } from './useContactPoints';
 

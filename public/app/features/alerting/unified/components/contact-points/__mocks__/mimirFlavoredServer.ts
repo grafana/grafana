@@ -7,11 +7,13 @@ import { setupMswServer } from '../../../mockApi';
 import mimirAlertmanagerMock from './alertmanager.mimir.config.mock.json';
 
 // this one emulates a mimir server setup
+export const MIMIR_DATASOURCE_UID = 'mimir';
+
 export default () => {
   const server = setupMswServer();
 
   server.use(
-    rest.get('/api/alertmanager/grafana/config/api/v1/alerts', (_req, res, ctx) =>
+    rest.get(`/api/alertmanager/${MIMIR_DATASOURCE_UID}/config/api/v1/alerts`, (_req, res, ctx) =>
       res(ctx.json<AlertManagerCortexConfig>(mimirAlertmanagerMock))
     )
   );
