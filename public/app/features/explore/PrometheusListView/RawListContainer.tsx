@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { cloneDeep } from 'lodash';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useId, useRef, useState } from 'react';
 import { useWindowSize } from 'react-use';
 import { VariableSizeList as List } from 'react-window';
 
@@ -20,7 +20,6 @@ export type instantQueryRawVirtualizedListData = { Value: string; __name__: stri
 
 export interface RawListContainerProps {
   tableResult: DataFrame;
-  exploreId: string;
 }
 
 const styles = {
@@ -62,7 +61,7 @@ const numberOfColumnsBeforeExpandedViewIsDefault = 2;
  * @constructor
  */
 const RawListContainer = (props: RawListContainerProps) => {
-  const { tableResult, exploreId } = props;
+  const { tableResult } = props;
   const dataFrame = cloneDeep(tableResult);
   const listRef = useRef<List | null>(null);
 
@@ -114,18 +113,14 @@ const RawListContainer = (props: RawListContainerProps) => {
     return 1.5 * singleLineHeight + (Object.keys(item).length - valueLabels.length) * additionalLineHeight;
   };
 
+  const switchId = `isExpandedView ${useId()}`;
+
   return (
     <section>
       <header className={styles.header}>
         <Field className={styles.switchWrapper} label={`Expand results`} htmlFor={'isExpandedView'}>
           <div className={styles.switch}>
-            <Switch
-              key={exploreId}
-              onChange={onContentClick}
-              id={`isExpandedView ${exploreId}`}
-              value={isExpandedView}
-              label={`Expand results`}
-            />
+            <Switch onChange={onContentClick} id={switchId} value={isExpandedView} label={`Expand results`} />
           </div>
         </Field>
 

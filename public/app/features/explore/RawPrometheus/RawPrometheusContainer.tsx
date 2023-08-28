@@ -106,8 +106,7 @@ export class RawPrometheusContainer extends PureComponent<Props, PrometheusConta
   };
 
   render() {
-    const { loading, onCellFilterAdded, tableResult, width, splitOpenFn, range, ariaLabel, timeZone, exploreId } =
-      this.props;
+    const { loading, onCellFilterAdded, tableResult, width, splitOpenFn, range, ariaLabel, timeZone } = this.props;
     const height = this.getTableHeight();
     const tableWidth = width - config.theme.panelPadding * 2 - PANEL_BORDER;
 
@@ -151,9 +150,7 @@ export class RawPrometheusContainer extends PureComponent<Props, PrometheusConta
                 onCellFilterAdded={onCellFilterAdded}
               />
             )}
-            {this.state?.resultsStyle === TABLE_RESULTS_STYLE.raw && (
-              <RawListContainer exploreId={exploreId} tableResult={frames[0]} />
-            )}
+            {this.state?.resultsStyle === TABLE_RESULTS_STYLE.raw && <RawListContainer tableResult={frames[0]} />}
           </>
         )}
         {!frames?.length && <MetaInfoText metaItems={[{ value: '0 series returned' }]} />}

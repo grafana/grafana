@@ -54,7 +54,6 @@ const dataFrame = toDataFrame({
 
 const defaultProps: RawListContainerProps = {
   tableResult: dataFrame,
-  exploreId: '5k',
 };
 
 describe('RawListContainer', () => {
