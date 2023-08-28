@@ -14,7 +14,7 @@ import {
 import { config, getBackendSrv } from '@grafana/runtime';
 import { GRAFANA_DATASOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
 
-import { GrafanaQueryType } from '../../../plugins/datasource/grafana/types';
+import { GrafanaQueryType } from '../../../../plugins/datasource/grafana/types';
 
 export const PUBLIC_DATASOURCE = '-- Public --';
 

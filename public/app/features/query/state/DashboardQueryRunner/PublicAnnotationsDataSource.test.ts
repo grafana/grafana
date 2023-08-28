@@ -4,7 +4,7 @@ import { DataQueryRequest, DataSourceRef, TimeRange } from '@grafana/data';
 import { BackendSrvRequest, BackendSrv, config } from '@grafana/runtime';
 import { GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
 
-import { GRAFANA_DATASOURCE_NAME } from '../../alerting/unified/utils/datasource';
+import { GRAFANA_DATASOURCE_NAME } from '../../../alerting/unified/utils/datasource';
 
 import { PublicAnnotationsDataSource } from './PublicAnnotationsDataSource';
 
