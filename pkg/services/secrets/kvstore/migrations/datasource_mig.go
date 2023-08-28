@@ -66,6 +66,13 @@ func (s *DataSourceSecretMigrationService) Migrate(ctx context.Context) error {
 				return err
 			}
 
+			if ds.Password != "" && secureJsonData["password"] == "" {
+				secureJsonData["password"] = ds.Password
+			}
+			if ds.BasicAuthPassword != "" && secureJsonData["basicAuthPassword"] == "" {
+				secureJsonData["basicAuthPassword"] = ds.BasicAuthPassword
+			}
+
 			// Secrets are set by the update data source function if the SecureJsonData is set in the command
 			// Secrets are deleted by the update data source function if the disableSecretsCompatibility flag is enabled
 			_, err = s.dataSourcesService.UpdateDataSource(ctx, &datasources.UpdateDataSourceCommand{
