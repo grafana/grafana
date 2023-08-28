@@ -49,17 +49,6 @@ func GetRequestMetaData(ctx context.Context) *RequestMetaData {
 	return defaultRequestMetadata()
 }
 
-// SetRequestMetaData returns an `web.Handler` that overrides the request metadata
-// with the provided param.
-func SetRequestMetaData(rmd RequestMetaData) web.Handler {
-	return func(w http.ResponseWriter, r *http.Request) {
-		v := GetRequestMetaData(r.Context())
-		if rmd.Team != "" {
-			v.Team = rmd.Team
-		}
-	}
-}
-
 // SetOwner returns an `web.Handler` that sets the team name for an request.
 func SetOwner(team string) web.Handler {
 	return func(w http.ResponseWriter, r *http.Request) {
