@@ -359,19 +359,12 @@ export class PanelModel implements DataConfigSource, IPanelModel {
     this.render();
   }
 
-  runAllPanelQueries({
-    dashboardUID,
-    dashboardTimezone,
-    timeData,
-    width,
-    publicDashboardAccessToken,
-  }: RunPanelQueryOptions) {
+  runAllPanelQueries({ dashboardUID, dashboardTimezone, timeData, width }: RunPanelQueryOptions) {
     this.getQueryRunner().run({
       datasource: this.datasource,
       queries: this.targets,
       panelId: this.id,
       dashboardUID: dashboardUID,
-      publicDashboardAccessToken,
       timezone: dashboardTimezone,
       timeRange: timeData.timeRange,
       timeInfo: timeData.timeInfo,
@@ -436,7 +429,7 @@ export class PanelModel implements DataConfigSource, IPanelModel {
     this.options = options.options;
   }
 
-  pluginLoaded(plugin: PanelPlugin) {
+  async pluginLoaded(plugin: PanelPlugin) {
     this.plugin = plugin;
 
     const version = getPluginVersion(plugin);
@@ -458,7 +451,8 @@ export class PanelModel implements DataConfigSource, IPanelModel {
 
     if (plugin.onPanelMigration) {
       if (version !== this.pluginVersion) {
-        this.options = plugin.onPanelMigration(this);
+        const newPanelOptions = plugin.onPanelMigration(this);
+        this.options = await newPanelOptions;
         this.pluginVersion = version;
       }
     }
