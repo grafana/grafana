@@ -37,7 +37,7 @@ export function RadioButtonGroup<T>({
   className,
   fullWidth = false,
   autoFocus = false,
-  ariaLabel,
+  aria-label,
   invalid = false,
 }: RadioButtonGroupProps<T>) {
   const handleOnChange = useCallback(
