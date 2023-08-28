@@ -39,7 +39,7 @@ export const TransformationOperationRow = ({
   uiConfig,
   onChange,
 }: TransformationOperationRowProps) => {
-  const [showDeleteModal, setShowDeleteModal] = useToggle(false); // JEV: remove all uses of useToggle?
+  const [showDeleteModal, setShowDeleteModal] = useToggle(false);
   const [showDebug, toggleDebug] = useToggle(false);
   const [showHelp, setShowHelp] = useState<boolean | undefined>(undefined);
   const disabled = !!configs[index].transformation.disabled;
