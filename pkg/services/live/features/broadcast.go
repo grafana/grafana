@@ -6,8 +6,8 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/live/model"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 var (
@@ -37,13 +37,13 @@ func (b *BroadcastRunner) GetHandlerForPath(_ string) (model.ChannelHandler, err
 }
 
 // OnSubscribe will let anyone connect to the path
-func (b *BroadcastRunner) OnSubscribe(_ context.Context, u identity.Requester, e model.SubscribeEvent) (model.SubscribeReply, backend.SubscribeStreamStatus, error) {
+func (b *BroadcastRunner) OnSubscribe(_ context.Context, u *user.SignedInUser, e model.SubscribeEvent) (model.SubscribeReply, backend.SubscribeStreamStatus, error) {
 	reply := model.SubscribeReply{
 		Presence:  true,
 		JoinLeave: true,
 	}
 	query := &model.GetLiveMessageQuery{
-		OrgID:   u.GetOrgID(),
+		OrgID:   u.OrgID,
 		Channel: e.Channel,
 	}
 	msg, ok, err := b.liveMessageStore.GetLiveMessage(query)
@@ -57,9 +57,9 @@ func (b *BroadcastRunner) OnSubscribe(_ context.Context, u identity.Requester, e
 }
 
 // OnPublish is called when a client wants to broadcast on the websocket
-func (b *BroadcastRunner) OnPublish(_ context.Context, u identity.Requester, e model.PublishEvent) (model.PublishReply, backend.PublishStreamStatus, error) {
+func (b *BroadcastRunner) OnPublish(_ context.Context, u *user.SignedInUser, e model.PublishEvent) (model.PublishReply, backend.PublishStreamStatus, error) {
 	query := &model.SaveLiveMessageQuery{
-		OrgID:   u.GetOrgID(),
+		OrgID:   u.OrgID,
 		Channel: e.Channel,
 		Data:    e.Data,
 	}
