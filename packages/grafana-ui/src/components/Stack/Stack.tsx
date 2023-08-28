@@ -9,7 +9,7 @@ interface StackProps {
   gap?: ThemeSpacingTokens;
 }
 
-const Stack = ({ gap, direction, children }: React.PropsWithChildren<StackProps>) => {
+const Stack = ({ gap = 1, direction = 'column', children }: React.PropsWithChildren<StackProps>) => {
   return (
     <Flex gap={gap} direction={direction}>
       {children}
