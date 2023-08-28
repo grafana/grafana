@@ -452,7 +452,7 @@ func (b *aggBuilderImpl) Filters(key string, fn func(a *FiltersAggregation, b Ag
 func (b *aggBuilderImpl) GeoHashGrid(key, field string, fn func(a *GeoHashGridAggregation, b AggBuilder)) AggBuilder {
 	innerAgg := &GeoHashGridAggregation{
 		Field:     field,
-		Precision: 3,
+		Precision: 5,
 	}
 	aggDef := newAggDef(key, &aggContainer{
 		Type:        "geohash_grid",
