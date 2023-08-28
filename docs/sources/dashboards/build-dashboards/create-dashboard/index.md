@@ -114,7 +114,7 @@ If a row includes panels using the special [Dashboard]({{< relref "../../../data
 For example, in a dashboard:
 
 - `Row 1` includes `Panel 1A` and `Panel 1B`
-- `Panel 1B` uses the results from `Panel 1A` by way of the -- Dashboard --` data source
+- `Panel 1B` uses the results from `Panel 1A` by way of the `-- Dashboard --` data source
 - Repeating row, `Row 2`, includes `Panel 2A` and `Panel 2B`
 - `Panel 2B` references `Panel 1A`, not `Panel 2A`
 
