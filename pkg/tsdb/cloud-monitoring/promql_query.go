@@ -76,9 +76,7 @@ func doRequestProm(r *http.Request, dsInfo datasourceInfo, body map[string]inter
 func parseProm(res *http.Response) backend.DataResponse {
 	iter := jsoniter.Parse(jsoniter.ConfigDefault, res.Body, 1024)
 	return converter.ReadPrometheusStyleResult(iter, converter.Options{
-		MatrixWideSeries: false,
-		VectorWideSeries: false,
-		Dataplane:        false,
+		Dataplane: false,
 	})
 }
 

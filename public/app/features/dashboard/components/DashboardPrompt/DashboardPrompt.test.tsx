@@ -132,14 +132,14 @@ describe('DashboardPrompt', () => {
       });
     });
 
-    it('Should ignore panel schema migrations', () => {
+    it('Should ignore panel schema migrations', async () => {
       const { original, dash } = getTestContext();
       const plugin = getPanelPlugin({}).setMigrationHandler((panel) => {
         delete (panel as any).legend;
         return { option1: 'Aasd' };
       });
 
-      dash.panels[0].pluginLoaded(plugin);
+      await dash.panels[0].pluginLoaded(plugin);
       expect(hasChanges(dash, original)).toBe(false);
     });
 
