@@ -1193,6 +1193,7 @@ func postDashboardScenario(t *testing.T, desc string, url string, routePattern s
 			Features:              featuremgmt.WithFeatures(),
 			Kinds:                 corekind.NewBase(nil),
 			accesscontrolService:  actest.FakeService{},
+			log:                   log.New("test-logger"),
 		}
 
 		sc := setupScenarioContext(t, url)

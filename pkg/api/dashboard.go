@@ -423,9 +423,10 @@ func (hs *HTTPServer) postDashboard(c *contextmodel.ReqContext, cmd dashboards.S
 	ctx := c.Req.Context()
 	var err error
 
-	userID, err := identity.IntIdentifier(c.SignedInUser.GetNamespacedID())
+	namespaceID, userIDstr := c.SignedInUser.GetNamespacedID()
+	userID, err := identity.IntIdentifier(namespaceID, userIDstr)
 	if err != nil {
-		hs.log.Warn("Error while checking user ID", "err", err)
+		hs.log.Warn("Error while parsing user ID", "namespaceID", namespaceID, "userID", userIDstr)
 	}
 
 	cmd.OrgID = c.SignedInUser.GetOrgID()
