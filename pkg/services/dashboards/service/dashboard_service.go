@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/alerting"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -181,12 +182,18 @@ func (dr *DashboardServiceImpl) BuildSaveDashboardCommand(ctx context.Context, d
 		}
 	}
 
+	namespaceID, userIDstr := dto.User.GetNamespacedID()
+	userID, err := identity.IntIdentifier(namespaceID, userIDstr)
+	if err != nil {
+		dr.log.Warn("failed to parse user ID", "namespaceID", namespaceID, "userID", userIDstr, "error", err)
+	}
+
 	cmd := &dashboards.SaveDashboardCommand{
 		Dashboard: dash.Data,
 		Message:   dto.Message,
 		OrgID:     dto.OrgID,
 		Overwrite: dto.Overwrite,
-		UserID:    dto.User.UserID,
+		UserID:    userID,
 		FolderID:  dash.FolderID,
 		IsFolder:  dash.IsFolder,
 		PluginID:  dash.PluginID,
@@ -209,7 +216,7 @@ func (dr *DashboardServiceImpl) DeleteOrphanedProvisionedDashboards(ctx context.
 
 // getGuardianForSavePermissionCheck returns the guardian to be used for checking permission of dashboard
 // It replaces deleted Dashboard.GetDashboardIdForSavePermissionCheck()
-func getGuardianForSavePermissionCheck(ctx context.Context, d *dashboards.Dashboard, user *user.SignedInUser) (guardian.DashboardGuardian, error) {
+func getGuardianForSavePermissionCheck(ctx context.Context, d *dashboards.Dashboard, user identity.Requester) (guardian.DashboardGuardian, error) {
 	newDashboard := d.ID == 0
 
 	if newDashboard {
@@ -297,7 +304,8 @@ func (dr *DashboardServiceImpl) SaveProvisionedDashboard(ctx context.Context, dt
 
 	if dto.Dashboard.ID == 0 {
 		if err := dr.setDefaultPermissions(ctx, dto, dash, true); err != nil {
-			dr.log.Error("Could not make user admin", "dashboard", dash.Title, "user", dto.User.UserID, "error", err)
+			namespaceID, userID := dto.User.GetNamespacedID()
+			dr.log.Error("Could not make user admin", "dashboard", dash.Title, "namespaceID", namespaceID, "userID", userID, "error", err)
 		}
 	}
 
@@ -337,7 +345,8 @@ func (dr *DashboardServiceImpl) SaveFolderForProvisionedDashboards(ctx context.C
 
 	if dto.Dashboard.ID == 0 {
 		if err := dr.setDefaultPermissions(ctx, dto, dash, true); err != nil {
-			dr.log.Error("Could not make user admin", "dashboard", dash.Title, "user", dto.User.UserID, "error", err)
+			namespaceID, userID := dto.User.GetNamespacedID()
+			dr.log.Error("Could not make user admin", "dashboard", dash.Title, "namespaceID", namespaceID, "userID", userID, "error", err)
 		}
 	}
 
@@ -385,7 +394,8 @@ func (dr *DashboardServiceImpl) SaveDashboard(ctx context.Context, dto *dashboar
 	// new dashboard created
 	if dto.Dashboard.ID == 0 {
 		if err := dr.setDefaultPermissions(ctx, dto, dash, false); err != nil {
-			dr.log.Error("Could not make user admin", "dashboard", dash.Title, "user", dto.User.UserID, "error", err)
+			namespaceID, userID := dto.User.GetNamespacedID()
+			dr.log.Error("Could not make user admin", "dashboard", dash.Title, "namespaceID", namespaceID, "userID", userID, "error", err)
 		}
 	}
 
@@ -442,7 +452,8 @@ func (dr *DashboardServiceImpl) ImportDashboard(ctx context.Context, dto *dashbo
 	}
 
 	if err := dr.setDefaultPermissions(ctx, dto, dash, false); err != nil {
-		dr.log.Error("Could not make user admin", "dashboard", dash.Title, "user", dto.User.UserID, "error", err)
+		namespaceID, userID := dto.User.GetNamespacedID()
+		dr.log.Error("Could not make user admin", "dashboard", dash.Title, "namespaceID", namespaceID, "userID", userID, "error", err)
 	}
 
 	return dash, nil
@@ -462,9 +473,16 @@ func (dr *DashboardServiceImpl) setDefaultPermissions(ctx context.Context, dto *
 	inFolder := dash.FolderID > 0
 	var permissions []accesscontrol.SetResourcePermissionCommand
 
-	if !provisioned && dto.User.IsRealUser() && !dto.User.IsAnonymous {
+	namespaceID, userIDstr := dto.User.GetNamespacedID()
+	userID, err := identity.IntIdentifier(namespaceID, userIDstr)
+
+	if err != nil {
+		return err
+	}
+
+	if !provisioned && namespaceID == identity.NamespaceUser {
 		permissions = append(permissions, accesscontrol.SetResourcePermissionCommand{
-			UserID: dto.User.UserID, Permission: dashboards.PERMISSION_ADMIN.String(),
+			UserID: userID, Permission: dashboards.PERMISSION_ADMIN.String(),
 		})
 	}
 
@@ -480,7 +498,7 @@ func (dr *DashboardServiceImpl) setDefaultPermissions(ctx context.Context, dto *
 		svc = dr.folderPermissions
 	}
 
-	_, err := svc.SetPermissions(ctx, dto.OrgID, dash.UID, permissions...)
+	_, err = svc.SetPermissions(ctx, dto.OrgID, dash.UID, permissions...)
 	if err != nil {
 		return err
 	}
