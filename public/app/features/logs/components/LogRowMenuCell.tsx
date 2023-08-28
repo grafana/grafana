@@ -17,6 +17,8 @@ interface Props {
   styles: LogRowStyles;
   mouseIsOver: boolean;
   onBlur: () => void;
+  expandAllLogs?: boolean;
+  expandLogMessage?: (expandLogMessage: (currnet: boolean) => boolean) => void;
 }
 
 export const LogRowMenuCell = React.memo(
@@ -32,11 +34,21 @@ export const LogRowMenuCell = React.memo(
     styles,
     mouseIsOver,
     onBlur,
+    expandLogMessage,
+    expandAllLogs,
   }: Props) => {
     const shouldShowContextToggle = showContextToggle ? showContextToggle(row) : false;
     const onLogRowClick = useCallback((e: SyntheticEvent) => {
       e.stopPropagation();
     }, []);
+    const onExpandLogClick = () => {
+      if (expandLogMessage !== undefined) {
+        expandLogMessage((current) => {
+          console.log('will become: ' + !current);
+          return !current;
+        });
+      }
+    };
     const onShowContextClick = useCallback(
       (e: SyntheticEvent<HTMLElement, Event>) => {
         e.stopPropagation();
@@ -75,6 +87,17 @@ export const LogRowMenuCell = React.memo(
         )}
         {mouseIsOver && (
           <>
+            {expandAllLogs && (
+              <IconButton
+                size="md"
+                name="expand-arrows"
+                onClick={onExpandLogClick}
+                tooltip="Expand log"
+                tooltipPlacement="top"
+                aria-label="Expand log"
+                tabIndex={0}
+              />
+            )}
             {shouldShowContextToggle && (
               <IconButton
                 size="md"

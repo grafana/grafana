@@ -1,14 +1,11 @@
-import React, { useMemo } from 'react';
-import Highlighter from 'react-highlight-words';
+import React, { useMemo, useState } from 'react';
 
-import { CoreApp, findHighlightChunksInText, LogRowModel } from '@grafana/data';
+import { CoreApp, LogRowModel } from '@grafana/data';
 
-import { LogMessageAnsi } from './LogMessageAnsi';
+import { LogMessage } from './LogMessage';
 import { LogRowMenuCell } from './LogRowMenuCell';
 import { LogRowStyles } from './getLogRowStyles';
-
-export const MAX_CHARACTERS = 100000;
-
+export { MAX_CHARACTERS } from './LogMessage';
 interface Props {
   row: LogRowModel;
   wrapLogMessage: boolean;
@@ -22,35 +19,9 @@ interface Props {
   pinned?: boolean;
   styles: LogRowStyles;
   mouseIsOver: boolean;
+  expandAllLogs?: boolean;
   onBlur: () => void;
 }
-
-interface LogMessageProps {
-  hasAnsi: boolean;
-  entry: string;
-  highlights: string[] | undefined;
-  styles: LogRowStyles;
-}
-
-const LogMessage = ({ hasAnsi, entry, highlights, styles }: LogMessageProps) => {
-  const needsHighlighter =
-    highlights && highlights.length > 0 && highlights[0] && highlights[0].length > 0 && entry.length < MAX_CHARACTERS;
-  const searchWords = highlights ?? [];
-  if (hasAnsi) {
-    const highlight = needsHighlighter ? { searchWords, highlightClassName: styles.logsRowMatchHighLight } : undefined;
-    return <LogMessageAnsi value={entry} highlight={highlight} />;
-  } else if (needsHighlighter) {
-    return (
-      <Highlighter
-        textToHighlight={entry}
-        searchWords={searchWords}
-        findChunks={findHighlightChunksInText}
-        highlightClassName={styles.logsRowMatchHighLight}
-      />
-    );
-  }
-  return <>{entry}</>;
-};
 
 const restructureLog = (line: string, prettifyLogMessage: boolean): string => {
   if (prettifyLogMessage) {
@@ -77,10 +48,14 @@ export const LogRowMessage = React.memo((props: Props) => {
     pinned,
     mouseIsOver,
     onBlur,
+    expandAllLogs,
   } = props;
   const { hasAnsi, raw } = row;
   const restructuredEntry = useMemo(() => restructureLog(raw, prettifyLogMessage), [raw, prettifyLogMessage]);
   const shouldShowMenu = useMemo(() => mouseIsOver || pinned, [mouseIsOver, pinned]);
+  // there are two levels for expanding logs - for specific row and for all rows. All rows are hanlded via prop(expandAllLogs), while the specific row is handled via state(expandLogMessage) in this component.
+  const [expandLogMessage, setExpandLogMessage] = useState(false);
+  const shouldBeExapnded = expandLogMessage || (expandAllLogs ?? false);
   return (
     <>
       {
@@ -90,7 +65,13 @@ export const LogRowMessage = React.memo((props: Props) => {
       <td className={styles.logsRowMessage}>
         <div className={wrapLogMessage ? styles.positionRelative : styles.horizontalScroll}>
           <button className={`${styles.logLine} ${styles.positionRelative}`}>
-            <LogMessage hasAnsi={hasAnsi} entry={restructuredEntry} highlights={row.searchWords} styles={styles} />
+            <LogMessage
+              expandLogMessage={shouldBeExapnded}
+              hasAnsi={hasAnsi}
+              entry={restructuredEntry}
+              highlights={row.searchWords}
+              styles={styles}
+            />
           </button>
         </div>
       </td>
@@ -108,6 +89,8 @@ export const LogRowMessage = React.memo((props: Props) => {
             styles={styles}
             mouseIsOver={mouseIsOver}
             onBlur={onBlur}
+            expandLogMessage={setExpandLogMessage}
+            expandAllLogs={!(expandAllLogs ?? true)}
           />
         )}
       </td>

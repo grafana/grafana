@@ -253,6 +253,13 @@ export const getLogRowStyles = memoizeOne((theme: GrafanaTheme2) => {
         margin: 0;
       }
     `,
+    truncateToOneLine: css`
+      width: 100%;
+      overflow: hidden;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 1;
+      display: -webkit-box;
+    `,
     logRowMenuCell: css`
       position: sticky;
       z-index: ${theme.zIndex.dropdown};

@@ -53,6 +53,7 @@ export interface Props extends Themeable2 {
   isFilterLabelActive?: (key: string, value: string) => Promise<boolean>;
   pinnedRowId?: string;
   containerRendered?: boolean;
+  expandAllLogs?: boolean;
 }
 
 interface State {
@@ -168,6 +169,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
                 onUnpinLine={this.props.onUnpinLine}
                 pinned={this.props.pinnedRowId === row.uid}
                 isFilterLabelActive={this.props.isFilterLabelActive}
+                expandAllLogs={this.props.expandAllLogs}
                 {...rest}
               />
             ))}

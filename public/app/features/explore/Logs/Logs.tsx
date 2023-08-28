@@ -118,6 +118,7 @@ interface State {
   tableFrame?: DataFrame;
   visualisationType?: VisualisationType;
   logsContainer?: HTMLDivElement;
+  expandAllLogs: boolean;
 }
 
 const scrollableLogsContainer = config.featureToggles.exploreScrollableLogsContainer;
@@ -161,6 +162,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
     contextRow: undefined,
     tableFrame: undefined,
     visualisationType: 'logs',
+    expandAllLogs: store.getBool(SETTINGS_KEYS.expandAllLogs, true),
     logsContainer: undefined,
   };
 
@@ -251,6 +253,17 @@ class UnthemedLogs extends PureComponent<Props, State> {
         showLabels,
       });
       store.set(SETTINGS_KEYS.showLabels, showLabels);
+    }
+  };
+
+  onChangeExpandAllLogs = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const { target } = event;
+    if (target) {
+      const expandAllLogs = target.checked;
+      this.setState({
+        expandAllLogs,
+      });
+      store.set(SETTINGS_KEYS.expandAllLogs, expandAllLogs);
     }
   };
 
@@ -513,6 +526,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
       displayedFields,
       forceEscape,
       contextOpen,
+      expandAllLogs,
       contextRow,
     } = this.state;
 
@@ -608,6 +622,15 @@ class UnthemedLogs extends PureComponent<Props, State> {
                     className={styles.horizontalInlineSwitch}
                     transparent
                     id={`unique-labels_${exploreId}`}
+                  />
+                </InlineField>
+                <InlineField label="Expand all logs" className={styles.horizontalInlineLabel} transparent>
+                  <InlineSwitch
+                    value={expandAllLogs}
+                    onChange={this.onChangeExpandAllLogs}
+                    className={styles.horizontalInlineSwitch}
+                    transparent
+                    id={`expand-labels_${exploreId}`}
                   />
                 </InlineField>
                 <InlineField label="Wrap lines" className={styles.horizontalInlineLabel} transparent>
@@ -709,6 +732,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
                   prettifyLogMessage={prettifyLogMessage}
                   timeZone={timeZone}
                   getFieldLinks={getFieldLinks}
+                  expandAllLogs={expandAllLogs}
                   logsSortOrder={logsSortOrder}
                   displayedFields={displayedFields}
                   onClickShowField={this.showField}

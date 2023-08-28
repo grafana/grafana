@@ -47,6 +47,7 @@ interface Props extends Themeable2 {
   onUnpinLine?: (row: LogRowModel) => void;
   pinned?: boolean;
   containerRendered?: boolean;
+  expandAllLogs?: boolean;
 }
 
 interface State {
@@ -86,7 +87,6 @@ class UnThemedLogRow extends PureComponent<Props, State> {
     this.setState({ showingContext: true });
     this.props.onOpenContext(row, this.debouncedContextClose);
   };
-
   toggleDetails = () => {
     if (!this.props.enableLogDetails) {
       return;
@@ -265,6 +265,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
               pinned={this.props.pinned}
               mouseIsOver={this.state.mouseIsOver}
               onBlur={this.onMouseLeave}
+              expandAllLogs={this.props.expandAllLogs}
             />
           )}
         </tr>

@@ -17,6 +17,7 @@ const setup = (propOverrides?: Partial<ComponentProps<typeof LogRowMessage>>, ro
     onOpenContext: () => {},
     prettifyLogMessage: false,
     app: CoreApp.Explore,
+    expandAllLogs: true,
     styles,
     mouseIsOver: true,
     onBlur: jest.fn(),

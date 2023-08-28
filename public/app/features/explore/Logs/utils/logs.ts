@@ -5,4 +5,5 @@ export const SETTINGS_KEYS = {
   prettifyLogMessage: 'grafana.explore.logs.prettifyLogMessage',
   logsSortOrder: 'grafana.explore.logs.sortOrder',
   logContextWrapLogMessage: 'grafana.explore.logs.logContext.wrapLogMessage',
+  expandAllLogs: 'grafana.explore.logs.expandAllLogs',
 };
