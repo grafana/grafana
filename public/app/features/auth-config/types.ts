@@ -6,6 +6,7 @@ export interface AuthProviderInfo {
   protocol: string;
   displayName: string;
   configPath?: string;
+  needEnterpriseLicense?: boolean;
 }
 
 export type GetStatusHook = () => Promise<AuthProviderStatus>;

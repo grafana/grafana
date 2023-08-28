@@ -300,17 +300,13 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     // ADMIN
     {
-      path: '/admin/authentication',
-      roles: () => contextSrv.evaluatePermission(() => ['Admin', 'ServerAdmin'], [AccessControlAction.SettingsWrite]),
-      component: config.licenseInfo.enabledFeatures?.saml
-        ? SafeDynamicImport(
-            () => import(/* webpackChunkName: "AdminAuthentication" */ 'app/features/auth-config/AuthConfigPage')
-          )
-        : () => <Redirect to="/admin" />,
-    },
-    {
       path: '/admin',
       component: () => <NavLandingPage navId="cfg" header={<ConnectionsRedirectNotice />} />,
+    },
+    {
+      path: '/admin/authentication',
+      roles: () => contextSrv.evaluatePermission(() => ['Admin', 'ServerAdmin'], [AccessControlAction.ServiceAccountsWrite]),
+      component: SafeDynamicImport(() => import(/* webpackChunkName: "AdminAuthentication" */ 'app/features/auth-config/AuthConfigPage')),
     },
     {
       path: '/admin/access',
