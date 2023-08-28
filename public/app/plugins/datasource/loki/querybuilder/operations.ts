@@ -1,4 +1,3 @@
-import { LabelParamEditor } from '../../prometheus/querybuilder/components/LabelParamEditor';
 import {
   createAggregationOperation,
   createAggregationOperationWithParam,
