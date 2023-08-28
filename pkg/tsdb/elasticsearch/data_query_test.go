@@ -661,7 +661,7 @@ func TestExecuteElasticsearchDataQuery(t *testing.T) {
 						"id": "3",
 						"type": "geohash_grid",
 						"field": "@location",
-						"settings": { "precision": 7 }
+						"settings": {}
 					}
 				],
 				"metrics": [{"type": "count", "id": "1" }]
