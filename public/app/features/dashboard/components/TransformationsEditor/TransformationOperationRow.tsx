@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
 import { useToggle } from 'react-use';
 
 import { DataFrame, DataTransformerConfig, TransformerRegistryItem, FrameMatcherID } from '@grafana/data';
@@ -39,9 +39,9 @@ export const TransformationOperationRow = ({
   uiConfig,
   onChange,
 }: TransformationOperationRowProps) => {
-  const [showDeleteModal, setShowDeleteModal] = useToggle(false);
+  const [showDeleteModal, setShowDeleteModal] = useToggle(false); // JEV: remove all uses of useToggle?
   const [showDebug, toggleDebug] = useToggle(false);
-  const [showHelp, toggleHelp] = useToggle(false);
+  const [showHelp, setShowHelp] = useState<boolean | undefined>(undefined);
   const disabled = !!configs[index].transformation.disabled;
   const filter = configs[index].transformation.filter != null;
   const showFilter = filter || data.length > 1;
@@ -98,8 +98,9 @@ export const TransformationOperationRow = ({
         <QueryOperationToggleAction
           title="Show transform help"
           icon="info-circle"
-          onClick={instrumentToggleCallback(toggleHelp, 'help', showHelp)}
-          active={showHelp}
+          // `instrumentToggleCallback` expects a function that takes a MouseEvent, is unused in the state setter. Instead, we simply toggle the state.
+          onClick={instrumentToggleCallback((_e) => setShowHelp(!showHelp), 'help', showHelp)}
+          active={!!showHelp}
         />
         {showFilter && (
           <QueryOperationToggleAction
@@ -155,7 +156,7 @@ export const TransformationOperationRow = ({
       disabled={disabled}
       isOpen={showHelp}
       // Assure that showHelp is untoggled when the row becomes collapsed.
-      onClose={() => toggleHelp(false)}
+      onClose={() => setShowHelp(false)}
     >
       {showHelp && <OperationRowHelp markdown={prepMarkdown(uiConfig)} />}
       {filter && (
