@@ -3477,6 +3477,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@fingerprintjs/fingerprintjs@npm:^3.4.2":
+  version: 3.4.2
+  resolution: "@fingerprintjs/fingerprintjs@npm:3.4.2"
+  dependencies:
+    tslib: ^2.4.1
+  checksum: 3b9dc81e4186f1aaa39e208c17939f5747bf9a8eb1c8175264a352e46e263abd81bcf89439240bd1a4755d7e3dfb4a83164e294f940abc290e7f2076d3b603ce
+  languageName: node
+  linkType: hard
+
 "@floating-ui/core@npm:^1.0.1":
   version: 1.0.1
   resolution: "@floating-ui/core@npm:1.0.1"
@@ -3604,13 +3613,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/aws-sdk@npm:0.1.1":
-  version: 0.1.1
-  resolution: "@grafana/aws-sdk@npm:0.1.1"
+"@grafana/aws-sdk@npm:0.1.2":
+  version: 0.1.2
+  resolution: "@grafana/aws-sdk@npm:0.1.2"
   dependencies:
     "@grafana/async-query-data": 0.1.4
     "@grafana/experimental": 1.1.0
-  checksum: 12d1b27b0959a4d16ddf643b360ce067f6debd4141eb28652ff36fece98a99087f865aa2b9f6fda78df2b9e38870a6a7cfa48e0fd1a1ec03de63bc340b344f05
+  checksum: ea0248c8458caeccfb5326db60fba36692868bf71ed17cb9aa9c6797e6acb9a90687cceaa274416841935b2f2ba362f80dec22f603351f180724f56bf2ed0450
   languageName: node
   linkType: hard
 
@@ -3631,7 +3640,7 @@ __metadata:
     "@types/d3-interpolate": ^3.0.0
     "@types/dompurify": ^2
     "@types/history": 4.7.11
-    "@types/jest": 29.2.3
+    "@types/jest": 29.5.4
     "@types/jquery": 3.5.16
     "@types/lodash": 4.14.195
     "@types/marked": 5.0.1
@@ -3719,6 +3728,7 @@ __metadata:
     "@babel/preset-env": 7.22.9
     "@cypress/webpack-preprocessor": 5.17.1
     "@grafana/e2e-selectors": 10.2.0-pre
+    "@grafana/schema": 10.2.0-pre
     "@grafana/tsconfig": ^1.2.0-rc1
     "@mochajs/json-file-reporter": ^1.2.0
     "@rollup/plugin-node-resolve": 15.1.0
@@ -3857,14 +3867,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/lezer-logql@npm:0.1.8":
-  version: 0.1.8
-  resolution: "@grafana/lezer-logql@npm:0.1.8"
+"@grafana/lezer-logql@npm:0.1.9":
+  version: 0.1.9
+  resolution: "@grafana/lezer-logql@npm:0.1.9"
   dependencies:
     lodash: ^4.17.21
   peerDependencies:
     "@lezer/lr": ^1.0.0
-  checksum: f0f301b6d4fbd2d79563b5b4e34303257be0ea995b2b9fa1f012648654b4afaa9cea91642bc59eddb70e9fa24ec8804489c161f7065b41eef49db68d3a2ca561
+  checksum: 6cceb18586413864137ef2305bbe2fdce054796c61a3fde4864e3f2d30ea3dac853aa701728867bf609a4009334dbf92fddbc06f7291dbca9459a86c9dc29e67
   languageName: node
   linkType: hard
 
@@ -3902,7 +3912,7 @@ __metadata:
     "@testing-library/user-event": 14.4.3
     "@types/angular": 1.8.5
     "@types/history": 4.7.11
-    "@types/jest": 29.2.3
+    "@types/jest": 29.5.4
     "@types/lodash": 4.14.195
     "@types/react": 18.2.15
     "@types/react-dom": 18.2.7
@@ -3929,9 +3939,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/scenes@npm:0.24.0":
-  version: 0.24.0
-  resolution: "@grafana/scenes@npm:0.24.0"
+"@grafana/scenes@npm:^0.25.0":
+  version: 0.25.0
+  resolution: "@grafana/scenes@npm:0.25.0"
   dependencies:
     "@grafana/e2e-selectors": 10.0.2
     react-grid-layout: 1.3.4
@@ -3943,7 +3953,7 @@ __metadata:
     "@grafana/runtime": 10.0.3
     "@grafana/schema": 10.0.3
     "@grafana/ui": 10.0.3
-  checksum: b9cfc535228f0426ee4e422d3e8872f56212f9785acfcdb86aefe6e9c2ff5c98ef750eef0d72cd0ebc2feb67719fac86877b2eae6d376bdd45691da9068b5194
+  checksum: ab81d18bb65b0b5d612708fbd9351022141248b476009bdde01660cce1747bd0724fdf599842127f48feea49b31858dc64e45af2638d90fd3b09d59e350f79e4
   languageName: node
   linkType: hard
 
@@ -4044,7 +4054,7 @@ __metadata:
     "@types/d3": 7.4.0
     "@types/hoist-non-react-statics": 3.3.1
     "@types/is-hotkey": 0.1.7
-    "@types/jest": 29.2.3
+    "@types/jest": 29.5.4
     "@types/jquery": 3.5.16
     "@types/lodash": 4.14.195
     "@types/mock-raf": 1.0.3
@@ -10064,13 +10074,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/jest@npm:29.2.3":
-  version: 29.2.3
-  resolution: "@types/jest@npm:29.2.3"
+"@types/jest@npm:29.5.4":
+  version: 29.5.4
+  resolution: "@types/jest@npm:29.5.4"
   dependencies:
     expect: ^29.0.0
     pretty-format: ^29.0.0
-  checksum: 55370906711b600a05b9e497c22aa74d80d8adcdbe4ac2f1bc9311f6f6ca0dd192862b6f38df6ac0d45e92396bcd796e377b1d8058c10bdfd584aeee580c3ce1
+  checksum: 38ed5942f44336452efd0f071eab60aaa57cd8d46530348d0a3aa5a691dcbf1366c4ca8f6ee8364efb45b4413bfefae443e5d4f469246a472a03b21ac11cd4ed
   languageName: node
   linkType: hard
 
@@ -19233,8 +19243,9 @@ __metadata:
     "@emotion/css": 11.11.2
     "@emotion/eslint-plugin": 11.11.0
     "@emotion/react": 11.11.1
+    "@fingerprintjs/fingerprintjs": ^3.4.2
     "@glideapps/glide-data-grid": ^5.2.1
-    "@grafana/aws-sdk": 0.1.1
+    "@grafana/aws-sdk": 0.1.2
     "@grafana/data": "workspace:*"
     "@grafana/e2e": "workspace:*"
     "@grafana/e2e-selectors": "workspace:*"
@@ -19244,11 +19255,11 @@ __metadata:
     "@grafana/faro-core": 1.1.2
     "@grafana/faro-web-sdk": 1.1.2
     "@grafana/google-sdk": 0.1.1
-    "@grafana/lezer-logql": 0.1.8
+    "@grafana/lezer-logql": 0.1.9
     "@grafana/lezer-traceql": 0.0.4
     "@grafana/monaco-logql": ^0.0.7
     "@grafana/runtime": "workspace:*"
-    "@grafana/scenes": 0.24.0
+    "@grafana/scenes": ^0.25.0
     "@grafana/schema": "workspace:*"
     "@grafana/toolkit": "workspace:*"
     "@grafana/tsconfig": ^1.3.0-rc1
@@ -19306,7 +19317,7 @@ __metadata:
     "@types/gtag.js": ^0.0.12
     "@types/history": 4.7.11
     "@types/hoist-non-react-statics": 3.3.1
-    "@types/jest": 29.2.3
+    "@types/jest": 29.5.4
     "@types/jquery": 3.5.16
     "@types/js-yaml": ^4.0.5
     "@types/jsurl": ^1.2.28

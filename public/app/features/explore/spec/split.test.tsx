@@ -3,22 +3,20 @@ import userEvent from '@testing-library/user-event';
 import React, { ComponentProps } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
-import { serializeStateToUrlParam } from '@grafana/data';
+import { EventBusSrv, serializeStateToUrlParam } from '@grafana/data';
 
 import * as mainState from '../state/main';
 
 import { makeLogsQueryResponse } from './helper/query';
 import { setupExplore, waitForExplore } from './helper/setup';
 
+const testEventBus = new EventBusSrv();
+
 jest.mock('app/core/core', () => {
   return {
     contextSrv: {
       hasPermission: () => true,
       hasAccess: () => true,
-    },
-    appEvents: {
-      subscribe: () => {},
-      publish: () => {},
     },
   };
 });
@@ -36,6 +34,7 @@ const fetch = jest.fn().mockResolvedValue({ correlations: [] });
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getBackendSrv: () => ({ fetch }),
+  getAppEvents: () => testEventBus,
 }));
 
 jest.mock('rxjs', () => ({

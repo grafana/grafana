@@ -12,10 +12,10 @@ import (
 )
 
 var (
-	errEmptyPassword       = errutil.NewBase(errutil.StatusUnauthorized, "password-auth.empty", errutil.WithPublicMessage("Invalid username or password"))
-	errPasswordAuthFailed  = errutil.NewBase(errutil.StatusUnauthorized, "password-auth.failed", errutil.WithPublicMessage("Invalid username or password"))
-	errInvalidPassword     = errutil.NewBase(errutil.StatusUnauthorized, "password-auth.invalid", errutil.WithPublicMessage("Invalid password or username"))
-	errLoginAttemptBlocked = errutil.NewBase(errutil.StatusUnauthorized, "login-attempt.blocked", errutil.WithPublicMessage("Invalid username or password"))
+	errEmptyPassword       = errutil.Unauthorized("password-auth.empty", errutil.WithPublicMessage("Invalid username or password"))
+	errPasswordAuthFailed  = errutil.Unauthorized("password-auth.failed", errutil.WithPublicMessage("Invalid username or password"))
+	errInvalidPassword     = errutil.Unauthorized("password-auth.invalid", errutil.WithPublicMessage("Invalid password or username"))
+	errLoginAttemptBlocked = errutil.Unauthorized("login-attempt.blocked", errutil.WithPublicMessage("Invalid username or password"))
 )
 
 var _ authn.PasswordClient = new(Password)

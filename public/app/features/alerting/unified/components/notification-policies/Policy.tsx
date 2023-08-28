@@ -279,8 +279,11 @@ const Policy: FC<PolicyComponentProps> = ({
                     <MuteTimings timings={muteTimings} alertManagerSourceName={alertManagerSourceName} />
                   </MetaText>
                 )}
-                {timingOptions && Object.values(timingOptions).some(Boolean) && (
-                  <TimingOptionsMeta timingOptions={timingOptions} />
+                {timingOptions && (
+                  // for the default policy we will also merge the default timings, that way a user can observe what the timing options would be
+                  <TimingOptionsMeta
+                    timingOptions={isDefaultPolicy ? { ...timingOptions, ...TIMING_OPTIONS_DEFAULTS } : timingOptions}
+                  />
                 )}
                 {hasInheritedProperties && (
                   <>
@@ -441,28 +444,39 @@ const MuteTimings: FC<{ timings: string[]; alertManagerSourceName: string }> = (
 };
 
 const TimingOptionsMeta: FC<{ timingOptions: TimingOptions }> = ({ timingOptions }) => {
-  const groupWait = timingOptions.group_wait ?? TIMING_OPTIONS_DEFAULTS.group_wait;
-  const groupInterval = timingOptions.group_interval ?? TIMING_OPTIONS_DEFAULTS.group_interval;
+  const groupWait = timingOptions.group_wait;
+  const groupInterval = timingOptions.group_interval;
+
+  // we don't have any timing options to show – we're inheriting everything from the parent
+  // and those show up in a separate "inherited properties" component
+  if (!groupWait && !groupInterval) {
+    return null;
+  }
 
   return (
     <MetaText icon="hourglass" data-testid="timing-options">
       <span>Wait</span>
-      <Tooltip
-        placement="top"
-        content="How long to initially wait to send a notification for a group of alert instances."
-      >
-        <span>
-          <Strong>{groupWait}</Strong> <span>to group instances</span>,
-        </span>
-      </Tooltip>
-      <Tooltip
-        placement="top"
-        content="How long to wait before sending a notification about new alerts that are added to a group of alerts for which an initial notification has already been sent."
-      >
-        <span>
-          <Strong>{groupInterval}</Strong> <span>before sending updates</span>
-        </span>
-      </Tooltip>
+      {groupWait && (
+        <Tooltip
+          placement="top"
+          content="How long to initially wait to send a notification for a group of alert instances."
+        >
+          <span>
+            <Strong>{groupWait}</Strong> <span>to group instances</span>
+            {groupWait && groupInterval && ','}
+          </span>
+        </Tooltip>
+      )}
+      {groupInterval && (
+        <Tooltip
+          placement="top"
+          content="How long to wait before sending a notification about new alerts that are added to a group of alerts for which an initial notification has already been sent."
+        >
+          <span>
+            <Strong>{groupInterval}</Strong> <span>before sending updates</span>
+          </span>
+        </Tooltip>
+      )}
     </MetaText>
   );
 };
