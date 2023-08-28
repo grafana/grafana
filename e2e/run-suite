@@ -115,6 +115,7 @@ function join () {
   echo "$res"
 }
 
+export TZ="Pacific/Honolulu"
 
 yarn $CMD --env "$(join env)" \
   --config "$(join cypressConfig)" \

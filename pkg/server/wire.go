@@ -77,7 +77,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/login/authinfoservice"
 	authinfodatabase "github.com/grafana/grafana/pkg/services/login/authinfoservice/database"
-	"github.com/grafana/grafana/pkg/services/login/loginservice"
 	"github.com/grafana/grafana/pkg/services/loginattempt"
 	"github.com/grafana/grafana/pkg/services/loginattempt/loginattemptimpl"
 	"github.com/grafana/grafana/pkg/services/navtree/navtreeimpl"
@@ -215,8 +214,6 @@ var wireBasicSet = wire.NewSet(
 	quotaimpl.ProvideService,
 	remotecache.ProvideService,
 	wire.Bind(new(remotecache.CacheStorage), new(*remotecache.RemoteCache)),
-	loginservice.ProvideService,
-	wire.Bind(new(login.Service), new(*loginservice.Implementation)),
 	authinfoservice.ProvideAuthInfoService,
 	wire.Bind(new(login.AuthInfoService), new(*authinfoservice.Implementation)),
 	authinfodatabase.ProvideAuthInfoStore,
@@ -257,6 +254,8 @@ var wireBasicSet = wire.NewSet(
 	elasticsearch.ProvideService,
 	pyroscope.ProvideService,
 	parca.ProvideService,
+	datasourceservice.ProvideCacheService,
+	wire.Bind(new(datasources.CacheService), new(*datasourceservice.CacheServiceImpl)),
 	encryptionservice.ProvideEncryptionService,
 	wire.Bind(new(encryption.Internal), new(*encryptionservice.Service)),
 	secretsManager.ProvideSecretsService,

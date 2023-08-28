@@ -1,6 +1,6 @@
 import { cloneDeep } from 'lodash';
 import { Observable, of, ReplaySubject, Unsubscribable } from 'rxjs';
-import { map, mergeMap } from 'rxjs/operators';
+import { map, mergeMap, catchError } from 'rxjs/operators';
 
 import {
   ApplyFieldOverrideOptions,
@@ -29,7 +29,7 @@ import {
   toDataFrame,
   transformDataFrame,
 } from '@grafana/data';
-import { getTemplateSrv, toDataQueryError } from '@grafana/runtime';
+import { config, getTemplateSrv, toDataQueryError } from '@grafana/runtime';
 import { ExpressionDatasourceRef } from '@grafana/runtime/src/utils/DataSourceWithBackend';
 import { updatePanelDataWithASHFromLoki } from 'app/features/alerting/unified/components/rules/state-history/common';
 import { isStreamingDataFrame } from 'app/features/live/data/utils';
@@ -51,7 +51,6 @@ export interface QueryRunnerOptions<
   queries: TQuery[];
   panelId?: number;
   dashboardUID?: string;
-  publicDashboardAccessToken?: string;
   timezone: TimeZone;
   timeRange: TimeRange;
   timeInfo?: string; // String description of time range for display
@@ -221,7 +220,17 @@ export class PanelQueryRunner {
       interpolate: (v: string) => getTemplateSrv().replace(v, data?.request?.scopedVars),
     };
 
-    return transformDataFrame(transformations, data.series, ctx).pipe(map((series) => ({ ...data, series })));
+    return transformDataFrame(transformations, data.series, ctx).pipe(
+      map((series) => ({ ...data, series })),
+      catchError((err) => {
+        console.warn('Error running transformation:', err);
+        return of({
+          ...data,
+          state: LoadingState.Error,
+          error: toDataQueryError(err),
+        });
+      })
+    );
   }
 
   async run(options: QueryRunnerOptions) {
@@ -231,7 +240,6 @@ export class PanelQueryRunner {
       datasource,
       panelId,
       dashboardUID,
-      publicDashboardAccessToken,
       timeRange,
       timeInfo,
       cacheTimeout,
@@ -253,7 +261,6 @@ export class PanelQueryRunner {
       timezone,
       panelId,
       dashboardUID,
-      publicDashboardAccessToken,
       range: timeRange,
       timeInfo,
       interval: '',
@@ -268,7 +275,7 @@ export class PanelQueryRunner {
     };
 
     try {
-      const ds = await getDataSource(datasource, request.scopedVars, publicDashboardAccessToken);
+      const ds = await getDataSource(datasource, request.scopedVars);
       const isMixedDS = ds.meta?.mixed;
 
       // Attach the data source to each query
@@ -406,15 +413,14 @@ export class PanelQueryRunner {
 
 async function getDataSource(
   datasource: DataSourceRef | string | DataSourceApi | null,
-  scopedVars: ScopedVars,
-  publicDashboardAccessToken?: string
+  scopedVars: ScopedVars
 ): Promise<DataSourceApi> {
-  if (!publicDashboardAccessToken && datasource && typeof datasource === 'object' && 'query' in datasource) {
+  if (!config.publicDashboardAccessToken && datasource && typeof datasource === 'object' && 'query' in datasource) {
     return datasource;
   }
 
   const ds = await getDatasourceSrv().get(datasource, scopedVars);
-  if (publicDashboardAccessToken) {
+  if (config.publicDashboardAccessToken) {
     return new PublicDashboardDataSource(ds);
   }
 
