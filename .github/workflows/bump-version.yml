@@ -55,6 +55,10 @@ jobs:
           repository: "grafana/grafana-github-actions"
           path: ./actions
           ref: main
+      # Go is required for also updating the schema versions as part of the precommit hook:
+      - uses: actions/setup-go@v4
+        with:
+          go-version: '1.20'
       - uses: actions/setup-node@v3.5.1
         with:
           node-version: '16'
@@ -71,3 +75,4 @@ jobs:
         with:
           token: ${{ steps.generate_token.outputs.token }}
           metricsWriteAPIKey: ${{ secrets.GRAFANA_MISC_STATS_API_KEY }}
+          precommit_make_target: gen-cue

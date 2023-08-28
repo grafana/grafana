@@ -19,7 +19,6 @@ var (
 	ErrGuardianPermissionExists    = errors.New("permission already exists")
 	ErrGuardianOverride            = errors.New("you can only override a permission to be higher")
 	ErrGuardianGetDashboardFailure = errutil.Internal("guardian.getDashboardFailure", errutil.WithPublicMessage("Failed to get dashboard"))
-	ErrGuardianGetFolderFailure    = errutil.Internal("guardian.getFolderFailure", errutil.WithPublicMessage("Failed to get folder"))
 	ErrGuardianDashboardNotFound   = errutil.NotFound("guardian.dashboardNotFound")
 	ErrGuardianFolderNotFound      = errutil.NotFound("guardian.folderNotFound")
 )

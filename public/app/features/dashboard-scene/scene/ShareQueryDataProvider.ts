@@ -10,7 +10,7 @@ import {
 } from '@grafana/scenes';
 import { DashboardQuery } from 'app/plugins/datasource/dashboard/types';
 
-import { getVizPanelKeyForPanelId } from './utils';
+import { getVizPanelKeyForPanelId } from '../utils/utils';
 
 export interface ShareQueryDataProviderState extends SceneDataState {
   query: DashboardQuery;

@@ -345,3 +345,37 @@ func TestInitalizer_awsEnvVars(t *testing.T) {
 		assert.ElementsMatch(t, []string{"GF_VERSION=", "AWS_AUTH_AssumeRoleEnabled=true", "AWS_AUTH_AllowedAuthProviders=grafana_assume_role,keys", "AWS_AUTH_EXTERNAL_ID=mock_external_id"}, envVars)
 	})
 }
+
+func TestInitializer_featureToggleEnvVar(t *testing.T) {
+	t.Run("backend datasource with feature toggle", func(t *testing.T) {
+		expectedFeatures := []string{"feat-1", "feat-2"}
+		featuresLookup := map[string]bool{
+			expectedFeatures[0]: true,
+			expectedFeatures[1]: true,
+		}
+
+		p := &plugins.Plugin{}
+		envVarsProvider := NewProvider(&config.Cfg{
+			Features: featuremgmt.WithFeatures(expectedFeatures[0], true, expectedFeatures[1], true),
+		}, nil)
+		envVars := envVarsProvider.Get(context.Background(), p)
+
+		assert.Equal(t, 2, len(envVars))
+
+		toggleExpression := strings.Split(envVars[1], "=")
+		assert.Equal(t, 2, len(toggleExpression))
+
+		assert.Equal(t, "GF_INSTANCE_FEATURE_TOGGLES_ENABLE", toggleExpression[0])
+
+		toggleArgs := toggleExpression[1]
+		features := strings.Split(toggleArgs, ",")
+
+		assert.Equal(t, len(expectedFeatures), len(features))
+
+		// this is necessary because the features are not returned in the order they are provided
+		for _, f := range features {
+			_, ok := featuresLookup[f]
+			assert.True(t, ok)
+		}
+	})
+}
