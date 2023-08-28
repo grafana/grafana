@@ -145,8 +145,8 @@ func callResource(ctx context.Context, req *backend.CallResourceRequest, sender 
 
 func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	dsInfo, err := s.getDSInfo(ctx, req.PluginContext)
+	logger := logger.FromContext(ctx).New("api", "QueryData")
 	if err != nil {
-		logger := logger.FromContext(ctx)
 		logger.Error("failed to get data source info", "err", err)
 		result := backend.NewQueryDataResponse()
 		return result, err
@@ -157,18 +157,17 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 		logsDataplane:   s.features.IsEnabled(featuremgmt.FlagLokiLogsDataplane),
 	}
 
-	return queryData(ctx, req, dsInfo, responseOpts, s.tracer)
+	return queryData(ctx, req, dsInfo, responseOpts, s.tracer, logger)
 }
 
-func queryData(ctx context.Context, req *backend.QueryDataRequest, dsInfo *datasourceInfo, responseOpts ResponseOpts, tracer tracing.Tracer) (*backend.QueryDataResponse, error) {
+func queryData(ctx context.Context, req *backend.QueryDataRequest, dsInfo *datasourceInfo, responseOpts ResponseOpts, tracer tracing.Tracer, plog log.Logger) (*backend.QueryDataResponse, error) {
 	result := backend.NewQueryDataResponse()
 
-	logger := logger.FromContext(ctx)
-	api := newLokiAPI(dsInfo.HTTPClient, dsInfo.URL, logger, tracer)
+	api := newLokiAPI(dsInfo.HTTPClient, dsInfo.URL, plog, tracer)
 
 	queries, err := parseQuery(req)
 	if err != nil {
-		logger.Error("failed to parse queries", "err", err)
+		plog.Error("failed to parse queries", "err", err)
 		return result, err
 	}
 
