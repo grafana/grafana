@@ -31,7 +31,7 @@ export const getStyles = ({ spacing }: GrafanaTheme) => ({
     white-space: nowrap;
   `,
   addRemoteInstanceTitle: css`
-    text-align: center;
+    text-align: left;
   `,
   addRemoteInstanceButtons: css`
     margin-top: ${spacing.md};

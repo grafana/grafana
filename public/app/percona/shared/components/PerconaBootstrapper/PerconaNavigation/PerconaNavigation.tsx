@@ -20,6 +20,7 @@ import {
   PMM_ADD_INSTANCE_PAGE,
   PMM_BACKUP_PAGE,
   PMM_DBAAS_PAGE,
+  PMM_EDIT_INSTANCE_PAGE,
   PMM_ENTITLEMENTS_PAGE,
   PMM_ENVIRONMENT_OVERVIEW_PAGE,
   PMM_INVENTORY_PAGE,
@@ -51,6 +52,7 @@ const PerconaNavigation: React.FC = () => {
   dispatch(updateNavIndex(PMM_BACKUP_PAGE));
   dispatch(updateNavIndex(PMM_INVENTORY_PAGE));
   dispatch(updateNavIndex(PMM_ADD_INSTANCE_PAGE));
+  dispatch(updateNavIndex(PMM_EDIT_INSTANCE_PAGE));
   dispatch(updateNavIndex(PMM_TICKETS_PAGE));
   dispatch(updateNavIndex(PMM_ENTITLEMENTS_PAGE));
   dispatch(updateNavIndex(PMM_ENVIRONMENT_OVERVIEW_PAGE));

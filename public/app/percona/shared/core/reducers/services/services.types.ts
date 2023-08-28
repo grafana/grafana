@@ -1,6 +1,6 @@
 import { CancelToken } from 'axios';
 
-import { Service, ServiceType } from 'app/percona/shared/services/services/Services.types';
+import { DbServicePayload, Service, ServiceType } from 'app/percona/shared/services/services/Services.types';
 
 export interface ServicesState {
   activeTypes: ServiceType[];
@@ -23,4 +23,16 @@ export interface RemoveServiceParams {
 export interface RemoveServicesParams {
   services: RemoveServiceParams[];
   cancelToken?: CancelToken;
+}
+
+export interface UpdateServiceParams {
+  serviceId: string;
+  labels: {
+    environment?: string;
+    cluster?: string;
+    replication_set?: string;
+    external_group?: string;
+  };
+  custom_labels: Record<string, string>;
+  current: DbServicePayload;
 }

@@ -70,3 +70,7 @@ export interface Instance {
 }
 
 export type SelectInstance = (instance: InstanceAvailable) => void;
+
+export interface AddInstanceRouteParams {
+  instanceType?: AvailableTypes;
+}

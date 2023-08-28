@@ -23,7 +23,7 @@ const Credentials: FC<CredentialsProps> = ({ onSetCredentials, selectInstance })
     <FormFinal
       onSubmit={onSubmit}
       render={({ handleSubmit }) => (
-        <form onSubmit={handleSubmit} className={styles.instanceForm}>
+        <form id="add-instance-form" onSubmit={handleSubmit} className={styles.instanceForm}>
           <div className={styles.searchPanel}>
             <TextInputField
               name={Messages.form.fields.clientId.name}
@@ -57,12 +57,6 @@ const Credentials: FC<CredentialsProps> = ({ onSetCredentials, selectInstance })
             />
           </div>
           <div className={styles.searchPanel}>
-            <Button variant="secondary" onClick={() => selectInstance({ type: '' })} icon="arrow-left">
-              {Messages.form.toMenuButton}
-            </Button>
-            <Button type="submit" data-testid="credentials-search-button" className={styles.credentialsSubmit}>
-              {Messages.form.submitButton}
-            </Button>
             <Button type="button" fill="text" onClick={() => window.open(SECURITY_CREDENTIALS_DOC_LINK, '_blank')}>
               {Messages.form.credentialsDocLink}
             </Button>

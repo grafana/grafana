@@ -1,13 +1,29 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
+import { withSerializedError } from 'app/features/alerting/unified/utils/redux';
 import { ServicesService } from 'app/percona/shared/services/services/Services.service';
 import { Service, ServiceType } from 'app/percona/shared/services/services/Services.types';
 import { createAsyncThunk } from 'app/types';
 
 import { filterFulfilled, processPromiseResults } from '../../../helpers/promises';
 
-import { ListServicesParams, RemoveServicesParams, ServicesState } from './services.types';
-import { toDbServicesModel, toListServicesBody, toRemoveServiceBody } from './services.utils';
+import {
+  ListServicesParams,
+  RemoveServiceParams,
+  RemoveServicesParams,
+  ServicesState,
+  UpdateServiceParams,
+} from './services.types';
+import {
+  didStandardLabelsChange,
+  hasLabelsToAddOrUpdate,
+  hasLabelsToRemove,
+  toCustomLabelsBodies,
+  toDbServicesModel,
+  toListServicesBody,
+  toRemoveServiceBody,
+  toUpdateServiceBody,
+} from './services.utils';
 
 const initialState: ServicesState = {
   activeTypes: [],
@@ -77,6 +93,46 @@ export const removeServicesAction = createAsyncThunk(
     const results = await processPromiseResults(requests);
     return results.filter(filterFulfilled).length;
   }
+);
+
+export const removeServiceAction = createAsyncThunk(
+  'percona/removeServices',
+  async (params: RemoveServiceParams, thunkAPI): Promise<void> =>
+    withSerializedError(
+      (async () => {
+        const body = toRemoveServiceBody(params);
+        await ServicesService.removeService(body);
+
+        thunkAPI.dispatch(fetchServicesAction({}));
+        thunkAPI.dispatch(fetchActiveServiceTypesAction());
+      })()
+    )
+);
+
+export const updateServiceAction = createAsyncThunk('percona/updateService', (params: UpdateServiceParams, thunkAPI) =>
+  withSerializedError(
+    (async (): Promise<void> => {
+      const updateBody = toUpdateServiceBody(params);
+      const [addLabelsBody, removeLabelsBody] = toCustomLabelsBodies(params);
+      const requests: Array<Promise<{}>> = [];
+
+      if (didStandardLabelsChange(params)) {
+        requests.push(ServicesService.updateService(updateBody));
+      }
+
+      if (hasLabelsToAddOrUpdate(addLabelsBody)) {
+        requests.push(ServicesService.addCustomLabels(addLabelsBody));
+      }
+
+      if (hasLabelsToRemove(removeLabelsBody)) {
+        requests.push(ServicesService.removeCustomLabels(removeLabelsBody));
+      }
+
+      await Promise.all(requests);
+
+      thunkAPI.dispatch(fetchServicesAction({}));
+    })()
+  )
 );
 
 export default servicesSlice.reducer;

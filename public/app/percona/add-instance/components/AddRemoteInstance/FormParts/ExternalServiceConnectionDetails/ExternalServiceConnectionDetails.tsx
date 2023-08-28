@@ -1,7 +1,6 @@
 import React, { FC, useCallback, useEffect, useMemo } from 'react';
 
-import { useStyles } from '@grafana/ui';
-import { LinkTooltip } from 'app/percona/shared/components/Elements/LinkTooltip/LinkTooltip';
+import { useStyles2 } from '@grafana/ui';
 import { PasswordInputField } from 'app/percona/shared/components/Form/PasswordInput';
 import { RadioButtonGroupField } from 'app/percona/shared/components/Form/RadioButtonGroup';
 import { TextInputField } from 'app/percona/shared/components/Form/TextInput';
@@ -14,7 +13,7 @@ import { getStyles } from '../FormParts.styles';
 import { FormPartProps, MetricsParameters, Schema } from '../FormParts.types';
 
 export const ExternalServiceConnectionDetails: FC<FormPartProps> = ({ form }) => {
-  const styles = useStyles(getStyles);
+  const styles = useStyles2(getStyles);
   const formValues = form.getState().values;
   const selectedOption = formValues?.metricsParameters;
   const urlValue = formValues?.url;
@@ -48,91 +47,100 @@ export const ExternalServiceConnectionDetails: FC<FormPartProps> = ({ form }) =>
   return (
     <div className={styles.groupWrapper}>
       <h4 className={styles.sectionHeader}>{Messages.form.titles.connectionDetails}</h4>
-      <div className={styles.labelWrapper} data-testid="username-label">
-        <span>{Messages.form.labels.externalService.serviceName}</span>
-        <LinkTooltip tooltipContent={Messages.form.tooltips.externalService.serviceName} icon="info-circle" />
+      <div className={styles.group}>
+        <TextInputField
+          name="serviceName"
+          label={Messages.form.labels.externalService.serviceName}
+          tooltipText={Messages.form.tooltips.externalService.serviceName}
+          placeholder={Messages.form.placeholders.externalService.serviceName}
+        />
+        <div />
       </div>
-      <TextInputField name="serviceName" placeholder={Messages.form.placeholders.externalService.serviceName} />
-      <div className={styles.labelWrapper} data-testid="username-label">
-        <span>{Messages.form.labels.externalService.group}</span>
-        <LinkTooltip tooltipContent={Messages.form.tooltips.externalService.group} icon="info-circle" />
+      <div className={styles.group}>
+        <TextInputField
+          name="group"
+          label={Messages.form.labels.externalService.group}
+          tooltipText={Messages.form.tooltips.externalService.group}
+        />
+        <div />
       </div>
-      <TextInputField name="group" />
-      <div className={styles.labelWrapper} data-testid="address-label">
-        <span>{Messages.form.labels.externalService.connectionParameters}</span>
-        <LinkTooltip tooltipContent={Messages.form.tooltips.externalService.url} icon="info-circle" />
+      <div className={styles.group}>
+        <RadioButtonGroupField
+          name="metricsParameters"
+          data-testid="metrics-parameters-field"
+          label={Messages.form.labels.externalService.connectionParameters}
+          tooltipText={Messages.form.tooltips.externalService.url}
+          options={metricsParametersOptions}
+        />
       </div>
-      <RadioButtonGroupField
-        name="metricsParameters"
-        data-testid="metrics-parameters-field"
-        options={metricsParametersOptions}
-      />
       {selectedOption === MetricsParameters.parsed && (
-        <>
-          <div className={styles.labelWrapper} data-testid="address-label">
-            <span>{Messages.form.labels.externalService.url}</span>
-            <LinkTooltip tooltipContent={Messages.form.tooltips.externalService.url} icon="info-circle" />
-          </div>
-          <div className={styles.urlFieldWrapper}>
-            <TextInputField
-              name="url"
-              placeholder={Messages.form.placeholders.externalService.url}
-              validators={[Validators.validateUrl, validators.required]}
-            />
-          </div>
-        </>
+        <div className={styles.urlFieldWrapper}>
+          <TextInputField
+            name="url"
+            label={Messages.form.labels.externalService.url}
+            tooltipText={Messages.form.tooltips.externalService.url}
+            placeholder={Messages.form.placeholders.externalService.url}
+            validators={[Validators.validateUrl, validators.required]}
+          />
+        </div>
       )}
       {selectedOption === MetricsParameters.manually && (
         <>
-          <div className={styles.labelWrapper} data-testid="address-label">
-            <span>{Messages.form.labels.externalService.schema}</span>
-            <LinkTooltip tooltipContent={Messages.form.tooltips.externalService.schema} icon="info-circle" />
+          <div className={styles.group}>
+            <RadioButtonGroupField
+              name="schema"
+              data-testid="http-schema-field"
+              label={Messages.form.labels.externalService.schema}
+              tooltipText={Messages.form.tooltips.externalService.schema}
+              options={schemaOptions}
+            />
+            <div />
           </div>
-          <RadioButtonGroupField name="schema" data-testid="http-schema-field" options={schemaOptions} />
-          <div className={styles.labelWrapper} data-testid="address-label">
-            <span>{Messages.form.labels.externalService.address}</span>
-            <LinkTooltip tooltipContent={Messages.form.tooltips.externalService.address} icon="info-circle" />
+          <div className={styles.group}>
+            <TextInputField
+              name="address"
+              initialValue=""
+              label={Messages.form.labels.externalService.address}
+              tooltipText={Messages.form.tooltips.externalService.address}
+              placeholder={Messages.form.placeholders.externalService.address}
+              validators={[validators.required]}
+            />
+            <TextInputField
+              name="metrics_path"
+              initialValue=""
+              label={Messages.form.labels.externalService.metricsPath}
+              tooltipText={Messages.form.tooltips.externalService.metricsPath}
+              placeholder={Messages.form.placeholders.externalService.metricsPath}
+            />
           </div>
-          <TextInputField
-            name="address"
-            initialValue=""
-            placeholder={Messages.form.placeholders.externalService.address}
-            validators={[validators.required]}
-          />
-          <div className={styles.labelWrapper} data-testid="service-name-label">
-            <span>{Messages.form.labels.externalService.metricsPath}</span>
-            <LinkTooltip tooltipContent={Messages.form.tooltips.externalService.metricsPath} icon="info-circle" />
+          <div className={styles.group}>
+            <TextInputField
+              name="port"
+              placeholder="Port"
+              label={Messages.form.labels.externalService.port}
+              tooltipText={Messages.form.tooltips.externalService.port}
+              validators={portValidators}
+            />
+            <div />
           </div>
-          <TextInputField
-            name="metrics_path"
-            initialValue=""
-            placeholder={Messages.form.placeholders.externalService.metricsPath}
-          />
-          <div className={styles.labelWrapper} data-testid="port-label">
-            <span>{Messages.form.labels.externalService.port}</span>
-            <LinkTooltip tooltipContent={Messages.form.tooltips.externalService.port} icon="info-circle" />
+          <div className={styles.group}>
+            <TextInputField
+              name="username"
+              initialValue=""
+              label={Messages.form.labels.externalService.username}
+              tooltipText={Messages.form.tooltips.externalService.username}
+              placeholder={Messages.form.placeholders.externalService.username}
+              format={trim}
+            />
+            <PasswordInputField
+              name="password"
+              initialValue=""
+              label={Messages.form.labels.externalService.password}
+              tooltipText={Messages.form.tooltips.externalService.password}
+              placeholder={Messages.form.placeholders.externalService.password}
+              format={trim}
+            />
           </div>
-          <TextInputField name="port" placeholder="Port" validators={portValidators} />
-          <div className={styles.labelWrapper} data-testid="username-label">
-            <span>{Messages.form.labels.externalService.username}</span>
-            <LinkTooltip tooltipContent={Messages.form.tooltips.externalService.username} icon="info-circle" />
-          </div>
-          <TextInputField
-            name="username"
-            initialValue=""
-            placeholder={Messages.form.placeholders.externalService.username}
-            format={trim}
-          />
-          <div className={styles.labelWrapper} data-testid="password-label">
-            <span>{Messages.form.labels.externalService.password}</span>
-            <LinkTooltip tooltipContent={Messages.form.tooltips.externalService.password} icon="info-circle" />
-          </div>
-          <PasswordInputField
-            name="password"
-            initialValue=""
-            placeholder={Messages.form.placeholders.externalService.password}
-            format={trim}
-          />
         </>
       )}
     </div>

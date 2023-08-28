@@ -1,52 +1,30 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 
-export const getStyles = ({ border, colors, spacing, typography }: GrafanaTheme) => ({
-  navigationButton: css`
+export const getStyles = (theme: GrafanaTheme2) => ({
+  Content: css`
     display: flex;
     flex-direction: column;
-    justify-content: flex-end;
-    align-items: center;
-    padding-bottom: 1.2em;
-    margin: ${spacing.sm};
-    border-radius: ${border.radius.md};
-    width: 230px;
-    height: 160px;
-    text-align: center;
-    background-color: transparent;
-    border: ${border.width.sm} dashed ${colors.border2};
-
-    :hover {
-      cursor: pointer;
-      background-color: ${colors.dropdownOptionHoverBg};
-      border: ${border.width.sm} solid ${colors.border2};
-    }
+    align-items: flex-start;
   `,
-  navigationPanel: css`
+  NavigationPanel: css`
     display: flex;
     flex-direction: row;
-    justify-content: center;
+    justify-content: flex-start;
     flex-wrap: wrap;
-    max-width: 800px;
+    max-width: 825px;
     width: 100%;
     overflow: hidden;
+    gap: ${theme.spacing(2)};
+    padding: 3px;
+    margin: -3px;
   `,
-  content: css`
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    margin-top: 2em;
+  InstanceCard: css`
+    width: 375px;
+    margin: 0;
   `,
-  addInstance: css`
-    margin-top: ${spacing.sm};
-    font-size: ${typography.size.sm};
-  `,
-  addInstanceTitle: css`
-    margin-top: ${spacing.sm};
-    overflow: hidden;
-    line-height: ${typography.lineHeight.md};
-    width: 65%;
-    height: 3em;
+  Description: css`
+    color: ${theme.colors.text.secondary};
   `,
 });

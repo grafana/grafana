@@ -1,6 +1,7 @@
 import { SelectInstance } from '../../panel.types';
 export interface DiscoverySearchPanelProps {
   selectInstance: SelectInstance;
+  onSubmit: (submitPromise: Promise<void>) => void;
 }
 
 export interface Instance {

@@ -1,7 +1,7 @@
 import { FormApi } from 'final-form';
 import React, { FC, useEffect, useState } from 'react';
 
-import { useStyles } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui';
 import { InstanceAvailableType, RemoteInstanceCredentials } from 'app/percona/add-instance/panel.types';
 import { CheckboxField } from 'app/percona/shared/components/Elements/Checkbox';
 import { NumberInputField } from 'app/percona/shared/components/Form/NumberInput';
@@ -25,12 +25,12 @@ export const AdditionalOptionsFormPart: FC<AdditionalOptionsFormPartProps> = ({
   remoteInstanceCredentials,
   form,
 }) => {
-  const styles = useStyles(getStyles);
+  const styles = useStyles2(getStyles);
 
   return (
     <div className={styles.groupWrapper}>
       <h4 className={styles.sectionHeader}>{Messages.form.titles.additionalOptions}</h4>
-      <div>
+      <div className={styles.additionalOptions}>
         <CheckboxField
           label={Messages.form.labels.additionalOptions.skipConnectionCheck}
           name="skip_connection_check"
@@ -43,11 +43,11 @@ export const AdditionalOptionsFormPart: FC<AdditionalOptionsFormPartProps> = ({
 
 export const PostgreSQLAdditionalOptions: FC<PostgreSQLAdditionalOptionsProps> = ({ isRDS, isAzure }) => (
   <>
+    <h4>{Messages.form.labels.trackingOptions}</h4>
     <RadioButtonGroupField
       name="tracking"
       data-testid="tracking-options-radio-button-group"
       options={isRDS || isAzure ? rdsTrackingOptions : trackingOptions}
-      label={Messages.form.labels.trackingOptions}
     />
   </>
 );
@@ -62,8 +62,9 @@ const getTablestatValues = (type: TablestatOptionsInterface) => {
 };
 
 const MySQLOptions = ({ form }: { form: FormApi }) => {
-  const selectedOption = form.getState().values && form.getState().values['tablestat-options'];
+  const selectedOption = form.getState().values && form.getState().values.tablestatOptions;
   const [selectedValue, setSelectedValue] = useState<string>(selectedOption || TablestatOptionsInterface.disabled);
+  const styles = useStyles2(getStyles);
 
   useEffect(() => {
     setSelectedValue(selectedOption);
@@ -72,19 +73,25 @@ const MySQLOptions = ({ form }: { form: FormApi }) => {
 
   return (
     <>
-      <RadioButtonGroupField
-        name="tablestat-options"
-        data-testid="tablestat-options-radio-button-group"
-        defaultValue={selectedValue}
-        options={tablestatOptions}
-        label={Messages.form.labels.additionalOptions.tablestatOptions}
-      />
-      <NumberInputField
-        name="tablestats_group_table_limit"
-        defaultValue={-1}
-        disabled={selectedValue !== TablestatOptionsInterface.custom}
-        validate={platformCoreValidators.containsNumber}
-      />
+      <h4>{Messages.form.labels.additionalOptions.tablestatOptions}</h4>
+      <div className={styles.group}>
+        <RadioButtonGroupField
+          name="tablestatOptions"
+          data-testid="tablestat-options-radio-button-group"
+          defaultValue={selectedValue}
+          options={tablestatOptions}
+          className={styles.radioField}
+          label={Messages.form.labels.additionalOptions.tablestatOptionsState}
+          fullWidth
+        />
+        <NumberInputField
+          name="tablestats_group_table_limit"
+          defaultValue={-1}
+          disabled={selectedValue !== TablestatOptionsInterface.custom}
+          validate={platformCoreValidators.containsNumber}
+          label={Messages.form.labels.additionalOptions.tablestatOptionsLimit}
+        />
+      </div>
     </>
   );
 };

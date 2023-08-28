@@ -1,10 +1,10 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 
-export const getStyles = ({ spacing }: GrafanaTheme) => ({
+export const getStyles = ({ breakpoints, spacing, colors }: GrafanaTheme2) => ({
   groupWrapper: css`
-    width: 50%;
+    width: ${breakpoints.values.md}px;
   `,
   addServiceButton: css`
     margin-top: 30px;
@@ -19,9 +19,9 @@ export const getStyles = ({ spacing }: GrafanaTheme) => ({
     font-weight: 500;
     color: rgb(159, 167, 179);
     svg {
-      margin-left: ${spacing.xs};
+      margin-left: ${spacing(1)};
     }
-    margin-bottom: ${spacing.xs};
+    margin-bottom: ${spacing(1)};
   `,
   urlFieldGroupWrapper: css`
     display: flex;
@@ -31,5 +31,45 @@ export const getStyles = ({ spacing }: GrafanaTheme) => ({
   urlFieldWrapper: css`
     width: 100%;
     margin-right: 5px;
+  `,
+  group: css`
+    display: flex;
+    flex-direction: row;
+    gap: ${spacing(2)};
+
+    ${breakpoints.down('md')} {
+      flex-wrap: wrap;
+    }
+
+    & > * {
+      width: 50%;
+      margin-bottom: ${spacing(1)} !important;
+    }
+  `,
+  radioField: css`
+    label {
+      /* match radio field height with inputs */
+      margin-top: -3px;
+      padding-bottom: 3px;
+      padding-top: 3px;
+      height: auto;
+    }
+  `,
+  description: css`
+    color: ${colors.text.secondary};
+    font-weight: normal;
+    margin-bottom: 0;
+  `,
+  additionalOptions: css`
+    & > div:not(:last-child) {
+      margin-bottom: -${spacing(2)} !important;
+    }
+
+    h4 {
+      margin: ${spacing(2)} 0;
+    }
+  `,
+  link: css`
+    color: ${colors.text.link};
   `,
 });

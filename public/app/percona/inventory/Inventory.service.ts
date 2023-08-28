@@ -1,3 +1,6 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/consistent-type-assertions */
+
 import { CancelToken } from 'axios';
 
 import { api } from 'app/percona/shared/helpers/api';
@@ -55,5 +58,8 @@ export const InventoryService = {
   },
   removeNode(body: RemoveNodeBody, token?: CancelToken) {
     return api.post<void, RemoveNodeBody>(`${BASE_URL}/Nodes/Remove`, body, false, token);
+  },
+  getService(serviceId: string, token?: CancelToken) {
+    return api.post<any, any>(`${BASE_URL}/Services/Get`, { service_id: serviceId }, false, token);
   },
 };

@@ -13,7 +13,7 @@ import Credentials from './components/Credentials/Credentials';
 import { AzureCredentialsForm } from './components/Credentials/Credentials.types';
 import Instances from './components/Instances/Instances';
 
-const Discovery: FC<DiscoverySearchPanelProps> = ({ selectInstance }) => {
+const Discovery: FC<DiscoverySearchPanelProps> = ({ onSubmit, selectInstance }) => {
   const styles = useStyles(getStyles);
 
   const [instances, setInstances] = useState<Instance[]>([]);

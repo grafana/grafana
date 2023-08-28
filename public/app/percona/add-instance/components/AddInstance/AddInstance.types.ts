@@ -1,12 +1,21 @@
-import { InstanceAvailable } from '../../panel.types';
+import { IconName } from '@grafana/data';
 
-export interface SelectInstanceProps {
-  type: string;
-  title: string;
-  selectInstanceType: (type: string) => () => void;
+import { InstanceAvailable, InstanceAvailableType } from '../../panel.types';
+
+export interface SelectInstanceProps extends InstanceListItem {
+  isSelected: boolean;
+  selectInstanceType: (type: InstanceAvailableType) => () => void;
 }
 
 export interface AddInstanceProps {
+  selectedInstanceType: InstanceAvailable;
   onSelectInstanceType: (arg: InstanceAvailable) => void;
   showAzure: boolean;
+}
+
+export interface InstanceListItem {
+  type: InstanceAvailableType;
+  icon?: IconName;
+  title: string;
+  isHidden?: boolean;
 }

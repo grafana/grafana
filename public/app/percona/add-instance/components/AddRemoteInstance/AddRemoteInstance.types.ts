@@ -22,6 +22,7 @@ export interface InstanceData {
 export interface AddRemoteInstanceProps {
   instance: InstanceAvailable;
   selectInstance: SelectInstance;
+  onSubmit: (submitPromise: Promise<void>) => void;
 }
 
 export enum DefaultPorts {

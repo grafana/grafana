@@ -1,7 +1,8 @@
 import React, { FC, useCallback } from 'react';
 import { Form as FormFinal } from 'react-final-form';
 
-import { Button, useStyles } from '@grafana/ui';
+import { useStyles } from '@grafana/ui';
+import { ADD_INSTANCE_FORM_NAME } from 'app/percona/add-instance/panel.constants';
 import { PasswordInputField } from 'app/percona/shared/components/Form/PasswordInput';
 import { TextInputField } from 'app/percona/shared/components/Form/TextInput';
 
@@ -9,7 +10,7 @@ import { Messages } from './Credentials.messages';
 import { getStyles } from './Credentials.styles';
 import { CredentialsProps, RDSCredentialsForm } from './Credentials.types';
 
-const Credentials: FC<CredentialsProps> = ({ discover, selectInstance }) => {
+const Credentials: FC<CredentialsProps> = ({ discover }) => {
   const styles = useStyles(getStyles);
 
   const onSubmit = useCallback(
@@ -23,7 +24,12 @@ const Credentials: FC<CredentialsProps> = ({ discover, selectInstance }) => {
     <FormFinal
       onSubmit={onSubmit}
       render={({ handleSubmit }) => (
-        <form onSubmit={handleSubmit} className={styles.instanceForm} data-testid="credentials-form">
+        <form
+          id={ADD_INSTANCE_FORM_NAME}
+          onSubmit={handleSubmit}
+          className={styles.instanceForm}
+          data-testid="credentials-form"
+        >
           <div className={styles.fieldsWrapper}>
             <TextInputField
               name={Messages.form.fields.awsAccessKey.name}
@@ -38,15 +44,6 @@ const Credentials: FC<CredentialsProps> = ({ discover, selectInstance }) => {
               fieldClassName={styles.credentialsField}
             />
           </div>
-          <div className={styles.buttonsWrapper}>
-            <Button variant="secondary" onClick={() => selectInstance({ type: '' })} icon="arrow-left">
-              {Messages.form.toMenuButton}
-            </Button>
-            <Button type="submit" data-testid="credentials-search-button" className={styles.credentialsSubmit}>
-              {Messages.form.submitButton}
-            </Button>
-          </div>
-          <div></div>
         </form>
       )}
     />

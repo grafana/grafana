@@ -5,14 +5,20 @@ import { Provider } from 'react-redux';
 import { configureStore } from 'app/store/configureStore';
 import { StoreState } from 'app/types';
 
+import { InstanceAvailable } from '../../panel.types';
+
 import { AddInstance } from './AddInstance';
 import { instanceList } from './AddInstance.constants';
 
 jest.mock('app/percona/settings/Settings.service');
 
+const selectedInstanceType: InstanceAvailable = { type: '' };
+
 describe('AddInstance page::', () => {
   it('should render a given number of links', async () => {
-    const ui = withStore(<AddInstance showAzure={false} onSelectInstanceType={() => {}} />);
+    const ui = withStore(
+      <AddInstance showAzure={false} onSelectInstanceType={() => {}} selectedInstanceType={selectedInstanceType} />
+    );
     await waitFor(() => render(ui));
 
     expect(screen.getAllByRole('button')).toHaveLength(instanceList.length);
@@ -22,7 +28,9 @@ describe('AddInstance page::', () => {
   });
 
   it('should render azure option', async () => {
-    const ui = withStore(<AddInstance showAzure onSelectInstanceType={() => {}} />);
+    const ui = withStore(
+      <AddInstance showAzure onSelectInstanceType={() => {}} selectedInstanceType={selectedInstanceType} />
+    );
     await waitFor(() => render(ui));
 
     expect(screen.getAllByRole('button')).toHaveLength(instanceList.length + 1);
@@ -35,13 +43,15 @@ describe('AddInstance page::', () => {
   it('should invoke a callback with a proper instance type', async () => {
     const onSelectInstanceType = jest.fn();
 
-    const ui = withStore(<AddInstance showAzure onSelectInstanceType={onSelectInstanceType} />);
+    const ui = withStore(
+      <AddInstance showAzure onSelectInstanceType={onSelectInstanceType} selectedInstanceType={selectedInstanceType} />
+    );
     render(ui);
 
     expect(onSelectInstanceType).toBeCalledTimes(0);
 
-    const button = await screen.findByTestId('rds-instance');
-    fireEvent.click(button);
+    const button = (await screen.findByTestId('rds-instance')).querySelector('button');
+    fireEvent.click(button!);
 
     expect(onSelectInstanceType).toBeCalledTimes(1);
     expect(onSelectInstanceType.mock.calls[0][0]).toStrictEqual({ type: 'rds' });

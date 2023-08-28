@@ -766,6 +766,18 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     {
+      path: '/add-instance/:instanceType',
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "AddInstancePage" */ 'app/percona/add-instance/panel')
+      ),
+    },
+    {
+      path: '/edit-instance/:serviceId',
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "AddInstancePage" */ 'app/percona/edit-instance/EditInstance')
+      ),
+    },
+    {
       path: '/add-instance/:tab',
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "AddInstancePage" */ 'app/percona/add-instance/panel')

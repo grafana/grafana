@@ -6,6 +6,7 @@ export const getStyles = ({ spacing }: GrafanaTheme) => ({
   instanceForm: css`
     padding: 0px;
     margin-bottom: ${spacing.sm};
+    width: 100%;
   `,
   searchPanel: css`
     display: flex;

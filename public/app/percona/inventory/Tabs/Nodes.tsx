@@ -53,7 +53,7 @@ export const NodesTab = () => {
         content: (
           <HorizontalGroup spacing="sm">
             <Icon name="trash-alt" />
-            <span className={styles.deleteItemTxtSpan}>{Messages.delete}</span>
+            <span className={styles.actionItemTxtSpan}>{Messages.delete}</span>
           </HorizontalGroup>
         ),
         action: () => {
@@ -62,7 +62,7 @@ export const NodesTab = () => {
         },
       },
     ],
-    [styles.deleteItemTxtSpan]
+    [styles.actionItemTxtSpan]
   );
 
   const columns = useMemo(

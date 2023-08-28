@@ -14,7 +14,7 @@ import { RDSCredentialsForm } from './components/Credentials/Credentials.types';
 import { DiscoveryDocs } from './components/DiscoveryDocs/DiscoveryDocs';
 import Instances from './components/Instances/Instances';
 
-const Discovery: FC<DiscoverySearchPanelProps> = ({ selectInstance }) => {
+const Discovery: FC<DiscoverySearchPanelProps> = ({ onSubmit, selectInstance }) => {
   const styles = useStyles(getStyles);
 
   const [instances, setInstances] = useState<Instance[]>([]);
@@ -58,7 +58,7 @@ const Discovery: FC<DiscoverySearchPanelProps> = ({ selectInstance }) => {
   return (
     <>
       <div className={styles.content}>
-        <Credentials discover={discover} selectInstance={selectInstance} />
+        <Credentials discover={(credentials) => onSubmit(discover(credentials))} />
         <Instances instances={instances} selectInstance={selectInstance} credentials={credentials} loading={loading} />
         <DiscoveryDocs />
       </div>

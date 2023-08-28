@@ -20,7 +20,7 @@ jest.mock('app/percona/shared/helpers/logger', () => {
 describe('Add remote instance:: ', () => {
   it('should render correct for mysql and postgres and highlight empty mandatory fields on submit', async () => {
     const type = Databases.mysql;
-    render(<AddRemoteInstance instance={{ type, credentials: {} }} selectInstance={jest.fn()} />);
+    render(<AddRemoteInstance onSubmit={jest.fn()} instance={{ type, credentials: {} }} selectInstance={jest.fn()} />);
 
     expect(screen.getByTestId('address-text-input').classList.contains('invalid')).toBe(false);
     expect(screen.getByTestId('username-text-input').classList.contains('invalid')).toBe(false);
@@ -35,7 +35,7 @@ describe('Add remote instance:: ', () => {
 
   it('should render for external service and highlight empty mandatory fields on submit', async () => {
     const type = InstanceTypesExtra.external;
-    render(<AddRemoteInstance instance={{ type, credentials: {} }} selectInstance={jest.fn()} />);
+    render(<AddRemoteInstance onSubmit={jest.fn()} instance={{ type, credentials: {} }} selectInstance={jest.fn()} />);
 
     expect(screen.getByTestId('address-text-input').classList.contains('invalid')).toBe(false);
     expect(screen.getByTestId('metrics_path-text-input').classList.contains('invalid')).toBe(false);
@@ -55,7 +55,7 @@ describe('Add remote instance:: ', () => {
   it('should render correct for HAProxy and highlight empty mandatory fields on submit', async () => {
     const type = Databases.haproxy;
 
-    render(<AddRemoteInstance instance={{ type, credentials: {} }} selectInstance={jest.fn()} />);
+    render(<AddRemoteInstance onSubmit={jest.fn()} instance={{ type, credentials: {} }} selectInstance={jest.fn()} />);
 
     expect(screen.getByTestId('address-text-input').classList.contains('invalid')).toBe(false);
     expect(screen.getByTestId('username-text-input').classList.contains('invalid')).toBe(false);

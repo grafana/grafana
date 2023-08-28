@@ -72,6 +72,7 @@ export const Messages = {
     },
   },
   delete: 'Delete',
+  edit: 'Edit',
   cancel: 'Cancel',
   proceed: 'Proceed',
   forceMode: 'Force mode',

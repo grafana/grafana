@@ -4,13 +4,16 @@ import { FormApi } from 'final-form';
 import React, { FC, useCallback, useMemo, useState } from 'react';
 import { Form as FormFinal } from 'react-final-form';
 
-import { Button, useStyles } from '@grafana/ui';
+import { AppEvents } from '@grafana/data';
+import { useStyles } from '@grafana/ui';
+import appEvents from 'app/core/app_events';
 import { useCancelToken } from 'app/percona/shared/components/hooks/cancelToken.hook';
 import { Databases } from 'app/percona/shared/core';
 import { isApiCancelError } from 'app/percona/shared/helpers/api';
 import { logger } from 'app/percona/shared/helpers/logger';
 
-import { InstanceAvailableType, InstanceTypes, InstanceTypesExtra, INSTANCE_TYPES_LABELS } from '../../panel.types';
+import { ADD_INSTANCE_FORM_NAME } from '../../panel.constants';
+import { InstanceTypesExtra, InstanceTypes, INSTANCE_TYPES_LABELS, InstanceAvailableType } from '../../panel.types';
 
 import { ADD_AZURE_CANCEL_TOKEN, ADD_RDS_CANCEL_TOKEN } from './AddRemoteInstance.constants';
 import { Messages } from './AddRemoteInstance.messages';
@@ -35,7 +38,10 @@ import {
 import { ExternalServiceConnectionDetails } from './FormParts/ExternalServiceConnectionDetails/ExternalServiceConnectionDetails';
 import { HAProxyConnectionDetails } from './FormParts/HAProxyConnectionDetails/HAProxyConnectionDetails';
 
-const AddRemoteInstance: FC<AddRemoteInstanceProps> = ({ instance: { type, credentials }, selectInstance }) => {
+const AddRemoteInstance: FC<AddRemoteInstanceProps> = ({
+  instance: { type, credentials },
+  onSubmit: submitWrapper,
+}) => {
   const styles = useStyles(getStyles);
 
   const { remoteInstanceCredentials, discoverName } = getInstanceData(type, credentials);
@@ -70,7 +76,10 @@ const AddRemoteInstance: FC<AddRemoteInstanceProps> = ({ instance: { type, crede
         } else {
           await AddRemoteInstanceService.addRemote(type, values, generateToken(remoteToken(type)));
         }
-
+        appEvents.emit(AppEvents.alertSuccess, [
+          Messages.success.title(values.serviceName || values.address || ''),
+          Messages.success.description(INSTANCE_TYPES_LABELS[type as Databases]),
+        ]);
         window.location.href = '/graph/inventory/';
       } catch (e) {
         if (isApiCancelError(e)) {
@@ -130,13 +139,13 @@ const AddRemoteInstance: FC<AddRemoteInstanceProps> = ({ instance: { type, crede
     if (databaseType === '') {
       return Messages.form.titles.addRemoteInstance;
     }
-    return `Add remote ${INSTANCE_TYPES_LABELS[databaseType]} Instance`;
+    return `Configuring ${INSTANCE_TYPES_LABELS[databaseType]} service`;
   };
 
   return (
     <div className={styles.formWrapper}>
       <FormFinal
-        onSubmit={onSubmit}
+        onSubmit={(values) => submitWrapper(onSubmit(values))}
         initialValues={initialValues}
         mutators={{
           setValue: ([field, value], state, { changeValue }) => {
@@ -144,23 +153,9 @@ const AddRemoteInstance: FC<AddRemoteInstanceProps> = ({ instance: { type, crede
           },
         }}
         render={({ form, handleSubmit }) => (
-          <form onSubmit={handleSubmit} data-testid="add-remote-instance-form">
-            <h4 className={styles.addRemoteInstanceTitle}>{getHeader(type)}</h4>
+          <form id={ADD_INSTANCE_FORM_NAME} onSubmit={handleSubmit} data-testid="add-remote-instance-form">
+            <h3 className={styles.addRemoteInstanceTitle}>{getHeader(type)}</h3>
             {formParts(form)}
-            <div className={styles.addRemoteInstanceButtons}>
-              <Button id="addInstance" disabled={loading} type="submit">
-                {Messages.form.buttons.addService}
-              </Button>
-              <Button
-                variant="secondary"
-                onClick={() => selectInstance({ type: '' })}
-                disabled={loading}
-                className={styles.returnButton}
-                icon="arrow-left"
-              >
-                {Messages.form.buttons.toMenu}
-              </Button>
-            </div>
           </form>
         )}
       />

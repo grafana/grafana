@@ -126,6 +126,14 @@ export const PMM_ADD_INSTANCE_PAGE: NavModelItem = {
   showIconInNavbar: true,
 };
 
+export const PMM_EDIT_INSTANCE_PAGE: NavModelItem = {
+  id: 'edit-instance',
+  url: `${config.appSubUrl}/edit-instance`,
+  text: 'Edit Instance',
+  hideFromTabs: true,
+  showIconInNavbar: false,
+};
+
 export const PMM_ACCESS_ROLE_CREATE_PAGE: NavModelItem = {
   id: 'rbac-create-role',
   url: `${config.appSubUrl}/roles/create`,

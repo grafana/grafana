@@ -63,6 +63,8 @@ export const Messages = {
         disableBasicMetrics: 'Disable Basic Metrics',
         disableEnchancedMetrics: 'Disable Enhanced Metrics',
         tablestatOptions: 'Table statistics limit',
+        tablestatOptionsState: 'State',
+        tablestatOptionsLimit: 'Limit value',
         azureDatabaseExporter: 'Enable Monitoring by Azure Metrics Exporter',
         disableCommentsParsing: 'Disable comments parsing',
       },
@@ -98,7 +100,7 @@ export const Messages = {
         az: 'Availability Zone',
         replicationSet: 'Replication set',
         cluster: 'Cluster',
-        customLabels: '"Custom labels\n Format:\n      key1:value1\n      key2:value2"',
+        customLabels: 'key1:value1\nkey2:value2',
       },
       additionalOptions: {},
     },
@@ -147,6 +149,15 @@ export const Messages = {
       additionalOptions: 'Additional options',
       parseURL: 'Parse URL',
       connectionDetails: 'External service connection details',
+    },
+    descriptions: {
+      dot: '. ',
+      labels:
+        'Please choose some labels to help identify your services. Labels can be useful, for example, to help define groupings',
+      labelsRoles: ' and segment access to build custom user roles ',
+      labelsRolesLink: 'custom user roles',
+      labelsExisting: 'Editing existing labels may affect your inventory and its data.',
+      customLabels: 'Follow the format as exemplified below, one label per line.',
     },
   },
 };

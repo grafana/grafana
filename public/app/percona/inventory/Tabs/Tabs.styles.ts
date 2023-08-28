@@ -36,12 +36,16 @@ export const getStyles = ({ colors, spacing }: GrafanaTheme2) => ({
     align-items: center;
     background-color: transparent;
   `,
-  deleteItemTxtSpan: css`
+  actionItemTxtSpan: css`
     line-height: 15px;
   `,
   agentBreadcrumb: css`
     margin-top: ${spacing(4)};
     display: flex;
+
+    span {
+      white-space: pre;
+    }
 
     & > span:first-child {
       max-width: 70%;

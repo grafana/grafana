@@ -13,6 +13,7 @@ import { MainDetailsFormPart } from './MainDetails/MainDetails';
 
 const form: Partial<FormApi> = {
   change: jest.fn(),
+  /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
   getState: () => ({} as FormState<any>),
 };
 

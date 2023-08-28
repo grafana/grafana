@@ -101,3 +101,21 @@ export interface RemoveServiceBody {
 export interface ListTypesPayload {
   service_types?: ServiceType[];
 }
+
+export interface UpdateServiceBody {
+  service_id: string;
+  environment?: string;
+  cluster?: string;
+  replication_set?: string;
+  external_group?: string;
+}
+
+export interface AddCustomLabelsBody {
+  service_id: string;
+  custom_labels: Record<string, string>;
+}
+
+export interface RemoveCustomLabelsBody {
+  service_id: string;
+  custom_label_keys: string[];
+}
