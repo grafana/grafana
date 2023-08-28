@@ -12,12 +12,21 @@ export const identityOverrideProcessor = <T>(value: T, _context: FieldOverrideCo
   return value;
 };
 
+export interface Bound {
+  path: string;
+  offest: number;
+  defaultBound: number;
+  dynamic?: boolean;
+}
+
 export interface NumberFieldConfigSettings {
   placeholder?: string;
   integer?: boolean;
   min?: number;
   max?: number;
   step?: number;
+  upperBound?: Bound;
+  lowerBound?: Bound;
 }
 
 export const numberOverrideProcessor = (

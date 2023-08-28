@@ -257,6 +257,17 @@ export const getAllStandardFieldConfigs = () => {
 
     settings: {
       placeholder: 'auto',
+      upperBound: {
+        path: 'max',
+        offest: -1,
+        defaultBound: Infinity,
+        dynamic: true,
+      },
+      lowerBound: {
+        path: 'min',
+        offest: 1,
+        defaultBound: -Infinity,
+      },
     },
     shouldApply: (field) => field.type === FieldType.number,
     category,
@@ -274,6 +285,17 @@ export const getAllStandardFieldConfigs = () => {
 
     settings: {
       placeholder: 'auto',
+      lowerBound: {
+        path: 'min',
+        offest: 1,
+        defaultBound: -Infinity,
+        dynamic: true,
+      },
+      upperBound: {
+        path: 'max',
+        offest: -1,
+        defaultBound: Infinity,
+      },
     },
 
     shouldApply: (field) => field.type === FieldType.number,

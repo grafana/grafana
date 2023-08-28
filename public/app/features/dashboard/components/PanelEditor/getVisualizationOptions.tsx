@@ -1,4 +1,4 @@
-import { get as lodashGet } from 'lodash';
+import { get as lodashGet, isNil } from 'lodash';
 import React from 'react';
 
 import {
@@ -134,13 +134,34 @@ export function getVisualizationOptions(props: OptionPaneRenderProps): OptionsPa
             );
           };
 
-          return <Editor value={value} onChange={onChange} item={fieldOption} context={context} id={fieldOption.id} />;
+          const dynamicProps: Record<string, any> = {}
+          const { upperBound, lowerBound } = fieldOption?.settings || {}
+          if (upperBound) {
+            createDynamicProps(upperBound, dynamicProps, currentFieldConfig.defaults)
+          }
+          if (lowerBound) {
+            createDynamicProps(lowerBound, dynamicProps, currentFieldConfig.defaults)
+          }
+          return <Editor value={value} onChange={onChange} item={fieldOption} context={context} id={fieldOption.id} {...dynamicProps} />;
         },
       })
     );
   }
 
   return Object.values(categoryIndex);
+}
+
+// create dynamic props
+function createDynamicProps(propsInfo: Record<string, string>, collection: Record<string, any>, sourceProps: any) {
+  let sourcePropsValue = lodashGet(sourceProps, propsInfo.path);
+  if (!isNil(sourcePropsValue) && propsInfo?.dynamic) {
+    sourcePropsValue += propsInfo.offest
+  }
+  else {
+    sourcePropsValue = propsInfo.defaultBound
+  }
+  collection[propsInfo.path] = sourcePropsValue
+  return collection
 }
 
 /**

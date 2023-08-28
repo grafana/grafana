@@ -78,6 +78,8 @@ export interface FieldConfigEditorProps<TValue, TSettings extends {}>
   item: FieldConfigPropertyItem<any, TValue, TSettings>; // The property info
   value: TValue;
   context: FieldOverrideContext;
+  min?: number;
+  max?: number;
   onChange: (value?: TValue) => void;
 }
 

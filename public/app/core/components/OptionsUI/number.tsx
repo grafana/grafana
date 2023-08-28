@@ -6,7 +6,7 @@ import { NumberInput } from './NumberInput';
 
 type Props = FieldConfigEditorProps<number, NumberFieldConfigSettings>;
 
-export const NumberValueEditor = ({ value, onChange, item }: Props) => {
+export const NumberValueEditor = ({ value, onChange, item, min, max }: Props) => {
   const { settings } = item;
 
   const onValueChange = useCallback(
@@ -19,8 +19,8 @@ export const NumberValueEditor = ({ value, onChange, item }: Props) => {
   return (
     <NumberInput
       value={value}
-      min={settings?.min}
-      max={settings?.max}
+      min={min ?? settings?.min}
+      max={max ?? settings?.max}
       step={settings?.step}
       placeholder={settings?.placeholder}
       onChange={onValueChange}
