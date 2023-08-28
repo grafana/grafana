@@ -59,7 +59,7 @@ You can create a service account and key file that can be used to access multipl
    The file's contents are encrypted and saved in the Grafana database.
    Remember to save the file after uploading.
 
-## Configure a GCE Default Service Account
+## Configure a GCE default service account
 
 When Grafana is running on a Google Compute Engine (GCE) virtual machine, Grafana can automatically retrieve default credentials from the metadata server. As a result, there is no need to generate a private key file for the service account. You also do not need to upload the file to Grafana. The following preconditions must be met before Grafana can retrieve default credentials.
 
