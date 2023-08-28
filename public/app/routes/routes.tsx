@@ -306,7 +306,9 @@ export function getAppRoutes(): RouteDescriptor[] {
     {
       path: '/admin/authentication',
       roles: () => contextSrv.evaluatePermission(() => ['Admin', 'ServerAdmin'], [AccessControlAction.SettingsWrite]),
-      component: SafeDynamicImport(() => import(/* webpackChunkName: "AdminAuthentication" */ 'app/features/auth-config/AuthConfigPage')),
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "AdminAuthentication" */ 'app/features/auth-config/AuthConfigPage')
+      ),
     },
     {
       path: '/admin/access',
