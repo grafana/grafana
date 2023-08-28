@@ -1,10 +1,19 @@
 import * as H from 'history';
+import { Unsubscribable } from 'rxjs';
 
-import { locationUtil, NavModelItem } from '@grafana/data';
-import { getUrlSyncManager, SceneGridLayout, SceneObject, SceneObjectBase, SceneObjectState } from '@grafana/scenes';
+import { locationUtil, NavModelItem, UrlQueryMap } from '@grafana/data';
+import { locationService } from '@grafana/runtime';
+import {
+  getUrlSyncManager,
+  SceneGridItem,
+  SceneGridLayout,
+  SceneObject,
+  SceneObjectBase,
+  SceneObjectState,
+  SceneObjectStateChangedEvent,
+} from '@grafana/scenes';
 
 import { DashboardSceneRenderer } from '../scene/DashboardSceneRenderer';
-import { DashboardChangeTracker } from '../serialization/DashboardChangeTracker';
 import { SaveDashboardDrawer } from '../serialization/SaveDashboardDrawer';
 import { findVizPanel } from '../utils/findVizPanel';
 import { forceRenderChildren } from '../utils/utils';
@@ -30,10 +39,24 @@ export interface DashboardSceneState extends SceneObjectState {
 export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   static Component = DashboardSceneRenderer;
 
+  /**
+   * Handles url sync
+   */
   protected _urlSync = new DashboardSceneUrlSync(this);
-  private _changeTracker?: DashboardChangeTracker;
+  /**
+   * State before editing started
+   */
+  private _original?: DashboardScene;
+  /**
+   * Url state before editing started
+   */
+  private _orignalUrlState?: UrlQueryMap;
+  /**
+   * change tracking subscription
+   */
+  private _changeTrackerSub?: Unsubscribable;
 
-  constructor(state: DashboardSceneState) {
+  public constructor(state: DashboardSceneState) {
     super(state);
 
     this.addActivationHandler(() => this.onActivate());
@@ -41,12 +64,12 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
 
   private onActivate() {
     if (this.state.isEditing) {
-      this._changeTracker?.startTracking();
+      this.startTrackingChanges();
     }
 
     // Deactivation logic
     return () => {
-      this._changeTracker?.stopTracking();
+      this.stopTrackingChanges();
       this.stopUrlSync();
     };
   }
@@ -60,20 +83,33 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   }
 
   public onEnterEditMode = () => {
+    // Save this state
+    this._original = this.clone();
+    this._orignalUrlState = locationService.getSearchObject();
+
+    // Switch to edit mode
     this.setState({ isEditing: true });
 
-    // Make grid draggable
+    // Propagate change edit mode change to children
     if (this.state.body instanceof SceneGridLayout) {
       this.state.body.setState({ isDraggable: true, isResizable: true });
       forceRenderChildren(this.state.body, true);
     }
 
-    this._changeTracker = new DashboardChangeTracker(this);
-    this._changeTracker.startTracking();
+    this.startTrackingChanges();
   };
 
   public onDiscard = () => {
-    this._changeTracker?.discard();
+    // No need to listen to changes anymore
+    this.stopTrackingChanges();
+    // Stop url sync before updating url
+    this.stopUrlSync();
+    // Now we can update url
+    locationService.partial(this._orignalUrlState!, true);
+    // Update state and disable editing
+    this.setState({ ...this._original?.state, isEditing: false });
+    // and start url sync again
+    this.startUrlSync();
 
     // Disable grid dragging
     if (this.state.body instanceof SceneGridLayout) {
@@ -83,7 +119,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   };
 
   public onSave = () => {
-    this.setState({ drawer: new SaveDashboardDrawer(this, this._changeTracker!) });
+    this.setState({ drawer: new SaveDashboardDrawer(this) });
   };
 
   public getPageNav(location: H.Location) {
@@ -108,5 +144,24 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   public getBodyToRender(viewPanelKey?: string): SceneObject {
     const viewPanel = findVizPanel(this, viewPanelKey);
     return viewPanel ?? this.state.body;
+  }
+
+  private startTrackingChanges() {
+    this._changeTrackerSub = this.subscribeToEvent(
+      SceneObjectStateChangedEvent,
+      (event: SceneObjectStateChangedEvent) => {
+        if (event.payload.changedObject instanceof SceneGridItem) {
+          this.setState({ isDirty: true });
+        }
+      }
+    );
+  }
+
+  private stopTrackingChanges() {
+    this._changeTrackerSub?.unsubscribe();
+  }
+
+  public getOriginal(): DashboardScene {
+    return this._original!;
   }
 }
