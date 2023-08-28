@@ -150,7 +150,7 @@ def secrets():
         ),
         vault_secret(
             "gcr_credentials",
-            "infra/data/ci/gcr-admin",
+            "secret/data/common/gcr",
             "service-account",
         ),
     ]

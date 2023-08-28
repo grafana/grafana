@@ -4669,11 +4669,11 @@ name: delivery-bot-app-private-key
 ---
 get:
   name: service-account
-  path: infra/data/ci/gcr-admin
+  path: secret/data/common/gcr
 kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 5cc59ab45bc9b976cde32b144f61aae11517843d3e731d8bb1e2b619e0daad49
+hmac: 37c8cdea5d79479014c2bee1b93433549ba5f8d5f2eef4f599247312c661118c
 
 ...
