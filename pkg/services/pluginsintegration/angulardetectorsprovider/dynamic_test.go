@@ -338,11 +338,12 @@ func TestRandomSkew(t *testing.T) {
 	t.Cleanup(srv.Close)
 	svc := provideDynamic(t, srv.URL)
 	const ttl = time.Hour * 1
+	const skew = ttl / 4
 	var different bool
 	var previous time.Duration
 	for i := 0; i < runs; i++ {
-		v := svc.randomSkew(ttl)
-		require.True(t, v >= -ttl/2 && v <= ttl/2, "returned skew must be within -ttl/2 and +ttl/2")
+		v := svc.randomSkew(skew)
+		require.True(t, v >= 0 && v <= skew, "returned skew must be within ttl and +ttl/4")
 		if i == 0 {
 			previous = v
 		} else if !different {

@@ -188,12 +188,10 @@ func (d *Dynamic) IsDisabled() bool {
 	return !d.features.IsEnabled(featuremgmt.FlagPluginsDynamicAngularDetectionPatterns)
 }
 
-// randomSkew returns a random time.Duration between -ttl/2 and +ttl/2.
+// randomSkew returns a random time.Duration between 0 and maxSkew.
 // This can be added to backgroundJobInterval to skew it by a random amount.
-func (d *Dynamic) randomSkew(ttl time.Duration) time.Duration {
-	maxJitter := ttl / 2
-	minJitter := -(maxJitter / 2)
-	return time.Duration(float64(minJitter) + rand.Float64()*float64(maxJitter-minJitter))
+func (d *Dynamic) randomSkew(maxSkew time.Duration) time.Duration {
+	return time.Duration(rand.Float64() * float64(maxSkew))
 }
 
 // Run is the function implementing the background service and updates the detectors periodically.
@@ -209,7 +207,7 @@ func (d *Dynamic) Run(ctx context.Context) error {
 	// Offset the background job interval a bit to skew GCOM calls from all instances,
 	// so GCOM is not overwhelmed with lots of requests all at the same time.
 	// Important when lots of HG instances restart at the same time.
-	skew := d.randomSkew(backgroundJobInterval)
+	skew := d.randomSkew(backgroundJobInterval / 4)
 	backgroundJobInterval += skew
 	d.log.Debug(
 		"Applied background job skew",
