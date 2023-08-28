@@ -91,13 +91,13 @@ const getStyles = (theme: GrafanaTheme2) => {
     `,
     exploreContainer: css`
       display: flex;
-      flex: 1 1 auto;
       padding: ${theme.spacing(2)};
       padding-top: 0;
     `,
     columnWrapper: css`
       display: flex;
       flex-direction: column;
+      flex: 1 1 auto;
     `,
   };
 };
