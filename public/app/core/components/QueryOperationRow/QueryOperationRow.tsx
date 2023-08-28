@@ -30,7 +30,6 @@ export interface QueryOperationRowRenderProps {
   isOpen: boolean;
   onOpen: () => void;
   onClose: () => void;
-  // onOptionClick?: (option: any) => void;
 }
 
 export function QueryOperationRow({
@@ -53,6 +52,7 @@ export function QueryOperationRow({
     setIsContentVisible(!isContentVisible);
   }, [isContentVisible, setIsContentVisible]);
 
+  // Force open when isOpen prop changes in parent.
   useEffect(() => {
     if (isOpen) {
       setIsContentVisible(true);
