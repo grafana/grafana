@@ -17,7 +17,7 @@ import { useDashboardSave } from './useDashboardSave';
 
 export const SaveDashboardDrawer = ({ dashboard, onDismiss, onSaveSuccess, isCopy }: SaveDashboardModalProps) => {
   const [options, setOptions] = useState<SaveDashboardOptions>({});
-  const previous = useSelector((store) => store.dashboard.original);
+  const previous = useSelector((store) => store.dashboard.getOriginal());
   const isProvisioned = dashboard.meta.provisioned;
   const isNew = dashboard.version === 0;
 
