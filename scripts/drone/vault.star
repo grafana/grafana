@@ -113,11 +113,6 @@ def secrets():
             "cdn_path",
         ),
         vault_secret(
-            "enterprise2_security_prefix",
-            "infra/data/ci/grafana-release-eng/enterprise2",
-            "security_prefix",
-        ),
-        vault_secret(
             rgm_gcp_key_base64,
             "infra/data/ci/grafana-release-eng/rgm",
             "gcp_service_account_prod_base64",
@@ -167,5 +162,10 @@ def secrets():
             rgm_github_token,
             "infra/data/ci/github/grafanabot",
             "pat",
+        ),
+        vault_secret(
+            "gcr_credentials",
+            "secret/data/common/gcr",
+            "service-account",
         ),
     ]
