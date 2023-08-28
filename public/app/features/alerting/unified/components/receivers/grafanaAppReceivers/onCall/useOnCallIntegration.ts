@@ -4,6 +4,7 @@ import { useCallback, useMemo } from 'react';
 import { SelectableValue } from '@grafana/data';
 import { isFetchError } from '@grafana/runtime';
 
+import { useAppNotification } from '../../../../../../../core/copy/appNotification';
 import { Receiver } from '../../../../../../../plugins/datasource/alertmanager/types';
 import { NotifierDTO } from '../../../../../../../types';
 import { onCallApi } from '../../../../api/onCallApi';
@@ -38,8 +39,6 @@ enum OnCallIntegrationStatus {
 }
 
 function useOnCallPluginStatus() {
-  // TODO We should be able to manually disable the OnCall integration or set it to V1 in case of errors
-
   const {
     installed: isOnCallEnabled,
     loading: isPluginBridgeLoading,
@@ -78,6 +77,8 @@ function useOnCallPluginStatus() {
 }
 
 export function useOnCallIntegration() {
+  const notifyApp = useAppNotification();
+
   const { isOnCallEnabled, integrationStatus, isAlertingV2IntegrationEnabled, isOnCallStatusLoading, onCallError } =
     useOnCallPluginStatus();
 
@@ -104,6 +105,7 @@ export function useOnCallIntegration() {
             return 'Integration of this name already exists in OnCall';
           }
 
+          notifyApp.error('Failed to validate OnCall integration name. Is the OnCall API available?');
           throw error;
         }
       },
@@ -117,7 +119,7 @@ export function useOnCallIntegration() {
           : 'Selection of existing OnCall integration is required';
       },
     };
-  }, [grafanaOnCallIntegrations, validateIntegrationNameQuery, isAlertingV2IntegrationEnabled]);
+  }, [grafanaOnCallIntegrations, validateIntegrationNameQuery, isAlertingV2IntegrationEnabled, notifyApp]);
 
   const extendOnCallReceivers = useCallback(
     (receiver: Receiver): Receiver => {

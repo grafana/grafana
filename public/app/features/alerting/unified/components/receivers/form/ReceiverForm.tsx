@@ -1,14 +1,15 @@
 import { css } from '@emotion/css';
 import React, { useCallback } from 'react';
-import { FieldErrors, FormProvider, useForm, Validate } from 'react-hook-form';
-import { useAsyncFn } from 'react-use';
+import { FieldErrors, FormProvider, SubmitErrorHandler, useForm, Validate } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { isFetchError } from '@grafana/runtime';
 import { Alert, Button, Field, Input, LinkButton, useStyles2 } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { useCleanup } from 'app/core/hooks/useCleanup';
 import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
 
+import { logAlertingError } from '../../../Analytics';
 import { useControlledFieldArray } from '../../../hooks/useControlledFieldArray';
 import { ChannelValues, CommonSettingsComponentType, ReceiverFormValues } from '../../../types/receiver-form';
 import { makeAMLink } from '../../../utils/misc';
@@ -70,12 +71,11 @@ export function ReceiverForm<R extends ChannelValues>({
   });
 
   useCleanup((state) => (state.unifiedAlerting.saveAMConfig = initialAsyncRequestState));
-  const [{ loading: isSubmitting }, onSubmitWithState] = useAsyncFn(onSubmit, []);
 
   const {
     handleSubmit,
     register,
-    formState: { errors },
+    formState: { errors, isSubmitting },
     getValues,
   } = formAPI;
 
@@ -90,13 +90,24 @@ export function ReceiverForm<R extends ChannelValues>({
   );
 
   const submitCallback = async (values: ReceiverFormValues<R>) => {
-    await onSubmitWithState({
-      ...values,
-      items: values.items.filter((item) => !item.__deleted),
-    });
+    try {
+      await onSubmit({
+        ...values,
+        items: values.items.filter((item) => !item.__deleted),
+      });
+    } catch (e) {
+      if (e instanceof Error || isFetchError(e)) {
+        notifyApp.error('Failed to save the contact point', e.message);
+
+        const error = new Error('Failed to save the contact point');
+        error.cause = e;
+        logAlertingError(error);
+      }
+      throw e;
+    }
   };
 
-  const onInvalid = () => {
+  const onInvalid: SubmitErrorHandler<ReceiverFormValues<R>> = () => {
     notifyApp.error('There are errors in the form. Please correct them and try again!');
   };
 
