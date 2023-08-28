@@ -32,7 +32,7 @@ const ContentOutline = () => {
       <ToolbarButton icon="gf-logs" />
       <ToolbarButton icon="code-branch" onClick={() => scrollIntoView('node-graph')} />
       <ToolbarButton icon="graph-bar" />
-      <ToolbarButton icon="gf-trace" />
+      <ToolbarButton icon="gf-traces" />
     </div>
   );
 };
