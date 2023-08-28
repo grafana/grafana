@@ -111,14 +111,14 @@ func callResource(ctx context.Context, req *backend.CallResourceRequest, sender 
 	url := req.URL
 	// a very basic is-this-url-valid check
 	if req.Method != "GET" {
-		plog.Error("invalid HTTP method", "method", req.Method)
+		plog.Error("Invalid HTTP method", "method", req.Method)
 		return fmt.Errorf("invalid HTTP method: %s", req.Method)
 	}
 	if (!strings.HasPrefix(url, "labels?")) &&
 		(!strings.HasPrefix(url, "label/")) && // the `/label/$label_name/values` form
 		(!strings.HasPrefix(url, "series?")) &&
 		(!strings.HasPrefix(url, "index/stats?")) {
-		plog.Error("invalid URL", "url", url)
+		plog.Error("Invalid URL", "url", url)
 		return fmt.Errorf("invalid URL: %s", url)
 	}
 	lokiURL := fmt.Sprintf("/loki/api/v1/%s", url)
@@ -133,7 +133,7 @@ func callResource(ctx context.Context, req *backend.CallResourceRequest, sender 
 	if err != nil {
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
-		plog.Error("failed resource call from loki", "err", err, "url", lokiURL)
+		plog.Error("Failed resource call from loki", "err", err, "url", lokiURL)
 		return err
 	}
 	respHeaders := map[string][]string{

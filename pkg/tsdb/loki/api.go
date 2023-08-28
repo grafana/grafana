@@ -227,11 +227,11 @@ func makeRawRequest(ctx context.Context, lokiDsUrl string, resourcePath string) 
 }
 
 func (api *LokiAPI) RawQuery(ctx context.Context, resourcePath string) (RawLokiResponse, error) {
-	api.log.Debug("sending raw query to loki", "resourcePath", resourcePath)
+	api.log.Debug("Sending raw query to loki", "resourcePath", resourcePath)
 	start := time.Now()
 	req, err := makeRawRequest(ctx, api.url, resourcePath)
 	if err != nil {
-		api.log.Error("failed to prepare request to loki", "err", err, "resourcePath", resourcePath)
+		api.log.Error("Failed to prepare request to loki", "err", err, "resourcePath", resourcePath)
 		return RawLokiResponse{}, err
 	}
 
@@ -242,11 +242,11 @@ func (api *LokiAPI) RawQuery(ctx context.Context, resourcePath string) (RawLokiR
 
 	defer func() {
 		if err := resp.Body.Close(); err != nil {
-			api.log.Warn("failed to close response body", "err", err)
+			api.log.Warn("Failed to close response body", "err", err)
 		}
 	}()
 
-	api.log.Debug("response received from loki", "status", resp.StatusCode, "length", resp.Header.Get("Content-Length"), "took", time.Since(start), "encoding", resp.Header.Get("Content-Encoding"))
+	api.log.Debug("Response received from loki", "status", resp.StatusCode, "length", resp.Header.Get("Content-Length"), "took", time.Since(start), "encoding", resp.Header.Get("Content-Encoding"))
 
 	// server errors are handled by the plugin-proxy to hide the error message
 	if resp.StatusCode/100 == 5 {
@@ -261,7 +261,7 @@ func (api *LokiAPI) RawQuery(ctx context.Context, resourcePath string) (RawLokiR
 	// client errors are passed as a json struct to the client
 	if resp.StatusCode/100 != 2 {
 		lokiResponseErr := lokiResponseError{Message: makeLokiError(body).Error()}
-		api.log.Warn("non 200 HTTP status received from loki", "err", lokiResponseErr.Message, "status", resp.StatusCode, "resourcePath", resourcePath)
+		api.log.Warn("Non 200 HTTP status received from loki", "err", lokiResponseErr.Message, "status", resp.StatusCode, "resourcePath", resourcePath)
 		traceID := tracing.TraceIDFromContext(ctx, false)
 		if traceID != "" {
 			lokiResponseErr.TraceID = traceID
