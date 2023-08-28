@@ -175,11 +175,6 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
     (updatedQueries: AlertQuery[]) => {
       const query = updatedQueries[0];
 
-      const dataSourceSettings = getDataSourceSrv().getInstanceSettings(query.datasourceUid);
-      if (!dataSourceSettings) {
-        throw new Error('The Data source has not been defined.');
-      }
-
       if (!isPromOrLokiQuery(query.model)) {
         return;
       }
@@ -187,13 +182,12 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
       const expression = query.model.expr;
 
       setValue('queries', updatedQueries, { shouldValidate: false });
-      setValue('dataSourceName', dataSourceSettings.name);
-      setValue('expression', expression);
+      updateExpressionAndDatasource(updatedQueries);
 
       dispatch(setRecordingRulesQueries({ recordingRuleQueries: updatedQueries, expression }));
       runQueriesPreview();
     },
-    [runQueriesPreview, setValue]
+    [runQueriesPreview, setValue, updateExpressionAndDatasource]
   );
 
   const recordingRuleDefaultDatasource = rulesSourcesWithRuler[0];
@@ -312,10 +306,14 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
     const typeInForm = getValues('type');
     if (typeInForm === RuleFormType.cloudAlerting) {
       setValue('type', RuleFormType.grafana);
+      setValue('dataSourceName', null); // set data source name back to "null"
+
       prevExpressions.length > 0 && restoreExpressionsInQueries();
       prevCondition && setValue('condition', prevCondition);
     } else {
       setValue('type', RuleFormType.cloudAlerting);
+      updateExpressionAndDatasource(queries);
+
       const expressions = queries.filter((query) => query.datasourceUid === ExpressionDatasourceUID);
       setPrevExpressions(expressions);
       removeExpressionsInQueries();
@@ -324,12 +322,12 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
   }, [
     getValues,
     setValue,
+    prevExpressions.length,
+    restoreExpressionsInQueries,
+    prevCondition,
+    updateExpressionAndDatasource,
     queries,
     removeExpressionsInQueries,
-    restoreExpressionsInQueries,
-    setPrevExpressions,
-    prevExpressions,
-    prevCondition,
     condition,
   ]);
 

@@ -18,8 +18,8 @@ describe('NodeGraphContainer', () => {
       />
     );
 
-    // Make sure we only show header in the collapsible
-    expect(container.firstChild?.childNodes.length).toBe(1);
+    // Make sure we only show header and loading bar container from PanelChrome in the collapsible
+    expect(container.firstChild?.childNodes.length).toBe(2);
   });
 
   it('shows the graph if not with trace view', async () => {
@@ -33,7 +33,7 @@ describe('NodeGraphContainer', () => {
       />
     );
 
-    expect(container.firstChild?.childNodes.length).toBe(2);
+    expect(container.firstChild?.childNodes.length).toBe(3);
     expect(container.querySelector('svg')).toBeInTheDocument();
     await screen.findByLabelText(/Node: tempo-querier/);
   });

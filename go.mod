@@ -41,7 +41,7 @@ require (
 	github.com/apache/arrow/go/v12 v12.0.1 // @grafana/observability-metrics
 	github.com/aws/aws-sdk-go v1.44.325 // @grafana/aws-datasources
 	github.com/beevik/etree v1.2.0 // @grafana/backend-platform
-	github.com/benbjohnson/clock v1.3.3 // @grafana/alerting-squad-backend
+	github.com/benbjohnson/clock v1.3.5 // @grafana/alerting-squad-backend
 	github.com/blang/semver/v4 v4.0.0 // @grafana/grafana-delivery
 	github.com/bradfitz/gomemcache v0.0.0-20190913173617-a41fca850d0b // @grafana/backend-platform
 	github.com/centrifugal/centrifuge v0.29.1 // @grafana/grafana-app-platform-squad
@@ -64,7 +64,7 @@ require (
 	github.com/google/uuid v1.3.0 // @grafana/backend-platform
 	github.com/google/wire v0.5.0 // @grafana/backend-platform
 	github.com/gorilla/websocket v1.5.0 // @grafana/grafana-app-platform-squad
-	github.com/grafana/alerting v0.0.0-20230606080147-55b8d71c7890 // @grafana/alerting-squad-backend
+	github.com/grafana/alerting v0.0.0-20230825102000-717e20092271 // @grafana/alerting-squad-backend
 	github.com/grafana/cuetsy v0.1.10 // @grafana/grafana-as-code
 	github.com/grafana/grafana-aws-sdk v0.19.1 // @grafana/aws-datasources
 	github.com/grafana/grafana-azure-sdk-go v1.7.0 // @grafana/backend-platform
@@ -93,7 +93,7 @@ require (
 	github.com/prometheus/alertmanager v0.25.0 // @grafana/alerting-squad-backend
 	github.com/prometheus/client_golang v1.15.1 // @grafana/alerting-squad-backend
 	github.com/prometheus/client_model v0.4.0 // @grafana/backend-platform
-	github.com/prometheus/common v0.43.0 // @grafana/alerting-squad-backend
+	github.com/prometheus/common v0.44.0 // @grafana/alerting-squad-backend
 	github.com/prometheus/prometheus v1.8.2-0.20221021121301-51a44e6657c3 // @grafana/alerting-squad-backend
 	github.com/robfig/cron/v3 v3.0.1 // @grafana/backend-platform
 	github.com/russellhaering/goxmldsig v1.4.0 // @grafana/backend-platform
@@ -158,11 +158,11 @@ require (
 	github.com/go-kit/log v0.2.1 //  @grafana/backend-platform
 	github.com/go-logfmt/logfmt v0.6.0 // indirect
 	github.com/go-openapi/analysis v0.21.4 // indirect
-	github.com/go-openapi/errors v0.20.3 // indirect
+	github.com/go-openapi/errors v0.20.4 // indirect
 	github.com/go-openapi/jsonpointer v0.19.6 // indirect
 	github.com/go-openapi/jsonreference v0.20.2 // indirect
 	github.com/go-openapi/loads v0.21.2 // @grafana/alerting-squad-backend
-	github.com/go-openapi/runtime v0.25.0 // indirect
+	github.com/go-openapi/runtime v0.26.0 // indirect
 	github.com/go-openapi/spec v0.20.8 // indirect
 	github.com/go-openapi/swag v0.22.3 // indirect
 	github.com/go-openapi/validate v0.22.1 // indirect
@@ -202,7 +202,7 @@ require (
 	github.com/olekukonko/tablewriter v0.0.5 // @grafana/backend-platform
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/prometheus/common/sigv4 v0.1.0 // indirect
-	github.com/prometheus/exporter-toolkit v0.9.1 // indirect
+	github.com/prometheus/exporter-toolkit v0.10.0 // indirect
 	github.com/prometheus/procfs v0.9.0 // indirect
 	github.com/protocolbuffers/txtpbfmt v0.0.0-20220428173112-74888fd59c2b // indirect
 	github.com/rs/cors v1.9.0 // indirect
@@ -218,7 +218,7 @@ require (
 	github.com/yudai/golcs v0.0.0-20170316035057-ecda9a501e82 // indirect
 	go.mongodb.org/mongo-driver v1.11.3 // indirect
 	go.opencensus.io v0.24.0 // indirect
-	go.uber.org/atomic v1.10.0 // @grafana/alerting-squad-backend
+	go.uber.org/atomic v1.11.0 // @grafana/alerting-squad-backend
 	go.uber.org/goleak v1.2.1 // indirect
 	golang.org/x/sys v0.10.0 // indirect
 	golang.org/x/text v0.11.0 // @grafana/backend-platform
@@ -486,7 +486,7 @@ require (
 )
 
 // Use fork of crewjam/saml with fixes for some issues until changes get merged into upstream
-replace github.com/crewjam/saml => github.com/grafana/saml v0.4.13-0.20230331080031-67cbfa09c7b6
+replace github.com/crewjam/saml => github.com/grafana/saml v0.4.13-0.20230823151800-99004118fff5
 
 // Thema's thema CLI requires cobra, which eventually works its way down to go-hclog@v1.0.0.
 // Upgrading affects backend plugins: https://github.com/grafana/grafana/pull/47653#discussion_r850508593
@@ -502,7 +502,7 @@ replace xorm.io/xorm => github.com/grafana/xorm v0.8.3-0.20220614223926-2fcda756
 
 // Use our fork of the upstream alertmanagers.
 // This is required in order to get notification delivery errors from the receivers API.
-replace github.com/prometheus/alertmanager => github.com/grafana/prometheus-alertmanager v0.25.1-0.20230508090422-7d5630522a53
+replace github.com/prometheus/alertmanager => github.com/grafana/prometheus-alertmanager v0.25.1-0.20230825101410-6af7ccb56cf8
 
 // grpc v1.46.0 removed "WithBalancerName()" API, still in use by weaveworks/commons.
 replace google.golang.org/grpc => google.golang.org/grpc v1.45.0

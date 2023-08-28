@@ -45,7 +45,6 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 
 		setup := func() {
 			sqlStore = db.InitTestDB(t)
-			sqlStore.Cfg.RBACEnabled = false
 			quotaService := quotatest.New(false, nil)
 			var err error
 			dashboardStore, err = ProvideDashboardStore(sqlStore, sqlStore.Cfg, testFeatureToggles, tagimpl.ProvideService(sqlStore, sqlStore.Cfg), quotaService)
@@ -247,7 +246,6 @@ func TestIntegrationDashboardInheritedFolderRBAC(t *testing.T) {
 
 	setup := func() {
 		sqlStore = db.InitTestDB(t)
-		sqlStore.Cfg.RBACEnabled = true
 		quotaService := quotatest.New(false, nil)
 
 		// enable nested folders so that the folder table is populated for all the tests

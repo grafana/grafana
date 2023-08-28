@@ -38,7 +38,7 @@ func BenchmarkExemplarJson(b *testing.B) {
 	responseBytes, err := os.ReadFile(responseFileName)
 	require.NoError(b, err)
 
-	tCtx, err := setup(true)
+	tCtx, err := setup()
 	require.NoError(b, err)
 	b.ResetTimer()
 	for n := 0; n < b.N; n++ {
@@ -66,7 +66,7 @@ func BenchmarkRangeJson(b *testing.B) {
 		err error
 	)
 	body, q := createJsonTestData(1642000000, 1, 300, 400)
-	tCtx, err := setup(true)
+	tCtx, err := setup()
 	require.NoError(b, err)
 
 	b.ResetTimer()
