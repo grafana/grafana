@@ -61,11 +61,8 @@ export const useDescription = (bucketAgg: BucketAggregation): string => {
     }
 
     case 'geohash_grid': {
-      // We want to use precision from the settings if it's set, but we also want to make sure it's in the range of 1-12
-      const precision = Math.max(
-        Math.min(parseInt(bucketAgg.settings?.precision || defaultPrecisionString, 10), 12),
-        1
-      );
+      const precision = parseInt(bucketAgg.settings?.precision || defaultPrecisionString, 10);
+
       return `Precision: ${precision}`;
     }
 
