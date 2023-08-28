@@ -479,6 +479,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
       showLogsSample,
       panelsState,
       isCorrelationsEditorMode,
+      correlationDetails
     } = this.props;
     const { openDrawer } = this.state;
     const styles = getStyles(theme);
@@ -500,7 +501,8 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
       ].every((e) => e.length === 0);
 
     let correlationsBox = undefined;
-    if (isCorrelationsEditorMode && panelsState && panelsState.correlations !== undefined) {
+    const showCorrelationHelper = isCorrelationsEditorMode || (!isCorrelationsEditorMode && correlationDetails?.dirty) || false;
+    if (showCorrelationHelper && panelsState && panelsState.correlations !== undefined) {
       correlationsBox = <CorrelationHelper correlations={panelsState.correlations} />;
     }
 
@@ -644,6 +646,7 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     showLogsSample,
     panelsState,
     isCorrelationsEditorMode: explore.correlationsEditorMode,
+    correlationDetails: explore.correlationDetails,
   };
 }
 

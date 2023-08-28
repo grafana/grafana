@@ -2,6 +2,7 @@ import { css, cx } from '@emotion/css';
 import React, { useEffect } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { ErrorBoundaryAlert, useStyles2 } from '@grafana/ui';
 import { SplitPaneWrapper } from 'app/core/components/SplitPaneWrapper/SplitPaneWrapper';
 import { useGrafana } from 'app/core/context/GrafanaContext';
@@ -45,7 +46,7 @@ export default function ExplorePage(props: GrafanaRouteComponentProps<{}, Explor
   const isCorrelationsEditorMode = useSelector(selectCorrelationEditorMode);
   const correlationDetails = useSelector(selectCorrelationDetails);
   // show correlation editor mode UX elements if we are in the editor mode or if we are trying to exit in a dirty state
-  const showCorrelationEditorMode = isCorrelationsEditorMode || (!isCorrelationsEditorMode && correlationDetails?.dirty);
+  const showCorrelationEditorMode = isCorrelationsEditorMode || (!isCorrelationsEditorMode && correlationDetails?.dirty) || false;
 
   useEffect(() => {
     //This is needed for breadcrumbs and topnav.
@@ -89,7 +90,7 @@ export default function ExplorePage(props: GrafanaRouteComponentProps<{}, Explor
       })}
     >
       <ExploreActions />
-      {showCorrelationEditorMode && <CorrelationEditorModeBar panes={panes} />}
+      {config.featureToggles.correlations  && <CorrelationEditorModeBar panes={panes} toShow={showCorrelationEditorMode}/>}
       <SplitPaneWrapper
         splitOrientation="vertical"
         paneSize={widthCalc}

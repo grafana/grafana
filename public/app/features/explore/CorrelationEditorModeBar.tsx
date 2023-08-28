@@ -11,7 +11,8 @@ import { changeCorrelationDetails, changeCorrelationsEditorMode } from './state/
 import { runQueries, saveCurrentCorrelation } from './state/query';
 import { selectCorrelationDetails, selectCorrelationEditorMode } from './state/selectors';
 
-export const CorrelationEditorModeBar = ({ panes }: { panes: Array<[string, ExploreItemState]> }) => {
+// we keep component rendered and hidden to avoid race conditions with the prompt
+export const CorrelationEditorModeBar = ({ panes, toShow }: { panes: Array<[string, ExploreItemState]>, toShow: boolean }) => {
   const dispatch = useDispatch();
   const styles = useStyles2(getStyles);
   const correlationDetails = useSelector(selectCorrelationDetails);
@@ -41,20 +42,22 @@ export const CorrelationEditorModeBar = ({ panes }: { panes: Array<[string, Expl
   }, []); */
 
   useEffect(() => {
-    // if we are trying to exit in a dirty state, show prompt
-    if (!correlationsEditorMode && correlationDetails?.dirty) {
-      setShowSavePrompt(true);
-    } else if (!correlationsEditorMode && !correlationDetails?.dirty) {
-      // otherwise, if we are exiting in a not dirty state, reset everything
-      setShowSavePrompt(false);
-      dispatch(changeCorrelationDetails({ label: undefined, description: undefined, canSave: false, dirty: false }));
-      panes.forEach((pane) => {
-        dispatch(removeCorrelationData(pane[0]));
-        dispatch(runQueries({ exploreId: pane[0] }));
-      });
+    if (!correlationsEditorMode) {
+      if (correlationDetails?.dirty) {
+        // if we are trying to exit in a dirty state, show prompt
+        setShowSavePrompt(true);
+      } else if (correlationDetails?.dirty === false) {
+        // otherwise, if we are exiting in a not dirty state, reset everything
+        setShowSavePrompt(false);
+        dispatch(changeCorrelationDetails({ label: undefined, description: undefined, canSave: false}));
+        panes.forEach((pane) => {
+          dispatch(removeCorrelationData(pane[0]));
+          dispatch(runQueries({ exploreId: pane[0] }));
+        });
+      }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [correlationsEditorMode]);
+  }, [correlationsEditorMode, correlationDetails?.dirty]);
 
   return (
     <>
@@ -63,12 +66,6 @@ export const CorrelationEditorModeBar = ({ panes }: { panes: Array<[string, Expl
           onDiscard={() => {
             // if we are discarding the in progress correlation, reset everything
             dispatch(changeCorrelationDetails({ dirty: false }));
-            setShowSavePrompt(false);
-            dispatch(changeCorrelationDetails({ label: undefined, description: undefined, canSave: false, dirty: false }));
-            panes.forEach((pane) => {
-              dispatch(removeCorrelationData(pane[0]));
-              dispatch(runQueries({ exploreId: pane[0] }));
-            });
           }}
           onCancel={() => {
             // if we are cancelling the exit, set the editor mode back to true and hide the prompt
@@ -77,10 +74,11 @@ export const CorrelationEditorModeBar = ({ panes }: { panes: Array<[string, Expl
           }}
           onSave={() => {
             dispatch(saveCurrentCorrelation(correlationDetails?.label, correlationDetails?.description));
+            dispatch(changeCorrelationDetails({ dirty: false }));
           }}
         />
       )}
-      <div className={styles.correlationEditorTop}>
+      {toShow && <div className={styles.correlationEditorTop}>
         <HorizontalGroup spacing="md" justify="flex-end">
           <Tooltip content="Correlations editor in Explore is an experimental feature.">
             <Icon name="info-circle" size="xl" />
@@ -98,7 +96,6 @@ export const CorrelationEditorModeBar = ({ panes }: { panes: Array<[string, Expl
           <Button
             variant="secondary"
             fill="outline"
-            tooltip="Exit Correlations Editor Mode"
             icon="times"
             onClick={() => {
               dispatch(changeCorrelationsEditorMode({ correlationsEditorMode: false }));
@@ -108,7 +105,7 @@ export const CorrelationEditorModeBar = ({ panes }: { panes: Array<[string, Expl
             Exit Correlation Editor
           </Button>
         </HorizontalGroup>
-      </div>
+      </div>}
     </>
   );
 };

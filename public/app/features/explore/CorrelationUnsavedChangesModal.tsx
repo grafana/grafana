@@ -30,7 +30,7 @@ export const CorrelationUnsavedChangesModal = ({
           Cancel
         </Button>
         <Button variant="destructive" onClick={onDiscard}>
-          Discard
+          Discard correlation
         </Button>
         <Button variant="primary" onClick={onSave}>
           Save correlation
