@@ -461,7 +461,7 @@ describe('optionsPickerReducer', () => {
         });
     });
 
-    it('should toggle all values to false when $_all is selected', () => {
+    it('should toggle each individual value to true when $_all is selected and mark ALL as selected, not supporting empty values', () => {
       const { initialState } = getVariableTestContext({
         options: [
           { text: 'All', value: '$__all', selected: true },
@@ -479,14 +479,17 @@ describe('optionsPickerReducer', () => {
           ...initialState,
           options: [
             { text: 'All', value: '$__all', selected: false },
-            { text: 'A', value: 'A', selected: false },
-            { text: 'B', value: 'B', selected: false },
+            { text: 'A', value: 'A', selected: true },
+            { text: 'B', value: 'B', selected: true },
           ],
-          selectedValues: [],
+          selectedValues: [
+            { text: 'A', value: 'A', selected: true },
+            { text: 'B', value: 'B', selected: true },
+          ],
         });
     });
 
-    it('should toggle all values to false when a option is selected', () => {
+    it('should toggle to ALL value when one regular option is selected, as empty values are not accepted', () => {
       const { initialState } = getVariableTestContext({
         options: [
           { text: 'All', value: '$__all', selected: false },
@@ -503,11 +506,11 @@ describe('optionsPickerReducer', () => {
         .thenStateShouldEqual({
           ...initialState,
           options: [
-            { text: 'All', value: '$__all', selected: false },
+            { text: 'All', value: '$__all', selected: true },
             { text: 'A', value: 'A', selected: false },
             { text: 'B', value: 'B', selected: false },
           ],
-          selectedValues: [],
+          selectedValues: [{ text: 'All', value: '$__all', selected: true }],
         });
     });
   });
