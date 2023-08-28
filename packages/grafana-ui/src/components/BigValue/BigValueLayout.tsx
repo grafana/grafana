@@ -263,6 +263,10 @@ export class WideNoChartLayout extends BigValueLayout {
     return styles;
   }
 
+  renderChart(): JSX.Element | null {
+    return null;
+  }
+
   getPanelStyles() {
     const panelStyles = super.getPanelStyles();
     panelStyles.alignItems = 'center';
@@ -426,6 +430,10 @@ export class StackedWithNoChartLayout extends BigValueLayout {
     styles.flexDirection = 'column';
     styles.flexGrow = 1;
     return styles;
+  }
+
+  renderChart(): JSX.Element | null {
+    return null;
   }
 
   getPanelStyles() {
