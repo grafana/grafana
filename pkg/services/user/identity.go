@@ -43,25 +43,12 @@ func (u *SignedInUser) NameOrFallback() string {
 	return u.Email
 }
 
-// TODO: There's a need to remove this struct since it creates a circular dependency
-
-// DEPRECATED: This function uses `UserDisplayDTO` model which we want to remove
 func (u *SignedInUser) ToUserDisplayDTO() *UserDisplayDTO {
 	return &UserDisplayDTO{
 		ID:    u.UserID,
 		Login: u.Login,
 		Name:  u.Name,
 	}
-}
-
-// Static function to parse a requester into a UserDisplayDTO
-func NewUserDisplayDTOFromRequester(requester identity.Requester) (*UserDisplayDTO, error) {
-	userID, _ := identity.IntIdentifier(requester.GetNamespacedID())
-	return &UserDisplayDTO{
-		ID:    userID,
-		Login: requester.GetLogin(),
-		Name:  requester.GetDisplayName(),
-	}, nil
 }
 
 func (u *SignedInUser) HasRole(role roletype.RoleType) bool {

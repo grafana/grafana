@@ -78,7 +78,6 @@ func TestGetHomeDashboard(t *testing.T) {
 		preferenceService:       prefService,
 		dashboardVersionService: dashboardVersionService,
 		Kinds:                   corekind.NewBase(nil),
-		log:                     log.New("test-logger"),
 	}
 
 	tests := []struct {
@@ -203,7 +202,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 					sc.sqlStore = mockSQLStore
 
 					hs.callGetDashboardVersion(sc)
-					assert.Equal(t, http.StatusForbidden, sc.resp.Code)
+					assert.Equal(t, 403, sc.resp.Code)
 				}, mockSQLStore)
 
 			loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/id/2/versions",
@@ -212,7 +211,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 					sc.sqlStore = mockSQLStore
 
 					hs.callGetDashboardVersions(sc)
-					assert.Equal(t, http.StatusForbidden, sc.resp.Code)
+					assert.Equal(t, 403, sc.resp.Code)
 				}, mockSQLStore)
 		})
 
@@ -235,7 +234,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 					sc.sqlStore = mockSQLStore
 					hs.callGetDashboardVersion(sc)
 
-					assert.Equal(t, http.StatusOK, sc.resp.Code)
+					assert.Equal(t, 200, sc.resp.Code)
 					var version *dashver.DashboardVersionMeta
 					err := json.NewDecoder(sc.resp.Body).Decode(&version)
 					require.NoError(t, err)
@@ -247,7 +246,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 					setUp()
 					hs.callGetDashboardVersions(sc)
 
-					assert.Equal(t, http.StatusOK, sc.resp.Code)
+					assert.Equal(t, 200, sc.resp.Code)
 				}, mockSQLStore)
 		})
 	})
@@ -311,7 +310,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 					sc.handlerFunc = hs.GetDashboard
 					sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
 
-					assert.Equal(t, http.StatusForbidden, sc.resp.Code)
+					assert.Equal(t, 403, sc.resp.Code)
 				}, mockSQLStore)
 
 			loggedInUserScenarioWithRole(t, "When calling DELETE on", "DELETE", "/api/dashboards/uid/abcdefghi",
@@ -320,7 +319,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 					sc.sqlStore = mockSQLStore
 					hs.callDeleteDashboardByUID(t, sc, dashboardService, nil)
 
-					assert.Equal(t, http.StatusForbidden, sc.resp.Code)
+					assert.Equal(t, 403, sc.resp.Code)
 				}, mockSQLStore)
 
 			loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/id/2/versions/1",
@@ -329,7 +328,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 					sc.sqlStore = mockSQLStore
 					hs.callGetDashboardVersion(sc)
 
-					assert.Equal(t, http.StatusForbidden, sc.resp.Code)
+					assert.Equal(t, 403, sc.resp.Code)
 				}, mockSQLStore)
 
 			loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/id/2/versions",
@@ -337,7 +336,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 					setUp()
 					hs.callGetDashboardVersions(sc)
 
-					assert.Equal(t, http.StatusForbidden, sc.resp.Code)
+					assert.Equal(t, 403, sc.resp.Code)
 				}, mockSQLStore)
 		})
 
@@ -350,7 +349,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 					sc.handlerFunc = hs.GetDashboard
 					sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
 
-					assert.Equal(t, http.StatusForbidden, sc.resp.Code)
+					assert.Equal(t, 403, sc.resp.Code)
 				}, mockSQLStore)
 
 			loggedInUserScenarioWithRole(t, "When calling DELETE on", "DELETE", "/api/dashboards/uid/abcdefghi",
@@ -358,7 +357,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 					setUp()
 					hs.callDeleteDashboardByUID(t, sc, dashboardService, nil)
 
-					assert.Equal(t, http.StatusForbidden, sc.resp.Code)
+					assert.Equal(t, 403, sc.resp.Code)
 				}, mockSQLStore)
 
 			loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/id/2/versions/1",
@@ -366,7 +365,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 					setUp()
 					hs.callGetDashboardVersion(sc)
 
-					assert.Equal(t, http.StatusForbidden, sc.resp.Code)
+					assert.Equal(t, 403, sc.resp.Code)
 				}, mockSQLStore)
 
 			loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/id/2/versions",
@@ -374,7 +373,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 					setUp()
 					hs.callGetDashboardVersions(sc)
 
-					assert.Equal(t, http.StatusForbidden, sc.resp.Code)
+					assert.Equal(t, 403, sc.resp.Code)
 				}, mockSQLStore)
 		})
 
@@ -414,7 +413,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 				pubdashService.On("DeleteByDashboard", mock.Anything, mock.Anything).Return(nil)
 				hs.callDeleteDashboardByUID(t, sc, dashboardService, pubdashService)
 
-				assert.Equal(t, http.StatusOK, sc.resp.Code)
+				assert.Equal(t, 200, sc.resp.Code)
 			}, mockSQLStore)
 		})
 
@@ -448,7 +447,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 				setUpInner()
 
 				hs.callDeleteDashboardByUID(t, sc, dashboardService, nil)
-				assert.Equal(t, http.StatusForbidden, sc.resp.Code)
+				assert.Equal(t, 403, sc.resp.Code)
 			}, mockSQLStore)
 		})
 
@@ -487,21 +486,21 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 				pubdashService.On("DeleteByDashboard", mock.Anything, mock.Anything).Return(nil)
 				hs.callDeleteDashboardByUID(t, sc, dashboardService, pubdashService)
 
-				assert.Equal(t, http.StatusOK, sc.resp.Code)
+				assert.Equal(t, 200, sc.resp.Code)
 			}, mockSQLStore)
 
 			loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/id/2/versions/1", "/api/dashboards/id/:dashboardId/versions/:id", role, func(sc *scenarioContext) {
 				setUpInner()
 
 				hs.callGetDashboardVersion(sc)
-				assert.Equal(t, http.StatusOK, sc.resp.Code)
+				assert.Equal(t, 200, sc.resp.Code)
 			}, mockSQLStore)
 
 			loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/id/2/versions", "/api/dashboards/id/:dashboardId/versions", role, func(sc *scenarioContext) {
 				setUpInner()
 
 				hs.callGetDashboardVersions(sc)
-				assert.Equal(t, http.StatusOK, sc.resp.Code)
+				assert.Equal(t, 200, sc.resp.Code)
 			}, mockSQLStore)
 		})
 
@@ -531,21 +530,21 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 				setUpInner()
 				hs.callDeleteDashboardByUID(t, sc, dashboardService, nil)
 
-				assert.Equal(t, http.StatusForbidden, sc.resp.Code)
+				assert.Equal(t, 403, sc.resp.Code)
 			}, mockSQLStore)
 
 			loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/id/2/versions/1", "/api/dashboards/id/:dashboardId/versions/:id", role, func(sc *scenarioContext) {
 				setUpInner()
 				hs.callGetDashboardVersion(sc)
 
-				assert.Equal(t, http.StatusForbidden, sc.resp.Code)
+				assert.Equal(t, 403, sc.resp.Code)
 			}, mockSQLStore)
 
 			loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/id/2/versions", "/api/dashboards/id/:dashboardId/versions", role, func(sc *scenarioContext) {
 				setUpInner()
 				hs.callGetDashboardVersions(sc)
 
-				assert.Equal(t, http.StatusForbidden, sc.resp.Code)
+				assert.Equal(t, 403, sc.resp.Code)
 			}, mockSQLStore)
 		})
 	})
@@ -655,7 +654,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 
 			postDashboardScenario(t, "When calling POST on", "/api/dashboards", "/api/dashboards", cmd, dashboardService, mockFolder, func(sc *scenarioContext) {
 				callPostDashboard(sc)
-				assert.Equal(t, http.StatusInternalServerError, sc.resp.Code)
+				assert.Equal(t, 500, sc.resp.Code)
 			})
 		})
 
@@ -665,23 +664,23 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 				SaveError          error
 				ExpectedStatusCode int
 			}{
-				{SaveError: dashboards.ErrDashboardNotFound, ExpectedStatusCode: http.StatusNotFound},
-				{SaveError: dashboards.ErrFolderNotFound, ExpectedStatusCode: http.StatusBadRequest},
-				{SaveError: dashboards.ErrDashboardWithSameUIDExists, ExpectedStatusCode: http.StatusBadRequest},
-				{SaveError: dashboards.ErrDashboardWithSameNameInFolderExists, ExpectedStatusCode: http.StatusPreconditionFailed},
-				{SaveError: dashboards.ErrDashboardVersionMismatch, ExpectedStatusCode: http.StatusPreconditionFailed},
-				{SaveError: dashboards.ErrDashboardTitleEmpty, ExpectedStatusCode: http.StatusBadRequest},
-				{SaveError: dashboards.ErrDashboardFolderCannotHaveParent, ExpectedStatusCode: http.StatusBadRequest},
-				{SaveError: alerting.ValidationError{Reason: "Mu"}, ExpectedStatusCode: http.StatusUnprocessableEntity},
-				{SaveError: dashboards.ErrDashboardTypeMismatch, ExpectedStatusCode: http.StatusBadRequest},
-				{SaveError: dashboards.ErrDashboardFolderWithSameNameAsDashboard, ExpectedStatusCode: http.StatusBadRequest},
-				{SaveError: dashboards.ErrDashboardWithSameNameAsFolder, ExpectedStatusCode: http.StatusBadRequest},
-				{SaveError: dashboards.ErrDashboardFolderNameExists, ExpectedStatusCode: http.StatusBadRequest},
-				{SaveError: dashboards.ErrDashboardUpdateAccessDenied, ExpectedStatusCode: http.StatusForbidden},
-				{SaveError: dashboards.ErrDashboardInvalidUid, ExpectedStatusCode: http.StatusBadRequest},
-				{SaveError: dashboards.ErrDashboardUidTooLong, ExpectedStatusCode: http.StatusBadRequest},
-				{SaveError: dashboards.ErrDashboardCannotSaveProvisionedDashboard, ExpectedStatusCode: http.StatusBadRequest},
-				{SaveError: dashboards.UpdatePluginDashboardError{PluginId: "plug"}, ExpectedStatusCode: http.StatusPreconditionFailed},
+				{SaveError: dashboards.ErrDashboardNotFound, ExpectedStatusCode: 404},
+				{SaveError: dashboards.ErrFolderNotFound, ExpectedStatusCode: 400},
+				{SaveError: dashboards.ErrDashboardWithSameUIDExists, ExpectedStatusCode: 400},
+				{SaveError: dashboards.ErrDashboardWithSameNameInFolderExists, ExpectedStatusCode: 412},
+				{SaveError: dashboards.ErrDashboardVersionMismatch, ExpectedStatusCode: 412},
+				{SaveError: dashboards.ErrDashboardTitleEmpty, ExpectedStatusCode: 400},
+				{SaveError: dashboards.ErrDashboardFolderCannotHaveParent, ExpectedStatusCode: 400},
+				{SaveError: alerting.ValidationError{Reason: "Mu"}, ExpectedStatusCode: 422},
+				{SaveError: dashboards.ErrDashboardTypeMismatch, ExpectedStatusCode: 400},
+				{SaveError: dashboards.ErrDashboardFolderWithSameNameAsDashboard, ExpectedStatusCode: 400},
+				{SaveError: dashboards.ErrDashboardWithSameNameAsFolder, ExpectedStatusCode: 400},
+				{SaveError: dashboards.ErrDashboardFolderNameExists, ExpectedStatusCode: 400},
+				{SaveError: dashboards.ErrDashboardUpdateAccessDenied, ExpectedStatusCode: 403},
+				{SaveError: dashboards.ErrDashboardInvalidUid, ExpectedStatusCode: 400},
+				{SaveError: dashboards.ErrDashboardUidTooLong, ExpectedStatusCode: 400},
+				{SaveError: dashboards.ErrDashboardCannotSaveProvisionedDashboard, ExpectedStatusCode: 400},
+				{SaveError: dashboards.UpdatePluginDashboardError{PluginId: "plug"}, ExpectedStatusCode: 412},
 			}
 
 			cmd := dashboards.SaveDashboardCommand{
@@ -698,7 +697,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 				postDashboardScenario(t, fmt.Sprintf("Expect '%s' error when calling POST on", tc.SaveError.Error()),
 					"/api/dashboards", "/api/dashboards", cmd, dashboardService, nil, func(sc *scenarioContext) {
 						callPostDashboard(sc)
-						assert.Equal(t, tc.ExpectedStatusCode, sc.resp.Code, sc.resp.Body.String())
+						assert.Equal(t, tc.ExpectedStatusCode, sc.resp.Code)
 					})
 			}
 		})
@@ -717,7 +716,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 				callPostDashboard(sc)
 
 				result := sc.ToJSON()
-				assert.Equal(t, http.StatusUnprocessableEntity, sc.resp.Code)
+				assert.Equal(t, 422, sc.resp.Code)
 				assert.False(t, result.Get("isValid").MustBool())
 				assert.NotEmpty(t, result.Get("message").MustString())
 			}, sqlmock)
@@ -733,7 +732,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 				callPostDashboard(sc)
 
 				result := sc.ToJSON()
-				assert.Equal(t, http.StatusPreconditionFailed, sc.resp.Code)
+				assert.Equal(t, 412, sc.resp.Code)
 				assert.False(t, result.Get("isValid").MustBool())
 				assert.Equal(t, "invalid schema version", result.Get("message").MustString())
 			}, sqlmock)
@@ -752,7 +751,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 				callPostDashboard(sc)
 
 				result := sc.ToJSON()
-				assert.Equal(t, http.StatusOK, sc.resp.Code)
+				assert.Equal(t, 200, sc.resp.Code)
 				assert.True(t, result.Get("isValid").MustBool())
 			}, sqlmock)
 		})
@@ -804,7 +803,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 				setUp()
 
 				callPostDashboard(sc)
-				assert.Equal(t, http.StatusForbidden, sc.resp.Code)
+				assert.Equal(t, 403, sc.resp.Code)
 			}, sqlmock, fakeDashboardVersionService)
 		})
 
@@ -814,7 +813,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 				// This test shouldn't hit GetDashboardACLInfoList, so no setup needed
 				sc.dashboardVersionService = fakeDashboardVersionService
 				callPostDashboard(sc)
-				assert.Equal(t, http.StatusOK, sc.resp.Code)
+				assert.Equal(t, 200, sc.resp.Code)
 			}, sqlmock, fakeDashboardVersionService)
 		})
 	})
@@ -851,7 +850,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 				sc.dashboardVersionService = fakeDashboardVersionService
 
 				callRestoreDashboardVersion(sc)
-				assert.Equal(t, http.StatusOK, sc.resp.Code)
+				assert.Equal(t, 200, sc.resp.Code)
 			}, mockSQLStore)
 	})
 
@@ -884,7 +883,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 		restoreDashboardVersionScenario(t, "When calling POST on", "/api/dashboards/id/1/restore",
 			"/api/dashboards/id/:dashboardId/restore", dashboardService, fakeDashboardVersionService, cmd, func(sc *scenarioContext) {
 				callRestoreDashboardVersion(sc)
-				assert.Equal(t, http.StatusOK, sc.resp.Code)
+				assert.Equal(t, 200, sc.resp.Code)
 			}, mockSQLStore)
 	})
 
@@ -940,7 +939,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 			}
 			hs.callGetDashboard(sc)
 
-			assert.Equal(t, http.StatusOK, sc.resp.Code)
+			assert.Equal(t, 200, sc.resp.Code)
 
 			dash := dtos.DashboardFullWithMeta{}
 			err := json.NewDecoder(sc.resp.Body).Decode(&dash)
@@ -1012,7 +1011,7 @@ func TestDashboardVersionsAPIEndpoint(t *testing.T) {
 				ExpectedUser: &user.User{ID: 1, Login: "test-user"},
 			}).callGetDashboardVersions(sc)
 
-			assert.Equal(t, http.StatusOK, sc.resp.Code)
+			assert.Equal(t, 200, sc.resp.Code)
 			var versions []dashver.DashboardVersionMeta
 			err := json.NewDecoder(sc.resp.Body).Decode(&versions)
 			require.NoError(t, err)
@@ -1038,7 +1037,7 @@ func TestDashboardVersionsAPIEndpoint(t *testing.T) {
 				ExpectedError: user.ErrUserNotFound,
 			}).callGetDashboardVersions(sc)
 
-			assert.Equal(t, http.StatusOK, sc.resp.Code)
+			assert.Equal(t, 200, sc.resp.Code)
 			var versions []dashver.DashboardVersionMeta
 			err := json.NewDecoder(sc.resp.Body).Decode(&versions)
 			require.NoError(t, err)
@@ -1064,7 +1063,7 @@ func TestDashboardVersionsAPIEndpoint(t *testing.T) {
 				ExpectedError: fmt.Errorf("some error"),
 			}).callGetDashboardVersions(sc)
 
-			assert.Equal(t, http.StatusOK, sc.resp.Code)
+			assert.Equal(t, 200, sc.resp.Code)
 			var versions []dashver.DashboardVersionMeta
 			err := json.NewDecoder(sc.resp.Body).Decode(&versions)
 			require.NoError(t, err)
@@ -1193,7 +1192,6 @@ func postDashboardScenario(t *testing.T, desc string, url string, routePattern s
 			Features:              featuremgmt.WithFeatures(),
 			Kinds:                 corekind.NewBase(nil),
 			accesscontrolService:  actest.FakeService{},
-			log:                   log.New("test-logger"),
 		}
 
 		sc := setupScenarioContext(t, url)

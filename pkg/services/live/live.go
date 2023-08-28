@@ -32,7 +32,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/annotations"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -300,11 +299,10 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 
 	g.websocketHandler = func(ctx *contextmodel.ReqContext) {
 		user := ctx.SignedInUser
-		_, userID := user.GetNamespacedID()
 
 		// Centrifuge expects Credentials in context with a current user ID.
 		cred := &centrifuge.Credentials{
-			UserID: userID,
+			UserID: fmt.Sprintf("%d", user.UserID),
 		}
 		newCtx := centrifuge.SetCredentials(ctx.Req.Context(), cred)
 		newCtx = livecontext.SetContextSignedUser(newCtx, user)
@@ -595,7 +593,7 @@ func (g *GrafanaLive) handleOnSubscribe(ctx context.Context, client *centrifuge.
 		return centrifuge.SubscribeReply{}, centrifuge.ErrorInternal
 	}
 
-	if user.GetOrgID() != orgID {
+	if user.OrgID != orgID {
 		logger.Info("Error subscribing: wrong orgId", "user", client.UserID(), "client", client.ID(), "channel", e.Channel)
 		return centrifuge.SubscribeReply{}, centrifuge.ErrorPermissionDenied
 	}
@@ -605,7 +603,7 @@ func (g *GrafanaLive) handleOnSubscribe(ctx context.Context, client *centrifuge.
 	var ruleFound bool
 
 	if g.Pipeline != nil {
-		rule, ok, err := g.Pipeline.Get(user.GetOrgID(), channel)
+		rule, ok, err := g.Pipeline.Get(user.OrgID, channel)
 		if err != nil {
 			logger.Error("Error getting channel rule", "user", client.UserID(), "client", client.ID(), "channel", e.Channel, "error", err)
 			return centrifuge.SubscribeReply{}, centrifuge.ErrorInternal
@@ -696,13 +694,13 @@ func (g *GrafanaLive) handleOnPublish(ctx context.Context, client *centrifuge.Cl
 		return centrifuge.PublishReply{}, centrifuge.ErrorInternal
 	}
 
-	if user.GetOrgID() != orgID {
+	if user.OrgID != orgID {
 		logger.Info("Error subscribing: wrong orgId", "user", client.UserID(), "client", client.ID(), "channel", e.Channel)
 		return centrifuge.PublishReply{}, centrifuge.ErrorPermissionDenied
 	}
 
 	if g.Pipeline != nil {
-		rule, ok, err := g.Pipeline.Get(user.GetOrgID(), channel)
+		rule, ok, err := g.Pipeline.Get(user.OrgID, channel)
 		if err != nil {
 			logger.Error("Error getting channel rule", "user", client.UserID(), "client", client.ID(), "channel", e.Channel, "error", err)
 			return centrifuge.PublishReply{}, centrifuge.ErrorInternal
@@ -726,7 +724,7 @@ func (g *GrafanaLive) handleOnPublish(ctx context.Context, client *centrifuge.Cl
 					return centrifuge.PublishReply{}, &centrifuge.Error{Code: uint32(code), Message: text}
 				}
 			}
-			_, err := g.Pipeline.ProcessInput(client.Context(), user.GetOrgID(), channel, e.Data)
+			_, err := g.Pipeline.ProcessInput(client.Context(), user.OrgID, channel, e.Data)
 			if err != nil {
 				logger.Error("Error processing input", "user", client.UserID(), "client", client.ID(), "channel", e.Channel, "error", err)
 				return centrifuge.PublishReply{}, centrifuge.ErrorInternal
@@ -807,7 +805,7 @@ func publishStatusToHTTPError(status backend.PublishStreamStatus) (int, string) 
 }
 
 // GetChannelHandler gives thread-safe access to the channel.
-func (g *GrafanaLive) GetChannelHandler(ctx context.Context, user identity.Requester, channel string) (model.ChannelHandler, live.Channel, error) {
+func (g *GrafanaLive) GetChannelHandler(ctx context.Context, user *user.SignedInUser, channel string) (model.ChannelHandler, live.Channel, error) {
 	// Parse the identifier ${scope}/${namespace}/${path}
 	addr, err := live.ParseChannel(channel)
 	if err != nil {
@@ -848,7 +846,7 @@ func (g *GrafanaLive) GetChannelHandler(ctx context.Context, user identity.Reque
 
 // GetChannelHandlerFactory gets a ChannelHandlerFactory for a namespace.
 // It gives thread-safe access to the channel.
-func (g *GrafanaLive) GetChannelHandlerFactory(ctx context.Context, user identity.Requester, scope string, namespace string) (model.ChannelHandlerFactory, error) {
+func (g *GrafanaLive) GetChannelHandlerFactory(ctx context.Context, user *user.SignedInUser, scope string, namespace string) (model.ChannelHandlerFactory, error) {
 	switch scope {
 	case live.ScopeGrafana:
 		return g.handleGrafanaScope(user, namespace)
@@ -863,14 +861,14 @@ func (g *GrafanaLive) GetChannelHandlerFactory(ctx context.Context, user identit
 	}
 }
 
-func (g *GrafanaLive) handleGrafanaScope(_ identity.Requester, namespace string) (model.ChannelHandlerFactory, error) {
+func (g *GrafanaLive) handleGrafanaScope(_ *user.SignedInUser, namespace string) (model.ChannelHandlerFactory, error) {
 	if p, ok := g.GrafanaScope.Features[namespace]; ok {
 		return p, nil
 	}
 	return nil, fmt.Errorf("unknown feature: %q", namespace)
 }
 
-func (g *GrafanaLive) handlePluginScope(ctx context.Context, _ identity.Requester, namespace string) (model.ChannelHandlerFactory, error) {
+func (g *GrafanaLive) handlePluginScope(ctx context.Context, _ *user.SignedInUser, namespace string) (model.ChannelHandlerFactory, error) {
 	streamHandler, err := g.getStreamPlugin(ctx, namespace)
 	if err != nil {
 		return nil, fmt.Errorf("can't find stream plugin: %s", namespace)
@@ -884,11 +882,11 @@ func (g *GrafanaLive) handlePluginScope(ctx context.Context, _ identity.Requeste
 	), nil
 }
 
-func (g *GrafanaLive) handleStreamScope(u identity.Requester, namespace string) (model.ChannelHandlerFactory, error) {
-	return g.ManagedStreamRunner.GetOrCreateStream(u.GetOrgID(), live.ScopeStream, namespace)
+func (g *GrafanaLive) handleStreamScope(u *user.SignedInUser, namespace string) (model.ChannelHandlerFactory, error) {
+	return g.ManagedStreamRunner.GetOrCreateStream(u.OrgID, live.ScopeStream, namespace)
 }
 
-func (g *GrafanaLive) handleDatasourceScope(ctx context.Context, user identity.Requester, namespace string) (model.ChannelHandlerFactory, error) {
+func (g *GrafanaLive) handleDatasourceScope(ctx context.Context, user *user.SignedInUser, namespace string) (model.ChannelHandlerFactory, error) {
 	ds, err := g.DataSourceCache.GetDatasourceByUID(ctx, namespace, user, false)
 	if err != nil {
 		return nil, fmt.Errorf("error getting datasource: %w", err)
@@ -931,13 +929,12 @@ func (g *GrafanaLive) HandleHTTPPublish(ctx *contextmodel.ReqContext) response.R
 		return response.Error(http.StatusBadRequest, "invalid channel ID", nil)
 	}
 
-	namespaceID, userID := ctx.SignedInUser.GetNamespacedID()
-	logger.Debug("Publish API cmd", "namespaceID", namespaceID, "userID", userID, "channel", cmd.Channel)
+	logger.Debug("Publish API cmd", "user", ctx.SignedInUser.UserID, "channel", cmd.Channel)
 	user := ctx.SignedInUser
 	channel := cmd.Channel
 
 	if g.Pipeline != nil {
-		rule, ok, err := g.Pipeline.Get(user.GetOrgID(), channel)
+		rule, ok, err := g.Pipeline.Get(user.OrgID, channel)
 		if err != nil {
 			logger.Error("Error getting channel rule", "user", user, "channel", channel, "error", err)
 			return response.Error(http.StatusInternalServerError, http.StatusText(http.StatusInternalServerError), nil)
@@ -957,7 +954,7 @@ func (g *GrafanaLive) HandleHTTPPublish(ctx *contextmodel.ReqContext) response.R
 					return response.Error(http.StatusForbidden, http.StatusText(http.StatusForbidden), nil)
 				}
 			}
-			_, err := g.Pipeline.ProcessInput(ctx.Req.Context(), user.GetOrgID(), channel, cmd.Data)
+			_, err := g.Pipeline.ProcessInput(ctx.Req.Context(), user.OrgID, channel, cmd.Data)
 			if err != nil {
 				logger.Error("Error processing input", "user", user, "channel", channel, "error", err)
 				return response.Error(http.StatusInternalServerError, http.StatusText(http.StatusInternalServerError), nil)
@@ -983,13 +980,13 @@ func (g *GrafanaLive) HandleHTTPPublish(ctx *contextmodel.ReqContext) response.R
 		return response.Error(code, text, nil)
 	}
 	if reply.Data != nil {
-		err = g.Publish(ctx.SignedInUser.GetOrgID(), cmd.Channel, cmd.Data)
+		err = g.Publish(ctx.OrgID, cmd.Channel, cmd.Data)
 		if err != nil {
 			logger.Error("Error publish to channel", "error", err, "channel", cmd.Channel)
 			return response.Error(http.StatusInternalServerError, http.StatusText(http.StatusInternalServerError), nil)
 		}
 	}
-	logger.Debug("Publication successful", "namespaceID", namespaceID, "userID", userID, "channel", cmd.Channel)
+	logger.Debug("Publication successful", "user", ctx.SignedInUser.UserID, "channel", cmd.Channel)
 	return response.JSON(http.StatusOK, dtos.LivePublishResponse{})
 }
 
@@ -1002,9 +999,9 @@ func (g *GrafanaLive) HandleListHTTP(c *contextmodel.ReqContext) response.Respon
 	var channels []*managedstream.ManagedChannel
 	var err error
 	if g.IsHA() {
-		channels, err = g.surveyCaller.CallManagedStreams(c.SignedInUser.GetOrgID())
+		channels, err = g.surveyCaller.CallManagedStreams(c.SignedInUser.OrgID)
 	} else {
-		channels, err = g.ManagedStreamRunner.GetManagedChannels(c.SignedInUser.GetOrgID())
+		channels, err = g.ManagedStreamRunner.GetManagedChannels(c.SignedInUser.OrgID)
 	}
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, http.StatusText(http.StatusInternalServerError), err)
@@ -1020,7 +1017,7 @@ func (g *GrafanaLive) HandleInfoHTTP(ctx *contextmodel.ReqContext) response.Resp
 	path := web.Params(ctx.Req)["*"]
 	if path == "grafana/dashboards/gitops" {
 		return response.JSON(http.StatusOK, util.DynMap{
-			"active": g.GrafanaScope.Dashboards.HasGitOpsObserver(ctx.SignedInUser.GetOrgID()),
+			"active": g.GrafanaScope.Dashboards.HasGitOpsObserver(ctx.SignedInUser.OrgID),
 		})
 	}
 	return response.JSONStreaming(404, util.DynMap{
@@ -1030,7 +1027,7 @@ func (g *GrafanaLive) HandleInfoHTTP(ctx *contextmodel.ReqContext) response.Resp
 
 // HandleChannelRulesListHTTP ...
 func (g *GrafanaLive) HandleChannelRulesListHTTP(c *contextmodel.ReqContext) response.Response {
-	result, err := g.pipelineStorage.ListChannelRules(c.Req.Context(), c.SignedInUser.GetOrgID())
+	result, err := g.pipelineStorage.ListChannelRules(c.Req.Context(), c.OrgID)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to get channel rules", err)
 	}
@@ -1115,7 +1112,7 @@ func (g *GrafanaLive) HandlePipelineConvertTestHTTP(c *contextmodel.ReqContext) 
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Error creating pipeline", err)
 	}
-	rule, ok, err := channelRuleGetter.Get(c.SignedInUser.GetOrgID(), req.Channel)
+	rule, ok, err := channelRuleGetter.Get(c.OrgID, req.Channel)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Error getting channel rule", err)
 	}
@@ -1125,7 +1122,7 @@ func (g *GrafanaLive) HandlePipelineConvertTestHTTP(c *contextmodel.ReqContext) 
 	if rule.Converter == nil {
 		return response.Error(http.StatusNotFound, "No converter found", nil)
 	}
-	channelFrames, err := pipe.DataToChannelFrames(c.Req.Context(), *rule, c.SignedInUser.GetOrgID(), req.Channel, []byte(req.Data))
+	channelFrames, err := pipe.DataToChannelFrames(c.Req.Context(), *rule, c.OrgID, req.Channel, []byte(req.Data))
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Error converting data", err)
 	}
@@ -1145,7 +1142,7 @@ func (g *GrafanaLive) HandleChannelRulesPostHTTP(c *contextmodel.ReqContext) res
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "Error decoding channel rule", err)
 	}
-	rule, err := g.pipelineStorage.CreateChannelRule(c.Req.Context(), c.SignedInUser.GetOrgID(), cmd)
+	rule, err := g.pipelineStorage.CreateChannelRule(c.Req.Context(), c.OrgID, cmd)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to create channel rule", err)
 	}
@@ -1168,7 +1165,7 @@ func (g *GrafanaLive) HandleChannelRulesPutHTTP(c *contextmodel.ReqContext) resp
 	if cmd.Pattern == "" {
 		return response.Error(http.StatusBadRequest, "Rule pattern required", nil)
 	}
-	rule, err := g.pipelineStorage.UpdateChannelRule(c.Req.Context(), c.SignedInUser.GetOrgID(), cmd)
+	rule, err := g.pipelineStorage.UpdateChannelRule(c.Req.Context(), c.OrgID, cmd)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to update channel rule", err)
 	}
@@ -1191,7 +1188,7 @@ func (g *GrafanaLive) HandleChannelRulesDeleteHTTP(c *contextmodel.ReqContext) r
 	if cmd.Pattern == "" {
 		return response.Error(http.StatusBadRequest, "Rule pattern required", nil)
 	}
-	err = g.pipelineStorage.DeleteChannelRule(c.Req.Context(), c.SignedInUser.GetOrgID(), cmd)
+	err = g.pipelineStorage.DeleteChannelRule(c.Req.Context(), c.OrgID, cmd)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to delete channel rule", err)
 	}
@@ -1211,7 +1208,7 @@ func (g *GrafanaLive) HandlePipelineEntitiesListHTTP(_ *contextmodel.ReqContext)
 
 // HandleWriteConfigsListHTTP ...
 func (g *GrafanaLive) HandleWriteConfigsListHTTP(c *contextmodel.ReqContext) response.Response {
-	backends, err := g.pipelineStorage.ListWriteConfigs(c.Req.Context(), c.SignedInUser.GetOrgID())
+	backends, err := g.pipelineStorage.ListWriteConfigs(c.Req.Context(), c.OrgID)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to get write configs", err)
 	}
@@ -1235,7 +1232,7 @@ func (g *GrafanaLive) HandleWriteConfigsPostHTTP(c *contextmodel.ReqContext) res
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "Error decoding write config create command", err)
 	}
-	result, err := g.pipelineStorage.CreateWriteConfig(c.Req.Context(), c.SignedInUser.GetOrgID(), cmd)
+	result, err := g.pipelineStorage.CreateWriteConfig(c.Req.Context(), c.OrgID, cmd)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to create write config", err)
 	}
@@ -1258,7 +1255,7 @@ func (g *GrafanaLive) HandleWriteConfigsPutHTTP(c *contextmodel.ReqContext) resp
 	if cmd.UID == "" {
 		return response.Error(http.StatusBadRequest, "UID required", nil)
 	}
-	existingBackend, ok, err := g.pipelineStorage.GetWriteConfig(c.Req.Context(), c.SignedInUser.GetOrgID(), pipeline.WriteConfigGetCmd{
+	existingBackend, ok, err := g.pipelineStorage.GetWriteConfig(c.Req.Context(), c.OrgID, pipeline.WriteConfigGetCmd{
 		UID: cmd.UID,
 	})
 	if err != nil {
@@ -1279,7 +1276,7 @@ func (g *GrafanaLive) HandleWriteConfigsPutHTTP(c *contextmodel.ReqContext) resp
 			}
 		}
 	}
-	result, err := g.pipelineStorage.UpdateWriteConfig(c.Req.Context(), c.SignedInUser.GetOrgID(), cmd)
+	result, err := g.pipelineStorage.UpdateWriteConfig(c.Req.Context(), c.OrgID, cmd)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to update write config", err)
 	}
@@ -1302,7 +1299,7 @@ func (g *GrafanaLive) HandleWriteConfigsDeleteHTTP(c *contextmodel.ReqContext) r
 	if cmd.UID == "" {
 		return response.Error(http.StatusBadRequest, "UID required", nil)
 	}
-	err = g.pipelineStorage.DeleteWriteConfig(c.Req.Context(), c.SignedInUser.GetOrgID(), cmd)
+	err = g.pipelineStorage.DeleteWriteConfig(c.Req.Context(), c.OrgID, cmd)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to delete write config", err)
 	}
