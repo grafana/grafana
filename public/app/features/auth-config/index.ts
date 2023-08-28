@@ -10,7 +10,7 @@ const registeredAuthProviders: AuthProviderInfo[] = [];
 const authProvidersConfigHooks: Record<string, GetStatusHook> = {};
 
 export function registerAuthProvider(provider: AuthProviderInfo, getConfigHook?: GetStatusHook) {
-  if (!registeredAuthProviders.find((p: any) => p.id === provider.id)) {
+  if (!registeredAuthProviders.find((p: AuthProviderInfo) => p.id === provider.id)) {
     registeredAuthProviders.push(provider);
     if (getConfigHook) {
       authProvidersConfigHooks[provider.id] = getConfigHook;
@@ -23,7 +23,7 @@ export function getRegisteredAuthProviders(): AuthProviderInfo[] {
 }
 
 export function getAuthProviderInfo(provider: string) {
-  return registeredAuthProviders.find((p: any) => p.id === provider);
+  return registeredAuthProviders.find((p: AuthProviderInfo) => p.id === provider);
 }
 
 export function getAuthProviders(cfg: Settings): SettingsSection[] {
