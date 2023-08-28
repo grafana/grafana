@@ -73,17 +73,13 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   };
 
   public onDiscard = () => {
-    // TODO open confirm modal if dirty
-    // TODO actually discard changes
-    this.setState({ isEditing: false });
+    this._changeTracker?.discard();
 
     // Disable grid dragging
     if (this.state.body instanceof SceneGridLayout) {
       this.state.body.setState({ isDraggable: false, isResizable: false });
       forceRenderChildren(this.state.body, true);
     }
-
-    this._changeTracker?.discard();
   };
 
   public onSave = () => {

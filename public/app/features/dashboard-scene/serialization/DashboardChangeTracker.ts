@@ -6,8 +6,6 @@ import { SceneGridItem, SceneObjectStateChangedEvent } from '@grafana/scenes';
 
 import { DashboardScene } from '../scene/DashboardScene';
 
-import { getDashboardLoader } from './DashboardsLoader';
-
 export class DashboardChangeTracker {
   private _sub?: Unsubscribable;
   private _scene: DashboardScene;
@@ -39,6 +37,13 @@ export class DashboardChangeTracker {
 
   discard() {
     this._sub?.unsubscribe();
-    getDashboardLoader().revertTo(this._original!, this._orignalUrlState!);
+    // Stop url sync before updating url
+    this._scene.stopUrlSync();
+    // Now we can update url
+    locationService.partial(this._orignalUrlState, true);
+    // Update state and disable editing
+    this._scene.setState({ ...this._original.state, isEditing: false });
+    // and start url sync again
+    this._scene.startUrlSync();
   }
 }

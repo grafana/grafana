@@ -3,10 +3,8 @@ import {
   CustomVariableModel,
   DataSourceVariableModel,
   QueryVariableModel,
-  UrlQueryMap,
   VariableModel,
 } from '@grafana/data';
-import { locationService } from '@grafana/runtime';
 import {
   VizPanel,
   SceneTimePicker,
@@ -27,9 +25,8 @@ import {
   VizPanelMenu,
   behaviors,
 } from '@grafana/scenes';
-import { StateManagerBase } from 'app/core/services/StateManagerBase';
-import { dashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
+import { DashboardDTO } from 'app/types';
 
 import { DashboardScene } from '../scene/DashboardScene';
 import { LibraryVizPanel } from '../scene/LibraryVizPanel';
@@ -43,56 +40,13 @@ export interface DashboardLoaderState {
   loadError?: string;
 }
 
-export class DashboardLoader extends StateManagerBase<DashboardLoaderState> {
-  private cache: Record<string, DashboardScene> = {};
+export function transformSaveModelToScene(rsp: DashboardDTO): DashboardScene {
+  // Just to have migrations run
+  const oldModel = new DashboardModel(rsp.dashboard, rsp.meta, {
+    autoMigrateOldPanels: true,
+  });
 
-  async loadAndInit(uid: string) {
-    try {
-      const scene = await this.loadScene(uid);
-      scene.startUrlSync();
-
-      this.cache[uid] = scene;
-      this.setState({ dashboard: scene, isLoading: false });
-    } catch (err) {
-      this.setState({ isLoading: false, loadError: String(err) });
-    }
-  }
-
-  private async loadScene(uid: string): Promise<DashboardScene> {
-    const fromCache = this.cache[uid];
-    if (fromCache) {
-      return fromCache;
-    }
-
-    this.setState({ isLoading: true });
-
-    const rsp = await dashboardLoaderSrv.loadDashboard('db', '', uid);
-
-    if (rsp.dashboard) {
-      // Just to have migrations run
-      const oldModel = new DashboardModel(rsp.dashboard, rsp.meta, {
-        autoMigrateOldPanels: true,
-      });
-
-      return createDashboardSceneFromDashboardModel(oldModel);
-    }
-
-    throw new Error('Dashboard not found');
-  }
-
-  public clearState() {
-    this.setState({ dashboard: undefined, loadError: undefined, isLoading: false });
-  }
-
-  revertTo(scene: DashboardScene, urlState: UrlQueryMap) {
-    this.cache[scene.state.uid!] = scene;
-    // Stop url sync for current mounted scene so we can update url state without any state changes
-    this.state.dashboard!.stopUrlSync();
-    // Update url state
-    locationService.partial(urlState, true);
-    // Now switch to the older scene version
-    this.setState({ dashboard: scene });
-  }
+  return createDashboardSceneFromDashboardModel(oldModel);
 }
 
 export function createSceneObjectsForPanels(oldPanels: PanelModel[]): Array<SceneGridItem | SceneGridRow> {
@@ -313,16 +267,6 @@ export function createVizPanelFromPanelModel(panel: PanelModel) {
       }),
     }),
   });
-}
-
-let loader: DashboardLoader | null = null;
-
-export function getDashboardLoader(): DashboardLoader {
-  if (!loader) {
-    loader = new DashboardLoader({});
-  }
-
-  return loader;
 }
 
 const isCustomVariable = (v: VariableModel): v is CustomVariableModel => v.type === 'custom';

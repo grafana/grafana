@@ -20,7 +20,6 @@ describe('transformSceneToSaveModel', () => {
         graphTooltip: 0,
         tags: [],
         timezone: 'browser',
-        style: 'dark',
         schemaVersion: defaultDashboard.schemaVersion,
         time: {
           from: 'now-5m',
