@@ -29,21 +29,21 @@ func TestSinglePluginVersion(t *testing.T) {
 		err := i.Remove(ctx, pluginID, v1)
 		require.EqualError(t, err, fmt.Errorf("plugin %s is not registered", pluginID).Error())
 
-		p = &plugins.Plugin{JSONData: plugins.JSONData{ID: pluginID, Info: plugins.Info{Version: v1}}}
-		err = i.Add(ctx, p)
+		pv1 := &plugins.Plugin{JSONData: plugins.JSONData{ID: pluginID, Info: plugins.Info{Version: v1}}}
+		err = i.Add(ctx, pv1)
 		require.NoError(t, err)
 
-		p = &plugins.Plugin{JSONData: plugins.JSONData{ID: pluginID, Info: plugins.Info{Version: v2}}}
-		err = i.Add(ctx, p)
+		pv2 := &plugins.Plugin{JSONData: plugins.JSONData{ID: pluginID, Info: plugins.Info{Version: v2}}}
+		err = i.Add(ctx, pv2)
 		require.Errorf(t, err, fmt.Sprintf("plugin %s is already registered", pluginID))
 
 		existingP, exists := i.Plugin(ctx, pluginID, v1)
 		require.True(t, exists)
-		require.Equal(t, p, existingP)
+		require.Equal(t, pv1, existingP)
 
 		p = &plugins.Plugin{JSONData: plugins.JSONData{ID: pluginID}}
 		err = i.Add(ctx, p)
-		require.Error(t, err)
+		require.Errorf(t, err, fmt.Sprintf("plugin %s is already registered", pluginID))
 
 		err = i.Remove(ctx, pluginID, v1)
 		require.NoError(t, err)
