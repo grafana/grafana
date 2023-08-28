@@ -382,7 +382,7 @@ func scenarioWithPanel(t *testing.T, desc string, fn func(t *testing.T, sc scena
 		foldertest.NewFakeService(),
 	)
 	require.NoError(t, svcErr)
-	guardian.InitAccessControlGuardian(sqlStore.Cfg, sqlStore, ac, folderPermissions, dashboardPermissions, dashboardService)
+	guardian.InitAccessControlGuardian(sqlStore.Cfg, ac, dashboardService)
 
 	testScenario(t, desc, func(t *testing.T, sc scenarioContext) {
 		command := getCreatePanelCommand(sc.folder.ID, "Text - Library Panel")
@@ -440,7 +440,7 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 			foldertest.NewFakeService(),
 		)
 		require.NoError(t, dashSvcErr)
-		guardian.InitAccessControlGuardian(sqlStore.Cfg, sqlStore, ac, folderPermissions, dashboardPermissions, dashService)
+		guardian.InitAccessControlGuardian(sqlStore.Cfg, ac, dashService)
 		service := LibraryElementService{
 			Cfg:           sqlStore.Cfg,
 			features:      featuremgmt.WithFeatures(),

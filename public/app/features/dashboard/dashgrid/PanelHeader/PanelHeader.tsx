@@ -3,7 +3,7 @@ import React from 'react';
 
 import { DataLink, GrafanaTheme2, PanelData } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { reportInteraction } from '@grafana/runtime';
+import { config, reportInteraction } from '@grafana/runtime';
 import { Icon, useStyles2, ClickOutsideWrapper } from '@grafana/ui';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
@@ -65,7 +65,7 @@ export function PanelHeader({ panel, error, isViewing, isEditing, data, alertSta
                     />
                   ) : null}
                   <h2 className={styles.titleText}>{title}</h2>
-                  {!dashboard.meta.publicDashboardAccessToken && (
+                  {!config.publicDashboardAccessToken && (
                     <div data-testid="panel-dropdown">
                       <Icon name="angle-down" className="panel-menu-toggle" />
                       {panelMenuOpen ? <PanelHeaderMenuWrapper panel={panel} dashboard={dashboard} /> : null}

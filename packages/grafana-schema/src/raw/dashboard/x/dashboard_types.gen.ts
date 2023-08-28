@@ -1100,11 +1100,6 @@ export interface Dashboard {
     userId: number;
   };
   /**
-   * Theme of dashboard.
-   * Default value: dark.
-   */
-  style: ('light' | 'dark');
-  /**
    * Tags associated with dashboard.
    */
   tags?: Array<string>;
@@ -1142,10 +1137,6 @@ export interface Dashboard {
      */
     collapse: boolean;
     /**
-     * Whether timepicker is enabled or not. Has no effect on provisioned dashboard.
-     */
-    enable: boolean;
-    /**
      * Selectable options available in the time picker dropdown. Has no effect on provisioned dashboard.
      */
     time_options: Array<string>;
@@ -1179,7 +1170,6 @@ export const defaultDashboard: Partial<Dashboard> = {
   links: [],
   panels: [],
   schemaVersion: 36,
-  style: 'dark',
   tags: [],
   timezone: 'browser',
 };

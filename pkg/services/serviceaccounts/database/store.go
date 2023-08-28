@@ -284,14 +284,12 @@ func (s *ServiceAccountsStoreImpl) SearchOrgServiceAccounts(ctx context.Context,
 				s.sqlStore.GetDialect().Quote("user"),
 				s.sqlStore.GetDialect().BooleanStr(true)))
 
-		if !accesscontrol.IsDisabled(s.cfg) {
-			acFilter, err := accesscontrol.Filter(query.SignedInUser, "org_user.user_id", "serviceaccounts:id:", serviceaccounts.ActionRead)
-			if err != nil {
-				return err
-			}
-			whereConditions = append(whereConditions, acFilter.Where)
-			whereParams = append(whereParams, acFilter.Args...)
+		acFilter, err := accesscontrol.Filter(query.SignedInUser, "org_user.user_id", "serviceaccounts:id:", serviceaccounts.ActionRead)
+		if err != nil {
+			return err
 		}
+		whereConditions = append(whereConditions, acFilter.Where)
+		whereParams = append(whereParams, acFilter.Args...)
 
 		if query.Query != "" {
 			queryWithWildcards := "%" + query.Query + "%"
