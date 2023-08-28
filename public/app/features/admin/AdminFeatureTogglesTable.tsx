@@ -93,11 +93,9 @@ export function AdminFeatureTogglesTable({ featureToggles }: Props) {
 
   return (
     <>
-      {hasModifications() && (
-        <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '0 0 15px 0' }}>
-          <Button onClick={handleSaveChanges}>Save Changes</Button>
-        </div>
-      )}
+      <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '0 0 5px 0' }}>
+        <Button disabled={!hasModifications()} onClick={handleSaveChanges}>Save Changes</Button>
+      </div>
       <InteractiveTable columns={columns} data={localToggles} getRowId={(featureToggle) => featureToggle.name} />
     </>
   );
