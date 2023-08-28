@@ -48,6 +48,7 @@ type Props = RawPrometheusContainerProps & ConnectedProps<typeof connector>;
 export class RawPrometheusContainer extends PureComponent<Props, PrometheusContainerState> {
   constructor(props: Props) {
     super(props);
+
     // If resultsStyle is undefined we won't render the toggle, and the default table will be rendered
     if (props.showRawPrometheus) {
       this.state = {
