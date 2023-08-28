@@ -2,7 +2,7 @@ import { DataTransformerConfig, FieldConfigSource, getPanelOptionsWithDefaults }
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { getLibraryPanel } from 'app/features/library-panels/state/api';
 import { LibraryElementDTO } from 'app/features/library-panels/types';
-import { getPanelPluginNotFound } from 'app/features/panel/components/PanelPluginError';
+import { getPanelErrorPlugin, getPanelPluginNotFound } from 'app/features/panel/components/PanelPluginError';
 import { loadPanelPlugin } from 'app/features/plugins/admin/state/actions';
 import { ThunkResult } from 'app/types';
 import { DashboardPanelsChangedEvent, PanelOptionsChangedEvent, PanelQueriesChangedEvent } from 'app/types/events';
@@ -11,29 +11,38 @@ import { changePanelKey, panelModelAndPluginReady, removePanel } from './reducer
 
 export function initPanelState(panel: PanelModel): ThunkResult<Promise<void>> {
   return async (dispatch, getStore) => {
-    if (panel.libraryPanel?.uid && !('model' in panel.libraryPanel)) {
-      // this will call init with a loaded library panel if it loads succesfully
-      dispatch(loadLibraryPanelAndUpdate(panel));
-      return;
-    }
-
-    let pluginToLoad = panel.type;
-    let plugin = getStore().plugins.panels[pluginToLoad];
-
-    if (!plugin) {
-      try {
-        plugin = await dispatch(loadPanelPlugin(pluginToLoad));
-      } catch (e) {
-        // When plugin not found
-        plugin = getPanelPluginNotFound(pluginToLoad, pluginToLoad === 'row');
+    try {
+      if (panel.libraryPanel?.uid && !('model' in panel.libraryPanel)) {
+        // this will call init with a loaded library panel if it loads succesfully
+        dispatch(loadLibraryPanelAndUpdate(panel));
+        return;
       }
-    }
 
-    if (!panel.plugin) {
-      await panel.pluginLoaded(plugin);
-    }
+      let pluginToLoad = panel.type;
+      let plugin = getStore().plugins.panels[pluginToLoad];
 
-    dispatch(panelModelAndPluginReady({ key: panel.key, plugin }));
+      if (!plugin) {
+        try {
+          plugin = await dispatch(loadPanelPlugin(pluginToLoad));
+        } catch (e) {
+          // When plugin not found
+          plugin = getPanelPluginNotFound(pluginToLoad, pluginToLoad === 'row');
+        }
+      }
+
+      if (!panel.plugin) {
+        await panel.pluginLoaded(plugin);
+      }
+
+      dispatch(panelModelAndPluginReady({ key: panel.key, plugin }));
+    } catch (err) {
+      dispatch(
+        panelModelAndPluginReady({
+          key: panel.key,
+          plugin: getPanelErrorPlugin('Error loading panel', err.toString ? err.toString() : 'unknown error'),
+        })
+      );
+    }
   };
 }
 

@@ -457,6 +457,9 @@ export class PanelModel implements DataConfigSource, IPanelModel {
       }
     }
 
+    const foo: any = undefined;
+    foo.hello.toString();
+
     this.applyPluginOptionDefaults(plugin, false);
     this.resendLastResult();
   }

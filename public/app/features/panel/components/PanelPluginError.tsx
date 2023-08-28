@@ -26,7 +26,7 @@ class PanelPluginError extends PureComponent<Props> {
 
     return (
       <div style={style}>
-        <Alert severity={AppNotificationSeverity.Error} {...this.props} />
+        <Alert severity={AppNotificationSeverity.Error} children={this.props.text} {...this.props} />
       </div>
     );
   }
@@ -46,6 +46,17 @@ export function getPanelPluginLoadError(meta: PanelPluginMeta, err: unknown): Pa
   };
   const plugin = new PanelPlugin(LoadError);
   plugin.meta = meta;
+  plugin.loadError = true;
+  return plugin;
+}
+
+export function getPanelErrorPlugin(title: string, message?: string): PanelPlugin {
+  const LoadError = class LoadError extends PureComponent<PanelProps> {
+    render() {
+      return <PanelPluginError title={title} text={message} />;
+    }
+  };
+  const plugin = new PanelPlugin(LoadError);
   plugin.loadError = true;
   return plugin;
 }
