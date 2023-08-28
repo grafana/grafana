@@ -398,6 +398,13 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
   }
 
   handleMetricsSummary = (target: TempoQuery, query: string, options: DataQueryRequest<TempoQuery>) => {
+    reportInteraction('grafana_traces_metrics_summary_queried', {
+      datasourceType: 'tempo',
+      app: options.app ?? '',
+      grafana_version: config.buildInfo.version,
+      filterCount: target.groupBy?.length ?? 0,
+    });
+
     if (query === '{}') {
       return of({
         error: {
