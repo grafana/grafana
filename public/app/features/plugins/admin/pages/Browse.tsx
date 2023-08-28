@@ -2,8 +2,8 @@ import { css } from '@emotion/css';
 import React, { ReactElement } from 'react';
 import { useLocation } from 'react-router-dom';
 
-import { SelectableValue, GrafanaTheme2 } from '@grafana/data';
-import { config, locationSearchToObject } from '@grafana/runtime';
+import { SelectableValue, GrafanaTheme2, PluginType } from '@grafana/data';
+import { locationSearchToObject } from '@grafana/runtime';
 import { LoadingPlaceholder, Select, RadioButtonGroup, useStyles2, Tooltip, Field } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
@@ -16,7 +16,7 @@ import { PluginList } from '../components/PluginList';
 import { SearchField } from '../components/SearchField';
 import { Sorters } from '../helpers';
 import { useHistory } from '../hooks/useHistory';
-import { useGetAllWithFilters, useIsRemotePluginsAvailable, useDisplayMode } from '../state/hooks';
+import { useGetAll, useIsRemotePluginsAvailable, useDisplayMode } from '../state/hooks';
 import { PluginListDisplayMode } from '../types';
 
 export default function Browse({ route }: GrafanaRouteComponentProps): ReactElement | null {
@@ -27,16 +27,19 @@ export default function Browse({ route }: GrafanaRouteComponentProps): ReactElem
   const styles = useStyles2(getStyles);
   const history = useHistory();
   const remotePluginsAvailable = useIsRemotePluginsAvailable();
-  const query = (locationSearch.q as string) || '';
-  const filterBy = (locationSearch.filterBy as string) || 'installed';
-  const filterByType = (locationSearch.filterByType as string) || 'all';
+  const keyword = locationSearch.q?.toString() || '';
+  const filterBy = locationSearch.filterBy?.toString() || 'installed';
+  const filterByType = (locationSearch.filterByType as PluginType | 'all') || 'all';
   const sortBy = (locationSearch.sortBy as Sorters) || Sorters.nameAsc;
-  const { isLoading, error, plugins } = useGetAllWithFilters({
-    query,
-    filterBy,
-    filterByType,
-    sortBy,
-  });
+  const { isLoading, error, plugins } = useGetAll(
+    {
+      keyword,
+      type: filterByType !== 'all' ? filterByType : undefined,
+      isInstalled: filterBy === 'installed' ? true : undefined,
+      isCore: filterBy === 'installed' ? undefined : false, // We only would like to show core plugins when the user filters to installed plugins
+    },
+    sortBy
+  );
   const filterByOptions = [
     { value: 'all', label: 'All' },
     { value: 'installed', label: 'Installed' },
@@ -64,7 +67,7 @@ export default function Browse({ route }: GrafanaRouteComponentProps): ReactElem
     return null;
   }
 
-  const subTitle = config.featureToggles.dataConnectionsConsole ? (
+  const subTitle = (
     <div>
       Extend the Grafana experience with panel plugins and apps. To find more data sources go to{' '}
       <a className="external-link" href={`${CONNECTIONS_ROUTES.AddNewConnection}?cat=data-source`}>
@@ -72,8 +75,6 @@ export default function Browse({ route }: GrafanaRouteComponentProps): ReactElem
       </a>
       .
     </div>
-  ) : (
-    <div>Extend the Grafana experience with panel plugins and apps.</div>
   );
 
   return (
@@ -81,7 +82,7 @@ export default function Browse({ route }: GrafanaRouteComponentProps): ReactElem
       <Page.Contents>
         <HorizontalGroup wrap>
           <Field label="Search">
-            <SearchField value={query} onSearch={onSearch} />
+            <SearchField value={keyword} onSearch={onSearch} />
           </Field>
           <HorizontalGroup wrap className={styles.actionBar}>
             {/* Filter by type */}

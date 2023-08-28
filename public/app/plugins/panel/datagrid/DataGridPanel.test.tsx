@@ -111,14 +111,28 @@ describe('DataGrid', () => {
       expect(screen.getByText('Remove all data')).toBeInTheDocument();
       expect(screen.getByText('Search...')).toBeInTheDocument();
 
-      // click on header cell should show only column options
+      // right clicking on header cell without clicking/selecting the cell should show only general options
+      fireEvent.contextMenu(scroller, {
+        clientX: 50,
+        clientY: 36,
+      });
+
+      expect(screen.getByText('Remove all data')).toBeInTheDocument();
+      expect(screen.getByText('Search...')).toBeInTheDocument();
+
+      // selecting the header first and then right click on header cell should show only column options
+      const canvas = screen.getByTestId('data-grid-canvas');
+      sendClick(canvas, {
+        clientX: 50,
+        clientY: 36,
+      });
+
       fireEvent.contextMenu(scroller, {
         clientX: 50,
         clientY: 36,
       });
 
       expect(screen.getByText('Delete column')).toBeInTheDocument();
-      expect(screen.getByText('Clear column')).toBeInTheDocument();
       expect(screen.getByText('Remove all data')).toBeInTheDocument();
       expect(screen.getByText('Search...')).toBeInTheDocument();
 

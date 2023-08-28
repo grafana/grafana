@@ -1,6 +1,6 @@
 # Errors
 
-Grafana introduced its own error type `github.com/grafana/grafana/pkg/util/errutil.Error`
+Grafana introduced its own error type [github.com/grafana/grafana/pkg/util/errutil.Error](../../pkg/util/errutil/errors.go)
 in June 2022. It's built on top of the Go `error` interface extended to
 contain all the information necessary by Grafana to handle errors in an
 informative and safe way.
@@ -19,8 +19,20 @@ code, and so forth are carried by the error.
 For a service, declare the different categories of errors that may occur
 from your service (this corresponds to what you might want to have
 specific public error messages or their templates for) by globally
-constructing variables using the `errutil.NewBase(status, messageID, opts...)`
-function.
+constructing variables using the `errutil.<status>(status, messageID, opts...)`
+functions, e.g.
+
+- `errutil.NotFound(messageID, opts...)`
+- `errutil.BadRequest(messageID, opts...)`
+- `errutil.ValidationFailed(messageID, opts...)`
+- `errutil.Internal(messageID, opts...)`
+- `errutil.Timeout(messageID, opts...)`
+- `errutil.Unauthorized(messageID, opts...)`
+- `errutil.Forbidden(messageID, opts...)`
+- `errutil.TooManyRequests(messageID, opts...)`
+- `errutil.NotImplemented(messageID, opts...)`
+
+Above functions uses `errutil.NewBase(status, messageID, opts...)` under the covers, and that function should in general only be used outside the `errutil` package for `errutil.StatusUnknown`, e.g. when there are no accurate status code available/provided.
 
 The status code loosely corresponds to HTTP status codes and provides a
 default log level for errors to ensure that the request logging is

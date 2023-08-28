@@ -24,7 +24,7 @@ func listVersionsCommand(c utils.CommandLine) error {
 
 	pluginToList := c.Args().First()
 
-	plugin, err := services.GetPlugin(pluginToList, c.String("repo"))
+	plugin, err := services.GetPluginInfoFromRepo(pluginToList, c.String("repo"))
 	if err != nil {
 		return err
 	}

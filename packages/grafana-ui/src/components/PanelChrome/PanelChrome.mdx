@@ -1,13 +1,13 @@
-import { Meta, Canvas, Story, Preview, Props } from '@storybook/addon-docs/blocks';
+import { css } from '@emotion/css';
+import { Meta, Preview } from '@storybook/addon-docs/blocks';
 import { PanelChrome } from './PanelChrome';
-import { LoadingIndicator } from './LoadingIndicator';
 
 import { action } from '@storybook/addon-actions';
-import { DashboardStoryCanvas } from '../../utils/storybook/DashboardStoryCanvas';
 import { HorizontalGroup } from '../Layout/Layout';
 import { LoadingState } from '@grafana/data';
-import { Button } from '../Button/Button.tsx';
+import { Button } from '../Button';
 import { Menu } from '../Menu/Menu';
+import { IconButton } from '../IconButton/IconButton';
 
 <Meta title="MDX|PanelChrome" component={PanelChrome} />
 
@@ -43,7 +43,7 @@ Component used for rendering content wrapped in the same style as grafana panels
 </PanelChrome>
 ```
 
-<Canvas>
+<Preview>
   <PanelChrome
     title="My awesome panel title"
     description="Here I will put a description that explains a bit more this panel"
@@ -67,7 +67,7 @@ Component used for rendering content wrapped in the same style as grafana panels
       );
     }}
   </PanelChrome>
-</Canvas>
+</Preview>
 
 ### Menu: Standard & Hover
 
@@ -107,7 +107,7 @@ Component used for rendering content wrapped in the same style as grafana panels
 </PanelChrome>
 ```
 
-<Canvas>
+<Preview>
 
   <HorizontalGroup spacing="md" align="flex-start" wrap>
   <PanelChrome
@@ -183,7 +183,7 @@ Component used for rendering content wrapped in the same style as grafana panels
 
   </PanelChrome>
 </HorizontalGroup>
-</Canvas>
+</Preview>
 
 ### States: Loading , Streaming, Error
 
@@ -215,7 +215,7 @@ Component used for rendering content wrapped in the same style as grafana panels
 </PanelChrome>
 ```
 
-<Canvas>
+<Preview>
 
   <HorizontalGroup spacing="md" align="flex-start" wrap>
   <PanelChrome
@@ -298,7 +298,7 @@ Component used for rendering content wrapped in the same style as grafana panels
 
   </PanelChrome>
 </HorizontalGroup>
-</Canvas>
+</Preview>
 
 ### Extra options? Title items and actions
 
@@ -306,10 +306,17 @@ Component used for rendering content wrapped in the same style as grafana panels
 <PanelChrome
   title="My awesome panel title"
   titleItems={
-    <div>
-      <Button fill="text" icon="github" variant="secondary" tooltip="extra content to render" />
-      <Button fill="text" icon="sliders-v-alt" variant="secondary" tooltip="extra content2 to render" />
-    </div>
+    <>
+      <IconButton
+        className={css`
+          margin-right: 10px;
+        `}
+        name="github"
+        variant="secondary"
+        tooltip="extra content to render"
+      />
+      <IconButton name="sliders-v-alt" variant="secondary" tooltip="extra content2 to render" />
+    </>
   }
   actions={
     <Button size="sm" variant="secondary" key="A">
@@ -338,14 +345,21 @@ Component used for rendering content wrapped in the same style as grafana panels
 </PanelChrome>
 ```
 
-<Canvas>
+<Preview>
   <PanelChrome
     title="My awesome panel title"
     titleItems={
-      <div>
-        <Button fill="text" icon="github" variant="secondary" tooltip="extra content to render" />
-        <Button fill="text" icon="sliders-v-alt" variant="secondary" tooltip="extra content2 to render" />
-      </div>
+      <>
+        <IconButton
+          className={css`
+            margin-right: 10px;
+          `}
+          name="github"
+          variant="secondary"
+          tooltip="extra content to render"
+        />
+        <IconButton name="sliders-v-alt" variant="secondary" tooltip="extra content to render" />
+      </>
     }
     actions={
       <Button size="sm" variant="secondary" key="A">
@@ -372,7 +386,7 @@ Component used for rendering content wrapped in the same style as grafana panels
       );
     }}
   </PanelChrome>
-</Canvas>
+</Preview>
 
 ### Migration from old PanelChrome (before v9.4.0)
 
@@ -404,7 +418,7 @@ Component used for rendering content wrapped in the same style as grafana panels
 </PanelChrome>
 ```
 
-<Canvas>
+<Preview>
   <PanelChrome
     title="My awesome panel title"
     leftItems={[
@@ -434,7 +448,7 @@ Component used for rendering content wrapped in the same style as grafana panels
       );
     }}
   </PanelChrome>
-</Canvas>
+</Preview>
 #### After
 
 ```tsx
@@ -464,7 +478,7 @@ Component used for rendering content wrapped in the same style as grafana panels
 </PanelChrome>
 ```
 
-<Canvas>
+<Preview>
   <PanelChrome
     title="My awesome panel title"
     loadingState={LoadingState.Loading}
@@ -489,4 +503,65 @@ Component used for rendering content wrapped in the same style as grafana panels
       );
     }}
   </PanelChrome>
-</Canvas>
+</Preview>
+
+### Collapsible
+
+The panel can be collapsed/expanded by clicking on the chevron or the title.
+
+> _Note: `collapsible` and `hoverHeader` props are mutually exclusive and cannot be used in the same panel._
+
+```tsx
+function Container() {
+  const [isCollapsed, setCollapsed] = useState(true);
+
+  return (
+    <PanelChrome
+      title="My awesome panel title"
+      width={400}
+      height={200}
+      collapsible={true}
+      collapsed={isCollapsed}
+      onToggleCollapse={(isCollapsed) => setCollapsed(isCollapsed)}
+    >
+      {(innerwidth, innerheight) => {
+        return (
+          <div
+            style={{
+              width: innerwidth,
+              height: innerheight,
+              background: 'rgba(230,0,0,0.05)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            Content
+          </div>
+        );
+      }}
+    </PanelChrome>
+  );
+}
+```
+
+<Preview>
+  <PanelChrome title="My awesome panel title" width={400} height={200} collapsible={true}>
+    {(innerwidth, innerheight) => {
+      return (
+        <div
+          style={{
+            width: innerwidth,
+            height: innerheight,
+            background: 'rgba(230,0,0,0.05)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          Content
+        </div>
+      );
+    }}
+  </PanelChrome>
+</Preview>

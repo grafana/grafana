@@ -5,10 +5,10 @@ import { TimeSeriesPanel } from './TimeSeriesPanel';
 import { TimezonesEditor } from './TimezonesEditor';
 import { defaultGraphConfig, getGraphFieldConfig } from './config';
 import { graphPanelChangedHandler } from './migrations';
-import { PanelFieldConfig, PanelOptions } from './panelcfg.gen';
+import { FieldConfig, Options } from './panelcfg.gen';
 import { TimeSeriesSuggestionsSupplier } from './suggestions';
 
-export const plugin = new PanelPlugin<PanelOptions, PanelFieldConfig>(TimeSeriesPanel)
+export const plugin = new PanelPlugin<Options, FieldConfig>(TimeSeriesPanel)
   .setPanelChangeHandler(graphPanelChangedHandler)
   .useFieldConfig(getGraphFieldConfig(defaultGraphConfig))
   .setPanelOptions((builder) => {

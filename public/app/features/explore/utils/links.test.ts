@@ -105,13 +105,17 @@ describe('explore links utils', () => {
       );
       expect(links[0].title).toBe('test_ds');
 
+      const preventDefault = jest.fn();
+
       if (links[0].onClick) {
-        links[0].onClick({});
+        links[0].onClick({
+          preventDefault,
+        });
       }
 
       expect(splitfn).toBeCalledWith({
         datasourceUid: 'uid_1',
-        query: { query: 'query_1' },
+        queries: [{ query: 'query_1' }],
         range,
         panelsState: {
           trace: {
@@ -119,6 +123,8 @@ describe('explore links utils', () => {
           },
         },
       });
+
+      expect(preventDefault).toBeCalled();
 
       expect(reportInteraction).toBeCalledWith('grafana_data_link_clicked', {
         app: CoreApp.Explore,
@@ -358,6 +364,61 @@ describe('explore links utils', () => {
       );
     });
 
+    it('returns internal links within a result consistent with trace data', () => {
+      const transformationLink: DataLink = {
+        title: '',
+        url: '',
+        internal: {
+          query: { query: 'http_requests{env=${msg}}' },
+          datasourceUid: 'uid_1',
+          datasourceName: 'test_ds',
+          transformations: [
+            {
+              type: SupportedTransformationType.Regex,
+              expression: '{(?=[^\\}]*\\bkey":"keyA")[^\\}]*\\bvalue":"(.*?)".*}',
+              field: 'serviceTags',
+              mapValue: 'msg',
+            },
+          ],
+        },
+      };
+
+      const { field, range, dataFrame } = setup(transformationLink, true, {
+        name: 'serviceTags',
+        type: FieldType.other,
+        values: [
+          [
+            { value: 'broccoli', key: 'keyA' },
+            { value: 'apple', key: 'keyB' },
+          ],
+          [
+            { key: 'keyA', value: 'cauliflower' },
+            { value: 'durian', key: 'keyB' },
+          ],
+        ],
+        config: {
+          links: [transformationLink],
+        },
+      });
+
+      const links = [
+        getFieldLinksForExplore({ field, rowIndex: 0, range, dataFrame }),
+        getFieldLinksForExplore({ field, rowIndex: 1, range, dataFrame }),
+      ];
+      expect(links[0]).toHaveLength(1);
+      expect(links[0][0].href).toBe(
+        `/explore?left=${encodeURIComponent(
+          '{"range":{"from":"now-1h","to":"now"},"datasource":"uid_1","queries":[{"query":"http_requests{env=broccoli}"}]}'
+        )}`
+      );
+      expect(links[1]).toHaveLength(1);
+      expect(links[1][0].href).toBe(
+        `/explore?left=${encodeURIComponent(
+          '{"range":{"from":"now-1h","to":"now"},"datasource":"uid_1","queries":[{"query":"http_requests{env=cauliflower}"}]}'
+        )}`
+      );
+    });
+
     it('returns internal links with logfmt with stringified booleans', () => {
       const transformationLink: DataLink = {
         title: '',
@@ -589,86 +650,47 @@ describe('explore links utils', () => {
   });
 
   describe('getVariableUsageInfo', () => {
-    it('returns true when query contains variables and all variables are used', () => {
-      const dataLink = {
+    function makeDataLinkWithQuery(query: string): DataLink {
+      return {
         url: '',
         title: '',
         internal: {
           datasourceUid: 'uid',
           datasourceName: 'dsName',
-          query: { query: 'test ${testVal}' },
+          query: { query },
         },
       };
+    }
+
+    function allVariablesDefinedInQuery(query: string) {
       const scopedVars = {
         testVal: { text: '', value: 'val1' },
       };
-      const dataLinkRtnVal = getVariableUsageInfo(dataLink, scopedVars).allVariablesDefined;
+      return getVariableUsageInfo(makeDataLinkWithQuery(query), scopedVars).allVariablesDefined;
+    }
 
-      expect(dataLinkRtnVal).toBe(true);
+    it('returns true when query contains variables and all variables are used', () => {
+      expect(allVariablesDefinedInQuery('test ${testVal}')).toBe(true);
+    });
+
+    it('ignores global variables', () => {
+      expect(allVariablesDefinedInQuery('test ${__rate_interval} $__from $__to')).toBe(true);
     });
 
     it('returns false when query contains variables and no variables are used', () => {
-      const dataLink = {
-        url: '',
-        title: '',
-        internal: {
-          datasourceUid: 'uid',
-          datasourceName: 'dsName',
-          query: { query: 'test ${diffVar}' },
-        },
-      };
-      const scopedVars = {
-        testVal: { text: '', value: 'val1' },
-      };
-      const dataLinkRtnVal = getVariableUsageInfo(dataLink, scopedVars).allVariablesDefined;
-
-      expect(dataLinkRtnVal).toBe(false);
+      expect(allVariablesDefinedInQuery('test ${diffVar}')).toBe(false);
     });
 
     it('returns false when query contains variables and some variables are used', () => {
-      const dataLink = {
-        url: '',
-        title: '',
-        internal: {
-          datasourceUid: 'uid',
-          datasourceName: 'dsName',
-          query: { query: 'test ${testVal} ${diffVar}' },
-        },
-      };
-      const scopedVars = {
-        testVal: { text: '', value: 'val1' },
-      };
-      const dataLinkRtnVal = getVariableUsageInfo(dataLink, scopedVars).allVariablesDefined;
-      expect(dataLinkRtnVal).toBe(false);
+      expect(allVariablesDefinedInQuery('test ${testVal} ${diffVar}')).toBe(false);
     });
 
     it('returns true when query contains no variables', () => {
-      const dataLink = {
-        url: '',
-        title: '',
-        internal: {
-          datasourceUid: 'uid',
-          datasourceName: 'dsName',
-          query: { query: 'test' },
-        },
-      };
-      const scopedVars = {
-        testVal: { text: '', value: 'val1' },
-      };
-      const dataLinkRtnVal = getVariableUsageInfo(dataLink, scopedVars).allVariablesDefined;
-      expect(dataLinkRtnVal).toBe(true);
+      expect(allVariablesDefinedInQuery('test')).toBe(true);
     });
 
     it('returns deduplicated list of variables', () => {
-      const dataLink = {
-        url: '',
-        title: '',
-        internal: {
-          datasourceUid: 'uid',
-          datasourceName: 'dsName',
-          query: { query: 'test ${test} ${foo} ${test:raw} $test' },
-        },
-      };
+      const dataLink = makeDataLinkWithQuery('test ${test} ${foo} ${test:raw} $test');
       const scopedVars = {
         testVal: { text: '', value: 'val1' },
       };
@@ -684,7 +706,7 @@ const ROW_WITH_NULL_VALUE = { value: null, index: 1 };
 function setup(
   link: DataLink,
   hasAccess = true,
-  fieldOverride?: Field<string | null>,
+  fieldOverride?: Field<string | Array<{ key: string; value: string }> | null>, // key/value array for traceView fields
   dataFrameOtherFieldOverride?: Field[]
 ) {
   setLinkSrv({

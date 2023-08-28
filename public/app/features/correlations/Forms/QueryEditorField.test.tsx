@@ -1,9 +1,8 @@
-import { fireEvent, render, screen, waitFor, waitForElementToBeRemoved } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import React, { ReactNode } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { MockDataSourceApi } from 'test/mocks/datasource_srv';
 
-import { LoadingState } from '@grafana/data';
 import { setDataSourceSrv } from '@grafana/runtime';
 import { MockDataSourceSrv } from 'app/features/alerting/unified/mocks';
 
@@ -32,19 +31,6 @@ const renderWithContext = (
   setDataSourceSrv(dsServer);
 
   render(<Wrapper>{children}</Wrapper>);
-};
-
-const initiateDsApi = () => {
-  const dsApi = new MockDataSourceApi('dsApiMock');
-  dsApi.components = {
-    QueryEditor: () => <>query editor</>,
-  };
-
-  renderWithContext(<QueryEditorField name="query" dsUid="randomDsUid" />, async () => {
-    return dsApi;
-  });
-
-  return dsApi;
 };
 
 describe('QueryEditorField', () => {
@@ -80,91 +66,5 @@ describe('QueryEditorField', () => {
     expect(
       await screen.findByRole('alert', { name: 'Data source does not export a query editor.' })
     ).toBeInTheDocument();
-  });
-
-  describe('Query validation', () => {
-    it('should result in succeeded validation if LoadingState.Done and data is available', async () => {
-      const dsApi = initiateDsApi();
-
-      await waitForElementToBeRemoved(() => screen.queryByText(/loading query editor/i));
-
-      dsApi.result = {
-        data: [
-          {
-            name: 'test',
-            fields: [],
-            length: 1,
-          },
-        ],
-        state: LoadingState.Done,
-      };
-
-      fireEvent.click(screen.getByRole('button', { name: /Validate query$/i }));
-
-      await waitFor(() => {
-        expect(screen.getByText('This query is valid.')).toBeInTheDocument();
-      });
-    });
-
-    it('should result in failed validation if LoadingState.Error and data is not available', async () => {
-      const dsApi = initiateDsApi();
-
-      await waitForElementToBeRemoved(() => screen.queryByText(/loading query editor/i));
-
-      dsApi.result = {
-        data: [],
-        state: LoadingState.Error,
-      };
-
-      fireEvent.click(screen.getByRole('button', { name: /Validate query$/i }));
-
-      await waitFor(() => {
-        const alertEl = screen.getByRole('alert');
-        expect(alertEl).toBeInTheDocument();
-        expect(alertEl).toHaveTextContent(/this query is not valid/i);
-      });
-    });
-
-    it('should result in failed validation if LoadingState.Error and data is available', async () => {
-      const dsApi = initiateDsApi();
-
-      await waitForElementToBeRemoved(() => screen.queryByText(/loading query editor/i));
-
-      dsApi.result = {
-        data: [
-          {
-            name: 'test',
-            fields: [],
-            length: 1,
-          },
-        ],
-        state: LoadingState.Error,
-      };
-
-      fireEvent.click(screen.getByRole('button', { name: /Validate query$/i }));
-
-      await waitFor(() => {
-        const alertEl = screen.getByRole('alert');
-        expect(alertEl).toBeInTheDocument();
-        expect(alertEl).toHaveTextContent(/this query is not valid/i);
-      });
-    });
-
-    it('should result in failed validation if result with LoadingState.Done and data is not available', async () => {
-      const dsApi = initiateDsApi();
-
-      await waitForElementToBeRemoved(() => screen.queryByText(/loading query editor/i));
-
-      dsApi.result = {
-        data: [],
-        state: LoadingState.Done,
-      };
-
-      fireEvent.click(screen.getByRole('button', { name: /Validate query$/i }));
-
-      await waitFor(() => {
-        expect(screen.getByText('This query is not valid.')).toBeInTheDocument();
-      });
-    });
   });
 });

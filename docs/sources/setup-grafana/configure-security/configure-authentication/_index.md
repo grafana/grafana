@@ -2,36 +2,35 @@
 aliases:
   - ../../auth/
   - ../../auth/overview/
-cascade:
-  labels:
-    products:
-      - cloud
-      - enterprise
-      - oss
 description: Learn about all the ways in which you can configure Grafana to authenticate
   users.
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: Configure authentication
-weight: 100
+weight: 200
 ---
 
 # Configure authentication
 
 Grafana provides many ways to authenticate users. Some authentication integrations also enable syncing user permissions and org memberships.
 
-The following table shows all supported authentication providers and the features available for them. [Team sync]({{< relref "../configure-team-sync/" >}}) and [active sync]({{< relref "enhanced-ldap/#active-ldap-synchronization" >}}) are only available in Grafana Enterprise.
+The following table shows all supported authentication providers and the features available for them. [Team sync]({{< relref "../configure-team-sync" >}}) and [active sync]({{< relref "./enhanced-ldap#active-ldap-synchronization" >}}) are only available in Grafana Enterprise.
 
-| Provider                                         | Support | Role mapping | Team sync<br> _(Enterprise only)_ | Active sync<br> _(Enterprise only)_ |
-| ------------------------------------------------ | :-----: | :----------: | :-------------------------------: | :---------------------------------: |
-| [Auth Proxy]({{< relref "auth-proxy/" >}})       |  v2.1+  |      -       |               v6.3+               |                  -                  |
-| [Azure AD OAuth]({{< relref "azuread/" >}})      |  v6.7+  |    v6.7+     |               v6.7+               |                  -                  |
-| [Generic OAuth]({{< relref "generic-oauth/" >}}) |  v4.0+  |    v6.5+     |                 -                 |                  -                  |
-| [GitHub OAuth]({{< relref "github/" >}})         |  v2.0+  |      -       |               v6.3+               |                  -                  |
-| [GitLab OAuth]({{< relref "gitlab/" >}})         |  v5.3+  |      -       |               v6.4+               |                  -                  |
-| [Google OAuth]({{< relref "google/" >}})         |  v2.0+  |      -       |                 -                 |                  -                  |
-| [JWT]({{< relref "jwt/" >}})                     |  v8.0+  |      -       |                 -                 |                  -                  |
-| [LDAP]({{< relref "ldap/" >}})                   |  v2.1+  |    v2.1+     |               v5.3+               |                v6.3+                |
-| [Okta OAuth]({{< relref "okta/" >}})             |  v7.0+  |    v7.0+     |               v7.0+               |                  -                  |
-| [SAML]({{< relref "saml/" >}}) (Enterprise only) |  v6.3+  |    v7.0+     |               v7.0+               |                  -                  |
+| Provider                                          | Support | Role mapping | Team sync<br> _(Enterprise only)_ | Active sync<br> _(Enterprise only)_ |
+| ------------------------------------------------- | :-----: | :----------: | :-------------------------------: | :---------------------------------: |
+| [Auth Proxy]({{< relref "./auth-proxy" >}})       |  v2.1+  |      -       |               v6.3+               |                  -                  |
+| [Azure AD OAuth]({{< relref "./azuread" >}})      |  v6.7+  |    v6.7+     |               v6.7+               |                  -                  |
+| [Generic OAuth]({{< relref "./generic-oauth" >}}) |  v4.0+  |    v6.5+     |                 -                 |                  -                  |
+| [GitHub OAuth]({{< relref "./github" >}})         |  v2.0+  |      -       |               v6.3+               |                  -                  |
+| [GitLab OAuth]({{< relref "./gitlab" >}})         |  v5.3+  |      -       |               v6.4+               |                  -                  |
+| [Google OAuth]({{< relref "./google" >}})         |  v2.0+  |      -       |                 -                 |                  -                  |
+| [JWT]({{< relref "./jwt" >}})                     |  v8.0+  |      -       |                 -                 |                  -                  |
+| [LDAP]({{< relref "./ldap" >}})                   |  v2.1+  |    v2.1+     |               v5.3+               |                v6.3+                |
+| [Okta OAuth]({{< relref "./okta" >}})             |  v7.0+  |    v7.0+     |               v7.0+               |                  -                  |
+| [SAML]({{< relref "./saml" >}}) (Enterprise only) |  v6.3+  |    v7.0+     |               v7.0+               |                  -                  |
 
 ## Grafana Auth
 
@@ -76,6 +75,9 @@ token_rotation_interval_minutes = 10
 
 # The maximum lifetime (seconds) an API key can be used. If it is set all the API keys should have limited lifetime that is lower than this value.
 api_key_max_seconds_to_live = -1
+
+# Enforce user lookup based on email instead of the unique ID provided by the IdP.
+oauth_allow_insecure_email_lookup = false
 ```
 
 ### Anonymous authentication
@@ -118,6 +120,20 @@ Hide the Grafana login form using the below configuration settings.
 disable_login_form = true
 ```
 
+### Enable email lookup
+
+Enable user lookup based on email in addition to using unique ID provided by IdPs.
+
+By default, Grafana relies on the user unique ID provided by the identity provider.
+Looking up users by email can be safe for some identity providers (for example, when they are single tenants and unique non-editable, validated emails are provided), as well as in some infrastructures.
+
+We strongly recommend against enabling email lookups, however it is possible to do with the following configuration.
+
+```bash
+[auth]
+oauth_allow_insecure_email_lookup = true
+```
+
 ### Automatic OAuth login
 
 Set to true to attempt login with specific OAuth provider automatically, skipping the login screen.
@@ -154,7 +170,9 @@ signout_redirect_url =
 
 ### Protected roles
 
-> **Note:** Available in [Grafana Enterprise]({{< relref "../../../introduction/grafana-enterprise/" >}}) and [Grafana Cloud Advanced]({{< ref "../../../introduction/grafana-cloud" >}}).
+{{% admonition type="note" %}}
+Available in [Grafana Enterprise]({{< relref "../../../introduction/grafana-enterprise" >}}) and [Grafana Cloud]({{< relref "../../../introduction/grafana-cloud" >}}).
+{{% /admonition %}}
 
 By default, after you configure an authorization provider, Grafana will adopt existing users into the new authentication scheme. For example, if you have created a user with basic authentication having the login `jsmith@example.com`, then set up SAML authentication where `jsmith@example.com` is an account, the user's authentication type will be changed to SAML if they perform a SAML sign-in.
 

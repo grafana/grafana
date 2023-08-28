@@ -52,7 +52,7 @@ func (p *grpcPlugin) Logger() log.Logger {
 	return p.logger
 }
 
-func (p *grpcPlugin) Start(ctx context.Context) error {
+func (p *grpcPlugin) Start(_ context.Context) error {
 	p.mutex.Lock()
 	defer p.mutex.Unlock()
 
@@ -76,7 +76,7 @@ func (p *grpcPlugin) Start(ctx context.Context) error {
 
 	elevated, err := process.IsRunningWithElevatedPrivileges()
 	if err != nil {
-		p.logger.Debug("Error checking plugin process execution privilege", "err", err)
+		p.logger.Debug("Error checking plugin process execution privilege", "error", err)
 	}
 	if elevated {
 		p.logger.Warn("Plugin process is running with elevated privileges. This is not recommended")
@@ -85,7 +85,7 @@ func (p *grpcPlugin) Start(ctx context.Context) error {
 	return nil
 }
 
-func (p *grpcPlugin) Stop(ctx context.Context) error {
+func (p *grpcPlugin) Stop(_ context.Context) error {
 	p.mutex.Lock()
 	defer p.mutex.Unlock()
 
@@ -109,8 +109,8 @@ func (p *grpcPlugin) Exited() bool {
 }
 
 func (p *grpcPlugin) Decommission() error {
-	p.mutex.RLock()
-	defer p.mutex.RUnlock()
+	p.mutex.Lock()
+	defer p.mutex.Unlock()
 
 	p.decommissioned = true
 
@@ -118,6 +118,8 @@ func (p *grpcPlugin) Decommission() error {
 }
 
 func (p *grpcPlugin) IsDecommissioned() bool {
+	p.mutex.RLock()
+	defer p.mutex.RUnlock()
 	return p.decommissioned
 }
 

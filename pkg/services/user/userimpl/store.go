@@ -40,6 +40,7 @@ type store interface {
 	Search(context.Context, *user.SearchUsersQuery) (*user.SearchUserQueryResult, error)
 
 	Count(ctx context.Context) (int64, error)
+	CountUserAccountsWithEmptyRole(ctx context.Context) (int64, error)
 }
 
 type sqlStore struct {
@@ -368,6 +369,9 @@ func (ss *sqlStore) ChangePassword(ctx context.Context, cmd *user.ChangeUserPass
 }
 
 func (ss *sqlStore) UpdateLastSeenAt(ctx context.Context, cmd *user.UpdateUserLastSeenAtCommand) error {
+	if cmd.UserID <= 0 {
+		return user.ErrUpdateInvalidID
+	}
 	return ss.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		user := user.User{
 			ID:         cmd.UserID,
@@ -396,15 +400,11 @@ func (ss *sqlStore) GetSignedInUser(ctx context.Context, query *user.GetSignedIn
 		u.is_disabled         as is_disabled,
 		u.help_flags1         as help_flags1,
 		u.last_seen_at        as last_seen_at,
-		(SELECT COUNT(*) FROM org_user where org_user.user_id = u.id) as org_count,
-		user_auth.auth_module as external_auth_module,
-		user_auth.auth_id     as external_auth_id,
 		org.name              as org_name,
 		org_user.role         as org_role,
 		org.id                as org_id,
 		u.is_service_account  as is_service_account
 		FROM ` + ss.dialect.Quote("user") + ` as u
-		LEFT OUTER JOIN user_auth on user_auth.user_id = u.id
 		LEFT OUTER JOIN org_user on org_user.org_id = ` + orgId + ` and org_user.user_id = u.id
 		LEFT OUTER JOIN org on org.id = org_user.org_id `
 
@@ -425,6 +425,8 @@ func (ss *sqlStore) GetSignedInUser(ctx context.Context, query *user.GetSignedIn
 			} else {
 				sess.SQL(rawSQL+"WHERE u.email=?", query.Email)
 			}
+		default:
+			return user.ErrNoUniqueID
 		}
 		has, err := sess.Get(&signedInUser)
 		if err != nil {
@@ -438,11 +440,6 @@ func (ss *sqlStore) GetSignedInUser(ctx context.Context, query *user.GetSignedIn
 			signedInUser.OrgName = "Org missing"
 		}
 
-		if signedInUser.ExternalAuthModule != "oauth_grafana_com" {
-			signedInUser.ExternalAuthID = ""
-		}
-
-		signedInUser.Analytics = buildUserAnalyticsSettings(signedInUser, ss.cfg.IntercomSecret)
 		return nil
 	})
 	return &signedInUser, err
@@ -536,6 +533,27 @@ func (ss *sqlStore) Count(ctx context.Context) (int64, error) {
 	return r.Count, err
 }
 
+func (ss *sqlStore) CountUserAccountsWithEmptyRole(ctx context.Context) (int64, error) {
+	sb := &db.SQLBuilder{}
+	sb.Write("SELECT ")
+	sb.Write(`(SELECT COUNT (*) from ` + ss.dialect.Quote("org_user") + ` AS ou ` +
+		`LEFT JOIN ` + ss.dialect.Quote("user") + ` AS u ON u.id = ou.user_id ` +
+		`WHERE ou.role =? ` +
+		`AND u.is_service_account = ` + ss.dialect.BooleanStr(false) + ` ` +
+		`AND u.is_disabled = ` + ss.dialect.BooleanStr(false) + `) AS user_accounts_with_no_role`)
+	sb.AddParams("None")
+
+	var countStats int64
+	if err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
+		_, err := sess.SQL(sb.GetSQLString(), sb.GetParams()...).Get(&countStats)
+		return err
+	}); err != nil {
+		return -1, err
+	}
+
+	return countStats, nil
+}
+
 // validateOneAdminLeft validate that there is an admin user left
 func validateOneAdminLeft(ctx context.Context, sess *db.Session) error {
 	count, err := sess.Where("is_admin=?", true).Count(&user.User{})
@@ -617,14 +635,12 @@ func (ss *sqlStore) Search(ctx context.Context, query *user.SearchUsersQuery) (*
 		}
 
 		// user only sees the users for which it has read permissions
-		if !accesscontrol.IsDisabled(ss.cfg) {
-			acFilter, err := accesscontrol.Filter(query.SignedInUser, "u.id", "global.users:id:", accesscontrol.ActionUsersRead)
-			if err != nil {
-				return err
-			}
-			whereConditions = append(whereConditions, acFilter.Where)
-			whereParams = append(whereParams, acFilter.Args...)
+		acFilter, err := accesscontrol.Filter(query.SignedInUser, "u.id", "global.users:id:", accesscontrol.ActionUsersRead)
+		if err != nil {
+			return err
 		}
+		whereConditions = append(whereConditions, acFilter.Where)
+		whereParams = append(whereParams, acFilter.Args...)
 
 		if query.Query != "" {
 			whereConditions = append(whereConditions, "(email "+ss.dialect.LikeStr()+" ? OR name "+ss.dialect.LikeStr()+" ? OR login "+ss.dialect.LikeStr()+" ?)")

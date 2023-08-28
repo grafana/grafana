@@ -1,8 +1,9 @@
 import { css, cx } from '@emotion/css';
+import classNames from 'classnames';
 import React, { PropsWithChildren } from 'react';
 
 import { GrafanaTheme2, PageLayoutType } from '@grafana/data';
-import { useStyles2 } from '@grafana/ui';
+import { useStyles2, LinkButton } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { CommandPalette } from 'app/features/commandPalette/CommandPalette';
 import { KioskMode } from 'app/types';
@@ -33,41 +34,51 @@ export function AppChrome({ children }: Props) {
   // doesn't get re-mounted when chromeless goes from true to false.
 
   return (
-    <main className="main-view">
+    <div
+      className={classNames('main-view', {
+        'main-view--search-bar-hidden': searchBarHidden && !state.chromeless,
+        'main-view--chrome-hidden': state.chromeless,
+      })}
+    >
       {!state.chromeless && (
-        <div className={cx(styles.topNav)}>
-          {!searchBarHidden && <TopSearchBar />}
-          <NavToolbar
-            searchBarHidden={searchBarHidden}
-            sectionNav={state.sectionNav.node}
-            pageNav={state.pageNav}
-            actions={state.actions}
-            onToggleSearchBar={chrome.onToggleSearchBar}
-            onToggleMegaMenu={chrome.onToggleMegaMenu}
-            onToggleKioskMode={chrome.onToggleKioskMode}
-          />
-        </div>
+        <>
+          <LinkButton className={styles.skipLink} href="#pageContent">
+            Skip to main content
+          </LinkButton>
+          <div className={cx(styles.topNav)}>
+            {!searchBarHidden && <TopSearchBar />}
+            <NavToolbar
+              searchBarHidden={searchBarHidden}
+              sectionNav={state.sectionNav.node}
+              pageNav={state.pageNav}
+              actions={state.actions}
+              onToggleSearchBar={chrome.onToggleSearchBar}
+              onToggleMegaMenu={chrome.onToggleMegaMenu}
+              onToggleKioskMode={chrome.onToggleKioskMode}
+            />
+          </div>
+        </>
       )}
-      <div className={contentClass}>
+      <main className={contentClass} id="pageContent">
         <div className={styles.panes}>
           {state.layout === PageLayoutType.Standard && state.sectionNav && <SectionNav model={state.sectionNav} />}
           <div className={styles.pageContainer}>{children}</div>
         </div>
-      </div>
+      </main>
       {!state.chromeless && (
         <>
           <MegaMenu searchBarHidden={searchBarHidden} onClose={() => chrome.setMegaMenu(false)} />
           <CommandPalette />
         </>
       )}
-    </main>
+    </div>
   );
 }
 
 const getStyles = (theme: GrafanaTheme2) => {
   const shadow = theme.isDark
     ? `0 0.6px 1.5px rgb(0 0 0), 0 2px 4px rgb(0 0 0 / 40%), 0 5px 10px rgb(0 0 0 / 23%)`
-    : '0 0.6px 1.5px rgb(0 0 0 / 8%), 0 2px 4px rgb(0 0 0 / 6%), 0 5px 10px rgb(0 0 0 / 5%)';
+    : '0 4px 8px rgb(0 0 0 / 4%)';
 
   return {
     content: css({
@@ -110,6 +121,17 @@ const getStyles = (theme: GrafanaTheme2) => {
       label: 'page-container',
       flexGrow: 1,
       minHeight: 0,
+      minWidth: 0,
+    }),
+    skipLink: css({
+      position: 'absolute',
+      top: -1000,
+
+      ':focus': {
+        left: theme.spacing(1),
+        top: theme.spacing(1),
+        zIndex: theme.zIndex.portal,
+      },
     }),
   };
 };

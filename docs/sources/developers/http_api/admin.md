@@ -9,6 +9,10 @@ keywords:
   - documentation
   - api
   - admin
+labels:
+  products:
+    - enterprise
+    - oss
 title: 'Admin HTTP API '
 ---
 
@@ -192,7 +196,9 @@ Content-Type: application/json
 
 `PUT /api/admin/settings`
 
-> **Note:** Available in Grafana Enterprise v8.0+.
+{{% admonition type="note" %}}
+Available in Grafana Enterprise v8.0+.
+{{% /admonition %}}
 
 Updates / removes and reloads database settings. You must provide either `updates`, `removals` or both.
 
@@ -471,7 +477,9 @@ Content-Type: application/json
 
 `POST /api/admin/pause-all-alerts`
 
-> **Note:** This API is relevant for the [legacy dashboard alerts](https://grafana.com/docs/grafana/v8.5/alerting/old-alerting/) only. For default alerting, use silences to stop alerts from being delivered.
+{{% admonition type="note" %}}
+This API is relevant for the [legacy dashboard alerts](https://grafana.com/docs/grafana/v8.5/alerting/old-alerting/) only. For default alerting, use silences to stop alerts from being delivered.
+{{% /admonition %}}
 
 Only works with Basic Authentication (username and password). See [introduction](http://docs.grafana.org/http_api/admin/#admin-api) for an explanation.
 

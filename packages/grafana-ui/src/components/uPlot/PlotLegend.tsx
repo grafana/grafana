@@ -27,6 +27,29 @@ interface PlotLegendProps extends VizLegendOptions, Omit<VizLayoutLegendProps, '
   config: UPlotConfigBuilder;
 }
 
+/**
+ * mostly duplicates logic in PlotLegend below :(
+ *
+ * @internal
+ */
+export function hasVisibleLegendSeries(config: UPlotConfigBuilder, data: DataFrame[]) {
+  return config.getSeries().some((s) => {
+    const fieldIndex = s.props.dataFrameFieldIndex;
+
+    if (!fieldIndex) {
+      return false;
+    }
+
+    const field = data[fieldIndex.frameIndex]?.fields[fieldIndex.fieldIndex];
+
+    if (!field || field.config.custom?.hideFrom?.legend) {
+      return false;
+    }
+
+    return true;
+  });
+}
+
 export const PlotLegend = React.memo(
   ({ data, config, placement, calcs, displayMode, ...vizLayoutLegendProps }: PlotLegendProps) => {
     const theme = useTheme2();
@@ -117,7 +140,7 @@ export const PlotLegend = React.memo(
           getItemKey: () => `${label}-${fieldIndex.frameIndex}-${fieldIndex.fieldIndex}`,
         };
       })
-      .filter((i) => i !== undefined) as VizLegendItem[];
+      .filter((i): i is VizLegendItem => i !== undefined);
 
     return (
       <VizLayout.Legend placement={placement} {...vizLayoutLegendProps}>
@@ -127,6 +150,7 @@ export const PlotLegend = React.memo(
           displayMode={displayMode}
           sortBy={vizLayoutLegendProps.sortBy}
           sortDesc={vizLayoutLegendProps.sortDesc}
+          isSortable={true}
         />
       </VizLayout.Legend>
     );

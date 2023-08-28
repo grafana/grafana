@@ -13,8 +13,6 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-
-	"github.com/grafana/grafana/pkg/components/simplejson"
 )
 
 const (
@@ -233,18 +231,66 @@ func (s *Service) registerScenario(scenario *Scenario) {
 	s.queryMux.HandleFunc(scenario.ID, scenario.handler)
 }
 
+type JSONModel struct {
+	ScenarioID         string    `json:"scenarioId"`
+	SeriesCount        int       `json:"seriesCount"`
+	StringInput        string    `json:"stringInput"`
+	Lines              int64     `json:"lines"`
+	IncludeLevelColumn bool      `json:"includeLevelColumn"`
+	StartValue         float64   `json:"startValue"`
+	Spread             float64   `json:"spread"`
+	Noise              float64   `json:"noise"`
+	Drop               float64   `json:"drop"`
+	Min                *float64  `json:"min,omitempty"`
+	Max                *float64  `json:"max,omitempty"`
+	Labels             string    `json:"labels"`
+	WithNil            bool      `json:"withNil"`
+	PulseWave          pulseWave `json:"pulseWave"`
+	Alias              string    `json:"alias"`
+	// Cannot specify a type for csvWave since legacy queries
+	// does not follow the same format as the new ones (and there is no migration).
+	CSVWave     interface{} `json:"csvWave"`
+	CSVContent  string      `json:"csvContent"`
+	CSVFileName string      `json:"csvFileName"`
+	DropPercent float64     `json:"dropPercent"`
+}
+
+type pulseWave struct {
+	TimeStep int64       `json:"timeStep"`
+	OnCount  int64       `json:"onCount"`
+	OffCount int64       `json:"offCount"`
+	OnValue  interface{} `json:"onValue"`
+	OffValue interface{} `json:"offValue"`
+}
+
+func getModel(j json.RawMessage) (JSONModel, error) {
+	model := JSONModel{
+		// Default values
+		ScenarioID:  string(randomWalkQuery),
+		SeriesCount: 1,
+		Lines:       10,
+		StartValue:  rand.Float64() * 100,
+		Spread:      1,
+	}
+	err := json.Unmarshal(j, &model)
+	if err != nil {
+		return JSONModel{}, err
+	}
+	return model, nil
+}
+
 // handleFallbackScenario handles the scenario where queryType is not set and fallbacks to scenarioId.
 func (s *Service) handleFallbackScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	scenarioQueries := map[string][]backend.DataQuery{}
 
 	for _, q := range req.Queries {
-		model, err := simplejson.NewJson(q.JSON)
+		model, err := getModel(q.JSON)
 		if err != nil {
 			s.logger.Error("Failed to unmarshal query model to JSON", "error", err)
 			continue
 		}
 
-		scenarioID := model.Get("scenarioId").MustString(string(randomWalkQuery))
+		scenarioID := model.ScenarioID
 		if _, exist := s.scenarios[scenarioID]; exist {
 			if _, ok := scenarioQueries[scenarioID]; !ok {
 				scenarioQueries[scenarioID] = []backend.DataQuery{}
@@ -281,11 +327,11 @@ func (s *Service) handleRandomWalkScenario(ctx context.Context, req *backend.Que
 	resp := backend.NewQueryDataResponse()
 
 	for _, q := range req.Queries {
-		model, err := simplejson.NewJson(q.JSON)
+		model, err := getModel(q.JSON)
 		if err != nil {
 			continue
 		}
-		seriesCount := model.Get("seriesCount").MustInt(1)
+		seriesCount := model.SeriesCount
 
 		for i := 0; i < seriesCount; i++ {
 			respD := resp.Responses[q.RefID]
@@ -301,7 +347,7 @@ func (s *Service) handleDatapointsOutsideRangeScenario(ctx context.Context, req 
 	resp := backend.NewQueryDataResponse()
 
 	for _, q := range req.Queries {
-		model, err := simplejson.NewJson(q.JSON)
+		model, err := getModel(q.JSON)
 		if err != nil {
 			continue
 		}
@@ -325,13 +371,19 @@ func (s *Service) handleCSVMetricValuesScenario(ctx context.Context, req *backen
 	resp := backend.NewQueryDataResponse()
 
 	for _, q := range req.Queries {
-		model, err := simplejson.NewJson(q.JSON)
+		model, err := getModel(q.JSON)
 		if err != nil {
 			continue
 		}
 
-		stringInput := model.Get("stringInput").MustString()
-
+		stringInput := model.StringInput
+		if strings.TrimSpace(stringInput) == "" {
+			qr := resp.Responses[q.RefID]
+			qr.Frames = data.Frames{
+				data.NewFrame("").SetMeta(&data.FrameMeta{ExecutedQueryString: stringInput}),
+			}
+			return resp, nil
+		}
 		valueField, err := csvLineToField(stringInput)
 		if err != nil {
 			return nil, err
@@ -369,7 +421,7 @@ func (s *Service) handleRandomWalkWithErrorScenario(ctx context.Context, req *ba
 	resp := backend.NewQueryDataResponse()
 
 	for _, q := range req.Queries {
-		model, err := simplejson.NewJson(q.JSON)
+		model, err := getModel(q.JSON)
 		if err != nil {
 			continue
 		}
@@ -387,12 +439,12 @@ func (s *Service) handleRandomWalkSlowScenario(ctx context.Context, req *backend
 	resp := backend.NewQueryDataResponse()
 
 	for _, q := range req.Queries {
-		model, err := simplejson.NewJson(q.JSON)
+		model, err := getModel(q.JSON)
 		if err != nil {
 			continue
 		}
 
-		stringInput := model.Get("stringInput").MustString()
+		stringInput := model.StringInput
 		parsedInterval, _ := time.ParseDuration(stringInput)
 		time.Sleep(parsedInterval)
 
@@ -408,7 +460,7 @@ func (s *Service) handleRandomWalkTableScenario(ctx context.Context, req *backen
 	resp := backend.NewQueryDataResponse()
 
 	for _, q := range req.Queries {
-		model, err := simplejson.NewJson(q.JSON)
+		model, err := getModel(q.JSON)
 		if err != nil {
 			continue
 		}
@@ -425,7 +477,7 @@ func (s *Service) handlePredictableCSVWaveScenario(ctx context.Context, req *bac
 	resp := backend.NewQueryDataResponse()
 
 	for _, q := range req.Queries {
-		model, err := simplejson.NewJson(q.JSON)
+		model, err := getModel(q.JSON)
 		if err != nil {
 			return nil, err
 		}
@@ -446,7 +498,7 @@ func (s *Service) handlePredictablePulseScenario(ctx context.Context, req *backe
 	resp := backend.NewQueryDataResponse()
 
 	for _, q := range req.Queries {
-		model, err := simplejson.NewJson(q.JSON)
+		model, err := getModel(q.JSON)
 		if err != nil {
 			continue
 		}
@@ -465,12 +517,12 @@ func (s *Service) handlePredictablePulseScenario(ctx context.Context, req *backe
 
 func (s *Service) handleServerError500Scenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	for _, q := range req.Queries {
-		model, err := simplejson.NewJson(q.JSON)
+		model, err := getModel(q.JSON)
 		if err != nil {
 			continue
 		}
 
-		stringInput := model.Get("stringInput").MustString()
+		stringInput := model.StringInput
 		if stringInput == "" {
 			panic("Test Data Panic!")
 		}
@@ -487,7 +539,7 @@ func (s *Service) handleArrowScenario(ctx context.Context, req *backend.QueryDat
 	resp := backend.NewQueryDataResponse()
 
 	for _, q := range req.Queries {
-		model, err := simplejson.NewJson(q.JSON)
+		model, err := getModel(q.JSON)
 		if err != nil {
 			return nil, err
 		}
@@ -573,13 +625,13 @@ func (s *Service) handleLogsScenario(ctx context.Context, req *backend.QueryData
 		from := q.TimeRange.From.UnixNano() / int64(time.Millisecond)
 		to := q.TimeRange.To.UnixNano() / int64(time.Millisecond)
 
-		model, err := simplejson.NewJson(q.JSON)
+		model, err := getModel(q.JSON)
 		if err != nil {
 			continue
 		}
 
-		lines := model.Get("lines").MustInt64(10)
-		includeLevelColumn := model.Get("levelColumn").MustBool(false)
+		lines := model.Lines
+		includeLevelColumn := model.IncludeLevelColumn
 
 		logLevelGenerator := newRandomStringProvider([]string{
 			"emerg",
@@ -651,19 +703,27 @@ func (s *Service) handleLogsScenario(ctx context.Context, req *backend.QueryData
 	return resp, nil
 }
 
-func RandomWalk(query backend.DataQuery, model *simplejson.Json, index int) *data.Frame {
-	rand := rand.New(rand.NewSource(time.Now().UnixNano()))
+func RandomWalk(query backend.DataQuery, model JSONModel, index int) *data.Frame {
+	rand := rand.New(rand.NewSource(time.Now().UnixNano() + int64(index)))
 	timeWalkerMs := query.TimeRange.From.UnixNano() / int64(time.Millisecond)
 	to := query.TimeRange.To.UnixNano() / int64(time.Millisecond)
-	startValue := model.Get("startValue").MustFloat64(rand.Float64() * 100)
-	spread := model.Get("spread").MustFloat64(1)
-	noise := model.Get("noise").MustFloat64(0)
-	drop := model.Get("drop").MustFloat64(0) / 100.0 // value is 0-100
+	startValue := model.StartValue
+	spread := model.Spread
+	noise := model.Noise
+	drop := model.Drop / 100.0 // value is 0-100
 
-	min, err := model.Get("min").Float64()
-	hasMin := err == nil
-	max, err := model.Get("max").Float64()
-	hasMax := err == nil
+	min := float64(0)
+	hasMin := false
+	if model.Min != nil {
+		hasMin = true
+		min = *model.Min
+	}
+	max := float64(0)
+	hasMax := false
+	if model.Max != nil {
+		hasMax = true
+		max = *model.Max
+	}
 
 	timeVec := make([]*time.Time, 0)
 	floatVec := make([]*float64, 0)
@@ -700,16 +760,16 @@ func RandomWalk(query backend.DataQuery, model *simplejson.Json, index int) *dat
 			SetConfig(&data.FieldConfig{
 				Interval: float64(query.Interval.Milliseconds()),
 			}),
-		data.NewField(frameNameForQuery(query, model, index), parseLabels(model), floatVec),
+		data.NewField(frameNameForQuery(query, model, index), parseLabels(model, index), floatVec),
 	)
 }
 
-func randomWalkTable(query backend.DataQuery, model *simplejson.Json) *data.Frame {
+func randomWalkTable(query backend.DataQuery, model JSONModel) *data.Frame {
 	rand := rand.New(rand.NewSource(time.Now().UnixNano()))
 	timeWalkerMs := query.TimeRange.From.UnixNano() / int64(time.Millisecond)
 	to := query.TimeRange.To.UnixNano() / int64(time.Millisecond)
-	withNil := model.Get("withNil").MustBool(false)
-	walker := model.Get("startValue").MustFloat64(rand.Float64() * 100)
+	withNil := model.WithNil
+	walker := model.StartValue
 	spread := 2.5
 
 	stateField := data.NewFieldFromFieldType(data.FieldTypeEnum, 0)
@@ -784,14 +844,13 @@ type pCSVOptions struct {
 	Name      string `json:"name"`
 }
 
-func predictableCSVWave(query backend.DataQuery, model *simplejson.Json) ([]*data.Frame, error) {
-	rawQueries, err := model.Get("csvWave").ToDB()
+func predictableCSVWave(query backend.DataQuery, model JSONModel) ([]*data.Frame, error) {
+	queries := []pCSVOptions{}
+	input, err := json.Marshal(model.CSVWave)
 	if err != nil {
 		return nil, err
 	}
-
-	queries := []pCSVOptions{}
-	err = json.Unmarshal(rawQueries, &queries)
+	err = json.Unmarshal(input, &queries)
 	if err != nil {
 		return nil, err
 	}
@@ -843,7 +902,7 @@ func predictableCSVWave(query backend.DataQuery, model *simplejson.Json) ([]*dat
 
 		frame := newSeriesForQuery(query, model, 0)
 		frame.Fields = fields
-		frame.Fields[1].Labels = parseLabelsString(subQ.Labels)
+		frame.Fields[1].Labels = parseLabelsString(subQ.Labels, 0)
 		if subQ.Name != "" {
 			frame.Name = subQ.Name
 		}
@@ -882,7 +941,7 @@ func predictableSeries(timeRange backend.TimeRange, timeStep, length int64, getV
 	}, nil
 }
 
-func predictablePulse(query backend.DataQuery, model *simplejson.Json) (*data.Frame, error) {
+func predictablePulse(query backend.DataQuery, model JSONModel) (*data.Frame, error) {
 	// Process Input
 	var timeStep int64
 	var onCount int64
@@ -890,26 +949,20 @@ func predictablePulse(query backend.DataQuery, model *simplejson.Json) (*data.Fr
 	var onValue *float64
 	var offValue *float64
 
-	options := model.Get("pulseWave")
+	options := model.PulseWave
 
 	var err error
-	if timeStep, err = options.Get("timeStep").Int64(); err != nil {
-		return nil, fmt.Errorf("failed to parse timeStep value '%v' into integer: %v", options.Get("timeStep"), err)
-	}
-	if onCount, err = options.Get("onCount").Int64(); err != nil {
-		return nil, fmt.Errorf("failed to parse onCount value '%v' into integer: %v", options.Get("onCount"), err)
-	}
-	if offCount, err = options.Get("offCount").Int64(); err != nil {
-		return nil, fmt.Errorf("failed to parse offCount value '%v' into integer: %v", options.Get("offCount"), err)
-	}
+	timeStep = options.TimeStep
+	onCount = options.OnCount
+	offCount = options.OffCount
 
-	onValue, err = fromStringOrNumber(options.Get("onValue"))
+	onValue, err = fromStringOrNumber(options.OnValue)
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse onValue value '%v' into float: %v", options.Get("onValue"), err)
+		return nil, fmt.Errorf("failed to parse onValue value '%v' into float: %v", options.OnValue, err)
 	}
-	offValue, err = fromStringOrNumber(options.Get("offValue"))
+	offValue, err = fromStringOrNumber(options.OffValue)
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse offValue value '%v' into float: %v", options.Get("offValue"), err)
+		return nil, fmt.Errorf("failed to parse offValue value '%v' into float: %v", options.OffValue, err)
 	}
 
 	timeStep *= 1000                             // Seconds to Milliseconds
@@ -929,7 +982,7 @@ func predictablePulse(query backend.DataQuery, model *simplejson.Json) (*data.Fr
 
 	frame := newSeriesForQuery(query, model, 0)
 	frame.Fields = fields
-	frame.Fields[1].Labels = parseLabels(model)
+	frame.Fields[1].Labels = parseLabels(model, 0)
 
 	return frame, nil
 }
@@ -958,8 +1011,8 @@ func randomHeatmapData(query backend.DataQuery, fnBucketGen func(index int) floa
 	return frame
 }
 
-func doArrowQuery(query backend.DataQuery, model *simplejson.Json) (*data.Frame, error) {
-	encoded := model.Get("stringInput").MustString("")
+func doArrowQuery(query backend.DataQuery, model JSONModel) (*data.Frame, error) {
+	encoded := model.StringInput
 	if encoded == "" {
 		return nil, nil
 	}
@@ -970,8 +1023,8 @@ func doArrowQuery(query backend.DataQuery, model *simplejson.Json) (*data.Frame,
 	return data.UnmarshalArrowFrame(arrow)
 }
 
-func newSeriesForQuery(query backend.DataQuery, model *simplejson.Json, index int) *data.Frame {
-	alias := model.Get("alias").MustString("")
+func newSeriesForQuery(query backend.DataQuery, model JSONModel, index int) *data.Frame {
+	alias := model.Alias
 	suffix := ""
 
 	if index > 0 {
@@ -998,12 +1051,11 @@ func newSeriesForQuery(query backend.DataQuery, model *simplejson.Json, index in
  *
  * '{job="foo", instance="bar"} => {job: "foo", instance: "bar"}`
  */
-func parseLabels(model *simplejson.Json) data.Labels {
-	labelText := model.Get("labels").MustString("")
-	return parseLabelsString(labelText)
+func parseLabels(model JSONModel, seriesIndex int) data.Labels {
+	return parseLabelsString(model.Labels, seriesIndex)
 }
 
-func parseLabelsString(labelText string) data.Labels {
+func parseLabelsString(labelText string, seriesIndex int) data.Labels {
 	if labelText == "" {
 		return data.Labels{}
 	}
@@ -1020,14 +1072,15 @@ func parseLabelsString(labelText string) data.Labels {
 		key := strings.TrimSpace(keyval[:idx])
 		val := strings.TrimSpace(keyval[idx+1:])
 		val = strings.Trim(val, "\"")
+		val = strings.ReplaceAll(val, "$seriesIndex", strconv.Itoa(seriesIndex))
 		tags[key] = val
 	}
 
 	return tags
 }
 
-func frameNameForQuery(query backend.DataQuery, model *simplejson.Json, index int) string {
-	name := model.Get("alias").MustString("")
+func frameNameForQuery(query backend.DataQuery, model JSONModel, index int) string {
+	name := model.Alias
 	suffix := ""
 
 	if index > 0 {
@@ -1049,13 +1102,10 @@ func frameNameForQuery(query backend.DataQuery, model *simplejson.Json, index in
 	return name
 }
 
-func fromStringOrNumber(val *simplejson.Json) (*float64, error) {
-	switch v := val.Interface().(type) {
-	case json.Number:
-		fV, err := v.Float64()
-		if err != nil {
-			return nil, err
-		}
+func fromStringOrNumber(val interface{}) (*float64, error) {
+	switch v := val.(type) {
+	case float64:
+		fV := val.(float64)
 		return &fV, nil
 	case string:
 		switch v {

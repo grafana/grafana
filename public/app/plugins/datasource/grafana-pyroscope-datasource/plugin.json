@@ -1,0 +1,33 @@
+{
+  "type": "datasource",
+  "name": "Grafana Pyroscope",
+  "id": "grafana-pyroscope-datasource",
+  "category": "profiling",
+
+  "metrics": true,
+  "alerting": false,
+  "annotations": false,
+  "logs": false,
+  "streaming": false,
+  "tracing": false,
+  "backend": true,
+
+  "info": {
+    "description": "Supports Phlare and Pyroscope backends, horizontally-scalable, highly-available, multi-tenant continuous profiling aggregation systems.",
+    "author": {
+      "name": "Grafana Labs",
+      "url": "https://www.grafana.com"
+    },
+    "keywords": ["grafana", "datasource", "phlare", "flamegraph", "profiling", "continuous profiling", "pyroscope"],
+    "logos": {
+      "small": "img/grafana_pyroscope_icon.svg",
+      "large": "img/grafana_pyroscope_icon.svg"
+    },
+    "links": [
+      {
+        "name": "GitHub Project",
+        "url": "https://github.com/grafana/phlare"
+      }
+    ]
+  }
+}

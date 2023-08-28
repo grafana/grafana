@@ -2,6 +2,11 @@
 keywords:
   - grafana
   - schema
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: Folder kind
 ---
 > Both documentation generation and kinds schemas are in active development and subject to change without prior notice.
@@ -16,7 +21,7 @@ A folder is a collection of resources that are grouped together and can share pe
 | Property   | Type                | Required | Default | Description                                                                                                                                                                                                                                                                    |
 |------------|---------------------|----------|---------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `metadata` | [object](#metadata) | **Yes**  |         | metadata contains embedded CommonMetadata and can be extended with custom string fields<br/>TODO: use CommonMetadata instead of redefining here; currently needs to be defined here<br/>without external reference as using the CommonMetadata reference breaks thema codegen. |
-| `spec`     | [object](#spec)     | **Yes**  |         |                                                                                                                                                                                                                                                                                |
+| `spec`     | [object](#spec)     | **Yes**  |         | TODO:<br/>common metadata will soon support setting the parent folder in the metadata                                                                                                                                                                                          |
 | `status`   | [object](#status)   | **Yes**  |         |                                                                                                                                                                                                                                                                                |
 
 ### Metadata
@@ -64,6 +69,9 @@ extraFields is reserved for any fields that are pulled from the API server metad
 
 ### Spec
 
+TODO:
+common metadata will soon support setting the parent folder in the metadata
+
 | Property      | Type   | Required | Default | Description                          |
 |---------------|--------|----------|---------|--------------------------------------|
 | `title`       | string | **Yes**  |         | Folder title                         |
@@ -72,10 +80,10 @@ extraFields is reserved for any fields that are pulled from the API server metad
 
 ### Status
 
-| Property           | Type                                                                             | Required | Default | Description                                                                                                                                                                |
-|--------------------|----------------------------------------------------------------------------------|----------|---------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `additionalFields` | [object](#additionalfields)                                                      | **Yes**  |         | additionalFields is reserved for future use                                                                                                                                |
-| `operatorStates`   | map[string][joinSchema.status.#OperatorState](#joinschema.status.#operatorstate) | No       |         | operatorStates is a map of operator ID to operator state evaluations.<br/>Any operator which consumes this kind SHOULD add its state evaluation information to this field. |
+| Property           | Type                                                       | Required | Default | Description                                                                                                                                                                |
+|--------------------|------------------------------------------------------------|----------|---------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `additionalFields` | [object](#additionalfields)                                | No       |         | additionalFields is reserved for future use                                                                                                                                |
+| `operatorStates`   | map[string][status.#OperatorState](#status.#operatorstate) | No       |         | operatorStates is a map of operator ID to operator state evaluations.<br/>Any operator which consumes this kind SHOULD add its state evaluation information to this field. |
 
 ### AdditionalFields
 
@@ -84,7 +92,7 @@ additionalFields is reserved for future use
 | Property | Type | Required | Default | Description |
 |----------|------|----------|---------|-------------|
 
-### JoinSchema.Status.#OperatorState
+### Status.#OperatorState
 
 | Property           | Type               | Required | Default | Description                                                                                                                                                                      |
 |--------------------|--------------------|----------|---------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

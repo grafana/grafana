@@ -9,10 +9,15 @@ import (
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/models"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/services"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/utils"
+	"github.com/grafana/grafana/pkg/plugins"
 )
 
-func shouldUpgrade(installed string, remote *models.Plugin) bool {
-	installedVersion, err := version.NewVersion(installed)
+func shouldUpgrade(installed plugins.FoundPlugin, remote models.Plugin) bool {
+	installedVer := installed.JSONData.Info.Version
+	if installedVer == "" {
+		installedVer = "0.0.0"
+	}
+	installedVersion, err := version.NewVersion(installedVer)
 	if err != nil {
 		return false
 	}
@@ -35,30 +40,30 @@ func upgradeAllCommand(c utils.CommandLine) error {
 		return err
 	}
 
-	pluginsToUpgrade := make([]models.InstalledPlugin, 0)
+	pluginsToUpgrade := make([]plugins.FoundPlugin, 0)
 
 	for _, localPlugin := range localPlugins {
 		for _, p := range remotePlugins.Plugins {
 			remotePlugin := p
-			if localPlugin.ID != remotePlugin.ID {
+			if localPlugin.Primary.JSONData.ID != remotePlugin.ID {
 				continue
 			}
-			if shouldUpgrade(localPlugin.Info.Version, &remotePlugin) {
-				pluginsToUpgrade = append(pluginsToUpgrade, localPlugin)
+			if shouldUpgrade(localPlugin.Primary, remotePlugin) {
+				pluginsToUpgrade = append(pluginsToUpgrade, localPlugin.Primary)
 			}
 		}
 	}
 
 	ctx := context.Background()
 	for _, p := range pluginsToUpgrade {
-		logger.Infof("Updating %v \n", p.ID)
+		logger.Infof("Updating %v \n", p.JSONData.ID)
 
-		err = uninstallPlugin(ctx, p.ID, c)
+		err = uninstallPlugin(ctx, p.JSONData.ID, c)
 		if err != nil {
 			return err
 		}
 
-		err = installPlugin(ctx, p.ID, "", c)
+		err = installPlugin(ctx, p.JSONData.ID, "", c)
 		if err != nil {
 			return err
 		}

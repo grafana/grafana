@@ -5,12 +5,14 @@ import (
 	"database/sql"
 	"errors"
 
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/sqlstore/session"
 	"github.com/grafana/grafana/pkg/services/star"
 )
 
 type sqlxStore struct {
 	sess *session.SessionDB
+	db   db.DB
 }
 
 func (s *sqlxStore) Get(ctx context.Context, query *star.IsStarredByUserQuery) (bool, error) {
@@ -31,6 +33,9 @@ func (s *sqlxStore) Insert(ctx context.Context, cmd *star.StarDashboardCommand) 
 		DashboardID: cmd.DashboardID,
 	}
 	_, err := s.sess.NamedExec(ctx, `INSERT INTO star (user_id, dashboard_id) VALUES (:user_id, :dashboard_id)`, entity)
+	if s.db.GetDialect().IsUniqueConstraintViolation(err) {
+		return nil
+	}
 	if err != nil {
 		return err
 	}

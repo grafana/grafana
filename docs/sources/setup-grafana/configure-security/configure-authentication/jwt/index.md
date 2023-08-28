@@ -2,8 +2,14 @@
 aliases:
   - ../../../auth/jwt/
 description: Grafana JWT Authentication
-title: Configure JWT Authentication
-weight: 500
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
+menuTitle: JWT
+title: Configure JWT authentication
+weight: 1600
 ---
 
 # Configure JWT authentication
@@ -22,7 +28,7 @@ authentication in an app embedding Grafana.
 
 To use JWT authentication:
 
-1. Enable JWT in the [main config file]({{< relref "../../../configure-grafana/" >}}).
+1. Enable JWT in the [main config file]({{< relref "../../../configure-grafana" >}}).
 1. Specify the header name that contains a token.
 
 ```ini
@@ -36,7 +42,7 @@ header_name = X-JWT-Assertion
 
 ## Configure login claim
 
-To identify the user, some of the claims needs to be selected as a login info. You could specify a claim that contains either a username or an email of the Grafana user.
+To identify the user, some of the claims needs to be selected as a login info. The subject claim called `"sub"` is mandatory and needs to identify the principal that is the subject of the JWT.
 
 Typically, the subject claim called `"sub"` would be used as a login but it might also be set to some application specific claim.
 
@@ -61,28 +67,21 @@ If `auto_sign_up` is enabled, then the `sub` claim is used as the "external Auth
 If you want to embed Grafana in an iframe while maintaning user identity and role checks,
 you can use JWT authentication to authenticate the iframe.
 
-> **Note**: For Grafana Cloud, or scenarios where verifying viewer identity is not required,
-> embed [public dashboards]({{< relref "../../../../dashboards/dashboard-public" >}}).
+{{% admonition type="note" %}}
+For Grafana Cloud, or scenarios where verifying viewer identity is not required,
+embed [public dashboards]({{< relref "../../../../dashboards/dashboard-public" >}}).
+{{% /admonition %}}
 
 In this scenario, you will need to configure Grafana to accept a JWT
 provided in the HTTP header and a reverse proxy should rewrite requests to the
 Grafana instance to include the JWT in the request's headers.
 
-> **Note**: For embedding to work, you must enable `allow_embedding` in the [security section]({{< relref "../../../configure-grafana#allow_embedding" >}}). This setting is not available in Grafana Cloud.
+{{% admonition type="note" %}}
+For embedding to work, you must enable `allow_embedding` in the [security section]({{< relref "../../../configure-grafana#allow_embedding" >}}). This setting is not available in Grafana Cloud.
+{{% /admonition %}}
 
 In a scenario where it is not possible to rewrite the request headers you
 can use URL login instead.
-
-## Skip organization role
-
-To skip the assignment of roles and permissions upon login via JWT and handle them via other mechanisms like the user interface, we can skip the organization role synchronization with the following configuration.
-
-```ini
-[auth.jwt]
-# ...
-
-skip_org_role_sync = true
-```
 
 ### URL login
 
@@ -91,8 +90,10 @@ skip_org_role_sync = true
 
 **Note**: You need to have enabled JWT before setting this setting see section Enabled JWT
 
-> **Warning**: this can lead to JWTs being exposed in logs and possible session hijacking if the server is not
-> using HTTP over TLS.
+{{% admonition type="warning" %}}
+this can lead to JWTs being exposed in logs and possible session hijacking if the server is not
+using HTTP over TLS.
+{{% /admonition %}}
 
 ```ini
 # [auth.jwt]
@@ -129,6 +130,8 @@ jwk_set_url = https://your-auth-provider.example.com/.well-known/jwks.json
 cache_ttl = 60m
 ```
 
+> **Note**: If the JWKS endpoint includes cache control headers and the value is less than the configured `cache_ttl`, then the cache control header value is used instead. If the cache_ttl is not set, no caching is performed. `no-store` and `no-cache` cache control headers are ignored.
+
 ### Verify token using a JSON Web Key Set loaded from JSON file
 
 Key set in the same format as in JWKS endpoint but located on disk.
@@ -143,6 +146,12 @@ PEM-encoded key file in PKIX, PKCS #1, PKCS #8 or SEC 1 format.
 
 ```ini
 key_file = /path/to/key.pem
+```
+
+If the JWT token's header specifies a `kid` (Key ID), then the Key ID must be set using the `key_id` configuration option.
+
+```ini
+key_id = my-key-id
 ```
 
 ## Validate claims
@@ -220,3 +229,14 @@ role_attribute_path = contains(info.roles[*], 'admin') && 'Admin' || contains(in
 ### Grafana Admin Role
 
 If the `role_attribute_path` property returns a `GrafanaAdmin` role, Grafana Admin is not assigned by default, instead the `Admin` role is assigned. To allow `Grafana Admin` role to be assigned set `allow_assign_grafana_admin = true`.
+
+### Skip organization role mapping
+
+To skip the assignment of roles and permissions upon login via JWT and handle them via other mechanisms like the user interface, we can skip the organization role synchronization with the following configuration.
+
+```ini
+[auth.jwt]
+# ...
+
+skip_org_role_sync = true
+```

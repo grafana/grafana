@@ -57,33 +57,44 @@ interface RegistrySelectInfo {
 }
 
 function getLayersSelection(items: Array<MapLayerRegistryItem<any>>, current?: string): RegistrySelectInfo {
-  const res: RegistrySelectInfo = { options: [], current: [] };
+  const registry: RegistrySelectInfo = { options: [], current: [] };
   const alpha: Array<SelectableValue<string>> = [];
+
   for (const layer of items) {
-    const opt: SelectableValue<string> = { label: layer.name, value: layer.id, description: layer.description };
-    if (layer.state === PluginState.alpha) {
-      if (!hasAlphaPanels) {
-        continue;
-      }
-      opt.label = `${layer.name} (Alpha)`;
-      opt.icon = 'bolt';
-      alpha.push(opt);
-    } else {
-      res.options.push(opt);
+    const option: SelectableValue<string> = { label: layer.name, value: layer.id, description: layer.description };
+
+    switch (layer.state) {
+      case PluginState.alpha:
+        if (!hasAlphaPanels) {
+          break;
+        }
+        option.label = `${layer.name} (Alpha)`;
+        option.icon = 'bolt';
+        alpha.push(option);
+        break;
+      case PluginState.beta:
+        option.label = `${layer.name} (Beta)`;
+      default:
+        registry.options.push(option);
     }
+
     if (layer.id === current) {
-      res.current.push(opt);
+      registry.current.push(option);
     }
   }
-  for (const p of alpha) {
-    res.options.push(p);
+
+  // Position alpha layers at the end of the layers list
+  for (const layer of alpha) {
+    registry.options.push(layer);
   }
-  return res;
+
+  return registry;
 }
 
 export function getLayersOptions(basemap: boolean, current?: string): RegistrySelectInfo {
   if (basemap) {
     return getLayersSelection([defaultBaseLayer, ...basemapLayers], current);
   }
+
   return getLayersSelection([...dataLayers, ...basemapLayers], current);
 }

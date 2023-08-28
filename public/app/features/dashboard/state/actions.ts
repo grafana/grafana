@@ -9,6 +9,7 @@ import { DashboardAcl, DashboardAclUpdateDTO, NewDashboardAclItem, PermissionLev
 
 import { loadPluginDashboards } from '../../plugins/admin/state/actions';
 import { cancelVariables } from '../../variables/state/actions';
+import { getDashboardSrv } from '../services/DashboardSrv';
 import { getTimeSrv } from '../services/TimeSrv';
 
 import { cleanUpDashboard, loadDashboardPermissions } from './reducers';
@@ -124,10 +125,12 @@ export const cleanUpDashboardAndVariables = (): ThunkResult<void> => (dispatch, 
   }
 
   getTimeSrv().stopAutoRefresh();
-
   dispatch(cleanUpDashboard());
   dispatch(removeAllPanels());
+
   dashboardWatcher.leave();
+
+  getDashboardSrv().setCurrent(undefined);
 };
 
 export const updateTimeZoneDashboard =

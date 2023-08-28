@@ -1,16 +1,13 @@
 ---
-aliases:
-  - ./
-cascade:
-  labels:
-    products:
-      - cloud
-      - enterprise
-      - oss
 description: Learn how to search for Grafana dashboards
 keywords:
   - search
   - dashboard
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 menutitle: Search
 title: Search
 weight: 80
@@ -30,7 +27,9 @@ Dashboard search is:
 - _Not_ case sensitive
 - Functional across stored _and_ file based dashboards.
 
-> **Note**: You can use your keyboard arrow keys to navigate the results and press `Enter` to open the selected dashboard.
+{{% admonition type="note" %}}
+You can use your keyboard arrow keys to navigate the results and press `Enter` to open the selected dashboard.
+{{% /admonition %}}
 
 The following image shows the search results when you search using dashboard name.
 
@@ -88,7 +87,9 @@ To filter dashboard search result by a tag, complete one of the following steps:
 
   All tags will be shown, and when you select a tag, the dashboard search will be instantly filtered.
 
-> **Note:** When using only a keyboard, press the `tab` key and navigate to the **Filter by tag** drop-down menu, press the down arrow key `▼` to activate the menu and locate a tag, and press `Enter` to select the tag.
+{{% admonition type="note" %}}
+When using only a keyboard, press the `tab` key and navigate to the **Filter by tag** drop-down menu, press the down arrow key `▼` to activate the menu and locate a tag, and press `Enter` to select the tag.
+{{% /admonition %}}
 
 ## Command palette
 

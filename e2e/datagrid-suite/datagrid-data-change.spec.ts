@@ -29,7 +29,7 @@ e2e.scenario({
     cy.get('[data-testid="glide-cell-2-1"]').should('have.attr', 'aria-selected', 'true');
     cy.get('body').type('12{enter}', { delay: 500 });
 
-    cy.get('[aria-label="Confirm Modal Danger Button"]').click();
+    cy.get('[data-testid="data-testid Confirm Modal Danger Button"]').click();
 
     cy.get('[data-testid="query-editor-row"]').contains('Snapshot');
   },

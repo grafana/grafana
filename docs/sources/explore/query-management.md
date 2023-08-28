@@ -3,6 +3,11 @@ keywords:
   - explore
   - loki
   - logs
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: Query management
 weight: 10
 ---
@@ -19,7 +24,9 @@ This functionality is similar to the panel inspector tasks [Inspect query perfor
 
 Query history is a list of queries that you used in Explore. The history is stored in the Grafana database and it is not shared with other users. The retention period for queries in history is two weeks. Queries older than two weeks are automatically deleted. To open and interact with your history, click the **Query history** button in Explore.
 
-> **Note**: Starred queries are not subject to the two weeks retention period and they are not deleted.
+{{% admonition type="note" %}}
+Starred queries are not subject to the two weeks retention period and they are not deleted.
+{{% /admonition %}}
 
 ### View query history
 
@@ -50,6 +57,8 @@ Filter query history in Query history and Starred tab by data source name:
 
 1. Click the **Filter queries for specific data source(s)** field.
 1. Select the data source for which you would like to filter your history. You can select multiple data sources.
+
+> **Note:** Queries ran using the Mixed data source will appear only when filtering for Mixed and not when filtering by their individual data sources.
 
 In **Query history** tab it is also possible to filter queries by date using the slider:
 

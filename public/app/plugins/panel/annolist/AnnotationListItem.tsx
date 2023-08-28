@@ -4,9 +4,9 @@ import React, { MouseEvent } from 'react';
 import { AnnotationEvent, DateTimeInput, GrafanaTheme2, PanelProps } from '@grafana/data';
 import { Card, TagList, Tooltip, RenderUserContentAsHTML, useStyles2 } from '@grafana/ui';
 
-import { PanelOptions } from './panelcfg.gen';
+import { Options } from './panelcfg.gen';
 
-interface Props extends Pick<PanelProps<PanelOptions>, 'options'> {
+interface Props extends Pick<PanelProps<Options>, 'options'> {
   annotation: AnnotationEvent;
   formatDate: (date: DateTimeInput, format?: string) => string;
   onClick: (annotation: AnnotationEvent) => void;
@@ -148,7 +148,7 @@ function getStyles(theme: GrafanaTheme2) {
       margin: 0,
       padding: theme.spacing(0.5),
       img: {
-        borderRadius: '50%',
+        borderRadius: theme.shape.radius.circle,
         width: theme.spacing(2),
         height: theme.spacing(2),
       },

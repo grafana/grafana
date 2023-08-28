@@ -37,8 +37,8 @@ const tempoPlugin = async () =>
   await import(/* webpackChunkName: "tempoPlugin" */ 'app/plugins/datasource/tempo/module');
 const alertmanagerPlugin = async () =>
   await import(/* webpackChunkName: "alertmanagerPlugin" */ 'app/plugins/datasource/alertmanager/module');
-const phlarePlugin = async () =>
-  await import(/* webpackChunkName: "phlarePlugin" */ 'app/plugins/datasource/phlare/module');
+const pyroscopePlugin = async () =>
+  await import(/* webpackChunkName: "pyroscopePlugin" */ 'app/plugins/datasource/grafana-pyroscope-datasource/module');
 const parcaPlugin = async () =>
   await import(/* webpackChunkName: "parcaPlugin" */ 'app/plugins/datasource/parca/module');
 
@@ -74,7 +74,6 @@ import * as xyChartPanel from 'app/plugins/panel/xychart/module';
 // Async loaded panels
 const geomapPanel = async () => await import(/* webpackChunkName: "geomapPanel" */ 'app/plugins/panel/geomap/module');
 const canvasPanel = async () => await import(/* webpackChunkName: "canvasPanel" */ 'app/plugins/panel/canvas/module');
-const iconPanel = async () => await import(/* webpackChunkName: "iconPanel" */ 'app/plugins/panel/icon/module');
 const graphPanel = async () => await import(/* webpackChunkName: "graphPlugin" */ 'app/plugins/panel/graph/module');
 const heatmapPanel = async () =>
   await import(/* webpackChunkName: "heatmapPanel" */ 'app/plugins/panel/heatmap/module');
@@ -103,7 +102,7 @@ const builtInPlugins: any = {
   'app/plugins/datasource/azuremonitor/module': azureMonitorPlugin,
   'app/plugins/datasource/tempo/module': tempoPlugin,
   'app/plugins/datasource/alertmanager/module': alertmanagerPlugin,
-  'app/plugins/datasource/phlare/module': phlarePlugin,
+  'app/plugins/datasource/grafana-pyroscope-datasource/module': pyroscopePlugin,
   'app/plugins/datasource/parca/module': parcaPlugin,
 
   'app/plugins/panel/text/module': textPanel,
@@ -116,7 +115,6 @@ const builtInPlugins: any = {
   'app/plugins/panel/xychart/module': xyChartPanel,
   'app/plugins/panel/geomap/module': geomapPanel,
   'app/plugins/panel/canvas/module': canvasPanel,
-  'app/plugins/panel/icon/module': iconPanel,
   'app/plugins/panel/dashlist/module': dashListPanel,
   'app/plugins/panel/alertlist/module': alertListPanel,
   'app/plugins/panel/annolist/module': annoListPanel,

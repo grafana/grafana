@@ -2,6 +2,10 @@
 aliases:
   - ../../../enterprise/enterprise-encryption/using-hashicorp-key-vault-to-encrypt-database-secrets/
 description: Learn how to use Hashicorp Vault to encrypt secrets in the Grafana database.
+labels:
+  products:
+    - cloud
+    - enterprise
 title: Encrypt database secrets using Hashicorp Vault
 weight: 200
 ---
@@ -13,7 +17,7 @@ You can use an encryption key from Hashicorp Vault to encrypt secrets in the Gra
 **Prerequisites:**
 
 - Permissions to manage Hashicorp Vault to enable secrets engines and issue tokens.
-- Access to the Grafana [configuration]({{< relref "../../../configure-grafana/#config-file-locations" >}}) file
+- Access to the Grafana [configuration]({{< relref "../../../configure-grafana#configuration-file-location" >}}) file
 
 1. [Enable the transit secrets engine](https://www.vaultproject.io/docs/secrets/transit#setup) in Hashicorp Vault.
 
@@ -21,7 +25,7 @@ You can use an encryption key from Hashicorp Vault to encrypt secrets in the Gra
 
 3. [Create a periodic service token](https://learn.hashicorp.com/tutorials/vault/tokens#periodic-service-tokens).
 
-4. From within Grafana, turn on [envelope encryption]({{< relref "/#envelop-encryption" >}}).
+4. From within Grafana, turn on envelope encryption.
 
 5. Add your Hashicorp Vault details to the Grafana configuration file; depending on your operating system, is usually named `grafana.ini`:
    <br><br>a. Add a new section to the configuration file, with a name in the format of `[security.encryption.hashicorpvault.<KEY-NAME>]`, where `<KEY-NAME>` is any name that uniquely identifies this key among other provider keys.
@@ -65,7 +69,7 @@ You can use an encryption key from Hashicorp Vault to encrypt secrets in the Gra
 
    **> Note:** The encryption key stored in the `secret_key` field is still used by Grafana’s legacy alerting system to encrypt secrets. Do not change or remove that value.
 
-7. [Restart Grafana](https://grafana.com/docs/grafana/latest/installation/restart-grafana/).
+7. [Restart Grafana](/docs/grafana/latest/installation/restart-grafana/).
 
 8. (Optional) From the command line and the root directory of Grafana Enterprise, re-encrypt all of the secrets within the Grafana database with the new key using the following command:
 

@@ -25,7 +25,7 @@ export default class AzureResourceGraphDatasource extends DataSourceWithBackend<
     const variableNames = templateSrv.getVariables().map((v) => `$${v.name}`);
     const subscriptionVar = _.find(target.subscriptions, (sub) => _.includes(variableNames, sub));
     const interpolatedSubscriptions = templateSrv
-      .replace(subscriptionVar, scopedVars, (v: any) => v)
+      .replace(subscriptionVar, scopedVars, (v: string[] | string) => v)
       .split(',')
       .filter((v) => v.length > 0);
     const subscriptions = [

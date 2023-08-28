@@ -12,6 +12,7 @@ import {
   getHandlerDetailsScene,
   getHandlerLogsScene,
 } from './scenes';
+import { getTrafficScene } from './traffic';
 
 export function GrafanaMonitoringApp() {
   const appScene = useMemo(
@@ -57,6 +58,12 @@ export function getMainPageScene() {
             getPage: getHandlerDrilldownPage,
           },
         ],
+      }),
+      new SceneAppPage({
+        title: 'Traffic',
+        url: '/scenes/grafana-monitoring/traffic',
+        getScene: getTrafficScene,
+        preserveUrlKeys: ['from', 'to', 'var-instance'],
       }),
       new SceneAppPage({
         title: 'Logs',

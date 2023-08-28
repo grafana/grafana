@@ -1,18 +1,17 @@
 import { css } from '@emotion/css';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { useLocation } from 'react-router-dom';
 import { useAsyncFn, useInterval } from 'react-use';
 
-import { GrafanaTheme2, urlUtil } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
-import { logInfo } from '@grafana/runtime';
-import { Button, LinkButton, useStyles2, withErrorBoundary } from '@grafana/ui';
+import { Button, useStyles2, withErrorBoundary } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { useDispatch } from 'app/types';
 
 import { CombinedRuleNamespace } from '../../../types/unified-alerting';
 
-import { LogMessages } from './Analytics';
+import { trackRuleListNavigation } from './Analytics';
+import { MoreActionsRuleButtons } from './MoreActionsRuleButtons';
 import { AlertingPageWrapper } from './components/AlertingPageWrapper';
 import { NoRulesSplash } from './components/rules/NoRulesCTA';
 import { INSTANCES_DISPLAY_LIMIT } from './components/rules/RuleDetails';
@@ -28,7 +27,6 @@ import { fetchAllPromAndRulerRulesAction } from './state/actions';
 import { useRulesAccess } from './utils/accessControlHooks';
 import { RULE_LIST_POLL_INTERVAL_MS } from './utils/constants';
 import { getAllRulesSourceNames } from './utils/datasource';
-import { createUrl } from './utils/url';
 
 const VIEWS = {
   groups: RuleListGroupView,
@@ -43,15 +41,12 @@ const RuleList = withErrorBoundary(
     const dispatch = useDispatch();
     const styles = useStyles2(getStyles);
     const rulesDataSourceNames = useMemo(getAllRulesSourceNames, []);
-    const location = useLocation();
     const [expandAll, setExpandAll] = useState(false);
 
     const onFilterCleared = useCallback(() => setExpandAll(false), []);
 
     const [queryParams] = useQueryParams();
     const { filterState, hasActiveFilters } = useRulesFilter();
-
-    const { canCreateGrafanaRules, canCreateCloudRules, canReadProvisioning } = useRulesAccess();
 
     const view = VIEWS[queryParams['view'] as keyof typeof VIEWS]
       ? (queryParams['view'] as keyof typeof VIEWS)
@@ -80,6 +75,10 @@ const RuleList = withErrorBoundary(
       }
     }, [loading, limitAlerts, dispatch]);
 
+    useEffect(() => {
+      trackRuleListNavigation().catch(() => {});
+    }, []);
+
     // fetch rules, then poll every RULE_LIST_POLL_INTERVAL_MS
     useEffect(() => {
       dispatch(fetchAllPromAndRulerRulesAction(false, { limitAlerts }));
@@ -91,6 +90,8 @@ const RuleList = withErrorBoundary(
 
     const combinedNamespaces: CombinedRuleNamespace[] = useCombinedRuleNamespaces();
     const filteredNamespaces = useFilteredRules(combinedNamespaces, filterState);
+
+    const { canCreateGrafanaRules, canCreateCloudRules, canReadProvisioning } = useRulesAccess();
 
     return (
       // We don't want to show the Loading... indicator for the whole page.
@@ -115,31 +116,11 @@ const RuleList = withErrorBoundary(
                 )}
                 <RuleStats namespaces={filteredNamespaces} />
               </div>
-              <Stack direction="row" gap={0.5}>
-                {canReadProvisioning && (
-                  <LinkButton
-                    variant="secondary"
-                    href={createUrl('/api/v1/provisioning/alert-rules/export', {
-                      download: 'true',
-                      format: 'yaml',
-                    })}
-                    icon="download-alt"
-                    target="_blank"
-                    rel="noopener"
-                  >
-                    Export
-                  </LinkButton>
-                )}
-                {(canCreateGrafanaRules || canCreateCloudRules) && (
-                  <LinkButton
-                    href={urlUtil.renderUrl('alerting/new', { returnTo: location.pathname + location.search })}
-                    icon="plus"
-                    onClick={() => logInfo(LogMessages.alertRuleFromScratch)}
-                  >
-                    Create alert rule
-                  </LinkButton>
-                )}
-              </Stack>
+              {(canCreateGrafanaRules || canCreateCloudRules || canReadProvisioning) && (
+                <Stack direction="row" gap={0.5}>
+                  <MoreActionsRuleButtons />
+                </Stack>
+              )}
             </div>
           </>
         )}

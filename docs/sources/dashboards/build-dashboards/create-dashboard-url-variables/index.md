@@ -8,6 +8,11 @@ keywords:
   - documentation
   - variables
   - dashboards
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: Dashboard URL variables
 weight: 250
 ---
@@ -61,11 +66,13 @@ https://${your-domain}/path/to/your/dashboard?var-adhoc=example_key|=|example_va
 
 The query parameter `var-adhoc=key|=|value` applies the ad hoc filter configured as the `adhoc` dashboard variable using the `example_key` key, the `=` operator, and the `example_value` value.
 
-> **Note:** When sharing URLs with ad hoc filters, remember to encode the URL. In the above example, replace the pipes (`|`) with `%7C` and the equality operator (`=`) with `%3D`.
+{{% admonition type="note" %}}
+When sharing URLs with ad hoc filters, remember to encode the URL. In the above example, replace the pipes (`|`) with `%7C` and the equality operator (`=`) with `%3D`.
+{{% /admonition %}}
 
 ### Example
 
-See [https://play.grafana.org/d/000000002/influxdb-templated?orgId=1&var-datacenter=America&var-host=All&var-summarize=1m&var-adhoc=datacenter%7C%3D%7CAmerica] - this passes the ad hoc filter variable `adhoc` with the filter value `datacenter = America`.
+[This example in Grafana Play](https://play.grafana.org/d/000000002/influxdb-templated?orgId=1&var-datacenter=America&var-host=All&var-summarize=1m&var-adhoc=datacenter%7C%3D%7CAmerica) passes the ad hoc filter variable `adhoc` with the filter value `datacenter = America`.
 
 ## Controlling time range using the URL
 

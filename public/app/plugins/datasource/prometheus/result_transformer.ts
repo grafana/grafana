@@ -19,11 +19,11 @@ import {
   ScopedVars,
   TIME_SERIES_TIME_FIELD_NAME,
   TIME_SERIES_VALUE_FIELD_NAME,
+  renderLegendFormat,
 } from '@grafana/data';
 import { calculateFieldDisplayName } from '@grafana/data/src/field/fieldState';
 import { config, FetchResponse, getDataSourceSrv, getTemplateSrv } from '@grafana/runtime';
 
-import { renderLegendFormat } from './legend';
 import {
   ExemplarTraceIdDestination,
   isExemplarData,
@@ -121,7 +121,7 @@ export function transformV2(
   // this works around the fact that we only get back frame.name with le buckets when legendFormat == {{le}}...which is not the default
   heatmapResults.forEach((df) => {
     if (df.name == null) {
-      let f = df.fields.find((f) => f.name === 'Value');
+      let f = df.fields.find((f) => f.type === FieldType.number);
 
       if (f) {
         let le = f.labels?.le;
@@ -150,7 +150,7 @@ export function transformV2(
     // Create a new grouping by iterating through the data frames...
     const heatmapResultsGroupedByValues = groupBy<DataFrame>(heatmapResultsGroup, (dataFrame) => {
       // Each data frame has `Time` and `Value` properties, we want to get the values
-      const values = dataFrame.fields.find((field) => field.name === TIME_SERIES_VALUE_FIELD_NAME);
+      const values = dataFrame.fields.find((field) => field.type === FieldType.number);
       // Specific functionality for special "le" quantile heatmap value, we know if this value exists, that we do not want to calculate the heatmap density across data frames from the same quartile
       if (values?.labels && HISTOGRAM_QUANTILE_LABEL_NAME in values.labels) {
         const { le, ...notLE } = values?.labels;
@@ -247,7 +247,10 @@ export function transformDFToTable(dfs: DataFrame[]): DataFrame[] {
       refId,
       fields,
       // Prometheus specific UI for instant queries
-      meta: { ...dfs[0].meta, preferredVisualisationType: 'rawPrometheus' as PreferredVisualisationType },
+      meta: {
+        ...dataFramesByRefId[refId][0].meta,
+        preferredVisualisationType: 'rawPrometheus' as PreferredVisualisationType,
+      },
       length: timeField.values.length,
     };
   });
@@ -617,7 +620,7 @@ export function getOriginalMetricName(labelData: { [key: string]: string }) {
 }
 
 function mergeHeatmapFrames(frames: DataFrame[]): DataFrame[] {
-  if (frames.length === 0) {
+  if (frames.length === 0 || (frames.length === 1 && frames[0].length === 0)) {
     return [];
   }
 
@@ -650,9 +653,10 @@ function transformToHistogramOverTime(seriesList: DataFrame[]) {
     le20    20  10  30    =>    10  0   30
     le30    30  10  35    =>    10  0   5
     */
+
   for (let i = seriesList.length - 1; i > 0; i--) {
-    const topSeries = seriesList[i].fields.find((s) => s.name === TIME_SERIES_VALUE_FIELD_NAME);
-    const bottomSeries = seriesList[i - 1].fields.find((s) => s.name === TIME_SERIES_VALUE_FIELD_NAME);
+    const topSeries = seriesList[i].fields.find((s) => s.type === FieldType.number);
+    const bottomSeries = seriesList[i - 1].fields.find((s) => s.type === FieldType.number);
     if (!topSeries || !bottomSeries) {
       throw new Error('Prometheus heatmap transform error: data should be a time series');
     }
@@ -670,10 +674,13 @@ export function sortSeriesByLabel(s1: DataFrame, s2: DataFrame): number {
   let le1, le2;
 
   try {
-    // fail if not integer. might happen with bad queries
-    le1 = parseSampleValue(s1.name ?? s1.fields[1].name);
-    le2 = parseSampleValue(s2.name ?? s2.fields[1].name);
+    // the state.displayName conditions are here because we also use this sorting util fn
+    // in panels where isHeatmapResult was false but we still want to sort numerically-named
+    // fields after the full unique displayName is cached in field state
+    le1 = parseSampleValue(s1.fields[1].state?.displayName ?? s1.name ?? s1.fields[1].name);
+    le2 = parseSampleValue(s2.fields[1].state?.displayName ?? s2.name ?? s2.fields[1].name);
   } catch (err) {
+    // fail if not integer. might happen with bad queries
     console.error(err);
     return 0;
   }

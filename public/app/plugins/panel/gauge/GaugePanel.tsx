@@ -7,9 +7,9 @@ import { config } from 'app/core/config';
 
 import { clearNameForSingleSeries } from '../bargauge/BarGaugePanel';
 
-import { PanelOptions } from './panelcfg.gen';
+import { Options } from './panelcfg.gen';
 
-export class GaugePanel extends PureComponent<PanelProps<PanelOptions>> {
+export class GaugePanel extends PureComponent<PanelProps<Options>> {
   renderComponent = (
     valueProps: VizRepeaterRenderValueProps<FieldDisplay>,
     menuProps: DataLinksContextMenuApi
@@ -31,6 +31,7 @@ export class GaugePanel extends PureComponent<PanelProps<PanelOptions>> {
         theme={config.theme2}
         onClick={openMenu}
         className={targetClassName}
+        orientation={options.orientation}
       />
     );
   };
@@ -90,6 +91,8 @@ export class GaugePanel extends PureComponent<PanelProps<PanelOptions>> {
         autoGrid={true}
         renderCounter={renderCounter}
         orientation={options.orientation}
+        minVizHeight={options.minVizHeight}
+        minVizWidth={options.minVizWidth}
       />
     );
   }

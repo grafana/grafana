@@ -1,4 +1,5 @@
 import { act, fireEvent, render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import React, { PropsWithChildren } from 'react';
 import { from } from 'rxjs';
 
@@ -9,7 +10,7 @@ import { defaultBucketAgg } from '../../../queryDef';
 import { ElasticsearchQuery } from '../../../types';
 import { ElasticsearchProvider } from '../ElasticsearchQueryContext';
 
-import { Average, UniqueCount } from './../../../types';
+import { Average, Count, UniqueCount } from './../../../types';
 import { MetricEditor } from './MetricEditor';
 
 describe('Metric Editor', () => {
@@ -84,5 +85,48 @@ describe('Metric Editor', () => {
 
     expect(await screen.findByText('No options found')).toBeInTheDocument();
     expect(screen.queryByText('None')).not.toBeInTheDocument();
+  });
+
+  it('Should not list special metrics', async () => {
+    const count: Count = {
+      id: '1',
+      type: 'count',
+    };
+
+    const query: ElasticsearchQuery = {
+      refId: 'A',
+      query: '',
+      metrics: [count],
+      bucketAggs: [],
+    };
+
+    const getDatabaseVersion: ElasticDatasource['getDatabaseVersion'] = jest.fn(() => Promise.resolve(null));
+
+    const wrapper = ({ children }: PropsWithChildren<{}>) => (
+      <ElasticsearchProvider
+        datasource={{ getDatabaseVersion } as ElasticDatasource}
+        query={query}
+        range={getDefaultTimeRange()}
+        onChange={() => {}}
+        onRunQuery={() => {}}
+      >
+        {children}
+      </ElasticsearchProvider>
+    );
+
+    render(<MetricEditor value={count} />, { wrapper });
+
+    act(() => {
+      userEvent.click(screen.getByText('Count'));
+    });
+
+    // we check if the list-of-options is visible by
+    // checking for an item to exist
+    expect(await screen.findByText('Extended Stats')).toBeInTheDocument();
+
+    // now we make sure the should-not-be-shown items are not shown
+    expect(screen.queryByText('Logs')).toBeNull();
+    expect(screen.queryByText('Raw Data')).toBeNull();
+    expect(screen.queryByText('Raw Document (deprecated)')).toBeNull();
   });
 });

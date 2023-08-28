@@ -5,8 +5,12 @@ keywords:
   - configuration
   - documentation
   - upgrade
-title: Upgrade to Grafana v9.0
+labels:
+  products:
+    - enterprise
+    - oss
 menutitle: Upgrade to v9.0
+title: Upgrade to Grafana v9.0
 weight: 2300
 ---
 
@@ -24,7 +28,7 @@ Fine-grained access control is now called "Role-based access control (RBAC)". As
 
 - Built-in roles are now called basic roles. They now consist of permissions, not roles.
 - The Terraform `builtin_role_assignment` resource is deprecated. Please use [grafana_role](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/role) resource instead.
-- Grafana provisioning has a new schema. Please refer to [Provisioning RBAC with Grafana](https://grafana.com/docs/grafana/latest/administration/roles-and-permissions/access-control/rbac-grafana-provisioning/) to learn more about provisioning.
+- Grafana provisioning has a new schema. Please refer to [Provisioning RBAC with Grafana](/docs/grafana/latest/administration/roles-and-permissions/access-control/rbac-grafana-provisioning/) to learn more about provisioning.
 - Basic roles no longer support permission inheritance. Previously, when permissions of a Viewer basic role were modified, it was propagated to the Editor and Admin basic roles. With the Grafana 9.0 release, this is not the case anymore.
 - Several role-based access control actions have been renamed. All database entries that use legacy action names will be migrated to use the new names, but provisioning files and scripts will have to be updated by the user. This change also means that if Grafana is downgraded from 9.0 to a lower version, some role-based access control permissions will not be resolved correctly.
 
@@ -59,11 +63,11 @@ The rename by regex transformation has been improved to allow global patterns of
 
 ### Clock Panel
 
-We have updated [clock panel](https://grafana.com/grafana/plugins/grafana-clock-panel/) to version `2.0.0` to make it compatible with Grafana 9. The previous version `1.3.1` will cause the Grafana 9 to [crash](https://github.com/grafana/clock-panel/issues/106) when being used in a dashboard, we encourage you to update the panel before migrating to Grafana 9.
+We have updated [clock panel](/grafana/plugins/grafana-clock-panel/) to version `2.0.0` to make it compatible with Grafana 9. The previous version `1.3.1` will cause the Grafana 9 to [crash](https://github.com/grafana/clock-panel/issues/106) when being used in a dashboard, we encourage you to update the panel before migrating to Grafana 9.
 
 ### Polystat Panel
 
-We have updated [polystat panel](https://grafana.com/grafana/plugins/grafana-polystat-panel/) to version `1.2.10` to make it compatible with Grafana 9. The previous versions `1.2.8` and below will render empty in Grafana 9. We encourage you to update the panel before or immediately after migrating to Grafana 9.
+We have updated [polystat panel](/grafana/plugins/grafana-polystat-panel/) to version `1.2.10` to make it compatible with Grafana 9. The previous versions `1.2.8` and below will render empty in Grafana 9. We encourage you to update the panel before or immediately after migrating to Grafana 9.
 
 ### Envelope encryption enabled by default
 
@@ -82,7 +86,7 @@ The recommendation here is to enable `envelopeEncryption` for older versions, or
 before upgrading to v9.0. However, the latter is probably going to be removed in one of the next releases, so we hugely
 encourage to move on with envelope encryption.
 
-Find [here]({{< relref "../../setup-grafana/configure-security/configure-database-encryption/" >}}) more details and some
+Find [here]({{< relref "../../setup-grafana/configure-security/configure-database-encryption" >}}) more details and some
 possible workarounds in case you end up in an undesired situation.
 
 ### A note on Grafana Enterprise licensing

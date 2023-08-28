@@ -1,18 +1,31 @@
+import { css } from '@emotion/css';
 import React from 'react';
 
-import { DataSourcePluginOptionsEditorProps } from '@grafana/data';
+import { DataSourcePluginOptionsEditorProps, GrafanaTheme2 } from '@grafana/data';
+import { ConfigSection, DataSourceDescription } from '@grafana/experimental';
 import { config } from '@grafana/runtime';
-import { DataSourceHttpSettings } from '@grafana/ui';
-import { NodeGraphSettings } from 'app/core/components/NodeGraphSettings';
-import { TraceToLogsSettings } from 'app/core/components/TraceToLogs/TraceToLogsSettings';
-import { TraceToMetricsSettings } from 'app/core/components/TraceToMetrics/TraceToMetricsSettings';
-import { SpanBarSettings } from 'app/features/explore/TraceView/components';
+import { DataSourceHttpSettings, useStyles2 } from '@grafana/ui';
+import { Divider } from 'app/core/components/Divider';
+import { NodeGraphSection } from 'app/core/components/NodeGraphSettings';
+import { TraceToLogsSection } from 'app/core/components/TraceToLogs/TraceToLogsSettings';
+import { TraceToMetricsSection } from 'app/core/components/TraceToMetrics/TraceToMetricsSettings';
+import { SpanBarSection } from 'app/features/explore/TraceView/components/settings/SpanBarSettings';
 
 export type Props = DataSourcePluginOptionsEditorProps;
 
 export const ConfigEditor = ({ options, onOptionsChange }: Props) => {
+  const styles = useStyles2(getStyles);
+
   return (
-    <>
+    <div className={styles.container}>
+      <DataSourceDescription
+        dataSourceName="Zipkin"
+        docsLink="https://grafana.com/docs/grafana/latest/datasources/zipkin"
+        hasRequiredFields={false}
+      />
+
+      <Divider />
+
       <DataSourceHttpSettings
         defaultUrl="http://localhost:9411"
         dataSourceConfig={options}
@@ -21,23 +34,35 @@ export const ConfigEditor = ({ options, onOptionsChange }: Props) => {
         secureSocksDSProxyEnabled={config.secureSocksDSProxyEnabled}
       />
 
-      <div className="gf-form-group">
-        <TraceToLogsSettings options={options} onOptionsChange={onOptionsChange} />
-      </div>
+      <TraceToLogsSection options={options} onOptionsChange={onOptionsChange} />
+
+      <Divider />
 
       {config.featureToggles.traceToMetrics ? (
-        <div className="gf-form-group">
-          <TraceToMetricsSettings options={options} onOptionsChange={onOptionsChange} />
-        </div>
+        <>
+          <TraceToMetricsSection options={options} onOptionsChange={onOptionsChange} />
+          <Divider />
+        </>
       ) : null}
 
-      <div className="gf-form-group">
-        <NodeGraphSettings options={options} onOptionsChange={onOptionsChange} />
-      </div>
-
-      <div className="gf-form-group">
-        <SpanBarSettings options={options} onOptionsChange={onOptionsChange} />
-      </div>
-    </>
+      <ConfigSection
+        title="Additional settings"
+        description="Additional settings are optional settings that can be configured for more control over your data source."
+        isCollapsible={true}
+        isInitiallyOpen={false}
+      >
+        <NodeGraphSection options={options} onOptionsChange={onOptionsChange} />
+        <Divider hideLine={true} />
+        <SpanBarSection options={options} onOptionsChange={onOptionsChange} />
+      </ConfigSection>
+    </div>
   );
 };
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  container: css`
+    label: container;
+    margin-bottom: ${theme.spacing(2)};
+    max-width: 900px;
+  `,
+});

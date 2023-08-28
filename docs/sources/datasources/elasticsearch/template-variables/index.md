@@ -8,6 +8,11 @@ keywords:
   - templates
   - variables
   - queries
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 menuTitle: Template variables
 title: Elasticsearch template variables
 weight: 400
@@ -19,7 +24,7 @@ Instead of hard-coding details such as server, application, and sensor names in 
 Grafana lists these variables in dropdown select boxes at the top of the dashboard to help you change the data displayed in your dashboard.
 Grafana refers to such variables as template variables.
 
-For an introduction to templating and template variables, refer to the [Templating]({{< relref "../../../dashboards/variables" >}}) and [Add and manage variables]({{< relref "../../../dashboards/variables/add-template-variables" >}}) documentation.
+For an introduction to templating and template variables, refer to the [Templating][variables] and [Add and manage variables][add-template-variables] documentation.
 
 ## Choose a variable syntax
 
@@ -29,7 +34,7 @@ The Elasticsearch data source supports two variable syntaxes for use in the **Qu
 - `[[varname]]`, such as `hostname:[[hostname]]`
 
 When the _Multi-value_ or _Include all value_ options are enabled, Grafana converts the labels from plain text to a Lucene-compatible condition.
-For details, see the [Multi-value variables]({{< relref "../../../dashboards/variables/add-template-variables#multi-value-variables" >}}) documentation.
+For details, see the [Multi-value variables][add-template-variables-multi-value-variables] documentation.
 
 ## Use variables in queries
 
@@ -47,7 +52,9 @@ These queries by default return results in term order (which can then be sorted 
 To produce a list of terms sorted by doc count (a top-N values list), add an `orderBy` property of "doc_count".
 This automatically selects a descending sort.
 
-> **Note:** To use an ascending sort (`asc`) with doc_count (a bottom-N list), set `order: "asc"`. However, Elasticsearch [discourages this](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-bucket-terms-aggregation.html#search-aggregations-bucket-terms-aggregation-order) because sorting by ascending doc count can return inaccurate results.
+{{% admonition type="note" %}}
+To use an ascending sort (`asc`) with doc_count (a bottom-N list), set `order: "asc"`. However, Elasticsearch [discourages this](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-bucket-terms-aggregation.html#search-aggregations-bucket-terms-aggregation-order) because sorting by ascending doc count can return inaccurate results.
+{{% /admonition %}}
 
 To keep terms in the doc count order, set the variable's Sort dropdown to **Disabled**.
 You can alternatively use other sorting criteria, such as **Alphabetical**, to re-sort them.
@@ -64,3 +71,14 @@ In the above example, a Lucene query filters documents based on the `hostname` p
 The example also uses a variable in the _Terms_ group by field input box, which you can use to quickly change how data is grouped.
 
 To view an example dashboard on Grafana Play, see the [Elasticsearch Templated Dashboard](https://play.grafana.org/d/z8OZC66nk/elasticsearch-8-2-0-sample-flight-data?orgId=1).
+
+{{% docs/reference %}}
+[add-template-variables-multi-value-variables]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables/add-template-variables#multi-value-variables"
+[add-template-variables-multi-value-variables]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables/add-template-variables#multi-value-variables"
+
+[add-template-variables]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables/add-template-variables"
+[add-template-variables]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables/add-template-variables"
+
+[variables]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables"
+[variables]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables"
+{{% /docs/reference %}}

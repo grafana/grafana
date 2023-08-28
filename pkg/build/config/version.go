@@ -19,9 +19,9 @@ type Metadata struct {
 }
 
 type ReleaseMode struct {
-	Mode   VersionMode `json:"mode,omitempty"`
-	IsBeta bool        `json:"isBeta,omitempty"`
-	IsTest bool        `json:"isTest,omitempty"`
+	Mode      VersionMode `json:"mode,omitempty"`
+	IsPreview bool        `json:"IsPreview,omitempty"`
+	IsTest    bool        `json:"isTest,omitempty"`
 }
 
 type PluginSignature struct {
@@ -71,8 +71,23 @@ func GetBuildConfig(mode VersionMode) (*BuildConfig, error) {
 	return nil, fmt.Errorf("mode '%s' not found in version list", mode)
 }
 
-// GetGrafanaVersion gets the Grafana version from the package.json
-func GetGrafanaVersion(buildID, grafanaDir string) (string, error) {
+// GenerateGrafanaVersion gets the Grafana version from the package.json
+func GenerateGrafanaVersion(buildID, grafanaDir string) (string, error) {
+	version, err := GetPackageJSONVersion(grafanaDir)
+	if err != nil {
+		return version, err
+	}
+	if buildID != "" {
+		buildID = shortenBuildID(buildID)
+		verComponents := strings.Split(version, "-")
+		version = verComponents[0]
+		version = fmt.Sprintf("%s-%s", version, buildID)
+	}
+
+	return version, nil
+}
+
+func GetPackageJSONVersion(grafanaDir string) (string, error) {
 	pkgJSONPath := filepath.Join(grafanaDir, "package.json")
 	//nolint:gosec
 	pkgJSONB, err := os.ReadFile(pkgJSONPath)
@@ -88,16 +103,6 @@ func GetGrafanaVersion(buildID, grafanaDir string) (string, error) {
 	if version == "" {
 		return "", fmt.Errorf("failed to read version from %q", pkgJSONPath)
 	}
-	if buildID != "" {
-		buildID = shortenBuildID(buildID)
-		verComponents := strings.Split(version, "-")
-		version = verComponents[0]
-		if len(verComponents) > 1 {
-			buildID = fmt.Sprintf("%s%s", buildID, verComponents[1])
-		}
-		version = fmt.Sprintf("%s-%s", version, buildID)
-	}
-
 	return version, nil
 }
 
@@ -121,7 +126,7 @@ func CheckDroneTargetBranch() (VersionMode, error) {
 }
 
 func CheckSemverSuffix() (ReleaseMode, error) {
-	reBetaRls := regexp.MustCompile(`beta.*`)
+	rePreviewRls := regexp.MustCompile(`preview.*`)
 	reTestRls := regexp.MustCompile(`test.*`)
 	reCloudRls := regexp.MustCompile(`cloud.*`)
 	tagSuffix, ok := os.LookupEnv("DRONE_SEMVER_PRERELEASE")
@@ -130,8 +135,8 @@ func CheckSemverSuffix() (ReleaseMode, error) {
 		return ReleaseMode{Mode: TagMode}, nil
 	}
 	switch {
-	case reBetaRls.MatchString(tagSuffix):
-		return ReleaseMode{Mode: TagMode, IsBeta: true}, nil
+	case rePreviewRls.MatchString(tagSuffix):
+		return ReleaseMode{Mode: TagMode, IsPreview: true}, nil
 	case reTestRls.MatchString(tagSuffix):
 		return ReleaseMode{Mode: TagMode, IsTest: true}, nil
 	case reCloudRls.MatchString(tagSuffix):

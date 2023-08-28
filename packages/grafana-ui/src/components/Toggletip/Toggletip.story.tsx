@@ -1,10 +1,11 @@
-import { ComponentMeta, ComponentStory } from '@storybook/react';
+import { Meta, StoryFn } from '@storybook/react';
 import React from 'react';
 
 import { SelectableValue } from '@grafana/data';
 
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { Button } from '../Button';
+import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
 import { ButtonSelect } from '../Dropdown/ButtonSelect';
 import { InlineField } from '../Forms/InlineField';
 import { Icon } from '../Icon/Icon';
@@ -14,7 +15,7 @@ import mdx from '../Toggletip/Toggletip.mdx';
 
 import { Toggletip } from './Toggletip';
 
-const meta: ComponentMeta<typeof Toggletip> = {
+const meta: Meta<typeof Toggletip> = {
   title: 'Overlays/Toggletip',
   component: Toggletip,
   decorators: [withCenteredStory],
@@ -60,7 +61,7 @@ const meta: ComponentMeta<typeof Toggletip> = {
   },
 };
 
-export const Basic: ComponentStory<typeof Toggletip> = ({
+export const Basic: StoryFn<typeof Toggletip> = ({
   title,
   content,
   footer,
@@ -92,7 +93,7 @@ Basic.args = {
   theme: 'info',
 };
 
-export const HostingMultiElements: ComponentStory<typeof Toggletip> = ({ theme, closeButton, placement }) => {
+export const HostingMultiElements: StoryFn<typeof Toggletip> = ({ theme, closeButton, placement }) => {
   const selectOptions: Array<SelectableValue<number>> = [
     { label: 'Sharilyn Markowitz', value: 1 },
     { label: 'Naomi Striplin', value: 2 },
@@ -173,6 +174,56 @@ HostingMultiElements.args = {
   placement: 'top',
   closeButton: true,
   theme: 'info',
+};
+
+export const LongContent: StoryFn<typeof Toggletip> = ({
+  title,
+  content,
+  footer,
+  theme,
+  closeButton,
+  placement,
+  ...args
+}) => {
+  return (
+    <Toggletip
+      title={<h2>Toggletip with scrollable content and no interactive controls</h2>}
+      content={
+        <CustomScrollbar autoHeightMax="500px">
+          {/* one of the few documented cases we can turn this rule off */}
+          {/* https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/blob/main/docs/rules/no-noninteractive-tabindex.md#case-shouldnt-i-add-a-tabindex-so-that-users-can-navigate-to-this-item */}
+          {/* eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex */}
+          <div tabIndex={0}>
+            <p>
+              If for any reason you have to use a Toggletip with a lot of content with no interactive controls, set a{' '}
+              <code>tabIndex=0</code> attribute to the container so keyboard users are able to focus the content and
+              able to scroll up and down it.
+            </p>
+            {new Array(15).fill(undefined).map((_, i) => (
+              <p key={i}>This is some content repeated over and over again to ensure it is scrollable.</p>
+            ))}
+          </div>
+        </CustomScrollbar>
+      }
+      footer={footer}
+      theme={theme}
+      placement={placement}
+      {...args}
+    >
+      <Button>Click to show Toggletip with long content!</Button>
+    </Toggletip>
+  );
+};
+LongContent.args = {
+  placement: 'auto',
+  theme: 'info',
+};
+
+LongContent.parameters = {
+  controls: {
+    hideNoControlsWarning: true,
+    exclude: ['title', 'content', 'children'],
+  },
 };
 
 export default meta;

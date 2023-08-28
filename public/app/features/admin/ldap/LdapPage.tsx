@@ -1,14 +1,13 @@
 import React, { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
-import { NavModel } from '@grafana/data';
+import { NavModelItem } from '@grafana/data';
 import { featureEnabled } from '@grafana/runtime';
 import { Alert, Button, LegacyForms } from '@grafana/ui';
 const { FormField } = LegacyForms;
 import { Page } from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/core';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
-import { getNavModel } from 'app/core/selectors/navModel';
 import {
   AppNotificationSeverity,
   LdapError,
@@ -32,7 +31,6 @@ import { LdapSyncInfo } from './LdapSyncInfo';
 import { LdapUserInfo } from './LdapUserInfo';
 
 interface OwnProps extends GrafanaRouteComponentProps<{}, { username?: string }> {
-  navModel: NavModel;
   ldapConnectionInfo: LdapConnectionInfo;
   ldapUser?: LdapUser;
   ldapSyncInfo?: SyncInfo;
@@ -43,6 +41,13 @@ interface OwnProps extends GrafanaRouteComponentProps<{}, { username?: string }>
 interface State {
   isLoading: boolean;
 }
+
+const pageNav: NavModelItem = {
+  text: 'LDAP',
+  subTitle: `Verify your LDAP and user mapping configuration.`,
+  icon: 'book',
+  id: 'LDAP',
+};
 
 export class LdapPage extends PureComponent<Props, State> {
   state = {
@@ -84,12 +89,12 @@ export class LdapPage extends PureComponent<Props, State> {
   };
 
   render() {
-    const { ldapUser, userError, ldapError, ldapSyncInfo, ldapConnectionInfo, navModel, queryParams } = this.props;
+    const { ldapUser, userError, ldapError, ldapSyncInfo, ldapConnectionInfo, queryParams } = this.props;
     const { isLoading } = this.state;
     const canReadLDAPUser = contextSrv.hasPermission(AccessControlAction.LDAPUsersRead);
 
     return (
-      <Page navModel={navModel}>
+      <Page navId="authentication" pageNav={pageNav}>
         <Page.Contents isLoading={isLoading}>
           <>
             {ldapError && ldapError.title && (
@@ -143,7 +148,6 @@ export class LdapPage extends PureComponent<Props, State> {
 }
 
 const mapStateToProps = (state: StoreState) => ({
-  navModel: getNavModel(state.navIndex, 'ldap'),
   ldapConnectionInfo: state.ldap.connectionInfo,
   ldapUser: state.ldap.user,
   ldapSyncInfo: state.ldap.syncInfo,

@@ -102,7 +102,7 @@ func processLogsResponse(res *es.SearchResponse, target *Query, configuredFields
 	for hitIdx, hit := range res.Hits.Hits {
 		var flattened map[string]interface{}
 		if hit["_source"] != nil {
-			flattened = flatten(hit["_source"].(map[string]interface{}))
+			flattened = flatten(hit["_source"].(map[string]interface{}), 10)
 		}
 
 		doc := map[string]interface{}{
@@ -129,6 +129,12 @@ func processLogsResponse(res *es.SearchResponse, target *Query, configuredFields
 					doc[k] = v
 				}
 			}
+		}
+
+		// we are going to add an `id` field with the concatenation of `_id` and `_index`
+		_, ok := doc["id"]
+		if !ok {
+			doc["id"] = fmt.Sprintf("%v#%v", doc["_index"], doc["_id"])
 		}
 
 		for key := range doc {
@@ -160,7 +166,7 @@ func processLogsResponse(res *es.SearchResponse, target *Query, configuredFields
 	frames := data.Frames{}
 	frame := data.NewFrame("", fields...)
 	setPreferredVisType(frame, data.VisTypeLogs)
-	setSearchWords(frame, searchWords)
+	setLogsCustomMeta(frame, searchWords, stringToIntWithDefaultValue(target.Metrics[0].Settings.Get("limit").MustString(), defaultSize))
 	frames = append(frames, frame)
 
 	queryRes.Frames = frames
@@ -174,7 +180,7 @@ func processRawDataResponse(res *es.SearchResponse, target *Query, configuredFie
 	for hitIdx, hit := range res.Hits.Hits {
 		var flattened map[string]interface{}
 		if hit["_source"] != nil {
-			flattened = flatten(hit["_source"].(map[string]interface{}))
+			flattened = flatten(hit["_source"].(map[string]interface{}), 10)
 		}
 
 		doc := map[string]interface{}{
@@ -1041,38 +1047,26 @@ func getErrorFromElasticResponse(response *es.SearchResponse) string {
 }
 
 // flatten flattens multi-level objects to single level objects. It uses dot notation to join keys.
-func flatten(target map[string]interface{}) map[string]interface{} {
+func flatten(target map[string]interface{}, maxDepth int) map[string]interface{} {
 	// On frontend maxDepth wasn't used but as we are processing on backend
 	// let's put a limit to avoid infinite loop. 10 was chosen arbitrary.
-	maxDepth := 10
-	currentDepth := 0
-	delimiter := ""
 	output := make(map[string]interface{})
+	step(0, maxDepth, target, "", output)
+	return output
+}
 
-	var step func(object map[string]interface{}, prev string)
+func step(currentDepth, maxDepth int, target map[string]interface{}, prev string, output map[string]interface{}) {
+	nextDepth := currentDepth + 1
+	for key, value := range target {
+		newKey := strings.Trim(prev+"."+key, ".")
 
-	step = func(object map[string]interface{}, prev string) {
-		for key, value := range object {
-			if prev == "" {
-				delimiter = ""
-			} else {
-				delimiter = "."
-			}
-			newKey := prev + delimiter + key
-
-			v, ok := value.(map[string]interface{})
-			shouldStepInside := ok && len(v) > 0 && currentDepth < maxDepth
-			if shouldStepInside {
-				currentDepth++
-				step(v, newKey)
-			} else {
-				output[newKey] = value
-			}
+		v, ok := value.(map[string]interface{})
+		if ok && len(v) > 0 && currentDepth < maxDepth {
+			step(nextDepth, maxDepth, v, newKey, output)
+		} else {
+			output[newKey] = value
 		}
 	}
-
-	step(target, "")
-	return output
 }
 
 // sortPropNames orders propNames so that timeField is first (if it exists), log message field is second
@@ -1137,7 +1131,7 @@ func setPreferredVisType(frame *data.Frame, visType data.VisType) {
 	frame.Meta.PreferredVisualization = visType
 }
 
-func setSearchWords(frame *data.Frame, searchWords map[string]bool) {
+func setLogsCustomMeta(frame *data.Frame, searchWords map[string]bool, limit int) {
 	i := 0
 	searchWordsList := make([]string, len(searchWords))
 	for searchWord := range searchWords {
@@ -1156,6 +1150,7 @@ func setSearchWords(frame *data.Frame, searchWords map[string]bool) {
 
 	frame.Meta.Custom = map[string]interface{}{
 		"searchWords": searchWordsList,
+		"limit":       limit,
 	}
 }
 

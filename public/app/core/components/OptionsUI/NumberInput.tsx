@@ -13,6 +13,7 @@ interface Props {
   step?: number;
   width?: number;
   fieldDisabled?: boolean;
+  suffix?: React.ReactNode;
 }
 
 interface State {
@@ -111,6 +112,7 @@ export class NumberInput extends PureComponent<Props, State> {
         placeholder={this.props.placeholder}
         disabled={this.props.fieldDisabled}
         width={this.props.width}
+        suffix={this.props.suffix}
       />
     );
   }

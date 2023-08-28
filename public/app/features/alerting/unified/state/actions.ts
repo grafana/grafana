@@ -1,7 +1,7 @@
 import { AsyncThunk, createAsyncThunk } from '@reduxjs/toolkit';
 import { isEmpty } from 'lodash';
 
-import { config, locationService } from '@grafana/runtime';
+import { locationService } from '@grafana/runtime';
 import {
   AlertmanagerAlert,
   AlertManagerCortexConfig,
@@ -32,27 +32,24 @@ import {
   RulerRulesConfigDTO,
 } from 'app/types/unified-alerting-dto';
 
-import { contextSrv } from '../../../../core/core';
 import { backendSrv } from '../../../../core/services/backend_srv';
-import { logInfo, LogMessages, trackNewAlerRuleFormSaved, withPerformanceLogging } from '../Analytics';
+import { logInfo, LogMessages, withPerformanceLogging } from '../Analytics';
 import {
   addAlertManagers,
   createOrUpdateSilence,
   deleteAlertManagerConfig,
   expireSilence,
   fetchAlertGroups,
-  fetchAlertManagerConfig,
   fetchAlerts,
   fetchExternalAlertmanagerConfig,
   fetchExternalAlertmanagers,
   fetchSilences,
-  fetchStatus,
   testReceivers,
   updateAlertManagerConfig,
 } from '../api/alertmanager';
+import { alertmanagerApi } from '../api/alertmanagerApi';
 import { fetchAnnotations } from '../api/annotations';
 import { discoverFeatures } from '../api/buildInfo';
-import { featureDiscoveryApi } from '../api/featureDiscoveryApi';
 import { fetchNotifiers } from '../api/grafana';
 import { FetchPromRulesFilter, fetchRules } from '../api/prometheus';
 import {
@@ -62,7 +59,6 @@ import {
   FetchRulerRulesFilter,
   setRulerRuleGroup,
 } from '../api/ruler';
-import { getAlertInfo, safeParseDurationstr } from '../components/rules/EditRuleGroupModal';
 import { RuleFormType, RuleFormValues } from '../types/rule-form';
 import { addDefaultsToAlertmanagerConfig, removeMuteTimingFromRoute } from '../utils/alertmanager';
 import {
@@ -70,15 +66,13 @@ import {
   getRulesDataSource,
   getRulesSourceName,
   GRAFANA_RULES_SOURCE_NAME,
-  isVanillaPrometheusAlertManagerDataSource,
 } from '../utils/datasource';
-import { makeAMLink, retryWhile } from '../utils/misc';
-import { AsyncRequestMapSlice, messageFromError, withAppEvents, withSerializedError } from '../utils/redux';
+import { makeAMLink } from '../utils/misc';
+import { AsyncRequestMapSlice, withAppEvents, withSerializedError } from '../utils/redux';
 import * as ruleId from '../utils/rule-id';
 import { getRulerClient } from '../utils/rulerClient';
-import { isRulerNotSupportedResponse } from '../utils/rules';
-
-const FETCH_CONFIG_RETRY_TIMEOUT = 30 * 1000;
+import { getAlertInfo, isRulerNotSupportedResponse } from '../utils/rules';
+import { safeParseDurationstr } from '../utils/time';
 
 function getDataSourceConfig(getState: () => unknown, rulesSourceName: string) {
   const dataSources = (getState() as StoreState).unifiedAlerting.dataSources;
@@ -108,12 +102,14 @@ export const fetchPromRulesAction = createAsyncThunk(
       limitAlerts,
       matcher,
       state,
+      identifier,
     }: {
       rulesSourceName: string;
       filter?: FetchPromRulesFilter;
       limitAlerts?: number;
       matcher?: Matcher[];
       state?: string[];
+      identifier?: RuleIdentifier;
     },
     thunkAPI
   ): Promise<RuleNamespace[]> => {
@@ -124,78 +120,10 @@ export const fetchPromRulesAction = createAsyncThunk(
       thunk: 'unifiedalerting/fetchPromRules',
     });
 
-    return await withSerializedError(fetchRulesWithLogging(rulesSourceName, filter, limitAlerts, matcher, state));
+    return await withSerializedError(
+      fetchRulesWithLogging(rulesSourceName, filter, limitAlerts, matcher, state, identifier)
+    );
   }
-);
-
-export const fetchAlertManagerConfigAction = createAsyncThunk(
-  'unifiedalerting/fetchAmConfig',
-  (alertManagerSourceName: string, thunkAPI): Promise<AlertManagerCortexConfig> =>
-    withSerializedError(
-      (async () => {
-        // for vanilla prometheus, there is no config endpoint. Only fetch config from status
-        if (isVanillaPrometheusAlertManagerDataSource(alertManagerSourceName)) {
-          return fetchStatus(alertManagerSourceName).then((status) => ({
-            alertmanager_config: status.config,
-            template_files: {},
-          }));
-        }
-
-        const { data: amFeatures } = await thunkAPI.dispatch(
-          featureDiscoveryApi.endpoints.discoverAmFeatures.initiate({
-            amSourceName: alertManagerSourceName,
-          })
-        );
-
-        const lazyConfigInitSupported = amFeatures?.lazyConfigInit ?? false;
-        const fetchAMconfigWithLogging = withPerformanceLogging(
-          fetchAlertManagerConfig,
-          `[${alertManagerSourceName}] Alertmanager config loaded`,
-          {
-            dataSourceName: alertManagerSourceName,
-            thunk: 'unifiedalerting/fetchAmConfig',
-          }
-        );
-
-        return retryWhile(
-          () => fetchAMconfigWithLogging(alertManagerSourceName),
-          // if config has been recently deleted, it takes a while for cortex start returning the default one.
-          // retry for a short while instead of failing
-          (e) => !!messageFromError(e)?.includes('alertmanager storage object not found') && !lazyConfigInitSupported,
-          FETCH_CONFIG_RETRY_TIMEOUT
-        )
-          .then((result) => {
-            // if user config is empty for cortex alertmanager, try to get config from status endpoint
-            if (
-              isEmpty(result.alertmanager_config) &&
-              isEmpty(result.template_files) &&
-              alertManagerSourceName !== GRAFANA_RULES_SOURCE_NAME
-            ) {
-              return fetchStatus(alertManagerSourceName).then((status) => ({
-                alertmanager_config: status.config,
-                template_files: {},
-                template_file_provenances: result.template_file_provenances,
-                last_applied: result.last_applied,
-                id: result.id,
-              }));
-            }
-            return result;
-          })
-          .catch((e) => {
-            // When mimir doesn't have fallback AM url configured the default response will be as above
-            // However it's fine, and it's possible to create AM configuration
-            if (lazyConfigInitSupported && messageFromError(e)?.includes('alertmanager storage object not found')) {
-              return Promise.resolve<AlertManagerCortexConfig>({
-                alertmanager_config: {},
-                template_files: {},
-                template_file_provenances: {},
-              });
-            }
-
-            throw e;
-          });
-      })()
-    )
 );
 
 export const fetchExternalAlertmanagersAction = createAsyncThunk(
@@ -240,12 +168,26 @@ export const fetchRulerRulesAction = createAsyncThunk(
   }
 );
 
-export function fetchPromAndRulerRulesAction({ rulesSourceName }: { rulesSourceName: string }): ThunkResult<void> {
+export function fetchPromAndRulerRulesAction({
+  rulesSourceName,
+  identifier,
+  filter,
+  limitAlerts,
+  matcher,
+  state,
+}: {
+  rulesSourceName: string;
+  identifier?: RuleIdentifier;
+  filter?: FetchPromRulesFilter;
+  limitAlerts?: number;
+  matcher?: Matcher[];
+  state?: string[];
+}): ThunkResult<void> {
   return async (dispatch, getState) => {
     await dispatch(fetchRulesSourceBuildInfoAction({ rulesSourceName }));
     const dsConfig = getDataSourceConfig(getState, rulesSourceName);
 
-    await dispatch(fetchPromRulesAction({ rulesSourceName }));
+    await dispatch(fetchPromRulesAction({ rulesSourceName, identifier, filter, limitAlerts, matcher, state }));
     if (dsConfig.rulerConfig) {
       await dispatch(fetchRulerRulesAction({ rulesSourceName }));
     }
@@ -440,6 +382,8 @@ export function deleteRuleAction(
    * reload ruler rules
    */
   return async (dispatch, getState) => {
+    await dispatch(fetchRulesSourceBuildInfoAction({ rulesSourceName: ruleIdentifier.ruleSourceName }));
+
     withAppEvents(
       (async () => {
         const rulerConfig = getDataSourceRulerConfig(getState, ruleIdentifier.ruleSourceName);
@@ -512,14 +456,6 @@ export const saveRuleFormAction = createAsyncThunk(
 
           logInfo(LogMessages.successSavingAlertRule, { type, isNew: (!existing).toString() });
 
-          if (!existing) {
-            trackNewAlerRuleFormSaved({
-              grafana_version: config.buildInfo.version,
-              org_id: contextSrv.user.orgId,
-              user_id: contextSrv.user.id,
-            });
-          }
-
           if (redirectOnSave) {
             locationService.push(redirectOnSave);
           } else {
@@ -563,32 +499,35 @@ interface UpdateAlertManagerConfigActionOptions {
   newConfig: AlertManagerCortexConfig;
   successMessage?: string; // show toast on success
   redirectPath?: string; // where to redirect on success
-  refetch?: boolean; // refetch config on success
+  redirectSearch?: string; // additional redirect query params
 }
 
 export const updateAlertManagerConfigAction = createAsyncThunk<void, UpdateAlertManagerConfigActionOptions, {}>(
   'unifiedalerting/updateAMConfig',
-  ({ alertManagerSourceName, oldConfig, newConfig, successMessage, redirectPath, refetch }, thunkAPI): Promise<void> =>
+  (
+    { alertManagerSourceName, oldConfig, newConfig, successMessage, redirectPath, redirectSearch },
+    thunkAPI
+  ): Promise<void> =>
     withAppEvents(
       withSerializedError(
         (async () => {
-          // TODO there must be a better way here than to dispatch another fetch as this causes re-rendering :(
-          const latestConfig = await thunkAPI.dispatch(fetchAlertManagerConfigAction(alertManagerSourceName)).unwrap();
+          const latestConfig = await thunkAPI
+            .dispatch(alertmanagerApi.endpoints.getAlertmanagerConfiguration.initiate(alertManagerSourceName))
+            .unwrap();
 
           const isLatestConfigEmpty = isEmpty(latestConfig.alertmanager_config) && isEmpty(latestConfig.template_files);
           const oldLastConfigsDiffer = JSON.stringify(latestConfig) !== JSON.stringify(oldConfig);
 
           if (!isLatestConfigEmpty && oldLastConfigsDiffer) {
             throw new Error(
-              'It seems configuration has been recently updated. Please reload page and try again to make sure that recent changes are not overwritten.'
+              'A newer Alertmanager configuration is available. Please reload the page and try again to not overwrite recent changes.'
             );
           }
           await updateAlertManagerConfig(alertManagerSourceName, addDefaultsToAlertmanagerConfig(newConfig));
-          if (refetch) {
-            await thunkAPI.dispatch(fetchAlertManagerConfigAction(alertManagerSourceName));
-          }
+          thunkAPI.dispatch(alertmanagerApi.util.invalidateTags(['AlertmanagerConfiguration']));
           if (redirectPath) {
-            locationService.push(makeAMLink(redirectPath, alertManagerSourceName));
+            const options = new URLSearchParams(redirectSearch ?? '');
+            locationService.push(makeAMLink(redirectPath, alertManagerSourceName, options));
           }
         })()
       ),
@@ -640,8 +579,11 @@ export const createOrUpdateSilenceAction = createAsyncThunk<void, UpdateSilenceA
 );
 
 export const deleteReceiverAction = (receiverName: string, alertManagerSourceName: string): ThunkResult<void> => {
-  return (dispatch, getState) => {
-    const config = getState().unifiedAlerting.amConfigs?.[alertManagerSourceName]?.result;
+  return async (dispatch) => {
+    const config = await dispatch(
+      alertmanagerApi.endpoints.getAlertmanagerConfiguration.initiate(alertManagerSourceName)
+    ).unwrap();
+
     if (!config) {
       throw new Error(`Config for ${alertManagerSourceName} not found`);
     }
@@ -661,15 +603,17 @@ export const deleteReceiverAction = (receiverName: string, alertManagerSourceNam
         oldConfig: config,
         alertManagerSourceName,
         successMessage: 'Contact point deleted.',
-        refetch: true,
       })
     );
   };
 };
 
 export const deleteTemplateAction = (templateName: string, alertManagerSourceName: string): ThunkResult<void> => {
-  return (dispatch, getState) => {
-    const config = getState().unifiedAlerting.amConfigs?.[alertManagerSourceName]?.result;
+  return async (dispatch) => {
+    const config = await dispatch(
+      alertmanagerApi.endpoints.getAlertmanagerConfiguration.initiate(alertManagerSourceName)
+    ).unwrap();
+
     if (!config) {
       throw new Error(`Config for ${alertManagerSourceName} not found`);
     }
@@ -692,7 +636,6 @@ export const deleteTemplateAction = (templateName: string, alertManagerSourceNam
         oldConfig: config,
         alertManagerSourceName,
         successMessage: 'Template deleted.',
-        refetch: true,
       })
     );
   };
@@ -725,7 +668,7 @@ export const deleteAlertManagerConfigAction = createAsyncThunk(
       withSerializedError(
         (async () => {
           await deleteAlertManagerConfig(alertManagerSourceName);
-          await thunkAPI.dispatch(fetchAlertManagerConfigAction(alertManagerSourceName));
+          await thunkAPI.dispatch(alertmanagerApi.util.invalidateTags(['AlertmanagerConfiguration']));
         })()
       ),
       {
@@ -737,8 +680,10 @@ export const deleteAlertManagerConfigAction = createAsyncThunk(
 );
 
 export const deleteMuteTimingAction = (alertManagerSourceName: string, muteTimingName: string): ThunkResult<void> => {
-  return async (dispatch, getState) => {
-    const config = getState().unifiedAlerting.amConfigs[alertManagerSourceName].result;
+  return async (dispatch) => {
+    const config = await dispatch(
+      alertmanagerApi.endpoints.getAlertmanagerConfiguration.initiate(alertManagerSourceName)
+    ).unwrap();
 
     const muteIntervals =
       config?.alertmanager_config?.mute_time_intervals?.filter(({ name }) => name !== muteTimingName) ?? [];
@@ -759,7 +704,6 @@ export const deleteMuteTimingAction = (alertManagerSourceName: string, muteTimin
                 mute_time_intervals: muteIntervals,
               },
             },
-            refetch: true,
           })
         ),
         {

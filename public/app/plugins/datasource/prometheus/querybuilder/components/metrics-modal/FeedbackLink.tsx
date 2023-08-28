@@ -13,11 +13,11 @@ export function FeedbackLink({ feedbackUrl }: Props) {
   const styles = useStyles2(getStyles);
 
   return (
-    <Stack gap={1}>
+    <Stack>
       <a
         href={feedbackUrl}
         className={styles.link}
-        title="The Metrics Modal is new, please let us know how we can improve it"
+        title="The metrics explorer is new, please let us know how we can improve it"
         target="_blank"
         rel="noreferrer noopener"
       >
@@ -35,6 +35,7 @@ function getStyles(theme: GrafanaTheme2) {
       ':hover': {
         color: theme.colors.text.link,
       },
+      margin: `-25px 0 30px 0`,
     }),
   };
 }

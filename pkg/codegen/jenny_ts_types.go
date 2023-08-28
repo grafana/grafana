@@ -2,6 +2,8 @@ package codegen
 
 import (
 	"github.com/grafana/codejen"
+	"github.com/grafana/cuetsy"
+	"github.com/grafana/grafana/pkg/cuectx"
 	"github.com/grafana/thema/encoding/typescript"
 )
 
@@ -21,6 +23,10 @@ func (j TSTypesJenny) JennyName() string {
 func (j TSTypesJenny) Generate(sfg SchemaForGen) (*codejen.File, error) {
 	// TODO allow using name instead of machine name in thema generator
 	f, err := typescript.GenerateTypes(sfg.Schema, &typescript.TypeConfig{
+		CuetsyConfig: &cuetsy.Config{
+			Export:       true,
+			ImportMapper: cuectx.MapCUEImportToTS,
+		},
 		RootName: sfg.Name,
 		Group:    sfg.IsGroup,
 	})

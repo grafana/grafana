@@ -8,24 +8,20 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/middleware/cookies"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/authn"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
-	"github.com/grafana/grafana/pkg/services/dashboards"
-	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
-	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 )
 
 type AuthOptions struct {
 	ReqGrafanaAdmin bool
-	ReqSignedIn     bool
 	ReqNoAnonynmous bool
+	ReqSignedIn     bool
 }
 
 func accessForbidden(c *contextmodel.ReqContext) {
@@ -90,14 +86,6 @@ func removeForceLoginParams(str string) string {
 	return forceLoginParamsRegexp.ReplaceAllString(str, "")
 }
 
-func EnsureEditorOrViewerCanEdit(cfg *setting.Cfg) func(c *contextmodel.ReqContext) {
-	return func(c *contextmodel.ReqContext) {
-		if !c.SignedInUser.HasRole(org.RoleEditor) && !cfg.ViewersCanEdit {
-			accessForbidden(c)
-		}
-	}
-}
-
 func CanAdminPlugins(cfg *setting.Cfg) func(c *contextmodel.ReqContext) {
 	return func(c *contextmodel.ReqContext) {
 		if !pluginaccesscontrol.ReqCanAdminPlugins(cfg)(c) {
@@ -156,25 +144,6 @@ func Auth(options *AuthOptions) web.Handler {
 	}
 }
 
-// AdminOrEditorAndFeatureEnabled creates a middleware that allows
-// access if the signed in user is either an Org Admin or if they
-// are an Org Editor and the feature flag is enabled.
-// Intended for when feature flags open up access to APIs that
-// are otherwise only available to admins.
-func AdminOrEditorAndFeatureEnabled(enabled bool) web.Handler {
-	return func(c *contextmodel.ReqContext) {
-		if c.OrgRole == org.RoleAdmin {
-			return
-		}
-
-		if c.OrgRole == org.RoleEditor && enabled {
-			return
-		}
-
-		accessForbidden(c)
-	}
-}
-
 // SnapshotPublicModeOrSignedIn creates a middleware that allows access
 // if snapshot public mode is enabled or if user is signed in.
 func SnapshotPublicModeOrSignedIn(cfg *setting.Cfg) web.Handler {
@@ -217,34 +186,4 @@ func shouldForceLogin(c *contextmodel.ReqContext) bool {
 	}
 
 	return forceLogin
-}
-
-func OrgAdminDashOrFolderAdminOrTeamAdmin(ss db.DB, ds dashboards.DashboardService, ts team.Service) func(c *contextmodel.ReqContext) {
-	return func(c *contextmodel.ReqContext) {
-		if c.OrgRole == org.RoleAdmin {
-			return
-		}
-
-		hasAdminPermissionInDashOrFoldersQuery := folder.HasAdminPermissionInDashboardsOrFoldersQuery{SignedInUser: c.SignedInUser}
-		hasAdminPermissionInDashOrFoldersQueryResult, err := ds.HasAdminPermissionInDashboardsOrFolders(c.Req.Context(), &hasAdminPermissionInDashOrFoldersQuery)
-		if err != nil {
-			c.JsonApiErr(500, "Failed to check if user is a folder admin", err)
-		}
-
-		if hasAdminPermissionInDashOrFoldersQueryResult {
-			return
-		}
-
-		isAdminOfTeamsQuery := team.IsAdminOfTeamsQuery{SignedInUser: c.SignedInUser}
-		isAdminOfTeamsQueryResult, err := ts.IsAdminOfTeams(c.Req.Context(), &isAdminOfTeamsQuery)
-		if err != nil {
-			c.JsonApiErr(500, "Failed to check if user is a team admin", err)
-		}
-
-		if isAdminOfTeamsQueryResult {
-			return
-		}
-
-		accessForbidden(c)
-	}
 }

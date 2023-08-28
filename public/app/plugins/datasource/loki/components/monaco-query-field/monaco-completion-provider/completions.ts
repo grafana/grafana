@@ -54,7 +54,7 @@ const AGGREGATION_COMPLETIONS: Completion[] = AGGREGATION_OPERATORS.map((f) => (
 const FUNCTION_COMPLETIONS: Completion[] = RANGE_VEC_FUNCTIONS.map((f) => ({
   type: 'FUNCTION',
   label: f.label,
-  insertText: `${f.insertText ?? ''}({$0}[\\$__interval])`, // i don't know what to do when this is nullish. it should not be.
+  insertText: `${f.insertText ?? ''}({$0}[\\$__auto])`, // i don't know what to do when this is nullish. it should not be.
   isSnippet: true,
   triggerOnInsert: true,
   detail: f.detail,
@@ -71,13 +71,11 @@ const BUILT_IN_FUNCTIONS_COMPLETIONS: Completion[] = BUILT_IN_FUNCTIONS.map((f) 
   documentation: f.documentation,
 }));
 
-const DURATION_COMPLETIONS: Completion[] = ['$__interval', '$__range', '1m', '5m', '10m', '30m', '1h', '1d'].map(
-  (text) => ({
-    type: 'DURATION',
-    label: text,
-    insertText: text,
-  })
-);
+const DURATION_COMPLETIONS: Completion[] = ['$__auto', '1m', '5m', '10m', '30m', '1h', '1d'].map((text) => ({
+  type: 'DURATION',
+  label: text,
+  insertText: text,
+}));
 
 const UNWRAP_FUNCTION_COMPLETIONS: Completion[] = [
   {
@@ -281,6 +279,34 @@ export async function getAfterSelectorCompletions(
     documentation: explainOperator(LokiOperationId.Unwrap),
   });
 
+  completions.push({
+    type: 'PIPE_OPERATION',
+    label: 'decolorize',
+    insertText: `${prefix}decolorize`,
+    documentation: explainOperator(LokiOperationId.Decolorize),
+  });
+
+  completions.push({
+    type: 'PIPE_OPERATION',
+    label: 'distinct',
+    insertText: `${prefix}distinct`,
+    documentation: explainOperator(LokiOperationId.Distinct),
+  });
+
+  completions.push({
+    type: 'PIPE_OPERATION',
+    label: 'drop',
+    insertText: `${prefix}drop`,
+    documentation: explainOperator(LokiOperationId.Drop),
+  });
+
+  completions.push({
+    type: 'PIPE_OPERATION',
+    label: 'keep',
+    insertText: `${prefix}keep`,
+    documentation: explainOperator(LokiOperationId.Keep),
+  });
+
   // Let's show label options only if query has parser
   if (hasQueryParser) {
     extractedLabelKeys.forEach((key) => {
@@ -333,6 +359,30 @@ async function getAfterUnwrapCompletions(
   return [...labelCompletions, ...UNWRAP_FUNCTION_COMPLETIONS];
 }
 
+async function getAfterDistinctCompletions(logQuery: string, dataProvider: CompletionDataProvider) {
+  const { extractedLabelKeys } = await dataProvider.getParserAndLabelKeys(logQuery);
+  const labelCompletions: Completion[] = extractedLabelKeys.map((label) => ({
+    type: 'LABEL_NAME',
+    label,
+    insertText: label,
+    triggerOnInsert: false,
+  }));
+
+  return [...labelCompletions];
+}
+
+async function getAfterKeepAndDropCompletions(logQuery: string, dataProvider: CompletionDataProvider) {
+  const { extractedLabelKeys } = await dataProvider.getParserAndLabelKeys(logQuery);
+  const labelCompletions: Completion[] = extractedLabelKeys.map((label) => ({
+    type: 'LABEL_NAME',
+    label,
+    insertText: label,
+    triggerOnInsert: false,
+  }));
+
+  return [...labelCompletions];
+}
+
 export async function getCompletions(
   situation: Situation,
   dataProvider: CompletionDataProvider
@@ -367,6 +417,10 @@ export async function getCompletions(
       return getAfterUnwrapCompletions(situation.logQuery, dataProvider);
     case 'IN_AGGREGATION':
       return [...FUNCTION_COMPLETIONS, ...AGGREGATION_COMPLETIONS];
+    case 'AFTER_DISTINCT':
+      return getAfterDistinctCompletions(situation.logQuery, dataProvider);
+    case 'AFTER_KEEP_AND_DROP':
+      return getAfterKeepAndDropCompletions(situation.logQuery, dataProvider);
     default:
       throw new NeverCaseError(situation);
   }

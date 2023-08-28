@@ -76,6 +76,36 @@ describe('buildVisualQueryFromString', () => {
     );
   });
 
+  it('parses query with line filter and escaped quote', () => {
+    expect(buildVisualQueryFromString('{app="frontend"} |= "\\"line"')).toEqual(
+      noErrors({
+        labels: [
+          {
+            op: '=',
+            value: 'frontend',
+            label: 'app',
+          },
+        ],
+        operations: [{ id: LokiOperationId.LineContains, params: ['"line'] }],
+      })
+    );
+  });
+
+  it('parses query with label filter and escaped quote', () => {
+    expect(buildVisualQueryFromString('{app="frontend"} | bar="\\"baz"')).toEqual(
+      noErrors({
+        labels: [
+          {
+            op: '=',
+            value: 'frontend',
+            label: 'app',
+          },
+        ],
+        operations: [{ id: LokiOperationId.LabelFilter, params: ['bar', '=', '"baz'] }],
+      })
+    );
+  });
+
   it('returns error for query with ip matching line filter', () => {
     const context = buildVisualQueryFromString('{app="frontend"} |= ip("192.168.4.5/16") | logfmt');
     expect(context).toEqual(
@@ -299,6 +329,40 @@ describe('buildVisualQueryFromString', () => {
           { id: LokiOperationId.Logfmt, params: [] },
           { id: LokiOperationId.Unwrap, params: ['label', 'duration'] },
           { id: LokiOperationId.SumOverTime, params: ['5m'] },
+        ],
+      })
+    );
+  });
+
+  it('parses query with with only decolorize', () => {
+    expect(buildVisualQueryFromString('{app="frontend"} | decolorize')).toEqual(
+      noErrors({
+        labels: [
+          {
+            op: '=',
+            value: 'frontend',
+            label: 'app',
+          },
+        ],
+        operations: [{ id: LokiOperationId.Decolorize, params: [] }],
+      })
+    );
+  });
+
+  it('parses query with with decolorize and other operations', () => {
+    expect(buildVisualQueryFromString('{app="frontend"} | logfmt | decolorize | __error__=""')).toEqual(
+      noErrors({
+        labels: [
+          {
+            op: '=',
+            value: 'frontend',
+            label: 'app',
+          },
+        ],
+        operations: [
+          { id: LokiOperationId.Logfmt, params: [] },
+          { id: LokiOperationId.Decolorize, params: [] },
+          { id: LokiOperationId.LabelFilterNoErrors, params: [] },
         ],
       })
     );
@@ -681,6 +745,126 @@ describe('buildVisualQueryFromString', () => {
         ],
       },
     });
+  });
+
+  it('parses a log query with distinct and no labels', () => {
+    expect(buildVisualQueryFromString('{app="frontend"} | distinct')).toEqual(
+      noErrors({
+        labels: [
+          {
+            op: '=',
+            value: 'frontend',
+            label: 'app',
+          },
+        ],
+        operations: [{ id: LokiOperationId.Distinct, params: [] }],
+      })
+    );
+  });
+
+  it('parses a log query with distinct and labels', () => {
+    expect(buildVisualQueryFromString('{app="frontend"} | distinct id, email')).toEqual(
+      noErrors({
+        labels: [
+          {
+            op: '=',
+            value: 'frontend',
+            label: 'app',
+          },
+        ],
+        operations: [{ id: LokiOperationId.Distinct, params: ['id', 'email'] }],
+      })
+    );
+  });
+
+  it('parses a log query with drop and no labels', () => {
+    expect(buildVisualQueryFromString('{app="frontend"} | drop')).toEqual(
+      noErrors({
+        labels: [
+          {
+            op: '=',
+            value: 'frontend',
+            label: 'app',
+          },
+        ],
+        operations: [{ id: LokiOperationId.Drop, params: [] }],
+      })
+    );
+  });
+
+  it('parses a log query with drop and labels', () => {
+    expect(buildVisualQueryFromString('{app="frontend"} | drop id, email')).toEqual(
+      noErrors({
+        labels: [
+          {
+            op: '=',
+            value: 'frontend',
+            label: 'app',
+          },
+        ],
+        operations: [{ id: LokiOperationId.Drop, params: ['id', 'email'] }],
+      })
+    );
+  });
+
+  it('parses a log query with drop, labels and expressions', () => {
+    expect(buildVisualQueryFromString('{app="frontend"} | drop id, email, test="test1"')).toEqual(
+      noErrors({
+        labels: [
+          {
+            op: '=',
+            value: 'frontend',
+            label: 'app',
+          },
+        ],
+        operations: [{ id: LokiOperationId.Drop, params: ['id', 'email', 'test="test1"'] }],
+      })
+    );
+  });
+
+  it('parses a log query with keep and no labels', () => {
+    expect(buildVisualQueryFromString('{app="frontend"} | keep')).toEqual(
+      noErrors({
+        labels: [
+          {
+            op: '=',
+            value: 'frontend',
+            label: 'app',
+          },
+        ],
+        operations: [{ id: LokiOperationId.Keep, params: [] }],
+      })
+    );
+  });
+
+  it('parses a log query with keep and labels', () => {
+    expect(buildVisualQueryFromString('{app="frontend"} | keep id, email')).toEqual(
+      noErrors({
+        labels: [
+          {
+            op: '=',
+            value: 'frontend',
+            label: 'app',
+          },
+        ],
+        operations: [{ id: LokiOperationId.Keep, params: ['id', 'email'] }],
+      })
+    );
+  });
+
+  it('parses a log query with keep, labels and expressions', () => {
+    expect(buildVisualQueryFromString('{app="frontend"} | keep id, email, test="test1"')).toEqual(
+      noErrors({
+        labels: [
+          {
+            op: '=',
+            value: 'frontend',
+            label: 'app',
+          },
+        ],
+        operations: [{ id: LokiOperationId.Keep, params: ['id', 'email', 'test="test1"'] }],
+      })
+    );
   });
 });
 

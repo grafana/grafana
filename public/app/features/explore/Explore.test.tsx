@@ -3,12 +3,15 @@ import React from 'react';
 import { AutoSizerProps } from 'react-virtualized-auto-sizer';
 import { TestProvider } from 'test/helpers/TestProvider';
 
-import { DataSourceApi, LoadingState, CoreApp, createTheme, EventBusSrv } from '@grafana/data';
-import { ExploreId } from 'app/types';
+import { CoreApp, createTheme, DataSourceApi, EventBusSrv, LoadingState, PluginExtensionTypes } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
+import { getPluginLinkExtensions } from '@grafana/runtime';
+import { configureStore } from 'app/store/configureStore';
 
 import { Explore, Props } from './Explore';
+import { initialExploreState } from './state/main';
 import { scanStopAction } from './state/query';
-import { createEmptyQueryResponse } from './state/utils';
+import { createEmptyQueryResponse, makeExplorePaneState } from './state/utils';
 
 const resizeWindow = (x: number, y: number) => {
   global.innerWidth = x;
@@ -58,8 +61,7 @@ const dummyProps: Props = {
       QueryEditorHelp: {},
     },
   } as DataSourceApi,
-  datasourceMissing: false,
-  exploreId: ExploreId.left,
+  exploreId: 'left',
   loading: false,
   modifyQueries: jest.fn(),
   scanStart: jest.fn(),
@@ -70,7 +72,6 @@ const dummyProps: Props = {
   isLive: false,
   syncedTimes: false,
   updateTimeRange: jest.fn(),
-  makeAbsoluteTime: jest.fn(),
   graphResult: [],
   absoluteRange: {
     from: 0,
@@ -84,11 +85,11 @@ const dummyProps: Props = {
   showLogs: true,
   showTable: true,
   showTrace: true,
+  showCustom: true,
   showNodeGraph: true,
   showFlameGraph: true,
   splitOpen: jest.fn(),
   splitted: false,
-  isFromCompactUrl: false,
   eventBus: new EventBusSrv(),
   showRawPrometheus: false,
   showLogsSample: false,
@@ -112,16 +113,31 @@ jest.mock('app/core/core', () => ({
   },
 }));
 
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getPluginLinkExtensions: jest.fn(() => ({ extensions: [] })),
+}));
+
 // for the AutoSizer component to have a width
 jest.mock('react-virtualized-auto-sizer', () => {
   return ({ children }: AutoSizerProps) => children({ height: 1, width: 1 });
 });
 
+const getPluginLinkExtensionsMock = jest.mocked(getPluginLinkExtensions);
+
 const setup = (overrideProps?: Partial<Props>) => {
+  const store = configureStore({
+    explore: {
+      ...initialExploreState,
+      panes: {
+        left: makeExplorePaneState(),
+      },
+    },
+  });
   const exploreProps = { ...dummyProps, ...overrideProps };
 
   return render(
-    <TestProvider>
+    <TestProvider store={store}>
       <Explore {...exploreProps} />
     </TestProvider>
   );
@@ -132,19 +148,47 @@ describe('Explore', () => {
     setup();
 
     // Wait for the Explore component to render
-    await screen.findByLabelText('Data source picker select container');
+    await screen.findByTestId(selectors.components.DataSourcePicker.container);
 
     expect(screen.queryByTestId('explore-no-data')).not.toBeInTheDocument();
   });
 
   it('should render no data with done loading state', async () => {
-    const queryResp = makeEmptyQueryResponse(LoadingState.Done);
-    setup({ queryResponse: queryResp });
+    setup({ queryResponse: makeEmptyQueryResponse(LoadingState.Done) });
 
     // Wait for the Explore component to render
-    await screen.findByLabelText('Data source picker select container');
+    await screen.findByTestId(selectors.components.DataSourcePicker.container);
 
     expect(screen.getByTestId('explore-no-data')).toBeInTheDocument();
+  });
+
+  it('should render toolbar extension point if extensions is available', async () => {
+    getPluginLinkExtensionsMock.mockReturnValueOnce({
+      extensions: [
+        {
+          id: '1',
+          pluginId: 'grafana',
+          title: 'Test 1',
+          description: '',
+          type: PluginExtensionTypes.link,
+          onClick: () => {},
+        },
+        {
+          id: '2',
+          pluginId: 'grafana',
+          title: 'Test 2',
+          description: '',
+          type: PluginExtensionTypes.link,
+          onClick: () => {},
+        },
+      ],
+    });
+
+    setup({ queryResponse: makeEmptyQueryResponse(LoadingState.Done) });
+    // Wait for the Explore component to render
+    await screen.findByTestId(selectors.components.DataSourcePicker.container);
+
+    expect(screen.getByRole('button', { name: 'Add' })).toBeVisible();
   });
 
   describe('On small screens', () => {
@@ -162,7 +206,7 @@ describe('Explore', () => {
     it('should render data source picker', async () => {
       setup();
 
-      const dataSourcePicker = await screen.findByLabelText('Data source picker select container');
+      const dataSourcePicker = await screen.findByTestId(selectors.components.DataSourcePicker.container);
 
       expect(dataSourcePicker).toBeInTheDocument();
     });

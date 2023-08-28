@@ -62,7 +62,7 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
   };
 
   element: HTMLElement | null = null;
-  $element: any;
+  $element: JQuery<HTMLElement> | null = null;
 
   componentDidUpdate(prevProps: GraphProps, prevState: GraphState) {
     if (prevProps !== this.props) {
@@ -86,14 +86,14 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
     }
   }
 
-  onPlotSelected = (event: JQueryEventObject, ranges: { xaxis: { from: number; to: number } }) => {
+  onPlotSelected = (event: JQuery.Event, ranges: { xaxis: { from: number; to: number } }) => {
     const { onHorizontalRegionSelected } = this.props;
     if (onHorizontalRegionSelected) {
       onHorizontalRegionSelected(ranges.xaxis.from, ranges.xaxis.to);
     }
   };
 
-  onPlotHover = (event: JQueryEventObject, pos: FlotPosition, item?: FlotItem<GraphSeriesXY>) => {
+  onPlotHover = (event: JQuery.Event, pos: FlotPosition, item?: FlotItem<GraphSeriesXY>) => {
     this.setState({
       isTooltipVisible: true,
       activeItem: item,
@@ -101,7 +101,7 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
     });
   };
 
-  onPlotClick = (event: JQueryEventObject, contextPos: FlotPosition, item?: FlotItem<GraphSeriesXY>) => {
+  onPlotClick = (event: JQuery.Event, contextPos: FlotPosition, item?: FlotItem<GraphSeriesXY>) => {
     this.setState({
       isContextVisible: true,
       isTooltipVisible: false,
@@ -135,7 +135,7 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
   renderTooltip = () => {
     const { children, series, timeZone } = this.props;
     const { pos, activeItem, isTooltipVisible } = this.state;
-    let tooltipElement: React.ReactElement<VizTooltipProps> | null = null;
+    let tooltipElement: React.ReactElement<VizTooltipProps> | undefined;
 
     if (!isTooltipVisible || !pos || series.length === 0) {
       return null;
@@ -147,18 +147,17 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
       if (tooltipElement) {
         return;
       }
-      // @ts-ignore
       const childType = c && c.type && (c.type.displayName || c.type.name);
 
       if (childType === VizTooltip.displayName) {
-        tooltipElement = c as React.ReactElement<VizTooltipProps>;
+        tooltipElement = c;
       }
     });
     // If no tooltip provided, skip rendering
     if (!tooltipElement) {
       return null;
     }
-    const tooltipElementProps = (tooltipElement as React.ReactElement<VizTooltipProps>).props;
+    const tooltipElementProps = tooltipElement.props;
 
     const tooltipMode = tooltipElementProps.mode || 'single';
 
@@ -203,7 +202,7 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
 
     const tooltipContent = React.createElement(tooltipContentRenderer, { ...tooltipContentProps });
 
-    return React.cloneElement<VizTooltipProps>(tooltipElement as React.ReactElement<VizTooltipProps>, {
+    return React.cloneElement(tooltipElement, {
       content: tooltipContent,
       position: { x: pos.pageX, y: pos.pageY },
       offset: { x: 10, y: 10 },
@@ -300,7 +299,7 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
     const max = timeRange.to.valueOf();
     const yaxes = this.getYAxes(series);
 
-    const flotOptions: any = {
+    const flotOptions = {
       legend: {
         show: false,
       },

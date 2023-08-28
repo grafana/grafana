@@ -77,26 +77,34 @@ func TestAdjustFrame(t *testing.T) {
 		verifyFrame := func(frame *data.Frame) {
 			fields := frame.Fields
 
-			require.Equal(t, 5, len(fields))
-
-			idField := fields[4]
+			idField := fields[len(fields)-1]
 			require.Equal(t, "id", idField.Name)
 			require.Equal(t, data.FieldTypeString, idField.Type())
 			require.Equal(t, 4, idField.Len())
-			require.Equal(t, "1641092645000000006_a36f4e1b_A", idField.At(0))
-			require.Equal(t, "1641092705000000006_1d77c9ca_A", idField.At(1))
-			require.Equal(t, "1641092705000000006_1d77c9ca_1_A", idField.At(2))
-			require.Equal(t, "1641092765000000006_948c1a7d_A", idField.At(3))
+			require.Equal(t, "1641092645000000006_a36f4e1b", idField.At(0))
+			require.Equal(t, "1641092705000000006_1d77c9ca", idField.At(1))
+			require.Equal(t, "1641092705000000006_1d77c9ca_1", idField.At(2))
+			require.Equal(t, "1641092765000000006_948c1a7d", idField.At(3))
 		}
 
 		frame := makeFrame()
 
-		err := adjustFrame(frame, query, true)
+		err := adjustFrame(frame, query, true, false)
 		require.NoError(t, err)
 		verifyFrame(frame)
 
 		frame = makeFrame() // we need to reset the frame, because adjustFrame mutates it
-		err = adjustFrame(frame, query, false)
+		err = adjustFrame(frame, query, false, false)
+		require.NoError(t, err)
+		verifyFrame(frame)
+
+		frame = makeFrame() // we need to reset the frame, because adjustFrame mutates it
+		err = adjustFrame(frame, query, true, true)
+		require.NoError(t, err)
+		verifyFrame(frame)
+
+		frame = makeFrame() // we need to reset the frame, because adjustFrame mutates it
+		err = adjustFrame(frame, query, false, true)
 		require.NoError(t, err)
 		verifyFrame(frame)
 	})
@@ -112,6 +120,13 @@ func TestAdjustFrame(t *testing.T) {
 			return frame
 		}
 
+		verifyFrame := func(frame *data.Frame, expectedFrameName string) {
+			require.Equal(t, frame.Name, expectedFrameName)
+			require.Equal(t, frame.Meta.ExecutedQueryString, "Expr: up(ALERTS)\nStep: 42s")
+			require.Equal(t, frame.Fields[0].Config.Interval, float64(42000))
+			require.Equal(t, frame.Fields[1].Config.DisplayNameFromDS, "legend Application")
+		}
+
 		query := &lokiQuery{
 			Expr:         "up(ALERTS)",
 			QueryType:    QueryTypeRange,
@@ -120,22 +135,28 @@ func TestAdjustFrame(t *testing.T) {
 		}
 
 		frame := makeFrame()
-		err := adjustFrame(frame, query, true)
+		err := adjustFrame(frame, query, true, false)
 		require.NoError(t, err)
 
-		require.Equal(t, frame.Name, "legend Application")
-		require.Equal(t, frame.Meta.ExecutedQueryString, "Expr: up(ALERTS)\nStep: 42s")
-		require.Equal(t, frame.Fields[0].Config.Interval, float64(42000))
-		require.Equal(t, frame.Fields[1].Config.DisplayNameFromDS, "legend Application")
+		verifyFrame(frame, "legend Application")
 
 		frame = makeFrame()
-		err = adjustFrame(frame, query, false)
+		err = adjustFrame(frame, query, false, false)
 		require.NoError(t, err)
 
-		require.Equal(t, frame.Name, "")
-		require.Equal(t, frame.Meta.ExecutedQueryString, "Expr: up(ALERTS)\nStep: 42s")
-		require.Equal(t, frame.Fields[0].Config.Interval, float64(42000))
-		require.Equal(t, frame.Fields[1].Config.DisplayNameFromDS, "legend Application")
+		verifyFrame(frame, "")
+
+		frame = makeFrame()
+		err = adjustFrame(frame, query, true, true)
+		require.NoError(t, err)
+
+		verifyFrame(frame, "legend Application")
+
+		frame = makeFrame()
+		err = adjustFrame(frame, query, false, true)
+		require.NoError(t, err)
+
+		verifyFrame(frame, "")
 	})
 
 	t.Run("should set interval-attribute in response", func(t *testing.T) {
@@ -167,11 +188,19 @@ func TestAdjustFrame(t *testing.T) {
 
 		frame := makeFrame()
 
-		err := adjustFrame(frame, query, true)
+		err := adjustFrame(frame, query, true, false)
 		require.NoError(t, err)
 		verifyFrame(frame)
 
-		err = adjustFrame(frame, query, false)
+		err = adjustFrame(frame, query, false, false)
+		require.NoError(t, err)
+		verifyFrame(frame)
+
+		err = adjustFrame(frame, query, true, true)
+		require.NoError(t, err)
+		verifyFrame(frame)
+
+		err = adjustFrame(frame, query, false, true)
 		require.NoError(t, err)
 		verifyFrame(frame)
 	})

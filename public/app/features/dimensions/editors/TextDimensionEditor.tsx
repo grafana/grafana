@@ -6,11 +6,12 @@ import {
   StandardEditorsRegistryItem,
   StringFieldConfigSettings,
 } from '@grafana/data';
+import { TextDimensionConfig, TextDimensionMode } from '@grafana/schema';
 import { Button, InlineField, InlineFieldRow, RadioButtonGroup } from '@grafana/ui';
 import { FieldNamePicker } from '@grafana/ui/src/components/MatchersUI/FieldNamePicker';
 import { StringValueEditor } from 'app/core/components/OptionsUI/string';
 
-import { TextDimensionConfig, TextDimensionMode, TextDimensionOptions } from '../types';
+import { TextDimensionOptions } from '../types';
 
 const textOptions = [
   { label: 'Fixed', value: TextDimensionMode.Fixed, description: 'Fixed value' },
@@ -18,13 +19,13 @@ const textOptions = [
   //  { label: 'Template', value: TextDimensionMode.Template, description: 'use template text' },
 ];
 
-const dummyFieldSettings: StandardEditorsRegistryItem<string, FieldNamePickerConfigSettings> = {
+const dummyFieldSettings = {
   settings: {},
-} as any;
+} as StandardEditorsRegistryItem<string, FieldNamePickerConfigSettings>;
 
-const dummyStringSettings: StandardEditorsRegistryItem<string, StringFieldConfigSettings> = {
+const dummyStringSettings = {
   settings: {},
-} as any;
+} as StandardEditorsRegistryItem<string, StringFieldConfigSettings>;
 
 type Props = StandardEditorProps<TextDimensionConfig, TextDimensionOptions>;
 

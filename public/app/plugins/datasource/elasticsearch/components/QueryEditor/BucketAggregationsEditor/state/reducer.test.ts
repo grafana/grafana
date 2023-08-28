@@ -114,10 +114,10 @@ describe('Bucket Aggregations Reducer', () => {
 
       reducerTester<ElasticsearchQuery['bucketAggs']>()
         .givenReducer(createReducer('@timestamp'), initialState)
-        // If the new metric aggregation is `isSingleMetric` we should remove all bucket aggregations.
+        // If the new metric aggregation is non-metric, we should remove all bucket aggregations.
         .whenActionIsDispatched(changeMetricType({ id: 'Some id', type: 'raw_data' }))
         .thenStatePredicateShouldEqual((newState) => newState?.length === 0)
-        // Switching back to another aggregation that is NOT `isSingleMetric` should bring back a bucket aggregation
+        // Switching back to another aggregation that is metric should bring back a bucket aggregation
         .whenActionIsDispatched(changeMetricType({ id: 'Some id', type: 'max' }))
         .thenStatePredicateShouldEqual((newState) => newState?.length === 1)
         // When none of the above is true state shouldn't change.

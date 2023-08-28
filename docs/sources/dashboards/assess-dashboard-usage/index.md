@@ -12,6 +12,10 @@ keywords:
   - presence-indicator
   - search
   - sort
+labels:
+  products:
+    - cloud
+    - enterprise
 title: Assess dashboard usage
 weight: 200
 ---
@@ -20,7 +24,9 @@ weight: 200
 
 Usage insights enables you to have a better understanding of how your Grafana instance is used.
 
-> **Note:** Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise/" >}}) and [Grafana Cloud Pro and Advanced](/docs/grafana-cloud/). Grafana Cloud insights logs include additional fields with their own dashboards. Read more in the [Grafana Cloud documentation](/docs/grafana-cloud/usage-insights/).
+{{% admonition type="note" %}}
+Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise/" >}}) and [Grafana Cloud Pro and Advanced](/docs/grafana-cloud/). Grafana Cloud insights logs include additional fields with their own dashboards. Read more in the [Grafana Cloud documentation](/docs/grafana-cloud/usage-insights/).
+{{% /admonition %}}
 
 The usage insights feature collects a number of aggregated data and stores them in the database:
 
@@ -54,7 +60,7 @@ Dashboard insights show the following information:
 
 {{< figure src="/static/img/docs/enterprise/dashboard_insights_stats.png" max-width="400px" class="docs-image--no-shadow" >}}{{< figure src="/static/img/docs/enterprise/dashboard_insights_users.png" max-width="400px" class="docs-image--no-shadow" >}}
 
-{{% admonition type="Note" %}}
+{{% admonition type="note" %}}
 
 If you've enabled the `publicDashboards` feature toggle, you'll also see a Public dashboards tab in your analytics.
 

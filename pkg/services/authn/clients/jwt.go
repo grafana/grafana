@@ -24,11 +24,11 @@ const authQueryParamName = "auth_token"
 var _ authn.ContextAwareClient = new(JWT)
 
 var (
-	errJWTInvalid = errutil.NewBase(errutil.StatusUnauthorized,
+	errJWTInvalid = errutil.Unauthorized(
 		"jwt.invalid", errutil.WithPublicMessage("Failed to verify JWT"))
-	errJWTMissingClaim = errutil.NewBase(errutil.StatusUnauthorized,
+	errJWTMissingClaim = errutil.Unauthorized(
 		"jwt.missing_claim", errutil.WithPublicMessage("Missing mandatory claim in JWT"))
-	errJWTInvalidRole = errutil.NewBase(errutil.StatusForbidden,
+	errJWTInvalidRole = errutil.Forbidden(
 		"jwt.invalid_role", errutil.WithPublicMessage("Invalid Role in claim"))
 )
 
@@ -66,9 +66,9 @@ func (s *JWT) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identi
 	}
 
 	id := &authn.Identity{
-		AuthModule: login.JWTModule,
-		AuthID:     sub,
-		OrgRoles:   map[int64]org.RoleType{},
+		AuthenticatedBy: login.JWTModule,
+		AuthID:          sub,
+		OrgRoles:        map[int64]org.RoleType{},
 		ClientParams: authn.ClientParams{
 			SyncUser:        true,
 			FetchSyncedUser: true,

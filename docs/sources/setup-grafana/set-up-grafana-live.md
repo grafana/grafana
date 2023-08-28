@@ -8,6 +8,10 @@ aliases:
   - ../live/set-up-grafana-live/
 description: Grafana Live is a real-time messaging engine that pushes event data to
   a frontend when an event occurs.
+labels:
+  products:
+    - enterprise
+    - oss
 menuTitle: Set up Grafana Live
 title: Set up Grafana Live
 weight: 1100
@@ -21,7 +25,9 @@ With Grafana Live, you can push event data to a frontend as soon as an event occ
 
 This could be notifications about dashboard changes, new frames for rendered data, and so on. Live features can help eliminate a page reload or polling in many places, it can stream Internet of things (IoT) sensors or any other real-time data to panels.
 
-> **Note:** By `real-time`, we indicate a soft real-time. Due to network latencies, garbage collection cycles, and so on, the delay of a delivered message can be up to several hundred milliseconds or higher.
+{{% admonition type="note" %}}
+By `real-time`, we indicate a soft real-time. Due to network latencies, garbage collection cycles, and so on, the delay of a delivered message can be up to several hundred milliseconds or higher.
+{{% /admonition %}}
 
 ## Concepts
 
@@ -45,7 +51,7 @@ For data source plugin channels, Grafana uses `ds` scope. Namespace in the case 
 
 For example, a data source channel looks like this: `ds/<DATASOURCE_UID>/<CUSTOM_PATH>`.
 
-Refer to the tutorial about [building a streaming data source backend plugin](https://grafana.com/tutorials/build-a-streaming-data-source-plugin/) for more details.
+Refer to the tutorial about [building a streaming data source backend plugin](/tutorials/build-a-streaming-data-source-plugin/) for more details.
 
 The basic streaming example included in Grafana core streams frames with some generated data to a panel. To look at it create a new panel and point it to the `-- Grafana --` data source. Next, choose `Live Measurements` and select the `plugin/testdata/random-20Hz-stream` channel.
 
@@ -53,7 +59,7 @@ The basic streaming example included in Grafana core streams frames with some ge
 
 A new API endpoint `/api/live/push/:streamId` allows accepting metrics data in Influx format from Telegraf. These metrics are transformed into Grafana data frames and published to channels.
 
-Refer to the tutorial about [streaming metrics from Telegraf to Grafana](https://grafana.com/tutorials/stream-metrics-from-telegraf-to-grafana/) for more information.
+Refer to the tutorial about [streaming metrics from Telegraf to Grafana](/tutorials/stream-metrics-from-telegraf-to-grafana/) for more information.
 
 ## Grafana Live channel
 
@@ -95,7 +101,7 @@ Grafana Live uses persistent connections (WebSocket at the moment) to deliver re
 
 WebSocket is a persistent connection that starts with an HTTP Upgrade request (using the same HTTP port as the rest of Grafana) and then switches to a TCP mode where WebSocket frames can travel in both directions between a client and a server. Each logged-in user opens a WebSocket connection – one per browser tab.
 
-The number of maximum WebSocket connections users can establish with Grafana is limited to 100 by default. See [max_connections]({{< relref "configure-grafana/#max_connections" >}}) option.
+The number of maximum WebSocket connections users can establish with Grafana is limited to 100 by default. See [max_connections]({{< relref "./configure-grafana#max_connections" >}}) option.
 
 In case you want to increase this limit, ensure that your server and infrastructure allow handling more connections. The following sections discuss several common problems which could happen when managing persistent connections, in particular WebSocket connections.
 
@@ -103,9 +109,9 @@ In case you want to increase this limit, ensure that your server and infrastruct
 
 To avoid hijacking of WebSocket connection Grafana Live checks the Origin request header sent by a client in an HTTP Upgrade request. Requests without Origin header pass through without any origin check.
 
-By default, Live accepts connections with Origin header that matches configured [root_url]({{< relref "configure-grafana/#root_url" >}}) (which is a public Grafana URL).
+By default, Live accepts connections with Origin header that matches configured [root_url]({{< relref "./configure-grafana#root_url" >}}) (which is a public Grafana URL).
 
-It is possible to provide a list of additional origin patterns to allow WebSocket connections from. This can be achieved using the [allowed_origins]({{< relref "configure-grafana/#allowed_origins" >}}) option of Grafana Live configuration.
+It is possible to provide a list of additional origin patterns to allow WebSocket connections from. This can be achieved using the [allowed_origins]({{< relref "./configure-grafana#allowed_origins" >}}) option of Grafana Live configuration.
 
 #### Resource usage
 
@@ -211,7 +217,7 @@ ha_engine = redis
 ha_engine_address = 127.0.0.1:6379
 ```
 
-For additional information, refer to the [ha_engine]({{< relref "configure-grafana/#ha_engine" >}}) and [ha_engine_address]({{< relref "configure-grafana/#ha_engine_address" >}}) options.
+For additional information, refer to the [ha_engine]({{< relref "./configure-grafana#ha_engine" >}}) and [ha_engine_address]({{< relref "./configure-grafana#ha_engine_address" >}}) options.
 
 After running:
 

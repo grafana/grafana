@@ -46,13 +46,13 @@ type SignatureError struct {
 
 func (e SignatureError) Error() string {
 	switch e.SignatureStatus {
-	case SignatureInvalid:
+	case SignatureStatusInvalid:
 		return fmt.Sprintf("plugin '%s' has an invalid signature", e.PluginID)
-	case SignatureModified:
+	case SignatureStatusModified:
 		return fmt.Sprintf("plugin '%s' has an modified signature", e.PluginID)
-	case SignatureUnsigned:
+	case SignatureStatusUnsigned:
 		return fmt.Sprintf("plugin '%s' has no signature", e.PluginID)
-	case SignatureInternal, SignatureValid:
+	case SignatureStatusInternal, SignatureStatusValid:
 		return ""
 	}
 
@@ -61,13 +61,13 @@ func (e SignatureError) Error() string {
 
 func (e SignatureError) AsErrorCode() ErrorCode {
 	switch e.SignatureStatus {
-	case SignatureInvalid:
-		return signatureInvalid
-	case SignatureModified:
-		return signatureModified
-	case SignatureUnsigned:
-		return signatureMissing
-	case SignatureInternal, SignatureValid:
+	case SignatureStatusInvalid:
+		return errorCodeSignatureInvalid
+	case SignatureStatusModified:
+		return errorCodeSignatureModified
+	case SignatureStatusUnsigned:
+		return errorCodeSignatureMissing
+	case SignatureStatusInternal, SignatureStatusValid:
 		return ""
 	}
 
@@ -155,40 +155,41 @@ type StaticRoute struct {
 type SignatureStatus string
 
 func (ss SignatureStatus) IsValid() bool {
-	return ss == SignatureValid
+	return ss == SignatureStatusValid
 }
 
 func (ss SignatureStatus) IsInternal() bool {
-	return ss == SignatureInternal
+	return ss == SignatureStatusInternal
 }
 
 const (
-	SignatureInternal SignatureStatus = "internal" // core plugin, no signature
-	SignatureValid    SignatureStatus = "valid"    // signed and accurate MANIFEST
-	SignatureInvalid  SignatureStatus = "invalid"  // invalid signature
-	SignatureModified SignatureStatus = "modified" // valid signature, but content mismatch
-	SignatureUnsigned SignatureStatus = "unsigned" // no MANIFEST file
+	SignatureStatusInternal SignatureStatus = "internal" // core plugin, no signature
+	SignatureStatusValid    SignatureStatus = "valid"    // signed and accurate MANIFEST
+	SignatureStatusInvalid  SignatureStatus = "invalid"  // invalid signature
+	SignatureStatusModified SignatureStatus = "modified" // valid signature, but content mismatch
+	SignatureStatusUnsigned SignatureStatus = "unsigned" // no MANIFEST file
 )
 
 type ReleaseState string
 
 const (
-	AlphaRelease ReleaseState = "alpha"
+	ReleaseStateAlpha ReleaseState = "alpha"
 )
 
 type SignatureType string
 
 const (
-	GrafanaSignature     SignatureType = "grafana"
-	CommercialSignature  SignatureType = "commercial"
-	CommunitySignature   SignatureType = "community"
-	PrivateSignature     SignatureType = "private"
-	PrivateGlobSignature SignatureType = "private-glob"
+	SignatureTypeGrafana     SignatureType = "grafana"
+	SignatureTypeCommercial  SignatureType = "commercial"
+	SignatureTypeCommunity   SignatureType = "community"
+	SignatureTypePrivate     SignatureType = "private"
+	SignatureTypePrivateGlob SignatureType = "private-glob"
 )
 
 func (s SignatureType) IsValid() bool {
 	switch s {
-	case GrafanaSignature, CommercialSignature, CommunitySignature, PrivateSignature, PrivateGlobSignature:
+	case SignatureTypeGrafana, SignatureTypeCommercial, SignatureTypeCommunity, SignatureTypePrivate,
+		SignatureTypePrivateGlob:
 		return true
 	}
 	return false
@@ -210,18 +211,19 @@ type PluginMetaDTO struct {
 }
 
 type DataSourceDTO struct {
-	ID         int64                  `json:"id,omitempty"`
-	UID        string                 `json:"uid,omitempty"`
-	Type       string                 `json:"type"`
-	Name       string                 `json:"name"`
-	PluginMeta *PluginMetaDTO         `json:"meta"`
-	URL        string                 `json:"url,omitempty"`
-	IsDefault  bool                   `json:"isDefault"`
-	Access     string                 `json:"access,omitempty"`
-	Preload    bool                   `json:"preload"`
-	Module     string                 `json:"module,omitempty"`
-	JSONData   map[string]interface{} `json:"jsonData"`
-	ReadOnly   bool                   `json:"readOnly"`
+	ID              int64                  `json:"id,omitempty"`
+	UID             string                 `json:"uid,omitempty"`
+	Type            string                 `json:"type"`
+	Name            string                 `json:"name"`
+	PluginMeta      *PluginMetaDTO         `json:"meta"`
+	URL             string                 `json:"url,omitempty"`
+	IsDefault       bool                   `json:"isDefault"`
+	Access          string                 `json:"access,omitempty"`
+	Preload         bool                   `json:"preload"`
+	Module          string                 `json:"module,omitempty"`
+	JSONData        map[string]interface{} `json:"jsonData"`
+	ReadOnly        bool                   `json:"readOnly"`
+	AngularDetected bool                   `json:"angularDetected"`
 
 	BasicAuth       string `json:"basicAuth,omitempty"`
 	WithCredentials bool   `json:"withCredentials,omitempty"`
@@ -241,29 +243,32 @@ type DataSourceDTO struct {
 }
 
 type PanelDTO struct {
-	ID            string `json:"id"`
-	Name          string `json:"name"`
-	Info          Info   `json:"info"`
-	HideFromList  bool   `json:"hideFromList"`
-	Sort          int    `json:"sort"`
-	SkipDataQuery bool   `json:"skipDataQuery"`
-	ReleaseState  string `json:"state"`
-	BaseURL       string `json:"baseUrl"`
-	Signature     string `json:"signature"`
-	Module        string `json:"module"`
+	ID              string `json:"id"`
+	Name            string `json:"name"`
+	Alias           string `json:"alias,omitempty"`
+	Info            Info   `json:"info"`
+	HideFromList    bool   `json:"hideFromList"`
+	Sort            int    `json:"sort"`
+	SkipDataQuery   bool   `json:"skipDataQuery"`
+	ReleaseState    string `json:"state"`
+	BaseURL         string `json:"baseUrl"`
+	Signature       string `json:"signature"`
+	Module          string `json:"module"`
+	AngularDetected bool   `json:"angularDetected"`
 }
 
 type AppDTO struct {
-	ID      string `json:"id"`
-	Path    string `json:"path"`
-	Version string `json:"version"`
-	Preload bool   `json:"preload"`
+	ID              string `json:"id"`
+	Path            string `json:"path"`
+	Version         string `json:"version"`
+	Preload         bool   `json:"preload"`
+	AngularDetected bool   `json:"angularDetected"`
 }
 
 const (
-	signatureMissing  ErrorCode = "signatureMissing"
-	signatureModified ErrorCode = "signatureModified"
-	signatureInvalid  ErrorCode = "signatureInvalid"
+	errorCodeSignatureMissing  ErrorCode = "signatureMissing"
+	errorCodeSignatureModified ErrorCode = "signatureModified"
+	errorCodeSignatureInvalid  ErrorCode = "signatureInvalid"
 )
 
 type ErrorCode string

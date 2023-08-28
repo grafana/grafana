@@ -1,6 +1,6 @@
 import { Field, FieldType, createDataFrame } from '@grafana/data';
 
-import { getTooltipData } from './FlameGraphTooltip';
+import { getDiffTooltipData, getTooltipData } from './FlameGraphTooltip';
 import { FlameGraphDataContainer } from './dataTransform';
 
 function setupData(unit?: string) {
@@ -15,11 +15,28 @@ function setupData(unit?: string) {
   return new FlameGraphDataContainer(flameGraphData);
 }
 
+function setupDiffData() {
+  const flameGraphData = createDataFrame({
+    fields: [
+      { name: 'level', values: [0, 1] },
+      { name: 'value', values: [200, 90] },
+      { name: 'valueRight', values: [100, 40] },
+      { name: 'self', values: [110, 90] },
+      { name: 'selfRight', values: [60, 40] },
+      { name: 'label', values: ['total', 'func1'] },
+    ],
+  });
+  return new FlameGraphDataContainer(flameGraphData);
+}
+
 describe('FlameGraphTooltip', () => {
   it('for bytes', () => {
-    const tooltipData = getTooltipData(setupData('bytes'), { start: 0, itemIndex: 0 }, 8_624_078_250);
+    const tooltipData = getTooltipData(
+      setupData('bytes'),
+      { start: 0, itemIndexes: [0], value: 8_624_078_250, children: [] },
+      8_624_078_250
+    );
     expect(tooltipData).toEqual({
-      name: 'total',
       percentSelf: 0.01,
       percentValue: 100,
       unitTitle: 'RAM',
@@ -30,9 +47,12 @@ describe('FlameGraphTooltip', () => {
   });
 
   it('with default unit', () => {
-    const tooltipData = getTooltipData(setupData('none'), { start: 0, itemIndex: 0 }, 8_624_078_250);
+    const tooltipData = getTooltipData(
+      setupData('none'),
+      { start: 0, itemIndexes: [0], value: 8_624_078_250, children: [] },
+      8_624_078_250
+    );
     expect(tooltipData).toEqual({
-      name: 'total',
       percentSelf: 0.01,
       percentValue: 100,
       unitSelf: '978250',
@@ -43,9 +63,12 @@ describe('FlameGraphTooltip', () => {
   });
 
   it('without unit', () => {
-    const tooltipData = getTooltipData(setupData('none'), { start: 0, itemIndex: 0 }, 8_624_078_250);
+    const tooltipData = getTooltipData(
+      setupData('none'),
+      { start: 0, itemIndexes: [0], value: 8_624_078_250, children: [] },
+      8_624_078_250
+    );
     expect(tooltipData).toEqual({
-      name: 'total',
       percentSelf: 0.01,
       percentValue: 100,
       unitTitle: 'Count',
@@ -56,9 +79,12 @@ describe('FlameGraphTooltip', () => {
   });
 
   it('for objects', () => {
-    const tooltipData = getTooltipData(setupData('short'), { start: 0, itemIndex: 0 }, 8_624_078_250);
+    const tooltipData = getTooltipData(
+      setupData('short'),
+      { start: 0, itemIndexes: [0], value: 8_624_078_250, children: [] },
+      8_624_078_250
+    );
     expect(tooltipData).toEqual({
-      name: 'total',
       percentSelf: 0.01,
       percentValue: 100,
       unitTitle: 'Count',
@@ -69,9 +95,12 @@ describe('FlameGraphTooltip', () => {
   });
 
   it('for nanoseconds', () => {
-    const tooltipData = getTooltipData(setupData('ns'), { start: 0, itemIndex: 0 }, 8_624_078_250);
+    const tooltipData = getTooltipData(
+      setupData('ns'),
+      { start: 0, itemIndexes: [0], value: 8_624_078_250, children: [] },
+      8_624_078_250
+    );
     expect(tooltipData).toEqual({
-      name: 'total',
       percentSelf: 0.01,
       percentValue: 100,
       unitTitle: 'Time',
@@ -79,6 +108,39 @@ describe('FlameGraphTooltip', () => {
       unitValue: '8.62 s',
       samples: '8,624,078,250',
     });
+  });
+});
+
+describe('getDiffTooltipData', () => {
+  it('works with diff data', () => {
+    const tooltipData = getDiffTooltipData(
+      setupDiffData(),
+      { start: 0, itemIndexes: [1], value: 90, valueRight: 40, children: [] },
+      200
+    );
+    expect(tooltipData).toEqual([
+      {
+        rowId: '1',
+        label: '% of total',
+        baseline: '50%',
+        comparison: '40%',
+        diff: '-20%',
+      },
+      {
+        rowId: '2',
+        label: 'Value',
+        baseline: '50',
+        comparison: '40',
+        diff: '-10',
+      },
+      {
+        rowId: '3',
+        label: 'Samples',
+        baseline: '50',
+        comparison: '40',
+        diff: '-10',
+      },
+    ]);
   });
 });
 

@@ -6,6 +6,10 @@ aliases:
   - preferences/change-grafana-theme/
   - preferences/change-grafana-timezone/
   - preferences/change-home-dashboard/
+labels:
+  products:
+    - enterprise
+    - oss
 title: Organization preferences
 weight: 500
 ---
@@ -194,7 +198,9 @@ Users with the Grafana Server Admin flag on their account or access to the confi
 default_home_dashboard_path = data/main-dashboard.json
 ```
 
-> **Note:** On Linux, Grafana uses `/usr/share/grafana/public/dashboards/home.json` as the default home dashboard location.
+{{% admonition type="note" %}}
+On Linux, Grafana uses `/usr/share/grafana/public/dashboards/home.json` as the default home dashboard location.
+{{% /admonition %}}
 
 ### Set the home dashboard for your organization
 

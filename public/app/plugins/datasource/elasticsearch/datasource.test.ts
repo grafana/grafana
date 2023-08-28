@@ -1,5 +1,6 @@
 import { map } from 'lodash';
 import { Observable, of, throwError } from 'rxjs';
+import { getQueryOptions } from 'test/helpers/getQueryOptions';
 
 import {
   CoreApp,
@@ -25,7 +26,8 @@ import { TemplateSrv } from 'app/features/templating/template_srv';
 
 import { createFetchResponse } from '../../../../test/helpers/createFetchResponse';
 
-import { ElasticDatasource, enhanceDataFrame } from './datasource';
+import { enhanceDataFrame } from './LegacyQueryRunner';
+import { ElasticDatasource } from './datasource';
 import { createElasticDatasource } from './mocks';
 import { Filters, ElasticsearchOptions, ElasticsearchQuery } from './types';
 
@@ -93,7 +95,6 @@ function getTestContext({
   data = { responses: [] },
   from = 'now-5m',
   jsonData,
-  database = '[test-]YYYY.MM.DD',
   fetchMockImplementation,
   templateSrvMock,
 }: TestContext = {}) {
@@ -126,12 +127,13 @@ function getTestContext({
           return text;
         }
       },
-      getAdhocFilters: () => [],
+      containsTemplate: jest.fn().mockImplementation((text?: string) => text?.includes('$') ?? false),
+      getAdhocFilters: jest.fn().mockReturnValue([]),
     } as unknown as TemplateSrv);
 
   const ds = createElasticDatasource(settings, templateSrv);
 
-  return { timeSrv, ds, fetchMock };
+  return { timeSrv, ds, fetchMock, templateSrv };
 }
 
 describe('ElasticDatasource', () => {
@@ -504,7 +506,7 @@ describe('ElasticDatasource', () => {
 
       const errObject = {
         error: 'Bad Request',
-        message: 'Elasticsearch error: Authentication to data source failed',
+        message: 'Authentication to data source failed',
       };
 
       await expect(ds.query(query)).toEmitValuesWith((received) => {
@@ -976,6 +978,102 @@ describe('ElasticDatasource', () => {
         timeField: '',
       });
     });
+
+    it('does not return logs samples for non time series queries', () => {
+      expect(
+        ds.getSupplementaryQuery(
+          { type: SupplementaryQueryType.LogsSample, limit: 100 },
+          {
+            refId: 'A',
+            bucketAggs: [{ type: 'filters', id: '1' }],
+            query: '',
+          }
+        )
+      ).toEqual(undefined);
+    });
+
+    it('returns logs samples for time series queries', () => {
+      expect(
+        ds.getSupplementaryQuery(
+          { type: SupplementaryQueryType.LogsSample, limit: 100 },
+          {
+            refId: 'A',
+            query: '',
+            bucketAggs: [{ type: 'date_histogram', id: '1' }],
+          }
+        )
+      ).toEqual({
+        refId: `log-sample-A`,
+        query: '',
+        metrics: [{ type: 'logs', id: '1', settings: { limit: '100' } }],
+      });
+    });
+  });
+
+  describe('getDataProvider', () => {
+    let ds: ElasticDatasource;
+    beforeEach(() => {
+      ds = getTestContext().ds;
+    });
+
+    it('does not create a logs sample provider for non time series query', () => {
+      const options = getQueryOptions<ElasticsearchQuery>({
+        targets: [
+          {
+            refId: 'A',
+            metrics: [{ type: 'logs', id: '1', settings: { limit: '100' } }],
+          },
+        ],
+      });
+
+      expect(ds.getDataProvider(SupplementaryQueryType.LogsSample, options)).not.toBeDefined();
+    });
+
+    it('does create a logs sample provider for time series query', () => {
+      const options = getQueryOptions<ElasticsearchQuery>({
+        targets: [
+          {
+            refId: 'A',
+            bucketAggs: [{ type: 'date_histogram', id: '1' }],
+          },
+        ],
+      });
+
+      expect(ds.getDataProvider(SupplementaryQueryType.LogsSample, options)).toBeDefined();
+    });
+  });
+
+  describe('getLogsSampleDataProvider', () => {
+    let ds: ElasticDatasource;
+    beforeEach(() => {
+      ds = getTestContext().ds;
+    });
+
+    it("doesn't return a logs sample provider given a non time series query", () => {
+      const request = getQueryOptions<ElasticsearchQuery>({
+        targets: [
+          {
+            refId: 'A',
+            metrics: [{ type: 'logs', id: '1', settings: { limit: '100' } }],
+          },
+        ],
+      });
+
+      expect(ds.getLogsSampleDataProvider(request)).not.toBeDefined();
+    });
+
+    it('returns a logs sample provider given a time series query', () => {
+      const request = getQueryOptions<ElasticsearchQuery>({
+        targets: [
+          {
+            refId: 'A',
+            bucketAggs: [{ type: 'date_histogram', id: '1' }],
+          },
+        ],
+      });
+
+      expect(ds.getLogsSampleDataProvider(request)).toBeDefined();
+    });
   });
 });
 
@@ -1135,33 +1233,99 @@ describe('modifyQuery', () => {
   });
 });
 
+describe('toggleQueryFilter', () => {
+  let ds: ElasticDatasource;
+  beforeEach(() => {
+    ds = getTestContext().ds;
+  });
+  describe('with empty query', () => {
+    let query: ElasticsearchQuery;
+    beforeEach(() => {
+      query = { query: '', refId: 'A' };
+    });
+
+    it('should add the filter', () => {
+      expect(ds.toggleQueryFilter(query, { type: 'FILTER_FOR', options: { key: 'foo', value: 'bar' } }).query).toBe(
+        'foo:"bar"'
+      );
+    });
+
+    it('should toggle the filter', () => {
+      query.query = 'foo:"bar"';
+      expect(ds.toggleQueryFilter(query, { type: 'FILTER_FOR', options: { key: 'foo', value: 'bar' } }).query).toBe('');
+    });
+
+    it('should add the negative filter', () => {
+      expect(ds.toggleQueryFilter(query, { type: 'FILTER_OUT', options: { key: 'foo', value: 'bar' } }).query).toBe(
+        '-foo:"bar"'
+      );
+    });
+
+    it('should remove a positive filter to add a negative filter', () => {
+      query.query = 'foo:"bar"';
+      expect(ds.toggleQueryFilter(query, { type: 'FILTER_OUT', options: { key: 'foo', value: 'bar' } }).query).toBe(
+        '-foo:"bar"'
+      );
+    });
+  });
+
+  describe('with non-empty query', () => {
+    let query: ElasticsearchQuery;
+    beforeEach(() => {
+      query = { query: 'test:"value"', refId: 'A' };
+    });
+
+    it('should add the filter', () => {
+      expect(ds.toggleQueryFilter(query, { type: 'FILTER_FOR', options: { key: 'foo', value: 'bar' } }).query).toBe(
+        'test:"value" AND foo:"bar"'
+      );
+    });
+
+    it('should add the negative filter', () => {
+      expect(ds.toggleQueryFilter(query, { type: 'FILTER_OUT', options: { key: 'foo', value: 'bar' } }).query).toBe(
+        'test:"value" AND -foo:"bar"'
+      );
+    });
+  });
+});
+
+describe('queryHasFilter()', () => {
+  let ds: ElasticDatasource;
+  beforeEach(() => {
+    ds = getTestContext().ds;
+  });
+  it('inspects queries for filter presence', () => {
+    const query = { refId: 'A', query: 'grafana:"awesome"' };
+    expect(
+      ds.queryHasFilter(query, {
+        key: 'grafana',
+        value: 'awesome',
+      })
+    ).toBe(true);
+  });
+});
+
 describe('addAdhocFilters', () => {
   describe('with invalid filters', () => {
     it('should filter out ad hoc filter without key', () => {
-      const templateSrvMock = {
-        getAdhocFilters: () => [{ key: '', operator: '=', value: 'a' }],
-      } as unknown as TemplateSrv;
-      const { ds } = getTestContext({ templateSrvMock });
+      const { ds, templateSrv } = getTestContext();
+      jest.mocked(templateSrv.getAdhocFilters).mockReturnValue([{ key: '', operator: '=', value: 'a', condition: '' }]);
 
       const query = ds.addAdHocFilters('foo:"bar"');
       expect(query).toBe('foo:"bar"');
     });
 
     it('should filter out ad hoc filter without value', () => {
-      const templateSrvMock = {
-        getAdhocFilters: () => [{ key: 'a', operator: '=', value: '' }],
-      } as unknown as TemplateSrv;
-      const { ds } = getTestContext({ templateSrvMock });
+      const { ds, templateSrv } = getTestContext();
+      jest.mocked(templateSrv.getAdhocFilters).mockReturnValue([{ key: 'a', operator: '=', value: '', condition: '' }]);
 
       const query = ds.addAdHocFilters('foo:"bar"');
       expect(query).toBe('foo:"bar"');
     });
 
     it('should filter out filter ad hoc filter with invalid operator', () => {
-      const templateSrvMock = {
-        getAdhocFilters: () => [{ key: 'a', operator: 'A', value: '' }],
-      } as unknown as TemplateSrv;
-      const { ds } = getTestContext({ templateSrvMock });
+      const { ds, templateSrv } = getTestContext();
+      jest.mocked(templateSrv.getAdhocFilters).mockReturnValue([{ key: 'a', operator: 'A', value: '', condition: '' }]);
 
       const query = ds.addAdHocFilters('foo:"bar"');
       expect(query).toBe('foo:"bar"');
@@ -1169,10 +1333,15 @@ describe('addAdhocFilters', () => {
   });
 
   describe('with 1 ad hoc filter', () => {
-    const templateSrvMock = {
-      getAdhocFilters: () => [{ key: 'test', operator: '=', value: 'test1' }],
-    } as unknown as TemplateSrv;
-    const { ds } = getTestContext({ templateSrvMock });
+    let ds: ElasticDatasource, templateSrvMock: TemplateSrv;
+    beforeEach(() => {
+      const { ds: datasource, templateSrv } = getTestContext();
+      ds = datasource;
+      templateSrvMock = templateSrv;
+      jest
+        .mocked(templateSrv.getAdhocFilters)
+        .mockReturnValue([{ key: 'test', operator: '=', value: 'test1', condition: '' }]);
+    });
 
     it('should correctly add 1 ad hoc filter when query is not empty', () => {
       const query = ds.addAdHocFilters('foo:"bar"');
@@ -1183,18 +1352,38 @@ describe('addAdhocFilters', () => {
       const query = ds.addAdHocFilters('');
       expect(query).toBe('test:"test1"');
     });
+
+    it('should escape characters in filter keys', () => {
+      jest
+        .mocked(templateSrvMock.getAdhocFilters)
+        .mockReturnValue([{ key: 'field:name', operator: '=', value: 'field:value', condition: '' }]);
+
+      const query = ds.addAdHocFilters('');
+      expect(query).toBe('field\\:name:"field:value"');
+    });
+
+    it('should escape characters in filter values', () => {
+      jest
+        .mocked(templateSrvMock.getAdhocFilters)
+        .mockReturnValue([{ key: 'field:name', operator: '=', value: 'field "value"', condition: '' }]);
+
+      const query = ds.addAdHocFilters('');
+      expect(query).toBe('field\\:name:"field \\"value\\""');
+    });
   });
 
   describe('with multiple ad hoc filters', () => {
-    const templateSrvMock = {
-      getAdhocFilters: () => [
-        { key: 'bar', operator: '=', value: 'baz' },
-        { key: 'job', operator: '!=', value: 'grafana' },
-        { key: 'service', operator: '=~', value: 'service' },
-        { key: 'count', operator: '>', value: '1' },
-      ],
-    } as unknown as TemplateSrv;
-    const { ds } = getTestContext({ templateSrvMock });
+    let ds: ElasticDatasource;
+    beforeEach(() => {
+      const { ds: datasource, templateSrv } = getTestContext();
+      ds = datasource;
+      jest.mocked(templateSrv.getAdhocFilters).mockReturnValue([
+        { key: 'bar', operator: '=', value: 'baz', condition: '' },
+        { key: 'job', operator: '!=', value: 'grafana', condition: '' },
+        { key: 'service', operator: '=~', value: 'service', condition: '' },
+        { key: 'count', operator: '>', value: '1', condition: '' },
+      ]);
+    });
 
     it('should correctly add ad hoc filters when query is not empty', () => {
       const query = ds.addAdHocFilters('foo:"bar" AND test:"test1"');
@@ -1294,6 +1483,57 @@ const logsResponse = {
   },
 };
 
+describe('targetContainsTemplate', () => {
+  let ds: ElasticDatasource;
+  let target: ElasticsearchQuery;
+  beforeEach(() => {
+    const context = getTestContext();
+    ds = context.ds;
+    target = {
+      refId: 'test',
+      bucketAggs: [{ type: 'date_histogram', field: '@timestamp', id: '1' }],
+      metrics: [{ type: 'count', id: '1' }],
+      query: 'escape\\:test',
+    };
+  });
+  it('returns false when there is no variable in the query', () => {
+    expect(ds.targetContainsTemplate(target)).toBe(false);
+  });
+  it('returns true when there are variables in the query alias', () => {
+    target.alias = '$variable';
+    expect(ds.targetContainsTemplate(target)).toBe(true);
+  });
+  it('returns true when there are variables in the query', () => {
+    target.query = '$variable:something';
+    expect(ds.targetContainsTemplate(target)).toBe(true);
+  });
+  it('returns true when there are variables in the bucket aggregation', () => {
+    target.bucketAggs = [{ type: 'date_histogram', field: '$field', id: '1' }];
+    expect(ds.targetContainsTemplate(target)).toBe(true);
+    target.bucketAggs = [{ type: 'date_histogram', field: '@timestamp', id: '1', settings: { interval: '$interval' } }];
+    expect(ds.targetContainsTemplate(target)).toBe(true);
+  });
+  it('returns true when there are variables in the metric aggregation', () => {
+    target.metrics = [{ type: 'moving_avg', id: '1', settings: { window: '$window' } }];
+    expect(ds.targetContainsTemplate(target)).toBe(true);
+    target.metrics = [{ type: 'moving_avg', id: '1', field: '$field' }];
+    expect(ds.targetContainsTemplate(target)).toBe(true);
+    target.metrics = [{ type: 'extended_stats', id: '1', meta: { something: '$something' } }];
+    expect(ds.targetContainsTemplate(target)).toBe(true);
+  });
+  it('returns true when there are variables in an array inside an object in metrics', () => {
+    target.metrics = [
+      {
+        field: 'counter',
+        id: '1',
+        settings: { percents: ['20', '40', '$qqq'] },
+        type: 'percentiles',
+      },
+    ];
+    expect(ds.targetContainsTemplate(target)).toBe(true);
+  });
+});
+
 describe('ElasticDatasource using backend', () => {
   beforeEach(() => {
     console.error = jest.fn();
@@ -1304,6 +1544,135 @@ describe('ElasticDatasource using backend', () => {
     console.error = originalConsoleError;
     config.featureToggles.enableElasticsearchBackendQuerying = false;
   });
+  describe('annotationQuery', () => {
+    describe('results processing', () => {
+      it('should return simple annotations using defaults', async () => {
+        const { ds, timeSrv } = getTestContext();
+        ds.postResourceRequest = jest.fn().mockResolvedValue({
+          responses: [
+            {
+              hits: {
+                hits: [
+                  { _source: { '@timestamp': 1, '@test_tags': 'foo', text: 'abc' } },
+                  { _source: { '@timestamp': 3, '@test_tags': 'bar', text: 'def' } },
+                ],
+              },
+            },
+          ],
+        });
+
+        const annotations = await ds.annotationQuery({
+          annotation: {},
+          range: timeSrv.timeRange(),
+        });
+
+        expect(annotations).toHaveLength(2);
+        expect(annotations[0].time).toBe(1);
+        expect(annotations[1].time).toBe(3);
+      });
+
+      it('should return annotation events using options', async () => {
+        const { ds, timeSrv } = getTestContext();
+        ds.postResourceRequest = jest.fn().mockResolvedValue({
+          responses: [
+            {
+              hits: {
+                hits: [
+                  { _source: { '@test_time': 1, '@test_tags': 'foo', text: 'abc' } },
+                  { _source: { '@test_time': 3, '@test_tags': 'bar', text: 'def' } },
+                ],
+              },
+            },
+          ],
+        });
+
+        const annotations = await ds.annotationQuery({
+          annotation: {
+            timeField: '@test_time',
+            name: 'foo',
+            query: 'abc',
+            tagsField: '@test_tags',
+            textField: 'text',
+          },
+          range: timeSrv.timeRange(),
+        });
+        expect(annotations).toHaveLength(2);
+        expect(annotations[0].time).toBe(1);
+        expect(annotations[0].tags?.[0]).toBe('foo');
+        expect(annotations[0].text).toBe('abc');
+
+        expect(annotations[1].time).toBe(3);
+        expect(annotations[1].tags?.[0]).toBe('bar');
+        expect(annotations[1].text).toBe('def');
+      });
+    });
+
+    describe('request processing', () => {
+      it('should process annotation request using options', async () => {
+        const { ds } = getTestContext();
+        const postResourceRequestMock = jest.spyOn(ds, 'postResourceRequest').mockResolvedValue({
+          responses: [
+            {
+              hits: {
+                hits: [
+                  { _source: { '@test_time': 1, '@test_tags': 'foo', text: 'abc' } },
+                  { _source: { '@test_time': 3, '@test_tags': 'bar', text: 'def' } },
+                ],
+              },
+            },
+          ],
+        });
+
+        await ds.annotationQuery({
+          annotation: {
+            timeField: '@test_time',
+            timeEndField: '@time_end_field',
+            name: 'foo',
+            query: 'abc',
+            tagsField: '@test_tags',
+            textField: 'text',
+          },
+          range: {
+            from: dateTime(1683291160012),
+            to: dateTime(1683291460012),
+          },
+        });
+        expect(postResourceRequestMock).toHaveBeenCalledWith(
+          '_msearch',
+          '{"search_type":"query_then_fetch","ignore_unavailable":true,"index":"[test-]YYYY.MM.DD"}\n{"query":{"bool":{"filter":[{"bool":{"should":[{"range":{"@test_time":{"from":1683291160012,"to":1683291460012,"format":"epoch_millis"}}},{"range":{"@time_end_field":{"from":1683291160012,"to":1683291460012,"format":"epoch_millis"}}}],"minimum_should_match":1}},{"query_string":{"query":"abc"}}]}},"size":10000}\n'
+        );
+      });
+
+      it('should process annotation request using defaults', async () => {
+        const { ds } = getTestContext();
+        const postResourceRequestMock = jest.spyOn(ds, 'postResourceRequest').mockResolvedValue({
+          responses: [
+            {
+              hits: {
+                hits: [
+                  { _source: { '@test_time': 1, '@test_tags': 'foo', text: 'abc' } },
+                  { _source: { '@test_time': 3, '@test_tags': 'bar', text: 'def' } },
+                ],
+              },
+            },
+          ],
+        });
+
+        await ds.annotationQuery({
+          annotation: {},
+          range: {
+            from: dateTime(1683291160012),
+            to: dateTime(1683291460012),
+          },
+        });
+        expect(postResourceRequestMock).toHaveBeenCalledWith(
+          '_msearch',
+          '{"search_type":"query_then_fetch","ignore_unavailable":true,"index":"[test-]YYYY.MM.DD"}\n{"query":{"bool":{"filter":[{"bool":{"should":[{"range":{"@timestamp":{"from":1683291160012,"to":1683291460012,"format":"epoch_millis"}}}],"minimum_should_match":1}}]}},"size":10000}\n'
+        );
+      });
+    });
+  });
+
   describe('getDatabaseVersion', () => {
     it('should correctly get db version', async () => {
       const { ds } = getTestContext();
@@ -1324,6 +1693,243 @@ describe('ElasticDatasource using backend', () => {
       ds.getResource = jest.fn().mockRejectedValue({});
       const version = await ds.getDatabaseVersion();
       expect(version).toBe(null);
+    });
+  });
+
+  describe('metricFindQuery', () => {
+    async function runScenario() {
+      const data = {
+        responses: [
+          {
+            aggregations: {
+              '1': {
+                buckets: [
+                  { doc_count: 1, key: 'test' },
+                  {
+                    doc_count: 2,
+                    key: 'test2',
+                    key_as_string: 'test2_as_string',
+                  },
+                ],
+              },
+            },
+          },
+        ],
+      };
+
+      const { ds } = getTestContext();
+      const postResourceMock = jest.spyOn(ds, 'postResource');
+      postResourceMock.mockResolvedValue(data);
+
+      const results = await ds.metricFindQuery('{"find": "terms", "field": "test"}');
+
+      expect(ds.postResource).toHaveBeenCalledTimes(1);
+      const requestOptions = postResourceMock.mock.calls[0][1];
+      const parts = requestOptions.split('\n');
+      const header = JSON.parse(parts[0]);
+      const body = JSON.parse(parts[1]);
+
+      return { results, body, header };
+    }
+
+    it('should get results', async () => {
+      const { results } = await runScenario();
+      expect(results.length).toEqual(2);
+    });
+
+    it('should use key or key_as_string', async () => {
+      const { results } = await runScenario();
+      expect(results[0].text).toEqual('test');
+      expect(results[1].text).toEqual('test2_as_string');
+    });
+
+    it('should not set search type to count', async () => {
+      const { header } = await runScenario();
+      expect(header.search_type).not.toEqual('count');
+    });
+
+    it('should set size to 0', async () => {
+      const { body } = await runScenario();
+      expect(body.size).toBe(0);
+    });
+
+    it('should not set terms aggregation size to 0', async () => {
+      const { body } = await runScenario();
+      expect(body['aggs']['1']['terms'].size).not.toBe(0);
+    });
+  });
+
+  describe('getFields', () => {
+    const getFieldsMockData = {
+      '[test-]YYYY.MM.DD': {
+        mappings: {
+          properties: {
+            '@timestamp_millis': {
+              type: 'date',
+              format: 'epoch_millis',
+            },
+            classification_terms: {
+              type: 'keyword',
+            },
+            ip_address: {
+              type: 'ip',
+            },
+            justification_blob: {
+              properties: {
+                criterion: {
+                  type: 'text',
+                  fields: {
+                    keyword: {
+                      type: 'keyword',
+                      ignore_above: 256,
+                    },
+                  },
+                },
+                shallow: {
+                  properties: {
+                    jsi: {
+                      properties: {
+                        sdb: {
+                          properties: {
+                            dsel2: {
+                              properties: {
+                                'bootlegged-gille': {
+                                  properties: {
+                                    botness: {
+                                      type: 'float',
+                                    },
+                                    general_algorithm_score: {
+                                      type: 'float',
+                                    },
+                                  },
+                                },
+                                'uncombed-boris': {
+                                  properties: {
+                                    botness: {
+                                      type: 'float',
+                                    },
+                                    general_algorithm_score: {
+                                      type: 'float',
+                                    },
+                                  },
+                                },
+                              },
+                            },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+            overall_vote_score: {
+              type: 'float',
+            },
+          },
+        },
+      },
+    };
+
+    it('should not retry when ES is down', async () => {
+      const twoDaysBefore = toUtc().subtract(2, 'day').format('YYYY.MM.DD');
+      const { ds, timeSrv } = getTestContext({
+        from: 'now-2w',
+        jsonData: { interval: 'Daily' },
+      });
+
+      ds.getResource = jest.fn().mockImplementation((options) => {
+        if (options.url === `test-${twoDaysBefore}/_mapping`) {
+          return of({
+            data: {},
+          });
+        }
+        return throwError({ status: 500 });
+      });
+
+      const range = timeSrv.timeRange();
+      await expect(ds.getFields(undefined, range)).toEmitValuesWith((received) => {
+        expect(received.length).toBe(1);
+        expect(received[0]).toStrictEqual({ status: 500 });
+        expect(ds.getResource).toBeCalledTimes(1);
+      });
+    });
+
+    it('should not retry more than 7 indices', async () => {
+      const { ds, timeSrv } = getTestContext({
+        from: 'now-2w',
+        jsonData: { interval: 'Daily' },
+      });
+      const range = timeSrv.timeRange();
+
+      ds.getResource = jest.fn().mockImplementation(() => {
+        return throwError({ status: 404 });
+      });
+
+      await expect(ds.getFields(undefined, range)).toEmitValuesWith((received) => {
+        expect(received.length).toBe(1);
+        expect(received[0]).toStrictEqual('Could not find an available index for this time range.');
+        expect(ds.getResource).toBeCalledTimes(7);
+      });
+    });
+
+    it('should return nested fields', async () => {
+      const { ds } = getTestContext({
+        from: 'now-2w',
+        jsonData: { interval: 'Daily' },
+      });
+
+      ds.getResource = jest.fn().mockResolvedValue(getFieldsMockData);
+
+      await expect(ds.getFields()).toEmitValuesWith((received) => {
+        expect(received.length).toBe(1);
+
+        const fieldObjects = received[0];
+        const fields = map(fieldObjects, 'text');
+        expect(fields).toEqual([
+          '@timestamp_millis',
+          'classification_terms',
+          'ip_address',
+          'justification_blob.criterion.keyword',
+          'justification_blob.criterion',
+          'justification_blob.shallow.jsi.sdb.dsel2.bootlegged-gille.botness',
+          'justification_blob.shallow.jsi.sdb.dsel2.bootlegged-gille.general_algorithm_score',
+          'justification_blob.shallow.jsi.sdb.dsel2.uncombed-boris.botness',
+          'justification_blob.shallow.jsi.sdb.dsel2.uncombed-boris.general_algorithm_score',
+          'overall_vote_score',
+        ]);
+      });
+    });
+    it('should return number fields', async () => {
+      const { ds } = getTestContext({});
+      ds.getResource = jest.fn().mockResolvedValue(getFieldsMockData);
+
+      await expect(ds.getFields(['number'])).toEmitValuesWith((received) => {
+        expect(received.length).toBe(1);
+
+        const fieldObjects = received[0];
+        const fields = map(fieldObjects, 'text');
+        expect(fields).toEqual([
+          'justification_blob.shallow.jsi.sdb.dsel2.bootlegged-gille.botness',
+          'justification_blob.shallow.jsi.sdb.dsel2.bootlegged-gille.general_algorithm_score',
+          'justification_blob.shallow.jsi.sdb.dsel2.uncombed-boris.botness',
+          'justification_blob.shallow.jsi.sdb.dsel2.uncombed-boris.general_algorithm_score',
+          'overall_vote_score',
+        ]);
+      });
+    });
+
+    it('should return date fields', async () => {
+      const { ds } = getTestContext({});
+      ds.getResource = jest.fn().mockResolvedValue(getFieldsMockData);
+
+      await expect(ds.getFields(['date'])).toEmitValuesWith((received) => {
+        expect(received.length).toBe(1);
+
+        const fieldObjects = received[0];
+        const fields = map(fieldObjects, 'text');
+        expect(fields).toEqual(['@timestamp_millis']);
+      });
     });
   });
 });

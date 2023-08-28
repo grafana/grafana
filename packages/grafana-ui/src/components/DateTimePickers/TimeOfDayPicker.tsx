@@ -2,10 +2,10 @@ import { css, cx } from '@emotion/css';
 import RcTimePicker from 'rc-time-picker';
 import React from 'react';
 
-import { dateTime, DateTime, dateTimeAsMoment, GrafanaTheme2 } from '@grafana/data';
+import { dateTime, DateTime, dateTimeAsMoment, GrafanaTheme2, isDateTimeInput } from '@grafana/data';
 
 import { Icon, useStyles2 } from '../../index';
-import { focusCss } from '../../themes/mixins';
+import { getFocusStyles } from '../../themes/mixins';
 import { inputSizes } from '../Forms/commonStyles';
 import { FormInputSize } from '../Forms/types';
 
@@ -43,7 +43,11 @@ export const TimeOfDayPicker = ({
       className={cx(inputSizes()[size], styles.input)}
       popupClassName={cx(styles.picker, POPUP_CLASS_NAME)}
       defaultValue={dateTimeAsMoment()}
-      onChange={(value: any) => onChange(dateTime(value))}
+      onChange={(value) => {
+        if (isDateTimeInput(value)) {
+          return onChange(dateTime(value));
+        }
+      }}
       allowEmpty={false}
       showSecond={showSeconds}
       value={dateTimeAsMoment(value)}
@@ -74,83 +78,80 @@ const getStyles = (theme: GrafanaTheme2) => {
   const bgColor = theme.components.input.background;
   const menuShadowColor = theme.v1.palette.black;
   const optionBgHover = theme.colors.background.secondary;
-  const borderRadius = theme.shape.borderRadius(1);
+  const borderRadius = theme.shape.radius.default;
   const borderColor = theme.components.input.borderColor;
   return {
-    caretWrapper: css`
-      position: absolute;
-      right: 8px;
-      top: 50%;
-      transform: translateY(-50%);
-      display: inline-block;
-      text-align: right;
-      color: ${theme.colors.text.secondary};
-    `,
-    picker: css`
-      .rc-time-picker-panel-select {
-        font-size: 14px;
-        background-color: ${bgColor};
-        border-color: ${borderColor};
-        li {
-          outline-width: 2px;
-          &.rc-time-picker-panel-select-option-selected {
-            background-color: inherit;
-            border: 1px solid ${theme.v1.palette.orange};
-            border-radius: ${borderRadius};
-          }
+    caretWrapper: css({
+      position: 'absolute',
+      right: '8px',
+      top: '50%',
+      transform: 'translateY(-50%)',
+      display: 'inline-block',
+      textAlign: 'right',
+      color: theme.colors.text.secondary,
+    }),
+    picker: css({
+      '.rc-time-picker-panel-select': {
+        fontSize: '14px',
+        backgroundColor: bgColor,
+        borderColor,
+        li: {
+          outlineWidth: '2px',
+          '&.rc-time-picker-panel-select-option-selected': {
+            backgroundColor: 'inherit',
+            border: `1px solid ${theme.v1.palette.orange}`,
+            borderRadius,
+          },
 
-          &:hover {
-            background: ${optionBgHover};
-          }
+          '&:hover': {
+            background: optionBgHover,
+          },
 
-          &.rc-time-picker-panel-select-option-disabled {
-            color: ${theme.colors.action.disabledText};
-          }
-        }
-      }
+          '&.rc-time-picker-panel-select-option-disabled': {
+            color: theme.colors.action.disabledText,
+          },
+        },
+      },
 
-      .rc-time-picker-panel-inner {
-        box-shadow: 0px 4px 4px ${menuShadowColor};
-        background-color: ${bgColor};
-        border-color: ${borderColor};
-        border-radius: ${borderRadius};
-        margin-top: 3px;
+      '.rc-time-picker-panel-inner': {
+        boxShadow: `0px 4px 4px ${menuShadowColor}`,
+        backgroundColor: bgColor,
+        borderColor,
+        borderRadius,
+        marginTop: '3px',
 
-        .rc-time-picker-panel-input-wrap {
-          margin-right: 2px;
+        '.rc-time-picker-panel-input-wrap': {
+          marginRight: '2px',
 
-          &,
-          .rc-time-picker-panel-input {
-            background-color: ${bgColor};
-            padding-top: 2px;
-          }
-        }
+          '&, .rc-time-picker-panel-input': {
+            backgroundColor: bgColor,
+            paddingTop: '2px',
+          },
+        },
 
-        .rc-time-picker-panel-combobox {
-          display: flex;
-        }
-      }
-    `,
-    input: css`
-      .rc-time-picker-input {
-        background-color: ${bgColor};
-        border-radius: ${borderRadius};
-        border-color: ${borderColor};
-        height: ${theme.spacing(4)};
+        '.rc-time-picker-panel-combobox': {
+          display: 'flex',
+        },
+      },
+    }),
+    input: css({
+      '.rc-time-picker-input': {
+        backgroundColor: bgColor,
+        borderRadius,
+        borderColor,
+        height: theme.spacing(4),
 
-        &:focus {
-          ${focusCss(theme)}
-        }
+        '&:focus': getFocusStyles(theme),
 
-        &:disabled {
-          background-color: ${theme.colors.action.disabledBackground};
-          color: ${theme.colors.action.disabledText};
-          border: 1px solid ${theme.colors.action.disabledBackground};
-          &:focus {
-            box-shadow: none;
-          }
-        }
-      }
-    `,
+        '&:disabled': {
+          backgroundColor: theme.colors.action.disabledBackground,
+          color: theme.colors.action.disabledText,
+          border: `1px solid ${theme.colors.action.disabledBackground}`,
+          '&:focus': {
+            boxShadow: 'none',
+          },
+        },
+      },
+    }),
   };
 };

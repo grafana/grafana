@@ -1,24 +1,26 @@
 import { css } from '@emotion/css';
 import React, { useCallback, useMemo } from 'react';
 
-import {
-  DataSourceJsonData,
-  DataSourceInstanceSettings,
-  DataSourcePluginOptionsEditorProps,
-  GrafanaTheme2,
-} from '@grafana/data';
-import { DataSourcePicker } from '@grafana/runtime';
-import { InlineField, InlineFieldRow, Input, useStyles2, InlineSwitch } from '@grafana/ui';
+import { DataSourceJsonData, DataSourceInstanceSettings, DataSourcePluginOptionsEditorProps } from '@grafana/data';
+import { ConfigSection } from '@grafana/experimental';
+import { InlineField, InlineFieldRow, Input, InlineSwitch } from '@grafana/ui';
+import { ConfigDescriptionLink } from 'app/core/components/ConfigDescriptionLink';
+import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 
-import { DocsLinkButton } from '../DocsLinkButton';
+import { IntervalInput } from '../IntervalInput/IntervalInput';
 
 import { TagMappingInput } from './TagMappingInput';
+
+export interface TraceToLogsTag {
+  key: string;
+  value?: string;
+}
 
 // @deprecated use getTraceToLogsOptions to get the v2 version of this config from jsonData
 export interface TraceToLogsOptions {
   datasourceUid?: string;
   tags?: string[];
-  mappedTags?: Array<{ key: string; value?: string }>;
+  mappedTags?: TraceToLogsTag[];
   mapTagNamesEnabled?: boolean;
   spanStartTimeShift?: string;
   spanEndTimeShift?: string;
@@ -29,7 +31,7 @@ export interface TraceToLogsOptions {
 
 export interface TraceToLogsOptionsV2 {
   datasourceUid?: string;
-  tags?: Array<{ key: string; value?: string }>;
+  tags?: TraceToLogsTag[];
   spanStartTimeShift?: string;
   spanEndTimeShift?: string;
   filterByTraceID?: boolean;
@@ -71,7 +73,6 @@ export function getTraceToLogsOptions(data?: TraceToLogsData): TraceToLogsOption
 interface Props extends DataSourcePluginOptionsEditorProps<TraceToLogsData> {}
 
 export function TraceToLogsSettings({ options, onOptionsChange }: Props) {
-  const styles = useStyles2(getStyles);
   const supportedDataSourceTypes = [
     'loki',
     'elasticsearch',
@@ -108,13 +109,6 @@ export function TraceToLogsSettings({ options, onOptionsChange }: Props) {
 
   return (
     <div className={css({ width: '100%' })}>
-      <h3 className="page-heading">Trace to logs</h3>
-
-      <div className={styles.infoText}>
-        Navigate from a trace span to the selected data source&apos;s logs
-        <DocsLinkButton hrefSuffix={`${options.type}/#trace-to-logs`} />
-      </div>
-
       <InlineFieldRow>
         <InlineField
           tooltip="The logs data source the trace is going to navigate to"
@@ -136,20 +130,33 @@ export function TraceToLogsSettings({ options, onOptionsChange }: Props) {
         </InlineField>
       </InlineFieldRow>
 
-      <TimeRangeShift
-        type={'start'}
-        value={traceToLogs.spanStartTimeShift || ''}
-        onChange={(val) => updateTracesToLogs({ spanStartTimeShift: val })}
-      />
-      <TimeRangeShift
-        type={'end'}
-        value={traceToLogs.spanEndTimeShift || ''}
-        onChange={(val) => updateTracesToLogs({ spanEndTimeShift: val })}
-      />
+      <InlineFieldRow>
+        <IntervalInput
+          label={getTimeShiftLabel('start')}
+          tooltip={getTimeShiftTooltip('start', '0')}
+          value={traceToLogs.spanStartTimeShift || ''}
+          onChange={(val) => {
+            updateTracesToLogs({ spanStartTimeShift: val });
+          }}
+          isInvalidError={invalidTimeShiftError}
+        />
+      </InlineFieldRow>
+
+      <InlineFieldRow>
+        <IntervalInput
+          label={getTimeShiftLabel('end')}
+          tooltip={getTimeShiftTooltip('end', '0')}
+          value={traceToLogs.spanEndTimeShift || ''}
+          onChange={(val) => {
+            updateTracesToLogs({ spanEndTimeShift: val });
+          }}
+          isInvalidError={invalidTimeShiftError}
+        />
+      </InlineFieldRow>
 
       <InlineFieldRow>
         <InlineField
-          tooltip="Tags that will be used in the query. Default tags: 'cluster', 'hostname', 'namespace', 'pod'"
+          tooltip="Tags that will be used in the query. Default tags: 'cluster', 'hostname', 'namespace', 'pod', 'service.name', 'service.namespace', 'deployment.environment'"
           label="Tags"
           labelWidth={26}
         >
@@ -235,35 +242,31 @@ function IdFilter(props: IdFilterProps) {
   );
 }
 
-interface TimeRangeShiftProps {
-  type: 'start' | 'end';
-  value: string;
-  onChange: (val: string) => void;
-}
-function TimeRangeShift(props: TimeRangeShiftProps) {
-  return (
-    <InlineFieldRow>
-      <InlineField
-        label={`Span ${props.type} time shift`}
-        labelWidth={26}
-        grow
-        tooltip={`Shifts the ${props.type} time of the span. Default: 0 (Time units can be used here, for example: 5s, -1m, 3h)`}
-      >
-        <Input
-          type="text"
-          placeholder="0"
-          width={40}
-          onChange={(e) => props.onChange(e.currentTarget.value)}
-          value={props.value}
-        />
-      </InlineField>
-    </InlineFieldRow>
-  );
-}
+export const getTimeShiftLabel = (type: 'start' | 'end') => {
+  return `Span ${type} time shift`;
+};
 
-const getStyles = (theme: GrafanaTheme2) => ({
-  infoText: css`
-    padding-bottom: ${theme.spacing(2)};
-    color: ${theme.colors.text.secondary};
-  `,
-});
+export const getTimeShiftTooltip = (type: 'start' | 'end', defaultVal: string) => {
+  return `Shifts the ${type} time of the span. Default: ${defaultVal} (Time units can be used here, for example: 5s, -1m, 3h)`;
+};
+
+export const invalidTimeShiftError = 'Invalid time shift. See tooltip for examples.';
+
+export const TraceToLogsSection = ({ options, onOptionsChange }: DataSourcePluginOptionsEditorProps) => {
+  return (
+    <ConfigSection
+      title="Trace to logs"
+      description={
+        <ConfigDescriptionLink
+          description="Navigate from a trace span to the selected data source's logs."
+          suffix={`${options.type}/#trace-to-logs`}
+          feature="trace to logs"
+        />
+      }
+      isCollapsible={true}
+      isInitiallyOpen={true}
+    >
+      <TraceToLogsSettings options={options} onOptionsChange={onOptionsChange} />
+    </ConfigSection>
+  );
+};

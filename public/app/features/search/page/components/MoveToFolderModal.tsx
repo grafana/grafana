@@ -3,7 +3,7 @@ import React, { useCallback, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Alert, Button, HorizontalGroup, Modal, useStyles2 } from '@grafana/ui';
-import { FolderPicker } from 'app/core/components/Select/FolderPicker';
+import { OldFolderPicker } from 'app/core/components/Select/OldFolderPicker';
 import config from 'app/core/config';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { moveDashboards, moveFolders } from 'app/features/manage-dashboards/state/actions';
@@ -125,15 +125,15 @@ export const MoveToFolderModal = ({ results, onMoveItems, onDismiss }: Props) =>
 
           <p>Move {thingsMoving} to:</p>
 
-          <FolderPicker allowEmpty={true} enableCreateNew={false} onChange={handleFolderChange} />
+          <OldFolderPicker allowEmpty={true} enableCreateNew={false} onChange={handleFolderChange} />
         </div>
 
         <HorizontalGroup justify="flex-end">
+          <Button variant="secondary" onClick={onDismiss} fill="outline">
+            Cancel
+          </Button>
           <Button icon={moving ? 'fa fa-spinner' : undefined} variant="primary" onClick={moveTo}>
             Move
-          </Button>
-          <Button variant="secondary" onClick={onDismiss}>
-            Cancel
           </Button>
         </HorizontalGroup>
       </>

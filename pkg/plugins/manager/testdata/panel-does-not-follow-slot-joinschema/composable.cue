@@ -9,10 +9,10 @@ composableKinds: PanelCfg: {
 			{
 				schemas: [
 					{
-						PanelOptions: {
+						Options: {
 							foo: string
 						} @cuetsy(kind="interface")
-						PanelFieldConfig: string
+						FieldConfig: string
 					},
 				]
 			},

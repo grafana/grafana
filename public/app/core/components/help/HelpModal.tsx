@@ -9,6 +9,7 @@ const getShortcuts = (modKey: string) => {
   return {
     Global: [
       { keys: ['g', 'h'], description: 'Go to Home Dashboard' },
+      { keys: ['g', 'd'], description: 'Go to Dashboards' },
       { keys: ['g', 'e'], description: 'Go to Explore' },
       { keys: ['g', 'p'], description: 'Go to Profile' },
       { keys: [`${modKey} + k`], description: 'Open search' },
@@ -27,6 +28,7 @@ const getShortcuts = (modKey: string) => {
       { keys: ['d', 'a'], description: 'Toggle auto fit panels (experimental feature)' },
       { keys: [`${modKey} + o`], description: 'Toggle shared graph crosshair' },
       { keys: ['d', 'l'], description: 'Toggle all panel legends' },
+      { keys: ['d', 'x'], description: 'Toggle exemplars in all panel' },
     ],
     'Focused Panel': [
       { keys: ['e'], description: 'Toggle panel edit view' },
@@ -139,7 +141,12 @@ function getStyles(theme: GrafanaTheme2) {
       text-align: center;
       margin-right: ${theme.spacing(0.5)};
       padding: 3px 5px;
-      font: 11px Consolas, 'Liberation Mono', Menlo, Courier, monospace;
+      font:
+        11px Consolas,
+        'Liberation Mono',
+        Menlo,
+        Courier,
+        monospace;
       line-height: 10px;
       vertical-align: middle;
       border: solid 1px ${theme.colors.border.medium};

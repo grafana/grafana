@@ -12,6 +12,10 @@ keywords:
   - role-based-access-control
   - acl
   - enterprise
+labels:
+  products:
+    - enterprise
+    - oss
 title: RBAC HTTP API
 ---
 
@@ -529,7 +533,7 @@ Content-Type: application/json; charset=UTF-8
 
 ### List your permissions
 
-`GET /api/access-control/users/permissions`
+`GET /api/access-control/user/permissions`
 
 Lists the permissions granted to the signed in user.
 

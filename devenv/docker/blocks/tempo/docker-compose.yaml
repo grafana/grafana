@@ -1,20 +1,3 @@
-x-logging: &default-logging
-  driver: loki
-  options:
-    loki-url: 'http://localhost:3100/api/prom/push'
-    labels: namespace
-    loki-relabel-config: |
-      - action: replace
-        source_labels: ["namespace","compose_service"]
-        separator: "/"
-        target_label: job
-      - action: replace
-        source_labels: ["container_name"]
-        target_label: instance
-
-version: "3"
-services:
-
   db:
     image: grafana/tns-db:9c1ab38
     command:
@@ -28,7 +11,16 @@ services:
       JAEGER_SAMPLER_PARAM: 1
     labels:
       namespace: tns
-    logging: *default-logging
+    logging: 
+      driver: loki
+      options:
+        loki-url: 'http://localhost:3100/api/prom/push'
+        labels: namespace
+        loki-relabel-config: |
+          - action: replace
+            source_labels: ["namespace","compose_service"]
+            separator: "/"
+            target_label: job
 
   app:
     image: grafana/tns-app:9c1ab38
@@ -46,7 +38,16 @@ services:
       JAEGER_SAMPLER_PARAM: 1
     labels:
       namespace: tns
-    logging: *default-logging
+    logging: 
+      driver: loki
+      options:
+        loki-url: 'http://localhost:3100/api/prom/push'
+        labels: namespace
+        loki-relabel-config: |
+          - action: replace
+            source_labels: ["namespace","compose_service"]
+            separator: "/"
+            target_label: job
 
   loadgen:
     image: grafana/tns-loadgen:9c1ab38
@@ -64,13 +65,16 @@ services:
       JAEGER_SAMPLER_PARAM: 1
     labels:
       namespace: tns
-    logging: *default-logging
+    logging: 
+      driver: loki
+      options:
+        loki-url: 'http://localhost:3100/api/prom/push'
+        labels: namespace
 
   tempo:
-    image: grafana/tempo:main-9a8474f
+    image: grafana/tempo:latest
     command:
       - --config.file=/etc/tempo.yaml
-      - --search.enabled=true
     volumes:
       - ./docker/blocks/tempo/tempo.yaml:/etc/tempo.yaml
       - ./docker/blocks/tempo/tempo-data:/tmp/tempo
@@ -96,7 +100,11 @@ services:
       - "9090:9090"
     labels:
       namespace: monitoring
-    logging: *default-logging
+    logging: 
+      driver: loki
+      options:
+        loki-url: 'http://localhost:3100/api/prom/push'
+        labels: namespace
 
   loki:
     image: grafana/loki:main
@@ -108,4 +116,8 @@ services:
       - "3100:3100"
     labels:
       namespace: monitoring
-    logging: *default-logging
+    logging: 
+      driver: loki
+      options:
+        loki-url: 'http://localhost:3100/api/prom/push'
+        labels: namespace

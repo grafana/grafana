@@ -5,7 +5,6 @@ import { Provider } from 'react-redux';
 
 import { DataFrame, MutableDataFrame, getDefaultTimeRange, LoadingState } from '@grafana/data';
 import { DataSourceSrv, setDataSourceSrv } from '@grafana/runtime';
-import { ExploreId } from 'app/types';
 
 import { configureStore } from '../../../store/configureStore';
 
@@ -26,12 +25,10 @@ function getTraceView(frames: DataFrame[]) {
   return (
     <Provider store={store}>
       <TraceView
-        exploreId={ExploreId.left}
+        exploreId="left"
         dataFrames={frames}
         splitOpenFn={() => {}}
         traceProp={transformDataFrames(frames[0])!}
-        search=""
-        focusedSpanIdForSearch=""
         queryResponse={mockPanelData}
         datasource={undefined}
         topOfViewRef={topOfViewRef}
@@ -91,14 +88,14 @@ describe('TraceView', () => {
 
   it('toggles detailState', async () => {
     renderTraceViewNew();
-    expect(screen.queryByText(/Attributes/)).toBeFalsy();
+    expect(screen.queryByText(/Span Attributes/)).toBeFalsy();
     const spanView = screen.getAllByText('', { selector: 'div[data-testid="span-view"]' })[0];
     await userEvent.click(spanView);
-    expect(screen.queryByText(/Attributes/)).toBeTruthy();
+    expect(screen.queryByText(/Span Attributes/)).toBeTruthy();
 
     await userEvent.click(spanView);
-    screen.debug(screen.queryAllByText(/Attributes/));
-    expect(screen.queryByText(/Attributes/)).toBeFalsy();
+    screen.debug(screen.queryAllByText(/Span Attributes/));
+    expect(screen.queryByText(/Span Attributes/)).toBeFalsy();
   });
 
   it('shows timeline ticks', () => {

@@ -264,6 +264,9 @@ func ValidateFixedRole(role RoleDTO) error {
 // ValidateBuiltInRoles errors when a built-in role does not match expected pattern
 func ValidateBuiltInRoles(builtInRoles []string) error {
 	for _, br := range builtInRoles {
+		if org.RoleType(br) == org.RoleNone {
+			return ErrNoneRoleAssignment
+		}
 		if !org.RoleType(br).IsValid() && br != RoleGrafanaAdmin {
 			return fmt.Errorf("'%s' %w", br, ErrInvalidBuiltinRole)
 		}
@@ -323,6 +326,17 @@ func BuildBasicRoleDefinitions() map[string]*RoleDTO {
 			Version:     1,
 			DisplayName: string(org.RoleViewer),
 			Description: "Viewer role",
+			Group:       "Basic",
+			Permissions: []Permission{},
+			Hidden:      true,
+		},
+		string(org.RoleNone): {
+			Name:        BasicRolePrefix + "none",
+			UID:         BasicRoleUIDPrefix + "none",
+			OrgID:       GlobalOrgID,
+			Version:     1,
+			DisplayName: string(org.RoleNone),
+			Description: "None role",
 			Group:       "Basic",
 			Permissions: []Permission{},
 			Hidden:      true,

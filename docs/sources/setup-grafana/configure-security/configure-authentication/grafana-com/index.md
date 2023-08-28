@@ -2,8 +2,12 @@
 aliases:
   - ../../../auth/grafana-com/
 description: Grafana Com Authentication
+labels:
+  products:
+    - cloud
+menuTitle: Grafana Com OAuth2
 title: Configure Grafana Com authentication
-weight: 500
+weight: 1200
 ---
 
 # Configure Grafana Com authentication
@@ -14,7 +18,7 @@ To enable GrafanaCom as your authentication provider, you configure it to genera
 
 To use GrafanaCom authentication:
 
-1. Log in to [GrafanaCom](https://grafana.com).
+1. Log in to [GrafanaCom](/).
 1. To create an OAuth client, locate your organization and click **OAuth Clients**.
 1. Click **Add OAuth Client Application**.
 1. Add the name and URL of your running Grafana instance.

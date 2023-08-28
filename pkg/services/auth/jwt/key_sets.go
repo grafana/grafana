@@ -3,21 +3,26 @@ package jwt
 import (
 	"bytes"
 	"context"
+	"crypto/tls"
 	"crypto/x509"
 	"encoding/json"
 	"encoding/pem"
 	"errors"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"net/url"
 	"os"
+	"strconv"
+	"strings"
 	"time"
 
 	jose "github.com/go-jose/go-jose/v3"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 var ErrFailedToParsePemFile = errors.New("failed to parse pem-encoded file")
@@ -118,9 +123,9 @@ func (s *AuthService) initKeySet() error {
 			return fmt.Errorf("unknown pem block type %q", block.Type)
 		}
 
-		s.keySet = keySetJWKS{
+		s.keySet = &keySetJWKS{
 			jose.JSONWebKeySet{
-				Keys: []jose.JSONWebKey{{Key: key}},
+				Keys: []jose.JSONWebKey{{Key: key, KeyID: s.Cfg.JWTAuthKeyID}},
 			},
 		}
 	} else if keyFilePath := s.Cfg.JWTAuthJWKSetFile; keyFilePath != "" {
@@ -141,19 +146,35 @@ func (s *AuthService) initKeySet() error {
 			return err
 		}
 
-		s.keySet = keySetJWKS{jwks}
+		s.keySet = &keySetJWKS{jwks}
 	} else if urlStr := s.Cfg.JWTAuthJWKSetURL; urlStr != "" {
 		urlParsed, err := url.Parse(urlStr)
 		if err != nil {
 			return err
 		}
-		if urlParsed.Scheme != "https" {
+		if urlParsed.Scheme != "https" && setting.Env != setting.Dev {
 			return ErrJWTSetURLMustHaveHTTPSScheme
 		}
 		s.keySet = &keySetHTTP{
-			url:             urlStr,
-			log:             s.log,
-			client:          &http.Client{},
+			url: urlStr,
+			log: s.log,
+			client: &http.Client{
+				Transport: &http.Transport{
+					TLSClientConfig: &tls.Config{
+						Renegotiation: tls.RenegotiateFreelyAsClient,
+					},
+					Proxy: http.ProxyFromEnvironment,
+					DialContext: (&net.Dialer{
+						Timeout:   time.Second * 30,
+						KeepAlive: 15 * time.Second,
+					}).DialContext,
+					TLSHandshakeTimeout:   10 * time.Second,
+					ExpectContinueTimeout: 1 * time.Second,
+					MaxIdleConns:          100,
+					IdleConnTimeout:       30 * time.Second,
+				},
+				Timeout: time.Second * 30,
+			},
 			cacheKey:        fmt.Sprintf("auth-jwt:jwk-%s", urlStr),
 			cacheExpiration: s.Cfg.JWTAuthCacheTTL,
 			cache:           s.RemoteCache,
@@ -163,7 +184,7 @@ func (s *AuthService) initKeySet() error {
 	return nil
 }
 
-func (ks keySetJWKS) Key(ctx context.Context, keyID string) ([]jose.JSONWebKey, error) {
+func (ks *keySetJWKS) Key(ctx context.Context, keyID string) ([]jose.JSONWebKey, error) {
 	return ks.JSONWebKeySet.Key(keyID), nil
 }
 
@@ -200,9 +221,38 @@ func (ks *keySetHTTP) getJWKS(ctx context.Context) (keySetJWKS, error) {
 	}
 
 	if ks.cacheExpiration > 0 {
-		err = ks.cache.Set(ctx, ks.cacheKey, jsonBuf.Bytes(), ks.cacheExpiration)
+		cacheExpiration := ks.getCacheExpiration(resp.Header.Get("cache-control"))
+
+		ks.log.Debug("Setting key set in cache", "url", ks.url,
+			"cacheExpiration", cacheExpiration, "cacheControl", resp.Header.Get("cache-control"))
+		err = ks.cache.Set(ctx, ks.cacheKey, jsonBuf.Bytes(), cacheExpiration)
 	}
 	return jwks, err
+}
+
+func (ks *keySetHTTP) getCacheExpiration(cacheControl string) time.Duration {
+	cacheDuration := ks.cacheExpiration
+	if cacheControl == "" {
+		return cacheDuration
+	}
+
+	parts := strings.Split(cacheControl, ",")
+	for _, part := range parts {
+		part = strings.TrimSpace(part)
+		if strings.HasPrefix(part, "max-age=") {
+			maxAge, err := strconv.Atoi(part[8:])
+			if err != nil {
+				return cacheDuration
+			}
+
+			// If the cache duration is 0 or the max-age is less than the cache duration, use the max-age
+			if cacheDuration == 0 || time.Duration(maxAge)*time.Second < cacheDuration {
+				return time.Duration(maxAge) * time.Second
+			}
+		}
+	}
+
+	return cacheDuration
 }
 
 func (ks keySetHTTP) Key(ctx context.Context, kid string) ([]jose.JSONWebKey, error) {

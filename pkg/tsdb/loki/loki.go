@@ -65,6 +65,7 @@ type QueryJSONModel struct {
 
 type ResponseOpts struct {
 	metricDataplane bool
+	logsDataplane   bool
 }
 
 func parseQueryModel(raw json.RawMessage) (*QueryJSONModel, error) {
@@ -95,7 +96,7 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 }
 
 func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
-	dsInfo, err := s.getDSInfo(req.PluginContext)
+	dsInfo, err := s.getDSInfo(ctx, req.PluginContext)
 	if err != nil {
 		return err
 	}
@@ -142,7 +143,7 @@ func callResource(ctx context.Context, req *backend.CallResourceRequest, sender 
 }
 
 func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-	dsInfo, err := s.getDSInfo(req.PluginContext)
+	dsInfo, err := s.getDSInfo(ctx, req.PluginContext)
 	if err != nil {
 		result := backend.NewQueryDataResponse()
 		return result, err
@@ -150,6 +151,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 
 	responseOpts := ResponseOpts{
 		metricDataplane: s.features.IsEnabled(featuremgmt.FlagLokiMetricDataplane),
+		logsDataplane:   s.features.IsEnabled(featuremgmt.FlagLokiLogsDataplane),
 	}
 
 	return queryData(ctx, req, dsInfo, responseOpts, s.tracer)
@@ -166,7 +168,7 @@ func queryData(ctx context.Context, req *backend.QueryDataRequest, dsInfo *datas
 	}
 
 	for _, query := range queries {
-		_, span := tracer.Start(ctx, "datasource.loki")
+		ctx, span := tracer.Start(ctx, "datasource.loki")
 		span.SetAttributes("expr", query.Expr, attribute.Key("expr").String(query.Expr))
 		span.SetAttributes("start_unixnano", query.Start, attribute.Key("start_unixnano").Int64(query.Start.UnixNano()))
 		span.SetAttributes("stop_unixnano", query.End, attribute.Key("stop_unixnano").Int64(query.End.UnixNano()))
@@ -202,7 +204,7 @@ func runQuery(ctx context.Context, api *LokiAPI, query *lokiQuery, responseOpts 
 	}
 
 	for _, frame := range frames {
-		if err = adjustFrame(frame, query, !responseOpts.metricDataplane); err != nil {
+		if err = adjustFrame(frame, query, !responseOpts.metricDataplane, responseOpts.logsDataplane); err != nil {
 			return data.Frames{}, err
 		}
 		if err != nil {
@@ -213,8 +215,8 @@ func runQuery(ctx context.Context, api *LokiAPI, query *lokiQuery, responseOpts 
 	return frames, nil
 }
 
-func (s *Service) getDSInfo(pluginCtx backend.PluginContext) (*datasourceInfo, error) {
-	i, err := s.im.Get(pluginCtx)
+func (s *Service) getDSInfo(ctx context.Context, pluginCtx backend.PluginContext) (*datasourceInfo, error) {
+	i, err := s.im.Get(ctx, pluginCtx)
 	if err != nil {
 		return nil, err
 	}

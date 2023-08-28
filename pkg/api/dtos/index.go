@@ -18,7 +18,7 @@ type IndexViewData struct {
 	NavTree                             *navtree.NavTreeRoot
 	BuildVersion                        string
 	BuildCommit                         string
-	Theme                               string
+	ThemeType                           string
 	NewGrafanaVersionExists             bool
 	NewGrafanaVersion                   string
 	AppName                             string
@@ -32,5 +32,6 @@ type IndexViewData struct {
 	CSPEnabled                          bool
 	IsDevelopmentEnv                    bool
 	// Nonce is a cryptographic identifier for use with Content Security Policy.
-	Nonce string
+	Nonce           string
+	NewsFeedEnabled bool
 }

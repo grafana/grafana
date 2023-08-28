@@ -30,53 +30,6 @@ const (
 	ErrorTypeServerPanic        ErrorType = "server_panic"
 )
 
-// Defines values for NodesType.
-const (
-	NodesTypeRandom      NodesType = "random"
-	NodesTypeRandomEdges NodesType = "random edges"
-	NodesTypeResponse    NodesType = "response"
-)
-
-// Defines values for ScenarioId.
-const (
-	ScenarioIdAnnotations                  ScenarioId = "annotations"
-	ScenarioIdArrow                        ScenarioId = "arrow"
-	ScenarioIdCsvContent                   ScenarioId = "csv_content"
-	ScenarioIdCsvFile                      ScenarioId = "csv_file"
-	ScenarioIdCsvMetricValues              ScenarioId = "csv_metric_values"
-	ScenarioIdDatapointsOutsideRange       ScenarioId = "datapoints_outside_range"
-	ScenarioIdExponentialHeatmapBucketData ScenarioId = "exponential_heatmap_bucket_data"
-	ScenarioIdFlameGraph                   ScenarioId = "flame_graph"
-	ScenarioIdGrafanaApi                   ScenarioId = "grafana_api"
-	ScenarioIdLinearHeatmapBucketData      ScenarioId = "linear_heatmap_bucket_data"
-	ScenarioIdLive                         ScenarioId = "live"
-	ScenarioIdLogs                         ScenarioId = "logs"
-	ScenarioIdManualEntry                  ScenarioId = "manual_entry"
-	ScenarioIdNoDataPoints                 ScenarioId = "no_data_points"
-	ScenarioIdNodeGraph                    ScenarioId = "node_graph"
-	ScenarioIdPredictableCsvWave           ScenarioId = "predictable_csv_wave"
-	ScenarioIdPredictablePulse             ScenarioId = "predictable_pulse"
-	ScenarioIdRandomWalk                   ScenarioId = "random_walk"
-	ScenarioIdRandomWalkTable              ScenarioId = "random_walk_table"
-	ScenarioIdRandomWalkWithError          ScenarioId = "random_walk_with_error"
-	ScenarioIdRawFrame                     ScenarioId = "raw_frame"
-	ScenarioIdServerError500               ScenarioId = "server_error_500"
-	ScenarioIdSimulation                   ScenarioId = "simulation"
-	ScenarioIdSlowQuery                    ScenarioId = "slow_query"
-	ScenarioIdStreamingClient              ScenarioId = "streaming_client"
-	ScenarioIdTableStatic                  ScenarioId = "table_static"
-	ScenarioIdTrace                        ScenarioId = "trace"
-	ScenarioIdUsa                          ScenarioId = "usa"
-	ScenarioIdVariablesQuery               ScenarioId = "variables-query"
-)
-
-// Defines values for StreamType.
-const (
-	StreamTypeFetch  StreamType = "fetch"
-	StreamTypeLogs   StreamType = "logs"
-	StreamTypeSignal StreamType = "signal"
-)
-
 // Defines values for TestDataQueryType.
 const (
 	TestDataQueryTypeAnnotations                  TestDataQueryType = "annotations"
@@ -118,6 +71,31 @@ type CSVWave struct {
 	ValuesCSV *string `json:"valuesCSV,omitempty"`
 }
 
+// These are the common properties available to all queries in all datasources.
+// Specific implementations will *extend* this interface, adding the required
+// properties for the given context.
+type DataQuery struct {
+	// For mixed data sources the selected datasource is on the query level.
+	// For non mixed scenarios this is undefined.
+	// TODO find a better way to do this ^ that's friendly to schema
+	// TODO this shouldn't be unknown but DataSourceRef | null
+	Datasource *any `json:"datasource,omitempty"`
+
+	// Hide true if query is disabled (ie should not be returned to the dashboard)
+	// Note this does not always imply that the query should not be executed since
+	// the results from a hidden query may be used as the input to other queries (SSE etc)
+	Hide *bool `json:"hide,omitempty"`
+
+	// Specify the query flavor
+	// TODO make this required and give it a default
+	QueryType *string `json:"queryType,omitempty"`
+
+	// A unique identifier for the query within the list of targets.
+	// In server side expressions, the refId is used as a variable name to identify results.
+	// By default, the UI will assign A->Z; however setting meaningful names may be useful.
+	RefId string `json:"refId"`
+}
+
 // NodesQuery defines model for NodesQuery.
 type NodesQuery struct {
 	Count *int64          `json:"count,omitempty"`
@@ -147,7 +125,7 @@ type Scenario struct {
 
 // SimulationQuery defines model for SimulationQuery.
 type SimulationQuery struct {
-	Config map[string]interface{} `json:"config,omitempty"`
+	Config map[string]any `json:"config,omitempty"`
 	Key    struct {
 		Tick float64 `json:"tick"`
 		Type string  `json:"type"`
@@ -172,94 +150,38 @@ type StreamingQueryType string
 
 // TestDataDataQuery defines model for TestDataDataQuery.
 type TestDataDataQuery struct {
-	Alias       *string `json:"alias,omitempty"`
-	Channel     *string `json:"channel,omitempty"`
-	CsvContent  *string `json:"csvContent,omitempty"`
-	CsvFileName *string `json:"csvFileName,omitempty"`
-	CsvWave     []struct {
-		Labels    *string `json:"labels,omitempty"`
-		Name      *string `json:"name,omitempty"`
-		TimeStep  *int64  `json:"timeStep,omitempty"`
-		ValuesCSV *string `json:"valuesCSV,omitempty"`
-	} `json:"csvWave,omitempty"`
+	// DataQuery These are the common properties available to all queries in all datasources.
+	// Specific implementations will *extend* this interface, adding the required
+	// properties for the given context.
+	DataQuery
+	Alias       *string   `json:"alias,omitempty"`
+	Channel     *string   `json:"channel,omitempty"`
+	CsvContent  *string   `json:"csvContent,omitempty"`
+	CsvFileName *string   `json:"csvFileName,omitempty"`
+	CsvWave     []CSVWave `json:"csvWave,omitempty"`
 
-	// For mixed data sources the selected datasource is on the query level.
-	// For non mixed scenarios this is undefined.
-	// TODO find a better way to do this ^ that's friendly to schema
-	// TODO this shouldn't be unknown but DataSourceRef | null
-	Datasource *interface{} `json:"datasource,omitempty"`
-	ErrorType  *ErrorType   `json:"errorType,omitempty"`
-
-	// Hide true if query is disabled (ie should not be returned to the dashboard)
-	// Note this does not always imply that the query should not be executed since
-	// the results from a hidden query may be used as the input to other queries (SSE etc)
-	Hide        *bool   `json:"hide,omitempty"`
-	Labels      *string `json:"labels,omitempty"`
-	LevelColumn *bool   `json:"levelColumn,omitempty"`
-	Lines       *int64  `json:"lines,omitempty"`
-	Nodes       *struct {
-		Count *int64     `json:"count,omitempty"`
-		Type  *NodesType `json:"type,omitempty"`
-	} `json:"nodes,omitempty"`
-	Points    [][]interface{} `json:"points,omitempty"`
-	PulseWave *struct {
-		OffCount *int64   `json:"offCount,omitempty"`
-		OffValue *float64 `json:"offValue,omitempty"`
-		OnCount  *int64   `json:"onCount,omitempty"`
-		OnValue  *float64 `json:"onValue,omitempty"`
-		TimeStep *int64   `json:"timeStep,omitempty"`
-	} `json:"pulseWave,omitempty"`
-
-	// Specify the query flavor
-	// TODO make this required and give it a default
-	QueryType       *string `json:"queryType,omitempty"`
-	RawFrameContent *string `json:"rawFrameContent,omitempty"`
-
-	// A unique identifier for the query within the list of targets.
-	// In server side expressions, the refId is used as a variable name to identify results.
-	// By default, the UI will assign A->Z; however setting meaningful names may be useful.
-	RefId       string      `json:"refId"`
-	ScenarioId  *ScenarioId `json:"scenarioId,omitempty"`
-	SeriesCount *int32      `json:"seriesCount,omitempty"`
-	Sim         *struct {
-		Config map[string]interface{} `json:"config,omitempty"`
-		Key    struct {
-			Tick float64 `json:"tick"`
-			Type string  `json:"type"`
-			Uid  *string `json:"uid,omitempty"`
-		} `json:"key"`
-		Last   *bool `json:"last,omitempty"`
-		Stream *bool `json:"stream,omitempty"`
-	} `json:"sim,omitempty"`
-	SpanCount *int32 `json:"spanCount,omitempty"`
-	Stream    *struct {
-		Bands  *int32     `json:"bands,omitempty"`
-		Noise  int32      `json:"noise"`
-		Speed  int32      `json:"speed"`
-		Spread int32      `json:"spread"`
-		Type   StreamType `json:"type"`
-		Url    *string    `json:"url,omitempty"`
-	} `json:"stream,omitempty"`
-	StringInput *string `json:"stringInput,omitempty"`
-	Usa         *struct {
-		Fields []string `json:"fields,omitempty"`
-		Mode   *string  `json:"mode,omitempty"`
-		Period *string  `json:"period,omitempty"`
-		States []string `json:"states,omitempty"`
-	} `json:"usa,omitempty"`
+	// Drop percentage (the chance we will lose a point 0-100)
+	DropPercent     *float64           `json:"dropPercent,omitempty"`
+	ErrorType       *ErrorType         `json:"errorType,omitempty"`
+	FlamegraphDiff  *bool              `json:"flamegraphDiff,omitempty"`
+	Labels          *string            `json:"labels,omitempty"`
+	LevelColumn     *bool              `json:"levelColumn,omitempty"`
+	Lines           *int64             `json:"lines,omitempty"`
+	Nodes           *NodesQuery        `json:"nodes,omitempty"`
+	Points          [][]any            `json:"points,omitempty"`
+	PulseWave       *PulseWaveQuery    `json:"pulseWave,omitempty"`
+	RawFrameContent *string            `json:"rawFrameContent,omitempty"`
+	ScenarioId      *TestDataQueryType `json:"scenarioId,omitempty"`
+	SeriesCount     *int32             `json:"seriesCount,omitempty"`
+	Sim             *SimulationQuery   `json:"sim,omitempty"`
+	SpanCount       *int32             `json:"spanCount,omitempty"`
+	Stream          *StreamingQuery    `json:"stream,omitempty"`
+	StringInput     *string            `json:"stringInput,omitempty"`
+	Usa             *USAQuery          `json:"usa,omitempty"`
 }
 
 // ErrorType defines model for TestDataDataQuery.ErrorType.
 type ErrorType string
-
-// NodesType defines model for TestDataDataQuery.Nodes.Type.
-type NodesType string
-
-// ScenarioId defines model for TestDataDataQuery.ScenarioId.
-type ScenarioId string
-
-// StreamType defines model for TestDataDataQuery.Stream.Type.
-type StreamType string
 
 // TestDataQueryType defines model for TestDataQueryType.
 type TestDataQueryType string

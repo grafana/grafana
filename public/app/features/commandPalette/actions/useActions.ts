@@ -30,10 +30,8 @@ export default function useActions(searchQuery: string) {
         .catch((err) => {
           console.error('Error loading recent dashboard actions', err);
         });
-    } else {
-      setRecentDashboardActions([]);
     }
   }, [searchQuery]);
 
-  return [...recentDashboardActions, ...navTreeActions];
+  return searchQuery ? navTreeActions : [...recentDashboardActions, ...navTreeActions];
 }

@@ -94,7 +94,7 @@ func (s CorrelationsService) GetCorrelationsBySourceUID(ctx context.Context, cmd
 	return s.getCorrelationsBySourceUID(ctx, cmd)
 }
 
-func (s CorrelationsService) GetCorrelations(ctx context.Context, cmd GetCorrelationsQuery) ([]Correlation, error) {
+func (s CorrelationsService) GetCorrelations(ctx context.Context, cmd GetCorrelationsQuery) (GetCorrelationsResponseBody, error) {
 	return s.getCorrelations(ctx, cmd)
 }
 
@@ -110,12 +110,14 @@ func (s CorrelationsService) handleDatasourceDeletion(ctx context.Context, event
 	return s.SQLStore.InTransaction(ctx, func(ctx context.Context) error {
 		if err := s.deleteCorrelationsBySourceUID(ctx, DeleteCorrelationsBySourceUIDCommand{
 			SourceUID: event.UID,
+			OrgId:     event.OrgID,
 		}); err != nil {
 			return err
 		}
 
 		if err := s.deleteCorrelationsByTargetUID(ctx, DeleteCorrelationsByTargetUIDCommand{
 			TargetUID: event.UID,
+			OrgId:     event.OrgID,
 		}); err != nil {
 			return err
 		}

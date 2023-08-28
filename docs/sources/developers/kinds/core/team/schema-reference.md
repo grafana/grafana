@@ -2,6 +2,11 @@
 keywords:
   - grafana
   - schema
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: Team kind
 ---
 > Both documentation generation and kinds schemas are in active development and subject to change without prior notice.
@@ -64,22 +69,17 @@ extraFields is reserved for any fields that are pulled from the API server metad
 
 ### Spec
 
-| Property        | Type               | Required | Default | Description                                              |
-|-----------------|--------------------|----------|---------|----------------------------------------------------------|
-| `memberCount`   | integer            | **Yes**  |         | MemberCount is the number of the team members.           |
-| `name`          | string             | **Yes**  |         | Name of the team.                                        |
-| `orgId`         | integer            | **Yes**  |         | OrgId is the ID of an organisation the team belongs to.  |
-| `permission`    | integer            | **Yes**  |         | Possible values are: `0`, `1`, `2`, `4`.                 |
-| `accessControl` | map[string]boolean | No       |         | AccessControl metadata associated with a given resource. |
-| `avatarUrl`     | string             | No       |         | AvatarUrl is the team's avatar URL.                      |
-| `email`         | string             | No       |         | Email of the team.                                       |
+| Property | Type   | Required | Default | Description        |
+|----------|--------|----------|---------|--------------------|
+| `name`   | string | **Yes**  |         | Name of the team.  |
+| `email`  | string | No       |         | Email of the team. |
 
 ### Status
 
-| Property           | Type                                                                             | Required | Default | Description                                                                                                                                                                |
-|--------------------|----------------------------------------------------------------------------------|----------|---------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `additionalFields` | [object](#additionalfields)                                                      | **Yes**  |         | additionalFields is reserved for future use                                                                                                                                |
-| `operatorStates`   | map[string][joinSchema.status.#OperatorState](#joinschema.status.#operatorstate) | No       |         | operatorStates is a map of operator ID to operator state evaluations.<br/>Any operator which consumes this kind SHOULD add its state evaluation information to this field. |
+| Property           | Type                                                       | Required | Default | Description                                                                                                                                                                |
+|--------------------|------------------------------------------------------------|----------|---------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `additionalFields` | [object](#additionalfields)                                | No       |         | additionalFields is reserved for future use                                                                                                                                |
+| `operatorStates`   | map[string][status.#OperatorState](#status.#operatorstate) | No       |         | operatorStates is a map of operator ID to operator state evaluations.<br/>Any operator which consumes this kind SHOULD add its state evaluation information to this field. |
 
 ### AdditionalFields
 
@@ -88,7 +88,7 @@ additionalFields is reserved for future use
 | Property | Type | Required | Default | Description |
 |----------|------|----------|---------|-------------|
 
-### JoinSchema.Status.#OperatorState
+### Status.#OperatorState
 
 | Property           | Type               | Required | Default | Description                                                                                                                                                                      |
 |--------------------|--------------------|----------|---------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

@@ -2,7 +2,7 @@ import { cx } from '@emotion/css';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useEffectOnce } from 'react-use';
 
-import { Alert, Button, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
+import { Alert, Button, LoadingPlaceholder, Modal, useStyles2 } from '@grafana/ui';
 
 import { selectors } from '../../e2e/selectors';
 import ResourcePickerData, { ResourcePickerQueryType } from '../../resourcePicker/resourcePickerData';
@@ -170,7 +170,7 @@ const ResourcePicker = ({
   );
 
   return (
-    <div>
+    <>
       <Search searchFn={handleSearch} />
       {shouldShowLimitFlag ? (
         <p className={styles.resultLimit}>Showing first {resourcePickerData.resultLimit} results</p>
@@ -188,7 +188,7 @@ const ResourcePicker = ({
         </thead>
       </table>
 
-      <div className={styles.tableScroller}>
+      <div className={cx(styles.scrollableTable, styles.tableScroller)}>
         <table className={styles.table}>
           <tbody>
             {isLoading && (
@@ -223,12 +223,12 @@ const ResourcePicker = ({
         </table>
       </div>
 
-      <div className={styles.selectionFooter}>
+      <footer className={styles.selectionFooter}>
         {selectedRows.length > 0 && (
           <>
             <h5>Selection</h5>
 
-            <div className={styles.tableScroller}>
+            <div className={cx(styles.scrollableTable, styles.selectedTableScroller)}>
               <table className={styles.table}>
                 <tbody>
                   {selectedRows.map((row) => (
@@ -261,32 +261,29 @@ const ResourcePicker = ({
           renderAdvanced={renderAdvanced}
         />
 
-        <Space v={2} />
+        {errorMessage && (
+          <>
+            <Space v={2} />
+            <Alert severity="error" title="An error occurred while requesting resources from Azure Monitor">
+              {errorMessage}
+            </Alert>
+          </>
+        )}
 
-        <Button
-          disabled={!!errorMessage || !internalSelected.every(isValid)}
-          onClick={handleApply}
-          data-testid={selectors.components.queryEditor.resourcePicker.apply.button}
-        >
-          Apply
-        </Button>
-
-        <Space layout="inline" h={1} />
-
-        <Button onClick={onCancel} variant="secondary">
-          Cancel
-        </Button>
-      </div>
-
-      {errorMessage && (
-        <>
-          <Space v={2} />
-          <Alert severity="error" title="An error occurred while requesting resources from Azure Monitor">
-            {errorMessage}
-          </Alert>
-        </>
-      )}
-    </div>
+        <Modal.ButtonRow>
+          <Button onClick={onCancel} variant="secondary" fill="outline">
+            Cancel
+          </Button>
+          <Button
+            disabled={!!errorMessage || !internalSelected.every(isValid)}
+            onClick={handleApply}
+            data-testid={selectors.components.queryEditor.resourcePicker.apply.button}
+          >
+            Apply
+          </Button>
+        </Modal.ButtonRow>
+      </footer>
+    </>
   );
 };
 

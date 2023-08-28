@@ -5,6 +5,11 @@ keywords:
   - panel
   - dashboard
   - create
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 menuTitle: Create a dashboard
 title: Create a dashboard
 weight: 1
@@ -26,10 +31,23 @@ Dashboards and panels allow you to show your data in visual form. Each panel nee
 1. Click **Dashboards** in the left-side menu.
 1. Click **New** and select **New Dashboard**.
 1. On the empty dashboard, click **+ Add visualization**.
-1. In the first line of the **Query** tab, click the dropdown list and select a data source.
-1. Write or construct a query in the query language of your data source.
+
+   ![Empty dashboard state](/media/docs/grafana/dashboards/empty-dashboard-9.5.png)
+
+1. In the modal that opens, do one of the following:
+
+   - Select one of your existing data sources.
+   - Select one of the Grafana's [built-in special data sources]({{< relref "../../../datasources/#special-data-sources" >}}).
+   - Click **Configure a new data source** to set up a new one (Admins only).
+
+   {{< figure class="float-right"  src="/media/docs/grafana/dashboards/screenshot-data-source-selector-10.0.png" max-width="800px" alt="Select data source modal" >}}
+
+   The **Edit panel** view opens with your data source selected.
+   You can change the panel data source later using the dropdown in the **Query** tab of the panel editor if needed.
 
    For more information about data sources, refer to [Data sources]({{< relref "../../../datasources/" >}}) for specific guidelines.
+
+1. Write or construct a query in the query language of your data source.
 
 1. Click the Refresh dashboard icon to query the data source.
 
@@ -59,6 +77,11 @@ Dashboards and panels allow you to show your data in visual form. Each panel nee
 
 1. Enter a name for your dashboard and select a folder, if applicable.
 1. Click **Save**.
+1. To add more panels to the dashboard, click **Add** in the dashboard header and select **Visualization** in the dropdown.
+
+   ![Add dropdown](/media/docs/grafana/dashboards/screenshot-add-dropdown-10.0.png)
+
+   When you add additional panels to the dashboard, you're taken straight to the **Edit panel** view.
 
 ## Configure repeating rows
 
@@ -82,7 +105,9 @@ To see an example of repeating rows, refer to [Dashboard with repeating rows](ht
 1. In the **Row Options** dialog box, add a title and select the variable for which you want to add repeating rows.
 1. Click **Update**.
 
-> **Note:** To provide context to dashboard users, add the variable to the row title.
+{{% admonition type="note" %}}
+To provide context to dashboard users, add the variable to the row title.
+{{% /admonition %}}
 
 ## Move a panel
 

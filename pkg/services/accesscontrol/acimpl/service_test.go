@@ -7,7 +7,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -25,7 +24,6 @@ import (
 func setupTestEnv(t testing.TB) *Service {
 	t.Helper()
 	cfg := setting.NewCfg()
-	cfg.RBACEnabled = true
 
 	ac := &Service{
 		cfg:           cfg,
@@ -42,17 +40,10 @@ func setupTestEnv(t testing.TB) *Service {
 func TestUsageMetrics(t *testing.T) {
 	tests := []struct {
 		name          string
-		enabled       bool
 		expectedValue int
 	}{
 		{
-			name:          "Expecting metric with value 0",
-			enabled:       false,
-			expectedValue: 0,
-		},
-		{
 			name:          "Expecting metric with value 1",
-			enabled:       true,
 			expectedValue: 1,
 		},
 	}
@@ -60,17 +51,13 @@ func TestUsageMetrics(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			cfg := setting.NewCfg()
-			cfg.RBACEnabled = tt.enabled
 
-			s, errInitAc := ProvideService(
+			s := ProvideOSSService(
 				cfg,
-				db.InitTestDB(t),
-				routing.NewRouteRegister(),
+				database.ProvideService(db.InitTestDB(t)),
 				localcache.ProvideService(),
-				actest.FakeAccessControl{},
 				featuremgmt.WithFeatures(),
 			)
-			require.NoError(t, errInitAc)
 			assert.Equal(t, tt.expectedValue, s.GetUsageStats(context.Background())["stats.oss.accesscontrol.enabled.count"])
 		})
 	}
@@ -384,6 +371,7 @@ func TestService_SearchUsersPermissions(t *testing.T) {
 	tests := []struct {
 		name           string
 		siuPermissions map[string][]string
+		searchOption   accesscontrol.SearchOptions
 		ramRoles       map[string]*accesscontrol.RoleDTO    // BasicRole => RBAC BasicRole
 		storedPerms    map[int64][]accesscontrol.Permission // UserID => Permissions
 		storedRoles    map[int64][]string                   // UserID => Roles
@@ -393,6 +381,7 @@ func TestService_SearchUsersPermissions(t *testing.T) {
 		{
 			name:           "ram only",
 			siuPermissions: listAllPerms,
+			searchOption:   searchOption,
 			ramRoles: map[string]*accesscontrol.RoleDTO{
 				string(roletype.RoleAdmin): {Permissions: []accesscontrol.Permission{
 					{Action: accesscontrol.ActionTeamsRead, Scope: "teams:*"},
@@ -413,6 +402,7 @@ func TestService_SearchUsersPermissions(t *testing.T) {
 		{
 			name:           "stored only",
 			siuPermissions: listAllPerms,
+			searchOption:   searchOption,
 			storedPerms: map[int64][]accesscontrol.Permission{
 				1: {{Action: accesscontrol.ActionTeamsRead, Scope: "teams:id:1"}},
 				2: {{Action: accesscontrol.ActionTeamsRead, Scope: "teams:*"},
@@ -431,6 +421,7 @@ func TestService_SearchUsersPermissions(t *testing.T) {
 		{
 			name:           "ram and stored",
 			siuPermissions: listAllPerms,
+			searchOption:   searchOption,
 			ramRoles: map[string]*accesscontrol.RoleDTO{
 				string(roletype.RoleAdmin): {Permissions: []accesscontrol.Permission{
 					{Action: accesscontrol.ActionTeamsRead, Scope: "teams:*"},
@@ -459,6 +450,7 @@ func TestService_SearchUsersPermissions(t *testing.T) {
 		{
 			name:           "view permission on subset of users only",
 			siuPermissions: listSomePerms,
+			searchOption:   searchOption,
 			ramRoles: map[string]*accesscontrol.RoleDTO{
 				accesscontrol.RoleGrafanaAdmin: {Permissions: []accesscontrol.Permission{
 					{Action: accesscontrol.ActionTeamsPermissionsRead, Scope: "teams:*"},
@@ -482,6 +474,7 @@ func TestService_SearchUsersPermissions(t *testing.T) {
 		{
 			name:           "check action filter on RAM permissions works correctly",
 			siuPermissions: listAllPerms,
+			searchOption:   searchOption,
 			ramRoles: map[string]*accesscontrol.RoleDTO{
 				accesscontrol.RoleGrafanaAdmin: {Permissions: []accesscontrol.Permission{
 					{Action: accesscontrol.ActionUsersCreate},
@@ -491,6 +484,27 @@ func TestService_SearchUsersPermissions(t *testing.T) {
 			storedRoles: map[int64][]string{1: {accesscontrol.RoleGrafanaAdmin}},
 			want: map[int64][]accesscontrol.Permission{
 				1: {{Action: accesscontrol.ActionTeamsPermissionsRead, Scope: "teams:*"}},
+			},
+		},
+		{
+			name:           "check empty action filter on RAM permissions works correctly",
+			siuPermissions: listAllPerms,
+			searchOption:   accesscontrol.SearchOptions{},
+			ramRoles: map[string]*accesscontrol.RoleDTO{
+				accesscontrol.RoleGrafanaAdmin: {Permissions: []accesscontrol.Permission{
+					{Action: accesscontrol.ActionTeamsRead, Scope: "teams:*"},
+					{Action: accesscontrol.ActionUsersCreate},
+					{Action: accesscontrol.ActionTeamsPermissionsRead, Scope: "teams:*"},
+					{Action: accesscontrol.ActionAnnotationsRead, Scope: "annotations:*"},
+				}},
+			},
+			storedRoles: map[int64][]string{1: {accesscontrol.RoleGrafanaAdmin}},
+			want: map[int64][]accesscontrol.Permission{
+				1: {{Action: accesscontrol.ActionTeamsRead, Scope: "teams:*"},
+					{Action: accesscontrol.ActionUsersCreate},
+					{Action: accesscontrol.ActionTeamsPermissionsRead, Scope: "teams:*"},
+					{Action: accesscontrol.ActionAnnotationsRead, Scope: "annotations:*"},
+				},
 			},
 		},
 	}
@@ -505,7 +519,7 @@ func TestService_SearchUsersPermissions(t *testing.T) {
 			}
 
 			siu := &user.SignedInUser{OrgID: 2, Permissions: map[int64]map[string][]string{2: tt.siuPermissions}}
-			got, err := ac.SearchUsersPermissions(ctx, siu, 2, searchOption)
+			got, err := ac.SearchUsersPermissions(ctx, siu, tt.searchOption)
 			if tt.wantErr {
 				require.NotNil(t, err)
 				return
@@ -737,6 +751,143 @@ func TestPermissionCacheKey(t *testing.T) {
 			str, err := permissionCacheKey(tc.signedInUser)
 			require.Equal(t, tc.expectedErr, err)
 			assert.Equal(t, tc.expected, str)
+		})
+	}
+}
+
+func TestService_SaveExternalServiceRole(t *testing.T) {
+	type run struct {
+		cmd     accesscontrol.SaveExternalServiceRoleCommand
+		wantErr bool
+	}
+	tests := []struct {
+		name string
+		runs []run
+	}{
+		{
+			name: "can create a role",
+			runs: []run{
+				{
+					cmd: accesscontrol.SaveExternalServiceRoleCommand{
+						OrgID:             2,
+						ServiceAccountID:  2,
+						ExternalServiceID: "App 1",
+						Permissions:       []accesscontrol.Permission{{Action: "users:read", Scope: "users:id:1"}},
+					},
+					wantErr: false,
+				},
+			},
+		},
+		{
+			name: "can update a role",
+			runs: []run{
+				{
+					cmd: accesscontrol.SaveExternalServiceRoleCommand{
+						Global:            true,
+						ServiceAccountID:  2,
+						ExternalServiceID: "App 1",
+						Permissions:       []accesscontrol.Permission{{Action: "users:read", Scope: "users:id:1"}},
+					},
+					wantErr: false,
+				},
+				{
+					cmd: accesscontrol.SaveExternalServiceRoleCommand{
+						Global:            true,
+						ServiceAccountID:  2,
+						ExternalServiceID: "App 1",
+						Permissions: []accesscontrol.Permission{
+							{Action: "users:write", Scope: "users:id:1"},
+							{Action: "users:write", Scope: "users:id:2"},
+						},
+					},
+					wantErr: false,
+				},
+			},
+		},
+		{
+			name: "test command validity - no service account ID",
+			runs: []run{
+				{
+					cmd: accesscontrol.SaveExternalServiceRoleCommand{
+						OrgID:             2,
+						ExternalServiceID: "App 1",
+						Permissions:       []accesscontrol.Permission{{Action: "users:read", Scope: "users:id:1"}},
+					},
+					wantErr: true,
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctx := context.Background()
+			ac := setupTestEnv(t)
+			ac.features = featuremgmt.WithFeatures(featuremgmt.FlagExternalServiceAuth)
+			for _, r := range tt.runs {
+				err := ac.SaveExternalServiceRole(ctx, r.cmd)
+				if r.wantErr {
+					require.Error(t, err)
+					continue
+				}
+				require.NoError(t, err)
+
+				// Check that the permissions and assignment are stored correctly
+				perms, errGetPerms := ac.getUserPermissions(ctx, &user.SignedInUser{OrgID: r.cmd.OrgID, UserID: 2}, accesscontrol.Options{})
+				require.NoError(t, errGetPerms)
+				assert.ElementsMatch(t, r.cmd.Permissions, perms)
+			}
+		})
+	}
+}
+
+func TestService_DeleteExternalServiceRole(t *testing.T) {
+	tests := []struct {
+		name              string
+		initCmd           *accesscontrol.SaveExternalServiceRoleCommand
+		externalServiceID string
+		wantErr           bool
+	}{
+		{
+			name:              "handles deleting role that doesn't exist",
+			externalServiceID: "App 1",
+			wantErr:           false,
+		},
+		{
+			name: "handles deleting role that exists",
+			initCmd: &accesscontrol.SaveExternalServiceRoleCommand{
+				Global:            true,
+				ServiceAccountID:  2,
+				ExternalServiceID: "App 1",
+				Permissions:       []accesscontrol.Permission{{Action: "users:read", Scope: "users:id:1"}},
+			},
+			externalServiceID: "App 1",
+			wantErr:           false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctx := context.Background()
+			ac := setupTestEnv(t)
+			ac.features = featuremgmt.WithFeatures(featuremgmt.FlagExternalServiceAuth)
+
+			if tt.initCmd != nil {
+				err := ac.SaveExternalServiceRole(ctx, *tt.initCmd)
+				require.NoError(t, err)
+			}
+
+			err := ac.DeleteExternalServiceRole(ctx, tt.externalServiceID)
+			if tt.wantErr {
+				require.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+
+			if tt.initCmd != nil {
+				// Check that the permissions and assignment are removed correctly
+				perms, errGetPerms := ac.getUserPermissions(ctx, &user.SignedInUser{OrgID: tt.initCmd.OrgID, UserID: 2}, accesscontrol.Options{})
+				require.NoError(t, errGetPerms)
+				assert.Empty(t, perms)
+			}
 		})
 	}
 }

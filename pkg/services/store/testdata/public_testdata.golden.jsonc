@@ -11,20 +11,15 @@
 //      }
 //  }
 //  Name: 
-//  Dimensions: 3 Fields by 7 Rows
-//  +--------------------------+-------------------------+---------------+
-//  | Name: name               | Name: mediaType         | Name: size    |
-//  | Labels:                  | Labels:                 | Labels:       |
-//  | Type: []string           | Type: []string          | Type: []int64 |
-//  +--------------------------+-------------------------+---------------+
-//  | browser_marketshare.csv  | text/csv; charset=utf-8 | 355           |
-//  | flight_info_by_state.csv | text/csv; charset=utf-8 | 681           |
-//  | gdp_per_capita.csv       | text/csv; charset=utf-8 | 4116          |
-//  | js_libraries.csv         | text/csv; charset=utf-8 | 179           |
-//  | ohlc_dogecoin.csv        | text/csv; charset=utf-8 | 191804        |
-//  | population_by_state.csv  | text/csv; charset=utf-8 | 138           |
-//  | weight_height.csv        | text/csv; charset=utf-8 | 418121        |
-//  +--------------------------+-------------------------+---------------+
+//  Dimensions: 3 Fields by 2 Rows
+//  +--------------------+----------------------+---------------+
+//  | Name: name         | Name: mediaType      | Name: size    |
+//  | Labels:            | Labels:              | Labels:       |
+//  | Type: []string     | Type: []string       | Type: []int64 |
+//  +--------------------+----------------------+---------------+
+//  | countries.geojson  | application/geo+json | 255943        |
+//  | usa-states.geojson | application/geo+json | 89263         |
+//  +--------------------+----------------------+---------------+
 //  
 //  
 //  🌟 This was machine generated.  Do not edit. 🌟
@@ -73,31 +68,16 @@
       "data": {
         "values": [
           [
-            "browser_marketshare.csv",
-            "flight_info_by_state.csv",
-            "gdp_per_capita.csv",
-            "js_libraries.csv",
-            "ohlc_dogecoin.csv",
-            "population_by_state.csv",
-            "weight_height.csv"
+            "countries.geojson",
+            "usa-states.geojson"
           ],
           [
-            "text/csv; charset=utf-8",
-            "text/csv; charset=utf-8",
-            "text/csv; charset=utf-8",
-            "text/csv; charset=utf-8",
-            "text/csv; charset=utf-8",
-            "text/csv; charset=utf-8",
-            "text/csv; charset=utf-8"
+            "application/geo+json",
+            "application/geo+json"
           ],
           [
-            355,
-            681,
-            4116,
-            179,
-            191804,
-            138,
-            418121
+            255943,
+            89263
           ]
         ]
       }

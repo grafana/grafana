@@ -1,8 +1,8 @@
 import { VisualizationSuggestionsBuilder } from '@grafana/data';
-import { GraphDrawStyle, GraphFieldConfig } from '@grafana/schema';
+import { GraphDrawStyle, GraphFieldConfig, VizLegendOptions } from '@grafana/schema';
 import { SuggestionName } from 'app/types/suggestions';
 
-import { PanelOptions } from './panelcfg.gen';
+import { Options } from './panelcfg.gen';
 
 export class TrendSuggestionsSupplier {
   getSuggestionsForData(builder: VisualizationSuggestionsBuilder) {
@@ -13,11 +13,11 @@ export class TrendSuggestionsSupplier {
     }
 
     // Super basic
-    const list = builder.getListAppender<PanelOptions, GraphFieldConfig>({
+    const list = builder.getListAppender<Options, GraphFieldConfig>({
       name: SuggestionName.LineChart,
       pluginId: 'trend',
       options: {
-        legend: {} as any,
+        legend: {} as VizLegendOptions,
       },
       fieldConfig: {
         defaults: {

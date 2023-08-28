@@ -1,65 +1,70 @@
-import { css } from '@emotion/css';
 import React, { useState } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
-import { Alert, Button, Field, Modal, Spinner, useStyles2 } from '@grafana/ui';
+import { Space } from '@grafana/experimental';
+import { Alert, Button, Field, Modal, Text } from '@grafana/ui';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
+import { t, Trans } from 'app/core/internationalization';
 
-import { useGetAffectedItemsQuery } from '../../api/browseDashboardsAPI';
 import { DashboardTreeSelection } from '../../types';
 
-import { buildBreakdownString } from './utils';
+import { DescendantCount } from './DescendantCount';
 
 export interface Props {
   isOpen: boolean;
-  onConfirm: (targetFolderUid: string) => void;
+  onConfirm: (targetFolderUid: string) => Promise<void>;
   onDismiss: () => void;
   selectedItems: DashboardTreeSelection;
 }
 
 export const MoveModal = ({ onConfirm, onDismiss, selectedItems, ...props }: Props) => {
   const [moveTarget, setMoveTarget] = useState<string>();
-  const styles = useStyles2(getStyles);
+  const [isMoving, setIsMoving] = useState(false);
   const selectedFolders = Object.keys(selectedItems.folder).filter((uid) => selectedItems.folder[uid]);
-  const { data, isFetching, isLoading, error } = useGetAffectedItemsQuery(selectedItems);
 
-  const onMove = () => {
+  const onMove = async () => {
     if (moveTarget !== undefined) {
-      onConfirm(moveTarget);
+      setIsMoving(true);
+      try {
+        await onConfirm(moveTarget);
+        setIsMoving(false);
+        onDismiss();
+      } catch {
+        setIsMoving(false);
+      }
     }
-    onDismiss();
   };
 
   return (
-    <Modal title="Move" onDismiss={onDismiss} {...props}>
-      {selectedFolders.length > 0 && <Alert severity="warning" title="Moving this item may change its permissions." />}
-      This action will move the following content:
-      <div className={styles.breakdown}>
-        <>
-          {data && buildBreakdownString(data.folder, data.dashboard, data.libraryPanel, data.alertRule)}
-          {(isFetching || isLoading) && <Spinner size={12} />}
-          {error && <Alert severity="error" title="Unable to retrieve descendant information" />}
-        </>
-      </div>
-      <Field label="Folder name">
-        <FolderPicker allowEmpty onChange={({ uid }) => setMoveTarget(uid)} />
+    <Modal title={t('browse-dashboards.action.move-modal-title', 'Move')} onDismiss={onDismiss} {...props}>
+      {selectedFolders.length > 0 && (
+        <Alert
+          severity="info"
+          title={t('browse-dashboards.action.move-modal-alert', 'Moving this item may change its permissions.')}
+        />
+      )}
+
+      <Text element="p">
+        <Trans i18nKey="browse-dashboards.action.move-modal-text">This action will move the following content:</Trans>
+      </Text>
+
+      <DescendantCount selectedItems={selectedItems} />
+
+      <Space v={3} />
+
+      <Field label={t('browse-dashboards.action.move-modal-field-label', 'Folder name')}>
+        <FolderPicker value={moveTarget} excludeUIDs={selectedFolders} onChange={setMoveTarget} />
       </Field>
+
       <Modal.ButtonRow>
-        <Button onClick={onDismiss} variant="secondary">
-          Cancel
+        <Button onClick={onDismiss} variant="secondary" fill="outline">
+          <Trans i18nKey="browse-dashboards.action.cancel-button">Cancel</Trans>
         </Button>
-        <Button disabled={moveTarget === undefined} onClick={onMove} variant="primary">
-          Move
+        <Button disabled={moveTarget === undefined || isMoving} onClick={onMove} variant="primary">
+          {isMoving
+            ? t('browse-dashboards.action.moving', 'Moving...')
+            : t('browse-dashboards.action.move-button', 'Move')}
         </Button>
       </Modal.ButtonRow>
     </Modal>
   );
 };
-
-const getStyles = (theme: GrafanaTheme2) => ({
-  breakdown: css({
-    ...theme.typography.bodySmall,
-    color: theme.colors.text.secondary,
-    marginBottom: theme.spacing(2),
-  }),
-});

@@ -1,23 +1,11 @@
-import { css, cx } from '@emotion/css';
+import { cx } from '@emotion/css';
 import React, { PureComponent } from 'react';
-import DropZone, { FileRejection, DropEvent, ErrorCode } from 'react-dropzone';
 import { connect, ConnectedProps } from 'react-redux';
 
-import {
-  NavModel,
-  NavModelItem,
-  TimeRange,
-  PageLayoutType,
-  locationUtil,
-  dataFrameToJSON,
-  DataFrameJSON,
-  GrafanaTheme2,
-  getValueFormat,
-  formattedValueToString,
-} from '@grafana/data';
+import { NavModel, NavModelItem, TimeRange, PageLayoutType, locationUtil } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { config, locationService, reportInteraction } from '@grafana/runtime';
-import { Icon, Themeable2, withTheme2 } from '@grafana/ui';
+import { config, locationService } from '@grafana/runtime';
+import { Themeable2, withTheme2 } from '@grafana/ui';
 import { notifyApp } from 'app/core/actions';
 import { Page } from 'app/core/components/Page/Page';
 import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound';
@@ -27,15 +15,14 @@ import { getKioskMode } from 'app/core/navigation/kiosk';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { PanelModel } from 'app/features/dashboard/state';
-import * as DFImport from 'app/features/dataframe-import';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { getPageNavFromSlug, getRootContentNavModel } from 'app/features/storage/StorageFolderPage';
-import { GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
 import { DashboardRoutes, KioskMode, StoreState } from 'app/types';
 import { PanelEditEnteredEvent, PanelEditExitedEvent } from 'app/types/events';
 
 import { cancelVariables, templateVarsChangedInUrl } from '../../variables/state/actions';
 import { findTemplateVarChanges } from '../../variables/utils';
+import { AddWidgetModal } from '../components/AddWidgetModal/AddWidgetModal';
 import { DashNav } from '../components/DashNav';
 import { DashboardFailed } from '../components/DashboardLoading/DashboardFailed';
 import { DashboardLoading } from '../components/DashboardLoading/DashboardLoading';
@@ -64,7 +51,7 @@ export type DashboardPageRouteSearchParams = {
   editPanel?: string;
   viewPanel?: string;
   editview?: string;
-  shareView?: string;
+  addWidget?: boolean;
   panelType?: string;
   inspect?: string;
   from?: string;
@@ -113,70 +100,6 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
 
   private forceRouteReloadCounter = 0;
   state: State = this.getCleanState();
-
-  onFileDrop = (acceptedFiles: File[], fileRejections: FileRejection[], event: DropEvent) => {
-    const grafanaDS = {
-      type: 'grafana',
-      uid: 'grafana',
-    };
-    DFImport.filesToDataframes(acceptedFiles).subscribe((next) => {
-      const snapshot: DataFrameJSON[] = [];
-      next.dataFrames.forEach((df) => {
-        const dataframeJson = dataFrameToJSON(df);
-        snapshot.push(dataframeJson);
-      });
-      this.props.dashboard?.addPanel({
-        type: 'table',
-        gridPos: { x: 0, y: 0, w: 12, h: 8 },
-        title: next.file.name,
-        datasource: grafanaDS,
-        targets: [
-          {
-            queryType: GrafanaQueryType.Snapshot,
-            snapshot,
-            file: { name: next.file.name, size: next.file.size },
-            datasource: grafanaDS,
-          },
-        ],
-      });
-    });
-
-    fileRejections.forEach((fileRejection) => {
-      const errors = fileRejection.errors.map((error) => {
-        switch (error.code) {
-          case ErrorCode.FileTooLarge:
-            const formattedSize = getValueFormat('decbytes')(DFImport.maxFileSize);
-            return `File size must be less than ${formattedValueToString(formattedSize)}.`;
-          case ErrorCode.FileInvalidType:
-            return `File type must be one of the following types ${DFImport.formatFileTypes(DFImport.acceptedFiles)}.`;
-          default:
-            return error.message;
-        }
-      });
-      this.props.notifyApp(
-        createErrorNotification(
-          `Failed to load ${fileRejection.file.name}`,
-          undefined,
-          undefined,
-          <ul>
-            {errors.map((err) => {
-              return <li key={err}>{err}</li>;
-            })}
-          </ul>
-        )
-      );
-    });
-
-    reportInteraction('dashboards_dropped_files', {
-      number_of_files: fileRejections.length + acceptedFiles.length,
-      accepted_files: acceptedFiles.map((a) => {
-        return { type: a.type, size: a.size };
-      }),
-      rejected_files: fileRejections.map((r) => {
-        return { type: r.file.type, size: r.file.size };
-      }),
-    });
-  };
 
   getCleanState(): State {
     return {
@@ -454,7 +377,6 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
                 onAddPanel={this.onAddPanel}
                 kioskMode={kioskMode}
                 hideTimePicker={dashboard.timepicker.hidden}
-                shareModalActiveTab={this.props.queryParams.shareView}
               />
             </header>
           )}
@@ -465,41 +387,13 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
               <SubMenu dashboard={dashboard} annotations={dashboard.annotations.list} links={dashboard.links} />
             </section>
           )}
-          {config.featureToggles.editPanelCSVDragAndDrop ? (
-            <DropZone
-              onDrop={this.onFileDrop}
-              accept={DFImport.acceptedFiles}
-              maxSize={DFImport.maxFileSize}
-              noClick={true}
-            >
-              {({ getRootProps, isDragActive }) => {
-                const styles = getStyles(this.props.theme, isDragActive);
-                return (
-                  <div {...getRootProps({ className: styles.dropZone })}>
-                    <div className={styles.dropOverlay}>
-                      <div className={styles.dropHint}>
-                        <Icon name="upload" size="xxxl"></Icon>
-                        <h3>Create tables from spreadsheets</h3>
-                      </div>
-                    </div>
-                    <DashboardGrid
-                      dashboard={dashboard}
-                      isEditable={!!dashboard.meta.canEdit}
-                      viewPanel={viewPanel}
-                      editPanel={editPanel}
-                    />
-                  </div>
-                );
-              }}
-            </DropZone>
-          ) : (
-            <DashboardGrid
-              dashboard={dashboard}
-              isEditable={!!dashboard.meta.canEdit}
-              viewPanel={viewPanel}
-              editPanel={editPanel}
-            />
-          )}
+          <DashboardGrid
+            dashboard={dashboard}
+            isEditable={!!dashboard.meta.canEdit}
+            viewPanel={viewPanel}
+            editPanel={editPanel}
+          />
+
           {inspectPanel && <PanelInspector dashboard={dashboard} panel={inspectPanel} />}
         </Page>
         {editPanel && (
@@ -519,13 +413,14 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
             sectionNav={sectionNav}
           />
         )}
+        {queryParams.addWidget && config.featureToggles.vizAndWidgetSplit && <AddWidgetModal />}
       </>
     );
   }
 }
 
 function updateStatePageNavFromProps(props: Props, state: State): State {
-  const { dashboard } = props;
+  const { dashboard, navIndex } = props;
 
   if (!dashboard) {
     return state;
@@ -534,7 +429,7 @@ function updateStatePageNavFromProps(props: Props, state: State): State {
   let pageNav = state.pageNav;
   let sectionNav = state.sectionNav;
 
-  if (!pageNav || dashboard.title !== pageNav.text) {
+  if (!pageNav || dashboard.title !== pageNav.text || dashboard.meta.folderUrl !== pageNav.parentItem?.url) {
     pageNav = {
       text: dashboard.title,
       url: locationUtil.getUrlForPartial(props.history.location, {
@@ -545,16 +440,26 @@ function updateStatePageNavFromProps(props: Props, state: State): State {
     };
   }
 
-  // Check if folder changed
   const { folderTitle, folderUid } = dashboard.meta;
-  if (folderTitle && folderUid && pageNav && pageNav.parentItem?.text !== folderTitle) {
-    pageNav = {
-      ...pageNav,
-      parentItem: {
-        text: folderTitle,
-        url: `/dashboards/f/${dashboard.meta.folderUid}`,
-      },
-    };
+  if (folderUid && pageNav) {
+    if (config.featureToggles.nestedFolders) {
+      const folderNavModel = getNavModel(navIndex, `folder-dashboards-${folderUid}`).main;
+      pageNav = {
+        ...pageNav,
+        parentItem: folderNavModel,
+      };
+    } else {
+      // Check if folder changed
+      if (folderTitle && pageNav.parentItem?.text !== folderTitle) {
+        pageNav = {
+          ...pageNav,
+          parentItem: {
+            text: folderTitle,
+            url: `/dashboards/f/${dashboard.meta.folderUid}`,
+          },
+        };
+      }
+    }
   }
 
   if (props.route.routeName === DashboardRoutes.Path) {
@@ -584,32 +489,6 @@ function updateStatePageNavFromProps(props: Props, state: State): State {
     ...state,
     pageNav,
     sectionNav,
-  };
-}
-
-function getStyles(theme: GrafanaTheme2, isDragActive: boolean) {
-  return {
-    dropZone: css`
-      height: 100%;
-    `,
-    dropOverlay: css`
-      background-color: ${isDragActive ? theme.colors.action.hover : `inherit`};
-      border: ${isDragActive ? `2px dashed ${theme.colors.border.medium}` : 0};
-      position: absolute;
-      display: ${isDragActive ? 'flex' : 'none'};
-      z-index: ${theme.zIndex.modal};
-      top: 0px;
-      left: 0px;
-      height: 100%;
-      width: 100%;
-      align-items: center;
-      justify-content: center;
-    `,
-    dropHint: css`
-      align-items: center;
-      display: flex;
-      flex-direction: column;
-    `,
   };
 }
 

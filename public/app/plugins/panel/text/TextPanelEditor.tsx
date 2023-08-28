@@ -10,9 +10,9 @@ import {
   variableSuggestionToCodeEditorSuggestion,
 } from '@grafana/ui';
 
-import { PanelOptions, TextMode } from './panelcfg.gen';
+import { Options, TextMode } from './panelcfg.gen';
 
-export const TextPanelEditor = ({ value, onChange, context }: StandardEditorProps<string, any, PanelOptions>) => {
+export const TextPanelEditor = ({ value, onChange, context }: StandardEditorProps<string, any, Options>) => {
   const language = useMemo(() => context.options?.mode ?? TextMode.Markdown, [context]);
   const styles = useStyles2(getStyles);
 
@@ -53,7 +53,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   editorBox: css`
     label: editorBox;
     border: 1px solid ${theme.colors.border.medium};
-    border-radius: ${theme.shape.borderRadius(1)};
+    border-radius: ${theme.shape.radius.default};
     margin: ${theme.spacing(0.5)} 0;
     width: 100%;
   `,

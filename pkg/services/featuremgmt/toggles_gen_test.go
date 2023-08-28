@@ -30,14 +30,20 @@ func TestFeatureToggleFiles(t *testing.T) {
 
 	t.Run("check registry constraints", func(t *testing.T) {
 		for _, flag := range standardFeatureFlags {
-			if flag.Expression == "true" && flag.State != FeatureStateStable {
-				t.Errorf("only stable features can be enabled by default.  See: %s", flag.Name)
+			if flag.Expression == "true" && !(flag.Stage == FeatureStageGeneralAvailability || flag.Stage == FeatureStageDeprecated) {
+				t.Errorf("only FeatureStageGeneralAvailability or FeatureStageDeprecated features can be enabled by default.  See: %s", flag.Name)
 			}
-			if flag.RequiresDevMode && flag.State != FeatureStateAlpha {
+			if flag.RequiresDevMode && flag.Stage != FeatureStageExperimental {
 				t.Errorf("only alpha features can require dev mode.  See: %s", flag.Name)
 			}
-			if flag.State == FeatureStateUnknown {
+			if flag.Stage == FeatureStageUnknown {
 				t.Errorf("standard toggles should not have an unknown state.  See: %s", flag.Name)
+			}
+			if flag.Description != strings.TrimSpace(flag.Description) {
+				t.Errorf("flag Description should not start/end with spaces.  See: %s", flag.Name)
+			}
+			if flag.Name != strings.TrimSpace(flag.Name) {
+				t.Errorf("flag Name should not start/end with spaces.  See: %s", flag.Name)
 			}
 		}
 	})
@@ -204,8 +210,8 @@ func generateCSV() string {
 	w := csv.NewWriter(&buf)
 	if err := w.Write([]string{
 		"Name",
-		"State",           //flag.State.String(),
-		"Owner",           // string(flag.Owner),
+		"Stage",           //flag.Stage.String(),
+		"Owner",           //string(flag.Owner),
 		"requiresDevMode", //strconv.FormatBool(flag.RequiresDevMode),
 		"RequiresLicense", //strconv.FormatBool(flag.RequiresLicense),
 		"RequiresRestart", //strconv.FormatBool(flag.RequiresRestart),
@@ -217,7 +223,7 @@ func generateCSV() string {
 	for _, flag := range standardFeatureFlags {
 		if err := w.Write([]string{
 			flag.Name,
-			flag.State.String(),
+			flag.Stage.String(),
 			string(flag.Owner),
 			strconv.FormatBool(flag.RequiresDevMode),
 			strconv.FormatBool(flag.RequiresLicense),
@@ -238,7 +244,7 @@ func generateDocsMD() string {
 	buf := `---
 aliases:
   - /docs/grafana/latest/setup-grafana/configure-grafana/feature-toggles/
-description: Learn about toggles for experimental and beta features, which you can enable or disable.
+description: Learn about feature toggles, which you can enable or disable.
 title: Configure feature toggles
 weight: 150
 ---
@@ -248,50 +254,50 @@ weight: 150
 
 # Configure feature toggles
 
-You use feature toggles, also known as feature flags, to turn experimental or beta features on and off in Grafana. Although we do not recommend using these features in production, you can turn on feature toggles to try out new functionality in development or test environments.
+You use feature toggles, also known as feature flags, to enable or disable features in Grafana. You can turn on feature toggles to try out new functionality in development or test environments.
 
-This page contains a list of available feature toggles. To learn how to turn on feature toggles, refer to our [Configure Grafana documentation]({{< relref "../_index.md/#feature_toggles" >}}). Feature toggles are also available to Grafana Cloud Advanced customers. If you use Grafana Cloud Advanced, you can open a support ticket and specify the feature toggles and stack for which you want them enabled.
+This page contains a list of available feature toggles. To learn how to turn on feature toggles, refer to our [Configure Grafana documentation]({{< relref "../_index.md#feature_toggles" >}}). Feature toggles are also available to Grafana Cloud Advanced customers. If you use Grafana Cloud Advanced, you can open a support ticket and specify the feature toggles and stack for which you want them enabled.
 
-## Stable feature toggles
+## Feature toggles
 
-Some stable features are enabled by default. You can disable a stable feature by setting the feature flag to "false" in the configuration.
+Some features are enabled by default. You can disable these feature by setting the feature flag to "false" in the configuration.
 
 ` + writeToggleDocsTable(func(flag FeatureFlag) bool {
-		return flag.State == FeatureStateStable
+		return flag.Stage == FeatureStageGeneralAvailability
 	}, true)
 
 	buf += `
-## Beta feature toggles
+## Preview feature toggles
 
 ` + writeToggleDocsTable(func(flag FeatureFlag) bool {
-		return flag.State == FeatureStateBeta
+		return flag.Stage == FeatureStagePublicPreview
 	}, false)
 
 	if hasDeprecatedFlags {
 		buf += `
 ## Deprecated feature toggles
 
-When stable or beta features are slated for removal, they will be marked as Deprecated first.
+When features are slated for removal, they will be marked as Deprecated first.
 
 	` + writeToggleDocsTable(func(flag FeatureFlag) bool {
-			return flag.State == FeatureStateDeprecated
+			return flag.Stage == FeatureStageDeprecated
 		}, false)
 	}
 
 	buf += `
-## Alpha feature toggles
+## Experimental feature toggles
 
 These features are early in their development lifecycle and so are not yet supported in Grafana Cloud.
-Alpha features might be changed or removed without prior notice.
+Experimental features might be changed or removed without prior notice.
 
 ` + writeToggleDocsTable(func(flag FeatureFlag) bool {
-		return flag.State == FeatureStateAlpha && !flag.RequiresDevMode
+		return flag.Stage == FeatureStageExperimental && !flag.RequiresDevMode
 	}, false)
 
 	buf += `
 ## Development feature toggles
 
-The following toggles require explicitly setting Grafana's [app mode]({{< relref "../_index.md/#app_mode" >}}) to 'development' before you can enable this feature toggle. These features tend to be experimental.
+The following toggles require explicitly setting Grafana's [app mode]({{< relref "../_index.md#app_mode" >}}) to 'development' before you can enable this feature toggle. These features tend to be experimental.
 
 ` + writeToggleDocsTable(func(flag FeatureFlag) bool {
 		return flag.RequiresDevMode
@@ -303,7 +309,7 @@ func writeToggleDocsTable(include func(FeatureFlag) bool, showEnableByDefault bo
 	data := [][]string{}
 
 	for _, flag := range standardFeatureFlags {
-		if include(flag) {
+		if include(flag) && !flag.HideFromDocs {
 			row := []string{"`" + flag.Name + "`", flag.Description}
 			if showEnableByDefault {
 				on := ""

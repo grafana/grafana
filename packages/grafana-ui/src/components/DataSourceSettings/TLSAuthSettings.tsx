@@ -53,9 +53,9 @@ export const TLSAuthSettings = ({ dataSourceConfig, onChange }: HttpSettingsBase
       <div
         className={cx(
           'gf-form',
-          css`
-            align-items: baseline;
-          `
+          css({
+            alignItems: 'baseline',
+          })
         )}
       >
         <h6>TLS/SSL Auth Details</h6>
@@ -64,9 +64,7 @@ export const TLSAuthSettings = ({ dataSourceConfig, onChange }: HttpSettingsBase
           content="TLS/SSL Certs are encrypted and stored in the Grafana database."
           theme="info"
         >
-          <div className="gf-form-help-icon gf-form-help-icon--right-normal">
-            <Icon name="info-circle" size="xs" style={{ marginLeft: '10px' }} />
-          </div>
+          <Icon name="info-circle" size="xs" style={{ marginLeft: '10px' }} />
         </Tooltip>
       </div>
       <div>

@@ -14,7 +14,7 @@ export function UnitValueEditor({ value, onChange, item }: Props) {
         <span className={styles.first}>
           <UnitPicker value={value} onChange={onChange} />
         </span>
-        <IconButton ariaLabel="clear unit selection" name="times" onClick={() => onChange(undefined)} />
+        <IconButton name="times" onClick={() => onChange(undefined)} tooltip="Clear unit selection" />
       </div>
     );
   }

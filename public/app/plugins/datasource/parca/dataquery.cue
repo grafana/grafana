@@ -16,31 +16,26 @@ package grafanaplugin
 
 import (
 	"github.com/grafana/grafana/packages/grafana-schema/src/common"
-	"github.com/grafana/grafana/pkg/plugins/pfs"
 )
-
-// This file (with its sibling .cue files) implements pfs.GrafanaPlugin
-pfs.GrafanaPlugin
 
 composableKinds: DataQuery: {
 	maturity: "experimental"
 
 	lineage: {
-		seqs: [
+		schemas: [{
+			version: [0, 0]
+			schema:
+			// v0.0
 			{
-				schemas: [
-					// v0.0
-					{
-						common.DataQuery
+				common.DataQuery
 
-						// Specifies the query label selectors.
-						labelSelector: string | *"{}"
-						// Specifies the type of profile to query.
-						profileTypeId:   string
-						#ParcaQueryType: "metrics" | "profile" | *"both" @cuetsy(kind="type")
-					},
-				]
-			},
-		]
+				// Specifies the query label selectors.
+				labelSelector: string | *"{}"
+				// Specifies the type of profile to query.
+				profileTypeId:   string
+				#ParcaQueryType: "metrics" | "profile" | *"both" @cuetsy(kind="type")
+			}
+		}]
+		lenses: []
 	}
 }

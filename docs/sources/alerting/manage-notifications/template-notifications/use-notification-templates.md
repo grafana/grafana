@@ -1,11 +1,17 @@
 ---
-aliases:
+canonical: https://grafana.com/docs/grafana/latest/alerting/manage-notifications/template-notifications/use-notification-templates/
+description: Use notification templates in contact points
 keywords:
   - grafana
   - alerting
   - notifications
   - templates
   - use templates
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: Use notification templates
 weight: 300
 ---
@@ -24,6 +30,14 @@ In the Contact points tab, you can see a list of your contact points.
 
    {{< figure max-width="940px" src="/static/img/docs/alerting/unified/use-notification-template-9-4.png" caption="Use notification template" >}}
 
-   For more information on how to write and execute templates, refer to [Using Go's templating language]({{< relref "./using-go-templating-language" >}}) and [Create notification templates]({{< relref "./create-notification-templates" >}}).
+   For more information on how to write and execute templates, refer to [Using Go's templating language][using-go-templating-language] and [Create notification templates][create-notification-templates].
 
 3. Click Save template.
+
+{{% docs/reference %}}
+[create-notification-templates]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/alerting/manage-notifications/template-notifications/create-notification-templates"
+[create-notification-templates]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/manage-notifications/template-notifications/create-notification-templates"
+
+[using-go-templating-language]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/alerting/manage-notifications/template-notifications/using-go-templating-language"
+[using-go-templating-language]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/manage-notifications/template-notifications/using-go-templating-language"
+{{% /docs/reference %}}

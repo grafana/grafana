@@ -30,7 +30,7 @@ func (s *Service) File(ctx context.Context, pluginID, filename string) (*plugins
 		defer func() {
 			err = f.Close()
 			if err != nil {
-				s.log.Error("Could not close plugin file", "pluginID", p.ID, "file", filename)
+				s.log.Error("Could not close plugin file", "pluginId", p.ID, "file", filename)
 			}
 		}()
 

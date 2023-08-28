@@ -12,6 +12,8 @@ export * from './appEvents';
 export {
   setPluginExtensionGetter,
   getPluginExtensions,
+  getPluginLinkExtensions,
+  getPluginComponentExtensions,
   type GetPluginExtensions,
 } from './pluginExtensions/getPluginExtensions';
-export { isPluginExtensionLink } from './pluginExtensions/utils';
+export { isPluginExtensionLink, isPluginExtensionComponent } from './pluginExtensions/utils';

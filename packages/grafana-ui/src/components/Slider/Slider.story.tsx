@@ -1,9 +1,9 @@
-import { ComponentStory, ComponentMeta } from '@storybook/react';
+import { StoryFn, Meta } from '@storybook/react';
 import React from 'react';
 
 import { Slider } from '@grafana/ui';
 
-const meta: ComponentMeta<typeof Slider> = {
+const meta: Meta<typeof Slider> = {
   title: 'Forms/Slider',
   component: Slider,
   parameters: {
@@ -29,7 +29,7 @@ const meta: ComponentMeta<typeof Slider> = {
   },
 };
 
-export const Basic: ComponentStory<typeof Slider> = (args) => {
+export const Basic: StoryFn<typeof Slider> = (args) => {
   return (
     <div style={{ width: '300px', height: '300px' }}>
       <Slider {...args} />
@@ -37,7 +37,7 @@ export const Basic: ComponentStory<typeof Slider> = (args) => {
   );
 };
 
-export const WithMarks: ComponentStory<typeof Slider> = (args) => {
+export const WithMarks: StoryFn<typeof Slider> = (args) => {
   return (
     <div style={{ width: '300px', height: '300px' }}>
       <Slider {...args} />

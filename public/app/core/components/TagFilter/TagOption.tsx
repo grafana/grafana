@@ -7,7 +7,7 @@ import { useStyles2 } from '@grafana/ui';
 
 import { TagBadge } from './TagBadge';
 
-export const TagOption = ({ data, className, label, isFocused, innerProps }: OptionProps<any, any>) => {
+export const TagOption = ({ data, className, label, isFocused, innerProps }: OptionProps<any>) => {
   const styles = useStyles2(getStyles);
 
   return (

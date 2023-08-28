@@ -7,20 +7,36 @@ keywords:
   - configuration
   - documentation
   - oauth
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
+menuTitle: Azure AD OAuth2
 title: Configure Azure AD OAuth2 authentication
-weight: 600
+weight: 800
 ---
 
 # Configure Azure AD OAuth2 authentication
 
 The Azure AD authentication allows you to use an Azure Active Directory tenant as an identity provider for Grafana. You can use Azure AD Application Roles to assign users and groups to Grafana roles from the Azure Portal. This topic has the following sections:
 
-- [Azure AD OAuth2 authentication](#azure-ad-oauth2-authentication)
+- [Configure Azure AD OAuth2 authentication](#configure-azure-ad-oauth2-authentication)
   - [Create the Azure AD application](#create-the-azure-ad-application)
+    - [Assign server administrator privileges](#assign-server-administrator-privileges)
   - [Enable Azure AD OAuth in Grafana](#enable-azure-ad-oauth-in-grafana)
+    - [Configure refresh token](#configure-refresh-token)
+    - [Configure allowed tenants](#configure-allowed-tenants)
     - [Configure allowed groups](#configure-allowed-groups)
     - [Configure allowed domains](#configure-allowed-domains)
+    - [PKCE](#pkce)
+    - [Configure automatic login](#configure-automatic-login)
     - [Team Sync (Enterprise only)](#team-sync-enterprise-only)
+  - [Common troubleshooting](#common-troubleshooting)
+    - [Users with over 200 Group assignments](#users-with-over-200-group-assignments)
+    - [Force fetching groups from Microsoft graph API](#force-fetching-groups-from-microsoft-graph-api)
+    - [Map roles](#map-roles)
+  - [Skip organization role sync](#skip-organization-role-sync)
 
 ## Create the Azure AD application
 
@@ -125,7 +141,7 @@ If the setting is set to `false`, the user is assigned the role of `Admin` of th
 
 ## Enable Azure AD OAuth in Grafana
 
-1. Add the following to the [Grafana configuration file]({{< relref "../../../configure-grafana/#config-file-locations" >}}):
+1. Add the following to the [Grafana configuration file]({{< relref "../../../configure-grafana#configuration-file-location" >}}):
 
 ```
 [auth.azuread]
@@ -140,9 +156,11 @@ auth_url = https://login.microsoftonline.com/TENANT_ID/oauth2/v2.0/authorize
 token_url = https://login.microsoftonline.com/TENANT_ID/oauth2/v2.0/token
 allowed_domains =
 allowed_groups =
+allowed_organizations = TENANT_ID
 role_attribute_strict = false
 allow_assign_grafana_admin = false
 skip_org_role_sync = false
+use_pkce = true
 ```
 
 You can also use these environment variables to configure **client_id** and **client_secret**:
@@ -152,7 +170,7 @@ GF_AUTH_AZUREAD_CLIENT_ID
 GF_AUTH_AZUREAD_CLIENT_SECRET
 ```
 
-**Note:** Verify that the Grafana [root_url]({{< relref "../../../configure-grafana/#root-url" >}}) is set in your Azure Application Redirect URLs.
+**Note:** Verify that the Grafana [root_url]({{< relref "../../../configure-grafana#root_url" >}}) is set in your Azure Application Redirect URLs.
 
 ### Configure refresh token
 
@@ -164,7 +182,22 @@ When a user logs in using an OAuth provider, Grafana verifies that the access to
 
 Grafana uses a refresh token to obtain a new access token without requiring the user to log in again. If a refresh token doesn't exist, Grafana logs the user out of the system after the access token has expired.
 
-To enable a refresh token for AzureAD, extend the `scopes` in `[auth.azuread]` with `offline_access`.
+Refresh token fetching and access token expiration check is enabled by default for the AzureAD provider since Grafana v10.1.0 if the `accessTokenExpirationCheck` feature toggle is enabled. If you would like to disable access token expiration check then set the `use_refresh_token` configuration value to `false`.
+
+> **Note:** The `accessTokenExpirationCheck` feature toggle will be removed in Grafana v10.2.0 and the `use_refresh_token` configuration value will be used instead for configuring refresh token fetching and access token expiration check.
+
+### Configure allowed tenants
+
+To limit access to authenticated users who are members of one or more tenants, set `allowed_organizations`
+to a comma- or space-separated list of tenant IDs. You can find tenant IDs on the Azure portal under **Azure Active Directory -> Overview**.
+
+Make sure to include the tenant IDs of all the federated Users' root directory if your Azure AD contains external identities.
+
+For example, if you want to only give access to members of the tenant `example` with an ID of `8bab1c86-8fba-33e5-2089-1d1c80ec267d`, then set the following:
+
+```
+allowed_organizations = 8bab1c86-8fba-33e5-2089-1d1c80ec267d
+```
 
 ### Configure allowed groups
 
@@ -191,9 +224,18 @@ The `allowed_domains` option limits access to users who belong to specific domai
 allowed_domains = mycompany.com mycompany.org
 ```
 
+### PKCE
+
+IETF's [RFC 7636](https://datatracker.ietf.org/doc/html/rfc7636)
+introduces "proof key for code exchange" (PKCE) which provides
+additional protection against some forms of authorization code
+interception attacks. PKCE will be required in [OAuth 2.1](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-v2-1-03).
+
+> You can disable PKCE in Grafana by setting `use_pkce` to `false` in the`[auth.azuread]` section.
+
 ### Configure automatic login
 
-Set `auto_login` option to true to attempt login automatically, skipping the login screen.
+To bypass the login screen and log in automatically, enable the "auto_login" feature.
 This setting is ignored if multiple auth providers are configured to use auto login.
 
 ```
@@ -207,7 +249,7 @@ the correct teams.
 
 You can reference Azure AD groups by group object ID, like `8bab1c86-8fba-33e5-2089-1d1c80ec267d`.
 
-To learn more, refer to the [Team Sync]({{< relref "../../configure-team-sync/" >}}) documentation.
+To learn more, refer to the [Team Sync]({{< relref "../../configure-team-sync" >}}) documentation.
 
 ## Common troubleshooting
 
@@ -224,7 +266,7 @@ If a user is member of more groups than the
 overage limit (200), then
 Azure AD does not emit the groups claim in the token and emits a group overage claim instead.
 
-> More information in [Groups overage claim](https://learn.microsoft.com/en-us/azure/active-directory/develop/id-tokens#groups-overage-claim)
+> More information in [Groups overage claim](https://learn.microsoft.com/en-us/azure/active-directory/develop/id-token-claims-reference#groups-overage-claim)
 
 If Grafana receives a token with a group overage claim instead of a groups claim,
 Grafana attempts to retrieve the user's group membership by calling the included endpoint.
@@ -255,7 +297,7 @@ their organization membership will be reset to the default organization.
 ## Skip organization role sync
 
 If Azure AD authentication is not intended to sync user roles and organization membership and prevent the sync of org roles from AzureAD, set `skip_org_role_sync` to `true`. This is useful if you want to manage the organization roles for your users from within Grafana or that your organization roles are synced from another provider.
-See [configure-grafana]({{< relref "../../../configure-grafana#authazuread-skip-org-role-sync" >}}) for more details.
+See [Configure Grafana]({{< relref "../../../configure-grafana#authazuread" >}}) for more details.
 
 ```ini
 [auth.azuread]

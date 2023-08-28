@@ -1,7 +1,7 @@
 import { VisualizationSuggestionsBuilder } from '@grafana/data';
 import { SuggestionName } from 'app/types/suggestions';
 
-import { PanelFieldConfig, PanelOptions } from './panelcfg.gen';
+import { FieldConfig, Options } from './panelcfg.gen';
 
 export class StatTimelineSuggestionsSupplier {
   getSuggestionsForData(builder: VisualizationSuggestionsBuilder) {
@@ -26,7 +26,7 @@ export class StatTimelineSuggestionsSupplier {
       return;
     }
 
-    const list = builder.getListAppender<PanelOptions, PanelFieldConfig>({
+    const list = builder.getListAppender<Options, FieldConfig>({
       name: '',
       pluginId: 'state-timeline',
       options: {},

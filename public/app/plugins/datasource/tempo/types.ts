@@ -1,4 +1,4 @@
-import { DataSourceJsonData, KeyValue } from '@grafana/data/src';
+import { DataSourceJsonData } from '@grafana/data/src';
 import { NodeGraphOptions } from 'app/core/components/NodeGraphSettings';
 import { TraceToLogsOptions } from 'app/core/components/TraceToLogs/TraceToLogsSettings';
 
@@ -55,17 +55,17 @@ export type TraceSearchMetadata = {
   rootTraceName: string;
   startTimeUnixNano?: string;
   durationMs?: number;
-  spanSet?: { spans: Span[] };
+  spanSet?: Spanset;
+  spanSets?: Spanset[];
 };
 
 export type SearchMetrics = {
   inspectedTraces?: number;
   inspectedBytes?: number;
-  inspectedBlocks?: number;
-  skippedBlocks?: number;
-  skippedTraces?: number;
+  totalBlocks?: number;
+  completedJobs?: number;
+  totalJobs?: number;
   totalBlockBytes?: number;
-  spanSets?: Spanset[];
 };
 
 export enum SpanKind {
@@ -77,6 +77,22 @@ export enum SpanKind {
   CONSUMER,
 }
 
+export type SpanAttributes = {
+  key: string;
+  value: {
+    stringValue?: string;
+    intValue?: string;
+    boolValue?: boolean;
+    doubleValue?: string;
+    Value?: {
+      string_value?: string;
+      int_value?: string;
+      bool_value?: boolean;
+      double_value?: string;
+    };
+  };
+};
+
 export type Span = {
   durationNanos: string;
   traceId?: string;
@@ -87,19 +103,21 @@ export type Span = {
   kind?: SpanKind;
   startTimeUnixNano: string;
   endTimeUnixNano?: string;
-  attributes?: Array<{
-    key: string;
-    value: { stringValue?: string; intValue?: string; boolValue?: boolean; doubleValue?: string };
-  }>;
+  attributes?: SpanAttributes[];
   dropped_attributes_count?: number;
 };
 
 export type Spanset = {
-  attributes: KeyValue[];
+  attributes?: SpanAttributes[];
   spans: Span[];
 };
 
 export type SearchResponse = {
   traces: TraceSearchMetadata[];
   metrics: SearchMetrics;
+};
+
+export type Scope = {
+  name: string;
+  tags: string[];
 };

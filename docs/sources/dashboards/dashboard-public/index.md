@@ -2,22 +2,27 @@
 aliases:
   - ../features/dashboard/dashboards/
   - dashboard-manage/
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: Public dashboards
 weight: 8
 ---
 
 # Public dashboards
 
-{{% admonition type="Note" %}}
+{{% admonition type="note" %}}
 
 This feature is in [public preview](/docs/release-life-cycle/).
 
 {{% /admonition %}}
 
-{{% admonition type="Caution" %}}
+{{% admonition type="caution" %}}
 
 Making your dashboard public could result in a large number of queries to the data sources used by your dashboard.
-This can be mitigated by utilizing the enterprise [caching]({{< relref "../../administration/data-source-management/#query-caching" >}}) and/or rate limiting features.
+This can be mitigated by utilizing the enterprise [caching]({{< relref "../../administration/data-source-management/#query-and-resource-caching" >}}) and/or rate limiting features.
 
 {{% /admonition %}}
 
@@ -47,7 +52,7 @@ If you are using Docker, use an environment variable to enable public dashboards
 --env GF_FEATURE_TOGGLES_ENABLE=publicDashboards
 ```
 
-{{% admonition type="Note" %}}
+{{% admonition type="note" %}}
 
 For Grafana Cloud (Pro and Advanced only), contact support to have the feature enabled.
 
@@ -81,28 +86,15 @@ The link no longer works. You must create a new public URL, as in [Make a dashbo
 
 ## Email sharing
 
-{{% admonition type="Note" %}}
+{{% admonition type="note" %}}
 
-Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise/" >}}) and [Grafana Cloud Pro and Advanced](/docs/grafana-cloud).
+Available in [private preview](/docs/release-life-cycle/) in [Grafana Cloud Pro and Advanced](/docs/grafana-cloud). This feature will have a cost by active users after being promoted into general availability.
+
+Please contact support to have the feature enabled.
 
 {{% /admonition %}}
 
 Email sharing allows you to share your public dashboard with only specific people by email, instead of having it accessible to anyone with the URL. When you use email sharing, recipients receive a one-time use link that's valid for **one hour**. Once the link is used, the viewer has access to the public dashboard for **30 days**.
-
-### Enable email sharing
-
-{{% admonition type="Note" %}}
-
-For Grafana Cloud (Pro and Advanced only), contact support to have the feature enabled.
-
-{{% /admonition %}}
-
-Add the `publicDashboardsEmailSharing` feature toggle to your `custom.ini` file.
-
-```
-[feature_toggles]
-publicDashboardsEmailSharing = true
-```
 
 ### Invite a viewer
 
@@ -157,7 +149,9 @@ If a Grafana user has read access to the parent dashboard, they can view the pub
 
 ## Assess public dashboard usage
 
-> **Note:** Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise/" >}}) and [Grafana Cloud Pro and Advanced](/docs/grafana-cloud).
+{{% admonition type="note" %}}
+Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise/" >}}) and [Grafana Cloud Pro and Advanced](/docs/grafana-cloud).
+{{% /admonition %}}
 
 You can check usage analytics about your public dashboard by clicking the insights icon in the dashboard header:
 
@@ -167,7 +161,7 @@ Learn more about the kind of information provided in the [dashboard insights doc
 
 ## Supported data sources
 
-Public dashboards _should_ work with any data source that has the properties `backend` and `alerting` both set to true in its `package.json`. However, this can't always be
+Public dashboards _should_ work with any data source that has the properties `backend` and `alerting` both set to true in its `plugin.json`. However, this can't always be
 guaranteed because plugin developers can override this functionality. The following lists include data sources confirmed to work with public dashboards and data sources that should work, but have not been confirmed as compatible.
 
 ### Confirmed:
@@ -203,7 +197,7 @@ guaranteed because plugin developers can override this functionality. The follow
 
 ### Unconfirmed:
 
-{{% admonition type="Note" %}}
+{{% admonition type="note" %}}
 
 If you've confirmed one of these data sources work with public dashboards, let us know in our [Github](https://github.com/grafana/grafana/discussions/49253) discussion, and we'll mark it as confirmed!
 

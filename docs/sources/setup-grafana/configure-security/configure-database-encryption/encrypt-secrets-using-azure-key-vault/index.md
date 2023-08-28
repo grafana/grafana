@@ -2,6 +2,10 @@
 aliases:
   - ../../../enterprise/enterprise-encryption/using-azure-key-vault-to-encrypt-database-secrets/
 description: Learn how to use Azure Key Vault to encrypt secrets in the Grafana database.
+labels:
+  products:
+    - enterprise
+    - oss
 title: Encrypt database secrets using Azure Key Vault
 weight: 400
 ---
@@ -13,7 +17,7 @@ You can use an encryption key from Azure Key Vault to encrypt secrets in the Gra
 **Prerequisites:**
 
 - An Azure account with permission to view and create Key Vault keys and programmatic credentials to access those keys
-- Access to the Grafana [configuration]({{< relref "../../../configure-grafana/#config-file-locations" >}}) file
+- Access to the Grafana [configuration]({{< relref "../../../configure-grafana#configuration-file-location" >}}) file
 
 1. [Create a vault](https://docs.microsoft.com/en-us/azure/key-vault/general/quick-create-portal#create-a-vault).
 
@@ -25,7 +29,7 @@ You can use an encryption key from Azure Key Vault to encrypt secrets in the Gra
 
 5. In the Key Permissions section, set encrypt and decrypt permissions, and click **Save**.
 
-6. From within Grafana, turn on [envelope encryption]({{< relref "./#envelope-encryption" >}}).
+6. From within Grafana, turn on envelope encryption.
 
 7. Add your Azure Key Vault details to the Grafana configuration file; depending on your operating system, is usually named `grafana.ini`:
    <br><br>a. Add a new section to the configuration file, with a name in the format of `[security.encryption.azurekv.<KEY-NAME>]`, where `<KEY-NAME>` is any name that uniquely identifies this key among other provider keys.
@@ -69,7 +73,7 @@ You can use an encryption key from Azure Key Vault to encrypt secrets in the Gra
 
    **> Note:** The encryption key stored in the `secret_key` field is still used by Grafana’s legacy alerting system to encrypt secrets. Do not change or remove that value.
 
-9. [Restart Grafana](https://grafana.com/docs/grafana/latest/installation/restart-grafana/).
+9. [Restart Grafana](/docs/grafana/latest/installation/restart-grafana/).
 
 10. (Optional) From the command line and the root directory of Grafana Enterprise, re-encrypt all of the secrets within the Grafana database with the new key using the following command:
 

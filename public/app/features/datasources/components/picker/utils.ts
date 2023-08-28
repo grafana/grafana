@@ -3,7 +3,7 @@ import { DataSourceInstanceSettings, DataSourceJsonData, DataSourceRef } from '@
 export function isDataSourceMatch(
   ds: DataSourceInstanceSettings | undefined,
   current: string | DataSourceInstanceSettings | DataSourceRef | null | undefined
-): boolean | undefined {
+): boolean {
   if (!ds) {
     return false;
   }
@@ -20,7 +20,7 @@ export function dataSourceLabel(
   dataSource: DataSourceInstanceSettings<DataSourceJsonData> | string | DataSourceRef | null | undefined
 ) {
   if (!dataSource) {
-    return 'Unknown';
+    return undefined;
   }
 
   if (typeof dataSource === 'string') {
@@ -35,7 +35,7 @@ export function dataSourceLabel(
     return `${dataSource.uid} - not found`;
   }
 
-  return 'Unknown';
+  return undefined;
 }
 
 export function getDataSourceCompareFn(
@@ -44,6 +44,9 @@ export function getDataSourceCompareFn(
   dataSourceVariablesIDs: string[]
 ) {
   const cmpDataSources = (a: DataSourceInstanceSettings, b: DataSourceInstanceSettings) => {
+    const nameA = a.name.toUpperCase();
+    const nameB = b.name.toUpperCase();
+
     // Sort the current ds before everything else.
     if (current && isDataSourceMatch(a, current)) {
       return -1;
@@ -68,8 +71,6 @@ export function getDataSourceCompareFn(
       return -1;
     } else if (bIsVariable && !aIsVariable) {
       return 1;
-    } else if (bIsVariable && aIsVariable) {
-      return a.name < b.name ? -1 : 1;
     }
 
     // Sort built in DataSources to the bottom and alphabetically by name.
@@ -77,12 +78,10 @@ export function getDataSourceCompareFn(
       return 1;
     } else if (b.meta.builtIn && !a.meta.builtIn) {
       return -1;
-    } else if (a.meta.builtIn && b.meta.builtIn) {
-      return a.name < b.name ? -1 : 1;
     }
 
     // Sort the rest alphabetically by name.
-    return a.name < b.name ? -1 : 1;
+    return nameA < nameB ? -1 : 1;
   };
 
   return cmpDataSources;

@@ -1,6 +1,7 @@
 package cloudwatch
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -39,8 +40,8 @@ func parseMultiSelectValue(input string) []string {
 
 // Whenever this list is updated, the frontend list should also be updated.
 // Please update the region list in public/app/plugins/datasource/cloudwatch/partials/config.html
-func (e *cloudWatchExecutor) handleGetRegions(pluginCtx backend.PluginContext, parameters url.Values) ([]suggestData, error) {
-	instance, err := e.getInstance(pluginCtx)
+func (e *cloudWatchExecutor) handleGetRegions(ctx context.Context, pluginCtx backend.PluginContext, parameters url.Values) ([]suggestData, error) {
+	instance, err := e.getInstance(ctx, pluginCtx)
 	if err != nil {
 		return nil, err
 	}
@@ -52,7 +53,7 @@ func (e *cloudWatchExecutor) handleGetRegions(pluginCtx backend.PluginContext, p
 		}
 	}
 
-	client, err := e.getEC2Client(pluginCtx, defaultRegion)
+	client, err := e.getEC2Client(ctx, pluginCtx, defaultRegion)
 	if err != nil {
 		return nil, err
 	}
@@ -85,12 +86,12 @@ func mergeEC2RegionsAndConstantRegions(regions map[string]struct{}, ec2Regions [
 	}
 }
 
-func (e *cloudWatchExecutor) handleGetEbsVolumeIds(pluginCtx backend.PluginContext, parameters url.Values) ([]suggestData, error) {
+func (e *cloudWatchExecutor) handleGetEbsVolumeIds(ctx context.Context, pluginCtx backend.PluginContext, parameters url.Values) ([]suggestData, error) {
 	region := parameters.Get("region")
 	instanceId := parameters.Get("instanceId")
 
 	instanceIds := aws.StringSlice(parseMultiSelectValue(instanceId))
-	instances, err := e.ec2DescribeInstances(pluginCtx, region, nil, instanceIds)
+	instances, err := e.ec2DescribeInstances(ctx, pluginCtx, region, nil, instanceIds)
 	if err != nil {
 		return nil, err
 	}
@@ -107,7 +108,7 @@ func (e *cloudWatchExecutor) handleGetEbsVolumeIds(pluginCtx backend.PluginConte
 	return result, nil
 }
 
-func (e *cloudWatchExecutor) handleGetEc2InstanceAttribute(pluginCtx backend.PluginContext, parameters url.Values) ([]suggestData, error) {
+func (e *cloudWatchExecutor) handleGetEc2InstanceAttribute(ctx context.Context, pluginCtx backend.PluginContext, parameters url.Values) ([]suggestData, error) {
 	region := parameters.Get("region")
 	attributeName := parameters.Get("attributeName")
 	filterJson := parameters.Get("filters")
@@ -134,7 +135,7 @@ func (e *cloudWatchExecutor) handleGetEc2InstanceAttribute(pluginCtx backend.Plu
 		}
 	}
 
-	instances, err := e.ec2DescribeInstances(pluginCtx, region, filters, nil)
+	instances, err := e.ec2DescribeInstances(ctx, pluginCtx, region, filters, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -192,7 +193,7 @@ func (e *cloudWatchExecutor) handleGetEc2InstanceAttribute(pluginCtx backend.Plu
 	return result, nil
 }
 
-func (e *cloudWatchExecutor) handleGetResourceArns(pluginCtx backend.PluginContext, parameters url.Values) ([]suggestData, error) {
+func (e *cloudWatchExecutor) handleGetResourceArns(ctx context.Context, pluginCtx backend.PluginContext, parameters url.Values) ([]suggestData, error) {
 	region := parameters.Get("region")
 	resourceType := parameters.Get("resourceType")
 	tagsJson := parameters.Get("tags")
@@ -222,7 +223,7 @@ func (e *cloudWatchExecutor) handleGetResourceArns(pluginCtx backend.PluginConte
 	var resourceTypes []*string
 	resourceTypes = append(resourceTypes, &resourceType)
 
-	resources, err := e.resourceGroupsGetResources(pluginCtx, region, filters, resourceTypes)
+	resources, err := e.resourceGroupsGetResources(ctx, pluginCtx, region, filters, resourceTypes)
 	if err != nil {
 		return nil, err
 	}
@@ -236,13 +237,13 @@ func (e *cloudWatchExecutor) handleGetResourceArns(pluginCtx backend.PluginConte
 	return result, nil
 }
 
-func (e *cloudWatchExecutor) ec2DescribeInstances(pluginCtx backend.PluginContext, region string, filters []*ec2.Filter, instanceIds []*string) (*ec2.DescribeInstancesOutput, error) {
+func (e *cloudWatchExecutor) ec2DescribeInstances(ctx context.Context, pluginCtx backend.PluginContext, region string, filters []*ec2.Filter, instanceIds []*string) (*ec2.DescribeInstancesOutput, error) {
 	params := &ec2.DescribeInstancesInput{
 		Filters:     filters,
 		InstanceIds: instanceIds,
 	}
 
-	client, err := e.getEC2Client(pluginCtx, region)
+	client, err := e.getEC2Client(ctx, pluginCtx, region)
 	if err != nil {
 		return nil, err
 	}
@@ -258,14 +259,14 @@ func (e *cloudWatchExecutor) ec2DescribeInstances(pluginCtx backend.PluginContex
 	return &resp, nil
 }
 
-func (e *cloudWatchExecutor) resourceGroupsGetResources(pluginCtx backend.PluginContext, region string, filters []*resourcegroupstaggingapi.TagFilter,
+func (e *cloudWatchExecutor) resourceGroupsGetResources(ctx context.Context, pluginCtx backend.PluginContext, region string, filters []*resourcegroupstaggingapi.TagFilter,
 	resourceTypes []*string) (*resourcegroupstaggingapi.GetResourcesOutput, error) {
 	params := &resourcegroupstaggingapi.GetResourcesInput{
 		ResourceTypeFilters: resourceTypes,
 		TagFilters:          filters,
 	}
 
-	client, err := e.getRGTAClient(pluginCtx, region)
+	client, err := e.getRGTAClient(ctx, pluginCtx, region)
 	if err != nil {
 		return nil, err
 	}

@@ -4,25 +4,23 @@ import { DataQuery } from '@grafana/schema';
 import { PromApplication } from '../../../types/unified-alerting-dto';
 
 import { Prometheus as GenPromQuery } from './dataquery.gen';
-import { QueryEditorMode } from './querybuilder/shared/types';
+import { QueryBuilderLabelFilter, QueryEditorMode } from './querybuilder/shared/types';
 
 export interface PromQuery extends GenPromQuery, DataQuery {
   /**
    * Timezone offset to align start & end time on backend
    */
   utcOffsetSec?: number;
-  legendFormat?: string;
   valueWithRefId?: boolean;
   showingGraph?: boolean;
   showingTable?: boolean;
   hinting?: boolean;
   interval?: string;
-  intervalFactor?: number;
-  // store the metrics modal additional settings
+  // store the metrics explorer additional settings
   useBackend?: boolean;
   disableTextWrap?: boolean;
   fullMetaSearch?: boolean;
-  excludeNullMetadata?: boolean;
+  includeNullMetadata?: boolean;
 }
 
 export enum PrometheusCacheLevel {
@@ -31,6 +29,7 @@ export enum PrometheusCacheLevel {
   High = 'High',
   None = 'None',
 }
+
 export interface PromOptions extends DataSourceJsonData {
   timeInterval?: string;
   queryTimeout?: string;
@@ -45,6 +44,8 @@ export interface PromOptions extends DataSourceJsonData {
   defaultEditor?: QueryEditorMode;
   incrementalQuerying?: boolean;
   incrementalQueryOverlapWindow?: string;
+  disableRecordingRules?: boolean;
+  sigV4Auth?: boolean;
 }
 
 export type ExemplarTraceIdDestination = {
@@ -192,6 +193,8 @@ export interface PromVariableQuery extends DataQuery {
   metric?: string;
   varQuery?: string;
   seriesQuery?: string;
+  labelFilters?: QueryBuilderLabelFilter[];
+  match?: string;
 }
 
 export type StandardPromVariableQuery = {

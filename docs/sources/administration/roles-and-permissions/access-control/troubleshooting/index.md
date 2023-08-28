@@ -1,12 +1,11 @@
 ---
 aliases:
   - ../../../enterprise/access-control/troubleshooting/
+description: RBAC troubleshooting guide.
 labels:
   products:
     - cloud
     - enterprise
-    - oss
-description: RBAC troubleshooting guide.
 menuTitle: Troubleshooting RBAC
 title: Troubleshooting RBAC
 weight: 80
@@ -27,7 +26,9 @@ filters = accesscontrol:debug accesscontrol.evaluator:debug dashboard.permission
 
 ## Enable audit logging
 
-> **Note:** Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise/" >}}) version 7.3 and later, and [Grafana Cloud Advanced](/docs/grafana-cloud).
+{{% admonition type="note" %}}
+Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise/" >}}) version 7.3 and later, and [Grafana Cloud](/docs/grafana-cloud).
+{{% /admonition %}}
 
 You can enable auditing in the Grafana configuration file.
 
@@ -45,8 +46,10 @@ Learn more about [access control audit logs]({{< relref "../../../../setup-grafa
 This happens when an instance is downgraded from a version that uses RBAC to a version that uses the legacy access control, and dashboard, folder or data source permissions are updated.
 These permission updates will not be applied to RBAC, so permissions will be out of sync when the instance is next upgraded to a version with RBAC.
 
-> **Note:** the steps provided below will set all dashboard, folder and data source permissions to what they are set to with the legacy access control.
-> If you have made dashboard, folder or data source permission updates with RBAC enabled, these updates will be wiped.
+{{% admonition type="note" %}}
+the steps provided below will set all dashboard, folder and data source permissions to what they are set to with the legacy access control.
+If you have made dashboard, folder or data source permission updates with RBAC enabled, these updates will be wiped.
+{{% /admonition %}}
 
 To resynchronize the permissions:
 

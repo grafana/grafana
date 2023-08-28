@@ -46,7 +46,7 @@ func TestVerifyUsingPKIXPublicKeyFile(t *testing.T) {
 	scenario(t, "verifies a token", func(t *testing.T, sc scenarioContext) {
 		token := sign(t, key, jwt.Claims{
 			Subject: subject,
-		})
+		}, nil)
 		verifiedClaims, err := sc.authJWTSvc.Verify(sc.ctx, token)
 		require.NoError(t, err)
 		assert.Equal(t, verifiedClaims["sub"], subject)
@@ -55,10 +55,23 @@ func TestVerifyUsingPKIXPublicKeyFile(t *testing.T) {
 	scenario(t, "rejects a token signed by unknown key", func(t *testing.T, sc scenarioContext) {
 		token := sign(t, unknownKey, jwt.Claims{
 			Subject: subject,
-		})
+		}, nil)
 		_, err := sc.authJWTSvc.Verify(sc.ctx, token)
 		require.Error(t, err)
 	}, configurePKIXPublicKeyFile)
+
+	publicKeyID := "some-key-id"
+	scenario(t, "verifies a token with a specified kid", func(t *testing.T, sc scenarioContext) {
+		token := sign(t, key, jwt.Claims{
+			Subject: subject,
+		}, (&jose.SignerOptions{}).WithHeader("kid", publicKeyID))
+		verifiedClaims, err := sc.authJWTSvc.Verify(sc.ctx, token)
+		require.NoError(t, err)
+		assert.Equal(t, verifiedClaims["sub"], subject)
+	}, configurePKIXPublicKeyFile, func(t *testing.T, cfg *setting.Cfg) {
+		t.Helper()
+		cfg.JWTAuthKeyID = publicKeyID
+	})
 }
 
 func TestVerifyUsingJWKSetFile(t *testing.T) {
@@ -80,21 +93,21 @@ func TestVerifyUsingJWKSetFile(t *testing.T) {
 	}
 
 	scenario(t, "verifies a token signed with a key from the set", func(t *testing.T, sc scenarioContext) {
-		token := sign(t, &jwKeys[0], jwt.Claims{Subject: subject})
+		token := sign(t, &jwKeys[0], jwt.Claims{Subject: subject}, nil)
 		verifiedClaims, err := sc.authJWTSvc.Verify(sc.ctx, token)
 		require.NoError(t, err)
 		assert.Equal(t, verifiedClaims["sub"], subject)
 	}, configure)
 
 	scenario(t, "verifies a token signed with another key from the set", func(t *testing.T, sc scenarioContext) {
-		token := sign(t, &jwKeys[1], jwt.Claims{Subject: subject})
+		token := sign(t, &jwKeys[1], jwt.Claims{Subject: subject}, nil)
 		verifiedClaims, err := sc.authJWTSvc.Verify(sc.ctx, token)
 		require.NoError(t, err)
 		assert.Equal(t, verifiedClaims["sub"], subject)
 	}, configure)
 
 	scenario(t, "rejects a token signed with a key not from the set", func(t *testing.T, sc scenarioContext) {
-		token := sign(t, jwKeys[2], jwt.Claims{Subject: subject})
+		token := sign(t, jwKeys[2], jwt.Claims{Subject: subject}, nil)
 		_, err := sc.authJWTSvc.Verify(sc.ctx, token)
 		require.Error(t, err)
 	}, configure)
@@ -112,25 +125,35 @@ func TestVerifyUsingJWKSetURL(t *testing.T) {
 		_, err = initAuthService(t, func(t *testing.T, cfg *setting.Cfg) {
 			cfg.JWTAuthJWKSetURL = "http://example.com/.well-known/jwks.json"
 		})
+		require.NoError(t, err)
+
+		oldEnv := setting.Env
+		setting.Env = setting.Prod
+		defer func() {
+			setting.Env = oldEnv
+		}()
+		_, err = initAuthService(t, func(t *testing.T, cfg *setting.Cfg) {
+			cfg.JWTAuthJWKSetURL = "http://example.com/.well-known/jwks.json"
+		})
 		require.Error(t, err)
 	})
 
 	jwkHTTPScenario(t, "verifies a token signed with a key from the set", func(t *testing.T, sc scenarioContext) {
-		token := sign(t, &jwKeys[0], jwt.Claims{Subject: subject})
+		token := sign(t, &jwKeys[0], jwt.Claims{Subject: subject}, nil)
 		verifiedClaims, err := sc.authJWTSvc.Verify(sc.ctx, token)
 		require.NoError(t, err)
 		assert.Equal(t, verifiedClaims["sub"], subject)
 	})
 
 	jwkHTTPScenario(t, "verifies a token signed with another key from the set", func(t *testing.T, sc scenarioContext) {
-		token := sign(t, &jwKeys[1], jwt.Claims{Subject: subject})
+		token := sign(t, &jwKeys[1], jwt.Claims{Subject: subject}, nil)
 		verifiedClaims, err := sc.authJWTSvc.Verify(sc.ctx, token)
 		require.NoError(t, err)
 		assert.Equal(t, verifiedClaims["sub"], subject)
 	})
 
 	jwkHTTPScenario(t, "rejects a token signed with a key not from the set", func(t *testing.T, sc scenarioContext) {
-		token := sign(t, jwKeys[2], jwt.Claims{Subject: subject})
+		token := sign(t, jwKeys[2], jwt.Claims{Subject: subject}, nil)
 		_, err := sc.authJWTSvc.Verify(sc.ctx, token)
 		require.Error(t, err)
 	})
@@ -139,7 +162,7 @@ func TestVerifyUsingJWKSetURL(t *testing.T) {
 func TestCachingJWKHTTPResponse(t *testing.T) {
 	jwkCachingScenario(t, "caches the jwk response", func(t *testing.T, sc cachingScenarioContext) {
 		for i := 0; i < 5; i++ {
-			token := sign(t, &jwKeys[0], jwt.Claims{Subject: subject})
+			token := sign(t, &jwKeys[0], jwt.Claims{Subject: subject}, nil)
 			_, err := sc.authJWTSvc.Verify(sc.ctx, token)
 			require.NoError(t, err, "verify call %d", i+1)
 		}
@@ -150,8 +173,8 @@ func TestCachingJWKHTTPResponse(t *testing.T) {
 	jwkCachingScenario(t, "respects TTL setting (while cached)", func(t *testing.T, sc cachingScenarioContext) {
 		var err error
 
-		token0 := sign(t, &jwKeys[0], jwt.Claims{Subject: subject})
-		token1 := sign(t, &jwKeys[1], jwt.Claims{Subject: subject})
+		token0 := sign(t, &jwKeys[0], jwt.Claims{Subject: subject}, nil)
+		token1 := sign(t, &jwKeys[1], jwt.Claims{Subject: subject}, nil)
 
 		_, err = sc.authJWTSvc.Verify(sc.ctx, token0)
 		require.NoError(t, err)
@@ -166,7 +189,7 @@ func TestCachingJWKHTTPResponse(t *testing.T) {
 
 	jwkCachingScenario(t, "does not cache the response when TTL is zero", func(t *testing.T, sc cachingScenarioContext) {
 		for i := 0; i < 2; i++ {
-			_, err := sc.authJWTSvc.Verify(sc.ctx, sign(t, &jwKeys[i], jwt.Claims{Subject: subject}))
+			_, err := sc.authJWTSvc.Verify(sc.ctx, sign(t, &jwKeys[i], jwt.Claims{Subject: subject}, nil))
 			require.NoError(t, err, "verify call %d", i+1)
 		}
 
@@ -188,8 +211,8 @@ func TestClaimValidation(t *testing.T) {
 	key := rsaKeys[0]
 
 	scenario(t, "validates iss field for equality", func(t *testing.T, sc scenarioContext) {
-		tokenValid := sign(t, key, jwt.Claims{Issuer: "http://foo"})
-		tokenInvalid := sign(t, key, jwt.Claims{Issuer: "http://bar"})
+		tokenValid := sign(t, key, jwt.Claims{Issuer: "http://foo"}, nil)
+		tokenInvalid := sign(t, key, jwt.Claims{Issuer: "http://bar"}, nil)
 
 		_, err := sc.authJWTSvc.Verify(sc.ctx, tokenValid)
 		require.NoError(t, err)
@@ -203,8 +226,8 @@ func TestClaimValidation(t *testing.T) {
 	scenario(t, "validates sub field for equality", func(t *testing.T, sc scenarioContext) {
 		var err error
 
-		tokenValid := sign(t, key, jwt.Claims{Subject: "foo"})
-		tokenInvalid := sign(t, key, jwt.Claims{Subject: "bar"})
+		tokenValid := sign(t, key, jwt.Claims{Subject: "foo"}, nil)
+		tokenInvalid := sign(t, key, jwt.Claims{Subject: "bar"}, nil)
 
 		_, err = sc.authJWTSvc.Verify(sc.ctx, tokenValid)
 		require.NoError(t, err)
@@ -218,19 +241,19 @@ func TestClaimValidation(t *testing.T) {
 	scenario(t, "validates aud field for inclusion", func(t *testing.T, sc scenarioContext) {
 		var err error
 
-		_, err = sc.authJWTSvc.Verify(sc.ctx, sign(t, key, jwt.Claims{Audience: []string{"bar", "foo"}}))
+		_, err = sc.authJWTSvc.Verify(sc.ctx, sign(t, key, jwt.Claims{Audience: []string{"bar", "foo"}}, nil))
 		require.NoError(t, err)
 
-		_, err = sc.authJWTSvc.Verify(sc.ctx, sign(t, key, jwt.Claims{Audience: []string{"foo", "bar", "baz"}}))
+		_, err = sc.authJWTSvc.Verify(sc.ctx, sign(t, key, jwt.Claims{Audience: []string{"foo", "bar", "baz"}}, nil))
 		require.NoError(t, err)
 
-		_, err = sc.authJWTSvc.Verify(sc.ctx, sign(t, key, jwt.Claims{Audience: []string{"foo"}}))
+		_, err = sc.authJWTSvc.Verify(sc.ctx, sign(t, key, jwt.Claims{Audience: []string{"foo"}}, nil))
 		require.Error(t, err)
 
-		_, err = sc.authJWTSvc.Verify(sc.ctx, sign(t, key, jwt.Claims{Audience: []string{"bar", "baz"}}))
+		_, err = sc.authJWTSvc.Verify(sc.ctx, sign(t, key, jwt.Claims{Audience: []string{"bar", "baz"}}, nil))
 		require.Error(t, err)
 
-		_, err = sc.authJWTSvc.Verify(sc.ctx, sign(t, key, jwt.Claims{Audience: []string{"baz"}}))
+		_, err = sc.authJWTSvc.Verify(sc.ctx, sign(t, key, jwt.Claims{Audience: []string{"baz"}}, nil))
 		require.Error(t, err)
 	}, configurePKIXPublicKeyFile, func(t *testing.T, cfg *setting.Cfg) {
 		cfg.JWTAuthExpectClaims = `{"aud": ["foo", "bar"]}`
@@ -239,19 +262,19 @@ func TestClaimValidation(t *testing.T) {
 	scenario(t, "validates non-registered (custom) claims for equality", func(t *testing.T, sc scenarioContext) {
 		var err error
 
-		_, err = sc.authJWTSvc.Verify(sc.ctx, sign(t, key, map[string]interface{}{"my-str": "foo", "my-number": 123}))
+		_, err = sc.authJWTSvc.Verify(sc.ctx, sign(t, key, map[string]interface{}{"my-str": "foo", "my-number": 123}, nil))
 		require.NoError(t, err)
 
-		_, err = sc.authJWTSvc.Verify(sc.ctx, sign(t, key, map[string]interface{}{"my-str": "bar", "my-number": 123}))
+		_, err = sc.authJWTSvc.Verify(sc.ctx, sign(t, key, map[string]interface{}{"my-str": "bar", "my-number": 123}, nil))
 		require.Error(t, err)
 
-		_, err = sc.authJWTSvc.Verify(sc.ctx, sign(t, key, map[string]interface{}{"my-str": "foo", "my-number": 100}))
+		_, err = sc.authJWTSvc.Verify(sc.ctx, sign(t, key, map[string]interface{}{"my-str": "foo", "my-number": 100}, nil))
 		require.Error(t, err)
 
-		_, err = sc.authJWTSvc.Verify(sc.ctx, sign(t, key, map[string]interface{}{"my-str": "foo"}))
+		_, err = sc.authJWTSvc.Verify(sc.ctx, sign(t, key, map[string]interface{}{"my-str": "foo"}, nil))
 		require.Error(t, err)
 
-		_, err = sc.authJWTSvc.Verify(sc.ctx, sign(t, key, map[string]interface{}{"my-number": 123}))
+		_, err = sc.authJWTSvc.Verify(sc.ctx, sign(t, key, map[string]interface{}{"my-number": 123}, nil))
 		require.Error(t, err)
 	}, configurePKIXPublicKeyFile, func(t *testing.T, cfg *setting.Cfg) {
 		cfg.JWTAuthExpectClaims = `{"my-str": "foo", "my-number": 123}`
@@ -260,30 +283,30 @@ func TestClaimValidation(t *testing.T) {
 	scenario(t, "validates exp claim of the token", func(t *testing.T, sc scenarioContext) {
 		var err error
 
-		_, err = sc.authJWTSvc.Verify(sc.ctx, sign(t, key, jwt.Claims{Expiry: jwt.NewNumericDate(time.Now().Add(time.Hour))}))
+		_, err = sc.authJWTSvc.Verify(sc.ctx, sign(t, key, jwt.Claims{Expiry: jwt.NewNumericDate(time.Now().Add(time.Hour))}, nil))
 		require.NoError(t, err)
 
-		_, err = sc.authJWTSvc.Verify(sc.ctx, sign(t, key, jwt.Claims{Expiry: jwt.NewNumericDate(time.Now().Add(-time.Hour))}))
+		_, err = sc.authJWTSvc.Verify(sc.ctx, sign(t, key, jwt.Claims{Expiry: jwt.NewNumericDate(time.Now().Add(-time.Hour))}, nil))
 		require.Error(t, err)
 	}, configurePKIXPublicKeyFile)
 
 	scenario(t, "validates nbf claim of the token", func(t *testing.T, sc scenarioContext) {
 		var err error
 
-		_, err = sc.authJWTSvc.Verify(sc.ctx, sign(t, key, jwt.Claims{NotBefore: jwt.NewNumericDate(time.Now().Add(-time.Hour))}))
+		_, err = sc.authJWTSvc.Verify(sc.ctx, sign(t, key, jwt.Claims{NotBefore: jwt.NewNumericDate(time.Now().Add(-time.Hour))}, nil))
 		require.NoError(t, err)
 
-		_, err = sc.authJWTSvc.Verify(sc.ctx, sign(t, key, jwt.Claims{NotBefore: jwt.NewNumericDate(time.Now().Add(time.Hour))}))
+		_, err = sc.authJWTSvc.Verify(sc.ctx, sign(t, key, jwt.Claims{NotBefore: jwt.NewNumericDate(time.Now().Add(time.Hour))}, nil))
 		require.Error(t, err)
 	}, configurePKIXPublicKeyFile)
 
 	scenario(t, "validates iat claim of the token", func(t *testing.T, sc scenarioContext) {
 		var err error
 
-		_, err = sc.authJWTSvc.Verify(sc.ctx, sign(t, key, jwt.Claims{IssuedAt: jwt.NewNumericDate(time.Now().Add(-time.Hour))}))
+		_, err = sc.authJWTSvc.Verify(sc.ctx, sign(t, key, jwt.Claims{IssuedAt: jwt.NewNumericDate(time.Now().Add(-time.Hour))}, nil))
 		require.NoError(t, err)
 
-		_, err = sc.authJWTSvc.Verify(sc.ctx, sign(t, key, jwt.Claims{IssuedAt: jwt.NewNumericDate(time.Now().Add(time.Hour))}))
+		_, err = sc.authJWTSvc.Verify(sc.ctx, sign(t, key, jwt.Claims{IssuedAt: jwt.NewNumericDate(time.Now().Add(time.Hour))}, nil))
 		require.Error(t, err)
 	}, configurePKIXPublicKeyFile)
 }
@@ -350,7 +373,7 @@ func TestBase64Paddings(t *testing.T) {
 	scenario(t, "verifies a token with base64 padding (non compliant rfc7515#section-2 but accepted)", func(t *testing.T, sc scenarioContext) {
 		token := sign(t, key, jwt.Claims{
 			Subject: subject,
-		})
+		}, nil)
 		var tokenParts []string
 		for i, part := range strings.Split(token, ".") {
 			// Create parts with different padding numbers to test multiple cases.

@@ -250,7 +250,7 @@ describe('when rendering table', () => {
       expect(html).toBe('<td>1.23 kb/s</td>');
     });
 
-    it('number column should be formated', () => {
+    it('number column should be formatted', () => {
       const html = renderer.renderCell(1, 0, 1230);
       expect(html).toBe('<td>1.230 s</td>');
     });

@@ -9,6 +9,8 @@ var Versions = VersionMap{
 			VariantLinuxAmd64Musl,
 			VariantDarwinAmd64,
 			VariantWindowsAmd64,
+			VariantArm64,
+			VariantArm64Musl,
 		},
 		PluginSignature: PluginSignature{
 			Sign:      false,
@@ -18,6 +20,7 @@ var Versions = VersionMap{
 			ShouldSave: false,
 			Architectures: []Architecture{
 				ArchAMD64,
+				ArchARM64,
 			},
 			Distribution: []Distribution{
 				Alpine,

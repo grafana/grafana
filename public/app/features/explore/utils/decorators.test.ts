@@ -17,6 +17,16 @@ jest.mock('@grafana/data', () => ({
   dateTimeFormatTimeAgo: () => 'fromNow() jest mocked',
 }));
 
+jest.mock('../../plugins/importPanelPlugin', () => {
+  const actual = jest.requireActual('../../plugins/importPanelPlugin');
+  return {
+    ...actual,
+    hasPanelPlugin: (id: string) => {
+      return id === 'someCustomPanelPlugin';
+    },
+  };
+});
+
 const getTestContext = () => {
   const timeSeries = toDataFrame({
     name: 'A-series',
@@ -84,6 +94,7 @@ const createExplorePanelData = (args: Partial<ExplorePanelData>): ExplorePanelDa
     tableResult: null,
     traceFrames: [],
     nodeGraphFrames: [],
+    customFrames: [],
     flameGraphFrames: [],
     rawPrometheusFrames: [],
     rawPrometheusResult: null,
@@ -111,6 +122,7 @@ describe('decorateWithGraphLogsTraceTableAndFlameGraph', () => {
       tableFrames: [table, emptyTable],
       logsFrames: [logs],
       traceFrames: [],
+      customFrames: [],
       nodeGraphFrames: [],
       flameGraphFrames: [flameGraph],
       graphResult: null,
@@ -139,6 +151,7 @@ describe('decorateWithGraphLogsTraceTableAndFlameGraph', () => {
       logsFrames: [],
       traceFrames: [],
       nodeGraphFrames: [],
+      customFrames: [],
       flameGraphFrames: [],
       graphResult: null,
       tableResult: null,
@@ -169,6 +182,7 @@ describe('decorateWithGraphLogsTraceTableAndFlameGraph', () => {
       logsFrames: [logs],
       traceFrames: [],
       nodeGraphFrames: [],
+      customFrames: [],
       flameGraphFrames: [],
       graphResult: null,
       tableResult: null,
@@ -312,5 +326,39 @@ describe('decorateWithLogsResult', () => {
     const { logs } = getTestContext();
     const panelData = createExplorePanelData({ error: {}, logsFrames: [logs] });
     expect(decorateWithLogsResult()(panelData).logsResult).not.toBeNull();
+  });
+});
+
+describe('decorateWithCustomFrames', () => {
+  it('returns empty array if no custom frames', () => {
+    const { table, logs, timeSeries, emptyTable, flameGraph } = getTestContext();
+    const series = [table, logs, timeSeries, emptyTable, flameGraph];
+    const timeRange = getDefaultTimeRange();
+    const panelData: PanelData = {
+      series,
+      state: LoadingState.Done,
+      timeRange,
+    };
+
+    expect(decorateWithFrameTypeMetadata(panelData).customFrames).toEqual([]);
+  });
+  it('returns data if we have custom frames', () => {
+    const { table, logs, timeSeries, emptyTable, flameGraph } = getTestContext();
+    const customFrame = toDataFrame({
+      name: 'custom-panel',
+      refId: 'A',
+      fields: [],
+      meta: { preferredVisualisationType: 'table', preferredVisualisationPluginId: 'someCustomPanelPlugin' },
+    });
+
+    const series = [table, logs, timeSeries, emptyTable, flameGraph, customFrame];
+    const timeRange = getDefaultTimeRange();
+    const panelData: PanelData = {
+      series,
+      state: LoadingState.Done,
+      timeRange,
+    };
+
+    expect(decorateWithFrameTypeMetadata(panelData).customFrames).toEqual([customFrame]);
   });
 });

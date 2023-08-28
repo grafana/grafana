@@ -1,5 +1,5 @@
 import { chain, difference } from 'lodash';
-import LRU from 'lru-cache';
+import { LRUCache } from 'lru-cache';
 import Prism, { Grammar } from 'prismjs';
 
 import { dateTime, AbsoluteTimeRange, LanguageProvider, HistoryItem, AbstractQuery } from '@grafana/data';
@@ -29,8 +29,7 @@ const NS_IN_MS = 1000000;
 // When changing RATE_RANGES, check if Prometheus/PromQL ranges should be changed too
 // @see public/app/plugins/datasource/prometheus/promql.ts
 const RATE_RANGES: CompletionItem[] = [
-  { label: '$__interval', sortValue: '$__interval' },
-  { label: '$__range', sortValue: '$__range' },
+  { label: '$__auto', sortValue: '$__auto' },
   { label: '1m', sortValue: '00:01:00' },
   { label: '5m', sortValue: '00:05:00' },
   { label: '10m', sortValue: '00:10:00' },
@@ -79,8 +78,8 @@ export default class LokiLanguageProvider extends LanguageProvider {
    *  not account for different size of a response. If that is needed a `length` function can be added in the options.
    *  10 as a max size is totally arbitrary right now.
    */
-  private seriesCache = new LRU<string, Record<string, string[]>>({ max: 10 });
-  private labelsCache = new LRU<string, string[]>({ max: 10 });
+  private seriesCache = new LRUCache<string, Record<string, string[]>>({ max: 10 });
+  private labelsCache = new LRUCache<string, string[]>({ max: 10 });
 
   constructor(datasource: LokiDatasource, initialValues?: any) {
     super();

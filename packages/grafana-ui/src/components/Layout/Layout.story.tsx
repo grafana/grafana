@@ -13,6 +13,9 @@ export default {
   title: 'Layout/Groups',
   component: Layout,
   decorators: [withStoryContainer, withCenteredStory, withHorizontallyCenteredStory],
+  // SB7 has broken subcomponent types due to dropping support for the feature
+  // https://github.com/storybookjs/storybook/issues/20782
+  // @ts-ignore
   subcomponents: { HorizontalGroup, VerticalGroup },
   parameters: {
     docs: {

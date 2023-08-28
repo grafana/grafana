@@ -2,8 +2,9 @@ import { dateTime } from '@grafana/data';
 import { faro, LogLevel as GrafanaLogLevel } from '@grafana/faro-web-sdk';
 import { getBackendSrv } from '@grafana/runtime';
 import { config, reportInteraction } from '@grafana/runtime/src';
+import { contextSrv } from 'app/core/core';
 
-export const USER_CREATION_MIN_DAYS = 15;
+export const USER_CREATION_MIN_DAYS = 7;
 
 export const LogMessages = {
   filterByLabel: 'filtering alert instances by label',
@@ -11,10 +12,12 @@ export const LogMessages = {
   leavingRuleGroupEdit: 'leaving rule group edit without saving',
   alertRuleFromPanel: 'creating alert rule from panel',
   alertRuleFromScratch: 'creating alert rule from scratch',
+  recordingRuleFromScratch: 'creating recording rule from scratch',
   clickingAlertStateFilters: 'clicking alert state filters',
   cancelSavingAlertRule: 'user canceled alert rule creation',
   successSavingAlertRule: 'alert rule saved successfully',
   unknownMessageFromError: 'unknown messageFromError',
+  errorGettingLokiHistory: 'error getting Loki history',
 };
 
 // logInfo from '@grafana/runtime' should be used, but it doesn't handle Grafana JS Agent correctly
@@ -59,6 +62,20 @@ export async function isNewUser() {
     return true; //if no date is returned, we assume the user is new to prevent tracking actions
   }
 }
+
+export const trackRuleListNavigation = async (
+  props: AlertRuleTrackingProps = {
+    grafana_version: config.buildInfo.version,
+    org_id: contextSrv.user.orgId,
+    user_id: contextSrv.user.id,
+  }
+) => {
+  const isNew = await isNewUser();
+  if (isNew) {
+    return;
+  }
+  reportInteraction('grafana_alerting_navigation', props);
+};
 
 export const trackNewAlerRuleFormSaved = async (props: AlertRuleTrackingProps) => {
   const isNew = await isNewUser();

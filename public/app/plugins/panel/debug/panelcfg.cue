@@ -14,37 +14,27 @@
 
 package grafanaplugin
 
-import (
-	// "github.com/grafana/grafana/packages/grafana-schema/src/common"
-	"github.com/grafana/grafana/pkg/plugins/pfs"
-)
-
-// This file (with its sibling .cue files) implements pfs.GrafanaPlugin
-pfs.GrafanaPlugin
-
 composableKinds: PanelCfg: {
 	maturity: "experimental"
 
 	lineage: {
-		seqs: [
-			{
-				schemas: [
-					{
-						UpdateConfig: {
-							render:        bool
-							dataChanged:   bool
-							schemaChanged: bool
-						} @cuetsy(kind="type")
+		schemas: [{
+			version: [0, 0]
+			schema: {
+				UpdateConfig: {
+					render:        bool
+					dataChanged:   bool
+					schemaChanged: bool
+				} @cuetsy(kind="type")
 
-						DebugMode: "render" | "events" | "cursor" | "State" | "ThrowError" @cuetsy(kind="enum")
+				DebugMode: "render" | "events" | "cursor" | "State" | "ThrowError" @cuetsy(kind="enum")
 
-						PanelOptions: {
-							mode:      DebugMode
-							counters?: UpdateConfig
-						} @cuetsy(kind="interface")
-					},
-				]
-			},
-		]
+				Options: {
+					mode:      DebugMode
+					counters?: UpdateConfig
+				} @cuetsy(kind="interface")
+			}
+		}]
+		lenses: []
 	}
 }

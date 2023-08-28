@@ -2,16 +2,18 @@ package accesscontrol
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
 
+	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
-var ErrInternal = errutil.NewBase(errutil.StatusInternal, "accesscontrol.internal")
+var ErrInternal = errutil.Internal("accesscontrol.internal")
 
 // RoleRegistration stores a role and its assignments to built-in roles
 // (Viewer, Editor, Admin, Grafana Admin)
@@ -129,6 +131,10 @@ func (r *RoleDTO) IsBasic() bool {
 	return strings.HasPrefix(r.Name, BasicRolePrefix) || strings.HasPrefix(r.UID, BasicRoleUIDPrefix)
 }
 
+func (r *RoleDTO) IsExternalService() bool {
+	return strings.HasPrefix(r.Name, ExternalServiceRolePrefix) || strings.HasPrefix(r.UID, ExternalServiceRoleUIDPrefix)
+}
+
 func (r RoleDTO) MarshalJSON() ([]byte, error) {
 	type Alias RoleDTO
 
@@ -176,6 +182,10 @@ type Permission struct {
 	Action string `json:"action"`
 	Scope  string `json:"scope"`
 
+	Kind       string `json:"-"`
+	Attribute  string `json:"-"`
+	Identifier string `json:"-"`
+
 	Updated time.Time `json:"updated"`
 	Created time.Time `json:"created"`
 }
@@ -187,12 +197,29 @@ func (p Permission) OSSPermission() Permission {
 	}
 }
 
+// SplitScope returns kind, attribute and Identifier
+func (p Permission) SplitScope() (string, string, string) {
+	if p.Scope == "" {
+		return "", "", ""
+	}
+
+	fragments := strings.Split(p.Scope, ":")
+	switch l := len(fragments); l {
+	case 1: // Splitting a wildcard scope "*" -> kind: "*"; attribute: "*"; identifier: "*"
+		return fragments[0], fragments[0], fragments[0]
+	case 2: // Splitting a wildcard scope with specified kind "dashboards:*" -> kind: "dashboards"; attribute: "*"; identifier: "*"
+		return fragments[0], fragments[1], fragments[1]
+	default: // Splitting a scope with all fields specified "dashboards:uid:my_dash" -> kind: "dashboards"; attribute: "uid"; identifier: "my_dash"
+		return fragments[0], fragments[1], strings.Join(fragments[2:], ":")
+	}
+}
+
 type GetUserPermissionsQuery struct {
-	OrgID      int64
-	UserID     int64
-	Roles      []string
-	TeamIDs    []int64
-	RolePrefix string
+	OrgID        int64
+	UserID       int64
+	Roles        []string
+	TeamIDs      []int64
+	RolePrefixes []string
 }
 
 // ResourcePermission is structure that holds all actions that either a team / user / builtin-role
@@ -245,14 +272,61 @@ type SetResourcePermissionCommand struct {
 	Permission  string `json:"permission"`
 }
 
+type SaveExternalServiceRoleCommand struct {
+	OrgID             int64
+	Global            bool
+	ExternalServiceID string
+	ServiceAccountID  int64
+	Permissions       []Permission
+}
+
+func (cmd *SaveExternalServiceRoleCommand) Validate() error {
+	if cmd.ExternalServiceID == "" {
+		return errors.New("external service id not specified")
+	}
+
+	// slugify the external service id ID for the role to have correct name and uid
+	cmd.ExternalServiceID = slugify.Slugify(cmd.ExternalServiceID)
+
+	if (cmd.OrgID == GlobalOrgID) != cmd.Global {
+		return fmt.Errorf("invalid org id %d for global role %t", cmd.OrgID, cmd.Global)
+	}
+
+	// Check and deduplicate permissions
+	if cmd.Permissions == nil || len(cmd.Permissions) == 0 {
+		return errors.New("no permissions provided")
+	}
+	dedupMap := map[Permission]bool{}
+	dedup := make([]Permission, 0, len(cmd.Permissions))
+	for i := range cmd.Permissions {
+		if len(cmd.Permissions[i].Action) == 0 {
+			return fmt.Errorf("external service %v requests a permission with no Action", cmd.ExternalServiceID)
+		}
+		if dedupMap[cmd.Permissions[i]] {
+			continue
+		}
+		dedupMap[cmd.Permissions[i]] = true
+		dedup = append(dedup, cmd.Permissions[i])
+	}
+	cmd.Permissions = dedup
+
+	if cmd.ServiceAccountID <= 0 {
+		return fmt.Errorf("invalid service account id %d", cmd.ServiceAccountID)
+	}
+
+	return nil
+}
+
 const (
-	GlobalOrgID        = 0
-	FixedRolePrefix    = "fixed:"
-	ManagedRolePrefix  = "managed:"
-	BasicRolePrefix    = "basic:"
-	PluginRolePrefix   = "plugins:"
-	BasicRoleUIDPrefix = "basic_"
-	RoleGrafanaAdmin   = "Grafana Admin"
+	GlobalOrgID                  = 0
+	FixedRolePrefix              = "fixed:"
+	ManagedRolePrefix            = "managed:"
+	BasicRolePrefix              = "basic:"
+	PluginRolePrefix             = "plugins:"
+	ExternalServiceRolePrefix    = "externalservice:"
+	BasicRoleUIDPrefix           = "basic_"
+	ExternalServiceRoleUIDPrefix = "externalservice_"
+	RoleGrafanaAdmin             = "Grafana Admin"
 
 	GeneralFolderUID = "general"
 
@@ -263,8 +337,10 @@ const (
 	ActionAPIKeyDelete = "apikeys:delete"
 
 	// Users actions
-	ActionUsersRead  = "users:read"
-	ActionUsersWrite = "users:write"
+	ActionUsersRead        = "users:read"
+	ActionUsersWrite       = "users:write"
+	ActionUsersImpersonate = "users:impersonate"
+
 	// We can ignore gosec G101 since this does not contain any credentials.
 	// nolint:gosec
 	ActionUsersAuthTokenList = "users.authtoken:read"
@@ -322,7 +398,8 @@ const (
 	ScopeAPIKeysAll = "apikeys:*"
 
 	// Users scope
-	ScopeUsersAll = "users:*"
+	ScopeUsersAll    = "users:*"
+	ScopeUsersPrefix = "users:id:"
 
 	// Settings scope
 	ScopeSettingsAll  = "settings:*"
@@ -378,8 +455,13 @@ const (
 	ActionAlertingNotificationsExternalRead  = "alert.notifications.external:read"
 
 	// Alerting provisioning actions
-	ActionAlertingProvisioningRead  = "alert.provisioning:read"
-	ActionAlertingProvisioningWrite = "alert.provisioning:write"
+	ActionAlertingProvisioningRead        = "alert.provisioning:read"
+	ActionAlertingProvisioningReadSecrets = "alert.provisioning.secrets:read"
+	ActionAlertingProvisioningWrite       = "alert.provisioning:write"
+
+	// Feature Management actions
+	ActionFeatureManagementRead  = "featuremgmt.read"
+	ActionFeatureManagementWrite = "featuremgmt.write"
 )
 
 var (

@@ -4,6 +4,7 @@ import { Location } from 'history';
 import React, { useCallback, useEffect, useState } from 'react';
 import { FormProvider, useForm, useFormContext, Validate } from 'react-hook-form';
 import { useLocation } from 'react-router-dom';
+import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
@@ -175,56 +176,63 @@ export const TemplateForm = ({ existing, alertManagerSourceName, config, provena
             />
           </Field>
           <TemplatingGuideline />
-          <Stack direction="row" alignItems={'center'}>
-            <div>
+          <div className={styles.editorsWrapper}>
+            <div className={styles.contentContainer}>
               <TabsBar>
                 <Tab label="Content" active={view === 'content'} onChangeTab={() => setView('content')} />
                 {isGrafanaAlertManager && (
                   <Tab label="Preview" active={view === 'preview'} onChangeTab={() => setView('preview')} />
                 )}
               </TabsBar>
-              <div className={styles.contentContainer}>
-                {view === 'content' ? (
-                  <div>
-                    <Field error={errors?.content?.message} invalid={!!errors.content?.message} required>
-                      <div className={styles.editWrapper}>
-                        <TemplateEditor
-                          value={getValues('content')}
-                          width={640}
-                          height={363}
-                          onBlur={(value) => setValue('content', value)}
+              <div className={styles.contentContainerEditor}>
+                <AutoSizer>
+                  {({ width }) => (
+                    <>
+                      {view === 'content' ? (
+                        <div>
+                          <Field error={errors?.content?.message} invalid={!!errors.content?.message} required>
+                            <div className={styles.editWrapper}>
+                              <TemplateEditor
+                                value={getValues('content')}
+                                width={width}
+                                height={363}
+                                onBlur={(value) => setValue('content', value)}
+                              />
+                            </div>
+                          </Field>
+                          <div className={styles.buttons}>
+                            {loading && (
+                              <Button disabled={true} icon="fa fa-spinner" variant="primary">
+                                Saving...
+                              </Button>
+                            )}
+                            {!loading && (
+                              <Button type="submit" variant="primary">
+                                Save template
+                              </Button>
+                            )}
+                            <LinkButton
+                              disabled={loading}
+                              href={makeAMLink('alerting/notifications', alertManagerSourceName)}
+                              variant="secondary"
+                              type="button"
+                            >
+                              Cancel
+                            </LinkButton>
+                          </div>
+                        </div>
+                      ) : (
+                        <TemplatePreview
+                          width={width}
+                          payload={payload}
+                          templateName={watch('name')}
+                          setPayloadFormatError={setPayloadFormatError}
+                          payloadFormatError={payloadFormatError}
                         />
-                      </div>
-                    </Field>
-                    <div className={styles.buttons}>
-                      {loading && (
-                        <Button disabled={true} icon="fa fa-spinner" variant="primary">
-                          Saving...
-                        </Button>
                       )}
-                      {!loading && (
-                        <Button type="submit" variant="primary">
-                          Save template
-                        </Button>
-                      )}
-                      <LinkButton
-                        disabled={loading}
-                        href={makeAMLink('alerting/notifications', alertManagerSourceName)}
-                        variant="secondary"
-                        type="button"
-                      >
-                        Cancel
-                      </LinkButton>
-                    </div>
-                  </div>
-                ) : (
-                  <TemplatePreview
-                    payload={payload}
-                    templateName={watch('name')}
-                    setPayloadFormatError={setPayloadFormatError}
-                    payloadFormatError={payloadFormatError}
-                  />
-                )}
+                    </>
+                  )}
+                </AutoSizer>
               </div>
             </div>
             {isGrafanaAlertManager && (
@@ -237,7 +245,7 @@ export const TemplateForm = ({ existing, alertManagerSourceName, config, provena
                 onPayloadError={onPayloadError}
               />
             )}
-          </Stack>
+          </div>
         </FieldSet>
         <CollapsableSection label="Data cheat sheet" isOpen={false} className={styles.collapsableSection}>
           <TemplateDataDocs />
@@ -348,11 +356,13 @@ export function TemplatePreview({
   templateName,
   payloadFormatError,
   setPayloadFormatError,
+  width,
 }: {
   payload: string;
   templateName: string;
   payloadFormatError: string | null;
   setPayloadFormatError: (value: React.SetStateAction<string | null>) => void;
+  width: number;
 }) {
   const styles = useStyles2(getStyles);
 
@@ -378,36 +388,41 @@ export function TemplatePreview({
   useEffect(() => onPreview(), [onPreview]);
 
   return (
-    <Stack direction="row" alignItems="center" gap={2}>
-      <Stack direction="column">
-        {isLoading && (
-          <>
-            <Spinner inline={true} /> Loading preview...
-          </>
-        )}
-        <pre className={styles.preview.result} data-testid="payloadJSON">
-          {previewToRender}
-        </pre>
-        <Button onClick={onPreview} className={styles.preview.button} icon="arrow-up" type="button" variant="secondary">
-          Refresh preview
-        </Button>
-      </Stack>
-    </Stack>
+    <div style={{ width: `${width}px` }} className={styles.preview.wrapper}>
+      {isLoading && (
+        <>
+          <Spinner inline={true} /> Loading preview...
+        </>
+      )}
+      <pre className={styles.preview.result} data-testid="payloadJSON">
+        {previewToRender}
+      </pre>
+      <Button onClick={onPreview} className={styles.preview.button} icon="arrow-up" type="button" variant="secondary">
+        Refresh preview
+      </Button>
+    </div>
   );
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
   contentContainer: css`
-    display: flex;
-    padding-top: 10px;
-    gap: ${theme.spacing(2)};
-    flex-direction: row;
-    align-items: flex-start;
-    flex-wrap: wrap;
-    ${theme.breakpoints.up('xxl')} {
-      flex-wrap: nowrap;
-    }
+    flex: 1;
+    margin-bottom: ${theme.spacing(6)};
   `,
+  contentContainerEditor: css`
+      flex:1;
+      display: flex;
+      padding-top: 10px;
+      gap: ${theme.spacing(2)};
+      flex-direction: row;
+      align-items: flex-start;
+      flex-wrap: wrap;
+      ${theme.breakpoints.up('xxl')} {
+        flex - wrap: nowrap;
+    }
+      min-width: 450px;
+      height: 363px;
+      `,
   snippets: css`
     margin-top: ${theme.spacing(2)};
     font-size: ${theme.typography.bodySmall.fontSize};
@@ -417,6 +432,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     font-weight: ${theme.typography.fontWeightBold};
   `,
   buttons: css`
+    display: flex;
     & > * + * {
       margin-left: ${theme.spacing(1)};
     }
@@ -426,43 +442,39 @@ const getStyles = (theme: GrafanaTheme2) => ({
     max-width: 758px;
   `,
   editWrapper: css`
-    display: block;
-    position: relative;
-    width: 640px;
-    height: 363px;
-  `,
-  toggle: css({
-    color: theme.colors.text.secondary,
-    marginRight: `${theme.spacing(1)}`,
-  }),
-  previewHeader: css({
-    display: 'flex',
-    cursor: 'pointer',
-    alignItems: 'baseline',
-    color: theme.colors.text.primary,
-    '&:hover': {
-      background: theme.colors.emphasize(theme.colors.background.primary, 0.03),
-    },
-  }),
-  previewHeaderTitle: css({
-    flexGrow: 1,
-    overflow: 'hidden',
-    fontSize: theme.typography.h4.fontSize,
-    fontWeight: theme.typography.fontWeightMedium,
-    margin: 0,
-  }),
+      display: flex;
+      width: 100%
+      heigth:100%;
+      position: relative;
+      `,
+  toggle: css`
+      color: theme.colors.text.secondary,
+      marginRight: ${theme.spacing(1)}`,
   preview: {
+    wrapper: css`
+      display: flex;
+      width: 100%
+      heigth:100%;
+      position: relative;
+      flex-direction: column;
+      `,
     result: css`
-      width: 640px;
+      width: 100%;
       height: 363px;
     `,
     button: css`
       flex: none;
       width: fit-content;
-      margin-top: ${theme.spacing(-3)};
+      margin-top: -6px;
     `,
   },
   collapsableSection: css`
     width: fit-content;
+  `,
+  editorsWrapper: css`
+    display: flex;
+    flex: 1;
+    flex-wrap: wrap;
+    gap: ${theme.spacing(1)};
   `,
 });

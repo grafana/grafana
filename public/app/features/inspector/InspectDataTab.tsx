@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { cloneDeep } from 'lodash';
 import React, { PureComponent } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
@@ -9,6 +10,7 @@ import {
   CSVConfig,
   DataFrame,
   DataTransformerID,
+  FieldConfigSource,
   SelectableValue,
   TimeZone,
   transformDataFrame,
@@ -18,9 +20,10 @@ import { reportInteraction } from '@grafana/runtime';
 import { Button, Spinner, Table } from '@grafana/ui';
 import { config } from 'app/core/config';
 import { t, Trans } from 'app/core/internationalization';
-import { dataFrameToLogsModel } from 'app/core/logsModel';
 import { PanelModel } from 'app/features/dashboard/state';
 import { GetDataOptions } from 'app/features/query/state/PanelQueryRunner';
+
+import { dataFrameToLogsModel } from '../logs/logsModel';
 
 import { InspectDataOptions } from './InspectDataOptions';
 import { getPanelInspectorStyles } from './styles';
@@ -169,17 +172,42 @@ export class InspectDataTab extends PureComponent<Props, State> {
       return applyRawFieldOverrides(data);
     }
 
-    // We need to apply field config even though it was already applied in the PanelQueryRunner.
-    // That's because transformers create new fields and data frames, so i.e. display processor is no longer there
+    const fieldConfig = this.cleanTableConfigFromFieldConfig(panel.type, panel.fieldConfig);
+
+    // We need to apply field config as it's not done by PanelQueryRunner (even when withFieldConfig is true).
+    // It's because transformers create new fields and data frames, and we need to clean field config of any table settings.
     return applyFieldOverrides({
       data,
       theme: config.theme2,
-      fieldConfig: panel.fieldConfig,
+      fieldConfig,
       timeZone,
       replaceVariables: (value: string) => {
         return value;
       },
     });
+  }
+
+  // Because we visualize this data in a table we have to remove any custom table display settings
+  cleanTableConfigFromFieldConfig(panelPluginId: string, fieldConfig: FieldConfigSource): FieldConfigSource {
+    if (panelPluginId !== 'table') {
+      return fieldConfig;
+    }
+
+    fieldConfig = cloneDeep(fieldConfig);
+    // clear all table specific options
+    fieldConfig.defaults.custom = {};
+
+    // clear all table override properties
+    for (const override of fieldConfig.overrides) {
+      for (const prop of override.properties) {
+        if (prop.id.startsWith('custom.')) {
+          const index = override.properties.indexOf(prop);
+          override.properties.slice(index, 1);
+        }
+      }
+    }
+
+    return fieldConfig;
   }
 
   render() {
@@ -285,11 +313,7 @@ export class InspectDataTab extends PureComponent<Props, State> {
                 return null;
               }
 
-              return (
-                <div style={{ width, height }}>
-                  <Table width={width} height={height} data={dataFrame} showTypeIcons={true} />
-                </div>
-              );
+              return <Table width={width} height={height} data={dataFrame} showTypeIcons={true} />;
             }}
           </AutoSizer>
         </div>

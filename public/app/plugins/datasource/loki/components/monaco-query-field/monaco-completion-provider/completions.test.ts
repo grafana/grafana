@@ -118,6 +118,30 @@ const afterSelectorCompletions = [
     type: 'PIPE_OPERATION',
     documentation: 'Operator docs',
   },
+  {
+    insertText: '| decolorize',
+    label: 'decolorize',
+    type: 'PIPE_OPERATION',
+    documentation: 'Operator docs',
+  },
+  {
+    documentation: 'Operator docs',
+    insertText: '| distinct',
+    label: 'distinct',
+    type: 'PIPE_OPERATION',
+  },
+  {
+    documentation: 'Operator docs',
+    insertText: '| drop',
+    label: 'drop',
+    type: 'PIPE_OPERATION',
+  },
+  {
+    documentation: 'Operator docs',
+    insertText: '| keep',
+    label: 'keep',
+    type: 'PIPE_OPERATION',
+  },
 ];
 
 function buildAfterSelectorCompletions(
@@ -200,8 +224,7 @@ describe('getCompletions', () => {
     const completions = await getCompletions(situation, completionProvider);
 
     expect(completions).toEqual([
-      { insertText: '$__interval', label: '$__interval', type: 'DURATION' },
-      { insertText: '$__range', label: '$__range', type: 'DURATION' },
+      { insertText: '$__auto', label: '$__auto', type: 'DURATION' },
       { insertText: '1m', label: '1m', type: 'DURATION' },
       { insertText: '5m', label: '5m', type: 'DURATION' },
       { insertText: '10m', label: '10m', type: 'DURATION' },
@@ -375,6 +398,58 @@ describe('getCompletions', () => {
       },
     ]);
     expect(functionCompletions).toHaveLength(3);
+  });
+
+  test('Returns completion options when the situation is AFTER_DISTINCT', async () => {
+    const situation: Situation = { type: 'AFTER_DISTINCT', logQuery: '{label="value"}' };
+    const completions = await getCompletions(situation, completionProvider);
+
+    expect(completions).toEqual([
+      {
+        insertText: 'extracted',
+        label: 'extracted',
+        triggerOnInsert: false,
+        type: 'LABEL_NAME',
+      },
+      {
+        insertText: 'place',
+        label: 'place',
+        triggerOnInsert: false,
+        type: 'LABEL_NAME',
+      },
+      {
+        insertText: 'source',
+        label: 'source',
+        triggerOnInsert: false,
+        type: 'LABEL_NAME',
+      },
+    ]);
+  });
+
+  test('Returns completion options when the situation is AFTER_KEEP_AND_DROP', async () => {
+    const situation: Situation = { type: 'AFTER_KEEP_AND_DROP', logQuery: '{label="value"}' };
+    const completions = await getCompletions(situation, completionProvider);
+
+    expect(completions).toEqual([
+      {
+        insertText: 'extracted',
+        label: 'extracted',
+        triggerOnInsert: false,
+        type: 'LABEL_NAME',
+      },
+      {
+        insertText: 'place',
+        label: 'place',
+        triggerOnInsert: false,
+        type: 'LABEL_NAME',
+      },
+      {
+        insertText: 'source',
+        label: 'source',
+        triggerOnInsert: false,
+        type: 'LABEL_NAME',
+      },
+    ]);
   });
 });
 

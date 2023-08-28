@@ -23,9 +23,17 @@ export interface BaseDimensionConfig<T = string | number> extends Omit<raw.BaseD
 
 export interface ScaleDimensionConfig extends BaseDimensionConfig<number>, Omit<raw.ScaleDimensionConfig, 'fixed'> {}
 
+export interface ScalarDimensionConfig extends BaseDimensionConfig<number>, Omit<raw.ScalarDimensionConfig, 'fixed'> {}
+
 export interface TextDimensionConfig extends BaseDimensionConfig<string>, Omit<raw.TextDimensionConfig, 'fixed'> {}
 
 export interface ColorDimensionConfig extends BaseDimensionConfig<string>, Omit<raw.ColorDimensionConfig, 'fixed'> {}
+
+export interface ColorDimensionConfig extends BaseDimensionConfig<string>, Omit<raw.ColorDimensionConfig, 'fixed'> {}
+
+export interface ResourceDimensionConfig
+  extends BaseDimensionConfig<string>,
+    Omit<raw.ResourceDimensionConfig, 'fixed'> {}
 
 export * from '../common/common.gen';
 

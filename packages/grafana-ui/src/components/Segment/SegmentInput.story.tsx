@@ -1,5 +1,5 @@
 import { action } from '@storybook/addon-actions';
-import { ComponentMeta, ComponentStory } from '@storybook/react';
+import { Meta, StoryFn } from '@storybook/react';
 import React, { useState } from 'react';
 
 import { SegmentInput, Icon, SegmentSection } from '@grafana/ui';
@@ -27,7 +27,7 @@ export const BasicInput = () => {
   );
 };
 
-const meta: ComponentMeta<typeof SegmentInput> = {
+const meta: Meta<typeof SegmentInput> = {
   title: 'Data Source/Segment/SegmentInput',
   component: SegmentInput,
 };
@@ -100,7 +100,7 @@ export const InputWithAutoFocus = () => {
   );
 };
 
-export const Basic: ComponentStory<React.ComponentType<SegmentInputProps>> = (args: SegmentInputProps) => {
+export const Basic: StoryFn<React.ComponentType<SegmentInputProps>> = (args: SegmentInputProps) => {
   const [value, setValue] = useState(args.value);
 
   const props: SegmentInputProps = {

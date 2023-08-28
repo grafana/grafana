@@ -1,7 +1,6 @@
 import debounce from 'debounce-promise';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
-import { locationUtil } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { t } from 'app/core/internationalization';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -43,7 +42,7 @@ export async function getRecentDashboardActions(): Promise<CommandPaletteAction[
       name: `${name}`,
       section: t('command-palette.section.recent-dashboards', 'Recent dashboards'),
       priority: RECENT_DASHBOARDS_PRORITY,
-      url: locationUtil.stripBaseFromUrl(url),
+      url,
     };
   });
 
@@ -72,7 +71,7 @@ export async function getSearchResultActions(searchQuery: string): Promise<Comma
           ? t('command-palette.section.dashboard-search-results', 'Dashboards')
           : t('command-palette.section.folder-search-results', 'Folders'),
       priority: SEARCH_RESULTS_PRORITY,
-      url: locationUtil.stripBaseFromUrl(url),
+      url,
       subtitle: data.view.dataFrame.meta?.custom?.locationInfo[location]?.name,
     };
   });
@@ -83,17 +82,28 @@ export async function getSearchResultActions(searchQuery: string): Promise<Comma
 export function useSearchResults(searchQuery: string, isShowing: boolean) {
   const [searchResults, setSearchResults] = useState<CommandPaletteAction[]>([]);
   const [isFetchingSearchResults, setIsFetchingSearchResults] = useState(false);
+  const lastSearchTimestamp = useRef<number>(0);
 
   // Hit dashboards API
   useEffect(() => {
+    const timestamp = Date.now();
     if (isShowing && searchQuery.length > 0) {
       setIsFetchingSearchResults(true);
       debouncedSearch(searchQuery).then((resultActions) => {
-        setSearchResults(resultActions);
-        setIsFetchingSearchResults(false);
+        // Only keep the results if it's was issued after the most recently resolved search.
+        // This prevents results showing out of order if first request is slower than later ones.
+        // We don't need to worry about clearing the isFetching state either - if there's a later
+        // request in progress, this will clear it for us
+        if (timestamp > lastSearchTimestamp.current) {
+          setSearchResults(resultActions);
+          setIsFetchingSearchResults(false);
+          lastSearchTimestamp.current = timestamp;
+        }
       });
     } else {
       setSearchResults([]);
+      setIsFetchingSearchResults(false);
+      lastSearchTimestamp.current = timestamp;
     }
   }, [isShowing, searchQuery]);
 

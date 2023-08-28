@@ -10,6 +10,11 @@ keywords:
   - documentation
   - '9.1'
   - release notes
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: What's new in Grafana v9.1
 weight: -33
 ---
@@ -45,17 +50,17 @@ You can now easily embed Grafana in other applications by adding a JWT token dir
 When the JWT token is passed through the request URL to Grafana, Grafana validates and authenticates the token linked to a specific user, allowing access to dashboards which that user can view.
 To see JWT URL embedding in action, see the [sample project](https://github.com/grafana/grafana-iframe-oauth-sample).
 
-> **Note:** JWT URL Embedding and `allow_embedding` are not available to Grafana Cloud users. For Grafana Cloud, use the [Public Dashboards]({{< relref "../dashboards/dashboard-public/" >}}) feature. To enable that, [open a ticket with our Support team](/docs/grafana-cloud/account-management/support/).
+> **Note:** JWT URL Embedding and `allow_embedding` are not available to Grafana Cloud users. For Grafana Cloud, use the [Public Dashboards]({{< relref "../dashboards/dashboard-public" >}}) feature. To enable that, [open a ticket with our Support team](/docs/grafana-cloud/account-management/support/).
 
 {{< figure src="/static/img/docs/dashboards/jwt-url-embedding-9-1.png" max-width="750px" caption="A JWT token used to embed Grafana" >}}
 
 #### Organization role mapping for GitHub OAuth2 authentication
 
-You can now use GitHub OAuth2 to map users or teams to specific [Grafana organization roles]({{< relref "../administration/roles-and-permissions/#organization-roles" >}}) by using `role_attribute_path` configuration option.
+You can now use GitHub OAuth2 to map users or teams to specific [Grafana organization roles]({{< relref "../administration/roles-and-permissions#organization-roles" >}}) by using `role_attribute_path` configuration option.
 Grafana will use [JMESPath](https://jmespath.org/examples.html) for path lookup and role mapping.
-For more information, see the [documentation]({{< relref "../setup-grafana/configure-security/configure-authentication/github/#map-roles" >}}).
+For more information, see the [documentation]({{< relref "../setup-grafana/configure-security/configure-authentication/github#map-roles" >}}).
 
-Grafana Cloud users can access this feature by [opening a support ticket in the Cloud Portal](https://grafana.com/profile/org#support).
+Grafana Cloud users can access this feature by [opening a support ticket in the Cloud Portal](/profile/org#support).
 
 {{< figure src="/static/img/docs/permissions/org-role-mapping-github-9-1.png" max-width="750px" caption="Configuring GitHub OAuth2 authentication with role mapping" >}}
 
@@ -70,13 +75,13 @@ This feature will be rolled out to Grafana Cloud users over the course of severa
 Panel title search uses our updated dashboard search approach.
 Previously, Grafana used SQL database queries to find dashboards by title.
 With the feature toggle enabled, Grafana can build an in-memory index of all dashboards.
-To learn more about search in Grafana, see the [documentation]({{< relref "../dashboards/use-dashboards/#dashboard-search" >}}).
+To learn more about search in Grafana, see the [documentation]({{< relref "../dashboards/use-dashboards#dashboard-search" >}}).
 
 {{< figure src="/static/img/docs/dashboards/panel-title-search-9-1.png" max-width="750px" caption="Searching for a panel title" >}}
 
 #### Starred dashboards in the navigation bar
 
-As part of the upcoming improvements to Grafana's navigation, you can now directly access your [starred dashboards]({{< relref "../dashboards/use-dashboards/" >}}) from the navigation bar.
+As part of the upcoming improvements to Grafana's navigation, you can now directly access your [starred dashboards]({{< relref "../dashboards/use-dashboards" >}}) from the navigation bar.
 
 {{< figure src="/static/img/docs/dashboards/starred-dashboards-9-1.png" max-width="750px" caption="Accessing your starred dashboards" >}}
 
@@ -85,15 +90,15 @@ As part of the upcoming improvements to Grafana's navigation, you can now direct
 #### Heatmap improvements
 
 The beta heatmap announced in version 9.0 is now used throughout Grafana.
-Its performance is improved, and it now supports [exemplars]({{< relref "../fundamentals/exemplars/" >}}).
-To learn more about the heatmap panel, see the [documentation]({{< relref "../panels-visualizations/visualizations/heatmap/" >}}).
+Its performance is improved, and it now supports [exemplars]({{< relref "../fundamentals/exemplars" >}}).
+To learn more about the heatmap panel, see the [documentation]({{< relref "../panels-visualizations/visualizations/heatmap" >}}).
 
 {{< figure src="/static/img/docs/panels/heatmap-panel-9-1.png" max-width="750px" caption="A heatmap panel" >}}
 
 #### Geomap
 
-You can now measure both distances and areas on Geomap visualizations by using the panel's new [measure tools]({{< relref "../panels-visualizations/visualizations/geomap/#show-measure-tools" >}}).
-To learn more about the Geomap panel, see the [documentation]({{< relref "../panels-visualizations/visualizations/geomap/" >}}).
+You can now measure both distances and areas on Geomap visualizations by using the panel's new [measure tools]({{< relref "../panels-visualizations/visualizations/geomap#show-measure-tools" >}}).
+To learn more about the Geomap panel, see the [documentation]({{< relref "../panels-visualizations/visualizations/geomap" >}}).
 
 {{< figure src="/static/img/docs/geomap-panel/geomap-map-controls-measure-area-9-1-0.png" max-width="750px" caption="Geomap panel measuring tool - area" >}}
 
@@ -101,7 +106,7 @@ To learn more about the Geomap panel, see the [documentation]({{< relref "../pan
 
 You can now link metrics queries to your traces.
 This feature can be accessed by enabling the `traceToMetrics` feature toggle.
-Grafana Cloud users can access this feature by [opening a support ticket in the Cloud Portal](https://grafana.com/profile/org#support).
+Grafana Cloud users can access this feature by [opening a support ticket in the Cloud Portal](/profile/org#support).
 
 In your tracing datasource configuration, select a metrics datasource, add tags, and write your queries.
 Each query appears as a link on each span.
@@ -109,7 +114,7 @@ The configured tag values are dynamically added to your metrics queries.
 You can link to any metric you'd like.
 Metrics for span durations, counts, and errors filtered by service or span are a great starting point.
 The metrics generator introduced in Tempo 1.4 pairs extremely well with the trace to metrics feature.
-To learn more about the metrics generator, see the [blog post](https://grafana.com/blog/2022/05/02/new-in-grafana-tempo-1.4-introducing-the-metrics-generator/).
+To learn more about the metrics generator, see the [blog post](/blog/2022/05/02/new-in-grafana-tempo-1.4-introducing-the-metrics-generator/).
 
 {{< figure src="/static/img/docs/panels/trace-to-metrics-9-1.png" max-width="750px" caption="Linking a trace to a metrics query" >}}
 
@@ -120,17 +125,17 @@ The data is shown in a table in the Tempo datasource under the Service Graph tab
 To access the feature, enable the `tempoApmTable` feature toggle.
 To receive the data for the APM table, you must also enable the metrics generator.
 
-Grafana Cloud users can access this feature by [opening a support ticket in the Cloud Portal](https://grafana.com/profile/org#support).
+Grafana Cloud users can access this feature by [opening a support ticket in the Cloud Portal](/profile/org#support).
 
 The APM table displays rate, errors, and duration (RED) metrics.
 To view your top five RED span metrics, use the table summary view.
-The span metrics are created using the Tempo [metrics generator](https://grafana.com/blog/2022/05/02/new-in-grafana-tempo-1.4-introducing-the-metrics-generator/).
+The span metrics are created using the Tempo [metrics generator](/blog/2022/05/02/new-in-grafana-tempo-1.4-introducing-the-metrics-generator/).
 
 We also embedded several links directly into the table.
 These links direct you to a Prometheus query to further investigate the data.
 We also provide a link from the table directly to Tempo search, making it easier for you to investigate your APM metrics.
 
-To learn more about the APM table, see the [documentation]({{< relref "../datasources/tempo/#apm-table" >}}).
+To learn more about the APM table, see the [documentation]({{< relref "../datasources/tempo#apm-table" >}}).
 
 {{< figure src="/static/img/docs/panels/apm-table-9-1.png" max-width="750px" caption="An APM table in the Explore view" >}}
 
@@ -139,7 +144,7 @@ To learn more about the APM table, see the [documentation]({{< relref "../dataso
 #### (Alpha) Public dashboards
 
 Public dashboards are available as an alpha feature that can be enabled with the `publicDashboards` feature toggle.
-Grafana Cloud users can access this feature by [opening a support ticket in the Cloud Portal](https://grafana.com/profile/org#support).
+Grafana Cloud users can access this feature by [opening a support ticket in the Cloud Portal](/profile/org#support).
 
 You can generate a link for dashboards that you'd like to share publicly.
 Anyone with the link will be able to access that dashboard, and nothing else.
@@ -151,7 +156,7 @@ The public view of a dashboard has a few restrictions:
 - The public dashboard is displayed in a read-only kiosk view.
 - The time range is fixed to the dashboard default time range.
 
-To learn more, see the [documentation]({{< relref "../dashboards/dashboard-public/" >}}).
+To learn more, see the [documentation]({{< relref "../dashboards/dashboard-public" >}}).
 
 #### Provisioning improvements for Grafana Alerting
 
@@ -167,7 +172,7 @@ Provisioning for Grafana Alerting currently supports these resources:
 - Text templates
 
 For more information, see the
-[provisioning documentation]({{< relref "../administration/provisioning/" >}}).
+[provisioning documentation]({{< relref "../administration/provisioning" >}}).
 
 ## Grafana Enterprise
 
@@ -183,7 +188,7 @@ Reporting is better in a few specific ways in Grafana version 9.1:
   For example, you can share last month's numbers as compared to the numbers for this month.
   The dashboard uses the same template variables if you attach the dashboard to a report twice.
 
-To learn more about reporting, see the [documentation]({{< relref "../dashboards/share-dashboards-panels/#reporting" >}}).
+To learn more about reporting, see the [documentation]({{< relref "../dashboards/share-dashboards-panels#reporting" >}}).
 
 {{< figure src="/static/img/docs/enterprise/reporting-draft-9-1.png" max-width="750px" caption="Saving a report as a draft" >}}
 
@@ -210,17 +215,17 @@ In v9.1, you can determine which users, teams, and roles can access app plugins 
 > This definition is planned for a future release.
 
 You can also control who can view, edit, or administer dashboard and data source usage insights, as well as data source query caching configuration.
-For more details, see the [RBAC documentation]({{< relref "../administration/roles-and-permissions/access-control/" >}}).
+For more details, see the [RBAC documentation]({{< relref "../administration/roles-and-permissions/access-control" >}}).
 
 {{< figure src="/static/img/docs/enterprise/rbac-app-plugins-9-1.png" max-width="750px" caption="Configuring role-based-access to app plugins" >}}
 
 #### Rotate your database encryption keys using Grafana's API
 
-In Grafana version 9.0, we [revamped]({{< relref "./whats-new-in-v9-0/#envelope-encryption-is-generally-available-and-enabled-by-default"  >}}) the method Grafana uses to encrypt secrets, like data source credentials, so that you can rotate encryption keys and integrate with a key management system like Hashicorp Vault, AWS Key Management Service, or Azure Key Vault.
+In Grafana version 9.0, we [revamped]({{< relref "./whats-new-in-v9-0#envelope-encryption-is-generally-available-and-enabled-by-default" >}}) the method Grafana uses to encrypt secrets, like data source credentials, so that you can rotate encryption keys and integrate with a key management system like Hashicorp Vault, AWS Key Management Service, or Azure Key Vault.
 
 Now, you can rotate keys and re-encrypt secrets via API.
 This makes it easier to configure Grafana to be secure while deploying it.
-To learn more, see our guide to [configuring database encryption]({{< relref "../setup-grafana/configure-security/configure-database-encryption/#configure-database-encryption" >}}).
+To learn more, see our guide to [configuring database encryption]({{< relref "../setup-grafana/configure-security/configure-database-encryption#configure-database-encryption" >}}).
 
 #### Audit all actions in Grafana using verbose logging
 
@@ -228,7 +233,7 @@ Auditing logs helps you manage and mitigate activity and meet compliance require
 By default, Grafana emits an audit log with every action that changes something (like a user creating or updating a dashboard or updating another user's permissions).
 If you want to record all actions on the Grafana server, including GETs and page views, you can now turn on `verbose mode`.
 This results in more logs, but it can be useful to debug specific issues or make sure you catch everything happening in Grafana for security or compliance reasons.
-To learn more, see the [configuration documentation]({{< relref "../setup-grafana/configure-grafana/enterprise-configuration/#verbose" >}}).
+To learn more, see the [configuration documentation]({{< relref "../setup-grafana/configure-grafana/enterprise-configuration#verbose" >}}).
 
 {{< figure src="/static/img/docs/enterprise/verbose-audit-logs-9-1.png" max-width="750px" caption="Verbose audit logging output" >}}
 
@@ -237,7 +242,7 @@ To learn more, see the [configuration documentation]({{< relref "../setup-grafan
 When you synchronize users from a SAML, LDAP, or OAuth provider, some user settings, such as name and email address, are synchronized from your identity provider.
 Previously, you could edit those settings in the Grafana UI, but they would revert back.
 To make user management clearer, you can now see which settings are synchronized from your identity provider, but you cannot edit those settings.
-To learn more about authentication, see the [documentation]({{< relref "../setup-grafana/configure-security/configure-authentication/" >}}).
+To learn more about authentication, see the [documentation]({{< relref "../setup-grafana/configure-security/configure-authentication" >}}).
 
 {{< figure src="/static/img/docs/enterprise/oauth-synced-user-9-1.png" max-width="750px" caption="Non-interactive view of a user synced via OAuth" >}}
 

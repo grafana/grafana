@@ -1,4 +1,4 @@
-import { omitBy, isNil, isNumber, defaultTo } from 'lodash';
+import { omitBy, isNil, isNumber, defaultTo, groupBy } from 'lodash';
 
 import {
   PanelModel,
@@ -7,17 +7,19 @@ import {
   ThresholdsMode,
   ThresholdsConfig,
   FieldConfig,
+  DataFrame,
+  FieldType,
 } from '@grafana/data';
 import { ReduceTransformerOptions } from '@grafana/data/src/transformations/transformers/reduce';
 
-import { PanelOptions } from './panelcfg.gen';
+import { Options } from './panelcfg.gen';
 
 /**
  * At 7.0, the `table` panel was swapped from an angular implementation to a react one.
  * The models do not match, so this process will delegate to the old implementation when
  * a saved table configuration exists.
  */
-export const tableMigrationHandler = (panel: PanelModel<PanelOptions>): Partial<PanelOptions> => {
+export const tableMigrationHandler = (panel: PanelModel<Options>): Partial<Options> => {
   // Table was saved as an angular table, lets just swap to the 'table-old' panel
   if (!panel.pluginVersion && (panel as any).columns) {
     console.log('Was angular table', panel);
@@ -73,7 +75,7 @@ const generateThresholds = (thresholds: string[], colors: string[]) => {
 };
 
 const migrateTransformations = (
-  panel: PanelModel<Partial<PanelOptions>> | any,
+  panel: PanelModel<Partial<Options>> | any,
   oldOpts: { columns: any; transform: Transformations }
 ) => {
   const transformations: Transformation[] = panel.transformations ?? [];
@@ -228,7 +230,7 @@ const migrateDefaults = (prevDefaults: Style) => {
  * This is called when the panel changes from another panel
  */
 export const tablePanelChangedHandler = (
-  panel: PanelModel<Partial<PanelOptions>> | any,
+  panel: PanelModel<Partial<Options>> | any,
   prevPluginId: string,
   prevOptions: any
 ) => {
@@ -248,4 +250,43 @@ export const tablePanelChangedHandler = (
   }
 
   return {};
+};
+
+const getMainFrames = (frames: DataFrame[] | null) => {
+  return frames?.filter((df) => df.meta?.custom?.parentRowIndex === undefined) || [frames?.[0]];
+};
+
+/**
+ * In 9.3 meta.custom.parentRowIndex was introduced to support sub-tables.
+ * In 10.2 meta.custom.parentRowIndex was deprecated in favor of FieldType.nestedFrames, which supports multiple nested frames.
+ * Migrate DataFrame[] from using meta.custom.parentRowIndex to using FieldType.nestedFrames
+ */
+export const migrateFromParentRowIndexToNestedFrames = (frames: DataFrame[] | null) => {
+  const migratedFrames: DataFrame[] = [];
+  const mainFrames = getMainFrames(frames).filter(
+    (frame: DataFrame | undefined): frame is DataFrame => !!frame && frame.length !== 0
+  );
+
+  mainFrames?.forEach((frame) => {
+    const subFrames = frames?.filter((df) => frame.refId === df.refId && df.meta?.custom?.parentRowIndex !== undefined);
+    const subFramesGrouped = groupBy(subFrames, (frame: DataFrame) => frame.meta?.custom?.parentRowIndex);
+    const subFramesByIndex = Object.keys(subFramesGrouped).map((key) => subFramesGrouped[key]);
+    const migratedFrame = { ...frame };
+
+    if (subFrames && subFrames.length > 0) {
+      migratedFrame.fields.push({
+        name: 'nested',
+        type: FieldType.nestedFrames,
+        config: {},
+        values: subFramesByIndex,
+      });
+    }
+    migratedFrames.push(migratedFrame);
+  });
+
+  return migratedFrames;
+};
+
+export const hasDeprecatedParentRowIndex = (frames: DataFrame[] | null) => {
+  return frames?.some((df) => df.meta?.custom?.parentRowIndex !== undefined);
 };

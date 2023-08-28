@@ -105,7 +105,7 @@ func TestProcessLogsResponse(t *testing.T) {
 			logsFrame := frames[0]
 
 			meta := logsFrame.Meta
-			require.Equal(t, map[string]interface{}{"searchWords": []string{"hello", "message"}}, meta.Custom)
+			require.Equal(t, map[string]interface{}{"searchWords": []string{"hello", "message"}, "limit": 500}, meta.Custom)
 			require.Equal(t, data.VisTypeLogs, string(meta.PreferredVisualization))
 
 			logsFieldMap := make(map[string]*data.Field)
@@ -339,7 +339,7 @@ func TestProcessLogsResponse(t *testing.T) {
 		require.Len(t, dataframes, 1)
 		frame := dataframes[0]
 
-		require.Equal(t, 16, len(frame.Fields))
+		require.Equal(t, 17, len(frame.Fields))
 		// Fields have the correct length
 		require.Equal(t, 2, frame.Fields[0].Len())
 		// First field is timeField
@@ -348,7 +348,7 @@ func TestProcessLogsResponse(t *testing.T) {
 		require.Equal(t, data.FieldTypeNullableString, frame.Fields[1].Type())
 		require.Equal(t, "line", frame.Fields[1].Name)
 		// Correctly renames lvl field to level
-		require.Equal(t, "level", frame.Fields[10].Name)
+		require.Equal(t, "level", frame.Fields[11].Name)
 		// Correctly uses string types
 		require.Equal(t, data.FieldTypeNullableString, frame.Fields[1].Type())
 		// Correctly detects float64 types
@@ -356,10 +356,10 @@ func TestProcessLogsResponse(t *testing.T) {
 		// Correctly detects json types
 		require.Equal(t, data.FieldTypeNullableJSON, frame.Fields[8].Type())
 		// Correctly flattens fields
-		require.Equal(t, "nested.field.double_nested", frame.Fields[12].Name)
-		require.Equal(t, data.FieldTypeNullableString, frame.Fields[12].Type())
+		require.Equal(t, "nested.field.double_nested", frame.Fields[13].Name)
+		require.Equal(t, data.FieldTypeNullableString, frame.Fields[13].Type())
 		// Correctly detects type even if first value is null
-		require.Equal(t, data.FieldTypeNullableString, frame.Fields[15].Type())
+		require.Equal(t, data.FieldTypeNullableString, frame.Fields[16].Type())
 	})
 
 	t.Run("Log query with highlight", func(t *testing.T) {
@@ -430,6 +430,7 @@ func TestProcessLogsResponse(t *testing.T) {
 
 		require.Equal(t, map[string]interface{}{
 			"searchWords": []string{"hello", "message"},
+			"limit":       500,
 		}, customMeta)
 	})
 }
@@ -2480,7 +2481,6 @@ func TestProcessBuckets(t *testing.T) {
 		  }
 		]
 	  }
-		  
 	`)
 
 			result, err := queryDataTest(query, response)
@@ -3304,7 +3304,7 @@ func TestFlatten(t *testing.T) {
 			},
 		}
 
-		flattened := flatten(obj)
+		flattened := flatten(obj, 10)
 		require.Len(t, flattened, 2)
 		require.Equal(t, "bar", flattened["foo"])
 		require.Equal(t, "qux", flattened["nested.bax.baz"])
@@ -3339,9 +3339,110 @@ func TestFlatten(t *testing.T) {
 			},
 		}
 
-		flattened := flatten(obj)
+		flattened := flatten(obj, 10)
 		require.Len(t, flattened, 1)
 		require.Equal(t, map[string]interface{}{"nested11": map[string]interface{}{"nested12": "abc"}}, flattened["nested0.nested1.nested2.nested3.nested4.nested5.nested6.nested7.nested8.nested9.nested10"])
+	})
+
+	t.Run("does not affect any non-nested JSON", func(t *testing.T) {
+		target := map[string]interface{}{
+			"fieldName": "",
+		}
+
+		assert.Equal(t, map[string]interface{}{
+			"fieldName": "",
+		}, flatten(target, 10))
+	})
+
+	t.Run("flattens up to maxDepth", func(t *testing.T) {
+		target := map[string]interface{}{
+			"fieldName2": map[string]interface{}{
+				"innerFieldName2": map[string]interface{}{
+					"innerFieldName3": "",
+				},
+			},
+		}
+
+		assert.Equal(t, map[string]interface{}{
+			"fieldName2.innerFieldName2": map[string]interface{}{"innerFieldName3": ""}}, flatten(target, 1))
+	})
+
+	t.Run("flattens up to maxDepth with multiple keys in target", func(t *testing.T) {
+		target := map[string]interface{}{
+			"fieldName": map[string]interface{}{
+				"innerFieldName": "",
+			},
+			"fieldName2": map[string]interface{}{
+				"innerFieldName2": map[string]interface{}{
+					"innerFieldName3": "",
+				},
+			},
+		}
+
+		assert.Equal(t, map[string]interface{}{"fieldName.innerFieldName": "", "fieldName2.innerFieldName2": map[string]interface{}{"innerFieldName3": ""}}, flatten(target, 1))
+	})
+
+	t.Run("flattens multiple objects of the same max depth", func(t *testing.T) {
+		target := map[string]interface{}{
+			"fieldName": map[string]interface{}{
+				"innerFieldName": "",
+			},
+			"fieldName2": map[string]interface{}{
+				"innerFieldName2": "",
+			},
+		}
+
+		assert.Equal(t, map[string]interface{}{
+			"fieldName.innerFieldName":   "",
+			"fieldName2.innerFieldName2": ""}, flatten(target, 1))
+	})
+
+	t.Run("only flattens multiple entries in the same key", func(t *testing.T) {
+		target := map[string]interface{}{
+			"fieldName": map[string]interface{}{
+				"innerFieldName":  "",
+				"innerFieldName1": "",
+			},
+			"fieldName2": map[string]interface{}{
+				"innerFieldName2": map[string]interface{}{
+					"innerFieldName3": "",
+				},
+			},
+		}
+
+		assert.Equal(t, map[string]interface{}{
+			"fieldName.innerFieldName":   "",
+			"fieldName.innerFieldName1":  "",
+			"fieldName2.innerFieldName2": map[string]interface{}{"innerFieldName3": ""}}, flatten(target, 1))
+	})
+
+	t.Run("combines nested field names", func(t *testing.T) {
+		target := map[string]interface{}{
+			"fieldName": map[string]interface{}{
+				"innerFieldName": "",
+			},
+			"fieldName2": map[string]interface{}{
+				"innerFieldName2": "",
+			},
+		}
+
+		assert.Equal(t, map[string]interface{}{"fieldName.innerFieldName": "", "fieldName2.innerFieldName2": ""}, flatten(target, 10))
+	})
+
+	t.Run("will preserve only one key with the same name", func(t *testing.T) {
+		// This test documents that in the unlikely case of a collision of a flattened name and an existing key, only
+		// one entry's value will be preserved at random
+		target := map[string]interface{}{
+			"fieldName": map[string]interface{}{
+				"innerFieldName": "one of these values will be lost",
+			},
+			"fieldName.innerFieldName": "this may be lost",
+		}
+
+		result := flatten(target, 10)
+		assert.Len(t, result, 1)
+		_, ok := result["fieldName.innerFieldName"]
+		assert.True(t, ok)
 	})
 }
 

@@ -4,8 +4,8 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
@@ -24,18 +24,26 @@ const (
 )
 
 var (
-	ErrServiceAccountNotFound            = errutil.NewBase(errutil.StatusNotFound, "serviceaccounts.ErrNotFound", errutil.WithPublicMessage("service account not found"))
-	ErrServiceAccountInvalidRole         = errutil.NewBase(errutil.StatusBadRequest, "serviceaccounts.ErrInvalidRoleSpecified", errutil.WithPublicMessage("invalid role specified"))
-	ErrServiceAccountRolePrivilegeDenied = errutil.NewBase(errutil.StatusForbidden, "serviceaccounts.ErrRoleForbidden", errutil.WithPublicMessage("can not assign a role higher than user's role"))
-	ErrServiceAccountInvalidOrgID        = errutil.NewBase(errutil.StatusBadRequest, "serviceaccounts.ErrInvalidOrgId", errutil.WithPublicMessage("invalid org id specified"))
-	ErrServiceAccountInvalidID           = errutil.NewBase(errutil.StatusBadRequest, "serviceaccounts.ErrInvalidId", errutil.WithPublicMessage("invalid service account id specified"))
-	ErrServiceAccountInvalidAPIKeyID     = errutil.NewBase(errutil.StatusBadRequest, "serviceaccounts.ErrInvalidAPIKeyId", errutil.WithPublicMessage("invalid api key id specified"))
-	ErrServiceAccountInvalidTokenID      = errutil.NewBase(errutil.StatusBadRequest, "serviceaccounts.ErrInvalidTokenId", errutil.WithPublicMessage("invalid service account token id specified"))
-	ErrServiceAccountAlreadyExists       = errutil.NewBase(errutil.StatusBadRequest, "serviceaccounts.ErrAlreadyExists", errutil.WithPublicMessage("service account already exists"))
-	ErrServiceAccountTokenNotFound       = errutil.NewBase(errutil.StatusNotFound, "serviceaccounts.ErrTokenNotFound", errutil.WithPublicMessage("service account token not found"))
-	ErrInvalidTokenExpiration            = errutil.NewBase(errutil.StatusValidationFailed, "serviceaccounts.ErrInvalidInput", errutil.WithPublicMessage("invalid SecondsToLive value"))
-	ErrDuplicateToken                    = errutil.NewBase(errutil.StatusBadRequest, "serviceaccounts.ErrTokenAlreadyExists", errutil.WithPublicMessage("service account token with given name already exists in the organization"))
+	ErrServiceAccountNotFound            = errutil.NotFound("serviceaccounts.ErrNotFound", errutil.WithPublicMessage("service account not found"))
+	ErrServiceAccountInvalidRole         = errutil.BadRequest("serviceaccounts.ErrInvalidRoleSpecified", errutil.WithPublicMessage("invalid role specified"))
+	ErrServiceAccountRolePrivilegeDenied = errutil.Forbidden("serviceaccounts.ErrRoleForbidden", errutil.WithPublicMessage("can not assign a role higher than user's role"))
+	ErrServiceAccountInvalidOrgID        = errutil.BadRequest("serviceaccounts.ErrInvalidOrgId", errutil.WithPublicMessage("invalid org id specified"))
+	ErrServiceAccountInvalidID           = errutil.BadRequest("serviceaccounts.ErrInvalidId", errutil.WithPublicMessage("invalid service account id specified"))
+	ErrServiceAccountInvalidAPIKeyID     = errutil.BadRequest("serviceaccounts.ErrInvalidAPIKeyId", errutil.WithPublicMessage("invalid api key id specified"))
+	ErrServiceAccountInvalidTokenID      = errutil.BadRequest("serviceaccounts.ErrInvalidTokenId", errutil.WithPublicMessage("invalid service account token id specified"))
+	ErrServiceAccountAlreadyExists       = errutil.BadRequest("serviceaccounts.ErrAlreadyExists", errutil.WithPublicMessage("service account already exists"))
+	ErrServiceAccountTokenNotFound       = errutil.NotFound("serviceaccounts.ErrTokenNotFound", errutil.WithPublicMessage("service account token not found"))
+	ErrInvalidTokenExpiration            = errutil.ValidationFailed("serviceaccounts.ErrInvalidInput", errutil.WithPublicMessage("invalid SecondsToLive value"))
+	ErrDuplicateToken                    = errutil.BadRequest("serviceaccounts.ErrTokenAlreadyExists", errutil.WithPublicMessage("service account token with given name already exists in the organization"))
 )
+
+type MigrationResult struct {
+	Total           int      `json:"total"`
+	Migrated        int      `json:"migrated"`
+	Failed          int      `json:"failed"`
+	FailedApikeyIDs []int64  `json:"failedApikeyIDs"`
+	FailedDetails   []string `json:"failedDetails"`
+}
 
 type ServiceAccount struct {
 	Id int64
@@ -98,7 +106,7 @@ type SearchOrgServiceAccountsQuery struct {
 	Filter       ServiceAccountFilter
 	Page         int
 	Limit        int
-	SignedInUser *user.SignedInUser
+	SignedInUser identity.Requester
 }
 
 func (q *SearchOrgServiceAccountsQuery) SetDefaults() {
@@ -152,9 +160,10 @@ const (
 )
 
 type Stats struct {
-	ServiceAccounts     int64 `xorm:"serviceaccounts"`
-	Tokens              int64 `xorm:"serviceaccount_tokens"`
-	ForcedExpiryEnabled bool  `xorm:"-"`
+	ServiceAccounts           int64 `xorm:"serviceaccounts"`
+	ServiceAccountsWithNoRole int64 `xorm:"serviceaccounts_with_no_role"`
+	Tokens                    int64 `xorm:"serviceaccount_tokens"`
+	ForcedExpiryEnabled       bool  `xorm:"-"`
 }
 
 // AccessEvaluator is used to protect the "Configuration > Service accounts" page access

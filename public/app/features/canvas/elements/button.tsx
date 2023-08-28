@@ -1,11 +1,11 @@
 import React, { PureComponent } from 'react';
 
 import { PluginState } from '@grafana/data/src';
+import { TextDimensionConfig } from '@grafana/schema';
 import { Button } from '@grafana/ui';
 import { DimensionContext } from 'app/features/dimensions/context';
 import { TextDimensionEditor } from 'app/features/dimensions/editors/TextDimensionEditor';
-import { TextDimensionConfig } from 'app/features/dimensions/types';
-import { APIEditor, APIEditorConfig, callApi } from 'app/plugins/panel/canvas/editor/APIEditor';
+import { APIEditor, APIEditorConfig, callApi } from 'app/plugins/panel/canvas/editor/element/APIEditor';
 
 import { CanvasElementItem, CanvasElementProps, defaultBgColor } from '../element';
 

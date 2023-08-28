@@ -1,4 +1,3 @@
-import { orderBy } from 'lodash';
 import uPlot, { Padding } from 'uplot';
 
 import {
@@ -8,10 +7,10 @@ import {
   formattedValueToString,
   getDisplayProcessor,
   getFieldColorModeForField,
+  cacheFieldDisplayNames,
   getFieldSeriesColor,
   GrafanaTheme2,
   outerJoinDataFrames,
-  reduceField,
   TimeZone,
   VizOrientation,
 } from '@grafana/data';
@@ -31,7 +30,7 @@ import { getStackingGroups } from '@grafana/ui/src/components/uPlot/utils';
 import { findField } from 'app/features/dimensions';
 
 import { BarsOptions, getConfig } from './bars';
-import { PanelFieldConfig, PanelOptions, defaultPanelFieldConfig } from './panelcfg.gen';
+import { FieldConfig, Options, defaultFieldConfig } from './panelcfg.gen';
 import { BarChartDisplayValues, BarChartDisplayWarning } from './types';
 
 function getBarCharScaleOrientation(orientation: VizOrientation) {
@@ -52,7 +51,7 @@ function getBarCharScaleOrientation(orientation: VizOrientation) {
   };
 }
 
-export interface BarChartOptionsEX extends PanelOptions {
+export interface BarChartOptionsEX extends Options {
   rawValue: (seriesIdx: number, valueIdx: number) => number | null;
   getColor?: (seriesIdx: number, valueIdx: number, value: unknown) => string | null;
   timeZone?: TimeZone;
@@ -185,7 +184,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptionsEX> = ({
 
     seriesIndex++;
 
-    const customConfig: PanelFieldConfig = { ...defaultPanelFieldConfig, ...field.config.custom };
+    const customConfig: FieldConfig = { ...defaultFieldConfig, ...field.config.custom };
 
     const scaleKey = field.config.unit || FIXED_UNIT;
     const colorMode = getFieldColorModeForField(field);
@@ -358,11 +357,13 @@ function getRotationPadding(
 export function prepareBarChartDisplayValues(
   series: DataFrame[],
   theme: GrafanaTheme2,
-  options: PanelOptions
+  options: Options
 ): BarChartDisplayValues | BarChartDisplayWarning {
   if (!series?.length) {
     return { warn: 'No data in response' };
   }
+
+  cacheFieldDisplayNames(series);
 
   // Bar chart requires a single frame
   const frame =
@@ -474,22 +475,10 @@ export function prepareBarChartDisplayValues(
     }
   }
 
-  if (isLegendOrdered(options.legend)) {
-    const sortKey = options.legend.sortBy!.toLowerCase();
-    const reducers = options.legend.calcs ?? [sortKey];
-    fields = orderBy(
-      fields,
-      (field) => {
-        return reduceField({ field, reducers })[sortKey];
-      },
-      options.legend.sortDesc ? 'desc' : 'asc'
-    );
-  }
-
   let legendFields: Field[] = fields;
   if (options.stacking === StackingMode.Percent) {
     legendFields = fields.map((field) => {
-      const alignedFrameField = frame.fields.find((f) => f.name === field.name)!;
+      const alignedFrameField = frame.fields.find((f) => f.state?.displayName === field.state?.displayName)!;
 
       const copy = {
         ...field,

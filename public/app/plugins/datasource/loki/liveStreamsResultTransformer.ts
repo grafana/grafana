@@ -69,7 +69,7 @@ function createUid(
   }
   // Return unique id
   if (refId) {
-    return `${id}_${refId}`;
+    return `${refId}_${id}`;
   }
   return id;
 }

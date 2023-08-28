@@ -26,6 +26,7 @@ describe('<ButtonRow>', () => {
     expect(screen.getByTestId(selectors.pages.DataSource.delete)).toBeInTheDocument();
     expect(screen.getByText('Test')).toBeInTheDocument();
   });
+
   it('should render save & test', () => {
     setup({ canSave: true });
 

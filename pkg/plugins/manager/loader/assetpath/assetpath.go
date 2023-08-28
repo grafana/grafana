@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 )
 
@@ -22,9 +23,13 @@ func ProvideService(cdn *pluginscdn.Service) *Service {
 	return &Service{cdn: cdn}
 }
 
+func DefaultService(cfg *config.Cfg) *Service {
+	return &Service{cdn: pluginscdn.ProvideService(cfg)}
+}
+
 // Base returns the base path for the specified plugin.
 func (s *Service) Base(pluginJSON plugins.JSONData, class plugins.Class, pluginDir string) (string, error) {
-	if class == plugins.Core {
+	if class == plugins.ClassCore {
 		return path.Join("public/app/plugins", string(pluginJSON.Type), filepath.Base(pluginDir)), nil
 	}
 	if s.cdn.PluginSupported(pluginJSON.ID) {
@@ -35,7 +40,7 @@ func (s *Service) Base(pluginJSON plugins.JSONData, class plugins.Class, pluginD
 
 // Module returns the module.js path for the specified plugin.
 func (s *Service) Module(pluginJSON plugins.JSONData, class plugins.Class, pluginDir string) (string, error) {
-	if class == plugins.Core {
+	if class == plugins.ClassCore {
 		return path.Join("app/plugins", string(pluginJSON.Type), filepath.Base(pluginDir), "module"), nil
 	}
 	if s.cdn.PluginSupported(pluginJSON.ID) {

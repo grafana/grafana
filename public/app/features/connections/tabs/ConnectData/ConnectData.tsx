@@ -4,7 +4,8 @@ import React, { useMemo, useState } from 'react';
 import { PluginType } from '@grafana/data';
 import { useStyles2, LoadingPlaceholder } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
-import { useGetAllWithFilters } from 'app/features/plugins/admin/state/hooks';
+import { t } from 'app/core/internationalization';
+import { useGetAll } from 'app/features/plugins/admin/state/hooks';
 import { AccessControlAction } from 'app/types';
 
 import { ROUTES } from '../../constants';
@@ -38,10 +39,9 @@ export function AddNewConnection() {
     setSearchTerm(e.currentTarget.value.toLowerCase());
   };
 
-  const { isLoading, error, plugins } = useGetAllWithFilters({
-    query: searchTerm,
-    filterBy: '',
-    filterByType: PluginType.datasource,
+  const { isLoading, error, plugins } = useGetAll({
+    keyword: searchTerm,
+    type: PluginType.datasource,
   });
 
   const cardGridItems = useMemo(
@@ -52,6 +52,7 @@ export function AddNewConnection() {
         description: plugin.description,
         logo: plugin.info.logos.small,
         url: ROUTES.DataSourcesDetails.replace(':id', plugin.id),
+        angularDetected: plugin.angularDetected,
       })),
     [plugins]
   );
@@ -76,6 +77,7 @@ export function AddNewConnection() {
   };
 
   const showNoResults = useMemo(() => !isLoading && !error && plugins.length < 1, [isLoading, error, plugins]);
+  const categoryHeaderLabel = t('connections.connect-data.category-header-label', 'Data sources');
 
   return (
     <>
@@ -83,7 +85,7 @@ export function AddNewConnection() {
       <Search onChange={handleSearchChange} />
       {/* We need this extra spacing when there are no filters */}
       <div className={styles.spacer} />
-      <CategoryHeader iconName="database" label="Data sources" />
+      <CategoryHeader iconName="database" label={categoryHeaderLabel} />
       {isLoading ? (
         <LoadingPlaceholder text="Loading..." />
       ) : !!error ? (

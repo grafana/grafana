@@ -9,6 +9,11 @@ keywords:
   - troubleshooting
   - panels
   - testdata
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 menuTitle: TestData
 title: TestData data source
 weight: 1500
@@ -16,10 +21,10 @@ weight: 1500
 
 # TestData data source
 
-Grafana ships with a TestData data source, which creates simulated time series data for any [panel]({{< relref "../../panels-visualizations/" >}}).
+Grafana ships with a TestData data source, which creates simulated time series data for any [panel][panels-visualizations].
 You can use it to build your own fake and random time series data and render it in any panel, which helps you verify dashboard functionality since you can safely and easily share the data.
 
-For instructions on how to add a data source to Grafana, refer to the [administration documentation]({{< relref "../../administration/data-source-management/" >}}).
+For instructions on how to add a data source to Grafana, refer to the [administration documentation][data-source-management].
 Only users with the organization administrator role can add data sources.
 
 ## Configure the data source
@@ -40,7 +45,7 @@ To configure basic settings for the data source, complete the following steps:
 
 ## Create mock data
 
-{{< figure src="/static/img/docs/v41/test_data_add.png" class="docs-image--no-shadow" caption="Adding test data" >}}
+{{< figure src="/media/docs/grafana/data-sources/screenshot-testdata-add-10.0.png" class="docs-image--no-shadow" caption="Adding test data" >}}
 
 Once you've added the TestData data source, your Grafana instance's users can use it as a data source in any metric panel.
 
@@ -50,7 +55,7 @@ Instead of providing a query editor, the TestData data source helps you select a
 
 You can assign an **Alias** to each scenario, and many have their own options that appear when selected.
 
-{{< figure src="/static/img/docs/v41/test_data_csv_example.png" class="docs-image--no-shadow" caption="Using CSV Metric Values" >}}
+{{< figure src="/media/docs/grafana/data-sources/screenshot-testdata-csv-example-10.0.png" class="docs-image--no-shadow" caption="Using CSV Metric Values" >}}
 
 **Available scenarios:**
 
@@ -88,7 +93,7 @@ TestData also provides an example dashboard.
 
 **To import the example dashboard:**
 
-1. Navigate to the data source's [configuration page]({{< relref "#configure-the-data-source" >}}).
+1. Navigate to the data source's [configuration page](#configure-the-data-source).
 1. Select the **Dashboards** tab.
 1. Select **Import** for the **Simple Streaming Example** dashboard.
 
@@ -101,3 +106,11 @@ If you don't, upgrading Grafana can overwrite the customized dashboard with the 
 
 If you report an issue on GitHub involving the use or rendering of time series data, we strongly recommend that you use this data source to replicate the issue.
 That makes it much easier for the developers to replicate and solve your issue.
+
+{{% docs/reference %}}
+[data-source-management]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/administration/data-source-management"
+[data-source-management]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/administration/data-source-management"
+
+[panels-visualizations]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations"
+[panels-visualizations]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations"
+{{% /docs/reference %}}

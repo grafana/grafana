@@ -1,13 +1,16 @@
 // Copyright (c) 2014, Hugh Kennedy
 // Based on code from https://github.com/hughsk/flat/blob/master/index.js
 //
-export default function flatten(target: object, opts?: { delimiter?: any; maxDepth?: any; safe?: any }): any {
+export default function flatten(
+  target: object,
+  opts?: { delimiter?: string; maxDepth?: number; safe?: boolean }
+): Record<string, unknown> {
   opts = opts || {};
 
   const delimiter = opts.delimiter || '.';
   let maxDepth = opts.maxDepth || 3;
   let currentDepth = 1;
-  const output: any = {};
+  const output: Record<string, unknown> = {};
 
   function step(object: any, prev: string | null) {
     Object.keys(object).forEach((key) => {

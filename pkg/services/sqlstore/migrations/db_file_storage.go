@@ -64,4 +64,7 @@ func addDbFileStorageMigration(mg *migrator.Migrator) {
 		// MySQL `utf8mb4_unicode_ci` collation is set in `mysql_dialect.go`
 		// SQLite uses a `BINARY` collation by default
 		Postgres("ALTER TABLE file ALTER COLUMN path TYPE VARCHAR(1024) COLLATE \"C\";")) // Collate C - sorting done based on character code byte values
+
+	mg.AddMigration("migrate contents column to mediumblob for MySQL", migrator.NewRawSQLMigration("").
+		Mysql("ALTER TABLE file MODIFY contents MEDIUMBLOB;"))
 }

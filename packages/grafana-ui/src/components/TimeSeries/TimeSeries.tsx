@@ -5,7 +5,7 @@ import { DataFrame, TimeRange } from '@grafana/data';
 import { withTheme2 } from '../../themes/ThemeContext';
 import { GraphNG, GraphNGProps, PropDiffFn } from '../GraphNG/GraphNG';
 import { PanelContext, PanelContextRoot } from '../PanelChrome/PanelContext';
-import { PlotLegend } from '../uPlot/PlotLegend';
+import { hasVisibleLegendSeries, PlotLegend } from '../uPlot/PlotLegend';
 import { UPlotConfigBuilder } from '../uPlot/config/UPlotConfigBuilder';
 
 import { preparePlotConfigBuilder } from './utils';
@@ -19,7 +19,7 @@ export class UnthemedTimeSeries extends Component<TimeSeriesProps> {
   panelContext: PanelContext = {} as PanelContext;
 
   prepConfig = (alignedFrame: DataFrame, allFrames: DataFrame[], getTimeRange: () => TimeRange) => {
-    const { eventBus, sync } = this.context as PanelContext;
+    const { eventBus, eventsScope, sync } = this.context as PanelContext;
     const { theme, timeZone, renderers, tweakAxis, tweakScale } = this.props;
 
     return preparePlotConfigBuilder({
@@ -33,14 +33,14 @@ export class UnthemedTimeSeries extends Component<TimeSeriesProps> {
       renderers,
       tweakScale,
       tweakAxis,
+      eventsScope,
     });
   };
 
   renderLegend = (config: UPlotConfigBuilder) => {
     const { legend, frames } = this.props;
 
-    //hides and shows the legend ON the uPlot graph
-    if (!config || (legend && !legend.showLegend)) {
+    if (!config || (legend && !legend.showLegend) || !hasVisibleLegendSeries(config, frames)) {
       return null;
     }
 

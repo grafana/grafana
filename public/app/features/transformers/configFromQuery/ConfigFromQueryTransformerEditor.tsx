@@ -8,6 +8,7 @@ import {
   SelectableValue,
   TransformerRegistryItem,
   TransformerUIProps,
+  TransformerCategory,
 } from '@grafana/data';
 import { fieldMatchersUI, InlineField, InlineFieldRow, Select, useStyles2 } from '@grafana/ui';
 
@@ -41,7 +42,7 @@ export function ConfigFromQueryTransformerEditor({ input, onChange, options }: P
     onChange({ ...options, applyTo: { id: value.value! } });
   };
 
-  const onMatcherConfigChange = (matcherOption: any) => {
+  const onMatcherConfigChange = (matcherOption: unknown) => {
     onChange({ ...options, applyTo: { id: currentMatcher.id, options: matcherOption } });
   };
 
@@ -93,6 +94,7 @@ export const configFromQueryTransformRegistryItem: TransformerRegistryItem<Confi
   name: configFromDataTransformer.name,
   description: configFromDataTransformer.description,
   state: PluginState.beta,
+  categories: new Set([TransformerCategory.CalculateNewFields]),
   help: `
 ### Use cases
 

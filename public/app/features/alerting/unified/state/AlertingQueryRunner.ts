@@ -1,3 +1,4 @@
+import { reject } from 'lodash';
 import { Observable, of, OperatorFunction, ReplaySubject, Unsubscribable } from 'rxjs';
 import { catchError, map, share } from 'rxjs/operators';
 import { v4 as uuidv4 } from 'uuid';
@@ -34,7 +35,10 @@ export class AlertingQueryRunner {
   private subscription?: Unsubscribable;
   private lastResult: Record<string, PanelData>;
 
-  constructor(private backendSrv = getBackendSrv(), private dataSourceSrv = getDataSourceSrv()) {
+  constructor(
+    private backendSrv = getBackendSrv(),
+    private dataSourceSrv = getDataSourceSrv()
+  ) {
     this.subject = new ReplaySubject(1);
     this.lastResult = {};
   }
@@ -44,24 +48,33 @@ export class AlertingQueryRunner {
   }
 
   async run(queries: AlertQuery[]) {
-    if (queries.length === 0) {
-      const empty = initialState(queries, LoadingState.Done);
-      return this.subject.next(empty);
-    }
+    const empty = initialState(queries, LoadingState.Done);
+    const queriesToExclude: string[] = [];
 
     // do not execute if one more of the queries are not runnable,
     // for example not completely configured
     for (const query of queries) {
-      if (!isExpressionQuery(query.model)) {
-        const ds = await this.dataSourceSrv.get(query.datasourceUid);
-        if (ds.filterQuery && !ds.filterQuery(query.model)) {
-          const empty = initialState(queries, LoadingState.Done);
-          return this.subject.next(empty);
-        }
+      const refId = query.model.refId;
+
+      if (isExpressionQuery(query.model)) {
+        continue;
+      }
+
+      const dataSourceInstance = await this.dataSourceSrv.get(query.datasourceUid);
+      const skipRunningQuery = dataSourceInstance.filterQuery && !dataSourceInstance.filterQuery(query.model);
+
+      if (skipRunningQuery) {
+        queriesToExclude.push(refId);
       }
     }
 
-    this.subscription = runRequest(this.backendSrv, queries).subscribe({
+    const queriesToRun = reject(queries, (q) => queriesToExclude.includes(q.model.refId));
+
+    if (queriesToRun.length === 0) {
+      return this.subject.next(empty);
+    }
+
+    this.subscription = runRequest(this.backendSrv, queriesToRun).subscribe({
       next: (dataPerQuery) => {
         const nextResult = applyChange(dataPerQuery, (refId, data) => {
           const previous = this.lastResult[refId];

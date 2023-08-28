@@ -4,8 +4,12 @@ keywords:
   - proxy
   - guide
   - Grafana
-title: Configure a data source connection proxy
+labels:
+  products:
+    - enterprise
+    - oss
 menuTitle: Configure data source proxy
+title: Configure a data source connection proxy
 weight: 1110
 ---
 
@@ -18,7 +22,7 @@ To make use of this functionality, you need to deploy a socks5 proxy server that
 ## Known limitations
 
 - You can configure only one socks5 proxy per Grafana instance
-- All built-in core data sources are compatible, but not all external data sources are. For a list of supported data sources, refer to [private data source connect]({{< ref "/docs/grafana-cloud/data-configuration/configure-private-datasource-connect/#known-limitations" >}}).
+- All built-in core data sources are compatible, but not all external data sources are. For a list of supported data sources, refer to [private data source connect](/docs/grafana-cloud/data-configuration/configure-private-datasource-connect/#known-limitations).
 
 ## Before you begin
 
@@ -39,6 +43,6 @@ To complete this task, you must first deploy a socks proxy server that supports 
 
 1. Set up a data source and configure it to send data source connections through the proxy.
 
-   To configure your data sources to send connections through the proxy, `enableSecureSocksProxy=true` must be specified in the data source json. You can do this in the [API]({{< relref "../../../developers/http_api/data_source" >}}) or use [file based provisioning]({{< relref "../../../administration/provisioning/#data-sources" >}}).
+   To configure your data sources to send connections through the proxy, `enableSecureSocksProxy=true` must be specified in the data source json. You can do this in the [API]({{< relref "../../../developers/http_api/data_source" >}}) or use [file based provisioning]({{< relref "../../../administration/provisioning#data-sources" >}}).
 
    Additionally, you can set the socks5 username and password by adding `secureSocksProxyUsername` in the data source json and `secureSocksProxyPassword` in the secure data source json.

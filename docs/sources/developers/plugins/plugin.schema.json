@@ -329,10 +329,10 @@
     },
     "routes": {
       "type": "array",
-      "description": "For data source plugins. Proxy routes used for plugin authentication and adding headers to HTTP requests made by the plugin. For more information, refer to [Authentication for data source plugins](https://grafana.com/docs/grafana/latest/developers/plugins/authentication/).",
+      "description": "For data source plugins. Proxy routes used for plugin authentication and adding headers to HTTP requests made by the plugin. For more information, refer to [Authentication for data source plugins](/docs/grafana/latest/developers/plugins/authentication/).",
       "items": {
         "type": "object",
-        "description": "For data source plugins. Proxy routes used for plugin authentication and adding headers to HTTP requests made by the plugin. For more information, refer to [Authentication for data source plugins](https://grafana.com/docs/grafana/latest/developers/plugins/authentication/).",
+        "description": "For data source plugins. Proxy routes used for plugin authentication and adding headers to HTTP requests made by the plugin. For more information, refer to [Authentication for data source plugins](/docs/grafana/latest/developers/plugins/authentication/).",
         "additionalProperties": false,
         "properties": {
           "path": {
@@ -477,6 +477,68 @@
     "tracing": {
       "type": "boolean",
       "description": "For data source plugins, if the plugin supports tracing. Used for example to link logs (e.g. Loki logs) with tracing plugins."
+    },
+    "externalServiceRegistration": {
+      "type": "object",
+      "description": "Oauth App Service Registration.",
+      "properties": {
+        "impersonation": {
+          "type": "object",
+          "description": "Impersonation describes the permissions that the external service will have on behalf of the user.",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "description": "Enabled allows the service to request access tokens to impersonate users using the jwtbearer grant"
+            },
+            "groups": {
+              "type": "boolean",
+              "description": "Groups allows the service to list the impersonated user's teams."
+            },
+            "permissions": {
+              "type": "array",
+              "description": "Permissions are the permissions that the external service needs when impersonating a user. The intersection of this set with the impersonated user's permission guarantees that the client will not gain more privileges than the impersonated user has.",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "action": {
+                    "type": "string"
+                  },
+                  "scope": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "self": {
+          "type": "object",
+          "description": "Self describes the permissions that the external service will have on behalf of itself",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "description": "Enabled allows the service to request access tokens for itself using the client_credentials grant"
+            },
+            "permissions": {
+              "type": "array",
+              "description": "Permissions are the permissions that the external service needs its associated service account to have",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "action": {
+                    "type": "string"
+                  },
+                  "scope": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
     }
   }
 }

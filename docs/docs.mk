@@ -1,3 +1,5 @@
+# The source of this file is https://raw.githubusercontent.com/grafana/writers-toolkit/main/docs/docs.mk.
+# A changelog is included in the head of the `make-docs` script.
 include variables.mk
 -include variables.mk.local
 
@@ -52,6 +54,11 @@ ifeq ($(origin DOC_VALIDATOR_IMAGE), undefined)
 export DOC_VALIDATOR_IMAGE := grafana/doc-validator:latest
 endif
 
+# Container image used for vale linting.
+ifeq ($(origin VALE_IMAGE), undefined)
+export VALE_IMAGE := grafana/vale:latest
+endif
+
 # PATH-like list of directories within which to find projects.
 # If all projects are checked out into the same directory, ~/repos/ for example, then the default should work.
 ifeq ($(origin REPOS_PATH), undefined)
@@ -69,7 +76,7 @@ docs-rm: ## Remove the docs container.
 
 .PHONY: docs-pull
 docs-pull: ## Pull documentation base image.
-	$(PODMAN) pull $(DOCS_IMAGE)
+	$(PODMAN) pull -q $(DOCS_IMAGE)
 
 make-docs: ## Fetch the latest make-docs script.
 make-docs:
@@ -91,17 +98,17 @@ docs-no-pull: make-docs
 .PHONY: docs-debug
 docs-debug: ## Run Hugo web server with debugging enabled. TODO: support all SERVER_FLAGS defined in website Makefile.
 docs-debug: make-docs
-	WEBSITE_EXEC='hugo server --debug' $(PWD)/make-docs $(PROJECTS)
+	WEBSITE_EXEC='hugo server --bind 0.0.0.0 --port 3002 --debug' $(PWD)/make-docs $(PROJECTS)
 
 .PHONY: doc-validator
-doc-validator: ## Run docs-validator on the entire docs folder.
+doc-validator: ## Run doc-validator on the entire docs folder.
 doc-validator: make-docs
 	DOCS_IMAGE=$(DOC_VALIDATOR_IMAGE) $(PWD)/make-docs $(PROJECTS)
 
-.PHONY: doc-validator/%
-doc-validator/%: ## Run doc-validator on a specific path. To lint the path /docs/sources/administration, run 'make doc-validator/administration'.
-doc-validator/%: make-docs
-	DOCS_IMAGE=$(DOC_VALIDATOR_IMAGE) DOC_VALIDATOR_INCLUDE=$(subst doc-validator/,,$@) $(PWD)/make-docs $(PROJECTS)
+.PHONY: vale
+vale: ## Run vale on the entire docs folder.
+vale: make-docs
+	DOCS_IMAGE=$(VALE_IMAGE) $(PWD)/make-docs $(PROJECTS)
 
 .PHONY: update
 update: ## Fetch the latest version of this Makefile and the `make-docs` script from Writers' Toolkit.

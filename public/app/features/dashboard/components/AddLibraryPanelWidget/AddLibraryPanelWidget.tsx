@@ -47,7 +47,12 @@ export const AddLibraryPanelWidget = ({ panel, dashboard }: Props) => {
             <Trans i18nKey="library-panel.add-widget.title">Add panel from panel library</Trans>
           </span>
           <div className="flex-grow-1" />
-          <IconButton aria-label="Close 'Add Panel' widget" name="times" onClick={onCancelAddPanel} />
+          <IconButton
+            aria-label="Close 'Add Panel' widget"
+            name="times"
+            onClick={onCancelAddPanel}
+            tooltip="Close widget"
+          />
         </div>
         <LibraryPanelsSearch onClick={onAddLibraryPanel} variant={LibraryPanelsSearchVariant.Tight} showPanelFilter />
       </div>

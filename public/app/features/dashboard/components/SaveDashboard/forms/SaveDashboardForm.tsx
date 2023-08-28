@@ -13,6 +13,7 @@ interface FormDTO {
 
 export type SaveProps = {
   dashboard: DashboardModel; // original
+  isLoading: boolean;
   saveModel: SaveDashboardData; // already cloned
   onCancel: () => void;
   onSuccess: () => void;
@@ -23,6 +24,7 @@ export type SaveProps = {
 
 export const SaveDashboardForm = ({
   dashboard,
+  isLoading,
   saveModel,
   options,
   onSubmit,
@@ -60,7 +62,7 @@ export const SaveDashboardForm = ({
       {({ register, errors }) => {
         const messageProps = register('message');
         return (
-          <Stack direction="column" gap={2}>
+          <Stack gap={2} direction="column" alignItems="flex-start">
             {hasTimeChanged && (
               <Checkbox
                 checked={!!options.saveTimerange}
@@ -102,18 +104,17 @@ export const SaveDashboardForm = ({
               autoFocus
               rows={5}
             />
-
             <Stack alignItems="center">
               <Button variant="secondary" onClick={onCancel} fill="outline">
                 Cancel
               </Button>
               <Button
                 type="submit"
-                disabled={!saveModel.hasChanges}
+                disabled={!saveModel.hasChanges || isLoading}
                 icon={saving ? 'fa fa-spinner' : undefined}
                 aria-label={selectors.pages.SaveDashboardModal.save}
               >
-                Save
+                {isLoading ? 'Saving...' : 'Save'}
               </Button>
               {!saveModel.hasChanges && <div>No changes to save</div>}
             </Stack>

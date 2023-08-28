@@ -10,6 +10,11 @@ keywords:
   - documentation
   - '9.0'
   - release notes
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: What's new in Grafana v9.0
 weight: -33
 ---
@@ -85,7 +90,7 @@ The new heatmap by default assumes that the data is pre-bucketed. So if your que
 
 Grafana Alerting is now on by default if you upgrade from an earlier version of Grafana. If you have been using legacy alerting in an earlier version of Grafana and you upgrade to Grafana 9 your alert rules will be automatically migrated and the legacy alerting interface will be replaced by the Grafana Alerting interface.
 
-Grafana Alerting, called unified alerting in Grafana 8, has been available since June, 2021 now provides feature parity with legacy alerting and many additional benefits. To find out more on the process to revert back to legacy alerts if needed, click [here]({{< relref "../alerting/migrating-alerts/opt-out/" >}}). Note that if you do revert back (by setting the Grafana config flag GF_UNIFIED_ALERTING_ENABLED to false), that we expect to remove legacy alerting in the next major Grafana release, Grafana 10.
+Grafana Alerting, called unified alerting in Grafana 8, has been available since June, 2021 now provides feature parity with legacy alerting and many additional benefits. To find out more on the process to revert back to legacy alerts if needed, click [here]({{< relref "../alerting/migrating-alerts/opt-out" >}}). Note that if you do revert back (by setting the Grafana config flag GF_UNIFIED_ALERTING_ENABLED to false), that we expect to remove legacy alerting in the next major Grafana release, Grafana 10.
 
 ### Alert state history for Grafana managed alerts
 
@@ -97,15 +102,15 @@ Grafana Alerting now provides the ability to capture an image for Grafana manage
 
 ## Envelope encryption is generally available and enabled by default
 
-Grafana now uses envelope encryption to encrypt secrets in the database. Envelope encryption adds a layer of indirection to the encryption process. Instead of encrypting all secrets in the database with a single key, Grafana uses a set of keys called data encryption keys (DEKs) to encrypt them. These data encryption keys are themselves encrypted with a single key encryption key (KEK). This allows you to rotate your KEK and quickly re-encrypt your DEKs in case a key is compromised. In Grafana Enterprise, you can also store your KEK in an external key management service (KMS) like AWS KMS or Azure Key Vault, for extra security. Learn more about envelope encryption in the [database encryption documentation]({{< relref "../setup-grafana/configure-security/configure-database-encryption/#envelope-encryption" >}}).
+Grafana now uses envelope encryption to encrypt secrets in the database. Envelope encryption adds a layer of indirection to the encryption process. Instead of encrypting all secrets in the database with a single key, Grafana uses a set of keys called data encryption keys (DEKs) to encrypt them. These data encryption keys are themselves encrypted with a single key encryption key (KEK). This allows you to rotate your KEK and quickly re-encrypt your DEKs in case a key is compromised. In Grafana Enterprise, you can also store your KEK in an external key management service (KMS) like AWS KMS or Azure Key Vault, for extra security. Learn more about envelope encryption in the [database encryption documentation]({{< relref "../setup-grafana/configure-security/configure-database-encryption#envelope-encryption" >}}).
 
 {{< figure src="/static/img/docs/enterprise/dashboards/envelope-encryption.png" max-width="750px" caption="Envelope encryption" >}}
 
 ## Dashboard previews (opt-in beta)
 
-The dashboard previews initially came to life during our internal [Grafana Labs Hackathon](https://grafana.com/blog/2022/01/14/all-about-the-grafana-labs-hackathon-2.0/?), and are now ready for an opt-in beta release. The previews provide an overview of all available dashboards and help you quickly find the right dashboard when the dashboard names aren’t enough.
+The dashboard previews initially came to life during our internal [Grafana Labs Hackathon](/blog/2022/01/14/all-about-the-grafana-labs-hackathon-2.0/?), and are now ready for an opt-in beta release. The previews provide an overview of all available dashboards and help you quickly find the right dashboard when the dashboard names aren’t enough.
 
-Refer to the [Dashboard previews topic](https://grafana.com/docs/grafana/next/dashboards/previews/) for instructions on how to enable the feature and current limitations.
+Refer to the [Dashboard previews topic](/docs/grafana/next/dashboards/previews/) for instructions on how to enable the feature and current limitations.
 
 {{< figure src="/static/img/docs/dashboards/dashboard-previews.png" max-width="750px" caption="Dashboard previews" >}}
 
@@ -156,7 +161,7 @@ Query history is a panel that keeps track of all queries that are run in Explore
 
 ### RBAC is generally available
 
-Fine-grained access control is now called role-based access control, or RBAC. It is now enabled by default in Grafana Enterprise and Grafana Cloud Advanced, so you can create and define custom roles like Annotations Writer, Users Viewer, and Dashboard Permissions Writer for users, teams, or service accounts. Learn more about RBAC in the [docs](https://grafana.com/docs/grafana/next/enterprise/access-control/).
+Fine-grained access control is now called role-based access control, or RBAC. It is now enabled by default in Grafana Enterprise and Grafana Cloud, so you can create and define custom roles like Annotations Writer, Users Viewer, and Dashboard Permissions Writer for users, teams, or service accounts. Learn more about RBAC in the [docs](/docs/grafana/next/enterprise/access-control/).
 
 {{< figure src="/static/img/docs/enterprise/rbac-ga.png" max-width="755px" caption="RBAC is GA" >}}
 
@@ -164,17 +169,17 @@ Fine-grained access control is now called role-based access control, or RBAC. It
 
 ### Add multiple dashboards to a single report
 
-If you have information spread across several dashboards that you’d like to send out to a group of recipients periodically, you can now add multiple dashboards to a single report and send it all in one email. Learn more about Reporting in the [Reporting docs](https://grafana.com/docs/grafana/latest/enterprise/reporting/#reporting).
+If you have information spread across several dashboards that you’d like to send out to a group of recipients periodically, you can now add multiple dashboards to a single report and send it all in one email. Learn more about Reporting in the [Reporting docs](/docs/grafana/latest/enterprise/reporting/#reporting).
 
 ### Embed an image of a dashboard in a report
 
-Reporting is all about convenience - getting info to eyeballs as quickly as possible. Now you can embed an image of a dashboard directly within a report email, so your recipients can see it right when they open the message instead of opening an attached PDF. This is especially handy for SLOs, financial results, or other at-a-glance data. Learn more about Reporting in the [Reporting docs](https://grafana.com/docs/grafana/latest/enterprise/reporting/#reporting).
+Reporting is all about convenience - getting info to eyeballs as quickly as possible. Now you can embed an image of a dashboard directly within a report email, so your recipients can see it right when they open the message instead of opening an attached PDF. This is especially handy for SLOs, financial results, or other at-a-glance data. Learn more about Reporting in the [Reporting docs](/docs/grafana/latest/enterprise/reporting/#reporting).
 
 {{< figure src="/static/img/docs/dashboards/report-embedded-image.png" max-width="750px" caption="Embed report" >}}
 
 ## Breaking changes
 
-This is a partial list of notable breaking changes. For the complete list, see our [Release Notes]({{< relref "../release-notes/release-notes-9-0-0/" >}}).
+This is a partial list of notable breaking changes. For the complete list, see our [Release Notes]({{< relref "../release-notes/release-notes-9-0-0" >}}).
 
 ### Role-based access control: changes for general release
 
@@ -209,7 +214,7 @@ In the Prometheus data source, when grafana receives numeric data from Prometheu
 
 <!-- ### InfluxDB: Support for browser access mode removed (should this stay??)
 
-In the InfluxDB data source, browser access mode was deprecated in grafana 8.0.0 and we are removing this feature in 9.0.0. If you are using this mode, you need to [switch to server access mode]({{< relref "../datasources/influxdb/##influxql-classic-influxdb-query" >}}) on the data source configuration page or you can do this via provisioning. -->
+In the InfluxDB data source, browser access mode was deprecated in grafana 8.0.0 and we are removing this feature in 9.0.0. If you are using this mode, you need to [switch to server access mode]({{< relref "../datasources/influxdb##influxql-classic-influxdb-query" >}}) on the data source configuration page or you can do this via provisioning. -->
 
 ### Transformations: Allow more complex regex expressions in rename by regex
 
@@ -217,11 +222,11 @@ The rename by regex transformation has been improved to allow global patterns of
 
 ### Clock Panel
 
-We have updated [clock panel](https://grafana.com/grafana/plugins/grafana-clock-panel/) to version `2.0.0` to make it compatible with Grafana 9. The previous version `1.3.1` will cause the Grafana 9 to [crash](https://github.com/grafana/clock-panel/issues/106) when being used in a dashboard, we encourage you to update the panel before migrating to Grafana 9.
+We have updated [clock panel](/grafana/plugins/grafana-clock-panel/) to version `2.0.0` to make it compatible with Grafana 9. The previous version `1.3.1` will cause the Grafana 9 to [crash](https://github.com/grafana/clock-panel/issues/106) when being used in a dashboard, we encourage you to update the panel before migrating to Grafana 9.
 
 ### Polystat Panel
 
-We have updated [polystat panel](https://grafana.com/grafana/plugins/grafana-polystat-panel/) to version `1.2.10` to make it compatible with Grafana 9. The previous versions `1.2.8` and below will render empty in Grafana 9. We encourage you to update the panel before or immediately after migrating to Grafana 9.
+We have updated [polystat panel](/grafana/plugins/grafana-polystat-panel/) to version `1.2.10` to make it compatible with Grafana 9. The previous versions `1.2.8` and below will render empty in Grafana 9. We encourage you to update the panel before or immediately after migrating to Grafana 9.
 
 ### Plugins: Most relevant breaking changes
 
@@ -233,10 +238,10 @@ We have updated [polystat panel](https://grafana.com/grafana/plugins/grafana-pol
 
 You can find the complete list of breaking changes in the links below. Please check them out for more details and see if there is anything affecting your plugin
 
-- https://grafana.com/docs/grafana/next/release-notes/release-notes-9-0-0-beta1/
-- https://grafana.com/docs/grafana/next/release-notes/release-notes-9-0-0-beta2/
-- https://grafana.com/docs/grafana/next/release-notes/release-notes-9-0-0-beta3/
-- https://grafana.com/docs/grafana/next/release-notes/release-notes-9-0-0
+- /docs/grafana/next/release-notes/release-notes-9-0-0-beta1/
+- /docs/grafana/next/release-notes/release-notes-9-0-0-beta2/
+- /docs/grafana/next/release-notes/release-notes-9-0-0-beta3/
+- /docs/grafana/next/release-notes/release-notes-9-0-0
 
 ### Envelope encryption enabled by default
 
@@ -248,7 +253,7 @@ Therefore, any secret created or updated in Grafana v9.0 won't be decryptable by
 
 We strongly recommend that you enable `envelopeEncryption` for older versions to deploy envelope encryption. You can alternatively configure the `disableEnvelopeEncryption` feature toggle before upgrading to v9.0; however, this feature toggle might be removed in a future Grafana release.
 
-For more details, and workarounds for potential issues, refer to the [documentation]({{< relref "../setup-grafana/configure-security/configure-database-encryption/" >}}).
+For more details, and workarounds for potential issues, refer to the [documentation]({{< relref "../setup-grafana/configure-security/configure-database-encryption" >}}).
 
 ## A note on Grafana Enterprise licensing
 

@@ -2,14 +2,15 @@ import { css } from '@emotion/css';
 import React, { lazy, Suspense, useCallback, useMemo, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { config } from '@grafana/runtime';
 import { Modal, useStyles2 } from '@grafana/ui';
 import { RulerGrafanaRuleDTO } from 'app/types/unified-alerting-dto';
+
+import { getHistoryImplementation } from '../components/rules/state-history/common';
 
 const AnnotationsStateHistory = lazy(() => import('../components/rules/state-history/StateHistory'));
 const LokiStateHistory = lazy(() => import('../components/rules/state-history/LokiStateHistory'));
 
-enum StateHistoryImplementation {
+export enum StateHistoryImplementation {
   Loki = 'loki',
   Annotations = 'annotations',
 }
@@ -20,10 +21,7 @@ function useStateHistoryModal() {
 
   const styles = useStyles2(getStyles);
 
-  const implementation =
-    config.unifiedAlerting.alertStateHistoryBackend === StateHistoryImplementation.Loki
-      ? StateHistoryImplementation.Loki
-      : StateHistoryImplementation.Annotations;
+  const implementation = getHistoryImplementation();
 
   const dismissModal = useCallback(() => {
     setRule(undefined);

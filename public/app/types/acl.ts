@@ -1,13 +1,13 @@
-import { Permission } from '@grafana/schema';
+import { OrgRole } from '@grafana/data';
 
-// Alias to an existing type to reduce the number of changes
-export { Permission as TeamPermissionLevel };
-
-export enum OrgRole {
-  Viewer = 'Viewer',
-  Editor = 'Editor',
-  Admin = 'Admin',
+export enum TeamPermissionLevel {
+  Admin = 4,
+  Editor = 2,
+  Member = 0,
+  Viewer = 1,
 }
+
+export { OrgRole as OrgRole };
 
 export interface DashboardAclDTO {
   id?: number;
@@ -123,15 +123,15 @@ export const dashboardPermissionLevels: DashboardPermissionInfo[] = [
 ];
 
 export interface TeamPermissionInfo {
-  value: Permission;
+  value: TeamPermissionLevel;
   label: string;
   description: string;
 }
 
 export const teamsPermissionLevels: TeamPermissionInfo[] = [
-  { value: Permission.Member, label: 'Member', description: 'Is team member' },
+  { value: TeamPermissionLevel.Member, label: 'Member', description: 'Is team member' },
   {
-    value: Permission.Admin,
+    value: TeamPermissionLevel.Admin,
     label: 'Admin',
     description: 'Can add/remove permissions, members and delete team.',
   },

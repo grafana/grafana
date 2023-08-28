@@ -1,4 +1,4 @@
-import { MetricKind, QueryType, ValueTypes } from './types';
+import { QueryType, MetricKind, ValueTypes } from './types/query';
 
 // not super excited about using uneven numbers, but this makes it align perfectly with rows that has two fields
 export const INPUT_WIDTH = 71;
@@ -313,4 +313,5 @@ export const QUERY_TYPES = [
   { label: 'Builder', value: QueryType.TIME_SERIES_LIST },
   { label: 'MQL', value: QueryType.TIME_SERIES_QUERY },
   { label: 'Service Level Objectives (SLO)', value: QueryType.SLO },
+  { label: 'PromQL', value: QueryType.PROMQL },
 ];

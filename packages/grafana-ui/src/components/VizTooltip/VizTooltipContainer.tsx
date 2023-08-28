@@ -100,6 +100,8 @@ export const VizTooltipContainer = ({
         transform: `translate(${placement.x}px, ${placement.y}px)`,
         transition: 'transform ease-out 0.1s',
       }}
+      aria-live="polite"
+      aria-atomic="true"
       {...otherProps}
       className={cx(styles.wrapper, className)}
     >
@@ -111,7 +113,5 @@ export const VizTooltipContainer = ({
 VizTooltipContainer.displayName = 'VizTooltipContainer';
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  wrapper: css`
-    ${getTooltipContainerStyles(theme)}
-  `,
+  wrapper: css(getTooltipContainerStyles(theme)),
 });

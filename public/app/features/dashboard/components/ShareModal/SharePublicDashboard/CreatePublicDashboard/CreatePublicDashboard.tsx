@@ -4,13 +4,14 @@ import { FormState, UseFormRegister } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data/src';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
-import { reportInteraction } from '@grafana/runtime/src';
 import { Button, Form, Spinner, useStyles2 } from '@grafana/ui/src';
 
 import { contextSrv } from '../../../../../../core/services/context_srv';
 import { AccessControlAction, useSelector } from '../../../../../../types';
 import { isOrgAdmin } from '../../../../../plugins/admin/permissions';
 import { useCreatePublicDashboardMutation } from '../../../../api/publicDashboardApi';
+import { trackDashboardSharingActionPerType } from '../../analytics';
+import { shareDashboardType } from '../../utils';
 import { NoUpsertPermissionsAlert } from '../ModalAlerts/NoUpsertPermissionsAlert';
 import { UnsupportedDataSourcesAlert } from '../ModalAlerts/UnsupportedDataSourcesAlert';
 import { UnsupportedTemplateVariablesAlert } from '../ModalAlerts/UnsupportedTemplateVariablesAlert';
@@ -39,13 +40,13 @@ const CreatePublicDashboard = ({ isError }: { isError: boolean }) => {
   const disableInputs = !hasWritePermissions || isSaveLoading || isError;
 
   const onCreate = async () => {
-    reportInteraction('grafana_dashboards_public_create_clicked');
+    trackDashboardSharingActionPerType('generate_public_url', shareDashboardType.publicDashboard);
     createPublicDashboard({ dashboard, payload: { isEnabled: true } });
   };
 
   return (
     <div>
-      <p className={styles.title}>Welcome to public dashboards alpha!</p>
+      <p className={styles.title}>Welcome to public dashboards public preview!</p>
       <Description />
       {!hasWritePermissions && <NoUpsertPermissionsAlert mode="create" />}
       {dashboardHasTemplateVariables(dashboard.getVariables()) && <UnsupportedTemplateVariablesAlert />}

@@ -5,11 +5,12 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"path/filepath"
 	"runtime"
 	"strings"
 
+	"github.com/Masterminds/semver/v3"
 	"github.com/fatih/color"
+
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/models"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/services"
@@ -19,10 +20,28 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/storage"
 )
 
-func validateInput(c utils.CommandLine, pluginFolder string) error {
-	arg := c.Args().First()
+const installArgsSize = 2
+
+func validateInput(c utils.CommandLine) error {
+	args := c.Args()
+	argsLen := args.Len()
+
+	if argsLen > installArgsSize {
+		logger.Info(color.RedString("Please specify the correct format. For example ./grafana cli (<command arguments>) plugins install <plugin ID> (<plugin version>)\n\n"))
+		return errors.New("install only supports 2 arguments: plugin and version")
+	}
+
+	arg := args.First()
 	if arg == "" {
 		return errors.New("please specify plugin to install")
+	}
+
+	if argsLen == installArgsSize {
+		version := args.Get(1)
+		_, err := semver.NewVersion(version)
+		if err != nil {
+			logger.Info(color.YellowString("The provided version doesn't use semantic versioning format\n\n"))
+		}
 	}
 
 	pluginsDir := c.PluginDirectory()
@@ -50,8 +69,7 @@ func logRestartNotice() {
 }
 
 func installCommand(c utils.CommandLine) error {
-	pluginFolder := c.PluginDirectory()
-	if err := validateInput(c, pluginFolder); err != nil {
+	if err := validateInput(c); err != nil {
 		return err
 	}
 
@@ -67,8 +85,19 @@ func installCommand(c utils.CommandLine) error {
 // installPlugin downloads the plugin code as a zip file from the Grafana.com API
 // and then extracts the zip into the plugin's directory.
 func installPlugin(ctx context.Context, pluginID, version string, c utils.CommandLine) error {
-	skipTLSVerify := c.Bool("insecure")
-	repository := repo.New(skipTLSVerify, c.PluginRepoURL(), services.Logger)
+	// If a version is specified, check if it is already installed
+	if version != "" {
+		if services.PluginVersionInstalled(pluginID, version, c.PluginDirectory()) {
+			services.Logger.Successf("Plugin %s v%s already installed.", pluginID, version)
+			return nil
+		}
+	}
+
+	repository := repo.NewManager(repo.ManagerCfg{
+		SkipTLSVerify: c.Bool("insecure"),
+		BaseURL:       c.PluginRepoURL(),
+		Logger:        services.Logger,
+	})
 
 	compatOpts := repo.NewCompatOpts(services.GrafanaVersion, runtime.GOOS, runtime.GOARCH)
 
@@ -86,7 +115,7 @@ func installPlugin(ctx context.Context, pluginID, version string, c utils.Comman
 	}
 
 	pluginFs := storage.FileSystem(services.Logger, c.PluginDirectory())
-	extractedArchive, err := pluginFs.Extract(ctx, pluginID, archive.File)
+	extractedArchive, err := pluginFs.Extract(ctx, pluginID, storage.SimpleDirNameGeneratorFunc, archive.File)
 	if err != nil {
 		return err
 	}
@@ -98,7 +127,7 @@ func installPlugin(ctx context.Context, pluginID, version string, c utils.Comman
 			return fmt.Errorf("%v: %w", fmt.Sprintf("failed to download plugin %s from repository", dep.ID), err)
 		}
 
-		_, err = pluginFs.Extract(ctx, dep.ID, d.File)
+		_, err = pluginFs.Extract(ctx, dep.ID, storage.SimpleDirNameGeneratorFunc, d.File)
 		if err != nil {
 			return err
 		}
@@ -108,16 +137,21 @@ func installPlugin(ctx context.Context, pluginID, version string, c utils.Comman
 
 // uninstallPlugin removes the plugin directory
 func uninstallPlugin(_ context.Context, pluginID string, c utils.CommandLine) error {
-	logger.Infof("Removing plugin: %v\n", pluginID)
-
-	pluginPath := filepath.Join(c.PluginDirectory(), pluginID)
-	fs := plugins.NewLocalFS(pluginPath)
-
-	logger.Debugf("Removing directory %v\n", pluginPath)
-	err := fs.Remove()
-	if err != nil {
-		return err
+	for _, bundle := range services.GetLocalPlugins(c.PluginDirectory()) {
+		if bundle.Primary.JSONData.ID == pluginID {
+			logger.Infof("Removing plugin: %v\n", pluginID)
+			if remover, ok := bundle.Primary.FS.(plugins.FSRemover); ok {
+				logger.Debugf("Removing directory %v\n\n", bundle.Primary.FS.Base())
+				if err := remover.Remove(); err != nil {
+					return err
+				}
+				return nil
+			} else {
+				return fmt.Errorf("plugin %v is immutable and therefore cannot be uninstalled", pluginID)
+			}
+		}
 	}
+
 	return nil
 }
 
@@ -127,7 +161,7 @@ func osAndArchString() string {
 	return osString + "-" + arch
 }
 
-func supportsCurrentArch(version *models.Version) bool {
+func supportsCurrentArch(version models.Version) bool {
 	if version.Arch == nil {
 		return true
 	}
@@ -139,10 +173,10 @@ func supportsCurrentArch(version *models.Version) bool {
 	return false
 }
 
-func latestSupportedVersion(plugin *models.Plugin) *models.Version {
+func latestSupportedVersion(plugin models.Plugin) *models.Version {
 	for _, v := range plugin.Versions {
 		ver := v
-		if supportsCurrentArch(&ver) {
+		if supportsCurrentArch(ver) {
 			return &ver
 		}
 	}

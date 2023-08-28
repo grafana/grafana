@@ -15,6 +15,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/sqleng"
 )
 
@@ -74,7 +75,7 @@ func TestIntegrationMySQL(t *testing.T) {
 
 	rowTransformer := mysqlQueryResultTransformer{}
 
-	exe, err := sqleng.NewQueryDataHandler(config, &rowTransformer, newMysqlMacroEngine(logger), logger)
+	exe, err := sqleng.NewQueryDataHandler(setting.NewCfg(), config, &rowTransformer, newMysqlMacroEngine(logger, setting.NewCfg()), logger)
 
 	require.NoError(t, err)
 
@@ -450,9 +451,9 @@ func TestIntegrationMySQL(t *testing.T) {
 		err = sess.CreateTable(metric_values{})
 		require.NoError(t, err)
 
-		rand.Seed(time.Now().Unix())
+		rng := rand.New(rand.NewSource(time.Now().Unix()))
 		rnd := func(min, max int64) int64 {
-			return rand.Int63n(max-min) + min
+			return rng.Int63n(max-min) + min
 		}
 
 		var tInitial time.Time
@@ -1165,7 +1166,7 @@ func TestIntegrationMySQL(t *testing.T) {
 
 			queryResultTransformer := mysqlQueryResultTransformer{}
 
-			handler, err := sqleng.NewQueryDataHandler(config, &queryResultTransformer, newMysqlMacroEngine(logger), logger)
+			handler, err := sqleng.NewQueryDataHandler(setting.NewCfg(), config, &queryResultTransformer, newMysqlMacroEngine(logger, setting.NewCfg()), logger)
 			require.NoError(t, err)
 
 			t.Run("When doing a table query that returns 2 rows should limit the result to 1 row", func(t *testing.T) {
@@ -1227,6 +1228,50 @@ func TestIntegrationMySQL(t *testing.T) {
 				require.Len(t, frames[0].Meta.Notices, 1)
 				require.Equal(t, data.NoticeSeverityWarning, frames[0].Meta.Notices[0].Severity)
 			})
+		})
+	})
+
+	t.Run("Given an empty table", func(t *testing.T) {
+		type emptyObj struct {
+			EmptyKey string
+			EmptyVal int64
+		}
+
+		exists, err := sess.IsTableExist(emptyObj{})
+		require.NoError(t, err)
+		if exists {
+			err := sess.DropTable(emptyObj{})
+			require.NoError(t, err)
+		}
+		err = sess.CreateTable(emptyObj{})
+		require.NoError(t, err)
+
+		t.Run("When no rows are returned, should return an empty frame", func(t *testing.T) {
+			query := &backend.QueryDataRequest{
+				Queries: []backend.DataQuery{
+					{
+						JSON: []byte(`{
+							"rawSql": "SELECT * FROM empty_obj",
+							"format": "table"
+						}`),
+						RefID: "A",
+						TimeRange: backend.TimeRange{
+							From: time.Now(),
+							To:   time.Now().Add(1 * time.Minute),
+						},
+					},
+				},
+			}
+
+			resp, err := exe.QueryData(context.Background(), query)
+			require.NoError(t, err)
+			queryResult := resp.Responses["A"]
+
+			frames := queryResult.Frames
+			require.Len(t, frames, 1)
+			require.Equal(t, 0, frames[0].Rows())
+			require.NotNil(t, frames[0].Fields)
+			require.Empty(t, frames[0].Fields)
 		})
 	})
 }

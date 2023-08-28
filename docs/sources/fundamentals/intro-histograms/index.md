@@ -9,8 +9,14 @@ keywords:
   - panel
   - documentation
   - histogram
-title: Histograms and heatmaps
-weight: 700
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
+menuTitle: Histograms and heatmaps
+title: Introduction to histograms and heatmaps
+weight: 650
 ---
 
 # Introduction to histograms and heatmaps
@@ -32,7 +38,7 @@ Here is an example showing height distribution of people.
 
 {{< figure src="/static/img/docs/histogram-panel/histogram-example-v8-0.png" max-width="625px" caption="Bar chart example" >}}
 
-For more information about histogram visualization options, refer to [Histogram]({{< relref "../../panels-visualizations/visualizations/histogram/" >}}).
+For more information about histogram visualization options, refer to [Histogram][histogram].
 
 Histograms only look at _value distributions_ over a specific time range. The problem with histograms is that you cannot see any trends or changes in the distribution over time. This is where heatmaps become useful.
 
@@ -44,7 +50,7 @@ In this example, you can clearly see what values are more common and how they tr
 
 ![](/static/img/docs/v43/heatmap_histogram_over_time.png)
 
-For more information about heatmap visualization options, refer to [Heatmap]({{< relref "../../panels-visualizations/visualizations/heatmap/" >}}).
+For more information about heatmap visualization options, refer to [Heatmap][heatmap].
 
 ## Pre-bucketed data
 
@@ -68,3 +74,11 @@ supports doing histogram bucketing on the raw data.
 If you remove or lower the group by time (or raise maxDataPoints) in your query to return more data points, your heatmap will be
 more accurate, but this can also be very CPU and memory taxing for your browser, possibly causing hangs or crashes if the number of
 data points becomes unreasonably large.
+
+{{% docs/reference %}}
+[heatmap]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/heatmap"
+[heatmap]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/heatmap"
+
+[histogram]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/histogram"
+[histogram]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/histogram"
+{{% /docs/reference %}}

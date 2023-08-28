@@ -38,10 +38,8 @@ func (api *AccessControlAPI) RegisterAPIEndpoints() {
 		rr.Get("/user/permissions", middleware.ReqSignedIn, routing.Wrap(api.getUserPermissions))
 		if api.features.IsEnabled(featuremgmt.FlagAccessControlOnCall) {
 			userIDScope := ac.Scope("users", "id", ac.Parameter(":userID"))
-			rr.Get("/users/permissions/search", authorize(middleware.ReqSignedIn,
-				ac.EvalPermission(ac.ActionUsersPermissionsRead)), routing.Wrap(api.searchUsersPermissions))
-			rr.Get("/user/:userID/permissions/search", authorize(middleware.ReqSignedIn,
-				ac.EvalPermission(ac.ActionUsersPermissionsRead, userIDScope)), routing.Wrap(api.searchUserPermissions))
+			rr.Get("/users/permissions/search", authorize(ac.EvalPermission(ac.ActionUsersPermissionsRead)), routing.Wrap(api.searchUsersPermissions))
+			rr.Get("/user/:userID/permissions/search", authorize(ac.EvalPermission(ac.ActionUsersPermissionsRead, userIDScope)), routing.Wrap(api.searchUserPermissions))
 		}
 	})
 }
@@ -84,7 +82,7 @@ func (api *AccessControlAPI) searchUsersPermissions(c *contextmodel.ReqContext) 
 	}
 
 	// Compute metadata
-	permissions, err := api.Service.SearchUsersPermissions(c.Req.Context(), c.SignedInUser, c.OrgID, searchOptions)
+	permissions, err := api.Service.SearchUsersPermissions(c.Req.Context(), c.SignedInUser, searchOptions)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "could not get org user permissions", err)
 	}
@@ -116,7 +114,8 @@ func (api *AccessControlAPI) searchUserPermissions(c *contextmodel.ReqContext) r
 		return response.JSON(http.StatusBadRequest, "provide one of 'action' or 'actionPrefix'")
 	}
 
-	permissions, err := api.Service.SearchUserPermissions(c.Req.Context(), c.OrgID, searchOptions)
+	permissions, err := api.Service.SearchUserPermissions(c.Req.Context(),
+		c.SignedInUser.GetOrgID(), searchOptions)
 	if err != nil {
 		response.Error(http.StatusInternalServerError, "could not search user permissions", err)
 	}

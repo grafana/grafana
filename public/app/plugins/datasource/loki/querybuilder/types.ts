@@ -38,8 +38,12 @@ export enum LokiOperationId {
   Regexp = 'regexp',
   Pattern = 'pattern',
   Unpack = 'unpack',
+  Distinct = 'distinct',
   LineFormat = 'line_format',
   LabelFormat = 'label_format',
+  Decolorize = 'decolorize',
+  Drop = 'drop',
+  Keep = 'keep',
   Rate = 'rate',
   RateCounter = 'rate_counter',
   CountOverTime = 'count_over_time',
@@ -95,8 +99,9 @@ export enum LokiOperationId {
 
 export enum LokiOperationOrder {
   LineFilters = 1,
-  LineFormats = 2,
-  LabelFilters = 3,
+  Parsers = 2,
+  PipeOperations = 3,
+  // Unwrap is a special case, as it is usually the last operation, so the order is after pipeOperations
   Unwrap = 4,
   NoErrors = 5,
   RangeVectorFunction = 5,

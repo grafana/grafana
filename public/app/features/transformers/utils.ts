@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 
-import { DataFrame, getFieldDisplayName } from '@grafana/data';
+import { DataFrame, getFieldDisplayName, TransformerCategory } from '@grafana/data';
 
 export function useAllFieldNamesFromDataFrames(input: DataFrame[]): string[] {
   return useMemo(() => {
@@ -9,7 +9,7 @@ export function useAllFieldNamesFromDataFrames(input: DataFrame[]): string[] {
     }
 
     return Object.keys(
-      input.reduce((names, frame) => {
+      input.reduce<Record<string, boolean>>((names, frame) => {
         if (!frame || !Array.isArray(frame.fields)) {
           return names;
         }
@@ -19,7 +19,7 @@ export function useAllFieldNamesFromDataFrames(input: DataFrame[]): string[] {
           names[t] = true;
           return names;
         }, names);
-      }, {} as Record<string, boolean>)
+      }, {})
     );
   }, [input]);
 }
@@ -37,3 +37,13 @@ export function getDistinctLabels(input: DataFrame[]): Set<string> {
   }
   return distinct;
 }
+
+export const categoriesLabels: { [K in TransformerCategory]: string } = {
+  combine: 'Combine',
+  calculateNewFields: 'Calculate new fields',
+  createNewVisualization: 'Create new visualization',
+  filter: 'Filter',
+  performSpatialOperations: 'Perform spatial operations',
+  reformat: 'Reformat',
+  reorderAndRename: 'Reorder and rename',
+};

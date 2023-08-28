@@ -75,7 +75,7 @@ export const createReducer =
     if (changeMetricType.match(action)) {
       // If we are switching to a metric which requires the absence of bucket aggregations
       // we remove all of them.
-      if (metricAggregationConfig[action.payload.type].isSingleMetric) {
+      if (metricAggregationConfig[action.payload.type].impliedQueryType !== 'metrics') {
         return [];
       } else if (state!.length === 0) {
         // Else, if there are no bucket aggregations we restore a default one.
@@ -107,10 +107,9 @@ export const createReducer =
     }
 
     if (initQuery.match(action)) {
-      if (state?.length || 0 > 0) {
+      if (state && state.length > 0) {
         return state;
       }
-
       return [{ ...defaultBucketAgg('2'), field: defaultTimeField }];
     }
 

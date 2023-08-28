@@ -2,9 +2,8 @@ package util
 
 import (
 	"context"
+	"errors"
 	"sync"
-
-	"github.com/hashicorp/go-multierror"
 )
 
 // this is a decorator for a regular context that contains a custom error and returns the
@@ -18,7 +17,7 @@ func (c *contextWithCancellableReason) Err() error {
 	c.mtx.Lock()
 	defer c.mtx.Unlock()
 	if c.err != nil {
-		return multierror.Append(c.Context.Err(), c.err)
+		return errors.Join(c.Context.Err(), c.err)
 	}
 	return c.Context.Err()
 }

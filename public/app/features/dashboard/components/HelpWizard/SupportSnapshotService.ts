@@ -4,7 +4,7 @@ import { dateTimeFormat, formattedValueToString, getValueFormat, SelectableValue
 import { config } from '@grafana/runtime';
 import { SceneObject } from '@grafana/scenes';
 import { StateManagerBase } from 'app/core/services/StateManagerBase';
-import { createDashboardSceneFromDashboardModel } from 'app/features/scenes/dashboard/DashboardsLoader';
+import { createDashboardSceneFromDashboardModel } from 'app/features/dashboard-scene/serialization/DashboardsLoader';
 
 import { getTimeSrv } from '../../services/TimeSrv';
 import { DashboardModel, PanelModel } from '../../state';
@@ -80,7 +80,7 @@ export class SupportSnapshotService extends StateManagerBase<SupportSnapshotStat
 
     let scene: SceneObject | undefined = undefined;
 
-    if (config.featureToggles.scenes && !panel.isAngularPlugin()) {
+    if (!panel.isAngularPlugin()) {
       try {
         const oldModel = new DashboardModel(snapshot);
         const dash = createDashboardSceneFromDashboardModel(oldModel);

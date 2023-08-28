@@ -16,46 +16,42 @@ package grafanaplugin
 
 import (
 	"github.com/grafana/grafana/packages/grafana-schema/src/common"
-	"github.com/grafana/grafana/pkg/plugins/pfs"
 )
-
-// This file (with its sibling .cue files) implements pfs.GrafanaPlugin
-pfs.GrafanaPlugin
 
 composableKinds: DataQuery: {
 	maturity: "experimental"
 
 	lineage: {
-		seqs: [
-			{
-				schemas: [
-					{
-						common.DataQuery
+		schemas: [{
+			version: [0, 0]
+			schema: {
+				common.DataQuery
 
-						// The LogQL query.
-						expr: string
-						// Used to override the name of the series.
-						legendFormat?: string
-						// Used to limit the number of log rows returned.
-						maxLines?: int64
-						// Used to scale the interval value.
-						resolution?: int64
-						editorMode?: #QueryEditorMode
-						// @deprecated, now use queryType.
-						range?: bool
-						// @deprecated, now use queryType.
-						instant?: bool
+				// The LogQL query.
+				expr: string
+				// Used to override the name of the series.
+				legendFormat?: string
+				// Used to limit the number of log rows returned.
+				maxLines?: int64
+				// @deprecated, now use step.
+				resolution?: int64
+				editorMode?: #QueryEditorMode
+				// @deprecated, now use queryType.
+				range?: bool
+				// @deprecated, now use queryType.
+				instant?: bool
+				// Used to set step value for range queries.
+				step?: string
 
-						#QueryEditorMode: "code" | "builder" @cuetsy(kind="enum")
+				#QueryEditorMode: "code" | "builder" @cuetsy(kind="enum")
 
-						#LokiQueryType: "range" | "instant" | "stream" @cuetsy(kind="enum")
+				#LokiQueryType: "range" | "instant" | "stream" @cuetsy(kind="enum")
 
-						#SupportingQueryType: "logsVolume" | "logsSample" | "dataSample" @cuetsy(kind="enum")
+				#SupportingQueryType: "logsVolume" | "logsSample" | "dataSample" @cuetsy(kind="enum")
 
-						#LokiQueryDirection: "forward" | "backward" @cuetsy(kind="enum")
-					},
-				]
-			},
-		]
+				#LokiQueryDirection: "forward" | "backward" @cuetsy(kind="enum")
+			}
+		}]
+		lenses: []
 	}
 }

@@ -1,3 +1,4 @@
+import { Interception } from 'cypress/types/net-stubbing';
 import { load } from 'js-yaml';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -22,6 +23,20 @@ type AzureMonitorProvision = { datasources: AzureMonitorConfig[] };
 
 const dataSourceName = `Azure Monitor E2E Tests - ${uuidv4()}`;
 
+const maxRetryCount = 3;
+
+Cypress.Commands.add('checkHealthRetryable', function (fn: Function, retryCount: number) {
+  cy.then(() => {
+    const result = fn(++retryCount);
+    result.then((res: Interception) => {
+      if (retryCount < maxRetryCount && res.response.statusCode !== 200) {
+        cy.wait(20000);
+        cy.checkHealthRetryable(fn, retryCount);
+      }
+    });
+  });
+});
+
 function provisionAzureMonitorDatasources(datasources: AzureMonitorProvision[]) {
   const datasource = datasources[0].datasources[0];
 
@@ -43,8 +58,11 @@ function provisionAzureMonitorDatasources(datasources: AzureMonitorProvision[]) 
         .type(datasource.secureJsonData.clientSecret, { log: false });
       e2eSelectors.configEditor.loadSubscriptions.button().click().wait('@subscriptions').wait(500);
       e2eSelectors.configEditor.defaultSubscription.input().find('input').type('datasources{enter}');
-      // Wait for 15s so that credentials are ready. 5s has been tested locally before and seemed insufficient.
-      e2e().wait(15000);
+
+      // We can do this because awaitHealth is set to true so @health is defined
+      cy.checkHealthRetryable(() => {
+        return e2e.pages.DataSource.saveAndTest().click().wait('@health');
+      }, 0);
     },
     expectedAlertMessage: 'Successfully connected to all Azure Monitor endpoints',
     // Reduce the timeout from 30s to error faster when an invalid alert message is presented
@@ -74,26 +92,62 @@ const addAzureMonitorVariable = (
     .type(`${type.replace('Azure', '').trim()}{enter}`);
   switch (type) {
     case AzureQueryType.ResourceGroupsQuery:
-      e2eSelectors.variableEditor.subscription.input().find('input').type(`${options?.subscription}{enter}`);
+      e2eSelectors.variableEditor.subscription
+        .input()
+        .find('input')
+        .type(`${options?.subscription}{enter}`);
       break;
     case AzureQueryType.LocationsQuery:
-      e2eSelectors.variableEditor.subscription.input().find('input').type(`${options?.subscription}{enter}`);
+      e2eSelectors.variableEditor.subscription
+        .input()
+        .find('input')
+        .type(`${options?.subscription}{enter}`);
       break;
     case AzureQueryType.NamespacesQuery:
-      e2eSelectors.variableEditor.subscription.input().find('input').type(`${options?.subscription}{enter}`);
-      e2eSelectors.variableEditor.resourceGroup.input().find('input').type(`${options?.resourceGroup}{enter}`);
+      e2eSelectors.variableEditor.subscription
+        .input()
+        .find('input')
+        .type(`${options?.subscription}{enter}`);
+      e2eSelectors.variableEditor.resourceGroup
+        .input()
+        .find('input')
+        .type(`${options?.resourceGroup}{enter}`);
       break;
     case AzureQueryType.ResourceNamesQuery:
-      e2eSelectors.variableEditor.subscription.input().find('input').type(`${options?.subscription}{enter}`);
-      e2eSelectors.variableEditor.resourceGroup.input().find('input').type(`${options?.resourceGroup}{enter}`);
-      e2eSelectors.variableEditor.namespace.input().find('input').type(`${options?.namespace}{enter}`);
-      e2eSelectors.variableEditor.region.input().find('input').type(`${options?.region}{enter}`);
+      e2eSelectors.variableEditor.subscription
+        .input()
+        .find('input')
+        .type(`${options?.subscription}{enter}`);
+      e2eSelectors.variableEditor.resourceGroup
+        .input()
+        .find('input')
+        .type(`${options?.resourceGroup}{enter}`);
+      e2eSelectors.variableEditor.namespace
+        .input()
+        .find('input')
+        .type(`${options?.namespace}{enter}`);
+      e2eSelectors.variableEditor.region
+        .input()
+        .find('input')
+        .type(`${options?.region}{enter}`);
       break;
     case AzureQueryType.MetricNamesQuery:
-      e2eSelectors.variableEditor.subscription.input().find('input').type(`${options?.subscription}{enter}`);
-      e2eSelectors.variableEditor.resourceGroup.input().find('input').type(`${options?.resourceGroup}{enter}`);
-      e2eSelectors.variableEditor.namespace.input().find('input').type(`${options?.namespace}{enter}`);
-      e2eSelectors.variableEditor.resource.input().find('input').type(`${options?.resource}{enter}`);
+      e2eSelectors.variableEditor.subscription
+        .input()
+        .find('input')
+        .type(`${options?.subscription}{enter}`);
+      e2eSelectors.variableEditor.resourceGroup
+        .input()
+        .find('input')
+        .type(`${options?.resourceGroup}{enter}`);
+      e2eSelectors.variableEditor.namespace
+        .input()
+        .find('input')
+        .type(`${options?.namespace}{enter}`);
+      e2eSelectors.variableEditor.resource
+        .input()
+        .find('input')
+        .type(`${options?.resource}{enter}`);
       break;
   }
   e2e.pages.Dashboard.Settings.Variables.Edit.General.submitButton().click();
@@ -153,14 +207,11 @@ e2e.scenario({
         zone: 'Coordinated Universal Time',
       },
     });
-    e2e()
-      .intercept(/locations/)
-      .as('locations');
     e2e.flows.addPanel({
       dataSourceName,
       visitDashboardAtStart: false,
       queriesForm: () => {
-        e2eSelectors.queryEditor.resourcePicker.select.button().click().wait('@locations');
+        e2eSelectors.queryEditor.resourcePicker.select.button().click();
         e2eSelectors.queryEditor.resourcePicker.search
           .input()
           .wait(100)

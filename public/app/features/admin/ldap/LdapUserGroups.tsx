@@ -21,9 +21,7 @@ export const LdapUserGroups = ({ groups, showAttributeMapping }: Props) => {
               <th>
                 Organization
                 <Tooltip placement="top" content="Only the first match for an Organization will be used" theme={'info'}>
-                  <span className="gf-form-help-icon">
-                    <Icon name="info-circle" />
-                  </span>
+                  <Icon name="info-circle" />
                 </Tooltip>
               </th>
               <th>Role</th>
@@ -39,14 +37,10 @@ export const LdapUserGroups = ({ groups, showAttributeMapping }: Props) => {
                     <td>{group.orgRole}</td>
                   ) : (
                     <td>
-                      <span className="text-warning">
-                        No match
-                        <Tooltip placement="top" content="No matching groups found" theme={'info'}>
-                          <span className="gf-form-help-icon">
-                            <Icon name="info-circle" />
-                          </span>
-                        </Tooltip>
-                      </span>
+                      <span className="text-warning">No match</span>
+                      <Tooltip placement="top" content="No matching groups found" theme={'info'}>
+                        <Icon name="info-circle" />
+                      </Tooltip>
                     </td>
                   )}
                 </tr>
