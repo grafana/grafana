@@ -3,6 +3,7 @@ import { InternalTimeZones, SelectableValue } from '@grafana/data';
 import { BucketsConfiguration } from '../../../types';
 
 import { defaultFilter } from './SettingsEditor/FiltersSettingsEditor/utils';
+export const defaultPrecisionString = '3';
 
 export const bucketAggregationConfig: BucketsConfiguration = {
   terms: {
@@ -26,7 +27,7 @@ export const bucketAggregationConfig: BucketsConfiguration = {
     label: 'Geo Hash Grid',
     requiresField: true,
     defaultSettings: {
-      precision: '3',
+      precision: defaultPrecisionString,
     },
   },
   date_histogram: {
