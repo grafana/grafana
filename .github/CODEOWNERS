@@ -324,6 +324,7 @@
 /packages/grafana-ui/src/components/VizTooltip/ @grafana/dataviz-squad
 /packages/grafana-ui/src/utils/storybook/ @grafana/plugins-platform-frontend
 /packages/grafana-data/src/**/*logs* @grafana/observability-logs
+/packages/grafana-schema/src/**/*tempo* @grafana/observability-traces-and-profiling
 /plugins-bundled/ @grafana/plugins-platform-frontend
 
 
