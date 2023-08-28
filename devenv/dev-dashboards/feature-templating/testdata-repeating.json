@@ -1281,7 +1281,6 @@
   ],
   "refresh": false,
   "schemaVersion": 18,
-  "style": "dark",
   "tags": ["gdev", "templating"],
   "templating": {
     "list": [
