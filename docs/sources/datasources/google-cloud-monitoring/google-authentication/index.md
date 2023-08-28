@@ -46,7 +46,7 @@ To visualize data from multiple GCP Projects, create one data source per GCP Pro
    The file's contents are encrypted and saved in the Grafana database.
    Remember to save the file after uploading.
 
-#### Create a GCP Service Account for multiple projects
+#### Create a GCP service account for multiple projects
 
 You can create a service account and key file that can be used to access multiple projects. Follow steps 1-5 above, then:
 
