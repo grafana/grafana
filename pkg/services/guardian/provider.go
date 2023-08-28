@@ -48,7 +48,6 @@ func InitLegacyGuardian(cfg *setting.Cfg, store db.DB, dashSvc dashboards.Dashbo
 func InitAccessControlGuardian(
 	cfg *setting.Cfg, ac accesscontrol.AccessControl, dashboardService dashboards.DashboardService,
 ) {
-
 	New = func(ctx context.Context, dashId int64, orgId int64, user identity.Requester) (DashboardGuardian, error) {
 		return NewAccessControlDashboardGuardian(ctx, cfg, dashId, user, ac, dashboardService)
 	}
