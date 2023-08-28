@@ -9,6 +9,8 @@ rc: ./lefthook.rc
 
 pre-commit:
   parallel: true
+  skip:
+    - merge
   commands:
     frontend-betterer:
       glob: '*.{ts,tsx}'
