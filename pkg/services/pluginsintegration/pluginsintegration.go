@@ -24,7 +24,6 @@ import (
 	pluginRegistry "github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
 	"github.com/grafana/grafana/pkg/plugins/manager/sources"
-	"github.com/grafana/grafana/pkg/plugins/manager/store"
 	"github.com/grafana/grafana/pkg/plugins/oauth"
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	"github.com/grafana/grafana/pkg/plugins/repo"
@@ -49,6 +48,7 @@ import (
 	pluginSettings "github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings/service"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/registry"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/serviceregistration"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/store"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
