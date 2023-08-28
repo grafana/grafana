@@ -1,37 +1,21 @@
-import { css } from '@emotion/css';
-import React, { CSSProperties, useCallback } from 'react';
+import React from 'react';
 
-import { GrafanaTheme2, ThemeSpacingTokens } from '@grafana/data';
+import { ThemeSpacingTokens } from '@grafana/data';
 
-import { useStyles2 } from '../../themes';
+import { Direction, Flex } from '../Flex/Flex';
 
 interface StackProps {
-  direction?: CSSProperties['flexDirection'];
-  alignItems?: CSSProperties['alignItems'];
-  wrap?: boolean;
+  direction?: Direction;
   gap?: ThemeSpacingTokens;
-  flexGrow?: CSSProperties['flexGrow'];
 }
 
-const Stack = React.forwardRef<HTMLDivElement, React.PropsWithChildren<StackProps>>((props, ref) => {
-  const styles = useStyles2(useCallback((theme) => getStyles(theme, props), [props]));
+const Stack = ({ gap, direction, children }: React.PropsWithChildren<StackProps>) => {
   return (
-    <div ref={ref} className={styles.root}>
-      {props.children}
-    </div>
+    <Flex gap={gap} direction="column">
+      {children}
+    </Flex>
   );
-});
-
-const getStyles = (theme: GrafanaTheme2, props: StackProps) => ({
-  root: css({
-    display: 'flex',
-    flexDirection: props.direction ?? 'row',
-    flexWrap: props.wrap ?? true ? 'wrap' : undefined,
-    alignItems: props.alignItems,
-    gap: theme.spacing(props.gap ?? 2),
-    flexGrow: props.flexGrow,
-  }),
-});
+};
 
 Stack.displayName = 'Stack';
 export { Stack };
