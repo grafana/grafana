@@ -290,7 +290,7 @@ func (c *client) Chan() chan<- Entry {
 func (c *client) sendBatch(tenantID string, batch *batch) {
 	buf, entriesCount, err := batch.encode()
 	if err != nil {
-		c.logger.Error("error encoding batch", "error", err)
+		c.logger.Error("Error encoding batch", "error", err)
 		return
 	}
 	bufBytes := float64(len(buf))
@@ -310,7 +310,7 @@ func (c *client) sendBatch(tenantID string, batch *batch) {
 			break
 		}
 
-		c.logger.Warn("error sending batch, will retry", "status", status, "error", err)
+		c.logger.Warn("Error sending batch, will retry", "status", status, "error", err)
 		c.metrics.batchRetries.WithLabelValues(c.cfg.URL.Host).Inc()
 		backoff.Wait()
 
@@ -321,7 +321,7 @@ func (c *client) sendBatch(tenantID string, batch *batch) {
 	}
 
 	if err != nil {
-		c.logger.Error("final error sendnig batch", "status", status, "error")
+		c.logger.Error("Final error sendnig batch", "status", status, "error")
 		c.metrics.droppedBytes.WithLabelValues(c.cfg.URL.Host).Add(bufBytes)
 		c.metrics.droppedEntries.WithLabelValues(c.cfg.URL.Host).Add(float64(entriesCount))
 	}
@@ -351,7 +351,7 @@ func (c *client) send(ctx context.Context, tenantID string, buf []byte) (int, er
 	defer func() {
 		err := resp.Body.Close()
 		if err != nil {
-			c.logger.Error("closing response body", "error", err)
+			c.logger.Error("Closing response body", "error", err)
 		}
 	}()
 

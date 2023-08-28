@@ -55,11 +55,11 @@ func (kv *SecretsKVStoreSQL) Get(ctx context.Context, orgId int64, namespace str
 	err := kv.sqlStore.WithDbSession(ctx, func(dbSession *db.Session) error {
 		has, err := dbSession.Get(&item)
 		if err != nil {
-			kv.log.Error("error getting secret value", "orgId", orgId, "type", typ, "namespace", namespace, "err", err)
+			kv.log.Error("Error getting secret value", "orgId", orgId, "type", typ, "namespace", namespace, "err", err)
 			return err
 		}
 		if !has {
-			kv.log.Debug("secret value not found", "orgId", orgId, "type", typ, "namespace", namespace)
+			kv.log.Debug("Secret value not found", "orgId", orgId, "type", typ, "namespace", namespace)
 			return nil
 		}
 		isFound = true
@@ -69,12 +69,12 @@ func (kv *SecretsKVStoreSQL) Get(ctx context.Context, orgId int64, namespace str
 	if err == nil && isFound {
 		decryptedValue, err = kv.getDecryptedValue(ctx, item)
 		if err != nil {
-			kv.log.Error("error decrypting secret value", "orgId", item.OrgId, "type", item.Type, "namespace", item.Namespace, "err", err)
+			kv.log.Error("Error decrypting secret value", "orgId", item.OrgId, "type", item.Type, "namespace", item.Namespace, "err", err)
 			return string(decryptedValue), isFound, err
 		}
 	}
 
-	kv.log.Debug("got secret value", "orgId", orgId, "type", typ, "namespace", namespace)
+	kv.log.Debug("Got secret value", "orgId", orgId, "type", typ, "namespace", namespace)
 	return string(decryptedValue), isFound, err
 }
 
@@ -82,7 +82,7 @@ func (kv *SecretsKVStoreSQL) Get(ctx context.Context, orgId int64, namespace str
 func (kv *SecretsKVStoreSQL) Set(ctx context.Context, orgId int64, namespace string, typ string, value string) error {
 	encryptedValue, err := kv.secretsService.Encrypt(ctx, []byte(value), secrets.WithoutScope())
 	if err != nil {
-		kv.log.Error("error encrypting secret value", "orgId", orgId, "type", typ, "namespace", namespace, "err", err)
+		kv.log.Error("Error encrypting secret value", "orgId", orgId, "type", typ, "namespace", namespace, "err", err)
 		return err
 	}
 	encodedValue := b64.EncodeToString(encryptedValue)
@@ -95,12 +95,12 @@ func (kv *SecretsKVStoreSQL) Set(ctx context.Context, orgId int64, namespace str
 
 		has, err := dbSession.Get(&item)
 		if err != nil {
-			kv.log.Error("error checking secret value", "orgId", orgId, "type", typ, "namespace", namespace, "err", err)
+			kv.log.Error("Error checking secret value", "orgId", orgId, "type", typ, "namespace", namespace, "err", err)
 			return err
 		}
 
 		if has && item.Value == encodedValue {
-			kv.log.Debug("secret value not changed", "orgId", orgId, "type", typ, "namespace", namespace)
+			kv.log.Debug("Secret value not changed", "orgId", orgId, "type", typ, "namespace", namespace)
 			return nil
 		}
 
@@ -111,7 +111,7 @@ func (kv *SecretsKVStoreSQL) Set(ctx context.Context, orgId int64, namespace str
 			// if item already exists we update it
 			_, err = dbSession.ID(item.Id).Update(&item)
 			if err != nil {
-				kv.log.Error("error updating secret value", "orgId", orgId, "type", typ, "namespace", namespace, "err", err)
+				kv.log.Error("Error updating secret value", "orgId", orgId, "type", typ, "namespace", namespace, "err", err)
 			} else {
 				kv.decryptionCache.Lock()
 				defer kv.decryptionCache.Unlock()
@@ -119,7 +119,7 @@ func (kv *SecretsKVStoreSQL) Set(ctx context.Context, orgId int64, namespace str
 					updated: item.Updated,
 					value:   value,
 				}
-				kv.log.Debug("secret value updated", "orgId", orgId, "type", typ, "namespace", namespace)
+				kv.log.Debug("Secret value updated", "orgId", orgId, "type", typ, "namespace", namespace)
 			}
 			return err
 		}
@@ -128,9 +128,9 @@ func (kv *SecretsKVStoreSQL) Set(ctx context.Context, orgId int64, namespace str
 		item.Created = item.Updated
 		_, err = dbSession.Insert(&item)
 		if err != nil {
-			kv.log.Error("error inserting secret value", "orgId", orgId, "type", typ, "namespace", namespace, "err", err)
+			kv.log.Error("Error inserting secret value", "orgId", orgId, "type", typ, "namespace", namespace, "err", err)
 		} else {
-			kv.log.Debug("secret value inserted", "orgId", orgId, "type", typ, "namespace", namespace)
+			kv.log.Debug("Secret value inserted", "orgId", orgId, "type", typ, "namespace", namespace)
 		}
 		return err
 	})
@@ -147,7 +147,7 @@ func (kv *SecretsKVStoreSQL) Del(ctx context.Context, orgId int64, namespace str
 
 		has, err := dbSession.Get(&item)
 		if err != nil {
-			kv.log.Error("error checking secret value", "orgId", orgId, "type", typ, "namespace", namespace, "err", err)
+			kv.log.Error("Error checking secret value", "orgId", orgId, "type", typ, "namespace", namespace, "err", err)
 			return err
 		}
 
@@ -155,12 +155,12 @@ func (kv *SecretsKVStoreSQL) Del(ctx context.Context, orgId int64, namespace str
 			// if item exists we delete it
 			_, err = dbSession.ID(item.Id).Delete(&item)
 			if err != nil {
-				kv.log.Error("error deleting secret value", "orgId", orgId, "type", typ, "namespace", namespace, "err", err)
+				kv.log.Error("Error deleting secret value", "orgId", orgId, "type", typ, "namespace", namespace, "err", err)
 			} else {
 				kv.decryptionCache.Lock()
 				defer kv.decryptionCache.Unlock()
 				delete(kv.decryptionCache.cache, item.Id)
-				kv.log.Debug("secret value deleted", "orgId", orgId, "type", typ, "namespace", namespace)
+				kv.log.Debug("Secret value deleted", "orgId", orgId, "type", typ, "namespace", namespace)
 			}
 			return err
 		}
@@ -194,7 +194,7 @@ func (kv *SecretsKVStoreSQL) Rename(ctx context.Context, orgId int64, namespace 
 
 		has, err := dbSession.Get(&item)
 		if err != nil {
-			kv.log.Error("error checking secret value", "orgId", orgId, "type", typ, "namespace", namespace, "err", err)
+			kv.log.Error("Error checking secret value", "orgId", orgId, "type", typ, "namespace", namespace, "err", err)
 			return err
 		}
 
@@ -205,9 +205,9 @@ func (kv *SecretsKVStoreSQL) Rename(ctx context.Context, orgId int64, namespace 
 			// if item already exists we update it
 			_, err = dbSession.ID(item.Id).Update(&item)
 			if err != nil {
-				kv.log.Error("error updating secret namespace", "orgId", orgId, "type", typ, "namespace", namespace, "err", err)
+				kv.log.Error("Error updating secret namespace", "orgId", orgId, "type", typ, "namespace", namespace, "err", err)
 			} else {
-				kv.log.Debug("secret namespace updated", "orgId", orgId, "type", typ, "namespace", namespace)
+				kv.log.Debug("Secret namespace updated", "orgId", orgId, "type", typ, "namespace", namespace)
 			}
 			return err
 		}
@@ -224,7 +224,7 @@ func (kv *SecretsKVStoreSQL) GetAll(ctx context.Context) ([]Item, error) {
 		return dbSession.Find(&items)
 	})
 	if err != nil {
-		kv.log.Error("error getting all the items", "err", err)
+		kv.log.Error("Error getting all the items", "err", err)
 		return nil, err
 	}
 
@@ -233,7 +233,7 @@ func (kv *SecretsKVStoreSQL) GetAll(ctx context.Context) ([]Item, error) {
 		value, err := kv.getDecryptedValue(ctx, items[i])
 		items[i].Value = string(value)
 		if err != nil {
-			kv.log.Error("error decrypting secret value", "orgId", items[i].OrgId, "type", items[i].Type, "namespace", items[i].Namespace, "err", err)
+			kv.log.Error("Error decrypting secret value", "orgId", items[i].OrgId, "type", items[i].Type, "namespace", items[i].Namespace, "err", err)
 		}
 	}
 

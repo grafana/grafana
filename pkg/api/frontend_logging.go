@@ -24,7 +24,7 @@ func GrafanaJavascriptAgentLogMessageHandler(store *frontendlogging.SourceMapSto
 			c.Resp.WriteHeader(http.StatusBadRequest)
 			_, err = c.Resp.Write([]byte("bad request data"))
 			if err != nil {
-				hs.log.Error("could not write to response", "err", err)
+				hs.log.Error("Could not write to response", "err", err)
 			}
 		}
 
@@ -89,7 +89,7 @@ func GrafanaJavascriptAgentLogMessageHandler(store *frontendlogging.SourceMapSto
 		c.Resp.WriteHeader(http.StatusAccepted)
 		_, err := c.Resp.Write([]byte("OK"))
 		if err != nil {
-			hs.log.Error("could not write to response", "err", err)
+			hs.log.Error("Could not write to response", "err", err)
 		}
 	}
 }
@@ -105,7 +105,7 @@ func (hs *HTTPServer) frontendLogEndpoints() web.Handler {
 				ctx.Resp.WriteHeader(http.StatusAccepted)
 				_, err := ctx.Resp.Write([]byte("OK"))
 				if err != nil {
-					hs.log.Error("could not write to response", "err", err)
+					hs.log.Error("Could not write to response", "err", err)
 				}
 			}
 		}

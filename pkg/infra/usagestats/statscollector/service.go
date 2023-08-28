@@ -92,14 +92,14 @@ func ProvideService(
 
 // RegisterProviders is called only once - during Grafana start up
 func (s *Service) RegisterProviders(usageStatProviders []registry.ProvidesUsageStats) {
-	s.log.Info("registering usage stat providers", "usageStatsProvidersLen", len(usageStatProviders))
+	s.log.Info("Registering usage stat providers", "usageStatsProvidersLen", len(usageStatProviders))
 	s.usageStatProviders = usageStatProviders
 }
 
 func (s *Service) Run(ctx context.Context) error {
 	sendInterval := time.Second * time.Duration(s.cfg.MetricsTotalStatsIntervalSeconds)
 	nextSendInterval := time.Duration(rand.Intn(MAX_DELAY-MIN_DELAY)+MIN_DELAY) * time.Second
-	s.log.Debug("usage stats collector started", "sendInterval", sendInterval, "nextSendInterval", nextSendInterval)
+	s.log.Debug("Usage stats collector started", "sendInterval", sendInterval, "nextSendInterval", nextSendInterval)
 	updateStatsTicker := time.NewTicker(nextSendInterval)
 	defer updateStatsTicker.Stop()
 

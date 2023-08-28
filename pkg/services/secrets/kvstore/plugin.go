@@ -227,7 +227,7 @@ func updateFatalFlag(ctx context.Context, skv *SecretsKVStorePlugin) {
 			err = SetPluginStartupErrorFatal(ctx, skv.kvstore, false)
 		}
 		if err != nil {
-			skv.log.Error("failed to set plugin error fatal flag", err.Error())
+			skv.log.Error("Failed to set plugin error fatal flag", err.Error())
 		}
 	})
 }

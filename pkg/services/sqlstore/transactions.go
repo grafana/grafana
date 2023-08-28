@@ -58,7 +58,7 @@ func (ss *SQLStore) inTransactionWithRetryCtx(ctx context.Context, engine *xorm.
 	ctxLogger := tsclogger.FromContext(ctx)
 
 	if !isNew {
-		ctxLogger.Debug("skip committing the transaction because it belongs to a session created in the outer scope")
+		ctxLogger.Debug("Skip committing the transaction because it belongs to a session created in the outer scope")
 		// Do not commit the transaction if the session was reused.
 		return err
 	}

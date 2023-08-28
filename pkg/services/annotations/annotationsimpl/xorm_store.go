@@ -437,7 +437,7 @@ func (r *xormRepositoryImpl) Delete(ctx context.Context, params *annotations.Del
 			annoTagSQL string
 		)
 
-		r.log.Info("delete", "orgId", params.OrgID)
+		r.log.Info("Delete", "orgId", params.OrgID)
 		if params.ID != 0 {
 			annoTagSQL = "DELETE FROM annotation_tag WHERE annotation_id IN (SELECT id FROM annotation WHERE id = ? AND org_id = ?)"
 			sql = "DELETE FROM annotation WHERE id = ? AND org_id = ?"

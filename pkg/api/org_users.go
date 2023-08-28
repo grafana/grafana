@@ -306,7 +306,7 @@ func (hs *HTTPServer) searchOrgUsersHelper(c *contextmodel.ReqContext, query *or
 	})
 
 	if err != nil {
-		hs.log.Warn("failed to retrieve users IDP label", err)
+		hs.log.Warn("Failed to retrieve users IDP label", err)
 	}
 
 	// Get accesscontrol metadata and IPD labels for users in the target org
@@ -497,14 +497,14 @@ func (hs *HTTPServer) removeOrgUserHelper(ctx context.Context, cmd *org.RemoveOr
 	if cmd.UserWasDeleted {
 		// This should be called from appropriate service when moved
 		if err := hs.accesscontrolService.DeleteUserPermissions(ctx, accesscontrol.GlobalOrgID, cmd.UserID); err != nil {
-			hs.log.Warn("failed to delete permissions for user", "userID", cmd.UserID, "orgID", accesscontrol.GlobalOrgID, "err", err)
+			hs.log.Warn("Failed to delete permissions for user", "userID", cmd.UserID, "orgID", accesscontrol.GlobalOrgID, "err", err)
 		}
 		return response.Success("User deleted")
 	}
 
 	// This should be called from appropriate service when moved
 	if err := hs.accesscontrolService.DeleteUserPermissions(ctx, cmd.OrgID, cmd.UserID); err != nil {
-		hs.log.Warn("failed to delete permissions for user", "userID", cmd.UserID, "orgID", cmd.OrgID, "err", err)
+		hs.log.Warn("Failed to delete permissions for user", "userID", cmd.UserID, "orgID", cmd.OrgID, "err", err)
 	}
 
 	return response.Success("User removed from organization")

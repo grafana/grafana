@@ -265,8 +265,9 @@ func (e *AzureMonitorDatasource) retrieveSubscriptionDetails(cli *http.Client, c
 	}
 
 	defer func() {
-		err := res.Body.Close()
-		backend.Logger.Error("Failed to close response body", "err", err)
+		if err := res.Body.Close(); err != nil {
+			logger.Warn("failed to close response body", "err", err)
+		}
 	}()
 
 	body, err := io.ReadAll(res.Body)
@@ -317,8 +318,9 @@ func (e *AzureMonitorDatasource) executeQuery(ctx context.Context, query *types.
 	}
 
 	defer func() {
-		err := res.Body.Close()
-		backend.Logger.Error("Failed to close response body", "err", err)
+		if err := res.Body.Close(); err != nil {
+			logger.Warn("failed to close response body", "err", err)
+		}
 	}()
 
 	data, err := e.unmarshalResponse(res)
@@ -348,6 +350,7 @@ func (e *AzureMonitorDatasource) executeQuery(ctx context.Context, query *types.
 func (e *AzureMonitorDatasource) createRequest(ctx context.Context, url string) (*http.Request, error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
+		logger.Debug("failed to create request", "error", err)
 		return nil, fmt.Errorf("%v: %w", "failed to create request", err)
 	}
 	req.Header.Set("Content-Type", "application/json")
@@ -368,6 +371,7 @@ func (e *AzureMonitorDatasource) unmarshalResponse(res *http.Response) (types.Az
 	var data types.AzureMonitorResponse
 	err = json.Unmarshal(body, &data)
 	if err != nil {
+		logger.Debug("failed to unmarshal AzureMonitor response", "error", err, "status", res.Status, "body", string(body))
 		return types.AzureMonitorResponse{}, err
 	}
 

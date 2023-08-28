@@ -168,7 +168,9 @@ func (e *AzureResourceGraphDatasource) executeQuery(ctx context.Context, query *
 
 	defer func() {
 		err := res.Body.Close()
-		backend.Logger.Error("Failed to close response body", "err", err)
+		if err != nil {
+			logger.Warn("failed to close response body", "error", err)
+		}
 	}()
 
 	argResponse, err := e.unmarshalResponse(res)

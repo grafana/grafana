@@ -96,7 +96,7 @@ func (ss *sqlStore) getUserScopeQuota(ctx quota.Context, userID int64) (*quota.M
 		for _, q := range quotas {
 			srv, ok := ctx.TargetToSrv.Get(quota.Target(q.Target))
 			if !ok {
-				ss.logger.Info("failed to get service for target", "target", q.Target)
+				ss.logger.Info("Failed to get service for target", "target", q.Target)
 			}
 			tag, err := quota.NewTag(srv, quota.Target(q.Target), quota.UserScope)
 			if err != nil {
@@ -120,7 +120,7 @@ func (ss *sqlStore) getOrgScopeQuota(ctx quota.Context, OrgID int64) (*quota.Map
 		for _, q := range quotas {
 			srv, ok := ctx.TargetToSrv.Get(quota.Target(q.Target))
 			if !ok {
-				ss.logger.Info("failed to get service for target", "target", q.Target)
+				ss.logger.Info("Failed to get service for target", "target", q.Target)
 			}
 			tag, err := quota.NewTag(srv, quota.Target(q.Target), quota.OrgScope)
 			if err != nil {

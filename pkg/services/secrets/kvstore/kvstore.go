@@ -33,17 +33,17 @@ func ProvideService(
 	store = NewSQLSecretsKVStore(sqlStore, secretsService, logger)
 	err := EvaluateRemoteSecretsPlugin(ctx, pluginsManager, cfg)
 	if err != nil {
-		logger.Debug("secrets manager evaluator returned false", "reason", err.Error())
+		logger.Debug("Secrets manager evaluator returned false", "reason", err.Error())
 	} else {
 		// Attempt to start the plugin
 		var secretsPlugin secretsmanagerplugin.SecretsManagerPlugin
 		secretsPlugin, err = StartAndReturnPlugin(pluginsManager, ctx)
 		namespacedKVStore := GetNamespacedKVStore(kvstore)
 		if err != nil || secretsPlugin == nil {
-			logger.Error("failed to start remote secrets management plugin")
+			logger.Error("Failed to start remote secrets management plugin")
 			if isFatal, readErr := IsPluginStartupErrorFatal(ctx, namespacedKVStore); isFatal || readErr != nil {
 				// plugin error was fatal or there was an error determining if the error was fatal
-				logger.Error("secrets management plugin is required to start -- exiting app")
+				logger.Error("Secrets management plugin is required to start -- exiting app")
 				if readErr != nil {
 					return nil, readErr
 				}
@@ -58,7 +58,7 @@ func ProvideService(
 	}
 
 	if err != nil {
-		logger.Debug("secrets kvstore is using the default (SQL) implementation for secrets management")
+		logger.Debug("Secrets kvstore is using the default (SQL) implementation for secrets management")
 	}
 
 	return WithCache(store, 5*time.Second, 5*time.Minute), nil

@@ -232,7 +232,7 @@ func (mg *Migrator) run() (err error) {
 		}
 	}
 
-	mg.Logger.Info("migrations completed", "performed", migrationsPerformed, "skipped", migrationsSkipped, "duration", time.Since(start))
+	mg.Logger.Info("Migrations completed", "performed", migrationsPerformed, "skipped", migrationsSkipped, "duration", time.Since(start))
 
 	// Make sure migrations are synced
 	return mg.DBEngine.Sync2()

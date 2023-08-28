@@ -27,15 +27,15 @@ func (kv *kvStoreSQL) Get(ctx context.Context, orgId int64, namespace string, ke
 	err := kv.sqlStore.WithDbSession(ctx, func(dbSession *db.Session) error {
 		has, err := dbSession.Get(&item)
 		if err != nil {
-			kv.log.Debug("error getting kvstore value", "orgId", orgId, "namespace", namespace, "key", key, "err", err)
+			kv.log.Debug("Error getting kvstore value", "orgId", orgId, "namespace", namespace, "key", key, "err", err)
 			return err
 		}
 		if !has {
-			kv.log.Debug("kvstore value not found", "orgId", orgId, "namespace", namespace, "key", key)
+			kv.log.Debug("Kvstore value not found", "orgId", orgId, "namespace", namespace, "key", key)
 			return nil
 		}
 		itemFound = true
-		kv.log.Debug("got kvstore value", "orgId", orgId, "namespace", namespace, "key", key, "value", item.Value)
+		kv.log.Debug("Got kvstore value", "orgId", orgId, "namespace", namespace, "key", key, "value", item.Value)
 		return nil
 	})
 
@@ -53,12 +53,12 @@ func (kv *kvStoreSQL) Set(ctx context.Context, orgId int64, namespace string, ke
 
 		has, err := dbSession.Get(&item)
 		if err != nil {
-			kv.log.Debug("error checking kvstore value", "orgId", orgId, "namespace", namespace, "key", key, "value", value, "err", err)
+			kv.log.Debug("Error checking kvstore value", "orgId", orgId, "namespace", namespace, "key", key, "value", value, "err", err)
 			return err
 		}
 
 		if has && item.Value == value {
-			kv.log.Debug("kvstore value not changed", "orgId", orgId, "namespace", namespace, "key", key, "value", value)
+			kv.log.Debug("Kvstore value not changed", "orgId", orgId, "namespace", namespace, "key", key, "value", value)
 			return nil
 		}
 
@@ -68,9 +68,9 @@ func (kv *kvStoreSQL) Set(ctx context.Context, orgId int64, namespace string, ke
 		if has {
 			_, err = dbSession.Exec("UPDATE kv_store SET value = ?, updated = ? WHERE id = ?", item.Value, item.Updated, item.Id)
 			if err != nil {
-				kv.log.Debug("error updating kvstore value", "orgId", orgId, "namespace", namespace, "key", key, "value", value, "err", err)
+				kv.log.Debug("Error updating kvstore value", "orgId", orgId, "namespace", namespace, "key", key, "value", value, "err", err)
 			} else {
-				kv.log.Debug("kvstore value updated", "orgId", orgId, "namespace", namespace, "key", key, "value", value)
+				kv.log.Debug("Kvstore value updated", "orgId", orgId, "namespace", namespace, "key", key, "value", value)
 			}
 			return err
 		}
@@ -78,9 +78,9 @@ func (kv *kvStoreSQL) Set(ctx context.Context, orgId int64, namespace string, ke
 		item.Created = item.Updated
 		_, err = dbSession.Insert(&item)
 		if err != nil {
-			kv.log.Debug("error inserting kvstore value", "orgId", orgId, "namespace", namespace, "key", key, "value", value, "err", err)
+			kv.log.Debug("Error inserting kvstore value", "orgId", orgId, "namespace", namespace, "key", key, "value", value, "err", err)
 		} else {
-			kv.log.Debug("kvstore value inserted", "orgId", orgId, "namespace", namespace, "key", key, "value", value)
+			kv.log.Debug("Kvstore value inserted", "orgId", orgId, "namespace", namespace, "key", key, "value", value)
 		}
 		return err
 	})

@@ -1186,11 +1186,11 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 	if err != nil {
 		// if the proxy is misconfigured, disable it rather than crashing
 		cfg.SecureSocksDSProxy.Enabled = false
-		cfg.Logger.Error("secure_socks_datasource_proxy unable to start up", "err", err.Error())
+		cfg.Logger.Error("Secure_socks_datasource_proxy unable to start up", "err", err.Error())
 	}
 
 	if VerifyEmailEnabled && !cfg.Smtp.Enabled {
-		cfg.Logger.Warn("require_email_validation is enabled but smtp is disabled")
+		cfg.Logger.Warn("Require_email_validation is enabled but smtp is disabled")
 	}
 
 	// check old key name

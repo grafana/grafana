@@ -198,7 +198,7 @@ func (s *Service) GetChildren(ctx context.Context, cmd *folder.GetChildrenQuery)
 		// fetch folder from dashboard store
 		dashFolder, ok := dashFolders[f.UID]
 		if !ok {
-			s.log.Error("failed to fetch folder by UID from dashboard store", "uid", f.UID)
+			s.log.Error("Failed to fetch folder by UID from dashboard store", "uid", f.UID)
 			continue
 		}
 
@@ -336,13 +336,13 @@ func (s *Service) Create(ctx context.Context, cmd *folder.CreateFolderCommand) (
 		if err != nil {
 			// We'll log the error and also roll back the previously-created
 			// (legacy) folder.
-			logger.Error("error saving folder to nested folder store", "error", err)
+			logger.Error("Error saving folder to nested folder store", "error", err)
 			// do not shallow create error if the legacy folder delete fails
 			if deleteErr := s.dashboardStore.DeleteDashboard(ctx, &dashboards.DeleteDashboardCommand{
 				ID:    createdFolder.ID,
 				OrgID: createdFolder.OrgID,
 			}); deleteErr != nil {
-				logger.Error("error deleting folder after failed save to nested folder store", "error", err)
+				logger.Error("Error deleting folder after failed save to nested folder store", "error", err)
 			}
 			return dashboards.FromDashboard(dash), err
 		}
@@ -451,7 +451,7 @@ func (s *Service) legacyUpdate(ctx context.Context, cmd *folder.UpdateFolderComm
 			UID:       dash.UID,
 			OrgID:     cmd.OrgID,
 		}); err != nil {
-			logger.Error("failed to publish FolderTitleUpdated event", "folder", foldr.Title, "user", user.UserID, "error", err)
+			logger.Error("Failed to publish FolderTitleUpdated event", "folder", foldr.Title, "user", user.UserID, "error", err)
 		}
 	}
 	return foldr, nil
@@ -513,7 +513,7 @@ func (s *Service) Delete(ctx context.Context, cmd *folder.DeleteFolderCommand) e
 			subfolders, err := s.nestedFolderDelete(ctx, cmd)
 
 			if err != nil {
-				logger.Error("the delete folder on folder table failed with err: ", "error", err)
+				logger.Error("The delete folder on folder table failed with err: ", "error", err)
 				return err
 			}
 			result = append(result, subfolders...)
@@ -646,19 +646,19 @@ func (s *Service) nestedFolderDelete(ctx context.Context, cmd *folder.DeleteFold
 	}
 	for _, f := range folders {
 		result = append(result, f.UID)
-		logger.Info("deleting subfolder", "org_id", f.OrgID, "uid", f.UID)
+		logger.Info("Deleting subfolder", "org_id", f.OrgID, "uid", f.UID)
 		subfolders, err := s.nestedFolderDelete(ctx, &folder.DeleteFolderCommand{UID: f.UID, OrgID: f.OrgID, ForceDeleteRules: cmd.ForceDeleteRules, SignedInUser: cmd.SignedInUser})
 		if err != nil {
-			logger.Error("failed deleting subfolder", "org_id", f.OrgID, "uid", f.UID, "error", err)
+			logger.Error("Failed deleting subfolder", "org_id", f.OrgID, "uid", f.UID, "error", err)
 			return result, err
 		}
 		result = append(result, subfolders...)
 	}
 
-	logger.Info("deleting folder and its contents", "org_id", cmd.OrgID, "uid", cmd.UID)
+	logger.Info("Deleting folder and its contents", "org_id", cmd.OrgID, "uid", cmd.UID)
 	err = s.store.Delete(ctx, cmd.UID, cmd.OrgID)
 	if err != nil {
-		logger.Info("failed deleting folder", "org_id", cmd.OrgID, "uid", cmd.UID, "err", err)
+		logger.Info("Failed deleting folder", "org_id", cmd.OrgID, "uid", cmd.UID, "err", err)
 		return result, err
 	}
 	return result, nil
@@ -681,7 +681,7 @@ func (s *Service) GetDescendantCounts(ctx context.Context, cmd *folder.GetDescen
 	if s.features.IsEnabled(featuremgmt.FlagNestedFolders) {
 		subfolders, err := s.getNestedFolders(ctx, cmd.OrgID, *cmd.UID)
 		if err != nil {
-			logger.Error("failed to get subfolders", "error", err)
+			logger.Error("Failed to get subfolders", "error", err)
 			return nil, err
 		}
 		result = append(result, subfolders...)
@@ -692,7 +692,7 @@ func (s *Service) GetDescendantCounts(ctx context.Context, cmd *folder.GetDescen
 		for _, folder := range result {
 			c, err := v.CountInFolder(ctx, cmd.OrgID, folder, cmd.SignedInUser)
 			if err != nil {
-				logger.Error("failed to count folder descendants", "error", err)
+				logger.Error("Failed to count folder descendants", "error", err)
 				return nil, err
 			}
 			countsMap[v.Kind()] += c

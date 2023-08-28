@@ -76,7 +76,7 @@ func (fr *FileReader) pollChanges(ctx context.Context) {
 		select {
 		case <-ticker.C:
 			if err := fr.walkDisk(ctx); err != nil {
-				fr.log.Error("failed to search for dashboards", "error", err)
+				fr.log.Error("Failed to search for dashboards", "error", err)
 			}
 		case <-ctx.Done():
 			return
@@ -149,7 +149,7 @@ func (fr *FileReader) storeDashboardsInFolder(ctx context.Context, filesFoundOnD
 	for path, fileInfo := range filesFoundOnDisk {
 		provisioningMetadata, err := fr.saveDashboard(ctx, path, folderID, fileInfo, dashboardRefs)
 		if err != nil {
-			fr.log.Error("failed to save dashboard", "file", path, "error", err)
+			fr.log.Error("Failed to save dashboard", "file", path, "error", err)
 			continue
 		}
 
@@ -178,7 +178,7 @@ func (fr *FileReader) storeDashboardsInFoldersFromFileStructure(ctx context.Cont
 		provisioningMetadata, err := fr.saveDashboard(ctx, path, folderID, fileInfo, dashboardRefs)
 		usageTracker.track(provisioningMetadata)
 		if err != nil {
-			fr.log.Error("failed to save dashboard", "file", path, "error", err)
+			fr.log.Error("Failed to save dashboard", "file", path, "error", err)
 		}
 	}
 	return nil
@@ -200,19 +200,19 @@ func (fr *FileReader) handleMissingDashboardFiles(ctx context.Context, provision
 		// If deletion is disabled for the provisioner we just remove provisioning metadata about the dashboard
 		// so afterwards the dashboard is considered unprovisioned.
 		for _, dashboardID := range dashboardsToDelete {
-			fr.log.Debug("unprovisioning provisioned dashboard. missing on disk", "id", dashboardID)
+			fr.log.Debug("Unprovisioning provisioned dashboard. missing on disk", "id", dashboardID)
 			err := fr.dashboardProvisioningService.UnprovisionDashboard(ctx, dashboardID)
 			if err != nil {
-				fr.log.Error("failed to unprovision dashboard", "dashboard_id", dashboardID, "error", err)
+				fr.log.Error("Failed to unprovision dashboard", "dashboard_id", dashboardID, "error", err)
 			}
 		}
 	} else {
 		// delete dashboards missing JSON file
 		for _, dashboardID := range dashboardsToDelete {
-			fr.log.Debug("deleting provisioned dashboard, missing on disk", "id", dashboardID)
+			fr.log.Debug("Deleting provisioned dashboard, missing on disk", "id", dashboardID)
 			err := fr.dashboardProvisioningService.DeleteProvisionedDashboard(ctx, dashboardID, fr.Cfg.OrgID)
 			if err != nil {
-				fr.log.Error("failed to delete dashboard", "id", dashboardID, "error", err)
+				fr.log.Error("Failed to delete dashboard", "id", dashboardID, "error", err)
 			}
 		}
 	}
@@ -231,7 +231,7 @@ func (fr *FileReader) saveDashboard(ctx context.Context, path string, folderID i
 
 	jsonFile, err := fr.readDashboardFromFile(path, resolvedFileInfo.ModTime(), folderID)
 	if err != nil {
-		fr.log.Error("failed to load dashboard from ", "file", path, "error", err)
+		fr.log.Error("Failed to load dashboard from ", "file", path, "error", err)
 		return provisioningMetadata, nil
 	}
 
@@ -259,7 +259,7 @@ func (fr *FileReader) saveDashboard(ctx context.Context, path string, folderID i
 	}
 
 	if !fr.isDatabaseAccessRestricted() {
-		fr.log.Debug("saving new dashboard", "provisioner", fr.Cfg.Name, "file", path, "folderId", dash.Dashboard.FolderID)
+		fr.log.Debug("Saving new dashboard", "provisioner", fr.Cfg.Name, "file", path, "folderId", dash.Dashboard.FolderID)
 		dp := &dashboards.DashboardProvisioning{
 			ExternalID: path,
 			Name:       fr.Cfg.Name,
@@ -444,7 +444,7 @@ func (fr *FileReader) resolvedPath() string {
 
 	if path == "" {
 		path = fr.Path
-		fr.log.Info("falling back to original path due to EvalSymlink/Abs failure")
+		fr.log.Info("Falling back to original path due to EvalSymlink/Abs failure")
 	}
 	return path
 }

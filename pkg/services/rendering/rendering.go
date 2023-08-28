@@ -329,7 +329,7 @@ func (rs *RenderingService) SanitizeSVG(ctx context.Context, req *SanitizeSVGReq
 	start := time.Now()
 
 	action, err := rs.sanitizeSVGAction(ctx, req)
-	rs.log.Info("svg sanitization finished", "duration", time.Since(start), "filename", req.Filename, "isError", err != nil)
+	rs.log.Info("Svg sanitization finished", "duration", time.Since(start), "filename", req.Filename, "isError", err != nil)
 
 	return action, err
 }

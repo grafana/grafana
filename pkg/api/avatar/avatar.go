@@ -118,7 +118,7 @@ func (a *AvatarCacheServer) Handler(ctx *contextmodel.ReqContext) {
 	ctx.Resp.Header().Set("Cache-Control", "private, max-age=3600")
 
 	if err := avatar.Encode(ctx.Resp); err != nil {
-		ctx.Logger.Warn("avatar encode error:", "err", err)
+		ctx.Logger.Warn("Avatar encode error:", "err", err)
 		ctx.Resp.WriteHeader(http.StatusInternalServerError)
 	}
 }
@@ -143,7 +143,7 @@ func (a *AvatarCacheServer) getAvatarForHash(hash string, baseUrl string) *Avata
 	if avatar.Expired() {
 		// The cache item is either expired or newly created, update it from the server
 		if err := avatar.update(baseUrl); err != nil {
-			alog.Debug("avatar update", "err", err)
+			alog.Debug("Avatar update", "err", err)
 			avatar = a.notFound
 		}
 	}
@@ -152,7 +152,7 @@ func (a *AvatarCacheServer) getAvatarForHash(hash string, baseUrl string) *Avata
 		avatar = a.notFound
 	} else if !exists {
 		if err := a.cache.Add(hash, avatar, gocache.DefaultExpiration); err != nil {
-			alog.Debug("add avatar to cache", "err", err)
+			alog.Debug("Add avatar to cache", "err", err)
 		}
 	}
 	return avatar
@@ -266,7 +266,7 @@ var client = &http.Client{
 func (a *thunderTask) fetch() error {
 	a.Avatar.timestamp = time.Now()
 
-	alog.Debug("avatar.fetch(fetch new avatar)", "url", a.BaseUrl)
+	alog.Debug("Avatar.fetch(fetch new avatar)", "url", a.BaseUrl)
 	// First do the fetch to get the Gravatar with a retro icon fallback
 	err := performGet(a.BaseUrl+gravatarReqParams, a.Avatar, getGravatarHandler)
 

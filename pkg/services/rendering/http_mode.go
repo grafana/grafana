@@ -149,7 +149,7 @@ func (rs *RenderingService) doRequest(ctx context.Context, u *url.URL, headers m
 		req.Header[k] = v
 	}
 
-	rs.log.Debug("calling remote rendering service", "url", u)
+	rs.log.Debug("Calling remote rendering service", "url", u)
 
 	// make request to renderer server
 	resp, err := netClient.Do(req)

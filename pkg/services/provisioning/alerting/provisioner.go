@@ -27,8 +27,8 @@ func Provision(ctx context.Context, cfg ProvisionerConfig) error {
 	if err != nil {
 		return err
 	}
-	logger.Info("starting to provision alerting")
-	logger.Debug("read all alerting files", "file_count", len(files))
+	logger.Info("Starting to provision alerting")
+	logger.Debug("Read all alerting files", "file_count", len(files))
 	ruleProvisioner := NewAlertRuleProvisioner(
 		logger,
 		cfg.DashboardService,
@@ -74,6 +74,6 @@ func Provision(ctx context.Context, cfg ProvisionerConfig) error {
 	if err != nil {
 		return fmt.Errorf("text templates: %w", err)
 	}
-	logger.Info("finished to provision alerting")
+	logger.Info("Finished to provision alerting")
 	return nil
 }

@@ -135,10 +135,10 @@ func (s *Service) getDashUIDMaybeEmpty(ctx context.Context, id int64) (string, e
 	result, err := s.dashSvc.GetDashboardUIDByID(ctx, &q)
 	if err != nil {
 		if errors.Is(err, dashboards.ErrDashboardNotFound) {
-			s.log.Debug("dashboard not found")
+			s.log.Debug("Dashboard not found")
 			return "", nil
 		} else {
-			s.log.Error("error getting dashboard", err)
+			s.log.Error("Error getting dashboard", err)
 			return "", err
 		}
 	}
@@ -152,10 +152,10 @@ func (s *Service) getDashIDMaybeEmpty(ctx context.Context, uid string) (int64, e
 	result, err := s.dashSvc.GetDashboard(ctx, &q)
 	if err != nil {
 		if errors.Is(err, dashboards.ErrDashboardNotFound) {
-			s.log.Debug("dashboard not found")
+			s.log.Debug("Dashboard not found")
 			return -1, nil
 		} else {
-			s.log.Error("error getting dashboard", err)
+			s.log.Error("Error getting dashboard", err)
 			return -1, err
 		}
 	}

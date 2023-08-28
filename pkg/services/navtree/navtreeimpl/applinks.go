@@ -239,7 +239,7 @@ func (s *ServiceImpl) hasAccessToInclude(c *contextmodel.ReqContext, pluginID st
 	return func(include *plugins.Includes) bool {
 		useRBAC := s.features.IsEnabled(featuremgmt.FlagAccessControlOnCall) && include.RequiresRBACAction()
 		if useRBAC && !hasAccess(ac.EvalPermission(include.Action)) {
-			s.log.Debug("plugin include is covered by RBAC, user doesn't have access",
+			s.log.Debug("Plugin include is covered by RBAC, user doesn't have access",
 				"plugin", pluginID,
 				"include", include.Name)
 			return false

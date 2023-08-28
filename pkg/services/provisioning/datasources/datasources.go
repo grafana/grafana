@@ -73,7 +73,7 @@ func (dc *DatasourceProvisioner) apply(ctx context.Context, cfg *configs) error 
 
 		if errors.Is(err, datasources.ErrDataSourceNotFound) {
 			insertCmd := createInsertCommand(ds)
-			dc.log.Info("inserting datasource from configuration ", "name", insertCmd.Name, "uid", insertCmd.UID)
+			dc.log.Info("Inserting datasource from configuration ", "name", insertCmd.Name, "uid", insertCmd.UID)
 			dataSource, err := dc.store.AddDataSource(ctx, insertCmd)
 			if err != nil {
 				return err
@@ -83,13 +83,13 @@ func (dc *DatasourceProvisioner) apply(ctx context.Context, cfg *configs) error 
 				if insertCorrelationCmd, err := makeCreateCorrelationCommand(correlation, dataSource.UID, insertCmd.OrgID); err == nil {
 					correlationsToInsert = append(correlationsToInsert, insertCorrelationCmd)
 				} else {
-					dc.log.Error("failed to parse correlation", "correlation", correlation)
+					dc.log.Error("Failed to parse correlation", "correlation", correlation)
 					return err
 				}
 			}
 		} else {
 			updateCmd := createUpdateCommand(ds, dataSource.ID)
-			dc.log.Debug("updating datasource from configuration", "name", updateCmd.Name, "uid", updateCmd.UID)
+			dc.log.Debug("Updating datasource from configuration", "name", updateCmd.Name, "uid", updateCmd.UID)
 			if _, err := dc.store.UpdateDataSource(ctx, updateCmd); err != nil {
 				return err
 			}
@@ -107,7 +107,7 @@ func (dc *DatasourceProvisioner) apply(ctx context.Context, cfg *configs) error 
 				if insertCorrelationCmd, err := makeCreateCorrelationCommand(correlation, dataSource.UID, updateCmd.OrgID); err == nil {
 					correlationsToInsert = append(correlationsToInsert, insertCorrelationCmd)
 				} else {
-					dc.log.Error("failed to parse correlation", "correlation", correlation)
+					dc.log.Error("Failed to parse correlation", "correlation", correlation)
 					return err
 				}
 			}
@@ -210,11 +210,11 @@ func (dc *DatasourceProvisioner) deleteDatasources(ctx context.Context, dsToDele
 				return err
 			}
 
-			dc.log.Info("deleted correlations based on configuration", "ds_name", ds.Name)
+			dc.log.Info("Deleted correlations based on configuration", "ds_name", ds.Name)
 		}
 
 		if cmd.DeletedDatasourcesCount > 0 {
-			dc.log.Info("deleted datasource based on configuration", "name", ds.Name)
+			dc.log.Info("Deleted datasource based on configuration", "name", ds.Name)
 		}
 	}
 

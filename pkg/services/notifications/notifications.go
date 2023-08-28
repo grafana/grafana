@@ -74,7 +74,7 @@ func ProvideService(bus bus.Bus, cfg *setting.Cfg, mailer Mailer, store TempUser
 		if len(invalidTemplates) == len(ns.Cfg.Smtp.TemplatesPatterns) {
 			return nil, fmt.Errorf("provided html/template filepaths matched no files: %s", is)
 		}
-		ns.log.Warn("some provided html/template filepaths matched no files: %s", is)
+		ns.log.Warn("Some provided html/template filepaths matched no files: %s", is)
 	}
 
 	if !util.IsEmail(ns.Cfg.Smtp.FromAddress) {

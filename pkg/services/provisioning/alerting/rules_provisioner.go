@@ -44,7 +44,7 @@ func (prov *defaultAlertRuleProvisioner) Provision(ctx context.Context,
 			if err != nil {
 				return err
 			}
-			prov.logger.Debug("provisioning alert rule group",
+			prov.logger.Debug("Provisioning alert rule group",
 				"org", group.OrgID,
 				"folder", group.FolderTitle,
 				"folderUID", folderUID,
@@ -77,17 +77,17 @@ func (prov *defaultAlertRuleProvisioner) provisionRule(
 	ctx context.Context,
 	orgID int64,
 	rule alert_models.AlertRule) error {
-	prov.logger.Debug("provisioning alert rule", "uid", rule.UID, "org", rule.OrgID)
+	prov.logger.Debug("Provisioning alert rule", "uid", rule.UID, "org", rule.OrgID)
 	_, _, err := prov.ruleService.GetAlertRule(ctx, orgID, rule.UID)
 	if err != nil && !errors.Is(err, alert_models.ErrAlertRuleNotFound) {
 		return err
 	} else if err != nil {
-		prov.logger.Debug("creating rule", "uid", rule.UID, "org", rule.OrgID)
+		prov.logger.Debug("Creating rule", "uid", rule.UID, "org", rule.OrgID)
 		// 0 is passed as userID as then the quota logic will only check for
 		// the organization quota, as we don't have any user scope here.
 		_, err = prov.ruleService.CreateAlertRule(ctx, rule, alert_models.ProvenanceFile, 0)
 	} else {
-		prov.logger.Debug("updating rule", "uid", rule.UID, "org", rule.OrgID)
+		prov.logger.Debug("Updating rule", "uid", rule.UID, "org", rule.OrgID)
 		_, err = prov.ruleService.UpdateAlertRule(ctx, rule, alert_models.ProvenanceFile)
 	}
 	return err

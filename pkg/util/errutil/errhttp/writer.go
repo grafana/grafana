@@ -48,7 +48,7 @@ func Write(ctx context.Context, err error, w http.ResponseWriter, opts ...func(E
 	w.WriteHeader(pub.StatusCode)
 	err = json.NewEncoder(w).Encode(pub)
 	if err != nil {
-		defaultLogger.FromContext(ctx).Error("error while writing error", "error", err)
+		defaultLogger.FromContext(ctx).Error("Error while writing error", "error", err)
 	}
 }
 

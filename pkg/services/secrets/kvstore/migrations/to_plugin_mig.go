@@ -48,12 +48,12 @@ func (s *MigrateToPluginService) Migrate(ctx context.Context) error {
 	err := secretskvs.EvaluateRemoteSecretsPlugin(ctx, s.manager, s.cfg)
 	hasStarted := secretskvs.HasPluginStarted(ctx, s.manager)
 	if err == nil && hasStarted {
-		logger.Debug("starting migration of unified secrets to the plugin")
+		logger.Debug("Starting migration of unified secrets to the plugin")
 		// we need to get the fallback store since in this scenario the secrets store would be the plugin.
 		tmpStore, err := secretskvs.GetUnwrappedStoreFromCache(s.secretsStore)
 		if err != nil {
 			tmpStore = s.secretsStore
-			logger.Warn("secret store is not cached, this is unexpected - continuing migration anyway.")
+			logger.Warn("Secret store is not cached, this is unexpected - continuing migration anyway.")
 		}
 		pluginStore, ok := tmpStore.(*secretskvs.SecretsKVStorePlugin)
 		if !ok {
@@ -65,7 +65,7 @@ func (s *MigrateToPluginService) Migrate(ctx context.Context) error {
 		namespacedKVStore := secretskvs.GetNamespacedKVStore(s.kvstore)
 		wasFatal, err := secretskvs.IsPluginStartupErrorFatal(ctx, namespacedKVStore)
 		if err != nil {
-			logger.Warn("unable to determine whether plugin startup failures are fatal - continuing migration anyway.")
+			logger.Warn("Unable to determine whether plugin startup failures are fatal - continuing migration anyway.")
 		}
 
 		var allSec []secretskvs.Item
@@ -95,26 +95,26 @@ func (s *MigrateToPluginService) Migrate(ctx context.Context) error {
 		}
 
 		// as no err was returned, when we delete all the secrets from the sql store
-		logger.Debug("migrated unified secrets to plugin", "number of secrets", totalSec)
+		logger.Debug("Migrated unified secrets to plugin", "number of secrets", totalSec)
 		for index, sec := range allSec {
 			logger.Debug(fmt.Sprintf("Cleaning secret %d of %d", index+1, totalSec), "current", index+1, "secretCount", totalSec)
 
 			err = fallbackStore.Del(ctx, *sec.OrgId, *sec.Namespace, *sec.Type)
 			if err != nil {
-				logger.Error("plugin migrator encountered error while deleting unified secrets")
+				logger.Error("Plugin migrator encountered error while deleting unified secrets")
 				if index == 0 && !wasFatal {
 					// old unified secrets still exists, so plugin startup errors are still not fatal, unless they were before we started
 					err := secretskvs.SetPluginStartupErrorFatal(ctx, namespacedKVStore, false)
 					if err != nil {
-						logger.Error("error reverting plugin failure fatal status", "error", err.Error())
+						logger.Error("Error reverting plugin failure fatal status", "error", err.Error())
 					} else {
-						logger.Debug("application will continue to function without the secrets plugin")
+						logger.Debug("Application will continue to function without the secrets plugin")
 					}
 				}
 				return err
 			}
 		}
-		logger.Debug("deleted unified secrets after migration", "number of secrets", totalSec)
+		logger.Debug("Deleted unified secrets after migration", "number of secrets", totalSec)
 	}
 	return nil
 }

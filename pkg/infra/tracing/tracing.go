@@ -268,10 +268,10 @@ func (ots *Opentelemetry) initJaegerTracerProvider() (*tracesdk.TracerProvider, 
 	var ep jaeger.EndpointOption
 	// Create the Jaeger exporter: address can be either agent address (host:port) or collector URL
 	if strings.HasPrefix(ots.Address, "http://") || strings.HasPrefix(ots.Address, "https://") {
-		ots.log.Debug("using jaeger collector", "address", ots.Address)
+		ots.log.Debug("Using jaeger collector", "address", ots.Address)
 		ep = jaeger.WithCollectorEndpoint(jaeger.WithEndpoint(ots.Address))
 	} else if host, port, err := net.SplitHostPort(ots.Address); err == nil {
-		ots.log.Debug("using jaeger agent", "host", host, "port", port)
+		ots.log.Debug("Using jaeger agent", "host", host, "port", port)
 		ep = jaeger.WithAgentEndpoint(jaeger.WithAgentHost(host), jaeger.WithAgentPort(port), jaeger.WithMaxPacketSize(64000))
 	} else {
 		return nil, fmt.Errorf("invalid tracer address: %s", ots.Address)

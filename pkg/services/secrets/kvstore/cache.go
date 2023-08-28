@@ -29,7 +29,7 @@ func WithCache(store SecretsKVStore, defaultExpiration time.Duration, cleanupInt
 func (kv *CachedKVStore) Get(ctx context.Context, orgId int64, namespace string, typ string) (string, bool, error) {
 	key := fmt.Sprint(orgId, namespace, typ)
 	if value, ok := kv.cache.Get(key); ok {
-		kv.log.Debug("got secret value from cache", "orgId", orgId, "type", typ, "namespace", namespace)
+		kv.log.Debug("Got secret value from cache", "orgId", orgId, "type", typ, "namespace", namespace)
 		return fmt.Sprint(value), true, nil
 	}
 	value, ok, err := kv.store.Get(ctx, orgId, namespace, typ)

@@ -367,7 +367,7 @@ func (hs *HTTPServer) newToFolderDto(c *contextmodel.ReqContext, g guardian.Dash
 	parents, err := hs.folderService.GetParents(ctx, folder.GetParentsQuery{UID: f.UID, OrgID: f.OrgID})
 	if err != nil {
 		// log the error instead of failing
-		hs.log.Error("failed to fetch folder parents", "folder", f.UID, "org", f.OrgID, "error", err)
+		hs.log.Error("Failed to fetch folder parents", "folder", f.UID, "org", f.OrgID, "error", err)
 	}
 
 	folderDTO.Parents = make([]dtos.Folder, 0, len(parents))

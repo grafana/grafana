@@ -516,7 +516,7 @@ func (hs *HTTPServer) postDashboard(c *contextmodel.ReqContext, cmd dashboards.S
 		}
 
 		if liveerr != nil {
-			hs.log.Warn("unable to broadcast save event", "uid", dashboard.UID, "error", liveerr)
+			hs.log.Warn("Unable to broadcast save event", "uid", dashboard.UID, "error", liveerr)
 		}
 	}
 

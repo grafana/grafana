@@ -94,6 +94,17 @@ func CheckInfluxQLHealth(ctx context.Context, dsInfo *models.DatasourceInfo) (*b
 		return getHealthCheckMessage(logger, "error performing influxQL query", err)
 	}
 
+	defer func() {
+		if err := res.Body.Close(); err != nil {
+			logger.Warn("failed to close response body", "err", err)
+		}
+	}()
+
+	resp := s.responseParser.Parse(res.Body, res.StatusCode, []Query{{
+		RefID:       refID,
+		UseRawQuery: true,
+		RawQuery:    queryString,
+	}})
 	if res, ok := resp.Responses[refID]; ok {
 		if res.Error != nil {
 			return getHealthCheckMessage(logger, "error reading influxDB", res.Error)

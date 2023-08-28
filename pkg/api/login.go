@@ -266,13 +266,13 @@ func (hs *HTTPServer) Logout(c *contextmodel.ReqContext) {
 		}
 
 		if err := hs.oauthTokenService.InvalidateOAuthTokens(c.Req.Context(), entry); err != nil {
-			hs.log.Warn("failed to invalidate oauth tokens for user", "userId", c.UserID, "error", err)
+			hs.log.Warn("Failed to invalidate oauth tokens for user", "userId", c.UserID, "error", err)
 		}
 	}
 
 	err := hs.AuthTokenService.RevokeToken(c.Req.Context(), c.UserToken, false)
 	if err != nil && !errors.Is(err, auth.ErrUserTokenNotFound) {
-		hs.log.Error("failed to revoke auth token", "error", err)
+		hs.log.Error("Failed to revoke auth token", "error", err)
 	}
 
 	authn.DeleteSessionCookie(c.Resp, hs.Cfg)

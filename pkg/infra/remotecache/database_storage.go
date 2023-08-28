@@ -48,7 +48,7 @@ func (dc *databaseCache) internalRunGC() {
 	})
 
 	if err != nil {
-		dc.log.Error("failed to run garbage collect", "error", err)
+		dc.log.Error("Failed to run garbage collect", "error", err)
 	}
 }
 

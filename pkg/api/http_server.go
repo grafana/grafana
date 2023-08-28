@@ -421,7 +421,7 @@ func (hs *HTTPServer) Run(ctx context.Context) error {
 	case setting.HTTPScheme, setting.SocketScheme:
 		if err := hs.httpSrv.Serve(listener); err != nil {
 			if errors.Is(err, http.ErrServerClosed) {
-				hs.log.Debug("server was shutdown gracefully")
+				hs.log.Debug("Server was shutdown gracefully")
 				return nil
 			}
 			return err
@@ -429,7 +429,7 @@ func (hs *HTTPServer) Run(ctx context.Context) error {
 	case setting.HTTP2Scheme, setting.HTTPSScheme:
 		if err := hs.httpSrv.ServeTLS(listener, hs.Cfg.CertFile, hs.Cfg.KeyFile); err != nil {
 			if errors.Is(err, http.ErrServerClosed) {
-				hs.log.Debug("server was shutdown gracefully")
+				hs.log.Debug("Server was shutdown gracefully")
 				return nil
 			}
 			return err
@@ -660,7 +660,7 @@ func (hs *HTTPServer) healthzHandler(ctx *web.Context) {
 
 	ctx.Resp.WriteHeader(http.StatusOK)
 	if _, err := ctx.Resp.Write([]byte("Ok")); err != nil {
-		hs.log.Error("could not write to response", "err", err)
+		hs.log.Error("Could not write to response", "err", err)
 	}
 }
 

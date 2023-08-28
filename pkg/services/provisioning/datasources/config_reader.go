@@ -26,7 +26,7 @@ func (cr *configReader) readConfig(ctx context.Context, path string) ([]*configs
 
 	files, err := os.ReadDir(path)
 	if err != nil {
-		cr.log.Error("can't read datasource provisioning files from directory", "path", path, "error", err)
+		cr.log.Error("Can't read datasource provisioning files from directory", "path", path, "error", err)
 		return datasources, nil
 	}
 
@@ -140,7 +140,7 @@ func (cr *configReader) validateAccessAndOrgID(ctx context.Context, ds *upsertDa
 	}
 
 	if ds.Access != datasources.DS_ACCESS_DIRECT && ds.Access != datasources.DS_ACCESS_PROXY {
-		cr.log.Warn("invalid access value, will use 'proxy' instead", "value", ds.Access)
+		cr.log.Warn("Invalid access value, will use 'proxy' instead", "value", ds.Access)
 		ds.Access = datasources.DS_ACCESS_PROXY
 	}
 	return nil

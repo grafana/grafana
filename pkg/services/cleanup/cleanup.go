@@ -124,7 +124,7 @@ func (srv *CleanUpService) cleanUpOldAnnotations(ctx context.Context) {
 	logger := srv.log.FromContext(ctx)
 	affected, affectedTags, err := srv.annotationCleaner.Run(ctx, srv.Cfg)
 	if err != nil && !errors.Is(err, context.DeadlineExceeded) {
-		logger.Error("failed to clean up old annotations", "error", err)
+		logger.Error("Failed to clean up old annotations", "error", err)
 	} else {
 		logger.Debug("Deleted excess annotations", "annotations affected", affected, "annotation tags affected", affectedTags)
 	}

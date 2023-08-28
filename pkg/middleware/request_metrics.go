@@ -74,7 +74,7 @@ func RequestMetrics(features featuremgmt.FeatureToggles, cfg *setting.Cfg, promR
 				} else {
 					// log requests where we could not identify handler so we can register them.
 					if features.IsEnabled(featuremgmt.FlagLogRequestsInstrumentedAsUnknown) {
-						log.Warn("request instrumented as unknown", "path", r.URL.Path, "status_code", status)
+						log.Warn("Request instrumented as unknown", "path", r.URL.Path, "status_code", status)
 					}
 				}
 			}

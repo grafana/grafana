@@ -69,7 +69,7 @@ func (a *authenticator) tokenAuth(ctx context.Context) (context.Context, error) 
 
 	signedInUser, err := a.getSignedInUser(ctx, token)
 	if err != nil {
-		a.logger.Warn("request with invalid token", "error", err, "token", token)
+		a.logger.Warn("Request with invalid token", "error", err, "token", token)
 		return ctx, status.Error(codes.Unauthenticated, "invalid token")
 	}
 
@@ -124,7 +124,7 @@ func (a *authenticator) getSignedInUser(ctx context.Context, token string) (*use
 	if signedInUser.Permissions[signedInUser.OrgID] == nil {
 		permissions, err := a.AccessControlService.GetUserPermissions(ctx, signedInUser, accesscontrol.Options{})
 		if err != nil {
-			a.logger.Error("failed fetching permissions for user", "userID", signedInUser.UserID, "error", err)
+			a.logger.Error("Failed fetching permissions for user", "userID", signedInUser.UserID, "error", err)
 		}
 		signedInUser.Permissions[signedInUser.OrgID] = accesscontrol.GroupScopesByAction(permissions)
 	}

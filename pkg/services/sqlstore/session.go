@@ -44,7 +44,7 @@ func startSessionOrUseExisting(ctx context.Context, engine *xorm.Engine, beginTr
 
 	if ok {
 		ctxLogger := sessionLogger.FromContext(ctx)
-		ctxLogger.Debug("reusing existing session", "transaction", sess.transactionOpen)
+		ctxLogger.Debug("Reusing existing session", "transaction", sess.transactionOpen)
 		sess.Session = sess.Session.Context(ctx)
 		return sess, false, nil, nil
 	}

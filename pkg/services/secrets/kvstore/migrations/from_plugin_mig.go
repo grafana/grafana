@@ -43,7 +43,7 @@ func ProvideMigrateFromPluginService(
 }
 
 func (s *MigrateFromPluginService) Migrate(ctx context.Context) error {
-	logger.Debug("starting migration of plugin secrets to unified secrets")
+	logger.Debug("Starting migration of plugin secrets to unified secrets")
 	// access the plugin directly
 	plugin, err := secretskvs.StartAndReturnPlugin(s.manager, context.Background())
 	if err != nil {
@@ -56,7 +56,7 @@ func (s *MigrateFromPluginService) Migrate(ctx context.Context) error {
 		return err
 	}
 	totalSecrets := len(res.Items)
-	logger.Debug("retrieved all secrets from plugin", "num secrets", totalSecrets)
+	logger.Debug("Retrieved all secrets from plugin", "num secrets", totalSecrets)
 	// create a secret sql store manually
 	secretsSql := secretskvs.NewSQLSecretsKVStore(s.sqlStore, s.secretsService, logger)
 	for i, item := range res.Items {

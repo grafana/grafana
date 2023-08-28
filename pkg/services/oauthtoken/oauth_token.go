@@ -76,9 +76,9 @@ func (o *Service) GetCurrentOAuthToken(ctx context.Context, usr identity.Request
 	if err != nil {
 		if errors.Is(err, user.ErrUserNotFound) {
 			// Not necessarily an error.  User may be logged in another way.
-			logger.Debug("no oauth token for user found", "userId", userID, "username", usr.GetLogin())
+			logger.Debug("no oauth token for user found", "userId", usr.UserID, "username", usr.Login)
 		} else {
-			logger.Error("failed to get oauth token for user", "userId", userID, "username", usr.GetLogin(), "error", err)
+			logger.Error("failed to get oauth token for user", "userId", usr.UserID, "username", usr.Login, "error", err)
 		}
 		return nil
 	}
@@ -125,7 +125,7 @@ func (o *Service) HasOAuthEntry(ctx context.Context, usr identity.Requester) (*l
 			// Not necessarily an error.  User may be logged in another way.
 			return nil, false, nil
 		}
-		logger.Error("failed to fetch oauth token for user", "userId", userID, "username", usr.GetLogin(), "error", err)
+		logger.Error("failed to fetch oauth token for user", "userId", usr.UserID, "username", usr.Login, "error", err)
 		return nil, false, err
 	}
 	if !strings.Contains(authInfo.AuthModule, "oauth") {
@@ -138,7 +138,7 @@ func (o *Service) HasOAuthEntry(ctx context.Context, usr identity.Requester) (*l
 // It uses a singleflight.Group to prevent getting the Refresh Token multiple times for a given User
 func (o *Service) TryTokenRefresh(ctx context.Context, usr *login.UserAuth) error {
 	lockKey := fmt.Sprintf("oauth-refresh-token-%d", usr.UserId)
-	_, err, _ := o.singleFlightGroup.Do(lockKey, func() (any, error) {
+	_, err, _ := o.singleFlightGroup.Do(lockKey, func() (interface{}, error) {
 		logger.Debug("singleflight request for getting a new access token", "key", lockKey)
 
 		return o.tryGetOrRefreshAccessToken(ctx, usr)

@@ -118,7 +118,7 @@ func (dc *NotificationProvisioner) mergeNotifications(ctx context.Context, notif
 		}
 
 		if res == nil {
-			dc.log.Debug("inserting alert notification from configuration", "name", notification.Name, "uid", notification.UID)
+			dc.log.Debug("Inserting alert notification from configuration", "name", notification.Name, "uid", notification.UID)
 			insertCmd := &models.CreateAlertNotificationCommand{
 				UID:                   notification.UID,
 				Name:                  notification.Name,
@@ -137,7 +137,7 @@ func (dc *NotificationProvisioner) mergeNotifications(ctx context.Context, notif
 				return err
 			}
 		} else {
-			dc.log.Debug("updating alert notification from configuration", "name", notification.Name)
+			dc.log.Debug("Updating alert notification from configuration", "name", notification.Name)
 			updateCmd := &models.UpdateAlertNotificationWithUidCommand{
 				UID:                   notification.UID,
 				Name:                  notification.Name,

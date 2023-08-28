@@ -53,7 +53,7 @@ func (s *DataSourceSecretMigrationService) Migrate(ctx context.Context) error {
 	needMigration := migrationStatus != completeSecretMigrationValue && disableSecretsCompatibility
 
 	if needCompatibility || needMigration {
-		logger.Debug("performing secret migration", "needs migration", needMigration, "needs compatibility", needCompatibility)
+		logger.Debug("Performing secret migration", "needs migration", needMigration, "needs compatibility", needCompatibility)
 		query := &datasources.GetAllDataSourcesQuery{}
 		dsList, err := s.dataSourcesService.GetAllDataSources(ctx, query)
 		if err != nil {

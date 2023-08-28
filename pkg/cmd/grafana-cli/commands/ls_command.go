@@ -19,7 +19,7 @@ var validateLsCommand = func(pluginDir string) error {
 		return errMissingPathFlag
 	}
 
-	logger.Debug("plugindir: " + pluginDir + "\n")
+	logger.Debug("Plugindir: " + pluginDir + "\n")
 	pluginDirInfo, err := services.IoHelper.Stat(pluginDir)
 	if err != nil {
 		return err
@@ -41,9 +41,9 @@ func lsCommand(c utils.CommandLine) error {
 	plugins := services.GetLocalPlugins(pluginDir)
 
 	if len(plugins) > 0 {
-		logger.Info("installed plugins:\n")
+		logger.Info("Installed plugins:\n")
 	} else {
-		logger.Info("no installed plugins found\n")
+		logger.Info("No installed plugins found\n")
 	}
 
 	for _, plugin := range plugins {

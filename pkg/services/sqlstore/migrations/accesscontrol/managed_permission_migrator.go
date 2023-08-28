@@ -54,7 +54,7 @@ func (sp *managedPermissionMigrator) Exec(sess *xorm.Session, mg *migrator.Migra
 	INNER JOIN role AS r ON p.role_id = r.id
 	WHERE r.name LIKE ?`, "managed:builtins%").
 		Find(&managedPermissions); errFindPermissions != nil {
-		logger.Error("could not get the managed permissions", "error", errFindPermissions)
+		logger.Error("Could not get the managed permissions", "error", errFindPermissions)
 		return errFindPermissions
 	}
 

@@ -47,7 +47,7 @@ func (m *DisabledMigrator) Exec(sess *xorm.Session, mg *migrator.Migrator) error
 	enabled := mg.Cfg.Raw.Section("rbac").Key("enabled").MustBool(true)
 	if enabled {
 		// if the flag is enabled we skip the reset of data migrations
-		mg.Logger.Debug("skip reset of rbac data migrations")
+		mg.Logger.Debug("Skip reset of rbac data migrations")
 		return nil
 	}
 

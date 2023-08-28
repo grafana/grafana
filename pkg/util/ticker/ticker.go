@@ -48,7 +48,7 @@ func getStartTick(clk clock.Clock, interval time.Duration) time.Time {
 
 func (t *T) run() {
 	logger := log.New("ticker")
-	logger.Info("starting", "first_tick", t.last.Add(t.interval))
+	logger.Info("Starting", "first_tick", t.last.Add(t.interval))
 LOOP:
 	for {
 		next := t.last.Add(t.interval) // calculate the time of the next tick
@@ -72,7 +72,7 @@ LOOP:
 			break LOOP
 		}
 	}
-	logger.Info("stopped", "last_tick", t.last)
+	logger.Info("Stopped", "last_tick", t.last)
 }
 
 // Stop stops the ticker. It does not close the C channel
