@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 
-	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
@@ -18,10 +17,7 @@ var _ DashboardGuardian = new(accessControlDashboardGuardian)
 // NewAccessControlDashboardGuardianByDashboard creates a dashboard guardian by the provided dashboardId.
 func NewAccessControlDashboardGuardian(
 	ctx context.Context, cfg *setting.Cfg, dashboardId int64, user identity.Requester,
-	store db.DB, ac accesscontrol.AccessControl,
-	folderPermissionsService accesscontrol.FolderPermissionsService,
-	dashboardPermissionsService accesscontrol.DashboardPermissionsService,
-	dashboardService dashboards.DashboardService,
+	ac accesscontrol.AccessControl, dashboardService dashboards.DashboardService,
 ) (DashboardGuardian, error) {
 	var dashboard *dashboards.Dashboard
 	if dashboardId != 0 {
@@ -47,12 +43,10 @@ func NewAccessControlDashboardGuardian(
 				cfg:              cfg,
 				log:              log.New("folder.permissions"),
 				user:             user,
-				store:            store,
 				ac:               ac,
 				dashboardService: dashboardService,
 			},
-			folder:                   dashboards.FromDashboard(dashboard),
-			folderPermissionsService: folderPermissionsService,
+			folder: dashboards.FromDashboard(dashboard),
 		}, nil
 	}
 
@@ -62,22 +56,17 @@ func NewAccessControlDashboardGuardian(
 			cfg:              cfg,
 			log:              log.New("dashboard.permissions"),
 			user:             user,
-			store:            store,
 			ac:               ac,
 			dashboardService: dashboardService,
 		},
-		dashboard:                   dashboard,
-		dashboardPermissionsService: dashboardPermissionsService,
+		dashboard: dashboard,
 	}, nil
 }
 
 // NewAccessControlDashboardGuardianByDashboard creates a dashboard guardian by the provided dashboardUID.
 func NewAccessControlDashboardGuardianByUID(
 	ctx context.Context, cfg *setting.Cfg, dashboardUID string, user identity.Requester,
-	store db.DB, ac accesscontrol.AccessControl,
-	folderPermissionsService accesscontrol.FolderPermissionsService,
-	dashboardPermissionsService accesscontrol.DashboardPermissionsService,
-	dashboardService dashboards.DashboardService,
+	ac accesscontrol.AccessControl, dashboardService dashboards.DashboardService,
 ) (DashboardGuardian, error) {
 	var dashboard *dashboards.Dashboard
 	if dashboardUID != "" {
@@ -103,12 +92,10 @@ func NewAccessControlDashboardGuardianByUID(
 				cfg:              cfg,
 				log:              log.New("folder.permissions"),
 				user:             user,
-				store:            store,
 				ac:               ac,
 				dashboardService: dashboardService,
 			},
-			folder:                   dashboards.FromDashboard(dashboard),
-			folderPermissionsService: folderPermissionsService,
+			folder: dashboards.FromDashboard(dashboard),
 		}, nil
 	}
 
@@ -118,12 +105,10 @@ func NewAccessControlDashboardGuardianByUID(
 			ctx:              ctx,
 			log:              log.New("dashboard.permissions"),
 			user:             user,
-			store:            store,
 			ac:               ac,
 			dashboardService: dashboardService,
 		},
-		dashboard:                   dashboard,
-		dashboardPermissionsService: dashboardPermissionsService,
+		dashboard: dashboard,
 	}, nil
 }
 
@@ -132,10 +117,7 @@ func NewAccessControlDashboardGuardianByUID(
 // since it avoids querying the database for fetching the dashboard.
 func NewAccessControlDashboardGuardianByDashboard(
 	ctx context.Context, cfg *setting.Cfg, dashboard *dashboards.Dashboard, user identity.Requester,
-	store db.DB, ac accesscontrol.AccessControl,
-	folderPermissionsService accesscontrol.FolderPermissionsService,
-	dashboardPermissionsService accesscontrol.DashboardPermissionsService,
-	dashboardService dashboards.DashboardService,
+	ac accesscontrol.AccessControl, dashboardService dashboards.DashboardService,
 ) (DashboardGuardian, error) {
 	if dashboard != nil && dashboard.IsFolder {
 		return &accessControlFolderGuardian{
@@ -144,12 +126,10 @@ func NewAccessControlDashboardGuardianByDashboard(
 				cfg:              cfg,
 				log:              log.New("folder.permissions"),
 				user:             user,
-				store:            store,
 				ac:               ac,
 				dashboardService: dashboardService,
 			},
-			folder:                   dashboards.FromDashboard(dashboard),
-			folderPermissionsService: folderPermissionsService,
+			folder: dashboards.FromDashboard(dashboard),
 		}, nil
 	}
 
@@ -159,22 +139,17 @@ func NewAccessControlDashboardGuardianByDashboard(
 			ctx:              ctx,
 			log:              log.New("dashboard.permissions"),
 			user:             user,
-			store:            store,
 			ac:               ac,
 			dashboardService: dashboardService,
 		},
-		dashboard:                   dashboard,
-		dashboardPermissionsService: dashboardPermissionsService,
+		dashboard: dashboard,
 	}, nil
 }
 
 // NewAccessControlFolderGuardian creates a folder guardian by the provided folder.
 func NewAccessControlFolderGuardian(
 	ctx context.Context, cfg *setting.Cfg, f *folder.Folder, user identity.Requester,
-	store db.DB, ac accesscontrol.AccessControl,
-	folderPermissionsService accesscontrol.FolderPermissionsService,
-	dashboardPermissionsService accesscontrol.DashboardPermissionsService,
-	dashboardService dashboards.DashboardService,
+	ac accesscontrol.AccessControl, dashboardService dashboards.DashboardService,
 ) (DashboardGuardian, error) {
 	return &accessControlFolderGuardian{
 		accessControlBaseGuardian: accessControlBaseGuardian{
@@ -182,12 +157,10 @@ func NewAccessControlFolderGuardian(
 			cfg:              cfg,
 			log:              log.New("folder.permissions"),
 			user:             user,
-			store:            store,
 			ac:               ac,
 			dashboardService: dashboardService,
 		},
-		folder:                   f,
-		folderPermissionsService: folderPermissionsService,
+		folder: f,
 	}, nil
 }
 
@@ -197,20 +170,17 @@ type accessControlBaseGuardian struct {
 	log              log.Logger
 	user             identity.Requester
 	ac               accesscontrol.AccessControl
-	store            db.DB
 	dashboardService dashboards.DashboardService
 }
 
 type accessControlDashboardGuardian struct {
 	accessControlBaseGuardian
-	dashboard                   *dashboards.Dashboard
-	dashboardPermissionsService accesscontrol.DashboardPermissionsService
+	dashboard *dashboards.Dashboard
 }
 
 type accessControlFolderGuardian struct {
 	accessControlBaseGuardian
-	folder                   *folder.Folder
-	folderPermissionsService accesscontrol.FolderPermissionsService
+	folder *folder.Folder
 }
 
 func (a *accessControlDashboardGuardian) CanSave() (bool, error) {

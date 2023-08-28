@@ -873,7 +873,7 @@ func permissionScenario(t *testing.T, desc string, canSave bool, fn permissionSc
 			foldertest.NewFakeService(),
 		)
 		require.NoError(t, err)
-		guardian.InitAccessControlGuardian(cfg, sqlStore, ac, folderPermissions, dashboardPermissions, dashboardService)
+		guardian.InitAccessControlGuardian(cfg, ac, dashboardService)
 
 		savedFolder := saveTestFolder(t, "Saved folder", testOrgID, sqlStore)
 		savedDashInFolder := saveTestDashboard(t, "Saved dash in folder", testOrgID, savedFolder.ID, sqlStore)
