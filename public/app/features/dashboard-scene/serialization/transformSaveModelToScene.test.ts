@@ -1,10 +1,9 @@
 import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
-import { config, locationService } from '@grafana/runtime';
+import { config } from '@grafana/runtime';
 import {
   behaviors,
   CustomVariable,
   DataSourceVariable,
-  getUrlSyncManager,
   QueryVariable,
   SceneDataTransformer,
   SceneGridItem,

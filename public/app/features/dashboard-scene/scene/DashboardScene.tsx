@@ -11,6 +11,7 @@ import {
   SceneObjectBase,
   SceneObjectState,
   SceneObjectStateChangedEvent,
+  sceneUtils,
 } from '@grafana/scenes';
 
 import { DashboardSceneRenderer } from '../scene/DashboardSceneRenderer';
@@ -46,11 +47,11 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   /**
    * State before editing started
    */
-  private _original?: DashboardScene;
+  private _initialState?: DashboardSceneState;
   /**
    * Url state before editing started
    */
-  private _orignalUrlState?: UrlQueryMap;
+  private _initiallUrlState?: UrlQueryMap;
   /**
    * change tracking subscription
    */
@@ -84,8 +85,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
 
   public onEnterEditMode = () => {
     // Save this state
-    this._original = this.clone();
-    this._orignalUrlState = locationService.getSearchObject();
+    this._initialState = sceneUtils.cloneSceneObjectState(this.state);
+    this._initiallUrlState = locationService.getSearchObject();
 
     // Switch to edit mode
     this.setState({ isEditing: true });
@@ -105,9 +106,9 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     // Stop url sync before updating url
     this.stopUrlSync();
     // Now we can update url
-    locationService.partial(this._orignalUrlState!, true);
+    locationService.partial(this._initiallUrlState!, true);
     // Update state and disable editing
-    this.setState({ ...this._original?.state, isEditing: false });
+    this.setState({ ...this._initialState, isEditing: false });
     // and start url sync again
     this.startUrlSync();
 
@@ -161,7 +162,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     this._changeTrackerSub?.unsubscribe();
   }
 
-  public getOriginal(): DashboardScene {
-    return this._original!;
+  public getInitialState(): DashboardSceneState | undefined {
+    return this._initialState;
   }
 }

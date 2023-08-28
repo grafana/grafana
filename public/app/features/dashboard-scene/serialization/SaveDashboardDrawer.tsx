@@ -21,10 +21,11 @@ export class SaveDashboardDrawer extends SceneObjectBase<SaveDashboardDrawerStat
   };
 
   static Component = ({ model }: SceneComponentProps<SaveDashboardDrawer>) => {
-    const originalVersion = transformSceneToSaveModel(model.dashboard.getOriginal());
-    const saveVersion = transformSceneToSaveModel(model.dashboard);
+    const initialScene = new DashboardScene(model.dashboard.getInitialState()!);
+    const initialSaveModel = transformSceneToSaveModel(initialScene);
+    const changedSaveModel = transformSceneToSaveModel(model.dashboard);
 
-    const diff = jsonDiff(originalVersion, saveVersion);
+    const diff = jsonDiff(initialSaveModel, changedSaveModel);
 
     // let diffCount = 0;
     // for (const d of Object.values(diff)) {
@@ -33,7 +34,7 @@ export class SaveDashboardDrawer extends SceneObjectBase<SaveDashboardDrawerStat
 
     return (
       <Drawer title="Save dashboard" subtitle={model.dashboard.state.title} scrollableContent onClose={model.onClose}>
-        <SaveDashboardDiff diff={diff} oldValue={originalVersion} newValue={saveVersion} />
+        <SaveDashboardDiff diff={diff} oldValue={initialSaveModel} newValue={changedSaveModel} />
       </Drawer>
     );
   };
