@@ -3,7 +3,7 @@ import { SceneDataProvider, SceneDataTransformer, SceneQueryRunner } from '@graf
 import { PanelModel } from 'app/features/dashboard/state';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard';
 
-import { ShareQueryDataProvider } from '../ShareQueryDataProvider';
+import { ShareQueryDataProvider } from '../scene/ShareQueryDataProvider';
 
 export function createPanelDataProvider(panel: PanelModel): SceneDataProvider | undefined {
   // Skip setting query runner for panels without queries

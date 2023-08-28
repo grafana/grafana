@@ -19,15 +19,16 @@ import { createPanelJSONFixture } from 'app/features/dashboard/state/__fixtures_
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard';
 import { DASHBOARD_DATASOURCE_PLUGIN_ID } from 'app/plugins/datasource/dashboard/types';
 
-import { DashboardScene } from './DashboardScene';
+import { DashboardScene } from '../scene/DashboardScene';
+import { ShareQueryDataProvider } from '../scene/ShareQueryDataProvider';
+import { setupLoadDashboardMock } from '../utils/test-utils';
+
 import {
   createDashboardSceneFromDashboardModel,
   createVizPanelFromPanelModel,
   createSceneVariableFromVariableModel,
   DashboardLoader,
 } from './DashboardsLoader';
-import { ShareQueryDataProvider } from './ShareQueryDataProvider';
-import { setupLoadDashboardMock } from './test-utils';
 
 describe('DashboardLoader', () => {
   describe('when fetching/loading a dashboard', () => {
