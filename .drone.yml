@@ -2280,7 +2280,7 @@ steps:
   - compile-build-cmd
   environment:
     GCP_KEY:
-      from_secret: gcp_upload_artifacts_key
+      from_secret: gcp_grafanauploads_base64
     PRERELEASE_BUCKET:
       from_secret: prerelease_bucket
   image: grafana/grafana-ci-deploy:1.3.3
@@ -2291,7 +2291,7 @@ steps:
   - compile-build-cmd
   environment:
     GCP_KEY:
-      from_secret: gcp_upload_artifacts_key
+      from_secret: gcp_grafanauploads_base64
     PRERELEASE_BUCKET:
       from_secret: prerelease_bucket
     STATIC_ASSET_EDITIONS:
@@ -2304,7 +2304,7 @@ steps:
   - compile-build-cmd
   environment:
     GCP_KEY:
-      from_secret: gcp_upload_artifacts_key
+      from_secret: gcp_grafanauploads_base64
     PRERELEASE_BUCKET:
       from_secret: prerelease_bucket
   image: grafana/grafana-ci-deploy:1.3.3
@@ -2355,7 +2355,7 @@ steps:
   - yarn-install
   environment:
     GCP_KEY:
-      from_secret: gcp_upload_artifacts_key
+      from_secret: gcp_grafanauploads_base64
     PRERELEASE_BUCKET:
       from_secret: prerelease_bucket
   failure: ignore
@@ -3793,13 +3793,33 @@ platform:
   os: linux
 steps:
 - commands:
+  - echo $${GCR_CREDENTIALS} | docker login -u _json_key --password-stdin https://us.gcr.io
+  environment:
+    GCR_CREDENTIALS:
+      from_secret: gcr_credentials
+  image: docker:dind
+  name: authenticate-gcr
+  volumes:
+  - name: docker
+    path: /var/run/docker.sock
+- commands:
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/grafana:latest
+  depends_on:
+  - authenticate-gcr
   image: aquasec/trivy:0.21.0
   name: scan-unknown-low-medium-vulnerabilities
+  volumes:
+  - name: docker
+    path: /var/run/docker.sock
 - commands:
   - trivy --exit-code 1 --severity HIGH,CRITICAL grafana/grafana:latest
+  depends_on:
+  - authenticate-gcr
   image: aquasec/trivy:0.21.0
   name: scan-high-critical-vulnerabilities
+  volumes:
+  - name: docker
+    path: /var/run/docker.sock
 - image: plugins/slack
   name: slack-notify-failure
   settings:
@@ -3813,6 +3833,10 @@ trigger:
   cron: nightly
   event: cron
 type: docker
+volumes:
+- host:
+    path: /var/run/docker.sock
+  name: docker
 ---
 clone:
   retries: 3
@@ -3823,13 +3847,33 @@ platform:
   os: linux
 steps:
 - commands:
+  - echo $${GCR_CREDENTIALS} | docker login -u _json_key --password-stdin https://us.gcr.io
+  environment:
+    GCR_CREDENTIALS:
+      from_secret: gcr_credentials
+  image: docker:dind
+  name: authenticate-gcr
+  volumes:
+  - name: docker
+    path: /var/run/docker.sock
+- commands:
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/grafana:main
+  depends_on:
+  - authenticate-gcr
   image: aquasec/trivy:0.21.0
   name: scan-unknown-low-medium-vulnerabilities
+  volumes:
+  - name: docker
+    path: /var/run/docker.sock
 - commands:
   - trivy --exit-code 1 --severity HIGH,CRITICAL grafana/grafana:main
+  depends_on:
+  - authenticate-gcr
   image: aquasec/trivy:0.21.0
   name: scan-high-critical-vulnerabilities
+  volumes:
+  - name: docker
+    path: /var/run/docker.sock
 - image: plugins/slack
   name: slack-notify-failure
   settings:
@@ -3843,6 +3887,10 @@ trigger:
   cron: nightly
   event: cron
 type: docker
+volumes:
+- host:
+    path: /var/run/docker.sock
+  name: docker
 ---
 clone:
   retries: 3
@@ -3853,13 +3901,33 @@ platform:
   os: linux
 steps:
 - commands:
+  - echo $${GCR_CREDENTIALS} | docker login -u _json_key --password-stdin https://us.gcr.io
+  environment:
+    GCR_CREDENTIALS:
+      from_secret: gcr_credentials
+  image: docker:dind
+  name: authenticate-gcr
+  volumes:
+  - name: docker
+    path: /var/run/docker.sock
+- commands:
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/grafana:latest-ubuntu
+  depends_on:
+  - authenticate-gcr
   image: aquasec/trivy:0.21.0
   name: scan-unknown-low-medium-vulnerabilities
+  volumes:
+  - name: docker
+    path: /var/run/docker.sock
 - commands:
   - trivy --exit-code 1 --severity HIGH,CRITICAL grafana/grafana:latest-ubuntu
+  depends_on:
+  - authenticate-gcr
   image: aquasec/trivy:0.21.0
   name: scan-high-critical-vulnerabilities
+  volumes:
+  - name: docker
+    path: /var/run/docker.sock
 - image: plugins/slack
   name: slack-notify-failure
   settings:
@@ -3874,6 +3942,10 @@ trigger:
   cron: nightly
   event: cron
 type: docker
+volumes:
+- host:
+    path: /var/run/docker.sock
+  name: docker
 ---
 clone:
   retries: 3
@@ -3884,13 +3956,33 @@ platform:
   os: linux
 steps:
 - commands:
+  - echo $${GCR_CREDENTIALS} | docker login -u _json_key --password-stdin https://us.gcr.io
+  environment:
+    GCR_CREDENTIALS:
+      from_secret: gcr_credentials
+  image: docker:dind
+  name: authenticate-gcr
+  volumes:
+  - name: docker
+    path: /var/run/docker.sock
+- commands:
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/grafana:main-ubuntu
+  depends_on:
+  - authenticate-gcr
   image: aquasec/trivy:0.21.0
   name: scan-unknown-low-medium-vulnerabilities
+  volumes:
+  - name: docker
+    path: /var/run/docker.sock
 - commands:
   - trivy --exit-code 1 --severity HIGH,CRITICAL grafana/grafana:main-ubuntu
+  depends_on:
+  - authenticate-gcr
   image: aquasec/trivy:0.21.0
   name: scan-high-critical-vulnerabilities
+  volumes:
+  - name: docker
+    path: /var/run/docker.sock
 - image: plugins/slack
   name: slack-notify-failure
   settings:
@@ -3905,6 +3997,10 @@ trigger:
   cron: nightly
   event: cron
 type: docker
+volumes:
+- host:
+    path: /var/run/docker.sock
+  name: docker
 ---
 clone:
   retries: 3
@@ -3914,6 +4010,16 @@ platform:
   arch: amd64
   os: linux
 steps:
+- commands:
+  - echo $${GCR_CREDENTIALS} | docker login -u _json_key --password-stdin https://us.gcr.io
+  environment:
+    GCR_CREDENTIALS:
+      from_secret: gcr_credentials
+  image: docker:dind
+  name: authenticate-gcr
+  volumes:
+  - name: docker
+    path: /var/run/docker.sock
 - commands:
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM google/cloud-sdk:431.0.0
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/build-container:1.7.5
@@ -3934,8 +4040,13 @@ steps:
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/docs-base:dbd975af06
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM cypress/included:9.5.1-node16.14.0-slim-chrome99-ff97
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM us-docker.pkg.dev/grafanalabs-dev/cloud-data-sources/e2e:latest
+  depends_on:
+  - authenticate-gcr
   image: aquasec/trivy:0.21.0
   name: scan-unknown-low-medium-vulnerabilities
+  volumes:
+  - name: docker
+    path: /var/run/docker.sock
 - commands:
   - trivy --exit-code 1 --severity HIGH,CRITICAL google/cloud-sdk:431.0.0
   - trivy --exit-code 1 --severity HIGH,CRITICAL grafana/build-container:1.7.5
@@ -3956,8 +4067,13 @@ steps:
   - trivy --exit-code 1 --severity HIGH,CRITICAL grafana/docs-base:dbd975af06
   - trivy --exit-code 1 --severity HIGH,CRITICAL cypress/included:9.5.1-node16.14.0-slim-chrome99-ff97
   - trivy --exit-code 1 --severity HIGH,CRITICAL us-docker.pkg.dev/grafanalabs-dev/cloud-data-sources/e2e:latest
+  depends_on:
+  - authenticate-gcr
   image: aquasec/trivy:0.21.0
   name: scan-high-critical-vulnerabilities
+  volumes:
+  - name: docker
+    path: /var/run/docker.sock
 - image: plugins/slack
   name: slack-notify-failure
   settings:
@@ -3971,6 +4087,10 @@ trigger:
   cron: nightly
   event: cron
 type: docker
+volumes:
+- host:
+    path: /var/run/docker.sock
+  name: docker
 ---
 clone:
   retries: 3
@@ -4002,6 +4122,10 @@ trigger:
   cron: grafana-com-nightly
   event: cron
 type: docker
+volumes:
+- host:
+    path: /var/run/docker.sock
+  name: docker
 ---
 get:
   name: credentials.json
@@ -4189,7 +4313,13 @@ get:
 kind: secret
 name: delivery-bot-app-private-key
 ---
+get:
+  name: service-account
+  path: secret/data/common/gcr
+kind: secret
+name: gcr_credentials
+---
 kind: signature
-hmac: 43853395ba795100b3a69df8fce1336cefa06b7a65067cddee1d85ef79e62b11
+hmac: 39fac391717124335cb454514c2c4757de5b19b17ac051192cd6bb62b89a50fe
 
 ...
