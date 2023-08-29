@@ -15,7 +15,7 @@ import { getTimeSrv, TimeSrv } from '../services/TimeSrv';
 import { DashboardModel, PanelModel } from '../state';
 import { getPanelChromeProps } from '../utils/getPanelChromeProps';
 
-import { PanelHeaderMenuWrapperNew } from './PanelHeader/PanelHeaderMenuWrapper';
+import { PanelHeaderMenuWrapper } from './PanelHeader/PanelHeaderMenuWrapper';
 
 interface OwnProps {
   panel: PanelModel;
@@ -202,7 +202,7 @@ export class PanelChromeAngularUnconnected extends PureComponent<Props, State> {
 
     const menu = (
       <div data-testid="panel-dropdown">
-        <PanelHeaderMenuWrapperNew panel={panel} dashboard={dashboard} loadingState={data.state} />
+        <PanelHeaderMenuWrapper panel={panel} dashboard={dashboard} loadingState={data.state} />
       </div>
     );
 
