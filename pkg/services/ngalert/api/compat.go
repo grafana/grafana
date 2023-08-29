@@ -186,6 +186,7 @@ func AlertRuleExportFromAlertRule(rule models.AlertRule) (definitions.AlertRuleE
 		UID:          rule.UID,
 		Title:        rule.Title,
 		For:          model.Duration(rule.For),
+		ForSeconds:   int64(rule.For.Seconds()),
 		Condition:    rule.Condition,
 		Data:         data,
 		DashboardUID: dashboardUID,
