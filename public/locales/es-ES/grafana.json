@@ -136,18 +136,18 @@
       "widget": ""
     },
     "empty": {
-      "add-import-body": "Importar las visualizaciones que se compartan con otros paneles de control.",
-      "add-import-button": "Importar el panel de la biblioteca",
-      "add-import-header": "Importar panel",
-      "add-row-body": "Agrupa tus visualizaciones en secciones ampliables.",
-      "add-row-button": "Añadir fila",
-      "add-row-header": "Añadir una fila",
+      "add-library-panel-body": "",
+      "add-library-panel-button": "",
+      "add-library-panel-header": "",
       "add-visualization-body": "Selecciona una fuente de datos y luego consulta y visualiza tus datos con gráficos, estadísticas y tablas o cree listas, anotaciones y otros widgets.",
       "add-visualization-button": "Añadir visualización",
       "add-visualization-header": "Comienza tu nuevo panel de control añadiendo una visualización",
       "add-widget-body": "",
       "add-widget-button": "",
-      "add-widget-header": ""
+      "add-widget-header": "",
+      "import-a-dashboard-body": "",
+      "import-a-dashboard-header": "",
+      "import-dashboard-button": ""
     },
     "inspect": {
       "data-tab": "Datos",

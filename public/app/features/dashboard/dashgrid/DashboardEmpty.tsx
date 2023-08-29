@@ -87,13 +87,13 @@ const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
           <div className={cx(styles.containerBox, styles.centeredContent, styles.libraryContainer)}>
             <div className={styles.headerSmall}>
               <H3 textAlignment="center" weight="medium">
-                <Trans i18nKey="dashboard.empty.add-import-header">Import panel</Trans>
+                <Trans i18nKey="dashboard.empty.add-library-panel-header">Import panel</Trans>
               </H3>
             </div>
             <div className={styles.bodySmall}>
               <P textAlignment="center" color="secondary">
-                <Trans i18nKey="dashboard.empty.add-import-body">
-                  Import visualizations that are shared with other dashboards.
+                <Trans i18nKey="dashboard.empty.add-library-panel-body">
+                  Add visualizations that are shared with other dashboards.
                 </Trans>
               </P>
             </div>
@@ -107,7 +107,7 @@ const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
               }}
               disabled={!canCreate}
             >
-              <Trans i18nKey="dashboard.empty.add-import-button">Import library panel</Trans>
+              <Trans i18nKey="dashboard.empty.add-library-panel-button">Add library panel</Trans>
             </Button>
           </div>
           <div className={cx(styles.containerBox, styles.centeredContent, styles.rowContainer)}>
