@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { FormEvent, useCallback } from 'react';
 
 import {
   DataTransformerID,
@@ -15,7 +15,7 @@ import {
   FormatStringOutput,
   FormatStringTransformerOptions,
 } from '@grafana/data/src/transformations/transformers/formatString';
-import { Select, InlineFieldRow, InlineField } from '@grafana/ui';
+import { Select, InlineFieldRow, InlineField, Input } from '@grafana/ui';
 import { FieldNamePicker } from '@grafana/ui/src/components/MatchersUI/FieldNamePicker';
 
 const fieldNamePickerSettings: StandardEditorsRegistryItem<string, FieldNamePickerConfigSettings> = {
@@ -57,10 +57,32 @@ export function FormatStringTransfomerEditor({
     [onChange, options]
   );
 
+  const onSubstringStartChange = useCallback(
+    (e: FormEvent<HTMLInputElement>) => {
+      const startVal = Number(e.currentTarget.value) ?? 0;
+      onChange({
+        ...options,
+        substringStart: startVal,
+      });
+    },
+    [onChange, options]
+  );
+
+  const onSubstringEndChange = useCallback(
+    (e: FormEvent<HTMLInputElement>) => {
+      const endVal = Number(e.currentTarget.value) ?? 0;
+      onChange({
+        ...options,
+        substringEnd: endVal,
+      });
+    },
+    [onChange, options]
+  );
+
   return (
     <>
       <InlineFieldRow>
-        <InlineField label={'Field'} labelWidth={12}>
+        <InlineField label={'Field'} labelWidth={10}>
           <FieldNamePicker
             context={{ data: input }}
             value={options.stringField ?? ''}
@@ -80,11 +102,35 @@ export function FormatStringTransfomerEditor({
               { label: FormatStringOutput.CamelCase, value: FormatStringOutput.CamelCase },
               { label: FormatStringOutput.SnakeCase, value: FormatStringOutput.SnakeCase },
               { label: FormatStringOutput.KebabCase, value: FormatStringOutput.KebabCase },
+              { label: FormatStringOutput.Trim, value: FormatStringOutput.Trim },
+              { label: FormatStringOutput.Substring, value: FormatStringOutput.Substring },
             ]}
             value={options.outputFormat}
             onChange={onFormatChange}
           />
         </InlineField>
+
+        {options.outputFormat === FormatStringOutput.Substring && 
+          <InlineFieldRow>
+            <InlineField label="Start" labelWidth={7}>
+              <Input
+                pattern="[0-9]*"
+                value={options.substringStart}
+                onChange={onSubstringStartChange}
+                width={7}
+              />
+            </InlineField>
+            <InlineField label="End" labelWidth={7}>
+            <Input
+              pattern="[0-9]*"
+              value={options.substringEnd}
+              onChange={onSubstringEndChange}
+              width={7}
+            />
+          </InlineField>
+        </InlineFieldRow>
+        }
+
       </InlineFieldRow>
     </>
   );

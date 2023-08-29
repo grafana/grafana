@@ -16,10 +16,14 @@ export enum FormatStringOutput {
   CamelCase = 'Camel Case',
   SnakeCase = 'Snake Case',
   KebabCase = 'Kebab Case',
+  Trim = 'Trim',
+  Substring = 'Substring',
 }
 
 export interface FormatStringTransformerOptions {
   stringField: string;
+  substringStart: number;
+  substringEnd: number;
   outputFormat: FormatStringOutput;
 }
 
@@ -31,10 +35,10 @@ const splitToCapitalWords = (input: string) => {
   return arr;
 };
 
-export const getFormatStringFunction = (outputFormat: FormatStringOutput) => {
+export const getFormatStringFunction = (options: FormatStringTransformerOptions) => {
   return (field: Field) =>
     field.values.map((value: string) => {
-      switch (outputFormat) {
+      switch (options.outputFormat) {
         case FormatStringOutput.UpperCase:
           return value.toUpperCase();
         case FormatStringOutput.LowerCase:
@@ -52,6 +56,10 @@ export const getFormatStringFunction = (outputFormat: FormatStringOutput) => {
           return value.toLowerCase().split(' ').join('_');
         case FormatStringOutput.KebabCase:
           return value.toLowerCase().split(' ').join('-');
+        case FormatStringOutput.Trim:
+          return value.trim();
+        case FormatStringOutput.Substring:
+          return value.substring(options.substringStart, options.substringEnd);
       }
     });
 };
@@ -65,7 +73,7 @@ export const formatStringTransformer: DataTransformerInfo<FormatStringTransforme
     source.pipe(
       map((data) => {
         const fieldMatches = fieldMatchers.get(FieldMatcherID.byName).get(options.stringField);
-        const formatStringFunction = getFormatStringFunction(options.outputFormat);
+        const formatStringFunction = getFormatStringFunction(options);
 
         const formatter = createStringFormatter(fieldMatches, formatStringFunction);
 
