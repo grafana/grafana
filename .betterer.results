@@ -118,7 +118,9 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "5"],
       [0, 0, 0, "Do not use any type assertions.", "6"],
       [0, 0, 0, "Do not use any type assertions.", "7"],
-      [0, 0, 0, "Do not use any type assertions.", "8"]
+      [0, 0, 0, "Do not use any type assertions.", "8"],
+      [0, 0, 0, "Do not use any type assertions.", "9"],
+      [0, 0, 0, "Do not use any type assertions.", "10"]
     ],
     "packages/grafana-data/src/datetime/parser.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],

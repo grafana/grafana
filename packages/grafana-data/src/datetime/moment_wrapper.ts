@@ -133,7 +133,7 @@ export const dateTimeForTimeZone = (
   if (timezone && timezone !== 'browser') {
     // TODO fix types here
     //@ts-ignore
-    return moment.tz(dateTimeAsMoment(input), formatInput, timezone);
+    return moment.tz(input as MomentInput, formatInput, timezone) as DateTime;
   }
 
   return dateTime(input, formatInput);
