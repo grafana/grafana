@@ -13,7 +13,11 @@ const sortByName: SortByFn<FeatureToggle> = (a, b) => {
 };
 
 const sortByDescription: SortByFn<FeatureToggle> = (a, b) => {
-  if (!a.original.description || !b.original.description) {
+  if (!a.original.description && !b.original.description) {
+    return 0;
+  } else if (!a.original.description) {
+    return 1;
+  } else if (!b.original.description) {
     return -1;
   }
   return a.original.description.localeCompare(b.original.description);
