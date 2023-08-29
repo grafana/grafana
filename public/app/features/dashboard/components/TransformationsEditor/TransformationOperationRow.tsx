@@ -220,6 +220,7 @@ function markdownHelper(markdown: string) {
 
 function prepMarkdown(uiConfig: TransformerRegistryItem<null>) {
   let helpMarkdown = uiConfig.help ?? uiConfig.description;
+  // JEV: does help exist on most of these??? If not, we should build them out...
 
   return `
 ${helpMarkdown}
