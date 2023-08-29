@@ -1,6 +1,7 @@
 package idsigner
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"time"
@@ -18,6 +19,8 @@ import (
 )
 
 var _ assertid.Service = &Service{}
+
+const cacheKeyPrefix = "assertid"
 
 // Service implements the AssertID service.
 type Service struct {
@@ -55,9 +58,19 @@ func ProvideIDSigningService(remoteCache remotecache.CacheStorage,
 }
 
 // ActiveUserAssertion returns the active user assertion.
-func (s *Service) ActiveUserAssertion(id identity.Requester, req *http.Request) (string, error) {
+func (s *Service) ActiveUserAssertion(ctx context.Context, id identity.Requester, req *http.Request) (string, error) {
 	if s.signer == nil {
 		return "", fmt.Errorf("signer unavailable")
+	}
+
+	cacheKey, err := id.GetCacheKey()
+	if err == nil {
+		val, err := s.remoteCache.Get(ctx, fmt.Sprintf("%s-%s", cacheKeyPrefix, cacheKey))
+		if err == nil {
+			return string(val), nil
+		}
+	} else {
+		return "", err
 	}
 
 	addr := web.RemoteAddr(req)
@@ -77,7 +90,7 @@ func (s *Service) ActiveUserAssertion(id identity.Requester, req *http.Request) 
 		Issuer:   fmt.Sprintf("%d", id.GetOrgID()),
 		Subject:  fmt.Sprintf("%s:%s", namespace, identifier),
 		Audience: jwt.Audience{"Grafana"},
-		Expiry:   jwt.NewNumericDate(time.Now().Add(time.Hour)),
+		Expiry:   jwt.NewNumericDate(time.Now().Add(time.Minute * 5)),
 		IssuedAt: jwt.NewNumericDate(time.Now()),
 		ID:       identifier,
 	}
@@ -94,6 +107,12 @@ func (s *Service) ActiveUserAssertion(id identity.Requester, req *http.Request) 
 	token, err := builder.CompactSerialize()
 	if err != nil {
 		return "", err
+	}
+
+	if err := s.remoteCache.Set(ctx,
+		fmt.Sprintf("%s-%s", cacheKeyPrefix, cacheKey),
+		[]byte(token), time.Minute*4); err != nil {
+		s.logger.Error("failed to set cache", "error", err)
 	}
 
 	return token, nil

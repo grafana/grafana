@@ -1,6 +1,7 @@
 package assertid
 
 import (
+	"context"
 	"net/http"
 
 	"github.com/grafana/grafana/pkg/services/auth/identity"
@@ -10,7 +11,7 @@ import (
 const datasourceKey = "grafanaId"
 
 type Service interface {
-	ActiveUserAssertion(id identity.Requester, req *http.Request) (string, error)
+	ActiveUserAssertion(ctx context.Context, id identity.Requester, req *http.Request) (string, error)
 }
 
 func IsIDSignerEnabledForDatasource(ds *datasources.DataSource) bool {

@@ -52,7 +52,7 @@ func (m *GrafanaIDMiddleware) applyToken(ctx context.Context, pCtx backend.Plugi
 
 	if assertid.IsIDSignerEnabledForDatasource(ds) {
 		requester := reqCtx.SignedInUser
-		token, err := m.signer.ActiveUserAssertion(requester, reqCtx.Req)
+		token, err := m.signer.ActiveUserAssertion(ctx, requester, reqCtx.Req)
 		if err != nil {
 			return err
 		}

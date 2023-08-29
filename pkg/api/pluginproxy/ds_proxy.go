@@ -267,7 +267,7 @@ func (proxy *DataSourceProxy) director(req *http.Request) {
 
 	if assertid.IsIDSignerEnabledForDatasource(proxy.ds) {
 		requester := proxy.ctx.SignedInUser
-		token, err := proxy.idSigner.ActiveUserAssertion(requester, req)
+		token, err := proxy.idSigner.ActiveUserAssertion(req.Context(), requester, req)
 		if err != nil {
 			ctxLogger.Error("Error creating ID token", "error", err)
 			return
