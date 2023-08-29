@@ -11,11 +11,11 @@ import { DashboardScene } from './DashboardScene';
 import { NavToolbarActions } from './NavToolbarActions';
 
 export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardScene>) {
-  const { controls, viewPanelId: viewPanelKey, drawer } = model.useState();
+  const { controls, viewPanelId, drawer } = model.useState();
   const styles = useStyles2(getStyles);
   const location = useLocation();
   const pageNav = model.getPageNav(location);
-  const bodyToRender = model.getBodyToRender(viewPanelKey);
+  const bodyToRender = model.getBodyToRender(viewPanelId);
 
   return (
     <Page navId="scenes" pageNav={pageNav} layout={PageLayoutType.Custom}>
