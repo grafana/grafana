@@ -96,7 +96,7 @@ func TestLDAP_AuthenticateProxy(t *testing.T) {
 	for i := range tests {
 		tt := tests[i]
 		t.Run(tt.desc, func(t *testing.T) {
-			c := setupTestCase(&tt)
+			c := setupLDAPTestCase(&tt)
 
 			identity, err := c.AuthenticateProxy(context.Background(), &authn.Request{OrgID: 1}, tt.username, nil)
 			assert.ErrorIs(t, err, tt.expectedErr)
@@ -177,7 +177,7 @@ func TestLDAP_AuthenticatePassword(t *testing.T) {
 	for i := range tests {
 		tt := tests[i]
 		t.Run(tt.desc, func(t *testing.T) {
-			c := setupTestCase(&tt)
+			c := setupLDAPTestCase(&tt)
 
 			identity, err := c.AuthenticatePassword(context.Background(), &authn.Request{OrgID: 1}, tt.username, tt.password)
 			assert.ErrorIs(t, err, tt.expectedErr)
@@ -189,7 +189,7 @@ func TestLDAP_AuthenticatePassword(t *testing.T) {
 	}
 }
 
-func setupTestCase(tt *ldapTestCase) *LDAP {
+func setupLDAPTestCase(tt *ldapTestCase) *LDAP {
 	userService := &usertest.FakeUserService{
 		ExpectedError: tt.expectedUserErr,
 		ExpectedUser:  &tt.expectedUser,
