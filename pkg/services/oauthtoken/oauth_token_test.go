@@ -72,6 +72,7 @@ func TestService_HasOAuthEntry(t *testing.T) {
 		},
 	}
 	for _, tc := range testCases {
+		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			srv, authInfoStore, _ := setupOAuthTokenService(t)
 			authInfoStore.ExpectedOAuth = &tc.getAuthInfoUser
