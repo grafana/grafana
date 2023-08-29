@@ -49,9 +49,9 @@ export function AdminFeatureTogglesTable({ featureToggles }: Props) {
   };
 
   const handleSaveChanges = async () => {
-    const { error: errResponse } = await updateFeatureToggles(modifiedToggles);
+    const resp = await updateFeatureToggles({featureToggles: modifiedToggles});
     // Reset modifiedToggles after successful update
-    if (!errResponse) {
+    if (!('error' in resp)) {
       setModifiedToggles([]);
     }
   };
