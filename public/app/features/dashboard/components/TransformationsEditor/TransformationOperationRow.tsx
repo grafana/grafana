@@ -48,7 +48,7 @@ export const TransformationOperationRow = ({
   const [showDeleteModal, setShowDeleteModal] = useToggle(false);
   const [showDebug, toggleShowDebug] = useToggle(false);
   const [showHelp, toggleShowHelp] = useToggle(false);
-  const [showInfoModal, toggleShowModal] = useToggle(true);
+  // const [showInfoModal, toggleShowModal] = useToggle(true);
   const disabled = !!configs[index].transformation.disabled;
   const filter = configs[index].transformation.filter != null;
   const showFilter = filter || data.length > 1;
@@ -161,7 +161,12 @@ export const TransformationOperationRow = ({
             onDismiss={() => setShowDeleteModal(false)}
           />
         )}
-        <Modal title="modal title bruh" isOpen={showInfoModal} onClickBackdrop={toggleShowModal}>
+        <Modal
+          title="Transformation help"
+          isOpen={showHelp}
+          onClickBackdrop={toggleShowHelp}
+          onDismiss={toggleShowHelp}
+        >
           {getDisplayContent()}
         </Modal>
       </HorizontalGroup>
@@ -180,7 +185,7 @@ export const TransformationOperationRow = ({
       // Assure that showHelp is untoggled when the row becomes collapsed.
       // onClose={() => toggleShowHelp(false)}
     >
-      {showHelp && <OperationRowHelp markdown={prepMarkdown(uiConfig)} />}
+      {/* {showHelp && <OperationRowHelp markdown={prepMarkdown(uiConfig)} />} */}
       {filter && (
         <TransformationFilter index={index} config={configs[index].transformation} data={data} onChange={onChange} />
       )}
