@@ -22,7 +22,7 @@ export function PanelHeaderTitleItems(props: Props) {
 
   // panel health
   const alertStateItem = (
-    <Tooltip content={alertState}>
+    <Tooltip content={alertState ?? 'unknown'}>
       <PanelChrome.TitleItem
         className={cx({
           [styles.ok]: alertState === AlertState.OK,
