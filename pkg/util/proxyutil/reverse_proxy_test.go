@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 func TestReverseProxy(t *testing.T) {
@@ -110,7 +111,7 @@ func TestReverseProxy(t *testing.T) {
 			{
 				desc:               "Cancelled request should return 499 Client closed request",
 				transport:          &cancelledRoundTripper{},
-				expectedStatusCode: StatusClientClosedRequest,
+				expectedStatusCode: errutil.HTTPStatusClientClosedRequest,
 			},
 			{
 				desc:               "Timed out request should return 504 Gateway timeout",

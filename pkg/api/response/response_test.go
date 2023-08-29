@@ -64,7 +64,7 @@ func TestErrors(t *testing.T) {
 				errMessage: genericErrorMessage,
 			},
 			newResponse: &NormalResponse{
-				status:     http.StatusGatewayTimeout,
+				status:     http.StatusRequestTimeout,
 				errMessage: errutil.StatusTimeout.String(),
 			},
 			fallbackUseNew: true,

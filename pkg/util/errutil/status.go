@@ -39,14 +39,38 @@ const (
 	StatusInternal CoreStatus = "Internal server error"
 	// StatusTimeout means that the server did not complete the request
 	// within the required time and aborted the action.
-	// HTTP status code 504.
+	// HTTP status code 408.
 	StatusTimeout CoreStatus = "Timeout"
 	// StatusNotImplemented means that the server does not support the
 	// requested action. Typically used during development of new
 	// features.
 	// HTTP status code 501.
 	StatusNotImplemented CoreStatus = "Not implemented"
+
+	// StatusBadGateway means that the server, while acting as a proxy,
+	// received an invalid response from the downstream server.
+	// HTTP status code 502.
+	StatusBadGateway CoreStatus = "Bad gateway"
+
+	// StatusClientClosedRequest means that a client closes the connection
+	// while the server is processing the request.
+	//
+	// This is a non-standard HTTP status code introduced by nginx, see
+	// https://httpstatus.in/499/ for more information.
+	// HTTP status code 499.
+	StatusClientClosedRequest CoreStatus = "Request cancelled by client"
+
+	// StatusGatewayTimeout means that the server, while acting as a proxy,
+	// did not receive a timely response from a downstream server it needed
+	// to access in order to complete the request.
+	// HTTP status code 504.
+	StatusGatewayTimeout CoreStatus = "Gateway timeout"
 )
+
+// HTTPStatusClientClosedRequest A non-standard status code introduced by nginx
+// for the case when a client closes the connection while nginx is processing
+// the request. See https://httpstatus.in/499/ for more information.
+const HTTPStatusClientClosedRequest = 499
 
 // StatusReason allows for wrapping of CoreStatus.
 type StatusReason interface {
@@ -70,13 +94,19 @@ func (s CoreStatus) HTTPStatus() int {
 	case StatusNotFound:
 		return http.StatusNotFound
 	case StatusTimeout:
-		return http.StatusGatewayTimeout
+		return http.StatusRequestTimeout
 	case StatusTooManyRequests:
 		return http.StatusTooManyRequests
 	case StatusBadRequest, StatusValidationFailed:
 		return http.StatusBadRequest
 	case StatusNotImplemented:
 		return http.StatusNotImplemented
+	case StatusClientClosedRequest:
+		return HTTPStatusClientClosedRequest
+	case StatusBadGateway:
+		return http.StatusBadGateway
+	case StatusGatewayTimeout:
+		return http.StatusGatewayTimeout
 	case StatusUnknown, StatusInternal:
 		return http.StatusInternalServerError
 	default:

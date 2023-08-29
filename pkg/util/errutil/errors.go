@@ -15,6 +15,7 @@ type Base struct {
 	messageID     string
 	publicMessage string
 	logLevel      LogLevel
+	source        Source
 }
 
 // NewBase initializes a [Base] that is used to construct [Error].
@@ -32,6 +33,7 @@ func NewBase(reason StatusReason, msgID string, opts ...BaseOpt) Base {
 		reason:    reason,
 		messageID: msgID,
 		logLevel:  reason.Status().LogLevel(),
+		source:    SourceServer,
 	}
 
 	for _, opt := range opts {
@@ -143,6 +145,43 @@ func NotImplemented(msgID string, opts ...BaseOpt) Base {
 	return NewBase(StatusNotImplemented, msgID, opts...)
 }
 
+// ClientClosedRequest initializes a new [Base] error with reason StatusClientClosedRequest
+// that is used to construct [Error]. The msgID is passed to the caller
+// to serve as the base for user facing error messages.
+//
+// msgID should be structured as component.errorBrief, for example
+//
+//	proxyutil.clientClosedRequest
+func ClientClosedRequest(msgID string, opts ...BaseOpt) Base {
+	return NewBase(StatusClientClosedRequest, msgID, opts...)
+}
+
+// BadGateway initializes a new [Base] error with reason StatusBadGateway
+// that is used to construct [Error]. The msgID is passed to the caller
+// to serve as the base for user facing error messages.
+//
+// msgID should be structured as component.errorBrief, for example
+//
+//	proxyutil.badGateway
+func BadGateway(msgID string, opts ...BaseOpt) Base {
+	b := NewBase(StatusBadGateway, msgID, opts...)
+	b.source = SourceDownstream
+	return b
+}
+
+// GatewayTimeout initializes a new [Base] error with reason StatusGatewayTimeout
+// that is used to construct [Error]. The msgID is passed to the caller
+// to serve as the base for user facing error messages.
+//
+// msgID should be structured as component.errorBrief, for example
+//
+//	proxyutil.clientClosedRequest
+func GatewayTimeout(msgID string, opts ...BaseOpt) Base {
+	b := NewBase(StatusGatewayTimeout, msgID, opts...)
+	b.source = SourceDownstream
+	return b
+}
+
 type BaseOpt func(Base) Base
 
 // WithLogLevel sets a custom log level for all errors instantiated from
@@ -167,6 +206,17 @@ func WithPublicMessage(message string) BaseOpt {
 	}
 }
 
+// WithDownstream sets the source as SourceDownstream that will be used
+// for errors based on this [Base].
+//
+// Used as a functional option to [NewBase].
+func WithDownstream() BaseOpt {
+	return func(b Base) Base {
+		b.source = SourceDownstream
+		return b
+	}
+}
+
 // Errorf creates a new [Error] with Reason and MessageID from [Base],
 // and Message and Underlying will be populated using the rules of
 // [fmt.Errorf].
@@ -180,6 +230,7 @@ func (b Base) Errorf(format string, args ...interface{}) Error {
 		MessageID:     b.messageID,
 		Underlying:    errors.Unwrap(err),
 		LogLevel:      b.logLevel,
+		Source:        b.source,
 	}
 }
 
@@ -273,6 +324,8 @@ type Error struct {
 	PublicPayload map[string]interface{}
 	// LogLevel provides a suggested level of logging for the error.
 	LogLevel LogLevel
+	// Source identifies from where the error originates.
+	Source Source
 }
 
 // MarshalJSON returns an error, we do not want raw [Error]s being

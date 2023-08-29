@@ -142,9 +142,11 @@ func errorLogParams(err error) []any {
 		return []any{"error", err.Error()}
 	}
 
+	// TODO: feature toggle for errorSource
 	return []any{
 		"errorReason", gfErr.Reason,
 		"errorMessageID", gfErr.MessageID,
+		"errorSource", gfErr.Source,
 		"error", gfErr.LogMessage,
 	}
 }

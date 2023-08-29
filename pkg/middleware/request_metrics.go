@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"errors"
 	"net/http"
 	"strconv"
 	"strings"
@@ -12,8 +13,10 @@ import (
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/middleware/requestmeta"
+	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util/errutil"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -35,7 +38,8 @@ func RequestMetrics(features featuremgmt.FeatureToggles, cfg *setting.Cfg, promR
 		},
 	)
 
-	histogramLabels := []string{"handler", "status_code", "method"}
+	// TODO: feature toggle for status_source
+	histogramLabels := []string{"handler", "status_code", "method", "status_source"}
 	if cfg.MetricsIncludeTeamLabel {
 		histogramLabels = append(histogramLabels, "team")
 	}
@@ -79,7 +83,17 @@ func RequestMetrics(features featuremgmt.FeatureToggles, cfg *setting.Cfg, promR
 				}
 			}
 
-			labelValues := []string{handler, code, r.Method}
+			source := errutil.SourceServer
+			// HACK: contexthandler.FromContext(r.Context()) doesn't work???
+			if reqCtx := contexthandler.FromContext(web.FromContext(r.Context()).Req.Context()); reqCtx != nil {
+				var gfErr errutil.Error
+				if errors.As(reqCtx.Error, &gfErr) {
+					source = gfErr.Source
+				}
+			}
+
+			// TODO: feature toggle for source
+			labelValues := []string{handler, code, r.Method, string(source)}
 			if cfg.MetricsIncludeTeamLabel {
 				rmd := requestmeta.GetRequestMetaData(r.Context())
 				labelValues = append(labelValues, rmd.Team)

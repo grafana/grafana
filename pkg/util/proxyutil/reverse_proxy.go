@@ -11,13 +11,14 @@ import (
 
 	glog "github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
+	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
-// StatusClientClosedRequest A non-standard status code introduced by nginx
-// for the case when a client closes the connection while nginx is processing
-// the request.
-// https://httpstatus.in/499/
-const StatusClientClosedRequest = 499
+var (
+	errRequestCancelled = errutil.ClientClosedRequest("proxyutil.clientClosedRequest", errutil.WithDownstream())
+	errRequestTimeout   = errutil.GatewayTimeout("proxyutil.timeout")
+	errRequestFailed    = errutil.BadGateway("proxyutil.badGateway")
+)
 
 // ReverseProxyOption reverse proxy option to configure a httputil.ReverseProxy.
 type ReverseProxyOption func(*httputil.ReverseProxy)
@@ -103,6 +104,7 @@ func modifyResponse(logger glog.Logger) func(resp *http.Response) error {
 
 		SetProxyResponseHeaders(resp.Header)
 		SetViaHeader(resp.Header, resp.ProtoMajor, resp.ProtoMinor)
+
 		return nil
 	}
 }
@@ -120,22 +122,32 @@ type timeoutError interface {
 func errorHandler(logger glog.Logger) func(http.ResponseWriter, *http.Request, error) {
 	return func(w http.ResponseWriter, r *http.Request, err error) {
 		ctxLogger := logger.FromContext(r.Context())
+		reqCtx := contexthandler.FromContext(r.Context())
 
 		if errors.Is(err, context.Canceled) {
+			if reqCtx != nil {
+				reqCtx.Error = errRequestCancelled.Errorf("proxyutil: request cancelled by client: %w", err)
+			}
 			ctxLogger.Debug("Proxy request cancelled by client")
-			w.WriteHeader(StatusClientClosedRequest)
+			w.WriteHeader(errRequestCancelled.Status().Status().HTTPStatus())
 			return
 		}
 
 		// nolint:errorlint
 		if timeoutErr, ok := err.(timeoutError); ok && timeoutErr.Timeout() {
+			if reqCtx != nil {
+				reqCtx.Error = errRequestTimeout.Errorf("proxyutil: request timeout: %w", err)
+			}
 			ctxLogger.Error("Proxy request timed out", "err", err)
-			w.WriteHeader(http.StatusGatewayTimeout)
+			w.WriteHeader(errRequestTimeout.Status().Status().HTTPStatus())
 			return
 		}
 
+		if reqCtx != nil {
+			reqCtx.Error = errRequestFailed.Errorf("proxyutil: request failed: %w", err)
+		}
 		ctxLogger.Error("Proxy request failed", "err", err)
-		w.WriteHeader(http.StatusBadGateway)
+		w.WriteHeader(errRequestFailed.Status().Status().HTTPStatus())
 	}
 }
 
