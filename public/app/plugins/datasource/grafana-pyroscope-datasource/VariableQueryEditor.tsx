@@ -15,7 +15,7 @@ export function VariableQueryEditor(props: QueryEditorProps<PhlareDataSource, Qu
           label="Query type"
           labelWidth={20}
           tooltip={
-            <div>The Prometheus data source plugin provides the following query types for template variables.</div>
+            <div>The Prometheus data source plugin provides the following query types for template variables</div>
           }
         >
           <Select
