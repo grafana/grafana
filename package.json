@@ -265,7 +265,7 @@
     "@grafana/faro-core": "1.1.0",
     "@grafana/faro-web-sdk": "1.1.0",
     "@grafana/google-sdk": "0.1.1",
-    "@grafana/lezer-logql": "0.1.8",
+    "@grafana/lezer-logql": "0.1.11",
     "@grafana/monaco-logql": "^0.0.7",
     "@grafana/runtime": "workspace:*",
     "@grafana/scenes": "0.22.0",
