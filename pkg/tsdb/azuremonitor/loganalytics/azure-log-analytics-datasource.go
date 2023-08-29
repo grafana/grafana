@@ -22,9 +22,9 @@ import (
 	"k8s.io/utils/strings/slices"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/kinds/dataquery"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/macros"
+	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/tracing"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
 )
 

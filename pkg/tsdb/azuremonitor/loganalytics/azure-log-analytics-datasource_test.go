@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/kinds/dataquery"
+	azTracing "github.com/grafana/grafana/pkg/tsdb/azuremonitor/tracing"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
 )
 
@@ -1396,7 +1397,7 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			queries, err := datasource.buildQueries(ctx, logger, tt.queryModel, dsInfo, tracer)
+			queries, err := datasource.buildQueries(ctx, logger, tt.queryModel, dsInfo, tracer.(azTracing.Tracer))
 			tt.Err(t, err)
 			if diff := cmp.Diff(tt.azureLogAnalyticsQueries[0], queries[0]); diff != "" {
 				t.Errorf("Result mismatch (-want +got): \n%s", diff)
@@ -1538,7 +1539,7 @@ func Test_executeQueryErrorWithDifferentLogAnalyticsCreds(t *testing.T) {
 		TimeRange: backend.TimeRange{},
 	}
 	tracer := tracing.InitializeTracerForTest()
-	res := ds.executeQuery(ctx, logger, query, dsInfo, &http.Client{}, dsInfo.Services["Azure Log Analytics"].URL, tracer)
+	res := ds.executeQuery(ctx, logger, query, dsInfo, &http.Client{}, dsInfo.Services["Azure Log Analytics"].URL, tracer.(azTracing.Tracer))
 	if res.Error == nil {
 		t.Fatal("expecting an error")
 	}
