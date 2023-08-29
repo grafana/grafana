@@ -194,7 +194,7 @@ export function callQueryMethod(
   );
 
   // If its a public datasource, just return the result. Expressions will be handled on the backend.
-  if (!!config.publicDashboardAccessToken) {
+  if (config.publicDashboardAccessToken) {
     return from(datasource.query(request));
   }
 
