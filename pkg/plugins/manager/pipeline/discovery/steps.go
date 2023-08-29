@@ -72,12 +72,17 @@ func NewLoadExternalPluginFilterStep(cfg *config.Cfg) *LoadExternalPluginValidat
 
 // Filter will filter out any plugins that are marked to be skipped.
 func (c *LoadExternalPluginValidation) Filter(ctx context.Context, cl plugins.Class, bundles []*plugins.FoundBundle) ([]*plugins.FoundBundle, error) {
-	if cl == plugins.ClassCore && len(c.cfg.LoadExternalPlugins) > 0 && c.cfg.Features != nil && c.cfg.Features.IsEnabled(featuremgmt.FlagDecoupleCorePlugins) {
+	if c.cfg.Features == nil || !c.cfg.Features.IsEnabled(featuremgmt.FlagDecoupleCorePlugins) {
+		return bundles, nil
+	}
+
+	if cl == plugins.ClassCore {
 		res := []*plugins.FoundBundle{}
 		for _, bundle := range bundles {
+			pluginCfg := c.cfg.PluginSettings[bundle.Primary.JSONData.ID]
 			// Skip core plugins if the feature flag is enabled and the plugin is in the skip list.
 			// It could be loaded later as an external plugin.
-			if c.cfg.LoadExternalPlugins[bundle.Primary.JSONData.ID] {
+			if pluginCfg["as_external"] == "true" {
 				c.log.Debug("Skipping plugin loading as a core plugin", "pluginID", bundle.Primary.JSONData.ID)
 			} else {
 				res = append(res, bundle)
@@ -86,19 +91,22 @@ func (c *LoadExternalPluginValidation) Filter(ctx context.Context, cl plugins.Cl
 		return res, nil
 	}
 
-	if cl == plugins.ClassExternal && len(c.cfg.LoadExternalPlugins) > 0 && c.cfg.Features != nil && c.cfg.Features.IsEnabled(featuremgmt.FlagDecoupleCorePlugins) {
+	if cl == plugins.ClassExternal {
 		// Warn if the plugin is not found in the external plugins directory.
-		found := map[string]bool{}
-		for _, bundle := range bundles {
-			if c.cfg.LoadExternalPlugins[bundle.Primary.JSONData.ID] {
-				found[bundle.Primary.JSONData.ID] = true
+		missing := map[string]bool{}
+		for pluginID, pluginCfg := range c.cfg.PluginSettings {
+			if pluginCfg["as_external"] == "true" {
+				missing[pluginID] = true
 			}
 		}
-		if len(found) < len(c.cfg.LoadExternalPlugins) {
-			for expected := range c.cfg.LoadExternalPlugins {
-				if !found[expected] {
-					c.log.Warn("Plugin not found in external plugins directory", "pluginID", expected)
-				}
+		for _, bundle := range bundles {
+			if missing[bundle.Primary.JSONData.ID] {
+				delete(missing, bundle.Primary.JSONData.ID)
+			}
+		}
+		if len(missing) > 0 {
+			for p := range missing {
+				c.log.Warn("Plugin not found in external plugins directory", "pluginID", p)
 			}
 		}
 	}

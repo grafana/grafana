@@ -15,10 +15,6 @@ func ProvideConfig(settingProvider setting.Provider, grafanaCfg *setting.Cfg, fe
 	if len(plugins.KeyValue("allow_loading_unsigned_plugins").Value()) > 0 {
 		allowedUnsigned = strings.Split(plugins.KeyValue("allow_loading_unsigned_plugins").Value(), ",")
 	}
-	loadExternalPlugins := grafanaCfg.PluginLoadExternalPlugins
-	if len(plugins.KeyValue("load_external_plugins").Value()) > 0 {
-		loadExternalPlugins = strings.Split(plugins.KeyValue("load_external_plugins").Value(), ",")
-	}
 
 	aws := settingProvider.Section("aws")
 	allowedAuth := grafanaCfg.AWSAllowedAuthProviders
@@ -49,7 +45,6 @@ func ProvideConfig(settingProvider setting.Provider, grafanaCfg *setting.Cfg, fe
 		features,
 		grafanaCfg.AngularSupportEnabled,
 		grafanaCfg.GrafanaComURL,
-		loadExternalPlugins,
 	), nil
 }
 

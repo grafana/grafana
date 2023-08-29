@@ -44,18 +44,12 @@ type Cfg struct {
 	Features plugins.FeatureToggles
 
 	AngularSupportEnabled bool
-
-	LoadExternalPlugins map[string]bool
 }
 
 func NewCfg(devMode bool, pluginsPath string, pluginSettings setting.PluginSettings, pluginsAllowUnsigned []string,
 	awsAllowedAuthProviders []string, awsAssumeRoleEnabled bool, awsExternalId string, azure *azsettings.AzureSettings, secureSocksDSProxy setting.SecureSocksDSProxySettings,
 	grafanaVersion string, logDatasourceRequests bool, pluginsCDNURLTemplate string, appURL string, tracing Tracing, features plugins.FeatureToggles, angularSupportEnabled bool,
-	grafanaComURL string, loadExternalPlugins []string) *Cfg {
-	loadExternalPluginsMap := make(map[string]bool)
-	for _, pluginID := range loadExternalPlugins {
-		loadExternalPluginsMap[pluginID] = true
-	}
+	grafanaComURL string) *Cfg {
 	return &Cfg{
 		log:                     log.New("plugin.cfg"),
 		PluginsPath:             pluginsPath,
@@ -75,6 +69,5 @@ func NewCfg(devMode bool, pluginsPath string, pluginSettings setting.PluginSetti
 		GrafanaAppURL:           appURL,
 		Features:                features,
 		AngularSupportEnabled:   angularSupportEnabled,
-		LoadExternalPlugins:     loadExternalPluginsMap,
 	}
 }
