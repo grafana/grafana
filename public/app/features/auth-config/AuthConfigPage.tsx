@@ -55,18 +55,20 @@ export const AuthConfigPageUnconnected = ({ providerStatuses, isLoading, loadSet
   {
     /* TODO: make generic for the provider of the configuration or make the documentation point to a collection of all our providers */
   }
-  const docsLink = (
+  const samlDocsLink = (
     <a
       className="external-link"
       href="https://grafana.com/docs/grafana/next/setup-grafana/configure-security/configure-authentication/saml-ui/"
       target="_blank"
       rel="noopener noreferrer"
     >
-      documentation.
+      SAML documentation.
     </a>
   );
 
-  const subTitle = <span>Manage your auth settings and configure single sign-on. Find out more in our {docsLink}</span>;
+  const subTitle = <span>Manage your auth settings and configure single sign-on. For the SAML configuration find out more in our {
+    samlDocsLink
+    }</span>;
 
   const onCTAClick = () => {
     reportInteraction('authentication_ui_created', { provider: firstAvailableProvider?.type });
@@ -78,7 +80,6 @@ export const AuthConfigPageUnconnected = ({ providerStatuses, isLoading, loadSet
   return (
     <Page navId="authentication" subTitle={subTitle}>
       <Page.Contents isLoading={isLoading}>
-        <h3 className={styles.sectionHeader}>Configured authentication</h3>
         {!!enabledProviders?.length && (
           <div className={styles.cardsContainer}>
             {enabledProviders.map((provider) => (
@@ -117,6 +118,9 @@ export const AuthConfigPageUnconnected = ({ providerStatuses, isLoading, loadSet
               />
             ))}
           </div>
+        )}
+        {!enabledProviders?.length && !configuresProviders?.length && !availableProviders?.length && (
+          "No authentication providers are currently available through the UI."
         )}
       </Page.Contents>
     </Page>
