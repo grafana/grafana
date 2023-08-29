@@ -1,9 +1,15 @@
 import React, { useCallback } from 'react';
 import { useToggle } from 'react-use';
 
-import { DataFrame, DataTransformerConfig, TransformerRegistryItem, FrameMatcherID } from '@grafana/data';
+import {
+  DataFrame,
+  DataTransformerConfig,
+  TransformerRegistryItem,
+  FrameMatcherID,
+  renderMarkdown,
+} from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
-import { ConfirmModal, HorizontalGroup } from '@grafana/ui';
+import { ConfirmModal, HorizontalGroup, Modal } from '@grafana/ui';
 import { OperationRowHelp } from 'app/core/components/QueryOperationRow/OperationRowHelp';
 import {
   QueryOperationAction,
@@ -42,6 +48,7 @@ export const TransformationOperationRow = ({
   const [showDeleteModal, setShowDeleteModal] = useToggle(false);
   const [showDebug, toggleShowDebug] = useToggle(false);
   const [showHelp, toggleShowHelp] = useToggle(false);
+  const [showInfoModal, toggleShowModal] = useToggle(true);
   const disabled = !!configs[index].transformation.disabled;
   const filter = configs[index].transformation.filter != null;
   const showFilter = filter || data.length > 1;
@@ -57,15 +64,15 @@ export const TransformationOperationRow = ({
     [onChange, configs]
   );
 
-  const toggleExpand = useCallback(() => {
-    if (showHelp) {
-      return true;
-    }
+  // const toggleExpand = useCallback(() => {
+  //   if (showHelp) {
+  //     return true;
+  //   }
 
-    // We return `undefined` here since the QueryOperationRow component ignores an `undefined` value for the `isOpen` prop.
-    // If we returned `false` here, the row would be collapsed when the user toggles off `showHelp`, which is not what we want.
-    return undefined;
-  }, [showHelp]);
+  //   // We return `undefined` here since the QueryOperationRow component ignores an `undefined` value for the `isOpen` prop.
+  //   // If we returned `false` here, the row would be collapsed when the user toggles off `showHelp`, which is not what we want.
+  //   return undefined;
+  // }, [showHelp]);
 
   // Adds or removes the frame filter
   const toggleFilter = useCallback(() => {
@@ -152,6 +159,9 @@ export const TransformationOperationRow = ({
             onDismiss={() => setShowDeleteModal(false)}
           />
         )}
+        <Modal title="modal title bruh" isOpen={showInfoModal} onClickBackdrop={toggleShowModal}>
+          {markdownHelper(prepMarkdown(uiConfig))}
+        </Modal>
       </HorizontalGroup>
     );
   };
@@ -164,9 +174,9 @@ export const TransformationOperationRow = ({
       draggable
       actions={renderActions}
       disabled={disabled}
-      isOpen={toggleExpand()}
+      // isOpen={toggleExpand()}
       // Assure that showHelp is untoggled when the row becomes collapsed.
-      onClose={() => toggleShowHelp(false)}
+      // onClose={() => toggleShowHelp(false)}
     >
       {showHelp && <OperationRowHelp markdown={prepMarkdown(uiConfig)} />}
       {filter && (
@@ -183,6 +193,11 @@ export const TransformationOperationRow = ({
     </QueryOperationRow>
   );
 };
+
+function markdownHelper(markdown: string) {
+  const helpHtml = renderMarkdown(markdown);
+  return <div className="markdown-html" dangerouslySetInnerHTML={{ __html: helpHtml }} />;
+}
 
 function prepMarkdown(uiConfig: TransformerRegistryItem<null>) {
   let helpMarkdown = uiConfig.help ?? uiConfig.description;
