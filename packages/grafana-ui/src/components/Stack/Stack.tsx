@@ -9,13 +9,10 @@ interface StackProps {
   gap?: ThemeSpacingTokens;
 }
 
-const Stack = ({ gap = 1, direction = 'column', children }: React.PropsWithChildren<StackProps>) => {
+export const Stack = ({ gap = 1, direction = 'column', children }: React.PropsWithChildren<StackProps>) => {
   return (
     <Flex gap={gap} direction={direction}>
       {children}
     </Flex>
   );
 };
-
-Stack.displayName = 'Stack';
-export { Stack };
