@@ -2,7 +2,7 @@
 // we expose it to the public via getDashboardSrv
 
 import { PluginsAPIDashboardSrvSingleton } from './DashboardSrvSingleton';
-import { CoreDashboardSrv } from './types';
+import { CoreDashboardSrv, PluginsAPIDashboardSrv } from './types';
 
 // do not export
 let publicSingletonInstance: PluginsAPIDashboardSrvSingleton;
@@ -27,6 +27,6 @@ export function setDashboardSrv(instance: CoreDashboardSrv) {
  * This is the public plugins API version. Do not use in Grafana core
  * @public
  */
-export function getDashboardSrv(): PluginsAPIDashboardSrvSingleton | undefined {
+export function getDashboardSrv(): PluginsAPIDashboardSrv | undefined {
   return publicSingletonInstance;
 }
