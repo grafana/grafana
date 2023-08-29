@@ -353,7 +353,7 @@ const HeatmapTooltipHover = ({
         customValueDisplay={getCustomValueDisplay()}
       />
       <VizTooltipContent contentLabelValue={getContentLabelValue()} customContent={getCustomContent()} />
-      {isPinned && <VizTooltipFooter dataLinks={links} canAnnotate={canAnnotate} dismiss={dismiss}/>}
+      {isPinned && <VizTooltipFooter dataLinks={links} canAnnotate={canAnnotate}/>}
     </div>
   );
 };

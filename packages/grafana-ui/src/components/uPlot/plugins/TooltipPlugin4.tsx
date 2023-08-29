@@ -6,6 +6,7 @@ import uPlot from 'uplot';
 import { GrafanaTheme2 } from '@grafana/data';
 
 import { CloseButton } from '../../../../../../public/app/core/components/CloseButton/CloseButton';
+import {ADD_ANNOTATION_ID} from "../../../../../../public/app/plugins/panel/heatmap/tooltip/VizTooltipFooter";
 import { useStyles2 } from '../../../themes/ThemeContext';
 import { UPlotConfigBuilder } from '../config/UPlotConfigBuilder';
 
@@ -151,7 +152,11 @@ export const TooltipPlugin4 = ({ config, render }: TooltipPlugin4Props) => {
 
       // TODO: use cursor.lock & and mousedown/mouseup here (to prevent unlocking)
       u.over.addEventListener('click', (e) => {
-        if (e.ctrlKey || e.metaKey) {
+        // @TODO Extract this
+        const elem = e.target as Element;
+        const isButtonClicked = elem.parentElement?.id === ADD_ANNOTATION_ID;
+
+        if (e.ctrlKey || e.metaKey || isButtonClicked) {
           dismiss();
           // @ts-ignore
           _plot!.cursor._lock = true;
@@ -176,7 +181,7 @@ export const TooltipPlugin4 = ({ config, render }: TooltipPlugin4Props) => {
           }
         }
 
-        // @TODO after saving annotation ^
+        // @TODO revisit, used after saving annotations
         if (!_isPinned) {
           u.setCursor({ left: e.clientX - u.rect.left, top: e.clientY - u.rect.top });
           _isHovering = true;
