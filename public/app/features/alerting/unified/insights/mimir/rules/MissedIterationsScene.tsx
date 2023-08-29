@@ -11,6 +11,7 @@ export function getMissedIterationsScene(timeRange: SceneTimeRange, datasource: 
         refId: 'A',
         expr: QUERY_A,
         range: true,
+        legendFormat: 'missed',
       },
     ],
     $timeRange: timeRange,

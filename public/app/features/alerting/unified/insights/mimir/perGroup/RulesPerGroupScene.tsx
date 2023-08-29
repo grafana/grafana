@@ -1,17 +1,17 @@
 import { PanelBuilders, SceneFlexItem, SceneQueryRunner, SceneTimeRange } from '@grafana/scenes';
 import { DataSourceRef, GraphDrawStyle } from '@grafana/schema';
 
-const QUERY = 'sum by (state) (grafanacloud_instance_alertmanager_alerts)';
+const QUERY_A = `sum(grafanacloud_instance_rule_group_rules{rule_group="$rule_group"})`;
 
-export function getAlertsByStateScene(timeRange: SceneTimeRange, datasource: DataSourceRef, panelTitle: string) {
+export function getRulesPerGroupScene(timeRange: SceneTimeRange, datasource: DataSourceRef, panelTitle: string) {
   const query = new SceneQueryRunner({
     datasource,
     queries: [
       {
         refId: 'A',
-        expr: QUERY,
+        expr: QUERY_A,
         range: true,
-        legendFormat: '{{state}}',
+        legendFormat: 'number of rules',
       },
     ],
     $timeRange: timeRange,
@@ -24,6 +24,7 @@ export function getAlertsByStateScene(timeRange: SceneTimeRange, datasource: Dat
       .setTitle(panelTitle)
       .setData(query)
       .setCustomFieldConfig('drawStyle', GraphDrawStyle.Line)
+      .setUnit('none')
       .build(),
   });
 }

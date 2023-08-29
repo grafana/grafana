@@ -13,11 +13,13 @@ export function getNotificationsScene(timeRange: SceneTimeRange, datasource: Dat
         refId: 'A',
         expr: QUERY_A,
         range: true,
+        legendFormat: 'success',
       },
       {
         refId: 'B',
         expr: QUERY_B,
         range: true,
+        legendFormat: 'failed',
       },
     ],
     $timeRange: timeRange,

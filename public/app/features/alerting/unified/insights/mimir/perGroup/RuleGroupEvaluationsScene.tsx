@@ -1,16 +1,16 @@
-import { PanelBuilders, SceneFlexItem, SceneQueryRunner, SceneTimeRange } from '@grafana/scenes';
+import {
+  PanelBuilders,
+  SceneFlexItem,
+  SceneQueryRunner,
+  SceneTimeRange,
+} from '@grafana/scenes';
 import { DataSourceRef, GraphDrawStyle } from '@grafana/schema';
 
-const QUERY_A =
-  'sum(grafanacloud_instance_rule_evaluations_total:rate5m) - sum(grafanacloud_instance_rule_evaluation_failures_total:rate5m)';
+const QUERY_A = `grafanacloud_instance_rule_evaluations_total:rate5m{rule_group="$rule_group"} - grafanacloud_instance_rule_evaluation_failures_total:rate5m{rule_group=~"$rule_group"}`;
+const QUERY_B = `grafanacloud_instance_rule_evaluation_failures_total:rate5m{rule_group=~"$rule_group"}`;
 
-const QUERY_B = 'sum(grafanacloud_instance_rule_evaluation_failures_total:rate5m)';
-
-export function getEvalSuccessVsFailuresScene(
-  timeRange: SceneTimeRange,
-  datasource: DataSourceRef,
-  panelTitle: string
-) {
+export function getRuleGroupEvaluationsScene(timeRange: SceneTimeRange, datasource: DataSourceRef, panelTitle: string) {
+  
   const query = new SceneQueryRunner({
     datasource,
     queries: [

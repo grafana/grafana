@@ -11,6 +11,7 @@ export function getSilencesScene(timeRange: SceneTimeRange, datasource: DataSour
         refId: 'A',
         expr: QUERY_A,
         range: true,
+        legendFormat: '{{state}}',
       },
     ],
     $timeRange: timeRange,

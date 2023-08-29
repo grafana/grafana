@@ -63,10 +63,6 @@ export function getFiringAlertsScene(timeRange: SceneTimeRange, datasource: Data
   return new SceneFlexItem({
     width: 'calc(50% - 4px)',
     height: 300,
-    body: PanelBuilders.stat()
-      .setTitle(panelTitle)
-      .setData(transformation)
-      .setOverrides((b) => b.matchFieldsWithName('Value #A * 100 / Value #B').overrideUnit('percent'))
-      .build(),
+    body: PanelBuilders.stat().setTitle(panelTitle).setData(transformation).setUnit('percent').build(),
   });
 }

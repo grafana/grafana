@@ -11,6 +11,7 @@ export function getInstancesByStateScene(timeRange: SceneTimeRange, datasource: 
         refId: 'A',
         expr: QUERY,
         range: true,
+        legendFormat: '{{state}}',
       },
     ],
     $timeRange: timeRange,

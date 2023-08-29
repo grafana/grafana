@@ -2,7 +2,14 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { EmbeddedScene, SceneFlexLayout, SceneTimeRange } from '@grafana/scenes';
+import {
+  EmbeddedScene,
+  QueryVariable,
+  SceneFlexLayout,
+  SceneTimeRange,
+  SceneVariableSet,
+  VariableValueSelectors,
+} from '@grafana/scenes';
 import { useStyles2 } from '@grafana/ui';
 
 import { getFiringAlertsScene } from './insights/grafana/FiringAlertsPercentage';
@@ -12,6 +19,10 @@ import { getAlertsByStateScene } from './insights/mimir/AlertsByState';
 import { getInvalidConfigScene } from './insights/mimir/InvalidConfig';
 import { getNotificationsScene } from './insights/mimir/Notifications';
 import { getSilencesScene } from './insights/mimir/Silences';
+import { getRuleGroupEvaluationDurationScene } from './insights/mimir/perGroup/RuleGroupEvaluationDurationScene';
+import { getRuleGroupEvaluationsScene } from './insights/mimir/perGroup/RuleGroupEvaluationsScene';
+import { getRuleGroupIntervalScene } from './insights/mimir/perGroup/RuleGroupIntervalScene';
+import { getRulesPerGroupScene } from './insights/mimir/perGroup/RulesPerGroupScene';
 import { getEvalSuccessVsFailuresScene } from './insights/mimir/rules/EvalSuccessVsFailuresScene';
 import { getFiringCloudAlertsScene } from './insights/mimir/rules/Firing';
 import { getInstancesByStateScene } from './insights/mimir/rules/InstancesByState';
@@ -90,16 +101,27 @@ function getMimirManagedRulesScenes() {
 }
 
 function getMimirManagedRulesPerGroupScenes() {
+  const ruleGroupHandler = new QueryVariable({
+    label: 'Rule Group',
+    name: 'rule_group',
+    datasource: cloudUsageDs,
+    query: 'label_values(grafanacloud_instance_rule_group_rules,rule_group)',
+  });
+
   return new EmbeddedScene({
     body: new SceneFlexLayout({
       wrap: 'wrap',
       children: [
-        //Rule group evaluation
-        //Rule group interval
-        //rule group evaluation duration
-        //rules per group
+        getRuleGroupEvaluationsScene(THIS_WEEK_TIME_RANGE, cloudUsageDs, 'Rule Group Evaluation'),
+        getRuleGroupIntervalScene(THIS_WEEK_TIME_RANGE, cloudUsageDs, 'Rule Group Interval'),
+        getRuleGroupEvaluationDurationScene(THIS_WEEK_TIME_RANGE, cloudUsageDs, 'Rule Group Evaluation Duration'),
+        getRulesPerGroupScene(THIS_WEEK_TIME_RANGE, cloudUsageDs, 'Rules per Group'),
       ],
     }),
+    $variables: new SceneVariableSet({
+      variables: [ruleGroupHandler],
+    }),
+    controls: [new VariableValueSelectors({})],
   });
 }
 

@@ -11,6 +11,7 @@ export function getInvalidConfigScene(timeRange: SceneTimeRange, datasource: Dat
         refId: 'A',
         expr: QUERY_A,
         range: true,
+        legendFormat: 'config invalid',
       },
     ],
     $timeRange: timeRange,
@@ -23,6 +24,7 @@ export function getInvalidConfigScene(timeRange: SceneTimeRange, datasource: Dat
       .setTitle(panelTitle)
       .setData(query)
       .setCustomFieldConfig('drawStyle', GraphDrawStyle.Line)
+      .setUnit('bool_yes_no')
       .build(),
   });
 }

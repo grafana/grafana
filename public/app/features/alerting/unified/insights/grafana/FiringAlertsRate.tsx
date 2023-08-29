@@ -12,6 +12,7 @@ export function getFiringAlertsRateScene(timeRange: SceneTimeRange, datasource: 
         expr: RATE_FIRING,
         range: true,
         instant: false,
+        legendFormat: 'Number of fires',
       },
     ],
     $timeRange: timeRange,
@@ -28,7 +29,6 @@ export function getFiringAlertsRateScene(timeRange: SceneTimeRange, datasource: 
       .setCustomFieldConfig('fillOpacity', 10)
       .setCustomFieldConfig('spanNulls', true)
       .setCustomFieldConfig('pointSize', 5)
-      .setOverrides((b) => b.matchFieldsWithName('{}').overrideDisplayName('Number of fires'))
       .build(),
   });
 }
