@@ -273,6 +273,23 @@ export const TooltipPlugin4 = ({ config, render }: TooltipPlugin4Props) => {
         }
       }
     });
+
+    // @TODO Extract this in a wrapper plugin
+    config.addHook('setSelect', (u) => {
+      if (u.cursor.event?.ctrlKey || u.cursor.event?.metaKey) {
+        const min = u.posToVal(u.select.left, 'x');
+        const max = u.posToVal(u.select.left + u.select.width, 'x');
+
+        const isRegionAnnotation = min !== max;
+
+        if (isRegionAnnotation) {
+          dismiss();
+          // @ts-ignore
+          _plot!.cursor._lock = true;
+          return;
+        }
+      }
+    });
   }, [config]);
 
   useLayoutEffect(() => {

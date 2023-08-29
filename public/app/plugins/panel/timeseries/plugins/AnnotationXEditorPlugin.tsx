@@ -78,9 +78,13 @@ export const AnnotationXEditorPlugin = ({ builder, timeRange, data, timeZone }: 
 
       if (annotating) {
         setIsAddingAnnotation(true);
+
+        const min = u.posToVal(u.select.left, 'x');
+        const max = u.posToVal(u.select.left + u.select.width, 'x');
+
         setSelection({
-          min: u.posToVal(u.select.left, 'x'),
-          max: u.posToVal(u.select.left + u.select.width, 'x'),
+          min: min,
+          max: max,
           bbox: {
             left: u.select.left,
             top: 0,
