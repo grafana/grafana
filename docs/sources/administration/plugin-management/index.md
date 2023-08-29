@@ -45,7 +45,7 @@ Applications, or _app plugins_, bundle data sources and panels to provide a cohe
 
 Apps can also add custom pages for things like control panels.
 
-Use app plugins when you want to create an custom out-of-the-box monitoring experience.
+Use app plugins when you want an out-of-the-box monitoring experience.
 
 ### Managing app plugins access
 
