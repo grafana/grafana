@@ -30,9 +30,7 @@ export function transformSceneToSaveModel(scene: DashboardScene): Dashboard {
     panels,
   };
 
-  // Has to be a cleaner and faster way to do this. Code copied from old SaveDashboardDrawer to get rid of undefined
-  const withoutUndefined = JSON.parse(JSON.stringify(dashboard, null, 2));
-  return sortedDeepCloneWithoutNulls(withoutUndefined);
+  return sortedDeepCloneWithoutNulls(dashboard);
 }
 
 function gridItemToPanel(gridItem: SceneGridItem): Panel {
