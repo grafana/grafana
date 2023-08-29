@@ -74,6 +74,8 @@ export const TransformationOperationRow = ({
   //   return undefined;
   // }, [showHelp]);
 
+  const getDisplayContent = () => markdownHelper(prepMarkdown(uiConfig));
+
   // Adds or removes the frame filter
   const toggleFilter = useCallback(() => {
     let current = { ...configs[index].transformation };
@@ -160,7 +162,7 @@ export const TransformationOperationRow = ({
           />
         )}
         <Modal title="modal title bruh" isOpen={showInfoModal} onClickBackdrop={toggleShowModal}>
-          {markdownHelper(prepMarkdown(uiConfig))}
+          {getDisplayContent()}
         </Modal>
       </HorizontalGroup>
     );
