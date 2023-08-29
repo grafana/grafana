@@ -87,9 +87,9 @@ export function VariableQueryEditor(props: QueryEditorProps<PhlareDataSource, Qu
 }
 
 function LabelRow(props: {
-  value: string;
   datasource: PhlareDataSource;
-  profileTypeId: string;
+  value?: string;
+  profileTypeId?: string;
   from: number;
   to: number;
   onChange: (val: string) => void;
@@ -97,12 +97,12 @@ function LabelRow(props: {
   const [labels, setLabels] = useState<string[]>();
   useEffect(() => {
     (async () => {
-      setLabels(await props.datasource.getLabelNames(props.profileTypeId + '{}', props.from, props.to));
+      setLabels(await props.datasource.getLabelNames((props.profileTypeId || '') + '{}', props.from, props.to));
     })();
   }, [props.datasource, props.profileTypeId, props.to, props.from]);
 
   const options = labels ? labels.map<SelectableValue>((v) => ({ label: v, value: v })) : [];
-  if (labels && !labels.find((v) => v === props.value)) {
+  if (labels && props.value && !labels.find((v) => v === props.value)) {
     options.push({ value: props.value, label: props.value });
   }
 
