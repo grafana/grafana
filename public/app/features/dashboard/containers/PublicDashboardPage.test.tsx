@@ -124,6 +124,13 @@ const getTestDashboard = (overrides?: Partial<Dashboard>, metaOverrides?: Partia
   return new DashboardModel(data, metaOverrides);
 };
 
+const dashboardBase = {
+  getModel: getTestDashboard,
+  initError: null,
+  initPhase: DashboardInitPhase.Completed,
+  permissions: [],
+};
+
 describe('PublicDashboardPage', () => {
   beforeEach(() => {
     config.featureToggles.publicDashboards = true;
@@ -144,12 +151,7 @@ describe('PublicDashboardPage', () => {
 
   describe('Given a simple public dashboard', () => {
     const newState = {
-      dashboard: {
-        getModel: getTestDashboard,
-        initError: null,
-        initPhase: DashboardInitPhase.Completed,
-        permissions: [],
-      },
+      dashboard: dashboardBase,
     };
 
     it('Should render panels', async () => {
@@ -220,10 +222,8 @@ describe('PublicDashboardPage', () => {
 
       const newState = {
         dashboard: {
+          ...dashboardBase,
           getModel: () => getTestDashboard({ panels }),
-          initError: null,
-          initPhase: DashboardInitPhase.Completed,
-          permissions: [],
         },
       };
       setup(undefined, newState);
@@ -247,13 +247,11 @@ describe('PublicDashboardPage', () => {
     it('Should render time range and refresh picker buttons', async () => {
       setup(undefined, {
         dashboard: {
+          ...dashboardBase,
           getModel: () =>
             getTestDashboard({
               timepicker: { hidden: false, collapse: false, refresh_intervals: [], time_options: [] },
             }),
-          initError: null,
-          initPhase: DashboardInitPhase.Completed,
-          permissions: [],
         },
       });
       expect(await screen.findByTestId(selectors.TimePicker.openButton)).toBeInTheDocument();
@@ -266,10 +264,8 @@ describe('PublicDashboardPage', () => {
     it('Should render public dashboard paused screen', async () => {
       setup(undefined, {
         dashboard: {
+          ...dashboardBase,
           getModel: () => getTestDashboard(undefined, { publicDashboardEnabled: false, dashboardNotFound: false }),
-          initError: null,
-          initPhase: DashboardInitPhase.Completed,
-          permissions: [],
         },
       });
 
@@ -285,10 +281,8 @@ describe('PublicDashboardPage', () => {
     it('Should render public dashboard deleted screen', async () => {
       setup(undefined, {
         dashboard: {
+          ...dashboardBase,
           getModel: () => getTestDashboard(undefined, { dashboardNotFound: true }),
-          initError: null,
-          initPhase: DashboardInitPhase.Completed,
-          permissions: [],
         },
       });
 
