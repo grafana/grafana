@@ -87,31 +87,11 @@ e2e.scenario({
 
 e2e.scenario({
   describeName: 'Dashboard time zone support',
-  itName: 'Tests relative timezone overrides within a panel',
+  itName: 'Tests relative timezone support and overrides',
   addScenarioDataSource: false,
   addScenarioDashBoard: false,
   skipScenario: false,
   scenario: () => {
-    // Test Default
-    e2e.flows.openDashboard({
-      uid: 'd41dbaa2-a39e-4536-ab2b-caca52f1a9c8',
-      timeRange: {
-        from: 'now-6h',
-        to: 'now',
-        zone: 'Default',
-      },
-    });
-
-    e2e.components.Panels.Panel.title('Panel with relative time override')
-      .should('be.visible')
-      .within(() => {
-        e2e.components.Panels.Visualization.Table.body()
-          .should('be.visible')
-          .within(() => {
-            e2e().get('[role="row"]').first().should('have.text', '00:00:00');
-          });
-      });
-
     // Test Browser
     e2e.flows.setTimeRange({
       from: 'now-6h',
@@ -125,11 +105,45 @@ e2e.scenario({
         e2e.components.Panels.Visualization.Table.body()
           .should('be.visible')
           .within(() => {
-            e2e().get('[role="row"]').first().should('have.text', '00:00:00');
+            e2e()
+              .get('[role="row"]')
+              .first()
+              .should('have.text', /00:00:00/);
           });
       });
 
-    // Test specific timezone
+    e2e.flows.setTimeRange({
+      from: 'now/d',
+      to: 'now',
+    });
+
+    e2e.components.Panels.Panel.title('Panel in timezone')
+      .should('be.visible')
+      .within(() => {
+        e2e.components.Panels.Visualization.Table.body()
+          .should('be.visible')
+          .within(() => {
+            e2e()
+              .get('[role="row"]')
+              .first()
+              .should('have.text', /00:00:00/);
+          });
+      });
+
+    e2e.components.Panels.Panel.title('Panel with relative time override')
+      .should('be.visible')
+      .within(() => {
+        e2e.components.Panels.Visualization.Table.body()
+          .should('be.visible')
+          .within(() => {
+            e2e()
+              .get('[role="row"]')
+              .first()
+              .should('have.text', /00:00:00/);
+          });
+      });
+
+    // Test Tokyo timezone
     e2e.flows.setTimeRange({
       from: 'now-6h',
       to: 'now',
@@ -142,11 +156,13 @@ e2e.scenario({
         e2e.components.Panels.Visualization.Table.body()
           .should('be.visible')
           .within(() => {
-            e2e().get('[role="row"]').first().should('have.text', '00:00:00');
+            e2e()
+              .get('[role="row"]')
+              .first()
+              .should('have.text', /00:00:00/);
           });
       });
 
-    // Test today so far in both panels
     e2e.flows.setTimeRange({
       from: 'now/d',
       to: 'now',
@@ -158,7 +174,10 @@ e2e.scenario({
         e2e.components.Panels.Visualization.Table.body()
           .should('be.visible')
           .within(() => {
-            e2e().get('[role="row"]').first().should('have.text', '00:00:00');
+            e2e()
+              .get('[role="row"]')
+              .first()
+              .should('have.text', /00:00:00/);
           });
       });
 
@@ -168,7 +187,61 @@ e2e.scenario({
         e2e.components.Panels.Visualization.Table.body()
           .should('be.visible')
           .within(() => {
-            e2e().get('[role="row"]').first().should('have.text', '00:00:00');
+            e2e()
+              .get('[role="row"]')
+              .first()
+              .should('have.text', /00:00:00/);
+          });
+      });
+
+    // Test LA timezone
+    e2e.flows.setTimeRange({
+      from: 'now-6h',
+      to: 'now',
+      zone: 'America/Los_Angeles',
+    });
+
+    e2e.components.Panels.Panel.title('Panel with relative time override')
+      .should('be.visible')
+      .within(() => {
+        e2e.components.Panels.Visualization.Table.body()
+          .should('be.visible')
+          .within(() => {
+            e2e()
+              .get('[role="row"]')
+              .first()
+              .should('have.text', /00:00:00/);
+          });
+      });
+
+    e2e.flows.setTimeRange({
+      from: 'now/d',
+      to: 'now',
+    });
+
+    e2e.components.Panels.Panel.title('Panel in timezone')
+      .should('be.visible')
+      .within(() => {
+        e2e.components.Panels.Visualization.Table.body()
+          .should('be.visible')
+          .within(() => {
+            e2e()
+              .get('[role="row"]')
+              .first()
+              .should('have.text', /00:00:00/);
+          });
+      });
+
+    e2e.components.Panels.Panel.title('Panel with relative time override')
+      .should('be.visible')
+      .within(() => {
+        e2e.components.Panels.Visualization.Table.body()
+          .should('be.visible')
+          .within(() => {
+            e2e()
+              .get('[role="row"]')
+              .first()
+              .should('have.text', /00:00:00/);
           });
       });
   },
