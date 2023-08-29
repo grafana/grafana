@@ -583,3 +583,26 @@ func (p *FakeBackendPlugin) Kill() {
 	defer p.mutex.Unlock()
 	p.Running = false
 }
+
+type FakeFeatureToggles struct {
+	features map[string]bool
+}
+
+func NewFakeFeatureToggles(features ...string) *FakeFeatureToggles {
+	m := make(map[string]bool)
+	for _, f := range features {
+		m[f] = true
+	}
+
+	return &FakeFeatureToggles{
+		features: m,
+	}
+}
+
+func (f *FakeFeatureToggles) GetEnabled(_ context.Context) map[string]bool {
+	return f.features
+}
+
+func (f *FakeFeatureToggles) IsEnabled(feature string) bool {
+	return f.features[feature]
+}
