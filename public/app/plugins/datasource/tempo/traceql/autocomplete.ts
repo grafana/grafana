@@ -42,11 +42,11 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
   triggerCharacters = ['{', '.', '[', '(', '=', '~', ' ', '"'];
 
   // Operators
-  static readonly operators: MinimalCompletionItem[] = [
+  static readonly arithmeticOps: MinimalCompletionItem[] = [
     {
-      label: '=',
-      insertText: '=',
-      detail: 'Equal',
+      label: '+',
+      insertText: '+',
+      detail: 'Plus',
     },
     {
       label: '-',
@@ -54,34 +54,14 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
       detail: 'Minus',
     },
     {
-      label: '+',
-      insertText: '+',
-      detail: 'Plus',
+      label: '*',
+      insertText: '*',
+      detail: 'Times',
     },
     {
-      label: '<',
-      insertText: '<',
-      detail: 'Less than',
-    },
-    {
-      label: '>',
-      insertText: '>',
-      detail: 'Greater than',
-    },
-    {
-      label: '<=',
-      insertText: '<=',
-      detail: 'Less than or equal to',
-    },
-    {
-      label: '>=',
-      insertText: '>=',
-      detail: 'Greater than or equal to',
-    },
-    {
-      label: '=~',
-      insertText: '=~',
-      detail: 'Regular expression',
+      label: '/',
+      insertText: '/',
+      detail: 'Over',
     },
   ];
 
@@ -134,12 +114,12 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
     {
       label: '=~',
       insertText: '=~',
-      detail: 'Regular expression)',
+      detail: 'Regular expression',
     },
     {
       label: '!~',
       insertText: '!~',
-      detail: 'Negated regular expression)',
+      detail: 'Negated regular expression',
     },
   ];
   static readonly structuralOps: MinimalCompletionItem[] = [
@@ -319,12 +299,33 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
       case 'SPANSET_ONLY_DOT': {
         return this.getTagsCompletions();
       }
+      case 'SPANSET_IN_THE_MIDDLE':
+        return [...CompletionProvider.comparisonOps, ...CompletionProvider.logicalOps].map((key) => ({
+          label: key.label,
+          insertText: key.insertText,
+          detail: key.detail,
+          documentation: key.documentation,
+          type: 'OPERATOR',
+        }));
+      case 'SPANSET_IN_THE_MIDDLE_3':
+      case 'SPANSET_EXPRESSION_OPERATORS_WITH_MISSING_CLOSED_BRACE':
+        return [...CompletionProvider.comparisonOps, ...CompletionProvider.logicalOps].map((key) => ({
+          label: key.label,
+          insertText: key.insertText,
+          detail: key.detail,
+          documentation: key.documentation,
+          type: 'OPERATOR',
+        }));
       case 'SPANSET_IN_NAME':
         return this.getScopesCompletions().concat(this.getIntrinsicsCompletions()).concat(this.getTagsCompletions());
       case 'SPANSET_IN_NAME_SCOPE':
         return this.getTagsCompletions(undefined, situation.scope);
       case 'SPANSET_EXPRESSION_OPERATORS':
-        return [...CompletionProvider.logicalOps, ...CompletionProvider.operators].map((key) => ({
+        return [
+          ...CompletionProvider.logicalOps,
+          ...CompletionProvider.arithmeticOps,
+          ...CompletionProvider.comparisonOps,
+        ].map((key) => ({
           label: key.label,
           insertText: key.insertText,
           detail: key.detail,
@@ -388,14 +389,17 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
         });
         return items;
       case 'SPANSET_AFTER_VALUE':
-        return CompletionProvider.logicalOps
-          .map((l) => l.insertText)
-          .concat('}')
-          .map((key) => ({
-            label: key,
-            insertText: key,
-            type: 'OPERATOR',
-          }));
+        return CompletionProvider.logicalOps.map((key) => ({
+          label: key.label,
+          insertText: key.insertText + '}',
+          type: 'OPERATOR',
+        }));
+      case 'NEW_SPANSET':
+        return this.getScopesCompletions('{ ', '$0 }')
+          .concat(this.getIntrinsicsCompletions('{ ', '$0 }'))
+          .concat(this.getTagsCompletions('.'));
+      case 'ATTRIBUTE_FOR_AGGREGATOR':
+        return this.getScopesCompletions().concat(this.getIntrinsicsCompletions()).concat(this.getTagsCompletions('.'));
       default:
         throw new Error(`Unexpected situation ${situation}`);
     }
@@ -412,19 +416,21 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
       }));
   }
 
-  private getIntrinsicsCompletions(prepend?: string): Completion[] {
+  private getIntrinsicsCompletions(prepend?: string, append?: string): Completion[] {
     return intrinsics.map((key) => ({
       label: key,
-      insertText: (prepend || '') + key,
+      insertText: (prepend || '') + key + (append || ''),
       type: 'KEYWORD',
+      insertTextRules: this.monaco?.languages.CompletionItemInsertTextRule?.InsertAsSnippet,
     }));
   }
 
-  private getScopesCompletions(prepend?: string): Completion[] {
+  private getScopesCompletions(prepend?: string, append?: string): Completion[] {
     return scopes.map((key) => ({
       label: key,
-      insertText: (prepend || '') + key,
+      insertText: (prepend || '') + key + (append || ''),
       type: 'SCOPE',
+      insertTextRules: this.monaco?.languages.CompletionItemInsertTextRule?.InsertAsSnippet,
     }));
   }
 }
