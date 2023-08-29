@@ -30,7 +30,6 @@ export function loadProviderStatuses(): ThunkResult<void> {
     for (const provider of registeredProviders) {
       getStatusPromises.push(getAuthProviderStatus(provider.id));
     }
-
     const statuses = await Promise.all(getStatusPromises);
     for (let i = 0; i < registeredProviders.length; i++) {
       const provider = registeredProviders[i];
