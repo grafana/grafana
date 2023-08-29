@@ -307,7 +307,6 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
           documentation: key.documentation,
           type: 'OPERATOR',
         }));
-      case 'SPANSET_IN_THE_MIDDLE_3':
       case 'SPANSET_EXPRESSION_OPERATORS_WITH_MISSING_CLOSED_BRACE':
         return [...CompletionProvider.comparisonOps, ...CompletionProvider.logicalOps].map((key) => ({
           label: key.label,
