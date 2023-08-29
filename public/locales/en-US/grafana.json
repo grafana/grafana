@@ -133,7 +133,7 @@
     "empty": {
       "add-library-panel-body": "Add visualizations that are shared with other dashboards.",
       "add-library-panel-button": "Add library panel",
-      "add-library-panel-header": "Import panel",
+      "add-library-panel-header": "Add a library panel",
       "add-visualization-body": "Select a data source and then query and visualize your data with charts, stats and tables or create lists, markdowns and other widgets.",
       "add-visualization-button": "Add visualization",
       "add-visualization-header": "Start your new dashboard by adding a visualization",
