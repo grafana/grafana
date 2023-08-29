@@ -31,8 +31,10 @@ export function QueryEditor(props: Props) {
   return (
     <EditorRows>
       <EditorRow stackProps={{ wrap: false, gap: 1 }}>
-        {/* we have to wait for query.profileTypeId to be set before we can render cascader as we cannot later change the value.
-            We set a default value in useNormalizeQuery if it's not set, so it should be always set eventually.
+        {/*
+            The cascader is uncontrolled component so if we want to set some default value we can do it only on initial
+            render, so we are waiting until we have the profileTypes and know what the default value should be before
+            rendering.
          */}
         {profileTypes && query.profileTypeId ? (
           <ProfileTypesCascader
