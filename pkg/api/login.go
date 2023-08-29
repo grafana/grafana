@@ -282,7 +282,6 @@ func (hs *HTTPServer) Logout(c *contextmodel.ReqContext) {
 		if oidcLogout {
 			rdUrl = getPostRedirectUrl(hs.Cfg.SignoutRedirectUrl, idTokenHint)
 		}
-		hs.log.Debug("Redirect url would be", "signOutUrl", rdUrl)
 		c.Redirect(rdUrl)
 	} else {
 		hs.log.Info("Successful Logout", "User", c.Email)
