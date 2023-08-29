@@ -98,22 +98,22 @@ func TestValidate(t *testing.T) {
 			expected: nil,
 		},
 		{
-			name:     "error when it is empty",
+			name:     "error when string is empty",
 			uid:      "",
 			expected: ErrUIDEmpty,
 		},
 		{
-			name:     "error when it is too long",
+			name:     "error when string is too long",
 			uid:      strings.Repeat("1", MaxUIDLength+1),
 			expected: ErrUIDTooLong,
 		},
 		{
-			name:     "error when it has invalid characters",
+			name:     "error when string has invalid characters",
 			uid:      "f8cc010c.ee72.4681;89d2+d46e1bd47d33",
 			expected: ErrUIDFormatInvalid,
 		},
 		{
-			name:     "error when it has whitespaces",
+			name:     "error when string has only whitespaces",
 			uid:      " ",
 			expected: ErrUIDFormatInvalid,
 		},
