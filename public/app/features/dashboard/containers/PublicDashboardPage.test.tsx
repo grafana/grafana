@@ -128,7 +128,6 @@ const getTestDashboard = (overrides?: Partial<Dashboard>, metaOverrides?: Partia
 describe('PublicDashboardPage', () => {
   beforeEach(() => {
     config.featureToggles.publicDashboards = true;
-    config.featureToggles.newPanelChromeUI = true;
 
     jest.clearAllMocks();
   });
