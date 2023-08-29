@@ -433,7 +433,7 @@ func TestApiCreatePublicDashboard(t *testing.T) {
 		{
 			Name:                 "returns 400 when uid is invalid",
 			ExpectedHttpResponse: http.StatusBadRequest,
-			publicDashboard:      &PublicDashboard{IsEnabled: true},
+			publicDashboard:      nil,
 			SaveDashboardErr:     nil,
 			User:                 userAdmin,
 			ShouldCallService:    false,

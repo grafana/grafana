@@ -428,17 +428,15 @@ func GenerateAccessToken() (string, error) {
 }
 
 func (pd *PublicDashboardServiceImpl) newCreatePublicDashboard(ctx context.Context, dto *SavePublicDashboardDTO) (*PublicDashboard, error) {
-	var uid string
-	var err error
 	//Check if uid already exists, if none then auto generate
 	existingPubdash, _ := pd.store.Find(ctx, dto.PublicDashboard.Uid)
 	if existingPubdash != nil {
-		return nil, ErrPublicDashboardUidExists.Errorf("Create: public dashboard uid %s already exists", dto.Uid)
+		return nil, ErrPublicDashboardUidExists.Errorf("Create: public dashboard uid %s already exists", dto.PublicDashboard.Uid)
 	}
 
-	if dto.PublicDashboard.Uid != "" {
-		uid = dto.PublicDashboard.Uid
-	} else {
+	var err error
+	uid := dto.PublicDashboard.Uid
+	if dto.PublicDashboard.Uid == "" {
 		uid, err = pd.NewPublicDashboardUid(ctx)
 		if err != nil {
 			return nil, err

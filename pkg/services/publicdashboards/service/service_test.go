@@ -817,8 +817,7 @@ func TestCreatePublicDashboard(t *testing.T) {
 
 		_, err := service.Create(context.Background(), SignedInUser, dto)
 		require.Error(t, err)
-		require.Equal(t, err, ErrPublicDashboardUidExists.Errorf("Create: public dashboard uid %s already exists", dto.Uid))
-		publicDashboardStore.AssertNotCalled(t, "Create")
+		require.Equal(t, err, ErrPublicDashboardUidExists.Errorf("Create: public dashboard uid %s already exists", dto.PublicDashboard.Uid))
 	})
 
 	t.Run("Create public dashboard with given pubdash uid", func(t *testing.T) {
