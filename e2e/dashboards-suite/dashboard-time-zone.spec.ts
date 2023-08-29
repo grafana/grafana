@@ -92,7 +92,7 @@ e2e.scenario({
   addScenarioDashBoard: false,
   skipScenario: false,
   scenario: () => {
-    e2e().intercept('/api/ds/query/*').as('dataQuery');
+    e2e().intercept('/api/ds/query*').as('dataQuery');
 
     // Open dashboard in Browser timezone
     e2e.flows.openDashboard({
