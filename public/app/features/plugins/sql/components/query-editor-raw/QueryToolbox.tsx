@@ -1,7 +1,9 @@
 import { css } from '@emotion/css';
 import React, { useMemo, useState } from 'react';
 
+import { reportInteraction } from '@grafana/runtime';
 import { HorizontalGroup, Icon, IconButton, Tooltip, useTheme2 } from '@grafana/ui';
+import { getModKey } from 'app/core/utils/browser';
 
 import { QueryValidator, QueryValidatorProps } from './QueryValidator';
 
@@ -70,11 +72,25 @@ export function QueryToolbox({ showTools, onFormatCode, onExpand, isExpanded, ..
         <div>
           <HorizontalGroup spacing="sm">
             {onFormatCode && (
-              <IconButton onClick={onFormatCode} name="brackets-curly" size="xs" tooltip="Format query" />
+              <IconButton
+                onClick={() => {
+                  reportInteraction('grafana_sql_query_formatted', {});
+                  onFormatCode();
+                }}
+                name="brackets-curly"
+                size="xs"
+                tooltip="Format query"
+              />
             )}
             {onExpand && (
               <IconButton
-                onClick={() => onExpand(!isExpanded)}
+                onClick={() => {
+                  reportInteraction('grafana_sql_editor_expanded', {
+                    expanded: !isExpanded,
+                  });
+
+                  onExpand(!isExpanded);
+                }}
                 name={isExpanded ? 'angle-up' : 'angle-down'}
                 size="xs"
                 tooltip={isExpanded ? 'Collapse editor' : 'Expand editor'}
