@@ -529,7 +529,7 @@ func exportHcl(download bool, body definitions.AlertingFileExport) response.Resp
 		gr := group
 		resources = append(resources, hcl.Resource{
 			Type: "grafana_rule_group",
-			Name: fmt.Sprintf("rule_group_%3d", idx),
+			Name: fmt.Sprintf("rule_group_%04d", idx),
 			Body: &gr,
 		})
 	}
