@@ -104,6 +104,7 @@ export class DashboardModel implements TimeModel {
   private appEventsSubscription: Subscription;
   private lastRefresh: number;
   private timeRangeUpdatedDuringEdit = false;
+  private originalDashboard: Dashboard | null = null;
 
   // ------------------
   // not persisted
@@ -130,6 +131,7 @@ export class DashboardModel implements TimeModel {
     panelsAffectedByVariableChange: true,
     lastRefresh: true,
     timeRangeUpdatedDuringEdit: true,
+    originalDashboard: true,
   };
 
   constructor(
@@ -169,6 +171,7 @@ export class DashboardModel implements TimeModel {
     this.links = data.links ?? [];
     this.gnetId = data.gnetId || null;
     this.panels = map(data.panels ?? [], (panelData: any) => new PanelModel(panelData));
+    this.originalDashboard = data;
     this.ensurePanelsHaveUniqueIds();
     this.formatDate = this.formatDate.bind(this);
 
@@ -1295,6 +1298,10 @@ export class DashboardModel implements TimeModel {
   private variablesChangedInUrlHandler(event: VariablesChangedInUrl) {
     this.templateVariableValueUpdated();
     this.startRefresh(event.payload);
+  }
+
+  getOriginalDashboard() {
+    return this.originalDashboard;
   }
 }
 
