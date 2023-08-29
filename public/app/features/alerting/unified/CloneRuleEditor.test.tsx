@@ -164,7 +164,9 @@ describe('CloneRuleEditor', function () {
       });
 
       await waitForElementToBeRemoved(ui.loadingIndicator.query());
-      await waitForElementToBeRemoved(within(ui.inputs.group.get()).getByTestId('Spinner'));
+      await waitFor(() => {
+        expect(within(ui.inputs.group.get()).queryByTestId('Spinner')).not.toBeInTheDocument();
+      });
 
       await waitFor(() => {
         expect(ui.inputs.name.get()).toHaveValue('First Grafana Rule (copy)');
