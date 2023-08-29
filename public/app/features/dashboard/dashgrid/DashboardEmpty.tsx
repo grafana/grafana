@@ -118,7 +118,7 @@ const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
             <div className={styles.bodySmall}>
               <Text element="p" textAlignment="center" color="secondary">
                 <Trans i18nKey="dashboard.empty.import-a-dashboard-body">
-                  Import dashboard from file or <a href="https://grafana.com/grafana/dashboards/">grafana.com</a>.
+                  Import dashboards from files or <a href="https://grafana.com/grafana/dashboards/">grafana.com</a>.
                 </Trans>
               </Text>
             </div>
