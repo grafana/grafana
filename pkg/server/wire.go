@@ -1,6 +1,9 @@
 //go:build wireinject
 // +build wireinject
 
+// This file should contain wire sets used by both OSS and Enterprise builds.
+// Use wireext_oss.go and wireext_enterprise.go for sets that are specific to
+// the respective builds.
 package server
 
 import (
@@ -69,7 +72,6 @@ import (
 	ldapservice "github.com/grafana/grafana/pkg/services/ldap/service"
 	"github.com/grafana/grafana/pkg/services/libraryelements"
 	"github.com/grafana/grafana/pkg/services/librarypanels"
-	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/live"
 	"github.com/grafana/grafana/pkg/services/live/pushhttp"
 	"github.com/grafana/grafana/pkg/services/login"
@@ -417,30 +419,12 @@ func InitializeForCLI(cla setting.CommandLineArgs) (Runner, error) {
 	return Runner{}, nil
 }
 
-// The BaseCLISet is a simplified set of dependencies for the CLI, suitable for
-// running background services and targeted dskit modules without starting up
-// the full Grafana server.
-// NOTE: This is an OSS only set of dependencies; if this works it should be moved to wireexts_oss and add the enterprise set.
-var wireBaseCLISet = wire.NewSet(
-	NewModuleRunner,
-	setting.NewCfgFromArgs,
-	setting.ProvideProvider, wire.Bind(new(setting.Provider), new(*setting.OSSImpl)),
-	featuremgmt.ProvideManagerService,
-	featuremgmt.ProvideToggles,
-	licensing.ProvideService,
-	wire.Bind(new(licensing.Licensing), new(*licensing.OSSLicensingService)),
-	hooks.ProvideService,
-)
-
+// InitializeForCLITarget is a simplified set of dependencies for the CLI, used
+// by the server target subcommand to launch specific dskit modules.
 func InitializeForCLITarget(cla setting.CommandLineArgs) (ModuleRunner, error) {
-	wire.Build(wireBaseCLISet)
+	wire.Build(wireCLITargetSet)
 	return ModuleRunner{}, nil
 }
-
-var wireModuleServerSet = wire.NewSet(
-	NewModule,
-	wireBaseCLISet,
-)
 
 // InitializeModuleServer is a simplified set of dependencies for the CLI,
 // suitable for running background services and targeting dskit modules.
@@ -448,3 +432,21 @@ func InitializeModuleServer(cla setting.CommandLineArgs, opts Options, apiOpts a
 	wire.Build(wireModuleServerSet)
 	return &ModuleServer{}, nil
 }
+
+// wireModuleServerSet is a wire set for the ModuleServer.
+var wireModuleServerSet = wire.NewSet(
+	NewModule,
+	wireCLITargetSet,
+)
+
+var wireCLITargetSet = wire.NewSet(
+	NewModuleRunner,
+	// build-specific wire sets
+	wireExtsBaseCLISet,
+
+	// Core Grafana dependencies
+	featuremgmt.ProvideManagerService,
+	featuremgmt.ProvideToggles,
+	hooks.ProvideService,
+	setting.NewCfgFromArgs,
+)
