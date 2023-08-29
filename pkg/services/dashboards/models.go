@@ -9,7 +9,6 @@ import (
 	"github.com/grafana/grafana/pkg/kinds"
 	"github.com/grafana/grafana/pkg/kinds/dashboard"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/quota"
@@ -338,7 +337,7 @@ type GetDashboardRefByIDQuery struct {
 type SaveDashboardDTO struct {
 	OrgID     int64
 	UpdatedAt time.Time
-	User      identity.Requester
+	User      *user.SignedInUser
 	Message   string
 	Overwrite bool
 	Dashboard *Dashboard
