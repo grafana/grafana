@@ -34,6 +34,16 @@ export function onCreateNewWidgetPanel(dashboard: DashboardModel, widgetType: st
   return newPanel.id;
 }
 
+export function onCreateNewRow(dashboard: DashboardModel) {
+  const newRow = {
+    type: 'row',
+    title: 'Row title',
+    gridPos: { x: 0, y: 0 },
+  };
+
+  dashboard.addPanel(newRow);
+}
+
 export function onImportDashboard() {
   locationService.push('/dashboard/import');
 }
