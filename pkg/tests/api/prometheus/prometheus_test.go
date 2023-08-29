@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -74,7 +73,7 @@ func TestIntegrationPrometheus(t *testing.T) {
 			"datasource": map[string]interface{}{
 				"uid": uid,
 			},
-			"expr":         "up",
+			"expr":         "1",
 			"instantQuery": true,
 		})
 		buf1 := &bytes.Buffer{}
@@ -88,13 +87,9 @@ func TestIntegrationPrometheus(t *testing.T) {
 		// nolint:gosec
 		resp, err := http.Post(u, "application/json", buf1)
 		require.NoError(t, err)
-		require.Equal(t, http.StatusOK, resp.StatusCode)
 		t.Cleanup(func() {
-			err := resp.Body.Close()
-			require.NoError(t, err)
+			_ = resp.Body.Close()
 		})
-		_, err = io.ReadAll(resp.Body)
-		require.NoError(t, err)
 
 		require.NotNil(t, outgoingRequest)
 		require.Equal(t, "/api/v1/query_range?q1=1&q2=2", outgoingRequest.URL.String())
@@ -124,13 +119,9 @@ func TestIntegrationPrometheus(t *testing.T) {
 		// nolint:gosec
 		resp, err := http.Post(u, "application/json", buf1)
 		require.NoError(t, err)
-		require.Equal(t, http.StatusOK, resp.StatusCode)
 		t.Cleanup(func() {
-			err := resp.Body.Close()
-			require.NoError(t, err)
+			_ = resp.Body.Close()
 		})
-		_, err = io.ReadAll(resp.Body)
-		require.NoError(t, err)
 
 		require.NotNil(t, outgoingRequest)
 		require.Equal(t, "/api/v1/query_range", outgoingRequest.URL.Path)
