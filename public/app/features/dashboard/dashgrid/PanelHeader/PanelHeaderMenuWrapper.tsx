@@ -4,7 +4,7 @@ import { LoadingState } from '@grafana/data';
 
 import { DashboardModel, PanelModel } from '../../state';
 
-import { PanelHeaderMenu, PanelHeaderMenuNew } from './PanelHeaderMenu';
+import { PanelHeaderMenu } from './PanelHeaderMenu';
 import { PanelHeaderMenuProvider } from './PanelHeaderMenuProvider';
 
 interface Props {
@@ -16,32 +16,10 @@ interface Props {
   menuWrapperClassName?: string;
 }
 
-export function PanelHeaderMenuWrapper({
-  panel,
-  dashboard,
-  loadingState,
-  style,
-  menuItemsClassName,
-  menuWrapperClassName,
-}: Props) {
-  return (
-    <PanelHeaderMenuProvider panel={panel} dashboard={dashboard} loadingState={loadingState}>
-      {({ items }) => (
-        <PanelHeaderMenu
-          className={menuWrapperClassName}
-          itemsClassName={menuItemsClassName}
-          style={style}
-          items={items}
-        />
-      )}
-    </PanelHeaderMenuProvider>
-  );
-}
-
 export function PanelHeaderMenuWrapperNew({ style, panel, dashboard, loadingState }: Props) {
   return (
     <PanelHeaderMenuProvider panel={panel} dashboard={dashboard} loadingState={loadingState}>
-      {({ items }) => <PanelHeaderMenuNew style={style} items={items} />}
+      {({ items }) => <PanelHeaderMenu style={style} items={items} />}
     </PanelHeaderMenuProvider>
   );
 }

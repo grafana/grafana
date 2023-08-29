@@ -1,4 +1,3 @@
-import classNames from 'classnames';
 import React, { PureComponent } from 'react';
 import { Subscription } from 'rxjs';
 
@@ -17,13 +16,11 @@ import {
   PanelData,
   PanelPlugin,
   PanelPluginMeta,
-  PluginContextProvider,
   TimeRange,
   toDataFrameDTO,
   toUtc,
 } from '@grafana/data';
-import { selectors } from '@grafana/e2e-selectors';
-import { config, locationService, RefreshEvent } from '@grafana/runtime';
+import { RefreshEvent } from '@grafana/runtime';
 import { VizLegendOptions } from '@grafana/schema';
 import {
   ErrorBoundary,
@@ -33,7 +30,6 @@ import {
   SeriesVisibilityChangeMode,
   AdHocFilterItem,
 } from '@grafana/ui';
-import { PANEL_BORDER } from 'app/core/constants';
 import { profiler } from 'app/core/profiler';
 import { applyPanelTimeOverrides } from 'app/features/dashboard/utils/panel';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
@@ -43,7 +39,6 @@ import { changeSeriesColorConfigFactory } from 'app/plugins/panel/timeseries/ove
 import { dispatch } from 'app/store/store';
 import { RenderEvent } from 'app/types/events';
 
-import { isSoloRoute } from '../../../routes/utils';
 import { deleteAnnotation, saveAnnotation, updateAnnotation } from '../../annotations/api';
 import { getDashboardQueryRunner } from '../../query/state/DashboardQueryRunner/DashboardQueryRunner';
 import { getTimeSrv, TimeSrv } from '../services/TimeSrv';
@@ -51,7 +46,6 @@ import { DashboardModel, PanelModel } from '../state';
 import { getPanelChromeProps } from '../utils/getPanelChromeProps';
 import { loadSnapshotData } from '../utils/loadSnapshotData';
 
-import { PanelHeader } from './PanelHeader/PanelHeader';
 import { PanelHeaderMenuWrapperNew } from './PanelHeader/PanelHeaderMenuWrapper';
 import { seriesVisibilityConfigFactory } from './SeriesVisibilityConfigFactory';
 import { liveTimer } from './liveTimer';
@@ -524,181 +518,70 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
     );
   }
 
-  renderPanel(width: number, height: number) {
-    const { panel, plugin, dashboard } = this.props;
-    const { renderCounter, data } = this.state;
-    const { theme } = config;
-    const { state: loadingState } = data;
-
-    // do not render component until we have first data
-    if (this.skipFirstRender(loadingState)) {
-      return null;
-    }
-
-    // This is only done to increase a counter that is used by backend
-    // image rendering to know when to capture image
-    if (this.shouldSignalRenderingCompleted(loadingState, plugin.meta)) {
-      profiler.renderingCompleted();
-    }
-
-    const PanelComponent = plugin.panel!;
-    const timeRange = this.state.liveTime ?? data.timeRange ?? this.timeSrv.timeRange();
-    const headerHeight = this.hasOverlayHeader() ? 0 : theme.panelHeaderHeight;
-    const chromePadding = plugin.noPadding ? 0 : theme.panelPadding;
-    const panelWidth = width - chromePadding * 2 - PANEL_BORDER;
-    const innerPanelHeight = height - headerHeight - chromePadding * 2 - PANEL_BORDER;
-    const panelContentClassNames = classNames({
-      'panel-content': true,
-      'panel-content--no-padding': plugin.noPadding,
-    });
-    const panelOptions = panel.getOptions();
-
-    // Update the event filter (dashboard settings may have changed)
-    // Yes this is called ever render for a function that is triggered on every mouse move
-    this.eventFilter.onlyLocal = dashboard.graphTooltip === 0;
-
-    const timeZone = this.props.timezone || this.props.dashboard.getTimezone();
-
-    return (
-      <>
-        <div className={panelContentClassNames}>
-          <PluginContextProvider meta={plugin.meta}>
-            <PanelContextProvider value={this.state.context}>
-              <PanelComponent
-                id={panel.id}
-                data={data}
-                title={panel.title}
-                timeRange={timeRange}
-                timeZone={timeZone}
-                options={panelOptions}
-                fieldConfig={panel.fieldConfig}
-                transparent={panel.transparent}
-                width={panelWidth}
-                height={innerPanelHeight}
-                renderCounter={renderCounter}
-                replaceVariables={panel.replaceVariables}
-                onOptionsChange={this.onOptionsChange}
-                onFieldConfigChange={this.onFieldConfigChange}
-                onChangeTimeRange={this.onChangeTimeRange}
-                eventBus={dashboard.events}
-              />
-            </PanelContextProvider>
-          </PluginContextProvider>
-        </div>
-      </>
-    );
-  }
-
-  hasOverlayHeader() {
-    const { panel } = this.props;
-    const { data } = this.state;
-
-    // always show normal header if we have time override
-    if (data.request && data.request.timeInfo) {
-      return false;
-    }
-
-    return !panel.hasTitle();
-  }
-
   render() {
-    const { dashboard, panel, isViewing, isEditing, width, height, plugin } = this.props;
+    const { dashboard, panel, width, height, plugin } = this.props;
     const { errorMessage, data } = this.state;
     const { transparent } = panel;
 
-    const alertState = data.alertState?.state;
-    const hasHoverHeader = this.hasOverlayHeader();
-
-    const containerClassNames = classNames({
-      'panel-container': true,
-      'panel-container--absolute': isSoloRoute(locationService.getLocation().pathname),
-      'panel-container--transparent': transparent,
-      'panel-container--no-title': hasHoverHeader,
-      [`panel-alert-state--${alertState}`]: alertState !== undefined,
-    });
+    // todo delete css classes if not used
+    // const containerClassNames = classNames({
+    //   'panel-container': true,
+    //   'panel-container--absolute': isSoloRoute(locationService.getLocation().pathname),
+    //   'panel-container--transparent': transparent,
+    //   'panel-container--no-title': hasHoverHeader,
+    //   [`panel-alert-state--${alertState}`]: alertState !== undefined,
+    // });
 
     const panelChromeProps = getPanelChromeProps({ ...this.props, data });
 
-    if (config.featureToggles.newPanelChromeUI) {
-      // Shift the hover menu down if it's on the top row so it doesn't get clipped by topnav
-      const hoverHeaderOffset = (panel.gridPos?.y ?? 0) === 0 ? -16 : undefined;
+    // Shift the hover menu down if it's on the top row so it doesn't get clipped by topnav
+    const hoverHeaderOffset = (panel.gridPos?.y ?? 0) === 0 ? -16 : undefined;
 
-      const menu = (
-        <div data-testid="panel-dropdown">
-          <PanelHeaderMenuWrapperNew panel={panel} dashboard={dashboard} loadingState={data.state} />
-        </div>
-      );
+    const menu = (
+      <div data-testid="panel-dropdown">
+        <PanelHeaderMenuWrapperNew panel={panel} dashboard={dashboard} loadingState={data.state} />
+      </div>
+    );
 
-      return (
-        <PanelChrome
-          width={width}
-          height={height}
-          title={panelChromeProps.title}
-          loadingState={data.state}
-          statusMessage={errorMessage}
-          statusMessageOnClick={panelChromeProps.onOpenErrorInspect}
-          description={panelChromeProps.description}
-          titleItems={panelChromeProps.titleItems}
-          menu={this.props.hideMenu ? undefined : menu}
-          dragClass={panelChromeProps.dragClass}
-          dragClassCancel="grid-drag-cancel"
-          padding={panelChromeProps.padding}
-          hoverHeaderOffset={hoverHeaderOffset}
-          hoverHeader={panelChromeProps.hasOverlayHeader()}
-          displayMode={transparent ? 'transparent' : 'default'}
-          onCancelQuery={panelChromeProps.onCancelQuery}
-          onOpenMenu={panelChromeProps.onOpenMenu}
-        >
-          {(innerWidth, innerHeight) => (
-            <>
-              <ErrorBoundary
-                dependencies={[data, plugin, panel.getOptions()]}
-                onError={this.onPanelError}
-                onRecover={this.onPanelErrorRecover}
-              >
-                {({ error }) => {
-                  if (error) {
-                    return null;
-                  }
-                  return this.renderPanelContent(innerWidth, innerHeight);
-                }}
-              </ErrorBoundary>
-            </>
-          )}
-        </PanelChrome>
-      );
-    } else {
-      return (
-        <section
-          className={containerClassNames}
-          aria-label={selectors.components.Panels.Panel.containerByTitle(panel.title)}
-        >
-          <PanelHeader
-            panel={panel}
-            dashboard={dashboard}
-            title={panel.title}
-            description={panel.description}
-            links={panel.links}
-            error={errorMessage}
-            isEditing={isEditing}
-            isViewing={isViewing}
-            alertState={alertState}
-            data={data}
-          />
-          <ErrorBoundary
-            dependencies={[data, plugin, panel.getOptions()]}
-            onError={this.onPanelError}
-            onRecover={this.onPanelErrorRecover}
-          >
-            {({ error }) => {
-              if (error) {
-                return null;
-              }
-              return this.renderPanel(width, height);
-            }}
-          </ErrorBoundary>
-        </section>
-      );
-    }
+    return (
+      <PanelChrome
+        width={width}
+        height={height}
+        title={panelChromeProps.title}
+        loadingState={data.state}
+        statusMessage={errorMessage}
+        statusMessageOnClick={panelChromeProps.onOpenErrorInspect}
+        description={panelChromeProps.description}
+        titleItems={panelChromeProps.titleItems}
+        menu={this.props.hideMenu ? undefined : menu}
+        dragClass={panelChromeProps.dragClass}
+        dragClassCancel="grid-drag-cancel"
+        padding={panelChromeProps.padding}
+        hoverHeaderOffset={hoverHeaderOffset}
+        hoverHeader={panelChromeProps.hasOverlayHeader()}
+        displayMode={transparent ? 'transparent' : 'default'}
+        onCancelQuery={panelChromeProps.onCancelQuery}
+        onOpenMenu={panelChromeProps.onOpenMenu}
+      >
+        {(innerWidth, innerHeight) => (
+          <>
+            <ErrorBoundary
+              dependencies={[data, plugin, panel.getOptions()]}
+              onError={this.onPanelError}
+              onRecover={this.onPanelErrorRecover}
+            >
+              {({ error }) => {
+                if (error) {
+                  return null;
+                }
+                return this.renderPanelContent(innerWidth, innerHeight);
+              }}
+            </ErrorBoundary>
+          </>
+        )}
+      </PanelChrome>
+    );
+
+
   }
 }
