@@ -4,6 +4,8 @@ import { FocusScope } from '@react-aria/focus';
 import { OverlayContainer, useOverlay } from '@react-aria/overlays';
 import React, { PropsWithChildren, useRef } from 'react';
 
+import { t } from 'app/core/internationalization';
+
 import { useTheme2 } from '../../themes';
 import { IconName } from '../../types';
 import { IconButton } from '../IconButton/IconButton';
@@ -84,7 +86,7 @@ export function Modal(props: PropsWithChildren<Props>) {
               typeof title !== 'string' && title
             }
             <div className={styles.modalHeaderClose}>
-              <IconButton name="times" size="xl" onClick={onDismiss} tooltip="Close" />
+              <IconButton name="times" size="xl" onClick={onDismiss} tooltip={t('modal.close-tooltip', 'Close')} />
             </div>
           </div>
           <div className={cx(styles.modalContent, contentClassName)}>{children}</div>

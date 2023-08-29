@@ -263,6 +263,9 @@
       "unknown": ""
     }
   },
+  "modal": {
+    "close-tooltip": ""
+  },
   "nav": {
     "add-new-connections": {
       "title": ""
@@ -670,6 +673,17 @@
     },
     "panel": {
       "title": "Partager le panneau"
+    },
+    "playlist": {
+      "copy-link-button": "",
+      "checkbox-description": "",
+      "checkbox-label": "",
+      "link-url-label": "",
+      "mode": "",
+      "mode-kiosk": "",
+      "mode-normal": "",
+      "mode-tv": "",
+      "title": ""
     },
     "snapshot": {
       "cancel-button": "Annuler",

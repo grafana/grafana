@@ -258,6 +258,9 @@
       "unknown": "Unknown error occurred"
     }
   },
+  "modal": {
+    "close-tooltip": "Close"
+  },
   "nav": {
     "add-new-connections": {
       "title": "Add new connection"
@@ -665,6 +668,17 @@
     },
     "panel": {
       "title": "Share Panel"
+    },
+    "playlist": {
+      "copy-link-button": "Copy",
+      "checkbox-description": "Panel heights will be adjusted to fit screen size",
+      "checkbox-label": "Autofit",
+      "link-url-label": "Link URL",
+      "mode": "Mode",
+      "mode-kiosk": "Kiosk",
+      "mode-normal": "Normal",
+      "mode-tv": "TV",
+      "title": "Share playlist"
     },
     "snapshot": {
       "cancel-button": "Cancel",

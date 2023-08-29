@@ -258,6 +258,9 @@
       "unknown": "Ůŉĸŉőŵŉ ęřřőř őččūřřęđ"
     }
   },
+  "modal": {
+    "close-tooltip": "Cľőşę"
+  },
   "nav": {
     "add-new-connections": {
       "title": "Åđđ ŉęŵ čőŉŉęčŧįőŉ"
@@ -665,6 +668,17 @@
     },
     "panel": {
       "title": "Ŝĥäřę Päŉęľ"
+    },
+    "playlist": {
+      "copy-link-button": "Cőpy",
+      "checkbox-description": "Päŉęľ ĥęįģĥŧş ŵįľľ þę äđĵūşŧęđ ŧő ƒįŧ şčřęęŉ şįžę",
+      "checkbox-label": "Åūŧőƒįŧ",
+      "link-url-label": "Ŀįŉĸ ŮŖĿ",
+      "mode": "Mőđę",
+      "mode-kiosk": "Ķįőşĸ",
+      "mode-normal": "Ńőřmäľ",
+      "mode-tv": "ŦV",
+      "title": "Ŝĥäřę pľäyľįşŧ"
     },
     "snapshot": {
       "cancel-button": "Cäŉčęľ",

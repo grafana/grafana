@@ -253,6 +253,9 @@
       "unknown": ""
     }
   },
+  "modal": {
+    "close-tooltip": ""
+  },
   "nav": {
     "add-new-connections": {
       "title": ""
@@ -660,6 +663,17 @@
     },
     "panel": {
       "title": "分享面板"
+    },
+    "playlist": {
+      "copy-link-button": "",
+      "checkbox-description": "",
+      "checkbox-label": "",
+      "link-url-label": "",
+      "mode": "",
+      "mode-kiosk": "",
+      "mode-normal": "",
+      "mode-tv": "",
+      "title": ""
     },
     "snapshot": {
       "cancel-button": "取消",
