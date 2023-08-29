@@ -60,8 +60,8 @@ func (o *Service) GetCurrentOAuthToken(ctx context.Context, usr identity.Request
 	}
 
 	namespace, id := usr.GetNamespacedID()
-	if namespace != identity.NamespaceUser && namespace != identity.NamespaceRenderService {
-		// Not a user, therefore no token. Render service can represent a user
+	if namespace != identity.NamespaceUser {
+		// Not a user, therefore no token.
 		return nil
 	}
 
@@ -108,8 +108,8 @@ func (o *Service) HasOAuthEntry(ctx context.Context, usr identity.Requester) (*l
 	}
 
 	namespace, id := usr.GetNamespacedID()
-	if namespace != identity.NamespaceUser && namespace != identity.NamespaceRenderService {
-		// Not a user, therefore no token. Render service can represent a user
+	if namespace != identity.NamespaceUser {
+		// Not a user, therefore no token.
 		return nil, false, nil
 	}
 
