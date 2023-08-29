@@ -105,8 +105,8 @@ const getStyles = (theme: GrafanaTheme2, props: BoxProps) => {
       display && {
         display,
       },
-      {
-        backgroundColor: theme.colors.background[backgroundColor ?? 'primary'],
+      backgroundColor && {
+        backgroundColor: theme.colors.background[backgroundColor],
       },
     ]),
   };
