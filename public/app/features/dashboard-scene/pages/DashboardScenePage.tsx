@@ -6,20 +6,20 @@ import { Page } from 'app/core/components/Page/Page';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 
-import { getDashboardLoader } from '../serialization/DashboardsLoader';
+import { getDashboardScenePageStateManager } from './DashboardScenePageStateManager';
 
 export interface Props extends GrafanaRouteComponentProps<{ uid: string }> {}
 
-export const DashboardScenePage = ({ match }: Props) => {
-  const loader = getDashboardLoader();
-  const { dashboard, isLoading } = loader.useState();
+export function DashboardScenePage({ match }: Props) {
+  const stateManager = getDashboardScenePageStateManager();
+  const { dashboard, isLoading } = stateManager.useState();
 
   useEffect(() => {
-    loader.loadAndInit(match.params.uid);
+    stateManager.loadAndInit(match.params.uid);
     return () => {
-      loader.clearState();
+      stateManager.clearState();
     };
-  }, [loader, match.params.uid]);
+  }, [stateManager, match.params.uid]);
 
   if (!dashboard) {
     return (
@@ -31,6 +31,6 @@ export const DashboardScenePage = ({ match }: Props) => {
   }
 
   return <dashboard.Component model={dashboard} />;
-};
+}
 
 export default DashboardScenePage;

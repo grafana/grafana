@@ -62,7 +62,7 @@ export const NavToolbarActions = React.memo<Props>(({ dashboard }) => {
   } else {
     // TODO check permissions
     toolbarActions.push(
-      <Button onClick={dashboard.onEnterEditMode} tooltip="Save as copy" fill="text" key="save-as">
+      <Button onClick={dashboard.onSave} tooltip="Save as copy" fill="text" key="save-as">
         Save as
       </Button>
     );
@@ -72,7 +72,7 @@ export const NavToolbarActions = React.memo<Props>(({ dashboard }) => {
       </Button>
     );
     toolbarActions.push(
-      <Button onClick={dashboard.onEnterEditMode} tooltip="Save changes" key="save" disabled={!isDirty}>
+      <Button onClick={dashboard.onSave} tooltip="Save changes" key="save" disabled={!isDirty}>
         Save
       </Button>
     );

@@ -4,6 +4,10 @@ export function getVizPanelKeyForPanelId(panelId: number) {
   return `panel-${panelId}`;
 }
 
+export function getPanelIdForVizPanelKey(key: string) {
+  return parseInt(key.replace('panel-', ''), 10);
+}
+
 /**
  * Useful from tests to simulate mounting a full scene. Children are activated before parents to simulate the real order
  * of React mount order and useEffect ordering.

@@ -1,0 +1,98 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`transformSceneToSaveModel Given a scene Should transfrom back to peristed model 1`] = `
+{
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "links": [],
+  "panels": [
+    {
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic",
+          },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false,
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear",
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none",
+            },
+            "thresholdsStyle": {
+              "mode": "off",
+            },
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+              },
+              {
+                "color": "red",
+                "value": 80,
+              },
+            ],
+          },
+        },
+        "overrides": [],
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 0,
+      },
+      "id": 28,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none",
+        },
+      },
+      "title": "Simple time series graph ",
+      "transformations": [],
+      "transparent": false,
+      "type": "timeseries",
+    },
+  ],
+  "schemaVersion": 36,
+  "tags": [],
+  "time": {
+    "from": "now-5m",
+    "to": "now",
+  },
+  "timezone": "browser",
+  "title": "Dashboard to load1",
+  "uid": "nP8rcffGkasd",
+}
+`;
