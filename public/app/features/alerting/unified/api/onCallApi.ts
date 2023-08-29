@@ -15,6 +15,9 @@ export interface OnCallPaginatedResult<T> {
   results: T[];
 }
 
+export const ONCALL_INTEGRATION_V2_FEATURE = 'grafana_alerting_v2';
+type OnCallFeature = typeof ONCALL_INTEGRATION_V2_FEATURE | string;
+
 type AlertReceiveChannelsResult = OnCallPaginatedResult<OnCallIntegrationDTO> | OnCallIntegrationDTO[];
 
 export interface OnCallIntegrationDTO {
@@ -35,7 +38,8 @@ export const onCallApi = alertingApi.injectEndpoints({
     grafanaOnCallIntegrations: build.query<OnCallIntegrationDTO[], void>({
       query: () => ({
         url: getProxyApiUrl('/api/internal/v1/alert_receive_channels/'),
-        // legacy_grafana_alerting is necessary for OnCall. We no need to differentiate between these two on our side
+        // legacy_grafana_alerting is necessary for OnCall.
+        // We do NOT need to differentiate between these two on our side
         params: { filters: true, integration: [GRAFANA_ONCALL_INTEGRATION_TYPE, 'legacy_grafana_alerting'] },
       }),
       transformResponse: (response: AlertReceiveChannelsResult) => {
@@ -62,7 +66,7 @@ export const onCallApi = alertingApi.injectEndpoints({
       }),
       invalidatesTags: ['OnCallIntegrations'],
     }),
-    features: build.query<string[], void>({
+    features: build.query<OnCallFeature[], void>({
       query: () => ({
         url: getProxyApiUrl('/api/internal/v1/features/'),
       }),

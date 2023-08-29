@@ -7,7 +7,7 @@ import { isFetchError } from '@grafana/runtime';
 import { useAppNotification } from '../../../../../../../core/copy/appNotification';
 import { Receiver } from '../../../../../../../plugins/datasource/alertmanager/types';
 import { NotifierDTO } from '../../../../../../../types';
-import { onCallApi } from '../../../../api/onCallApi';
+import { ONCALL_INTEGRATION_V2_FEATURE, onCallApi } from '../../../../api/onCallApi';
 import { usePluginBridge } from '../../../../hooks/usePluginBridge';
 import { SupportedPlugin } from '../../../../types/pluginBridges';
 import { option } from '../../../../utils/notifier-types';
@@ -24,8 +24,6 @@ export enum OnCallIntegrationSetting {
   IntegrationType = 'integration_type',
   IntegrationName = 'integration_name',
 }
-
-export const ONCALL_INTEGRATION_V2_FEATURE = 'grafana_alerting_v2';
 
 enum OnCallIntegrationStatus {
   Disabled = 'disabled',

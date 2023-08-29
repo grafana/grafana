@@ -342,7 +342,6 @@ export const ReceiversTable = ({ config, alertManagerName }: Props) => {
               return type;
             }
           ),
-          // grafanaAppReceiverType: receiver.grafanaAppReceiverType,
           provisioned: receiver.grafana_managed_receiver_configs?.some((receiver) => receiver.provenance),
           metadata: receiversMetadata.get(receiver),
         },

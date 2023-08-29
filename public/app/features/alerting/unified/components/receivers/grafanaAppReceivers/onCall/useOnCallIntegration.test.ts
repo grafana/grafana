@@ -6,13 +6,10 @@ import { onCallPluginMetaMock } from 'app/features/alerting/unified/mocks';
 import { option } from 'app/features/alerting/unified/utils/notifier-types';
 import { clearPluginSettingsCache } from 'app/features/plugins/pluginSettings';
 
+import { ONCALL_INTEGRATION_V2_FEATURE } from '../../../../api/onCallApi';
+
 import { ReceiverTypes } from './onCall';
-import {
-  OnCallIntegrationSetting,
-  OnCallIntegrationType,
-  ONCALL_INTEGRATION_V2_FEATURE,
-  useOnCallIntegration,
-} from './useOnCallIntegration';
+import { OnCallIntegrationSetting, OnCallIntegrationType, useOnCallIntegration } from './useOnCallIntegration';
 
 const server = setupMswServer();
 

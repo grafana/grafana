@@ -8,11 +8,11 @@ import { byLabelText, byRole, byTestId, byText } from 'testing-library-selector'
 import { clearPluginSettingsCache } from 'app/features/plugins/pluginSettings';
 import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
 
+import { ONCALL_INTEGRATION_V2_FEATURE } from '../../../api/onCallApi';
 import { AlertmanagerConfigBuilder, mockApi, setupMswServer } from '../../../mockApi';
 import { grafanaAlertNotifiersMock } from '../../../mockGrafanaNotifiers';
 import { onCallPluginMetaMock } from '../../../mocks';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../../utils/datasource';
-import { ONCALL_INTEGRATION_V2_FEATURE } from '../grafanaAppReceivers/onCall/useOnCallIntegration';
 
 import { GrafanaReceiverForm } from './GrafanaReceiverForm';
 
