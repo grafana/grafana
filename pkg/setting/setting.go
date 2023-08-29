@@ -98,7 +98,6 @@ var (
 	LoginHint               string
 	PasswordHint            string
 	DisableSignoutMenu      bool
-	SignoutRedirectUrl      string
 	ExternalUserMngLinkUrl  string
 	ExternalUserMngLinkName string
 	ExternalUserMngInfo     string
@@ -282,6 +281,7 @@ type Cfg struct {
 	DisableLogin                 bool
 	AdminEmail                   string
 	DisableLoginForm             bool
+	SignoutRedirectUrl           string
 	// Not documented & not supported
 	// stand in until a more complete solution is implemented
 	AuthConfigUIAdminAccess bool
@@ -1557,7 +1557,7 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 	}
 
 	cfg.OAuthCookieMaxAge = auth.Key("oauth_state_cookie_max_age").MustInt(600)
-	SignoutRedirectUrl = valueAsString(auth, "signout_redirect_url", "")
+	cfg.SignoutRedirectUrl = valueAsString(auth, "signout_redirect_url", "")
 	// Deprecated
 	cfg.OAuthSkipOrgRoleUpdateSync = auth.Key("oauth_skip_org_role_update_sync").MustBool(false)
 	if cfg.OAuthSkipOrgRoleUpdateSync {
