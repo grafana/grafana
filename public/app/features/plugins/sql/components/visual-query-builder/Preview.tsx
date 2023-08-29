@@ -3,6 +3,7 @@ import React from 'react';
 import { useCopyToClipboard } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { reportInteraction } from '@grafana/runtime';
 import { CodeEditor, Field, IconButton, useStyles2 } from '@grafana/ui';
 
 import { formatSQL } from '../../utils/formatSQL';
@@ -16,10 +17,15 @@ export function Preview({ rawSql }: PreviewProps) {
   const [_, copyToClipboard] = useCopyToClipboard();
   const styles = useStyles2(getStyles);
 
+  const copyPreview = (rawSql: string) => {
+    copyToClipboard(rawSql);
+    reportInteraction('grafana_sql_preview_copied', {});
+  };
+
   const labelElement = (
     <div className={styles.labelWrapper}>
       <span className={styles.label}>Preview</span>
-      <IconButton tooltip="Copy to clipboard" onClick={() => copyToClipboard(rawSql)} name="copy" />
+      <IconButton tooltip="Copy to clipboard" onClick={() => copyPreview(rawSql)} name="copy" />
     </div>
   );
 

@@ -3,6 +3,7 @@ import { useCopyToClipboard } from 'react-use';
 
 import { SelectableValue } from '@grafana/data';
 import { EditorField, EditorHeader, EditorMode, EditorRow, FlexItem, InlineSelect, Space } from '@grafana/experimental';
+import { reportInteraction } from '@grafana/runtime';
 import { Button, InlineSwitch, RadioButtonGroup, Tooltip } from '@grafana/ui';
 
 import { QueryWithDefaults } from '../defaults';
@@ -48,6 +49,11 @@ export function QueryHeader({
 
   const onEditorModeChange = useCallback(
     (newEditorMode: EditorMode) => {
+      reportInteraction('grafana_sql_editor_changed', {
+        datasource: query.datasource?.type,
+        selectedEditorMode: newEditorMode,
+      });
+
       if (editorMode === EditorMode.Code) {
         setShowConfirm(true);
         return;
@@ -59,6 +65,11 @@ export function QueryHeader({
 
   const onFormatChange = (e: SelectableValue) => {
     const next = { ...query, format: e.value !== undefined ? e.value : QueryFormat.Table };
+
+    reportInteraction('grafana_sql_format_changed', {
+      datasource: query.datasource?.type,
+      selectedFormat: next.format,
+    });
     onChange(next);
   };
 
@@ -123,10 +134,15 @@ export function QueryHeader({
               transparent={true}
               showLabel={true}
               value={queryRowFilter.filter}
-              onChange={(ev) =>
+              onChange={(ev) => {
+                reportInteraction('grafana_sql_filter_toggled', {
+                  datasource: query.datasource?.type,
+                  displayed: ev.target instanceof HTMLInputElement && ev.target.checked,
+                });
+
                 ev.target instanceof HTMLInputElement &&
-                onQueryRowChange({ ...queryRowFilter, filter: ev.target.checked })
-              }
+                  onQueryRowChange({ ...queryRowFilter, filter: ev.target.checked });
+              }}
             />
 
             <InlineSwitch
@@ -135,10 +151,15 @@ export function QueryHeader({
               transparent={true}
               showLabel={true}
               value={queryRowFilter.group}
-              onChange={(ev) =>
+              onChange={(ev) => {
+                reportInteraction('grafana_sql_group_toggled', {
+                  datasource: query.datasource?.type,
+                  displayed: ev.target instanceof HTMLInputElement && ev.target.checked,
+                });
+
                 ev.target instanceof HTMLInputElement &&
-                onQueryRowChange({ ...queryRowFilter, group: ev.target.checked })
-              }
+                  onQueryRowChange({ ...queryRowFilter, group: ev.target.checked });
+              }}
             />
 
             <InlineSwitch
@@ -147,10 +168,15 @@ export function QueryHeader({
               transparent={true}
               showLabel={true}
               value={queryRowFilter.order}
-              onChange={(ev) =>
+              onChange={(ev) => {
+                reportInteraction('grafana_sql_order_toggled', {
+                  datasource: query.datasource?.type,
+                  displayed: ev.target instanceof HTMLInputElement && ev.target.checked,
+                });
+
                 ev.target instanceof HTMLInputElement &&
-                onQueryRowChange({ ...queryRowFilter, order: ev.target.checked })
-              }
+                  onQueryRowChange({ ...queryRowFilter, order: ev.target.checked });
+              }}
             />
 
             <InlineSwitch
@@ -159,10 +185,15 @@ export function QueryHeader({
               transparent={true}
               showLabel={true}
               value={queryRowFilter.preview}
-              onChange={(ev) =>
+              onChange={(ev) => {
+                reportInteraction('grafana_sql_preview_toggled', {
+                  datasource: query.datasource?.type,
+                  displayed: ev.target instanceof HTMLInputElement && ev.target.checked,
+                });
+
                 ev.target instanceof HTMLInputElement &&
-                onQueryRowChange({ ...queryRowFilter, preview: ev.target.checked })
-              }
+                  onQueryRowChange({ ...queryRowFilter, preview: ev.target.checked });
+              }}
             />
           </>
         )}
