@@ -122,6 +122,7 @@ function SilenceList({
   if (!!items.length) {
     return (
       <DynamicTable
+        pagination={{ itemsPerPage: 25 }}
         items={items}
         cols={columns}
         isExpandable
