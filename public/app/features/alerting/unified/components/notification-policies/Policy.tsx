@@ -21,6 +21,7 @@ import { normalizeMatchers } from '../../utils/matchers';
 import { createContactPointLink, createMuteTimingLink } from '../../utils/misc';
 import { getInheritedProperties, InhertitableProperties } from '../../utils/notification-policies';
 import { createUrl } from '../../utils/url';
+import { Authorize } from '../Authorize';
 import { HoverCard } from '../HoverCard';
 import { Label } from '../Label';
 import { MetaText } from '../MetaText';
@@ -77,8 +78,11 @@ const Policy: FC<PolicyComponentProps> = ({
   const [updateTreeSupported, updateTreeAllowed] = useAlertmanagerAbility(
     AlertmanagerAction.UpdateNotificationPolicyTree
   );
+  const [deletePolicySupported, deletePolicyAllowed] = useAlertmanagerAbility(
+    AlertmanagerAction.DeleteNotificationPolicy
+  );
 
-  const canDeleteRoutes = updateTreeSupported && updateTreeAllowed;
+  const canDeleteRoutes = deletePolicySupported && deletePolicyAllowed;
   const canEditRoutes = updateTreeSupported && updateTreeAllowed;
 
   const canReadProvisioning =
@@ -165,19 +169,21 @@ const Policy: FC<PolicyComponentProps> = ({
                 {provisioned && <ProvisioningBadge />}
                 {readOnly && !showExport ? null : (
                   <Stack direction="row" gap={0.5}>
-                    {!readOnly && canEditRoutes && (
-                      <ConditionalWrap shouldWrap={provisioned} wrap={ProvisionedTooltip}>
-                        <Button
-                          variant="secondary"
-                          icon="plus"
-                          size="sm"
-                          onClick={() => onAddPolicy(currentRoute)}
-                          disabled={provisioned}
-                          type="button"
-                        >
-                          New nested policy
-                        </Button>
-                      </ConditionalWrap>
+                    {!readOnly && (
+                      <Authorize actions={[AlertmanagerAction.CreateNotificationPolicy]}>
+                        <ConditionalWrap shouldWrap={provisioned} wrap={ProvisionedTooltip}>
+                          <Button
+                            variant="secondary"
+                            icon="plus"
+                            size="sm"
+                            onClick={() => onAddPolicy(currentRoute)}
+                            disabled={provisioned}
+                            type="button"
+                          >
+                            New nested policy
+                          </Button>
+                        </ConditionalWrap>
+                      </Authorize>
                     )}
 
                     <Dropdown

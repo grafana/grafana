@@ -30,8 +30,10 @@ export enum AlertmanagerAction {
   DeleteNotificationTemplate = 'delete-notification-template',
 
   // notification policies
+  CreateNotificationPolicy = 'create-notification-policy',
   ViewNotificationPolicyTree = 'view-notification-policy-tree',
   UpdateNotificationPolicyTree = 'update-notification-policy-tree',
+  DeleteNotificationPolicy = 'delete-notification-policy',
 
   // silences – these cannot be deleted only "expired" (updated)
   CreateSilence = 'create-silence',
@@ -137,11 +139,19 @@ export function useAlertmanagerAbilities(): Abilities<AlertmanagerAction> {
       ctx.hasPermission(notificationsPermissions.delete),
     ],
     // -- notification policies --
+    [AlertmanagerAction.CreateNotificationPolicy]: [
+      hasConfigurationAPI,
+      ctx.hasPermission(notificationsPermissions.create),
+    ],
+    [AlertmanagerAction.ViewNotificationPolicyTree]: [true, ctx.hasPermission(notificationsPermissions.read)],
     [AlertmanagerAction.UpdateNotificationPolicyTree]: [
       hasConfigurationAPI,
       ctx.hasPermission(notificationsPermissions.update),
     ],
-    [AlertmanagerAction.ViewNotificationPolicyTree]: [true, ctx.hasPermission(notificationsPermissions.read)],
+    [AlertmanagerAction.DeleteNotificationPolicy]: [
+      hasConfigurationAPI,
+      ctx.hasPermission(notificationsPermissions.delete),
+    ],
     // -- silences --
     [AlertmanagerAction.CreateSilence]: [hasConfigurationAPI, ctx.hasPermission(instancePermissions.create)],
     [AlertmanagerAction.ViewSilence]: [true, ctx.hasPermission(instancePermissions.read)],

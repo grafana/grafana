@@ -10,6 +10,10 @@ exports[`alertmanager abilities should report Create / Update / Delete actions a
     false,
     false,
   ],
+  "create-notification-policy": [
+    false,
+    false,
+  ],
   "create-notification-template": [
     false,
     false,
@@ -23,6 +27,10 @@ exports[`alertmanager abilities should report Create / Update / Delete actions a
     false,
   ],
   "delete-mute-timing": [
+    false,
+    false,
+  ],
+  "delete-notification-policy": [
     false,
     false,
   ],
@@ -95,6 +103,10 @@ exports[`alertmanager abilities should report everything except exporting for Mi
     true,
     true,
   ],
+  "create-notification-policy": [
+    true,
+    true,
+  ],
   "create-notification-template": [
     true,
     true,
@@ -108,6 +120,10 @@ exports[`alertmanager abilities should report everything except exporting for Mi
     true,
   ],
   "delete-mute-timing": [
+    true,
+    true,
+  ],
+  "delete-notification-policy": [
     true,
     true,
   ],
@@ -180,6 +196,10 @@ exports[`alertmanager abilities should report everything is supported for builti
     true,
     false,
   ],
+  "create-notification-policy": [
+    true,
+    false,
+  ],
   "create-notification-template": [
     true,
     false,
@@ -193,6 +213,10 @@ exports[`alertmanager abilities should report everything is supported for builti
     false,
   ],
   "delete-mute-timing": [
+    true,
+    false,
+  ],
+  "delete-notification-policy": [
     true,
     false,
   ],
