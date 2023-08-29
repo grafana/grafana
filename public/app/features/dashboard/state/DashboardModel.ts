@@ -154,7 +154,6 @@ export class DashboardModel implements TimeModel {
     this.title = data.title ?? 'No Title';
     this.description = data.description;
     this.tags = data.tags ?? [];
-    this.style = data.style ?? 'dark';
     this.timezone = data.timezone ?? '';
     this.weekStart = data.weekStart ?? '';
     this.editable = data.editable !== false;

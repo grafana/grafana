@@ -3371,7 +3371,6 @@
     }
   ],
   "schemaVersion": 16,
-  "style": "dark",
   "tags": ["panel-test", "gdev"],
   "templating": {
     "list": []
