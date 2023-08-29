@@ -108,10 +108,7 @@ e2e.scenario({
         e2e.components.Panels.Visualization.Table.body()
           .should('be.visible')
           .within(() => {
-            e2e()
-              .get('[role="row"]')
-              .first()
-              .should('have.text', /00:00:00/);
+            e2e().get('[role="row"]').first().should('include.text', '00:00:00');
           });
       });
 
@@ -127,10 +124,7 @@ e2e.scenario({
         e2e.components.Panels.Visualization.Table.body()
           .should('be.visible')
           .within(() => {
-            e2e()
-              .get('[role="row"]')
-              .first()
-              .should('have.text', /00:00:00/);
+            e2e().get('[role="row"]').first().should('include.text', '00:00:00');
           });
       });
 
@@ -140,10 +134,7 @@ e2e.scenario({
         e2e.components.Panels.Visualization.Table.body()
           .should('be.visible')
           .within(() => {
-            e2e()
-              .get('[role="row"]')
-              .first()
-              .should('have.text', /00:00:00/);
+            e2e().get('[role="row"]').first().should('include.text', '00:00:00');
           });
       });
 
@@ -160,10 +151,7 @@ e2e.scenario({
         e2e.components.Panels.Visualization.Table.body()
           .should('be.visible')
           .within(() => {
-            e2e()
-              .get('[role="row"]')
-              .first()
-              .should('have.text', /00:00:00/);
+            e2e().get('[role="row"]').first().should('include.text', '00:00:00');
           });
       });
 
@@ -179,10 +167,7 @@ e2e.scenario({
         e2e.components.Panels.Visualization.Table.body()
           .should('be.visible')
           .within(() => {
-            e2e()
-              .get('[role="row"]')
-              .first()
-              .should('have.text', /00:00:00/);
+            e2e().get('[role="row"]').first().should('include.text', '00:00:00');
           });
       });
 
@@ -192,10 +177,7 @@ e2e.scenario({
         e2e.components.Panels.Visualization.Table.body()
           .should('be.visible')
           .within(() => {
-            e2e()
-              .get('[role="row"]')
-              .first()
-              .should('have.text', /00:00:00/);
+            e2e().get('[role="row"]').first().should('include.text', '00:00:00');
           });
       });
 
@@ -212,10 +194,7 @@ e2e.scenario({
         e2e.components.Panels.Visualization.Table.body()
           .should('be.visible')
           .within(() => {
-            e2e()
-              .get('[role="row"]')
-              .first()
-              .should('have.text', /00:00:00/);
+            e2e().get('[role="row"]').first().should('include.text', '00:00:00');
           });
       });
 
@@ -231,10 +210,7 @@ e2e.scenario({
         e2e.components.Panels.Visualization.Table.body()
           .should('be.visible')
           .within(() => {
-            e2e()
-              .get('[role="row"]')
-              .first()
-              .should('have.text', /00:00:00/);
+            e2e().get('[role="row"]').first().should('include.text', '00:00:00');
           });
       });
 
@@ -244,10 +220,7 @@ e2e.scenario({
         e2e.components.Panels.Visualization.Table.body()
           .should('be.visible')
           .within(() => {
-            e2e()
-              .get('[role="row"]')
-              .first()
-              .should('have.text', /00:00:00/);
+            e2e().get('[role="row"]').first().should('include.text', '00:00:00');
           });
       });
   },
