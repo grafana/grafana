@@ -18,7 +18,7 @@ interface Context {
 }
 
 const AlertmanagerContext = React.createContext<Context | undefined>(undefined);
-const RULER_ENABLED_ALERTMANAGER_FLAVORS = [AlertManagerImplementation.mimir, AlertManagerImplementation.cortex];
+const CONFIG_API_ENABLED_ALERTMANAGER_FLAVORS = [AlertManagerImplementation.mimir, AlertManagerImplementation.cortex];
 
 interface Props extends React.PropsWithChildren {
   accessType: 'instance' | 'notification';
@@ -62,7 +62,7 @@ const AlertmanagerProvider = ({ children, accessType, alertmanagerSourceName }: 
 
   // determine if we're dealing with an Alertmanager data source that supports the ruler API
   const isGrafanaFlavoredAlertmanager = selectedAlertmanager === GRAFANA_RULES_SOURCE_NAME;
-  const isRulerFlavoredAlertmanager = RULER_ENABLED_ALERTMANAGER_FLAVORS.includes(
+  const isRulerFlavoredAlertmanager = CONFIG_API_ENABLED_ALERTMANAGER_FLAVORS.includes(
     selectedAlertmanagerConfig?.implementation!
   );
 

@@ -31,8 +31,8 @@ export const AlertDetails = ({ alert, alertManagerSourceName }: AmNotificationsA
   return (
     <>
       <div className={styles.actionsRow}>
-        <Authorize actions={[AlertmanagerAction.CreateSilence]}>
-          {alert.status.state === AlertState.Suppressed && (
+        {alert.status.state === AlertState.Suppressed && (
+          <Authorize actions={[AlertmanagerAction.CreateSilence, AlertmanagerAction.UpdateSilence]}>
             <LinkButton
               href={`${makeAMLink(
                 '/alerting/silences',
@@ -44,8 +44,10 @@ export const AlertDetails = ({ alert, alertManagerSourceName }: AmNotificationsA
             >
               Manage silences
             </LinkButton>
-          )}
-          {alert.status.state === AlertState.Active && (
+          </Authorize>
+        )}
+        {alert.status.state === AlertState.Active && (
+          <Authorize actions={[AlertmanagerAction.CreateSilence]}>
             <LinkButton
               href={makeLabelBasedSilenceLink(alertManagerSourceName, alert.labels)}
               className={styles.button}
@@ -54,8 +56,8 @@ export const AlertDetails = ({ alert, alertManagerSourceName }: AmNotificationsA
             >
               Silence
             </LinkButton>
-          )}
-        </Authorize>
+          </Authorize>
+        )}
         {isSeeSourceButtonEnabled && alert.generatorURL && (
           <LinkButton className={styles.button} href={alert.generatorURL} icon={'chart-line'} size={'sm'}>
             See source

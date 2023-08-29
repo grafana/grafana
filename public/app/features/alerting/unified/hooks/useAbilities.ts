@@ -13,7 +13,7 @@ import { getInstancesPermissions, getNotificationsPermissions } from '../utils/a
  */
 export enum AlertmanagerAction {
   // configuration
-  ViewExternalConfiguration = 'View-external-configuration',
+  ViewExternalConfiguration = 'view-external-configuration',
   UpdateExternalConfiguration = 'update-external-configuration',
 
   // contact points
