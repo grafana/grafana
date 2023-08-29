@@ -11,7 +11,7 @@ labels:
     - enterprise
     - oss
 title: Pie chart
-weight: 850
+weight: 100
 ---
 
 # Pie chart
