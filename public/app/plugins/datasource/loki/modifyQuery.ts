@@ -175,7 +175,9 @@ export function addLabelToQuery(
   // If we have non-empty stream selector and parser/label filter, we want to add a new label filter after the last one.
   // If some of the stream selectors don't have matchers, we want to add new matcher to the all stream selectors.
   if (forceAsLabelFilter) {
-    return addFilterAsLabelFilter(query, streamSelectorPositions, filter);
+    // `forceAsLabelFilter` is mostly used for non-indexed labels. Those are not very well distinguishable from real labels, but need to be added as label filters after the last stream selector, parser or label filter.
+    const positionToAdd = findLastPosition([...streamSelectorPositions, ...labelFilterPositions, ...parserPositions]);
+    return addFilterAsLabelFilter(query, [positionToAdd], filter);
   } else if (everyStreamSelectorHasMatcher && (labelFilterPositions.length || parserPositions.length)) {
     const positionToAdd = findLastPosition([...labelFilterPositions, ...parserPositions]);
     return addFilterAsLabelFilter(query, [positionToAdd], filter);
