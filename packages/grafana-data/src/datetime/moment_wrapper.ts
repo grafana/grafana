@@ -130,6 +130,12 @@ export const dateTimeForTimeZone = (
     return toUtc(input, formatInput);
   }
 
+  if (timezone && timezone !== 'browser') {
+    // TODO fix types here
+    //@ts-ignore
+    return moment.tz(dateTimeAsMoment(input), formatInput, timezone);
+  }
+
   return dateTime(input, formatInput);
 };
 
