@@ -709,6 +709,13 @@ var (
 			RequiresRestart: true,
 		},
 		{
+			Name:         "angularDeprecationUI",
+			Description:  "Display new Angular deprecation-related UI features",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaPluginsPlatformSquad,
+		},
+		{
 			Name: 		  "dashgpt",
 			Description:  "Enable AI powered features",
 			Stage: 	      FeatureStageExperimental,

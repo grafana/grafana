@@ -3867,14 +3867,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/lezer-logql@npm:0.1.9":
-  version: 0.1.9
-  resolution: "@grafana/lezer-logql@npm:0.1.9"
-  dependencies:
-    lodash: ^4.17.21
+"@grafana/lezer-logql@npm:0.1.11":
+  version: 0.1.11
+  resolution: "@grafana/lezer-logql@npm:0.1.11"
   peerDependencies:
     "@lezer/lr": ^1.0.0
-  checksum: 6cceb18586413864137ef2305bbe2fdce054796c61a3fde4864e3f2d30ea3dac853aa701728867bf609a4009334dbf92fddbc06f7291dbca9459a86c9dc29e67
+  checksum: 6a624b9a8d31ff854fcf9708c35e6a7498e78c4bda884639681d0b6d0fffe5527fbaeab1198e5a7694f913181657334345f31156a4a15ff64e3019b30ba6ca2a
   languageName: node
   linkType: hard
 
@@ -3939,9 +3937,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/scenes@npm:^0.25.0":
-  version: 0.25.0
-  resolution: "@grafana/scenes@npm:0.25.0"
+"@grafana/scenes@npm:^0.26.0":
+  version: 0.26.0
+  resolution: "@grafana/scenes@npm:0.26.0"
   dependencies:
     "@grafana/e2e-selectors": 10.0.2
     react-grid-layout: 1.3.4
@@ -3953,7 +3951,7 @@ __metadata:
     "@grafana/runtime": 10.0.3
     "@grafana/schema": 10.0.3
     "@grafana/ui": 10.0.3
-  checksum: ab81d18bb65b0b5d612708fbd9351022141248b476009bdde01660cce1747bd0724fdf599842127f48feea49b31858dc64e45af2638d90fd3b09d59e350f79e4
+  checksum: 041458e463cde07179c75444f245411715ed50f072a5c4d519e258d0e0d57864c55e9cce3fb245943e2bc4245ee48e243701f5f0290c33e0374d4e948820eb14
   languageName: node
   linkType: hard
 
@@ -19255,11 +19253,11 @@ __metadata:
     "@grafana/faro-core": 1.1.2
     "@grafana/faro-web-sdk": 1.1.2
     "@grafana/google-sdk": 0.1.1
-    "@grafana/lezer-logql": 0.1.9
+    "@grafana/lezer-logql": 0.1.11
     "@grafana/lezer-traceql": 0.0.4
     "@grafana/monaco-logql": ^0.0.7
     "@grafana/runtime": "workspace:*"
-    "@grafana/scenes": ^0.25.0
+    "@grafana/scenes": ^0.26.0
     "@grafana/schema": "workspace:*"
     "@grafana/toolkit": "workspace:*"
     "@grafana/tsconfig": ^1.3.0-rc1

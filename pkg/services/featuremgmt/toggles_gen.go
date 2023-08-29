@@ -415,6 +415,10 @@ const (
 	// Changes how Alerting state manager handles execution of NoData/Error
 	FlagAlertingNoDataErrorExecution = "alertingNoDataErrorExecution"
 
+	// FlagAngularDeprecationUI
+	// Display new Angular deprecation-related UI features
+	FlagAngularDeprecationUI = "angularDeprecationUI"
+
 	// FlagDashgpt
 	// Enable AI powered features
 	FlagDashgpt = "dashgpt"
