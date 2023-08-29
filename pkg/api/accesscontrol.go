@@ -350,6 +350,7 @@ func (hs *HTTPServer) declareFixedRoles() error {
 			Description: "Create, read, write or delete all dashboards and their permissions.",
 			Permissions: ac.ConcatPermissions(dashboardsReaderRole.Role.Permissions, []ac.Permission{
 				{Action: dashboards.ActionDashboardsWrite, Scope: dashboards.ScopeDashboardsAll},
+				{Action: dashboards.ActionDashboardsWrite, Scope: dashboards.ScopeFoldersAll},
 				{Action: dashboards.ActionDashboardsDelete, Scope: dashboards.ScopeDashboardsAll},
 				{Action: dashboards.ActionDashboardsCreate, Scope: dashboards.ScopeFoldersAll},
 				{Action: dashboards.ActionDashboardsPermissionsRead, Scope: dashboards.ScopeDashboardsAll},
