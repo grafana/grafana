@@ -110,12 +110,14 @@ func (s CorrelationsService) handleDatasourceDeletion(ctx context.Context, event
 	return s.SQLStore.InTransaction(ctx, func(ctx context.Context) error {
 		if err := s.deleteCorrelationsBySourceUID(ctx, DeleteCorrelationsBySourceUIDCommand{
 			SourceUID: event.UID,
+			OrgId:     event.OrgID,
 		}); err != nil {
 			return err
 		}
 
 		if err := s.deleteCorrelationsByTargetUID(ctx, DeleteCorrelationsByTargetUIDCommand{
 			TargetUID: event.UID,
+			OrgId:     event.OrgID,
 		}); err != nil {
 			return err
 		}

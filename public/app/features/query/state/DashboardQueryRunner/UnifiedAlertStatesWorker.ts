@@ -2,7 +2,7 @@ import { from, Observable } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 
 import { AlertState, AlertStateInfo } from '@grafana/data';
-import { getBackendSrv } from '@grafana/runtime';
+import { config, getBackendSrv } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 import { Annotation } from 'app/features/alerting/unified/utils/constants';
 import { isAlertingRule } from 'app/features/alerting/unified/utils/rules';
@@ -24,7 +24,7 @@ export class UnifiedAlertStatesWorker implements DashboardQueryRunnerWorker {
     }
 
     // Cannot fetch rules while on a public dashboard since it's unauthenticated
-    if (dashboard.meta.publicDashboardAccessToken) {
+    if (config.publicDashboardAccessToken) {
       return false;
     }
 

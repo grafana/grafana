@@ -23,6 +23,7 @@ import { DEFAULT_ANNOTATION_COLOR } from '@grafana/ui';
 import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, GRID_COLUMN_COUNT, REPEAT_DIR_VERTICAL } from 'app/core/constants';
 import { contextSrv } from 'app/core/services/context_srv';
 import { sortedDeepCloneWithoutNulls } from 'app/core/utils/object';
+import { isAngularDatasourcePlugin } from 'app/features/plugins/angularDeprecation/utils';
 import { variableAdapters } from 'app/features/variables/adapters';
 import { onTimeRangeUpdated } from 'app/features/variables/state/actions';
 import { GetVariables, getVariablesByKey } from 'app/features/variables/state/selectors';
@@ -104,6 +105,7 @@ export class DashboardModel implements TimeModel {
   private appEventsSubscription: Subscription;
   private lastRefresh: number;
   private timeRangeUpdatedDuringEdit = false;
+  private originalDashboard: Dashboard | null = null;
 
   // ------------------
   // not persisted
@@ -130,6 +132,7 @@ export class DashboardModel implements TimeModel {
     panelsAffectedByVariableChange: true,
     lastRefresh: true,
     timeRangeUpdatedDuringEdit: true,
+    originalDashboard: true,
   };
 
   constructor(
@@ -152,7 +155,6 @@ export class DashboardModel implements TimeModel {
     this.title = data.title ?? 'No Title';
     this.description = data.description;
     this.tags = data.tags ?? [];
-    this.style = data.style ?? 'dark';
     this.timezone = data.timezone ?? '';
     this.weekStart = data.weekStart ?? '';
     this.editable = data.editable !== false;
@@ -170,6 +172,7 @@ export class DashboardModel implements TimeModel {
     this.links = data.links ?? [];
     this.gnetId = data.gnetId || null;
     this.panels = map(data.panels ?? [], (panelData: any) => new PanelModel(panelData));
+    this.originalDashboard = data;
     this.ensurePanelsHaveUniqueIds();
     this.formatDate = this.formatDate.bind(this);
 
@@ -1296,6 +1299,17 @@ export class DashboardModel implements TimeModel {
   private variablesChangedInUrlHandler(event: VariablesChangedInUrl) {
     this.templateVariableValueUpdated();
     this.startRefresh(event.payload);
+  }
+
+  getOriginalDashboard() {
+    return this.originalDashboard;
+  }
+
+  hasAngularPlugins(): boolean {
+    return this.panels.some(
+      (panel) =>
+        panel.isAngularPlugin() || (panel.datasource?.uid ? isAngularDatasourcePlugin(panel.datasource?.uid) : false)
+    );
   }
 }
 
