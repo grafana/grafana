@@ -709,10 +709,10 @@ var (
 		},
 		{
 			Name:            "reportingRetries",
-			Description:     "Enable rendering retries for the reporting feature",
+			Description:     "Enables rendering retries for the reporting feature",
 			Stage:           FeatureStagePublicPreview,
 			FrontendOnly:    false,
-			Owner:           grafanaAsCodeSquad,
+			Owner:           grafanaSharingSquad,
 			RequiresRestart: true,
 		},
 	}

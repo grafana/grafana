@@ -416,6 +416,6 @@ const (
 	FlagAlertingNoDataErrorExecution = "alertingNoDataErrorExecution"
 
 	// FlagReportingRetries
-	// Enable rendering retries for the reporting feature
+	// Enables rendering retries for the reporting feature
 	FlagReportingRetries = "reportingRetries"
 )
