@@ -26,7 +26,7 @@ export const VersionList = ({ versions = [], installedVersion }: Props) => {
         <tr>
           <th>Version</th>
           <th>Last updated</th>
-          <th>Dependency</th>
+          <th>Grafana Dependency</th>
         </tr>
       </thead>
       <tbody>
