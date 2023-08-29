@@ -24,6 +24,10 @@ interface BoxProps {
   backgroundColor?: keyof GrafanaTheme2['colors']['background'];
   display?: 'flex' | 'block' | 'inline' | 'none';
   element?: ElementType;
+  grow?: number;
+  shrink?: number;
+  borderStyle?: 'solid' | 'dashed';
+  borderColor?: keyof GrafanaTheme2['colors']['border'] | 'error' | 'success' | 'warning' | 'info';
 }
 
 export const Box = ({ children, ...props }: React.PropsWithChildren<BoxProps>) => {
@@ -34,6 +38,21 @@ export const Box = ({ children, ...props }: React.PropsWithChildren<BoxProps>) =
 };
 
 Box.displayName = 'Box';
+
+const customColor = (color: BoxProps['borderColor'], theme: GrafanaTheme2): string | undefined => {
+  switch (color) {
+    case 'error':
+      return theme.colors.error.border;
+    case 'success':
+      return theme.colors.success.border;
+    case 'info':
+      return theme.colors.info.border;
+    case 'warning':
+      return theme.colors.warning.border;
+    default:
+      return color ? theme.colors.border[color] : undefined;
+  }
+};
 
 const getStyles = (theme: GrafanaTheme2, props: BoxProps) => {
   const {
@@ -53,6 +72,10 @@ const getStyles = (theme: GrafanaTheme2, props: BoxProps) => {
     paddingRight,
     display,
     backgroundColor,
+    grow,
+    shrink,
+    borderColor,
+    borderStyle,
   } = props;
   return {
     root: css([
@@ -107,6 +130,14 @@ const getStyles = (theme: GrafanaTheme2, props: BoxProps) => {
       },
       backgroundColor && {
         backgroundColor: theme.colors.background[backgroundColor],
+      },
+      (grow !== undefined || shrink !== undefined) && {
+        flex: `${grow ?? 0} ${shrink ?? 1}`,
+      },
+      (borderStyle || borderColor) && {
+        border: `1px ${borderStyle ?? 'solid'} ${
+          borderColor ? customColor(borderColor, theme) : theme.colors.border.weak
+        }`,
       },
     ]),
   };
