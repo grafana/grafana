@@ -48,9 +48,7 @@ export const VersionList = ({ versions = [], installedVersion }: Props) => {
                 {dateTimeFormatTimeAgo(version.createdAt)}
               </td>
               {/* Dependency */}
-              <td className={isInstalledVersion ? styles.currentVersion : ''}>
-                {version.grafanaDependency || 'N/A'}
-              </td>
+              <td className={isInstalledVersion ? styles.currentVersion : ''}>{version.grafanaDependency || 'N/A'}</td>
             </tr>
           );
         })}
