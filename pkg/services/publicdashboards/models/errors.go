@@ -21,6 +21,7 @@ var (
 	ErrInvalidTimeRange                    = errutil.BadRequest("publicdashboards.invalidTimeRange", errutil.WithPublicMessage("Invalid time range"))
 	ErrInvalidShareType                    = errutil.BadRequest("publicdashboards.invalidShareType", errutil.WithPublicMessage("Invalid share type"))
 	ErrDashboardIsPublic                   = errutil.BadRequest("publicdashboards.dashboardIsPublic", errutil.WithPublicMessage("Dashboard is already public"))
+	ErrPublicDashboardUidExists            = errutil.BadRequest("publicdashboards.uidExists", errutil.WithPublicMessage("Public Dashboard Uid exists"))
 
 	ErrPublicDashboardNotEnabled = errutil.Forbidden("publicdashboards.notEnabled", errutil.WithPublicMessage("Public dashboard paused"))
 )
