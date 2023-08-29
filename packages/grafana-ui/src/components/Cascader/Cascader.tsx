@@ -71,7 +71,7 @@ const disableDivFocus = css({
   },
 });
 
-const DEFAULT_SEPARATOR = '/';
+const DEFAULT_SEPARATOR = ' / ';
 
 export class Cascader extends PureComponent<CascaderProps, CascaderState> {
   constructor(props: CascaderProps) {
