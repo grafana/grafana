@@ -780,6 +780,83 @@ func TestCreatePublicDashboard(t *testing.T) {
 		assert.Equal(t, dashboard.OrgID, pubdash.OrgId)
 	})
 
+	t.Run("Throws an error when given pubdash uid already exists", func(t *testing.T) {
+		dashboard := dashboards.NewDashboard("testDashie")
+		pubdash := &PublicDashboard{
+			Uid:                "ExistingUid",
+			IsEnabled:          true,
+			AnnotationsEnabled: false,
+			DashboardUid:       "NOTTHESAME",
+			OrgId:              dashboard.OrgID,
+			TimeSettings:       timeSettings,
+		}
+
+		publicDashboardStore := &FakePublicDashboardStore{}
+		publicDashboardStore.On("FindDashboard", mock.Anything, mock.Anything, mock.Anything).Return(dashboard, nil)
+		publicDashboardStore.On("Find", mock.Anything, "ExistingUid").Return(pubdash, nil)
+		publicDashboardStore.On("FindByDashboardUid", mock.Anything, mock.Anything, mock.Anything).Return(nil, ErrPublicDashboardNotFound.Errorf(""))
+
+		serviceWrapper := ProvideServiceWrapper(publicDashboardStore)
+
+		service := &PublicDashboardServiceImpl{
+			log:            log.New("test.logger"),
+			store:          publicDashboardStore,
+			serviceWrapper: serviceWrapper,
+		}
+
+		isEnabled := true
+		dto := &SavePublicDashboardDTO{
+			DashboardUid: "an-id",
+			OrgID:        dashboard.OrgID,
+			UserId:       7,
+			PublicDashboard: &PublicDashboardDTO{
+				Uid:       "ExistingUid",
+				IsEnabled: &isEnabled,
+			},
+		}
+
+		_, err := service.Create(context.Background(), SignedInUser, dto)
+		require.Error(t, err)
+		require.Equal(t, err, ErrPublicDashboardUidExists.Errorf("Create: public dashboard uid %s already exists", dto.Uid))
+		publicDashboardStore.AssertNotCalled(t, "Create")
+	})
+
+	t.Run("Create public dashboard with given pubdash uid", func(t *testing.T) {
+		sqlStore := db.InitTestDB(t)
+		quotaService := quotatest.New(false, nil)
+		dashboardStore, err := dashboardsDB.ProvideDashboardStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, sqlStore.Cfg), quotaService)
+		require.NoError(t, err)
+		publicdashboardStore := database.ProvideStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures())
+		dashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, true, []map[string]interface{}{}, nil)
+		serviceWrapper := ProvideServiceWrapper(publicdashboardStore)
+
+		service := &PublicDashboardServiceImpl{
+			log:            log.New("test.logger"),
+			store:          publicdashboardStore,
+			serviceWrapper: serviceWrapper,
+		}
+
+		isEnabled := true
+
+		dto := &SavePublicDashboardDTO{
+			DashboardUid: dashboard.UID,
+			UserId:       7,
+			OrgID:        dashboard.OrgID,
+			PublicDashboard: &PublicDashboardDTO{
+				Uid:       "GivenUid",
+				IsEnabled: &isEnabled,
+			},
+		}
+
+		_, err = service.Create(context.Background(), SignedInUser, dto)
+		require.NoError(t, err)
+
+		pubdash, err := service.FindByDashboardUid(context.Background(), dashboard.OrgID, dashboard.UID)
+		require.NoError(t, err)
+
+		assert.Equal(t, dto.PublicDashboard.Uid, pubdash.Uid)
+	})
+
 	t.Run("Throws an error when pubdash with generated access token already exists", func(t *testing.T) {
 		dashboard := dashboards.NewDashboard("testDashie")
 		pubdash := &PublicDashboard{
