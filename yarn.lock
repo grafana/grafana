@@ -3477,6 +3477,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@fingerprintjs/fingerprintjs@npm:^3.4.2":
+  version: 3.4.2
+  resolution: "@fingerprintjs/fingerprintjs@npm:3.4.2"
+  dependencies:
+    tslib: ^2.4.1
+  checksum: 3b9dc81e4186f1aaa39e208c17939f5747bf9a8eb1c8175264a352e46e263abd81bcf89439240bd1a4755d7e3dfb4a83164e294f940abc290e7f2076d3b603ce
+  languageName: node
+  linkType: hard
+
 "@floating-ui/core@npm:^1.0.1":
   version: 1.0.1
   resolution: "@floating-ui/core@npm:1.0.1"
@@ -3819,9 +3828,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/eslint-config@npm:6.0.0":
-  version: 6.0.0
-  resolution: "@grafana/eslint-config@npm:6.0.0"
+"@grafana/eslint-config@npm:6.0.1":
+  version: 6.0.1
+  resolution: "@grafana/eslint-config@npm:6.0.1"
   dependencies:
     "@typescript-eslint/eslint-plugin": 5.59.9
     "@typescript-eslint/parser": 5.59.9
@@ -3831,7 +3840,7 @@ __metadata:
     eslint-plugin-react: 7.32.2
     eslint-plugin-react-hooks: 4.6.0
     typescript: 4.8.4
-  checksum: a22d21282ba88a3b27d7a68ca6cbd01fe18c39aa3227b23079a0303d3c4265937c8371f8a0ea87acb843c9cec9fc82c649e2a8f47698613af8259edc85fd027c
+  checksum: 6744cc4b48d7504f574798fc442e1c794f784bc408b435ed43cb1baef8d0ab83554c5ac2a6437af352ee5df241055050217d5a67e15491a6116555c92c349c31
   languageName: node
   linkType: hard
 
@@ -3927,14 +3936,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/lezer-logql@npm:0.1.9":
-  version: 0.1.9
-  resolution: "@grafana/lezer-logql@npm:0.1.9"
-  dependencies:
-    lodash: ^4.17.21
+"@grafana/lezer-logql@npm:0.1.11":
+  version: 0.1.11
+  resolution: "@grafana/lezer-logql@npm:0.1.11"
   peerDependencies:
     "@lezer/lr": ^1.0.0
-  checksum: 6cceb18586413864137ef2305bbe2fdce054796c61a3fde4864e3f2d30ea3dac853aa701728867bf609a4009334dbf92fddbc06f7291dbca9459a86c9dc29e67
+  checksum: 6a624b9a8d31ff854fcf9708c35e6a7498e78c4bda884639681d0b6d0fffe5527fbaeab1198e5a7694f913181657334345f31156a4a15ff64e3019b30ba6ca2a
   languageName: node
   linkType: hard
 
@@ -19407,19 +19414,20 @@ __metadata:
     "@emotion/css": 11.11.2
     "@emotion/eslint-plugin": 11.11.0
     "@emotion/react": 11.11.1
+    "@fingerprintjs/fingerprintjs": ^3.4.2
     "@glideapps/glide-data-grid": ^5.2.1
     "@grafana-plugins/testdata": "workspace:*"
     "@grafana/aws-sdk": 0.1.2
     "@grafana/data": "workspace:*"
     "@grafana/e2e": "workspace:*"
     "@grafana/e2e-selectors": "workspace:*"
-    "@grafana/eslint-config": 6.0.0
+    "@grafana/eslint-config": 6.0.1
     "@grafana/eslint-plugin": "link:./packages/grafana-eslint-rules"
     "@grafana/experimental": 1.6.1
     "@grafana/faro-core": 1.1.2
     "@grafana/faro-web-sdk": 1.1.2
     "@grafana/google-sdk": 0.1.1
-    "@grafana/lezer-logql": 0.1.9
+    "@grafana/lezer-logql": 0.1.11
     "@grafana/lezer-traceql": 0.0.4
     "@grafana/monaco-logql": ^0.0.7
     "@grafana/runtime": "workspace:*"

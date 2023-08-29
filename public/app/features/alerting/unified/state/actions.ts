@@ -382,6 +382,8 @@ export function deleteRuleAction(
    * reload ruler rules
    */
   return async (dispatch, getState) => {
+    await dispatch(fetchRulesSourceBuildInfoAction({ rulesSourceName: ruleIdentifier.ruleSourceName }));
+
     withAppEvents(
       (async () => {
         const rulerConfig = getDataSourceRulerConfig(getState, ruleIdentifier.ruleSourceName);
