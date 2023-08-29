@@ -2,6 +2,7 @@ package clients
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -25,9 +26,16 @@ type ldapTestCase struct {
 	password         string
 	expectedErr      error
 	expectedLDAPErr  error
-	expectedUserErr  error
 	expectedLDAPInfo *login.ExternalUserInfo
 	expectedIdentity *authn.Identity
+
+	// Disabling User
+	expectedUser        user.User
+	expectedUserErr     error
+	expectedAuthInfo    login.UserAuth
+	expectedAuthInfoErr error
+	disableCalled       bool
+	expectDisable       bool
 }
 
 func TestLDAP_AuthenticateProxy(t *testing.T) {
@@ -77,7 +85,7 @@ func TestLDAP_AuthenticateProxy(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			c := setupTestCase(tt)
+			c := setupTestCase(&tt)
 
 			identity, err := c.AuthenticateProxy(context.Background(), &authn.Request{OrgID: 1}, tt.username, nil)
 			assert.ErrorIs(t, err, tt.expectedErr)
@@ -139,29 +147,55 @@ func TestLDAP_AuthenticatePassword(t *testing.T) {
 			expectedLDAPErr: ldap.ErrCouldNotFindUser,
 			expectedUserErr: user.ErrUserNotFound,
 		},
+		{
+			desc:             "should disable user if not found",
+			username:         "test",
+			password:         "wrong",
+			expectedErr:      errIdentityNotFound,
+			expectedLDAPErr:  ldap.ErrCouldNotFindUser,
+			expectedUser:     user.User{ID: 11, Login: "test"},
+			expectedAuthInfo: login.UserAuth{UserId: 11, AuthId: "cn=test,ou=users,dc=example,dc=org", AuthModule: login.LDAPAuthModule},
+			expectDisable:    true,
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			c := setupTestCase(tt)
+			c := setupTestCase(&tt)
 
 			identity, err := c.AuthenticatePassword(context.Background(), &authn.Request{OrgID: 1}, tt.username, tt.password)
 			assert.ErrorIs(t, err, tt.expectedErr)
 			assert.EqualValues(t, tt.expectedIdentity, identity)
+			if tt.expectDisable {
+				assert.True(t, tt.disableCalled)
+			}
 		})
 	}
 }
 
-func setupTestCase(tt ldapTestCase) *LDAP {
-	userService := usertest.NewUserServiceFake()
-	userService.ExpectedError = tt.expectedUserErr
+func setupTestCase(tt *ldapTestCase) *LDAP {
+	userService := &usertest.FakeUserService{
+		ExpectedError: tt.expectedUserErr,
+		ExpectedUser:  &tt.expectedUser,
+		DisableFn: func(ctx context.Context, cmd *user.DisableUserCommand) error {
+			if tt.expectDisable {
+				tt.disableCalled = true
+				return nil
+			}
+			return errors.New("unexpected call")
+		},
+	}
+	authInfoService := &logintest.AuthInfoServiceFake{
+		ExpectedUserAuth: &tt.expectedAuthInfo,
+		ExpectedError:    tt.expectedAuthInfoErr,
+	}
 
 	c := &LDAP{
 		cfg:             setting.NewCfg(),
 		logger:          log.New("authn.ldap.test"),
 		service:         &service.LDAPFakeService{ExpectedUser: tt.expectedLDAPInfo, ExpectedError: tt.expectedLDAPErr},
 		userService:     userService,
-		authInfoService: &logintest.AuthInfoServiceFake{},
+		authInfoService: authInfoService,
 	}
 
 	return c
