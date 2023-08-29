@@ -312,6 +312,13 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
       prevCondition && setValue('condition', prevCondition);
     } else {
       setValue('type', RuleFormType.cloudAlerting);
+      // dataSourceName is used only by Mimir/Loki alerting and recording rules
+      // It should be empty for Grafana managed alert rules
+      const newDsName = getDataSourceSrv().getInstanceSettings(queries[0].datasourceUid)?.name;
+      if (newDsName) {
+        setValue('dataSourceName', newDsName);
+      }
+
       updateExpressionAndDatasource(queries);
 
       const expressions = queries.filter((query) => query.datasourceUid === ExpressionDatasourceUID);
@@ -549,11 +556,9 @@ const useSetExpressionAndDataSource = () => {
     if (!dataSourceSettings) {
       throw new Error('The Data source has not been defined.');
     }
-    setValue('dataSourceName', dataSourceSettings.name);
 
     if (isPromOrLokiQuery(query.model)) {
       const expression = query.model.expr;
-
       setValue('expression', expression);
     }
   };
