@@ -78,31 +78,31 @@ const GrafanaInspectorHclTab = ({ alertUid }: YamlTabProps) => {
 
   const { currentData: ruleHclConfig, isLoading } = useExportRuleQuery({ uid: alertUid, format: 'hcl' });
 
-   const hclRule = useMemo(() => ruleHclConfig ?? "", [ruleHclConfig]);
+  const hclRule = useMemo(() => ruleHclConfig ?? '', [ruleHclConfig]);
 
   if (isLoading) {
     return <div>Loading...</div>;
   }
 
   return (
-      <>
-        <div className={styles.content}>
-          <AutoSizer disableWidth>
-            {({ height }) => (
-                <CodeEditor
-                    width="100%"
-                    height={height}
-                    language="hcl"
-                    value={hclRule}
-                    monacoOptions={{
-                      minimap: {
-                        enabled: false,
-                      },
-                    }}
-                />
-            )}
-          </AutoSizer>
-        </div>
-      </>
+    <>
+      <div className={styles.content}>
+        <AutoSizer disableWidth>
+          {({ height }) => (
+            <CodeEditor
+              width="100%"
+              height={height}
+              language="hcl"
+              value={hclRule}
+              monacoOptions={{
+                minimap: {
+                  enabled: false,
+                },
+              }}
+            />
+          )}
+        </AutoSizer>
+      </div>
+    </>
   );
 };
