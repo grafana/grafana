@@ -3,7 +3,6 @@ import React, { useMemo, useState } from 'react';
 
 import { reportInteraction } from '@grafana/runtime';
 import { HorizontalGroup, Icon, IconButton, Tooltip, useTheme2 } from '@grafana/ui';
-import { getModKey } from 'app/core/utils/browser';
 
 import { QueryValidator, QueryValidatorProps } from './QueryValidator';
 
