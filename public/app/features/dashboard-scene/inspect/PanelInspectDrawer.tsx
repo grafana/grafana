@@ -24,7 +24,7 @@ interface PanelInspectDrawerState extends SceneObjectState {
 }
 
 export class PanelInspectDrawer extends SceneObjectBase<PanelInspectDrawerState> {
-  static Component = ScenePanelInspectorRenderer;
+  static Component = PanelInspectRenderer;
 
   // Not stored in state as this is just a reference and it never changes
   private _panel: VizPanel;
@@ -61,7 +61,7 @@ export class PanelInspectDrawer extends SceneObjectBase<PanelInspectDrawerState>
   };
 }
 
-function ScenePanelInspectorRenderer({ model }: SceneComponentProps<PanelInspectDrawer>) {
+function PanelInspectRenderer({ model }: SceneComponentProps<PanelInspectDrawer>) {
   const { tabs } = model.useState();
   const location = useLocation();
   const queryParams = new URLSearchParams(location.search);
