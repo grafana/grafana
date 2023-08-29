@@ -62,8 +62,8 @@ export const TransformationOperationRow = ({
       return true;
     }
 
-    // We return `undefined` here since the QueryOperationRow component ignores an `undefined` value.
-    // If we returned `false` here, the row would be collapsed when the user toggles off the help, which is not what we want.
+    // We return `undefined` here since the QueryOperationRow component ignores an `undefined` value for the `isOpen` prop.
+    // If we returned `false` here, the row would be collapsed when the user toggles off `showHelp`, which is not what we want.
     return undefined;
   }, [showHelp]);
 

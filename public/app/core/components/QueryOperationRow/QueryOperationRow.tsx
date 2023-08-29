@@ -53,7 +53,7 @@ export function QueryOperationRow({
   }, [isContentVisible, setIsContentVisible]);
 
   // Force QueryOperationRow expansion when `isOpen` prop updates in parent component.
-  // `undefined` is a possible intentionally passed value here, which should not trigger the effect.
+  // `undefined` can be deliberately passed value here, but we only want booleans to trigger the effect.
   useEffect(() => {
     if (typeof isOpen === 'boolean') {
       setIsContentVisible(isOpen);
