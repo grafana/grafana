@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"math/rand"
 	"net"
 	"net/http"
 	"net/url"
@@ -117,6 +118,9 @@ func (d *Dynamic) fetch(ctx context.Context) (GCOMPatterns, error) {
 			d.log.Error("Response body close error", "error", err)
 		}
 	}()
+	if resp.StatusCode/100 != 2 {
+		return nil, fmt.Errorf("bad status code: %d", resp.StatusCode)
+	}
 	var out GCOMPatterns
 	if err := json.NewDecoder(resp.Body).Decode(&out); err != nil {
 		return nil, fmt.Errorf("json decode: %w", err)
@@ -184,6 +188,12 @@ func (d *Dynamic) IsDisabled() bool {
 	return !d.features.IsEnabled(featuremgmt.FlagPluginsDynamicAngularDetectionPatterns)
 }
 
+// randomSkew returns a random time.Duration between 0 and maxSkew.
+// This can be added to backgroundJobInterval to skew it by a random amount.
+func (d *Dynamic) randomSkew(maxSkew time.Duration) time.Duration {
+	return time.Duration(rand.Float64() * float64(maxSkew))
+}
+
 // Run is the function implementing the background service and updates the detectors periodically.
 func (d *Dynamic) Run(ctx context.Context) error {
 	d.log.Debug("Started background service")
@@ -193,8 +203,18 @@ func (d *Dynamic) Run(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("get last updated: %w", err)
 	}
-	nextRunUntil := time.Until(lastUpdate.Add(backgroundJobInterval))
 
+	// Offset the background job interval a bit to skew GCOM calls from all instances,
+	// so GCOM is not overwhelmed with lots of requests all at the same time.
+	// Important when lots of HG instances restart at the same time.
+	skew := d.randomSkew(backgroundJobInterval / 4)
+	backgroundJobInterval += skew
+	d.log.Debug(
+		"Applied background job skew",
+		"skew", backgroundJobInterval, "interval", backgroundJobInterval,
+	)
+
+	nextRunUntil := time.Until(lastUpdate.Add(backgroundJobInterval))
 	ticker := time.NewTicker(backgroundJobInterval)
 	defer ticker.Stop()
 

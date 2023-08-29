@@ -188,10 +188,12 @@ export function getPanelMenu(
     iconClassName: 'info-circle',
     onClick: (e: React.MouseEvent<HTMLElement>) => {
       const currentTarget = e.currentTarget;
-      const target = e.target as HTMLElement;
-      const closestMenuItem = target.closest('[role="menuitem"]');
+      const target = e.target;
 
-      if (target === currentTarget || closestMenuItem === currentTarget) {
+      if (
+        target === currentTarget ||
+        (target instanceof HTMLElement && target.closest('[role="menuitem"]') === currentTarget)
+      ) {
         onInspectPanel();
       }
     },
