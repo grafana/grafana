@@ -56,7 +56,7 @@ export const QueryRows = ({ exploreId }: Props) => {
     (newQueries: DataQuery[]) => {
       dispatch(changeQueries({ exploreId, queries: newQueries }));
 
-      if (isCorrelationsEditorMode && !correlationDetails?.dirty && isLeftPane) {
+      if (isCorrelationsEditorMode && !correlationDetails?.dirty && !isLeftPane) {
         dispatch(changeCorrelationDetails({ dirty: true }));
       }
     },

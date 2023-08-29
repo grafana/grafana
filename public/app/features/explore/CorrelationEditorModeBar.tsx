@@ -33,6 +33,12 @@ export const CorrelationEditorModeBar = ({
   useEffect(() => {
     return () => {
       dispatch(changeCorrelationsEditorMode({ correlationsEditorMode: false }));
+      setShowSavePrompt(false);
+      dispatch(changeCorrelationDetails({ label: undefined, description: undefined, canSave: false }));
+      panes.forEach((pane) => {
+        dispatch(removeCorrelationData(pane[0]));
+        dispatch(runQueries({ exploreId: pane[0] }));
+      });
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
