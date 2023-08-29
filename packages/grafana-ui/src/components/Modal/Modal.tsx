@@ -6,12 +6,12 @@ import React, { PropsWithChildren, useRef } from 'react';
 
 import { useTheme2 } from '../../themes';
 import { IconName } from '../../types';
+import { t } from '../../utils/i18n';
 import { IconButton } from '../IconButton/IconButton';
 import { HorizontalGroup } from '../Layout/Layout';
 
 import { ModalHeader } from './ModalHeader';
 import { getModalStyles } from './getModalStyles';
-import { t } from '../../utils/i18n';
 
 export interface Props {
   /** @deprecated no longer used */
