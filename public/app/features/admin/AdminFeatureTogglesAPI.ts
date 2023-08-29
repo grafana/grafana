@@ -33,7 +33,7 @@ export const togglesApi = createApi({
     getFeatureToggles: builder.query<FeatureToggle[], void>({
       query: () => ({ url: '/featuremgmt' }),
     }),
-    updateFeatureToggles: builder.mutation<void, { featureToggles: FeatureToggle[]; }>({
+    updateFeatureToggles: builder.mutation<void, { featureToggles: FeatureToggle[] }>({
       query: (updatedToggles) => ({
         url: '/featuremgmt',
         method: 'POST',

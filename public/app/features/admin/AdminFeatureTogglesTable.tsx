@@ -56,7 +56,7 @@ export function AdminFeatureTogglesTable({ featureToggles }: Props) {
   };
 
   const handleSaveChanges = async () => {
-    const resp = await updateFeatureToggles({featureToggles: modifiedToggles});
+    const resp = await updateFeatureToggles({ featureToggles: modifiedToggles });
     // Reset modifiedToggles after successful update
     if (!('error' in resp)) {
       setModifiedToggles([]);
@@ -103,7 +103,9 @@ export function AdminFeatureTogglesTable({ featureToggles }: Props) {
   return (
     <>
       <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '0 0 5px 0' }}>
-        <Button disabled={!hasModifications()} onClick={handleSaveChanges}>Save Changes</Button>
+        <Button disabled={!hasModifications()} onClick={handleSaveChanges}>
+          Save Changes
+        </Button>
       </div>
       <InteractiveTable columns={columns} data={localToggles} getRowId={(featureToggle) => featureToggle.name} />
     </>
