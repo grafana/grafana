@@ -3828,6 +3828,22 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@grafana/eslint-config@npm:6.0.0":
+  version: 6.0.0
+  resolution: "@grafana/eslint-config@npm:6.0.0"
+  dependencies:
+    "@typescript-eslint/eslint-plugin": 5.59.9
+    "@typescript-eslint/parser": 5.59.9
+    eslint: 8.42.0
+    eslint-config-prettier: 8.8.0
+    eslint-plugin-jsdoc: 46.2.6
+    eslint-plugin-react: 7.32.2
+    eslint-plugin-react-hooks: 4.6.0
+    typescript: 4.8.4
+  checksum: a22d21282ba88a3b27d7a68ca6cbd01fe18c39aa3227b23079a0303d3c4265937c8371f8a0ea87acb843c9cec9fc82c649e2a8f47698613af8259edc85fd027c
+  languageName: node
+  linkType: hard
+
 "@grafana/eslint-config@npm:6.0.1":
   version: 6.0.1
   resolution: "@grafana/eslint-config@npm:6.0.1"
