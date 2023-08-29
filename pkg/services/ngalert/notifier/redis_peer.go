@@ -27,6 +27,7 @@ type redisConfig struct {
 	db       int
 	name     string
 	prefix   string
+	maxConns int
 }
 
 const (
@@ -89,6 +90,7 @@ func newRedisPeer(cfg redisConfig, logger log.Logger, reg prometheus.Registerer,
 		Username: cfg.username,
 		Password: cfg.password,
 		DB:       cfg.db,
+		PoolSize: cfg.maxConns,
 	})
 	cmd := rdb.Ping(context.Background())
 	if cmd.Err() != nil {
