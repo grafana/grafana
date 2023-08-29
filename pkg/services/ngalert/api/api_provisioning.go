@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/log"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/ngalert/api/hcl"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	alerting_models "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
@@ -489,7 +490,7 @@ func extractExportRequest(c *contextmodel.ReqContext) definitions.ExportQueryPar
 	}
 
 	queryFormat := c.Query("format")
-	if queryFormat == "yaml" || queryFormat == "json" {
+	if queryFormat == "yaml" || queryFormat == "json" || queryFormat == "hcl" {
 		format = queryFormat
 	}
 
@@ -503,6 +504,10 @@ func extractExportRequest(c *contextmodel.ReqContext) definitions.ExportQueryPar
 
 func exportResponse(c *contextmodel.ReqContext, body definitions.AlertingFileExport) response.Response {
 	params := extractExportRequest(c)
+	if params.Format == "hcl" {
+		return exportHcl(params.Download, body)
+	}
+
 	if params.Download {
 		r := response.JSONDownload
 		if params.Format == "yaml" {
@@ -516,4 +521,44 @@ func exportResponse(c *contextmodel.ReqContext, body definitions.AlertingFileExp
 		r = response.YAML
 	}
 	return r(http.StatusOK, body)
+}
+
+func exportHcl(download bool, body definitions.AlertingFileExport) response.Response {
+	resources := make([]hcl.Resource, 0, len(body.Groups)+len(body.ContactPoints)+len(body.Policies))
+	for idx, group := range body.Groups {
+		gr := group
+		resources = append(resources, hcl.Resource{
+			Type: "grafana_rule_group",
+			Name: fmt.Sprintf("rule_group_%3d", idx),
+			Body: &gr,
+		})
+	}
+
+	// TODO implement support.
+	// for idx, cp := range ex.ContactPoints {
+	// 	resources = append(resources, resourceBlock{
+	// 		Type: "grafana_contact_point",
+	// 		Name: fmt.Sprintf("contact_point_%d", idx),
+	// 		Body: &cp,
+	// 	})
+	// }
+	// for idx, cp := range ex.Policies {
+	// 	resources = append(resources, resourceBlock{
+	// 		Type: "grafana_notification_policy",
+	// 		Name: fmt.Sprintf("notification_policy_%d", idx),
+	// 		Body: &cp,
+	// 	})
+	//
+
+	hclBody, err := hcl.Encode(resources...)
+	if err != nil {
+		return response.Error(500, "body hcl encode", err)
+	}
+	resp := response.Respond(http.StatusOK, hclBody)
+	if download {
+		return resp.
+			SetHeader("Content-Type", "application/terraform+hcl").
+			SetHeader("Content-Disposition", `attachment;filename=export.tf`)
+	}
+	return resp.SetHeader("Content-Type", "text/hcl")
 }
