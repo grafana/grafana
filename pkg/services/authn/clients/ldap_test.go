@@ -93,7 +93,8 @@ func TestLDAP_AuthenticateProxy(t *testing.T) {
 		},
 	}
 
-	for _, tt := range tests {
+	for i := range tests {
+		tt := tests[i]
 		t.Run(tt.desc, func(t *testing.T) {
 			c := setupTestCase(&tt)
 
@@ -173,7 +174,8 @@ func TestLDAP_AuthenticatePassword(t *testing.T) {
 		},
 	}
 
-	for _, tt := range tests {
+	for i := range tests {
+		tt := tests[i]
 		t.Run(tt.desc, func(t *testing.T) {
 			c := setupTestCase(&tt)
 
