@@ -45,18 +45,30 @@ export const AnnotationXEditorPlugin = ({ builder, timeRange, data, timeZone }: 
     let _plot: uPlot;
     let annotating = false;
 
+    /**
+     * Triggers selection on uPlot if tooltip button is clicked
+     * */
+    let isButtonClicked = false;
+
     builder.addHook('init', (u) => {
       setPlot((_plot = u));
 
       u.over.addEventListener('mousedown', (e) => {
-        annotating = e.ctrlKey || e.metaKey;
+        const elem = e.target as Element;
+        isButtonClicked = elem.parentElement?.id === ADD_ANNOTATION_ID;
+
+        annotating = e.ctrlKey || e.metaKey || isButtonClicked;
       });
 
       u.over.addEventListener('mouseup', (e) => {
         if (annotating && u.select.width === 0) {
           u.select.left = u.cursor.left!;
           u.select.height = u.bbox.height / window.devicePixelRatio;
-          u.select.width = 1; // @TODO ??
+          u.select.width = 1;
+
+          if (isButtonClicked) {
+            u.setSelect(u.select);
+          }
         }
       });
     });
@@ -84,7 +96,7 @@ export const AnnotationXEditorPlugin = ({ builder, timeRange, data, timeZone }: 
     });
   }, [builder, styles.overlay]);
 
-  if (plot && plot.select.width > 0 && isAddingAnnotation) {
+  if (plot && selection && isAddingAnnotation) {
     // && timeRange
     return createPortal(
       <div
@@ -94,15 +106,13 @@ export const AnnotationXEditorPlugin = ({ builder, timeRange, data, timeZone }: 
           left: `${plot.select.left + plot.select.width / 2}px`,
         }}
       >
-        {selection && (
-          <AnnotationEditor2
-            selection={selection}
-            timeZone={timeZone}
-            data={data}
-            onDismiss={clearSelection}
-            onSave={clearSelection}
-          />
-        )}
+        <AnnotationEditor2
+          selection={selection}
+          timeZone={timeZone}
+          data={data}
+          onDismiss={clearSelection}
+          onSave={clearSelection}
+        />
       </div>,
       plot.over
     );
