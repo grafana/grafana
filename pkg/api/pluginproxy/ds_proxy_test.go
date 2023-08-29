@@ -27,6 +27,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	datasourceservice "github.com/grafana/grafana/pkg/services/datasources/service"
@@ -1118,7 +1119,7 @@ type mockOAuthTokenService struct {
 	oAuthEnabled bool
 }
 
-func (m *mockOAuthTokenService) GetCurrentOAuthToken(ctx context.Context, user *user.SignedInUser) *oauth2.Token {
+func (m *mockOAuthTokenService) GetCurrentOAuthToken(ctx context.Context, user identity.Requester) *oauth2.Token {
 	return m.token
 }
 
@@ -1126,7 +1127,7 @@ func (m *mockOAuthTokenService) IsOAuthPassThruEnabled(ds *datasources.DataSourc
 	return m.oAuthEnabled
 }
 
-func (m *mockOAuthTokenService) HasOAuthEntry(context.Context, *user.SignedInUser) (*login.UserAuth, bool, error) {
+func (m *mockOAuthTokenService) HasOAuthEntry(context.Context, identity.Requester) (*login.UserAuth, bool, error) {
 	return nil, false, nil
 }
 

@@ -156,7 +156,11 @@ func (u *SignedInUser) GetNamespacedID() (string, string) {
 	case u.IsAnonymous:
 		return identity.NamespaceAnonymous, ""
 	case u.AuthenticatedBy == "render": //import cycle render
-		return identity.NamespaceRenderService, fmt.Sprintf("%d", u.UserID)
+		if u.UserID == 0 {
+			return identity.NamespaceRenderService, fmt.Sprintf("%d", u.UserID)
+		} else { // this should never happen as u.UserID > 0 already catches this
+			return identity.NamespaceUser, fmt.Sprintf("%d", u.UserID)
+		}
 	}
 
 	// backwards compatibility

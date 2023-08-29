@@ -1,10 +1,9 @@
 import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
-import { config, locationService } from '@grafana/runtime';
+import { config } from '@grafana/runtime';
 import {
   behaviors,
   CustomVariable,
   DataSourceVariable,
-  getUrlSyncManager,
   QueryVariable,
   SceneDataTransformer,
   SceneGridItem,
@@ -19,91 +18,15 @@ import { createPanelJSONFixture } from 'app/features/dashboard/state/__fixtures_
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard';
 import { DASHBOARD_DATASOURCE_PLUGIN_ID } from 'app/plugins/datasource/dashboard/types';
 
-import { DashboardScene } from '../scene/DashboardScene';
 import { ShareQueryDataProvider } from '../scene/ShareQueryDataProvider';
-import { setupLoadDashboardMock } from '../utils/test-utils';
 
 import {
   createDashboardSceneFromDashboardModel,
   createVizPanelFromPanelModel,
   createSceneVariableFromVariableModel,
-  DashboardLoader,
-} from './DashboardsLoader';
+} from './transformSaveModelToScene';
 
 describe('DashboardLoader', () => {
-  describe('when fetching/loading a dashboard', () => {
-    beforeEach(() => {
-      new DashboardLoader({});
-    });
-
-    it('should call dashboard loader server if the dashboard is not cached', async () => {
-      const loadDashboardMock = setupLoadDashboardMock({ dashboard: { uid: 'fake-dash' }, meta: {} });
-
-      const loader = new DashboardLoader({});
-      await loader.loadAndInit('fake-dash');
-
-      expect(loadDashboardMock).toHaveBeenCalledWith('db', '', 'fake-dash');
-
-      // should use cache second time
-      await loader.loadAndInit('fake-dash');
-      expect(loadDashboardMock.mock.calls.length).toBe(1);
-    });
-
-    it("should error when the dashboard doesn't exist", async () => {
-      setupLoadDashboardMock({ dashboard: undefined, meta: {} });
-
-      const loader = new DashboardLoader({});
-      await loader.loadAndInit('fake-dash');
-
-      expect(loader.state.dashboard).toBeUndefined();
-      expect(loader.state.isLoading).toBe(false);
-      expect(loader.state.loadError).toBe('Error: Dashboard not found');
-    });
-
-    it('should initialize the dashboard scene with the loaded dashboard', async () => {
-      setupLoadDashboardMock({ dashboard: { uid: 'fake-dash' }, meta: {} });
-
-      const loader = new DashboardLoader({});
-      await loader.loadAndInit('fake-dash');
-
-      expect(loader.state.dashboard?.state.uid).toBe('fake-dash');
-      expect(loader.state.loadError).toBe(undefined);
-      expect(loader.state.isLoading).toBe(false);
-    });
-
-    it('should use DashboardScene creator to initialize the scene', async () => {
-      setupLoadDashboardMock({ dashboard: { uid: 'fake-dash' }, meta: {} });
-
-      const loader = new DashboardLoader({});
-      await loader.loadAndInit('fake-dash');
-
-      expect(loader.state.dashboard).toBeInstanceOf(DashboardScene);
-      expect(loader.state.isLoading).toBe(false);
-    });
-
-    it('should initialize url sync', async () => {
-      setupLoadDashboardMock({ dashboard: { uid: 'fake-dash' }, meta: {} });
-
-      locationService.partial({ from: 'now-5m', to: 'now' });
-
-      const loader = new DashboardLoader({});
-      await loader.loadAndInit('fake-dash');
-      const dash = loader.state.dashboard;
-
-      expect(dash!.state.$timeRange?.state.from).toEqual('now-5m');
-
-      getUrlSyncManager().cleanUp(dash!);
-
-      // try loading again (and hitting cache)
-      locationService.partial({ from: 'now-10m', to: 'now' });
-
-      await loader.loadAndInit('fake-dash');
-      const dash2 = loader.state.dashboard;
-
-      expect(dash2!.state.$timeRange?.state.from).toEqual('now-10m');
-    });
-  });
-
   describe('when creating dashboard scene', () => {
     it('should initialize the DashboardScene with the model state', () => {
       const dash = {
