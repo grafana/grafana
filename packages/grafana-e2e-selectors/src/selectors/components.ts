@@ -425,4 +425,7 @@ export const Components = {
     annotationsTypeInput: 'annotations-type-input',
     annotationsChoosePanelInput: 'choose-panels-input',
   },
+  Tooltip: {
+    container: 'data-testid tooltip',
+  },
 };

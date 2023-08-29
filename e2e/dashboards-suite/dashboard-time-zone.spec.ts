@@ -85,6 +85,78 @@ e2e.scenario({
   },
 });
 
+e2e.scenario({
+  describeName: 'Dashboard time zone support',
+  itName: 'Tests relative timezone overrides within a panel',
+  addScenarioDataSource: false,
+  addScenarioDashBoard: false,
+  skipScenario: false,
+  scenario: () => {
+    // Test Default
+    e2e.flows.openDashboard({
+      uid: 'd41dbaa2-a39e-4536-ab2b-caca52f1a9c8',
+      timeRange: {
+        from: 'now-6h',
+        to: 'now',
+        zone: 'Default',
+      },
+    });
+
+    e2e.components.Panels.Panel.title('Panel title')
+      .should('be.visible')
+      .within(() => {
+        e2e().contains('Today so far').should('be.visible');
+        e2e().contains('Today so far').click();
+      });
+
+    e2e.components.Tooltip.container()
+      .should('be.visible')
+      .within(() => {
+        e2e().contains('00:00:00').should('be.visible');
+      });
+
+    // Test Browser
+    e2e.flows.setTimeRange({
+      from: 'now-6h',
+      to: 'now',
+      zone: 'Browser Time',
+    });
+
+    e2e.components.Panels.Panel.title('Panel title')
+      .should('be.visible')
+      .within(() => {
+        e2e().contains('Today so far').should('be.visible');
+        e2e().contains('Today so far').click();
+      });
+
+    e2e.components.Tooltip.container()
+      .should('be.visible')
+      .within(() => {
+        e2e().contains('00:00:00').should('be.visible');
+      });
+
+    // Test specific timezone
+    e2e.flows.setTimeRange({
+      from: 'now-6h',
+      to: 'now',
+      zone: 'Asia/Tokyo',
+    });
+
+    e2e.components.Panels.Panel.title('Panel title')
+      .should('be.visible')
+      .within(() => {
+        e2e().contains('Today so far').should('be.visible');
+        e2e().contains('Today so far').click();
+      });
+
+    e2e.components.Tooltip.container()
+      .should('be.visible')
+      .within(() => {
+        e2e().contains('00:00:00').should('be.visible');
+      });
+  },
+});
+
 const isTimeCorrect = (inUtc: string, inTz: string, offset: number): boolean => {
   if (inUtc === inTz) {
     // we need to catch issues when timezone isn't changed for some reason like https://github.com/grafana/grafana/issues/35504
