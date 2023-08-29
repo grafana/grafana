@@ -670,9 +670,9 @@
       "title": "Share Panel"
     },
     "playlist": {
-      "copy-link-button": "Copy",
       "checkbox-description": "Panel heights will be adjusted to fit screen size",
       "checkbox-label": "Autofit",
+      "copy-link-button": "Copy",
       "link-url-label": "Link URL",
       "mode": "Mode",
       "mode-kiosk": "Kiosk",
