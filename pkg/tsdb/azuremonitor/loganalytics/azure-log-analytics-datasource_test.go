@@ -1535,9 +1535,8 @@ func Test_executeQueryErrorWithDifferentLogAnalyticsCreds(t *testing.T) {
 		TimeRange: backend.TimeRange{},
 	}
 	tracer := tracing.InitializeTracerForTest()
-	res, err := ds.executeQuery(ctx, query, dsInfo, &http.Client{}, dsInfo.Services["Azure Log Analytics"].URL, tracer)
-	require.NoError(t, err)
-	if !strings.Contains(res.Error.Error(), "credentials for Log Analytics are no longer supported") {
+	_, err := ds.executeQuery(ctx, query, dsInfo, &http.Client{}, dsInfo.Services["Azure Log Analytics"].URL, tracer)
+	if !strings.Contains(err.Error(), "credentials for Log Analytics are no longer supported") {
 		t.Error("expecting the error to inform of bad credentials")
 	}
 }
