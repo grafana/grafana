@@ -4140,8 +4140,8 @@ kind: secret
 name: gcp_grafanauploads_base64
 ---
 get:
-  name: grafana_api_key
-  path: infra/data/ci/drone-plugins
+  name: api_key
+  path: infra/data/ci/grafana-release-eng/grafanacom
 kind: secret
 name: grafana_api_key
 ---
@@ -4320,6 +4320,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 39fac391717124335cb454514c2c4757de5b19b17ac051192cd6bb62b89a50fe
+hmac: 22ca4a06107f4704231fc97b61680c3f162aea508696773654b05c91f6683f09
 
 ...
