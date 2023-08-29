@@ -99,7 +99,7 @@ describe('timeSrv', () => {
         };
 
         locationService.push('/d/id?from=now-24h&to=now');
-        config.isPublicDashboardView = true;
+        config.publicDashboardAccessToken = 'abc123';
         timeSrv = new TimeSrv(new ContextSrvStub());
       });
 

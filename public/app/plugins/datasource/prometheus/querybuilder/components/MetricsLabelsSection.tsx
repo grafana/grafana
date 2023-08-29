@@ -4,13 +4,14 @@ import { SelectableValue } from '@grafana/data';
 
 import { PrometheusDatasource } from '../../datasource';
 import { getMetadataString } from '../../language_provider';
+import { truncateResult } from '../../language_utils';
 import { promQueryModeller } from '../PromQueryModeller';
 import { regexifyLabelValuesQueryString } from '../shared/parsingUtils';
 import { QueryBuilderLabelFilter } from '../shared/types';
 import { PromVisualQuery } from '../types';
 
 import { LabelFilters } from './LabelFilters';
-import { MetricSelect, PROMETHEUS_QUERY_BUILDER_MAX_RESULTS } from './MetricSelect';
+import { MetricSelect } from './MetricSelect';
 
 export interface MetricsLabelsSectionProps {
   query: PromVisualQuery;
@@ -108,9 +109,7 @@ export function MetricsLabelsSection({
     }
 
     return response.then((response: SelectableValue[]) => {
-      if (response.length > PROMETHEUS_QUERY_BUILDER_MAX_RESULTS) {
-        response.splice(0, response.length - PROMETHEUS_QUERY_BUILDER_MAX_RESULTS);
-      }
+      truncateResult(response);
       return response;
     });
   };

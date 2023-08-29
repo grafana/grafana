@@ -12,7 +12,7 @@ title: Data sources
 weight: 60
 ---
 
-# Data sources
+# Grafana data sources
 
 Grafana comes with built-in support for many _data sources_.
 If you need other data sources, you can also install one of the many data source plugins.
