@@ -6,7 +6,11 @@ import { AlertManagerDataSourceJsonData, AlertManagerImplementation } from 'app/
 
 import { useAlertManagersByPermission } from '../hooks/useAlertManagerSources';
 import { ALERTMANAGER_NAME_LOCAL_STORAGE_KEY, ALERTMANAGER_NAME_QUERY_KEY } from '../utils/constants';
-import { AlertManagerDataSource, getDataSourceByName, GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
+import {
+  AlertManagerDataSource,
+  getAlertmanagerDataSourceByName,
+  GRAFANA_RULES_SOURCE_NAME,
+} from '../utils/datasource';
 
 interface Context {
   selectedAlertmanager: string | undefined;
@@ -57,8 +61,7 @@ const AlertmanagerProvider = ({ children, accessType, alertmanagerSourceName }: 
     ? desiredAlertmanager
     : undefined;
 
-  const selectedAlertmanagerConfig = getDataSourceByName(selectedAlertmanager)
-    ?.jsonData as AlertManagerDataSourceJsonData;
+  const selectedAlertmanagerConfig = getAlertmanagerDataSourceByName(selectedAlertmanager)?.jsonData;
 
   // determine if we're dealing with an Alertmanager data source that supports the ruler API
   const isGrafanaFlavoredAlertmanager = selectedAlertmanager === GRAFANA_RULES_SOURCE_NAME;
