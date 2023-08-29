@@ -6,26 +6,32 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/ldap"
 	"github.com/grafana/grafana/pkg/services/ldap/multildap"
 	"github.com/grafana/grafana/pkg/services/ldap/service"
 	"github.com/grafana/grafana/pkg/services/login"
+	"github.com/grafana/grafana/pkg/services/login/logintest"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/services/user/usertest"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func TestLDAP_AuthenticateProxy(t *testing.T) {
-	type testCase struct {
-		desc             string
-		username         string
-		expectedLDAPErr  error
-		expectedLDAPInfo *login.ExternalUserInfo
-		expectedErr      error
-		expectedIdentity *authn.Identity
-	}
+type ldapTestCase struct {
+	desc             string
+	username         string
+	password         string
+	expectedErr      error
+	expectedLDAPErr  error
+	expectedUserErr  error
+	expectedLDAPInfo *login.ExternalUserInfo
+	expectedIdentity *authn.Identity
+}
 
-	tests := []testCase{
+func TestLDAP_AuthenticateProxy(t *testing.T) {
+	tests := []ldapTestCase{
 		{
 			desc:     "should return valid identity when found by ldap service",
 			username: "test",
@@ -71,7 +77,8 @@ func TestLDAP_AuthenticateProxy(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			c := &LDAP{cfg: setting.NewCfg(), service: &service.LDAPFakeService{ExpectedUser: tt.expectedLDAPInfo, ExpectedError: tt.expectedLDAPErr}}
+			c := setupTestCase(tt)
+
 			identity, err := c.AuthenticateProxy(context.Background(), &authn.Request{OrgID: 1}, tt.username, nil)
 			assert.ErrorIs(t, err, tt.expectedErr)
 			assert.EqualValues(t, tt.expectedIdentity, identity)
@@ -80,17 +87,7 @@ func TestLDAP_AuthenticateProxy(t *testing.T) {
 }
 
 func TestLDAP_AuthenticatePassword(t *testing.T) {
-	type testCase struct {
-		desc             string
-		username         string
-		password         string
-		expectedErr      error
-		expectedLDAPErr  error
-		expectedLDAPInfo *login.ExternalUserInfo
-		expectedIdentity *authn.Identity
-	}
-
-	tests := []testCase{
+	tests := []ldapTestCase{
 		{
 			desc:     "should successfully authenticate with correct username and password",
 			username: "test",
@@ -140,18 +137,34 @@ func TestLDAP_AuthenticatePassword(t *testing.T) {
 			password:        "wrong",
 			expectedErr:     errIdentityNotFound,
 			expectedLDAPErr: ldap.ErrCouldNotFindUser,
+			expectedUserErr: user.ErrUserNotFound,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			c := &LDAP{cfg: setting.NewCfg(), service: &service.LDAPFakeService{ExpectedUser: tt.expectedLDAPInfo, ExpectedError: tt.expectedLDAPErr}}
+			c := setupTestCase(tt)
 
 			identity, err := c.AuthenticatePassword(context.Background(), &authn.Request{OrgID: 1}, tt.username, tt.password)
 			assert.ErrorIs(t, err, tt.expectedErr)
 			assert.EqualValues(t, tt.expectedIdentity, identity)
 		})
 	}
+}
+
+func setupTestCase(tt ldapTestCase) *LDAP {
+	userService := usertest.NewUserServiceFake()
+	userService.ExpectedError = tt.expectedUserErr
+
+	c := &LDAP{
+		cfg:             setting.NewCfg(),
+		logger:          log.New("authn.ldap.test"),
+		service:         &service.LDAPFakeService{ExpectedUser: tt.expectedLDAPInfo, ExpectedError: tt.expectedLDAPErr},
+		userService:     userService,
+		authInfoService: &logintest.AuthInfoServiceFake{},
+	}
+
+	return c
 }
 
 func strPtr(s string) *string {
