@@ -210,14 +210,6 @@ var (
 			Owner:        awsDatasourcesSquad,
 		},
 		{
-			Name:         "newPanelChromeUI",
-			Description:  "Show updated look and feel of grafana-ui PanelChrome: panel header, icons, and menu",
-			Stage:        FeatureStageGeneralAvailability,
-			FrontendOnly: true,
-			Expression:   "true", // enabled by default
-			Owner:        grafanaDashboardsSquad,
-		},
-		{
 			Name:        "showDashboardValidationWarnings",
 			Description: "Show warnings when dashboards do not validate against the schema",
 			Stage:       FeatureStageExperimental,
