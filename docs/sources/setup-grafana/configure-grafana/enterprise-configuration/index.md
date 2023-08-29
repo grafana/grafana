@@ -180,7 +180,7 @@ Name of the TrueType font file with italic style.
 
 ### max_retries_per_panel
 
-Maximum number of panel rendering request retries before returning an error. 0 means disabling the retry feature. This is available in public preview, this requires the 'reportingRetries' feature toggle.
+Maximum number of panel rendering request retries before returning an error. To disable the retry feature, enter `0`. This is available in public preview and requires the 'reportingRetries' feature toggle.
 
 ## [auditing]
 
