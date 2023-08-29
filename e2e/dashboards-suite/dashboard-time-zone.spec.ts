@@ -92,6 +92,8 @@ e2e.scenario({
   addScenarioDashBoard: false,
   skipScenario: false,
   scenario: () => {
+    e2e().intercept('/api/ds/query/*').as('dataQuery');
+
     // Open dashboard in Browser timezone
     e2e.flows.openDashboard({
       uid: 'd41dbaa2-a39e-4536-ab2b-caca52f1a9c8',
@@ -101,6 +103,7 @@ e2e.scenario({
         zone: 'Browser Time',
       },
     });
+    e2e().wait('@dataQuery');
 
     e2e.components.Panels.Panel.title('Panel with relative time override')
       .should('be.visible')
@@ -108,7 +111,7 @@ e2e.scenario({
         e2e.components.Panels.Visualization.Table.body()
           .should('be.visible')
           .within(() => {
-            e2e().get('[role="row"]').first().should('be.visible').should('include.text', '00:00:00');
+            e2e().get('[role="row"]').first().should('include.text', '00:00:00');
           });
       });
 
@@ -117,6 +120,7 @@ e2e.scenario({
       from: 'now/d',
       to: 'now',
     });
+    e2e().wait('@dataQuery');
 
     e2e.components.Panels.Panel.title('Panel in timezone')
       .should('be.visible')
@@ -124,7 +128,7 @@ e2e.scenario({
         e2e.components.Panels.Visualization.Table.body()
           .should('be.visible')
           .within(() => {
-            e2e().get('[role="row"]').first().should('be.visible').should('include.text', '00:00:00');
+            e2e().get('[role="row"]').first().should('include.text', '00:00:00');
           });
       });
 
@@ -134,7 +138,7 @@ e2e.scenario({
         e2e.components.Panels.Visualization.Table.body()
           .should('be.visible')
           .within(() => {
-            e2e().get('[role="row"]').first().should('be.visible').should('include.text', '00:00:00');
+            e2e().get('[role="row"]').first().should('include.text', '00:00:00');
           });
       });
 
@@ -144,6 +148,7 @@ e2e.scenario({
       to: 'now',
       zone: 'Asia/Tokyo',
     });
+    e2e().wait('@dataQuery');
 
     e2e.components.Panels.Panel.title('Panel with relative time override')
       .should('be.visible')
@@ -151,7 +156,7 @@ e2e.scenario({
         e2e.components.Panels.Visualization.Table.body()
           .should('be.visible')
           .within(() => {
-            e2e().get('[role="row"]').first().should('be.visible').should('include.text', '00:00:00');
+            e2e().get('[role="row"]').first().should('include.text', '00:00:00');
           });
       });
 
@@ -160,6 +165,7 @@ e2e.scenario({
       from: 'now/d',
       to: 'now',
     });
+    e2e().wait('@dataQuery');
 
     e2e.components.Panels.Panel.title('Panel in timezone')
       .should('be.visible')
@@ -167,7 +173,7 @@ e2e.scenario({
         e2e.components.Panels.Visualization.Table.body()
           .should('be.visible')
           .within(() => {
-            e2e().get('[role="row"]').first().should('be.visible').should('include.text', '00:00:00');
+            e2e().get('[role="row"]').first().should('include.text', '00:00:00');
           });
       });
 
@@ -177,7 +183,7 @@ e2e.scenario({
         e2e.components.Panels.Visualization.Table.body()
           .should('be.visible')
           .within(() => {
-            e2e().get('[role="row"]').first().should('be.visible').should('include.text', '00:00:00');
+            e2e().get('[role="row"]').first().should('include.text', '00:00:00');
           });
       });
 
@@ -187,6 +193,7 @@ e2e.scenario({
       to: 'now',
       zone: 'America/Los_Angeles',
     });
+    e2e().wait('@dataQuery');
 
     e2e.components.Panels.Panel.title('Panel with relative time override')
       .should('be.visible')
@@ -194,7 +201,7 @@ e2e.scenario({
         e2e.components.Panels.Visualization.Table.body()
           .should('be.visible')
           .within(() => {
-            e2e().get('[role="row"]').first().should('be.visible').should('include.text', '00:00:00');
+            e2e().get('[role="row"]').first().should('include.text', '00:00:00');
           });
       });
 
@@ -203,6 +210,7 @@ e2e.scenario({
       from: 'now/d',
       to: 'now',
     });
+    e2e().wait('@dataQuery');
 
     e2e.components.Panels.Panel.title('Panel in timezone')
       .should('be.visible')
@@ -210,7 +218,7 @@ e2e.scenario({
         e2e.components.Panels.Visualization.Table.body()
           .should('be.visible')
           .within(() => {
-            e2e().get('[role="row"]').first().should('be.visible').should('include.text', '00:00:00');
+            e2e().get('[role="row"]').first().should('include.text', '00:00:00');
           });
       });
 
@@ -220,7 +228,7 @@ e2e.scenario({
         e2e.components.Panels.Visualization.Table.body()
           .should('be.visible')
           .within(() => {
-            e2e().get('[role="row"]').first().should('be.visible').should('include.text', '00:00:00');
+            e2e().get('[role="row"]').first().should('include.text', '00:00:00');
           });
       });
   },
