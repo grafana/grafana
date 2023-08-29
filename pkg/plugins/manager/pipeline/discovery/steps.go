@@ -55,34 +55,53 @@ func (d *DuplicatePluginValidation) Filter(ctx context.Context, bundles []*plugi
 	return res, nil
 }
 
-// DuplicatePluginValidation is a filter step that will filter out any core plugins that are
-// marked to be skipped.
-type CorePluginValidation struct {
+// LoadExternalPluginValidation is a filter step that will filter out any core plugins that are
+// marked to be skipped and warns if the plugin is not available externally.
+type LoadExternalPluginValidation struct {
 	log log.Logger
 	cfg *config.Cfg
 }
 
-// NewCorePluginFilterStep returns a new DuplicatePluginValidation.
-func NewCorePluginFilterStep(cfg *config.Cfg) *CorePluginValidation {
-	return &CorePluginValidation{
+// NewLoadExternalPluginFilterStep returns a new LoadExternalPluginValidation.
+func NewLoadExternalPluginFilterStep(cfg *config.Cfg) *LoadExternalPluginValidation {
+	return &LoadExternalPluginValidation{
 		cfg: cfg,
 		log: log.New("plugins.corefilter"),
 	}
 }
 
 // Filter will filter out any plugins that are marked to be skipped.
-func (c *CorePluginValidation) Filter(ctx context.Context, cl plugins.Class, bundles []*plugins.FoundBundle) ([]*plugins.FoundBundle, error) {
-	res := []*plugins.FoundBundle{}
-	for _, bundle := range bundles {
-		// Skip core plugins if the feature flag is enabled and the plugin is in the skip list.
-		// It could be loaded later as an external plugin.
-		if c.cfg.Features != nil && c.cfg.Features.IsEnabled(featuremgmt.FlagDecoupleCorePlugins) &&
-			cl == plugins.ClassCore &&
-			c.cfg.SkipCorePlugins[bundle.Primary.JSONData.ID] {
-			c.log.Debug("Skipping plugin loading as a core plugin", "pluginID", bundle.Primary.JSONData.ID)
-		} else {
-			res = append(res, bundle)
+func (c *LoadExternalPluginValidation) Filter(ctx context.Context, cl plugins.Class, bundles []*plugins.FoundBundle) ([]*plugins.FoundBundle, error) {
+	if cl == plugins.ClassCore && len(c.cfg.LoadExternalPlugins) > 0 && c.cfg.Features != nil && c.cfg.Features.IsEnabled(featuremgmt.FlagDecoupleCorePlugins) {
+		res := []*plugins.FoundBundle{}
+		for _, bundle := range bundles {
+			// Skip core plugins if the feature flag is enabled and the plugin is in the skip list.
+			// It could be loaded later as an external plugin.
+			if c.cfg.LoadExternalPlugins[bundle.Primary.JSONData.ID] {
+				c.log.Debug("Skipping plugin loading as a core plugin", "pluginID", bundle.Primary.JSONData.ID)
+			} else {
+				res = append(res, bundle)
+			}
+		}
+		return res, nil
+	}
+
+	if cl == plugins.ClassExternal && len(c.cfg.LoadExternalPlugins) > 0 && c.cfg.Features != nil && c.cfg.Features.IsEnabled(featuremgmt.FlagDecoupleCorePlugins) {
+		// Warn if the plugin is not found in the external plugins directory.
+		found := map[string]bool{}
+		for _, bundle := range bundles {
+			if c.cfg.LoadExternalPlugins[bundle.Primary.JSONData.ID] {
+				found[bundle.Primary.JSONData.ID] = true
+			}
+		}
+		if len(found) < len(c.cfg.LoadExternalPlugins) {
+			for expected := range c.cfg.LoadExternalPlugins {
+				if !found[expected] {
+					c.log.Warn("Plugin not found in external plugins directory", "pluginID", expected)
+				}
+			}
 		}
 	}
-	return res, nil
+
+	return bundles, nil
 }

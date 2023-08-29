@@ -405,7 +405,7 @@ func TestLoader_Load(t *testing.T) {
 			class: plugins.ClassCore,
 			cfg: &config.Cfg{
 				Features:             featuremgmt.WithFeatures(featuremgmt.FlagDecoupleCorePlugins),
-				SkipCorePlugins:      map[string]bool{"test-app": true},
+				LoadExternalPlugins:  map[string]bool{"test-app": true},
 				PluginsAllowUnsigned: []string{"test-app"},
 			},
 			pluginPaths: []string{"../testdata/test-app-with-includes"},
@@ -419,7 +419,7 @@ func TestLoader_Load(t *testing.T) {
 
 			d := discovery.New(tt.cfg, discovery.Opts{
 				FindFilterFuncs: []discovery.FindFilterFunc{
-					discovery.NewCorePluginFilterStep(tt.cfg).Filter,
+					discovery.NewLoadExternalPluginFilterStep(tt.cfg).Filter,
 				},
 			})
 			l := New(d, bootstrap.New(tt.cfg, bootstrap.Opts{}),
