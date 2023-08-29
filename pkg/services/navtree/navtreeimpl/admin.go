@@ -15,7 +15,7 @@ func (s *ServiceImpl) getAdminNode(c *contextmodel.ReqContext) (*navtree.NavLink
 	hasAccess := ac.HasAccess(s.accessControl, c)
 	hasGlobalAccess := ac.HasGlobalAccess(s.accessControl, s.accesscontrolService, c)
 	orgsAccessEvaluator := ac.EvalPermission(ac.ActionOrgsRead)
-	authConfigUIAvailable := s.license.FeatureEnabled("saml")
+	authConfigUIAvailable := s.license.FeatureEnabled("saml") || s.cfg.LDAPAuthEnabled
 
 	// FIXME: while we don't have a permissions for listing plugins the legacy check has to stay as a default
 	if pluginaccesscontrol.ReqCanAdminPlugins(s.cfg)(c) || hasAccess(pluginaccesscontrol.AdminAccessEvaluator) {

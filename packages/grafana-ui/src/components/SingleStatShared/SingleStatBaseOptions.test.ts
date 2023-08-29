@@ -34,10 +34,10 @@ describe('sharedSingleStatMigrationHandler', () => {
       },
       title: 'Usage',
       type: 'bargauge',
-    };
+    } as PanelModel;
 
-    sharedSingleStatMigrationHandler(panel as any);
-    expect((panel as any).fieldConfig).toMatchInlineSnapshot(`
+    sharedSingleStatMigrationHandler(panel);
+    expect(panel.fieldConfig).toMatchInlineSnapshot(`
       {
         "defaults": {
           "color": {
@@ -105,11 +105,11 @@ describe('sharedSingleStatMigrationHandler', () => {
           },
         },
       },
-    };
+    } as PanelModel;
 
-    sharedSingleStatMigrationHandler(panel as any);
+    sharedSingleStatMigrationHandler(panel);
 
-    expect((panel as any).fieldConfig).toMatchInlineSnapshot(`
+    expect(panel.fieldConfig).toMatchInlineSnapshot(`
       {
         "defaults": {
           "mappings": undefined,
@@ -141,10 +141,10 @@ describe('sharedSingleStatMigrationHandler', () => {
       },
       title: 'Usage',
       type: 'bargauge',
-    };
+    } as PanelModel;
 
-    sharedSingleStatMigrationHandler(panel as any);
-    expect((panel as any).fieldConfig).toMatchInlineSnapshot(`
+    sharedSingleStatMigrationHandler(panel);
+    expect(panel.fieldConfig).toMatchInlineSnapshot(`
       {
         "defaults": {
           "mappings": undefined,
@@ -174,10 +174,10 @@ describe('sharedSingleStatMigrationHandler', () => {
       },
       title: 'Usage',
       type: 'bargauge',
-    };
+    } as PanelModel;
 
-    sharedSingleStatMigrationHandler(panel as any);
-    expect((panel as any).fieldConfig.defaults.displayName).toBe('newTitle');
+    sharedSingleStatMigrationHandler(panel);
+    expect(panel.fieldConfig.defaults.displayName).toBe('newTitle');
   });
 
   it('change from angular singlestat with no enabled gauge', () => {
@@ -242,8 +242,8 @@ describe('sharedSingleStatMigrationHandler', () => {
       },
       title: 'Usage',
       type: 'bargauge',
-    } as unknown as PanelModel;
-    sharedSingleStatMigrationHandler(panel as any);
+    } as PanelModel;
+    sharedSingleStatMigrationHandler(panel);
     expect(panel.fieldConfig.defaults.unit).toBe('percentunit');
     expect(panel.fieldConfig.defaults.min).toBe(0);
     expect(panel.fieldConfig.defaults.max).toBe(1);
