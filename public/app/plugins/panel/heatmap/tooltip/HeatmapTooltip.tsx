@@ -59,6 +59,7 @@ const HeatmapTooltipHover = ({
   showColorScale = false,
   scopedVars,
   replaceVars,
+  dismiss,
 }: Props) => {
   const data = dataRef.current;
 
@@ -352,7 +353,7 @@ const HeatmapTooltipHover = ({
         customValueDisplay={getCustomValueDisplay()}
       />
       <VizTooltipContent contentLabelValue={getContentLabelValue()} customContent={getCustomContent()} />
-      {isPinned && <VizTooltipFooter dataLinks={links} canAnnotate={canAnnotate} />}
+      {isPinned && <VizTooltipFooter dataLinks={links} canAnnotate={canAnnotate} dismiss={dismiss}/>}
     </div>
   );
 };

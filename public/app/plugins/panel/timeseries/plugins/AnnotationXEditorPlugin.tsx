@@ -6,6 +6,8 @@ import { colorManipulator, DataFrame, GrafanaTheme2 } from '@grafana/data';
 import { TimeZone } from '@grafana/schema';
 import { UPlotConfigBuilder, useStyles2, PlotSelection, DEFAULT_ANNOTATION_COLOR } from '@grafana/ui';
 
+import { ADD_ANNOTATION_ID } from "../../heatmap/tooltip/VizTooltipFooter";
+
 import { AnnotationEditor2 } from './annotations/AnnotationEditor2';
 
 interface AnnotationXEditorPluginProps {
@@ -75,6 +77,7 @@ export const AnnotationXEditorPlugin = ({ builder, timeRange, data, timeZone }: 
           },
         });
 
+        annotating = false;
         u.over.querySelector<HTMLDivElement>('.u-select')!.classList.add(styles.overlay);
         forceRender(Math.random());
       }

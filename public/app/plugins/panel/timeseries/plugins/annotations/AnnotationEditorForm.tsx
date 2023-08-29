@@ -8,6 +8,7 @@ import { Button, Field, Form, HorizontalGroup, InputControl, TextArea, usePanelC
 import { TagFilter } from 'app/core/components/TagFilter/TagFilter';
 import { getAnnotationTags } from 'app/features/annotations/api';
 
+import { ADD_ANNOTATION_ID } from "../../../heatmap/tooltip/VizTooltipFooter";
 import { AnnotationsDataFrameViewDTO } from '../types';
 
 interface AnnotationEditFormDTO {
@@ -28,7 +29,13 @@ export const AnnotationEditorForm = React.forwardRef<HTMLDivElement, AnnotationE
     const panelContext = usePanelContext();
     const clickAwayRef = useRef(null);
 
-    useClickAway(clickAwayRef, () => {
+    useClickAway(clickAwayRef, (e: Event) => {
+      // @TODO better check
+      const elem = e.target as Element;
+      if (elem.parentElement?.id === ADD_ANNOTATION_ID) {
+        return;
+      }
+
       onDismiss();
     });
 

@@ -7,13 +7,12 @@ import { Button, ButtonProps, DataLinkButton, HorizontalGroup, useStyles2 } from
 interface VizTooltipFooterProps {
   dataLinks: Array<LinkModel<Field>>;
   canAnnotate: boolean;
+  dismiss: () => void;
 }
 
-const addAnnotation = () => {
-  console.log('add annotation');
-};
+export const ADD_ANNOTATION_ID = 'add-annotation-button';
 
-export const VizTooltipFooter = ({ dataLinks, canAnnotate }: VizTooltipFooterProps) => {
+export const VizTooltipFooter = ({ dataLinks, canAnnotate, dismiss }: VizTooltipFooterProps) => {
   const styles = useStyles2(getStyles);
 
   const renderDataLinks = () => {
@@ -30,12 +29,16 @@ export const VizTooltipFooter = ({ dataLinks, canAnnotate }: VizTooltipFooterPro
     );
   };
 
+  const addAnnotation = () => {
+    dismiss();
+  };
+
   return (
     <div className={styles.wrapper}>
       {dataLinks.length > 0 && <div className={styles.dataLinks}>{renderDataLinks()}</div>}
       {canAnnotate && (
         <div className={styles.addAnnotations}>
-          <Button icon="comment-alt" variant="secondary" size="sm" onClick={addAnnotation}>
+          <Button icon="comment-alt" variant="secondary" size="sm" onClick={addAnnotation} id={ADD_ANNOTATION_ID}>
             Add annotation
           </Button>
         </div>
