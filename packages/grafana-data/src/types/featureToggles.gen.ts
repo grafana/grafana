@@ -121,4 +121,5 @@ export interface FeatureToggles {
   influxdbSqlSupport?: boolean;
   noBasicRole?: boolean;
   alertingNoDataErrorExecution?: boolean;
+  angularDeprecationUI?: boolean;
 }
