@@ -41,10 +41,11 @@ async function fetchDashboards(options: Options, replaceVars: InterpolateFunctio
 
   let searchedDashboards: Promise<DashboardSearchItem[]> = Promise.resolve([]);
   if (options.showSearch) {
+    const uid = options.folderUID === '' ? 'general' : options.folderUid;
     const params = {
       limit: options.maxItems,
       query: replaceVars(options.query, {}, 'text'),
-      folderIds: options.folderId,
+      folderUIDs: uid,
       tag: options.tags.map((tag: string) => replaceVars(tag, {}, 'text')),
       type: 'dash-db',
     };

@@ -4496,7 +4496,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "4"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "5"]
     ],
-    "public/app/plugins/panel/dashlist/module.tsx:5381": [
+    "public/app/plugins/panel/dashlist/migrations.test.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
     "public/app/plugins/panel/debug/CursorView.tsx:5381": [
