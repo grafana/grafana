@@ -185,10 +185,6 @@ func (s *StandardSearchService) getUser(ctx context.Context, backendUser *backen
 		}
 	}
 
-	if s.ac.IsDisabled() {
-		return usr, nil
-	}
-
 	if usr.Permissions == nil {
 		usr.Permissions = make(map[int64]map[string][]string)
 	}

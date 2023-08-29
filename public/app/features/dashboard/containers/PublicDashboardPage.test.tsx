@@ -107,7 +107,6 @@ const getTestDashboard = (overrides?: Partial<Dashboard>, metaOverrides?: Partia
       editable: false,
       graphTooltip: DashboardCursorSync.Off,
       schemaVersion: 1,
-      style: 'dark',
       timepicker: { hidden: true },
       timezone: '',
       panels: [
@@ -249,7 +248,7 @@ describe('PublicDashboardPage', () => {
         dashboard: {
           getModel: () =>
             getTestDashboard({
-              timepicker: { hidden: false, collapse: false, enable: true, refresh_intervals: [], time_options: [] },
+              timepicker: { hidden: false, collapse: false, refresh_intervals: [], time_options: [] },
             }),
           initError: null,
           initPhase: DashboardInitPhase.Completed,

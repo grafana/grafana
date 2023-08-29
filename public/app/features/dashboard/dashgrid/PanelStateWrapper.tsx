@@ -347,7 +347,6 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
       panel.runAllPanelQueries({
         dashboardUID: dashboard.uid,
         dashboardTimezone: dashboard.getTimezone(),
-        publicDashboardAccessToken: dashboard.meta.publicDashboardAccessToken,
         timeData,
         width,
       });

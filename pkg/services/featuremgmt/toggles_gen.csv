@@ -17,7 +17,6 @@ newDBLibrary,preview,@grafana/backend-platform,false,false,false,false
 validateDashboardsOnSave,preview,@grafana/grafana-as-code,false,false,true,false
 autoMigrateOldPanels,preview,@grafana/dataviz-squad,false,false,false,true
 disableAngular,preview,@grafana/dataviz-squad,false,false,false,true
-prometheusWideSeries,experimental,@grafana/observability-metrics,false,false,false,false
 canvasPanelNesting,experimental,@grafana/dataviz-squad,false,false,false,true
 scenes,experimental,@grafana/dashboards-squad,false,false,false,true
 disableSecretsCompatibility,experimental,@grafana/hosted-grafana-team,false,false,true,false
@@ -89,6 +88,7 @@ transformationsRedesign,GA,@grafana/observability-metrics,false,false,false,true
 toggleLabelsInLogsUI,experimental,@grafana/observability-logs,false,false,false,true
 mlExpressions,experimental,@grafana/alerting-squad,false,false,false,false
 traceQLStreaming,experimental,@grafana/observability-traces-and-profiling,false,false,false,true
+metricsSummary,experimental,@grafana/observability-traces-and-profiling,false,false,false,true
 grafanaAPIServer,experimental,@grafana/grafana-app-platform-squad,false,false,false,false
 featureToggleAdminPage,experimental,@grafana/grafana-operator-experience-squad,false,false,true,false
 awsAsyncQueryCaching,experimental,@grafana/aws-datasources,false,false,false,false

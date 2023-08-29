@@ -61,19 +61,19 @@ func CopyWithReqContext(ctx context.Context) context.Context {
 		Resp: web.NewResponseWriter(origReqCtx.Req.Method, response.CreateNormalResponse(http.Header{}, []byte{}, 0)),
 	}
 	reqCtx := &contextmodel.ReqContext{
-		Context:               webCtx,
-		SignedInUser:          origReqCtx.SignedInUser,
-		UserToken:             origReqCtx.UserToken,
-		IsSignedIn:            origReqCtx.IsSignedIn,
-		IsRenderCall:          origReqCtx.IsRenderCall,
-		AllowAnonymous:        origReqCtx.AllowAnonymous,
-		SkipDSCache:           origReqCtx.SkipDSCache,
-		SkipQueryCache:        origReqCtx.SkipQueryCache,
-		Logger:                origReqCtx.Logger,
-		Error:                 origReqCtx.Error,
-		RequestNonce:          origReqCtx.RequestNonce,
-		IsPublicDashboardView: origReqCtx.IsPublicDashboardView,
-		LookupTokenErr:        origReqCtx.LookupTokenErr,
+		Context:                    webCtx,
+		SignedInUser:               origReqCtx.SignedInUser,
+		UserToken:                  origReqCtx.UserToken,
+		IsSignedIn:                 origReqCtx.IsSignedIn,
+		IsRenderCall:               origReqCtx.IsRenderCall,
+		AllowAnonymous:             origReqCtx.AllowAnonymous,
+		SkipDSCache:                origReqCtx.SkipDSCache,
+		SkipQueryCache:             origReqCtx.SkipQueryCache,
+		Logger:                     origReqCtx.Logger,
+		Error:                      origReqCtx.Error,
+		RequestNonce:               origReqCtx.RequestNonce,
+		PublicDashboardAccessToken: origReqCtx.PublicDashboardAccessToken,
+		LookupTokenErr:             origReqCtx.LookupTokenErr,
 	}
 	return context.WithValue(ctx, reqContextKey{}, reqCtx)
 }
