@@ -92,18 +92,21 @@ e2e.scenario({
   addScenarioDashBoard: false,
   skipScenario: false,
   scenario: () => {
-    e2e().intercept('/api/ds/query*').as('dataQuery');
-
-    // Open dashboard in Browser timezone
+    // Open dashboard
     e2e.flows.openDashboard({
       uid: 'd41dbaa2-a39e-4536-ab2b-caca52f1a9c8',
-      timeRange: {
-        from: 'now-6h',
-        to: 'now',
-        zone: 'Browser Time',
-      },
     });
-    e2e().wait('@dataQuery');
+
+    e2e().intercept('/api/ds/query*').as('dataQuery');
+
+    // Switch to Browser timezone
+    e2e.flows.setTimeRange({
+      from: 'now-6h',
+      to: 'now',
+      zone: 'Browser',
+    });
+    // Need to wait for 2 calls as there's 2 panels
+    e2e().wait(['@dataQuery', '@dataQuery']);
 
     e2e.components.Panels.Panel.title('Panel with relative time override')
       .should('be.visible')
@@ -120,7 +123,8 @@ e2e.scenario({
       from: 'now/d',
       to: 'now',
     });
-    e2e().wait('@dataQuery');
+    // Need to wait for 2 calls as there's 2 panels
+    e2e().wait(['@dataQuery', '@dataQuery']);
 
     e2e.components.Panels.Panel.title('Panel in timezone')
       .should('be.visible')
@@ -148,7 +152,8 @@ e2e.scenario({
       to: 'now',
       zone: 'Asia/Tokyo',
     });
-    e2e().wait('@dataQuery');
+    // Need to wait for 2 calls as there's 2 panels
+    e2e().wait(['@dataQuery', '@dataQuery']);
 
     e2e.components.Panels.Panel.title('Panel with relative time override')
       .should('be.visible')
@@ -165,7 +170,8 @@ e2e.scenario({
       from: 'now/d',
       to: 'now',
     });
-    e2e().wait('@dataQuery');
+    // Need to wait for 2 calls as there's 2 panels
+    e2e().wait(['@dataQuery', '@dataQuery']);
 
     e2e.components.Panels.Panel.title('Panel in timezone')
       .should('be.visible')
@@ -193,7 +199,8 @@ e2e.scenario({
       to: 'now',
       zone: 'America/Los_Angeles',
     });
-    e2e().wait('@dataQuery');
+    // Need to wait for 2 calls as there's 2 panels
+    e2e().wait(['@dataQuery', '@dataQuery']);
 
     e2e.components.Panels.Panel.title('Panel with relative time override')
       .should('be.visible')
@@ -210,7 +217,8 @@ e2e.scenario({
       from: 'now/d',
       to: 'now',
     });
-    e2e().wait('@dataQuery');
+    // Need to wait for 2 calls as there's 2 panels
+    e2e().wait(['@dataQuery', '@dataQuery']);
 
     e2e.components.Panels.Panel.title('Panel in timezone')
       .should('be.visible')
