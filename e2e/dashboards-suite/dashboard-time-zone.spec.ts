@@ -92,11 +92,14 @@ e2e.scenario({
   addScenarioDashBoard: false,
   skipScenario: false,
   scenario: () => {
-    // Test Browser
-    e2e.flows.setTimeRange({
-      from: 'now-6h',
-      to: 'now',
-      zone: 'Browser Time',
+    // Open dashboard in Browser timezone
+    e2e.flows.openDashboard({
+      uid: 'd41dbaa2-a39e-4536-ab2b-caca52f1a9c8',
+      timeRange: {
+        from: 'now-6h',
+        to: 'now',
+        zone: 'Browser Time',
+      },
     });
 
     e2e.components.Panels.Panel.title('Panel with relative time override')
@@ -112,6 +115,7 @@ e2e.scenario({
           });
       });
 
+    // Today so far, still in Browser timezone
     e2e.flows.setTimeRange({
       from: 'now/d',
       to: 'now',
@@ -163,6 +167,7 @@ e2e.scenario({
           });
       });
 
+    // Today so far, still in Tokyo timezone
     e2e.flows.setTimeRange({
       from: 'now/d',
       to: 'now',
@@ -214,6 +219,7 @@ e2e.scenario({
           });
       });
 
+    // Today so far, still in LA timezone
     e2e.flows.setTimeRange({
       from: 'now/d',
       to: 'now',
