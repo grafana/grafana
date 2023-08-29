@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/grafana/dskit/concurrency"
 	"net/http"
 	"regexp"
 	"strings"
@@ -158,6 +159,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 }
 
 func queryData(ctx context.Context, req *backend.QueryDataRequest, dsInfo *datasourceInfo, responseOpts ResponseOpts, tracer tracing.Tracer) (*backend.QueryDataResponse, error) {
+	resultLock := sync.Mutex{}
 	result := backend.NewQueryDataResponse()
 
 	api := newLokiAPI(dsInfo.HTTPClient, dsInfo.URL, logger.FromContext(ctx))
@@ -167,7 +169,8 @@ func queryData(ctx context.Context, req *backend.QueryDataRequest, dsInfo *datas
 		return result, err
 	}
 
-	for _, query := range queries {
+	err = concurrency.ForEachJob(ctx, len(queries), 10, func(ctx context.Context, idx int) error {
+		query := queries[idx]
 		ctx, span := tracer.Start(ctx, "datasource.loki")
 		span.SetAttributes("expr", query.Expr, attribute.Key("expr").String(query.Expr))
 		span.SetAttributes("start_unixnano", query.Start, attribute.Key("start_unixnano").Int64(query.Start.UnixNano()))
@@ -191,9 +194,14 @@ func queryData(ctx context.Context, req *backend.QueryDataRequest, dsInfo *datas
 			queryRes.Frames = frames
 		}
 
+		resultLock.Lock()
+		defer resultLock.Unlock()
 		result.Responses[query.RefID] = queryRes
-	}
-	return result, nil
+
+		return nil // errors are saved per-query,always return nil
+	})
+
+	return result, err
 }
 
 // we extracted this part of the functionality to make it easy to unit-test it
