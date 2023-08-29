@@ -389,7 +389,12 @@ export class BackendSrv implements BackendService {
                   return throwError(() => error);
                 }
 
-                let authChecker = config.featureToggles.clientTokenRotation ? this.rotateToken() : this.loginPing();
+                let authChecker = this.loginPing();
+
+                const expired = contextSrv.getSessionExpiry() * 1000 < Date.now();
+                if (config.featureToggles.clientTokenRotation && expired) {
+                  authChecker = this.rotateToken();
+                }
 
                 return from(authChecker).pipe(
                   catchError((err) => {

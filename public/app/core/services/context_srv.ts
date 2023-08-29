@@ -279,7 +279,7 @@ export class ContextSrv {
       });
   }
 
-  private getSessionExpiry() {
+  getSessionExpiry() {
     const expiryCookie = document.cookie.split('; ').find((row) => row.startsWith('grafana_session_expiry='));
     if (!expiryCookie) {
       return 0;
