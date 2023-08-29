@@ -6,7 +6,7 @@ import { applyPanelTimeOverrides } from 'app/features/dashboard/utils/panel';
 import { PanelRenderer } from 'app/features/panel/components/PanelRenderer';
 import { Options } from 'app/plugins/panel/table/panelcfg.gen';
 
-import PanelHeaderCorner from '../../dashgrid/PanelHeader/PanelHeaderCorner';
+import PanelHeaderCorner from './PanelHeaderCorner';
 import { getTimeSrv } from '../../services/TimeSrv';
 import { DashboardModel, PanelModel } from '../../state';
 
