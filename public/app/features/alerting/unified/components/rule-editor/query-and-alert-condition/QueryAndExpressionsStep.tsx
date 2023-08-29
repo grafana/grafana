@@ -312,6 +312,8 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
       prevCondition && setValue('condition', prevCondition);
     } else {
       setValue('type', RuleFormType.cloudAlerting);
+      // dataSourceName is used only by Mimir/Loki alerting and recording rules
+      // It should be empty for Grafana managed alert rules
       const newDsName = getDataSourceSrv().getInstanceSettings(queries[0].datasourceUid)?.name;
       if (newDsName) {
         setValue('dataSourceName', newDsName);
