@@ -22,6 +22,7 @@ export function ProfileTypesCascader(props: Props) {
       allowCustomValue={true}
       onSelect={props.onChange}
       options={cascaderOptions}
+      changeOnSelect={false}
     />
   );
 }
