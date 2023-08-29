@@ -4,7 +4,6 @@ import React from 'react';
 import { Provider } from 'react-redux';
 
 import { configureStore } from 'app/store/configureStore';
-import { DashboardDataDTO } from 'app/types';
 
 import { DashboardModel } from '../../state';
 import { createDashboardModelFixture } from '../../state/__fixtures__/dashboardFixtures';
@@ -60,7 +59,6 @@ describe('SaveDashboardDrawer', () => {
 
   it("renders a modal if there's an unhandled error", async () => {
     const { onDismiss, dashboard, error } = buildMocks();
-    dashboard.setOriginalDashboard({} as DashboardDataDTO);
     mockPost.mockRejectedValueOnce(error);
 
     await setup({ dashboard, onDismiss });
