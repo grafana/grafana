@@ -28,14 +28,14 @@ export type ProfileTypeQuery = {
 
 export type LabelQuery = {
   type: 'label';
-  profileTypeId: string;
+  profileTypeId?: string;
   refId: string;
 };
 
 export type LabelValueQuery = {
   type: 'labelValue';
-  profileTypeId: string;
-  labelName: string;
+  profileTypeId?: string;
+  labelName?: string;
   refId: string;
 };
 

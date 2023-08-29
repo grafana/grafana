@@ -36,6 +36,9 @@ export class VariableSupport extends CustomVariableSupport<PhlareDataSource> {
     }
 
     if (request.targets[0].type === 'label') {
+      if (!request.targets[0].profileTypeId) {
+        return of({ data: [] });
+      }
       return from(
         this.dataAPI.getLabelNames(
           request.targets[0].profileTypeId + '{}',
@@ -50,6 +53,9 @@ export class VariableSupport extends CustomVariableSupport<PhlareDataSource> {
     }
 
     if (request.targets[0].type === 'labelValue') {
+      if (!request.targets[0].labelName || !request.targets[0].profileTypeId) {
+        return of({ data: [] });
+      }
       return from(
         this.dataAPI.getLabelValues(
           request.targets[0].profileTypeId + '{}',
