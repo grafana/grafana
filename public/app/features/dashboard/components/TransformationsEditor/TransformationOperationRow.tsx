@@ -10,7 +10,7 @@ import {
 } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 import { ConfirmModal, HorizontalGroup, Modal } from '@grafana/ui';
-import { OperationRowHelp } from 'app/core/components/QueryOperationRow/OperationRowHelp';
+// import { OperationRowHelp } from 'app/core/components/QueryOperationRow/OperationRowHelp';
 import {
   QueryOperationAction,
   QueryOperationToggleAction,
@@ -118,8 +118,8 @@ export const TransformationOperationRow = ({
           title="Show transform help"
           icon="info-circle"
           // `instrumentToggleCallback` expects a function that takes a MouseEvent, is unused in the state setter. Instead, we simply toggle the state.
-          onClick={instrumentToggleCallback((_e) => toggleShowHelp(!showHelp), 'help', showHelp)}
-          active={!!showHelp}
+          onClick={instrumentToggleCallback(toggleShowHelp, 'help', showHelp)}
+          active={showHelp}
         />
         {showFilter && (
           <QueryOperationToggleAction
@@ -206,14 +206,36 @@ function markdownHelper(markdown: string) {
   return <div className="markdown-html" dangerouslySetInnerHTML={{ __html: helpHtml }} />;
 }
 
+// function prepMarkdown(uiConfig: TransformerRegistryItem<null>) {
+//   let helpMarkdown = uiConfig.help ?? uiConfig.description;
+
+//   return `
+// ${helpMarkdown}
+
+// Go the <a href="https://grafana.com/docs/grafana/latest/panels/transformations/?utm_source=grafana" target="_blank" rel="noreferrer">
+// transformation documentation
+// </a> for more.
+// `;
+// }
+
 function prepMarkdown(uiConfig: TransformerRegistryItem<null>) {
   let helpMarkdown = uiConfig.help ?? uiConfig.description;
 
   return `
 ${helpMarkdown}
 
-Go the <a href="https://grafana.com/docs/grafana/latest/panels/transformations/?utm_source=grafana" target="_blank" rel="noreferrer">
-transformation documentation
-</a> for more.
+<ul>
+  <li><strong>Field</strong> - Select from available fields</li>
+  <li><strong>as</strong> - Select the FieldType to convert to</li>
+    <ul>
+      <li><strong>Numeric</strong> - attempts to make the values numbers</li>
+      <li><strong>String</strong> - will make the values strings</li>
+      <li><strong>Boolean</strong> - will make the values booleans</li>
+      <li><strong>Time</strong> - attempts to parse the values as time</li>
+        <ul>
+          <li>Will show an option to specify a DateFormat as input by a string like yyyy-mm-dd or DD MM YYYY hh:mm:ss</li>
+        </ul>
+    </ul>
+</ul>
 `;
 }
