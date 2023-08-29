@@ -554,6 +554,11 @@ func (hs *HTTPServer) postDashboard(c *contextmodel.ReqContext, cmd dashboards.S
 // 500: internalServerError
 func (hs *HTTPServer) GetHomeDashboard(c *contextmodel.ReqContext) response.Response {
 	namespaceID, userIDstr := c.SignedInUser.GetNamespacedID()
+
+	if namespaceID != identity.NamespaceUser {
+		return response.Error(http.StatusBadRequest, "User does not belong to a user namespace", nil)
+	}
+
 	userID, err := identity.IntIdentifier(namespaceID, userIDstr)
 	if err != nil {
 		hs.log.Warn("Error while parsing user ID", "namespaceID", namespaceID, "userID", userIDstr, "err", err)
@@ -1066,7 +1071,11 @@ func (hs *HTTPServer) RestoreDashboardVersion(c *contextmodel.ReqContext) respon
 		return response.Error(http.StatusNotFound, "Dashboard version not found", nil)
 	}
 
-	userID, err := identity.IntIdentifier(c.SignedInUser.GetNamespacedID())
+	namespaceID, userIDstr := c.SignedInUser.GetNamespacedID()
+	if namespaceID != identity.NamespaceUser && namespaceID != identity.NamespaceServiceAccount {
+		return response.Error(http.StatusBadRequest, "User does not belong to a user or service namespace", nil)
+	}
+	userID, err := identity.IntIdentifier(namespaceID, userIDstr)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "failed to get user id", err)
 	}

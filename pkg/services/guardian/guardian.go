@@ -379,12 +379,17 @@ func (g *dashboardGuardianImpl) getTeams() ([]*team.TeamDTO, error) {
 		return g.teams, nil
 	}
 
-	userIdD, err := identity.IntIdentifier(g.user.GetNamespacedID())
+	namespaceId, userIDstr := g.user.GetNamespacedID()
+	if namespaceId == identity.NamespaceAPIKey {
+		return nil, nil
+	}
+
+	userID, err := identity.IntIdentifier(namespaceId, userIDstr)
 	if err != nil {
 		return nil, err
 	}
 
-	query := team.GetTeamsByUserQuery{OrgID: g.orgId, UserID: userIdD, SignedInUser: g.user}
+	query := team.GetTeamsByUserQuery{OrgID: g.orgId, UserID: userID, SignedInUser: g.user}
 	queryResult, err := g.teamService.GetTeamsByUser(g.ctx, &query)
 
 	g.teams = queryResult
