@@ -46,7 +46,7 @@ import { DashboardModel, PanelModel } from '../state';
 import { getPanelChromeProps } from '../utils/getPanelChromeProps';
 import { loadSnapshotData } from '../utils/loadSnapshotData';
 
-import { PanelHeaderMenuWrapperNew } from './PanelHeader/PanelHeaderMenuWrapper';
+import { PanelHeaderMenuWrapper } from './PanelHeader/PanelHeaderMenuWrapper';
 import { seriesVisibilityConfigFactory } from './SeriesVisibilityConfigFactory';
 import { liveTimer } from './liveTimer';
 
@@ -539,7 +539,7 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
 
     const menu = (
       <div data-testid="panel-dropdown">
-        <PanelHeaderMenuWrapperNew panel={panel} dashboard={dashboard} loadingState={data.state} />
+        <PanelHeaderMenuWrapper panel={panel} dashboard={dashboard} loadingState={data.state} />
       </div>
     );
 
