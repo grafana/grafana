@@ -219,7 +219,7 @@ type AlertRuleExport struct {
 	PanelID      int64               `json:"panelId,omitempty" yaml:"panelId,omitempty"`
 	NoDataState  NoDataState         `json:"noDataState" yaml:"noDataState" hcl:"no_data_state"`
 	ExecErrState ExecutionErrorState `json:"execErrState" yaml:"execErrState" hcl:"exec_err_state"`
-	For          model.Duration      `json:"for" yaml:"for" hcl:"for"`
+	For          model.Duration      `json:"for" yaml:"for"`
 	ForSeconds   int64               `json:"-" yaml:"-" hcl:"for"`
 	Annotations  map[string]string   `json:"annotations,omitempty" yaml:"annotations,omitempty" hcl:"annotations"`
 	Labels       map[string]string   `json:"labels,omitempty" yaml:"labels,omitempty" hcl:"labels"`
