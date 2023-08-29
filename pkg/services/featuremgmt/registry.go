@@ -716,11 +716,11 @@ var (
 			Owner:        grafanaPluginsPlatformSquad,
 		},
 		{
-			Name: 		  "dashgpt",
+			Name:         "dashgpt",
 			Description:  "Enable AI powered features",
-			Stage: 	      FeatureStageExperimental,
+			Stage:        FeatureStageExperimental,
 			FrontendOnly: true,
-			Owner: 	      grafanaDashboardsSquad,
+			Owner:        grafanaDashboardsSquad,
 		},
 	}
 )
