@@ -440,7 +440,6 @@ func (pd *PublicDashboardServiceImpl) newCreatePublicDashboard(ctx context.Conte
 	if dto.PublicDashboard.Uid != "" {
 		uid = dto.PublicDashboard.Uid
 	} else {
-
 		uid, err = pd.NewPublicDashboardUid(ctx)
 		if err != nil {
 			return nil, err
