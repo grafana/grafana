@@ -159,8 +159,8 @@ export const EmailSharingConfiguration = () => {
   };
 
   return (
-    <form data-testid={selectors.Container} onSubmit={handleSubmit(onSubmit)}>
-      <FieldSet disabled={!hasWritePermissions} className={styles.container}>
+    <form onSubmit={handleSubmit(onSubmit)}>
+      <FieldSet disabled={!hasWritePermissions} data-testid={selectors.Container} className={styles.container}>
         <Field label="Can view dashboard" className={styles.field}>
           <InputControl
             name="shareType"
