@@ -1304,7 +1304,7 @@ export class DashboardModel implements TimeModel {
   getOriginalDashboard() {
     return this.originalDashboard;
   }
-  
+
   hasAngularPlugins(): boolean {
     return this.panels.some(
       (panel) =>
