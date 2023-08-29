@@ -79,7 +79,17 @@ func TestLDAP_AuthenticateProxy(t *testing.T) {
 			desc:            "should return error when user is not found",
 			username:        "test",
 			expectedLDAPErr: multildap.ErrDidNotFindUser,
+			expectedUserErr: user.ErrUserNotFound,
 			expectedErr:     errIdentityNotFound,
+		},
+		{
+			desc:             "should disable user when user is not found",
+			username:         "test",
+			expectedLDAPErr:  multildap.ErrDidNotFindUser,
+			expectedUser:     user.User{ID: 11, Login: "test"},
+			expectedAuthInfo: login.UserAuth{UserId: 11, AuthId: "cn=test,ou=users,dc=example,dc=org", AuthModule: login.LDAPAuthModule},
+			expectDisable:    true,
+			expectedErr:      errIdentityNotFound,
 		},
 	}
 
@@ -90,6 +100,10 @@ func TestLDAP_AuthenticateProxy(t *testing.T) {
 			identity, err := c.AuthenticateProxy(context.Background(), &authn.Request{OrgID: 1}, tt.username, nil)
 			assert.ErrorIs(t, err, tt.expectedErr)
 			assert.EqualValues(t, tt.expectedIdentity, identity)
+
+			if tt.expectDisable {
+				assert.True(t, tt.disableCalled)
+			}
 		})
 	}
 }

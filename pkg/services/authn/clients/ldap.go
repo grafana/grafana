@@ -39,7 +39,7 @@ func (c *LDAP) String() string {
 func (c *LDAP) AuthenticateProxy(ctx context.Context, r *authn.Request, username string, _ map[string]string) (*authn.Identity, error) {
 	info, err := c.service.User(username)
 	if errors.Is(err, multildap.ErrDidNotFindUser) {
-		return nil, errIdentityNotFound.Errorf("no user found: %w", err)
+		return c.disableUser(ctx, username)
 	}
 
 	if err != nil {
@@ -56,7 +56,7 @@ func (c *LDAP) AuthenticatePassword(ctx context.Context, r *authn.Request, usern
 	})
 
 	if errors.Is(err, multildap.ErrCouldNotFindUser) {
-		return c.disableUser(ctx, err, username)
+		return c.disableUser(ctx, username)
 	}
 
 	// user was found so set auth module in req metadata
@@ -74,9 +74,9 @@ func (c *LDAP) AuthenticatePassword(ctx context.Context, r *authn.Request, usern
 }
 
 // disableUser will disable users if they logged in via LDAP previously
-func (c *LDAP) disableUser(ctx context.Context, err error, username string) (*authn.Identity, error) {
+func (c *LDAP) disableUser(ctx context.Context, username string) (*authn.Identity, error) {
 	c.logger.Debug("user was not found in the LDAP directory tree", "username", username)
-	retErr := errIdentityNotFound.Errorf("no user found: %w", err)
+	retErr := errIdentityNotFound.Errorf("no user found: %w", multildap.ErrDidNotFindUser)
 
 	// Retrieve the user from store based on the login
 	dbUser, errGet := c.userService.GetByLogin(ctx, &user.GetUserByLoginQuery{
@@ -85,7 +85,7 @@ func (c *LDAP) disableUser(ctx context.Context, err error, username string) (*au
 	if errors.Is(errGet, user.ErrUserNotFound) {
 		return nil, retErr
 	} else if errGet != nil {
-		return nil, err
+		return nil, errGet
 	}
 
 	// Check if the user logged in via LDAP
