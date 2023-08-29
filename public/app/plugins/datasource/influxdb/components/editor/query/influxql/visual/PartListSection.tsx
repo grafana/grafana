@@ -2,7 +2,6 @@ import { css, cx } from '@emotion/css';
 import React, { useMemo } from 'react';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { AccessoryButton } from '@grafana/experimental';
 import { MenuGroup, MenuItem, useTheme2, WithContextMenu } from '@grafana/ui';
 
 import { toSelectableValue } from '../utils/toSelectableValue';
@@ -135,15 +134,6 @@ export const PartListSection = ({
             }}
             onChange={(pars) => {
               onChange(index, pars);
-            }}
-          />
-          <AccessoryButton
-            style={{ marginRight: '4px' }}
-            aria-label="remove"
-            icon="times"
-            variant="secondary"
-            onClick={() => {
-              onRemovePart(index);
             }}
           />
         </React.Fragment>
