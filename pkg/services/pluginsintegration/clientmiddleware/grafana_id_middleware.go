@@ -4,31 +4,30 @@ import (
 	"context"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana/pkg/infra/remotecache"
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/services/auth/assertid"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
-	"github.com/grafana/grafana/pkg/services/signingkeys"
+	"github.com/grafana/grafana/pkg/services/datasources"
 )
+
+const grafanaIdHeaderName = "X-Grafana-Id"
 
 // NewGrafanaIDMiddleware creates a new plugins.ClientMiddleware that will
 // set OAuth token headers on outgoing plugins.Client requests if the
 // datasource has enabled Forward Grafana ID.
-func NewGrafanaIDMiddleware(
-	remoteCache remotecache.CacheStorage, signingKeyService signingkeys.Service,
-) plugins.ClientMiddleware {
+func NewGrafanaIDMiddleware(signer assertid.Service) plugins.ClientMiddleware {
 	return plugins.ClientMiddlewareFunc(func(next plugins.Client) plugins.Client {
 		return &GrafanaIDMiddleware{
-			remoteCache:       remoteCache,
-			signingKeyService: signingKeyService,
-			next:              next,
+			signer: signer,
+			next:   next,
 		}
 	})
 }
 
 type GrafanaIDMiddleware struct {
-	remoteCache       remotecache.CacheStorage
-	signingKeyService signingkeys.Service
-	next              plugins.Client
+	signer assertid.Service
+	next   plugins.Client
 }
 
 func (m *GrafanaIDMiddleware) applyToken(ctx context.Context, pCtx backend.PluginContext, req interface{}) error {
@@ -36,6 +35,36 @@ func (m *GrafanaIDMiddleware) applyToken(ctx context.Context, pCtx backend.Plugi
 	// if request not for a datasource or no HTTP request context skip middleware
 	if req == nil || pCtx.DataSourceInstanceSettings == nil || reqCtx == nil || reqCtx.Req == nil {
 		return nil
+	}
+
+	settings := pCtx.DataSourceInstanceSettings
+	jsonDataBytes, err := simplejson.NewJson(settings.JSONData)
+	if err != nil {
+		return err
+	}
+
+	ds := &datasources.DataSource{
+		ID:       settings.ID,
+		OrgID:    pCtx.OrgID,
+		JsonData: jsonDataBytes,
+		Updated:  settings.Updated,
+	}
+
+	if assertid.IsIDSignerEnabledForDatasource(ds) {
+		requester := reqCtx.SignedInUser
+		token, err := m.signer.ActiveUserAssertion(requester, reqCtx.Req)
+		if err != nil {
+			return err
+		}
+
+		switch t := req.(type) {
+		case *backend.QueryDataRequest:
+			t.SetHTTPHeader(grafanaIdHeaderName, token)
+		case *backend.CheckHealthRequest:
+			t.SetHTTPHeader(grafanaIdHeaderName, token)
+		case *backend.CallResourceRequest:
+			t.SetHTTPHeader(grafanaIdHeaderName, token)
+		}
 	}
 
 	return nil

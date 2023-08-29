@@ -66,6 +66,20 @@ export const HttpProxySettings = ({
           </InlineField>
         </div>
       )}
+      <div className="gf-form-inline">
+        <InlineField
+          label="Forward Grafana Identity"
+          tooltip="Forward the user's grafana identity with user and team membership information."
+          labelWidth={LABEL_WIDTH}
+          disabled={dataSourceConfig.readOnly}
+        >
+          <InlineSwitch
+            id="http-settings-forward-grafana"
+            value={dataSourceConfig.jsonData.grafanaId || false}
+            onChange={(event) => onChange({ ...dataSourceConfig.jsonData, grafanaId: event!.currentTarget.checked })}
+          />
+        </InlineField>
+      </div>
     </>
   );
 };
