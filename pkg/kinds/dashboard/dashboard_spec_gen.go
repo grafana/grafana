@@ -97,12 +97,6 @@ const (
 	RowPanelTypeRow RowPanelType = "row"
 )
 
-// Defines values for SpecStyle.
-const (
-	SpecStyleDark  SpecStyle = "dark"
-	SpecStyleLight SpecStyle = "light"
-)
-
 // Defines values for SpecialValueMapType.
 const (
 	SpecialValueMapTypeRange   SpecialValueMapType = "range"
@@ -740,7 +734,7 @@ type Spec struct {
 
 	// Unique numeric identifier for the dashboard.
 	// `id` is internal to a specific Grafana instance. `uid` should be used to identify a dashboard across Grafana instances.
-	Id *int64 `json:"id,omitempty"`
+	Id *int64 `json:"id"`
 
 	// Links with references to other dashboards or external websites.
 	Links []Link `json:"links,omitempty"`
@@ -771,10 +765,6 @@ type Spec struct {
 	// Sensitive information stripped: queries (metric, template,annotation) and panel links.
 	Snapshot *Snapshot `json:"snapshot,omitempty"`
 
-	// Theme of dashboard.
-	// Default value: dark.
-	Style SpecStyle `json:"style"`
-
 	// Tags associated with dashboard.
 	Tags []string `json:"tags,omitempty"`
 
@@ -795,9 +785,6 @@ type Spec struct {
 	Timepicker *struct {
 		// Whether timepicker is collapsed or not. Has no effect on provisioned dashboard.
 		Collapse bool `json:"collapse"`
-
-		// Whether timepicker is enabled or not. Has no effect on provisioned dashboard.
-		Enable bool `json:"enable"`
 
 		// Whether timepicker is visible or not.
 		Hidden bool `json:"hidden"`
@@ -824,10 +811,6 @@ type Spec struct {
 	// Day when the week starts. Expressed by the name of the day in lowercase, e.g. "monday".
 	WeekStart *string `json:"weekStart,omitempty"`
 }
-
-// Theme of dashboard.
-// Default value: dark.
-type SpecStyle string
 
 // Maps special values like Null, NaN (not a number), and boolean values like true and false to a display text and color.
 // See SpecialValueMatch to see the list of special values.

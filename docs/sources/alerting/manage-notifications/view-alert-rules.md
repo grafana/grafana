@@ -3,6 +3,7 @@ aliases:
   - ../unified-alerting/alerting-rules/rule-list/
   - ../view-alert-rules/
   - rule-list/
+canonical: https://grafana.com/docs/grafana/latest/alerting/manage-notifications/view-alert-rules/
 description: Manage alerting rules
 keywords:
   - grafana

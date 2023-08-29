@@ -11,9 +11,8 @@ import {
   LoadingState,
   DataFrameSchema,
   DataFrameData,
+  StreamingDataFrame,
 } from '@grafana/data';
-import { liveTimer } from 'app/features/dashboard/dashgrid/liveTimer';
-import { StreamingDataFrame } from 'app/features/live/data/StreamingDataFrame';
 
 import { getRandomLine } from './LogIpsum';
 import { TestData, StreamingQuery } from './dataquery.gen';
@@ -102,18 +101,13 @@ export function runSignalStream(
     }
 
     const pushNextEvent = () => {
-      addNextRow(Date.now());
-
-      const elapsed = liveTimer.lastUpdate - lastSent;
-      if (elapsed > 1000 || liveTimer.ok) {
-        subscriber.next({
-          data: [frame],
-          key: streamId,
-          state: LoadingState.Streaming,
-        });
-        lastSent = liveTimer.lastUpdate;
-      }
-
+      lastSent = Date.now();
+      addNextRow(lastSent);
+      subscriber.next({
+        data: [frame],
+        key: streamId,
+        state: LoadingState.Streaming,
+      });
       timeoutId = setTimeout(pushNextEvent, speed);
     };
 

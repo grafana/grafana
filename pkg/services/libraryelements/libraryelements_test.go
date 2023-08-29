@@ -316,7 +316,7 @@ func createFolder(t *testing.T, sc scenarioContext, title string) *folder.Folder
 	require.NoError(t, err)
 
 	folderStore := folderimpl.ProvideDashboardFolderStore(sc.sqlStore)
-	s := folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), cfg, dashboardStore, folderStore, nil, features)
+	s := folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), cfg, dashboardStore, folderStore, sc.sqlStore, features)
 	t.Logf("Creating folder with title and UID %q", title)
 	ctx := appcontext.WithUser(context.Background(), &sc.user)
 	folder, err := s.Create(ctx, &folder.CreateFolderCommand{
@@ -382,7 +382,7 @@ func scenarioWithPanel(t *testing.T, desc string, fn func(t *testing.T, sc scena
 		foldertest.NewFakeService(),
 	)
 	require.NoError(t, svcErr)
-	guardian.InitAccessControlGuardian(sqlStore.Cfg, sqlStore, ac, folderPermissions, dashboardPermissions, dashboardService)
+	guardian.InitAccessControlGuardian(sqlStore.Cfg, ac, dashboardService)
 
 	testScenario(t, desc, func(t *testing.T, sc scenarioContext) {
 		command := getCreatePanelCommand(sc.folder.ID, "Text - Library Panel")
@@ -440,12 +440,12 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 			foldertest.NewFakeService(),
 		)
 		require.NoError(t, dashSvcErr)
-		guardian.InitAccessControlGuardian(sqlStore.Cfg, sqlStore, ac, folderPermissions, dashboardPermissions, dashService)
+		guardian.InitAccessControlGuardian(sqlStore.Cfg, ac, dashService)
 		service := LibraryElementService{
 			Cfg:           sqlStore.Cfg,
 			features:      featuremgmt.WithFeatures(),
 			SQLStore:      sqlStore,
-			folderService: folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), sqlStore.Cfg, dashboardStore, folderStore, nil, features),
+			folderService: folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), sqlStore.Cfg, dashboardStore, folderStore, sqlStore, features),
 		}
 
 		// deliberate difference between signed in user and user in db to make it crystal clear

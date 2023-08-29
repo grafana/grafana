@@ -14,7 +14,7 @@ import (
 func TestWrite(t *testing.T) {
 	ctx := context.Background()
 	const msgID = "test.thisIsExpected"
-	base := errutil.NewBase(errutil.StatusTimeout, msgID)
+	base := errutil.Timeout(msgID)
 	handler := func(writer http.ResponseWriter, request *http.Request) {
 		Write(ctx, base.Errorf("got expected error"), writer)
 	}

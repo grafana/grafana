@@ -12,35 +12,42 @@ interface Props {
 export const PanelHeaderMenuItem = (props: Props & PanelMenuItem) => {
   const [ref, setRef] = useState<HTMLLIElement | null>(null);
   const isSubMenu = props.type === 'submenu';
-  const isDivider = props.type === 'divider';
   const styles = useStyles2(getStyles);
-
   const icon = props.iconClassName ? toIconName(props.iconClassName) : undefined;
 
-  return isDivider ? (
-    <li className="divider" />
-  ) : (
-    <li
-      className={isSubMenu ? `dropdown-submenu ${getDropdownLocationCssClass(ref)}` : undefined}
-      ref={setRef}
-      data-testid={selectors.components.Panels.Panel.menuItems(props.text)}
-    >
-      <a onClick={props.onClick} href={props.href} role="menuitem">
-        {icon && <Icon name={icon} className={styles.menuIconClassName} />}
-        <span className="dropdown-item-text" aria-label={selectors.components.Panels.Panel.headerItems(props.text)}>
-          {props.text}
-          {isSubMenu && <Icon name="angle-right" className={styles.shortcutIconClassName} />}
-        </span>
+  switch (props.type) {
+    case 'divider':
+      return <li className="divider" />;
+    case 'group':
+      return (
+        <li>
+          <span className={styles.groupLabel}>{props.text}</span>
+        </li>
+      );
+    default:
+      return (
+        <li
+          className={isSubMenu ? `dropdown-submenu ${getDropdownLocationCssClass(ref)}` : undefined}
+          ref={setRef}
+          data-testid={selectors.components.Panels.Panel.menuItems(props.text)}
+        >
+          <a onClick={props.onClick} href={props.href} role="menuitem">
+            {icon && <Icon name={icon} className={styles.menuIconClassName} />}
+            <span className="dropdown-item-text" aria-label={selectors.components.Panels.Panel.headerItems(props.text)}>
+              {props.text}
+              {isSubMenu && <Icon name="angle-right" className={styles.shortcutIconClassName} />}
+            </span>
 
-        {props.shortcut && (
-          <span className="dropdown-menu-item-shortcut">
-            <Icon name="keyboard" className={styles.menuIconClassName} /> {props.shortcut}
-          </span>
-        )}
-      </a>
-      {props.children}
-    </li>
-  );
+            {props.shortcut && (
+              <span className="dropdown-menu-item-shortcut">
+                <Icon name="keyboard" className={styles.menuIconClassName} /> {props.shortcut}
+              </span>
+            )}
+          </a>
+          {props.children}
+        </li>
+      );
+  }
 };
 
 function getDropdownLocationCssClass(element: HTMLElement | null) {
@@ -75,6 +82,11 @@ function getStyles(theme: GrafanaTheme2) {
       top: '7px',
       right: theme.spacing(0.5),
       color: theme.colors.text.secondary,
+    }),
+    groupLabel: css({
+      color: theme.colors.text.secondary,
+      fontSize: theme.typography.size.sm,
+      padding: theme.spacing(0.5, 1),
     }),
   };
 }

@@ -19,13 +19,12 @@ import {
   TimeRange,
   TimeZone,
   toDataFrame,
+  getSearchFilterScopedVar,
 } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
 import { isVersionGtOrEq, SemVersion } from 'app/core/utils/version';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
 import { getRollupNotice, getRuntimeConsolidationNotice } from 'app/plugins/datasource/graphite/meta';
-
-import { getSearchFilterScopedVar } from '../../../features/variables/utils';
 
 import { AnnotationEditor } from './components/AnnotationsEditor';
 import { convertToGraphiteQueryObject } from './components/helpers';

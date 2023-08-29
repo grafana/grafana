@@ -9,8 +9,8 @@ import { Layout } from '@grafana/ui/src/components/Layout/Layout';
 import { Page } from 'app/core/components/Page/Page';
 import { AppNotificationSeverity } from 'app/types';
 
+import { AngularDeprecationPluginNotice } from '../../angularDeprecation/AngularDeprecationPluginNotice';
 import { Loader } from '../components/Loader';
-import { PluginDetailsAngularDeprecation } from '../components/PluginDetailsAngularDeprecation';
 import { PluginDetailsBody } from '../components/PluginDetailsBody';
 import { PluginDetailsDisabledError } from '../components/PluginDetailsDisabledError';
 import { PluginDetailsSignature } from '../components/PluginDetailsSignature';
@@ -76,9 +76,13 @@ export function PluginDetailsPage({
       <Page.Contents>
         <TabContent className={styles.tabContent}>
           {plugin.angularDetected && (
-            <PluginDetailsAngularDeprecation
+            <AngularDeprecationPluginNotice
               className={styles.alert}
               angularSupportEnabled={config?.angularSupportEnabled}
+              pluginId={plugin.id}
+              pluginType={plugin.type}
+              showPluginDetailsLink={false}
+              interactionElementId="plugin-details-page"
             />
           )}
           <PluginDetailsSignature plugin={plugin} className={styles.alert} />

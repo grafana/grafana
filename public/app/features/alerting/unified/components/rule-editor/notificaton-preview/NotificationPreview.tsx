@@ -3,8 +3,7 @@ import { compact } from 'lodash';
 import React, { lazy, Suspense } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Button, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
-import { H4 } from '@grafana/ui/src/unstable';
+import { Button, LoadingPlaceholder, useStyles2, Text } from '@grafana/ui';
 import { alertRuleApi } from 'app/features/alerting/unified/api/alertRuleApi';
 import { Stack } from 'app/plugins/datasource/parca/QueryEditor/Stack';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
@@ -67,7 +66,7 @@ export const NotificationPreview = ({
     <Stack direction="column" gap={2}>
       <div className={styles.routePreviewHeaderRow}>
         <div className={styles.previewHeader}>
-          <H4>Alert instance routing preview</H4>
+          <Text element="h4">Alert instance routing preview</Text>
         </div>
         <div className={styles.button}>
           <Button icon="sync" variant="secondary" type="button" onClick={onPreview}>

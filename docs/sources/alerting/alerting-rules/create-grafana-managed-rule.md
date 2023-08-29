@@ -1,76 +1,148 @@
 ---
 aliases:
   - ../unified-alerting/alerting-rules/create-grafana-managed-rule/
-description: Create Grafana managed alert rule
+canonical: https://grafana.com/docs/grafana/latest/alerting/alerting-rules/create-grafana-managed-rule/
+description: Configure Grafana-managed alert rules
 keywords:
   - grafana
   - alerting
   - guide
   - rules
   - create
+  - grafana-managed
+  - data source-managed
 labels:
   products:
     - cloud
     - enterprise
     - oss
-title: Create Grafana-managed alert rules
-weight: 400
+title: Configure Grafana-managed alert rules
+weight: 100
 ---
 
-# Create Grafana-managed alert rules
+# Configure Grafana-managed alert rules
 
 Grafana-managed rules are the most flexible alert rule type. They allow you to create alerts that can act on data from any of our supported data sources. In addition to supporting multiple data sources, you can also add expressions to transform your data and set alert conditions. Using images in alert notifications is also supported. This is the only type of rule that allows alerting from multiple data sources in a single rule definition.
 
 Multiple alert instances can be created as a result of one alert rule (also known as a multi-dimensional alerting).
 
-For information on Grafana Alerting, see [Introduction to Grafana Alerting][fundamentals], which explains the key concepts and features of Grafana Alerting.
+**Note:**
 
-Watch this video to learn more about creating alerts: {{< vimeo 720001934 >}}
+Grafana managed alert rules can only be edited or deleted by users with Edit permissions for the folder storing the rules.
 
-To create a Grafana-managed alert rule, complete the following steps.
+Watch this video to learn more about creating alert rules: {{< vimeo 720001934 >}}
 
-1. In the left-side menu, click **Alerts & IRM** and then **Alerting**.
-2. Click **Alert rules**.
-3. Click **+ Create alert rule**. The new alert rule page opens where the **Grafana managed alerts** option is selected by default.
-4. In Step 1, add the rule name.
-   - In **Rule name**, add a descriptive name. This name is displayed in the alert rule list. It is also the `alertname` label for every alert instance that is created from this rule.
-5. In Step 2, add queries and expressions to evaluate, and then select the alert condition.
+In the following sections, we’ll guide you through the process of creating your Grafana-managed alert rules.
 
-   - For queries, select a data source from the dropdown.
-   - Specify a [time range][time-units-and-relative-ranges].
+To create a Grafana-managed alert rule, use the in-product alert creation flow and follow these steps to help you.
 
-     **Note:**
-     Grafana Alerting only supports fixed relative time ranges, for example, `now-24hr: now`.
+## Set alert rule name
 
-     It does not support absolute time ranges: `2021-12-02 00:00:00 to 2021-12-05 23:59:592` or semi-relative time ranges: `now/d to: now`.
+1. Click **Alerts & IRM** -> **Alert rules** -> **+ New alert rule**.
+1. Enter a name to identify your alert rule.
 
-   - Add one or more [queries][add-a-query] or [expressions][expression-queries].
-   - For each expression, select either **Classic condition** to create a single alert rule, or choose from the **Math**, **Reduce**, and **Resample** options to generate separate alert for each series. For details on these options, see [Single and multi dimensional rule](#single-and-multi-dimensional-rule).
-   - Click **Run queries** to verify that the query is successful.
-   - Next, select the query or expression for your alert condition.
+   This name is displayed in the alert rule list. It is also the `alertname` label for every alert instance that is created from this rule.
 
-6. In Step 3, specify the alert evaluation interval.
+## Define query and condition
 
-   - From the **Condition** dropdown, select the query or expression to trigger the alert rule.
-   - For **Evaluate every**, specify the frequency of evaluation. Must be a multiple of 10 seconds. For examples, `1m`, `30s`.
-   - For **Evaluate for**, specify the duration for which the condition must be true before an alert fires.
-     > **Note:** Once a condition is breached, the alert goes into the Pending state. If the condition remains breached for the duration specified, the alert transitions to the `Firing` state, otherwise it reverts back to the `Normal` state.
-   - In **Configure no data and error handling**, configure alerting behavior in the absence of data. Use the guidelines in [No data and error handling](#configure-no-data-and-error-handling).
-   - Click **Preview** to check the result of running the query at this moment. Preview excludes no data and error handling.
+Define a query to get the data you want to measure and a condition that needs to be met before an alert rule fires.
 
-     **Note:**
+1. Select a data source.
+1. From the **Options** dropdown, specify a [time range][time-units-and-relative-ranges].
 
-     You can pause alert rule evaluation to prevent noisy alerting while tuning your alerts. Pausing stops alert rule evaluation and does not create any alert instances. This is different to mute timings, which stop notifications from being delivered, but still allow for alert rule evaluation and the creation of alert instances.
+   **Note:**
 
-7. In Step 4, add the storage location, rule group, as well as additional metadata associated with the rule.
-   - From the **Folder** dropdown, select the folder where you want to store the rule.
-   - For **Group**, specify a pre-defined group. Newly created rules are appended to the end of the group. Rules within a group are run sequentially at a regular interval, with the same evaluation time.
-   - Add a description and summary to customize alert messages. Use the guidelines in [Annotations and labels for alerting][annotation-label].
-   - Add Runbook URL, panel, dashboard, and alert IDs.
-8. In Step 5, add custom labels.
-   - Add custom labels selecting existing key-value pairs from the drop down, or add new labels by entering the new key or value .
-9. Click **Save** to save the rule or **Save and exit** to save the rule and go back to the Alerting page.
-10. Next, create a for the rule.
+   Grafana Alerting only supports fixed relative time ranges, for example, `now-24hr: now`.
+
+   It does not support absolute time ranges: `2021-12-02 00:00:00 to 2021-12-05 23:59:592` or semi-relative time ranges: `now/d to: now`.
+
+1. Add a query.
+
+   To add multiple [queries][add-a-query], click **Add query**.
+
+   All alert rules are managed by Grafana by default. If you want to switch to a data source-managed alert rule, click **Switch to data source-managed alert rule**.
+
+1. Add one or more [expressions][expression-queries].
+   a. For each expression, select either **Classic condition** to create a single alert rule, or choose from the **Math**, **Reduce**, and **Resample** options to generate separate alert for each series.
+
+   For details on these options, see [Single and multi dimensional rule]
+   b. Click **Preview** to verify that the expression is successful.
+
+1. Click **Set as alert condition** on the query or expression you want to set as your alert condition.
+
+## Set alert evaluation behavior
+
+Use alert rule evaluation to determine how frequently an alert rule should be evaluated and how quickly it should change its state.
+
+To do this, you need to make sure that your alert rule is in the right evaluation group and set a pending period time that works best for your use case.
+
+1. Select a folder or click **+ New folder**.
+1. Select an evaluation group or click **+ New evaluation group**.
+
+   If you are creating a new evaluation group, specify the interval for the group.
+
+   All rules within the same group are evaluated sequentially over the same time interval.
+
+1. Enter a pending period.
+
+   The pending period is the period in which an alert rule can be in breach of the condition until it fires.
+
+   Once a condition is met, the alert goes into the **Pending** state. If the condition remains active for the duration specified, the alert transitions to the **Firing** state, else it reverts to the **Normal** state.
+
+1. Turn on pause alert notifications, if required.
+
+   **Note**:
+
+   Pause alert rule evaluation to prevent noisy alerting while tuning your alerts. Pausing stops alert rule evaluation and does not create any alert instances. This is different to mute timings, which stop notifications from being delivered, but still allow for alert rule evaluation and the creation of alert instances.
+
+   You can pause alert rule evaluation to prevent noisy alerting while tuning your alerts. Pausing stops alert rule evaluation and does not create any alert instances. This is different to mute timings, which stop notifications from being delivered, but still allow for alert rule evaluation and the creation of alert instances.
+
+1. In **Configure no data and error handling**, configure alerting behavior in the absence of data.
+
+   Use the guidelines in [No data and error handling](#configure-no-data-and-error-handling).
+
+## Add annotations
+
+Add [annotations][annotation-label]. to provide more context on the alert in your alert notifications.
+
+Annotations add metadata to provide more information on the alert in your alert notifications. For example, add a **Summary** annotation to tell you which value caused the alert to fire or which server it happened on.
+
+1. [Optional] Add a summary.
+
+   Short summary of what happened and why.
+
+2. [Optional] Add a description.
+
+   Description of what the alert rule does.
+
+3. [Optional] Add a Runbook URL.
+
+   Webpage where you keep your runbook for the alert
+
+4. [Optional] Add a custom annotation
+5. [Optional] Add a dashboard and panel link.
+
+   Links alerts to panels in a dashboard.
+
+## Configure notifications
+
+Add labels to your alert rules to set which notification policy should handle your firing alert instances.
+
+All alert rules and instances, irrespective of their labels, match the default notification policy. If there are no nested policies, or no nested policies match the labels in the alert rule or alert instance, then the default notification policy is the matching policy.
+
+1. Add labels if you want to change the way your notifications are routed.
+
+   Add custom labels by selecting existing key-value pairs from the drop down, or add new labels by entering the new key or value.
+
+1. Preview your alert instance routing set up.
+
+   Based on the labels added, alert instances are routed to the following notification policies displayed.
+
+   Expand each notification policy below to view more details.
+
+1. Click **See details** to view alert routing details and an email preview.
+
+1. Click **Save rule**.
 
 ### Single and multi-dimensional rule
 

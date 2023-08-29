@@ -29,6 +29,7 @@ export const seriesToRowsTransformer: DataTransformerInfo<SeriesToRowsTransforme
           return data;
         }
 
+        data = data.filter((frame) => frame.length > 0);
         if (!isTimeSeriesFrames(data)) {
           return data;
         }

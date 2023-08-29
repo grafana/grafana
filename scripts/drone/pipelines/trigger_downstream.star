@@ -23,6 +23,9 @@ trigger = {
             "latest.json",
         ],
     },
+    "repo": [
+        "grafana/grafana-security-mirror",
+    ],
 }
 
 def enterprise_downstream_pipeline():

@@ -23,6 +23,7 @@ import {
   rangeUtil,
   ScopedVars,
   TimeRange,
+  renderLegendFormat,
 } from '@grafana/data';
 import {
   BackendDataSourceResponse,
@@ -52,7 +53,6 @@ import {
   getPrometheusTime,
   getRangeSnapInterval,
 } from './language_utils';
-import { renderLegendFormat } from './legend';
 import PrometheusMetricFindQuery from './metric_find_query';
 import { getInitHints, getQueryHints } from './query_hints';
 import { QueryEditorMode } from './querybuilder/shared/types';

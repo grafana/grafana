@@ -960,26 +960,13 @@ func (d *dashboardStore) GetDashboards(ctx context.Context, query *dashboards.Ge
 }
 
 func (d *dashboardStore) FindDashboards(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery) ([]dashboards.DashboardSearchProjection, error) {
-	filters := []interface{}{
-		permissions.DashboardPermissionFilter{
-			OrgRole:         query.SignedInUser.OrgRole,
-			OrgId:           query.SignedInUser.OrgID,
-			Dialect:         d.store.GetDialect(),
-			UserId:          query.SignedInUser.UserID,
-			PermissionLevel: query.Permission,
-		},
+	recursiveQueriesAreSupported, err := d.store.RecursiveQueriesAreSupported()
+	if err != nil {
+		return nil, err
 	}
 
-	if !ac.IsDisabled(d.cfg) {
-		recursiveQueriesAreSupported, err := d.store.RecursiveQueriesAreSupported()
-		if err != nil {
-			return nil, err
-		}
-
-		// if access control is enabled, overwrite the filters so far
-		filters = []interface{}{
-			permissions.NewAccessControlDashboardPermissionFilter(query.SignedInUser, query.Permission, query.Type, d.features, recursiveQueriesAreSupported),
-		}
+	filters := []interface{}{
+		permissions.NewAccessControlDashboardPermissionFilter(query.SignedInUser, query.Permission, query.Type, d.features, recursiveQueriesAreSupported),
 	}
 
 	for _, filter := range query.Sort.Filter {
@@ -988,10 +975,13 @@ func (d *dashboardStore) FindDashboards(ctx context.Context, query *dashboards.F
 
 	filters = append(filters, query.Filters...)
 
+	var orgID int64
 	if query.OrgId != 0 {
-		filters = append(filters, searchstore.OrgFilter{OrgId: query.OrgId})
+		orgID = query.OrgId
+		filters = append(filters, searchstore.OrgFilter{OrgId: orgID})
 	} else if query.SignedInUser.OrgID != 0 {
-		filters = append(filters, searchstore.OrgFilter{OrgId: query.SignedInUser.OrgID})
+		orgID = query.SignedInUser.OrgID
+		filters = append(filters, searchstore.OrgFilter{OrgId: orgID})
 	}
 
 	if len(query.Tags) > 0 {
@@ -1016,6 +1006,10 @@ func (d *dashboardStore) FindDashboards(ctx context.Context, query *dashboards.F
 		filters = append(filters, searchstore.FolderFilter{IDs: query.FolderIds})
 	}
 
+	if len(query.FolderUIDs) > 0 {
+		filters = append(filters, searchstore.FolderUIDFilter{Dialect: d.store.GetDialect(), OrgID: orgID, UIDs: query.FolderUIDs})
+	}
+
 	var res []dashboards.DashboardSearchProjection
 	sb := &searchstore.Builder{Dialect: d.store.GetDialect(), Filters: filters}
 
@@ -1031,7 +1025,7 @@ func (d *dashboardStore) FindDashboards(ctx context.Context, query *dashboards.F
 
 	sql, params := sb.ToSQL(limit, page)
 
-	err := d.store.WithDbSession(ctx, func(sess *db.Session) error {
+	err = d.store.WithDbSession(ctx, func(sess *db.Session) error {
 		return sess.SQL(sql, params...).Find(&res)
 	})
 

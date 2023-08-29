@@ -11,43 +11,32 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/infra/db/dbtest"
 	"github.com/grafana/grafana/pkg/infra/fs"
-	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/models/usertoken"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/annotations/annotationstest"
-	"github.com/grafana/grafana/pkg/services/anonymous/anontest"
 	"github.com/grafana/grafana/pkg/services/auth/authtest"
-	"github.com/grafana/grafana/pkg/services/auth/jwt"
+	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/authn/authntest"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
-	"github.com/grafana/grafana/pkg/services/contexthandler/authproxy"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
-	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/guardian"
-	"github.com/grafana/grafana/pkg/services/ldap/service"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/login"
-	"github.com/grafana/grafana/pkg/services/login/loginservice"
 	"github.com/grafana/grafana/pkg/services/login/logintest"
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/services/org/orgtest"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
-	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/services/search"
 	"github.com/grafana/grafana/pkg/services/search/model"
 	"github.com/grafana/grafana/pkg/services/searchusers"
-	"github.com/grafana/grafana/pkg/services/team/teamtest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/usertest"
 	"github.com/grafana/grafana/pkg/setting"
@@ -70,6 +59,7 @@ func loggedInUserScenarioWithRole(t *testing.T, desc string, method string, url 
 			sc.context.OrgID = testOrgID
 			sc.context.Login = testUserLogin
 			sc.context.OrgRole = role
+			sc.context.IsAnonymous = false
 			if sc.handlerFunc != nil {
 				return sc.handlerFunc(sc.context)
 			}
@@ -177,6 +167,7 @@ type scenarioContext struct {
 	authInfoService         *logintest.AuthInfoServiceFake
 	dashboardVersionService dashver.Service
 	userService             user.Service
+	ctxHdlr                 *contexthandler.ContextHandler
 }
 
 func (sc *scenarioContext) exec() {
@@ -193,32 +184,22 @@ func getContextHandler(t *testing.T, cfg *setting.Cfg) *contexthandler.ContextHa
 		cfg = setting.NewCfg()
 	}
 
-	sqlStore := db.InitTestDB(t)
-	remoteCacheSvc := &remotecache.RemoteCache{}
-	cfg.RemoteCacheOptions = &setting.RemoteCacheOptions{
-		Name: "database",
-	}
-	userAuthTokenSvc := authtest.NewFakeUserAuthTokenService()
-	renderSvc := &fakeRenderService{}
-	authJWTSvc := jwt.NewFakeJWTService()
-	tracer := tracing.InitializeTracerForTest()
-	authProxy := authproxy.ProvideAuthProxy(cfg, remoteCacheSvc, loginservice.LoginServiceMock{}, &usertest.FakeUserService{}, sqlStore, service.NewLDAPFakeService())
-	loginService := &logintest.LoginServiceFake{}
-	authenticator := &logintest.AuthenticatorFake{}
-	ctxHdlr := contexthandler.ProvideService(cfg, userAuthTokenSvc, authJWTSvc,
-		remoteCacheSvc, renderSvc, sqlStore, tracer, authProxy, loginService, nil,
-		authenticator, usertest.NewUserServiceFake(), orgtest.NewOrgServiceFake(),
-		nil, featuremgmt.WithFeatures(), &authntest.FakeService{}, &anontest.FakeAnonymousSessionService{})
-
-	return ctxHdlr
+	return contexthandler.ProvideService(
+		cfg,
+		tracing.NewFakeTracer(),
+		featuremgmt.WithFeatures(),
+		&authntest.FakeService{ExpectedIdentity: &authn.Identity{IsAnonymous: true, SessionToken: &usertoken.UserToken{}}},
+	)
 }
 
 func setupScenarioContext(t *testing.T, url string) *scenarioContext {
 	cfg := setting.NewCfg()
+	ctxHdlr := getContextHandler(t, cfg)
 	sc := &scenarioContext{
-		url: url,
-		t:   t,
-		cfg: cfg,
+		url:     url,
+		t:       t,
+		cfg:     cfg,
+		ctxHdlr: ctxHdlr,
 	}
 	viewsPath, err := filepath.Abs("../../public/views")
 	require.NoError(t, err)
@@ -228,21 +209,19 @@ func setupScenarioContext(t *testing.T, url string) *scenarioContext {
 
 	sc.m = web.New()
 	sc.m.UseMiddleware(web.Renderer(viewsPath, "[[", "]]"))
-	sc.m.Use(getContextHandler(t, cfg).Middleware)
+	sc.m.Use(ctxHdlr.Middleware)
 
 	return sc
 }
 
-type fakeRenderService struct {
-	rendering.Service
+// FIXME: This user should not be anonymous
+func authedUserWithPermissions(userID, orgID int64, permissions []accesscontrol.Permission) *user.SignedInUser {
+	return &user.SignedInUser{UserID: userID, OrgID: orgID, OrgRole: org.RoleViewer, Permissions: map[int64]map[string][]string{orgID: accesscontrol.GroupScopesByAction(permissions)}}
 }
 
-func (s *fakeRenderService) Init() error {
-	return nil
-}
-
+// FIXME: This user should not be anonymous
 func userWithPermissions(orgID int64, permissions []accesscontrol.Permission) *user.SignedInUser {
-	return &user.SignedInUser{OrgID: orgID, OrgRole: org.RoleViewer, Permissions: map[int64]map[string][]string{orgID: accesscontrol.GroupScopesByAction(permissions)}}
+	return &user.SignedInUser{IsAnonymous: true, OrgID: orgID, OrgRole: org.RoleViewer, Permissions: map[int64]map[string][]string{orgID: accesscontrol.GroupScopesByAction(permissions)}}
 }
 
 func setupSimpleHTTPServer(features *featuremgmt.FeatureManager) *HTTPServer {
@@ -250,7 +229,6 @@ func setupSimpleHTTPServer(features *featuremgmt.FeatureManager) *HTTPServer {
 		features = featuremgmt.WithFeatures()
 	}
 	cfg := setting.NewCfg()
-	cfg.RBACEnabled = false
 	cfg.IsFeatureToggleEnabled = features.IsEnabled
 
 	return &HTTPServer{
@@ -304,16 +282,12 @@ func SetupAPITestServer(t *testing.T, opts ...APITestServerOption) *webtest.Serv
 	hs.registerRoutes()
 
 	s := webtest.NewServer(t, hs.RouteRegister)
+
+	viewsPath, err := filepath.Abs("../../public/views")
+	require.NoError(t, err)
+	s.Mux.UseMiddleware(web.Renderer(viewsPath, "[[", "]]"))
+
 	return s
-}
-
-var (
-	viewerRole = org.RoleViewer
-	editorRole = org.RoleEditor
-)
-
-type setUpConf struct {
-	aclMockResp []*dashboards.DashboardACLInfoDTO
 }
 
 type mockSearchService struct{ ExpectedResult model.HitList }
@@ -321,22 +295,5 @@ type mockSearchService struct{ ExpectedResult model.HitList }
 func (mss *mockSearchService) SearchHandler(_ context.Context, q *search.Query) (model.HitList, error) {
 	return mss.ExpectedResult, nil
 }
+
 func (mss *mockSearchService) SortOptions() []model.SortOption { return nil }
-
-func setUp(confs ...setUpConf) *HTTPServer {
-	store := dbtest.NewFakeDB()
-	hs := &HTTPServer{SQLStore: store, SearchService: &mockSearchService{}}
-
-	aclMockResp := []*dashboards.DashboardACLInfoDTO{}
-	for _, c := range confs {
-		if c.aclMockResp != nil {
-			aclMockResp = c.aclMockResp
-		}
-	}
-	teamSvc := &teamtest.FakeService{}
-	dashSvc := &dashboards.FakeDashboardService{}
-	qResult := aclMockResp
-	dashSvc.On("GetDashboardACLInfoList", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardACLInfoListQuery")).Return(qResult, nil)
-	guardian.InitLegacyGuardian(setting.NewCfg(), store, dashSvc, teamSvc)
-	return hs
-}

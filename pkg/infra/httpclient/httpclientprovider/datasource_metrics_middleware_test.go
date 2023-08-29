@@ -89,11 +89,11 @@ func TestDataSourceMetricsMiddleware(t *testing.T) {
 	t.Run("With datasource name label options set should execute middleware", func(t *testing.T) {
 		origExecuteMiddlewareFunc := executeMiddlewareFunc
 		executeMiddlewareCalled := false
-		datasourceLabels := prometheus.Labels{}
+		labels := prometheus.Labels{}
 		middlewareCalled := false
 		executeMiddlewareFunc = func(next http.RoundTripper, datasourceLabel prometheus.Labels) http.RoundTripper {
 			executeMiddlewareCalled = true
-			datasourceLabels = datasourceLabel
+			labels = datasourceLabel
 			return httpclient.RoundTripperFunc(func(r *http.Request) (*http.Response, error) {
 				middlewareCalled = true
 				return next.RoundTrip(r)
@@ -106,7 +106,7 @@ func TestDataSourceMetricsMiddleware(t *testing.T) {
 		ctx := &testContext{}
 		finalRoundTripper := ctx.createRoundTripper("finalrt")
 		mw := DataSourceMetricsMiddleware()
-		rt := mw.CreateMiddleware(httpclient.Options{Labels: map[string]string{"datasource_name": "My Data Source 123"}}, finalRoundTripper)
+		rt := mw.CreateMiddleware(httpclient.Options{Labels: map[string]string{"datasource_name": "My Data Source 123", "datasource_type": "prometheus"}}, finalRoundTripper)
 		require.NotNil(t, rt)
 		middlewareName, ok := mw.(httpclient.MiddlewareName)
 		require.True(t, ok)
@@ -123,8 +123,9 @@ func TestDataSourceMetricsMiddleware(t *testing.T) {
 		require.Len(t, ctx.callChain, 1)
 		require.ElementsMatch(t, []string{"finalrt"}, ctx.callChain)
 		require.True(t, executeMiddlewareCalled)
-		require.Len(t, datasourceLabels, 1)
-		require.Equal(t, "My_Data_Source_123", datasourceLabels["datasource"])
+		require.Len(t, labels, 2)
+		require.Equal(t, "My_Data_Source_123", labels["datasource"])
+		require.Equal(t, "prometheus", labels["datasource_type"])
 		require.True(t, middlewareCalled)
 	})
 }

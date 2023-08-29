@@ -6,7 +6,8 @@ import (
 )
 
 type State struct {
-	AlertState *prometheus.GaugeVec
+	AlertState          *prometheus.GaugeVec
+	StateUpdateDuration prometheus.Histogram
 }
 
 func NewStateMetrics(r prometheus.Registerer) *State {
@@ -17,5 +18,14 @@ func NewStateMetrics(r prometheus.Registerer) *State {
 			Name:      "alerts",
 			Help:      "How many alerts by state.",
 		}, []string{"state"}),
+		StateUpdateDuration: promauto.With(r).NewHistogram(
+			prometheus.HistogramOpts{
+				Namespace: Namespace,
+				Subsystem: Subsystem,
+				Name:      "state_calculation_duration_seconds",
+				Help:      "The duration of calculation of a single state.",
+				Buckets:   []float64{0.01, 0.1, 1, 2, 5, 10},
+			},
+		),
 	}
 }

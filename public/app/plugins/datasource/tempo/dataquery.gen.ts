@@ -13,15 +13,19 @@ import * as common from '@grafana/schema';
 export interface TempoQuery extends common.DataQuery {
   filters: Array<TraceqlFilter>;
   /**
+   * Filters that are used to query the metrics summary
+   */
+  groupBy?: Array<TraceqlFilter>;
+  /**
    * Defines the maximum number of traces that are returned from Tempo
    */
   limit?: number;
   /**
-   * Define the maximum duration to select traces. Use duration format, for example: 1.2s, 100ms
+   * @deprecated Define the maximum duration to select traces. Use duration format, for example: 1.2s, 100ms
    */
   maxDuration?: string;
   /**
-   * Define the minimum duration to select traces. Use duration format, for example: 1.2s, 100ms
+   * @deprecated Define the minimum duration to select traces. Use duration format, for example: 1.2s, 100ms
    */
   minDuration?: string;
   /**
@@ -29,29 +33,30 @@ export interface TempoQuery extends common.DataQuery {
    */
   query: string;
   /**
-   * Logfmt query to filter traces by their tags. Example: http.status_code=200 error=true
+   * @deprecated Logfmt query to filter traces by their tags. Example: http.status_code=200 error=true
    */
   search?: string;
+  /**
+   * Use service.namespace in addition to service.name to uniquely identify a service.
+   */
+  serviceMapIncludeNamespace?: boolean;
   /**
    * Filters to be included in a PromQL query to select data for the service graph. Example: {client="app",service="app"}
    */
   serviceMapQuery?: string;
   /**
-   * Query traces by service name
+   * @deprecated Query traces by service name
    */
   serviceName?: string;
   /**
-   * Query traces by span name
+   * @deprecated Query traces by span name
    */
   spanName?: string;
-  /**
-   * Use the streaming API to get partial results as they are available
-   */
-  streaming?: boolean;
 }
 
 export const defaultTempoQuery: Partial<TempoQuery> = {
   filters: [],
+  groupBy: [],
 };
 
 /**
@@ -73,6 +78,7 @@ export enum SearchStreamingState {
  * static fields are pre-set in the UI, dynamic fields are added by the user
  */
 export enum TraceqlSearchScope {
+  Intrinsic = 'intrinsic',
   Resource = 'resource',
   Span = 'span',
   Unscoped = 'unscoped',
