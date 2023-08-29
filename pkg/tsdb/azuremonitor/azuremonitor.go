@@ -157,7 +157,7 @@ func getAzureRoutes(cloud string, jsonData json.RawMessage) (map[string]types.Az
 
 type azDatasourceExecutor interface {
 	ExecuteTimeSeriesQuery(ctx context.Context, originalQueries []backend.DataQuery, dsInfo types.DatasourceInfo, client *http.Client, url string, tracer tracing.Tracer) (*backend.QueryDataResponse, error)
-	ResourceRequest(rw http.ResponseWriter, req *http.Request, cli *http.Client)
+	ResourceRequest(rw http.ResponseWriter, req *http.Request, cli *http.Client) (http.ResponseWriter, error)
 }
 
 func (s *Service) getDataSourceFromPluginReq(ctx context.Context, req *backend.QueryDataRequest) (types.DatasourceInfo, error) {

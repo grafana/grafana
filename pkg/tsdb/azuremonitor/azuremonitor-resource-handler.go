@@ -115,7 +115,11 @@ func (s *Service) handleResourceReq(subDataSource string) func(rw http.ResponseW
 		req.URL.Host = serviceURL.Host
 		req.URL.Scheme = serviceURL.Scheme
 
-		s.executors[subDataSource].ResourceRequest(rw, req, service.HTTPClient)
+		rw, err = s.executors[subDataSource].ResourceRequest(rw, req, service.HTTPClient)
+		if err != nil {
+			writeResponse(rw, http.StatusInternalServerError, fmt.Sprintf("unexpected error %v", err))
+			return
+		}
 	}
 }
 
