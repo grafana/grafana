@@ -70,6 +70,19 @@ export const TestCases: StoryFn<typeof Stack> = ({ direction = 'column', gap = 2
           </Card>
         </Example>
 
+        <div style={{ width: 500 }}>
+          <Example title="Row, mismatched heights">
+            <Stack direction="row">
+              <MyComponent>
+                <div style={{ height: 50, width: 100, background: 'blue' }} />
+              </MyComponent>
+              <MyComponent>
+                <div style={{ height: 150, width: 100, background: 'orange' }} />
+              </MyComponent>
+            </Stack>
+          </Example>
+        </div>
+
         <Example title="Horizontal/row stack, mismatched heights">
           <Stack direction="row">
             <Card>
@@ -165,6 +178,10 @@ function Example({ title, children }: { title: string; children: React.ReactNode
       <div style={{ background: 'rgba(255,255,255,0.1)', border: '1px dashed green' }}>{children}</div>
     </div>
   );
+}
+
+function MyComponent({ children }: { children: React.ReactNode }) {
+  return <div style={{ background: 'rgba(0,255,255, 0.2)', padding: 16 }}>{children}</div>;
 }
 
 export default meta;
