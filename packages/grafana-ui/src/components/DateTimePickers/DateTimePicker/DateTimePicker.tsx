@@ -206,9 +206,8 @@ const DateTimeInput = React.forwardRef<HTMLInputElement, InputProps>(
       });
     }, []);
 
-    const onBlur = useCallback((event: FormEvent<HTMLInputElement>) => {
-      const validInput = isValid(event.currentTarget.value);
-      if(validInput) {
+    const onBlur = useCallback(() => {
+      if (!internalDate.invalid) {
         const date = dateTime(internalDate.value);
         onChange(date);
       }
