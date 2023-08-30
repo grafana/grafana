@@ -19,6 +19,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
+	ngalertmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	es "github.com/grafana/grafana/pkg/tsdb/elasticsearch/client"
 )
 
@@ -38,7 +39,9 @@ func ProvideService(httpClientProvider httpclient.Provider) *Service {
 
 func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	dsInfo, err := s.getDSInfo(ctx, req.PluginContext)
-	logger := eslog.FromContext(ctx).New("api", "QueryData")
+	_, fromAlert := req.Headers[ngalertmodels.FromAlertHeaderName]
+	logger := eslog.FromContext(ctx).New("api", "QueryData", "fromAlert", fromAlert)
+
 	if err != nil {
 		logger.Error("Failed to get data source info", "err", err)
 		return &backend.QueryDataResponse{}, err
