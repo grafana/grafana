@@ -40,7 +40,7 @@ func TestIntegrationBackendPlugins(t *testing.T) {
 		RefreshToken: "refresh-token",
 		Expiry:       time.Now().UTC().Add(24 * time.Hour),
 	}
-	oauthToken = oauthToken.WithExtra(map[string]interface{}{"id_token": "id-token"})
+	oauthToken = oauthToken.WithExtra(map[string]any{"id_token": "id-token"})
 
 	newTestScenario(t, "Datasource with no custom HTTP settings",
 		options(

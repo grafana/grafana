@@ -39,11 +39,11 @@ func MigrateScopeSplit(db db.DB, log log.Logger) error {
 
 		// IDs to remove
 		delQuery := "DELETE FROM permission WHERE id IN ("
-		delArgs := make([]interface{}, 0, n)
+		delArgs := make([]any, 0, n)
 
 		// Query to insert the updated permissions
 		insertQuery := "INSERT INTO permission (id, role_id, action, scope, kind, attribute, identifier, created, updated) VALUES "
-		insertArgs := make([]interface{}, 0, 9*n)
+		insertArgs := make([]any, 0, 9*n)
 
 		// Prepare batch of updated permissions
 		for i := start; i < end; i++ {

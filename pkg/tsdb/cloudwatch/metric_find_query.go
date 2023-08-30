@@ -113,7 +113,7 @@ func (e *cloudWatchExecutor) handleGetEc2InstanceAttribute(ctx context.Context, 
 	attributeName := parameters.Get("attributeName")
 	filterJson := parameters.Get("filters")
 
-	filterMap := map[string]interface{}{}
+	filterMap := map[string]any{}
 	err := json.Unmarshal([]byte(filterJson), &filterMap)
 	if err != nil {
 		return nil, fmt.Errorf("error unmarshaling filter: %v", err)
@@ -121,7 +121,7 @@ func (e *cloudWatchExecutor) handleGetEc2InstanceAttribute(ctx context.Context, 
 
 	var filters []*ec2.Filter
 	for k, v := range filterMap {
-		if vv, ok := v.([]interface{}); ok {
+		if vv, ok := v.([]any); ok {
 			var values []*string
 			for _, vvv := range vv {
 				if vvvv, ok := vvv.(string); ok {
@@ -198,7 +198,7 @@ func (e *cloudWatchExecutor) handleGetResourceArns(ctx context.Context, pluginCt
 	resourceType := parameters.Get("resourceType")
 	tagsJson := parameters.Get("tags")
 
-	tagsMap := map[string]interface{}{}
+	tagsMap := map[string]any{}
 	err := json.Unmarshal([]byte(tagsJson), &tagsMap)
 	if err != nil {
 		return nil, fmt.Errorf("error unmarshaling filter: %v", err)
@@ -206,7 +206,7 @@ func (e *cloudWatchExecutor) handleGetResourceArns(ctx context.Context, pluginCt
 
 	var filters []*resourcegroupstaggingapi.TagFilter
 	for k, v := range tagsMap {
-		if vv, ok := v.([]interface{}); ok {
+		if vv, ok := v.([]any); ok {
 			var values []*string
 			for _, vvv := range vv {
 				if vvvv, ok := vvv.(string); ok {

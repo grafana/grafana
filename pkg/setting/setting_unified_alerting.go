@@ -20,6 +20,7 @@ const (
 	alertmanagerDefaultGossipInterval     = cluster.DefaultGossipInterval
 	alertmanagerDefaultPushPullInterval   = cluster.DefaultPushPullInterval
 	alertmanagerDefaultConfigPollInterval = time.Minute
+	alertmanagerRedisDefaultMaxConns      = 5
 	// To start, the alertmanager needs at least one route defined.
 	// TODO: we should move this to Grafana settings and define this as the default.
 	alertmanagerDefaultConfiguration = `{
@@ -78,6 +79,7 @@ type UnifiedAlertingSettings struct {
 	HARedisUsername                string
 	HARedisPassword                string
 	HARedisDB                      int
+	HARedisMaxConns                int
 	MaxAttempts                    int64
 	MinInterval                    time.Duration
 	EvaluationTimeout              time.Duration
@@ -240,6 +242,7 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 	uaCfg.HARedisUsername = ua.Key("ha_redis_username").MustString("")
 	uaCfg.HARedisPassword = ua.Key("ha_redis_password").MustString("")
 	uaCfg.HARedisDB = ua.Key("ha_redis_db").MustInt(0)
+	uaCfg.HARedisMaxConns = ua.Key("ha_redis_max_conns").MustInt(alertmanagerRedisDefaultMaxConns)
 	peers := ua.Key("ha_peers").MustString("")
 	uaCfg.HAPeers = make([]string, 0)
 	if peers != "" {

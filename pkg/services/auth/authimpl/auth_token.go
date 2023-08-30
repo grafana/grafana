@@ -215,7 +215,7 @@ func (s *UserAuthTokenService) RotateToken(ctx context.Context, cmd auth.RotateC
 		return nil, auth.ErrInvalidSessionToken
 	}
 
-	res, err, _ := s.singleflight.Do(cmd.UnHashedToken, func() (interface{}, error) {
+	res, err, _ := s.singleflight.Do(cmd.UnHashedToken, func() (any, error) {
 		token, err := s.LookupToken(ctx, cmd.UnHashedToken)
 		if err != nil {
 			return nil, err
@@ -312,7 +312,7 @@ func (s *UserAuthTokenService) TryRotateToken(ctx context.Context, token *auth.U
 		newToken *auth.UserToken
 	}
 
-	rotResult, err, _ := s.singleflight.Do(fmt.Sprint(model.Id), func() (interface{}, error) {
+	rotResult, err, _ := s.singleflight.Do(fmt.Sprint(model.Id), func() (any, error) {
 		var needsRotation bool
 		rotatedAt := time.Unix(model.RotatedAt, 0)
 		if model.AuthTokenSeen {
@@ -462,7 +462,7 @@ func (s *UserAuthTokenService) BatchRevokeAllUserTokens(ctx context.Context, use
 		user_id_params := strings.Repeat(",?", len(userIds)-1)
 		sql := "DELETE from user_auth_token WHERE user_id IN (?" + user_id_params + ")"
 
-		params := []interface{}{sql}
+		params := []any{sql}
 		for _, v := range userIds {
 			params = append(params, v)
 		}

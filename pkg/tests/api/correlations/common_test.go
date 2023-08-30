@@ -134,6 +134,18 @@ func (c TestContext) getURL(url string, user User) string {
 	)
 }
 
+func (c TestContext) createOrg(name string) int64 {
+	c.t.Helper()
+	store := c.env.SQLStore
+	store.Cfg.AutoAssignOrg = false
+	quotaService := quotaimpl.ProvideService(store, store.Cfg)
+	orgService, err := orgimpl.ProvideService(store, store.Cfg, quotaService)
+	require.NoError(c.t, err)
+	orgId, err := orgService.GetOrCreate(context.Background(), name)
+	require.NoError(c.t, err)
+	return orgId
+}
+
 func (c TestContext) createUser(cmd user.CreateUserCommand) User {
 	c.t.Helper()
 	store := c.env.SQLStore

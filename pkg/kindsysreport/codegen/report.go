@@ -100,7 +100,7 @@ func (k Kind) MarshalJSON() ([]byte, error) {
 		return nil, err
 	}
 
-	var m map[string]interface{}
+	var m map[string]any
 	if err = json.Unmarshal(b, &m); err != nil {
 		return nil, err
 	}

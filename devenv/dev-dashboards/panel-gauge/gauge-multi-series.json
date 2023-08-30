@@ -245,7 +245,6 @@
     }
   ],
   "schemaVersion": 18,
-  "style": "dark",
   "tags": ["panel-tests", "gdev", "gauge"],
   "templating": {
     "list": []

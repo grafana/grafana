@@ -49,8 +49,8 @@ func init() {
 	)
 }
 
-func (sa *ServiceAccountsService) getUsageMetrics(ctx context.Context) (map[string]interface{}, error) {
-	stats := map[string]interface{}{}
+func (sa *ServiceAccountsService) getUsageMetrics(ctx context.Context) (map[string]any, error) {
+	stats := map[string]any{}
 
 	storeStats, err := sa.store.GetUsageMetrics(ctx)
 	if err != nil {

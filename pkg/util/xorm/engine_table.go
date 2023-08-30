@@ -35,7 +35,7 @@ func isSubQuery(tbName string) bool {
 }
 
 // TableName returns table name with schema prefix if has
-func (engine *Engine) TableName(bean interface{}, includeSchema ...bool) string {
+func (engine *Engine) TableName(bean any, includeSchema ...bool) string {
 	tbName := engine.tbNameNoSchema(bean)
 	if len(includeSchema) > 0 && includeSchema[0] && !isSubQuery(tbName) {
 		tbName = engine.tbNameWithSchema(tbName)
@@ -43,7 +43,7 @@ func (engine *Engine) TableName(bean interface{}, includeSchema ...bool) string 
 	return tbName
 }
 
-func (engine *Engine) tbNameNoSchema(tablename interface{}) string {
+func (engine *Engine) tbNameNoSchema(tablename any) string {
 	switch tablename.(type) {
 	case []string:
 		t := tablename.([]string)
@@ -52,8 +52,8 @@ func (engine *Engine) tbNameNoSchema(tablename interface{}) string {
 		} else if len(t) == 1 {
 			return engine.Quote(t[0])
 		}
-	case []interface{}:
-		t := tablename.([]interface{})
+	case []any:
+		t := tablename.([]any)
 		l := len(t)
 		var table string
 		if l > 0 {
