@@ -3138,8 +3138,8 @@ volumes:
 clone:
   retries: 3
 depends_on:
-- rgm-tag-prerelease
-- rgm-tag-prerelease-windows
+- rgm-%s-prerelease
+- rgm-%s-prerelease-windows
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
@@ -3450,8 +3450,8 @@ volumes:
 clone:
   retries: 3
 depends_on:
-- rgm-tag-prerelease
-- rgm-tag-prerelease-windows
+- rgm-%s-prerelease
+- rgm-%s-prerelease-windows
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
@@ -4998,6 +4998,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: c62e305b6a0f4960f56602a4118d4c408bbfe8cc032af30103c73aceb5d7b42c
+hmac: 18df23e8035efca37a2b8cfe93b3140de4dae815f668af2a36ee480a39d9a5ae
 
 ...

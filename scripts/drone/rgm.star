@@ -163,8 +163,8 @@ def rgm_release(trigger, trigger_name):
             name = "rgm-%s-verify-prerelease-assets".format(trigger_name),
             bucket = "grafana-prerelease",
             depends_on = [
-                "rgm-tag-prerelease",
-                "rgm-tag-prerelease-windows",
+                "rgm-%s-prerelease".format(trigger_name),
+                "rgm-%s-prerelease-windows".format(trigger_name),
             ],
         ),
     ]
