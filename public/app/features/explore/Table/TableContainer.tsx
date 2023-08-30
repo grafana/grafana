@@ -91,6 +91,7 @@ export class TableContainer extends PureComponent<Props> {
               width={width}
               height={this.getTableHeight(data.length, this.hasSubFrames(data))}
               loadingState={loading ? LoadingState.Loading : undefined}
+              scrollId="table"
             >
               {(innerWidth, innerHeight) => (
                 <Table

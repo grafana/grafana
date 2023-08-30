@@ -55,6 +55,7 @@ interface BaseProps {
    * callback when opening the panel menu
    */
   onOpenMenu?: () => void;
+  scrollId?: string;
 }
 
 interface FixedDimensions extends BaseProps {
@@ -120,6 +121,7 @@ export function PanelChrome({
   collapsible = false,
   collapsed,
   onToggleCollapse,
+  scrollId = '',
 }: PanelChromeProps) {
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
@@ -235,6 +237,7 @@ export function PanelChrome({
       data-testid={testid}
       tabIndex={0} //eslint-disable-line jsx-a11y/no-noninteractive-tabindex
       ref={ref}
+      id={scrollId}
     >
       <div className={styles.loadingBarContainer}>
         {loadingState === LoadingState.Loading ? (

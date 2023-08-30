@@ -90,6 +90,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: flex;
       padding: ${theme.spacing(2)};
       padding-top: 0;
+      flex: 1 0 auto;
     `,
     columnWrapper: css`
       display: flex;
@@ -510,6 +511,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
         <ExploreToolbar exploreId={exploreId} onChangeTime={this.onChangeTime} topOfViewRef={this.topOfViewRef} />
         {datasourceInstance ? (
           <div className={styles.exploreContainer}>
+            {contentOutlineVisible && <ContentOutline visible={contentOutlineVisible} />}
             <div className={styles.columnWrapper}>
               <PanelContainer className={styles.queryContainer}>
                 <QueryRows exploreId={exploreId} />
@@ -575,7 +577,6 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
                 }}
               </AutoSizer>
             </div>
-            {contentOutlineVisible && <ContentOutline />}
           </div>
         ) : (
           this.renderEmptyState(styles.exploreContainer)

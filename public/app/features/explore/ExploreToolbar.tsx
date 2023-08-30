@@ -139,6 +139,16 @@ export function ExploreToolbar({ exploreId, topOfViewRef, onChangeTime }: Props)
       <PageToolbar
         aria-label="Explore toolbar"
         leftItems={[
+          <ToolbarButton
+            key="content-outline"
+            variant="canvas"
+            tooltip="Content Outline"
+            icon="list-ui-alt"
+            iconOnly={splitted}
+            onClick={onContentOutlineToogle}
+          >
+            Outline
+          </ToolbarButton>,
           <DataSourcePicker
             key={`${exploreId}-ds-picker`}
             mixed
@@ -239,16 +249,6 @@ export function ExploreToolbar({ exploreId, topOfViewRef, onChangeTime }: Props)
               }}
             </LiveTailControls>
           ),
-          <ToolbarButton
-            key="content-outline"
-            variant="canvas"
-            tooltip="Content Outline"
-            icon="list-ui-alt"
-            iconOnly={splitted}
-            onClick={onContentOutlineToogle}
-          >
-            Outline
-          </ToolbarButton>,
         ].filter(Boolean)}
       </PageToolbar>
     </div>
