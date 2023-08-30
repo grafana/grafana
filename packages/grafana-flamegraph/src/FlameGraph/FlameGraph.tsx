@@ -241,7 +241,8 @@ const FlameGraph = ({
 
 const getStyles = () => ({
   graph: css`
-    overflow: scroll;
+    label: graph;
+    overflow: auto;
     height: 100%;
     flex-grow: 1;
     flex-basis: 50%;
@@ -257,12 +258,14 @@ const getStyles = () => ({
     overflow: hidden;
   `,
   sandwichMarker: css`
+    label: sandwichMarker;
     writing-mode: vertical-lr;
     transform: rotate(180deg);
     overflow: hidden;
     white-space: nowrap;
   `,
   sandwichMarkerIcon: css`
+    label: sandwichMarkerIcon;
     vertical-align: baseline;
   `,
 });

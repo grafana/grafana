@@ -198,7 +198,6 @@ const getStyles = (theme: GrafanaTheme2, sticky?: boolean) => ({
     display: flex;
     justify-content: space-between;
     width: 100%;
-    background: ${theme.colors.background.primary};
     top: 0;
     z-index: ${theme.zIndex.navbarFixed};
     ${sticky
