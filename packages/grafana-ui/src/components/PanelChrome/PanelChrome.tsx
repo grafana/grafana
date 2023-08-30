@@ -351,7 +351,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     container: css({
       label: 'panel-container',
       backgroundColor: background,
-      border: `1px solid ${borderColor}`,
+      outline: `1px solid ${borderColor}`,
       position: 'relative',
       borderRadius: theme.shape.radius.default,
       height: '100%',
