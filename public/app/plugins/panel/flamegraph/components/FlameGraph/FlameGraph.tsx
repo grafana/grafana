@@ -168,8 +168,10 @@ const FlameGraph = ({
   // hide context menu if outside the flame graph canvas is clicked
   useEffect(() => {
     const handleOnClick = (e: MouseEvent) => {
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-      if ((e.target as HTMLElement).parentElement?.id !== 'flameGraphCanvasContainer_clickOutsideCheck') {
+      if (
+        e.target instanceof HTMLElement &&
+        e.target.parentElement?.id !== 'flameGraphCanvasContainer_clickOutsideCheck'
+      ) {
         setClickedItemData(undefined);
       }
     };

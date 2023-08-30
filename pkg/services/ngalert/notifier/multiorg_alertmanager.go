@@ -125,6 +125,7 @@ func (moa *MultiOrgAlertmanager) setupClustering(cfg *setting.Cfg) error {
 			password: cfg.UnifiedAlerting.HARedisPassword,
 			username: cfg.UnifiedAlerting.HARedisUsername,
 			db:       cfg.UnifiedAlerting.HARedisDB,
+			maxConns: cfg.UnifiedAlerting.HARedisMaxConns,
 		}, clusterLogger, moa.metrics.Registerer, cfg.UnifiedAlerting.HAPushPullInterval)
 		if err != nil {
 			return fmt.Errorf("unable to initialize redis: %w", err)

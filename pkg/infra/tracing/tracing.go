@@ -128,7 +128,7 @@ type Span interface {
 
 	// contextWithSpan returns a context.Context that holds the parent
 	// context plus a reference to this span.
-	contextWithSpan(ctx context.Context) context.Context
+	ContextWithSpan(ctx context.Context) context.Context
 }
 
 func ProvideService(cfg *setting.Cfg) (Tracer, error) {
@@ -188,7 +188,7 @@ func SpanFromContext(ctx context.Context) Span {
 // It is the equivalent of opentracing.ContextWithSpan and trace.ContextWithSpan.
 func ContextWithSpan(ctx context.Context, span Span) context.Context {
 	if span != nil {
-		return span.contextWithSpan(ctx)
+		return span.ContextWithSpan(ctx)
 	}
 	return ctx
 }
@@ -487,7 +487,7 @@ func (s OpentelemetrySpan) AddEvents(keys []string, values []EventValue) {
 	}
 }
 
-func (s OpentelemetrySpan) contextWithSpan(ctx context.Context) context.Context {
+func (s OpentelemetrySpan) ContextWithSpan(ctx context.Context) context.Context {
 	if s.span != nil {
 		ctx = trace.ContextWithSpan(ctx, s.span)
 		// Grafana also manages its own separate traceID in the context in addition to what opentracing handles.
