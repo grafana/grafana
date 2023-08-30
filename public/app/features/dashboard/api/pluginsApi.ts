@@ -7,6 +7,9 @@ import { GridPos } from '@grafana/schema';
 import { getDashboardSrv } from '../services/DashboardSrv';
 import { PanelModel } from '../state';
 
+// using a weakmap to prevent memory leak in forgotten panel wrapperes and destroyed panel models
+let panelsMap = new WeakMap<PluginsAPIPanelModelInterface, PanelModel>();
+
 /**
  * This is a wrapper for the DashboardSrv that is used by plugins to interact with
  * dashboards and panels.
@@ -16,9 +19,6 @@ import { PanelModel } from '../state';
  *
  */
 export class PluginsAPIDashboardSrv implements PluginsAPIDashboardSrvInterface {
-  // store plugin panel references in a weakmap to avoid memory leaks
-  #panelsMap = new WeakMap<PluginsAPIPanelModelInterface, PanelModel>();
-
   get dashboardUid() {
     return getDashboardSrv().getCurrent()?.uid ?? '';
   }
@@ -33,14 +33,11 @@ export class PluginsAPIDashboardSrv implements PluginsAPIDashboardSrvInterface {
       return [];
     }
 
-    // reset the weakmap
-    this.#panelsMap = new WeakMap();
-
     //return a wrapper for each panel. Do not return the grafana-core panel
     return currentDashboard.panels.map((panel) => {
-      const panelWrapper = new PluginsAPIPanelModel(panel);
+      const panelWrapper = new PluginsAPIPanelModel();
       // store the original panel in a symbol for later retrieval
-      this.#panelsMap.set(panelWrapper, panel);
+      panelsMap.set(panelWrapper, panel);
       return panelWrapper;
     });
   }
@@ -52,7 +49,7 @@ export class PluginsAPIDashboardSrv implements PluginsAPIDashboardSrvInterface {
     }
     const panelsToSet: PanelModel[] = panels.map((panel) => {
       // if it is a panel wrapper, get the original from the panels map
-      const originalPanel = this.#panelsMap.get(panel);
+      const originalPanel = panelsMap.get(panel);
       if (originalPanel) {
         return originalPanel;
       }
@@ -80,34 +77,36 @@ function isValidPanelModel(panel: PluginsAPIPanelModelInterface): panel is Panel
 
 export class PluginsAPIPanelModel implements PluginsAPIPanelModelInterface {
   // use a hashed private field to prevent runtime access to the panel
-  #panel: PanelModel;
-
-  constructor(panel: PanelModel) {
-    this.#panel = panel;
+  #getCorePanel(): PanelModel {
+    const panel = panelsMap.get(this);
+    if (!panel) {
+      throw new Error('Panel no longer available');
+    }
+    return panel;
   }
 
   get id() {
-    return this.#panel.id;
+    return this.#getCorePanel().id;
   }
   get title() {
-    return this.#panel.title || '';
+    return this.#getCorePanel().title;
   }
   get type() {
-    return this.#panel.type;
+    return this.#getCorePanel().type;
   }
   get gridPos() {
-    return this.#panel.gridPos;
+    return this.#getCorePanel().gridPos;
   }
   get options() {
-    return this.#panel.options;
+    return this.#getCorePanel().options;
   }
 
   set id(id: number) {
-    this.#panel.id = id;
+    this.#getCorePanel().id = id;
   }
 
   set title(title: string) {
-    this.#panel.title = title;
+    this.#getCorePanel().title = title;
   }
 
   set type(_) {
@@ -115,14 +114,14 @@ export class PluginsAPIPanelModel implements PluginsAPIPanelModelInterface {
   }
 
   set gridPos(gridPos: GridPos) {
-    this.#panel.gridPos = gridPos;
+    this.#getCorePanel().gridPos = gridPos;
   }
 
   set options(options: { [key: string]: unknown }) {
-    this.#panel.options = options;
+    this.#getCorePanel().options = options;
   }
 
   refresh() {
-    this.#panel.refresh();
+    this.#getCorePanel().refresh();
   }
 }
