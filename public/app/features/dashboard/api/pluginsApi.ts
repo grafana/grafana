@@ -7,7 +7,7 @@ import { GridPos } from '@grafana/schema';
 import { getDashboardSrv } from '../services/DashboardSrv';
 import { PanelModel } from '../state';
 
-// using a weakmap to prevent memory leak in forgotten panel wrapperes and destroyed panel models
+// using a weakmap to prevent memory leaks in forgotten panel wrappers and destroyed panel models
 let panelsMap = new WeakMap<PluginsAPIPanelModelInterface, PanelModel>();
 
 /**
