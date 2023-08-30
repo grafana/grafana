@@ -6,7 +6,7 @@ import { getBackendSrv } from '@grafana/runtime';
 type QueryArgs = {
   url: string;
   method?: string;
-  body?: FeatureToggle[];
+  body?: { featureToggles: FeatureToggle[] };
 };
 
 const backendSrvBaseQuery =
@@ -33,11 +33,11 @@ export const togglesApi = createApi({
     getFeatureToggles: builder.query<FeatureToggle[], void>({
       query: () => ({ url: '/featuremgmt' }),
     }),
-    updateFeatureToggles: builder.mutation<void, { featureToggles: FeatureToggle[] }>({
+    updateFeatureToggles: builder.mutation<void, FeatureToggle[]>({
       query: (updatedToggles) => ({
         url: '/featuremgmt',
         method: 'POST',
-        data: updatedToggles,
+        body: { featureToggles: updatedToggles },
       }),
     }),
   }),
