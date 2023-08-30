@@ -80,11 +80,7 @@ const Tag = ({ tag, isFirst, onRemove, onChange, getTagKeyOptions, getTagValueOp
         loadOptions={getTagKeySegmentOptions}
         onChange={(v) => {
           const { value } = v;
-          if (value === undefined) {
-            onRemove();
-          } else {
-            onChange({ ...tag, key: value ?? '' });
-          }
+          onChange({ ...tag, key: value ?? '' });
         }}
       />
       <Seg
