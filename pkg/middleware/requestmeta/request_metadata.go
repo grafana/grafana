@@ -13,10 +13,22 @@ const (
 	TeamCore     = "core"
 )
 
+type StatusSource string
+
+const (
+	StatusSourceServer     StatusSource = "server"
+	StatusSourceDownstream StatusSource = "downstream"
+)
+
+func (ss StatusSource) String() string {
+	return string(ss)
+}
+
 type rMDContextKey struct{}
 
 type RequestMetaData struct {
-	Team string
+	Team         string
+	StatusSource StatusSource
 }
 
 var requestMetaDataContextKey = rMDContextKey{}
@@ -57,8 +69,15 @@ func SetOwner(team string) web.Handler {
 	}
 }
 
+// SetOwner returns an `web.Handler` that sets the team name for an request.
+func WithDownstreamStatusSource(ctx context.Context) {
+	v := GetRequestMetaData(ctx)
+	v.StatusSource = StatusSourceDownstream
+}
+
 func defaultRequestMetadata() *RequestMetaData {
 	return &RequestMetaData{
-		Team: TeamCore,
+		Team:         TeamCore,
+		StatusSource: StatusSourceServer,
 	}
 }
