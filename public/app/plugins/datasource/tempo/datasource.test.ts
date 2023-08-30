@@ -14,15 +14,12 @@ import {
   PluginType,
   CoreApp,
 } from '@grafana/data';
-import {
-  BackendDataSourceResponse,
-  FetchResponse,
-  setBackendSrv,
-  setDataSourceSrv,
-  TemplateSrv,
-} from '@grafana/runtime';
+import { BackendDataSourceResponse, FetchResponse, setBackendSrv, setDataSourceSrv } from '@grafana/runtime';
 import { BarGaugeDisplayMode, TableCellDisplayMode } from '@grafana/schema';
+import { TemplateSrv } from 'app/features/templating/template_srv';
 
+import { TempoVariableQueryType } from './VariableQueryEditor';
+import { TraceqlSearchScope } from './dataquery.gen';
 import {
   DEFAULT_LIMIT,
   TempoDatasource,
@@ -36,6 +33,7 @@ import {
 } from './datasource';
 import mockJson from './mockJsonResponse.json';
 import mockServiceGraph from './mockServiceGraph.json';
+import { createMetadataRequest, createTempoDatasource } from './mocks';
 import { TempoJsonData, TempoQuery } from './types';
 
 let mockObservable: () => Observable<any>;
@@ -265,6 +263,18 @@ describe('Tempo data source', () => {
       maxDuration: duration,
       limit: 10,
     });
+  });
+
+  it('should format metrics summary query correctly', () => {
+    const ds = new TempoDatasource(defaultSettings, {} as TemplateSrv);
+    const queryGroupBy = [
+      { id: '1', scope: TraceqlSearchScope.Unscoped, tag: 'component' },
+      { id: '2', scope: TraceqlSearchScope.Span, tag: 'name' },
+      { id: '3', scope: TraceqlSearchScope.Resource, tag: 'service.name' },
+      { id: '4', scope: TraceqlSearchScope.Intrinsic, tag: 'kind' },
+    ];
+    const groupBy = ds.formatGroupBy(queryGroupBy);
+    expect(groupBy).toEqual('.component, span.name, resource.service.name, kind');
   });
 
   it('should include a default limit', () => {
@@ -761,6 +771,105 @@ describe('Tempo service graph view', () => {
   });
 });
 
+describe('label names - v2 tags', () => {
+  let datasource: TempoDatasource;
+
+  beforeEach(() => {
+    datasource = createTempoDatasource();
+    jest.spyOn(datasource, 'metadataRequest').mockImplementation(
+      createMetadataRequest({
+        data: {
+          scopes: [{ name: 'span', tags: ['label1', 'label2'] }],
+        },
+      })
+    );
+  });
+
+  it('get label names', async () => {
+    // label_names()
+    const response = await datasource.executeVariableQuery({ refId: 'test', type: TempoVariableQueryType.LabelNames });
+
+    expect(response).toEqual([{ text: 'label1' }, { text: 'label2' }]);
+  });
+});
+
+describe('label names - v1 tags', () => {
+  let datasource: TempoDatasource;
+
+  beforeEach(() => {
+    datasource = createTempoDatasource();
+    jest
+      .spyOn(datasource, 'metadataRequest')
+      .mockImplementationOnce(() => {
+        throw Error;
+      })
+      .mockImplementation(
+        createMetadataRequest({
+          data: {
+            tagNames: ['label1', 'label2'],
+          },
+        })
+      );
+  });
+
+  it('get label names', async () => {
+    // label_names()
+    const response = await datasource.executeVariableQuery({ refId: 'test', type: TempoVariableQueryType.LabelNames });
+    expect(response).toEqual([{ text: 'label1' }, { text: 'label2' }, { text: 'status.code' }]);
+  });
+});
+
+describe('label values', () => {
+  let datasource: TempoDatasource;
+
+  beforeEach(() => {
+    datasource = createTempoDatasource();
+    jest.spyOn(datasource, 'metadataRequest').mockImplementation(
+      createMetadataRequest({
+        data: {
+          tagValues: [
+            {
+              type: 'value1',
+              value: 'value1',
+              label: 'value1',
+            },
+            {
+              type: 'value2',
+              value: 'value2',
+              label: 'value2',
+            },
+          ],
+        },
+      })
+    );
+  });
+
+  it('get label values for given label', async () => {
+    // label_values("label")
+    const response = await datasource.executeVariableQuery({
+      refId: 'test',
+      type: TempoVariableQueryType.LabelValues,
+      label: 'label',
+    });
+
+    expect(response).toEqual([
+      { text: { type: 'value1', value: 'value1', label: 'value1' } },
+      { text: { type: 'value2', value: 'value2', label: 'value2' } },
+    ]);
+  });
+
+  it('do not raise error when label is not set', async () => {
+    // label_values()
+    const response = await datasource.executeVariableQuery({
+      refId: 'test',
+      type: TempoVariableQueryType.LabelValues,
+      label: undefined,
+    });
+
+    expect(response).toEqual([]);
+  });
+});
+
 const backendSrvWithPrometheus = {
   async get(uid: string) {
     if (uid === 'prom') {
@@ -800,7 +909,7 @@ function setupBackendSrv(frame: DataFrame) {
   } as any);
 }
 
-const defaultSettings: DataSourceInstanceSettings<TempoJsonData> = {
+export const defaultSettings: DataSourceInstanceSettings<TempoJsonData> = {
   id: 0,
   uid: 'gdev-tempo',
   type: 'tracing',

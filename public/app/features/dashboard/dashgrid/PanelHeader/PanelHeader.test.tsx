@@ -1,6 +1,8 @@
 import { render, screen } from '@testing-library/react';
 import React from 'react';
 
+import { config } from '@grafana/runtime';
+
 import { createEmptyQueryResponse } from '../../../explore/state/utils';
 import { PanelModel } from '../../state';
 import { createDashboardModelFixture } from '../../state/__fixtures__/dashboardFixtures';
@@ -17,9 +19,10 @@ let panelModel = new PanelModel({
 let panelData = createEmptyQueryResponse();
 
 describe('Panel Header', () => {
-  const dashboardModel = createDashboardModelFixture({}, { publicDashboardAccessToken: 'abc123' });
+  const dashboardModel = createDashboardModelFixture({}, {});
   it('will render header title but not render dropdown icon when dashboard is being viewed publicly', () => {
     window.history.pushState({}, 'Test Title', '/public-dashboards/abc123');
+    config.publicDashboardAccessToken = 'abc123';
 
     render(
       <PanelHeader panel={panelModel} dashboard={dashboardModel} isViewing={false} isEditing={false} data={panelData} />
@@ -30,8 +33,9 @@ describe('Panel Header', () => {
   });
 
   it('will render header title and dropdown icon when dashboard is not being viewed publicly', () => {
-    const dashboardModel = createDashboardModelFixture({}, { publicDashboardAccessToken: '' });
+    const dashboardModel = createDashboardModelFixture({}, {});
     window.history.pushState({}, 'Test Title', '/d/abc/123');
+    config.publicDashboardAccessToken = '';
 
     render(
       <PanelHeader panel={panelModel} dashboard={dashboardModel} isViewing={false} isEditing={false} data={panelData} />
