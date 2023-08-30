@@ -16,8 +16,7 @@ import {
 
 import { DashboardSceneRenderer } from '../scene/DashboardSceneRenderer';
 import { SaveDashboardDrawer } from '../serialization/SaveDashboardDrawer';
-import { findVizPanel } from '../utils/findVizPanel';
-import { forceRenderChildren } from '../utils/utils';
+import { findVizPanelById, forceRenderChildren } from '../utils/utils';
 
 import { DashboardSceneUrlSync } from './DashboardSceneUrlSync';
 
@@ -29,10 +28,10 @@ export interface DashboardSceneState extends SceneObjectState {
   controls?: SceneObject[];
   isEditing?: boolean;
   isDirty?: boolean;
-  /** Scene object key for object to inspect */
-  inspectPanelKey?: string;
-  /** Scene object key for object to view in fullscreen */
-  viewPanelKey?: string;
+  /** Panel to inspect */
+  inspectPanelId?: string;
+  /** Panel to view in full screen */
+  viewPanelId?: string;
   /** Scene object that handles the current drawer */
   drawer?: SceneObject;
 }
@@ -129,7 +128,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       url: locationUtil.getUrlForPartial(location, { viewPanel: null, inspect: null }),
     };
 
-    if (this.state.viewPanelKey) {
+    if (this.state.viewPanelId) {
       pageNav = {
         text: 'View panel',
         parentItem: pageNav,
@@ -142,8 +141,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   /**
    * Returns the body (layout) or the full view panel
    */
-  public getBodyToRender(viewPanelKey?: string): SceneObject {
-    const viewPanel = findVizPanel(this, viewPanelKey);
+  public getBodyToRender(viewPanelId?: string): SceneObject {
+    const viewPanel = findVizPanelById(this, viewPanelId);
     return viewPanel ?? this.state.body;
   }
 

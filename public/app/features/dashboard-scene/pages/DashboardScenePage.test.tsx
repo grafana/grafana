@@ -133,7 +133,7 @@ describe('DashboardScenePage', () => {
 
     expect(await screen.findByTitle('Panel A')).toBeInTheDocument();
 
-    act(() => locationService.partial({ viewPanel: 'panel-2' }));
+    act(() => locationService.partial({ viewPanel: '2' }));
 
     expect(screen.queryByTitle('Panel A')).not.toBeInTheDocument();
     expect(await screen.findByTitle('Panel B')).toBeInTheDocument();

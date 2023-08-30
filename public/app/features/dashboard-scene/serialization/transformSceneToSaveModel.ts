@@ -3,7 +3,7 @@ import { Dashboard, defaultDashboard, FieldConfigSource, Panel } from '@grafana/
 import { sortedDeepCloneWithoutNulls } from 'app/core/utils/object';
 
 import { DashboardScene } from '../scene/DashboardScene';
-import { getPanelIdForVizPanelKey } from '../utils/utils';
+import { getPanelIdForVizPanel } from '../utils/utils';
 
 export function transformSceneToSaveModel(scene: DashboardScene): Dashboard {
   const state = scene.state;
@@ -40,7 +40,7 @@ function gridItemToPanel(gridItem: SceneGridItem): Panel {
   }
 
   const panel: Panel = {
-    id: getPanelIdForVizPanelKey(vizPanel.state.key!),
+    id: getPanelIdForVizPanel(vizPanel),
     type: vizPanel.state.pluginId,
     title: vizPanel.state.title,
     gridPos: {

@@ -6,20 +6,20 @@ describe('DashboardScene', () => {
   describe('Given a standard scene', () => {
     it('Should set inspectPanelKey when url has inspect key', () => {
       const scene = buildTestScene();
-      scene.urlSync?.updateFromUrl({ inspect: 'panel-2' });
-      expect(scene.state.inspectPanelKey).toBe('panel-2');
+      scene.urlSync?.updateFromUrl({ inspect: '2' });
+      expect(scene.state.inspectPanelId).toBe('2');
     });
 
     it('Should handle inspect key that is not found', () => {
       const scene = buildTestScene();
       scene.urlSync?.updateFromUrl({ inspect: '12321' });
-      expect(scene.state.inspectPanelKey).toBe(undefined);
+      expect(scene.state.inspectPanelId).toBe(undefined);
     });
 
     it('Should set viewPanelKey when url has viewPanel', () => {
       const scene = buildTestScene();
-      scene.urlSync?.updateFromUrl({ viewPanel: 'panel-2' });
-      expect(scene.state.viewPanelKey).toBe('panel-2');
+      scene.urlSync?.updateFromUrl({ viewPanel: '2' });
+      expect(scene.state.viewPanelId).toBe('2');
     });
   });
 
