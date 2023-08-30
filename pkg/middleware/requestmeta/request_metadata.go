@@ -20,10 +20,6 @@ const (
 	StatusSourceDownstream StatusSource = "downstream"
 )
 
-func (ss StatusSource) String() string {
-	return string(ss)
-}
-
 type rMDContextKey struct{}
 
 type RequestMetaData struct {
