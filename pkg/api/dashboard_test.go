@@ -175,7 +175,6 @@ func TestHTTPServer_GetDashboard_AccessControl(t *testing.T) {
 		require.NoError(t, err)
 
 		assert.Equal(t, http.StatusOK, res.StatusCode)
-		fmt.Println(res.Body)
 		var data dtos.DashboardFullWithMeta
 		require.NoError(t, json.NewDecoder(res.Body).Decode(&data))
 
