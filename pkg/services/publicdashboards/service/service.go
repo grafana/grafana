@@ -443,9 +443,17 @@ func (pd *PublicDashboardServiceImpl) newCreatePublicDashboard(ctx context.Conte
 		}
 	}
 
-	accessToken, err := pd.NewPublicDashboardAccessToken(ctx)
-	if err != nil {
-		return nil, err
+	//Check if accessToken already exists, if none then auto generate
+	existingPubdash, _ = pd.store.FindByAccessToken(ctx, dto.PublicDashboard.AccessToken)
+	if existingPubdash != nil {
+		return nil, ErrPublicDashboardAccessTokenExists.Errorf("Create: public dashboard access token %s already exists", dto.PublicDashboard.AccessToken)
+	}
+	accessToken := dto.PublicDashboard.AccessToken
+	if dto.PublicDashboard.AccessToken == "" {
+		accessToken, err = pd.NewPublicDashboardAccessToken(ctx)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	isEnabled := returnValueOrDefault(dto.PublicDashboard.IsEnabled, false)
