@@ -102,3 +102,4 @@ influxdbSqlSupport,experimental,@grafana/observability-metrics,false,false,false
 noBasicRole,experimental,@grafana/grafana-authnz-team,false,false,true,true
 alertingNoDataErrorExecution,privatePreview,@grafana/alerting-squad,false,false,true,false
 angularDeprecationUI,experimental,@grafana/plugins-platform-backend,false,false,false,true
+requestInstrumentationStatusSource,experimental,@grafana/plugins-platform-backend,false,false,false,false

@@ -418,4 +418,8 @@ const (
 	// FlagAngularDeprecationUI
 	// Display new Angular deprecation-related UI features
 	FlagAngularDeprecationUI = "angularDeprecationUI"
+
+	// FlagRequestInstrumentationStatusSource
+	// Include a status source label for request metrics and logs
+	FlagRequestInstrumentationStatusSource = "requestInstrumentationStatusSource"
 )

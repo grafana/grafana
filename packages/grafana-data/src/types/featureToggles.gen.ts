@@ -121,4 +121,5 @@ export interface FeatureToggles {
   noBasicRole?: boolean;
   alertingNoDataErrorExecution?: boolean;
   angularDeprecationUI?: boolean;
+  requestInstrumentationStatusSource?: boolean;
 }
