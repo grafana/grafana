@@ -60,8 +60,6 @@ jobs:
             [ ! -d ./public/plugins/${{ inputs.plugin_id }}/bin ] && mkdir -pv ./public/plugins/${{ inputs.plugin_id }}/bin || true
             curl -fL -o ./public/plugins/${{ inputs.plugin_id }}/bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v${{ env.GRABPL_VERSION }}/grabpl
             chmod 0755 ./public/plugins/${{ inputs.plugin_id }}/bin/grabpl
-        - name: Setup jq
-          uses: dcarbone/install-jq-action@v1.0.1
         - name: Validate environment
           shell: bash
           run: |
