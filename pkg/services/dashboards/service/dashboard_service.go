@@ -184,8 +184,8 @@ func (dr *DashboardServiceImpl) BuildSaveDashboardCommand(ctx context.Context, d
 	}
 
 	namespaceID, userIDstr := dto.User.GetNamespacedID()
-	if namespaceID != identity.NamespaceUser {
-		return nil, errutil.BadRequest("account doesn't belong to the user namespace")
+	if namespaceID != identity.NamespaceUser && namespaceID != identity.NamespaceServiceAccount {
+		return nil, errutil.BadRequest("account doesn't belong to the user or service namespace")
 	}
 	userID, err := identity.IntIdentifier(namespaceID, userIDstr)
 	if err != nil {

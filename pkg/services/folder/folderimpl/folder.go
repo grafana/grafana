@@ -282,6 +282,10 @@ func (s *Service) Create(ctx context.Context, cmd *folder.CreateFolderCommand) (
 
 	user := cmd.SignedInUser
 	namespaceID, userIDstr := user.GetNamespacedID()
+	if namespaceID == identity.NamespaceAPIKey {
+		s.log.Warn("namespace API key detected, using 0 as user ID", "namespaceID", namespaceID, "userID", userIDstr)
+		userIDstr = "0"
+	}
 	userID, err := identity.IntIdentifier(namespaceID, userIDstr)
 	if err != nil {
 		s.log.Warn("failed to parse user ID", "namespaceID", namespaceID, "userID", userIDstr, "error", err)
@@ -770,6 +774,10 @@ func (s *Service) BuildSaveDashboardCommand(ctx context.Context, dto *dashboards
 	}
 
 	namespaceID, userIDstr := dto.User.GetNamespacedID()
+	if namespaceID == identity.NamespaceAPIKey {
+		s.log.Warn("namespace API key detected, using 0 as user ID", "namespaceID", namespaceID, "userID", userIDstr)
+		userIDstr = "0"
+	}
 	userID, err := identity.IntIdentifier(namespaceID, userIDstr)
 	if err != nil {
 		s.log.Warn("failed to parse user ID", "namespaceID", namespaceID, "userID", userIDstr, "error", err)

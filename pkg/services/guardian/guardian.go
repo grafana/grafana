@@ -233,7 +233,12 @@ func (g *dashboardGuardianImpl) checkACL(permission dashboards.PermissionType, a
 	teamACLItems := []*dashboards.DashboardACLInfoDTO{}
 
 	for _, p := range acl {
-		userID, err := identity.IntIdentifier(g.user.GetNamespacedID())
+		namespaceID, identifier := g.user.GetNamespacedID()
+		if namespaceID == identity.NamespaceAPIKey {
+			g.log.Warn("namespace API key detected, using 0 as user ID", "namespaceID", namespaceID, "userID", identifier)
+			identifier = "0"
+		}
+		userID, err := identity.IntIdentifier(namespaceID, identifier)
 		if err != nil {
 			return false, err
 		}
