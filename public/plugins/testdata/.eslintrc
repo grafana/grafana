@@ -1,4 +1,5 @@
 {
   "extends": "./.config/.eslintrc",
-  "plugins": ["@grafana"]
+  "plugins": ["@grafana"],
+  "ignorePatterns": ["**/*.gen.ts"]
 }
