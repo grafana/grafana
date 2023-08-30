@@ -46,11 +46,7 @@ func (b *BackendClientInit) Initialize(ctx context.Context, p *plugins.Plugin) (
 			return nil, errors.New("could not find backend factory for plugin")
 		}
 
-		env, err := b.envVarProvider.Get(ctx, p)
-		if err != nil {
-			return nil, err
-		}
-		if backendClient, err := backendFactory(p.ID, p.Logger(), env); err != nil {
+		if backendClient, err := backendFactory(p.ID, p.Logger(), b.envVarProvider.Get(ctx, p)); err != nil {
 			return nil, err
 		} else {
 			p.RegisterClient(backendClient)
@@ -61,16 +57,16 @@ func (b *BackendClientInit) Initialize(ctx context.Context, p *plugins.Plugin) (
 
 // BackendClientStarter implements an InitializeFunc for starting a backend plugin process.
 type BackendClientStarter struct {
-	processManager process.Service
+	processManager process.Manager
 	log            log.Logger
 }
 
 // BackendProcessStartStep returns a new InitializeFunc for starting a backend plugin process.
-func BackendProcessStartStep(processManager process.Service) InitializeFunc {
+func BackendProcessStartStep(processManager process.Manager) InitializeFunc {
 	return newBackendProcessStarter(processManager).Start
 }
 
-func newBackendProcessStarter(processManager process.Service) *BackendClientStarter {
+func newBackendProcessStarter(processManager process.Manager) *BackendClientStarter {
 	return &BackendClientStarter{
 		processManager: processManager,
 		log:            log.New("plugins.backend.start"),
@@ -79,8 +75,8 @@ func newBackendProcessStarter(processManager process.Service) *BackendClientStar
 
 // Start will start the backend plugin process.
 func (b *BackendClientStarter) Start(ctx context.Context, p *plugins.Plugin) (*plugins.Plugin, error) {
-	if err := b.processManager.Start(ctx, p.ID); err != nil {
-		b.log.Error("Could not start plugin", "pluginId", p.ID, "err", err)
+	if err := b.processManager.Start(ctx, p); err != nil {
+		b.log.Error("Could not start plugin", "pluginId", p.ID, "error", err)
 		return nil, err
 	}
 	return p, nil
@@ -107,11 +103,11 @@ func newPluginRegistration(pluginRegistry registry.Service) *PluginRegistration 
 // Initialize registers the plugin with the plugin registry.
 func (r *PluginRegistration) Initialize(ctx context.Context, p *plugins.Plugin) (*plugins.Plugin, error) {
 	if err := r.pluginRegistry.Add(ctx, p); err != nil {
-		r.log.Error("Could not register plugin", "pluginID", p.ID, "err", err)
-		return nil, errors.New("could not register plugin")
+		r.log.Error("Could not register plugin", "pluginId", p.ID, "error", err)
+		return nil, err
 	}
 	if !p.IsCorePlugin() {
-		r.log.Info("Plugin registered", "pluginID", p.ID)
+		r.log.Info("Plugin registered", "pluginId", p.ID)
 	}
 
 	return p, nil

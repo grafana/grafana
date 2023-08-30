@@ -28,7 +28,7 @@ To follow this guide:
 
 To integrate your Okta OAuth2 provider with Grafana using our Okta OAuth2 integration, follow these steps:
 
-1. [Create an SWA app](https://help.okta.com/en-us/Content/Topics/Apps/Apps_App_Integration_Wizard_SWA.htm) or [OCID app](https://help.okta.com/en-us/Content/Topics/Apps/Apps_App_Integration_Wizard_OIDC.htm) at the Okta applications section.
+1. [Create an SWA app](https://help.okta.com/en-us/Content/Topics/Apps/Apps_App_Integration_Wizard_SWA.htm) or [OIDC app](https://help.okta.com/en-us/Content/Topics/Apps/Apps_App_Integration_Wizard_OIDC.htm) in the Okta applications section.
 
 1. Set the callback URL for your OAuth2 app to `http://<my_grafana_server_name_or_ip>:<grafana_server_port>/login/okta`.
 
@@ -41,8 +41,8 @@ To integrate your Okta OAuth2 provider with Grafana using our Okta OAuth2 integr
    | Field                        | Description                                                                                                   |
    | ---------------------------- | ------------------------------------------------------------------------------------------------------------- |
    | `client_id`, `client_secret` | These values must match the client ID and client secret from your Okta OAuth2 app.                            |
-   | `auth_url`                   | The authorization endpoint of your OAuth2 provider. `https://<okta-tenant-id>.okta.com/oauth2v1authorize`     |
-   | `token_url`                  | The token endpoint of your Okta OAuth2 provider. `https://<okta-tenant-id>.okta.com/token`                    |
+   | `auth_url`                   | The authorization endpoint of your OAuth2 provider. `https://<okta-tenant-id>.okta.com/oauth2/v1/authorize`   |
+   | `token_url`                  | The token endpoint of your Okta OAuth2 provider. `https://<okta-tenant-id>.okta.com/oauth2/v1/token`          |
    | `api_url`                    | The user information endpoint of your Okta OAuth2 provider. `https://<tenant-id>.okta.com/oauth2/v1/userinfo` |
    | `enabled`                    | Enables Okta OAuth2 authentication. Set this value to `true`.                                                 |
 
@@ -84,7 +84,7 @@ The following table outlines the various Okta OAuth2 configuration options. You 
 | `skip_org_role_sync`    | No       | Set to `true` to stop automatically syncing user roles. This will allow you to set organization roles for your users from within Grafana manually.                                                                                                                                                                                                                                                                                                                                                                             | `false`                       |
 | `allowed_groups`        | No       | List of comma- or space-separated groups. The user should be a member of at least one group to log in.                                                                                                                                                                                                                                                                                                                                                                                                                         |                               |
 | `allowed_domains`       | No       | List comma- or space-separated domains. The user should belong to at least one domain to log in.                                                                                                                                                                                                                                                                                                                                                                                                                               |                               |
-| `use_pkce`              | No       | Set to `true` to use [Proof Key for Code Exchange (PKCE)](https://datatracker.ietf.org/doc/html/rfc7636). Grafana uses the SHA256 based `S256` challenge method and a 128 bytes (base64url encoded) code verifier.                                                                                                                                                                                                                                                                                                             | `false`                       |
+| `use_pkce`              | No       | Set to `true` to use [Proof Key for Code Exchange (PKCE)](https://datatracker.ietf.org/doc/html/rfc7636). Grafana uses the SHA256 based `S256` challenge method and a 128 bytes (base64url encoded) code verifier.                                                                                                                                                                                                                                                                                                             | `true`                        |
 | `use_refresh_token`     | No       | Set to `true` to use refresh token and check access token expiration. The `accessTokenExpirationCheck` feature toggle should also be enabled to use refresh token.                                                                                                                                                                                                                                                                                                                                                             | `false`                       |
 
 ### Configure a refresh token
@@ -131,4 +131,4 @@ the correct teams.
 
 Okta groups can be referenced by group names, like `Admins` or `Editors`.
 
-To learn more about Team Sync, refer to [Confgure Team Sync]({{< relref "../../configure-team-sync" >}}).
+To learn more about Team Sync, refer to [Configure Team Sync]({{< relref "../../configure-team-sync" >}}).

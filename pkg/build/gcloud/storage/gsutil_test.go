@@ -1,9 +1,14 @@
 package storage
 
 import (
+	"context"
+	"os"
+	"path/filepath"
 	"testing"
 
+	"cloud.google.com/go/storage"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/api/option"
 )
 
 func Test_asChunks(t *testing.T) {
@@ -156,4 +161,65 @@ func Test_asChunks(t *testing.T) {
 			require.Equal(t, tc.expected, result)
 		})
 	}
+}
+
+func TestCopyLocalDir(t *testing.T) {
+	t.Parallel()
+
+	tmpDir := t.TempDir()
+	testFiles := []string{"file1.txt", "file2.txt"}
+	for _, testFile := range testFiles {
+		path := filepath.Join(tmpDir, testFile)
+		require.NoError(t, os.WriteFile(path, []byte{}, 0600))
+	}
+
+	// If an upload fails then the whole copy operation should return an error.
+	t.Run("failure-should-error", func(t *testing.T) {
+		t.Parallel()
+
+		// Assemble:
+		ctx := context.Background()
+		client := createAnonymousClient(t, ctx)
+		testBucket := client.Bucket("grafana-testing-repo")
+
+		// Act:
+		err := client.CopyLocalDir(ctx, tmpDir, testBucket, "test-path", false)
+
+		// Assert:
+		// This should fail as the client has no access to the bucket to upload to:
+		require.Error(t, err)
+	})
+}
+
+func TestCopyRemoteDir(t *testing.T) {
+	t.Parallel()
+
+	t.Run("failure-should-error", func(t *testing.T) {
+		t.Parallel()
+
+		// Assemble:
+		ctx := context.Background()
+		client := createAnonymousClient(t, ctx)
+		testFromBucket := client.Bucket("grafana-testing-repo")
+		testToBucket := client.Bucket("grafana-testing-repo")
+
+		// Act:
+		err := client.CopyRemoteDir(ctx, testFromBucket, "test-from", testToBucket, "test-to")
+
+		// Assert:
+		// This should fail as the client has no access to the bucket to copy from/to. Unfortunately, this does not yet
+		// cover if a single file fails to get transferred.
+		require.Error(t, err)
+	})
+}
+
+func createAnonymousClient(t *testing.T, ctx context.Context) *Client {
+	t.Helper()
+	storageClient, err := storage.NewClient(ctx, option.WithoutAuthentication())
+	require.NoError(t, err)
+	client := &Client{
+		Client: *storageClient,
+	}
+	require.NoError(t, err)
+	return client
 }

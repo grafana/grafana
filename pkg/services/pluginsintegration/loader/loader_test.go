@@ -19,21 +19,21 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/angular/angularinspector"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/assetpath"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/finder"
-	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/bootstrap"
-	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/discovery"
-	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/initialization"
-	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/termination"
 	"github.com/grafana/grafana/pkg/plugins/manager/process"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
 	"github.com/grafana/grafana/pkg/plugins/manager/sources"
+	"github.com/grafana/grafana/pkg/plugins/oauth"
+	"github.com/grafana/grafana/pkg/plugins/plugindef"
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pipeline"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginerrs"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-var compareOpts = []cmp.Option{cmpopts.IgnoreFields(plugins.Plugin{}, "client", "log"), fsComparer}
+var compareOpts = []cmp.Option{cmpopts.IgnoreFields(plugins.Plugin{}, "client", "log", "mu"), fsComparer}
 
 var fsComparer = cmp.Comparer(func(fs1 plugins.FS, fs2 plugins.FS) bool {
 	fs1Files, err := fs1.Files()
@@ -63,7 +63,7 @@ func TestLoader_Load(t *testing.T) {
 		cfg          *config.Cfg
 		pluginPaths  []string
 		want         []*plugins.Plugin
-		pluginErrors map[string]*plugins.Error
+		pluginErrors map[string]*plugins.SignatureError
 	}{
 		{
 			name:        "Load a Core plugin",
@@ -275,10 +275,10 @@ func TestLoader_Load(t *testing.T) {
 			cfg:         &config.Cfg{},
 			pluginPaths: []string{filepath.Join(testDataDir(t), "unsigned-datasource")},
 			want:        []*plugins.Plugin{},
-			pluginErrors: map[string]*plugins.Error{
+			pluginErrors: map[string]*plugins.SignatureError{
 				"test-datasource": {
-					PluginID:  "test-datasource",
-					ErrorCode: "signatureMissing",
+					PluginID:        "test-datasource",
+					SignatureStatus: plugins.SignatureStatusUnsigned,
 				},
 			},
 		},
@@ -327,10 +327,10 @@ func TestLoader_Load(t *testing.T) {
 			cfg:         &config.Cfg{},
 			pluginPaths: []string{filepath.Join(testDataDir(t), "lacking-files")},
 			want:        []*plugins.Plugin{},
-			pluginErrors: map[string]*plugins.Error{
+			pluginErrors: map[string]*plugins.SignatureError{
 				"test-datasource": {
-					PluginID:  "test-datasource",
-					ErrorCode: "signatureInvalid",
+					PluginID:        "test-datasource",
+					SignatureStatus: plugins.SignatureStatusInvalid,
 				},
 			},
 		},
@@ -342,10 +342,10 @@ func TestLoader_Load(t *testing.T) {
 			},
 			pluginPaths: []string{filepath.Join(testDataDir(t), "lacking-files")},
 			want:        []*plugins.Plugin{},
-			pluginErrors: map[string]*plugins.Error{
+			pluginErrors: map[string]*plugins.SignatureError{
 				"test-datasource": {
-					PluginID:  "test-datasource",
-					ErrorCode: "signatureInvalid",
+					PluginID:        "test-datasource",
+					SignatureStatus: plugins.SignatureStatusInvalid,
 				},
 			},
 		},
@@ -357,10 +357,10 @@ func TestLoader_Load(t *testing.T) {
 			},
 			pluginPaths: []string{filepath.Join(testDataDir(t), "invalid-v2-missing-file")},
 			want:        []*plugins.Plugin{},
-			pluginErrors: map[string]*plugins.Error{
+			pluginErrors: map[string]*plugins.SignatureError{
 				"test-datasource": {
-					PluginID:  "test-datasource",
-					ErrorCode: "signatureModified",
+					PluginID:        "test-datasource",
+					SignatureStatus: plugins.SignatureStatusModified,
 				},
 			},
 		},
@@ -372,10 +372,10 @@ func TestLoader_Load(t *testing.T) {
 			},
 			pluginPaths: []string{filepath.Join(testDataDir(t), "invalid-v2-extra-file")},
 			want:        []*plugins.Plugin{},
-			pluginErrors: map[string]*plugins.Error{
+			pluginErrors: map[string]*plugins.SignatureError{
 				"test-datasource": {
-					PluginID:  "test-datasource",
-					ErrorCode: "signatureModified",
+					PluginID:        "test-datasource",
+					SignatureStatus: plugins.SignatureStatusModified,
 				},
 			},
 		},
@@ -433,7 +433,8 @@ func TestLoader_Load(t *testing.T) {
 		reg := fakes.NewFakePluginRegistry()
 		procPrvdr := fakes.NewFakeBackendProcessProvider()
 		procMgr := fakes.NewFakeProcessManager()
-		l := newLoader(t, tt.cfg, reg, procMgr, procPrvdr)
+		errTracker := pluginerrs.ProvideSignatureErrorTracker()
+		l := newLoader(t, tt.cfg, reg, procMgr, procPrvdr, errTracker)
 
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := l.Load(context.Background(), sources.NewLocalSource(tt.class, tt.pluginPaths))
@@ -442,7 +443,7 @@ func TestLoader_Load(t *testing.T) {
 				t.Fatalf("Result mismatch (-want +got):\n%s", cmp.Diff(got, tt.want, compareOpts...))
 			}
 
-			pluginErrs := l.PluginErrors()
+			pluginErrs := errTracker.SignatureErrors(context.Background())
 			require.Equal(t, len(tt.pluginErrors), len(pluginErrs))
 			for _, pluginErr := range pluginErrs {
 				require.Equal(t, tt.pluginErrors[pluginErr.PluginID], pluginErr)
@@ -451,6 +452,116 @@ func TestLoader_Load(t *testing.T) {
 			verifyState(t, tt.want, reg, procPrvdr, procMgr)
 		})
 	}
+}
+
+func TestLoader_Load_ExternalRegistration(t *testing.T) {
+	boolPtr := func(b bool) *bool { return &b }
+	stringPtr := func(s string) *string { return &s }
+
+	t.Run("Load a plugin with external registration", func(t *testing.T) {
+		cfg := &config.Cfg{
+			Features:             fakes.NewFakeFeatureToggles(featuremgmt.FlagExternalServiceAuth),
+			PluginsAllowUnsigned: []string{"grafana-test-datasource"},
+		}
+		pluginPaths := []string{filepath.Join(testDataDir(t), "external-registration")}
+		expected := []*plugins.Plugin{
+			{JSONData: plugins.JSONData{
+				ID:         "grafana-test-datasource",
+				Type:       plugins.TypeDataSource,
+				Name:       "Test",
+				Backend:    true,
+				Executable: "gpx_test_datasource",
+				Info: plugins.Info{
+					Author: plugins.InfoLink{
+						Name: "Grafana Labs",
+						URL:  "https://grafana.com",
+					},
+					Version: "1.0.0",
+					Logos: plugins.Logos{
+						Small: "public/plugins/grafana-test-datasource/img/ds.svg",
+						Large: "public/plugins/grafana-test-datasource/img/ds.svg",
+					},
+					Updated:     "2023-08-03",
+					Screenshots: []plugins.Screenshots{},
+				},
+				Dependencies: plugins.Dependencies{
+					GrafanaVersion: "*",
+					Plugins:        []plugins.Dependency{},
+				},
+				ExternalServiceRegistration: &plugindef.ExternalServiceRegistration{
+					Impersonation: &plugindef.Impersonation{
+						Enabled: boolPtr(true),
+						Groups:  boolPtr(true),
+						Permissions: []plugindef.Permission{
+							{
+								Action: "read",
+								Scope:  stringPtr("datasource"),
+							},
+						},
+					},
+					Self: &plugindef.Self{
+						Enabled: boolPtr(true),
+						Permissions: []plugindef.Permission{
+							{
+								Action: "read",
+								Scope:  stringPtr("datasource"),
+							},
+						},
+					},
+				},
+			},
+				FS:        mustNewStaticFSForTests(t, pluginPaths[0]),
+				Class:     plugins.ClassExternal,
+				Signature: plugins.SignatureStatusUnsigned,
+				Module:    "plugins/grafana-test-datasource/module",
+				BaseURL:   "public/plugins/grafana-test-datasource",
+				ExternalService: &oauth.ExternalService{
+					ClientID:     "client-id",
+					ClientSecret: "secretz",
+					PrivateKey:   "priv@t3",
+				},
+			},
+		}
+
+		backendFactoryProvider := fakes.NewFakeBackendProcessProvider()
+		backendFactoryProvider.BackendFactoryFunc = func(ctx context.Context, plugin *plugins.Plugin) backendplugin.PluginFactoryFunc {
+			return func(pluginID string, logger log.Logger, env []string) (backendplugin.Plugin, error) {
+				require.Equal(t, "grafana-test-datasource", pluginID)
+				require.Equal(t, []string{"GF_VERSION=", "GF_EDITION=", "GF_ENTERPRISE_LICENSE_PATH=",
+					"GF_ENTERPRISE_APP_URL=", "GF_ENTERPRISE_LICENSE_TEXT=", "GF_APP_URL=",
+					"GF_PLUGIN_APP_CLIENT_ID=client-id", "GF_PLUGIN_APP_CLIENT_SECRET=secretz",
+					"GF_PLUGIN_APP_PRIVATE_KEY=priv@t3", "GF_INSTANCE_FEATURE_TOGGLES_ENABLE=externalServiceAuth"}, env)
+				return &fakes.FakeBackendPlugin{}, nil
+			}
+		}
+
+		l := newLoaderWithOpts(t, cfg, loaderDepOpts{
+			oauthServiceRegistry: &fakes.FakeOauthService{
+				Result: &oauth.ExternalService{
+					ClientID:     "client-id",
+					ClientSecret: "secretz",
+					PrivateKey:   "priv@t3",
+				},
+			},
+			backendFactoryProvider: backendFactoryProvider,
+		})
+		got, err := l.Load(context.Background(), &fakes.FakePluginSource{
+			PluginClassFunc: func(ctx context.Context) plugins.Class {
+				return plugins.ClassExternal
+			},
+			PluginURIsFunc: func(ctx context.Context) []string {
+				return pluginPaths
+			},
+			DefaultSignatureFunc: func(ctx context.Context) (plugins.Signature, bool) {
+				return plugins.Signature{}, false
+			},
+		})
+
+		require.NoError(t, err)
+		if !cmp.Equal(got, expected, compareOpts...) {
+			t.Fatalf("Result mismatch (-want +got):\n%s", cmp.Diff(got, expected, compareOpts...))
+		}
+	})
 }
 
 func TestLoader_Load_CustomSource(t *testing.T) {
@@ -506,7 +617,7 @@ func TestLoader_Load_CustomSource(t *testing.T) {
 			Module:    "plugin-cdn/grafana-worldmap-panel/0.3.3/public/plugins/grafana-worldmap-panel/module",
 		}}
 
-		l := newLoader(t, cfg, fakes.NewFakePluginRegistry(), fakes.NewFakeProcessManager(), fakes.NewFakeBackendProcessProvider())
+		l := newLoader(t, cfg, fakes.NewFakePluginRegistry(), fakes.NewFakeProcessManager(), fakes.NewFakeBackendProcessProvider(), newFakeSignatureErrorTracker())
 		got, err := l.Load(context.Background(), &fakes.FakePluginSource{
 			PluginClassFunc: func(ctx context.Context) plugins.Class {
 				return plugins.ClassBundled
@@ -536,7 +647,7 @@ func TestLoader_Load_MultiplePlugins(t *testing.T) {
 			pluginPaths     []string
 			existingPlugins map[string]struct{}
 			want            []*plugins.Plugin
-			pluginErrors    map[string]*plugins.Error
+			pluginErrors    map[string]*plugins.SignatureError
 		}{
 			{
 				name: "Load multiple plugins (broken, valid, unsigned)",
@@ -583,10 +694,10 @@ func TestLoader_Load_MultiplePlugins(t *testing.T) {
 						SignatureOrg:  "Will Browne",
 					},
 				},
-				pluginErrors: map[string]*plugins.Error{
+				pluginErrors: map[string]*plugins.SignatureError{
 					"test-panel": {
-						PluginID:  "test-panel",
-						ErrorCode: "signatureMissing",
+						PluginID:        "test-panel",
+						SignatureStatus: plugins.SignatureStatusUnsigned,
 					},
 				},
 			},
@@ -596,7 +707,9 @@ func TestLoader_Load_MultiplePlugins(t *testing.T) {
 			reg := fakes.NewFakePluginRegistry()
 			procPrvdr := fakes.NewFakeBackendProcessProvider()
 			procMgr := fakes.NewFakeProcessManager()
-			l := newLoader(t, tt.cfg, reg, procMgr, procPrvdr)
+			errTracker := pluginerrs.ProvideSignatureErrorTracker()
+
+			l := newLoader(t, tt.cfg, reg, procMgr, procPrvdr, errTracker)
 			t.Run(tt.name, func(t *testing.T) {
 				got, err := l.Load(context.Background(), &fakes.FakePluginSource{
 					PluginClassFunc: func(ctx context.Context) plugins.Class {
@@ -613,7 +726,7 @@ func TestLoader_Load_MultiplePlugins(t *testing.T) {
 				if !cmp.Equal(got, tt.want, compareOpts...) {
 					t.Fatalf("Result mismatch (-want +got):\n%s", cmp.Diff(got, tt.want, compareOpts...))
 				}
-				pluginErrs := l.PluginErrors()
+				pluginErrs := errTracker.SignatureErrors(context.Background())
 				require.Equal(t, len(tt.pluginErrors), len(pluginErrs))
 				for _, pluginErr := range pluginErrs {
 					require.Equal(t, tt.pluginErrors[pluginErr.PluginID], pluginErr)
@@ -696,7 +809,7 @@ func TestLoader_Load_RBACReady(t *testing.T) {
 		reg := fakes.NewFakePluginRegistry()
 		procPrvdr := fakes.NewFakeBackendProcessProvider()
 		procMgr := fakes.NewFakeProcessManager()
-		l := newLoader(t, tt.cfg, reg, procMgr, procPrvdr)
+		l := newLoader(t, tt.cfg, reg, procMgr, procPrvdr, newFakeSignatureErrorTracker())
 
 		got, err := l.Load(context.Background(), &fakes.FakePluginSource{
 			PluginClassFunc: func(ctx context.Context) plugins.Class {
@@ -711,8 +824,6 @@ func TestLoader_Load_RBACReady(t *testing.T) {
 		if !cmp.Equal(got, tt.want, compareOpts...) {
 			t.Fatalf("Result mismatch (-want +got):\n%s", cmp.Diff(got, tt.want, compareOpts...))
 		}
-		pluginErrs := l.PluginErrors()
-		require.Len(t, pluginErrs, 0)
 
 		verifyState(t, tt.want, reg, procPrvdr, procMgr)
 	}
@@ -756,7 +867,7 @@ func TestLoader_Load_Signature_RootURL(t *testing.T) {
 		procPrvdr := fakes.NewFakeBackendProcessProvider()
 		procMgr := fakes.NewFakeProcessManager()
 		cfg := &config.Cfg{GrafanaAppURL: defaultAppURL}
-		l := newLoader(t, cfg, reg, procMgr, procPrvdr)
+		l := newLoader(t, cfg, reg, procMgr, procPrvdr, newFakeSignatureErrorTracker())
 		got, err := l.Load(context.Background(), &fakes.FakePluginSource{
 			PluginClassFunc: func(ctx context.Context) plugins.Class {
 				return plugins.ClassExternal
@@ -832,7 +943,7 @@ func TestLoader_Load_DuplicatePlugins(t *testing.T) {
 		procPrvdr := fakes.NewFakeBackendProcessProvider()
 		procMgr := fakes.NewFakeProcessManager()
 		cfg := &config.Cfg{}
-		l := newLoader(t, cfg, reg, procMgr, procPrvdr)
+		l := newLoader(t, cfg, reg, procMgr, procPrvdr, newFakeSignatureErrorTracker())
 		got, err := l.Load(context.Background(), &fakes.FakePluginSource{
 			PluginClassFunc: func(ctx context.Context) plugins.Class {
 				return plugins.ClassExternal
@@ -921,7 +1032,7 @@ func TestLoader_Load_SkipUninitializedPlugins(t *testing.T) {
 		}
 		procMgr := fakes.NewFakeProcessManager()
 		cfg := &config.Cfg{}
-		l := newLoader(t, cfg, reg, procMgr, procPrvdr)
+		l := newLoader(t, cfg, reg, procMgr, procPrvdr, newFakeSignatureErrorTracker())
 		got, err := l.Load(context.Background(), &fakes.FakePluginSource{
 			PluginClassFunc: func(ctx context.Context) plugins.Class {
 				return plugins.ClassExternal
@@ -977,7 +1088,9 @@ func TestLoader_AngularClass(t *testing.T) {
 				},
 			}
 			// if angularDetected = true, it means that the detection has run
-			l := newLoaderWithAngularInspector(t, &config.Cfg{AngularSupportEnabled: true}, angularinspector.AlwaysAngularFakeInspector)
+			l := newLoaderWithOpts(t, &config.Cfg{AngularSupportEnabled: true}, loaderDepOpts{
+				angularInspector: angularinspector.AlwaysAngularFakeInspector,
+			})
 			p, err := l.Load(context.Background(), fakePluginSource)
 			require.NoError(t, err)
 			require.Len(t, p, 1, "should load 1 plugin")
@@ -1026,7 +1139,7 @@ func TestLoader_Load_Angular(t *testing.T) {
 				},
 			} {
 				t.Run(tc.name, func(t *testing.T) {
-					l := newLoaderWithAngularInspector(t, cfgTc.cfg, tc.angularInspector)
+					l := newLoaderWithOpts(t, cfgTc.cfg, loaderDepOpts{angularInspector: tc.angularInspector})
 					p, err := l.Load(context.Background(), fakePluginSource)
 					require.NoError(t, err)
 					if tc.shouldLoad {
@@ -1114,7 +1227,7 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 		procMgr := fakes.NewFakeProcessManager()
 		reg := fakes.NewFakePluginRegistry()
 		cfg := &config.Cfg{}
-		l := newLoader(t, cfg, reg, procMgr, procPrvdr)
+		l := newLoader(t, cfg, reg, procMgr, procPrvdr, newFakeSignatureErrorTracker())
 
 		got, err := l.Load(context.Background(), &fakes.FakePluginSource{
 			PluginClassFunc: func(ctx context.Context) plugins.Class {
@@ -1289,7 +1402,7 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 		procPrvdr := fakes.NewFakeBackendProcessProvider()
 		procMgr := fakes.NewFakeProcessManager()
 		cfg := &config.Cfg{}
-		l := newLoader(t, cfg, reg, procMgr, procPrvdr)
+		l := newLoader(t, cfg, reg, procMgr, procPrvdr, newFakeSignatureErrorTracker())
 		got, err := l.Load(context.Background(), &fakes.FakePluginSource{
 			PluginClassFunc: func(ctx context.Context) plugins.Class {
 				return plugins.ClassExternal
@@ -1313,35 +1426,58 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 	})
 }
 
-func newLoader(t *testing.T, cfg *config.Cfg, reg registry.Service, proc process.Service,
-	backendFactory plugins.BackendFactoryProvider) *Loader {
+type loaderDepOpts struct {
+	angularInspector       angularinspector.Inspector
+	oauthServiceRegistry   oauth.ExternalServiceRegistry
+	backendFactoryProvider plugins.BackendFactoryProvider
+}
+
+func newLoader(t *testing.T, cfg *config.Cfg, reg registry.Service, proc process.Manager,
+	backendFactory plugins.BackendFactoryProvider, sigErrTracker pluginerrs.SignatureErrorTracker) *Loader {
 	assets := assetpath.ProvideService(pluginscdn.ProvideService(cfg))
 	lic := fakes.NewFakeLicensingService()
-	angularInspector, err := angularinspector.NewStaticInspector()
-	require.NoError(t, err)
+	angularInspector := angularinspector.NewStaticInspector()
 
 	terminate, err := pipeline.ProvideTerminationStage(cfg, reg, proc)
 	require.NoError(t, err)
 
-	return ProvideService(cfg, signature.NewUnsignedAuthorizer(cfg), proc, reg, fakes.NewFakeRoleRegistry(), assets,
-		angularInspector, &fakes.FakeOauthService{},
-		pipeline.ProvideDiscoveryStage(cfg, finder.NewLocalFinder(false), reg),
+	return ProvideService(pipeline.ProvideDiscoveryStage(cfg, finder.NewLocalFinder(false), reg),
 		pipeline.ProvideBootstrapStage(cfg, signature.DefaultCalculator(cfg), assets),
+		pipeline.ProvideValidationStage(cfg, signature.NewValidator(signature.NewUnsignedAuthorizer(cfg)), angularInspector, sigErrTracker),
 		pipeline.ProvideInitializationStage(cfg, reg, lic, backendFactory, proc, &fakes.FakeOauthService{}, fakes.NewFakeRoleRegistry()),
 		terminate)
 }
 
-func newLoaderWithAngularInspector(t *testing.T, cfg *config.Cfg, angularInspector angularinspector.Inspector) *Loader {
+func newLoaderWithOpts(t *testing.T, cfg *config.Cfg, opts loaderDepOpts) *Loader {
+	assets := assetpath.ProvideService(pluginscdn.ProvideService(cfg))
+	lic := fakes.NewFakeLicensingService()
 	reg := fakes.NewFakePluginRegistry()
+	proc := fakes.NewFakeProcessManager()
 
-	terminationStage, err := termination.New(cfg, termination.Opts{})
+	terminate, err := pipeline.ProvideTerminationStage(cfg, reg, proc)
 	require.NoError(t, err)
+	sigErrTracker := pluginerrs.ProvideSignatureErrorTracker()
 
-	return ProvideService(cfg, signature.NewUnsignedAuthorizer(cfg), process.ProvideService(reg), reg,
-		fakes.NewFakeRoleRegistry(), assetpath.ProvideService(pluginscdn.ProvideService(cfg)),
-		angularInspector, &fakes.FakeOauthService{},
-		discovery.New(cfg, discovery.Opts{}), bootstrap.New(cfg, bootstrap.Opts{}),
-		initialization.New(cfg, initialization.Opts{}), terminationStage)
+	angularInspector := opts.angularInspector
+	if opts.angularInspector == nil {
+		angularInspector = angularinspector.NewStaticInspector()
+	}
+
+	oauthServiceRegistry := opts.oauthServiceRegistry
+	if oauthServiceRegistry == nil {
+		oauthServiceRegistry = &fakes.FakeOauthService{}
+	}
+
+	backendFactoryProvider := opts.backendFactoryProvider
+	if backendFactoryProvider == nil {
+		backendFactoryProvider = fakes.NewFakeBackendProcessProvider()
+	}
+
+	return ProvideService(pipeline.ProvideDiscoveryStage(cfg, finder.NewLocalFinder(false), reg),
+		pipeline.ProvideBootstrapStage(cfg, signature.DefaultCalculator(cfg), assets),
+		pipeline.ProvideValidationStage(cfg, signature.NewValidator(signature.NewUnsignedAuthorizer(cfg)), angularInspector, sigErrTracker),
+		pipeline.ProvideInitializationStage(cfg, reg, lic, backendFactoryProvider, proc, oauthServiceRegistry, fakes.NewFakeRoleRegistry()),
+		terminate)
 }
 
 func verifyState(t *testing.T, ps []*plugins.Plugin, reg registry.Service,

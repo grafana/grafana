@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/discovery"
 	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/initialization"
 	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/termination"
+	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/validation"
 	"github.com/grafana/grafana/pkg/plugins/manager/process"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
@@ -42,6 +43,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/loader"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pipeline"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginerrs"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	pluginSettings "github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings/service"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/serviceregistration"
@@ -59,7 +61,7 @@ var WireSet = wire.NewSet(
 	ProvideClientDecorator,
 	wire.Bind(new(plugins.Client), new(*client.Decorator)),
 	process.ProvideService,
-	wire.Bind(new(process.Service), new(*process.Manager)),
+	wire.Bind(new(process.Manager), new(*process.Service)),
 	coreplugin.ProvideCoreRegistry,
 	pluginscdn.ProvideService,
 	assetpath.ProvideService,
@@ -72,15 +74,22 @@ var WireSet = wire.NewSet(
 	wire.Bind(new(initialization.Initializer), new(*initialization.Initialize)),
 	pipeline.ProvideTerminationStage,
 	wire.Bind(new(termination.Terminator), new(*termination.Terminate)),
+	pipeline.ProvideValidationStage,
+	wire.Bind(new(validation.Validator), new(*validation.Validate)),
 
 	angularpatternsstore.ProvideService,
 	angulardetectorsprovider.ProvideDynamic,
 	angularinspector.ProvideService,
 	wire.Bind(new(pAngularInspector.Inspector), new(*angularinspector.Service)),
 
+	signature.ProvideValidatorService,
+	wire.Bind(new(signature.Validator), new(*signature.Validation)),
 	loader.ProvideService,
 	wire.Bind(new(pluginLoader.Service), new(*loader.Loader)),
-	wire.Bind(new(plugins.ErrorResolver), new(*loader.Loader)),
+	pluginerrs.ProvideSignatureErrorTracker,
+	wire.Bind(new(pluginerrs.SignatureErrorTracker), new(*pluginerrs.SignatureErrorRegistry)),
+	pluginerrs.ProvideStore,
+	wire.Bind(new(plugins.ErrorResolver), new(*pluginerrs.Store)),
 	manager.ProvideInstaller,
 	wire.Bind(new(plugins.Installer), new(*manager.PluginInstaller)),
 	registry.ProvideService,

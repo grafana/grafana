@@ -20,6 +20,10 @@ export interface CloudMonitoringQuery extends common.DataQuery {
    */
   intervalMs?: number;
   /**
+   * PromQL sub-query properties.
+   */
+  promQLQuery?: PromQLQuery;
+  /**
    * SLO sub-query properties.
    */
   sloQuery?: SLOQuery;
@@ -40,6 +44,7 @@ export interface CloudMonitoringQuery extends common.DataQuery {
  */
 export enum QueryType {
   ANNOTATION = 'annotation',
+  PROMQL = 'promQL',
   SLO = 'slo',
   TIME_SERIES_LIST = 'timeSeriesList',
   TIME_SERIES_QUERY = 'timeSeriesQuery',
@@ -184,6 +189,24 @@ export interface SLOQuery {
    * Name of the SLO.
    */
   sloName: string;
+}
+
+/**
+ * PromQL sub-query properties.
+ */
+export interface PromQLQuery {
+  /**
+   * PromQL expression/query to be executed.
+   */
+  expr: string;
+  /**
+   * GCP project to execute the query against.
+   */
+  projectName: string;
+  /**
+   * PromQL min step
+   */
+  step: string;
 }
 
 /**

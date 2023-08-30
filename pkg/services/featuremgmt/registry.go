@@ -126,12 +126,6 @@ var (
 			Owner:        grafanaDatavizSquad,
 		},
 		{
-			Name:        "prometheusWideSeries",
-			Description: "Enable wide series responses in the Prometheus datasource",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaObservabilityMetricsSquad,
-		},
-		{
 			Name:         "canvasPanelNesting",
 			Description:  "Allow elements nesting",
 			Stage:        FeatureStageExperimental,
@@ -300,10 +294,9 @@ var (
 		{
 			Name:         "lokiQuerySplitting",
 			Description:  "Split large interval queries into subqueries with smaller time intervals",
-			Stage:        FeatureStageGeneralAvailability,
+			Stage:        FeatureStageExperimental,
 			FrontendOnly: true,
 			Owner:        grafanaObservabilityLogsSquad,
-			Expression:   "true", // turned on by default
 		},
 		{
 			Name:         "lokiQuerySplittingConfig",
@@ -455,8 +448,9 @@ var (
 		{
 			Name:        "enableElasticsearchBackendQuerying",
 			Description: "Enable the processing of queries and responses in the Elasticsearch data source through backend",
-			Stage:       FeatureStagePublicPreview,
+			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaObservabilityLogsSquad,
+			Expression:  "true", // enabled by default
 		},
 		{
 			Name:         "advancedDataSourcePicker",
@@ -627,6 +621,13 @@ var (
 			Owner:        grafanaObservabilityTracesAndProfilingSquad,
 		},
 		{
+			Name:         "metricsSummary",
+			Description:  "Enables metrics summary queries in the Tempo data source",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaObservabilityTracesAndProfilingSquad,
+		},
+		{
 			Name:         "grafanaAPIServer",
 			Description:  "Enable Kubernetes API Server for Grafana resources",
 			Stage:        FeatureStageExperimental,
@@ -698,6 +699,21 @@ var (
 			FrontendOnly:    true,
 			Owner:           grafanaAuthnzSquad,
 			RequiresRestart: true,
+		},
+		{
+			Name:            "alertingNoDataErrorExecution",
+			Description:     "Changes how Alerting state manager handles execution of NoData/Error",
+			Stage:           FeatureStagePrivatePreview,
+			FrontendOnly:    false,
+			Owner:           grafanaAlertingSquad,
+			RequiresRestart: true,
+		},
+		{
+			Name:         "angularDeprecationUI",
+			Description:  "Display new Angular deprecation-related UI features",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaPluginsPlatformSquad,
 		},
 	}
 )

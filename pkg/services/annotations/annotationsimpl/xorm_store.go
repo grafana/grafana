@@ -339,16 +339,12 @@ func (r *xormRepositoryImpl) Get(ctx context.Context, query *annotations.ItemQue
 			}
 		}
 
-		var acFilter acFilter
-		if !ac.IsDisabled(r.cfg) {
-			var err error
-			acFilter, err = r.getAccessControlFilter(query.SignedInUser)
-			if err != nil {
-				return err
-			}
-			sql.WriteString(fmt.Sprintf(" AND (%s)", acFilter.where))
-			params = append(params, acFilter.whereParams...)
+		acFilter, err := r.getAccessControlFilter(query.SignedInUser)
+		if err != nil {
+			return err
 		}
+		sql.WriteString(fmt.Sprintf(" AND (%s)", acFilter.where))
+		params = append(params, acFilter.whereParams...)
 
 		if query.Limit == 0 {
 			query.Limit = 100

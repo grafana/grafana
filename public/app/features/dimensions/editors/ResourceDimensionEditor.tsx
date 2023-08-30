@@ -16,9 +16,9 @@ const resourceOptions = [
   //  { label: 'Mapping', value: ResourceDimensionMode.Mapping, description: 'Map the results of a value to an svg' },
 ];
 
-const dummyFieldSettings: StandardEditorsRegistryItem<string, FieldNamePickerConfigSettings> = {
+const dummyFieldSettings = {
   settings: {},
-} as any;
+} as StandardEditorsRegistryItem<string, FieldNamePickerConfigSettings>;
 
 export const ResourceDimensionEditor = (
   props: StandardEditorProps<ResourceDimensionConfig, ResourceDimensionOptions, unknown>

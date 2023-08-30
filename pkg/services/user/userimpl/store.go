@@ -40,6 +40,7 @@ type store interface {
 	Search(context.Context, *user.SearchUsersQuery) (*user.SearchUserQueryResult, error)
 
 	Count(ctx context.Context) (int64, error)
+	CountUserAccountsWithEmptyRole(ctx context.Context) (int64, error)
 }
 
 type sqlStore struct {
@@ -532,6 +533,27 @@ func (ss *sqlStore) Count(ctx context.Context) (int64, error) {
 	return r.Count, err
 }
 
+func (ss *sqlStore) CountUserAccountsWithEmptyRole(ctx context.Context) (int64, error) {
+	sb := &db.SQLBuilder{}
+	sb.Write("SELECT ")
+	sb.Write(`(SELECT COUNT (*) from ` + ss.dialect.Quote("org_user") + ` AS ou ` +
+		`LEFT JOIN ` + ss.dialect.Quote("user") + ` AS u ON u.id = ou.user_id ` +
+		`WHERE ou.role =? ` +
+		`AND u.is_service_account = ` + ss.dialect.BooleanStr(false) + ` ` +
+		`AND u.is_disabled = ` + ss.dialect.BooleanStr(false) + `) AS user_accounts_with_no_role`)
+	sb.AddParams("None")
+
+	var countStats int64
+	if err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
+		_, err := sess.SQL(sb.GetSQLString(), sb.GetParams()...).Get(&countStats)
+		return err
+	}); err != nil {
+		return -1, err
+	}
+
+	return countStats, nil
+}
+
 // validateOneAdminLeft validate that there is an admin user left
 func validateOneAdminLeft(ctx context.Context, sess *db.Session) error {
 	count, err := sess.Where("is_admin=?", true).Count(&user.User{})
@@ -613,14 +635,12 @@ func (ss *sqlStore) Search(ctx context.Context, query *user.SearchUsersQuery) (*
 		}
 
 		// user only sees the users for which it has read permissions
-		if !accesscontrol.IsDisabled(ss.cfg) {
-			acFilter, err := accesscontrol.Filter(query.SignedInUser, "u.id", "global.users:id:", accesscontrol.ActionUsersRead)
-			if err != nil {
-				return err
-			}
-			whereConditions = append(whereConditions, acFilter.Where)
-			whereParams = append(whereParams, acFilter.Args...)
+		acFilter, err := accesscontrol.Filter(query.SignedInUser, "u.id", "global.users:id:", accesscontrol.ActionUsersRead)
+		if err != nil {
+			return err
 		}
+		whereConditions = append(whereConditions, acFilter.Where)
+		whereParams = append(whereParams, acFilter.Args...)
 
 		if query.Query != "" {
 			whereConditions = append(whereConditions, "(email "+ss.dialect.LikeStr()+" ? OR name "+ss.dialect.LikeStr()+" ? OR login "+ss.dialect.LikeStr()+" ?)")

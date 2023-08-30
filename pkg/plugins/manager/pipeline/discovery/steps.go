@@ -37,14 +37,14 @@ func (d *DuplicatePluginValidation) Filter(ctx context.Context, bundles []*plugi
 	for _, b := range bundles {
 		_, exists := d.registry.Plugin(ctx, b.Primary.JSONData.ID)
 		if exists {
-			d.log.Warn("Skipping loading of plugin as it's a duplicate", "pluginID", b.Primary.JSONData.ID)
+			d.log.Warn("Skipping loading of plugin as it's a duplicate", "pluginId", b.Primary.JSONData.ID)
 			continue
 		}
 
 		for _, child := range b.Children {
 			_, exists = d.registry.Plugin(ctx, child.JSONData.ID)
 			if exists {
-				d.log.Warn("Skipping loading of child plugin as it's a duplicate", "pluginID", child.JSONData.ID)
+				d.log.Warn("Skipping loading of child plugin as it's a duplicate", "pluginId", child.JSONData.ID)
 				continue
 			}
 		}

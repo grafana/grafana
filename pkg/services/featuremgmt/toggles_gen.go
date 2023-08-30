@@ -79,10 +79,6 @@ const (
 	// Dynamic flag to disable angular at runtime. The preferred method is to set `angular_support_enabled` to `false` in the [security] settings, which allows you to change the state at runtime.
 	FlagDisableAngular = "disableAngular"
 
-	// FlagPrometheusWideSeries
-	// Enable wide series responses in the Prometheus datasource
-	FlagPrometheusWideSeries = "prometheusWideSeries"
-
 	// FlagCanvasPanelNesting
 	// Allow elements nesting
 	FlagCanvasPanelNesting = "canvasPanelNesting"
@@ -371,6 +367,10 @@ const (
 	// Enables response streaming of TraceQL queries of the Tempo data source
 	FlagTraceQLStreaming = "traceQLStreaming"
 
+	// FlagMetricsSummary
+	// Enables metrics summary queries in the Tempo data source
+	FlagMetricsSummary = "metricsSummary"
+
 	// FlagGrafanaAPIServer
 	// Enable Kubernetes API Server for Grafana resources
 	FlagGrafanaAPIServer = "grafanaAPIServer"
@@ -410,4 +410,12 @@ const (
 	// FlagNoBasicRole
 	// Enables a new role that has no permissions by default
 	FlagNoBasicRole = "noBasicRole"
+
+	// FlagAlertingNoDataErrorExecution
+	// Changes how Alerting state manager handles execution of NoData/Error
+	FlagAlertingNoDataErrorExecution = "alertingNoDataErrorExecution"
+
+	// FlagAngularDeprecationUI
+	// Display new Angular deprecation-related UI features
+	FlagAngularDeprecationUI = "angularDeprecationUI"
 )

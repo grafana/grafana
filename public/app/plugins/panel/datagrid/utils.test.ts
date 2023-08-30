@@ -6,6 +6,7 @@ describe('when deleting rows', () => {
   let df: DataFrame;
 
   beforeEach(() => {
+    jest.spyOn(console, 'warn').mockImplementation();
     df = {
       name: 'test',
       length: 5,

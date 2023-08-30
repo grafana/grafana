@@ -16,7 +16,7 @@ import (
 )
 
 type Provider interface {
-	Get(ctx context.Context, p *plugins.Plugin) ([]string, error)
+	Get(ctx context.Context, p *plugins.Plugin) []string
 }
 
 type Service struct {
@@ -31,7 +31,7 @@ func NewProvider(cfg *config.Cfg, license plugins.Licensing) *Service {
 	}
 }
 
-func (s *Service) Get(ctx context.Context, p *plugins.Plugin) ([]string, error) {
+func (s *Service) Get(ctx context.Context, p *plugins.Plugin) []string {
 	hostEnv := []string{
 		fmt.Sprintf("GF_VERSION=%s", s.cfg.BuildVersion),
 	}
@@ -56,13 +56,14 @@ func (s *Service) Get(ctx context.Context, p *plugins.Plugin) ([]string, error) 
 		)
 	}
 
+	hostEnv = append(hostEnv, s.featureToggleEnableVar(ctx)...)
 	hostEnv = append(hostEnv, s.awsEnvVars()...)
 	hostEnv = append(hostEnv, s.secureSocksProxyEnvVars()...)
 	hostEnv = append(hostEnv, azsettings.WriteToEnvStr(s.cfg.Azure)...)
 	hostEnv = append(hostEnv, s.tracingEnvVars(p)...)
 
 	ev := getPluginSettings(p.ID, s.cfg).asEnvVar("GF_PLUGIN", hostEnv)
-	return ev, nil
+	return ev
 }
 
 func (s *Service) tracingEnvVars(plugin *plugins.Plugin) []string {
@@ -82,6 +83,24 @@ func (s *Service) tracingEnvVars(plugin *plugins.Plugin) []string {
 		vars = append(vars, fmt.Sprintf("GF_PLUGIN_VERSION=%s", plugin.Info.Version))
 	}
 	return vars
+}
+
+func (s *Service) featureToggleEnableVar(ctx context.Context) []string {
+	var variables []string // an array is used for consistency and keep the logic simpler for no features case
+
+	if s.cfg.Features != nil {
+		enabledFeatures := s.cfg.Features.GetEnabled(ctx)
+
+		if len(enabledFeatures) > 0 {
+			features := make([]string, 0, len(enabledFeatures))
+			for feat := range enabledFeatures {
+				features = append(features, feat)
+			}
+			variables = append(variables, fmt.Sprintf("GF_INSTANCE_FEATURE_TOGGLES_ENABLE=%s", strings.Join(features, ",")))
+		}
+	}
+
+	return variables
 }
 
 func (s *Service) awsEnvVars() []string {
