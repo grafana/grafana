@@ -1254,6 +1254,12 @@
      },
      "type": "array"
     },
+    "teams_configs": {
+     "items": {
+      "$ref": "#/definitions/MSTeamsConfig"
+     },
+     "type": "array"
+    },
     "telegram_configs": {
      "items": {
       "$ref": "#/definitions/TelegramConfig"
@@ -1812,6 +1818,26 @@
    },
    "type": "object"
   },
+  "MSTeamsConfig": {
+   "properties": {
+    "http_config": {
+     "$ref": "#/definitions/HTTPClientConfig"
+    },
+    "send_resolved": {
+     "type": "boolean"
+    },
+    "text": {
+     "type": "string"
+    },
+    "title": {
+     "type": "string"
+    },
+    "webhook_url": {
+     "$ref": "#/definitions/SecretURL"
+    }
+   },
+   "type": "object"
+  },
   "MatchRegexps": {
    "additionalProperties": {
     "$ref": "#/definitions/Regexp"
@@ -2291,6 +2317,12 @@
     "sns_configs": {
      "items": {
       "$ref": "#/definitions/SNSConfig"
+     },
+     "type": "array"
+    },
+    "teams_configs": {
+     "items": {
+      "$ref": "#/definitions/MSTeamsConfig"
      },
      "type": "array"
     },
@@ -2862,6 +2894,12 @@
     "sns_configs": {
      "items": {
       "$ref": "#/definitions/SNSConfig"
+     },
+     "type": "array"
+    },
+    "teams_configs": {
+     "items": {
+      "$ref": "#/definitions/MSTeamsConfig"
      },
      "type": "array"
     },
@@ -3477,8 +3515,16 @@
   },
   "TLSConfig": {
    "properties": {
+    "ca": {
+     "description": "Text of the CA cert to use for the targets.",
+     "type": "string"
+    },
     "ca_file": {
      "description": "The CA cert to use for the targets.",
+     "type": "string"
+    },
+    "cert": {
+     "description": "Text of the client cert file for the targets.",
      "type": "string"
     },
     "cert_file": {
@@ -3488,6 +3534,9 @@
     "insecure_skip_verify": {
      "description": "Disable target certificate validation.",
      "type": "boolean"
+    },
+    "key": {
+     "$ref": "#/definitions/Secret"
     },
     "key_file": {
      "description": "The client key file for the targets.",
@@ -4040,6 +4089,7 @@
    "type": "object"
   },
   "alertGroups": {
+   "description": "AlertGroups alert groups",
    "items": {
     "$ref": "#/definitions/alertGroup"
    },
@@ -4144,6 +4194,7 @@
    "type": "object"
   },
   "gettableAlert": {
+   "description": "GettableAlert gettable alert",
    "properties": {
     "annotations": {
      "$ref": "#/definitions/labelSet"
@@ -4199,14 +4250,12 @@
    "type": "object"
   },
   "gettableAlerts": {
-   "description": "GettableAlerts gettable alerts",
    "items": {
     "$ref": "#/definitions/gettableAlert"
    },
    "type": "array"
   },
   "gettableSilence": {
-   "description": "GettableSilence gettable silence",
    "properties": {
     "comment": {
      "description": "comment",
@@ -4442,7 +4491,6 @@
    "type": "object"
   },
   "receiver": {
-   "description": "Receiver receiver",
    "properties": {
     "active": {
      "description": "active",
