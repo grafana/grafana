@@ -143,7 +143,7 @@ def rgm_windows(trigger, trigger_name):
                 bucket = "grafana-prerelease",
             ),
         ),
-        depends_on = ["rgm-tag-prerelease"],
+        depends_on = ["rgm-%s-prerelease".format(trigger_name)],
         platform = "windows",
     )
 
