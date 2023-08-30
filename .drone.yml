@@ -2776,6 +2776,64 @@ volumes:
 ---
 clone:
   retries: 3
+depends_on:
+- main-test-backend
+- main-test-frontend
+image_pull_secrets:
+- dockerconfigjson
+kind: pipeline
+name: rgm-main-prerelease
+node:
+  type: no-parallel
+platform:
+  arch: amd64
+  os: linux
+services: []
+steps:
+- commands:
+  - export GRAFANA_DIR=$$(pwd)
+  - cd /src && ./scripts/drone_publish_main.sh
+  environment:
+    _EXPERIMENTAL_DAGGER_CLOUD_TOKEN:
+      from_secret: dagger_token
+    DESTINATION:
+      from_secret: destination
+    GCP_KEY_BASE64:
+      from_secret: gcp_key_base64
+    GITHUB_TOKEN:
+      from_secret: github_token
+    GPG_PASSPHRASE:
+      from_secret: packages_gpg_passphrase
+    GPG_PRIVATE_KEY:
+      from_secret: packages_gpg_private_key
+    GPG_PUBLIC_KEY:
+      from_secret: packages_gpg_public_key
+  failure: ignore
+  image: grafana/grafana-build:main
+  name: rgm-build
+  volumes:
+  - name: docker
+    path: /var/run/docker.sock
+trigger:
+  branch: main
+  event:
+  - push
+  paths:
+    exclude:
+    - '*.md'
+    - docs/**
+    - packages/**/*.md
+    - latest.json
+  repo:
+  - grafana/grafana
+type: docker
+volumes:
+- host:
+    path: /var/run/docker.sock
+  name: docker
+---
+clone:
+  retries: 3
 depends_on: []
 environment:
   EDITION: oss
@@ -2960,64 +3018,6 @@ volumes:
 clone:
   retries: 3
 depends_on:
-- main-test-backend
-- main-test-frontend
-image_pull_secrets:
-- dockerconfigjson
-kind: pipeline
-name: rgm-main-prerelease
-node:
-  type: no-parallel
-platform:
-  arch: amd64
-  os: linux
-services: []
-steps:
-- commands:
-  - export GRAFANA_DIR=$$(pwd)
-  - cd /src && ./scripts/drone_publish_main.sh
-  environment:
-    _EXPERIMENTAL_DAGGER_CLOUD_TOKEN:
-      from_secret: dagger_token
-    DESTINATION:
-      from_secret: destination
-    GCP_KEY_BASE64:
-      from_secret: gcp_key_base64
-    GITHUB_TOKEN:
-      from_secret: github_token
-    GPG_PASSPHRASE:
-      from_secret: packages_gpg_passphrase
-    GPG_PRIVATE_KEY:
-      from_secret: packages_gpg_private_key
-    GPG_PUBLIC_KEY:
-      from_secret: packages_gpg_public_key
-  failure: ignore
-  image: grafana/grafana-build:main
-  name: rgm-build
-  volumes:
-  - name: docker
-    path: /var/run/docker.sock
-trigger:
-  branch: main
-  event:
-  - push
-  paths:
-    exclude:
-    - '*.md'
-    - docs/**
-    - packages/**/*.md
-    - latest.json
-  repo:
-  - grafana/grafana
-type: docker
-volumes:
-- host:
-    path: /var/run/docker.sock
-  name: docker
----
-clone:
-  retries: 3
-depends_on:
 - release-test-backend
 - release-test-frontend
 image_pull_secrets:
@@ -3174,6 +3174,366 @@ trigger:
     - refs/tags/*-cloud*
     include:
     - refs/tags/v*
+type: docker
+volumes:
+- host:
+    path: /var/run/docker.sock
+  name: docker
+---
+clone:
+  retries: 3
+depends_on: []
+environment:
+  EDITION: oss
+image_pull_secrets:
+- dockerconfigjson
+kind: pipeline
+name: release-whatsnew-checker
+node:
+  type: no-parallel
+platform:
+  arch: amd64
+  os: linux
+services: []
+steps:
+- commands:
+  - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
+  depends_on: []
+  environment:
+    CGO_ENABLED: 0
+  image: golang:1.20.6
+  name: compile-build-cmd
+- commands:
+  - ./bin/build whatsnew-checker
+  depends_on:
+  - compile-build-cmd
+  image: golang:1.20.6
+  name: whats-new-checker
+trigger:
+  cron:
+    include:
+    - nightly-release
+  event:
+    include:
+    - promote
+    - cron
+  target:
+    include:
+    - nightly
+type: docker
+volumes:
+- host:
+    path: /var/run/docker.sock
+  name: docker
+---
+clone:
+  retries: 3
+depends_on: []
+environment:
+  EDITION: oss
+image_pull_secrets:
+- dockerconfigjson
+kind: pipeline
+name: release-test-frontend
+node:
+  type: no-parallel
+platform:
+  arch: amd64
+  os: linux
+services: []
+steps:
+- commands:
+  - echo $DRONE_RUNNER_NAME
+  image: alpine:3.17.1
+  name: identify-runner
+- commands:
+  - mkdir -p bin
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.41/grabpl
+  - chmod +x bin/grabpl
+  image: byrnedo/alpine-curl:0.1.8
+  name: grabpl
+- commands:
+  - yarn install --immutable
+  depends_on: []
+  image: grafana/build-container:1.7.5
+  name: yarn-install
+- commands:
+  - yarn betterer ci
+  depends_on:
+  - yarn-install
+  image: grafana/build-container:1.7.5
+  name: betterer-frontend
+- commands:
+  - yarn run ci:test-frontend
+  depends_on:
+  - yarn-install
+  environment:
+    TEST_MAX_WORKERS: 50%
+  image: grafana/build-container:1.7.5
+  name: test-frontend
+trigger:
+  cron:
+    include:
+    - nightly-release
+  event:
+    include:
+    - promote
+    - cron
+  target:
+    include:
+    - nightly
+type: docker
+volumes:
+- host:
+    path: /var/run/docker.sock
+  name: docker
+---
+clone:
+  retries: 3
+depends_on: []
+environment:
+  EDITION: oss
+image_pull_secrets:
+- dockerconfigjson
+kind: pipeline
+name: release-test-backend
+node:
+  type: no-parallel
+platform:
+  arch: amd64
+  os: linux
+services: []
+steps:
+- commands:
+  - echo $DRONE_RUNNER_NAME
+  image: alpine:3.17.1
+  name: identify-runner
+- commands:
+  - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
+  depends_on: []
+  environment:
+    CGO_ENABLED: 0
+  image: golang:1.20.6
+  name: compile-build-cmd
+- commands:
+  - '# It is required that code generated from Thema/CUE be committed and in sync
+    with its inputs.'
+  - '# The following command will fail if running code generators produces any diff
+    in output.'
+  - CODEGEN_VERIFY=1 make gen-cue
+  depends_on: []
+  image: grafana/build-container:1.7.5
+  name: verify-gen-cue
+- commands:
+  - '# It is required that generated jsonnet is committed and in sync with its inputs.'
+  - '# The following command will fail if running code generators produces any diff
+    in output.'
+  - CODEGEN_VERIFY=1 make gen-jsonnet
+  depends_on: []
+  image: grafana/build-container:1.7.5
+  name: verify-gen-jsonnet
+- commands:
+  - make gen-go
+  depends_on:
+  - verify-gen-cue
+  image: grafana/build-container:1.7.5
+  name: wire-install
+- commands:
+  - go test -tags requires_buildifer -short -covermode=atomic -timeout=5m ./pkg/...
+  depends_on:
+  - wire-install
+  image: grafana/build-container:1.7.5
+  name: test-backend
+- commands:
+  - go test -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find
+    ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+'
+    | grep -o '\(.*\)/' | sort -u)
+  depends_on:
+  - wire-install
+  image: grafana/build-container:1.7.5
+  name: test-backend-integration
+trigger:
+  cron:
+    include:
+    - nightly-release
+  event:
+    include:
+    - promote
+    - cron
+  target:
+    include:
+    - nightly
+type: docker
+volumes:
+- host:
+    path: /var/run/docker.sock
+  name: docker
+---
+clone:
+  retries: 3
+depends_on:
+- release-test-backend
+- release-test-frontend
+image_pull_secrets:
+- dockerconfigjson
+kind: pipeline
+name: rgm-tag-prerelease
+node:
+  type: no-parallel
+platform:
+  arch: amd64
+  os: linux
+services: []
+steps:
+- commands:
+  - export GRAFANA_DIR=$$(pwd)
+  - cd /src && ./scripts/drone_publish_tag_grafana.sh
+  environment:
+    _EXPERIMENTAL_DAGGER_CLOUD_TOKEN:
+      from_secret: dagger_token
+    DESTINATION:
+      from_secret: destination
+    GCP_KEY_BASE64:
+      from_secret: gcp_key_base64
+    GITHUB_TOKEN:
+      from_secret: github_token
+    GPG_PASSPHRASE:
+      from_secret: packages_gpg_passphrase
+    GPG_PRIVATE_KEY:
+      from_secret: packages_gpg_private_key
+    GPG_PUBLIC_KEY:
+      from_secret: packages_gpg_public_key
+  image: grafana/grafana-build:main
+  name: rgm-build
+  volumes:
+  - name: docker
+    path: /var/run/docker.sock
+trigger:
+  cron:
+    include:
+    - nightly-release
+  event:
+    include:
+    - promote
+    - cron
+  target:
+    include:
+    - nightly
+type: docker
+volumes:
+- host:
+    path: /var/run/docker.sock
+  name: docker
+---
+clone:
+  retries: 3
+depends_on:
+- rgm-tag-prerelease
+image_pull_secrets:
+- dockerconfigjson
+kind: pipeline
+name: rgm-tag-prerelease-windows
+platform:
+  arch: amd64
+  os: windows
+  version: "1809"
+services: []
+steps:
+- commands:
+  - echo $env:DRONE_RUNNER_NAME
+  failure: ignore
+  image: mcr.microsoft.com/windows:1809
+  name: identify-runner
+- commands:
+  - $$ProgressPreference = "SilentlyContinue"
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.41/windows/grabpl.exe
+    -OutFile grabpl.exe
+  failure: ignore
+  image: grafana/ci-wix:0.1.1
+  name: windows-init
+- commands:
+  - $$gcpKey = $$env:GCP_KEY
+  - '[System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($$gcpKey))
+    > gcpkey.json'
+  - dos2unix gcpkey.json
+  - gcloud auth activate-service-account --key-file=gcpkey.json
+  - rm gcpkey.json
+  - cp C:\App\nssm-2.24.zip .
+  - .\grabpl.exe windows-installer --target gs://grafana-prerelease/artifacts/downloads/${DRONE_TAG}/oss/release/grafana-${DRONE_TAG:1}.windows-amd64.zip
+    --edition oss ${DRONE_TAG}
+  - $$fname = ((Get-Childitem grafana*.msi -name) -split "`n")[0]
+  - gsutil cp $$fname gs://grafana-prerelease/artifacts/downloads/${DRONE_TAG}/oss/release/
+  - gsutil cp "$$fname.sha256" gs://grafana-prerelease/artifacts/downloads/${DRONE_TAG}/oss/release/
+  depends_on:
+  - windows-init
+  environment:
+    GCP_KEY:
+      from_secret: gcp_grafanauploads_base64
+    GITHUB_TOKEN:
+      from_secret: github_token
+    PRERELEASE_BUCKET:
+      from_secret: prerelease_bucket
+  failure: ignore
+  image: grafana/ci-wix:0.1.1
+  name: build-windows-installer
+trigger:
+  cron:
+    include:
+    - nightly-release
+  event:
+    include:
+    - promote
+    - cron
+  target:
+    include:
+    - nightly
+type: docker
+volumes:
+- host:
+    path: //./pipe/docker_engine/
+  name: docker
+---
+clone:
+  retries: 3
+depends_on:
+- rgm-tag-prerelease
+- rgm-tag-prerelease-windows
+image_pull_secrets:
+- dockerconfigjson
+kind: pipeline
+name: rgm-tag-verify-prerelease-assets
+node:
+  type: no-parallel
+platform:
+  arch: amd64
+  os: linux
+services: []
+steps:
+- commands:
+  - apt-get update && apt-get install -yq gettext
+  - printenv GCP_KEY | base64 -d > /tmp/key.json
+  - gcloud auth activate-service-account --key-file=/tmp/key.json
+  - ./scripts/list-release-artifacts.sh ${DRONE_TAG} | xargs -n1 gsutil stat >> /tmp/stat.log
+  - '! cat /tmp/stat.log | grep "No URLs matched"'
+  depends_on:
+  - clone
+  environment:
+    BUCKET: grafana-prerelease
+    GCP_KEY:
+      from_secret: gcp_key_base64
+  image: google/cloud-sdk:431.0.0
+  name: gsutil-stat
+trigger:
+  cron:
+    include:
+    - nightly-release
+  event:
+    include:
+    - promote
+    - cron
+  target:
+    include:
+    - nightly
 type: docker
 volumes:
 - host:
@@ -4684,6 +5044,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 25fbe6d5a41fe21f21031c5faa74aa8603e4d01f93ea203c9e17e19a881b2874
+hmac: 2bf237f341ff8b6435e4f14174ab63c1863f21ba23643d7c583465e1db3604d4
 
 ...
