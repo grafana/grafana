@@ -245,7 +245,7 @@
     "@grafana/lezer-traceql": "0.0.4",
     "@grafana/monaco-logql": "^0.0.7",
     "@grafana/runtime": "workspace:*",
-    "@grafana/scenes": "portal:/home/torkel/dev/scenes/packages/scenes",
+    "@grafana/scenes": "^0.27.0",
     "@grafana/schema": "workspace:*",
     "@grafana/ui": "workspace:*",
     "@kusto/monaco-kusto": "^7.4.0",
