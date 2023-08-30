@@ -14,6 +14,11 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
+var (
+	dashWildcards   = accesscontrol.WildcardsFromPrefix(dashboards.ScopeDashboardsPrefix)
+	folderWildcards = accesscontrol.WildcardsFromPrefix(dashboards.ScopeFoldersPrefix)
+)
+
 // maximum possible capacity for recursive queries array: one query for folder and one for dashboard actions
 const maximumRecursiveQueries = 2
 
@@ -134,19 +139,35 @@ func (f *accessControlDashboardPermissionFilter) buildClauses() {
 
 		if len(toCheck) > 0 {
 			if !useSelfContainedPermissions {
-				builder.WriteString("(dashboard.uid IN (SELECT substr(scope, 16) FROM permission WHERE scope LIKE 'dashboards:uid:%'")
-				builder.WriteString(rolesFilter)
-				args = append(args, params...)
+				if f.features.IsEnabled(featuremgmt.FlagSplitScopes) {
+					builder.WriteString("(dashboard.uid IN (SELECT identifier FROM permission WHERE kind = 'dashboards' AND attribute = 'uid'")
+					builder.WriteString(rolesFilter)
+					args = append(args, params...)
 
-				if len(toCheck) == 1 {
-					builder.WriteString(" AND action = ?")
-					args = append(args, toCheck[0])
+					if len(toCheck) == 1 {
+						builder.WriteString(" AND action = ?")
+						args = append(args, toCheck[0])
+					} else {
+						builder.WriteString(" AND action IN (?" + strings.Repeat(", ?", len(toCheck)-1) + ") GROUP BY role_id, scope HAVING COUNT(action) = ?")
+						args = append(args, toCheck...)
+						args = append(args, len(toCheck))
+					}
+					builder.WriteString(") AND NOT dashboard.is_folder)")
 				} else {
-					builder.WriteString(" AND action IN (?" + strings.Repeat(", ?", len(toCheck)-1) + ") GROUP BY role_id, scope HAVING COUNT(action) = ?")
-					args = append(args, toCheck...)
-					args = append(args, len(toCheck))
+					builder.WriteString("(dashboard.uid IN (SELECT substr(scope, 16) FROM permission WHERE scope LIKE 'dashboards:uid:%'")
+					builder.WriteString(rolesFilter)
+					args = append(args, params...)
+
+					if len(toCheck) == 1 {
+						builder.WriteString(" AND action = ?")
+						args = append(args, toCheck[0])
+					} else {
+						builder.WriteString(" AND action IN (?" + strings.Repeat(", ?", len(toCheck)-1) + ") GROUP BY role_id, scope HAVING COUNT(action) = ?")
+						args = append(args, toCheck...)
+						args = append(args, len(toCheck))
+					}
+					builder.WriteString(") AND NOT dashboard.is_folder)")
 				}
-				builder.WriteString(") AND NOT dashboard.is_folder)")
 			} else {
 				actions := parseStringSliceFromInterfaceSlice(toCheck)
 
@@ -164,17 +185,32 @@ func (f *accessControlDashboardPermissionFilter) buildClauses() {
 			builder.WriteString(" OR ")
 
 			if !useSelfContainedPermissions {
-				permSelector.WriteString("(SELECT substr(scope, 13) FROM permission WHERE scope LIKE 'folders:uid:%' ")
-				permSelector.WriteString(rolesFilter)
-				permSelectorArgs = append(permSelectorArgs, params...)
+				if f.features.IsEnabled(featuremgmt.FlagSplitScopes) {
+					permSelector.WriteString("(SELECT identifier FROM permission WHERE kind = 'folders' AND attribute = 'uid' ")
+					permSelector.WriteString(rolesFilter)
+					permSelectorArgs = append(permSelectorArgs, params...)
 
-				if len(toCheck) == 1 {
-					permSelector.WriteString(" AND action = ?")
-					permSelectorArgs = append(permSelectorArgs, toCheck[0])
+					if len(toCheck) == 1 {
+						permSelector.WriteString(" AND action = ?")
+						permSelectorArgs = append(permSelectorArgs, toCheck[0])
+					} else {
+						permSelector.WriteString(" AND action IN (?" + strings.Repeat(", ?", len(toCheck)-1) + ") GROUP BY role_id, scope HAVING COUNT(action) = ?")
+						permSelectorArgs = append(permSelectorArgs, toCheck...)
+						permSelectorArgs = append(permSelectorArgs, len(toCheck))
+					}
 				} else {
-					permSelector.WriteString(" AND action IN (?" + strings.Repeat(", ?", len(toCheck)-1) + ") GROUP BY role_id, scope HAVING COUNT(action) = ?")
-					permSelectorArgs = append(permSelectorArgs, toCheck...)
-					permSelectorArgs = append(permSelectorArgs, len(toCheck))
+					permSelector.WriteString("(SELECT substr(scope, 13) FROM permission WHERE scope LIKE 'folders:uid:%' ")
+					permSelector.WriteString(rolesFilter)
+					permSelectorArgs = append(permSelectorArgs, params...)
+
+					if len(toCheck) == 1 {
+						permSelector.WriteString(" AND action = ?")
+						permSelectorArgs = append(permSelectorArgs, toCheck[0])
+					} else {
+						permSelector.WriteString(" AND action IN (?" + strings.Repeat(", ?", len(toCheck)-1) + ") GROUP BY role_id, scope HAVING COUNT(action) = ?")
+						permSelectorArgs = append(permSelectorArgs, toCheck...)
+						permSelectorArgs = append(permSelectorArgs, len(toCheck))
+					}
 				}
 			} else {
 				actions := parseStringSliceFromInterfaceSlice(toCheck)

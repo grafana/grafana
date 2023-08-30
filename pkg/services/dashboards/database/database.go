@@ -960,19 +960,13 @@ func (d *dashboardStore) GetDashboards(ctx context.Context, query *dashboards.Ge
 }
 
 func (d *dashboardStore) FindDashboards(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery) ([]dashboards.DashboardSearchProjection, error) {
-	var filters []any
-	if !d.features.IsEnabled(featuremgmt.FlagSplitScopes) || d.features.IsEnabled(featuremgmt.FlagNestedFolders) {
-		recursiveQueriesAreSupported, err := d.store.RecursiveQueriesAreSupported()
-		if err != nil {
-			return nil, err
-		}
-		filters = []any{
-			permissions.NewAccessControlDashboardPermissionFilter(query.SignedInUser, query.Permission, query.Type, d.features, recursiveQueriesAreSupported),
-		}
-	} else {
-		filters = []any{
-			permissions.NewDashboardFilter(query.SignedInUser, query.Permission, query.Type, d.features, false),
-		}
+	recursiveQueriesAreSupported, err := d.store.RecursiveQueriesAreSupported()
+	if err != nil {
+		return nil, err
+	}
+
+	filters := []any{
+		permissions.NewAccessControlDashboardPermissionFilter(query.SignedInUser, query.Permission, query.Type, d.features, recursiveQueriesAreSupported),
 	}
 
 	for _, filter := range query.Sort.Filter {
@@ -1031,7 +1025,7 @@ func (d *dashboardStore) FindDashboards(ctx context.Context, query *dashboards.F
 
 	sql, params := sb.ToSQL(limit, page)
 
-	err := d.store.WithDbSession(ctx, func(sess *db.Session) error {
+	err = d.store.WithDbSession(ctx, func(sess *db.Session) error {
 		return sess.SQL(sql, params...).Find(&res)
 	})
 

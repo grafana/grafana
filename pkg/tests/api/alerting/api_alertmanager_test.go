@@ -829,8 +829,11 @@ func TestIntegrationDeleteFolderWithRules(t *testing.T) {
 			err := resp.Body.Close()
 			require.NoError(t, err)
 		})
+		b, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
-		assert.Equal(t, 403, resp.StatusCode)
+
+		assert.Equal(t, 200, resp.StatusCode)
+		assert.JSONEq(t, "{}", string(b))
 	}
 }
 
