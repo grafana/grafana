@@ -294,7 +294,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
         }
       }
 
-      let axisColorOpts = {
+      const axisDisplayOptions = {
         border: {
           show: customConfig.axisShow || false,
           width: 1,
@@ -336,7 +336,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
             splits,
             values,
             incrs,
-            ...axisColorOpts,
+            ...axisDisplayOptions,
           },
           field
         )
