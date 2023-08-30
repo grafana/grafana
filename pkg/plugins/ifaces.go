@@ -164,6 +164,7 @@ func (fn ClientMiddlewareFunc) CreateClientMiddleware(next Client) Client {
 
 type FeatureToggles interface {
 	IsEnabled(flag string) bool
+	GetEnabled(ctx context.Context) map[string]bool
 }
 
 type SignatureCalculator interface {
