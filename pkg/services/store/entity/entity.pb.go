@@ -2127,7 +2127,7 @@ func file_entity_proto_rawDescGZIP() []byte {
 
 var file_entity_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
 var file_entity_proto_msgTypes = make([]protoimpl.MessageInfo, 23)
-var file_entity_proto_goTypes = []interface{}{
+var file_entity_proto_goTypes = []any{
 	(WriteEntityResponse_Status)(0), // 0: entity.WriteEntityResponse.Status
 	(EntityWatchResponse_Action)(0), // 1: entity.EntityWatchResponse.Action
 	(*GRN)(nil),                     // 2: entity.GRN
@@ -2210,7 +2210,7 @@ func file_entity_proto_init() {
 		return
 	}
 	if !protoimpl.UnsafeEnabled {
-		file_entity_proto_msgTypes[0].Exporter = func(v interface{}, i int) interface{} {
+		file_entity_proto_msgTypes[0].Exporter = func(v any, i int) any {
 			switch v := v.(*GRN); i {
 			case 0:
 				return &v.state
@@ -2222,7 +2222,7 @@ func file_entity_proto_init() {
 				return nil
 			}
 		}
-		file_entity_proto_msgTypes[1].Exporter = func(v interface{}, i int) interface{} {
+		file_entity_proto_msgTypes[1].Exporter = func(v any, i int) any {
 			switch v := v.(*Entity); i {
 			case 0:
 				return &v.state
@@ -2234,7 +2234,7 @@ func file_entity_proto_init() {
 				return nil
 			}
 		}
-		file_entity_proto_msgTypes[2].Exporter = func(v interface{}, i int) interface{} {
+		file_entity_proto_msgTypes[2].Exporter = func(v any, i int) any {
 			switch v := v.(*EntityOriginInfo); i {
 			case 0:
 				return &v.state
@@ -2246,7 +2246,7 @@ func file_entity_proto_init() {
 				return nil
 			}
 		}
-		file_entity_proto_msgTypes[3].Exporter = func(v interface{}, i int) interface{} {
+		file_entity_proto_msgTypes[3].Exporter = func(v any, i int) any {
 			switch v := v.(*EntityErrorInfo); i {
 			case 0:
 				return &v.state
@@ -2258,7 +2258,7 @@ func file_entity_proto_init() {
 				return nil
 			}
 		}
-		file_entity_proto_msgTypes[4].Exporter = func(v interface{}, i int) interface{} {
+		file_entity_proto_msgTypes[4].Exporter = func(v any, i int) any {
 			switch v := v.(*EntityVersionInfo); i {
 			case 0:
 				return &v.state
@@ -2270,7 +2270,7 @@ func file_entity_proto_init() {
 				return nil
 			}
 		}
-		file_entity_proto_msgTypes[5].Exporter = func(v interface{}, i int) interface{} {
+		file_entity_proto_msgTypes[5].Exporter = func(v any, i int) any {
 			switch v := v.(*ReadEntityRequest); i {
 			case 0:
 				return &v.state
@@ -2282,7 +2282,7 @@ func file_entity_proto_init() {
 				return nil
 			}
 		}
-		file_entity_proto_msgTypes[6].Exporter = func(v interface{}, i int) interface{} {
+		file_entity_proto_msgTypes[6].Exporter = func(v any, i int) any {
 			switch v := v.(*BatchReadEntityRequest); i {
 			case 0:
 				return &v.state
@@ -2294,7 +2294,7 @@ func file_entity_proto_init() {
 				return nil
 			}
 		}
-		file_entity_proto_msgTypes[7].Exporter = func(v interface{}, i int) interface{} {
+		file_entity_proto_msgTypes[7].Exporter = func(v any, i int) any {
 			switch v := v.(*BatchReadEntityResponse); i {
 			case 0:
 				return &v.state
@@ -2306,7 +2306,7 @@ func file_entity_proto_init() {
 				return nil
 			}
 		}
-		file_entity_proto_msgTypes[8].Exporter = func(v interface{}, i int) interface{} {
+		file_entity_proto_msgTypes[8].Exporter = func(v any, i int) any {
 			switch v := v.(*WriteEntityRequest); i {
 			case 0:
 				return &v.state
@@ -2318,7 +2318,7 @@ func file_entity_proto_init() {
 				return nil
 			}
 		}
-		file_entity_proto_msgTypes[9].Exporter = func(v interface{}, i int) interface{} {
+		file_entity_proto_msgTypes[9].Exporter = func(v any, i int) any {
 			switch v := v.(*AdminWriteEntityRequest); i {
 			case 0:
 				return &v.state
@@ -2330,7 +2330,7 @@ func file_entity_proto_init() {
 				return nil
 			}
 		}
-		file_entity_proto_msgTypes[10].Exporter = func(v interface{}, i int) interface{} {
+		file_entity_proto_msgTypes[10].Exporter = func(v any, i int) any {
 			switch v := v.(*WriteEntityResponse); i {
 			case 0:
 				return &v.state
@@ -2342,7 +2342,7 @@ func file_entity_proto_init() {
 				return nil
 			}
 		}
-		file_entity_proto_msgTypes[11].Exporter = func(v interface{}, i int) interface{} {
+		file_entity_proto_msgTypes[11].Exporter = func(v any, i int) any {
 			switch v := v.(*DeleteEntityRequest); i {
 			case 0:
 				return &v.state
@@ -2354,7 +2354,7 @@ func file_entity_proto_init() {
 				return nil
 			}
 		}
-		file_entity_proto_msgTypes[12].Exporter = func(v interface{}, i int) interface{} {
+		file_entity_proto_msgTypes[12].Exporter = func(v any, i int) any {
 			switch v := v.(*DeleteEntityResponse); i {
 			case 0:
 				return &v.state
@@ -2366,7 +2366,7 @@ func file_entity_proto_init() {
 				return nil
 			}
 		}
-		file_entity_proto_msgTypes[13].Exporter = func(v interface{}, i int) interface{} {
+		file_entity_proto_msgTypes[13].Exporter = func(v any, i int) any {
 			switch v := v.(*EntityHistoryRequest); i {
 			case 0:
 				return &v.state
@@ -2378,7 +2378,7 @@ func file_entity_proto_init() {
 				return nil
 			}
 		}
-		file_entity_proto_msgTypes[14].Exporter = func(v interface{}, i int) interface{} {
+		file_entity_proto_msgTypes[14].Exporter = func(v any, i int) any {
 			switch v := v.(*EntityHistoryResponse); i {
 			case 0:
 				return &v.state
@@ -2390,7 +2390,7 @@ func file_entity_proto_init() {
 				return nil
 			}
 		}
-		file_entity_proto_msgTypes[15].Exporter = func(v interface{}, i int) interface{} {
+		file_entity_proto_msgTypes[15].Exporter = func(v any, i int) any {
 			switch v := v.(*EntitySearchRequest); i {
 			case 0:
 				return &v.state
@@ -2402,7 +2402,7 @@ func file_entity_proto_init() {
 				return nil
 			}
 		}
-		file_entity_proto_msgTypes[16].Exporter = func(v interface{}, i int) interface{} {
+		file_entity_proto_msgTypes[16].Exporter = func(v any, i int) any {
 			switch v := v.(*EntitySearchResult); i {
 			case 0:
 				return &v.state
@@ -2414,7 +2414,7 @@ func file_entity_proto_init() {
 				return nil
 			}
 		}
-		file_entity_proto_msgTypes[17].Exporter = func(v interface{}, i int) interface{} {
+		file_entity_proto_msgTypes[17].Exporter = func(v any, i int) any {
 			switch v := v.(*EntitySearchResponse); i {
 			case 0:
 				return &v.state
@@ -2426,7 +2426,7 @@ func file_entity_proto_init() {
 				return nil
 			}
 		}
-		file_entity_proto_msgTypes[18].Exporter = func(v interface{}, i int) interface{} {
+		file_entity_proto_msgTypes[18].Exporter = func(v any, i int) any {
 			switch v := v.(*EntityWatchRequest); i {
 			case 0:
 				return &v.state
@@ -2438,7 +2438,7 @@ func file_entity_proto_init() {
 				return nil
 			}
 		}
-		file_entity_proto_msgTypes[19].Exporter = func(v interface{}, i int) interface{} {
+		file_entity_proto_msgTypes[19].Exporter = func(v any, i int) any {
 			switch v := v.(*EntityWatchResponse); i {
 			case 0:
 				return &v.state

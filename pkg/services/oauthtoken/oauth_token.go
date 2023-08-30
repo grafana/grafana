@@ -138,7 +138,7 @@ func (o *Service) HasOAuthEntry(ctx context.Context, usr identity.Requester) (*l
 // It uses a singleflight.Group to prevent getting the Refresh Token multiple times for a given User
 func (o *Service) TryTokenRefresh(ctx context.Context, usr *login.UserAuth) error {
 	lockKey := fmt.Sprintf("oauth-refresh-token-%d", usr.UserId)
-	_, err, _ := o.singleFlightGroup.Do(lockKey, func() (interface{}, error) {
+	_, err, _ := o.singleFlightGroup.Do(lockKey, func() (any, error) {
 		logger.Debug("singleflight request for getting a new access token", "key", lockKey)
 
 		return o.tryGetOrRefreshAccessToken(ctx, usr)
@@ -155,7 +155,7 @@ func buildOAuthTokenFromAuthInfo(authInfo *login.UserAuth) *oauth2.Token {
 	}
 
 	if authInfo.OAuthIdToken != "" {
-		token = token.WithExtra(map[string]interface{}{"id_token": authInfo.OAuthIdToken})
+		token = token.WithExtra(map[string]any{"id_token": authInfo.OAuthIdToken})
 	}
 
 	return token

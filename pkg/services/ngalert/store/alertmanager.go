@@ -84,7 +84,7 @@ func (st DBstore) SaveAlertmanagerConfigurationWithCallback(ctx context.Context,
 			[]string{"org_id"},
 			[]string{"alertmanager_configuration", "configuration_version", "created_at", "default", "org_id", "configuration_hash"},
 		)
-		params := append(make([]interface{}, 0), cmd.AlertmanagerConfiguration, cmd.ConfigurationVersion, config.CreatedAt, config.Default, config.OrgID, config.ConfigurationHash)
+		params := append(make([]any, 0), cmd.AlertmanagerConfiguration, cmd.ConfigurationVersion, config.CreatedAt, config.Default, config.OrgID, config.ConfigurationHash)
 		if _, err := sess.SQL(upsertSQL, params...).Query(); err != nil {
 			return err
 		}
@@ -142,7 +142,7 @@ func (st *DBstore) UpdateAlertmanagerConfiguration(ctx context.Context, cmd *mod
 // MarkConfigurationAsApplied sets the `last_applied` field of the last config with the given hash to the current UNIX timestamp.
 func (st *DBstore) MarkConfigurationAsApplied(ctx context.Context, cmd *models.MarkConfigurationAsAppliedCmd) error {
 	return st.SQLStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
-		update := map[string]interface{}{"last_applied": time.Now().UTC().Unix()}
+		update := map[string]any{"last_applied": time.Now().UTC().Unix()}
 		rowsAffected, err := sess.Table("alert_configuration_history").
 			Desc("id").
 			Limit(1).

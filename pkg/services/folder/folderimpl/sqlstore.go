@@ -42,10 +42,10 @@ func (ss *sqlStore) Create(ctx context.Context, cmd folder.CreateFolderCommand) 
 	var lastInsertedID int64
 	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
 		var sql string
-		var args []interface{}
+		var args []any
 		if cmd.ParentUID == "" {
 			sql = "INSERT INTO folder(org_id, uid, title, description, created, updated) VALUES(?, ?, ?, ?, ?, ?)"
-			args = []interface{}{cmd.OrgID, cmd.UID, cmd.Title, cmd.Description, time.Now(), time.Now()}
+			args = []any{cmd.OrgID, cmd.UID, cmd.Title, cmd.Description, time.Now(), time.Now()}
 		} else {
 			if cmd.ParentUID != folder.GeneralFolderUID {
 				if _, err := ss.Get(ctx, folder.GetFolderQuery{
@@ -56,7 +56,7 @@ func (ss *sqlStore) Create(ctx context.Context, cmd folder.CreateFolderCommand) 
 				}
 			}
 			sql = "INSERT INTO folder(org_id, uid, parent_uid, title, description, created, updated) VALUES(?, ?, ?, ?, ?, ?, ?)"
-			args = []interface{}{cmd.OrgID, cmd.UID, cmd.ParentUID, cmd.Title, cmd.Description, time.Now(), time.Now()}
+			args = []any{cmd.OrgID, cmd.UID, cmd.ParentUID, cmd.Title, cmd.Description, time.Now(), time.Now()}
 		}
 
 		var err error
@@ -99,7 +99,7 @@ func (ss *sqlStore) Update(ctx context.Context, cmd folder.UpdateFolderCommand) 
 		sql := strings.Builder{}
 		sql.WriteString("UPDATE folder SET ")
 		columnsToUpdate := []string{"updated = ?"}
-		args := []interface{}{updated}
+		args := []any{updated}
 		if cmd.NewDescription != nil {
 			columnsToUpdate = append(columnsToUpdate, "description = ?")
 			args = append(args, *cmd.NewDescription)
@@ -133,7 +133,7 @@ func (ss *sqlStore) Update(ctx context.Context, cmd folder.UpdateFolderCommand) 
 		sql.WriteString(" WHERE uid = ? AND org_id = ?")
 		args = append(args, cmd.UID, cmd.OrgID)
 
-		args = append([]interface{}{sql.String()}, args...)
+		args = append([]any{sql.String()}, args...)
 
 		res, err := sess.Exec(args...)
 		if err != nil {
@@ -242,7 +242,7 @@ func (ss *sqlStore) GetChildren(ctx context.Context, q folder.GetChildrenQuery) 
 
 	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
 		sql := strings.Builder{}
-		args := make([]interface{}, 0, 2)
+		args := make([]any, 0, 2)
 		if q.UID == "" {
 			sql.WriteString("SELECT * FROM folder WHERE parent_uid IS NULL AND org_id=? ORDER BY title ASC")
 			args = append(args, q.OrgID)

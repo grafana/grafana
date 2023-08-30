@@ -30,7 +30,7 @@ const (
 )
 
 // CreateDatabaseEntityId creates entityId for entities stored in the existing SQL tables
-func CreateDatabaseEntityId(internalId interface{}, orgId int64, entityType EntityType) string {
+func CreateDatabaseEntityId(internalId any, orgId int64, entityType EntityType) string {
 	var internalIdAsString string
 	switch id := internalId.(type) {
 	case string:

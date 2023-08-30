@@ -25,7 +25,7 @@ type GRN struct {
 	ResourceIdentifier string
 
 	// GRN can not be extended
-	_ interface{}
+	_ any
 }
 
 // ParseStr attempts to parse a string into a GRN. It returns an error if the

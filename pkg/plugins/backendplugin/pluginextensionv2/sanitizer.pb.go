@@ -192,7 +192,7 @@ func file_sanitizer_proto_rawDescGZIP() []byte {
 }
 
 var file_sanitizer_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
-var file_sanitizer_proto_goTypes = []interface{}{
+var file_sanitizer_proto_goTypes = []any{
 	(*SanitizeRequest)(nil),  // 0: pluginextensionv2.SanitizeRequest
 	(*SanitizeResponse)(nil), // 1: pluginextensionv2.SanitizeResponse
 }
@@ -212,7 +212,7 @@ func file_sanitizer_proto_init() {
 		return
 	}
 	if !protoimpl.UnsafeEnabled {
-		file_sanitizer_proto_msgTypes[0].Exporter = func(v interface{}, i int) interface{} {
+		file_sanitizer_proto_msgTypes[0].Exporter = func(v any, i int) any {
 			switch v := v.(*SanitizeRequest); i {
 			case 0:
 				return &v.state
@@ -224,7 +224,7 @@ func file_sanitizer_proto_init() {
 				return nil
 			}
 		}
-		file_sanitizer_proto_msgTypes[1].Exporter = func(v interface{}, i int) interface{} {
+		file_sanitizer_proto_msgTypes[1].Exporter = func(v any, i int) any {
 			switch v := v.(*SanitizeResponse); i {
 			case 0:
 				return &v.state
@@ -306,7 +306,7 @@ func RegisterSanitizerServer(s *grpc.Server, srv SanitizerServer) {
 	s.RegisterService(&_Sanitizer_serviceDesc, srv)
 }
 
-func _Sanitizer_Sanitize_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _Sanitizer_Sanitize_Handler(srv any, ctx context.Context, dec func(any) error, interceptor grpc.UnaryServerInterceptor) (any, error) {
 	in := new(SanitizeRequest)
 	if err := dec(in); err != nil {
 		return nil, err
@@ -318,7 +318,7 @@ func _Sanitizer_Sanitize_Handler(srv interface{}, ctx context.Context, dec func(
 		Server:     srv,
 		FullMethod: "/pluginextensionv2.Sanitizer/Sanitize",
 	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+	handler := func(ctx context.Context, req any) (any, error) {
 		return srv.(SanitizerServer).Sanitize(ctx, req.(*SanitizeRequest))
 	}
 	return interceptor(ctx, in, info, handler)

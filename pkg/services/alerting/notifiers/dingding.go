@@ -122,14 +122,14 @@ func (dd *DingDingNotifier) genBody(evalContext *alerting.EvalContext, messageUR
 		message += fmt.Sprintf("\n%2d. %s: %s", i+1, match.Metric, match.Value)
 	}
 
-	var bodyMsg map[string]interface{}
+	var bodyMsg map[string]any
 	if dd.MsgType == "actionCard" {
 		// Embed the pic into the markdown directly because actionCard doesn't have a picUrl field
 		if dd.NeedsImage() && picURL != "" {
 			message = "![](" + picURL + ")\n\n" + message
 		}
 
-		bodyMsg = map[string]interface{}{
+		bodyMsg = map[string]any{
 			"msgtype": "actionCard",
 			"actionCard": map[string]string{
 				"text":        message,
@@ -149,7 +149,7 @@ func (dd *DingDingNotifier) genBody(evalContext *alerting.EvalContext, messageUR
 			link["picUrl"] = picURL
 		}
 
-		bodyMsg = map[string]interface{}{
+		bodyMsg = map[string]any{
 			"msgtype": "link",
 			"link":    link,
 		}

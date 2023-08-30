@@ -58,7 +58,7 @@ type OAuth2ServiceImpl struct {
 	saService     serviceaccounts.Service
 	userService   user.Service
 	teamService   team.Service
-	publicKey     interface{}
+	publicKey     any
 }
 
 func ProvideService(router routing.RouteRegister, db db.DB, cfg *setting.Cfg,
@@ -77,7 +77,7 @@ func ProvideService(router routing.RouteRegister, db db.DB, cfg *setting.Cfg,
 
 	privateKey := keySvc.GetServerPrivateKey()
 
-	var publicKey interface{}
+	var publicKey any
 	switch k := privateKey.(type) {
 	case *rsa.PrivateKey:
 		publicKey = &k.PublicKey
@@ -109,8 +109,8 @@ func ProvideService(router routing.RouteRegister, db db.DB, cfg *setting.Cfg,
 	return s, nil
 }
 
-func newProvider(config *fosite.Config, storage interface{}, key interface{}) fosite.OAuth2Provider {
-	keyGetter := func(context.Context) (interface{}, error) {
+func newProvider(config *fosite.Config, storage any, key any) fosite.OAuth2Provider {
+	keyGetter := func(context.Context) (any, error) {
 		return key, nil
 	}
 	return compose.Compose(

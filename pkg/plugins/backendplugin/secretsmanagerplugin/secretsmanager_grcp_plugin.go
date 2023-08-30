@@ -19,7 +19,7 @@ func (p *SecretsManagerGRPCPlugin) GRPCServer(broker *plugin.GRPCBroker, s *grpc
 	return nil
 }
 
-func (p *SecretsManagerGRPCPlugin) GRPCClient(ctx context.Context, broker *plugin.GRPCBroker, c *grpc.ClientConn) (interface{}, error) {
+func (p *SecretsManagerGRPCPlugin) GRPCClient(ctx context.Context, broker *plugin.GRPCBroker, c *grpc.ClientConn) (any, error) {
 	return &SecretsManagerGRPCClient{NewSecretsManagerClient(c)}, nil
 }
 

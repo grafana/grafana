@@ -516,7 +516,7 @@ func (s dbFileStorage) DeleteFolder(ctx context.Context, folderPath string, opti
 	}
 
 	err := s.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
-		var rawHashes []interface{}
+		var rawHashes []any
 
 		// xorm does not support `.Delete()` with `.Join()`, so we first have to retrieve all path_hashes and then use them to filter `file_meta` table
 		err := sess.Table("file").
@@ -547,7 +547,7 @@ func (s dbFileStorage) DeleteFolder(ctx context.Context, folderPath string, opti
 			return fmt.Errorf("force folder delete: unauthorized access for path %s", lowerFolderPath)
 		}
 
-		var hashes []interface{}
+		var hashes []any
 		for _, hash := range rawHashes {
 			if hashString, ok := hash.(string); ok {
 				hashes = append(hashes, hashString)

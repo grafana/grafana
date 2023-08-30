@@ -56,7 +56,7 @@ func TestDataSourcesProxy_userLoggedIn(t *testing.T) {
 		sc.handlerFunc = hs.GetDataSources
 		sc.fakeReq("GET", "/api/datasources").exec()
 
-		respJSON := []map[string]interface{}{}
+		respJSON := []map[string]any{}
 		err := json.NewDecoder(sc.resp.Body).Decode(&respJSON)
 		require.NoError(t, err)
 

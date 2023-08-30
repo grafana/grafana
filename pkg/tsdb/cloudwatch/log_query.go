@@ -38,7 +38,7 @@ func logsResultsToDataframes(response *cloudwatchlogs.GetQueryResultsOutput) (*d
 
 	rowCount := len(nonEmptyRows)
 
-	fieldValues := make(map[string]interface{})
+	fieldValues := make(map[string]any)
 
 	// Maintaining a list of field names in the order returned from CloudWatch
 	// as just iterating over fieldValues would not give a consistent order
@@ -97,7 +97,7 @@ func logsResultsToDataframes(response *cloudwatchlogs.GetQueryResultsOutput) (*d
 		} else if fieldName == logStreamIdentifierInternal || fieldName == logIdentifierInternal {
 			newFields[len(newFields)-1].SetConfig(
 				&data.FieldConfig{
-					Custom: map[string]interface{}{
+					Custom: map[string]any{
 						"hidden": true,
 					},
 				},
@@ -140,7 +140,7 @@ func logsResultsToDataframes(response *cloudwatchlogs.GetQueryResultsOutput) (*d
 	}
 
 	if response.Status != nil {
-		frame.Meta.Custom = map[string]interface{}{
+		frame.Meta.Custom = map[string]any{
 			"Status": *response.Status,
 		}
 	}
@@ -239,8 +239,8 @@ func removeFieldsByIndex(fields []*data.Field, removeIndices []int) []*data.Fiel
 }
 
 // copy a row without the listed values
-func copyRowWithoutValues(f *data.Frame, rowIdx int, removeIndices []int) []interface{} {
-	vals := make([]interface{}, len(f.Fields)-len(removeIndices))
+func copyRowWithoutValues(f *data.Frame, rowIdx int, removeIndices []int) []any {
+	vals := make([]any, len(f.Fields)-len(removeIndices))
 	valsIdx := 0
 	removeIndicesIndex := 0
 	for i := range f.Fields {

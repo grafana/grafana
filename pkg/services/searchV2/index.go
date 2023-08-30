@@ -585,7 +585,7 @@ func (i *searchIndex) reIndexFromScratch(ctx context.Context) {
 	}
 }
 
-func (i *searchIndex) withCtxData(ctx context.Context, params ...interface{}) []interface{} {
+func (i *searchIndex) withCtxData(ctx context.Context, params ...any) []any {
 	traceID := tracing.TraceIDFromContext(ctx, false)
 	if traceID != "" {
 		params = append(params, "traceID", traceID)

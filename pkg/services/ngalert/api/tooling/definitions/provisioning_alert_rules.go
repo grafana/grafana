@@ -225,9 +225,9 @@ type AlertRuleExport struct {
 
 // AlertQueryExport is the provisioned export of models.AlertQuery.
 type AlertQueryExport struct {
-	RefID             string                 `json:"refId" yaml:"refId"`
-	QueryType         string                 `json:"queryType,omitempty" yaml:"queryType,omitempty"`
-	RelativeTimeRange RelativeTimeRange      `json:"relativeTimeRange,omitempty" yaml:"relativeTimeRange,omitempty"`
-	DatasourceUID     string                 `json:"datasourceUid" yaml:"datasourceUid"`
-	Model             map[string]interface{} `json:"model" yaml:"model"`
+	RefID             string            `json:"refId" yaml:"refId"`
+	QueryType         string            `json:"queryType,omitempty" yaml:"queryType,omitempty"`
+	RelativeTimeRange RelativeTimeRange `json:"relativeTimeRange,omitempty" yaml:"relativeTimeRange,omitempty"`
+	DatasourceUID     string            `json:"datasourceUid" yaml:"datasourceUid"`
+	Model             map[string]any    `json:"model" yaml:"model"`
 }

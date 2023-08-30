@@ -317,7 +317,7 @@ func (p *redisPeer) membersScan() ([]string, error) {
 
 // filterUnhealthyMembers will filter out the members that have failed to send
 // a heartbeat since heartbeatTimeout.
-func (p *redisPeer) filterUnhealthyMembers(members []string, values []interface{}) []string {
+func (p *redisPeer) filterUnhealthyMembers(members []string, values []any) []string {
 	peers := []string{}
 	for i, peer := range members {
 		val := values[i]

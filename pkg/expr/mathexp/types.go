@@ -29,11 +29,11 @@ func (vals Values) AsDataFrames(refID string) []*data.Frame {
 // all Value implementations should be a *data.Frame
 type Value interface {
 	Type() parse.ReturnType
-	Value() interface{}
+	Value() any
 	GetLabels() data.Labels
 	SetLabels(data.Labels)
-	GetMeta() interface{}
-	SetMeta(interface{})
+	GetMeta() any
+	SetMeta(any)
 	AsDataFrame() *data.Frame
 	AddNotice(notice data.Notice)
 }
@@ -47,17 +47,17 @@ type Scalar struct{ Frame *data.Frame }
 func (s Scalar) Type() parse.ReturnType { return parse.TypeScalar }
 
 // Value returns the actual value allows it to fulfill the Value interface.
-func (s Scalar) Value() interface{} { return s }
+func (s Scalar) Value() any { return s }
 
 func (s Scalar) GetLabels() data.Labels { return nil }
 
 func (s Scalar) SetLabels(ls data.Labels) {}
 
-func (s Scalar) GetMeta() interface{} {
+func (s Scalar) GetMeta() any {
 	return s.Frame.Meta.Custom
 }
 
-func (s Scalar) SetMeta(v interface{}) {
+func (s Scalar) SetMeta(v any) {
 	m := s.Frame.Meta
 	if m == nil {
 		m = &data.FrameMeta{}
@@ -105,7 +105,7 @@ type Number struct{ Frame *data.Frame }
 func (n Number) Type() parse.ReturnType { return parse.TypeNumberSet }
 
 // Value returns the actual value allows it to fulfill the Value interface.
-func (n Number) Value() interface{} { return &n }
+func (n Number) Value() any { return &n }
 
 func (n Number) GetLabels() data.Labels { return n.Frame.Fields[0].Labels }
 
@@ -154,11 +154,11 @@ func NumberFromRef(refID string, nr numeric.MetricRef) (Number, error) {
 	return Number{frame}, nil
 }
 
-func (n Number) GetMeta() interface{} {
+func (n Number) GetMeta() any {
 	return n.Frame.Meta.Custom
 }
 
-func (n Number) SetMeta(v interface{}) {
+func (n Number) SetMeta(v any) {
 	m := n.Frame.Meta
 	if m == nil {
 		m = &data.FrameMeta{}
@@ -203,17 +203,17 @@ type NoData struct{ Frame *data.Frame }
 func (s NoData) Type() parse.ReturnType { return parse.TypeNoData }
 
 // Value returns the actual value allows it to fulfill the Value interface.
-func (s NoData) Value() interface{} { return s }
+func (s NoData) Value() any { return s }
 
 func (s NoData) GetLabels() data.Labels { return nil }
 
 func (s NoData) SetLabels(ls data.Labels) {}
 
-func (s NoData) GetMeta() interface{} {
+func (s NoData) GetMeta() any {
 	return s.Frame.Meta.Custom
 }
 
-func (s NoData) SetMeta(v interface{}) {
+func (s NoData) SetMeta(v any) {
 	m := s.Frame.Meta
 	if m == nil {
 		m = &data.FrameMeta{}

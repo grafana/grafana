@@ -35,7 +35,7 @@ type baseNode struct {
 
 type rawNode struct {
 	RefID      string `json:"refId"`
-	Query      map[string]interface{}
+	Query      map[string]any
 	QueryRaw   []byte
 	QueryType  string
 	TimeRange  TimeRange

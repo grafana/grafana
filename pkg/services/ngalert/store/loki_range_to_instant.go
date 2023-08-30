@@ -48,7 +48,7 @@ func canBeInstant(r *models.AlertRule) ([]int, bool) {
 			if !expr.IsDataSource(r.Data[ii].DatasourceUID) {
 				continue
 			}
-			exprRaw := make(map[string]interface{})
+			exprRaw := make(map[string]any)
 			if err := json.Unmarshal(r.Data[ii].Model, &exprRaw); err != nil {
 				continue
 			}
@@ -76,7 +76,7 @@ func canBeInstant(r *models.AlertRule) ([]int, bool) {
 // be used for loki.
 func migrateToInstant(r *models.AlertRule, optimizableIndices []int) error {
 	for _, lokiQueryIndex := range optimizableIndices {
-		modelRaw := make(map[string]interface{})
+		modelRaw := make(map[string]any)
 		if err := json.Unmarshal(r.Data[lokiQueryIndex].Model, &modelRaw); err != nil {
 			return err
 		}

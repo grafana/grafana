@@ -165,7 +165,7 @@ func TestLogsResultsToDataframes(t *testing.T) {
 		aws.String("fakelogstream"),
 	})
 	hiddenLogStreamField.SetConfig(&data.FieldConfig{
-		Custom: map[string]interface{}{
+		Custom: map[string]any{
 			"hidden": true,
 		},
 	})
@@ -176,7 +176,7 @@ func TestLogsResultsToDataframes(t *testing.T) {
 		aws.String("fakelog"),
 	})
 	hiddenLogField.SetConfig(&data.FieldConfig{
-		Custom: map[string]interface{}{
+		Custom: map[string]any{
 			"hidden": true,
 		},
 	})
@@ -193,7 +193,7 @@ func TestLogsResultsToDataframes(t *testing.T) {
 		},
 		RefID: "",
 		Meta: &data.FrameMeta{
-			Custom: map[string]interface{}{
+			Custom: map[string]any{
 				"Status": "ok",
 			},
 			Stats: []data.QueryStat{
@@ -265,7 +265,7 @@ func TestLogsResultsToDataframes_MixedTypes_NumericValuesMixedWithStringFallBack
 		},
 		RefID: "",
 		Meta: &data.FrameMeta{
-			Custom: map[string]interface{}{
+			Custom: map[string]any{
 				"Status": "ok",
 			},
 		},

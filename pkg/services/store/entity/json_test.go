@@ -8,7 +8,7 @@ import (
 )
 
 func TestRawEncoders(t *testing.T) {
-	body, err := json.Marshal(map[string]interface{}{
+	body, err := json.Marshal(map[string]any{
 		"hello": "world",
 		"field": 1.23,
 	})

@@ -86,7 +86,7 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 		Services: map[string]types.DatasourceService{
 			"Azure Monitor": {URL: svr.URL, HTTPClient: client},
 		},
-		JSONData: map[string]interface{}{
+		JSONData: map[string]any{
 			"azureLogAnalyticsSameAs": false,
 		},
 	}
@@ -1526,7 +1526,7 @@ func Test_executeQueryErrorWithDifferentLogAnalyticsCreds(t *testing.T) {
 		Services: map[string]types.DatasourceService{
 			"Azure Log Analytics": {URL: "http://ds"},
 		},
-		JSONData: map[string]interface{}{
+		JSONData: map[string]any{
 			"azureLogAnalyticsSameAs": false,
 		},
 	}

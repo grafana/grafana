@@ -16,7 +16,7 @@ var ConversionError = errutil.BadRequest("sse.readDataError").MustTemplate(
 func MakeConversionError(refID string, err error) error {
 	data := errutil.TemplateData{
 		// Conversion errors should only have meta information in errors
-		Public: map[string]interface{}{
+		Public: map[string]any{
 			"refId": refID,
 			"error": err.Error(),
 		},
@@ -42,7 +42,7 @@ func MakeQueryError(refID, datasourceUID string, err error) error {
 	}
 
 	data := errutil.TemplateData{
-		Public: map[string]interface{}{
+		Public: map[string]any{
 			"refId":         refID,
 			"datasourceUID": datasourceUID,
 			"error":         pErr.Error(),

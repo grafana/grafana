@@ -131,7 +131,7 @@ func (ss *sqlStore) GetAlertNotificationsWithUidToSend(ctx context.Context, quer
 	res = make([]*models.AlertNotification, 0)
 	err = ss.db.WithDbSession(ctx, func(sess *db.Session) error {
 		var sql bytes.Buffer
-		params := make([]interface{}, 0)
+		params := make([]any, 0)
 
 		sql.WriteString(`SELECT
 										alert_notification.id,
@@ -171,7 +171,7 @@ func (ss *sqlStore) GetAlertNotificationsWithUidToSend(ctx context.Context, quer
 
 func getAlertNotificationUidInternal(ctx context.Context, query *models.GetAlertNotificationUidQuery, sess *db.Session) (res string, err error) {
 	var sql bytes.Buffer
-	params := make([]interface{}, 0)
+	params := make([]any, 0)
 
 	sql.WriteString(`SELECT
 										alert_notification.uid
@@ -199,7 +199,7 @@ func getAlertNotificationUidInternal(ctx context.Context, query *models.GetAlert
 
 func getAlertNotificationInternal(ctx context.Context, query *models.GetAlertNotificationsQuery, sess *db.Session) (res *models.AlertNotification, err error) {
 	var sql bytes.Buffer
-	params := make([]interface{}, 0)
+	params := make([]any, 0)
 
 	sql.WriteString(`SELECT
 										alert_notification.id,
@@ -246,7 +246,7 @@ func getAlertNotificationInternal(ctx context.Context, query *models.GetAlertNot
 
 func getAlertNotificationWithUidInternal(ctx context.Context, query *models.GetAlertNotificationsWithUidQuery, sess *db.Session) (res *models.AlertNotification, err error) {
 	var sql bytes.Buffer
-	params := make([]interface{}, 0)
+	params := make([]any, 0)
 
 	sql.WriteString(`SELECT
 										alert_notification.id,

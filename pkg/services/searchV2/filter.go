@@ -53,7 +53,7 @@ func newPermissionFilter(resourceFilter ResourceFilter, log log.Logger) *Permiss
 	}
 }
 
-func (q *PermissionFilter) logAccessDecision(decision bool, kind interface{}, id string, reason string, ctx ...interface{}) {
+func (q *PermissionFilter) logAccessDecision(decision bool, kind any, id string, reason string, ctx ...any) {
 	if true {
 		return // TOO much logging right now
 	}

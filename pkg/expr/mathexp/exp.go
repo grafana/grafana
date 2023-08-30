@@ -560,7 +560,7 @@ func (e *State) walkFunc(node *parse.FuncNode) (Results, error) {
 	var err error
 	var in []reflect.Value
 	for _, a := range node.Args {
-		var v interface{}
+		var v any
 		switch t := a.(type) {
 		case *parse.StringNode:
 			v = t.Text

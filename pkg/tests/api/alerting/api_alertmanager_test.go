@@ -449,7 +449,7 @@ func TestIntegrationAlertAndGroupsQuery(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, http.StatusUnauthorized, resp.StatusCode)
 
-		var res map[string]interface{}
+		var res map[string]any
 		require.NoError(t, json.Unmarshal(b, &res))
 		assert.Equal(t, "Invalid username or password", res["message"])
 	}
@@ -1341,7 +1341,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 
 		status, body := apiClient.PostRulesGroup(t, "default", &rules)
 		assert.Equal(t, http.StatusNotFound, status)
-		var res map[string]interface{}
+		var res map[string]any
 		assert.NoError(t, json.Unmarshal([]byte(body), &res))
 		require.Equal(t, "failed to update rule group: failed to update rule with UID unknown because could not find alert rule", res["message"])
 
@@ -1447,7 +1447,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 		}
 		status, body := apiClient.PostRulesGroup(t, "default", &rules)
 		assert.Equal(t, http.StatusBadRequest, status)
-		var res map[string]interface{}
+		var res map[string]any
 		require.NoError(t, json.Unmarshal([]byte(body), &res))
 		require.Equal(t, fmt.Sprintf("rule [1] has UID %s that is already assigned to another rule at index 0", ruleUID), res["message"])
 
@@ -1813,7 +1813,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 			require.NoError(t, err)
 
 			require.Equal(t, http.StatusAccepted, resp.StatusCode)
-			var res map[string]interface{}
+			var res map[string]any
 			require.NoError(t, json.Unmarshal(b, &res))
 			require.Equal(t, "rules deleted", res["message"])
 		})
@@ -1995,7 +1995,7 @@ func TestIntegrationQuota(t *testing.T) {
 		}
 		status, body := apiClient.PostRulesGroup(t, "default", &rules)
 		assert.Equal(t, http.StatusForbidden, status)
-		var res map[string]interface{}
+		var res map[string]any
 		require.NoError(t, json.Unmarshal([]byte(body), &res))
 		require.Equal(t, "quota has been exceeded", res["message"])
 	})

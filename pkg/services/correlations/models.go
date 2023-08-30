@@ -74,7 +74,7 @@ type CorrelationConfig struct {
 	// Target data query
 	// required:true
 	// example: {"prop1":"value1","prop2":"value"}
-	Target map[string]interface{} `json:"target" binding:"Required"`
+	Target map[string]any `json:"target" binding:"Required"`
 	// Source data transformations
 	// required:false
 	// example: [{"type":"logfmt"}]
@@ -85,13 +85,13 @@ func (c CorrelationConfig) MarshalJSON() ([]byte, error) {
 	target := c.Target
 	transformations := c.Transformations
 	if target == nil {
-		target = map[string]interface{}{}
+		target = map[string]any{}
 	}
 	return json.Marshal(struct {
-		Type            CorrelationConfigType  `json:"type"`
-		Field           string                 `json:"field"`
-		Target          map[string]interface{} `json:"target"`
-		Transformations Transformations        `json:"transformations,omitempty"`
+		Type            CorrelationConfigType `json:"type"`
+		Field           string                `json:"field"`
+		Target          map[string]any        `json:"target"`
+		Transformations Transformations       `json:"transformations,omitempty"`
 	}{
 		Type:            ConfigTypeQuery,
 		Field:           c.Field,
@@ -204,7 +204,7 @@ type CorrelationConfigUpdateDTO struct {
 	Type *CorrelationConfigType `json:"type"`
 	// Target data query
 	// example: {"prop1":"value1","prop2":"value"}
-	Target *map[string]interface{} `json:"target"`
+	Target *map[string]any `json:"target"`
 	// Source data transformations
 	// example: [{"type": "logfmt"},{"type":"regex","expression":"(Superman|Batman)", "variable":"name"}]
 	Transformations []Transformation `json:"transformations"`

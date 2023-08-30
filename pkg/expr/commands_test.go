@@ -75,7 +75,7 @@ func Test_UnmarshalReduceCommand_Settings(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			q := fmt.Sprintf(`{ "expression" : "$A", "reducer": "sum"%s }`, test.querySettings)
-			var qmap = make(map[string]interface{})
+			var qmap = make(map[string]any)
 			require.NoError(t, json.Unmarshal([]byte(q), &qmap))
 
 			cmd, err := UnmarshalReduceCommand(&rawNode{

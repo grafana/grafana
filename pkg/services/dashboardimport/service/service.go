@@ -69,7 +69,7 @@ func (s *ImportDashboardService) ImportDashboard(ctx context.Context, req *dashb
 	libraryElements := generatedDash.Get("__elements")
 	libElementsArr, err := libraryElements.Array()
 	if err == nil {
-		elementMap := map[string]interface{}{}
+		elementMap := map[string]any{}
 		for _, el := range libElementsArr {
 			libElement := simplejson.NewFromAny(el)
 			elementMap[libElement.Get("uid").MustString()] = el

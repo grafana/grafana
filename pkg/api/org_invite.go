@@ -130,7 +130,7 @@ func (hs *HTTPServer) AddOrgInvite(c *contextmodel.ReqContext) response.Response
 		emailCmd := notifications.SendEmailCommand{
 			To:       []string{inviteDto.LoginOrEmail},
 			Template: "new_user_invite",
-			Data: map[string]interface{}{
+			Data: map[string]any{
 				"Name":      util.StringsFallback2(cmd.Name, cmd.Email),
 				"OrgName":   c.SignedInUser.GetOrgName(),
 				"Email":     c.SignedInUser.GetEmail(),
@@ -172,7 +172,7 @@ func (hs *HTTPServer) inviteExistingUserToOrg(c *contextmodel.ReqContext, user *
 		emailCmd := notifications.SendEmailCommand{
 			To:       []string{user.Email},
 			Template: "invited_to_org",
-			Data: map[string]interface{}{
+			Data: map[string]any{
 				"Name":      user.NameOrFallback(),
 				"OrgName":   c.SignedInUser.GetOrgName(),
 				"InvitedBy": c.SignedInUser.GetDisplayName(),

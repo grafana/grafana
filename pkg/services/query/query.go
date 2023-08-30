@@ -211,7 +211,7 @@ func (s *ServiceImpl) handleExpressions(ctx context.Context, user identity.Reque
 	for _, pq := range parsedReq.getFlattenedQueries() {
 		if pq.datasource == nil {
 			return nil, ErrMissingDataSourceInfo.Build(errutil.TemplateData{
-				Public: map[string]interface{}{
+				Public: map[string]any{
 					"RefId": pq.query.RefID,
 				},
 			})

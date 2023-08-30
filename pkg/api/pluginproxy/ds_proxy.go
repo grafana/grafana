@@ -227,7 +227,7 @@ func (proxy *DataSourceProxy) director(req *http.Request) {
 	proxyutil.ClearCookieHeader(req, proxy.ds.AllowedCookies(), []string{proxy.cfg.LoginCookieName})
 	req.Header.Set("User-Agent", proxy.cfg.DataProxyUserAgent)
 
-	jsonData := make(map[string]interface{})
+	jsonData := make(map[string]any)
 	if proxy.ds.JsonData != nil {
 		jsonData, err = proxy.ds.JsonData.Map()
 		if err != nil {

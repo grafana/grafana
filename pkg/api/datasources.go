@@ -839,14 +839,14 @@ func (hs *HTTPServer) checkDatasourceHealth(c *contextmodel.ReqContext, ds *data
 		return translatePluginRequestErrorToAPIError(err)
 	}
 
-	payload := map[string]interface{}{
+	payload := map[string]any{
 		"status":  resp.Status.String(),
 		"message": resp.Message,
 	}
 
 	// Unmarshal JSONDetails if it's not empty.
 	if len(resp.JSONDetails) > 0 {
-		var jsonDetails map[string]interface{}
+		var jsonDetails map[string]any
 		err = json.Unmarshal(resp.JSONDetails, &jsonDetails)
 		if err != nil {
 			return response.Error(http.StatusInternalServerError, "Failed to unmarshal detailed response from backend plugin", err)

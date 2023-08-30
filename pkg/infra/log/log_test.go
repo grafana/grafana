@@ -73,8 +73,8 @@ func TestNew(t *testing.T) {
 	})
 
 	t.Run("When initializing root logger should swap loggers as expected", func(t *testing.T) {
-		swappedLoggedArgs := [][]interface{}{}
-		swapLogger := gokitlog.LoggerFunc(func(i ...interface{}) error {
+		swappedLoggedArgs := [][]any{}
+		swapLogger := gokitlog.LoggerFunc(func(i ...any) error {
 			swappedLoggedArgs = append(swappedLoggedArgs, i)
 			return nil
 		})
@@ -113,8 +113,8 @@ func TestContextualArguments(t *testing.T) {
 	childLoggerCtx := childLogger.FromContext(ctx)
 	childLoggerCtx.Error("hello child")
 
-	RegisterContextualLogProvider(func(ctx context.Context) ([]interface{}, bool) {
-		return []interface{}{"ctxKey", "ctxValue"}, true
+	RegisterContextualLogProvider(func(ctx context.Context) ([]any, bool) {
+		return []any{"ctxKey", "ctxValue"}, true
 	})
 
 	rootLoggerCtx = rootLogger.FromContext(ctx)
@@ -268,7 +268,7 @@ func TestGetFilters(t *testing.T) {
 }
 
 type scenarioContext struct {
-	loggedArgs [][]interface{}
+	loggedArgs [][]any
 	mockedTime time.Time
 }
 
@@ -291,11 +291,11 @@ func newLoggerScenario(t testing.TB) *scenarioContext {
 	t.Helper()
 
 	scenario := &scenarioContext{
-		loggedArgs: [][]interface{}{},
+		loggedArgs: [][]any{},
 		mockedTime: time.Now(),
 	}
 
-	l := gokitlog.LoggerFunc(func(i ...interface{}) error {
+	l := gokitlog.LoggerFunc(func(i ...any) error {
 		scenario.loggedArgs = append(scenario.loggedArgs, i)
 		return nil
 	})

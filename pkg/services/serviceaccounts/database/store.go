@@ -181,7 +181,7 @@ func (s *ServiceAccountsStoreImpl) RetrieveServiceAccount(ctx context.Context, o
 			fmt.Sprintf("org_user.user_id=%s.id", s.sqlStore.GetDialect().Quote("user")))
 
 		whereConditions := make([]string, 0, 3)
-		whereParams := make([]interface{}, 0)
+		whereParams := make([]any, 0)
 
 		whereConditions = append(whereConditions, "org_user.org_id = ?")
 		whereParams = append(whereParams, orgId)
@@ -237,7 +237,7 @@ func (s *ServiceAccountsStoreImpl) RetrieveServiceAccountIdByName(ctx context.Co
 				s.sqlStore.GetDialect().Quote("user"),
 				s.sqlStore.GetDialect().BooleanStr(true)),
 		}
-		whereParams := []interface{}{name, orgId}
+		whereParams := []any{name, orgId}
 
 		sess.Where(strings.Join(whereConditions, " AND "), whereParams...)
 
@@ -274,7 +274,7 @@ func (s *ServiceAccountsStoreImpl) SearchOrgServiceAccounts(ctx context.Context,
 		sess.Join("INNER", s.sqlStore.GetDialect().Quote("user"), fmt.Sprintf("org_user.user_id=%s.id", s.sqlStore.GetDialect().Quote("user")))
 
 		whereConditions := make([]string, 0)
-		whereParams := make([]interface{}, 0)
+		whereParams := make([]any, 0)
 
 		whereConditions = append(whereConditions, "org_user.org_id = ?")
 		whereParams = append(whereParams, query.OrgID)

@@ -78,13 +78,13 @@ func (l *LibraryElementService) DeleteLibraryElementsInFolder(c context.Context,
 }
 
 func (l *LibraryElementService) addUidToLibraryPanel(model []byte, newUid string) (json.RawMessage, error) {
-	var modelMap map[string]interface{}
+	var modelMap map[string]any
 	err := json.Unmarshal(model, &modelMap)
 	if err != nil {
 		return nil, err
 	}
 
-	if libraryPanel, ok := modelMap["libraryPanel"].(map[string]interface{}); ok {
+	if libraryPanel, ok := modelMap["libraryPanel"].(map[string]any); ok {
 		if uid, ok := libraryPanel["uid"]; ok && uid == "" {
 			libraryPanel["uid"] = newUid
 		}

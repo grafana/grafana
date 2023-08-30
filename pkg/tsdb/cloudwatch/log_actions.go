@@ -253,7 +253,7 @@ func (e *cloudWatchExecutor) handleStartQuery(ctx context.Context, logger log.Lo
 	}
 
 	dataFrame.Meta = &data.FrameMeta{
-		Custom: map[string]interface{}{
+		Custom: map[string]any{
 			"Region": region,
 		},
 	}

@@ -91,7 +91,7 @@ func (d *DashboardFolderStoreImpl) GetFolders(ctx context.Context, orgID int64, 
 	var folders []*folder.Folder
 	if err := d.store.WithDbSession(ctx, func(sess *db.Session) error {
 		b := strings.Builder{}
-		args := make([]interface{}, 0, len(uids)+1)
+		args := make([]any, 0, len(uids)+1)
 
 		b.WriteString("SELECT * FROM dashboard WHERE org_id=? ")
 		args = append(args, orgID)

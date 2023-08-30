@@ -54,7 +54,7 @@ LEFT JOIN ` + user + ` AS u2 ON le.updated_by = u2.id
 }
 
 func syncFieldsWithModel(libraryElement *model.LibraryElement) error {
-	var modelLibraryElement map[string]interface{}
+	var modelLibraryElement map[string]any
 	if err := json.Unmarshal(libraryElement.Model, &modelLibraryElement); err != nil {
 		return err
 	}

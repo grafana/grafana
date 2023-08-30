@@ -170,7 +170,7 @@ func WithPublicMessage(message string) BaseOpt {
 // Errorf creates a new [Error] with Reason and MessageID from [Base],
 // and Message and Underlying will be populated using the rules of
 // [fmt.Errorf].
-func (b Base) Errorf(format string, args ...interface{}) Error {
+func (b Base) Errorf(format string, args ...any) Error {
 	err := fmt.Errorf(format, args...)
 
 	return Error{
@@ -270,7 +270,7 @@ type Error struct {
 	PublicMessage string
 	// PublicPayload provides fields for passing structured data to
 	// construct localized error messages in the client.
-	PublicPayload map[string]interface{}
+	PublicPayload map[string]any
 	// LogLevel provides a suggested level of logging for the error.
 	LogLevel LogLevel
 }
@@ -327,10 +327,10 @@ func (e Error) Is(other error) bool {
 // PublicError is derived from Error and only contains information
 // available to the end user.
 type PublicError struct {
-	StatusCode int                    `json:"statusCode"`
-	MessageID  string                 `json:"messageId"`
-	Message    string                 `json:"message,omitempty"`
-	Extra      map[string]interface{} `json:"extra,omitempty"`
+	StatusCode int            `json:"statusCode"`
+	MessageID  string         `json:"messageId"`
+	Message    string         `json:"message,omitempty"`
+	Extra      map[string]any `json:"extra,omitempty"`
 }
 
 // Public returns a subset of the error with non-sensitive information
