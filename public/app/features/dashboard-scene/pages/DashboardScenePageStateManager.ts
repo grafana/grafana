@@ -57,6 +57,7 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
     if (rsp.dashboard) {
       const scene = transformSaveModelToScene(rsp);
       this.cache[uid] = scene;
+      return scene;
     }
 
     throw new Error('Dashboard not found');
