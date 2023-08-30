@@ -51,9 +51,9 @@ func notAuthorized(c *contextmodel.ReqContext) {
 
 func tokenRevoked(c *contextmodel.ReqContext, err *auth.TokenRevokedError) {
 	if c.IsApiRequest() {
-		c.JSON(401, map[string]interface{}{
+		c.JSON(401, map[string]any{
 			"message": "Token revoked",
-			"error": map[string]interface{}{
+			"error": map[string]any{
 				"id":                    "ERR_TOKEN_REVOKED",
 				"maxConcurrentSessions": err.MaxConcurrentSessions,
 			},

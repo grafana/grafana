@@ -43,26 +43,26 @@ func TestDeleteLibraryElement(t *testing.T) {
 
 	scenarioWithPanel(t, "When an admin tries to delete a library panel that is connected, it should fail",
 		func(t *testing.T, sc scenarioContext) {
-			dashJSON := map[string]interface{}{
-				"panels": []interface{}{
-					map[string]interface{}{
+			dashJSON := map[string]any{
+				"panels": []any{
+					map[string]any{
 						"id": int64(1),
-						"gridPos": map[string]interface{}{
+						"gridPos": map[string]any{
 							"h": 6,
 							"w": 6,
 							"x": 0,
 							"y": 0,
 						},
 					},
-					map[string]interface{}{
+					map[string]any{
 						"id": int64(2),
-						"gridPos": map[string]interface{}{
+						"gridPos": map[string]any{
 							"h": 6,
 							"w": 6,
 							"x": 6,
 							"y": 0,
 						},
-						"libraryPanel": map[string]interface{}{
+						"libraryPanel": map[string]any{
 							"uid":  sc.initialResult.Result.UID,
 							"name": sc.initialResult.Result.Name,
 						},

@@ -47,7 +47,7 @@ func TestAPIViewPublicDashboard(t *testing.T) {
 		Name                 string
 		AccessToken          string
 		ExpectedHttpResponse int
-		DashboardResult      *dashboards.Dashboard
+		DashboardResult      *dtos.DashboardFullWithMeta
 		Err                  error
 		FixedErrorResponse   string
 	}{
@@ -55,10 +55,20 @@ func TestAPIViewPublicDashboard(t *testing.T) {
 			Name:                 "It gets a public dashboard",
 			AccessToken:          validAccessToken,
 			ExpectedHttpResponse: http.StatusOK,
-			DashboardResult: &dashboards.Dashboard{
-				Data: simplejson.NewFromAny(map[string]interface{}{
+			DashboardResult: &dtos.DashboardFullWithMeta{
+				Dashboard: simplejson.NewFromAny(map[string]any{
 					"Uid": DashboardUid,
 				}),
+				Meta: dtos.DashboardMeta{
+					Type:                   dashboards.DashTypeDB,
+					CanStar:                false,
+					CanSave:                false,
+					CanEdit:                false,
+					CanAdmin:               false,
+					CanDelete:              false,
+					IsFolder:               false,
+					PublicDashboardEnabled: true,
+				},
 			},
 			Err:                nil,
 			FixedErrorResponse: "",
@@ -84,8 +94,8 @@ func TestAPIViewPublicDashboard(t *testing.T) {
 	for _, test := range testCases {
 		t.Run(test.Name, func(t *testing.T) {
 			service := publicdashboards.NewFakePublicDashboardService(t)
-			service.On("FindEnabledPublicDashboardAndDashboardByAccessToken", mock.Anything, mock.AnythingOfType("string")).
-				Return(&PublicDashboard{Uid: "pubdashuid"}, test.DashboardResult, test.Err).Maybe()
+			service.On("GetPublicDashboardForView", mock.Anything, mock.AnythingOfType("string")).
+				Return(test.DashboardResult, test.Err).Maybe()
 
 			cfg := setting.NewCfg()
 
@@ -282,13 +292,13 @@ func TestIntegrationUnauthenticatedUserCanGetPubdashPanelQueryData(t *testing.T)
 		OrgID:    1,
 		FolderID: 1,
 		IsFolder: false,
-		Dashboard: simplejson.NewFromAny(map[string]interface{}{
+		Dashboard: simplejson.NewFromAny(map[string]any{
 			"id":    nil,
 			"title": "test",
-			"panels": []map[string]interface{}{
+			"panels": []map[string]any{
 				{
 					"id": 1,
-					"targets": []map[string]interface{}{
+					"targets": []map[string]any{
 						{
 							"datasource": map[string]string{
 								"type": "mysql",

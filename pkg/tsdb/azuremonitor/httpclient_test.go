@@ -22,7 +22,7 @@ func TestHttpClient_AzureCredentials(t *testing.T) {
 		Credentials: &azcredentials.AzureManagedIdentityCredentials{},
 	}
 
-	jsonData, _ := json.Marshal(map[string]interface{}{
+	jsonData, _ := json.Marshal(map[string]any{
 		"httpHeaderName1": "GrafanaHeader",
 	})
 	settings := &backend.DataSourceInstanceSettings{
