@@ -38,11 +38,11 @@ export function migrateVariableQueryToEditor(rawQuery: string | PromVariableQuer
     };
   }
 
-  const labelValues = rawQuery.match(PrometheusLabelValuesRegex);
-
-  if (labelValues) {
-    const label = labelValues[2];
-    const metric = labelValues[1];
+  const labelValuesCheck = rawQuery.match(/^label_values\(/);
+  if (labelValuesCheck) {
+    const labelValues = rawQuery.match(PrometheusLabelValuesRegex);
+    const label = labelValues ? labelValues[2] : '';
+    const metric = labelValues ? labelValues[1] : '';
 
     if (metric) {
       const visQuery = buildVisualQueryFromString(metric);
@@ -62,26 +62,30 @@ export function migrateVariableQueryToEditor(rawQuery: string | PromVariableQuer
     }
   }
 
-  const metricNames = rawQuery.match(PrometheusMetricNamesRegex);
-  if (metricNames) {
+  const metricNamesCheck = rawQuery.match(/^metrics\(/);
+  if (metricNamesCheck) {
+    const metricNames = rawQuery.match(PrometheusMetricNamesRegex);
+    const metric = metricNames ? metricNames[1] : '';
     return {
       ...queryBase,
       qryType: QueryType.MetricNames,
-      metric: metricNames[1],
+      metric,
     };
   }
 
-  const queryResult = rawQuery.match(PrometheusQueryResultRegex);
-  if (queryResult) {
+  const queryResultCheck = rawQuery.match(/^query_result\(/);
+  if (queryResultCheck) {
+    const queryResult = rawQuery.match(PrometheusQueryResultRegex);
+    const varQuery = queryResult ? queryResult[1] : '';
     return {
       ...queryBase,
       qryType: QueryType.VarQueryResult,
-      varQuery: queryResult[1],
+      varQuery,
     };
   }
 
   // seriesQuery does not have a function and no regex above
-  if (!labelNames && !labelValues && !metricNames && !queryResult) {
+  if (!labelNames && !labelValuesCheck && !metricNamesCheck && !queryResultCheck) {
     return {
       ...queryBase,
       qryType: QueryType.SeriesQuery,
