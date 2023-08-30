@@ -10,6 +10,7 @@ import (
 	"time"
 
 	glog "github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/middleware/requestmeta"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 )
 
@@ -97,6 +98,8 @@ var deletedHeaders = []string{
 // modifyResponse enforces certain constraints on http.Response.
 func modifyResponse(logger glog.Logger) func(resp *http.Response) error {
 	return func(resp *http.Response) error {
+		requestmeta.WithDownstreamStatusSource(resp.Request.Context())
+
 		for _, header := range deletedHeaders {
 			resp.Header.Del(header)
 		}
@@ -120,6 +123,7 @@ type timeoutError interface {
 func errorHandler(logger glog.Logger) func(http.ResponseWriter, *http.Request, error) {
 	return func(w http.ResponseWriter, r *http.Request, err error) {
 		ctxLogger := logger.FromContext(r.Context())
+		requestmeta.WithDownstreamStatusSource(r.Context())
 
 		if errors.Is(err, context.Canceled) {
 			ctxLogger.Debug("Proxy request cancelled by client")
