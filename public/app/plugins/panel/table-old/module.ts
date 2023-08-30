@@ -56,7 +56,12 @@ export class TablePanelCtrl extends MetricsPanelCtrl {
 
   static $inject = ['$scope', '$injector', 'annotationsSrv', '$sanitize'];
 
-  constructor($scope: any, $injector: any, private annotationsSrv: any, private $sanitize: any) {
+  constructor(
+    $scope: any,
+    $injector: any,
+    private annotationsSrv: any,
+    private $sanitize: any
+  ) {
     super($scope, $injector);
 
     this.pageIndex = 0;

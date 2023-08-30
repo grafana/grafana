@@ -23,7 +23,7 @@ import { useMeasure } from 'react-use';
 import { Icon, useStyles2 } from '@grafana/ui';
 
 import { PIXELS_PER_LEVEL } from '../../constants';
-import { ClickedItemData, ColorScheme, TextAlign } from '../types';
+import { ClickedItemData, ColorScheme, ColorSchemeDiff, TextAlign } from '../types';
 
 import FlameGraphContextMenu from './FlameGraphContextMenu';
 import FlameGraphMetadata from './FlameGraphMetadata';
@@ -46,7 +46,7 @@ type Props = {
   onSandwich: (label: string) => void;
   onFocusPillClick: () => void;
   onSandwichPillClick: () => void;
-  colorScheme: ColorScheme;
+  colorScheme: ColorScheme | ColorSchemeDiff;
 };
 
 const FlameGraph = ({
@@ -67,50 +67,55 @@ const FlameGraph = ({
 }: Props) => {
   const styles = useStyles2(getStyles);
 
-  const [levels, totalTicks, callersCount] = useMemo(() => {
+  const [levels, totalProfileTicks, totalProfileTicksRight, totalViewTicks, callersCount] = useMemo(() => {
     let levels = data.getLevels();
-    let totalTicks = levels.length ? levels[0][0].value : 0;
+    let totalProfileTicks = levels.length ? levels[0][0].value : 0;
+    let totalProfileTicksRight = levels.length ? levels[0][0].valueRight : undefined;
     let callersCount = 0;
+    let totalViewTicks = totalProfileTicks;
 
     if (sandwichItem) {
       const [callers, callees] = data.getSandwichLevels(sandwichItem);
       levels = [...callers, [], ...callees];
-      totalTicks = callees.length ? callees[0][0].value : 0;
+      // We need this separate as in case of diff profile we to compute diff colors based on the original ticks.
+      totalViewTicks = callees[0]?.[0]?.value ?? 0;
       callersCount = callers.length;
     }
-    return [levels, totalTicks, callersCount];
+    return [levels, totalProfileTicks, totalProfileTicksRight, totalViewTicks, callersCount];
   }, [data, sandwichItem]);
 
   const [sizeRef, { width: wrapperWidth }] = useMeasure<HTMLDivElement>();
   const graphRef = useRef<HTMLCanvasElement>(null);
-  const tooltipRef = useRef<HTMLDivElement>(null);
   const [tooltipItem, setTooltipItem] = useState<LevelItem>();
 
   const [clickedItemData, setClickedItemData] = useState<ClickedItemData>();
 
-  useFlameRender(
-    graphRef,
+  useFlameRender({
+    canvasRef: graphRef,
+    colorScheme,
     data,
+    focusedItemData,
     levels,
-    wrapperWidth,
-    rangeMin,
     rangeMax,
+    rangeMin,
     search,
     textAlign,
-    totalTicks,
-    colorScheme,
-    focusedItemData
-  );
+    totalViewTicks,
+    // We need this so that if we have a diff profile and are in sandwich view we still show the same diff colors.
+    totalColorTicks: data.isDiffFlamegraph() ? totalProfileTicks : totalViewTicks,
+    totalTicksRight: totalProfileTicksRight,
+    wrapperWidth,
+  });
 
   const onGraphClick = useCallback(
     (e: ReactMouseEvent<HTMLCanvasElement>) => {
       setTooltipItem(undefined);
-      const pixelsPerTick = graphRef.current!.clientWidth / totalTicks / (rangeMax - rangeMin);
+      const pixelsPerTick = graphRef.current!.clientWidth / totalViewTicks / (rangeMax - rangeMin);
       const { levelIndex, barIndex } = convertPixelCoordinatesToBarCoordinates(
         { x: e.nativeEvent.offsetX, y: e.nativeEvent.offsetY },
         levels,
         pixelsPerTick,
-        totalTicks,
+        totalViewTicks,
         rangeMin
       );
 
@@ -129,47 +134,31 @@ const FlameGraph = ({
         setClickedItemData(undefined);
       }
     },
-    [data, rangeMin, rangeMax, totalTicks, levels]
+    [data, rangeMin, rangeMax, totalViewTicks, levels]
   );
 
+  const [mousePosition, setMousePosition] = useState<{ x: number; y: number }>();
   const onGraphMouseMove = useCallback(
     (e: ReactMouseEvent<HTMLCanvasElement>) => {
-      if (tooltipRef.current && clickedItemData === undefined) {
+      if (clickedItemData === undefined) {
         setTooltipItem(undefined);
-        const pixelsPerTick = graphRef.current!.clientWidth / totalTicks / (rangeMax - rangeMin);
+        setMousePosition(undefined);
+        const pixelsPerTick = graphRef.current!.clientWidth / totalViewTicks / (rangeMax - rangeMin);
         const { levelIndex, barIndex } = convertPixelCoordinatesToBarCoordinates(
           { x: e.nativeEvent.offsetX, y: e.nativeEvent.offsetY },
           levels,
           pixelsPerTick,
-          totalTicks,
+          totalViewTicks,
           rangeMin
         );
 
         if (barIndex !== -1 && !isNaN(levelIndex) && !isNaN(barIndex)) {
-          // tooltip has a set number of lines of text so 200 should be good enough (with some buffer) without going
-          // into measuring rendered sizes
-          if (e.clientY < document.documentElement.clientHeight - 200) {
-            tooltipRef.current.style.top = e.clientY + 'px';
-            tooltipRef.current.style.bottom = 'auto';
-          } else {
-            tooltipRef.current.style.bottom = document.documentElement.clientHeight - e.clientY + 'px';
-            tooltipRef.current.style.top = 'auto';
-          }
-
-          // 400 is max width of the tooltip
-          if (e.clientX < document.documentElement.clientWidth - 400) {
-            tooltipRef.current.style.left = e.clientX + 15 + 'px';
-            tooltipRef.current.style.right = 'auto';
-          } else {
-            tooltipRef.current.style.right = document.documentElement.clientWidth - e.clientX + 15 + 'px';
-            tooltipRef.current.style.left = 'auto';
-          }
-
+          setMousePosition({ x: e.clientX, y: e.clientY });
           setTooltipItem(levels[levelIndex][barIndex]);
         }
       }
     },
-    [rangeMin, rangeMax, totalTicks, clickedItemData, levels]
+    [rangeMin, rangeMax, totalViewTicks, clickedItemData, levels, setMousePosition]
   );
 
   const onGraphMouseLeave = useCallback(() => {
@@ -179,8 +168,10 @@ const FlameGraph = ({
   // hide context menu if outside the flame graph canvas is clicked
   useEffect(() => {
     const handleOnClick = (e: MouseEvent) => {
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-      if ((e.target as HTMLElement).parentElement?.id !== 'flameGraphCanvasContainer_clickOutsideCheck') {
+      if (
+        e.target instanceof HTMLElement &&
+        e.target.parentElement?.id !== 'flameGraphCanvasContainer_clickOutsideCheck'
+      ) {
         setClickedItemData(undefined);
       }
     };
@@ -194,7 +185,7 @@ const FlameGraph = ({
         data={data}
         focusedItem={focusedItemData}
         sandwichedLabel={sandwichItem}
-        totalTicks={totalTicks}
+        totalTicks={totalViewTicks}
         onFocusPillClick={onFocusPillClick}
         onSandwichPillClick={onSandwichPillClick}
       />
@@ -224,7 +215,7 @@ const FlameGraph = ({
           />
         </div>
       </div>
-      <FlameGraphTooltip tooltipRef={tooltipRef} item={tooltipItem} data={data} totalTicks={totalTicks} />
+      <FlameGraphTooltip position={mousePosition} item={tooltipItem} data={data} totalTicks={totalViewTicks} />
       {clickedItemData && (
         <FlameGraphContextMenu
           itemData={clickedItemData}
@@ -232,8 +223,8 @@ const FlameGraph = ({
             setClickedItemData(undefined);
           }}
           onItemFocus={() => {
-            setRangeMin(clickedItemData.item.start / totalTicks);
-            setRangeMax((clickedItemData.item.start + clickedItemData.item.value) / totalTicks);
+            setRangeMin(clickedItemData.item.start / totalViewTicks);
+            setRangeMax((clickedItemData.item.start + clickedItemData.item.value) / totalViewTicks);
             onItemFocused(clickedItemData);
           }}
           onSandwich={() => {

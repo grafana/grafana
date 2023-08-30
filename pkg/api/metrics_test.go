@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	pluginClient "github.com/grafana/grafana/pkg/plugins/manager/client"
+	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	fakeDatasources "github.com/grafana/grafana/pkg/services/datasources/fakes"
@@ -66,7 +67,7 @@ func TestAPIEndpoint_Metrics_QueryMetricsV2(t *testing.T) {
 				return &backend.QueryDataResponse{Responses: resp}, nil
 			},
 		},
-		plugincontext.ProvideService(localcache.ProvideService(), &plugins.FakePluginStore{
+		plugincontext.ProvideService(localcache.ProvideService(), &fakes.FakePluginStore{
 			PluginList: []plugins.PluginDTO{
 				{
 					JSONData: plugins.JSONData{
@@ -112,7 +113,7 @@ func TestAPIEndpoint_Metrics_PluginDecryptionFailure(t *testing.T) {
 	ds := &fakeDatasources.FakeDataSourceService{SimulatePluginFailure: true}
 	db := &dbtest.FakeDB{ExpectedError: pluginsettings.ErrPluginSettingNotFound}
 	pcp := plugincontext.ProvideService(localcache.ProvideService(),
-		&plugins.FakePluginStore{
+		&fakes.FakePluginStore{
 			PluginList: []plugins.PluginDTO{
 				{
 					JSONData: plugins.JSONData{
@@ -293,7 +294,7 @@ func TestDataSourceQueryError(t *testing.T) {
 					nil,
 					&fakePluginRequestValidator{},
 					pluginClient.ProvideService(r, &config.Cfg{}),
-					plugincontext.ProvideService(localcache.ProvideService(), &plugins.FakePluginStore{
+					plugincontext.ProvideService(localcache.ProvideService(), &fakes.FakePluginStore{
 						PluginList: []plugins.PluginDTO{p.ToDTO()},
 					},
 						ds, pluginSettings.ProvideService(dbtest.NewFakeDB(),

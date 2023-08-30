@@ -59,8 +59,6 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 }
 
 func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-	s.logger.Info("QueryData called ", "Queries ", req.Queries)
-
 	// create response struct
 	response := backend.NewQueryDataResponse()
 

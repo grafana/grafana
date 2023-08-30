@@ -2005,13 +2005,6 @@
         "operationId": "RouteGetAlertRuleExport",
         "parameters": [
           {
-            "type": "string",
-            "description": "Alert rule UID",
-            "name": "UID",
-            "in": "path",
-            "required": true
-          },
-          {
             "type": "boolean",
             "default": false,
             "description": "Whether to initiate a download of the file or not.",
@@ -2024,6 +2017,13 @@
             "description": "Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence.",
             "name": "format",
             "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "Alert rule UID",
+            "name": "UID",
+            "in": "path",
+            "required": true
           }
         ],
         "responses": {
@@ -2094,6 +2094,59 @@
             "description": "ValidationError",
             "schema": {
               "$ref": "#/definitions/ValidationError"
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/provisioning/contact-points/export": {
+      "get": {
+        "tags": [
+          "provisioning",
+          "stable"
+        ],
+        "summary": "Export all contact points in provisioning file format.",
+        "operationId": "RouteGetContactpointsExport",
+        "parameters": [
+          {
+            "type": "boolean",
+            "default": false,
+            "description": "Whether to initiate a download of the file or not.",
+            "name": "download",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "default": "yaml",
+            "description": "Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence.",
+            "name": "format",
+            "in": "query"
+          },
+          {
+            "type": "boolean",
+            "default": false,
+            "description": "Whether any contained secure settings should be decrypted or left redacted. Redacted settings will contain RedactedValue instead. Currently, only org admin can view decrypted secure settings.",
+            "name": "decrypt",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "Filter by name",
+            "name": "name",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "AlertingFileExport",
+            "schema": {
+              "$ref": "#/definitions/AlertingFileExport"
+            }
+          },
+          "403": {
+            "description": "PermissionDenied",
+            "schema": {
+              "$ref": "#/definitions/PermissionDenied"
             }
           }
         }
@@ -2263,18 +2316,6 @@
         "operationId": "RouteGetAlertRuleGroupExport",
         "parameters": [
           {
-            "type": "string",
-            "name": "FolderUID",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "string",
-            "name": "Group",
-            "in": "path",
-            "required": true
-          },
-          {
             "type": "boolean",
             "default": false,
             "description": "Whether to initiate a download of the file or not.",
@@ -2287,6 +2328,18 @@
             "description": "Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence.",
             "name": "format",
             "in": "query"
+          },
+          {
+            "type": "string",
+            "name": "FolderUID",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "name": "Group",
+            "in": "path",
+            "required": true
           }
         ],
         "responses": {
@@ -2514,6 +2567,30 @@
             "description": "Ack",
             "schema": {
               "$ref": "#/definitions/Ack"
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/provisioning/policies/export": {
+      "get": {
+        "tags": [
+          "provisioning",
+          "stable"
+        ],
+        "summary": "Export the notification policy tree in provisioning file format.",
+        "operationId": "RouteGetPolicyTreeExport",
+        "responses": {
+          "200": {
+            "description": "AlertingFileExport",
+            "schema": {
+              "$ref": "#/definitions/AlertingFileExport"
+            }
+          },
+          "404": {
+            "description": "NotFound",
+            "schema": {
+              "$ref": "#/definitions/NotFound"
             }
           }
         }
@@ -3054,10 +3131,22 @@
           "type": "integer",
           "format": "int64"
         },
+        "contactPoints": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ContactPointExport"
+          }
+        },
         "groups": {
           "type": "array",
           "items": {
             "$ref": "#/definitions/AlertRuleGroupExport"
+          }
+        },
+        "policies": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/NotificationPolicyExport"
           }
         }
       }
@@ -3299,6 +3388,25 @@
           "type": "array",
           "items": {
             "type": "string"
+          }
+        }
+      }
+    },
+    "ContactPointExport": {
+      "type": "object",
+      "title": "ContactPointExport is the provisioned file export of alerting.ContactPointV1.",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "orgId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "receivers": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ReceiverExport"
           }
         }
       }
@@ -3843,6 +3951,10 @@
           "description": "PathSeparator defines the separator pattern to decode a hierarchy. The default separator is '/'.",
           "type": "string"
         },
+        "preferredVisualisationPluginId": {
+          "description": "PreferredVisualizationPluginId sets the panel plugin id to use to render the data when using Explore. If\nthe plugin cannot be found will fall back to PreferredVisualization.",
+          "type": "string"
+        },
         "preferredVisualisationType": {
           "$ref": "#/definitions/VisType"
         },
@@ -3987,6 +4099,12 @@
           "type": "array",
           "items": {
             "$ref": "#/definitions/SNSConfig"
+          }
+        },
+        "teams_configs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/MSTeamsConfig"
           }
         },
         "telegram_configs": {
@@ -4546,6 +4664,26 @@
         }
       }
     },
+    "MSTeamsConfig": {
+      "type": "object",
+      "properties": {
+        "http_config": {
+          "$ref": "#/definitions/HTTPClientConfig"
+        },
+        "send_resolved": {
+          "type": "boolean"
+        },
+        "text": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "webhook_url": {
+          "$ref": "#/definitions/SecretURL"
+        }
+      }
+    },
     "MatchRegexps": {
       "type": "object",
       "title": "MatchRegexps represents a map of Regexp.",
@@ -4641,6 +4779,19 @@
       "type": "integer",
       "format": "int64",
       "title": "NoticeSeverity is a type for the Severity property of a Notice."
+    },
+    "NotificationPolicyExport": {
+      "type": "object",
+      "title": "NotificationPolicyExport is the provisioned file export of alerting.NotificiationPolicyV1.",
+      "properties": {
+        "Policy": {
+          "$ref": "#/definitions/RouteExport"
+        },
+        "orgId": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
     },
     "NotificationTemplate": {
       "type": "object",
@@ -5015,6 +5166,12 @@
           "type": "array",
           "items": {
             "$ref": "#/definitions/SNSConfig"
+          }
+        },
+        "teams_configs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/MSTeamsConfig"
           }
         },
         "telegram_configs": {
@@ -5589,6 +5746,12 @@
             "$ref": "#/definitions/SNSConfig"
           }
         },
+        "teams_configs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/MSTeamsConfig"
+          }
+        },
         "telegram_configs": {
           "type": "array",
           "items": {
@@ -5618,6 +5781,24 @@
           "items": {
             "$ref": "#/definitions/WechatConfig"
           }
+        }
+      }
+    },
+    "ReceiverExport": {
+      "type": "object",
+      "title": "ReceiverExport is the provisioned file export of alerting.ReceiverV1.",
+      "properties": {
+        "disableResolveMessage": {
+          "type": "boolean"
+        },
+        "settings": {
+          "$ref": "#/definitions/RawMessage"
+        },
+        "type": {
+          "type": "string"
+        },
+        "uid": {
+          "type": "string"
         }
       }
     },
@@ -5708,6 +5889,61 @@
           "type": "array",
           "items": {
             "$ref": "#/definitions/Route"
+          }
+        }
+      }
+    },
+    "RouteExport": {
+      "description": "RouteExport is the provisioned file export of definitions.Route. This is needed to hide fields that aren't useable in\nprovisioning file format. An alternative would be to define a custom MarshalJSON and MarshalYAML that excludes them.",
+      "type": "object",
+      "properties": {
+        "continue": {
+          "type": "boolean"
+        },
+        "group_by": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "group_interval": {
+          "type": "string"
+        },
+        "group_wait": {
+          "type": "string"
+        },
+        "match": {
+          "description": "Deprecated. Remove before v1.0 release.",
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "match_re": {
+          "$ref": "#/definitions/MatchRegexps"
+        },
+        "matchers": {
+          "$ref": "#/definitions/Matchers"
+        },
+        "mute_time_intervals": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "object_matchers": {
+          "$ref": "#/definitions/ObjectMatchers"
+        },
+        "receiver": {
+          "type": "string"
+        },
+        "repeat_interval": {
+          "type": "string"
+        },
+        "routes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/RouteExport"
           }
         }
       }
@@ -6128,8 +6364,16 @@
       "type": "object",
       "title": "TLSConfig configures the options for TLS connections.",
       "properties": {
+        "ca": {
+          "description": "Text of the CA cert to use for the targets.",
+          "type": "string"
+        },
         "ca_file": {
           "description": "The CA cert to use for the targets.",
+          "type": "string"
+        },
+        "cert": {
+          "description": "Text of the client cert file for the targets.",
           "type": "string"
         },
         "cert_file": {
@@ -6139,6 +6383,9 @@
         "insecure_skip_verify": {
           "description": "Disable target certificate validation.",
           "type": "boolean"
+        },
+        "key": {
+          "$ref": "#/definitions/Secret"
         },
         "key_file": {
           "description": "The client key file for the targets.",
@@ -6451,9 +6698,8 @@
       }
     },
     "URL": {
-      "description": "The general form represented is:\n\n[scheme:][//[userinfo@]host][/]path[?query][#fragment]\n\nURLs that do not start with a slash after the scheme are interpreted as:\n\nscheme:opaque[?query][#fragment]\n\nNote that the Path field is stored in decoded form: /%47%6f%2f becomes /Go/.\nA consequence is that it is impossible to tell which slashes in the Path were\nslashes in the raw URL and which were %2f. This distinction is rarely important,\nbut when it is, the code should use RawPath, an optional field which only gets\nset if the default encoding is different from Path.\n\nURL's String method uses the EscapedPath method to obtain the path. See the\nEscapedPath method for more details.",
       "type": "object",
-      "title": "A URL represents a parsed URL (technically, a URI reference).",
+      "title": "URL is a custom URL type that allows validation at configuration load time.",
       "properties": {
         "ForceQuery": {
           "type": "boolean"
@@ -6691,6 +6937,7 @@
       "$ref": "#/definitions/alertGroup"
     },
     "alertGroups": {
+      "description": "AlertGroups alert groups",
       "type": "array",
       "items": {
         "$ref": "#/definitions/alertGroup"
@@ -6853,7 +7100,6 @@
       "$ref": "#/definitions/gettableAlert"
     },
     "gettableAlerts": {
-      "description": "GettableAlerts gettable alerts",
       "type": "array",
       "items": {
         "$ref": "#/definitions/gettableAlert"
@@ -6861,7 +7107,6 @@
       "$ref": "#/definitions/gettableAlerts"
     },
     "gettableSilence": {
-      "description": "GettableSilence gettable silence",
       "type": "object",
       "required": [
         "comment",
@@ -7063,7 +7308,6 @@
       }
     },
     "postableSilence": {
-      "description": "PostableSilence postable silence",
       "type": "object",
       "required": [
         "comment",
@@ -7102,7 +7346,6 @@
       "$ref": "#/definitions/postableSilence"
     },
     "receiver": {
-      "description": "Receiver receiver",
       "type": "object",
       "required": [
         "active",

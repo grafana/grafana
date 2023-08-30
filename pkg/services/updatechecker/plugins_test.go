@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
 )
 
 func TestPluginUpdateChecker_HasUpdate(t *testing.T) {
@@ -20,7 +21,7 @@ func TestPluginUpdateChecker_HasUpdate(t *testing.T) {
 			availableUpdates: map[string]string{
 				"test-ds": "1.0.0",
 			},
-			pluginStore: plugins.FakePluginStore{
+			pluginStore: &fakes.FakePluginStore{
 				PluginList: []plugins.PluginDTO{
 					{
 						JSONData: plugins.JSONData{
@@ -43,7 +44,7 @@ func TestPluginUpdateChecker_HasUpdate(t *testing.T) {
 				"test-panel": "0.9.0",
 				"test-app":   "0.0.1",
 			},
-			pluginStore: plugins.FakePluginStore{
+			pluginStore: &fakes.FakePluginStore{
 				PluginList: []plugins.PluginDTO{
 					{
 						JSONData: plugins.JSONData{
@@ -85,7 +86,7 @@ func TestPluginUpdateChecker_HasUpdate(t *testing.T) {
 			availableUpdates: map[string]string{
 				"test-panel": "0.9.0",
 			},
-			pluginStore: plugins.FakePluginStore{
+			pluginStore: &fakes.FakePluginStore{
 				PluginList: []plugins.PluginDTO{
 					{
 						JSONData: plugins.JSONData{
@@ -128,7 +129,7 @@ func TestPluginUpdateChecker_checkForUpdates(t *testing.T) {
 			availableUpdates: map[string]string{
 				"test-app": "1.0.0",
 			},
-			pluginStore: plugins.FakePluginStore{
+			pluginStore: &fakes.FakePluginStore{
 				PluginList: []plugins.PluginDTO{
 					{
 						JSONData: plugins.JSONData{

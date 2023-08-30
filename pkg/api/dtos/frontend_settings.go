@@ -17,7 +17,7 @@ type FrontendSettingsAuthDTO struct {
 	GithubSkipOrgRoleSync       bool `json:"GithubSkipOrgRoleSync"`
 	GitLabSkipOrgRoleSync       bool `json:"GitLabSkipOrgRoleSync"`
 	OktaSkipOrgRoleSync         bool `json:"OktaSkipOrgRoleSync"`
-	DisableSyncLock             bool `json:"DisableSyncLock"`
+	AuthProxyEnableLoginToken   bool `json:"AuthProxyEnableLoginToken"`
 }
 
 type FrontendSettingsBuildInfoDTO struct {
@@ -111,6 +111,7 @@ type FrontendSettingsWhitelabelingDTO struct {
 	LoginSubtitle         *string                                         `json:"loginSubtitle,omitempty"`
 	LoginBoxBackground    *string                                         `json:"loginBoxBackground,omitempty"`
 	LoadingLogo           *string                                         `json:"loadingLogo,omitempty"`
+	HideEdition           *bool                                           `json:"hideEdition,omitempty"`
 	PublicDashboardFooter *FrontendSettingsPublicDashboardFooterConfigDTO `json:"publicDashboardFooter,omitempty"` // PR TODO: type this properly
 }
 
@@ -216,7 +217,7 @@ type FrontendSettingsDTO struct {
 	GeomapDefaultBaseLayerConfig *map[string]interface{} `json:"geomapDefaultBaseLayerConfig,omitempty"`
 	GeomapDisableCustomBaseLayer bool                    `json:"geomapDisableCustomBaseLayer"`
 
-	IsPublicDashboardView bool `json:"isPublicDashboardView"`
+	PublicDashboardAccessToken string `json:"publicDashboardAccessToken"`
 
 	DateFormats setting.DateFormats `json:"dateFormats,omitempty"`
 

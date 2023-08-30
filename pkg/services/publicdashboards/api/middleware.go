@@ -28,9 +28,9 @@ func SetPublicDashboardOrgIdOnContext(publicDashboardService publicdashboards.Se
 	}
 }
 
-// SetPublicDashboardFlag Adds public dashboard flag on context
-func SetPublicDashboardFlag(c *contextmodel.ReqContext) {
-	c.IsPublicDashboardView = true
+// SetPublicDashboardAccessToken Adds public dashboard flag on context
+func SetPublicDashboardAccessToken(c *contextmodel.ReqContext) {
+	c.PublicDashboardAccessToken = web.Params(c.Req)[":accessToken"]
 }
 
 // RequiresExistingAccessToken Middleware to enforce that a public dashboards exists before continuing to handler. This

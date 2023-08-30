@@ -1,8 +1,7 @@
 ---
-title: Plugin publishing and signing criteria
-description: Acceptance criteria for publishing and signing Grafana plugins.
 aliases:
   - ../../plugins/publishing-and-signing-criteria/
+description: Acceptance criteria for publishing and signing Grafana plugins.
 keywords:
   - grafana
   - plugins
@@ -11,6 +10,11 @@ keywords:
   - sign plugin
   - publishing
   - signing
+labels:
+  products:
+    - enterprise
+    - oss
+title: Plugin publishing and signing criteria
 weight: 200
 ---
 

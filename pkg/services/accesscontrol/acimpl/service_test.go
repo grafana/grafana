@@ -7,7 +7,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -25,7 +24,6 @@ import (
 func setupTestEnv(t testing.TB) *Service {
 	t.Helper()
 	cfg := setting.NewCfg()
-	cfg.RBACEnabled = true
 
 	ac := &Service{
 		cfg:           cfg,
@@ -42,12 +40,10 @@ func setupTestEnv(t testing.TB) *Service {
 func TestUsageMetrics(t *testing.T) {
 	tests := []struct {
 		name          string
-		enabled       bool
 		expectedValue int
 	}{
 		{
 			name:          "Expecting metric with value 1",
-			enabled:       true,
 			expectedValue: 1,
 		},
 	}
@@ -55,17 +51,13 @@ func TestUsageMetrics(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			cfg := setting.NewCfg()
-			cfg.RBACEnabled = tt.enabled
 
-			s, errInitAc := ProvideService(
+			s := ProvideOSSService(
 				cfg,
-				db.InitTestDB(t),
-				routing.NewRouteRegister(),
+				database.ProvideService(db.InitTestDB(t)),
 				localcache.ProvideService(),
-				actest.FakeAccessControl{},
 				featuremgmt.WithFeatures(),
 			)
-			require.NoError(t, errInitAc)
 			assert.Equal(t, tt.expectedValue, s.GetUsageStats(context.Background())["stats.oss.accesscontrol.enabled.count"])
 		})
 	}
@@ -527,7 +519,7 @@ func TestService_SearchUsersPermissions(t *testing.T) {
 			}
 
 			siu := &user.SignedInUser{OrgID: 2, Permissions: map[int64]map[string][]string{2: tt.siuPermissions}}
-			got, err := ac.SearchUsersPermissions(ctx, siu, 2, tt.searchOption)
+			got, err := ac.SearchUsersPermissions(ctx, siu, tt.searchOption)
 			if tt.wantErr {
 				require.NotNil(t, err)
 				return

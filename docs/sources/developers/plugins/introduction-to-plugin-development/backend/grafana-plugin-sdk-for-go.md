@@ -1,7 +1,8 @@
 ---
-title: Grafana plugin SDK for Go
 aliases:
   - ../../plugins/backend/grafana-plugin-sdk-for-go/
+description: Learn about the Grafana plugin SDK for Go, a Go module with packages
+  for implementing a Grafana backend plugin.
 keywords:
   - grafana
   - plugins
@@ -10,7 +11,11 @@ keywords:
   - backend-plugins
   - sdk
   - documentation
-description: Learn about the Grafana plugin SDK for Go, a Go module with packages for implementing a Grafana backend plugin.
+labels:
+  products:
+    - enterprise
+    - oss
+title: Grafana plugin SDK for Go
 ---
 
 # Grafana plugin SDK for Go

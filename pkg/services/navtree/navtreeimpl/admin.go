@@ -4,7 +4,6 @@ import (
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/correlations"
-	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/navtree"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
@@ -16,17 +15,7 @@ func (s *ServiceImpl) getAdminNode(c *contextmodel.ReqContext) (*navtree.NavLink
 	hasAccess := ac.HasAccess(s.accessControl, c)
 	hasGlobalAccess := ac.HasGlobalAccess(s.accessControl, s.accesscontrolService, c)
 	orgsAccessEvaluator := ac.EvalPermission(ac.ActionOrgsRead)
-	authConfigUIAvailable := s.license.FeatureEnabled("saml")
-
-	if hasAccess(datasources.ConfigurationPageAccess) {
-		configNodes = append(configNodes, &navtree.NavLink{
-			Text:     "Data sources",
-			Icon:     "database",
-			SubTitle: "Add and configure data sources",
-			Id:       "datasources",
-			Url:      s.cfg.AppSubURL + "/datasources",
-		})
-	}
+	authConfigUIAvailable := s.license.FeatureEnabled("saml") || s.cfg.LDAPAuthEnabled
 
 	// FIXME: while we don't have a permissions for listing plugins the legacy check has to stay as a default
 	if pluginaccesscontrol.ReqCanAdminPlugins(s.cfg)(c) || hasAccess(pluginaccesscontrol.AdminAccessEvaluator) {
@@ -108,6 +97,12 @@ func (s *ServiceImpl) getAdminNode(c *contextmodel.ReqContext) (*navtree.NavLink
 	if hasGlobalAccess(orgsAccessEvaluator) {
 		configNodes = append(configNodes, &navtree.NavLink{
 			Text: "Organizations", SubTitle: "Isolated instances of Grafana running on the same server", Id: "global-orgs", Url: s.cfg.AppSubURL + "/admin/orgs", Icon: "building",
+		})
+	}
+
+	if s.features.IsEnabled(featuremgmt.FlagFeatureToggleAdminPage) && hasAccess(ac.EvalPermission(ac.ActionFeatureManagementRead)) {
+		configNodes = append(configNodes, &navtree.NavLink{
+			Text: "Feature Toggles", SubTitle: "View feature toggles", Id: "feature-toggles", Url: s.cfg.AppSubURL + "/admin/featuretoggles", Icon: "toggle-on",
 		})
 	}
 

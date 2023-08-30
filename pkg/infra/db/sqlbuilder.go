@@ -20,6 +20,7 @@ type SQLBuilder struct {
 	features                     featuremgmt.FeatureToggles
 	sql                          bytes.Buffer
 	params                       []interface{}
+	leftJoin                     string
 	recQry                       string
 	recQryParams                 []interface{}
 	recursiveQueriesAreSupported bool
@@ -43,6 +44,9 @@ func (sb *SQLBuilder) GetSQLString() string {
 	var bf bytes.Buffer
 	bf.WriteString(sb.recQry)
 	bf.WriteString(sb.sql.String())
+	if sb.leftJoin != "" {
+		bf.WriteString(" LEFT OUTER JOIN " + sb.leftJoin)
+	}
 	return bf.String()
 }
 
@@ -65,9 +69,11 @@ func (sb *SQLBuilder) WriteDashboardPermissionFilter(user *user.SignedInUser, pe
 		params       []interface{}
 		recQry       string
 		recQryParams []interface{}
+		leftJoin     string
 	)
 
 	filterRBAC := permissions.NewAccessControlDashboardPermissionFilter(user, permission, queryType, sb.features, sb.recursiveQueriesAreSupported)
+	leftJoin = filterRBAC.LeftJoin()
 	sql, params = filterRBAC.Where()
 	recQry, recQryParams = filterRBAC.With()
 
@@ -75,4 +81,5 @@ func (sb *SQLBuilder) WriteDashboardPermissionFilter(user *user.SignedInUser, pe
 	sb.params = append(sb.params, params...)
 	sb.recQry = recQry
 	sb.recQryParams = recQryParams
+	sb.leftJoin = leftJoin
 }

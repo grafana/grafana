@@ -1,5 +1,5 @@
 import React from 'react';
-import { Redirect } from 'react-router-dom';
+import { Redirect, RouteComponentProps } from 'react-router-dom';
 
 import { isTruthy } from '@grafana/data';
 import { LoginPage } from 'app/core/components/Login/LoginPage';
@@ -10,6 +10,8 @@ import { contextSrv } from 'app/core/services/context_srv';
 import UserAdminPage from 'app/features/admin/UserAdminPage';
 import LdapPage from 'app/features/admin/ldap/LdapPage';
 import { getAlertingRoutes } from 'app/features/alerting/routes';
+import { ConnectionsRedirectNotice } from 'app/features/connections/components/ConnectionsRedirectNotice';
+import { ROUTES as CONNECTIONS_ROUTES } from 'app/features/connections/constants';
 import { getRoutes as getDataConnectionsRoutes } from 'app/features/connections/routes';
 import { DATASOURCES_ROUTES } from 'app/features/datasources/constants';
 import { getRoutes as getPluginCatalogRoutes } from 'app/features/plugins/admin/routes';
@@ -105,30 +107,23 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: DATASOURCES_ROUTES.List,
-      component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "DataSourcesListPage"*/ 'app/features/datasources/pages/DataSourcesListPage')
-      ),
+      component: () => <Redirect to={CONNECTIONS_ROUTES.DataSources} />,
     },
     {
       path: DATASOURCES_ROUTES.Edit,
-      component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "EditDataSourcePage"*/ '../features/datasources/pages/EditDataSourcePage')
+      component: (props: RouteComponentProps<{ uid: string }>) => (
+        <Redirect to={CONNECTIONS_ROUTES.DataSourcesEdit.replace(':uid', props.match.params.uid)} />
       ),
     },
     {
       path: DATASOURCES_ROUTES.Dashboards,
-      component: SafeDynamicImport(
-        () =>
-          import(
-            /* webpackChunkName: "DataSourceDashboards"*/ 'app/features/datasources/pages/DataSourceDashboardsPage'
-          )
+      component: (props: RouteComponentProps<{ uid: string }>) => (
+        <Redirect to={CONNECTIONS_ROUTES.DataSourcesDashboards.replace(':uid', props.match.params.uid)} />
       ),
     },
     {
       path: DATASOURCES_ROUTES.New,
-      component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "NewDataSourcePage"*/ '../features/datasources/pages/NewDataSourcePage')
-      ),
+      component: () => <Redirect to={CONNECTIONS_ROUTES.DataSourcesNew} />,
     },
     {
       path: '/datasources/correlations',
@@ -305,17 +300,18 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     // ADMIN
     {
-      path: '/admin/authentication',
-      roles: () => contextSrv.evaluatePermission(() => ['Admin', 'ServerAdmin'], [AccessControlAction.SettingsWrite]),
-      component: config.licenseInfo.enabledFeatures?.saml
-        ? SafeDynamicImport(
-            () => import(/* webpackChunkName: "AdminAuthentication" */ 'app/features/auth-config/AuthConfigPage')
-          )
-        : () => <Redirect to="/admin" />,
+      path: '/admin',
+      component: () => <NavLandingPage navId="cfg" header={<ConnectionsRedirectNotice />} />,
     },
     {
-      path: '/admin',
-      component: () => <NavLandingPage navId="cfg" />,
+      path: '/admin/authentication',
+      roles: () => contextSrv.evaluatePermission(() => ['Admin', 'ServerAdmin'], [AccessControlAction.SettingsWrite]),
+      component:
+        config.licenseInfo.enabledFeatures?.saml || config.ldapEnabled
+          ? SafeDynamicImport(
+              () => import(/* webpackChunkName: "AdminAuthentication" */ 'app/features/auth-config/AuthConfigPage')
+            )
+          : () => <Redirect to="/admin" />,
     },
     {
       path: '/admin/access',
@@ -362,6 +358,14 @@ export function getAppRoutes(): RouteDescriptor[] {
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "AdminEditOrgPage" */ 'app/features/admin/AdminEditOrgPage')
       ),
+    },
+    {
+      path: '/admin/featuretoggles',
+      component: config.featureToggles.featureToggleAdminPage
+        ? SafeDynamicImport(
+            () => import(/* webpackChunkName: "AdminFeatureTogglesPage" */ 'app/features/admin/AdminFeatureTogglesPage')
+          )
+        : () => <Redirect to="/admin" />,
     },
     {
       path: '/admin/storage/:path*',
@@ -557,7 +561,7 @@ export function getDynamicDashboardRoutes(cfg = config): RouteDescriptor[] {
     {
       path: '/scenes/dashboard/:uid',
       component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "scenes"*/ 'app/features/scenes/dashboard/DashboardScenePage')
+        () => import(/* webpackChunkName: "scenes"*/ 'app/features/dashboard-scene/pages/DashboardScenePage')
       ),
     },
     {

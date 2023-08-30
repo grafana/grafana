@@ -9,6 +9,10 @@ keywords:
   - documentation
   - api
   - serviceaccount
+labels:
+  products:
+    - enterprise
+    - oss
 title: Service account HTTP API
 ---
 

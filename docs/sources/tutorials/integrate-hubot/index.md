@@ -1,14 +1,22 @@
 ---
-title: Integrate Hubot with Grafana
-summary: Learn how to integrate Hubot with Grafana
+Feedback Link: https://github.com/grafana/tutorials/issues/new
+aliases:
+  - /docs/grafana/latest/tutorials/hubot_howto/
+authors:
+  - grafana_labs
+categories:
+  - administration
 description: Learn how to integrate Hubot with Grafana
 id: integrate-hubot
-categories: ['administration']
-tags: ['advanced']
+labels:
+  products:
+    - enterprise
+    - oss
 status: Published
-authors: ['grafana_labs']
-Feedback Link: https://github.com/grafana/tutorials/issues/new
-aliases: ['/docs/grafana/latest/tutorials/hubot_howto/']
+summary: Learn how to integrate Hubot with Grafana
+tags:
+  - advanced
+title: Integrate Hubot with Grafana
 ---
 
 # Integrate Hubot with Grafana

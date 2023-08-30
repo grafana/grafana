@@ -1,11 +1,17 @@
 ---
+canonical: https://grafana.com/docs/grafana/latest/alerting/manage-notifications/template-notifications/use-notification-templates/
+description: Use notification templates in contact points
 keywords:
   - grafana
   - alerting
   - notifications
   - templates
   - use templates
-description: Use notification templates in contact points
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: Use notification templates
 weight: 300
 ---

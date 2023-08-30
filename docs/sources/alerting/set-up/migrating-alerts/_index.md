@@ -4,7 +4,12 @@ aliases:
   - unified-alerting/
   - unified-alerting/difference-old-new/
   - alerting/migrating-alerts/
+canonical: https://grafana.com/docs/grafana/latest/alerting/set-up/migrating-alerts/
 description: Upgrade Grafana alerts
+labels:
+  products:
+    - enterprise
+    - oss
 title: Upgrade Alerting
 weight: 150
 ---
@@ -154,4 +159,3 @@ longer supported.
 **Limitations**
 
 1. Since `Hipchat` and `Sensu` notification channels are no longer supported, legacy alerts associated with these channels are not automatically migrated to Grafana Alerting. Assign the legacy alerts to a supported notification channel so that you continue to receive notifications for those alerts.
-   Silences (expiring after one year) are created for all paused dashboard alerts.

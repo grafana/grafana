@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/kinds"
 	"github.com/grafana/grafana/pkg/kinds/dashboard"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/quota"
@@ -337,7 +338,7 @@ type GetDashboardRefByIDQuery struct {
 type SaveDashboardDTO struct {
 	OrgID     int64
 	UpdatedAt time.Time
-	User      *user.SignedInUser
+	User      identity.Requester
 	Message   string
 	Overwrite bool
 	Dashboard *Dashboard
@@ -418,9 +419,10 @@ type DashboardACL struct {
 func (p DashboardACL) TableName() string { return "dashboard_acl" }
 
 type DashboardACLInfoDTO struct {
-	OrgID       int64 `json:"-" xorm:"org_id"`
-	DashboardID int64 `json:"dashboardId,omitempty" xorm:"dashboard_id"`
-	FolderID    int64 `json:"folderId,omitempty" xorm:"folder_id"`
+	OrgID       int64  `json:"-" xorm:"org_id"`
+	DashboardID int64  `json:"dashboardId,omitempty" xorm:"dashboard_id"`
+	FolderID    int64  `json:"folderId,omitempty" xorm:"folder_id"`
+	FolderUID   string `json:"folderUid,omitempty" xorm:"folder_uid"`
 
 	Created time.Time `json:"created"`
 	Updated time.Time `json:"updated"`
@@ -479,6 +481,7 @@ type FindPersistedDashboardsQuery struct {
 	DashboardUIDs []string
 	Type          string
 	FolderIds     []int64
+	FolderUIDs    []string
 	Tags          []string
 	Limit         int64
 	Page          int64

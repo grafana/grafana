@@ -1,4 +1,4 @@
-import { render, waitFor, screen, within, act } from '@testing-library/react';
+import { render, waitFor, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { Route } from 'react-router-dom';
@@ -6,7 +6,6 @@ import { TestProvider } from 'test/helpers/TestProvider';
 import { ui } from 'test/helpers/alertingRuleEditor';
 
 import { locationService, setDataSourceSrv } from '@grafana/runtime';
-import { ADD_NEW_FOLER_OPTION } from 'app/core/components/Select/FolderPicker';
 import { contextSrv } from 'app/core/services/context_srv';
 import { DashboardSearchHit } from 'app/features/search/types';
 import { GrafanaAlertStateDecision } from 'app/types/unified-alerting-dto';
@@ -184,14 +183,8 @@ describe('RuleEditor grafana managed rules', () => {
     await userEvent.click(ui.buttons.save.get());
     await waitFor(() => expect(mocks.api.setRulerRuleGroup).toHaveBeenCalled());
 
-    //check that '+ Add new' option is in folders drop down even if we don't have values
-    const emptyFolderInput = await ui.inputs.folderContainer.find();
     mocks.searchFolders.mockResolvedValue([] as DashboardSearchHit[]);
-    await act(async () => {
-      renderRuleEditor(uid);
-    });
-    await userEvent.click(within(emptyFolderInput).getByRole('combobox'));
-    expect(screen.getByText(ADD_NEW_FOLER_OPTION)).toBeInTheDocument();
+    expect(screen.getByText('New folder')).toBeInTheDocument();
 
     expect(mocks.api.setRulerRuleGroup).toHaveBeenCalledWith(
       { dataSourceName: GRAFANA_RULES_SOURCE_NAME, apiVersion: 'legacy' },

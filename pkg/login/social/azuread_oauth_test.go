@@ -379,7 +379,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 				Name:   "My Name",
 				Email:  "me@example.com",
 				Login:  "me@example.com",
-				Role:   "",
+				Role:   "Viewer",
 				Groups: []string{"foo", "bar"},
 			},
 			wantErr: false,

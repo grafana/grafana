@@ -4,10 +4,12 @@ import (
 	"errors"
 	"time"
 
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	"github.com/grafana/grafana/pkg/kinds/team"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/user"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // Typed errors
@@ -70,7 +72,7 @@ type DeleteTeamCommand struct {
 type GetTeamByIDQuery struct {
 	OrgID        int64
 	ID           int64
-	SignedInUser *user.SignedInUser
+	SignedInUser identity.Requester
 	HiddenUsers  map[string]struct{}
 }
 
@@ -80,7 +82,7 @@ const FilterIgnoreUser int64 = 0
 type GetTeamsByUserQuery struct {
 	OrgID        int64
 	UserID       int64 `json:"userId"`
-	SignedInUser *user.SignedInUser
+	SignedInUser identity.Requester
 }
 
 type SearchTeamsQuery struct {
@@ -89,7 +91,7 @@ type SearchTeamsQuery struct {
 	Limit        int
 	Page         int
 	OrgID        int64 `xorm:"org_id"`
-	SignedInUser *user.SignedInUser
+	SignedInUser identity.Requester
 	HiddenUsers  map[string]struct{}
 }
 

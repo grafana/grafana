@@ -3,8 +3,8 @@ import React from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
 import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
-import { DataSourcePicker } from '@grafana/runtime';
 import { Card, Field, FieldSet, Input, useStyles2 } from '@grafana/ui';
+import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 
 import { getVariableUsageInfo } from '../../explore/utils/links';
@@ -37,9 +37,9 @@ export const ConfigureCorrelationSourceForm = () => {
   return (
     <>
       <FieldSet
-        label={`Configure the data source that will link to ${
-          getDatasourceSrv().getInstanceSettings(correlation?.targetUID)?.name
-        } (Step 3 of 3)`}
+        label={`Configure the data source that will link to ${getDatasourceSrv().getInstanceSettings(
+          correlation?.targetUID
+        )?.name} (Step 3 of 3)`}
       >
         <p>
           Define what data source will display the correlation, and what data will replace previously defined variables.

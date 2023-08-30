@@ -11,8 +11,9 @@ import {
   DataSourceRef,
   MetricFindValue,
   ScopedVars,
-  TimeRange,
   CoreApp,
+  getSearchFilterScopedVar,
+  LegacyMetricFindQueryOptions,
 } from '@grafana/data';
 import { EditorMode } from '@grafana/experimental';
 import {
@@ -27,7 +28,6 @@ import { toDataQueryResponse } from '@grafana/runtime/src/utils/queryResponse';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
 import { VariableWithMultiSupport } from '../../../variables/types';
-import { getSearchFilterScopedVar, SearchFilterOptions } from '../../../variables/utils';
 import { ResponseParser } from '../ResponseParser';
 import { SqlQueryEditor } from '../components/QueryEditor';
 import { MACRO_NAMES } from '../constants';
@@ -171,17 +171,18 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
     return;
   }
 
-  async metricFindQuery(query: string, optionalOptions?: MetricFindQueryOptions): Promise<MetricFindValue[]> {
+  async metricFindQuery(query: string, options?: LegacyMetricFindQueryOptions): Promise<MetricFindValue[]> {
     let refId = 'tempvar';
-    if (optionalOptions && optionalOptions.variable && optionalOptions.variable.name) {
-      refId = optionalOptions.variable.name;
+    if (options && options.variable && options.variable.name) {
+      refId = options.variable.name;
     }
 
-    const rawSql = this.templateSrv.replace(
-      query,
-      getSearchFilterScopedVar({ query, wildcardChar: '%', options: optionalOptions }),
-      this.interpolateVariable
-    );
+    const scopedVars = {
+      ...options?.scopedVars,
+      ...getSearchFilterScopedVar({ query, wildcardChar: '%', options }),
+    };
+
+    const rawSql = this.templateSrv.replace(query, scopedVars, this.interpolateVariable);
 
     const interpolatedQuery: SQLQuery = {
       refId: refId,
@@ -190,7 +191,7 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
       format: QueryFormat.Table,
     };
 
-    const response = await this.runMetaQuery(interpolatedQuery, optionalOptions);
+    const response = await this.runMetaQuery(interpolatedQuery, options);
     return this.getResponseParser().transformMetricFindResponse(response);
   }
 
@@ -199,7 +200,7 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
     return new DataFrameView<T>(frame);
   }
 
-  private runMetaQuery(request: Partial<SQLQuery>, options?: MetricFindQueryOptions): Promise<DataFrame> {
+  private runMetaQuery(request: Partial<SQLQuery>, options?: LegacyMetricFindQueryOptions): Promise<DataFrame> {
     const range = getTimeSrv().timeRange();
     const refId = request.refId || 'meta';
     const queries: DataQuery[] = [{ ...request, datasource: request.datasource || this.getRef(), refId }];
@@ -235,11 +236,6 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
   }
 }
 
-interface RunSQLOptions extends MetricFindQueryOptions {
+interface RunSQLOptions extends LegacyMetricFindQueryOptions {
   refId?: string;
-}
-
-interface MetricFindQueryOptions extends SearchFilterOptions {
-  range?: TimeRange;
-  variable?: VariableWithMultiSupport;
 }

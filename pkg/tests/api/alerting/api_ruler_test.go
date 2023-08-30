@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	datasourceService "github.com/grafana/grafana/pkg/services/datasources/service"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -41,7 +42,7 @@ func TestIntegrationAlertRulePermissions(t *testing.T) {
 	})
 
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
-	permissionsStore := resourcepermissions.NewStore(store)
+	permissionsStore := resourcepermissions.NewStore(store, featuremgmt.WithFeatures())
 
 	// Create a user to make authenticated requests
 	userID := createUser(t, store, user.CreateUserCommand{
@@ -868,7 +869,7 @@ func TestIntegrationRuleUpdate(t *testing.T) {
 		AppModeProduction:     true,
 	})
 	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
-	permissionsStore := resourcepermissions.NewStore(store)
+	permissionsStore := resourcepermissions.NewStore(store, featuremgmt.WithFeatures())
 
 	// Create a user to make authenticated requests
 	userID := createUser(t, store, user.CreateUserCommand{

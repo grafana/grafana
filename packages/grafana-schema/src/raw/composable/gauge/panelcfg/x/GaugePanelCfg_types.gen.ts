@@ -11,14 +11,18 @@
 
 import * as common from '@grafana/schema';
 
-export const pluginVersion = "10.1.0-pre";
+export const pluginVersion = "10.2.0-pre";
 
 export interface Options extends common.SingleStatBaseOptions {
+  minVizHeight: number;
+  minVizWidth: number;
   showThresholdLabels: boolean;
   showThresholdMarkers: boolean;
 }
 
 export const defaultOptions: Partial<Options> = {
+  minVizHeight: 75,
+  minVizWidth: 75,
   showThresholdLabels: false,
   showThresholdMarkers: true,
 };

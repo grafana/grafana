@@ -8,11 +8,12 @@ import (
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 type Store interface {
@@ -52,7 +53,7 @@ type Store interface {
 }
 
 func New(
-	options Options, cfg *setting.Cfg, router routing.RouteRegister, license licensing.Licensing,
+	options Options, features featuremgmt.FeatureToggles, router routing.RouteRegister, license licensing.Licensing,
 	ac accesscontrol.AccessControl, service accesscontrol.Service, sqlStore db.DB,
 	teamService team.Service, userService user.Service,
 ) (*Service, error) {
@@ -77,8 +78,7 @@ func New(
 
 	s := &Service{
 		ac:          ac,
-		cfg:         cfg,
-		store:       NewStore(sqlStore),
+		store:       NewStore(sqlStore, features),
 		options:     options,
 		license:     license,
 		permissions: permissions,
@@ -102,7 +102,6 @@ func New(
 
 // Service is used to create access control sub system including api / and service for managed resource permission
 type Service struct {
-	cfg     *setting.Cfg
 	ac      accesscontrol.AccessControl
 	service accesscontrol.Service
 	store   Store
@@ -117,17 +116,17 @@ type Service struct {
 	userService user.Service
 }
 
-func (s *Service) GetPermissions(ctx context.Context, user *user.SignedInUser, resourceID string) ([]accesscontrol.ResourcePermission, error) {
+func (s *Service) GetPermissions(ctx context.Context, user identity.Requester, resourceID string) ([]accesscontrol.ResourcePermission, error) {
 	var inheritedScopes []string
 	if s.options.InheritedScopesSolver != nil {
 		var err error
-		inheritedScopes, err = s.options.InheritedScopesSolver(ctx, user.OrgID, resourceID)
+		inheritedScopes, err = s.options.InheritedScopesSolver(ctx, user.GetOrgID(), resourceID)
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	return s.store.GetResourcePermissions(ctx, user.OrgID, GetResourcePermissionsQuery{
+	return s.store.GetResourcePermissions(ctx, user.GetOrgID(), GetResourcePermissionsQuery{
 		User:                 user,
 		Actions:              s.actions,
 		Resource:             s.options.Resource,

@@ -1,6 +1,6 @@
 import { createAction, createReducer } from '@reduxjs/toolkit';
 
-import { DataQuery, getDefaultRelativeTimeRange, RelativeTimeRange } from '@grafana/data';
+import { DataQuery, getDefaultRelativeTimeRange, rangeUtil, RelativeTimeRange } from '@grafana/data';
 import { getNextRefIdChar } from 'app/core/utils/query';
 import { findDataSourceFromExpressionRecursive } from 'app/features/alerting/utils/dataSourceFromExpression';
 import { dataSource as expressionDatasource } from 'app/features/expressions/ExpressionDatasource';
@@ -43,6 +43,7 @@ export const rewireExpressions = createAction<{ oldRefId: string; newRefId: stri
 export const updateExpressionType = createAction<{ refId: string; type: ExpressionQueryType }>('updateExpressionType');
 export const updateExpressionTimeRange = createAction('updateExpressionTimeRange');
 export const updateMaxDataPoints = createAction<{ refId: string; maxDataPoints: number }>('updateMaxDataPoints');
+export const updateMinInterval = createAction<{ refId: string; minInterval: string }>('updateMinInterval');
 
 export const setRecordingRulesQueries = createAction<{ recordingRuleQueries: AlertQuery[]; expression: string }>(
   'setRecordingRulesQueries'
@@ -79,7 +80,7 @@ export const queriesAndExpressionsReducer = createReducer(initialState, (builder
       const query = payload.recordingRuleQueries[0];
       const recordingRuleQuery = {
         ...query,
-        ...{ expr: payload.expression, model: { expr: payload.expression, refId: query.model.refId } },
+        ...{ expr: payload.expression, model: query?.model },
       };
 
       state.queries = [recordingRuleQuery];
@@ -92,6 +93,19 @@ export const queriesAndExpressionsReducer = createReducer(initialState, (builder
               model: {
                 ...query.model,
                 maxDataPoints: action.payload.maxDataPoints,
+              },
+            }
+          : query;
+      });
+    })
+    .addCase(updateMinInterval, (state, action) => {
+      state.queries = state.queries.map((query) => {
+        return query.refId === action.payload.refId
+          ? {
+              ...query,
+              model: {
+                ...query.model,
+                intervalMs: action.payload.minInterval ? rangeUtil.intervalToMs(action.payload.minInterval) : undefined,
               },
             }
           : query;

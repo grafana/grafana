@@ -7,8 +7,13 @@ keywords:
   - configuration
   - documentation
   - oauth
-title: Configure generic OAuth2 authentication
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 menuTitle: Generic OAuth2
+title: Configure generic OAuth2 authentication
 weight: 700
 ---
 
@@ -23,6 +28,7 @@ Grafana provides OAuth2 integrations for the following auth providers:
 - [GitLab OAuth]({{< relref "../gitlab" >}})
 - [Google OAuth]({{< relref "../google" >}})
 - [Grafana Com OAuth]({{< relref "../grafana-com" >}})
+- [Keycloak OAuth]({{< relref "../keycloak" >}})
 - [Okta OAuth]({{< relref "../okta" >}})
 
 If your OAuth2 provider is not listed, you can use generic OAuth2 authentication.

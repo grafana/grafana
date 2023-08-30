@@ -50,7 +50,9 @@ export interface Props extends Themeable2 {
   onPermalinkClick?: (row: LogRowModel) => Promise<void>;
   permalinkedRowId?: string;
   scrollIntoView?: (element: HTMLElement) => void;
+  isFilterLabelActive?: (key: string, value: string) => Promise<boolean>;
   pinnedRowId?: string;
+  containerRendered?: boolean;
 }
 
 interface State {
@@ -144,6 +146,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
                 onPinLine={this.props.onPinLine}
                 onUnpinLine={this.props.onUnpinLine}
                 pinned={this.props.pinnedRowId === row.uid}
+                isFilterLabelActive={this.props.isFilterLabelActive}
                 {...rest}
               />
             ))}
@@ -164,6 +167,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
                 onPinLine={this.props.onPinLine}
                 onUnpinLine={this.props.onUnpinLine}
                 pinned={this.props.pinnedRowId === row.uid}
+                isFilterLabelActive={this.props.isFilterLabelActive}
                 {...rest}
               />
             ))}

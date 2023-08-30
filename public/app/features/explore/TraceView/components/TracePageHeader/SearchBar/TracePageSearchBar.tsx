@@ -13,196 +13,146 @@
 // limitations under the License.
 
 import { css } from '@emotion/css';
-import cx from 'classnames';
-import React, { memo, Dispatch, SetStateAction } from 'react';
+import React, { memo, Dispatch, SetStateAction, useMemo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { config, reportInteraction } from '@grafana/runtime';
-import { Button, useStyles2 } from '@grafana/ui';
+import { Button, Switch, useStyles2 } from '@grafana/ui';
+import { getButtonStyles } from '@grafana/ui/src/components/Button';
 
-import SearchBarInput from '../../common/SearchBarInput';
-import { ubFlexAuto, ubJustifyEnd } from '../../uberUtilityStyles';
+import { SearchProps } from '../../../useSearch';
+import { Trace } from '../../types';
+import { convertTimeFilter } from '../../utils/filter-spans';
 
-// eslint-disable-next-line no-duplicate-imports
-
-export const getStyles = (theme: GrafanaTheme2) => {
-  return {
-    TracePageSearchBar: css`
-      label: TracePageSearchBar;
-      float: right;
-      position: absolute;
-      top: 0;
-      right: 0;
-      z-index: ${theme.zIndex.navbarFixed};
-      background: ${theme.colors.background.primary};
-      margin-bottom: -48px;
-      padding: 8px;
-      margin-right: 2px;
-      border-radius: ${theme.shape.radius.default};
-      box-shadow: ${theme.shadows.z2};
-    `,
-    TracePageSearchBarBar: css`
-      label: TracePageSearchBarBar;
-      max-width: 20rem;
-      transition: max-width 0.5s;
-      &:focus-within {
-        max-width: 100%;
-      }
-    `,
-    TracePageSearchBarSuffix: css`
-      label: TracePageSearchBarSuffix;
-      opacity: 0.6;
-    `,
-    TracePageSearchBarBtn: css`
-      label: TracePageSearchBarBtn;
-      transition: 0.2s;
-      margin-left: 8px;
-    `,
-    TracePageSearchBarBtnDisabled: css`
-      label: TracePageSearchBarBtnDisabled;
-      opacity: 0.5;
-    `,
-    TracePageSearchBarLocateBtn: css`
-      label: TracePageSearchBarLocateBtn;
-      padding: 1px 8px 4px;
-    `,
-  };
-};
+import NextPrevResult from './NextPrevResult';
 
 export type TracePageSearchBarProps = {
-  navigable: boolean;
-  searchValue: string;
-  setSearch: (value: string) => void;
-  searchBarSuffix: string;
-  spanFindMatches: Set<string> | undefined;
-  focusedSpanIdForSearch: string;
-  setSearchBarSuffix: Dispatch<SetStateAction<string>>;
+  trace: Trace;
+  search: SearchProps;
+  spanFilterMatches: Set<string> | undefined;
+  showSpanFilterMatchesOnly: boolean;
+  setShowSpanFilterMatchesOnly: (showMatchesOnly: boolean) => void;
+  focusedSpanIndexForSearch: number;
+  setFocusedSpanIndexForSearch: Dispatch<SetStateAction<number>>;
   setFocusedSpanIdForSearch: Dispatch<SetStateAction<string>>;
   datasourceType: string;
+  clear: () => void;
+  showSpanFilters: boolean;
 };
 
 export default memo(function TracePageSearchBar(props: TracePageSearchBarProps) {
   const {
-    navigable,
-    setSearch,
-    searchValue,
-    searchBarSuffix,
-    spanFindMatches,
-    focusedSpanIdForSearch,
-    setSearchBarSuffix,
+    trace,
+    search,
+    spanFilterMatches,
+    showSpanFilterMatchesOnly,
+    setShowSpanFilterMatchesOnly,
+    focusedSpanIndexForSearch,
+    setFocusedSpanIndexForSearch,
     setFocusedSpanIdForSearch,
     datasourceType,
+    clear,
+    showSpanFilters,
   } = props;
   const styles = useStyles2(getStyles);
 
-  const suffix = searchValue ? (
-    <span className={styles.TracePageSearchBarSuffix} aria-label="Search bar suffix">
-      {searchBarSuffix}
-    </span>
-  ) : null;
-
-  const btnClass = cx(styles.TracePageSearchBarBtn, { [styles.TracePageSearchBarBtnDisabled]: !searchValue });
-  const SearchBarInputProps = {
-    className: cx(styles.TracePageSearchBarBar, ubFlexAuto),
-    name: 'search',
-    suffix,
-  };
-
-  const setTraceSearch = (value: string) => {
-    setFocusedSpanIdForSearch('');
-    setSearchBarSuffix('');
-    setSearch(value);
-  };
-
-  const nextResult = () => {
-    reportInteraction('grafana_traces_trace_view_find_next_prev_clicked', {
-      datasourceType: datasourceType,
-      grafana_version: config.buildInfo.version,
-      direction: 'next',
-    });
-
-    const spanMatches = Array.from(spanFindMatches!);
-    const prevMatchedIndex = spanMatches.indexOf(focusedSpanIdForSearch)
-      ? spanMatches.indexOf(focusedSpanIdForSearch)
-      : 0;
-
-    // new query || at end, go to start
-    if (prevMatchedIndex === -1 || prevMatchedIndex === spanMatches.length - 1) {
-      setFocusedSpanIdForSearch(spanMatches[0]);
-      setSearchBarSuffix(getSearchBarSuffix(1));
-      return;
-    }
-
-    // get next
-    setFocusedSpanIdForSearch(spanMatches[prevMatchedIndex + 1]);
-    setSearchBarSuffix(getSearchBarSuffix(prevMatchedIndex + 2));
-  };
-
-  const prevResult = () => {
-    reportInteraction('grafana_traces_trace_view_find_next_prev_clicked', {
-      datasourceType: datasourceType,
-      grafana_version: config.buildInfo.version,
-      direction: 'prev',
-    });
-
-    const spanMatches = Array.from(spanFindMatches!);
-    const prevMatchedIndex = spanMatches.indexOf(focusedSpanIdForSearch)
-      ? spanMatches.indexOf(focusedSpanIdForSearch)
-      : 0;
-
-    // new query || at start, go to end
-    if (prevMatchedIndex === -1 || prevMatchedIndex === 0) {
-      setFocusedSpanIdForSearch(spanMatches[spanMatches.length - 1]);
-      setSearchBarSuffix(getSearchBarSuffix(spanMatches.length));
-      return;
-    }
-
-    // get prev
-    setFocusedSpanIdForSearch(spanMatches[prevMatchedIndex - 1]);
-    setSearchBarSuffix(getSearchBarSuffix(prevMatchedIndex));
-  };
-
-  const getSearchBarSuffix = (index: number): string => {
-    if (spanFindMatches?.size && spanFindMatches?.size > 0) {
-      return index + ' of ' + spanFindMatches?.size;
-    }
-    return '';
-  };
+  const clearEnabled = useMemo(() => {
+    return (
+      (search.serviceName && search.serviceName !== '') ||
+      (search.spanName && search.spanName !== '') ||
+      convertTimeFilter(search.from || '') ||
+      convertTimeFilter(search.to || '') ||
+      search.tags.length > 1 ||
+      search.tags.some((tag) => {
+        return tag.key;
+      })
+    );
+  }, [search.serviceName, search.spanName, search.from, search.to, search.tags]);
 
   return (
-    <div className={styles.TracePageSearchBar}>
-      <span className={ubJustifyEnd} style={{ display: 'flex' }}>
-        <SearchBarInput
-          onChange={setTraceSearch}
-          value={searchValue}
-          inputProps={SearchBarInputProps}
-          allowClear={true}
-        />
+    <div className={styles.container}>
+      <div className={styles.controls}>
         <>
-          {navigable && (
-            <>
-              <Button
-                className={btnClass}
-                variant="secondary"
-                disabled={!searchValue}
-                type="button"
-                icon="arrow-down"
-                aria-label="Next results button"
-                onClick={nextResult}
+          <div className={styles.clearButton}>
+            <Button
+              variant="destructive"
+              disabled={!clearEnabled}
+              type="button"
+              fill="outline"
+              aria-label="Clear filters button"
+              onClick={clear}
+            >
+              Clear
+            </Button>
+            <div className={styles.matchesOnly}>
+              <Switch
+                value={showSpanFilterMatchesOnly}
+                onChange={(value) => setShowSpanFilterMatchesOnly(value.currentTarget.checked ?? false)}
+                label="Show matches only switch"
               />
               <Button
-                className={btnClass}
+                onClick={() => setShowSpanFilterMatchesOnly(!showSpanFilterMatchesOnly)}
+                className={styles.clearMatchesButton}
                 variant="secondary"
-                disabled={!searchValue}
-                type="button"
-                icon="arrow-up"
-                aria-label="Prev results button"
-                onClick={prevResult}
-              />
-            </>
-          )}
+                fill="text"
+              >
+                Show matches only
+              </Button>
+            </div>
+          </div>
+          <div className={styles.nextPrevResult}>
+            <NextPrevResult
+              trace={trace}
+              spanFilterMatches={spanFilterMatches}
+              setFocusedSpanIdForSearch={setFocusedSpanIdForSearch}
+              focusedSpanIndexForSearch={focusedSpanIndexForSearch}
+              setFocusedSpanIndexForSearch={setFocusedSpanIndexForSearch}
+              datasourceType={datasourceType}
+              showSpanFilters={showSpanFilters}
+            />
+          </div>
         </>
-      </span>
+      </div>
     </div>
   );
 });
+
+export const getStyles = (theme: GrafanaTheme2) => {
+  const buttonStyles = getButtonStyles({ theme, variant: 'secondary', size: 'md', iconOnly: false, fill: 'outline' });
+
+  return {
+    button: css(buttonStyles.button),
+    buttonDisabled: css(buttonStyles.disabled, { pointerEvents: 'none', cursor: 'not-allowed' }),
+    container: css`
+      display: inline;
+    `,
+    controls: css`
+      display: flex;
+      justify-content: flex-end;
+      margin: 5px 0 0 0;
+    `,
+    clearButton: css`
+      order: 1;
+    `,
+    matchesOnly: css`
+      display: inline-flex;
+      margin: 0 0 0 25px;
+      vertical-align: middle;
+      align-items: center;
+
+      span {
+        cursor: pointer;
+      }
+    `,
+    clearMatchesButton: css`
+      color: ${theme.colors.text.primary};
+      &:hover {
+        background: inherit;
+        color: inherit;
+      }
+    `,
+    nextPrevResult: css`
+      margin-left: auto;
+      order: 2;
+    `,
+  };
+};

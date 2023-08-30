@@ -118,6 +118,9 @@ type AppInsightsMetricNameQueryKind string
 
 // Azure Monitor Logs sub-query properties
 type AzureLogsQuery struct {
+	// If set to true the intersection of time ranges specified in the query and Grafana will be used. Otherwise the query time ranges will be used. Defaults to false
+	IntersectTime *bool `json:"intersectTime,omitempty"`
+
 	// KQL query to be executed.
 	Query *string `json:"query,omitempty"`
 
