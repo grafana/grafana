@@ -422,31 +422,13 @@ func InitializeForCLI(cla setting.CommandLineArgs) (Runner, error) {
 // InitializeForCLITarget is a simplified set of dependencies for the CLI, used
 // by the server target subcommand to launch specific dskit modules.
 func InitializeForCLITarget(cla setting.CommandLineArgs) (ModuleRunner, error) {
-	wire.Build(wireCLITargetSet)
+	wire.Build(wireExtsBaseCLISet)
 	return ModuleRunner{}, nil
 }
 
 // InitializeModuleServer is a simplified set of dependencies for the CLI,
 // suitable for running background services and targeting dskit modules.
 func InitializeModuleServer(cla setting.CommandLineArgs, opts Options, apiOpts api.ServerOptions) (*ModuleServer, error) {
-	wire.Build(wireModuleServerSet)
+	wire.Build(wireExtsModuleServerSet)
 	return &ModuleServer{}, nil
 }
-
-// wireModuleServerSet is a wire set for the ModuleServer.
-var wireModuleServerSet = wire.NewSet(
-	NewModule,
-	wireCLITargetSet,
-)
-
-var wireCLITargetSet = wire.NewSet(
-	NewModuleRunner,
-	// build-specific wire sets
-	wireExtsBaseCLISet,
-
-	// Core Grafana dependencies
-	featuremgmt.ProvideManagerService,
-	featuremgmt.ProvideToggles,
-	hooks.ProvideService,
-	setting.NewCfgFromArgs,
-)

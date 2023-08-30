@@ -6,7 +6,8 @@ import (
 )
 
 // ModuleRunner is a simplified version of Runner that is used in the grafana
-// server target command. It pulls in a minimal set of dependencies.
+// server target command. It has a minimal set of dependencies required to
+// launch background/dskit services.
 type ModuleRunner struct {
 	Cfg              *setting.Cfg
 	SettingsProvider setting.Provider
