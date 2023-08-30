@@ -294,21 +294,18 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
         }
       }
 
-      let axisColorOpts = {};
-
-      if (axisColor) {
-        axisColorOpts = {
-          border: {
-            show: true,
-            width: 1,
-            stroke: axisColor,
-          },
-          ticks: {
-            stroke: axisColor,
-          },
-          color: customConfig.axisColorMode === AxisColorMode.Series ? axisColor : undefined,
-        };
-      }
+      let axisColorOpts = {
+        border: {
+          show: customConfig.axisShow,
+          width: 1,
+          stroke: axisColor || theme.colors.text.primary,
+        },
+        ticks: {
+          show: customConfig.axisShow,
+          stroke: axisColor || theme.colors.text.primary,
+        },
+        color: axisColor || theme.colors.text.primary,
+      };
 
       let incrs: uPlot.Axis.Incrs | undefined;
 

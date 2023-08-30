@@ -354,6 +354,7 @@ export interface ScaleDistributionConfig {
  */
 export interface AxisConfig {
   axisCenteredZero?: boolean;
+  axisShow?: boolean;
   axisColorMode?: AxisColorMode;
   axisGridShow?: boolean;
   axisLabel?: string;
