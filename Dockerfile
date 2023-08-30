@@ -58,6 +58,7 @@ COPY pkg pkg
 COPY scripts scripts
 COPY conf conf
 COPY .github .github
+COPY LICENSE ./
 
 RUN make build-go
 
@@ -156,6 +157,7 @@ RUN if [ ! $(getent group "$GF_GID") ]; then \
 
 COPY --from=go-src /tmp/grafana/bin/grafana* /tmp/grafana/bin/*/grafana* ./bin/
 COPY --from=js-src /tmp/grafana/public ./public
+COPY --from=go-src /tmp/grafana/LICENSE ./
 
 EXPOSE 3000
 
