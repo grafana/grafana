@@ -296,12 +296,12 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
 
       let axisColorOpts = {
         border: {
-          show: customConfig.axisShow,
+          show: customConfig.axisShow || false,
           width: 1,
           stroke: axisColor || theme.colors.text.primary,
         },
         ticks: {
-          show: customConfig.axisShow,
+          show: customConfig.axisShow || false,
           stroke: axisColor || theme.colors.text.primary,
         },
         color: axisColor || theme.colors.text.primary,
