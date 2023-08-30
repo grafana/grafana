@@ -249,7 +249,6 @@ func (e *AzureLogAnalyticsDatasource) buildQueries(ctx context.Context, queries 
 }
 
 func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, query *AzureLogAnalyticsQuery, dsInfo types.DatasourceInfo, client *http.Client, url string, tracer tracing.Tracer) (*backend.DataResponse, error) {
-
 	// If azureLogAnalyticsSameAs is defined and set to false, return an error
 	if sameAs, ok := dsInfo.JSONData["azureLogAnalyticsSameAs"]; ok && !sameAs.(bool) {
 		return nil, fmt.Errorf("credentials for Log Analytics are no longer supported. Go to the data source configuration to update Azure Monitor credentials")
