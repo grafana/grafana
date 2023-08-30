@@ -4,10 +4,9 @@ import { FocusScope } from '@react-aria/focus';
 import { OverlayContainer, useOverlay } from '@react-aria/overlays';
 import React, { PropsWithChildren, useRef } from 'react';
 
-import { t } from 'app/core/internationalization';
-
 import { useTheme2 } from '../../themes';
 import { IconName } from '../../types';
+import { t } from '../../utils/i18n';
 import { IconButton } from '../IconButton/IconButton';
 import { HorizontalGroup } from '../Layout/Layout';
 
