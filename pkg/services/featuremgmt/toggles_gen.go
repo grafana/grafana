@@ -420,6 +420,6 @@ const (
 	FlagAngularDeprecationUI = "angularDeprecationUI"
 
 	// FlagDashgpt
-	// Enable AI powered features
+	// Enable AI powered features in dashboards
 	FlagDashgpt = "dashgpt"
 )

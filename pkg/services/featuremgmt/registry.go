@@ -717,7 +717,7 @@ var (
 		},
 		{
 			Name:         "dashgpt",
-			Description:  "Enable AI powered features",
+			Description:  "Enable AI powered features in dashboards",
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: true,
 			Owner:        grafanaDashboardsSquad,

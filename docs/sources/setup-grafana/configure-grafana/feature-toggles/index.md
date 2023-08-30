@@ -131,7 +131,7 @@ Experimental features might be changed or removed without prior notice.
 | `influxdbSqlSupport`                        | Enable InfluxDB SQL query language support with new querying UI                                                                                                                          |
 | `noBasicRole`                               | Enables a new role that has no permissions by default                                                                                                                                    |
 | `angularDeprecationUI`                      | Display new Angular deprecation-related UI features                                                                                                                                      |
-| `dashgpt`                                   | Enable AI powered features                                                                                                                                                               |
+| `dashgpt`                                   | Enable AI powered features in dashboards                                                                                                                                                 |
 
 ## Development feature toggles
 
