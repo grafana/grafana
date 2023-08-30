@@ -367,6 +367,10 @@ const (
 	// Enables response streaming of TraceQL queries of the Tempo data source
 	FlagTraceQLStreaming = "traceQLStreaming"
 
+	// FlagMetricsSummary
+	// Enables metrics summary queries in the Tempo data source
+	FlagMetricsSummary = "metricsSummary"
+
 	// FlagGrafanaAPIServer
 	// Enable Kubernetes API Server for Grafana resources
 	FlagGrafanaAPIServer = "grafanaAPIServer"
@@ -410,4 +414,8 @@ const (
 	// FlagAlertingNoDataErrorExecution
 	// Changes how Alerting state manager handles execution of NoData/Error
 	FlagAlertingNoDataErrorExecution = "alertingNoDataErrorExecution"
+
+	// FlagAngularDeprecationUI
+	// Display new Angular deprecation-related UI features
+	FlagAngularDeprecationUI = "angularDeprecationUI"
 )

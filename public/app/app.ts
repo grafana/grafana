@@ -69,6 +69,7 @@ import { GrafanaJavascriptAgentBackend } from './core/services/echo/backends/gra
 import { KeybindingSrv } from './core/services/keybindingSrv';
 import { startMeasure, stopMeasure } from './core/utils/metrics';
 import { initDevFeatures } from './dev';
+import { initAuthConfig } from './features/auth-config';
 import { getDashboardSrv } from './features/dashboard/services/DashboardSrv';
 import { getTimeSrv } from './features/dashboard/services/TimeSrv';
 import { initGrafanaLive } from './features/live';
@@ -134,6 +135,8 @@ export class GrafanaApp {
       setTimeZoneResolver(() => config.bootData.user.timezone);
       setDashboardSrv(getDashboardSrv());
       initGrafanaLive();
+
+      initAuthConfig();
 
       // Expose the app-wide eventbus
       setAppEvents(appEvents);

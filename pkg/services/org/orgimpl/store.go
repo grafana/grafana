@@ -560,7 +560,7 @@ func (ss *sqlStore) SearchOrgUsers(ctx context.Context, query *org.SearchOrgUser
 			ss.log.Warn("Query user not set for filtering.")
 		}
 
-		if !query.DontEnforceAccessControl && !accesscontrol.IsDisabled(ss.cfg) {
+		if !query.DontEnforceAccessControl {
 			acFilter, err := accesscontrol.Filter(query.User, "org_user.user_id", "users:id:", accesscontrol.ActionOrgUsersRead)
 			if err != nil {
 				return err
