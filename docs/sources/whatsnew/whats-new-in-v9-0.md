@@ -110,6 +110,8 @@ Grafana now uses envelope encryption to encrypt secrets in the database. Envelop
 
 The dashboard previews initially came to life during our internal [Grafana Labs Hackathon](/blog/2022/01/14/all-about-the-grafana-labs-hackathon-2.0/?), and are now ready for an opt-in beta release. The previews provide an overview of all available dashboards and help you quickly find the right dashboard when the dashboard names aren’t enough.
 
+Refer to the [Dashboard previews topic]({{< relref "../../dashboards/previews" >}}) for instructions on how to enable the feature and current limitations.
+
 {{< figure src="/static/img/docs/dashboards/dashboard-previews.png" max-width="750px" caption="Dashboard previews" >}}
 
 ## Panel title search (opt-in beta)
