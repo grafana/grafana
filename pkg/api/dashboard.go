@@ -33,7 +33,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/star"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
-	"github.com/grafana/grafana/pkg/util/errutil"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -49,7 +48,7 @@ func (hs *HTTPServer) isDashboardStarredByUser(c *contextmodel.ReqContext, dashI
 	namespaceID, userIDstr := c.SignedInUser.GetNamespacedID()
 
 	if namespaceID != identity.NamespaceUser {
-		return false, errutil.BadRequest("User does not belong to a user namespace")
+		return false, nil
 	}
 
 	userID, err := identity.IntIdentifier(namespaceID, userIDstr)
