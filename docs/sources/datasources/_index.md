@@ -52,7 +52,7 @@ For example, this video demonstrates the visual Prometheus query builder:
 
 {{< vimeo 720004179 >}}
 
-For general information about querying in Grafana, and common options and user interface elements across all query editors, refer to [Query and transform data]({{< relref "../panels-visualizations/query-transform-data/" >}}).
+For general information about querying in Grafana, and common options and user interface elements across all query editors, refer to [Query and transform data]({{< relref "../../panels-visualizations/query-transform-data/" >}}).
 
 ## Special data sources
 
