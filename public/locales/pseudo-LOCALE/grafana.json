@@ -669,17 +669,6 @@
     "panel": {
       "title": "Ŝĥäřę Päŉęľ"
     },
-    "playlist": {
-      "checkbox-description": "Päŉęľ ĥęįģĥŧş ŵįľľ þę äđĵūşŧęđ ŧő ƒįŧ şčřęęŉ şįžę",
-      "checkbox-label": "Åūŧőƒįŧ",
-      "copy-link-button": "Cőpy",
-      "link-url-label": "Ŀįŉĸ ŮŖĿ",
-      "mode": "Mőđę",
-      "mode-kiosk": "Ķįőşĸ",
-      "mode-normal": "Ńőřmäľ",
-      "mode-tv": "ŦV",
-      "title": "Ŝĥäřę pľäyľįşŧ"
-    },
     "snapshot": {
       "cancel-button": "Cäŉčęľ",
       "copy-link-button": "Cőpy",
@@ -715,6 +704,17 @@
     "view-json": {
       "copy-button": "Cőpy ŧő Cľįpþőäřđ"
     }
+  },
+  "share-playlist": {
+    "checkbox-description": "",
+    "checkbox-label": "",
+    "copy-link-button": "",
+    "link-url-label": "",
+    "mode": "",
+    "mode-kiosk": "",
+    "mode-normal": "",
+    "mode-tv": "",
+    "title": ""
   },
   "shared": {
     "preferences": {

@@ -669,17 +669,6 @@
     "panel": {
       "title": "Share Panel"
     },
-    "playlist": {
-      "checkbox-description": "Panel heights will be adjusted to fit screen size",
-      "checkbox-label": "Autofit",
-      "copy-link-button": "Copy",
-      "link-url-label": "Link URL",
-      "mode": "Mode",
-      "mode-kiosk": "Kiosk",
-      "mode-normal": "Normal",
-      "mode-tv": "TV",
-      "title": "Share playlist"
-    },
     "snapshot": {
       "cancel-button": "Cancel",
       "copy-link-button": "Copy",
@@ -715,6 +704,17 @@
     "view-json": {
       "copy-button": "Copy to Clipboard"
     }
+  },
+  "share-playlist": {
+    "checkbox-description": "Panel heights will be adjusted to fit screen size",
+    "checkbox-label": "Autofit",
+    "copy-link-button": "Copy",
+    "link-url-label": "Link URL",
+    "mode": "Mode",
+    "mode-kiosk": "Kiosk",
+    "mode-normal": "Normal",
+    "mode-tv": "TV",
+    "title": "Share playlist"
   },
   "shared": {
     "preferences": {

@@ -674,17 +674,6 @@
     "panel": {
       "title": "Compartir panel"
     },
-    "playlist": {
-      "checkbox-description": "",
-      "checkbox-label": "",
-      "copy-link-button": "",
-      "link-url-label": "",
-      "mode": "",
-      "mode-kiosk": "",
-      "mode-normal": "",
-      "mode-tv": "",
-      "title": ""
-    },
     "snapshot": {
       "cancel-button": "Cancelar",
       "copy-link-button": "Copiar",
@@ -720,6 +709,17 @@
     "view-json": {
       "copy-button": "Copiar al portapapeles"
     }
+  },
+  "share-playlist": {
+    "checkbox-description": "",
+    "checkbox-label": "",
+    "copy-link-button": "",
+    "link-url-label": "",
+    "mode": "",
+    "mode-kiosk": "",
+    "mode-normal": "",
+    "mode-tv": "",
+    "title": ""
   },
   "shared": {
     "preferences": {

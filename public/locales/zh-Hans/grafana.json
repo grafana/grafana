@@ -664,17 +664,6 @@
     "panel": {
       "title": "分享面板"
     },
-    "playlist": {
-      "checkbox-description": "",
-      "checkbox-label": "",
-      "copy-link-button": "",
-      "link-url-label": "",
-      "mode": "",
-      "mode-kiosk": "",
-      "mode-normal": "",
-      "mode-tv": "",
-      "title": ""
-    },
     "snapshot": {
       "cancel-button": "取消",
       "copy-link-button": "复制",
@@ -710,6 +699,17 @@
     "view-json": {
       "copy-button": "复制到剪贴板"
     }
+  },
+  "share-playlist": {
+    "checkbox-description": "",
+    "checkbox-label": "",
+    "copy-link-button": "",
+    "link-url-label": "",
+    "mode": "",
+    "mode-kiosk": "",
+    "mode-normal": "",
+    "mode-tv": "",
+    "title": ""
   },
   "shared": {
     "preferences": {
