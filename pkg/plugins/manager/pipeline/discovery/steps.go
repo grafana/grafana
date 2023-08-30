@@ -83,7 +83,7 @@ func (c *LoadExternalPluginValidation) Filter(ctx context.Context, cl plugins.Cl
 			// Skip core plugins if the feature flag is enabled and the plugin is in the skip list.
 			// It could be loaded later as an external plugin.
 			if pluginCfg["as_external"] == "true" {
-				c.log.Debug("Skipping plugin loading as a core plugin", "pluginID", bundle.Primary.JSONData.ID)
+				c.log.Debug("Skipping the core plugin load", "pluginID", bundle.Primary.JSONData.ID)
 			} else {
 				res = append(res, bundle)
 			}
@@ -106,7 +106,7 @@ func (c *LoadExternalPluginValidation) Filter(ctx context.Context, cl plugins.Cl
 		}
 		if len(missing) > 0 {
 			for p := range missing {
-				c.log.Warn("Plugin not found in external plugins directory", "pluginID", p)
+				c.log.Warn("Core plugin expected to be loaded as external, but it is missing", "pluginID", p)
 			}
 		}
 	}
