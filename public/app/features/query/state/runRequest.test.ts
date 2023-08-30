@@ -297,6 +297,19 @@ describe('runRequest', () => {
     });
   });
 
+  runRequestScenario('With filterQuery', (ctx) => {
+    ctx.setup(() => {
+      ctx.ds.filterQuery = (q: any) => q.refId === 'A'
+      ctx.request.targets.push({ refId: 'B' });
+      ctx.start();
+    });
+
+    it('should filter out query', () => {
+      expect(ctx.request.targets.length).toBe(1);
+    });
+
+  });
+
   runRequestScenarioThatThrows('on thrown error', (ctx) => {
     ctx.setup(() => {
       ctx.error = new Error('Ohh no');

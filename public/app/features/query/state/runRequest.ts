@@ -183,6 +183,11 @@ export function callQueryMethod(
   request: DataQueryRequest,
   queryFunction?: typeof datasource.query
 ) {
+
+  if (datasource.filterQuery) {
+    request.targets = request.targets.filter((q) => datasource.filterQuery?.(q));
+  }
+
   // If the datasource has defined a default query, make sure it's applied
   request.targets = request.targets.map((t) =>
     queryIsEmpty(t)
