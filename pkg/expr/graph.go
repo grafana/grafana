@@ -169,7 +169,7 @@ func (s *Service) buildGraph(req *Request) (*simple.DirectedGraph, error) {
 			return nil, fmt.Errorf("missing datasource uid in query with refId %v", query.RefID)
 		}
 
-		rawQueryProp := make(map[string]interface{})
+		rawQueryProp := make(map[string]any)
 		queryBytes, err := query.JSON.MarshalJSON()
 
 		if err != nil {

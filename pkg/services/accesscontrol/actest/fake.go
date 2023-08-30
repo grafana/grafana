@@ -19,8 +19,8 @@ type FakeService struct {
 	ExpectedUsersPermissions        map[int64][]accesscontrol.Permission
 }
 
-func (f FakeService) GetUsageStats(ctx context.Context) map[string]interface{} {
-	return map[string]interface{}{}
+func (f FakeService) GetUsageStats(ctx context.Context) map[string]any {
+	return map[string]any{}
 }
 
 func (f FakeService) GetUserPermissions(ctx context.Context, user identity.Requester, options accesscontrol.Options) ([]accesscontrol.Permission, error) {

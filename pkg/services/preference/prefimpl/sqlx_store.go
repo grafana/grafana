@@ -26,7 +26,7 @@ func (s *sqlxStore) Get(ctx context.Context, query *pref.Preference) (*pref.Pref
 
 func (s *sqlxStore) List(ctx context.Context, query *pref.Preference) ([]*pref.Preference, error) {
 	prefs := make([]*pref.Preference, 0)
-	params := make([]interface{}, 0)
+	params := make([]any, 0)
 	filter := ""
 
 	if len(query.Teams) > 0 {

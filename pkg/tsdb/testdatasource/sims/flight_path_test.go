@@ -22,7 +22,7 @@ func TestFlightPathQuery(t *testing.T) {
 			TickHZ: 1,
 		}
 		sq.Stream = true
-		sb, err := json.Marshal(map[string]interface{}{
+		sb, err := json.Marshal(map[string]any{
 			"sim": sq,
 		})
 		require.NoError(t, err)

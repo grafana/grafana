@@ -27,6 +27,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	datasourceservice "github.com/grafana/grafana/pkg/services/datasources/service"
@@ -108,7 +109,7 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 		require.NoError(t, err)
 
 		ds := &datasources.DataSource{
-			JsonData: simplejson.NewFromAny(map[string]interface{}{
+			JsonData: simplejson.NewFromAny(map[string]any{
 				"clientId":   "asd",
 				"dynamicUrl": "https://dynamic.grafana.com",
 				"queryParam": "apiKey",
@@ -276,7 +277,7 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 		require.NoError(t, err)
 
 		ds := &datasources.DataSource{
-			JsonData: simplejson.NewFromAny(map[string]interface{}{
+			JsonData: simplejson.NewFromAny(map[string]any{
 				"clientId": "asd",
 				"tenantId": "mytenantId",
 			}),
@@ -516,7 +517,7 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 		ds := &datasources.DataSource{
 			Type: "custom-datasource",
 			URL:  "http://host/root/",
-			JsonData: simplejson.NewFromAny(map[string]interface{}{
+			JsonData: simplejson.NewFromAny(map[string]any{
 				"oauthPassThru": true,
 			}),
 		}
@@ -534,7 +535,7 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 			TokenType:    "Bearer",
 			Expiry:       time.Now().AddDate(0, 0, 1),
 		}
-		extra := map[string]interface{}{
+		extra := map[string]any{
 			"id_token": "testidtoken",
 		}
 		token = token.WithExtra(extra)
@@ -1118,7 +1119,7 @@ type mockOAuthTokenService struct {
 	oAuthEnabled bool
 }
 
-func (m *mockOAuthTokenService) GetCurrentOAuthToken(ctx context.Context, user *user.SignedInUser) *oauth2.Token {
+func (m *mockOAuthTokenService) GetCurrentOAuthToken(ctx context.Context, user identity.Requester) *oauth2.Token {
 	return m.token
 }
 
@@ -1126,7 +1127,7 @@ func (m *mockOAuthTokenService) IsOAuthPassThruEnabled(ds *datasources.DataSourc
 	return m.oAuthEnabled
 }
 
-func (m *mockOAuthTokenService) HasOAuthEntry(context.Context, *user.SignedInUser) (*login.UserAuth, bool, error) {
+func (m *mockOAuthTokenService) HasOAuthEntry(context.Context, identity.Requester) (*login.UserAuth, bool, error) {
 	return nil, false, nil
 }
 
