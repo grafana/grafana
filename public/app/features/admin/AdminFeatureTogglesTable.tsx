@@ -91,6 +91,7 @@ export function AdminFeatureTogglesTable({ featureToggles }: Props) {
         <div>
           <Switch
             value={row.original.enabled}
+            disabled={row.original.readOnly}
             onChange={(e) => handleToggleChange(row.original, e.currentTarget.checked)}
           />
         </div>
