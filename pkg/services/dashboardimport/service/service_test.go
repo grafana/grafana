@@ -47,7 +47,7 @@ func TestImportDashboardService(t *testing.T) {
 		importLibraryPanelsForDashboard := false
 		connectLibraryPanelsForDashboardCalled := false
 		libraryPanelService := &libraryPanelServiceMock{
-			importLibraryPanelsForDashboardFunc: func(ctx context.Context, signedInUser *user.SignedInUser, libraryPanels *simplejson.Json, panels []interface{}, folderID int64) error {
+			importLibraryPanelsForDashboardFunc: func(ctx context.Context, signedInUser *user.SignedInUser, libraryPanels *simplejson.Json, panels []any, folderID int64) error {
 				importLibraryPanelsForDashboard = true
 				return nil
 			},
@@ -212,7 +212,7 @@ func (s *dashboardServiceMock) ImportDashboard(ctx context.Context, dto *dashboa
 type libraryPanelServiceMock struct {
 	librarypanels.Service
 	connectLibraryPanelsForDashboardFunc func(c context.Context, signedInUser *user.SignedInUser, dash *dashboards.Dashboard) error
-	importLibraryPanelsForDashboardFunc  func(c context.Context, signedInUser *user.SignedInUser, libraryPanels *simplejson.Json, panels []interface{}, folderID int64) error
+	importLibraryPanelsForDashboardFunc  func(c context.Context, signedInUser *user.SignedInUser, libraryPanels *simplejson.Json, panels []any, folderID int64) error
 }
 
 func (s *libraryPanelServiceMock) ConnectLibraryPanelsForDashboard(ctx context.Context, signedInUser *user.SignedInUser, dash *dashboards.Dashboard) error {
@@ -223,7 +223,7 @@ func (s *libraryPanelServiceMock) ConnectLibraryPanelsForDashboard(ctx context.C
 	return nil
 }
 
-func (s *libraryPanelServiceMock) ImportLibraryPanelsForDashboard(ctx context.Context, signedInUser *user.SignedInUser, libraryPanels *simplejson.Json, panels []interface{}, folderID int64) error {
+func (s *libraryPanelServiceMock) ImportLibraryPanelsForDashboard(ctx context.Context, signedInUser *user.SignedInUser, libraryPanels *simplejson.Json, panels []any, folderID int64) error {
 	if s.importLibraryPanelsForDashboardFunc != nil {
 		return s.importLibraryPanelsForDashboardFunc(ctx, signedInUser, libraryPanels, panels, folderID)
 	}

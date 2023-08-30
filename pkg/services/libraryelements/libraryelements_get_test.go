@@ -40,7 +40,7 @@ func TestGetLibraryElement(t *testing.T) {
 						Kind:        int64(model.PanelElement),
 						Type:        "text",
 						Description: "A description",
-						Model: map[string]interface{}{
+						Model: map[string]any{
 							"datasource":  "${DS_GDEV-TESTDATA}",
 							"description": "A description",
 							"id":          float64(1),
@@ -92,26 +92,26 @@ func TestGetLibraryElement(t *testing.T) {
 
 	scenarioWithPanel(t, "When an admin tries to get a connected library panel, it should succeed and return correct connected dashboards",
 		func(t *testing.T, sc scenarioContext) {
-			dashJSON := map[string]interface{}{
-				"panels": []interface{}{
-					map[string]interface{}{
+			dashJSON := map[string]any{
+				"panels": []any{
+					map[string]any{
 						"id": int64(1),
-						"gridPos": map[string]interface{}{
+						"gridPos": map[string]any{
 							"h": 6,
 							"w": 6,
 							"x": 0,
 							"y": 0,
 						},
 					},
-					map[string]interface{}{
+					map[string]any{
 						"id": int64(2),
-						"gridPos": map[string]interface{}{
+						"gridPos": map[string]any{
 							"h": 6,
 							"w": 6,
 							"x": 6,
 							"y": 0,
 						},
-						"libraryPanel": map[string]interface{}{
+						"libraryPanel": map[string]any{
 							"uid":  sc.initialResult.Result.UID,
 							"name": sc.initialResult.Result.Name,
 						},
@@ -137,7 +137,7 @@ func TestGetLibraryElement(t *testing.T) {
 						Kind:        int64(model.PanelElement),
 						Type:        "text",
 						Description: "A description",
-						Model: map[string]interface{}{
+						Model: map[string]any{
 							"datasource":  "${DS_GDEV-TESTDATA}",
 							"description": "A description",
 							"id":          float64(1),

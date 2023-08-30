@@ -35,7 +35,7 @@ func (j *Job) SetRunning(b bool) {
 // ResultLogEntry represents log data for the alert evaluation.
 type ResultLogEntry struct {
 	Message string
-	Data    interface{}
+	Data    any
 }
 
 // EvalMatch represents the series violating the threshold.
