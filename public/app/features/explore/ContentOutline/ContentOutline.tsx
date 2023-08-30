@@ -51,7 +51,7 @@ const scrollIntoView = (ref: string) => {
 const items = [
   {
     title: 'Prometheus',
-    icon: 'gf-prometheus-2',
+    icon: 'gf-prometheus',
     scrollRef: 'prometheus',
   },
   {
@@ -76,7 +76,7 @@ const items = [
   },
   {
     title: 'Traces',
-    icon: 'gf-traces-2',
+    icon: 'gf-traces',
     scrollRef: 'traces',
   },
 ];
@@ -89,9 +89,6 @@ const ContentOutline = ({ visible }: ContentOutlineProps) => {
 
   return (
     <div className={style.content}>
-      {/* TODO: haris - this will be rendered by maping items from an array
-      will have icon, title, and scrollRef
-      */}
       <ToolbarButton
         className={style.buttonStyles}
         icon={expanded ? 'angle-left' : 'angle-right'}
