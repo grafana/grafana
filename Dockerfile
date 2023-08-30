@@ -111,7 +111,7 @@ RUN if grep -i -q alpine /etc/issue; then \
     elif grep -i -q ubuntu /etc/issue; then \
       DEBIAN_FRONTEND=noninteractive && \
       apt-get update && \
-      apt-get install -y ca-certificates curl tzdata && \
+      apt-get install -y ca-certificates curl tzdata musl && \
       apt-get autoremove -y && \
       rm -rf /var/lib/apt/lists/*; \
     else \
