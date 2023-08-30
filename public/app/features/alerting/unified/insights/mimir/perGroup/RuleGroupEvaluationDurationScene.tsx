@@ -15,6 +15,7 @@ export function getRuleGroupEvaluationDurationScene(
         refId: 'A',
         expr: QUERY_A,
         range: true,
+        legendFormat: '{{rule_group}}',
       },
     ],
     $timeRange: timeRange,

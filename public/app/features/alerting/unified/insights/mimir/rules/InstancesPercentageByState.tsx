@@ -16,6 +16,7 @@ export function getInstancesPercentageByStateScene(
         refId: 'A',
         expr: QUERY,
         range: true,
+        legendFormat: '{{alertstate}}'
       },
     ],
     $timeRange: timeRange,

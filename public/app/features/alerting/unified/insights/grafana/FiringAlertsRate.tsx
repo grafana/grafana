@@ -1,5 +1,5 @@
 import { PanelBuilders, SceneFlexItem, SceneQueryRunner, SceneTimeRange } from '@grafana/scenes';
-import { DataSourceRef, GraphDrawStyle, LineInterpolation } from '@grafana/schema';
+import { DataSourceRef, GraphDrawStyle } from '@grafana/schema';
 
 const RATE_FIRING = 'sum(count_over_time({from="state-history"} | json | current="Alerting"[5m]))';
 
@@ -11,7 +11,6 @@ export function getFiringAlertsRateScene(timeRange: SceneTimeRange, datasource: 
         refId: 'A',
         expr: RATE_FIRING,
         range: true,
-        instant: false,
         legendFormat: 'Number of fires',
       },
     ],
@@ -25,7 +24,6 @@ export function getFiringAlertsRateScene(timeRange: SceneTimeRange, datasource: 
       .setTitle(panelTitle)
       .setData(query)
       .setCustomFieldConfig('drawStyle', GraphDrawStyle.Line)
-      .setCustomFieldConfig('lineInterpolation', LineInterpolation.Linear)
       .setCustomFieldConfig('fillOpacity', 10)
       .setCustomFieldConfig('spanNulls', true)
       .setCustomFieldConfig('pointSize', 5)
