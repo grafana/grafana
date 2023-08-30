@@ -28,9 +28,9 @@ export interface PanelEditorState extends SceneObjectState {
   /** Scene object that handles the current drawer */
   drawer?: SceneObject;
 
-  dashboard: SceneObjectRef<DashboardScene>;
-  sourcePanel: SceneObjectRef<VizPanel>;
-  panel: SceneObjectRef<VizPanel>;
+  dashboardRef: SceneObjectRef<DashboardScene>;
+  sourcePanelRef: SceneObjectRef<VizPanel>;
+  panelRef: SceneObjectRef<VizPanel>;
 }
 
 export class PanelEditor extends SceneObjectBase<PanelEditorState> {
@@ -39,7 +39,7 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
   public getPageNav(location: H.Location) {
     return {
       text: 'Edit panel',
-      parentItem: this.state.dashboard.resolve().getPageNav(location),
+      parentItem: this.state.dashboardRef.resolve().getPageNav(location),
     };
   }
 
@@ -61,9 +61,9 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
   };
 
   private commitChanges() {
-    const dashboard = this.state.dashboard.resolve();
-    const sourcePanel = this.state.sourcePanel.resolve();
-    const panel = this.state.panel.resolve();
+    const dashboard = this.state.dashboardRef.resolve();
+    const sourcePanel = this.state.sourcePanelRef.resolve();
+    const panel = this.state.panelRef.resolve();
 
     if (dashboard.state.isEditing) {
       dashboard.setState({ isEditing: true });
@@ -83,7 +83,7 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
   private navigateBackToDashboard() {
     locationService.push(
       getDashboardUrl({
-        uid: this.state.dashboard.resolve().state.uid,
+        uid: this.state.dashboardRef.resolve().state.uid,
         currentQueryParams: locationService.getLocation().search,
       })
     );
@@ -95,9 +95,9 @@ export function buildPanelEditScene(dashboard: DashboardScene, panel: VizPanel):
   const dashboardStateCloned = sceneUtils.cloneSceneObjectState(dashboard.state);
 
   return new PanelEditor({
-    dashboard: new SceneObjectRef(dashboard),
-    sourcePanel: new SceneObjectRef(panel),
-    panel: new SceneObjectRef(panelClone),
+    dashboardRef: new SceneObjectRef(dashboard),
+    sourcePanelRef: new SceneObjectRef(panel),
+    panelRef: new SceneObjectRef(panelClone),
     controls: dashboardStateCloned.controls,
     $variables: dashboardStateCloned.$variables,
     $timeRange: dashboardStateCloned.$timeRange,

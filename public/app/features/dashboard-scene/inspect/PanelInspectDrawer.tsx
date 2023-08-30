@@ -22,7 +22,7 @@ import { InspectTabState } from './types';
 
 interface PanelInspectDrawerState extends SceneObjectState {
   tabs?: Array<SceneObject<InspectTabState>>;
-  panel: SceneObjectRef<VizPanel>;
+  panelRef: SceneObjectRef<VizPanel>;
 }
 
 export class PanelInspectDrawer extends SceneObjectBase<PanelInspectDrawerState> {
@@ -35,7 +35,7 @@ export class PanelInspectDrawer extends SceneObjectBase<PanelInspectDrawerState>
   }
 
   buildTabs() {
-    const panel = this.state.panel.resolve();
+    const panel = this.state.panelRef.resolve();
     const plugin = panel.getPlugin();
     const tabs: Array<SceneObject<InspectTabState>> = [];
 
@@ -52,7 +52,7 @@ export class PanelInspectDrawer extends SceneObjectBase<PanelInspectDrawerState>
   }
 
   getDrawerTitle() {
-    const panel = this.state.panel.resolve();
+    const panel = this.state.panelRef.resolve();
     return sceneGraph.interpolate(panel, `Inspect: ${panel.state.title}`);
   }
 

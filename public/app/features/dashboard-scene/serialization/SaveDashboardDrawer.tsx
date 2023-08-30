@@ -10,16 +10,16 @@ import { DashboardScene } from '../scene/DashboardScene';
 import { transformSceneToSaveModel } from './transformSceneToSaveModel';
 
 interface SaveDashboardDrawerState extends SceneObjectState {
-  dashboard: SceneObjectRef<DashboardScene>;
+  dashboardRef: SceneObjectRef<DashboardScene>;
 }
 
 export class SaveDashboardDrawer extends SceneObjectBase<SaveDashboardDrawerState> {
   onClose = () => {
-    this.state.dashboard.resolve().setState({ drawer: undefined });
+    this.state.dashboardRef.resolve().setState({ drawer: undefined });
   };
 
   static Component = ({ model }: SceneComponentProps<SaveDashboardDrawer>) => {
-    const dashboard = model.state.dashboard.resolve();
+    const dashboard = model.state.dashboardRef.resolve();
     const initialState = dashboard.getInitialState();
     const initialScene = new DashboardScene(initialState!);
     const initialSaveModel = transformSceneToSaveModel(initialScene);

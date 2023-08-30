@@ -34,7 +34,7 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
       }
 
       update.inspectPanelId = values.inspect;
-      update.drawer = new PanelInspectDrawer({ panel: new SceneObjectRef(panel) });
+      update.drawer = new PanelInspectDrawer({ panelRef: new SceneObjectRef(panel) });
     } else if (inspectPanelId) {
       update.inspectPanelId = undefined;
       update.drawer = undefined;
