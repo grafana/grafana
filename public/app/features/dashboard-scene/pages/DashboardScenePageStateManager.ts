@@ -1,11 +1,14 @@
 import { StateManagerBase } from 'app/core/services/StateManagerBase';
 import { dashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
 
+import { buildPanelEditScene, PanelEditor } from '../panel-edit/PanelEditor';
 import { DashboardScene } from '../scene/DashboardScene';
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
+import { findVizPanelById } from '../utils/utils';
 
 export interface DashboardScenePageState {
   dashboard?: DashboardScene;
+  panelEditor?: PanelEditor;
   isLoading?: boolean;
   loadError?: string;
 }
@@ -13,13 +16,31 @@ export interface DashboardScenePageState {
 export class DashboardScenePageStateManager extends StateManagerBase<DashboardScenePageState> {
   private cache: Record<string, DashboardScene> = {};
 
-  async loadAndInit(uid: string) {
+  public async loadAndInit(uid: string) {
     try {
-      const scene = await this.loadScene(uid);
-      scene.startUrlSync();
+      const dashboard = await this.loadScene(uid);
+      dashboard.startUrlSync();
 
-      this.cache[uid] = scene;
-      this.setState({ dashboard: scene, isLoading: false });
+      this.cache[uid] = dashboard;
+      this.setState({ dashboard: dashboard, isLoading: false });
+    } catch (err) {
+      this.setState({ isLoading: false, loadError: String(err) });
+    }
+  }
+
+  public async loadPanelEdit(uid: string, panelId: string) {
+    try {
+      const dashboard = await this.loadScene(uid);
+      this.cache[uid] = dashboard;
+
+      const panel = findVizPanelById(dashboard, panelId);
+
+      if (!panel) {
+        this.setState({ isLoading: false, loadError: 'Panel not found' });
+        return;
+      }
+
+      this.setState({ isLoading: false, panelEditor: buildPanelEditScene(dashboard, panel) });
     } catch (err) {
       this.setState({ isLoading: false, loadError: String(err) });
     }

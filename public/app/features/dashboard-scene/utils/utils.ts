@@ -1,3 +1,5 @@
+import { UrlQueryMap, urlUtil } from '@grafana/data';
+import { locationSearchToObject } from '@grafana/runtime';
 import { SceneDeactivationHandler, sceneGraph, SceneObject, VizPanel } from '@grafana/scenes';
 
 export function getVizPanelKeyForPanelId(panelId: number) {
@@ -63,4 +65,33 @@ export function forceRenderChildren(model: SceneObject, recursive?: boolean) {
     child.forceRender();
     forceRenderChildren(child, recursive);
   });
+}
+
+export interface DashboardUrlOptions {
+  uid?: string;
+  subPath?: string;
+  updateQuery?: UrlQueryMap;
+  /**
+   * Set to location.search to preserve current params
+   */
+  currentQueryParams: string;
+}
+
+export function getDashboardUrl(options: DashboardUrlOptions) {
+  const url = `/scenes/dashboard/${options.uid}${options.subPath ?? ''}`;
+
+  const params = options.currentQueryParams ? locationSearchToObject(options.currentQueryParams) : {};
+
+  if (options.updateQuery) {
+    for (const key of Object.keys(options.updateQuery)) {
+      // removing params with null | undefined
+      if (options.updateQuery[key] === null || options.updateQuery[key] === undefined) {
+        delete params[key];
+      } else {
+        params[key] = options.updateQuery[key];
+      }
+    }
+  }
+
+  return urlUtil.renderUrl(url, params);
 }
