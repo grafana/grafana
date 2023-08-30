@@ -28,6 +28,7 @@ export interface PluginsAPIDashboardSrv {
    * Note: Modifications to the panels are not immediately visible on the dashboard and are not automatically saved.
    *
    * Users must manually save the dashboard to persist any changes.
+   * @public
    */
   getPanels(): PluginsAPIPanelModel[];
 
@@ -81,6 +82,8 @@ export interface PluginsAPIPanelModel extends Pick<PanelModel, 'options'> {
    * Note: While changes are instantly visible on the dashboard, they are not automatically saved.
    *
    * Users must manually save the dashboard to persist any modifications.
+   *
+   * @public
    */
   refresh(): void;
 }
