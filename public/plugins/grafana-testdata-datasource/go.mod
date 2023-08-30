@@ -1,4 +1,4 @@
-module github.com/grafana/testdata
+module github.com/grafana/grafana-testdata-datasource
 
 go 1.19
 

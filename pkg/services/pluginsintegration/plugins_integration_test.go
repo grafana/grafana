@@ -13,6 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"gopkg.in/ini.v1"
 
+	"github.com/grafana/grafana-testdata-datasource/pkg/plugin/testdatasource"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -39,7 +40,6 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/postgres"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus"
 	"github.com/grafana/grafana/pkg/tsdb/tempo"
-	"github.com/grafana/testdata/pkg/plugin/testdatasource"
 )
 
 func TestIntegrationPluginManager(t *testing.T) {
@@ -113,7 +113,7 @@ func verifyPluginQuery(t *testing.T, ctx context.Context, c plugins.Client) {
 	now := time.Unix(1661420870, 0)
 	req := &backend.QueryDataRequest{
 		PluginContext: backend.PluginContext{
-			PluginID: "testdata",
+			PluginID: "grafana-testdata-datasource",
 		},
 		Queries: []backend.DataQuery{
 			{
@@ -184,7 +184,7 @@ func verifyCorePluginCatalogue(t *testing.T, ctx context.Context, ps *store.Serv
 		"opentsdb":                         {},
 		"prometheus":                       {},
 		"tempo":                            {},
-		"testdata":                         {},
+		"grafana-testdata-datasource":      {},
 		"postgres":                         {},
 		"mysql":                            {},
 		"mssql":                            {},

@@ -97,7 +97,7 @@ const builtInPlugins: any = {
   'app/plugins/datasource/postgres/module': postgresPlugin,
   'app/plugins/datasource/mssql/module': mssqlPlugin,
   'app/plugins/datasource/prometheus/module': prometheusPlugin,
-  'app/plugins/datasource/testdata/module': testDataDSPlugin,
+  'app/plugins/datasource/grafana-testdata-datasource/module': testDataDSPlugin,
   'app/plugins/datasource/cloud-monitoring/module': cloudMonitoringPlugin,
   'app/plugins/datasource/azuremonitor/module': azureMonitorPlugin,
   'app/plugins/datasource/tempo/module': tempoPlugin,
