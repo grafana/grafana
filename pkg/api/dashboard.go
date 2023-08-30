@@ -423,6 +423,10 @@ func (hs *HTTPServer) postDashboard(c *contextmodel.ReqContext, cmd dashboards.S
 	var err error
 
 	namespaceID, userIDstr := c.SignedInUser.GetNamespacedID()
+	if namespaceID != identity.NamespaceUser && namespaceID != identity.NamespaceServiceAccount {
+		hs.log.Warn("User does not belong to a user or service account namespace", "namespaceID", namespaceID, "userID", userIDstr)
+		return response.Error(http.StatusBadRequest, "User does not belong to a user or service account namespace", nil)
+	}
 	userID, err := identity.IntIdentifier(namespaceID, userIDstr)
 	if err != nil {
 		hs.log.Warn("Error while parsing user ID", "namespaceID", namespaceID, "userID", userIDstr)
