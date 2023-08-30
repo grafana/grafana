@@ -24,6 +24,8 @@ import { AlertQuery } from 'app/types/unified-alerting-dto';
 import { getTimeRangeForExpression } from '../utils/timeRange';
 
 export interface AlertingQueryResult {
+  error?: string;
+  status?: number; // HTTP status error
   frames: DataFrameJSON[];
 }
 
@@ -180,10 +182,16 @@ const mapToPanelData = (
     const results: Record<string, PanelData> = {};
 
     for (const [refId, result] of Object.entries(data.results)) {
+      const { error, status, frames = [] } = result;
+
+      // extract errors from the /eval results
+      const errors = error ? [{ message: error, refId, status }] : [];
+
       results[refId] = {
+        errors,
         timeRange: dataByQuery[refId].timeRange,
         state: LoadingState.Done,
-        series: result.frames.map(dataFrameFromJSON),
+        series: frames.map(dataFrameFromJSON),
       };
     }
 
