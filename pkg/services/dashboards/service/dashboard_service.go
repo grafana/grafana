@@ -183,14 +183,12 @@ func (dr *DashboardServiceImpl) BuildSaveDashboardCommand(ctx context.Context, d
 		}
 	}
 
-	namespaceID, userIDstr := dto.User.GetNamespacedID()
-	if namespaceID != identity.NamespaceUser && namespaceID != identity.NamespaceServiceAccount {
-		return nil, errutil.BadRequest("account doesn't belong to the user or service namespace")
-	}
-	userID, err := identity.IntIdentifier(namespaceID, userIDstr)
+	namespaceID, userIDstr, err := validateNamespace(dto.User)
 	if err != nil {
-		dr.log.Warn("failed to parse user ID", "namespaceID", namespaceID, "userID", userIDstr, "error", err)
+		return nil, err
 	}
+
+	userID := resolveUserID(namespaceID, userIDstr, dr.log)
 
 	cmd := &dashboards.SaveDashboardCommand{
 		Dashboard: dash.Data,
@@ -208,6 +206,22 @@ func (dr *DashboardServiceImpl) BuildSaveDashboardCommand(ctx context.Context, d
 	}
 
 	return cmd, nil
+}
+
+func validateNamespace(user identity.Requester) (string, string, error) {
+	namespaceID, userIDstr := user.GetNamespacedID()
+	if namespaceID != identity.NamespaceUser && namespaceID != identity.NamespaceServiceAccount {
+		return "", "", errutil.BadRequest("account doesn't belong to the user or service namespace")
+	}
+	return namespaceID, userIDstr, nil
+}
+
+func resolveUserID(namespaceID, idenfitier string, log log.Logger) int64 {
+	userID, err := identity.IntIdentifier(namespaceID, idenfitier)
+	if err != nil {
+		log.Warn("failed to parse user ID", "namespaceID", namespaceID, "userID", idenfitier, "error", err)
+	}
+	return userID
 }
 
 func (dr *DashboardServiceImpl) UpdateDashboardACL(ctx context.Context, uid int64, items []*dashboards.DashboardACL) error {
