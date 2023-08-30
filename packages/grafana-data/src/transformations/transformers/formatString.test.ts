@@ -16,79 +16,70 @@ const frame = toDataFrame({
     {
       name: 'names',
       type: FieldType.string,
-      values: ['alice', 'BOB', 'CharliE', 'david frederick attenborough', 'Emma Fakename', ''],
+      values: ['alice', 'BOB', '  charliE  ', 'david frederick attenborough', 'Emma Fakename', ''],
     },
   ],
 });
 
 const fieldMatches = fieldMatchers.get(FieldMatcherID.byName).get('names');
 
+const options = (format: FormatStringOutput, substringStart?: number, substringEnd?: number) => {
+  return {
+    stringField: 'names',
+    substringStart: substringStart ?? 0,
+    substringEnd: substringEnd ?? 100,
+    outputFormat: format,
+  };
+};
+
 describe('Format String Transformer', () => {
   beforeAll(() => {
     mockTransformationsRegistry([formatStringTransformer]);
   });
 
-  it('will convert string to upper case', () => {
-    const formatter = createStringFormatter(fieldMatches, getFormatStringFunction(FormatStringOutput.UpperCase));
-    const newFrame = formatter(frame, [frame]);
-    const newValues = newFrame[0].values;
+  it('will convert string to each case', () => {
+    const formats = [
+      FormatStringOutput.UpperCase,
+      FormatStringOutput.LowerCase,
+      FormatStringOutput.SentenceCase,
+      FormatStringOutput.TitleCase,
+      FormatStringOutput.PascalCase,
+      FormatStringOutput.CamelCase,
+      FormatStringOutput.SnakeCase,
+      FormatStringOutput.KebabCase,
+      FormatStringOutput.Trim,
+    ];
+    const newValues = [];
 
-    expect(newValues).toEqual(['ALICE', 'BOB', 'CHARLIE', 'DAVID FREDERICK ATTENBOROUGH', 'EMMA FAKENAME', '']);
+    for (let i = 0; i < formats.length; i++) {
+      const formatter = createStringFormatter(fieldMatches, getFormatStringFunction(options(formats[i])));
+      const newFrame = formatter(frame, [frame]);
+      newValues.push(newFrame[0].values);
+    }
+
+    const answers = [
+      ['ALICE', 'BOB', '  CHARLIE  ', 'DAVID FREDERICK ATTENBOROUGH', 'EMMA FAKENAME', ''], // Upper Case
+      ['alice', 'bob', '  charlie  ', 'david frederick attenborough', 'emma fakename', ''], // Lower Case
+      ['Alice', 'BOB', '  charliE  ', 'David frederick attenborough', 'Emma Fakename', ''], // Sentence Case
+      ['Alice', 'Bob', '  Charlie  ', 'David Frederick Attenborough', 'Emma Fakename', ''], // Title Case
+      ['Alice', 'Bob', 'Charlie', 'DavidFrederickAttenborough', 'EmmaFakename', ''], // Pascal Case
+      ['alice', 'bob', 'charlie', 'davidFrederickAttenborough', 'emmaFakename', ''], // Camel Case
+      ['alice', 'bob', '__charlie__', 'david_frederick_attenborough', 'emma_fakename', ''], // Snake Case
+      ['alice', 'bob', '--charlie--', 'david-frederick-attenborough', 'emma-fakename', ''], // Kebab Case
+      ['alice', 'BOB', 'charliE', 'david frederick attenborough', 'Emma Fakename', ''], // Trim
+    ];
+
+    expect(newValues).toEqual(answers);
   });
 
-  it('will convert string to lower case', () => {
-    const formatter = createStringFormatter(fieldMatches, getFormatStringFunction(FormatStringOutput.LowerCase));
+  it('will convert string to substring', () => {
+    const formatter = createStringFormatter(
+      fieldMatches,
+      getFormatStringFunction(options(FormatStringOutput.Substring, 2, 5))
+    );
     const newFrame = formatter(frame, [frame]);
     const newValues = newFrame[0].values;
 
-    expect(newValues).toEqual(['alice', 'bob', 'charlie', 'david frederick attenborough', 'emma fakename', '']);
-  });
-
-  it('will capitalize first letter of a string', () => {
-    const formatter = createStringFormatter(fieldMatches, getFormatStringFunction(FormatStringOutput.SentenceCase));
-    const newFrame = formatter(frame, [frame]);
-    const newValues = newFrame[0].values;
-
-    expect(newValues).toEqual(['Alice', 'BOB', 'CharliE', 'David frederick attenborough', 'Emma Fakename', '']);
-  });
-
-  it('will capitalize first letter of every word in a string', () => {
-    const formatter = createStringFormatter(fieldMatches, getFormatStringFunction(FormatStringOutput.TitleCase));
-    const newFrame = formatter(frame, [frame]);
-    const newValues = newFrame[0].values;
-
-    expect(newValues).toEqual(['Alice', 'Bob', 'Charlie', 'David Frederick Attenborough', 'Emma Fakename', '']);
-  });
-
-  it('will convert string to pascal case', () => {
-    const formatter = createStringFormatter(fieldMatches, getFormatStringFunction(FormatStringOutput.PascalCase));
-    const newFrame = formatter(frame, [frame]);
-    const newValues = newFrame[0].values;
-
-    expect(newValues).toEqual(['Alice', 'Bob', 'Charlie', 'DavidFrederickAttenborough', 'EmmaFakename', '']);
-  });
-
-  it('will convert string to camel case', () => {
-    const formatter = createStringFormatter(fieldMatches, getFormatStringFunction(FormatStringOutput.CamelCase));
-    const newFrame = formatter(frame, [frame]);
-    const newValues = newFrame[0].values;
-
-    expect(newValues).toEqual(['alice', 'bob', 'charlie', 'davidFrederickAttenborough', 'emmaFakename', '']);
-  });
-
-  it('will convert string to snake case', () => {
-    const formatter = createStringFormatter(fieldMatches, getFormatStringFunction(FormatStringOutput.SnakeCase));
-    const newFrame = formatter(frame, [frame]);
-    const newValues = newFrame[0].values;
-
-    expect(newValues).toEqual(['alice', 'bob', 'charlie', 'david_frederick_attenborough', 'emma_fakename', '']);
-  });
-
-  it('will convert string to kebab case', () => {
-    const formatter = createStringFormatter(fieldMatches, getFormatStringFunction(FormatStringOutput.KebabCase));
-    const newFrame = formatter(frame, [frame]);
-    const newValues = newFrame[0].values;
-
-    expect(newValues).toEqual(['alice', 'bob', 'charlie', 'david-frederick-attenborough', 'emma-fakename', '']);
+    expect(newValues).toEqual(['ice', 'B', 'cha', 'vid', 'ma ', '']);
   });
 });

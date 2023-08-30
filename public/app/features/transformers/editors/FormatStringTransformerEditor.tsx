@@ -30,7 +30,7 @@ const fieldNamePickerSettings: StandardEditorsRegistryItem<string, FieldNamePick
   editor: () => null,
 };
 
-export function FormatStringTransfomerEditor({
+function FormatStringTransfomerEditor({
   input,
   options,
   onChange,
@@ -107,31 +107,21 @@ export function FormatStringTransfomerEditor({
             ]}
             value={options.outputFormat}
             onChange={onFormatChange}
+            width={20}
           />
         </InlineField>
+      </InlineFieldRow>
 
-        {options.outputFormat === FormatStringOutput.Substring && 
-          <InlineFieldRow>
-            <InlineField label="Start" labelWidth={7}>
-              <Input
-                pattern="[0-9]*"
-                value={options.substringStart}
-                onChange={onSubstringStartChange}
-                width={7}
-              />
-            </InlineField>
-            <InlineField label="End" labelWidth={7}>
-            <Input
-              pattern="[0-9]*"
-              value={options.substringEnd}
-              onChange={onSubstringEndChange}
-              width={7}
-            />
+      {options.outputFormat === FormatStringOutput.Substring && (
+        <InlineFieldRow>
+          <InlineField label="Substring range" labelWidth={15}>
+            <Input pattern="[0-9]*" value={options.substringStart ?? 0} onChange={onSubstringStartChange} width={7} />
+          </InlineField>
+          <InlineField>
+            <Input pattern="[0-9]*" value={options.substringEnd ?? 0} onChange={onSubstringEndChange} width={7} />
           </InlineField>
         </InlineFieldRow>
-        }
-
-      </InlineFieldRow>
+      )}
     </>
   );
 }
