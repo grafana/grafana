@@ -2,6 +2,7 @@ package permissions_test
 
 import (
 	"context"
+	"fmt"
 	"strconv"
 	"strings"
 	"testing"
@@ -169,7 +170,7 @@ func TestIntegration_DashboardPermissionFilter(t *testing.T) {
 
 		usr := &user.SignedInUser{OrgID: 1, OrgRole: org.RoleViewer, Permissions: map[int64]map[string][]string{1: accesscontrol.GroupScopesByAction(tt.permissions)}}
 
-		for _, features := range []*featuremgmt.FeatureManager{featuremgmt.WithFeatures(), featuremgmt.WithFeatures(featuremgmt.FlagPermissionsFilterRemoveSubquery)} {
+		for _, features := range []*featuremgmt.FeatureManager{featuremgmt.WithFeatures(), featuremgmt.WithFeatures(featuremgmt.FlagPermissionsFilterRemoveSubquery), featuremgmt.WithFeatures(featuremgmt.FlagSplitScopes)} {
 			m := features.GetEnabled(context.Background())
 			keys := make([]string, 0, len(m))
 			for k := range m {
@@ -188,6 +189,7 @@ func TestIntegration_DashboardPermissionFilter(t *testing.T) {
 					if leftJoin != "" {
 						s = recQry + "\nSELECT COUNT(*) FROM dashboard LEFT OUTER JOIN " + leftJoin + " WHERE " + q
 					}
+					fmt.Println(s)
 					_, err := sess.SQL(s, params...).Get(&result)
 					return err
 				})
