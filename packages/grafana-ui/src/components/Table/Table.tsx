@@ -222,7 +222,8 @@ export const Table = memo((props: Props) => {
 
       const isFieldPopulated = (f: Field) => f.values.length > 0;
       const isDataFramePopulated = (df: DataFrame) => df.fields.some((f: Field) => isFieldPopulated(f));
-      const isNestedDataFieldPopulated = (dfs: DataFrame[] | undefined) => dfs ? dfs.some((df: DataFrame) => isDataFramePopulated(df)) : false;
+      const isNestedDataFieldPopulated = (dfs: DataFrame[] | undefined) =>
+        dfs ? dfs.some((df: DataFrame) => isDataFramePopulated(df)) : false;
       row.canExpand = isNestedDataFieldPopulated(nestedDataField?.values[rowIndex]);
 
       const expandedRowStyle = state.expanded[row.index] ? css({ '&:hover': { background: 'inherit' } }) : {};
