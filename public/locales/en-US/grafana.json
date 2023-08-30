@@ -301,9 +301,6 @@
       "unknown": "Unknown error occurred"
     }
   },
-  "modal": {
-    "close-tooltip": "Close"
-  },
   "nav": {
     "add-new-connections": {
       "title": "Add new connection"
