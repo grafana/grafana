@@ -126,7 +126,7 @@ e2e.scenario({
     // Need to wait for 2 calls as there's 2 panels
     e2e().wait(['@dataQuery', '@dataQuery']);
 
-    e2e.components.Panels.Panel.title('Panel in timezone')
+    e2e.components.Panels.Panel.title('Panel with relative time override')
       .should('be.visible')
       .within(() => {
         e2e.components.Panels.Visualization.Table.body()
@@ -136,7 +136,7 @@ e2e.scenario({
           });
       });
 
-    e2e.components.Panels.Panel.title('Panel with relative time override')
+    e2e.components.Panels.Panel.title('Panel in timezone')
       .should('be.visible')
       .within(() => {
         e2e.components.Panels.Visualization.Table.body()
@@ -173,7 +173,7 @@ e2e.scenario({
     // Need to wait for 2 calls as there's 2 panels
     e2e().wait(['@dataQuery', '@dataQuery']);
 
-    e2e.components.Panels.Panel.title('Panel in timezone')
+    e2e.components.Panels.Panel.title('Panel with relative time override')
       .should('be.visible')
       .within(() => {
         e2e.components.Panels.Visualization.Table.body()
@@ -183,7 +183,7 @@ e2e.scenario({
           });
       });
 
-    e2e.components.Panels.Panel.title('Panel with relative time override')
+    e2e.components.Panels.Panel.title('Panel in timezone')
       .should('be.visible')
       .within(() => {
         e2e.components.Panels.Visualization.Table.body()
@@ -220,7 +220,7 @@ e2e.scenario({
     // Need to wait for 2 calls as there's 2 panels
     e2e().wait(['@dataQuery', '@dataQuery']);
 
-    e2e.components.Panels.Panel.title('Panel in timezone')
+    e2e.components.Panels.Panel.title('Panel with relative time override')
       .should('be.visible')
       .within(() => {
         e2e.components.Panels.Visualization.Table.body()
@@ -230,7 +230,7 @@ e2e.scenario({
           });
       });
 
-    e2e.components.Panels.Panel.title('Panel with relative time override')
+    e2e.components.Panels.Panel.title('Panel in timezone')
       .should('be.visible')
       .within(() => {
         e2e.components.Panels.Visualization.Table.body()
