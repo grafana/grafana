@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	ngalertmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/tsdb/loki/kinds/dataquery"
 )
 
@@ -145,7 +146,8 @@ func callResource(ctx context.Context, req *backend.CallResourceRequest, sender 
 
 func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	dsInfo, err := s.getDSInfo(ctx, req.PluginContext)
-	logger := logger.FromContext(ctx).New("api", "QueryData")
+	_, fromAlert := req.Headers[ngalertmodels.FromAlertHeaderName]
+	logger := logger.FromContext(ctx).New("api", "QueryData", "fromAlert", fromAlert)
 	if err != nil {
 		logger.Error("Failed to get data source info", "err", err)
 		result := backend.NewQueryDataResponse()
