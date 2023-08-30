@@ -2884,7 +2884,7 @@ environment:
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
-name: release-test-frontend
+name: tag-test-frontend
 node:
   type: no-parallel
 platform:
@@ -2944,7 +2944,7 @@ environment:
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
-name: release-test-backend
+name: tag-test-backend
 node:
   type: no-parallel
 platform:
@@ -3018,12 +3018,12 @@ volumes:
 clone:
   retries: 3
 depends_on:
-- release-test-backend
-- release-test-frontend
+- '%s-test-backend'
+- '%s-test-frontend'
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
-name: rgm-tag-prerelease
+name: rgm-%s-prerelease
 node:
   type: no-parallel
 platform:
@@ -3076,7 +3076,7 @@ depends_on:
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
-name: rgm-tag-prerelease-windows
+name: rgm-%s-prerelease-windows
 platform:
   arch: amd64
   os: windows
@@ -3143,7 +3143,7 @@ depends_on:
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
-name: rgm-tag-verify-prerelease-assets
+name: rgm-%s-verify-prerelease-assets
 node:
   type: no-parallel
 platform:
@@ -3188,53 +3188,7 @@ environment:
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
-name: release-whatsnew-checker
-node:
-  type: no-parallel
-platform:
-  arch: amd64
-  os: linux
-services: []
-steps:
-- commands:
-  - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
-  depends_on: []
-  environment:
-    CGO_ENABLED: 0
-  image: golang:1.20.6
-  name: compile-build-cmd
-- commands:
-  - ./bin/build whatsnew-checker
-  depends_on:
-  - compile-build-cmd
-  image: golang:1.20.6
-  name: whats-new-checker
-trigger:
-  cron:
-    include:
-    - nightly-release
-  event:
-    include:
-    - promote
-    - cron
-  target:
-    include:
-    - nightly
-type: docker
-volumes:
-- host:
-    path: /var/run/docker.sock
-  name: docker
----
-clone:
-  retries: 3
-depends_on: []
-environment:
-  EDITION: oss
-image_pull_secrets:
-- dockerconfigjson
-kind: pipeline
-name: release-test-frontend
+name: nightly-test-frontend
 node:
   type: no-parallel
 platform:
@@ -3296,7 +3250,7 @@ environment:
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
-name: release-test-backend
+name: nightly-test-backend
 node:
   type: no-parallel
 platform:
@@ -3372,12 +3326,12 @@ volumes:
 clone:
   retries: 3
 depends_on:
-- release-test-backend
-- release-test-frontend
+- '%s-test-backend'
+- '%s-test-frontend'
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
-name: rgm-tag-prerelease
+name: rgm-%s-prerelease
 node:
   type: no-parallel
 platform:
@@ -3432,7 +3386,7 @@ depends_on:
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
-name: rgm-tag-prerelease-windows
+name: rgm-%s-prerelease-windows
 platform:
   arch: amd64
   os: windows
@@ -3501,7 +3455,7 @@ depends_on:
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
-name: rgm-tag-verify-prerelease-assets
+name: rgm-%s-verify-prerelease-assets
 node:
   type: no-parallel
 platform:
@@ -5044,6 +4998,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 2bf237f341ff8b6435e4f14174ab63c1863f21ba23643d7c583465e1db3604d4
+hmac: c62e305b6a0f4960f56602a4118d4c408bbfe8cc032af30103c73aceb5d7b42c
 
 ...
