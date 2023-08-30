@@ -64,7 +64,7 @@ function setupTestContext(options: Partial<Props>) {
     isInView: false,
     width: 100,
     height: 100,
-    onInstanceStateChange: () => {},
+    onInstanceStateChange: () => { },
   };
 
   const props = { ...defaults, ...options };
@@ -129,7 +129,7 @@ describe('PanelStateWrapper', () => {
         );
 
         const button = screen.getByRole('button', {
-          name: selectors.components.Panels.Panel.headerCornerInfo('error'),
+          name: "Panel status",
         });
         expect(button).toBeInTheDocument();
         await act(async () => {

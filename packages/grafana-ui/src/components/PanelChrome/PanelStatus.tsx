@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 
 import { useStyles2 } from '../../themes';
 import { ToolbarButton } from '../ToolbarButton/ToolbarButton';
@@ -24,6 +25,7 @@ export function PanelStatus({ message, onClick, ariaLabel = 'status' }: Props) {
       iconSize="md"
       tooltip={message || ''}
       aria-label={ariaLabel}
+      data-testid={selectors.components.Panels.Panel.status}
     />
   );
 }
