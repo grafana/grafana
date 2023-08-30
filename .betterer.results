@@ -5296,10 +5296,10 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Do not use any type assertions.", "1"]
     ],
-    "public/plugins/testdata/src/ConfigEditor.tsx:5381": [
+    "public/plugins/grafana-testdata-datasource/src/ConfigEditor.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
-    "public/plugins/testdata/src/QueryEditor.tsx:5381": [
+    "public/plugins/grafana-testdata-datasource/src/QueryEditor.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Do not use any type assertions.", "1"],
       [0, 0, 0, "Do not use any type assertions.", "2"],
@@ -5308,41 +5308,41 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "5"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "6"]
     ],
-    "public/plugins/testdata/src/components/RandomWalkEditor.tsx:5381": [
+    "public/plugins/grafana-testdata-datasource/src/components/RandomWalkEditor.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Do not use any type assertions.", "1"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
       [0, 0, 0, "Do not use any type assertions.", "3"]
     ],
-    "public/plugins/testdata/src/components/RawFrameEditor.tsx:5381": [
+    "public/plugins/grafana-testdata-datasource/src/components/RawFrameEditor.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
-    "public/plugins/testdata/src/components/SimulationQueryEditor.tsx:5381": [
+    "public/plugins/grafana-testdata-datasource/src/components/SimulationQueryEditor.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Do not use any type assertions.", "1"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "3"]
     ],
-    "public/plugins/testdata/src/components/SimulationSchemaForm.tsx:5381": [
+    "public/plugins/grafana-testdata-datasource/src/components/SimulationSchemaForm.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
     ],
-    "public/plugins/testdata/src/components/StreamingClientEditor.tsx:5381": [
+    "public/plugins/grafana-testdata-datasource/src/components/StreamingClientEditor.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
-    "public/plugins/testdata/src/datasource.ts:5381": [
+    "public/plugins/grafana-testdata-datasource/src/datasource.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
     ],
-    "public/plugins/testdata/src/nodeGraphUtils.ts:5381": [
+    "public/plugins/grafana-testdata-datasource/src/nodeGraphUtils.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "2"]
     ],
-    "public/plugins/testdata/src/runStreams.ts:5381": [
+    "public/plugins/grafana-testdata-datasource/src/runStreams.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
-    "public/plugins/testdata/src/testData/serviceMapResponse.ts:5381": [
+    "public/plugins/grafana-testdata-datasource/src/testData/serviceMapResponse.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Do not use any type assertions.", "1"]
     ],
