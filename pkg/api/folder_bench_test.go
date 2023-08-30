@@ -2,18 +2,13 @@ package api
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"math/rand"
-	"net/http"
-	"net/http/httptest"
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -47,7 +42,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
-	"github.com/grafana/grafana/pkg/web/webtest"
 )
 
 const (
@@ -73,108 +67,110 @@ type benchScenario struct {
 }
 
 func BenchmarkFolderListAndSearch(b *testing.B) {
-	start := time.Now()
-	b.Log("setup start")
-	sc := setupDB(b)
-	b.Log("setup time:", time.Since(start))
+	//start := time.Now()
+	//b.Log("setup start")
+	//sc := setupDB(b)
+	//b.Log("setup time:", time.Since(start))
+	//b.Log("number of folders in root: ", Lvl0FolderNum)
+	//b.Log("number of dashboard in : ", Lvl0FolderNum)
 
-	all := LEVEL0_FOLDER_NUM*LEVEL0_DASHBOARD_NUM + LEVEL0_FOLDER_NUM*LEVEL1_FOLDER_NUM*LEVEL1_DASHBOARD_NUM + LEVEL0_FOLDER_NUM*LEVEL1_FOLDER_NUM*LEVEL2_FOLDER_NUM*LEVEL2_DASHBOARD_NUM
+	//all := LEVEL0_FOLDER_NUM*LEVEL0_DASHBOARD_NUM + LEVEL0_FOLDER_NUM*LEVEL1_FOLDER_NUM*LEVEL1_DASHBOARD_NUM + LEVEL0_FOLDER_NUM*LEVEL1_FOLDER_NUM*LEVEL2_FOLDER_NUM*LEVEL2_DASHBOARD_NUM
 
-	// the maximum number of dashboards that can be returned by the search API
-	// otherwise the handler fails with 422 status code
-	const limit = 1000
-	withLimit := func(res int) int {
-		if res > limit {
-			return limit
-		}
-		return res
-	}
+	//// the maximum number of dashboards that can be returned by the search API
+	//// otherwise the handler fails with 422 status code
+	//const limit = 1000
+	//withLimit := func(res int) int {
+	//	if res > limit {
+	//		return limit
+	//	}
+	//	return res
+	//}
 
-	benchmarks := []struct {
-		desc        string
-		url         string
-		expectedLen int
-		features    *featuremgmt.FeatureManager
-	}{
-		//{
-		//	desc:        "get root folders with nested folders feature enabled",
-		//	url:         "/api/folders",
-		//	expectedLen: LEVEL0_FOLDER_NUM,
-		//	features:    featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders, featuremgmt.FlagPermissionsFilterRemoveSubquery),
-		//},
-		//{
-		//	desc:        "get subfolders with nested folders feature enabled",
-		//	url:         "/api/folders?parentUid=folder0",
-		//	expectedLen: LEVEL1_FOLDER_NUM,
-		//	features:    featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders, featuremgmt.FlagPermissionsFilterRemoveSubquery),
-		//},
-		//{
-		//	desc:        "list all inherited dashboards with nested folders feature enabled",
-		//	url:         "/api/search?type=dash-db&limit=1000",
-		//	expectedLen: withLimit(all),
-		//	features:    featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders, featuremgmt.FlagPermissionsFilterRemoveSubquery),
-		//},
-		//{
-		//	desc:        "search for pattern with nested folders feature enabled",
-		//	url:         "/api/search?type=dash-db&query=dashboard_0_0&limit=1000",
-		//	expectedLen: withLimit(1 + LEVEL1_DASHBOARD_NUM + LEVEL2_FOLDER_NUM*LEVEL2_DASHBOARD_NUM),
-		//	features:    featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders, featuremgmt.FlagPermissionsFilterRemoveSubquery),
-		//},
-		//{
-		//	desc:        "search for specific dashboard nested folders feature enabled",
-		//	url:         "/api/search?type=dash-db&query=dashboard_0_0_0_0",
-		//	expectedLen: 1,
-		//	features:    featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders, featuremgmt.FlagPermissionsFilterRemoveSubquery),
-		//},
-		{
-			desc:        "get root folders with nested folders and split scopes enabled",
-			url:         "/api/folders",
-			expectedLen: LEVEL0_FOLDER_NUM,
-			features:    featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders, featuremgmt.FlagSplitScopes),
-		},
-		{
-			desc:        "get subfolders with nested folders and split scopes enabled",
-			url:         "/api/folders?parentUid=folder0",
-			expectedLen: LEVEL1_FOLDER_NUM,
-			features:    featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders, featuremgmt.FlagSplitScopes),
-		},
-		{
-			desc:        "list all inherited dashboards with nested folders and split scopes enabled",
-			url:         "/api/search?type=dash-db&limit=1000",
-			expectedLen: withLimit(all),
-			features:    featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders, featuremgmt.FlagSplitScopes),
-		},
-		{
-			desc:        "search for pattern with nested folders and split scopes enabled",
-			url:         "/api/search?type=dash-db&query=dashboard_0_0&limit=1000",
-			expectedLen: withLimit(1 + LEVEL1_DASHBOARD_NUM + LEVEL2_FOLDER_NUM*LEVEL2_DASHBOARD_NUM),
-			features:    featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders, featuremgmt.FlagSplitScopes),
-		},
-		{
-			desc:        "search for specific dashboard nested folders and split scopes enabled",
-			url:         "/api/search?type=dash-db&query=dashboard_0_0_0_0",
-			expectedLen: 1,
-			features:    featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders, featuremgmt.FlagSplitScopes),
-		},
-	}
-	for _, bm := range benchmarks {
-		b.Run(bm.desc, func(b *testing.B) {
-			m := setupServer(b, sc, bm.features)
-			req := httptest.NewRequest(http.MethodGet, bm.url, nil)
-			req = webtest.RequestWithSignedInUser(req, sc.signedInUser)
-			b.ResetTimer()
+	//benchmarks := []struct {
+	//	desc        string
+	//	url         string
+	//	expectedLen int
+	//	features    *featuremgmt.FeatureManager
+	//}{
+	//	{
+	//		desc:        "get root folders with nested folders feature enabled",
+	//		url:         "/api/folders",
+	//		expectedLen: LEVEL0_FOLDER_NUM,
+	//		features:    featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders, featuremgmt.FlagPermissionsFilterRemoveSubquery),
+	//	},
+	//	{
+	//		desc:        "get subfolders with nested folders feature enabled",
+	//		url:         "/api/folders?parentUid=folder0",
+	//		expectedLen: LEVEL1_FOLDER_NUM,
+	//		features:    featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders, featuremgmt.FlagPermissionsFilterRemoveSubquery),
+	//	},
+	//	{
+	//		desc:        "list all inherited dashboards with nested folders feature enabled",
+	//		url:         "/api/search?type=dash-db&limit=1000",
+	//		expectedLen: withLimit(all),
+	//		features:    featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders, featuremgmt.FlagPermissionsFilterRemoveSubquery),
+	//	},
+	//	{
+	//		desc:        "search for pattern with nested folders feature enabled",
+	//		url:         "/api/search?type=dash-db&query=dashboard_0_0&limit=1000",
+	//		expectedLen: withLimit(1 + LEVEL1_DASHBOARD_NUM + LEVEL2_FOLDER_NUM*LEVEL2_DASHBOARD_NUM),
+	//		features:    featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders, featuremgmt.FlagPermissionsFilterRemoveSubquery),
+	//	},
+	//	{
+	//		desc:        "search for specific dashboard nested folders feature enabled",
+	//		url:         "/api/search?type=dash-db&query=dashboard_0_0_0_0",
+	//		expectedLen: 1,
+	//		features:    featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders, featuremgmt.FlagPermissionsFilterRemoveSubquery),
+	//	},
+	//	{
+	//		desc:        "get root folders with nested folders and split scopes enabled",
+	//		url:         "/api/folders",
+	//		expectedLen: LEVEL0_FOLDER_NUM,
+	//		features:    featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders, featuremgmt.FlagSplitScopes),
+	//	},
+	//	{
+	//		desc:        "get subfolders with nested folders and split scopes enabled",
+	//		url:         "/api/folders?parentUid=folder0",
+	//		expectedLen: LEVEL1_FOLDER_NUM,
+	//		features:    featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders, featuremgmt.FlagSplitScopes),
+	//	},
+	//	{
+	//		desc:        "list all inherited dashboards with nested folders and split scopes enabled",
+	//		url:         "/api/search?type=dash-db&limit=1000",
+	//		expectedLen: withLimit(all),
+	//		features:    featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders, featuremgmt.FlagSplitScopes),
+	//	},
+	//	{
+	//		desc:        "search for pattern with nested folders and split scopes enabled",
+	//		url:         "/api/search?type=dash-db&query=dashboard_0_0&limit=1000",
+	//		expectedLen: withLimit(1 + LEVEL1_DASHBOARD_NUM + LEVEL2_FOLDER_NUM*LEVEL2_DASHBOARD_NUM),
+	//		features:    featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders, featuremgmt.FlagSplitScopes),
+	//	},
+	//	{
+	//		desc:        "search for specific dashboard nested folders and split scopes enabled",
+	//		url:         "/api/search?type=dash-db&query=dashboard_0_0_0_0",
+	//		expectedLen: 1,
+	//		features:    featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders, featuremgmt.FlagSplitScopes),
+	//	},
+	//}
+	//for _, bm := range benchmarks {
+	//	b.Run(bm.desc, func(b *testing.B) {
+	//		m := setupServer(b, sc, bm.features)
+	//		req := httptest.NewRequest(http.MethodGet, bm.url, nil)
+	//		req = webtest.RequestWithSignedInUser(req, sc.signedInUser)
+	//		b.ResetTimer()
 
-			for i := 0; i < b.N; i++ {
-				rec := httptest.NewRecorder()
-				m.ServeHTTP(rec, req)
-				require.Equal(b, 200, rec.Code)
-				var resp []dtos.FolderSearchHit
-				err := json.Unmarshal(rec.Body.Bytes(), &resp)
-				require.NoError(b, err)
-				assert.Len(b, resp, bm.expectedLen)
-			}
-		})
-	}
+	//		for i := 0; i < b.N; i++ {
+	//			rec := httptest.NewRecorder()
+	//			m.ServeHTTP(rec, req)
+	//			require.Equal(b, 200, rec.Code)
+	//			var resp []dtos.FolderSearchHit
+	//			err := json.Unmarshal(rec.Body.Bytes(), &resp)
+	//			require.NoError(b, err)
+	//			assert.Len(b, resp, bm.expectedLen)
+	//		}
+	//	})
+	//}
 }
 
 func setupDB(b testing.TB) benchScenario {

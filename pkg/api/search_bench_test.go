@@ -32,12 +32,12 @@ import (
 
 var (
 	Lvl0FolderNum    = 50
-	Lvl1FolderNum    = 10
-	Lvl2FolderNum    = 10
-	RootDashboardNum = 5000
+	Lvl1FolderNum    = 20
+	Lvl2FolderNum    = 20
+	RootDashboardNum = 100
 	Lvl0DashboardNum = 30
-	Lvl1DashboardNum = 10
-	Lvl2DashboardNum = 10
+	Lvl1DashboardNum = 30
+	Lvl2DashboardNum = 100
 )
 
 func BenchmarkSearch(b *testing.B) {
@@ -69,6 +69,42 @@ func BenchmarkSearch(b *testing.B) {
 		expectedLen int
 		features    *featuremgmt.FeatureManager
 	}{
+		{
+			desc:        "get all folders with nested folders enabled",
+			url:         "/api/folders?limit=1000",
+			expectedLen: withLimit(Lvl0FolderNum),
+			features:    featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders, featuremgmt.FlagSplitScopes),
+		},
+		{
+			desc:        "list all dashboards with nested folders enabled",
+			url:         "/api/search?type=dash-db&limit=1000",
+			expectedLen: withLimit(allDashboards),
+			features:    featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders, featuremgmt.FlagSplitScopes),
+		},
+		{
+			desc:        "search specific dashboard with nested folders enabled",
+			url:         "/api/search?type=dash-db&query=dashboard_0_0",
+			expectedLen: 1,
+			features:    featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders, featuremgmt.FlagSplitScopes),
+		},
+		{
+			desc:        "search several dashboards with nested folders enabled",
+			url:         "/api/search?type=dash-db&query=dashboard_0_",
+			expectedLen: withLimit(Lvl0DashboardNum),
+			features:    featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders, featuremgmt.FlagSplitScopes),
+		},
+		{
+			desc:        "search dashboards and folder with nested folders enabled",
+			url:         "/api/search",
+			expectedLen: withLimit(allDashboards + allFolders),
+			features:    featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders, featuremgmt.FlagSplitScopes),
+		},
+		{
+			desc:        "search dashboards in general folder with nested folders enabled",
+			url:         "/api/search?limit=1000&sort=name_sort&type=dash-db&folderUIDs=general",
+			expectedLen: withLimit(RootDashboardNum),
+			features:    featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders, featuremgmt.FlagSplitScopes),
+		},
 		{
 			desc:        "get all folders with split scopes enabled",
 			url:         "/api/folders?limit=1000",
