@@ -141,33 +141,23 @@ func (f *accessControlDashboardPermissionFilter) buildClauses() {
 			if !useSelfContainedPermissions {
 				if f.features.IsEnabled(featuremgmt.FlagSplitScopes) {
 					builder.WriteString("(dashboard.uid IN (SELECT identifier FROM permission WHERE kind = 'dashboards' AND attribute = 'uid'")
-					builder.WriteString(rolesFilter)
-					args = append(args, params...)
-
-					if len(toCheck) == 1 {
-						builder.WriteString(" AND action = ?")
-						args = append(args, toCheck[0])
-					} else {
-						builder.WriteString(" AND action IN (?" + strings.Repeat(", ?", len(toCheck)-1) + ") GROUP BY role_id, scope HAVING COUNT(action) = ?")
-						args = append(args, toCheck...)
-						args = append(args, len(toCheck))
-					}
-					builder.WriteString(") AND NOT dashboard.is_folder)")
 				} else {
 					builder.WriteString("(dashboard.uid IN (SELECT substr(scope, 16) FROM permission WHERE scope LIKE 'dashboards:uid:%'")
-					builder.WriteString(rolesFilter)
-					args = append(args, params...)
-
-					if len(toCheck) == 1 {
-						builder.WriteString(" AND action = ?")
-						args = append(args, toCheck[0])
-					} else {
-						builder.WriteString(" AND action IN (?" + strings.Repeat(", ?", len(toCheck)-1) + ") GROUP BY role_id, scope HAVING COUNT(action) = ?")
-						args = append(args, toCheck...)
-						args = append(args, len(toCheck))
-					}
-					builder.WriteString(") AND NOT dashboard.is_folder)")
 				}
+
+				builder.WriteString(rolesFilter)
+				args = append(args, params...)
+
+				if len(toCheck) == 1 {
+					builder.WriteString(" AND action = ?")
+					args = append(args, toCheck[0])
+				} else {
+					builder.WriteString(" AND action IN (?" + strings.Repeat(", ?", len(toCheck)-1) + ") GROUP BY role_id, scope HAVING COUNT(action) = ?")
+					args = append(args, toCheck...)
+					args = append(args, len(toCheck))
+				}
+				builder.WriteString(") AND NOT dashboard.is_folder)")
+
 			} else {
 				actions := parseStringSliceFromInterfaceSlice(toCheck)
 
@@ -187,31 +177,22 @@ func (f *accessControlDashboardPermissionFilter) buildClauses() {
 			if !useSelfContainedPermissions {
 				if f.features.IsEnabled(featuremgmt.FlagSplitScopes) {
 					permSelector.WriteString("(SELECT identifier FROM permission WHERE kind = 'folders' AND attribute = 'uid' ")
-					permSelector.WriteString(rolesFilter)
-					permSelectorArgs = append(permSelectorArgs, params...)
-
-					if len(toCheck) == 1 {
-						permSelector.WriteString(" AND action = ?")
-						permSelectorArgs = append(permSelectorArgs, toCheck[0])
-					} else {
-						permSelector.WriteString(" AND action IN (?" + strings.Repeat(", ?", len(toCheck)-1) + ") GROUP BY role_id, scope HAVING COUNT(action) = ?")
-						permSelectorArgs = append(permSelectorArgs, toCheck...)
-						permSelectorArgs = append(permSelectorArgs, len(toCheck))
-					}
 				} else {
 					permSelector.WriteString("(SELECT substr(scope, 13) FROM permission WHERE scope LIKE 'folders:uid:%' ")
-					permSelector.WriteString(rolesFilter)
-					permSelectorArgs = append(permSelectorArgs, params...)
-
-					if len(toCheck) == 1 {
-						permSelector.WriteString(" AND action = ?")
-						permSelectorArgs = append(permSelectorArgs, toCheck[0])
-					} else {
-						permSelector.WriteString(" AND action IN (?" + strings.Repeat(", ?", len(toCheck)-1) + ") GROUP BY role_id, scope HAVING COUNT(action) = ?")
-						permSelectorArgs = append(permSelectorArgs, toCheck...)
-						permSelectorArgs = append(permSelectorArgs, len(toCheck))
-					}
 				}
+
+				permSelector.WriteString(rolesFilter)
+				permSelectorArgs = append(permSelectorArgs, params...)
+
+				if len(toCheck) == 1 {
+					permSelector.WriteString(" AND action = ?")
+					permSelectorArgs = append(permSelectorArgs, toCheck[0])
+				} else {
+					permSelector.WriteString(" AND action IN (?" + strings.Repeat(", ?", len(toCheck)-1) + ") GROUP BY role_id, scope HAVING COUNT(action) = ?")
+					permSelectorArgs = append(permSelectorArgs, toCheck...)
+					permSelectorArgs = append(permSelectorArgs, len(toCheck))
+				}
+
 			} else {
 				actions := parseStringSliceFromInterfaceSlice(toCheck)
 
@@ -273,7 +254,11 @@ func (f *accessControlDashboardPermissionFilter) buildClauses() {
 		toCheck := actionsToCheck(f.folderActions, f.user.Permissions[f.user.OrgID], folderWildcards)
 		if len(toCheck) > 0 {
 			if !useSelfContainedPermissions {
-				permSelector.WriteString("(SELECT substr(scope, 13) FROM permission WHERE scope LIKE 'folders:uid:%'")
+				if f.features.IsEnabled(featuremgmt.FlagSplitScopes) {
+					permSelector.WriteString("(SELECT identifier FROM permission WHERE kind = 'folders' AND attribute = 'uid'")
+				} else {
+					permSelector.WriteString("(SELECT substr(scope, 13) FROM permission WHERE scope LIKE 'folders:uid:%'")
+				}
 				permSelector.WriteString(rolesFilter)
 				permSelectorArgs = append(permSelectorArgs, params...)
 				if len(toCheck) == 1 {
