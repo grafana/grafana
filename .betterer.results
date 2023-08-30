@@ -2120,9 +2120,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "2"]
     ],
-    "public/app/features/dashboard/services/PublicDashboardDataSource.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
     "public/app/features/dashboard/state/DashboardMigrator.test.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
@@ -2753,6 +2750,9 @@ exports[`better eslint`] = {
     ],
     "public/app/features/query/state/DashboardQueryRunner/DashboardQueryRunner.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
+    ],
+    "public/app/features/query/state/DashboardQueryRunner/PublicAnnotationsDataSource.ts:5381": [
+      [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
     "public/app/features/query/state/DashboardQueryRunner/SnapshotWorker.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
