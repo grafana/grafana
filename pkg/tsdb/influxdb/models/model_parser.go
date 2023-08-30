@@ -1,4 +1,4 @@
-package influxdb
+package models
 
 import (
 	"fmt"
@@ -12,7 +12,7 @@ import (
 
 type InfluxdbQueryParser struct{}
 
-func (qp *InfluxdbQueryParser) Parse(query backend.DataQuery) (*Query, error) {
+func QueryParse(query backend.DataQuery) (*Query, error) {
 	model, err := simplejson.NewJson(query.JSON)
 	if err != nil {
 		return nil, fmt.Errorf("couldn't unmarshal query")
@@ -29,17 +29,17 @@ func (qp *InfluxdbQueryParser) Parse(query backend.DataQuery) (*Query, error) {
 
 	measurement := model.Get("measurement").MustString("")
 
-	tags, err := qp.parseTags(model)
+	tags, err := parseTags(model)
 	if err != nil {
 		return nil, err
 	}
 
-	groupBys, err := qp.parseGroupBy(model)
+	groupBys, err := parseGroupBy(model)
 	if err != nil {
 		return nil, err
 	}
 
-	selects, err := qp.parseSelects(model)
+	selects, err := parseSelects(model)
 	if err != nil {
 		return nil, err
 	}
@@ -70,7 +70,7 @@ func (qp *InfluxdbQueryParser) Parse(query backend.DataQuery) (*Query, error) {
 	}, nil
 }
 
-func (qp *InfluxdbQueryParser) parseSelects(model *simplejson.Json) ([]*Select, error) {
+func parseSelects(model *simplejson.Json) ([]*Select, error) {
 	selectObjs := model.Get("select").MustArray()
 	result := make([]*Select, 0, len(selectObjs))
 
@@ -80,7 +80,7 @@ func (qp *InfluxdbQueryParser) parseSelects(model *simplejson.Json) ([]*Select, 
 
 		for _, partObj := range selectJson.MustArray() {
 			part := simplejson.NewFromAny(partObj)
-			queryPart, err := qp.parseQueryPart(part)
+			queryPart, err := parseQueryPart(part)
 			if err != nil {
 				return nil, err
 			}
@@ -94,7 +94,7 @@ func (qp *InfluxdbQueryParser) parseSelects(model *simplejson.Json) ([]*Select, 
 	return result, nil
 }
 
-func (*InfluxdbQueryParser) parseTags(model *simplejson.Json) ([]*Tag, error) {
+func parseTags(model *simplejson.Json) ([]*Tag, error) {
 	tags := model.Get("tags").MustArray()
 	result := make([]*Tag, 0, len(tags))
 	for _, t := range tags {
@@ -128,7 +128,7 @@ func (*InfluxdbQueryParser) parseTags(model *simplejson.Json) ([]*Tag, error) {
 	return result, nil
 }
 
-func (*InfluxdbQueryParser) parseQueryPart(model *simplejson.Json) (*QueryPart, error) {
+func parseQueryPart(model *simplejson.Json) (*QueryPart, error) {
 	typ, err := model.Get("type").String()
 	if err != nil {
 		return nil, err
@@ -161,12 +161,12 @@ func (*InfluxdbQueryParser) parseQueryPart(model *simplejson.Json) (*QueryPart, 
 	return qp, nil
 }
 
-func (qp *InfluxdbQueryParser) parseGroupBy(model *simplejson.Json) ([]*QueryPart, error) {
+func parseGroupBy(model *simplejson.Json) ([]*QueryPart, error) {
 	groupBy := model.Get("groupBy").MustArray()
 	result := make([]*QueryPart, 0, len(groupBy))
 	for _, groupObj := range groupBy {
 		groupJson := simplejson.NewFromAny(groupObj)
-		queryPart, err := qp.parseQueryPart(groupJson)
+		queryPart, err := parseQueryPart(groupJson)
 		if err != nil {
 			return nil, err
 		}
