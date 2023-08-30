@@ -75,7 +75,11 @@ export const defaultOptions: Partial<Options> = {
   xTickLabelSpacing: 0,
 };
 
-export interface FieldConfig extends common.AxisConfig, common.HideableFieldConfig {
+export interface FieldConfig extends common.AxisConfig, common.HideableFieldConfig, common.PointsConfig, common.LineConfig {
+  /**
+   * Draw style
+   */
+  drawStyle?: common.GraphDrawStyle;
   /**
    * Controls the fill opacity of the bars.
    */
@@ -96,6 +100,7 @@ export interface FieldConfig extends common.AxisConfig, common.HideableFieldConf
 }
 
 export const defaultFieldConfig: Partial<FieldConfig> = {
+  drawStyle: common.GraphDrawStyle.Bars,
   fillOpacity: 80,
   gradientMode: common.GraphGradientMode.None,
   lineWidth: 1,
