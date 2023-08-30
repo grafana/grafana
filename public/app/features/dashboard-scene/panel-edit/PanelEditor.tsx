@@ -4,9 +4,9 @@ import { locationService } from '@grafana/runtime';
 import {
   SceneFlexItem,
   SceneFlexLayout,
-  sceneGraph,
   SceneObject,
   SceneObjectBase,
+  SceneObjectRef,
   SceneObjectState,
   sceneUtils,
   SplitLayout,
@@ -27,25 +27,19 @@ export interface PanelEditorState extends SceneObjectState {
   inspectPanelId?: string;
   /** Scene object that handles the current drawer */
   drawer?: SceneObject;
+
+  dashboard: SceneObjectRef<DashboardScene>;
+  sourcePanel: SceneObjectRef<VizPanel>;
+  panel: SceneObjectRef<VizPanel>;
 }
 
 export class PanelEditor extends SceneObjectBase<PanelEditorState> {
   static Component = PanelEditorRenderer;
 
-  private _dashboard: DashboardScene;
-  private _sourcePanel: VizPanel;
-
-  public constructor(dashboard: DashboardScene, panel: VizPanel) {
-    super(buildPanelEditScene(dashboard, panel));
-
-    this._dashboard = dashboard;
-    this._sourcePanel = panel;
-  }
-
   public getPageNav(location: H.Location) {
     return {
       text: 'Edit panel',
-      parentItem: this._dashboard.getPageNav(location),
+      parentItem: this.state.dashboard.resolve().getPageNav(location),
     };
   }
 
@@ -67,17 +61,20 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
   };
 
   private commitChanges() {
-    if (!this._dashboard.state.isEditing) {
-      this._dashboard.setState({ isEditing: true });
+    const dashboard = this.state.dashboard.resolve();
+    const sourcePanel = this.state.sourcePanel.resolve();
+    const panel = this.state.panel.resolve();
+
+    if (dashboard.state.isEditing) {
+      dashboard.setState({ isEditing: true });
     }
 
-    const updatedPanel = sceneGraph.findObject(this.state.body, (p) => p.state.key === this._sourcePanel.state.key)!;
-    const newState = sceneUtils.cloneSceneObjectState(updatedPanel.state);
+    const newState = sceneUtils.cloneSceneObjectState(panel.state);
 
-    this._sourcePanel.setState(newState);
+    sourcePanel.setState(newState);
 
     // preserve time range and variables state
-    this._dashboard.setState({
+    dashboard.setState({
       $timeRange: this.state.$timeRange?.clone(),
       $variables: this.state.$variables?.clone(),
     });
@@ -86,18 +83,21 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
   private navigateBackToDashboard() {
     locationService.push(
       getDashboardUrl({
-        uid: this._dashboard.state.uid,
+        uid: this.state.dashboard.resolve().state.uid,
         currentQueryParams: locationService.getLocation().search,
       })
     );
   }
 }
 
-function buildPanelEditScene(dashboard: DashboardScene, panel: VizPanel): PanelEditorState {
+export function buildPanelEditScene(dashboard: DashboardScene, panel: VizPanel): PanelEditor {
   const panelClone = panel.clone();
   const dashboardStateCloned = sceneUtils.cloneSceneObjectState(dashboard.state);
 
-  const state: PanelEditorState = {
+  return new PanelEditor({
+    dashboard: new SceneObjectRef(dashboard),
+    sourcePanel: new SceneObjectRef(panel),
+    panel: new SceneObjectRef(panelClone),
     controls: dashboardStateCloned.controls,
     $variables: dashboardStateCloned.$variables,
     $timeRange: dashboardStateCloned.$timeRange,
@@ -112,7 +112,5 @@ function buildPanelEditScene(dashboard: DashboardScene, panel: VizPanel): PanelE
         body: new PanelOptionsPane(panelClone),
       }),
     }),
-  };
-
-  return state;
+  });
 }

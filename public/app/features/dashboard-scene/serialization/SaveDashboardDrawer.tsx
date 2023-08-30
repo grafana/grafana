@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { SceneComponentProps, SceneObjectBase, SceneObjectState } from '@grafana/scenes';
+import { SceneComponentProps, SceneObjectBase, SceneObjectState, SceneObjectRef } from '@grafana/scenes';
 import { Drawer } from '@grafana/ui';
 import { SaveDashboardDiff } from 'app/features/dashboard/components/SaveDashboard/SaveDashboardDiff';
 import { jsonDiff } from 'app/features/dashboard/components/VersionHistory/utils';
@@ -9,21 +9,21 @@ import { DashboardScene } from '../scene/DashboardScene';
 
 import { transformSceneToSaveModel } from './transformSceneToSaveModel';
 
-interface SaveDashboardDrawerState extends SceneObjectState {}
+interface SaveDashboardDrawerState extends SceneObjectState {
+  dashboard: SceneObjectRef<DashboardScene>;
+}
 
 export class SaveDashboardDrawer extends SceneObjectBase<SaveDashboardDrawerState> {
-  constructor(public dashboard: DashboardScene) {
-    super({});
-  }
-
   onClose = () => {
-    this.dashboard.setState({ drawer: undefined });
+    this.state.dashboard.resolve().setState({ drawer: undefined });
   };
 
   static Component = ({ model }: SceneComponentProps<SaveDashboardDrawer>) => {
-    const initialScene = new DashboardScene(model.dashboard.getInitialState()!);
+    const dashboard = model.state.dashboard.resolve();
+    const initialState = dashboard.getInitialState();
+    const initialScene = new DashboardScene(initialState!);
     const initialSaveModel = transformSceneToSaveModel(initialScene);
-    const changedSaveModel = transformSceneToSaveModel(model.dashboard);
+    const changedSaveModel = transformSceneToSaveModel(dashboard);
 
     const diff = jsonDiff(initialSaveModel, changedSaveModel);
 
@@ -33,7 +33,7 @@ export class SaveDashboardDrawer extends SceneObjectBase<SaveDashboardDrawerStat
     // }
 
     return (
-      <Drawer title="Save dashboard" subtitle={model.dashboard.state.title} scrollableContent onClose={model.onClose}>
+      <Drawer title="Save dashboard" subtitle={dashboard.state.title} scrollableContent onClose={model.onClose}>
         <SaveDashboardDiff diff={diff} oldValue={initialSaveModel} newValue={changedSaveModel} />
       </Drawer>
     );

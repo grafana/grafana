@@ -1,6 +1,6 @@
 import { AppEvents } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
-import { SceneObjectUrlSyncHandler, SceneObjectUrlValues } from '@grafana/scenes';
+import { SceneObjectRef, SceneObjectUrlSyncHandler, SceneObjectUrlValues } from '@grafana/scenes';
 import appEvents from 'app/core/app_events';
 
 import { PanelInspectDrawer } from '../inspect/PanelInspectDrawer';
@@ -34,7 +34,7 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
       }
 
       update.inspectPanelId = values.inspect;
-      update.drawer = new PanelInspectDrawer(panel);
+      update.drawer = new PanelInspectDrawer({ panel: new SceneObjectRef(panel) });
     } else if (inspectPanelId) {
       update.inspectPanelId = undefined;
       update.drawer = undefined;

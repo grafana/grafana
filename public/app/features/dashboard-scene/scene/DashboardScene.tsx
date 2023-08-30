@@ -9,6 +9,7 @@ import {
   SceneGridLayout,
   SceneObject,
   SceneObjectBase,
+  SceneObjectRef,
   SceneObjectState,
   SceneObjectStateChangedEvent,
   sceneUtils,
@@ -119,7 +120,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   };
 
   public onSave = () => {
-    this.setState({ drawer: new SaveDashboardDrawer(this) });
+    this.setState({ drawer: new SaveDashboardDrawer({ dashboard: new SceneObjectRef(this) }) });
   };
 
   public getPageNav(location: H.Location) {

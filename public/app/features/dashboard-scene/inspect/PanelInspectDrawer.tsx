@@ -10,6 +10,7 @@ import {
   SceneObject,
   sceneGraph,
   VizPanel,
+  SceneObjectRef,
 } from '@grafana/scenes';
 import { Drawer, Tab, TabsBar } from '@grafana/ui';
 import { supportsDataQuery } from 'app/features/dashboard/components/PanelEditor/utils';
@@ -21,39 +22,38 @@ import { InspectTabState } from './types';
 
 interface PanelInspectDrawerState extends SceneObjectState {
   tabs?: Array<SceneObject<InspectTabState>>;
+  panel: SceneObjectRef<VizPanel>;
 }
 
 export class PanelInspectDrawer extends SceneObjectBase<PanelInspectDrawerState> {
   static Component = PanelInspectRenderer;
 
-  // Not stored in state as this is just a reference and it never changes
-  private _panel: VizPanel;
+  constructor(state: PanelInspectDrawerState) {
+    super(state);
 
-  constructor(panel: VizPanel) {
-    super({});
-
-    this._panel = panel;
     this.buildTabs();
   }
 
   buildTabs() {
-    const plugin = this._panel.getPlugin();
+    const panel = this.state.panel.resolve();
+    const plugin = panel.getPlugin();
     const tabs: Array<SceneObject<InspectTabState>> = [];
 
     if (plugin) {
       if (supportsDataQuery(plugin)) {
-        tabs.push(new InspectDataTab(this._panel));
-        tabs.push(new InspectStatsTab(this._panel));
+        tabs.push(new InspectDataTab(panel));
+        tabs.push(new InspectStatsTab(panel));
       }
     }
 
-    tabs.push(new InspectJsonTab(this._panel));
+    tabs.push(new InspectJsonTab(panel));
 
     this.setState({ tabs });
   }
 
   getDrawerTitle() {
-    return sceneGraph.interpolate(this._panel, `Inspect: ${this._panel.state.title}`);
+    const panel = this.state.panel.resolve();
+    return sceneGraph.interpolate(panel, `Inspect: ${panel.state.title}`);
   }
 
   onClose = () => {
