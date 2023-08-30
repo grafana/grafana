@@ -427,6 +427,23 @@ describe('CompletionProvider', () => {
     ]);
   });
 
+  it.each([
+    ['{ .foo = 200 } &&  ', 18],
+    ['{ .foo = 200 } &&  ', 19],
+    ['{ .foo = 200 } || ', 18],
+    ['{ .foo = 200 } >> ', 18],
+  ])('suggests new spanset after multi-spanset operator - %s, %i', async (input: string, offset: number) => {
+    const { provider, model } = setup(input, offset);
+    const result = await provider.provideCompletionItems(
+      model as unknown as monacoTypes.editor.ITextModel,
+      {} as monacoTypes.Position
+    );
+    expect((result! as monacoTypes.languages.CompletionList).suggestions).toEqual([
+      ...scopes.map((s) => expect.objectContaining({ label: s })),
+      ...intrinsics.map((s) => expect.objectContaining({ label: s })),
+    ]);
+  });
+
   it('suggests between spansets with complete query', async () => {
     const { provider, model } = setup('{ .foo = 1 } &&  { .bar = 2 }', 16);
     const result = await provider.provideCompletionItems(
