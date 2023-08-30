@@ -253,7 +253,7 @@ func checkAzureLogAnalyticsHealth(dsInfo types.DatasourceInfo, subscription stri
 	}
 	defaultWorkspaceId := target.Value[0].Properties.CustomerId
 
-	body, err := json.Marshal(map[string]interface{}{
+	body, err := json.Marshal(map[string]any{
 		"query": "AzureActivity | limit 1",
 	})
 	if err != nil {
@@ -276,7 +276,7 @@ func checkAzureLogAnalyticsHealth(dsInfo types.DatasourceInfo, subscription stri
 }
 
 func checkAzureMonitorResourceGraphHealth(dsInfo types.DatasourceInfo, subscription string) (*http.Response, error) {
-	body, err := json.Marshal(map[string]interface{}{
+	body, err := json.Marshal(map[string]any{
 		"query":         "Resources | project id | limit 1",
 		"subscriptions": []string{subscription},
 	})

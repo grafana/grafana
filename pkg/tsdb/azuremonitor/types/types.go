@@ -65,7 +65,7 @@ type DatasourceInfo struct {
 	Routes      map[string]AzRoute
 	Services    map[string]DatasourceService
 
-	JSONData                map[string]interface{}
+	JSONData                map[string]any
 	DecryptedSecureJSONData map[string]string
 	DatasourceID            int64
 	OrgID                   int64
@@ -131,7 +131,7 @@ type AzureResponseTable struct {
 		Name string `json:"name"`
 		Type string `json:"type"`
 	} `json:"columns"`
-	Rows [][]interface{} `json:"rows"`
+	Rows [][]any `json:"rows"`
 }
 
 type AzureMonitorResource struct {

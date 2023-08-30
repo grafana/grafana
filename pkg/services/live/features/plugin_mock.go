@@ -46,7 +46,7 @@ func (m *MockPluginContextGetter) GetPluginContext(arg0 context.Context, arg1 *u
 }
 
 // GetPluginContext indicates an expected call of GetPluginContext.
-func (mr *MockPluginContextGetterMockRecorder) GetPluginContext(arg0, arg1, arg2, arg3, arg4 interface{}) *gomock.Call {
+func (mr *MockPluginContextGetterMockRecorder) GetPluginContext(arg0, arg1, arg2, arg3, arg4 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPluginContext", reflect.TypeOf((*MockPluginContextGetter)(nil).GetPluginContext), arg0, arg1, arg2, arg3, arg4)
 }

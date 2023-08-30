@@ -6,8 +6,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/authn"
 )
 
-func (s *Service) getUsageStats(ctx context.Context) (map[string]interface{}, error) {
-	m := map[string]interface{}{}
+func (s *Service) getUsageStats(ctx context.Context) (map[string]any, error) {
+	m := map[string]any{}
 
 	// Add stats about auth configuration
 	authTypes := map[string]bool{}

@@ -583,10 +583,10 @@ func (hs *HTTPServer) addGettingStartedPanelToHomeDashboard(c *contextmodel.ReqC
 
 	panels := dash.Get("panels").MustArray()
 
-	newpanel := simplejson.NewFromAny(map[string]interface{}{
+	newpanel := simplejson.NewFromAny(map[string]any{
 		"type": "gettingstarted",
 		"id":   123123,
-		"gridPos": map[string]interface{}{
+		"gridPos": map[string]any{
 			"x": 0,
 			"y": 3,
 			"w": 24,

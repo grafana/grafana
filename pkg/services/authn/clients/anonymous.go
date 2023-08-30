@@ -83,8 +83,8 @@ func (a *Anonymous) Priority() uint {
 	return 100
 }
 
-func (a *Anonymous) UsageStatFn(ctx context.Context) (map[string]interface{}, error) {
-	m := map[string]interface{}{}
+func (a *Anonymous) UsageStatFn(ctx context.Context) (map[string]any, error) {
+	m := map[string]any{}
 
 	// Add stats about anonymous auth
 	m["stats.anonymous.customized_role.count"] = 0

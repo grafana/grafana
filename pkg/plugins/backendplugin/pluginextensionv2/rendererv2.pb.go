@@ -499,7 +499,7 @@ func file_rendererv2_proto_rawDescGZIP() []byte {
 }
 
 var file_rendererv2_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
-var file_rendererv2_proto_goTypes = []interface{}{
+var file_rendererv2_proto_goTypes = []any{
 	(*StringList)(nil),        // 0: pluginextensionv2.StringList
 	(*RenderRequest)(nil),     // 1: pluginextensionv2.RenderRequest
 	(*RenderResponse)(nil),    // 2: pluginextensionv2.RenderResponse
@@ -530,7 +530,7 @@ func file_rendererv2_proto_init() {
 		return
 	}
 	if !protoimpl.UnsafeEnabled {
-		file_rendererv2_proto_msgTypes[0].Exporter = func(v interface{}, i int) interface{} {
+		file_rendererv2_proto_msgTypes[0].Exporter = func(v any, i int) any {
 			switch v := v.(*StringList); i {
 			case 0:
 				return &v.state
@@ -542,7 +542,7 @@ func file_rendererv2_proto_init() {
 				return nil
 			}
 		}
-		file_rendererv2_proto_msgTypes[1].Exporter = func(v interface{}, i int) interface{} {
+		file_rendererv2_proto_msgTypes[1].Exporter = func(v any, i int) any {
 			switch v := v.(*RenderRequest); i {
 			case 0:
 				return &v.state
@@ -554,7 +554,7 @@ func file_rendererv2_proto_init() {
 				return nil
 			}
 		}
-		file_rendererv2_proto_msgTypes[2].Exporter = func(v interface{}, i int) interface{} {
+		file_rendererv2_proto_msgTypes[2].Exporter = func(v any, i int) any {
 			switch v := v.(*RenderResponse); i {
 			case 0:
 				return &v.state
@@ -566,7 +566,7 @@ func file_rendererv2_proto_init() {
 				return nil
 			}
 		}
-		file_rendererv2_proto_msgTypes[3].Exporter = func(v interface{}, i int) interface{} {
+		file_rendererv2_proto_msgTypes[3].Exporter = func(v any, i int) any {
 			switch v := v.(*RenderCSVRequest); i {
 			case 0:
 				return &v.state
@@ -578,7 +578,7 @@ func file_rendererv2_proto_init() {
 				return nil
 			}
 		}
-		file_rendererv2_proto_msgTypes[4].Exporter = func(v interface{}, i int) interface{} {
+		file_rendererv2_proto_msgTypes[4].Exporter = func(v any, i int) any {
 			switch v := v.(*RenderCSVResponse); i {
 			case 0:
 				return &v.state
@@ -674,7 +674,7 @@ func RegisterRendererServer(s *grpc.Server, srv RendererServer) {
 	s.RegisterService(&_Renderer_serviceDesc, srv)
 }
 
-func _Renderer_Render_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _Renderer_Render_Handler(srv any, ctx context.Context, dec func(any) error, interceptor grpc.UnaryServerInterceptor) (any, error) {
 	in := new(RenderRequest)
 	if err := dec(in); err != nil {
 		return nil, err
@@ -686,13 +686,13 @@ func _Renderer_Render_Handler(srv interface{}, ctx context.Context, dec func(int
 		Server:     srv,
 		FullMethod: "/pluginextensionv2.Renderer/Render",
 	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+	handler := func(ctx context.Context, req any) (any, error) {
 		return srv.(RendererServer).Render(ctx, req.(*RenderRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Renderer_RenderCSV_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _Renderer_RenderCSV_Handler(srv any, ctx context.Context, dec func(any) error, interceptor grpc.UnaryServerInterceptor) (any, error) {
 	in := new(RenderCSVRequest)
 	if err := dec(in); err != nil {
 		return nil, err
@@ -704,7 +704,7 @@ func _Renderer_RenderCSV_Handler(srv interface{}, ctx context.Context, dec func(
 		Server:     srv,
 		FullMethod: "/pluginextensionv2.Renderer/RenderCSV",
 	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+	handler := func(ctx context.Context, req any) (any, error) {
 		return srv.(RendererServer).RenderCSV(ctx, req.(*RenderCSVRequest))
 	}
 	return interceptor(ctx, in, info, handler)

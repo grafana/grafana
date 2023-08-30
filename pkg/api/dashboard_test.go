@@ -396,7 +396,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 			cmd := dashboards.SaveDashboardCommand{
 				OrgID:  1,
 				UserID: 5,
-				Dashboard: simplejson.NewFromAny(map[string]interface{}{
+				Dashboard: simplejson.NewFromAny(map[string]any{
 					"title": "Dash",
 				}),
 				Overwrite: true,
@@ -428,7 +428,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 			cmd := dashboards.SaveDashboardCommand{
 				OrgID:  1,
 				UserID: 5,
-				Dashboard: simplejson.NewFromAny(map[string]interface{}{
+				Dashboard: simplejson.NewFromAny(map[string]any{
 					"title": "Dash",
 				}),
 				Overwrite: true,
@@ -461,7 +461,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 			cmd := dashboards.SaveDashboardCommand{
 				OrgID:  1,
 				UserID: 5,
-				Dashboard: simplejson.NewFromAny(map[string]interface{}{
+				Dashboard: simplejson.NewFromAny(map[string]any{
 					"title": "Dash",
 				}),
 				Overwrite: true,
@@ -509,7 +509,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 
 			cmd := dashboards.SaveDashboardCommand{
 				OrgID: 1,
-				Dashboard: simplejson.NewFromAny(map[string]interface{}{
+				Dashboard: simplejson.NewFromAny(map[string]any{
 					"title": "",
 				}),
 			}
@@ -587,14 +587,14 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 			{
 				DashboardID: 1,
 				Version:     1,
-				Data: simplejson.NewFromAny(map[string]interface{}{
+				Data: simplejson.NewFromAny(map[string]any{
 					"title": "Dash1",
 				}),
 			},
 			{
 				DashboardID: 2,
 				Version:     2,
-				Data: simplejson.NewFromAny(map[string]interface{}{
+				Data: simplejson.NewFromAny(map[string]any{
 					"title": "Dash2",
 				}),
 			},
@@ -1140,7 +1140,7 @@ func (m *mockLibraryPanelService) ConnectLibraryPanelsForDashboard(c context.Con
 	return nil
 }
 
-func (m *mockLibraryPanelService) ImportLibraryPanelsForDashboard(c context.Context, signedInUser *user.SignedInUser, libraryPanels *simplejson.Json, panels []interface{}, folderID int64) error {
+func (m *mockLibraryPanelService) ImportLibraryPanelsForDashboard(c context.Context, signedInUser *user.SignedInUser, libraryPanels *simplejson.Json, panels []any, folderID int64) error {
 	return nil
 }
 
