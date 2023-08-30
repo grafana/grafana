@@ -99,8 +99,7 @@ func (c *LDAP) disableUser(ctx context.Context, username string) (*authn.Identit
 
 	// Disable the user
 	c.logger.Debug("user was removed from the LDAP directory tree, disabling it", "username", username, "authID", authinfo.AuthId)
-	errDisable := c.userService.Disable(ctx, &user.DisableUserCommand{UserID: dbUser.ID, IsDisabled: true})
-	if errDisable != nil {
+	if errDisable := c.userService.Disable(ctx, &user.DisableUserCommand{UserID: dbUser.ID, IsDisabled: true}); errDisable != nil {
 		return nil, errDisable
 	}
 

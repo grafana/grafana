@@ -2,7 +2,6 @@ package clients
 
 import (
 	"context"
-	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -101,10 +100,7 @@ func TestLDAP_AuthenticateProxy(t *testing.T) {
 			identity, err := c.AuthenticateProxy(context.Background(), &authn.Request{OrgID: 1}, tt.username, nil)
 			assert.ErrorIs(t, err, tt.expectedErr)
 			assert.EqualValues(t, tt.expectedIdentity, identity)
-
-			if tt.expectDisable {
-				assert.True(t, tt.disableCalled)
-			}
+			assert.Equal(t, tt.expectDisable, tt.disableCalled)
 		})
 	}
 }
@@ -182,9 +178,7 @@ func TestLDAP_AuthenticatePassword(t *testing.T) {
 			identity, err := c.AuthenticatePassword(context.Background(), &authn.Request{OrgID: 1}, tt.username, tt.password)
 			assert.ErrorIs(t, err, tt.expectedErr)
 			assert.EqualValues(t, tt.expectedIdentity, identity)
-			if tt.expectDisable {
-				assert.True(t, tt.disableCalled)
-			}
+			assert.Equal(t, tt.expectDisable, tt.disableCalled)
 		})
 	}
 }
@@ -194,11 +188,8 @@ func setupLDAPTestCase(tt *ldapTestCase) *LDAP {
 		ExpectedError: tt.expectedUserErr,
 		ExpectedUser:  &tt.expectedUser,
 		DisableFn: func(ctx context.Context, cmd *user.DisableUserCommand) error {
-			if tt.expectDisable {
-				tt.disableCalled = true
-				return nil
-			}
-			return errors.New("unexpected call")
+			tt.disableCalled = true
+			return nil
 		},
 	}
 	authInfoService := &logintest.AuthInfoServiceFake{
