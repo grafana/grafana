@@ -45,14 +45,14 @@ var (
 			Name:        "publicDashboards",
 			Description: "Enables public access to dashboards",
 			Stage:       FeatureStagePublicPreview,
-			Owner:       grafanaDashboardsSquad,
+			Owner:       grafanaSharingSquad,
 		},
 		{
 			Name:            "publicDashboardsEmailSharing",
 			Description:     "Enables public dashboard sharing to be restricted to only allowed emails",
 			Stage:           FeatureStagePublicPreview,
 			RequiresLicense: true,
-			Owner:           grafanaDashboardsSquad,
+			Owner:           grafanaSharingSquad,
 			HideFromDocs:    true,
 		},
 		{
