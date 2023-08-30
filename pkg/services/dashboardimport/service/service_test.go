@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/dashboardimport"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
@@ -46,7 +47,7 @@ func TestImportDashboardService(t *testing.T) {
 		importLibraryPanelsForDashboard := false
 		connectLibraryPanelsForDashboardCalled := false
 		libraryPanelService := &libraryPanelServiceMock{
-			importLibraryPanelsForDashboardFunc: func(ctx context.Context, signedInUser *user.SignedInUser, libraryPanels *simplejson.Json, panels []interface{}, folderID int64) error {
+			importLibraryPanelsForDashboardFunc: func(ctx context.Context, signedInUser *user.SignedInUser, libraryPanels *simplejson.Json, panels []any, folderID int64) error {
 				importLibraryPanelsForDashboard = true
 				return nil
 			},
@@ -83,9 +84,12 @@ func TestImportDashboardService(t *testing.T) {
 		require.NotNil(t, resp)
 		require.Equal(t, "UDdpyzz7z", resp.UID)
 
+		userID, err := identity.IntIdentifier(importDashboardArg.User.GetNamespacedID())
+		require.NoError(t, err)
+
 		require.NotNil(t, importDashboardArg)
 		require.Equal(t, int64(3), importDashboardArg.OrgID)
-		require.Equal(t, int64(2), importDashboardArg.User.UserID)
+		require.Equal(t, int64(2), userID)
 		require.Equal(t, "prometheus", importDashboardArg.Dashboard.PluginID)
 		require.Equal(t, int64(5), importDashboardArg.Dashboard.FolderID)
 
@@ -147,9 +151,12 @@ func TestImportDashboardService(t *testing.T) {
 		require.NotNil(t, resp)
 		require.Equal(t, "UDdpyzz7z", resp.UID)
 
+		userID, err := identity.IntIdentifier(importDashboardArg.User.GetNamespacedID())
+		require.NoError(t, err)
+
 		require.NotNil(t, importDashboardArg)
 		require.Equal(t, int64(3), importDashboardArg.OrgID)
-		require.Equal(t, int64(2), importDashboardArg.User.UserID)
+		require.Equal(t, int64(2), userID)
 		require.Equal(t, "", importDashboardArg.Dashboard.PluginID)
 		require.Equal(t, int64(5), importDashboardArg.Dashboard.FolderID)
 
@@ -205,7 +212,7 @@ func (s *dashboardServiceMock) ImportDashboard(ctx context.Context, dto *dashboa
 type libraryPanelServiceMock struct {
 	librarypanels.Service
 	connectLibraryPanelsForDashboardFunc func(c context.Context, signedInUser *user.SignedInUser, dash *dashboards.Dashboard) error
-	importLibraryPanelsForDashboardFunc  func(c context.Context, signedInUser *user.SignedInUser, libraryPanels *simplejson.Json, panels []interface{}, folderID int64) error
+	importLibraryPanelsForDashboardFunc  func(c context.Context, signedInUser *user.SignedInUser, libraryPanels *simplejson.Json, panels []any, folderID int64) error
 }
 
 func (s *libraryPanelServiceMock) ConnectLibraryPanelsForDashboard(ctx context.Context, signedInUser *user.SignedInUser, dash *dashboards.Dashboard) error {
@@ -216,7 +223,7 @@ func (s *libraryPanelServiceMock) ConnectLibraryPanelsForDashboard(ctx context.C
 	return nil
 }
 
-func (s *libraryPanelServiceMock) ImportLibraryPanelsForDashboard(ctx context.Context, signedInUser *user.SignedInUser, libraryPanels *simplejson.Json, panels []interface{}, folderID int64) error {
+func (s *libraryPanelServiceMock) ImportLibraryPanelsForDashboard(ctx context.Context, signedInUser *user.SignedInUser, libraryPanels *simplejson.Json, panels []any, folderID int64) error {
 	if s.importLibraryPanelsForDashboardFunc != nil {
 		return s.importLibraryPanelsForDashboardFunc(ctx, signedInUser, libraryPanels, panels, folderID)
 	}

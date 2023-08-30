@@ -391,6 +391,7 @@ func TestApiCreatePublicDashboard(t *testing.T) {
 		SaveDashboardErr     error
 		User                 *user.SignedInUser
 		ShouldCallService    bool
+		JsonBody             string
 	}{
 		{
 			Name:                 "returns 500 when not persisted",
@@ -399,6 +400,7 @@ func TestApiCreatePublicDashboard(t *testing.T) {
 			SaveDashboardErr:     ErrInternalServerError.Errorf(""),
 			User:                 userAdmin,
 			ShouldCallService:    true,
+			JsonBody:             `{ "isPublic": true }`,
 		},
 		{
 			Name:                 "returns 404 when dashboard not found",
@@ -407,6 +409,7 @@ func TestApiCreatePublicDashboard(t *testing.T) {
 			SaveDashboardErr:     ErrDashboardNotFound.Errorf(""),
 			User:                 userAdmin,
 			ShouldCallService:    true,
+			JsonBody:             `{ "isPublic": true }`,
 		},
 		{
 			Name:                 "returns 200 when update persists RBAC on",
@@ -416,6 +419,7 @@ func TestApiCreatePublicDashboard(t *testing.T) {
 			SaveDashboardErr:     nil,
 			User:                 userAdmin,
 			ShouldCallService:    true,
+			JsonBody:             `{ "isPublic": true }`,
 		},
 		{
 			Name:                 "returns 403 when no permissions RBAC on",
@@ -424,6 +428,25 @@ func TestApiCreatePublicDashboard(t *testing.T) {
 			SaveDashboardErr:     nil,
 			User:                 userNoRBACPerms,
 			ShouldCallService:    false,
+			JsonBody:             `{ "isPublic": true }`,
+		},
+		{
+			Name:                 "returns 400 when uid is invalid",
+			ExpectedHttpResponse: http.StatusBadRequest,
+			publicDashboard:      nil,
+			SaveDashboardErr:     nil,
+			User:                 userAdmin,
+			ShouldCallService:    false,
+			JsonBody:             `{ "uid": "*", "isEnabled": true }`,
+		},
+		{
+			Name:                 "returns 200 when uid is valid",
+			ExpectedHttpResponse: http.StatusOK,
+			publicDashboard:      &PublicDashboard{IsEnabled: true},
+			SaveDashboardErr:     nil,
+			User:                 userAdmin,
+			ShouldCallService:    true,
+			JsonBody:             `{ "uid": "123abc", "isEnabled": true}`,
 		},
 	}
 
@@ -452,7 +475,7 @@ func TestApiCreatePublicDashboard(t *testing.T) {
 				testServer,
 				http.MethodPost,
 				"/api/dashboards/uid/1/public-dashboards",
-				strings.NewReader(`{ "isPublic": true }`),
+				strings.NewReader(test.JsonBody),
 				t,
 			)
 

@@ -682,7 +682,7 @@ func (u *upgradeNgAlerting) updateAlertConfigurations(sess *xorm.Session, migrat
 // Otherwise, it deletes those files.
 // pre-8.2 version put all configuration files into the root of alerting directory. Since 8.2 configuration files are put in organization specific directory
 func (u *upgradeNgAlerting) updateAlertmanagerFiles(orgId int64, migrator *migrator.Migrator) {
-	knownFiles := map[string]interface{}{"__default__.tmpl": nil, "silences": nil, "notifications": nil}
+	knownFiles := map[string]any{"__default__.tmpl": nil, "silences": nil, "notifications": nil}
 	alertingDir := filepath.Join(migrator.Cfg.DataPath, "alerting")
 
 	// do not fail if something goes wrong because these files are not used anymore. the worst that can happen is that we leave some leftovers behind
@@ -858,7 +858,7 @@ func (c updateRulesOrderInGroup) Exec(sess *xorm.Session, migrator *migrator.Mig
 	}
 
 	updated := time.Now()
-	versions := make([]interface{}, 0, len(toUpdate))
+	versions := make([]any, 0, len(toUpdate))
 
 	for _, rule := range toUpdate {
 		rule.Updated = updated

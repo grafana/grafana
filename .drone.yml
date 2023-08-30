@@ -4174,6 +4174,8 @@ steps:
   volumes:
   - name: docker
     path: /var/run/docker.sock
+  - name: config
+    path: /root/.docker/
 - commands:
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/grafana:latest
   depends_on:
@@ -4228,6 +4230,8 @@ steps:
   volumes:
   - name: docker
     path: /var/run/docker.sock
+  - name: config
+    path: /root/.docker/
 - commands:
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/grafana:main
   depends_on:
@@ -4282,6 +4286,8 @@ steps:
   volumes:
   - name: docker
     path: /var/run/docker.sock
+  - name: config
+    path: /root/.docker/
 - commands:
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/grafana:latest-ubuntu
   depends_on:
@@ -4337,6 +4343,8 @@ steps:
   volumes:
   - name: docker
     path: /var/run/docker.sock
+  - name: config
+    path: /root/.docker/
 - commands:
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/grafana:main-ubuntu
   depends_on:
@@ -4392,6 +4400,8 @@ steps:
   volumes:
   - name: docker
     path: /var/run/docker.sock
+  - name: config
+    path: /root/.docker/
 - commands:
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM google/cloud-sdk:431.0.0
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/build-container:1.7.5
@@ -4512,8 +4522,8 @@ kind: secret
 name: gcp_grafanauploads_base64
 ---
 get:
-  name: grafana_api_key
-  path: infra/data/ci/drone-plugins
+  name: api_key
+  path: infra/data/ci/grafana-release-eng/grafanacom
 kind: secret
 name: grafana_api_key
 ---
@@ -4674,6 +4684,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 37c8cdea5d79479014c2bee1b93433549ba5f8d5f2eef4f599247312c661118c
+hmac: 25fbe6d5a41fe21f21031c5faa74aa8603e4d01f93ea203c9e17e19a881b2874
 
 ...

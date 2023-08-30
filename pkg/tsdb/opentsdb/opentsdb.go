@@ -187,8 +187,8 @@ func (s *Service) parseResponse(logger log.Logger, res *http.Response) (*backend
 	return resp, nil
 }
 
-func (s *Service) buildMetric(query backend.DataQuery) map[string]interface{} {
-	metric := make(map[string]interface{})
+func (s *Service) buildMetric(query backend.DataQuery) map[string]any {
+	metric := make(map[string]any)
 
 	model, err := simplejson.NewJson(query.JSON)
 	if err != nil {
@@ -217,7 +217,7 @@ func (s *Service) buildMetric(query backend.DataQuery) map[string]interface{} {
 	// Setting rate options
 	if model.Get("shouldComputeRate").MustBool() {
 		metric["rate"] = true
-		rateOptions := make(map[string]interface{})
+		rateOptions := make(map[string]any)
 		rateOptions["counter"] = model.Get("isCounter").MustBool()
 
 		counterMax, counterMaxCheck := model.CheckGet("counterMax")
