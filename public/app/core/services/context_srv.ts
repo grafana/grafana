@@ -2,6 +2,7 @@ import { extend } from 'lodash';
 
 import { AnalyticsSettings, OrgRole, rangeUtil, WithAccessControlMetadata } from '@grafana/data';
 import { featureEnabled, getBackendSrv } from '@grafana/runtime';
+import { getSessionExpiry } from 'app/core/utils/auth';
 import { AccessControlAction, UserPermission } from 'app/types';
 import { CurrentUserInternal } from 'app/types/config';
 
@@ -209,7 +210,7 @@ export class ContextSrv {
     // check if we can schedula the token rotation job
     if (this.canScheduleRotation()) {
       // get the time token is going to expire
-      let expires = this.getSessionExpiry();
+      let expires = getSessionExpiry();
 
       // because this job is scheduled for every tab we have open that shares a session we try
       // to distribute the scheduling of the job. For now this can be between 1 and 20 seconds
@@ -222,7 +223,7 @@ export class ContextSrv {
       this.tokenRotationJobId = setTimeout(() => {
         // if we have a new expiry time from the expiry cookie another tab have already performed the rotation
         // so the only thing we need to do is reschedule the job and exit
-        if (this.getSessionExpiry() > expires) {
+        if (getSessionExpiry() > expires) {
           this.scheduleTokenRotationJob();
           return;
         }
@@ -247,7 +248,7 @@ export class ContextSrv {
     // from an older version of grafana, we never schedule the job and the fallback logic
     // in backend_srv will take care of rotations until first rotation has been made and
     // page has been reloaded.
-    if (this.getSessionExpiry() === 0) {
+    if (getSessionExpiry() === 0) {
       return false;
     }
 
@@ -277,20 +278,6 @@ export class ContextSrv {
       .catch((e) => {
         console.error(e);
       });
-  }
-
-  private getSessionExpiry() {
-    const expiryCookie = document.cookie.split('; ').find((row) => row.startsWith('grafana_session_expiry='));
-    if (!expiryCookie) {
-      return 0;
-    }
-
-    let expiresStr = expiryCookie.split('=').at(1);
-    if (!expiresStr) {
-      return 0;
-    }
-
-    return parseInt(expiresStr, 10);
   }
 }
 
