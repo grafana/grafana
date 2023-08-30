@@ -1,11 +1,10 @@
 // This is the public API singleton instance
 // we expose it to the public via getDashboardSrv
 
-import { PluginsAPIDashboardSrvSingleton } from './DashboardSrvSingleton';
-import { CoreDashboardSrv, PluginsAPIDashboardSrv } from './types';
+import { PluginsAPIDashboardSrv } from './types';
 
 // do not export
-let publicSingletonInstance: PluginsAPIDashboardSrvSingleton;
+let publicSingletonInstance: PluginsAPIDashboardSrv;
 /**
  * Internal method. Only for Grafana-core usage.
  *
@@ -13,11 +12,11 @@ let publicSingletonInstance: PluginsAPIDashboardSrvSingleton;
  * exported to the public API
  * @private
  */
-export function setDashboardSrv(instance: CoreDashboardSrv) {
+export function setDashboardSrv(instance: PluginsAPIDashboardSrv) {
   if (publicSingletonInstance) {
     throw new Error('DashboardSrv can only be set once.');
   }
-  publicSingletonInstance = new PluginsAPIDashboardSrvSingleton(instance);
+  publicSingletonInstance = instance;
 }
 
 /**

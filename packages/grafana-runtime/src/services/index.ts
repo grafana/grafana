@@ -8,7 +8,10 @@ export * from './legacyAngularInjector';
 export * from './live';
 export * from './LocationService';
 export * from './appEvents';
-export * from './dashboard-srv/DashboardSrv';
+
+//dashboard service exports
+export { getDashboardSrv, setDashboardSrv } from './dashboardSrv/DashboardSrv';
+export type { PluginsAPIDashboardSrv, PluginsAPIPanelModel } from './dashboardSrv/types';
 
 export {
   setPluginExtensionGetter,

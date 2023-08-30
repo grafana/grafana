@@ -1,24 +1,5 @@
-import { PanelModel as BaseCorePanelModel } from '@grafana/data';
+import { PanelModel } from '@grafana/data';
 import { GridPos } from '@grafana/schema';
-
-// Middle types to glue Public Plugin APIs types with internal Grafana types
-export interface CorePanelModel extends BaseCorePanelModel {
-  gridPos: GridPos;
-  refresh: () => void;
-}
-
-export interface CoreDashboardModel {
-  panels: CorePanelModel[];
-  uid: string;
-  title: string;
-  updatePanels: (panels: CorePanelModel[]) => unknown;
-}
-
-export interface CoreDashboardSrv {
-  dashboard?: CoreDashboardModel;
-}
-
-// Public types
 
 /**
  * Used to interact with the current Grafana dashboard.
@@ -27,37 +8,19 @@ export interface CoreDashboardSrv {
  */
 export interface PluginsAPIDashboardSrv {
   /**
-   * @deprecated use `getCurrentDashboard()` instead
-   */
-  dashboard?: PluginsAPIDashboardModel;
-  /**
    * Represents the currently loaded dashboard. Returns 'undefined' if no dashboard is loaded.
-   */
-  getCurrentDashboard(): PluginsAPIDashboardModel | undefined;
-}
-
-/**
- * Used to interact with the current Grafana dashboard.
- * @public
- */
-export interface PluginsAPIDashboardModel {
   /**
    * The uid of the dashboard
    * @remarks
    * Note: The old `id` attribute is deprecated and therefore not included in the public API.
    * @readonly
    */
-  uid: string;
+  dashboardUid: string;
   /**
    * The title of the dashboard
    * @readonly
    */
-  title: string;
-  /**
-   * @readonly
-   * @deprecated use `getPanels()`
-   */
-  panels: PluginsAPIPanelModel[];
+  dashboardTitle: string;
 
   /**
    * Returns the panels within the current dashboard.
@@ -86,7 +49,7 @@ export interface PluginsAPIDashboardModel {
  * A panel in a grafana dashboard.
  * @public
  */
-export interface PluginsAPIPanelModel extends Pick<CorePanelModel, 'options'> {
+export interface PluginsAPIPanelModel extends Pick<PanelModel, 'options'> {
   /**
    * The panel's unique ID
    */
@@ -110,7 +73,7 @@ export interface PluginsAPIPanelModel extends Pick<CorePanelModel, 'options'> {
    *
    * This also includes custom fields provided by any plugins.
    */
-  options: CorePanelModel['options'];
+  options: PanelModel['options'];
   /**
    * Triggers a re-render of the panel on the dashboard, fetching fresh data.
    * Useful for visualizing immediate changes to panel properties.

@@ -70,7 +70,7 @@ import { KeybindingSrv } from './core/services/keybindingSrv';
 import { startMeasure, stopMeasure } from './core/utils/metrics';
 import { initDevFeatures } from './dev';
 import { initAuthConfig } from './features/auth-config';
-import { getDashboardSrv } from './features/dashboard/services/DashboardSrv';
+import { PluginsAPIDashboardSrv } from './features/dashboard/api/pluginsApi';
 import { getTimeSrv } from './features/dashboard/services/TimeSrv';
 import { initGrafanaLive } from './features/live';
 import { PanelDataErrorView } from './features/panel/components/PanelDataErrorView';
@@ -133,7 +133,7 @@ export class GrafanaApp {
       setPanelDataErrorView(PanelDataErrorView);
       setLocationSrv(locationService);
       setTimeZoneResolver(() => config.bootData.user.timezone);
-      setDashboardSrv(getDashboardSrv());
+      setDashboardSrv(new PluginsAPIDashboardSrv());
       initGrafanaLive();
 
       initAuthConfig();
