@@ -71,8 +71,6 @@ Transparency of the gradient is calculated based on the values on the Y-axis. Th
 
 Gradient color is generated based on the hue of the line color.
 
-{{< docs/shared "visualizations/tooltip-mode.md" >}}
-
 {{< docs/shared "visualizations/legend-mode.md" >}}
 
 ### Legend calculations
