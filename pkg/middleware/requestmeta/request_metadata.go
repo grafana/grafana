@@ -35,8 +35,7 @@ func SetupRequestMetadata() web.Middleware {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			rmd := defaultRequestMetadata()
-
-			ctx := context.WithValue(r.Context(), requestMetaDataContextKey, rmd)
+			ctx := SetRequestMetaData(r.Context(), *rmd)
 			*r = *r.WithContext(ctx)
 
 			next.ServeHTTP(w, r)
@@ -55,6 +54,11 @@ func GetRequestMetaData(ctx context.Context) *RequestMetaData {
 	}
 
 	return defaultRequestMetadata()
+}
+
+// SetRequestMetaData sets the request metadata for the context.
+func SetRequestMetaData(ctx context.Context, rmd RequestMetaData) context.Context {
+	return context.WithValue(ctx, requestMetaDataContextKey, &rmd)
 }
 
 // SetOwner returns an `web.Handler` that sets the team name for an request.
