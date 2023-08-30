@@ -36,8 +36,6 @@ type ConfiguredFields struct {
 	LogLevelField   string
 }
 
-const loggerName = "tsdb.elasticsearch.client"
-
 // Client represents a client which can interact with elasticsearch api
 type Client interface {
 	GetConfiguredFields() ConfiguredFields
@@ -46,9 +44,12 @@ type Client interface {
 }
 
 // NewClient creates a new elasticsearch client
-var NewClient = func(ctx context.Context, ds *DatasourceInfo, timeRange backend.TimeRange) (Client, error) {
+var NewClient = func(ctx context.Context, ds *DatasourceInfo, timeRange backend.TimeRange, logger log.Logger) (Client, error) {
+	logger = logger.New("entity", "client")
+
 	ip, err := newIndexPattern(ds.Interval, ds.Database)
 	if err != nil {
+		logger.Error("Failed creating index pattern", "err", err, "interval", ds.Interval, "index", ds.Database)
 		return nil, err
 	}
 
@@ -56,9 +57,7 @@ var NewClient = func(ctx context.Context, ds *DatasourceInfo, timeRange backend.
 	if err != nil {
 		return nil, err
 	}
-
-	logger := log.New(loggerName).FromContext(ctx)
-	logger.Debug("Creating new client", "configuredFields", fmt.Sprintf("%#v", ds.ConfiguredFields), "indices", strings.Join(indices, ", "))
+	logger.Debug("Creating new client", "configuredFields", fmt.Sprintf("%#v", ds.ConfiguredFields), "indices", strings.Join(indices, ", "), "interval", ds.Interval, "index", ds.Database)
 
 	return &baseClientImpl{
 		logger:           logger,
@@ -164,12 +163,13 @@ func (c *baseClientImpl) executeRequest(method, uriPath, uriQuery string, body [
 }
 
 func (c *baseClientImpl) ExecuteMultisearch(r *MultiSearchRequest) (*MultiSearchResponse, error) {
-	c.logger.Debug("Executing multisearch", "search requests", len(r.Requests))
+	c.logger.Debug("Executing multisearch", "requestsLength", len(r.Requests))
 
 	multiRequests := c.createMultiSearchRequests(r.Requests)
 	queryParams := c.getMultiSearchQueryParameters()
 	clientRes, err := c.executeBatchRequest("_msearch", queryParams, multiRequests)
 	if err != nil {
+		c.logger.Error("Failed to execute multisearch", "err", err, "url", c.ds.URL, "status", clientRes.StatusCode)
 		return nil, err
 	}
 	res := clientRes
@@ -179,20 +179,18 @@ func (c *baseClientImpl) ExecuteMultisearch(r *MultiSearchRequest) (*MultiSearch
 		}
 	}()
 
-	c.logger.Debug("Received multisearch response", "code", res.StatusCode, "status", res.Status, "content-length", res.ContentLength)
+	c.logger.Debug("Received multisearch response", "code", res.StatusCode, "status", res.StatusCode, "content-length", res.ContentLength)
 
 	start := time.Now()
-	c.logger.Debug("Decoding multisearch json response")
-
 	var msr MultiSearchResponse
 	dec := json.NewDecoder(res.Body)
 	err = dec.Decode(&msr)
 	if err != nil {
+		c.logger.Error("Failed to decode multisearch json response", "err", err, "took", time.Since(start))
 		return nil, err
 	}
 
-	elapsed := time.Since(start)
-	c.logger.Debug("Decoded multisearch json response", "took", elapsed)
+	c.logger.Debug("Decoded multisearch json response", "took", time.Since(start))
 
 	msr.Status = res.StatusCode
 

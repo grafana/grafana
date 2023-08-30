@@ -30,8 +30,6 @@ type Service struct {
 }
 
 func ProvideService(httpClientProvider httpclient.Provider) *Service {
-	eslog.Debug("Initializing")
-
 	return &Service{
 		im:                 datasource.NewInstanceManager(newInstanceSettings(httpClientProvider)),
 		httpClientProvider: httpClientProvider,
@@ -40,25 +38,27 @@ func ProvideService(httpClientProvider httpclient.Provider) *Service {
 
 func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	dsInfo, err := s.getDSInfo(ctx, req.PluginContext)
+	logger := eslog.FromContext(ctx).New("api", "QueryData")
 	if err != nil {
+		logger.Error("Failed to get data source info", "err", err)
 		return &backend.QueryDataResponse{}, err
 	}
 
-	return queryData(ctx, req.Queries, dsInfo)
+	return queryData(ctx, req.Queries, dsInfo, logger)
 }
 
 // separate function to allow testing the whole transformation and query flow
-func queryData(ctx context.Context, queries []backend.DataQuery, dsInfo *es.DatasourceInfo) (*backend.QueryDataResponse, error) {
+func queryData(ctx context.Context, queries []backend.DataQuery, dsInfo *es.DatasourceInfo, logger log.Logger) (*backend.QueryDataResponse, error) {
 	if len(queries) == 0 {
 		return &backend.QueryDataResponse{}, fmt.Errorf("query contains no queries")
 	}
 
-	client, err := es.NewClient(ctx, dsInfo, queries[0].TimeRange)
+	client, err := es.NewClient(ctx, dsInfo, queries[0].TimeRange, logger)
 	if err != nil {
 		return &backend.QueryDataResponse{}, err
 	}
 	query := newElasticsearchDataQuery(client, queries)
-	return query.execute()
+	return query.execute(ctx, logger)
 }
 
 func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.InstanceFactoryFunc {

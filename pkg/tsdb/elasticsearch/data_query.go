@@ -1,6 +1,7 @@
 package elasticsearch
 
 import (
+	"context"
 	"fmt"
 	"regexp"
 	"strconv"
@@ -9,6 +10,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/log"
 	es "github.com/grafana/grafana/pkg/tsdb/elasticsearch/client"
 )
 
@@ -28,9 +30,13 @@ var newElasticsearchDataQuery = func(client es.Client, dataQuery []backend.DataQ
 	}
 }
 
-func (e *elasticsearchDataQuery) execute() (*backend.QueryDataResponse, error) {
-	queries, err := parseQuery(e.dataQueries)
+func (e *elasticsearchDataQuery) execute(ctx context.Context, logger log.Logger) (*backend.QueryDataResponse, error) {
+	// TODO: Tracing - span this
+	start := time.Now()
+	logger.Debug("Parsing queries", "queriesLength", len(e.dataQueries))
+	queries, err := parseQuery(e.dataQueries, logger)
 	if err != nil {
+		logger.Error("Failed to parse queries", "err", err, "queries", fmt.Sprintf("%v", e.dataQueries), "took", time.Since(start))
 		return &backend.QueryDataResponse{}, err
 	}
 
@@ -40,26 +46,31 @@ func (e *elasticsearchDataQuery) execute() (*backend.QueryDataResponse, error) {
 	to := e.dataQueries[0].TimeRange.To.UnixNano() / int64(time.Millisecond)
 	for _, q := range queries {
 		if err := e.processQuery(q, ms, from, to); err != nil {
+			logger.Error("Failed to process query", "err", err, "query", fmt.Sprintf("%v", q))
 			return &backend.QueryDataResponse{}, err
 		}
 	}
 
 	req, err := ms.Build()
 	if err != nil {
+		logger.Error("Failed to build multisearch request", "err", err, "queries", fmt.Sprintf("%v", queries), "took", time.Since(start))
 		return &backend.QueryDataResponse{}, err
 	}
 
+	logger.Debug("Finished preparing of request", "queriesLength", len(queries), "took", time.Since(start))
 	res, err := e.client.ExecuteMultisearch(req)
 	if err != nil {
 		return &backend.QueryDataResponse{}, err
 	}
 
+	// TODO: Instrumentation of parseResponse
 	return parseResponse(res.Responses, queries, e.client.GetConfiguredFields())
 }
 
 func (e *elasticsearchDataQuery) processQuery(q *Query, ms *es.MultiSearchRequestBuilder, from, to int64) error {
 	err := isQueryWithError(q)
 	if err != nil {
+		err = fmt.Errorf("received invalid query. %w", err)
 		return err
 	}
 

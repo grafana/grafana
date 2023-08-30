@@ -4,9 +4,10 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/log"
 )
 
-func parseQuery(tsdbQuery []backend.DataQuery) ([]*Query, error) {
+func parseQuery(tsdbQuery []backend.DataQuery, logger log.Logger) ([]*Query, error) {
 	queries := make([]*Query, 0)
 	for _, q := range tsdbQuery {
 		model, err := simplejson.NewJson(q.JSON)
@@ -20,10 +21,12 @@ func parseQuery(tsdbQuery []backend.DataQuery) ([]*Query, error) {
 		rawQuery := model.Get("query").MustString()
 		bucketAggs, err := parseBucketAggs(model)
 		if err != nil {
+			logger.Error("Failed to parse bucket aggs", "err", err, "model", string(q.JSON))
 			return nil, err
 		}
 		metrics, err := parseMetrics(model)
 		if err != nil {
+			logger.Error("Failed to parse metrics", "err", err, "model", string(q.JSON))
 			return nil, err
 		}
 		alias := model.Get("alias").MustString("")
