@@ -39,6 +39,7 @@ import { PrometheusDatasource } from '../prometheus/datasource';
 import { PromQuery } from '../prometheus/types';
 
 import { generateQueryFromFilters } from './SearchTraceQLEditor/utils';
+import { TempoVariableQuery, TempoVariableQueryType } from './VariableQueryEditor';
 import { TraceqlFilter, TraceqlSearchScope } from './dataquery.gen';
 import {
   failedMetric,
@@ -63,6 +64,7 @@ import {
 import { doTempoChannelStream } from './streaming';
 import { SearchQueryParams, TempoQuery, TempoJsonData } from './types';
 import { getErrorMessage } from './utils';
+import { TempoVariableSupport } from './variables';
 
 export const DEFAULT_LIMIT = 20;
 
@@ -115,6 +117,66 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
         ],
       };
     }
+
+    this.variables = new TempoVariableSupport(this);
+  }
+
+  async executeVariableQuery(query: TempoVariableQuery) {
+    // Avoid failing if the user did not select the query type (label names, label values, etc.)
+    if (query.type === undefined) {
+      return new Promise<Array<{ text: string }>>(() => []);
+    }
+
+    switch (query.type) {
+      case TempoVariableQueryType.LabelNames: {
+        return await this.labelNamesQuery();
+      }
+      case TempoVariableQueryType.LabelValues: {
+        return this.labelValuesQuery(query.label);
+      }
+      default: {
+        throw Error('Invalid query type', query.type);
+      }
+    }
+  }
+
+  async labelNamesQuery(): Promise<Array<{ text: string }>> {
+    await this.languageProvider.fetchTags();
+    const tags = this.languageProvider.getAutocompleteTags();
+    return tags.filter((tag) => tag !== undefined).map((tag) => ({ text: tag })) as Array<{ text: string }>;
+  }
+
+  async labelValuesQuery(labelName?: string): Promise<Array<{ text: string }>> {
+    if (!labelName) {
+      return [];
+    }
+
+    let options;
+    try {
+      // Retrieve the scope of the tag
+      // Example: given `http.status_code`, we want scope `span`
+      // Note that we ignore possible name clashes, e.g., `http.status_code` in both `span` and `resource`
+      const scope: string | undefined = (this.languageProvider.tagsV2 || [])
+        // flatten the Scope objects
+        .flatMap((tagV2) => tagV2.tags.map((tag) => ({ scope: tagV2.name, name: tag })))
+        // find associated scope
+        .find((tag) => tag.name === labelName)?.scope;
+      if (!scope) {
+        throw Error(`Scope for tag ${labelName} not found`);
+      }
+
+      // For V2, we need to send scope and tag name, e.g. `span.http.status_code`,
+      // unless the tag has intrinsic scope
+      const scopeAndTag = scope === 'intrinsic' ? labelName : `${scope}.${labelName}`;
+      options = await this.languageProvider.getOptionsV2(scopeAndTag);
+    } catch {
+      // For V1, the tag name (e.g. `http.status_code`) is enough
+      options = await this.languageProvider.getOptionsV1(labelName);
+    }
+
+    return options.filter((option) => option.value !== undefined).map((option) => ({ text: option.value })) as Array<{
+      text: string;
+    }>;
   }
 
   query(options: DataQueryRequest<TempoQuery>): Observable<DataQueryResponse> {

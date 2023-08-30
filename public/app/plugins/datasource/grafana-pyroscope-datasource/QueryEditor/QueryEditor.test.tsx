@@ -13,7 +13,7 @@ describe('QueryEditor', () => {
   it('should render without error', async () => {
     setup();
 
-    expect(await screen.findByText('process_cpu - cpu')).toBeDefined();
+    expect(await screen.findByDisplayValue('process_cpu-cpu')).toBeDefined();
   });
 
   it('should render options', async () => {

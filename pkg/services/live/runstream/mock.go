@@ -10,7 +10,7 @@ import (
 
 	gomock "github.com/golang/mock/gomock"
 	backend "github.com/grafana/grafana-plugin-sdk-go/backend"
-	user "github.com/grafana/grafana/pkg/services/user"
+	identity "github.com/grafana/grafana/pkg/services/auth/identity"
 )
 
 // MockChannelLocalPublisher is a mock of ChannelLocalPublisher interface.
@@ -149,7 +149,7 @@ func (m *MockPluginContextGetter) EXPECT() *MockPluginContextGetterMockRecorder 
 }
 
 // GetPluginContext mocks base method.
-func (m *MockPluginContextGetter) GetPluginContext(arg0 context.Context, arg1 *user.SignedInUser, arg2, arg3 string, arg4 bool) (backend.PluginContext, error) {
+func (m *MockPluginContextGetter) GetPluginContext(arg0 context.Context, arg1 identity.Requester, arg2, arg3 string, arg4 bool) (backend.PluginContext, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetPluginContext", arg0, arg1, arg2, arg3, arg4)
 	ret0, _ := ret[0].(backend.PluginContext)

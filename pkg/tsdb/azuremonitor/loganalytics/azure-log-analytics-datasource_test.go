@@ -16,13 +16,10 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/kinds/dataquery"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
 )
-
-var logger = log.New("test")
 
 func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 	datasource := &AzureLogAnalyticsDatasource{}
@@ -1396,7 +1393,7 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			queries, err := datasource.buildQueries(ctx, logger, tt.queryModel, dsInfo, tracer)
+			queries, err := datasource.buildQueries(ctx, tt.queryModel, dsInfo, tracer)
 			tt.Err(t, err)
 			if diff := cmp.Diff(tt.azureLogAnalyticsQueries[0], queries[0]); diff != "" {
 				t.Errorf("Result mismatch (-want +got): \n%s", diff)
@@ -1411,7 +1408,7 @@ func TestLogAnalyticsCreateRequest(t *testing.T) {
 
 	t.Run("creates a request", func(t *testing.T) {
 		ds := AzureLogAnalyticsDatasource{}
-		req, err := ds.createRequest(ctx, logger, url, &AzureLogAnalyticsQuery{
+		req, err := ds.createRequest(ctx, url, &AzureLogAnalyticsQuery{
 			Resources:        []string{"r"},
 			Query:            "Perf",
 			IntersectTime:    false,
@@ -1435,7 +1432,7 @@ func TestLogAnalyticsCreateRequest(t *testing.T) {
 
 	t.Run("creates a request with timespan", func(t *testing.T) {
 		ds := AzureLogAnalyticsDatasource{}
-		req, err := ds.createRequest(ctx, logger, url, &AzureLogAnalyticsQuery{
+		req, err := ds.createRequest(ctx, url, &AzureLogAnalyticsQuery{
 			Resources:        []string{"r"},
 			Query:            "Perf",
 			IntersectTime:    true,
@@ -1459,7 +1456,7 @@ func TestLogAnalyticsCreateRequest(t *testing.T) {
 
 	t.Run("creates a request with multiple resources", func(t *testing.T) {
 		ds := AzureLogAnalyticsDatasource{}
-		req, err := ds.createRequest(ctx, logger, url, &AzureLogAnalyticsQuery{
+		req, err := ds.createRequest(ctx, url, &AzureLogAnalyticsQuery{
 			Resources:        []string{"/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.OperationalInsights/workspaces/r1", "/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.OperationalInsights/workspaces/r2"},
 			Query:            "Perf",
 			QueryType:        string(dataquery.AzureQueryTypeAzureLogAnalytics),
@@ -1479,7 +1476,7 @@ func TestLogAnalyticsCreateRequest(t *testing.T) {
 		ds := AzureLogAnalyticsDatasource{}
 		from := time.Now()
 		to := from.Add(3 * time.Hour)
-		req, err := ds.createRequest(ctx, logger, url, &AzureLogAnalyticsQuery{
+		req, err := ds.createRequest(ctx, url, &AzureLogAnalyticsQuery{
 			Resources: []string{"/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.OperationalInsights/workspaces/r1", "/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.OperationalInsights/workspaces/r2"},
 			Query:     "Perf",
 			QueryType: string(dataquery.AzureQueryTypeAzureLogAnalytics),
@@ -1503,7 +1500,7 @@ func TestLogAnalyticsCreateRequest(t *testing.T) {
 		ds := AzureLogAnalyticsDatasource{}
 		from := time.Now()
 		to := from.Add(3 * time.Hour)
-		req, err := ds.createRequest(ctx, logger, url, &AzureLogAnalyticsQuery{
+		req, err := ds.createRequest(ctx, url, &AzureLogAnalyticsQuery{
 			Resources: []string{"/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r1", "/subscriptions/test-sub/resourceGroups/test-rg/providers/Microsoft.Insights/components/r2"},
 			QueryType: string(dataquery.AzureQueryTypeAzureTraces),
 			TimeRange: backend.TimeRange{
@@ -1538,11 +1535,8 @@ func Test_executeQueryErrorWithDifferentLogAnalyticsCreds(t *testing.T) {
 		TimeRange: backend.TimeRange{},
 	}
 	tracer := tracing.InitializeTracerForTest()
-	res := ds.executeQuery(ctx, logger, query, dsInfo, &http.Client{}, dsInfo.Services["Azure Log Analytics"].URL, tracer)
-	if res.Error == nil {
-		t.Fatal("expecting an error")
-	}
-	if !strings.Contains(res.Error.Error(), "credentials for Log Analytics are no longer supported") {
+	_, err := ds.executeQuery(ctx, query, dsInfo, &http.Client{}, dsInfo.Services["Azure Log Analytics"].URL, tracer)
+	if !strings.Contains(err.Error(), "credentials for Log Analytics are no longer supported") {
 		t.Error("expecting the error to inform of bad credentials")
 	}
 }
