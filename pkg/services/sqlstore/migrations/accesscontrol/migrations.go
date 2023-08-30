@@ -186,4 +186,8 @@ func AddMigration(mg *migrator.Migrator) {
 	mg.AddMigration("add permission identifier index", migrator.NewAddIndexMigration(permissionV1, &migrator.Index{
 		Cols: []string{"identifier"},
 	}))
+
+	mg.AddMigration("add role action kind attribute and role index", migrator.NewAddIndexMigration(permissionV1, &migrator.Index{
+		Cols: []string{"role_id", "action", "kind", "attribute"},
+	}))
 }
