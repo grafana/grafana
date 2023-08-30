@@ -91,10 +91,7 @@
       }
     },
     {
-      "files": [
-        "public/plugins/grafana-testdata-datasource/*.{ts,tsx}",
-        "public/plugins/grafana-testdata-datasource/**/*.{ts,tsx}"
-      ],
+      "files": ["public/plugins/**/*.{ts,tsx}"],
       "rules": {
         "no-restricted-imports": [
           "error",
