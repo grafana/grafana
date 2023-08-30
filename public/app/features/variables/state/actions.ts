@@ -669,6 +669,18 @@ const dfs = (node: Node, visited: string[], variables: VariableModel[], variable
   return variablesRefreshTimeRange;
 };
 
+// verify if the output edges of a node are not time range dependent
+const areOuputEdgesNotTimeRange = (node: Node, variables: VariableModel[]) => {
+  return node.outputEdges.every((e) => {
+    const child = e.outputNode;
+    if (child) {
+      const childVariable = variables.find((v) => v.name === child.name) as QueryVariableModel;
+      return childVariable.refresh !== VariableRefresh.onTimeRangeChanged;
+    }
+    return true;
+  });
+};
+
 /**
  * This function returns a list of variables that need to be refreshed when the time range changes
  * It follows this logic
@@ -714,6 +726,14 @@ export const getVariablesThatNeedRefreshNew = (key: string, state: StoreState): 
       ) {
         variablesRefreshTimeRange.push(parentVariableNode);
         dfs(node, visitedDfs, allVariables, variablesRefreshTimeRange);
+      }
+
+      // If is variable time range, has outputEdges, but the output edges are not time range configured, it means this
+      // is the top variable that need to be refreshed
+      if (isVariableTimeRange && node.outputEdges.length > 0 && areOuputEdgesNotTimeRange(node, allVariables)) {
+        if (!variablesRefreshTimeRange.includes(parentVariableNode)) {
+          variablesRefreshTimeRange.push(parentVariableNode);
+        }
       }
 
       // if variable is not time range but has dependents (output edges) visit its dependants and repeat the process
