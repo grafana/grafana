@@ -1,4 +1,4 @@
-package influxdb
+package influxql
 
 import (
 	"context"
@@ -9,23 +9,21 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/tsdb/influxdb/models"
 )
 
 func TestExecutor_createRequest(t *testing.T) {
+	logger := log.New("tsdb.influx_influxql_test")
 	datasource := &models.DatasourceInfo{
 		URL:      "http://awesome-influxdb:1337",
 		DbName:   "awesome-db",
 		HTTPMode: "GET",
 	}
 	query := "SELECT awesomeness FROM somewhere"
-	s := &Service{
-		queryParser:    &InfluxdbQueryParser{},
-		responseParser: &ResponseParser{},
-	}
 
 	t.Run("createRequest with GET httpMode", func(t *testing.T) {
-		req, err := s.createRequest(context.Background(), logger, datasource, query)
+		req, err := createRequest(context.Background(), logger, datasource, query, defaultRetentionPolicy)
 
 		require.NoError(t, err)
 
@@ -39,7 +37,7 @@ func TestExecutor_createRequest(t *testing.T) {
 
 	t.Run("createRequest with POST httpMode", func(t *testing.T) {
 		datasource.HTTPMode = "POST"
-		req, err := s.createRequest(context.Background(), logger, datasource, query)
+		req, err := createRequest(context.Background(), logger, datasource, query, defaultRetentionPolicy)
 		require.NoError(t, err)
 
 		assert.Equal(t, "POST", req.Method)
@@ -58,7 +56,7 @@ func TestExecutor_createRequest(t *testing.T) {
 
 	t.Run("createRequest with PUT httpMode", func(t *testing.T) {
 		datasource.HTTPMode = "PUT"
-		_, err := s.createRequest(context.Background(), logger, datasource, query)
+		_, err := createRequest(context.Background(), logger, datasource, query, defaultRetentionPolicy)
 		require.EqualError(t, err, ErrInvalidHttpMode.Error())
 	})
 }
