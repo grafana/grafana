@@ -120,6 +120,7 @@ func (proxy *DataSourceProxy) HandleRequest() {
 				Body:          io.NopCloser(strings.NewReader(msg)),
 				ContentLength: int64(len(msg)),
 				Header:        http.Header{},
+				Request:       resp.Request,
 			}
 		}
 		return nil
