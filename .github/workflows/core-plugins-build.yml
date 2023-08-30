@@ -10,7 +10,7 @@ on:
             type: choice
             options:
               - "testdata"
-    
+
 concurrency:
     group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}-${{ inputs.plugin_id }}
     cancel-in-progress: true
@@ -19,6 +19,7 @@ env:
     GO_VERSION: 1.21.0
     GO_LINT_VERSION: 1.51.1
     GRABPL_VERSION: 3.0.41
+    GCP_BUCKET: plugins-community-staging
 
 jobs:
     build:
@@ -38,9 +39,8 @@ jobs:
             cache: yarn
         - name: Install frontend dependencies
           shell: bash
-          working-directory: ./public/plugins/testdata # ${{ inputs.plugin_id }}
+          working-directory: ./public/plugins/${{ inputs.plugin_id }}
           run: |
-           pwd
            yarn install --immutable
         - name: Setup golang environment
           uses: actions/setup-go@v3
@@ -57,10 +57,11 @@ jobs:
         - name: Download grabpl executable
           shell: sh
           run: |
-            # ${{ inputs.plugin_id }}
-            [ ! -d ./public/plugins/testdata/bin ] && mkdir -pv ./public/plugins/testdata/bin || true
-            curl -fL -o ./public/plugins/testdata/bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v${{ env.GRABPL_VERSION }}/grabpl
-            chmod 0755 ./public/plugins/testdata/bin/grabpl
+            [ ! -d ./public/plugins/${{ inputs.plugin_id }}/bin ] && mkdir -pv ./public/plugins/${{ inputs.plugin_id }}/bin || true
+            curl -fL -o ./public/plugins/${{ inputs.plugin_id }}/bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v${{ env.GRABPL_VERSION }}/grabpl
+            chmod 0755 ./public/plugins/${{ inputs.plugin_id }}/bin/grabpl
+        - name: Setup jq
+          uses: dcarbone/install-jq-action@v1.0.1
         - name: Validate environment
           shell: bash
           run: |
@@ -87,39 +88,41 @@ jobs:
             echo "======================================="
             echo "-------- docker version -----"
             docker --version
+            echo "-------- jq version -----"
+            jq --version
             echo "======================================="
         - name: test:frontend
-          working-directory: ./public/plugins/testdata # ${{ inputs.plugin_id }}
+          working-directory: ./public/plugins/${{ inputs.plugin_id }}
           shell: bash
           run: |
             yarn test:ci
         - name: lint:frontend
-          working-directory: ./public/plugins/testdata # ${{ inputs.plugin_id }}
+          working-directory: ./public/plugins/${{ inputs.plugin_id }}
           shell: bash
           run: |
             yarn lint
         - name: build:frontend
-          working-directory: ./public/plugins/testdata # ${{ inputs.plugin_id }}
+          working-directory: ./public/plugins/${{ inputs.plugin_id }}
           shell: bash
           run: |
             yarn build
         - name: lint:backend
-          working-directory: ./public/plugins/testdata # ${{ inputs.plugin_id }}
+          working-directory: ./public/plugins/${{ inputs.plugin_id }}
           shell: bash
           run: |
             mage lint
         - name: test:backend
-          working-directory: ./public/plugins/testdata # ${{ inputs.plugin_id }}
+          working-directory: ./public/plugins/${{ inputs.plugin_id }}
           shell: bash
           run: |
             mage test
         - name: build:backend
-          working-directory: ./public/plugins/testdata # ${{ inputs.plugin_id }}
+          working-directory: ./public/plugins/${{ inputs.plugin_id }}
           shell: bash
           run: |
             mage -v
         - name: package
-          working-directory: ./public/plugins/testdata # ${{ inputs.plugin_id }}
+          working-directory: ./public/plugins/${{ inputs.plugin_id }}
           run: |
               mkdir -p ci/jobs/package
               bin/grabpl plugin package
@@ -130,11 +133,48 @@ jobs:
           uses: actions/upload-artifact@v3
           with:
             name: build-artifacts
-            path: ./public/plugins/testdata/ci/packages/*.zip # ${{ inputs.plugin_id }}/ci/packages/*.zip
+            path: ./public/plugins/${{ inputs.plugin_id }}/ci/packages/*.zip
         - name: Publish release to Google Cloud Storage
+        # TODO: Authentication
           run: |
-            echo "Publish release to Google Cloud Storage: NOT IMPLEMENTED YET"
+            echo "Publish release to Google Cloud Storage:"
+            version=$(cat ci/dist/${{ inputs.plugin_id }}/plugin.json | jq -r .info.version)
+            echo "Plugin version: $version"
+            touch ci/packages/windows ci/packages/darwin ci/packages/linux ci/packages/any
+            gsutil -m cp -r ci/packages/*windows* gs://${{ env.GCP_BUCKET }}/${{ inputs.plugin_id }}/release/${version}/windows
+            gsutil -m cp -r ci/packages/*linux* gs://${{ env.GCP_BUCKET }}/${{ inputs.plugin_id }}/release/${version}/linux 
+            gsutil -m cp -r ci/packages/*darwin* gs://${{ env.GCP_BUCKET }}/${{ inputs.plugin_id }}/release/${version}/darwin
+            gsutil -m cp -r ci/packages/*any* gs://${{ env.GCP_BUCKET }}/${{ inputs.plugin_id }}/release/${version}/any
         - name: Publish new plugin version on grafana.com
-          working-directory: ./public/plugins/testdata # ${{ inputs.plugin_id }}
           run: |
-            echo "Publish new plugin version on grafana.com: NOT IMPLEMENTED YET"
+            echo "Publish new plugin version on grafana.com:"
+            # TODO: gcom (not dev)
+            gcom-dev /plugins -d "{
+              \"url\": \"https://github.com/grafana/grafana/tree/main/public/plugins/${{ inputs.plugin_id }}\",
+              \"download\": {
+                \"linux-amd64\": {
+                  \"url\": \"https://storage.googleapis.com/${{ env.GCP_BUCKET }}/${{ inputs.plugin_id }}/release/${version}/linux/${{ inputs.plugin_id }}-${version}.linux_amd64.zip\",
+                  \"md5\": \"$(cat ci/packages/info-linux_amd64.json | jq -r .plugin.md5)\"
+                },
+                \"linux-arm64\": {
+                  \"url\": \"https://storage.googleapis.com/${{ env.GCP_BUCKET }}/${{ inputs.plugin_id }}/release/${version}/linux/${{ inputs.plugin_id }}-${version}.linux_arm64.zip\",
+                  \"md5\": \"$(cat ci/packages/info-linux_arm64.json | jq -r .plugin.md5)\"
+                },
+                \"linux-arm\": {
+                  \"url\": \"https://storage.googleapis.com/${{ env.GCP_BUCKET }}/${{ inputs.plugin_id }}/release/${version}/linux/${{ inputs.plugin_id }}-${version}.linux_arm.zip\",
+                  \"md5\": \"$(cat ci/packages/info-linux_arm.json | jq -r .plugin.md5)\"
+                },
+                \"windows-amd64\": {
+                  \"url\": \"https://storage.googleapis.com/${{ env.GCP_BUCKET }}/${{ inputs.plugin_id }}/release/${version}/windows/${{ inputs.plugin_id }}-${version}.windows_amd64.zip\",
+                  \"md5\": \"$(cat ci/packages/info-windows_amd64.json | jq -r .plugin.md5)\"
+                },
+                \"darwin-amd64\": {
+                  \"url\": \"https://storage.googleapis.com/${{ env.GCP_BUCKET }}/${{ inputs.plugin_id }}/release/${version}/darwin/${{ inputs.plugin_id }}-${version}.darwin_amd64.zip\",
+                  \"md5\": \"$(cat ci/packages/info-darwin_amd64.json | jq -r .plugin.md5)\"
+                },
+                \"darwin-arm64\": {
+                  \"url\": \"https://storage.googleapis.com/${{ env.GCP_BUCKET }}/${{ inputs.plugin_id }}/release/${version}/darwin/${{ inputs.plugin_id }}-${version}.darwin_arm64.zip\",
+                  \"md5\": \"$(cat ci/packages/info-darwin_arm64.json | jq -r .plugin.md5)\"
+                }
+              }
+            }"
