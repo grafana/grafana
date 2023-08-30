@@ -33,12 +33,14 @@ class ColorGenerator {
   colorsHex: string[];
   colorsRgb: Array<[number, number, number]>;
   cache: Map<string, number>;
+  prevCacheColor: number | undefined;
 
   constructor(colorsHex: string[], theme: GrafanaTheme2) {
     const filteredColors = getFilteredColors(colorsHex, theme);
     this.colorsHex = filteredColors;
     this.colorsRgb = filteredColors.map(strToRgb);
     this.cache = new Map();
+    this.prevCacheColor = undefined;
   }
 
   _getColorIndex(key: string): number {
@@ -47,15 +49,14 @@ class ColorGenerator {
       const hash = this.hashCode(key.toLowerCase());
       i = Math.abs(hash % this.colorsHex.length);
 
-      const prevCacheItem = Array.from(this.cache).pop();
-      if (prevCacheItem && prevCacheItem[1]) {
+      if (this.prevCacheColor !== undefined) {
         // disallow a color that is the same as the previous color
-        if (prevCacheItem[1] === i) {
+        if (this.prevCacheColor === i) {
           i = this.getNextIndex(i);
         }
 
         // disallow a color that looks very similar to the previous color
-        const prevColor = this.colorsHex[prevCacheItem[1]];
+        const prevColor = this.colorsHex[this.prevCacheColor];
         if (tinycolor.readability(prevColor, this.colorsHex[i]) < 1.5) {
           let newIndex = i;
           for (let j = 0; j < this.colorsHex.length; j++) {
@@ -70,6 +71,7 @@ class ColorGenerator {
       }
 
       this.cache.set(key, i);
+      this.prevCacheColor = i;
     }
     return i;
   }
