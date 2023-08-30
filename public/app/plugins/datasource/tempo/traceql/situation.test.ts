@@ -45,7 +45,12 @@ describe('situation', () => {
     {
       query: '{span.foo = "val" }',
       cursorPos: 18,
-      expected: { type: 'SPANSET_EXPRESSION_OPERATORS' },
+      expected: { type: 'SPANFIELD_COMBINING_OPERATORS' },
+    },
+    {
+      query: '{span.foo = 200 }',
+      cursorPos: 15,
+      expected: { type: 'SPANFIELD_COMBINING_OPERATORS' },
     },
     {
       query: '{span.foo = "val" && }',

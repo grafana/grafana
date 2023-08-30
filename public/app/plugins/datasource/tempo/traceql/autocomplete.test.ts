@@ -189,7 +189,7 @@ describe('CompletionProvider', () => {
       {} as monacoTypes.Position
     );
     expect((result! as monacoTypes.languages.CompletionList).suggestions).toEqual(
-      [...CompletionProvider.logicalOps, ...CompletionProvider.arithmeticOps, ...CompletionProvider.comparisonOps].map(
+      [...CompletionProvider.comparisonOps, ...CompletionProvider.logicalOps, ...CompletionProvider.arithmeticOps].map(
         (s) => expect.objectContaining({ label: s.label, insertText: s.insertText })
       )
     );
@@ -270,8 +270,8 @@ describe('CompletionProvider', () => {
   });
 
   it.each([
-    ['{.foo=300} | avg(value) ', 24],
-    ['{.foo=300} && {.foo=300} | avg(value) ', 38],
+    ['{.foo=300} | avg(.value) ', 25],
+    ['{.foo=300} && {.foo=300} | avg(.value) ', 39],
   ])('suggests comparison operators after aggregator (avg, max, ...)', async (x: string, offset: number) => {
     const { provider, model } = setup(x, offset);
     const result = await provider.provideCompletionItems(
@@ -284,8 +284,8 @@ describe('CompletionProvider', () => {
   });
 
   it.each([
-    ['{.foo=300} | avg(value) = ', 26],
-    ['{.foo=300} && {.foo=300} | avg(value) = ', 40],
+    ['{.foo=300} | avg(.value) = ', 27],
+    ['{.foo=300} && {.foo=300} | avg(.value) = ', 41],
   ])('no suggestion after aggregator and comparison operator', async (x: string, offset: number) => {
     const { provider, model } = setup(x, offset);
     const result = await provider.provideCompletionItems(
@@ -302,7 +302,7 @@ describe('CompletionProvider', () => {
       {} as monacoTypes.Position
     );
     expect((result! as monacoTypes.languages.CompletionList).suggestions).toEqual(
-      [...CompletionProvider.logicalOps, ...CompletionProvider.arithmeticOps, ...CompletionProvider.comparisonOps].map(
+      [...CompletionProvider.comparisonOps, ...CompletionProvider.logicalOps, ...CompletionProvider.arithmeticOps].map(
         (s) => expect.objectContaining({ label: s.label, insertText: s.insertText })
       )
     );
@@ -319,14 +319,14 @@ describe('CompletionProvider', () => {
     ['{.foo  300 && .bar  200}', 18],
     ['{.foo  300 && .bar  200}', 19],
     ['{.foo  300 && .bar  200}', 20],
-  ])('suggestions in the middle of an incomplete expression $0', async (x: string, offset: number) => {
+  ])('suggestions in the middle of an incomplete expression', async (x: string, offset: number) => {
     const { provider, model } = setup(x, offset);
     const result = await provider.provideCompletionItems(
       model as unknown as monacoTypes.editor.ITextModel,
       {} as monacoTypes.Position
     );
     expect((result! as monacoTypes.languages.CompletionList).suggestions).toEqual(
-      [...CompletionProvider.logicalOps, ...CompletionProvider.arithmeticOps, ...CompletionProvider.comparisonOps].map(
+      [...CompletionProvider.comparisonOps, ...CompletionProvider.logicalOps, ...CompletionProvider.arithmeticOps].map(
         (s) => expect.objectContaining({ label: s.label, insertText: s.insertText })
       )
     );
@@ -336,24 +336,7 @@ describe('CompletionProvider', () => {
     ['{.foo = 200  }', 11],
     ['{.foo = 200  }', 12],
     ['{.foo = 200  }', 13],
-  ])('suggest logical operators after field expression', async (x: string, offset: number) => {
-    const { provider, model } = setup(x, offset);
-    const result = await provider.provideCompletionItems(
-      model as unknown as monacoTypes.editor.ITextModel,
-      {} as monacoTypes.Position
-    );
-    expect((result! as monacoTypes.languages.CompletionList).suggestions).toEqual(
-      [...CompletionProvider.logicalOps, ...CompletionProvider.arithmeticOps, ...CompletionProvider.comparisonOps].map(
-        (s) => expect.objectContaining({ label: s.label, insertText: s.insertText })
-      )
-    );
-  });
-
-  it.each([
-    ['{.foo = 200  }', 11],
-    ['{.foo = 200  }', 12],
-    ['{.foo = 200  }', 13],
-  ])('suggest logical operators after field expression', async (x: string, offset: number) => {
+  ])('suggest only logical operators after field expression', async (x: string, offset: number) => {
     const { provider, model } = setup(x, offset);
     const result = await provider.provideCompletionItems(
       model as unknown as monacoTypes.editor.ITextModel,

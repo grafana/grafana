@@ -8,7 +8,6 @@ import {
   FieldExpression,
   FieldOp,
   GroupOperation,
-  Identifier,
   IntrinsicField,
   Or,
   parser,
@@ -17,6 +16,7 @@ import {
   SpansetFilter,
   SpansetPipeline,
   SpansetPipelineExpression,
+  Static,
   TraceQL,
 } from '@grafana/lezer-traceql';
 
@@ -40,6 +40,9 @@ export type SituationType =
     }
   | {
       type: 'SPANSET_EXPRESSION_OPERATORS';
+    }
+  | {
+      type: 'SPANFIELD_COMBINING_OPERATORS';
     }
   | {
       type: 'SPANSET_IN_NAME';
@@ -146,12 +149,12 @@ export function getSituation(text: string, offset: number): Situation | null {
 
   const tree = parser.parse(text);
 
-  // Multiple consecutive whitespaces on the left of the text cursor can trick the Lezer parser,
+  // Whitespaces (especially when multiple) on the left of the text cursor can trick the Lezer parser,
   // causing a wrong tree cursor to be picked.
   // Example: `{ span.foo =    ↓ }`, with `↓` being the cursor, tricks the parser.
-  // Quick and dirty hack: Shift the cursor to the left until we find a single whitespace character on its left.
+  // Quick and dirty hack: Shift the cursor to the left until we find a non-whitespace character on its left.
   let shiftedOffset = offset;
-  while (shiftedOffset - 2 >= 0 && text[shiftedOffset - 1] === ' ' && text[shiftedOffset - 2] === ' ') {
+  while (shiftedOffset - 1 >= 0 && text[shiftedOffset - 1] === ' ') {
     shiftedOffset -= 1;
   }
 
@@ -288,11 +291,21 @@ function resolveSpanset(node: SyntaxNode): SituationType {
   const firstChild = walk(node, [
     ['firstChild', [FieldExpression]],
     ['firstChild', [AttributeField]],
-    ['lastChild', [Identifier]],
   ]);
   if (firstChild) {
     return {
       type: 'SPANSET_EXPRESSION_OPERATORS',
+    };
+  }
+
+  const lastFieldExpression1 = walk(node, [
+    ['lastChild', [FieldExpression]],
+    ['lastChild', [FieldExpression]],
+    ['lastChild', [Static]],
+  ]);
+  if (lastFieldExpression1) {
+    return {
+      type: 'SPANFIELD_COMBINING_OPERATORS',
     };
   }
 

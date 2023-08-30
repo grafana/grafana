@@ -321,6 +321,18 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
         return this.getTagsCompletions(undefined, situation.scope);
       case 'SPANSET_EXPRESSION_OPERATORS':
         return [
+          ...CompletionProvider.comparisonOps,
+          ...CompletionProvider.logicalOps,
+          ...CompletionProvider.arithmeticOps,
+        ].map((key) => ({
+          label: key.label,
+          insertText: key.insertText,
+          detail: key.detail,
+          documentation: key.documentation,
+          type: 'OPERATOR',
+        }));
+      case 'SPANFIELD_COMBINING_OPERATORS':
+        return [
           ...CompletionProvider.logicalOps,
           ...CompletionProvider.arithmeticOps,
           ...CompletionProvider.comparisonOps,
