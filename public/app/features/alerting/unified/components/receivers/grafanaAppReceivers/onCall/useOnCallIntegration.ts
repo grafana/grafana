@@ -235,7 +235,7 @@ export function useOnCallIntegration() {
     integrationStatus,
     onCallNotifierMeta: {
       enabled: !!isOnCallEnabled,
-      order: 1,
+      order: -1, // The default is 0. We want OnCall to be the first on the list
       description: isOnCallEnabled
         ? 'Connect effortlessly to Grafana OnCall'
         : 'Enable Grafana OnCall plugin to use this integration',

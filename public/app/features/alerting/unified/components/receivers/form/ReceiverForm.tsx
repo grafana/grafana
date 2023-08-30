@@ -9,7 +9,9 @@ import { useAppNotification } from 'app/core/copy/appNotification';
 import { useCleanup } from 'app/core/hooks/useCleanup';
 import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
 
+import { getMessageFromError } from '../../../../../../core/utils/errors';
 import { logAlertingError } from '../../../Analytics';
+import { isOnCallFetchError } from '../../../api/onCallApi';
 import { useControlledFieldArray } from '../../../hooks/useControlledFieldArray';
 import { ChannelValues, CommonSettingsComponentType, ReceiverFormValues } from '../../../types/receiver-form';
 import { makeAMLink } from '../../../utils/misc';
@@ -97,7 +99,7 @@ export function ReceiverForm<R extends ChannelValues>({
       });
     } catch (e) {
       if (e instanceof Error || isFetchError(e)) {
-        notifyApp.error('Failed to save the contact point', e.message);
+        notifyApp.error('Failed to save the contact point', getErrorMessage(e));
 
         const error = new Error('Failed to save the contact point');
         error.cause = e;
@@ -218,3 +220,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
     }
   `,
 });
+
+function getErrorMessage(error: unknown) {
+  if (isOnCallFetchError(error)) {
+    return error.data.detail;
+  }
+
+  return getMessageFromError(error);
+}

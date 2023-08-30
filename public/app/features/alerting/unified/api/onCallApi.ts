@@ -1,3 +1,5 @@
+import { FetchError, isFetchError } from '@grafana/runtime';
+
 import { GRAFANA_ONCALL_INTEGRATION_TYPE } from '../components/receivers/grafanaAppReceivers/onCall/onCall';
 import { SupportedPlugin } from '../types/pluginBridges';
 
@@ -81,3 +83,7 @@ function isPaginatedResponse(
 }
 
 export const { useGrafanaOnCallIntegrationsQuery } = onCallApi;
+
+export function isOnCallFetchError(error: unknown): error is FetchError<{ detail: string }> {
+  return isFetchError(error) && 'detail' in error.data;
+}
