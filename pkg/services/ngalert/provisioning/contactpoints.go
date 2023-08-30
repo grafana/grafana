@@ -12,11 +12,11 @@ import (
 	alertingNotify "github.com/grafana/alerting/notify"
 	"github.com/prometheus/alertmanager/config"
 
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels_config"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -77,42 +77,21 @@ func (ecp *ContactPointService) GetContactPoints(ctx context.Context, q ContactP
 	if err != nil {
 		return nil, err
 	}
-	contactPoints := []apimodels.EmbeddedContactPoint{}
+	var contactPoints []apimodels.EmbeddedContactPoint
+
 	for _, contactPoint := range revision.cfg.GetGrafanaReceiverMap() {
 		if q.Name != "" && contactPoint.Name != q.Name {
 			continue
 		}
 
-		simpleJson, err := simplejson.NewJson(contactPoint.Settings)
+		embeddedContactPoint, err := GrafanaIntegrationConfigToEmbeddedContactPoint(
+			notifier.PostableGrafanaReceiverToGrafanaIntegrationConfig(contactPoint),
+			provenances[contactPoint.UID],
+			ecp.decryptValueOrRedacted(q.Decrypt, contactPoint.UID),
+		)
 		if err != nil {
 			return nil, err
 		}
-		embeddedContactPoint := apimodels.EmbeddedContactPoint{
-			UID:                   contactPoint.UID,
-			Type:                  contactPoint.Type,
-			Name:                  contactPoint.Name,
-			DisableResolveMessage: contactPoint.DisableResolveMessage,
-			Settings:              simpleJson,
-		}
-		if val, exists := provenances[embeddedContactPoint.UID]; exists && val != "" {
-			embeddedContactPoint.Provenance = string(val)
-		}
-		for k, v := range contactPoint.SecureSettings {
-			decryptedValue, err := ecp.decryptValue(v)
-			if err != nil {
-				ecp.log.Warn("Decrypting value failed", "error", err.Error())
-				continue
-			}
-			if decryptedValue == "" {
-				continue
-			}
-			if q.Decrypt {
-				embeddedContactPoint.Settings.Set(k, decryptedValue)
-			} else {
-				embeddedContactPoint.Settings.Set(k, apimodels.RedactedValue)
-			}
-		}
-
 		contactPoints = append(contactPoints, embeddedContactPoint)
 	}
 	sort.SliceStable(contactPoints, func(i, j int) bool {
@@ -138,27 +117,13 @@ func (ecp *ContactPointService) getContactPointDecrypted(ctx context.Context, or
 		if receiver.UID != uid {
 			continue
 		}
-		simpleJson, err := simplejson.NewJson(receiver.Settings)
+		embeddedContactPoint, err := GrafanaIntegrationConfigToEmbeddedContactPoint(
+			notifier.PostableGrafanaReceiverToGrafanaIntegrationConfig(receiver),
+			"",
+			ecp.decryptValueOrRedacted(true, receiver.UID),
+		)
 		if err != nil {
 			return apimodels.EmbeddedContactPoint{}, err
-		}
-		embeddedContactPoint := apimodels.EmbeddedContactPoint{
-			UID:                   receiver.UID,
-			Type:                  receiver.Type,
-			Name:                  receiver.Name,
-			DisableResolveMessage: receiver.DisableResolveMessage,
-			Settings:              simpleJson,
-		}
-		for k, v := range receiver.SecureSettings {
-			decryptedValue, err := ecp.decryptValue(v)
-			if err != nil {
-				ecp.log.Warn("Decrypting value failed", "error", err.Error())
-				continue
-			}
-			if decryptedValue == "" {
-				continue
-			}
-			embeddedContactPoint.Settings.Set(k, decryptedValue)
 		}
 		return embeddedContactPoint, nil
 	}
@@ -440,6 +405,21 @@ func (ecp *ContactPointService) decryptValue(value string) (string, error) {
 	}
 
 	return string(decryptedValue), nil
+}
+
+func (ecp *ContactPointService) decryptValueOrRedacted(decrypt bool, integrationUID string) func(v string) string {
+	return func(v string) string {
+		decryptedValue, err := ecp.decryptValue(v)
+		if err != nil {
+			ecp.log.Warn("Decrypting value failed", "error", err.Error(), "integrationUid", integrationUID)
+			return ""
+		}
+		if decrypt {
+			return decryptedValue
+		} else {
+			return apimodels.RedactedValue
+		}
+	}
 }
 
 func (ecp *ContactPointService) encryptValue(value string) (string, error) {
