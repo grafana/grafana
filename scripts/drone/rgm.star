@@ -33,20 +33,9 @@ load(
     "scripts/drone/vault.star",
     "from_secret",
     "rgm_dagger_token",
-    "rgm_destination",
     "rgm_gcp_key_base64",
     "rgm_github_token",
 )
-
-rgm_env_secrets = {
-    "GCP_KEY_BASE64": from_secret(rgm_gcp_key_base64),
-    "DESTINATION": from_secret(rgm_destination),
-    "GITHUB_TOKEN": from_secret(rgm_github_token),
-    "_EXPERIMENTAL_DAGGER_CLOUD_TOKEN": from_secret(rgm_dagger_token),
-    "GPG_PRIVATE_KEY": from_secret("packages_gpg_private_key"),
-    "GPG_PUBLIC_KEY": from_secret("packages_gpg_public_key"),
-    "GPG_PASSPHRASE": from_secret("packages_gpg_passphrase"),
-}
 
 docs_paths = {
     "exclude": [
@@ -92,7 +81,7 @@ nightly_trigger = {
     },
 }
 
-def rgm_build(script = "drone_publish_main.sh", canFail = True):
+def rgm_build(script = "drone_publish_main.sh", canFail = True, bucket = "grafana-prerelease"):
     rgm_build_step = {
         "name": "rgm-build",
         "image": "grafana/grafana-build:main",
@@ -100,7 +89,15 @@ def rgm_build(script = "drone_publish_main.sh", canFail = True):
             "export GRAFANA_DIR=$$(pwd)",
             "cd /src && ./scripts/{}".format(script),
         ],
-        "environment": rgm_env_secrets,
+        "environment": {
+            "GCP_KEY_BASE64": from_secret(rgm_gcp_key_base64),
+            "GITHUB_TOKEN": from_secret(rgm_github_token),
+            "_EXPERIMENTAL_DAGGER_CLOUD_TOKEN": from_secret(rgm_dagger_token),
+            "GPG_PRIVATE_KEY": from_secret("packages_gpg_private_key"),
+            "GPG_PUBLIC_KEY": from_secret("packages_gpg_public_key"),
+            "GPG_PASSPHRASE": from_secret("packages_gpg_passphrase"),
+            "DESTINATION": "gs://{}".format(bucket),
+        },
         # The docker socket is a requirement for running dagger programs
         # In the future we should find a way to use dagger without mounting the docker socket.
         "volumes": [{"name": "docker", "path": "/var/run/docker.sock"}],
@@ -133,9 +130,9 @@ def rgm_main():
         ),
     ]
 
-def rgm_windows(trigger, trigger_name):
+def rgm_windows(trigger, name):
     return pipeline(
-        name = "rgm-{}-prerelease-windows".format(trigger_name),
+        name = "rgm-{}-prerelease-windows".format(name),
         trigger = trigger,
         steps = ignore_failure(
             get_windows_steps(
@@ -143,28 +140,28 @@ def rgm_windows(trigger, trigger_name):
                 bucket = "grafana-prerelease",
             ),
         ),
-        depends_on = ["rgm-{}-prerelease".format(trigger_name)],
+        depends_on = ["rgm-{}-prerelease".format(name)],
         platform = "windows",
     )
 
-def rgm_release(trigger, trigger_name):
+def rgm_release(trigger, name, bucket):
     return [
-        test_frontend(trigger, trigger_name),
-        test_backend(trigger, trigger_name),
+        test_frontend(trigger, name),
+        test_backend(trigger, name),
         pipeline(
-            name = "rgm-{}-prerelease".format(trigger_name),
+            name = "rgm-{}-prerelease".format(name),
             trigger = trigger,
-            steps = rgm_build(script = "drone_publish_tag_grafana.sh", canFail = False),
-            depends_on = ["{}-test-backend".format(trigger_name), "{}-test-frontend".format(trigger_name)],
+            steps = rgm_build(script = "drone_publish_tag_grafana.sh", canFail = False, bucket = bucket),
+            depends_on = ["{}-test-backend".format(name), "{}-test-frontend".format(name)],
         ),
-        rgm_windows(trigger, trigger_name),
+        rgm_windows(trigger, name),
         verify_release_pipeline(
             trigger = trigger,
-            name = "rgm-{}-verify-prerelease-assets".format(trigger_name),
-            bucket = "grafana-prerelease",
+            name = "rgm-{}-verify-prerelease-assets".format(name),
+            bucket = bucket,
             depends_on = [
-                "rgm-{}-prerelease".format(trigger_name),
-                "rgm-{}-prerelease-windows".format(trigger_name),
+                "rgm-{}-prerelease".format(name),
+                "rgm-{}-prerelease-windows".format(name),
             ],
         ),
     ]
@@ -173,6 +170,6 @@ def rgm():
     return (
         rgm_main() +
         [whats_new_checker_pipeline(tag_trigger)] +
-        rgm_release(tag_trigger, "tag") +
-        rgm_release(nightly_trigger, "nightly")
+        rgm_release(tag_trigger, "tag", "grafana-prerelease") +
+        rgm_release(nightly_trigger, "nightly", "grafana-prerelease/nightly")
     )

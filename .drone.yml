@@ -2796,8 +2796,7 @@ steps:
   environment:
     _EXPERIMENTAL_DAGGER_CLOUD_TOKEN:
       from_secret: dagger_token
-    DESTINATION:
-      from_secret: destination
+    DESTINATION: gs://grafana-prerelease
     GCP_KEY_BASE64:
       from_secret: gcp_key_base64
     GITHUB_TOKEN:
@@ -3037,8 +3036,7 @@ steps:
   environment:
     _EXPERIMENTAL_DAGGER_CLOUD_TOKEN:
       from_secret: dagger_token
-    DESTINATION:
-      from_secret: destination
+    DESTINATION: gs://grafana-prerelease
     GCP_KEY_BASE64:
       from_secret: gcp_key_base64
     GITHUB_TOKEN:
@@ -3345,8 +3343,7 @@ steps:
   environment:
     _EXPERIMENTAL_DAGGER_CLOUD_TOKEN:
       from_secret: dagger_token
-    DESTINATION:
-      from_secret: destination
+    DESTINATION: gs://grafana-prerelease/nightly
     GCP_KEY_BASE64:
       from_secret: gcp_key_base64
     GITHUB_TOKEN:
@@ -3472,7 +3469,7 @@ steps:
   depends_on:
   - clone
   environment:
-    BUCKET: grafana-prerelease
+    BUCKET: grafana-prerelease/nightly
     GCP_KEY:
       from_secret: gcp_key_base64
   image: google/cloud-sdk:431.0.0
@@ -4998,6 +4995,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 20aa8c4a08f1feb4b14ec542c93bad64ffa81e7dc819797d4244f99b57b21665
+hmac: 240a22d05523d10a7eb244c55a5e55ee7796d051763382fea817e2000580afc7
 
 ...
