@@ -21,6 +21,7 @@ import { t, Trans } from '../../../utils/i18n';
 import { Button } from '../../Button';
 import { Field } from '../../Forms/Field';
 import { Input } from '../../Input/Input';
+import { isValid } from '../utils';
 
 import TimePickerCalendar from './TimePickerCalendar';
 
@@ -206,19 +207,6 @@ function valueAsString(value: DateTime | string, timeZone?: TimeZone): string {
     return dateTimeFormat(value, { timeZone });
   }
   return value;
-}
-
-function isValid(value: string, roundUp?: boolean, timeZone?: TimeZone): boolean {
-  if (isDateTime(value)) {
-    return value.isValid();
-  }
-
-  if (dateMath.isMathString(value)) {
-    return dateMath.isValid(value);
-  }
-
-  const parsed = dateTimeParse(value, { roundUp, timeZone });
-  return parsed.isValid();
 }
 
 function getStyles(theme: GrafanaTheme2) {
