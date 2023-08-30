@@ -27,6 +27,7 @@ type redisConfig struct {
 	db       int
 	name     string
 	prefix   string
+	maxConns int
 }
 
 const (
@@ -44,6 +45,7 @@ const (
 	reasonRedisIssue        = "redis_issue"
 	heartbeatInterval       = time.Second * 5
 	heartbeatTimeout        = time.Minute
+	defaultPoolSize         = 5
 	// The duration we want to return the members if the network is down.
 	membersValidFor = time.Minute
 )
@@ -84,11 +86,17 @@ func newRedisPeer(cfg redisConfig, logger log.Logger, reg prometheus.Registerer,
 	if cfg.name != "" {
 		name = cfg.name
 	}
+	// Allow zero through, since it'll fall back to go-redis's default.
+	poolSize := defaultPoolSize
+	if cfg.maxConns >= 0 {
+		poolSize = cfg.maxConns
+	}
 	rdb := redis.NewClient(&redis.Options{
 		Addr:     cfg.addr,
 		Username: cfg.username,
 		Password: cfg.password,
 		DB:       cfg.db,
+		PoolSize: poolSize,
 	})
 	cmd := rdb.Ping(context.Background())
 	if cmd.Err() != nil {
@@ -309,7 +317,7 @@ func (p *redisPeer) membersScan() ([]string, error) {
 
 // filterUnhealthyMembers will filter out the members that have failed to send
 // a heartbeat since heartbeatTimeout.
-func (p *redisPeer) filterUnhealthyMembers(members []string, values []interface{}) []string {
+func (p *redisPeer) filterUnhealthyMembers(members []string, values []any) []string {
 	peers := []string{}
 	for i, peer := range members {
 		val := values[i]

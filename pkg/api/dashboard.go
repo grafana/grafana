@@ -33,7 +33,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/star"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
-	"github.com/grafana/grafana/pkg/util/errutil"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -49,7 +48,7 @@ func (hs *HTTPServer) isDashboardStarredByUser(c *contextmodel.ReqContext, dashI
 	namespaceID, userIDstr := c.SignedInUser.GetNamespacedID()
 
 	if namespaceID != identity.NamespaceUser {
-		return false, errutil.BadRequest("User does not belong to a user namespace")
+		return false, nil
 	}
 
 	userID, err := identity.IntIdentifier(namespaceID, userIDstr)
@@ -424,6 +423,10 @@ func (hs *HTTPServer) postDashboard(c *contextmodel.ReqContext, cmd dashboards.S
 	var err error
 
 	namespaceID, userIDstr := c.SignedInUser.GetNamespacedID()
+	if namespaceID != identity.NamespaceUser && namespaceID != identity.NamespaceServiceAccount {
+		hs.log.Warn("User does not belong to a user or service account namespace", "namespaceID", namespaceID, "userID", userIDstr)
+		return response.Error(http.StatusBadRequest, "User does not belong to a user or service account namespace", nil)
+	}
 	userID, err := identity.IntIdentifier(namespaceID, userIDstr)
 	if err != nil {
 		hs.log.Warn("Error while parsing user ID", "namespaceID", namespaceID, "userID", userIDstr)
@@ -554,6 +557,11 @@ func (hs *HTTPServer) postDashboard(c *contextmodel.ReqContext, cmd dashboards.S
 // 500: internalServerError
 func (hs *HTTPServer) GetHomeDashboard(c *contextmodel.ReqContext) response.Response {
 	namespaceID, userIDstr := c.SignedInUser.GetNamespacedID()
+
+	if namespaceID != identity.NamespaceUser {
+		return response.Error(http.StatusBadRequest, "User does not belong to a user namespace", nil)
+	}
+
 	userID, err := identity.IntIdentifier(namespaceID, userIDstr)
 	if err != nil {
 		hs.log.Warn("Error while parsing user ID", "namespaceID", namespaceID, "userID", userIDstr, "err", err)
@@ -626,10 +634,10 @@ func (hs *HTTPServer) addGettingStartedPanelToHomeDashboard(c *contextmodel.ReqC
 
 	panels := dash.Get("panels").MustArray()
 
-	newpanel := simplejson.NewFromAny(map[string]interface{}{
+	newpanel := simplejson.NewFromAny(map[string]any{
 		"type": "gettingstarted",
 		"id":   123123,
-		"gridPos": map[string]interface{}{
+		"gridPos": map[string]any{
 			"x": 0,
 			"y": 3,
 			"w": 24,
@@ -1066,7 +1074,11 @@ func (hs *HTTPServer) RestoreDashboardVersion(c *contextmodel.ReqContext) respon
 		return response.Error(http.StatusNotFound, "Dashboard version not found", nil)
 	}
 
-	userID, err := identity.IntIdentifier(c.SignedInUser.GetNamespacedID())
+	namespaceID, userIDstr := c.SignedInUser.GetNamespacedID()
+	if namespaceID != identity.NamespaceUser && namespaceID != identity.NamespaceServiceAccount {
+		return response.Error(http.StatusBadRequest, "User does not belong to a user or service namespace", nil)
+	}
+	userID, err := identity.IntIdentifier(namespaceID, userIDstr)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "failed to get user id", err)
 	}

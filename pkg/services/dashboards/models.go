@@ -64,9 +64,9 @@ func (d *Dashboard) SetVersion(version int) {
 	d.Data.Set("version", version)
 }
 
-func (d *Dashboard) ToResource() kinds.GrafanaResource[simplejson.Json, interface{}] {
+func (d *Dashboard) ToResource() kinds.GrafanaResource[simplejson.Json, any] {
 	parent := dashboard.NewK8sResource(d.UID, nil)
-	res := kinds.GrafanaResource[simplejson.Json, interface{}]{
+	res := kinds.GrafanaResource[simplejson.Json, any]{
 		Kind:       parent.Kind,
 		APIVersion: parent.APIVersion,
 		Metadata: kinds.GrafanaResourceMetadata{
@@ -488,5 +488,5 @@ type FindPersistedDashboardsQuery struct {
 	Permission    PermissionType
 	Sort          model.SortOption
 
-	Filters []interface{}
+	Filters []any
 }

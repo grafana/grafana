@@ -22,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 var (
@@ -182,10 +183,9 @@ func (dr *DashboardServiceImpl) BuildSaveDashboardCommand(ctx context.Context, d
 		}
 	}
 
-	namespaceID, userIDstr := dto.User.GetNamespacedID()
-	userID, err := identity.IntIdentifier(namespaceID, userIDstr)
+	userID, err := resolveUserID(dto.User, dr.log)
 	if err != nil {
-		dr.log.Warn("failed to parse user ID", "namespaceID", namespaceID, "userID", userIDstr, "error", err)
+		return nil, err
 	}
 
 	cmd := &dashboards.SaveDashboardCommand{
@@ -204,6 +204,20 @@ func (dr *DashboardServiceImpl) BuildSaveDashboardCommand(ctx context.Context, d
 	}
 
 	return cmd, nil
+}
+
+func resolveUserID(user identity.Requester, log log.Logger) (int64, error) {
+	namespaceID, identifier := user.GetNamespacedID()
+	if namespaceID != identity.NamespaceUser && namespaceID != identity.NamespaceServiceAccount {
+		return 0, errutil.BadRequest("account doesn't belong to the user or service namespace")
+	}
+
+	userID, err := identity.IntIdentifier(namespaceID, identifier)
+
+	if err != nil {
+		log.Warn("failed to parse user ID", "namespaceID", namespaceID, "userID", identifier, "error", err)
+	}
+	return userID, nil
 }
 
 func (dr *DashboardServiceImpl) UpdateDashboardACL(ctx context.Context, uid int64, items []*dashboards.DashboardACL) error {

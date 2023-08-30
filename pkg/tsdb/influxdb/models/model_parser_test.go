@@ -1,4 +1,4 @@
-package influxdb
+package models
 
 import (
 	"testing"
@@ -9,8 +9,6 @@ import (
 )
 
 func TestInfluxdbQueryParser_Parse(t *testing.T) {
-	parser := &InfluxdbQueryParser{}
-
 	t.Run("can parse influxdb json model", func(t *testing.T) {
 		json := `
         {
@@ -110,7 +108,7 @@ func TestInfluxdbQueryParser_Parse(t *testing.T) {
 			Interval: time.Second * 20,
 		}
 
-		res, err := parser.Parse(query)
+		res, err := QueryParse(query)
 		require.NoError(t, err)
 		require.Len(t, res.GroupBy, 3)
 		require.Len(t, res.Selects, 3)
@@ -173,7 +171,7 @@ func TestInfluxdbQueryParser_Parse(t *testing.T) {
 			Interval: time.Second * 10,
 		}
 
-		res, err := parser.Parse(query)
+		res, err := QueryParse(query)
 		require.NoError(t, err)
 		require.Equal(t, "RawDummyQuery", res.RawQuery)
 		require.Len(t, res.GroupBy, 2)
@@ -196,7 +194,7 @@ func TestInfluxdbQueryParser_Parse(t *testing.T) {
 			Interval: time.Millisecond * 0,
 		}
 
-		res, err := parser.Parse(query)
+		res, err := QueryParse(query)
 		require.NoError(t, err)
 		require.Equal(t, time.Millisecond*1, res.Interval)
 	})

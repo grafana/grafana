@@ -56,7 +56,11 @@ func (u *SignedInUser) ToUserDisplayDTO() *UserDisplayDTO {
 
 // Static function to parse a requester into a UserDisplayDTO
 func NewUserDisplayDTOFromRequester(requester identity.Requester) (*UserDisplayDTO, error) {
-	userID, _ := identity.IntIdentifier(requester.GetNamespacedID())
+	namespaceID, identifier := requester.GetNamespacedID()
+	if namespaceID != identity.NamespaceUser && namespaceID != identity.NamespaceServiceAccount {
+		identifier = "0"
+	}
+	userID, _ := identity.IntIdentifier(namespaceID, identifier)
 	return &UserDisplayDTO{
 		ID:    userID,
 		Login: requester.GetLogin(),
@@ -169,7 +173,11 @@ func (u *SignedInUser) GetNamespacedID() (string, string) {
 	case u.IsAnonymous:
 		return identity.NamespaceAnonymous, ""
 	case u.AuthenticatedBy == "render": //import cycle render
-		return identity.NamespaceRenderService, fmt.Sprintf("%d", u.UserID)
+		if u.UserID == 0 {
+			return identity.NamespaceRenderService, fmt.Sprintf("%d", u.UserID)
+		} else { // this should never happen as u.UserID > 0 already catches this
+			return identity.NamespaceUser, fmt.Sprintf("%d", u.UserID)
+		}
 	}
 
 	// backwards compatibility

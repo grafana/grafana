@@ -13,7 +13,7 @@ interface Props {
 }
 
 export const NavToolbarActions = React.memo<Props>(({ dashboard }) => {
-  const { actions = [], isEditing, viewPanelKey, isDirty, uid } = dashboard.useState();
+  const { actions = [], isEditing, viewPanelId, isDirty, uid } = dashboard.useState();
   const toolbarActions = (actions ?? []).map((action) => <action.Component key={action.state.key} model={action} />);
 
   if (uid) {
@@ -29,7 +29,7 @@ export const NavToolbarActions = React.memo<Props>(({ dashboard }) => {
 
   toolbarActions.push(<NavToolbarSeparator leftActionsSeparator key="separator" />);
 
-  if (viewPanelKey) {
+  if (viewPanelId) {
     toolbarActions.push(
       <Button
         onClick={() => locationService.partial({ viewPanel: null })}
@@ -62,7 +62,7 @@ export const NavToolbarActions = React.memo<Props>(({ dashboard }) => {
   } else {
     // TODO check permissions
     toolbarActions.push(
-      <Button onClick={dashboard.onEnterEditMode} tooltip="Save as copy" fill="text" key="save-as">
+      <Button onClick={dashboard.onSave} tooltip="Save as copy" fill="text" key="save-as">
         Save as
       </Button>
     );
@@ -72,7 +72,7 @@ export const NavToolbarActions = React.memo<Props>(({ dashboard }) => {
       </Button>
     );
     toolbarActions.push(
-      <Button onClick={dashboard.onEnterEditMode} tooltip="Save changes" key="save" disabled={!isDirty}>
+      <Button onClick={dashboard.onSave} tooltip="Save changes" key="save" disabled={!isDirty}>
         Save
       </Button>
     );
