@@ -152,7 +152,7 @@ Each linked query consists of:
 
 ### Service Graph
 
-The **Service Graph** setting configures the [Service Graph](/docs/tempo/latest/grafana-agent/service-graphs/) feature.
+The **Service Graph** setting configures the [Service Graph](/docs/tempo/latest/metrics-generator/service-graphs/) feature.
 
 Configure the **Data source** setting to define in which Prometheus instance the Service Graph data is stored.
 
@@ -206,7 +206,7 @@ You can choose one of three options:
 You can define and configure the Tempo data source in YAML files as part of Grafana's provisioning system.
 For more information about provisioning and available configuration options, refer to [Provisioning Grafana][provisioning-data-sources].
 
-#### Provisioning example
+Example provision YAML file:
 
 ```yaml
 apiVersion: 1
