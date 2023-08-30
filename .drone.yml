@@ -3689,6 +3689,8 @@ steps:
   volumes:
   - name: docker
     path: /var/run/docker.sock
+  - name: config
+    path: /root/.docker/
 - commands:
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/grafana:latest
   depends_on:
@@ -3743,6 +3745,8 @@ steps:
   volumes:
   - name: docker
     path: /var/run/docker.sock
+  - name: config
+    path: /root/.docker/
 - commands:
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/grafana:main
   depends_on:
@@ -3797,6 +3801,8 @@ steps:
   volumes:
   - name: docker
     path: /var/run/docker.sock
+  - name: config
+    path: /root/.docker/
 - commands:
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/grafana:latest-ubuntu
   depends_on:
@@ -3852,6 +3858,8 @@ steps:
   volumes:
   - name: docker
     path: /var/run/docker.sock
+  - name: config
+    path: /root/.docker/
 - commands:
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/grafana:main-ubuntu
   depends_on:
@@ -3907,6 +3915,8 @@ steps:
   volumes:
   - name: docker
     path: /var/run/docker.sock
+  - name: config
+    path: /root/.docker/
 - commands:
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM google/cloud-sdk:431.0.0
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/build-container:1.7.4
@@ -4207,6 +4217,6 @@ kind: secret
 name: github_token
 ---
 kind: signature
-hmac: 02b21b9aea12f6dfb6f2d0bd9e47d0d6908c8133a06d5ab382b973c8fe377271
+hmac: 1909d6a745b6bb93ca11b3aba037295401d963b5e9a24156a0b763625e581fa8
 
 ...
