@@ -28,8 +28,8 @@ func (ss *sqlxStore) Get(ctx context.Context, query *dashver.GetDashboardVersion
 	return &version, err
 }
 
-func (ss *sqlxStore) GetBatch(ctx context.Context, cmd *dashver.DeleteExpiredVersionsCommand, perBatch int, versionsToKeep int) ([]interface{}, error) {
-	var versionIds []interface{}
+func (ss *sqlxStore) GetBatch(ctx context.Context, cmd *dashver.DeleteExpiredVersionsCommand, perBatch int, versionsToKeep int) ([]any, error) {
+	var versionIds []any
 	versionIdsToDeleteQuery := `SELECT id
 	FROM dashboard_version, (
 		SELECT dashboard_id, count(version) as count, min(version) as min
@@ -45,7 +45,7 @@ func (ss *sqlxStore) GetBatch(ctx context.Context, cmd *dashver.DeleteExpiredVer
 
 // This service is used by cleanup which need to belong to the same transaction
 // Here we need to make sure that the transaction is shared between services
-func (ss *sqlxStore) DeleteBatch(ctx context.Context, cmd *dashver.DeleteExpiredVersionsCommand, versionIdsToDelete []interface{}) (int64, error) {
+func (ss *sqlxStore) DeleteBatch(ctx context.Context, cmd *dashver.DeleteExpiredVersionsCommand, versionIdsToDelete []any) (int64, error) {
 	var deleted int64
 	err := ss.sess.WithTransaction(ctx, func(tx *session.SessionTx) error {
 		deleteExpiredSQL := `DELETE FROM dashboard_version WHERE id IN (?` + strings.Repeat(",?", len(versionIdsToDelete)-1) + `)`

@@ -105,7 +105,7 @@ func TestProcessLogsResponse(t *testing.T) {
 			logsFrame := frames[0]
 
 			meta := logsFrame.Meta
-			require.Equal(t, map[string]interface{}{"searchWords": []string{"hello", "message"}, "limit": 500}, meta.Custom)
+			require.Equal(t, map[string]any{"searchWords": []string{"hello", "message"}, "limit": 500}, meta.Custom)
 			require.Equal(t, data.VisTypeLogs, string(meta.PreferredVisualization))
 
 			logsFieldMap := make(map[string]*data.Field)
@@ -428,7 +428,7 @@ func TestProcessLogsResponse(t *testing.T) {
 
 		customMeta := frame.Meta.Custom
 
-		require.Equal(t, map[string]interface{}{
+		require.Equal(t, map[string]any{
 			"searchWords": []string{"hello", "message"},
 			"limit":       500,
 		}, customMeta)
@@ -652,7 +652,7 @@ func TestProcessRawDocumentResponse(t *testing.T) {
 		require.Equal(t, 2, f.Len())
 
 		v := f.At(0).(*json.RawMessage)
-		var jsonData map[string]interface{}
+		var jsonData map[string]any
 		err = json.Unmarshal(*v, &jsonData)
 		require.NoError(t, err)
 
@@ -3295,10 +3295,10 @@ func TestLabelOrderInFieldName(t *testing.T) {
 
 func TestFlatten(t *testing.T) {
 	t.Run("Flattens simple object", func(t *testing.T) {
-		obj := map[string]interface{}{
+		obj := map[string]any{
 			"foo": "bar",
-			"nested": map[string]interface{}{
-				"bax": map[string]interface{}{
+			"nested": map[string]any{
+				"bax": map[string]any{
 					"baz": "qux",
 				},
 			},
@@ -3311,19 +3311,19 @@ func TestFlatten(t *testing.T) {
 	})
 
 	t.Run("Flattens object to max 10 nested levels", func(t *testing.T) {
-		obj := map[string]interface{}{
-			"nested0": map[string]interface{}{
-				"nested1": map[string]interface{}{
-					"nested2": map[string]interface{}{
-						"nested3": map[string]interface{}{
-							"nested4": map[string]interface{}{
-								"nested5": map[string]interface{}{
-									"nested6": map[string]interface{}{
-										"nested7": map[string]interface{}{
-											"nested8": map[string]interface{}{
-												"nested9": map[string]interface{}{
-													"nested10": map[string]interface{}{
-														"nested11": map[string]interface{}{
+		obj := map[string]any{
+			"nested0": map[string]any{
+				"nested1": map[string]any{
+					"nested2": map[string]any{
+						"nested3": map[string]any{
+							"nested4": map[string]any{
+								"nested5": map[string]any{
+									"nested6": map[string]any{
+										"nested7": map[string]any{
+											"nested8": map[string]any{
+												"nested9": map[string]any{
+													"nested10": map[string]any{
+														"nested11": map[string]any{
 															"nested12": "abc",
 														},
 													},
@@ -3341,99 +3341,99 @@ func TestFlatten(t *testing.T) {
 
 		flattened := flatten(obj, 10)
 		require.Len(t, flattened, 1)
-		require.Equal(t, map[string]interface{}{"nested11": map[string]interface{}{"nested12": "abc"}}, flattened["nested0.nested1.nested2.nested3.nested4.nested5.nested6.nested7.nested8.nested9.nested10"])
+		require.Equal(t, map[string]any{"nested11": map[string]any{"nested12": "abc"}}, flattened["nested0.nested1.nested2.nested3.nested4.nested5.nested6.nested7.nested8.nested9.nested10"])
 	})
 
 	t.Run("does not affect any non-nested JSON", func(t *testing.T) {
-		target := map[string]interface{}{
+		target := map[string]any{
 			"fieldName": "",
 		}
 
-		assert.Equal(t, map[string]interface{}{
+		assert.Equal(t, map[string]any{
 			"fieldName": "",
 		}, flatten(target, 10))
 	})
 
 	t.Run("flattens up to maxDepth", func(t *testing.T) {
-		target := map[string]interface{}{
-			"fieldName2": map[string]interface{}{
-				"innerFieldName2": map[string]interface{}{
+		target := map[string]any{
+			"fieldName2": map[string]any{
+				"innerFieldName2": map[string]any{
 					"innerFieldName3": "",
 				},
 			},
 		}
 
-		assert.Equal(t, map[string]interface{}{
-			"fieldName2.innerFieldName2": map[string]interface{}{"innerFieldName3": ""}}, flatten(target, 1))
+		assert.Equal(t, map[string]any{
+			"fieldName2.innerFieldName2": map[string]any{"innerFieldName3": ""}}, flatten(target, 1))
 	})
 
 	t.Run("flattens up to maxDepth with multiple keys in target", func(t *testing.T) {
-		target := map[string]interface{}{
-			"fieldName": map[string]interface{}{
+		target := map[string]any{
+			"fieldName": map[string]any{
 				"innerFieldName": "",
 			},
-			"fieldName2": map[string]interface{}{
-				"innerFieldName2": map[string]interface{}{
+			"fieldName2": map[string]any{
+				"innerFieldName2": map[string]any{
 					"innerFieldName3": "",
 				},
 			},
 		}
 
-		assert.Equal(t, map[string]interface{}{"fieldName.innerFieldName": "", "fieldName2.innerFieldName2": map[string]interface{}{"innerFieldName3": ""}}, flatten(target, 1))
+		assert.Equal(t, map[string]any{"fieldName.innerFieldName": "", "fieldName2.innerFieldName2": map[string]any{"innerFieldName3": ""}}, flatten(target, 1))
 	})
 
 	t.Run("flattens multiple objects of the same max depth", func(t *testing.T) {
-		target := map[string]interface{}{
-			"fieldName": map[string]interface{}{
+		target := map[string]any{
+			"fieldName": map[string]any{
 				"innerFieldName": "",
 			},
-			"fieldName2": map[string]interface{}{
+			"fieldName2": map[string]any{
 				"innerFieldName2": "",
 			},
 		}
 
-		assert.Equal(t, map[string]interface{}{
+		assert.Equal(t, map[string]any{
 			"fieldName.innerFieldName":   "",
 			"fieldName2.innerFieldName2": ""}, flatten(target, 1))
 	})
 
 	t.Run("only flattens multiple entries in the same key", func(t *testing.T) {
-		target := map[string]interface{}{
-			"fieldName": map[string]interface{}{
+		target := map[string]any{
+			"fieldName": map[string]any{
 				"innerFieldName":  "",
 				"innerFieldName1": "",
 			},
-			"fieldName2": map[string]interface{}{
-				"innerFieldName2": map[string]interface{}{
+			"fieldName2": map[string]any{
+				"innerFieldName2": map[string]any{
 					"innerFieldName3": "",
 				},
 			},
 		}
 
-		assert.Equal(t, map[string]interface{}{
+		assert.Equal(t, map[string]any{
 			"fieldName.innerFieldName":   "",
 			"fieldName.innerFieldName1":  "",
-			"fieldName2.innerFieldName2": map[string]interface{}{"innerFieldName3": ""}}, flatten(target, 1))
+			"fieldName2.innerFieldName2": map[string]any{"innerFieldName3": ""}}, flatten(target, 1))
 	})
 
 	t.Run("combines nested field names", func(t *testing.T) {
-		target := map[string]interface{}{
-			"fieldName": map[string]interface{}{
+		target := map[string]any{
+			"fieldName": map[string]any{
 				"innerFieldName": "",
 			},
-			"fieldName2": map[string]interface{}{
+			"fieldName2": map[string]any{
 				"innerFieldName2": "",
 			},
 		}
 
-		assert.Equal(t, map[string]interface{}{"fieldName.innerFieldName": "", "fieldName2.innerFieldName2": ""}, flatten(target, 10))
+		assert.Equal(t, map[string]any{"fieldName.innerFieldName": "", "fieldName2.innerFieldName2": ""}, flatten(target, 10))
 	})
 
 	t.Run("will preserve only one key with the same name", func(t *testing.T) {
 		// This test documents that in the unlikely case of a collision of a flattened name and an existing key, only
 		// one entry's value will be preserved at random
-		target := map[string]interface{}{
-			"fieldName": map[string]interface{}{
+		target := map[string]any{
+			"fieldName": map[string]any{
 				"innerFieldName": "one of these values will be lost",
 			},
 			"fieldName.innerFieldName": "this may be lost",

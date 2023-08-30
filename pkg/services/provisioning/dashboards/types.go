@@ -16,23 +16,23 @@ type config struct {
 	Folder                string
 	FolderUID             string
 	Editable              bool
-	Options               map[string]interface{}
+	Options               map[string]any
 	DisableDeletion       bool
 	UpdateIntervalSeconds int64
 	AllowUIUpdates        bool
 }
 
 type configV0 struct {
-	Name                  string                 `json:"name" yaml:"name"`
-	Type                  string                 `json:"type" yaml:"type"`
-	OrgID                 int64                  `json:"org_id" yaml:"org_id"`
-	Folder                string                 `json:"folder" yaml:"folder"`
-	FolderUID             string                 `json:"folderUid" yaml:"folderUid"`
-	Editable              bool                   `json:"editable" yaml:"editable"`
-	Options               map[string]interface{} `json:"options" yaml:"options"`
-	DisableDeletion       bool                   `json:"disableDeletion" yaml:"disableDeletion"`
-	UpdateIntervalSeconds int64                  `json:"updateIntervalSeconds" yaml:"updateIntervalSeconds"`
-	AllowUIUpdates        bool                   `json:"allowUiUpdates" yaml:"allowUiUpdates"`
+	Name                  string         `json:"name" yaml:"name"`
+	Type                  string         `json:"type" yaml:"type"`
+	OrgID                 int64          `json:"org_id" yaml:"org_id"`
+	Folder                string         `json:"folder" yaml:"folder"`
+	FolderUID             string         `json:"folderUid" yaml:"folderUid"`
+	Editable              bool           `json:"editable" yaml:"editable"`
+	Options               map[string]any `json:"options" yaml:"options"`
+	DisableDeletion       bool           `json:"disableDeletion" yaml:"disableDeletion"`
+	UpdateIntervalSeconds int64          `json:"updateIntervalSeconds" yaml:"updateIntervalSeconds"`
+	AllowUIUpdates        bool           `json:"allowUiUpdates" yaml:"allowUiUpdates"`
 }
 
 type configVersion struct {
