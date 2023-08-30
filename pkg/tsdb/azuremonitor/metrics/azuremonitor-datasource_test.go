@@ -19,7 +19,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/kinds/dataquery"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/testdata"
 	azTime "github.com/grafana/grafana/pkg/tsdb/azuremonitor/time"
@@ -294,7 +293,7 @@ func TestAzureMonitorBuildQueries(t *testing.T) {
 				},
 			}
 
-			queries, err := datasource.buildQueries(log.New("test"), tsdbQuery, dsInfo)
+			queries, err := datasource.buildQueries(tsdbQuery, dsInfo)
 			require.NoError(t, err)
 
 			resources := map[string]dataquery.AzureMonitorResource{}
@@ -359,7 +358,7 @@ func TestCustomNamespace(t *testing.T) {
 			},
 		}
 
-		result, err := datasource.buildQueries(log.New("test"), q, types.DatasourceInfo{})
+		result, err := datasource.buildQueries(q, types.DatasourceInfo{})
 		require.NoError(t, err)
 		expected := "custom/namespace"
 		require.Equal(t, expected, result[0].Params.Get("metricnamespace"))
@@ -690,7 +689,7 @@ func TestAzureMonitorCreateRequest(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			ds := AzureMonitorDatasource{}
-			req, err := ds.createRequest(ctx, log.New("test"), url)
+			req, err := ds.createRequest(ctx, url)
 			tt.Err(t, err)
 			if req.URL.String() != tt.expectedURL {
 				t.Errorf("Expecting %s, got %s", tt.expectedURL, req.URL.String())

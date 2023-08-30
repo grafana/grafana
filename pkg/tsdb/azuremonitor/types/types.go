@@ -190,7 +190,7 @@ type MetricVisualization struct {
 }
 
 type ServiceProxy interface {
-	Do(rw http.ResponseWriter, req *http.Request, cli *http.Client) http.ResponseWriter
+	Do(rw http.ResponseWriter, req *http.Request, cli *http.Client) (http.ResponseWriter, error)
 }
 
 type LogAnalyticsWorkspaceFeatures struct {
