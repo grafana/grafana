@@ -17,13 +17,14 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 	"k8s.io/utils/strings/slices"
 
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/kinds/dataquery"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/macros"
-	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/tracing"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
 )
 
@@ -58,15 +59,15 @@ func (e *AzureLogAnalyticsDatasource) ResourceRequest(rw http.ResponseWriter, re
 // 1. build the AzureMonitor url and querystring for each query
 // 2. executes each query by calling the Azure Monitor API
 // 3. parses the responses for each query into data frames
-func (e *AzureLogAnalyticsDatasource) ExecuteTimeSeriesQuery(ctx context.Context, originalQueries []backend.DataQuery, dsInfo types.DatasourceInfo, client *http.Client, url string, tracer tracing.Tracer) (*backend.QueryDataResponse, error) {
+func (e *AzureLogAnalyticsDatasource) ExecuteTimeSeriesQuery(ctx context.Context, originalQueries []backend.DataQuery, dsInfo types.DatasourceInfo, client *http.Client, url string) (*backend.QueryDataResponse, error) {
 	result := backend.NewQueryDataResponse()
-	queries, err := e.buildQueries(ctx, originalQueries, dsInfo, tracer)
+	queries, err := e.buildQueries(ctx, originalQueries, dsInfo)
 	if err != nil {
 		return nil, err
 	}
 
 	for _, query := range queries {
-		res, err := e.executeQuery(ctx, query, dsInfo, client, url, tracer)
+		res, err := e.executeQuery(ctx, query, dsInfo, client, url)
 		if err != nil {
 			result.Responses[query.RefID] = backend.DataResponse{Error: err}
 			continue
@@ -91,7 +92,7 @@ func getApiURL(resourceOrWorkspace string, isAppInsightsQuery bool) string {
 	}
 }
 
-func (e *AzureLogAnalyticsDatasource) buildQueries(ctx context.Context, queries []backend.DataQuery, dsInfo types.DatasourceInfo, tracer tracing.Tracer) ([]*AzureLogAnalyticsQuery, error) {
+func (e *AzureLogAnalyticsDatasource) buildQueries(ctx context.Context, queries []backend.DataQuery, dsInfo types.DatasourceInfo) ([]*AzureLogAnalyticsQuery, error) {
 	azureLogAnalyticsQueries := []*AzureLogAnalyticsQuery{}
 	appInsightsRegExp, err := regexp.Compile("providers/Microsoft.Insights/components")
 	if err != nil {
@@ -181,7 +182,7 @@ func (e *AzureLogAnalyticsDatasource) buildQueries(ctx context.Context, queries 
 			operationId := ""
 			if queryJSONModel.AzureTraces.OperationId != nil && *queryJSONModel.AzureTraces.OperationId != "" {
 				operationId = *queryJSONModel.AzureTraces.OperationId
-				resourcesMap, err = getCorrelationWorkspaces(ctx, resourceOrWorkspace, resourcesMap, dsInfo, operationId, tracer)
+				resourcesMap, err = getCorrelationWorkspaces(ctx, resourceOrWorkspace, resourcesMap, dsInfo, operationId)
 				if err != nil {
 					return nil, fmt.Errorf("failed to retrieve correlation resources for operation ID - %s: %s", operationId, err)
 				}
@@ -248,7 +249,7 @@ func (e *AzureLogAnalyticsDatasource) buildQueries(ctx context.Context, queries 
 	return azureLogAnalyticsQueries, nil
 }
 
-func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, query *AzureLogAnalyticsQuery, dsInfo types.DatasourceInfo, client *http.Client, url string, tracer tracing.Tracer) (*backend.DataResponse, error) {
+func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, query *AzureLogAnalyticsQuery, dsInfo types.DatasourceInfo, client *http.Client, url string) (*backend.DataResponse, error) {
 	// If azureLogAnalyticsSameAs is defined and set to false, return an error
 	if sameAs, ok := dsInfo.JSONData["azureLogAnalyticsSameAs"]; ok && !sameAs.(bool) {
 		return nil, fmt.Errorf("credentials for Log Analytics are no longer supported. Go to the data source configuration to update Azure Monitor credentials")
@@ -271,16 +272,21 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, query *A
 		return nil, err
 	}
 
-	ctx, span := tracer.Start(ctx, "azure log analytics query")
-	span.SetAttributes("target", query.Query, attribute.Key("target").String(query.Query))
-	span.SetAttributes("from", query.TimeRange.From.UnixNano()/int64(time.Millisecond), attribute.Key("from").Int64(query.TimeRange.From.UnixNano()/int64(time.Millisecond)))
-	span.SetAttributes("until", query.TimeRange.To.UnixNano()/int64(time.Millisecond), attribute.Key("until").Int64(query.TimeRange.To.UnixNano()/int64(time.Millisecond)))
-	span.SetAttributes("datasource_id", dsInfo.DatasourceID, attribute.Key("datasource_id").Int64(dsInfo.DatasourceID))
-	span.SetAttributes("org_id", dsInfo.OrgID, attribute.Key("org_id").Int64(dsInfo.OrgID))
+	_, span := tracing.DefaultTracer().Start(
+		ctx,
+		"azure log analytics query",
+		trace.WithAttributes(
+			attribute.String("target", query.Query),
+			attribute.Int64("from", query.TimeRange.From.UnixNano()/int64(time.Millisecond)),
+			attribute.Int64("until", query.TimeRange.To.UnixNano()/int64(time.Millisecond)),
+			attribute.Int64("datasource_id", dsInfo.DatasourceID),
+			attribute.Int64("org_id", dsInfo.OrgID),
+		),
+	)
 
 	defer span.End()
 
-	tracer.Inject(ctx, req.Header, span)
+	//tracer.Inject(ctx, req.Header, span)
 
 	res, err := client.Do(req)
 	if err != nil {
@@ -527,7 +533,7 @@ func getTracesQueryUrl(resources []string, azurePortalUrl string) (string, error
 	return portalUrl, nil
 }
 
-func getCorrelationWorkspaces(ctx context.Context, baseResource string, resourcesMap map[string]bool, dsInfo types.DatasourceInfo, operationId string, tracer tracing.Tracer) (map[string]bool, error) {
+func getCorrelationWorkspaces(ctx context.Context, baseResource string, resourcesMap map[string]bool, dsInfo types.DatasourceInfo, operationId string) (map[string]bool, error) {
 	azMonService := dsInfo.Services["Azure Monitor"]
 	correlationUrl := azMonService.URL + fmt.Sprintf("%s/providers/microsoft.insights/transactions/%s", baseResource, operationId)
 
@@ -543,14 +549,19 @@ func getCorrelationWorkspaces(ctx context.Context, baseResource string, resource
 		req.URL.RawQuery = values.Encode()
 		req.Method = "GET"
 
-		ctx, span := tracer.Start(ctx, "azure traces correlation request")
-		span.SetAttributes("target", req.URL, attribute.Key("target").String(req.URL.String()))
-		span.SetAttributes("datasource_id", dsInfo.DatasourceID, attribute.Key("datasource_id").Int64(dsInfo.DatasourceID))
-		span.SetAttributes("org_id", dsInfo.OrgID, attribute.Key("org_id").Int64(dsInfo.OrgID))
+		_, span := tracing.DefaultTracer().Start(
+			ctx,
+			"azure traces correlation request",
+			trace.WithAttributes(
+				attribute.String("target", req.URL.String()),
+				attribute.Int64("datasource_id", dsInfo.DatasourceID),
+				attribute.Int64("org_id", dsInfo.OrgID),
+			),
+		)
 
 		defer span.End()
 
-		tracer.Inject(ctx, req.Header, span)
+		//tracer.Inject(ctx, req.Header, span)
 
 		res, err := azMonService.HTTPClient.Do(req)
 		if err != nil {

@@ -12,13 +12,14 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/kinds/dataquery"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/loganalytics"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/macros"
-	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/tracing"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
 )
 
@@ -55,7 +56,7 @@ func (e *AzureResourceGraphDatasource) ResourceRequest(rw http.ResponseWriter, r
 // 1. builds the AzureMonitor url and querystring for each query
 // 2. executes each query by calling the Azure Monitor API
 // 3. parses the responses for each query into data frames
-func (e *AzureResourceGraphDatasource) ExecuteTimeSeriesQuery(ctx context.Context, originalQueries []backend.DataQuery, dsInfo types.DatasourceInfo, client *http.Client, url string, tracer tracing.Tracer) (*backend.QueryDataResponse, error) {
+func (e *AzureResourceGraphDatasource) ExecuteTimeSeriesQuery(ctx context.Context, originalQueries []backend.DataQuery, dsInfo types.DatasourceInfo, client *http.Client, url string) (*backend.QueryDataResponse, error) {
 	result := &backend.QueryDataResponse{
 		Responses: map[string]backend.DataResponse{},
 	}
@@ -66,7 +67,7 @@ func (e *AzureResourceGraphDatasource) ExecuteTimeSeriesQuery(ctx context.Contex
 	}
 
 	for _, query := range queries {
-		res, err := e.executeQuery(ctx, query, dsInfo, client, url, tracer)
+		res, err := e.executeQuery(ctx, query, dsInfo, client, url)
 		if err != nil {
 			result.Responses[query.RefID] = backend.DataResponse{Error: err}
 			continue
@@ -120,8 +121,7 @@ func (e *AzureResourceGraphDatasource) buildQueries(queries []backend.DataQuery,
 	return azureResourceGraphQueries, nil
 }
 
-func (e *AzureResourceGraphDatasource) executeQuery(ctx context.Context, query *AzureResourceGraphQuery, dsInfo types.DatasourceInfo, client *http.Client,
-	dsURL string, tracer tracing.Tracer) (*backend.DataResponse, error) {
+func (e *AzureResourceGraphDatasource) executeQuery(ctx context.Context, query *AzureResourceGraphQuery, dsInfo types.DatasourceInfo, client *http.Client, dsURL string) (*backend.DataResponse, error) {
 	params := url.Values{}
 	params.Add("api-version", ArgAPIVersion)
 
@@ -150,16 +150,21 @@ func (e *AzureResourceGraphDatasource) executeQuery(ctx context.Context, query *
 	req.URL.Path = path.Join(req.URL.Path, argQueryProviderName)
 	req.URL.RawQuery = params.Encode()
 
-	ctx, span := tracer.Start(ctx, "azure resource graph query")
-	span.SetAttributes("interpolated_query", query.InterpolatedQuery, attribute.Key("interpolated_query").String(query.InterpolatedQuery))
-	span.SetAttributes("from", query.TimeRange.From.UnixNano()/int64(time.Millisecond), attribute.Key("from").Int64(query.TimeRange.From.UnixNano()/int64(time.Millisecond)))
-	span.SetAttributes("until", query.TimeRange.To.UnixNano()/int64(time.Millisecond), attribute.Key("until").Int64(query.TimeRange.To.UnixNano()/int64(time.Millisecond)))
-	span.SetAttributes("datasource_id", dsInfo.DatasourceID, attribute.Key("datasource_id").Int64(dsInfo.DatasourceID))
-	span.SetAttributes("org_id", dsInfo.OrgID, attribute.Key("org_id").Int64(dsInfo.OrgID))
+	ctx, span := tracing.DefaultTracer().Start(
+		ctx,
+		"azure resource graph query",
+		trace.WithAttributes(
+			attribute.String("interpolated_query", query.InterpolatedQuery),
+			attribute.Int64("from", query.TimeRange.From.UnixNano()/int64(time.Millisecond)),
+			attribute.Int64("until", query.TimeRange.To.UnixNano()/int64(time.Millisecond)),
+			attribute.Int64("datasource_id", dsInfo.DatasourceID),
+			attribute.Int64("org_id", dsInfo.OrgID),
+		),
+	)
 
 	defer span.End()
 
-	tracer.Inject(ctx, req.Header, span)
+	//tracer.Inject(ctx, req.Header, span)
 
 	res, err := client.Do(req)
 	if err != nil {

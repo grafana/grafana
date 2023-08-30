@@ -14,14 +14,15 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/kinds/dataquery"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/loganalytics"
 	azTime "github.com/grafana/grafana/pkg/tsdb/azuremonitor/time"
-	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/tracing"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
 )
 
@@ -47,7 +48,7 @@ func (e *AzureMonitorDatasource) ResourceRequest(rw http.ResponseWriter, req *ht
 // 1. build the AzureMonitor url and querystring for each query
 // 2. executes each query by calling the Azure Monitor API
 // 3. parses the responses for each query into data frames
-func (e *AzureMonitorDatasource) ExecuteTimeSeriesQuery(ctx context.Context, originalQueries []backend.DataQuery, dsInfo types.DatasourceInfo, client *http.Client, url string, tracer tracing.Tracer) (*backend.QueryDataResponse, error) {
+func (e *AzureMonitorDatasource) ExecuteTimeSeriesQuery(ctx context.Context, originalQueries []backend.DataQuery, dsInfo types.DatasourceInfo, client *http.Client, url string) (*backend.QueryDataResponse, error) {
 	result := backend.NewQueryDataResponse()
 
 	queries, err := e.buildQueries(originalQueries, dsInfo)
@@ -56,7 +57,7 @@ func (e *AzureMonitorDatasource) ExecuteTimeSeriesQuery(ctx context.Context, ori
 	}
 
 	for _, query := range queries {
-		res, err := e.executeQuery(ctx, query, dsInfo, client, url, tracer)
+		res, err := e.executeQuery(ctx, query, dsInfo, client, url)
 		if err != nil {
 			result.Responses[query.RefID] = backend.DataResponse{Error: err}
 			continue
@@ -243,7 +244,7 @@ func getParams(azJSONModel *dataquery.AzureMetricQuery, query backend.DataQuery)
 	return params, nil
 }
 
-func (e *AzureMonitorDatasource) retrieveSubscriptionDetails(cli *http.Client, ctx context.Context, tracer tracing.Tracer, subscriptionId string, baseUrl string, dsId int64, orgId int64) (string, error) {
+func (e *AzureMonitorDatasource) retrieveSubscriptionDetails(cli *http.Client, ctx context.Context, subscriptionId string, baseUrl string, dsId int64, orgId int64) (string, error) {
 	req, err := e.createRequest(ctx, fmt.Sprintf("%s/subscriptions/%s", baseUrl, subscriptionId))
 	if err != nil {
 		return "", fmt.Errorf("failed to retrieve subscription details for subscription %s: %s", subscriptionId, err)
@@ -252,13 +253,17 @@ func (e *AzureMonitorDatasource) retrieveSubscriptionDetails(cli *http.Client, c
 	values.Add("api-version", "2022-12-01")
 	req.URL.RawQuery = values.Encode()
 
-	ctx, span := tracer.Start(ctx, "azuremonitor query")
-	span.SetAttributes("subscription", subscriptionId, attribute.Key("subscription").String(subscriptionId))
-	span.SetAttributes("datasource_id", dsId, attribute.Key("datasource_id").Int64(dsId))
-	span.SetAttributes("org_id", orgId, attribute.Key("org_id").Int64(orgId))
-
+	ctx, span := tracing.DefaultTracer().Start(
+		ctx,
+		"azuremonitor query",
+		trace.WithAttributes(
+			attribute.String("subscription", subscriptionId),
+			attribute.Int64("datasource_id", dsId),
+			attribute.Int64("org_id", orgId),
+		),
+	)
 	defer span.End()
-	tracer.Inject(ctx, req.Header, span)
+	//tracer.Inject(ctx, req.Header, span)
 	res, err := cli.Do(req)
 	if err != nil {
 		return "", fmt.Errorf("failed to request subscription details: %s", err)
@@ -287,8 +292,7 @@ func (e *AzureMonitorDatasource) retrieveSubscriptionDetails(cli *http.Client, c
 	return data.DisplayName, nil
 }
 
-func (e *AzureMonitorDatasource) executeQuery(ctx context.Context, query *types.AzureMonitorQuery, dsInfo types.DatasourceInfo, cli *http.Client,
-	url string, tracer tracing.Tracer) (*backend.DataResponse, error) {
+func (e *AzureMonitorDatasource) executeQuery(ctx context.Context, query *types.AzureMonitorQuery, dsInfo types.DatasourceInfo, cli *http.Client, url string) (*backend.DataResponse, error) {
 	req, err := e.createRequest(ctx, url)
 	if err != nil {
 		return nil, err
@@ -301,15 +305,20 @@ func (e *AzureMonitorDatasource) executeQuery(ctx context.Context, query *types.
 		req.Body = io.NopCloser(strings.NewReader(fmt.Sprintf(`{"filter": "%s"}`, query.BodyFilter)))
 	}
 
-	ctx, span := tracer.Start(ctx, "azuremonitor query")
-	span.SetAttributes("target", query.Target, attribute.Key("target").String(query.Target))
-	span.SetAttributes("from", query.TimeRange.From.UnixNano()/int64(time.Millisecond), attribute.Key("from").Int64(query.TimeRange.From.UnixNano()/int64(time.Millisecond)))
-	span.SetAttributes("until", query.TimeRange.To.UnixNano()/int64(time.Millisecond), attribute.Key("until").Int64(query.TimeRange.To.UnixNano()/int64(time.Millisecond)))
-	span.SetAttributes("datasource_id", dsInfo.DatasourceID, attribute.Key("datasource_id").Int64(dsInfo.DatasourceID))
-	span.SetAttributes("org_id", dsInfo.OrgID, attribute.Key("org_id").Int64(dsInfo.OrgID))
+	ctx, span := tracing.DefaultTracer().Start(
+		ctx,
+		"azuremonitor query",
+		trace.WithAttributes(
+			attribute.String("target", query.Target),
+			attribute.Int64("from", query.TimeRange.From.UnixNano()/int64(time.Millisecond)),
+			attribute.Int64("until", query.TimeRange.To.UnixNano()/int64(time.Millisecond)),
+			attribute.Int64("datasource_id", dsInfo.DatasourceID),
+			attribute.Int64("org_id", dsInfo.OrgID),
+		),
+	)
 
 	defer span.End()
-	tracer.Inject(ctx, req.Header, span)
+	//tracer.Inject(ctx, req.Header, span)
 
 	res, err := cli.Do(req)
 	if err != nil {
@@ -331,7 +340,7 @@ func (e *AzureMonitorDatasource) executeQuery(ctx context.Context, query *types.
 		return nil, err
 	}
 
-	subscription, err := e.retrieveSubscriptionDetails(cli, ctx, tracer, query.Subscription, dsInfo.Routes["Azure Monitor"].URL, dsInfo.DatasourceID, dsInfo.OrgID)
+	subscription, err := e.retrieveSubscriptionDetails(cli, ctx, query.Subscription, dsInfo.Routes["Azure Monitor"].URL, dsInfo.DatasourceID, dsInfo.OrgID)
 	if err != nil {
 		return nil, err
 	}

@@ -16,7 +16,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/kinds/dataquery"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
 )
@@ -26,7 +25,6 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 	fromStart := time.Date(2018, 3, 15, 13, 0, 0, 0, time.UTC).In(time.Local)
 	timeRange := backend.TimeRange{From: fromStart, To: fromStart.Add(34 * time.Minute)}
 	ctx := context.Background()
-	tracer := tracing.InitializeTracerForTest()
 	svr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
@@ -1393,7 +1391,7 @@ func TestBuildingAzureLogAnalyticsQueries(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			queries, err := datasource.buildQueries(ctx, tt.queryModel, dsInfo, tracer)
+			queries, err := datasource.buildQueries(ctx, tt.queryModel, dsInfo)
 			tt.Err(t, err)
 			if diff := cmp.Diff(tt.azureLogAnalyticsQueries[0], queries[0]); diff != "" {
 				t.Errorf("Result mismatch (-want +got): \n%s", diff)
@@ -1534,8 +1532,7 @@ func Test_executeQueryErrorWithDifferentLogAnalyticsCreds(t *testing.T) {
 	query := &AzureLogAnalyticsQuery{
 		TimeRange: backend.TimeRange{},
 	}
-	tracer := tracing.InitializeTracerForTest()
-	_, err := ds.executeQuery(ctx, query, dsInfo, &http.Client{}, dsInfo.Services["Azure Log Analytics"].URL, tracer)
+	_, err := ds.executeQuery(ctx, query, dsInfo, &http.Client{}, dsInfo.Services["Azure Log Analytics"].URL)
 	if !strings.Contains(err.Error(), "credentials for Log Analytics are no longer supported") {
 		t.Error("expecting the error to inform of bad credentials")
 	}
