@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/dashboardimport"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
@@ -83,9 +84,12 @@ func TestImportDashboardService(t *testing.T) {
 		require.NotNil(t, resp)
 		require.Equal(t, "UDdpyzz7z", resp.UID)
 
+		userID, err := identity.IntIdentifier(importDashboardArg.User.GetNamespacedID())
+		require.NoError(t, err)
+
 		require.NotNil(t, importDashboardArg)
 		require.Equal(t, int64(3), importDashboardArg.OrgID)
-		require.Equal(t, int64(2), importDashboardArg.User.UserID)
+		require.Equal(t, int64(2), userID)
 		require.Equal(t, "prometheus", importDashboardArg.Dashboard.PluginID)
 		require.Equal(t, int64(5), importDashboardArg.Dashboard.FolderID)
 
@@ -147,9 +151,12 @@ func TestImportDashboardService(t *testing.T) {
 		require.NotNil(t, resp)
 		require.Equal(t, "UDdpyzz7z", resp.UID)
 
+		userID, err := identity.IntIdentifier(importDashboardArg.User.GetNamespacedID())
+		require.NoError(t, err)
+
 		require.NotNil(t, importDashboardArg)
 		require.Equal(t, int64(3), importDashboardArg.OrgID)
-		require.Equal(t, int64(2), importDashboardArg.User.UserID)
+		require.Equal(t, int64(2), userID)
 		require.Equal(t, "", importDashboardArg.Dashboard.PluginID)
 		require.Equal(t, int64(5), importDashboardArg.Dashboard.FolderID)
 
