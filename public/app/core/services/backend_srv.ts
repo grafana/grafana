@@ -20,6 +20,7 @@ import { GrafanaEdition } from '@grafana/data/src/types/config';
 import { BackendSrv as BackendService, BackendSrvRequest, config, FetchError, FetchResponse } from '@grafana/runtime';
 import appEvents from 'app/core/app_events';
 import { getConfig } from 'app/core/config';
+import { getSessionExpiry } from 'app/core/utils/auth';
 import { loadUrlToken } from 'app/core/utils/urlToken';
 import { DashboardModel } from 'app/features/dashboard/state';
 import { DashboardSearchItem } from 'app/features/search/types';
@@ -389,7 +390,12 @@ export class BackendSrv implements BackendService {
                   return throwError(() => error);
                 }
 
-                let authChecker = config.featureToggles.clientTokenRotation ? this.rotateToken() : this.loginPing();
+                let authChecker = this.loginPing();
+
+                const expired = getSessionExpiry() * 1000 < Date.now();
+                if (config.featureToggles.clientTokenRotation && expired) {
+                  authChecker = this.rotateToken();
+                }
 
                 return from(authChecker).pipe(
                   catchError((err) => {
