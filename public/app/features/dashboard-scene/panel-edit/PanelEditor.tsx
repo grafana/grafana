@@ -1,31 +1,51 @@
 import * as H from 'history';
 
 import { locationService } from '@grafana/runtime';
-import { SceneObject, SceneObjectBase, SceneObjectState, sceneUtils, VizPanel } from '@grafana/scenes';
+import {
+  SceneFlexItem,
+  SceneFlexLayout,
+  sceneGraph,
+  SceneObject,
+  SceneObjectBase,
+  SceneObjectState,
+  sceneUtils,
+  SplitLayout,
+  VizPanel,
+} from '@grafana/scenes';
 
 import { DashboardScene } from '../scene/DashboardScene';
 import { getDashboardUrl } from '../utils/utils';
 
 import { PanelEditorRenderer } from './PanelEditorRenderer';
+import { PanelOptionsPane } from './PanelOptionsPane';
 
 export interface PanelEditorState extends SceneObjectState {
-  panel: VizPanel;
+  body: SceneObject;
   controls?: SceneObject[];
   isDirty?: boolean;
   /** Panel to inspect */
   inspectPanelId?: string;
   /** Scene object that handles the current drawer */
   drawer?: SceneObject;
-  getDashboard(): DashboardScene;
 }
 
 export class PanelEditor extends SceneObjectBase<PanelEditorState> {
   static Component = PanelEditorRenderer;
 
+  private _dashboard: DashboardScene;
+  private _sourcePanel: VizPanel;
+
+  public constructor(dashboard: DashboardScene, panel: VizPanel) {
+    super(buildPanelEditScene(dashboard, panel));
+
+    this._dashboard = dashboard;
+    this._sourcePanel = panel;
+  }
+
   public getPageNav(location: H.Location) {
     return {
       text: 'Edit panel',
-      parentItem: this.state.getDashboard().getPageNav(location),
+      parentItem: this._dashboard.getPageNav(location),
     };
   }
 
@@ -37,36 +57,62 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
   };
 
   public onApply = () => {
-    // TODO handle applying changes to source dashboard state
+    this.commitChanges();
     this.navigateBackToDashboard();
   };
 
   public onSave = () => {
-    // Apply change
+    this.commitChanges();
     // Open dashboard save drawer
   };
+
+  private commitChanges() {
+    if (!this._dashboard.state.isEditing) {
+      this._dashboard.setState({ isEditing: true });
+    }
+
+    const updatedPanel = sceneGraph.findObject(this.state.body, (p) => p.state.key === this._sourcePanel.state.key)!;
+    const newState = sceneUtils.cloneSceneObjectState(updatedPanel.state);
+
+    this._sourcePanel.setState(newState);
+
+    // preserve time range and variables state
+    this._dashboard.setState({
+      $timeRange: this.state.$timeRange?.clone(),
+      $variables: this.state.$variables?.clone(),
+    });
+  }
 
   private navigateBackToDashboard() {
     locationService.push(
       getDashboardUrl({
-        uid: this.state.getDashboard().state.uid,
+        uid: this._dashboard.state.uid,
         currentQueryParams: locationService.getLocation().search,
       })
     );
   }
 }
 
-export function buildPanelEditScene(dashboard: DashboardScene, panel: VizPanel) {
+function buildPanelEditScene(dashboard: DashboardScene, panel: VizPanel): PanelEditorState {
   const panelClone = panel.clone();
   const dashboardStateCloned = sceneUtils.cloneSceneObjectState(dashboard.state);
 
-  const panelEditor = new PanelEditor({
-    panel: panelClone,
+  const state: PanelEditorState = {
     controls: dashboardStateCloned.controls,
     $variables: dashboardStateCloned.$variables,
     $timeRange: dashboardStateCloned.$timeRange,
-    getDashboard: () => dashboard,
-  });
+    body: new SplitLayout({
+      direction: 'row',
+      primary: new SceneFlexLayout({
+        direction: 'column',
+        children: [panelClone],
+      }),
+      secondary: new SceneFlexItem({
+        width: '300px',
+        body: new PanelOptionsPane(panelClone),
+      }),
+    }),
+  };
 
-  return panelEditor;
+  return state;
 }

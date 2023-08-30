@@ -1,7 +1,7 @@
 import { StateManagerBase } from 'app/core/services/StateManagerBase';
 import { dashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
 
-import { buildPanelEditScene, PanelEditor } from '../panel-edit/PanelEditor';
+import { PanelEditor } from '../panel-edit/PanelEditor';
 import { DashboardScene } from '../scene/DashboardScene';
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
 import { findVizPanelById } from '../utils/utils';
@@ -38,7 +38,7 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
         return;
       }
 
-      this.setState({ isLoading: false, panelEditor: buildPanelEditScene(dashboard, panel) });
+      this.setState({ isLoading: false, panelEditor: new PanelEditor(dashboard, panel) });
     } catch (err) {
       this.setState({ isLoading: false, loadError: String(err) });
     }

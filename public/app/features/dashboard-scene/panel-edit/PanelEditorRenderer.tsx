@@ -12,14 +12,14 @@ import { Page } from 'app/core/components/Page/Page';
 import { PanelEditor } from './PanelEditor';
 
 export function PanelEditorRenderer({ model }: SceneComponentProps<PanelEditor>) {
-  const { panel, controls, drawer } = model.useState();
+  const { body, controls, drawer } = model.useState();
   const styles = useStyles2(getStyles);
   const location = useLocation();
   const pageNav = model.getPageNav(location);
 
   return (
     <Page navId="scenes" pageNav={pageNav} layout={PageLayoutType.Custom}>
-      <AppChromeUpdate actions={getToolbarActions(model)} />;
+      <AppChromeUpdate actions={getToolbarActions(model)} />
       <div className={styles.canvasContent}>
         {controls && (
           <div className={styles.controls}>
@@ -29,7 +29,7 @@ export function PanelEditorRenderer({ model }: SceneComponentProps<PanelEditor>)
           </div>
         )}
         <div className={styles.body}>
-          <panel.Component model={panel} />
+          <body.Component model={body} />
         </div>
       </div>
       {drawer && <drawer.Component model={drawer} />}
