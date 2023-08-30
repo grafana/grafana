@@ -57,7 +57,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
    */
   private _changeTrackerSub?: Unsubscribable;
 
-  constructor(state: DashboardSceneState) {
+  public constructor(state: DashboardSceneState) {
     super(state);
 
     this.addActivationHandler(() => this.onActivate());
@@ -75,15 +75,15 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     };
   }
 
-  startUrlSync() {
+  public startUrlSync() {
     getUrlSyncManager().initSync(this);
   }
 
-  stopUrlSync() {
+  public stopUrlSync() {
     getUrlSyncManager().cleanUp(this);
   }
 
-  onEnterEditMode = () => {
+  public onEnterEditMode = () => {
     // Save this state
     this._initialState = sceneUtils.cloneSceneObjectState(this.state);
     this._initiallUrlState = locationService.getSearchObject();
@@ -100,7 +100,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     this.startTrackingChanges();
   };
 
-  onDiscard = () => {
+  public onDiscard = () => {
     // No need to listen to changes anymore
     this.stopTrackingChanges();
     // Stop url sync before updating url
@@ -119,11 +119,11 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     }
   };
 
-  onSave = () => {
+  public onSave = () => {
     this.setState({ drawer: new SaveDashboardDrawer(this) });
   };
 
-  getPageNav(location: H.Location) {
+  public getPageNav(location: H.Location) {
     let pageNav: NavModelItem = {
       text: this.state.title,
       url: locationUtil.getUrlForPartial(location, { viewPanel: null, inspect: null }),
@@ -142,7 +142,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   /**
    * Returns the body (layout) or the full view panel
    */
-  getBodyToRender(viewPanelKey?: string): SceneObject {
+  public getBodyToRender(viewPanelKey?: string): SceneObject {
     const viewPanel = findVizPanel(this, viewPanelKey);
     return viewPanel ?? this.state.body;
   }
@@ -162,7 +162,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     this._changeTrackerSub?.unsubscribe();
   }
 
-  getInitialState(): DashboardSceneState | undefined {
+  public getInitialState(): DashboardSceneState | undefined {
     return this._initialState;
   }
 }
