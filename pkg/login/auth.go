@@ -37,16 +37,18 @@ type AuthenticatorService struct {
 	loginService        login.Service
 	loginAttemptService loginattempt.Service
 	userService         user.Service
+	authInfoService     login.AuthInfoService
 	cfg                 *setting.Cfg
 }
 
 func ProvideService(store db.DB, loginService login.Service,
 	loginAttemptService loginattempt.Service,
-	userService user.Service, cfg *setting.Cfg) *AuthenticatorService {
+	userService user.Service, authInfoService login.AuthInfoService, cfg *setting.Cfg) *AuthenticatorService {
 	a := &AuthenticatorService{
 		loginService:        loginService,
 		loginAttemptService: loginAttemptService,
 		userService:         userService,
+		authInfoService:     authInfoService,
 		cfg:                 cfg,
 	}
 	return a
@@ -78,7 +80,7 @@ func (a *AuthenticatorService) AuthenticateUser(ctx context.Context, query *logi
 		return err
 	}
 
-	ldapEnabled, ldapErr := loginUsingLDAP(ctx, query, a.loginService, a.cfg)
+	ldapEnabled, ldapErr := loginUsingLDAP(ctx, query, a.loginService, a.userService, a.authInfoService, a.cfg)
 	if ldapEnabled {
 		query.AuthModule = login.LDAPAuthModule
 		if ldapErr == nil || !errors.Is(ldapErr, ldap.ErrInvalidCredentials) {
