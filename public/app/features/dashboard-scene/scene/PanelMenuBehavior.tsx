@@ -27,7 +27,6 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
       text: t('panel.header-menu.view', `View`),
       iconClassName: 'eye',
       shortcut: 'v',
-      // Hm... need the numeric id to be url compatible?
       href: getDashboardUrl({
         uid: dashboard.state.uid,
         currentQueryParams: location.search,
@@ -41,7 +40,6 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
       text: t('panel.header-menu.edit', `Edit`),
       iconClassName: 'eye',
       shortcut: 'v',
-      // Hm... need the numeric id to be url compatible?
       href: getDashboardUrl({
         uid: dashboard.state.uid,
         subPath: `/panel-edit/${panelId}`,
@@ -55,7 +53,6 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
     text: t('panel.header-menu.inspect', `Inspect`),
     iconClassName: 'info-circle',
     shortcut: 'i',
-    // Hm... need the numeric id to be url compatible?
     href: locationUtil.getUrlForPartial(location, { inspect: getPanelIdForVizPanel(panel) }),
   });
 

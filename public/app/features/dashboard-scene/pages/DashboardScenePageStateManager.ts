@@ -21,7 +21,6 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
       const dashboard = await this.loadScene(uid);
       dashboard.startUrlSync();
 
-      this.cache[uid] = dashboard;
       this.setState({ dashboard: dashboard, isLoading: false });
     } catch (err) {
       this.setState({ isLoading: false, loadError: String(err) });
@@ -31,7 +30,6 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
   public async loadPanelEdit(uid: string, panelId: string) {
     try {
       const dashboard = await this.loadScene(uid);
-      this.cache[uid] = dashboard;
 
       const panel = findVizPanelById(dashboard, panelId);
 
@@ -57,7 +55,8 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
     const rsp = await dashboardLoaderSrv.loadDashboard('db', '', uid);
 
     if (rsp.dashboard) {
-      return transformSaveModelToScene(rsp);
+      const scene = transformSaveModelToScene(rsp);
+      this.cache[uid] = scene;
     }
 
     throw new Error('Dashboard not found');
