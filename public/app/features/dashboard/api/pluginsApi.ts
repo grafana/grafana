@@ -65,6 +65,7 @@ export class PluginsAPIDashboardSrv implements PluginsAPIDashboardSrvInterface {
       throw new Error('Invalid panel');
     });
     currentDashboard?.updatePanels(panelsToSet);
+    currentDashboard.render();
   }
 }
 
