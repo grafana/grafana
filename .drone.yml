@@ -3018,12 +3018,12 @@ volumes:
 clone:
   retries: 3
 depends_on:
-- '%s-test-backend'
-- '%s-test-frontend'
+- tag-test-backend
+- tag-test-frontend
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
-name: rgm-%s-prerelease
+name: rgm-tag-prerelease
 node:
   type: no-parallel
 platform:
@@ -3072,11 +3072,11 @@ volumes:
 clone:
   retries: 3
 depends_on:
-- rgm-%s-prerelease
+- rgm-tag-prerelease
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
-name: rgm-%s-prerelease-windows
+name: rgm-tag-prerelease-windows
 platform:
   arch: amd64
   os: windows
@@ -3138,12 +3138,12 @@ volumes:
 clone:
   retries: 3
 depends_on:
-- rgm-%s-prerelease
-- rgm-%s-prerelease-windows
+- rgm-tag-prerelease
+- rgm-tag-prerelease-windows
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
-name: rgm-%s-verify-prerelease-assets
+name: rgm-tag-verify-prerelease-assets
 node:
   type: no-parallel
 platform:
@@ -3326,12 +3326,12 @@ volumes:
 clone:
   retries: 3
 depends_on:
-- '%s-test-backend'
-- '%s-test-frontend'
+- nightly-test-backend
+- nightly-test-frontend
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
-name: rgm-%s-prerelease
+name: rgm-nightly-prerelease
 node:
   type: no-parallel
 platform:
@@ -3382,11 +3382,11 @@ volumes:
 clone:
   retries: 3
 depends_on:
-- rgm-%s-prerelease
+- rgm-nightly-prerelease
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
-name: rgm-%s-prerelease-windows
+name: rgm-nightly-prerelease-windows
 platform:
   arch: amd64
   os: windows
@@ -3450,12 +3450,12 @@ volumes:
 clone:
   retries: 3
 depends_on:
-- rgm-%s-prerelease
-- rgm-%s-prerelease-windows
+- rgm-nightly-prerelease
+- rgm-nightly-prerelease-windows
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
-name: rgm-%s-verify-prerelease-assets
+name: rgm-nightly-verify-prerelease-assets
 node:
   type: no-parallel
 platform:
@@ -4998,6 +4998,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 735a514f153b0854b3771922ba82341c04b28d67184ef0c4ac0a5d1a9c03daaf
+hmac: 20aa8c4a08f1feb4b14ec542c93bad64ffa81e7dc819797d4244f99b57b21665
 
 ...

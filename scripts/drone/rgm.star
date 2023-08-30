@@ -135,7 +135,7 @@ def rgm_main():
 
 def rgm_windows(trigger, trigger_name):
     return pipeline(
-        name = "rgm-%s-prerelease-windows".format(trigger_name),
+        name = "rgm-{}-prerelease-windows".format(trigger_name),
         trigger = trigger,
         steps = ignore_failure(
             get_windows_steps(
@@ -143,7 +143,7 @@ def rgm_windows(trigger, trigger_name):
                 bucket = "grafana-prerelease",
             ),
         ),
-        depends_on = ["rgm-%s-prerelease".format(trigger_name)],
+        depends_on = ["rgm-{}-prerelease".format(trigger_name)],
         platform = "windows",
     )
 
@@ -152,19 +152,19 @@ def rgm_release(trigger, trigger_name):
         test_frontend(trigger, trigger_name),
         test_backend(trigger, trigger_name),
         pipeline(
-            name = "rgm-%s-prerelease".format(trigger_name),
+            name = "rgm-{}-prerelease".format(trigger_name),
             trigger = trigger,
             steps = rgm_build(script = "drone_publish_tag_grafana.sh", canFail = False),
-            depends_on = ["%s-test-backend", "%s-test-frontend"],
+            depends_on = ["{}-test-backend".format(trigger_name), "{}-test-frontend".format(trigger_name)],
         ),
         rgm_windows(trigger, trigger_name),
         verify_release_pipeline(
             trigger = trigger,
-            name = "rgm-%s-verify-prerelease-assets".format(trigger_name),
+            name = "rgm-{}-verify-prerelease-assets".format(trigger_name),
             bucket = "grafana-prerelease",
             depends_on = [
-                "rgm-%s-prerelease".format(trigger_name),
-                "rgm-%s-prerelease-windows".format(trigger_name),
+                "rgm-{}-prerelease".format(trigger_name),
+                "rgm-{}-prerelease-windows".format(trigger_name),
             ],
         ),
     ]
