@@ -182,8 +182,8 @@ describe('CompletionProvider', () => {
   it.each([
     ['{ .foo }', 7],
     ['{ .foo = 1 && .bar }', 19],
-  ])('suggests operators after a space after the tag name', async (x: string, offset: number) => {
-    const { provider, model } = setup(x, offset, v1Tags);
+  ])('suggests operators after a space after the tag name', async (input: string, offset: number) => {
+    const { provider, model } = setup(input, offset, v1Tags);
     const result = await provider.provideCompletionItems(
       model as unknown as monacoTypes.editor.ITextModel,
       {} as monacoTypes.Position
@@ -256,8 +256,8 @@ describe('CompletionProvider', () => {
     ['{.foo=300} | ', 13],
     ['{.foo=300} && {.foo=300} | ', 27],
     ['{.foo=300} && {.foo=300} && {.foo=300} | ', 41],
-  ])('suggests after-pipe operators (aggregators, selectorts, ...)', async (x: string, offset: number) => {
-    const { provider, model } = setup(x, offset);
+  ])('suggests after-pipe operators (aggregators, selectorts, ...)', async (input: string, offset: number) => {
+    const { provider, model } = setup(input, offset);
     const result = await provider.provideCompletionItems(
       model as unknown as monacoTypes.editor.ITextModel,
       {} as monacoTypes.Position
@@ -272,8 +272,8 @@ describe('CompletionProvider', () => {
   it.each([
     ['{.foo=300} | avg(.value) ', 25],
     ['{.foo=300} && {.foo=300} | avg(.value) ', 39],
-  ])('suggests comparison operators after aggregator (avg, max, ...)', async (x: string, offset: number) => {
-    const { provider, model } = setup(x, offset);
+  ])('suggests comparison operators after aggregator (avg, max, ...)', async (input: string, offset: number) => {
+    const { provider, model } = setup(input, offset);
     const result = await provider.provideCompletionItems(
       model as unknown as monacoTypes.editor.ITextModel,
       {} as monacoTypes.Position
@@ -286,8 +286,8 @@ describe('CompletionProvider', () => {
   it.each([
     ['{.foo=300} | avg(.value) = ', 27],
     ['{.foo=300} && {.foo=300} | avg(.value) = ', 41],
-  ])('no suggestion after aggregator and comparison operator', async (x: string, offset: number) => {
-    const { provider, model } = setup(x, offset);
+  ])('no suggestion after aggregator and comparison operator', async (input: string, offset: number) => {
+    const { provider, model } = setup(input, offset);
     const result = await provider.provideCompletionItems(
       model as unknown as monacoTypes.editor.ITextModel,
       {} as monacoTypes.Position
@@ -295,8 +295,8 @@ describe('CompletionProvider', () => {
     expect((result! as monacoTypes.languages.CompletionList).suggestions).toEqual([]);
   });
 
-  it.each([['{ .foo = 1 && .bar  }', 19]])('suggest to complete spanset', async (x: string, offset: number) => {
-    const { provider, model } = setup(x, offset);
+  it.each([['{ .foo = 1 && .bar  }', 19]])('suggest to complete spanset', async (input: string, offset: number) => {
+    const { provider, model } = setup(input, offset);
     const result = await provider.provideCompletionItems(
       model as unknown as monacoTypes.editor.ITextModel,
       {} as monacoTypes.Position
@@ -319,8 +319,8 @@ describe('CompletionProvider', () => {
     ['{.foo  300 && .bar  200}', 18],
     ['{.foo  300 && .bar  200}', 19],
     ['{.foo  300 && .bar  200}', 20],
-  ])('suggestions in the middle of an incomplete expression', async (x: string, offset: number) => {
-    const { provider, model } = setup(x, offset);
+  ])('suggestions in the middle of an incomplete expression', async (input: string, offset: number) => {
+    const { provider, model } = setup(input, offset);
     const result = await provider.provideCompletionItems(
       model as unknown as monacoTypes.editor.ITextModel,
       {} as monacoTypes.Position
@@ -336,8 +336,8 @@ describe('CompletionProvider', () => {
     ['{.foo = 200  }', 11],
     ['{.foo = 200  }', 12],
     ['{.foo = 200  }', 13],
-  ])('suggest only logical operators after field expression', async (x: string, offset: number) => {
-    const { provider, model } = setup(x, offset);
+  ])('suggest only logical operators after field expression', async (input: string, offset: number) => {
+    const { provider, model } = setup(input, offset);
     const result = await provider.provideCompletionItems(
       model as unknown as monacoTypes.editor.ITextModel,
       {} as monacoTypes.Position
@@ -369,8 +369,8 @@ describe('CompletionProvider', () => {
     ['{ span.http.status_code = 200 ||   }', 34],
     ['{ span.http.status_code = 200 &&   }', 35],
     ['{ span.http.status_code = 200 ||   }', 35],
-  ])('suggest scope after field expression in span', async (x: string, offset: number) => {
-    const { provider, model } = setup(x, offset);
+  ])('suggest scope after field expression in span', async (input: string, offset: number) => {
+    const { provider, model } = setup(input, offset);
     const result = await provider.provideCompletionItems(
       model as unknown as monacoTypes.editor.ITextModel,
       {} as monacoTypes.Position
@@ -389,8 +389,8 @@ describe('CompletionProvider', () => {
     ['{.foo=1} | select()', 18],
   ])(
     'suggest attributes inside aggregator (or grouping, selector, etc.) operator parentheses',
-    async (x: string, offset: number) => {
-      const { provider, model } = setup(x, offset);
+    async (input: string, offset: number) => {
+      const { provider, model } = setup(input, offset);
       const result = await provider.provideCompletionItems(
         model as unknown as monacoTypes.editor.ITextModel,
         {} as monacoTypes.Position
@@ -408,8 +408,8 @@ describe('CompletionProvider', () => {
     ['{.foo=1}  {.bar=2}', 10],
   ])(
     'suggest spanset combining attributes in the middle of incomplete expression',
-    async (x: string, offset: number) => {
-      const { provider, model } = setup(x, offset);
+    async (input: string, offset: number) => {
+      const { provider, model } = setup(input, offset);
       const result = await provider.provideCompletionItems(
         model as unknown as monacoTypes.editor.ITextModel,
         {} as monacoTypes.Position
@@ -427,22 +427,25 @@ describe('CompletionProvider', () => {
     ['{ .foo = 200 } &&  ', 19],
     ['{ .foo = 200 } || ', 18],
     ['{ .foo = 200 } >> ', 18],
-  ])('suggest new spanset after multi-spanset operator after complete spanset', async (x: string, offset: number) => {
-    const { provider, model } = setup(x, offset);
-    const result = await provider.provideCompletionItems(
-      model as unknown as monacoTypes.editor.ITextModel,
-      {} as monacoTypes.Position
-    );
-    expect((result! as monacoTypes.languages.CompletionList).suggestions).toEqual([
-      ...scopes.map((s) => expect.objectContaining({ label: s })),
-      ...intrinsics.map((s) => expect.objectContaining({ label: s })),
-    ]);
-  });
+  ])(
+    'suggest new spanset after multi-spanset operator after complete spanset',
+    async (input: string, offset: number) => {
+      const { provider, model } = setup(input, offset);
+      const result = await provider.provideCompletionItems(
+        model as unknown as monacoTypes.editor.ITextModel,
+        {} as monacoTypes.Position
+      );
+      expect((result! as monacoTypes.languages.CompletionList).suggestions).toEqual([
+        ...scopes.map((s) => expect.objectContaining({ label: s })),
+        ...intrinsics.map((s) => expect.objectContaining({ label: s })),
+      ]);
+    }
+  );
 
   it.each([['{ .foo = 1 } &&  { .bar = 2 }', 16]])(
     'proper suggestions between spansets with complete query',
-    async (x: string, offset: number) => {
-      const { provider, model } = setup(x, offset);
+    async (input: string, offset: number) => {
+      const { provider, model } = setup(input, offset);
       const result = await provider.provideCompletionItems(
         model as unknown as monacoTypes.editor.ITextModel,
         {} as monacoTypes.Position

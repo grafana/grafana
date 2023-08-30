@@ -75,7 +75,7 @@ export type SituationType =
       type: 'NEW_SPANSET';
     }
   | {
-      type: 'ATTRIBUTE_FOR_AGGREGATOR';
+      type: 'ATTRIBUTE_FOR_FUNCTION';
     }
   | {
       type: 'SPANSET_COMPARISON_OPERATORS';
@@ -172,11 +172,9 @@ export function getSituation(text: string, offset: number): Situation | null {
   const cur = maybeErrorNode != null ? maybeErrorNode.cursor() : tree.cursorAt(shiftedOffset);
 
   const currentNode = cur.node;
-  const x = [cur.node];
   const ids = [cur.type.id];
   while (cur.parent()) {
     ids.push(cur.type.id);
-    x.push(cur.node);
   }
 
   let situationType: SituationType | null = null;
@@ -186,15 +184,13 @@ export function getSituation(text: string, offset: number): Situation | null {
     }
   }
 
-  // console.log(x);
-  // console.log(situationType);
-
   return { query: text, ...(situationType ?? { type: 'UNKNOWN' }) };
 }
 
 const ERROR_NODE_ID = 0;
 
 const RESOLVERS: Resolver[] = [
+  // Incomplete query cases
   {
     path: [ERROR_NODE_ID, AttributeField],
     fun: resolveAttribute,
@@ -204,26 +200,10 @@ const RESOLVERS: Resolver[] = [
     fun: resolveExpression,
   },
   {
-    path: [FieldExpression],
-    fun: () => ({
-      type: 'SPANSET_EXPRESSION_OPERATORS',
-    }),
-  },
-  {
     path: [ERROR_NODE_ID, SpansetFilter],
-    fun: resolveErrorInFilterRoot,
-  },
-  {
-    path: [SpansetFilter],
-    fun: resolveSpanset,
-  },
-  {
-    path: [SpansetPipelineExpression],
-    fun: resolveSpansetPipelineExpression,
-  },
-  {
-    path: [TraceQL],
-    fun: resolveSpansetPipelineExpression,
+    fun: () => ({
+      type: 'SPANSET_EXPRESSION_OPERATORS_WITH_MISSING_CLOSED_BRACE',
+    }),
   },
   {
     path: [ERROR_NODE_ID, SpansetPipeline],
@@ -235,35 +215,11 @@ const RESOLVERS: Resolver[] = [
   },
   {
     path: [ERROR_NODE_ID, Aggregate],
-    fun: () => {
-      return {
-        type: 'ATTRIBUTE_FOR_AGGREGATOR',
-      };
-    },
+    fun: resolveAttributeForFunction,
   },
   {
-    path: [ERROR_NODE_ID, IntrinsicField, FieldExpression, Aggregate],
-    fun: () => {
-      return {
-        type: 'ATTRIBUTE_FOR_AGGREGATOR',
-      };
-    },
-  },
-  {
-    path: [ERROR_NODE_ID, IntrinsicField, FieldExpression, GroupOperation],
-    fun: () => {
-      return {
-        type: 'ATTRIBUTE_FOR_AGGREGATOR',
-      };
-    },
-  },
-  {
-    path: [ERROR_NODE_ID, IntrinsicField, FieldExpression, SelectArgs],
-    fun: () => {
-      return {
-        type: 'ATTRIBUTE_FOR_AGGREGATOR',
-      };
-    },
+    path: [ERROR_NODE_ID, IntrinsicField],
+    fun: resolveAttributeForFunction,
   },
   {
     path: [ERROR_NODE_ID, SpansetPipelineExpression],
@@ -284,6 +240,25 @@ const RESOLVERS: Resolver[] = [
         type: 'UNKNOWN',
       };
     },
+  },
+  // Valid query cases
+  {
+    path: [FieldExpression],
+    fun: () => ({
+      type: 'SPANSET_EXPRESSION_OPERATORS',
+    }),
+  },
+  {
+    path: [SpansetFilter],
+    fun: resolveSpanset,
+  },
+  {
+    path: [SpansetPipelineExpression],
+    fun: resolveNewSpansetExpression,
+  },
+  {
+    path: [TraceQL],
+    fun: resolveNewSpansetExpression,
   },
 ];
 
@@ -368,12 +343,6 @@ function resolveExpression(node: SyntaxNode, text: string): SituationType {
   };
 }
 
-function resolveErrorInFilterRoot(node: SyntaxNode): SituationType {
-  return {
-    type: 'SPANSET_EXPRESSION_OPERATORS_WITH_MISSING_CLOSED_BRACE',
-  };
-}
-
 function resolveArithmeticOperator(node: SyntaxNode, _0: string, _1: number): SituationType {
   if (node.prevSibling?.type.id === ComparisonOp) {
     return {
@@ -386,16 +355,19 @@ function resolveArithmeticOperator(node: SyntaxNode, _0: string, _1: number): Si
   };
 }
 
-function resolveSpansetPipelineExpression(node: SyntaxNode, text: string, offset: number): SituationType {
-  let x;
+function resolveNewSpansetExpression(node: SyntaxNode, text: string, offset: number): SituationType {
+  // Select the node immediately before the one pointed by the cursor
+  let previousNode = node.firstChild;
   try {
-    x = node.firstChild;
-    while (x!.to < offset - 2) {
-      x = x!.nextSibling;
+    previousNode = node.firstChild;
+    while (previousNode!.to < offset) {
+      previousNode = previousNode!.nextSibling;
     }
-  } catch (e) {}
+  } catch (error) {
+    console.error('Unexpected error while searching for previous node', error);
+  }
 
-  if (x?.type.id === And || x?.type.id === Or) {
+  if (previousNode?.type.id === And || previousNode?.type.id === Or) {
     return {
       type: 'NEW_SPANSET',
     };
@@ -403,6 +375,18 @@ function resolveSpansetPipelineExpression(node: SyntaxNode, text: string, offset
 
   return {
     type: 'SPANSET_COMBINING_OPERATORS',
+  };
+}
+
+function resolveAttributeForFunction(node: SyntaxNode, _0: string, _1: number): SituationType {
+  const parent = node?.parent;
+  if (!!parent && [IntrinsicField, Aggregate, GroupOperation, SelectArgs].includes(parent.type.id)) {
+    return {
+      type: 'ATTRIBUTE_FOR_FUNCTION',
+    };
+  }
+  return {
+    type: 'UNKNOWN',
   };
 }
 

@@ -285,7 +285,7 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
    */
   private async getCompletions(situation: Situation): Promise<Completion[]> {
     switch (situation.type) {
-      // Not really sure what would make sense to suggest in this case so just leave it
+      // This should only happen for cases that we do not support yet
       case 'UNKNOWN': {
         return [];
       }
@@ -409,7 +409,7 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
         return this.getScopesCompletions('{ ', '$0 }')
           .concat(this.getIntrinsicsCompletions('{ ', '$0 }'))
           .concat(this.getTagsCompletions('.'));
-      case 'ATTRIBUTE_FOR_AGGREGATOR':
+      case 'ATTRIBUTE_FOR_FUNCTION':
         return this.getScopesCompletions().concat(this.getIntrinsicsCompletions()).concat(this.getTagsCompletions('.'));
       default:
         throw new Error(`Unexpected situation ${situation}`);
