@@ -263,6 +263,13 @@ abstract class DataSourceApi<
   abstract testDatasource(): Promise<TestDataSourceResponse>;
 
   /**
+   * This function is not called automatically unless running within the DataSourceWithBackend
+   *
+   * @deprecated
+   */
+  filterQuery?(query: TQuery): boolean;
+
+  /**
    *  Get hints for query improvements
    */
   getQueryHints?(query: TQuery, results: any[], ...rest: any): QueryHint[];

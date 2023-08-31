@@ -268,7 +268,8 @@ class DataSourceWithBackend<
   }
 
   /**
-   * Override to skip executing a query
+   * Override to skip executing a query.  Note this function may not be called
+   * if the query method is overwritten.
    *
    * @returns false if the query should be skipped
    *
