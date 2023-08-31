@@ -73,7 +73,9 @@ export function QueryToolbox({ showTools, onFormatCode, onExpand, isExpanded, ..
             {onFormatCode && (
               <IconButton
                 onClick={() => {
-                  reportInteraction('grafana_sql_query_formatted', {});
+                  reportInteraction('grafana_sql_query_formatted', {
+                    datasource: validatorProps.query.datasource?.type,
+                  });
                   onFormatCode();
                 }}
                 name="brackets-curly"
@@ -85,6 +87,7 @@ export function QueryToolbox({ showTools, onFormatCode, onExpand, isExpanded, ..
               <IconButton
                 onClick={() => {
                   reportInteraction('grafana_sql_editor_expanded', {
+                    datasource: validatorProps.query.datasource?.type,
                     expanded: !isExpanded,
                   });
 
