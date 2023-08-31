@@ -3101,7 +3101,7 @@ steps:
   - gcloud auth activate-service-account --key-file=gcpkey.json
   - rm gcpkey.json
   - cp C:\App\nssm-2.24.zip .
-  - .\grabpl.exe windows-installer --target gs://grafana-prerelease/artifacts/downloads/${DRONE_TAG}/oss/tag/grafana-{DRONE_TAG}.windows-amd64.zip
+  - .\grabpl.exe windows-installer --target gs://grafana-prerelease/artifacts/downloads/${DRONE_TAG}/oss/release/grafana-tag.windows-amd64.zip
     --edition oss ${DRONE_TAG}
   - $$fname = ((Get-Childitem grafana*.msi -name) -split "`n")[0]
   - gsutil cp $$fname gs://grafana-prerelease/artifacts/downloads/${DRONE_TAG}/oss/release/
@@ -3396,7 +3396,7 @@ steps:
   - gcloud auth activate-service-account --key-file=gcpkey.json
   - rm gcpkey.json
   - cp C:\App\nssm-2.24.zip .
-  - .\grabpl.exe windows-installer --target gs://grafana-prerelease/nightly/artifacts/downloads/nightly-${DRONE_COMMIT_SHA:0:8}/oss/nightly/grafana-nightly-${DRONE_COMMIT_SHA:0:8}.windows-amd64.zip
+  - .\grabpl.exe windows-installer --target gs://grafana-prerelease/nightly/artifacts/downloads/nightly-${DRONE_COMMIT_SHA:0:8}/oss/release/grafana-nightly.windows-amd64.zip
     --edition oss nightly-${DRONE_COMMIT_SHA:0:8}
   - $$fname = ((Get-Childitem grafana*.msi -name) -split "`n")[0]
   - gsutil cp $$fname gs://grafana-prerelease/nightly/artifacts/downloads/nightly-${DRONE_COMMIT_SHA:0:8}/oss/release/
@@ -4973,6 +4973,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: a5ca9f97063c00abb3552072a46fcd077b783dbb4f2eacefccad3cbaf8184db6
+hmac: e9759fa7d6dab25c947e78a17c6ff633c4bc173b5d3bc5e2f6f84d1449b44f63
 
 ...
