@@ -116,7 +116,7 @@ func (s *ModuleServer) Run() error {
 	m := modules.New(s.cfg.Target)
 
 	m.RegisterModule(modules.Core, func() (services.Service, error) {
-		return NewService(s.opts, s.apiOpts)
+		return NewService(s.cfg, s.opts, s.apiOpts)
 	})
 
 	m.RegisterModule(modules.GrafanaAPIServer, func() (services.Service, error) {
