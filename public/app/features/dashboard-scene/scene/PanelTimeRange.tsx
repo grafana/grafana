@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import React from 'react';
 
-import { dateMath, getTimeZone, GrafanaTheme2, rangeUtil, TimeRange } from '@grafana/data';
+import { dateMath, getDefaultTimeRange, GrafanaTheme2, rangeUtil, TimeRange } from '@grafana/data';
 import {
   SceneComponentProps,
   sceneGraph,
@@ -9,7 +9,6 @@ import {
   SceneTimeRangeLike,
   SceneTimeRangeState,
 } from '@grafana/scenes';
-import { TimeZone } from '@grafana/schema';
 import { Icon, PanelChrome, TimePickerTooltip, Tooltip, useStyles2 } from '@grafana/ui';
 import { TimeOverrideResult } from 'app/features/dashboard/utils/panel';
 
@@ -24,11 +23,13 @@ export class PanelTimeRange extends SceneObjectBase<PanelTimeRangeState> impleme
   public static Component = PanelTimeRangeRenderer;
 
   public constructor(state: Partial<PanelTimeRangeState> = {}) {
-    const from = state.from ?? 'now-6h';
-    const to = state.to ?? 'now';
-    const timeZone = state.timeZone ?? getTimeZone();
-    const value = evaluateTimeRange(from, to, timeZone);
-    super({ from, to, timeZone, value, ...state });
+    super({
+      ...state,
+      // This time range is not valid until activation
+      from: 'now-6h',
+      to: 'now',
+      value: getDefaultTimeRange(),
+    });
 
     this.addActivationHandler(() => this._activationHandler());
   }
@@ -115,17 +116,6 @@ export class PanelTimeRange extends SceneObjectBase<PanelTimeRangeState> impleme
   public getTimeZone(): string {
     return this.getParentTimeRange().getTimeZone();
   }
-}
-
-function evaluateTimeRange(from: string, to: string, timeZone: TimeZone, fiscalYearStartMonth?: number): TimeRange {
-  return {
-    from: dateMath.parse(from, false, timeZone, fiscalYearStartMonth)!,
-    to: dateMath.parse(to, true, timeZone, fiscalYearStartMonth)!,
-    raw: {
-      from: from,
-      to: to,
-    },
-  };
 }
 
 function PanelTimeRangeRenderer({ model }: SceneComponentProps<PanelTimeRange>) {
