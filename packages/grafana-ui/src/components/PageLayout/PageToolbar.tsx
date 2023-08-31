@@ -221,7 +221,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       fontSize: typography.size.lg,
       margin: 0,
-      maxWidth: '300px',
       borderRadius: theme.shape.radius.default,
     }),
     titleLink: css({

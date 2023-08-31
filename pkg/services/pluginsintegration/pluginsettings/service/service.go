@@ -136,7 +136,7 @@ func (s *Service) DecryptedValues(ps *pluginsettings.DTO) map[string]string {
 
 func (s *Service) getPluginSettingsInfo(ctx context.Context, orgID int64) ([]*pluginsettings.PluginSettingInfo, error) {
 	sql := `SELECT org_id, plugin_id, enabled, pinned, plugin_version FROM plugin_setting `
-	params := make([]interface{}, 0)
+	params := make([]any, 0)
 
 	if orgID != 0 {
 		sql += "WHERE org_id=?"
