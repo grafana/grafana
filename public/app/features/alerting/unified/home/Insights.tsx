@@ -10,7 +10,7 @@ import {
   SceneVariableSet,
   VariableValueSelectors,
 } from '@grafana/scenes';
-import { useStyles2, Text } from '@grafana/ui';
+import { useStyles2, CollapsableSection } from '@grafana/ui';
 
 import { getFiringAlertsScene } from '../insights/grafana/FiringAlertsPercentage';
 import { getFiringAlertsRateScene } from '../insights/grafana/FiringAlertsRate';
@@ -133,26 +133,23 @@ export default function Insights() {
   const mimirRulesPerGroupScenes = getMimirManagedRulesPerGroupScenes();
 
   return (
-    <>
-      <div className={styles.container}>
-        <Text variant="h4">Grafana</Text>
+    <div className={styles.container}>
+      <CollapsableSection label="Grafana" isOpen={true}>
         <grafanaScenes.Component model={grafanaScenes} />
-      </div>
-      <div className={styles.container}>
-        <Text variant="h4">Mimir Alertmanager</Text>
+      </CollapsableSection>
+
+      <CollapsableSection label="Mimir Alertmanager" isOpen={true}>
         <cloudScenes.Component model={cloudScenes} />
-      </div>
+      </CollapsableSection>
 
-      <div className={styles.container}>
-        <Text variant="h4">Mimir-managed Rules</Text>
+      <CollapsableSection label="Mimir-managed Rules" isOpen={true}>
         <mimirRulesScenes.Component model={mimirRulesScenes} />
-      </div>
+      </CollapsableSection>
 
-      <div className={styles.container}>
-        <Text variant="h4">Mimir-managed Rules - Per Rule Group</Text>
+      <CollapsableSection label="Mimir-managed Rules - Per Rule Group" isOpen={true}>
         <mimirRulesPerGroupScenes.Component model={mimirRulesPerGroupScenes} />
-      </div>
-    </>
+      </CollapsableSection>
+    </div>
   );
 }
 
