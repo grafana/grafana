@@ -8,7 +8,7 @@ keywords:
   - panels
   - flame graph
 title: Flame graph
-weight: 850
+weight: 100
 ---
 
 # Flame graph panel

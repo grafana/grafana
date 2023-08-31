@@ -6,7 +6,7 @@ keywords:
   - grafana
   - pie chart
 title: Pie chart
-weight: 850
+weight: 100
 ---
 
 # Pie chart

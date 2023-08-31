@@ -11,7 +11,7 @@ keywords:
   - panel
   - barchart
 title: Histogram
-weight: 605
+weight: 100
 ---
 
 # Histogram

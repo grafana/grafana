@@ -10,7 +10,7 @@ keywords:
   - panel
   - documentation
 title: Annotations
-weight: 105
+weight: 100
 ---
 
 # Annotations

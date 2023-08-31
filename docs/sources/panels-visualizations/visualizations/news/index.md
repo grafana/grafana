@@ -9,7 +9,7 @@ keywords:
   - panels
   - news panel
 title: News
-weight: 800
+weight: 100
 ---
 
 ## News

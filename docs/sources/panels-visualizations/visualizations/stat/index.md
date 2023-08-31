@@ -11,7 +11,7 @@ keywords:
   - docs
   - stat panel
 title: Stat
-weight: 900
+weight: 100
 ---
 
 # Stat

@@ -8,7 +8,7 @@ keywords:
   - panels
   - traces
 title: Traces
-weight: 850
+weight: 100
 ---
 
 # Traces panel
