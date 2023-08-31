@@ -97,15 +97,26 @@ To add a tag, follow these steps:
 1. Select a value from the **Select value** drop-down. This field is populated based upon the tag.
 1. Optional: Select **+** to add an additional tag.
 
-### Optional: Use Aggregate by
+## Optional: Use Aggregate by
 
 {{% admonition type="warning" %}}
 **Aggregate by** is an [experimental feature](/docs/release-life-cycle/). Engineering and on-call support is not available. Documentation is either limited or not provided outside of code comments. No SLA is provided.
 [Enable the `metricsSummary` feature toggle](/docs/grafana/latest/setup-grafana/configure-grafana/feature-toggles/) in Grafana to use this feature. Contact Grafana Support to enable this feature in Grafana Cloud.
 {{% /admonition %}}
 
-Using **Aggregate by**, you can group RED metrics (span count, erroring span count, and latency information) for `kind=server` spans sent to Tempo in the last hour, grouped by a user-specified attribute.
-For example, you can group request rate and latency metrics by attribute for spans of `kind=server`.
+Using **Aggregate by**, you can calculate RED metrics (span count, erroring span count, and latency information) for `kind=server` spans recently sent to Tempo, grouped by one or more attributes.
+
+Whatever is selected in the **Aggregate by** list, you'll see every combination of present in your data.
+Each aggregate value, for example `intrinsic`:`name`, has a corresponding column in the results table.
+These values are grouped and the RED metrics are calculated for them.
+
+![Use Aggregate by to calculate RED metrics for spans and group by attributes](/static/img/docs/tempo/screenshot-traces-aggregate-by.png)
+
+The screenshot shows all of the successful HTTP `status_code` API calls against the `mystical-server` service.
+The results are shown in the same order used in **Aggregate by**.
+For example, **Aggregate by** lists `intrinsic.name` followed by `span.http.user_agent`.
+The first column in the results Table shows **name** and then **span.http.user_agent**.
+The RED metrics are calculated for every endpoint and user agent combinations found in your data.
 
 This capability is based on the [metrics summary API](/docs/grafana-cloud/monitor-infrastructure/traces/metrics-summary-api/).
 
@@ -114,6 +125,7 @@ To use this capability:
 1. In the **Aggregate by** row, select a scope from the first drop-down box. For example, `span`.
 1. Select an attribute from the second drop-down.
 1. Optional: Select **+** to add an **Aggregate by** row.
+1. Optional: Select a **Time range** to expand or narrow the data set.
 1. Select **Run query**.
 
 ### Optional: Add queries
