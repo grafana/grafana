@@ -2,6 +2,7 @@ import { lastValueFrom, Observable, throwError } from 'rxjs';
 import { map } from 'rxjs/operators';
 
 import {
+  rangeUtil,
   DataFrame,
   DataFrameView,
   DataQuery,
@@ -14,6 +15,7 @@ import {
   CoreApp,
   getSearchFilterScopedVar,
   LegacyMetricFindQueryOptions,
+  TimeRange,
 } from '@grafana/data';
 import { EditorMode } from '@grafana/experimental';
 import {
@@ -25,7 +27,6 @@ import {
   TemplateSrv,
 } from '@grafana/runtime';
 import { toDataQueryResponse } from '@grafana/runtime/src/utils/queryResponse';
-import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
 import { VariableWithMultiSupport } from '../../../variables/types';
 import { ResponseParser } from '../ResponseParser';
@@ -35,6 +36,13 @@ import { DB, SQLQuery, SQLOptions, SqlQueryModel, QueryFormat } from '../types';
 import migrateAnnotation from '../utils/migration';
 
 import { isSqlDatasourceDatabaseSelectionFeatureFlagEnabled } from './../components/QueryEditorFeatureFlag.utils';
+
+function getLast6Hours(): TimeRange {
+  return rangeUtil.convertRawToRange({
+    from: 'now-6h',
+    to: 'now',
+  });
+}
 
 export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLOptions> {
   id: number;
@@ -191,17 +199,20 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
       format: QueryFormat.Table,
     };
 
-    const response = await this.runMetaQuery(interpolatedQuery, options);
+    // based on my experience we always receive the time-range here,
+    // but typescript claims it is optional, so to be sure, we fall back to last-6-hours
+    const range = options?.range ?? getLast6Hours();
+    const response = await this.runMetaQuery(interpolatedQuery, range);
     return this.getResponseParser().transformMetricFindResponse(response);
   }
 
-  async runSql<T>(query: string, options?: RunSQLOptions) {
-    const frame = await this.runMetaQuery({ rawSql: query, format: QueryFormat.Table, refId: options?.refId }, options);
+  async runSql<T>(query: string, options?: { refId?: string }) {
+    const range = getLast6Hours();
+    const frame = await this.runMetaQuery({ rawSql: query, format: QueryFormat.Table, refId: options?.refId }, range);
     return new DataFrameView<T>(frame);
   }
 
-  private runMetaQuery(request: Partial<SQLQuery>, options?: LegacyMetricFindQueryOptions): Promise<DataFrame> {
-    const range = getTimeSrv().timeRange();
+  private runMetaQuery(request: Partial<SQLQuery>, range: TimeRange): Promise<DataFrame> {
     const refId = request.refId || 'meta';
     const queries: DataQuery[] = [{ ...request, datasource: request.datasource || this.getRef(), refId }];
 
@@ -212,8 +223,8 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
           method: 'POST',
           headers: this.getRequestHeaders(),
           data: {
-            from: options?.range?.from.valueOf().toString() || range.from.valueOf().toString(),
-            to: options?.range?.to.valueOf().toString() || range.to.valueOf().toString(),
+            from: range.from.valueOf().toString(),
+            to: range.to.valueOf().toString(),
             queries,
           },
           requestId: refId,
@@ -234,8 +245,4 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
     });
     return this.templateSrv.containsTemplate(queryWithoutMacros);
   }
-}
-
-interface RunSQLOptions extends LegacyMetricFindQueryOptions {
-  refId?: string;
 }
