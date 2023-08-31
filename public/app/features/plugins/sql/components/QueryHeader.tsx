@@ -135,13 +135,16 @@ export function QueryHeader({
               showLabel={true}
               value={queryRowFilter.filter}
               onChange={(ev) => {
+                if (!(ev.target instanceof HTMLInputElement)) {
+                  return;
+                }
+
                 reportInteraction('grafana_sql_filter_toggled', {
                   datasource: query.datasource?.type,
-                  displayed: ev.target instanceof HTMLInputElement && ev.target.checked,
+                  displayed: ev.target.checked,
                 });
 
-                ev.target instanceof HTMLInputElement &&
-                  onQueryRowChange({ ...queryRowFilter, filter: ev.target.checked });
+                onQueryRowChange({ ...queryRowFilter, filter: ev.target.checked });
               }}
             />
 
@@ -152,13 +155,16 @@ export function QueryHeader({
               showLabel={true}
               value={queryRowFilter.group}
               onChange={(ev) => {
+                if (!(ev.target instanceof HTMLInputElement)) {
+                  return;
+                }
+
                 reportInteraction('grafana_sql_group_toggled', {
                   datasource: query.datasource?.type,
-                  displayed: ev.target instanceof HTMLInputElement && ev.target.checked,
+                  displayed: ev.target.checked,
                 });
 
-                ev.target instanceof HTMLInputElement &&
-                  onQueryRowChange({ ...queryRowFilter, group: ev.target.checked });
+                onQueryRowChange({ ...queryRowFilter, group: ev.target.checked });
               }}
             />
 
