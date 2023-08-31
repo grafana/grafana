@@ -30,11 +30,12 @@ import {
 } from '../../utils/rule-form';
 import * as ruleId from '../../utils/rule-id';
 
+import AnnotationsStep from './AnnotationsStep';
 import { CloudEvaluationBehavior } from './CloudEvaluationBehavior';
-import { DetailsStep } from './DetailsStep';
 import { GrafanaEvaluationBehavior } from './GrafanaEvaluationBehavior';
 import { GrafanaRuleInspector } from './GrafanaRuleInspector';
 import { NotificationsStep } from './NotificationsStep';
+import { RecordingRulesNameSpaceAndGroupStep } from './RecordingRulesNameSpaceAndGroupStep';
 import { RuleEditorSection } from './RuleEditorSection';
 import { RuleInspector } from './RuleInspector';
 import { QueryAndExpressionsStep } from './query-and-alert-condition/QueryAndExpressionsStep';
@@ -130,7 +131,7 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
   const type = watch('type');
   const dataSourceName = watch('dataSourceName');
 
-  const showStep2 = Boolean(type && (type === RuleFormType.grafana || !!dataSourceName));
+  const showDataSourceDependantStep = Boolean(type && (type === RuleFormType.grafana || !!dataSourceName));
 
   const submitState = useUnifiedAlertingSelector((state) => state.ruleForm.saveRule) || initialAsyncRequestState;
   useCleanup((state) => (state.unifiedAlerting.ruleForm.saveRule = initialAsyncRequestState));
@@ -254,20 +255,30 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
         <div className={styles.contentOuter}>
           <CustomScrollbar autoHeightMin="100%" hideHorizontalTrack={true}>
             <div className={styles.contentInner}>
+              {/* Step 1 */}
               <AlertRuleNameInput />
+              {/* Step 2 */}
               <QueryAndExpressionsStep editingExistingRule={!!existing} onDataChange={checkAlertCondition} />
-              {showStep2 && (
+              {/* Step 3-4-5 */}
+              {showDataSourceDependantStep && (
                 <>
-                  {type === RuleFormType.grafana ? (
+                  {/* Step 3 */}
+                  {type === RuleFormType.grafana && (
                     <GrafanaEvaluationBehavior
                       evaluateEvery={evaluateEvery}
                       setEvaluateEvery={setEvaluateEvery}
                       existing={Boolean(existing)}
                     />
-                  ) : (
-                    <CloudEvaluationBehavior />
                   )}
-                  <DetailsStep />
+
+                  {type === RuleFormType.cloudAlerting && <CloudEvaluationBehavior />}
+
+                  {type === RuleFormType.cloudRecording && <RecordingRulesNameSpaceAndGroupStep />}
+
+                  {/* Step 4 & 5 */}
+                  {/* Annotations only for cloud and Grafana */}
+                  {type !== RuleFormType.cloudRecording && <AnnotationsStep />}
+                  {/* Notifications step*/}
                   <NotificationsStep alertUid={uidFromParams} />
                 </>
               )}
