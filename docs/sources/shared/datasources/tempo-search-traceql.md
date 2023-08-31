@@ -108,7 +108,7 @@ Using **Aggregate by**, you can calculate RED metrics (span count, erroring span
 
 Whatever is selected in the **Aggregate by** list, you'll see every combination of present in your data.
 Each aggregate value, for example `intrinsic`:`name`, has a corresponding column in the results table.
-These values are grouped and the RED metrics are calculated for them.
+The RED metrics are calculated for every endpoint and user agent combinations found in your data.
 
 ![Use Aggregate by to calculate RED metrics for spans and group by attributes](/static/img/docs/tempo/screenshot-traces-aggregate-by.png)
 
@@ -116,7 +116,6 @@ The screenshot shows all of the successful HTTP `status_code` API calls against 
 The results are shown in the same order used in **Aggregate by**.
 For example, **Aggregate by** lists `intrinsic.name` followed by `span.http.user_agent`.
 The first column in the results Table shows **name** and then **span.http.user_agent**.
-The RED metrics are calculated for every endpoint and user agent combinations found in your data.
 
 This capability is based on the [metrics summary API](/docs/grafana-cloud/monitor-infrastructure/traces/metrics-summary-api/).
 
