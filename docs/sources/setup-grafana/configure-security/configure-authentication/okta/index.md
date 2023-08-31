@@ -9,7 +9,7 @@ weight: 1400
 
 # Configure Okta OAuth2 authentication
 
-{{< docs/shared "auth/intro.md" >}}
+{{< docs/shared lookup="auth/intro.md" source="grafana" version="<GRAFANA VERSION>" >}}
 
 ## Before you begin
 
