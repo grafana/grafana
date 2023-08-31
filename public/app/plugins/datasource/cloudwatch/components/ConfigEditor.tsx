@@ -19,7 +19,7 @@ import { CloudWatchDatasource } from '../datasource';
 import { SelectableResourceValue } from '../resources/types';
 import { CloudWatchJsonData, CloudWatchSecureJsonData } from '../types';
 
-import { LogGroupsField } from './LogGroups/LogGroupsField';
+import { LogGroupsFieldWrapper } from './LogGroups/LogGroupsField';
 import { XrayLinkConfig } from './XrayLinkConfig';
 
 export type Props = DataSourcePluginOptionsEditorProps<CloudWatchJsonData, CloudWatchSecureJsonData>;
@@ -94,39 +94,47 @@ export const ConfigEditor = (props: Props) => {
           shrink={true}
           {...logGroupFieldState}
         >
-          <LogGroupsField
-            region={defaultRegion ?? ''}
-            datasource={datasource}
-            onBeforeOpen={() => {
-              if (saved) {
-                return;
-              }
+          {datasource ? (
+            <LogGroupsFieldWrapper
+              region={defaultRegion ?? ''}
+              datasource={datasource}
+              onBeforeOpen={() => {
+                if (saved) {
+                  return;
+                }
 
-              let error = 'You need to save the data source before adding log groups.';
-              if (props.options.version && props.options.version > 1) {
-                error =
-                  'You have unsaved connection detail changes. You need to save the data source before adding log groups.';
-              }
-              setLogGroupFieldState({
-                invalid: true,
-                error,
-              });
-              throw new Error(error);
-            }}
-            legacyLogGroupNames={defaultLogGroups}
-            logGroups={logGroups}
-            onChange={(updatedLogGroups) => {
-              onOptionsChange({
-                ...props.options,
-                jsonData: {
-                  ...props.options.jsonData,
-                  logGroups: updatedLogGroups,
-                  defaultLogGroups: undefined,
-                },
-              });
-            }}
-            maxNoOfVisibleLogGroups={2}
-          />
+                let error = 'You need to save the data source before adding log groups.';
+                if (props.options.version && props.options.version > 1) {
+                  error =
+                    'You have unsaved connection detail changes. You need to save the data source before adding log groups.';
+                }
+                setLogGroupFieldState({
+                  invalid: true,
+                  error,
+                });
+                throw new Error(error);
+              }}
+              legacyLogGroupNames={defaultLogGroups}
+              logGroups={logGroups}
+              onChange={(updatedLogGroups) => {
+                onOptionsChange({
+                  ...props.options,
+                  jsonData: {
+                    ...props.options.jsonData,
+                    logGroups: updatedLogGroups,
+                    defaultLogGroups: undefined,
+                  },
+                });
+              }}
+              maxNoOfVisibleLogGroups={2}
+              //legacy props
+              legacyOnChange={(logGroups) => {
+                updateDatasourcePluginJsonDataOption(props, 'defaultLogGroups', logGroups);
+              }}
+            />
+          ) : (
+            <></>
+          )}
         </InlineField>
       </div>
       <XrayLinkConfig
@@ -212,7 +220,7 @@ function useDataSourceSavedState(props: Props) {
   ]);
 
   useEffect(() => {
-    props.options.version && setSaved(true);
+    props.options.version && props.options.version > 1 && setSaved(true);
   }, [props.options.version]);
 
   return saved;

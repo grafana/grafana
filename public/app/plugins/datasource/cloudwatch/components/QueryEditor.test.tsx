@@ -46,6 +46,15 @@ jest.mock('./SQLCodeEditor', () => ({
 }));
 
 export { SQLCodeEditor } from './SQLCodeEditor';
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  config: {
+    ...jest.requireActual('@grafana/runtime').config,
+    featureToggles: {
+      cloudWatchCrossAccountQuerying: true,
+    },
+  },
+}));
 
 describe('QueryEditor should render right editor', () => {
   describe('when using grafana 6.3.0 metric query', () => {

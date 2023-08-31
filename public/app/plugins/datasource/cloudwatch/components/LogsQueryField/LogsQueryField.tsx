@@ -11,8 +11,7 @@ import { registerLanguage } from '../../language/monarch/register';
 import { CloudWatchJsonData, CloudWatchLogsQuery, CloudWatchQuery } from '../../types';
 import { getStatsGroups } from '../../utils/query/getStatsGroups';
 
-import { LogGroupsField } from './../LogGroups/LogGroupsField';
-
+import { LogGroupsFieldWrapper } from './../LogGroups/LogGroupsField';
 export interface CloudWatchLogsQueryFieldProps
   extends QueryEditorProps<CloudWatchDatasource, CloudWatchQuery, CloudWatchJsonData>,
     Themeable2 {
@@ -48,13 +47,17 @@ export const CloudWatchLogsQueryFieldMonaco = (props: CloudWatchLogsQueryFieldPr
 
   return (
     <>
-      <LogGroupsField
+      <LogGroupsFieldWrapper
         region={query.region}
         datasource={datasource}
         legacyLogGroupNames={query.logGroupNames}
         logGroups={query.logGroups}
         onChange={(logGroups) => {
           onChange({ ...query, logGroups, logGroupNames: undefined });
+        }}
+        //legacy props
+        legacyOnChange={(logGroupNames) => {
+          onChange({ ...query, logGroupNames });
         }}
       />
       <div className="gf-form-inline gf-form-inline--nowrap flex-grow-1">
