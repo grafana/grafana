@@ -55,7 +55,7 @@ func TestErrors(t *testing.T) {
 		{
 			name: "grafana error with fallback to other error",
 
-			err:        errutil.Timeout("thing.timeout").Errorf("whoops"),
+			err:        errutil.RequestTimeout("thing.timeout").Errorf("whoops"),
 			statusCode: http.StatusBadRequest,
 			message:    genericErrorMessage,
 
@@ -64,8 +64,8 @@ func TestErrors(t *testing.T) {
 				errMessage: genericErrorMessage,
 			},
 			newResponse: &NormalResponse{
-				status:     http.StatusGatewayTimeout,
-				errMessage: errutil.StatusTimeout.String(),
+				status:     http.StatusRequestTimeout,
+				errMessage: errutil.StatusRequestTimeout.String(),
 			},
 			fallbackUseNew: true,
 		},

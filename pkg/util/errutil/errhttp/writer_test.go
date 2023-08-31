@@ -14,7 +14,7 @@ import (
 func TestWrite(t *testing.T) {
 	ctx := context.Background()
 	const msgID = "test.thisIsExpected"
-	base := errutil.Timeout(msgID)
+	base := errutil.RequestTimeout(msgID)
 	handler := func(writer http.ResponseWriter, request *http.Request) {
 		Write(ctx, base.Errorf("got expected error"), writer)
 	}
@@ -24,6 +24,6 @@ func TestWrite(t *testing.T) {
 
 	handler(recorder, req)
 
-	assert.Equal(t, http.StatusGatewayTimeout, recorder.Code)
-	assert.JSONEq(t, `{"message": "Timeout", "messageId": "test.thisIsExpected", "statusCode": 504}`, recorder.Body.String())
+	assert.Equal(t, http.StatusRequestTimeout, recorder.Code)
+	assert.JSONEq(t, `{"message": "Timeout", "messageId": "test.thisIsExpected", "statusCode": 408}`, recorder.Body.String())
 }
