@@ -61,6 +61,7 @@ export function gridItemToPanel(gridItem: SceneGridItem): Panel {
   if (panelTime instanceof PanelTimeRange) {
     panel.timeFrom = panelTime.state.timeFrom;
     panel.timeShift = panelTime.state.timeShift;
+    panel.hideTimeOverride = panelTime.state.hideTimeOverride;
   }
 
   if (vizPanel.state.displayMode === 'transparent') {

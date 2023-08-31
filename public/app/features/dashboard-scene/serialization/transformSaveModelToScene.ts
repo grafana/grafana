@@ -264,7 +264,11 @@ export function buildSceneFromPanelModel(panel: PanelModel): SceneGridItem {
   };
 
   if (panel.timeFrom || panel.timeShift) {
-    vizPanelState.$timeRange = new PanelTimeRange({ timeFrom: panel.timeFrom, timeShift: panel.timeShift });
+    vizPanelState.$timeRange = new PanelTimeRange({
+      timeFrom: panel.timeFrom,
+      timeShift: panel.timeShift,
+      hideTimeOverride: panel.hideTimeOverride,
+    });
   }
 
   return new SceneGridItem({

@@ -21,11 +21,13 @@ describe('transformSceneToSaveModel', () => {
       const gridItem = createVizPanelFromPanelSchema({
         timeFrom: '2h',
         timeShift: '1d',
+        hideTimeOverride: true,
       });
 
       const saveModel = gridItemToPanel(gridItem);
       expect(saveModel.timeFrom).toBe('2h');
       expect(saveModel.timeShift).toBe('1d');
+      expect(saveModel.hideTimeOverride).toBe(true);
     });
 
     it('transparent panel', () => {

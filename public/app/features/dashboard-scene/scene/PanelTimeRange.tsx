@@ -15,7 +15,7 @@ import { TimeOverrideResult } from 'app/features/dashboard/utils/panel';
 interface PanelTimeRangeState extends SceneTimeRangeState {
   timeFrom?: string;
   timeShift?: string;
-  //hideTimeOverride
+  hideTimeOverride?: boolean;
   timeInfo?: string;
 }
 
@@ -119,10 +119,10 @@ export class PanelTimeRange extends SceneObjectBase<PanelTimeRangeState> impleme
 }
 
 function PanelTimeRangeRenderer({ model }: SceneComponentProps<PanelTimeRange>) {
-  const { timeInfo } = model.useState();
+  const { timeInfo, hideTimeOverride } = model.useState();
   const styles = useStyles2(getStyles);
 
-  if (!timeInfo) {
+  if (!timeInfo || hideTimeOverride) {
     return null;
   }
 
