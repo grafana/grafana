@@ -166,8 +166,14 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     try {
       return semver.gte(actualVersion, featuresToTempoVersion[featureName]);
     } catch {
-      // An error could still happen if Tempo is running locally. In that case, the version is not a
-      // semantic version and instead it is in the form `<branch>-<revision>` (e.g., `main-12bdeff`).
+      // An error could happen if Tempo is running locally. In that case, the version is not a semantic version
+      // and instead it is in the form `<branch>-<revision>`, possibly with a `-WIP` suffix (e.g., `main-12bdeff-WIP`).
+      // Thus, if the version is in the form `<branch>-<revision>`, assume that we are on the most updated
+      // Tempo version and thus any feature should be considered enabled
+      if (/^.*-[a-zA-Z0-9_]{7}(-WIP)?$/.test(actualVersion)) {
+        return true;
+      }
+
       console.error(`Cannot compare ${actualVersion} and ${featuresToTempoVersion[featureName]}`);
       return false;
     }
