@@ -14,16 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/testdatasource/sims"
 )
 
-func NewBackendServerOpts() *backend.ServeOpts {
-	s := ProvideService()
-	return &backend.ServeOpts{
-		//	CheckHealthHandler:  s,
-		CallResourceHandler: s,
-		QueryDataHandler:    s,
-		StreamHandler:       s,
-	}
-}
-
 func ProvideService() *Service {
 	s := &Service{
 		queryMux:  datasource.NewQueryTypeMux(),
