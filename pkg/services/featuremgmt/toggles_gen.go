@@ -388,7 +388,7 @@ const (
 	FlagSplitScopes = "splitScopes"
 
 	// FlagDecoupleCorePlugins
-	// Skip loading core plugins on startup in order to load them as external
+	// To load core plugins externally, this setting bypasses loading configured plugins during startup.
 	FlagDecoupleCorePlugins = "decoupleCorePlugins"
 
 	// FlagAzureMonitorDataplane

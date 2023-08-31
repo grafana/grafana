@@ -2160,7 +2160,7 @@ If `true`, propagate the tracing context to the plugin backend and enable tracin
 
 ## as_external
 
-Load an external versions of a core plugin. The external version needs to be explicitly installed.
+Load an external versions of a core plugin if it has been installed.
 
 Experimental. Requires the feature toggle `decoupleCorePlugins` to be enabled.
 

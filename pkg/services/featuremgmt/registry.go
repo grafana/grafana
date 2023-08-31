@@ -658,7 +658,7 @@ var (
 		},
 		{
 			Name:            "decoupleCorePlugins",
-			Description:     "Skip loading core plugins on startup in order to load them as external",
+			Description:     "To load core plugins externally, this setting bypasses loading configured plugins during startup.",
 			Stage:           FeatureStageExperimental,
 			Owner:           grafanaPluginsPlatformSquad,
 			RequiresRestart: true,
