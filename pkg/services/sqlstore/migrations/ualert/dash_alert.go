@@ -55,7 +55,8 @@ func (m *migration) slurpDashAlerts() ([]dashAlert, error) {
 	for i := range dashAlerts {
 		err = json.Unmarshal(dashAlerts[i].Settings, &dashAlerts[i].ParsedSettings)
 		if err != nil {
-			return nil, err
+			da := dashAlerts[i]
+			return nil, fmt.Errorf("failed to parse alert rule ID:%d, name:'%s', orgID:%d: %w", da.Id, da.Name, da.OrgId, err)
 		}
 	}
 
@@ -68,7 +69,7 @@ type dashAlertSettings struct {
 	NoDataState         string               `json:"noDataState"`
 	ExecutionErrorState string               `json:"executionErrorState"`
 	Conditions          []dashAlertCondition `json:"conditions"`
-	AlertRuleTags       interface{}          `json:"alertRuleTags"`
+	AlertRuleTags       any                  `json:"alertRuleTags"`
 	Notifications       []dashAlertNot       `json:"notifications"`
 }
 
@@ -95,7 +96,7 @@ type dashAlertCondition struct {
 	} `json:"query"`
 
 	Reducer struct {
-		// Params []interface{} `json:"params"` (Unused)
+		// Params []any `json:"params"` (Unused)
 		Type string `json:"type"`
 	}
 }

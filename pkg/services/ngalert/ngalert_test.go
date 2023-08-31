@@ -49,7 +49,7 @@ func Test_subscribeToFolderChanges(t *testing.T) {
 	require.NoError(t, err)
 
 	require.Eventuallyf(t, func() bool {
-		return len(db.GetRecordedCommands(func(cmd interface{}) (interface{}, bool) {
+		return len(db.GetRecordedCommands(func(cmd any) (any, bool) {
 			c, ok := cmd.(fakes.GenericRecordedQuery)
 			if !ok || c.Name != "IncreaseVersionForAllRulesInNamespace" {
 				return nil, false

@@ -2,12 +2,17 @@
 aliases:
   - guides/what-is-grafana/
   - oss-details/
-title: Introduction to Grafana
 description: Learn about Grafana OSS, Grafana Enterprise, and Grafana Cloud.
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
+title: About Grafana
 weight: 5
 ---
 
-# Introduction to Grafana
+# About Grafana
 
 [Grafana open source software](/oss/) enables you to query, visualize, alert on, and explore your metrics, logs, and traces wherever they are stored. Grafana OSS provides you with tools to turn your time-series database (TSDB) data into insightful graphs and visualizations. The Grafana OSS plugin framework also enables you to connect other data sources like NoSQL/SQL databases, ticketing tools like Jira or ServiceNow, and CI/CD tooling like GitLab.
 

@@ -42,13 +42,11 @@ const defaultAlertmanagerConfigJSON = `
 			"name": "a new receiver",
 			"grafana_managed_receiver_configs": [{
 				"uid": "",
-				"name": "email receiver",
-				"type": "email",
+				"name": "slack receiver",
+				"type": "slack",
 				"disableResolveMessage": false,
-				"settings": {
-					"addresses": "\u003canother@email.com\u003e"
-				},
-				"secureFields": {}
+				"settings": {},
+				"secureSettings": {"url":"secure url"}
 			}]
 		}]
 	}
@@ -60,10 +58,10 @@ type fakeAMConfigStore struct {
 	lastSaveCommand *models.SaveAlertmanagerConfigurationCmd
 }
 
-func newFakeAMConfigStore() *fakeAMConfigStore {
+func newFakeAMConfigStore(config string) *fakeAMConfigStore {
 	return &fakeAMConfigStore{
 		config: models.AlertConfiguration{
-			AlertmanagerConfiguration: defaultAlertmanagerConfigJSON,
+			AlertmanagerConfiguration: config,
 			ConfigurationVersion:      "v1",
 			Default:                   true,
 			OrgID:                     1,
@@ -168,6 +166,7 @@ func (m *MockAMConfigStore_Expecter) SaveSucceedsIntercept(intercepted *models.S
 
 func (m *MockProvisioningStore_Expecter) GetReturns(p models.Provenance) *MockProvisioningStore_Expecter {
 	m.GetProvenance(mock.Anything, mock.Anything, mock.Anything).Return(p, nil)
+	m.GetProvenances(mock.Anything, mock.Anything, mock.Anything).Return(nil, nil)
 	return m
 }
 

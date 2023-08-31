@@ -19,7 +19,7 @@ const combokeys = new Mousetrap(document.body);
  * This is the main alerting page wrapper, used by the alertmanager page wrapper and the alert rules list view
  */
 interface AlertingPageWrapperProps extends PropsWithChildren {
-  pageId: string;
+  pageId?: string;
   isLoading?: boolean;
   pageNav?: NavModelItem;
   actions?: React.ReactNode;

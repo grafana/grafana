@@ -132,7 +132,7 @@ describe('Admin config', () => {
     await waitFor(() => expect(mocks.api.updateAlertManagerConfig).toHaveBeenCalled());
     expect(mocks.api.updateAlertManagerConfig.mock.lastCall).toMatchSnapshot();
 
-    await waitFor(() => expect(mocks.api.fetchConfig).toHaveBeenCalledTimes(3));
+    await waitFor(() => expect(mocks.api.fetchConfig).toHaveBeenCalledTimes(2));
   });
 
   it('Read-only when using Prometheus Alertmanager', async () => {

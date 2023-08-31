@@ -1,4 +1,6 @@
 ---
+canonical: https://grafana.com/docs/grafana/latest/alerting/manage-notifications/template-notifications/create-notification-templates/
+description: How to create notification templates
 keywords:
   - grafana
   - alerting
@@ -7,7 +9,11 @@ keywords:
   - create templates
   - edit templates
   - delete templates
-description: How to create notification templates
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: Create notification templates
 weight: 200
 ---

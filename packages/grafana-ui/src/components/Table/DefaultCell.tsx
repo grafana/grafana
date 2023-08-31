@@ -3,7 +3,7 @@ import React, { ReactElement } from 'react';
 import tinycolor from 'tinycolor2';
 
 import { DisplayValue, formattedValueToString } from '@grafana/data';
-import { TableCellBackgroundDisplayMode, TableCellOptions } from '@grafana/schema';
+import { TableCellBackgroundDisplayMode, TableCellDisplayMode } from '@grafana/schema';
 
 import { useStyles2 } from '../../themes';
 import { getCellLinks, getTextColorForAlphaBackground } from '../../utils';
@@ -12,21 +12,14 @@ import { DataLinksContextMenu } from '../DataLinks/DataLinksContextMenu';
 
 import { CellActions } from './CellActions';
 import { TableStyles } from './styles';
-import { TableCellDisplayMode, TableCellProps, TableFieldOptions } from './types';
+import { TableCellProps, CustomCellRendererProps, TableCellOptions } from './types';
 import { getCellOptions } from './utils';
 
 export const DefaultCell = (props: TableCellProps) => {
-  const { field, cell, tableStyles, row, cellProps } = props;
+  const { field, cell, tableStyles, row, cellProps, frame } = props;
 
-  const inspectEnabled = Boolean((field.config.custom as TableFieldOptions)?.inspect);
+  const inspectEnabled = Boolean(field.config.custom?.inspect);
   const displayValue = field.display!(cell.value);
-
-  let value: string | ReactElement;
-  if (React.isValidElement(cell.value)) {
-    value = cell.value;
-  } else {
-    value = formattedValueToString(displayValue);
-  }
 
   const showFilters = props.onCellFilterAdded && field.config.filterable;
   const showActions = (showFilters && cell.value !== undefined) || inspectEnabled;
@@ -34,6 +27,18 @@ export const DefaultCell = (props: TableCellProps) => {
   const cellStyle = getCellStyle(tableStyles, cellOptions, displayValue, inspectEnabled);
   const hasLinks = Boolean(getCellLinks(field, row)?.length);
   const clearButtonStyle = useStyles2(clearLinkButtonStyles);
+  let value: string | ReactElement;
+
+  if (cellOptions.type === TableCellDisplayMode.Custom) {
+    const CustomCellComponent: React.ComponentType<CustomCellRendererProps> = cellOptions.cellComponent;
+    value = <CustomCellComponent field={field} value={cell.value} rowIndex={row.index} frame={frame} />;
+  } else {
+    if (React.isValidElement(cell.value)) {
+      value = cell.value;
+    } else {
+      value = formattedValueToString(displayValue);
+    }
+  }
 
   return (
     <div {...cellProps} className={cellStyle}>

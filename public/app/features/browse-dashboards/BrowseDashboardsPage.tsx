@@ -80,25 +80,24 @@ const BrowseDashboardsPage = memo(({ match }: Props) => {
 
   const { canEditInFolder, canCreateDashboards, canCreateFolder } = getFolderPermissions(folderDTO);
 
-  const onEditTitle = folderUID
-    ? async (newValue: string) => {
-        if (folderDTO) {
-          const result = await saveFolder({
-            ...folderDTO,
-            title: newValue,
-          });
-          if ('error' in result) {
-            throw result.error;
-          }
-        }
+  const showEditTitle = canEditInFolder && folderUID;
+  const onEditTitle = async (newValue: string) => {
+    if (folderDTO) {
+      const result = await saveFolder({
+        ...folderDTO,
+        title: newValue,
+      });
+      if ('error' in result) {
+        throw result.error;
       }
-    : undefined;
+    }
+  };
 
   return (
     <Page
       navId="dashboards/browse"
       pageNav={navModel}
-      onEditTitle={onEditTitle}
+      onEditTitle={showEditTitle ? onEditTitle : undefined}
       actions={
         <>
           {folderDTO && <FolderActionsButton folder={folderDTO} />}

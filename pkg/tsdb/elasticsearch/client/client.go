@@ -84,8 +84,8 @@ func (c *baseClientImpl) GetConfiguredFields() ConfiguredFields {
 }
 
 type multiRequest struct {
-	header   map[string]interface{}
-	body     interface{}
+	header   map[string]any
+	body     any
 	interval time.Duration
 }
 
@@ -204,10 +204,10 @@ func (c *baseClientImpl) createMultiSearchRequests(searchRequests []*SearchReque
 
 	for _, searchReq := range searchRequests {
 		mr := multiRequest{
-			header: map[string]interface{}{
+			header: map[string]any{
 				"search_type":        "query_then_fetch",
 				"ignore_unavailable": true,
-				"index":              c.indices,
+				"index":              strings.Join(c.indices, ","),
 			},
 			body:     searchReq,
 			interval: searchReq.Interval,

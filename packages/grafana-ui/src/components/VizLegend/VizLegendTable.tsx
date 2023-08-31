@@ -108,31 +108,31 @@ export const VizLegendTable = <T extends unknown>({
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  table: css`
-    width: 100%;
-    th:first-child {
-      width: 100%;
-      border-bottom: 1px solid ${theme.colors.border.weak};
-    }
-  `,
-  header: css`
-    color: ${theme.colors.primary.text};
-    font-weight: ${theme.typography.fontWeightMedium};
-    border-bottom: 1px solid ${theme.colors.border.weak};
-    padding: ${theme.spacing(0.25, 1, 0.25, 1)};
-    font-size: ${theme.typography.bodySmall.fontSize};
-    text-align: right;
-    white-space: nowrap;
-  `,
-  nameHeader: css`
-    text-align: left;
-    padding-left: 30px;
-  `,
+  table: css({
+    width: '100%',
+    'th:first-child': {
+      width: '100%',
+      borderBottom: `1px solid ${theme.colors.border.weak}`,
+    },
+  }),
+  header: css({
+    color: theme.colors.primary.text,
+    fontWeight: theme.typography.fontWeightMedium,
+    borderBottom: `1px solid ${theme.colors.border.weak}`,
+    padding: theme.spacing(0.25, 1, 0.25, 1),
+    fontSize: theme.typography.bodySmall.fontSize,
+    textAlign: 'right',
+    whiteSpace: 'nowrap',
+  }),
+  nameHeader: css({
+    textAlign: 'left',
+    paddingLeft: '30px',
+  }),
   // This needs to be padding-right - icon size(xs==12) to avoid jumping
-  withIcon: css`
-    padding-right: 4px;
-  `,
-  headerSortable: css`
-    cursor: pointer;
-  `,
+  withIcon: css({
+    paddingRight: '4px',
+  }),
+  headerSortable: css({
+    cursor: 'pointer',
+  }),
 });

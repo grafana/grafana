@@ -209,6 +209,8 @@ class UnThemedOrgRow extends PureComponent<OrgRowProps> {
                   roleOptions={this.state.roleOptions}
                   onBasicRoleChange={this.onBasicRoleChange}
                   basicRoleDisabled={rolePickerDisabled}
+                  basicRoleDisabledMessage="This user's role is not editable because it is synchronized from your auth provider.
+                    Refer to the Grafana authentication docs for details."
                 />
               </div>
               {isExternalUser && <ExternalUserTooltip lockMessage={lockMessage} />}
@@ -486,7 +488,7 @@ interface ExternalUserTooltipProps {
   lockMessage?: string;
 }
 
-const ExternalUserTooltip = ({ lockMessage }: ExternalUserTooltipProps) => {
+export const ExternalUserTooltip = ({ lockMessage }: ExternalUserTooltipProps) => {
   const styles = useStyles2(getTooltipStyles);
 
   return (

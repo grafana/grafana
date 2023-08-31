@@ -118,11 +118,11 @@ type SecretsPluginManager interface {
 }
 
 type StaticRouteResolver interface {
-	Routes() []*StaticRoute
+	Routes(ctx context.Context) []*StaticRoute
 }
 
 type ErrorResolver interface {
-	PluginErrors() []*Error
+	PluginErrors(ctx context.Context) []*Error
 }
 
 type PluginLoaderAuthorizer interface {
@@ -164,6 +164,7 @@ func (fn ClientMiddlewareFunc) CreateClientMiddleware(next Client) Client {
 
 type FeatureToggles interface {
 	IsEnabled(flag string) bool
+	GetEnabled(ctx context.Context) map[string]bool
 }
 
 type SignatureCalculator interface {

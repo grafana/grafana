@@ -62,7 +62,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       border: 1px solid ${theme.colors.border.weak};
       margin: ${theme.spacing(1)} 0;
       background-color: ${cardColor};
-      border-radius: ${theme.shape.borderRadius(1)};
+      border-radius: ${theme.shape.radius.default};
       .starred {
         color: ${theme.v1.palette.orange};
       }
@@ -403,14 +403,13 @@ const Query = ({ query, showDsInfo = false }: QueryProps) => {
   );
 };
 
-const getDsInfoStyles = (size: 'sm' | 'md') => (theme: GrafanaTheme2) =>
-  css`
-    display: flex;
-    align-items: center;
-    font-size: ${theme.typography[size === 'sm' ? 'bodySmall' : 'body'].fontSize};
-    font-weight: ${theme.typography.fontWeightMedium};
-    white-space: nowrap;
-  `;
+const getDsInfoStyles = (size: 'sm' | 'md') => (theme: GrafanaTheme2) => css`
+  display: flex;
+  align-items: center;
+  font-size: ${theme.typography[size === 'sm' ? 'bodySmall' : 'body'].fontSize};
+  font-weight: ${theme.typography.fontWeightMedium};
+  white-space: nowrap;
+`;
 
 function DatasourceInfo({ dsApi, size }: { dsApi?: DataSourceApi; size: 'sm' | 'md' }) {
   const getStyles = useCallback((theme: GrafanaTheme2) => getDsInfoStyles(size)(theme), [size]);

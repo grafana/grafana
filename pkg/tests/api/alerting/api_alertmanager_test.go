@@ -101,7 +101,7 @@ func TestIntegrationAMConfigAccess(t *testing.T) {
 				desc:      "un-authenticated request should fail",
 				url:       "http://%s/api/alertmanager/grafana/config/api/v1/alerts",
 				expStatus: http.StatusUnauthorized,
-				expBody:   `{"message":"Unauthorized"}`,
+				expBody:   `"message":"Unauthorized"`,
 			},
 			{
 				desc:      "viewer request should fail",
@@ -171,7 +171,7 @@ func TestIntegrationAMConfigAccess(t *testing.T) {
 				desc:      "un-authenticated request should fail",
 				url:       "http://%s/api/alertmanager/grafana/config/api/v1/alerts",
 				expStatus: http.StatusUnauthorized,
-				expBody:   `{"message": "Unauthorized"}`,
+				expBody:   `{"extra":null,"message":"Unauthorized","messageId":"auth.unauthorized","statusCode":401,"traceID":""}`,
 			},
 			{
 				desc:      "viewer request should succeed",
@@ -235,7 +235,7 @@ func TestIntegrationAMConfigAccess(t *testing.T) {
 				desc:      "un-authenticated request should fail",
 				url:       "http://%s/api/alertmanager/grafana/config/api/v2/silences",
 				expStatus: http.StatusUnauthorized,
-				expBody:   `{"message":"Unauthorized"}`,
+				expBody:   `"message":"Unauthorized"`,
 			},
 			{
 				desc:      "viewer request should fail",
@@ -286,7 +286,7 @@ func TestIntegrationAMConfigAccess(t *testing.T) {
 				desc:      "un-authenticated request should fail",
 				url:       "http://%s/api/alertmanager/grafana/api/v2/silences",
 				expStatus: http.StatusUnauthorized,
-				expBody:   `{"message": "Unauthorized"}`,
+				expBody:   `"message": "Unauthorized"`,
 			},
 			{
 				desc:      "viewer request should succeed",
@@ -341,7 +341,7 @@ func TestIntegrationAMConfigAccess(t *testing.T) {
 				desc:      "un-authenticated request should fail",
 				url:       "http://%s/api/alertmanager/grafana/api/v2/silence/%s",
 				expStatus: http.StatusUnauthorized,
-				expBody:   `{"message":"Unauthorized"}`,
+				expBody:   `"message":"Unauthorized"`,
 			},
 			{
 				desc:      "viewer request should fail",
@@ -423,7 +423,7 @@ func TestIntegrationAlertAndGroupsQuery(t *testing.T) {
 		b, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
 		require.Equal(t, http.StatusUnauthorized, resp.StatusCode)
-		require.JSONEq(t, `{"message": "Unauthorized"}`, string(b))
+		require.Contains(t, string(b), `"message":"Unauthorized"`)
 	}
 
 	// Create a user to make authenticated requests
@@ -447,11 +447,11 @@ func TestIntegrationAlertAndGroupsQuery(t *testing.T) {
 		})
 		b, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
-		require.Equal(t, http.StatusUnauthorized, resp.StatusCode)
+		assert.Equal(t, http.StatusUnauthorized, resp.StatusCode)
 
-		var res map[string]interface{}
+		var res map[string]any
 		require.NoError(t, json.Unmarshal(b, &res))
-		require.Equal(t, "invalid username or password", res["message"])
+		assert.Equal(t, "Invalid username or password", res["message"])
 	}
 
 	// When there are no alerts available, it returns an empty list.
@@ -1341,7 +1341,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 
 		status, body := apiClient.PostRulesGroup(t, "default", &rules)
 		assert.Equal(t, http.StatusNotFound, status)
-		var res map[string]interface{}
+		var res map[string]any
 		assert.NoError(t, json.Unmarshal([]byte(body), &res))
 		require.Equal(t, "failed to update rule group: failed to update rule with UID unknown because could not find alert rule", res["message"])
 
@@ -1447,7 +1447,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 		}
 		status, body := apiClient.PostRulesGroup(t, "default", &rules)
 		assert.Equal(t, http.StatusBadRequest, status)
-		var res map[string]interface{}
+		var res map[string]any
 		require.NoError(t, json.Unmarshal([]byte(body), &res))
 		require.Equal(t, fmt.Sprintf("rule [1] has UID %s that is already assigned to another rule at index 0", ruleUID), res["message"])
 
@@ -1813,7 +1813,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 			require.NoError(t, err)
 
 			require.Equal(t, http.StatusAccepted, resp.StatusCode)
-			var res map[string]interface{}
+			var res map[string]any
 			require.NoError(t, json.Unmarshal(b, &res))
 			require.Equal(t, "rules deleted", res["message"])
 		})
@@ -1995,7 +1995,7 @@ func TestIntegrationQuota(t *testing.T) {
 		}
 		status, body := apiClient.PostRulesGroup(t, "default", &rules)
 		assert.Equal(t, http.StatusForbidden, status)
-		var res map[string]interface{}
+		var res map[string]any
 		require.NoError(t, json.Unmarshal([]byte(body), &res))
 		require.Equal(t, "quota has been exceeded", res["message"])
 	})

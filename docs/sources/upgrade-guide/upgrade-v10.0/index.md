@@ -5,8 +5,12 @@ keywords:
   - configuration
   - documentation
   - upgrade
-title: Upgrade to Grafana v10.0
+labels:
+  products:
+    - enterprise
+    - oss
 menutitle: Upgrade to v10.0
+title: Upgrade to Grafana v10.0
 weight: 1700
 ---
 

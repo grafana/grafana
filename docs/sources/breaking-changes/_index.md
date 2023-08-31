@@ -1,6 +1,11 @@
 ---
 aliases:
   - guides/
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: Breaking changes
 weight: 2
 ---

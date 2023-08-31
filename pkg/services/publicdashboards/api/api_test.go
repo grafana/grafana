@@ -22,11 +22,10 @@ import (
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
-var userAdmin = &user.SignedInUser{UserID: 1, OrgID: 1, OrgRole: org.RoleAdmin, Login: "testAdminUser"}
-var userAdminRBAC = &user.SignedInUser{UserID: 2, OrgID: 1, OrgRole: org.RoleAdmin, Login: "testAdminUserRBAC", Permissions: map[int64]map[string][]string{1: {dashboards.ActionDashboardsPublicWrite: {dashboards.ScopeDashboardsAll}}}}
-var userViewer = &user.SignedInUser{UserID: 3, OrgID: 1, OrgRole: org.RoleViewer, Login: "testViewerUser"}
-var userViewerRBAC = &user.SignedInUser{UserID: 4, OrgID: 1, OrgRole: org.RoleViewer, Login: "testViewerUserRBAC", Permissions: map[int64]map[string][]string{1: {dashboards.ActionDashboardsRead: {dashboards.ScopeDashboardsAll}}}}
-var anonymousUser *user.SignedInUser
+var userNoRBACPerms = &user.SignedInUser{UserID: 1, OrgID: 1, OrgRole: org.RoleAdmin, Login: "testAdminUserNoRBACPerms"}
+var userAdmin = &user.SignedInUser{UserID: 2, OrgID: 1, OrgRole: org.RoleAdmin, Login: "testAdminUserRBAC", Permissions: map[int64]map[string][]string{1: {dashboards.ActionDashboardsPublicWrite: {dashboards.ScopeDashboardsAll}}}}
+var userViewer = &user.SignedInUser{UserID: 4, OrgID: 1, OrgRole: org.RoleViewer, Login: "testViewerUserRBAC", Permissions: map[int64]map[string][]string{1: {dashboards.ActionDashboardsRead: {dashboards.ScopeDashboardsAll}}}}
+var anonymousUser = &user.SignedInUser{IsAnonymous: true}
 
 type JsonErrResponse struct {
 	Error string `json:"error"`
@@ -78,7 +77,6 @@ func TestAPIFeatureFlag(t *testing.T) {
 	for _, test := range testCases {
 		t.Run(test.Name, func(t *testing.T) {
 			cfg := setting.NewCfg()
-			cfg.RBACEnabled = false
 			service := publicdashboards.NewFakePublicDashboardService(t)
 			features := featuremgmt.WithFeatures()
 			testServer := setupTestServer(t, cfg, features, service, nil, userAdmin)
@@ -137,7 +135,6 @@ func TestAPIListPublicDashboard(t *testing.T) {
 				Return(test.Response, test.ResponseErr).Maybe()
 
 			cfg := setting.NewCfg()
-			cfg.RBACEnabled = false
 			features := featuremgmt.WithFeatures(featuremgmt.FlagPublicDashboards)
 			testServer := setupTestServer(t, cfg, features, service, nil, test.User)
 
@@ -314,7 +311,7 @@ func TestAPIGetPublicDashboard(t *testing.T) {
 			ExpectedHttpResponse:  http.StatusNotFound,
 			PublicDashboardResult: nil,
 			PublicDashboardErr:    ErrDashboardNotFound.Errorf(""),
-			User:                  userViewerRBAC,
+			User:                  userViewer,
 			ShouldCallService:     true,
 		},
 		{
@@ -323,7 +320,7 @@ func TestAPIGetPublicDashboard(t *testing.T) {
 			ExpectedHttpResponse:  http.StatusInternalServerError,
 			PublicDashboardResult: nil,
 			PublicDashboardErr:    errors.New("database broken"),
-			User:                  userViewerRBAC,
+			User:                  userViewer,
 			ShouldCallService:     true,
 		},
 		{
@@ -332,7 +329,7 @@ func TestAPIGetPublicDashboard(t *testing.T) {
 			ExpectedHttpResponse:  http.StatusOK,
 			PublicDashboardResult: pubdash,
 			PublicDashboardErr:    nil,
-			User:                  userViewerRBAC,
+			User:                  userViewer,
 			ShouldCallService:     true,
 		},
 		{
@@ -340,7 +337,7 @@ func TestAPIGetPublicDashboard(t *testing.T) {
 			ExpectedHttpResponse:  http.StatusForbidden,
 			PublicDashboardResult: pubdash,
 			PublicDashboardErr:    nil,
-			User:                  userViewer,
+			User:                  userNoRBACPerms,
 			ShouldCallService:     false,
 		},
 	}
@@ -394,22 +391,25 @@ func TestApiCreatePublicDashboard(t *testing.T) {
 		SaveDashboardErr     error
 		User                 *user.SignedInUser
 		ShouldCallService    bool
+		JsonBody             string
 	}{
 		{
 			Name:                 "returns 500 when not persisted",
 			ExpectedHttpResponse: http.StatusInternalServerError,
 			publicDashboard:      &PublicDashboard{},
 			SaveDashboardErr:     ErrInternalServerError.Errorf(""),
-			User:                 userAdminRBAC,
+			User:                 userAdmin,
 			ShouldCallService:    true,
+			JsonBody:             `{ "isPublic": true }`,
 		},
 		{
 			Name:                 "returns 404 when dashboard not found",
 			ExpectedHttpResponse: http.StatusNotFound,
 			publicDashboard:      &PublicDashboard{},
 			SaveDashboardErr:     ErrDashboardNotFound.Errorf(""),
-			User:                 userAdminRBAC,
+			User:                 userAdmin,
 			ShouldCallService:    true,
+			JsonBody:             `{ "isPublic": true }`,
 		},
 		{
 			Name:                 "returns 200 when update persists RBAC on",
@@ -417,16 +417,36 @@ func TestApiCreatePublicDashboard(t *testing.T) {
 			publicDashboard:      &PublicDashboard{IsEnabled: true},
 			ExpectedHttpResponse: http.StatusOK,
 			SaveDashboardErr:     nil,
-			User:                 userAdminRBAC,
+			User:                 userAdmin,
 			ShouldCallService:    true,
+			JsonBody:             `{ "isPublic": true }`,
 		},
 		{
 			Name:                 "returns 403 when no permissions RBAC on",
 			ExpectedHttpResponse: http.StatusForbidden,
 			publicDashboard:      &PublicDashboard{IsEnabled: true},
 			SaveDashboardErr:     nil,
+			User:                 userNoRBACPerms,
+			ShouldCallService:    false,
+			JsonBody:             `{ "isPublic": true }`,
+		},
+		{
+			Name:                 "returns 400 when uid is invalid",
+			ExpectedHttpResponse: http.StatusBadRequest,
+			publicDashboard:      nil,
+			SaveDashboardErr:     nil,
 			User:                 userAdmin,
 			ShouldCallService:    false,
+			JsonBody:             `{ "uid": "*", "isEnabled": true }`,
+		},
+		{
+			Name:                 "returns 200 when uid is valid",
+			ExpectedHttpResponse: http.StatusOK,
+			publicDashboard:      &PublicDashboard{IsEnabled: true},
+			SaveDashboardErr:     nil,
+			User:                 userAdmin,
+			ShouldCallService:    true,
+			JsonBody:             `{ "uid": "123abc", "isEnabled": true}`,
 		},
 	}
 
@@ -455,7 +475,7 @@ func TestApiCreatePublicDashboard(t *testing.T) {
 				testServer,
 				http.MethodPost,
 				"/api/dashboards/uid/1/public-dashboards",
-				strings.NewReader(`{ "isPublic": true }`),
+				strings.NewReader(test.JsonBody),
 				t,
 			)
 

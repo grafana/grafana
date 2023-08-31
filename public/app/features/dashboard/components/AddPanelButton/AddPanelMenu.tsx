@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { locationService, reportInteraction } from '@grafana/runtime';
+import { config, locationService, reportInteraction } from '@grafana/runtime';
 import { Menu } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 import { DashboardModel } from 'app/features/dashboard/state';
@@ -38,6 +38,17 @@ const AddPanelMenu = ({ dashboard }: Props) => {
           dispatch(setInitialDatasource(undefined));
         }}
       />
+      {config.featureToggles.vizAndWidgetSplit && (
+        <Menu.Item
+          key="add-widget"
+          testId={selectors.pages.AddDashboard.itemButton('Add new widget menu item')}
+          label={t('dashboard.add-menu.widget', 'Widget')}
+          onClick={() => {
+            reportInteraction('dashboards_toolbar_add_clicked', { item: 'add_widget' });
+            locationService.partial({ addWidget: true });
+          }}
+        />
+      )}
       <Menu.Item
         key="add-row"
         testId={selectors.pages.AddDashboard.itemButton('Add new row menu item')}

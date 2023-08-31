@@ -31,25 +31,25 @@ const IconWrapper = ({ name }: { name: IconName }) => {
 
   return (
     <div
-      className={css`
-        width: 150px;
-        padding: 12px;
-        border: 1px solid ${borderColor};
-        text-align: center;
+      className={css({
+        width: '150px',
+        padding: '12px',
+        border: `1px solid ${borderColor}`,
+        textAlign: 'center',
 
-        &:hover {
-          background: ${borderColor};
-        }
-      `}
+        '&:hover': {
+          background: borderColor,
+        },
+      })}
     >
       <Icon name={name} />
       <div
-        className={css`
-          padding-top: 16px;
-          word-break: break-all;
-          font-family: ${theme.typography.fontFamilyMonospace};
-          font-size: ${theme.typography.size.xs};
-        `}
+        className={css({
+          paddingTop: '16px',
+          wordBreak: 'break-all',
+          fontFamily: theme.typography.fontFamilyMonospace,
+          fontSize: theme.typography.size.xs,
+        })}
       >
         {name}
       </div>
@@ -69,26 +69,26 @@ export const IconsOverview = () => {
 
   return (
     <div
-      className={css`
-        display: flex;
-        flex-direction: column;
-        height: 100%;
-        overflow: auto;
-        width: 100%;
-      `}
+      className={css({
+        display: 'flex',
+        flexDirection: 'column',
+        height: '100%',
+        overflow: 'auto',
+        width: '100%',
+      })}
     >
       <Field
-        className={css`
-          width: 300px;
-        `}
+        className={css({
+          width: '300px',
+        })}
       >
         <Input onChange={searchIcon} placeholder="Search icons by name" />
       </Field>
       <div
-        className={css`
-          display: flex;
-          flex-wrap: wrap;
-        `}
+        className={css({
+          display: 'flex',
+          flexWrap: 'wrap',
+        })}
       >
         {icons
           .filter((val) => val.includes(filter))

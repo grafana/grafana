@@ -3,43 +3,58 @@ import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Card, useStyles2 } from '@grafana/ui';
+import { PluginAngularBadge } from 'app/features/plugins/admin/components/Badges';
 
 const getStyles = (theme: GrafanaTheme2) => ({
   sourcesList: css`
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
     gap: 12px;
     list-style: none;
     margin-bottom: 80px;
   `,
-  card: css`
-    height: 90px;
-    padding: 0px 24px;
-    margin-bottom: 0;
-  `,
-  cardContent: css`
-    display: flex;
-    align-items: center;
-  `,
-  logoWrapper: css`
-    display: flex;
-    justify-content: center;
-    margin-right: 8px;
-    width: 32px;
-    height: 32px;
-    img {
-      max-width: 100%;
-      max-height: 100%;
-      align-self: center;
-    }
-  `,
-  label: css`
-    color: ${theme.colors.text.primary};
-    margin-bottom: 0;
-  `,
+  heading: css({
+    fontSize: theme.typography.h5.fontSize,
+    fontWeight: 'inherit',
+  }),
+  figure: css({
+    width: 'inherit',
+    marginRight: '0px',
+    '> img': {
+      width: theme.spacing(7),
+    },
+  }),
+  meta: css({
+    marginTop: '6px',
+    position: 'relative',
+  }),
+  description: css({
+    margin: '0px',
+    fontSize: theme.typography.bodySmall.fontSize,
+  }),
+  card: css({
+    gridTemplateAreas: `
+        "Figure   Heading   Actions"
+        "Figure Description Actions"
+        "Figure    Meta     Actions"
+        "Figure     -       Actions"`,
+  }),
+  logo: css({
+    marginRight: theme.spacing(3),
+    marginLeft: theme.spacing(1),
+    width: theme.spacing(7),
+    maxHeight: theme.spacing(7),
+  }),
 });
 
-export type CardGridItem = { id: string; name: string; description: string; url: string; logo?: string };
+export type CardGridItem = {
+  id: string;
+  name: string;
+  description: string;
+  url: string;
+  logo?: string;
+  angularDetected?: boolean;
+};
 export interface CardGridProps {
   items: CardGridItem[];
   onClickItem?: (e: React.MouseEvent<HTMLElement>, item: CardGridItem) => void;
@@ -61,16 +76,17 @@ export const CardGrid = ({ items, onClickItem }: CardGridProps) => {
             }
           }}
         >
-          <Card.Heading>
-            <div className={styles.cardContent}>
-              {item.logo && (
-                <div className={styles.logoWrapper}>
-                  <img src={item.logo} alt={`logo of ${item.name}`} />
-                </div>
-              )}
-              <h4 className={styles.label}>{item.name}</h4>
-            </div>
-          </Card.Heading>
+          <Card.Heading className={styles.heading}>{item.name}</Card.Heading>
+
+          <Card.Figure align="center" className={styles.figure}>
+            <img className={styles.logo} src={item.logo} alt="" />
+          </Card.Figure>
+
+          {item.angularDetected ? (
+            <Card.Meta className={styles.meta}>
+              <PluginAngularBadge />
+            </Card.Meta>
+          ) : null}
         </Card>
       ))}
     </ul>

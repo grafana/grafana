@@ -110,37 +110,37 @@ export const ToolbarButtonRow = forwardRef<HTMLDivElement, Props>(
 ToolbarButtonRow.displayName = 'ToolbarButtonRow';
 
 const getStyles = (theme: GrafanaTheme2, overflowButtonOrder: number, alignment: Props['alignment']) => ({
-  overflowButton: css`
-    order: ${overflowButtonOrder};
-  `,
-  overflowItems: css`
-    align-items: center;
-    background-color: ${theme.colors.background.primary};
-    border-radius: ${theme.shape.borderRadius()};
-    box-shadow: ${theme.shadows.z3};
-    display: flex;
-    flex-wrap: wrap;
-    gap: ${theme.spacing(1)};
-    margin-top: ${theme.spacing(1)};
-    max-width: 80vw;
-    padding: ${theme.spacing(0.5, 1)};
-    position: absolute;
-    right: 0;
-    top: 100%;
-    width: max-content;
-    z-index: ${theme.zIndex.sidemenu};
-  `,
-  container: css`
-    align-items: center;
-    display: flex;
-    gap: ${theme.spacing(1)};
-    justify-content: ${alignment === 'left' ? 'flex-start' : 'flex-end'};
-    min-width: 0;
-    position: relative;
-  `,
-  childWrapper: css`
-    align-items: center;
-    display: flex;
-    gap: ${theme.spacing(1)};
-  `,
+  overflowButton: css({
+    order: overflowButtonOrder,
+  }),
+  overflowItems: css({
+    alignItems: 'center',
+    backgroundColor: theme.colors.background.primary,
+    borderRadius: theme.shape.radius.default,
+    boxShadow: theme.shadows.z3,
+    display: 'flex',
+    flexWrap: 'wrap',
+    gap: theme.spacing(1),
+    marginTop: theme.spacing(1),
+    maxWidth: '80vw',
+    padding: theme.spacing(0.5, 1),
+    position: 'absolute',
+    right: 0,
+    top: '100%',
+    width: 'max-content',
+    zIndex: theme.zIndex.sidemenu,
+  }),
+  container: css({
+    alignItems: 'center',
+    display: 'flex',
+    gap: theme.spacing(1),
+    justifyContent: alignment === 'left' ? 'flex-start' : 'flex-end',
+    minWidth: 0,
+    position: 'relative',
+  }),
+  childWrapper: css({
+    alignItems: 'center',
+    display: 'flex',
+    gap: theme.spacing(1),
+  }),
 });

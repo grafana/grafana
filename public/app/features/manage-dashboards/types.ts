@@ -1,3 +1,7 @@
+import { Dashboard } from '@grafana/schema/src/veneer/dashboard.types';
+
+import { ExternalDashboard } from '../dashboard/components/DashExportModal/DashboardExporter';
+
 export interface Snapshot {
   created: string;
   expires: string;
@@ -36,3 +40,5 @@ export interface PublicDashboardListResponse {
 export interface PublicDashboardListWithPagination extends PublicDashboardListWithPaginationResponse {
   totalPages: number;
 }
+
+export type DashboardJson = ExternalDashboard & Omit<Dashboard, 'panels'>;

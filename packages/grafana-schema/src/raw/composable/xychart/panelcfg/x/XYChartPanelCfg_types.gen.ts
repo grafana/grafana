@@ -11,7 +11,7 @@
 
 import * as common from '@grafana/schema';
 
-export const pluginVersion = "";
+export const pluginVersion = "10.2.0-pre";
 
 export enum SeriesMapping {
   Auto = 'auto',
@@ -34,7 +34,7 @@ export const defaultXYDimensionConfig: Partial<XYDimensionConfig> = {
   exclude: [],
 };
 
-export interface ScatterFieldConfig extends common.HideableFieldConfig, common.AxisConfig {
+export interface FieldConfig extends common.HideableFieldConfig, common.AxisConfig {
   label?: common.VisibilityMode;
   labelValue?: common.TextDimensionConfig;
   lineColor?: common.ColorDimensionConfig;
@@ -45,12 +45,12 @@ export interface ScatterFieldConfig extends common.HideableFieldConfig, common.A
   show?: ScatterShow;
 }
 
-export const defaultScatterFieldConfig: Partial<ScatterFieldConfig> = {
+export const defaultFieldConfig: Partial<FieldConfig> = {
   label: common.VisibilityMode.Auto,
   show: ScatterShow.Points,
 };
 
-export interface ScatterSeriesConfig extends ScatterFieldConfig {
+export interface ScatterSeriesConfig extends FieldConfig {
   name?: string;
   x?: string;
   y?: string;

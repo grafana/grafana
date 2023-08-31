@@ -1,5 +1,5 @@
 {
-  "_comment": "Do not manually edit this file. Translations must be made in Crowdin which will sync them back into this file",
+  "_comment": "",
   "access-control": {
     "add-permission": {
       "role-label": "",
@@ -39,6 +39,13 @@
       "moving": "",
       "new-folder-name-required-phrase": ""
     },
+    "counts": {
+      "alertRule__other": "",
+      "dashboard__other": "",
+      "folder__other": "",
+      "libraryPanel__other": "",
+      "total__other": ""
+    },
     "dashboards-tree": {
       "name-column": "",
       "tags-column": ""
@@ -48,6 +55,14 @@
       "folder-actions": "",
       "manage-permissions": "",
       "move": ""
+    },
+    "folder-picker": {
+      "accessible-label": "",
+      "button-label": "",
+      "empty-message": "",
+      "error-title": "",
+      "search-placeholder": "",
+      "unknown-error": ""
     },
     "manage-folder-nav": {
       "alert-rules": "",
@@ -108,7 +123,8 @@
       "import": "从库导入",
       "paste-panel": "粘贴面板",
       "row": "行",
-      "visualization": "可视化"
+      "visualization": "可视化",
+      "widget": ""
     },
     "empty": {
       "add-import-body": "导入与其他仪表板共享的可视化。",
@@ -119,7 +135,10 @@
       "add-row-header": "添加一行",
       "add-visualization-body": "选择一个数据源，然后用图表、统计信息和表格查询您的数据以及将其可视化，或创建列表、Markdown 和其他小部件。",
       "add-visualization-button": "添加可视化",
-      "add-visualization-header": "通过添加可视化开始您的新仪表板"
+      "add-visualization-header": "通过添加可视化开始您的新仪表板",
+      "add-widget-body": "",
+      "add-widget-button": "",
+      "add-widget-header": ""
     },
     "inspect": {
       "data-tab": "数据",
@@ -197,6 +216,9 @@
     "loading": "正在加载文件夹..."
   },
   "grafana-ui": {
+    "modal": {
+      "close-tooltip": ""
+    },
     "segment-async": {
       "error": "加载选项失败",
       "loading": "正在加载选项...",
@@ -206,6 +228,46 @@
       "no-options-label": "",
       "placeholder": ""
     }
+  },
+  "help-modal": {
+    "shortcuts-category": {
+      "dashboard": "",
+      "focused-panel": "",
+      "global": "",
+      "time-range": ""
+    },
+    "shortcuts-description": {
+      "change-theme": "",
+      "collapse-all-rows": "",
+      "dashboard-settings": "",
+      "duplicate-panel": "",
+      "exit-edit/setting-views": "",
+      "expand-all-rows": "",
+      "go-to-dashboards": "",
+      "go-to-explore": "",
+      "go-to-home-dashboard": "",
+      "go-to-profile": "",
+      "make-time-range-permanent": "",
+      "move-time-range-back": "",
+      "move-time-range-forward": "",
+      "open-search": "",
+      "open-shared-modal": "",
+      "refresh-all-panels": "",
+      "remove-panel": "",
+      "save-dashboard": "",
+      "show-all-shortcuts": "",
+      "toggle-active-mode": "",
+      "toggle-all-panel-legends": "",
+      "toggle-auto-fit": "",
+      "toggle-exemplars": "",
+      "toggle-graph-crosshair": "",
+      "toggle-kiosk": "",
+      "toggle-panel-edit": "",
+      "toggle-panel-fullscreen": "",
+      "toggle-panel-legend": "",
+      "zoom-out-time-range": ""
+    },
+    "title": ""
   },
   "library-panel": {
     "add-modal": {
@@ -230,6 +292,7 @@
     "error": {
       "blocked": "",
       "invalid-user-or-password": "",
+      "title": "",
       "unknown": ""
     }
   },
@@ -285,12 +348,21 @@
       "subtitle": "管理和创建用于与 Grafana HTTP API 交互的 API 密钥",
       "title": "API 密钥"
     },
+    "application": {
+      "title": ""
+    },
     "apps": {
       "subtitle": "扩展 Grafana 体验的应用插件",
       "title": "应用"
     },
+    "authentication": {
+      "title": ""
+    },
     "config": {
       "title": "管理"
+    },
+    "connect-data": {
+      "title": ""
     },
     "connections": {
       "subtitle": "",
@@ -327,8 +399,14 @@
       "subtitle": "添加并配置数据源",
       "title": "数据源"
     },
+    "detect": {
+      "title": ""
+    },
     "explore": {
       "title": "探索"
+    },
+    "frontend": {
+      "title": ""
     },
     "global-orgs": {
       "subtitle": "在同一服务器上运行的 Grafana 的孤立实例",
@@ -337,6 +415,9 @@
     "global-users": {
       "subtitle": "在 Grafana 中管理用户",
       "title": "用户"
+    },
+    "grafana-quaderno": {
+      "title": ""
     },
     "help": {
       "title": "帮助"
@@ -348,9 +429,21 @@
     "home": {
       "title": "首页"
     },
+    "incidents": {
+      "title": ""
+    },
+    "infrastructure": {
+      "title": ""
+    },
+    "kubernetes": {
+      "title": ""
+    },
     "library-panels": {
       "subtitle": "可重复使用的面板，可以添加到多个仪表板",
       "title": "库面板"
+    },
+    "machine-learning": {
+      "title": ""
     },
     "manage-folder": {
       "subtitle": "管理文件夹仪表板和权限"
@@ -368,9 +461,18 @@
     "new-folder": {
       "title": "新建文件夹"
     },
+    "observability": {
+      "title": ""
+    },
+    "oncall": {
+      "title": ""
+    },
     "org-settings": {
       "subtitle": "管理整个组织的首选项",
       "title": "默认首选项"
+    },
+    "performance-testing": {
+      "title": ""
     },
     "playlists": {
       "subtitle": "以序列显示的仪表板组",
@@ -389,8 +491,17 @@
     "profile/settings": {
       "title": "个人资料"
     },
+    "profiles": {
+      "title": ""
+    },
     "public": {
       "title": "公共仪表板"
+    },
+    "recorded-queries": {
+      "title": ""
+    },
+    "reporting": {
+      "title": ""
     },
     "scenes": {
       "title": "场景"
@@ -412,6 +523,9 @@
     "sign-out": {
       "title": "退出登录"
     },
+    "slo": {
+      "title": ""
+    },
     "snapshots": {
       "subtitle": "交互式、可公开获取的仪表板时间点表示",
       "title": "快照"
@@ -422,6 +536,9 @@
     "starred-empty": {
       "title": "您已加星标的仪表板将显示在这里"
     },
+    "statistics-and-licensing": {
+      "title": ""
+    },
     "storage": {
       "subtitle": "管理文件存储",
       "title": "存储"
@@ -429,6 +546,9 @@
     "support-bundles": {
       "subtitle": "下载支持包",
       "title": "支持包"
+    },
+    "synthetics": {
+      "title": ""
     },
     "teams": {
       "subtitle": "具有共同仪表板和权限需求的用户组",

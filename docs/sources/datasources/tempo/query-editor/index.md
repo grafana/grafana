@@ -7,6 +7,11 @@ keywords:
   - tempo
   - traces
   - queries
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 menuTitle: Query editor
 title: Tempo query editor
 weight: 300
@@ -14,10 +19,10 @@ weight: 300
 
 # Tempo query editor
 
-The Tempo data source's query editor helps you query and display traces from Tempo in [Explore]({{< relref "../../../explore" >}}).
+The Tempo data source's query editor helps you query and display traces from Tempo in [Explore][explore].
 
 This topic explains configuration and queries specific to the Tempo data source.
-For general documentation on querying data sources in Grafana, see [Query and transform data]({{< relref "../../../panels-visualizations/query-transform-data" >}}).
+For general documentation on querying data sources in Grafana, see [Query and transform data][query-transform-data].
 
 ## Query by search
 
@@ -84,3 +89,11 @@ To find traces to visualize, you can use the [Loki query editor]({{< relref "../
 For results, you must configure [derived fields]({{< relref "../../loki#configure-derived-fields" >}}) in the Loki data source that point to this data source.
 
 {{< figure src="/static/img/docs/tempo/query-editor-search.png" class="docs-image--no-shadow" max-width="750px" caption="Screenshot of the Tempo query editor showing the Loki Search tab" >}}
+
+{{% docs/reference %}}
+[explore]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/explore"
+[explore]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/explore"
+
+[query-transform-data]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/query-transform-data"
+[query-transform-data]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/query-transform-data"
+{{% /docs/reference %}}

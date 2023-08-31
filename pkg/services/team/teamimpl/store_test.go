@@ -461,9 +461,10 @@ func TestIntegrationSQLStore_SearchTeams(t *testing.T) {
 			assert.Len(t, queryResult.Teams, tt.expectedTeamCount)
 			assert.Equal(t, queryResult.TotalCount, int64(tt.expectedTeamCount))
 
-			if !hasWildcardScope(tt.query.SignedInUser, ac.ActionTeamsRead) {
+			castSignedInUser := tt.query.SignedInUser.(*user.SignedInUser)
+			if !hasWildcardScope(castSignedInUser, ac.ActionTeamsRead) {
 				for _, team := range queryResult.Teams {
-					assert.Contains(t, tt.query.SignedInUser.Permissions[tt.query.SignedInUser.OrgID][ac.ActionTeamsRead], fmt.Sprintf("teams:id:%d", team.ID))
+					assert.Contains(t, castSignedInUser.Permissions[castSignedInUser.OrgID][ac.ActionTeamsRead], fmt.Sprintf("teams:id:%d", team.ID))
 				}
 			}
 		})

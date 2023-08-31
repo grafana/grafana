@@ -3,7 +3,6 @@ import 'core-js';
 import 'regenerator-runtime/runtime';
 
 import 'whatwg-fetch'; // fetch polyfill needed for PhantomJs rendering
-import './polyfills/old-mediaquerylist'; // Safari < 14 does not have mql.addEventListener()
 import 'file-saver';
 import 'jquery';
 
@@ -69,6 +68,7 @@ import { GrafanaJavascriptAgentBackend } from './core/services/echo/backends/gra
 import { KeybindingSrv } from './core/services/keybindingSrv';
 import { startMeasure, stopMeasure } from './core/utils/metrics';
 import { initDevFeatures } from './dev';
+import { initAuthConfig } from './features/auth-config';
 import { getTimeSrv } from './features/dashboard/services/TimeSrv';
 import { initGrafanaLive } from './features/live';
 import { PanelDataErrorView } from './features/panel/components/PanelDataErrorView';
@@ -132,6 +132,8 @@ export class GrafanaApp {
       setLocationSrv(locationService);
       setTimeZoneResolver(() => config.bootData.user.timezone);
       initGrafanaLive();
+
+      initAuthConfig();
 
       // Expose the app-wide eventbus
       setAppEvents(appEvents);

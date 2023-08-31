@@ -40,6 +40,14 @@ func TestExtractEvalString(t *testing.T) {
 			}, util.Pointer(1.0), withRefID("A")),
 			outString: `[ var='A0' metric='Test' labels={host=foo} value=32.3 ], [ var='A1' metric='Test' labels={host=baz} value=10 ], [ var='A2' metric='TestA' labels={host=zip} value=11 ]`,
 		},
+		{
+			desc: "Captures are sorted in ascending order of var",
+			inFrame: newMetaFrame([]NumberValueCapture{
+				{Var: "B", Labels: data.Labels{"host": "foo"}, Value: util.Pointer(1.0)},
+				{Var: "A", Labels: data.Labels{"host": "foo"}, Value: util.Pointer(10.0)},
+			}, util.Pointer(1.0)),
+			outString: `[ var='A' labels={host=foo} value=10 ], [ var='B' labels={host=foo} value=1 ]`,
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
@@ -117,7 +125,7 @@ func withRefID(refID string) frameCallback {
 	}
 }
 
-func newMetaFrame(custom interface{}, val *float64, callbacks ...frameCallback) *data.Frame {
+func newMetaFrame(custom any, val *float64, callbacks ...frameCallback) *data.Frame {
 	f := data.NewFrame("",
 		data.NewField("", nil, []*float64{val})).
 		SetMeta(&data.FrameMeta{

@@ -1,181 +1,157 @@
-import { css } from '@emotion/react';
+import { css, CSSObject } from '@emotion/react';
 
 import { GrafanaTheme2, ThemeTypographyVariant } from '@grafana/data';
 
 import { getFocusStyles } from '../mixins';
 
 export function getElementStyles(theme: GrafanaTheme2) {
-  return css`
-    html {
-      -ms-overflow-style: scrollbar;
-      -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
-      height: 100%;
-      font-size: ${theme.typography.htmlFontSize}px;
-      font-family: ${theme.typography.fontFamily};
-      line-height: ${theme.typography.body.lineHeight};
-      font-kerning: normal;
-    }
+  return css({
+    html: {
+      MsOverflowStyle: 'scrollbar',
+      WebkitTapHighlightColor: 'rgba(0, 0, 0, 0)',
+      height: '100%',
+      fontSize: `${theme.typography.htmlFontSize}px`,
+      fontFamily: theme.typography.fontFamily,
+      lineHeight: theme.typography.body.lineHeight,
+      fontKerning: 'normal',
+    },
 
-    :root {
-      color-scheme: ${theme.colors.mode};
-    }
+    ':root': {
+      colorScheme: theme.colors.mode,
+    },
 
-    body {
-      height: 100%;
-      width: 100%;
-      position: absolute;
-      color: ${theme.colors.text.primary};
-      background-color: ${theme.colors.background.canvas};
-      ${getVariantStyles(theme.typography.body)}
-    }
+    body: {
+      height: '100%',
+      width: '100%',
+      position: 'absolute',
+      color: theme.colors.text.primary,
+      backgroundColor: theme.colors.background.canvas,
+      ...getVariantStyles(theme.typography.body),
+    },
 
-    h1,
-    .h1 {
-      ${getVariantStyles(theme.typography.h1)}
-    }
-    h2,
-    .h2 {
-      ${getVariantStyles(theme.typography.h2)}
-    }
-    h3,
-    .h3 {
-      ${getVariantStyles(theme.typography.h3)}
-    }
-    h4,
-    .h4 {
-      ${getVariantStyles(theme.typography.h4)}
-    }
-    h5,
-    .h5 {
-      ${getVariantStyles(theme.typography.h5)}
-    }
-    h6,
-    .h6 {
-      ${getVariantStyles(theme.typography.h6)}
-    }
+    'h1, .h1': getVariantStyles(theme.typography.h1),
+    'h2, .h2': getVariantStyles(theme.typography.h2),
+    'h3, .h3': getVariantStyles(theme.typography.h3),
+    'h4, .h4': getVariantStyles(theme.typography.h4),
+    'h5, .h5': getVariantStyles(theme.typography.h5),
+    'h6, .h6': getVariantStyles(theme.typography.h6),
 
-    p {
-      margin: 0 0 ${theme.spacing(2)};
-    }
+    p: {
+      margin: theme.spacing(0, 0, 2),
+    },
 
-    button {
-      letter-spacing: ${theme.typography.body.letterSpacing};
+    button: {
+      letterSpacing: theme.typography.body.letterSpacing,
 
-      &:focus-visible {
-        outline: ${getFocusStyles(theme)};
-      }
-      &:focus {
-        outline: none;
-      }
-    }
+      '&:focus-visible': getFocusStyles(theme),
+      '&:focus': {
+        outline: 'none',
+      },
+    },
 
     // Ex: 14px base font * 85% = about 12px
-    small {
-      font-size: ${theme.typography.bodySmall.fontSize};
-    }
+    small: {
+      fontSize: theme.typography.bodySmall.fontSize,
+    },
 
-    b,
-    strong {
-      font-weight: ${theme.typography.fontWeightMedium};
-    }
+    'b, strong': {
+      fontWeight: theme.typography.fontWeightMedium,
+    },
 
-    em {
-      font-style: italic;
-      color: ${theme.colors.text.primary};
-    }
+    em: {
+      fontStyle: 'italic',
+      color: theme.colors.text.primary,
+    },
 
-    cite {
-      font-style: normal;
-    }
+    cite: {
+      fontStyle: 'normal',
+    },
 
     // Utility classes
-    .muted {
-      color: ${theme.colors.text.secondary};
-    }
+    '.muted': {
+      color: theme.colors.text.secondary,
+    },
 
-    a.muted:hover,
-    a.muted:focus {
-      color: ${theme.colors.text.primary};
-    }
+    'a.muted:hover, a.muted:focus': {
+      color: theme.colors.text.primary,
+    },
 
-    .text-warning {
-      color: ${theme.colors.warning.text};
+    '.text-warning': {
+      color: theme.colors.warning.text,
 
-      &:hover,
-      &:focus {
-        color: ${theme.colors.emphasize(theme.colors.warning.text, 0.15)};
-      }
-    }
+      '&:hover, &:focus': {
+        color: theme.colors.emphasize(theme.colors.warning.text, 0.15),
+      },
+    },
 
-    .text-error {
-      color: ${theme.colors.error.text};
+    '.text-error': {
+      color: theme.colors.error.text,
 
-      &:hover,
-      &:focus {
-        color: ${theme.colors.emphasize(theme.colors.error.text, 0.15)};
-      }
-    }
+      '&:hover, &:focus': {
+        color: theme.colors.emphasize(theme.colors.error.text, 0.15),
+      },
+    },
 
-    .text-success {
-      color: $success-text-color;
+    '.text-success': {
+      color: '$success-text-color',
 
-      &:hover,
-      &:focus {
-        color: ${theme.colors.emphasize(theme.colors.success.text, 0.15)};
-      }
-    }
+      '&:hover, &:focus': {
+        color: theme.colors.emphasize(theme.colors.success.text, 0.15),
+      },
+    },
 
-    a {
-      cursor: pointer;
-      color: ${theme.colors.text.primary};
-      text-decoration: none;
+    a: {
+      cursor: 'pointer',
+      color: theme.colors.text.primary,
+      textDecoration: 'none',
 
-      &:focus {
-        outline: none;
-      }
+      '&:focus': {
+        outline: 'none',
+      },
 
-      &:focus-visible {
-        ${getFocusStyles(theme)}
-      }
+      '&:focus-visible': getFocusStyles(theme),
 
-      &: [disabled] {
-        cursor: default;
-        pointer-events: none !important;
-      }
-    }
+      '&:[disabled]': {
+        cursor: 'default',
+        // Need type assertion here due to the use of !important
+        // see https://github.com/frenic/csstype/issues/114#issuecomment-697201978
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+        pointerEvents: 'none !important' as 'none',
+      },
+    },
 
-    .text-link {
-      text-decoration: underline;
-    }
+    '.text-link': {
+      textDecoration: 'underline',
+    },
 
-    .text-left {
-      text-align: left;
-    }
+    '.text-left': {
+      textAlign: 'left',
+    },
 
-    .text-right {
-      text-align: right;
-    }
+    '.text-right': {
+      textAlign: 'right',
+    },
 
-    .text-center {
-      text-align: center;
-    }
+    '.text-center': {
+      textAlign: 'center',
+    },
 
-    .highlight-search-match {
-      background: ${theme.components.textHighlight.background};
-      color: ${theme.components.textHighlight.text};
-      padding: 0;
-    }
-  `;
+    '.highlight-search-match': {
+      background: theme.components.textHighlight.background,
+      color: theme.components.textHighlight.text,
+      padding: 0,
+    },
+  });
 }
 
-export function getVariantStyles(variant: ThemeTypographyVariant) {
-  return `
-    margin: 0;
-    font-size: ${variant.fontSize};
-    line-height: ${variant.lineHeight};
-    font-weight: ${variant.fontWeight};
-    letter-spacing: ${variant.letterSpacing};
-    font-family: ${variant.fontFamily};
-    margin-bottom: 0.45em;
-  `;
+export function getVariantStyles(variant: ThemeTypographyVariant): CSSObject {
+  return {
+    margin: 0,
+    fontSize: variant.fontSize,
+    lineHeight: variant.lineHeight,
+    fontWeight: variant.fontWeight,
+    letterSpacing: variant.letterSpacing,
+    fontFamily: variant.fontFamily,
+    marginBottom: '0.45em',
+  };
 }

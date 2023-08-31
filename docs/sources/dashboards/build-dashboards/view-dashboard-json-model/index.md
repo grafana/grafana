@@ -8,6 +8,11 @@ keywords:
   - documentation
   - json
   - model
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: JSON model
 weight: 700
 ---
@@ -36,7 +41,6 @@ In the following JSON, id is shown as null which is the default value assigned t
   "uid": "cLV5GDCkz",
   "title": "New dashboard",
   "tags": [],
-  "style": "dark",
   "timezone": "browser",
   "editable": true,
   "graphTooltip": 1,

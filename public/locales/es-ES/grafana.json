@@ -1,5 +1,5 @@
 {
-  "_comment": "Do not manually edit this file, or update these source phrases in Crowdin. The source of truth for English strings are in the code source",
+  "_comment": "",
   "access-control": {
     "add-permission": {
       "role-label": "",
@@ -39,6 +39,23 @@
       "moving": "",
       "new-folder-name-required-phrase": ""
     },
+    "counts": {
+      "alertRule__one": "",
+      "alertRule__many": "",
+      "alertRule__other": "",
+      "dashboard__one": "",
+      "dashboard__many": "",
+      "dashboard__other": "",
+      "folder__one": "",
+      "folder__many": "",
+      "folder__other": "",
+      "libraryPanel__one": "",
+      "libraryPanel__many": "",
+      "libraryPanel__other": "",
+      "total__one": "",
+      "total__many": "",
+      "total__other": ""
+    },
     "dashboards-tree": {
       "name-column": "",
       "tags-column": ""
@@ -48,6 +65,14 @@
       "folder-actions": "",
       "manage-permissions": "",
       "move": ""
+    },
+    "folder-picker": {
+      "accessible-label": "",
+      "button-label": "",
+      "empty-message": "",
+      "error-title": "",
+      "search-placeholder": "",
+      "unknown-error": ""
     },
     "manage-folder-nav": {
       "alert-rules": "",
@@ -108,7 +133,8 @@
       "import": "Importar de la biblioteca",
       "paste-panel": "Pegar panel",
       "row": "Fila",
-      "visualization": "Visualización"
+      "visualization": "Visualización",
+      "widget": ""
     },
     "empty": {
       "add-import-body": "Importar las visualizaciones que se compartan con otros paneles de control.",
@@ -119,7 +145,10 @@
       "add-row-header": "Añadir una fila",
       "add-visualization-body": "Selecciona una fuente de datos y luego consulta y visualiza tus datos con gráficos, estadísticas y tablas o cree listas, anotaciones y otros widgets.",
       "add-visualization-button": "Añadir visualización",
-      "add-visualization-header": "Comienza tu nuevo panel de control añadiendo una visualización"
+      "add-visualization-header": "Comienza tu nuevo panel de control añadiendo una visualización",
+      "add-widget-body": "",
+      "add-widget-button": "",
+      "add-widget-header": ""
     },
     "inspect": {
       "data-tab": "Datos",
@@ -197,6 +226,9 @@
     "loading": "Cargando carpetas..."
   },
   "grafana-ui": {
+    "modal": {
+      "close-tooltip": ""
+    },
     "segment-async": {
       "error": "No se han podido cargar las opciones",
       "loading": "Cargando las opciones...",
@@ -206,6 +238,46 @@
       "no-options-label": "",
       "placeholder": ""
     }
+  },
+  "help-modal": {
+    "shortcuts-category": {
+      "dashboard": "",
+      "focused-panel": "",
+      "global": "",
+      "time-range": ""
+    },
+    "shortcuts-description": {
+      "change-theme": "",
+      "collapse-all-rows": "",
+      "dashboard-settings": "",
+      "duplicate-panel": "",
+      "exit-edit/setting-views": "",
+      "expand-all-rows": "",
+      "go-to-dashboards": "",
+      "go-to-explore": "",
+      "go-to-home-dashboard": "",
+      "go-to-profile": "",
+      "make-time-range-permanent": "",
+      "move-time-range-back": "",
+      "move-time-range-forward": "",
+      "open-search": "",
+      "open-shared-modal": "",
+      "refresh-all-panels": "",
+      "remove-panel": "",
+      "save-dashboard": "",
+      "show-all-shortcuts": "",
+      "toggle-active-mode": "",
+      "toggle-all-panel-legends": "",
+      "toggle-auto-fit": "",
+      "toggle-exemplars": "",
+      "toggle-graph-crosshair": "",
+      "toggle-kiosk": "",
+      "toggle-panel-edit": "",
+      "toggle-panel-fullscreen": "",
+      "toggle-panel-legend": "",
+      "zoom-out-time-range": ""
+    },
+    "title": ""
   },
   "library-panel": {
     "add-modal": {
@@ -230,6 +302,7 @@
     "error": {
       "blocked": "",
       "invalid-user-or-password": "",
+      "title": "",
       "unknown": ""
     }
   },
@@ -285,12 +358,21 @@
       "subtitle": "Administrar y crear claves de API que se utilizan para interactuar con las API de HTTP de Grafana",
       "title": "Claves API"
     },
+    "application": {
+      "title": ""
+    },
     "apps": {
       "subtitle": "Complementos de aplicaciones que amplían la experiencia de Grafana",
       "title": "Aplicaciones"
     },
+    "authentication": {
+      "title": ""
+    },
     "config": {
       "title": "Administración"
+    },
+    "connect-data": {
+      "title": ""
     },
     "connections": {
       "subtitle": "",
@@ -327,8 +409,14 @@
       "subtitle": "Añadir y configurar orígenes de datos",
       "title": "Orígenes de datos"
     },
+    "detect": {
+      "title": ""
+    },
     "explore": {
       "title": "Explorar"
+    },
+    "frontend": {
+      "title": ""
     },
     "global-orgs": {
       "subtitle": "Instancias aisladas de Grafana ejecutándose en el mismo servidor",
@@ -337,6 +425,9 @@
     "global-users": {
       "subtitle": "Gestionar usuarios de Grafana",
       "title": "Usuarios"
+    },
+    "grafana-quaderno": {
+      "title": ""
     },
     "help": {
       "title": "Ayuda"
@@ -348,9 +439,21 @@
     "home": {
       "title": "Inicio"
     },
+    "incidents": {
+      "title": ""
+    },
+    "infrastructure": {
+      "title": ""
+    },
+    "kubernetes": {
+      "title": ""
+    },
     "library-panels": {
       "subtitle": "Paneles reutilizables que se pueden añadir a varios paneles de control",
       "title": "Paneles de librería"
+    },
+    "machine-learning": {
+      "title": ""
     },
     "manage-folder": {
       "subtitle": "Gestionar paneles de control de carpetas y permisos"
@@ -368,9 +471,18 @@
     "new-folder": {
       "title": "Nueva carpeta"
     },
+    "observability": {
+      "title": ""
+    },
+    "oncall": {
+      "title": ""
+    },
     "org-settings": {
       "subtitle": "Gestionar las preferencias en una organización",
       "title": "Preferencias por defecto"
+    },
+    "performance-testing": {
+      "title": ""
     },
     "playlists": {
       "subtitle": "Grupos de paneles de control que se muestran en una secuencia",
@@ -389,8 +501,17 @@
     "profile/settings": {
       "title": "Perfil"
     },
+    "profiles": {
+      "title": ""
+    },
     "public": {
       "title": "Paneles de control públicos"
+    },
+    "recorded-queries": {
+      "title": ""
+    },
+    "reporting": {
+      "title": ""
     },
     "scenes": {
       "title": "Escenas"
@@ -412,6 +533,9 @@
     "sign-out": {
       "title": "Cerrar sesión"
     },
+    "slo": {
+      "title": ""
+    },
     "snapshots": {
       "subtitle": "Representaciones interactivas, públicamente disponibles y puntuales de los paneles de control",
       "title": "Instantáneas"
@@ -422,6 +546,9 @@
     "starred-empty": {
       "title": "Tus paneles de control destacados aparecerán aquí"
     },
+    "statistics-and-licensing": {
+      "title": ""
+    },
     "storage": {
       "subtitle": "Gestionar el almacenamiento de archivos",
       "title": "Almacenamiento"
@@ -429,6 +556,9 @@
     "support-bundles": {
       "subtitle": "Descargar paquetes de apoyo",
       "title": "Paquetes de apoyo"
+    },
+    "synthetics": {
+      "title": ""
     },
     "teams": {
       "subtitle": "Grupos de usuarios que tienen necesidades comunes de permisos y de panel de control",

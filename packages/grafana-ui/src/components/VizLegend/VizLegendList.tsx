@@ -85,37 +85,37 @@ export const VizLegendList = <T extends unknown>({
 VizLegendList.displayName = 'VizLegendList';
 
 const getStyles = (theme: GrafanaTheme2) => {
-  const itemStyles = css`
-    padding-right: 10px;
-    display: flex;
-    font-size: ${theme.typography.bodySmall.fontSize};
-    white-space: nowrap;
-  `;
+  const itemStyles = css({
+    paddingRight: '10px',
+    display: 'flex',
+    fontSize: theme.typography.bodySmall.fontSize,
+    whiteSpace: 'nowrap',
+  });
 
   return {
     itemBottom: itemStyles,
     itemRight: cx(
       itemStyles,
-      css`
-        margin-bottom: ${theme.spacing(0.5)};
-      `
+      css({
+        marginBottom: theme.spacing(0.5),
+      })
     ),
-    rightWrapper: css`
-      padding-left: ${theme.spacing(0.5)};
-    `,
-    bottomWrapper: css`
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: space-between;
-      width: 100%;
-      padding-left: ${theme.spacing(0.5)};
-    `,
-    section: css`
-      display: flex;
-    `,
-    sectionRight: css`
-      justify-content: flex-end;
-      flex-grow: 1;
-    `,
+    rightWrapper: css({
+      paddingLeft: theme.spacing(0.5),
+    }),
+    bottomWrapper: css({
+      display: 'flex',
+      flexWrap: 'wrap',
+      justifyContent: 'space-between',
+      width: '100%',
+      paddingLeft: theme.spacing(0.5),
+    }),
+    section: css({
+      display: 'flex',
+    }),
+    sectionRight: css({
+      justifyContent: 'flex-end',
+      flexGrow: 1,
+    }),
   };
 };

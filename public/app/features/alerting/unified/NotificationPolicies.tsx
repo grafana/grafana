@@ -16,13 +16,8 @@ import { alertmanagerApi } from './api/alertmanagerApi';
 import { useGetContactPointsState } from './api/receiversApi';
 import { AlertmanagerPageWrapper } from './components/AlertingPageWrapper';
 import { GrafanaAlertmanagerDeliveryWarning } from './components/GrafanaAlertmanagerDeliveryWarning';
-import { ProvisionedResource, ProvisioningAlert } from './components/Provisioning';
 import { MuteTimingsTable } from './components/mute-timings/MuteTimingsTable';
-import {
-  computeInheritedTree,
-  findRoutesMatchingPredicate,
-  NotificationPoliciesFilter,
-} from './components/notification-policies/Filters';
+import { findRoutesMatchingPredicate, NotificationPoliciesFilter } from './components/notification-policies/Filters';
 import {
   useAddPolicyModal,
   useEditPolicyModal,
@@ -38,6 +33,7 @@ import { useRouteGroupsMatcher } from './useRouteGroupsMatcher';
 import { addUniqueIdentifierToRoute } from './utils/amroutes';
 import { isVanillaPrometheusAlertManagerDataSource } from './utils/datasource';
 import { normalizeMatchers } from './utils/matchers';
+import { computeInheritedTree } from './utils/notification-policies';
 import { initialAsyncRequestState } from './utils/redux';
 import { addRouteToParentRoute, mergePartialAmRouteWithRouteTree, omitRouteFromRouteTree } from './utils/routeTree';
 
@@ -65,7 +61,16 @@ const AmRoutes = () => {
 
   const contactPointsState = useGetContactPointsState(selectedAlertmanager ?? '');
 
-  const { result, config, loading: resultLoading, error: resultError } = useAlertmanagerConfig(selectedAlertmanager);
+  const {
+    currentData: result,
+    isLoading: resultLoading,
+    error: resultError,
+  } = useAlertmanagerConfig(selectedAlertmanager, {
+    refetchOnFocus: true,
+    refetchOnReconnect: true,
+  });
+
+  const config = result?.alertmanager_config;
 
   const { currentData: alertGroups, refetch: refetchAlertGroups } = useGetAlertmanagerAlertGroupsQuery(
     { amSourceName: selectedAlertmanager ?? '' },
@@ -148,7 +153,6 @@ const AmRoutes = () => {
         oldConfig: result,
         alertManagerSourceName: selectedAlertmanager!,
         successMessage: 'Updated notification policies',
-        refetch: true,
       })
     )
       .unwrap()
@@ -183,12 +187,12 @@ const AmRoutes = () => {
   }
 
   const vanillaPrometheusAlertManager = isVanillaPrometheusAlertManagerDataSource(selectedAlertmanager);
-  const readOnlyPolicies = vanillaPrometheusAlertManager || isProvisioned;
+  const readOnlyPolicies = vanillaPrometheusAlertManager;
   const readOnlyMuteTimings = vanillaPrometheusAlertManager;
 
   const numberOfMuteTimings = result?.alertmanager_config.mute_time_intervals?.length ?? 0;
   const haveData = result && !resultError && !resultLoading;
-  const isLoading = !result && resultLoading;
+  const isFetching = !result && resultLoading;
   const haveError = resultError && !resultLoading;
 
   const muteTimingsTabActive = activeTab === ActiveTab.MuteTimings;
@@ -216,7 +220,7 @@ const AmRoutes = () => {
         />
       </TabsBar>
       <TabContent className={styles.tabContent}>
-        {isLoading && <LoadingPlaceholder text="Loading Alertmanager config..." />}
+        {isFetching && <LoadingPlaceholder text="Loading Alertmanager config..." />}
         {haveError && (
           <Alert severity="error" title="Error loading Alertmanager config">
             {resultError.message || 'Unknown error.'}
@@ -227,7 +231,6 @@ const AmRoutes = () => {
             {policyTreeTabActive && (
               <>
                 <GrafanaAlertmanagerDeliveryWarning currentAlertmanager={selectedAlertmanager} />
-                {isProvisioned && <ProvisioningAlert resource={ProvisionedResource.RootNotificationPolicy} />}
                 <Stack direction="column" gap={1}>
                   {rootRoute && (
                     <NotificationPoliciesFilter
@@ -244,6 +247,7 @@ const AmRoutes = () => {
                       alertGroups={alertGroups ?? []}
                       contactPointsState={contactPointsState.receivers}
                       readOnly={readOnlyPolicies}
+                      provisioned={isProvisioned}
                       alertManagerSourceName={selectedAlertmanager}
                       onAddPolicy={openAddModal}
                       onEditPolicy={openEditModal}

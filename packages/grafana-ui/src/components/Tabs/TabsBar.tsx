@@ -26,18 +26,18 @@ export const TabsBar = React.forwardRef<HTMLDivElement, Props>(({ children, clas
 });
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  tabsWrapper: css`
-    border-bottom: 1px solid ${theme.colors.border.weak};
-    overflow-x: auto;
-  `,
-  noBorder: css`
-    border-bottom: 0;
-  `,
-  tabs: css`
-    position: relative;
-    display: flex;
-    height: ${theme.components.menuTabs.height}px;
-  `,
+  tabsWrapper: css({
+    borderBottom: `1px solid ${theme.colors.border.weak}`,
+    overflowX: 'auto',
+  }),
+  noBorder: css({
+    borderBottom: 0,
+  }),
+  tabs: css({
+    position: 'relative',
+    display: 'flex',
+    height: `${theme.components.menuTabs.height}px`,
+  }),
 });
 
 TabsBar.displayName = 'TabsBar';

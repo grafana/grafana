@@ -17,8 +17,8 @@ import (
 	semconv "go.opentelemetry.io/otel/semconv/v1.4.0"
 	"go.opentelemetry.io/otel/trace"
 
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/live/model"
-	"github.com/grafana/grafana/pkg/services/user"
 )
 
 const (
@@ -113,12 +113,12 @@ type Subscriber interface {
 
 // PublishAuthChecker checks whether current user can publish to a channel.
 type PublishAuthChecker interface {
-	CanPublish(ctx context.Context, u *user.SignedInUser) (bool, error)
+	CanPublish(ctx context.Context, u identity.Requester) (bool, error)
 }
 
 // SubscribeAuthChecker checks whether current user can subscribe to a channel.
 type SubscribeAuthChecker interface {
-	CanSubscribe(ctx context.Context, u *user.SignedInUser) (bool, error)
+	CanSubscribe(ctx context.Context, u identity.Requester) (bool, error)
 }
 
 // LiveChannelRule is an in-memory representation of each specific rule to be executed by Pipeline.

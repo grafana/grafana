@@ -150,19 +150,18 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 				}
 			},
 			want: &authn.Identity{
-				OrgID:          1,
-				OrgCount:       0,
-				OrgName:        "",
-				OrgRoles:       map[int64]roletype.RoleType{1: roletype.RoleAdmin},
-				ID:             "user:2",
-				Login:          "johndoe",
-				Name:           "John Doe",
-				Email:          "johndoe@grafana.com",
-				IsGrafanaAdmin: boolPtr(false),
-				AuthModule:     "",
-				AuthID:         "",
-				IsDisabled:     false,
-				HelpFlags1:     0,
+				OrgID:           1,
+				OrgName:         "",
+				OrgRoles:        map[int64]roletype.RoleType{1: roletype.RoleAdmin},
+				ID:              "user:2",
+				Login:           "johndoe",
+				Name:            "John Doe",
+				Email:           "johndoe@grafana.com",
+				IsGrafanaAdmin:  boolPtr(false),
+				AuthenticatedBy: login.ExtendedJWTModule,
+				AuthID:          "",
+				IsDisabled:      false,
+				HelpFlags1:      0,
 				Permissions: map[int64]map[string][]string{
 					1: {
 						"dashboards:create": {
@@ -535,9 +534,9 @@ type testEnv struct {
 	s        *ExtendedJWT
 }
 
-func generateToken(payload ExtendedJWTClaims, signingKey interface{}, alg jose.SignatureAlgorithm) string {
+func generateToken(payload ExtendedJWTClaims, signingKey any, alg jose.SignatureAlgorithm) string {
 	signer, _ := jose.NewSigner(jose.SigningKey{Algorithm: alg, Key: signingKey}, &jose.SignerOptions{
-		ExtraHeaders: map[jose.HeaderKey]interface{}{
+		ExtraHeaders: map[jose.HeaderKey]any{
 			jose.HeaderType: "at+jwt",
 		}})
 

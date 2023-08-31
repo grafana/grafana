@@ -3,7 +3,6 @@ package db
 import (
 	"bytes"
 
-	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
@@ -20,15 +19,16 @@ type SQLBuilder struct {
 	cfg                          *setting.Cfg
 	features                     featuremgmt.FeatureToggles
 	sql                          bytes.Buffer
-	params                       []interface{}
+	params                       []any
+	leftJoin                     string
 	recQry                       string
-	recQryParams                 []interface{}
+	recQryParams                 []any
 	recursiveQueriesAreSupported bool
 
 	dialect migrator.Dialect
 }
 
-func (sb *SQLBuilder) Write(sql string, params ...interface{}) {
+func (sb *SQLBuilder) Write(sql string, params ...any) {
 	sb.sql.WriteString(sql)
 
 	if len(params) > 0 {
@@ -44,10 +44,13 @@ func (sb *SQLBuilder) GetSQLString() string {
 	var bf bytes.Buffer
 	bf.WriteString(sb.recQry)
 	bf.WriteString(sb.sql.String())
+	if sb.leftJoin != "" {
+		bf.WriteString(" LEFT OUTER JOIN " + sb.leftJoin)
+	}
 	return bf.String()
 }
 
-func (sb *SQLBuilder) GetParams() []interface{} {
+func (sb *SQLBuilder) GetParams() []any {
 	if len(sb.recQryParams) == 0 {
 		return sb.params
 	}
@@ -56,33 +59,27 @@ func (sb *SQLBuilder) GetParams() []interface{} {
 	return sb.params
 }
 
-func (sb *SQLBuilder) AddParams(params ...interface{}) {
+func (sb *SQLBuilder) AddParams(params ...any) {
 	sb.params = append(sb.params, params...)
 }
 
 func (sb *SQLBuilder) WriteDashboardPermissionFilter(user *user.SignedInUser, permission dashboards.PermissionType, queryType string) {
 	var (
 		sql          string
-		params       []interface{}
+		params       []any
 		recQry       string
-		recQryParams []interface{}
+		recQryParams []any
+		leftJoin     string
 	)
-	if !ac.IsDisabled(sb.cfg) {
-		filterRBAC := permissions.NewAccessControlDashboardPermissionFilter(user, permission, queryType, sb.features, sb.recursiveQueriesAreSupported)
-		sql, params = filterRBAC.Where()
-		recQry, recQryParams = filterRBAC.With()
-	} else {
-		sql, params = permissions.DashboardPermissionFilter{
-			OrgRole:         user.OrgRole,
-			Dialect:         sb.dialect,
-			UserId:          user.UserID,
-			OrgId:           user.OrgID,
-			PermissionLevel: permission,
-		}.Where()
-	}
+
+	filterRBAC := permissions.NewAccessControlDashboardPermissionFilter(user, permission, queryType, sb.features, sb.recursiveQueriesAreSupported)
+	leftJoin = filterRBAC.LeftJoin()
+	sql, params = filterRBAC.Where()
+	recQry, recQryParams = filterRBAC.With()
 
 	sb.sql.WriteString(" AND " + sql)
 	sb.params = append(sb.params, params...)
 	sb.recQry = recQry
 	sb.recQryParams = recQryParams
+	sb.leftJoin = leftJoin
 }

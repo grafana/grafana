@@ -43,6 +43,14 @@ export function getFrameDisplayName(frame: DataFrame, index?: number) {
   return `Series (${index})`;
 }
 
+export function cacheFieldDisplayNames(frames: DataFrame[]) {
+  frames.forEach((frame) => {
+    frame.fields.forEach((field) => {
+      getFieldDisplayName(field, frame, frames);
+    });
+  });
+}
+
 export function getFieldDisplayName(field: Field, frame?: DataFrame, allFrames?: DataFrame[]): string {
   const existingTitle = field.state?.displayName;
   const multipleFrames = Boolean(allFrames && allFrames.length > 1);
@@ -64,15 +72,15 @@ export function getFieldDisplayName(field: Field, frame?: DataFrame, allFrames?:
  */
 export function calculateFieldDisplayName(field: Field, frame?: DataFrame, allFrames?: DataFrame[]): string {
   const hasConfigTitle = field.config?.displayName && field.config?.displayName.length;
-
+  const isComparisonSeries = Boolean(frame?.meta?.timeCompare?.isTimeShiftQuery);
   let displayName = hasConfigTitle ? field.config!.displayName! : field.name;
 
   if (hasConfigTitle) {
-    return displayName;
+    return isComparisonSeries ? `${displayName} (comparison)` : displayName;
   }
 
   if (frame && field.config?.displayNameFromDS) {
-    return field.config.displayNameFromDS;
+    return isComparisonSeries ? `${field.config.displayNameFromDS} (comparison)` : field.config.displayNameFromDS;
   }
 
   // This is an ugly exception for time field
@@ -143,6 +151,9 @@ export function calculateFieldDisplayName(field: Field, frame?: DataFrame, allFr
     displayName = getUniqueFieldName(field, frame);
   }
 
+  if (isComparisonSeries) {
+    displayName = `${displayName} (comparison)`;
+  }
   return displayName;
 }
 

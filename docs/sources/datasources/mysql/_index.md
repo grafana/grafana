@@ -7,6 +7,11 @@ keywords:
   - grafana
   - mysql
   - guide
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 menuTitle: MySQL
 title: MySQL data source
 weight: 1000
@@ -16,11 +21,11 @@ weight: 1000
 
 > Starting from Grafana v5.1 you can name the time column _time_ in addition to earlier supported _time_sec_. Usage of _time_sec_ will eventually be deprecated.
 
-Grafana ships with a built-in MySQL data source plugin that allows you to query and visualize data from a MySQL compatible database.
+Grafana ships with a built-in MySQL data source plugin that allows you to query and visualize data from a MySQL compatible database like MariaDB or Percona Server.
 
-For instructions on how to add a data source to Grafana, refer to the [administration documentation]({{< relref "../../administration/data-source-management/" >}}).
+For instructions on how to add a data source to Grafana, refer to the [administration documentation][data-source-management].
 Only users with the organization administrator role can add data sources.
-Administrators can also [configure the data source via YAML]({{< relref "#provision-the-data-source" >}}) with Grafana's provisioning system.
+Administrators can also [configure the data source via YAML](#provision-the-data-source) with Grafana's provisioning system.
 
 ## Configure the data source
 
@@ -35,24 +40,24 @@ Administrators can also [configure the data source via YAML]({{< relref "#provis
 
 1. Set the data source's basic configuration options.
 
-| Name                          | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
-| ----------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Name**                      | The data source name. This is how you refer to the data source in panels and queries.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
-| **Default**                   | Default data source means that it will be pre-selected for new panels.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
-| **Host**                      | The IP address/hostname and optional port of your MySQL instance.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
-| **Database**                  | Name of your MySQL database.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
-| **User**                      | Database user's login/username                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
-| **Password**                  | Database user's password                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
-| **Session Timezone**          | Specify the time zone used in the database session, such as `Europe/Berlin` or `+02:00`. This is necessary, if the timezone of the database (or the host of the database) is set to something other than UTC. Set the value used in the session with `SET time_zone='...'`. If you leave this field empty, then the time zone is not updated. For more information, refer to the [MySQL documentation](https://dev.mysql.com/doc/refman/8.0/en/time-zone-support.html).                                                                                                                                                                                                    |
-| **Max open**                  | The maximum number of open connections to the database, default `100` (Grafana v5.4+).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
-| **Max idle**                  | The maximum number of connections in the idle connection pool, default `100` (Grafana v5.4+).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
-| **Auto (max idle)**           | If set will set the maximum number of idle connections to the number of maximum open connections (Grafana v9.5.1+). Default is `true`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
-| **Allow cleartext passwords** | Allows using the [cleartext client side plugin](https://dev.mysql.com/doc/en/cleartext-pluggable-authentication.html) if required by an account, such as one defined with the [PAM authentication plugin](http://dev.mysql.com/doc/en/pam-authentication-plugin.html). <br />**Sending passwords in clear text may be a security problem in some configurations**. To avoid problems if there is any possibility that the password would be intercepted, clients should connect to MySQL Server using a method that protects the password. Possibilities include [TLS / SSL](https://github.com/go-sql-driver/mysql#tls), IPsec, or a private network. Default is `false`. |
-| **Max lifetime**              | The maximum amount of time in seconds a connection may be reused, default `14400`/4 hours. This should always be lower than configured [wait_timeout](https://dev.mysql.com/doc/refman/8.0/en/server-system-variables.html#sysvar_wait_timeout) in MySQL (Grafana v5.4+).                                                                                                                                                                                                                                                                                                                                                                                                  |
+| Name                          | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Name**                      | The data source name. This is how you refer to the data source in panels and queries.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| **Default**                   | Default data source means that it will be pre-selected for new panels.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| **Host**                      | The IP address/hostname and optional port of your MySQL instance.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| **Database**                  | Name of your MySQL database.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| **User**                      | Database user's login/username                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| **Password**                  | Database user's password                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| **Session Timezone**          | Specifies the time zone used in the database session, such as `Europe/Berlin` or `+02:00`. Required if the timezone of the database (or the host of the database) is set to something other than UTC. Set the value used in the session with `SET time_zone='...'`. If you leave this field empty, then the time zone is not updated. For more information, refer to the [MySQL documentation](https://dev.mysql.com/doc/en/time-zone-support.html).                                                                                                                                                                                                      |
+| **Max open**                  | The maximum number of open connections to the database, default `100` (Grafana v5.4+).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| **Max idle**                  | The maximum number of connections in the idle connection pool, default `100` (Grafana v5.4+).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| **Auto (max idle)**           | Toggle to set the maximum number of idle connections to the number of maximum open connections (available in Grafana v9.5.1+). Default is `true`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| **Allow cleartext passwords** | Allows the use of the [cleartext client side plugin](https://dev.mysql.com/doc/en/cleartext-pluggable-authentication.html) as required by a specific type of account, such as one defined with the [PAM authentication plugin](https://dev.mysql.com/doc/en/pam-pluggable-authentication.html). <br />**Sending passwords in clear text may be a security problem in some configurations**. To avoid password issues, it is recommended that clients connect to a MySQL server using a method that protects the password. Possibilities include [TLS / SSL](https://github.com/go-sql-driver/mysql#tls), IPsec, or a private network. Default is `false`. |
+| **Max lifetime**              | The maximum amount of time in seconds a connection may be reused. This should always be lower than configured [wait_timeout](https://dev.mysql.com/doc/en/server-system-variables.html#sysvar_wait_timeout) in MySQL (Grafana v5.4+). The default is `14400` or 4 hours.                                                                                                                                                                                                                                                                                                                                                                                  |
 
 ### Min time interval
 
-The **Min time interval** setting defines a lower limit for the [`$__interval`]({{< relref "../../dashboards/variables/add-template-variables#__interval" >}}) and [`$__interval_ms`]({{< relref "../../dashboards/variables/add-template-variables#__interval_ms" >}}) variables.
+The **Min time interval** setting defines a lower limit for the [`$__interval`][add-template-variables-interval] and [`$__interval_ms`][add-template-variables-interval-ms] variables.
 
 This value _must_ be formatted as a number followed by a valid time identifier:
 
@@ -91,7 +96,7 @@ You can use wildcards (`*`) in place of database or table if you want to grant a
 ### Provision the data source
 
 You can define and configure the data source in YAML files as part of Grafana's provisioning system.
-For more information about provisioning, and for available configuration options, refer to [Provisioning Grafana]({{< relref "../../administration/provisioning/#data-sources" >}}).
+For more information about provisioning, and for available configuration options, refer to [Provisioning Grafana][provisioning-data-sources].
 
 #### Provisioning examples
 
@@ -150,7 +155,7 @@ datasources:
     user: grafana
     jsonData:
       tlsAuth: true
-      skipTLSVerify: true
+      tlsSkipVerify: true
       database: grafana
       maxOpenConns: 100 # Grafana v5.4+
       maxIdleConns: 100 # Grafana v5.4+
@@ -169,7 +174,7 @@ datasources:
 The MySQL query builder is available when editing a panel using a MySQL data source.
 
 This topic explains querying specific to the MySQL data source.
-For general documentation on querying data sources in Grafana, see [Query and transform data]({{< relref "../../panels-visualizations/query-transform-data/" >}}).
+For general documentation on querying data sources in Grafana, see [Query and transform data][query-transform-data].
 
 You can run the built query by pressing the `Run query` button in the top right corner of the editor.
 
@@ -180,7 +185,7 @@ The response from MySQL can be formatted as either a table or as a time series. 
 ### Dataset and Table selection
 
 {{% admonition type="note" %}}
-If your table or database name contains a reserved word or a [not permitted character](https://dev.mysql.com/doc/refman/8.0/en/identifiers.html) the editor will put quotes around them. For example a table name like `table-name` will be quoted with backticks `` `table-name` ``.
+If your table or database name contains a reserved word or a [prohibited character](https://dev.mysql.com/doc/en/identifiers.html) the editor will put quotes around the name. For example, the name `table-name` will be quoted with backticks - `` `table-name` ``.
 {{% /admonition %}}
 
 In the dataset dropdown, choose the MySQL database to query. The dropdown is be populated with the databases that the user has access to.
@@ -276,13 +281,27 @@ The resulting table panel:
 
 ## Time series queries
 
-If you set Format as to _Time series_, then the query must have a column named time that returns either a SQL datetime or any numeric datatype representing Unix epoch in seconds. In addition, result sets of time series queries must be sorted by time for panels to properly visualize the result.
+The examples in this section query the following table:
 
-A time series query result is returned in a [wide data frame format]({{< relref "../../developers/plugins/introduction-to-plugin-development/data-frames#wide-format" >}}). Any column except time or of type string transforms into value fields in the data frame query result. Any string column transforms into field labels in the data frame query result.
+```text
++---------------------+--------------+---------------------+----------+
+| time_date_time      | value_double | CreatedAt           | hostname |
++---------------------+--------------+---------------------+----------+
+| 2020-01-02 03:05:00 | 3.0          | 2020-01-02 03:05:00 | 10.0.1.1 |
+| 2020-01-02 03:06:00 | 4.0          | 2020-01-02 03:06:00 | 10.0.1.2 |
+| 2020-01-02 03:10:00 | 6.0          | 2020-01-02 03:10:00 | 10.0.1.1 |
+| 2020-01-02 03:11:00 | 7.0          | 2020-01-02 03:11:00 | 10.0.1.2 |
+| 2020-01-02 03:20:00 | 5.0          | 2020-01-02 03:20:00 | 10.0.1.2 |
++---------------------+--------------+---------------------+----------+
+```
+
+If the `Format as` query option is set to `Time Series` then the query must have a column named time that returns either a SQL datetime or any numeric datatype representing Unix epoch in seconds. In addition, result sets of time series queries must be sorted by time for panels to properly visualize the result.
+
+A time series query result is returned in a [wide data frame format][data-frames-wide-format]. Any column except time or of type string transforms into value fields in the data frame query result. Any string column transforms into field labels in the data frame query result.
 
 > For backward compatibility, there's an exception to the above rule for queries that return three columns including a string column named metric. Instead of transforming the metric column into field labels, it becomes the field name, and then the series name is formatted as the value of the metric column. See the example with the metric column below.
 
-To optionally customize the default series name formatting, refer to [Standard options definitions]({{< relref "../../panels-visualizations/configure-standard-options#display-name" >}}).
+To optionally customize the default series name formatting, refer to [Standard options definitions][configure-standard-options-display-name].
 
 **Example with `metric` column:**
 
@@ -307,6 +326,7 @@ Data frame result:
 +---------------------+-----------------+
 | 2020-01-02 03:05:00 | 3               |
 | 2020-01-02 03:10:00 | 6               |
+| 2020-01-02 03:20:00 | 5               |
 +---------------------+-----------------+
 ```
 
@@ -324,7 +344,7 @@ GROUP BY time, hostname
 ORDER BY time
 ```
 
-Given the data frame result in the following example and using the graph panel, you will get two series named _value 10.0.1.1_ and _value 10.0.1.2_. To render the series with a name of _10.0.1.1_ and _10.0.1.2_ , use a [[Standard options definitions]({{< relref "../../panels-visualizations/configure-standard-options#display-name" >}}) display value of `${__field.labels.hostname}`.
+Given the data frame result in the following example and using the graph panel, you will get two series named _value 10.0.1.1_ and _value 10.0.1.2_. To render the series with a name of _10.0.1.1_ and _10.0.1.2_ , use a [Standard options definitions][configure-standard-options-display-name] display value of `${__field.labels.hostname}`.
 
 Data frame result:
 
@@ -336,6 +356,8 @@ Data frame result:
 +---------------------+---------------------------+---------------------------+
 | 2020-01-02 03:05:00 | 3                         | 4                         |
 | 2020-01-02 03:10:00 | 6                         | 7                         |
+| 2020-01-02 03:15:00 | 0                         | 0                         |
+| 2020-01-02 03:20:00 | 0                         | 5                         |
 +---------------------+---------------------------+---------------------------+
 ```
 
@@ -360,8 +382,9 @@ Data frame result:
 | Labels:             | Labels:         | Labels:         |
 | Type: []time.Time   | Type: []float64 | Type: []float64 |
 +---------------------+-----------------+-----------------+
-| 2020-01-02 03:04:00 | 3               | 4               |
-| 2020-01-02 03:05:00 | 6               | 7               |
+| 2020-01-02 03:05:00 | 3               | 4               |
+| 2020-01-02 03:10:00 | 6               | 7               |
+| 2020-01-02 03:20:00 | 5               | 5               |
 +---------------------+-----------------+-----------------+
 ```
 
@@ -374,7 +397,7 @@ This feature is currently available in the nightly builds and will be included i
 
 Instead of hard-coding things like server, application and sensor name in your metric queries you can use variables in their place. Variables are shown as dropdown select boxes at the top of the dashboard. These dropdowns make it easy to change the data being displayed in your dashboard.
 
-Check out the [Templating]({{< relref "../../dashboards/variables" >}}) documentation for an introduction to the templating feature and the different types of template variables.
+Check out the [Templating][variables] documentation for an introduction to the templating feature and the different types of template variables.
 
 ### Query Variable
 
@@ -465,15 +488,15 @@ ORDER BY atimestamp ASC
 
 #### Disabling Quoting for Multi-value Variables
 
-Grafana automatically creates a quoted, comma-separated string for multi-value variables. For example: if `server01` and `server02` are selected then it will be formatted as: `'server01', 'server02'`. Do disable quoting, use the csv formatting option for variables:
+Grafana automatically creates a quoted, comma-separated string for multi-value variables. For example: if `server01` and `server02` are selected then it will be formatted as: `'server01', 'server02'`. To disable quoting, use the csv formatting option for variables:
 
 `${servers:csv}`
 
-Read more about variable formatting options in the [Variables]({{< relref "../../dashboards/variables/variable-syntax#advanced-variable-format-options" >}}) documentation.
+Read more about variable formatting options in the [Variables][variable-syntax-advanced-variable-format-options] documentation.
 
 ## Annotations
 
-[Annotations]({{< relref "../../dashboards/build-dashboards/annotate-visualizations" >}}) allow you to overlay rich event information on top of graphs. You add annotation queries via the Dashboard menu / Annotations view.
+[Annotations][annotate-visualizations] allow you to overlay rich event information on top of graphs. You add annotation queries via the Dashboard menu / Annotations view.
 
 **Example query using time column with epoch values:**
 
@@ -527,3 +550,38 @@ WHERE
 ## Alerting
 
 Time series queries should work in alerting conditions. Table formatted queries are not yet supported in alert rule conditions.
+
+{{% docs/reference %}}
+
+<!-- prettier-ignore-start -->
+[add-template-variables-interval-ms]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables/add-template-variables#__interval_ms"
+[add-template-variables-interval-ms]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables/add-template-variables#__interval_ms"
+
+[add-template-variables-interval]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables/add-template-variables#__interval"
+[add-template-variables-interval]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables/add-template-variables#__interval"
+<!-- prettier-ignore-end -->
+
+[annotate-visualizations]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/build-dashboards/annotate-visualizations"
+[annotate-visualizations]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/build-dashboards/annotate-visualizations"
+
+[configure-standard-options-display-name]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/configure-standard-options#display-name"
+[configure-standard-options-display-name]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/configure-standard-options#display-name"
+
+[data-frames-wide-format]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/developers/plugins/introduction-to-plugin-development/data-frames#wide-format"
+[data-frames-wide-format]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/developers/plugins/introduction-to-plugin-development/data-frames#wide-format"
+
+[data-source-management]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/administration/data-source-management"
+[data-source-management]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/administration/data-source-management"
+
+[provisioning-data-sources]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/administration/provisioning#data-sources"
+[provisioning-data-sources]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/administration/provisioning#data-sources"
+
+[query-transform-data]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/query-transform-data"
+[query-transform-data]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/query-transform-data"
+
+[variable-syntax-advanced-variable-format-options]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables/variable-syntax#advanced-variable-format-options"
+[variable-syntax-advanced-variable-format-options]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables/variable-syntax#advanced-variable-format-options"
+
+[variables]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables"
+[variables]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables"
+{{% /docs/reference %}}

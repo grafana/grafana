@@ -3,7 +3,7 @@ import React from 'react';
 import { AutoSizerProps } from 'react-virtualized-auto-sizer';
 import { TestProvider } from 'test/helpers/TestProvider';
 
-import { DataSourceApi, LoadingState, CoreApp, createTheme, EventBusSrv, PluginExtensionTypes } from '@grafana/data';
+import { CoreApp, createTheme, DataSourceApi, EventBusSrv, LoadingState, PluginExtensionTypes } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { getPluginLinkExtensions } from '@grafana/runtime';
 import { configureStore } from 'app/store/configureStore';
@@ -72,7 +72,6 @@ const dummyProps: Props = {
   isLive: false,
   syncedTimes: false,
   updateTimeRange: jest.fn(),
-  makeAbsoluteTime: jest.fn(),
   graphResult: [],
   absoluteRange: {
     from: 0,
@@ -86,6 +85,7 @@ const dummyProps: Props = {
   showLogs: true,
   showTable: true,
   showTrace: true,
+  showCustom: true,
   showNodeGraph: true,
   showFlameGraph: true,
   splitOpen: jest.fn(),

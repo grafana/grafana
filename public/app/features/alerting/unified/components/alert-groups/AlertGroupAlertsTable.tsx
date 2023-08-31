@@ -47,7 +47,7 @@ export const AlertGroupAlertsTable = ({ alerts, alertManagerSourceName }: Props)
         id: 'labels',
         label: 'Labels',
         // eslint-disable-next-line react/display-name
-        renderCell: ({ data: { labels } }) => <AlertLabels labels={labels} />,
+        renderCell: ({ data: { labels } }) => <AlertLabels labels={labels} size="sm" />,
         size: 1,
       },
     ],

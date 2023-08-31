@@ -20,8 +20,9 @@ const googleIAMScope = "https://www.googleapis.com/auth/cloud-identity.groups.re
 
 type SocialGoogle struct {
 	*SocialBase
-	hostedDomain string
-	apiUrl       string
+	hostedDomain    string
+	apiUrl          string
+	skipOrgRoleSync bool
 }
 
 type googleUserData struct {
@@ -114,7 +115,7 @@ func (s *SocialGoogle) extractFromAPI(ctx context.Context, client *http.Client) 
 }
 
 func (s *SocialGoogle) AuthCodeURL(state string, opts ...oauth2.AuthCodeOption) string {
-	if s.features.IsEnabled(featuremgmt.FlagAccessTokenExpirationCheck) {
+	if s.features.IsEnabled(featuremgmt.FlagAccessTokenExpirationCheck) && s.useRefreshToken {
 		opts = append(opts, oauth2.AccessTypeOffline, oauth2.ApprovalForce)
 	}
 	return s.SocialBase.AuthCodeURL(state, opts...)

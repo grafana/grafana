@@ -7,6 +7,11 @@ keywords:
   - annotations
   - documentation
   - guide
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 menuTitle: Annotate visualizations
 title: Annotate visualizations
 weight: 600
@@ -14,77 +19,142 @@ weight: 600
 
 # Annotate visualizations
 
-Annotations provide a way to mark points on the graph with rich events. When you hover over an annotation
-you can get event description and event tags. The text field can include links to other systems with more detail.
+Annotations provide a way to mark points on a visualization with rich events. They are visualized as vertical lines and icons on all graph panels. When you hover over an annotation, you can get event description and event tags. The text field can include links to other systems with more detail.
 
 {{< figure src="/static/img/docs/v46/annotations.png" max-width="800px" >}}
 
-## Native annotations
+You can annotate visualizations in three ways:
 
-Grafana comes with a native annotation store and the ability to add annotation events directly from the graph panel or via the [HTTP API]({{< relref "../../../developers/http_api/annotations/" >}}).
+- Directly in the panel, using the [built-in annotations query](#built-in-query)
+- Using the HTTP API
+- Configuring annotation queries in the dashboard settings
 
-### Add annotation
+In the first two cases, you're creating new annotations, while in the last you're querying existing annotations from data sources. The built-in annotation query also supports this.
 
-1. In the dashboard click on the Time series panel. A context menu will appear.
-1. In the context menu click on **Add annotation**.
+This page explains the first and third options; for information about using the HTTP API, refer to [Annotations API]({{< relref "../../../developers/http_api/annotations/" >}}).
+
+Annotations are supported for the following visualization types:
+
+- Time series
+- State timeline
+- Candlestick
+
+## Create annotations in panels
+
+Grafana comes with the ability to add annotation events directly from a panel using the [built-in annotation query](#built-in-query) that exists on all dashboards. Annotations that you create this way are stored in Grafana.
+
+To add annotations directly in the panel, the built-in query must be enabled. Learn more in [Built-in query](#built-in-query)
+
+### Add an annotation
+
+To add an annotation, complete the following steps:
+
+1. In the dashboard click the panel to which you're adding the annotation. A context menu will appear.
+1. In the context menu, click **Add annotation**.
    ![Add annotation context menu](/static/img/docs/time-series-panel/time-series-annotations-context-menu.png)
-1. Add an annotation description and tags(optional).
-   ![Add annotation popover](/static/img/docs/time-series-panel/time-series-annotations-add-annotation.png)
-1. Click save.
+1. Add an annotation description and tags (optional).
+1. Click **Save**.
 
-Alternatively, to add an annotation, Ctrl/Cmd+Click on the Time series panel and the Add annotation popover will appear
+Alternatively, to add an annotation, press Ctrl/Cmd and click the panel, and the **Add annotation** popover will appear.
 
-### Add region annotation
+### Add a region annotation
 
-1. In the dashboard Ctrl/Cmd+click and drag on the Time series panel.
+1. In the dashboard press Ctrl/Cmd and click and drag on the panel.
    ![Add annotation popover](/static/img/docs/time-series-panel/time-series-annotations-add-region-annotation.gif)
-1. Add an annotation description and tags(optional).
-1. Click save.
+1. Add an annotation description and tags (optional).
+1. Click **Save**.
 
-### Edit annotation
+### Edit an annotation
 
-1. In the dashboard hover over an annotation indicator on the Time series panel.
+1. In the dashboard, hover over an annotation indicator on the Time series panel.
    <!--![Add annotation popover](/static/img/docs/time-series-panel/time-series-annotations-edit-annotation.gif)-->
 1. Click on the pencil icon in the annotation tooltip.
 1. Modify the description and/or tags.
 1. Click save.
 
-### Delete annotation
+### Delete an annotation
 
-1. In the dashboard hover over an annotation indicator on the Time series panel.
+1. In the dashboard hover over an annotation indicator on a panel.
    <!--![Add annotation popover](/static/img/docs/time-series-panel/time-series-annotations-edit-annotation.gif)-->
 1. Click on the trash icon in the annotation tooltip.
 
-### Built-in query
+## Fetch annotations through dashboard settings
 
-After you added an annotation they will still be visible. This is due to the built in annotation query that exists on all dashboards. This annotation query will
-fetch all annotation events that originate from the current dashboard and show them on the panel where they were created. This includes alert state history annotations. You can
-stop annotations from being fetched and drawn by opening the **Annotations** settings (via Dashboard cogs menu) and modifying the query named `Annotations & Alerts (Built-in)`.
+In the dashboard settings, under **Annotations**, you can add new queries to fetch annotations using any data source, including the built-in data annotation data source. Annotation queries return events that can be visualized as event markers in graphs across the dashboard.
 
-When you copy a dashboard using the **Save As** feature it will get a new dashboard id so annotations created on source dashboard will no longer be visible on the copy. You
-can still show them if you add a new **Annotation Query** and filter by tags. But this only works if the annotations on the source dashboard had tags to filter by.
+### Add new annotation queries
 
-### Query by tag
+To add a new annotation query to a dashboard, take the following steps:
 
-You can create new queries to fetch annotations from the native annotation store via the `-- Grafana --` data source by setting _Filter by_ to `Tags`.
+1. Click the dashboard settings (gear) icon in the dashboard header to open the settings menu.
+1. Select **Annotations**.
+1. Click **Add annotation query**.
+
+   If you've added a query before, the **+ New query** button is displayed.
+
+1. Enter a name for the annotation query.
+
+   This name is given to the toggle (checkbox) that will allow you to enable/disable showing annotation events from this query.
+
+1. Select the data source for the annotations.
+
+   You can also click **Open advanced data source picker** to see more options, including adding a data source (Admins only).
+
+1. If you don't want to use the annotation query right away, clear the **Enabled** checkbox.
+1. If you don't want the annotation query toggle to be displayed in the dashboard, select the **Hidden** checkbox.
+1. Select a color for the event markers.
+1. In the **Show in** drop-down, choose one of the following options:
+
+   - **All panels** - The annotations are displayed on all panels that support annotations.
+   - **Selected panels** - The annotations are displayed on all the panels you select.
+   - **All panels except** - The annotations are displayed on all panels except the ones you select.
+
+   {{< figure src="/media/docs/grafana/dashboards/screenshot-annotation-filtering-10-v2.png" max-width="600px" caption="Annotation filtering" >}}
+
+1. Configure the query.
+
+   The annotation query options are different for each data source. For information about annotations in a specific data source, refer to the specific [data source]({{< relref "../../../datasources/" >}}) topic.
+
+## Built-in query
+
+After you add an annotation, they will still be visible. This is due to the built-in annotation query that exists on all dashboards. This annotation query will fetch all annotation events that originate from the current dashboard, which are stored in Grafana, and show them on the panel where they were created. This includes alert state history annotations.
+
+To add annotations directly to the dashboard, this query must be enabled.
+
+To confirm if the built-in query is enabled, take the following steps:
+
+1. Click the dashboard settings (gear) icon in the dashboard header to open the dashboard settings menu.
+1. Click **Annotations**.
+1. Find the **Annotations & Alerts (Built-in)** query.
+
+   If it says **Disabled** before the name of the query, then you'll need to click the query name to open it and update the setting.
+
+You can stop annotations from being fetched and drawn by taking the following steps:
+
+1. Click the dashboard settings (gear) icon in the dashboard header to open the settings menu.
+1. Click **Annotations**.
+1. Find and click the **Annotations & Alerts (Built-in)** query to open it.
+1. Click the **Enabled** toggle to turn it off.
+
+When you copy a dashboard using the **Save As** feature it will get a new dashboard id, so annotations created on source dashboard will no longer be visible on the copy. You can still show them if you add a new **Annotation Query** and filter by tags. However, this only works if the annotations on the source dashboard had tags to filter by.
+
+Following are some query options specific to the built-in annotation query.
+
+### Filter queries by tag
+
+You can create new queries to fetch annotations from the built-in annotation query using the `-- Grafana --` data source by setting _Filter by_ to `Tags`.
 
 Grafana v8.1 and later versions also support typeahead of existing tags, provide at least one tag.
 
 For example, create an annotation query name `outages` and specify a tag `outage`. This query will show all annotations (from any dashboard or via API) with the `outage` tag. If multiple tags are defined in an annotation query, then Grafana will only show annotations matching all the tags. To modify the behavior, enable `Match any`, and Grafana will show annotations that contain any one of the tags you provided.
 
-{{< figure src="/static/img/docs/annotations/annotations_typeahead_support-8-1-0.png" max-width="600px" >}}
+{{< figure src="/media/docs/grafana/dashboards/screenshot-annotations-typeahead-support-10.0.png" max-width="600px" >}}
 
-In Grafana v5.3+ it's possible to use template variables in the tag query. So if you have a dashboard showing stats for different services and a template variable that dictates which services to show, you can now use the same template variable in your annotation query to only show annotations for those services.
+You can also use template variables in the tag query. This means if you have a dashboard showing stats for different services and a template variable that dictates which services to show, you can use the same template variable in your annotation query to only show annotations for those services.
 
-{{< figure src="/static/img/docs/annotations/annotation_tag_filter_variable-8-1-0.png" max-width="600px" >}}
+{{< figure src="/media/docs/grafana/dashboards/screenshot-annotation-tag-filter-variable-10.0.png" max-width="600px" >}}
 
-### Filter by panel
-
-You can configure the panels to which annotations apply by choosing an option from the **Show in** section. You can select **All panels**, which applies to all panels that support annotations, or filter for specific panels by choosing **Selected panels** or **All panels except**. The annotations are displayed accordingly.
-
-{{< figure src="/media/docs/grafana/dashboards/screenshot-annotation-filtering-10-v2.png" max-width="600px" caption="Annotation filtering" >}}
-
-### Add time region
+### Add time regions
 
 When adding or editing an annotation, you can define a repeating time region by setting **Query type** to **Time regions**. Then, define the **From** and **To** sections with the preferred days of the week and time. You also have the option to change the timezone, which is set to the dashboard's timezone, by default.
 
@@ -93,22 +163,3 @@ When adding or editing an annotation, you can define a repeating time region by 
 The above configuration will produce the following result in the Time series panel:
 
 {{< figure src="/media/docs/grafana/screenshot-grafana-10-0-timeseries-time-regions.png" max-width="600px" caption="Time series time regions business hours" >}}
-
-## Querying other data sources
-
-Annotation events are fetched via annotation queries. To add a new annotation query to a dashboard
-open the dashboard settings menu, then select `Annotations`. This will open the dashboard annotations
-settings view. To create a new annotation query hit the `New` button.
-
-<!--![](/static/img/docs/v50/annotation_new_query.png)-->
-
-{{< figure src="/static/img/docs/v50/annotation_new_query.png" max-width="600px" >}}
-
-Specify a name for the annotation query. This name is given to the toggle (checkbox) that will allow
-you to enable/disable showing annotation events from this query. For example you might have two
-annotation queries named `Deploys` and `Outages`. The toggle will allow you to decide what annotations
-to show.
-
-### Annotation query details
-
-The annotation query options are different for each data source. For information about annotations in a specific data source, refer to the specific [data source]({{< relref "../../../datasources/" >}}) topic.

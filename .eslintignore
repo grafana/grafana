@@ -3,23 +3,23 @@
 .yarn
 build
 compiled
-data
+/data
 deployment_tools_config.json
-devenv
+/devenv
 dist
-e2e/tmp
+/e2e/tmp
 node_modules
-pkg
-public/lib/monaco
-scripts/grafana-server/tmp
+/pkg
+/public/lib/monaco
+/scripts/grafana-server/tmp
 vendor
 
 # TS generate from cue by cuetsy
 **/*.gen.ts
 
 # Auto-generated internationalization files
-public/locales/_build/
-public/locales/**/*.js
+/public/locales/_build/
+/public/locales/**/*.js
 
 # Auto-generated icon file
-packages/grafana-ui/src/components/Icon/iconBundle.ts
+/packages/grafana-ui/src/components/Icon/iconBundle.ts

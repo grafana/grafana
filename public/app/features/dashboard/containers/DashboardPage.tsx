@@ -16,12 +16,14 @@ import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { PanelModel } from 'app/features/dashboard/state';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
+import { AngularDeprecationNotice } from 'app/features/plugins/angularDeprecation/AngularDeprecationNotice';
 import { getPageNavFromSlug, getRootContentNavModel } from 'app/features/storage/StorageFolderPage';
 import { DashboardRoutes, KioskMode, StoreState } from 'app/types';
 import { PanelEditEnteredEvent, PanelEditExitedEvent } from 'app/types/events';
 
 import { cancelVariables, templateVarsChangedInUrl } from '../../variables/state/actions';
 import { findTemplateVarChanges } from '../../variables/utils';
+import { AddWidgetModal } from '../components/AddWidgetModal/AddWidgetModal';
 import { DashNav } from '../components/DashNav';
 import { DashboardFailed } from '../components/DashboardLoading/DashboardFailed';
 import { DashboardLoading } from '../components/DashboardLoading/DashboardLoading';
@@ -50,6 +52,7 @@ export type DashboardPageRouteSearchParams = {
   editPanel?: string;
   viewPanel?: string;
   editview?: string;
+  addWidget?: boolean;
   panelType?: string;
   inspect?: string;
   from?: string;
@@ -385,6 +388,9 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
               <SubMenu dashboard={dashboard} annotations={dashboard.annotations.list} links={dashboard.links} />
             </section>
           )}
+          {config.featureToggles.angularDeprecationUI && dashboard.hasAngularPlugins() && dashboard.uid !== null && (
+            <AngularDeprecationNotice dashboardUid={dashboard.uid} />
+          )}
           <DashboardGrid
             dashboard={dashboard}
             isEditable={!!dashboard.meta.canEdit}
@@ -411,6 +417,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
             sectionNav={sectionNav}
           />
         )}
+        {queryParams.addWidget && config.featureToggles.vizAndWidgetSplit && <AddWidgetModal />}
       </>
     );
   }

@@ -121,8 +121,7 @@ func (hs *HTTPServer) GetPluginList(c *contextmodel.ReqContext) response.Respons
 	}
 
 	// Compute metadata
-	pluginsMetadata := hs.getMultiAccessControlMetadata(c, c.OrgID,
-		pluginaccesscontrol.ScopeProvider.GetResourceScope(""), filteredPluginIDs)
+	pluginsMetadata := hs.getMultiAccessControlMetadata(c, pluginaccesscontrol.ScopeProvider.GetResourceScope(""), filteredPluginIDs)
 
 	// Prepare DTO
 	result := make(dtos.PluginList, 0)
@@ -408,14 +407,14 @@ func (hs *HTTPServer) CheckHealth(c *contextmodel.ReqContext) response.Response 
 		return translatePluginRequestErrorToAPIError(err)
 	}
 
-	payload := map[string]interface{}{
+	payload := map[string]any{
 		"status":  resp.Status.String(),
 		"message": resp.Message,
 	}
 
 	// Unmarshal JSONDetails if it's not empty.
 	if len(resp.JSONDetails) > 0 {
-		var jsonDetails map[string]interface{}
+		var jsonDetails map[string]any
 		err = json.Unmarshal(resp.JSONDetails, &jsonDetails)
 		if err != nil {
 			return response.Error(500, "Failed to unmarshal detailed response from backend plugin", err)
@@ -431,8 +430,8 @@ func (hs *HTTPServer) CheckHealth(c *contextmodel.ReqContext) response.Response 
 	return response.JSON(http.StatusOK, payload)
 }
 
-func (hs *HTTPServer) GetPluginErrorsList(_ *contextmodel.ReqContext) response.Response {
-	return response.JSON(http.StatusOK, hs.pluginErrorResolver.PluginErrors())
+func (hs *HTTPServer) GetPluginErrorsList(c *contextmodel.ReqContext) response.Response {
+	return response.JSON(http.StatusOK, hs.pluginErrorResolver.PluginErrors(c.Req.Context()))
 }
 
 func (hs *HTTPServer) InstallPlugin(c *contextmodel.ReqContext) response.Response {

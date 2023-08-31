@@ -14,12 +14,14 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
+	sdkproxy "github.com/grafana/grafana-plugin-sdk-go/backend/proxy"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/data/sqlutil"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/sqleng"
+	"github.com/grafana/grafana/pkg/tsdb/sqleng/proxyutil"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -94,8 +96,9 @@ func newInstanceSettings(cfg *setting.Cfg) datasource.InstanceFactoryFunc {
 
 		driverName := "mssql"
 		// register a new proxy driver if the secure socks proxy is enabled
-		if cfg.SecureSocksDSProxy.Enabled && jsonData.SecureDSProxy {
-			driverName, err = createMSSQLProxyDriver(&cfg.SecureSocksDSProxy, cnnstr)
+		proxyOpts := proxyutil.GetSQLProxyOptions(dsInfo)
+		if sdkproxy.Cli.SecureSocksProxyEnabled(proxyOpts) {
+			driverName, err = createMSSQLProxyDriver(cnnstr, proxyOpts)
 			if err != nil {
 				return nil, err
 			}
@@ -157,7 +160,7 @@ func generateConnectionString(dsInfo sqleng.DataSourceInfo) (string, error) {
 		}
 	}
 
-	args := []interface{}{
+	args := []any{
 		"url", dsInfo.URL, "host", addr.Host,
 	}
 	if addr.Port != "0" {
@@ -239,7 +242,7 @@ func (t *mssqlQueryResultTransformer) GetConverterList() []sqlutil.StringConvert
 			ConversionFunc: func(in *string) (*string, error) { return in, nil },
 			Replacer: &sqlutil.StringFieldReplacer{
 				OutputFieldType: data.FieldTypeNullableFloat64,
-				ReplaceFunc: func(in *string) (interface{}, error) {
+				ReplaceFunc: func(in *string) (any, error) {
 					if in == nil {
 						return nil, nil
 					}
@@ -258,7 +261,7 @@ func (t *mssqlQueryResultTransformer) GetConverterList() []sqlutil.StringConvert
 			ConversionFunc: func(in *string) (*string, error) { return in, nil },
 			Replacer: &sqlutil.StringFieldReplacer{
 				OutputFieldType: data.FieldTypeNullableFloat64,
-				ReplaceFunc: func(in *string) (interface{}, error) {
+				ReplaceFunc: func(in *string) (any, error) {
 					if in == nil {
 						return nil, nil
 					}
@@ -277,7 +280,7 @@ func (t *mssqlQueryResultTransformer) GetConverterList() []sqlutil.StringConvert
 			ConversionFunc: func(in *string) (*string, error) { return in, nil },
 			Replacer: &sqlutil.StringFieldReplacer{
 				OutputFieldType: data.FieldTypeNullableFloat64,
-				ReplaceFunc: func(in *string) (interface{}, error) {
+				ReplaceFunc: func(in *string) (any, error) {
 					if in == nil {
 						return nil, nil
 					}
@@ -296,7 +299,7 @@ func (t *mssqlQueryResultTransformer) GetConverterList() []sqlutil.StringConvert
 			ConversionFunc: func(in *string) (*string, error) { return in, nil },
 			Replacer: &sqlutil.StringFieldReplacer{
 				OutputFieldType: data.FieldTypeNullableString,
-				ReplaceFunc: func(in *string) (interface{}, error) {
+				ReplaceFunc: func(in *string) (any, error) {
 					if in == nil {
 						return nil, nil
 					}

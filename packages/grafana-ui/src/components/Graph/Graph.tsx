@@ -62,7 +62,7 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
   };
 
   element: HTMLElement | null = null;
-  $element: any;
+  $element: JQuery<HTMLElement> | null = null;
 
   componentDidUpdate(prevProps: GraphProps, prevState: GraphState) {
     if (prevProps !== this.props) {
@@ -86,14 +86,14 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
     }
   }
 
-  onPlotSelected = (event: JQueryEventObject, ranges: { xaxis: { from: number; to: number } }) => {
+  onPlotSelected = (event: JQuery.Event, ranges: { xaxis: { from: number; to: number } }) => {
     const { onHorizontalRegionSelected } = this.props;
     if (onHorizontalRegionSelected) {
       onHorizontalRegionSelected(ranges.xaxis.from, ranges.xaxis.to);
     }
   };
 
-  onPlotHover = (event: JQueryEventObject, pos: FlotPosition, item?: FlotItem<GraphSeriesXY>) => {
+  onPlotHover = (event: JQuery.Event, pos: FlotPosition, item?: FlotItem<GraphSeriesXY>) => {
     this.setState({
       isTooltipVisible: true,
       activeItem: item,
@@ -101,7 +101,7 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
     });
   };
 
-  onPlotClick = (event: JQueryEventObject, contextPos: FlotPosition, item?: FlotItem<GraphSeriesXY>) => {
+  onPlotClick = (event: JQuery.Event, contextPos: FlotPosition, item?: FlotItem<GraphSeriesXY>) => {
     this.setState({
       isContextVisible: true,
       isTooltipVisible: false,
@@ -299,7 +299,7 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
     const max = timeRange.to.valueOf();
     const yaxes = this.getYAxes(series);
 
-    const flotOptions: any = {
+    const flotOptions = {
       legend: {
         show: false,
       },

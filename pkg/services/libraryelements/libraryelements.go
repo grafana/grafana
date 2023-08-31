@@ -2,6 +2,7 @@ package libraryelements
 
 import (
 	"context"
+	"encoding/json"
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -29,7 +30,7 @@ func ProvideService(cfg *setting.Cfg, sqlStore db.DB, routeRegister routing.Rout
 // Service is a service for operating on library elements.
 type Service interface {
 	CreateElement(c context.Context, signedInUser *user.SignedInUser, cmd model.CreateLibraryElementCommand) (model.LibraryElementDTO, error)
-	GetElement(c context.Context, signedInUser *user.SignedInUser, UID string) (model.LibraryElementDTO, error)
+	GetElement(c context.Context, signedInUser *user.SignedInUser, cmd model.GetLibraryElementCommand) (model.LibraryElementDTO, error)
 	GetElementsForDashboard(c context.Context, dashboardID int64) (map[string]model.LibraryElementDTO, error)
 	ConnectElementsToDashboard(c context.Context, signedInUser *user.SignedInUser, elementUIDs []string, dashboardID int64) error
 	DisconnectElementsFromDashboard(c context.Context, dashboardID int64) error
@@ -52,8 +53,8 @@ func (l *LibraryElementService) CreateElement(c context.Context, signedInUser *u
 }
 
 // GetElement gets an element from a UID.
-func (l *LibraryElementService) GetElement(c context.Context, signedInUser *user.SignedInUser, UID string) (model.LibraryElementDTO, error) {
-	return l.getLibraryElementByUid(c, signedInUser, UID)
+func (l *LibraryElementService) GetElement(c context.Context, signedInUser *user.SignedInUser, cmd model.GetLibraryElementCommand) (model.LibraryElementDTO, error) {
+	return l.getLibraryElementByUid(c, signedInUser, cmd)
 }
 
 // GetElementsForDashboard gets all connected elements for a specific dashboard.
@@ -74,4 +75,25 @@ func (l *LibraryElementService) DisconnectElementsFromDashboard(c context.Contex
 // DeleteLibraryElementsInFolder deletes all elements for a specific folder.
 func (l *LibraryElementService) DeleteLibraryElementsInFolder(c context.Context, signedInUser *user.SignedInUser, folderUID string) error {
 	return l.deleteLibraryElementsInFolderUID(c, signedInUser, folderUID)
+}
+
+func (l *LibraryElementService) addUidToLibraryPanel(model []byte, newUid string) (json.RawMessage, error) {
+	var modelMap map[string]any
+	err := json.Unmarshal(model, &modelMap)
+	if err != nil {
+		return nil, err
+	}
+
+	if libraryPanel, ok := modelMap["libraryPanel"].(map[string]any); ok {
+		if uid, ok := libraryPanel["uid"]; ok && uid == "" {
+			libraryPanel["uid"] = newUid
+		}
+	}
+
+	updatedModel, err := json.Marshal(modelMap)
+	if err != nil {
+		return nil, err
+	}
+
+	return updatedModel, nil
 }

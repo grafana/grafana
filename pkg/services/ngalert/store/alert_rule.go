@@ -340,7 +340,7 @@ func (st DBstore) ListAlertRules(ctx context.Context, query *ngmodels.ListAlertR
 		}
 
 		if len(query.NamespaceUIDs) > 0 {
-			args := make([]interface{}, 0, len(query.NamespaceUIDs))
+			args := make([]any, 0, len(query.NamespaceUIDs))
 			in := make([]string, 0, len(query.NamespaceUIDs))
 			for _, namespaceUID := range query.NamespaceUIDs {
 				args = append(args, namespaceUID)
@@ -392,7 +392,7 @@ func (st DBstore) Count(ctx context.Context, orgID int64) (int64, error) {
 	r := result{}
 	err := st.SQLStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		rawSQL := "SELECT COUNT(*) as count from alert_rule"
-		args := make([]interface{}, 0)
+		args := make([]any, 0)
 		if orgID != 0 {
 			rawSQL += " WHERE org_id=?"
 			args = append(args, orgID)
@@ -432,7 +432,7 @@ func (st DBstore) GetUserVisibleNamespaces(ctx context.Context, orgID int64, use
 		Limit:        -1,
 		Permission:   dashboards.PERMISSION_VIEW,
 		Sort:         model.SortOption{},
-		Filters: []interface{}{
+		Filters: []any{
 			searchstore.FolderWithAlertsFilter{},
 		},
 	}
@@ -553,11 +553,13 @@ func (st DBstore) GetAlertRulesForScheduling(ctx context.Context, query *ngmodel
 			// In previous versions of Grafana, Loki datasources would default to range queries
 			// instead of instant queries, sometimes creating unnecessary load. This is only
 			// done for Grafana Cloud.
-			if lokiRangeToInstantEnabled && canBeInstant(rule) {
-				if err := migrateToInstant(rule); err != nil {
-					st.Logger.Error("Could not migrate rule from range to instant query", "rule", rule.UID, "err", err)
-				} else {
-					st.Logger.Info("Migrated rule from range to instant query", "rule", rule.UID)
+			if lokiRangeToInstantEnabled {
+				if indices, migratable := canBeInstant(rule); migratable {
+					if err := migrateToInstant(rule, indices); err != nil {
+						st.Logger.Error("Could not migrate rule from range to instant query", "rule", rule.UID, "err", err)
+					} else {
+						st.Logger.Info("Migrated rule from range to instant query", "rule", rule.UID, "migrated_queries", len(indices))
+					}
 				}
 			}
 			rules = append(rules, rule)
@@ -586,7 +588,7 @@ func (st DBstore) GetAlertRulesForScheduling(ctx context.Context, query *ngmodel
 }
 
 // DeleteInFolder deletes the rules contained in a given folder along with their associated data.
-func (st DBstore) DeleteInFolder(ctx context.Context, orgID int64, folderUID string) error {
+func (st DBstore) DeleteInFolder(ctx context.Context, orgID int64, folderUID string, user *user.SignedInUser) error {
 	rules, err := st.ListAlertRules(ctx, &ngmodels.ListAlertRulesQuery{
 		OrgID:         orgID,
 		NamespaceUIDs: []string{folderUID},
