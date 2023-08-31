@@ -8,13 +8,13 @@ import (
 // locker is a named reader/writer mutual exclusion lock.
 // The lock for each particular key can be held by an arbitrary number of readers or a single writer.
 type locker struct {
-	locks   map[interface{}]*sync.RWMutex
+	locks   map[any]*sync.RWMutex
 	locksRW *sync.RWMutex
 }
 
 func newLocker() *locker {
 	return &locker{
-		locks:   make(map[interface{}]*sync.RWMutex),
+		locks:   make(map[any]*sync.RWMutex),
 		locksRW: new(sync.RWMutex),
 	}
 }
@@ -22,7 +22,7 @@ func newLocker() *locker {
 // Lock locks named rw mutex with specified key for writing.
 // If the lock with the same key is already locked for reading or writing,
 // Lock blocks until the lock is available.
-func (lkr *locker) Lock(key interface{}) {
+func (lkr *locker) Lock(key any) {
 	lk, ok := lkr.getLock(key)
 	if !ok {
 		lk = lkr.newLock(key)
@@ -32,7 +32,7 @@ func (lkr *locker) Lock(key interface{}) {
 
 // Unlock unlocks named rw mutex with specified key for writing. It is a run-time error if rw is
 // not locked for writing on entry to Unlock.
-func (lkr *locker) Unlock(key interface{}) {
+func (lkr *locker) Unlock(key any) {
 	lk, ok := lkr.getLock(key)
 	if !ok {
 		panic(fmt.Errorf("lock for key '%s' not initialized", key))
@@ -45,7 +45,7 @@ func (lkr *locker) Unlock(key interface{}) {
 // It should not be used for recursive read locking for the same key; a blocked Lock
 // call excludes new readers from acquiring the lock. See the
 // documentation on the golang RWMutex type.
-func (lkr *locker) RLock(key interface{}) {
+func (lkr *locker) RLock(key any) {
 	lk, ok := lkr.getLock(key)
 	if !ok {
 		lk = lkr.newLock(key)
@@ -56,7 +56,7 @@ func (lkr *locker) RLock(key interface{}) {
 // RUnlock undoes a single RLock call for specified key;
 // it does not affect other simultaneous readers of locker for specified key.
 // It is a run-time error if locker for specified key is not locked for reading
-func (lkr *locker) RUnlock(key interface{}) {
+func (lkr *locker) RUnlock(key any) {
 	lk, ok := lkr.getLock(key)
 	if !ok {
 		panic(fmt.Errorf("lock for key '%s' not initialized", key))
@@ -64,7 +64,7 @@ func (lkr *locker) RUnlock(key interface{}) {
 	lk.RUnlock()
 }
 
-func (lkr *locker) newLock(key interface{}) *sync.RWMutex {
+func (lkr *locker) newLock(key any) *sync.RWMutex {
 	lkr.locksRW.Lock()
 	defer lkr.locksRW.Unlock()
 
@@ -76,7 +76,7 @@ func (lkr *locker) newLock(key interface{}) *sync.RWMutex {
 	return lk
 }
 
-func (lkr *locker) getLock(key interface{}) (*sync.RWMutex, bool) {
+func (lkr *locker) getLock(key any) (*sync.RWMutex, bool) {
 	lkr.locksRW.RLock()
 	defer lkr.locksRW.RUnlock()
 

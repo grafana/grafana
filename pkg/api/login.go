@@ -21,7 +21,6 @@ import (
 	pref "github.com/grafana/grafana/pkg/services/preference"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
@@ -29,6 +28,8 @@ import (
 const (
 	viewIndex            = "index"
 	loginErrorCookieName = "login_error"
+	// #nosec G101 - this is not a hardcoded secret
+	postLogoutRedirectParam = "post_logout_redirect_uri"
 )
 
 var setIndexViewData = (*HTTPServer).setIndexViewData
@@ -250,8 +251,20 @@ func (hs *HTTPServer) Logout(c *contextmodel.ReqContext) {
 		}
 	}
 
+	idTokenHint := ""
+	oidcLogout := isPostLogoutRedirectConfigured(hs.Cfg.SignoutRedirectUrl)
+
 	// Invalidate the OAuth tokens in case the User logged in with OAuth or the last external AuthEntry is an OAuth one
 	if entry, exists, _ := hs.oauthTokenService.HasOAuthEntry(c.Req.Context(), c.SignedInUser); exists {
+		token := hs.oauthTokenService.GetCurrentOAuthToken(c.Req.Context(), c.SignedInUser)
+		if oidcLogout {
+			if token.Valid() {
+				idTokenHint = token.Extra("id_token").(string)
+			} else {
+				hs.log.Warn("Token is not valid")
+			}
+		}
+
 		if err := hs.oauthTokenService.InvalidateOAuthTokens(c.Req.Context(), entry); err != nil {
 			hs.log.Warn("failed to invalidate oauth tokens for user", "userId", c.UserID, "error", err)
 		}
@@ -264,8 +277,12 @@ func (hs *HTTPServer) Logout(c *contextmodel.ReqContext) {
 
 	authn.DeleteSessionCookie(c.Resp, hs.Cfg)
 
-	if setting.SignoutRedirectUrl != "" {
-		c.Redirect(setting.SignoutRedirectUrl)
+	rdUrl := hs.Cfg.SignoutRedirectUrl
+	if rdUrl != "" {
+		if oidcLogout {
+			rdUrl = getPostRedirectUrl(hs.Cfg.SignoutRedirectUrl, idTokenHint)
+		}
+		c.Redirect(rdUrl)
 	} else {
 		hs.log.Info("Successful Logout", "User", c.Email)
 		c.Redirect(hs.Cfg.AppSubURL + "/login")
@@ -298,12 +315,12 @@ func (hs *HTTPServer) trySetEncryptedCookie(ctx *contextmodel.ReqContext, cookie
 	return nil
 }
 
-func (hs *HTTPServer) redirectWithError(c *contextmodel.ReqContext, err error, v ...interface{}) {
+func (hs *HTTPServer) redirectWithError(c *contextmodel.ReqContext, err error, v ...any) {
 	c.Logger.Warn(err.Error(), v...)
 	c.Redirect(hs.redirectURLWithErrorCookie(c, err))
 }
 
-func (hs *HTTPServer) RedirectResponseWithError(c *contextmodel.ReqContext, err error, v ...interface{}) *response.RedirectResponse {
+func (hs *HTTPServer) RedirectResponseWithError(c *contextmodel.ReqContext, err error, v ...any) *response.RedirectResponse {
 	c.Logger.Error(err.Error(), v...)
 	location := hs.redirectURLWithErrorCookie(c, err)
 	return response.Redirect(location)
@@ -373,4 +390,39 @@ func getFirstPublicErrorMessage(err *errutil.Error) string {
 	}
 
 	return errPublic.Message
+}
+
+func isPostLogoutRedirectConfigured(redirectUrl string) bool {
+	if redirectUrl == "" {
+		return false
+	}
+
+	u, err := url.Parse(redirectUrl)
+	if err != nil {
+		return false
+	}
+
+	q := u.Query()
+	_, ok := q[postLogoutRedirectParam]
+	return ok
+}
+
+func getPostRedirectUrl(rdUrl string, tokenHint string) string {
+	if tokenHint == "" {
+		return rdUrl
+	}
+	if rdUrl == "" {
+		return rdUrl
+	}
+
+	u, err := url.Parse(rdUrl)
+	if err != nil {
+		return rdUrl
+	}
+
+	q := u.Query()
+	q.Set("id_token_hint", tokenHint)
+	u.RawQuery = q.Encode()
+
+	return u.String()
 }

@@ -45,7 +45,6 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 
 		setup := func() {
 			sqlStore = db.InitTestDB(t)
-			sqlStore.Cfg.RBACEnabled = false
 			quotaService := quotatest.New(false, nil)
 			var err error
 			dashboardStore, err = ProvideDashboardStore(sqlStore, sqlStore.Cfg, testFeatureToggles, tagimpl.ProvideService(sqlStore, sqlStore.Cfg), quotaService)
@@ -247,7 +246,6 @@ func TestIntegrationDashboardInheritedFolderRBAC(t *testing.T) {
 
 	setup := func() {
 		sqlStore = db.InitTestDB(t)
-		sqlStore.Cfg.RBACEnabled = true
 		quotaService := quotatest.New(false, nil)
 
 		// enable nested folders so that the folder table is populated for all the tests
@@ -325,7 +323,7 @@ func TestIntegrationDashboardInheritedFolderRBAC(t *testing.T) {
 			UserID:   admin.UserID,
 			OrgID:    admin.OrgID,
 			IsFolder: false,
-			Dashboard: simplejson.NewFromAny(map[string]interface{}{
+			Dashboard: simplejson.NewFromAny(map[string]any{
 				"title": dashInRootTitle,
 			}),
 		}
@@ -336,7 +334,7 @@ func TestIntegrationDashboardInheritedFolderRBAC(t *testing.T) {
 			UserID:   admin.UserID,
 			OrgID:    admin.OrgID,
 			IsFolder: false,
-			Dashboard: simplejson.NewFromAny(map[string]interface{}{
+			Dashboard: simplejson.NewFromAny(map[string]any{
 				"title": dashInParentTitle,
 			}),
 			FolderID:  nestedFolders[0].ID,
@@ -349,7 +347,7 @@ func TestIntegrationDashboardInheritedFolderRBAC(t *testing.T) {
 			UserID:   admin.UserID,
 			OrgID:    admin.OrgID,
 			IsFolder: false,
-			Dashboard: simplejson.NewFromAny(map[string]interface{}{
+			Dashboard: simplejson.NewFromAny(map[string]any{
 				"title": dashInSubfolderTitle,
 			}),
 			FolderID:  nestedFolders[1].ID,

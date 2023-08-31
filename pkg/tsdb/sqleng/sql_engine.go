@@ -983,7 +983,7 @@ func convertSQLValueColumnToFloat(frame *data.Frame, Index int) (*data.Frame, er
 }
 
 func SetupFillmode(query *backend.DataQuery, interval time.Duration, fillmode string) error {
-	rawQueryProp := make(map[string]interface{})
+	rawQueryProp := make(map[string]any)
 	queryBytes, err := query.JSON.MarshalJSON()
 	if err != nil {
 		return err

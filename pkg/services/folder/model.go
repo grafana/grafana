@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/slugify"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errutil"
@@ -138,6 +139,7 @@ type GetFolderQuery struct {
 	OrgID int64
 
 	SignedInUser *user.SignedInUser `json:"-"`
+	Requester    identity.Requester `json:"-"`
 }
 
 // GetParentsQuery captures the information required by the folder service to
