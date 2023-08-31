@@ -11,6 +11,7 @@ import {
   RulerRulesConfigDTO,
 } from 'app/types/unified-alerting-dto';
 
+import { RuleExportFormats } from '../components/export/providers';
 import { Folder } from '../components/rule-editor/RuleFolderPicker';
 import { getDatasourceAPIUid, GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 import { arrayKeyValuesToObject } from '../utils/labels';
@@ -30,6 +31,7 @@ export type ResponseLabels = {
 };
 
 export type PreviewResponse = ResponseLabels[];
+
 export interface Datasource {
   type: string;
   uid: string;
@@ -49,6 +51,7 @@ export interface Data {
   datasourceUid: string;
   model: AlertQuery;
 }
+
 export interface GrafanaAlert {
   data?: Data;
   condition: string;
@@ -62,6 +65,7 @@ export interface Rule {
   labels: Labels;
   annotations: Annotations;
 }
+
 export type AlertInstances = Record<string, string>;
 
 export const alertRuleApi = alertingApi.injectEndpoints({
@@ -178,8 +182,8 @@ export const alertRuleApi = alertingApi.injectEndpoints({
       },
     }),
 
-    exportRule: build.query<string, { uid: string; format: 'yaml' | 'json' | 'hcl' }>({
-      query: ({ uid, format }) => ({ url: getProvisioningUrl(uid, format) }),
+    exportRule: build.query<string, { uid: string; format: RuleExportFormats }>({
+      query: ({ uid, format }) => ({ url: getProvisioningUrl(uid, format), responseType: 'text' }),
     }),
   }),
 });
