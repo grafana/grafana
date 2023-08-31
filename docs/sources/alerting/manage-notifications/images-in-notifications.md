@@ -90,11 +90,11 @@ We recommended that `max_concurrent_screenshots` is less than or equal to `concu
 Grafana supports a wide range of contact points with varied support for images in notifications. The table below shows the list of all contact points supported in Grafana and their support for uploading screenshots to the receiving service and referencing screenshots that have been uploaded to a cloud storage service.
 
 | Name                    | Upload from disk                                           | Reference from cloud storage                             |
-| ----------------------- | ---------------------------------------------------------- | -------------------------------------------------------- |
+|-------------------------| ---------------------------------------------------------- | -------------------------------------------------------- |
 | DingDing                | No                                                         | No                                                       |
 | Discord                 | Yes (Maximum of 10 per notification)                       | Yes (Maximum of 10 per notification)                     |
 | Email                   | Yes (Embedded in the email)                                | Yes                                                      |
-| Google Hangouts Chat    | No                                                         | Yes                                                      |
+| Google Chat             | No                                                         | Yes                                                      |
 | Kafka                   | No                                                         | No                                                       |
 | Line                    | No                                                         | No                                                       |
 | Microsoft Teams         | No                                                         | Yes                                                      |
