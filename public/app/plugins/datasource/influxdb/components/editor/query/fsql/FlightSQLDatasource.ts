@@ -1,5 +1,6 @@
 import { DataSourceInstanceSettings, TimeRange } from '@grafana/data';
 import { CompletionItemKind, LanguageDefinition, TableIdentifier } from '@grafana/experimental';
+import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { SqlDatasource } from 'app/features/plugins/sql/datasource/SqlDatasource';
 import { DB, SQLQuery } from 'app/features/plugins/sql/types';
 import { formatSQL } from 'app/features/plugins/sql/utils/formatSQL';
@@ -10,6 +11,10 @@ import { buildColumnQuery, buildTableQuery, showDatabases } from '../../../../..
 import { getSqlCompletionProvider } from '../../../../../mysql/sqlCompletionProvider';
 import { quoteIdentifierIfNecessary, quoteLiteral, toRawSql } from '../../../../../mysql/sqlUtil';
 import { MySQLOptions } from '../../../../../mysql/types';
+
+function getTimeRange() {
+  return getTimeSrv().timeRange();
+}
 
 export class FlightSQLDatasource extends SqlDatasource {
   sqlLanguageDefinition: LanguageDefinition | undefined;
@@ -39,13 +44,13 @@ export class FlightSQLDatasource extends SqlDatasource {
   }
 
   async fetchDatasets(): Promise<string[]> {
-    const datasets = await this.runSql<string[]>(showDatabases(), { refId: 'datasets' });
+    const datasets = await this.runSql<string[]>(showDatabases(), getTimeRange(), { refId: 'datasets' });
     return datasets.map((t) => quoteIdentifierIfNecessary(t[0]));
   }
 
   async fetchTables(dataset?: string): Promise<string[]> {
     const query = buildTableQuery(dataset);
-    const tables = await this.runSql<string[]>(query, { refId: 'tables' });
+    const tables = await this.runSql<string[]>(query, getTimeRange(), { refId: 'tables' });
     return tables.map((t) => quoteIdentifierIfNecessary(t[0]));
   }
 
@@ -54,7 +59,7 @@ export class FlightSQLDatasource extends SqlDatasource {
       return [];
     }
     const queryString = buildColumnQuery(query.table, query.dataset);
-    const frame = await this.runSql<string[]>(queryString, { refId: 'fields' });
+    const frame = await this.runSql<string[]>(queryString, getTimeRange(), { refId: 'fields' });
     const fields = frame.map((f) => ({
       name: f[0],
       text: f[0],

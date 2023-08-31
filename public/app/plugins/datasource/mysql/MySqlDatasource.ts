@@ -1,5 +1,6 @@
 import { DataSourceInstanceSettings, TimeRange } from '@grafana/data';
 import { CompletionItemKind, LanguageDefinition, TableIdentifier } from '@grafana/experimental';
+import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { SqlDatasource } from 'app/features/plugins/sql/datasource/SqlDatasource';
 import { DB, SQLQuery } from 'app/features/plugins/sql/types';
 import { formatSQL } from 'app/features/plugins/sql/utils/formatSQL';
@@ -9,6 +10,10 @@ import { buildColumnQuery, buildTableQuery, showDatabases } from './mySqlMetaQue
 import { getSqlCompletionProvider } from './sqlCompletionProvider';
 import { quoteIdentifierIfNecessary, quoteLiteral, toRawSql } from './sqlUtil';
 import { MySQLOptions } from './types';
+
+function getTimeRange() {
+  return getTimeSrv().timeRange();
+}
 
 export class MySqlDatasource extends SqlDatasource {
   sqlLanguageDefinition: LanguageDefinition | undefined;
@@ -40,12 +45,12 @@ export class MySqlDatasource extends SqlDatasource {
   }
 
   async fetchDatasets(): Promise<string[]> {
-    const datasets = await this.runSql<string[]>(showDatabases(), { refId: 'datasets' });
+    const datasets = await this.runSql<string[]>(showDatabases(), getTimeRange(), { refId: 'datasets' });
     return datasets.map((t) => quoteIdentifierIfNecessary(t[0]));
   }
 
   async fetchTables(dataset?: string): Promise<string[]> {
-    const tables = await this.runSql<string[]>(buildTableQuery(dataset), { refId: 'tables' });
+    const tables = await this.runSql<string[]>(buildTableQuery(dataset), getTimeRange(), { refId: 'tables' });
     return tables.map((t) => quoteIdentifierIfNecessary(t[0]));
   }
 
@@ -54,7 +59,7 @@ export class MySqlDatasource extends SqlDatasource {
       return [];
     }
     const queryString = buildColumnQuery(query.table, query.dataset);
-    const frame = await this.runSql<string[]>(queryString, { refId: 'fields' });
+    const frame = await this.runSql<string[]>(queryString, getTimeRange(), { refId: 'fields' });
     const fields = frame.map((f) => ({
       name: f[0],
       text: f[0],

@@ -1,6 +1,7 @@
 import { DataSourceInstanceSettings, ScopedVars } from '@grafana/data';
 import { LanguageDefinition } from '@grafana/experimental';
 import { TemplateSrv } from '@grafana/runtime';
+import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { SqlDatasource } from 'app/features/plugins/sql/datasource/SqlDatasource';
 import { DB, SQLQuery, SQLSelectableValue } from 'app/features/plugins/sql/types';
 import { formatSQL } from 'app/features/plugins/sql/utils/formatSQL';
@@ -10,6 +11,10 @@ import { MSSqlQueryModel } from './MSSqlQueryModel';
 import { fetchColumns, fetchTables, getSqlCompletionProvider } from './sqlCompletionProvider';
 import { getIcon, getRAQBType, toRawSql } from './sqlUtil';
 import { MssqlOptions } from './types';
+
+function getTimeRange() {
+  return getTimeSrv().timeRange();
+}
 
 export class MssqlDatasource extends SqlDatasource {
   sqlLanguageDefinition: LanguageDefinition | undefined = undefined;
@@ -22,13 +27,15 @@ export class MssqlDatasource extends SqlDatasource {
   }
 
   async fetchDatasets(): Promise<string[]> {
-    const datasets = await this.runSql<{ name: string[] }>(showDatabases(), { refId: 'datasets' });
+    const datasets = await this.runSql<{ name: string[] }>(showDatabases(), getTimeRange(), { refId: 'datasets' });
     return datasets.fields.name?.values.flat() ?? [];
   }
 
   async fetchTables(dataset?: string): Promise<string[]> {
     // We get back the table name with the schema as well. like dbo.table
-    const tables = await this.runSql<{ schemaAndName: string[] }>(getSchemaAndName(dataset), { refId: 'tables' });
+    const tables = await this.runSql<{ schemaAndName: string[] }>(getSchemaAndName(dataset), getTimeRange(), {
+      refId: 'tables',
+    });
     return tables.fields.schemaAndName?.values.flat() ?? [];
   }
 
@@ -37,9 +44,13 @@ export class MssqlDatasource extends SqlDatasource {
       return [];
     }
     const [_, table] = query.table.split('.');
-    const schema = await this.runSql<{ column: string; type: string }>(getSchema(query.dataset, table), {
-      refId: 'columns',
-    });
+    const schema = await this.runSql<{ column: string; type: string }>(
+      getSchema(query.dataset, table),
+      getTimeRange(),
+      {
+        refId: 'columns',
+      }
+    );
     const result: SQLSelectableValue[] = [];
     for (let i = 0; i < schema.length; i++) {
       const column = schema.fields.column.values[i];

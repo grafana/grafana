@@ -1,5 +1,6 @@
 import { DataSourceInstanceSettings, ScopedVars } from '@grafana/data';
 import { LanguageDefinition } from '@grafana/experimental';
+import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { SqlDatasource } from 'app/features/plugins/sql/datasource/SqlDatasource';
 import { DB, SQLQuery, SQLSelectableValue } from 'app/features/plugins/sql/types';
 import { formatSQL } from 'app/features/plugins/sql/utils/formatSQL';
@@ -10,6 +11,10 @@ import { getSchema, getTimescaleDBVersion, getVersion, showTables } from './post
 import { fetchColumns, fetchTables, getSqlCompletionProvider } from './sqlCompletionProvider';
 import { getFieldConfig, toRawSql } from './sqlUtil';
 import { PostgresOptions } from './types';
+
+function getTimeRange() {
+  return getTimeSrv().timeRange();
+}
 
 export class PostgresDatasource extends SqlDatasource {
   sqlLanguageDefinition: LanguageDefinition | undefined = undefined;
@@ -23,7 +28,7 @@ export class PostgresDatasource extends SqlDatasource {
   }
 
   async getVersion(): Promise<string> {
-    const value = await this.runSql<{ version: number }>(getVersion());
+    const value = await this.runSql<{ version: number }>(getVersion(), getTimeRange());
     const results = value.fields.version?.values;
 
     if (!results) {
@@ -34,7 +39,7 @@ export class PostgresDatasource extends SqlDatasource {
   }
 
   async getTimescaleDBVersion(): Promise<string | undefined> {
-    const value = await this.runSql<{ extversion: string }>(getTimescaleDBVersion());
+    const value = await this.runSql<{ extversion: string }>(getTimescaleDBVersion(), getTimeRange());
     const results = value.fields.extversion?.values;
 
     if (!results) {
@@ -45,7 +50,7 @@ export class PostgresDatasource extends SqlDatasource {
   }
 
   async fetchTables(): Promise<string[]> {
-    const tables = await this.runSql<{ table: string[] }>(showTables(), { refId: 'tables' });
+    const tables = await this.runSql<{ table: string[] }>(showTables(), getTimeRange(), { refId: 'tables' });
     return tables.fields.table?.values.flat() ?? [];
   }
 
@@ -67,7 +72,9 @@ export class PostgresDatasource extends SqlDatasource {
   }
 
   async fetchFields(query: SQLQuery): Promise<SQLSelectableValue[]> {
-    const schema = await this.runSql<{ column: string; type: string }>(getSchema(query.table), { refId: 'columns' });
+    const schema = await this.runSql<{ column: string; type: string }>(getSchema(query.table), getTimeRange(), {
+      refId: 'columns',
+    });
     const result: SQLSelectableValue[] = [];
     for (let i = 0; i < schema.length; i++) {
       const column = schema.fields.column.values[i];
