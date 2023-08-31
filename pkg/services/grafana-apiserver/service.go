@@ -7,11 +7,12 @@ import (
 	"os"
 	"path"
 	"strconv"
+	"strings"
 
-	"cuelang.org/go/pkg/strings"
 	"github.com/go-logr/logr"
 	"github.com/grafana/dskit/services"
 	grafanaapiserveroptions "github.com/grafana/grafana-apiserver/pkg/cmd/server/options"
+	"github.com/grafana/grafana/pkg/modules"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"k8s.io/apiserver/pkg/authentication/authenticator"
 	"k8s.io/apiserver/pkg/authentication/request/headerrequest"
@@ -72,7 +73,7 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, rr ro
 		stopCh:   make(chan struct{}),
 	}
 
-	s.BasicService = services.NewBasicService(s.start, s.running, nil).WithName("grafana-apiserver")
+	s.BasicService = services.NewBasicService(s.start, s.running, nil).WithName(modules.GrafanaAPIServer)
 
 	s.rr.Group("/k8s", func(k8sRoute routing.RouteRegister) {
 		handler := func(c *contextmodel.ReqContext) {
@@ -91,7 +92,7 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, rr ro
 		k8sRoute.Any("/*", middleware.ReqSignedIn, handler)
 	})
 
-	s.BasicService = services.NewBasicService(s.start, s.running, nil).WithName("grafana-apiserver")
+	s.BasicService = services.NewBasicService(s.start, s.running, nil).WithName(modules.GrafanaAPIServer)
 	if err := s.BasicService.StartAsync(context.Background()); err != nil {
 		s.log.Error("failed to start service", "err", err)
 		return nil, err
@@ -120,7 +121,6 @@ func (s *service) start(ctx context.Context) error {
 	o.RecommendedOptions.Authorization.AlwaysAllowPaths = []string{"*"}
 	o.RecommendedOptions.Authorization.AlwaysAllowGroups = []string{user.SystemPrivilegedGroup, "grafana"}
 	o.RecommendedOptions.Etcd = nil
-	// TODO: setting CoreAPI to nil currently segfaults in grafana-apiserver
 	o.RecommendedOptions.CoreAPI = nil
 
 	// Get the util to get the paths to pre-generated certs
@@ -128,13 +128,11 @@ func (s *service) start(ctx context.Context) error {
 		K8sDataPath: s.dataPath,
 	}
 
-	err := certUtil.InitializeCACertPKI()
-	if err != nil {
+	if err := certUtil.InitializeCACertPKI(); err != nil {
 		return err
 	}
 
-	err = certUtil.EnsureApiServerPKI(certgenerator.DefaultAPIServerIp)
-	if err != nil {
+	if err := certUtil.EnsureApiServerPKI(certgenerator.DefaultAPIServerIp); err != nil {
 		return err
 	}
 
