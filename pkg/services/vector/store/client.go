@@ -7,6 +7,8 @@ import (
 )
 
 // Client is a client for interacting with a vector store.
+// The methods of this interface are named after the qdrant API but
+// can probably be renamed to be more generic.
 type Client interface {
 	Collections(ctx context.Context) ([]string, error)
 	CollectionExists(ctx context.Context, collection string) (bool, error)
