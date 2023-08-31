@@ -182,21 +182,6 @@ export class PanelChromeAngularUnconnected extends PureComponent<Props, State> {
 
     const panelChromeProps = getPanelChromeProps({ ...this.props, data });
 
-    // todo delete css classes if not used
-    // const containerClassNames = classNames({
-    //   'panel-container': true,
-    //   'panel-container--absolute': isSoloRoute(locationService.getLocation().pathname),
-    //   'panel-container--transparent': transparent,
-    //   'panel-container--no-title': this.hasOverlayHeader(),
-    //   'panel-has-alert': panel.alert !== undefined,
-    //   [`panel-alert-state--${alertState}`]: alertState !== undefined,
-    // });
-
-    // const panelContentClassNames = classNames({
-    //   'panel-content': true,
-    //   'panel-content--no-padding': plugin.noPadding,
-    // });
-
     // Shift the hover menu down if it's on the top row so it doesn't get clipped by topnav
     const hoverHeaderOffset = (panel.gridPos?.y ?? 0) === 0 ? -16 : undefined;
 

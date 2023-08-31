@@ -522,15 +522,6 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
     const { errorMessage, data } = this.state;
     const { transparent } = panel;
 
-    // todo delete css classes if not used
-    // const containerClassNames = classNames({
-    //   'panel-container': true,
-    //   'panel-container--absolute': isSoloRoute(locationService.getLocation().pathname),
-    //   'panel-container--transparent': transparent,
-    //   'panel-container--no-title': hasHoverHeader,
-    //   [`panel-alert-state--${alertState}`]: alertState !== undefined,
-    // });
-
     const panelChromeProps = getPanelChromeProps({ ...this.props, data });
 
     // Shift the hover menu down if it's on the top row so it doesn't get clipped by topnav

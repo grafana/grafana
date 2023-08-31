@@ -11,6 +11,7 @@ import { setTimeSrv, TimeSrv } from '../services/TimeSrv';
 import { DashboardModel, PanelModel } from '../state';
 
 import { PanelStateWrapper, Props } from './PanelStateWrapper';
+import { selectors } from '@grafana/e2e-selectors';
 
 jest.mock('app/core/profiler', () => ({
   profiler: {
@@ -128,7 +129,7 @@ describe('PanelStateWrapper', () => {
         );
 
         const button = screen.getByRole('button', {
-          name: "Panel status",
+          name: selectors.components.Panels.Panel.status,
         });
         expect(button).toBeInTheDocument();
         await act(async () => {
