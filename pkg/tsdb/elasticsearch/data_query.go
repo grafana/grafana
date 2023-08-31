@@ -41,8 +41,8 @@ func (e *elasticsearchDataQuery) execute() (*backend.QueryDataResponse, error) {
 	e.logger.Debug("Parsing queries", "queriesLength", len(e.dataQueries))
 	queries, err := parseQuery(e.dataQueries, e.logger)
 	if err != nil {
-		dq, _ := json.Marshal(e.dataQueries)
-		e.logger.Error("Failed to parse queries", "err", err, "queries", string(dq), "took", time.Since(start))
+		mq, _ := json.Marshal(e.dataQueries)
+		e.logger.Error("Failed to parse queries", "err", err, "queries", string(mq), "took", time.Since(start))
 		return &backend.QueryDataResponse{}, err
 	}
 

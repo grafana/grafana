@@ -126,6 +126,7 @@ func (c *baseClientImpl) encodeBatchRequests(requests []*multiRequest) ([]byte, 
 }
 
 func (c *baseClientImpl) executeRequest(method, uriPath, uriQuery string, body []byte) (*http.Response, error) {
+	c.logger.Debug("Sending request to Elasticsearch", "url", c.ds.URL)
 	u, err := url.Parse(c.ds.URL)
 	if err != nil {
 		return nil, err
@@ -157,12 +158,10 @@ func (c *baseClientImpl) ExecuteMultisearch(r *MultiSearchRequest) (*MultiSearch
 
 	multiRequests := c.createMultiSearchRequests(r.Requests)
 	queryParams := c.getMultiSearchQueryParameters()
-	c.logger.Debug("Sending request to Elasticsearch", "requestsLength", len(r.Requests), "url", c.ds.URL)
 	start := time.Now()
 	clientRes, err := c.executeBatchRequest("_msearch", queryParams, multiRequests)
 	if err != nil {
 		c.logger.Error("Error received from Elasticsearch", "err", err, "status", clientRes.StatusCode, "took", time.Since(start))
-
 		return nil, err
 	}
 	res := clientRes
@@ -183,7 +182,7 @@ func (c *baseClientImpl) ExecuteMultisearch(r *MultiSearchRequest) (*MultiSearch
 		return nil, err
 	}
 
-	c.logger.Debug("Successfully decoded response from Elasticsearch", "took", time.Since(start))
+	c.logger.Debug("Completed decoding of response from Elasticsearch", "took", time.Since(start))
 
 	msr.Status = res.StatusCode
 
