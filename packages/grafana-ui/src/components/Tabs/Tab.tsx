@@ -68,11 +68,13 @@ const getStyles = (theme: GrafanaTheme2) => {
       position: 'relative',
       display: 'flex',
       whiteSpace: 'nowrap',
-      backgroundColor: `${theme.colors.background.secondary}`,
+      // backgroundColor: `${theme.colors.background.secondary}`,
       marginBottom: '0px',
     }),
     itemActive: css({
       backgroundColor: `${theme.colors.background.primary}`,
+      borderLeft: `1px solid ${theme.components.panel.borderColor}`,
+      borderRight: `1px solid ${theme.components.panel.borderColor}`,
       borderBottom: 0,
     }),
     link: css({
