@@ -134,7 +134,7 @@ The default values for "cloud monitoring auto" are:
 
 The other automatic option is "grafana auto", which automatically sets the Group By time depending on the time range chosen and width of the time series panel.
 
-For more information about "grafana auto", refer to [Interval variable]({{< relref "../../../dashboards/variables/add-template-variables/#add-an-interval-variable" >}}).
+For more information about "grafana auto", refer to [Interval variable]({{< relref "../dashboards/variables/add-template-variables/#add-an-interval-variable" >}}).
 
 You can also choose fixed time intervals to group by, like `1h` or `1d`.
 
