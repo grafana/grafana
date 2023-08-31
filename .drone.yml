@@ -3224,13 +3224,12 @@ steps:
   image: grafana/build-container:1.7.5
   name: test-frontend
 trigger:
-  cron:
-  - nightly-release
   event:
-  - promote
-  - cron
+    include:
+    - promote
   target:
-  - nightly
+    include:
+    - nightly
 type: docker
 volumes:
 - host:
@@ -3302,13 +3301,12 @@ steps:
   image: grafana/build-container:1.7.5
   name: test-backend-integration
 trigger:
-  cron:
-  - nightly-release
   event:
-  - promote
-  - cron
+    include:
+    - promote
   target:
-  - nightly
+    include:
+    - nightly
 type: docker
 volumes:
 - host:
@@ -3354,13 +3352,12 @@ steps:
   - name: docker
     path: /var/run/docker.sock
 trigger:
-  cron:
-  - nightly-release
   event:
-  - promote
-  - cron
+    include:
+    - promote
   target:
-  - nightly
+    include:
+    - nightly
 type: docker
 volumes:
 - host:
@@ -3419,13 +3416,12 @@ steps:
   image: grafana/ci-wix:0.1.1
   name: build-windows-installer
 trigger:
-  cron:
-  - nightly-release
   event:
-  - promote
-  - cron
+    include:
+    - promote
   target:
-  - nightly
+    include:
+    - nightly
 type: docker
 volumes:
 - host:
@@ -3463,13 +3459,12 @@ steps:
   image: google/cloud-sdk:431.0.0
   name: gsutil-stat
 trigger:
-  cron:
-  - nightly-release
   event:
-  - promote
-  - cron
+    include:
+    - promote
   target:
-  - nightly
+    include:
+    - nightly
 type: docker
 volumes:
 - host:
@@ -4980,6 +4975,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: e25da811f0f5cbe68708c3b0b79f87cb245114147be0cf5a9489a68b158cac4e
+hmac: 3bb67f1111bebc32fa75c115298b1b52a4f706cce753fe663c4dc5e4f5ed2690
 
 ...

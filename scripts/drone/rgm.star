@@ -63,16 +63,22 @@ tag_trigger = {
 }
 
 nightly_trigger = {
-    "event": [
-        "promote",
-        "cron",
-    ],
-    "target": [
-        "nightly",
-    ],
-    "cron": [
-        "nightly-release",
-    ],
+    "event": {
+        "include": [
+            "promote",
+            # "cron",
+        ],
+    },
+    "target": {
+        "include": [
+            "nightly",
+        ],
+    },
+    # "cron": {
+    #     "include": [
+    #         "nightly-release",
+    #     ],
+    # },
 }
 
 def rgm_build(script = "drone_publish_main.sh", canFail = True, bucket = "grafana-prerelease"):
