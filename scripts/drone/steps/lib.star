@@ -1321,7 +1321,7 @@ def get_windows_steps(ver_mode, bucket = "%PRERELEASE_BUCKET%"):
         ]
 
         if ver_mode in ("release", "nightly", "tag"):
-            version = "${DRONE_TAG:1}"
+            version = ver_part[1:]
             installer_commands.extend(
                 [
                     ".\\grabpl.exe windows-installer --target {} --edition oss {}".format(
