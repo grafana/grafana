@@ -24,11 +24,6 @@ export const CloudEvaluationBehavior = () => {
   const type = watch('type');
   const dataSourceName = watch('dataSourceName');
 
-  // cloud recording rules do not have alert conditions
-  if (type === RuleFormType.cloudRecording) {
-    return null;
-  }
-
   return (
     <RuleEditorSection stepNo={3} title="Set alert evaluation behavior">
       <Field
