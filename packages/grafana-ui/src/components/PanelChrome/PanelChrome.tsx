@@ -139,7 +139,7 @@ export function PanelChrome({
   const isPanelTransparent = displayMode === 'transparent';
 
   const headerHeight = getHeaderHeight(theme, hasHeader);
-  const { contentStyle, innerWidth, innerHeight } = getContentStyle(
+  const { contentStyle, innerWidth, innerHeight, collapsedHeight } = getContentStyle(
     padding,
     theme,
     headerHeight,
@@ -153,7 +153,7 @@ export function PanelChrome({
     cursor: dragClass ? 'move' : 'auto',
   };
 
-  const containerStyles: CSSProperties = { width, height: !collapsed ? height : headerHeight };
+  const containerStyles: CSSProperties = { width, height: !collapsed ? height : collapsedHeight };
   const [ref, { width: loadingBarWidth }] = useMeasure<HTMLDivElement>();
 
   /** Old property name now maps to actions */
@@ -341,7 +341,9 @@ const getContentStyle = (
     padding: chromePadding,
   };
 
-  return { contentStyle, innerWidth, innerHeight };
+  const collapsedHeight = headerHeight + panelBorder;
+
+  return { contentStyle, innerWidth, innerHeight, collapsedHeight };
 };
 
 const getStyles = (theme: GrafanaTheme2) => {
@@ -351,7 +353,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     container: css({
       label: 'panel-container',
       backgroundColor: background,
-      outline: `1px solid ${borderColor}`,
+      border: `1px solid ${borderColor}`,
       position: 'relative',
       borderRadius: theme.shape.radius.default,
       height: '100%',
