@@ -16,12 +16,12 @@ import { TimeOverrideResult } from 'app/features/dashboard/utils/panel';
 interface PanelTimeRangeState extends SceneTimeRangeState {
   timeFrom?: string;
   timeShift?: string;
+  //hideTimeOverride
+  timeInfo?: string;
 }
 
 export class PanelTimeRange extends SceneObjectBase<PanelTimeRangeState> implements SceneTimeRangeLike {
   public static Component = PanelTimeRangeRenderer;
-
-  private overrideResult: TimeOverrideResult | null = null;
 
   public constructor(state: Partial<PanelTimeRangeState> = {}) {
     const from = state.from ?? 'now-6h';
@@ -86,8 +86,8 @@ export class PanelTimeRange extends SceneObjectBase<PanelTimeRangeState> impleme
   }
 
   private handleParentTimeRangeChanged(parentTimeRange: TimeRange) {
-    this.overrideResult = this.getTimeOverride(parentTimeRange);
-    this.setState({ value: this.overrideResult.timeRange });
+    const overrideResult = this.getTimeOverride(parentTimeRange);
+    this.setState({ value: overrideResult.timeRange, timeInfo: overrideResult.timeInfo });
   }
 
   private getParentTimeRange(): SceneTimeRangeLike {
@@ -115,10 +115,6 @@ export class PanelTimeRange extends SceneObjectBase<PanelTimeRangeState> impleme
   public getTimeZone(): string {
     return this.getParentTimeRange().getTimeZone();
   }
-
-  public getOverrideInfo(): string | undefined {
-    return this.overrideResult?.timeInfo;
-  }
 }
 
 function evaluateTimeRange(from: string, to: string, timeZone: TimeZone, fiscalYearStartMonth?: number): TimeRange {
@@ -133,7 +129,7 @@ function evaluateTimeRange(from: string, to: string, timeZone: TimeZone, fiscalY
 }
 
 function PanelTimeRangeRenderer({ model }: SceneComponentProps<PanelTimeRange>) {
-  const timeInfo = model.getOverrideInfo();
+  const { timeInfo } = model.useState();
   const styles = useStyles2(getStyles);
 
   if (!timeInfo) {
@@ -143,7 +139,7 @@ function PanelTimeRangeRenderer({ model }: SceneComponentProps<PanelTimeRange>) 
   return (
     <Tooltip content={<TimePickerTooltip timeRange={model.state.value} timeZone={model.getTimeZone()} />}>
       <PanelChrome.TitleItem className={styles.timeshift}>
-        <Icon name="clock-nine" size="sm" /> {model.getOverrideInfo()}
+        <Icon name="clock-nine" size="sm" /> {timeInfo}
       </PanelChrome.TitleItem>
     </Tooltip>
   );
@@ -152,9 +148,7 @@ function PanelTimeRangeRenderer({ model }: SceneComponentProps<PanelTimeRange>) 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
     timeshift: css({
-      color: theme.colors.text.primary,
-      fontWeight: theme.typography.fontWeightMedium,
-      fontSize: theme.typography.bodySmall.fontSize,
+      color: theme.colors.text.link,
       gap: theme.spacing(0.5),
     }),
   };
