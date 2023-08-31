@@ -53,7 +53,7 @@ func (e *elasticsearchDataQuery) execute() (*backend.QueryDataResponse, error) {
 	for _, q := range queries {
 		if err := e.processQuery(q, ms, from, to); err != nil {
 			mq, _ := json.Marshal(q)
-			e.logger.Error("Failed to process query", "err", err, "query", string(mq))
+			e.logger.Error("Failed to process query to multisearch request builder", "err", err, "query", string(mq))
 			return &backend.QueryDataResponse{}, err
 		}
 	}
