@@ -1,33 +1,39 @@
-import React, { useMemo, useState } from 'react';
+import React, { useState } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
-import { CodeEditor, Drawer, useStyles2 } from '@grafana/ui';
+import { CodeEditor, Drawer, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
 
 import { alertRuleApi } from '../../api/alertRuleApi';
+import { grafanaRuleExportProviders, RuleExportFormats } from '../export/providers';
 
-import { drawerStyles, RuleInspectorSubtitle, yamlTabStyle } from './RuleInspector';
+import { RuleInspectorTabs, yamlTabStyle } from './RuleInspector';
 
 interface Props {
   onClose: () => void;
   alertUid: string;
 }
 
-export const GrafanaRuleInspector = ({ onClose, alertUid }: Props) => {
-  const [activeTab, setActiveTab] = useState('yaml');
+const grafanaRulesTabs = Object.values(grafanaRuleExportProviders).map((provider) => ({
+  label: provider.name,
+  value: provider.exportFormat,
+}));
 
-  const styles = useStyles2(drawerStyles);
+export const GrafanaRuleInspector = ({ onClose, alertUid }: Props) => {
+  const [activeTab, setActiveTab] = useState<RuleExportFormats>('yaml');
 
   return (
     <Drawer
       title="Inspect Alert rule"
-      subtitle={
-        <div className={styles.subtitle}>
-          <RuleInspectorSubtitle setActiveTab={setActiveTab} activeTab={activeTab} />
-        </div>
+      tabs={
+        <RuleInspectorTabs<RuleExportFormats>
+          tabs={grafanaRulesTabs}
+          setActiveTab={setActiveTab}
+          activeTab={activeTab}
+        />
       }
       onClose={onClose}
     >
-      {activeTab === 'yaml' && <GrafanaInspectorYamlTab alertUid={alertUid} />}
+      <GrafanaInspectorRuleDefinition alertUid={alertUid} exportFormat={activeTab} />
     </Drawer>
   );
 };
@@ -36,38 +42,44 @@ const { useExportRuleQuery } = alertRuleApi;
 
 interface YamlTabProps {
   alertUid: string;
+  exportFormat: RuleExportFormats;
 }
 
-const GrafanaInspectorYamlTab = ({ alertUid }: YamlTabProps) => {
+const GrafanaInspectorRuleDefinition = ({ alertUid, exportFormat }: YamlTabProps) => {
   const styles = useStyles2(yamlTabStyle);
 
-  const { currentData: ruleYamlConfig, isLoading } = useExportRuleQuery({ uid: alertUid, format: 'yaml' });
+  const { currentData: ruleTextDefinition = '', isFetching } = useExportRuleQuery({
+    uid: alertUid,
+    format: exportFormat,
+  });
 
-  const yamlRule = useMemo(() => ruleYamlConfig, [ruleYamlConfig]);
-
-  if (isLoading) {
-    return <div>Loading...</div>;
+  if (isFetching) {
+    return <LoadingPlaceholder text="Loading...." />;
   }
 
+  const provider = grafanaRuleExportProviders[exportFormat];
+  const formattedTextDefinition = provider.formatter ? provider.formatter(ruleTextDefinition) : ruleTextDefinition;
+
   return (
-    <>
-      <div className={styles.content}>
-        <AutoSizer disableWidth>
-          {({ height }) => (
-            <CodeEditor
-              width="100%"
-              height={height}
-              language="yaml"
-              value={yamlRule || ''}
-              monacoOptions={{
-                minimap: {
-                  enabled: false,
-                },
-              }}
-            />
-          )}
-        </AutoSizer>
-      </div>
-    </>
+    // TODO Handle empty content
+    <div className={styles.content}>
+      <AutoSizer disableWidth>
+        {({ height }) => (
+          <CodeEditor
+            width="100%"
+            height={height}
+            language={exportFormat}
+            value={formattedTextDefinition}
+            monacoOptions={{
+              minimap: {
+                enabled: false,
+              },
+              lineNumbers: 'on',
+              readOnly: true,
+            }}
+          />
+        )}
+      </AutoSizer>
+    </div>
   );
 };

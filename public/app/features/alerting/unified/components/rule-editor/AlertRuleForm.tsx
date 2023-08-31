@@ -259,7 +259,7 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
           disabled={submitState.loading}
           size="sm"
         >
-          {isCortexLokiOrRecordingRule(watch) ? 'Edit YAML' : 'View YAML'}
+          {isCortexLokiOrRecordingRule(watch) ? 'Edit YAML' : 'Export'}
         </Button>
       ) : null}
     </HorizontalGroup>
