@@ -49,7 +49,7 @@ export function QueryHeader({
 
   const onEditorModeChange = useCallback(
     (newEditorMode: EditorMode) => {
-      reportInteraction('grafana_sql_editor_changed', {
+      reportInteraction('grafana_sql_editor_mode_changed', {
         datasource: query.datasource?.type,
         selectedEditorMode: newEditorMode,
       });
