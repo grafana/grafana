@@ -40,16 +40,6 @@ type Service struct {
 	im  instancemgmt.InstanceManager
 }
 
-func NewBackendServerOpts(cfg *setting.Cfg, httpClientProvider httpclient.Provider) *backend.ServeOpts {
-	s := ProvideService(cfg, httpClientProvider)
-	return &backend.ServeOpts{
-		CheckHealthHandler: s,
-		//CallResourceHandler: s,
-		QueryDataHandler: s,
-		//StreamHandler:       s,
-	}
-}
-
 func characterEscape(s string, escapeChar string) string {
 	return strings.ReplaceAll(s, escapeChar, url.QueryEscape(escapeChar))
 }

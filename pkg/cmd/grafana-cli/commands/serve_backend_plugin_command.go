@@ -9,9 +9,14 @@ import (
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/utils"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/hooks"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/setting"
+	cloudmonitoring "github.com/grafana/grafana/pkg/tsdb/cloud-monitoring"
+	"github.com/grafana/grafana/pkg/tsdb/elasticsearch"
+	phlare "github.com/grafana/grafana/pkg/tsdb/grafana-pyroscope-datasource"
 	"github.com/grafana/grafana/pkg/tsdb/loki"
 	"github.com/grafana/grafana/pkg/tsdb/mssql"
 	"github.com/grafana/grafana/pkg/tsdb/mysql"
@@ -33,9 +38,12 @@ func serveBackendPluginCommand(context *cli.Context) error {
 		return err
 	}
 
-	// Setup standard wire things (if complex, we could use wire?)
+	// Setup standard wire things (if complex, we could actually use wire!)
 	clientprovider := httpclient.NewProvider(sdkhttpclient.ProviderOptions{})
-	features, err := featuremgmt.ProvideManagerService(cfg, licensing.ProvideService(cfg, nil))
+	features, err := featuremgmt.ProvideManagerService(cfg,
+		licensing.ProvideService(cfg,
+			hooks.ProvideService(), // <<< obviously wrong!
+		))
 	if err != nil {
 		return err
 	}
@@ -86,6 +94,31 @@ func serveBackendPluginCommand(context *cli.Context) error {
 			CallResourceHandler: s,
 			QueryDataHandler:    s,
 			StreamHandler:       s,
+		}
+	case "cloud-monitoring":
+		s := cloudmonitoring.ProvideService(clientprovider, tracer)
+		opts = &backend.ServeOpts{
+			CheckHealthHandler:  s,
+			CallResourceHandler: s,
+			QueryDataHandler:    s,
+			//StreamHandler:       s,
+		}
+	case "elasticsearch":
+		s := elasticsearch.ProvideService(clientprovider)
+		opts = &backend.ServeOpts{
+			//	CheckHealthHandler:  s,
+			CallResourceHandler: s,
+			QueryDataHandler:    s,
+			//StreamHandler:       s,
+		}
+	case "grafana-pyroscope-datasource":
+		ac := acimpl.ProvideAccessControl(cfg)
+		s := phlare.ProvideService(clientprovider, ac)
+		opts = &backend.ServeOpts{
+			CheckHealthHandler:  s,
+			CallResourceHandler: s,
+			QueryDataHandler:    s,
+			//StreamHandler:       s,
 		}
 	default:
 		return fmt.Errorf("missing <pluginid> (only core work now!)")
