@@ -35,10 +35,10 @@ The default traces search reviews the whole trace.
 TraceQL provides a method for formulating precise queries so you can zoom in to the data you need.
 Query results are returned faster because the queries limit what is searched.
 
-To learn more about how to query by TraceQL, refer to the [TraceQL documentation](/docs/tempo/latest/traceql).
-
 You can compose TraceQL queries in Grafana and Grafana Cloud using **Explore** and a Tempo data source. You can use either the **Query type** > **Search** (the TraceQL query builder) or the **TraceQL** tab (the TraceQL query editor).
 Both of these methods let you build queries and drill-down into result sets.
+
+To learn more about how to query by TraceQL, refer to the [TraceQL documentation](/docs/tempo/latest/traceql).
 
 ### TraceQL query builder
 
