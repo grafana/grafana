@@ -15,7 +15,7 @@ cd "$DIR"
 
 protoc \
   -I ./ \
-  -I ../../../../ \
+  -I ../../../ \
   --go_out=${DST_DIR} \
   --go_opt=paths=source_relative \
   --go-grpc_out=${DST_DIR} \
