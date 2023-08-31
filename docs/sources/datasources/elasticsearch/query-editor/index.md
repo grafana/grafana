@@ -47,9 +47,9 @@ There are several different types of queries you can create using the Elasticsea
 
 Regardless of query type, you can create multiple queries by clicking **+ Add query**.
 
-### Inspector
+### Query inspector
 
-Click **Inspector** to get detailed statistics regarding your query. Inspector functions as a kind of debugging tool that "inspects" your query. It provides query statistics under **Stats**, request response time under **Query**, data frame details under **{} JSON**, and the shape of your data under **Data**.
+Click **Query inspector** to get detailed statistics regarding your query. Query inspector functions as a kind of debugging tool that "inspects" your query. It provides query statistics under **Stats**, request response time under **Query**, data frame details under **{} JSON**, and the shape of your data under **Data**.
 
 ## Select a query type
 
