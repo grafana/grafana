@@ -33,7 +33,7 @@ labels:
     - enterprise
     - oss
 title: Geomap
-weight: 600
+weight: 100
 ---
 
 # Geomap

@@ -30,7 +30,7 @@ labels:
     - enterprise
     - oss
 title: Time series
-weight: 90
+weight: 10
 ---
 
 # Time series

@@ -14,7 +14,7 @@ labels:
     - enterprise
     - oss
 title: Status history
-weight: 900
+weight: 100
 ---
 
 # Status history

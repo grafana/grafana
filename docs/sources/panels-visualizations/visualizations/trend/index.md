@@ -13,7 +13,7 @@ labels:
     - enterprise
     - oss
 title: Trend
-weight: 1200
+weight: 100
 ---
 
 # Trend

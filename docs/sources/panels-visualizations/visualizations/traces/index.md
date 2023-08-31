@@ -13,7 +13,7 @@ labels:
     - enterprise
     - oss
 title: Traces
-weight: 850
+weight: 100
 ---
 
 # Traces panel

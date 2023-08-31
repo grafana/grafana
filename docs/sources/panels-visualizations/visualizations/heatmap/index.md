@@ -14,7 +14,7 @@ labels:
     - enterprise
     - oss
 title: Heatmap
-weight: 600
+weight: 100
 ---
 
 # Heatmap

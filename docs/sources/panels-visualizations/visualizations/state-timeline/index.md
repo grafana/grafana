@@ -14,7 +14,7 @@ labels:
     - enterprise
     - oss
 title: State timeline
-weight: 900
+weight: 100
 ---
 
 # State timeline
