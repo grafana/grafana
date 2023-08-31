@@ -81,10 +81,10 @@ nightly_trigger = {
     # },
 }
 
-def rgm_build(script = "drone_publish_main.sh", bucket = "grafana-prerelease"):
+def rgm_build(script = "drone_publish_main.sh", bucket = "grafana-prerelease", version = "${DRONE_TAG}"):
     rgm_build_step = {
         "name": "rgm-build",
-        "image": "grafana/grafana-build:main",
+        "image": "grafana/grafana-build:dev-209553c",
         "commands": [
             "export GRAFANA_DIR=$$(pwd)",
             "cd /src && ./scripts/{}".format(script),
@@ -97,6 +97,7 @@ def rgm_build(script = "drone_publish_main.sh", bucket = "grafana-prerelease"):
             "GPG_PUBLIC_KEY": from_secret("packages_gpg_public_key"),
             "GPG_PASSPHRASE": from_secret("packages_gpg_passphrase"),
             "DESTINATION": "gs://{}".format(bucket),
+            "VERSION": version,
         },
         # The docker socket is a requirement for running dagger programs
         # In the future we should find a way to use dagger without mounting the docker socket.
@@ -151,7 +152,7 @@ def rgm_release(trigger, ver_mode, bucket = "grafana-prerelease"):
         pipeline(
             name = "rgm-{}-prerelease".format(ver_mode),
             trigger = trigger,
-            steps = rgm_build(script = "drone_publish_tag_grafana.sh", bucket = bucket),
+            steps = rgm_build(script = "drone_publish_tag_grafana.sh", bucket = bucket, version = version),
             depends_on = ["{}-test-backend".format(ver_mode), "{}-test-frontend".format(ver_mode)],
         ),
         rgm_windows(trigger, ver_mode, bucket),

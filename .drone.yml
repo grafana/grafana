@@ -2807,8 +2807,9 @@ steps:
       from_secret: packages_gpg_private_key
     GPG_PUBLIC_KEY:
       from_secret: packages_gpg_public_key
+    VERSION: ${DRONE_TAG}
   failure: ignore
-  image: grafana/grafana-build:main
+  image: grafana/grafana-build:dev-209553c
   name: rgm-build
   volumes:
   - name: docker
@@ -3047,7 +3048,8 @@ steps:
       from_secret: packages_gpg_private_key
     GPG_PUBLIC_KEY:
       from_secret: packages_gpg_public_key
-  image: grafana/grafana-build:main
+    VERSION: ${DRONE_TAG}
+  image: grafana/grafana-build:dev-209553c
   name: rgm-build
   volumes:
   - name: docker
@@ -3343,7 +3345,8 @@ steps:
       from_secret: packages_gpg_private_key
     GPG_PUBLIC_KEY:
       from_secret: packages_gpg_public_key
-  image: grafana/grafana-build:main
+    VERSION: nightly-${DRONE_COMMIT_SHA:0:8}
+  image: grafana/grafana-build:dev-209553c
   name: rgm-build
   volumes:
   - name: docker
@@ -4970,6 +4973,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: a03fd5fd211394d4cadebf37901c277606e445db01d935b35739ba987fe570a3
+hmac: b82667c5e8527b8fe3a719c37c69c1cd2d18b5959e439e426f39a87cd7d6763f
 
 ...
