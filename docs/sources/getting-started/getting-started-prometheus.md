@@ -18,7 +18,7 @@ Prometheus is an open source monitoring system for which Grafana provides out-of
 
 > **Note:** You can configure a [Grafana Cloud](https://grafana.com/docs/grafana-cloud/) instance to display system metrics without having to host Grafana yourself. A [free forever plan](https://grafana.com/signup/cloud/connect-account?pg=gsdocs) provides 10,000 active series for metrics.
 
-{{< docs/shared "getting-started/first-step.md" >}}
+{{< docs/shared lookup="getting-started/first-step.md" source="grafana" version="<GRAFANA VERSION>" >}}
 
 ## Step 2. Download Prometheus and node_exporter
 

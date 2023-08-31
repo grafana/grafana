@@ -13,7 +13,7 @@ weight: 700
 
 # InfluxDB data source
 
-{{< docs/shared "influxdb/intro.md" >}}
+{{< docs/shared lookup="influxdb/intro.md" source="grafana" version="<GRAFANA VERSION>" >}}
 
 This topic explains options, variables, querying, and other options specific to this data source. Refer to [Add a data source]({{< relref "../add-a-data-source.md" >}}) for instructions on how to add a data source to Grafana. Only users with the organization admin role can add data sources.
 

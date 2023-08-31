@@ -43,6 +43,6 @@ Point size set to 35:
 
 ![Show points point size 35 example](/static/img/docs/time-series-panel/points-graph-show-points-35-7-4.png)
 
-{{< docs/shared "visualizations/stack-series-link.md" >}}
+{{< docs/shared lookup="visualizations/stack-series-link.md" source="grafana" version="<GRAFANA VERSION>" >}}
 
-{{< docs/shared "visualizations/change-axis-link.md" >}}
+{{< docs/shared lookup="visualizations/change-axis-link.md" source="grafana" version="<GRAFANA VERSION>" >}}

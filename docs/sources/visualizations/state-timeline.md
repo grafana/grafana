@@ -61,4 +61,4 @@ The panel can be used with time series data as well. In this case, the threshold
 
 When the legend option is enabled it can show either the value mappings or the threshold brackets. To show the value mappings in the legend, it's important that the `Color scheme` as referenced in [Apply color to a series and fields]({{< relref "../panels/working-with-panels/apply-color-to-series.md" >}}) is set to `Single color` or `Classic palette`. To see the threshold brackets in the legend set the `Color scheme` to `From thresholds`.
 
-{{< docs/shared "visualizations/legend-mode.md" >}}
+{{< docs/shared lookup="visualizations/legend-mode.md" source="grafana" version="<GRAFANA VERSION>" >}}
