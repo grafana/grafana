@@ -143,6 +143,28 @@ func NotImplemented(msgID string, opts ...BaseOpt) Base {
 	return NewBase(StatusNotImplemented, msgID, opts...)
 }
 
+// BadGateway initializes a new [Base] error with reason StatusBadGateway
+// that is used to construct [Error]. The msgID is passed to the caller
+// to serve as the base for user facing error messages.
+//
+// msgID should be structured as component.errorBrief, for example
+//
+//	area.downstreamError
+func BadGateway(msgID string, opts ...BaseOpt) Base {
+	return NewBase(StatusBadGateway, msgID, opts...)
+}
+
+// GatewayTimeout initializes a new [Base] error with reason StatusGatewayTimeout
+// that is used to construct [Error]. The msgID is passed to the caller
+// to serve as the base for user facing error messages.
+//
+// msgID should be structured as component.errorBrief, for example
+//
+//	area.downstreamTimeout
+func GatewayTimeout(msgID string, opts ...BaseOpt) Base {
+	return NewBase(StatusGatewayTimeout, msgID, opts...)
+}
+
 type BaseOpt func(Base) Base
 
 // WithLogLevel sets a custom log level for all errors instantiated from

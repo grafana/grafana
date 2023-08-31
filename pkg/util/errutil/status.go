@@ -46,6 +46,15 @@ const (
 	// features.
 	// HTTP status code 501.
 	StatusNotImplemented CoreStatus = "Not implemented"
+	// StatusBadGateway means that the server, while acting as a proxy,
+	// received an invalid response from the downstream server.
+	// HTTP status code 502.
+	StatusBadGateway CoreStatus = "Bad gateway"
+	// StatusGatewayTimeout means that the server, while acting as a proxy,
+	// did not receive a timely response from a downstream server it needed
+	// to access in order to complete the request.
+	// HTTP status code 504.
+	StatusGatewayTimeout CoreStatus = "Gateway timeout"
 )
 
 // StatusReason allows for wrapping of CoreStatus.
@@ -77,6 +86,10 @@ func (s CoreStatus) HTTPStatus() int {
 		return http.StatusBadRequest
 	case StatusNotImplemented:
 		return http.StatusNotImplemented
+	case StatusBadGateway:
+		return http.StatusBadGateway
+	case StatusGatewayTimeout:
+		return http.StatusGatewayTimeout
 	case StatusUnknown, StatusInternal:
 		return http.StatusInternalServerError
 	default:
@@ -107,6 +120,16 @@ func (s CoreStatus) LogLevel() LogLevel {
 		return LevelError
 	default:
 		return LevelUnknown
+	}
+}
+
+// IsDownstream returns if CoreStatus is originating from a downstream service.
+func (s CoreStatus) IsDownstream() bool {
+	switch s {
+	case StatusBadGateway, StatusGatewayTimeout:
+		return true
+	default:
+		return false
 	}
 }
 
