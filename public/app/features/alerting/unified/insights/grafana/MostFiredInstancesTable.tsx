@@ -14,7 +14,6 @@ import { DataSourceRef } from '@grafana/schema';
 import { Icon, Link } from '@grafana/ui';
 
 import { createUrl } from '../../utils/url';
-import { ReactI18NextChild } from 'react-i18next';
 
 const TOP_FIRING_INSTANCES =
   'topk(10, sum by(labels_alertname, ruleUID) (count_over_time({from="state-history"} | json | current = `Alerting` [1w])))';
