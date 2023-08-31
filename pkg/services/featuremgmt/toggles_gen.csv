@@ -103,3 +103,4 @@ noBasicRole,experimental,@grafana/grafana-authnz-team,false,false,true,true
 alertingNoDataErrorExecution,privatePreview,@grafana/alerting-squad,false,false,true,false
 angularDeprecationUI,experimental,@grafana/plugins-platform-backend,false,false,false,true
 dashgpt,experimental,@grafana/dashboards-squad,false,false,false,true
+reportingRetries,preview,@grafana/sharing-squad,false,false,true,false
