@@ -54,7 +54,7 @@ func Test_PhlareClient(t *testing.T) {
 }
 
 type FakePhlareConnectClient struct {
-	Req interface{}
+	Req any
 }
 
 func (f *FakePhlareConnectClient) ProfileTypes(ctx context.Context, c *connect.Request[querierv1.ProfileTypesRequest]) (*connect.Response[querierv1.ProfileTypesResponse], error) {

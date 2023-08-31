@@ -106,7 +106,7 @@ func parseMetrics(model *simplejson.Json) ([]*MetricAgg, error) {
 			metric.PipelineVariables = map[string]string{}
 			pvArr := metricJSON.Get("pipelineVariables").MustArray()
 			for _, v := range pvArr {
-				kv := v.(map[string]interface{})
+				kv := v.(map[string]any)
 				metric.PipelineVariables[kv["name"].(string)] = kv["pipelineAgg"].(string)
 			}
 		}

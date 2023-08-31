@@ -83,7 +83,7 @@ export const GroupByFieldConfiguration = ({ fieldName, config, onConfigChange }:
   );
 
   return (
-    <InlineField label={fieldName} labelWidth={32} grow shrink>
+    <InlineField className={styles.label} label={fieldName} grow shrink>
       <Stack gap={0.5} direction="row" wrap={false}>
         <div className={styles.operation}>
           <Select options={options} value={config?.operation} placeholder="Ignored" onChange={onChange} isClearable />
@@ -107,6 +107,11 @@ export const GroupByFieldConfiguration = ({ fieldName, config, onConfigChange }:
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
+    label: css`
+      label {
+        min-width: ${theme.spacing(32)};
+      }
+    `,
     operation: css`
       flex-shrink: 0;
       height: 100%;

@@ -63,6 +63,7 @@ describe('GroupByField', () => {
       const groupByFilter = query.groupBy?.find((f) => f.id === 'group-by-id');
       expect(groupByFilter).not.toBeNull();
       expect(groupByFilter?.scope).toBe('resource');
+      expect(groupByFilter?.tag).toBe('');
     }
   });
 

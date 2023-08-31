@@ -108,7 +108,7 @@ type Span interface {
 	// SetAttributes repeats the key value pair with [string] and [any]
 	// used for OpenTracing and [attribute.KeyValue] used for
 	// OpenTelemetry.
-	SetAttributes(key string, value interface{}, kv attribute.KeyValue)
+	SetAttributes(key string, value any, kv attribute.KeyValue)
 	// SetName renames the span.
 	SetName(name string)
 	// SetStatus can be used to indicate whether the span was
@@ -137,9 +137,9 @@ func ProvideService(cfg *setting.Cfg) (Tracer, error) {
 		return nil, err
 	}
 
-	log.RegisterContextualLogProvider(func(ctx context.Context) ([]interface{}, bool) {
+	log.RegisterContextualLogProvider(func(ctx context.Context) ([]any, bool) {
 		if traceID := TraceIDFromContext(ctx, false); traceID != "" {
-			return []interface{}{"traceID", traceID}, true
+			return []any{"traceID", traceID}, true
 		}
 
 		return nil, false
@@ -460,7 +460,7 @@ func (s OpentelemetrySpan) End() {
 	s.span.End()
 }
 
-func (s OpentelemetrySpan) SetAttributes(key string, value interface{}, kv attribute.KeyValue) {
+func (s OpentelemetrySpan) SetAttributes(key string, value any, kv attribute.KeyValue) {
 	s.span.SetAttributes(kv)
 }
 
