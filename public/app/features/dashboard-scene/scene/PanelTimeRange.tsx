@@ -1,6 +1,7 @@
+import { css } from '@emotion/css';
 import React from 'react';
 
-import { dateMath, getTimeZone, rangeUtil, TimeRange } from '@grafana/data';
+import { dateMath, getTimeZone, GrafanaTheme2, rangeUtil, TimeRange } from '@grafana/data';
 import {
   SceneComponentProps,
   sceneGraph,
@@ -9,6 +10,7 @@ import {
   SceneTimeRangeState,
 } from '@grafana/scenes';
 import { TimeZone } from '@grafana/schema';
+import { Icon, PanelChrome, TimePickerTooltip, Tooltip, useStyles2 } from '@grafana/ui';
 import { TimeOverrideResult } from 'app/features/dashboard/utils/panel';
 
 interface PanelTimeRangeState extends SceneTimeRangeState {
@@ -28,7 +30,7 @@ export class PanelTimeRange extends SceneObjectBase<PanelTimeRangeState> impleme
     const value = evaluateTimeRange(from, to, timeZone);
     super({ from, to, timeZone, value, ...state });
 
-    this.addActivationHandler(() => this.onActivate());
+    this.addActivationHandler(() => this._activationHandler());
   }
 
   private getTimeOverride(parentTimeRange: TimeRange): TimeOverrideResult {
@@ -75,9 +77,7 @@ export class PanelTimeRange extends SceneObjectBase<PanelTimeRangeState> impleme
     return newTimeData;
   }
 
-  public onActivate(): void {
-    super.activate();
-
+  private _activationHandler(): void {
     const parentTimeRange = this.getParentTimeRange();
 
     this._subs.add(parentTimeRange.subscribeToState((state) => this.handleParentTimeRangeChanged(state.value)));
@@ -134,9 +134,28 @@ function evaluateTimeRange(from: string, to: string, timeZone: TimeZone, fiscalY
 
 function PanelTimeRangeRenderer({ model }: SceneComponentProps<PanelTimeRange>) {
   const timeInfo = model.getOverrideInfo();
+  const styles = useStyles2(getStyles);
+
   if (!timeInfo) {
     return null;
   }
 
-  return <div>{timeInfo}</div>;
+  return (
+    <Tooltip content={<TimePickerTooltip timeRange={model.state.value} timeZone={model.getTimeZone()} />}>
+      <PanelChrome.TitleItem className={styles.timeshift}>
+        <Icon name="clock-nine" size="sm" /> {model.getOverrideInfo()}
+      </PanelChrome.TitleItem>
+    </Tooltip>
+  );
 }
+
+const getStyles = (theme: GrafanaTheme2) => {
+  return {
+    timeshift: css({
+      color: theme.colors.text.primary,
+      fontWeight: theme.typography.fontWeightMedium,
+      fontSize: theme.typography.bodySmall.fontSize,
+      gap: theme.spacing(0.5),
+    }),
+  };
+};
