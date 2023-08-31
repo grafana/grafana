@@ -5,7 +5,6 @@ import configureMockStore from 'redux-mock-store';
 import { ReplaySubject } from 'rxjs';
 
 import { EventBusSrv, getDefaultTimeRange, LoadingState, PanelData, PanelPlugin } from '@grafana/data';
-import { selectors } from '@grafana/e2e-selectors';
 
 import { PanelQueryRunner } from '../../query/state/PanelQueryRunner';
 import { setTimeSrv, TimeSrv } from '../services/TimeSrv';
