@@ -422,4 +422,8 @@ const (
 	// FlagDashgpt
 	// Enable AI powered features in dashboards
 	FlagDashgpt = "dashgpt"
+
+	// FlagReportingRetries
+	// Enables rendering retries for the reporting feature
+	FlagReportingRetries = "reportingRetries"
 )

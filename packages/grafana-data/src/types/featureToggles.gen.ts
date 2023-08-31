@@ -122,4 +122,5 @@ export interface FeatureToggles {
   alertingNoDataErrorExecution?: boolean;
   angularDeprecationUI?: boolean;
   dashgpt?: boolean;
+  reportingRetries?: boolean;
 }

@@ -722,5 +722,13 @@ var (
 			FrontendOnly: true,
 			Owner:        grafanaDashboardsSquad,
 		},
+		{
+			Name:            "reportingRetries",
+			Description:     "Enables rendering retries for the reporting feature",
+			Stage:           FeatureStagePublicPreview,
+			FrontendOnly:    false,
+			Owner:           grafanaSharingSquad,
+			RequiresRestart: true,
+		},
 	}
 )
