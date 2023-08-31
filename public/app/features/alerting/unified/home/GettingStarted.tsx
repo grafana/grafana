@@ -6,74 +6,69 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
 import { Icon, useStyles2, useTheme2 } from '@grafana/ui';
 
-import { AlertingPageWrapper } from './components/AlertingPageWrapper';
-
-export default function Home() {
+export default function GettingStarted({ showWelcomeHeader }: { showWelcomeHeader?: boolean }) {
   const theme = useTheme2();
   const styles = useStyles2(getWelcomePageStyles);
 
   return (
-    <AlertingPageWrapper pageId={'alerting'}>
-      <div className={styles.grid}>
-        <WelcomeHeader className={styles.ctaContainer} />
-        <ContentBox className={styles.flowBlock}>
+    <div className={styles.grid}>
+      {showWelcomeHeader && <WelcomeHeader className={styles.ctaContainer} />}
+      <ContentBox className={styles.flowBlock}>
+        <div>
+          <h3>How it works</h3>
+          <ul className={styles.list}>
+            <li>
+              Grafana alerting periodically queries data sources and evaluates the condition defined in the alert rule
+            </li>
+            <li>If the condition is breached, an alert instance fires</li>
+            <li>Firing instances are routed to notification policies based on matching labels</li>
+            <li>Notifications are sent out to the contact points specified in the notification policy</li>
+          </ul>
+        </div>
+        <SVG
+          src={`public/img/alerting/at_a_glance_${theme.name.toLowerCase()}.svg`}
+          width={undefined}
+          height={undefined}
+        />
+      </ContentBox>
+      <ContentBox className={styles.gettingStartedBlock}>
+        <h3>Get started</h3>
+        <Stack direction="column" alignItems="space-between">
+          <ul className={styles.list}>
+            <li>
+              <strong>Create an alert rule</strong> by adding queries and expressions from multiple data sources.
+            </li>
+            <li>
+              <strong>Add labels</strong> to your alert rules <strong>to connect them to notification policies</strong>
+            </li>
+            <li>
+              <strong>Configure contact points</strong> to define where to send your notifications to.
+            </li>
+            <li>
+              <strong>Configure notification policies</strong> to route your alert instances to contact points.
+            </li>
+          </ul>
           <div>
-            <h3>How it works</h3>
-            <ul className={styles.list}>
-              <li>
-                Grafana alerting periodically queries data sources and evaluates the condition defined in the alert rule
-              </li>
-              <li>If the condition is breached, an alert instance fires</li>
-              <li>Firing instances are routed to notification policies based on matching labels</li>
-              <li>Notifications are sent out to the contact points specified in the notification policy</li>
-            </ul>
+            <ArrowLink href="https://grafana.com/docs/grafana/latest/alerting/" title="Read more in the Docs" />
           </div>
-          <SVG
-            src={`public/img/alerting/at_a_glance_${theme.name.toLowerCase()}.svg`}
-            width={undefined}
-            height={undefined}
-          />
-        </ContentBox>
-        <ContentBox className={styles.gettingStartedBlock}>
-          <h3>Get started</h3>
-          <Stack direction="column" alignItems="space-between">
-            <ul className={styles.list}>
-              <li>
-                <strong>Create an alert rule</strong> by adding queries and expressions from multiple data sources.
-              </li>
-              <li>
-                <strong>Add labels</strong> to your alert rules{' '}
-                <strong>to connect them to notification policies</strong>
-              </li>
-              <li>
-                <strong>Configure contact points</strong> to define where to send your notifications to.
-              </li>
-              <li>
-                <strong>Configure notification policies</strong> to route your alert instances to contact points.
-              </li>
-            </ul>
-            <div>
-              <ArrowLink href="https://grafana.com/docs/grafana/latest/alerting/" title="Read more in the Docs" />
-            </div>
-          </Stack>
-        </ContentBox>
-        <ContentBox className={styles.videoBlock}>
-          <iframe
-            title="Alerting - Introductory video"
-            src="https://player.vimeo.com/video/720001629?h=c6c1732f92"
-            width="960"
-            height="540"
-            allow="autoplay; fullscreen"
-            allowFullScreen
-            frameBorder="0"
-            // This is necessary because color-scheme defined on :root has impact on iframe elements
-            // More about how color-scheme works for iframes https://github.com/w3c/csswg-drafts/issues/4772
-            // Summary: If the color scheme of an iframe differs from embedding document iframe gets an opaque canvas bg appropriate to its color scheme
-            style={{ colorScheme: 'light dark' }}
-          ></iframe>
-        </ContentBox>
-      </div>
-    </AlertingPageWrapper>
+        </Stack>
+      </ContentBox>
+      <ContentBox className={styles.videoBlock}>
+        <iframe
+          title="Alerting - Introductory video"
+          src="https://player.vimeo.com/video/720001629?h=c6c1732f92"
+          width="960"
+          height="540"
+          allow="autoplay; fullscreen"
+          allowFullScreen
+          frameBorder="0"
+          // This is necessary because color-scheme defined on :root has impact on iframe elements
+          // More about how color-scheme works for iframes https://github.com/w3c/csswg-drafts/issues/4772
+          // Summary: If the color scheme of an iframe differs from embedding document iframe gets an opaque canvas bg appropriate to its color scheme
+          style={{ colorScheme: 'light dark' }}
+        ></iframe>
+      </ContentBox>
+    </div>
   );
 }
 
@@ -105,7 +100,6 @@ const getWelcomePageStyles = (theme: GrafanaTheme2) => ({
   `,
   videoBlock: css`
     grid-column: 3 / span 3;
-    grid-row: 3 / span 1;
 
     // Video required
     position: relative;
@@ -132,7 +126,7 @@ const getWelcomePageStyles = (theme: GrafanaTheme2) => ({
   `,
 });
 
-function WelcomeHeader({ className }: { className?: string }) {
+export function WelcomeHeader({ className }: { className?: string }) {
   const styles = useStyles2(getWelcomeHeaderStyles);
 
   return (
