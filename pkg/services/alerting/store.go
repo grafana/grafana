@@ -352,7 +352,7 @@ func (ss *sqlStore) PauseAlert(ctx context.Context, cmd *alertmodels.PauseAlertC
 		}
 
 		var buffer bytes.Buffer
-		params := make([]interface{}, 0)
+		params := make([]any, 0)
 
 		buffer.WriteString(`UPDATE alert SET state = ?, new_state_date = ?`)
 		if cmd.Paused {
@@ -368,7 +368,7 @@ func (ss *sqlStore) PauseAlert(ctx context.Context, cmd *alertmodels.PauseAlertC
 			params = append(params, v)
 		}
 
-		sqlOrArgs := append([]interface{}{buffer.String()}, params...)
+		sqlOrArgs := append([]any{buffer.String()}, params...)
 
 		res, err := sess.Exec(sqlOrArgs...)
 		if err != nil {

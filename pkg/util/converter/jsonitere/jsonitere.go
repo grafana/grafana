@@ -17,7 +17,7 @@ func NewIterator(i *j.Iterator) *Iterator {
 	return &Iterator{i}
 }
 
-func (iter *Iterator) Read() (interface{}, error) {
+func (iter *Iterator) Read() (any, error) {
 	return iter.i.Read(), iter.i.Error
 }
 
@@ -46,7 +46,7 @@ func (iter *Iterator) Skip() error {
 	return iter.i.Error
 }
 
-func (iter *Iterator) ReadVal(obj interface{}) error {
+func (iter *Iterator) ReadVal(obj any) error {
 	iter.i.ReadVal(obj)
 	return iter.i.Error
 }

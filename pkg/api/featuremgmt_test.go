@@ -351,12 +351,12 @@ func findResult(t *testing.T, result []featuremgmt.FeatureToggleDTO, name string
 	return featuremgmt.FeatureToggleDTO{}, false
 }
 
-func readBody(t *testing.T, rc io.ReadCloser) map[string]interface{} {
+func readBody(t *testing.T, rc io.ReadCloser) map[string]any {
 	t.Helper()
 
 	b, err := io.ReadAll(rc)
 	require.NoError(t, err)
-	payload := map[string]interface{}{}
+	payload := map[string]any{}
 	require.NoError(t, json.Unmarshal(b, &payload))
 	return payload
 }

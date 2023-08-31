@@ -505,7 +505,7 @@ type Cfg struct {
 	GrafanaNetAuthEnabled bool
 
 	// Geomap base layer config
-	GeomapDefaultBaseLayerConfig map[string]interface{}
+	GeomapDefaultBaseLayerConfig map[string]any
 	GeomapEnableCustomBaseLayers bool
 
 	// Unified Alerting
@@ -1226,7 +1226,7 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 	geomapSection := iniFile.Section("geomap")
 	basemapJSON := valueAsString(geomapSection, "default_baselayer_config", "")
 	if basemapJSON != "" {
-		layer := make(map[string]interface{})
+		layer := make(map[string]any)
 		err = json.Unmarshal([]byte(basemapJSON), &layer)
 		if err != nil {
 			cfg.Logger.Error("Error reading json from default_baselayer_config", "error", err)
