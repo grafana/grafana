@@ -32,6 +32,11 @@ exports[`GraphNG utils preparePlotConfigBuilder 1`] = `
       "values": [Function],
     },
     {
+      "border": {
+        "show": false,
+        "stroke": "rgb(204, 204, 220)",
+        "width": 1,
+      },
       "filter": undefined,
       "font": "12px "Inter", "Helvetica", "Arial", sans-serif",
       "gap": 5,
@@ -51,9 +56,9 @@ exports[`GraphNG utils preparePlotConfigBuilder 1`] = `
       "splits": undefined,
       "stroke": "rgb(204, 204, 220)",
       "ticks": {
-        "show": true,
+        "show": false,
         "size": 4,
-        "stroke": "rgba(240, 250, 255, 0.09)",
+        "stroke": "rgb(204, 204, 220)",
         "width": 1,
       },
       "timeZone": undefined,
