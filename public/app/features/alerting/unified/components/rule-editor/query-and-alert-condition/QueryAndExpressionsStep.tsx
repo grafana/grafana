@@ -359,13 +359,6 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
       {/* This is the PromQL Editor for Cloud rules */}
       {isCloudAlertRuleType && dataSourceName && (
         <Stack direction="column">
-          <SmartAlertTypeDetector
-            editingExistingRule={editingExistingRule}
-            queries={queries}
-            rulesSourcesWithRuler={rulesSourcesWithRuler}
-            onClickSwitch={onClickSwitch}
-          />
-
           <Field error={errors.expression?.message} invalid={!!errors.expression?.message}>
             <InputControl
               name="expression"
@@ -385,6 +378,12 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
               }}
             />
           </Field>
+          <SmartAlertTypeDetector
+            editingExistingRule={editingExistingRule}
+            queries={queries}
+            rulesSourcesWithRuler={rulesSourcesWithRuler}
+            onClickSwitch={onClickSwitch}
+          />
         </Stack>
       )}
 
@@ -407,13 +406,6 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
               title="Define query and alert condition"
             />
           </Stack>
-
-          <SmartAlertTypeDetector
-            editingExistingRule={editingExistingRule}
-            rulesSourcesWithRuler={rulesSourcesWithRuler}
-            queries={queries}
-            onClickSwitch={onClickSwitch}
-          />
 
           <QueryEditor
             queries={dataQueries}
@@ -439,6 +431,12 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
               Add query
             </Button>
           </Tooltip>
+          <SmartAlertTypeDetector
+            editingExistingRule={editingExistingRule}
+            rulesSourcesWithRuler={rulesSourcesWithRuler}
+            queries={queries}
+            onClickSwitch={onClickSwitch}
+          />
           {/* Expression Queries */}
           <Text element="h5">Expressions</Text>
           <div className={styles.mutedText}>Manipulate data returned from queries with math and other operations.</div>
