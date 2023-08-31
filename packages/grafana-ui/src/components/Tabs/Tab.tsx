@@ -36,10 +36,11 @@ export const Tab = React.forwardRef<HTMLAnchorElement, TabProps>(
       </>
     );
 
-    const linkClass = cx(tabsStyles.link, active ? tabsStyles.activeStyle : tabsStyles.notActive);
+    const containerClass = cx(tabsStyles.item, active ? tabsStyles.itemActive : null);
+    const linkClass = cx(tabsStyles.link, active ? tabsStyles.activeStyle : tabsStyles.notActive, className);
 
     return (
-      <div className={tabsStyles.item}>
+      <div className={containerClass}>
         <a
           // in case there is no href '#' is set in order to maintain a11y
           href={href ? href : '#'}
@@ -67,12 +68,19 @@ const getStyles = (theme: GrafanaTheme2) => {
       position: 'relative',
       display: 'flex',
       whiteSpace: 'nowrap',
+      backgroundColor: `${theme.colors.background.secondary}`,
+      marginBottom: '0px',
+    }),
+    itemActive: css({
+      backgroundColor: `${theme.colors.background.primary}`,
+      borderBottom: 0,
     }),
     link: css({
       color: theme.colors.text.secondary,
       padding: theme.spacing(1.5, 2, 1),
       display: 'block',
       height: '100%',
+      borderBottom: `1px solid ${theme.components.panel.borderColor}`,
 
       svg: {
         marginRight: theme.spacing(1),
@@ -87,8 +95,8 @@ const getStyles = (theme: GrafanaTheme2) => {
         left: 0,
         right: 0,
         height: '4px',
-        borderRadius: theme.shape.radius.default,
-        bottom: 0,
+        // borderRadius: theme.shape.radius.default,
+        top: 0,
       },
     }),
     notActive: css({
@@ -104,6 +112,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       label: 'activeTabStyle',
       color: theme.colors.text.primary,
       overflow: 'hidden',
+      border: 0,
 
       a: {
         color: theme.colors.text.primary,

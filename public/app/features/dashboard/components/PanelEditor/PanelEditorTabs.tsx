@@ -70,7 +70,6 @@ export const PanelEditorTabs = React.memo(({ panel, dashboard, tabs, onChangeTab
               onChangeTab={() => instrumentedOnChangeTab(tab)}
               icon={toIconName(tab.icon)}
               counter={getCounter(panel, tab)}
-              className={ styles.tab }
             />
           );
         })}
@@ -151,9 +150,6 @@ const getStyles = (theme: GrafanaTheme2) => {
     `,
     tabBar: css`
       padding-left: ${theme.spacing(2)};
-    `,
-    tab: css`
-      border: 1px solid ${theme.components.panel.borderColor};
     `,
     tabContent: css`
       padding: 0;
