@@ -11,7 +11,7 @@ keywords:
   - panel
   - dashlist
 title: Dashboard list
-weight: 300
+weight: 100
 ---
 
 # Dashboard list

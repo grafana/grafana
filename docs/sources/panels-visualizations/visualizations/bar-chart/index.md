@@ -10,7 +10,7 @@ keywords:
   - panel
   - barchart
 title: Bar chart
-weight: 170
+weight: 100
 ---
 
 # Bar chart

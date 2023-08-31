@@ -9,7 +9,7 @@ keywords:
   - bar
   - bar gauge
 title: Bar gauge
-weight: 200
+weight: 100
 ---
 
 # Bar gauge

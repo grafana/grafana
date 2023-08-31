@@ -10,7 +10,7 @@ keywords:
   - documentation
   - panel
 title: Text
-weight: 1100
+weight: 100
 ---
 
 # Text

@@ -9,7 +9,7 @@ keywords:
   - status history
   - panel
 title: Status history
-weight: 900
+weight: 100
 ---
 
 # Status history

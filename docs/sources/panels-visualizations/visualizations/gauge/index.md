@@ -9,7 +9,7 @@ keywords:
   - gauge
   - gauge panel
 title: Gauge
-weight: 400
+weight: 100
 ---
 
 # Gauge

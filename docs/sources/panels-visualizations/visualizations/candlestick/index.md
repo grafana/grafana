@@ -11,7 +11,7 @@ keywords:
   - panel
   - documentation
 title: Candlestick
-weight: 600
+weight: 100
 ---
 
 # Candlestick

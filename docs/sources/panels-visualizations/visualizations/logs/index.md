@@ -11,7 +11,7 @@ keywords:
   - panels
   - logs panel
 title: Logs panel
-weight: 700
+weight: 100
 ---
 
 # Logs panel
