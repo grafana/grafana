@@ -112,7 +112,7 @@ Each aggregate value, for example `intrinsic`:`name`, has a corresponding column
 
 For example, **names** matching `GET /:endpoint` with a **span.http.user_agent** of `k6/0.46` appeared in 31,466 spans. Instead of being listed by traces and associated spans, the query results are grouped by the the selections in **Aggregate by**.
 
-The RED metrics are calculated for every endpoint and user agent combinations found in your data.
+The RED metrics are calculated for every name and user agent combination found in your data.
 
 ![Use Aggregate by to calculate RED metrics for spans and group by attributes](/static/img/docs/tempo/screenshot-traces-aggregate-by.png)
 
