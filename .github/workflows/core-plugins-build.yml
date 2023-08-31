@@ -26,8 +26,9 @@ env:
 jobs:
     build:
       name: build
-      runs-on:
-        labels: ubuntu-latest-8-cores
+      runs-on: ubuntu-latest
+      # runs-on:
+      #   labels: ubuntu-latest-8-cores
       steps:
         - name: checkout
           uses: actions/checkout@v3
