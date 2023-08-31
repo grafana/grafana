@@ -4,7 +4,7 @@ import (
 	"context"
 )
 
-type JWTClaims map[string]interface{}
+type JWTClaims map[string]any
 
 type JWTService interface {
 	Verify(ctx context.Context, strToken string) (JWTClaims, error)

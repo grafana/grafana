@@ -65,7 +65,7 @@ func TestQuery_Regions(t *testing.T) {
 			data.NewField("value", nil, expRegions),
 		)
 		expFrame.Meta = &data.FrameMeta{
-			Custom: map[string]interface{}{
+			Custom: map[string]any{
 				"rowCount": len(constants.Regions()) + 1,
 			},
 		}

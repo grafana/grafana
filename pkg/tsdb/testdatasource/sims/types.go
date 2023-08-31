@@ -28,7 +28,7 @@ type simulationState struct {
 	Key simulationKey `json:"key"`
 
 	// Saved in panel options, and used to set initial values
-	Config interface{} `json:"config"`
+	Config any `json:"config"`
 }
 
 type simulationInfo struct {
@@ -45,7 +45,7 @@ type simulationInfo struct {
 type Simulation interface {
 	io.Closer
 	GetState() simulationState
-	SetConfig(vals map[string]interface{}) error
+	SetConfig(vals map[string]any) error
 	NewFrame(size int) *data.Frame
-	GetValues(t time.Time) map[string]interface{}
+	GetValues(t time.Time) map[string]any
 }

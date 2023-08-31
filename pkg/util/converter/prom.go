@@ -13,7 +13,7 @@ import (
 )
 
 // helpful while debugging all the options that may appear
-func logf(format string, a ...interface{}) {
+func logf(format string, a ...any) {
 	//fmt.Printf(format, a...)
 }
 
@@ -207,7 +207,7 @@ l1Fields:
 					meta = &data.FrameMeta{}
 					rsp.Frames[0].Meta = meta
 				}
-				meta.Custom = map[string]interface{}{
+				meta.Custom = map[string]any{
 					"stats": v,
 				}
 			}
