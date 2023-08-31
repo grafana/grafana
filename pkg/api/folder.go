@@ -49,6 +49,7 @@ func (hs *HTTPServer) GetFolders(c *contextmodel.ReqContext) response.Response {
 			UID:          c.Query("parentUid"),
 			SignedInUser: c.SignedInUser,
 		})
+
 	} else {
 		folders, err = hs.searchFolders(c)
 	}
