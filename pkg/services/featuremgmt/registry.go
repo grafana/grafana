@@ -730,5 +730,14 @@ var (
 			Owner:           grafanaSharingSquad,
 			RequiresRestart: true,
 		},
+		{
+			Name:            "vectorSync",
+			Description:     "Enable synchronisation of metadata to a vector database",
+			Stage:           FeatureStageExperimental,
+			FrontendOnly:    false,
+			Owner:           grafanaMachineLearningSquad,
+			HideFromDocs:    true,
+			RequiresRestart: true,
+		},
 	}
 )

@@ -123,4 +123,5 @@ export interface FeatureToggles {
   angularDeprecationUI?: boolean;
   dashgpt?: boolean;
   reportingRetries?: boolean;
+  vectorSync?: boolean;
 }

@@ -426,4 +426,8 @@ const (
 	// FlagReportingRetries
 	// Enables rendering retries for the reporting feature
 	FlagReportingRetries = "reportingRetries"
+
+	// FlagVectorSync
+	// Enable synchronisation of metadata to a vector database
+	FlagVectorSync = "vectorSync"
 )
