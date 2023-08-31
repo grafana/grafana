@@ -132,33 +132,6 @@ Logs queries analyze Elasticsearch log data. You can configure the following opt
 
 - **Logs Options/Limit** - Limits the number of logs to analyze. The default is `500`.
 
-#### Logs volume panel
-
-The logs volume panel depicts a histogram of your logs in the time range specified in the toolbar next to the **Run query** button in the upper right.
-
-{{< figure src="/static/img/docs/elasticsearch/logs-volume-panel-10.2.png" max-width="850px" class="docs-image--no-shadow" caption="Logs volume panel" >}}
-
-#### Logs panel
-
-The logs panel contains several toggle options to display your data in greater detail and make it easier to read. For general documentation on how to work with logs in Explore in Grafana see [Logs in Explore]({{< relref "../../../explore/logs-integration" >}}).
-
-{{< figure src="/static/img/docs/elasticsearch/logs-query-type-10.1.png" max-width="850px" class="docs-image--no-shadow" caption="Logs panel" >}}
-
-- **Time** - Toggle to do display the time column. This is the timestamp associated with the log line as reported from the data source.
-
-- **Unique labels** - Toggle to do display the unique labels column that includes only non-common labels.
-
-- **Wrap lines** - Toggle if you want the display to use line wrapping.
-
-- **Pretty JSON** - Toggle to pretty print JSON data to make it easier to read.
-
-- **Deduplication** - Makes repetitive log data easier to read. `Exact` matches are done on the whole line with the exception for date fields. `Numbers` matches are done on the line after stripping out numbers such as durations, IP addresses, and so on. `Signature` is the most aggressive deduplication as it strips all letters and numbers and matches on the remaining whitespace and punctuation. The default is `None`.
-
-- **Display results** - Change the order of received logs from the newest first (descending order) to oldest first (ascending order). The default is `Newest first`.
-
-- **Download** - Click to download log results in either `txt`or `json` format.
-
-Click on a specific log to get an expanded details view of each log, which provides additional information including `fields` and `links` attached to the log lines. See [Log details view](/docs/grafana/latest/explore/logs-integration/#log-details-view) for more information.
 
 ### Raw data query type
 
