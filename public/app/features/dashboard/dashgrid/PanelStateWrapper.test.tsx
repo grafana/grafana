@@ -5,13 +5,13 @@ import configureMockStore from 'redux-mock-store';
 import { ReplaySubject } from 'rxjs';
 
 import { EventBusSrv, getDefaultTimeRange, LoadingState, PanelData, PanelPlugin } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 
 import { PanelQueryRunner } from '../../query/state/PanelQueryRunner';
 import { setTimeSrv, TimeSrv } from '../services/TimeSrv';
 import { DashboardModel, PanelModel } from '../state';
 
 import { PanelStateWrapper, Props } from './PanelStateWrapper';
-import { selectors } from '@grafana/e2e-selectors';
 
 jest.mock('app/core/profiler', () => ({
   profiler: {
@@ -128,9 +128,7 @@ describe('PanelStateWrapper', () => {
           </Provider>
         );
 
-        const button = screen.getByRole('button', {
-          name: selectors.components.Panels.Panel.status,
-        });
+        const button = screen.getByTestId(selectors.components.Panels.Panel.status);
         expect(button).toBeInTheDocument();
         await act(async () => {
           fireEvent.focus(button);
