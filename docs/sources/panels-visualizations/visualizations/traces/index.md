@@ -41,7 +41,7 @@ For more information about dashboard variables, refer to the [Variables document
 To use this procedure, you need:
 
 - A Grafana instance
-- A Tempo data source connected to your Grafana instance (see [documentation]({{< relref "../../../datasources/tempo/" >}}))
+- A Tempo data source connected to your Grafana instance (refer to [documentation]({{< relref "../../../datasources/tempo" >}}))
 
 ### Add the Traces panel query
 
