@@ -3604,9 +3604,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana-plugins/testdata@workspace:*, @grafana-plugins/testdata@workspace:public/plugins/testdata":
+"@grafana-plugins/testdata@workspace:*, @grafana-plugins/testdata@workspace:public/plugins/grafana-testdata-datasource":
   version: 0.0.0-use.local
-  resolution: "@grafana-plugins/testdata@workspace:public/plugins/testdata"
+  resolution: "@grafana-plugins/testdata@workspace:public/plugins/grafana-testdata-datasource"
   dependencies:
     "@babel/core": 7.22.9
     "@emotion/css": 11.11.2
@@ -3860,9 +3860,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/eslint-plugin@link:../../../packages/grafana-eslint-rules::locator=%40grafana-plugins%2Ftestdata%40workspace%3Apublic%2Fplugins%2Ftestdata":
+"@grafana/eslint-plugin@link:../../../packages/grafana-eslint-rules::locator=%40grafana-plugins%2Ftestdata%40workspace%3Apublic%2Fplugins%2Fgrafana-testdata-datasource":
   version: 0.0.0-use.local
-  resolution: "@grafana/eslint-plugin@link:../../../packages/grafana-eslint-rules::locator=%40grafana-plugins%2Ftestdata%40workspace%3Apublic%2Fplugins%2Ftestdata"
+  resolution: "@grafana/eslint-plugin@link:../../../packages/grafana-eslint-rules::locator=%40grafana-plugins%2Ftestdata%40workspace%3Apublic%2Fplugins%2Fgrafana-testdata-datasource"
   languageName: node
   linkType: soft
 
@@ -12472,9 +12472,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"app@link:../../public/app::locator=%40grafana-plugins%2Ftestdata%40workspace%3Apublic%2Fplugins%2Ftestdata":
+"app@link:../../public/app::locator=%40grafana-plugins%2Ftestdata%40workspace%3Apublic%2Fplugins%2Fgrafana-testdata-datasource":
   version: 0.0.0-use.local
-  resolution: "app@link:../../public/app::locator=%40grafana-plugins%2Ftestdata%40workspace%3Apublic%2Fplugins%2Ftestdata"
+  resolution: "app@link:../../public/app::locator=%40grafana-plugins%2Ftestdata%40workspace%3Apublic%2Fplugins%2Fgrafana-testdata-datasource"
   languageName: node
   linkType: soft
 

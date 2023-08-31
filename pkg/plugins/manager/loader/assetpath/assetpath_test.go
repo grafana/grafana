@@ -42,14 +42,14 @@ func TestService(t *testing.T) {
 			}))
 
 			const tableOldPath = "/grafana/public/app/plugins/panel/table-old"
-			const testdataPath = "/grafana/public/plugins/testdata/src"
+			const testdataPath = "/grafana/public/plugins/grafana-testdata-datasource/src"
 			jsonData := map[string]plugins.JSONData{
 				"table-old": {ID: "table-old", Info: plugins.Info{Version: "1.0.0"}},
 
 				"one": {ID: "one", Info: plugins.Info{Version: "1.0.0"}},
 				"two": {ID: "two", Info: plugins.Info{Version: "2.0.0"}},
 
-				"testdata": {ID: "testdata", Info: plugins.Info{Version: "1.0.0"}},
+				"grafana-testdata-datasource": {ID: "grafana-testdata-datasource", Info: plugins.Info{Version: "1.0.0"}},
 			}
 
 			t.Run("CDN Base URL", func(t *testing.T) {
@@ -71,9 +71,9 @@ func TestService(t *testing.T) {
 				require.NoError(t, err)
 				require.Equal(t, "public/app/plugins/table-old", base)
 
-				base, err = svc.Base(jsonData["testdata"], plugins.ClassCore, testdataPath)
+				base, err = svc.Base(jsonData["grafana-testdata-datasource"], plugins.ClassCore, testdataPath)
 				require.NoError(t, err)
-				require.Equal(t, "public/plugins/testdata/src", base)
+				require.Equal(t, "public/plugins/grafana-testdata-datasource/src", base)
 			})
 
 			t.Run("Module", func(t *testing.T) {
@@ -89,9 +89,9 @@ func TestService(t *testing.T) {
 				require.NoError(t, err)
 				require.Equal(t, "app/plugins/table-old/module", module)
 
-				module, err = svc.Module(jsonData["testdata"], plugins.ClassCore, testdataPath)
+				module, err = svc.Module(jsonData["grafana-testdata-datasource"], plugins.ClassCore, testdataPath)
 				require.NoError(t, err)
-				require.Equal(t, "app/plugins/testdata/module", module)
+				require.Equal(t, "app/plugins/grafana-testdata-datasource/module", module)
 			})
 
 			t.Run("RelativeURL", func(t *testing.T) {

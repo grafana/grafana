@@ -2,7 +2,7 @@
   "$schema": "https://raw.githubusercontent.com/grafana/grafana/master/docs/sources/developers/plugins/plugin.schema.json",
   "type": "datasource",
   "name": "TestData",
-  "id": "testdata",
+  "id": "grafana-testdata-datasource",
 
   "metrics": true,
   "logs": true,
