@@ -22,7 +22,7 @@ weight: 700
 
 # InfluxDB data source
 
-{{< docs/shared "influxdb/intro.md" >}}
+{{< docs/shared lookup="influxdb/intro.md" source="grafana" version="<GRAFANA VERSION>" >}}
 
 Grafana includes built-in support for InfluxDB.
 This topic explains options, variables, querying, and other features specific to the InfluxDB data source, which include its [feature-rich code editor for queries and visual query builder]({{< relref "./query-editor" >}}).
