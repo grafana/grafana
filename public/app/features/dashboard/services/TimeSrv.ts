@@ -149,7 +149,7 @@ export class TimeSrv {
   }
 
   private initTimeFromUrl() {
-    if (config.isPublicDashboardView && this.timeModel?.timepicker?.hidden) {
+    if (config.publicDashboardAccessToken && this.timeModel?.timepicker?.hidden) {
       return;
     }
 
@@ -238,7 +238,7 @@ export class TimeSrv {
     if (interval === AutoRefreshInterval) {
       intervalMs = this.getAutoRefreshInteval().intervalMs;
     } else {
-      refresh = this.contextSrv.getValidInterval(interval as string);
+      refresh = this.contextSrv.getValidInterval(interval);
       intervalMs = rangeUtil.intervalToMs(refresh);
     }
 

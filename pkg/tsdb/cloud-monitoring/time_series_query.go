@@ -28,20 +28,21 @@ func (timeSeriesQuery *cloudMonitoringTimeSeriesQuery) appendGraphPeriod(req *ba
 }
 
 func (timeSeriesQuery *cloudMonitoringTimeSeriesQuery) run(ctx context.Context, req *backend.QueryDataRequest,
-	s *Service, dsInfo datasourceInfo, tracer tracing.Tracer) (*backend.DataResponse, cloudMonitoringResponse, string, error) {
+	s *Service, dsInfo datasourceInfo, tracer tracing.Tracer) (*backend.DataResponse, any, string, error) {
 	timeSeriesQuery.parameters.Query += timeSeriesQuery.appendGraphPeriod(req)
 	from := req.Queries[0].TimeRange.From
 	to := req.Queries[0].TimeRange.To
 	timeFormat := "2006/01/02-15:04:05"
 	timeSeriesQuery.parameters.Query += fmt.Sprintf(" | within d'%s', d'%s'", from.UTC().Format(timeFormat), to.UTC().Format(timeFormat))
-	requestBody := map[string]interface{}{
+	requestBody := map[string]any{
 		"query": timeSeriesQuery.parameters.Query,
 	}
 	return runTimeSeriesRequest(ctx, timeSeriesQuery.logger, req, s, dsInfo, tracer, timeSeriesQuery.parameters.ProjectName, nil, requestBody)
 }
 
 func (timeSeriesQuery *cloudMonitoringTimeSeriesQuery) parseResponse(queryRes *backend.DataResponse,
-	response cloudMonitoringResponse, executedQueryString string) error {
+	res any, executedQueryString string) error {
+	response := res.(cloudMonitoringResponse)
 	frames := data.Frames{}
 
 	for _, series := range response.TimeSeriesData {
@@ -60,7 +61,7 @@ func (timeSeriesQuery *cloudMonitoringTimeSeriesQuery) parseResponse(queryRes *b
 
 			seriesLabels["metric.name"] = d.Key
 
-			customFrameMeta := map[string]interface{}{}
+			customFrameMeta := map[string]any{}
 			customFrameMeta["labels"] = seriesLabels
 			frameMeta := &data.FrameMeta{
 				ExecutedQueryString: executedQueryString,
@@ -87,7 +88,7 @@ func (timeSeriesQuery *cloudMonitoringTimeSeriesQuery) parseResponse(queryRes *b
 }
 
 func (timeSeriesQuery *cloudMonitoringTimeSeriesQuery) buildDeepLink() string {
-	dataSets := []map[string]interface{}{
+	dataSets := []map[string]any{
 		{
 			"timeSeriesQuery": timeSeriesQuery.parameters.Query,
 			"targetAxis":      "Y1",

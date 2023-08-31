@@ -174,11 +174,11 @@ func TestAPIEndpoint_CreateOrgs(t *testing.T) {
 				hs.orgService = &orgtest.FakeOrgService{ExpectedOrg: &org.Org{}}
 				hs.accesscontrolService = actest.FakeService{}
 				hs.userService = &usertest.FakeUserService{
-					ExpectedSignedInUser: &user.SignedInUser{OrgID: 0},
+					ExpectedSignedInUser: &user.SignedInUser{UserID: 1, OrgID: 0},
 				}
 			})
 
-			req := webtest.RequestWithSignedInUser(server.NewPostRequest("/api/orgs", strings.NewReader(`{"name": "test"}`)), userWithPermissions(0, tt.permission))
+			req := webtest.RequestWithSignedInUser(server.NewPostRequest("/api/orgs", strings.NewReader(`{"name": "test"}`)), authedUserWithPermissions(1, 0, tt.permission))
 			res, err := server.SendJSON(req)
 			require.NoError(t, err)
 			assert.Equal(t, tt.expectedCode, res.StatusCode)

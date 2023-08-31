@@ -305,3 +305,13 @@ func TestTimestampFirst(t *testing.T) {
 	require.Equal(t, "Time", dr.Frames[0].Fields[0].Name)
 	require.Equal(t, "Value", dr.Frames[0].Fields[1].Name)
 }
+
+func TestWithoutTimeColumn(t *testing.T) {
+	dr := verifyGoldenResponse(t, "without-time-column")
+	require.Len(t, dr.Frames, 5)
+	// we make sure the timestamp-column is the first column
+	// in the dataframe, even if it was not the first column
+	// in the csv.
+	require.Equal(t, "cpu", dr.Frames[0].Fields[0].Name)
+	require.Equal(t, "host", dr.Frames[0].Fields[1].Name)
+}

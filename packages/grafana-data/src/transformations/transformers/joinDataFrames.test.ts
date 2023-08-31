@@ -31,7 +31,7 @@ describe('align frames', () => {
     });
 
     // the following does not work for tabular joins where the joined on field value is duplicated
-    // the time will never have a dupicated time which is joined on
+    // the time will never have a duplicated time which is joined on
     it('should perform an outer join', () => {
       const out = joinDataFrames({ frames: [series1, series2] })!;
       expect(
@@ -415,7 +415,7 @@ describe('align frames', () => {
   it('supports duplicate times', () => {
     //----------
     // NOTE!!!
-    // * ideally we would *keep* dupicate fields
+    // * ideally we would *keep* duplicate fields
     //----------
     const series1 = toDataFrame({
       fields: [

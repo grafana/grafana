@@ -42,7 +42,6 @@ type QueryData struct {
 	ID                 int64
 	URL                string
 	TimeInterval       string
-	enableWideSeries   bool
 	enableDataplane    bool
 	exemplarSampler    func() exemplar.Sampler
 }
@@ -82,7 +81,6 @@ func New(
 		TimeInterval:       timeInterval,
 		ID:                 settings.ID,
 		URL:                settings.URL,
-		enableWideSeries:   features.IsEnabled(featuremgmt.FlagPrometheusWideSeries),
 		enableDataplane:    features.IsEnabled(featuremgmt.FlagPrometheusDataplane),
 		exemplarSampler:    exemplarSampler,
 	}, nil

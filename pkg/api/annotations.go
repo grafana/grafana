@@ -200,7 +200,7 @@ func (hs *HTTPServer) PostGraphiteAnnotation(c *contextmodel.ReqContext) respons
 		} else {
 			tagsArray = []string{}
 		}
-	case []interface{}:
+	case []any:
 		for _, t := range tags {
 			if tagStr, ok := t.(string); ok {
 				tagsArray = append(tagsArray, tagStr)

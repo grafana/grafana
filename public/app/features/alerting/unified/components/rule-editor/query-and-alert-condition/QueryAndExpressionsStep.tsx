@@ -175,11 +175,6 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
     (updatedQueries: AlertQuery[]) => {
       const query = updatedQueries[0];
 
-      const dataSourceSettings = getDataSourceSrv().getInstanceSettings(query.datasourceUid);
-      if (!dataSourceSettings) {
-        throw new Error('The Data source has not been defined.');
-      }
-
       if (!isPromOrLokiQuery(query.model)) {
         return;
       }
@@ -187,13 +182,12 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
       const expression = query.model.expr;
 
       setValue('queries', updatedQueries, { shouldValidate: false });
-      setValue('dataSourceName', dataSourceSettings.name);
-      setValue('expression', expression);
+      updateExpressionAndDatasource(updatedQueries);
 
       dispatch(setRecordingRulesQueries({ recordingRuleQueries: updatedQueries, expression }));
       runQueriesPreview();
     },
-    [runQueriesPreview, setValue]
+    [runQueriesPreview, setValue, updateExpressionAndDatasource]
   );
 
   const recordingRuleDefaultDatasource = rulesSourcesWithRuler[0];
@@ -312,10 +306,21 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
     const typeInForm = getValues('type');
     if (typeInForm === RuleFormType.cloudAlerting) {
       setValue('type', RuleFormType.grafana);
+      setValue('dataSourceName', null); // set data source name back to "null"
+
       prevExpressions.length > 0 && restoreExpressionsInQueries();
       prevCondition && setValue('condition', prevCondition);
     } else {
       setValue('type', RuleFormType.cloudAlerting);
+      // dataSourceName is used only by Mimir/Loki alerting and recording rules
+      // It should be empty for Grafana managed alert rules
+      const newDsName = getDataSourceSrv().getInstanceSettings(queries[0].datasourceUid)?.name;
+      if (newDsName) {
+        setValue('dataSourceName', newDsName);
+      }
+
+      updateExpressionAndDatasource(queries);
+
       const expressions = queries.filter((query) => query.datasourceUid === ExpressionDatasourceUID);
       setPrevExpressions(expressions);
       removeExpressionsInQueries();
@@ -324,12 +329,12 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
   }, [
     getValues,
     setValue,
+    prevExpressions.length,
+    restoreExpressionsInQueries,
+    prevCondition,
+    updateExpressionAndDatasource,
     queries,
     removeExpressionsInQueries,
-    restoreExpressionsInQueries,
-    setPrevExpressions,
-    prevExpressions,
-    prevCondition,
     condition,
   ]);
 
@@ -340,7 +345,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
     >
       {/* This is the cloud data source selector */}
       {(type === RuleFormType.cloudRecording || type === RuleFormType.cloudAlerting) && (
-        <CloudDataSourceSelector onChangeCloudDatasource={onChangeCloudDatasource} />
+        <CloudDataSourceSelector onChangeCloudDatasource={onChangeCloudDatasource} disabled={editingExistingRule} />
       )}
 
       {/* This is the PromQL Editor for recording rules */}
@@ -551,11 +556,9 @@ const useSetExpressionAndDataSource = () => {
     if (!dataSourceSettings) {
       throw new Error('The Data source has not been defined.');
     }
-    setValue('dataSourceName', dataSourceSettings.name);
 
     if (isPromOrLokiQuery(query.model)) {
       const expression = query.model.expr;
-
       setValue('expression', expression);
     }
   };

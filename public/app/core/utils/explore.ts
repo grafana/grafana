@@ -19,6 +19,7 @@ import {
   RawTimeRange,
   TimeRange,
   TimeZone,
+  toURLRange,
   urlUtil,
 } from '@grafana/data';
 import { DataSourceSrv, getDataSourceSrv } from '@grafana/runtime';
@@ -76,8 +77,8 @@ export async function getExploreUrl(args: GetExploreUrlArguments): Promise<strin
   let url: string | undefined;
 
   if (exploreDatasource) {
-    const range = timeSrv.timeRangeForUrl();
-    let state: Partial<ExploreUrlState> = { range };
+    const range = timeSrv.timeRange().raw;
+    let state: Partial<ExploreUrlState> = { range: toURLRange(range) };
     if (exploreDatasource.interpolateVariablesInQueries) {
       const scopedVars = panel.scopedVars || {};
       state = {

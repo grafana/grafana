@@ -32,6 +32,7 @@ import {
 import { mockAlertmanagerConfigResponse } from './mocks/alertmanagerApi';
 import { mockSearchApiResponse } from './mocks/grafanaApi';
 import { mockRulerRulesApiResponse, mockRulerRulesGroupApiResponse } from './mocks/rulerApi';
+import { AlertingQueryRunner } from './state/AlertingQueryRunner';
 import { RuleFormValues } from './types/rule-form';
 import { Annotation } from './utils/constants';
 import { GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
@@ -50,6 +51,8 @@ jest.mock('./components/rule-editor/ExpressionEditor', () => ({
 jest.mock('./components/rule-editor/notificaton-preview/NotificationPreview', () => ({
   NotificationPreview: () => <div />,
 }));
+
+jest.spyOn(AlertingQueryRunner.prototype, 'run').mockImplementation(() => Promise.resolve());
 
 const server = setupServer();
 
@@ -161,7 +164,9 @@ describe('CloneRuleEditor', function () {
       });
 
       await waitForElementToBeRemoved(ui.loadingIndicator.query());
-      await waitForElementToBeRemoved(within(ui.inputs.group.get()).getByTestId('Spinner'));
+      await waitFor(() => {
+        expect(within(ui.inputs.group.get()).queryByTestId('Spinner')).not.toBeInTheDocument();
+      });
 
       await waitFor(() => {
         expect(ui.inputs.name.get()).toHaveValue('First Grafana Rule (copy)');
@@ -214,6 +219,7 @@ describe('CloneRuleEditor', function () {
             ruleSourceName: 'my-prom-ds',
             namespace: 'namespace-one',
             groupName: 'group1',
+            ruleName: 'First Ruler Rule',
             rulerRuleHash: hashRulerRule(originRule),
           }}
         />,

@@ -54,7 +54,7 @@ func (rs *RenderingService) GetRenderUser(ctx context.Context, key string) (*Ren
 
 func (rs *RenderingService) getRenderUserFromJWT(key string) *RenderUser {
 	claims := new(renderJWT)
-	tkn, err := jwt.ParseWithClaims(key, claims, func(_ *jwt.Token) (interface{}, error) {
+	tkn, err := jwt.ParseWithClaims(key, claims, func(_ *jwt.Token) (any, error) {
 		return []byte(rs.Cfg.RendererAuthToken), nil
 	}, jwt.WithValidMethods([]string{jwt.SigningMethodHS512.Alg()}))
 
