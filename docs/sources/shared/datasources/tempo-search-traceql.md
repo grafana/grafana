@@ -21,6 +21,10 @@ The TraceQL query builder, located on the **Explore** > **Query type** > **Searc
 
 ![The TraceQL query builder](/static/img/docs/tempo/screenshot-traceql-query-type-search-v10.png)
 
+The builder lets you run the most common queries in as few clicks as possible. You don't need to know the underlying query language or database architecture to use it.
+
+The builder supports a subset of TraceQL capabilities. For example, if you wish to use structural operators (`>>`, `>`, `~`), you need to use the query editor on the **TraceQL** tab.
+
 You can use the query builder’s drop-downs to compose TraceQL queries. The selections you make automatically generate a [TraceQL query](/docs/tempo/latest/traceql).
 
 To access **Search**, select your Tempo data source, and then choose **Explore** and select **Query type** > **Search**.
@@ -92,6 +96,25 @@ To add a tag, follow these steps:
 1. Select a comparison operator.
 1. Select a value from the **Select value** drop-down. This field is populated based upon the tag.
 1. Optional: Select **+** to add an additional tag.
+
+### Optional: Use Aggregate by
+
+{{% admonition type="warning" %}}
+**Aggregate by** is an [experimental feature](/docs/release-life-cycle/). Engineering and on-call support is not available. Documentation is either limited or not provided outside of code comments. No SLA is provided.
+[Enable the `metricsSummary` feature toggle](/docs/grafana/latest/setup-grafana/configure-grafana/feature-toggles/) in Grafana to use this feature. Contact Grafana Support to enable this feature in Grafana Cloud.
+{{% /admonition %}}
+
+Using **Aggregate by**, you can group RED metrics (span count, erroring span count, and latency information) for `kind=server` spans sent to Tempo in the last hour, grouped by a user-specified attribute.
+For example, you can group request rate and latency metrics by attribute for spans of `kind=server`.
+
+This capability is based on the [metrics summary API](/docs/grafana-cloud/monitor-infrastructure/traces/metrics-summary-api/).
+
+To use this capability:
+
+1. In the Attribute by row, select an option from the first drop-down box. For example, `span`.
+1. Select an attribute from the second drop-down.
+1. Optional: Select **+** to add an **Aggregate by** row.
+1. Select **Run query**.
 
 ### Optional: Add queries
 
