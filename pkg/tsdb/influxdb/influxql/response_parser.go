@@ -1,4 +1,4 @@
-package influxdb
+package influxql
 
 import (
 	"encoding/json"
@@ -11,51 +11,45 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-)
 
-type ResponseParser struct{}
+	"github.com/grafana/grafana/pkg/tsdb/influxdb/models"
+)
 
 var (
 	legendFormat = regexp.MustCompile(`\[\[([\@\/\w-]+)(\.[\@\/\w-]+)*\]\]*|\$([\@\w-]+?)*`)
 )
 
-func (rp *ResponseParser) Parse(buf io.ReadCloser, statusCode int, queries []Query) *backend.QueryDataResponse {
-	return rp.parse(buf, statusCode, queries)
+func ResponseParse(buf io.ReadCloser, statusCode int, query *models.Query) *backend.DataResponse {
+	return parse(buf, statusCode, query)
 }
 
 // parse is the same as Parse, but without the io.ReadCloser (we don't need to
 // close the buffer)
-func (*ResponseParser) parse(buf io.Reader, statusCode int, queries []Query) *backend.QueryDataResponse {
-	resp := backend.NewQueryDataResponse()
+func parse(buf io.Reader, statusCode int, query *models.Query) *backend.DataResponse {
 	response, jsonErr := parseJSON(buf)
 
 	if statusCode/100 != 2 {
-		resp.Responses["A"] = backend.DataResponse{Error: fmt.Errorf("InfluxDB returned error: %s", response.Error)}
+		return &backend.DataResponse{Error: fmt.Errorf("InfluxDB returned error: %s", response.Error)}
 	}
 
 	if jsonErr != nil {
-		resp.Responses["A"] = backend.DataResponse{Error: jsonErr}
-		return resp
+		return &backend.DataResponse{Error: jsonErr}
 	}
 
 	if response.Error != "" {
-		resp.Responses["A"] = backend.DataResponse{Error: fmt.Errorf(response.Error)}
-		return resp
+		return &backend.DataResponse{Error: fmt.Errorf(response.Error)}
 	}
 
-	for i, result := range response.Results {
-		if result.Error != "" {
-			resp.Responses[queries[i].RefID] = backend.DataResponse{Error: fmt.Errorf(result.Error)}
-		} else {
-			resp.Responses[queries[i].RefID] = backend.DataResponse{Frames: transformRows(result.Series, queries[i])}
-		}
+	result := response.Results[0]
+	if result.Error != "" {
+		return &backend.DataResponse{Error: fmt.Errorf(result.Error)}
+	} else {
+		return &backend.DataResponse{Frames: transformRows(result.Series, *query)}
 	}
-
-	return resp
 }
 
-func parseJSON(buf io.Reader) (Response, error) {
-	var response Response
+func parseJSON(buf io.Reader) (models.Response, error) {
+	var response models.Response
 
 	dec := json.NewDecoder(buf)
 	dec.UseNumber()
@@ -65,7 +59,7 @@ func parseJSON(buf io.Reader) (Response, error) {
 	return response, err
 }
 
-func transformRows(rows []Row, query Query) data.Frames {
+func transformRows(rows []models.Row, query models.Query) data.Frames {
 	// pre-allocate frames - this can save many allocations
 	cols := 0
 	for _, row := range rows {
@@ -106,7 +100,7 @@ func transformRows(rows []Row, query Query) data.Frames {
 	return frames
 }
 
-func newFrameWithTimeField(row Row, column string, colIndex int, query Query, frameName []byte) *data.Frame {
+func newFrameWithTimeField(row models.Row, column string, colIndex int, query models.Query, frameName []byte) *data.Frame {
 	var timeArray []time.Time
 	var floatArray []*float64
 	var stringArray []*string
@@ -164,7 +158,7 @@ func newFrameWithTimeField(row Row, column string, colIndex int, query Query, fr
 	return newDataFrame(name, query.RawQuery, timeField, valueField)
 }
 
-func newFrameWithoutTimeField(row Row, retentionPolicyQuery bool, tagValuesQuery bool) *data.Frame {
+func newFrameWithoutTimeField(row models.Row, retentionPolicyQuery bool, tagValuesQuery bool) *data.Frame {
 	var values []string
 
 	if retentionPolicyQuery {
@@ -213,7 +207,7 @@ func newDataFrame(name string, queryString string, timeField *data.Field, valueF
 	return frame
 }
 
-func formatFrameName(row Row, column string, query Query, frameName []byte) []byte {
+func formatFrameName(row models.Row, column string, query models.Query, frameName []byte) []byte {
 	if query.Alias == "" {
 		return buildFrameNameFromQuery(row, column, frameName)
 	}
@@ -253,7 +247,7 @@ func formatFrameName(row Row, column string, query Query, frameName []byte) []by
 	return result
 }
 
-func buildFrameNameFromQuery(row Row, column string, frameName []byte) []byte {
+func buildFrameNameFromQuery(row models.Row, column string, frameName []byte) []byte {
 	frameName = append(frameName, row.Name...)
 	frameName = append(frameName, '.')
 	frameName = append(frameName, column...)
@@ -278,7 +272,7 @@ func buildFrameNameFromQuery(row Row, column string, frameName []byte) []byte {
 	return frameName
 }
 
-func parseTimestamp(value interface{}) (time.Time, error) {
+func parseTimestamp(value any) (time.Time, error) {
 	timestampNumber, ok := value.(json.Number)
 	if !ok {
 		return time.Time{}, fmt.Errorf("timestamp-value has invalid type: %#v", value)
@@ -295,7 +289,7 @@ func parseTimestamp(value interface{}) (time.Time, error) {
 	return t, nil
 }
 
-func typeof(values [][]interface{}, colIndex int) string {
+func typeof(values [][]any, colIndex int) string {
 	for _, value := range values {
 		if value != nil && value[colIndex] != nil {
 			return fmt.Sprintf("%T", value[colIndex])
@@ -304,7 +298,7 @@ func typeof(values [][]interface{}, colIndex int) string {
 	return "null"
 }
 
-func parseNumber(value interface{}) *float64 {
+func parseNumber(value any) *float64 {
 	// NOTE: we use pointers-to-float64 because we need
 	// to represent null-json-values. they come for example
 	// when we do a group-by with fill(null)
@@ -329,10 +323,10 @@ func parseNumber(value interface{}) *float64 {
 	return &fvalue
 }
 
-func isTagValuesQuery(query Query) bool {
+func isTagValuesQuery(query models.Query) bool {
 	return strings.Contains(strings.ToLower(query.RawQuery), strings.ToLower("SHOW TAG VALUES"))
 }
 
-func isRetentionPolicyQuery(query Query) bool {
+func isRetentionPolicyQuery(query models.Query) bool {
 	return strings.Contains(strings.ToLower(query.RawQuery), strings.ToLower("SHOW RETENTION POLICIES"))
 }

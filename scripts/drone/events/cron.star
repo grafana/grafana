@@ -32,7 +32,7 @@ def authenticate_gcr_step():
         "environment": {
             "GCR_CREDENTIALS": from_secret("gcr_credentials"),
         },
-        "volumes": [{"name": "docker", "path": "/var/run/docker.sock"}],
+        "volumes": [{"name": "docker", "path": "/var/run/docker.sock"}, {"name": "config", "path": "/root/.docker/"}],
     }
 
 def cron_job_pipeline(cronName, name, steps):

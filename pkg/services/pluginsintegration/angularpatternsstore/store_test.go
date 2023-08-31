@@ -12,7 +12,7 @@ import (
 )
 
 func TestAngularPatternsStore(t *testing.T) {
-	mockPatterns := []map[string]interface{}{
+	mockPatterns := []map[string]any{
 		{"name": "PanelCtrl", "type": "contains", "pattern": "PanelCtrl"},
 		{"name": "ConfigCtrl", "type": "contains", "pattern": "ConfigCtrl"},
 	}

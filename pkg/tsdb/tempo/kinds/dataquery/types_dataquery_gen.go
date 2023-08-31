@@ -31,9 +31,10 @@ const (
 
 // Defines values for TraceqlSearchScope.
 const (
-	TraceqlSearchScopeResource TraceqlSearchScope = "resource"
-	TraceqlSearchScopeSpan     TraceqlSearchScope = "span"
-	TraceqlSearchScopeUnscoped TraceqlSearchScope = "unscoped"
+	TraceqlSearchScopeIntrinsic TraceqlSearchScope = "intrinsic"
+	TraceqlSearchScopeResource  TraceqlSearchScope = "resource"
+	TraceqlSearchScopeSpan      TraceqlSearchScope = "span"
+	TraceqlSearchScopeUnscoped  TraceqlSearchScope = "unscoped"
 )
 
 // These are the common properties available to all queries in all datasources.
@@ -80,6 +81,9 @@ type TempoQuery struct {
 	// TODO this shouldn't be unknown but DataSourceRef | null
 	Datasource *any            `json:"datasource,omitempty"`
 	Filters    []TraceqlFilter `json:"filters"`
+
+	// Filters that are used to query the metrics summary
+	GroupBy []TraceqlFilter `json:"groupBy,omitempty"`
 
 	// Hide true if query is disabled (ie should not be returned to the dashboard)
 	// Note this does not always imply that the query should not be executed since

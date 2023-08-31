@@ -12,6 +12,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/login/social"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -35,9 +36,9 @@ type Service struct {
 }
 
 type OAuthTokenService interface {
-	GetCurrentOAuthToken(context.Context, *user.SignedInUser) *oauth2.Token
+	GetCurrentOAuthToken(context.Context, identity.Requester) *oauth2.Token
 	IsOAuthPassThruEnabled(*datasources.DataSource) bool
-	HasOAuthEntry(context.Context, *user.SignedInUser) (*login.UserAuth, bool, error)
+	HasOAuthEntry(context.Context, identity.Requester) (*login.UserAuth, bool, error)
 	TryTokenRefresh(context.Context, *login.UserAuth) error
 	InvalidateOAuthTokens(context.Context, *login.UserAuth) error
 }
@@ -52,20 +53,32 @@ func ProvideService(socialService social.Service, authInfoService login.AuthInfo
 }
 
 // GetCurrentOAuthToken returns the OAuth token, if any, for the authenticated user. Will try to refresh the token if it has expired.
-func (o *Service) GetCurrentOAuthToken(ctx context.Context, usr *user.SignedInUser) *oauth2.Token {
-	if usr == nil {
+func (o *Service) GetCurrentOAuthToken(ctx context.Context, usr identity.Requester) *oauth2.Token {
+	if usr == nil || usr.IsNil() {
 		// No user, therefore no token
 		return nil
 	}
 
-	authInfoQuery := &login.GetAuthInfoQuery{UserId: usr.UserID}
+	namespace, id := usr.GetNamespacedID()
+	if namespace != identity.NamespaceUser {
+		// Not a user, therefore no token.
+		return nil
+	}
+
+	userID, err := identity.IntIdentifier(namespace, id)
+	if err != nil {
+		logger.Error("failed to convert user id to int", "namespace", namespace, "userId", id, "error", err)
+		return nil
+	}
+
+	authInfoQuery := &login.GetAuthInfoQuery{UserId: userID}
 	authInfo, err := o.AuthInfoService.GetAuthInfo(ctx, authInfoQuery)
 	if err != nil {
 		if errors.Is(err, user.ErrUserNotFound) {
 			// Not necessarily an error.  User may be logged in another way.
-			logger.Debug("no oauth token for user found", "userId", usr.UserID, "username", usr.Login)
+			logger.Debug("no oauth token for user found", "userId", userID, "username", usr.GetLogin())
 		} else {
-			logger.Error("failed to get oauth token for user", "userId", usr.UserID, "username", usr.Login, "error", err)
+			logger.Error("failed to get oauth token for user", "userId", userID, "username", usr.GetLogin(), "error", err)
 		}
 		return nil
 	}
@@ -88,20 +101,31 @@ func (o *Service) IsOAuthPassThruEnabled(ds *datasources.DataSource) bool {
 }
 
 // HasOAuthEntry returns true and the UserAuth object when OAuth info exists for the specified User
-func (o *Service) HasOAuthEntry(ctx context.Context, usr *user.SignedInUser) (*login.UserAuth, bool, error) {
-	if usr == nil {
+func (o *Service) HasOAuthEntry(ctx context.Context, usr identity.Requester) (*login.UserAuth, bool, error) {
+	if usr == nil || usr.IsNil() {
 		// No user, therefore no token
 		return nil, false, nil
 	}
 
-	authInfoQuery := &login.GetAuthInfoQuery{UserId: usr.UserID}
+	namespace, id := usr.GetNamespacedID()
+	if namespace != identity.NamespaceUser {
+		// Not a user, therefore no token.
+		return nil, false, nil
+	}
+
+	userID, err := identity.IntIdentifier(namespace, id)
+	if err != nil {
+		return nil, false, err
+	}
+
+	authInfoQuery := &login.GetAuthInfoQuery{UserId: userID}
 	authInfo, err := o.AuthInfoService.GetAuthInfo(ctx, authInfoQuery)
 	if err != nil {
 		if errors.Is(err, user.ErrUserNotFound) {
 			// Not necessarily an error.  User may be logged in another way.
 			return nil, false, nil
 		}
-		logger.Error("failed to fetch oauth token for user", "userId", usr.UserID, "username", usr.Login, "error", err)
+		logger.Error("failed to fetch oauth token for user", "userId", userID, "username", usr.GetLogin(), "error", err)
 		return nil, false, err
 	}
 	if !strings.Contains(authInfo.AuthModule, "oauth") {
@@ -114,7 +138,7 @@ func (o *Service) HasOAuthEntry(ctx context.Context, usr *user.SignedInUser) (*l
 // It uses a singleflight.Group to prevent getting the Refresh Token multiple times for a given User
 func (o *Service) TryTokenRefresh(ctx context.Context, usr *login.UserAuth) error {
 	lockKey := fmt.Sprintf("oauth-refresh-token-%d", usr.UserId)
-	_, err, _ := o.singleFlightGroup.Do(lockKey, func() (interface{}, error) {
+	_, err, _ := o.singleFlightGroup.Do(lockKey, func() (any, error) {
 		logger.Debug("singleflight request for getting a new access token", "key", lockKey)
 
 		return o.tryGetOrRefreshAccessToken(ctx, usr)
@@ -131,7 +155,7 @@ func buildOAuthTokenFromAuthInfo(authInfo *login.UserAuth) *oauth2.Token {
 	}
 
 	if authInfo.OAuthIdToken != "" {
-		token = token.WithExtra(map[string]interface{}{"id_token": authInfo.OAuthIdToken})
+		token = token.WithExtra(map[string]any{"id_token": authInfo.OAuthIdToken})
 	}
 
 	return token

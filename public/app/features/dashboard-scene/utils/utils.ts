@@ -1,7 +1,27 @@
-import { SceneDeactivationHandler, SceneObject } from '@grafana/scenes';
+import { SceneDeactivationHandler, sceneGraph, SceneObject, VizPanel } from '@grafana/scenes';
 
 export function getVizPanelKeyForPanelId(panelId: number) {
   return `panel-${panelId}`;
+}
+
+export function getPanelIdForVizPanel(panel: VizPanel): number {
+  return parseInt(panel.state.key!.replace('panel-', ''), 10);
+}
+
+export function findVizPanelById(scene: SceneObject, id: string | undefined): VizPanel | null {
+  if (!id) {
+    return null;
+  }
+
+  const panelId = parseInt(id, 10);
+  const key = getVizPanelKeyForPanelId(panelId);
+
+  const obj = sceneGraph.findObject(scene, (obj) => obj.state.key === key);
+  if (obj instanceof VizPanel) {
+    return obj;
+  }
+
+  return null;
 }
 
 /**
