@@ -120,7 +120,7 @@ func (c *baseClientImpl) encodeBatchRequests(requests []*multiRequest) ([]byte, 
 	}
 
 	elapsed := time.Since(start)
-	c.logger.Debug("Encoded batch requests to json", "took", elapsed)
+	c.logger.Debug("Completed encoding of batch requests to json", "took", elapsed)
 
 	return payload.Bytes(), nil
 }
@@ -154,11 +154,11 @@ func (c *baseClientImpl) executeRequest(method, uriPath, uriQuery string, body [
 }
 
 func (c *baseClientImpl) ExecuteMultisearch(r *MultiSearchRequest) (*MultiSearchResponse, error) {
-	start := time.Now()
-	c.logger.Debug("Sending request to Elasticsearch", "requestsLength", len(r.Requests), "url", c.ds.URL)
 
 	multiRequests := c.createMultiSearchRequests(r.Requests)
 	queryParams := c.getMultiSearchQueryParameters()
+	c.logger.Debug("Sending request to Elasticsearch", "requestsLength", len(r.Requests), "url", c.ds.URL)
+	start := time.Now()
 	clientRes, err := c.executeBatchRequest("_msearch", queryParams, multiRequests)
 	if err != nil {
 		c.logger.Error("Error received from Elasticsearch", "err", err, "status", clientRes.StatusCode, "took", time.Since(start))
