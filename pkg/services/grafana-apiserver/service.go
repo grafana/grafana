@@ -13,7 +13,6 @@ import (
 	"github.com/grafana/dskit/services"
 	grafanaapiserveroptions "github.com/grafana/grafana-apiserver/pkg/cmd/server/options"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	grafanaAdmission "github.com/grafana/grafana/pkg/services/grafana-apiserver/admission"
 
 	"k8s.io/apiserver/pkg/admission"
 	"k8s.io/apiserver/pkg/authentication/authenticator"
@@ -135,11 +134,9 @@ func (s *service) start(ctx context.Context) error {
 	// and replacing them with our internal admission plugins. this avoids issues with the default admission
 	// plugins that depend on the Core V1 APIs and informers.
 	o.RecommendedOptions.Admission.Plugins = admission.NewPlugins()
-	grafanaAdmission.RegisterDenyByName(o.RecommendedOptions.Admission.Plugins)
-	grafanaAdmission.RegisterAddDefaultFields(o.RecommendedOptions.Admission.Plugins)
-	o.RecommendedOptions.Admission.RecommendedPluginOrder = []string{grafanaAdmission.PluginNameDenyByName, grafanaAdmission.PluginNameAddDefaultFields}
-	o.RecommendedOptions.Admission.DisablePlugins = append([]string{}, o.RecommendedOptions.Admission.EnablePlugins...)
-	o.RecommendedOptions.Admission.EnablePlugins = []string{grafanaAdmission.PluginNameDenyByName, grafanaAdmission.PluginNameAddDefaultFields}
+	o.RecommendedOptions.Admission.RecommendedPluginOrder = []string{}
+	o.RecommendedOptions.Admission.DisablePlugins = []string{}
+	o.RecommendedOptions.Admission.EnablePlugins = []string{}
 
 	// Get the util to get the paths to pre-generated certs
 	certUtil := certgenerator.CertUtil{
