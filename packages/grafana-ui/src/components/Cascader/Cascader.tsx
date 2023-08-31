@@ -15,12 +15,14 @@ export interface CascaderProps {
   /** The separator between levels in the search */
   separator?: string;
   placeholder?: string;
+  /** As the onSelect handler reports only the leaf node selected, the leaf nodes should have unique value. */
   options: CascaderOption[];
   /** Changes the value for every selection, including branch nodes. Defaults to true. */
   changeOnSelect?: boolean;
   onSelect(val: string): void;
   /** Sets the width to a multiple of 8px. Should only be used with inline forms. Setting width of the container is preferred in other cases.*/
   width?: number;
+  /** Single string that needs to be the same as value of the last item in the selection chain. */
   initialValue?: string;
   allowCustomValue?: boolean;
   /** A function for formatting the message for custom value creation. Only applies when allowCustomValue is set to true*/
@@ -69,7 +71,7 @@ const disableDivFocus = css({
   },
 });
 
-const DEFAULT_SEPARATOR = '/';
+const DEFAULT_SEPARATOR = ' / ';
 
 export class Cascader extends PureComponent<CascaderProps, CascaderState> {
   constructor(props: CascaderProps) {
@@ -94,7 +96,7 @@ export class Cascader extends PureComponent<CascaderProps, CascaderState> {
       if (!option.items) {
         selectOptions.push({
           singleLabel: cpy[cpy.length - 1].label,
-          label: cpy.map((o) => o.label).join(this.props.separator || ` ${DEFAULT_SEPARATOR} `),
+          label: cpy.map((o) => o.label).join(this.props.separator || DEFAULT_SEPARATOR),
           value: cpy.map((o) => o.value),
         });
       } else {
@@ -113,7 +115,7 @@ export class Cascader extends PureComponent<CascaderProps, CascaderState> {
     for (const option of searchableOptions) {
       const optionPath = option.value || [];
 
-      if (optionPath.indexOf(initValue) === optionPath.length - 1) {
+      if (optionPath[optionPath.length - 1] === initValue) {
         return {
           rcValue: optionPath,
           activeLabel: this.props.displayAllSelectedLevels ? option.label : option.singleLabel || '',

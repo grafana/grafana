@@ -956,6 +956,53 @@ func updateDashboardACL(t *testing.T, sqlStore db.DB, dashboardID int64, items .
 	return err
 }
 
+func TestMetricsUsage(t *testing.T) {
+	ss := db.InitTestDB(t)
+	userStore := ProvideStore(ss, setting.NewCfg())
+	quotaService := quotaimpl.ProvideService(ss, ss.Cfg)
+	orgService, err := orgimpl.ProvideService(ss, ss.Cfg, quotaService)
+	require.NoError(t, err)
+
+	_, usrSvc := createOrgAndUserSvc(t, ss, ss.Cfg)
+
+	t.Run("Get empty role metrics for an org", func(t *testing.T) {
+		orgId := int64(1)
+
+		// create first user
+		createFirtUserCmd := &user.CreateUserCommand{
+			Login: "admin",
+			Email: "admin@admin.com",
+			Name:  "admin",
+			OrgID: orgId,
+		}
+		_, err := usrSvc.Create(context.Background(), createFirtUserCmd)
+		require.NoError(t, err)
+
+		// create second user
+		createSecondUserCmd := &user.CreateUserCommand{
+			Login: "userWithoutRole",
+			Email: "userWithoutRole@userWithoutRole.com",
+			Name:  "userWithoutRole",
+		}
+		secondUser, err := usrSvc.Create(context.Background(), createSecondUserCmd)
+		require.NoError(t, err)
+
+		// assign the user to the org
+		cmd := org.AddOrgUserCommand{
+			OrgID:  secondUser.OrgID,
+			UserID: orgId,
+			Role:   org.RoleNone,
+		}
+		err = orgService.AddOrgUser(context.Background(), &cmd)
+		require.NoError(t, err)
+
+		// get metric usage
+		stats, err := userStore.CountUserAccountsWithEmptyRole(context.Background())
+		require.NoError(t, err)
+		assert.Equal(t, int64(1), stats)
+	})
+}
+
 // This function was copied from pkg/services/dashboards/database to circumvent
 // import cycles. When this org-related code is refactored into a service the
 // tests can the real GetDashboardACLInfoList functions

@@ -383,6 +383,13 @@ export interface MetadataInspectorProps<
   data: DataFrame[];
 }
 
+export interface LegacyMetricFindQueryOptions {
+  searchFilter?: string;
+  scopedVars?: ScopedVars;
+  range?: TimeRange;
+  variable?: { name: string };
+}
+
 export interface QueryEditorProps<
   DSType extends DataSourceApi<TQuery, TOptions>,
   TQuery extends DataQuery = DataQuery,
@@ -523,7 +530,6 @@ export interface DataQueryRequest<TQuery extends DataQuery = DataQuery> {
   timeInfo?: string; // The query time description (blue text in the upper right)
   panelId?: number;
   dashboardUID?: string;
-  publicDashboardAccessToken?: string;
 
   // Request Timing
   startTime: number;

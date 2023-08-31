@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/search"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -294,7 +295,9 @@ func (hs *HTTPServer) DeleteFolder(c *contextmodel.ReqContext) response.Response
 		return apierrors.ToFolderErrorResponse(err)
 	}
 
-	return response.JSON(http.StatusOK, "")
+	return response.JSON(http.StatusOK, util.DynMap{
+		"message": "Folder deleted",
+	})
 }
 
 // swagger:route GET /folders/{folder_uid}/counts folders getFolderDescendantCounts
@@ -390,7 +393,7 @@ func (hs *HTTPServer) getFolderACMetadata(c *contextmodel.ReqContext, f *folder.
 		folderIDs[p.UID] = true
 	}
 
-	allMetadata := hs.getMultiAccessControlMetadata(c, c.OrgID, dashboards.ScopeFoldersPrefix, folderIDs)
+	allMetadata := hs.getMultiAccessControlMetadata(c, dashboards.ScopeFoldersPrefix, folderIDs)
 	metadata := allMetadata[f.UID]
 
 	// Flatten metadata - if any parent has a permission, the child folder inherits it

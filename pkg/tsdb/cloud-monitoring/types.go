@@ -20,8 +20,8 @@ import (
 type (
 	cloudMonitoringQueryExecutor interface {
 		run(ctx context.Context, req *backend.QueryDataRequest, s *Service, dsInfo datasourceInfo, tracer tracing.Tracer) (
-			*backend.DataResponse, cloudMonitoringResponse, string, error)
-		parseResponse(dr *backend.DataResponse, data cloudMonitoringResponse, executedQueryString string) error
+			*backend.DataResponse, any, string, error)
+		parseResponse(dr *backend.DataResponse, data any, executedQueryString string) error
 		buildDeepLink() string
 		getRefID() string
 		getAliasBy() string
@@ -35,6 +35,7 @@ type (
 		TimeSeriesList  *dataquery.TimeSeriesList  `json:"timeSeriesList,omitempty"`
 		TimeSeriesQuery *dataquery.TimeSeriesQuery `json:"timeSeriesQuery,omitempty"`
 		SloQuery        *dataquery.SLOQuery        `json:"sloQuery,omitempty"`
+		PromQLQuery     *dataquery.PromQLQuery     `json:"promQLQuery,omitempty"`
 	}
 
 	cloudMonitoringTimeSeriesList struct {
@@ -53,6 +54,16 @@ type (
 		parameters *dataquery.SLOQuery
 		// Processed properties
 		params url.Values
+	}
+
+	// cloudMonitoringProm is used to build a promQL queries
+	cloudMonitoringProm struct {
+		refID      string
+		aliasBy    string
+		logger     log.Logger
+		parameters *dataquery.PromQLQuery
+		timeRange  backend.TimeRange
+		IntervalMS int64
 	}
 
 	// cloudMonitoringTimeSeriesQuery is used to build MQL queries
@@ -88,6 +99,14 @@ type (
 		TimeSeriesData       []timeSeriesData     `json:"timeSeriesData"`
 		Unit                 string               `json:"unit"`
 		NextPageToken        string               `json:"nextPageToken"`
+	}
+
+	promResponse struct {
+		Status string `json:"status"`
+		Data   struct {
+			Result     any    `json:"result"`
+			ResultType string `json:"resultType"`
+		} `json:"data"`
 	}
 )
 
@@ -229,10 +248,10 @@ type timeSeries struct {
 		Type   string            `json:"type"`
 		Labels map[string]string `json:"labels"`
 	} `json:"resource"`
-	MetaData   map[string]map[string]interface{} `json:"metadata"`
-	MetricKind string                            `json:"metricKind"`
-	ValueType  string                            `json:"valueType"`
-	Points     []timeSeriesPoint                 `json:"points"`
+	MetaData   map[string]map[string]any `json:"metadata"`
+	MetricKind string                    `json:"metricKind"`
+	ValueType  string                    `json:"valueType"`
+	Points     []timeSeriesPoint         `json:"points"`
 }
 
 func (ts timeSeries) length() int {
@@ -286,7 +305,7 @@ func (ts timeSeries) getLabels(groupBys []string) (data.Labels, string) {
 			case bool:
 				strVal := strconv.FormatBool(v)
 				seriesLabels[key] = strVal
-			case []interface{}:
+			case []any:
 				for _, v := range v {
 					strVal := v.(string)
 					if len(seriesLabels[key]) > 0 {

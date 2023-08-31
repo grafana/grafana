@@ -6,18 +6,17 @@ import (
 	"fmt"
 	"strings"
 	"sync"
-	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/guardian"
-	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/store/entity"
@@ -282,7 +281,16 @@ func (s *Service) Create(ctx context.Context, cmd *folder.CreateFolderCommand) (
 	dashFolder.SetUID(trimmedUID)
 
 	user := cmd.SignedInUser
-	userID := user.UserID
+	namespaceID, userIDstr := user.GetNamespacedID()
+	if namespaceID == identity.NamespaceAPIKey {
+		s.log.Warn("namespace API key detected, using 0 as user ID", "namespaceID", namespaceID, "userID", userIDstr)
+		userIDstr = "0"
+	}
+	userID, err := identity.IntIdentifier(namespaceID, userIDstr)
+	if err != nil {
+		s.log.Warn("failed to parse user ID", "namespaceID", namespaceID, "userID", userIDstr, "error", err)
+	}
+
 	if userID == 0 {
 		userID = -1
 	}
@@ -711,50 +719,6 @@ func (s *Service) getNestedFolders(ctx context.Context, orgID int64, uid string)
 	return result, nil
 }
 
-// MakeUserAdmin is copy of DashboardServiceImpl.MakeUserAdmin
-func (s *Service) MakeUserAdmin(ctx context.Context, orgID int64, userID, folderID int64, setViewAndEditPermissions bool) error {
-	rtEditor := org.RoleEditor
-	rtViewer := org.RoleViewer
-
-	items := []*dashboards.DashboardACL{
-		{
-			OrgID:       orgID,
-			DashboardID: folderID,
-			UserID:      userID,
-			Permission:  dashboards.PERMISSION_ADMIN,
-			Created:     time.Now(),
-			Updated:     time.Now(),
-		},
-	}
-
-	if setViewAndEditPermissions {
-		items = append(items,
-			&dashboards.DashboardACL{
-				OrgID:       orgID,
-				DashboardID: folderID,
-				Role:        &rtEditor,
-				Permission:  dashboards.PERMISSION_EDIT,
-				Created:     time.Now(),
-				Updated:     time.Now(),
-			},
-			&dashboards.DashboardACL{
-				OrgID:       orgID,
-				DashboardID: folderID,
-				Role:        &rtViewer,
-				Permission:  dashboards.PERMISSION_VIEW,
-				Created:     time.Now(),
-				Updated:     time.Now(),
-			},
-		)
-	}
-
-	if err := s.dashboardStore.UpdateDashboardACL(ctx, folderID, items); err != nil {
-		return err
-	}
-
-	return nil
-}
-
 // BuildSaveDashboardCommand is a simplified version on DashboardServiceImpl.BuildSaveDashboardCommand
 // keeping only the meaningful functionality for folders
 func (s *Service) BuildSaveDashboardCommand(ctx context.Context, dto *dashboards.SaveDashboardDTO) (*dashboards.SaveDashboardCommand, error) {
@@ -809,12 +773,22 @@ func (s *Service) BuildSaveDashboardCommand(ctx context.Context, dto *dashboards
 		}
 	}
 
+	namespaceID, userIDstr := dto.User.GetNamespacedID()
+	if namespaceID == identity.NamespaceAPIKey {
+		s.log.Warn("namespace API key detected, using 0 as user ID", "namespaceID", namespaceID, "userID", userIDstr)
+		userIDstr = "0"
+	}
+	userID, err := identity.IntIdentifier(namespaceID, userIDstr)
+	if err != nil {
+		s.log.Warn("failed to parse user ID", "namespaceID", namespaceID, "userID", userIDstr, "error", err)
+	}
+
 	cmd := &dashboards.SaveDashboardCommand{
 		Dashboard: dash.Data,
 		Message:   dto.Message,
 		OrgID:     dto.OrgID,
 		Overwrite: dto.Overwrite,
-		UserID:    dto.User.UserID,
+		UserID:    userID,
 		FolderID:  dash.FolderID,
 		IsFolder:  dash.IsFolder,
 		PluginID:  dash.PluginID,
@@ -829,7 +803,7 @@ func (s *Service) BuildSaveDashboardCommand(ctx context.Context, dto *dashboards
 
 // getGuardianForSavePermissionCheck returns the guardian to be used for checking permission of dashboard
 // It replaces deleted Dashboard.GetDashboardIdForSavePermissionCheck()
-func getGuardianForSavePermissionCheck(ctx context.Context, d *dashboards.Dashboard, user *user.SignedInUser) (guardian.DashboardGuardian, error) {
+func getGuardianForSavePermissionCheck(ctx context.Context, d *dashboards.Dashboard, user identity.Requester) (guardian.DashboardGuardian, error) {
 	newDashboard := d.ID == 0
 
 	if newDashboard {

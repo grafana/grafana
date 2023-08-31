@@ -57,16 +57,16 @@ func (b *BackendClientInit) Initialize(ctx context.Context, p *plugins.Plugin) (
 
 // BackendClientStarter implements an InitializeFunc for starting a backend plugin process.
 type BackendClientStarter struct {
-	processManager process.Service
+	processManager process.Manager
 	log            log.Logger
 }
 
 // BackendProcessStartStep returns a new InitializeFunc for starting a backend plugin process.
-func BackendProcessStartStep(processManager process.Service) InitializeFunc {
+func BackendProcessStartStep(processManager process.Manager) InitializeFunc {
 	return newBackendProcessStarter(processManager).Start
 }
 
-func newBackendProcessStarter(processManager process.Service) *BackendClientStarter {
+func newBackendProcessStarter(processManager process.Manager) *BackendClientStarter {
 	return &BackendClientStarter{
 		processManager: processManager,
 		log:            log.New("plugins.backend.start"),
@@ -75,7 +75,7 @@ func newBackendProcessStarter(processManager process.Service) *BackendClientStar
 
 // Start will start the backend plugin process.
 func (b *BackendClientStarter) Start(ctx context.Context, p *plugins.Plugin) (*plugins.Plugin, error) {
-	if err := b.processManager.Start(ctx, p.ID); err != nil {
+	if err := b.processManager.Start(ctx, p); err != nil {
 		b.log.Error("Could not start plugin", "pluginId", p.ID, "error", err)
 		return nil, err
 	}

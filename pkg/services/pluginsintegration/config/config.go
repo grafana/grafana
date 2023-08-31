@@ -47,8 +47,9 @@ func ProvideConfig(settingProvider setting.Provider, grafanaCfg *setting.Cfg, fe
 		grafanaCfg.PluginLogBackendRequests,
 		grafanaCfg.PluginsCDNURLTemplate,
 		grafanaCfg.AppURL,
+		grafanaCfg.AppSubURL,
 		tracingCfg,
-		featuremgmt.ProvideToggles(features),
+		features,
 		grafanaCfg.AngularSupportEnabled,
 		grafanaCfg.GrafanaComURL,
 	), nil

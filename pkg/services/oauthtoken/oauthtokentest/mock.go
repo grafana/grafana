@@ -5,20 +5,20 @@ import (
 
 	"golang.org/x/oauth2"
 
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/login"
-	"github.com/grafana/grafana/pkg/services/user"
 )
 
 type MockOauthTokenService struct {
-	GetCurrentOauthTokenFunc   func(ctx context.Context, usr *user.SignedInUser) *oauth2.Token
+	GetCurrentOauthTokenFunc   func(ctx context.Context, usr identity.Requester) *oauth2.Token
 	IsOAuthPassThruEnabledFunc func(ds *datasources.DataSource) bool
-	HasOAuthEntryFunc          func(ctx context.Context, usr *user.SignedInUser) (*login.UserAuth, bool, error)
+	HasOAuthEntryFunc          func(ctx context.Context, usr identity.Requester) (*login.UserAuth, bool, error)
 	InvalidateOAuthTokensFunc  func(ctx context.Context, usr *login.UserAuth) error
 	TryTokenRefreshFunc        func(ctx context.Context, usr *login.UserAuth) error
 }
 
-func (m *MockOauthTokenService) GetCurrentOAuthToken(ctx context.Context, usr *user.SignedInUser) *oauth2.Token {
+func (m *MockOauthTokenService) GetCurrentOAuthToken(ctx context.Context, usr identity.Requester) *oauth2.Token {
 	if m.GetCurrentOauthTokenFunc != nil {
 		return m.GetCurrentOauthTokenFunc(ctx, usr)
 	}
@@ -32,7 +32,7 @@ func (m *MockOauthTokenService) IsOAuthPassThruEnabled(ds *datasources.DataSourc
 	return false
 }
 
-func (m *MockOauthTokenService) HasOAuthEntry(ctx context.Context, usr *user.SignedInUser) (*login.UserAuth, bool, error) {
+func (m *MockOauthTokenService) HasOAuthEntry(ctx context.Context, usr identity.Requester) (*login.UserAuth, bool, error) {
 	if m.HasOAuthEntryFunc != nil {
 		return m.HasOAuthEntryFunc(ctx, usr)
 	}

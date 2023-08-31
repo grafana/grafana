@@ -847,8 +847,8 @@ describe('getLinksSupplier', () => {
 
     const links = supplier({ valueRowIndex: 0 });
     const rangeStr = JSON.stringify({
-      from: range.from.toISOString(),
-      to: range.to.toISOString(),
+      from: range.from.valueOf().toString(),
+      to: range.to.valueOf().toString(),
     });
     const encodeURIParams = `{"range":${rangeStr},"datasource":"${datasourceUid}","queries":["12345"]}`;
     expect(links.length).toBe(1);

@@ -98,7 +98,6 @@ var (
 	LoginHint               string
 	PasswordHint            string
 	DisableSignoutMenu      bool
-	SignoutRedirectUrl      string
 	ExternalUserMngLinkUrl  string
 	ExternalUserMngLinkName string
 	ExternalUserMngInfo     string
@@ -258,6 +257,10 @@ type Cfg struct {
 	MetricsEndpointBasicAuthUsername string
 	MetricsEndpointBasicAuthPassword string
 	MetricsEndpointDisableTotalStats bool
+	// MetricsIncludeTeamLabel configures grafana to set a label for
+	// the team responsible for the code at Grafana labs. We don't expect anyone else to
+	// use this setting.
+	MetricsIncludeTeamLabel          bool
 	MetricsTotalStatsIntervalSeconds int
 	MetricsGrafanaEnvironmentInfo    map[string]string
 
@@ -279,6 +282,7 @@ type Cfg struct {
 	DisableLogin                 bool
 	AdminEmail                   string
 	DisableLoginForm             bool
+	SignoutRedirectUrl           string
 	// Not documented & not supported
 	// stand in until a more complete solution is implemented
 	AuthConfigUIAdminAccess bool
@@ -502,7 +506,7 @@ type Cfg struct {
 	GrafanaNetAuthEnabled bool
 
 	// Geomap base layer config
-	GeomapDefaultBaseLayerConfig map[string]interface{}
+	GeomapDefaultBaseLayerConfig map[string]any
 	GeomapEnableCustomBaseLayers bool
 
 	// Unified Alerting
@@ -968,7 +972,7 @@ var skipStaticRootValidation = false
 
 func NewCfg() *Cfg {
 	return &Cfg{
-		Target:      []string{},
+		Target:      []string{"all"},
 		Logger:      log.New("settings"),
 		Raw:         ini.Empty(),
 		Azure:       &azsettings.AzureSettings{},
@@ -1027,7 +1031,7 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 
 	cfg.ErrTemplateName = "error"
 
-	Target := valueAsString(iniFile.Section(""), "target", "")
+	Target := valueAsString(iniFile.Section(""), "target", "all")
 	if Target != "" {
 		cfg.Target = strings.Split(Target, " ")
 	}
@@ -1090,6 +1094,7 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 	cfg.MetricsEndpointBasicAuthUsername = valueAsString(iniFile.Section("metrics"), "basic_auth_username", "")
 	cfg.MetricsEndpointBasicAuthPassword = valueAsString(iniFile.Section("metrics"), "basic_auth_password", "")
 	cfg.MetricsEndpointDisableTotalStats = iniFile.Section("metrics").Key("disable_total_stats").MustBool(false)
+	cfg.MetricsIncludeTeamLabel = iniFile.Section("metrics").Key("include_team_label").MustBool(false)
 	cfg.MetricsTotalStatsIntervalSeconds = iniFile.Section("metrics").Key("total_stats_collector_interval_seconds").MustInt(1800)
 
 	analytics := iniFile.Section("analytics")
@@ -1222,7 +1227,7 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 	geomapSection := iniFile.Section("geomap")
 	basemapJSON := valueAsString(geomapSection, "default_baselayer_config", "")
 	if basemapJSON != "" {
-		layer := make(map[string]interface{})
+		layer := make(map[string]any)
 		err = json.Unmarshal([]byte(basemapJSON), &layer)
 		if err != nil {
 			cfg.Logger.Error("Error reading json from default_baselayer_config", "error", err)
@@ -1553,7 +1558,7 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 	}
 
 	cfg.OAuthCookieMaxAge = auth.Key("oauth_state_cookie_max_age").MustInt(600)
-	SignoutRedirectUrl = valueAsString(auth, "signout_redirect_url", "")
+	cfg.SignoutRedirectUrl = valueAsString(auth, "signout_redirect_url", "")
 	// Deprecated
 	cfg.OAuthSkipOrgRoleUpdateSync = auth.Key("oauth_skip_org_role_update_sync").MustBool(false)
 	if cfg.OAuthSkipOrgRoleUpdateSync {
@@ -1677,6 +1682,7 @@ func readUserSettings(iniFile *ini.File, cfg *Cfg) error {
 	cfg.AutoAssignOrgId = users.Key("auto_assign_org_id").MustInt(1)
 	cfg.AutoAssignOrgRole = users.Key("auto_assign_org_role").In(
 		string(roletype.RoleViewer), []string{
+			string(roletype.RoleNone),
 			string(roletype.RoleViewer),
 			string(roletype.RoleEditor),
 			string(roletype.RoleAdmin)})

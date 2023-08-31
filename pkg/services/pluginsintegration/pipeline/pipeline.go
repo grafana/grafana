@@ -40,7 +40,7 @@ func ProvideDiscoveryStage(cfg *config.Cfg, pf finder.Finder, pr registry.Servic
 func ProvideBootstrapStage(cfg *config.Cfg, sc plugins.SignatureCalculator, a *assetpath.Service) *bootstrap.Bootstrap {
 	return bootstrap.New(cfg, bootstrap.Opts{
 		ConstructFunc: bootstrap.DefaultConstructFunc(sc, a),
-		DecorateFuncs: bootstrap.DefaultDecorateFuncs,
+		DecorateFuncs: bootstrap.DefaultDecorateFuncs(cfg),
 	})
 }
 
@@ -56,27 +56,25 @@ func ProvideValidationStage(cfg *config.Cfg, sv signature.Validator, ai angulari
 }
 
 func ProvideInitializationStage(cfg *config.Cfg, pr registry.Service, l plugins.Licensing,
-	bp plugins.BackendFactoryProvider, pm process.Service, externalServiceRegistry oauth.ExternalServiceRegistry,
+	bp plugins.BackendFactoryProvider, pm process.Manager, externalServiceRegistry oauth.ExternalServiceRegistry,
 	roleRegistry plugins.RoleRegistry) *initialization.Initialize {
 	return initialization.New(cfg, initialization.Opts{
 		InitializeFuncs: []initialization.InitializeFunc{
+			ExternalServiceRegistrationStep(cfg, externalServiceRegistry),
 			initialization.BackendClientInitStep(envvars.NewProvider(cfg, l), bp),
 			initialization.PluginRegistrationStep(pr),
 			initialization.BackendProcessStartStep(pm),
-			ExternalServiceRegistrationStep(cfg, externalServiceRegistry),
 			RegisterPluginRolesStep(roleRegistry),
 			ReportBuildMetrics,
 		},
 	})
 }
 
-func ProvideTerminationStage(cfg *config.Cfg, pr registry.Service, pm process.Service) (*termination.Terminate, error) {
+func ProvideTerminationStage(cfg *config.Cfg, pr registry.Service, pm process.Manager) (*termination.Terminate, error) {
 	return termination.New(cfg, termination.Opts{
-		ResolveFunc: termination.TerminablePluginResolverStep(pr),
 		TerminateFuncs: []termination.TerminateFunc{
 			termination.BackendProcessTerminatorStep(pm),
 			termination.DeregisterStep(pr),
-			termination.FSRemoval,
 		},
 	})
 }

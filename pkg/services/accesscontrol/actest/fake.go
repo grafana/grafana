@@ -5,7 +5,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
-	"github.com/grafana/grafana/pkg/services/user"
 )
 
 var _ accesscontrol.Service = new(FakeService)
@@ -20,8 +19,8 @@ type FakeService struct {
 	ExpectedUsersPermissions        map[int64][]accesscontrol.Permission
 }
 
-func (f FakeService) GetUsageStats(ctx context.Context) map[string]interface{} {
-	return map[string]interface{}{}
+func (f FakeService) GetUsageStats(ctx context.Context) map[string]any {
+	return map[string]any{}
 }
 
 func (f FakeService) GetUserPermissions(ctx context.Context, user identity.Requester, options accesscontrol.Options) ([]accesscontrol.Permission, error) {
@@ -121,7 +120,7 @@ type FakePermissionsService struct {
 	ExpectedMappedAction string
 }
 
-func (f *FakePermissionsService) GetPermissions(ctx context.Context, user *user.SignedInUser, resourceID string) ([]accesscontrol.ResourcePermission, error) {
+func (f *FakePermissionsService) GetPermissions(ctx context.Context, user identity.Requester, resourceID string) ([]accesscontrol.ResourcePermission, error) {
 	return f.ExpectedPermissions, f.ExpectedErr
 }
 
