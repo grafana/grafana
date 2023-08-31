@@ -6,6 +6,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
 )
@@ -65,7 +66,7 @@ func TestSetDefaultNavURL(t *testing.T) {
 	})
 }
 
-func TestSetPathsBasedOnApp(t *testing.T) {
+func Test_configureAppChildPlugin(t *testing.T) {
 	t.Run("When setting paths based on core plugin on Windows", func(t *testing.T) {
 		child := &plugins.Plugin{
 			FS: fakes.NewFakePluginFiles("c:\\grafana\\public\\app\\plugins\\app\\testdata-app\\datasources\\datasource"),
@@ -77,13 +78,42 @@ func TestSetPathsBasedOnApp(t *testing.T) {
 			},
 			Class:   plugins.ClassCore,
 			FS:      fakes.NewFakePluginFiles("c:\\grafana\\public\\app\\plugins\\app\\testdata-app"),
-			BaseURL: "public/app/plugins/app/testdata-app",
+			BaseURL: "/public/app/plugins/app/testdata-app",
 		}
 
-		configureAppChildPlugin(parent, child)
+		configureAppChildPlugin(&config.Cfg{}, parent, child)
 
-		require.Equal(t, "app/plugins/app/testdata-app/datasources/datasource/module", child.Module)
+		require.Equal(t, "core:plugin/testdata-app/datasources/datasource", child.Module)
 		require.Equal(t, "testdata-app", child.IncludedInAppID)
-		require.Equal(t, "public/app/plugins/app/testdata-app", child.BaseURL)
+		require.Equal(t, "/public/app/plugins/app/testdata-app", child.BaseURL)
+
+		t.Run("App sub URL has no effect on Core plugins", func(t *testing.T) {
+			configureAppChildPlugin(&config.Cfg{GrafanaAppSubURL: "/grafana"}, parent, child)
+
+			require.Equal(t, "core:plugin/testdata-app/datasources/datasource", child.Module)
+			require.Equal(t, "testdata-app", child.IncludedInAppID)
+			require.Equal(t, "/public/app/plugins/app/testdata-app", child.BaseURL)
+		})
+	})
+
+	t.Run("When setting paths based on external plugin with app sub URL", func(t *testing.T) {
+		child := &plugins.Plugin{
+			FS: fakes.NewFakePluginFiles("/plugins/parent-app/child-panel"),
+		}
+		parent := &plugins.Plugin{
+			JSONData: plugins.JSONData{
+				Type: plugins.TypeApp,
+				ID:   "testdata-app",
+			},
+			Class:   plugins.ClassExternal,
+			FS:      fakes.NewFakePluginFiles("/plugins/parent-app"),
+			BaseURL: "/grafana/plugins/parent-app",
+		}
+
+		configureAppChildPlugin(&config.Cfg{GrafanaAppSubURL: "/grafana"}, parent, child)
+
+		require.Equal(t, "/grafana/public/plugins/testdata-app/child-panel/module.js", child.Module)
+		require.Equal(t, "testdata-app", child.IncludedInAppID)
+		require.Equal(t, "/grafana/plugins/parent-app", child.BaseURL)
 	})
 }
