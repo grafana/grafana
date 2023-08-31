@@ -122,7 +122,7 @@ Complete the following steps to start the Grafana server with systemd and verify
 
 #### Serve Grafana on a port < 1024
 
-{{< docs/shared "systemd/bind-net-capabilities.md" >}}
+{{< docs/shared lookup="systemd/bind-net-capabilities.md" source="grafana" version="<GRAFANA VERSION>" >}}
 
 ### Start the server with init.d
 
