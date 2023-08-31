@@ -52,7 +52,7 @@ func CreateIntegrationTestCtx(t *testing.T, cfg *setting.Cfg, coreRegistry *core
 	errTracker := pluginerrs.ProvideSignatureErrorTracker()
 
 	disc := pipeline.ProvideDiscoveryStage(pCfg, finder.NewLocalFinder(true), reg)
-	boot := pipeline.ProvideBootstrapStage(pCfg, signature.ProvideService(pCfg, statickey.New()), assetpath.ProvideService(cdn))
+	boot := pipeline.ProvideBootstrapStage(pCfg, signature.ProvideService(pCfg, statickey.New()), assetpath.ProvideService(pCfg, cdn))
 	valid := pipeline.ProvideValidationStage(pCfg, signature.NewValidator(signature.NewUnsignedAuthorizer(pCfg)), angularInspector, errTracker)
 	init := pipeline.ProvideInitializationStage(pCfg, reg, fakes.NewFakeLicensingService(), provider.ProvideService(coreRegistry), proc, &fakes.FakeOauthService{}, fakes.NewFakeRoleRegistry())
 	term, err := pipeline.ProvideTerminationStage(pCfg, reg, proc)
@@ -90,7 +90,7 @@ func CreateTestLoader(t *testing.T, cfg *pluginsCfg.Cfg, opts LoaderOpts) *loade
 	}
 
 	if opts.Bootstrapper == nil {
-		opts.Bootstrapper = pipeline.ProvideBootstrapStage(cfg, signature.ProvideService(cfg, statickey.New()), assetpath.ProvideService(pluginscdn.ProvideService(cfg)))
+		opts.Bootstrapper = pipeline.ProvideBootstrapStage(cfg, signature.ProvideService(cfg, statickey.New()), assetpath.ProvideService(cfg, pluginscdn.ProvideService(cfg)))
 	}
 
 	if opts.Validator == nil {

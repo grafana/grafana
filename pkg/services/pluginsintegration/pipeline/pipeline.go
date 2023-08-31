@@ -37,7 +37,7 @@ func ProvideDiscoveryStage(cfg *config.Cfg, pf finder.Finder, pr registry.Servic
 func ProvideBootstrapStage(cfg *config.Cfg, sc plugins.SignatureCalculator, a *assetpath.Service) *bootstrap.Bootstrap {
 	return bootstrap.New(cfg, bootstrap.Opts{
 		ConstructFunc: bootstrap.DefaultConstructFunc(sc, a),
-		DecorateFuncs: bootstrap.DefaultDecorateFuncs,
+		DecorateFuncs: bootstrap.DefaultDecorateFuncs(cfg),
 	})
 }
 
