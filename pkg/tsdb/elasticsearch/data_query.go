@@ -9,6 +9,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
+	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	es "github.com/grafana/grafana/pkg/tsdb/elasticsearch/client"
@@ -21,22 +22,26 @@ const (
 type elasticsearchDataQuery struct {
 	client      es.Client
 	dataQueries []backend.DataQuery
+	logger      log.Logger
+	ctx         context.Context
 }
 
-var newElasticsearchDataQuery = func(client es.Client, dataQuery []backend.DataQuery) *elasticsearchDataQuery {
+var newElasticsearchDataQuery = func(ctx context.Context, client es.Client, dataQuery []backend.DataQuery, logger log.Logger) *elasticsearchDataQuery {
 	return &elasticsearchDataQuery{
 		client:      client,
 		dataQueries: dataQuery,
+		logger:      logger,
+		ctx:         ctx,
 	}
 }
 
-func (e *elasticsearchDataQuery) execute(ctx context.Context, logger log.Logger) (*backend.QueryDataResponse, error) {
+func (e *elasticsearchDataQuery) execute() (*backend.QueryDataResponse, error) {
 	// TODO: Tracing - span this
 	start := time.Now()
-	logger.Debug("Parsing queries", "queriesLength", len(e.dataQueries))
-	queries, err := parseQuery(e.dataQueries, logger)
+	e.logger.Debug("Parsing queries", "queriesLength", len(e.dataQueries))
+	queries, err := parseQuery(e.dataQueries, e.logger)
 	if err != nil {
-		logger.Error("Failed to parse queries", "err", err, "queries", fmt.Sprintf("%v", e.dataQueries), "took", time.Since(start))
+		e.logger.Error("Failed to parse queries", "err", err, "queries", fmt.Sprintf("%v", e.dataQueries), "took", time.Since(start))
 		return &backend.QueryDataResponse{}, err
 	}
 
@@ -46,7 +51,7 @@ func (e *elasticsearchDataQuery) execute(ctx context.Context, logger log.Logger)
 	to := e.dataQueries[0].TimeRange.To.UnixNano() / int64(time.Millisecond)
 	for _, q := range queries {
 		if err := e.processQuery(q, ms, from, to); err != nil {
-			logger.Error("Failed to process query", "err", err, "query", fmt.Sprintf("%v", q))
+			e.logger.Error("Failed to process query", "err", err, "query", fmt.Sprintf("%v", q))
 			return &backend.QueryDataResponse{}, err
 		}
 	}

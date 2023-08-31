@@ -60,8 +60,8 @@ func queryData(ctx context.Context, queries []backend.DataQuery, dsInfo *es.Data
 	if err != nil {
 		return &backend.QueryDataResponse{}, err
 	}
-	query := newElasticsearchDataQuery(client, queries)
-	return query.execute(ctx, logger)
+	query := newElasticsearchDataQuery(ctx, client, queries, logger)
+	return query.execute()
 }
 
 func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.InstanceFactoryFunc {
