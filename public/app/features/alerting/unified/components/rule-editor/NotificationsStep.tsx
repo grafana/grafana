@@ -4,7 +4,7 @@ import { useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
-import { Card, Icon, Link, useStyles2 } from '@grafana/ui';
+import { Card, Icon, Link, Text, useStyles2 } from '@grafana/ui';
 
 import { RuleFormType, RuleFormValues } from '../../types/rule-form';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
@@ -88,11 +88,15 @@ export const NotificationsStep = ({ alertUid }: NotificationsStepProps) => {
       stepNo={type === RuleFormType.cloudRecording ? 4 : 5}
       title={type === RuleFormType.cloudRecording ? 'Add labels' : 'Configure notifications'}
       description={
-        type === RuleFormType.cloudRecording ? (
-          'Add labels to help you better manage your recording rules'
-        ) : (
-          <NotificationsStepDescription />
-        )
+        <Stack direction="row" gap={0.5} alignItems="baseline">
+          {type === RuleFormType.cloudRecording ? (
+            <Text variant="bodySmall" color="secondary">
+              Add labels to help you better manage your recording rules
+            </Text>
+          ) : (
+            <NotificationsStepDescription />
+          )}
+        </Stack>
       }
     >
       <div className={styles.contentWrapper}>

@@ -4,7 +4,7 @@ import { RegisterOptions, useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
-import { Field, Icon, IconButton, Input, InputControl, Label, Switch, Tooltip, useStyles2 } from '@grafana/ui';
+import { Field, Icon, IconButton, Input, InputControl, Label, Switch, Text, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { CombinedRuleGroup, CombinedRuleNamespace } from '../../../../../types/unified-alerting';
 import { logInfo, LogMessages } from '../../Analytics';
@@ -185,11 +185,13 @@ function ForInput({ evaluateEvery }: { evaluateEvery: string }) {
 }
 
 function getDescription() {
-  const textToRender = 'Define how the alert rule is evaluated.';
   const docsLink = 'https://grafana.com/docs/grafana/latest/alerting/fundamentals/alert-rules/rule-evaluation/';
+
   return (
-    <Stack gap={0.5}>
-      {`${textToRender}`}
+    <Stack direction="row" gap={0.5} alignItems="baseline">
+      <Text variant="bodySmall" color="secondary">
+        Define how the alert rule is evaluated.
+      </Text>
       <NeedHelpInfo
         contentText="Evaluation groups are containers for evaluating alert and recording rules. An evaluation group defines an evaluation interval - how often a rule is checked. Alert rules within the same evaluation group are evaluated sequentially"
         externalLink={docsLink}

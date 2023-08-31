@@ -5,7 +5,7 @@ import { useFormContext } from 'react-hook-form';
 import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
 import { DataSourceJsonData } from '@grafana/schema';
-import { Alert, useStyles2 } from '@grafana/ui';
+import { Alert, Text, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
 import { ExpressionDatasourceUID } from 'app/features/expressions/types';
 import { AccessControlAction } from 'app/types';
@@ -143,7 +143,21 @@ export function SmartAlertTypeDetector({
 
   return (
     <div className={styles.alert}>
-      <Alert
+      <Stack direction="column" gap={0}>
+        <Text variant="h5">Rule type</Text>
+        <Stack direction="row" gap={0.5} alignItems="baseline">
+          <Text variant="bodySmall" color="secondary">
+            Select where the alert rule will be managed.
+          </Text>
+          <NeedHelpInfo
+            contentText={content?.contentText ?? ''}
+            externalLink="https://grafana.com/docs/grafana/latest/alerting/fundamentals/alert-rules/alert-rule-types/"
+            linkText="Read about alert rule types"
+            title="Alert rule types"
+          />
+        </Stack>
+      </Stack>
+      {/* <Alert
         severity="info"
         title={typeTitle}
         onRemove={canSwitch ? onClickSwitch : undefined}
@@ -152,15 +166,10 @@ export function SmartAlertTypeDetector({
         <Stack gap={0.5} direction="row" alignItems={'baseline'}>
           <div className={styles.alertText}>{content?.title}</div>
           <div className={styles.needInfo}>
-            <NeedHelpInfo
-              contentText={content?.contentText ?? ''}
-              externalLink={`https://grafana.com/docs/grafana/latest/alerting/fundamentals/alert-rules/alert-rule-types/`}
-              linkText={`Read about alert rule types`}
-              title=" Alert rule types"
-            />
+
           </div>
         </Stack>
-      </Alert>
+      </Alert> */}
     </div>
   );
 }

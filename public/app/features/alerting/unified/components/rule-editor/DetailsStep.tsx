@@ -4,7 +4,7 @@ import { useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
-import { useStyles2 } from '@grafana/ui';
+import { Text, useStyles2 } from '@grafana/ui';
 
 import { RuleFormType, RuleFormValues } from '../../types/rule-form';
 
@@ -30,10 +30,12 @@ function getDescription(ruleType: RuleFormType | undefined, styles: { [key: stri
       : '';
 
   return (
-    <Stack gap={0.5}>
-      {`${textToRender}`}
+    <Stack direction="row" gap={0.5} alignItems="baseline">
+      <Text variant="bodySmall" color="secondary">
+        {textToRender}
+      </Text>
       <NeedHelpInfo
-        contentText={`Annotations add metadata to provide more information on the alert in your alert notifications. 
+        contentText={`Annotations add metadata to provide more information on the alert in your alert notifications.
           For example, add a Summary annotation to tell you which value caused the alert to fire or which server it happened on.
           Annotations can contain a combination of text and template code.`}
         externalLink={docsLink}

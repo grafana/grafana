@@ -205,7 +205,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
   flexColumn: css`
     display: flex;
     flex-direction: column;
-    margin-top: ${theme.spacing(2)};
   `,
   field: css`
     margin-bottom: ${theme.spacing(0.5)};

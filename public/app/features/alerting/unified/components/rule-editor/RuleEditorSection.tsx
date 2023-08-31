@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import React, { ReactElement } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Stack } from '@grafana/experimental';
 import { FieldSet, useStyles2 } from '@grafana/ui';
 
 export interface RuleEditorSectionProps {
@@ -23,12 +24,12 @@ export const RuleEditorSection = ({
       <div>
         <span className={styles.stepNo}>{stepNo}</span>
       </div>
-      <div className={styles.content}>
-        <FieldSet label={title} className={styles.fieldset}>
+      <FieldSet label={title} className={styles.fieldset}>
+        <Stack direction="column">
           {description && <div className={styles.description}>{description}</div>}
           {children}
-        </FieldSet>
-      </div>
+        </Stack>
+      </FieldSet>
     </div>
   );
 };
@@ -44,13 +45,13 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: flex;
     flex-direction: row;
     max-width: ${theme.breakpoints.values.xl};
+
     & + & {
       margin-top: ${theme.spacing(4)};
     }
   `,
   description: css`
     margin-top: -${theme.spacing(2)};
-    color: ${theme.colors.text.secondary};
   `,
   stepNo: css`
     display: inline-block;

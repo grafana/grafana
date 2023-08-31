@@ -3,7 +3,7 @@ import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
-import { Icon, Toggletip, useStyles2 } from '@grafana/ui';
+import { Icon, Text, Toggletip, useStyles2 } from '@grafana/ui';
 
 interface NeedHelpInfoProps {
   contentText: string | JSX.Element;
@@ -25,9 +25,9 @@ export function NeedHelpInfo({ contentText, externalLink, linkText, title }: Nee
       footer={
         externalLink ? (
           <a href={externalLink} target="_blank" rel="noreferrer">
-            <div className={styles.infoLink}>
+            <Text color="link">
               {linkText} <Icon name="external-link-alt" />
-            </div>
+            </Text>
           </a>
         ) : undefined
       }
@@ -35,8 +35,12 @@ export function NeedHelpInfo({ contentText, externalLink, linkText, title }: Nee
       placement="bottom-start"
     >
       <div className={styles.helpInfo}>
-        <Icon name="question-circle" />
-        <div className={styles.helpInfoText}>Need help?</div>
+        <Stack direction="row" alignItems="center" gap={0.5}>
+          <Icon name="question-circle" size="sm" />
+          <Text variant="bodySmall" color="primary">
+            Need help?
+          </Text>
+        </Stack>
       </div>
     </Toggletip>
   );
@@ -48,21 +52,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     font-size: ${theme.typography.size.sm};
   `,
   helpInfo: css`
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    width: fit-content;
-    font-weight: ${theme.typography.fontWeightMedium};
-    margin-left: ${theme.spacing(1)};
-    font-size: ${theme.typography.size.sm};
     cursor: pointer;
-    color: ${theme.colors.text.primary};
-  `,
-  helpInfoText: css`
-    margin-left: ${theme.spacing(0.5)};
     text-decoration: underline;
-  `,
-  infoLink: css`
-    color: ${theme.colors.text.link};
   `,
 });
