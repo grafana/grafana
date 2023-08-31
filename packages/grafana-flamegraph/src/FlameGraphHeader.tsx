@@ -23,6 +23,8 @@ type Props = {
   colorScheme: ColorScheme;
   onColorSchemeChange: (colorScheme: ColorScheme) => void;
   stickyHeader: boolean;
+
+  extraHeaderElements?: React.ReactNode;
 };
 
 const FlameGraphHeader = ({
@@ -38,6 +40,7 @@ const FlameGraphHeader = ({
   colorScheme,
   onColorSchemeChange,
   stickyHeader,
+  extraHeaderElements,
 }: Props) => {
   const styles = useStyles2((theme) => getStyles(theme, stickyHeader));
   const [localSearch, setLocalSearch] = useSearchInput(search, setSearch);
@@ -102,7 +105,9 @@ const FlameGraphHeader = ({
           value={selectedView}
           onChange={setSelectedView}
         />
+        {extraHeaderElements && <div className={styles.extraElements}>{extraHeaderElements}</div>}
       </div>
+
     </div>
   );
 };
@@ -247,6 +252,10 @@ const getStyles = (theme: GrafanaTheme2, sticky?: boolean) => ({
     label: colorDotByPackage;
     background: ${byPackageGradient};
   `,
+  extraElements: css`
+    label: extraElements;
+    margin-left: ${theme.spacing(1)};
+  `
 });
 
 export default FlameGraphHeader;

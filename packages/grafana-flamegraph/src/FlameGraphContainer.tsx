@@ -22,6 +22,8 @@ type Props = {
   onViewSelected?: (view: string) => void;
   onTextAlignSelected?: (align: string) => void;
   onTableSort?: (sort: string) => void;
+
+  extraHeaderElements?: React.ReactNode;
 };
 
 const FlameGraphContainer = ({
@@ -32,6 +34,7 @@ const FlameGraphContainer = ({
   onTableSort,
   getTheme,
   stickyHeader,
+  extraHeaderElements
 }: Props) => {
   const [focusedItemData, setFocusedItemData] = useState<ClickedItemData>();
 
@@ -121,6 +124,7 @@ const FlameGraphContainer = ({
             colorScheme={colorScheme}
             onColorSchemeChange={setColorScheme}
             stickyHeader={Boolean(stickyHeader)}
+            extraHeaderElements={extraHeaderElements}
           />
 
           <div className={styles.body}>
