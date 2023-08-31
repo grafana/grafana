@@ -1,6 +1,7 @@
 package elasticsearch
 
 import (
+	"context"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -3532,7 +3533,7 @@ func parseTestResponse(tsdbQueries map[string]string, responseBody string) (*bac
 		return nil, err
 	}
 
-	return parseResponse(response.Responses, queries, configuredFields)
+	return parseResponse(context.Background(), response.Responses, queries, configuredFields, log.New("test.logger"))
 }
 
 func requireTimeValue(t *testing.T, expected int64, frame *data.Frame, index int) {
