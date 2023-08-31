@@ -5,7 +5,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
-	"github.com/grafana/testdata/pkg/plugin/testdatasource"
+	"github.com/grafana/grafana-testdata-datasource/pkg/plugin/testdatasource"
 )
 
 var (

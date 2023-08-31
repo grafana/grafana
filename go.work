@@ -2,5 +2,5 @@ go 1.20
 
 use (
 	.
-	./public/plugins/testdata
+	./public/plugins/grafana-testdata-datasource
 )
