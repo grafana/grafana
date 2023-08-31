@@ -35,7 +35,7 @@ func SetupRequestMetadata() web.Middleware {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			rmd := defaultRequestMetadata()
-			ctx := SetRequestMetaData(r.Context(), *rmd)
+			ctx := SetRequestMetaData(r.Context(), rmd)
 			*r = *r.WithContext(ctx)
 
 			next.ServeHTTP(w, r)
@@ -53,7 +53,8 @@ func GetRequestMetaData(ctx context.Context) *RequestMetaData {
 		return value
 	}
 
-	return defaultRequestMetadata()
+	rmd := defaultRequestMetadata()
+	return &rmd
 }
 
 // SetRequestMetaData sets the request metadata for the context.
@@ -69,15 +70,15 @@ func SetOwner(team string) web.Handler {
 	}
 }
 
-// WithDownstreamStatusSource sets the StatusSource field of the [RequestMetaData] for the 
+// WithDownstreamStatusSource sets the StatusSource field of the [RequestMetaData] for the
 // context to [StatusSourceDownstream].
 func WithDownstreamStatusSource(ctx context.Context) {
 	v := GetRequestMetaData(ctx)
 	v.StatusSource = StatusSourceDownstream
 }
 
-func defaultRequestMetadata() *RequestMetaData {
-	return &RequestMetaData{
+func defaultRequestMetadata() RequestMetaData {
+	return RequestMetaData{
 		Team:         TeamCore,
 		StatusSource: StatusSourceServer,
 	}
