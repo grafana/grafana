@@ -38,6 +38,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/store/sanitizer"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlesimpl"
 	"github.com/grafana/grafana/pkg/services/updatechecker"
+	"github.com/grafana/grafana/pkg/services/vector/sync"
 )
 
 func ProvideBackgroundServiceRegistry(
@@ -59,6 +60,7 @@ func ProvideBackgroundServiceRegistry(
 	_ serviceaccounts.Service, _ *guardian.Provider,
 	_ *plugindashboardsservice.DashboardUpdater, _ *sanitizer.Provider,
 	_ *grpcserver.HealthService, _ entity.EntityStoreServer, _ *grpcserver.ReflectionService, _ *ldapapi.Service,
+	syncService *sync.Service,
 ) *BackgroundServiceRegistry {
 	return NewBackgroundServiceRegistry(
 		httpServer,
@@ -92,6 +94,7 @@ func ProvideBackgroundServiceRegistry(
 		publicDashboardsMetric,
 		keyRetriever,
 		dynamicAngularDetectorsProvider,
+		syncService,
 	)
 }
 

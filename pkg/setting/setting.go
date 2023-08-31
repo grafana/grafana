@@ -561,6 +561,9 @@ type Cfg struct {
 
 	// Feature Management Settings
 	FeatureManagement FeatureMgmtSettings
+
+	// Vector settings
+	Vector VectorSettings
 }
 
 // AddChangePasswordLink returns if login form is disabled or not since
