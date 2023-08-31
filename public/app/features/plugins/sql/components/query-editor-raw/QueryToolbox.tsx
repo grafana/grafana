@@ -86,7 +86,7 @@ export function QueryToolbox({ showTools, onFormatCode, onExpand, isExpanded, ..
             {onExpand && (
               <IconButton
                 onClick={() => {
-                  reportInteraction('grafana_sql_editor_expanded', {
+                  reportInteraction('grafana_sql_editor_expand', {
                     datasource: validatorProps.query.datasource?.type,
                     expanded: !isExpanded,
                   });
