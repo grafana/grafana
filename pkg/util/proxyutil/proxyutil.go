@@ -7,7 +7,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 )
 
 // UserHeaderName name of the header used when forwarding the Grafana user login.
@@ -103,9 +103,16 @@ func SetViaHeader(header http.Header, major, minor int) {
 }
 
 // ApplyUserHeader Set the X-Grafana-User header if needed (and remove if not).
-func ApplyUserHeader(sendUserHeader bool, req *http.Request, user *user.SignedInUser) {
+func ApplyUserHeader(sendUserHeader bool, req *http.Request, user identity.Requester) {
 	req.Header.Del(UserHeaderName)
-	if sendUserHeader && user != nil && !user.IsAnonymous {
-		req.Header.Set(UserHeaderName, user.Login)
+
+	if !sendUserHeader || user == nil || user.IsNil() {
+		return
+	}
+
+	namespace, _ := user.GetNamespacedID()
+	switch namespace {
+	case identity.NamespaceUser, identity.NamespaceServiceAccount:
+		req.Header.Set(UserHeaderName, user.GetLogin())
 	}
 }

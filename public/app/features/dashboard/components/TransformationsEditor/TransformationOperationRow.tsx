@@ -40,8 +40,8 @@ export const TransformationOperationRow = ({
   onChange,
 }: TransformationOperationRowProps) => {
   const [showDeleteModal, setShowDeleteModal] = useToggle(false);
-  const [showDebug, toggleDebug] = useToggle(false);
-  const [showHelp, toggleHelp] = useToggle(false);
+  const [showDebug, toggleShowDebug] = useToggle(false);
+  const [showHelp, toggleShowHelp] = useToggle(false);
   const disabled = !!configs[index].transformation.disabled;
   const filter = configs[index].transformation.filter != null;
   const showFilter = filter || data.length > 1;
@@ -56,6 +56,16 @@ export const TransformationOperationRow = ({
     },
     [onChange, configs]
   );
+
+  const toggleExpand = useCallback(() => {
+    if (showHelp) {
+      return true;
+    }
+
+    // We return `undefined` here since the QueryOperationRow component ignores an `undefined` value for the `isOpen` prop.
+    // If we returned `false` here, the row would be collapsed when the user toggles off `showHelp`, which is not what we want.
+    return undefined;
+  }, [showHelp]);
 
   // Adds or removes the frame filter
   const toggleFilter = useCallback(() => {
@@ -98,8 +108,9 @@ export const TransformationOperationRow = ({
         <QueryOperationToggleAction
           title="Show transform help"
           icon="info-circle"
-          onClick={instrumentToggleCallback(toggleHelp, 'help', showHelp)}
-          active={showHelp}
+          // `instrumentToggleCallback` expects a function that takes a MouseEvent, is unused in the state setter. Instead, we simply toggle the state.
+          onClick={instrumentToggleCallback((_e) => toggleShowHelp(!showHelp), 'help', showHelp)}
+          active={!!showHelp}
         />
         {showFilter && (
           <QueryOperationToggleAction
@@ -113,7 +124,7 @@ export const TransformationOperationRow = ({
           title="Debug"
           disabled={!isOpen}
           icon="bug"
-          onClick={instrumentToggleCallback(toggleDebug, 'debug', showDebug)}
+          onClick={instrumentToggleCallback(toggleShowDebug, 'debug', showDebug)}
           active={showDebug}
         />
         <QueryOperationToggleAction
@@ -153,6 +164,9 @@ export const TransformationOperationRow = ({
       draggable
       actions={renderActions}
       disabled={disabled}
+      isOpen={toggleExpand()}
+      // Assure that showHelp is untoggled when the row becomes collapsed.
+      onClose={() => toggleShowHelp(false)}
     >
       {showHelp && <OperationRowHelp markdown={prepMarkdown(uiConfig)} />}
       {filter && (

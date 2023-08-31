@@ -1598,7 +1598,7 @@
   {
     "name": "TestData",
     "type": "datasource",
-    "id": "testdata",
+    "id": "grafana-testdata-datasource",
     "enabled": true,
     "pinned": false,
     "info": {
@@ -1609,8 +1609,8 @@
       "description": "Generates test data in different forms",
       "links": [],
       "logos": {
-        "small": "public/plugins/testdata/src/img/testdata.svg",
-        "large": "public/plugins/testdata/src/img/testdata.svg"
+        "small": "public/plugins/grafana-testdata-datasource/src/img/testdata.svg",
+        "large": "public/plugins/grafana-testdata-datasource/src/img/testdata.svg"
       },
       "build": {},
       "screenshots": [],
@@ -1624,7 +1624,7 @@
     },
     "latestVersion": "",
     "hasUpdate": false,
-    "defaultNavUrl": "/plugins/testdata/",
+    "defaultNavUrl": "/plugins/grafana-testdata-datasource/",
     "category": "",
     "state": "",
     "signature": "internal",

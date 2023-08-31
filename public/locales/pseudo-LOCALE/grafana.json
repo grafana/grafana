@@ -221,6 +221,9 @@
     "loading": "Ŀőäđįŉģ ƒőľđęřş..."
   },
   "grafana-ui": {
+    "modal": {
+      "close-tooltip": "Cľőşę"
+    },
     "segment-async": {
       "error": "Fäįľęđ ŧő ľőäđ őpŧįőŉş",
       "loading": "Ŀőäđįŉģ őpŧįőŉş...",
@@ -230,6 +233,46 @@
       "no-options-label": "Ńő őpŧįőŉş ƒőūŉđ",
       "placeholder": "Cĥőőşę"
     }
+  },
+  "help-modal": {
+    "shortcuts-category": {
+      "dashboard": "Đäşĥþőäřđ",
+      "focused-panel": "Főčūşęđ Päŉęľ",
+      "global": "Ğľőþäľ",
+      "time-range": "Ŧįmę Ŗäŉģę"
+    },
+    "shortcuts-description": {
+      "change-theme": "Cĥäŉģę ŧĥęmę",
+      "collapse-all-rows": "Cőľľäpşę äľľ řőŵş",
+      "dashboard-settings": "Đäşĥþőäřđ şęŧŧįŉģş",
+      "duplicate-panel": "Đūpľįčäŧę Päŉęľ",
+      "exit-edit/setting-views": "Ēχįŧ ęđįŧ/şęŧŧįŉģ vįęŵş",
+      "expand-all-rows": "Ēχpäŉđ äľľ řőŵş",
+      "go-to-dashboards": "Ğő ŧő Đäşĥþőäřđş",
+      "go-to-explore": "Ğő ŧő Ēχpľőřę",
+      "go-to-home-dashboard": "Ğő ŧő Ħőmę Đäşĥþőäřđ",
+      "go-to-profile": "Ğő ŧő Přőƒįľę",
+      "make-time-range-permanent": "Mäĸę ŧįmę řäŉģę äþşőľūŧę/pęřmäŉęŉŧ",
+      "move-time-range-back": "Mővę ŧįmę řäŉģę þäčĸ",
+      "move-time-range-forward": "Mővę ŧįmę řäŉģę ƒőřŵäřđ",
+      "open-search": "Øpęŉ şęäřčĥ",
+      "open-shared-modal": "Øpęŉ Päŉęľ Ŝĥäřę Mőđäľ",
+      "refresh-all-panels": "Ŗęƒřęşĥ äľľ päŉęľş",
+      "remove-panel": "Ŗęmővę Päŉęľ",
+      "save-dashboard": "Ŝävę đäşĥþőäřđ",
+      "show-all-shortcuts": "Ŝĥőŵ äľľ ĸęyþőäřđ şĥőřŧčūŧş",
+      "toggle-active-mode": "Ŧőģģľę įŉ-äčŧįvę / vįęŵ mőđę",
+      "toggle-all-panel-legends": "Ŧőģģľę äľľ päŉęľ ľęģęŉđş",
+      "toggle-auto-fit": "Ŧőģģľę äūŧő ƒįŧ päŉęľş (ęχpęřįmęŉŧäľ ƒęäŧūřę)",
+      "toggle-exemplars": "Ŧőģģľę ęχęmpľäřş įŉ äľľ päŉęľ",
+      "toggle-graph-crosshair": "Ŧőģģľę şĥäřęđ ģřäpĥ čřőşşĥäįř",
+      "toggle-kiosk": "Ŧőģģľę ĸįőşĸ mőđę (ĥįđęş ŧőp ŉäv)",
+      "toggle-panel-edit": "Ŧőģģľę päŉęľ ęđįŧ vįęŵ",
+      "toggle-panel-fullscreen": "Ŧőģģľę päŉęľ ƒūľľşčřęęŉ vįęŵ",
+      "toggle-panel-legend": "Ŧőģģľę päŉęľ ľęģęŉđ",
+      "zoom-out-time-range": "Żőőm őūŧ ŧįmę řäŉģę"
+    },
+    "title": "Ŝĥőřŧčūŧş"
   },
   "library-panel": {
     "add-modal": {
@@ -655,7 +698,7 @@
       "info-text": "Cřęäŧę ä đįřęčŧ ľįŉĸ ŧő ŧĥįş đäşĥþőäřđ őř päŉęľ, čūşŧőmįžęđ ŵįŧĥ ŧĥę őpŧįőŉş þęľőŵ.",
       "link-url": "Ŀįŉĸ ŮŖĿ",
       "render-alert": "Ĩmäģę řęŉđęřęř pľūģįŉ ŉőŧ įŉşŧäľľęđ",
-      "render-instructions": "Ŧő řęŉđęř ä päŉęľ įmäģę, yőū mūşŧ įŉşŧäľľ ŧĥę&ŉþşp;<1>Ğřäƒäŉä įmäģę řęŉđęřęř pľūģįŉ</1>. Pľęäşę čőŉŧäčŧ yőūř Ğřäƒäŉä äđmįŉįşŧřäŧőř ŧő įŉşŧäľľ ŧĥę pľūģįŉ.",
+      "render-instructions": "Ŧő řęŉđęř ä päŉęľ įmäģę, yőū mūşŧ įŉşŧäľľ ŧĥę <1>Ğřäƒäŉä įmäģę řęŉđęřęř pľūģįŉ</1>. Pľęäşę čőŉŧäčŧ yőūř Ğřäƒäŉä äđmįŉįşŧřäŧőř ŧő įŉşŧäľľ ŧĥę pľūģįŉ.",
       "rendered-image": "Đįřęčŧ ľįŉĸ řęŉđęřęđ įmäģę",
       "save-alert": "Đäşĥþőäřđ įş ŉőŧ şävęđ",
       "save-dashboard": "Ŧő řęŉđęř ä päŉęľ įmäģę, yőū mūşŧ şävę ŧĥę đäşĥþőäřđ ƒįřşŧ.",

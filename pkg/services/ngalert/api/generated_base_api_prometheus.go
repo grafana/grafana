@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/middleware"
+	"github.com/grafana/grafana/pkg/middleware/requestmeta"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/web"
@@ -45,6 +46,7 @@ func (api *API) RegisterPrometheusApiEndpoints(srv PrometheusApi, m *metrics.API
 	api.RouteRegister.Group("", func(group routing.RouteRegister) {
 		group.Get(
 			toMacaronPath("/api/prometheus/{DatasourceUID}/api/v1/alerts"),
+			requestmeta.SetOwner(requestmeta.TeamAlerting),
 			api.authorize(http.MethodGet, "/api/prometheus/{DatasourceUID}/api/v1/alerts"),
 			metrics.Instrument(
 				http.MethodGet,
@@ -55,6 +57,7 @@ func (api *API) RegisterPrometheusApiEndpoints(srv PrometheusApi, m *metrics.API
 		)
 		group.Get(
 			toMacaronPath("/api/prometheus/grafana/api/v1/alerts"),
+			requestmeta.SetOwner(requestmeta.TeamAlerting),
 			api.authorize(http.MethodGet, "/api/prometheus/grafana/api/v1/alerts"),
 			metrics.Instrument(
 				http.MethodGet,
@@ -65,6 +68,7 @@ func (api *API) RegisterPrometheusApiEndpoints(srv PrometheusApi, m *metrics.API
 		)
 		group.Get(
 			toMacaronPath("/api/prometheus/grafana/api/v1/rules"),
+			requestmeta.SetOwner(requestmeta.TeamAlerting),
 			api.authorize(http.MethodGet, "/api/prometheus/grafana/api/v1/rules"),
 			metrics.Instrument(
 				http.MethodGet,
@@ -75,6 +79,7 @@ func (api *API) RegisterPrometheusApiEndpoints(srv PrometheusApi, m *metrics.API
 		)
 		group.Get(
 			toMacaronPath("/api/prometheus/{DatasourceUID}/api/v1/rules"),
+			requestmeta.SetOwner(requestmeta.TeamAlerting),
 			api.authorize(http.MethodGet, "/api/prometheus/{DatasourceUID}/api/v1/rules"),
 			metrics.Instrument(
 				http.MethodGet,

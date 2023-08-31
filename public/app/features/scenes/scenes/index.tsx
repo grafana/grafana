@@ -1,4 +1,4 @@
-import { DashboardScene } from '../dashboard/DashboardScene';
+import { DashboardScene } from '../../dashboard-scene/scene/DashboardScene';
 
 import { getGridWithMultipleTimeRanges } from './gridMultiTimeRange';
 import { getMultipleGridLayoutTest } from './gridMultiple';

@@ -82,6 +82,8 @@ func AliasDecorateFunc(_ context.Context, p *plugins.Plugin) (*plugins.Plugin, e
 	switch p.ID {
 	case "grafana-pyroscope-datasource": // rebranding
 		p.Alias = "phlare"
+	case "grafana-testdata-datasource":
+		p.Alias = "testdata"
 	case "debug": // panel plugin used for testing
 		p.Alias = "debugX"
 	}

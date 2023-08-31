@@ -45,14 +45,14 @@ var (
 			Name:        "publicDashboards",
 			Description: "Enables public access to dashboards",
 			Stage:       FeatureStagePublicPreview,
-			Owner:       grafanaDashboardsSquad,
+			Owner:       grafanaSharingSquad,
 		},
 		{
 			Name:            "publicDashboardsEmailSharing",
 			Description:     "Enables public dashboard sharing to be restricted to only allowed emails",
 			Stage:           FeatureStagePublicPreview,
 			RequiresLicense: true,
-			Owner:           grafanaDashboardsSquad,
+			Owner:           grafanaSharingSquad,
 			HideFromDocs:    true,
 		},
 		{
@@ -124,12 +124,6 @@ var (
 			Stage:        FeatureStagePublicPreview,
 			FrontendOnly: true,
 			Owner:        grafanaDatavizSquad,
-		},
-		{
-			Name:        "prometheusWideSeries",
-			Description: "Enable wide series responses in the Prometheus datasource",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaObservabilityMetricsSquad,
 		},
 		{
 			Name:         "canvasPanelNesting",
@@ -627,6 +621,13 @@ var (
 			Owner:        grafanaObservabilityTracesAndProfilingSquad,
 		},
 		{
+			Name:         "metricsSummary",
+			Description:  "Enables metrics summary queries in the Tempo data source",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaObservabilityTracesAndProfilingSquad,
+		},
+		{
 			Name:         "grafanaAPIServer",
 			Description:  "Enable Kubernetes API Server for Grafana resources",
 			Stage:        FeatureStageExperimental,
@@ -657,7 +658,7 @@ var (
 		},
 		{
 			Name:            "decoupleCorePlugins",
-			Description:     "Skip loading core plugins on startup in order to load them as external",
+			Description:     "To load core plugins externally, this setting bypasses loading configured plugins during startup.",
 			Stage:           FeatureStageExperimental,
 			Owner:           grafanaPluginsPlatformSquad,
 			RequiresRestart: true,
@@ -712,6 +713,28 @@ var (
 			Stage:           FeatureStagePrivatePreview,
 			FrontendOnly:    false,
 			Owner:           grafanaAlertingSquad,
+			RequiresRestart: true,
+		},
+		{
+			Name:         "angularDeprecationUI",
+			Description:  "Display new Angular deprecation-related UI features",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaPluginsPlatformSquad,
+		},
+		{
+			Name:         "dashgpt",
+			Description:  "Enable AI powered features in dashboards",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaDashboardsSquad,
+		},
+		{
+			Name:            "reportingRetries",
+			Description:     "Enables rendering retries for the reporting feature",
+			Stage:           FeatureStagePublicPreview,
+			FrontendOnly:    false,
+			Owner:           grafanaSharingSquad,
 			RequiresRestart: true,
 		},
 	}

@@ -98,7 +98,6 @@ var (
 	LoginHint               string
 	PasswordHint            string
 	DisableSignoutMenu      bool
-	SignoutRedirectUrl      string
 	ExternalUserMngLinkUrl  string
 	ExternalUserMngLinkName string
 	ExternalUserMngInfo     string
@@ -244,7 +243,7 @@ type Cfg struct {
 	PluginAdminExternalManageEnabled bool
 	PluginForcePublicKeyDownload     bool
 	PluginSkipPublicKeyDownload      bool
-	PluginSkipCorePlugins            []string
+	PluginLoadExternalPlugins        []string
 
 	PluginsCDNURLTemplate    string
 	PluginLogBackendRequests bool
@@ -282,6 +281,7 @@ type Cfg struct {
 	DisableLogin                 bool
 	AdminEmail                   string
 	DisableLoginForm             bool
+	SignoutRedirectUrl           string
 	// Not documented & not supported
 	// stand in until a more complete solution is implemented
 	AuthConfigUIAdminAccess bool
@@ -505,7 +505,7 @@ type Cfg struct {
 	GrafanaNetAuthEnabled bool
 
 	// Geomap base layer config
-	GeomapDefaultBaseLayerConfig map[string]interface{}
+	GeomapDefaultBaseLayerConfig map[string]any
 	GeomapEnableCustomBaseLayers bool
 
 	// Unified Alerting
@@ -1226,7 +1226,7 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 	geomapSection := iniFile.Section("geomap")
 	basemapJSON := valueAsString(geomapSection, "default_baselayer_config", "")
 	if basemapJSON != "" {
-		layer := make(map[string]interface{})
+		layer := make(map[string]any)
 		err = json.Unmarshal([]byte(basemapJSON), &layer)
 		if err != nil {
 			cfg.Logger.Error("Error reading json from default_baselayer_config", "error", err)
@@ -1557,7 +1557,7 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 	}
 
 	cfg.OAuthCookieMaxAge = auth.Key("oauth_state_cookie_max_age").MustInt(600)
-	SignoutRedirectUrl = valueAsString(auth, "signout_redirect_url", "")
+	cfg.SignoutRedirectUrl = valueAsString(auth, "signout_redirect_url", "")
 	// Deprecated
 	cfg.OAuthSkipOrgRoleUpdateSync = auth.Key("oauth_skip_org_role_update_sync").MustBool(false)
 	if cfg.OAuthSkipOrgRoleUpdateSync {

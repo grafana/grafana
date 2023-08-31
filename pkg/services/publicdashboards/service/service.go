@@ -8,6 +8,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/annotations"
@@ -62,6 +63,34 @@ func ProvideService(
 		ac:                 ac,
 		serviceWrapper:     serviceWrapper,
 	}
+}
+
+func (pd *PublicDashboardServiceImpl) GetPublicDashboardForView(ctx context.Context, accessToken string) (*dtos.DashboardFullWithMeta, error) {
+	pubdash, dash, err := pd.FindEnabledPublicDashboardAndDashboardByAccessToken(ctx, accessToken)
+	if err != nil {
+		return nil, err
+	}
+
+	meta := dtos.DashboardMeta{
+		Slug:                   dash.Slug,
+		Type:                   dashboards.DashTypeDB,
+		CanStar:                false,
+		CanSave:                false,
+		CanEdit:                false,
+		CanAdmin:               false,
+		CanDelete:              false,
+		Created:                dash.Created,
+		Updated:                dash.Updated,
+		Version:                dash.Version,
+		IsFolder:               false,
+		FolderId:               dash.FolderID,
+		PublicDashboardEnabled: pubdash.IsEnabled,
+	}
+	dash.Data.Get("timepicker").Set("hidden", !pubdash.TimeSelectionEnabled)
+
+	sanitizeData(dash.Data)
+
+	return &dtos.DashboardFullWithMeta{Meta: meta, Dashboard: dash.Data}, nil
 }
 
 // FindByDashboardUid this method would be replaced by another implementation for Enterprise version
@@ -399,9 +428,19 @@ func GenerateAccessToken() (string, error) {
 }
 
 func (pd *PublicDashboardServiceImpl) newCreatePublicDashboard(ctx context.Context, dto *SavePublicDashboardDTO) (*PublicDashboard, error) {
-	uid, err := pd.NewPublicDashboardUid(ctx)
-	if err != nil {
-		return nil, err
+	//Check if uid already exists, if none then auto generate
+	existingPubdash, _ := pd.store.Find(ctx, dto.PublicDashboard.Uid)
+	if existingPubdash != nil {
+		return nil, ErrPublicDashboardUidExists.Errorf("Create: public dashboard uid %s already exists", dto.PublicDashboard.Uid)
+	}
+
+	var err error
+	uid := dto.PublicDashboard.Uid
+	if dto.PublicDashboard.Uid == "" {
+		uid, err = pd.NewPublicDashboardUid(ctx)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	accessToken, err := pd.NewPublicDashboardAccessToken(ctx)

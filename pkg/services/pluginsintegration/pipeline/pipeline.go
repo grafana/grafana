@@ -28,7 +28,7 @@ func ProvideDiscoveryStage(cfg *config.Cfg, pf finder.Finder, pr registry.Servic
 		},
 		FindFilterFuncs: []discovery.FindFilterFunc{
 			func(ctx context.Context, cl plugins.Class, bundles []*plugins.FoundBundle) ([]*plugins.FoundBundle, error) {
-				return discovery.NewCorePluginFilterStep(cfg).Filter(ctx, cl, bundles)
+				return discovery.NewLoadExternalPluginFilterStep(cfg).Filter(ctx, cl, bundles)
 			},
 			func(ctx context.Context, _ plugins.Class, b []*plugins.FoundBundle) ([]*plugins.FoundBundle, error) {
 				return discovery.NewDuplicatePluginFilterStep(pr).Filter(ctx, b)
@@ -60,10 +60,10 @@ func ProvideInitializationStage(cfg *config.Cfg, pr registry.Service, l plugins.
 	roleRegistry plugins.RoleRegistry) *initialization.Initialize {
 	return initialization.New(cfg, initialization.Opts{
 		InitializeFuncs: []initialization.InitializeFunc{
+			ExternalServiceRegistrationStep(cfg, externalServiceRegistry),
 			initialization.BackendClientInitStep(envvars.NewProvider(cfg, l), bp),
 			initialization.PluginRegistrationStep(pr),
 			initialization.BackendProcessStartStep(pm),
-			ExternalServiceRegistrationStep(cfg, externalServiceRegistry),
 			RegisterPluginRolesStep(roleRegistry),
 			ReportBuildMetrics,
 		},

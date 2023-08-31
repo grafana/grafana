@@ -444,11 +444,15 @@ func copyPubDir(grafanaDir, tmpDir string) error {
 	}
 
 	// Remove plugin backend code.
-	pluBeFiles, err := filepath.Glob(filepath.Join(tgtPubDir, "plugins", "*", "pkg"))
+	pluginFiles, err := filepath.Glob(filepath.Join(tgtPubDir, "plugins", "*", "*"))
 	if err != nil {
 		return err
 	}
-	for _, p := range pluBeFiles {
+	for _, p := range pluginFiles {
+		if filepath.Base(p) == "src" {
+			// Src directory is the only one necessary
+			continue
+		}
 		if err := os.RemoveAll(p); err != nil {
 			return err
 		}
@@ -544,7 +548,7 @@ func copyPlugins(ctx context.Context, v config.Variant, grafanaDir, tmpDir strin
 		if err != nil {
 			return fmt.Errorf("failed to read %q: %w", filepath.Join(srcDir, "plugin.json"), err)
 		}
-		var plugJSON map[string]interface{}
+		var plugJSON map[string]any
 		if err := json.Unmarshal(jsonB, &plugJSON); err != nil {
 			return err
 		}

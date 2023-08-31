@@ -6,6 +6,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	sdklog "github.com/grafana/grafana-plugin-sdk-go/backend/log"
 
+	"github.com/grafana/grafana-testdata-datasource/pkg/plugin/testdatasource"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/log"
@@ -25,7 +26,6 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/postgres"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus"
 	"github.com/grafana/grafana/pkg/tsdb/tempo"
-	"github.com/grafana/testdata/pkg/plugin/testdatasource"
 )
 
 const (
@@ -39,7 +39,7 @@ const (
 	OpenTSDB        = "opentsdb"
 	Prometheus      = "prometheus"
 	Tempo           = "tempo"
-	TestData        = "testdata"
+	TestData        = "grafana-testdata-datasource"
 	PostgreSQL      = "postgres"
 	MySQL           = "mysql"
 	MSSQL           = "mssql"
@@ -52,14 +52,14 @@ func init() {
 	// Non-optimal global solution to replace plugin SDK default loggers for core plugins.
 	sdklog.DefaultLogger = &logWrapper{logger: log.New("plugin.coreplugin")}
 	backend.Logger = sdklog.DefaultLogger
-	backend.NewLoggerWith = func(args ...interface{}) sdklog.Logger {
+	backend.NewLoggerWith = func(args ...any) sdklog.Logger {
 		for i, arg := range args {
 			// Obtain logger name from args.
 			if s, ok := arg.(string); ok && s == "logger" {
 				l := &logWrapper{logger: log.New(args[i+1].(string))}
 				// new args slice without logger name and logger name value
 				if len(args) > 2 {
-					newArgs := make([]interface{}, 0, len(args)-2)
+					newArgs := make([]any, 0, len(args)-2)
 					newArgs = append(newArgs, args[:i]...)
 					newArgs = append(newArgs, args[i+2:]...)
 					return l.With(newArgs...)
@@ -120,7 +120,7 @@ func (cr *Registry) BackendFactoryProvider() func(_ context.Context, p *plugins.
 	}
 }
 
-func asBackendPlugin(svc interface{}) backendplugin.PluginFactoryFunc {
+func asBackendPlugin(svc any) backendplugin.PluginFactoryFunc {
 	opts := backend.ServeOpts{}
 	if queryHandler, ok := svc.(backend.QueryDataHandler); ok {
 		opts.QueryDataHandler = queryHandler
@@ -147,19 +147,19 @@ type logWrapper struct {
 	logger log.Logger
 }
 
-func (l *logWrapper) Debug(msg string, args ...interface{}) {
+func (l *logWrapper) Debug(msg string, args ...any) {
 	l.logger.Debug(msg, args...)
 }
 
-func (l *logWrapper) Info(msg string, args ...interface{}) {
+func (l *logWrapper) Info(msg string, args ...any) {
 	l.logger.Info(msg, args...)
 }
 
-func (l *logWrapper) Warn(msg string, args ...interface{}) {
+func (l *logWrapper) Warn(msg string, args ...any) {
 	l.logger.Warn(msg, args...)
 }
 
-func (l *logWrapper) Error(msg string, args ...interface{}) {
+func (l *logWrapper) Error(msg string, args ...any) {
 	l.logger.Error(msg, args...)
 }
 
@@ -167,7 +167,7 @@ func (l *logWrapper) Level() sdklog.Level {
 	return sdklog.NoLevel
 }
 
-func (l *logWrapper) With(args ...interface{}) sdklog.Logger {
+func (l *logWrapper) With(args ...any) sdklog.Logger {
 	l.logger = l.logger.New(args...)
 	return l
 }

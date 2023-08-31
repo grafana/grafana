@@ -22,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/sources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 var compareOpts = []cmp.Option{cmpopts.IgnoreFields(plugins.Plugin{}, "client", "log", "mu"), fsComparer}
@@ -405,8 +406,12 @@ func TestLoader_Load(t *testing.T) {
 			class: plugins.ClassCore,
 			cfg: &config.Cfg{
 				Features:             featuremgmt.WithFeatures(featuremgmt.FlagDecoupleCorePlugins),
-				SkipCorePlugins:      map[string]bool{"test-app": true},
 				PluginsAllowUnsigned: []string{"test-app"},
+				PluginSettings: setting.PluginSettings{
+					"test-app": map[string]string{
+						"as_external": "true",
+					},
+				},
 			},
 			pluginPaths: []string{"../testdata/test-app-with-includes"},
 			want:        []*plugins.Plugin{},
@@ -419,7 +424,7 @@ func TestLoader_Load(t *testing.T) {
 
 			d := discovery.New(tt.cfg, discovery.Opts{
 				FindFilterFuncs: []discovery.FindFilterFunc{
-					discovery.NewCorePluginFilterStep(tt.cfg).Filter,
+					discovery.NewLoadExternalPluginFilterStep(tt.cfg).Filter,
 				},
 			})
 			l := New(d, bootstrap.New(tt.cfg, bootstrap.Opts{}),

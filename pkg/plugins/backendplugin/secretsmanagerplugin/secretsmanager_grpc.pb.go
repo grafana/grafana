@@ -141,7 +141,7 @@ func RegisterSecretsManagerServer(s grpc.ServiceRegistrar, srv SecretsManagerSer
 	s.RegisterService(&SecretsManager_ServiceDesc, srv)
 }
 
-func _SecretsManager_GetSecret_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _SecretsManager_GetSecret_Handler(srv any, ctx context.Context, dec func(any) error, interceptor grpc.UnaryServerInterceptor) (any, error) {
 	in := new(GetSecretRequest)
 	if err := dec(in); err != nil {
 		return nil, err
@@ -153,13 +153,13 @@ func _SecretsManager_GetSecret_Handler(srv interface{}, ctx context.Context, dec
 		Server:     srv,
 		FullMethod: "/secretsmanagerplugin.SecretsManager/GetSecret",
 	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+	handler := func(ctx context.Context, req any) (any, error) {
 		return srv.(SecretsManagerServer).GetSecret(ctx, req.(*GetSecretRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _SecretsManager_SetSecret_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _SecretsManager_SetSecret_Handler(srv any, ctx context.Context, dec func(any) error, interceptor grpc.UnaryServerInterceptor) (any, error) {
 	in := new(SetSecretRequest)
 	if err := dec(in); err != nil {
 		return nil, err
@@ -171,13 +171,13 @@ func _SecretsManager_SetSecret_Handler(srv interface{}, ctx context.Context, dec
 		Server:     srv,
 		FullMethod: "/secretsmanagerplugin.SecretsManager/SetSecret",
 	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+	handler := func(ctx context.Context, req any) (any, error) {
 		return srv.(SecretsManagerServer).SetSecret(ctx, req.(*SetSecretRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _SecretsManager_DeleteSecret_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _SecretsManager_DeleteSecret_Handler(srv any, ctx context.Context, dec func(any) error, interceptor grpc.UnaryServerInterceptor) (any, error) {
 	in := new(DeleteSecretRequest)
 	if err := dec(in); err != nil {
 		return nil, err
@@ -189,13 +189,13 @@ func _SecretsManager_DeleteSecret_Handler(srv interface{}, ctx context.Context, 
 		Server:     srv,
 		FullMethod: "/secretsmanagerplugin.SecretsManager/DeleteSecret",
 	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+	handler := func(ctx context.Context, req any) (any, error) {
 		return srv.(SecretsManagerServer).DeleteSecret(ctx, req.(*DeleteSecretRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _SecretsManager_ListSecrets_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _SecretsManager_ListSecrets_Handler(srv any, ctx context.Context, dec func(any) error, interceptor grpc.UnaryServerInterceptor) (any, error) {
 	in := new(ListSecretsRequest)
 	if err := dec(in); err != nil {
 		return nil, err
@@ -207,13 +207,13 @@ func _SecretsManager_ListSecrets_Handler(srv interface{}, ctx context.Context, d
 		Server:     srv,
 		FullMethod: "/secretsmanagerplugin.SecretsManager/ListSecrets",
 	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+	handler := func(ctx context.Context, req any) (any, error) {
 		return srv.(SecretsManagerServer).ListSecrets(ctx, req.(*ListSecretsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _SecretsManager_RenameSecret_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _SecretsManager_RenameSecret_Handler(srv any, ctx context.Context, dec func(any) error, interceptor grpc.UnaryServerInterceptor) (any, error) {
 	in := new(RenameSecretRequest)
 	if err := dec(in); err != nil {
 		return nil, err
@@ -225,13 +225,13 @@ func _SecretsManager_RenameSecret_Handler(srv interface{}, ctx context.Context, 
 		Server:     srv,
 		FullMethod: "/secretsmanagerplugin.SecretsManager/RenameSecret",
 	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+	handler := func(ctx context.Context, req any) (any, error) {
 		return srv.(SecretsManagerServer).RenameSecret(ctx, req.(*RenameSecretRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _SecretsManager_GetAllSecrets_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _SecretsManager_GetAllSecrets_Handler(srv any, ctx context.Context, dec func(any) error, interceptor grpc.UnaryServerInterceptor) (any, error) {
 	in := new(GetAllSecretsRequest)
 	if err := dec(in); err != nil {
 		return nil, err
@@ -243,7 +243,7 @@ func _SecretsManager_GetAllSecrets_Handler(srv interface{}, ctx context.Context,
 		Server:     srv,
 		FullMethod: "/secretsmanagerplugin.SecretsManager/GetAllSecrets",
 	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+	handler := func(ctx context.Context, req any) (any, error) {
 		return srv.(SecretsManagerServer).GetAllSecrets(ctx, req.(*GetAllSecretsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
