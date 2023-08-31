@@ -175,7 +175,7 @@ export function addLabelToQuery(
   // If we have non-empty stream selector and parser/label filter, we want to add a new label filter after the last one.
   // If some of the stream selectors don't have matchers, we want to add new matcher to the all stream selectors.
   if (forceAsLabelFilter) {
-    // `forceAsLabelFilter` is mostly used for non-indexed labels. Those are not
+    // `forceAsLabelFilter` is mostly used for structured metadata labels. Those are not
     // very well distinguishable from real labels, but need to be added as label
     // filters after the last stream selector, parser or label filter. This is
     // just a quickfix for now and still has edge-cases where it can fail.
