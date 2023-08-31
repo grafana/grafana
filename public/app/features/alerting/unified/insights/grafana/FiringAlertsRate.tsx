@@ -18,7 +18,7 @@ export function getFiringAlertsRateScene(timeRange: SceneTimeRange, datasource: 
   });
 
   return new SceneFlexItem({
-    width: 'calc(50% - 8px)',
+    width: 'calc(50% - 4px)',
     height: 300,
     body: PanelBuilders.timeseries()
       .setTitle(panelTitle)
