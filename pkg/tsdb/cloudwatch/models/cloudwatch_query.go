@@ -166,9 +166,9 @@ func (q *CloudWatchQuery) BuildDeepLink(startTime time.Time, endTime time.Time) 
 	if q.isSearchExpression() {
 		metricExpressions := &metricExpression{Expression: q.UsedExpression}
 		metricExpressions.Label = q.Label
-		link.Metrics = []interface{}{metricExpressions}
+		link.Metrics = []any{metricExpressions}
 	} else {
-		metricStat := []interface{}{q.Namespace, q.MetricName}
+		metricStat := []any{q.Namespace, q.MetricName}
 		for dimensionKey, dimensionValues := range q.Dimensions {
 			metricStat = append(metricStat, dimensionKey, dimensionValues[0])
 		}
@@ -181,7 +181,7 @@ func (q *CloudWatchQuery) BuildDeepLink(startTime time.Time, endTime time.Time) 
 			metricStatMeta.AccountId = *q.AccountId
 		}
 		metricStat = append(metricStat, metricStatMeta)
-		link.Metrics = []interface{}{metricStat}
+		link.Metrics = []any{metricStat}
 	}
 
 	linkProps, err := json.Marshal(link)
@@ -464,13 +464,13 @@ func getRetainedPeriods(timeSince time.Duration) []int {
 	}
 }
 
-func parseDimensions(dimensions map[string]interface{}) (map[string][]string, error) {
+func parseDimensions(dimensions map[string]any) (map[string][]string, error) {
 	parsedDimensions := make(map[string][]string)
 	for k, v := range dimensions {
 		// This is for backwards compatibility. Before 6.5 dimensions values were stored as strings and not arrays
 		if value, ok := v.(string); ok {
 			parsedDimensions[k] = []string{value}
-		} else if values, ok := v.([]interface{}); ok {
+		} else if values, ok := v.([]any); ok {
 			for _, value := range values {
 				parsedDimensions[k] = append(parsedDimensions[k], value.(string))
 			}

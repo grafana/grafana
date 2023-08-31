@@ -8,6 +8,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -142,8 +143,8 @@ func GetGravatarUrlWithDefault(text string, defaultText string) string {
 	return GetGravatarUrl(text)
 }
 
-func IsHiddenUser(userLogin string, signedInUser *user.SignedInUser, cfg *setting.Cfg) bool {
-	if userLogin == "" || signedInUser.IsGrafanaAdmin || userLogin == signedInUser.Login {
+func IsHiddenUser(userLogin string, signedInUser identity.Requester, cfg *setting.Cfg) bool {
+	if userLogin == "" || signedInUser.GetIsGrafanaAdmin() || userLogin == signedInUser.GetLogin() {
 		return false
 	}
 

@@ -6,6 +6,7 @@ export enum AlertingFeature {
   NotificationPoliciesV2MatchingInstances = 'notification-policies.v2.matching-instances',
   DetailsViewV2 = 'details-view.v2',
   ContactPointsV2 = 'contact-points.v2',
+  InsightsPage = 'insights-page',
 }
 
 const FEATURES: FeatureDescription[] = [
@@ -19,6 +20,10 @@ const FEATURES: FeatureDescription[] = [
   },
   {
     name: AlertingFeature.DetailsViewV2,
+    defaultValue: false,
+  },
+  {
+    name: AlertingFeature.InsightsPage,
     defaultValue: false,
   },
 ];

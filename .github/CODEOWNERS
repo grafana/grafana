@@ -98,13 +98,12 @@
 /pkg/server/ @grafana/backend-platform
 /pkg/services/annotations/ @grafana/backend-platform
 /pkg/services/apikey/ @grafana/grafana-authnz-team
-/pkg/services/certgenerator @grafana/grafana-app-platform-squad
 /pkg/services/cleanup/ @grafana/backend-platform
 /pkg/services/contexthandler/ @grafana/backend-platform
 /pkg/services/correlations/ @grafana/explore-squad
 /pkg/services/dashboardimport/ @grafana/backend-platform
 /pkg/services/dashboards/ @grafana/backend-platform
-/pkg/services/dashboardsnapshots/ @grafana/backend-platform
+/pkg/services/dashboardsnapshots/ @grafana/sharing-squad
 /pkg/services/dashboardversion/ @grafana/backend-platform
 /pkg/services/encryption/ @grafana/backend-platform
 /pkg/services/folder/ @grafana/backend-platform
@@ -119,7 +118,7 @@
 /pkg/services/plugindashboards/ @grafana/backend-platform
 /pkg/services/preference/ @grafana/backend-platform
 /pkg/services/provisioning/ @grafana/backend-platform
-/pkg/services/publicdashboards/ @grafana/dashboards-squad
+/pkg/services/publicdashboards/ @grafana/sharing-squad
 /pkg/services/query/ @grafana/backend-platform
 /pkg/services/queryhistory/ @grafana/backend-platform
 /pkg/services/quota/ @grafana/backend-platform
@@ -324,6 +323,7 @@
 /packages/grafana-ui/src/components/VizTooltip/ @grafana/dataviz-squad
 /packages/grafana-ui/src/utils/storybook/ @grafana/plugins-platform-frontend
 /packages/grafana-data/src/**/*logs* @grafana/observability-logs
+/packages/grafana-schema/src/**/*tempo* @grafana/observability-traces-and-profiling
 /plugins-bundled/ @grafana/plugins-platform-frontend
 
 

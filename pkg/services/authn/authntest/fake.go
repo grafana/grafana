@@ -80,7 +80,7 @@ type FakeClient struct {
 	ExpectedTest     bool
 	ExpectedPriority uint
 	ExpectedIdentity *authn.Identity
-	ExpectedStats    map[string]interface{}
+	ExpectedStats    map[string]any
 }
 
 func (f *FakeClient) Name() string {
@@ -99,7 +99,7 @@ func (f *FakeClient) Priority() uint {
 	return f.ExpectedPriority
 }
 
-func (f *FakeClient) UsageStatFn(ctx context.Context) (map[string]interface{}, error) {
+func (f *FakeClient) UsageStatFn(ctx context.Context) (map[string]any, error) {
 	return f.ExpectedStats, f.ExpectedErr
 }
 

@@ -43,7 +43,7 @@ type channelsPerOrg map[int64][]*notificationChannel
 type defaultChannelsPerOrg map[int64][]*notificationChannel
 
 // uidOrID for both uid and ID, primarily used for mapping legacy channel to migrated receiver.
-type uidOrID interface{}
+type uidOrID any
 
 // channelReceiver is a convenience struct that contains a notificationChannel and its corresponding migrated PostableApiReceiver.
 type channelReceiver struct {
@@ -130,7 +130,7 @@ func (m *migration) setupAlertmanagerConfigs(rulesPerOrg map[int64]map[*alertRul
 }
 
 // contactListToString creates a sorted string representation of a given map (set) of receiver names. Each name will be comma-separated and double-quoted. Names should not contain double quotes.
-func contactListToString(m map[string]interface{}) string {
+func contactListToString(m map[string]any) string {
 	keys := make([]string, 0, len(m))
 	for k := range m {
 		keys = append(keys, quote(k))
@@ -338,14 +338,14 @@ func createRoute(cr channelReceiver) (*Route, error) {
 }
 
 // Filter receivers to select those that were associated to the given rule as channels.
-func (m *migration) filterReceiversForAlert(name string, channelIDs []uidOrID, receivers map[uidOrID]*PostableApiReceiver, defaultReceivers map[string]struct{}) map[string]interface{} {
+func (m *migration) filterReceiversForAlert(name string, channelIDs []uidOrID, receivers map[uidOrID]*PostableApiReceiver, defaultReceivers map[string]struct{}) map[string]any {
 	if len(channelIDs) == 0 {
 		// If there are no channels associated, we use the default route.
 		return nil
 	}
 
 	// Filter receiver names.
-	filteredReceiverNames := make(map[string]interface{})
+	filteredReceiverNames := make(map[string]any)
 	for _, uidOrId := range channelIDs {
 		recv, ok := receivers[uidOrId]
 		if ok {
@@ -355,7 +355,7 @@ func (m *migration) filterReceiversForAlert(name string, channelIDs []uidOrID, r
 		}
 	}
 
-	coveredByDefault := func(names map[string]interface{}) bool {
+	coveredByDefault := func(names map[string]any) bool {
 		// Check if all receivers are also default ones and if so, just use the default route.
 		for n := range names {
 			if _, ok := defaultReceivers[n]; !ok {

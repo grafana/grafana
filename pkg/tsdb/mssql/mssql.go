@@ -160,7 +160,7 @@ func generateConnectionString(dsInfo sqleng.DataSourceInfo) (string, error) {
 		}
 	}
 
-	args := []interface{}{
+	args := []any{
 		"url", dsInfo.URL, "host", addr.Host,
 	}
 	if addr.Port != "0" {
@@ -242,7 +242,7 @@ func (t *mssqlQueryResultTransformer) GetConverterList() []sqlutil.StringConvert
 			ConversionFunc: func(in *string) (*string, error) { return in, nil },
 			Replacer: &sqlutil.StringFieldReplacer{
 				OutputFieldType: data.FieldTypeNullableFloat64,
-				ReplaceFunc: func(in *string) (interface{}, error) {
+				ReplaceFunc: func(in *string) (any, error) {
 					if in == nil {
 						return nil, nil
 					}
@@ -261,7 +261,7 @@ func (t *mssqlQueryResultTransformer) GetConverterList() []sqlutil.StringConvert
 			ConversionFunc: func(in *string) (*string, error) { return in, nil },
 			Replacer: &sqlutil.StringFieldReplacer{
 				OutputFieldType: data.FieldTypeNullableFloat64,
-				ReplaceFunc: func(in *string) (interface{}, error) {
+				ReplaceFunc: func(in *string) (any, error) {
 					if in == nil {
 						return nil, nil
 					}
@@ -280,7 +280,7 @@ func (t *mssqlQueryResultTransformer) GetConverterList() []sqlutil.StringConvert
 			ConversionFunc: func(in *string) (*string, error) { return in, nil },
 			Replacer: &sqlutil.StringFieldReplacer{
 				OutputFieldType: data.FieldTypeNullableFloat64,
-				ReplaceFunc: func(in *string) (interface{}, error) {
+				ReplaceFunc: func(in *string) (any, error) {
 					if in == nil {
 						return nil, nil
 					}
@@ -299,7 +299,7 @@ func (t *mssqlQueryResultTransformer) GetConverterList() []sqlutil.StringConvert
 			ConversionFunc: func(in *string) (*string, error) { return in, nil },
 			Replacer: &sqlutil.StringFieldReplacer{
 				OutputFieldType: data.FieldTypeNullableString,
-				ReplaceFunc: func(in *string) (interface{}, error) {
+				ReplaceFunc: func(in *string) (any, error) {
 					if in == nil {
 						return nil, nil
 					}

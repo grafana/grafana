@@ -13,8 +13,6 @@ import (
 	"github.com/grafana/dskit/services"
 	grafanaapiserveroptions "github.com/grafana/grafana-apiserver/pkg/cmd/server/options"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-
-	"k8s.io/apiserver/pkg/admission"
 	"k8s.io/apiserver/pkg/authentication/authenticator"
 	"k8s.io/apiserver/pkg/authentication/request/headerrequest"
 	"k8s.io/apiserver/pkg/authentication/user"
@@ -70,16 +68,11 @@ type service struct {
 func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, rr routing.RouteRegister) (*service, error) {
 	s := &service{
 		rr:       rr,
-		log:      log.New("grafana-apiserver"),
 		dataPath: path.Join(cfg.DataPath, "k8s"),
 		stopCh:   make(chan struct{}),
 	}
 
-	// TODO: this should be changed once dskit modules are implemented; for now we return a real service instance to avoid panics, but don't start it
-	if !features.IsEnabled(featuremgmt.FlagGrafanaAPIServer) {
-		s.log.Debug("apiserver feature is disabled")
-		return s, nil
-	}
+	s.BasicService = services.NewBasicService(s.start, s.running, nil).WithName("grafana-apiserver")
 
 	s.rr.Group("/k8s", func(k8sRoute routing.RouteRegister) {
 		handler := func(c *contextmodel.ReqContext) {
@@ -130,30 +123,25 @@ func (s *service) start(ctx context.Context) error {
 	// TODO: setting CoreAPI to nil currently segfaults in grafana-apiserver
 	o.RecommendedOptions.CoreAPI = nil
 
-	// this currently only will work for standalone mode. we are removing all default enabled plugins
-	// and replacing them with our internal admission plugins. this avoids issues with the default admission
-	// plugins that depend on the Core V1 APIs and informers.
-	o.RecommendedOptions.Admission.Plugins = admission.NewPlugins()
-	o.RecommendedOptions.Admission.RecommendedPluginOrder = []string{}
-	o.RecommendedOptions.Admission.DisablePlugins = []string{}
-	o.RecommendedOptions.Admission.EnablePlugins = []string{}
-
 	// Get the util to get the paths to pre-generated certs
 	certUtil := certgenerator.CertUtil{
 		K8sDataPath: s.dataPath,
 	}
+
+	err := certUtil.InitializeCACertPKI()
+	if err != nil {
+		return err
+	}
+
+	err = certUtil.EnsureApiServerPKI(certgenerator.DefaultAPIServerIp)
+	if err != nil {
+		return err
+	}
+
 	o.RecommendedOptions.SecureServing.BindAddress = net.ParseIP(certgenerator.DefaultAPIServerIp)
 	o.RecommendedOptions.SecureServing.ServerCert.CertKey = options.CertKey{
 		CertFile: certUtil.APIServerCertFile(),
 		KeyFile:  certUtil.APIServerKeyFile(),
-	}
-
-	rootCert, err := certUtil.GetK8sCACert()
-	if err != nil {
-		return err
-	}
-	if err := certUtil.EnsureApiServerPKI(certgenerator.DefaultAPIServerIp); err != nil {
-		return err
 	}
 
 	if err := o.Complete(); err != nil {
@@ -165,6 +153,11 @@ func (s *service) start(ctx context.Context) error {
 	}
 
 	serverConfig, err := o.Config()
+	if err != nil {
+		return err
+	}
+
+	rootCert, err := certUtil.GetK8sCACert()
 	if err != nil {
 		return err
 	}
@@ -255,7 +248,6 @@ func (s *service) writeKubeConfiguration(restConfig *rest.Config) error {
 		CurrentContext: "default-context",
 		AuthInfos:      authinfos,
 	}
-	s.log.Debug("writing configuration", "path", path.Join(s.dataPath, "grafana.kubeconfig"))
 	return clientcmd.WriteToFile(clientConfig, path.Join(s.dataPath, "grafana.kubeconfig"))
 }
 
