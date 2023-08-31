@@ -72,13 +72,6 @@ func TestServer_Shutdown(t *testing.T) {
 
 	go func() {
 		defer close(ch)
-
-		// Wait until all services launched.
-		for _, svc := range s.backgroundServices {
-			if !svc.(*testService).isDisabled {
-				<-svc.(*testService).started
-			}
-		}
 		ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
 		defer cancel()
 		err := s.Shutdown(ctx, "test interrupt")

@@ -1,6 +1,9 @@
 //go:build wireinject
 // +build wireinject
 
+// This file should contain wire sets used by both OSS and Enterprise builds.
+// Use wireext_oss.go and wireext_enterprise.go for sets that are specific to
+// the respective builds.
 package server
 
 import (
@@ -414,4 +417,18 @@ func InitializeForTest(cla setting.CommandLineArgs, opts Options, apiOpts api.Se
 func InitializeForCLI(cla setting.CommandLineArgs) (Runner, error) {
 	wire.Build(wireExtsCLISet)
 	return Runner{}, nil
+}
+
+// InitializeForCLITarget is a simplified set of dependencies for the CLI, used
+// by the server target subcommand to launch specific dskit modules.
+func InitializeForCLITarget(cla setting.CommandLineArgs) (ModuleRunner, error) {
+	wire.Build(wireExtsBaseCLISet)
+	return ModuleRunner{}, nil
+}
+
+// InitializeModuleServer is a simplified set of dependencies for the CLI,
+// suitable for running background services and targeting dskit modules.
+func InitializeModuleServer(cla setting.CommandLineArgs, opts Options, apiOpts api.ServerOptions) (*ModuleServer, error) {
+	wire.Build(wireExtsModuleServerSet)
+	return &ModuleServer{}, nil
 }
