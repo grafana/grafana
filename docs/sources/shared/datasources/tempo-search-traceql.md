@@ -10,13 +10,18 @@ labels:
 [//]: # 'This shared file is included in these locations:'
 [//]: # '/grafana/docs/sources/datasources/tempo/query-editor/index.md'
 [//]: # '/website/docs/grafana-cloud/data-configuration/traces/traces-query-editor.md'
+[//]: # '/tempo/docs/sources/tempo/traceql/query_editor.md'
 [//]: #
 [//]: # 'If you make changes to this file, verify that the meaning and content are not changed in any place where the file is included.'
 [//]: # 'Any links should be fully qualified and not relative: /docs/grafana/ instead of ../grafana/.'
 
-# Create TraceQL queries using Search
+# Write TraceQL queries using Search
 
-Using the Search tab in Explore, you can use the query builder’s drop-downs to compose TraceQL queries. The selections you make automatically generate a [TraceQL query](/docs/tempo/latest/traceql).
+The TraceQL query builder, located on the **Explore** > **Query type** > **Search** in Grafana, provides drop-downs and text fields to help you write a query.
+
+![The TraceQL query builder](/static/img/docs/tempo/screenshot-traceql-query-type-search-v10.png)
+
+You can use the query builder’s drop-downs to compose TraceQL queries. The selections you make automatically generate a [TraceQL query](/docs/tempo/latest/traceql).
 
 To access **Search**, select your Tempo data source, and then choose **Explore** and select **Query type** > **Search**.
 You can use the query builder to search trace data by resource service name, span name, duration, and one or more tags. The examples on this page use the default filters.

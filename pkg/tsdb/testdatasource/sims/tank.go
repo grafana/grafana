@@ -36,7 +36,7 @@ func (s *tankSim) GetState() simulationState {
 	}
 }
 
-func (s *tankSim) SetConfig(vals map[string]interface{}) error {
+func (s *tankSim) SetConfig(vals map[string]any) error {
 	return updateConfigObjectFromJSON(&s.cfg, vals)
 }
 
@@ -69,7 +69,7 @@ func (s *tankSim) NewFrame(size int) *data.Frame {
 	return frame
 }
 
-func (s *tankSim) GetValues(t time.Time) map[string]interface{} {
+func (s *tankSim) GetValues(t time.Time) map[string]any {
 	if t.Before(s.state.Time) {
 		return nil // can not look backwards!
 	}
@@ -94,7 +94,7 @@ func (s *tankSim) GetValues(t time.Time) map[string]interface{} {
 		s.state.Time = t
 	}
 
-	return map[string]interface{}{
+	return map[string]any{
 		"time":        s.state.Time,
 		"percentFull": s.state.FillPercent,
 		"tankVolume":  s.state.FillPercent * s.cfg.TankCapacity,
