@@ -148,7 +148,7 @@ export default chance.mixin({
           chance.normal({ mean: 45, dev: 15 }), // average case
         ])
       ),
-      1 // `pickone` might pick a negative number (or zero) from one of the normal distributions, but we want to have at least one span
+      1 // `pickone` might pick a negative number (or zero) from one of the normal distributions, but we need to have at least one span
     ),
     numberOfProcesses = chance.integer({ min: 1, max: 10 }),
     maxDepth = chance.integer({ min: 1, max: 10 }),
@@ -194,8 +194,6 @@ export default chance.mixin({
     traceEndTime = 0,
     operations = OPERATIONS_LIST,
   }: ChanceSpanOptions) {
-    console.log('span');
-
     // Set default values for trace start/end time.
     traceStartTime = traceStartTime || chance.timestamp() * 1000 * 1000;
     traceEndTime = traceEndTime || traceStartTime + 100000;
