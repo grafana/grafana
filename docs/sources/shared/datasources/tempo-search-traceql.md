@@ -104,10 +104,10 @@ To add a tag, follow these steps:
 [Enable the `metricsSummary` feature toggle](/docs/grafana/latest/setup-grafana/configure-grafana/feature-toggles/) in Grafana to use this feature. Your Grafana Tempo data source must also point to a Tempo database with the [Metrics Summary API](https://grafana.com/docs/tempo/latest/api_docs/metrics-summary/) enabled. Contact Grafana Support to enable this feature in Grafana Cloud.
 {{% /admonition %}}
 
-Using **Aggregate by**, you can calculate RED metrics (total span count, percent erroring spans, and latency information) for spans of `kind=server` that match your filter criteria, grouped by one or more attributes. 
+Using **Aggregate by**, you can calculate RED metrics (total span count, percent erroring spans, and latency information) for spans of `kind=server` that match your filter criteria, grouped by one or more attributes.
 This capability is based on the [metrics summary API](/docs/grafana-cloud/monitor-infrastructure/traces/metrics-summary-api/).
 
-When you use  **Aggregate by**,  the selections you make determine how the information is reported in the Table. Every combination that matches selections in your data is listed in the table. 
+When you use **Aggregate by**, the selections you make determine how the information is reported in the Table. Every combination that matches selections in your data is listed in the table.
 Each aggregate value, for example `intrinsic`:`name`, has a corresponding column in the results table.
 
 For example, **names** matching `GET /:endpoint` with a **span.http.user_agent** of `k6/0.46` appeared in 31,466 spans. Instead of being listed by traces and associated spans, the query results are grouped by the the selections in **Aggregate by**.
@@ -120,7 +120,6 @@ The screenshot shows all of the successful HTTP `status_code` API calls against 
 The results are shown in the same order used in **Aggregate by**.
 For example, **Aggregate by** lists `intrinsic.name` followed by `span.http.user_agent`.
 The first column in the results Table shows **name** and then **span.http.user_agent**.
-
 
 To use this capability:
 
