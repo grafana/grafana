@@ -3225,15 +3225,12 @@ steps:
   name: test-frontend
 trigger:
   cron:
-    include:
-    - nightly-release
+  - nightly-release
   event:
-    include:
-    - promote
-    - cron
+  - promote
+  - cron
   target:
-    include:
-    - nightly
+  - nightly
 type: docker
 volumes:
 - host:
@@ -3306,15 +3303,12 @@ steps:
   name: test-backend-integration
 trigger:
   cron:
-    include:
-    - nightly-release
+  - nightly-release
   event:
-    include:
-    - promote
-    - cron
+  - promote
+  - cron
   target:
-    include:
-    - nightly
+  - nightly
 type: docker
 volumes:
 - host:
@@ -3361,15 +3355,12 @@ steps:
     path: /var/run/docker.sock
 trigger:
   cron:
-    include:
-    - nightly-release
+  - nightly-release
   event:
-    include:
-    - promote
-    - cron
+  - promote
+  - cron
   target:
-    include:
-    - nightly
+  - nightly
 type: docker
 volumes:
 - host:
@@ -3429,15 +3420,12 @@ steps:
   name: build-windows-installer
 trigger:
   cron:
-    include:
-    - nightly-release
+  - nightly-release
   event:
-    include:
-    - promote
-    - cron
+  - promote
+  - cron
   target:
-    include:
-    - nightly
+  - nightly
 type: docker
 volumes:
 - host:
@@ -3476,15 +3464,12 @@ steps:
   name: gsutil-stat
 trigger:
   cron:
-    include:
-    - nightly-release
+  - nightly-release
   event:
-    include:
-    - promote
-    - cron
+  - promote
+  - cron
   target:
-    include:
-    - nightly
+  - nightly
 type: docker
 volumes:
 - host:
@@ -4995,6 +4980,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 240a22d05523d10a7eb244c55a5e55ee7796d051763382fea817e2000580afc7
+hmac: e25da811f0f5cbe68708c3b0b79f87cb245114147be0cf5a9489a68b158cac4e
 
 ...
