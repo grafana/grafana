@@ -1327,7 +1327,7 @@ def get_windows_steps(ver_mode, bucket = "%PRERELEASE_BUCKET%"):
             installer_commands.extend(
                 [
                     ".\\grabpl.exe windows-installer --target {} --edition oss {}".format(
-                        "gs://{}/{}/oss/release/grafana-{}.windows-amd64.zip".format(gcp_bucket, ver_part, ver_mode, version),
+                        "gs://{}/{}/oss/release/grafana-{}.windows-amd64.zip".format(gcp_bucket, ver_part, version),
                         ver_part,
                     ),
                     '$$fname = ((Get-Childitem grafana*.msi -name) -split "`n")[0]',
