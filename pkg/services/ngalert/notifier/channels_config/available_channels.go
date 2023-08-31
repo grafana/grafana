@@ -1096,15 +1096,15 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 		},
 		{
 			Type:        "googlechat",
-			Name:        "Google Hangouts Chat",
-			Description: "Sends notifications to Google Hangouts Chat via webhooks based on the official JSON message format",
-			Heading:     "Google Hangouts Chat settings",
+			Name:        "Google Chat",
+			Description: "Sends notifications to Google Chat via webhooks based on the official JSON message format",
+			Heading:     "Google Chat settings",
 			Options: []NotifierOption{
 				{
 					Label:        "URL",
 					Element:      ElementTypeInput,
 					InputType:    InputTypeText,
-					Placeholder:  "Google Hangouts Chat incoming webhook url",
+					Placeholder:  "Google Chat incoming webhook url",
 					PropertyName: "url",
 					Required:     true,
 				},
