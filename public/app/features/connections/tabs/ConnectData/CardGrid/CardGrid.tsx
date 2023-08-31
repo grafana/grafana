@@ -3,15 +3,12 @@ import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Card, useStyles2 } from '@grafana/ui';
+import { Grid } from '@grafana/ui/src/unstable';
 import { PluginAngularBadge } from 'app/features/plugins/admin/components/Badges';
 
 const getStyles = (theme: GrafanaTheme2) => ({
   sourcesList: css`
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
-    gap: 12px;
-    list-style: none;
-    margin-bottom: 80px;
+  margin-bottom: 80px;
   `,
   heading: css({
     fontSize: theme.typography.h5.fontSize,
@@ -62,10 +59,9 @@ export interface CardGridProps {
 
 export const CardGrid = ({ items, onClickItem }: CardGridProps) => {
   const styles = useStyles2(getStyles);
-
-  return (
-    <ul className={styles.sourcesList}>
-      {items.map((item) => (
+  const cardItems = (array: CardGridItem[]) => {
+    const cardList = React.Children.toArray(
+      array.map((item) => (
         <Card
           key={item.id}
           className={styles.card}
@@ -88,7 +84,10 @@ export const CardGrid = ({ items, onClickItem }: CardGridProps) => {
             </Card.Meta>
           ) : null}
         </Card>
-      ))}
-    </ul>
-  );
+      ))
+    );
+    return cardList;
+  };
+
+  return <Grid display='grid' templateColumns='repeat(auto-fill, minmax(380px, 1fr))' gap='12px'> {cardItems(items)}</Grid>;
 };
