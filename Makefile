@@ -263,6 +263,9 @@ devenv-mysql:
 protobuf: ## Compile protobuf definitions
 	bash scripts/protobuf-check.sh
 	bash pkg/plugins/backendplugin/pluginextensionv2/generate.sh
+	bash pkg/plugins/backendplugin/secretsmanagerplugin/generate.sh
+	bash pkg/services/store/entity/generate.sh
+	bash pkg/infra/grn/generate.sh
 
 clean: ## Clean up intermediate build artifacts.
 	@echo "cleaning"
