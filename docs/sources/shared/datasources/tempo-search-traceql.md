@@ -121,7 +121,6 @@ The results are shown in the same order used in **Aggregate by**.
 For example, **Aggregate by** lists `intrinsic.name` followed by `span.http.user_agent`.
 The first column in the results Table shows **name** and then **span.http.user_agent**.
 
-This capability is based on the [metrics summary API](/docs/grafana-cloud/monitor-infrastructure/traces/metrics-summary-api/).
 
 To use this capability:
 
