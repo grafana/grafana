@@ -10,26 +10,26 @@ import {
   SceneVariableSet,
   VariableValueSelectors,
 } from '@grafana/scenes';
-import { useStyles2 } from '@grafana/ui';
+import { useStyles2, Text } from '@grafana/ui';
 
-import { getFiringAlertsScene } from './insights/grafana/FiringAlertsPercentage';
-import { getFiringAlertsRateScene } from './insights/grafana/FiringAlertsRate';
-import { getMostFiredInstancesScene } from './insights/grafana/MostFiredInstancesTable';
-import { getAlertsByStateScene } from './insights/mimir/AlertsByState';
-import { getInvalidConfigScene } from './insights/mimir/InvalidConfig';
-import { getNotificationsScene } from './insights/mimir/Notifications';
-import { getSilencesScene } from './insights/mimir/Silences';
-import { getRuleGroupEvaluationDurationScene } from './insights/mimir/perGroup/RuleGroupEvaluationDurationScene';
-import { getRuleGroupEvaluationsScene } from './insights/mimir/perGroup/RuleGroupEvaluationsScene';
-import { getRuleGroupIntervalScene } from './insights/mimir/perGroup/RuleGroupIntervalScene';
-import { getRulesPerGroupScene } from './insights/mimir/perGroup/RulesPerGroupScene';
-import { getEvalSuccessVsFailuresScene } from './insights/mimir/rules/EvalSuccessVsFailuresScene';
-import { getFiringCloudAlertsScene } from './insights/mimir/rules/Firing';
-import { getInstancesByStateScene } from './insights/mimir/rules/InstancesByState';
-import { getInstancesPercentageByStateScene } from './insights/mimir/rules/InstancesPercentageByState';
-import { getMissedIterationsScene } from './insights/mimir/rules/MissedIterationsScene';
-import { getMostFiredInstancesScene as getMostFiredCloudInstances } from './insights/mimir/rules/MostFiredInstances';
-import { getPendingCloudAlertsScene } from './insights/mimir/rules/Pending';
+import { getFiringAlertsScene } from '../insights/grafana/FiringAlertsPercentage';
+import { getFiringAlertsRateScene } from '../insights/grafana/FiringAlertsRate';
+import { getMostFiredInstancesScene } from '../insights/grafana/MostFiredInstancesTable';
+import { getAlertsByStateScene } from '../insights/mimir/AlertsByState';
+import { getInvalidConfigScene } from '../insights/mimir/InvalidConfig';
+import { getNotificationsScene } from '../insights/mimir/Notifications';
+import { getSilencesScene } from '../insights/mimir/Silences';
+import { getRuleGroupEvaluationDurationScene } from '../insights/mimir/perGroup/RuleGroupEvaluationDurationScene';
+import { getRuleGroupEvaluationsScene } from '../insights/mimir/perGroup/RuleGroupEvaluationsScene';
+import { getRuleGroupIntervalScene } from '../insights/mimir/perGroup/RuleGroupIntervalScene';
+import { getRulesPerGroupScene } from '../insights/mimir/perGroup/RulesPerGroupScene';
+import { getEvalSuccessVsFailuresScene } from '../insights/mimir/rules/EvalSuccessVsFailuresScene';
+import { getFiringCloudAlertsScene } from '../insights/mimir/rules/Firing';
+import { getInstancesByStateScene } from '../insights/mimir/rules/InstancesByState';
+import { getInstancesPercentageByStateScene } from '../insights/mimir/rules/InstancesPercentageByState';
+import { getMissedIterationsScene } from '../insights/mimir/rules/MissedIterationsScene';
+import { getMostFiredInstancesScene as getMostFiredCloudInstances } from '../insights/mimir/rules/MostFiredInstances';
+import { getPendingCloudAlertsScene } from '../insights/mimir/rules/Pending';
 
 const ashDs = {
   type: 'loki',
@@ -135,21 +135,21 @@ export default function Insights() {
   return (
     <>
       <div className={styles.container}>
-        <h4>Grafana</h4>
+        <Text variant="h4">Grafana</Text>
         <grafanaScenes.Component model={grafanaScenes} />
       </div>
       <div className={styles.container}>
-        <h4>Mimir Alertmanager</h4>
+        <Text variant="h4">Mimir Alertmanager</Text>
         <cloudScenes.Component model={cloudScenes} />
       </div>
 
       <div className={styles.container}>
-        <h4>Mimir-managed Rules</h4>
+        <Text variant="h4">Mimir-managed Rules</Text>
         <mimirRulesScenes.Component model={mimirRulesScenes} />
       </div>
 
       <div className={styles.container}>
-        <h4>Mimir-managed Rules - Per Rule Group</h4>
+        <Text variant="h4">Mimir-managed Rules - Per Rule Group</Text>
         <mimirRulesPerGroupScenes.Component model={mimirRulesPerGroupScenes} />
       </div>
     </>

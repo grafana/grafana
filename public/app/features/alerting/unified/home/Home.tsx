@@ -3,10 +3,11 @@ import { Enable, Disable } from 'react-enable';
 
 import { Tab, TabContent, TabsBar } from '@grafana/ui';
 
+import { AlertingPageWrapper } from '../components/AlertingPageWrapper';
+import { AlertingFeature } from '../features';
+
 import GettingStarted, { WelcomeHeader } from './GettingStarted';
 import Insights from './Insights';
-import { AlertingPageWrapper } from './components/AlertingPageWrapper';
-import { AlertingFeature } from './features';
 
 type HomeTabs = 'insights' | 'gettingStarted';
 
