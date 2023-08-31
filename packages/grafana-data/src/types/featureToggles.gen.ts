@@ -121,4 +121,6 @@ export interface FeatureToggles {
   noBasicRole?: boolean;
   alertingNoDataErrorExecution?: boolean;
   angularDeprecationUI?: boolean;
+  dashgpt?: boolean;
+  reportingRetries?: boolean;
 }

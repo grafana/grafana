@@ -142,6 +142,7 @@
     "@types/slate": "0.47.11",
     "@types/slate-plain-serializer": "0.7.2",
     "@types/slate-react": "0.22.9",
+    "@types/systemjs": "6.13.1",
     "@types/testing-library__jest-dom": "5.14.8",
     "@types/tinycolor2": "1.4.3",
     "@types/uuid": "9.0.2",

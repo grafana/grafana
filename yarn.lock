@@ -3915,7 +3915,7 @@ __metadata:
     "@types/lodash": 4.14.195
     "@types/react": 18.2.15
     "@types/react-dom": 18.2.7
-    "@types/systemjs": ^0.20.6
+    "@types/systemjs": 6.13.1
     esbuild: 0.18.12
     history: 4.10.1
     lodash: 4.17.21
@@ -3929,7 +3929,8 @@ __metadata:
     rollup-plugin-sourcemaps: 0.6.3
     rollup-plugin-terser: 7.0.2
     rxjs: 7.8.1
-    systemjs: 0.20.19
+    systemjs: 6.14.2
+    systemjs-cjs-extra: 0.1.0
     tslib: 2.6.0
     typescript: 4.8.4
   peerDependencies:
@@ -10792,10 +10793,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/systemjs@npm:^0.20.6":
-  version: 0.20.8
-  resolution: "@types/systemjs@npm:0.20.8"
-  checksum: 10bf85416521b89cd20c6eddd72f7414ab6eff31ff8c577152d6f5dd952daf7f9c5eed32d3c482ddbfbe2e9586ed5287838b6dc8a7d6b3963fdad8afbece717b
+"@types/systemjs@npm:6.13.1":
+  version: 6.13.1
+  resolution: "@types/systemjs@npm:6.13.1"
+  checksum: 61fad0cbdbc61e0b6c6fd82d9623d9e68ff587848e0c8198a6bb4a78985b4880962543e02aeb96dfdb4623439ef0d848fde61a82757308dd5067040deee9d1ee
   languageName: node
   linkType: hard
 
@@ -19350,6 +19351,7 @@ __metadata:
     "@types/slate": 0.47.11
     "@types/slate-plain-serializer": 0.7.2
     "@types/slate-react": 0.22.9
+    "@types/systemjs": 6.13.1
     "@types/testing-library__jest-dom": 5.14.8
     "@types/tinycolor2": 1.4.3
     "@types/trusted-types": 2.0.3
@@ -30704,10 +30706,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"systemjs@npm:0.20.19":
-  version: 0.20.19
-  resolution: "systemjs@npm:0.20.19"
-  checksum: 4b5a404be790cd545d6994f617c24ef3a3ae52e029c6498f10206f715c6777c4c0733ab9d626723fdfa359f12707835f302986516e5835be26c202bc13e242df
+"systemjs-cjs-extra@npm:0.1.0":
+  version: 0.1.0
+  resolution: "systemjs-cjs-extra@npm:0.1.0"
+  checksum: 09169416c858e43671e988f05f2c14fe2fa923472619983fce44aa946493337bdda0a6c28ea8aeded0c2d3dfa62ad6d8479944144b451c0492f7a505e7b18813
+  languageName: node
+  linkType: hard
+
+"systemjs@npm:6.14.2":
+  version: 6.14.2
+  resolution: "systemjs@npm:6.14.2"
+  checksum: 1f58c7da8f7deb8e4a3eb357e67f5363eb97e44a456f8f81ece391f2e1ae54ac70fb62135043d4cf96c11c6b76d7963c295ea844ca25bcb3b55193f6727fd0b2
   languageName: node
   linkType: hard
 

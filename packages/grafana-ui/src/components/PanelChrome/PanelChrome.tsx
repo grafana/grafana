@@ -153,7 +153,7 @@ export function PanelChrome({
     cursor: dragClass ? 'move' : 'auto',
   };
 
-  const containerStyles: CSSProperties = { width, height: !collapsed ? height : headerHeight };
+  const containerStyles: CSSProperties = { width, height: collapsed ? undefined : height };
   const [ref, { width: loadingBarWidth }] = useMeasure<HTMLDivElement>();
 
   /** Old property name now maps to actions */
@@ -163,39 +163,39 @@ export function PanelChrome({
 
   const testid = title ? selectors.components.Panels.Panel.title(title) : 'Panel';
 
-  const collapsibleHeader = (
-    <h6 className={styles.title}>
-      <button
-        type="button"
-        className={styles.clearButtonStyles}
-        onClick={() => {
-          toggleOpen();
-          if (onToggleCollapse) {
-            onToggleCollapse(!collapsed);
-          }
-        }}
-        aria-expanded={!collapsed}
-        aria-controls={!collapsed ? panelContentId : undefined}
-      >
-        <Icon
-          name={!collapsed ? 'angle-down' : 'angle-right'}
-          aria-hidden={!!title}
-          aria-label={!title ? 'toggle collapse panel' : undefined}
-        />
-        {title}
-      </button>
-    </h6>
-  );
-
   const headerContent = (
     <>
-      {collapsible
-        ? collapsibleHeader
-        : title && (
-            <h6 title={title} className={styles.title}>
-              {title}
-            </h6>
-          )}
+      {/* Non collapsible title */}
+      {!collapsible && title && (
+        <h6 title={title} className={styles.title}>
+          {title}
+        </h6>
+      )}
+
+      {/* Collapsible title */}
+      {collapsible && (
+        <h6 className={styles.title}>
+          <button
+            type="button"
+            className={styles.clearButtonStyles}
+            onClick={() => {
+              toggleOpen();
+              if (onToggleCollapse) {
+                onToggleCollapse(!collapsed);
+              }
+            }}
+            aria-expanded={!collapsed}
+            aria-controls={!collapsed ? panelContentId : undefined}
+          >
+            <Icon
+              name={!collapsed ? 'angle-down' : 'angle-right'}
+              aria-hidden={!!title}
+              aria-label={!title ? 'toggle collapse panel' : undefined}
+            />
+            {title}
+          </button>
+        </h6>
+      )}
 
       <div className={cx(styles.titleItems, dragClassCancel)} data-testid="title-items-container">
         <PanelDescription description={description} className={dragClassCancel} />
@@ -476,6 +476,8 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     clearButtonStyles: css({
       alignItems: 'center',
+      display: 'flex',
+      gap: theme.spacing(0.5),
       background: 'transparent',
       color: theme.colors.text.primary,
       border: 'none',
