@@ -169,10 +169,11 @@ func CreateMiddlewares(cfg *setting.Cfg, oAuthTokenService oauthtoken.OAuthToken
 		middlewares = append(middlewares, clientmiddleware.NewUserHeaderMiddleware())
 	}
 
-	middlewares = append(middlewares,
-		clientmiddleware.NewHTTPClientMiddleware(),
-		clientmiddleware.NewDownstreamStatusMiddleware(),
-	)
+	middlewares = append(middlewares, clientmiddleware.NewHTTPClientMiddleware())
+	
+	if features.IsEnabled(featuremgmt.FlagRequestInstrumentationStatusSource) {
+		middlewares = append(middlewares, clientmiddleware.NewDownstreamStatusMiddleware())
+	}
 
 	return middlewares
 }

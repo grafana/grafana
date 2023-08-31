@@ -69,7 +69,8 @@ func SetOwner(team string) web.Handler {
 	}
 }
 
-// SetOwner returns an `web.Handler` that sets the team name for an request.
+// WithDownstreamStatusSource sets the StatusSource field of the [RequestMetaData] for the 
+// context to [StatusSourceDownstream].
 func WithDownstreamStatusSource(ctx context.Context) {
 	v := GetRequestMetaData(ctx)
 	v.StatusSource = StatusSourceDownstream
