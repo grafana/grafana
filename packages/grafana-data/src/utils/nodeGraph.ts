@@ -20,8 +20,16 @@ export enum NodeGraphDataFrameFieldNames {
 
   // Id of the source node [required] [edges]
   source = 'source',
+  // The source name [required] [edges]
+  sourceName = 'sourceName',
+  // When the server includes a namespace, the source namespace [edges]
+  sourceNamespace = 'sourceNamespace',
   // Id of the target node [required] [edges]
   target = 'target',
+  // The target name [required] [edges]
+  targetName = 'targetName',
+  // When the server includes a namespace, the target namespace [edges]
+  targetNamespace = 'targetNamespace',
 
   // Prefix for fields which will be shown in a context menu [nodes + edges]
   detail = 'detail__',
