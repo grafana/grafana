@@ -212,7 +212,11 @@ function createServiceMapDataFrames() {
   const edges = createDF('Edges', [
     { name: Fields.id, type: FieldType.string },
     { name: Fields.source, type: FieldType.string },
+    { name: Fields.sourceName, type: FieldType.string },
+    { name: Fields.sourceNamespace, type: FieldType.string },
     { name: Fields.target, type: FieldType.string },
+    { name: Fields.targetName, type: FieldType.string },
+    { name: Fields.targetNamespace, type: FieldType.string },
     { name: Fields.mainStat, type: FieldType.number, config: { unit: 'ms/r', displayName: 'Average response time' } },
     {
       name: Fields.secondaryStat,
@@ -249,7 +253,11 @@ type NodeObject = ServiceMapStatistics & {
 
 type EdgeObject = ServiceMapStatistics & {
   source: string;
+  sourceName: string;
+  sourceNamespace: string;
   target: string;
+  targetName: string;
+  targetNamespace: string;
 };
 
 /**
@@ -289,7 +297,11 @@ function collectMetricData(
       // Create edge as it does not exist yet
       edgesMap[edgeId] = {
         target: serverId,
+        targetName: row.server,
+        targetNamespace: row.server_service_namespace,
         source: clientId,
+        sourceName: row.client,
+        sourceNamespace: row.client_service_namespace,
         [stat]: row[valueName],
       };
     } else {
@@ -348,7 +360,11 @@ function convertToDataFrames(
     edges.add({
       [Fields.id]: edgeId,
       [Fields.source]: edge.source,
+      [Fields.sourceName]: edge.sourceName,
+      [Fields.sourceNamespace]: edge.sourceNamespace,
       [Fields.target]: edge.target,
+      [Fields.targetName]: edge.targetName,
+      [Fields.targetNamespace]: edge.targetNamespace,
       [Fields.mainStat]: edge.total ? (edge.seconds! / edge.total) * 1000 : Number.NaN, // Average response time
       [Fields.secondaryStat]: edge.total ? Math.round(edge.total * 100) / 100 : Number.NaN, // Request per second (to 2 decimals)
     });
