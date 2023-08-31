@@ -99,7 +99,7 @@ func setIntPath(settings *simplejson.Json, path ...string) {
 }
 
 // Casts values to float when required by Elastic's query DSL
-func (metricAggregation MetricAgg) generateSettingsForDSL() map[string]interface{} {
+func (metricAggregation MetricAgg) generateSettingsForDSL() map[string]any {
 	switch metricAggregation.Type {
 	case "moving_avg":
 		setFloatPath(metricAggregation.Settings, "window")
@@ -127,7 +127,7 @@ func (metricAggregation MetricAgg) generateSettingsForDSL() map[string]interface
 	return metricAggregation.Settings.MustMap()
 }
 
-func (bucketAgg BucketAgg) generateSettingsForDSL() map[string]interface{} {
+func (bucketAgg BucketAgg) generateSettingsForDSL() map[string]any {
 	setIntPath(bucketAgg.Settings, "min_doc_count")
 
 	return bucketAgg.Settings.MustMap()
@@ -246,7 +246,7 @@ func addNestedAgg(aggBuilder es.AggBuilder, bucketAgg *BucketAgg) es.AggBuilder 
 }
 
 func addFiltersAgg(aggBuilder es.AggBuilder, bucketAgg *BucketAgg) es.AggBuilder {
-	filters := make(map[string]interface{})
+	filters := make(map[string]any)
 	for _, filter := range bucketAgg.Settings.Get("filters").MustArray() {
 		json := simplejson.NewFromAny(filter)
 		query := json.Get("query").MustString()
@@ -344,7 +344,7 @@ func processLogsQuery(q *Query, b *es.SearchRequestBuilder, from, to int64, defa
 		Type:  dateHistType,
 		Field: defaultTimeField,
 		ID:    "1",
-		Settings: simplejson.NewFromAny(map[string]interface{}{
+		Settings: simplejson.NewFromAny(map[string]any{
 			"interval": "auto",
 		}),
 	})
@@ -398,7 +398,7 @@ func processTimeSeriesQuery(q *Query, b *es.SearchRequestBuilder, from, to int64
 		if isPipelineAgg(m.Type) {
 			if isPipelineAggWithMultipleBucketPaths(m.Type) {
 				if len(m.PipelineVariables) > 0 {
-					bucketPaths := map[string]interface{}{}
+					bucketPaths := map[string]any{}
 					for name, pipelineAgg := range m.PipelineVariables {
 						if _, err := strconv.Atoi(pipelineAgg); err == nil {
 							var appliedAgg *MetricAgg

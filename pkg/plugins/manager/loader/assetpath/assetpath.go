@@ -87,7 +87,7 @@ func getBaseDir(pluginDir string, keepSrcDir bool) string {
 	baseDir := filepath.Base(pluginDir)
 	if isDecoupledPlugin(pluginDir) {
 		// Decoupled core plugins will be suffixed with "dist" if they have been built or "src" if not.
-		// e.g. public/plugins/testdata/src
+		// e.g. public/plugins/grafana-testdata-datasource/src
 		if baseDir == "dist" || baseDir == "src" {
 			parentDir := filepath.Base(strings.TrimSuffix(pluginDir, baseDir))
 			if keepSrcDir {

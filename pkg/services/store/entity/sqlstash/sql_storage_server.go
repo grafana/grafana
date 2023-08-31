@@ -68,7 +68,7 @@ func (s *sqlEntityServer) rowToReadEntityResponse(ctx context.Context, rows *sql
 	}
 
 	summaryjson := &summarySupport{}
-	args := []interface{}{
+	args := []any{
 		&raw.GRN.TenantId, &raw.GRN.Kind, &raw.GRN.UID, &raw.Folder,
 		&raw.Version, &raw.Size, &raw.ETag, &summaryjson.errors,
 		&raw.CreatedAt, &raw.CreatedBy,
@@ -144,7 +144,7 @@ func (s *sqlEntityServer) Read(ctx context.Context, r *entity.ReadEntityRequest)
 		return nil, err
 	}
 
-	args := []interface{}{grn.ToGRNString()}
+	args := []any{grn.ToGRNString()}
 	where := "grn=?"
 
 	rows, err := s.sess.Query(ctx, getReadSelect(r)+where, args...)
@@ -226,7 +226,7 @@ func (s *sqlEntityServer) BatchRead(ctx context.Context, b *entity.BatchReadEnti
 	}
 
 	first := b.Batch[0]
-	args := []interface{}{}
+	args := []any{}
 	constraints := []string{}
 
 	for _, r := range b.Batch {
@@ -683,7 +683,7 @@ func (s *sqlEntityServer) History(ctx context.Context, r *entity.EntityHistoryRe
 	oid := grn.ToGRNString()
 
 	page := ""
-	args := []interface{}{oid}
+	args := []any{oid}
 	if r.NextPageToken != "" {
 		// args = append(args, r.NextPageToken) // TODO, need to get time from the version
 		// page = "AND updated <= ?"
@@ -748,7 +748,7 @@ func (s *sqlEntityServer) Search(ctx context.Context, r *entity.EntitySearchRequ
 	entityQuery := selectQuery{
 		fields:   fields,
 		from:     "entity", // the table
-		args:     []interface{}{},
+		args:     []any{},
 		limit:    r.Limit,
 		oneExtra: true, // request one more than the limit (and show next token if it exists)
 	}
@@ -764,7 +764,7 @@ func (s *sqlEntityServer) Search(ctx context.Context, r *entity.EntitySearchRequ
 	}
 
 	if len(r.Labels) > 0 {
-		var args []interface{}
+		var args []any
 		var conditions []string
 		for labelKey, labelValue := range r.Labels {
 			args = append(args, labelKey)
@@ -793,7 +793,7 @@ func (s *sqlEntityServer) Search(ctx context.Context, r *entity.EntitySearchRequ
 		}
 		summaryjson := summarySupport{}
 
-		args := []interface{}{
+		args := []any{
 			&oid, &result.GRN.TenantId, &result.GRN.Kind, &result.GRN.UID,
 			&result.Version, &result.Folder, &result.Slug, &summaryjson.errors,
 			&result.Size, &result.UpdatedAt, &result.UpdatedBy,

@@ -740,7 +740,7 @@ func (pts *PropertyTypes) HasType(pt PropertyType) bool {
 }
 
 func (pts *PropertyTypes) UnmarshalJSON(data []byte) error {
-	var value interface{}
+	var value any
 	if err := json.Unmarshal(data, &value); err != nil {
 		return err
 	}
@@ -749,7 +749,7 @@ func (pts *PropertyTypes) UnmarshalJSON(data []byte) error {
 	case string:
 		*pts = []PropertyType{PropertyType(val)}
 		return nil
-	case []interface{}:
+	case []any:
 		var pt []PropertyType
 		for _, t := range val {
 			s, ok := t.(string)
@@ -778,7 +778,7 @@ const (
 )
 
 type Any struct {
-	value interface{}
+	value any
 }
 
 func (u *Any) UnmarshalJSON(data []byte) error {

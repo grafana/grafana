@@ -125,7 +125,7 @@ func withRefID(refID string) frameCallback {
 	}
 }
 
-func newMetaFrame(custom interface{}, val *float64, callbacks ...frameCallback) *data.Frame {
+func newMetaFrame(custom any, val *float64, callbacks ...frameCallback) *data.Frame {
 	f := data.NewFrame("",
 		data.NewField("", nil, []*float64{val})).
 		SetMeta(&data.FrameMeta{

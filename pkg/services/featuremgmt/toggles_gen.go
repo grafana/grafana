@@ -388,7 +388,7 @@ const (
 	FlagSplitScopes = "splitScopes"
 
 	// FlagDecoupleCorePlugins
-	// Skip loading core plugins on startup in order to load them as external
+	// To load core plugins externally, this setting bypasses loading configured plugins during startup.
 	FlagDecoupleCorePlugins = "decoupleCorePlugins"
 
 	// FlagAzureMonitorDataplane
@@ -422,4 +422,12 @@ const (
 	// FlagAngularDeprecationUI
 	// Display new Angular deprecation-related UI features
 	FlagAngularDeprecationUI = "angularDeprecationUI"
+
+	// FlagDashgpt
+	// Enable AI powered features in dashboards
+	FlagDashgpt = "dashgpt"
+
+	// FlagReportingRetries
+	// Enables rendering retries for the reporting feature
+	FlagReportingRetries = "reportingRetries"
 )

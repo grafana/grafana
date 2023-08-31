@@ -91,7 +91,7 @@
       }
     },
     {
-      "files": ["public/plugins/testdata/*.{ts,tsx}", "public/plugins/testdata/**/*.{ts,tsx}"],
+      "files": ["public/plugins/**/*.{ts,tsx}"],
       "rules": {
         "no-restricted-imports": [
           "error",
