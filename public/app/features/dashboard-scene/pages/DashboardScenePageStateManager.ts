@@ -16,7 +16,7 @@ export interface DashboardScenePageState {
 export class DashboardScenePageStateManager extends StateManagerBase<DashboardScenePageState> {
   private cache: Record<string, DashboardScene> = {};
 
-  public async loadAndInit(uid: string) {
+  public async loadDashboard(uid: string) {
     try {
       const dashboard = await this.loadScene(uid);
       dashboard.startUrlSync();
@@ -30,7 +30,6 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
   public async loadPanelEdit(uid: string, panelId: string) {
     try {
       const dashboard = await this.loadScene(uid);
-
       const panel = findVizPanelById(dashboard, panelId);
 
       if (!panel) {
@@ -38,7 +37,10 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
         return;
       }
 
-      this.setState({ isLoading: false, panelEditor: buildPanelEditScene(dashboard, panel) });
+      const panelEditor = buildPanelEditScene(dashboard, panel);
+      panelEditor.startUrlSync();
+
+      this.setState({ isLoading: false, panelEditor });
     } catch (err) {
       this.setState({ isLoading: false, loadError: String(err) });
     }
@@ -64,7 +66,7 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
   }
 
   public clearState() {
-    this.setState({ dashboard: undefined, loadError: undefined, isLoading: false });
+    this.setState({ dashboard: undefined, loadError: undefined, isLoading: false, panelEditor: undefined });
   }
 }
 

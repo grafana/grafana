@@ -60,10 +60,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   public constructor(state: DashboardSceneState) {
     super(state);
 
-    this.addActivationHandler(() => this.onActivate());
+    this.addActivationHandler(() => this._activationHandler());
   }
 
-  private onActivate() {
+  private _activationHandler() {
     if (this.state.isEditing) {
       this.startTrackingChanges();
     }

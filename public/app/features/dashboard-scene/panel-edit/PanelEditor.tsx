@@ -2,6 +2,7 @@ import * as H from 'history';
 
 import { locationService } from '@grafana/runtime';
 import {
+  getUrlSyncManager,
   SceneFlexItem,
   SceneFlexLayout,
   SceneObject,
@@ -36,6 +37,23 @@ export interface PanelEditorState extends SceneObjectState {
 export class PanelEditor extends SceneObjectBase<PanelEditorState> {
   static Component = PanelEditorRenderer;
 
+  public constructor(state: PanelEditorState) {
+    super(state);
+
+    this.addActivationHandler(() => this._activationHandler());
+  }
+
+  private _activationHandler() {
+    // Deactivation logic
+    return () => {
+      getUrlSyncManager().cleanUp(this);
+    };
+  }
+
+  public startUrlSync() {
+    getUrlSyncManager().initSync(this);
+  }
+
   public getPageNav(location: H.Location) {
     return {
       text: 'Edit panel',
@@ -47,20 +65,20 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     // Open question on what to preserve when going back
     // Preserve time range, and variables state (that might have been changed while in panel edit)
     // Preserve current panel data? (say if you just changed the time range and have new data)
-    this.navigateBackToDashboard();
+    this._navigateBackToDashboard();
   };
 
   public onApply = () => {
-    this.commitChanges();
-    this.navigateBackToDashboard();
+    this._commitChanges();
+    this._navigateBackToDashboard();
   };
 
   public onSave = () => {
-    this.commitChanges();
+    this._commitChanges();
     // Open dashboard save drawer
   };
 
-  private commitChanges() {
+  private _commitChanges() {
     const dashboard = this.state.dashboardRef.resolve();
     const sourcePanel = this.state.sourcePanelRef.resolve();
     const panel = this.state.panelRef.resolve();
@@ -80,7 +98,7 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     });
   }
 
-  private navigateBackToDashboard() {
+  private _navigateBackToDashboard() {
     locationService.push(
       getDashboardUrl({
         uid: this.state.dashboardRef.resolve().state.uid,
