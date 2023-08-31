@@ -12,6 +12,7 @@ import (
 	"gopkg.in/yaml.v3"
 
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/middleware/requestmeta"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errutil"
@@ -80,6 +81,11 @@ func (r *NormalResponse) ErrMessage() string {
 
 func (r *NormalResponse) WriteTo(ctx *contextmodel.ReqContext) {
 	if r.err != nil {
+		grafanaErr := errutil.Error{}
+		if errors.As(r.err, &grafanaErr) && grafanaErr.Reason.Status().IsDownstream() {
+			requestmeta.WithDownstreamStatusSource(ctx.Req.Context())
+		}
+
 		if errutil.HasUnifiedLogging(ctx.Req.Context()) {
 			ctx.Error = r.err
 		} else {

@@ -507,7 +507,7 @@ func translatePluginRequestErrorToAPIError(err error) response.Response {
 		return response.Error(503, "Plugin unavailable", err)
 	}
 
-	return response.Error(500, "Plugin request failed", err)
+	return response.ErrOrFallback(http.StatusInternalServerError, "Plugin request failed", err)
 }
 
 func (hs *HTTPServer) pluginMarkdown(ctx context.Context, pluginID string, name string) ([]byte, error) {

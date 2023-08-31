@@ -3,7 +3,6 @@ package grpcplugin
 import (
 	"context"
 	"errors"
-	"fmt"
 	"io"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -122,7 +121,7 @@ func (c *ClientV2) CollectMetrics(ctx context.Context, req *backend.CollectMetri
 			return &backend.CollectMetricsResult{}, nil
 		}
 
-		return nil, err
+		return nil, backendplugin.ErrDownstreamError.Errorf("grpcplugin: collect metrics response error: %w", err)
 	}
 
 	return backend.FromProto().CollectMetricsResponse(protoResp), nil
@@ -143,7 +142,7 @@ func (c *ClientV2) CheckHealth(ctx context.Context, req *backend.CheckHealthRequ
 				Message: "Health check not implemented",
 			}, nil
 		}
-		return nil, err
+		return nil, backendplugin.ErrDownstreamError.Errorf("grpcplugin: check health response error: %w", err)
 	}
 
 	return backend.FromProto().CheckHealthResponse(protoResp), nil
@@ -162,7 +161,7 @@ func (c *ClientV2) QueryData(ctx context.Context, req *backend.QueryDataRequest)
 			return nil, backendplugin.ErrMethodNotImplemented
 		}
 
-		return nil, fmt.Errorf("%v: %w", "Failed to query data", err)
+		return nil, backendplugin.ErrDownstreamError.Errorf("grpcplugin: query data response error: %w", err)
 	}
 
 	return backend.FromProto().QueryDataResponse(protoResp)
@@ -180,7 +179,7 @@ func (c *ClientV2) CallResource(ctx context.Context, req *backend.CallResourceRe
 			return backendplugin.ErrMethodNotImplemented
 		}
 
-		return fmt.Errorf("%v: %w", "Failed to call resource", err)
+		return backendplugin.ErrDownstreamError.Errorf("grpcplugin: call resource response error: %w", err)
 	}
 
 	for {
@@ -194,7 +193,7 @@ func (c *ClientV2) CallResource(ctx context.Context, req *backend.CallResourceRe
 				return nil
 			}
 
-			return fmt.Errorf("%v: %w", "failed to receive call resource response", err)
+			return backendplugin.ErrDownstreamError.Errorf("grpcplugin: failed to receive call resource response: %w", err)
 		}
 
 		if err := sender.Send(backend.FromProto().CallResourceResponse(protoResp)); err != nil {
@@ -209,7 +208,11 @@ func (c *ClientV2) SubscribeStream(ctx context.Context, req *backend.SubscribeSt
 	}
 	protoResp, err := c.StreamClient.SubscribeStream(ctx, backend.ToProto().SubscribeStreamRequest(req))
 	if err != nil {
-		return nil, err
+		if status.Code(err) == codes.Unimplemented {
+			return nil, backendplugin.ErrMethodNotImplemented
+		}
+
+		return nil, backendplugin.ErrDownstreamError.Errorf("grpcplugin: subscribe stream response error: %w", err)
 	}
 	return backend.FromProto().SubscribeStreamResponse(protoResp), nil
 }
@@ -220,7 +223,11 @@ func (c *ClientV2) PublishStream(ctx context.Context, req *backend.PublishStream
 	}
 	protoResp, err := c.StreamClient.PublishStream(ctx, backend.ToProto().PublishStreamRequest(req))
 	if err != nil {
-		return nil, err
+		if status.Code(err) == codes.Unimplemented {
+			return nil, backendplugin.ErrMethodNotImplemented
+		}
+
+		return nil, backendplugin.ErrDownstreamError.Errorf("grpcplugin: publish stream response error: %w", err)
 	}
 	return backend.FromProto().PublishStreamResponse(protoResp), nil
 }
@@ -236,7 +243,8 @@ func (c *ClientV2) RunStream(ctx context.Context, req *backend.RunStreamRequest,
 		if status.Code(err) == codes.Unimplemented {
 			return backendplugin.ErrMethodNotImplemented
 		}
-		return fmt.Errorf("%v: %w", "Failed to call resource", err)
+
+		return backendplugin.ErrDownstreamError.Errorf("grpcplugin: run stream response error: %w", err)
 	}
 
 	for {
@@ -248,7 +256,8 @@ func (c *ClientV2) RunStream(ctx context.Context, req *backend.RunStreamRequest,
 			if errors.Is(err, io.EOF) {
 				return nil
 			}
-			return fmt.Errorf("error running stream: %w", err)
+
+			return backendplugin.ErrDownstreamError.Errorf("grpcplugin: failed to receive run stream response: %w", err)
 		}
 		// From GRPC connection we receive already prepared JSON.
 		err = sender.SendJSON(p.Data)

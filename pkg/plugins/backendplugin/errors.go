@@ -1,6 +1,10 @@
 package backendplugin
 
-import "errors"
+import (
+	"errors"
+
+	"github.com/grafana/grafana/pkg/util/errutil"
+)
 
 var (
 	// ErrPluginNotRegistered error returned when plugin is not registered.
@@ -11,4 +15,7 @@ var (
 	ErrPluginUnavailable = errors.New("plugin unavailable")
 	// ErrMethodNotImplemented error returned when plugin method not implemented.
 	ErrMethodNotImplemented = errors.New("method not implemented")
+	// ErrDownstreamError error returned when an error received from downstream plugin.
+	ErrDownstreamError = errutil.BadGateway("backendplugin.downstreamError",
+		errutil.WithPublicMessage("An error occurred within the plugin"))
 )
