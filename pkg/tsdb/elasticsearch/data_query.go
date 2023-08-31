@@ -68,8 +68,7 @@ func (e *elasticsearchDataQuery) execute() (*backend.QueryDataResponse, error) {
 		return &backend.QueryDataResponse{}, err
 	}
 
-	// TODO: Instrumentation of parseResponse
-	return parseResponse(res.Responses, queries, e.client.GetConfiguredFields())
+	return parseResponse(e.ctx, res.Responses, queries, e.client.GetConfiguredFields(), e.logger)
 }
 
 func (e *elasticsearchDataQuery) processQuery(q *Query, ms *es.MultiSearchRequestBuilder, from, to int64) error {

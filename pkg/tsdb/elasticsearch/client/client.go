@@ -97,7 +97,6 @@ func (c *baseClientImpl) executeBatchRequest(uriPath, uriQuery string, requests 
 }
 
 func (c *baseClientImpl) encodeBatchRequests(requests []*multiRequest) ([]byte, error) {
-	c.logger.Debug("Encoding batch requests to json", "batch requests", len(requests))
 	start := time.Now()
 
 	payload := bytes.Buffer{}
@@ -144,32 +143,26 @@ func (c *baseClientImpl) executeRequest(method, uriPath, uriQuery string, body [
 		return nil, err
 	}
 
-	c.logger.Debug("Executing request", "url", req.URL.String(), "method", method)
-
 	req.Header.Set("Content-Type", "application/x-ndjson")
 
-	start := time.Now()
-	defer func() {
-		elapsed := time.Since(start)
-		c.logger.Debug("Executed request", "took", elapsed)
-	}()
 	//nolint:bodyclose
 	resp, err := c.ds.HTTPClient.Do(req)
 	if err != nil {
 		return nil, err
 	}
-
 	return resp, nil
 }
 
 func (c *baseClientImpl) ExecuteMultisearch(r *MultiSearchRequest) (*MultiSearchResponse, error) {
-	c.logger.Debug("Executing multisearch", "requestsLength", len(r.Requests))
+	start := time.Now()
+	c.logger.Debug("Sending request to Elasticsearch", "requestsLength", len(r.Requests), "url", c.ds.URL)
 
 	multiRequests := c.createMultiSearchRequests(r.Requests)
 	queryParams := c.getMultiSearchQueryParameters()
 	clientRes, err := c.executeBatchRequest("_msearch", queryParams, multiRequests)
 	if err != nil {
-		c.logger.Error("Failed to execute multisearch", "err", err, "url", c.ds.URL, "status", clientRes.StatusCode)
+		c.logger.Error("Error received from Elasticsearch", "err", err, "status", clientRes.StatusCode, "took", time.Since(start))
+
 		return nil, err
 	}
 	res := clientRes
@@ -179,18 +172,18 @@ func (c *baseClientImpl) ExecuteMultisearch(r *MultiSearchRequest) (*MultiSearch
 		}
 	}()
 
-	c.logger.Debug("Received multisearch response", "code", res.StatusCode, "status", res.StatusCode, "content-length", res.ContentLength)
+	c.logger.Debug("Response received from Elasticsearch", "status", res.StatusCode, "contentLength", res.ContentLength, "took", time.Since(start))
 
-	start := time.Now()
+	start = time.Now()
 	var msr MultiSearchResponse
 	dec := json.NewDecoder(res.Body)
 	err = dec.Decode(&msr)
 	if err != nil {
-		c.logger.Error("Failed to decode multisearch json response", "err", err, "took", time.Since(start))
+		c.logger.Error("Failed to decode response from Elasticsearch", "err", err, "took", time.Since(start))
 		return nil, err
 	}
 
-	c.logger.Debug("Decoded multisearch json response", "took", time.Since(start))
+	c.logger.Debug("Successfully decoded response from Elasticsearch", "took", time.Since(start))
 
 	msr.Status = res.StatusCode
 
