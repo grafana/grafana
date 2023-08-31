@@ -81,7 +81,7 @@ nightly_trigger = {
     # },
 }
 
-def rgm_build(script = "drone_publish_main.sh", canFail = True, bucket = "grafana-prerelease"):
+def rgm_build(script = "drone_publish_main.sh", bucket = "grafana-prerelease"):
     rgm_build_step = {
         "name": "rgm-build",
         "image": "grafana/grafana-build:main",
@@ -102,8 +102,6 @@ def rgm_build(script = "drone_publish_main.sh", canFail = True, bucket = "grafan
         # In the future we should find a way to use dagger without mounting the docker socket.
         "volumes": [{"name": "docker", "path": "/var/run/docker.sock"}],
     }
-    if canFail:
-        rgm_build_step["failure"] = "ignore"
 
     return [
         rgm_build_step,
@@ -125,44 +123,47 @@ def rgm_main():
         pipeline(
             name = "rgm-main-prerelease",
             trigger = trigger,
-            steps = rgm_build(canFail = True),
+            steps = ignore_failure(rgm_build()),
             depends_on = ["main-test-backend", "main-test-frontend"],
         ),
     ]
 
-def rgm_windows(trigger, name, bucket = "grafana-prerelease"):
+def rgm_windows(trigger, ver_mode, bucket = "grafana-prerelease"):
     return pipeline(
-        name = "rgm-{}-prerelease-windows".format(name),
+        name = "rgm-{}-prerelease-windows".format(ver_mode),
         trigger = trigger,
-        steps = ignore_failure(
-            get_windows_steps(
-                ver_mode = "release",
-                bucket = bucket,
-            ),
+        steps = get_windows_steps(
+            ver_mode = ver_mode,
+            bucket = bucket,
         ),
-        depends_on = ["rgm-{}-prerelease".format(name)],
+        depends_on = ["rgm-{}-prerelease".format(ver_mode)],
         platform = "windows",
     )
 
-def rgm_release(trigger, name, bucket = "grafana-prerelease"):
+def rgm_release(trigger, ver_mode, bucket = "grafana-prerelease"):
+    version = "${DRONE_TAG}"
+    if ver_mode == "nightly":
+        version = "nightly-${DRONE_COMMIT_SHA:0:8}"
+
     return [
-        test_frontend(trigger, name),
-        test_backend(trigger, name),
+        test_frontend(trigger, ver_mode),
+        test_backend(trigger, ver_mode),
         pipeline(
-            name = "rgm-{}-prerelease".format(name),
+            name = "rgm-{}-prerelease".format(ver_mode),
             trigger = trigger,
-            steps = rgm_build(script = "drone_publish_tag_grafana.sh", canFail = False, bucket = bucket),
-            depends_on = ["{}-test-backend".format(name), "{}-test-frontend".format(name)],
+            steps = rgm_build(script = "drone_publish_tag_grafana.sh", bucket = bucket),
+            depends_on = ["{}-test-backend".format(ver_mode), "{}-test-frontend".format(ver_mode)],
         ),
-        rgm_windows(trigger, name, bucket),
+        rgm_windows(trigger, ver_mode, bucket),
         verify_release_pipeline(
             trigger = trigger,
-            name = "rgm-{}-verify-prerelease-assets".format(name),
+            name = "rgm-{}-verify-prerelease-assets".format(ver_mode),
             bucket = bucket,
             depends_on = [
-                "rgm-{}-prerelease".format(name),
-                "rgm-{}-prerelease-windows".format(name),
+                "rgm-{}-prerelease".format(ver_mode),
+                "rgm-{}-prerelease-windows".format(ver_mode),
             ],
+            version = version,
         ),
     ]
 

@@ -3083,14 +3083,12 @@ services: []
 steps:
 - commands:
   - echo $env:DRONE_RUNNER_NAME
-  failure: ignore
   image: mcr.microsoft.com/windows:1809
   name: identify-runner
 - commands:
   - $$ProgressPreference = "SilentlyContinue"
   - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.41/windows/grabpl.exe
     -OutFile grabpl.exe
-  failure: ignore
   image: grafana/ci-wix:0.1.1
   name: windows-init
 - commands:
@@ -3101,7 +3099,7 @@ steps:
   - gcloud auth activate-service-account --key-file=gcpkey.json
   - rm gcpkey.json
   - cp C:\App\nssm-2.24.zip .
-  - .\grabpl.exe windows-installer --target gs://grafana-prerelease/artifacts/downloads/${DRONE_TAG}/oss/release/grafana-${DRONE_TAG:1}.windows-amd64.zip
+  - .\grabpl.exe windows-installer --target gs://grafana-prerelease/artifacts/downloads/${DRONE_TAG}/oss/tag/grafana-${DRONE_TAG:1}.windows-amd64.zip
     --edition oss ${DRONE_TAG}
   - $$fname = ((Get-Childitem grafana*.msi -name) -split "`n")[0]
   - gsutil cp $$fname gs://grafana-prerelease/artifacts/downloads/${DRONE_TAG}/oss/release/
@@ -3115,7 +3113,6 @@ steps:
       from_secret: github_token
     PRERELEASE_BUCKET:
       from_secret: prerelease_bucket
-  failure: ignore
   image: grafana/ci-wix:0.1.1
   name: build-windows-installer
 trigger:
@@ -3380,14 +3377,12 @@ services: []
 steps:
 - commands:
   - echo $env:DRONE_RUNNER_NAME
-  failure: ignore
   image: mcr.microsoft.com/windows:1809
   name: identify-runner
 - commands:
   - $$ProgressPreference = "SilentlyContinue"
   - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.41/windows/grabpl.exe
     -OutFile grabpl.exe
-  failure: ignore
   image: grafana/ci-wix:0.1.1
   name: windows-init
 - commands:
@@ -3398,11 +3393,11 @@ steps:
   - gcloud auth activate-service-account --key-file=gcpkey.json
   - rm gcpkey.json
   - cp C:\App\nssm-2.24.zip .
-  - .\grabpl.exe windows-installer --target gs://grafana-prerelease/nightly/artifacts/downloads/${DRONE_TAG}/oss/release/grafana-${DRONE_TAG:1}.windows-amd64.zip
-    --edition oss ${DRONE_TAG}
+  - .\grabpl.exe windows-installer --target gs://grafana-prerelease/nightly/artifacts/downloads/nightly-${DRONE_COMMIT_SHA:0:8}/oss/nightly/grafana-${DRONE_TAG:1}.windows-amd64.zip
+    --edition oss nightly-${DRONE_COMMIT_SHA:0:8}
   - $$fname = ((Get-Childitem grafana*.msi -name) -split "`n")[0]
-  - gsutil cp $$fname gs://grafana-prerelease/nightly/artifacts/downloads/${DRONE_TAG}/oss/release/
-  - gsutil cp "$$fname.sha256" gs://grafana-prerelease/nightly/artifacts/downloads/${DRONE_TAG}/oss/release/
+  - gsutil cp $$fname gs://grafana-prerelease/nightly/artifacts/downloads/nightly-${DRONE_COMMIT_SHA:0:8}/oss/release/
+  - gsutil cp "$$fname.sha256" gs://grafana-prerelease/nightly/artifacts/downloads/nightly-${DRONE_COMMIT_SHA:0:8}/oss/release/
   depends_on:
   - windows-init
   environment:
@@ -3412,7 +3407,6 @@ steps:
       from_secret: github_token
     PRERELEASE_BUCKET:
       from_secret: prerelease_bucket
-  failure: ignore
   image: grafana/ci-wix:0.1.1
   name: build-windows-installer
 trigger:
@@ -3448,7 +3442,8 @@ steps:
   - apt-get update && apt-get install -yq gettext
   - printenv GCP_KEY | base64 -d > /tmp/key.json
   - gcloud auth activate-service-account --key-file=/tmp/key.json
-  - ./scripts/list-release-artifacts.sh ${DRONE_TAG} | xargs -n1 gsutil stat >> /tmp/stat.log
+  - ./scripts/list-release-artifacts.sh nightly-${DRONE_COMMIT_SHA:0:8} | xargs -n1
+    gsutil stat >> /tmp/stat.log
   - '! cat /tmp/stat.log | grep "No URLs matched"'
   depends_on:
   - clone
@@ -4975,6 +4970,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 6866f90ba3b6eafd7b8882b1fd711e622c1afdc63b6bec2314432cd44e9cb9df
+hmac: a03fd5fd211394d4cadebf37901c277606e445db01d935b35739ba987fe570a3
 
 ...

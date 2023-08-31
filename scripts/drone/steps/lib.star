@@ -1295,9 +1295,14 @@ def get_windows_steps(ver_mode, bucket = "%PRERELEASE_BUCKET%"):
     if ver_mode in (
         "release",
         "release-branch",
+        "tag",
+        "nightly",
     ):
         gcp_bucket = "{}/artifacts/downloads".format(bucket)
-        if ver_mode == "release":
+        if ver_mode == "nightly":
+            ver_part = "nightly-${DRONE_COMMIT_SHA:0:8}"
+            dir = "release"
+        elif ver_mode == "release" or ver_mode == "tag":
             ver_part = "${DRONE_TAG}"
             dir = "release"
         else:
@@ -1315,7 +1320,7 @@ def get_windows_steps(ver_mode, bucket = "%PRERELEASE_BUCKET%"):
             "cp C:\\App\\nssm-2.24.zip .",
         ]
 
-        if ver_mode in ("release",):
+        if ver_mode in ("release", "nightly", "tag"):
             version = "${DRONE_TAG:1}"
             installer_commands.extend(
                 [
