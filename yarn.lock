@@ -3930,6 +3930,7 @@ __metadata:
     rollup-plugin-terser: 7.0.2
     rxjs: 7.8.1
     systemjs: 6.14.2
+    systemjs-cjs-extra: 0.1.0
     tslib: 2.6.0
     typescript: 4.8.4
   peerDependencies:
@@ -30702,6 +30703,13 @@ __metadata:
   version: 2.0.17
   resolution: "synchronous-promise@npm:2.0.17"
   checksum: 7b1342c93741f3f92ebde1edf5d6ce8dde2278de948d84e9bd85e232c16c0d77c90c4940f9975be3effcb20f047cfb0f16fa311c3b4e092c22f3bf2889fb0fb4
+  languageName: node
+  linkType: hard
+
+"systemjs-cjs-extra@npm:0.1.0":
+  version: 0.1.0
+  resolution: "systemjs-cjs-extra@npm:0.1.0"
+  checksum: 09169416c858e43671e988f05f2c14fe2fa923472619983fce44aa946493337bdda0a6c28ea8aeded0c2d3dfa62ad6d8479944144b451c0492f7a505e7b18813
   languageName: node
   linkType: hard
 

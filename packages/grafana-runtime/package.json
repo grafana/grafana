@@ -45,6 +45,7 @@
     "lodash": "4.17.21",
     "rxjs": "7.8.1",
     "systemjs": "6.14.2",
+    "systemjs-cjs-extra": "0.1.0",
     "tslib": "2.6.0"
   },
   "devDependencies": {
