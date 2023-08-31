@@ -24,7 +24,43 @@ The Tempo data source's query editor helps you query and display traces from Tem
 This topic explains configuration and queries specific to the Tempo data source.
 For general documentation on querying data sources in Grafana, see [Query and transform data][query-transform-data].
 
-## Query by search
+To add TraceQL panels to your dashboard, refer to the [Traces panel documentation](/docs/grafana/latest/panels-visualizations/visualizations/traces/).
+
+To learn more about Grafana dashboards, refer to the [Use dashboards documentation](/docs/grafana/latest/dashboards/use-dashboards/).
+
+## Write TraceQL queries in Grafana
+
+Inspired by PromQL and LogQL, TraceQL is a query language designed for selecting traces.
+The default traces search reviews the whole trace.
+TraceQL provides a method for formulating precise queries so you can zoom in to the data you need.
+Query results are returned faster because the queries limit what is searched.
+
+To learn more about how to query by TraceQL, refer to the [TraceQL documentation](/docs/tempo/latest/traceql).
+
+You can compose TraceQL queries in Grafana and Grafana Cloud using **Explore** and a Tempo data source. You can use either the **Query type** > **Search** (the TraceQL query builder) or the **TraceQL** tab (the TraceQL query editor).
+Both of these methods let you build queries and drill-down into result sets.
+
+### TraceQL query builder
+
+The TraceQL query builder, located on the **Explore** > **Query type** > **Search** in Grafana, provides drop-downs and text fields to help you write a query.
+
+Refer to the [Search using the TraceQL query builder documentation]({{< relref "./traceql-search" >}}) to learn more about creating queries using convenient drop-down menus.
+
+![The TraceQL query builder](/static/img/docs/tempo/screenshot-traceql-query-type-search-v10.png)
+
+### TraceQL query editor
+
+The TraceQL query editor, located on the **Explore** > **TraceQL** tab in Grafana, lets you search by trace ID and write TraceQL queries using autocomplete.
+
+Refer to the [TraceQL query editor documentation]({{< relref "./traceql-editor" >}}) to learn more about constructing queries using a code-editor-like experience.
+
+![The TraceQL query editor](/static/img/docs/tempo/screenshot-traceql-query-editor-v10.png)
+
+## Query by search (deprecated)
+
+{{% admonition type="caution" %}}
+Starting with Grafana v10.2, this query type has been deprecated. It will be removed in Grafana v10.3.
+{{% /admonition %}}
 
 Use this to search for traces by service name, span name, duration range, or process-level attributes that are included in your application's instrumentation, such as HTTP status code and customer ID.
 
@@ -67,21 +103,6 @@ To query a particular trace:
 1. Enter the trace's ID into the query field.
 
 {{< figure src="/static/img/docs/tempo/query-editor-traceid.png" class="docs-image--no-shadow" max-width="750px" caption="Screenshot of the Tempo TraceID query type" >}}
-
-## Query by TraceQL
-
-Inspired by PromQL and LogQL, TraceQL is a query language designed for selecting traces.
-The default traces search reviews the whole trace.
-TraceQL provides a method for formulating precise queries so you can zoom in to the data you need.
-Query results are returned faster because the queries limit what is searched.
-
-To learn more about how to query by TraceQL, refer to the [TraceQL documentation](/docs/tempo/latest/traceql).
-
-You can create TraceQL queries using the Query editor or using **Search** query type.
-
-[//]: # 'Include content for preview of Search tab featuring TraceQL query builder'
-
-{{< docs/shared source="grafana" lookup="datasources/tempo-search-traceql.md" leveloffset="+1" version="<GRAFANA VERSION>" >}}
 
 ## Query Loki for traces
 
