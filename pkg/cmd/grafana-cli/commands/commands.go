@@ -106,7 +106,7 @@ var pluginCommands = []*cli.Command{
 	}, {
 		Name:   "run",
 		Usage:  "run <plugin id>",
-		Action: runPluginCommand(hostPluginCommand),
+		Action: serveBackendPluginCommand,
 	}, {
 		Name:    "uninstall",
 		Aliases: []string{"remove"},

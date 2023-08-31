@@ -31,6 +31,16 @@ type Service struct {
 	im instancemgmt.InstanceManager
 }
 
+func NewBackendServerOpts(cfg *setting.Cfg) *backend.ServeOpts {
+	s := ProvideService(cfg)
+	return &backend.ServeOpts{
+		CheckHealthHandler: s,
+		//CallResourceHandler: s,
+		QueryDataHandler: s,
+		//StreamHandler:       s,
+	}
+}
+
 func ProvideService(cfg *setting.Cfg) *Service {
 	return &Service{
 		im: datasource.NewInstanceManager(newInstanceSettings(cfg)),
