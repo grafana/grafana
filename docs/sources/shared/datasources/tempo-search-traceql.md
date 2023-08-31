@@ -111,7 +111,7 @@ This capability is based on the [metrics summary API](/docs/grafana-cloud/monito
 
 To use this capability:
 
-1. In the Attribute by row, select an option from the first drop-down box. For example, `span`.
+1. In the **Aggregate by** row, select an option from the first drop-down box. For example, `span`.
 1. Select an attribute from the second drop-down.
 1. Optional: Select **+** to add an **Aggregate by** row.
 1. Select **Run query**.
