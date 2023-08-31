@@ -1301,15 +1301,18 @@ def get_windows_steps(ver_mode, bucket = "%PRERELEASE_BUCKET%"):
         gcp_bucket = "{}/artifacts/downloads".format(bucket)
         if ver_mode == "nightly":
             ver_part = "nightly-${DRONE_COMMIT_SHA:0:8}"
+            version = ver_part
             dir = "release"
         elif ver_mode == "release" or ver_mode == "tag":
             ver_part = "${DRONE_TAG}"
+            version = ver_part[1:]
             dir = "release"
         else:
             dir = "main"
             gcp_bucket = "grafana-downloads"
             build_no = "DRONE_BUILD_NUMBER"
             ver_part = "--build-id $$env:{}".format(build_no)
+            version = "${DRONE_TAG}"
         installer_commands = [
             "$$gcpKey = $$env:GCP_KEY",
             "[System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($$gcpKey)) > gcpkey.json",
@@ -1321,7 +1324,6 @@ def get_windows_steps(ver_mode, bucket = "%PRERELEASE_BUCKET%"):
         ]
 
         if ver_mode in ("release", "nightly", "tag"):
-            version = ver_part[1:]
             installer_commands.extend(
                 [
                     ".\\grabpl.exe windows-installer --target {} --edition oss {}".format(
