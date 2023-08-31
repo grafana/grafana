@@ -2,6 +2,7 @@ package elasticsearch
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"regexp"
 	"strconv"
@@ -9,7 +10,6 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
-	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	es "github.com/grafana/grafana/pkg/tsdb/elasticsearch/client"
@@ -41,7 +41,8 @@ func (e *elasticsearchDataQuery) execute() (*backend.QueryDataResponse, error) {
 	e.logger.Debug("Parsing queries", "queriesLength", len(e.dataQueries))
 	queries, err := parseQuery(e.dataQueries, e.logger)
 	if err != nil {
-		e.logger.Error("Failed to parse queries", "err", err, "queries", fmt.Sprintf("%v", e.dataQueries), "took", time.Since(start))
+		dq, _ := json.Marshal(e.dataQueries)
+		e.logger.Error("Failed to parse queries", "err", err, "queries", string(dq), "took", time.Since(start))
 		return &backend.QueryDataResponse{}, err
 	}
 
@@ -51,18 +52,20 @@ func (e *elasticsearchDataQuery) execute() (*backend.QueryDataResponse, error) {
 	to := e.dataQueries[0].TimeRange.To.UnixNano() / int64(time.Millisecond)
 	for _, q := range queries {
 		if err := e.processQuery(q, ms, from, to); err != nil {
-			e.logger.Error("Failed to process query", "err", err, "query", fmt.Sprintf("%v", q))
+			mq, _ := json.Marshal(q)
+			e.logger.Error("Failed to process query", "err", err, "query", string(mq))
 			return &backend.QueryDataResponse{}, err
 		}
 	}
 
 	req, err := ms.Build()
 	if err != nil {
-		logger.Error("Failed to build multisearch request", "err", err, "queries", fmt.Sprintf("%v", queries), "took", time.Since(start))
+		mqs, _ := json.Marshal(e.dataQueries)
+		e.logger.Error("Failed to build multisearch request", "err", err, "queries", string(mqs), "took", time.Since(start))
 		return &backend.QueryDataResponse{}, err
 	}
 
-	logger.Debug("Finished preparing of request", "queriesLength", len(queries), "took", time.Since(start))
+	e.logger.Debug("Finished preparing of request", "queriesLength", len(queries), "took", time.Since(start))
 	res, err := e.client.ExecuteMultisearch(req)
 	if err != nil {
 		return &backend.QueryDataResponse{}, err
