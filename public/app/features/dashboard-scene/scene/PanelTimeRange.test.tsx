@@ -1,20 +1,11 @@
 import { advanceTo, clear } from 'jest-date-mock';
 
-import { dateTime, TimeRange } from '@grafana/data';
+import { dateTime } from '@grafana/data';
 import { SceneCanvasText, SceneFlexItem, SceneFlexLayout, SceneTimeRange } from '@grafana/scenes';
 
 import { activateFullSceneTree } from '../utils/utils';
 
 import { PanelTimeRange } from './PanelTimeRange';
-
-const dashboardTimeRange: TimeRange = {
-  from: dateTime([2019, 1, 11, 12, 0]),
-  to: dateTime([2019, 1, 11, 18, 0]),
-  raw: {
-    from: 'now-6h',
-    to: 'now',
-  },
-};
 
 describe('PanelTimeRange', () => {
   const fakeCurrentDate = dateTime('2019-02-11T19:00:00.000Z').toDate();

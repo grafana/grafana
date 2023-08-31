@@ -26,6 +26,7 @@ import {
   behaviors,
   VizPanelState,
 } from '@grafana/scenes';
+import { Panel } from '@grafana/schema';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { DashboardDTO } from 'app/types';
 
@@ -70,7 +71,7 @@ export function createSceneObjectsForPanels(oldPanels: PanelModel[]): Array<Scen
               title: panel.title,
               isCollapsed: true,
               y: panel.gridPos.y,
-              children: panel.panels ? panel.panels.map(createVizPanelFromPanelModel) : [],
+              children: panel.panels ? panel.panels.map(buildSceneFromPanelModel) : [],
             })
           );
         } else {
@@ -106,7 +107,7 @@ export function createSceneObjectsForPanels(oldPanels: PanelModel[]): Array<Scen
       });
       panels.push(gridItem);
     } else {
-      const panelObject = createVizPanelFromPanelModel(panel);
+      const panelObject = buildSceneFromPanelModel(panel);
 
       // when processing an expanded row, collect its panels
       if (currentRow) {
@@ -246,7 +247,7 @@ export function createSceneVariableFromVariableModel(variable: VariableModel): S
   }
 }
 
-export function createVizPanelFromPanelModel(panel: PanelModel) {
+export function buildSceneFromPanelModel(panel: PanelModel): SceneGridItem {
   const vizPanelState: VizPanelState = {
     key: getVizPanelKeyForPanelId(panel.id),
     title: panel.title,
