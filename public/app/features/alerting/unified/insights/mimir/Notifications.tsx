@@ -2,8 +2,8 @@ import { PanelBuilders, SceneFlexItem, SceneQueryRunner, SceneTimeRange } from '
 import { DataSourceRef, GraphDrawStyle } from '@grafana/schema';
 
 const QUERY_A =
-  'grafanacloud_instance_alertmanager_notifications_per_second - grafanacloud_instance_alertmanager_notifications_failed_per_second';
-const QUERY_B = 'grafanacloud_instance_alertmanager_notifications_failed_per_second';
+  'sum by(cluster)(grafanacloud_instance_alertmanager_notifications_per_second) - sum by (cluster)(grafanacloud_instance_alertmanager_notifications_failed_per_second)';
+const QUERY_B = 'sum by(cluster)(grafanacloud_instance_alertmanager_notifications_failed_per_second)';
 
 export function getNotificationsScene(timeRange: SceneTimeRange, datasource: DataSourceRef, panelTitle: string) {
   const query = new SceneQueryRunner({
@@ -13,13 +13,13 @@ export function getNotificationsScene(timeRange: SceneTimeRange, datasource: Dat
         refId: 'A',
         expr: QUERY_A,
         range: true,
-        legendFormat: 'success',
+        legendFormat: '{{cluster}} - success',
       },
       {
         refId: 'B',
         expr: QUERY_B,
         range: true,
-        legendFormat: 'failed',
+        legendFormat: '{{cluster}} - failed',
       },
     ],
     $timeRange: timeRange,

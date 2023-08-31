@@ -1,7 +1,7 @@
 import { PanelBuilders, SceneFlexItem, SceneQueryRunner, SceneTimeRange } from '@grafana/scenes';
 import { DataSourceRef, GraphDrawStyle } from '@grafana/schema';
 
-const QUERY_A = 'grafanacloud_instance_alertmanager_invalid_config';
+const QUERY_A = 'sum by (cluster)(grafanacloud_instance_alertmanager_invalid_config)';
 
 export function getInvalidConfigScene(timeRange: SceneTimeRange, datasource: DataSourceRef, panelTitle: string) {
   const query = new SceneQueryRunner({
@@ -11,7 +11,7 @@ export function getInvalidConfigScene(timeRange: SceneTimeRange, datasource: Dat
         refId: 'A',
         expr: QUERY_A,
         range: true,
-        legendFormat: 'config invalid',
+        legendFormat: '{{cluster}}',
       },
     ],
     $timeRange: timeRange,

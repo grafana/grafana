@@ -28,7 +28,7 @@ export function getRuleGroupEvaluationDurationScene(
       .setTitle(panelTitle)
       .setData(query)
       .setCustomFieldConfig('drawStyle', GraphDrawStyle.Line)
-      .setOverrides((b) => b.matchFieldsWithName('Value #A').overrideUnit('seconds'))
+      .setUnit('s')
       .build(),
   });
 }

@@ -86,15 +86,15 @@ function getMimirManagedRulesScenes() {
     body: new SceneFlexLayout({
       wrap: 'wrap',
       children: [
-        getMostFiredCloudInstances(THIS_WEEK_TIME_RANGE, grafanaCloudPromDs, 'Top 5 firing instance this week'),
+        getMostFiredCloudInstances(THIS_WEEK_TIME_RANGE, grafanaCloudPromDs, 'Top 10 firing instance this week'),
         getFiringCloudAlertsScene(THIS_WEEK_TIME_RANGE, grafanaCloudPromDs, 'Firing'),
         getPendingCloudAlertsScene(THIS_WEEK_TIME_RANGE, grafanaCloudPromDs, 'Pending'),
 
         getInstancesByStateScene(THIS_WEEK_TIME_RANGE, grafanaCloudPromDs, 'Count of alert instances by state'),
         getInstancesPercentageByStateScene(THIS_WEEK_TIME_RANGE, grafanaCloudPromDs, '% of Alert Instances by State'),
 
-        getEvalSuccessVsFailuresScene(THIS_WEEK_TIME_RANGE, grafanaCloudPromDs, 'Evaluation Success vs Failures'),
-        getMissedIterationsScene(THIS_WEEK_TIME_RANGE, grafanaCloudPromDs, 'Iterations Missed'),
+        getEvalSuccessVsFailuresScene(THIS_WEEK_TIME_RANGE, cloudUsageDs, 'Evaluation Success vs Failures'),
+        getMissedIterationsScene(THIS_WEEK_TIME_RANGE, cloudUsageDs, 'Iterations Missed'),
       ],
     }),
   });
