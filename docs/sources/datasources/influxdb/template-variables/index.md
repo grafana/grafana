@@ -38,7 +38,7 @@ SHOW TAG VALUES WITH KEY = "hostname"
 
 ### Chain or nest variables
 
-You can also create nested variables, sometimes called [chained variables]({{< relref "../dashboards/variables/add-template-variables#chained-variables" >}}).
+You can also create nested variables, sometimes called [chained variables]({{< relref "../../../dashboards/variables/add-template-variables#chained-variables" >}}).
 
 For example, if you had a variable called `region`, you could have the `hosts` variable show only hosts from the selected region with a query like:
 
