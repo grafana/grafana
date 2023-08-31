@@ -6,6 +6,12 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
+type VectorStoreType string
+
+const (
+	VectorStoreTypeQdrant VectorStoreType = "qdrant"
+)
+
 // Client is a client for interacting with a vector store.
 // The methods of this interface are named after the qdrant API but
 // can probably be renamed to be more generic.
@@ -20,6 +26,9 @@ type Client interface {
 
 // NewClient creates a new vector store client.
 func NewClient(cfg setting.VectorStoreSettings) (Client, context.CancelFunc, error) {
-	// TODO: dispatch based on cfg.Type.
+	switch VectorStoreType(cfg.Type) {
+	case VectorStoreTypeQdrant:
+		return newQdrantClient(cfg.Qdrant)
+	}
 	return nil, nil, nil
 }

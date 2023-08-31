@@ -19,6 +19,9 @@ type Client interface {
 
 // NewClient creates a new embedding engine client.
 func NewClient(cfg setting.EmbeddingEngineSettings) Client {
-	// TODO: dispatch based on cfg.Type.
+	switch EmbeddingEngineType(cfg.Type) {
+	case EmbeddingEngineOpenAI:
+		return newOpenAILLMClient(cfg.OpenAI)
+	}
 	return nil
 }

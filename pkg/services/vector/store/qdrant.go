@@ -3,6 +3,7 @@ package store
 import (
 	"context"
 
+	"github.com/grafana/grafana/pkg/setting"
 	qdrant "github.com/qdrant/go-client/qdrant"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -16,8 +17,8 @@ type qdrantClient struct {
 	pointsClient      qdrant.PointsClient
 }
 
-func newQdrantClient(addr string) (Client, func(), error) {
-	conn, err := grpc.DialContext(context.Background(), addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+func newQdrantClient(cfg setting.QdrantVectorDBSettings) (Client, func(), error) {
+	conn, err := grpc.DialContext(context.Background(), cfg.Address, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		return nil, nil, err
 	}
