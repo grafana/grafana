@@ -13,13 +13,13 @@ const getStyles = (theme: GrafanaTheme2, expanded: boolean, visible: boolean) =>
       flexDirection: 'column',
       marginRight: expanded ? theme.spacing(-3) : theme.spacing(1),
       width: expanded ? 'auto' : '3em',
+      position: 'sticky',
       top: 0,
-      right: 0,
+      height: '99vh',
       backgroundColor: theme.colors.background.primary,
       transition: 'width 0.5s, visibility 0.5s',
       visibility: visible ? 'visible' : 'hidden',
       zIndex: 2,
-      overflow: 'visible',
     }),
     buttonStyles: css({
       textAlign: 'left',
@@ -62,7 +62,7 @@ const items = [
   {
     title: 'Logs',
     icon: 'gf-logs',
-    scrollRef: 'logs',
+    scrollRef: 'explore-logs',
   },
   {
     title: 'Node Graph',
@@ -72,7 +72,7 @@ const items = [
   {
     title: 'Graph',
     icon: 'graph-bar',
-    scrollRef: 'graph',
+    scrollRef: 'explore-graph',
   },
   {
     title: 'Traces',
