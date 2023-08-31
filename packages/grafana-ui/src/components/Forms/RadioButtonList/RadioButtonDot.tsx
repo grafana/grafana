@@ -42,7 +42,7 @@ export const RadioButtonDot = <T extends string | number | readonly string[]>({
       />
       <div>
         {label}
-        <div className={styles.description}>{description}</div>
+        {description && <div className={styles.description}>{description}</div>}
       </div>
     </label>
   );
