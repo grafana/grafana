@@ -101,13 +101,16 @@ To add a tag, follow these steps:
 
 {{% admonition type="warning" %}}
 **Aggregate by** is an [experimental feature](/docs/release-life-cycle/). Engineering and on-call support is not available. Documentation is either limited or not provided outside of code comments. No SLA is provided.
-[Enable the `metricsSummary` feature toggle](/docs/grafana/latest/setup-grafana/configure-grafana/feature-toggles/) in Grafana to use this feature. Contact Grafana Support to enable this feature in Grafana Cloud.
+[Enable the `metricsSummary` feature toggle](/docs/grafana/latest/setup-grafana/configure-grafana/feature-toggles/) in Grafana to use this feature. Your Grafana Tempo data source must also point to a Tempo database with the [Metrics Summary API](https://grafana.com/docs/tempo/latest/api_docs/metrics-summary/) enabled. Contact Grafana Support to enable this feature in Grafana Cloud.
 {{% /admonition %}}
 
-Using **Aggregate by**, you can calculate RED metrics (span count, erroring span count, and latency information) for `kind=server` spans recently sent to Tempo, grouped by one or more attributes.
+Using **Aggregate by**, you can calculate RED metrics (total span count, percent erroring spans, and latency information) for spans of `kind=server` that match your filter criteria, grouped by one or more attributes. 
 
-Whatever is selected in the **Aggregate by** list, you'll see every combination of present in your data.
+When you use  **Aggregate by**,  the selections you make determine how the information is reported in the Table. Every combination that matches selections in your data is listed in the table. 
 Each aggregate value, for example `intrinsic`:`name`, has a corresponding column in the results table.
+
+For example, **names** matching `GET /:endpoint` with a **span.http.user_agent** of `k6/0.46` appeared in 31,466 spans. Instead of being listed by traces and associated spans, the query results are grouped by the the selections in **Aggregate by**.
+
 The RED metrics are calculated for every endpoint and user agent combinations found in your data.
 
 ![Use Aggregate by to calculate RED metrics for spans and group by attributes](/static/img/docs/tempo/screenshot-traces-aggregate-by.png)
