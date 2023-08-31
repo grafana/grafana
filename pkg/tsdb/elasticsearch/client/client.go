@@ -155,7 +155,6 @@ func (c *baseClientImpl) executeRequest(method, uriPath, uriQuery string, body [
 }
 
 func (c *baseClientImpl) ExecuteMultisearch(r *MultiSearchRequest) (*MultiSearchResponse, error) {
-
 	multiRequests := c.createMultiSearchRequests(r.Requests)
 	queryParams := c.getMultiSearchQueryParameters()
 	start := time.Now()
