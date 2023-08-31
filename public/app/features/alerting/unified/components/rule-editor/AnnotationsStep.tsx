@@ -16,8 +16,10 @@ import { Annotation, annotationLabels } from '../../utils/constants';
 import AnnotationHeaderField from './AnnotationHeaderField';
 import DashboardAnnotationField from './DashboardAnnotationField';
 import { DashboardPicker, PanelDTO } from './DashboardPicker';
+import { NeedHelpInfo } from './NeedHelpInfo';
+import { RuleEditorSection } from './RuleEditorSection';
 
-const AnnotationsField = () => {
+const AnnotationsStep = () => {
   const styles = useStyles2(getStyles);
   const [showPanelSelector, setShowPanelSelector] = useToggle(false);
 
@@ -90,8 +92,27 @@ const AnnotationsField = () => {
     setShowPanelSelector(true);
   };
 
+  function getAnnotationsSectionDescription() {
+    const docsLink =
+      'https://grafana.com/docs/grafana/latest/alerting/fundamentals/annotation-label/variables-label-annotation';
+
+    return (
+      <Stack gap={0.5}>
+        Add annotations to provide more context in your alert notifications.
+        <NeedHelpInfo
+          contentText={`Annotations add metadata to provide more information on the alert in your alert notifications. 
+          For example, add a Summary annotation to tell you which value caused the alert to fire or which server it happened on.
+          Annotations can contain a combination of text and template code.`}
+          externalLink={docsLink}
+          linkText={`Read about annotations`}
+          title="Annotations"
+        />
+      </Stack>
+    );
+  }
+
   return (
-    <>
+    <RuleEditorSection stepNo={4} title="Add annotations" description={getAnnotationsSectionDescription()}>
       <div className={styles.flexColumn}>
         {fields.map((annotationField, index: number) => {
           const isUrl = annotations[index]?.key?.toLocaleLowerCase().endsWith('url');
@@ -186,7 +207,7 @@ const AnnotationsField = () => {
           />
         )}
       </div>
-    </>
+    </RuleEditorSection>
   );
 };
 
@@ -242,4 +263,4 @@ const getStyles = (theme: GrafanaTheme2) => ({
   `,
 });
 
-export default AnnotationsField;
+export default AnnotationsStep;
