@@ -1,22 +1,35 @@
 package setting
 
 import (
-	"gopkg.in/ini.v1"
+	"time"
 )
 
-func (cfg *Cfg) readVectorSettings(iniFile *ini.File) {
-	syncSection := cfg.SectionWithEnvOverrides("vector.sync")
+func (cfg *Cfg) readVectorSettings() {
+	section := cfg.SectionWithEnvOverrides("vector")
 	cfg.Vector = VectorSettings{
-		SyncEnabled: syncSection.Key("enabled").MustBool(false),
-		Store:       cfg.readVectorStoreSettings(iniFile),
-		Embedding:   cfg.readVectorEmbeddingSettings(iniFile),
+		Sync:      cfg.readVectorSyncSettings(),
+		Store:     cfg.readVectorStoreSettings(section.Key("store_engine").String()),
+		Embedding: cfg.readVectorEmbeddingSettings(section.Key("embedding_engine").String()),
 	}
 }
 
 type VectorSettings struct {
-	SyncEnabled bool
-	Store       VectorStoreSettings
-	Embedding   EmbeddingEngineSettings
+	Sync      VectorSyncSettings
+	Store     VectorStoreSettings
+	Embedding EmbeddingEngineSettings
+}
+
+type VectorSyncSettings struct {
+	Enabled  bool
+	Interval time.Duration
+}
+
+func (cfg *Cfg) readVectorSyncSettings() VectorSyncSettings {
+	section := cfg.SectionWithEnvOverrides("vector.sync")
+	return VectorSyncSettings{
+		Enabled:  section.Key("enabled").MustBool(false),
+		Interval: section.Key("interval").MustDuration(time.Minute * 15),
+	}
 }
 
 type VectorStoreSettings struct {
@@ -29,12 +42,12 @@ type QdrantVectorDBSettings struct {
 	Address string
 }
 
-func (cfg *Cfg) readVectorStoreSettings(iniFile *ini.File) VectorStoreSettings {
-	section := cfg.SectionWithEnvOverrides("vector.store")
+func (cfg *Cfg) readVectorStoreSettings(engine string) VectorStoreSettings {
 	settings := VectorStoreSettings{}
-	switch section.Key("type").MustString("") {
+	switch engine {
 	case "qdrant":
 		settings.Type = "qdrant"
+		section := cfg.SectionWithEnvOverrides("vector.qdrant")
 		settings.Qdrant = QdrantVectorDBSettings{
 			Address: section.Key("address").MustString("localhost:6333"),
 		}
@@ -48,11 +61,11 @@ type EmbeddingEngineSettings struct {
 	OpenAI OpenAIEngineSettings
 }
 
-func (cfg *Cfg) readVectorEmbeddingSettings(iniFile *ini.File) EmbeddingEngineSettings {
-	section := cfg.SectionWithEnvOverrides("vector.embedding")
+func (cfg *Cfg) readVectorEmbeddingSettings(engine string) EmbeddingEngineSettings {
 	settings := EmbeddingEngineSettings{}
-	switch section.Key("type").MustString("") {
+	switch engine {
 	case "openai":
+		section := cfg.SectionWithEnvOverrides("vector.openai")
 		settings.Type = "openai"
 		settings.OpenAI = OpenAIEngineSettings{
 			URL:    section.Key("url").MustString("https://api.openai.com"),

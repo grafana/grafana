@@ -1255,6 +1255,8 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 
 	cfg.readFeatureManagementConfig()
 
+	cfg.readVectorSettings()
+
 	return nil
 }
 

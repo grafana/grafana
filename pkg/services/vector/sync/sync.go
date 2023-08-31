@@ -57,7 +57,7 @@ func ProvideService(
 // Satisfies the registry.CanBeDisabled interface which will guarantee
 // that Run() is not called if the service is disabled.
 func (s *Service) IsDisabled() bool {
-	return !s.features.IsEnabled(featuremgmt.FlagVectorSync) || !s.cfg.Vector.SyncEnabled || s.cfg.Vector.Embedding.Type == "" || s.cfg.Vector.Store.Type == ""
+	return !s.features.IsEnabled(featuremgmt.FlagVectorSync) || !s.cfg.Vector.Sync.Enabled || s.cfg.Vector.Embedding.Type == "" || s.cfg.Vector.Store.Type == "" || s.embeddingClient == nil
 }
 
 func (s *Service) Run(ctx context.Context) error {
@@ -82,6 +82,9 @@ func (s *Service) syncVectorStore(ctx context.Context) error {
 	client, cancel, err := store.NewClient(s.cfg.Vector.Store)
 	if err != nil {
 		return fmt.Errorf("create vector store client: %s", err)
+	}
+	if client == nil {
+		return fmt.Errorf("got nil vector store client")
 	}
 	defer cancel()
 
