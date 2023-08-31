@@ -148,7 +148,7 @@ jobs:
         - name: Publish new plugin version on grafana.com
           run: |
             echo "Publish new plugin version on grafana.com:"
-            # TODO: gcom (not dev) 
+            # TODO: gcom (not dev)
             gcom-dev /plugins -H "Content-Type: application/json" -d "{
               \"url\": \"https://github.com/grafana/grafana/tree/main/public/plugins/${{ env.plugin_id }}\",
               \"download\": {
