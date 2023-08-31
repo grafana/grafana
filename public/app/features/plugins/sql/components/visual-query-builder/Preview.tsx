@@ -10,16 +10,19 @@ import { formatSQL } from '../../utils/formatSQL';
 
 type PreviewProps = {
   rawSql: string;
+  datasourceType?: string;
 };
 
-export function Preview({ rawSql }: PreviewProps) {
+export function Preview({ rawSql, datasourceType }: PreviewProps) {
   // TODO: use zero index to give feedback about copy success
   const [_, copyToClipboard] = useCopyToClipboard();
   const styles = useStyles2(getStyles);
 
   const copyPreview = (rawSql: string) => {
     copyToClipboard(rawSql);
-    reportInteraction('grafana_sql_preview_copied', {});
+    reportInteraction('grafana_sql_preview_copied', {
+      datasource: datasourceType,
+    });
   };
 
   const labelElement = (
