@@ -13,12 +13,17 @@ import (
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	libPanelsModel "github.com/grafana/grafana/pkg/services/libraryelements/model"
 	"github.com/grafana/grafana/pkg/services/publicdashboards/models"
 	"github.com/grafana/grafana/pkg/services/publicdashboards/validation"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/tsdb/grafanads"
 	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 )
+
+type Veamos struct {
+	valor string
+}
 
 // FindAnnotations returns annotations for a public dashboard
 func (pd *PublicDashboardServiceImpl) FindAnnotations(ctx context.Context, reqDTO models.AnnotationsQueryDTO, accessToken string) ([]models.AnnotationEvent, error) {
@@ -103,13 +108,15 @@ func (pd *PublicDashboardServiceImpl) FindAnnotations(ctx context.Context, reqDT
 }
 
 // GetMetricRequest returns a metric request for the given panel and query
-func (pd *PublicDashboardServiceImpl) GetMetricRequest(ctx context.Context, dashboard *dashboards.Dashboard, publicDashboard *models.PublicDashboard, panelId int64, queryDto models.PublicDashboardQueryDTO) (dtos.MetricRequest, error) {
+func (pd *PublicDashboardServiceImpl) GetMetricRequest(ctx context.Context, user *user.SignedInUser, dashboard *dashboards.Dashboard, publicDashboard *models.PublicDashboard, panelId int64, queryDto models.PublicDashboardQueryDTO) (dtos.MetricRequest, error) {
 	err := validation.ValidateQueryPublicDashboardRequest(queryDto, publicDashboard)
 	if err != nil {
 		return dtos.MetricRequest{}, err
 	}
 
 	metricReqDTO, err := pd.buildMetricRequest(
+		ctx,
+		user,
 		dashboard,
 		publicDashboard,
 		panelId,
@@ -123,13 +130,13 @@ func (pd *PublicDashboardServiceImpl) GetMetricRequest(ctx context.Context, dash
 }
 
 // GetQueryDataResponse returns a query data response for the given panel and query
-func (pd *PublicDashboardServiceImpl) GetQueryDataResponse(ctx context.Context, skipDSCache bool, queryDto models.PublicDashboardQueryDTO, panelId int64, accessToken string) (*backend.QueryDataResponse, error) {
+func (pd *PublicDashboardServiceImpl) GetQueryDataResponse(ctx context.Context, u *user.SignedInUser, skipDSCache bool, queryDto models.PublicDashboardQueryDTO, panelId int64, accessToken string) (*backend.QueryDataResponse, error) {
 	publicDashboard, dashboard, err := pd.FindEnabledPublicDashboardAndDashboardByAccessToken(ctx, accessToken)
 	if err != nil {
 		return nil, err
 	}
 
-	metricReq, err := pd.GetMetricRequest(ctx, dashboard, publicDashboard, panelId, queryDto)
+	metricReq, err := pd.GetMetricRequest(ctx, u, dashboard, publicDashboard, panelId, queryDto)
 	if err != nil {
 		return nil, err
 	}
@@ -154,9 +161,9 @@ func (pd *PublicDashboardServiceImpl) GetQueryDataResponse(ctx context.Context, 
 }
 
 // buildMetricRequest merges public dashboard parameters with dashboard and returns a metrics request to be sent to query backend
-func (pd *PublicDashboardServiceImpl) buildMetricRequest(dashboard *dashboards.Dashboard, publicDashboard *models.PublicDashboard, panelId int64, reqDTO models.PublicDashboardQueryDTO) (dtos.MetricRequest, error) {
+func (pd *PublicDashboardServiceImpl) buildMetricRequest(ctx context.Context, user *user.SignedInUser, dashboard *dashboards.Dashboard, publicDashboard *models.PublicDashboard, panelId int64, reqDTO models.PublicDashboardQueryDTO) (dtos.MetricRequest, error) {
 	// group queries by panel
-	queriesByPanel := groupQueriesByPanelId(dashboard.Data)
+	queriesByPanel := pd.groupQueriesByPanelId(ctx, user, dashboard.Data)
 	queries, ok := queriesByPanel[panelId]
 	if !ok {
 		return dtos.MetricRequest{}, models.ErrPanelNotFound.Errorf("buildMetricRequest: public dashboard panel not found")
@@ -261,29 +268,46 @@ func getFlattenedPanels(dashboard *simplejson.Json) []any {
 	return flatPanels
 }
 
-func groupQueriesByPanelId(dashboard *simplejson.Json) map[int64][]*simplejson.Json {
+func (pd *PublicDashboardServiceImpl) groupQueriesByPanelId(ctx context.Context, user *user.SignedInUser, dashboard *simplejson.Json) map[int64][]*simplejson.Json {
 	result := make(map[int64][]*simplejson.Json)
 
-	extractQueriesFromPanels(dashboard.Get("panels").MustArray(), result)
+	pd.extractQueriesFromPanels(ctx, user, dashboard.Get("panels").MustArray(), result)
 
 	return result
 }
 
-func extractQueriesFromPanels(panels []any, result map[int64][]*simplejson.Json) {
+func (pd *PublicDashboardServiceImpl) extractQueriesFromPanels(ctx context.Context, user *user.SignedInUser, panels []any, result map[int64][]*simplejson.Json) {
 	for _, panelObj := range panels {
 		panel := simplejson.NewFromAny(panelObj)
 
 		// if the panel is a row and it is collapsed, get the queries from the panels inside the row
 		if panel.Get("type").MustString() == "row" && panel.Get("collapsed").MustBool() {
 			// recursive call to get queries from panels inside a row
-			extractQueriesFromPanels(panel.Get("panels").MustArray(), result)
+			pd.extractQueriesFromPanels(ctx, user, panel.Get("panels").MustArray(), result)
 			continue
+		}
+
+		targets := panel.Get("targets")
+		if libPanel, ok := panel.CheckGet("libraryPanel"); ok {
+			cmd := libPanelsModel.GetLibraryElementCommand{
+				UID:        libPanel.Get("uid").MustString(),
+				FolderName: dashboards.RootFolderName,
+			}
+			libPanel, err := pd.libPanelService.GetElement(ctx, user, cmd)
+			if err != nil {
+				return
+			}
+			model, err := simplejson.NewJson(libPanel.Model)
+			if err != nil {
+				return
+			}
+			targets = model.Get("targets")
 		}
 
 		var panelQueries []*simplejson.Json
 		hasExpression := panelHasAnExpression(panel)
 
-		for _, queryObj := range panel.Get("targets").MustArray() {
+		for _, queryObj := range targets.MustArray() {
 			query := simplejson.NewFromAny(queryObj)
 
 			// it the panel doesn't have an expression and the query is disabled (hide is true), skip the query

@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/libraryelements"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	. "github.com/grafana/grafana/pkg/services/publicdashboards/models"
 	"github.com/grafana/grafana/pkg/services/publicdashboards/validation"
@@ -35,6 +36,7 @@ type PublicDashboardServiceImpl struct {
 	AnnotationsRepo    annotations.Repository
 	ac                 accesscontrol.AccessControl
 	serviceWrapper     publicdashboards.ServiceWrapper
+	libPanelService    libraryelements.Service
 }
 
 var LogPrefix = "publicdashboards.service"
@@ -52,6 +54,7 @@ func ProvideService(
 	anno annotations.Repository,
 	ac accesscontrol.AccessControl,
 	serviceWrapper publicdashboards.ServiceWrapper,
+	libPanelService libraryelements.Service,
 ) *PublicDashboardServiceImpl {
 	return &PublicDashboardServiceImpl{
 		log:                log.New(LogPrefix),
@@ -62,6 +65,7 @@ func ProvideService(
 		AnnotationsRepo:    anno,
 		ac:                 ac,
 		serviceWrapper:     serviceWrapper,
+		libPanelService:    libPanelService,
 	}
 }
 

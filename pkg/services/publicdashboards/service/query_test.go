@@ -734,7 +734,7 @@ func TestGetQueryDataResponse(t *testing.T) {
 		pubdashDto, err := service.Create(context.Background(), SignedInUser, dto)
 		require.NoError(t, err)
 
-		resp, _ := service.GetQueryDataResponse(context.Background(), true, publicDashboardQueryDTO, 1, pubdashDto.AccessToken)
+		resp, _ := service.GetQueryDataResponse(context.Background(), SignedInUser, true, publicDashboardQueryDTO, 1, pubdashDto.AccessToken)
 		require.NotNil(t, resp)
 	})
 }
@@ -1149,7 +1149,7 @@ func TestGetMetricRequest(t *testing.T) {
 			MaxDataPoints: int64(-1),
 		}
 
-		_, err := service.GetMetricRequest(context.Background(), dashboard, publicDashboard, 1, publicDashboardQueryDTO)
+		_, err := service.GetMetricRequest(context.Background(), SignedInUser, dashboard, publicDashboard, 1, publicDashboardQueryDTO)
 
 		require.Error(t, err)
 	})
@@ -1161,7 +1161,7 @@ func TestGetMetricRequest(t *testing.T) {
 		}
 		from, to := internal.GetTimeRangeFromDashboard(t, dashboard.Data)
 
-		metricReq, err := service.GetMetricRequest(context.Background(), dashboard, publicDashboard, 1, publicDashboardQueryDTO)
+		metricReq, err := service.GetMetricRequest(context.Background(), SignedInUser, dashboard, publicDashboard, 1, publicDashboardQueryDTO)
 
 		require.NoError(t, err)
 		require.Equal(t, from, metricReq.From)
@@ -1258,6 +1258,8 @@ func TestBuildMetricRequest(t *testing.T) {
 
 	t.Run("extracts queries from provided dashboard", func(t *testing.T) {
 		reqDTO, err := service.buildMetricRequest(
+			context.Background(),
+			SignedInUser,
 			publicDashboard,
 			publicDashboardPD,
 			1,
@@ -1308,6 +1310,8 @@ func TestBuildMetricRequest(t *testing.T) {
 
 	t.Run("returns an error when panel missing", func(t *testing.T) {
 		_, err := service.buildMetricRequest(
+			context.Background(),
+			SignedInUser,
 			publicDashboard,
 			publicDashboardPD,
 			49,
@@ -1346,6 +1350,8 @@ func TestBuildMetricRequest(t *testing.T) {
 		publicDashboard := insertTestDashboard(t, dashboardStore, "testDashWithHiddenQuery", 1, 0, true, []map[string]interface{}{}, customPanels)
 
 		reqDTO, err := service.buildMetricRequest(
+			context.Background(),
+			SignedInUser,
 			publicDashboard,
 			publicDashboardPD,
 			1,
@@ -1396,10 +1402,23 @@ func TestBuildAnonymousUser(t *testing.T) {
 }
 
 func TestGroupQueriesByPanelId(t *testing.T) {
+	sqlStore := db.InitTestDB(t)
+	//dashboardStore, err := dashboardsDB.ProvideDashboardStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, sqlStore.Cfg), quotatest.New(false, nil))
+	//require.NoError(t, err)
+	publicdashboardStore := database.ProvideStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures())
+	serviceWrapper := ProvideServiceWrapper(publicdashboardStore)
+	service := &PublicDashboardServiceImpl{
+		log:                log.New("test.logger"),
+		store:              publicdashboardStore,
+		intervalCalculator: intervalv2.NewCalculator(),
+		serviceWrapper:     serviceWrapper,
+	}
+
 	t.Run("can extract queries from dashboard with panel datasource string that has no datasource on panel targets", func(t *testing.T) {
+
 		json, err := simplejson.NewJson([]byte(oldStyleDashboard))
 		require.NoError(t, err)
-		queries := groupQueriesByPanelId(json)
+		queries := service.groupQueriesByPanelId(context.Background(), SignedInUser, json)
 
 		panelId := int64(2)
 		queriesByDatasource := groupQueriesByDataSource(t, queries[panelId])
@@ -1408,7 +1427,7 @@ func TestGroupQueriesByPanelId(t *testing.T) {
 	t.Run("will delete exemplar property from target if exists", func(t *testing.T) {
 		json, err := simplejson.NewJson([]byte(dashboardWithQueriesExemplarEnabled))
 		require.NoError(t, err)
-		queries := groupQueriesByPanelId(json)
+		queries := service.groupQueriesByPanelId(context.Background(), SignedInUser, json)
 
 		panelId := int64(2)
 		queriesByDatasource := groupQueriesByDataSource(t, queries[panelId])
@@ -1420,7 +1439,7 @@ func TestGroupQueriesByPanelId(t *testing.T) {
 	t.Run("can extract queries from dashboard with panel json datasource that has no datasource on panel targets", func(t *testing.T) {
 		json, err := simplejson.NewJson([]byte(dashboardWithTargetsWithNoDatasources))
 		require.NoError(t, err)
-		queries := groupQueriesByPanelId(json)
+		queries := service.groupQueriesByPanelId(context.Background(), SignedInUser, json)
 
 		panelId := int64(2)
 		queriesByDatasource := groupQueriesByDataSource(t, queries[panelId])
@@ -1430,7 +1449,7 @@ func TestGroupQueriesByPanelId(t *testing.T) {
 		json, err := simplejson.NewJson([]byte(`{"panels": {}}`))
 		require.NoError(t, err)
 
-		queries := groupQueriesByPanelId(json)
+		queries := service.groupQueriesByPanelId(context.Background(), SignedInUser, json)
 		require.Len(t, queries, 0)
 	})
 
@@ -1438,7 +1457,7 @@ func TestGroupQueriesByPanelId(t *testing.T) {
 		json, err := simplejson.NewJson([]byte(dashboardWithNoQueries))
 		require.NoError(t, err)
 
-		queries := groupQueriesByPanelId(json)
+		queries := service.groupQueriesByPanelId(context.Background(), SignedInUser, json)
 		require.Len(t, queries, 1)
 		require.Contains(t, queries, int64(2))
 		require.Len(t, queries[2], 0)
@@ -1448,7 +1467,7 @@ func TestGroupQueriesByPanelId(t *testing.T) {
 		json, err := simplejson.NewJson([]byte(dashboardWithQueriesExemplarEnabled))
 		require.NoError(t, err)
 
-		queries := groupQueriesByPanelId(json)
+		queries := service.groupQueriesByPanelId(context.Background(), SignedInUser, json)
 		require.Len(t, queries, 1)
 		require.Contains(t, queries, int64(2))
 		require.Len(t, queries[2], 2)
@@ -1482,7 +1501,7 @@ func TestGroupQueriesByPanelId(t *testing.T) {
 		json, err := simplejson.NewJson([]byte(oldStyleDashboard))
 		require.NoError(t, err)
 
-		queries := groupQueriesByPanelId(json)
+		queries := service.groupQueriesByPanelId(context.Background(), SignedInUser, json)
 		require.Len(t, queries, 1)
 		require.Contains(t, queries, int64(2))
 		require.Len(t, queries[2], 1)
@@ -1503,7 +1522,7 @@ func TestGroupQueriesByPanelId(t *testing.T) {
 	t.Run("hidden queries in a panel with an expression not filtered", func(t *testing.T) {
 		json, err := simplejson.NewJson([]byte(dashboardWithOneHiddenQuery))
 		require.NoError(t, err)
-		queries := groupQueriesByPanelId(json)[2]
+		queries := service.groupQueriesByPanelId(context.Background(), SignedInUser, json)[2]
 
 		require.Len(t, queries, 3)
 	})
@@ -1511,7 +1530,7 @@ func TestGroupQueriesByPanelId(t *testing.T) {
 	t.Run("all hidden queries in a panel with an expression not filtered", func(t *testing.T) {
 		json, err := simplejson.NewJson([]byte(dashboardWithAllHiddenQueries))
 		require.NoError(t, err)
-		queries := groupQueriesByPanelId(json)[2]
+		queries := service.groupQueriesByPanelId(context.Background(), SignedInUser, json)[2]
 
 		require.Len(t, queries, 3)
 	})
@@ -1520,7 +1539,7 @@ func TestGroupQueriesByPanelId(t *testing.T) {
 		json, err := simplejson.NewJson([]byte(dashboardWithRowsAndOneHiddenQuery))
 		require.NoError(t, err)
 
-		queries := groupQueriesByPanelId(json)
+		queries := service.groupQueriesByPanelId(context.Background(), SignedInUser, json)
 		for idx := range queries {
 			assert.NotNil(t, queries[idx])
 		}
@@ -1532,7 +1551,7 @@ func TestGroupQueriesByPanelId(t *testing.T) {
 		json, err := simplejson.NewJson([]byte(dashboardWithRowsAndOneHiddenQuery))
 		require.NoError(t, err)
 
-		queries := groupQueriesByPanelId(json)
+		queries := service.groupQueriesByPanelId(context.Background(), SignedInUser, json)
 		var totalQueries int
 		for idx := range queries {
 			totalQueries += len(queries[idx])
