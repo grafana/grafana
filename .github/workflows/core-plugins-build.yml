@@ -32,6 +32,13 @@ jobs:
       steps:
         - name: checkout
           uses: actions/checkout@v3
+        - name: check secrets
+          env:
+            GCOM_TOKEN: ${{ secrets.PLUGINS_GCOM_TOKEN }}
+            GRAFANA_API_KEY: ${{ secrets.PLUGINS_GRAFANA_API_KEY }}
+          run: |
+            if [ -z $GCOM_TOKEN ]; then exit 1; fi
+            if [ -z $GRAFANA_API_KEY ]; then exit 1; fi
         - name: Verify plugin_id
           run: |
             echo "Verifying plugin_id: ${{ env.plugin_id }}"
@@ -128,7 +135,7 @@ jobs:
               mkdir -p ci/jobs/package
               bin/grabpl plugin package
           env:
-            GRAFANA_API_KEY: TBD # ${{ secrets.GRAFANA_PLUGINS_SIGN_AND_PUBLISH_TOKEN }}
+            GRAFANA_API_KEY: ${{ secrets.PLUGINS_GRAFANA_API_KEY }}
             PLUGIN_SIGNATURE_TYPE: grafana
         - name: store build artifacts
           uses: actions/upload-artifact@v3
@@ -147,10 +154,11 @@ jobs:
             gsutil -m cp -r ci/packages/*darwin* gs://${{ env.GCP_BUCKET }}/${{ env.plugin_id }}/release/${version}/darwin
             gsutil -m cp -r ci/packages/*any* gs://${{ env.GCP_BUCKET }}/${{ env.plugin_id }}/release/${version}/any
         - name: Publish new plugin version on grafana.com
+          env:
+            GCOM_TOKEN: ${{ secrets.PLUGINS_GCOM_TOKEN }}
           run: |
             echo "Publish new plugin version on grafana.com:"
-            # TODO: gcom (not dev)
-            gcom-dev /plugins -H "Content-Type: application/json" -d "{
+            curl -H "Authorization: Bearer $GCOM_TOKEN" -H "Content-Type: application/json"  https://grafana-dev.com/api/plugins "{
               \"url\": \"https://github.com/grafana/grafana/tree/main/public/plugins/${{ env.plugin_id }}\",
               \"download\": {
                 \"linux-amd64\": {
