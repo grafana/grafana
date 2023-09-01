@@ -67,10 +67,10 @@ func (s *NamespacedStore) Get(ctx context.Context, key string) (string, bool, er
 }
 
 // Set sets the value for the given key and updates the last updated time.
-// It uses the Marshal method to marshal the value before storing it.
+// It uses the marshal method to marshal the value before storing it.
 // This means that the value to store can implement the Marshaler interface to control how it is stored.
 func (s *NamespacedStore) Set(ctx context.Context, key string, value any) error {
-	valueToStore, err := Marshal(value)
+	valueToStore, err := marshal(value)
 	if err != nil {
 		return fmt.Errorf("marshal: %w", err)
 	}

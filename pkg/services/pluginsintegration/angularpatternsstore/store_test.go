@@ -9,7 +9,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/kvstore"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/cachekvstore"
 )
 
 func TestAngularPatternsStore(t *testing.T) {
@@ -28,7 +27,7 @@ func TestAngularPatternsStore(t *testing.T) {
 		})
 
 		t.Run("set and get", func(t *testing.T) {
-			err := svc.Set(context.Background(), cachekvstore.NewJSONMarshaler(mockPatterns))
+			err := svc.Set(context.Background(), mockPatterns)
 			require.NoError(t, err)
 
 			expV, err := json.Marshal(mockPatterns)
@@ -52,7 +51,7 @@ func TestAngularPatternsStore(t *testing.T) {
 		})
 
 		t.Run("not empty", func(t *testing.T) {
-			err := svc.Set(context.Background(), cachekvstore.NewJSONMarshaler(mockPatterns))
+			err := svc.Set(context.Background(), mockPatterns)
 			require.NoError(t, err)
 
 			lastUpdated, err := svc.GetLastUpdated(context.Background())

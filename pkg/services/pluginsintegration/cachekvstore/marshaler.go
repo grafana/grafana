@@ -5,37 +5,11 @@ import (
 	"fmt"
 )
 
-// Marshaler can marshal a value to a string before storing it into the key-value store.
-type Marshaler interface {
-	Marshal() (string, error)
-}
-
-// JSONMarshaler is a Marshaler that marshals the value to JSON.
-type JSONMarshaler struct {
-	value any
-}
-
-// NewJSONMarshaler returns a new JSONMarshaler for the provided value.
-func NewJSONMarshaler(v any) JSONMarshaler {
-	return JSONMarshaler{value: v}
-}
-
-// Marshal marshals the value to JSON using json.Marshal, and returns it as a string.
-func (m JSONMarshaler) Marshal() (string, error) {
-	b, err := json.Marshal(m.value)
-	if err != nil {
-		return "", fmt.Errorf("json marshal: %w", err)
-	}
-	return string(b), nil
-}
-
-// Marshal is the default marshaling function. It marshals the provided value to a string.
-// The provided value can be of a type implementing Marshaler, fmt.Stringer or a string, []byte.
-// It returns an error if the type is not supported.
-func Marshal(value any) (string, error) {
+// marshal marshals the provided value to a string to store it in the kv store.
+// The provided value can be of a type implementing fmt.Stringer, a string or []byte.
+// If the value is none of those, it is marshaled to JSON.
+func marshal(value any) (string, error) {
 	switch value := value.(type) {
-	case Marshaler:
-		return value.Marshal()
 	case fmt.Stringer:
 		return value.String(), nil
 	case string:
@@ -43,6 +17,10 @@ func Marshal(value any) (string, error) {
 	case []byte:
 		return string(value), nil
 	default:
-		return "", fmt.Errorf("unsupported value type: %T", value)
+		b, err := json.Marshal(value)
+		if err != nil {
+			return "", fmt.Errorf("json marshal: %w", err)
+		}
+		return string(b), nil
 	}
 }
