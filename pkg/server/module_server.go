@@ -109,7 +109,7 @@ func (s *ModuleServer) Run() error {
 	s.log.Debug("Waiting on services...")
 
 	// Only allow individual dskit modules to run in dev mode.
-	if s.cfg.Env != "dev" {
+	if s.cfg.Env != "development" {
 		if len(s.cfg.Target) > 1 || s.cfg.Target[0] != "all" {
 			s.log.Error("dskit module targeting is only supported in dev mode. Falling back to 'all'")
 			s.cfg.Target = []string{"all"}
