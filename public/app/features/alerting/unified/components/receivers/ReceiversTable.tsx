@@ -283,7 +283,7 @@ function NotifiersTable({ notifiersState }: NotifiersTableProps) {
     })
   );
 
-  return <DynamicTable items={notifierRows} cols={getNotifierColumns()} />;
+  return <DynamicTable items={notifierRows} cols={getNotifierColumns()} pagination={{ itemsPerPage: 25 }} />;
 }
 
 interface Props {
@@ -326,7 +326,7 @@ export const ReceiversTable = ({ config, alertManagerName }: Props) => {
   };
 
   const receivers = useGetReceiversWithGrafanaAppTypes(config.alertmanager_config.receivers ?? []);
-  const rows: RowItemTableProps[] = useMemo(() => {
+  let rows: RowItemTableProps[] = useMemo(() => {
     return (
       receivers?.map((receiver: ReceiverWithTypes) => ({
         id: receiver.name,
@@ -375,6 +375,7 @@ export const ReceiversTable = ({ config, alertManagerName }: Props) => {
       }
     >
       <DynamicTable
+        pagination={{ itemsPerPage: 25 }}
         items={rows}
         cols={columns}
         isExpandable={errorStateAvailable}
