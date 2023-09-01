@@ -97,4 +97,3 @@ To set a custom limit, set the `size` property in your query.
 [variables]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables"
 [variables]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables"
 {{% /docs/reference %}}
-

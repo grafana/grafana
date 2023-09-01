@@ -87,40 +87,40 @@ Use the **plus icon** to the right to add multiple metrics to your query. Click 
   - histogram - Depicts frequency distributions. See [Histogram aggregation](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-bucket-histogram-aggregation.html).
   - nested (experimental) - See [Nested aggregation](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-bucket-nested-aggregation.html).
 
-Each group by option will have a different subset of options to further narrow your query.  
+Each group by option will have a different subset of options to further narrow your query.
 
 The following options are specific to the **date histogram** bucket aggregation option.
 
-  - **Time field** - Depicts date data options. The default option can be specified when configuring the Elasticsearch data source in the **Time field name** under the [**Elasticsearch details**](/docs/grafana/latest/datasources/elasticsearch/configure-elasticsearch-data-source/#elasticsearch-details) section. Otherwise **@timestamp** field will be used as a default option. 
-  - **Interval** - Group by a type of interval. There are option to choose from the dropdown menu to select seconds, minutes, hours or day. You can also add a custom interval such as `30d` (30 days). `Auto` is the default option.
-  - **Min doc count** - The minimum amount of data to include in your query. The default is `0`.
-  - **Thin edges** - Select to trim edges on the time series data points. The default is `0`.
-  - **Offset** - Changes the start value of each bucket by the specified positive(+) or negative (-) offset duration. Examples include `1h` for 1 hour, `5s` for 5 seconds or `1d` for 1 day.
-  - **Timezone** - Select a timezone from the dropdown menu. The default is `Coordinated universal time`.
+- **Time field** - Depicts date data options. The default option can be specified when configuring the Elasticsearch data source in the **Time field name** under the [**Elasticsearch details**](/docs/grafana/latest/datasources/elasticsearch/configure-elasticsearch-data-source/#elasticsearch-details) section. Otherwise **@timestamp** field will be used as a default option.
+- **Interval** - Group by a type of interval. There are option to choose from the dropdown menu to select seconds, minutes, hours or day. You can also add a custom interval such as `30d` (30 days). `Auto` is the default option.
+- **Min doc count** - The minimum amount of data to include in your query. The default is `0`.
+- **Thin edges** - Select to trim edges on the time series data points. The default is `0`.
+- **Offset** - Changes the start value of each bucket by the specified positive(+) or negative (-) offset duration. Examples include `1h` for 1 hour, `5s` for 5 seconds or `1d` for 1 day.
+- **Timezone** - Select a timezone from the dropdown menu. The default is `Coordinated universal time`.
 
 Configure the following options for the **terms** bucket aggregation option:
 
-  - **Order** - Sets the order of data.  Options are `top` or `bottom.`
-  - **Size** - Limits the number of documents, or size of the data set.  You can set a custom number or `no limit`.
-  - **Min doc count** - The minimum amount of data to include in your query. The default is `0`.
-  - **Order by** - Order terms by `term value`, `doc count` or `count`.
-  - **Missing** - Defines how documents missing a value should be treated. Missing values are ignored by default, but they can be treated as if they had a value. See [Missing value](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-bucket-terms-aggregation.html#_missing_value_5) in Elasticsearch's documentation for more information.
+- **Order** - Sets the order of data. Options are `top` or `bottom.`
+- **Size** - Limits the number of documents, or size of the data set. You can set a custom number or `no limit`.
+- **Min doc count** - The minimum amount of data to include in your query. The default is `0`.
+- **Order by** - Order terms by `term value`, `doc count` or `count`.
+- **Missing** - Defines how documents missing a value should be treated. Missing values are ignored by default, but they can be treated as if they had a value. See [Missing value](https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-bucket-terms-aggregation.html#_missing_value_5) in Elasticsearch's documentation for more information.
 
 Configure the following options for the **filters** bucket aggregation option:
 
-  - **Query** - Specify the query to create a bucket of documents (data). Examples are `hostname:"hostname1"`, `product:"widget5"`. Use the * wildcard to match any number of characters.
-  - **Label** - Add a label or name to the bucket.
+- **Query** - Specify the query to create a bucket of documents (data). Examples are `hostname:"hostname1"`, `product:"widget5"`. Use the \* wildcard to match any number of characters.
+- **Label** - Add a label or name to the bucket.
 
 Configure the following options for the **geo hash grid** bucket aggregation option:
 
-   - **Precision** - Specifies the number of characters of the geo hash.
+- **Precision** - Specifies the number of characters of the geo hash.
 
 Configure the following options for the **histogram** bucket aggregation option:
 
-  - **Interval** - Group by a type of interval. There are option to choose from the dropdown menu to select seconds, minutes, hours or day. You can also add a custom interval such as `30d` (30 days). `Auto` is the default option.
-  - **Min doc count** - The minimum amount of data to include in your query. The default is `0`
+- **Interval** - Group by a type of interval. There are option to choose from the dropdown menu to select seconds, minutes, hours or day. You can also add a custom interval such as `30d` (30 days). `Auto` is the default option.
+- **Min doc count** - The minimum amount of data to include in your query. The default is `0`
 
-The **nested** group by option is currently experimental, you can select a field and then settings specific to that field. 
+The **nested** group by option is currently experimental, you can select a field and then settings specific to that field.
 
 Click the **+ sign** to add multiple group by options. The data will grouped in order (first by, then by).
 
@@ -131,7 +131,6 @@ Click the **+ sign** to add multiple group by options. The data will grouped in 
 Logs queries analyze Elasticsearch log data. You can configure the following options:
 
 - **Logs Options/Limit** - Limits the number of logs to analyze. The default is `500`.
-
 
 ### Raw data query type
 
@@ -154,4 +153,3 @@ To set a custom limit, set the `size` property in your query.
 [query-transform-data]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/query-transform-data"
 [query-transform-data]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/query-transform-data"
 {{% /docs/reference %}}
-
