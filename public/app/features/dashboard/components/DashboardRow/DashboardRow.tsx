@@ -55,7 +55,7 @@ export class DashboardRow extends React.Component<DashboardRowProps> {
           <TextLink
             external
             href={
-              'https://grafana.com/docs/grafana/latest/dashboards/build-dashboards/create-dashboard/#configure-repeating-rows'
+              'https://grafana.com/docs/grafana/next/dashboards/build-dashboards/create-dashboard/#configure-repeating-rows'
             }
           >
             Learn more
