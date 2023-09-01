@@ -8,12 +8,12 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
 import { config, logInfo } from '@grafana/runtime';
 import {
+  AutoSizeInput,
   Button,
   ConfirmModal,
   CustomScrollbar,
   Field,
   HorizontalGroup,
-  Input,
   Spinner,
   Text,
   useStyles2,
@@ -77,8 +77,9 @@ const AlertRuleNameInput = () => {
       }
     >
       <Field label="Name" error={errors?.name?.message} invalid={!!errors.name?.message}>
-        <Input
+        <AutoSizeInput
           id="name"
+          minWidth={30}
           {...register('name', {
             required: { value: true, message: 'Must enter an alert name' },
             pattern: ruleFormType === RuleFormType.cloudRecording ? recordingRuleNameValidationPattern : undefined,
