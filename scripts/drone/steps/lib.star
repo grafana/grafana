@@ -909,6 +909,7 @@ def build_docs_website_step():
         "image": images["docs_image"],
         "commands": [
             "mkdir -p /hugo/content/docs/grafana/latest",
+            "echo -e '---\\nredirectURL: /docs/grafana/latest/\\ntype: redirect\\nversioned: true\\n---\\n' > /hugo/content/docs/grafana/_index.md",
             "cp -r docs/sources/* /hugo/content/docs/grafana/latest/",
             "cd /hugo && make prod",
         ],
