@@ -15,7 +15,13 @@ labels:
 [//]: # 'If you make changes to this file, verify that the meaning and content are not changed in any place where the file is included.'
 [//]: # 'Any links should be fully qualified and not relative: /docs/grafana/ instead of ../grafana/.'
 
-# Write TraceQL queries using the query editor
+<!-- # Write TraceQL queries using the query editor -->
+
+Inspired by PromQL and LogQL, TraceQL is a query language designed for selecting traces.
+TraceQL provides a method for formulating precise queries so you can zoom in to the data you need.
+Query results are returned faster because the queries limit what is searched.
+
+To learn more about how to query by TraceQL, refer to the [TraceQL documentation](/docs/tempo/latest/traceql).
 
 The TraceQL query editor, located on the **Explore** > **TraceQL** tab in Grafana, lets you search by trace ID and write TraceQL queries using autocomplete.
 
