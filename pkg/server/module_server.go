@@ -11,6 +11,7 @@ import (
 	"sync"
 
 	"github.com/grafana/dskit/services"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 
 	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -21,8 +22,8 @@ import (
 
 // NewModule returns an instance of a ModuleServer, responsible for managing
 // dskit modules (services).
-func NewModule(opts Options, apiOpts api.ServerOptions, cfg *setting.Cfg) (*ModuleServer, error) {
-	s, err := newModuleServer(opts, apiOpts, cfg)
+func NewModule(opts Options, apiOpts api.ServerOptions, features featuremgmt.FeatureToggles, cfg *setting.Cfg) (*ModuleServer, error) {
+	s, err := newModuleServer(opts, apiOpts, features, cfg)
 	if err != nil {
 		return nil, err
 	}
@@ -34,7 +35,7 @@ func NewModule(opts Options, apiOpts api.ServerOptions, cfg *setting.Cfg) (*Modu
 	return s, nil
 }
 
-func newModuleServer(opts Options, apiOpts api.ServerOptions, cfg *setting.Cfg) (*ModuleServer, error) {
+func newModuleServer(opts Options, apiOpts api.ServerOptions, features featuremgmt.FeatureToggles, cfg *setting.Cfg) (*ModuleServer, error) {
 	rootCtx, shutdownFn := context.WithCancel(context.Background())
 
 	s := &ModuleServer{
@@ -44,6 +45,7 @@ func newModuleServer(opts Options, apiOpts api.ServerOptions, cfg *setting.Cfg) 
 		shutdownFn:       shutdownFn,
 		shutdownFinished: make(chan struct{}),
 		log:              log.New("base-server"),
+		features:         features,
 		cfg:              cfg,
 		pidFile:          opts.PidFile,
 		version:          opts.Version,
@@ -61,6 +63,7 @@ type ModuleServer struct {
 	opts    Options
 	apiOpts api.ServerOptions
 
+	features         featuremgmt.FeatureToggles
 	context          context.Context
 	shutdownFn       context.CancelFunc
 	log              log.Logger
@@ -119,9 +122,13 @@ func (s *ModuleServer) Run() error {
 		return NewService(s.cfg, s.opts, s.apiOpts)
 	})
 
-	m.RegisterModule(modules.GrafanaAPIServer, func() (services.Service, error) {
-		return grafanaapiserver.New(path.Join(s.cfg.DataPath, "k8s"))
-	})
+	if s.features.IsEnabled(featuremgmt.FlagGrafanaAPIServer) {
+		m.RegisterModule(modules.GrafanaAPIServer, func() (services.Service, error) {
+			return grafanaapiserver.New(path.Join(s.cfg.DataPath, "k8s"))
+		})
+	} else {
+		s.log.Debug("apiserver feature is disabled")
+	}
 
 	m.RegisterModule(modules.All, nil)
 

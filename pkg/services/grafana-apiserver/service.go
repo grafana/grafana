@@ -12,8 +12,8 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/grafana/dskit/services"
 	grafanaapiserveroptions "github.com/grafana/grafana-apiserver/pkg/cmd/server/options"
+	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/modules"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"k8s.io/apiserver/pkg/authentication/authenticator"
 	"k8s.io/apiserver/pkg/authentication/request/headerrequest"
 	"k8s.io/apiserver/pkg/authentication/user"
@@ -30,9 +30,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/middleware"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -66,42 +64,14 @@ type service struct {
 	stoppedCh chan error
 }
 
-func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, rr routing.RouteRegister) (*service, error) {
+func New(dataPath string) (*service, error) {
 	s := &service{
-		rr:       rr,
-		dataPath: path.Join(cfg.DataPath, "k8s"),
+		dataPath: dataPath,
 		stopCh:   make(chan struct{}),
 	}
 
 	s.BasicService = services.NewBasicService(s.start, s.running, nil).WithName(modules.GrafanaAPIServer)
 
-	s.rr.Group("/k8s", func(k8sRoute routing.RouteRegister) {
-		handler := func(c *contextmodel.ReqContext) {
-			if s.handler == nil {
-				c.Resp.WriteHeader(404)
-				_, _ = c.Resp.Write([]byte("Not found"))
-				return
-			}
-
-			if handle, ok := s.handler.(func(c *contextmodel.ReqContext)); ok {
-				handle(c)
-				return
-			}
-		}
-		k8sRoute.Any("/", middleware.ReqSignedIn, handler)
-		k8sRoute.Any("/*", middleware.ReqSignedIn, handler)
-	})
-
-	s.BasicService = services.NewBasicService(s.start, s.running, nil).WithName(modules.GrafanaAPIServer)
-	if err := s.BasicService.StartAsync(context.Background()); err != nil {
-		s.log.Error("failed to start service", "err", err)
-		return nil, err
-	}
-	if err := s.BasicService.AwaitRunning(context.Background()); err != nil {
-		s.log.Error("failed to run service", "err", err)
-		return nil, err
-	}
-	s.log.Debug("apiserver created successfully")
 	return s, nil
 }
 
@@ -199,6 +169,23 @@ func (s *service) start(ctx context.Context) error {
 		resp := responsewriter.WrapForHTTP1Or2(c.Resp)
 		prepared.GenericAPIServer.Handler.ServeHTTP(resp, req)
 	}
+
+	s.rr.Group("/k8s", func(k8sRoute routing.RouteRegister) {
+		handler := func(c *contextmodel.ReqContext) {
+			if s.handler == nil {
+				c.Resp.WriteHeader(404)
+				_, _ = c.Resp.Write([]byte("Not found"))
+				return
+			}
+
+			if handle, ok := s.handler.(func(c *contextmodel.ReqContext)); ok {
+				handle(c)
+				return
+			}
+		}
+		k8sRoute.Any("/", middleware.ReqSignedIn, handler)
+		k8sRoute.Any("/*", middleware.ReqSignedIn, handler)
+	})
 
 	go func() {
 		s.stoppedCh <- prepared.Run(s.stopCh)
