@@ -90,11 +90,11 @@ func Internal(msgID string, opts ...BaseOpt) Base {
 	return NewBase(StatusInternal, msgID, opts...)
 }
 
-// RequestTimeout initializes a new [Base] error with reason StatusRequestTimeout.
+// Timeout initializes a new [Base] error with reason StatusTimeout.
 //
 //	area.timeout
-func RequestTimeout(msgID string, opts ...BaseOpt) Base {
-	return NewBase(StatusRequestTimeout, msgID, opts...)
+func Timeout(msgID string, opts ...BaseOpt) Base {
+	return NewBase(StatusTimeout, msgID, opts...)
 }
 
 // Unauthorized initializes a new [Base] error with reason StatusUnauthorized

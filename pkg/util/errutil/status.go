@@ -37,10 +37,10 @@ const (
 	// an error, but that there is nothing the client can do to fix it.
 	// HTTP status code 500.
 	StatusInternal CoreStatus = "Internal server error"
-	// StatusRequestTimeout means that the server did not complete the request
+	// StatusTimeout means that the server did not complete the request
 	// within the required time and aborted the action.
-	// HTTP status code 408.
-	StatusRequestTimeout CoreStatus = "Timeout"
+	// HTTP status code 504.
+	StatusTimeout CoreStatus = "Timeout"
 	// StatusNotImplemented means that the server does not support the
 	// requested action. Typically used during development of new
 	// features.
@@ -78,8 +78,8 @@ func (s CoreStatus) HTTPStatus() int {
 		return http.StatusForbidden
 	case StatusNotFound:
 		return http.StatusNotFound
-	case StatusRequestTimeout:
-		return http.StatusRequestTimeout
+	case StatusTimeout, StatusGatewayTimeout:
+		return http.StatusGatewayTimeout
 	case StatusTooManyRequests:
 		return http.StatusTooManyRequests
 	case StatusBadRequest, StatusValidationFailed:
@@ -88,8 +88,6 @@ func (s CoreStatus) HTTPStatus() int {
 		return http.StatusNotImplemented
 	case StatusBadGateway:
 		return http.StatusBadGateway
-	case StatusGatewayTimeout:
-		return http.StatusGatewayTimeout
 	case StatusUnknown, StatusInternal:
 		return http.StatusInternalServerError
 	default:
@@ -106,7 +104,7 @@ func (s CoreStatus) LogLevel() LogLevel {
 		return LevelInfo
 	case StatusNotFound:
 		return LevelInfo
-	case StatusRequestTimeout:
+	case StatusTimeout:
 		return LevelInfo
 	case StatusTooManyRequests:
 		return LevelInfo
