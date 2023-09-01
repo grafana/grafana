@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/folder"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -60,6 +61,7 @@ type migration struct {
 	encryptionService secrets.Service
 	dashboardService  dashboards.DashboardService
 	folderService     folder.Service
+	dsCacheService    datasources.CacheService
 }
 
 func newMigration(
@@ -72,6 +74,7 @@ func newMigration(
 	encryptionService secrets.Service,
 	dashboardService dashboards.DashboardService,
 	folderService folder.Service,
+	dsCacheService datasources.CacheService,
 ) *migration {
 	return &migration{
 		// We deduplicate for case-insensitive matching in MySQL-compatible backend flavours because they use case-insensitive collation.
@@ -86,6 +89,7 @@ func newMigration(
 		encryptionService: encryptionService,
 		dashboardService:  dashboardService,
 		folderService:     folderService,
+		dsCacheService:    dsCacheService,
 	}
 }
 
@@ -100,12 +104,6 @@ func (m *migration) Exec(ctx context.Context) error {
 		return err
 	}
 	m.log.Info("alerts found to migrate", "alerts", len(dashAlerts))
-
-	// [orgID, dataSourceId] -> UID
-	dsIDMap, err := m.slurpDSIDs(ctx)
-	if err != nil {
-		return err
-	}
 
 	// cache for folders created for dashboards that have custom permissions
 	folderCache := make(map[string]*folder.Folder)
@@ -143,7 +141,7 @@ func (m *migration) Exec(ctx context.Context) error {
 	for _, da := range dashAlerts {
 		l := m.log.New("ruleID", da.Id, "ruleName", da.Name, "dashboardID", da.DashboardId, "orgID", da.OrgId)
 		l.Debug("migrating alert rule to Unified Alerting")
-		newCond, err := transConditions(*da.ParsedSettings, da.OrgId, dsIDMap)
+		newCond, err := transConditions(ctx, *da.ParsedSettings, da.OrgId, m.dsCacheService)
 		if err != nil {
 			return err
 		}
