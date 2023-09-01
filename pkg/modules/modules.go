@@ -3,7 +3,6 @@ package modules
 import (
 	"context"
 	"errors"
-	"time"
 
 	"github.com/grafana/dskit/modules"
 	"github.com/grafana/dskit/services"
@@ -52,7 +51,6 @@ func New(
 func (m *service) Run(ctx context.Context) error {
 	var err error
 
-	time.Sleep(10 * time.Second)
 	for mod, targets := range dependencyMap {
 		if !m.moduleManager.IsModuleRegistered(mod) {
 			continue
