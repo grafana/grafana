@@ -18,11 +18,12 @@ import { createPanelJSONFixture } from 'app/features/dashboard/state/__fixtures_
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard';
 import { DASHBOARD_DATASOURCE_PLUGIN_ID } from 'app/plugins/datasource/dashboard/types';
 
+import { PanelTimeRange } from '../scene/PanelTimeRange';
 import { ShareQueryDataProvider } from '../scene/ShareQueryDataProvider';
 
 import {
   createDashboardSceneFromDashboardModel,
-  createVizPanelFromPanelModel,
+  buildSceneFromPanelModel,
   createSceneVariableFromVariableModel,
 } from './transformSaveModelToScene';
 
@@ -234,7 +235,7 @@ describe('DashboardLoader', () => {
           },
         ],
       };
-      const vizPanelSceneObject = createVizPanelFromPanelModel(new PanelModel(panel));
+      const vizPanelSceneObject = buildSceneFromPanelModel(new PanelModel(panel));
       const vizPanelItelf = vizPanelSceneObject.state.body as VizPanel;
       expect(vizPanelItelf?.state.title).toBe('test');
       expect(vizPanelItelf?.state.pluginId).toBe('test-plugin');
@@ -262,11 +263,27 @@ describe('DashboardLoader', () => {
         transparent: true,
       };
 
-      const gridItem = createVizPanelFromPanelModel(new PanelModel(panel));
+      const gridItem = buildSceneFromPanelModel(new PanelModel(panel));
       const vizPanel = gridItem.state.body as VizPanel;
 
       expect(vizPanel.state.displayMode).toEqual('transparent');
       expect(vizPanel.state.hoverHeader).toEqual(true);
+    });
+
+    it('should set PanelTimeRange when timeFrom or timeShift is present', () => {
+      const panel = {
+        type: 'test-plugin',
+        timeFrom: '2h',
+        timeShift: '1d',
+      };
+
+      const gridItem = buildSceneFromPanelModel(new PanelModel(panel));
+      const vizPanel = gridItem.state.body as VizPanel;
+      const timeRange = vizPanel.state.$timeRange as PanelTimeRange;
+
+      expect(timeRange).toBeInstanceOf(PanelTimeRange);
+      expect(timeRange.state.timeFrom).toBe('2h');
+      expect(timeRange.state.timeShift).toBe('1d');
     });
 
     it('should handle a dashboard query data source', () => {
@@ -279,7 +296,7 @@ describe('DashboardLoader', () => {
         targets: [{ refId: 'A', panelId: 10 }],
       };
 
-      const vizPanel = createVizPanelFromPanelModel(new PanelModel(panel)).state.body as VizPanel;
+      const vizPanel = buildSceneFromPanelModel(new PanelModel(panel)).state.body as VizPanel;
 
       expect(vizPanel.state.$data).toBeInstanceOf(ShareQueryDataProvider);
     });
@@ -297,7 +314,7 @@ describe('DashboardLoader', () => {
         skipDataQuery: true,
       }).meta;
 
-      const gridItem = createVizPanelFromPanelModel(new PanelModel(panel));
+      const gridItem = buildSceneFromPanelModel(new PanelModel(panel));
       const vizPanel = gridItem.state.body as VizPanel;
 
       expect(vizPanel.state.$data).toBeUndefined();
