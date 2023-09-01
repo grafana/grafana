@@ -4174,8 +4174,10 @@ steps:
   volumes:
   - name: docker
     path: /var/run/docker.sock
+  - name: config
+    path: /root/.docker/
 - commands:
-  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/grafana:latest
+  - trivy image --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/grafana:latest
   depends_on:
   - authenticate-gcr
   image: aquasec/trivy:0.21.0
@@ -4183,15 +4185,22 @@ steps:
   volumes:
   - name: docker
     path: /var/run/docker.sock
+  - name: config
+    path: /root/.docker/
 - commands:
-  - trivy --exit-code 1 --severity HIGH,CRITICAL grafana/grafana:latest
+  - trivy image --exit-code 1 --severity HIGH,CRITICAL grafana/grafana:latest
   depends_on:
   - authenticate-gcr
+  environment:
+    GOOGLE_APPLICATION_CREDENTIALS:
+      from_secret: gcr_credentials_json
   image: aquasec/trivy:0.21.0
   name: scan-high-critical-vulnerabilities
   volumes:
   - name: docker
     path: /var/run/docker.sock
+  - name: config
+    path: /root/.docker/
 - image: plugins/slack
   name: slack-notify-failure
   settings:
@@ -4209,6 +4218,8 @@ volumes:
 - host:
     path: /var/run/docker.sock
   name: docker
+- name: config
+  temp: {}
 ---
 clone:
   retries: 3
@@ -4228,8 +4239,10 @@ steps:
   volumes:
   - name: docker
     path: /var/run/docker.sock
+  - name: config
+    path: /root/.docker/
 - commands:
-  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/grafana:main
+  - trivy image --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/grafana:main
   depends_on:
   - authenticate-gcr
   image: aquasec/trivy:0.21.0
@@ -4237,15 +4250,22 @@ steps:
   volumes:
   - name: docker
     path: /var/run/docker.sock
+  - name: config
+    path: /root/.docker/
 - commands:
-  - trivy --exit-code 1 --severity HIGH,CRITICAL grafana/grafana:main
+  - trivy image --exit-code 1 --severity HIGH,CRITICAL grafana/grafana:main
   depends_on:
   - authenticate-gcr
+  environment:
+    GOOGLE_APPLICATION_CREDENTIALS:
+      from_secret: gcr_credentials_json
   image: aquasec/trivy:0.21.0
   name: scan-high-critical-vulnerabilities
   volumes:
   - name: docker
     path: /var/run/docker.sock
+  - name: config
+    path: /root/.docker/
 - image: plugins/slack
   name: slack-notify-failure
   settings:
@@ -4263,6 +4283,8 @@ volumes:
 - host:
     path: /var/run/docker.sock
   name: docker
+- name: config
+  temp: {}
 ---
 clone:
   retries: 3
@@ -4282,8 +4304,10 @@ steps:
   volumes:
   - name: docker
     path: /var/run/docker.sock
+  - name: config
+    path: /root/.docker/
 - commands:
-  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/grafana:latest-ubuntu
+  - trivy image --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/grafana:latest-ubuntu
   depends_on:
   - authenticate-gcr
   image: aquasec/trivy:0.21.0
@@ -4291,15 +4315,22 @@ steps:
   volumes:
   - name: docker
     path: /var/run/docker.sock
+  - name: config
+    path: /root/.docker/
 - commands:
-  - trivy --exit-code 1 --severity HIGH,CRITICAL grafana/grafana:latest-ubuntu
+  - trivy image --exit-code 1 --severity HIGH,CRITICAL grafana/grafana:latest-ubuntu
   depends_on:
   - authenticate-gcr
+  environment:
+    GOOGLE_APPLICATION_CREDENTIALS:
+      from_secret: gcr_credentials_json
   image: aquasec/trivy:0.21.0
   name: scan-high-critical-vulnerabilities
   volumes:
   - name: docker
     path: /var/run/docker.sock
+  - name: config
+    path: /root/.docker/
 - image: plugins/slack
   name: slack-notify-failure
   settings:
@@ -4318,6 +4349,8 @@ volumes:
 - host:
     path: /var/run/docker.sock
   name: docker
+- name: config
+  temp: {}
 ---
 clone:
   retries: 3
@@ -4337,8 +4370,10 @@ steps:
   volumes:
   - name: docker
     path: /var/run/docker.sock
+  - name: config
+    path: /root/.docker/
 - commands:
-  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/grafana:main-ubuntu
+  - trivy image --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/grafana:main-ubuntu
   depends_on:
   - authenticate-gcr
   image: aquasec/trivy:0.21.0
@@ -4346,15 +4381,22 @@ steps:
   volumes:
   - name: docker
     path: /var/run/docker.sock
+  - name: config
+    path: /root/.docker/
 - commands:
-  - trivy --exit-code 1 --severity HIGH,CRITICAL grafana/grafana:main-ubuntu
+  - trivy image --exit-code 1 --severity HIGH,CRITICAL grafana/grafana:main-ubuntu
   depends_on:
   - authenticate-gcr
+  environment:
+    GOOGLE_APPLICATION_CREDENTIALS:
+      from_secret: gcr_credentials_json
   image: aquasec/trivy:0.21.0
   name: scan-high-critical-vulnerabilities
   volumes:
   - name: docker
     path: /var/run/docker.sock
+  - name: config
+    path: /root/.docker/
 - image: plugins/slack
   name: slack-notify-failure
   settings:
@@ -4373,6 +4415,8 @@ volumes:
 - host:
     path: /var/run/docker.sock
   name: docker
+- name: config
+  temp: {}
 ---
 clone:
   retries: 3
@@ -4392,6 +4436,8 @@ steps:
   volumes:
   - name: docker
     path: /var/run/docker.sock
+  - name: config
+    path: /root/.docker/
 - commands:
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM google/cloud-sdk:431.0.0
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/build-container:1.7.5
@@ -4419,6 +4465,8 @@ steps:
   volumes:
   - name: docker
     path: /var/run/docker.sock
+  - name: config
+    path: /root/.docker/
 - commands:
   - trivy --exit-code 1 --severity HIGH,CRITICAL google/cloud-sdk:431.0.0
   - trivy --exit-code 1 --severity HIGH,CRITICAL grafana/build-container:1.7.5
@@ -4441,11 +4489,16 @@ steps:
   - trivy --exit-code 1 --severity HIGH,CRITICAL us-docker.pkg.dev/grafanalabs-dev/cloud-data-sources/e2e:latest
   depends_on:
   - authenticate-gcr
+  environment:
+    GOOGLE_APPLICATION_CREDENTIALS:
+      from_secret: gcr_credentials_json
   image: aquasec/trivy:0.21.0
   name: scan-high-critical-vulnerabilities
   volumes:
   - name: docker
     path: /var/run/docker.sock
+  - name: config
+    path: /root/.docker/
 - image: plugins/slack
   name: slack-notify-failure
   settings:
@@ -4463,6 +4516,8 @@ volumes:
 - host:
     path: /var/run/docker.sock
   name: docker
+- name: config
+  temp: {}
 ---
 clone:
   retries: 3
@@ -4498,6 +4553,8 @@ volumes:
 - host:
     path: /var/run/docker.sock
   name: docker
+- name: config
+  temp: {}
 ---
 get:
   name: credentials.json
@@ -4512,8 +4569,8 @@ kind: secret
 name: gcp_grafanauploads_base64
 ---
 get:
-  name: grafana_api_key
-  path: infra/data/ci/drone-plugins
+  name: api_key
+  path: infra/data/ci/grafana-release-eng/grafanacom
 kind: secret
 name: grafana_api_key
 ---
@@ -4674,6 +4731,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 37c8cdea5d79479014c2bee1b93433549ba5f8d5f2eef4f599247312c661118c
+hmac: fe74c275ebfa4c5fc190b08d9b452abb3dd35120a5e3616231bcbcd7d1f5e614
 
 ...

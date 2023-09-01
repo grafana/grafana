@@ -288,13 +288,6 @@ export async function getAfterSelectorCompletions(
 
   completions.push({
     type: 'PIPE_OPERATION',
-    label: 'distinct',
-    insertText: `${prefix}distinct`,
-    documentation: explainOperator(LokiOperationId.Distinct),
-  });
-
-  completions.push({
-    type: 'PIPE_OPERATION',
     label: 'drop',
     insertText: `${prefix}drop`,
     documentation: explainOperator(LokiOperationId.Drop),
@@ -359,18 +352,6 @@ async function getAfterUnwrapCompletions(
   return [...labelCompletions, ...UNWRAP_FUNCTION_COMPLETIONS];
 }
 
-async function getAfterDistinctCompletions(logQuery: string, dataProvider: CompletionDataProvider) {
-  const { extractedLabelKeys } = await dataProvider.getParserAndLabelKeys(logQuery);
-  const labelCompletions: Completion[] = extractedLabelKeys.map((label) => ({
-    type: 'LABEL_NAME',
-    label,
-    insertText: label,
-    triggerOnInsert: false,
-  }));
-
-  return [...labelCompletions];
-}
-
 async function getAfterKeepAndDropCompletions(logQuery: string, dataProvider: CompletionDataProvider) {
   const { extractedLabelKeys } = await dataProvider.getParserAndLabelKeys(logQuery);
   const labelCompletions: Completion[] = extractedLabelKeys.map((label) => ({
@@ -417,8 +398,6 @@ export async function getCompletions(
       return getAfterUnwrapCompletions(situation.logQuery, dataProvider);
     case 'IN_AGGREGATION':
       return [...FUNCTION_COMPLETIONS, ...AGGREGATION_COMPLETIONS];
-    case 'AFTER_DISTINCT':
-      return getAfterDistinctCompletions(situation.logQuery, dataProvider);
     case 'AFTER_KEEP_AND_DROP':
       return getAfterKeepAndDropCompletions(situation.logQuery, dataProvider);
     default:
