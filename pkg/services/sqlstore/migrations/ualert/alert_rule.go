@@ -309,7 +309,7 @@ func (d duration) MarshalJSON() ([]byte, error) {
 }
 
 func (d *duration) UnmarshalJSON(b []byte) error {
-	var v interface{}
+	var v any
 	if err := json.Unmarshal(b, &v); err != nil {
 		return err
 	}

@@ -52,26 +52,26 @@ const userInDbAvatar = "/avatar/402d08de060496d6b6874495fe20f5ad"
 func TestDeleteLibraryPanelsInFolder(t *testing.T) {
 	scenarioWithPanel(t, "When an admin tries to delete a folder that contains connected library elements, it should fail",
 		func(t *testing.T, sc scenarioContext) {
-			dashJSON := map[string]interface{}{
-				"panels": []interface{}{
-					map[string]interface{}{
+			dashJSON := map[string]any{
+				"panels": []any{
+					map[string]any{
 						"id": int64(1),
-						"gridPos": map[string]interface{}{
+						"gridPos": map[string]any{
 							"h": 6,
 							"w": 6,
 							"x": 0,
 							"y": 0,
 						},
 					},
-					map[string]interface{}{
+					map[string]any{
 						"id": int64(2),
-						"gridPos": map[string]interface{}{
+						"gridPos": map[string]any{
 							"h": 6,
 							"w": 6,
 							"x": 6,
 							"y": 0,
 						},
-						"libraryPanel": map[string]interface{}{
+						"libraryPanel": map[string]any{
 							"uid":  sc.initialResult.Result.UID,
 							"name": sc.initialResult.Result.Name,
 						},
@@ -125,26 +125,26 @@ func TestDeleteLibraryPanelsInFolder(t *testing.T) {
 func TestGetLibraryPanelConnections(t *testing.T) {
 	scenarioWithPanel(t, "When an admin tries to get connections of library panel, it should succeed and return correct result",
 		func(t *testing.T, sc scenarioContext) {
-			dashJSON := map[string]interface{}{
-				"panels": []interface{}{
-					map[string]interface{}{
+			dashJSON := map[string]any{
+				"panels": []any{
+					map[string]any{
 						"id": int64(1),
-						"gridPos": map[string]interface{}{
+						"gridPos": map[string]any{
 							"h": 6,
 							"w": 6,
 							"x": 0,
 							"y": 0,
 						},
 					},
-					map[string]interface{}{
+					map[string]any{
 						"id": int64(2),
-						"gridPos": map[string]interface{}{
+						"gridPos": map[string]any{
 							"h": 6,
 							"w": 6,
 							"x": 6,
 							"y": 0,
 						},
-						"libraryPanel": map[string]interface{}{
+						"libraryPanel": map[string]any{
 							"uid":  sc.initialResult.Result.UID,
 							"name": sc.initialResult.Result.Name,
 						},
@@ -198,7 +198,7 @@ type libraryElement struct {
 	Kind        int64                       `json:"kind"`
 	Type        string                      `json:"type"`
 	Description string                      `json:"description"`
-	Model       map[string]interface{}      `json:"model"`
+	Model       map[string]any              `json:"model"`
 	Version     int64                       `json:"version"`
 	Meta        model.LibraryElementDTOMeta `json:"meta"`
 }
@@ -488,7 +488,7 @@ func getCompareOptions() []cmp.Option {
 	}
 }
 
-func mockRequestBody(v interface{}) io.ReadCloser {
+func mockRequestBody(v any) io.ReadCloser {
 	b, _ := json.Marshal(v)
 	return io.NopCloser(bytes.NewReader(b))
 }

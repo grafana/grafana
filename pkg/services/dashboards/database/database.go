@@ -233,7 +233,7 @@ func (d *dashboardStore) DeleteOrphanedProvisionedDashboards(ctx context.Context
 	return d.store.WithDbSession(ctx, func(sess *db.Session) error {
 		var result []*dashboards.DashboardProvisioning
 
-		convertedReaderNames := make([]interface{}, len(cmd.ReaderNames))
+		convertedReaderNames := make([]any, len(cmd.ReaderNames))
 		for index, readerName := range cmd.ReaderNames {
 			convertedReaderNames[index] = readerName
 		}
@@ -965,7 +965,7 @@ func (d *dashboardStore) FindDashboards(ctx context.Context, query *dashboards.F
 		return nil, err
 	}
 
-	filters := []interface{}{
+	filters := []any{
 		permissions.NewAccessControlDashboardPermissionFilter(query.SignedInUser, query.Permission, query.Type, d.features, recursiveQueriesAreSupported),
 	}
 

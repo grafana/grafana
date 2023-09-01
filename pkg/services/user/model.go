@@ -254,12 +254,12 @@ type Filter interface {
 
 type WhereCondition struct {
 	Condition string
-	Params    interface{}
+	Params    any
 }
 
 type InCondition struct {
 	Condition string
-	Params    interface{}
+	Params    any
 }
 
 type JoinCondition struct {

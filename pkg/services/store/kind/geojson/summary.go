@@ -22,7 +22,7 @@ func GetEntityKindInfo() entity.EntityKindInfo {
 // Very basic geojson validator
 func GetEntitySummaryBuilder() entity.EntitySummaryBuilder {
 	return func(ctx context.Context, uid string, body []byte) (*entity.EntitySummary, []byte, error) {
-		var geojson map[string]interface{}
+		var geojson map[string]any
 		err := json.Unmarshal(body, &geojson)
 		if err != nil {
 			return nil, nil, err
@@ -42,13 +42,13 @@ func GetEntitySummaryBuilder() entity.EntitySummaryBuilder {
 			Kind: entity.StandardKindGeoJSON,
 			Name: store.GuessNameFromUID(uid),
 			UID:  uid,
-			Fields: map[string]interface{}{
+			Fields: map[string]any{
 				"type": ftype,
 			},
 		}
 
 		if ftype == "FeatureCollection" {
-			features, ok := geojson["features"].([]interface{})
+			features, ok := geojson["features"].([]any)
 			if ok {
 				summary.Fields["count"] = len(features)
 			}

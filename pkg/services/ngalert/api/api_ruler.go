@@ -56,7 +56,7 @@ func (srv RulerSrv) RouteDeleteAlertRules(c *contextmodel.ReqContext, namespaceT
 	if err != nil {
 		return toNamespaceErrorResponse(err)
 	}
-	var loggerCtx = []interface{}{
+	var loggerCtx = []any{
 		"namespace",
 		namespace.Title,
 	}

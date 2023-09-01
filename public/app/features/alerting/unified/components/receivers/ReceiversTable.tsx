@@ -283,7 +283,7 @@ function NotifiersTable({ notifiersState }: NotifiersTableProps) {
     })
   );
 
-  return <DynamicTable items={notifierRows} cols={getNotifierColumns()} />;
+  return <DynamicTable items={notifierRows} cols={getNotifierColumns()} pagination={{ itemsPerPage: 25 }} />;
 }
 
 interface Props {
@@ -375,6 +375,7 @@ export const ReceiversTable = ({ config, alertManagerName }: Props) => {
       }
     >
       <DynamicTable
+        pagination={{ itemsPerPage: 25 }}
         items={rows}
         cols={columns}
         isExpandable={errorStateAvailable}

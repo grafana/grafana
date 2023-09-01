@@ -26,9 +26,9 @@ import { isSandboxedPluginObject } from './utils';
  *
  */
 export async function sandboxPluginComponents(
-  pluginExports: unknown,
+  pluginExports: System.Module,
   meta: PluginMeta
-): Promise<SandboxedPluginObject | unknown> {
+): Promise<SandboxedPluginObject | System.Module> {
   if (!isSandboxedPluginObject(pluginExports)) {
     // we should monitor these cases. There should not be any plugins without a plugin export loaded inside the sandbox
     return pluginExports;

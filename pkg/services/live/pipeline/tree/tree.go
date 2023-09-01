@@ -65,7 +65,7 @@ const (
 	catchAll
 )
 
-type Handler interface{}
+type Handler any
 
 func New() *Node {
 	return new(Node)

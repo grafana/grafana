@@ -249,18 +249,18 @@ type JSONModel struct {
 	Alias              string    `json:"alias"`
 	// Cannot specify a type for csvWave since legacy queries
 	// does not follow the same format as the new ones (and there is no migration).
-	CSVWave     interface{} `json:"csvWave"`
-	CSVContent  string      `json:"csvContent"`
-	CSVFileName string      `json:"csvFileName"`
-	DropPercent float64     `json:"dropPercent"`
+	CSVWave     any     `json:"csvWave"`
+	CSVContent  string  `json:"csvContent"`
+	CSVFileName string  `json:"csvFileName"`
+	DropPercent float64 `json:"dropPercent"`
 }
 
 type pulseWave struct {
-	TimeStep int64       `json:"timeStep"`
-	OnCount  int64       `json:"onCount"`
-	OffCount int64       `json:"offCount"`
-	OnValue  interface{} `json:"onValue"`
-	OffValue interface{} `json:"offValue"`
+	TimeStep int64 `json:"timeStep"`
+	OnCount  int64 `json:"onCount"`
+	OffCount int64 `json:"offCount"`
+	OnValue  any   `json:"onValue"`
+	OffValue any   `json:"offValue"`
 }
 
 func GetJSONModel(j json.RawMessage) (JSONModel, error) {
@@ -1001,7 +1001,7 @@ func randomHeatmapData(query backend.DataQuery, fnBucketGen func(index int) floa
 
 	for j := int64(0); j < 100 && timeWalkerMs < to; j++ {
 		t := time.Unix(timeWalkerMs/int64(1e+3), (timeWalkerMs%int64(1e+3))*int64(1e+6))
-		vals := []interface{}{&t}
+		vals := []any{&t}
 		for n := 1; n < len(frame.Fields); n++ {
 			v := float64(rand.Int63n(100))
 			vals = append(vals, &v)
@@ -1104,7 +1104,7 @@ func frameNameForQuery(query backend.DataQuery, model JSONModel, index int) stri
 	return name
 }
 
-func fromStringOrNumber(val interface{}) (*float64, error) {
+func fromStringOrNumber(val any) (*float64, error) {
 	switch v := val.(type) {
 	case float64:
 		fV := val.(float64)

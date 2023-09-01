@@ -90,8 +90,8 @@ type Service struct {
 	features      *featuremgmt.FeatureManager
 }
 
-func (s *Service) GetUsageStats(_ context.Context) map[string]interface{} {
-	return map[string]interface{}{
+func (s *Service) GetUsageStats(_ context.Context) map[string]any {
+	return map[string]any{
 		"stats.oss.accesscontrol.enabled.count": 1,
 	}
 }

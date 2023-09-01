@@ -40,8 +40,8 @@ type MassDeleteAnnotationsCmd struct {
 }
 
 type PostGraphiteAnnotationsCmd struct {
-	When int64       `json:"when"`
-	What string      `json:"what"`
-	Data string      `json:"data"`
-	Tags interface{} `json:"tags"`
+	When int64  `json:"when"`
+	What string `json:"what"`
+	Data string `json:"data"`
+	Tags any    `json:"tags"`
 }
