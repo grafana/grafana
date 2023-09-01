@@ -19,6 +19,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
+	"github.com/grafana/grafana/pkg/middleware/requestmeta"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/repo"
@@ -307,6 +308,10 @@ func (hs *HTTPServer) CollectPluginMetrics(c *contextmodel.ReqContext) response.
 	headers := make(http.Header)
 	headers.Set("Content-Type", "text/plain")
 
+	// treat response as downstream since it means we've got
+	// a proper response from the plugin.
+	requestmeta.WithDownstreamStatusSource(c.Req.Context())
+
 	return response.CreateNormalResponse(headers, resp.PrometheusMetrics, http.StatusOK)
 }
 
@@ -395,9 +400,9 @@ func (hs *HTTPServer) CheckHealth(c *contextmodel.ReqContext) response.Response 
 	pCtx, err := hs.pluginContextProvider.Get(c.Req.Context(), pluginID, c.SignedInUser, c.OrgID)
 	if err != nil {
 		if errors.Is(err, plugincontext.ErrPluginNotFound) {
-			return response.Error(404, "Plugin not found", nil)
+			return response.Error(http.StatusNotFound, "Plugin not found", nil)
 		}
-		return response.Error(500, "Failed to get plugin settings", err)
+		return response.Error(http.StatusInternalServerError, "Failed to get plugin settings", err)
 	}
 	resp, err := hs.pluginClient.CheckHealth(c.Req.Context(), &backend.CheckHealthRequest{
 		PluginContext: pCtx,
@@ -423,8 +428,12 @@ func (hs *HTTPServer) CheckHealth(c *contextmodel.ReqContext) response.Response 
 		payload["details"] = jsonDetails
 	}
 
+	// treat all check health responses as downstream since any response means
+	// that a plugin has been correctly or incorrectly configured by the end user.
+	requestmeta.WithDownstreamStatusSource(c.Req.Context())
+
 	if resp.Status != backend.HealthStatusOk {
-		return response.JSON(503, payload)
+		return response.JSON(http.StatusServiceUnavailable, payload)
 	}
 
 	return response.JSON(http.StatusOK, payload)
@@ -492,19 +501,15 @@ func (hs *HTTPServer) UninstallPlugin(c *contextmodel.ReqContext) response.Respo
 
 func translatePluginRequestErrorToAPIError(err error) response.Response {
 	if errors.Is(err, backendplugin.ErrPluginNotRegistered) {
-		return response.Error(404, "Plugin not found", err)
+		return response.Error(http.StatusNotFound, "Plugin not found", err)
 	}
 
 	if errors.Is(err, backendplugin.ErrMethodNotImplemented) {
-		return response.Error(404, "Not found", err)
+		return response.Error(http.StatusNotFound, "Not found", err)
 	}
 
 	if errors.Is(err, backendplugin.ErrHealthCheckFailed) {
-		return response.Error(500, "Plugin health check failed", err)
-	}
-
-	if errors.Is(err, backendplugin.ErrPluginUnavailable) {
-		return response.Error(503, "Plugin unavailable", err)
+		return response.Error(http.StatusInternalServerError, "Plugin health check failed", err)
 	}
 
 	return response.ErrOrFallback(http.StatusInternalServerError, "Plugin request failed", err)

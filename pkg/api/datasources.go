@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/middleware/requestmeta"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
@@ -854,6 +855,10 @@ func (hs *HTTPServer) checkDatasourceHealth(c *contextmodel.ReqContext, ds *data
 
 		payload["details"] = jsonDetails
 	}
+
+	// treat response as downstream since it means we've got
+	// a proper response from the plugin.
+	requestmeta.WithDownstreamStatusSource(c.Req.Context())
 
 	if resp.Status != backend.HealthStatusOk {
 		return response.JSON(http.StatusBadRequest, payload)

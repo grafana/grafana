@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
 	"github.com/grafana/grafana/pkg/api/response"
+	"github.com/grafana/grafana/pkg/middleware/requestmeta"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/httpresponsesender"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
@@ -46,6 +47,10 @@ func (hs *HTTPServer) callPluginResource(c *contextmodel.ReqContext, pluginID st
 	if err = hs.makePluginResourceRequest(c.Resp, req, pCtx); err != nil {
 		handleCallResourceError(err, c)
 	}
+
+	// treat response as downstream since it means we've got
+	// a proper response from the plugin.
+	requestmeta.WithDownstreamStatusSource(c.Req.Context())
 }
 
 func (hs *HTTPServer) callPluginResourceWithDataSource(c *contextmodel.ReqContext, pluginID string, ds *datasources.DataSource) {
