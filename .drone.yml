@@ -3029,51 +3029,6 @@ clone:
   retries: 3
 depends_on:
 - rgm-tag-prerelease
-- rgm-tag-prerelease-windows
-image_pull_secrets:
-- dockerconfigjson
-kind: pipeline
-name: rgm-tag-verify-prerelease-assets
-node:
-  type: no-parallel
-platform:
-  arch: amd64
-  os: linux
-services: []
-steps:
-- commands:
-  - apt-get update && apt-get install -yq gettext
-  - printenv GCP_KEY | base64 -d > /tmp/key.json
-  - gcloud auth activate-service-account --key-file=/tmp/key.json
-  - ./scripts/list-release-artifacts.sh ${DRONE_TAG} | xargs -n1 gsutil stat >> /tmp/stat.log
-  - '! cat /tmp/stat.log | grep "No URLs matched"'
-  depends_on:
-  - clone
-  environment:
-    BUCKET: grafana-prerelease
-    GCP_KEY:
-      from_secret: gcp_key_base64
-  image: google/cloud-sdk:431.0.0
-  name: gsutil-stat
-trigger:
-  event:
-    exclude:
-    - promote
-  ref:
-    exclude:
-    - refs/tags/*-cloud*
-    include:
-    - refs/tags/v*
-type: docker
-volumes:
-- host:
-    path: /var/run/docker.sock
-  name: docker
----
-clone:
-  retries: 3
-depends_on:
-- rgm-tag-prerelease
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
@@ -3162,6 +3117,51 @@ steps:
   - compile-build-cmd
   image: golang:1.20.6
   name: whats-new-checker
+trigger:
+  event:
+    exclude:
+    - promote
+  ref:
+    exclude:
+    - refs/tags/*-cloud*
+    include:
+    - refs/tags/v*
+type: docker
+volumes:
+- host:
+    path: /var/run/docker.sock
+  name: docker
+---
+clone:
+  retries: 3
+depends_on:
+- rgm-tag-prerelease
+- rgm-tag-prerelease-windows
+image_pull_secrets:
+- dockerconfigjson
+kind: pipeline
+name: rgm-tag-verify-prerelease-assets
+node:
+  type: no-parallel
+platform:
+  arch: amd64
+  os: linux
+services: []
+steps:
+- commands:
+  - apt-get update && apt-get install -yq gettext
+  - printenv GCP_KEY | base64 -d > /tmp/key.json
+  - gcloud auth activate-service-account --key-file=/tmp/key.json
+  - ./scripts/list-release-artifacts.sh ${DRONE_TAG} | xargs -n1 gsutil stat >> /tmp/stat.log
+  - '! cat /tmp/stat.log | grep "No URLs matched"'
+  depends_on:
+  - clone
+  environment:
+    BUCKET: grafana-prerelease
+    GCP_KEY:
+      from_secret: gcp_key_base64
+  image: google/cloud-sdk:431.0.0
+  name: gsutil-stat
 trigger:
   event:
     exclude:
@@ -3351,50 +3351,6 @@ steps:
   volumes:
   - name: docker
     path: /var/run/docker.sock
-trigger:
-  event:
-    include:
-    - promote
-  target:
-    include:
-    - nightly
-type: docker
-volumes:
-- host:
-    path: /var/run/docker.sock
-  name: docker
----
-clone:
-  retries: 3
-depends_on:
-- rgm-nightly-prerelease
-- rgm-nightly-prerelease-windows
-image_pull_secrets:
-- dockerconfigjson
-kind: pipeline
-name: rgm-nightly-verify-prerelease-assets
-node:
-  type: no-parallel
-platform:
-  arch: amd64
-  os: linux
-services: []
-steps:
-- commands:
-  - apt-get update && apt-get install -yq gettext
-  - printenv GCP_KEY | base64 -d > /tmp/key.json
-  - gcloud auth activate-service-account --key-file=/tmp/key.json
-  - ./scripts/list-release-artifacts.sh nightly-${DRONE_COMMIT_SHA:0:8} | xargs -n1
-    gsutil stat >> /tmp/stat.log
-  - '! cat /tmp/stat.log | grep "No URLs matched"'
-  depends_on:
-  - clone
-  environment:
-    BUCKET: grafana-prerelease/nightly
-    GCP_KEY:
-      from_secret: gcp_key_base64
-  image: google/cloud-sdk:431.0.0
-  name: gsutil-stat
 trigger:
   event:
     include:
@@ -4912,6 +4868,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: ae3018988ed0b598e4518300c853fa00cd6ceb61fb5606f2d565c6ee17d35313
+hmac: 599220faabc3cedfed278804f9ced27756ce0d977adc591b105a46f5d990d088
 
 ...

@@ -155,7 +155,12 @@ def rgm_release(trigger, ver_mode, bucket = "grafana-prerelease"):
             steps = rgm_build(script = "drone_publish_tag_grafana.sh", bucket = bucket, version = version),
             depends_on = ["{}-test-backend".format(ver_mode), "{}-test-frontend".format(ver_mode)],
         ),
-        verify_release_pipeline(
+    ]
+
+    if ver_mode != "nightly":
+        pipelines.append(rgm_windows(trigger, ver_mode, bucket))
+        pipelines.append(whats_new_checker_pipeline(trigger))
+        pipelines.append(verify_release_pipeline(
             trigger = trigger,
             name = "rgm-{}-verify-prerelease-assets".format(ver_mode),
             bucket = bucket,
@@ -164,12 +169,7 @@ def rgm_release(trigger, ver_mode, bucket = "grafana-prerelease"):
                 "rgm-{}-prerelease-windows".format(ver_mode),
             ],
             version = version,
-        ),
-    ]
-
-    if ver_mode != "nightly":
-        pipelines.append(rgm_windows(trigger, ver_mode, bucket))
-        pipelines.append(whats_new_checker_pipeline(trigger))
+        ))
 
     return pipelines
 
