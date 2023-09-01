@@ -33,6 +33,7 @@ import { DashboardScene } from '../scene/DashboardScene';
 import { LibraryVizPanel } from '../scene/LibraryVizPanel';
 import { panelMenuBehavior } from '../scene/PanelMenuBehavior';
 import { PanelTimeRange } from '../scene/PanelTimeRange';
+import { RepeatPanelByVariableBehavior } from '../scene/RepeatPanelByVariableBehavior';
 import { createPanelDataProvider } from '../utils/createPanelDataProvider';
 import { getVizPanelKeyForPanelId } from '../utils/utils';
 
@@ -278,7 +279,16 @@ export function buildSceneFromPanelModel(panel: PanelModel): SceneGridItem {
     width: panel.gridPos.w,
     height: panel.gridPos.h,
     body: new VizPanel(vizPanelState),
+    $behaviors: getGridItemBehaviors(panel),
   });
+}
+
+function getGridItemBehaviors(panel: PanelModel) {
+  if (panel.repeat) {
+    return [new RepeatPanelByVariableBehavior({ variableName: panel.repeat })];
+  }
+
+  return undefined;
 }
 
 const isCustomVariable = (v: VariableModel): v is CustomVariableModel => v.type === 'custom';
