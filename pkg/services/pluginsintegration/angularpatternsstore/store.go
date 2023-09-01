@@ -37,8 +37,7 @@ func (s *KVStoreService) Get(ctx context.Context) (string, bool, error) {
 	return s.CacheKvStore.Get(ctx, keyPatterns)
 }
 
-// Set stores the given angular patterns in the underlying cachekvstore.
-// TODO: change signature so `value` accepts only the correct type?
+// Set stores the given angular patterns in the underlying cachekvstore.s
 func (s *KVStoreService) Set(ctx context.Context, value any) error {
 	return s.CacheKvStore.Set(ctx, keyPatterns, value)
 }
