@@ -49,10 +49,10 @@ In these steps you'll create an alert and define an expression to evaluate. Thes
 1. Enter the alert query in the query editor, switch to **code** mode in the top right corner of the editor to paste the query below:
 
     ```
-    sum by (message)(count_over_time({filename="/var/log/web_requests.log"} != `status=200` | pattern `<_> <message> duration<_>` [$__interval]))
+    sum by (message)(count_over_time({filename="/var/log/web_requests.log"} != `status=200` | pattern `<_> <message> duration<_>` [10m]))
     ```
 
-    This query will search the interval period selected in the **time range** and count the number of log lines with a status code that is not 200 (OK), then sum the result set by message type. It uses the logql pattern parser to add a new label called `message` that contains the level, method, url, and status from the log line.
+    This query will count the number of log lines with a status code that is not 200 (OK), then sum the result set by message type using an **instant query** and the time interval indicated in brackets. It uses the logql pattern parser to add a new label called `message` that contains the level, method, url, and status from the log line.
 
     You can use the **explain query** toggle button for a full explanation of the query syntax. The optional log-generating script creates a sample log line similar to the one below:
     **`2023-04-22T02:49:32.562825+00:00 level=info method=GET url=/ status=200 duration=171ms`**
