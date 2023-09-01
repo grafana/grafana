@@ -44,7 +44,7 @@ The following table lists the contact point integrations supported by Grafana.
 | [DingDing](https://www.dingtalk.com/en)          | `dingding`                | Supported            | N/A                                                                                                      |
 | [Discord](https://discord.com/)                  | `discord`                 | Supported            | N/A                                                                                                      |
 | Email                                            | `email`                   | Supported            | Supported                                                                                                |
-| [Google Hangouts](https://hangouts.google.com/)  | `googlechat`              | Supported            | N/A                                                                                                      |
+| [Google Chat](https://chat.google.com/)          | `googlechat`              | Supported            | N/A                                                                                                      |
 | [Kafka](https://kafka.apache.org/)               | `kafka`                   | Supported            | N/A                                                                                                      |
 | [Line](https://line.me/en/)                      | `line`                    | Supported            | N/A                                                                                                      |
 | [Microsoft Teams](https://teams.microsoft.com/)  | `teams`                   | Supported            | N/A                                                                                                      |
