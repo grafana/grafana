@@ -3,7 +3,7 @@ import React from 'react';
 import { useLocation } from 'react-router-dom';
 
 import { GrafanaTheme2, PageLayoutType } from '@grafana/data';
-import { SceneComponentProps } from '@grafana/scenes';
+import { SceneComponentProps, SceneDebugger } from '@grafana/scenes';
 import { CustomScrollbar, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 
@@ -27,6 +27,7 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
               {controls.map((control) => (
                 <control.Component key={control.state.key} model={control} />
               ))}
+              <SceneDebugger scene={model} key={'scene-debugger'} />
             </div>
           )}
           <div className={styles.body}>

@@ -5,6 +5,7 @@ import {
   SceneGridLayout,
   SceneObjectBase,
   SceneObjectState,
+  SceneQueryRunner,
   SceneVariable,
   SceneVariableSet,
   VariableDependencyConfig,
@@ -90,22 +91,22 @@ export class RepeatPanelByVariableBehavior extends SceneObjectBase<RepeatPanelBy
     valueCount: number,
     maxPerRow: number
   ): SceneGridItem {
-    const clone = index === 0 ? sourceItem : sourceItem.clone({ key: `${sourceItem.state.key}-clone-${index}` });
-
-    clone.setState({
-      $variables: new SceneVariableSet({
-        variables: [new ConstantVariable({ name: variableName, value: value })],
-      }),
-    });
-
     console.log(`RepeatPanelByVariableBehavior. cloneItem setting ${variableName} = ${value}`);
 
     const x = sourceItem.state.x ?? 0;
     const width = Math.max(GRID_COLUMN_COUNT / valueCount, GRID_COLUMN_COUNT / maxPerRow);
 
-    clone.setState({
+    const clone = sourceItem.clone({
+      $variables: new SceneVariableSet({
+        variables: [new ConstantVariable({ name: variableName, value: value })],
+      }),
+      $behaviors: index === 0 ? sourceItem.state.$behaviors : [],
+      key: index === 0 ? sourceItem.state.key : `${sourceItem.state.key}-clone-${index}`,
       x: x + width * index,
     });
+
+    //const vizPanel = clone.state.body as VizPanel;
+    //const queryRunner = vizPanel.state.$data as SceneQueryRunner;
 
     return clone;
   }
