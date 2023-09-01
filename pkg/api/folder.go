@@ -373,7 +373,14 @@ func (hs *HTTPServer) newToFolderDto(c *contextmodel.ReqContext, g guardian.Dash
 
 	folderDTO.Parents = make([]dtos.Folder, 0, len(parents))
 	for _, f := range parents {
-		folderDTO.Parents = append(folderDTO.Parents, toDTO(f))
+		// Hide parent folders user has no access to
+		parentGuardian, err := guardian.NewByFolder(ctx, f, f.OrgID, c.SignedInUser)
+		if err != nil {
+			hs.log.Error("failed to check folder permissions", "folder", f.UID, "org", f.OrgID, "error", err)
+		}
+		if canView, _ := parentGuardian.CanView(); canView {
+			folderDTO.Parents = append(folderDTO.Parents, toDTO(f))
+		}
 	}
 
 	return folderDTO
