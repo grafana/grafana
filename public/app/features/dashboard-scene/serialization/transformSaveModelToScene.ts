@@ -25,6 +25,7 @@ import {
   VizPanelMenu,
   behaviors,
   VizPanelState,
+  SceneGridItemLike,
 } from '@grafana/scenes';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { DashboardDTO } from 'app/types';
@@ -32,8 +33,8 @@ import { DashboardDTO } from 'app/types';
 import { DashboardScene } from '../scene/DashboardScene';
 import { LibraryVizPanel } from '../scene/LibraryVizPanel';
 import { panelMenuBehavior } from '../scene/PanelMenuBehavior';
+import { PanelRepeaterGridItem } from '../scene/PanelRepeaterGridItem';
 import { PanelTimeRange } from '../scene/PanelTimeRange';
-import { RepeatPanelByVariableBehavior } from '../scene/RepeatPanelByVariableBehavior';
 import { createPanelDataProvider } from '../utils/createPanelDataProvider';
 import { getVizPanelKeyForPanelId } from '../utils/utils';
 
@@ -247,7 +248,7 @@ export function createSceneVariableFromVariableModel(variable: VariableModel): S
   }
 }
 
-export function buildSceneFromPanelModel(panel: PanelModel): SceneGridItem {
+export function buildSceneFromPanelModel(panel: PanelModel): SceneGridItemLike {
   const vizPanelState: VizPanelState = {
     key: getVizPanelKeyForPanelId(panel.id),
     title: panel.title,
@@ -272,6 +273,21 @@ export function buildSceneFromPanelModel(panel: PanelModel): SceneGridItem {
     });
   }
 
+  if (panel.repeat) {
+    return new PanelRepeaterGridItem({
+      key: `grid-item-${panel.id}`,
+      x: panel.gridPos.x,
+      y: panel.gridPos.y,
+      width: 1,
+      height: 1,
+      itemWidth: panel.gridPos.w,
+      itemHeight: panel.gridPos.h,
+      source: new VizPanel(vizPanelState),
+      variableName: panel.repeat,
+      repeats: [],
+    });
+  }
+
   return new SceneGridItem({
     key: `grid-item-${panel.id}`,
     x: panel.gridPos.x,
@@ -279,16 +295,7 @@ export function buildSceneFromPanelModel(panel: PanelModel): SceneGridItem {
     width: panel.gridPos.w,
     height: panel.gridPos.h,
     body: new VizPanel(vizPanelState),
-    $behaviors: getGridItemBehaviors(panel),
   });
-}
-
-function getGridItemBehaviors(panel: PanelModel) {
-  if (panel.repeat) {
-    return [new RepeatPanelByVariableBehavior({ variableName: panel.repeat })];
-  }
-
-  return undefined;
 }
 
 const isCustomVariable = (v: VariableModel): v is CustomVariableModel => v.type === 'custom';
