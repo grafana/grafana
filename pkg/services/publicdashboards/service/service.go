@@ -432,10 +432,10 @@ func (pd *PublicDashboardServiceImpl) newCreatePublicDashboard(ctx context.Conte
 	var err error
 	uid := dto.PublicDashboard.Uid
 
-	if dto.PublicDashboard.Uid != "" {
-		existingPubdash, _ := pd.store.Find(ctx, dto.PublicDashboard.Uid)
+	if uid != "" {
+		existingPubdash, _ := pd.store.Find(ctx, uid)
 		if existingPubdash != nil {
-			return nil, ErrPublicDashboardUidExists.Errorf("Create: public dashboard uid %s already exists", dto.PublicDashboard.Uid)
+			return nil, ErrPublicDashboardUidExists.Errorf("Create: public dashboard uid %s already exists", uid)
 		}
 	} else {
 		uid, err = pd.NewPublicDashboardUid(ctx)
@@ -446,10 +446,10 @@ func (pd *PublicDashboardServiceImpl) newCreatePublicDashboard(ctx context.Conte
 
 	//Check if accessToken already exists, if none then auto generate
 	accessToken := dto.PublicDashboard.AccessToken
-	if dto.PublicDashboard.AccessToken != "" {
-		existingPubdash, _ := pd.store.FindByAccessToken(ctx, dto.PublicDashboard.AccessToken)
+	if accessToken != "" {
+		existingPubdash, _ := pd.store.FindByAccessToken(ctx, accessToken)
 		if existingPubdash != nil {
-			return nil, ErrPublicDashboardAccessTokenExists.Errorf("Create: public dashboard access token %s already exists", dto.PublicDashboard.AccessToken)
+			return nil, ErrPublicDashboardAccessTokenExists.Errorf("Create: public dashboard access token %s already exists", accessToken)
 		}
 	} else {
 		accessToken, err = pd.NewPublicDashboardAccessToken(ctx)
