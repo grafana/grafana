@@ -4,6 +4,7 @@ import { config } from '@grafana/runtime';
 import { DataLinksInlineEditor, Input, RadioButtonGroup, Select, Switch, TextArea } from '@grafana/ui';
 import { getPanelLinksVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
 
+import { GenAIPanelDescription } from '../GenAI/GenAIPanelDescription';
 import { GenAIPanelTitle } from '../GenAI/GenAIPanelTitle';
 import { RepeatRowSelect } from '../RepeatRowSelect/RepeatRowSelect';
 
@@ -51,7 +52,7 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
             />
           );
         },
-        addon: config.featureToggles.dashgpt && <div>Generate description</div>,
+        addon: config.featureToggles.dashgpt && <GenAIPanelDescription />,
       })
     )
     .addItem(
