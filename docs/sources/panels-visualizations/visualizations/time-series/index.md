@@ -227,7 +227,7 @@ Use this option to transform the series values without affecting the values show
 The transform option is only available as an override.
 {{% /admonition %}}
 
-{{< docs/shared source="grafana" lookup="multiple-y-axes.md" version="GRAFANA VERSION" >}}
+{{< docs/shared lookup="visualizations/multiple-y-axes.md" source="grafana" version="<GRAFANA VERSION>" leveloffset="+2" >}}
 
 ## Color options
 
