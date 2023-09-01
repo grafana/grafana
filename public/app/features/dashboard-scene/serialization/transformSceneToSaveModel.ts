@@ -3,6 +3,7 @@ import { Dashboard, defaultDashboard, FieldConfigSource, Panel } from '@grafana/
 import { sortedDeepCloneWithoutNulls } from 'app/core/utils/object';
 
 import { DashboardScene } from '../scene/DashboardScene';
+import { PanelTimeRange } from '../scene/PanelTimeRange';
 import { getPanelIdForVizPanel } from '../utils/utils';
 
 export function transformSceneToSaveModel(scene: DashboardScene): Dashboard {
@@ -33,7 +34,7 @@ export function transformSceneToSaveModel(scene: DashboardScene): Dashboard {
   return sortedDeepCloneWithoutNulls(dashboard);
 }
 
-function gridItemToPanel(gridItem: SceneGridItem): Panel {
+export function gridItemToPanel(gridItem: SceneGridItem): Panel {
   const vizPanel = gridItem.state.body;
   if (!(vizPanel instanceof VizPanel)) {
     throw new Error('SceneGridItem body expected to be VizPanel');
@@ -54,6 +55,18 @@ function gridItemToPanel(gridItem: SceneGridItem): Panel {
     transformations: [],
     transparent: false,
   };
+
+  const panelTime = vizPanel.state.$timeRange;
+
+  if (panelTime instanceof PanelTimeRange) {
+    panel.timeFrom = panelTime.state.timeFrom;
+    panel.timeShift = panelTime.state.timeShift;
+    panel.hideTimeOverride = panelTime.state.hideTimeOverride;
+  }
+
+  if (vizPanel.state.displayMode === 'transparent') {
+    panel.transparent = true;
+  }
 
   return panel;
 }

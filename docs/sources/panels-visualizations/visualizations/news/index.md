@@ -14,7 +14,7 @@ labels:
     - enterprise
     - oss
 title: News
-weight: 800
+weight: 100
 ---
 
 ## News

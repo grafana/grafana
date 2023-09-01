@@ -8,10 +8,12 @@ import (
 	"net/url"
 	"reflect"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/service/cloudwatchlogs"
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/aws/aws-sdk-go/service/resourcegroupstaggingapi"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -281,4 +283,39 @@ func (e *cloudWatchExecutor) resourceGroupsGetResources(ctx context.Context, plu
 	}
 
 	return &resp, nil
+}
+
+// legacy route, will be removed once GovCloud supports Cross Account Observability
+func (e *cloudWatchExecutor) handleGetLogGroups(ctx context.Context, pluginCtx backend.PluginContext, parameters url.Values) ([]suggestData, error) {
+	region := parameters.Get("region")
+	limit := parameters.Get("limit")
+	logGroupNamePrefix := parameters.Get("logGroupNamePrefix")
+
+	logsClient, err := e.getCWLogsClient(ctx, pluginCtx, region)
+	if err != nil {
+		return nil, err
+	}
+
+	logGroupLimit := defaultLogGroupLimit
+	intLimit, err := strconv.ParseInt(limit, 10, 64)
+	if err == nil && intLimit > 0 {
+		logGroupLimit = intLimit
+	}
+
+	input := &cloudwatchlogs.DescribeLogGroupsInput{Limit: aws.Int64(logGroupLimit)}
+	if len(logGroupNamePrefix) > 0 {
+		input.LogGroupNamePrefix = aws.String(logGroupNamePrefix)
+	}
+	var response *cloudwatchlogs.DescribeLogGroupsOutput
+	response, err = logsClient.DescribeLogGroups(input)
+	if err != nil || response == nil {
+		return nil, err
+	}
+	result := make([]suggestData, 0)
+	for _, logGroup := range response.LogGroups {
+		logGroupName := *logGroup.LogGroupName
+		result = append(result, suggestData{Text: logGroupName, Value: logGroupName, Label: logGroupName})
+	}
+
+	return result, nil
 }
