@@ -19,7 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-// NewModule returns an instances of a ModuleServer, responsible for managing
+// NewModule returns an instance of a ModuleServer, responsible for managing
 // dskit modules (services).
 func NewModule(opts Options, apiOpts api.ServerOptions, cfg *setting.Cfg) (*ModuleServer, error) {
 	s, err := newModuleServer(opts, apiOpts, cfg)
