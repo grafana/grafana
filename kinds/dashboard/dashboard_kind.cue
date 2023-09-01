@@ -38,10 +38,6 @@ lineage: schemas: [{
 			// Tags associated with dashboard.
 			tags?: [...string]
 
-			// Theme of dashboard.
-			// Default value: dark.
-			style: "light" | *"dark"
-
 			// Timezone of dashboard. Accepted values are IANA TZDB zone ID or "browser" or "utc".
 			timezone?: string | *"browser"
 
@@ -67,8 +63,6 @@ lineage: schemas: [{
 				refresh_intervals: [...string] | *["5s", "10s", "30s", "1m", "5m", "15m", "30m", "1h", "2h", "1d"]
 				// Whether timepicker is collapsed or not. Has no effect on provisioned dashboard.
 				collapse: bool | *false
-				// Whether timepicker is enabled or not. Has no effect on provisioned dashboard.
-				enable: bool | *true
 				// Selectable options available in the time picker dropdown. Has no effect on provisioned dashboard.
 				time_options: [...string] | *["5m", "15m", "1h", "6h", "12h", "24h", "2d", "7d", "30d"]
 			}
@@ -577,6 +571,9 @@ lineage: schemas: [{
 			// Note: Panel time overrides have no effect when the dashboard’s time range is absolute.
 			// See: https://grafana.com/docs/grafana/latest/panels-visualizations/query-transform-data/#query-options
 			timeShift?: string
+
+			// Controls if the timeFrom or timeShift overrides are shown in the panel header
+			hideTimeOverride?: bool
 
 			// Dynamically load the panel
 			libraryPanel?: #LibraryPanelRef

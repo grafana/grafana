@@ -36,7 +36,7 @@ export interface LiveDataStreamOptions {
  */
 export interface LiveQueryDataOptions {
   request: DataQueryRequest;
-  body: any; // processed queries, same as sent to `/api/query/ds`
+  body: unknown; // processed queries, same as sent to `/api/query/ds`
 }
 
 /**
@@ -79,7 +79,7 @@ export interface GrafanaLiveSrv {
    *
    * @alpha -- experimental
    */
-  publish(address: LiveChannelAddress, data: any): Promise<any>;
+  publish(address: LiveChannelAddress, data: unknown): Promise<any>;
 }
 
 let singletonInstance: GrafanaLiveSrv;

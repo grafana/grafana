@@ -14,8 +14,8 @@ import (
 )
 
 type KeyValue struct {
-	Value interface{} `json:"value"`
-	Key   string      `json:"key"`
+	Value any    `json:"value"`
+	Key   string `json:"key"`
 }
 
 type TraceLog struct {
@@ -83,17 +83,17 @@ func TraceToFrame(td ptrace.Traces) (*data.Frame, error) {
 }
 
 // resourceSpansToRows processes all the spans for a particular resource/service
-func resourceSpansToRows(rs ptrace.ResourceSpans) ([][]interface{}, error) {
+func resourceSpansToRows(rs ptrace.ResourceSpans) ([][]any, error) {
 	resource := rs.Resource()
 	ilss := rs.ScopeSpans()
 
 	if resource.Attributes().Len() == 0 || ilss.Len() == 0 {
-		return [][]interface{}{}, nil
+		return [][]any{}, nil
 	}
 
 	// Approximate the number of the spans as the number of the spans in the first
 	// instrumentation library info.
-	rows := make([][]interface{}, 0, ilss.At(0).Spans().Len())
+	rows := make([][]any, 0, ilss.At(0).Spans().Len())
 
 	for i := 0; i < ilss.Len(); i++ {
 		ils := ilss.At(i)
@@ -116,7 +116,7 @@ func resourceSpansToRows(rs ptrace.ResourceSpans) ([][]interface{}, error) {
 	return rows, nil
 }
 
-func spanToSpanRow(span ptrace.Span, libraryTags pcommon.InstrumentationScope, resource pcommon.Resource) ([]interface{}, error) {
+func spanToSpanRow(span ptrace.Span, libraryTags pcommon.InstrumentationScope, resource pcommon.Resource) ([]any, error) {
 	// If the id representation changed from hexstring to something else we need to change the transformBase64IDToHexString in the frontend code
 	traceID := span.TraceID()
 	traceIDHex := hex.EncodeToString(traceID[:])
@@ -161,7 +161,7 @@ func spanToSpanRow(span ptrace.Span, libraryTags pcommon.InstrumentationScope, r
 	}
 
 	// Order matters (look at dataframe order)
-	return []interface{}{
+	return []any{
 		traceIDHex,
 		spanIDHex,
 		parentSpanIDHex,
@@ -201,7 +201,7 @@ func resourceToProcess(resource pcommon.Resource) (string, []*KeyValue) {
 	return serviceName, tags
 }
 
-func getAttributeVal(attr pcommon.Value) interface{} {
+func getAttributeVal(attr pcommon.Value) any {
 	switch attr.Type() {
 	case pcommon.ValueTypeStr:
 		return attr.Str()
@@ -263,7 +263,7 @@ func spanEventsToLogs(events ptrace.SpanEventSlice) []*TraceLog {
 		if event.Name() != "" {
 			fields = append(fields, &KeyValue{
 				Key:   TagMessage,
-				Value: attribute.StringValue(event.Name()),
+				Value: event.Name(),
 			})
 		}
 		event.Attributes().Range(func(key string, attr pcommon.Value) bool {

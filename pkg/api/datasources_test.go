@@ -21,7 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
-	"github.com/grafana/grafana/pkg/services/datasources/permissions"
+	"github.com/grafana/grafana/pkg/services/datasources/guardian"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 	"github.com/grafana/grafana/pkg/web/webtest"
@@ -35,7 +35,6 @@ const (
 
 func TestDataSourcesProxy_userLoggedIn(t *testing.T) {
 	mockSQLStore := dbtest.NewFakeDB()
-	mockDatasourcePermissionService := permissions.NewMockDatasourcePermissionService()
 	loggedInUserScenario(t, "When calling GET on", "/api/datasources/", "/api/datasources/", func(sc *scenarioContext) {
 		// Stubs the database query
 		ds := []*datasources.DataSource{
@@ -44,7 +43,6 @@ func TestDataSourcesProxy_userLoggedIn(t *testing.T) {
 			{Name: "BBB"},
 			{Name: "aaa"},
 		}
-		mockDatasourcePermissionService.DsResult = ds
 
 		// handler func being tested
 		hs := &HTTPServer{
@@ -53,12 +51,12 @@ func TestDataSourcesProxy_userLoggedIn(t *testing.T) {
 			DataSourcesService: &dataSourcesServiceMock{
 				expectedDatasources: ds,
 			},
-			DatasourcePermissionsService: mockDatasourcePermissionService,
+			dsGuardian: guardian.ProvideGuardian(),
 		}
 		sc.handlerFunc = hs.GetDataSources
 		sc.fakeReq("GET", "/api/datasources").exec()
 
-		respJSON := []map[string]interface{}{}
+		respJSON := []map[string]any{}
 		err := json.NewDecoder(sc.resp.Body).Decode(&respJSON)
 		require.NoError(t, err)
 

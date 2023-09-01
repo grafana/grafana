@@ -132,18 +132,18 @@
       "widget": "Widget"
     },
     "empty": {
-      "add-import-body": "Import visualizations that are shared with other dashboards.",
-      "add-import-button": "Import library panel",
-      "add-import-header": "Import panel",
-      "add-row-body": "Group your visualizations into expandable sections.",
-      "add-row-button": "Add row",
-      "add-row-header": "Add a row",
+      "add-library-panel-body": "Add visualizations that are shared with other dashboards.",
+      "add-library-panel-button": "Add library panel",
+      "add-library-panel-header": "Add a library panel",
       "add-visualization-body": "Select a data source and then query and visualize your data with charts, stats and tables or create lists, markdowns and other widgets.",
       "add-visualization-button": "Add visualization",
       "add-visualization-header": "Start your new dashboard by adding a visualization",
       "add-widget-body": "Create lists, markdowns and other widgets",
       "add-widget-button": "Add widget",
-      "add-widget-header": "Add a widget"
+      "add-widget-header": "Add a widget",
+      "import-a-dashboard-body": "Import dashboard from file or <1>grafana.com</1>.",
+      "import-a-dashboard-header": "Import a dashboard",
+      "import-dashboard-button": "Import dashboard"
     },
     "inspect": {
       "data-tab": "Data",
@@ -221,6 +221,9 @@
     "loading": "Loading folders..."
   },
   "grafana-ui": {
+    "modal": {
+      "close-tooltip": "Close"
+    },
     "segment-async": {
       "error": "Failed to load options",
       "loading": "Loading options...",
@@ -230,6 +233,46 @@
       "no-options-label": "No options found",
       "placeholder": "Choose"
     }
+  },
+  "help-modal": {
+    "shortcuts-category": {
+      "dashboard": "Dashboard",
+      "focused-panel": "Focused Panel",
+      "global": "Global",
+      "time-range": "Time Range"
+    },
+    "shortcuts-description": {
+      "change-theme": "Change theme",
+      "collapse-all-rows": "Collapse all rows",
+      "dashboard-settings": "Dashboard settings",
+      "duplicate-panel": "Duplicate Panel",
+      "exit-edit/setting-views": "Exit edit/setting views",
+      "expand-all-rows": "Expand all rows",
+      "go-to-dashboards": "Go to Dashboards",
+      "go-to-explore": "Go to Explore",
+      "go-to-home-dashboard": "Go to Home Dashboard",
+      "go-to-profile": "Go to Profile",
+      "make-time-range-permanent": "Make time range absolute/permanent",
+      "move-time-range-back": "Move time range back",
+      "move-time-range-forward": "Move time range forward",
+      "open-search": "Open search",
+      "open-shared-modal": "Open Panel Share Modal",
+      "refresh-all-panels": "Refresh all panels",
+      "remove-panel": "Remove Panel",
+      "save-dashboard": "Save dashboard",
+      "show-all-shortcuts": "Show all keyboard shortcuts",
+      "toggle-active-mode": "Toggle in-active / view mode",
+      "toggle-all-panel-legends": "Toggle all panel legends",
+      "toggle-auto-fit": "Toggle auto fit panels (experimental feature)",
+      "toggle-exemplars": "Toggle exemplars in all panel",
+      "toggle-graph-crosshair": "Toggle shared graph crosshair",
+      "toggle-kiosk": "Toggle kiosk mode (hides top nav)",
+      "toggle-panel-edit": "Toggle panel edit view",
+      "toggle-panel-fullscreen": "Toggle panel fullscreen view",
+      "toggle-panel-legend": "Toggle panel legend",
+      "zoom-out-time-range": "Zoom out time range"
+    },
+    "title": "Shortcuts"
   },
   "library-panel": {
     "add-modal": {
@@ -655,7 +698,7 @@
       "info-text": "Create a direct link to this dashboard or panel, customized with the options below.",
       "link-url": "Link URL",
       "render-alert": "Image renderer plugin not installed",
-      "render-instructions": "To render a panel image, you must install the&nbsp;<1>Grafana image renderer plugin</1>. Please contact your Grafana administrator to install the plugin.",
+      "render-instructions": "To render a panel image, you must install the <1>Grafana image renderer plugin</1>. Please contact your Grafana administrator to install the plugin.",
       "rendered-image": "Direct link rendered image",
       "save-alert": "Dashboard is not saved",
       "save-dashboard": "To render a panel image, you must save the dashboard first.",

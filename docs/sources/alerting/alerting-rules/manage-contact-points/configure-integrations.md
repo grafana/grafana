@@ -32,7 +32,7 @@ Once configured, you can use integrations as part of your contact points to rece
 | DingDing                | `dingding`                |
 | Discord                 | `discord`                 |
 | Email                   | `email`                   |
-| Google Hangouts Chat    | `googlechat`              |
+| Google Chat             | `googlechat`              |
 | Hipchat                 | `hipchat`                 |
 | Kafka                   | `kafka`                   |
 | Line                    | `line`                    |

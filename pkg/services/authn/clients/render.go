@@ -13,7 +13,7 @@ import (
 )
 
 var (
-	errInvalidRenderKey = errutil.NewBase(errutil.StatusUnauthorized, "render-auth.invalid-key", errutil.WithPublicMessage("Invalid Render Key"))
+	errInvalidRenderKey = errutil.Unauthorized("render-auth.invalid-key", errutil.WithPublicMessage("Invalid Render Key"))
 )
 
 const (
