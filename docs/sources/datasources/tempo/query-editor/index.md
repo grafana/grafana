@@ -30,7 +30,6 @@ To learn more about Grafana dashboards, refer to the [Use dashboards documentati
 
 ## Write TraceQL queries in Grafana
 
-
 You can compose TraceQL queries in Grafana and Grafana Cloud using **Explore** and a Tempo data source. You can use either the **Query type** > **Search** (the TraceQL query builder) or the **TraceQL** tab (the TraceQL query editor).
 Both of these methods let you build queries and drill-down into result sets.
 
