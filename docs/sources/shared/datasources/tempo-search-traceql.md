@@ -106,6 +106,7 @@ To add a tag, follow these steps:
 
 Using **Aggregate by**, you can calculate RED metrics (total span count, percent erroring spans, and latency information) for spans of `kind=server` that match your filter criteria, grouped by one or more attributes.
 This capability is based on the [metrics summary API](/docs/grafana-cloud/monitor-infrastructure/traces/metrics-summary-api/).
+Metrics summary only calculates summaries based on spans received within the last hour.
 
 When you use **Aggregate by**, the selections you make determine how the information is reported in the Table. Every combination that matches selections in your data is listed in the table.
 Each aggregate value, for example `intrinsic`:`name`, has a corresponding column in the results table.
@@ -126,7 +127,7 @@ To use this capability:
 1. In the **Aggregate by** row, select a scope from the first drop-down box. For example, `span`.
 1. Select an attribute from the second drop-down.
 1. Optional: Select **+** to add an **Aggregate by** row.
-1. Optional: Select a **Time range** to expand or narrow the data set.
+1. Optional: Select a **Time range** to expand or narrow the data set for an hour's range. 
 1. Select **Run query**.
 
 ### Optional: Add queries
