@@ -4729,3 +4729,8 @@ get:
   path: secret/data/common/gcr
 kind: secret
 name: gcr_credentials
+---
+kind: signature
+hmac: fe74c275ebfa4c5fc190b08d9b452abb3dd35120a5e3616231bcbcd7d1f5e614
+
+...
