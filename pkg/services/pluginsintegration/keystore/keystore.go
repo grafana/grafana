@@ -8,7 +8,7 @@ import (
 
 // Service is a service for storing and retrieving public keys.
 type Service struct {
-	*cachekvstore.NamespacedStore
+	*cachekvstore.CacheKvStore
 }
 
 const (
@@ -20,6 +20,6 @@ var _ plugins.KeyStore = (*Service)(nil)
 
 func ProvideService(kv kvstore.KVStore) *Service {
 	return &Service{
-		NamespacedStore: cachekvstore.NewNamespacedStoreWithPrefix(kv, namespace, prefix),
+		CacheKvStore: cachekvstore.NewCacheKvStoreWithPrefix(kv, namespace, prefix),
 	}
 }

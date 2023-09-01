@@ -17,7 +17,7 @@ func TestNamespacedStore(t *testing.T) {
 	const namespace = "namespace"
 
 	t.Run("simple", func(t *testing.T) {
-		store := NewNamespacedStore(kvstore.NewFakeKVStore(), namespace)
+		store := NewCacheKvStore(kvstore.NewFakeKVStore(), namespace)
 
 		t.Run("default last updated time is zero", func(t *testing.T) {
 			ts, err := store.GetLastUpdated(context.Background())
@@ -68,7 +68,7 @@ func TestNamespacedStore(t *testing.T) {
 		})
 
 		t.Run("sets last updated on delete", func(t *testing.T) {
-			store := NewNamespacedStore(kvstore.NewFakeKVStore(), namespace)
+			store := NewCacheKvStore(kvstore.NewFakeKVStore(), namespace)
 			ts, err := store.GetLastUpdated(context.Background())
 			require.NoError(t, err)
 			require.Zero(t, ts)
@@ -81,7 +81,7 @@ func TestNamespacedStore(t *testing.T) {
 		})
 
 		t.Run("last updated key is used in GetLastUpdated", func(t *testing.T) {
-			store := NewNamespacedStore(kvstore.NewFakeKVStore(), namespace)
+			store := NewCacheKvStore(kvstore.NewFakeKVStore(), namespace)
 
 			// Set in underlying store
 			ts := time.Now()
@@ -95,7 +95,7 @@ func TestNamespacedStore(t *testing.T) {
 		})
 
 		t.Run("last updated key is used in SetLastUpdated", func(t *testing.T) {
-			store := NewNamespacedStore(kvstore.NewFakeKVStore(), namespace)
+			store := NewCacheKvStore(kvstore.NewFakeKVStore(), namespace)
 			require.NoError(t, store.SetLastUpdated(context.Background()))
 
 			marshaledStoreTs, ok, err := store.kv.Get(context.Background(), keyLastUpdated)
@@ -135,12 +135,12 @@ func TestNamespacedStore(t *testing.T) {
 
 	t.Run("prefix", func(t *testing.T) {
 		t.Run("no prefix", func(t *testing.T) {
-			store := NewNamespacedStore(kvstore.NewFakeKVStore(), namespace)
+			store := NewCacheKvStore(kvstore.NewFakeKVStore(), namespace)
 			require.Equal(t, "k", store.storeKey("k"))
 		})
 
 		t.Run("prefix", func(t *testing.T) {
-			store := NewNamespacedStoreWithPrefix(kvstore.NewFakeKVStore(), namespace, "my-")
+			store := NewCacheKvStoreWithPrefix(kvstore.NewFakeKVStore(), namespace, "my-")
 			require.Equal(t, "my-k", store.storeKey("k"))
 		})
 	})

@@ -12,10 +12,10 @@ import (
 // keyLastUpdated is the key used to store the last updated time.
 const keyLastUpdated = "last_updated"
 
-// NamespacedStore is a Store that stores data in a *kvstore.NamespacedKVStore.
+// CacheKvStore is a Store that stores data in a *kvstore.NamespacedKVStore.
 // It also stores a last updated time, which is unique for all the keys and is updated on each call to `Set`,
 // and can be used to determine if the data is stale.
-type NamespacedStore struct {
+type CacheKvStore struct {
 	// kv is the underlying KV store.
 	kv *kvstore.NamespacedKVStore
 
@@ -23,34 +23,34 @@ type NamespacedStore struct {
 	keyPrefix string
 }
 
-// NewNamespacedStoreWithPrefix creates a new NamespacedStore using the provided underlying KVStore, namespace and prefix.
-func NewNamespacedStoreWithPrefix(kv kvstore.KVStore, namespace, prefix string) *NamespacedStore {
-	return &NamespacedStore{
+// NewCacheKvStoreWithPrefix creates a new CacheKvStore using the provided underlying KVStore, namespace and prefix.
+func NewCacheKvStoreWithPrefix(kv kvstore.KVStore, namespace, prefix string) *CacheKvStore {
+	return &CacheKvStore{
 		kv:        kvstore.WithNamespace(kv, 0, namespace),
 		keyPrefix: prefix,
 	}
 }
 
-// NewNamespacedStore creates a new NamespacedStore using the provided underlying KVStore and namespace.
-func NewNamespacedStore(kv kvstore.KVStore, namespace string) *NamespacedStore {
-	return NewNamespacedStoreWithPrefix(kv, namespace, "")
+// NewCacheKvStore creates a new CacheKvStore using the provided underlying KVStore and namespace.
+func NewCacheKvStore(kv kvstore.KVStore, namespace string) *CacheKvStore {
+	return NewCacheKvStoreWithPrefix(kv, namespace, "")
 }
 
 // storeKey returns the key to use in the underlying store for the given key.
-func (s *NamespacedStore) storeKey(k string) string {
+func (s *CacheKvStore) storeKey(k string) string {
 	return s.keyPrefix + k
 }
 
 // Get returns the value for the given key.
 // If no value is present, the second argument is false and the returned error is nil.
-func (s *NamespacedStore) Get(ctx context.Context, key string) (string, bool, error) {
+func (s *CacheKvStore) Get(ctx context.Context, key string) (string, bool, error) {
 	return s.kv.Get(ctx, s.storeKey(key))
 }
 
 // Set sets the value for the given key and updates the last updated time.
 // It uses the marshal method to marshal the value before storing it.
 // This means that the value to store can implement the Marshaler interface to control how it is stored.
-func (s *NamespacedStore) Set(ctx context.Context, key string, value any) error {
+func (s *CacheKvStore) Set(ctx context.Context, key string, value any) error {
 	valueToStore, err := marshal(value)
 	if err != nil {
 		return fmt.Errorf("marshal: %w", err)
@@ -67,7 +67,7 @@ func (s *NamespacedStore) Set(ctx context.Context, key string, value any) error 
 
 // GetLastUpdated returns the last updated time.
 // If the last updated time is not set, it returns a zero time.
-func (s *NamespacedStore) GetLastUpdated(ctx context.Context) (time.Time, error) {
+func (s *CacheKvStore) GetLastUpdated(ctx context.Context) (time.Time, error) {
 	v, ok, err := s.kv.Get(ctx, keyLastUpdated)
 	if err != nil {
 		return time.Time{}, fmt.Errorf("kv get: %w", err)
@@ -86,12 +86,12 @@ func (s *NamespacedStore) GetLastUpdated(ctx context.Context) (time.Time, error)
 
 // SetLastUpdated sets the last updated time to the current time.
 // The last updated time is shared between all the keys for this store.
-func (s *NamespacedStore) SetLastUpdated(ctx context.Context) error {
+func (s *CacheKvStore) SetLastUpdated(ctx context.Context) error {
 	return s.kv.Set(ctx, keyLastUpdated, time.Now().Format(time.RFC3339))
 }
 
 // Delete deletes the value for the given key and it also updates the last updated time.
-func (s *NamespacedStore) Delete(ctx context.Context, key string) error {
+func (s *CacheKvStore) Delete(ctx context.Context, key string) error {
 	if err := s.kv.Del(ctx, s.storeKey(key)); err != nil {
 		return fmt.Errorf("kv del: %w", err)
 	}
@@ -102,7 +102,7 @@ func (s *NamespacedStore) Delete(ctx context.Context, key string) error {
 }
 
 // ListKeys returns all the keys in the store.
-func (s *NamespacedStore) ListKeys(ctx context.Context) ([]string, error) {
+func (s *CacheKvStore) ListKeys(ctx context.Context) ([]string, error) {
 	keys, err := s.kv.Keys(ctx, s.storeKey(""))
 	if err != nil {
 		return nil, err

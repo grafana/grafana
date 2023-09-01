@@ -21,24 +21,24 @@ const (
 
 // KVStoreService allows to cache GCOM angular patterns into the database, as a cache.
 type KVStoreService struct {
-	*cachekvstore.NamespacedStore
+	*cachekvstore.CacheKvStore
 }
 
 var _ Service = (*KVStoreService)(nil)
 
 func ProvideService(kv kvstore.KVStore) Service {
 	return &KVStoreService{
-		NamespacedStore: cachekvstore.NewNamespacedStore(kv, kvNamespace),
+		CacheKvStore: cachekvstore.NewCacheKvStore(kv, kvNamespace),
 	}
 }
 
 // Get returns the stored angular patterns from the underlying cachekvstore.
 func (s *KVStoreService) Get(ctx context.Context) (string, bool, error) {
-	return s.NamespacedStore.Get(ctx, keyPatterns)
+	return s.CacheKvStore.Get(ctx, keyPatterns)
 }
 
 // Set stores the given angular patterns in the underlying cachekvstore.
 // TODO: change signature so `value` accepts only the correct type?
 func (s *KVStoreService) Set(ctx context.Context, value any) error {
-	return s.NamespacedStore.Set(ctx, keyPatterns, value)
+	return s.CacheKvStore.Set(ctx, keyPatterns, value)
 }
