@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import { debounce } from 'lodash';
+import React, { useState, useMemo } from 'react';
 
 import { Select, HorizontalGroup, Input, useStyles2 } from '@grafana/ui';
 
@@ -34,6 +35,16 @@ const DurationInput = ({ filter, operators, updateFilter }: Props) => {
     invalid = filter.value ? !validationRegex.test(filter.value.concat('')) : false;
   }
 
+  const [value, setValue] = useState(filter.value);
+
+  const delayFilter = useMemo(
+    () =>
+      debounce((value: string, filter: TraceqlFilter) => {
+        updateFilter({ ...filter, value: value });
+      }, 500),
+    [updateFilter]
+  );
+
   return (
     <HorizontalGroup spacing={'none'}>
       <Select
@@ -51,9 +62,10 @@ const DurationInput = ({ filter, operators, updateFilter }: Props) => {
       />
       <Input
         className={styles.noBoxShadow}
-        value={filter.value}
+        value={value}
         onChange={(v) => {
-          updateFilter({ ...filter, value: v.currentTarget.value });
+          setValue(v.currentTarget.value);
+          delayFilter(v.currentTarget.value, filter);
         }}
         placeholder="e.g. 100ms, 1.2s"
         aria-label={`select ${filter.id} value`}
