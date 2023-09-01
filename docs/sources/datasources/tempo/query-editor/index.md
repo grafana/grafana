@@ -30,10 +30,6 @@ To learn more about Grafana dashboards, refer to the [Use dashboards documentati
 
 ## Write TraceQL queries in Grafana
 
-Inspired by PromQL and LogQL, TraceQL is a query language designed for selecting traces.
-The default traces search reviews the whole trace.
-TraceQL provides a method for formulating precise queries so you can zoom in to the data you need.
-Query results are returned faster because the queries limit what is searched.
 
 You can compose TraceQL queries in Grafana and Grafana Cloud using **Explore** and a Tempo data source. You can use either the **Query type** > **Search** (the TraceQL query builder) or the **TraceQL** tab (the TraceQL query editor).
 Both of these methods let you build queries and drill-down into result sets.
