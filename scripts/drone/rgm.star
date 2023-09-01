@@ -146,7 +146,7 @@ def rgm_release(trigger, ver_mode, bucket = "grafana-prerelease"):
     if ver_mode == "nightly":
         version = "nightly-${DRONE_COMMIT_SHA:0:8}"
 
-    return [
+    pipelines = [
         test_frontend(trigger, ver_mode),
         test_backend(trigger, ver_mode),
         pipeline(
@@ -155,7 +155,6 @@ def rgm_release(trigger, ver_mode, bucket = "grafana-prerelease"):
             steps = rgm_build(script = "drone_publish_tag_grafana.sh", bucket = bucket, version = version),
             depends_on = ["{}-test-backend".format(ver_mode), "{}-test-frontend".format(ver_mode)],
         ),
-        rgm_windows(trigger, ver_mode, bucket),
         verify_release_pipeline(
             trigger = trigger,
             name = "rgm-{}-verify-prerelease-assets".format(ver_mode),
@@ -168,10 +167,15 @@ def rgm_release(trigger, ver_mode, bucket = "grafana-prerelease"):
         ),
     ]
 
+    if ver_mode != "nightly":
+        pipelines.append(rgm_windows(trigger, ver_mode, bucket))
+        pipelines.append(whats_new_checker_pipeline(trigger))
+
+    return pipelines
+
 def rgm():
     return (
         rgm_main() +
-        [whats_new_checker_pipeline(tag_trigger)] +
         rgm_release(tag_trigger, "tag", "grafana-prerelease") +
         rgm_release(nightly_trigger, "nightly", "grafana-prerelease/nightly")
     )
