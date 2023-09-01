@@ -3,6 +3,7 @@ package store
 import (
 	"context"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/setting"
 	qdrant "github.com/qdrant/go-client/qdrant"
 	"google.golang.org/grpc"
@@ -10,6 +11,8 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/status"
 )
+
+var logger = log.New("vector.store.qdrant")
 
 type qdrantClient struct {
 	conn              *grpc.ClientConn
@@ -23,7 +26,11 @@ func newQdrantClient(cfg setting.QdrantVectorDBSettings) (Client, func(), error)
 		return nil, nil, err
 	}
 	cancel := func() {
-		defer conn.Close()
+		defer func() {
+			if err := conn.Close(); err != nil {
+				logger.Warn("failed to close connection", "err", err)
+			}
+		}()
 	}
 	return &qdrantClient{
 		conn:              conn,

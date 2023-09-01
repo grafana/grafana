@@ -9,8 +9,11 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/setting"
 )
+
+var logger = log.New("vector.embedding.openai")
 
 type openAILLMClient struct {
 	client *http.Client
@@ -62,7 +65,11 @@ func (o *openAILLMClient) Embeddings(ctx context.Context, payload string) ([]flo
 	if err != nil {
 		return nil, fmt.Errorf("make request: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			logger.Warn("failed to close response body", "err", err)
+		}
+	}()
 	if resp.StatusCode/100 != 2 {
 		return nil, fmt.Errorf("got non-2xx status from OpenAI: %s", resp.Status)
 	}

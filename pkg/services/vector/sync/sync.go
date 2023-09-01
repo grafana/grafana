@@ -61,15 +61,18 @@ func (s *Service) IsDisabled() bool {
 }
 
 func (s *Service) Run(ctx context.Context) error {
-	s.syncVectorStore(ctx)
+	err := s.syncVectorStore(ctx)
 	ticker := time.NewTicker(15 * time.Minute)
 	defer ticker.Stop()
 	for {
+		if err != nil {
+			logger.Warn("error syncing vector store", "err", err)
+		}
 		select {
 		case <-ctx.Done():
 			return ctx.Err()
 		case <-ticker.C:
-			s.syncVectorStore(ctx)
+			err = s.syncVectorStore(ctx)
 		}
 	}
 }
@@ -186,7 +189,9 @@ func (s *Service) addNewMetadata(ctx context.Context, client store.Client, colle
 		payloads := make([]string, 0)
 		for j, metadata := range chunk {
 			hash := fnv.New64a()
-			hash.Write([]byte(metadata))
+			if _, err := hash.Write([]byte(metadata)); err != nil {
+				return fmt.Errorf("hash metadata: %w", err)
+			}
 			id := hash.Sum64()
 			// TODO: can we do this call in a batch?
 			// or does it return 404 if _any_ don't exist?
@@ -210,7 +215,6 @@ func (s *Service) addNewMetadata(ctx context.Context, client store.Client, colle
 			ids = append(ids, id)
 			embeddings = append(embeddings, e)
 			payloads = append(payloads, metadata)
-
 		}
 		if len(ids) == 0 {
 			logger.Debug("no new embeddings to add")
