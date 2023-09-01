@@ -202,7 +202,8 @@ func (noopTracerProvider) Shutdown(ctx context.Context) error {
 }
 
 func (ots *Opentelemetry) parseSettings() error {
-	legacyAddress, legacyTags := "", ""
+	legacyAddress, legacyTags, legacySampler, legacySamplerRemoteURL := "", "", "", ""
+	var legacySamplerParam float64
 	if section, err := ots.Cfg.Raw.GetSection("tracing.jaeger"); err == nil {
 		legacyAddress = section.Key("address").MustString("")
 		if legacyAddress == "" {
@@ -212,9 +213,9 @@ func (ots *Opentelemetry) parseSettings() error {
 			}
 		}
 		legacyTags = section.Key("always_included_tag").MustString("")
-		ots.sampler = section.Key("sampler_type").MustString("")
-		ots.samplerParam = section.Key("sampler_param").MustFloat64(1)
-		ots.samplerRemoteURL = section.Key("sampling_server_url").MustString("")
+		legacySampler = section.Key("sampler_type").MustString("")
+		legacySamplerParam = section.Key("sampler_param").MustFloat64(1)
+		legacySamplerRemoteURL = section.Key("sampling_server_url").MustString("")
 	}
 	section := ots.Cfg.Raw.Section("tracing.opentelemetry")
 	var err error
@@ -234,6 +235,9 @@ func (ots *Opentelemetry) parseSettings() error {
 		ots.enabled = jaegerExporter
 		return nil
 	}
+	ots.sampler = section.Key("sampler_type").MustString(legacySampler)
+	ots.samplerParam = section.Key("sampler_param").MustFloat64(legacySamplerParam)
+	ots.samplerRemoteURL = section.Key("sampling_server_url").MustString(legacySamplerRemoteURL)
 
 	section = ots.Cfg.Raw.Section("tracing.opentelemetry.otlp")
 	ots.Address = section.Key("address").MustString("")
@@ -241,6 +245,7 @@ func (ots *Opentelemetry) parseSettings() error {
 		ots.enabled = otlpExporter
 	}
 	ots.Propagation = section.Key("propagation").MustString("")
+
 	return nil
 }
 
