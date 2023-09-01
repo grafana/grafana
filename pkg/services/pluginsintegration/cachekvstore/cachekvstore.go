@@ -5,11 +5,17 @@ import (
 	"time"
 )
 
-// LastUpdatedStore keeps track of the last time the store was updated.
+// LastUpdateGetter can get the last time the store was updated.
 // The last updated time is shared between all keys in the store.
-type LastUpdatedStore interface {
+type LastUpdateGetter interface {
 	// GetLastUpdated returns the last time the store was updated.
 	GetLastUpdated(ctx context.Context) (time.Time, error)
+}
+
+// LastUpdatedStore can get and set the time when the store was updated.
+// The last updated time is shared between all keys in the store.
+type LastUpdatedStore interface {
+	LastUpdateGetter
 
 	// SetLastUpdated sets the last time the store was updated.
 	SetLastUpdated(ctx context.Context) error
