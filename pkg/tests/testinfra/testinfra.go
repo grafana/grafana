@@ -45,11 +45,12 @@ func StartGrafanaEnv(t *testing.T, grafDir, cfgPath string) (string, *server.Tes
 	setting.IsEnterprise = extensions.IsEnterprise
 	listener, err := net.Listen("tcp", "127.0.0.1:0")
 	require.NoError(t, err)
-	cmdLineArgs := setting.CommandLineArgs{Config: cfgPath, HomePath: grafDir}
+	cfg, err := setting.NewCfgFromArgs(setting.CommandLineArgs{Config: cfgPath, HomePath: grafDir})
+	require.NoError(t, err)
 	serverOpts := server.Options{Listener: listener, HomePath: grafDir}
 	apiServerOpts := api.ServerOptions{Listener: listener}
 
-	env, err := server.InitializeForTest(cmdLineArgs, serverOpts, apiServerOpts)
+	env, err := server.InitializeForTest(cfg, serverOpts, apiServerOpts)
 	require.NoError(t, err)
 	require.NoError(t, env.SQLStore.Sync())
 
