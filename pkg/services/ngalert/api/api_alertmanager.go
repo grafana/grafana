@@ -48,7 +48,12 @@ func (srv AlertmanagerSrv) RouteGetAMStatus(c *contextmodel.ReqContext) response
 		return errResp
 	}
 
-	return response.JSON(http.StatusOK, am.GetStatus())
+	status, err := am.GetStatus()
+	if err != nil {
+		return ErrResp(http.StatusInternalServerError, err, "failed to get status")
+	}
+
+	return response.JSON(http.StatusOK, status)
 }
 
 func (srv AlertmanagerSrv) RouteCreateSilence(c *contextmodel.ReqContext, postableSilence apimodels.PostableSilence) response.Response {
@@ -296,7 +301,10 @@ func (srv AlertmanagerSrv) RouteGetReceivers(c *contextmodel.ReqContext) respons
 		return errResp
 	}
 
-	rcvs := am.GetReceivers(c.Req.Context())
+	rcvs, err := am.GetReceivers(c.Req.Context())
+	if err != nil {
+		return ErrResp(http.StatusInternalServerError, err, "failed to get receivers")
+	}
 	return response.JSON(http.StatusOK, rcvs)
 }
 

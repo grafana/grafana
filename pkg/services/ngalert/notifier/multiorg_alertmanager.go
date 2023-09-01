@@ -34,7 +34,7 @@ type Alertmanager interface {
 	// Configuration
 	SaveAndApplyConfig(ctx context.Context, config *apimodels.PostableUserConfig) error
 	SaveAndApplyDefaultConfig(ctx context.Context) error
-	GetStatus() apimodels.GettableStatus
+	GetStatus() (apimodels.GettableStatus, error)
 
 	// Silences
 	CreateSilence(*apimodels.PostableSilence) (string, error)
@@ -48,7 +48,7 @@ type Alertmanager interface {
 	PutAlerts(postableAlerts apimodels.PostableAlerts) error
 
 	// Receivers
-	GetReceivers(ctx context.Context) []apimodels.Receiver
+	GetReceivers(ctx context.Context) ([]apimodels.Receiver, error)
 	TestReceivers(ctx context.Context, c apimodels.TestReceiversConfigBodyParams) (*TestReceiversResult, error)
 	TestTemplate(ctx context.Context, c apimodels.TestTemplatesConfigBodyParams) (*TestTemplatesResults, error)
 	ApplyConfig(context.Context, *models.AlertConfiguration) error
@@ -244,11 +244,21 @@ func (moa *MultiOrgAlertmanager) SyncAlertmanagersForOrgs(ctx context.Context, o
 			// These metrics are not exported by Grafana and are mostly a placeholder.
 			// To export them, we need to translate the metrics from each individual registry and,
 			// then aggregate them on the main registry.
-			m := metrics.NewAlertmanagerMetrics(moa.metrics.GetOrCreateOrgRegistry(orgID))
-			am, err := newAlertmanager(ctx, orgID, moa.settings, moa.configStore, moa.kvStore, moa.peer, moa.decryptFn, moa.ns, m)
+			var am Alertmanager
+			var err error
+			// TODO: change depending on which AM we're using.
+			if true {
+				m := metrics.NewAlertmanagerMetrics(moa.metrics.GetOrCreateOrgRegistry(orgID))
+				am, err = newAlertmanager(ctx, orgID, moa.settings, moa.configStore, moa.kvStore, moa.peer, moa.decryptFn, moa.ns, m)
+			} else {
+				// TODO: configure
+				cfg := ExternalAlertmanagerConfig{}
+				am, err = newExternalAlertmanager(cfg, moa.configStore, orgID)
+			}
 			if err != nil {
 				moa.logger.Error("unable to create Alertmanager for org", "org", orgID, "error", err)
 			}
+
 			moa.alertmanagers[orgID] = am
 			alertmanager = am
 		}

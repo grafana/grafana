@@ -7,16 +7,16 @@ import (
 )
 
 // TODO: We no longer do apimodels at this layer, move it to the API.
-func (am *alertmanager) GetStatus() apimodels.GettableStatus {
+func (am *alertmanager) GetStatus() (apimodels.GettableStatus, error) {
 	config := &apimodels.PostableUserConfig{}
 	status := am.Base.GetStatus()
 	if status == nil {
-		return *apimodels.NewGettableStatus(&config.AlertmanagerConfig)
+		return *apimodels.NewGettableStatus(&config.AlertmanagerConfig), nil
 	}
 
 	if err := json.Unmarshal(status, config); err != nil {
 		am.logger.Error("unable to unmarshall alertmanager config", "Err", err)
 	}
 
-	return *apimodels.NewGettableStatus(&config.AlertmanagerConfig)
+	return *apimodels.NewGettableStatus(&config.AlertmanagerConfig), nil
 }

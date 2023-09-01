@@ -285,7 +285,10 @@ func TestMultiOrgAlertmanager_AlertmanagerFor(t *testing.T) {
 	{
 		am, err := mam.AlertmanagerFor(2)
 		require.NoError(t, err)
-		require.Equal(t, "N/A", *am.GetStatus().VersionInfo.Version)
+
+		status, err := am.GetStatus()
+		require.NoError(t, err)
+		require.Equal(t, "N/A", status.VersionInfo.Version)
 		require.Equal(t, int64(2), am.OrgID())
 		require.NotNil(t, am.ConfigHash())
 	}
