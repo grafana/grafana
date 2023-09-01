@@ -12,8 +12,7 @@ type Service interface {
 const (
 	kvNamespace = "plugin.angularpatterns"
 
-	keyPatterns    = "angular_patterns"
-	keyLastUpdated = "last_updated"
+	keyPatterns = "angular_patterns"
 )
 
 // KVStoreService allows to cache GCOM angular patterns into the database, as a cache.
@@ -25,9 +24,6 @@ var _ Service = (*KVStoreService)(nil)
 
 func ProvideService(kv kvstore.KVStore) Service {
 	return &KVStoreService{
-		SingleKeyStore: cachekvstore.NewSingleKeyNamespacedStore(
-			kv, kvNamespace, keyPatterns,
-			cachekvstore.WithLastUpdatedKey(keyLastUpdated),
-		),
+		SingleKeyStore: cachekvstore.NewSingleKeyNamespacedStore(kv, kvNamespace, keyPatterns),
 	}
 }

@@ -8,8 +8,8 @@ import (
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 )
 
-// DefaultLastUpdatedKey is the default key used to store the last updated time.
-const DefaultLastUpdatedKey = "last_updated"
+// keyLastUpdated is the key used to store the last updated time.
+const keyLastUpdated = "last_updated"
 
 // NamespacedStore is a Store that stores data in a *kvstore.NamespacedKVStore.
 // It uses the provided StoreKeyGetter to determine the underlying store's key to use for a given key.
@@ -23,9 +23,6 @@ type NamespacedStore struct {
 	// This allows to modify the key for the underlying storage.
 	// This is only used for actual data, not for the last updated time key.
 	storeKeyGetter StoreKeyGetter
-
-	// lastUpdatedKey is the key to use for the last updated time key.
-	lastUpdatedKey string
 
 	// setLastUpdatedOnDelete is a flag that determines if the last updated time should be updated when deleting a key.
 	setLastUpdatedOnDelete bool
@@ -47,13 +44,6 @@ func PrefixStoreKeyGetter(prefix string) StoreKeyGetterFunc {
 // NamespacedStoreOpt is an option for NewNamespacedStore that modifies the store passed to it.
 type NamespacedStoreOpt func(store *NamespacedStore)
 
-// WithLastUpdatedKey sets the key to use for the last updated time key.
-func WithLastUpdatedKey(lastUpdatedKey string) NamespacedStoreOpt {
-	return func(store *NamespacedStore) {
-		store.lastUpdatedKey = lastUpdatedKey
-	}
-}
-
 // WithStoreKeyGetter sets the StoreKeyGetter to use.
 func WithStoreKeyGetter(g StoreKeyGetter) NamespacedStoreOpt {
 	return func(store *NamespacedStore) {
@@ -73,7 +63,6 @@ func NewNamespacedStore(kv kvstore.KVStore, namespace string, opts ...Namespaced
 	store := &NamespacedStore{
 		kv:                     kvstore.WithNamespace(kv, 0, namespace),
 		storeKeyGetter:         DefaultStoreKeyGetter,
-		lastUpdatedKey:         DefaultLastUpdatedKey,
 		setLastUpdatedOnDelete: true,
 	}
 	for _, opt := range opts {
@@ -109,7 +98,7 @@ func (s *NamespacedStore) Set(ctx context.Context, key string, value any) error 
 // GetLastUpdated returns the last updated time.
 // If the last updated time is not set, it returns a zero time.
 func (s *NamespacedStore) GetLastUpdated(ctx context.Context) (time.Time, error) {
-	v, ok, err := s.kv.Get(ctx, s.lastUpdatedKey)
+	v, ok, err := s.kv.Get(ctx, keyLastUpdated)
 	if err != nil {
 		return time.Time{}, fmt.Errorf("kv get: %w", err)
 	}
@@ -128,7 +117,7 @@ func (s *NamespacedStore) GetLastUpdated(ctx context.Context) (time.Time, error)
 // SetLastUpdated sets the last updated time to the current time.
 // The last updated time is shared between all the keys for this store.
 func (s *NamespacedStore) SetLastUpdated(ctx context.Context) error {
-	return s.kv.Set(ctx, s.lastUpdatedKey, time.Now().Format(time.RFC3339))
+	return s.kv.Set(ctx, keyLastUpdated, time.Now().Format(time.RFC3339))
 }
 
 // Delete deletes the value for the given key.
@@ -157,7 +146,7 @@ func (s *NamespacedStore) ListKeys(ctx context.Context) ([]string, error) {
 	res := make([]string, 0, len(keys)-1)
 	for _, key := range keys {
 		// Filter out last updated time
-		if key.Key == s.lastUpdatedKey {
+		if key.Key == keyLastUpdated {
 			continue
 		}
 		res = append(res, key.Key)

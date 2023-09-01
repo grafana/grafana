@@ -12,9 +12,8 @@ type Service struct {
 }
 
 const (
-	namespace      = "plugin.publickeys"
-	prefix         = "key-"
-	lastUpdatedKey = "last_updated"
+	namespace = "plugin.publickeys"
+	prefix    = "key-"
 )
 
 var _ plugins.KeyStore = (*Service)(nil)
@@ -23,7 +22,6 @@ func ProvideService(kv kvstore.KVStore) *Service {
 	return &Service{
 		NamespacedStore: cachekvstore.NewNamespacedStore(
 			kv, namespace,
-			cachekvstore.WithLastUpdatedKey(lastUpdatedKey),
 			cachekvstore.WithStoreKeyGetter(cachekvstore.PrefixStoreKeyGetter(prefix)),
 			cachekvstore.WithSetLastUpdatedOnDelete(true),
 		),
