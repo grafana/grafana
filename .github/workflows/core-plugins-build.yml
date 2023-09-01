@@ -170,6 +170,8 @@ jobs:
             GCOM_TOKEN: ${{ secrets.PLUGINS_GCOM_TOKEN }}
           run: |
             echo "Publish new plugin version on grafana.com:"
+            version=$(cat ci/dist/${{ env.plugin_id }}/plugin.json | jq -r .info.version)
+            echo "Plugin version: $version"
             curl -H "Authorization: Bearer $GCOM_TOKEN" -H "Content-Type: application/json" https://grafana-dev.com/api/plugins -d "{
               \"url\": \"https://github.com/grafana/grafana/tree/main/public/plugins/${{ env.plugin_id }}\",
               \"download\": {
