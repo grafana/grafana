@@ -47,7 +47,6 @@ const getStyles = (theme: GrafanaTheme2) => {
     colorRow: css({
       display: 'grid',
       gridTemplateColumns: '25% 1fr',
-      gridColumnGap: theme.spacing(2),
       padding: theme.spacing(0.5, 0),
 
       '&:hover': {

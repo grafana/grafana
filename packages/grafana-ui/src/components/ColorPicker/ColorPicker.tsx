@@ -42,7 +42,7 @@ export const colorPickerFactory = <T extends ColorPickerProps>(
         onChange,
       });
       return (
-        <PopoverController content={popoverElement} hideAfter={300}>
+        <PopoverController content={popoverElement} hideAfter={100000}>
           {(showPopper, hidePopper, popperProps) => {
             return (
               <>
