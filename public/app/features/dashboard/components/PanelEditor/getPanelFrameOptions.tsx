@@ -66,7 +66,9 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
             />
           );
         },
-        addon: config.featureToggles.dashgpt && <GenAIPanelDescription setPanelDescription={setPanelDescription} />,
+        addon: config.featureToggles.dashgpt && (
+          <GenAIPanelDescription setPanelDescription={setPanelDescription} panel={panel} />
+        ),
       })
     )
     .addItem(

@@ -20,6 +20,11 @@ export const GenAIPanelTitle = ({ setPanelTitle, panel }: GenAIPanelTitleProps) 
   // TODO: Figure out better state management for this possibly (useState results in stale value on first run)
   let isGenAIEnabled = false;
 
+  const onGenAIButtonClick = () => {
+    // TODO: Improve this to be enum or some other way of handling
+    generateAITitleResult('title');
+  };
+
   const generateAITitleResult = (subject: string) => {
     const payload = getGeneratePayloadForPanelTitleAndDescription(panel);
 
@@ -28,10 +33,6 @@ export const GenAIPanelTitle = ({ setPanelTitle, panel }: GenAIPanelTitleProps) 
         isGenAIEnabled = response.enabled;
       })
       .catch((e) => console.log('error', e.message));
-  };
-
-  const onGenAIButtonClick = () => {
-    generateAITitleResult('title');
   };
 
   const setPanelTitleFromGenAIResult = (reply: string) => {
