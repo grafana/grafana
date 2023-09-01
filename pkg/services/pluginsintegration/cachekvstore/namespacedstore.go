@@ -13,58 +13,38 @@ import (
 const keyLastUpdated = "last_updated"
 
 // NamespacedStore is a Store that stores data in a *kvstore.NamespacedKVStore.
-// It uses the provided StoreKeyGetter to determine the underlying store's key to use for a given key.
 // It also stores a last updated time, which is unique for all the keys and is updated on each call to `Set`,
 // and can be used to determine if the data is stale.
 type NamespacedStore struct {
 	// kv is the underlying KV store.
 	kv *kvstore.NamespacedKVStore
 
-	// storeKeyGetter is a function that returns the underlying store's key to use for a given key.
-	// This allows to modify the key for the underlying storage.
-	// This is only used for actual data, not for the last updated time key.
-	storeKeyGetter StoreKeyGetter
+	// keyPrefix is the prefix to use for all the keys.
+	keyPrefix string
 }
 
-// DefaultStoreKeyGetter is the default StoreKeyGetterFunc, which returns the key as-is.
-var DefaultStoreKeyGetter = StoreKeyGetterFunc(func(k string) string {
-	return k
-})
-
-// PrefixStoreKeyGetter returns a StoreKeyGetterFunc that returns the key with a prefix.
-// It is used to prefix all keys in the underlying store with a fixed prefix.
-func PrefixStoreKeyGetter(prefix string) StoreKeyGetterFunc {
-	return func(k string) string {
-		return prefix + k
-	}
-}
-
-// NamespacedStoreOpt is an option for NewNamespacedStore that modifies the store passed to it.
-type NamespacedStoreOpt func(store *NamespacedStore)
-
-// WithStoreKeyGetter sets the StoreKeyGetter to use.
-func WithStoreKeyGetter(g StoreKeyGetter) NamespacedStoreOpt {
-	return func(store *NamespacedStore) {
-		store.storeKeyGetter = g
+// NewNamespacedStoreWithPrefix creates a new NamespacedStore using the provided underlying KVStore, namespace and prefix.
+func NewNamespacedStoreWithPrefix(kv kvstore.KVStore, namespace, prefix string) *NamespacedStore {
+	return &NamespacedStore{
+		kv:        kvstore.WithNamespace(kv, 0, namespace),
+		keyPrefix: prefix,
 	}
 }
 
 // NewNamespacedStore creates a new NamespacedStore using the provided underlying KVStore and namespace.
-func NewNamespacedStore(kv kvstore.KVStore, namespace string, opts ...NamespacedStoreOpt) *NamespacedStore {
-	store := &NamespacedStore{
-		kv:             kvstore.WithNamespace(kv, 0, namespace),
-		storeKeyGetter: DefaultStoreKeyGetter,
-	}
-	for _, opt := range opts {
-		opt(store)
-	}
-	return store
+func NewNamespacedStore(kv kvstore.KVStore, namespace string) *NamespacedStore {
+	return NewNamespacedStoreWithPrefix(kv, namespace, "")
+}
+
+// storeKey returns the key to use in the underlying store for the given key.
+func (s *NamespacedStore) storeKey(k string) string {
+	return s.keyPrefix + k
 }
 
 // Get returns the value for the given key.
 // If no value is present, the second argument is false and the returned error is nil.
 func (s *NamespacedStore) Get(ctx context.Context, key string) (string, bool, error) {
-	return s.kv.Get(ctx, s.storeKeyGetter.GetStoreKey(key))
+	return s.kv.Get(ctx, s.storeKey(key))
 }
 
 // Set sets the value for the given key and updates the last updated time.
@@ -76,7 +56,7 @@ func (s *NamespacedStore) Set(ctx context.Context, key string, value any) error 
 		return fmt.Errorf("marshal: %w", err)
 	}
 
-	if err := s.kv.Set(ctx, s.storeKeyGetter.GetStoreKey(key), valueToStore); err != nil {
+	if err := s.kv.Set(ctx, s.storeKey(key), valueToStore); err != nil {
 		return fmt.Errorf("kv set: %w", err)
 	}
 	if err := s.SetLastUpdated(ctx); err != nil {
@@ -112,7 +92,7 @@ func (s *NamespacedStore) SetLastUpdated(ctx context.Context) error {
 
 // Delete deletes the value for the given key and it also updates the last updated time.
 func (s *NamespacedStore) Delete(ctx context.Context, key string) error {
-	if err := s.kv.Del(ctx, s.storeKeyGetter.GetStoreKey(key)); err != nil {
+	if err := s.kv.Del(ctx, s.storeKey(key)); err != nil {
 		return fmt.Errorf("kv del: %w", err)
 	}
 	if err := s.SetLastUpdated(ctx); err != nil {
@@ -123,7 +103,7 @@ func (s *NamespacedStore) Delete(ctx context.Context, key string) error {
 
 // ListKeys returns all the keys in the store.
 func (s *NamespacedStore) ListKeys(ctx context.Context) ([]string, error) {
-	keys, err := s.kv.Keys(ctx, s.storeKeyGetter.GetStoreKey(""))
+	keys, err := s.kv.Keys(ctx, s.storeKey(""))
 	if err != nil {
 		return nil, err
 	}

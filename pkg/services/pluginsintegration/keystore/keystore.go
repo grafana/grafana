@@ -20,9 +20,6 @@ var _ plugins.KeyStore = (*Service)(nil)
 
 func ProvideService(kv kvstore.KVStore) *Service {
 	return &Service{
-		NamespacedStore: cachekvstore.NewNamespacedStore(
-			kv, namespace,
-			cachekvstore.WithStoreKeyGetter(cachekvstore.PrefixStoreKeyGetter(prefix)),
-		),
+		NamespacedStore: cachekvstore.NewNamespacedStoreWithPrefix(kv, namespace, prefix),
 	}
 }
