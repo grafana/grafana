@@ -127,18 +127,18 @@
       "widget": ""
     },
     "empty": {
-      "add-import-body": "导入与其他仪表板共享的可视化。",
-      "add-import-button": "导入库面板",
-      "add-import-header": "导入面板",
-      "add-row-body": "将您的可视化分组成可扩展部分。",
-      "add-row-button": "添加行",
-      "add-row-header": "添加一行",
+      "add-library-panel-body": "",
+      "add-library-panel-button": "",
+      "add-library-panel-header": "",
       "add-visualization-body": "选择一个数据源，然后用图表、统计信息和表格查询您的数据以及将其可视化，或创建列表、Markdown 和其他小部件。",
       "add-visualization-button": "添加可视化",
       "add-visualization-header": "通过添加可视化开始您的新仪表板",
       "add-widget-body": "",
       "add-widget-button": "",
-      "add-widget-header": ""
+      "add-widget-header": "",
+      "import-a-dashboard-body": "",
+      "import-a-dashboard-header": "",
+      "import-dashboard-button": ""
     },
     "inspect": {
       "data-tab": "数据",
