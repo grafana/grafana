@@ -17,6 +17,7 @@ export interface OptionsPaneItemProps {
   skipField?: boolean;
   showIf?: () => boolean;
   overrides?: OptionPaneItemOverrideInfo[];
+  addon?: ReactNode;
 }
 
 /**
@@ -28,7 +29,7 @@ export class OptionsPaneItemDescriptor {
   constructor(public props: OptionsPaneItemProps) {}
 
   getLabel(searchQuery?: string): ReactNode {
-    const { title, description, overrides } = this.props;
+    const { title, description, overrides, addon } = this.props;
 
     if (!searchQuery) {
       // Do not render label for categories with only one child
@@ -37,10 +38,14 @@ export class OptionsPaneItemDescriptor {
       }
 
       return (
-        <Label description={description}>
-          {title}
-          {overrides && overrides.length > 0 && <OptionsPaneItemOverrides overrides={overrides} />}
-        </Label>
+        // TODO: replace inline styles with styles object
+        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+          <Label description={description}>
+            {title}
+            {overrides && overrides.length > 0 && <OptionsPaneItemOverrides overrides={overrides} />}
+          </Label>
+          {addon}
+        </div>
       );
     }
 
