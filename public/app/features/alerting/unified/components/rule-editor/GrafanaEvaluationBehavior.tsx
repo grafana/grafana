@@ -254,7 +254,6 @@ export function GrafanaEvaluationBehavior({
         isCollapsed={!showErrorHandling}
         onToggle={(collapsed) => setShowErrorHandling(!collapsed)}
         text="Configure no data and error handling"
-        className={styles.collapseToggle}
       />
       {showErrorHandling && (
         <>
@@ -297,9 +296,6 @@ export function GrafanaEvaluationBehavior({
 const getStyles = (theme: GrafanaTheme2) => ({
   inlineField: css`
     margin-bottom: 0;
-  `,
-  collapseToggle: css`
-    margin: ${theme.spacing(2, 0, 2, -1)};
   `,
   evaluateLabel: css`
     margin-right: ${theme.spacing(1)};

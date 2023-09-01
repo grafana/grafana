@@ -27,7 +27,7 @@ const getPageNav = (state: 'edit' | 'add') => {
   if (state === 'edit') {
     return { ...defaultPageNav, id: 'alert-rule-edit', text: 'Edit rule' };
   } else if (state === 'add') {
-    return { ...defaultPageNav, id: 'alert-rule-add', text: 'Add rule' };
+    return { ...defaultPageNav, id: 'alert-rule-add', text: 'New alert rule' };
   }
   return undefined;
 };

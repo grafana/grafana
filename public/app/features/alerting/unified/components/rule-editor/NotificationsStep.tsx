@@ -37,9 +37,10 @@ export const NotificationsStep = ({ alertUid }: NotificationsStepProps) => {
 
   const NotificationsStepDescription = () => {
     return (
-      <div className={styles.stepDescription}>
-        <div>Add custom labels to change the way your notifications are routed.</div>
-
+      <Stack direction="row" gap={0.5} alignItems="baseline">
+        <Text variant="bodySmall" color="secondary">
+          Add custom labels to change the way your notifications are routed.
+        </Text>
         <NeedHelpInfo
           contentText={
             <Stack gap={1}>
@@ -55,9 +56,9 @@ export const NotificationsStep = ({ alertUid }: NotificationsStepProps) => {
                   target="_blank"
                   rel="noreferrer"
                 >
-                  <div className={styles.infoLink}>
+                  <Text color="link">
                     Read about notification routing. <Icon name="external-link-alt" />
-                  </div>
+                  </Text>
                 </a>
               </Stack>
               <Stack direction="row" gap={0}>
@@ -70,16 +71,16 @@ export const NotificationsStep = ({ alertUid }: NotificationsStepProps) => {
                   target="_blank"
                   rel="noreferrer"
                 >
-                  <div className={styles.infoLink}>
+                  <Text color="link">
                     Read about Labels and annotations. <Icon name="external-link-alt" />
-                  </div>
+                  </Text>
                 </a>
               </Stack>
             </Stack>
           }
           title="Notification routing"
         />
-      </div>
+      </Stack>
     );
   };
 
@@ -99,21 +100,7 @@ export const NotificationsStep = ({ alertUid }: NotificationsStepProps) => {
         </Stack>
       }
     >
-      <div className={styles.contentWrapper}>
-        <div style={{ display: 'flex', flexDirection: 'column' }}>
-          {!hasLabelsDefined && type !== RuleFormType.cloudRecording && (
-            <Card className={styles.card}>
-              <Card.Heading>Default policy</Card.Heading>
-              <Card.Description>
-                All alert instances are handled by the default policy if no other matching policies are found. To view
-                and edit the default policy, go to <Link href="/alerting/routes">Notification Policies</Link>
-                &nbsp;or contact your Admin if you are using provisioning.
-              </Card.Description>
-            </Card>
-          )}
-          <LabelsField dataSourceName={dataSourceName} />
-        </div>
-      </div>
+      <LabelsField dataSourceName={dataSourceName} />
       {shouldRenderPreview &&
         condition &&
         folder && ( // need to check for condition and folder again because of typescript
@@ -144,28 +131,5 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: flex;
     align-items: center;
     margin-top: ${theme.spacing(2)};
-  `,
-  hideButton: css`
-    color: ${theme.colors.text.secondary};
-    cursor: pointer;
-    margin-bottom: ${theme.spacing(1)};
-  `,
-  card: css`
-    max-width: 500px;
-  `,
-  flowChart: css`
-    margin-right: ${theme.spacing(3)};
-  `,
-  title: css`
-    margin-bottom: ${theme.spacing(2)};
-  `,
-  stepDescription: css`
-    margin-bottom: ${theme.spacing(2)};
-    display: flex;
-    gap: ${theme.spacing(1)};
-)};
-  `,
-  infoLink: css`
-    color: ${theme.colors.text.link};
   `,
 });
