@@ -2,13 +2,14 @@ package angularpatternsstore
 
 import (
 	"context"
+	"time"
 
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/cachekvstore"
 )
 
 type Service interface {
-	cachekvstore.LastUpdateGetter
+	GetLastUpdated(ctx context.Context) (time.Time, error)
 	Get(ctx context.Context) (string, bool, error)
 	Set(ctx context.Context, value any) error
 }
