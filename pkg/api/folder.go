@@ -377,6 +377,7 @@ func (hs *HTTPServer) newToFolderDto(c *contextmodel.ReqContext, g guardian.Dash
 		parentGuardian, err := guardian.NewByFolder(ctx, f, f.OrgID, c.SignedInUser)
 		if err != nil {
 			hs.log.Error("failed to check folder permissions", "folder", f.UID, "org", f.OrgID, "error", err)
+			continue
 		}
 		if canView, _ := parentGuardian.CanView(); canView {
 			folderDTO.Parents = append(folderDTO.Parents, toDTO(f))
