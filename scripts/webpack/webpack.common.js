@@ -42,7 +42,6 @@ module.exports = {
       https: false,
       string_decoder: false,
     },
-    symlinks: false,
   },
   ignoreWarnings: [/export .* was not found in/],
   stats: {
