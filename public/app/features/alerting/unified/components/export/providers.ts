@@ -22,7 +22,7 @@ const YamlRuleExportProvider: RuleExportProvider<'yaml'> = {
 };
 
 const HclRuleExportProvider: RuleExportProvider<'hcl'> = {
-  name: 'Terraform (HCL)',
+  name: 'HCL',
   exportFormat: 'hcl',
 };
 
