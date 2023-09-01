@@ -22,9 +22,6 @@ import (
 	"k8s.io/klog/v2"
 
 	"github.com/grafana/grafana-apiserver/pkg/certgenerator"
-
-	"github.com/grafana/grafana/pkg/api/routing"
-	"github.com/grafana/grafana/pkg/infra/log"
 )
 
 const (
@@ -46,10 +43,8 @@ type RestConfigProvider interface {
 
 type service struct {
 	*services.BasicService
-	log log.Logger
 
 	restConfig *rest.Config
-	rr         routing.RouteRegister
 
 	dataPath  string
 	stopCh    chan struct{}
