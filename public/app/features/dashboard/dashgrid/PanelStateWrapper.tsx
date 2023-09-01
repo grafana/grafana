@@ -571,7 +571,5 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
         )}
       </PanelChrome>
     );
-
-
   }
 }
