@@ -4,9 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"golang.org/x/exp/slices"
 	"strings"
 	"sync"
+
+	"golang.org/x/exp/slices"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/events"
@@ -189,19 +190,16 @@ func (s *Service) GetChildren(ctx context.Context, cmd *folder.GetChildrenQuery)
 		childrenUIDs = append(childrenUIDs, f.UID)
 	}
 
-	availableNonRootFolderUIDs := make([]string, 0)
+	availableNonRootFolders := make([]*folder.Folder, 0)
 	if cmd.UID == "" {
-		availableNonRootFolderUIDs = GetAvailableNonRootFolders(cmd.SignedInUser)
-		s.log.Debug("Non root folders", "folders", availableNonRootFolderUIDs)
-
-		nonRootFolderUIDs := make([]string, 0)
-		for _, uid := range availableNonRootFolderUIDs {
-			if !slices.Contains(childrenUIDs, uid) {
-				childrenUIDs = append(childrenUIDs, uid)
-				nonRootFolderUIDs = append(nonRootFolderUIDs, uid)
-			}
+		availableNonRootFolders, err = s.GetAvailableNonRootFolders(ctx, cmd.OrgID, cmd.SignedInUser)
+		if err != nil {
+			return nil, folder.ErrInternal.Errorf("failed to fetch subfolders from dashboard store: %w", err)
 		}
-		availableNonRootFolderUIDs = nonRootFolderUIDs
+
+		for _, f := range availableNonRootFolders {
+			childrenUIDs = append(childrenUIDs, f.UID)
+		}
 	}
 
 	dashFolders, err := s.dashboardFolderStore.GetFolders(ctx, cmd.OrgID, childrenUIDs)
@@ -210,11 +208,6 @@ func (s *Service) GetChildren(ctx context.Context, cmd *folder.GetChildrenQuery)
 	}
 
 	if cmd.UID == "" {
-		availableNonRootFolders := make([]*folder.Folder, 0)
-		for _, uid := range availableNonRootFolderUIDs {
-			availableNonRootFolders = append(availableNonRootFolders, dashFolders[uid])
-		}
-
 		availableNonRootFoldersDedup := make([]*folder.Folder, 0)
 		for _, f := range availableNonRootFolders {
 			parents, err := s.GetParents(ctx, folder.GetParentsQuery{UID: f.UID, OrgID: f.OrgID})
@@ -241,7 +234,7 @@ func (s *Service) GetChildren(ctx context.Context, cmd *folder.GetChildrenQuery)
 		children = append(children, availableNonRootFoldersDedup...)
 	}
 
-	filtered := make([]*folder.Folder, 0, len(childrenUIDs))
+	filtered := make([]*folder.Folder, 0, len(children))
 	for _, f := range children {
 		// fetch folder from dashboard store
 		dashFolder, ok := dashFolders[f.UID]
@@ -276,7 +269,7 @@ func (s *Service) GetChildren(ctx context.Context, cmd *folder.GetChildrenQuery)
 	return filtered, nil
 }
 
-func GetAvailableNonRootFolders(user identity.Requester) []string {
+func (s *Service) GetAvailableNonRootFolders(ctx context.Context, orgID int64, user identity.Requester) ([]*folder.Folder, error) {
 	permissions := user.GetPermissions()
 	folderPermissions := permissions["dashboards:read"]
 	folderUids := make([]string, 0)
@@ -285,7 +278,20 @@ func GetAvailableNonRootFolders(user identity.Requester) []string {
 			folderUids = append(folderUids, folderUid)
 		}
 	}
-	return folderUids
+
+	dashFolders, err := s.store.GetFolders(ctx, orgID, folderUids)
+	if err != nil {
+		return nil, folder.ErrInternal.Errorf("failed to fetch subfolders from dashboard store: %w", err)
+	}
+
+	nonRootFolders := make([]*folder.Folder, 0)
+	for _, f := range dashFolders {
+		if f.ParentUID != "" {
+			nonRootFolders = append(nonRootFolders, f)
+		}
+	}
+
+	return nonRootFolders, nil
 }
 
 func (s *Service) GetParents(ctx context.Context, q folder.GetParentsQuery) ([]*folder.Folder, error) {

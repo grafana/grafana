@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/grafana/dskit/concurrency"
+
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -330,4 +331,35 @@ func (ss *sqlStore) GetHeight(ctx context.Context, foldrUID string, orgID int64,
 		ss.log.Warn("folder height exceeds the maximum allowed depth, You might have a circular reference", "uid", foldrUID, "orgId", orgID, "maxDepth", folder.MaxNestedFolderDepth)
 	}
 	return height, nil
+}
+
+func (ss *sqlStore) GetFolders(ctx context.Context, orgID int64, uids []string) ([]*folder.Folder, error) {
+	var folders []*folder.Folder
+	if err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
+		b := strings.Builder{}
+		args := make([]any, 0, len(uids)+1)
+
+		b.WriteString("SELECT * FROM folder WHERE org_id=? ")
+		args = append(args, orgID)
+		for i, uid := range uids {
+			if i == 0 {
+				b.WriteString("  AND (")
+			}
+
+			if i > 0 {
+				b.WriteString(" OR ")
+			}
+			b.WriteString(" uid=? ")
+			args = append(args, uid)
+
+			if i == len(uids)-1 {
+				b.WriteString(")")
+			}
+		}
+		return sess.SQL(b.String(), args...).Find(&folders)
+	}); err != nil {
+		return nil, err
+	}
+
+	return folders, nil
 }
