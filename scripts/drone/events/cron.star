@@ -59,6 +59,10 @@ def cron_job_pipeline(cronName, name, steps):
                     "path": "/var/run/docker.sock",
                 },
             },
+            {
+                "name": "config",
+                "temp": {},
+            },
         ],
     }
 
@@ -117,13 +121,13 @@ def scan_docker_image_unknown_low_medium_vulnerabilities_step(docker_image):
         for key in images:
             cmds = cmds + ["trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM " + images[key]]
     else:
-        cmds = ["trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM " + docker_image]
+        cmds = ["trivy image --exit-code 0 --severity UNKNOWN,LOW,MEDIUM " + docker_image]
     return {
         "name": "scan-unknown-low-medium-vulnerabilities",
         "image": aquasec_trivy_image,
         "commands": cmds,
         "depends_on": ["authenticate-gcr"],
-        "volumes": [{"name": "docker", "path": "/var/run/docker.sock"}],
+        "volumes": [{"name": "docker", "path": "/var/run/docker.sock"}, {"name": "config", "path": "/root/.docker/"}],
     }
 
 def scan_docker_image_high_critical_vulnerabilities_step(docker_image):
@@ -141,13 +145,16 @@ def scan_docker_image_high_critical_vulnerabilities_step(docker_image):
         for key in images:
             cmds = cmds + ["trivy --exit-code 1 --severity HIGH,CRITICAL " + images[key]]
     else:
-        cmds = ["trivy --exit-code 1 --severity HIGH,CRITICAL " + docker_image]
+        cmds = ["trivy image --exit-code 1 --severity HIGH,CRITICAL " + docker_image]
     return {
         "name": "scan-high-critical-vulnerabilities",
         "image": aquasec_trivy_image,
         "commands": cmds,
         "depends_on": ["authenticate-gcr"],
-        "volumes": [{"name": "docker", "path": "/var/run/docker.sock"}],
+        "environment": {
+            "GOOGLE_APPLICATION_CREDENTIALS": from_secret("gcr_credentials_json"),
+        },
+        "volumes": [{"name": "docker", "path": "/var/run/docker.sock"}, {"name": "config", "path": "/root/.docker/"}],
     }
 
 def slack_job_failed_step(channel, image):
