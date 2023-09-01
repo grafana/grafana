@@ -45,7 +45,6 @@ jobs:
             credentials_json: '${{ secrets.PLUGINS_GOOGLE_CREDENTIALS }}'
         - name: 'Verify gcloud permissions'
           run: |
-            gcloud auth list
             touch test
             gsutil -m cp -r test gs://${{ env.GCP_BUCKET }}/${{ env.plugin_id }}/release/
         - name: Verify plugin_id
