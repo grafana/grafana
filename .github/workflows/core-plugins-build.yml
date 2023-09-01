@@ -144,6 +144,7 @@ jobs:
             path: ./public/plugins/${{ env.plugin_id }}/ci/packages/*.zip
         - name: Publish release to Google Cloud Storage
         # TODO: Authentication
+          working-directory: ./public/plugins/${{ env.plugin_id }}
           run: |
             echo "Publish release to Google Cloud Storage:"
             version=$(cat ci/dist/${{ env.plugin_id }}/plugin.json | jq -r .info.version)
