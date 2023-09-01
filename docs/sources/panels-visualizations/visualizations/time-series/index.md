@@ -227,6 +227,8 @@ Use this option to transform the series values without affecting the values show
 The transform option is only available as an override.
 {{% /admonition %}}
 
+{{< docs/shared source="grafana" lookup="multiple-y-axes.md" version="GRAFANA VERSION" >}}
+
 ## Color options
 
 By default, the graph uses the standard [Color scheme]({{< relref "../../configure-standard-options/#color-scheme" >}}) option to assign series colors. You can also use the legend to open the color picker by clicking the legend series color icon. Setting
