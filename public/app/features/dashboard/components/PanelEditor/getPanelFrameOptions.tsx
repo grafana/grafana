@@ -20,6 +20,20 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
     isOpenDefault: true,
   });
 
+  const setPanelTitle = (title: string) => {
+    // TODO: Fix type casting / magic ID string
+    const input = document.getElementById('PanelFrameTitle') as HTMLInputElement;
+    input.value = title;
+    onPanelConfigChange('title', title);
+  };
+
+  const setPanelDescription = (description: string) => {
+    // TODO: Fix type casting / magic ID string
+    const input = document.getElementById('description-text-area') as HTMLInputElement;
+    input.value = description;
+    onPanelConfigChange('description', description);
+  };
+
   return descriptor
     .addItem(
       new OptionsPaneItemDescriptor({
@@ -35,7 +49,7 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
             />
           );
         },
-        addon: config.featureToggles.dashgpt && <GenAIPanelTitle />,
+        addon: config.featureToggles.dashgpt && <GenAIPanelTitle setPanelTitle={setPanelTitle} />,
       })
     )
     .addItem(
@@ -52,7 +66,7 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
             />
           );
         },
-        addon: config.featureToggles.dashgpt && <GenAIPanelDescription />,
+        addon: config.featureToggles.dashgpt && <GenAIPanelDescription setPanelDescription={setPanelDescription} />,
       })
     )
     .addItem(

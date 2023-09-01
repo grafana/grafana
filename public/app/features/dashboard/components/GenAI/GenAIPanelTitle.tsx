@@ -2,7 +2,11 @@ import React, { useState } from 'react';
 
 import { GenAIButton } from './GenAIButton';
 
-export const GenAIPanelTitle = () => {
+interface GenAIPanelTitleProps {
+  setPanelTitle: (title: string) => void;
+}
+
+export const GenAIPanelTitle = ({ setPanelTitle }: GenAIPanelTitleProps) => {
   const [isTitleGenerating, setIsTitleGenerating] = useState(false);
   const [genAITitleResult, setGenAITitleResult] = useState('');
 

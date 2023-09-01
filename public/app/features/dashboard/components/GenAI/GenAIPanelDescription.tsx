@@ -2,7 +2,11 @@ import React, { useState } from 'react';
 
 import { GenAIButton } from './GenAIButton';
 
-export const GenAIPanelDescription = () => {
+interface GenAIPanelDescriptionProps {
+  setPanelDescription: (description: string) => void;
+}
+
+export const GenAIPanelDescription = ({ setPanelDescription }: GenAIPanelDescriptionProps) => {
   const [isDescriptionGenerating, setIsDescriptionGenerating] = useState(false);
   const [genAIDescriptionResult, setGenAIDescriptionResult] = useState('');
 
