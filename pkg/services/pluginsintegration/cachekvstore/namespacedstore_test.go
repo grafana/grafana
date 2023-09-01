@@ -83,6 +83,45 @@ func TestNamespacedStore(t *testing.T) {
 			require.False(t, ok)
 		})
 
+		t.Run("sets last updated on delete", func(t *testing.T) {
+			store := NewNamespacedStore(kvstore.NewFakeKVStore(), namespace)
+			ts, err := store.GetLastUpdated(context.Background())
+			require.NoError(t, err)
+			require.Zero(t, ts)
+
+			require.NoError(t, store.Delete(context.Background(), "key"))
+
+			ts, err = store.GetLastUpdated(context.Background())
+			require.NoError(t, err)
+			require.WithinDuration(t, time.Now(), ts, time.Second*10)
+		})
+
+		t.Run("last updated key is used in GetLastUpdated", func(t *testing.T) {
+			store := NewNamespacedStore(kvstore.NewFakeKVStore(), namespace)
+
+			// Set in underlying store
+			ts := time.Now()
+			require.NoError(t, store.kv.Set(context.Background(), keyLastUpdated, ts.Format(time.RFC3339)))
+
+			// Make sure we get the same value
+			storeTs, err := store.GetLastUpdated(context.Background())
+			require.NoError(t, err)
+			// Format to account for marshal/unmarshal differences
+			require.Equal(t, ts.Format(time.RFC3339), storeTs.Format(time.RFC3339))
+		})
+
+		t.Run("last updated key is used in SetLastUpdated", func(t *testing.T) {
+			store := NewNamespacedStore(kvstore.NewFakeKVStore(), namespace)
+			require.NoError(t, store.SetLastUpdated(context.Background()))
+
+			marshaledStoreTs, ok, err := store.kv.Get(context.Background(), keyLastUpdated)
+			require.NoError(t, err)
+			require.True(t, ok)
+			storeTs, err := time.Parse(time.RFC3339, marshaledStoreTs)
+			require.NoError(t, err)
+			require.WithinDuration(t, time.Now(), storeTs, time.Second*10)
+		})
+
 		t.Run("ListKeys", func(t *testing.T) {
 			t.Run("returns empty list if no keys", func(t *testing.T) {
 				keys, err := store.ListKeys(context.Background())
