@@ -36,7 +36,6 @@ export interface FeatureToggles {
   validateDashboardsOnSave?: boolean;
   autoMigrateOldPanels?: boolean;
   disableAngular?: boolean;
-  prometheusWideSeries?: boolean;
   canvasPanelNesting?: boolean;
   scenes?: boolean;
   disableSecretsCompatibility?: boolean;
@@ -81,7 +80,6 @@ export interface FeatureToggles {
   alertStateHistoryLokiOnly?: boolean;
   unifiedRequestLog?: boolean;
   renderAuthJWT?: boolean;
-  pyroscopeFlameGraph?: boolean;
   externalServiceAuth?: boolean;
   refactorVariablesTimeRange?: boolean;
   useCachingService?: boolean;
@@ -110,11 +108,19 @@ export interface FeatureToggles {
   toggleLabelsInLogsUI?: boolean;
   mlExpressions?: boolean;
   traceQLStreaming?: boolean;
+  metricsSummary?: boolean;
   grafanaAPIServer?: boolean;
   featureToggleAdminPage?: boolean;
   awsAsyncQueryCaching?: boolean;
   splitScopes?: boolean;
   azureMonitorDataplane?: boolean;
+  permissionsFilterRemoveSubquery?: boolean;
   prometheusConfigOverhaulAuth?: boolean;
   configurableSchedulerTick?: boolean;
+  influxdbSqlSupport?: boolean;
+  noBasicRole?: boolean;
+  alertingNoDataErrorExecution?: boolean;
+  angularDeprecationUI?: boolean;
+  dashgpt?: boolean;
+  reportingRetries?: boolean;
 }

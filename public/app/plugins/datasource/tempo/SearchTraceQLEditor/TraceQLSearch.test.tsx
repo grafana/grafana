@@ -1,7 +1,10 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { act } from 'react-dom/test-utils';
+import { initTemplateSrv } from 'test/helpers/initTemplateSrv';
+
+import { config } from '@grafana/runtime';
 
 import { TraceqlSearchScope } from '../dataquery.gen';
 import { TempoDatasource } from '../datasource';
@@ -40,6 +43,8 @@ jest.mock('../language_provider', () => {
 });
 
 describe('TraceQLSearch', () => {
+  initTemplateSrv('key', []);
+
   let user: ReturnType<typeof userEvent.setup>;
 
   const datasource: TempoDatasource = {
@@ -135,6 +140,25 @@ describe('TraceQLSearch', () => {
       const serviceNameValue = container.querySelector(`input[aria-label="select service-name value"]`);
       expect(serviceNameValue).toBeNull();
       expect(serviceNameValue).not.toBeInTheDocument();
+    });
+  });
+
+  it('should not render group by when feature toggle is not enabled', async () => {
+    await waitFor(() => {
+      render(<TraceQLSearch datasource={datasource} query={query} onChange={onChange} />);
+      const groupBy = screen.queryByText('Aggregate by');
+      expect(groupBy).toBeNull();
+      expect(groupBy).not.toBeInTheDocument();
+    });
+  });
+
+  it('should render group by when feature toggle enabled', async () => {
+    config.featureToggles.metricsSummary = true;
+    await waitFor(() => {
+      render(<TraceQLSearch datasource={datasource} query={query} onChange={onChange} />);
+      const groupBy = screen.queryByText('Aggregate by');
+      expect(groupBy).not.toBeNull();
+      expect(groupBy).toBeInTheDocument();
     });
   });
 });

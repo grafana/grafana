@@ -8,7 +8,7 @@ jest.mock('app/features/plugins/datasource_srv', () => ({
   getDatasourceSrv: jest.fn(() => dataSourceMock),
 }));
 
-import { loadAndInitDatasource, getRange } from './utils';
+import { loadAndInitDatasource, getRange, fromURLRange } from './utils';
 
 const DEFAULT_DATASOURCE = { uid: 'abc123', name: 'Default' };
 const TEST_DATASOURCE = { uid: 'def789', name: 'Test' };
@@ -58,17 +58,17 @@ describe('getRange', () => {
     const result = getRange(range, 'browser');
     expect(result.raw).toEqual(range);
   });
+});
 
+describe('fromURLRange', () => {
   it('should parse epoch strings', () => {
     const range = {
       from: dateTime('2020-10-22T10:00:00Z').valueOf().toString(),
       to: dateTime('2020-10-22T11:00:00Z').valueOf().toString(),
     };
-    const result = getRange(range, 'browser');
+    const result = fromURLRange(range);
     expect(result.from.valueOf()).toEqual(dateTime('2020-10-22T10:00:00Z').valueOf());
     expect(result.to.valueOf()).toEqual(dateTime('2020-10-22T11:00:00Z').valueOf());
-    expect(result.raw.from.valueOf()).toEqual(dateTime('2020-10-22T10:00:00Z').valueOf());
-    expect(result.raw.to.valueOf()).toEqual(dateTime('2020-10-22T11:00:00Z').valueOf());
   });
 
   it('should parse ISO strings', () => {
@@ -76,10 +76,8 @@ describe('getRange', () => {
       from: dateTime('2020-10-22T10:00:00Z').toISOString(),
       to: dateTime('2020-10-22T11:00:00Z').toISOString(),
     };
-    const result = getRange(range, 'browser');
+    const result = fromURLRange(range);
     expect(result.from.valueOf()).toEqual(dateTime('2020-10-22T10:00:00Z').valueOf());
     expect(result.to.valueOf()).toEqual(dateTime('2020-10-22T11:00:00Z').valueOf());
-    expect(result.raw.from.valueOf()).toEqual(dateTime('2020-10-22T10:00:00Z').valueOf());
-    expect(result.raw.to.valueOf()).toEqual(dateTime('2020-10-22T11:00:00Z').valueOf());
   });
 });

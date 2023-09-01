@@ -204,7 +204,7 @@ export class LokiDatasource
           refId: `${REF_ID_STARTER_LOG_VOLUME}${normalizedQuery.refId}`,
           queryType: LokiQueryType.Range,
           supportingQueryType: SupportingQueryType.LogsVolume,
-          expr: `sum by (level) (count_over_time(${expr}[$__interval]))`,
+          expr: `sum by (level) (count_over_time(${expr}[$__auto]))`,
         };
 
       case SupplementaryQueryType.LogsSample:
@@ -659,18 +659,34 @@ export class LokiDatasource
 
   modifyQuery(query: LokiQuery, action: QueryFixAction): LokiQuery {
     let expression = query.expr ?? '';
+    // NB: Usually the labelKeys should be fetched and cached in the datasource,
+    // but there might be some edge cases where this wouldn't be the case.
+    // However the changed would make this method `async`.
+    const allLabels = this.languageProvider.getLabelKeys();
     switch (action.type) {
       case 'ADD_FILTER': {
         if (action.options?.key && action.options?.value) {
           const value = escapeLabelValueInSelector(action.options.value);
-          expression = addLabelToQuery(expression, action.options.key, '=', value);
+          expression = addLabelToQuery(
+            expression,
+            action.options.key,
+            '=',
+            value,
+            allLabels.includes(action.options.key) === false
+          );
         }
         break;
       }
       case 'ADD_FILTER_OUT': {
         if (action.options?.key && action.options?.value) {
           const value = escapeLabelValueInSelector(action.options.value);
-          expression = addLabelToQuery(expression, action.options.key, '!=', value);
+          expression = addLabelToQuery(
+            expression,
+            action.options.key,
+            '!=',
+            value,
+            allLabels.includes(action.options.key) === false
+          );
         }
         break;
       }
@@ -888,7 +904,7 @@ export class LokiDatasource
   applyTemplateVariables(target: LokiQuery, scopedVars: ScopedVars): LokiQuery {
     // We want to interpolate these variables on backend because we support using them in
     // alerting/ML queries and we want to have consistent interpolation for all queries
-    const { __interval, __interval_ms, __range, __range_s, __range_ms, ...rest } = scopedVars || {};
+    const { __auto, __interval, __interval_ms, __range, __range_s, __range_ms, ...rest } = scopedVars || {};
 
     const exprWithAdHoc = this.addAdHocFilters(target.expr);
 

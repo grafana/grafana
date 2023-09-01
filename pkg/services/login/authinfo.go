@@ -29,7 +29,7 @@ type Store interface {
 	GetUserById(ctx context.Context, id int64) (*user.User, error)
 	GetUserByLogin(ctx context.Context, login string) (*user.User, error)
 	GetUserByEmail(ctx context.Context, email string) (*user.User, error)
-	CollectLoginStats(ctx context.Context) (map[string]interface{}, error)
+	CollectLoginStats(ctx context.Context) (map[string]any, error)
 	RunMetricsCollection(ctx context.Context) error
 	GetLoginStats(ctx context.Context) (LoginStats, error)
 }
@@ -112,6 +112,26 @@ func IsExternallySynced(cfg *setting.Cfg, authModule string) bool {
 		return !cfg.GenericOAuthSkipOrgRoleSync
 	}
 	return true
+}
+
+// IsGrafanaAdminExternallySynced returns true if Grafana server admin role is being managed by an external auth provider, and false otherwise.
+// Grafana admin role sync is available for JWT, OAuth providers and LDAP.
+// For JWT and OAuth providers there is an additional config option `allow_assign_grafana_admin` that has to be enabled for Grafana Admin role to be synced.
+func IsGrafanaAdminExternallySynced(cfg *setting.Cfg, authModule string, oAuthAndAllowAssignGrafanaAdmin bool) bool {
+	if !IsExternallySynced(cfg, authModule) {
+		return false
+	}
+
+	switch authModule {
+	case JWTModule:
+		return cfg.JWTAuthAllowAssignGrafanaAdmin
+	case SAMLAuthModule:
+		return cfg.SAMLRoleValuesGrafanaAdmin != ""
+	case LDAPAuthModule:
+		return true
+	default:
+		return oAuthAndAllowAssignGrafanaAdmin
+	}
 }
 
 func IsProviderEnabled(cfg *setting.Cfg, authModule string) bool {

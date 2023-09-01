@@ -72,14 +72,20 @@ There are two ways to configure the trace to logs feature:
 
 #### Use a simple configuration
 
-1. Select the target data source.
+1. Select the target data source from the drop-down list.
+
+   You can also click **Open advanced data source picker** to see more options, including adding a data source.
+
 1. Set start and end time shift. As the logs timestamps may not exactly match the timestamps of the spans in trace it may be necessary to search in larger or shifted time range to find the desired logs.
 1. Select which tags to use in the logs query. The tags you configure must be present in the spans attributes or resources for a trace to logs span link to appear. You can optionally configure a new name for the tag. This is useful for example if the tag has dots in the name and the target data source does not allow using dots in labels. In that case you can for example remap `http.status` to `http_status`.
 1. Optionally switch on the **Filter by trace ID** and/or **Filter by span ID** setting to further filter the logs if your logs consistently contain trace or span IDs.
 
 #### Configure a custom query
 
-1. Select the target data source.
+1. Select the target data source from the drop-down list.
+
+   You can also click **Open advanced data source picker** to see more options, including adding a data source.
+
 1. Set start and end time shift. As the logs timestamps may not exactly match the timestamps of the spans in the trace it may be necessary to widen or shift the time range to find the desired logs.
 1. Optionally select tags to map. These tags can be used in the custom query with `${__tags}` variable. This variable will interpolate the mapped tags as list in an appropriate syntax for the data source and will only include the tags that were present in the span omitting those that weren't present. You can optionally configure a new name for the tag. This is useful in cases where the tag has dots in the name and the target data source does not allow using dots in labels. For example, you can remap `http.status` to `http_status` in such a case. If you don't map any tags here, you can still use any tag in the query like this `method="${__span.tags.method}"`.
 1. Skip **Filter by trace ID** and **Filter by span ID** settings as these cannot be used with a custom query.
@@ -126,7 +132,10 @@ The **Trace to metrics** setting configures the [trace to metrics feature](/blog
 
 To configure trace to metrics:
 
-1. Select the target data source.
+1. Select the target data source from the drop-down list.
+
+   You can also click **Open advanced data source picker** to see more options, including adding a data source.
+
 1. Create any desired linked queries.
 
 | Setting name    | Description                                                                                                                                                                                                                                                     |
@@ -143,7 +152,7 @@ Each linked query consists of:
 
 ### Service Graph
 
-The **Service Graph** setting configures the [Service Graph](/docs/tempo/latest/grafana-agent/service-graphs/) feature.
+The **Service Graph** setting configures the [Service Graph](/docs/tempo/latest/metrics-generator/service-graphs/) feature.
 
 Configure the **Data source** setting to define in which Prometheus instance the Service Graph data is stored.
 
@@ -197,7 +206,7 @@ You can choose one of three options:
 You can define and configure the Tempo data source in YAML files as part of Grafana's provisioning system.
 For more information about provisioning and available configuration options, refer to [Provisioning Grafana][provisioning-data-sources].
 
-#### Provisioning example
+Example provision YAML file:
 
 ```yaml
 apiVersion: 1

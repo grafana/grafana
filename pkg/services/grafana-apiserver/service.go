@@ -6,16 +6,14 @@ import (
 	"net"
 	"os"
 	"path"
-	"strconv"
 
-	"cuelang.org/go/pkg/strings"
 	"github.com/go-logr/logr"
 	"github.com/grafana/dskit/services"
+	"github.com/grafana/grafana-apiserver/pkg/certgenerator"
 	grafanaapiserveroptions "github.com/grafana/grafana-apiserver/pkg/cmd/server/options"
 	"k8s.io/apiserver/pkg/authentication/authenticator"
 	"k8s.io/apiserver/pkg/authentication/request/headerrequest"
 	"k8s.io/apiserver/pkg/authentication/user"
-	"k8s.io/apiserver/pkg/endpoints/responsewriter"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/apiserver/pkg/server/options"
 	"k8s.io/client-go/rest"
@@ -23,14 +21,7 @@ import (
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 	"k8s.io/klog/v2"
 
-	"github.com/grafana/grafana-apiserver/pkg/certgenerator"
-	"github.com/grafana/grafana/pkg/api/routing"
-	"github.com/grafana/grafana/pkg/infra/appcontext"
-	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/modules"
-	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
-	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/web"
 )
 
 const (
@@ -54,39 +45,19 @@ type service struct {
 	*services.BasicService
 
 	restConfig *rest.Config
-	rr         routing.RouteRegister
 
-	handler   web.Handler
 	dataPath  string
 	stopCh    chan struct{}
 	stoppedCh chan error
 }
 
-func ProvideService(cfg *setting.Cfg, rr routing.RouteRegister) (*service, error) {
+func New(dataPath string) (*service, error) {
 	s := &service{
-		rr:       rr,
-		dataPath: path.Join(cfg.DataPath, "k8s"),
+		dataPath: dataPath,
 		stopCh:   make(chan struct{}),
 	}
 
 	s.BasicService = services.NewBasicService(s.start, s.running, nil).WithName(modules.GrafanaAPIServer)
-
-	s.rr.Group("/k8s", func(k8sRoute routing.RouteRegister) {
-		handler := func(c *contextmodel.ReqContext) {
-			if s.handler == nil {
-				c.Resp.WriteHeader(404)
-				_, _ = c.Resp.Write([]byte("Not found"))
-				return
-			}
-
-			if handle, ok := s.handler.(func(c *contextmodel.ReqContext)); ok {
-				handle(c)
-				return
-			}
-		}
-		k8sRoute.Any("/", middleware.ReqSignedIn, handler)
-		k8sRoute.Any("/*", middleware.ReqSignedIn, handler)
-	})
 
 	return s, nil
 }
@@ -113,6 +84,16 @@ func (s *service) start(ctx context.Context) error {
 	// Get the util to get the paths to pre-generated certs
 	certUtil := certgenerator.CertUtil{
 		K8sDataPath: s.dataPath,
+	}
+
+	err := certUtil.InitializeCACertPKI()
+	if err != nil {
+		return err
+	}
+
+	err = certUtil.EnsureApiServerPKI(certgenerator.DefaultAPIServerIp)
+	if err != nil {
+		return err
 	}
 
 	o.RecommendedOptions.SecureServing.BindAddress = net.ParseIP(certgenerator.DefaultAPIServerIp)
@@ -158,26 +139,6 @@ func (s *service) start(ctx context.Context) error {
 	}
 
 	prepared := server.GenericAPIServer.PrepareRun()
-
-	s.handler = func(c *contextmodel.ReqContext) {
-		req := c.Req
-		req.URL.Path = strings.TrimPrefix(req.URL.Path, "/k8s")
-		if req.URL.Path == "" {
-			req.URL.Path = "/"
-		}
-		ctx := req.Context()
-		signedInUser := appcontext.MustUser(ctx)
-
-		req.Header.Set("X-Remote-User", strconv.FormatInt(signedInUser.UserID, 10))
-		req.Header.Set("X-Remote-Group", "grafana")
-		req.Header.Set("X-Remote-Extra-token-name", signedInUser.Name)
-		req.Header.Set("X-Remote-Extra-org-role", string(signedInUser.OrgRole))
-		req.Header.Set("X-Remote-Extra-org-id", strconv.FormatInt(signedInUser.OrgID, 10))
-		req.Header.Set("X-Remote-Extra-user-id", strconv.FormatInt(signedInUser.UserID, 10))
-
-		resp := responsewriter.WrapForHTTP1Or2(c.Resp)
-		prepared.GenericAPIServer.Handler.ServeHTTP(resp, req)
-	}
 
 	go func() {
 		s.stoppedCh <- prepared.Run(s.stopCh)

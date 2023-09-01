@@ -192,7 +192,7 @@ func RegisterEntityStoreServer(s grpc.ServiceRegistrar, srv EntityStoreServer) {
 	s.RegisterService(&EntityStore_ServiceDesc, srv)
 }
 
-func _EntityStore_Read_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _EntityStore_Read_Handler(srv any, ctx context.Context, dec func(any) error, interceptor grpc.UnaryServerInterceptor) (any, error) {
 	in := new(ReadEntityRequest)
 	if err := dec(in); err != nil {
 		return nil, err
@@ -204,13 +204,13 @@ func _EntityStore_Read_Handler(srv interface{}, ctx context.Context, dec func(in
 		Server:     srv,
 		FullMethod: "/entity.EntityStore/Read",
 	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+	handler := func(ctx context.Context, req any) (any, error) {
 		return srv.(EntityStoreServer).Read(ctx, req.(*ReadEntityRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _EntityStore_BatchRead_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _EntityStore_BatchRead_Handler(srv any, ctx context.Context, dec func(any) error, interceptor grpc.UnaryServerInterceptor) (any, error) {
 	in := new(BatchReadEntityRequest)
 	if err := dec(in); err != nil {
 		return nil, err
@@ -222,13 +222,13 @@ func _EntityStore_BatchRead_Handler(srv interface{}, ctx context.Context, dec fu
 		Server:     srv,
 		FullMethod: "/entity.EntityStore/BatchRead",
 	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+	handler := func(ctx context.Context, req any) (any, error) {
 		return srv.(EntityStoreServer).BatchRead(ctx, req.(*BatchReadEntityRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _EntityStore_Write_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _EntityStore_Write_Handler(srv any, ctx context.Context, dec func(any) error, interceptor grpc.UnaryServerInterceptor) (any, error) {
 	in := new(WriteEntityRequest)
 	if err := dec(in); err != nil {
 		return nil, err
@@ -240,13 +240,13 @@ func _EntityStore_Write_Handler(srv interface{}, ctx context.Context, dec func(i
 		Server:     srv,
 		FullMethod: "/entity.EntityStore/Write",
 	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+	handler := func(ctx context.Context, req any) (any, error) {
 		return srv.(EntityStoreServer).Write(ctx, req.(*WriteEntityRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _EntityStore_Delete_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _EntityStore_Delete_Handler(srv any, ctx context.Context, dec func(any) error, interceptor grpc.UnaryServerInterceptor) (any, error) {
 	in := new(DeleteEntityRequest)
 	if err := dec(in); err != nil {
 		return nil, err
@@ -258,13 +258,13 @@ func _EntityStore_Delete_Handler(srv interface{}, ctx context.Context, dec func(
 		Server:     srv,
 		FullMethod: "/entity.EntityStore/Delete",
 	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+	handler := func(ctx context.Context, req any) (any, error) {
 		return srv.(EntityStoreServer).Delete(ctx, req.(*DeleteEntityRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _EntityStore_History_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _EntityStore_History_Handler(srv any, ctx context.Context, dec func(any) error, interceptor grpc.UnaryServerInterceptor) (any, error) {
 	in := new(EntityHistoryRequest)
 	if err := dec(in); err != nil {
 		return nil, err
@@ -276,13 +276,13 @@ func _EntityStore_History_Handler(srv interface{}, ctx context.Context, dec func
 		Server:     srv,
 		FullMethod: "/entity.EntityStore/History",
 	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+	handler := func(ctx context.Context, req any) (any, error) {
 		return srv.(EntityStoreServer).History(ctx, req.(*EntityHistoryRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _EntityStore_Search_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _EntityStore_Search_Handler(srv any, ctx context.Context, dec func(any) error, interceptor grpc.UnaryServerInterceptor) (any, error) {
 	in := new(EntitySearchRequest)
 	if err := dec(in); err != nil {
 		return nil, err
@@ -294,13 +294,13 @@ func _EntityStore_Search_Handler(srv interface{}, ctx context.Context, dec func(
 		Server:     srv,
 		FullMethod: "/entity.EntityStore/Search",
 	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+	handler := func(ctx context.Context, req any) (any, error) {
 		return srv.(EntityStoreServer).Search(ctx, req.(*EntitySearchRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _EntityStore_Watch_Handler(srv interface{}, stream grpc.ServerStream) error {
+func _EntityStore_Watch_Handler(srv any, stream grpc.ServerStream) error {
 	m := new(EntityWatchRequest)
 	if err := stream.RecvMsg(m); err != nil {
 		return err
@@ -321,7 +321,7 @@ func (x *entityStoreWatchServer) Send(m *EntityWatchResponse) error {
 	return x.ServerStream.SendMsg(m)
 }
 
-func _EntityStore_AdminWrite_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _EntityStore_AdminWrite_Handler(srv any, ctx context.Context, dec func(any) error, interceptor grpc.UnaryServerInterceptor) (any, error) {
 	in := new(AdminWriteEntityRequest)
 	if err := dec(in); err != nil {
 		return nil, err
@@ -333,7 +333,7 @@ func _EntityStore_AdminWrite_Handler(srv interface{}, ctx context.Context, dec f
 		Server:     srv,
 		FullMethod: "/entity.EntityStore/AdminWrite",
 	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+	handler := func(ctx context.Context, req any) (any, error) {
 		return srv.(EntityStoreServer).AdminWrite(ctx, req.(*AdminWriteEntityRequest))
 	}
 	return interceptor(ctx, in, info, handler)
@@ -435,7 +435,7 @@ func RegisterEntityStoreAdminServer(s grpc.ServiceRegistrar, srv EntityStoreAdmi
 	s.RegisterService(&EntityStoreAdmin_ServiceDesc, srv)
 }
 
-func _EntityStoreAdmin_AdminWrite_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _EntityStoreAdmin_AdminWrite_Handler(srv any, ctx context.Context, dec func(any) error, interceptor grpc.UnaryServerInterceptor) (any, error) {
 	in := new(AdminWriteEntityRequest)
 	if err := dec(in); err != nil {
 		return nil, err
@@ -447,7 +447,7 @@ func _EntityStoreAdmin_AdminWrite_Handler(srv interface{}, ctx context.Context, 
 		Server:     srv,
 		FullMethod: "/entity.EntityStoreAdmin/AdminWrite",
 	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+	handler := func(ctx context.Context, req any) (any, error) {
 		return srv.(EntityStoreAdminServer).AdminWrite(ctx, req.(*AdminWriteEntityRequest))
 	}
 	return interceptor(ctx, in, info, handler)
