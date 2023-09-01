@@ -21,10 +21,6 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 )
 
-type Veamos struct {
-	valor string
-}
-
 // FindAnnotations returns annotations for a public dashboard
 func (pd *PublicDashboardServiceImpl) FindAnnotations(ctx context.Context, reqDTO models.AnnotationsQueryDTO, accessToken string) ([]models.AnnotationEvent, error) {
 	pub, dash, err := pd.FindEnabledPublicDashboardAndDashboardByAccessToken(ctx, accessToken)
