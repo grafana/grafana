@@ -1295,10 +1295,9 @@ def get_windows_steps(ver_mode, bucket = "%PRERELEASE_BUCKET%"):
     if ver_mode in (
         "release",
         "release-branch",
-        "tag",
     ):
         gcp_bucket = "{}/artifacts/downloads".format(bucket)
-        if ver_mode == "release" or ver_mode == "tag":
+        if ver_mode == "release":
             ver_part = "${DRONE_TAG}"
             dir = "release"
         else:
@@ -1316,12 +1315,12 @@ def get_windows_steps(ver_mode, bucket = "%PRERELEASE_BUCKET%"):
             "cp C:\\App\\nssm-2.24.zip .",
         ]
 
-        if ver_mode in ("release", "tag"):
+        if ver_mode in ("release",):
             version = "${DRONE_TAG:1}"
             installer_commands.extend(
                 [
                     ".\\grabpl.exe windows-installer --target {} --edition oss {}".format(
-                        "gs://{}/{}/oss/release/grafana-{}.windows-amd64.zip".format(gcp_bucket, ver_part, version),
+                        "gs://{}/{}/oss/{}/grafana-{}.windows-amd64.zip".format(gcp_bucket, ver_part, ver_mode, version),
                         ver_part,
                     ),
                     '$$fname = ((Get-Childitem grafana*.msi -name) -split "`n")[0]',
