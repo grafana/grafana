@@ -19,11 +19,14 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/serverlock"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/alerting/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/datasources/guardian"
+	datasourceService "github.com/grafana/grafana/pkg/services/datasources/service"
 	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngModels "github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -1318,6 +1321,8 @@ func NewMigrationService(t *testing.T, sqlStore *sqlstore.SQLStore, cfg *setting
 	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
 	dashboardService, dashboardStore := testutil.SetupDashboardService(t, sqlStore, folderStore, cfg)
 	folderService := testutil.SetupFolderService(t, cfg, sqlStore, dashboardStore, folderStore, bus)
+
+	cache := localcache.ProvideService()
 	ms, err := ProvideService(
 		serverlock.ProvideService(sqlStore, tracer),
 		cfg,
@@ -1327,6 +1332,7 @@ func NewMigrationService(t *testing.T, sqlStore *sqlstore.SQLStore, cfg *setting
 		fake_secrets.NewFakeSecretsService(),
 		dashboardService,
 		folderService,
+		datasourceService.ProvideCacheService(cache, sqlStore, guardian.ProvideGuardian()),
 	)
 	require.NoError(t, err)
 	return ms

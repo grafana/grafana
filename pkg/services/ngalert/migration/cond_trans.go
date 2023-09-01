@@ -1,7 +1,9 @@
 package migration
 
 import (
+	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"sort"
 	"strings"
@@ -15,7 +17,9 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-func transConditions(set dashAlertSettings, orgID int64, dsUIDMap dsUIDLookup) (*condition, error) {
+func transConditions(ctx context.Context, set dashAlertSettings, orgID int64, dsCacheService datasources.CacheService) (*condition, error) {
+	usr := getBackgroundUser(orgID)
+
 	refIDtoCondIdx := make(map[string][]int) // a map of original refIds to their corresponding condition index
 	for i, cond := range set.Conditions {
 		if len(cond.Query.Params) != 3 {
@@ -124,8 +128,14 @@ func transConditions(set dashAlertSettings, orgID int64, dsUIDMap dsUIDLookup) (
 				}
 			}
 
-			// one could have an alert saved but datasource deleted, so can not require match.
-			dsUID := dsUIDMap.GetUID(orgID, set.Conditions[condIdx].Query.DatasourceID)
+			ds, err := dsCacheService.GetDatasource(ctx, set.Conditions[condIdx].Query.DatasourceID, usr, false)
+			if err != nil {
+				// one could have an alert saved but datasource deleted, so can not require match.
+				if !errors.Is(err, datasources.ErrDataSourceNotFound) {
+					return nil, err
+				}
+			}
+
 			queryObj["refId"] = refID
 
 			// See services/alerting/conditions/query.go's newQueryCondition
@@ -158,7 +168,7 @@ func transConditions(set dashAlertSettings, orgID int64, dsUIDMap dsUIDLookup) (
 				RefID:             refID,
 				Model:             encodedObj,
 				RelativeTimeRange: *rTR,
-				DatasourceUID:     dsUID,
+				DatasourceUID:     ds.UID,
 				QueryType:         queryType,
 			}
 			newCond.Data = append(newCond.Data, alertQuery)

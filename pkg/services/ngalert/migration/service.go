@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/serverlock"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
@@ -42,6 +43,7 @@ type MigrationService struct {
 	encryptionService secrets.Service
 	dashboardService  dashboards.DashboardService
 	folderService     folder.Service
+	dataSourceCache   datasources.CacheService
 }
 
 func ProvideService(
@@ -53,6 +55,7 @@ func ProvideService(
 	encryptionService secrets.Service,
 	dashboardService dashboards.DashboardService,
 	folderService folder.Service,
+	dataSourceCache datasources.CacheService,
 ) (*MigrationService, error) {
 	return &MigrationService{
 		lock:              lock,
@@ -65,6 +68,7 @@ func ProvideService(
 		encryptionService: encryptionService,
 		dashboardService:  dashboardService,
 		folderService:     folderService,
+		dataSourceCache:   dataSourceCache,
 	}, nil
 }
 
@@ -117,6 +121,7 @@ func (ms *MigrationService) Run(ctx context.Context) error {
 				ms.encryptionService,
 				ms.dashboardService,
 				ms.folderService,
+				ms.dataSourceCache,
 			)
 
 			err = mg.Exec(ctx)
