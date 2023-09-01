@@ -165,11 +165,12 @@ jobs:
         #     gsutil -m cp -r ci/packages/*darwin* gs://${{ env.GCP_BUCKET }}/${{ env.plugin_id }}/release/${version}/darwin
         #     gsutil -m cp -r ci/packages/*any* gs://${{ env.GCP_BUCKET }}/${{ env.plugin_id }}/release/${version}/any
         - name: Publish new plugin version on grafana.com
+          working-directory: ./public/plugins/${{ env.plugin_id }}
           env:
             GCOM_TOKEN: ${{ secrets.PLUGINS_GCOM_TOKEN }}
           run: |
             echo "Publish new plugin version on grafana.com:"
-            curl -H "Authorization: Bearer $GCOM_TOKEN" -H "Content-Type: application/json"  https://grafana-dev.com/api/plugins "{
+            curl -H "Authorization: Bearer $GCOM_TOKEN" -H "Content-Type: application/json" https://grafana-dev.com/api/plugins -d "{
               \"url\": \"https://github.com/grafana/grafana/tree/main/public/plugins/${{ env.plugin_id }}\",
               \"download\": {
                 \"linux-amd64\": {
