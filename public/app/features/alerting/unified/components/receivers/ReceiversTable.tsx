@@ -326,7 +326,7 @@ export const ReceiversTable = ({ config, alertManagerName }: Props) => {
   };
 
   const receivers = useGetReceiversWithGrafanaAppTypes(config.alertmanager_config.receivers ?? []);
-  let rows: RowItemTableProps[] = useMemo(() => {
+  const rows: RowItemTableProps[] = useMemo(() => {
     return (
       receivers?.map((receiver: ReceiverWithTypes) => ({
         id: receiver.name,
