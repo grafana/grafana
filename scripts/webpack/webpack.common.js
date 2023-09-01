@@ -161,4 +161,7 @@ module.exports = {
       },
     },
   },
+  snapshot: {
+    managedPaths: [/^(.+?[\\/]node_modules)[\\/]/],
+  },
 };
