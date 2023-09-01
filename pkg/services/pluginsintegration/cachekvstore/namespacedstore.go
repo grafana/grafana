@@ -23,9 +23,6 @@ type NamespacedStore struct {
 	// This allows to modify the key for the underlying storage.
 	// This is only used for actual data, not for the last updated time key.
 	storeKeyGetter StoreKeyGetter
-
-	// setLastUpdatedOnDelete is a flag that determines if the last updated time should be updated when deleting a key.
-	setLastUpdatedOnDelete bool
 }
 
 // DefaultStoreKeyGetter is the default StoreKeyGetterFunc, which returns the key as-is.
@@ -51,19 +48,11 @@ func WithStoreKeyGetter(g StoreKeyGetter) NamespacedStoreOpt {
 	}
 }
 
-// WithSetLastUpdatedOnDelete sets the setLastUpdatedOnDelete flag.
-func WithSetLastUpdatedOnDelete(updateLastUpdatedOnDelete bool) NamespacedStoreOpt {
-	return func(store *NamespacedStore) {
-		store.setLastUpdatedOnDelete = updateLastUpdatedOnDelete
-	}
-}
-
 // NewNamespacedStore creates a new NamespacedStore using the provided underlying KVStore and namespace.
 func NewNamespacedStore(kv kvstore.KVStore, namespace string, opts ...NamespacedStoreOpt) *NamespacedStore {
 	store := &NamespacedStore{
-		kv:                     kvstore.WithNamespace(kv, 0, namespace),
-		storeKeyGetter:         DefaultStoreKeyGetter,
-		setLastUpdatedOnDelete: true,
+		kv:             kvstore.WithNamespace(kv, 0, namespace),
+		storeKeyGetter: DefaultStoreKeyGetter,
 	}
 	for _, opt := range opts {
 		opt(store)
@@ -120,16 +109,13 @@ func (s *NamespacedStore) SetLastUpdated(ctx context.Context) error {
 	return s.kv.Set(ctx, keyLastUpdated, time.Now().Format(time.RFC3339))
 }
 
-// Delete deletes the value for the given key.
-// If setLastUpdatedOnDelete is true, it also updates the last updated time.
+// Delete deletes the value for the given key and it also updates the last updated time.
 func (s *NamespacedStore) Delete(ctx context.Context, key string) error {
 	if err := s.kv.Del(ctx, s.storeKeyGetter.GetStoreKey(key)); err != nil {
 		return fmt.Errorf("kv del: %w", err)
 	}
-	if s.setLastUpdatedOnDelete {
-		if err := s.SetLastUpdated(ctx); err != nil {
-			return fmt.Errorf("set last updated: %w", err)
-		}
+	if err := s.SetLastUpdated(ctx); err != nil {
+		return fmt.Errorf("set last updated: %w", err)
 	}
 	return nil
 }

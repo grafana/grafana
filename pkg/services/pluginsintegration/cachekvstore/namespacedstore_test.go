@@ -150,38 +150,6 @@ func TestNamespacedStore(t *testing.T) {
 				require.True(t, mockKeyGetter.lastCalledWith(""))
 			})
 		})
-
-		t.Run("setLastUpdatedOnDelete", func(t *testing.T) {
-			t.Run("defaults to true", func(t *testing.T) {
-				store := NewNamespacedStore(kvstore.NewFakeKVStore(), namespace)
-				require.True(t, store.setLastUpdatedOnDelete)
-			})
-
-			t.Run("sets last updated on delete if true", func(t *testing.T) {
-				store := NewNamespacedStore(kvstore.NewFakeKVStore(), namespace, WithSetLastUpdatedOnDelete(true))
-				ts, err := store.GetLastUpdated(context.Background())
-				require.NoError(t, err)
-				require.Zero(t, ts)
-
-				require.NoError(t, store.Delete(context.Background(), "key"))
-
-				ts, err = store.GetLastUpdated(context.Background())
-				require.NoError(t, err)
-				require.WithinDuration(t, time.Now(), ts, time.Second*10)
-			})
-
-			t.Run("does not set last updated on delete if false", func(t *testing.T) {
-				store := NewNamespacedStore(kvstore.NewFakeKVStore(), namespace, WithSetLastUpdatedOnDelete(false))
-				ts, err := store.GetLastUpdated(context.Background())
-				require.NoError(t, err)
-				require.Zero(t, ts)
-
-				require.NoError(t, store.Delete(context.Background(), "key"))
-				ts, err = store.GetLastUpdated(context.Background())
-				require.NoError(t, err)
-				require.Zero(t, ts)
-			})
-		})
 	})
 }
 
