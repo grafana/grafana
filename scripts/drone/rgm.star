@@ -142,6 +142,16 @@ def rgm_windows(trigger, ver_mode, bucket = "grafana-prerelease"):
     )
 
 def rgm_release(trigger, ver_mode, bucket = "grafana-prerelease"):
+    """Generates pre-release assets.
+
+    Args:
+      trigger: used to trigger the pipeline.
+      ver_mode: used to differentiate steps for different version modes.
+      bucket: used to override prerelease bucket.
+
+    Returns:
+      List of Drone pipelines.
+    """
     version = "${DRONE_TAG}"
     if ver_mode == "nightly":
         version = "nightly-${DRONE_COMMIT_SHA:0:8}"
