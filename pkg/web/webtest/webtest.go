@@ -11,6 +11,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -111,9 +112,9 @@ func RequestWithWebContext(req *http.Request, c *contextmodel.ReqContext) *http.
 	return req
 }
 
-func RequestWithSignedInUser(req *http.Request, user *user.SignedInUser) *http.Request {
+func RequestWithSignedInUser(req *http.Request, usr identity.Requester) *http.Request {
 	return RequestWithWebContext(req, &contextmodel.ReqContext{
-		SignedInUser: user,
+		SignedInUser: usr.(*user.SignedInUser),
 		IsSignedIn:   true,
 	})
 }
