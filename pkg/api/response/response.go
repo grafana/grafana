@@ -82,7 +82,7 @@ func (r *NormalResponse) ErrMessage() string {
 func (r *NormalResponse) WriteTo(ctx *contextmodel.ReqContext) {
 	if r.err != nil {
 		grafanaErr := errutil.Error{}
-		if errors.As(r.err, &grafanaErr) && grafanaErr.Reason.Status().IsDownstream() {
+		if errors.As(r.err, &grafanaErr) && grafanaErr.Source.IsDownstream() {
 			requestmeta.WithDownstreamStatusSource(ctx.Req.Context())
 		}
 

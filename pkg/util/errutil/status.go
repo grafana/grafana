@@ -121,16 +121,6 @@ func (s CoreStatus) LogLevel() LogLevel {
 	}
 }
 
-// IsDownstream returns if CoreStatus is originating from a downstream service.
-func (s CoreStatus) IsDownstream() bool {
-	switch s {
-	case StatusBadGateway, StatusGatewayTimeout:
-		return true
-	default:
-		return false
-	}
-}
-
 func (s CoreStatus) String() string {
 	return string(s)
 }
