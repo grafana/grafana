@@ -1,4 +1,5 @@
-import React, { CSSProperties } from 'react';
+import { css } from '@emotion/css';
+import React, { CSSProperties, useMemo } from 'react';
 
 import { config } from '@grafana/runtime';
 import {
@@ -163,19 +164,35 @@ export class PanelRepeaterGridItem extends SceneObjectBase<PanelRepeaterGridItem
     return this.state.maxPerRow ?? 4;
   }
 
-  private getRepeatDirection(): RepeatDirection {
+  public getRepeatDirection(): RepeatDirection {
     return this.state.repeatDirection === 'v' ? 'v' : 'h';
   }
 
   public getContainerStyles(): CSSProperties {
     const direction = this.getRepeatDirection();
+    const itemCount = this.state.repeatedPanels?.length ?? 0;
+
+    if (direction === 'h') {
+      const rowCount = Math.ceil(itemCount / this.getMaxPerRow());
+      const columnCount = Math.ceil(itemCount / rowCount);
+
+      return {
+        display: 'grid',
+        height: '100%',
+        width: '100%',
+        gridTemplateColumns: `repeat(${columnCount}, 1fr)`,
+        gridTemplateRows: `repeat(${rowCount}, 1fr)`,
+        gridColumnGap: config.theme2.spacing(1),
+        gridRowGap: config.theme2.spacing(1),
+      };
+    }
 
     return {
       display: 'flex',
       height: '100%',
       width: '100%',
       flexWrap: 'wrap',
-      flexDirection: direction === 'h' ? 'row' : 'column',
+      flexDirection: 'column',
       gap: config.theme2.spacing(1),
     };
   }
@@ -185,10 +202,10 @@ export class PanelRepeaterGridItem extends SceneObjectBase<PanelRepeaterGridItem
 
     if (direction === 'h') {
       return {
-        display: 'flex',
-        minWidth: `${100 / this.getMaxPerRow()}%`,
+        //display: 'flex',
+        //minWidth: `${100 / this.getMaxPerRow()}%`,
         position: 'relative',
-        flexGrow: 1,
+        //flexGrow: 1,
       };
     } else {
       return {
@@ -201,15 +218,17 @@ export class PanelRepeaterGridItem extends SceneObjectBase<PanelRepeaterGridItem
 
   public static Component = ({ model }: SceneComponentProps<PanelRepeaterGridItem>) => {
     const { repeatedPanels } = model.useState();
+    const itemCount = repeatedPanels?.length ?? 0;
+    const layoutStyle = useLayoutStyle(model.getRepeatDirection(), itemCount, model.getMaxPerRow());
 
     if (!repeatedPanels) {
       return null;
     }
 
     return (
-      <div style={model.getContainerStyles()}>
+      <div className={layoutStyle}>
         {repeatedPanels.map((panel) => (
-          <div style={model.getItemStyles()} key={panel.state.key}>
+          <div className={itemStyle} key={panel.state.key}>
             <panel.Component model={panel} key={panel.state.key} />
           </div>
         ))}
@@ -217,3 +236,43 @@ export class PanelRepeaterGridItem extends SceneObjectBase<PanelRepeaterGridItem
     );
   };
 }
+
+function useLayoutStyle(direction: RepeatDirection, itemCount: number, maxPerRow: number) {
+  return useMemo(() => {
+    const theme = config.theme2;
+
+    if (direction === 'h') {
+      const rowCount = Math.ceil(itemCount / maxPerRow);
+      const columnCount = Math.ceil(itemCount / rowCount);
+
+      return css({
+        display: 'grid',
+        height: '100%',
+        width: '100%',
+        gridTemplateColumns: `repeat(${columnCount}, 1fr)`,
+        gridTemplateRows: `repeat(${rowCount}, 1fr)`,
+        gridColumnGap: theme.spacing(1),
+        gridRowGap: theme.spacing(1),
+        [theme.breakpoints.down('md')]: {
+          display: 'flex',
+          flexDirection: 'column',
+        },
+      });
+    }
+
+    // Vertical is a bit simpler
+    return css({
+      display: 'flex',
+      height: '100%',
+      width: '100%',
+      flexDirection: 'column',
+      gap: theme.spacing(1),
+    });
+  }, [direction, itemCount, maxPerRow]);
+}
+
+const itemStyle = css({
+  display: 'flex',
+  flexGrow: 1,
+  position: 'relative',
+});

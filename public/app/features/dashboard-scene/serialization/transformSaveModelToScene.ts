@@ -55,12 +55,12 @@ export function transformSaveModelToScene(rsp: DashboardDTO): DashboardScene {
 
 export function createSceneObjectsForPanels(oldPanels: PanelModel[]): Array<SceneGridItem | SceneGridRow> {
   // collects all panels and rows
-  const panels: Array<SceneGridItem | SceneGridRow> = [];
+  const panels: SceneGridItemLike[] = [];
 
   // indicates expanded row that's currently processed
   let currentRow: PanelModel | null = null;
   // collects panels in the currently processed, expanded row
-  let currentRowPanels: SceneGridItem[] = [];
+  let currentRowPanels: SceneGridItemLike[] = [];
 
   for (const panel of oldPanels) {
     if (panel.type === 'row') {
@@ -286,6 +286,7 @@ export function buildSceneFromPanelModel(panel: PanelModel): SceneGridItemLike {
       variableName: panel.repeat,
       repeatedPanels: [],
       repeatDirection: panel.repeatDirection,
+      maxPerRow: 8,
     });
   }
 
