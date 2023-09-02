@@ -222,8 +222,8 @@ const EmptyRecentList = memo(() => {
       <Trans i18nKey="time-picker.content.empty-recent-list">
         <div>
           <span>
-            It looks like you haven&apos;t used this time picker before. As soon as you enter some time intervals,
-            recently used intervals will appear here.
+            It looks like you haven't used this time picker before. As soon as you enter some time intervals, recently
+            used intervals will appear here.
           </span>
         </div>
         <div>
