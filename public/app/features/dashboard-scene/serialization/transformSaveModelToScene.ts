@@ -278,13 +278,14 @@ export function buildSceneFromPanelModel(panel: PanelModel): SceneGridItemLike {
       key: `grid-item-${panel.id}`,
       x: panel.gridPos.x,
       y: panel.gridPos.y,
-      width: 1,
-      height: 1,
+      width: panel.gridPos.w,
+      height: 10,
       itemWidth: panel.gridPos.w,
       itemHeight: panel.gridPos.h,
       source: new VizPanel(vizPanelState),
       variableName: panel.repeat,
-      repeats: [],
+      repeatedPanels: [],
+      repeatDirection: panel.repeatDirection,
     });
   }
 
