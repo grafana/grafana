@@ -36,6 +36,26 @@ describe('transformSceneToSaveModel', () => {
 
       expect(saveModel.transparent).toBe(true);
     });
+
+    it('Given panel with repeat', () => {
+      const gridItem = buildGridItemFromPanelSchema({
+        title: '',
+        type: 'text-plugin-34',
+        gridPos: { x: 1, y: 2, w: 12, h: 8 },
+        repeat: 'server',
+        repeatDirection: 'v',
+        maxPerRow: 8,
+      });
+
+      const saveModel = gridItemToPanel(gridItem);
+      expect(saveModel.repeat).toBe('server');
+      expect(saveModel.repeatDirection).toBe('v');
+      expect(saveModel.maxPerRow).toBe(8);
+      expect(saveModel.gridPos?.x).toBe(1);
+      expect(saveModel.gridPos?.y).toBe(2);
+      expect(saveModel.gridPos?.w).toBe(12);
+      expect(saveModel.gridPos?.h).toBe(8);
+    });
   });
 });
 

@@ -55,7 +55,12 @@ export function gridItemToPanel(gridItem: SceneGridItemLike): Panel {
   }
 
   if (gridItem instanceof PanelRepeaterGridItem) {
-    //
+    vizPanel = gridItem.state.source;
+
+    x = gridItem.state.x ?? 0;
+    y = gridItem.state.y ?? 0;
+    w = gridItem.state.width ?? 0;
+    h = gridItem.state.height ?? 0;
   }
 
   if (!vizPanel) {
@@ -83,6 +88,12 @@ export function gridItemToPanel(gridItem: SceneGridItemLike): Panel {
 
   if (vizPanel.state.displayMode === 'transparent') {
     panel.transparent = true;
+  }
+
+  if (gridItem instanceof PanelRepeaterGridItem) {
+    panel.repeat = gridItem.state.variableName;
+    panel.maxPerRow = gridItem.state.maxPerRow;
+    panel.repeatDirection = gridItem.getRepeatDirection();
   }
 
   return panel;

@@ -3,7 +3,7 @@ import React, { useMemo } from 'react';
 
 import { config } from '@grafana/runtime';
 import {
-  SceneObject as VizPanel,
+  VizPanel,
   SceneObjectBase,
   VariableDependencyConfig,
   SceneVariable,
@@ -20,7 +20,6 @@ interface PanelRepeaterGridItemState extends SceneGridItemStateLike {
   source: VizPanel;
   repeatedPanels?: VizPanel[];
   variableName: string;
-  itemWidth?: number;
   itemHeight?: number;
   repeatDirection?: RepeatDirection | string;
   maxPerRow?: number;
@@ -88,15 +87,6 @@ export class PanelRepeaterGridItem extends SceneObjectBase<PanelRepeaterGridItem
       }
     }
 
-    // Width changed
-    if (newState.width !== prevState.width) {
-      if (this.getRepeatDirection() === 'v') {
-        stateChange.itemWidth = newState.width!;
-      } else {
-        stateChange.itemWidth = newState.width! / this.getMaxPerRow();
-      }
-    }
-
     this._ignoreNextStateChange = true;
     this.setState(stateChange);
   }
@@ -126,24 +116,14 @@ export class PanelRepeaterGridItem extends SceneObjectBase<PanelRepeaterGridItem
 
     const direction = this.getRepeatDirection();
     const stateChange: Partial<PanelRepeaterGridItemState> = { repeatedPanels: repeatedPanels };
-    let itemWidth = this.state.itemWidth ?? 10;
     const itemHeight = this.state.itemHeight ?? 10;
     const maxPerRow = this.getMaxPerRow();
-    const panelCount = repeatedPanels.length;
 
     if (direction === 'h') {
       const rowCount = Math.ceil(repeatedPanels.length / maxPerRow);
-
-      // if we can distribute panels evenly do that
-      if (panelCount % rowCount === 0) {
-        itemWidth = panelCount / rowCount;
-      }
-
       stateChange.height = rowCount * itemHeight;
-      //stateChange.width = 24;
     } else {
       stateChange.height = repeatedPanels.length * itemHeight;
-      stateChange.width = itemWidth;
     }
 
     this._ignoreNextStateChange = true;

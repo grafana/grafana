@@ -279,14 +279,13 @@ export function buildGridItemForPanel(panel: PanelModel): SceneGridItemLike {
       x: panel.gridPos.x,
       y: panel.gridPos.y,
       width: panel.gridPos.w,
-      height: 10,
-      itemWidth: panel.gridPos.w,
+      height: panel.gridPos.h,
       itemHeight: panel.gridPos.h,
       source: new VizPanel(vizPanelState),
       variableName: panel.repeat,
       repeatedPanels: [],
       repeatDirection: panel.repeatDirection,
-      maxPerRow: 8,
+      maxPerRow: panel.maxPerRow,
     });
   }
 

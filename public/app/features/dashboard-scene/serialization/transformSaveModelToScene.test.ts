@@ -18,6 +18,7 @@ import { createPanelJSONFixture } from 'app/features/dashboard/state/__fixtures_
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard';
 import { DASHBOARD_DATASOURCE_PLUGIN_ID } from 'app/plugins/datasource/dashboard/types';
 
+import { PanelRepeaterGridItem } from '../scene/PanelRepeaterGridItem';
 import { PanelTimeRange } from '../scene/PanelTimeRange';
 import { ShareQueryDataProvider } from '../scene/ShareQueryDataProvider';
 
@@ -317,6 +318,27 @@ describe('DashboardLoader', () => {
       const { vizPanel } = buildGridItemForTest(panel);
 
       expect(vizPanel.state.$data).toBeUndefined();
+    });
+
+    it('When repeat is set should build PanelRepeaterGridItem', () => {
+      const panel = {
+        title: '',
+        type: 'text-plugin-34',
+        gridPos: { x: 0, y: 0, w: 8, h: 8 },
+        repeat: 'server',
+        repeatDirection: 'v',
+        maxPerRow: 8,
+      };
+
+      const gridItem = buildGridItemForPanel(new PanelModel(panel));
+      const repeater = gridItem as PanelRepeaterGridItem;
+
+      expect(repeater.state.maxPerRow).toBe(8);
+      expect(repeater.state.variableName).toBe('server');
+      expect(repeater.state.width).toBe(8);
+      expect(repeater.state.height).toBe(8);
+      expect(repeater.state.repeatDirection).toBe('v');
+      expect(repeater.state.maxPerRow).toBe(8);
     });
   });
 
