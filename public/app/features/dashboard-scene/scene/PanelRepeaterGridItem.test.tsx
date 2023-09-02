@@ -50,8 +50,47 @@ describe('PanelRepeaterGridItem', () => {
     scene.activate();
     repeater.activate();
 
-    // panels require 5 rows so total height should be 50
+    // In vertical direction height itemCount * itemHeight
     expect(repeater.state.height).toBe(50);
+  });
+
+  it('Should adjust itemHeight when container is resized, direction horizontal', async () => {
+    const { scene, repeater } = buildScene({
+      variableQueryTime: 0,
+      itemHeight: 10,
+      repeatDirection: 'h',
+      maxPerRow: 4,
+    });
+
+    scene.activate();
+    repeater.activate();
+
+    // Sould be two rows (5 panels and maxPerRow 5)
+    expect(repeater.state.height).toBe(20);
+
+    // resize container
+    repeater.setState({ height: 10 });
+    // given 2 current rows, the itemHeight is halved
+    expect(repeater.state.itemHeight).toBe(5);
+  });
+
+  it('Should adjust itemHeight when container is resized, direction vertical', async () => {
+    const { scene, repeater } = buildScene({
+      variableQueryTime: 0,
+      itemHeight: 10,
+      repeatDirection: 'v',
+    });
+
+    scene.activate();
+    repeater.activate();
+
+    // In vertical direction height itemCount * itemHeight
+    expect(repeater.state.height).toBe(50);
+
+    // resize container
+    repeater.setState({ height: 25 });
+    // given 5 rows with total height 25 gives new itemHeight of 5
+    expect(repeater.state.itemHeight).toBe(5);
   });
 });
 
