@@ -12,6 +12,7 @@ import { reportInteraction } from '@grafana/runtime';
 import { DataQuery, DataSourceRef } from '@grafana/schema';
 import { Button, CustomScrollbar, Icon, Input, ModalsController, Portal, useStyles2 } from '@grafana/ui';
 import config from 'app/core/config';
+import { Trans } from 'app/core/internationalization';
 import { useKeyNavigationListener } from 'app/features/search/hooks/useSearchKeyboardSelection';
 import { defaultFileUploadQuery, GrafanaQuery } from 'app/plugins/datasource/grafana/types';
 
@@ -406,7 +407,7 @@ function Footer({ onClose, onChange, onClickAddCSV, ...props }: FooterProps) {
             ref={props.footerRef}
             onKeyDown={isUploadFileEnabled ? onKeyDownFirstButton : onKeyDownLastButton}
           >
-            Open advanced data source picker
+            <Trans i18nKey="search-page.results-title">Open advanced data source picker</Trans>
             <Icon name="arrow-right" />
           </Button>
         )}

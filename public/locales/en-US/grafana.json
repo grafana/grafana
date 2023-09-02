@@ -215,6 +215,20 @@
   "data-sources": {
     "datasource-add-button": {
       "label": "Add new data source"
+    },
+    "advanced-datasource-picker": "Open advanced data source picker"
+  },
+  "explore": {
+    "copy-shortened-link": "Copy shortened link",
+    "toolbar": {
+      "split": {
+        "close": "Close",
+        "close-tooltip": "Close split pane",
+        "narrow": "Narrow pane",
+        "title": "Split",
+        "tooltip": "Split the pane",
+        "widen": "Widen pane"
+      }
     }
   },
   "folder-picker": {

@@ -7,6 +7,7 @@ import { DataSourceInstanceSettings, RawTimeRange } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 import { defaultIntervals, PageToolbar, RefreshPicker, SetInterval, ToolbarButton, ButtonGroup } from '@grafana/ui';
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
+import { t, Trans } from 'app/core/internationalization';
 import { createAndCopyShortLink } from 'app/core/utils/shortLinks';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 import { StoreState, useDispatch, useSelector } from 'app/types/store';
@@ -121,10 +122,10 @@ export function ExploreToolbar({ exploreId, topOfViewRef, onChangeTime }: Props)
           actions={[
             <DashNavButton
               key="share"
-              tooltip="Copy shortened link"
+              tooltip={t('explore.copy-shortened-link', 'Copy shortened link')}
               icon="share-alt"
               onClick={onCopyShortLink}
-              aria-label="Copy shortened link"
+              aria-label={t('explore.copy-shortened-link', 'Copy shortened link')}
             />,
             <div style={{ flex: 1 }} key="spacer" />,
           ]}
@@ -149,25 +150,34 @@ export function ExploreToolbar({ exploreId, topOfViewRef, onChangeTime }: Props)
             <ToolbarButton
               variant="canvas"
               key="split"
-              tooltip="Split the pane"
+              tooltip={t('explore.toolbar.split.tooltip', 'Split the pane')}
               onClick={onOpenSplitView}
               icon="columns"
               disabled={isLive}
             >
-              Split
+              <Trans i18nKey="explore.toolbar.split.title"> Split </Trans>
             </ToolbarButton>
           ) : (
             <ButtonGroup key="split-controls">
               <ToolbarButton
                 variant="canvas"
-                tooltip={`${isLargerPane ? 'Narrow' : 'Widen'} pane`}
+                tooltip={
+                  isLargerPane
+                    ? t('explore.toolbar.split.narrow', 'Narrow pane')
+                    : t('explore.toolbar.split.widen', 'Widen pane')
+                }
                 onClick={onClickResize}
                 icon={isLargerPane ? 'gf-movepane-left' : 'gf-movepane-right'}
                 iconOnly={true}
                 className={cx(shouldRotateSplitIcon && rotateIcon)}
               />
-              <ToolbarButton tooltip="Close split pane" onClick={onCloseSplitView} icon="times" variant="canvas">
-                Close
+              <ToolbarButton
+                tooltip={t('explore.toolbar.split.close-tooltip', 'Close split pane')}
+                onClick={onCloseSplitView}
+                icon="times"
+                variant="canvas"
+              >
+                <Trans i18nKey="explore.toolbar.split.close"> Close </Trans>
               </ToolbarButton>
             </ButtonGroup>
           ),
