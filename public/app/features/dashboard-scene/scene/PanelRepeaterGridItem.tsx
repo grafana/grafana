@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { CSSProperties, useMemo } from 'react';
+import React, { useMemo } from 'react';
 
 import { config } from '@grafana/runtime';
 import {
@@ -166,54 +166,6 @@ export class PanelRepeaterGridItem extends SceneObjectBase<PanelRepeaterGridItem
 
   public getRepeatDirection(): RepeatDirection {
     return this.state.repeatDirection === 'v' ? 'v' : 'h';
-  }
-
-  public getContainerStyles(): CSSProperties {
-    const direction = this.getRepeatDirection();
-    const itemCount = this.state.repeatedPanels?.length ?? 0;
-
-    if (direction === 'h') {
-      const rowCount = Math.ceil(itemCount / this.getMaxPerRow());
-      const columnCount = Math.ceil(itemCount / rowCount);
-
-      return {
-        display: 'grid',
-        height: '100%',
-        width: '100%',
-        gridTemplateColumns: `repeat(${columnCount}, 1fr)`,
-        gridTemplateRows: `repeat(${rowCount}, 1fr)`,
-        gridColumnGap: config.theme2.spacing(1),
-        gridRowGap: config.theme2.spacing(1),
-      };
-    }
-
-    return {
-      display: 'flex',
-      height: '100%',
-      width: '100%',
-      flexWrap: 'wrap',
-      flexDirection: 'column',
-      gap: config.theme2.spacing(1),
-    };
-  }
-
-  public getItemStyles(): CSSProperties {
-    const direction = this.getRepeatDirection();
-
-    if (direction === 'h') {
-      return {
-        //display: 'flex',
-        //minWidth: `${100 / this.getMaxPerRow()}%`,
-        position: 'relative',
-        //flexGrow: 1,
-      };
-    } else {
-      return {
-        display: 'flex',
-        position: 'relative',
-        flexGrow: 1,
-      };
-    }
   }
 
   public static Component = ({ model }: SceneComponentProps<PanelRepeaterGridItem>) => {
