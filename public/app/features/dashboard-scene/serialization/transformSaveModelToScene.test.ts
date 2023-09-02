@@ -23,7 +23,7 @@ import { ShareQueryDataProvider } from '../scene/ShareQueryDataProvider';
 
 import {
   createDashboardSceneFromDashboardModel,
-  buildSceneFromPanelModel,
+  buildGridItemForPanel,
   createSceneVariableFromVariableModel,
 } from './transformSaveModelToScene';
 
@@ -214,6 +214,7 @@ describe('DashboardLoader', () => {
           defaults: {
             unit: 'none',
           },
+          overrides: [],
         },
         pluginVersion: '1.0.0',
         transformations: [
@@ -235,24 +236,26 @@ describe('DashboardLoader', () => {
           },
         ],
       };
-      const vizPanelSceneObject = buildSceneFromPanelModel(new PanelModel(panel));
-      const vizPanelItelf = vizPanelSceneObject.state.body as VizPanel;
-      expect(vizPanelItelf?.state.title).toBe('test');
-      expect(vizPanelItelf?.state.pluginId).toBe('test-plugin');
-      expect(vizPanelSceneObject.state.x).toEqual(0);
-      expect(vizPanelSceneObject.state.y).toEqual(0);
-      expect(vizPanelSceneObject.state.width).toEqual(12);
-      expect(vizPanelSceneObject.state.height).toEqual(8);
-      expect(vizPanelItelf?.state.options).toEqual(panel.options);
-      expect(vizPanelItelf?.state.fieldConfig).toEqual(panel.fieldConfig);
-      expect(vizPanelItelf?.state.pluginVersion).toBe('1.0.0');
+
+      const { gridItem, vizPanel } = buildGridItemForTest(panel);
+
+      expect(gridItem.state.x).toEqual(0);
+      expect(gridItem.state.y).toEqual(0);
+      expect(gridItem.state.width).toEqual(12);
+      expect(gridItem.state.height).toEqual(8);
+
+      expect(vizPanel.state.title).toBe('test');
+      expect(vizPanel.state.pluginId).toBe('test-plugin');
+      expect(vizPanel.state.options).toEqual(panel.options);
+      expect(vizPanel.state.fieldConfig).toEqual(panel.fieldConfig);
+      expect(vizPanel.state.pluginVersion).toBe('1.0.0');
+      expect(((vizPanel.state.$data as SceneDataTransformer)?.state.$data as SceneQueryRunner).state.queries).toEqual(
+        panel.targets
+      );
       expect(
-        ((vizPanelItelf.state.$data as SceneDataTransformer)?.state.$data as SceneQueryRunner).state.queries
-      ).toEqual(panel.targets);
-      expect(
-        ((vizPanelItelf.state.$data as SceneDataTransformer)?.state.$data as SceneQueryRunner).state.maxDataPoints
+        ((vizPanel.state.$data as SceneDataTransformer)?.state.$data as SceneQueryRunner).state.maxDataPoints
       ).toEqual(100);
-      expect((vizPanelItelf.state.$data as SceneDataTransformer)?.state.transformations).toEqual(panel.transformations);
+      expect((vizPanel.state.$data as SceneDataTransformer)?.state.transformations).toEqual(panel.transformations);
     });
 
     it('should initalize the VizPanel without title and transparent true', () => {
@@ -263,8 +266,7 @@ describe('DashboardLoader', () => {
         transparent: true,
       };
 
-      const gridItem = buildSceneFromPanelModel(new PanelModel(panel));
-      const vizPanel = gridItem.state.body as VizPanel;
+      const { vizPanel } = buildGridItemForTest(panel);
 
       expect(vizPanel.state.displayMode).toEqual('transparent');
       expect(vizPanel.state.hoverHeader).toEqual(true);
@@ -277,8 +279,7 @@ describe('DashboardLoader', () => {
         timeShift: '1d',
       };
 
-      const gridItem = buildSceneFromPanelModel(new PanelModel(panel));
-      const vizPanel = gridItem.state.body as VizPanel;
+      const { vizPanel } = buildGridItemForTest(panel);
       const timeRange = vizPanel.state.$timeRange as PanelTimeRange;
 
       expect(timeRange).toBeInstanceOf(PanelTimeRange);
@@ -296,8 +297,7 @@ describe('DashboardLoader', () => {
         targets: [{ refId: 'A', panelId: 10 }],
       };
 
-      const vizPanel = buildSceneFromPanelModel(new PanelModel(panel)).state.body as VizPanel;
-
+      const { vizPanel } = buildGridItemForTest(panel);
       expect(vizPanel.state.$data).toBeInstanceOf(ShareQueryDataProvider);
     });
 
@@ -314,8 +314,7 @@ describe('DashboardLoader', () => {
         skipDataQuery: true,
       }).meta;
 
-      const gridItem = buildSceneFromPanelModel(new PanelModel(panel));
-      const vizPanel = gridItem.state.body as VizPanel;
+      const { vizPanel } = buildGridItemForTest(panel);
 
       expect(vizPanel.state.$data).toBeUndefined();
     });
@@ -595,3 +594,12 @@ describe('DashboardLoader', () => {
     });
   });
 });
+
+function buildGridItemForTest(saveModel: Partial<Panel>): { gridItem: SceneGridItem; vizPanel: VizPanel } {
+  const gridItem = buildGridItemForPanel(new PanelModel(saveModel));
+  if (gridItem instanceof SceneGridItem) {
+    return { gridItem, vizPanel: gridItem.state.body as VizPanel };
+  }
+
+  throw new Error('buildGridItemForPanel to return SceneGridItem');
+}

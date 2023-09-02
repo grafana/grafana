@@ -1,9 +1,9 @@
-import { SceneGridItem } from '@grafana/scenes';
+import { SceneGridItemLike } from '@grafana/scenes';
 import { Panel } from '@grafana/schema';
 import { PanelModel } from 'app/features/dashboard/state';
 
 import dashboard_to_load1 from './testfiles/dashboard_to_load1.json';
-import { buildSceneFromPanelModel, transformSaveModelToScene } from './transformSaveModelToScene';
+import { buildGridItemForPanel, transformSaveModelToScene } from './transformSaveModelToScene';
 import { gridItemToPanel, transformSceneToSaveModel } from './transformSceneToSaveModel';
 
 describe('transformSceneToSaveModel', () => {
@@ -18,7 +18,7 @@ describe('transformSceneToSaveModel', () => {
 
   describe('Panel options', () => {
     it('Given panel with time override', () => {
-      const gridItem = createVizPanelFromPanelSchema({
+      const gridItem = buildGridItemFromPanelSchema({
         timeFrom: '2h',
         timeShift: '1d',
         hideTimeOverride: true,
@@ -31,7 +31,7 @@ describe('transformSceneToSaveModel', () => {
     });
 
     it('transparent panel', () => {
-      const gridItem = createVizPanelFromPanelSchema({ transparent: true });
+      const gridItem = buildGridItemFromPanelSchema({ transparent: true });
       const saveModel = gridItemToPanel(gridItem);
 
       expect(saveModel.transparent).toBe(true);
@@ -39,6 +39,6 @@ describe('transformSceneToSaveModel', () => {
   });
 });
 
-export function createVizPanelFromPanelSchema(panel: Partial<Panel>): SceneGridItem {
-  return buildSceneFromPanelModel(new PanelModel(panel));
+export function buildGridItemFromPanelSchema(panel: Partial<Panel>): SceneGridItemLike {
+  return buildGridItemForPanel(new PanelModel(panel));
 }

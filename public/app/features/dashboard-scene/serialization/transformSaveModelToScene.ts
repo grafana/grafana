@@ -72,7 +72,7 @@ export function createSceneObjectsForPanels(oldPanels: PanelModel[]): SceneGridI
               title: panel.title,
               isCollapsed: true,
               y: panel.gridPos.y,
-              children: panel.panels ? panel.panels.map(buildSceneFromPanelModel) : [],
+              children: panel.panels ? panel.panels.map(buildGridItemForPanel) : [],
             })
           );
         } else {
@@ -108,7 +108,7 @@ export function createSceneObjectsForPanels(oldPanels: PanelModel[]): SceneGridI
       });
       panels.push(gridItem);
     } else {
-      const panelObject = buildSceneFromPanelModel(panel);
+      const panelObject = buildGridItemForPanel(panel);
 
       // when processing an expanded row, collect its panels
       if (currentRow) {
@@ -248,7 +248,7 @@ export function createSceneVariableFromVariableModel(variable: VariableModel): S
   }
 }
 
-export function buildSceneFromPanelModel(panel: PanelModel): SceneGridItemLike {
+export function buildGridItemForPanel(panel: PanelModel): SceneGridItemLike {
   const vizPanelState: VizPanelState = {
     key: getVizPanelKeyForPanelId(panel.id),
     title: panel.title,
