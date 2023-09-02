@@ -215,6 +215,20 @@
   "data-sources": {
     "datasource-add-button": {
       "label": "Åđđ ŉęŵ đäŧä şőūřčę"
+    },
+    "advanced-datasource-picker": "Øpęŉ äđväŉčęđ đäŧä şőūřčę pįčĸęř"
+  },
+  "explore": {
+    "copy-shortened-link": "Cőpy şĥőřŧęŉęđ ľįŉĸ",
+    "toolbar": {
+      "split": {
+        "close": "Cľőşę",
+        "close-tooltip": "Cľőşę şpľįŧ päŉę",
+        "narrow": "Ńäřřőŵ päŉę",
+        "title": "Ŝpľįŧ",
+        "tooltip": "Ŝpľįŧ ŧĥę päŉę",
+        "widen": "Ŵįđęŉ päŉę"
+      }
     }
   },
   "folder-picker": {

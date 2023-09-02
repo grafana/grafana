@@ -208,8 +208,20 @@ export function ExploreToolbar({ exploreId, topOfViewRef, onChangeTime }: Props)
             onIntervalChanged={onChangeRefreshInterval}
             value={refreshInterval}
             isLoading={loading}
-            text={showSmallTimePicker ? undefined : loading ? 'Cancel' : 'Run query'}
-            tooltip={showSmallTimePicker ? (loading ? 'Cancel' : 'Run query') : undefined}
+            text={
+              showSmallTimePicker
+                ? undefined
+                : loading
+                ? t('grafana-ui.refresh-picker.cancel', 'Cancel')
+                : t('grafana-ui.refresh-picker.run-query', 'Run query')
+            }
+            tooltip={
+              showSmallTimePicker
+                ? loading
+                  ? t('grafana-ui.refresh-picker.cancel', 'Cancel')
+                  : t('grafana-ui.refresh-picker.run-query', 'Run query')
+                : undefined
+            }
             intervals={getTimeSrv().getValidIntervals(defaultIntervals)}
             isLive={isLive}
             onRefresh={() => onRunQuery(loading)}
