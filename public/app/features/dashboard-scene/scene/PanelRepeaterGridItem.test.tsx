@@ -17,6 +17,7 @@ describe('PanelRepeaterGridItem', () => {
 
     // Panels should have scoped variables
     expect(panel1.state.$variables?.state.variables[0].getValue()).toBe('1');
+    expect(panel1.state.$variables?.state.variables[0].getValueText?.()).toBe('A');
     expect(panel2.state.$variables?.state.variables[0].getValue()).toBe('2');
   });
 

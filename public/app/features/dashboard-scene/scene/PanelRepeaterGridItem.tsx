@@ -14,6 +14,8 @@ import {
   SceneGridItemStateLike,
   SceneGridItemLike,
   sceneGraph,
+  MultiValueVariable,
+  VariableValueSingle,
 } from '@grafana/scenes';
 import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN } from 'app/core/constants';
 
@@ -92,22 +94,27 @@ export class PanelRepeaterGridItem extends SceneObjectBase<PanelRepeaterGridItem
   }
 
   private _performRepeat(variable: SceneVariable) {
+    if (!(variable instanceof MultiValueVariable)) {
+      console.error('PanelRepeaterGridItem: Variable is not a MultiValueVariable');
+      return;
+    }
+
     const panelToRepeat = this.state.source;
-    const values = variable.getValue();
+    const { values, texts } = this.getVariableValues(variable);
     const repeatedPanels: VizPanel[] = [];
 
     // Loop through variable values and create repeates
-    if (Array.isArray(values)) {
-      for (let index = 0; index < values.length; index++) {
-        const clone = panelToRepeat.clone({
-          $variables: new SceneVariableSet({
-            variables: [new ConstantVariable({ name: variable.state.name, value: values[index] })],
-          }),
-          key: `${panelToRepeat.state.key}-clone-${index}`,
-        });
+    for (let index = 0; index < values.length; index++) {
+      const clone = panelToRepeat.clone({
+        $variables: new SceneVariableSet({
+          variables: [
+            new ConstantVariable({ name: variable.state.name, value: values[index], text: String(texts[index]) }),
+          ],
+        }),
+        key: `${panelToRepeat.state.key}-clone-${index}`,
+      });
 
-        repeatedPanels.push(clone);
-      }
+      repeatedPanels.push(clone);
     }
 
     const direction = this.getRepeatDirection();
@@ -129,6 +136,25 @@ export class PanelRepeaterGridItem extends SceneObjectBase<PanelRepeaterGridItem
     if (this.parent instanceof SceneGridLayout) {
       this.parent!.forceRender();
     }
+  }
+
+  private getVariableValues(variable: MultiValueVariable): {
+    values: VariableValueSingle[];
+    texts: VariableValueSingle[];
+  } {
+    const { value, text, options } = variable.state;
+
+    if (variable.hasAllValue()) {
+      return {
+        values: options.map((o) => o.value),
+        texts: options.map((o) => o.label),
+      };
+    }
+
+    return {
+      values: Array.isArray(value) ? value : [value],
+      texts: Array.isArray(text) ? text : [text],
+    };
   }
 
   private getMaxPerRow(): number {
