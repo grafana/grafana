@@ -1,7 +1,7 @@
-import { PanelModel } from '@grafana/data';
 import { llms } from '@grafana/experimental';
 
 import { getDashboardSrv } from '../../services/DashboardSrv';
+import { PanelModel } from '../../state';
 
 // TODO: Replace this approach with more stable approach
 export const SPECIAL_DONE_TOKEN = '~';
