@@ -25,7 +25,7 @@ interface PanelRepeaterGridItemState extends SceneGridItemStateLike {
   maxPerRow?: number;
 }
 
-type RepeatDirection = 'v' | 'h';
+export type RepeatDirection = 'v' | 'h';
 
 export class PanelRepeaterGridItem extends SceneObjectBase<PanelRepeaterGridItemState> implements SceneGridItemLike {
   protected _variableDependency = new VariableDependencyConfig(this, {
@@ -48,7 +48,7 @@ export class PanelRepeaterGridItem extends SceneObjectBase<PanelRepeaterGridItem
     if (!sceneGraph.hasVariableDependencyInLoadingState(this)) {
       const variable = sceneGraph.lookupVariable(this.state.variableName, this);
       if (variable) {
-        this._processRepeat(variable!);
+        this._performRepeat(variable!);
       } else {
         console.error('SceneGridItemRepeater: Variable not found');
       }
@@ -56,10 +56,9 @@ export class PanelRepeaterGridItem extends SceneObjectBase<PanelRepeaterGridItem
   }
 
   private _onVariableChanged(changedVariables: Set<SceneVariable>): void {
-    console.log('variable changed');
     for (const variable of changedVariables) {
       if (this.state.variableName === variable.state.name) {
-        this._processRepeat(variable);
+        this._performRepeat(variable);
       }
     }
   }
@@ -91,11 +90,7 @@ export class PanelRepeaterGridItem extends SceneObjectBase<PanelRepeaterGridItem
     this.setState(stateChange);
   }
 
-  private _processRepeat(variable: SceneVariable) {
-    const grid = this._getParentGrid();
-
-    console.log(`SceneGridItemRepeater: _processRepeat ${variable.state.name}`);
-
+  private _performRepeat(variable: SceneVariable) {
     const panelToRepeat = this.state.source;
     const values = variable.getValue();
     const repeatedPanels: VizPanel[] = [];
@@ -128,16 +123,11 @@ export class PanelRepeaterGridItem extends SceneObjectBase<PanelRepeaterGridItem
 
     this._ignoreNextStateChange = true;
     this.setState(stateChange);
-    grid.forceRender();
-  }
 
-  private _getParentGrid(): SceneGridLayout {
-    const grid = this.parent;
-    if (!(grid instanceof SceneGridLayout)) {
-      throw new Error('SceneGridItemRepeater: Layout of type SceneGridLayout not found');
+    // In case we updated our height the grid layout needs to be update
+    if (this.parent instanceof SceneGridLayout) {
+      this.parent!.forceRender();
     }
-
-    return grid;
   }
 
   private getMaxPerRow(): number {
