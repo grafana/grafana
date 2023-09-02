@@ -15,6 +15,7 @@ import {
   SceneGridItemLike,
   sceneGraph,
 } from '@grafana/scenes';
+import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN } from 'app/core/constants';
 
 interface PanelRepeaterGridItemState extends SceneGridItemStateLike {
   source: VizPanel;
@@ -138,10 +139,14 @@ export class PanelRepeaterGridItem extends SceneObjectBase<PanelRepeaterGridItem
     return this.state.repeatDirection === 'v' ? 'v' : 'h';
   }
 
+  public getClassName() {
+    return 'panel-repeater-grid-item';
+  }
+
   public static Component = ({ model }: SceneComponentProps<PanelRepeaterGridItem>) => {
-    const { repeatedPanels } = model.useState();
+    const { repeatedPanels, itemHeight } = model.useState();
     const itemCount = repeatedPanels?.length ?? 0;
-    const layoutStyle = useLayoutStyle(model.getRepeatDirection(), itemCount, model.getMaxPerRow());
+    const layoutStyle = useLayoutStyle(model.getRepeatDirection(), itemCount, model.getMaxPerRow(), itemHeight ?? 10);
 
     if (!repeatedPanels) {
       return null;
@@ -159,9 +164,12 @@ export class PanelRepeaterGridItem extends SceneObjectBase<PanelRepeaterGridItem
   };
 }
 
-function useLayoutStyle(direction: RepeatDirection, itemCount: number, maxPerRow: number) {
+function useLayoutStyle(direction: RepeatDirection, itemCount: number, maxPerRow: number, itemHeight: number) {
   return useMemo(() => {
     const theme = config.theme2;
+
+    // In mobile responsive layout we have to calculate the absolute height
+    const mobileHeight = itemHeight * GRID_CELL_HEIGHT * itemCount + (itemCount - 1) * GRID_CELL_VMARGIN;
 
     if (direction === 'h') {
       const rowCount = Math.ceil(itemCount / maxPerRow);
@@ -175,9 +183,11 @@ function useLayoutStyle(direction: RepeatDirection, itemCount: number, maxPerRow
         gridTemplateRows: `repeat(${rowCount}, 1fr)`,
         gridColumnGap: theme.spacing(1),
         gridRowGap: theme.spacing(1),
+
         [theme.breakpoints.down('md')]: {
           display: 'flex',
           flexDirection: 'column',
+          height: mobileHeight,
         },
       });
     }
@@ -189,8 +199,11 @@ function useLayoutStyle(direction: RepeatDirection, itemCount: number, maxPerRow
       width: '100%',
       flexDirection: 'column',
       gap: theme.spacing(1),
+      [theme.breakpoints.down('md')]: {
+        height: mobileHeight,
+      },
     });
-  }, [direction, itemCount, maxPerRow]);
+  }, [direction, itemCount, maxPerRow, itemHeight]);
 }
 
 const itemStyle = css({
