@@ -13,7 +13,7 @@ interface Props {
 }
 
 export const NavToolbarActions = React.memo<Props>(({ dashboard }) => {
-  const { actions = [], isEditing, viewPanelId, isDirty, uid } = dashboard.useState();
+  const { actions = [], isEditing, viewPanelKey: viewPanelId, isDirty, uid } = dashboard.useState();
   const toolbarActions = (actions ?? []).map((action) => <action.Component key={action.state.key} model={action} />);
 
   if (uid) {

@@ -53,7 +53,7 @@ export function transformSaveModelToScene(rsp: DashboardDTO): DashboardScene {
   return createDashboardSceneFromDashboardModel(oldModel);
 }
 
-export function createSceneObjectsForPanels(oldPanels: PanelModel[]): Array<SceneGridItem | SceneGridRow> {
+export function createSceneObjectsForPanels(oldPanels: PanelModel[]): SceneGridItemLike[] {
   // collects all panels and rows
   const panels: SceneGridItemLike[] = [];
 
