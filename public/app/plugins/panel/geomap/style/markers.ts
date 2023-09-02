@@ -5,7 +5,15 @@ import { Registry, RegistryItem, textUtil } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { getPublicOrAbsoluteUrl } from 'app/features/dimensions';
 
-import { defaultStyleConfig, DEFAULT_SIZE, StyleConfigValues, StyleMaker } from './types';
+import {
+  AnchorX,
+  AnchorY,
+  defaultStyleConfig,
+  DEFAULT_SIZE,
+  StyleConfigValues,
+  StyleMaker,
+  SymbolAnchor,
+} from './types';
 
 interface SymbolMaker extends RegistryItem {
   aliasIds: string[];
@@ -80,11 +88,13 @@ export const textMarker = (cfg: StyleConfigValues) => {
 
 export const circleMarker = (cfg: StyleConfigValues) => {
   const stroke = new Stroke({ color: cfg.color, width: cfg.lineWidth ?? 1 });
+  const radius = cfg.size ?? DEFAULT_SIZE;
   return new Style({
     image: new Circle({
       stroke,
       fill: getFillColor(cfg),
-      radius: cfg.size ?? DEFAULT_SIZE,
+      radius,
+      displacement: getDisplacement(cfg.symbolAnchor ?? defaultStyleConfig.symbolAnchor, radius),
     }),
     text: textLabel(cfg),
     stroke, // in case lines are sent to the markers layer
@@ -154,6 +164,8 @@ const makers: SymbolMaker[] = [
           points: 4,
           radius,
           rotation: (rotation * Math.PI) / 180 + Math.PI / 4,
+          // TODO needs to account for additional rotation
+          displacement: getDisplacement(cfg.symbolAnchor ?? defaultStyleConfig.symbolAnchor, radius),
         }),
         text: textLabel(cfg),
       });
@@ -174,6 +186,7 @@ const makers: SymbolMaker[] = [
           radius,
           rotation: (rotation * Math.PI) / 180,
           angle: 0,
+          displacement: getDisplacement(cfg.symbolAnchor ?? defaultStyleConfig.symbolAnchor, radius),
         }),
         text: textLabel(cfg),
       });
@@ -195,6 +208,7 @@ const makers: SymbolMaker[] = [
           radius2: radius * 0.4,
           angle: 0,
           rotation: (rotation * Math.PI) / 180,
+          displacement: getDisplacement(cfg.symbolAnchor ?? defaultStyleConfig.symbolAnchor, radius),
         }),
         text: textLabel(cfg),
       });
@@ -215,6 +229,7 @@ const makers: SymbolMaker[] = [
           radius2: 0,
           angle: 0,
           rotation: (rotation * Math.PI) / 180,
+          displacement: getDisplacement(cfg.symbolAnchor ?? defaultStyleConfig.symbolAnchor, radius),
         }),
         text: textLabel(cfg),
       });
@@ -234,6 +249,8 @@ const makers: SymbolMaker[] = [
           radius,
           radius2: 0,
           rotation: (rotation * Math.PI) / 180 + Math.PI / 4,
+          // TODO needs to account for additional rotation
+          displacement: getDisplacement(cfg.symbolAnchor ?? defaultStyleConfig.symbolAnchor, radius),
         }),
         text: textLabel(cfg),
       });
@@ -285,6 +302,28 @@ export function getMarkerAsPath(shape?: string): string | undefined {
   return undefined;
 }
 
+//TODO clean up
+function getDisplacement(symbolAnchor: SymbolAnchor, radius: number, offset?: number) {
+  const anchor = [];
+  if (symbolAnchor?.anchorX === AnchorX.Left) {
+    anchor.push(radius);
+  } else if (symbolAnchor?.anchorX === AnchorX.Right) {
+    anchor.push(-radius);
+  } else {
+    anchor.push(0);
+  }
+  anchor[0] += offset ?? 0;
+  if (symbolAnchor?.anchorY === AnchorY.Top) {
+    anchor.push(-radius);
+  } else if (symbolAnchor?.anchorY === AnchorY.Bottom) {
+    anchor.push(radius);
+  } else {
+    anchor.push(0);
+  }
+  anchor[1] += offset ?? 0;
+  return anchor;
+}
+
 // Will prepare symbols as necessary
 export async function getMarkerMaker(symbol?: string, hasTextLabel?: boolean): Promise<StyleMaker> {
   if (!symbol) {
@@ -315,6 +354,9 @@ export async function getMarkerMaker(symbol?: string, hasTextLabel?: boolean): P
                   opacity: cfg.opacity ?? 1,
                   scale: (DEFAULT_SIZE + radius) / 100,
                   rotation: (rotation * Math.PI) / 180,
+                  anchor: getDisplacement(cfg.symbolAnchor ?? defaultStyleConfig.symbolAnchor, -0.5, 0.5),
+                  anchorXUnits: 'fraction',
+                  anchorYUnits: 'fraction',
                 }),
                 text: !cfg?.text ? undefined : textLabel(cfg),
               }),

@@ -37,6 +37,7 @@ export async function getStyleConfigState(cfg?: StyleConfig): Promise<StyleConfi
       lineWidth: cfg.lineWidth ?? 1,
       size: cfg.size?.fixed ?? defaultStyleConfig.size.fixed,
       rotation: cfg.rotation?.fixed ?? defaultStyleConfig.rotation.fixed, // add ability follow path later
+      symbolAnchor: cfg.symbolAnchor ?? defaultStyleConfig.symbolAnchor,
     },
     maker,
   };

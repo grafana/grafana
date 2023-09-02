@@ -31,7 +31,15 @@ import {
 } from 'app/features/dimensions/editors';
 import { ResourceFolderName, defaultTextConfig, MediaType } from 'app/features/dimensions/types';
 
-import { defaultStyleConfig, GeometryTypeId, StyleConfig, TextAlignment, TextBaseline } from '../style/types';
+import {
+  AnchorX,
+  AnchorY,
+  defaultStyleConfig,
+  GeometryTypeId,
+  StyleConfig,
+  TextAlignment,
+  TextBaseline,
+} from '../style/types';
 import { styleUsesText } from '../style/utils';
 import { LayerContentInfo } from '../utils/getFeatures';
 
@@ -99,6 +107,14 @@ export const StyleEditor = (props: Props) => {
 
   const onTextBaselineChange = (textBaseline: TextBaseline) => {
     onChange({ ...value, textConfig: { ...value.textConfig, textBaseline: textBaseline } });
+  };
+
+  const onAnchorXChange = (anchorX: AnchorX) => {
+    onChange({ ...value, symbolAnchor: { ...value.symbolAnchor, anchorX } });
+  };
+
+  const onAnchorYChange = (anchorY: AnchorY) => {
+    onChange({ ...value, symbolAnchor: { ...value.symbolAnchor, anchorY } });
   };
 
   const propertyOptions = useObservable(settings?.layerInfo ?? of());
@@ -200,24 +216,48 @@ export const StyleEditor = (props: Props) => {
         />
       </Field>
       {!settings?.hideSymbol && (
-        <Field label={'Symbol'}>
-          <ResourceDimensionEditor
-            value={value?.symbol ?? defaultStyleConfig.symbol}
-            context={context}
-            onChange={onSymbolChange}
-            item={
-              {
-                settings: {
-                  resourceType: MediaType.Icon,
-                  folderName: ResourceFolderName.Marker,
-                  placeholderText: hasTextLabel ? 'Select a symbol' : 'Select a symbol or add a text label',
-                  placeholderValue: defaultStyleConfig.symbol.fixed,
-                  showSourceRadio: false,
-                },
-              } as StandardEditorsRegistryItem
-            }
-          />
-        </Field>
+        <>
+          <Field label={'Symbol'}>
+            <ResourceDimensionEditor
+              value={value?.symbol ?? defaultStyleConfig.symbol}
+              context={context}
+              onChange={onSymbolChange}
+              item={
+                {
+                  settings: {
+                    resourceType: MediaType.Icon,
+                    folderName: ResourceFolderName.Marker,
+                    placeholderText: hasTextLabel ? 'Select a symbol' : 'Select a symbol or add a text label',
+                    placeholderValue: defaultStyleConfig.symbol.fixed,
+                    showSourceRadio: false,
+                  },
+                } as StandardEditorsRegistryItem
+              }
+            />
+          </Field>
+          <Field label={'Anchor X'}>
+            <RadioButtonGroup
+              value={value?.symbolAnchor?.anchorX ?? defaultStyleConfig.symbolAnchor.anchorX}
+              onChange={onAnchorXChange}
+              options={[
+                { value: AnchorX.Left, label: capitalize(AnchorX.Left) },
+                { value: AnchorX.Center, label: capitalize(AnchorX.Center) },
+                { value: AnchorX.Right, label: capitalize(AnchorX.Right) },
+              ]}
+            />
+          </Field>
+          <Field label={'Anchor Y'}>
+            <RadioButtonGroup
+              value={value?.symbolAnchor?.anchorY ?? defaultStyleConfig.symbolAnchor.anchorY}
+              onChange={onAnchorYChange}
+              options={[
+                { value: AnchorY.Top, label: capitalize(AnchorY.Top) },
+                { value: AnchorY.Center, label: capitalize(AnchorY.Center) },
+                { value: AnchorY.Bottom, label: capitalize(AnchorY.Bottom) },
+              ]}
+            />
+          </Field>
+        </>
       )}
       <Field label={'Color'}>
         <ColorDimensionEditor
