@@ -2000,6 +2000,9 @@ exports[`better eslint`] = {
     "public/app/features/dashboard/components/DashboardRow/DashboardRow.test.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
+    "public/app/features/dashboard/components/GenAI/GenAIService.ts:5381": [
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
+    ],
     "public/app/features/dashboard/components/Inspector/PanelInspector.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
@@ -2028,6 +2031,10 @@ exports[`better eslint`] = {
     ],
     "public/app/features/dashboard/components/PanelEditor/getFieldOverrideElements.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
+    ],
+    "public/app/features/dashboard/components/PanelEditor/getPanelFrameOptions.tsx:5381": [
+      [0, 0, 0, "Do not use any type assertions.", "0"],
+      [0, 0, 0, "Do not use any type assertions.", "1"]
     ],
     "public/app/features/dashboard/components/PanelEditor/getVisualizationOptions.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
