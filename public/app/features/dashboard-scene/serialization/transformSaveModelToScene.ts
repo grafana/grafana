@@ -274,11 +274,13 @@ export function buildGridItemForPanel(panel: PanelModel): SceneGridItemLike {
   }
 
   if (panel.repeat) {
+    const repeatDirection = panel.repeatDirection ?? 'h';
+
     return new PanelRepeaterGridItem({
       key: `grid-item-${panel.id}`,
       x: panel.gridPos.x,
       y: panel.gridPos.y,
-      width: panel.gridPos.w,
+      width: repeatDirection === 'h' ? 24 : panel.gridPos.w,
       height: panel.gridPos.h,
       itemHeight: panel.gridPos.h,
       source: new VizPanel(vizPanelState),

@@ -37,6 +37,7 @@ export class PanelRepeaterGridItem extends SceneObjectBase<PanelRepeaterGridItem
   });
 
   private _ignoreNextStateChange = false;
+  private _isWaitingForVariables = false;
 
   public constructor(state: PanelRepeaterGridItemState) {
     super(state);
@@ -48,21 +49,23 @@ export class PanelRepeaterGridItem extends SceneObjectBase<PanelRepeaterGridItem
     this._subs.add(this.subscribeToState((newState, prevState) => this._handleGridResize(newState, prevState)));
 
     // If we our variable is ready we can process repeats on activation
-    if (!sceneGraph.hasVariableDependencyInLoadingState(this)) {
-      const variable = sceneGraph.lookupVariable(this.state.variableName, this);
-      if (variable) {
-        this._performRepeat(variable!);
-      } else {
-        console.error('SceneGridItemRepeater: Variable not found');
-      }
+    if (sceneGraph.hasVariableDependencyInLoadingState(this)) {
+      this._isWaitingForVariables = true;
+    } else {
+      this._performRepeat();
     }
   }
 
-  private _onVariableChanged(changedVariables: Set<SceneVariable>): void {
-    for (const variable of changedVariables) {
-      if (this.state.variableName === variable.state.name) {
-        this._performRepeat(variable);
-      }
+  private _onVariableChanged(changedVariables: Set<SceneVariable>, dependencyChanged: boolean): void {
+    if (dependencyChanged) {
+      this._performRepeat();
+      return;
+    }
+
+    // If we are waiting for variables and the variable is no longer loading then we are ready to repeat as well
+    if (this._isWaitingForVariables && !sceneGraph.hasVariableDependencyInLoadingState(this)) {
+      this._isWaitingForVariables = false;
+      this._performRepeat();
     }
   }
 
@@ -93,12 +96,19 @@ export class PanelRepeaterGridItem extends SceneObjectBase<PanelRepeaterGridItem
     this.setState(stateChange);
   }
 
-  private _performRepeat(variable: SceneVariable) {
+  private _performRepeat() {
+    const variable = sceneGraph.lookupVariable(this.state.variableName, this);
+    if (!variable) {
+      console.error('SceneGridItemRepeater: Variable not found');
+      return;
+    }
+
     if (!(variable instanceof MultiValueVariable)) {
       console.error('PanelRepeaterGridItem: Variable is not a MultiValueVariable');
       return;
     }
 
+    console.log('perform repeat');
     const panelToRepeat = this.state.source;
     const { values, texts } = this.getVariableValues(variable);
     const repeatedPanels: VizPanel[] = [];
