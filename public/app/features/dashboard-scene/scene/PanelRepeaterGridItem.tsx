@@ -108,7 +108,6 @@ export class PanelRepeaterGridItem extends SceneObjectBase<PanelRepeaterGridItem
       return;
     }
 
-    console.log('perform repeat');
     const panelToRepeat = this.state.source;
     const { values, texts } = this.getVariableValues(variable);
     const repeatedPanels: VizPanel[] = [];
