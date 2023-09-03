@@ -539,7 +539,8 @@ lineage: schemas: [{
 			// `h` for horizontal, `v` for vertical.
 			repeatDirection?: *"h" | "v"
 
-			// Max items per for when repeatDirection is horizontal (h)
+			// Option for repeated panels that controls max items per row
+			// Only relevant for horizontally repeated panels
 			maxPerRow?: number
 
 			// The maximum number of data points that the panel queries are retrieving.
