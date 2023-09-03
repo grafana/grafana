@@ -99,24 +99,27 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 
 func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
 	dsInfo, err := s.getDSInfo(ctx, req.PluginContext)
+	logger := logger.FromContext(ctx).New("api", "CallResource")
 	if err != nil {
+		logger.Error("failed to get data source info", "err", err)
 		return err
 	}
-	return callResource(ctx, req, sender, dsInfo, logger.FromContext(ctx), s.tracer)
+	return callResource(ctx, req, sender, dsInfo, logger, s.tracer)
 }
 
 func callResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender, dsInfo *datasourceInfo, plog log.Logger, tracer tracing.Tracer) error {
 	url := req.URL
-
 	// a very basic is-this-url-valid check
 	if req.Method != "GET" {
-		return fmt.Errorf("invalid resource method: %s", req.Method)
+		plog.Error("Invalid HTTP method", "method", req.Method)
+		return fmt.Errorf("invalid HTTP method: %s", req.Method)
 	}
 	if (!strings.HasPrefix(url, "labels?")) &&
 		(!strings.HasPrefix(url, "label/")) && // the `/label/$label_name/values` form
 		(!strings.HasPrefix(url, "series?")) &&
 		(!strings.HasPrefix(url, "index/stats?")) {
-		return fmt.Errorf("invalid resource URL: %s", url)
+		plog.Error("Invalid URL", "url", url)
+		return fmt.Errorf("invalid URL: %s", url)
 	}
 	lokiURL := fmt.Sprintf("/loki/api/v1/%s", url)
 
@@ -125,12 +128,14 @@ func callResource(ctx context.Context, req *backend.CallResourceRequest, sender 
 	defer span.End()
 
 	api := newLokiAPI(dsInfo.HTTPClient, dsInfo.URL, plog, tracer)
-	rawLokiResponse, err := api.RawQuery(ctx, lokiURL)
 
+	rawLokiResponse, err := api.RawQuery(ctx, lokiURL)
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+		plog.Error("Failed resource call from loki", "err", err, "url", lokiURL)
 		return err
 	}
-
 	respHeaders := map[string][]string{
 		"content-type": {"application/json"},
 	}
