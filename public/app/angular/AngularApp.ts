@@ -7,14 +7,14 @@ import 'vendor/bootstrap/bootstrap';
 import angular from 'angular'; // eslint-disable-line no-duplicate-imports
 import { extend } from 'lodash';
 
-import { getTemplateSrv } from '@grafana/runtime';
-import coreModule, { angularModules } from 'app/angular/core_module';
+import { getTemplateSrv, SystemJS } from '@grafana/runtime';
+import { coreModule, angularModules } from 'app/angular/core_module';
 import appEvents from 'app/core/app_events';
 import { config } from 'app/core/config';
 import { contextSrv } from 'app/core/services/context_srv';
 import { DashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
-import { exposeToPlugin } from 'app/features/plugins/plugin_loader';
+import { buildImportMap } from 'app/features/plugins/loader/utils';
 import * as sdk from 'app/plugins/sdk';
 
 import { registerAngularDirectives } from './angular_wrappers';
@@ -22,6 +22,22 @@ import { initAngularRoutingBridge } from './bridgeReactAngularRouting';
 import { monkeyPatchInjectorWithPreAssignedBindings } from './injectorMonkeyPatch';
 import { promiseToDigest } from './promiseToDigest';
 import { registerComponents } from './registerComponents';
+
+// Angular plugin dependencies map
+const importMap = {
+  angular: angular,
+  'app/core/core_module': {
+    default: coreModule,
+    __useDefault: true,
+  },
+  'app/core/core': {
+    appEvents: appEvents,
+    contextSrv: contextSrv,
+    coreModule: coreModule,
+  },
+  'app/plugins/sdk': sdk,
+  'app/core/utils/promiseToDigest': { promiseToDigest },
+} as Record<string, System.Module>;
 
 export class AngularApp {
   ngModuleDependencies: any[];
@@ -105,17 +121,9 @@ export class AngularApp {
     registerComponents();
     initAngularRoutingBridge();
 
-    // Angular plugins import this
-    exposeToPlugin('angular', angular);
-    exposeToPlugin('app/core/utils/promiseToDigest', { promiseToDigest, __esModule: true });
-    exposeToPlugin('app/plugins/sdk', sdk);
-    exposeToPlugin('app/core/core_module', coreModule);
-    exposeToPlugin('app/core/core', {
-      coreModule: coreModule,
-      appEvents: appEvents,
-      contextSrv: contextSrv,
-      __esModule: true,
-    });
+    const imports = buildImportMap(importMap);
+    // pass the map of module names so systemjs can resolve them
+    SystemJS.addImportMap({ imports });
 
     // disable tool tip animation
     $.fn.tooltip.defaults.animation = false;

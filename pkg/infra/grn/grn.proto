@@ -1,0 +1,20 @@
+syntax = "proto3";
+package grn;
+
+option go_package = "github.com/grafana/grafana/pkg/infra/grn";
+
+message GRN {
+	// TenantID contains the ID of the tenant (in hosted grafana) or
+	// organization (in other environments) the resource belongs to. This field
+	// may be omitted for global Grafana resources which are not associated with
+	// an organization.
+	int64 TenantID = 1;
+
+	// The kind of resource being identified, for e.g. "dashboard" or "user".
+	// The caller is responsible for validating the value.
+	string ResourceKind = 3;
+
+	// ResourceIdentifier is used by the underlying service to identify the
+	// resource.
+	string ResourceIdentifier = 4;
+}

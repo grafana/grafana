@@ -2,11 +2,12 @@ import { cloneDeep, isFunction } from 'lodash';
 
 import { PluginMeta } from '@grafana/data';
 import { config } from '@grafana/runtime';
+import { Monaco } from '@grafana/ui';
 
 import { loadScriptIntoSandbox } from './code_loader';
 import { forbiddenElements } from './constants';
 import { SandboxEnvironment } from './types';
-import { logWarning } from './utils';
+import { logWarning, unboxRegexesFromMembraneProxy } from './utils';
 
 /**
  * Distortions are near-membrane mechanisms to altert JS instrics and DOM APIs.
@@ -67,6 +68,8 @@ const generalDistortionMap: DistortionMap = new Map();
 
 const monitorOnly = Boolean(config.featureToggles.frontendSandboxMonitorOnly);
 
+const SANDBOX_LIVE_API_PATCHED = Symbol.for('@SANDBOX_LIVE_API_PATCHED');
+
 export function getGeneralSandboxDistortionMap() {
   if (generalDistortionMap.size === 0) {
     // initialize the distortion map
@@ -79,6 +82,8 @@ export function getGeneralSandboxDistortionMap() {
     distortCreateElement(generalDistortionMap);
     distortWorkers(generalDistortionMap);
     distortDocument(generalDistortionMap);
+    distortMonacoEditor(generalDistortionMap);
+    distortPostMessage(generalDistortionMap);
   }
   return generalDistortionMap;
 }
@@ -455,4 +460,73 @@ function distortDocument(distortions: DistortionMap) {
       distortions.set(descriptor.value, failToSet);
     }
   }
+}
+
+async function distortMonacoEditor(distortions: DistortionMap) {
+  // We rely on `monaco` being instanciated inside `window.monaco`.
+  // this is the same object passed down to plugins using monaco editor for their editors
+  // this `window.monaco` is an instance of monaco but not the same as if we
+  // import `monaco-editor` directly in this file.
+  // Short of abusing the `window.monaco` object we would have to modify grafana-ui to export
+  // the monaco instance directly in the ReactMonacoEditor component
+  const monacoEditor: Monaco = Reflect.get(window, 'monaco');
+
+  // do not double patch
+  if (!monacoEditor || Object.hasOwn(monacoEditor, SANDBOX_LIVE_API_PATCHED)) {
+    return;
+  }
+  const originalSetMonarchTokensProvider = monacoEditor.languages.setMonarchTokensProvider;
+
+  // NOTE: this function in particular is called only once per intialized custom language inside a plugin which is a
+  // rare ocurrance but if not patched it'll break the syntax highlighting for the custom language.
+  function getSetMonarchTokensProvider() {
+    return function (...args: Parameters<typeof originalSetMonarchTokensProvider>) {
+      if (args.length !== 2) {
+        return originalSetMonarchTokensProvider.apply(monacoEditor, args);
+      }
+      return originalSetMonarchTokensProvider.call(
+        monacoEditor,
+        args[0],
+        unboxRegexesFromMembraneProxy(args[1]) as (typeof args)[1]
+      );
+    };
+  }
+  distortions.set(monacoEditor.languages.setMonarchTokensProvider, getSetMonarchTokensProvider);
+  Reflect.set(monacoEditor, SANDBOX_LIVE_API_PATCHED, {});
+}
+
+async function distortPostMessage(distortions: DistortionMap) {
+  const descriptor = Object.getOwnPropertyDescriptor(window, 'postMessage');
+
+  function getPostMessageDistortion(originalMethod: unknown) {
+    return function postMessageDistortion(this: Window, ...args: unknown[]) {
+      // proxies can't be serialized by postMessage algorithm
+      // the only way to pass it through is to send a cloned version
+      // objects passed to postMessage should be clonable
+      try {
+        const newArgs: unknown[] = cloneDeep(args);
+        if (isFunction(originalMethod)) {
+          originalMethod.apply(this, newArgs);
+        }
+      } catch (e) {
+        throw new Error('postMessage arguments are invalid objects');
+      }
+    };
+  }
+
+  if (descriptor?.value) {
+    distortions.set(descriptor.value, getPostMessageDistortion);
+  }
+}
+
+/**
+ * We define "live" APIs as APIs that can only be distorted in runtime on-the-fly and not at initialization
+ * time like other distortions do.
+ *
+ * This could be because the objects we want to patch only become available after specific states are reached
+ * or because the libraries we want to patch are lazy-loaded and we don't have access to their definitions
+ *
+ */
+export async function distortLiveApis() {
+  distortMonacoEditor(generalDistortionMap);
 }

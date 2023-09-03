@@ -4,8 +4,8 @@ import { Subscriber } from 'rxjs';
 // Observers, ie. functions passed to `observable.subscribe(...)`, are converted to a subclass of `Subscriber` before they are sent to the source Observable.
 // The conversion happens internally in the RxJS library - this transfer handler is catches them and wraps them with a proxy
 const subscriberTransferHandler: any = {
-  canHandle(value: any): boolean {
-    return value && value instanceof Subscriber;
+  canHandle(value: unknown): boolean {
+    return Boolean(value && value instanceof Subscriber);
   },
 
   serialize(value: Function): [MessagePort, Transferable[]] {

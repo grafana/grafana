@@ -86,7 +86,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
       color: ${theme.colors.text.disabled};
     `,
     basicRoleSelector: css`
-      margin: ${theme.spacing(1, 1.25, 1, 1)};
+      margin: ${theme.spacing(1, 1.25, 1, 1.5)};
     `,
     subMenuPortal: css`
       height: 100%;

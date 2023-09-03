@@ -91,7 +91,7 @@ const unifiedRoutes: RouteDescriptor[] = [
   {
     path: '/alerting',
     component: SafeDynamicImport(
-      () => import(/* webpackChunkName: "AlertingHome" */ 'app/features/alerting/unified/Home')
+      () => import(/* webpackChunkName: "AlertingHome" */ 'app/features/alerting/unified/home/Home')
     ),
   },
   {

@@ -549,7 +549,7 @@ func (ss *sqlStore) SearchOrgUsers(ctx context.Context, query *org.SearchOrgUser
 		sess.Join("INNER", ss.dialect.Quote("user"), fmt.Sprintf("org_user.user_id=%s.id", ss.dialect.Quote("user")))
 
 		whereConditions := make([]string, 0)
-		whereParams := make([]interface{}, 0)
+		whereParams := make([]any, 0)
 
 		whereConditions = append(whereConditions, "org_user.org_id = ?")
 		whereParams = append(whereParams, query.OrgID)
@@ -566,7 +566,7 @@ func (ss *sqlStore) SearchOrgUsers(ctx context.Context, query *org.SearchOrgUser
 			ss.log.Warn("Query user not set for filtering.")
 		}
 
-		if !query.DontEnforceAccessControl && !accesscontrol.IsDisabled(ss.cfg) {
+		if !query.DontEnforceAccessControl {
 			acFilter, err := accesscontrol.Filter(query.User, "org_user.user_id", "users:id:", accesscontrol.ActionOrgUsersRead)
 			if err != nil {
 				return err
@@ -770,7 +770,7 @@ func deleteUserAccessControl(sess *db.Session, userID int64) error {
 	}
 
 	query := "DELETE FROM permission WHERE role_id IN(? " + strings.Repeat(",?", len(roleIDs)-1) + ")"
-	args := make([]interface{}, 0, len(roleIDs)+1)
+	args := make([]any, 0, len(roleIDs)+1)
 	args = append(args, query)
 	for _, id := range roleIDs {
 		args = append(args, id)

@@ -21,6 +21,7 @@ type Cfg struct {
 	// AWS Plugin Auth
 	AWSAllowedAuthProviders []string
 	AWSAssumeRoleEnabled    bool
+	AWSExternalId           string
 
 	// Azure Cloud settings
 	Azure *azsettings.AzureSettings
@@ -38,7 +39,8 @@ type Cfg struct {
 
 	GrafanaComURL string
 
-	GrafanaAppURL string
+	GrafanaAppURL    string
+	GrafanaAppSubURL string
 
 	Features plugins.FeatureToggles
 
@@ -46,8 +48,8 @@ type Cfg struct {
 }
 
 func NewCfg(devMode bool, pluginsPath string, pluginSettings setting.PluginSettings, pluginsAllowUnsigned []string,
-	awsAllowedAuthProviders []string, awsAssumeRoleEnabled bool, azure *azsettings.AzureSettings, secureSocksDSProxy setting.SecureSocksDSProxySettings,
-	grafanaVersion string, logDatasourceRequests bool, pluginsCDNURLTemplate string, appURL string, tracing Tracing, features plugins.FeatureToggles, angularSupportEnabled bool,
+	awsAllowedAuthProviders []string, awsAssumeRoleEnabled bool, awsExternalId string, azure *azsettings.AzureSettings, secureSocksDSProxy setting.SecureSocksDSProxySettings,
+	grafanaVersion string, logDatasourceRequests bool, pluginsCDNURLTemplate string, appURL string, appSubURL string, tracing Tracing, features plugins.FeatureToggles, angularSupportEnabled bool,
 	grafanaComURL string) *Cfg {
 	return &Cfg{
 		log:                     log.New("plugin.cfg"),
@@ -58,6 +60,7 @@ func NewCfg(devMode bool, pluginsPath string, pluginSettings setting.PluginSetti
 		PluginsAllowUnsigned:    pluginsAllowUnsigned,
 		AWSAllowedAuthProviders: awsAllowedAuthProviders,
 		AWSAssumeRoleEnabled:    awsAssumeRoleEnabled,
+		AWSExternalId:           awsExternalId,
 		Azure:                   azure,
 		ProxySettings:           secureSocksDSProxy,
 		LogDatasourceRequests:   logDatasourceRequests,
@@ -65,6 +68,7 @@ func NewCfg(devMode bool, pluginsPath string, pluginSettings setting.PluginSetti
 		Tracing:                 tracing,
 		GrafanaComURL:           grafanaComURL,
 		GrafanaAppURL:           appURL,
+		GrafanaAppSubURL:        appSubURL,
 		Features:                features,
 		AngularSupportEnabled:   angularSupportEnabled,
 	}

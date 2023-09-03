@@ -339,16 +339,12 @@ func (r *xormRepositoryImpl) Get(ctx context.Context, query *annotations.ItemQue
 			}
 		}
 
-		var acFilter acFilter
-		if !ac.IsDisabled(r.cfg) {
-			var err error
-			acFilter, err = r.getAccessControlFilter(query.SignedInUser)
-			if err != nil {
-				return err
-			}
-			sql.WriteString(fmt.Sprintf(" AND (%s)", acFilter.where))
-			params = append(params, acFilter.whereParams...)
+		acFilter, err := r.getAccessControlFilter(query.SignedInUser)
+		if err != nil {
+			return err
 		}
+		sql.WriteString(fmt.Sprintf(" AND (%s)", acFilter.where))
+		params = append(params, acFilter.whereParams...)
 
 		if query.Limit == 0 {
 			query.Limit = 100
@@ -415,7 +411,11 @@ func (r *xormRepositoryImpl) getAccessControlFilter(user *user.SignedInUser) (ac
 			filterRBAC := permissions.NewAccessControlDashboardPermissionFilter(user, dashboards.PERMISSION_VIEW, searchstore.TypeDashboard, r.features, recursiveQueriesAreSupported)
 			dashboardFilter, dashboardParams := filterRBAC.Where()
 			recQueries, recQueriesParams = filterRBAC.With()
+			leftJoin := filterRBAC.LeftJoin()
 			filter := fmt.Sprintf("a.dashboard_id IN(SELECT id FROM dashboard WHERE %s)", dashboardFilter)
+			if leftJoin != "" {
+				filter = fmt.Sprintf("a.dashboard_id IN(SELECT dashboard.id FROM dashboard LEFT OUTER JOIN %s WHERE %s)", leftJoin, dashboardFilter)
+			}
 			filters = append(filters, filter)
 			params = dashboardParams
 		}

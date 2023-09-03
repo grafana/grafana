@@ -11,8 +11,7 @@ import {
   getFieldDisplayName,
 } from '@grafana/data';
 import { config, getDataSourceSrv } from '@grafana/runtime';
-import { Checkbox, Icon, IconName, TagList } from '@grafana/ui';
-import { Text } from '@grafana/ui/src/unstable';
+import { Checkbox, Icon, IconName, TagList, Text } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import { t } from 'app/core/internationalization';
 import { PluginIconName } from 'app/features/plugins/admin/types';
@@ -64,21 +63,21 @@ export const generateColumns = (
       id: `column-checkbox`,
       width,
       Header: () => {
+        const { view } = response;
+        const hasSelection = selection('*', '*');
+        const allSelected = view.every((item) => selection(item.kind, item.uid));
         return (
           <Checkbox
-            indeterminate={selection('*', '*')}
-            checked={false}
+            indeterminate={!allSelected && hasSelection}
+            checked={allSelected}
             disabled={!response}
             onChange={(e) => {
-              const { view } = response;
-              const count = Math.min(view.length, 50);
-              const hasSelection = selection('*', '*');
-              for (let i = 0; i < count; i++) {
-                const item = view.get(i);
-                if (item.uid && item.kind) {
-                  if (hasSelection === selection(item.kind, item.uid)) {
-                    selectionToggle(item.kind, item.uid);
-                  }
+              if (hasSelection) {
+                clearSelection();
+              } else {
+                for (let i = 0; i < view.length; i++) {
+                  const item = view.get(i);
+                  selectionToggle(item.kind, item.uid);
                 }
               }
             }}

@@ -22,7 +22,7 @@ const esbuildOptions = {
 
 module.exports = (env = {}) => {
   return merge(common, {
-    devtool: 'eval-source-map',
+    devtool: 'source-map',
     mode: 'development',
 
     entry: {

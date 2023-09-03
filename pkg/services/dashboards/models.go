@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/kinds"
 	"github.com/grafana/grafana/pkg/kinds/dashboard"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/quota"
@@ -63,9 +64,9 @@ func (d *Dashboard) SetVersion(version int) {
 	d.Data.Set("version", version)
 }
 
-func (d *Dashboard) ToResource() kinds.GrafanaResource[simplejson.Json, interface{}] {
+func (d *Dashboard) ToResource() kinds.GrafanaResource[simplejson.Json, any] {
 	parent := dashboard.NewK8sResource(d.UID, nil)
-	res := kinds.GrafanaResource[simplejson.Json, interface{}]{
+	res := kinds.GrafanaResource[simplejson.Json, any]{
 		Kind:       parent.Kind,
 		APIVersion: parent.APIVersion,
 		Metadata: kinds.GrafanaResourceMetadata{
@@ -337,7 +338,7 @@ type GetDashboardRefByIDQuery struct {
 type SaveDashboardDTO struct {
 	OrgID     int64
 	UpdatedAt time.Time
-	User      *user.SignedInUser
+	User      identity.Requester
 	Message   string
 	Overwrite bool
 	Dashboard *Dashboard
@@ -480,11 +481,12 @@ type FindPersistedDashboardsQuery struct {
 	DashboardUIDs []string
 	Type          string
 	FolderIds     []int64
+	FolderUIDs    []string
 	Tags          []string
 	Limit         int64
 	Page          int64
 	Permission    PermissionType
 	Sort          model.SortOption
 
-	Filters []interface{}
+	Filters []any
 }
