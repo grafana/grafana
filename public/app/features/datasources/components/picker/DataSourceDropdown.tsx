@@ -407,7 +407,7 @@ function Footer({ onClose, onChange, onClickAddCSV, ...props }: FooterProps) {
             ref={props.footerRef}
             onKeyDown={isUploadFileEnabled ? onKeyDownFirstButton : onKeyDownLastButton}
           >
-            <Trans i18nKey="search-page.results-title">Open advanced data source picker</Trans>
+            <Trans i18nKey="data-sources.advanced-datasource-picker">Open advanced data source picker</Trans>
             <Icon name="arrow-right" />
           </Button>
         )}
