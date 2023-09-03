@@ -229,7 +229,8 @@
         "tooltip": "Split the pane",
         "widen": "Widen pane"
       }
-    }
+    },
+    "add-to-darshboard": "Add to dashboard"
   },
   "folder-picker": {
     "loading": "Loading folders..."
