@@ -127,7 +127,7 @@ To use this capability:
 1. In the **Aggregate by** row, select a scope from the first drop-down box. For example, `span`.
 1. Select an attribute from the second drop-down.
 1. Optional: Select **+** to add an **Aggregate by** row.
-1. Optional: Select a **Time range** to expand or narrow the data set for an hour's range. 
+1. Optional: Select a **Time range** to expand or narrow the data set for an hour's range.
 1. Select **Run query**.
 
 ### Optional: Add queries
