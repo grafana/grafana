@@ -38,7 +38,7 @@ func TestAuthenticateUser(t *testing.T) {
 		sc.loginUserQuery.Cfg.DisableLogin = true
 
 		loginAttemptService := &loginattempttest.MockLoginAttemptService{ExpectedValid: true}
-		a := AuthenticatorService{loginAttemptService: loginAttemptService, loginService: &logintest.LoginServiceFake{}}
+		a := AuthenticatorService{loginAttemptService: loginAttemptService, loginService: &logintest.LoginServiceFake{}, cfg: setting.NewCfg()}
 		err := a.AuthenticateUser(context.Background(), sc.loginUserQuery)
 
 		require.EqualError(t, err, ErrNoAuthProvider.Error())
