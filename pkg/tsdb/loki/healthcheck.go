@@ -86,7 +86,7 @@ func healthcheck(ctx context.Context, req *backend.CheckHealthRequest, s *Servic
 		return getHealthCheckMessage("There was an error returned querying the Loki API.", errors.New("invalid response"))
 	}
 
-	return getHealthCheckMessage("Successfully queried the Loki API.", nil)
+	return getHealthCheckMessage("Data source successfully connected.", nil)
 }
 
 func getHealthCheckMessage(message string, err error) (*backend.CheckHealthResult, error) {
