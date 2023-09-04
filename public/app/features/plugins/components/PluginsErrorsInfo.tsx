@@ -1,16 +1,28 @@
 import { css } from '@emotion/css';
 import React from 'react';
 
-import { GrafanaTheme2, PluginErrorCode, PluginSignatureStatus } from '@grafana/data';
+import { GrafanaTheme2, PluginErrorCode, PluginSignatureStatus, PluginType } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { HorizontalGroup, InfoBox, List, PluginSignatureBadge, useStyles2 } from '@grafana/ui';
 
 import { useGetErrors, useFetchStatus } from '../admin/state/hooks';
 
-export function PluginsErrorsInfo() {
-  const errors = useGetErrors();
+type PluginsErrorInfoProps = {
+  filterByPluginType?: PluginType;
+};
+
+export function PluginsErrorsInfo({ filterByPluginType }: PluginsErrorInfoProps) {
+  let errors = useGetErrors();
   const { isLoading } = useFetchStatus();
   const styles = useStyles2(getStyles);
+  if (filterByPluginType) {
+    errors = errors.filter((pluginError) => {
+      const pluginIdParts = pluginError.pluginId.split('-');
+      const pluginType = pluginIdParts[pluginIdParts.length - 1];
+
+      return pluginType === filterByPluginType;
+    });
+  }
 
   if (isLoading || errors.length === 0) {
     return null;
