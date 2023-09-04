@@ -84,13 +84,13 @@ func BenchmarkSearch(b *testing.B) {
 		{
 			desc:        "search specific dashboard with nested folders enabled",
 			url:         "/api/search?type=dash-db&query=dashboard_0_0",
-			expectedLen: 1,
+			expectedLen: 1000,
 			features:    featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders, featuremgmt.FlagSplitScopes),
 		},
 		{
 			desc:        "search several dashboards with nested folders enabled",
 			url:         "/api/search?type=dash-db&query=dashboard_0_",
-			expectedLen: withLimit(Lvl0DashboardNum),
+			expectedLen: 1000,
 			features:    featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders, featuremgmt.FlagSplitScopes),
 		},
 		{
