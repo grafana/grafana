@@ -258,7 +258,8 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
     const singleKey = parsedKeys == null ? false : parsedKeys.length === 1;
     const singleVal = parsedValues == null ? false : parsedValues.length === 1;
     const hasFilteringFunctionality = !disableActions && onClickFilterLabel && onClickFilterOutLabel;
-    const refIdTooltip = config.featureToggles.toggleLabelsInLogsUI && row.dataFrame?.refId ? ` in query ${row.dataFrame?.refId}` : '';
+    const refIdTooltip =
+      config.featureToggles.toggleLabelsInLogsUI && row.dataFrame?.refId ? ` in query ${row.dataFrame?.refId}` : '';
 
     const isMultiParsedValueWithNoContent =
       !singleVal && parsedValues != null && !parsedValues.every((val) => val === '');
@@ -288,7 +289,11 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
                   ) : (
                     <IconButton name="search-plus" onClick={this.filterLabel} tooltip="Filter for value" />
                   )}
-                  <IconButton name="search-minus" tooltip={`Filter out value${refIdTooltip}`} onClick={this.filterOutLabel} />
+                  <IconButton
+                    name="search-minus"
+                    tooltip={`Filter out value${refIdTooltip}`}
+                    onClick={this.filterOutLabel}
+                  />
                 </>
               )}
               {!disableActions && displayedFields && toggleFieldButton}
@@ -365,13 +370,7 @@ const AsyncIconButton = ({ isActive, tooltipSuffix, ...rest }: AsyncIconButtonPr
    */
   isActive().then(setActive);
 
-  return (
-    <IconButton
-      {...rest}
-      variant={active ? 'primary' : undefined}
-      tooltip={tooltip + tooltipSuffix}
-    />
-  );
+  return <IconButton {...rest} variant={active ? 'primary' : undefined} tooltip={tooltip + tooltipSuffix} />;
 };
 
 export const LogDetailsRow = withTheme2(UnThemedLogDetailsRow);

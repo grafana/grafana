@@ -195,7 +195,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
       row.hasUnescapedContent && forceEscape
         ? { ...row, entry: escapeUnescapedString(row.entry), raw: escapeUnescapedString(row.raw) }
         : row;
-    
+
     return (
       <>
         <tr

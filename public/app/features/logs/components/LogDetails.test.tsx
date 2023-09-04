@@ -71,28 +71,30 @@ describe('LogDetails', () => {
         const onClickFilterLabelMock = jest.fn();
         const onClickFilterOutLabelMock = jest.fn();
         const isFilterLabelActiveMock = jest.fn().mockResolvedValue(true);
-        const mockRow = createLogRow({ logLevel: LogLevel.error, timeEpochMs: 1546297200000, labels: { key1: 'label1' } });
-  
-        setup(
-          {
-            onClickFilterLabel: onClickFilterLabelMock,
-            onClickFilterOutLabel: onClickFilterOutLabelMock,
-            isFilterLabelActive: isFilterLabelActiveMock,
-            row: mockRow
-          }
-        );
-  
+        const mockRow = createLogRow({
+          logLevel: LogLevel.error,
+          timeEpochMs: 1546297200000,
+          labels: { key1: 'label1' },
+        });
+
+        setup({
+          onClickFilterLabel: onClickFilterLabelMock,
+          onClickFilterOutLabel: onClickFilterOutLabelMock,
+          isFilterLabelActive: isFilterLabelActiveMock,
+          row: mockRow,
+        });
+
         expect(isFilterLabelActiveMock).toHaveBeenCalledWith('key1', 'label1', mockRow.dataFrame.refId);
-        
+
         await userEvent.click(screen.getByLabelText('Filter for value in query A'));
         expect(onClickFilterLabelMock).toHaveBeenCalledTimes(1);
         expect(onClickFilterLabelMock).toHaveBeenCalledWith('key1', 'label1', mockRow.dataFrame.refId);
-  
+
         await userEvent.click(screen.getByLabelText('Filter out value in query A'));
         expect(onClickFilterOutLabelMock).toHaveBeenCalledTimes(1);
         expect(onClickFilterOutLabelMock).toHaveBeenCalledWith('key1', 'label1', mockRow.dataFrame.refId);
       });
-    })
+    });
     it('should not render filter controls when the callbacks are not provided', () => {
       setup(
         {
