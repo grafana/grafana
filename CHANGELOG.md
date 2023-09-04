@@ -1,6 +1,46 @@
+<!-- 10.1.1 START -->
+
+# 10.1.1 (2023-08-29)
+
+### Features and enhancements
+
+- **Loki:** Remove `distinct` operation. [#74003](https://github.com/grafana/grafana/issues/74003), [@svennergr](https://github.com/svennergr)
+- **Whitelabeling:** Add a config option to hide the Grafana edition from the footer. [#73491](https://github.com/grafana/grafana/issues/73491), [@JoaoSilvaGrafana](https://github.com/JoaoSilvaGrafana)
+- **Alerting:** Optimize rule details page data fetching. [#73139](https://github.com/grafana/grafana/issues/73139), [@konrad147](https://github.com/konrad147)
+- **Alerting:** Optimize external Loki queries. [#73050](https://github.com/grafana/grafana/issues/73050), [@JohnnyQQQQ](https://github.com/JohnnyQQQQ)
+
+### Bug fixes
+
+- **Alerting:** Limit redis pool size to 5 and make configurable. [#74059](https://github.com/grafana/grafana/issues/74059), [@alexweav](https://github.com/alexweav)
+- **Elasticsearch:** Fix respecting of precision in geo hash grid. [#73933](https://github.com/grafana/grafana/issues/73933), [@ivanahuckova](https://github.com/ivanahuckova)
+- **Dashboard:** Fix Variable Dropdown to Enforce Minimum One Selection when 'All' Option is Configured. [#73927](https://github.com/grafana/grafana/issues/73927), [@axelavargas](https://github.com/axelavargas)
+- **Chore:** Fix Random Walk scenario for Grafana DS. [#73894](https://github.com/grafana/grafana/issues/73894), [@andresmgot](https://github.com/andresmgot)
+- **AuthProxy:** Fix user retrieval through cache. [#73824](https://github.com/grafana/grafana/issues/73824), [@kalleep](https://github.com/kalleep)
+- **Alerting:** Fix auto-completion snippets for KV properties. [#73741](https://github.com/grafana/grafana/issues/73741), [@jvmdc](https://github.com/jvmdc)
+- **Alerting:** Fix incorrect timing meta information for policy. [#73695](https://github.com/grafana/grafana/issues/73695), [@gillesdemey](https://github.com/gillesdemey)
+- **Alerting:** Add new Recording Rule button when the list is empty. [#73638](https://github.com/grafana/grafana/issues/73638), [@VikaCep](https://github.com/VikaCep)
+- **Drawer:** Clicking a `Select` arrow within a `Drawer` no longer causes it to close. [#73634](https://github.com/grafana/grafana/issues/73634), [@ashharrison90](https://github.com/ashharrison90)
+- **Logs:** Fix log samples not present with empty first frame. [#73622](https://github.com/grafana/grafana/issues/73622), [@svennergr](https://github.com/svennergr)
+- **Alerting:** Fix Recording Rule QueryEditor builder view. [#73621](https://github.com/grafana/grafana/issues/73621), [@VikaCep](https://github.com/VikaCep)
+- **Transforms:** Catch errors while running transforms. [#73527](https://github.com/grafana/grafana/issues/73527), [@ryantxu](https://github.com/ryantxu)
+- **Dashboard:** Fix version restore. [#73482](https://github.com/grafana/grafana/issues/73482), [@Clarity-89](https://github.com/Clarity-89)
+- **Logs:** Fix permalinks not scrolling into view. [#73477](https://github.com/grafana/grafana/issues/73477), [@svennergr](https://github.com/svennergr)
+- **SqlDataSources:** Update metricFindQuery to pass on scopedVars to templateSrv. [#73398](https://github.com/grafana/grafana/issues/73398), [@torkelo](https://github.com/torkelo)
+- **Rendering:** Fix dashboard screenshot. [#73361](https://github.com/grafana/grafana/issues/73361), [@AgnesToulet](https://github.com/AgnesToulet)
+- **Loki:** Fix validation of `step` values to also allow e.g. `ms` values. [#73335](https://github.com/grafana/grafana/issues/73335), [@svennergr](https://github.com/svennergr)
+- **Dashboard:** Fix repeated row panel placement with larger number of rows. [#73279](https://github.com/grafana/grafana/issues/73279), [@kaydelaney](https://github.com/kaydelaney)
+- **CodeEditor:** Correctly fires onChange handler. [#73261](https://github.com/grafana/grafana/issues/73261), [@ashharrison90](https://github.com/ashharrison90)
+- **Drawer:** Fix scrolling drawer content on Safari. [#73229](https://github.com/grafana/grafana/issues/73229), [@asimonok](https://github.com/asimonok)
+- **Alerting:** Remove dump wrapper for yaml config. [#73215](https://github.com/grafana/grafana/issues/73215), [@VikaCep](https://github.com/VikaCep)
+- **Alerting:** Always invalidate the AM config after mutation. [#73189](https://github.com/grafana/grafana/issues/73189), [@gillesdemey](https://github.com/gillesdemey)
+- **Slug:** Combine various slugify fixes for special character handling. [#73173](https://github.com/grafana/grafana/issues/73173), [@DanCech](https://github.com/DanCech)
+- **Logs:** Fix displaying the wrong field as body. [#73037](https://github.com/grafana/grafana/issues/73037), [@svennergr](https://github.com/svennergr)
+- **Alerting:** Fix "see graph button" for cloud rules. [#73029](https://github.com/grafana/grafana/issues/73029), [@gillesdemey](https://github.com/gillesdemey)
+
+<!-- 10.1.1 END -->
 <!-- 10.1.0 START -->
 
-# 10.1.0 (2023-08-01)
+# 10.1.0 (2023-08-22)
 
 ### Features and enhancements
 
@@ -125,7 +165,7 @@
 - **Alerting:** Repurpose rule testing endpoint to return potential alerts. [#69755](https://github.com/grafana/grafana/issues/69755), [@JacobsonMT](https://github.com/JacobsonMT)
 - **NestedFolders:** Move `New folder` into a drawer. [#69706](https://github.com/grafana/grafana/issues/69706), [@ashharrison90](https://github.com/ashharrison90)
 - **Loki:** Implement step editor. [#69648](https://github.com/grafana/grafana/issues/69648), [@ivanahuckova](https://github.com/ivanahuckova)
-- **DataFrame:** Align frame (series.name) and field naming (field.name) . [#69621](https://github.com/grafana/grafana/issues/69621), [@torkelo](https://github.com/torkelo)
+- **DataFrame:** Align frame (`__series.name`) and field naming (`__field.name`) . [#69621](https://github.com/grafana/grafana/issues/69621), [@torkelo](https://github.com/torkelo)
 - **Auth:** Use auth broker by default. [#69620](https://github.com/grafana/grafana/issues/69620), [@Jguer](https://github.com/Jguer)
 - **Dashboards:** Add dashboard embed route. [#69596](https://github.com/grafana/grafana/issues/69596), [@Clarity-89](https://github.com/Clarity-89)
 - **Nested folders:** Improve loading states. [#69556](https://github.com/grafana/grafana/issues/69556), [@ashharrison90](https://github.com/ashharrison90)

@@ -93,14 +93,18 @@ func RunServer(opts ServerOptions) error {
 	checkPrivileges()
 
 	configOptions := strings.Split(ConfigOverrides, " ")
+	cfg, err := setting.NewCfgFromArgs(setting.CommandLineArgs{
+		Config:   ConfigFile,
+		HomePath: HomePath,
+		// tailing arguments have precedence over the options string
+		Args: append(configOptions, opts.Context.Args().Slice()...),
+	})
+	if err != nil {
+		return err
+	}
 
-	s, err := server.Initialize(
-		setting.CommandLineArgs{
-			Config:   ConfigFile,
-			HomePath: HomePath,
-			// tailing arguments have precedence over the options string
-			Args: append(configOptions, opts.Context.Args().Slice()...),
-		},
+	s, err := server.InitializeModuleServer(
+		cfg,
 		server.Options{
 			PidFile:     PidFile,
 			Version:     opts.Version,
@@ -114,9 +118,7 @@ func RunServer(opts ServerOptions) error {
 	}
 
 	ctx := context.Background()
-
 	go listenToSystemSignals(ctx, s)
-
 	return s.Run()
 }
 
@@ -130,7 +132,7 @@ func validPackaging(packaging string) string {
 	return "unknown"
 }
 
-func listenToSystemSignals(ctx context.Context, s *server.Server) {
+func listenToSystemSignals(ctx context.Context, s *server.ModuleServer) {
 	signalChan := make(chan os.Signal, 1)
 	sighupChan := make(chan os.Signal, 1)
 

@@ -29,6 +29,7 @@ import {
   StreamingFrameOptions,
 } from '../services';
 
+import { publicDashboardQueryHandler } from './publicDashboardQueryHandler';
 import { BackendDataSourceResponse, toDataQueryResponse } from './queryResponse';
 
 /**
@@ -123,6 +124,10 @@ class DataSourceWithBackend<
    * Ideally final -- any other implementation may not work as expected
    */
   query(request: DataQueryRequest<TQuery>): Observable<DataQueryResponse> {
+    if (config.publicDashboardAccessToken) {
+      return publicDashboardQueryHandler(request);
+    }
+
     const { intervalMs, maxDataPoints, queryCachingTTL, range, requestId, hideFromInspector = false } = request;
     let targets = request.targets;
 

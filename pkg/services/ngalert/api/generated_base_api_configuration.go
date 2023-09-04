@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/middleware"
+	"github.com/grafana/grafana/pkg/middleware/requestmeta"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
@@ -51,6 +52,7 @@ func (api *API) RegisterConfigurationApiEndpoints(srv ConfigurationApi, m *metri
 	api.RouteRegister.Group("", func(group routing.RouteRegister) {
 		group.Delete(
 			toMacaronPath("/api/v1/ngalert/admin_config"),
+			requestmeta.SetOwner(requestmeta.TeamAlerting),
 			api.authorize(http.MethodDelete, "/api/v1/ngalert/admin_config"),
 			metrics.Instrument(
 				http.MethodDelete,
@@ -61,6 +63,7 @@ func (api *API) RegisterConfigurationApiEndpoints(srv ConfigurationApi, m *metri
 		)
 		group.Get(
 			toMacaronPath("/api/v1/ngalert/alertmanagers"),
+			requestmeta.SetOwner(requestmeta.TeamAlerting),
 			api.authorize(http.MethodGet, "/api/v1/ngalert/alertmanagers"),
 			metrics.Instrument(
 				http.MethodGet,
@@ -71,6 +74,7 @@ func (api *API) RegisterConfigurationApiEndpoints(srv ConfigurationApi, m *metri
 		)
 		group.Get(
 			toMacaronPath("/api/v1/ngalert/admin_config"),
+			requestmeta.SetOwner(requestmeta.TeamAlerting),
 			api.authorize(http.MethodGet, "/api/v1/ngalert/admin_config"),
 			metrics.Instrument(
 				http.MethodGet,
@@ -81,6 +85,7 @@ func (api *API) RegisterConfigurationApiEndpoints(srv ConfigurationApi, m *metri
 		)
 		group.Get(
 			toMacaronPath("/api/v1/ngalert"),
+			requestmeta.SetOwner(requestmeta.TeamAlerting),
 			api.authorize(http.MethodGet, "/api/v1/ngalert"),
 			metrics.Instrument(
 				http.MethodGet,
@@ -91,6 +96,7 @@ func (api *API) RegisterConfigurationApiEndpoints(srv ConfigurationApi, m *metri
 		)
 		group.Post(
 			toMacaronPath("/api/v1/ngalert/admin_config"),
+			requestmeta.SetOwner(requestmeta.TeamAlerting),
 			api.authorize(http.MethodPost, "/api/v1/ngalert/admin_config"),
 			metrics.Instrument(
 				http.MethodPost,

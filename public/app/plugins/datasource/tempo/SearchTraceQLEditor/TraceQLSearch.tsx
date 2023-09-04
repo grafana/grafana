@@ -3,7 +3,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { EditorRow } from '@grafana/experimental';
-import { FetchError, getTemplateSrv } from '@grafana/runtime';
+import { config, FetchError, getTemplateSrv } from '@grafana/runtime';
 import { Alert, HorizontalGroup, useStyles2 } from '@grafana/ui';
 
 import { createErrorNotification } from '../../../../core/copy/appNotification';
@@ -17,6 +17,7 @@ import { traceqlGrammar } from '../traceql/traceql';
 import { TempoQuery } from '../types';
 
 import DurationInput from './DurationInput';
+import { GroupByField } from './GroupByField';
 import InlineSearchField from './InlineSearchField';
 import SearchField from './SearchField';
 import TagsInput from './TagsInput';
@@ -166,6 +167,9 @@ const TraceQLSearch = ({ datasource, query, onChange }: Props) => {
               query={traceQlQuery}
             />
           </InlineSearchField>
+          {config.featureToggles.metricsSummary && (
+            <GroupByField datasource={datasource} onChange={onChange} query={query} isTagsLoading={isTagsLoading} />
+          )}
         </div>
         <EditorRow>
           <RawQuery query={templateSrv.replace(traceQlQuery)} lang={{ grammar: traceqlGrammar, name: 'traceql' }} />

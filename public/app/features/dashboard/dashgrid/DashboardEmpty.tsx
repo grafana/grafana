@@ -8,7 +8,7 @@ import { Button, useStyles2, Text } from '@grafana/ui';
 import { Box, Flex } from '@grafana/ui/src/unstable';
 import { Trans } from 'app/core/internationalization';
 import { DashboardModel } from 'app/features/dashboard/state';
-import { onAddLibraryPanel, onCreateNewPanel, onCreateNewRow } from 'app/features/dashboard/utils/dashboard';
+import { onAddLibraryPanel, onCreateNewPanel, onImportDashboard } from 'app/features/dashboard/utils/dashboard';
 import { useDispatch, useSelector } from 'app/types';
 
 import { setInitialDatasource } from '../state/reducers';
@@ -88,38 +88,12 @@ const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
             <Box borderStyle="dashed" borderColor="info" padding={3} grow={1}>
               <Flex direction="column" alignItems="center" gap={1}>
                 <Text element="h3" textAlignment="center" weight="medium">
-                  <Trans i18nKey="dashboard.empty.add-row-header">Add a row</Trans>
+                  <Trans i18nKey="dashboard.empty.add-library-panel-header">Import panel</Trans>
                 </Text>
                 <Box marginBottom={2}>
                   <Text element="p" textAlignment="center" color="secondary">
-                    <Trans i18nKey="dashboard.empty.add-row-body">
-                      Group your visualizations into expandable sections.
-                    </Trans>
-                  </Text>
-                </Box>
-                <Button
-                  icon="plus"
-                  fill="outline"
-                  data-testid={selectors.pages.AddDashboard.itemButton('Create new row button')}
-                  onClick={() => {
-                    reportInteraction('dashboards_emptydashboard_clicked', { item: 'add_row' });
-                    onCreateNewRow(dashboard);
-                  }}
-                  disabled={!canCreate}
-                >
-                  <Trans i18nKey="dashboard.empty.add-row-button">Add row</Trans>
-                </Button>
-              </Flex>
-            </Box>
-            <Box borderStyle="dashed" borderColor="info" padding={3} grow={1}>
-              <Flex direction="column" alignItems="center" gap={1}>
-                <Text element="h3" textAlignment="center" weight="medium">
-                  <Trans i18nKey="dashboard.empty.add-import-header">Import panel</Trans>
-                </Text>
-                <Box marginBottom={2}>
-                  <Text element="p" textAlignment="center" color="secondary">
-                    <Trans i18nKey="dashboard.empty.add-import-body">
-                      Import visualizations that are shared with other dashboards.
+                    <Trans i18nKey="dashboard.empty.add-library-panel-body">
+                      Add visualizations that are shared with other dashboards.
                     </Trans>
                   </Text>
                 </Box>
@@ -133,7 +107,33 @@ const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
                   }}
                   disabled={!canCreate}
                 >
-                  <Trans i18nKey="dashboard.empty.add-import-button">Import library panel</Trans>
+                  <Trans i18nKey="dashboard.empty.add-library-panel-button">Add library panel</Trans>
+                </Button>
+              </Flex>
+            </Box>
+            <Box borderStyle="dashed" borderColor="info" padding={3} grow={1}>
+              <Flex direction="column" alignItems="center" gap={1}>
+                <Text element="h3" textAlignment="center" weight="medium">
+                  <Trans i18nKey="dashboard.empty.import-a-dashboard-header">Import a dashboard</Trans>
+                </Text>
+                <Box marginBottom={2}>
+                  <Text element="p" textAlignment="center" color="secondary">
+                    <Trans i18nKey="dashboard.empty.import-a-dashboard-body">
+                      Import dashboards from files or <a href="https://grafana.com/grafana/dashboards/">grafana.com</a>.
+                    </Trans>
+                  </Text>
+                </Box>
+                <Button
+                  icon="upload"
+                  fill="outline"
+                  data-testid={selectors.pages.AddDashboard.itemButton('Import dashboard button')}
+                  onClick={() => {
+                    reportInteraction('dashboards_emptydashboard_clicked', { item: 'import_dashboard' });
+                    onImportDashboard();
+                  }}
+                  disabled={!canCreate}
+                >
+                  <Trans i18nKey="dashboard.empty.import-dashboard-button">Import dashboard</Trans>
                 </Button>
               </Flex>
             </Box>
