@@ -238,6 +238,34 @@ describe('calculateField transformer w/ timeseries', () => {
     });
   });
 
+  it('can add percentage index field', async () => {
+    const cfg = {
+      id: DataTransformerID.calculateField,
+      options: {
+        mode: CalculateFieldMode.Index,
+        replaceFields: true,
+        index: {
+          showPercentage: true,
+        },
+      },
+    };
+
+    const series = toDataFrame({
+      fields: [
+        { name: 'TheTime', type: FieldType.time, values: [1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000] },
+        { name: 'Field', type: FieldType.number, values: [2, 200, 3, 6, 3, 7, 9, 9] },
+      ],
+    });
+
+    await expect(transformDataFrame([cfg], [series])).toEmitValuesWith((received) => {
+      const data = received[0][0];
+      expect(data.fields.length).toEqual(1);
+      expect(data.fields[0].values[2]).toEqual(25);
+      expect(data.fields[0].values[4]).toEqual(50);
+      expect(data.fields[0].values[6]).toEqual(75);
+    });
+  });
+
   it('uses template variable substituion', async () => {
     const cfg = {
       id: DataTransformerID.calculateField,
