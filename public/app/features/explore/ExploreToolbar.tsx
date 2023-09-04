@@ -132,7 +132,7 @@ export function ExploreToolbar({ exploreId, topOfViewRef, onChangeTime }: Props)
         />
       </div>
       <PageToolbar
-        aria-label="Explore toolbar"
+        aria-label={t('explore.toolbar.aria-label', 'Explore toolbar')}
         leftItems={[
           <DataSourcePicker
             key={`${exploreId}-ds-picker`}

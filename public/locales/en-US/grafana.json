@@ -222,6 +222,7 @@
     "add-to-dashboard": "Add to dashboard",
     "copy-shortened-link": "Copy shortened link",
     "toolbar": {
+      "aria-label": "Explore toolbar",
       "split": {
         "close": "Close",
         "close-tooltip": "Close split pane",
