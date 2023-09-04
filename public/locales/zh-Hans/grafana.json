@@ -217,6 +217,7 @@
     "add-to-dashboard": "",
     "copy-shortened-link": "",
     "toolbar": {
+      "aria-label": "",
       "split": {
         "close": "",
         "close-tooltip": "",
