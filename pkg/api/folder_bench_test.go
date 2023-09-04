@@ -50,14 +50,17 @@ import (
 )
 
 const (
-	LEVEL0_FOLDER_NUM    = 300
-	LEVEL1_FOLDER_NUM    = 30
-	LEVEL2_FOLDER_NUM    = 5
-	LEVEL0_DASHBOARD_NUM = 300
-	LEVEL1_DASHBOARD_NUM = 30
-	LEVEL2_DASHBOARD_NUM = 5
-	TEAM_NUM             = 50
-	TEAM_MEMBER_NUM      = 5
+	LEVEL0_FOLDER_NUM              = 300
+	LEVEL1_FOLDER_NUM              = 30
+	LEVEL2_FOLDER_NUM              = 5
+	LEVEL0_DASHBOARD_NUM           = 300
+	LEVEL1_DASHBOARD_NUM           = 30
+	LEVEL2_DASHBOARD_NUM           = 5
+	TEAM_NUM                       = 50
+	TEAM_MEMBER_NUM                = 5
+	LEVEL0_FOLDER_PERMISSSIONS_NUM = 10
+	LEVEL1_FOLDER_PERMISSSIONS_NUM = 2
+	LEVEL2_FOLDER_PERMISSSIONS_NUM = 1
 
 	MAXIMUM_INT_POSTGRES = 2147483647
 )
@@ -203,7 +206,11 @@ func setupDB(b testing.TB) benchScenario {
 	}
 
 	signedInUser := user.SignedInUser{UserID: userIDs[0], OrgID: orgID, Permissions: map[int64]map[string][]string{
-		orgID: {dashboards.ActionFoldersCreate: {}, dashboards.ActionFoldersWrite: {dashboards.ScopeFoldersAll}},
+		orgID: {
+			dashboards.ActionFoldersCreate: {},
+			dashboards.ActionFoldersWrite:  {dashboards.ScopeFoldersAll},
+			dashboards.ActionFoldersRead:   {},
+		},
 	}}
 
 	now := time.Now()
@@ -277,6 +284,11 @@ func setupDB(b testing.TB) benchScenario {
 		folders = append(folders, f0)
 		dashs = append(dashs, d)
 
+		if i < LEVEL0_FOLDER_PERMISSSIONS_NUM {
+			readPermission := signedInUser.Permissions[orgID][dashboards.ActionFoldersRead]
+			signedInUser.Permissions[orgID][dashboards.ActionFoldersRead] = append(readPermission, dashboards.ScopeFoldersPrefix+f0.UID)
+		}
+
 		roleID := int64(i%TEAM_NUM + 1)
 		permissions = append(permissions, accesscontrol.Permission{
 			RoleID:  roleID,
@@ -321,6 +333,11 @@ func setupDB(b testing.TB) benchScenario {
 			folders = append(folders, f1)
 			dashs = append(dashs, d1)
 
+			if i < LEVEL1_FOLDER_PERMISSSIONS_NUM {
+				readPermission := signedInUser.Permissions[orgID][dashboards.ActionFoldersRead]
+				signedInUser.Permissions[orgID][dashboards.ActionFoldersRead] = append(readPermission, dashboards.ScopeFoldersPrefix+f1.UID)
+			}
+
 			for k := 0; k < LEVEL1_DASHBOARD_NUM; k++ {
 				str := fmt.Sprintf("dashboard_%d_%d_%d", i, j, k)
 				dashID := generateID(IDs)
@@ -347,6 +364,11 @@ func setupDB(b testing.TB) benchScenario {
 				f2, d2 := addFolder(orgID, generateID(IDs), fmt.Sprintf("folder%d_%d_%d", i, j, k), &f1.UID)
 				folders = append(folders, f2)
 				dashs = append(dashs, d2)
+
+				if i < LEVEL2_FOLDER_PERMISSSIONS_NUM {
+					readPermission := signedInUser.Permissions[orgID][dashboards.ActionFoldersRead]
+					signedInUser.Permissions[orgID][dashboards.ActionFoldersRead] = append(readPermission, dashboards.ScopeFoldersPrefix+f2.UID)
+				}
 
 				for l := 0; l < LEVEL2_DASHBOARD_NUM; l++ {
 					str := fmt.Sprintf("dashboard_%d_%d_%d_%d", i, j, k, l)
