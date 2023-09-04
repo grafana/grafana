@@ -8,9 +8,12 @@ import {
   PanelBuilders,
   SceneGridLayout,
   SceneControlsSpacer,
+  SceneGridRow,
+  SceneGridItem,
 } from '@grafana/scenes';
 import { VariableRefresh } from '@grafana/schema';
 import { PanelRepeaterGridItem } from 'app/features/dashboard-scene/scene/PanelRepeaterGridItem';
+import { RepeatedRowBehavior } from 'app/features/dashboard-scene/scene/RepeatedRowBehavior';
 
 import { DashboardScene } from '../../dashboard-scene/scene/DashboardScene';
 
@@ -105,4 +108,71 @@ function changeVariable(variable: TestVariable) {
   return () => {
     sub.unsubscribe();
   };
+}
+
+export function getRepeatingRowsDemo(): DashboardScene {
+  return new DashboardScene({
+    title: 'Variables - Repeating rows',
+    $variables: new SceneVariableSet({
+      variables: [
+        new TestVariable({
+          name: 'server',
+          query: 'AB',
+          value: 'server',
+          text: '',
+          delayMs: 2000,
+          isMulti: true,
+          includeAll: true,
+          refresh: VariableRefresh.onTimeRangeChanged,
+          optionsToReturn: [
+            { label: 'A', value: 'A' },
+            { label: 'B', value: 'C' },
+          ],
+          options: [],
+          $behaviors: [changeVariable],
+        }),
+      ],
+    }),
+    body: new SceneGridLayout({
+      isDraggable: true,
+      isResizable: true,
+      children: [
+        new SceneGridRow({
+          title: 'Row A',
+          key: 'Row A',
+          isCollapsed: false,
+          y: 0,
+          x: 0,
+          $behaviors: [
+            new RepeatedRowBehavior({
+              variableName: 'server',
+              sources: [
+                new SceneGridItem({
+                  x: 0,
+                  y: 1,
+                  width: 12,
+                  height: 5,
+                  isResizable: true,
+                  isDraggable: true,
+                  body: PanelBuilders.timeseries()
+                    .setTitle('server = $server')
+                    .setIsDraggable(true)
+                    .setData(getQueryRunnerWithRandomWalkQuery({ alias: 'server = $server' }))
+                    .build(),
+                }),
+              ],
+            }),
+          ],
+        }),
+      ],
+    }),
+    $timeRange: new SceneTimeRange(),
+    actions: [],
+    controls: [
+      new VariableValueSelectors({}),
+      new SceneControlsSpacer(),
+      new SceneTimePicker({}),
+      new SceneRefreshPicker({}),
+    ],
+  });
 }
