@@ -71,4 +71,4 @@ To remove a silence, complete the following steps.
 
 ## Useful links
 
-[Aggregation operators](/docs/prometheus/latest/querying/operators/#aggregation-operators)
+[Aggregation operators](/prometheus.io/docs/prometheus/latest/querying/operators/#aggregation-operators)
