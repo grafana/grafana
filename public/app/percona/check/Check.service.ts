@@ -116,17 +116,6 @@ export const CheckService = {
         .sort((a, b) => order[a.severity] - order[b.severity]),
     };
   },
-  async silenceAlert(alertId: string, silence: boolean, token?: CancelToken) {
-    return api.post<void, any>(
-      `${BASE_URL}/ToggleCheckAlert`,
-      {
-        alert_id: alertId,
-        silence,
-      },
-      false,
-      token
-    );
-  },
   runDbChecks(checkNames: string[], token?: CancelToken): Promise<void | {}> {
     return api.post<{}, {}>(
       '/v1/management/SecurityChecks/Start',

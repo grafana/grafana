@@ -8,7 +8,6 @@ import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { Severity } from 'app/percona/integrated-alerting/components/Severity';
 import { Chip } from 'app/percona/shared/components/Elements/Chip';
 import { ExpandableCell } from 'app/percona/shared/components/Elements/ExpandableCell';
-import { SilenceBell } from 'app/percona/shared/components/Elements/SilenceBell';
 import { ExtendedColumn, Table } from 'app/percona/shared/components/Elements/Table';
 import { useStoredTablePageSize } from 'app/percona/shared/components/Elements/Table/Pagination';
 import { useCancelToken } from 'app/percona/shared/components/hooks/cancelToken.hook';
@@ -63,14 +62,6 @@ export const ServiceChecks: FC<GrafanaRouteComponentProps<{ service: string }>> 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pageIndex, pageSize, serviceId]);
 
-  const onSilenceClick = useCallback(
-    async (alertId: string, silenced: boolean) => {
-      await CheckService.silenceAlert(alertId, !silenced);
-      fetchChecks();
-    },
-    [fetchChecks]
-  );
-
   const columns = useMemo(
     (): Array<ExtendedColumn<ServiceFailedCheck>> => [
       {
@@ -104,22 +95,8 @@ export const ServiceChecks: FC<GrafanaRouteComponentProps<{ service: string }>> 
             </a>
           ) : null,
       },
-      {
-        Header: 'Actions',
-        accessor: 'silenced',
-        width: '30px',
-        Cell: ({ value, row }) => (
-          <span className={styles.actions}>
-            <SilenceBell
-              tooltip={value ? Messages.activate : Messages.silence}
-              silenced={value}
-              onClick={() => onSilenceClick(row.original.alertId, row.original.silenced)}
-            />
-          </span>
-        ),
-      },
     ],
-    [styles.link, styles.actions, onSilenceClick]
+    [styles.link]
   );
 
   const onPaginationChanged = useCallback(
