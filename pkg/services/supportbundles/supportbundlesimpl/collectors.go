@@ -135,7 +135,7 @@ func pluginInfoCollector(pluginStore plugins.Store, pluginSettings pluginsetting
 			// plugin settings
 			settings, err := pluginSettings.GetPluginSettings(ctx, &pluginsettings.GetArgs{})
 			if err != nil {
-				logger.Debug("failed to fetch plugin settings:", "err", err)
+				logger.Debug("Failed to fetch plugin settings:", "err", err)
 			}
 
 			settingMap := make(map[string][]*pluginsettings.InfoDTO)
