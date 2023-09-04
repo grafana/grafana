@@ -642,6 +642,7 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/dashboards-issue-add-label.yml @grafana/dashboards-squad
 /.github/workflows/ephemeral-instances-pr-comment.yml @grafana/grafana-operator-experience-squad
 /.github/workflows/ephemeral-instances-pr-opened-closed.yml @grafana/grafana-operator-experience-squad
+/.github/workflows/core-plugins-build.yml @grafana/plugins-platform-frontend @grafana/plugins-platform-backend
 
 
 # Generated files not requiring owner approval
