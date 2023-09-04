@@ -891,7 +891,7 @@ def cloud_plugins_e2e_tests_step(suite, cloud, trigger = None):
     branch = "${DRONE_SOURCE_BRANCH}".replace("/", "-")
     step = {
         "name": "end-to-end-tests-{}-{}".format(suite, cloud),
-        "image": images["cloud_datasources_e2e_image"],
+        "image": "us-docker.pkg.dev/grafanalabs-dev/cloud-data-sources/e2e:latest",
         "depends_on": [
             "grafana-server",
         ],

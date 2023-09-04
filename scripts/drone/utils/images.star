@@ -21,5 +21,4 @@ images = {
     "docker_puppeteer_image": "grafana/docker-puppeteer:1.1.0",
     "docs_image": "grafana/docs-base:dbd975af06",
     "cypress_image": "cypress/included:12.15.0",
-    "cloud_datasources_e2e_image": "us-docker.pkg.dev/grafanalabs-dev/cloud-data-sources/e2e:latest",
 }

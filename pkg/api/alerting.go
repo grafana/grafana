@@ -695,7 +695,7 @@ func (hs *HTTPServer) PauseAlert(legacyAlertingEnabled *bool) func(c *contextmod
 		if err != nil {
 			return response.Error(http.StatusBadRequest, "alertId is invalid", err)
 		}
-		result := make(map[string]interface{})
+		result := make(map[string]any)
 		result["alertId"] = alertID
 
 		query := alertmodels.GetAlertByIdQuery{ID: alertID}
@@ -789,7 +789,7 @@ func (hs *HTTPServer) PauseAllAlerts(legacyAlertingEnabled *bool) func(c *contex
 			pausedState = "paused"
 		}
 
-		result := map[string]interface{}{
+		result := map[string]any{
 			"state":          resp,
 			"message":        "alerts " + pausedState,
 			"alertsAffected": updateCmd.ResultCount,

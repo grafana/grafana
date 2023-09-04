@@ -18,7 +18,7 @@ func ParseUserIDFromSubject(subject string) (int64, error) {
 }
 
 // ParsePublicKeyPem parses the public key from the PEM encoded public key.
-func ParsePublicKeyPem(publicPem []byte) (interface{}, error) {
+func ParsePublicKeyPem(publicPem []byte) (any, error) {
 	block, _ := pem.Decode(publicPem)
 	if block == nil {
 		return nil, errors.New("could not decode PEM block")
