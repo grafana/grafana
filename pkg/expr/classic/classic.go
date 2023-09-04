@@ -272,11 +272,11 @@ type ConditionQueryJSON struct {
 
 type ConditionReducerJSON struct {
 	Type string `json:"type"`
-	// Params []interface{} `json:"params"` (Unused)
+	// Params []any `json:"params"` (Unused)
 }
 
 // UnmarshalConditionsCmd creates a new ConditionsCmd.
-func UnmarshalConditionsCmd(rawQuery map[string]interface{}, refID string) (*ConditionsCmd, error) {
+func UnmarshalConditionsCmd(rawQuery map[string]any, refID string) (*ConditionsCmd, error) {
 	jsonFromM, err := json.Marshal(rawQuery["conditions"])
 	if err != nil {
 		return nil, fmt.Errorf("failed to remarshal classic condition body: %w", err)

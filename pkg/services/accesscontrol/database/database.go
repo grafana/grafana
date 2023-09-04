@@ -95,7 +95,7 @@ func (s *AccessControlStore) SearchUsersPermissions(ctx context.Context, orgID i
 		WHERE (org_id = ? OR org_id = ?)
 		`
 
-		params := []interface{}{accesscontrol.RoleGrafanaAdmin, accesscontrol.GlobalOrgID, orgID}
+		params := []any{accesscontrol.RoleGrafanaAdmin, accesscontrol.GlobalOrgID, orgID}
 
 		if options.ActionPrefix != "" {
 			q += ` AND action LIKE ?`
@@ -145,7 +145,7 @@ func (s *AccessControlStore) GetUsersBasicRoles(ctx context.Context, userFilter 
 		LEFT JOIN org_user AS ou ON u.id = ou.user_id
 		WHERE (u.is_admin OR ou.org_id = ?)
 		`
-		params := []interface{}{orgID}
+		params := []any{orgID}
 		if len(userFilter) > 0 {
 			q += "AND u.id IN (?" + strings.Repeat(",?", len(userFilter)-1) + ")"
 			for _, u := range userFilter {
@@ -173,10 +173,10 @@ func (s *AccessControlStore) GetUsersBasicRoles(ctx context.Context, userFilter 
 func (s *AccessControlStore) DeleteUserPermissions(ctx context.Context, orgID, userID int64) error {
 	err := s.sql.WithDbSession(ctx, func(sess *db.Session) error {
 		roleDeleteQuery := "DELETE FROM user_role WHERE user_id = ?"
-		roleDeleteParams := []interface{}{roleDeleteQuery, userID}
+		roleDeleteParams := []any{roleDeleteQuery, userID}
 		if orgID != accesscontrol.GlobalOrgID {
 			roleDeleteQuery += " AND org_id = ?"
-			roleDeleteParams = []interface{}{roleDeleteQuery, userID, orgID}
+			roleDeleteParams = []any{roleDeleteQuery, userID, orgID}
 		}
 
 		// Delete user role assignments
@@ -193,10 +193,10 @@ func (s *AccessControlStore) DeleteUserPermissions(ctx context.Context, orgID, u
 		}
 
 		roleQuery := "SELECT id FROM role WHERE name = ?"
-		roleParams := []interface{}{accesscontrol.ManagedUserRoleName(userID)}
+		roleParams := []any{accesscontrol.ManagedUserRoleName(userID)}
 		if orgID != accesscontrol.GlobalOrgID {
 			roleQuery += " AND org_id = ?"
-			roleParams = []interface{}{accesscontrol.ManagedUserRoleName(userID), orgID}
+			roleParams = []any{accesscontrol.ManagedUserRoleName(userID), orgID}
 		}
 
 		var roleIDs []int64
@@ -209,7 +209,7 @@ func (s *AccessControlStore) DeleteUserPermissions(ctx context.Context, orgID, u
 		}
 
 		permissionDeleteQuery := "DELETE FROM permission WHERE role_id IN(? " + strings.Repeat(",?", len(roleIDs)-1) + ")"
-		permissionDeleteParams := make([]interface{}, 0, len(roleIDs)+1)
+		permissionDeleteParams := make([]any, 0, len(roleIDs)+1)
 		permissionDeleteParams = append(permissionDeleteParams, permissionDeleteQuery)
 		for _, id := range roleIDs {
 			permissionDeleteParams = append(permissionDeleteParams, id)
@@ -221,7 +221,7 @@ func (s *AccessControlStore) DeleteUserPermissions(ctx context.Context, orgID, u
 		}
 
 		managedRoleDeleteQuery := "DELETE FROM role WHERE id IN(? " + strings.Repeat(",?", len(roleIDs)-1) + ")"
-		managedRoleDeleteParams := []interface{}{managedRoleDeleteQuery}
+		managedRoleDeleteParams := []any{managedRoleDeleteQuery}
 		for _, id := range roleIDs {
 			managedRoleDeleteParams = append(managedRoleDeleteParams, id)
 		}

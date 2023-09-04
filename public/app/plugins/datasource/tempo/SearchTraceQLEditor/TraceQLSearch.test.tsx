@@ -124,7 +124,7 @@ describe('TraceQLSearch', () => {
   it('should not render group by when feature toggle is not enabled', async () => {
     await waitFor(() => {
       render(<TraceQLSearch datasource={datasource} query={query} onChange={onChange} />);
-      const groupBy = screen.queryByText('Group By Metrics');
+      const groupBy = screen.queryByText('Aggregate by');
       expect(groupBy).toBeNull();
       expect(groupBy).not.toBeInTheDocument();
     });
@@ -134,7 +134,7 @@ describe('TraceQLSearch', () => {
     config.featureToggles.metricsSummary = true;
     await waitFor(() => {
       render(<TraceQLSearch datasource={datasource} query={query} onChange={onChange} />);
-      const groupBy = screen.queryByText('Group By Metrics');
+      const groupBy = screen.queryByText('Aggregate by');
       expect(groupBy).not.toBeNull();
       expect(groupBy).toBeInTheDocument();
     });
