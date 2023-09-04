@@ -17,12 +17,11 @@ env:
     GO_VERSION: 1.21.0
     GO_LINT_VERSION: 1.51.1
     GRABPL_VERSION: 3.0.41
-    GCP_BUCKET: plugins-community-staging
-    plugin_id: grafana-testdata-datasource
+    GCP_BUCKET: integration-artifacts
 
 jobs:
-    build:
-      name: build
+    build-and-publish:
+      name: Build and publish a core plugin
       runs-on:
         labels: ubuntu-latest-8-cores
       steps:
