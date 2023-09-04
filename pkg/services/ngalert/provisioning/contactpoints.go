@@ -490,7 +490,7 @@ groupLoop:
 						candidateExistingGroup.GrafanaManagedReceivers = append(candidateExistingGroup.GrafanaManagedReceivers, target)
 						configModified = true
 
-						// if the receiver group turns out to be empty. Remove it.
+						// if the old receiver group turns out to be empty. Remove it.
 						if len(receiverGroup.GrafanaManagedReceivers) == 0 {
 							cfg.AlertmanagerConfig.Receivers = append(cfg.AlertmanagerConfig.Receivers[:groupIdx], cfg.AlertmanagerConfig.Receivers[groupIdx+1:]...)
 						}
