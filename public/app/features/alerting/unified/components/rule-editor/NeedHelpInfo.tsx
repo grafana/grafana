@@ -25,9 +25,11 @@ export function NeedHelpInfo({ contentText, externalLink, linkText, title }: Nee
       footer={
         externalLink ? (
           <a href={externalLink} target="_blank" rel="noreferrer">
-            <Text color="link">
-              {linkText} <Icon name="external-link-alt" />
-            </Text>
+            <Stack direction="row" gap={0.5} alignItems="center">
+              <Text color="link">
+                {linkText} <Icon size="sm" name="external-link-alt" />
+              </Text>
+            </Stack>
           </a>
         ) : undefined
       }

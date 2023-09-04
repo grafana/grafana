@@ -1,10 +1,8 @@
-import { css } from '@emotion/css';
 import React from 'react';
 import { useFormContext } from 'react-hook-form';
 
-import { GrafanaTheme2 } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
-import { Card, Icon, Link, Text, useStyles2 } from '@grafana/ui';
+import { Icon, Text } from '@grafana/ui';
 
 import { RuleFormType, RuleFormValues } from '../../types/rule-form';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
@@ -18,8 +16,7 @@ type NotificationsStepProps = {
   alertUid?: string;
 };
 export const NotificationsStep = ({ alertUid }: NotificationsStepProps) => {
-  const styles = useStyles2(getStyles);
-  const { watch, getValues } = useFormContext<RuleFormValues & { location?: string }>();
+  const { watch } = useFormContext<RuleFormValues & { location?: string }>();
 
   const [type, labels, queries, condition, folder, alertName] = watch([
     'type',
@@ -31,9 +28,8 @@ export const NotificationsStep = ({ alertUid }: NotificationsStepProps) => {
   ]);
 
   const dataSourceName = watch('dataSourceName') ?? GRAFANA_RULES_SOURCE_NAME;
-  const hasLabelsDefined = getNonEmptyLabels(getValues('labels')).length > 0;
 
-  const shouldRenderPreview = Boolean(condition) && Boolean(folder) && type === RuleFormType.grafana;
+  const shouldRenderPreview = type === RuleFormType.grafana;
 
   const NotificationsStepDescription = () => {
     return (
@@ -99,37 +95,19 @@ export const NotificationsStep = ({ alertUid }: NotificationsStepProps) => {
           )}
         </Stack>
       }
+      fullWidth
     >
       <LabelsField dataSourceName={dataSourceName} />
-      {shouldRenderPreview &&
-        condition &&
-        folder && ( // need to check for condition and folder again because of typescript
-          <NotificationPreview
-            alertQueries={queries}
-            customLabels={labels}
-            condition={condition}
-            folder={folder}
-            alertName={alertName}
-            alertUid={alertUid}
-          />
-        )}
+      {shouldRenderPreview && (
+        <NotificationPreview
+          alertQueries={queries}
+          customLabels={labels}
+          condition={condition}
+          folder={folder}
+          alertName={alertName}
+          alertUid={alertUid}
+        />
+      )}
     </RuleEditorSection>
   );
 };
-
-interface Label {
-  key: string;
-  value: string;
-}
-
-function getNonEmptyLabels(labels: Label[]) {
-  return labels.filter((label) => label.key && label.value);
-}
-
-const getStyles = (theme: GrafanaTheme2) => ({
-  contentWrapper: css`
-    display: flex;
-    align-items: center;
-    margin-top: ${theme.spacing(2)};
-  `,
-});

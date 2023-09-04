@@ -114,7 +114,7 @@ const AnnotationsStep = () => {
   }
 
   return (
-    <RuleEditorSection stepNo={4} title="Add annotations" description={getAnnotationsSectionDescription()}>
+    <RuleEditorSection stepNo={4} title="Add annotations" description={getAnnotationsSectionDescription()} fullWidth>
       <Stack direction="column" gap={1}>
         {fields.map((annotationField, index: number) => {
           const isUrl = annotations[index]?.key?.toLocaleLowerCase().endsWith('url');
