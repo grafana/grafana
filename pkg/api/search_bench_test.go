@@ -31,13 +31,13 @@ import (
 )
 
 var (
-	Lvl0FolderNum    = 50
-	Lvl1FolderNum    = 20
-	Lvl2FolderNum    = 20
+	Lvl0FolderNum    = 20
+	Lvl1FolderNum    = 10
+	Lvl2FolderNum    = 10
 	RootDashboardNum = 100
-	Lvl0DashboardNum = 30
-	Lvl1DashboardNum = 30
-	Lvl2DashboardNum = 100
+	Lvl0DashboardNum = 20
+	Lvl1DashboardNum = 20
+	Lvl2DashboardNum = 20
 )
 
 func BenchmarkSearch(b *testing.B) {
