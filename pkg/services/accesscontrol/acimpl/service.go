@@ -215,10 +215,6 @@ func (s *Service) RegisterFixedRoles(ctx context.Context) error {
 	return nil
 }
 
-func (s *Service) IsDisabled() bool {
-	return accesscontrol.IsDisabled(s.cfg)
-}
-
 func permissionCacheKey(user identity.Requester) (string, error) {
 	key, err := user.GetCacheKey()
 	if err != nil {
