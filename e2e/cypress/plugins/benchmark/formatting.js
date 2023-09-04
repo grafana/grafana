@@ -63,6 +63,8 @@ const emptyFormattedCDPData = () => ({
   longTaskWarnings: [],
 });
 
+const isCDPData = (data) => data.every((d) => typeof d.eventCounts === 'object');
+
 const formatCDPData = (data) => {
   if (!isCDPData(data)) {
     return emptyFormattedCDPData();

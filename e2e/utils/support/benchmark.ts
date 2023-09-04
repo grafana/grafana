@@ -28,50 +28,52 @@ export const benchmark = ({
     describe(name, () => {
       it.skip(name, () => {});
     });
-  }
-
-  describe(name, () => {
-    cy.session('login', () => e2e.flows.login(e2e.env('USERNAME'), e2e.env('PASSWORD'), true), {
-      cacheAcrossSpecs: true,
-    });
-
-    beforeEach(() => {
-      e2e.flows.importDashboards(dashboard.folder, 1000, dashboard.skipPanelValidation);
-    });
-
-    afterEach(() => e2e.flows.revertAllChanges());
-
-    Array(repeat)
-      .fill(0)
-      .map((_, i) => {
-        const testName = `${name}-${i}`;
-        return it(testName, () => {
-          e2e.flows.openDashboard();
-
-          e2e().wait(dashboard.delayAfterOpening);
-
-          if (appStats) {
-            const startCollecting = appStats.startCollecting;
-            if (startCollecting) {
-              e2e()
-                .window()
-                .then((win) => startCollecting(win));
-            }
-
-            e2e().startBenchmarking(testName);
-            e2e().wait(duration);
-
-            e2e()
-              .window()
-              .then((win) => {
-                e2e().stopBenchmarking(testName, appStats.collect(win));
-              });
-          } else {
-            e2e().startBenchmarking(testName);
-            e2e().wait(duration);
-            e2e().stopBenchmarking(testName, {});
-          }
+  } else {
+    describe(name, () => {
+      before(() => {
+        cy.session('login', () => e2e.flows.login(e2e.env('USERNAME'), e2e.env('PASSWORD'), true), {
+          cacheAcrossSpecs: true,
         });
       });
-  });
+
+      beforeEach(() => {
+        e2e.flows.importDashboards(dashboard.folder, 1000, dashboard.skipPanelValidation);
+      });
+
+      afterEach(() => e2e.flows.revertAllChanges());
+
+      Array(repeat)
+        .fill(0)
+        .map((_, i) => {
+          const testName = `${name}-${i}`;
+          return it(testName, () => {
+            e2e.flows.openDashboard();
+
+            e2e().wait(dashboard.delayAfterOpening);
+
+            if (appStats) {
+              const startCollecting = appStats.startCollecting;
+              if (startCollecting) {
+                e2e()
+                  .window()
+                  .then((win) => startCollecting(win));
+              }
+
+              e2e().startBenchmarking(testName);
+              e2e().wait(duration);
+
+              e2e()
+                .window()
+                .then((win) => {
+                  e2e().stopBenchmarking(testName, appStats.collect(win));
+                });
+            } else {
+              e2e().startBenchmarking(testName);
+              e2e().wait(duration);
+              e2e().stopBenchmarking(testName, {});
+            }
+          });
+        });
+    });
+  }
 };
