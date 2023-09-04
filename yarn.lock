@@ -3720,7 +3720,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/e2e@workspace:*, @grafana/e2e@workspace:packages/grafana-e2e":
+"@grafana/e2e@workspace:packages/grafana-e2e":
   version: 0.0.0-use.local
   resolution: "@grafana/e2e@workspace:packages/grafana-e2e"
   dependencies:
@@ -19307,7 +19307,6 @@ __metadata:
     "@glideapps/glide-data-grid": ^5.2.1
     "@grafana/aws-sdk": 0.1.2
     "@grafana/data": "workspace:*"
-    "@grafana/e2e": "workspace:*"
     "@grafana/e2e-selectors": "workspace:*"
     "@grafana/eslint-config": 6.0.1
     "@grafana/eslint-plugin": "link:./packages/grafana-eslint-rules"

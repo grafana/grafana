@@ -78,7 +78,6 @@
     "@betterer/regexp": "5.4.0",
     "@cypress/webpack-preprocessor": "5.17.1",
     "@emotion/eslint-plugin": "11.11.0",
-    "@grafana/e2e": "workspace:*",
     "@grafana/eslint-config": "6.0.1",
     "@grafana/eslint-plugin": "link:./packages/grafana-eslint-rules",
     "@grafana/toolkit": "workspace:*",
