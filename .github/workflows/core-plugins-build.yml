@@ -45,11 +45,11 @@ jobs:
             credentials_json: '${{ secrets.PLUGINS_GOOGLE_CREDENTIALS }}'
         - name: 'Set up Cloud SDK'
           uses: 'google-github-actions/setup-gcloud@v1'
-        # - name: 'Verify gcloud permissions'
-        #   run: |
-        #     gcloud auth list
-        #     touch test
-        #     gsutil -m cp -r test gs://${{ env.GCP_BUCKET }}/${{ env.plugin_id }}/release/
+        - name: 'Verify gcloud permissions'
+          run: |
+            gcloud auth list
+            touch test
+            gsutil -m cp -r test gs://${{ env.GCP_BUCKET }}/${{ env.plugin_id }}/release/
         - name: Verify plugin_id
           run: |
             echo "Verifying plugin_id: ${{ env.plugin_id }}"
@@ -153,17 +153,17 @@ jobs:
           with:
             name: build-artifacts
             path: ./public/plugins/${{ env.plugin_id }}/ci/packages/*.zip
-        # - name: Publish release to Google Cloud Storage
-        #   working-directory: ./public/plugins/${{ env.plugin_id }}
-        #   run: |
-        #     echo "Publish release to Google Cloud Storage:"
-        #     version=$(cat ci/dist/${{ env.plugin_id }}/plugin.json | jq -r .info.version)
-        #     echo "Plugin version: $version"
-        #     touch ci/packages/windows ci/packages/darwin ci/packages/linux ci/packages/any
-        #     gsutil -m cp -r ci/packages/*windows* gs://${{ env.GCP_BUCKET }}/${{ env.plugin_id }}/release/${version}/windows
-        #     gsutil -m cp -r ci/packages/*linux* gs://${{ env.GCP_BUCKET }}/${{ env.plugin_id }}/release/${version}/linux 
-        #     gsutil -m cp -r ci/packages/*darwin* gs://${{ env.GCP_BUCKET }}/${{ env.plugin_id }}/release/${version}/darwin
-        #     gsutil -m cp -r ci/packages/*any* gs://${{ env.GCP_BUCKET }}/${{ env.plugin_id }}/release/${version}/any
+        - name: Publish release to Google Cloud Storage
+          working-directory: ./public/plugins/${{ env.plugin_id }}
+          run: |
+            echo "Publish release to Google Cloud Storage:"
+            version=$(cat ci/dist/${{ env.plugin_id }}/plugin.json | jq -r .info.version)
+            echo "Plugin version: $version"
+            touch ci/packages/windows ci/packages/darwin ci/packages/linux ci/packages/any
+            gsutil -m cp -r ci/packages/*windows* gs://${{ env.GCP_BUCKET }}/${{ env.plugin_id }}/release/${version}/windows
+            gsutil -m cp -r ci/packages/*linux* gs://${{ env.GCP_BUCKET }}/${{ env.plugin_id }}/release/${version}/linux 
+            gsutil -m cp -r ci/packages/*darwin* gs://${{ env.GCP_BUCKET }}/${{ env.plugin_id }}/release/${version}/darwin
+            gsutil -m cp -r ci/packages/*any* gs://${{ env.GCP_BUCKET }}/${{ env.plugin_id }}/release/${version}/any
         - name: Publish new plugin version on grafana.com
           working-directory: ./public/plugins/${{ env.plugin_id }}
           env:
