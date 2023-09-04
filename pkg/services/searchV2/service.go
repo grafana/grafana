@@ -198,7 +198,7 @@ func (s *StandardSearchService) getUser(ctx context.Context, backendUser *backen
 	permissions, err := s.ac.GetUserPermissions(ctx, usr,
 		accesscontrol.Options{ReloadCache: false})
 	if err != nil {
-		s.logger.Error("failed to retrieve user permissions", "error", err, "email", backendUser.Email)
+		s.logger.Error("Failed to retrieve user permissions", "error", err, "email", backendUser.Email)
 		return nil, errors.New("auth error")
 	}
 
@@ -268,7 +268,7 @@ func (s *StandardSearchService) doDashboardQuery(ctx context.Context, signedInUs
 
 	if q.WithAllowedActions {
 		if err := s.addAllowedActionsField(ctx, orgID, signedInUser, response); err != nil {
-			s.logger.Error("error when adding the allowedActions field", "err", err)
+			s.logger.Error("Error when adding the allowedActions field", "err", err)
 		}
 	}
 
