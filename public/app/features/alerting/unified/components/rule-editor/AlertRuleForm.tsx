@@ -96,6 +96,7 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
   const uidFromParams = routeParams.id;
 
   const returnTo: string = (queryParams['returnTo'] as string | undefined) ?? '/alerting/list';
+  const fromPanel = returnTo.startsWith('/d/');
   const [showDeleteModal, setShowDeleteModal] = useState<boolean>(false);
 
   const defaultValues: RuleFormValues = useMemo(() => {
@@ -258,7 +259,11 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
               {/* Step 1 */}
               <AlertRuleNameInput />
               {/* Step 2 */}
-              <QueryAndExpressionsStep editingExistingRule={!!existing} onDataChange={checkAlertCondition} />
+              <QueryAndExpressionsStep
+                editingExistingRule={!!existing}
+                onDataChange={checkAlertCondition}
+                fromPanel={fromPanel}
+              />
               {/* Step 3-4-5 */}
               {showDataSourceDependantStep && (
                 <>

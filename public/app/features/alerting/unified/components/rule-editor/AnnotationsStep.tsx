@@ -10,7 +10,7 @@ import { Button, Field, Input, TextArea, useStyles2 } from '@grafana/ui';
 import { DashboardDataDTO } from 'app/types';
 
 import { dashboardApi } from '../../api/dashboardApi';
-import { RuleFormValues } from '../../types/rule-form';
+import { RuleFormType, RuleFormValues } from '../../types/rule-form';
 import { Annotation, annotationLabels } from '../../utils/constants';
 
 import AnnotationHeaderField from './AnnotationHeaderField';
@@ -31,6 +31,7 @@ const AnnotationsStep = () => {
     setValue,
   } = useFormContext<RuleFormValues>();
   const annotations = watch('annotations');
+  const type = watch('type');
 
   const { fields, append, remove } = useFieldArray({ control, name: 'annotations' });
 
@@ -91,6 +92,8 @@ const AnnotationsStep = () => {
   const handleEditDashboardAnnotation = () => {
     setShowPanelSelector(true);
   };
+  const showDashboardPicker = showPanelSelector && type === RuleFormType.grafana;
+  const showLinkToDashAndPanelButton = type === RuleFormType.grafana && !selectedDashboard;
 
   function getAnnotationsSectionDescription() {
     const docsLink =
@@ -190,14 +193,14 @@ const AnnotationsStep = () => {
             >
               Add custom annotation
             </Button>
-            {!selectedDashboard && (
+            {showLinkToDashAndPanelButton && (
               <Button type="button" variant="secondary" icon="dashboard" onClick={() => setShowPanelSelector(true)}>
                 Link dashboard and panel
               </Button>
             )}
           </div>
         </Stack>
-        {showPanelSelector && (
+        {showDashboardPicker && (
           <DashboardPicker
             isOpen={true}
             dashboardUid={selectedDashboardUid}

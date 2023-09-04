@@ -81,6 +81,7 @@ export interface SmartAlertTypeDetectorProps {
   rulesSourcesWithRuler: Array<DataSourceInstanceSettings<DataSourceJsonData>>;
   queries: AlertQuery[];
   onClickSwitch: () => void;
+  fromPanel: boolean;
 }
 
 const getContentText = (ruleFormType: RuleFormType, isEditing: boolean, dataSourceName: string, canSwitch: boolean) => {
@@ -125,13 +126,14 @@ export function SmartAlertTypeDetector({
   rulesSourcesWithRuler,
   queries,
   onClickSwitch,
+  fromPanel,
 }: SmartAlertTypeDetectorProps) {
   const { getValues } = useFormContext<RuleFormValues>();
 
   const [ruleFormType, dataSourceName] = getValues(['type', 'dataSourceName']);
   const styles = useStyles2(getStyles);
 
-  const canSwitch = getCanSwitch({ queries, ruleFormType, editingExistingRule, rulesSourcesWithRuler });
+  const canSwitch = !fromPanel && getCanSwitch({ queries, ruleFormType, editingExistingRule, rulesSourcesWithRuler });
 
   const typeTitle =
     ruleFormType === RuleFormType.cloudAlerting ? 'Data source-managed alert rule' : 'Grafana-managed alert rule';

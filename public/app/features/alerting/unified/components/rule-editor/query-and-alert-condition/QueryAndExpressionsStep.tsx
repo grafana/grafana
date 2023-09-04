@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { cloneDeep } from 'lodash';
+import { cloneDeep, remove } from 'lodash';
 import React, { useCallback, useEffect, useMemo, useReducer, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
@@ -17,6 +17,7 @@ import { AlertQuery } from 'app/types/unified-alerting-dto';
 import { useRulesSourcesWithRuler } from '../../../hooks/useRuleSourcesWithRuler';
 import { fetchAllPromBuildInfoAction } from '../../../state/actions';
 import { RuleFormType, RuleFormValues } from '../../../types/rule-form';
+import { Annotation } from '../../../utils/constants';
 import { getDefaultOrFirstCompatibleDataSource } from '../../../utils/datasource';
 import { isPromOrLokiQuery, PromOrLokiQuery } from '../../../utils/rule-form';
 import { ExpressionEditor } from '../ExpressionEditor';
@@ -50,9 +51,10 @@ import { useAlertQueryRunner } from './useAlertQueryRunner';
 interface Props {
   editingExistingRule: boolean;
   onDataChange: (error: string) => void;
+  fromPanel: boolean;
 }
 
-export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: Props) => {
+export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange, fromPanel }: Props) => {
   const {
     setValue,
     getValues,
@@ -294,9 +296,34 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
     [dispatch]
   );
 
+  const removeDashboardAndPanelAnnotations = useCallback(() => {
+    const newAnnotations = cloneDeep(getValues('annotations'));
+    remove(newAnnotations, (annotation) => annotation.key === Annotation.dashboardUID);
+    remove(newAnnotations, (annotation) => annotation.key === Annotation.panelID);
+    setValue('annotations', newAnnotations, { shouldValidate: false });
+  }, [setValue, getValues]);
+
+  const getDashboardAndPanelAnnotations = useCallback(() => {
+    const annotations = getValues('annotations');
+    return annotations.filter(
+      (annotation) => annotation.key === Annotation.dashboardUID || annotation.key === Annotation.panelID
+    );
+  }, [getValues]);
+
+  const addDashboardAndPanelAnnotations = useCallback(
+    (annotations: Array<{ key: string; value: string }>) => {
+      const newAnnotations = cloneDeep(getValues('annotations'));
+      setValue('annotations', [...newAnnotations, ...annotations], { shouldValidate: false });
+    },
+    [setValue, getValues]
+  );
+
   // we need to keep track of the previous expressions and condition reference to be able to restore them when switching back to grafana managed
   const [prevExpressions, setPrevExpressions] = useState<AlertQuery[]>([]);
   const [prevCondition, setPrevCondition] = useState<string | null>(null);
+  const [prevDashboardAndPanelAnnotations, setPrevDashboardAndPanelAnnotation] = useState<
+    Array<{ key: string; value: string }>
+  >([]);
 
   const restoreExpressionsInQueries = useCallback(() => {
     addExpressionsInQueries(prevExpressions);
@@ -305,12 +332,16 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
   const onClickSwitch = useCallback(() => {
     const typeInForm = getValues('type');
     if (typeInForm === RuleFormType.cloudAlerting) {
+      // When switching from cloud to grafana managed
       setValue('type', RuleFormType.grafana);
       setValue('dataSourceName', null); // set data source name back to "null"
 
       prevExpressions.length > 0 && restoreExpressionsInQueries();
       prevCondition && setValue('condition', prevCondition);
+      // restore the dashboard and panel annotations
+      prevDashboardAndPanelAnnotations.length > 0 && addDashboardAndPanelAnnotations(prevDashboardAndPanelAnnotations);
     } else {
+      // When switching from grafana managed to cloud
       setValue('type', RuleFormType.cloudAlerting);
       // dataSourceName is used only by Mimir/Loki alerting and recording rules
       // It should be empty for Grafana managed alert rules
@@ -325,6 +356,9 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
       setPrevExpressions(expressions);
       removeExpressionsInQueries();
       setPrevCondition(condition);
+      // we need to keep track of the dashboard and panel annotations to restore them when switching back to grafana managed
+      setPrevDashboardAndPanelAnnotation(getDashboardAndPanelAnnotations());
+      removeDashboardAndPanelAnnotations();
     }
   }, [
     getValues,
@@ -336,6 +370,11 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
     queries,
     removeExpressionsInQueries,
     condition,
+    setPrevCondition,
+    prevDashboardAndPanelAnnotations,
+    addDashboardAndPanelAnnotations,
+    removeDashboardAndPanelAnnotations,
+    getDashboardAndPanelAnnotations,
   ]);
 
   return (
@@ -388,6 +427,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
             queries={queries}
             rulesSourcesWithRuler={rulesSourcesWithRuler}
             onClickSwitch={onClickSwitch}
+            fromPanel={fromPanel}
           />
         </Stack>
       )}
@@ -441,6 +481,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
             rulesSourcesWithRuler={rulesSourcesWithRuler}
             queries={queries}
             onClickSwitch={onClickSwitch}
+            fromPanel={fromPanel}
           />
           {/* Expression Queries */}
           <Text element="h5">Expressions</Text>

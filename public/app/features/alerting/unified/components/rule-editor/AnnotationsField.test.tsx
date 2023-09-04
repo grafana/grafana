@@ -15,7 +15,7 @@ import { DashboardDTO } from '../../../../../types';
 import { DashboardSearchItem, DashboardSearchItemType } from '../../../../search/types';
 import { mockStore } from '../../mocks';
 import { mockSearchApiResponse } from '../../mocks/grafanaApi';
-import { RuleFormValues } from '../../types/rule-form';
+import { RuleFormType, RuleFormValues } from '../../types/rule-form';
 import { Annotation } from '../../utils/constants';
 import { getDefaultFormValues } from '../../utils/rule-form';
 
@@ -60,7 +60,9 @@ afterAll(() => {
 
 function FormWrapper({ formValues }: { formValues?: Partial<RuleFormValues> }) {
   const store = mockStore(() => null);
-  const formApi = useForm<RuleFormValues>({ defaultValues: { ...getDefaultFormValues(), ...formValues } });
+  const formApi = useForm<RuleFormValues>({
+    defaultValues: { ...getDefaultFormValues(), type: RuleFormType.grafana, ...formValues },
+  });
 
   return (
     <TestProvider store={store}>
