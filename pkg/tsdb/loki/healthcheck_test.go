@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	sdkHttpClient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/stretchr/testify/assert"
@@ -87,6 +88,7 @@ func Test_healthcheck(t *testing.T) {
 			im:       datasource.NewInstanceManager(newInstanceSettings(httpProvider)),
 			features: featuremgmt.WithFeatures(featuremgmt.FlagLokiLogsDataplane, featuremgmt.FlagLokiMetricDataplane),
 			tracer:   tracing.NewFakeTracer(),
+			logger:   log.New("loki test"),
 		}
 
 		req := &backend.CheckHealthRequest{
@@ -105,6 +107,7 @@ func Test_healthcheck(t *testing.T) {
 			im:       datasource.NewInstanceManager(newInstanceSettings(httpProvider)),
 			features: featuremgmt.WithFeatures(featuremgmt.FlagLokiLogsDataplane, featuremgmt.FlagLokiMetricDataplane),
 			tracer:   tracing.NewFakeTracer(),
+			logger:   log.New("loki test"),
 		}
 
 		req := &backend.CheckHealthRequest{

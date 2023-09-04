@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/tsdb/loki/kinds/dataquery"
 )
 
@@ -17,27 +18,23 @@ const (
 
 func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult,
 	error) {
-	logger := logger.FromContext(ctx)
+	logger := s.logger.New("endpoint", "CheckHealth")
 	ds, err := s.im.Get(ctx, req.PluginContext)
 	// check that the datasource exists
 	if err != nil {
-		return getHealthCheckMessage("error getting datasource info", err)
+		return getHealthCheckMessage(fmt.Errorf("failed to get datasource information: %w", err), logger), err
 	}
 
 	if ds == nil {
-		return getHealthCheckMessage("", errors.New("invalid datasource info received"))
+		return getHealthCheckMessage(errors.New("invalid datasource info received"), logger), err
 	}
 
-	hc, err := healthcheck(ctx, req, s)
-	if err != nil {
-		logger.Warn("error performing loki healthcheck", "err", err.Error())
-		return nil, err
-	}
+	hc := healthcheck(ctx, req, s, logger)
 
 	return hc, nil
 }
 
-func healthcheck(ctx context.Context, req *backend.CheckHealthRequest, s *Service) (*backend.CheckHealthResult, error) {
+func healthcheck(ctx context.Context, req *backend.CheckHealthRequest, s *Service, logger *log.ConcreteLogger) *backend.CheckHealthResult {
 	step := "1s"
 	qt := "instant"
 	qm := dataquery.LokiDataQuery{
@@ -61,46 +58,47 @@ func healthcheck(ctx context.Context, req *backend.CheckHealthRequest, s *Servic
 	})
 
 	if err != nil {
-		return getHealthCheckMessage("There was an error returned querying the Loki API.", err)
+		return getHealthCheckMessage(fmt.Errorf("error received while querying loki: %w", err), logger)
 	}
 
 	if resp.Responses[refID].Error != nil {
-		return getHealthCheckMessage("There was an error returned querying the Loki API.",
-			errors.New(resp.Responses[refID].Error.Error()))
+		return getHealthCheckMessage(fmt.Errorf("error from loki: %w", resp.Responses[refID].Error), logger)
 	}
 
-	if len(resp.Responses[refID].Frames) == 0 {
-		return getHealthCheckMessage("There was an error returned querying the Loki API.", errors.New("no frames"))
+	frameLen := len(resp.Responses[refID].Frames)
+	if frameLen != 1 {
+		return getHealthCheckMessage(fmt.Errorf("invalid dataframe length, expected %d got %d", 1, frameLen), logger)
 	}
 
-	if len(resp.Responses[refID].Frames[0].Fields) != 2 {
-		return getHealthCheckMessage("There was an error returned querying the Loki API.", errors.New("invalid response"))
+	fieldLen := len(resp.Responses[refID].Frames[0].Fields)
+	if fieldLen != 2 {
+		return getHealthCheckMessage(fmt.Errorf("invalid dataframe field length, expected %d got %d", 2, fieldLen), logger)
 	}
 
-	if resp.Responses[refID].Frames[0].Fields[0].Len() != 1 {
-		return getHealthCheckMessage("There was an error returned querying the Loki API.", errors.New("invalid response"))
+	fieldValueLen := resp.Responses[refID].Frames[0].Fields[0].Len()
+	if fieldValueLen != 1 {
+		return getHealthCheckMessage(fmt.Errorf("invalid dataframe field value length, expected %d got %d", 1, fieldLen), logger)
 	}
 
 	rspValue := resp.Responses[refID].Frames[0].Fields[1].At(0).(float64)
 	if rspValue != 2 {
-		return getHealthCheckMessage("There was an error returned querying the Loki API.", errors.New("invalid response"))
+		return getHealthCheckMessage(fmt.Errorf("invalid response value, expected %d got %f", 2, rspValue), logger)
 	}
 
-	return getHealthCheckMessage("Data source successfully connected.", nil)
+	return getHealthCheckMessage(nil, logger)
 }
 
-func getHealthCheckMessage(message string, err error) (*backend.CheckHealthResult, error) {
+func getHealthCheckMessage(err error, logger *log.ConcreteLogger) *backend.CheckHealthResult {
 	if err == nil {
 		return &backend.CheckHealthResult{
 			Status:  backend.HealthStatusOk,
-			Message: message,
-		}, nil
+			Message: "Data source successfully connected.",
+		}
 	}
 
-	errorMessage := fmt.Sprintf("%s: %s", message, err.Error())
-
+	logger.Error("Loki health check failed", "error", err)
 	return &backend.CheckHealthResult{
 		Status:  backend.HealthStatusError,
-		Message: errorMessage,
-	}, nil
+		Message: "Unable to connect with Loki. Please check the server logs for more details.",
+	}
 }

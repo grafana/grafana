@@ -28,6 +28,7 @@ type Service struct {
 	im       instancemgmt.InstanceManager
 	features featuremgmt.FeatureToggles
 	tracer   tracing.Tracer
+	logger   *log.ConcreteLogger
 }
 
 var (
@@ -41,6 +42,7 @@ func ProvideService(httpClientProvider httpclient.Provider, features featuremgmt
 		im:       datasource.NewInstanceManager(newInstanceSettings(httpClientProvider)),
 		features: features,
 		tracer:   tracer,
+		logger:   logger,
 	}
 }
 
