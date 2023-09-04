@@ -77,7 +77,7 @@ export const generatePublicDashboardUrl = (accessToken: string): string => {
 };
 
 export const generatePublicDashboardConfigUrl = (dashboardUid: string): string => {
-  return `/d/${dashboardUid}?shareView=public-dashboard`;
+  return `/d/${dashboardUid}?shareView=public_dashboard`;
 };
 
 export const validEmailRegex = /^[A-Z\d._%+-]+@[A-Z\d.-]+\.[A-Z]{2,}$/i;
