@@ -172,6 +172,13 @@ export class ContextSrv {
     return interval;
   }
 
+  getValidIntervals(intervals: string[]): string[] {
+    if (this.minRefreshInterval) {
+      return intervals.filter((str) => str !== '').filter(this.isAllowedInterval);
+    }
+    return intervals;
+  }
+
   hasAccessToExplore() {
     if (this.accessControlEnabled()) {
       return this.hasPermission(AccessControlAction.DataSourcesExplore) && config.exploreEnabled;

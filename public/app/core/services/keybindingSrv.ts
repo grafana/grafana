@@ -263,7 +263,7 @@ export class KeybindingSrv {
         const url = await getExploreUrl({
           panel,
           datasourceSrv: getDatasourceSrv(),
-          timeSrv: getTimeSrv(),
+          timeRange: getTimeSrv().timeRange(),
         });
 
         if (url) {

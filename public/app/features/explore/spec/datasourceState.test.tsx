@@ -19,6 +19,14 @@ jest.mock('@grafana/runtime', () => ({
   getAppEvents: () => testEventBus,
 }));
 
+jest.mock('app/core/core', () => ({
+  contextSrv: {
+    hasAccess: () => true,
+    hasPermission: () => true,
+    getValidIntervals: (defaultIntervals: string[]) => defaultIntervals,
+  },
+}));
+
 describe('Explore: handle datasource states', () => {
   afterEach(() => {
     tearDown();
