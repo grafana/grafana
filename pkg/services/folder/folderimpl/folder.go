@@ -254,6 +254,7 @@ func (s *Service) getAvailableNonRootFolders(ctx context.Context, orgID int64, u
 	permissions := user.GetPermissions()
 	folderPermissions := permissions["folders:read"]
 	folderPermissions = append(folderPermissions, permissions["dashboards:read"]...)
+	nonRootFolders := make([]*folder.Folder, 0)
 	folderUids := make([]string, 0)
 	for _, p := range folderPermissions {
 		if folderUid, found := strings.CutPrefix(p, "folders:uid:"); found {
@@ -263,12 +264,15 @@ func (s *Service) getAvailableNonRootFolders(ctx context.Context, orgID int64, u
 		}
 	}
 
+	if len(folderUids) == 0 {
+		return nonRootFolders, nil
+	}
+
 	dashFolders, err := s.store.GetFolders(ctx, orgID, folderUids)
 	if err != nil {
 		return nil, folder.ErrInternal.Errorf("failed to fetch subfolders: %w", err)
 	}
 
-	nonRootFolders := make([]*folder.Folder, 0)
 	for _, f := range dashFolders {
 		if f.ParentUID != "" {
 			nonRootFolders = append(nonRootFolders, f)
