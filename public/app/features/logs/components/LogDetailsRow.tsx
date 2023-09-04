@@ -250,6 +250,7 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
       onClickFilterLabel,
       onClickFilterOutLabel,
       disableActions,
+      row,
     } = this.props;
     const { showFieldsStats, fieldStats, fieldCount } = this.state;
     const styles = getStyles(theme);
@@ -257,6 +258,7 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
     const singleKey = parsedKeys == null ? false : parsedKeys.length === 1;
     const singleVal = parsedValues == null ? false : parsedValues.length === 1;
     const hasFilteringFunctionality = !disableActions && onClickFilterLabel && onClickFilterOutLabel;
+    const refIdTooltip = config.featureToggles.toggleLabelsInLogsUI && row.dataFrame.refId ? ` in query ${row.dataFrame.refId}` : '';
 
     const isMultiParsedValueWithNoContent =
       !singleVal && parsedValues != null && !parsedValues.every((val) => val === '');
@@ -275,18 +277,18 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
             <div className={styles.buttonRow}>
               {hasFilteringFunctionality && (
                 <>
-                  {config.featureToggles.toggleLabelsInLogsUI && (
+                  {config.featureToggles.toggleLabelsInLogsUI ? (
                     // If we are using the new label toggling, we want to use the async icon button
                     <AsyncIconButton
                       name="search-plus"
                       onClick={this.filterLabel}
                       isActive={this.isFilterLabelActive}
+                      tooltipSuffix={refIdTooltip}
                     />
-                  )}
-                  {!config.featureToggles.toggleLabelsInLogsUI && (
+                  ) : (
                     <IconButton name="search-plus" onClick={this.filterLabel} tooltip="Filter for value" />
                   )}
-                  <IconButton name="search-minus" tooltip="Filter out value" onClick={this.filterOutLabel} />
+                  <IconButton name="search-minus" tooltip={`Filter out value${refIdTooltip}`} onClick={this.filterOutLabel} />
                 </>
               )}
               {!disableActions && displayedFields && toggleFieldButton}
@@ -350,10 +352,12 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
 interface AsyncIconButtonProps extends Pick<React.ButtonHTMLAttributes<HTMLButtonElement>, 'onClick'> {
   name: IconName;
   isActive(): Promise<boolean>;
+  tooltipSuffix: string;
 }
 
-const AsyncIconButton = ({ isActive, ...rest }: AsyncIconButtonProps) => {
+const AsyncIconButton = ({ isActive, tooltipSuffix, ...rest }: AsyncIconButtonProps) => {
   const [active, setActive] = useState(false);
+  const tooltip = active ? 'Remove filter' : 'Filter for value';
 
   /**
    * We purposely want to run this on every render to allow the active state to be updated
@@ -365,7 +369,7 @@ const AsyncIconButton = ({ isActive, ...rest }: AsyncIconButtonProps) => {
     <IconButton
       {...rest}
       variant={active ? 'primary' : undefined}
-      tooltip={active ? 'Remove filter' : 'Filter for value'}
+      tooltip={tooltip + tooltipSuffix}
     />
   );
 };
