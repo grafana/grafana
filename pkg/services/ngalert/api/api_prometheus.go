@@ -191,7 +191,7 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *contextmodel.ReqContext) respon
 	}
 
 	if len(namespaceMap) == 0 {
-		srv.log.Debug("user does not have access to any namespaces")
+		srv.log.Debug("User does not have access to any namespaces")
 		return response.JSON(http.StatusOK, ruleResponse)
 	}
 
@@ -236,7 +236,7 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *contextmodel.ReqContext) respon
 	for groupKey, rules := range groupedRules {
 		folder := namespaceMap[groupKey.NamespaceUID]
 		if folder == nil {
-			srv.log.Warn("query returned rules that belong to folder the user does not have access to. All rules that belong to that namespace will not be added to the response", "folder_uid", groupKey.NamespaceUID)
+			srv.log.Warn("Query returned rules that belong to folder the user does not have access to. All rules that belong to that namespace will not be added to the response", "folder_uid", groupKey.NamespaceUID)
 			continue
 		}
 		if !authorizeAccessToRuleGroup(rules, hasAccess) {
@@ -443,7 +443,7 @@ func ruleToQuery(logger log.Logger, rule *ngmodels.AlertRule) string {
 			}
 
 			// For any other type of error, it is unexpected abort and return the whole JSON.
-			logger.Debug("failed to parse a query", "error", err)
+			logger.Debug("Failed to parse a query", "error", err)
 			queryErr = err
 			break
 		}
