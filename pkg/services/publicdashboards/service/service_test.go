@@ -856,9 +856,11 @@ func TestCreatePublicDashboard(t *testing.T) {
 		assert.Equal(t, dto.PublicDashboard.Uid, pubdash.Uid)
 	})
 
-	t.Run("Throws an error when pubdash with generated access token already exists", func(t *testing.T) {
+	t.Run("Throws an error when pubdash with given access token input already exists", func(t *testing.T) {
 		dashboard := dashboards.NewDashboard("testDashie")
 		pubdash := &PublicDashboard{
+			Uid:                "ExistingUid",
+			AccessToken:        "ExistingAccessToken",
 			IsEnabled:          true,
 			AnnotationsEnabled: false,
 			DashboardUid:       "NOTTHESAME",
@@ -869,7 +871,7 @@ func TestCreatePublicDashboard(t *testing.T) {
 		publicDashboardStore := &FakePublicDashboardStore{}
 		publicDashboardStore.On("FindDashboard", mock.Anything, mock.Anything, mock.Anything).Return(dashboard, nil)
 		publicDashboardStore.On("Find", mock.Anything, mock.Anything).Return(nil, nil)
-		publicDashboardStore.On("FindByAccessToken", mock.Anything, mock.Anything).Return(pubdash, nil)
+		publicDashboardStore.On("FindByAccessToken", mock.Anything, "ExistingAccessToken").Return(pubdash, nil)
 		publicDashboardStore.On("FindByDashboardUid", mock.Anything, mock.Anything, mock.Anything).Return(nil, ErrPublicDashboardNotFound.Errorf(""))
 
 		serviceWrapper := ProvideServiceWrapper(publicDashboardStore)
@@ -886,14 +888,76 @@ func TestCreatePublicDashboard(t *testing.T) {
 			OrgID:        dashboard.OrgID,
 			UserId:       7,
 			PublicDashboard: &PublicDashboardDTO{
-				IsEnabled: &isEnabled,
+				AccessToken: "ExistingAccessToken",
+				IsEnabled:   &isEnabled,
 			},
 		}
 
 		_, err := service.Create(context.Background(), SignedInUser, dto)
 		require.Error(t, err)
+		require.Equal(t, err, ErrPublicDashboardAccessTokenExists.Errorf("Create: public dashboard access token %s already exists", dto.PublicDashboard.AccessToken))
+	})
+
+	t.Run("Create public dashboard with given pubdash access token", func(t *testing.T) {
+		sqlStore := db.InitTestDB(t)
+		quotaService := quotatest.New(false, nil)
+		dashboardStore, err := dashboardsDB.ProvideDashboardStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, sqlStore.Cfg), quotaService)
+		require.NoError(t, err)
+		publicdashboardStore := database.ProvideStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures())
+		dashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, true, []map[string]interface{}{}, nil)
+		serviceWrapper := ProvideServiceWrapper(publicdashboardStore)
+
+		service := &PublicDashboardServiceImpl{
+			log:            log.New("test.logger"),
+			store:          publicdashboardStore,
+			serviceWrapper: serviceWrapper,
+		}
+
+		isEnabled := true
+
+		dto := &SavePublicDashboardDTO{
+			DashboardUid: dashboard.UID,
+			UserId:       7,
+			OrgID:        dashboard.OrgID,
+			PublicDashboard: &PublicDashboardDTO{
+				AccessToken: "GivenAccessToken",
+				IsEnabled:   &isEnabled,
+			},
+		}
+
+		_, err = service.Create(context.Background(), SignedInUser, dto)
+		require.NoError(t, err)
+
+		pubdash, err := service.FindByDashboardUid(context.Background(), dashboard.OrgID, dashboard.UID)
+		require.NoError(t, err)
+
+		assert.Equal(t, dto.PublicDashboard.AccessToken, pubdash.AccessToken)
+	})
+
+	t.Run("Throws an error when pubdash with generated access token already exists", func(t *testing.T) {
+		dashboard := dashboards.NewDashboard("testDashie")
+		pubdash := &PublicDashboard{
+			IsEnabled:          true,
+			AnnotationsEnabled: false,
+			DashboardUid:       "NOTTHESAME",
+			OrgId:              dashboard.OrgID,
+			TimeSettings:       timeSettings,
+		}
+
+		publicDashboardStore := &FakePublicDashboardStore{}
+		publicDashboardStore.On("FindByAccessToken", mock.Anything, mock.Anything).Return(pubdash, nil)
+
+		serviceWrapper := ProvideServiceWrapper(publicDashboardStore)
+
+		service := &PublicDashboardServiceImpl{
+			log:            log.New("test.logger"),
+			store:          publicDashboardStore,
+			serviceWrapper: serviceWrapper,
+		}
+
+		_, err := service.NewPublicDashboardAccessToken(context.Background())
+		require.Error(t, err)
 		require.Equal(t, err, ErrInternalServerError.Errorf("failed to generate a unique accessToken for public dashboard"))
-		publicDashboardStore.AssertNotCalled(t, "Create")
 	})
 
 	t.Run("Returns error if public dashboard exists", func(t *testing.T) {
