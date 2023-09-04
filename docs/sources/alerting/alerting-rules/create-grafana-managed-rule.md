@@ -65,7 +65,9 @@ Define a query to get the data you want to measure and a condition that needs to
 1. Add one or more [expressions][expression-queries].
    a. For each expression, select either **Classic condition** to create a single alert rule, or choose from the **Math**, **Reduce**, and **Resample** options to generate separate alert for each series.
 
-   **Note:** When using Prometheus, you can use an instant vector and built-in functions, so you don't need to add additional expressions.
+   {{% admonition type="note" %}}
+   When using Prometheus, you can use an instant vector and built-in functions, so you don't need to add additional expressions.
+   {{% /admonition %}}
 
    b. Click **Preview** to verify that the expression is successful.
 
