@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import { style } from 'd3';
 import React from 'react';
 
 import { GrafanaTheme2, PluginErrorCode, PluginSignatureStatus, PluginType } from '@grafana/data';
