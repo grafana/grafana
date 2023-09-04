@@ -6,7 +6,7 @@ import { defaultDashboard } from '@grafana/schema';
 import config from 'app/core/config';
 
 import { createDashboardModelFixture } from '../state/__fixtures__/dashboardFixtures';
-import { onCreateNewPanel, onCreateNewRow, onAddLibraryPanel } from '../utils/dashboard';
+import { onCreateNewPanel, onImportDashboard, onAddLibraryPanel } from '../utils/dashboard';
 
 import DashboardEmpty, { Props } from './DashboardEmpty';
 
@@ -27,7 +27,7 @@ jest.mock('@grafana/runtime', () => ({
 
 jest.mock('app/features/dashboard/utils/dashboard', () => ({
   onCreateNewPanel: jest.fn(),
-  onCreateNewRow: jest.fn(),
+  onImportDashboard: jest.fn(),
   onAddLibraryPanel: jest.fn(),
 }));
 
@@ -56,16 +56,16 @@ it('renders with all buttons enabled when canCreate is true', () => {
   setup();
 
   expect(screen.getByRole('button', { name: 'Add visualization' })).not.toBeDisabled();
-  expect(screen.getByRole('button', { name: 'Add row' })).not.toBeDisabled();
-  expect(screen.getByRole('button', { name: 'Import library panel' })).not.toBeDisabled();
+  expect(screen.getByRole('button', { name: 'Import dashboard' })).not.toBeDisabled();
+  expect(screen.getByRole('button', { name: 'Add library panel' })).not.toBeDisabled();
 });
 
 it('renders with all buttons disabled when canCreate is false', () => {
   setup({ canCreate: false });
 
   expect(screen.getByRole('button', { name: 'Add visualization' })).toBeDisabled();
-  expect(screen.getByRole('button', { name: 'Add row' })).toBeDisabled();
-  expect(screen.getByRole('button', { name: 'Import library panel' })).toBeDisabled();
+  expect(screen.getByRole('button', { name: 'Import dashboard' })).toBeDisabled();
+  expect(screen.getByRole('button', { name: 'Add library panel' })).toBeDisabled();
 });
 
 it('creates new visualization when clicked Add visualization', () => {
@@ -80,23 +80,22 @@ it('creates new visualization when clicked Add visualization', () => {
   expect(onCreateNewPanel).toHaveBeenCalled();
 });
 
-it('creates new row when clicked Add row', () => {
+it('open import dashboard when clicked Import dashboard', () => {
   setup();
 
   act(() => {
-    fireEvent.click(screen.getByRole('button', { name: 'Add row' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Import dashboard' }));
   });
 
-  expect(reportInteraction).toHaveBeenCalledWith('dashboards_emptydashboard_clicked', { item: 'add_row' });
-  expect(locationService.partial).not.toHaveBeenCalled();
-  expect(onCreateNewRow).toHaveBeenCalled();
+  expect(reportInteraction).toHaveBeenCalledWith('dashboards_emptydashboard_clicked', { item: 'import_dashboard' });
+  expect(onImportDashboard).toHaveBeenCalled();
 });
 
-it('adds a library panel when clicked Import library panel', () => {
+it('adds a library panel when clicked Add library panel', () => {
   setup();
 
   act(() => {
-    fireEvent.click(screen.getByRole('button', { name: 'Import library panel' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Add library panel' }));
   });
 
   expect(reportInteraction).toHaveBeenCalledWith('dashboards_emptydashboard_clicked', { item: 'import_from_library' });
@@ -108,8 +107,8 @@ it('renders page without Add Widget button when feature flag is disabled', () =>
   setup();
 
   expect(screen.getByRole('button', { name: 'Add visualization' })).toBeInTheDocument();
-  expect(screen.getByRole('button', { name: 'Add row' })).toBeInTheDocument();
-  expect(screen.getByRole('button', { name: 'Import library panel' })).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Import dashboard' })).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Add library panel' })).toBeInTheDocument();
   expect(screen.queryByRole('button', { name: 'Add widget' })).not.toBeInTheDocument();
 });
 
@@ -118,7 +117,7 @@ it('renders page with Add Widget button when feature flag is enabled', () => {
   setup();
 
   expect(screen.getByRole('button', { name: 'Add visualization' })).toBeInTheDocument();
-  expect(screen.getByRole('button', { name: 'Add row' })).toBeInTheDocument();
-  expect(screen.getByRole('button', { name: 'Import library panel' })).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Import dashboard' })).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Add library panel' })).toBeInTheDocument();
   expect(screen.getByRole('button', { name: 'Add widget' })).toBeInTheDocument();
 });

@@ -96,13 +96,13 @@ func TestIntegrationDashboardFolderStore(t *testing.T) {
 	})
 }
 
-func insertTestDashboard(t *testing.T, dashboardStore dashboards.Store, title string, orgId int64, folderId int64, tags ...interface{}) *dashboards.Dashboard {
+func insertTestDashboard(t *testing.T, dashboardStore dashboards.Store, title string, orgId int64, folderId int64, tags ...any) *dashboards.Dashboard {
 	t.Helper()
 	cmd := dashboards.SaveDashboardCommand{
 		OrgID:    orgId,
 		FolderID: folderId,
 		IsFolder: false,
-		Dashboard: simplejson.NewFromAny(map[string]interface{}{
+		Dashboard: simplejson.NewFromAny(map[string]any{
 			"id":    nil,
 			"title": title,
 			"tags":  tags,
@@ -116,13 +116,13 @@ func insertTestDashboard(t *testing.T, dashboardStore dashboards.Store, title st
 	return dash
 }
 
-func insertTestFolder(t *testing.T, dashboardStore dashboards.Store, title string, orgId int64, folderId int64, tags ...interface{}) *dashboards.Dashboard {
+func insertTestFolder(t *testing.T, dashboardStore dashboards.Store, title string, orgId int64, folderId int64, tags ...any) *dashboards.Dashboard {
 	t.Helper()
 	cmd := dashboards.SaveDashboardCommand{
 		OrgID:    orgId,
 		FolderID: folderId,
 		IsFolder: true,
-		Dashboard: simplejson.NewFromAny(map[string]interface{}{
+		Dashboard: simplejson.NewFromAny(map[string]any{
 			"id":    nil,
 			"title": title,
 			"tags":  tags,

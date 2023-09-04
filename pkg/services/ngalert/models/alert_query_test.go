@@ -164,7 +164,7 @@ func TestAlertQuery(t *testing.T) {
 			t.Run("can get the updated model with the default properties (if missing)", func(t *testing.T) {
 				blob, err := tc.alertQuery.GetModel()
 				require.NoError(t, err)
-				model := make(map[string]interface{})
+				model := make(map[string]any)
 				err = json.Unmarshal(blob, &model)
 				require.NoError(t, err)
 

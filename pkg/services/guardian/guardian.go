@@ -3,9 +3,9 @@ package guardian
 import (
 	"context"
 
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
-	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
@@ -27,25 +27,25 @@ type DashboardGuardian interface {
 
 // New factory for creating a new dashboard guardian instance
 // When using access control this function is replaced on startup and the AccessControlDashboardGuardian is returned
-var New = func(ctx context.Context, dashId int64, orgId int64, user *user.SignedInUser) (DashboardGuardian, error) {
+var New = func(ctx context.Context, dashId int64, orgId int64, user identity.Requester) (DashboardGuardian, error) {
 	panic("no guardian factory implementation provided")
 }
 
 // NewByUID factory for creating a new dashboard guardian instance
 // When using access control this function is replaced on startup and the AccessControlDashboardGuardian is returned
-var NewByUID = func(ctx context.Context, dashUID string, orgId int64, user *user.SignedInUser) (DashboardGuardian, error) {
+var NewByUID = func(ctx context.Context, dashUID string, orgId int64, user identity.Requester) (DashboardGuardian, error) {
 	panic("no guardian factory implementation provided")
 }
 
 // NewByDashboard factory for creating a new dashboard guardian instance
 // When using access control this function is replaced on startup and the AccessControlDashboardGuardian is returned
-var NewByDashboard = func(ctx context.Context, dash *dashboards.Dashboard, orgId int64, user *user.SignedInUser) (DashboardGuardian, error) {
+var NewByDashboard = func(ctx context.Context, dash *dashboards.Dashboard, orgId int64, user identity.Requester) (DashboardGuardian, error) {
 	panic("no guardian factory implementation provided")
 }
 
 // NewByFolder factory for creating a new folder guardian instance
 // When using access control this function is replaced on startup and the AccessControlDashboardGuardian is returned
-var NewByFolder = func(ctx context.Context, f *folder.Folder, orgId int64, user *user.SignedInUser) (DashboardGuardian, error) {
+var NewByFolder = func(ctx context.Context, f *folder.Folder, orgId int64, user identity.Requester) (DashboardGuardian, error) {
 	panic("no guardian factory implementation provided")
 }
 
@@ -54,7 +54,7 @@ type FakeDashboardGuardian struct {
 	DashID        int64
 	DashUID       string
 	OrgID         int64
-	User          *user.SignedInUser
+	User          identity.Requester
 	CanSaveValue  bool
 	CanEditValue  bool
 	CanViewValue  bool
@@ -87,21 +87,21 @@ func (g *FakeDashboardGuardian) CanCreate(_ int64, _ bool) (bool, error) {
 
 // nolint:unused
 func MockDashboardGuardian(mock *FakeDashboardGuardian) {
-	New = func(_ context.Context, dashID int64, orgId int64, user *user.SignedInUser) (DashboardGuardian, error) {
+	New = func(_ context.Context, dashID int64, orgId int64, user identity.Requester) (DashboardGuardian, error) {
 		mock.OrgID = orgId
 		mock.DashID = dashID
 		mock.User = user
 		return mock, nil
 	}
 
-	NewByUID = func(_ context.Context, dashUID string, orgId int64, user *user.SignedInUser) (DashboardGuardian, error) {
+	NewByUID = func(_ context.Context, dashUID string, orgId int64, user identity.Requester) (DashboardGuardian, error) {
 		mock.OrgID = orgId
 		mock.DashUID = dashUID
 		mock.User = user
 		return mock, nil
 	}
 
-	NewByDashboard = func(_ context.Context, dash *dashboards.Dashboard, orgId int64, user *user.SignedInUser) (DashboardGuardian, error) {
+	NewByDashboard = func(_ context.Context, dash *dashboards.Dashboard, orgId int64, user identity.Requester) (DashboardGuardian, error) {
 		mock.OrgID = orgId
 		mock.DashUID = dash.UID
 		mock.DashID = dash.ID
@@ -109,7 +109,7 @@ func MockDashboardGuardian(mock *FakeDashboardGuardian) {
 		return mock, nil
 	}
 
-	NewByFolder = func(_ context.Context, f *folder.Folder, orgId int64, user *user.SignedInUser) (DashboardGuardian, error) {
+	NewByFolder = func(_ context.Context, f *folder.Folder, orgId int64, user identity.Requester) (DashboardGuardian, error) {
 		mock.OrgID = orgId
 		mock.DashUID = f.UID
 		mock.DashID = f.ID

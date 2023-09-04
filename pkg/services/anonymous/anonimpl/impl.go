@@ -65,7 +65,7 @@ func ProvideAnonymousDeviceService(remoteCache remotecache.CacheStorage, usageSt
 	return a
 }
 
-func (a *AnonDeviceService) usageStatFn(ctx context.Context) (map[string]interface{}, error) {
+func (a *AnonDeviceService) usageStatFn(ctx context.Context) (map[string]any, error) {
 	anonDeviceCount, err := a.remoteCache.Count(ctx, string(anonymous.AnonDevice))
 	if err != nil {
 		return nil, nil
@@ -86,7 +86,7 @@ func (a *AnonDeviceService) usageStatFn(ctx context.Context) (map[string]interfa
 		return nil, nil
 	}
 
-	return map[string]interface{}{
+	return map[string]any{
 		"stats.anonymous.session.count":   anonDeviceCount, // keep session for legacy data
 		"stats.users.device.count":        authedDeviceCount,
 		"stats.anonymous.device.ui.count": anonUIDeviceCount,

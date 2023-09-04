@@ -39,6 +39,9 @@ jest.mock('@grafana/runtime', () => ({
   config: {
     ...jest.requireActual('@grafana/runtime').config,
     awsAssumeRoleEnabled: true,
+    featureToggles: {
+      cloudWatchCrossAccountQuerying: true,
+    },
   },
 }));
 
@@ -166,7 +169,7 @@ describe('Render', () => {
 
   it('should display log group selector field', async () => {
     setup();
-    await waitFor(async () => expect(await screen.getByText('Select log groups')).toBeInTheDocument());
+    await waitFor(async () => expect(screen.getByText('Select log groups')).toBeInTheDocument());
   });
 
   it('should only display the first two default log groups and show all of them when clicking "Show all" button', async () => {
@@ -204,9 +207,7 @@ describe('Render', () => {
   });
 
   it('should show error message if Select log group button is clicked when data source is never saved', async () => {
-    const SAVED_VERSION = undefined;
-    setup({ version: SAVED_VERSION });
-
+    setup({ version: 1 });
     await waitFor(() => expect(screen.getByText('Select log groups')).toBeInTheDocument());
     await userEvent.click(screen.getByText('Select log groups'));
     await waitFor(() =>
@@ -265,12 +266,11 @@ describe('Render', () => {
   });
 
   it('should open log group selector if Select log group button is clicked when data source has saved changes', async () => {
-    const SAVED_VERSION = undefined;
     const newProps = {
       ...props,
       options: {
         ...props.options,
-        version: SAVED_VERSION,
+        version: 1,
       },
     };
     const meta: PluginMeta = {
@@ -291,7 +291,7 @@ describe('Render', () => {
       ...newProps,
       options: {
         ...newProps.options,
-        version: 1,
+        version: 2,
       },
     };
     rerender(
