@@ -111,11 +111,7 @@ e2e.scenario({
     e2e.components.Panels.Panel.title('Panel with relative time override')
       .should('be.visible')
       .within(() => {
-        e2e.components.Panels.Visualization.Table.body()
-          .should('be.visible')
-          .within(() => {
-            e2e().get('[role="row"]').first().should('include.text', '00:00:00');
-          });
+        e2e().contains('[role="row"]', '00:00:00').should('be.visible');
       });
 
     // Today so far, still in Browser timezone
@@ -129,21 +125,13 @@ e2e.scenario({
     e2e.components.Panels.Panel.title('Panel with relative time override')
       .should('be.visible')
       .within(() => {
-        e2e.components.Panels.Visualization.Table.body()
-          .should('be.visible')
-          .within(() => {
-            e2e().get('[role="row"]').first().should('include.text', '00:00:00');
-          });
+        e2e().contains('[role="row"]', '00:00:00').should('be.visible');
       });
 
     e2e.components.Panels.Panel.title('Panel in timezone')
       .should('be.visible')
       .within(() => {
-        e2e.components.Panels.Visualization.Table.body()
-          .should('be.visible')
-          .within(() => {
-            e2e().get('[role="row"]').first().should('include.text', '00:00:00');
-          });
+        e2e().contains('[role="row"]', '00:00:00').should('be.visible');
       });
 
     // Test Tokyo timezone
@@ -158,11 +146,7 @@ e2e.scenario({
     e2e.components.Panels.Panel.title('Panel with relative time override')
       .should('be.visible')
       .within(() => {
-        e2e.components.Panels.Visualization.Table.body()
-          .should('be.visible')
-          .within(() => {
-            e2e().get('[role="row"]').first().should('include.text', '00:00:00');
-          });
+        e2e().contains('[role="row"]', '00:00:00').should('be.visible');
       });
 
     // Today so far, still in Tokyo timezone
@@ -176,21 +160,13 @@ e2e.scenario({
     e2e.components.Panels.Panel.title('Panel with relative time override')
       .should('be.visible')
       .within(() => {
-        e2e.components.Panels.Visualization.Table.body()
-          .should('be.visible')
-          .within(() => {
-            e2e().get('[role="row"]').first().should('include.text', '00:00:00');
-          });
+        e2e().contains('[role="row"]', '00:00:00').should('be.visible');
       });
 
     e2e.components.Panels.Panel.title('Panel in timezone')
       .should('be.visible')
       .within(() => {
-        e2e.components.Panels.Visualization.Table.body()
-          .should('be.visible')
-          .within(() => {
-            e2e().get('[role="row"]').first().should('include.text', '00:00:00');
-          });
+        e2e().contains('[role="row"]', '00:00:00').should('be.visible');
       });
 
     // Test LA timezone
@@ -205,11 +181,7 @@ e2e.scenario({
     e2e.components.Panels.Panel.title('Panel with relative time override')
       .should('be.visible')
       .within(() => {
-        e2e.components.Panels.Visualization.Table.body()
-          .should('be.visible')
-          .within(() => {
-            e2e().get('[role="row"]').first().should('include.text', '00:00:00');
-          });
+        e2e().contains('[role="row"]', '00:00:00').should('be.visible');
       });
 
     // Today so far, still in LA timezone
@@ -223,21 +195,13 @@ e2e.scenario({
     e2e.components.Panels.Panel.title('Panel with relative time override')
       .should('be.visible')
       .within(() => {
-        e2e.components.Panels.Visualization.Table.body()
-          .should('be.visible')
-          .within(() => {
-            e2e().get('[role="row"]').first().should('include.text', '00:00:00');
-          });
+        e2e().contains('[role="row"]', '00:00:00').should('be.visible');
       });
 
     e2e.components.Panels.Panel.title('Panel in timezone')
       .should('be.visible')
       .within(() => {
-        e2e.components.Panels.Visualization.Table.body()
-          .should('be.visible')
-          .within(() => {
-            e2e().get('[role="row"]').first().should('include.text', '00:00:00');
-          });
+        e2e().contains('[role="row"]', '00:00:00').should('be.visible');
       });
   },
 });
