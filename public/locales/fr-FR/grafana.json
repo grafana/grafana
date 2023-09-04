@@ -770,6 +770,17 @@
       "copy-button": "Copier dans le presse-papiers"
     }
   },
+  "share-playlist": {
+    "checkbox-description": "",
+    "checkbox-label": "",
+    "copy-link-button": "",
+    "link-url-label": "",
+    "mode": "",
+    "mode-kiosk": "",
+    "mode-normal": "",
+    "mode-tv": "",
+    "title": ""
+  },
   "shared": {
     "preferences": {
       "theme": {

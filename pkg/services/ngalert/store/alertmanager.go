@@ -96,7 +96,7 @@ func (st DBstore) SaveAlertmanagerConfigurationWithCallback(ctx context.Context,
 		}
 
 		if _, err := st.deleteOldConfigurations(ctx, cmd.OrgID, ConfigRecordsLimit); err != nil {
-			st.Logger.Warn("failed to delete old am configs", "org", cmd.OrgID, "error", err)
+			st.Logger.Warn("Failed to delete old am configs", "org", cmd.OrgID, "error", err)
 		}
 
 		if err := callback(); err != nil {
@@ -133,7 +133,7 @@ func (st *DBstore) UpdateAlertmanagerConfiguration(ctx context.Context, cmd *mod
 			return err
 		}
 		if _, err := st.deleteOldConfigurations(ctx, cmd.OrgID, ConfigRecordsLimit); err != nil {
-			st.Logger.Warn("failed to delete old am configs", "org", cmd.OrgID, "error", err)
+			st.Logger.Warn("Failed to delete old am configs", "org", cmd.OrgID, "error", err)
 		}
 		return nil
 	})
@@ -255,7 +255,7 @@ func (st *DBstore) deleteOldConfigurations(ctx context.Context, orgID int64, lim
 		}
 		affectedRows = rows
 		if affectedRows > 0 {
-			st.Logger.Info("deleted old alert_configuration(s)", "org", orgID, "limit", limit, "delete_count", affectedRows)
+			st.Logger.Info("Deleted old alert_configuration(s)", "org", orgID, "limit", limit, "delete_count", affectedRows)
 		}
 		return nil
 	})

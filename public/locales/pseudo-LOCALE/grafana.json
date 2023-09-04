@@ -765,6 +765,17 @@
       "copy-button": "Cőpy ŧő Cľįpþőäřđ"
     }
   },
+  "share-playlist": {
+    "checkbox-description": "Päŉęľ ĥęįģĥŧş ŵįľľ þę äđĵūşŧęđ ŧő ƒįŧ şčřęęŉ şįžę",
+    "checkbox-label": "Åūŧőƒįŧ",
+    "copy-link-button": "Cőpy",
+    "link-url-label": "Ŀįŉĸ ŮŖĿ",
+    "mode": "Mőđę",
+    "mode-kiosk": "Ķįőşĸ",
+    "mode-normal": "Ńőřmäľ",
+    "mode-tv": "ŦV",
+    "title": "Ŝĥäřę pľäyľįşŧ"
+  },
   "shared": {
     "preferences": {
       "theme": {
