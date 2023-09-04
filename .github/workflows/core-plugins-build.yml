@@ -35,7 +35,7 @@ jobs:
           uses: 'google-github-actions/setup-gcloud@v1'
         - name: Verify plugin_id
           run: |
-            echo "Verifying plugin_id: ${{ inputs.plugin_id }}"
+            if [ -z ${{ inputs.plugin_id }} ]; then echo "Missing plugin ID"; exit 1; fi
         - name: Setup nodejs environment
           uses: actions/setup-node@v3
           with:
@@ -65,8 +65,9 @@ jobs:
             [ ! -d ./bin ] && mkdir -pv ./bin || true
             curl -fL -o ./bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v${{ env.GRABPL_VERSION }}/grabpl
             chmod 0755 ./bin/grabpl
-        - name: Validate environment
+        - name: Check tools
           shell: bash
+          working-directory: ./public/plugins/${{ inputs.plugin_id }}
           run: |
             echo "======================================="
             echo "    Frontend tools"
@@ -93,6 +94,8 @@ jobs:
             docker --version
             echo "-------- jq version -----"
             jq --version
+            echo "-------- grabpl version -----"
+            ./bin/grabpl --version
             echo "======================================="
         - name: test:frontend
           working-directory: ./public/plugins/${{ inputs.plugin_id }}
