@@ -213,12 +213,13 @@
     }
   },
   "data-sources": {
+    "advanced-datasource-picker": "Open advanced data source picker",
     "datasource-add-button": {
       "label": "Add new data source"
-    },
-    "advanced-datasource-picker": "Open advanced data source picker"
+    }
   },
   "explore": {
+    "add-to-dashboard": "Add to dashboard",
     "copy-shortened-link": "Copy shortened link",
     "toolbar": {
       "split": {
@@ -229,8 +230,7 @@
         "tooltip": "Split the pane",
         "widen": "Widen pane"
       }
-    },
-    "add-to-dashboard": "Add to dashboard"
+    }
   },
   "folder-picker": {
     "loading": "Loading folders..."

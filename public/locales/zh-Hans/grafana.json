@@ -208,8 +208,23 @@
     }
   },
   "data-sources": {
+    "advanced-datasource-picker": "",
     "datasource-add-button": {
       "label": ""
+    }
+  },
+  "explore": {
+    "add-to-dashboard": "",
+    "copy-shortened-link": "",
+    "toolbar": {
+      "split": {
+        "close": "",
+        "close-tooltip": "",
+        "narrow": "",
+        "title": "",
+        "tooltip": "",
+        "widen": ""
+      }
     }
   },
   "folder-picker": {
@@ -218,6 +233,10 @@
   "grafana-ui": {
     "modal": {
       "close-tooltip": ""
+    },
+    "refresh-picker": {
+      "cancel": "",
+      "run-query": ""
     },
     "segment-async": {
       "error": "加载选项失败",
