@@ -19,10 +19,6 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 	error) {
 	logger := logger.FromContext(ctx)
 	ds, err := s.im.Get(ctx, req.PluginContext)
-	if err != nil {
-		return nil, err
-	}
-
 	// check that the datasource exists
 	if err != nil {
 		return getHealthCheckMessage("error getting datasource info", err)
