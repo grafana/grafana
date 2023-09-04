@@ -16,7 +16,7 @@ echo -e "Starting Cypress scenarios"
 
 args=("$@")
 
-CMD="cypress run --browser=chrome"
+CMD="cy:run"
 PARAMS=""
 CLEANUP=""
 
@@ -52,12 +52,12 @@ case "$1" in
         ;;
     "dev")
         echo "Dev mode"
-        CMD="cypress open"
+        CMD="cy:open"
         ;;
     "benchmark")
         echo "Benchmark"
         PARAMS="--headed"
-        CMD="CYPRESS_NO_COMMAND_LOG=1 cypress run --browser=chrome"
+        CMD="cy:benchmark"
         env[BENCHMARK_PLUGIN_ENABLED]=true
         env[BENCHMARK_PLUGIN_RESULTS_FOLDER]=./e2e/benchmarks/"${args[1]}"/results
         cypressConfig[video]=false
@@ -78,7 +78,7 @@ case "$1" in
                 ;;
             "dev")
                 echo "Dev mode"
-                CMD="cypress open"
+                CMD="cy:open"
                 enterpriseSuite=$(basename "${args[2]}")
                 ;;
         esac
@@ -114,7 +114,7 @@ function join () {
 
 export TZ="Pacific/Honolulu"
 
-yarn run $CMD --env "$(join env)" \
+yarn $CMD --env "$(join env)" \
   --config "$(join cypressConfig)" \
   $PARAMS
 
