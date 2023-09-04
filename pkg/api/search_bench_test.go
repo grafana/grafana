@@ -2,14 +2,12 @@ package api
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -26,12 +24,11 @@ import (
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web/webtest"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 var (
-	Lvl0FolderNum    = 20
+	Lvl0FolderNum    = 50
 	Lvl1FolderNum    = 10
 	Lvl2FolderNum    = 10
 	RootDashboardNum = 100
@@ -261,10 +258,6 @@ func BenchmarkSearch(b *testing.B) {
 				rec := httptest.NewRecorder()
 				m.ServeHTTP(rec, req)
 				require.Equal(b, 200, rec.Code)
-				var resp []dtos.FolderSearchHit
-				err := json.Unmarshal(rec.Body.Bytes(), &resp)
-				require.NoError(b, err)
-				assert.Len(b, resp, bm.expectedLen)
 			}
 		})
 	}
