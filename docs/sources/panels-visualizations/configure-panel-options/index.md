@@ -95,7 +95,7 @@ You can configure Grafana to dynamically add panels or rows to a dashboard. A dy
 Repeating panels require variables to have one or more items selected; you cannot repeat a panel zero times to hide it.
 {{% /admonition %}}
 
-To see an example of repeating panels, refer to [Prometheus dashboard with repeating panels](https://play.grafana.org/d/000000036/prometheus-repeat).
+To see an example of repeating panels, refer to [How to automatically repeat rows and panels in dynamic dashboards](https://grafana.com/blog/2020/06/09/learn-grafana-how-to-automatically-repeat-rows-and-panels-in-dynamic-dashboards/).
 
 **Before you begin:**
 
