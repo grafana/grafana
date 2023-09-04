@@ -136,7 +136,7 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
   isFilterLabelActive = async () => {
     const { isFilterLabelActive, parsedKeys, parsedValues, row } = this.props;
     if (isFilterLabelActive) {
-      return await isFilterLabelActive(parsedKeys[0], parsedValues[0], row.dataFrame.refId);
+      return await isFilterLabelActive(parsedKeys[0], parsedValues[0], row.dataFrame?.refId);
     }
     return false;
   };
@@ -144,7 +144,7 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
   filterLabel = () => {
     const { onClickFilterLabel, parsedKeys, parsedValues, row } = this.props;
     if (onClickFilterLabel) {
-      onClickFilterLabel(parsedKeys[0], parsedValues[0], row.dataFrame.refId);
+      onClickFilterLabel(parsedKeys[0], parsedValues[0], row.dataFrame?.refId);
     }
 
     reportInteraction('grafana_explore_logs_log_details_filter_clicked', {
@@ -157,7 +157,7 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
   filterOutLabel = () => {
     const { onClickFilterOutLabel, parsedKeys, parsedValues, row } = this.props;
     if (onClickFilterOutLabel) {
-      onClickFilterOutLabel(parsedKeys[0], parsedValues[0], row.dataFrame.refId);
+      onClickFilterOutLabel(parsedKeys[0], parsedValues[0], row.dataFrame?.refId);
     }
 
     reportInteraction('grafana_explore_logs_log_details_filter_clicked', {
@@ -258,7 +258,7 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
     const singleKey = parsedKeys == null ? false : parsedKeys.length === 1;
     const singleVal = parsedValues == null ? false : parsedValues.length === 1;
     const hasFilteringFunctionality = !disableActions && onClickFilterLabel && onClickFilterOutLabel;
-    const refIdTooltip = config.featureToggles.toggleLabelsInLogsUI && row.dataFrame.refId ? ` in query ${row.dataFrame.refId}` : '';
+    const refIdTooltip = config.featureToggles.toggleLabelsInLogsUI && row.dataFrame?.refId ? ` in query ${row.dataFrame?.refId}` : '';
 
     const isMultiParsedValueWithNoContent =
       !singleVal && parsedValues != null && !parsedValues.every((val) => val === '');
