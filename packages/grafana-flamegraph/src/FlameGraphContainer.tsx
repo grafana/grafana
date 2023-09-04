@@ -24,6 +24,7 @@ type Props = {
   onTableSort?: (sort: string) => void;
 
   extraHeaderElements?: React.ReactNode;
+  vertical?: boolean;
 };
 
 const FlameGraphContainer = ({
@@ -34,7 +35,8 @@ const FlameGraphContainer = ({
   onTableSort,
   getTheme,
   stickyHeader,
-  extraHeaderElements
+  extraHeaderElements,
+  vertical,
 }: Props) => {
   const [focusedItemData, setFocusedItemData] = useState<ClickedItemData>();
 
@@ -57,18 +59,19 @@ const FlameGraphContainer = ({
     return new FlameGraphDataContainer(data, theme);
   }, [data, theme]);
 
-  const styles = getStyles(theme);
+  const styles = getStyles(theme, vertical);
 
   // If user resizes window with both as the selected view
   useEffect(() => {
     if (
       containerWidth > 0 &&
       containerWidth < MIN_WIDTH_TO_SHOW_BOTH_TOPTABLE_AND_FLAMEGRAPH &&
-      selectedView === SelectedView.Both
+      selectedView === SelectedView.Both &&
+      !vertical
     ) {
       setSelectedView(SelectedView.FlameGraph);
     }
-  }, [selectedView, setSelectedView, containerWidth]);
+  }, [selectedView, setSelectedView, containerWidth, vertical]);
 
   const resetFocus = useCallback(() => {
     setFocusedItemData(undefined);
@@ -98,80 +101,82 @@ const FlameGraphContainer = ({
     [setSearch, resetFocus, onTableSymbolClick, search]
   );
 
+  if (!dataContainer) {
+    return null;
+  }
+
   return (
-    <>
-      {dataContainer && (
-        <div ref={sizeRef} className={styles.container}>
-          <FlameGraphHeader
+    <div ref={sizeRef} className={styles.container}>
+      <FlameGraphHeader
+        search={search}
+        setSearch={setSearch}
+        selectedView={selectedView}
+        setSelectedView={(view) => {
+          setSelectedView(view);
+          onViewSelected?.(view);
+        }}
+        containerWidth={containerWidth}
+        onReset={() => {
+          resetFocus();
+          resetSandwich();
+        }}
+        textAlign={textAlign}
+        onTextAlignChange={(align) => {
+          setTextAlign(align);
+          onTextAlignSelected?.(align);
+        }}
+        showResetButton={Boolean(focusedItemData || sandwichItem)}
+        colorScheme={colorScheme}
+        onColorSchemeChange={setColorScheme}
+        stickyHeader={Boolean(stickyHeader)}
+        extraHeaderElements={extraHeaderElements}
+        vertical={vertical}
+      />
+
+      <div className={styles.body}>
+        {selectedView !== SelectedView.FlameGraph && (
+          <FlameGraphTopTableContainer
+            data={dataContainer}
+            onSymbolClick={onSymbolClick}
+            height={selectedView === SelectedView.TopTable ? 600 : undefined}
             search={search}
-            setSearch={setSearch}
-            selectedView={selectedView}
-            setSelectedView={(view) => {
-              setSelectedView(view);
-              onViewSelected?.(view);
-            }}
-            containerWidth={containerWidth}
-            onReset={() => {
-              resetFocus();
-              resetSandwich();
-            }}
-            textAlign={textAlign}
-            onTextAlignChange={(align) => {
-              setTextAlign(align);
-              onTextAlignSelected?.(align);
-            }}
-            showResetButton={Boolean(focusedItemData || sandwichItem)}
-            colorScheme={colorScheme}
-            onColorSchemeChange={setColorScheme}
-            stickyHeader={Boolean(stickyHeader)}
-            extraHeaderElements={extraHeaderElements}
+            sandwichItem={sandwichItem}
+            onSandwich={setSandwichItem}
+            onSearch={setSearch}
+            onTableSort={onTableSort}
+            getTheme={getTheme}
+            vertical={vertical}
           />
+        )}
 
-          <div className={styles.body}>
-            {selectedView !== SelectedView.FlameGraph && (
-              <FlameGraphTopTableContainer
-                data={dataContainer}
-                onSymbolClick={onSymbolClick}
-                height={selectedView === SelectedView.TopTable ? 600 : undefined}
-                search={search}
-                sandwichItem={sandwichItem}
-                onSandwich={setSandwichItem}
-                onSearch={setSearch}
-                onTableSort={onTableSort}
-                getTheme={getTheme}
-              />
-            )}
-
-            {selectedView !== SelectedView.TopTable && (
-              <FlameGraph
-                getTheme={getTheme}
-                data={dataContainer}
-                rangeMin={rangeMin}
-                rangeMax={rangeMax}
-                search={search}
-                setRangeMin={setRangeMin}
-                setRangeMax={setRangeMax}
-                onItemFocused={(data) => setFocusedItemData(data)}
-                focusedItemData={focusedItemData}
-                textAlign={textAlign}
-                sandwichItem={sandwichItem}
-                onSandwich={(label: string) => {
-                  resetFocus();
-                  setSandwichItem(label);
-                }}
-                onFocusPillClick={resetFocus}
-                onSandwichPillClick={resetSandwich}
-                colorScheme={colorScheme}
-              />
-            )}
-          </div>
-        </div>
-      )}
-    </>
+        {selectedView !== SelectedView.TopTable && (
+          <FlameGraph
+            getTheme={getTheme}
+            data={dataContainer}
+            rangeMin={rangeMin}
+            rangeMax={rangeMax}
+            search={search}
+            setRangeMin={setRangeMin}
+            setRangeMax={setRangeMax}
+            onItemFocused={(data) => setFocusedItemData(data)}
+            focusedItemData={focusedItemData}
+            textAlign={textAlign}
+            sandwichItem={sandwichItem}
+            onSandwich={(label: string) => {
+              resetFocus();
+              setSandwichItem(label);
+            }}
+            onFocusPillClick={resetFocus}
+            onSandwichPillClick={resetSandwich}
+            colorScheme={colorScheme}
+          />
+        )}
+      </div>
+    </div>
   );
 };
 
-function getStyles(theme: GrafanaTheme2) {
+function getStyles(theme: GrafanaTheme2, vertical?: boolean) {
   return {
     container: css({
       label: 'container',
@@ -187,6 +192,7 @@ function getStyles(theme: GrafanaTheme2) {
       display: 'flex',
       flexGrow: 1,
       minHeight: 0,
+      flexDirection: vertical ? 'column-reverse' : 'row',
     }),
   };
 }

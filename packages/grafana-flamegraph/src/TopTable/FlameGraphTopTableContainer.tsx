@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { applyFieldOverrides, DataFrame, DataLinkClickEvent, Field, FieldType, GrafanaTheme2 } from '@grafana/data';
@@ -10,7 +10,6 @@ import {
   TableCustomCellOptions,
   TableFieldOptions,
   TableSortByFieldState,
-  useStyles2,
 } from '@grafana/ui';
 
 import { FlameGraphDataContainer } from '../FlameGraph/dataTransform';
@@ -27,11 +26,44 @@ type Props = {
   onSandwich: (str?: string) => void;
   onTableSort?: (sort: string) => void;
   getTheme: () => GrafanaTheme2;
+  vertical?: boolean;
 };
 
 const FlameGraphTopTableContainer = React.memo(
-  ({ data, onSymbolClick, height, search, onSearch, sandwichItem, onSandwich, onTableSort, getTheme }: Props) => {
-    const styles = useStyles2(getStyles);
+  ({
+    data,
+    onSymbolClick,
+    height,
+    search,
+    onSearch,
+    sandwichItem,
+    onSandwich,
+    onTableSort,
+    getTheme,
+    vertical,
+  }: Props) => {
+    const table = useMemo(() => {
+      // Group the data by label, we show only one row per label and sum the values
+      // TODO: should be by filename + funcName + linenumber?
+      let table: { [key: string]: TableData } = {};
+      for (let i = 0; i < data.data.length; i++) {
+        const value = data.getValue(i);
+        const self = data.getSelf(i);
+        const label = data.getLabel(i);
+        table[label] = table[label] || {};
+        table[label].self = table[label].self ? table[label].self + self : self;
+        table[label].total = table[label].total ? table[label].total + value : value;
+      }
+      return table;
+    }, [data]);
+
+    const rowHeight = 35;
+    // When we use normal layout we size the table to have the same height as the flamegraph to look good side by side.
+    // In vertical layout we don't need that so this is a bit arbitrary. We want some max limit
+    // so we don't show potentially thousands of rows at once which can hinder performance (the table is virtualized
+    // so with some max height it handles it fine)
+    const tableHeight = vertical ? Math.min(Object.keys(table).length * rowHeight, 800) : 0;
+    const styles = getStyles(tableHeight);
 
     const [sort, setSort] = useState<TableSortByFieldState[]>([{ displayName: 'Self', desc: true }]);
 
@@ -44,7 +76,9 @@ const FlameGraphTopTableContainer = React.memo(
             }
 
             const frame = buildTableDataFrame(
-              data,
+              table,
+              data.valueField.config.unit,
+              data.selfField.config.unit,
               width,
               onSymbolClick,
               onSearch,
@@ -77,7 +111,9 @@ const FlameGraphTopTableContainer = React.memo(
 FlameGraphTopTableContainer.displayName = 'FlameGraphTopTableContainer';
 
 function buildTableDataFrame(
-  data: FlameGraphDataContainer,
+  table: { [key: string]: TableData },
+  valueUnit: string | undefined,
+  selfUnit: string | undefined,
   width: number,
   onSymbolClick: (str: string) => void,
   onSearch: (str: string) => void,
@@ -86,18 +122,6 @@ function buildTableDataFrame(
   search?: string,
   sandwichItem?: string
 ): DataFrame {
-  // Group the data by label
-  // TODO: should be by filename + funcName + linenumber?
-  let table: { [key: string]: TableData } = {};
-  for (let i = 0; i < data.data.length; i++) {
-    const value = data.getValue(i);
-    const self = data.getSelf(i);
-    const label = data.getLabel(i);
-    table[label] = table[label] || {};
-    table[label].self = table[label].self ? table[label].self + self : self;
-    table[label].total = table[label].total ? table[label].total + value : value;
-  }
-
   const actionField: Field = createActionField(onSandwich, onSearch, search, sandwichItem);
 
   const symbolField: Field = {
@@ -120,8 +144,8 @@ function buildTableDataFrame(
     },
   };
 
-  const selfField = createNumberField('Self', data.selfField.config.unit);
-  const totalField = createNumberField('Total', data.valueField.config.unit);
+  const selfField = createNumberField('Self', selfUnit);
+  const totalField = createNumberField('Total', valueUnit);
 
   for (let key in table) {
     actionField.values.push(null);
@@ -207,7 +231,7 @@ type ActionCellProps = {
 };
 
 function ActionCell(props: ActionCellProps) {
-  const styles = useStyles2(getStyles);
+  const styles = getStylesActionCell();
   const symbol = props.frame.fields.find((f: Field) => f.name === 'Symbol')?.values[props.rowIndex];
   const isSearched = props.search === symbol;
   const isSandwiched = props.sandwichItem === symbol;
@@ -238,15 +262,24 @@ function ActionCell(props: ActionCellProps) {
   );
 }
 
-const getStyles = () => {
+const getStyles = (height: number) => {
   return {
     topTableContainer: css`
       label: topTableContainer;
       flex-grow: 1;
       flex-basis: 50%;
       overflow: hidden;
+      ${height
+        ? css`
+            min-height: ${height}px;
+          `
+        : ''}
     `,
+  };
+};
 
+const getStylesActionCell = () => {
+  return {
     actionCellWrapper: css`
       label: actionCellWrapper;
       display: flex;

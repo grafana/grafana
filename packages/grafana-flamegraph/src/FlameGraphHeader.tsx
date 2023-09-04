@@ -23,6 +23,7 @@ type Props = {
   colorScheme: ColorScheme;
   onColorSchemeChange: (colorScheme: ColorScheme) => void;
   stickyHeader: boolean;
+  vertical?: boolean;
 
   extraHeaderElements?: React.ReactNode;
 };
@@ -41,6 +42,7 @@ const FlameGraphHeader = ({
   onColorSchemeChange,
   stickyHeader,
   extraHeaderElements,
+  vertical,
 }: Props) => {
   const styles = useStyles2((theme) => getStyles(theme, stickyHeader));
   const [localSearch, setLocalSearch] = useSearchInput(search, setSearch);
@@ -70,7 +72,6 @@ const FlameGraphHeader = ({
             setLocalSearch(v.currentTarget.value);
           }}
           placeholder={'Search..'}
-          width={44}
           suffix={suffix}
         />
       </div>
@@ -101,7 +102,7 @@ const FlameGraphHeader = ({
         />
         <RadioButtonGroup<SelectedView>
           size="sm"
-          options={getViewOptions(containerWidth)}
+          options={getViewOptions(containerWidth, vertical)}
           value={selectedView}
           onChange={setSelectedView}
         />
@@ -153,13 +154,13 @@ const alignOptions: Array<SelectableValue<TextAlign>> = [
   { value: 'right', description: 'Align text right', icon: 'align-right' },
 ];
 
-function getViewOptions(width: number): Array<SelectableValue<SelectedView>> {
+function getViewOptions(width: number, vertical?: boolean): Array<SelectableValue<SelectedView>> {
   let viewOptions: Array<{ value: SelectedView; label: string; description: string }> = [
     { value: SelectedView.TopTable, label: 'Top Table', description: 'Only show top table' },
     { value: SelectedView.FlameGraph, label: 'Flame Graph', description: 'Only show flame graph' },
   ];
 
-  if (width >= MIN_WIDTH_TO_SHOW_BOTH_TOPTABLE_AND_FLAMEGRAPH) {
+  if (width >= MIN_WIDTH_TO_SHOW_BOTH_TOPTABLE_AND_FLAMEGRAPH || vertical) {
     viewOptions.push({
       value: SelectedView.Both,
       label: 'Both',
@@ -201,6 +202,7 @@ const getStyles = (theme: GrafanaTheme2, sticky?: boolean) => ({
   header: css`
     label: header;
     display: flex;
+    flex-wrap: wrap;
     justify-content: space-between;
     width: 100%;
     top: 0;
@@ -210,17 +212,22 @@ const getStyles = (theme: GrafanaTheme2, sticky?: boolean) => ({
           position: sticky;
           padding-bottom: ${theme.spacing(1)};
           padding-top: ${theme.spacing(1)};
+          background: ${theme.colors.background.primary};
         `
       : ''};
   `,
   inputContainer: css`
     label: inputContainer;
     margin-right: 20px;
+    flex-grow: 1;
+    min-width: 150px;
+    max-width: 350px;
   `,
   rightContainer: css`
     label: rightContainer;
     display: flex;
     align-items: flex-start;
+    flex-wrap: wrap;
   `,
   buttonSpacing: css`
     label: buttonSpacing;
