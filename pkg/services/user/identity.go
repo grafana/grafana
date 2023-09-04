@@ -46,11 +46,13 @@ func (u *SignedInUser) NameOrFallback() string {
 // TODO: There's a need to remove this struct since it creates a circular dependency
 
 // DEPRECATED: This function uses `UserDisplayDTO` model which we want to remove
+// this function uses dto to getch the gravatar url
 func (u *SignedInUser) ToUserDisplayDTO() *UserDisplayDTO {
 	return &UserDisplayDTO{
 		ID:    u.UserID,
 		Login: u.Login,
 		Name:  u.Name,
+		// AvatarURL: dtos.GetGravatarUrl(u.GetEmail()),
 	}
 }
 
@@ -199,4 +201,9 @@ func (u *SignedInUser) GetEmail() string {
 // The display name is the name if it is set, otherwise the login or email
 func (u *SignedInUser) GetDisplayName() string {
 	return u.NameOrFallback()
+}
+
+// DEPRECATEAD: Returns the authentication method used
+func (u *SignedInUser) GetAuthenticatedBy() string {
+	return u.AuthenticatedBy
 }
