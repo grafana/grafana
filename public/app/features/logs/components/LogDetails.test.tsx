@@ -82,15 +82,15 @@ describe('LogDetails', () => {
           }
         );
   
-        expect(isFilterLabelActiveMock).toHaveBeenCalledWith('key1', 'label1', mockRow);
+        expect(isFilterLabelActiveMock).toHaveBeenCalledWith('key1', 'label1', mockRow.dataFrame.refId);
         
-        await userEvent.click(screen.getByLabelText('Filter for value'));
+        await userEvent.click(screen.getByLabelText('Filter for value in query A'));
         expect(onClickFilterLabelMock).toHaveBeenCalledTimes(1);
-        expect(onClickFilterLabelMock).toHaveBeenCalledWith('key1', 'label1', mockRow);
+        expect(onClickFilterLabelMock).toHaveBeenCalledWith('key1', 'label1', mockRow.dataFrame.refId);
   
-        await userEvent.click(screen.getByLabelText('Filter out value'));
+        await userEvent.click(screen.getByLabelText('Filter out value in query A'));
         expect(onClickFilterOutLabelMock).toHaveBeenCalledTimes(1);
-        expect(onClickFilterOutLabelMock).toHaveBeenCalledWith('key1', 'label1', mockRow);
+        expect(onClickFilterOutLabelMock).toHaveBeenCalledWith('key1', 'label1', mockRow.dataFrame.refId);
       });
     })
     it('should not render filter controls when the callbacks are not provided', () => {
