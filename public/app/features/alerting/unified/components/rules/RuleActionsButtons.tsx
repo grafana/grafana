@@ -1,13 +1,25 @@
 import { css } from '@emotion/css';
+import { uniqueId } from 'lodash';
 import React, { useState } from 'react';
 import { useLocation } from 'react-router-dom';
+import { useToggle } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
-import { Button, ClipboardButton, ConfirmModal, LinkButton, Tooltip, useStyles2 } from '@grafana/ui';
+import {
+  Button,
+  ClipboardButton,
+  ConfirmModal,
+  Dropdown,
+  Icon,
+  LinkButton,
+  Menu,
+  Tooltip,
+  useStyles2,
+} from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { useDispatch } from 'app/types';
-import { CombinedRule, RulesSource } from 'app/types/unified-alerting';
+import { CombinedRule, RuleIdentifier, RulesSource } from 'app/types/unified-alerting';
 
 import { useIsRuleEditable } from '../../hooks/useIsRuleEditable';
 import { deleteRuleAction } from '../../state/actions';
@@ -16,8 +28,10 @@ import { createShareLink, createViewLink } from '../../utils/misc';
 import * as ruleId from '../../utils/rule-id';
 import { isFederatedRuleGroup, isGrafanaRulerRule } from '../../utils/rules';
 import { createUrl } from '../../utils/url';
+import { GrafanaRuleInspector } from '../rule-editor/GrafanaRuleInspector';
 
-import { CloneRuleButton } from './CloneRuleButton';
+import { RedirectToCloneRule } from './CloneRule';
+
 export const matchesWidth = (width: number) => window.matchMedia(`(max-width: ${width}px)`).matches;
 
 interface Props {
@@ -30,6 +44,12 @@ export const RuleActionsButtons = ({ rule, rulesSource }: Props) => {
   const location = useLocation();
   const notifyApp = useAppNotification();
   const style = useStyles2(getStyles);
+
+  const [redirectToClone, setRedirectToClone] = useState<
+    { identifier: RuleIdentifier; isProvisioned: boolean } | undefined
+  >(undefined);
+  const [showExportDrawer, toggleShowExportDrawer] = useToggle(false);
+
   const { namespace, group, rulerRule } = rule;
   const [ruleToDelete, setRuleToDelete] = useState<CombinedRule>();
 
@@ -38,6 +58,7 @@ export const RuleActionsButtons = ({ rule, rulesSource }: Props) => {
   const isProvisioned = isGrafanaRulerRule(rule.rulerRule) && Boolean(rule.rulerRule.grafana_alert.provenance);
 
   const buttons: JSX.Element[] = [];
+  const moreActions: JSX.Element[] = [];
 
   const isFederated = isFederatedRuleGroup(group);
   const { isEditable, isRemovable } = useIsRuleEditable(rulesSourceName, rulerRule);
@@ -118,28 +139,17 @@ export const RuleActionsButtons = ({ rule, rulesSource }: Props) => {
       );
     }
 
-    buttons.push(
-      <Tooltip placement="top" content="Copy">
-        <CloneRuleButton ruleIdentifier={identifier} isProvisioned={isProvisioned} className={style.button} />
-      </Tooltip>
+    if (isGrafanaRulerRule(rulerRule)) {
+      moreActions.push(<Menu.Item label="Export" icon="download-alt" onClick={toggleShowExportDrawer} />);
+    }
+
+    moreActions.push(
+      <Menu.Item label="Duplicate" icon="copy" onClick={() => setRedirectToClone({ identifier, isProvisioned })} />
     );
   }
 
   if (isRemovable && rulerRule && !isFederated && !isProvisioned) {
-    buttons.push(
-      <Tooltip placement="top" content={'Delete'}>
-        <Button
-          title="Delete"
-          className={style.button}
-          size="sm"
-          type="button"
-          key="delete"
-          variant="secondary"
-          icon="trash-alt"
-          onClick={() => setRuleToDelete(rule)}
-        />
-      </Tooltip>
-    );
+    moreActions.push(<Menu.Item label="Delete" icon="trash-alt" onClick={() => setRuleToDelete(rule)} />);
   }
 
   if (buttons.length) {
@@ -149,6 +159,20 @@ export const RuleActionsButtons = ({ rule, rulesSource }: Props) => {
           {buttons.map((button, index) => (
             <React.Fragment key={index}>{button}</React.Fragment>
           ))}
+          <Dropdown
+            overlay={
+              <Menu>
+                {moreActions.map((action) => (
+                  <React.Fragment key={uniqueId('action_')}>{action}</React.Fragment>
+                ))}
+              </Menu>
+            }
+          >
+            <Button variant="secondary" size="sm">
+              More
+              <Icon name="angle-down" />
+            </Button>
+          </Dropdown>
         </Stack>
         {!!ruleToDelete && (
           <ConfirmModal
@@ -167,6 +191,16 @@ export const RuleActionsButtons = ({ rule, rulesSource }: Props) => {
             icon="exclamation-triangle"
             onConfirm={deleteRule}
             onDismiss={() => setRuleToDelete(undefined)}
+          />
+        )}
+        {showExportDrawer && isGrafanaRulerRule(rule.rulerRule) && (
+          <GrafanaRuleInspector alertUid={rule.rulerRule.grafana_alert.uid} onClose={toggleShowExportDrawer} />
+        )}
+        {redirectToClone && (
+          <RedirectToCloneRule
+            identifier={redirectToClone.identifier}
+            isProvisioned={redirectToClone.isProvisioned}
+            onDismiss={() => setRedirectToClone(undefined)}
           />
         )}
       </>
