@@ -101,7 +101,7 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 10,
+        "h": 6,
         "w": 8,
         "x": 0,
         "y": 2
@@ -418,6 +418,6 @@
   "timezone": "",
   "title": "Templating - Repeating Panels",
   "uid": "templating-repeating-panels",
-  "version": 36,
+  "version": 37,
   "weekStart": ""
 }
