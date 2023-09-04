@@ -23,6 +23,7 @@ import {
   CalculateFieldMode,
   CalculateFieldTransformerOptions,
   getNameFromOptions,
+  IndexOptions,
   ReduceOptions,
 } from '@grafana/data/src/transformations/transformers/calculateField';
 import { FilterPill, HorizontalGroup, Input, LegacyForms, Select, StatsPicker } from '@grafana/ui';
@@ -142,6 +143,16 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
     });
   };
 
+  onToggleRowIndexShowPercentage = () => {
+    const { options } = this.props;
+    this.props.onChange({
+      ...options,
+      index: {
+        showPercentage: !options.index?.showPercentage ?? false
+      }
+    });
+  };
+
   onModeChanged = (value: SelectableValue<CalculateFieldMode>) => {
     const { options, onChange } = this.props;
     const mode = value.value ?? CalculateFieldMode.BinaryOperation;
@@ -196,6 +207,21 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
     const { reduce } = this.props.options;
     this.updateReduceOptions({ ...reduce, reducer });
   };
+
+  renderRowIndex(options?: IndexOptions) {
+    return (
+      <>
+        <div className="gf-form-inline">
+            <LegacyForms.Switch
+              label="Show percentage"
+              labelClass="width-8"
+              checked={!!options?.showPercentage}
+              onChange={this.onToggleRowIndexShowPercentage}
+            />
+        </div>
+      </>
+    )
+  }
 
   renderReduceRow(options?: ReduceOptions) {
     const { names, selected } = this.state;
@@ -353,6 +379,7 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
         </div>
         {mode === CalculateFieldMode.BinaryOperation && this.renderBinaryOperation(options.binary)}
         {mode === CalculateFieldMode.ReduceRow && this.renderReduceRow(options.reduce)}
+        {mode === CalculateFieldMode.Index && this.renderRowIndex(options.index)}
         <div className="gf-form-inline">
           <div className="gf-form">
             <div className="gf-form-label width-8">Alias</div>

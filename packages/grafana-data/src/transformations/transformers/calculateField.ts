@@ -31,6 +31,10 @@ export interface BinaryOptions {
   right: string;
 }
 
+export interface IndexOptions {
+  showPercentage: boolean;
+}
+
 const defaultReduceOptions: ReduceOptions = {
   reducer: ReducerID.sum,
 };
@@ -49,6 +53,7 @@ export interface CalculateFieldTransformerOptions {
   // Only one should be filled
   reduce?: ReduceOptions;
   binary?: BinaryOptions;
+  index?: IndexOptions;
 
   // Remove other fields
   replaceFields?: boolean;
@@ -98,10 +103,18 @@ export const calculateFieldTransformer: DataTransformerInfo<CalculateFieldTransf
           creator = getBinaryCreator(defaults(binaryOptions, defaultBinaryOptions), data);
         } else if (mode === CalculateFieldMode.Index) {
           return data.map((frame) => {
+            const indexArr = [...Array(frame.length).keys()]
+          
+            if (options.index?.showPercentage) {
+              for(let i = 0; i < indexArr.length; i++) {
+                indexArr[i] = indexArr[i] / indexArr.length * 100;
+              }
+            }
+
             const f = {
               name: options.alias ?? 'Row',
               type: FieldType.number,
-              values: [...Array(frame.length).keys()],
+              values: indexArr,
               config: {},
             };
             return {
