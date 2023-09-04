@@ -97,7 +97,7 @@ func (s *AuthService) initKeySet() error {
 			return ErrFailedToParsePemFile
 		}
 
-		var key interface{}
+		var key any
 		switch block.Type {
 		case "PUBLIC KEY":
 			if key, err = x509.ParsePKIXPublicKey(block.Bytes); err != nil {

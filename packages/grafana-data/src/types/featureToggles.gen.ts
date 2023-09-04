@@ -36,7 +36,6 @@ export interface FeatureToggles {
   validateDashboardsOnSave?: boolean;
   autoMigrateOldPanels?: boolean;
   disableAngular?: boolean;
-  prometheusWideSeries?: boolean;
   canvasPanelNesting?: boolean;
   scenes?: boolean;
   disableSecretsCompatibility?: boolean;
@@ -109,6 +108,7 @@ export interface FeatureToggles {
   toggleLabelsInLogsUI?: boolean;
   mlExpressions?: boolean;
   traceQLStreaming?: boolean;
+  metricsSummary?: boolean;
   grafanaAPIServer?: boolean;
   featureToggleAdminPage?: boolean;
   awsAsyncQueryCaching?: boolean;
@@ -120,4 +120,7 @@ export interface FeatureToggles {
   influxdbSqlSupport?: boolean;
   noBasicRole?: boolean;
   alertingNoDataErrorExecution?: boolean;
+  angularDeprecationUI?: boolean;
+  dashgpt?: boolean;
+  reportingRetries?: boolean;
 }

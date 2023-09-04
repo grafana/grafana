@@ -21,7 +21,7 @@ import { getDefaultFormValues } from '../../utils/rule-form';
 
 import 'whatwg-fetch';
 
-import AnnotationsField from './AnnotationsField';
+import AnnotationsStep from './AnnotationsStep';
 
 // To get anything displayed inside the Autosize component we need to mock it
 // Ref https://github.com/bvaughn/react-window/issues/454#issuecomment-646031139
@@ -65,7 +65,7 @@ function FormWrapper({ formValues }: { formValues?: Partial<RuleFormValues> }) {
   return (
     <TestProvider store={store}>
       <FormProvider {...formApi}>
-        <AnnotationsField />
+        <AnnotationsStep />
       </FormProvider>
     </TestProvider>
   );

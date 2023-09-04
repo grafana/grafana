@@ -76,7 +76,7 @@ func TestCanBeInstant(t *testing.T) {
 			name:     "invalid rule that has not last() pointing to range query",
 			expected: false,
 			rule: createMigrateableLokiRule(t, func(r *models.AlertRule) {
-				raw := make(map[string]interface{})
+				raw := make(map[string]any)
 				err := json.Unmarshal(r.Data[1].Model, &raw)
 				require.NoError(t, err)
 				raw["expression"] = "C"
@@ -106,9 +106,9 @@ func TestMigrateLokiQueryToInstant(t *testing.T) {
 
 	require.Equal(t, mirgrated.Data[0].QueryType, original.Data[0].QueryType)
 
-	originalModel := make(map[string]interface{})
+	originalModel := make(map[string]any)
 	require.NoError(t, json.Unmarshal(original.Data[0].Model, &originalModel))
-	migratedModel := make(map[string]interface{})
+	migratedModel := make(map[string]any)
 	require.NoError(t, json.Unmarshal(mirgrated.Data[0].Model, &migratedModel))
 
 	require.Equal(t, migratedModel, originalModel)
@@ -131,16 +131,16 @@ func TestMigrateMultiLokiQueryToInstant(t *testing.T) {
 	require.Equal(t, mirgrated.Data[0].QueryType, original.Data[0].QueryType)
 	require.Equal(t, mirgrated.Data[1].QueryType, original.Data[1].QueryType)
 
-	originalModel := make(map[string]interface{})
+	originalModel := make(map[string]any)
 	require.NoError(t, json.Unmarshal(original.Data[0].Model, &originalModel))
-	migratedModel := make(map[string]interface{})
+	migratedModel := make(map[string]any)
 	require.NoError(t, json.Unmarshal(mirgrated.Data[0].Model, &migratedModel))
 
 	require.Equal(t, migratedModel, originalModel)
 
-	originalModel = make(map[string]interface{})
+	originalModel = make(map[string]any)
 	require.NoError(t, json.Unmarshal(original.Data[1].Model, &originalModel))
-	migratedModel = make(map[string]interface{})
+	migratedModel = make(map[string]any)
 	require.NoError(t, json.Unmarshal(mirgrated.Data[1].Model, &migratedModel))
 
 	require.Equal(t, migratedModel, originalModel)

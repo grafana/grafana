@@ -126,12 +126,6 @@ const afterSelectorCompletions = [
   },
   {
     documentation: 'Operator docs',
-    insertText: '| distinct',
-    label: 'distinct',
-    type: 'PIPE_OPERATION',
-  },
-  {
-    documentation: 'Operator docs',
     insertText: '| drop',
     label: 'drop',
     type: 'PIPE_OPERATION',
@@ -398,32 +392,6 @@ describe('getCompletions', () => {
       },
     ]);
     expect(functionCompletions).toHaveLength(3);
-  });
-
-  test('Returns completion options when the situation is AFTER_DISTINCT', async () => {
-    const situation: Situation = { type: 'AFTER_DISTINCT', logQuery: '{label="value"}' };
-    const completions = await getCompletions(situation, completionProvider);
-
-    expect(completions).toEqual([
-      {
-        insertText: 'extracted',
-        label: 'extracted',
-        triggerOnInsert: false,
-        type: 'LABEL_NAME',
-      },
-      {
-        insertText: 'place',
-        label: 'place',
-        triggerOnInsert: false,
-        type: 'LABEL_NAME',
-      },
-      {
-        insertText: 'source',
-        label: 'source',
-        triggerOnInsert: false,
-        type: 'LABEL_NAME',
-      },
-    ]);
   });
 
   test('Returns completion options when the situation is AFTER_KEEP_AND_DROP', async () => {

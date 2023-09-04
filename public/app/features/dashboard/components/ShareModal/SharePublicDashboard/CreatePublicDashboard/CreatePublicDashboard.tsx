@@ -18,7 +18,6 @@ import { UnsupportedTemplateVariablesAlert } from '../ModalAlerts/UnsupportedTem
 import { dashboardHasTemplateVariables, getUnsupportedDashboardDatasources } from '../SharePublicDashboardUtils';
 
 import { AcknowledgeCheckboxes } from './AcknowledgeCheckboxes';
-import { Description } from './Description';
 
 const selectors = e2eSelectors.pages.ShareDashboardModal.PublicDashboard;
 
@@ -45,14 +44,20 @@ const CreatePublicDashboard = ({ isError }: { isError: boolean }) => {
   };
 
   return (
-    <div>
-      <p className={styles.title}>Welcome to public dashboards public preview!</p>
-      <Description />
+    <div className={styles.container}>
+      <div>
+        <p className={styles.title}>Welcome to public dashboards public preview!</p>
+        <p className={styles.description}>Currently, we don’t support template variables or frontend data sources</p>
+      </div>
+
       {!hasWritePermissions && <NoUpsertPermissionsAlert mode="create" />}
+
       {dashboardHasTemplateVariables(dashboard.getVariables()) && <UnsupportedTemplateVariablesAlert />}
+
       {!!unsupportedDataSources.length && (
         <UnsupportedDataSourcesAlert unsupportedDataSources={unsupportedDataSources.join(', ')} />
       )}
+
       <Form onSubmit={onCreate} validateOn="onChange" maxWidth="none">
         {({
           register,
@@ -78,9 +83,18 @@ const CreatePublicDashboard = ({ isError }: { isError: boolean }) => {
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
+  container: css`
+    display: flex;
+    flex-direction: column;
+    gap: ${theme.spacing(4)};
+  `,
   title: css`
     font-size: ${theme.typography.h4.fontSize};
     margin: ${theme.spacing(0, 0, 2)};
+  `,
+  description: css`
+    color: ${theme.colors.text.secondary};
+    margin-bottom: ${theme.spacing(0)};
   `,
   checkboxes: css`
     margin: ${theme.spacing(0, 0, 4)};

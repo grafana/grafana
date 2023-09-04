@@ -90,8 +90,8 @@ type Service struct {
 	features      *featuremgmt.FeatureManager
 }
 
-func (s *Service) GetUsageStats(_ context.Context) map[string]interface{} {
-	return map[string]interface{}{
+func (s *Service) GetUsageStats(_ context.Context) map[string]any {
+	return map[string]any{
 		"stats.oss.accesscontrol.enabled.count": 1,
 	}
 }
@@ -202,10 +202,6 @@ func (s *Service) DeclareFixedRoles(registrations ...accesscontrol.RoleRegistrat
 
 // RegisterFixedRoles registers all declared roles in RAM
 func (s *Service) RegisterFixedRoles(ctx context.Context) error {
-	// If accesscontrol is disabled no need to register roles
-	if accesscontrol.IsDisabled(s.cfg) {
-		return nil
-	}
 	s.registrations.Range(func(registration accesscontrol.RoleRegistration) bool {
 		for br := range accesscontrol.BuiltInRolesWithParents(registration.Grants) {
 			if basicRole, ok := s.roles[br]; ok {
@@ -234,11 +230,6 @@ func permissionCacheKey(user identity.Requester) (string, error) {
 // DeclarePluginRoles allow the caller to declare, to the service, plugin roles and their assignments
 // to organization roles ("Viewer", "Editor", "Admin") or "Grafana Admin"
 func (s *Service) DeclarePluginRoles(_ context.Context, ID, name string, regs []plugins.RoleRegistration) error {
-	// If accesscontrol is disabled no need to register roles
-	if accesscontrol.IsDisabled(s.cfg) {
-		return nil
-	}
-
 	// Protect behind feature toggle
 	if !s.features.IsEnabled(featuremgmt.FlagAccessControlOnCall) {
 		return nil
@@ -426,11 +417,6 @@ func PermissionMatchesSearchOptions(permission accesscontrol.Permission, searchO
 }
 
 func (s *Service) SaveExternalServiceRole(ctx context.Context, cmd accesscontrol.SaveExternalServiceRoleCommand) error {
-	// If accesscontrol is disabled no need to save the external service role
-	if accesscontrol.IsDisabled(s.cfg) {
-		return nil
-	}
-
 	if !s.features.IsEnabled(featuremgmt.FlagExternalServiceAuth) {
 		s.log.Debug("registering an external service role is behind a feature flag, enable it to use this feature.")
 		return nil
@@ -444,11 +430,6 @@ func (s *Service) SaveExternalServiceRole(ctx context.Context, cmd accesscontrol
 }
 
 func (s *Service) DeleteExternalServiceRole(ctx context.Context, externalServiceID string) error {
-	// If accesscontrol is disabled no need to delete the external service role
-	if accesscontrol.IsDisabled(s.cfg) {
-		return nil
-	}
-
 	if !s.features.IsEnabled(featuremgmt.FlagExternalServiceAuth) {
 		s.log.Debug("deleting an external service role is behind a feature flag, enable it to use this feature.")
 		return nil

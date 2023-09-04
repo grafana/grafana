@@ -155,7 +155,7 @@ func (dc *DatasourceProvisioner) applyChanges(ctx context.Context, configPath st
 	return nil
 }
 
-func makeCreateCorrelationCommand(correlation map[string]interface{}, SourceUID string, OrgId int64) (correlations.CreateCorrelationCommand, error) {
+func makeCreateCorrelationCommand(correlation map[string]any, SourceUID string, OrgId int64) (correlations.CreateCorrelationCommand, error) {
 	var json = jsoniter.ConfigCompatibleWithStandardLibrary
 	createCommand := correlations.CreateCorrelationCommand{
 		SourceUID:   SourceUID,

@@ -373,13 +373,13 @@ func validateDatasourceV1(t *testing.T, dsCfg *configs) {
 	validateDatasourceV0(t, dsCfg)
 	ds := dsCfg.Datasources[0]
 	require.Equal(t, ds.UID, "test_uid")
-	require.Equal(t, []map[string]interface{}{{
+	require.Equal(t, []map[string]any{{
 		"targetUID":   "a target",
 		"label":       "a label",
 		"description": "a description",
-		"config": map[string]interface{}{
+		"config": map[string]any{
 			"field": "fieldName",
-			"target": map[string]interface{}{
+			"target": map[string]any{
 				"target": "test.query",
 			},
 		},
