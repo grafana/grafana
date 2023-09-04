@@ -4,28 +4,33 @@ import (
 	"context"
 	"errors"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/multildap"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 var _ authn.ProxyClient = new(LDAP)
 var _ authn.PasswordClient = new(LDAP)
 
-func ProvideLDAP(cfg *setting.Cfg) *LDAP {
-	return &LDAP{cfg, &ldapServiceImpl{cfg}}
+func ProvideLDAP(cfg *setting.Cfg, userService user.Service, authInfoService login.AuthInfoService) *LDAP {
+	return &LDAP{cfg, log.New("authn.ldap"), &ldapServiceImpl{cfg}, userService, authInfoService}
 }
 
 type LDAP struct {
-	cfg     *setting.Cfg
-	service ldapService
+	cfg             *setting.Cfg
+	logger          log.Logger
+	service         ldapService
+	userService     user.Service
+	authInfoService login.AuthInfoService
 }
 
 func (c *LDAP) AuthenticateProxy(ctx context.Context, r *authn.Request, username string, _ map[string]string) (*authn.Identity, error) {
 	info, err := c.service.User(username)
 	if errors.Is(err, multildap.ErrDidNotFindUser) {
-		return nil, errIdentityNotFound.Errorf("no user found: %w", err)
+		return c.disableUser(ctx, username)
 	}
 
 	if err != nil {
@@ -42,8 +47,7 @@ func (c *LDAP) AuthenticatePassword(ctx context.Context, r *authn.Request, usern
 	})
 
 	if errors.Is(err, multildap.ErrCouldNotFindUser) {
-		// FIXME: disable user in grafana if not found
-		return nil, errIdentityNotFound.Errorf("no user found: %w", err)
+		return c.disableUser(ctx, username)
 	}
 
 	// user was found so set auth module in req metadata
@@ -58,6 +62,39 @@ func (c *LDAP) AuthenticatePassword(ctx context.Context, r *authn.Request, usern
 	}
 
 	return identityFromLDAPInfo(r.OrgID, info, c.cfg.LDAPAllowSignup), nil
+}
+
+// disableUser will disable users if they logged in via LDAP previously
+func (c *LDAP) disableUser(ctx context.Context, username string) (*authn.Identity, error) {
+	c.logger.Debug("user was not found in the LDAP directory tree", "username", username)
+	retErr := errIdentityNotFound.Errorf("no user found: %w", multildap.ErrDidNotFindUser)
+
+	// Retrieve the user from store based on the login
+	dbUser, errGet := c.userService.GetByLogin(ctx, &user.GetUserByLoginQuery{
+		LoginOrEmail: username,
+	})
+	if errors.Is(errGet, user.ErrUserNotFound) {
+		return nil, retErr
+	} else if errGet != nil {
+		return nil, errGet
+	}
+
+	// Check if the user logged in via LDAP
+	query := &login.GetAuthInfoQuery{UserId: dbUser.ID, AuthModule: login.LDAPAuthModule}
+	errGetAuthInfo := c.authInfoService.GetAuthInfo(ctx, query)
+	if errors.Is(errGetAuthInfo, user.ErrUserNotFound) {
+		return nil, retErr
+	} else if errGetAuthInfo != nil {
+		return nil, errGetAuthInfo
+	}
+
+	// Disable the user
+	c.logger.Debug("user was removed from the LDAP directory tree, disabling it", "username", username, "authID", query.Result.AuthId)
+	if errDisable := c.userService.Disable(ctx, &user.DisableUserCommand{UserID: dbUser.ID, IsDisabled: true}); errDisable != nil {
+		return nil, errDisable
+	}
+
+	return nil, retErr
 }
 
 type ldapService interface {
