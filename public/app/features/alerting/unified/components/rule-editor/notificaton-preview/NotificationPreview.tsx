@@ -26,6 +26,8 @@ interface NotificationPreviewProps {
   alertUid?: string;
 }
 
+// TODO the scroll position keeps resetting when we preview
+// this is to be expected because the list of routes dissapears as we start the request but is very annoying
 export const NotificationPreview = ({
   alertQueries,
   customLabels,
@@ -37,9 +39,9 @@ export const NotificationPreview = ({
   const styles = useStyles2(getStyles);
   const disabled = !condition || !folder;
 
-  const { usePreviewMutation } = alertRuleApi;
+  const previewEndpoint = alertRuleApi.endpoints.preview;
 
-  const [trigger, { data = [], isLoading, isUninitialized: previewUninitialized }] = usePreviewMutation();
+  const [trigger, { data = [], isLoading, isUninitialized: previewUninitialized }] = previewEndpoint.useMutation();
 
   // potential instances are the instances that are going to be routed to the notification policies
   // convert data to list of labels: are the representation of the potential instances
@@ -71,6 +73,22 @@ export const NotificationPreview = ({
       <div className={styles.routePreviewHeaderRow}>
         <div className={styles.previewHeader}>
           <Text element="h4">Alert instance routing preview</Text>
+          {isLoading && previewUninitialized && (
+            <Text color="secondary" variant="bodySmall">
+              Loading...
+            </Text>
+          )}
+          {previewUninitialized ? (
+            <Text color="secondary" variant="bodySmall">
+              When you have your folder selected and your query and labels are configured, click &quot;Preview
+              routing&quot; to see the results here.
+            </Text>
+          ) : (
+            <Text color="secondary" variant="bodySmall">
+              Based on the labels added, alert instances are routed to the following notification policies. Expand each
+              notification policy below to view more details.
+            </Text>
+          )}
         </div>
         <div className={styles.button}>
           <Button icon="sync" variant="secondary" type="button" onClick={onPreview} disabled={disabled}>
@@ -78,18 +96,6 @@ export const NotificationPreview = ({
           </Button>
         </div>
       </div>
-      {isLoading && <Text color="secondary">Loading...</Text>}
-      {data?.length === 0 ? (
-        <Text color="secondary" variant="bodySmall">
-          When you have your folder selected and your query and labels are configured, click &quot;Preview routing&quot;
-          to see the results here.
-        </Text>
-      ) : (
-        <Text color="secondary" variant="bodySmall">
-          Based on the labels added, alert instances are routed to the following notification policies. Expand each
-          notification policy below to view more details.
-        </Text>
-      )}
       {!isLoading && !previewUninitialized && potentialInstances.length > 0 && (
         <Suspense fallback={<LoadingPlaceholder text="Loading preview..." />}>
           {alertManagerSourceNamesAndImage.map((alertManagerSource) => (
@@ -118,7 +124,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: flex;
     flex-direction: row;
     justify-content: space-between;
-    align-items: center;
+    align-items: flex-start;
   `,
   collapseLabel: css`
     flex: 1;

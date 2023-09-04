@@ -8,12 +8,12 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
 import { config, logInfo } from '@grafana/runtime';
 import {
-  AutoSizeInput,
   Button,
   ConfirmModal,
   CustomScrollbar,
   Field,
   HorizontalGroup,
+  Input,
   Spinner,
   Text,
   useStyles2,
@@ -66,25 +66,28 @@ const AlertRuleNameInput = () => {
   } = useFormContext<RuleFormValues & { location?: string }>();
 
   const ruleFormType = watch('type');
+  const entityName = ruleFormType === RuleFormType.cloudRecording ? 'recording rule' : 'alert rule';
+
   return (
     <RuleEditorSection
       stepNo={1}
-      title="Enter alert rule name"
+      title={`Enter ${entityName} name`}
       description={
         <Text variant="bodySmall" color="secondary">
-          Enter an alert rule name to identify your alert.
+          {/* sigh language rules – we should use translations ideally but for now we deal with "a" and "an" */}
+          Enter {entityName === 'alert rule' ? 'an' : 'a'} {entityName} name to identify your alert.
         </Text>
       }
     >
       <Field label="Name" error={errors?.name?.message} invalid={!!errors.name?.message}>
-        <AutoSizeInput
+        <Input
           id="name"
-          minWidth={30}
+          width={35}
           {...register('name', {
-            required: { value: true, message: 'Must enter an alert name' },
+            required: { value: true, message: 'Must enter a name' },
             pattern: ruleFormType === RuleFormType.cloudRecording ? recordingRuleNameValidationPattern : undefined,
           })}
-          placeholder="Give your alert rule a name."
+          placeholder={`Give your ${entityName} rule a name.`}
         />
       </Field>
     </RuleEditorSection>

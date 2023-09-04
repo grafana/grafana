@@ -5,6 +5,7 @@ import { NavModelItem } from '@grafana/data';
 import { withErrorBoundary } from '@grafana/ui';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { useDispatch } from 'app/types';
+import { RuleIdentifier } from 'app/types/unified-alerting';
 
 import { AlertWarning } from './AlertWarning';
 import { CloneRuleEditor } from './CloneRuleEditor';
@@ -16,27 +17,37 @@ import { fetchRulesSourceBuildInfoAction } from './state/actions';
 import { useRulesAccess } from './utils/accessControlHooks';
 import * as ruleId from './utils/rule-id';
 
-type RuleEditorProps = GrafanaRouteComponentProps<{ id?: string }>;
+type RuleEditorProps = GrafanaRouteComponentProps<{ id?: string; type?: 'recording' | 'alerting' }>;
 
 const defaultPageNav: Partial<NavModelItem> = {
   icon: 'bell',
   id: 'alert-rule-view',
 };
 
-const getPageNav = (state: 'edit' | 'add') => {
-  if (state === 'edit') {
+// sadly we only get the "type" when a new rule is being created, when editing an existing recording rule we can't actually know it from the URL
+const getPageNav = (identifier?: RuleIdentifier, type?: 'recording' | 'alerting') => {
+  if (type === 'recording') {
+    if (identifier) {
+      // this branch should never trigger actually, the type param isn't used when editing rules
+      return { ...defaultPageNav, id: 'alert-rule-edit', text: 'Edit recording rule' };
+    } else {
+      return { ...defaultPageNav, id: 'alert-rule-add', text: 'New recording rule' };
+    }
+  }
+
+  if (identifier) {
+    // keep this one ambiguous, don't mentiond a specific alert type here
     return { ...defaultPageNav, id: 'alert-rule-edit', text: 'Edit rule' };
-  } else if (state === 'add') {
+  } else {
     return { ...defaultPageNav, id: 'alert-rule-add', text: 'New alert rule' };
   }
-  return undefined;
 };
 
 const RuleEditor = ({ match }: RuleEditorProps) => {
   const dispatch = useDispatch();
   const [searchParams] = useURLSearchParams();
 
-  const { id } = match.params;
+  const { id, type } = match.params;
   const identifier = ruleId.tryParse(id, true);
 
   const copyFromId = searchParams.get('copyFrom') ?? undefined;
@@ -75,7 +86,7 @@ const RuleEditor = ({ match }: RuleEditorProps) => {
   }, [canCreateCloudRules, canCreateGrafanaRules, canEditRules, copyFromIdentifier, id, identifier, loading]);
 
   return (
-    <AlertingPageWrapper isLoading={loading} pageId="alert-list" pageNav={getPageNav(identifier ? 'edit' : 'add')}>
+    <AlertingPageWrapper isLoading={loading} pageId="alert-list" pageNav={getPageNav(identifier, type)}>
       {getContent()}
     </AlertingPageWrapper>
   );
