@@ -230,7 +230,7 @@
         "widen": "Widen pane"
       }
     },
-    "add-to-darshboard": "Add to dashboard"
+    "add-to-dashboard": "Add to dashboard"
   },
   "folder-picker": {
     "loading": "Loading folders..."
