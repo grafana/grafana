@@ -65,11 +65,11 @@ Define a query to get the data you want to measure and a condition that needs to
 1. Add one or more [expressions][expression-queries].
    a. For each expression, select either **Classic condition** to create a single alert rule, or choose from the **Math**, **Reduce**, and **Resample** options to generate separate alert for each series.
 
-   **Note:** When using Prometheus, you  can use an instant vector and built-in functions, so you don't need to add additional expressions.
+   **Note:** When using Prometheus, you can use an instant vector and built-in functions, so you don't need to add additional expressions.
 
    b. Click **Preview** to verify that the expression is successful.
 
-2. Click **Set as alert condition** on the query or expression you want to set as your alert condition.
+1. Click **Set as alert condition** on the query or expression you want to set as your alert condition.
 
 ## Set alert evaluation behavior
 
