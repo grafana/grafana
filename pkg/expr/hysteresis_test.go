@@ -2,7 +2,6 @@ package expr
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"testing"
 	"time"
@@ -13,51 +12,6 @@ import (
 	"github.com/grafana/grafana/pkg/expr/mathexp"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 )
-
-func TestHysteresisUnmarshall(t *testing.T) {
-	t.Run("success", func(t *testing.T) {
-		query := map[string]interface{}{}
-		require.NoError(t, json.Unmarshal([]byte(`{
-        "refId": "C",
-        "type": "hysteresis",
-		"expression": "B",
-        "loadCondition": {
-            "evaluator": {
-                "params": [
-                    100
-                ],
-                "type": "gt"
-            }
-        },
-        "unloadCondition": {
-            "evaluator": {
-                "params": [
-                    30
-                ],
-                "type": "gt"
-            }
-        }
-    }`), &query))
-
-		reader := &fakeLoadedMetricsReader{}
-		cmd, err := UnmarshalHysteresisCommand(&rawNode{
-			RefID: "C",
-			Query: query,
-		}, reader)
-
-		require.NoError(t, err)
-		require.Equal(t, "C", cmd.RefID)
-		require.Equal(t, "B", cmd.ReferenceVar)
-		require.Equal(t, []string{"B"}, cmd.NeedsVars())
-		require.Equal(t, []string{"B"}, cmd.LoadingThresholdFunc.NeedsVars())
-		require.Equal(t, "gt", cmd.LoadingThresholdFunc.ThresholdFunc)
-		require.Equal(t, []float64{100.0}, cmd.LoadingThresholdFunc.Conditions)
-		require.Equal(t, []string{"B"}, cmd.UnloadingThresholdFunc.NeedsVars())
-		require.Equal(t, "gt", cmd.UnloadingThresholdFunc.ThresholdFunc)
-		require.Equal(t, []float64{30.0}, cmd.UnloadingThresholdFunc.Conditions)
-		require.Equal(t, reader, cmd.LoadedReader)
-	})
-}
 
 func TestHysteresisExecute(t *testing.T) {
 	number := func(label string, value float64) mathexp.Number {

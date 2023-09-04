@@ -82,7 +82,10 @@ func TestUnmarshalThresholdCommand(t *testing.T) {
 		query         string
 		shouldError   bool
 		expectedError string
+		assert        func(*testing.T, Command)
 	}
+
+	reader := &fakeLoadedMetricsReader{}
 
 	cases := []testCase{
 		{
@@ -97,7 +100,13 @@ func TestUnmarshalThresholdCommand(t *testing.T) {
 					}
 				}]
 			}`,
-			shouldError: false,
+			assert: func(t *testing.T, command Command) {
+				require.IsType(t, &ThresholdCommand{}, command)
+				cmd := command.(*ThresholdCommand)
+				require.Equal(t, []string{"A"}, cmd.NeedsVars())
+				require.Equal(t, "gt", cmd.ThresholdFunc)
+				require.Equal(t, []float64{20.0, 80.0}, cmd.Conditions)
+			},
 		},
 		{
 			description: "unmarshal with missing conditions should error",
@@ -107,17 +116,7 @@ func TestUnmarshalThresholdCommand(t *testing.T) {
 				"conditions": []
 			}`,
 			shouldError:   true,
-			expectedError: "requires exactly one condition",
-		},
-		{
-			description: "unmarshal with missing conditions should error",
-			query: `{
-				"expression" : "A",
-				"type": "threshold",
-				"conditions": []
-			}`,
-			shouldError:   true,
-			expectedError: "requires exactly one condition",
+			expectedError: "threshold expression requires exactly one condition",
 		},
 		{
 			description: "unmarshal with unsupported threshold function",
@@ -144,34 +143,70 @@ func TestUnmarshalThresholdCommand(t *testing.T) {
 			shouldError:   true,
 			expectedError: "expected threshold variable to be a string",
 		},
+		{
+			description: "unmarshal as hysteresis command if two conditions",
+			query: `{
+				"expression": "B",
+                "conditions": [{
+                    "evaluator": {
+                        "params": [
+                            100
+                        ],
+                        "type": "gt"
+                    },
+					"unloadEvaluator": {
+                        "params": [
+                            30
+                        ],
+                        "type": "gt"
+                    }
+                }]
+            }`,
+			assert: func(t *testing.T, c Command) {
+				require.IsType(t, &HysteresisCommand{}, c)
+				cmd := c.(*HysteresisCommand)
+				require.Equal(t, []string{"B"}, cmd.NeedsVars())
+				require.Equal(t, []string{"B"}, cmd.LoadingThresholdFunc.NeedsVars())
+				require.Equal(t, "gt", cmd.LoadingThresholdFunc.ThresholdFunc)
+				require.Equal(t, []float64{100.0}, cmd.LoadingThresholdFunc.Conditions)
+				require.Equal(t, []string{"B"}, cmd.UnloadingThresholdFunc.NeedsVars())
+				require.Equal(t, "gt", cmd.UnloadingThresholdFunc.ThresholdFunc)
+				require.Equal(t, []float64{30.0}, cmd.UnloadingThresholdFunc.Conditions)
+				require.Equal(t, reader, cmd.LoadedReader)
+			},
+		},
 	}
 
 	for _, tc := range cases {
-		q := []byte(tc.query)
+		t.Run(tc.description, func(t *testing.T) {
+			q := []byte(tc.query)
+			var qmap = make(map[string]any)
+			require.NoError(t, json.Unmarshal(q, &qmap))
 
-		var qmap = make(map[string]any)
-		require.NoError(t, json.Unmarshal(q, &qmap))
+			cmd, err := UnmarshalThresholdCommand(&rawNode{
+				RefID:      "",
+				Query:      qmap,
+				QueryType:  "",
+				DataSource: nil,
+			}, reader)
 
-		cmd, err := UnmarshalThresholdCommand(&rawNode{
-			RefID:      "",
-			Query:      qmap,
-			QueryType:  "",
-			DataSource: nil,
+			if tc.shouldError {
+				require.Nil(t, cmd)
+				require.NotNil(t, err)
+				require.Contains(t, err.Error(), tc.expectedError)
+			} else {
+				require.Nil(t, err)
+				require.NotNil(t, cmd)
+				if tc.assert != nil {
+					tc.assert(t, cmd)
+				}
+			}
 		})
-
-		if tc.shouldError {
-			require.Nil(t, cmd)
-			require.NotNil(t, err)
-			require.Contains(t, err.Error(), tc.expectedError)
-		} else {
-			require.Nil(t, err)
-			require.NotNil(t, cmd)
-		}
 	}
 }
 
 func TestThresholdCommandVars(t *testing.T) {
-	cmd, err := NewThresholdCommand("B", "A", "is_above", []float64{})
+	cmd, err := NewThresholdCommand("B", "A", "lt", []float64{1.0})
 	require.Nil(t, err)
 	require.Equal(t, cmd.NeedsVars(), []string{"A"})
 }

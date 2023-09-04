@@ -120,9 +120,7 @@ func buildCMDNode(dp *simple.DirectedGraph, rn *rawNode, r LoadedMetricsReader) 
 	case TypeClassicConditions:
 		node.Command, err = classic.UnmarshalConditionsCmd(rn.Query, rn.RefID)
 	case TypeThreshold:
-		node.Command, err = UnmarshalThresholdCommand(rn)
-	case TypeHysteresis:
-		node.Command, err = UnmarshalHysteresisCommand(rn, r)
+		node.Command, err = UnmarshalThresholdCommand(rn, r)
 	default:
 		return nil, fmt.Errorf("expression command type '%v' in expression '%v' not implemented", commandType, rn.RefID)
 	}

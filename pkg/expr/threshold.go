@@ -39,6 +39,8 @@ func NewThresholdCommand(refID, referenceVar, thresholdFunc string, conditions [
 		if len(conditions) < 1 {
 			return nil, fmt.Errorf("incorrect number of arguments: got %d but need 1", len(conditions))
 		}
+	default:
+		return nil, fmt.Errorf("expected threshold function to be one of [%s], got %s", strings.Join(supportedThresholdFuncs, ", "), thresholdFunc)
 	}
 
 	return &ThresholdCommand{
@@ -50,7 +52,8 @@ func NewThresholdCommand(refID, referenceVar, thresholdFunc string, conditions [
 }
 
 type ThresholdConditionJSON struct {
-	Evaluator ConditionEvalJSON `json:"evaluator"`
+	Evaluator       ConditionEvalJSON  `json:"evaluator"`
+	UnloadEvaluator *ConditionEvalJSON `json:"unloadEvaluator"`
 }
 
 type ConditionEvalJSON struct {
@@ -59,7 +62,7 @@ type ConditionEvalJSON struct {
 }
 
 // UnmarshalResampleCommand creates a ResampleCMD from Grafana's frontend query.
-func UnmarshalThresholdCommand(rn *rawNode) (*ThresholdCommand, error) {
+func UnmarshalThresholdCommand(rn *rawNode, r LoadedMetricsReader) (Command, error) {
 	rawQuery := rn.Query
 
 	rawExpression, ok := rawQuery["expression"]
@@ -80,19 +83,24 @@ func UnmarshalThresholdCommand(rn *rawNode) (*ThresholdCommand, error) {
 		return nil, fmt.Errorf("failed to unmarshal remarshaled threshold expression body: %w", err)
 	}
 
-	for _, condition := range conditions {
-		if !IsSupportedThresholdFunc(condition.Evaluator.Type) {
-			return nil, fmt.Errorf("expected threshold function to be one of %s, got %s", strings.Join(supportedThresholdFuncs, ", "), condition.Evaluator.Type)
-		}
-	}
-
 	// we only support one condition for now, we might want to turn this in to "OR" expressions later
 	if len(conditions) != 1 {
 		return nil, fmt.Errorf("threshold expression requires exactly one condition")
 	}
 	firstCondition := conditions[0]
 
-	return NewThresholdCommand(rn.RefID, referenceVar, firstCondition.Evaluator.Type, firstCondition.Evaluator.Params)
+	threshold, err := NewThresholdCommand(rn.RefID, referenceVar, firstCondition.Evaluator.Type, firstCondition.Evaluator.Params)
+	if err != nil {
+		return nil, fmt.Errorf("invalid condition: %w", err)
+	}
+	if firstCondition.UnloadEvaluator != nil {
+		unloading, err := NewThresholdCommand(rn.RefID, referenceVar, firstCondition.UnloadEvaluator.Type, firstCondition.UnloadEvaluator.Params)
+		if err != nil {
+			return nil, fmt.Errorf("invalid unloadCondition: %w", err)
+		}
+		return NewHysteresisCommand(rn.RefID, referenceVar, *threshold, *unloading, r)
+	}
+	return threshold, nil
 }
 
 // NeedsVars returns the variable names (refIds) that are dependencies

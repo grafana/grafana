@@ -2,9 +2,7 @@ package expr
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
@@ -19,10 +17,10 @@ type LoadedMetricsReader interface {
 	Read(ctx context.Context) (map[data.Fingerprint]struct{}, error)
 }
 
-// HysteresisCommand implements a two-level threshold command expression that determines whether a metric is above threshold:
-// - one threshold, called "loading", is used when the metric is determined as not loaded.
-// - another threshold, called "unloading", is used when the metric is determined as loaded.
-// To determine whether a metric is loaded, the command uses LoadedMetricsReader that provides a set of fingerprints of labels of metrics that should be considered as loaded.
+// HysteresisCommand is a special case of ThresholdCommand that encapsulates two thresholds that are applied depending on the results of the previous evaluations provided via LoadedMetricsReader:
+// - first threshold - "loading", is used when the metric is determined as not loaded, i.e. it does not exist in the data provided by the reader.
+// - second threshold - "unloading", is used when the metric is determined as loaded.
+// To determine whether a metric is loaded, the command calls LoadedMetricsReader that provides a set of data.Fingerprint of the metrics that were loaded during the previous evaluation.
 // The result of the execution of the command is the same as ThresholdCommand: 0 or 1 for each metric.
 type HysteresisCommand struct {
 	RefID                  string
@@ -95,60 +93,12 @@ func (h *HysteresisCommand) Execute(ctx context.Context, now time.Time, vars mat
 	return mathexp.Results{Values: append(loadingResults.Values, unloadingResults.Values...)}, nil
 }
 
-func NewHysteresisCommand(refID string, referenceVar string, loadCondition ThresholdCommand, unloadCondition ThresholdCommand, r LoadedMetricsReader) *HysteresisCommand {
+func NewHysteresisCommand(refID string, referenceVar string, loadCondition ThresholdCommand, unloadCondition ThresholdCommand, r LoadedMetricsReader) (*HysteresisCommand, error) {
 	return &HysteresisCommand{
 		RefID:                  refID,
 		LoadingThresholdFunc:   loadCondition,
 		UnloadingThresholdFunc: unloadCondition,
 		ReferenceVar:           referenceVar,
 		LoadedReader:           r,
-	}
-}
-
-func UnmarshalHysteresisCommand(rn *rawNode, r LoadedMetricsReader) (*HysteresisCommand, error) {
-	rawQuery := rn.Query
-
-	rawExpression, ok := rawQuery["expression"]
-	if !ok {
-		return nil, fmt.Errorf("no variable specified to reference for refId %v", rn.RefID)
-	}
-	referenceVar, ok := rawExpression.(string)
-	if !ok {
-		return nil, fmt.Errorf("expected threshold variable to be a string, got %T for refId %v", rawExpression, rn.RefID)
-	}
-
-	loadConditionRaw, err := json.Marshal(rawQuery["loadCondition"])
-	if err != nil {
-		return nil, fmt.Errorf("failed to remarshal threshold expression body: %w", err)
-	}
-	var loadCondition ThresholdConditionJSON
-	if err = json.Unmarshal(loadConditionRaw, &loadCondition); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal remarshaled load condition expression body: %w", err)
-	}
-	if !IsSupportedThresholdFunc(loadCondition.Evaluator.Type) {
-		return nil, fmt.Errorf("expected threshold function for load condition to be one of %s, got %s", strings.Join(supportedThresholdFuncs, ", "), loadCondition.Evaluator.Type)
-	}
-
-	unloadConditionRaw, err := json.Marshal(rawQuery["unloadCondition"])
-	if err != nil {
-		return nil, fmt.Errorf("failed to remarshal threshold expression body: %w", err)
-	}
-	var unloadCondition ThresholdConditionJSON
-	if err = json.Unmarshal(unloadConditionRaw, &unloadCondition); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal remarshaled load condition expression body: %w", err)
-	}
-	if !IsSupportedThresholdFunc(unloadCondition.Evaluator.Type) {
-		return nil, fmt.Errorf("expected threshold function for unload condition to be one of %s, got %s", strings.Join(supportedThresholdFuncs, ", "), loadCondition.Evaluator.Type)
-	}
-
-	loadThresholdCmd, err := NewThresholdCommand(rn.RefID, referenceVar, loadCondition.Evaluator.Type, loadCondition.Evaluator.Params)
-	if err != nil {
-		return nil, fmt.Errorf("failed to initialize load condition command: %w", err)
-	}
-
-	unloadConditionCmd, err := NewThresholdCommand(rn.RefID, referenceVar, unloadCondition.Evaluator.Type, unloadCondition.Evaluator.Params)
-	if err != nil {
-		return nil, fmt.Errorf("failed to initialize unload condition command: %w", err)
-	}
-	return NewHysteresisCommand(rn.RefID, referenceVar, *loadThresholdCmd, *unloadConditionCmd, r), nil
+	}, nil
 }
