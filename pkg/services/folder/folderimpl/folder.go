@@ -208,35 +208,7 @@ func (s *Service) GetChildren(ctx context.Context, cmd *folder.GetChildrenQuery)
 	}
 
 	if cmd.UID == "" {
-		availableNonRootFoldersDedup := make([]*folder.Folder, 0)
-		for _, f := range availableNonRootFolders {
-			isSubfolder := slices.ContainsFunc(availableNonRootFolders, func(folder *folder.Folder) bool {
-				return f.ParentUID == folder.UID
-			})
-
-			if !isSubfolder {
-				parents, err := s.GetParents(ctx, folder.GetParentsQuery{UID: f.UID, OrgID: f.OrgID})
-				if err != nil {
-					s.log.Error("failed to fetch folder parents", "uid", f.UID, "error", err)
-					continue
-				}
-
-				for _, parent := range parents {
-					contains := slices.ContainsFunc(availableNonRootFolders, func(f *folder.Folder) bool {
-						return f.UID == parent.UID
-					})
-					if contains {
-						isSubfolder = true
-						break
-					}
-				}
-			}
-			if !isSubfolder {
-				availableNonRootFoldersDedup = append(availableNonRootFoldersDedup, f)
-			}
-		}
-
-		children = append(children, availableNonRootFoldersDedup...)
+		children = append(children, availableNonRootFolders...)
 	}
 
 	filtered := make([]*folder.Folder, 0, len(children))
@@ -271,6 +243,10 @@ func (s *Service) GetChildren(ctx context.Context, cmd *folder.GetChildrenQuery)
 		}
 	}
 
+	if cmd.UID == "" {
+		filtered = s.deduplicateAvailableFolders(ctx, filtered)
+	}
+
 	return filtered, nil
 }
 
@@ -300,6 +276,44 @@ func (s *Service) getAvailableNonRootFolders(ctx context.Context, orgID int64, u
 	}
 
 	return nonRootFolders, nil
+}
+
+func (s *Service) deduplicateAvailableFolders(ctx context.Context, folders []*folder.Folder) []*folder.Folder {
+	foldersDedup := make([]*folder.Folder, 0)
+
+	for _, f := range folders {
+		if f.ParentUID == "" {
+			foldersDedup = append(foldersDedup, f)
+			continue
+		}
+
+		isSubfolder := slices.ContainsFunc(folders, func(folder *folder.Folder) bool {
+			return f.ParentUID == folder.UID
+		})
+
+		if !isSubfolder {
+			parents, err := s.GetParents(ctx, folder.GetParentsQuery{UID: f.UID, OrgID: f.OrgID})
+			if err != nil {
+				s.log.Error("failed to fetch folder parents", "uid", f.UID, "error", err)
+				continue
+			}
+
+			for _, parent := range parents {
+				contains := slices.ContainsFunc(folders, func(f *folder.Folder) bool {
+					return f.UID == parent.UID
+				})
+				if contains {
+					isSubfolder = true
+					break
+				}
+			}
+		}
+		if !isSubfolder {
+			foldersDedup = append(foldersDedup, f)
+		}
+	}
+
+	return foldersDedup
 }
 
 func (s *Service) GetParents(ctx context.Context, q folder.GetParentsQuery) ([]*folder.Folder, error) {
