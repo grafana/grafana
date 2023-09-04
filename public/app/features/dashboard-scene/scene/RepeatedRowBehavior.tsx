@@ -87,13 +87,20 @@ export class RepeatedRowBehavior extends SceneObjectBase<RepeatedRowBehaviorStat
     const rowToRepeat = this.parent as SceneGridRow;
     const { values, texts } = this.getVariableValues(variable);
     const rows: SceneGridRow[] = [];
+    const rowContentHeight = getRowContentHeight(this.state.sources);
+    console.log('rowContentHeight', rowContentHeight);
 
     // Loop through variable values and create repeates
     for (let index = 0; index < values.length; index++) {
       const children: SceneGridItemLike[] = [];
 
       for (const source of this.state.sources) {
-        const itemClone = source.clone({ key: `${source.state.key}-clone-${index}` });
+        const itemClone = source.clone({
+          key: `${source.state.key}-clone-${index}`,
+          y: source.state.y + rowContentHeight * index + index,
+        });
+        console.log('itemClone.y', itemClone.state.y);
+
         children.push(itemClone);
       }
 
@@ -105,7 +112,9 @@ export class RepeatedRowBehavior extends SceneObjectBase<RepeatedRowBehaviorStat
           ],
         }),
         children,
+        y: rowToRepeat.state.y + rowContentHeight * index + index,
       });
+      console.log('rowClone.y', rowClone.state.y);
 
       rows.push(rowClone);
     }
@@ -136,4 +145,20 @@ export class RepeatedRowBehavior extends SceneObjectBase<RepeatedRowBehaviorStat
       texts: Array.isArray(text) ? text : [text],
     };
   }
+}
+
+function getRowContentHeight(panels: SceneGridItemLike[]): number {
+  let maxY = 0;
+  let minY = Number.MAX_VALUE;
+
+  for (const panel of panels) {
+    if (panel.state.y + panel.state.height > maxY) {
+      maxY = panel.state.y + panel.state.height;
+    }
+    if (panel.state.y < minY) {
+      minY = panel.state.y;
+    }
+  }
+
+  return maxY - minY;
 }

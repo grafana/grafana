@@ -118,15 +118,16 @@ export function getRepeatingRowsDemo(): DashboardScene {
         new TestVariable({
           name: 'server',
           query: 'AB',
-          value: 'server',
-          text: '',
+          value: ['A', 'B', 'C'],
+          text: ['A', 'B', 'C'],
           delayMs: 2000,
           isMulti: true,
           includeAll: true,
           refresh: VariableRefresh.onTimeRangeChanged,
           optionsToReturn: [
             { label: 'A', value: 'A' },
-            { label: 'B', value: 'C' },
+            { label: 'B', value: 'B' },
+            { label: 'C', value: 'C' },
           ],
           options: [],
           $behaviors: [changeVariable],
@@ -138,7 +139,7 @@ export function getRepeatingRowsDemo(): DashboardScene {
       isResizable: true,
       children: [
         new SceneGridRow({
-          title: 'Row A',
+          title: 'Row $server',
           key: 'Row A',
           isCollapsed: false,
           y: 0,
