@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/login/logintest"
 	"github.com/grafana/grafana/pkg/services/multildap"
+	"github.com/grafana/grafana/pkg/services/user/usertest"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -19,7 +20,8 @@ var errTest = errors.New("test error")
 
 func TestLoginUsingLDAP(t *testing.T) {
 	LDAPLoginScenario(t, "When LDAP enabled and no server configured", func(sc *LDAPLoginScenarioContext) {
-		setting.LDAPAuthEnabled = true
+		cfg := setting.NewCfg()
+		cfg.LDAPAuthEnabled = true
 
 		sc.withLoginResult(false)
 		getLDAPConfig = func(*setting.Cfg) (*ldap.Config, error) {
@@ -31,7 +33,9 @@ func TestLoginUsingLDAP(t *testing.T) {
 		}
 
 		loginService := &logintest.LoginServiceFake{}
-		enabled, err := loginUsingLDAP(context.Background(), sc.loginUserQuery, loginService)
+		userService := &usertest.FakeUserService{}
+		authInfoService := &logintest.AuthInfoServiceFake{}
+		enabled, err := loginUsingLDAP(context.Background(), sc.loginUserQuery, loginService, userService, authInfoService, cfg)
 		require.EqualError(t, err, errTest.Error())
 
 		assert.True(t, enabled)
@@ -39,11 +43,14 @@ func TestLoginUsingLDAP(t *testing.T) {
 	})
 
 	LDAPLoginScenario(t, "When LDAP disabled", func(sc *LDAPLoginScenarioContext) {
-		setting.LDAPAuthEnabled = false
+		cfg := setting.NewCfg()
+		cfg.LDAPAuthEnabled = false
 
 		sc.withLoginResult(false)
 		loginService := &logintest.LoginServiceFake{}
-		enabled, err := loginUsingLDAP(context.Background(), sc.loginUserQuery, loginService)
+		userService := &usertest.FakeUserService{}
+		authInfoService := &logintest.AuthInfoServiceFake{}
+		enabled, err := loginUsingLDAP(context.Background(), sc.loginUserQuery, loginService, userService, authInfoService, cfg)
 		require.NoError(t, err)
 
 		assert.False(t, enabled)

@@ -38,7 +38,7 @@ func TestAuthenticateUser(t *testing.T) {
 		sc.loginUserQuery.Cfg.DisableLogin = true
 
 		loginAttemptService := &loginattempttest.MockLoginAttemptService{ExpectedValid: true}
-		a := AuthenticatorService{loginAttemptService: loginAttemptService, loginService: &logintest.LoginServiceFake{}}
+		a := AuthenticatorService{loginAttemptService: loginAttemptService, loginService: &logintest.LoginServiceFake{}, cfg: setting.NewCfg()}
 		err := a.AuthenticateUser(context.Background(), sc.loginUserQuery)
 
 		require.EqualError(t, err, ErrNoAuthProvider.Error())
@@ -195,7 +195,7 @@ func mockLoginUsingGrafanaDB(err error, sc *authScenarioContext) {
 }
 
 func mockLoginUsingLDAP(enabled bool, err error, sc *authScenarioContext) {
-	loginUsingLDAP = func(ctx context.Context, query *login.LoginUserQuery, _ login.Service) (bool, error) {
+	loginUsingLDAP = func(ctx context.Context, query *login.LoginUserQuery, _ login.Service, _ user.Service, _ login.AuthInfoService, _ *setting.Cfg) (bool, error) {
 		sc.ldapLoginWasCalled = true
 		return enabled, err
 	}

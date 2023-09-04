@@ -86,7 +86,7 @@ func ProvideService(
 	var proxyClients []authn.ProxyClient
 	var passwordClients []authn.PasswordClient
 	if s.cfg.LDAPAuthEnabled {
-		ldap := clients.ProvideLDAP(cfg)
+		ldap := clients.ProvideLDAP(cfg, userService, authInfoService)
 		proxyClients = append(proxyClients, ldap)
 		passwordClients = append(passwordClients, ldap)
 	}
