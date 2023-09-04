@@ -9,7 +9,7 @@ import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { removePluginFromNavTree } from 'app/core/reducers/navBarTree';
 import { useDispatch } from 'app/types';
 
-import { useInstallStatus, useUninstallStatus, useInstall, useUninstall, useUnsetInstall } from '../../state/hooks';
+import { useInstallStatus, useUninstallStatus, useInstall, useUninstall, useUnsetInstall, useManagedInstall } from '../../state/hooks';
 import { trackPluginInstalled, trackPluginUninstalled } from '../../tracking';
 import { CatalogPlugin, PluginStatus, PluginTabIds, Version } from '../../types';
 
@@ -18,6 +18,7 @@ type InstallControlsButtonProps = {
   pluginStatus: PluginStatus;
   latestCompatibleVersion?: Version;
   setNeedReload?: (needReload: boolean) => void;
+  isExternallyManaged?: boolean;
 };
 
 export function InstallControlsButton({
@@ -25,6 +26,7 @@ export function InstallControlsButton({
   pluginStatus,
   latestCompatibleVersion,
   setNeedReload,
+  isExternallyManaged = false,
 }: InstallControlsButtonProps) {
   const dispatch = useDispatch();
   const [queryParams] = useQueryParams();
@@ -32,6 +34,7 @@ export function InstallControlsButton({
   const { isInstalling, error: errorInstalling } = useInstallStatus();
   const { isUninstalling, error: errorUninstalling } = useUninstallStatus();
   const install = useInstall();
+  const managedInstall = useManagedInstall();
   const uninstall = useUninstall();
   const unsetInstall = useUnsetInstall();
   const [isConfirmModalVisible, setIsConfirmModalVisible] = useState(false);
@@ -62,6 +65,16 @@ export function InstallControlsButton({
       }
     }
   };
+
+  const onManagedInstall = async () => {
+    const result = await managedInstall(plugin.id, latestCompatibleVersion?.version);
+    if (!errorInstalling && !('error' in result)) {
+      appEvents.emit(AppEvents.alertSuccess, [`Installed ${plugin.name}`]);
+      if (plugin.type === 'app') {
+        setNeedReload?.(true);
+      }
+    }
+  }
 
   const onUninstall = async () => {
     hideConfirmModal();
@@ -124,7 +137,7 @@ export function InstallControlsButton({
   }
   const shouldDisable = isInstalling || errorInstalling || (!config.angularSupportEnabled && plugin.angularDetected);
   return (
-    <Button disabled={shouldDisable} onClick={onInstall}>
+    <Button disabled={shouldDisable} onClick={isExternallyManaged ? onManagedInstall : onInstall}>
       {isInstalling ? 'Installing' : 'Install'}
     </Button>
   );

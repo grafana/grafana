@@ -13,6 +13,7 @@ import {
   loadPluginDashboards,
   panelPluginLoaded,
   fetchAllLocal,
+  managedInstall,
 } from './actions';
 
 export const pluginsAdapter = createEntityAdapter<CatalogPlugin>();
@@ -72,6 +73,10 @@ const slice = createSlice({
       })
       // Install
       .addCase(install.fulfilled, (state, action) => {
+        pluginsAdapter.updateOne(state.items, action.payload);
+      })
+      // Managed Install
+      .addCase(managedInstall.fulfilled, (state, action) => {
         pluginsAdapter.updateOne(state.items, action.payload);
       })
       // Uninstall

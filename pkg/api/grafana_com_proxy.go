@@ -40,6 +40,8 @@ func ReverseProxyGnetReq(logger log.Logger, proxyPath string, version string, gr
 
 		// send the current Grafana version for each request proxied to GCOM
 		req.Header.Add("grafana-version", version)
+		// TODO authenticate with GCOM
+		req.Header.Add("Authorization", "Bearer <token>")
 	}
 
 	return proxyutil.NewReverseProxy(logger, director)

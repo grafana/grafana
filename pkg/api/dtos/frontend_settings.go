@@ -140,6 +140,7 @@ type FrontendSettingsDTO struct {
 	AlertingMinInterval        int64                            `json:"alertingMinInterval"`
 	LiveEnabled                bool                             `json:"liveEnabled"`
 	AutoAssignOrg              bool                             `json:"autoAssignOrg"`
+	InstanceId                 string                           `json:"instanceId"`
 
 	VerifyEmailEnabled  bool `json:"verifyEmailEnabled"`
 	SigV4AuthEnabled    bool `json:"sigV4AuthEnabled"`

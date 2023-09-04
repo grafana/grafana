@@ -7,7 +7,6 @@ import { HorizontalGroup, Icon, useStyles2, VerticalGroup } from '@grafana/ui';
 
 import { GetStartedWithPlugin } from '../components/GetStartedWithPlugin';
 import { InstallControlsButton } from '../components/InstallControls';
-import { ExternallyManagedButton } from '../components/InstallControls/ExternallyManagedButton';
 import { getLatestCompatibleVersion, hasInstallControlWarning, isInstallControlsEnabled } from '../helpers';
 import { useIsRemotePluginsAvailable } from '../state/hooks';
 import { CatalogPlugin, PluginStatus } from '../types';
@@ -40,22 +39,13 @@ export const PluginActions = ({ plugin }: Props) => {
     <VerticalGroup>
       <HorizontalGroup>
         {!isInstallControlsDisabled && (
-          <>
-            {isExternallyManaged ? (
-              <ExternallyManagedButton
-                pluginId={plugin.id}
-                pluginStatus={pluginStatus}
-                angularDetected={plugin.angularDetected}
-              />
-            ) : (
               <InstallControlsButton
                 plugin={plugin}
                 latestCompatibleVersion={latestCompatibleVersion}
                 pluginStatus={pluginStatus}
                 setNeedReload={setNeedReload}
+                isExternallyManaged={isExternallyManaged}
               />
-            )}
-          </>
         )}
         <GetStartedWithPlugin plugin={plugin} />
       </HorizontalGroup>

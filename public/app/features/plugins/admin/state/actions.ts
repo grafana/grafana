@@ -1,7 +1,7 @@
 import { createAction, createAsyncThunk, Update } from '@reduxjs/toolkit';
 
 import { PanelPlugin } from '@grafana/data';
-import { getBackendSrv, isFetchError } from '@grafana/runtime';
+import { config, getBackendSrv, isFetchError } from '@grafana/runtime';
 import { importPanelPlugin } from 'app/features/plugins/importPanelPlugin';
 import { StoreState, ThunkResult } from 'app/types';
 
@@ -12,6 +12,7 @@ import {
   getLocalPlugins,
   getPluginDetails,
   installPlugin,
+  installManagedPlugin,
   uninstallPlugin,
 } from '../api';
 import { STATE_PREFIX } from '../constants';
@@ -86,6 +87,37 @@ export const install = createAsyncThunk<
     : { isInstalled: true, installedVersion: version };
   try {
     await installPlugin(id);
+    await updatePanels();
+
+    if (isUpdating) {
+      invalidatePluginInCache(id);
+    }
+
+    return { id, changes };
+  } catch (e) {
+    console.error(e);
+    if (isFetchError(e)) {
+      return thunkApi.rejectWithValue(e.data);
+    }
+
+    return thunkApi.rejectWithValue('Unknown error.');
+  }
+});
+
+// We are also using the install API endpoint to update the plugin
+export const managedInstall = createAsyncThunk<
+  Update<CatalogPlugin>,
+  {
+    id: string;
+    version?: string;
+    isUpdating?: boolean;
+  }
+>(`${STATE_PREFIX}/managed-install`, async ({ id, version, isUpdating = false }, thunkApi) => {
+  const changes = isUpdating
+    ? { isInstalled: true, installedVersion: version, hasUpdate: false }
+    : { isInstalled: true, installedVersion: version };
+  try {
+    await installManagedPlugin(config.instanceId, id, version); // TODO provide the right parameters
     await updatePanels();
 
     if (isUpdating) {
