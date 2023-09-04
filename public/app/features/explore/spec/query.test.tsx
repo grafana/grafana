@@ -18,6 +18,13 @@ jest.mock('../../correlations/utils', () => {
   };
 });
 
+jest.mock('app/core/core', () => ({
+  contextSrv: {
+    hasAccess: () => true,
+    getValidIntervals: (defaultIntervals: string[]) => defaultIntervals,
+  },
+}));
+
 describe('Explore: handle running/not running query', () => {
   afterEach(() => {
     tearDown();
