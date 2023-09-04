@@ -175,13 +175,16 @@ export function QueryHeader({
               showLabel={true}
               value={queryRowFilter.order}
               onChange={(ev) => {
+                if (!(ev.target instanceof HTMLInputElement)) {
+                  return;
+                }
+
                 reportInteraction('grafana_sql_order_toggled', {
                   datasource: query.datasource?.type,
-                  displayed: ev.target instanceof HTMLInputElement && ev.target.checked,
+                  displayed: ev.target.checked,
                 });
 
-                ev.target instanceof HTMLInputElement &&
-                  onQueryRowChange({ ...queryRowFilter, order: ev.target.checked });
+                onQueryRowChange({ ...queryRowFilter, order: ev.target.checked });
               }}
             />
 
@@ -192,13 +195,16 @@ export function QueryHeader({
               showLabel={true}
               value={queryRowFilter.preview}
               onChange={(ev) => {
+                if (!(ev.target instanceof HTMLInputElement)) {
+                  return;
+                }
+
                 reportInteraction('grafana_sql_preview_toggled', {
                   datasource: query.datasource?.type,
-                  displayed: ev.target instanceof HTMLInputElement && ev.target.checked,
+                  displayed: ev.target.checked,
                 });
 
-                ev.target instanceof HTMLInputElement &&
-                  onQueryRowChange({ ...queryRowFilter, preview: ev.target.checked });
+                onQueryRowChange({ ...queryRowFilter, preview: ev.target.checked });
               }}
             />
           </>
