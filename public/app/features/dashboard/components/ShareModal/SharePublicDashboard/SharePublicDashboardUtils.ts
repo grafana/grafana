@@ -2,6 +2,7 @@ import { getConfig } from 'app/core/config';
 import { VariableModel } from 'app/features/variables/types';
 
 import { PanelModel } from '../../../state';
+import { shareDashboardType } from '../utils';
 
 import { supportedDatasources } from './SupportedPubdashDatasources';
 
@@ -77,7 +78,7 @@ export const generatePublicDashboardUrl = (accessToken: string): string => {
 };
 
 export const generatePublicDashboardConfigUrl = (dashboardUid: string): string => {
-  return `/d/${dashboardUid}?shareView=public_dashboard`;
+  return `/d/${dashboardUid}?shareView=${shareDashboardType.publicDashboard}`;
 };
 
 export const validEmailRegex = /^[A-Z\d._%+-]+@[A-Z\d.-]+\.[A-Z]{2,}$/i;
