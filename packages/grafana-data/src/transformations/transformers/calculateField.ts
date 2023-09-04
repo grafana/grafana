@@ -103,11 +103,11 @@ export const calculateFieldTransformer: DataTransformerInfo<CalculateFieldTransf
           creator = getBinaryCreator(defaults(binaryOptions, defaultBinaryOptions), data);
         } else if (mode === CalculateFieldMode.Index) {
           return data.map((frame) => {
-            const indexArr = [...Array(frame.length).keys()]
-          
+            const indexArr = [...Array(frame.length).keys()];
+
             if (options.index?.showPercentage) {
-              for(let i = 0; i < indexArr.length; i++) {
-                indexArr[i] = indexArr[i] / indexArr.length * 100;
+              for (let i = 0; i < indexArr.length; i++) {
+                indexArr[i] = (indexArr[i] / indexArr.length) * 100;
               }
             }
 

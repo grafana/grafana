@@ -148,8 +148,8 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
     this.props.onChange({
       ...options,
       index: {
-        showPercentage: !options.index?.showPercentage ?? false
-      }
+        showPercentage: !options.index?.showPercentage ?? false,
+      },
     });
   };
 
@@ -212,15 +212,15 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
     return (
       <>
         <div className="gf-form-inline">
-            <LegacyForms.Switch
-              label="Show percentage"
-              labelClass="width-8"
-              checked={!!options?.showPercentage}
-              onChange={this.onToggleRowIndexShowPercentage}
-            />
+          <LegacyForms.Switch
+            label="Show percentage"
+            labelClass="width-8"
+            checked={!!options?.showPercentage}
+            onChange={this.onToggleRowIndexShowPercentage}
+          />
         </div>
       </>
-    )
+    );
   }
 
   renderReduceRow(options?: ReduceOptions) {
