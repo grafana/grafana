@@ -21,7 +21,7 @@ jobs:
       pull-requests: write
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
 
     # Download artifact (as a .zip archive)
     - name: 'Download artifact'
