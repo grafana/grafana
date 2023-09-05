@@ -149,7 +149,6 @@ class UnthemedDashboardImport extends PureComponent<Props> {
                     Find and import dashboards for common applications at{' '} 
                     <TextLink href="https://grafana.com/grafana/dashboards/" external>grafana.com/dashboards
                     </TextLink>
-                    .
                   </p>
                 }
                 invalid={!!errors.gcomDashboard}
