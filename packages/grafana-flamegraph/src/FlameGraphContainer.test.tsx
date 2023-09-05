@@ -2,12 +2,11 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
-import { CoreApp, createDataFrame } from '@grafana/data';
-
-import { MIN_WIDTH_TO_SHOW_BOTH_TOPTABLE_AND_FLAMEGRAPH } from './constants';
+import { createDataFrame, createTheme } from '@grafana/data';
 
 import { data } from './FlameGraph/testData/dataNestedSet';
 import FlameGraphContainer from './FlameGraphContainer';
+import { MIN_WIDTH_TO_SHOW_BOTH_TOPTABLE_AND_FLAMEGRAPH } from './constants';
 
 jest.mock('react-use', () => ({
   useMeasure: () => {
@@ -30,7 +29,7 @@ describe('FlameGraphContainer', () => {
       },
     };
 
-    return <FlameGraphContainer data={flameGraphData} app={CoreApp.Explore} />;
+    return <FlameGraphContainer data={flameGraphData} getTheme={() => createTheme({ colors: { mode: 'dark' } })} />;
   };
 
   it('should render without error', async () => {

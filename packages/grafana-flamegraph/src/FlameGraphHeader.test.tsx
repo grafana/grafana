@@ -3,7 +3,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
-import { CoreApp } from '@grafana/data';
+import { createTheme } from '@grafana/data';
 
 import FlameGraphHeader from './FlameGraphHeader';
 import { ColorScheme, SelectedView } from './types';
@@ -17,7 +17,6 @@ describe('FlameGraphHeader', () => {
 
     const renderResult = render(
       <FlameGraphHeader
-        app={CoreApp.Explore}
         search={''}
         setSearch={setSearch}
         selectedView={SelectedView.Both}
@@ -29,6 +28,9 @@ describe('FlameGraphHeader', () => {
         showResetButton={true}
         colorScheme={ColorScheme.ValueBased}
         onColorSchemeChange={onSchemeChange}
+        getTheme={() => createTheme({ colors: { mode: 'dark' } })}
+        stickyHeader={false}
+        isDiffMode={false}
         {...props}
       />
     );

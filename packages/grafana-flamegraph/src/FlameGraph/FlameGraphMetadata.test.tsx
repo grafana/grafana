@@ -2,6 +2,8 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
+import { createTheme } from '@grafana/data';
+
 import FlameGraphMetadata from './FlameGraphMetadata';
 import { textToDataContainer } from './testHelpers';
 
@@ -21,6 +23,7 @@ function setup(props: Partial<React.ComponentProps<typeof FlameGraphMetadata>> =
       totalTicks={17}
       onFocusPillClick={onFocusPillClick}
       onSandwichPillClick={onSandwichPillClick}
+      getTheme={() => createTheme({ colors: { mode: 'dark' } })}
       {...props}
     />
   );
