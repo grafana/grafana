@@ -151,18 +151,18 @@ func (s *Service) getCachedUserPermissions(ctx context.Context, user identity.Re
 	if !options.ReloadCache {
 		permissions, ok := s.cache.Get(key)
 		if ok {
-			s.log.Debug("using cached permissions", "key", key)
+			s.log.Debug("Using cached permissions", "key", key)
 			return permissions.([]accesscontrol.Permission), nil
 		}
 	}
 
-	s.log.Debug("fetch permissions from store", "key", key)
+	s.log.Debug("Fetch permissions from store", "key", key)
 	permissions, err := s.getUserPermissions(ctx, user, options)
 	if err != nil {
 		return nil, err
 	}
 
-	s.log.Debug("cache permissions", "key", key)
+	s.log.Debug("Cache permissions", "key", key)
 	s.cache.Set(key, permissions, cacheTTL)
 
 	return permissions, nil
@@ -382,7 +382,7 @@ func (s *Service) searchUserPermissionsFromCache(orgID int64, searchOptions acce
 	}
 	key, err := permissionCacheKey(tempUser)
 	if err != nil {
-		s.log.Debug("could not obtain cache key to search user permissions", "error", err.Error())
+		s.log.Debug("Could not obtain cache key to search user permissions", "error", err.Error())
 		return nil, false
 	}
 
@@ -391,7 +391,7 @@ func (s *Service) searchUserPermissionsFromCache(orgID int64, searchOptions acce
 		return nil, false
 	}
 
-	s.log.Debug("using cached permissions", "key", key)
+	s.log.Debug("Using cached permissions", "key", key)
 	filteredPermissions := make([]accesscontrol.Permission, 0)
 	for _, permission := range permissions.([]accesscontrol.Permission) {
 		if PermissionMatchesSearchOptions(permission, searchOptions) {
@@ -414,7 +414,7 @@ func PermissionMatchesSearchOptions(permission accesscontrol.Permission, searchO
 
 func (s *Service) SaveExternalServiceRole(ctx context.Context, cmd accesscontrol.SaveExternalServiceRoleCommand) error {
 	if !s.features.IsEnabled(featuremgmt.FlagExternalServiceAuth) {
-		s.log.Debug("registering an external service role is behind a feature flag, enable it to use this feature.")
+		s.log.Debug("Registering an external service role is behind a feature flag, enable it to use this feature.")
 		return nil
 	}
 
@@ -427,7 +427,7 @@ func (s *Service) SaveExternalServiceRole(ctx context.Context, cmd accesscontrol
 
 func (s *Service) DeleteExternalServiceRole(ctx context.Context, externalServiceID string) error {
 	if !s.features.IsEnabled(featuremgmt.FlagExternalServiceAuth) {
-		s.log.Debug("deleting an external service role is behind a feature flag, enable it to use this feature.")
+		s.log.Debug("Deleting an external service role is behind a feature flag, enable it to use this feature.")
 		return nil
 	}
 

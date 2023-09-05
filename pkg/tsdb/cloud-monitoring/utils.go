@@ -89,7 +89,7 @@ func doRequestPage(ctx context.Context, logger log.Logger, r *http.Request, dsIn
 
 	defer func() {
 		if err = res.Body.Close(); err != nil {
-			logger.Warn("failed to close response body", "error", err)
+			logger.Warn("Failed to close response body", "error", err)
 		}
 	}()
 

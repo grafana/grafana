@@ -34,13 +34,13 @@ func (a *AccessControl) Evaluate(ctx context.Context, user identity.Requester, e
 	metrics.MAccessEvaluationCount.Inc()
 
 	if user == nil || user.IsNil() {
-		a.log.Warn("no entity set for access control evaluation")
+		a.log.Warn("No entity set for access control evaluation")
 		return false, nil
 	}
 
 	namespace, identifier := user.GetNamespacedID()
 	if len(user.GetPermissions()) == 0 {
-		a.log.Warn("no permissions set for entity", "namespace", namespace, "id", identifier, "orgID", user.GetOrgID(), "login", user.GetLogin())
+		a.log.Warn("No permissions set for entity", "namespace", namespace, "id", identifier, "orgID", user.GetOrgID(), "login", user.GetLogin())
 		return false, nil
 	}
 

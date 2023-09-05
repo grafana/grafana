@@ -210,7 +210,7 @@ func (h *DashboardHandler) DashboardDeleted(orgID int64, user *user.UserDisplayD
 func (h *DashboardHandler) HasGitOpsObserver(orgID int64) bool {
 	count, err := h.ClientCount(orgID, GitopsChannel)
 	if err != nil {
-		logger.Error("error getting client count", "error", err)
+		logger.Error("Error getting client count", "error", err)
 		return false
 	}
 	return count > 0

@@ -2,9 +2,9 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { getAppEvents } from '@grafana/runtime';
 import { useStyles2, Select, Button, Field, InlineField, InlineSwitch, Alert } from '@grafana/ui';
 import { notifyApp } from 'app/core/actions';
-import appEvents from 'app/core/app_events';
 import { createSuccessNotification } from 'app/core/copy/appNotification';
 import { MAX_HISTORY_ITEMS } from 'app/core/history/RichHistoryLocalStorage';
 import { dispatch } from 'app/store/store';
@@ -63,7 +63,7 @@ export function RichHistorySettingsTab(props: RichHistorySettingsProps) {
   const selectedOption = retentionPeriodOptions.find((v) => v.value === retentionPeriod);
 
   const onDelete = () => {
-    appEvents.publish(
+    getAppEvents().publish(
       new ShowConfirmModalEvent({
         title: 'Delete',
         text: 'Are you sure you want to permanently delete your query history?',

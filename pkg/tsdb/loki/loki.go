@@ -30,6 +30,7 @@ type Service struct {
 	im       instancemgmt.InstanceManager
 	features featuremgmt.FeatureToggles
 	tracer   tracing.Tracer
+	logger   *log.ConcreteLogger
 }
 
 var (
@@ -43,6 +44,7 @@ func ProvideService(httpClientProvider httpclient.Provider, features featuremgmt
 		im:       datasource.NewInstanceManager(newInstanceSettings(httpClientProvider)),
 		features: features,
 		tracer:   tracer,
+		logger:   logger,
 	}
 }
 
@@ -101,7 +103,7 @@ func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceReq
 	dsInfo, err := s.getDSInfo(ctx, req.PluginContext)
 	logger := logger.FromContext(ctx).New("api", "CallResource")
 	if err != nil {
-		logger.Error("failed to get data source info", "err", err)
+		logger.Error("Failed to get data source info", "err", err)
 		return err
 	}
 	return callResource(ctx, req, sender, dsInfo, logger, s.tracer)
