@@ -4313,16 +4313,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "8"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "9"]
     ],
-    "public/app/plugins/datasource/tempo/testResponse.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
-      [0, 0, 0, "Do not use any type assertions.", "2"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "3"]
-    ],
-    "public/app/plugins/datasource/tempo/traceql/TraceQLEditor.tsx:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"],
-      [0, 0, 0, "Do not use any type assertions.", "1"]
-    ],
     "public/app/plugins/datasource/tempo/traceql/autocomplete.test.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
@@ -4358,9 +4348,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
     ],
-    "public/app/plugins/datasource/testdata/components/StreamingClientEditor.tsx:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
     "public/app/plugins/datasource/testdata/datasource.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
@@ -4372,10 +4359,6 @@ exports[`better eslint`] = {
     ],
     "public/app/plugins/datasource/testdata/runStreams.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
-    ],
-    "public/app/plugins/datasource/testdata/testData/serviceMapResponse.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"],
-      [0, 0, 0, "Do not use any type assertions.", "1"]
     ],
     "public/app/plugins/datasource/zipkin/QueryField.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
