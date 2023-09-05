@@ -119,6 +119,11 @@ type cloudWatchExecutor struct {
 }
 
 func (e *cloudWatchExecutor) getRequestContext(ctx context.Context, pluginCtx backend.PluginContext, region string) (models.RequestContext, error) {
+	ec2Client, err := e.getEC2Client(ctx, pluginCtx, defaultRegion)
+	if err != nil {
+		return models.RequestContext{}, err
+	}
+
 	r := region
 	instance, err := e.getInstance(ctx, pluginCtx)
 	if region == defaultRegion {
@@ -136,6 +141,7 @@ func (e *cloudWatchExecutor) getRequestContext(ctx context.Context, pluginCtx ba
 		OAMAPIProvider:        NewOAMAPI(sess),
 		MetricsClientProvider: clients.NewMetricsClient(NewMetricsAPI(sess), e.cfg),
 		LogsAPIProvider:       NewLogsAPI(sess),
+		EC2APIProvider:        ec2Client,
 		Settings:              instance.Settings,
 		Features:              e.features,
 	}, nil
@@ -233,6 +239,9 @@ func (e *cloudWatchExecutor) newSession(ctx context.Context, pluginCtx backend.P
 	}
 
 	if region == defaultRegion {
+		if len(instance.Settings.Region) == 0 {
+			return nil, fmt.Errorf("Unable to start new auth session without a selected or default region")
+		}
 		region = instance.Settings.Region
 	}
 
@@ -300,7 +309,7 @@ func (e *cloudWatchExecutor) getEC2Client(ctx context.Context, pluginCtx backend
 		return nil, err
 	}
 
-	return newEC2Client(sess), nil
+	return NewEC2Client(sess), nil
 }
 
 func (e *cloudWatchExecutor) getRGTAClient(ctx context.Context, pluginCtx backend.PluginContext, region string) (resourcegroupstaggingapiiface.ResourceGroupsTaggingAPIAPI,

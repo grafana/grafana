@@ -15,10 +15,10 @@ import (
 
 func (e *cloudWatchExecutor) newResourceMux() *http.ServeMux {
 	mux := http.NewServeMux()
-	mux.HandleFunc("/regions", handleResourceReq(e.handleGetRegions))
 	mux.HandleFunc("/ebs-volume-ids", handleResourceReq(e.handleGetEbsVolumeIds))
 	mux.HandleFunc("/ec2-instance-attribute", handleResourceReq(e.handleGetEc2InstanceAttribute))
 	mux.HandleFunc("/resource-arns", handleResourceReq(e.handleGetResourceArns))
+	mux.HandleFunc("/regions", routes.ResourceRequestMiddleware(routes.RegionsHandler, logger, e.getRequestContext))
 	mux.HandleFunc("/log-groups", routes.ResourceRequestMiddleware(routes.LogGroupsHandler, logger, e.getRequestContext))
 	mux.HandleFunc("/metrics", routes.ResourceRequestMiddleware(routes.MetricsHandler, logger, e.getRequestContext))
 	mux.HandleFunc("/dimension-values", routes.ResourceRequestMiddleware(routes.DimensionValuesHandler, logger, e.getRequestContext))

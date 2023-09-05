@@ -52,8 +52,8 @@ var NewCWLogsClient = func(sess *session.Session) cloudwatchlogsiface.CloudWatch
 // EC2 client factory.
 //
 // Stubbable by tests.
-var newEC2Client = func(provider client.ConfigProvider) models.EC2APIProvider {
-	return ec2.New(provider)
+var NewEC2Client = func(sess *session.Session) models.EC2APIProvider {
+	return ec2.New(sess)
 }
 
 // RGTA client factory.
