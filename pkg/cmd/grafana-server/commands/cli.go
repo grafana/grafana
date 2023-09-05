@@ -103,7 +103,7 @@ func RunServer(opts ServerOptions) error {
 		return err
 	}
 
-	s, err := server.InitializeModuleServer(
+	s, err := server.Initialize(
 		cfg,
 		server.Options{
 			PidFile:     PidFile,
@@ -132,7 +132,7 @@ func validPackaging(packaging string) string {
 	return "unknown"
 }
 
-func listenToSystemSignals(ctx context.Context, s *server.ModuleServer) {
+func listenToSystemSignals(ctx context.Context, s *server.Server) {
 	signalChan := make(chan os.Signal, 1)
 	sighupChan := make(chan os.Signal, 1)
 
