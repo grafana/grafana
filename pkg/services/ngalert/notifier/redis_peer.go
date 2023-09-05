@@ -2,7 +2,6 @@ package notifier
 
 import (
 	"context"
-	"fmt"
 	"sort"
 	"strconv"
 	"sync"
@@ -100,8 +99,9 @@ func newRedisPeer(cfg redisConfig, logger log.Logger, reg prometheus.Registerer,
 	})
 	cmd := rdb.Ping(context.Background())
 	if cmd.Err() != nil {
-		return nil, fmt.Errorf("failed to ping redis: %w", cmd.Err())
+		logger.Error("Failed to ping redis - redis-based alertmanager clustering may not be available", "err", cmd.Err())
 	}
+
 	// Make sure that the prefix uses a colon at the end as deliminator.
 	if cfg.prefix != "" && cfg.prefix[len(cfg.prefix)-1] != ':' {
 		cfg.prefix = cfg.prefix + ":"
