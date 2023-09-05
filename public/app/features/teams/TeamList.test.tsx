@@ -93,7 +93,7 @@ describe('TeamList', () => {
 it('should call delete team', async () => {
   const mockDelete = jest.fn();
   const mockTeam = getMockTeam();
-  jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
+  jest.spyOn(contextSrv, 'hasAccessInMetadata').mockReturnValue(true);
   setup({ deleteTeam: mockDelete, teams: [mockTeam], totalCount: 1, hasFetched: true });
   await userEvent.click(screen.getByRole('button', { name: `Delete team ${mockTeam.name}` }));
   await userEvent.click(screen.getByRole('button', { name: 'Delete' }));
