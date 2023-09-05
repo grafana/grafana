@@ -8,34 +8,45 @@ import { FileExportPreview } from './FileExportPreview';
 import { GrafanaExportDrawer } from './GrafanaExportDrawer';
 import { RuleExportFormats } from './providers';
 
-interface GrafanaRuleExporterProps {
+interface GrafanaRuleGroupExporterProps {
+  folderUid: string;
+  groupName: string;
   onClose: () => void;
-  alertUid: string;
 }
 
-export const GrafanaRuleExporter = ({ onClose, alertUid }: GrafanaRuleExporterProps) => {
+export function GrafanaRuleGroupExporter({ folderUid, groupName, onClose }: GrafanaRuleGroupExporterProps) {
   const [activeTab, setActiveTab] = useState<RuleExportFormats>('yaml');
 
   return (
     <GrafanaExportDrawer activeTab={activeTab} onTabChange={setActiveTab} onClose={onClose}>
-      <GrafanaRuleExportPreview alertUid={alertUid} exportFormat={activeTab} onClose={onClose} />
+      <GrafanaRuleGroupExportPreview
+        folderUid={folderUid}
+        groupName={groupName}
+        exportFormat={activeTab}
+        onClose={onClose}
+      />
     </GrafanaExportDrawer>
   );
-};
+}
 
-interface GrafanaRuleExportPreviewProps {
-  alertUid: string;
+interface GrafanaRuleGroupExportPreviewProps {
+  folderUid: string;
+  groupName: string;
   exportFormat: RuleExportFormats;
   onClose: () => void;
 }
 
-const GrafanaRuleExportPreview = ({ alertUid, exportFormat, onClose }: GrafanaRuleExportPreviewProps) => {
-  const { currentData: ruleTextDefinition = '', isFetching } = alertRuleApi.useExportRuleQuery({
-    uid: alertUid,
+function GrafanaRuleGroupExportPreview({
+  folderUid,
+  groupName,
+  exportFormat,
+  onClose,
+}: GrafanaRuleGroupExportPreviewProps) {
+  const { currentData: ruleGroupTextDefinition = '', isFetching } = alertRuleApi.useExportRuleGroupQuery({
+    folderUid,
+    groupName,
     format: exportFormat,
   });
-
-  const downloadFileName = `${alertUid}-${new Date().getTime()}`;
 
   if (isFetching) {
     return <LoadingPlaceholder text="Loading...." />;
@@ -44,9 +55,9 @@ const GrafanaRuleExportPreview = ({ alertUid, exportFormat, onClose }: GrafanaRu
   return (
     <FileExportPreview
       format={exportFormat}
-      textDefinition={ruleTextDefinition}
-      downloadFileName={downloadFileName}
+      textDefinition={ruleGroupTextDefinition}
+      downloadFileName={groupName}
       onClose={onClose}
     />
   );
-};
+}
