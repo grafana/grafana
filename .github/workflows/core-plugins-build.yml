@@ -38,6 +38,8 @@ jobs:
             if [ -z ${{ env.plugin_id }} ]; then echo "Missing plugin ID"; exit 1; fi
         - name: Check existing release
           working-directory: ./public/plugins/${{ env.plugin_id }}
+          env:
+            GCOM_TOKEN: ${{ secrets.PLUGINS_GCOM_TOKEN }}
           run: |
             version=$(cat package.json | jq -r .version)
             api_res=$(curl -X 'GET' -H "Authorization: Bearer $GCOM_TOKEN" \
