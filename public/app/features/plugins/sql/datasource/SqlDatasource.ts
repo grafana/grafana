@@ -23,6 +23,7 @@ import {
   getBackendSrv,
   getTemplateSrv,
   TemplateSrv,
+  reportInteraction,
 } from '@grafana/runtime';
 import { toDataQueryResponse } from '@grafana/runtime/src/utils/queryResponse';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
@@ -137,6 +138,15 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
         return throwError(() => error);
       }
     }
+
+    request.targets.forEach((target) => {
+      reportInteraction('grafana_sql_query_executed', {
+        datasource: target.datasource?.type,
+        editorMode: target.editorMode,
+        format: target.format,
+        app: request.app,
+      });
+    });
 
     return super.query(request);
   }

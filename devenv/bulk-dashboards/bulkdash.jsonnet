@@ -1090,7 +1090,6 @@
   ],
   "refresh": false,
   "schemaVersion": 16,
-  "style": "dark",
   "tags": [
     "demo"
   ],

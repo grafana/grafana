@@ -119,7 +119,7 @@ func (s *Service) create(ctx context.Context, collectors []string, usr identity.
 		ctx, cancel := context.WithTimeout(context.Background(), bundleCreationTimeout)
 		defer func() {
 			if err := recover(); err != nil {
-				s.log.Error("support bundle collection panic", "err", err)
+				s.log.Error("Support bundle collection panic", "err", err)
 			}
 			cancel()
 		}()
@@ -157,14 +157,14 @@ func (s *Service) remove(ctx context.Context, uid string) error {
 func (s *Service) cleanup(ctx context.Context) {
 	bundles, err := s.list(ctx)
 	if err != nil {
-		s.log.Error("failed to list bundles to clean up", "error", err)
+		s.log.Error("Failed to list bundles to clean up", "error", err)
 	}
 
 	if err == nil {
 		for _, b := range bundles {
 			if time.Now().Unix() >= b.ExpiresAt {
 				if err := s.remove(ctx, b.UID); err != nil {
-					s.log.Error("failed to cleanup bundle", "error", err)
+					s.log.Error("Failed to cleanup bundle", "error", err)
 				}
 			}
 		}
@@ -176,7 +176,7 @@ func (s *Service) getUsageStats(ctx context.Context) (map[string]interface{}, er
 
 	count, err := s.store.StatsCount(ctx)
 	if err != nil {
-		s.log.Warn("unable to get support bundle counter", "error", err)
+		s.log.Warn("Unable to get support bundle counter", "error", err)
 	}
 
 	m["stats.bundles.count"] = count

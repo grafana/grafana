@@ -95,7 +95,7 @@ func CalculateDiff(ctx context.Context, options *Options, baseData, newData *sim
 }
 
 // getDiff computes the diff of two dashboard versions.
-func getDiff(baseData, newData *simplejson.Json) (interface{}, diff.Diff, error) {
+func getDiff(baseData, newData *simplejson.Json) (any, diff.Diff, error) {
 	leftBytes, err := baseData.Encode()
 	if err != nil {
 		return nil, nil, err
@@ -115,7 +115,7 @@ func getDiff(baseData, newData *simplejson.Json) (interface{}, diff.Diff, error)
 		return nil, nil, ErrNilDiff
 	}
 
-	left := make(map[string]interface{})
+	left := make(map[string]any)
 	err = json.Unmarshal(leftBytes, &left)
 	if err != nil {
 		return nil, nil, err
