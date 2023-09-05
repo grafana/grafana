@@ -87,7 +87,7 @@ Query variables are generally only supported for strings. If your query returns 
 Query expressions can contain references to other variables and in effect create linked variables. Grafana detects this and automatically refreshes a variable when one of its linked variables change.
 
 {{% admonition type="note" %}}
-The query should return two fields named `__text` and `__value`. The `__text` column value should be unique (if it is not unique then the first value is used). Query expressions are different for each data source. For more information, refer to the documentation for your [data source]({{< relref "../../../datasources/" >}}).
+Query expressions are different for each data source. For more information, refer to the documentation for your [data source]({{< relref "../../../datasources/" >}}).
 {{% /admonition %}}
 
 1. [Enter general options](#enter-general-options).
