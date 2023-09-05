@@ -140,7 +140,9 @@ export function SmartAlertTypeDetector({
         onChange={onClickSwitch}
       />
       {/* editing an existing rule, we just show "cannot be changed" */}
-      {editingExistingRule && <Text color="secondary">The alert rule type cannot be changed.</Text>}
+      {editingExistingRule && (
+        <Text color="secondary">The alert rule type cannot be changed for an existing rule.</Text>
+      )}
       {/* in regular alert creation we tell the user what options they have when using a cloud data source */}
       {!editingExistingRule && (
         <>
