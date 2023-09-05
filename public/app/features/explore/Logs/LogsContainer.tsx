@@ -47,14 +47,14 @@ interface LogsContainerProps extends PropsFromRedux {
   scanRange?: RawTimeRange;
   syncedTimes: boolean;
   loadingState: LoadingState;
-  onClickFilterLabel: (key: string, value: string) => void;
-  onClickFilterOutLabel: (key: string, value: string) => void;
+  onClickFilterLabel: (key: string, value: string, refId?: string) => void;
+  onClickFilterOutLabel: (key: string, value: string, refId?: string) => void;
   onStartScanning: () => void;
   onStopScanning: () => void;
   eventBus: EventBus;
   splitOpenFn: SplitOpen;
   scrollElement?: HTMLDivElement;
-  isFilterLabelActive: (key: string, value: string) => Promise<boolean>;
+  isFilterLabelActive: (key: string, value: string, refId?: string) => Promise<boolean>;
 }
 
 interface LogsContainerState {

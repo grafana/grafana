@@ -2,6 +2,7 @@ import React, { useCallback, useEffect } from 'react';
 import { usePopperTooltip } from 'react-popper-tooltip';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 import { buildTooltipTheme } from '../../utils/tooltipUtils';
@@ -76,7 +77,11 @@ export const Tooltip = React.forwardRef<HTMLElement, TooltipProps>(
         })}
         {visible && (
           <Portal>
-            <div ref={setTooltipRef} {...getTooltipProps({ className: style.container })}>
+            <div
+              data-testid={selectors.components.Tooltip.container}
+              ref={setTooltipRef}
+              {...getTooltipProps({ className: style.container })}
+            >
               <div {...getArrowProps({ className: style.arrow })} />
               {typeof content === 'string' && content}
               {React.isValidElement(content) && React.cloneElement(content)}

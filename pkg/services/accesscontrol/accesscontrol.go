@@ -116,7 +116,7 @@ func HasGlobalAccess(ac AccessControl, service Service, c *contextmodel.ReqConte
 		if userCopy.Permissions[GlobalOrgID] == nil {
 			permissions, err := service.GetUserPermissions(c.Req.Context(), &userCopy, Options{})
 			if err != nil {
-				c.Logger.Error("failed fetching permissions for user", "userID", userCopy.UserID, "error", err)
+				c.Logger.Error("Failed fetching permissions for user", "userID", userCopy.UserID, "error", err)
 			}
 			userCopy.Permissions[GlobalOrgID] = GroupScopesByAction(permissions)
 		}
