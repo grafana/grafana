@@ -87,7 +87,8 @@ const AlertRuleNameInput = () => {
             required: { value: true, message: 'Must enter a name' },
             pattern: ruleFormType === RuleFormType.cloudRecording ? recordingRuleNameValidationPattern : undefined,
           })}
-          placeholder={`Give your ${entityName} rule a name.`}
+          aria-label="name"
+          placeholder={`Give your ${entityName} a name`}
         />
       </Field>
     </RuleEditorSection>
