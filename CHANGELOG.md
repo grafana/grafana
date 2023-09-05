@@ -1,3 +1,16 @@
+<!-- 10.0.5 START -->
+
+# 10.0.5 (2023-09-05)
+
+### Features and enhancements
+
+- **SSE:** DSNode to update result with names to make each value identifiable by labels (only Graphite and TestData. [#73646](https://github.com/grafana/grafana/issues/73646), [@yuri-tceretian](https://github.com/yuri-tceretian)
+
+### Bug fixes
+
+- **LDAP:** Fix user disabling. [#74107](https://github.com/grafana/grafana/issues/74107), [@gamab](https://github.com/gamab)
+
+<!-- 10.0.5 END -->
 <!-- 10.0.4 START -->
 
 # 10.0.4 (2023-08-22)
