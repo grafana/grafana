@@ -23,6 +23,8 @@ jobs:
     build-and-publish:
       name: Build and publish a core plugin
       runs-on: ubuntu-latest
+      outputs:
+        has_backend: ${{ steps.check_backend.outputs.has_backend }}
       steps:
         - name: checkout
           uses: actions/checkout@v3
@@ -52,18 +54,28 @@ jobs:
             [ ! -d ./bin ] && mkdir -pv ./bin || true
             curl -fL -o ./bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v${{ env.GRABPL_VERSION }}/grabpl
             chmod 0755 ./bin/grabpl
+        - name: Check backend
+          id: check_backend
+          shell: bash
+          working-directory: ./public/plugins/${{ inputs.plugin_id }}
+          run: |
+            if [ -f ./go.mod ]; then
+              echo "::set-output name=has_backend::true"
+            else
+              echo "::set-output name=has_backend::false"
+            fi
         - name: Setup golang environment
           uses: actions/setup-go@v4
-          if: endsWith(inputs.plugin_id, '-datasource')
+          if: steps.check_backend.outputs.has_backend == 'true'
           with:
             go-version: ${{ env.GO_VERSION }}
         - name: Install Mage
           shell: bash
-          if: endsWith(inputs.plugin_id, '-datasource')
+          if: steps.check_backend.outputs.has_backend == 'true'
           run: |
             go install github.com/magefile/mage
         - name: Install golangci-lint
-          if: endsWith(inputs.plugin_id, '-datasource')
+          if: steps.check_backend.outputs.has_backend == 'true'
           shell: bash
           run: |
             curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v${{ env.GO_LINT_VERSION }}
@@ -92,7 +104,7 @@ jobs:
             echo "======================================="
         - name: Check backend tools
           shell: bash
-          if: endsWith(inputs.plugin_id, '-datasource')
+          if: steps.check_backend.outputs.has_backend == 'true'
           working-directory: ./public/plugins/${{ inputs.plugin_id }}
           run: |
             echo "======================================="
@@ -121,19 +133,19 @@ jobs:
           run: |
             yarn build
         - name: lint:backend
-          if: endsWith(inputs.plugin_id, '-datasource')
+          if: steps.check_backend.outputs.has_backend == 'true'
           working-directory: ./public/plugins/${{ inputs.plugin_id }}
           shell: bash
           run: |
             mage lint
         - name: test:backend
-          if: endsWith(inputs.plugin_id, '-datasource')
+          if: steps.check_backend.outputs.has_backend == 'true'
           working-directory: ./public/plugins/${{ inputs.plugin_id }}
           shell: bash
           run: |
             mage test
         - name: build:backend
-          if: endsWith(inputs.plugin_id, '-datasource')
+          if: steps.check_backend.outputs.has_backend == 'true'
           working-directory: ./public/plugins/${{ inputs.plugin_id }}
           shell: bash
           run: |
