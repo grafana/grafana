@@ -39,6 +39,19 @@ Grafana Enterprise is the recommended and default edition. It is available for f
 
 Complete the following steps to install Grafana from the APT repository:
 
+1. Install the prerequisite packages:
+   
+   ```bash
+   sudo apt-get install -y apt-transport-https software-properties-common wget
+   ```
+
+1. Import the GPG key:
+   
+   ```bash
+   sudo mkdir -p /etc/apt/keyrings/
+   wget -q -O - https://apt.grafana.com/gpg.key | gpg --dearmor | sudo tee /etc/apt/keyrings/grafana.gpg > /dev/null
+   ```
+
 1. To install required packages and download the Grafana repository signing key, run the following commands:
 
    ```bash
@@ -50,13 +63,13 @@ Complete the following steps to install Grafana from the APT repository:
 1. To add a repository for stable releases, run the following command:
 
    ```bash
-   echo "deb [signed-by=/usr/share/keyrings/grafana.key] https://apt.grafana.com stable main" | sudo tee -a /etc/apt/sources.list.d/grafana.list
+   echo "deb [signed-by=/etc/apt/keyrings/grafana.gpg] https://apt.grafana.com stable main" | sudo tee -a /etc/apt/sources.list.d/grafana.list
    ```
 
 1. To add a repository for beta releases, run the following command:
 
    ```bash
-   echo "deb [signed-by=/usr/share/keyrings/grafana.key] https://apt.grafana.com beta main" | sudo tee -a /etc/apt/sources.list.d/grafana.list
+   echo "deb [signed-by=/etc/apt/keyrings/grafana.gpg] https://apt.grafana.com beta main" | sudo tee -a /etc/apt/sources.list.d/grafana.list
    ```
 
 1. Run the following command to update the list of available packages:
