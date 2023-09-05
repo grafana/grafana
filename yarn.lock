@@ -4062,22 +4062,6 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/toolkit@workspace:*, @grafana/toolkit@workspace:packages/grafana-toolkit":
-  version: 0.0.0-use.local
-  resolution: "@grafana/toolkit@workspace:packages/grafana-toolkit"
-  dependencies:
-    "@grafana/tsconfig": ^1.2.0-rc1
-    "@types/node": 16.11.26
-    chalk: ^4.1.2
-    commander: ^9.2.0
-    ts-node: ^9.1.0
-    tslib: 2.5.0
-    typescript: 4.8.2
-  bin:
-    grafana-toolkit: ./bin/grafana-toolkit.js
-  languageName: unknown
-  linkType: soft
-
 "@grafana/tsconfig@npm:^1.2.0-rc1":
   version: 1.2.0-rc1
   resolution: "@grafana/tsconfig@npm:1.2.0-rc1"
@@ -10417,13 +10401,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/node@npm:16.11.26":
-  version: 16.11.26
-  resolution: "@types/node@npm:16.11.26"
-  checksum: 57757caaba3f0d95de82198cb276a1002c49b710108c932a1d02d7c91ff2fa57cfe2dd19fde60853b6dd90b0964b3cf35557981d2628e20aed6a909057aedfe6
-  languageName: node
-  linkType: hard
-
 "@types/node@npm:18.16.16":
   version: 18.16.16
   resolution: "@types/node@npm:18.16.16"
@@ -14515,13 +14492,6 @@ __metadata:
   version: 6.2.1
   resolution: "commander@npm:6.2.1"
   checksum: d7090410c0de6bc5c67d3ca41c41760d6d268f3c799e530aafb73b7437d1826bbf0d2a3edac33f8b57cc9887b4a986dce307fa5557e109be40eadb7c43b21742
-  languageName: node
-  linkType: hard
-
-"commander@npm:^9.2.0":
-  version: 9.2.0
-  resolution: "commander@npm:9.2.0"
-  checksum: 7c82e4cd969712aa6d7c055b8351807a7230f9f31ef7ec7881e11a1147511de85adf5d6ccfd200240a118eecf693b220caf6865b8efbcea558a70d35aa9ed711
   languageName: node
   linkType: hard
 
@@ -19451,7 +19421,6 @@ __metadata:
     "@grafana/runtime": "workspace:*"
     "@grafana/scenes": ^0.27.0
     "@grafana/schema": "workspace:*"
-    "@grafana/toolkit": "workspace:*"
     "@grafana/tsconfig": ^1.3.0-rc1
     "@grafana/ui": "workspace:*"
     "@kusto/monaco-kusto": ^7.4.0
@@ -30046,7 +30015,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"source-map-support@npm:^0.5.16, source-map-support@npm:^0.5.17":
+"source-map-support@npm:^0.5.16":
   version: 0.5.21
   resolution: "source-map-support@npm:0.5.21"
   dependencies:
@@ -31770,27 +31739,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ts-node@npm:^9.1.0":
-  version: 9.1.1
-  resolution: "ts-node@npm:9.1.1"
-  dependencies:
-    arg: ^4.1.0
-    create-require: ^1.1.0
-    diff: ^4.0.1
-    make-error: ^1.1.1
-    source-map-support: ^0.5.17
-    yn: 3.1.1
-  peerDependencies:
-    typescript: ">=2.7"
-  bin:
-    ts-node: dist/bin.js
-    ts-node-script: dist/bin-script.js
-    ts-node-transpile-only: dist/bin-transpile.js
-    ts-script: dist/bin-script-deprecated.js
-  checksum: 356e2647b8b1e6ab00380c0537fa569b63bd9b6f006cc40fd650f81fae1817bd8fecc075300036950d8f45c1d85b95be33cd1e48a1a424a7d86c3dbb42bf60e5
-  languageName: node
-  linkType: hard
-
 "ts-toolbelt@npm:^9.6.0":
   version: 9.6.0
   resolution: "ts-toolbelt@npm:9.6.0"
@@ -32031,16 +31979,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"typescript@npm:4.8.2":
-  version: 4.8.2
-  resolution: "typescript@npm:4.8.2"
-  bin:
-    tsc: bin/tsc
-    tsserver: bin/tsserver
-  checksum: 7f5b81d0d558c9067f952c7af52ab7f19c2e70a916817929e4a5b256c93990bf3178eccb1ac8a850bc75df35f6781b6f4cb3370ce20d8b1ded92ed462348f628
-  languageName: node
-  linkType: hard
-
 "typescript@npm:4.8.4, typescript@npm:^3 || ^4":
   version: 4.8.4
   resolution: "typescript@npm:4.8.4"
@@ -32068,16 +32006,6 @@ __metadata:
     tsc: bin/tsc
     tsserver: bin/tsserver
   checksum: 8286a5edcaf3d68e65c451aa1e7150ad1cf53ee0813c07ec35b7abdfdb10f355ecaa13c6a226a694ae7a67785fd7eeebf89f845da0b4f7e4a35561ddc459aba0
-  languageName: node
-  linkType: hard
-
-"typescript@patch:typescript@4.8.2#~builtin<compat/typescript>":
-  version: 4.8.2
-  resolution: "typescript@patch:typescript@npm%3A4.8.2#~builtin<compat/typescript>::version=4.8.2&hash=3b564f"
-  bin:
-    tsc: bin/tsc
-    tsserver: bin/tsserver
-  checksum: 28e130a49d9330b64b8229ad336247bf980e9a705c5850f30a859a68c051e8e68e367b3275f119da4a825dca71ad0fe315964a1315d4a381c0021bca5eeeb62e
   languageName: node
   linkType: hard
 

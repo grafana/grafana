@@ -131,7 +131,7 @@ func (kr *KeyRetriever) downloadKeys(ctx context.Context) error {
 	defer func() {
 		err := resp.Body.Close()
 		if err != nil {
-			kr.log.Warn("error closing response body", "error", err)
+			kr.log.Warn("Error closing response body", "error", err)
 		}
 	}()
 
@@ -145,7 +145,7 @@ func (kr *KeyRetriever) downloadKeys(ctx context.Context) error {
 	}
 
 	if err := json.Unmarshal(body, &data); err != nil {
-		kr.log.Debug("error unmarshalling response body", "error", err, "body", string(body))
+		kr.log.Debug("Error unmarshalling response body", "error", err, "body", string(body))
 		return fmt.Errorf("error unmarshalling response body: %w", err)
 	}
 
