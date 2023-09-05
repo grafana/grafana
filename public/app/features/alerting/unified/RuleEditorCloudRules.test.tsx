@@ -110,10 +110,11 @@ describe('RuleEditor cloud', () => {
     expect(removeExpressionsButtons).toHaveLength(2);
 
     // Needs to wait for featrue discovery API call to finish - Check if ruler enabled
-    await waitFor(() => expect(screen.getByText('Switch to data source-managed alert rule')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText('Data source-managed')).toBeInTheDocument());
 
-    const switchToCloudButton = screen.getByText('Switch to data source-managed alert rule');
+    const switchToCloudButton = screen.getByText('Data source-managed');
     expect(switchToCloudButton).toBeInTheDocument();
+    expect(switchToCloudButton).not.toBeDisabled();
 
     await user.click(switchToCloudButton);
 
