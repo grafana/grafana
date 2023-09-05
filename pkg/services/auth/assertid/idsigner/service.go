@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/go-jose/go-jose/v3"
 	"github.com/go-jose/go-jose/v3/jwt"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -15,6 +14,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/auth/assertid"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/signingkeys"
+	"github.com/grafana/grafana/pkg/services/team"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -22,55 +23,72 @@ var _ assertid.Service = &Service{}
 
 const cacheKeyPrefix = "assertid"
 
+type TokenSigner interface {
+	SignToken(claims *jwt.Claims, assertions *IDAssertions) (string, error)
+}
+
 // Service implements the AssertID service.
 type Service struct {
+	Signer            TokenSigner
 	logger            log.Logger
 	remoteCache       remotecache.CacheStorage
 	signingKeyService signingkeys.Service
-	signer            jose.Signer
+	cfg               *setting.Cfg
+	teams             team.Service
 }
 
-type idAssertions struct {
-	Teams     []string `json:"teams"`
-	IPAddress string   `json:"ip_address"`
+type IDAssertions struct {
+	Teams     []string `json:"groups"`
+	IPAddress string   `json:"ip"`
 }
 
 // ProvideIDSigningService returns a new instance of the AssertID service.
-func ProvideIDSigningService(remoteCache remotecache.CacheStorage,
-	signingKeyService signingkeys.Service) *Service {
-	key := signingKeyService.GetServerPrivateKey() // FIXME: replace with signing specific key
-
+func ProvideIDSigningService(remoteCache remotecache.CacheStorage, cfg *setting.Cfg,
+	signingKeyService signingkeys.Service, teams team.Service) *Service {
 	service := &Service{
 		logger:            log.New("auth.assertid"),
 		remoteCache:       remoteCache,
-		signer:            nil,
+		cfg:               cfg,
 		signingKeyService: signingKeyService,
+		teams:             teams,
+		Signer:            nil,
 	}
-	// Create a new JWT signer using the signing key.
-	signer, err := jose.NewSigner(jose.SigningKey{Algorithm: jose.ES256, Key: key}, nil)
-	if err == nil {
-		service.signer = signer
-	} else {
+
+	signer, err := newLocalSigner(signingKeyService)
+	if err != nil {
 		service.logger.Error("Unable to create signer", "error", err)
+	} else {
+		service.Signer = signer
 	}
 
 	return service
 }
 
-// ActiveUserAssertion returns the active user assertion.
-func (s *Service) ActiveUserAssertion(ctx context.Context, id identity.Requester, req *http.Request) (string, error) {
-	if s.signer == nil {
-		return "", fmt.Errorf("signer unavailable")
+func (s *Service) GenerateUserAssertion(ctx context.Context, id identity.Requester, req *http.Request) (*IDAssertions, error) {
+	idAssertions := &IDAssertions{
+		Teams:     []string{},
+		IPAddress: "",
 	}
 
-	cacheKey, err := id.GetCacheKey()
-	if err == nil {
-		val, err := s.remoteCache.Get(ctx, fmt.Sprintf("%s-%s", cacheKeyPrefix, cacheKey))
-		if err == nil {
-			return string(val), nil
+	var userID int64
+	namespace, identifier := id.GetNamespacedID()
+	if namespace == identity.NamespaceUser || namespace == identity.NamespaceServiceAccount {
+		var err error
+		userID, err = identity.IntIdentifier(namespace, identifier)
+		if err != nil {
+			return nil, err
 		}
-	} else {
-		return "", err
+
+		// Get the user's teams.
+		query := team.GetTeamsByUserQuery{OrgID: id.GetOrgID(), UserID: userID, SignedInUser: id}
+		teams, err := s.teams.GetTeamsByUser(ctx, &query)
+		if err != nil {
+			return nil, err
+		}
+
+		for _, team := range teams {
+			idAssertions.Teams = append(idAssertions.Teams, team.Name)
+		}
 	}
 
 	addr := web.RemoteAddr(req)
@@ -84,27 +102,45 @@ func (s *Service) ActiveUserAssertion(ctx context.Context, id identity.Requester
 		clientIPStr = ""
 	}
 
+	idAssertions.IPAddress = clientIPStr
+
+	return idAssertions, nil
+}
+
+// ActiveUserAssertion returns the active user assertion.
+func (s *Service) ActiveUserAssertion(ctx context.Context, id identity.Requester, req *http.Request) (string, error) {
+	if s.Signer == nil {
+		return "", fmt.Errorf("signer unavailable")
+	}
+
+	cacheKey, err := id.GetCacheKey()
+	if err == nil {
+		val, err := s.remoteCache.Get(ctx, fmt.Sprintf("%s-%s", cacheKeyPrefix, cacheKey))
+		if err == nil {
+			return string(val), nil
+		}
+	} else {
+		return "", err
+	}
+
 	namespace, identifier := id.GetNamespacedID()
 	// Set the JWT claims.
-	claims := jwt.Claims{
-		Issuer:   fmt.Sprintf("%d", id.GetOrgID()),
+	claims := &jwt.Claims{
+		Issuer:   fmt.Sprintf("grn:%d:instance/%s", id.GetOrgID(), s.cfg.AppURL),
 		Subject:  fmt.Sprintf("%s:%s", namespace, identifier),
-		Audience: jwt.Audience{"Grafana"},
+		Audience: jwt.Audience{fmt.Sprintf("grn:%d:instance/%s", id.GetOrgID(), s.cfg.AppURL)},
 		Expiry:   jwt.NewNumericDate(time.Now().Add(time.Minute * 5)),
 		IssuedAt: jwt.NewNumericDate(time.Now()),
 		ID:       identifier,
 	}
 
-	assertions := &idAssertions{
-		Teams:     []string{"team1", "team2"},
-		IPAddress: clientIPStr,
+	assertions, err := s.GenerateUserAssertion(ctx, id, req)
+	if err != nil {
+		return "", err
 	}
 
 	// Create a new JWT builder.
-	builder := jwt.Signed(s.signer).Claims(claims).Claims(assertions)
-
-	// Build the JWT.
-	token, err := builder.CompactSerialize()
+	token, err := s.Signer.SignToken(claims, assertions)
 	if err != nil {
 		return "", err
 	}
