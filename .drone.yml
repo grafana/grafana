@@ -3311,7 +3311,7 @@ steps:
 - commands:
   - printenv GCP_KEY_BASE64 | base64 -d > /tmp/key.json
   - gcloud auth activate-service-account --key-file=/tmp/key.json
-  - 'gcloud storage cp dist/nightly-${DRONE_COMMIT_SHA:0:8} {"from_secret": "destination"}/nightly/nightly-${DRONE_COMMIT_SHA:0:8}'
+  - gcloud storage cp dist/nightly-${DRONE_COMMIT_SHA:0:8} ${DESTINATION}/nightly/nightly-${DRONE_COMMIT_SHA:0:8}
   environment:
     _EXPERIMENTAL_DAGGER_CLOUD_TOKEN:
       from_secret: dagger_token
@@ -4936,6 +4936,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 64913f3e1b089cb7f566fe02d4372a58cf18090e62ecb57f4e0d1f0038fb0187
+hmac: ee9fb48e42d77dbc4f83cf911a3e89281ab8fa9e85d9706706679bd397e79b31
 
 ...
