@@ -53,19 +53,19 @@ func (st DBstore) DeleteAlertRulesByUID(ctx context.Context, orgID int64, ruleUI
 		if err != nil {
 			return err
 		}
-		logger.Debug("deleted alert rules", "count", rows)
+		logger.Debug("Deleted alert rules", "count", rows)
 
 		rows, err = sess.Table("alert_rule_version").Where("rule_org_id = ?", orgID).In("rule_uid", ruleUID).Delete(ngmodels.AlertRule{})
 		if err != nil {
 			return err
 		}
-		logger.Debug("deleted alert rule versions", "count", rows)
+		logger.Debug("Deleted alert rule versions", "count", rows)
 
 		rows, err = sess.Table("alert_instance").Where("rule_org_id = ?", orgID).In("rule_uid", ruleUID).Delete(ngmodels.AlertRule{})
 		if err != nil {
 			return err
 		}
-		logger.Debug("deleted alert instances", "count", rows)
+		logger.Debug("Deleted alert instances", "count", rows)
 		return nil
 	})
 }
@@ -265,7 +265,7 @@ func (st DBstore) preventIntermediateUniqueConstraintViolations(sess *db.Session
 	if !newTitlesOverlapExisting(titleUpdates) {
 		return nil
 	}
-	st.Logger.Debug("detected possible intermediate unique constraint violation, creating temporary title updates", "updates", len(titleUpdates))
+	st.Logger.Debug("Detected possible intermediate unique constraint violation, creating temporary title updates", "updates", len(titleUpdates))
 
 	for _, update := range titleUpdates {
 		r := update.Existing
@@ -537,7 +537,7 @@ func (st DBstore) GetAlertRulesForScheduling(ctx context.Context, query *ngmodel
 		}
 		defer func() {
 			if err := rows.Close(); err != nil {
-				st.Logger.Error("unable to close rows session", "error", err)
+				st.Logger.Error("Unable to close rows session", "error", err)
 			}
 		}()
 		lokiRangeToInstantEnabled := st.FeatureToggles.IsEnabled(featuremgmt.FlagAlertingLokiRangeToInstant)

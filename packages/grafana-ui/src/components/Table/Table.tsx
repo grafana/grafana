@@ -13,6 +13,7 @@ import {
 import { VariableSizeList } from 'react-window';
 
 import { Field, FieldType, ReducerID } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { TableCellHeight } from '@grafana/schema';
 
 import { useTheme2 } from '../../themes';
@@ -330,7 +331,7 @@ export const Table = memo((props: Props) => {
             <HeaderRow headerGroups={headerGroups} showTypeIcons={showTypeIcons} tableStyles={tableStyles} />
           )}
           {itemCount > 0 ? (
-            <div ref={variableSizeListScrollbarRef}>
+            <div data-testid={selectors.components.Panels.Visualization.Table.body} ref={variableSizeListScrollbarRef}>
               <CustomScrollbar onScroll={handleScroll} hideHorizontalTrack={true}>
                 <VariableSizeList
                   // This component needs an unmount/remount when row height or page changes

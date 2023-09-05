@@ -448,6 +448,24 @@ func TestApiCreatePublicDashboard(t *testing.T) {
 			ShouldCallService:    true,
 			JsonBody:             `{ "uid": "123abc", "isEnabled": true}`,
 		},
+		{
+			Name:                 "returns 400 when access token is invalid",
+			ExpectedHttpResponse: http.StatusBadRequest,
+			publicDashboard:      nil,
+			SaveDashboardErr:     nil,
+			User:                 userAdmin,
+			ShouldCallService:    false,
+			JsonBody:             `{ "AccessToken": "123abc", "isEnabled": true }`,
+		},
+		{
+			Name:                 "returns 200 when access token is valid",
+			ExpectedHttpResponse: http.StatusOK,
+			publicDashboard:      &PublicDashboard{IsEnabled: true},
+			SaveDashboardErr:     nil,
+			User:                 userAdmin,
+			ShouldCallService:    true,
+			JsonBody:             `{ "accessToken": "d64457c699644079b50230cfefddb211", "isEnabled": true}`,
+		},
 	}
 
 	for _, test := range testCases {

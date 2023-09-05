@@ -1,19 +1,26 @@
 package azuremonitor
 
 import (
+	"crypto/tls"
 	"fmt"
 	"net/http"
 
 	"github.com/grafana/grafana-azure-sdk-go/azcredentials"
 	"github.com/grafana/grafana-azure-sdk-go/azhttpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 
-	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
 )
 
-func newHTTPClient(route types.AzRoute, model types.DatasourceInfo, settings *backend.DataSourceInstanceSettings, cfg *setting.Cfg, clientProvider httpclient.Provider) (*http.Client, error) {
+type Provider interface {
+	New(...httpclient.Options) (*http.Client, error)
+	GetTransport(...httpclient.Options) (http.RoundTripper, error)
+	GetTLSConfig(...httpclient.Options) (*tls.Config, error)
+}
+
+func newHTTPClient(route types.AzRoute, model types.DatasourceInfo, settings *backend.DataSourceInstanceSettings, cfg *setting.Cfg, clientProvider Provider) (*http.Client, error) {
 	clientOpts, err := settings.HTTPClientOptions()
 	if err != nil {
 		return nil, fmt.Errorf("error getting HTTP options: %w", err)
