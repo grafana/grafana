@@ -2,7 +2,15 @@ import { css } from '@emotion/css';
 import React, { useMemo, useState } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
-import { applyFieldOverrides, DataFrame, DataLinkClickEvent, Field, FieldType, GrafanaTheme2 } from '@grafana/data';
+import {
+  applyFieldOverrides,
+  DataFrame,
+  DataLinkClickEvent,
+  Field,
+  FieldType,
+  GrafanaTheme2,
+  MappingType,
+} from '@grafana/data';
 import {
   IconButton,
   Table,
@@ -86,7 +94,7 @@ const FlameGraphTopTableContainer = React.memo(
               onSandwich,
               getTheme,
               search,
-              sandwichItem,
+              sandwichItem
             );
             return (
               <Table
@@ -152,6 +160,13 @@ function buildTableDataFrame(
     const baselineField = createNumberField('Baseline', 'percent');
     const comparisonField = createNumberField('Comparison', 'percent');
     const diffField = createNumberField('Diff', 'percent');
+    diffField.config.custom.cellOptions.type = TableCellDisplayMode.ColorText;
+    diffField.config.mappings = [
+      { type: MappingType.ValueToText, options: { [Infinity]: { text: 'new', color: 'red' } } },
+      { type: MappingType.ValueToText, options: { [-100]: { text: 'removed', color: 'green' } } },
+      { type: MappingType.RangeToText, options: { from: 0, to: Infinity, result: { color: 'red' } } },
+      { type: MappingType.RangeToText, options: { from: -Infinity, to: 0, result: { color: 'green' } } },
+    ];
 
     // For this we don't really consider sandwich view even though you can switch it on.
     const levels = data.getLevels();
@@ -173,9 +188,9 @@ function buildTableDataFrame(
 
       const diff = ((percentageRight - percentageLeft) / percentageLeft) * 100;
 
+      diffField.values.push(diff);
       baselineField.values.push(percentageLeft);
       comparisonField.values.push(percentageRight);
-      diffField.values.push(diff);
     }
 
     frame = {
@@ -210,11 +225,21 @@ function buildTableDataFrame(
 }
 
 function createNumberField(name: string, unit?: string): Field {
+  const tableFieldOptions: TableFieldOptions = {
+    width: TOP_TABLE_COLUMN_WIDTH,
+    align: 'auto',
+    inspect: false,
+    cellOptions: { type: TableCellDisplayMode.Auto },
+  };
+
   return {
     type: FieldType.number,
     name,
     values: [],
-    config: { unit, custom: { width: TOP_TABLE_COLUMN_WIDTH } },
+    config: {
+      unit,
+      custom: tableFieldOptions,
+    },
   };
 }
 
