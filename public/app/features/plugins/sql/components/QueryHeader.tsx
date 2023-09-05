@@ -49,10 +49,12 @@ export function QueryHeader({
 
   const onEditorModeChange = useCallback(
     (newEditorMode: EditorMode) => {
-      reportInteraction('grafana_sql_editor_mode_changed', {
-        datasource: query.datasource?.type,
-        selectedEditorMode: newEditorMode,
-      });
+      if (newEditorMode === EditorMode.Code) {
+        reportInteraction('grafana_sql_editor_mode_changed', {
+          datasource: query.datasource?.type,
+          selectedEditorMode: EditorMode.Code,
+        });
+      }
 
       if (editorMode === EditorMode.Code) {
         setShowConfirm(true);
@@ -238,6 +240,12 @@ export function QueryHeader({
         <ConfirmModal
           isOpen={showConfirm}
           onCopy={() => {
+            reportInteraction('grafana_sql_editor_mode_changed', {
+              datasource: query.datasource?.type,
+              selectedEditorMode: EditorMode.Builder,
+              type: 'copy',
+            });
+
             setShowConfirm(false);
             copyToClipboard(query.rawSql!);
             onChange({
@@ -247,6 +255,12 @@ export function QueryHeader({
             });
           }}
           onDiscard={() => {
+            reportInteraction('grafana_sql_editor_mode_changed', {
+              datasource: query.datasource?.type,
+              selectedEditorMode: EditorMode.Builder,
+              type: 'discard',
+            });
+
             setShowConfirm(false);
             onChange({
               ...query,
@@ -254,7 +268,15 @@ export function QueryHeader({
               editorMode: EditorMode.Builder,
             });
           }}
-          onCancel={() => setShowConfirm(false)}
+          onCancel={() => {
+            reportInteraction('grafana_sql_editor_mode_changed', {
+              datasource: query.datasource?.type,
+              selectedEditorMode: EditorMode.Builder,
+              type: 'cancel',
+            });
+
+            setShowConfirm(false);
+          }}
         />
       </EditorHeader>
 
