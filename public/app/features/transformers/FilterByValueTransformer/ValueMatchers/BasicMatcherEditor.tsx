@@ -1,7 +1,8 @@
 import React, { useCallback, useState } from 'react';
 
-import { ValueMatcherID, BasicValueMatcherOptions } from '@grafana/data';
-import { Input } from '@grafana/ui';
+import { ValueMatcherID, BasicValueMatcherOptions, SelectableValue, VariableOrigin } from '@grafana/data';
+import { getTemplateSrv } from '@grafana/runtime';
+import { DataLinkInput, Input, Select } from '@grafana/ui';
 
 import { ValueMatcherEditorConfig, ValueMatcherUIProps, ValueMatcherUIRegistryItem } from './types';
 
@@ -13,15 +14,24 @@ export function basicMatcherEditor<T = any>(
     const { value } = options;
     const [isInvalid, setInvalid] = useState(!validator(value));
 
+    const templateSrv = getTemplateSrv();
+    const variables = templateSrv.getVariables().map((v) => {
+      return { value: v.name, label: v.label || v.name, origin: VariableOrigin.Template };
+    });
+
     const onChangeValue = useCallback(
-      (event: React.FormEvent<HTMLInputElement>) => {
-        setInvalid(!validator(event.currentTarget.value));
+      (value: string) => {
+        setInvalid(!validator(value));
+        onChange({
+          ...options,
+          value: value,
+        });
       },
-      [setInvalid, validator]
+      [setInvalid, validator, onChange, options]
     );
 
-    const onChangeOptions = useCallback(
-      (event: React.FocusEvent<HTMLInputElement>) => {
+    /* const onChangeOptions = useCallback(
+      () => {
         if (isInvalid) {
           return;
         }
@@ -35,16 +45,9 @@ export function basicMatcherEditor<T = any>(
       },
       [options, onChange, isInvalid]
     );
-
+*/
     return (
-      <Input
-        className="flex-grow-1"
-        invalid={isInvalid}
-        defaultValue={String(options.value)}
-        placeholder="Value"
-        onChange={onChangeValue}
-        onBlur={onChangeOptions}
-      />
+      <DataLinkInput value={value} onChange={onChangeValue} placeholder="Value" suggestions={variables}></DataLinkInput>
     );
   };
 }
