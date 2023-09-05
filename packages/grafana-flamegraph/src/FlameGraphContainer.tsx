@@ -9,7 +9,7 @@ import { FlameGraphDataContainer } from './FlameGraph/dataTransform';
 import FlameGraphHeader from './FlameGraphHeader';
 import FlameGraphTopTableContainer from './TopTable/FlameGraphTopTableContainer';
 import { MIN_WIDTH_TO_SHOW_BOTH_TOPTABLE_AND_FLAMEGRAPH } from './constants';
-import { ClickedItemData, ColorScheme, SelectedView, TextAlign } from './types';
+import { ClickedItemData, ColorScheme, ColorSchemeDiff, SelectedView, TextAlign } from './types';
 
 type Props = {
   data?: DataFrame;
@@ -48,7 +48,6 @@ const FlameGraphContainer = ({
   const [textAlign, setTextAlign] = useState<TextAlign>('left');
   // This is a label of the item because in sandwich view we group all items by label and present a merged graph
   const [sandwichItem, setSandwichItem] = useState<string>();
-  const [colorScheme, setColorScheme] = useState<ColorScheme>(ColorScheme.ValueBased);
 
   const theme = getTheme();
 
@@ -59,6 +58,7 @@ const FlameGraphContainer = ({
     return new FlameGraphDataContainer(data, theme);
   }, [data, theme]);
 
+  const [colorScheme, setColorScheme] = useColorScheme(dataContainer);
   const styles = getStyles(theme, vertical);
 
   // If user resizes window with both as the selected view
@@ -131,6 +131,8 @@ const FlameGraphContainer = ({
         stickyHeader={Boolean(stickyHeader)}
         extraHeaderElements={extraHeaderElements}
         vertical={vertical}
+        isDiffMode={Boolean(dataContainer.isDiffFlamegraph())}
+        getTheme={getTheme}
       />
 
       <div className={styles.body}>
@@ -175,6 +177,29 @@ const FlameGraphContainer = ({
     </div>
   );
 };
+
+function useColorScheme(dataContainer: FlameGraphDataContainer | undefined) {
+  const [colorScheme, setColorScheme] = useState<ColorScheme | ColorSchemeDiff>(
+    dataContainer?.isDiffFlamegraph() ? ColorSchemeDiff.Default : ColorScheme.ValueBased
+  );
+  useEffect(() => {
+    if (
+      dataContainer?.isDiffFlamegraph() &&
+      (colorScheme === ColorScheme.ValueBased || colorScheme === ColorScheme.PackageBased)
+    ) {
+      setColorScheme(ColorSchemeDiff.Default);
+    }
+
+    if (
+      !dataContainer?.isDiffFlamegraph() &&
+      (colorScheme === ColorSchemeDiff.Default || colorScheme === ColorSchemeDiff.DiffColorBlind)
+    ) {
+      setColorScheme(ColorScheme.ValueBased);
+    }
+  }, [dataContainer, colorScheme]);
+
+  return [colorScheme, setColorScheme] as const;
+}
 
 function getStyles(theme: GrafanaTheme2, vertical?: boolean) {
   return {

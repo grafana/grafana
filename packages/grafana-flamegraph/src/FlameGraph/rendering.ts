@@ -12,27 +12,55 @@ import {
   LABEL_THRESHOLD,
   PIXELS_PER_LEVEL,
 } from '../constants';
-import { ClickedItemData, ColorScheme, TextAlign } from '../types';
+import { ClickedItemData, ColorScheme, ColorSchemeDiff, TextAlign } from '../types';
 
-import { getBarColorByPackage, getBarColorByValue } from './colors';
+import { getBarColorByDiff, getBarColorByPackage, getBarColorByValue } from './colors';
 import { FlameGraphDataContainer, LevelItem } from './dataTransform';
 
 const ufuzzy = new uFuzzy();
 
-export function useFlameRender(
-  canvasRef: RefObject<HTMLCanvasElement>,
-  data: FlameGraphDataContainer,
-  levels: LevelItem[][],
-  wrapperWidth: number,
-  rangeMin: number,
-  rangeMax: number,
-  search: string,
-  textAlign: TextAlign,
-  totalTicks: number,
-  colorScheme: ColorScheme,
-  getTheme: () => GrafanaTheme2,
-  focusedItemData?: ClickedItemData
-) {
+type RenderOptions = {
+  canvasRef: RefObject<HTMLCanvasElement>;
+  data: FlameGraphDataContainer;
+  levels: LevelItem[][];
+  wrapperWidth: number;
+
+  // If we are rendering only zoomed in part of the graph.
+  rangeMin: number;
+  rangeMax: number;
+
+  search: string;
+  textAlign: TextAlign;
+
+  // Total ticks that will be used for sizing
+  totalViewTicks: number;
+  // Total ticks that will be used for computing colors as some color scheme (like in diff view) should not be affected
+  // by sandwich or focus view.
+  totalColorTicks: number;
+  // Total ticks used to compute the diff colors
+  totalTicksRight: number | undefined;
+  colorScheme: ColorScheme | ColorSchemeDiff;
+  focusedItemData?: ClickedItemData;
+  getTheme: () => GrafanaTheme2;
+};
+
+export function useFlameRender(options: RenderOptions) {
+  const {
+    canvasRef,
+    data,
+    levels,
+    wrapperWidth,
+    rangeMin,
+    rangeMax,
+    search,
+    textAlign,
+    totalViewTicks,
+    totalColorTicks,
+    totalTicksRight,
+    colorScheme,
+    focusedItemData,
+    getTheme,
+  } = options;
   const foundLabels = useMemo(() => {
     if (search) {
       const foundLabels = new Set<string>();
@@ -58,20 +86,21 @@ export function useFlameRender(
       return;
     }
     ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-    const pixelsPerTick = (wrapperWidth * window.devicePixelRatio) / totalTicks / (rangeMax - rangeMin);
+    const pixelsPerTick = (wrapperWidth * window.devicePixelRatio) / totalViewTicks / (rangeMax - rangeMin);
 
     for (let levelIndex = 0; levelIndex < levels.length; levelIndex++) {
       const level = levels[levelIndex];
       // Get all the dimensions of the rectangles for the level. We do this by level instead of per rectangle, because
       // sometimes we collapse multiple bars into single rect.
-      const dimensions = getRectDimensionsForLevel(data, level, levelIndex, totalTicks, rangeMin, pixelsPerTick);
+      const dimensions = getRectDimensionsForLevel(data, level, levelIndex, totalViewTicks, rangeMin, pixelsPerTick);
       for (const rect of dimensions) {
         const focusedLevel = focusedItemData ? focusedItemData.level : 0;
         // Render each rectangle based on the computed dimensions
         renderRect(
           ctx,
           rect,
-          totalTicks,
+          totalColorTicks,
+          totalTicksRight,
           rangeMin,
           rangeMax,
           levelIndex,
@@ -94,7 +123,9 @@ export function useFlameRender(
     focusedItemData,
     foundLabels,
     textAlign,
-    totalTicks,
+    totalViewTicks,
+    totalColorTicks,
+    totalTicksRight,
     colorScheme,
     theme,
   ]);
@@ -130,6 +161,7 @@ type RectData = {
   y: number;
   collapsed: boolean;
   ticks: number;
+  ticksRight?: number;
   label: string;
   unitLabel: string;
   itemIndex: number;
@@ -177,6 +209,8 @@ export function getRectDimensionsForLevel(
       y: levelIndex * PIXELS_PER_LEVEL,
       collapsed,
       ticks: curBarTicks,
+      // When collapsed this does not make that much sense but then we don't really use it anyway.
+      ticksRight: item.valueRight,
       label: data.getLabel(item.itemIndexes[0]),
       unitLabel: unit,
       itemIndex: item.itemIndexes[0],
@@ -189,13 +223,14 @@ export function renderRect(
   ctx: CanvasRenderingContext2D,
   rect: RectData,
   totalTicks: number,
+  totalTicksRight: number | undefined,
   rangeMin: number,
   rangeMax: number,
   levelIndex: number,
   topLevelIndex: number,
   foundNames: Set<string> | undefined,
   textAlign: TextAlign,
-  colorScheme: ColorScheme,
+  colorScheme: ColorScheme | ColorSchemeDiff,
   theme: GrafanaTheme2
 ) {
   if (rect.width < HIDE_THRESHOLD) {
@@ -206,9 +241,12 @@ export function renderRect(
   ctx.rect(rect.x + (rect.collapsed ? 0 : BAR_BORDER_WIDTH), rect.y, rect.width, rect.height);
 
   const color =
-    colorScheme === ColorScheme.ValueBased
-      ? getBarColorByValue(rect.ticks, totalTicks, rangeMin, rangeMax)
-      : getBarColorByPackage(rect.label, theme);
+    rect.ticksRight !== undefined &&
+    (colorScheme === ColorSchemeDiff.Default || colorScheme === ColorSchemeDiff.DiffColorBlind)
+      ? getBarColorByDiff(rect.ticks, rect.ticksRight, totalTicks, totalTicksRight!, colorScheme)
+      : colorScheme === ColorScheme.ValueBased
+        ? getBarColorByValue(rect.ticks, totalTicks, rangeMin, rangeMax)
+        : getBarColorByPackage(rect.label, theme);
 
   if (foundNames) {
     // Means we are searching, we use color for matches and gray the rest

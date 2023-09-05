@@ -4,11 +4,11 @@ import useDebounce from 'react-use/lib/useDebounce';
 import usePrevious from 'react-use/lib/usePrevious';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { Button, Dropdown, Input, Menu, RadioButtonGroup, useStyles2 } from '@grafana/ui';
+import { Button, Dropdown, Input, Menu, RadioButtonGroup } from '@grafana/ui';
 
-import { byPackageGradient, byValueGradient } from './FlameGraph/colors';
+import { byPackageGradient, byValueGradient, diffColorBlindGradient, diffDefaultGradient } from './FlameGraph/colors';
 import { MIN_WIDTH_TO_SHOW_BOTH_TOPTABLE_AND_FLAMEGRAPH } from './constants';
-import { ColorScheme, SelectedView, TextAlign } from './types';
+import { ColorScheme, ColorSchemeDiff, SelectedView, TextAlign } from './types';
 
 type Props = {
   search: string;
@@ -20,10 +20,12 @@ type Props = {
   textAlign: TextAlign;
   onTextAlignChange: (align: TextAlign) => void;
   showResetButton: boolean;
-  colorScheme: ColorScheme;
-  onColorSchemeChange: (colorScheme: ColorScheme) => void;
+  colorScheme: ColorScheme | ColorSchemeDiff;
+  onColorSchemeChange: (colorScheme: ColorScheme | ColorSchemeDiff) => void;
   stickyHeader: boolean;
   vertical?: boolean;
+  isDiffMode: boolean;
+  getTheme: () => GrafanaTheme2;
 
   extraHeaderElements?: React.ReactNode;
 };
@@ -43,8 +45,10 @@ const FlameGraphHeader = ({
   stickyHeader,
   extraHeaderElements,
   vertical,
+  isDiffMode,
+  getTheme,
 }: Props) => {
-  const styles = useStyles2((theme) => getStyles(theme, stickyHeader));
+  const styles = getStyles(getTheme(), stickyHeader);
   const [localSearch, setLocalSearch] = useSearchInput(search, setSearch);
 
   const suffix =
@@ -91,7 +95,12 @@ const FlameGraphHeader = ({
             aria-label={'Reset focus and sandwich state'}
           />
         )}
-        <ColorSchemeButton value={colorScheme} onChange={onColorSchemeChange} />
+        <ColorSchemeButton
+          value={colorScheme}
+          onChange={onColorSchemeChange}
+          isDiffMode={isDiffMode}
+          getTheme={getTheme}
+        />
         <RadioButtonGroup<TextAlign>
           size="sm"
           disabled={selectedView === SelectedView.TopTable}
@@ -108,24 +117,44 @@ const FlameGraphHeader = ({
         />
         {extraHeaderElements && <div className={styles.extraElements}>{extraHeaderElements}</div>}
       </div>
-
     </div>
   );
 };
 
 type ColorSchemeButtonProps = {
-  value: ColorScheme;
-  onChange: (colorScheme: ColorScheme) => void;
+  value: ColorScheme | ColorSchemeDiff;
+  onChange: (colorScheme: ColorScheme | ColorSchemeDiff) => void;
+  getTheme: () => GrafanaTheme2;
+  isDiffMode: boolean;
 };
 function ColorSchemeButton(props: ColorSchemeButtonProps) {
   // TODO: probably create separate getStyles
-  const styles = useStyles2((theme) => getStyles(theme, false));
-  const menu = (
+  const styles = getStyles(props.getTheme(), false);
+  let menu = (
     <Menu>
       <Menu.Item label="By value" onClick={() => props.onChange(ColorScheme.ValueBased)} />
       <Menu.Item label="By package name" onClick={() => props.onChange(ColorScheme.PackageBased)} />
     </Menu>
   );
+
+  if (props.isDiffMode) {
+    menu = (
+      <Menu>
+        <Menu.Item label="Default (green to red)" onClick={() => props.onChange(ColorSchemeDiff.Default)} />
+        <Menu.Item label="Color blind (blue to red)" onClick={() => props.onChange(ColorSchemeDiff.DiffColorBlind)} />
+      </Menu>
+    );
+  }
+
+  // Show a bit different gradient as a way to indicate selected value
+  const colorDotStyle =
+    {
+      [ColorScheme.ValueBased]: styles.colorDotByValue,
+      [ColorScheme.PackageBased]: styles.colorDotByPackage,
+      [ColorSchemeDiff.DiffColorBlind]: styles.colorDotDiffColorBlind,
+      [ColorSchemeDiff.Default]: styles.colorDotDiffDefault,
+    }[props.value] || styles.colorDotByValue;
+
   return (
     <Dropdown overlay={menu}>
       <Button
@@ -137,13 +166,7 @@ function ColorSchemeButton(props: ColorSchemeButtonProps) {
         className={styles.buttonSpacing}
         aria-label={'Change color scheme'}
       >
-        <span
-          className={cx(
-            styles.colorDot,
-            // Show a bit different gradient as a way to indicate selected value
-            props.value === ColorScheme.ValueBased ? styles.colorDotByValue : styles.colorDotByPackage
-          )}
-        />
+        <span className={cx(styles.colorDot, colorDotStyle)} />
       </Button>
     </Dropdown>
   );
@@ -259,10 +282,18 @@ const getStyles = (theme: GrafanaTheme2, sticky?: boolean) => ({
     label: colorDotByPackage;
     background: ${byPackageGradient};
   `,
+  colorDotDiffDefault: css`
+    label: colorDotDiffDefault;
+    background: ${diffDefaultGradient};
+  `,
+  colorDotDiffColorBlind: css`
+    label: colorDotDiffColorBlind;
+    background: ${diffColorBlindGradient};
+  `,
   extraElements: css`
     label: extraElements;
     margin-left: ${theme.spacing(1)};
-  `
+  `,
 });
 
 export default FlameGraphHeader;
