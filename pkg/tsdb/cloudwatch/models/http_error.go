@@ -8,10 +8,7 @@ type HttpError struct {
 	StatusCode int
 }
 
-// Note: an HttpError should be a user-facing error.
-// The message should always be something WE have written and vetted as non-sensitive.
-// The original error stack trace can be directly from the service but should only ever be logged, not displayed to user
-// This ensures that we don't leak sensitive information to the user.
+// Note: an HttpError is a user facing error. It should not contain any sensitive information.
 func NewHttpError(message string, statusCode int, err error) *HttpError {
 	httpError := &HttpError{
 		Message:    message,
