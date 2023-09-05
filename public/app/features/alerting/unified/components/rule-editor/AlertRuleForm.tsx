@@ -44,7 +44,7 @@ import * as ruleId from '../../utils/rule-id';
 import AnnotationsStep from './AnnotationsStep';
 import { CloudEvaluationBehavior } from './CloudEvaluationBehavior';
 import { GrafanaEvaluationBehavior } from './GrafanaEvaluationBehavior';
-import { GrafanaRuleInspector } from './GrafanaRuleInspector';
+import { GrafanaRuleExporter } from './GrafanaRuleExporter';
 import { NotificationsStep } from './NotificationsStep';
 import { RecordingRulesNameSpaceAndGroupStep } from './RecordingRulesNameSpaceAndGroupStep';
 import { RuleEditorSection } from './RuleEditorSection';
@@ -316,7 +316,7 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
       ) : null}
       {showEditYaml ? (
         type === RuleFormType.grafana ? (
-          <GrafanaRuleInspector alertUid={uidFromParams} onClose={() => setShowEditYaml(false)} />
+          <GrafanaRuleExporter alertUid={uidFromParams} onClose={() => setShowEditYaml(false)} />
         ) : (
           <RuleInspector onClose={() => setShowEditYaml(false)} />
         )

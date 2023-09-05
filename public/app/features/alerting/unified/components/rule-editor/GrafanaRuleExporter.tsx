@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import saveAs from 'file-saver';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -21,7 +21,7 @@ const grafanaRulesTabs = Object.values(grafanaRuleExportProviders).map((provider
   value: provider.exportFormat,
 }));
 
-export const GrafanaRuleInspector = ({ onClose, alertUid }: Props) => {
+export const GrafanaRuleExporter = ({ onClose, alertUid }: Props) => {
   const [activeTab, setActiveTab] = useState<RuleExportFormats>('yaml');
 
   return (
@@ -43,8 +43,6 @@ export const GrafanaRuleInspector = ({ onClose, alertUid }: Props) => {
   );
 };
 
-const { useExportRuleQuery } = alertRuleApi;
-
 interface YamlTabProps {
   alertUid: string;
   exportFormat: RuleExportFormats;
@@ -52,28 +50,52 @@ interface YamlTabProps {
 }
 
 const GrafanaInspectorRuleDefinition = ({ alertUid, exportFormat, onClose }: YamlTabProps) => {
-  const styles = useStyles2(grafanaInspectorStyles);
-
-  const { currentData: ruleTextDefinition = '', isFetching } = useExportRuleQuery({
+  const { currentData: ruleTextDefinition = '', isFetching } = alertRuleApi.useExportRuleQuery({
     uid: alertUid,
     format: exportFormat,
   });
 
-  const onDownload = useCallback(() => {
-    const blob = new Blob([ruleTextDefinition], {
-      type: `application/${exportFormat};charset=utf-8`,
-    });
-    saveAs(blob, `${alertUid}-${new Date().getTime()}.${exportFormat}`);
-
-    onClose();
-  }, [alertUid, exportFormat, ruleTextDefinition, onClose]);
+  const downloadFileName = `${alertUid}-${new Date().getTime()}`;
 
   if (isFetching) {
     return <LoadingPlaceholder text="Loading...." />;
   }
 
-  const provider = grafanaRuleExportProviders[exportFormat];
-  const formattedTextDefinition = provider.formatter ? provider.formatter(ruleTextDefinition) : ruleTextDefinition;
+  return (
+    <FileExportPreview
+      format={exportFormat}
+      textDefinition={ruleTextDefinition}
+      downloadFileName={downloadFileName}
+      onClose={onClose}
+    />
+  );
+};
+
+interface FileExportPreviewProps {
+  format: RuleExportFormats;
+  textDefinition: string;
+
+  /*** Filename without extension ***/
+  downloadFileName: string;
+  onClose: () => void;
+}
+
+export function FileExportPreview({ format, textDefinition, downloadFileName, onClose }: FileExportPreviewProps) {
+  const styles = useStyles2(fileExportPreviewStyles);
+
+  const onDownload = useCallback(() => {
+    const blob = new Blob([textDefinition], {
+      type: `application/${format};charset=utf-8`,
+    });
+    saveAs(blob, `${downloadFileName}.${format}`);
+
+    onClose();
+  }, [textDefinition, downloadFileName, format, onClose]);
+
+  const formattedTextDefinition = useMemo(() => {
+    const provider = grafanaRuleExportProviders[format];
+    return provider.formatter ? provider.formatter(textDefinition) : textDefinition;
+  }, [format, textDefinition]);
 
   return (
     // TODO Handle empty content
@@ -84,7 +106,7 @@ const GrafanaInspectorRuleDefinition = ({ alertUid, exportFormat, onClose }: Yam
             <CodeEditor
               width="100%"
               height={height}
-              language={exportFormat}
+              language={format}
               value={formattedTextDefinition}
               monacoOptions={{
                 minimap: {
@@ -101,7 +123,7 @@ const GrafanaInspectorRuleDefinition = ({ alertUid, exportFormat, onClose }: Yam
         <Button variant="secondary" onClick={onClose}>
           Cancel
         </Button>
-        <ClipboardButton icon="copy" getText={() => formattedTextDefinition}>
+        <ClipboardButton icon="copy" getText={() => textDefinition}>
           Copy code
         </ClipboardButton>
         <Button icon="download-alt" onClick={onDownload}>
@@ -110,9 +132,9 @@ const GrafanaInspectorRuleDefinition = ({ alertUid, exportFormat, onClose }: Yam
       </div>
     </div>
   );
-};
+}
 
-const grafanaInspectorStyles = (theme: GrafanaTheme2) => ({
+const fileExportPreviewStyles = (theme: GrafanaTheme2) => ({
   container: css`
     display: flex;
     flex-direction: column;
