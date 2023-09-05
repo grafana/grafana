@@ -1,6 +1,7 @@
 import { combineReducers } from '@reduxjs/toolkit';
 
 import { TypedVariableModel } from '@grafana/data';
+import { VariableRefresh } from '@grafana/schema';
 import { dashboardReducer } from 'app/features/dashboard/state/reducers';
 
 import { DashboardState, StoreState } from '../../../types';
@@ -160,4 +161,20 @@ export function getPreloadedState(
       },
     },
   };
+}
+
+// function to find a query variable node in the list of all variables
+export function findVariableNodeInList(allVariables: TypedVariableModel[], nodeName: string) {
+  const variableNode = allVariables.find((v) => {
+    return v.name === nodeName;
+  });
+  return variableNode;
+}
+
+// Some variable types have a refresh options, and it might be configured to refresh on time range change
+export function isVariableOnTimeRangeConfigured(variable: TypedVariableModel) {
+  return (
+    (variable.type === 'query' || variable.type === 'datasource' || variable.type === 'interval') &&
+    variable.refresh === VariableRefresh.onTimeRangeChanged
+  );
 }
