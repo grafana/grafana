@@ -1,4 +1,6 @@
-import { AuthProviderStatus, Settings, SettingsSection } from 'app/types';
+import { contextSrv } from 'app/core/core';
+import { getBackendSrv } from 'app/core/services/backend_srv';
+import { AuthProviderStatus, AccessControlAction, Settings, SettingsSection } from 'app/types';
 
 import { AuthProviderInfo, GetStatusHook } from './types';
 
@@ -27,7 +29,7 @@ export function getAuthProviderInfo(provider: string) {
 export function getAuthProviders(cfg: Settings): SettingsSection[] {
   const providers: SettingsSection[] = [];
   for (const [section, sectionConfig] of Object.entries(cfg)) {
-    const provider = registeredAuthProviders.find((provider) => `auth.${provider.id}` === section);
+    const provider = registeredAuthProviders.find((provider: AuthProviderInfo) => `auth.${provider.id}` === section);
     if (provider) {
       const providerData = {
         ...sectionConfig,
@@ -45,5 +47,30 @@ export async function getAuthProviderStatus(providerId: string): Promise<AuthPro
     const getStatusHook = authProvidersConfigHooks[providerId];
     return getStatusHook();
   }
+  return { configured: false, enabled: false };
+}
+
+export function initAuthConfig() {
+  const ldapAuthProvider: AuthProviderInfo = {
+    id: 'ldap',
+    type: 'LDAP',
+    protocol: 'LDAP',
+    displayName: 'LDAP',
+    configPath: 'ldap',
+  };
+  registerAuthProvider(ldapAuthProvider, getConfigHookLDAP);
+}
+
+async function getConfigHookLDAP(): Promise<AuthProviderStatus> {
+  if (contextSrv.hasPermission(AccessControlAction.SettingsRead)) {
+    const result = await getBackendSrv().get('/api/admin/settings');
+    const ldapSettings = result!['auth.ldap'] || {};
+    return {
+      configured: ldapSettings['enabled'] === 'true',
+      enabled: ldapSettings['enabled'] === 'true',
+      hide: ldapSettings['enabled'] !== 'true',
+    };
+  }
+
   return { configured: false, enabled: false };
 }
