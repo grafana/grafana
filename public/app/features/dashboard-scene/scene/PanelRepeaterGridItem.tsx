@@ -36,7 +36,6 @@ export class PanelRepeaterGridItem extends SceneObjectBase<PanelRepeaterGridItem
     onVariableUpdatesCompleted: this._onVariableChanged.bind(this),
   });
 
-  private _ignoreNextStateChange = false;
   private _isWaitingForVariables = false;
 
   public constructor(state: PanelRepeaterGridItemState) {
@@ -73,27 +72,25 @@ export class PanelRepeaterGridItem extends SceneObjectBase<PanelRepeaterGridItem
    * Uses the current repeat item count to calculate the user intended desired itemHeight
    */
   private _handleGridResize(newState: PanelRepeaterGridItemState, prevState: PanelRepeaterGridItemState) {
-    if (this._ignoreNextStateChange) {
-      this._ignoreNextStateChange = false;
-      return;
-    }
-
     const itemCount = this.state.repeatedPanels?.length ?? 1;
     const stateChange: Partial<PanelRepeaterGridItemState> = {};
 
     // Height changed
-    if (newState.height !== prevState.height) {
-      if (this.getRepeatDirection() === 'v') {
-        const itemHeight = Math.ceil(newState.height! / itemCount);
-        stateChange.itemHeight = itemHeight;
-      } else {
-        const rowCount = Math.ceil(itemCount / this.getMaxPerRow());
-        stateChange.itemHeight = Math.ceil(newState.height! / rowCount);
-      }
+    if (newState.height === prevState.height) {
+      return;
     }
 
-    this._ignoreNextStateChange = true;
-    this.setState(stateChange);
+    if (this.getRepeatDirection() === 'v') {
+      const itemHeight = Math.ceil(newState.height! / itemCount);
+      stateChange.itemHeight = itemHeight;
+    } else {
+      const rowCount = Math.ceil(itemCount / this.getMaxPerRow());
+      stateChange.itemHeight = Math.ceil(newState.height! / rowCount);
+    }
+
+    if (stateChange.itemHeight !== this.state.itemHeight) {
+      this.setState(stateChange);
+    }
   }
 
   private _performRepeat() {
@@ -138,7 +135,6 @@ export class PanelRepeaterGridItem extends SceneObjectBase<PanelRepeaterGridItem
       stateChange.height = repeatedPanels.length * itemHeight;
     }
 
-    this._ignoreNextStateChange = true;
     this.setState(stateChange);
 
     // In case we updated our height the grid layout needs to be update
