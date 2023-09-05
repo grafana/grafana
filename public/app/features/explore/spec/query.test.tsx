@@ -12,19 +12,6 @@ jest.mock('@grafana/runtime', () => ({
   getAppEvents: () => testEventBus,
 }));
 
-jest.mock('../../correlations/utils', () => {
-  return {
-    getCorrelationsBySourceUIDs: jest.fn().mockReturnValue({ correlations: [] }),
-  };
-});
-
-jest.mock('app/core/core', () => ({
-  contextSrv: {
-    hasAccess: () => true,
-    getValidIntervals: (defaultIntervals: string[]) => defaultIntervals,
-  },
-}));
-
 describe('Explore: handle running/not running query', () => {
   afterEach(() => {
     tearDown();
