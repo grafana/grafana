@@ -104,6 +104,7 @@ const getErrorPublicDashboardResponse = () =>
 const alertTests = () => {
   it('when user has no write permissions, warning is shown', async () => {
     jest.spyOn(contextSrv, 'hasAccess').mockReturnValue(false);
+    jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
 
     await renderSharePublicDashboard();
     expect(screen.queryByTestId(selectors.NoUpsertPermissionsWarningAlert)).toBeInTheDocument();
@@ -252,6 +253,7 @@ describe('SharePublic - Already persisted', () => {
   });
   it('inputs and delete button are disabled because of lack of permissions', async () => {
     jest.spyOn(contextSrv, 'hasAccess').mockReturnValue(false);
+    jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
     await renderSharePublicDashboard();
     await userEvent.click(screen.getByText('Settings'));
 

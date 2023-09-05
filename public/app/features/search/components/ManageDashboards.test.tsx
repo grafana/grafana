@@ -30,10 +30,6 @@ const setup = async (options?: { folder?: FolderDTO }) => {
 jest.spyOn(console, 'error').mockImplementation();
 
 describe('ManageDashboards', () => {
-  beforeEach(() => {
-    (contextSrv.hasPermission as jest.Mock).mockClear();
-  });
-
   it("should hide and show dashboard actions based on user's permissions", async () => {
     (contextSrv.hasPermission as jest.Mock).mockReturnValue(false);
 

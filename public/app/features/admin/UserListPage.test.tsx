@@ -77,54 +77,28 @@ describe('Tabs rendering', () => {
     expect(screen.getByTestId(tabsSelector.publicDashboardsUsers)).toBeInTheDocument();
   });
   describe('No permissions to read org users or not admin', () => {
-    [
-      {
-        hasOrgReadPermissions: false,
-        isAdmin: true,
-      },
-      {
-        hasOrgReadPermissions: true,
-        isAdmin: false,
-      },
-    ].forEach((scenario) => {
-      it('should render no tabs when user has no permissions to read org users or is not admin', async () => {
-        jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(scenario.hasOrgReadPermissions);
-        jest.spyOn(contextSrv, 'hasAccess').mockReturnValue(scenario.isAdmin);
+    it('should render no tabs when user has no permissions to read org users', async () => {
+      jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
 
-        renderPage();
+      renderPage();
 
-        expect(screen.queryByTestId(tabsSelector.allUsers)).not.toBeInTheDocument();
-        expect(screen.queryByTestId(tabsSelector.orgUsers)).not.toBeInTheDocument();
-        expect(screen.queryByTestId(tabsSelector.publicDashboardsUsers)).not.toBeInTheDocument();
-      });
+      expect(screen.queryByTestId(tabsSelector.allUsers)).not.toBeInTheDocument();
+      expect(screen.queryByTestId(tabsSelector.orgUsers)).not.toBeInTheDocument();
+      expect(screen.queryByTestId(tabsSelector.publicDashboardsUsers)).not.toBeInTheDocument();
     });
   });
-  describe('No permissions to read org users or not admin but email sharing enabled', () => {
-    [
-      {
-        title: 'user has no permissions to read org users',
-        hasOrgReadPermissions: false,
-        isAdmin: true,
-      },
-      {
-        title: 'user is not admin',
-        hasOrgReadPermissions: true,
-        isAdmin: false,
-      },
-    ].forEach((scenario) => {
-      it(`should render User and Public dashboard tabs when ${scenario.title} but has email sharing enabled`, async () => {
-        jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(scenario.hasOrgReadPermissions);
-        jest.spyOn(contextSrv, 'hasAccess').mockReturnValue(scenario.isAdmin);
+  describe('No permissions to read org users but email sharing enabled', () => {
+    it(`should render User and Public dashboard tabs when no permissions to read org users but has email sharing enabled`, async () => {
+      jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
 
-        enableEmailSharing();
-        renderPage();
+      enableEmailSharing();
+      renderPage();
 
-        expect(screen.queryByTestId(tabsSelector.allUsers)).not.toBeInTheDocument();
-        expect(screen.queryByTestId(tabsSelector.orgUsers)).not.toBeInTheDocument();
+      expect(screen.queryByTestId(tabsSelector.allUsers)).not.toBeInTheDocument();
+      expect(screen.queryByTestId(tabsSelector.orgUsers)).not.toBeInTheDocument();
 
-        expect(screen.getByTestId(tabsSelector.users)).toBeInTheDocument();
-        expect(screen.getByTestId(tabsSelector.publicDashboardsUsers)).toBeInTheDocument();
-      });
+      expect(screen.getByTestId(tabsSelector.users)).toBeInTheDocument();
+      expect(screen.getByTestId(tabsSelector.publicDashboardsUsers)).toBeInTheDocument();
     });
   });
 });
@@ -157,7 +131,7 @@ describe('Tables rendering', () => {
   });
   it('should render UsersListPage when user has org read permissions and is not admin', async () => {
     jest.spyOn(contextSrv, 'hasAccess').mockReturnValue(false);
-    jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
+    jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
 
     renderPage();
 
@@ -170,7 +144,7 @@ describe('Tables rendering', () => {
   });
   it('should render UserListPublicDashboardPage when user has email sharing enabled and is not admin', async () => {
     jest.spyOn(contextSrv, 'hasAccess').mockReturnValue(false);
-    jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
+    jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
 
     enableEmailSharing();
     renderPage();

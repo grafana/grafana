@@ -85,6 +85,7 @@ describe('OldFolderPicker', () => {
       ]);
 
     jest.spyOn(contextSrv, 'hasAccess').mockReturnValue(true);
+    jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
 
     const onChangeFn = jest.fn();
     render(<OldFolderPicker onChange={onChangeFn} />);
@@ -106,6 +107,7 @@ describe('OldFolderPicker', () => {
       ]);
 
     jest.spyOn(contextSrv, 'hasAccess').mockReturnValue(true);
+    jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
 
     const onChangeFn = jest.fn();
     render(<OldFolderPicker onChange={onChangeFn} showRoot={false} />);
@@ -127,6 +129,7 @@ describe('OldFolderPicker', () => {
       ]);
 
     jest.spyOn(contextSrv, 'hasAccess').mockReturnValue(false);
+    jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
 
     const onChangeFn = jest.fn();
     render(<OldFolderPicker onChange={onChangeFn} />);
@@ -149,6 +152,7 @@ describe('OldFolderPicker', () => {
       );
     });
     jest.spyOn(contextSrv, 'hasAccess').mockReturnValue(false);
+    jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
     const onChangeFn = jest.fn();
     render(<OldFolderPicker onChange={onChangeFn} />);
 
