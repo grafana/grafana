@@ -43,7 +43,7 @@ const Toolbar = ({ dashboard }: { dashboard: DashboardModel }) => {
   };
 
   return (
-    <PageToolbar title={dashboard.title} buttonOverflowAlignment="right">
+    <PageToolbar title={dashboard.title} pageIcon="grafana" buttonOverflowAlignment="right">
       {!dashboard.timepicker.hidden && (
         <DashNavTimeControls dashboard={dashboard} onChangeTimeZone={onChangeTimeZone} />
       )}
