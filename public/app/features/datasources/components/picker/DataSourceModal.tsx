@@ -167,7 +167,6 @@ export function DataSourceModal({
         />
         <CustomScrollbar>
           <DataSourceList
-            className={styles.dataSourceList}
             onChange={onChangeDataSource}
             current={current}
             onClickEmptyStateCTA={() =>
@@ -212,7 +211,7 @@ export function DataSourceModal({
           )}
         </div>
         <div className={styles.newDSSection}>
-          <span className={styles.newDSDescription}>Open a new tab and configure a new connection</span>
+          <span className={styles.newDSDescription}>Open a new tab and configure a data source</span>
           <AddNewDataSourceButton
             variant="secondary"
             onClick={() => {
@@ -266,10 +265,6 @@ function getDataSourceModalStyles(theme: GrafanaTheme2) {
         overflow-y: auto;
       }
     `,
-    dataSourceList: css`
-      flex: 1 1;
-      height: 100%;
-    }`,
     rightColumn: css`
       display: flex;
       flex-direction: column;

@@ -33,7 +33,7 @@ func (c *PyroscopeClient) ProfileTypes(ctx context.Context) ([]*ProfileType, err
 	}
 	defer func() {
 		if err := resp.Body.Close(); err != nil {
-			logger.Error("failed to close response body", "err", err)
+			logger.Error("Failed to close response body", "err", err)
 		}
 	}()
 
@@ -97,7 +97,7 @@ func (c *PyroscopeClient) getProfileData(ctx context.Context, profileTypeID, lab
 	}
 
 	url := c.URL + "/render?" + params.Encode()
-	logger.Debug("calling /render", "url", url)
+	logger.Debug("Calling /render", "url", url)
 
 	resp, err := c.httpClient.Get(url)
 	if err != nil {
@@ -105,7 +105,7 @@ func (c *PyroscopeClient) getProfileData(ctx context.Context, profileTypeID, lab
 	}
 	defer func() {
 		if err := resp.Body.Close(); err != nil {
-			logger.Error("failed to close response body", "err", err)
+			logger.Error("Failed to close response body", "err", err)
 		}
 	}()
 
@@ -118,7 +118,7 @@ func (c *PyroscopeClient) getProfileData(ctx context.Context, profileTypeID, lab
 
 	err = json.Unmarshal(body, &respData)
 	if err != nil {
-		logger.Debug("flamegraph data", "body", string(body))
+		logger.Debug("Flamegraph data", "body", string(body))
 		return nil, fmt.Errorf("error decoding flamegraph data: %v", err)
 	}
 
@@ -230,7 +230,7 @@ func (c *PyroscopeClient) LabelNames(ctx context.Context, query string, start in
 	}
 	defer func() {
 		if err := resp.Body.Close(); err != nil {
-			logger.Error("failed to close response body", "err", err)
+			logger.Error("Failed to close response body", "err", err)
 		}
 	}()
 
@@ -264,7 +264,7 @@ func (c *PyroscopeClient) LabelValues(ctx context.Context, query string, label s
 	}
 	defer func() {
 		if err := resp.Body.Close(); err != nil {
-			logger.Error("failed to close response body", "err", err)
+			logger.Error("Failed to close response body", "err", err)
 		}
 	}()
 	var values []string
@@ -274,7 +274,7 @@ func (c *PyroscopeClient) LabelValues(ctx context.Context, query string, label s
 	}
 	err = json.Unmarshal(body, &values)
 	if err != nil {
-		logger.Debug("response", "body", string(body))
+		logger.Debug("Response", "body", string(body))
 		return nil, fmt.Errorf("error unmarshaling response %v", err)
 	}
 
