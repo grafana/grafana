@@ -72,16 +72,14 @@ export const UserProfileEditForm = ({ user, isSavingUser, updateProfile }: Props
               />
             </Field>
 
-            <div className="gf-form-button-row">
-              <Button
-                variant="primary"
-                disabled={isSavingUser || disabledEdit}
-                data-testid={selectors.components.UserProfile.profileSaveButton}
-                type="submit"
-              >
-                <Trans i18nKey="common.save">Save</Trans>
-              </Button>
-            </div>
+            <Button
+              variant="primary"
+              disabled={isSavingUser || disabledEdit}
+              data-testid={selectors.components.UserProfile.profileSaveButton}
+              type="submit"
+            >
+              <Trans i18nKey="common.save">Save</Trans>
+            </Button>
           </FieldSet>
         );
       }}
