@@ -1,3 +1,19 @@
+<!-- 9.4.14 START -->
+
+# 9.4.14 (2023-09-05)
+
+### Features and enhancements
+
+- **Prometheus:** Add present_over_time syntax highlighting. [#72366](https://github.com/grafana/grafana/issues/72366), [@arnaudlemaignen](https://github.com/arnaudlemaignen)
+
+### Bug fixes
+
+- **LDAP:** Fix user disabling. [#74318](https://github.com/grafana/grafana/issues/74318), [@gamab](https://github.com/gamab)
+- **Plugins:** Only configure plugin proxy transport once. [#71740](https://github.com/grafana/grafana/issues/71740), [@wbrowne](https://github.com/wbrowne)
+- **InfluxDB:** Interpolate retention policies. [#71202](https://github.com/grafana/grafana/issues/71202), [@itsmylife](https://github.com/itsmylife)
+- **Azure Monitor:** Fix bug that did not show alert rule preview. [#68561](https://github.com/grafana/grafana/issues/68561), [@alyssabull](https://github.com/alyssabull)
+
+<!-- 9.4.14 END -->
 <!-- 9.4.13 START -->
 
 # 9.4.13 (2023-06-22)
