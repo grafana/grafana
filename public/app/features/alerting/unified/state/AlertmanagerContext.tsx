@@ -64,17 +64,17 @@ const AlertmanagerProvider = ({ children, accessType, alertmanagerSourceName }: 
   const selectedAlertmanagerConfig = getAlertmanagerDataSourceByName(selectedAlertmanager)?.jsonData;
 
   // determine if we're dealing with an Alertmanager data source that supports the ruler API
-  const isGrafanaFlavoredAlertmanager = selectedAlertmanager === GRAFANA_RULES_SOURCE_NAME;
-  const isRulerFlavoredAlertmanager = CONFIG_API_ENABLED_ALERTMANAGER_FLAVORS.includes(
+  const isGrafanaAlertmanager = selectedAlertmanager === GRAFANA_RULES_SOURCE_NAME;
+  const isAlertmanagerWithConfigAPI = CONFIG_API_ENABLED_ALERTMANAGER_FLAVORS.includes(
     selectedAlertmanagerConfig?.implementation!
   );
 
-  const hasConfigurationAPI = isGrafanaFlavoredAlertmanager || isRulerFlavoredAlertmanager;
+  const hasConfigurationAPI = isGrafanaAlertmanager || isAlertmanagerWithConfigAPI;
 
   const value: Context = {
     selectedAlertmanager,
     hasConfigurationAPI,
-    isGrafanaFlavoredAlertmanager,
+    isGrafanaFlavoredAlertmanager: isGrafanaAlertmanager,
     selectedAlertmanagerConfig,
     availableAlertManagers,
     setSelectedAlertmanager: updateSelectedAlertmanager,
