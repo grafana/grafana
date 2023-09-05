@@ -694,7 +694,8 @@ export interface Panel {
    */
   maxDataPoints?: number;
   /**
-   * Max items per for when repeatDirection is horizontal (h)
+   * Option for repeated panels that controls max items per row
+   * Only relevant for horizontally repeated panels
    */
   maxPerRow?: number;
   /**

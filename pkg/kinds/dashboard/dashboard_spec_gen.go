@@ -546,7 +546,8 @@ type Panel struct {
 	// The maximum number of data points that the panel queries are retrieving.
 	MaxDataPoints *float32 `json:"maxDataPoints,omitempty"`
 
-	// Max items per for when repeatDirection is horizontal (h)
+	// Option for repeated panels that controls max items per row
+	// Only relevant for horizontally repeated panels
 	MaxPerRow *float32 `json:"maxPerRow,omitempty"`
 
 	// It depends on the panel plugin. They are specified by the Options field in panel plugin schemas.
