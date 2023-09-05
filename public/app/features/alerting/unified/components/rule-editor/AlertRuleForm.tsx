@@ -40,11 +40,11 @@ import {
   rulerRuleToFormValues,
 } from '../../utils/rule-form';
 import * as ruleId from '../../utils/rule-id';
+import { GrafanaRuleExporter } from '../export/GrafanaRuleExporter';
 
 import AnnotationsStep from './AnnotationsStep';
 import { CloudEvaluationBehavior } from './CloudEvaluationBehavior';
 import { GrafanaEvaluationBehavior } from './GrafanaEvaluationBehavior';
-import { GrafanaRuleExporter } from './GrafanaRuleExporter';
 import { NotificationsStep } from './NotificationsStep';
 import { RecordingRulesNameSpaceAndGroupStep } from './RecordingRulesNameSpaceAndGroupStep';
 import { RuleEditorSection } from './RuleEditorSection';

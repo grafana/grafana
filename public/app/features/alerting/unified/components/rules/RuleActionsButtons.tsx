@@ -28,7 +28,7 @@ import { createShareLink, createViewLink } from '../../utils/misc';
 import * as ruleId from '../../utils/rule-id';
 import { isFederatedRuleGroup, isGrafanaRulerRule } from '../../utils/rules';
 import { createUrl } from '../../utils/url';
-import { GrafanaRuleExporter } from '../rule-editor/GrafanaRuleExporter';
+import { GrafanaRuleExporter } from '../export/GrafanaRuleExporter';
 
 import { RedirectToCloneRule } from './CloneRule';
 
