@@ -21,6 +21,7 @@ import {
   TabsBar,
   TabContent,
   Tab,
+  Pagination,
 } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
 import ConditionalWrap from 'app/features/alerting/components/ConditionalWrap';
@@ -29,6 +30,7 @@ import { receiverTypeNames } from 'app/plugins/datasource/alertmanager/consts';
 import { GrafanaManagedReceiverConfig } from 'app/plugins/datasource/alertmanager/types';
 import { GrafanaNotifierType, NotifierStatus } from 'app/types/alerting';
 
+import { usePagination } from '../../hooks/usePagination';
 import { useAlertmanager } from '../../state/AlertmanagerContext';
 import { INTEGRATION_ICONS } from '../../types/contact-points';
 import { getNotificationsPermissions } from '../../utils/access-control';
@@ -44,18 +46,20 @@ import { UnusedContactPointBadge } from '../receivers/ReceiversTable';
 import { MessageTemplates } from './MessageTemplates';
 import { useDeleteContactPointModal } from './Modals';
 import { RECEIVER_STATUS_KEY, useContactPointsWithStatus, useDeleteContactPoint } from './useContactPoints';
-import { getReceiverDescription, isProvisioned, ReceiverConfigWithStatus } from './utils';
+import { ContactPointWithStatus, getReceiverDescription, isProvisioned, ReceiverConfigWithStatus } from './utils';
 
 enum ActiveTab {
   ContactPoints,
   MessageTemplates,
 }
 
+const DEFAULT_PAGE_SIZE = 25;
+
 const ContactPoints = () => {
   const { selectedAlertmanager } = useAlertmanager();
   // TODO hook up to query params
   const [activeTab, setActiveTab] = useState<ActiveTab>(ActiveTab.ContactPoints);
-  const { isLoading, error, contactPoints } = useContactPointsWithStatus(selectedAlertmanager!);
+  let { isLoading, error, contactPoints } = useContactPointsWithStatus(selectedAlertmanager!);
   const { deleteTrigger, updateAlertmanagerState } = useDeleteContactPoint(selectedAlertmanager!);
 
   const [DeleteModal, showDeleteModal] = useDeleteContactPointModal(deleteTrigger, updateAlertmanagerState.isLoading);
@@ -122,24 +126,12 @@ const ContactPoints = () => {
                       <Text variant="body" color="secondary">
                         Define where notifications are sent, a contact point can contain multiple integrations.
                       </Text>
-                      {contactPoints.map((contactPoint) => {
-                        const contactPointKey = selectedAlertmanager + contactPoint.name;
-                        const provisioned = isProvisioned(contactPoint);
-                        const disabled = updateAlertmanagerState.isLoading;
-                        const policies = contactPoint.numberOfPolicies;
-
-                        return (
-                          <ContactPoint
-                            key={contactPointKey}
-                            name={contactPoint.name}
-                            disabled={disabled}
-                            onDelete={(name) => showDeleteModal(name)}
-                            receivers={contactPoint.grafana_managed_receiver_configs}
-                            provisioned={provisioned}
-                            policies={policies}
-                          />
-                        );
-                      })}
+                      <ContactPointsList
+                        contactPoints={contactPoints}
+                        pageSize={DEFAULT_PAGE_SIZE}
+                        onDelete={(name) => showDeleteModal(name)}
+                        disabled={updateAlertmanagerState.isLoading}
+                      />
                       {/* Grafana manager Alertmanager does not support global config, Mimir and Cortex do */}
                       {!isGrafanaManagedAlertmanager && <GlobalConfigAlert alertManagerName={selectedAlertmanager!} />}
                     </>
@@ -160,6 +152,44 @@ const ContactPoints = () => {
         </TabContent>
       </Stack>
       {DeleteModal}
+    </>
+  );
+};
+
+interface ContactPointsListProps {
+  contactPoints: ContactPointWithStatus[];
+  disabled?: boolean;
+  onDelete: (name: string) => void;
+  pageSize?: number;
+}
+
+const ContactPointsList = ({
+  contactPoints,
+  disabled = false,
+  pageSize = DEFAULT_PAGE_SIZE,
+  onDelete,
+}: ContactPointsListProps) => {
+  const { page, pageItems, numberOfPages, onPageChange } = usePagination(contactPoints, 1, pageSize);
+
+  return (
+    <>
+      {pageItems.map((contactPoint, index) => {
+        const provisioned = isProvisioned(contactPoint);
+        const policies = contactPoint.numberOfPolicies;
+
+        return (
+          <ContactPoint
+            key={`${contactPoint.name}-${index}`}
+            name={contactPoint.name}
+            disabled={disabled}
+            onDelete={onDelete}
+            receivers={contactPoint.grafana_managed_receiver_configs}
+            provisioned={provisioned}
+            policies={policies}
+          />
+        );
+      })}
+      <Pagination currentPage={page} numberOfPages={numberOfPages} onNavigate={onPageChange} hideWhenSinglePage />
     </>
   );
 };
