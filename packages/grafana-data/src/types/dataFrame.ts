@@ -170,9 +170,6 @@ export interface Field<T = any, V = Vector<T>> {
    * Get value data links with variables interpolated
    */
   getLinks?: (config: ValueLinkConfig) => Array<LinkModel<Field>>;
-
-  // currently only used for Logs JSON
-  typeInfo?: { frame: string };
 }
 
 /** @alpha */

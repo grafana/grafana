@@ -3,7 +3,7 @@ import { toNumber } from 'lodash';
 import { DataFrame, DisplayValue, TimeZone } from '../types';
 import { formattedValueToString } from '../valueFormats';
 
-import { getDisplayProcessor, getRawDisplayProcessor } from './displayProcessor';
+import { getDisplayProcessor } from './displayProcessor';
 
 /**
  * Creates a proxy object that allows accessing fields on dataFrame through various means and then returns it's
@@ -46,10 +46,8 @@ export function getFieldDisplayValuesProxy(options: {
         if (!field) {
           return undefined;
         }
-        const displayProcessor =
-          field.display ||
-          (field?.typeInfo?.frame === 'json.RawMessage' && getRawDisplayProcessor()) ||
-          getDisplayProcessor({ field });
+
+        const displayProcessor = field.display ?? getDisplayProcessor({field});
         const raw = field.values[options.rowIndex];
         const disp = displayProcessor(raw);
         disp.toString = () => formattedValueToString(disp);

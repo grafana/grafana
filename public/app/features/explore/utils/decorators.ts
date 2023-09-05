@@ -11,6 +11,7 @@ import {
   standardTransformers,
   preProcessPanelData,
   DataLinkConfigOrigin,
+  getRawDisplayProcessor,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
@@ -107,6 +108,8 @@ export const decorateWithCorrelations = ({
       for (const frame of data.series) {
         for (const field of frame.fields) {
           field.config.links = []; // hide all previous links, we only want to show fake correlations in this view
+
+          field.display = field.display || getRawDisplayProcessor();
 
           const availableVars: Record<string, string> = {};
           frame.fields.map((field) => {
