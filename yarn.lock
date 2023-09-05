@@ -2998,9 +2998,9 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@grafana-plugins/input-datasource@workspace:plugins-bundled/internal/input-datasource"
   dependencies:
-    "@grafana/data": 9.5.8
-    "@grafana/toolkit": 9.5.8
-    "@grafana/ui": 9.5.8
+    "@grafana/data": 9.5.9
+    "@grafana/toolkit": 9.5.9
+    "@grafana/ui": 9.5.9
     "@types/jest": 26.0.15
     "@types/lodash": 4.14.149
     "@types/react": 17.0.30
@@ -3033,12 +3033,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/data@9.5.8, @grafana/data@workspace:*, @grafana/data@workspace:packages/grafana-data":
+"@grafana/data@9.5.9, @grafana/data@workspace:*, @grafana/data@workspace:packages/grafana-data":
   version: 0.0.0-use.local
   resolution: "@grafana/data@workspace:packages/grafana-data"
   dependencies:
     "@braintree/sanitize-url": 6.0.2
-    "@grafana/schema": 9.5.8
+    "@grafana/schema": 9.5.9
     "@grafana/tsconfig": ^1.2.0-rc1
     "@rollup/plugin-commonjs": 23.0.2
     "@rollup/plugin-json": 5.0.1
@@ -3098,7 +3098,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/e2e-selectors@9.5.8, @grafana/e2e-selectors@workspace:*, @grafana/e2e-selectors@workspace:packages/grafana-e2e-selectors":
+"@grafana/e2e-selectors@9.5.9, @grafana/e2e-selectors@workspace:*, @grafana/e2e-selectors@workspace:packages/grafana-e2e-selectors":
   version: 0.0.0-use.local
   resolution: "@grafana/e2e-selectors@workspace:packages/grafana-e2e-selectors"
   dependencies:
@@ -3135,7 +3135,7 @@ __metadata:
     "@babel/core": 7.20.5
     "@babel/preset-env": 7.20.2
     "@cypress/webpack-preprocessor": 5.17.0
-    "@grafana/e2e-selectors": 9.5.8
+    "@grafana/e2e-selectors": 9.5.9
     "@grafana/tsconfig": ^1.2.0-rc1
     "@mochajs/json-file-reporter": ^1.2.0
     "@rollup/plugin-node-resolve": 15.0.1
@@ -3295,11 +3295,11 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@grafana/runtime@workspace:packages/grafana-runtime"
   dependencies:
-    "@grafana/data": 9.5.8
-    "@grafana/e2e-selectors": 9.5.8
+    "@grafana/data": 9.5.9
+    "@grafana/e2e-selectors": 9.5.9
     "@grafana/faro-web-sdk": 1.0.2
     "@grafana/tsconfig": ^1.2.0-rc1
-    "@grafana/ui": 9.5.8
+    "@grafana/ui": 9.5.9
     "@rollup/plugin-commonjs": 23.0.2
     "@rollup/plugin-node-resolve": 15.0.1
     "@sentry/browser": 6.19.7
@@ -3350,7 +3350,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/schema@9.5.8, @grafana/schema@workspace:*, @grafana/schema@workspace:packages/grafana-schema":
+"@grafana/schema@9.5.9, @grafana/schema@workspace:*, @grafana/schema@workspace:packages/grafana-schema":
   version: 0.0.0-use.local
   resolution: "@grafana/schema@workspace:packages/grafana-schema"
   dependencies:
@@ -3369,7 +3369,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/toolkit@9.5.8, @grafana/toolkit@workspace:*, @grafana/toolkit@workspace:packages/grafana-toolkit":
+"@grafana/toolkit@9.5.9, @grafana/toolkit@workspace:*, @grafana/toolkit@workspace:packages/grafana-toolkit":
   version: 0.0.0-use.local
   resolution: "@grafana/toolkit@workspace:packages/grafana-toolkit"
   dependencies:
@@ -3385,10 +3385,10 @@ __metadata:
     "@babel/preset-env": 7.18.9
     "@babel/preset-react": 7.18.6
     "@babel/preset-typescript": 7.18.6
-    "@grafana/data": 9.5.8
+    "@grafana/data": 9.5.9
     "@grafana/eslint-config": 5.1.0
     "@grafana/tsconfig": ^1.2.0-rc1
-    "@grafana/ui": 9.5.8
+    "@grafana/ui": 9.5.9
     "@jest/core": 27.5.1
     "@types/command-exists": ^1.2.0
     "@types/eslint": 8.4.1
@@ -3469,17 +3469,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/ui@9.5.8, @grafana/ui@workspace:*, @grafana/ui@workspace:packages/grafana-ui":
+"@grafana/ui@9.5.9, @grafana/ui@workspace:*, @grafana/ui@workspace:packages/grafana-ui":
   version: 0.0.0-use.local
   resolution: "@grafana/ui@workspace:packages/grafana-ui"
   dependencies:
     "@babel/core": 7.20.5
     "@emotion/css": 11.10.6
     "@emotion/react": 11.10.6
-    "@grafana/data": 9.5.8
-    "@grafana/e2e-selectors": 9.5.8
+    "@grafana/data": 9.5.9
+    "@grafana/e2e-selectors": 9.5.9
     "@grafana/faro-web-sdk": 1.0.2
-    "@grafana/schema": 9.5.8
+    "@grafana/schema": 9.5.9
     "@grafana/tsconfig": ^1.2.0-rc1
     "@leeoniya/ufuzzy": 1.0.6
     "@mdx-js/react": 1.6.22
