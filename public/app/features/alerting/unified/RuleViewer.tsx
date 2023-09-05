@@ -8,7 +8,7 @@ import { SafeDynamicImport } from 'app/core/components/DynamicImports/SafeDynami
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 
 import { AlertingPageWrapper } from './components/AlertingPageWrapper';
-import { GrafanaRuleExporter } from './components/rule-editor/GrafanaRuleExporter';
+import { GrafanaRuleExporter } from './components/export/GrafanaRuleExporter';
 import { AlertingFeature } from './features';
 import { GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
 

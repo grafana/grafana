@@ -29,11 +29,11 @@ import {
   rulerRuleToFormValues,
 } from '../../utils/rule-form';
 import * as ruleId from '../../utils/rule-id';
+import { GrafanaRuleExporter } from '../export/GrafanaRuleExporter';
 
 import { CloudEvaluationBehavior } from './CloudEvaluationBehavior';
 import { DetailsStep } from './DetailsStep';
 import { GrafanaEvaluationBehavior } from './GrafanaEvaluationBehavior';
-import { GrafanaRuleExporter } from './GrafanaRuleExporter';
 import { NotificationsStep } from './NotificationsStep';
 import { RuleEditorSection } from './RuleEditorSection';
 import { RuleInspector } from './RuleInspector';
