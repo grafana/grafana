@@ -23,7 +23,7 @@ const appNotificationsSlice = createSlice({
   initialState,
   reducers: {
     notifyApp: (state, { payload: newAlert }: PayloadAction<AppNotification>) => {
-      if (Object.values(state.byId).some((alert) => isSimilar(newAlert, alert) && alert.showing)) {
+      if (Object.values(state.byId).some((alert) => isSimilar(newAlert, alert) && alert.showing && isInNotificationWindow(alert))) {
         return;
       }
 
@@ -63,7 +63,7 @@ export const selectLastReadTimestamp = (state: AppNotificationsState) => state.l
 export const selectAll = (state: AppNotificationsState) =>
   Object.values(state.byId).sort((a, b) => b.timestamp - a.timestamp);
 export const selectWarningsAndErrors = (state: AppNotificationsState) => selectAll(state).filter(isAtLeastWarning);
-export const selectVisible = (state: AppNotificationsState) => Object.values(state.byId).filter((n) => n.showing);
+export const selectVisible = (state: AppNotificationsState) => Object.values(state.byId).filter((n) => n.showing && isInNotificationWindow(n));
 
 // Helper functions
 
@@ -77,6 +77,15 @@ function isAtLeastWarning(notif: AppNotification) {
 
 function isStoredNotification(obj: unknown): obj is StoredNotification {
   return typeof obj === 'object' && obj !== null && 'id' in obj && 'icon' in obj && 'title' in obj && 'text' in obj;
+}
+
+function isInNotificationWindow(notif: AppNotification){
+  // one minute in ms
+  const timeout = 60000
+  console.log({currentDate: Date.now()-notif.timestamp})
+
+  return Date.now()-notif.timestamp<timeout
+
 }
 
 // (De)serialization
@@ -109,7 +118,7 @@ function serializeNotifications(notifs: Record<string, StoredNotification>) {
         text: cur.text,
         traceId: cur.traceId,
         timestamp: cur.timestamp,
-        showing: cur.showing,
+        showing: cur.showing && isInNotificationWindow(cur),
       };
 
       return prev;
