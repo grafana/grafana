@@ -182,7 +182,7 @@ func (c *QueryCondition) executeQuery(context *alerting.EvalContext, timeRange l
 			queries = append(queries, &queryDto{
 				RefID: q.RefID,
 				Model: q.Model,
-				Datasource: simplejson.NewFromAny(map[string]interface{}{
+				Datasource: simplejson.NewFromAny(map[string]any{
 					"id":   q.DataSource.ID,
 					"name": q.DataSource.Name,
 				}),
@@ -230,7 +230,7 @@ func (c *QueryCondition) executeQuery(context *alerting.EvalContext, timeRange l
 			result = append(result, v.Series...)
 		}
 
-		queryResultData := map[string]interface{}{}
+		queryResultData := map[string]any{}
 
 		if context.IsTestRun {
 			queryResultData["series"] = result

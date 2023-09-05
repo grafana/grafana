@@ -16,7 +16,7 @@ while IFS=" " read -r -a package; do
     CURRENT="./pr/$PACKAGE_PATH"
 
     # Temporarily skipping these packages as they don't have any exposed static typing
-    if [[ "$PACKAGE_PATH" == 'grafana-toolkit' || "$PACKAGE_PATH" == 'grafana-eslint-rules' ]]; then
+    if [[ "$PACKAGE_PATH" == 'grafana-eslint-rules' ]]; then
         continue
     fi
 

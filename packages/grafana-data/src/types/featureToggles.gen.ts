@@ -120,4 +120,7 @@ export interface FeatureToggles {
   influxdbSqlSupport?: boolean;
   noBasicRole?: boolean;
   alertingNoDataErrorExecution?: boolean;
+  angularDeprecationUI?: boolean;
+  dashgpt?: boolean;
+  reportingRetries?: boolean;
 }

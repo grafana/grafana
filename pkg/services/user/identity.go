@@ -43,12 +43,29 @@ func (u *SignedInUser) NameOrFallback() string {
 	return u.Email
 }
 
+// TODO: There's a need to remove this struct since it creates a circular dependency
+
+// DEPRECATED: This function uses `UserDisplayDTO` model which we want to remove
 func (u *SignedInUser) ToUserDisplayDTO() *UserDisplayDTO {
 	return &UserDisplayDTO{
 		ID:    u.UserID,
 		Login: u.Login,
 		Name:  u.Name,
 	}
+}
+
+// Static function to parse a requester into a UserDisplayDTO
+func NewUserDisplayDTOFromRequester(requester identity.Requester) (*UserDisplayDTO, error) {
+	namespaceID, identifier := requester.GetNamespacedID()
+	if namespaceID != identity.NamespaceUser && namespaceID != identity.NamespaceServiceAccount {
+		identifier = "0"
+	}
+	userID, _ := identity.IntIdentifier(namespaceID, identifier)
+	return &UserDisplayDTO{
+		ID:    userID,
+		Login: requester.GetLogin(),
+		Name:  requester.GetDisplayName(),
+	}, nil
 }
 
 func (u *SignedInUser) HasRole(role roletype.RoleType) bool {
@@ -156,7 +173,11 @@ func (u *SignedInUser) GetNamespacedID() (string, string) {
 	case u.IsAnonymous:
 		return identity.NamespaceAnonymous, ""
 	case u.AuthenticatedBy == "render": //import cycle render
-		return identity.NamespaceRenderService, fmt.Sprintf("%d", u.UserID)
+		if u.UserID == 0 {
+			return identity.NamespaceRenderService, fmt.Sprintf("%d", u.UserID)
+		} else { // this should never happen as u.UserID > 0 already catches this
+			return identity.NamespaceUser, fmt.Sprintf("%d", u.UserID)
+		}
 	}
 
 	// backwards compatibility

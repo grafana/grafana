@@ -39,11 +39,11 @@ func ProvideService(cfg *setting.Cfg, sqlStore db.DB, routeRegister routing.Rout
 // Service is a service for operating on library panels.
 type Service interface {
 	ConnectLibraryPanelsForDashboard(c context.Context, signedInUser *user.SignedInUser, dash *dashboards.Dashboard) error
-	ImportLibraryPanelsForDashboard(c context.Context, signedInUser *user.SignedInUser, libraryPanels *simplejson.Json, panels []interface{}, folderID int64) error
+	ImportLibraryPanelsForDashboard(c context.Context, signedInUser *user.SignedInUser, libraryPanels *simplejson.Json, panels []any, folderID int64) error
 }
 
 type LibraryInfo struct {
-	Panels        []*interface{}
+	Panels        []*any
 	LibraryPanels *simplejson.Json
 }
 
@@ -78,7 +78,7 @@ func isLibraryPanelOrRow(panel *simplejson.Json, panelType string) bool {
 	return panel.Interface() != nil || panelType == "row"
 }
 
-func connectLibraryPanelsRecursively(c context.Context, panels []interface{}, libraryPanels map[string]string) error {
+func connectLibraryPanelsRecursively(c context.Context, panels []any, libraryPanels map[string]string) error {
 	for _, panel := range panels {
 		panelAsJSON := simplejson.NewFromAny(panel)
 		libraryPanel := panelAsJSON.Get("libraryPanel")
@@ -112,11 +112,11 @@ func connectLibraryPanelsRecursively(c context.Context, panels []interface{}, li
 }
 
 // ImportLibraryPanelsForDashboard loops through all panels in dashboard JSON and creates any missing library panels in the database.
-func (lps *LibraryPanelService) ImportLibraryPanelsForDashboard(c context.Context, signedInUser *user.SignedInUser, libraryPanels *simplejson.Json, panels []interface{}, folderID int64) error {
+func (lps *LibraryPanelService) ImportLibraryPanelsForDashboard(c context.Context, signedInUser *user.SignedInUser, libraryPanels *simplejson.Json, panels []any, folderID int64) error {
 	return importLibraryPanelsRecursively(c, lps.LibraryElementService, signedInUser, libraryPanels, panels, folderID)
 }
 
-func importLibraryPanelsRecursively(c context.Context, service libraryelements.Service, signedInUser *user.SignedInUser, libraryPanels *simplejson.Json, panels []interface{}, folderID int64) error {
+func importLibraryPanelsRecursively(c context.Context, service libraryelements.Service, signedInUser *user.SignedInUser, libraryPanels *simplejson.Json, panels []any, folderID int64) error {
 	for _, panel := range panels {
 		panelAsJSON := simplejson.NewFromAny(panel)
 		libraryPanel := panelAsJSON.Get("libraryPanel")
@@ -152,7 +152,7 @@ func importLibraryPanelsRecursively(c context.Context, service libraryelements.S
 			}
 
 			elementModel := libraryPanels.Get(UID).Get("model")
-			elementModel.Set("libraryPanel", map[string]interface{}{
+			elementModel.Set("libraryPanel", map[string]any{
 				"uid": UID,
 			})
 

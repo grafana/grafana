@@ -3814,21 +3814,22 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/experimental@npm:1.6.1":
-  version: 1.6.1
-  resolution: "@grafana/experimental@npm:1.6.1"
+"@grafana/experimental@npm:1.7.0":
+  version: 1.7.0
+  resolution: "@grafana/experimental@npm:1.7.0"
   dependencies:
     "@types/uuid": ^8.3.3
     uuid: ^8.3.2
   peerDependencies:
     "@emotion/css": 11.1.3
-    "@grafana/data": ^9.2.0
-    "@grafana/runtime": ^9.2.0
-    "@grafana/ui": ^9.2.0
+    "@grafana/data": ^10.0.0
+    "@grafana/runtime": ^10.0.0
+    "@grafana/ui": ^10.0.0
     react: 17.0.2
     react-dom: 17.0.2
     react-select: ^5.2.1
-  checksum: 64c32bc9e3bf96c88fbe9522c53e13e4cbc3848ff83df2b1b76735ad5cf9e1775b31094d1298c4bc6a8c75dbcac015eedb14dd9269f492f296c240c58c9916e7
+    rxjs: 7.8.0
+  checksum: f418072aab298bf5fa4b80d59593f10c62e77347e346cc5f669bdee1de2626fdd9f3d999da55a3079ccf6c6df979fc82e8e4d2e3d3bff2e66e49a0c38b8b80a0
   languageName: node
   linkType: hard
 
@@ -3914,7 +3915,7 @@ __metadata:
     "@types/lodash": 4.14.195
     "@types/react": 18.2.15
     "@types/react-dom": 18.2.7
-    "@types/systemjs": ^0.20.6
+    "@types/systemjs": 6.13.1
     esbuild: 0.18.12
     history: 4.10.1
     lodash: 4.17.21
@@ -3928,7 +3929,8 @@ __metadata:
     rollup-plugin-sourcemaps: 0.6.3
     rollup-plugin-terser: 7.0.2
     rxjs: 7.8.1
-    systemjs: 0.20.19
+    systemjs: 6.14.2
+    systemjs-cjs-extra: 0.1.0
     tslib: 2.6.0
     typescript: 4.8.4
   peerDependencies:
@@ -3937,9 +3939,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/scenes@npm:^0.25.0":
-  version: 0.25.0
-  resolution: "@grafana/scenes@npm:0.25.0"
+"@grafana/scenes@npm:^0.27.0":
+  version: 0.27.0
+  resolution: "@grafana/scenes@npm:0.27.0"
   dependencies:
     "@grafana/e2e-selectors": 10.0.2
     react-grid-layout: 1.3.4
@@ -3951,7 +3953,7 @@ __metadata:
     "@grafana/runtime": 10.0.3
     "@grafana/schema": 10.0.3
     "@grafana/ui": 10.0.3
-  checksum: ab81d18bb65b0b5d612708fbd9351022141248b476009bdde01660cce1747bd0724fdf599842127f48feea49b31858dc64e45af2638d90fd3b09d59e350f79e4
+  checksum: 71b2ea13c6afca0d8d101e9a7d945ebb181ad2acbeb6fa5ca4018a34332a9b1e09a434feea9080665327d3d30a7e4d2542a7491a2f68a944717d56ba014fba25
   languageName: node
   linkType: hard
 
@@ -3972,22 +3974,6 @@ __metadata:
     rollup-plugin-node-externals: ^5.0.0
     tslib: 2.6.0
     typescript: 4.8.4
-  languageName: unknown
-  linkType: soft
-
-"@grafana/toolkit@workspace:*, @grafana/toolkit@workspace:packages/grafana-toolkit":
-  version: 0.0.0-use.local
-  resolution: "@grafana/toolkit@workspace:packages/grafana-toolkit"
-  dependencies:
-    "@grafana/tsconfig": ^1.2.0-rc1
-    "@types/node": 16.11.26
-    chalk: ^4.1.2
-    commander: ^9.2.0
-    ts-node: ^9.1.0
-    tslib: 2.5.0
-    typescript: 4.8.2
-  bin:
-    grafana-toolkit: ./bin/grafana-toolkit.js
   languageName: unknown
   linkType: soft
 
@@ -10286,13 +10272,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/node@npm:16.11.26":
-  version: 16.11.26
-  resolution: "@types/node@npm:16.11.26"
-  checksum: 57757caaba3f0d95de82198cb276a1002c49b710108c932a1d02d7c91ff2fa57cfe2dd19fde60853b6dd90b0964b3cf35557981d2628e20aed6a909057aedfe6
-  languageName: node
-  linkType: hard
-
 "@types/node@npm:18.16.16":
   version: 18.16.16
   resolution: "@types/node@npm:18.16.16"
@@ -10791,10 +10770,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/systemjs@npm:^0.20.6":
-  version: 0.20.8
-  resolution: "@types/systemjs@npm:0.20.8"
-  checksum: 10bf85416521b89cd20c6eddd72f7414ab6eff31ff8c577152d6f5dd952daf7f9c5eed32d3c482ddbfbe2e9586ed5287838b6dc8a7d6b3963fdad8afbece717b
+"@types/systemjs@npm:6.13.1":
+  version: 6.13.1
+  resolution: "@types/systemjs@npm:6.13.1"
+  checksum: 61fad0cbdbc61e0b6c6fd82d9623d9e68ff587848e0c8198a6bb4a78985b4880962543e02aeb96dfdb4623439ef0d848fde61a82757308dd5067040deee9d1ee
   languageName: node
   linkType: hard
 
@@ -14349,13 +14328,6 @@ __metadata:
   version: 6.2.1
   resolution: "commander@npm:6.2.1"
   checksum: d7090410c0de6bc5c67d3ca41c41760d6d268f3c799e530aafb73b7437d1826bbf0d2a3edac33f8b57cc9887b4a986dce307fa5557e109be40eadb7c43b21742
-  languageName: node
-  linkType: hard
-
-"commander@npm:^9.2.0":
-  version: 9.2.0
-  resolution: "commander@npm:9.2.0"
-  checksum: 7c82e4cd969712aa6d7c055b8351807a7230f9f31ef7ec7881e11a1147511de85adf5d6ccfd200240a118eecf693b220caf6865b8efbcea558a70d35aa9ed711
   languageName: node
   linkType: hard
 
@@ -19249,7 +19221,7 @@ __metadata:
     "@grafana/e2e-selectors": "workspace:*"
     "@grafana/eslint-config": 6.0.1
     "@grafana/eslint-plugin": "link:./packages/grafana-eslint-rules"
-    "@grafana/experimental": 1.6.1
+    "@grafana/experimental": 1.7.0
     "@grafana/faro-core": 1.1.2
     "@grafana/faro-web-sdk": 1.1.2
     "@grafana/google-sdk": 0.1.1
@@ -19257,9 +19229,8 @@ __metadata:
     "@grafana/lezer-traceql": 0.0.4
     "@grafana/monaco-logql": ^0.0.7
     "@grafana/runtime": "workspace:*"
-    "@grafana/scenes": ^0.25.0
+    "@grafana/scenes": ^0.27.0
     "@grafana/schema": "workspace:*"
-    "@grafana/toolkit": "workspace:*"
     "@grafana/tsconfig": ^1.3.0-rc1
     "@grafana/ui": "workspace:*"
     "@kusto/monaco-kusto": ^7.4.0
@@ -19349,6 +19320,7 @@ __metadata:
     "@types/slate": 0.47.11
     "@types/slate-plain-serializer": 0.7.2
     "@types/slate-react": 0.22.9
+    "@types/systemjs": 6.13.1
     "@types/testing-library__jest-dom": 5.14.8
     "@types/tinycolor2": 1.4.3
     "@types/trusted-types": 2.0.3
@@ -29806,7 +29778,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"source-map-support@npm:^0.5.16, source-map-support@npm:^0.5.17":
+"source-map-support@npm:^0.5.16":
   version: 0.5.21
   resolution: "source-map-support@npm:0.5.21"
   dependencies:
@@ -30703,10 +30675,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"systemjs@npm:0.20.19":
-  version: 0.20.19
-  resolution: "systemjs@npm:0.20.19"
-  checksum: 4b5a404be790cd545d6994f617c24ef3a3ae52e029c6498f10206f715c6777c4c0733ab9d626723fdfa359f12707835f302986516e5835be26c202bc13e242df
+"systemjs-cjs-extra@npm:0.1.0":
+  version: 0.1.0
+  resolution: "systemjs-cjs-extra@npm:0.1.0"
+  checksum: 09169416c858e43671e988f05f2c14fe2fa923472619983fce44aa946493337bdda0a6c28ea8aeded0c2d3dfa62ad6d8479944144b451c0492f7a505e7b18813
+  languageName: node
+  linkType: hard
+
+"systemjs@npm:6.14.2":
+  version: 6.14.2
+  resolution: "systemjs@npm:6.14.2"
+  checksum: 1f58c7da8f7deb8e4a3eb357e67f5363eb97e44a456f8f81ece391f2e1ae54ac70fb62135043d4cf96c11c6b76d7963c295ea844ca25bcb3b55193f6727fd0b2
   languageName: node
   linkType: hard
 
@@ -31492,27 +31471,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ts-node@npm:^9.1.0":
-  version: 9.1.1
-  resolution: "ts-node@npm:9.1.1"
-  dependencies:
-    arg: ^4.1.0
-    create-require: ^1.1.0
-    diff: ^4.0.1
-    make-error: ^1.1.1
-    source-map-support: ^0.5.17
-    yn: 3.1.1
-  peerDependencies:
-    typescript: ">=2.7"
-  bin:
-    ts-node: dist/bin.js
-    ts-node-script: dist/bin-script.js
-    ts-node-transpile-only: dist/bin-transpile.js
-    ts-script: dist/bin-script-deprecated.js
-  checksum: 356e2647b8b1e6ab00380c0537fa569b63bd9b6f006cc40fd650f81fae1817bd8fecc075300036950d8f45c1d85b95be33cd1e48a1a424a7d86c3dbb42bf60e5
-  languageName: node
-  linkType: hard
-
 "ts-toolbelt@npm:^9.6.0":
   version: 9.6.0
   resolution: "ts-toolbelt@npm:9.6.0"
@@ -31742,16 +31700,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"typescript@npm:4.8.2":
-  version: 4.8.2
-  resolution: "typescript@npm:4.8.2"
-  bin:
-    tsc: bin/tsc
-    tsserver: bin/tsserver
-  checksum: 7f5b81d0d558c9067f952c7af52ab7f19c2e70a916817929e4a5b256c93990bf3178eccb1ac8a850bc75df35f6781b6f4cb3370ce20d8b1ded92ed462348f628
-  languageName: node
-  linkType: hard
-
 "typescript@npm:4.8.4, typescript@npm:^3 || ^4":
   version: 4.8.4
   resolution: "typescript@npm:4.8.4"
@@ -31779,16 +31727,6 @@ __metadata:
     tsc: bin/tsc
     tsserver: bin/tsserver
   checksum: 8286a5edcaf3d68e65c451aa1e7150ad1cf53ee0813c07ec35b7abdfdb10f355ecaa13c6a226a694ae7a67785fd7eeebf89f845da0b4f7e4a35561ddc459aba0
-  languageName: node
-  linkType: hard
-
-"typescript@patch:typescript@4.8.2#~builtin<compat/typescript>":
-  version: 4.8.2
-  resolution: "typescript@patch:typescript@npm%3A4.8.2#~builtin<compat/typescript>::version=4.8.2&hash=3b564f"
-  bin:
-    tsc: bin/tsc
-    tsserver: bin/tsserver
-  checksum: 28e130a49d9330b64b8229ad336247bf980e9a705c5850f30a859a68c051e8e68e367b3275f119da4a825dca71ad0fe315964a1315d4a381c0021bca5eeeb62e
   languageName: node
   linkType: hard
 
