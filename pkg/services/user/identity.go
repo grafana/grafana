@@ -46,7 +46,8 @@ func (u *SignedInUser) NameOrFallback() string {
 // TODO: There's a need to remove this struct since it creates a circular dependency
 
 // DEPRECATED: This function uses `UserDisplayDTO` model which we want to remove
-// this function uses dto to getch the gravatar url
+// In order to retrieve the user URL, we need the dto library. However, adding
+// the dto library to the user service creates a circular dependency
 func (u *SignedInUser) ToUserDisplayDTO() *UserDisplayDTO {
 	return &UserDisplayDTO{
 		ID:    u.UserID,

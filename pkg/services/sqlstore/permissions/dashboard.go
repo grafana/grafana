@@ -111,7 +111,7 @@ func (f *accessControlDashboardPermissionFilter) Where() (string, []any) {
 }
 
 func (f *accessControlDashboardPermissionFilter) buildClauses() {
-	if f.user == nil || f.user.IsNil() || f.user.GetPermissions() == nil || len(f.user.GetPermissions()) == 0 {
+	if f.user == nil || f.user.IsNil() || len(f.user.GetPermissions()) == 0 {
 		f.where = clause{string: "(1 = 0)"}
 		return
 	}
