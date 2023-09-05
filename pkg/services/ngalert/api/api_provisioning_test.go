@@ -858,7 +858,6 @@ func TestProvisioningApi(t *testing.T) {
 					require.Equal(t, 400, response.Status())
 				})
 			})
-
 		})
 
 		t.Run("notification policies", func(t *testing.T) {
