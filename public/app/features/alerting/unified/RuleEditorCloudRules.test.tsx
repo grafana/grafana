@@ -6,7 +6,6 @@ import { clickSelectOption } from 'test/helpers/selectOptionInTest';
 import { byRole } from 'testing-library-selector';
 
 import { contextSrv } from 'app/core/services/context_srv';
-import { AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
 
 import { searchFolders } from '../../manage-dashboards/state/actions';
 
