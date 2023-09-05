@@ -422,14 +422,15 @@ func (hs *HTTPServer) postDashboard(c *contextmodel.ReqContext, cmd dashboards.S
 	ctx := c.Req.Context()
 	var err error
 
+	userID := int64(0)
 	namespaceID, userIDstr := c.SignedInUser.GetNamespacedID()
 	if namespaceID != identity.NamespaceUser && namespaceID != identity.NamespaceServiceAccount {
 		hs.log.Warn("User does not belong to a user or service account namespace", "namespaceID", namespaceID, "userID", userIDstr)
-		return response.Error(http.StatusBadRequest, "User does not belong to a user or service account namespace", nil)
-	}
-	userID, err := identity.IntIdentifier(namespaceID, userIDstr)
-	if err != nil {
-		hs.log.Warn("Error while parsing user ID", "namespaceID", namespaceID, "userID", userIDstr)
+	} else {
+		userID, err = identity.IntIdentifier(namespaceID, userIDstr)
+		if err != nil {
+			hs.log.Warn("Error while parsing user ID", "namespaceID", namespaceID, "userID", userIDstr)
+		}
 	}
 
 	cmd.OrgID = c.SignedInUser.GetOrgID()
@@ -556,10 +557,10 @@ func (hs *HTTPServer) postDashboard(c *contextmodel.ReqContext, cmd dashboards.S
 // 401: unauthorisedError
 // 500: internalServerError
 func (hs *HTTPServer) GetHomeDashboard(c *contextmodel.ReqContext) response.Response {
+	userID := int64(0)
 	namespaceID, userIDstr := c.SignedInUser.GetNamespacedID()
-
-	if namespaceID != identity.NamespaceUser {
-		return response.Error(http.StatusBadRequest, "User does not belong to a user namespace", nil)
+	if namespaceID != identity.NamespaceUser && namespaceID != identity.NamespaceServiceAccount {
+		hs.log.Warn("User does not belong to a user or service account namespace", "namespaceID", namespaceID, "userID", userIDstr)
 	}
 
 	userID, err := identity.IntIdentifier(namespaceID, userIDstr)
@@ -1074,13 +1075,15 @@ func (hs *HTTPServer) RestoreDashboardVersion(c *contextmodel.ReqContext) respon
 		return response.Error(http.StatusNotFound, "Dashboard version not found", nil)
 	}
 
+	userID := int64(0)
 	namespaceID, userIDstr := c.SignedInUser.GetNamespacedID()
 	if namespaceID != identity.NamespaceUser && namespaceID != identity.NamespaceServiceAccount {
-		return response.Error(http.StatusBadRequest, "User does not belong to a user or service namespace", nil)
-	}
-	userID, err := identity.IntIdentifier(namespaceID, userIDstr)
-	if err != nil {
-		return response.Error(http.StatusInternalServerError, "failed to get user id", err)
+		hs.log.Warn("User does not belong to a user or service account namespace", "namespaceID", namespaceID, "userID", userIDstr)
+	} else {
+		userID, err = identity.IntIdentifier(namespaceID, userIDstr)
+		if err != nil {
+			hs.log.Warn("Error while parsing user ID", "namespaceID", namespaceID, "userID", userIDstr)
+		}
 	}
 
 	saveCmd := dashboards.SaveDashboardCommand{}
