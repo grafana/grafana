@@ -4,7 +4,6 @@ import { toString, toNumber as _toNumber, isEmpty, isBoolean, isArray, join } fr
 // Types
 import { getFieldTypeFromValue } from '../dataframe/processDataFrame';
 import { toUtc, dateTimeParse } from '../datetime';
-import { createTheme } from '../themes';
 import { GrafanaTheme2 } from '../themes/types';
 import { KeyValue, TimeZone } from '../types';
 import { Field, FieldType } from '../types/dataFrame';
@@ -24,7 +23,7 @@ interface DisplayProcessorOptions {
   /**
    * Will pick 'dark' if not defined
    */
-  theme?: GrafanaTheme2;
+  theme: GrafanaTheme2;
 }
 
 // Reasonable units for time
@@ -45,8 +44,7 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
 
   const field = options.field as Field;
   const config = field.config ?? {};
-  const theme = options.theme || createTheme({ colors: { mode: 'dark' } });
-  const { palette } = theme.visualization;
+  const { palette } = options.theme.visualization;
 
   let unit = config.unit;
   let hasDateUnit = unit && (timeFormats[unit] || unit.startsWith('time:'));
@@ -83,7 +81,7 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
     !hasDateUnit && !hasCurrencyUnit && !hasBoolUnit && !isLocaleFormat && isNumType && config.decimals == null;
 
   const formatFunc = getValueFormat(unit || 'none');
-  const scaleFunc = getScaleCalculator(field, theme);
+  const scaleFunc = getScaleCalculator(field, options.theme);
 
   return (value: unknown, adjacentDecimals?: DecimalCount) => {
     const { mappings } = config;
@@ -110,7 +108,7 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
         }
 
         if (mappingResult.color != null) {
-          color = theme.visualization.getColorByName(mappingResult.color);
+          color = options.theme.visualization.getColorByName(mappingResult.color);
         }
 
         if (mappingResult.icon != null) {
@@ -136,7 +134,7 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
 
         if (color == null) {
           const namedColor = palette[enumIndex % palette.length];
-          color = theme.visualization.getColorByName(namedColor);
+          color = options.theme.visualization.getColorByName(namedColor);
         }
       }
     }
