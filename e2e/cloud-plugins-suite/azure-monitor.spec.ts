@@ -10,7 +10,7 @@ import {
 } from '../../public/app/plugins/datasource/azuremonitor/types';
 import { e2e } from '../utils';
 
-const provisioningPath = `../../provisioning/datasources/azmonitor-ds.yaml`;
+const provisioningPath = `provisioning/datasources/azmonitor-ds.yaml`;
 const e2eSelectors = e2e.getSelectors(selectors.components);
 
 type AzureMonitorConfig = {
@@ -165,7 +165,7 @@ e2e.scenario({
     const CI = e2e.env('CI');
     if (CI) {
       e2e()
-        .readFile('../../outputs.json')
+        .readFile('outputs.json')
         .then((outputs) => {
           provisionAzureMonitorDatasources([
             {
