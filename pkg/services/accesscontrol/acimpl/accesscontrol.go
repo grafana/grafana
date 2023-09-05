@@ -63,7 +63,3 @@ func (a *AccessControl) Evaluate(ctx context.Context, user identity.Requester, e
 func (a *AccessControl) RegisterScopeAttributeResolver(prefix string, resolver accesscontrol.ScopeAttributeResolver) {
 	a.resolvers.AddScopeAttributeResolver(prefix, resolver)
 }
-
-func (a *AccessControl) IsDisabled() bool {
-	return accesscontrol.IsDisabled(a.cfg)
-}

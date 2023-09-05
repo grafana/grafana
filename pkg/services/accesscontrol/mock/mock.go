@@ -22,7 +22,6 @@ type Calls struct {
 	Evaluate                       []interface{}
 	GetUserPermissions             []interface{}
 	ClearUserPermissionCache       []interface{}
-	IsDisabled                     []interface{}
 	DeclareFixedRoles              []interface{}
 	DeclarePluginRoles             []interface{}
 	GetUserBuiltInRoles            []interface{}
@@ -38,8 +37,6 @@ type Calls struct {
 type Mock struct {
 	// Unless an override is provided, permissions will be returned by GetUserPermissions
 	permissions []accesscontrol.Permission
-	// Unless an override is provided, disabled will be returned by IsDisabled
-	disabled bool
 	// Unless an override is provided, builtInRoles will be returned by GetUserBuiltInRoles
 	builtInRoles []string
 
@@ -50,7 +47,6 @@ type Mock struct {
 	EvaluateFunc                       func(context.Context, *user.SignedInUser, accesscontrol.Evaluator) (bool, error)
 	GetUserPermissionsFunc             func(context.Context, *user.SignedInUser, accesscontrol.Options) ([]accesscontrol.Permission, error)
 	ClearUserPermissionCacheFunc       func(*user.SignedInUser)
-	IsDisabledFunc                     func() bool
 	DeclareFixedRolesFunc              func(...accesscontrol.RoleRegistration) error
 	DeclarePluginRolesFunc             func(context.Context, string, string, []plugins.RoleRegistration) error
 	GetUserBuiltInRolesFunc            func(user *user.SignedInUser) []string
@@ -72,7 +68,6 @@ var _ fullAccessControl = New()
 func New() *Mock {
 	mock := &Mock{
 		Calls:          Calls{},
-		disabled:       false,
 		permissions:    []accesscontrol.Permission{},
 		builtInRoles:   []string{},
 		scopeResolvers: accesscontrol.NewResolvers(log.NewNopLogger()),
@@ -87,11 +82,6 @@ func (m *Mock) GetUsageStats(ctx context.Context) map[string]interface{} {
 
 func (m *Mock) WithPermissions(permissions []accesscontrol.Permission) *Mock {
 	m.permissions = permissions
-	return m
-}
-
-func (m *Mock) WithDisabled() *Mock {
-	m.disabled = true
 	return m
 }
 
@@ -158,18 +148,6 @@ func (m *Mock) ClearUserPermissionCache(usr identity.Requester) {
 	if m.ClearUserPermissionCacheFunc != nil {
 		m.ClearUserPermissionCacheFunc(user)
 	}
-}
-
-// Middleware checks if service disabled or not to switch to fallback authorization.
-// This mock return m.disabled unless an override is provided.
-func (m *Mock) IsDisabled() bool {
-	m.Calls.IsDisabled = append(m.Calls.IsDisabled, struct{}{})
-	// Use override if provided
-	if m.IsDisabledFunc != nil {
-		return m.IsDisabledFunc()
-	}
-	// Otherwise return the Disabled bool
-	return m.disabled
 }
 
 // DeclareFixedRoles allow the caller to declare, to the service, fixed roles and their
