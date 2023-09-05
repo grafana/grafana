@@ -185,9 +185,9 @@ export const alertRuleApi = alertingApi.injectEndpoints({
     exportRule: build.query<string, { uid: string; format: RuleExportFormats }>({
       query: ({ uid, format }) => ({ url: getProvisioningUrl(uid, format), responseType: 'text' }),
     }),
-    exportGroup: build.query<string, { folderUid: string; group: string; format: RuleExportFormats }>({
-      query: ({ folderUid, group, format }) => ({
-        url: `/api/v1/provisioning/folders/${folderUid}/rule-groups/${group}/export`,
+    exportRuleGroup: build.query<string, { folderUid: string; groupName: string; format: RuleExportFormats }>({
+      query: ({ folderUid, groupName, format }) => ({
+        url: `/api/v1/provisioning/folder/${folderUid}/rule-groups/${groupName}/export`,
         params: { format: format },
         responseType: 'text',
       }),

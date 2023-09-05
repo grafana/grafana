@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 import pluralize from 'pluralize';
 import React, { useEffect, useState } from 'react';
+import { useToggle } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
@@ -19,6 +20,7 @@ import { makeFolderLink, makeFolderSettingsLink } from '../../utils/misc';
 import { isFederatedRuleGroup, isGrafanaRulerRule } from '../../utils/rules';
 import { CollapseToggle } from '../CollapseToggle';
 import { RuleLocation } from '../RuleLocation';
+import { GrafanaRuleGroupExporter } from '../export/GrafanaRuleGroupExporter';
 
 import { ActionIcon } from './ActionIcon';
 import { EditCloudGroupModal } from './EditRuleGroupModal';
@@ -43,6 +45,7 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
   const [isEditingGroup, setIsEditingGroup] = useState(false);
   const [isDeletingGroup, setIsDeletingGroup] = useState(false);
   const [isReorderingGroup, setIsReorderingGroup] = useState(false);
+  const [isExporting, toggleIsExporting] = useToggle(false);
   const [isCollapsed, setIsCollapsed] = useState(!expandAll);
 
   const { canEditRules } = useRulesAccess();
@@ -109,6 +112,18 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
               tooltip="reorder rules"
               className={styles.rotate90}
               onClick={() => setIsReorderingGroup(true)}
+            />
+          );
+        }
+        if (isGroupView) {
+          actionIcons.push(
+            <ActionIcon
+              aria-label="xport rule group"
+              data-testid="export-group"
+              key="export"
+              icon="download-alt"
+              tooltip="Export rule group"
+              onClick={() => toggleIsExporting(true)}
             />
           );
         }
@@ -272,6 +287,9 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
         onDismiss={() => setIsDeletingGroup(false)}
         confirmText="Delete"
       />
+      {isExporting && folder?.uid && (
+        <GrafanaRuleGroupExporter folderUid={folder?.uid} groupName={group.name} onClose={toggleIsExporting} />
+      )}
     </div>
   );
 });
@@ -288,6 +306,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
       padding: ${theme.spacing(1)} ${theme.spacing(1)} ${theme.spacing(1)} 0;
       flex-wrap: nowrap;
       border-bottom: 1px solid ${theme.colors.border.weak};
+
       &:hover {
         background-color: ${theme.components.table.rowHoverBackground};
       }
