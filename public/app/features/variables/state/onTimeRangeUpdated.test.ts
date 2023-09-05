@@ -442,13 +442,9 @@ describe('when onTimeRangeUpdated is dispatched', () => {
       // Based on the algorithm of getVariablesThatNeedRefreshNew, we have the following variables:
       // - queryA: This is a Query variable and has no dependents. According to the algorithm, Query variables without dependents
       //   should be refreshed. Hence, it's expected to be in the refreshed variables list.
-      // - queryD: This is a query variable without any dependents. Similar to queryA, the algorithm specifies that
-      //   variables without dependents should be refreshed when the time range changes. Hence, queryD is also expected
-      //   to be refreshed.
-      // - interval: This is an interval variable without any dependents. Similar to queryA, the algorithm specifies that
-      //   variables without dependents that are configured to refresh "onTimeRange" should be refreshed when the time range changes.
-      //   Hence, queryD is also expected to be refreshed
-      // Note: Variables 'b' and 'c' are not expected to be in the refreshed variables list even though they're set to
+      // - queryD and interval: These are variables without any dependents. Similar to queryA, the algorithm specifies that
+      //   variables without dependents should be refreshed when the time range changes.
+      //   Note: Variables 'b' and 'c' are not expected to be in the refreshed variables list even though they're set to
       // refresh on time range change. This is because they have dependencies ('b' and 'c' depend on 'a'). The algorithm
       // optimizes the refreshing process by refreshing only independent variables and those that have dependents.
       // Once 'a' is refreshed, it will trigger a cascading refresh of 'b' and 'c'.
@@ -526,21 +522,12 @@ describe('when onTimeRangeUpdated is dispatched', () => {
 
       // Defining the variables that are expected to be refreshed
       // Based on the algorithm of getVariablesThatNeedRefreshNew, we have the following variables:
-      // - queryA: This is a Query variable and has no dependents. According to the algorithm, Query variables without dependents
-      //   should be refreshed. Hence, it's expected to be in the refreshed variables list.
-      // - queryD: This is a query variable without any dependents. Similar to queryA, the algorithm specifies that
-      //   variables without dependents should be refreshed when the time range changes. Hence, queryD is also expected
-      //   to be refreshed.
-      // - interval: This is an interval variable without any dependents. Similar to queryA, the algorithm specifies that
-      //   variables without dependents that are configured to refresh "onTimeRange" should be refreshed when the time range changes.
-      //   Hence, queryD is also expected to be refreshed
+      // - queryA, queryD and interval: These are variables with no dependents. According to the algorithm, should be refreshed.
       // - queryE: This is a query variable with a dependent node (queryF) but also has a dependency on DsVar datasource variable.
-      //   According to the algorithm, because DSVar is not configured to refresh on time range,this means that queryE is the
-      //   variable that is expected to be refreshed, this will also trigger a cascading refresh of queryF.
-      // Note: Variables 'b' and 'c' are not expected to be in the refreshed variables list even though they're set to
-      // refresh on time range change. This is because they have dependencies ('b' and 'c' depend on 'a'). The algorithm
-      // optimizes the refreshing process by refreshing only independent variables and those that have dependents.
-      // Once 'a' is refreshed, it will trigger a cascading refresh of 'b' and 'c'.
+      //   because DSVar is not configured to refresh on time range,this means that queryE is the
+      //   variable that is expected to be refreshed
+      // Note: Variables 'b' and 'c', f are not expected to be in the refreshed variables list even though they're set to
+      // refresh on time range change. This is because they have dependencies ('b' and 'c' depend on 'a').
 
       const expectedVariables = {
         queryA: {
