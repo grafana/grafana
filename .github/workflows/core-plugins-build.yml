@@ -33,15 +33,30 @@ jobs:
       steps:
         - name: checkout
           uses: actions/checkout@v3
+        - name: Verify plugin_id
+          run: |
+            if [ -z ${{ env.plugin_id }} ]; then echo "Missing plugin ID"; exit 1; fi
+        - name: Check existing release
+          working-directory: ./public/plugins/${{ env.plugin_id }}
+          run: |
+            version=$(cat package.json | jq -r .version)
+            api_res=$(curl -X 'GET' -H "Authorization: Bearer $GCOM_TOKEN" \
+            'https://grafana.com/api/plugins/${{ env.plugin_id }}?version=${version}' \
+            -H 'accept: application/json')
+            api_res_code=$(echo $api_res | jq -r .code)
+            if [ "$api_res_code" = "NotFound" ]; then
+              echo "No existing release found"
+            else
+              echo "Expecting a missing release, got:"
+              echo $api_res
+              exit 1
+            fi
         - name: 'Authenticate to Google Cloud'
           uses: 'google-github-actions/auth@v1'
           with:
             credentials_json: '${{ secrets.PLUGINS_GOOGLE_CREDENTIALS }}'
         - name: 'Set up Cloud SDK'
           uses: 'google-github-actions/setup-gcloud@v1'
-        - name: Verify plugin_id
-          run: |
-            if [ -z ${{ env.plugin_id }} ]; then echo "Missing plugin ID"; exit 1; fi
         - name: Setup nodejs environment
           uses: actions/setup-node@v3
           with:
