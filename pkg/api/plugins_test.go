@@ -65,7 +65,6 @@ func Test_PluginsInstallAndUninstall(t *testing.T) {
 	for _, tc := range tcs {
 		server := SetupAPITestServer(t, func(hs *HTTPServer) {
 			hs.Cfg = &setting.Cfg{
-				RBACEnabled:                      true,
 				PluginAdminEnabled:               tc.pluginAdminEnabled,
 				PluginAdminExternalManageEnabled: tc.pluginAdminExternalManageEnabled}
 			hs.orgService = &orgtest.FakeOrgService{ExpectedOrg: &org.Org{}}
