@@ -4066,7 +4066,6 @@
    "type": "object"
   },
   "alertGroup": {
-   "description": "AlertGroup alert group",
    "properties": {
     "alerts": {
      "description": "alerts",
@@ -4249,13 +4248,13 @@
    "type": "object"
   },
   "gettableAlerts": {
-   "description": "GettableAlerts gettable alerts",
    "items": {
     "$ref": "#/definitions/gettableAlert"
    },
    "type": "array"
   },
   "gettableSilence": {
+   "description": "GettableSilence gettable silence",
    "properties": {
     "comment": {
      "description": "comment",
@@ -4455,7 +4454,6 @@
    "type": "array"
   },
   "postableSilence": {
-   "description": "PostableSilence postable silence",
    "properties": {
     "comment": {
      "description": "comment",
@@ -4493,6 +4491,7 @@
    "type": "object"
   },
   "receiver": {
+   "description": "Receiver receiver",
    "properties": {
     "active": {
      "description": "active",
@@ -4683,6 +4682,18 @@
       "description": "Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence.",
       "in": "query",
       "name": "format",
+      "type": "string"
+     },
+     {
+      "description": "UID of folder from which export rules",
+      "in": "query",
+      "name": "folder_uid",
+      "type": "string"
+     },
+     {
+      "description": "Name of group of rules to export. Must be specified only together with folder UID",
+      "in": "query",
+      "name": "group",
       "type": "string"
      }
     ],
