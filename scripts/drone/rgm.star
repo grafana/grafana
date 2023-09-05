@@ -110,6 +110,22 @@ def rgm_build(script = "drone_publish_main.sh"):
         rgm_build_step,
     ]
 
+def rgm_copy(src, dst):
+    rgm_copy_step = {
+        "name": "rgm-copy",
+        "image": "google/cloud-sdk:alpine",
+        "commands": [
+            "printenv GCP_KEY_BASE64 | base64 -d > /tmp/key.json",
+            "gcloud auth activate-service-account --key-file=/tmp/key.json",
+            "gcloud storage cp {} {}".format(src, dst),
+        ],
+        "environment": rgm_env_secrets,
+    }
+
+    return [
+        rgm_copy_step,
+    ]
+
 def rgm_main():
     trigger = {
         "event": [
@@ -138,10 +154,13 @@ def rgm_tag():
     )
 
 def rgm_nightly():
+    ver = "nightly-${DRONE_COMMIT_SHA:0:8}"
+    dst = "{}/nightly/{}".format(rgm_env_secrets["DESTINATION"], ver)
+    src = "dist/{}".format(ver)
     return pipeline(
         name = "rgm-nightly-prerelease",
         trigger = nightly_trigger,
-        steps = rgm_build(script = "drone_build_nightly_grafana.sh"),
+        steps = rgm_build(script = "drone_build_nightly_grafana.sh") + rgm_copy(src, dst),
         depends_on = ["nightly-test-backend", "nightly-test-frontend"],
     )
 

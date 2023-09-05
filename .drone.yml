@@ -3308,6 +3308,27 @@ steps:
   volumes:
   - name: docker
     path: /var/run/docker.sock
+- commands:
+  - printenv GCP_KEY_BASE64 | base64 -d > /tmp/key.json
+  - gcloud auth activate-service-account --key-file=/tmp/key.json
+  - 'gcloud storage cp dist/nightly-${DRONE_COMMIT_SHA:0:8} {"from_secret": "destination"}/nightly/nightly-${DRONE_COMMIT_SHA:0:8}'
+  environment:
+    _EXPERIMENTAL_DAGGER_CLOUD_TOKEN:
+      from_secret: dagger_token
+    DESTINATION:
+      from_secret: destination
+    GCP_KEY_BASE64:
+      from_secret: gcp_key_base64
+    GITHUB_TOKEN:
+      from_secret: github_token
+    GPG_PASSPHRASE:
+      from_secret: packages_gpg_passphrase
+    GPG_PRIVATE_KEY:
+      from_secret: packages_gpg_private_key
+    GPG_PUBLIC_KEY:
+      from_secret: packages_gpg_public_key
+  image: google/cloud-sdk:alpine
+  name: rgm-copy
 trigger:
   event:
     include:
@@ -4915,6 +4936,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: e0bdf4afed78d796c38a5fcc872435bfa8ba89d9271c03f6b1aa1b9c4a0f424b
+hmac: 12c806c380ed742732bfc3569191f2ce6fac97bc928e24f303faaac039f9d121
 
 ...
