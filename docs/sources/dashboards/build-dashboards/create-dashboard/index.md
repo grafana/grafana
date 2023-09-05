@@ -38,7 +38,7 @@ Dashboards and panels allow you to show your data in visual form. Each panel nee
 
    - Select one of your existing data sources.
    - Select one of the Grafana's [built-in special data sources]({{< relref "../../../datasources/#special-data-sources" >}}).
-   - Click **Connect data** to set up a new one (Admins only).
+   - Click **Configure a new data source** to set up a new one (Admins only).
 
    {{< figure class="float-right"  src="/media/docs/grafana/dashboards/screenshot-data-source-selector-10.0.png" max-width="800px" alt="Select data source modal" >}}
 
