@@ -301,18 +301,12 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
       }
       case 'SPANSET_IN_THE_MIDDLE':
         return [...CompletionProvider.comparisonOps, ...CompletionProvider.logicalOps].map((key) => ({
-          label: key.label,
-          insertText: key.insertText,
-          detail: key.detail,
-          documentation: key.documentation,
+          ...key,
           type: 'OPERATOR',
         }));
       case 'SPANSET_EXPRESSION_OPERATORS_WITH_MISSING_CLOSED_BRACE':
         return [...CompletionProvider.comparisonOps, ...CompletionProvider.logicalOps].map((key) => ({
-          label: key.label,
-          insertText: key.insertText,
-          detail: key.detail,
-          documentation: key.documentation,
+          ...key,
           type: 'OPERATOR',
         }));
       case 'SPANSET_IN_NAME':
@@ -325,10 +319,7 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
           ...CompletionProvider.logicalOps,
           ...CompletionProvider.arithmeticOps,
         ].map((key) => ({
-          label: key.label,
-          insertText: key.insertText,
-          detail: key.detail,
-          documentation: key.documentation,
+          ...key,
           type: 'OPERATOR',
         }));
       case 'SPANFIELD_COMBINING_OPERATORS':
@@ -337,35 +328,23 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
           ...CompletionProvider.arithmeticOps,
           ...CompletionProvider.comparisonOps,
         ].map((key) => ({
-          label: key.label,
-          insertText: key.insertText,
-          detail: key.detail,
-          documentation: key.documentation,
+          ...key,
           type: 'OPERATOR',
         }));
       case 'SPANSET_COMBINING_OPERATORS':
         return CompletionProvider.spansetOps.map((key) => ({
-          label: key.label,
-          insertText: key.insertText,
-          detail: key.detail,
-          documentation: key.documentation,
+          ...key,
           type: 'OPERATOR',
         }));
       case 'SPANSET_PIPELINE_AFTER_OPERATOR':
         return CompletionProvider.functions.map((key) => ({
-          label: key.label,
-          insertText: key.insertText,
-          detail: key.detail,
-          documentation: key.documentation,
+          ...key,
           insertTextRules: this.monaco?.languages.CompletionItemInsertTextRule?.InsertAsSnippet,
           type: 'FUNCTION',
         }));
       case 'SPANSET_COMPARISON_OPERATORS':
         return CompletionProvider.comparisonOps.map((key) => ({
-          label: key.label,
-          insertText: key.insertText,
-          detail: key.detail,
-          documentation: key.documentation,
+          ...key,
           type: 'OPERATOR',
         }));
       case 'SPANSET_IN_VALUE':
