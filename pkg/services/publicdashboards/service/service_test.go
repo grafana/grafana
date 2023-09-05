@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/grafana/grafana/pkg/util/errutil"
 	"strings"
 	"testing"
 	"time"
@@ -1159,6 +1160,24 @@ func TestUpdatePublicDashboard(t *testing.T) {
 		}
 		_, err = service.Update(context.Background(), SignedInUser, dto)
 		assert.Error(t, err)
+	})
+
+	t.Run("Updating not existent dashboard", func(t *testing.T) {
+		dto := &SavePublicDashboardDTO{
+			DashboardUid:    "NOTEXISTENTDASHBOARD",
+			UserId:          7,
+			PublicDashboard: &PublicDashboardDTO{},
+		}
+
+		updatedPubdash, err := service.Update(context.Background(), SignedInUser, dto)
+		assert.Error(t, err)
+
+		var grafanaErr errutil.Error
+		ok := errors.As(err, &grafanaErr)
+		assert.True(t, ok)
+		assert.Equal(t, "publicdashboards.dashboardNotFound", grafanaErr.MessageID)
+		assert.Empty(t, updatedPubdash)
+
 	})
 
 	trueBooleanField := true
