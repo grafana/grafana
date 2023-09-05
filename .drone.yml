@@ -4643,7 +4643,6 @@ steps:
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/docker-puppeteer:1.1.0
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/docs-base:dbd975af06
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM cypress/included:9.5.1-node16.14.0-slim-chrome99-ff97
-  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM us-docker.pkg.dev/grafanalabs-dev/cloud-data-sources/e2e:latest
   depends_on:
   - authenticate-gcr
   image: aquasec/trivy:0.21.0
@@ -4672,7 +4671,6 @@ steps:
   - trivy --exit-code 1 --severity HIGH,CRITICAL grafana/docker-puppeteer:1.1.0
   - trivy --exit-code 1 --severity HIGH,CRITICAL grafana/docs-base:dbd975af06
   - trivy --exit-code 1 --severity HIGH,CRITICAL cypress/included:9.5.1-node16.14.0-slim-chrome99-ff97
-  - trivy --exit-code 1 --severity HIGH,CRITICAL us-docker.pkg.dev/grafanalabs-dev/cloud-data-sources/e2e:latest
   depends_on:
   - authenticate-gcr
   environment:
@@ -4917,6 +4915,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 73c32c312b16fefbbb9589a5e1bbc69903030e824c110340014aa1b32b360688
+hmac: e0bdf4afed78d796c38a5fcc872435bfa8ba89d9271c03f6b1aa1b9c4a0f424b
 
 ...

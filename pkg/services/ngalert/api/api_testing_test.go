@@ -271,7 +271,7 @@ func TestRouteEvalQueries(t *testing.T) {
 
 func createTestingApiSrv(t *testing.T, ds *fakes.FakeCacheService, ac *acMock.Mock, evaluator eval.EvaluatorFactory) *TestingApiSrv {
 	if ac == nil {
-		ac = acMock.New().WithDisabled()
+		ac = acMock.New()
 	}
 
 	return &TestingApiSrv{

@@ -8,7 +8,7 @@ export const createLogRow = (overrides?: Partial<LogRowModel>): LogRowModel => {
   return {
     entryFieldIndex: 0,
     rowIndex: 0,
-    dataFrame: new MutableDataFrame(),
+    dataFrame: new MutableDataFrame({ refId: 'A', fields: [] }),
     uid,
     logLevel: LogLevel.info,
     entry,
