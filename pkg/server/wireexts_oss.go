@@ -17,6 +17,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/anonymous"
 	"github.com/grafana/grafana/pkg/services/anonymous/anonimpl"
 	"github.com/grafana/grafana/pkg/services/auth"
+	"github.com/grafana/grafana/pkg/services/auth/assertid"
+	"github.com/grafana/grafana/pkg/services/auth/assertid/idsigner"
 	"github.com/grafana/grafana/pkg/services/auth/authimpl"
 	"github.com/grafana/grafana/pkg/services/caching"
 	"github.com/grafana/grafana/pkg/services/datasources/guardian"
@@ -89,6 +91,7 @@ var wireExtsBasicSet = wire.NewSet(
 	wire.Bind(new(publicdashboards.ServiceWrapper), new(*publicdashboardsService.PublicDashboardServiceWrapperImpl)),
 	caching.ProvideCachingService,
 	wire.Bind(new(caching.CachingService), new(*caching.OSSCachingService)),
+	wire.Bind(new(assertid.Service), new(*idsigner.Service)),
 	secretsMigrator.ProvideSecretsMigrator,
 	wire.Bind(new(secrets.Migrator), new(*secretsMigrator.SecretsMigrator)),
 )
