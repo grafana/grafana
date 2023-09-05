@@ -40,13 +40,13 @@ Grafana Enterprise is the recommended and default edition. It is available for f
 Complete the following steps to install Grafana from the APT repository:
 
 1. Install the prerequisite packages:
-   
+
    ```bash
    sudo apt-get install -y apt-transport-https software-properties-common wget
    ```
 
 1. Import the GPG key:
-   
+
    ```bash
    sudo mkdir -p /etc/apt/keyrings/
    wget -q -O - https://apt.grafana.com/gpg.key | gpg --dearmor | sudo tee /etc/apt/keyrings/grafana.gpg > /dev/null
