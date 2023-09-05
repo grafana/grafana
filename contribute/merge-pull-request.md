@@ -93,7 +93,7 @@ Labeled with `add to changelog` and either labeled with `type/bug` or the pull r
 
 **Plugin development fixes & changes:**
 
-Labeled with `area/grafana/toolkit`, `area/grafana/ui` or `area/grafana/runtime`.
+Labeled with `area/grafana/ui` or `area/grafana/runtime`.
 
 **Deprecations:**
 
