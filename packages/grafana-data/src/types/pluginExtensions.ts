@@ -46,9 +46,6 @@ export type PluginExtensionLinkConfig<Context extends object = object> = {
   title: string;
   description: string;
 
-  // allow for plugin context to show/hide options
-  shouldShow?: (context: Readonly<Context>) => boolean;
-
   // A URL path that will be used as the href for the rendered link extension
   // (It is optional, because in some cases the action will be handled by the `onClick` handler instead of navigating to a new page)
   path?: string;

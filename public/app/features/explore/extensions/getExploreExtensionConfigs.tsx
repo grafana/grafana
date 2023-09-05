@@ -46,18 +46,16 @@ export function getExploreExtensionConfigs(): PluginExtensionLinkConfig[] {
         description: 'Create a correlation from this query',
         extensionPointId: PluginExtensionPoints.ExploreToolbarAction,
         icon: 'link',
-        configure: () => {
-          return {};
+        configure: (context) => {
+          const shouldShow = context?.shouldShowAddCorrelation !== undefined ? context?.shouldShowAddCorrelation : false;
+          return shouldShow ? {} : undefined;
         },
         onClick: (_, { context }) => {
           dispatch(changeCorrelationsEditorMode({ correlationsEditorMode: true }));
           if (context?.exploreId) {
             dispatch(runQueries({ exploreId: context?.exploreId }));
           }
-        },
-        shouldShow: (context) => {
-          return context?.shouldShowAddCorrelation !== undefined ? context?.shouldShowAddCorrelation : false;
-        },
+        }
       }),
     ];
   } catch (error) {
