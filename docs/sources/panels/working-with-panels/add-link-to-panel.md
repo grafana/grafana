@@ -7,6 +7,6 @@ weight: 60
 
 # Add a link to a panel
 
-{{< docs/shared "panels/panel-links-intro.md" >}}
+{{< docs/shared lookup="panels/panel-links-intro.md" source="grafana" version="<GRAFANA VERSION>" >}}
 
 For more information, refer to [Panel links]({{< relref "../../linking/panel-links.md" >}}).
