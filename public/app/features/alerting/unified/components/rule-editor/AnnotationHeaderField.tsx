@@ -46,9 +46,11 @@ const AnnotationHeaderField = ({
               }
 
               return (
-                <Text color="primary" variant="bodySmall" data-testid={`annotation-key-${index}`}>
-                  {label}
-                </Text>
+                <span data-testid={`annotation-key-${index}`}>
+                  <Text color="primary" variant="bodySmall">
+                    {label}
+                  </Text>
+                </span>
               );
             }}
             control={control}
