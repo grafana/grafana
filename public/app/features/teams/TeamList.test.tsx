@@ -10,10 +10,9 @@ import { OrgRole, Team } from '../../types';
 import { Props, TeamList } from './TeamList';
 import { getMockTeam, getMultipleMockTeams } from './__mocks__/teamMocks';
 
-jest.mock('app/core/config', () => ({
-  ...jest.requireActual('app/core/config'),
-  featureToggles: { accesscontrol: false },
-}));
+const mocks = {
+  contextSrv: jest.mocked(contextSrv),
+};
 
 const setup = (propOverrides?: object) => {
   const props: Props = {
@@ -51,39 +50,39 @@ describe('TeamList', () => {
     expect(screen.getAllByRole('row')).toHaveLength(6); // 5 teams plus table header row
   });
 
-  describe('when feature toggle editorsCanAdmin is turned on', () => {
-    describe('and signed in user is not viewer', () => {
-      it('should enable the new team button', () => {
-        setup({
-          teams: getMultipleMockTeams(1),
-          totalCount: 1,
-          hasFetched: true,
-          editorsCanAdmin: true,
-          signedInUser: {
-            id: 1,
-            orgRole: OrgRole.Editor,
-          } as User,
-        });
-
-        expect(screen.getByRole('link', { name: /new team/i })).not.toHaveStyle('pointer-events: none');
+  describe('when user has access to create a team', () => {
+    it('should enable the new team button', () => {
+      mocks.contextSrv.hasPermission.mockReturnValue(true);
+      setup({
+        teams: getMultipleMockTeams(1),
+        totalCount: 1,
+        hasFetched: true,
+        editorsCanAdmin: true,
+        signedInUser: {
+          id: 1,
+          orgRole: OrgRole.Editor,
+        } as User,
       });
+
+      expect(screen.getByRole('link', { name: /new team/i })).not.toHaveStyle('pointer-events: none');
     });
+  });
 
-    describe('and signed in user is a viewer', () => {
-      it('should disable the new team button', () => {
-        setup({
-          teams: getMultipleMockTeams(1),
-          totalCount: 1,
-          hasFetched: true,
-          editorsCanAdmin: true,
-          signedInUser: {
-            id: 1,
-            orgRole: OrgRole.Viewer,
-          } as User,
-        });
-
-        expect(screen.getByRole('link', { name: /new team/i })).toHaveStyle('pointer-events: none');
+  describe('when user does not have access to create a team', () => {
+    it('should disable the new team button', () => {
+      mocks.contextSrv.hasPermission.mockReturnValue(false);
+      setup({
+        teams: getMultipleMockTeams(1),
+        totalCount: 1,
+        hasFetched: true,
+        editorsCanAdmin: true,
+        signedInUser: {
+          id: 1,
+          orgRole: OrgRole.Viewer,
+        } as User,
       });
+
+      expect(screen.getByRole('link', { name: /new team/i })).toHaveStyle('pointer-events: none');
     });
   });
 });
