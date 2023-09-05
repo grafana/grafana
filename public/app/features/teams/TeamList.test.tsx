@@ -10,9 +10,11 @@ import { OrgRole, Team } from '../../types';
 import { Props, TeamList } from './TeamList';
 import { getMockTeam, getMultipleMockTeams } from './__mocks__/teamMocks';
 
-const mocks = {
-  contextSrv: jest.mocked(contextSrv),
-};
+jest.mock('app/core/core', () => ({
+  contextSrv: {
+    hasPermission: (action: string) => true,
+  },
+}));
 
 const setup = (propOverrides?: object) => {
   const props: Props = {
@@ -52,7 +54,7 @@ describe('TeamList', () => {
 
   describe('when user has access to create a team', () => {
     it('should enable the new team button', () => {
-      mocks.contextSrv.hasPermission.mockReturnValue(true);
+      jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
       setup({
         teams: getMultipleMockTeams(1),
         totalCount: 1,
@@ -70,7 +72,7 @@ describe('TeamList', () => {
 
   describe('when user does not have access to create a team', () => {
     it('should disable the new team button', () => {
-      mocks.contextSrv.hasPermission.mockReturnValue(false);
+      jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
       setup({
         teams: getMultipleMockTeams(1),
         totalCount: 1,
