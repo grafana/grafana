@@ -8,7 +8,7 @@ weight: 400
 
 # Get started with Grafana and InfluxDB
 
-{{< docs/shared "influxdb/intro.md" >}}
+{{< docs/shared lookup="influxdb/intro.md" source="grafana" version="<GRAFANA VERSION>" >}}
 
 > **Note:** You can also configure a [Grafana Cloud](https://grafana.com/docs/grafana-cloud/) instance to display system metrics without having to host Grafana yourself. Grafana offers a [free account with Grafana Cloud](https://grafana.com/signup/cloud/connect-account?pg=gsdocs) to help you get started.
 
