@@ -6,6 +6,7 @@ import { clickSelectOption } from 'test/helpers/selectOptionInTest';
 import { byRole } from 'testing-library-selector';
 
 import { contextSrv } from 'app/core/services/context_srv';
+import { AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
 
 import { searchFolders } from '../../manage-dashboards/state/actions';
 
@@ -13,6 +14,12 @@ import { fetchRulerRules, fetchRulerRulesGroup, fetchRulerRulesNamespace, setRul
 import { ExpressionEditorProps } from './components/rule-editor/ExpressionEditor';
 import { mockApi, mockFeatureDiscoveryApi, setupMswServer } from './mockApi';
 import { disableRBAC, mockDataSource } from './mocks';
+import {
+  defaultAlertmanagerChoiceResponse,
+  emptyExternalAlertmanagersResponse,
+  mockAlertmanagerChoiceResponse,
+  mockAlertmanagersResponse,
+} from './mocks/alertmanagerApi';
 import { fetchRulerRulesIfNotFetchedYet } from './state/actions';
 import { setupDataSources } from './testSetup/datasources';
 import { buildInfoResponse } from './testSetup/featureDiscovery';
@@ -48,6 +55,8 @@ setupDataSources(dataSources.default);
 const server = setupMswServer();
 
 mockFeatureDiscoveryApi(server).discoverDsFeatures(dataSources.default, buildInfoResponse.mimir);
+mockAlertmanagerChoiceResponse(server, defaultAlertmanagerChoiceResponse);
+mockAlertmanagersResponse(server, emptyExternalAlertmanagersResponse);
 mockApi(server).eval({ results: {} });
 
 // these tests are rather slow because we have to wait for various API calls and mocks to be called
