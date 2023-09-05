@@ -896,6 +896,21 @@ The `database` field has been deprecated in the Elasticsearch datasource provisi
 - **InteractiveTable:** Updated design and minor tweak to Correlactions page. [#66443](https://github.com/grafana/grafana/issues/66443), [@torkelo](https://github.com/torkelo)
 
 <!-- 10.0.0-preview END -->
+<!-- 9.5.9 START -->
+
+# 9.5.9 (2023-09-05)
+
+### Features and enhancements
+
+- **SSE:** DSNode to update result with names to make each value identifiable by labels (only Graphite and TestData). [#73642](https://github.com/grafana/grafana/issues/73642), [@yuri-tceretian](https://github.com/yuri-tceretian)
+- **Prometheus:** Add present_over_time syntax highlighting. [#72367](https://github.com/grafana/grafana/issues/72367), [@arnaudlemaignen](https://github.com/arnaudlemaignen)
+- **Alerting:** Improve performance of matching captures. [#71998](https://github.com/grafana/grafana/issues/71998), [@grobinson-grafana](https://github.com/grobinson-grafana)
+
+### Bug fixes
+
+- **LDAP:** Fix user disabling. [#74096](https://github.com/grafana/grafana/issues/74096), [@gamab](https://github.com/gamab)
+
+<!-- 9.5.9 END -->
 <!-- 9.5.8 START -->
 
 # 9.5.8 (2023-08-16)
