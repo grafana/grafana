@@ -22,8 +22,7 @@ env:
 jobs:
     build-and-publish:
       name: Build and publish a core plugin
-      runs-on:
-        labels: ubuntu-latest-8-cores
+      runs-on: ubuntu-latest
       steps:
         - name: checkout
           uses: actions/checkout@v3
