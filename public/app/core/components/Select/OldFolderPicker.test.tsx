@@ -84,7 +84,6 @@ describe('OldFolderPicker', () => {
         { title: 'Dash 2', uid: 'wfTJJL5Wz' } as DashboardSearchHit,
       ]);
 
-    jest.spyOn(contextSrv, 'hasAccess').mockReturnValue(true);
     jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
 
     const onChangeFn = jest.fn();
@@ -106,7 +105,6 @@ describe('OldFolderPicker', () => {
         { title: 'Dash 2', uid: 'wfTJJL5Wz' } as DashboardSearchHit,
       ]);
 
-    jest.spyOn(contextSrv, 'hasAccess').mockReturnValue(true);
     jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
 
     const onChangeFn = jest.fn();
@@ -128,7 +126,6 @@ describe('OldFolderPicker', () => {
         { title: 'Dash 2', uid: 'wfTJJL5Wz' } as DashboardSearchHit,
       ]);
 
-    jest.spyOn(contextSrv, 'hasAccess').mockReturnValue(false);
     jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
 
     const onChangeFn = jest.fn();
@@ -151,7 +148,6 @@ describe('OldFolderPicker', () => {
         ].filter((dash) => dash.title.indexOf(query) > -1)
       );
     });
-    jest.spyOn(contextSrv, 'hasAccess').mockReturnValue(false);
     jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
     const onChangeFn = jest.fn();
     render(<OldFolderPicker onChange={onChangeFn} />);

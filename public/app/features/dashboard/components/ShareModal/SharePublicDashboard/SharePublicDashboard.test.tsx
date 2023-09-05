@@ -69,7 +69,6 @@ beforeAll(() => {
 beforeEach(() => {
   config.featureToggles.publicDashboards = true;
 
-  jest.spyOn(contextSrv, 'hasAccess').mockReturnValue(true);
   jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
   jest.spyOn(contextSrv, 'hasRole').mockReturnValue(true);
 });
@@ -103,7 +102,6 @@ const getErrorPublicDashboardResponse = () =>
 
 const alertTests = () => {
   it('when user has no write permissions, warning is shown', async () => {
-    jest.spyOn(contextSrv, 'hasAccess').mockReturnValue(false);
     jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
 
     await renderSharePublicDashboard();
@@ -252,7 +250,6 @@ describe('SharePublic - Already persisted', () => {
     expect(screen.getByTestId(selectors.DeleteButton)).toBeEnabled();
   });
   it('inputs and delete button are disabled because of lack of permissions', async () => {
-    jest.spyOn(contextSrv, 'hasAccess').mockReturnValue(false);
     jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
     await renderSharePublicDashboard();
     await userEvent.click(screen.getByText('Settings'));

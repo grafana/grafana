@@ -56,7 +56,6 @@ afterEach(() => {
 
 describe('Tabs rendering', () => {
   it('should render All and Org Users tabs when user has permissions to read to org users and is admin', async () => {
-    jest.spyOn(contextSrv, 'hasAccess').mockReturnValue(true);
     jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
 
     renderPage();
@@ -66,7 +65,6 @@ describe('Tabs rendering', () => {
     expect(screen.queryByTestId(tabsSelector.publicDashboardsUsers)).not.toBeInTheDocument();
   });
   it('should render All, Org and Public dashboard tabs when user has permissions to read org users, is admin and has email sharing enabled', async () => {
-    jest.spyOn(contextSrv, 'hasAccess').mockReturnValue(true);
     jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
 
     enableEmailSharing();
@@ -105,7 +103,6 @@ describe('Tabs rendering', () => {
 
 describe('Tables rendering', () => {
   it('should render UserListAdminPage when user is admin', () => {
-    jest.spyOn(contextSrv, 'hasAccess').mockReturnValue(true);
     jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
 
     renderPage();
@@ -116,7 +113,6 @@ describe('Tables rendering', () => {
     expect(screen.getByTestId(selectors.UserListAdminPage.container)).toBeInTheDocument();
   });
   it('should render UsersListPage when user is admin and has org read permissions', async () => {
-    jest.spyOn(contextSrv, 'hasAccess').mockReturnValue(true);
     jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
 
     renderPage();
@@ -130,7 +126,6 @@ describe('Tables rendering', () => {
     expect(screen.getByTestId(selectors.UsersListPage.container)).toBeInTheDocument();
   });
   it('should render UsersListPage when user has org read permissions and is not admin', async () => {
-    jest.spyOn(contextSrv, 'hasAccess').mockReturnValue(false);
     jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
 
     renderPage();
@@ -143,7 +138,6 @@ describe('Tables rendering', () => {
     expect(screen.getByTestId(selectors.UsersListPage.container)).toBeInTheDocument();
   });
   it('should render UserListPublicDashboardPage when user has email sharing enabled and is not admin', async () => {
-    jest.spyOn(contextSrv, 'hasAccess').mockReturnValue(false);
     jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
 
     enableEmailSharing();
@@ -160,7 +154,6 @@ describe('Tables rendering', () => {
     expect(screen.getByTestId(selectors.UsersListPublicDashboardsPage.container)).toBeInTheDocument();
   });
   it('should render UsersListPage when user is not admin and does not have nor org read perms neither email sharing enabled', async () => {
-    jest.spyOn(contextSrv, 'hasAccess').mockReturnValue(false);
     jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
 
     renderPage();
