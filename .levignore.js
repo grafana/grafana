@@ -1,3 +1,3 @@
 module.exports = {
-  removals: [/FeatureToggles\..*\b/],
+  removals: [/FeatureToggles\..*/],
 };
