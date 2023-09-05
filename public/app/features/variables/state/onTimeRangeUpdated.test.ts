@@ -475,7 +475,9 @@ describe('when onTimeRangeUpdated is dispatched', () => {
       spyTimeRangeUpdated.mockRestore();
     });
 
-    it('should ensure that when we have a query variable (with dependent nodes) it is also depending on a datasource variable that is not set to refresh on time range, the query variable is added to the list of variables that need refresh ', async () => {
+    // query variables can depend on datasource variables, but currently datasource variables do not refresh on time
+    // range change via the UI. This test ensures that query variables that depend on datasource variables are refreshed
+    it('Should ensure query variable is refreshed when dependent on a non-refreshing datasource variable', async () => {
       const dataSourceVariable = datasourceBuilder()
         .withId('dsVar')
         .withRootStateKey('key')
