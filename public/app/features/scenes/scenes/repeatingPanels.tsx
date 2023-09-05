@@ -41,7 +41,7 @@ export function getRepeatingPanelsDemo(): DashboardScene {
           refresh: VariableRefresh.onTimeRangeChanged,
           optionsToReturn: [
             { label: 'A', value: 'A' },
-            { label: 'B', value: 'C' },
+            { label: 'B', value: 'B' },
           ],
           options: [],
           $behaviors: [changeVariable],

@@ -60,7 +60,7 @@ export class RepeatedRowBehavior extends SceneObjectBase<RepeatedRowBehaviorStat
   }
 
   private _performRepeat() {
-    const variable = sceneGraph.lookupVariable(this.state.variableName, this);
+    const variable = sceneGraph.lookupVariable(this.state.variableName, this.parent?.parent!);
 
     if (!variable) {
       console.error('RepeatedRowBehavior: Variable not found');
@@ -88,7 +88,6 @@ export class RepeatedRowBehavior extends SceneObjectBase<RepeatedRowBehaviorStat
     const { values, texts } = this.getVariableValues(variable);
     const rows: SceneGridRow[] = [];
     const rowContentHeight = getRowContentHeight(this.state.sources);
-    console.log('rowContentHeight', rowContentHeight);
 
     // Loop through variable values and create repeates
     for (let index = 0; index < values.length; index++) {
@@ -99,25 +98,23 @@ export class RepeatedRowBehavior extends SceneObjectBase<RepeatedRowBehaviorStat
           key: `${source.state.key}-clone-${index}`,
           y: source.state.y + rowContentHeight * index + index,
         });
-        console.log('itemClone.y', itemClone.state.y);
 
         children.push(itemClone);
       }
 
-      const rowClone = rowToRepeat.clone({
-        key: `${rowToRepeat.state.key}-clone-${index}`,
-        $variables: new SceneVariableSet({
-          variables: [
-            new ConstantVariable({ name: variable.state.name, value: values[index], text: String(texts[index]) }),
-          ],
-        }),
-        children,
-        y: rowToRepeat.state.y + rowContentHeight * index + index,
-      });
-      console.log('rowClone.y', rowClone.state.y);
+      const rowClone = this.getRowClone(rowToRepeat, index, values[index], texts[index], rowContentHeight, children);
 
       rows.push(rowClone);
     }
+
+    // Maintain the first row instance as our parent / rowToRepeat
+    // if (rows.length > 0) {
+    //   rowToRepeat.setState({
+    //     children: rows[0].state.children,
+    //     $variables: rows[0].state.$variables,
+    //   });
+    //   rows[0] = rowToRepeat;
+    // }
 
     layout.setState({ children: rows });
 
@@ -125,6 +122,36 @@ export class RepeatedRowBehavior extends SceneObjectBase<RepeatedRowBehaviorStat
     if (this.parent instanceof SceneGridLayout) {
       this.parent!.forceRender();
     }
+  }
+
+  getRowClone(
+    rowToRepeat: SceneGridRow,
+    index: number,
+    value: VariableValueSingle,
+    text: VariableValueSingle,
+    rowContentHeight: number,
+    children: SceneGridItemLike[]
+  ): SceneGridRow {
+    if (index === 0) {
+      rowToRepeat.setState({
+        // not activated
+        $variables: new SceneVariableSet({
+          variables: [new ConstantVariable({ name: this.state.variableName, value, text: String(text) })],
+        }),
+        children,
+      });
+      return rowToRepeat;
+    }
+
+    return rowToRepeat.clone({
+      key: `${rowToRepeat.state.key}-clone-${index}`,
+      $variables: new SceneVariableSet({
+        variables: [new ConstantVariable({ name: this.state.variableName, value, text: String(text) })],
+      }),
+      $behaviors: [],
+      children,
+      y: rowToRepeat.state.y + rowContentHeight * index + index,
+    });
   }
 
   private getVariableValues(variable: MultiValueVariable): {
