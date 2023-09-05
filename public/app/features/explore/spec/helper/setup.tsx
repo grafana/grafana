@@ -186,7 +186,7 @@ export function setupExplore(options?: SetupOptions): {
     setEchoSrv(previousEchoSrv);
     setBackendSrv(previousBackendSrv);
     setLocationService(locationService);
-    if (!options?.clearLocalStorage === false) {
+    if (options?.clearLocalStorage !== false) {
       window.localStorage.clear();
     }
   };
